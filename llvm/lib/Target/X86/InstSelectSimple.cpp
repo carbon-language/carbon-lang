@@ -19,13 +19,11 @@
 #include "llvm/Pass.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/CodeGen/SSARegMap.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/InstVisitor.h"
 #include "llvm/Target/MRegisterInfo.h"
 #include <map>
-
-using namespace MOTy;  // Get Use, Def, UseAndDef
-
 
 /// BMI - A special BuildMI variant that takes an iterator to insert the
 /// instruction at as well as a basic block.
@@ -207,7 +205,9 @@ namespace {
     /// we haven't yet used.
     unsigned makeAnotherReg(const Type *Ty) {
       // Add the mapping of regnumber => reg class to MachineFunction
-      F->addRegMap(CurReg, TM.getRegisterInfo()->getRegClassForType(Ty));
+      const TargetRegisterClass *RC =
+	TM.getRegisterInfo()->getRegClassForType(Ty);
+      F->getSSARegMap()->addRegMap(CurReg, RC);
       return CurReg++;
     }
 
@@ -250,7 +250,7 @@ namespace {
 /// Representation.
 ///
 enum TypeClass {
-  cByte, cShort, cInt, cLong, cFloat, cDouble
+  cByte, cShort, cInt, cFP, cLong
 };
 
 /// getClass - Turn a primitive type into a "class" number which is based on the
@@ -266,12 +266,11 @@ static inline TypeClass getClass(const Type *Ty) {
   case Type::UIntTyID:
   case Type::PointerTyID: return cInt;       // Int's and pointers are class #2
 
+  case Type::FloatTyID:
+  case Type::DoubleTyID:  return cFP;        // Floating Point is #3
   case Type::LongTyID:
   case Type::ULongTyID:   //return cLong;      // Longs are class #3
     return cInt;          // FIXME: LONGS ARE TREATED AS INTS!
-
-  case Type::FloatTyID:   return cFloat;     // Float is class #4
-  case Type::DoubleTyID:  return cDouble;    // Doubles are class #5
   default:
     assert(0 && "Invalid type to getClass!");
     return cByte;  // not reached
@@ -299,12 +298,12 @@ void ISel::copyConstantToRegister(MachineBasicBlock *MBB,
     }
 
     std::cerr << "Offending expr: " << C << "\n";
-    assert (0 && "Constant expressions not yet handled!\n");
+    assert(0 && "Constant expressions not yet handled!\n");
   }
 
   if (C->getType()->isIntegral()) {
     unsigned Class = getClassB(C->getType());
-    assert(Class != 3 && "Type not handled yet!");
+    assert(Class <= cInt && "Type not handled yet!");
 
     static const unsigned IntegralOpcodeTab[] = {
       X86::MOVir8, X86::MOVir16, X86::MOVir32
@@ -319,6 +318,17 @@ void ISel::copyConstantToRegister(MachineBasicBlock *MBB,
       ConstantUInt *CUI = cast<ConstantUInt>(C);
       BMI(MBB, IP, IntegralOpcodeTab[Class], 1, R).addZImm(CUI->getValue());
     }
+  } else if (ConstantFP *CFP = dyn_cast<ConstantFP>(C)) {
+    double Value = CFP->getValue();
+    if (Value == +0.0)
+      BMI(MBB, IP, X86::FLD0, 0, R);
+    else if (Value == +1.0)
+      BMI(MBB, IP, X86::FLD1, 0, R);
+    else {
+      std::cerr << "Cannot load constant '" << Value << "'!\n";
+      assert(0);
+    }
+
   } else if (isa<ConstantPointerNull>(C)) {
     // Copy zero (null pointer) to the register.
     BMI(MBB, IP, X86::MOVir32, 1, R).addZImm(0);
@@ -396,22 +406,25 @@ void ISel::visitSetCCInst(SetCondInst &I, unsigned OpNum) {
     BuildMI (BB, X86::CMPrr32, 2).addReg (reg1).addReg (reg2);
     break;
 
+#if 0
     // Push the variables on the stack with fldl opcodes.
     // FIXME: assuming var1, var2 are in memory, if not, spill to
     // stack first
-  case cFloat:  // Floats
+  case cFP:  // Floats
     BuildMI (BB, X86::FLDr32, 1).addReg (reg1);
     BuildMI (BB, X86::FLDr32, 1).addReg (reg2);
     break;
-  case cDouble:  // Doubles
+  case cFP (doubles):  // Doubles
     BuildMI (BB, X86::FLDr64, 1).addReg (reg1);
     BuildMI (BB, X86::FLDr64, 1).addReg (reg2);
     break;
+#endif
   case cLong:
   default:
     visitInstruction(I);
   }
 
+#if 0
   if (CompTy->isFloatingPoint()) {
     // (Non-trapping) compare and pop twice.
     BuildMI (BB, X86::FUCOMPP, 0);
@@ -420,6 +433,7 @@ void ISel::visitSetCCInst(SetCondInst &I, unsigned OpNum) {
     // Load real concodes from ax.
     BuildMI (BB, X86::SAHF, 1).addReg(X86::AH);
   }
+#endif
 
   // Emit setOp instruction (extract concode; clobbers ax),
   // using the following mapping:
@@ -442,35 +456,31 @@ void ISel::visitSetCCInst(SetCondInst &I, unsigned OpNum) {
 
 /// promote32 - Emit instructions to turn a narrow operand into a 32-bit-wide
 /// operand, in the specified target register.
-void
-ISel::promote32 (unsigned targetReg, Value *v)
-{
-  unsigned vReg = getReg (v);
-  unsigned Class = getClass (v->getType ());
-  bool isUnsigned = v->getType ()->isUnsigned ();
-  assert (((Class == cByte) || (Class == cShort) || (Class == cInt))
-	  && "Unpromotable operand class in promote32");
-  switch (Class)
-    {
-    case cByte:
-      // Extend value into target register (8->32)
-      if (isUnsigned)
-	BuildMI (BB, X86::MOVZXr32r8, 1, targetReg).addReg (vReg);
-      else
-	BuildMI (BB, X86::MOVSXr32r8, 1, targetReg).addReg (vReg);
-      break;
-    case cShort:
-      // Extend value into target register (16->32)
-      if (isUnsigned)
-	BuildMI (BB, X86::MOVZXr32r16, 1, targetReg).addReg (vReg);
-      else
-	BuildMI (BB, X86::MOVSXr32r16, 1, targetReg).addReg (vReg);
-      break;
-    case cInt:
-      // Move value into target register (32->32)
-      BuildMI (BB, X86::MOVrr32, 1, targetReg).addReg (vReg);
-      break;
-    }
+void ISel::promote32 (unsigned targetReg, Value *v) {
+  unsigned vReg = getReg(v);
+  bool isUnsigned = v->getType()->isUnsigned();
+  switch (getClass(v->getType())) {
+  case cByte:
+    // Extend value into target register (8->32)
+    if (isUnsigned)
+      BuildMI(BB, X86::MOVZXr32r8, 1, targetReg).addReg(vReg);
+    else
+      BuildMI(BB, X86::MOVSXr32r8, 1, targetReg).addReg(vReg);
+    break;
+  case cShort:
+    // Extend value into target register (16->32)
+    if (isUnsigned)
+      BuildMI(BB, X86::MOVZXr32r16, 1, targetReg).addReg(vReg);
+    else
+      BuildMI(BB, X86::MOVSXr32r16, 1, targetReg).addReg(vReg);
+    break;
+  case cInt:
+    // Move value into target register (32->32)
+    BuildMI(BB, X86::MOVrr32, 1, targetReg).addReg(vReg);
+    break;
+  default:
+    assert(0 && "Unpromotable operand class in promote32");
+  }
 }
 
 /// 'ret' instruction - Here we are interested in meeting the x86 ABI.  As such,
@@ -484,43 +494,30 @@ ISel::promote32 (unsigned targetReg, Value *v)
 ///   ret long, ulong  : Move value into EAX/EDX and return
 ///   ret float/double : Top of FP stack
 ///
-void
-ISel::visitReturnInst (ReturnInst &I)
-{
-  if (I.getNumOperands () == 0)
-    {
-      // Emit a 'ret' instruction
-      BuildMI (BB, X86::RET, 0);
-      return;
-    }
-  Value *rv = I.getOperand (0);
-  unsigned Class = getClass (rv->getType ());
-  switch (Class)
-    {
-      // integral return values: extend or move into EAX and return. 
-    case cByte:
-    case cShort:
-    case cInt:
-      promote32 (X86::EAX, rv);
-      break;
-      // ret float/double: top of FP stack
-      // FLD <val>
-    case cFloat:		// Floats
-      BuildMI (BB, X86::FLDr32, 1).addReg (getReg (rv));
-      break;
-    case cDouble:		// Doubles
-      BuildMI (BB, X86::FLDr64, 1).addReg (getReg (rv));
-      break;
-    case cLong:
-      // ret long: use EAX(least significant 32 bits)/EDX (most
-      // significant 32)...uh, I think so Brain, but how do i call
-      // up the two parts of the value from inside this mouse
-      // cage? *zort*
-    default:
-      visitInstruction (I);
-    }
+void ISel::visitReturnInst (ReturnInst &I) {
+  if (I.getNumOperands() == 0) {
+    BuildMI(BB, X86::RET, 0); // Just emit a 'ret' instruction
+    return;
+  }
+
+  Value *RetVal = I.getOperand(0);
+  switch (getClass(RetVal->getType())) {
+  case cByte:   // integral return values: extend or move into EAX and return
+  case cShort:
+  case cInt:
+    promote32(X86::EAX, RetVal);
+    break;
+  case cFP:                   // Floats & Doubles: Return in ST(0)
+    BuildMI(BB, X86::FpMOV, 1, X86::ST0).addReg(getReg(RetVal));
+    break;
+  case cLong:
+    // ret long: use EAX(least significant 32 bits)/EDX (most
+    // significant 32)...
+  default:
+    visitInstruction (I);
+  }
   // Emit a 'ret' instruction
-  BuildMI (BB, X86::RET, 0);
+  BuildMI(BB, X86::RET, 0);
 }
 
 /// visitBranchInst - Handle conditional and unconditional branches here.  Note
@@ -528,63 +525,52 @@ ISel::visitReturnInst (ReturnInst &I)
 /// jump to a block that is the immediate successor of the current block, we can
 /// just make a fall-through. (but we don't currently).
 ///
-void
-ISel::visitBranchInst (BranchInst & BI)
-{
-  if (BI.isConditional ())
-    {
-      BasicBlock *ifTrue = BI.getSuccessor (0);
-      BasicBlock *ifFalse = BI.getSuccessor (1); // this is really unobvious 
+void ISel::visitBranchInst(BranchInst &BI) {
+  if (BI.isConditional()) {
+    BasicBlock *ifTrue  = BI.getSuccessor(0);
+    BasicBlock *ifFalse = BI.getSuccessor(1);
 
-      // simplest thing I can think of: compare condition with zero,
-      // followed by jump-if-equal to ifFalse, and jump-if-nonequal to
-      // ifTrue
-      unsigned int condReg = getReg (BI.getCondition ());
-      BuildMI (BB, X86::CMPri8, 2).addReg (condReg).addZImm (0);
-      BuildMI (BB, X86::JNE, 1).addPCDisp (BI.getSuccessor (0));
-      BuildMI (BB, X86::JE, 1).addPCDisp (BI.getSuccessor (1));
-    }
-  else // unconditional branch
-    {
-      BuildMI (BB, X86::JMP, 1).addPCDisp (BI.getSuccessor (0));
-    }
+    // Compare condition with zero, followed by jump-if-equal to ifFalse, and
+    // jump-if-nonequal to ifTrue
+    unsigned int condReg = getReg(BI.getCondition());
+    BuildMI(BB, X86::CMPri8, 2).addReg(condReg).addZImm(0);
+    BuildMI(BB, X86::JNE, 1).addPCDisp(BI.getSuccessor(0));
+    BuildMI(BB, X86::JE, 1).addPCDisp(BI.getSuccessor(1));
+  } else { // unconditional branch
+    BuildMI(BB, X86::JMP, 1).addPCDisp(BI.getSuccessor(0));
+  }
 }
 
 /// visitCallInst - Push args on stack and do a procedure call instruction.
-void
-ISel::visitCallInst (CallInst & CI)
-{
+void ISel::visitCallInst(CallInst &CI) {
   // keep a counter of how many bytes we pushed on the stack
   unsigned bytesPushed = 0;
 
   // Push the arguments on the stack in reverse order, as specified by
   // the ABI.
-  for (unsigned i = CI.getNumOperands()-1; i >= 1; --i)
-    {
-      Value *v = CI.getOperand (i);
-      switch (getClass (v->getType ()))
-	{
-	case cByte:
-	case cShort:
-	  // Promote V to 32 bits wide, and move the result into EAX,
-	  // then push EAX.
-	  promote32 (X86::EAX, v);
-	  BuildMI (BB, X86::PUSHr32, 1).addReg (X86::EAX);
-          bytesPushed += 4;
-	  break;
-	case cInt:
-	case cFloat: {
-          unsigned Reg = getReg(v);
-          BuildMI (BB, X86::PUSHr32, 1).addReg(Reg);
-          bytesPushed += 4;
-	  break;
-        }
-	default:
-	  // FIXME: long/ulong/double args not handled.
-	  visitInstruction (CI);
-	  break;
-	}
+  for (unsigned i = CI.getNumOperands()-1; i >= 1; --i) {
+    Value *v = CI.getOperand(i);
+    switch (getClass(v->getType())) {
+    case cByte:
+    case cShort:
+      // Promote V to 32 bits wide, and move the result into EAX,
+      // then push EAX.
+      promote32 (X86::EAX, v);
+      BuildMI(BB, X86::PUSHr32, 1).addReg(X86::EAX);
+      bytesPushed += 4;
+      break;
+    case cInt: {
+      unsigned Reg = getReg(v);
+      BuildMI(BB, X86::PUSHr32, 1).addReg(Reg);
+      bytesPushed += 4;
+      break;
     }
+    default:
+      // FIXME: long/ulong/float/double args not handled.
+      visitInstruction(CI);
+      break;
+    }
+  }
 
   if (Function *F = CI.getCalledFunction()) {
     // Emit a CALL instruction with PC-relative displacement.
@@ -596,13 +582,13 @@ ISel::visitCallInst (CallInst & CI)
 
   // Adjust the stack by `bytesPushed' amount if non-zero
   if (bytesPushed > 0)
-    BuildMI (BB, X86::ADDri32,2,X86::ESP).addReg(X86::ESP).addZImm(bytesPushed);
+    BuildMI(BB, X86::ADDri32,2, X86::ESP).addReg(X86::ESP).addZImm(bytesPushed);
 
   // If there is a return value, scavenge the result from the location the call
   // leaves it in...
   //
   if (CI.getType() != Type::VoidTy) {
-    unsigned resultTypeClass = getClass (CI.getType ());
+    unsigned resultTypeClass = getClass(CI.getType());
     switch (resultTypeClass) {
     case cByte:
     case cShort:
@@ -613,19 +599,12 @@ ISel::visitCallInst (CallInst & CI)
 	X86::MOVrr8, X86::MOVrr16, X86::MOVrr32
       };
       static const unsigned AReg[] = { X86::AL, X86::AX, X86::EAX };
-      BuildMI (BB, regRegMove[resultTypeClass], 1,
-	       getReg (CI)).addReg (AReg[resultTypeClass]);
+      BuildMI(BB, regRegMove[resultTypeClass], 1, getReg(CI))
+	         .addReg(AReg[resultTypeClass]);
       break;
     }
-    case cFloat:
-      // Floating-point return values live in %st(0) (i.e., the top of
-      // the FP stack.) The general way to approach this is to do a
-      // FSTP to save the top of the FP stack on the real stack, then
-      // do a MOV to load the top of the real stack into the target
-      // register.
-      visitInstruction (CI); // FIXME: add the right args for the calls below
-      // BuildMI (BB, X86::FSTPm32, 0);
-      // BuildMI (BB, X86::MOVmr32, 0);
+    case cFP:     // Floating-point return values live in %ST(0)
+      BuildMI(BB, X86::FpMOV, 1, getReg(CI)).addReg(X86::ST0);
       break;
     default:
       std::cerr << "Cannot get return value for call of type '"
@@ -644,13 +623,13 @@ void ISel::visitSimpleBinary(BinaryOperator &B, unsigned OperatorClass) {
     visitInstruction(B);
 
   unsigned Class = getClass(B.getType());
-  if (Class > 2)  // FIXME: Handle longs
+  if (Class > cFP)  // FIXME: Handle longs
     visitInstruction(B);
 
   static const unsigned OpcodeTab[][4] = {
     // Arithmetic operators
-    { X86::ADDrr8, X86::ADDrr16, X86::ADDrr32, 0 },  // ADD
-    { X86::SUBrr8, X86::SUBrr16, X86::SUBrr32, 0 },  // SUB
+    { X86::ADDrr8, X86::ADDrr16, X86::ADDrr32, X86::FpADD },  // ADD
+    { X86::SUBrr8, X86::SUBrr16, X86::SUBrr32, X86::FpSUB },  // SUB
 
     // Bitwise operators
     { X86::ANDrr8, X86::ANDrr16, X86::ANDrr32, 0 },  // AND
@@ -659,6 +638,7 @@ void ISel::visitSimpleBinary(BinaryOperator &B, unsigned OperatorClass) {
   };
   
   unsigned Opcode = OpcodeTab[OperatorClass][Class];
+  assert(Opcode && "Floating point arguments to logical inst?");
   unsigned Op0r = getReg(B.getOperand(0));
   unsigned Op1r = getReg(B.getOperand(1));
   BuildMI(BB, Opcode, 2, getReg(B)).addReg(Op0r).addReg(Op1r);
@@ -670,11 +650,19 @@ void ISel::visitSimpleBinary(BinaryOperator &B, unsigned OperatorClass) {
 void ISel::doMultiply(MachineBasicBlock *MBB, MachineBasicBlock::iterator &MBBI,
                       unsigned destReg, const Type *resultType,
                       unsigned op0Reg, unsigned op1Reg) {
-  unsigned Class = getClass (resultType);
-
-  // FIXME:
-  assert (Class <= 2 && "Someday, we will learn how to multiply"
-	  "longs and floating-point numbers. This is not that day.");
+  unsigned Class = getClass(resultType);
+  switch (Class) {
+  case cFP:              // Floating point multiply
+    BuildMI(BB, X86::FpMUL, 2, destReg).addReg(op0Reg).addReg(op1Reg);
+    return;
+  default:
+  case cLong:
+    assert(0 && "doMultiply not implemented for this class yet!");
+  case cByte:
+  case cShort:
+  case cInt:          // Small integerals, handled below...
+    break;
+  }
  
   static const unsigned Regs[]     ={ X86::AL    , X86::AX     , X86::EAX     };
   static const unsigned MulOpcode[]={ X86::MULrr8, X86::MULrr16, X86::MULrr32 };
@@ -710,9 +698,26 @@ void ISel::visitMul(BinaryOperator &I) {
 /// instructions work differently for signed and unsigned operands.
 ///
 void ISel::visitDivRem(BinaryOperator &I) {
-  unsigned Class = getClass(I.getType());
-  if (Class > 2)  // FIXME: Handle longs
-    visitInstruction(I);
+  unsigned Class     = getClass(I.getType());
+  unsigned Op0Reg    = getReg(I.getOperand(0));
+  unsigned Op1Reg    = getReg(I.getOperand(1));
+  unsigned ResultReg = getReg(I);
+
+  switch (Class) {
+  case cFP:              // Floating point multiply
+    if (I.getOpcode() == Instruction::Div)
+      BuildMI(BB, X86::FpDIV, 2, ResultReg).addReg(Op0Reg).addReg(Op1Reg);
+    else
+      BuildMI(BB, X86::FpREM, 2, ResultReg).addReg(Op0Reg).addReg(Op1Reg);
+    return;
+  default:
+  case cLong:
+    assert(0 && "div/rem not implemented for this class yet!");
+  case cByte:
+  case cShort:
+  case cInt:          // Small integerals, handled below...
+    break;
+  }
 
   static const unsigned Regs[]     ={ X86::AL    , X86::AX     , X86::EAX     };
   static const unsigned MovOpcode[]={ X86::MOVrr8, X86::MOVrr16, X86::MOVrr32 };
@@ -728,8 +733,6 @@ void ISel::visitDivRem(BinaryOperator &I) {
   bool isSigned   = I.getType()->isSigned();
   unsigned Reg    = Regs[Class];
   unsigned ExtReg = ExtRegs[Class];
-  unsigned Op0Reg = getReg(I.getOperand(0));
-  unsigned Op1Reg = getReg(I.getOperand(1));
 
   // Put the first operand into one of the A registers...
   BuildMI(BB, MovOpcode[Class], 1, Reg).addReg(Op0Reg);
@@ -749,7 +752,7 @@ void ISel::visitDivRem(BinaryOperator &I) {
   unsigned DestReg = (I.getOpcode() == Instruction::Div) ? Reg : ExtReg;
   
   // Put the result into the destination register...
-  BuildMI(BB, MovOpcode[Class], 1, getReg(I)).addReg(DestReg);
+  BuildMI(BB, MovOpcode[Class], 1, ResultReg).addReg(DestReg);
 }
 
 
@@ -765,7 +768,7 @@ void ISel::visitShiftInst (ShiftInst &I) {
   bool isOperandSigned = I.getType()->isUnsigned();
   unsigned OperandClass = getClass(I.getType());
 
-  if (OperandClass > 2)
+  if (OperandClass > cInt)
     visitInstruction(I); // Can't handle longs yet!
 
   if (ConstantUInt *CUI = dyn_cast <ConstantUInt> (I.getOperand (1)))
@@ -822,13 +825,22 @@ void ISel::visitShiftInst (ShiftInst &I) {
 void ISel::visitLoadInst(LoadInst &I) {
   bool isLittleEndian  = TM.getTargetData().isLittleEndian();
   bool hasLongPointers = TM.getTargetData().getPointerSize() == 8;
+  unsigned SrcAddrReg = getReg(I.getOperand(0));
+  unsigned DestReg = getReg(I);
 
   unsigned Class = getClass(I.getType());
-  if (Class > 2)  // FIXME: Handle longs and others...
-    visitInstruction(I);
-
-  static const unsigned Opcode[] = { X86::MOVmr8, X86::MOVmr16, X86::MOVmr32 };
-  unsigned SrcAddrReg = getReg(I.getOperand(0));
+  switch (Class) {
+  default: visitInstruction(I);   // FIXME: Handle longs...
+  case cFP: {
+    // FIXME: Handle endian swapping for FP values.
+    unsigned Opcode = I.getType() == Type::FloatTy ? X86::FLDr32 : X86::FLDr64;
+    addDirectMem(BuildMI(BB, Opcode, 4, DestReg), SrcAddrReg);
+    return;
+  }
+  case cInt:      // Integers of various sizes handled below
+  case cShort:
+  case cByte: break;
+  }
 
   // We need to adjust the input pointer if we are emulating a big-endian
   // long-pointer target.  On these systems, the pointer that we are interested
@@ -840,18 +852,40 @@ void ISel::visitLoadInst(LoadInst &I) {
     BuildMI(BB, X86::ADDri32, 2, R).addReg(SrcAddrReg).addZImm(4);
     SrcAddrReg = R;
   }
-  unsigned DestReg = getReg(I);
+
   unsigned IReg = DestReg;
   if (!isLittleEndian) {  // If big endian we need an intermediate stage
     IReg = makeAnotherReg(I.getType());
     std::swap(IReg, DestReg);
   }
+
+  static const unsigned Opcode[] = { X86::MOVmr8, X86::MOVmr16, X86::MOVmr32 };
   addDirectMem(BuildMI(BB, Opcode[Class], 4, DestReg), SrcAddrReg);
 
   if (!isLittleEndian) {
     // Emit the byte swap instruction...
-    static const unsigned BSWAPOpcode[] = { X86::MOVrr8, X86::BSWAPr16, X86::BSWAPr32 };
-    BuildMI(BB, BSWAPOpcode[Class], 1, IReg).addReg(DestReg);
+    switch (Class) {
+    case cByte:
+      // No byteswap neccesary for 8 bit value...
+      BuildMI(BB, X86::MOVrr8, 1, IReg).addReg(DestReg);
+      break;
+    case cInt:
+      // Use the 32 bit bswap instruction to do a 32 bit swap...
+      BuildMI(BB, X86::BSWAPr32, 1, IReg).addReg(DestReg);
+      break;
+
+    case cShort:
+      // For 16 bit we have to use an xchg instruction, because there is no
+      // 16-bit bswap.  XCHG is neccesarily not in SSA form, so we force things
+      // into AX to do the xchg.
+      //
+      BuildMI(BB, X86::MOVrr16, 1, X86::AX).addReg(DestReg);
+      BuildMI(BB, X86::XCHGrr8, 2).addReg(X86::AL, MOTy::UseAndDef)
+                                  .addReg(X86::AH, MOTy::UseAndDef);
+      BuildMI(BB, X86::MOVrr16, 1, DestReg).addReg(X86::AX);
+      break;
+    default: assert(0 && "Class not handled yet!");
+    }
   }
 }
 
@@ -862,29 +896,55 @@ void ISel::visitLoadInst(LoadInst &I) {
 void ISel::visitStoreInst(StoreInst &I) {
   bool isLittleEndian  = TM.getTargetData().isLittleEndian();
   bool hasLongPointers = TM.getTargetData().getPointerSize() == 8;
-  unsigned Class = getClass(I.getOperand(0)->getType());
-  if (Class > 2)  // FIXME: Handle longs and others...
-    visitInstruction(I);
-
-  static const unsigned Opcode[] = { X86::MOVrm8, X86::MOVrm16, X86::MOVrm32 };
-
   unsigned ValReg = getReg(I.getOperand(0));
   unsigned AddressReg = getReg(I.getOperand(1));
 
-  if (!isLittleEndian && hasLongPointers && isa<PointerType>(I.getOperand(0)->getType())) {
+  unsigned Class = getClass(I.getOperand(0)->getType());
+  switch (Class) {
+  default: visitInstruction(I);   // FIXME: Handle longs...
+  case cFP: {
+    // FIXME: Handle endian swapping for FP values.
+    unsigned Opcode = I.getOperand(0)->getType() == Type::FloatTy ?
+                            X86::FSTr32 : X86::FSTr64;
+    addDirectMem(BuildMI(BB, Opcode, 1+4), AddressReg).addReg(ValReg);
+    return;
+  }
+  case cInt:      // Integers of various sizes handled below
+  case cShort:
+  case cByte: break;
+  }
+
+  if (!isLittleEndian && hasLongPointers &&
+      isa<PointerType>(I.getOperand(0)->getType())) {
     unsigned R = makeAnotherReg(Type::UIntTy);
     BuildMI(BB, X86::ADDri32, 2, R).addReg(AddressReg).addZImm(4);
     AddressReg = R;
   }
 
-  if (!isLittleEndian && Class) {
-    // Emit the byte swap instruction...
-    static const unsigned BSWAPOpcode[] = { X86::MOVrr8, X86::BSWAPr16, X86::BSWAPr32 };
-    unsigned R = makeAnotherReg(I.getOperand(0)->getType());
-    BuildMI(BB, BSWAPOpcode[Class], 1, R).addReg(ValReg);
-    ValReg = R;
+  if (!isLittleEndian && Class != cByte) {
+    // Emit a byte swap instruction...
+    switch (Class) {
+    case cInt: {
+      unsigned R = makeAnotherReg(I.getOperand(0)->getType());
+      BuildMI(BB, X86::BSWAPr32, 1, R).addReg(ValReg);
+      ValReg = R;
+      break;
+    }
+    case cShort:
+      // For 16 bit we have to use an xchg instruction, because there is no
+      // 16-bit bswap.  XCHG is neccesarily not in SSA form, so we force things
+      // into AX to do the xchg.
+      //
+      BuildMI(BB, X86::MOVrr16, 1, X86::AX).addReg(ValReg);
+      BuildMI(BB, X86::XCHGrr8, 2).addReg(X86::AL, MOTy::UseAndDef)
+                                  .addReg(X86::AH, MOTy::UseAndDef);
+      ValReg = X86::AX;
+      break;
+    default: assert(0 && "Unknown class!");
+    }
   }
 
+  static const unsigned Opcode[] = { X86::MOVrm8, X86::MOVrm16, X86::MOVrm32 };
   addDirectMem(BuildMI(BB, Opcode[Class], 1+4), AddressReg).addReg(ValReg);
 }
 
@@ -927,20 +987,20 @@ ISel::visitCastInst (CastInst &CI)
 
   // 2) Implement casts between values of the same type class (as determined
   // by getClass) by using a register-to-register move.
-  unsigned srcClass = getClassB (sourceType);
-  unsigned targClass = getClass (targetType);
+  unsigned srcClass = getClassB(sourceType);
+  unsigned targClass = getClass(targetType);
   static const unsigned regRegMove[] = {
     X86::MOVrr8, X86::MOVrr16, X86::MOVrr32
   };
-  if ((srcClass < cLong) && (targClass < cLong) && (srcClass == targClass))
-    {
-      BuildMI (BB, regRegMove[srcClass], 1, destReg).addReg (operandReg);
-      return;
-    }
+
+  if (srcClass <= cInt && targClass <= cInt && srcClass == targClass) {
+    BuildMI(BB, regRegMove[srcClass], 1, destReg).addReg(operandReg);
+    return;
+  }
   // 3) Handle cast of SMALLER int to LARGER int using a move with sign
   // extension or zero extension, depending on whether the source type
   // was signed.
-  if ((srcClass < cLong) && (targClass < cLong) && (srcClass < targClass))
+  if ((srcClass <= cInt) && (targClass <= cInt) && (srcClass < targClass))
     {
       static const unsigned ops[] = {
 	X86::MOVSXr16r8, X86::MOVSXr32r8, X86::MOVSXr32r16,
@@ -953,7 +1013,7 @@ ISel::visitCastInst (CastInst &CI)
     }
   // 4) Handle cast of LARGER int to SMALLER int using a move to EAX
   // followed by a move out of AX or AL.
-  if ((srcClass < cLong) && (targClass < cLong) && (srcClass > targClass))
+  if ((srcClass <= cInt) && (targClass <= cInt) && (srcClass > targClass))
     {
       static const unsigned AReg[] = { X86::AL, X86::AX, X86::EAX };
       BuildMI (BB, regRegMove[srcClass], 1,
