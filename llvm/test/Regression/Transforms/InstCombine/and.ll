@@ -105,3 +105,11 @@ ubyte %test16(ubyte %A) {
 	%C = and ubyte %B, 3
 	ret ubyte %C
 }
+
+sbyte %test17(sbyte %X, sbyte %Y) { ;; ~(~X & Y) --> (X | ~Y)
+	%B = xor sbyte %X, -1
+	%C = and sbyte %B, %Y
+        %D = xor sbyte %C, -1
+	ret sbyte %D
+}
+
