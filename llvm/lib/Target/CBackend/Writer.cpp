@@ -1472,7 +1472,7 @@ void CWriter::visitCallInst(CallInst &I) {
                     << I.getParent()->getParent()->getName() << "'!\n";
           abort();
         }
-        writeOperand(&I.getParent()->getParent()->arg_back());
+        writeOperand(--I.getParent()->getParent()->arg_end());
         Out << ')';
         return;
       case Intrinsic::vaend:
