@@ -20,9 +20,6 @@
 #include <memory>
 #include <algorithm>
 
-using std::cerr;
-using std::string;
-
 
 // The OptimizationList is automatically populated with registered Passes by the
 // PassNameParser.
@@ -34,10 +31,10 @@ OptimizationList(cl::desc("Optimizations available:"));
 
 // Other command line options...
 //
-static cl::opt<string>
+static cl::opt<std::string>
 InputFilename(cl::Positional, cl::desc("<input bytecode>"), cl::init("-"));
 
-static cl::opt<string>
+static cl::opt<std::string>
 OutputFilename("o", cl::desc("Override output filename"),
                cl::value_desc("filename"));
 
@@ -78,11 +75,11 @@ int main(int argc, char **argv) {
   // Load the input module...
   std::auto_ptr<Module> M(ParseBytecodeFile(InputFilename, &ErrorMessage));
   if (M.get() == 0) {
-    cerr << argv[0] << ": ";
+    std::cerr << argv[0] << ": ";
     if (ErrorMessage.size())
-      cerr << ErrorMessage << "\n";
+      std::cerr << ErrorMessage << "\n";
     else
-      cerr << "bytecode didn't read correctly.\n";
+      std::cerr << "bytecode didn't read correctly.\n";
     return 1;
   }
 
@@ -91,15 +88,15 @@ int main(int argc, char **argv) {
   if (OutputFilename != "") {
     if (!Force && std::ifstream(OutputFilename.c_str())) {
       // If force is not specified, make sure not to overwrite a file!
-      cerr << argv[0] << ": error opening '" << OutputFilename
-           << "': file exists!\n"
-           << "Use -f command line argument to force output\n";
+      std::cerr << argv[0] << ": error opening '" << OutputFilename
+                << "': file exists!\n"
+                << "Use -f command line argument to force output\n";
       return 1;
     }
     Out = new std::ofstream(OutputFilename.c_str());
 
     if (!Out->good()) {
-      cerr << argv[0] << ": error opening " << OutputFilename << "!\n";
+      std::cerr << argv[0] << ": error opening " << OutputFilename << "!\n";
       return 1;
     }
 
@@ -130,10 +127,11 @@ int main(int argc, char **argv) {
       assert(target.get() && "Could not allocate target machine!");
       Passes.add(Opt->getTargetCtor()(*target.get()));
     } else
-      cerr << argv[0] << ": cannot create pass: " << Opt->getPassName() << "\n";
+      std::cerr << argv[0] << ": cannot create pass: " << Opt->getPassName()
+                << "\n";
 
     if (PrintEachXForm)
-      Passes.add(new PrintModulePass(&cerr));
+      Passes.add(new PrintModulePass(&std::cerr));
   }
 
   // Check that the module is well formed on completion of optimization
@@ -146,7 +144,7 @@ int main(int argc, char **argv) {
 
   // Now that we have all of the passes ready, run them.
   if (Passes.run(*M.get()) && !Quiet)
-    cerr << "Program modified.\n";
+    std::cerr << "Program modified.\n";
 
   return 0;
 }

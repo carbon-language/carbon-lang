@@ -20,8 +20,6 @@
 #include <sys/types.h>     // For FileExists
 #include <sys/stat.h>
 
-using std::cerr;
-
 static cl::list<std::string>
 InputFilenames(cl::Positional, cl::OneOrMore,
                cl::desc("<input bytecode files>"));
@@ -59,15 +57,15 @@ static inline std::auto_ptr<Module> LoadFile(const std::string &FN) {
   bool FoundAFile = false;
 
   while (1) {
-    if (Verbose) cerr << "Loading '" << Filename << "'\n";
+    if (Verbose) std::cerr << "Loading '" << Filename << "'\n";
     if (FileExists(Filename)) FoundAFile = true;
     Module *Result = ParseBytecodeFile(Filename, &ErrorMessage);
     if (Result) return std::auto_ptr<Module>(Result);   // Load successful!
 
     if (Verbose) {
-      cerr << "Error opening bytecode file: '" << Filename << "'";
-      if (ErrorMessage.size()) cerr << ": " << ErrorMessage;
-      cerr << "\n";
+      std::cerr << "Error opening bytecode file: '" << Filename << "'";
+      if (ErrorMessage.size()) std::cerr << ": " << ErrorMessage;
+      std::cerr << "\n";
     }
     
     if (NextLibPathIdx == LibPaths.size()) break;
@@ -75,10 +73,10 @@ static inline std::auto_ptr<Module> LoadFile(const std::string &FN) {
   }
 
   if (FoundAFile)
-    cerr << "Bytecode file '" << FN << "' corrupt!  "
-         << "Use 'link -v ...' for more info.\n";
+    std::cerr << "Bytecode file '" << FN << "' corrupt!  "
+              << "Use 'link -v ...' for more info.\n";
   else
-    cerr << "Could not locate bytecode file: '" << FN << "'\n";
+    std::cerr << "Could not locate bytecode file: '" << FN << "'\n";
   return std::auto_ptr<Module>();
 }
 
@@ -106,29 +104,29 @@ int main(int argc, char **argv) {
     std::auto_ptr<Module> M(LoadFile(InputFilenames[i]));
     if (M.get() == 0) return 1;
 
-    if (Verbose) cerr << "Linking in '" << InputFilenames[i] << "'\n";
+    if (Verbose) std::cerr << "Linking in '" << InputFilenames[i] << "'\n";
 
     if (LinkModules(Composite.get(), M.get(), &ErrorMessage)) {
-      cerr << argv[0] << ": error linking in '" << InputFilenames[i] << "': "
-	   << ErrorMessage << "\n";
+      std::cerr << argv[0] << ": error linking in '" << InputFilenames[i]
+                << "': " << ErrorMessage << "\n";
       return 1;
     }
   }
 
-  if (DumpAsm) cerr << "Here's the assembly:\n" << Composite.get();
+  if (DumpAsm) std::cerr << "Here's the assembly:\n" << Composite.get();
 
   std::ostream *Out = &std::cout;  // Default to printing to stdout...
   if (OutputFilename != "-") {
     if (!Force && std::ifstream(OutputFilename.c_str())) {
       // If force is not specified, make sure not to overwrite a file!
-      cerr << argv[0] << ": error opening '" << OutputFilename
-           << "': file exists!\n"
-           << "Use -f command line argument to force output\n";
+      std::cerr << argv[0] << ": error opening '" << OutputFilename
+                << "': file exists!\n"
+                << "Use -f command line argument to force output\n";
       return 1;
     }
     Out = new std::ofstream(OutputFilename.c_str());
     if (!Out->good()) {
-      cerr << argv[0] << ": error opening '" << OutputFilename << "'!\n";
+      std::cerr << argv[0] << ": error opening '" << OutputFilename << "'!\n";
       return 1;
     }
 
@@ -137,7 +135,7 @@ int main(int argc, char **argv) {
     RemoveFileOnSignal(OutputFilename);
   }
 
-  if (Verbose) cerr << "Writing bytecode...\n";
+  if (Verbose) std::cerr << "Writing bytecode...\n";
   WriteBytecodeToFile(Composite.get(), *Out);
 
   if (Out != &std::cout) delete Out;

@@ -20,7 +20,6 @@
 #include "Support/Signals.h"
 #include <fstream>
 #include <memory>
-using std::cerr;
 
 // OutputMode - The different orderings to print basic blocks in...
 enum OutputMode {
@@ -52,19 +51,19 @@ int main(int argc, char **argv) {
 
   std::auto_ptr<Module> M(ParseBytecodeFile(InputFilename, &ErrorMessage));
   if (M.get() == 0) {
-    cerr << argv[0] << ": ";
+    std::cerr << argv[0] << ": ";
     if (ErrorMessage.size())
-      cerr << ErrorMessage << "\n";
+      std::cerr << ErrorMessage << "\n";
     else
-      cerr << "bytecode didn't read correctly.\n";
+      std::cerr << "bytecode didn't read correctly.\n";
     return 1;
   }
   
   if (OutputFilename != "") {   // Specified an output filename?
     if (!Force && std::ifstream(OutputFilename.c_str())) {
       // If force is not specified, make sure not to overwrite a file!
-      cerr << argv[0] << ": error opening '" << OutputFilename
-           << "': file exists! Sending to standard output.\n";
+      std::cerr << argv[0] << ": error opening '" << OutputFilename
+                << "': file exists! Sending to standard output.\n";
     } else {
       Out = new std::ofstream(OutputFilename.c_str());
     }
@@ -87,8 +86,8 @@ int main(int argc, char **argv) {
 
       if (!Force && std::ifstream(OutputFilename.c_str())) {
         // If force is not specified, make sure not to overwrite a file!
-        cerr << argv[0] << ": error opening '" << OutputFilename
-             << "': file exists! Sending to standard output.\n";
+        std::cerr << argv[0] << ": error opening '" << OutputFilename
+                  << "': file exists! Sending to standard output.\n";
       } else {
         Out = new std::ofstream(OutputFilename.c_str());
 
@@ -100,8 +99,8 @@ int main(int argc, char **argv) {
   }
 
   if (!Out->good()) {
-    cerr << argv[0] << ": error opening " << OutputFilename
-	 << ": sending to stdout instead!\n";
+    std::cerr << argv[0] << ": error opening " << OutputFilename
+              << ": sending to stdout instead!\n";
     Out = &std::cout;
   }
 
