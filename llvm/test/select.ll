@@ -1,3 +1,5 @@
+%AConst    = constant int 123
+
 implementation
 
 ; A SetCC whose result is used should produce instructions to
@@ -35,6 +37,31 @@ Top:
 Next:
 	br label %Top
 end
+
+
+
+; A constant argument to a cast used only once should be forward substituted
+; and loaded where needed, which happens is:
+; -- User of cast has no immediate field
+; -- User of cast has immediate field but constant is too large to fit
+;    or constant is not resolved until later (e.g., global address)
+; -- User of cast uses it as a call arg. or return value so it is an implicit
+;    use but has to be loaded into a virtual register so that the reg.
+;    allocator can allocate the appropriate phys. reg. for it
+;  
+int* "castconst"(float)
+begin
+	%castbig   = cast ulong 99999999 to int
+	%castsmall = cast ulong 1        to int
+	%usebig    = add int %castbig, %castsmall
+		
+	%castglob = cast int* %AConst to long*
+	%dummyl   = load long* %castglob
+	
+	%castnull = cast ulong 0 to int*
+	ret int* %castnull
+end
+
 
 
 ; Test branch-on-comparison-with-zero, in two ways:
