@@ -1,4 +1,4 @@
-//===- AlphaISelPattern.cpp - A pattern matching inst selector for Alpha -===//
+//===- AlphaISelPattern.cpp - A pattern matching inst selector for Alpha --===//
 // 
 //                     The LLVM Compiler Infrastructure
 //

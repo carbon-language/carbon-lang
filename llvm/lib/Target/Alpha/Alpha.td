@@ -1,4 +1,4 @@
-//===- Alpha.td - Describe the Alpha Target Machine ----*- tablegen -*-===//
+//===- Alpha.td - Describe the Alpha Target Machine --------*- tablegen -*-===//
 // 
 //                     The LLVM Compiler Infrastructure
 //

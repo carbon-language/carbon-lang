@@ -1,4 +1,4 @@
-//===- AlphaRegisterInfo.cpp - Alpha Register Information ---*- C++ -*-----===//
+//===- AlphaRegisterInfo.cpp - Alpha Register Information -------*- C++ -*-===//
 // 
 //                     The LLVM Compiler Infrastructure
 //

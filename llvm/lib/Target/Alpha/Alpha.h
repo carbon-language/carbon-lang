@@ -1,4 +1,4 @@
-//===-- Alpha.h - Top-level interface for Alpha representation -*- C++ -*-//
+//===-- Alpha.h - Top-level interface for Alpha representation --*- C++ -*-===//
 // 
 //                     The LLVM Compiler Infrastructure
 //

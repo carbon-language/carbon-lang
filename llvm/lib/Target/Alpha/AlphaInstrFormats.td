@@ -1,4 +1,4 @@
-//===- AlphaInstrFormats.td - Alpha Instruction Formats --*- tablegen -*-=//
+//===- AlphaInstrFormats.td - Alpha Instruction Formats ----*- tablegen -*-===//
 // 
 //                     The LLVM Compiler Infrastructure
 //
