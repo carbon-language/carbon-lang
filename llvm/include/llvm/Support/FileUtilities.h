@@ -46,8 +46,10 @@ void MoveFileOverIfUpdated(const std::string &New, const std::string &Old);
       : Filename(filename), DeleteIt(deleteIt) {}
     
     ~FileRemover() {
-      if (DeleteIt) 
-        Filename.destroyFile();
+      if (DeleteIt)
+        try {
+          Filename.destroyFile();
+        } catch (...) {}             // Ignore problems deleting the file.
     }
 
     /// releaseFile - Take ownership of the file away from the FileRemover so it
