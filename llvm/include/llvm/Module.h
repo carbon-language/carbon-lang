@@ -243,6 +243,9 @@ public:
   /// @brief Remove a library from the list of dependent libraries
   inline void removeLibrary(const std::string& Lib);
 
+  /// @brief Get all the libraries 
+  inline const LibraryListType& getLibraries() const { return LibraryList; }
+
   void print(std::ostream &OS) const { print(OS, 0); }
   void print(std::ostream &OS, AssemblyAnnotationWriter *AAW) const;
 
