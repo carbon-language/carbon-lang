@@ -1,10 +1,12 @@
+default: testcodegen
+
 LLC  := ../tools/Debug/llc
 AS   := ../tools/Debug/as
-LLCOPTS := -dsched t
+LLCOPTS := -dsched y
 
 TESTS := $(wildcard *.ll)
 
-LLCTESTS := $(shell /bin/ls *.ll | grep -v testmemory | grep -v testswitch | grep -v sumarray | grep -v globalvars)
+LLCTESTS := $(shell /bin/ls *.ll | grep -v testmemory | grep -v testswitch | grep -v sumarray )
 
 
 test all : testasmdis testopt testcodegen
@@ -37,5 +39,5 @@ clean :
 
 %.mc: %.ll $(LLC) $(AS)
 	@echo "Generating machine instructions for $<"
-	$(AS) < $< | $(LLC) -dsched=t > $@
+	$(AS) < $< | $(LLC) $(LLCOPTS) > $@
 
