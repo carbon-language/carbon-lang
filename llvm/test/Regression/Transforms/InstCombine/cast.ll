@@ -57,3 +57,14 @@ long %test8(sbyte %A) {
         ret long %res
 }
 
+short %test9(short %A) {
+	%c1 = cast short %A to int
+	%c2 = cast int %c1 to short
+	ret short %c2
+}
+
+short %test10(short %A) {
+	%c1 = cast short %A to uint
+	%c2 = cast uint %c1 to short
+	ret short %c2
+}
