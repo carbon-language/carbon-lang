@@ -174,7 +174,6 @@ public:
   // Public data-type declarations...
   typedef DSScalarMap ScalarMapTy;
   typedef hash_map<Function*, DSNodeHandle> ReturnNodesTy;
-  typedef hash_set<GlobalValue*> GlobalSetTy;
   typedef ilist<DSNode> NodeListTy;
 
   /// NodeMapTy - This data type is used when cloning one graph into another to
@@ -211,11 +210,6 @@ private:
   // the _unresolved_ call sites, because it cannot modify FunctionCalls.
   //
   std::list<DSCallSite> AuxFunctionCalls;
-
-  // InlinedGlobals - This set records which globals have been inlined from
-  // other graphs (callers or callees, depending on the pass) into this one.
-  // 
-  GlobalSetTy InlinedGlobals;
 
   /// TD - This is the target data object for the machine this graph is
   /// constructed for.
@@ -317,13 +311,6 @@ public:
   typedef std::list<DSCallSite>::const_iterator afc_iterator;
   afc_iterator afc_begin() const { return AuxFunctionCalls.begin(); }
   afc_iterator afc_end() const { return AuxFunctionCalls.end(); }
-
-  /// getInlinedGlobals - Get the set of globals that are have been inlined
-  /// (from callees in BU or from callers in TD) into the current graph.
-  ///
-  GlobalSetTy& getInlinedGlobals() {
-    return InlinedGlobals;
-  }
 
   /// getNodeForValue - Given a value that is used or defined in the body of the
   /// current function, return the DSNode that it points to.
@@ -443,7 +430,6 @@ public:
     DontCloneAuxCallNodes = 1 << 2, CloneAuxCallNodes = 0,
     StripModRefBits       = 1 << 3, KeepModRefBits    = 0,
     StripIncompleteBit    = 1 << 4, KeepIncompleteBit = 0,
-    UpdateInlinedGlobals  = 1 << 5, DontUpdateInlinedGlobals = 0,
   };
 
   void updateFromGlobalGraph();
