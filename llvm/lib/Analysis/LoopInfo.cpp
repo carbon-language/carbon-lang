@@ -442,14 +442,15 @@ Value *Loop::getTripCount() const {
     IV->getIncomingBlock(contains(IV->getIncomingBlock(1)));
 
   if (BranchInst *BI = dyn_cast<BranchInst>(BackedgeBlock->getTerminator()))
-    if (SetCondInst *SCI = dyn_cast<SetCondInst>(BI->getCondition()))
-      if (SCI->getOperand(0) == Inc)
-        if (BI->getSuccessor(0) == getHeader()) {
-          if (SCI->getOpcode() == Instruction::SetNE)
+    if (BI->isConditional())
+      if (SetCondInst *SCI = dyn_cast<SetCondInst>(BI->getCondition()))
+        if (SCI->getOperand(0) == Inc)
+          if (BI->getSuccessor(0) == getHeader()) {
+            if (SCI->getOpcode() == Instruction::SetNE)
+              return SCI->getOperand(1);
+          } else if (SCI->getOpcode() == Instruction::SetEQ) {
             return SCI->getOperand(1);
-        } else if (SCI->getOpcode() == Instruction::SetEQ) {
-          return SCI->getOperand(1);
-        }
+          }
   
   return 0;
 }
