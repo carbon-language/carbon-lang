@@ -148,6 +148,22 @@ bool Instruction::isCommutative(unsigned op) {
   }
 }
 
+/// isRelational - Return true if the instruction is a Set* instruction:
+///
+bool Instruction::isRelational(unsigned op) {
+  switch (op) {
+  case SetEQ:
+  case SetNE:
+  case SetLT:
+  case SetGT:
+  case SetLE:
+  case SetGE:
+    return true;
+  }
+  return false;
+}
+
+
 
 /// isTrappingInstruction - Return true if the instruction may trap.
 ///
