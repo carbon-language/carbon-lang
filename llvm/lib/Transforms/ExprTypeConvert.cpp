@@ -22,8 +22,7 @@
 #include "Support/STLExtras.h"
 #include "Support/Debug.h"
 #include <algorithm>
-
-namespace llvm {
+using namespace llvm;
 
 static bool OperandConvertibleToType(User *U, Value *V, const Type *Ty,
                                      ValueTypeCache &ConvertedTypes,
@@ -142,7 +141,7 @@ static Instruction *ConvertMallocToType(MallocInst *MI, const Type *Ty,
 
 
 // ExpressionConvertibleToType - Return true if it is possible
-bool ExpressionConvertibleToType(Value *V, const Type *Ty,
+bool llvm::ExpressionConvertibleToType(Value *V, const Type *Ty,
                                  ValueTypeCache &CTMap, const TargetData &TD) {
   // Expression type must be holdable in a register.
   if (!Ty->isFirstClassType())
@@ -330,8 +329,8 @@ bool ExpressionConvertibleToType(Value *V, const Type *Ty,
 }
 
 
-Value *ConvertExpressionToType(Value *V, const Type *Ty, ValueMapCache &VMC,
-                               const TargetData &TD) {
+Value *llvm::ConvertExpressionToType(Value *V, const Type *Ty, 
+                                     ValueMapCache &VMC, const TargetData &TD) {
   if (V->getType() == Ty) return V;  // Already where we need to be?
 
   ValueMapCache::ExprMapTy::iterator VMCI = VMC.ExprMap.find(V);
@@ -564,9 +563,9 @@ Value *ConvertExpressionToType(Value *V, const Type *Ty, ValueMapCache &VMC,
 
 
 // ValueConvertibleToType - Return true if it is possible
-bool ValueConvertibleToType(Value *V, const Type *Ty,
-                             ValueTypeCache &ConvertedTypes,
-                            const TargetData &TD) {
+bool llvm::ValueConvertibleToType(Value *V, const Type *Ty,
+                                  ValueTypeCache &ConvertedTypes,
+                                  const TargetData &TD) {
   ValueTypeCache::iterator I = ConvertedTypes.find(V);
   if (I != ConvertedTypes.end()) return I->second == Ty;
   ConvertedTypes[V] = Ty;
@@ -894,8 +893,8 @@ static bool OperandConvertibleToType(User *U, Value *V, const Type *Ty,
 }
 
 
-void ConvertValueToNewType(Value *V, Value *NewVal, ValueMapCache &VMC,
-                           const TargetData &TD) {
+void llvm::ConvertValueToNewType(Value *V, Value *NewVal, ValueMapCache &VMC,
+                                 const TargetData &TD) {
   ValueHandle VH(VMC, V);
 
   unsigned NumUses = V->use_size();
@@ -1302,4 +1301,3 @@ ValueHandle::~ValueHandle() {
   }
 }
 
-} // End llvm namespace

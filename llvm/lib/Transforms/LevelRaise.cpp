@@ -20,15 +20,13 @@
 #include "llvm/iMemory.h"
 #include "llvm/Pass.h"
 #include "llvm/ConstantHandling.h"
-#include "llvm/Analysis/Expressions.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "Support/CommandLine.h"
 #include "Support/Debug.h"
 #include "Support/Statistic.h"
 #include "Support/STLExtras.h"
 #include <algorithm>
-
-namespace llvm {
+using namespace llvm;
 
 // StartInst - This enables the -raise-start-inst=foo option to cause the level
 // raising pass to start at instruction "foo", which is immensely useful for
@@ -87,7 +85,7 @@ namespace {
 }
 
 
-Pass *createRaisePointerReferencesPass() {
+Pass *llvm::createRaisePointerReferencesPass() {
   return new RPR();
 }
 
@@ -614,4 +612,3 @@ bool RPR::runOnFunction(Function &F) {
   return Changed;
 }
 
-} // End llvm namespace
