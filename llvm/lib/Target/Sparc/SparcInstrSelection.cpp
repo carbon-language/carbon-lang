@@ -1965,11 +1965,11 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
       }
       
       case 61:	// reg:   Call
-      {         // Generate a direct (CALL) or indirect (JMPL). depending
-                // Mark the return-address register and the indirection
-                // register (if any) as hidden virtual registers.
-                // Also, mark the operands of the Call and return value (if
-                // any) as implicit operands of the CALL machine instruction.
+      {         // Generate a direct (CALL) or indirect (JMPL) call.
+                // Mark the return-address register, the indirection
+                // register (for indirect calls), the operands of the Call,
+                // and the return value (if any) as implicit operands
+                // of the machine instruction.
                 // 
                 // If this is a varargs function, floating point arguments
                 // have to passed in integer registers so insert
@@ -1977,34 +1977,22 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
                 // 
         CallInst *callInstr = cast<CallInst>(subtreeRoot->getInstruction());
         Value *callee = callInstr->getCalledValue();
-        
-        // Create hidden virtual register for return address, with type void*. 
+
+        // Create hidden virtual register for return address with type void*
         TmpInstruction* retAddrReg =
           new TmpInstruction(PointerType::get(Type::VoidTy), callInstr);
         MachineCodeForInstruction::get(callInstr).addTemp(retAddrReg);
-        
+
         // Generate the machine instruction and its operands.
         // Use CALL for direct function calls; this optimistically assumes
         // the PC-relative address fits in the CALL address field (22 bits).
         // Use JMPL for indirect calls.
         // 
-        if (isa<Function>(callee))
-          { // direct function call
-            M = new MachineInstr(CALL);
-            M->SetMachineOperandVal(0, MachineOperand::MO_PCRelativeDisp,
-                                    callee);
-          } 
-        else
-          { // indirect function call
-            M = new MachineInstr(JMPLCALL);
-            M->SetMachineOperandVal(0, MachineOperand::MO_VirtualRegister,
-                                    callee);
-            M->SetMachineOperandConst(1, MachineOperand::MO_SignExtendedImmed,
-                                      (int64_t) 0);
-            M->SetMachineOperandVal(2, MachineOperand::MO_VirtualRegister,
-                                    retAddrReg);
-          }
-        
+        if (isa<Function>(callee))      // direct function call
+          M = Create1OperandInstr_Addr(CALL, callee);
+        else                            // indirect function call
+          M = Create3OperandInstr_SImmed(JMPLCALL, callee,
+                                         (int64_t) 0, retAddrReg);
         mvec.push_back(M);
 
         const FunctionType* funcType =
