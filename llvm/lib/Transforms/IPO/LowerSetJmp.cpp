@@ -455,10 +455,7 @@ void LowerSetJmp::visitCallInst(CallInst& CI)
   assert(NewBB && "Couldn't split BB of \"call\" instruction!!");
   NewBB->setName("Call2Invoke");
 
-  // Reposition the split BB in the BB list to make things tidier.
   Function* Func = OldBB->getParent();
-  Func->getBasicBlockList().remove(NewBB);
-  Func->getBasicBlockList().insert(++Function::iterator(OldBB), NewBB);
 
   // Construct the new "invoke" instruction.
   TerminatorInst* Term = OldBB->getTerminator();
