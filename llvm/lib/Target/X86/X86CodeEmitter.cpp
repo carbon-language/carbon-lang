@@ -23,8 +23,7 @@
 #include "Support/Debug.h"
 #include "Support/Statistic.h"
 #include "Config/alloca.h"
-
-namespace llvm {
+using namespace llvm;
 
 namespace {
   Statistic<>
@@ -54,6 +53,12 @@ namespace {
   JITResolver *TheJITResolver;
 }
 
+void *X86TargetMachine::getJITStubForFunction(Function *F,
+                                              MachineCodeEmitter &MCE) {
+  if (TheJITResolver == 0)
+    TheJITResolver = new JITResolver(MCE);
+  return (void*)TheJITResolver->getLazyResolver(F);
+}
 
 /// addFunctionReference - This method is called when we need to emit the
 /// address of a function that has not yet been emitted, so we don't know the
@@ -591,5 +596,3 @@ void Emitter::emitInstruction(MachineInstr &MI) {
     break;
   }
 }
-
-} // End llvm namespace
