@@ -85,10 +85,33 @@ process, and you should <b>only</b> try to do it if:</p>
 </pre></li>
 
 <li><p>Configure, build and install the C front-end:</p>
+
+<p>
+<b>Linux/x86:</b>
+</p>
+
 <pre>
  % cd build
  % ../src/configure --prefix=$CFEINSTALL --disable-nls --disable-shared \
    --enable-languages=c,c++
+ % gmake all-gcc
+ % setenv LLVM_LIB_SEARCH_PATH `pwd`/gcc 
+ % gmake all; gmake install
+</pre>
+
+<p>
+<b>Solaris/Sparc:</b>
+</p>
+
+<p>
+For Solaris/Sparc, LLVM only supports SparcV9.  Therefore, the configure
+command line should like something like this:
+</p>
+
+<pre>
+ % cd build
+ % ../src/configure --prefix=$CFEINSTALL --disable-nls --disable-shared \
+   --enable-languages=c,c++ sparcv9-sun-solaris2.8
  % gmake all-gcc
  % setenv LLVM_LIB_SEARCH_PATH `pwd`/gcc 
  % gmake all; gmake install
