@@ -9,11 +9,6 @@
 //	7/02/01	 -  Vikram Adve  -  Created
 //***************************************************************************
 
-
-//************************** System Include Files **************************/
-
-#include <assert.h>
-
 //*************************** User Include Files ***************************/
 
 #include "llvm/Type.h"
@@ -48,37 +43,37 @@ struct BranchPattern {
 //************************* Forward Declarations ***************************/
 
 
-static MachineOpCode	ChooseBprInstruction	(const InstructionNode* instrNode);
+static MachineOpCode ChooseBprInstruction     (const InstructionNode* instrNod);
 
-static MachineOpCode	ChooseBccInstruction	(const InstructionNode* instrNode,
-						 bool& isFPBranch);
+static MachineOpCode ChooseBccInstruction     (const InstructionNode* instrNode,
+					       bool& isFPBranch);
 
-static MachineOpCode	ChooseBpccInstruction	(const InstructionNode* instrNode,
-						 const BinaryOperator* setCCInstr);
+static MachineOpCode ChooseBpccInstruction    (const InstructionNode* instrNode,
+					       const BinaryOperator* setCCInst);
 
-static MachineOpCode	ChooseBfpccInstruction	(const InstructionNode* instrNode,
-						 const BinaryOperator* setCCInstr);
+static MachineOpCode ChooseBfpccInstruction   (const InstructionNode* instrNode,
+					       const BinaryOperator* setCCInst);
 
-static MachineOpCode	ChooseConvertToFloatInstr(const InstructionNode* instrNode,
-						  const Type* opType);
+static MachineOpCode ChooseConvertToFloatInstr(const InstructionNode* instrNode,
+					       const Type* opType);
 
-static MachineOpCode	ChooseConvertToIntInstr	(const InstructionNode* instrNode,
-						 const Type* opType);
+static MachineOpCode ChooseConvertToIntInstr  (const InstructionNode* instrNode,
+					       const Type* opType);
 
-static MachineOpCode	ChooseAddInstruction	(const InstructionNode* instrNode);
+static MachineOpCode ChooseAddInstruction     (const InstructionNode* instrNod);
 
-static MachineOpCode	ChooseSubInstruction	(const InstructionNode* instrNode);
+static MachineOpCode ChooseSubInstruction     (const InstructionNode* instrNod);
 
-static MachineOpCode	ChooseFcmpInstruction	(const InstructionNode* instrNode);
+static MachineOpCode ChooseFcmpInstruction    (const InstructionNode* instrNod);
 
-static MachineOpCode	ChooseMulInstruction	(const InstructionNode* instrNode,
-						 bool checkCasts);
+static MachineOpCode ChooseMulInstruction     (const InstructionNode* instrNode,
+					       bool checkCasts);
 
-static MachineOpCode	ChooseDivInstruction	(const InstructionNode* instrNode);
+static MachineOpCode ChooseDivInstruction     (const InstructionNode* instrNod);
 
-static MachineOpCode	ChooseLoadInstruction	(const Type* resultType);
+static MachineOpCode ChooseLoadInstruction	(const Type* resultType);
 
-static MachineOpCode	ChooseStoreInstruction	(const Type* valueType);
+static MachineOpCode ChooseStoreInstruction	(const Type* valueType);
 
 static void		SetOperandsForMemInstr	(MachineInstr* minstr,
 					 const InstructionNode* vmInstrNode,
