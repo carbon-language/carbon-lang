@@ -19,6 +19,7 @@
 #include <iostream>
 #include <set>
 #include <cmath>
+#include <algorithm>
 using namespace llvm;
 
 /// getSetCCSwappedOperands - Return the operation corresponding to (Y op X)
