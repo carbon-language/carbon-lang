@@ -34,7 +34,7 @@ public:
   inline BasicBlock *getHeader() const { return Blocks.front(); }
 
   // contains - Return true of the specified basic block is in this loop
-  bool contains(BasicBlock *BB) const;
+  bool contains(const BasicBlock *BB) const;
 
   // getSubLoops - Return the loops contained entirely within this loop
   inline const std::vector<Loop*> &getSubLoops() const { return SubLoops; }
