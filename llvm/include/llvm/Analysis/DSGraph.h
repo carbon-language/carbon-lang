@@ -473,7 +473,12 @@ class DSGraph {
 public:
   DSGraph() : Func(0) {}           // Create a new, empty, DSGraph.
   DSGraph(Function &F);            // Compute the local DSGraph
-  DSGraph(const DSGraph &DSG);     // Copy ctor
+
+  // Copy ctor - If you want to capture the node mapping between the source and
+  // destination graph, you may optionally do this by specifying a map to record
+  // this into.
+  DSGraph(const DSGraph &DSG);
+  DSGraph(const DSGraph &DSG, std::map<const DSNode*, DSNode*> &BUNodeMapTy);
   ~DSGraph();
 
   bool hasFunction() const { return Func != 0; }

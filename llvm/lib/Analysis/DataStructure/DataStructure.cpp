@@ -371,6 +371,11 @@ DSGraph::DSGraph(const DSGraph &G) : Func(G.Func) {
   RetNode = cloneInto(G, ValueMap, NodeMap);
 }
 
+DSGraph::DSGraph(const DSGraph &G, std::map<const DSNode*, DSNode*> &NodeMap)
+  : Func(G.Func) {
+  RetNode = cloneInto(G, ValueMap, NodeMap);
+}
+
 DSGraph::~DSGraph() {
   FunctionCalls.clear();
   ValueMap.clear();
