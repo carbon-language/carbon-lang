@@ -628,6 +628,13 @@ Please report any bugs or problems.</p>
 <li>The C++ front-end inherits all problems afflicting the <a href="#c-fe">C
     front-end</a>.</li>
 </ul>
+
+<p><b>IA64 note</b>: The C++ front-end does not use <a 
+href="http://llvm.cs.uiuc.edu/PR406">IA64 ABI compliant layout of vtables</a>.
+In particular, it just stores function pointers instead of function
+descriptors in the vtable.  This bug prevents mixing C++ code compiled with
+LLVM with C++ objects compiled by other C++ compilers.</p>
+
 </div>
 
 <!-- _______________________________________________________________________ -->
