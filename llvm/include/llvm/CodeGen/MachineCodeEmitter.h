@@ -10,8 +10,10 @@
 #ifndef LLVM_CODEGEN_MACHINE_CODE_EMITTER_H
 #define LLVM_CODEGEN_MACHINE_CODE_EMITTER_H
 
+#include <string>
 class MachineFunction;
 class MachineBasicBlock;
+class MachineConstantPool;
 class Value;
 class GlobalValue;
 
@@ -27,6 +29,10 @@ struct MachineCodeEmitter {
   /// finished code generation.
   ///
   virtual void finishFunction(MachineFunction &F) {}
+
+  /// emitConstantPool - This callback is invoked to output the constant pool
+  /// for the function.
+  virtual void emitConstantPool(MachineConstantPool *MCP) {}
 
   /// startBasicBlock - This callback is invoked when a new basic block is about
   /// to be emitted.
@@ -48,8 +54,17 @@ struct MachineCodeEmitter {
   /// address of a global value to machine code.  This is important for indirect
   /// calls as well as accessing global variables.
   ///
-  virtual void emitGlobalAddress(GlobalValue *V) {}
+  virtual void emitGlobalAddress(GlobalValue *V, bool isPCRelative) {}
+  virtual void emitGlobalAddress(const std::string &Name, bool isPCRelative) {}
 
+  /// emitFunctionConstantValueAddress - This callback is invoked when the
+  /// address of a constant, which was spilled to memory, needs to be addressed.
+  /// This is used for constants which cannot be directly specified as operands
+  /// to instructions, such as large integer values on the sparc, or floating
+  /// point constants on the X86.
+  ///
+  virtual void emitFunctionConstantValueAddress(unsigned ConstantNum,
+						int Offset) {}
 
   /// createDebugMachineCodeEmitter - Return a dynamically allocated machine
   /// code emitter, which just prints the opcodes and fields out the cout.  This
