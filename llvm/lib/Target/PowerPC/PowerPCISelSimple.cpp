@@ -76,11 +76,11 @@ namespace {
     int VarArgsFrameIndex;              // FrameIndex for start of varargs area
     int ReturnAddressIndex;             // FrameIndex for the return address
 
-    std::map<Value*, unsigned> RegMap;  // Mapping between Val's and SSA Regs
+    std::map<Value*, unsigned> RegMap;  // Mapping between Values and SSA Regs
 
     // External functions used in the Module
     Function *fmodFn, *__moddi3Fn, *__divdi3Fn, *__umoddi3Fn, *__udivdi3Fn,
-      *__fixdfdiFn, *__floatdisfFn, *__floatdidfFn;
+      *__fixdfdiFn, *__floatdisfFn, *__floatdidfFn, *mallocFn, *freeFn;
 
     // MBBMap - Mapping between LLVM BB -> Machine BB
     std::map<const BasicBlock*, MachineBasicBlock*> MBBMap;
@@ -97,6 +97,7 @@ namespace {
       Type *f = Type::FloatTy;
       Type *l = Type::LongTy;
       Type *ul = Type::ULongTy;
+      Type *voidPtr = PointerType::get(Type::SByteTy);
       // double fmod(double, double);
       fmodFn = M.getOrInsertFunction("fmod", d, d, d, 0);
       // long __moddi3(long, long);
@@ -113,6 +114,10 @@ namespace {
       __floatdisfFn = M.getOrInsertFunction("__floatdisf", f, l, 0);
       // double __floatdidf(long)
       __floatdidfFn = M.getOrInsertFunction("__floatdidf", d, l, 0);
+      // void* malloc(size_t)
+      mallocFn = M.getOrInsertFunction("malloc", voidPtr, Type::UIntTy, 0);
+      // void free(void*)
+      freeFn = M.getOrInsertFunction("free", Type::VoidTy, voidPtr, 0);
       return false;
     }
 
@@ -594,13 +599,13 @@ void ISel::LoadArgumentsToVirtualRegs(Function &Fn) {
       if (ArgLive) {
         FI = MFI->CreateFixedObject(8, ArgOffset);
         if (GPR_remaining > 1) {
-            BuildMI(BB, PPC32::OR, 2, Reg).addReg(GPR[GPR_idx])
-              .addReg(GPR[GPR_idx]);
-            BuildMI(BB, PPC32::OR, 2, Reg+1).addReg(GPR[GPR_idx+1])
-              .addReg(GPR[GPR_idx+1]);
+          BuildMI(BB, PPC32::OR, 2, Reg).addReg(GPR[GPR_idx])
+            .addReg(GPR[GPR_idx]);
+          BuildMI(BB, PPC32::OR, 2, Reg+1).addReg(GPR[GPR_idx+1])
+            .addReg(GPR[GPR_idx+1]);
         } else {
-            addFrameReference(BuildMI(BB, PPC32::LWZ, 2, Reg), FI);
-            addFrameReference(BuildMI(BB, PPC32::LWZ, 2, Reg+1), FI, 4);
+          addFrameReference(BuildMI(BB, PPC32::LWZ, 2, Reg), FI);
+          addFrameReference(BuildMI(BB, PPC32::LWZ, 2, Reg+1), FI, 4);
         }
       }
       ArgOffset += 4;   // longs require 4 additional bytes
@@ -686,7 +691,15 @@ void ISel::SelectPHINodes() {
       std::map<MachineBasicBlock*, unsigned> PHIValues;
 
       for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i) {
-        MachineBasicBlock *PredMBB = MBBMap[PN->getIncomingBlock(i)];
+        MachineBasicBlock *PredMBB = 0;
+        for (MachineBasicBlock::pred_iterator PI = MBB.pred_begin (),
+             PE = MBB.pred_end (); PI != PE; ++PI)
+          if (PN->getIncomingBlock(i) == (*PI)->getBasicBlock()) {
+            PredMBB = *PI;
+            break;
+          }
+        assert (PredMBB && "Couldn't find incoming machine-cfg edge for phi");
+
         unsigned ValReg;
         std::map<MachineBasicBlock*, unsigned>::iterator EntryIt =
           PHIValues.lower_bound(PredMBB);
@@ -2494,8 +2507,9 @@ void ISel::emitCastOperation(MachineBasicBlock *BB,
     if (SrcClass == cLong) {
       std::vector<ValueRecord> Args;
       Args.push_back(ValueRecord(SrcReg, SrcTy));
+      Function *floatFn = (SrcTy==Type::FloatTy) ? __floatdisfFn : __floatdidfFn;
       MachineInstr *TheCall =
-        BuildMI(PPC32::CALLpcrel, 1).addGlobalAddress(__floatdidfFn, true);
+        BuildMI(PPC32::CALLpcrel, 1).addGlobalAddress(floatFn, true);
       doCall(ValueRecord(DestReg, DestTy), TheCall, Args, false);
       return;
     }
@@ -2703,58 +2717,78 @@ void ISel::emitGEPOperation(MachineBasicBlock *MBB,
       BuildMI(*MBB, IP, PPC32::OR, 2, TargetReg).addReg(Reg).addReg(Reg);
       break;          // we are now done
     }
-    // It's an array or pointer access: [ArraySize x ElementType].
-    const SequentialType *SqTy = cast<SequentialType>(GEPTypes.back());
-    Value *idx = GEPOps.back();
-    GEPOps.pop_back();        // Consume a GEP operand
-    GEPTypes.pop_back();
+    if (const StructType *StTy = dyn_cast<StructType>(GEPTypes.back())) {
+      // It's a struct access.  CUI is the index into the structure,
+      // which names the field. This index must have unsigned type.
+      const ConstantUInt *CUI = cast<ConstantUInt>(GEPOps.back());
 
-    // Many GEP instructions use a [cast (int/uint) to LongTy] as their
-    // operand.  Handle this case directly now...
-    if (CastInst *CI = dyn_cast<CastInst>(idx))
-      if (CI->getOperand(0)->getType() == Type::IntTy ||
-          CI->getOperand(0)->getType() == Type::UIntTy)
-        idx = CI->getOperand(0);
-
-    // We want to add BaseReg to(idxReg * sizeof ElementType). First, we
-    // must find the size of the pointed-to type (Not coincidentally, the next
-    // type is the type of the elements in the array).
-    const Type *ElTy = SqTy->getElementType();
-    unsigned elementSize = TD.getTypeSize(ElTy);
-
-    if (idx == Constant::getNullValue(idx->getType())) {
-      // GEP with idx 0 is a no-op
-    } else if (elementSize == 1) {
-      // If the element size is 1, we don't have to multiply, just add
-      unsigned idxReg = getReg(idx, MBB, IP);
+      // Use the TargetData structure to pick out what the layout of the
+      // structure is in memory.  Since the structure index must be constant, we
+      // can get its value and use it to find the right byte offset from the
+      // StructLayout class's list of structure member offsets.
+      unsigned Disp = TD.getStructLayout(StTy)->MemberOffsets[CUI->getValue()];
+      GEPOps.pop_back();        // Consume a GEP operand
+      GEPTypes.pop_back();
       unsigned Reg = makeAnotherReg(Type::UIntTy);
-      BuildMI(*MBB, IP, PPC32::ADD, 2,TargetReg).addReg(Reg).addReg(idxReg);
+      unsigned DispReg = makeAnotherReg(Type::UIntTy);
+      BuildMI(*MBB, IP, PPC32::LI, 2, DispReg).addImm(Disp);
+      BuildMI(*MBB, IP, PPC32::ADD, 2, TargetReg).addReg(Reg).addReg(DispReg);
       --IP;            // Insert the next instruction before this one.
       TargetReg = Reg; // Codegen the rest of the GEP into this
     } else {
-      unsigned idxReg = getReg(idx, MBB, IP);
-      unsigned OffsetReg = makeAnotherReg(Type::UIntTy);
-
-      // Make sure we can back the iterator up to point to the first
-      // instruction emitted.
-      MachineBasicBlock::iterator BeforeIt = IP;
-      if (IP == MBB->begin())
-        BeforeIt = MBB->end();
-      else
-        --BeforeIt;
-      doMultiplyConst(MBB, IP, OffsetReg, Type::IntTy, idxReg, elementSize);
-
-      // Emit an ADD to add OffsetReg to the basePtr.
-      unsigned Reg = makeAnotherReg(Type::UIntTy);
-      BuildMI(*MBB, IP, PPC32::ADD, 2, TargetReg).addReg(Reg).addReg(OffsetReg);
-
-      // Step to the first instruction of the multiply.
-      if (BeforeIt == MBB->end())
-        IP = MBB->begin();
-      else
-        IP = ++BeforeIt;
-
-      TargetReg = Reg; // Codegen the rest of the GEP into this
+      // It's an array or pointer access: [ArraySize x ElementType].
+      const SequentialType *SqTy = cast<SequentialType>(GEPTypes.back());
+      Value *idx = GEPOps.back();
+      GEPOps.pop_back();        // Consume a GEP operand
+      GEPTypes.pop_back();
+    
+      // Many GEP instructions use a [cast (int/uint) to LongTy] as their
+      // operand.  Handle this case directly now...
+      if (CastInst *CI = dyn_cast<CastInst>(idx))
+        if (CI->getOperand(0)->getType() == Type::IntTy ||
+            CI->getOperand(0)->getType() == Type::UIntTy)
+          idx = CI->getOperand(0);
+    
+      // We want to add BaseReg to(idxReg * sizeof ElementType). First, we
+      // must find the size of the pointed-to type (Not coincidentally, the next
+      // type is the type of the elements in the array).
+      const Type *ElTy = SqTy->getElementType();
+      unsigned elementSize = TD.getTypeSize(ElTy);
+    
+      if (idx == Constant::getNullValue(idx->getType())) {
+        // GEP with idx 0 is a no-op
+      } else if (elementSize == 1) {
+        // If the element size is 1, we don't have to multiply, just add
+        unsigned idxReg = getReg(idx, MBB, IP);
+        unsigned Reg = makeAnotherReg(Type::UIntTy);
+        BuildMI(*MBB, IP, PPC32::ADD, 2,TargetReg).addReg(Reg).addReg(idxReg);
+        --IP;            // Insert the next instruction before this one.
+        TargetReg = Reg; // Codegen the rest of the GEP into this
+      } else {
+        unsigned idxReg = getReg(idx, MBB, IP);
+        unsigned OffsetReg = makeAnotherReg(Type::UIntTy);
+    
+        // Make sure we can back the iterator up to point to the first
+        // instruction emitted.
+        MachineBasicBlock::iterator BeforeIt = IP;
+        if (IP == MBB->begin())
+          BeforeIt = MBB->end();
+        else
+          --BeforeIt;
+        doMultiplyConst(MBB, IP, OffsetReg, Type::IntTy, idxReg, elementSize);
+    
+        // Emit an ADD to add OffsetReg to the basePtr.
+        unsigned Reg = makeAnotherReg(Type::UIntTy);
+        BuildMI(*MBB, IP, PPC32::ADD, 2, TargetReg).addReg(Reg).addReg(OffsetReg);
+    
+        // Step to the first instruction of the multiply.
+        if (BeforeIt == MBB->end())
+          IP = MBB->begin();
+        else
+          IP = ++BeforeIt;
+    
+        TargetReg = Reg; // Codegen the rest of the GEP into this
+      }
     }
   }
 }
@@ -2821,7 +2855,7 @@ void ISel::visitMallocInst(MallocInst &I) {
   std::vector<ValueRecord> Args;
   Args.push_back(ValueRecord(Arg, Type::UIntTy));
   MachineInstr *TheCall = 
-    BuildMI(PPC32::CALLpcrel, 1).addExternalSymbol("malloc", true);
+    BuildMI(PPC32::CALLpcrel, 1).addGlobalAddress(mallocFn, true);
   doCall(ValueRecord(getReg(I), I.getType()), TheCall, Args, false);
 }
 
@@ -2833,7 +2867,7 @@ void ISel::visitFreeInst(FreeInst &I) {
   std::vector<ValueRecord> Args;
   Args.push_back(ValueRecord(I.getOperand(0)));
   MachineInstr *TheCall = 
-    BuildMI(PPC32::CALLpcrel, 1).addExternalSymbol("free", true);
+    BuildMI(PPC32::CALLpcrel, 1).addGlobalAddress(freeFn, true);
   doCall(ValueRecord(0, Type::VoidTy), TheCall, Args, false);
 }
    
