@@ -31,15 +31,35 @@ namespace llvm {
     /// instruction.
     std::string AsmString;
 
-    /// OperandInfo - For each operand declared in the OperandList of the
-    /// instruction, keep track of its record (which specifies the class of the
-    /// operand), its type, and the name given to the operand, if any.
+    /// OperandInfo - The information we keep track of for each operand in the
+    /// operand list for a tablegen instruction.
     struct OperandInfo {
+      /// Rec - The definition this operand is declared as.
       Record *Rec;
+
+      /// Ty - The MachineValueType of the operand.
+      ///
       MVT::ValueType Ty;
+
+      /// Name - If this operand was assigned a symbolic name, this is it,
+      /// otherwise, it's empty.
       std::string Name;
-      OperandInfo(Record *R, MVT::ValueType T, const std::string &N)
-        : Rec(R), Ty(T), Name(N) {}
+
+      /// PrinterMethodName - The method used to print operands of this type in
+      /// the asmprinter.
+      std::string PrinterMethodName;
+
+      /// MIOperandNo - Currently (this is meant to be phased out), some logical
+      /// operands correspond to multiple MachineInstr operands.  In the X86
+      /// target for example, one address operand is represented as 4
+      /// MachineOperands.  Because of this, the operand number in the
+      /// OperandList may not match the MachineInstr operand num.  Until it
+      /// does, this contains the MI operand index of this operand.
+      unsigned MIOperandNo;
+
+      OperandInfo(Record *R, MVT::ValueType T, const std::string &N,
+                  const std::string &PMN, unsigned MION)
+        : Rec(R), Ty(T), Name(N), PrinterMethodName(PMN), MIOperandNo(MION) {}
     };
     
     /// OperandList - The list of declared operands, along with their declared

@@ -132,19 +132,26 @@ CodeGenInstruction::CodeGenInstruction(Record *R) : TheDef(R) {
   try {
     DagInit *DI = R->getValueAsDag("OperandList");
 
+    unsigned MIOperandNo = 0;
     for (unsigned i = 0, e = DI->getNumArgs(); i != e; ++i)
       if (DefInit *Arg = dynamic_cast<DefInit*>(DI->getArg(i))) {
         Record *Rec = Arg->getDef();
         MVT::ValueType Ty;
+        std::string PrintMethod = "printOperand";
+        unsigned NumOps = 1;
         if (Rec->isSubClassOf("RegisterClass"))
           Ty = getValueType(Rec->getValueAsDef("RegType"));
-        else if (Rec->isSubClassOf("Operand"))
+        else if (Rec->isSubClassOf("Operand")) {
           Ty = getValueType(Rec->getValueAsDef("Type"));
-        else
+          PrintMethod = Rec->getValueAsString("PrintMethod");
+          NumOps = Rec->getValueAsInt("NumMIOperands");
+        } else
           throw "Unknown operand class '" + Rec->getName() +
                 "' in instruction '" + R->getName() + "' instruction!";
         
-        OperandList.push_back(OperandInfo(Rec, Ty, DI->getArgName(i)));
+        OperandList.push_back(OperandInfo(Rec, Ty, DI->getArgName(i),
+                                          PrintMethod, MIOperandNo));
+        MIOperandNo += NumOps;
       } else {
         throw "Illegal operand for the '" + R->getName() + "' instruction!";
       }
