@@ -73,8 +73,7 @@ href="http://llvm.cs.uiuc.edu/releases/">releases page</a>.</p>
 
 <p> At this time, LLVM is known to correctly compile and run all C &amp; C++
 SPEC CPU95 &amp; 2000 benchmarks, the Olden benchmarks, and the Ptrdist 
-benchmarks, and <b>many</b> other programs.  LLVM now also works
-with a broad variety of C++ programs.</p>
+benchmarks, and <b>many</b> other C and C++ programs.</p>
 
 </div>
 
@@ -86,9 +85,15 @@ with a broad variety of C++ programs.</p>
 <div class="doc_text">
 
 <ol>
-  <li><a href="http://llvm.cs.uiuc.edu/PR257">move test/Programs out of the main llvm
-    tree</a></li>
-<li></li>
+  <li>The test/Programs hierarchy<a href="http://llvm.cs.uiuc.edu/PR257">has
+      been moved out of the main LLVM tree</a> into a separate CVS repo and
+      tarball.</li>
+  <li>LLVM now optimizes global variables significantly more than it did
+      before.</li>
+  <li>LLVM now includes the new '<tt>undef</tt>' value and <a
+      href="LangRef.html#i_unreachable"><tt>unreachable</tt></a> instruction,
+      which give the optimizer more information about the behavior of the
+      program.</li>
 </ol>
 
 </div>
