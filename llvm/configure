@@ -19694,8 +19694,7 @@ done
 
 
 
-
-for ac_header in malloc.h strings.h sys/mman.h sys/resource.h
+for ac_header in malloc.h sys/mman.h sys/resource.h
 do
 as_ac_Header=`echo "ac_cv_header_$ac_header" | $as_tr_sh`
 if eval "test \"\${$as_ac_Header+set}\" = set"; then
