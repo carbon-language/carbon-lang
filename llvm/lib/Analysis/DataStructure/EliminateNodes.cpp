@@ -19,6 +19,8 @@
 #include "Support/STLExtras.h"
 #include <algorithm>
 
+//#define DEBUG_NODE_ELIMINATE 1
+
 // NodesAreEquivalent - Check to see if the nodes are equivalent in all ways
 // except node type.  Since we know N1 is a shadow node, N2 is allowed to be
 // any type.
@@ -27,8 +29,13 @@ static bool NodesAreEquivalent(const ShadowDSNode *N1, const DSNode *N2) {
   assert(N1 != N2 && "A node is always equivalent to itself!");
 
   // Perform simple, fast checks first...
-  if (N1->getType() != N2->getType()) return false;
-  assert(N1->getNumLinks() == N2->getNumLinks() && "Same type, diff # links?");
+  if (N1->getType() != N2->getType() ||  // Must have same type...
+      N1->isCriticalNode())              // Must not be a critical node...
+    return false;
+
+#if 0
+  return true;
+#else
 
   // The shadow node is considered equivalent if it has a subset of the incoming
   // edges that N2 does...
@@ -51,6 +58,7 @@ static bool NodesAreEquivalent(const ShadowDSNode *N1, const DSNode *N2) {
   }
 
   return i1 == e1 && i2 <= e2;
+#endif
 }
 
 // IndistinguishableShadowNode - A shadow node is indistinguishable if some
@@ -77,13 +85,6 @@ static bool IndistinguishableShadowNode(const ShadowDSNode *SN) {
   return false;
 }
 
-// removeEdgesTo - Erase all edges in the graph that point to the specified node
-static void removeEdgesTo(DSNode *Node) {
-  while (!Node->getReferrers().empty()) {
-    PointerValSet *PVS = Node->getReferrers().back();
-    PVS->removePointerTo(Node);
-  }
-}
 
 // UnlinkUndistinguishableShadowNodes - Eliminate shadow nodes that are not
 // distinguishable from some other node in the graph...
@@ -96,10 +97,12 @@ bool FunctionDSGraph::UnlinkUndistinguishableShadowNodes() {
   for (vector<ShadowDSNode*>::iterator I = ShadowNodes.begin();
        I != ShadowNodes.end(); )
     if (IndistinguishableShadowNode(*I)) {
+#ifdef DEBUG_NODE_ELIMINATE
       cerr << "Found Indistinguishable Shadow Node:\n";
       (*I)->print(cerr);
-      removeEdgesTo(*I);
-      // Don't need to dropAllRefs, because nothing can poitn to it now
+#endif
+      (*I)->removeAllIncomingEdges();
+      // Don't need to dropAllRefs, because nothing can point to it now
       delete *I;
       
       I = ShadowNodes.erase(I);
@@ -180,7 +183,7 @@ bool FunctionDSGraph::RemoveUnreachableShadowNodes() {
     for (unsigned i = 0; i != ShadowNodes.size(); ++i)
       if (!Reachable[i]) {
         // Track all unreachable nodes...
-#if 0
+#if DEBUG_NODE_ELIMINATE
         cerr << "Unreachable node eliminated:\n";
         ShadowNodes[i]->print(cerr);
 #endif
