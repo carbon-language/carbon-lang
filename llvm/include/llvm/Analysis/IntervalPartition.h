@@ -73,7 +73,6 @@ public:
   // getAnalysisUsage - Implement the Pass API
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
     AU.setPreservesAll();
-    AU.addProvided(ID);
   }
 
 private:

@@ -81,7 +81,7 @@ class PassManagerT : public PassManagerTraits<UnitType>,public AnalysisResolver{
   friend typename Traits::SubPassClass;  
   friend class Traits;
 
-  std::vector<PassClass*> Passes;    // List of pass's to run
+  std::vector<PassClass*> Passes;    // List of passes to run
 
   // The parent of this pass manager...
   ParentClass * const Parent;
@@ -160,8 +160,6 @@ public:
                                       (Annotable*)M);
       PMDebug::PrintAnalysisSetInfo(getDepth(), "Preserved", P,
                                     AnUsage.getPreservedSet());
-      PMDebug::PrintAnalysisSetInfo(getDepth(), "Provided", P,
-                                    AnUsage.getProvidedSet());
 
 
       // Erase all analyses not in the preserved set...
@@ -183,11 +181,11 @@ public:
           }
       }
 
-      // Add all analyses in the provided set...
-      for (std::vector<AnalysisID>::const_iterator
-             I = AnUsage.getProvidedSet().begin(),
-             E = AnUsage.getProvidedSet().end(); I != E; ++I)
-        CurrentAnalyses[*I] = P;
+      // Add the current pass to the set of passes that have been run, and are
+      // thus available to users.
+      //
+      if (const PassInfo *PI = P->getPassInfo())
+        CurrentAnalyses[PI] = P;
 
       // Free memory for any passes that we are the last use of...
       std::vector<Pass*> &DeadPass = LastUserOf[P];
@@ -214,7 +212,7 @@ public:
       for (std::map<Pass*, Pass*>::iterator I = LastUseOf.begin(),
                                             E = LastUseOf.end(); I != E; ++I) {
         if (P == I->second) {
-          std::cerr << "Fr" << std::string(Offset*2, ' ');
+          std::cerr << "--" << std::string(Offset*2, ' ');
           I->first->dumpPassStructure(0);
         }
       }
@@ -321,13 +319,13 @@ private:
   //
   void addPass(PassClass *P, AnalysisUsage &AnUsage) {
     const std::vector<AnalysisID> &RequiredSet = AnUsage.getRequiredSet();
-    const std::vector<AnalysisID> &ProvidedSet = AnUsage.getProvidedSet();
 
-    // Providers are analysis classes which are forbidden to modify the module
-    // they are operating on, so they are allowed to be reordered to before the
-    // batcher...
+    // FIXME: If this pass being added isn't killed by any of the passes in the
+    // batcher class then we can reorder to pass to execute before the batcher
+    // does, which will potentially allow us to batch more passes!
     //
-    if (Batcher && ProvidedSet.empty())
+    //const std::vector<AnalysisID> &ProvidedSet = AnUsage.getProvidedSet();
+    if (Batcher /*&& ProvidedSet.empty()*/)
       closeBatcher();                     // This pass cannot be batched!
     
     // Set the Resolver instance variable in the Pass so that it knows where to 
@@ -362,10 +360,9 @@ private:
         }
     }
 
-    // Add all analyses in the provided set...
-    for (std::vector<AnalysisID>::const_iterator I = ProvidedSet.begin(),
-           E = ProvidedSet.end(); I != E; ++I)
-      CurrentAnalyses[*I] = P;
+    // Add this pass to the currently available set...
+    if (const PassInfo *PI = P->getPassInfo())
+      CurrentAnalyses[PI] = P;
 
     // For now assume that our results are never used...
     LastUseOf[P] = P;
@@ -378,7 +375,7 @@ private:
   void addPass(SubPassClass *MP, AnalysisUsage &AnUsage) {
     if (Batcher == 0) // If we don't have a batcher yet, make one now.
       Batcher = new BatcherClass(this);
-    // The Batcher will queue them passes up
+    // The Batcher will queue the passes up
     MP->addToPassManager(Batcher, AnUsage);
   }
 

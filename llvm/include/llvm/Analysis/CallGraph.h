@@ -132,7 +132,6 @@ public:
   // getAnalysisUsage - This obviously provides a call graph
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
     AU.setPreservesAll();
-    AU.addProvided(ID);
   }
 
   // releaseMemory - Data structures can be large, so free memory aggressively.

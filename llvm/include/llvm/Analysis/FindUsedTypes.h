@@ -46,7 +46,6 @@ public:
   //
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
     AU.setPreservesAll();
-    AU.addProvided(ID);
   }
 };
 

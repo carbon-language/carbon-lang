@@ -350,7 +350,6 @@ public:
   // getAnalysisUsage - This obviously provides a data structure graph.
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
     AU.setPreservesAll();
-    AU.addProvided(ID);
   }
 };
 
@@ -385,7 +384,6 @@ public:
   // getAnalysisUsage - This obviously provides a data structure graph.
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
     AU.setPreservesAll();
-    AU.addProvided(ID);
     AU.addRequired(LocalDataStructures::ID);
   }
 private:
@@ -427,7 +425,6 @@ public:
   // getAnalysisUsage - This obviously provides a data structure graph.
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
     AU.setPreservesAll();
-    AU.addProvided(ID);
     AU.addRequired(BUDataStructures::ID);
   }
 private:

@@ -23,7 +23,6 @@ public:
   BasicBlock *getExitNode() const { return ExitNode; }
 
   virtual bool runOnFunction(Function &F);
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const { AU.addProvided(ID); }
 };
 
 static inline Pass *createUnifyFunctionExitNodesPass() {
