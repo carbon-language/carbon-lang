@@ -151,7 +151,7 @@ static inline bool LoadLibrary(const std::string &FN, Module*& Result) {
   }
 
   if (Filename.readable() && Filename.is_bytecode_file()) {
-    if (Result = GetModule(Filename))
+    if ((Result = GetModule(Filename)))
       return true;
   }
 
@@ -161,7 +161,7 @@ static inline bool LoadLibrary(const std::string &FN, Module*& Result) {
     sys::Path path = GetPathForLinkageItem(FN,LibPaths[I]);
     if (!path.is_empty()) {
       if (path.is_bytecode_file()) {
-        if (Result = GetModule(path)) {
+        if ((Result = GetModule(path))) {
           return true;
         } else {
           // We found file but its not a valid bytecode file so we 
