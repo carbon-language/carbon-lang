@@ -90,6 +90,28 @@ const PointerValSet &PointerValSet::operator=(const PointerValSet &PVS) {
   return *this;
 }
 
+// operator< - Allow insertion into a map...
+bool PointerValSet::operator<(const PointerValSet &PVS) const {
+  if (Vals.size() < PVS.Vals.size()) return true;
+  if (Vals.size() > PVS.Vals.size()) return false;
+  if (Vals.size() == 1) return Vals[0] < PVS.Vals[0];  // Most common case
+
+  vector<PointerVal> S1(Vals), S2(PVS.Vals);
+  sort(S1.begin(), S1.end());
+  sort(S2.begin(), S2.end());
+  return S1 < S2;
+}
+
+bool PointerValSet::operator==(const PointerValSet &PVS) const {
+  if (Vals.size() != PVS.Vals.size()) return false;
+  if (Vals.size() == 1) return Vals[0] == PVS.Vals[0];  // Most common case...
+
+  vector<PointerVal> S1(Vals), S2(PVS.Vals);
+  sort(S1.begin(), S1.end());
+  sort(S2.begin(), S2.end());
+  return S1 == S2;
+}
+
 
 bool PointerValSet::add(const PointerVal &PV, Value *Pointer) {
   if (std::find(Vals.begin(), Vals.end(), PV) != Vals.end())

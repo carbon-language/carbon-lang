@@ -20,8 +20,8 @@
 //
 
 static void MapPVS(PointerValSet &PVSOut, const PointerValSet &PVSIn,
-                   map<const DSNode*, DSNode*> &NodeMap) {
-  assert(PVSOut.empty() && "Value set already initialized!");
+                   map<const DSNode*, DSNode*> &NodeMap, bool ReinitOk = false){
+  assert((ReinitOk || PVSOut.empty()) && "Value set already initialized!");
 
   for (unsigned i = 0, e = PVSIn.size(); i != e; ++i)
     PVSOut.add(PointerVal(NodeMap[PVSIn[i].Node], PVSIn[i].Index));
@@ -148,16 +148,16 @@ void DSNode::mapNode(map<const DSNode*, DSNode*> &NodeMap, const DSNode *Old) {
     MapPVS(FieldLinks[j], Old->FieldLinks[j], NodeMap);
 }
 
-NewDSNode::NewDSNode(AllocationInst *V)
+AllocDSNode::AllocDSNode(AllocationInst *V)
   : DSNode(NewNode, V->getType()->getElementType()), Allocation(V) {
 }
 
-bool NewDSNode::isAllocaNode() const {
+bool AllocDSNode::isAllocaNode() const {
   return isa<AllocaInst>(Allocation);
 }
 
 
-string NewDSNode::getCaption() const {
+string AllocDSNode::getCaption() const {
   stringstream OS;
   OS << (isMallocNode() ? "new " : "alloca ");
 
@@ -175,7 +175,7 @@ GlobalDSNode::GlobalDSNode(GlobalValue *V)
 string GlobalDSNode::getCaption() const {
   stringstream OS;
   WriteTypeSymbolic(OS, getType(), Val->getParent());
-  return "global " + OS.str();
+  return "global " + OS.str() + " %" + Val->getName();
 }
 
 
@@ -243,7 +243,7 @@ string CallDSNode::getCaption() const {
 
 void CallDSNode::mapNode(map<const DSNode*, DSNode*> &NodeMap,
                          const DSNode *O) {
-  const CallDSNode *Old = (CallDSNode*)O;
+  const CallDSNode *Old = cast<CallDSNode>(O);
   DSNode::mapNode(NodeMap, Old);  // Map base portions first...
 
   assert(ArgLinks.size() == Old->ArgLinks.size() && "# Arguments changed!?");
@@ -266,10 +266,16 @@ void FunctionDSGraph::printFunction(std::ostream &O,
                                     const char *Label) const {
   O << "\tsubgraph cluster_" << Label << "_Function" << (void*)this << " {\n";
   O << "\t\tlabel=\"" << Label << " Function\\ " << Func->getName() << "\";\n";
-  for (unsigned i = 0, e = Nodes.size(); i != e; ++i)
-    Nodes[i]->print(O);
+  for (unsigned i = 0, e = ArgNodes.size(); i != e; ++i)
+    ArgNodes[i]->print(O);
+  for (unsigned i = 0, e = AllocNodes.size(); i != e; ++i)
+    AllocNodes[i]->print(O);
   for (unsigned i = 0, e = ShadowNodes.size(); i != e; ++i)
     ShadowNodes[i]->print(O);
+  for (unsigned i = 0, e = GlobalNodes.size(); i != e; ++i)
+    GlobalNodes[i]->print(O);
+  for (unsigned i = 0, e = CallNodes.size(); i != e; ++i)
+    CallNodes[i]->print(O);
 
   if (RetNode.size()) {
     O << "\t\tNode" << (void*)this << Label
@@ -315,14 +321,30 @@ FunctionDSGraph::FunctionDSGraph(const FunctionDSGraph &DSG) : Func(DSG.Func) {
 PointerValSet FunctionDSGraph::cloneFunctionIntoSelf(const FunctionDSGraph &DSG,
                                                      bool CloneValueMap) {
   map<const DSNode*, DSNode*> NodeMap;  // Map from old graph to new graph...
-  unsigned StartSize = Nodes.size();    // We probably already have nodes...
-  Nodes.reserve(StartSize+DSG.Nodes.size());
+  unsigned StartArgSize = ArgNodes.size();
+  ArgNodes.reserve(StartArgSize+DSG.ArgNodes.size());
+  unsigned StartAllocSize = AllocNodes.size();
+  AllocNodes.reserve(StartAllocSize+DSG.AllocNodes.size());
   unsigned StartShadowSize = ShadowNodes.size();
   ShadowNodes.reserve(StartShadowSize+DSG.ShadowNodes.size());
+  unsigned StartGlobalSize = GlobalNodes.size();
+  GlobalNodes.reserve(StartGlobalSize+DSG.GlobalNodes.size());
+  unsigned StartCallSize = CallNodes.size();
+  CallNodes.reserve(StartCallSize+DSG.CallNodes.size());
 
-  // Clone all of the nodes, keeping track of the mapping...
-  for (unsigned i = 0, e = DSG.Nodes.size(); i != e; ++i)
-    Nodes.push_back(NodeMap[DSG.Nodes[i]] = DSG.Nodes[i]->clone());
+  // Clone all of the arg nodes...
+  for (unsigned i = 0, e = DSG.ArgNodes.size(); i != e; ++i) {
+    ArgDSNode *New = cast<ArgDSNode>(DSG.ArgNodes[i]->clone());
+    NodeMap[DSG.ArgNodes[i]] = New;
+    ArgNodes.push_back(New);
+  }
+
+  // Clone all of the alloc nodes similarly...
+  for (unsigned i = 0, e = DSG.AllocNodes.size(); i != e; ++i) {
+    AllocDSNode *New = cast<AllocDSNode>(DSG.AllocNodes[i]->clone());
+    NodeMap[DSG.AllocNodes[i]] = New;
+    AllocNodes.push_back(New);
+  }
 
   // Clone all of the shadow nodes similarly...
   for (unsigned i = 0, e = DSG.ShadowNodes.size(); i != e; ++i) {
@@ -331,14 +353,34 @@ PointerValSet FunctionDSGraph::cloneFunctionIntoSelf(const FunctionDSGraph &DSG,
     ShadowNodes.push_back(New);
   }
 
+  // Clone all of the global nodes...
+  for (unsigned i = 0, e = DSG.GlobalNodes.size(); i != e; ++i) {
+    GlobalDSNode *New = cast<GlobalDSNode>(DSG.GlobalNodes[i]->clone());
+    NodeMap[DSG.GlobalNodes[i]] = New;
+    GlobalNodes.push_back(New);
+  }
+
+  // Clone all of the call nodes...
+  for (unsigned i = 0, e = DSG.CallNodes.size(); i != e; ++i) {
+    CallDSNode *New = cast<CallDSNode>(DSG.CallNodes[i]->clone());
+    NodeMap[DSG.CallNodes[i]] = New;
+    CallNodes.push_back(New);
+  }
+
   // Convert all of the links over in the nodes now that the map has been filled
   // in all the way...
   //
-  for (unsigned i = 0, e = DSG.Nodes.size(); i != e; ++i)
-    Nodes[i+StartSize]->mapNode(NodeMap, DSG.Nodes[i]);
-
+  for (unsigned i = 0, e = DSG.ArgNodes.size(); i != e; ++i)
+    ArgNodes[i+StartArgSize]->mapNode(NodeMap, DSG.ArgNodes[i]);
+  for (unsigned i = 0, e = DSG.AllocNodes.size(); i != e; ++i)
+    AllocNodes[i+StartAllocSize]->mapNode(NodeMap, DSG.AllocNodes[i]);
   for (unsigned i = 0, e = DSG.ShadowNodes.size(); i != e; ++i)
     ShadowNodes[i+StartShadowSize]->mapNode(NodeMap, DSG.ShadowNodes[i]);
+  for (unsigned i = 0, e = DSG.GlobalNodes.size(); i != e; ++i)
+    GlobalNodes[i+StartGlobalSize]->mapNode(NodeMap, DSG.GlobalNodes[i]);
+  for (unsigned i = 0, e = DSG.CallNodes.size(); i != e; ++i)
+    CallNodes[i+StartCallSize]->mapNode(NodeMap, DSG.CallNodes[i]);
+
 
   if (CloneValueMap) {
     // Convert value map... the values themselves stay the same, just the nodes
@@ -346,7 +388,7 @@ PointerValSet FunctionDSGraph::cloneFunctionIntoSelf(const FunctionDSGraph &DSG,
     //
     for (std::map<Value*,PointerValSet>::const_iterator I =DSG.ValueMap.begin(),
            E = DSG.ValueMap.end(); I != E; ++I)
-      MapPVS(ValueMap[I->first], I->second, NodeMap);
+      MapPVS(ValueMap[I->first], I->second, NodeMap, true);
   }
 
   // Convert over return node...
@@ -359,10 +401,20 @@ PointerValSet FunctionDSGraph::cloneFunctionIntoSelf(const FunctionDSGraph &DSG,
 FunctionDSGraph::~FunctionDSGraph() {
   RetNode.clear();
   ValueMap.clear();
-  for_each(Nodes.begin(), Nodes.end(), mem_fun(&DSNode::dropAllReferences));
+  for_each(ArgNodes.begin(), ArgNodes.end(),
+           mem_fun(&DSNode::dropAllReferences));
+  for_each(AllocNodes.begin(), AllocNodes.end(),
+           mem_fun(&DSNode::dropAllReferences));
   for_each(ShadowNodes.begin(), ShadowNodes.end(),
            mem_fun(&DSNode::dropAllReferences));
-  for_each(Nodes.begin(), Nodes.end(), deleter<DSNode>);
+  for_each(GlobalNodes.begin(), GlobalNodes.end(),
+           mem_fun(&DSNode::dropAllReferences));
+  for_each(CallNodes.begin(), CallNodes.end(),
+           mem_fun(&DSNode::dropAllReferences));
+  for_each(ArgNodes.begin(),    ArgNodes.end(),    deleter<DSNode>);
+  for_each(AllocNodes.begin(),  AllocNodes.end(),  deleter<DSNode>);
   for_each(ShadowNodes.begin(), ShadowNodes.end(), deleter<DSNode>);
+  for_each(GlobalNodes.begin(), GlobalNodes.end(), deleter<DSNode>);
+  for_each(CallNodes.begin(),   CallNodes.end(),   deleter<DSNode>);
 }
 

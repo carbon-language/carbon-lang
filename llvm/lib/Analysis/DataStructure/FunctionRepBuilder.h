@@ -61,8 +61,11 @@ class FunctionRepBuilder : InstVisitor<FunctionRepBuilder> {
   // Nodes - Keep track of all of the resultant nodes, because there may not
   // be edges connecting these to anything.
   //
-  std::vector<DSNode*> Nodes;
+  std::vector<ArgDSNode*>    ArgNodes;
+  std::vector<AllocDSNode*>  AllocNodes;
   std::vector<ShadowDSNode*> ShadowNodes;
+  std::vector<GlobalDSNode*> GlobalNodes;
+  std::vector<CallDSNode*>   CallNodes;
 
   // addAllUsesToWorkList - Add all of the instructions users of the specified
   // value to the work list for further processing...
@@ -75,11 +78,13 @@ public:
     processWorkList();
   }
 
-  void addNode(DSNode *N) { Nodes.push_back(N); }
-  const std::vector<DSNode*> &getNodes() const { return Nodes; }
-
-  void addShadowNode(ShadowDSNode *N) { ShadowNodes.push_back(N); }
+  const std::vector<ArgDSNode*>    &getArgNodes() const { return ArgNodes; }
+  const std::vector<AllocDSNode*>  &getAllocNodes() const { return AllocNodes; }
   const std::vector<ShadowDSNode*> &getShadowNodes() const {return ShadowNodes;}
+  const std::vector<GlobalDSNode*> &getGlobalNodes() const {return GlobalNodes;}
+  const std::vector<CallDSNode*>   &getCallNodes() const { return CallNodes; }
+
+  void addShadowNode(ShadowDSNode *SN) { ShadowNodes.push_back(SN); }
 
   const PointerValSet &getRetNode() const { return RetNode; }
 

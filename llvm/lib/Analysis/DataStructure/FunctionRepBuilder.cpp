@@ -44,7 +44,7 @@ void InitVisitor::visitOperand(Value *V) {
   if (!Rep->ValueMap.count(V))                  // Only process it once...
     if (GlobalValue *GV = dyn_cast<GlobalValue>(V)) {
       GlobalDSNode *N = new GlobalDSNode(GV);
-      Rep->Nodes.push_back(N);
+      Rep->GlobalNodes.push_back(N);
       Rep->ValueMap[V].add(N);
       Rep->addAllUsesToWorkList(GV);
 
@@ -60,7 +60,7 @@ void InitVisitor::visitOperand(Value *V) {
 //
 void InitVisitor::visitCallInst(CallInst *CI) {
   CallDSNode *C = new CallDSNode(CI);
-  Rep->Nodes.push_back(C);
+  Rep->CallNodes.push_back(C);
   Rep->CallMap[CI] = C;
       
   if (isa<PointerType>(CI->getType())) {
@@ -95,8 +95,8 @@ void InitVisitor::visitCallInst(CallInst *CI) {
 // global vars...
 //
 void InitVisitor::visitAllocationInst(AllocationInst *AI) {
-  NewDSNode *N = new NewDSNode(AI);
-  Rep->Nodes.push_back(N);
+  AllocDSNode *N = new AllocDSNode(AI);
+  Rep->AllocNodes.push_back(N);
   
   Rep->ValueMap[AI].add(N, AI);
   
@@ -144,7 +144,7 @@ void FunctionRepBuilder::initializeWorkList(Function *Func) {
     // Only process arguments that are of pointer type...
     if (isa<PointerType>((*I)->getType())) {
       ArgDSNode *Arg = new ArgDSNode(*I);
-      Nodes.push_back(Arg);
+      ArgNodes.push_back(Arg);
       
       // Add a critical shadow value for it to represent what it is pointing
       // to and add this to the value map...
@@ -326,10 +326,13 @@ void FunctionRepBuilder::visitPHINode(PHINode *PN) {
 //
 FunctionDSGraph::FunctionDSGraph(Function *F) : Func(F) {
   FunctionRepBuilder Builder(this);
-  Nodes = Builder.getNodes();
+  ArgNodes    = Builder.getArgNodes();
+  AllocNodes  = Builder.getAllocNodes();
   ShadowNodes = Builder.getShadowNodes();
-  RetNode = Builder.getRetNode();
-  ValueMap = Builder.getValueMap();
+  GlobalNodes = Builder.getGlobalNodes();
+  CallNodes   = Builder.getCallNodes();
+  RetNode     = Builder.getRetNode();
+  ValueMap    = Builder.getValueMap();
 
   bool Changed = true;
   while (Changed) {
