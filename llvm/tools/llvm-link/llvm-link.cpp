@@ -109,10 +109,7 @@ int main(int argc, char **argv) {
     }
   }
 
-  if (DumpAsm) {
-    cerr << "Here's the assembly:\n";
-    Composite.get()->dump();
-  }
+  if (DumpAsm) cerr << "Here's the assembly:\n" << Composite.get();
 
   ostream *Out = &cout;  // Default to printing to stdout...
   if (OutputFilename != "-") {

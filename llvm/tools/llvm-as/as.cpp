@@ -35,10 +35,7 @@ int main(int argc, char **argv) {
       return 1;
     }
   
-    if (DumpAsm) {
-      cerr << "Here's the assembly:\n";
-      M.get()->dump();
-    }
+    if (DumpAsm) cerr << "Here's the assembly:\n" << M.get();
 
     if (OutputFilename != "") {   // Specified an output filename?
       if (!Force && std::ifstream(OutputFilename.c_str())) {
