@@ -32,10 +32,19 @@ namespace sys {
     /// @name Constructors
     /// @{
     public:
+      /// Construct a DynamicLibrary that represents the currently executing
+      /// program. The program must have been linked with -export-dynamic or
+      /// -dlopen self for this to work. Any symbols retrieved with the 
+      /// GetAddressOfSymbol function will refer to the program not to any
+      /// library.
+      /// @throws std::string indicating why the program couldn't be opened.
+      /// @brief Open program as dynamic library.
+      DynamicLibrary();
+
       /// This is the constructor for DynamicLibrary instances. It will open
       /// the dynamic library specified by the \filename Path.
       /// @throws std::string indicating why the library couldn't be opened.
-      /// @brief DynamicLibrary constructor
+      /// @brief Open a dynamic library.
       DynamicLibrary(const char* filename);
 
       /// After destruction, the symbols of the library will no longer be
@@ -68,7 +77,6 @@ namespace sys {
     protected:
       void* handle;  // Opaque handle for information about the library
 
-      DynamicLibrary();  ///< Do not implement
       DynamicLibrary(const DynamicLibrary&); ///< Do not implement
       DynamicLibrary& operator=(const DynamicLibrary&); ///< Do not implement
     /// @}
