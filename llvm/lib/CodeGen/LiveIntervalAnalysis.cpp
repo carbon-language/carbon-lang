@@ -58,8 +58,6 @@ namespace {
   EnableJoining("join-liveintervals",
                 cl::desc("Join compatible live intervals"),
                 cl::init(true));
-  cl::opt<bool>
-  DisableHack("disable-hack");
 };
 
 void LiveIntervals::getAnalysisUsage(AnalysisUsage &AU) const
@@ -495,7 +493,7 @@ exit:
   // the physreg, then the new fragment has the same value as the one copied
   // into the vreg.
   if (interval.reg == DestReg && !interval.empty() &&
-      MRegisterInfo::isVirtualRegister(SrcReg) && !DisableHack) {
+      MRegisterInfo::isVirtualRegister(SrcReg)) {
 
     // Get the live interval for the vreg, see if it is defined by a copy.
     LiveInterval &SrcInterval = getOrCreateInterval(SrcReg);
