@@ -1092,7 +1092,8 @@ ISel::visitAllocaInst (AllocaInst &I)
   unsigned int allocatedTypeWords = allocatedTypeSize / 4;
   if (allocatedTypeSize % 4 != 0) { allocatedTypeWords++; }
   // Subtract size from stack pointer, thereby allocating some space.
-  BuildMI (BB, X86::SUBri32, 1, X86::ESP).addZImm (allocatedTypeWords * 4);
+  BuildMI(BB, X86::SUBri32, 2,
+          X86::ESP).addReg(X86::ESP).addZImm(allocatedTypeWords * 4);
   // Put a pointer to the space into the result register, by copying
   // the stack pointer.
   BuildMI (BB, X86::MOVrr32, 1, getReg (I)).addReg (X86::ESP);
