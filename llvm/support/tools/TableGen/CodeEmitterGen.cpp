@@ -74,8 +74,7 @@ void CodeEmitterGen::createEmitter(std::ostream &o) {
       }
     }
 
-    unsigned Offset = 31;
-    for (int f = Vals.size()-1; f >= 0; --f) {
+    for (unsigned f = 0, e = Vals.size(); f != e; ++f) {
       if (Vals[f].getPrefix()) {
         BitsInit *FieldInitializer = (BitsInit*)Vals[f].getValue();
 
@@ -83,18 +82,17 @@ void CodeEmitterGen::createEmitter(std::ostream &o) {
         // variable...
         for (int i = FieldInitializer->getNumBits()-1; i >= 0; --i) {
           if (BitInit *BI=dynamic_cast<BitInit*>(FieldInitializer->getBit(i))){
-            --Offset;
+            o << "      // bit init: f: " << f << ", i: " << i << "\n";
           } else if (UnsetInit *UI = 
                      dynamic_cast<UnsetInit*>(FieldInitializer->getBit(i))) {
-            --Offset;
+            o << "      // unset init: f: " << f << ", i: " << i << "\n";
           } else if (VarBitInit *VBI =
                      dynamic_cast<VarBitInit*>(FieldInitializer->getBit(i))) {
             TypedInit *TI = VBI->getVariable();
             if (VarInit *VI = dynamic_cast<VarInit*>(TI)) {
               o << "      Value |= getValueBit(op" << OpOrder[VI->getName()]
                 << ", " << VBI->getBitNum()
-                << ")" << " << " << Offset << ";\n";
-              --Offset;
+                << ")" << " << " << i << ";\n";
             } else if (FieldInit *FI = dynamic_cast<FieldInit*>(TI)) {
               // FIXME: implement this!
               o << "FIELD INIT not implemented yet!\n";
@@ -105,8 +103,9 @@ void CodeEmitterGen::createEmitter(std::ostream &o) {
         } 
       } else {
         // ignore annul and predict bits since no one sets them yet
-        if (Vals[f].getName() == "annul" || Vals[f].getName() == "predict")
-          --Offset;
+        if (Vals[f].getName() == "annul" || Vals[f].getName() == "predict") {
+          o << "      // found " << Vals[f].getName() << "\n";
+        }
       }
     }
 
