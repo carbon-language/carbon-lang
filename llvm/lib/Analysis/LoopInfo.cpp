@@ -27,24 +27,24 @@ bool Loop::contains(const BasicBlock *BB) const {
 bool Loop::isLoopExit(const BasicBlock *BB) const {
   for (BasicBlock::succ_const_iterator SI = succ_begin(BB), SE = succ_end(BB);
        SI != SE; ++SI) {
-    if (! contains(*SI))
+    if (!contains(*SI))
       return true;
   }
   return false;
 }
 
 unsigned Loop::getNumBackEdges() const {
-  unsigned numBackEdges = 0;
-  BasicBlock *header = Blocks.front();
+  unsigned NumBackEdges = 0;
+  BasicBlock *H = getHeader();
 
   for (std::vector<BasicBlock*>::const_iterator I = Blocks.begin(),
-         E = Blocks.end(); I != E; ++I) {
+         E = Blocks.end(); I != E; ++I)
     for (BasicBlock::succ_iterator SI = succ_begin(*I), SE = succ_end(*I);
          SI != SE; ++SI)
-      if (header == *SI)
-	++numBackEdges;
-  }
-  return numBackEdges;
+      if (*SI == H)
+	++NumBackEdges;
+  
+  return NumBackEdges;
 }
 
 void Loop::print(std::ostream &OS) const {
@@ -52,8 +52,16 @@ void Loop::print(std::ostream &OS) const {
 
   for (unsigned i = 0; i < getBlocks().size(); ++i) {
     if (i) OS << ",";
-    WriteAsOperand(OS, (const Value*)getBlocks()[i]);
+    WriteAsOperand(OS, getBlocks()[i], false);
   }
+  if (!ExitBlocks.empty()) {
+    OS << "\tExitBlocks: ";
+    for (unsigned i = 0; i < getExitBlocks().size(); ++i) {
+      if (i) OS << ",";
+      WriteAsOperand(OS, getExitBlocks()[i], false);
+    }
+  }
+
   OS << "\n";
 
   for (unsigned i = 0, e = getSubLoops().size(); i != e; ++i)
@@ -131,9 +139,9 @@ Loop *LoopInfo::ConsiderForLoop(BasicBlock *BB, const DominatorSet &DS) {
     BasicBlock *X = TodoStack.back();
     TodoStack.pop_back();
 
-    if (!L->contains(X)) {                  // As of yet unprocessed??
+    if (!L->contains(X)) {         // As of yet unprocessed??
       L->Blocks.push_back(X);
-
+      
       // Add all of the predecessors of X to the end of the work stack...
       TodoStack.insert(TodoStack.end(), pred_begin(X), pred_end(X));
     }
@@ -157,6 +165,14 @@ Loop *LoopInfo::ConsiderForLoop(BasicBlock *BB, const DominatorSet &DS) {
     if (BBMI == BBMap.end() || BBMI->first != *I)  // Not in map yet...
       BBMap.insert(BBMI, std::make_pair(*I, L));   // Must be at this level
   }
+
+  // Now that we know all of the blocks that make up this loop, see if there are
+  // any branches to outside of the loop... building the ExitBlocks list.
+  for (std::vector<BasicBlock*>::iterator BI = L->Blocks.begin(),
+         BE = L->Blocks.end(); BI != BE; ++BI)
+    for (succ_iterator I = succ_begin(*BI), E = succ_end(*BI); I != E; ++I)
+      if (!L->contains(*I))               // Not in current loop?
+        L->ExitBlocks.push_back(*I);      // It must be an exit block...
 
   return L;
 }
@@ -210,4 +226,17 @@ void Loop::addBasicBlockToLoop(BasicBlock *NewBB, LoopInfo &LI) {
     L->Blocks.push_back(NewBB);
     L = L->getParentLoop();
   }
+}
+
+/// changeExitBlock - This method is used to update loop information.  One
+/// instance of the specified Old basic block is removed from the exit list
+/// and replaced with New.
+///
+void Loop::changeExitBlock(BasicBlock *Old, BasicBlock *New) {
+  assert(Old != New && "Cannot changeExitBlock to the same thing!");
+  assert(Old && New && "Cannot changeExitBlock to or from a null node!");
+  std::vector<BasicBlock*>::iterator I = 
+    std::find(ExitBlocks.begin(), ExitBlocks.end(), Old);
+  assert(I != ExitBlocks.end() && "Old exit block not found!");
+  *I = New;
 }
