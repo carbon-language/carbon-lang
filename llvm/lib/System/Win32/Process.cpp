@@ -14,6 +14,7 @@
 #include "Win32.h"
 #include <psapi.h>
 #include <malloc.h>
+#include <io.h>
 
 #pragma comment(lib, "psapi.lib")
 
@@ -97,6 +98,18 @@ void Process::PreventCoreFiles() {
   // Windows doesn't do core files, so nothing to do.
   // Although...  it might be nice to prevent the do-you-want-to-debug
   // dialog box from coming up.  Or maybe not...
+}
+
+bool Process::StandardInIsUserInput() {
+  return GetFileType((HANDLE)_get_osfhandle(0)) == FILE_TYPE_CHAR;
+}
+
+bool Process::StandardOutIsDisplayed() {
+  return GetFileType((HANDLE)_get_osfhandle(1)) == FILE_TYPE_CHAR;
+}
+
+bool Process::StandardErrIsDisplayed() {
+  return GetFileType((HANDLE)_get_osfhandle(2)) == FILE_TYPE_CHAR;
 }
 
 }
