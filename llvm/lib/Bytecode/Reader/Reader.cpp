@@ -55,23 +55,44 @@ const Type *BytecodeParser::getType(unsigned ID) {
   return cast_or_null<Type>(V);
 }
 
-int BytecodeParser::insertValue(Value *Val, std::vector<ValueList> &ValueTab) {
+int BytecodeParser::insertValue(Value *Val, ValueTable &ValueTab) {
+  assert((!HasImplicitZeroInitializer || !isa<Constant>(Val) ||
+          Val->getType()->isPrimitiveType() ||
+          !cast<Constant>(Val)->isNullValue()) &&
+         "Cannot read null values from bytecode!");
   unsigned type;
   if (getTypeSlot(Val->getType(), type)) return -1;
   assert(type != Type::TypeTyID && "Types should never be insertValue'd!");
  
-  while (ValueTab.size() <= type) {
-    ValueTab.push_back(ValueList());
-    if (HasImplicitZeroInitializer)   // add a zero initializer if appropriate
-      ValueTab.back().push_back(
-                 Constant::getNullValue(getType(ValueTab.size()-1)));
+  if (ValueTab.size() <= type) {
+    unsigned OldSize = ValueTab.size();
+    ValueTab.resize(type+1);
+    while (OldSize != type+1)
+      ValueTab[OldSize++] = new ValueList();
   }
 
   //cerr << "insertValue Values[" << type << "][" << ValueTab[type].size() 
   //     << "] = " << Val << "\n";
-  ValueTab[type].push_back(Val);
+  ValueTab[type]->push_back(Val);
 
-  return ValueTab[type].size()-1;
+  bool HasOffset = HasImplicitZeroInitializer &&
+                       !Val->getType()->isPrimitiveType();
+
+  return ValueTab[type]->size()-1 + HasOffset;
+}
+
+
+void BytecodeParser::setValueTo(ValueTable &ValueTab, unsigned Slot,
+                                Value *Val) {
+  assert(&ValueTab == &ModuleValues && "Can only setValueTo on Module values!");
+  unsigned type;
+  if (getTypeSlot(Val->getType(), type))
+    assert(0 && "getTypeSlot failed!");
+  
+  assert((!HasImplicitZeroInitializer || Slot != 0) &&
+         "Cannot change zero init");
+  assert(type < ValueTab.size() && Slot <= ValueTab[type]->size());
+  ValueTab[type]->setOperand(Slot-HasImplicitZeroInitializer, Val);
 }
 
 Value *BytecodeParser::getValue(const Type *Ty, unsigned oNum, bool Create) {
@@ -102,25 +123,25 @@ Value *BytecodeParser::getValue(const Type *Ty, unsigned oNum, bool Create) {
     return 0;
   }
 
-  if (type < ModuleValues.size()) {
-    if (Num < ModuleValues[type].size())
-      return ModuleValues[type][Num];
-    Num -= ModuleValues[type].size();
+  if (HasImplicitZeroInitializer && type >= FirstDerivedTyID) {
+    if (Num == 0)
+      return Constant::getNullValue(Ty);
+    --Num;
   }
 
-  if (Values.size() > type && Values[type].size() > Num)
-    return Values[type][Num];
+  if (type < ModuleValues.size()) {
+    if (Num < ModuleValues[type]->size())
+      return ModuleValues[type]->getOperand(Num);
+    Num -= ModuleValues[type]->size();
+  }
+
+  if (Values.size() > type && Values[type]->size() > Num)
+    return Values[type]->getOperand(Num);
 
   if (!Create) return 0;  // Do not create a placeholder?
 
   Value *d = 0;
   switch (Ty->getPrimitiveID()) {
-  case Type::FunctionTyID:
-    std::cerr << "Creating function pholder! : " << type << ":" << oNum << " " 
-              << Ty->getName() << "\n";
-    d = new FunctionPHolder(Ty, oNum);
-    if (insertValue(d, LateResolveModuleValues) == -1) return 0;
-    return d;
   case Type::LabelTyID:
     d = new BBPHolder(Ty, oNum);
     break;
@@ -144,8 +165,10 @@ Constant *BytecodeParser::getConstantValue(const Type *Ty, unsigned Slot) {
   if (Value *V = getValue(Ty, Slot, false))
     return dyn_cast<Constant>(V);      // If we already have the value parsed...
 
-  GlobalRefsType::iterator I = GlobalRefs.find(std::make_pair(Ty, Slot));
-  if (I != GlobalRefs.end()) {
+  std::pair<const Type*, unsigned> Key(Ty, Slot);
+  GlobalRefsType::iterator I = GlobalRefs.lower_bound(Key);
+
+  if (I != GlobalRefs.end() && I->first == Key) {
     BCR_TRACE(5, "Previous forward ref found!\n");
     return cast<Constant>(I->second);
   } else {
@@ -155,29 +178,28 @@ Constant *BytecodeParser::getConstantValue(const Type *Ty, unsigned Slot) {
     Constant *C = new ConstPHolder(Ty, Slot);
     
     // Keep track of the fact that we have a forward ref to recycle it
-    GlobalRefs.insert(std::make_pair(std::make_pair(Ty, Slot), C));
+    GlobalRefs.insert(I, std::make_pair(Key, C));
     return C;
   }
 }
 
 
-
 bool BytecodeParser::postResolveValues(ValueTable &ValTab) {
   bool Error = false;
-  for (unsigned ty = 0; ty < ValTab.size(); ++ty) {
-    ValueList &DL = ValTab[ty];
-    unsigned Size;
-    while ((Size = DL.size())) {
-      unsigned IDNumber = getValueIDNumberFromPlaceHolder(DL[Size-1]);
+  while (!ValTab.empty()) {
+    ValueList &DL = *ValTab.back();
+    ValTab.pop_back();    
 
-      Value *D = DL[Size-1];
+    while (!DL.empty()) {
+      Value *D = DL.back();
+      unsigned IDNumber = getValueIDNumberFromPlaceHolder(D);
       DL.pop_back();
 
       Value *NewDef = getValue(D->getType(), IDNumber, false);
       if (NewDef == 0) {
 	Error = true;  // Unresolved thinger
 	std::cerr << "Unresolvable reference found: <"
-                  << D->getType()->getDescription() << ">:" << IDNumber <<"!\n";
+                  << *D->getType() << ">:" << IDNumber <<"!\n";
       } else {
 	// Fixup all of the uses of this placeholder def...
         D->replaceAllUsesWith(NewDef);
@@ -187,6 +209,7 @@ bool BytecodeParser::postResolveValues(ValueTable &ValTab) {
 	delete D;  // memory, 'cause otherwise we can't remove all uses!
       }
     }
+    delete &DL;
   }
 
   return Error;
@@ -235,15 +258,15 @@ bool BytecodeParser::ParseSymbolTable(const uchar *&Buf, const uchar *EndBuf,
       if (read(Buf, EndBuf, Name, false))  // Not aligned...
 	return true;
 
-      Value *D = getValue(Ty, slot, false); // Find mapping...
-      if (D == 0) {
+      Value *V = getValue(Ty, slot, false); // Find mapping...
+      if (V == 0) {
 	BCR_TRACE(3, "FAILED LOOKUP: Slot #" << slot << "\n");
 	return true;
       }
-      BCR_TRACE(4, "Map: '" << Name << "' to #" << slot << ":" << D;
-		if (!isa<Instruction>(D)) std::cerr << "\n");
+      BCR_TRACE(4, "Map: '" << Name << "' to #" << slot << ":" << *V;
+		if (!isa<Instruction>(V)) std::cerr << "\n");
 
-      D->setName(Name, ST);
+      V->setName(Name, ST);
     }
   }
 
@@ -259,52 +282,40 @@ void BytecodeParser::ResolveReferencesToValue(Value *NewV, unsigned Slot) {
   BCR_TRACE(3, "Mutating forward refs!\n");
   Value *VPH = I->second;   // Get the placeholder...
 
-  // Loop over all of the uses of the Value.  What they are depends
-  // on what NewV is.  Replacing a use of the old reference takes the
-  // use off the use list, so loop with !use_empty(), not the use_iterator.
-  while (!VPH->use_empty()) {
-    Constant *C = cast<Constant>(VPH->use_back());
-    unsigned numReplaced = C->mutateReferences(VPH, NewV);
-    assert(numReplaced > 0 && "Supposed user wasn't really a user?");
-      
-    if (GlobalValue* GVal = dyn_cast<GlobalValue>(NewV)) {
-      // Remove the placeholder GlobalValue from the module...
-      GVal->getParent()->getGlobalList().remove(cast<GlobalVariable>(VPH));
-    }
-  }
+  VPH->replaceAllUsesWith(NewV);
+
+  // If this is a global variable being resolved, remove the placeholder from
+  // the module...
+  if (GlobalValue* GVal = dyn_cast<GlobalValue>(NewV))
+    GVal->getParent()->getGlobalList().remove(cast<GlobalVariable>(VPH));
 
   delete VPH;                         // Delete the old placeholder
   GlobalRefs.erase(I);                // Remove the map entry for it
 }
 
+
 bool BytecodeParser::ParseFunction(const uchar *&Buf, const uchar *EndBuf) {
   // Clear out the local values table...
-  Values.clear();
   if (FunctionSignatureList.empty()) {
     Error = "Function found, but FunctionSignatureList empty!";
     return true;  // Unexpected function!
   }
 
-  const PointerType *PMTy = FunctionSignatureList.back().first; // PtrMeth
-  const FunctionType *MTy  = dyn_cast<FunctionType>(PMTy->getElementType());
-  if (MTy == 0) return true;  // Not ptr to function!
-
   unsigned isInternal;
   if (read_vbr(Buf, EndBuf, isInternal)) return true;
 
-  unsigned MethSlot = FunctionSignatureList.back().second;
+  Function *F = FunctionSignatureList.back().first;
+  unsigned FunctionSlot = FunctionSignatureList.back().second;
   FunctionSignatureList.pop_back();
-  Function *M = new Function(MTy, isInternal != 0);
+  F->setInternalLinkage(isInternal != 0);
 
-  BCR_TRACE(2, "FUNCTION TYPE: " << MTy << "\n");
-
-  const FunctionType::ParamTypes &Params = MTy->getParamTypes();
-  Function::aiterator AI = M->abegin();
+  const FunctionType::ParamTypes &Params =F->getFunctionType()->getParamTypes();
+  Function::aiterator AI = F->abegin();
   for (FunctionType::ParamTypes::const_iterator It = Params.begin();
        It != Params.end(); ++It, ++AI) {
     if (insertValue(AI, Values) == -1) {
       Error = "Error reading function arguments!\n";
-      delete M; return true; 
+      return true; 
     }
   }
 
@@ -313,34 +324,31 @@ bool BytecodeParser::ParseFunction(const uchar *&Buf, const uchar *EndBuf) {
     const unsigned char *OldBuf = Buf;
     if (readBlock(Buf, EndBuf, Type, Size)) {
       Error = "Error reading Function level block!";
-      delete M; return true; 
+      return true; 
     }
 
     switch (Type) {
     case BytecodeFormat::ConstantPool:
       BCR_TRACE(2, "BLOCK BytecodeFormat::ConstantPool: {\n");
-      if (ParseConstantPool(Buf, Buf+Size, Values, FunctionTypeValues)) {
-	delete M; return true;
-      }
+      if (ParseConstantPool(Buf, Buf+Size, Values, FunctionTypeValues))
+	return true;
       break;
 
     case BytecodeFormat::BasicBlock: {
       BCR_TRACE(2, "BLOCK BytecodeFormat::BasicBlock: {\n");
       BasicBlock *BB;
       if (ParseBasicBlock(Buf, Buf+Size, BB) ||
-	  insertValue(BB, Values) == -1) {
-	delete M; return true;                // Parse error... :(
-      }
+	  insertValue(BB, Values) == -1)
+	return true;                // Parse error... :(
 
-      M->getBasicBlockList().push_back(BB);
+      F->getBasicBlockList().push_back(BB);
       break;
     }
 
     case BytecodeFormat::SymbolTable:
       BCR_TRACE(2, "BLOCK BytecodeFormat::SymbolTable: {\n");
-      if (ParseSymbolTable(Buf, Buf+Size, &M->getSymbolTable())) {
-	delete M; return true;
-      }
+      if (ParseSymbolTable(Buf, Buf+Size, &F->getSymbolTable()))
+	return true;
       break;
 
     default:
@@ -353,41 +361,21 @@ bool BytecodeParser::ParseFunction(const uchar *&Buf, const uchar *EndBuf) {
 
     if (align32(Buf, EndBuf)) {
       Error = "Error aligning Function level block!";
-      delete M;    // Malformed bc file, read past end of block.
-      return true;
+      return true;   // Malformed bc file, read past end of block.
     }
   }
 
-  if (postResolveValues(LateResolveValues) ||
-      postResolveValues(LateResolveModuleValues)) {
+  if (postResolveValues(LateResolveValues)) {
     Error = "Error resolving function values!";
-    delete M; return true;     // Unresolvable references!
+    return true;     // Unresolvable references!
   }
 
-  Value *FunctionPHolder = getValue(PMTy, MethSlot, false);
-  assert(FunctionPHolder && "Something is broken, no placeholder found!");
-  assert(isa<Function>(FunctionPHolder) && "Not a function?");
-
-  unsigned type;  // Type slot
-  assert(!getTypeSlot(MTy, type) && "How can meth type not exist?");
-  getTypeSlot(PMTy, type);
-
-  TheModule->getFunctionList().push_back(M);
-
-  // Replace placeholder with the real function pointer...
-  ModuleValues[type][MethSlot] = M;
+  ResolveReferencesToValue(F, FunctionSlot);
 
   // Clear out function level types...
   FunctionTypeValues.clear();
 
-  // If anyone is using the placeholder make them use the real function instead
-  FunctionPHolder->replaceAllUsesWith(M);
-
-  // We don't need the placeholder anymore!
-  delete FunctionPHolder;
-
-  ResolveReferencesToValue(M, MethSlot);
-
+  freeTable(Values);
   return false;
 }
 
@@ -409,40 +397,25 @@ bool BytecodeParser::ParseModuleGlobalInfo(const uchar *&Buf, const uchar *End){
       return true; 
     }
 
-    const PointerType *PTy = cast<const PointerType>(Ty);
-    const Type *ElTy = PTy->getElementType();
-
-    Constant *Initializer = 0;
-    if (VarType & 2) { // Does it have an initalizer?
-      // Do not improvise... values must have been stored in the constant pool,
-      // which should have been read before now.
-      //
-      unsigned InitSlot;
-      if (read_vbr(Buf, End, InitSlot)) return true;
-      
-      Value *V = getValue(ElTy, InitSlot, false);
-      if (V == 0) return true;
-      Initializer = cast<Constant>(V);
-    }
+    const Type *ElTy = cast<PointerType>(Ty)->getElementType();
 
     // Create the global variable...
     GlobalVariable *GV = new GlobalVariable(ElTy, VarType & 1, VarType & 4,
-					    Initializer);
+                                            0, "", TheModule);
     int DestSlot = insertValue(GV, ModuleValues);
     if (DestSlot == -1) return true;
-
-    TheModule->getGlobalList().push_back(GV);
-
+    BCR_TRACE(2, "Global Variable of type: " << *Ty << "\n");
     ResolveReferencesToValue(GV, (unsigned)DestSlot);
 
-    BCR_TRACE(2, "Global Variable of type: " << PTy->getDescription() 
-	      << " into slot #" << DestSlot << "\n");
-
+    if (VarType & 2) { // Does it have an initalizer?
+      unsigned InitSlot;
+      if (read_vbr(Buf, End, InitSlot)) return true;
+      GlobalInits.push_back(std::make_pair(GV, InitSlot));
+    }
     if (read_vbr(Buf, End, VarType)) return true;
   }
 
-  // Read the function signatures for all of the functions that are coming, and 
-  // create fillers in the Value tables.
+  // Read the function objects for all of the functions that are coming
   unsigned FnSignature;
   if (read_vbr(Buf, End, FnSignature)) return true;
   while (FnSignature != Type::VoidTyID) { // List is terminated by Void
@@ -462,20 +435,16 @@ bool BytecodeParser::ParseModuleGlobalInfo(const uchar *&Buf, const uchar *End){
     // this placeholder is replaced.
 
     // Insert the placeholder...
-    Value *Val = new FunctionPHolder(Ty, 0);
-    if (insertValue(Val, ModuleValues) == -1) return true;
+    Function *Func = new Function(cast<FunctionType>(Ty), false, "", TheModule);
+    int DestSlot = insertValue(Func, ModuleValues);
+    if (DestSlot == -1) return true;
+    ResolveReferencesToValue(Func, (unsigned)DestSlot);
 
-    // Figure out which entry of its typeslot it went into...
-    unsigned TypeSlot;
-    if (getTypeSlot(Val->getType(), TypeSlot)) return true;
-
-    unsigned SlotNo = ModuleValues[TypeSlot].size()-1;
-    
-    // Keep track of this information in a linked list that is emptied as 
-    // functions are loaded...
+    // Keep track of this information in a list that is emptied as functions are
+    // loaded...
     //
-    FunctionSignatureList.push_back(
-           std::make_pair(cast<const PointerType>(Val->getType()), SlotNo));
+    FunctionSignatureList.push_back(std::make_pair(Func, DestSlot));
+
     if (read_vbr(Buf, End, FnSignature)) return true;
     BCR_TRACE(2, "Function of type: " << Ty << "\n");
   }
@@ -505,12 +474,17 @@ bool BytecodeParser::ParseVersionInfo(const uchar *&Buf, const uchar *EndBuf) {
 
   switch (RevisionNum) {
   case 0:                  // Initial revision
+    // Version #0 didn't have any of the flags stored correctly, and in fact as
+    // only valid with a 14 in the flags values.  Also, it does not support
+    // encoding zero initializers for arrays compactly.
+    //
     if (Version != 14) return true;  // Unknown revision 0 flags?
     FirstDerivedTyID = 14;
     HasImplicitZeroInitializer = false;
     isBigEndian = hasLongPointers = true;
     break;
   case 1:
+    // Version #1 has two bit fields: isBigEndian and hasLongPointers
     FirstDerivedTyID = 14;
     break;
   default:
@@ -544,20 +518,26 @@ bool BytecodeParser::ParseModule(const uchar *Buf, const uchar *EndBuf) {
     const unsigned char *OldBuf = Buf;
     if (readBlock(Buf, EndBuf, Type, Size)) return true;
     switch (Type) {
+    case BytecodeFormat::GlobalTypePlane:
+      BCR_TRACE(1, "BLOCK BytecodeFormat::GlobalTypePlane: {\n");
+      if (ParseGlobalTypes(Buf, Buf+Size)) return true;
+      break;
+
+    case BytecodeFormat::ModuleGlobalInfo:
+      BCR_TRACE(1, "BLOCK BytecodeFormat::ModuleGlobalInfo: {\n");
+      if (ParseModuleGlobalInfo(Buf, Buf+Size)) return true;
+      break;
+
     case BytecodeFormat::ConstantPool:
       BCR_TRACE(1, "BLOCK BytecodeFormat::ConstantPool: {\n");
       if (ParseConstantPool(Buf, Buf+Size, ModuleValues, ModuleTypeValues))
 	return true;
       break;
 
-    case BytecodeFormat::ModuleGlobalInfo:
-      BCR_TRACE(1, "BLOCK BytecodeFormat::ModuleGlobalInfo: {\n");
-      if (ParseModuleGlobalInfo(Buf, Buf+Size))	return true;
-      break;
-
     case BytecodeFormat::Function: {
       BCR_TRACE(1, "BLOCK BytecodeFormat::Function: {\n");
-      if (ParseFunction(Buf, Buf+Size)) return true;  // Error parsing function
+      if (ParseFunction(Buf, Buf+Size))
+        return true;  // Error parsing function
       break;
     }
 
@@ -577,6 +557,21 @@ bool BytecodeParser::ParseModule(const uchar *Buf, const uchar *EndBuf) {
     if (align32(Buf, EndBuf)) return true;
   }
 
+  // After the module constant pool has been read, we can safely initialize
+  // global variables...
+  while (!GlobalInits.empty()) {
+    GlobalVariable *GV = GlobalInits.back().first;
+    unsigned Slot = GlobalInits.back().second;
+    GlobalInits.pop_back();
+
+    // Look up the initializer value...
+    if (Value *V = getValue(GV->getType()->getElementType(), Slot, false)) {
+      if (GV->hasInitializer()) return true;
+      GV->setInitializer(cast<Constant>(V));
+    } else
+      return true;
+  }
+
   if (!FunctionSignatureList.empty()) {     // Expected more functions!
     Error = "Function expected, but bytecode stream at end!";
     return true;
@@ -592,7 +587,6 @@ static inline Module *Error(std::string *ErrorStr, const char *Message) {
 }
 
 Module *BytecodeParser::ParseBytecode(const uchar *Buf, const uchar *EndBuf) {
-  LateResolveValues.clear();
   unsigned Sig;
   // Read and check signature...
   if (read(Buf, EndBuf, Sig) ||

@@ -316,7 +316,11 @@ bool BytecodeParser::parseConstantValue(const uchar *&Buf, const uchar *EndBuf,
   case Type::PointerTyID: {
     const PointerType *PT = cast<const PointerType>(Ty);
     unsigned SubClass;
-    if (read_vbr(Buf, EndBuf, SubClass)) return true;
+    if (HasImplicitZeroInitializer)
+      SubClass = 1;
+    else
+      if (read_vbr(Buf, EndBuf, SubClass)) return true;
+
     switch (SubClass) {
     case 0:    // ConstantPointerNull value...
       V = ConstantPointerNull::get(PT);
@@ -333,6 +337,10 @@ bool BytecodeParser::parseConstantValue(const uchar *&Buf, const uchar *EndBuf,
       if (Val) {
         if (!(GV = dyn_cast<GlobalValue>(Val))) return true;
         BCR_TRACE(5, "Value Found in ValueTable!\n");
+      } else if (RevisionNum > 0) {
+        // Revision #0 could have forward references to globals that were wierd.
+        // We got rid of this in subsequent revs.
+        return true;
       } else {         // Nope... find or create a forward ref. for it
         GlobalRefsType::iterator I = GlobalRefs.find(std::make_pair(PT, Slot));
 
@@ -341,12 +349,12 @@ bool BytecodeParser::parseConstantValue(const uchar *&Buf, const uchar *EndBuf,
           GV = cast<GlobalValue>(I->second);
         } else {
           BCR_TRACE(5, "Creating new forward ref to a global variable!\n");
-
-	  // Create a placeholder for the global variable reference...
+          
+          // Create a placeholder for the global variable reference...
           GlobalVariable *GVar =
             new GlobalVariable(PT->getElementType(), false, true);
           
-	  // Keep track of the fact that we have a forward ref to recycle it
+          // Keep track of the fact that we have a forward ref to recycle it
           GlobalRefs.insert(std::make_pair(std::make_pair(PT, Slot), GVar));
           
           // Must temporarily push this value into the module table...
@@ -354,6 +362,7 @@ bool BytecodeParser::parseConstantValue(const uchar *&Buf, const uchar *EndBuf,
           GV = GVar;
         }
       }
+
       V = ConstantPointerRef::get(GV);
       break;
     }
@@ -375,6 +384,11 @@ bool BytecodeParser::parseConstantValue(const uchar *&Buf, const uchar *EndBuf,
   return false;
 }
 
+bool BytecodeParser::ParseGlobalTypes(const uchar *&Buf, const uchar *EndBuf) {
+  ValueTable T;
+  return ParseConstantPool(Buf, EndBuf, T, ModuleTypeValues);
+}
+
 bool BytecodeParser::ParseConstantPool(const uchar *&Buf, const uchar *EndBuf,
 				       ValueTable &Tab, 
 				       TypeValuesListTy &TypeTab) {
@@ -391,20 +405,19 @@ bool BytecodeParser::ParseConstantPool(const uchar *&Buf, const uchar *EndBuf,
       if (parseTypeConstants(Buf, EndBuf, TypeTab, NumEntries)) return true;
     } else {
       for (unsigned i = 0; i < NumEntries; ++i) {
-	Constant *I;
+	Constant *C;
         int Slot;
-	if (parseConstantValue(Buf, EndBuf, Ty, I)) return true;
-        assert(I && "parseConstantValue returned NULL!");
-	BCR_TRACE(4, "Read Constant: '" << I << "'\n");
-	if ((Slot = insertValue(I, Tab)) < 0) return true;
+	if (parseConstantValue(Buf, EndBuf, Ty, C)) return true;
+        assert(C && "parseConstantValue returned NULL!");
+	BCR_TRACE(4, "Read Constant: '" << *C << "'\n");
+	if ((Slot = insertValue(C, Tab)) == -1) return true;
 
         // If we are reading a function constant table, make sure that we adjust
         // the slot number to be the real global constant number.
         //
-        if (&Tab != &ModuleValues)
-          Slot += ModuleValues[Typ].size();
-
-        ResolveReferencesToValue(I, (unsigned)Slot);
+        if (&Tab != &ModuleValues && Typ < ModuleValues.size())
+          Slot += ModuleValues[Typ]->size();
+        ResolveReferencesToValue(C, (unsigned)Slot);
       }
     }
   }

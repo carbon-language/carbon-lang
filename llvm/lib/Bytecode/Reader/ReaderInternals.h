@@ -18,7 +18,8 @@
 #define TRACE_LEVEL 0
 
 #if TRACE_LEVEL    // ByteCodeReading_TRACEer
-#define BCR_TRACE(n, X) if (n < TRACE_LEVEL) std::cerr << std::string(n*2, ' ') << X
+#define BCR_TRACE(n, X) \
+    if (n < TRACE_LEVEL) std::cerr << std::string(n*2, ' ') << X
 #else
 #define BCR_TRACE(n, X)
 #endif
@@ -45,6 +46,11 @@ public:
     // Define this in case we don't see a ModuleGlobalInfo block.
     FirstDerivedTyID = Type::FirstDerivedTyID;
   }
+  ~BytecodeParser() {
+    freeTable(Values);
+    freeTable(LateResolveValues);
+    freeTable(ModuleValues);
+  }
 
   Module *ParseBytecode(const uchar *Buf, const uchar *EndBuf);
 
@@ -55,6 +61,23 @@ public:
   }
 
 private:          // All of this data is transient across calls to ParseBytecode
+  struct ValueList : public User {
+    ValueList() : User(Type::TypeTy, Value::TypeVal) {
+    }
+    ~ValueList() {}
+
+    // vector compatibility methods
+    unsigned size() const { return getNumOperands(); }
+    void push_back(Value *V) { Operands.push_back(Use(V, this)); }
+    Value *back() const { return Operands.back(); }
+    void pop_back() { Operands.pop_back(); }
+    bool empty() const { return Operands.empty(); }
+
+    virtual void print(std::ostream& OS) const {
+      OS << "Bytecode Reader UseHandle!";
+    }
+  };
+
   Module *TheModule;   // Current Module being read into...
   
   // Information about the module, extracted from the bytecode revision number.
@@ -63,18 +86,16 @@ private:          // All of this data is transient across calls to ParseBytecode
   bool HasImplicitZeroInitializer;  // Is entry 0 of every slot implicity zeros?
   bool isBigEndian, hasLongPointers;// Information about the target compiled for
 
-  typedef std::vector<Value *> ValueList;
-  typedef std::vector<ValueList> ValueTable;
+  typedef std::vector<ValueList*> ValueTable;
   ValueTable Values, LateResolveValues;
-  ValueTable ModuleValues, LateResolveModuleValues;
+  ValueTable ModuleValues;
 
   // GlobalRefs - This maintains a mapping between <Type, Slot #>'s and forward
   // references to global values or constants.  Such values may be referenced
   // before they are defined, and if so, the temporary object that they
   // represent is held here.
   //
-  typedef std::map<std::pair<const Type *, unsigned>,
-                   Value*>  GlobalRefsType;
+  typedef std::map<std::pair<const Type *, unsigned>, Value*>  GlobalRefsType;
   GlobalRefsType GlobalRefs;
 
   // TypesLoaded - This vector mirrors the Values[TypeTyID] plane.  It is used
@@ -84,14 +105,27 @@ private:          // All of this data is transient across calls to ParseBytecode
   TypeValuesListTy ModuleTypeValues;
   TypeValuesListTy FunctionTypeValues;
 
-  // When the ModuleGlobalInfo section is read, we load the type of each
-  // function and the 'ModuleValues' slot that it lands in.  We then load a
-  // placeholder into its slot to reserve it.  When the function is loaded, this
-  // placeholder is replaced.
+  // When the ModuleGlobalInfo section is read, we create a function object for
+  // each function in the module.  When the function is loaded, this function is
+  // filled in.
   //
-  std::vector<std::pair<const PointerType *, unsigned> > FunctionSignatureList;
+  std::vector<std::pair<Function*, unsigned> > FunctionSignatureList;
+
+  // Constant values are read in after global variables.  Because of this, we
+  // must defer setting the initializers on global variables until after module
+  // level constants have been read.  In the mean time, this list keeps track of
+  // what we must do.
+  //
+  std::vector<std::pair<GlobalVariable*, unsigned> > GlobalInits;
 
 private:
+  void freeTable(ValueTable &Tab) {
+    while (!Tab.empty()) {
+      delete Tab.back();
+      Tab.pop_back();
+    }
+  }
+
   bool ParseModule          (const uchar * Buf, const uchar *End);
   bool ParseVersionInfo     (const uchar *&Buf, const uchar *End);
   bool ParseModuleGlobalInfo(const uchar *&Buf, const uchar *End);
@@ -102,6 +136,7 @@ private:
                            BasicBlock *BB /*HACK*/);
   bool ParseRawInst       (const uchar *&Buf, const uchar *End, RawInst &);
 
+  bool ParseGlobalTypes(const uchar *&Buf, const uchar *EndBuf);
   bool ParseConstantPool(const uchar *&Buf, const uchar *EndBuf,
 			 ValueTable &Tab, TypeValuesListTy &TypeTab);
   bool parseConstantValue(const uchar *&Buf, const uchar *End,
@@ -114,7 +149,8 @@ private:
   const Type *getType(unsigned ID);
   Constant   *getConstantValue(const Type *Ty, unsigned num);
 
-  int insertValue(Value *D, std::vector<ValueList> &D);  // -1 = Failure
+  int insertValue(Value *V, ValueTable &Table);  // -1 = Failure
+  void setValueTo(ValueTable &D, unsigned Slot, Value *V);
   bool postResolveValues(ValueTable &ValTab);
 
   bool getTypeSlot(const Type *Ty, unsigned &Slot);
@@ -152,12 +188,6 @@ struct BBPlaceHolderHelper : public BasicBlock {
   }
 };
 
-struct FunctionPlaceHolderHelper : public Function {
-  FunctionPlaceHolderHelper(const Type *Ty) 
-    : Function(cast<const FunctionType>(Ty), true) {
-  }
-};
-
 struct ConstantPlaceHolderHelper : public Constant {
   ConstantPlaceHolderHelper(const Type *Ty)
     : Constant(Ty) {}
@@ -166,7 +196,6 @@ struct ConstantPlaceHolderHelper : public Constant {
 
 typedef PlaceholderDef<InstPlaceHolderHelper>  ValPHolder;
 typedef PlaceholderDef<BBPlaceHolderHelper>    BBPHolder;
-typedef PlaceholderDef<FunctionPlaceHolderHelper>  FunctionPHolder;
 typedef PlaceholderDef<ConstantPlaceHolderHelper>  ConstPHolder;
 
 
@@ -177,7 +206,6 @@ static inline unsigned getValueIDNumberFromPlaceHolder(Value *Val) {
   // else discriminate by type
   switch (Val->getType()->getPrimitiveID()) {
   case Type::LabelTyID:    return ((BBPHolder*)Val)->getID();
-  case Type::FunctionTyID: return ((FunctionPHolder*)Val)->getID();
   default:                 return ((ValPHolder*)Val)->getID();
   }
 }
