@@ -537,6 +537,8 @@ void Emitter::emitInstruction(const MachineInstr &MI) {
         unsigned Address = MCE.getGlobalValueAddress(MO.getSymbolName());
         assert(Address && "Unknown external symbol!");
         emitMaybePCRelativeValue(Address, MO.isPCRelative());
+      } else if (MO.isImmediate()) {
+        emitConstant(MO.getImmedValue(), sizeOfImm(Desc));        
       } else {
 	assert(0 && "Unknown RawFrm operand!");
       }
