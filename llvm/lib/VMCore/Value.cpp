@@ -83,44 +83,22 @@ User *Value::use_remove(use_iterator &I) {
   return i;
 }
 
-void
-Value::dump() const
-{
-  DebugValue(*this);
-}
-
-ostream&
-operator<<(ostream &o, const Value& I)
-{
-  switch (I.getValueType()) {
-  case Value::TypeVal:       return o << I.castTypeAsserting();
-  case Value::ConstantVal:   WriteToAssembly((const ConstPoolVal*)&I,o);break;
-  case Value::MethodArgumentVal: return o << I.getType() << " "<< I.getName();
-  case Value::InstructionVal:WriteToAssembly((const Instruction *)&I, o);break;
-  case Value::BasicBlockVal: WriteToAssembly((const BasicBlock  *)&I, o);break;
-  case Value::MethodVal:     WriteToAssembly((const Method      *)&I, o);break;
-  case Value::GlobalVal:     WriteToAssembly((const GlobalVariable*)&I,o);break;
-  case Value::ModuleVal:     WriteToAssembly((const Module      *)&I,o); break;
-  default: return o << "<unknown value type: " << I.getValueType() << ">";
-  }
-  return o;
-}
-
-void
-DebugValue(const Value* V)
-{
+#ifndef NDEBUG      // Only in -g mode...
+void DebugValue(const Value *V) {
   if (V)
     cerr << *V << endl;
   else
     cerr << "<NULL value>" << endl;
 }
 
-void
-DebugValue(const Value& V)
-{
+void DebugValue(const Value &V) {
   cerr << V << endl;
 }
 
+void Value::dump() const {
+  DebugValue(*this);
+}
+#endif
 
 //===----------------------------------------------------------------------===//
 //                                 User Class
