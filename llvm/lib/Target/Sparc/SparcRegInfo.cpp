@@ -302,7 +302,7 @@ void UltraSparcRegInfo::suggestReg4CallAddr(const MachineInstr * CallMI,
   // create a new LR for the return address and color it
   
   LiveRange * RetAddrLR = new LiveRange();  
-  RetAddrLR->add( RetAddrVal );
+  RetAddrLR->insert( RetAddrVal );
   unsigned RegClassID = getRegClassIDOfValue( RetAddrVal );
   RetAddrLR->setRegClass( RCList[RegClassID] );
   RetAddrLR->setColor(getUnifiedRegNum(IntRegClassID,SparcIntRegOrder::o7));
@@ -532,7 +532,7 @@ void UltraSparcRegInfo::suggestRegs4CallArgs(const MachineInstr *CallMI,
 
     // create a new LR for the return value
     LiveRange *RetValLR = new LiveRange();  
-    RetValLR->add(RetVal);
+    RetValLR->insert(RetVal);
     unsigned RegClassID = getRegClassIDOfValue(RetVal);
     RetValLR->setRegClass(RCList[RegClassID]);
     LRI.addLRToMap(RetVal, RetValLR);
