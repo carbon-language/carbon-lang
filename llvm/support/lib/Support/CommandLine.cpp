@@ -435,6 +435,22 @@ void Option::addArgument(const char *ArgStr) {
   }
 }
 
+void Option::removeArgument(const char *ArgStr) {
+  if (ArgStr[0]) {
+    assert(getOpts()[ArgStr] == this && "Arg not in map!");
+    getOpts().erase(ArgStr);
+  } else if (getFormattingFlag() == Positional) {
+    vector<Option*>::iterator I =
+      std::find(getPositionalOpts().begin(), getPositionalOpts().end(), this);
+    assert(I != getPositionalOpts().end() && "Arg not registered!");
+    getPositionalOpts().erase(I);
+  } else if (getNumOccurancesFlag() == ConsumeAfter) {
+    assert(!getPositionalOpts().empty() && getPositionalOpts()[0] == this &&
+           "Arg not registered correctly!");
+    getPositionalOpts().erase(getPositionalOpts().begin());
+  }
+}
+
 
 // getValueStr - Get the value description string, using "DefaultMsg" if nothing
 // has been specified yet.
@@ -570,6 +586,22 @@ void parser<string>::printOptionInfo(const Option &O,
 
 // generic_parser_base implementation
 //
+
+// findOption - Return the option number corresponding to the specified
+// argument string.  If the option is not found, getNumOptions() is returned.
+//
+unsigned generic_parser_base::findOption(const char *Name) {
+  unsigned i = 0, e = getNumOptions();
+  string N(Name);
+
+  while (i != e)
+    if (getOption(i) == N)
+      return i;
+    else
+      ++i;
+  return e;
+}
+
 
 // Return the width of the option tag for printing...
 unsigned generic_parser_base::getOptionWidth(const Option &O) const {
