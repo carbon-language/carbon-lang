@@ -173,8 +173,12 @@ public:
   
   virtual unsigned getFirstIndexOperandNumber() const = 0;
 
+  inline unsigned getNumIndices() const {  // Note: always non-negative
+    return (getNumOperands() - getFirstIndexOperandNumber());
+  }
+  
   inline bool hasIndices() const {
-    return getNumOperands() > getFirstIndexOperandNumber();
+    return getNumIndices() > 0;
   }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
