@@ -61,9 +61,9 @@ I(ADDrr32     , "addl",               0, 0)           // R32 += R32   01/r
 I(SUBrr8      , "subb",               0, 0)           // R8  -= R8    2A/r
 I(SUBrr16     , "subw",               0, 0)           // R16 -= R16   2B/r
 I(SUBrr32     , "subl",               0, 0)           // R32 -= R32   2B/r
-I(MULrr8      , "mulb",               0, 0)           // AX   = AL*R8  F6/4
-I(MULrr16     , "mulw",               0, 0)           // DX:AX= AX*R16 F7/4
-I(MULrr32     , "mull",               0, 0)           // ED:EA= EA*R32 F7/4
+I(MULrr8      , "mulb",               0, X86II::Void) // AX   = AL*R8  F6/4
+I(MULrr16     , "mulw",               0, X86II::Void) // DX:AX= AX*R16 F7/4
+I(MULrr32     , "mull",               0, X86II::Void) // ED:EA= EA*R32 F7/4
 
 // unsigned division/remainder
 I(DIVrr8      , "divb",               0, X86II::Void) // AX/r8= AL&AH  F6/6
