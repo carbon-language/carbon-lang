@@ -106,21 +106,24 @@ void* DynamicLibrary::SearchForAddressOfSymbol(const char* symbolName) {
   // there is only a small handful of them.
 #ifdef __APPLE__
   {
-    extern void *__ashldi3;    if (Name == "__ashldi3")    return &__ashldi3;
-    extern void *__ashrdi3;    if (Name == "__ashrdi3")    return &__ashrdi3;
-    extern void *__cmpdi2;     if (Name == "__cmpdi2")     return &__cmpdi2;
-    extern void *__divdi3;     if (Name == "__divdi3")     return &__divdi3;
-    extern void *__eprintf;    if (Name == "__eprintf")    return &__eprintf;
-    extern void *__fixdfdi;    if (Name == "__fixdfdi")    return &__fixdfdi;
-    extern void *__fixsfdi;    if (Name == "__fixsfdi")    return &__fixsfdi;
-    extern void *__fixunsdfdi; if (Name == "__fixunsdfdi") return &__fixunsdfdi;
-    extern void *__fixunssfdi; if (Name == "__fixunssfdi") return &__fixunssfdi;
-    extern void *__floatdidf;  if (Name == "__floatdidf")  return &__floatdidf;
-    extern void *__floatdisf;  if (Name == "__floatdisf")  return &__floatdisf;
-    extern void *__lshrdi3;    if (Name == "__lshrdi3")    return &__lshrdi3;
-    extern void *__moddi3;     if (Name == "__moddi3")     return &__moddi3;
-    extern void *__udivdi3;    if (Name == "__udivdi3")    return &__udivdi3;
-    extern void *__umoddi3;    if (Name == "__umoddi3")    return &__umoddi3;
+#define EXPLICIT_SYMBOL(SYM) \
+   extern void *SYM; if (!strcmp(symbolName, #SYM)) return &SYM
+    EXPLICIT_SYMBOL(__ashldi3);
+    EXPLICIT_SYMBOL(__ashrdi3);
+    EXPLICIT_SYMBOL(__cmpdi2);
+    EXPLICIT_SYMBOL(__divdi3);
+    EXPLICIT_SYMBOL(__eprintf);
+    EXPLICIT_SYMBOL(__fixdfdi);
+    EXPLICIT_SYMBOL(__fixsfdi);
+    EXPLICIT_SYMBOL(__fixunsdfdi);
+    EXPLICIT_SYMBOL(__fixunssfdi);
+    EXPLICIT_SYMBOL(__floatdidf);
+    EXPLICIT_SYMBOL(__floatdisf);
+    EXPLICIT_SYMBOL(__lshrdi3);
+    EXPLICIT_SYMBOL(__moddi3);
+    EXPLICIT_SYMBOL(__udivdi3);
+    EXPLICIT_SYMBOL(__umoddi3);
+#undef EXPLICIT_SYMBOL
   }
 #endif
 
