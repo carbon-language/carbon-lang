@@ -170,6 +170,8 @@ def JBE : IBr<0x86, (ops i32imm:$dst), "jbe $dst">, TB;
 def JA  : IBr<0x87, (ops i32imm:$dst), "ja $dst">, TB;
 def JS  : IBr<0x88, (ops i32imm:$dst), "js $dst">, TB;
 def JNS : IBr<0x89, (ops i32imm:$dst), "jns $dst">, TB;
+def JP  : IBr<0x8A, (ops i32imm:$dst), "jp $dst">, TB;
+def JNP : IBr<0x8B, (ops i32imm:$dst), "jnp $dst">, TB;
 def JL  : IBr<0x8C, (ops i32imm:$dst), "jl $dst">, TB;
 def JGE : IBr<0x8D, (ops i32imm:$dst), "jge $dst">, TB;
 def JLE : IBr<0x8E, (ops i32imm:$dst), "jle $dst">, TB;
@@ -556,8 +558,10 @@ let isTwoAddress = 0 in {
 }
 
 def INC8r  : I<0xFE, MRM0r, (ops R8 :$dst, R8 :$src), "inc{b} $dst">;
+let isConvertibleToThreeAddress = 1 in {   // Can transform into LEA.
 def INC16r : I<0xFF, MRM0r, (ops R16:$dst, R16:$src), "inc{w} $dst">, OpSize;
 def INC32r : I<0xFF, MRM0r, (ops R32:$dst, R32:$src), "inc{l} $dst">;
+}
 let isTwoAddress = 0 in {
   def INC8m  : I<0xFE, MRM0m, (ops i8mem :$dst), "inc{b} $dst">;
   def INC16m : I<0xFF, MRM0m, (ops i16mem:$dst), "inc{w} $dst">, OpSize;
@@ -565,8 +569,10 @@ let isTwoAddress = 0 in {
 }
 
 def DEC8r  : I<0xFE, MRM1r, (ops R8 :$dst, R8 :$src), "dec{b} $dst">;
+let isConvertibleToThreeAddress = 1 in {   // Can transform into LEA.
 def DEC16r : I<0xFF, MRM1r, (ops R16:$dst, R16:$src), "dec{w} $dst">, OpSize;
 def DEC32r : I<0xFF, MRM1r, (ops R32:$dst, R32:$src), "dec{l} $dst">;
+}
 
 let isTwoAddress = 0 in {
   def DEC8m  : I<0xFE, MRM1m, (ops i8mem :$dst), "dec{b} $dst">;
@@ -575,6 +581,7 @@ let isTwoAddress = 0 in {
 }
 
 // Logical operators...
+let isCommutable = 1 in {   // X = AND Y, Z   --> X = AND Z, Y
 def AND8rr   : I<0x20, MRMDestReg,
                 (ops R8 :$dst, R8 :$src1, R8 :$src2),
                 "and{b} {$src2, $dst|$dst, $src2}">;
@@ -584,6 +591,7 @@ def AND16rr  : I<0x21, MRMDestReg,
 def AND32rr  : I<0x21, MRMDestReg, 
                  (ops R32:$dst, R32:$src1, R32:$src2),
                  "and{l} {$src2, $dst|$dst, $src2}">;
+}
 
 def AND8rm   : I<0x22, MRMSrcMem, 
                  (ops R8 :$dst, R8 :$src1, i8mem :$src2),
@@ -639,12 +647,14 @@ let isTwoAddress = 0 in {
 }
 
 
+let isCommutable = 1 in {   // X = OR Y, Z   --> X = OR Z, Y
 def OR8rr    : I<0x08, MRMDestReg, (ops R8 :$dst, R8 :$src1, R8 :$src2),
                  "or{b} {$src2, $dst|$dst, $src2}">;
 def OR16rr   : I<0x09, MRMDestReg, (ops R16:$dst, R16:$src1, R16:$src2),
                  "or{w} {$src2, $dst|$dst, $src2}">, OpSize;
 def OR32rr   : I<0x09, MRMDestReg, (ops R32:$dst, R32:$src1, R32:$src2),
                  "or{l} {$src2, $dst|$dst, $src2}">;
+}
 def OR8rm    : I<0x0A, MRMSrcMem , (ops R8 :$dst, R8 :$src1, i8mem :$src2),
                  "or{b} {$src2, $dst|$dst, $src2}">;
 def OR16rm   : I<0x0B, MRMSrcMem , (ops R16:$dst, R16:$src1, i16mem:$src2),
@@ -683,6 +693,7 @@ let isTwoAddress = 0 in {
 }
 
 
+let isCommutable = 1 in {   // X = XOR Y, Z   --> X = XOR Z, Y
 def XOR8rr   : I<0x30, MRMDestReg,
                  (ops R8 :$dst, R8 :$src1, R8 :$src2),
                  "xor{b} {$src2, $dst|$dst, $src2}">;
@@ -692,6 +703,8 @@ def XOR16rr  : I<0x31, MRMDestReg,
 def XOR32rr  : I<0x31, MRMDestReg, 
                  (ops R32:$dst, R32:$src1, R32:$src2), 
                  "xor{l} {$src2, $dst|$dst, $src2}">;
+}
+
 def XOR8rm   : I<0x32, MRMSrcMem , 
                  (ops R8 :$dst, R8:$src1, i8mem :$src2), 
                  "xor{b} {$src2, $dst|$dst, $src2}">;
@@ -752,12 +765,15 @@ def SHL16rCL : I<0xD3, MRM4r, (ops R16:$dst, R16:$src),
                  "shl{w} {%cl, $dst|$dst, %CL}">, Imp<[CL],[]>, OpSize;
 def SHL32rCL : I<0xD3, MRM4r, (ops R32:$dst, R32:$src),
                  "shl{l} {%cl, $dst|$dst, %CL}">, Imp<[CL],[]>;
+
 def SHL8ri   : Ii8<0xC0, MRM4r, (ops R8 :$dst, R8 :$src1, i8imm:$src2),
                    "shl{b} {$src2, $dst|$dst, $src2}">;
+let isConvertibleToThreeAddress = 1 in {   // Can transform into LEA.
 def SHL16ri  : Ii8<0xC1, MRM4r, (ops R16:$dst, R16:$src1, i8imm:$src2),
                    "shl{w} {$src2, $dst|$dst, $src2}">, OpSize;
 def SHL32ri  : Ii8<0xC1, MRM4r, (ops R32:$dst, R32:$src1, i8imm:$src2),
                    "shl{l} {$src2, $dst|$dst, $src2}">;
+}
 
 let isTwoAddress = 0 in {
   def SHL8mCL  : I<0xD2, MRM4m, (ops i8mem :$dst),
@@ -860,13 +876,17 @@ let isTwoAddress = 0 in {
 }
 
 
-// Arithmetic...
+// Arithmetic.
+let isCommutable = 1 in {   // X = ADD Y, Z   --> X = ADD Z, Y
 def ADD8rr   : I<0x00, MRMDestReg, (ops R8 :$dst, R8 :$src1, R8 :$src2),
                  "add{b} {$src2, $dst|$dst, $src2}">;
+let isConvertibleToThreeAddress = 1 in {   // Can transform into LEA.
 def ADD16rr  : I<0x01, MRMDestReg, (ops R16:$dst, R16:$src1, R16:$src2),
                  "add{w} {$src2, $dst|$dst, $src2}">, OpSize;
 def ADD32rr  : I<0x01, MRMDestReg, (ops R32:$dst, R32:$src1, R32:$src2),
                  "add{l} {$src2, $dst|$dst, $src2}">;
+} // end isConvertibleToThreeAddress
+} // end isCommutable
 def ADD8rm   : I<0x02, MRMSrcMem, (ops R8 :$dst, R8 :$src1, i8mem :$src2),
                  "add{b} {$src2, $dst|$dst, $src2}">;
 def ADD16rm  : I<0x03, MRMSrcMem, (ops R16:$dst, R16:$src1, i16mem:$src2),
@@ -876,10 +896,13 @@ def ADD32rm  : I<0x03, MRMSrcMem, (ops R32:$dst, R32:$src1, i32mem:$src2),
 
 def ADD8ri   : Ii8<0x80, MRM0r, (ops R8:$dst, R8:$src1, i8imm:$src2),
                    "add{b} {$src2, $dst|$dst, $src2}">;
+
+let isConvertibleToThreeAddress = 1 in {   // Can transform into LEA.
 def ADD16ri  : Ii16<0x81, MRM0r, (ops R16:$dst, R16:$src1, i16imm:$src2),
                     "add{w} {$src2, $dst|$dst, $src2}">, OpSize;
 def ADD32ri  : Ii32<0x81, MRM0r, (ops R32:$dst, R32:$src1, i32imm:$src2),
                     "add{l} {$src2, $dst|$dst, $src2}">;
+}
 
 def ADD16ri8 : Ii8<0x83, MRM0r, (ops R16:$dst, R16:$src1, i8imm:$src2),
                    "add{w} {$src2, $dst|$dst, $src2}">, OpSize;
@@ -1039,12 +1062,14 @@ def IMUL32rmi8 : Ii8<0x6B, MRMSrcMem,                       // R32 = [mem32]*I8
 //===----------------------------------------------------------------------===//
 // Test instructions are just like AND, except they don't generate a result.
 //
+let isCommutable = 1 in {   // TEST X, Y   --> TEST Y, X
 def TEST8rr  : I<0x84, MRMDestReg, (ops R8:$src1, R8:$src2),
                  "test{b} {$src2, $src1|$src1, $src2}">;
 def TEST16rr : I<0x85, MRMDestReg, (ops R16:$src1, R16:$src2),
                  "test{w} {$src2, $src1|$src1, $src2}">, OpSize;
 def TEST32rr : I<0x85, MRMDestReg, (ops R32:$src1, R32:$src2),
                  "test{l} {$src2, $src1|$src1, $src2}">;
+}
 def TEST8mr  : I<0x84, MRMDestMem, (ops i8mem :$src1, R8 :$src2),
                  "test{b} {$src2, $src1|$src1, $src2}">;
 def TEST16mr : I<0x85, MRMDestMem, (ops i16mem:$src1, R16:$src2),
@@ -1119,6 +1144,10 @@ def SETPr    : I<0x9A, MRM0r,
                  (ops R8   :$dst), "setp $dst">, TB;    // R8 = parity
 def SETPm    : I<0x9A, MRM0m, 
                  (ops i8mem:$dst), "setp $dst">, TB;    // [mem8] = parity
+def SETNPr   : I<0x9B, MRM0r, 
+                 (ops R8   :$dst), "setnp $dst">, TB;   // R8 = not parity
+def SETNPm   : I<0x9B, MRM0m, 
+                 (ops i8mem:$dst), "setnp $dst">, TB;   // [mem8] = not parity
 def SETLr    : I<0x9C, MRM0r, 
                  (ops R8   :$dst), "setl $dst">, TB;    // R8 = <  signed
 def SETLm    : I<0x9C, MRM0m, 
