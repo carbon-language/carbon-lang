@@ -84,12 +84,18 @@ def R32 : RegisterClass<i32, 32, [EAX, ECX, EDX, ESI, EDI, EBX, EBP, ESP]> {
   }];
 }
 
-def RFP : RegisterClass<f80, 32, [FP0, FP1, FP2, FP3, FP4, FP5, FP6]>;
+// FIXME: This sets up the floating point register files as though they are f64
+// values, though they really are f80 values.  This will cause us to spill
+// values as 64-bit quantities instead of 80-bit quantities, which is much much
+// faster on common hardware.  In reality, this should be controlled by a
+// command line option or something.
+
+def RFP : RegisterClass<f64, 32, [FP0, FP1, FP2, FP3, FP4, FP5, FP6]>;
 
 // Floating point stack registers (these are not allocatable by the
 // register allocator - the floating point stackifier is responsible
 // for transforming FPn allocations to STn registers)
-def RST : RegisterClass<f80, 32, [ST0, ST1, ST2, ST3, ST4, ST5, ST6, ST7]> {
+def RST : RegisterClass<f64, 32, [ST0, ST1, ST2, ST3, ST4, ST5, ST6, ST7]> {
   let Methods = [{
     iterator allocation_order_end(MachineFunction &MF) const {
       return begin();

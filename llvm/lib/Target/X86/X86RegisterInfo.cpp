@@ -50,7 +50,8 @@ static unsigned getIdx(unsigned SpillSize) {
   case 8:  return 0;
   case 16: return 1;
   case 32: return 2;
-  case 80: return 3;
+  case 64: return 3;   // FP in 64-bit spill mode.
+  case 80: return 4;   // FP in 80-bit spill mode.
   }
 }
 
@@ -58,7 +59,7 @@ void X86RegisterInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
                                           MachineBasicBlock::iterator MI,
                                           unsigned SrcReg, int FrameIdx) const {
   static const unsigned Opcode[] =
-    { X86::MOV8mr, X86::MOV16mr, X86::MOV32mr, X86::FSTP80m };
+    { X86::MOV8mr, X86::MOV16mr, X86::MOV32mr, X86::FST64m, X86::FSTP80m };
   unsigned Idx = getIdx(getSpillSize(SrcReg));
   addFrameReference(BuildMI(MBB, MI, Opcode[Idx], 5), FrameIdx).addReg(SrcReg);
 }
@@ -67,7 +68,7 @@ void X86RegisterInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
                                            MachineBasicBlock::iterator MI,
                                            unsigned DestReg, int FrameIdx)const{
   static const unsigned Opcode[] =
-    { X86::MOV8rm, X86::MOV16rm, X86::MOV32rm, X86::FLD80m };
+    { X86::MOV8rm, X86::MOV16rm, X86::MOV32rm, X86::FLD64m, X86::FLD80m };
   unsigned Idx = getIdx(getSpillSize(DestReg));
   addFrameReference(BuildMI(MBB, MI, Opcode[Idx], 4, DestReg), FrameIdx);
 }
@@ -77,7 +78,7 @@ void X86RegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
                                    unsigned DestReg, unsigned SrcReg,
                                    const TargetRegisterClass *RC) const {
   static const unsigned Opcode[] =
-    { X86::MOV8rr, X86::MOV16rr, X86::MOV32rr, X86::FpMOV };
+    { X86::MOV8rr, X86::MOV16rr, X86::MOV32rr, X86::FpMOV, X86::FpMOV };
   BuildMI(MBB, MI, Opcode[getIdx(RC->getSize()*8)], 1, DestReg).addReg(SrcReg);
 }
 
