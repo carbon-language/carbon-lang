@@ -4031,7 +4031,7 @@ bool InstCombiner::runOnFunction(Function &F) {
           uint64_t Offset = TD->getIndexedOffset(I->getOperand(0)->getType(),
                              std::vector<Value*>(I->op_begin()+1, I->op_end()));
           C = ConstantUInt::get(Type::ULongTy, Offset);
-          C = ConstantUInt::getCast(C, TD->getIntPtrType());
+          C = ConstantExpr::getCast(C, TD->getIntPtrType());
           C = ConstantExpr::getCast(C, I->getType());
         }
       }
