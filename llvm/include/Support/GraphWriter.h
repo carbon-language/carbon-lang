@@ -141,7 +141,9 @@ public:
     O << "\tNode" << ID << "[ ";
     if (!Attr.empty())
       O << Attr << ",";
-    O << " label =\"{" << DOT::EscapeString(Label);
+    O << " label =\"";
+    if (NumEdgeSources) O << "{";
+    O << DOT::EscapeString(Label);
     if (NumEdgeSources) {
       O << "|{";
       
@@ -149,9 +151,9 @@ public:
         if (i) O << "|";
         O << "<g" << i << ">";
       }
-      O << "}";
+      O << "}}";
     }
-    O << "}\"];\n";
+    O << "\"];\n";
   }
 
   /// emitEdge - Output an edge from a simple node into the graph...
