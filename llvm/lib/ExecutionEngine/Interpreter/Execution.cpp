@@ -268,34 +268,6 @@ Annotation *GlobalAddress::Create(AnnotationID AID, const Annotable *O, void *){
   return new GlobalAddress(Addr, true);  // Simply invoke the ctor
 }
 
-
-//===----------------------------------------------------------------------===//
-//                      Unary Instruction Implementations
-//===----------------------------------------------------------------------===//
-
-#define IMPLEMENT_UNARY_OPERATOR(OP, TY) \
-   case Type::TY##TyID: Dest.TY##Val = OP Src.TY##Val; break
-
-static void executeNotInst(UnaryOperator &I, ExecutionContext &SF) {
-  const Type *Ty   = I.getOperand(0)->getType();
-  GenericValue Src = getOperandValue(I.getOperand(0), SF);
-  GenericValue Dest;
-  switch (Ty->getPrimitiveID()) {
-    IMPLEMENT_UNARY_OPERATOR(~, UByte);
-    IMPLEMENT_UNARY_OPERATOR(~, SByte);
-    IMPLEMENT_UNARY_OPERATOR(~, UShort);
-    IMPLEMENT_UNARY_OPERATOR(~, Short);
-    IMPLEMENT_UNARY_OPERATOR(~, UInt);
-    IMPLEMENT_UNARY_OPERATOR(~, Int);
-    IMPLEMENT_UNARY_OPERATOR(~, ULong);
-    IMPLEMENT_UNARY_OPERATOR(~, Long);
-    IMPLEMENT_UNARY_OPERATOR(~, Pointer);
-  default:
-    cout << "Unhandled type for Not instruction: " << Ty << "\n";
-  }
-  SetValue(&I, Dest, SF);
-}
-
 //===----------------------------------------------------------------------===//
 //                    Binary Instruction Implementations
 //===----------------------------------------------------------------------===//
@@ -1184,7 +1156,6 @@ bool Interpreter::executeInstruction() {
     executeBinaryInst(cast<BinaryOperator>(I), SF);
   } else {
     switch (I.getOpcode()) {
-    case Instruction::Not:     executeNotInst(cast<UnaryOperator>(I),SF); break;
       // Terminators
     case Instruction::Ret:     executeRetInst  (cast<ReturnInst>(I), SF); break;
     case Instruction::Br:      executeBrInst   (cast<BranchInst>(I), SF); break;

@@ -365,12 +365,6 @@ void MutateStructTypes::transformFunction(Function *m) {
       case Instruction::Invoke:
         assert(0 && "Insn not implemented!");
 
-        // Unary Instructions
-      case Instruction::Not:
-        NewI = UnaryOperator::create((Instruction::UnaryOps)I.getOpcode(),
-                                     ConvertValue(I.getOperand(0)));
-        break;
-
         // Binary Instructions
       case Instruction::Add:
       case Instruction::Sub:
