@@ -8,39 +8,26 @@
 <body>
 
 <div class="doc_title">System Library</div>
-
-<div class="doc_warning">
-  <p>Warning: This document is a work in progress.</p>
-</div>
-
 <ul>
   <li><a href="#abstract">Abstract</a></li>
-  <li><a href="#requirements">System Library Requirements</a>
+  <li><a href="#requirements">Keeping LLVM Portable</a>
   <ol>
-    <li><a href="#headers">Hide System Header Files</a></li>
+    <li><a href="#headers">Don't Include System Headers</a></li>
+    <li><a href="#expose">Don't Expose System Headers</a></li>
     <li><a href="#c_headers">Allow Standard C Header Files</a></li>
     <li><a href="#cpp_headers">Allow Standard C++ Header Files</a></li>
+    <li><a href="#highlev">High-Level Interface</a></li>
     <li><a href="#nofunc">No Exposed Functions</a></li>
     <li><a href="#nodata">No Exposed Data</a></li>
+    <li><a href="#nodupl">No Duplicate Implementations</a></li>
+    <li><a href="#nounused">No Unused Functionality</a></li>
+    <li><a href="#virtuals">No Virtual Methods</a></li>
+    <li><a href="#softerrors">Minimize Soft Errors</a></li>
     <li><a href="#throw">Throw Only std::string</a></li>
     <li><a href="#throw_spec">No throw() Specifications</a></li>
-    <li><a href="#nodupl">No Duplicate Implementations</a></li>
-  </ol></li>
-  <li><a href="#design">System Library Design</a>
-  <ol>
-    <li><a href="#nounused">No Unused Functionality</a></li>
-    <li><a href="#highlev">High-Level Interface</a></li>
-    <li><a href="#opaque">Use Opaque Classes</a></li>
-    <li><a href="#common">Common Implementations</a></li>
-    <li><a href="#multi_imps">Multiple Implementations</a></li>
-    <li><a href="#lowlevel">Use Low Level Interfaces</a></li>
-    <li><a href="#memalloc">No Memory Allocation</a></li>
-    <li><a href="#virtuals">No Virtual Methods</a></li>
-  </ol></li>
-  <li><a href="#detail">System Library Details</a>
-  <ol>
+    <li><a href="#organization">Code Organization</a></li>
+    <li><a href="#semantics">Consistent Semantics</a></li>
     <li><a href="#bug">Tracking Bugzilla Bug: 351</a></li>
-    <li><a href="#refimpl">Reference Implementation</a></li>
   </ol></li>
 </ul>
 
@@ -52,68 +39,140 @@
 <!-- *********************************************************************** -->
 <div class="doc_section"><a name="abstract">Abstract</a></div>
 <div class="doc_text">
-  <p>This document describes the requirements, design, and implementation 
-  details of LLVM's System Library. The library is composed of the header files
-  in <tt>llvm/include/llvm/System</tt> and the source files in 
-  <tt>llvm/lib/System</tt>. The goal of this library is to completely shield 
-  LLVM from the variations in operating system interfaces. By centralizing 
-  LLVM's use of operating system interfaces, we make it possible for the LLVM
-  tool chain and runtime libraries to be more easily ported to new platforms
-  since (theoretically) only <tt>llvm/lib/System</tt> needs to be ported.  This
-  library also unclutters the rest of LLVM from #ifdef use and special
-  cases for specific operating systems. Such uses are replaced with simple calls
-  to the interfaces provided in <tt>llvm/include/llvm/System</tt>.</p> Note that
-  lib/System is not intended to be a complete operating system wrapper (such as
-  the Adaptive Communications Environment (ACE) or Apache Portable Runtime
-  (APR)), but only to provide the functionality necessary to support LLVM.
+  <p>This document provides some details on LLVM's System Library, located in
+  the source at <tt>lib/System</tt> and <tt>include/llvm/System</tt>. The
+  library's purpose is to shield LLVM from the differences between operating
+  systems for the few services LLVM needs from the operating system. Much of
+  LLVM is written using portability features of standard C++. However, in a few
+  areas, system dependent facilities are needed and the System Library is the
+  wrapper around those system calls.</p>
+  <p>By centralizing LLVM's use of operating system interfaces, we make it 
+  possible for the LLVM tool chain and runtime libraries to be more easily 
+  ported to new platforms since (theoretically) only <tt>lib/System</tt> needs 
+  to be ported.  This library also unclutters the rest of LLVM from #ifdef use 
+  and special cases for specific operating systems. Such uses are replaced 
+  with simple calls to the interfaces provided in <tt>include/llvm/System</tt>.
+  </p> 
+  <p>Note that the System Library is not intended to be a complete operating 
+  system wrapper (such as the Adaptive Communications Environment (ACE) or 
+  Apache Portable Runtime (APR)), but only provides the functionality necessary
+  to support LLVM.
   <p>The System Library was written by Reid Spencer who formulated the
-  design based on similar original work as part of the eXtensible Programming 
-  System (XPS).</p>
+  design based on similar work originating from the eXtensible Programming 
+  System (XPS). Several people helped with the effort; especially,
+  Jeff Cohen and Henrik Bach on the Win32 port.</p>
 </div>
 
 <!-- *********************************************************************** -->
 <div class="doc_section">
-  <a name="requirements">System Library Requirements</a>
+  <a name="requirements">Keeping LLVM Portable</a>
 </div>
 <div class="doc_text">
-  <p>The System library's requirements are aimed at shielding LLVM from the
-  variations in operating system interfaces. The following sections define the
-  requirements needed to fulfill this objective. Of necessity, these requirements 
-  must be strictly followed in order to ensure the library's goal is reached.</p>
+  <p>In order to keep LLVM portable, LLVM developers should adhere to a set of
+  portability rules associated with the System Library. Adherence to these rules
+  should help the System Library achieve its goal of shielding LLVM from the
+  variations in operating system interfaces and doing so efficiently.  The 
+  following sections define the rules needed to fulfill this objective.</p>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="headers">Hide System Header Files</a></div>
+<div class="doc_subsection"><a name="headers">Don't Inlcude System Headers</a>
+</div>
 <div class="doc_text">
-  <p>The library must shield LLVM from <em>all</em> system libraries. To obtain
-  system level functionality, LLVM must <tt>#include "llvm/System/Thing.h"</tt>
-  and nothing else. This means that <tt>Thing.h</tt> cannot expose any system
-  header files. This protects LLVM from accidentally using system specific
-  functionality except through the lib/System interface.  Specifically this 
-  means that header files like "unistd.h", "windows.h", "stdio.h", and 
-  "string.h" are verbotten outside the implementation of lib/System.
+  <p>Except in <tt>lib/System</tt>, no LLVM source code should directly
+  <tt>#include</tt> a system header. Care has been taken to remove all such
+  <tt>#includes</tt> from LLVM while <tt>lib/System</tt> was being
+  developed.  Specifically this means that header files like "unistd.h", 
+  "windows.h", "stdio.h", and "string.h" are forbidden to be included by LLVM 
+  source code outside the implementation of <tt>lib/System</tt>.</p>
+  <p>To obtain system-dependent functionality, existing interfaces to the system
+  found in <tt>include/llvm/System</tt> should be used. If an appropriate 
+  interface is not available, it should be added to <tt>include/llvm/System</tt>
+  and implemented in <tt>lib/System</tt> for all supported platforms.</p>
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection"><a name="expose">Don't Expose System Headers</a>
+</div>
+  <p>The System Library must shield LLVM from <em>all</em> system headers. To 
+  obtain system level functionality, LLVM source must 
+  <tt>#include "llvm/System/Thing.h"</tt> and nothing else. This means that 
+  <tt>Thing.h</tt> cannot expose any system header files. This protects LLVM 
+  from accidentally using system specific functionality and only allows it
+  via the <tt>lib/System</tt> interface.</p>
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection"><a name="c_headers">Use Standard C Headers</a>
+</div>
+<div class="doc_text">
+  <p>The <em>standard</em> C headers (the ones beginning with "c") are allowed
+  to be exposed through the <tt>lib/System</tt> interface. These headers and 
+  the things they declare are considered to be platform agnostic. LLVM source 
+  files may include them directly or obtain their inclusion through 
+  <tt>lib/System</tt> interfaces.</p>
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection"><a name="cpp_headers">Use Standard C++ Headers</a>
+</div>
+<div class="doc_text">
+  <p>The <em>standard</em> C++ headers from the standard C++ library and
+  standard template library may be exposed through the <tt>lib/System</tt>
+  interface. These headers and the things they declare are considered to be
+  platform agnostic. LLVM source files may include them or obtain their
+  inclusion through lib/System interfaces.</p>
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection"><a name="highlev">High Level Interface</a></div>
+<div class="doc_text">
+  <p>The entry points specified in the interface of lib/System must be aimed at 
+  completing some reasonably high level task needed by LLVM. We do not want to
+  simply wrap each operating system call. It would be preferable to wrap several
+  operating system calls that are always used in conjunction with one another by
+  LLVM.</p>
+  <p>For example, consider what is needed to execute a program, wait for it to
+  complete, and return its result code. On Unix, this involves the following
+  operating system calls: <tt>getenv, fork, execve,</tt> and <tt>wait</tt>. The
+  correct thing for lib/System to provide is a function, say
+  <tt>ExecuteProgramAndWait</tt>, that implements the functionality completely.
+  what we don't want is wrappers for the operating system calls involved.</p>
+  <p>There must <em>not</em> be a one-to-one relationship between operating
+  system calls and the System library's interface. Any such interface function
+  will be suspicious.</p>
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection"><a name="nounused">No Unused Functionality</a></div>
+<div class="doc_text">
+  <p>There must be no functionality specified in the interface of lib/System 
+  that isn't actually used by LLVM. We're not writing a general purpose
+  operating system wrapper here, just enough to satisfy LLVM's needs. And, LLVM
+  doesn't need much. This design goal aims to keep the lib/System interface
+  small and understandable which should foster its actual use and adoption.</p>
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection"><a name="nodupl">No Duplicate Implementations</a>
+</div>
+<div class="doc_text">
+  <p>The implementation of a function for a given platform must be written
+  exactly once. This implies that it must be possible to apply a function's 
+  implementation to multiple operating systems if those operating systems can
+  share the same implementation. This rule applies to the set of operating
+  systems supported for a given class of operating system (e.g. Unix, Win32).
   </p>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="c_headers">Allow Standard C Headers</a>
-</div>
+<div class="doc_subsection"><a name="virtuals">No Virtual Methods</a></div>
 <div class="doc_text">
-  <p>The <em>standard</em> C headers (the ones beginning with "c") are allowed
-  to be exposed through the lib/System interface. These headers and the things
-  they declare are considered to be platform agnostic. LLVM source files may
-  include them or obtain their inclusion through lib/System interfaces.</p>
-</div>
-
-<!-- ======================================================================= -->
-<div class="doc_subsection"><a name="cpp_headers">Allow Standard C++ Headers</a>
-</div>
-<div class="doc_text">
-  <p>The <em>standard</em> C++ headers from the standard C++ library and
-  standard template library are allowed to be exposed through the lib/System
-  interface. These headers and the things they declare are considered to be
-  platform agnostic. LLVM source files may include them or obtain their
-  inclusion through lib/System interfaces.</p>
+  <p>The System Library interfaces can be called quite frequently by LLVM. In
+  order to make those calls as efficient as possible, we discourage the use of
+  virtual methods. There is no need to use inheritance for implementation
+  differences, it just adds complexity. The <tt>#include</tt> mechanism works
+  just fine.</p>
 </div>
 
 <!-- ======================================================================= -->
@@ -124,11 +183,12 @@
   for that function is not exposed. This prevents inadvertent use of system
   specific functionality.</p>
   <p>For example, the <tt>stat</tt> system call is notorious for having
-  variations in the data it provides. lib/System must not declare <tt>stat</tt>
-  nor allow it to be declared. Instead it should provide its own interface to
-  discovering information about files and directories. Those interfaces may be
-  implemented in terms of <tt>stat</tt> but that is strictly an implementation
-  detail.</p>
+  variations in the data it provides. <tt>lib/System</tt> must not declare 
+  <tt>stat</tt> nor allow it to be declared. Instead it should provide its own 
+  interface to discovering information about files and directories. Those 
+  interfaces may be implemented in terms of <tt>stat</tt> but that is strictly 
+  an implementation detail. The interface provided by the System Library must
+  be implemented on all platforms (even those without <tt>stat</tt>).</p>
 </div>
 
 <!-- ======================================================================= -->
@@ -138,6 +198,45 @@
   not be exposed through the lib/System interface, even if the header file for
   that function is not exposed. As with functions, this prevents inadvertent use
   of data that might not exist on all platforms.</p>
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection"><a name="softerrors">Minimize Soft Errors</a></div>
+<div class="doc_text">
+  <p>Operating system interfaces will generally provide error results for every
+  little thing that could go wrong. In almost all cases, you can divide these
+  error results into two groups: normal/good/soft and abnormal/bad/hard. That
+  is, some of the errors are simply information like "file not found", 
+  "insufficient privileges", etc. while other errors are much harder like
+  "out of space", "bad disk sector", or "system call interrupted". We'll call 
+  the first group "<i>soft</i>" errors and the second group "<i>hard</i>" 
+  errors.<p>
+  <p>lib/System must always attempt to minimize soft errors and always just
+  throw a std::string on hard errors. This is a design requirement because the
+  minimization of soft errors can affect the granularity and the nature of the
+  interface. In general, if you find that you're wanting to throw soft errors,
+  you must review the granularity of the interface because it is likely you're
+  trying to implement something that is too low level. The rule of thumb is to
+  provide interface functions that <em>can't</em> fail, except when faced with 
+  hard errors.</p>
+  <p>For a trivial example, suppose we wanted to add an "OpenFileForWriting" 
+  function. For many operating systems, if the file doesn't exist, attempting 
+  to open the file will produce an error.  However, lib/System should not
+  simply throw that error if it occurs because its a soft error. The problem
+  is that the interface function, OpenFileForWriting is too low level. It should
+  be OpenOrCreateFileForWriting. In the case of the soft "doesn't exist" error, 
+  this function would just create it and then open it for writing.</p>
+  <p>This design principle needs to be maintained in lib/System because it
+  avoids the propagation of soft error handling throughout the rest of LLVM.
+  Hard errors will generally just cause a termination for an LLVM tool so don't
+  be bashful about throwing them.</p>
+  <p>Rules of thumb:</p>
+  <ol>
+    <li>Don't throw soft errors, only hard errors.</li>
+    <li>If you're tempted to throw a soft error, re-think the interface.</li>
+    <li>Handle internally the most common normal/good/soft error conditions
+    so the rest of LLVM doesn't have to.</li>
+  </ol>
 </div>
 
 <!-- ======================================================================= -->
@@ -173,191 +272,52 @@
   <tt>throw()</tt> specifications on them. This requirement makes sure that the
   compiler does not insert additional exception handling code into the interface
   functions. This is a performance consideration: lib/System functions are at
-  the bottom of the many call chains and as such can be frequently called. We
+  the bottom of many call chains and as such can be frequently called. We
   need them to be as efficient as possible.</p>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="nodupl">No Duplicate Implementations</a>
-</div>
+<div class="doc_subsection"><a name="organization">Code Organization</a></div>
 <div class="doc_text">
-  <p>The implementation of a function for a given platform must be written
-  exactly once. This implies that it must be possible to apply a function's 
-  implementation to multiple operating systems if those operating systems can
-  share the same implementation.</p>
-</div>
-
-<!-- *********************************************************************** -->
-<div class="doc_section"><a name="design">System Library Design</a></div>
-<div class="doc_text">
-  <p>In order to fulfill the requirements of the system library, strict design
-  objectives must be maintained in the library as it evolves.  The goal here 
-  is to provide interfaces to operating system concepts (files, memory maps, 
-  sockets, signals, locking, etc) efficiently and in such a way that the 
-  remainder of LLVM is completely operating system agnostic.</p>
-</div>
-
-<!-- ======================================================================= -->
-<div class="doc_subsection"><a name="nounused">No Unused Functionality</a></div>
-<div class="doc_text">
-  <p>There must be no functionality specified in the interface of lib/System 
-  that isn't actually used by LLVM. We're not writing a general purpose
-  operating system wrapper here, just enough to satisfy LLVM's needs. And, LLVM
-  doesn't need much. This design goal aims to keep the lib/System interface
-  small and understandable which should foster its actual use and adoption.</p>
-</div>
-
-<!-- ======================================================================= -->
-<div class="doc_subsection"><a name="highlev">High Level Interface</a></div>
-<div class="doc_text">
-  <p>The entry points specified in the interface of lib/System must be aimed at 
-  completing some reasonably high level task needed by LLVM. We do not want to
-  simply wrap each operating system call. It would be preferable to wrap several
-  operating system calls that are always used in conjunction with one another by
-  LLVM.</p>
-  <p>For example, consider what is needed to execute a program, wait for it to
-  complete, and return its result code. On Unix, this involves the following
-  operating system calls: <tt>getenv, fork, execve,</tt> and <tt>wait</tt>. The
-  correct thing for lib/System to provide is a function, say
-  <tt>ExecuteProgramAndWait</tt>, that implements the functionality completely.
-  what we don't want is wrappers for the operating system calls involved.</p>
-  <p>There must <em>not</em> be a one-to-one relationship between operating
-  system calls and the System library's interface. Any such interface function
-  will be suspicious.</p>
+  <p>Implementations of the System Library interface are separated by their
+  general class of operating system. Currently only Unix and Win32 classes are
+  defined but more could be added for other operating system classifications.
+  To distinguish which implementation to compile, the code in lib/System uses
+  the LLVM_ON_UNIX and LLVM_ON_WIN32 #defines provided via configure through the
+  llvm/Config/config.h file. Each source file in lib/System, after implementing
+  the generic (operating system independent) functionality needs to include the
+  correct implementation using a set of <tt>#if defined(LLVM_ON_XYZ)</tt> 
+  directives. For example, if we had lib/System/File.cpp, we'd expect to see in
+  that file:</p>
+  <pre><tt>
+  #if defined(LLVM_ON_UNIX)
+  #include "Unix/File.cpp"
+  #endif
+  #if defined(LLVM_ON_WIN32)
+  #include "Win32/File.cpp"
+  #endif
+  </tt></pre>
+  <p>The implementation in lib/System/Unix/File.cpp should handle all Unix
+  variants. The implementation in lib/System/Win32/File.cpp should handle all
+  Win32 variants.  What this does is quickly differentiate the basic class of 
+  operating system that will provide the implementation. The specific details
+  for a given platform must still be determined through the use of
+  <tt>#ifdef</tt>.</p>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="highlev">Minimize Soft Errors</a></div>
+<div class="doc_subsection"><a name="semantics">Consistent Semantics</a></div>
 <div class="doc_text">
-  <p>Operating system interfaces will generally provide errors results for every
-  little thing that could go wrong. In almost all cases, you can divide these
-  error results into two groups: normal/good/soft and abnormal/bad/hard. That
-  is, some of the errors are simply information like "file not found", 
-  "insufficient privileges", etc. while other errors are much harder like
-  "out of space", "bad disk sector", or "system call interrupted". Well call the
-  first group "soft" errors and the second group "hard" errors.<p>
-  <p>lib/System must always attempt to minimize soft errors and always just
-  throw a std::string on hard errors. This is a design requirement because the
-  minimization of soft errors can affect the granularity and the nature of the
-  interface. In general, if you find that you're wanting to throw soft errors,
-  you must review the granularity of the interface because it is likely you're
-  trying to implement something that is too low level. The rule of thumb is to
-  provide interface functions that "can't" fail, except when faced with hard
-  errors.</p>
-  <p>For a trivial example, suppose we wanted to add an "OpenFileForWriting" 
-  function. For many operating systems, if the file doesn't exist, attempting 
-  to open the file will produce an error.  However, lib/System should not
-  simply throw that error if it occurs because its a soft error. The problem
-  is that the interface function, OpenFileForWriting is too low level. It should
-  be OpenOrCreateFileForWriting. In the case of the soft "doesn't exist" error, 
-  this function would just create it and then open it for writing.</p>
-  <p>This design principle needs to be maintained in lib/System because it
-  avoids the propagation of soft error handling throughout the rest of LLVM.
-  Hard errors will generally just cause a termination for an LLVM tool so don't
-  be bashful about throwing them.</p>
-  <p>Rules of thumb:</p>
-  <ol>
-    <li>Don't throw soft errors, only hard errors.</li>
-    <li>If you're tempted to throw a soft error, re-think the interface.</li>
-    <li>Handle internally the most common normal/good/soft error conditions
-    so the rest of LLVM doesn't have to.</li>
-  </ol>
- 
-<pre><tt>
-Notes:
-10. The implementation of a lib/System interface can vary drastically between
-    platforms. That's okay as long as the end result of the interface function is
-    the same. For example, a function to create a directory is pretty straight
-    forward on all operating system. System V IPC on the other hand isn't even
-    supported on all platforms. Instead of "supporting" System V IPC, lib/System
-    should provide an interface to the basic concept of inter-process 
-    communications. The implementations might use System V IPC if that was
-    available or named pipes, or whatever gets the job done effectively for a
-    given operating system.
-
-11. Implementations are separated first by the general class of operating system
-    as provided by the configure script's $build variable. This variable is used
-    to create a link from $BUILD_OBJ_ROOT/lib/System/platform to a directory in
-    $BUILD_SRC_ROOT/lib/System directory with the same name as the $build
-    variable. This provides a retargetable include mechanism. By using the link's
-    name (platform) we can actually include the operating specific
-    implementation. For example, support $build is "Darwin" for MacOS X. If we
-    place:
-      #include "platform/File.cpp"
-    into a a file in lib/System, it will actually include
-    lib/System/Darwin/File.cpp. What this does is quickly differentiate the basic
-    class of operating system that will provide the implementation.
- 
-12. Implementation files in lib/System need may only do two things: (1) define 
-    functions and data that is *TRULY* generic (completely platform agnostic) and
-    (2) #include the platform specific implementation with:
- 
-       #include "platform/Impl.cpp"
- 
-    where Impl is the name of the implementation files.
- 
-13. Platform specific implementation files (platform/Impl.cpp) may only #include
-    other Impl.cpp files found in directories under lib/System. The order of
-    inclusion is very important (from most generic to most specific) so that we
-    don't inadvertently place an implementation in the wrong place. For example,
-    consider a fictitious implementation file named DoIt.cpp. Here's how the
-    #includes should work for a Linux platform
- 
-    lib/System/DoIt.cpp
-      #include "platform/DoIt.cpp"        // platform specific impl. of Doit
-      DoIt
- 
-    lib/System/Linux/DoIt.cpp             // impl that works on all Linux 
-      #include "../Unix/DoIt.cpp"         // generic Unix impl. of DoIt
-      #include "../Unix/SUS/DoIt.cpp      // SUS specific impl. of DoIt
-      #include "../Unix/SUS/v3/DoIt.cpp   // SUSv3 specific impl. of DoIt
- 
-    Note that the #includes in lib/System/Linux/DoIt.cpp are all optional but
-    should be used where the implementation of some functionality can be shared
-    across some set of Unix variants. We don't want to duplicate code across
-    variants if their implementation could be shared.
-</tt></pre>
-</div>
-
-<!-- ======================================================================= -->
-<div class="doc_subsection"><a name="opaque">Use Opaque Classes</a></div>
-<div class="doc_text">
-  <p>no public data</p>
-  <p>onlyprimitive typed private/protected data</p>
-  <p>data size is "right" for platform, not max of all platforms</p>
-  <p>each class corresponds to O/S concept</p>
-</div>
-
-<!-- ======================================================================= -->
-<div class="doc_subsection"><a name="common">Common Implementations</a></div>
-<div class="doc_text">
-  <p>To be written.</p>
-</div>
-
-<!-- ======================================================================= -->
-<div class="doc_subsection">
-  <a name="multi_imps">Multiple Implementations</a>
-</div>
-<div class="doc_text">
-  <p>To be written.</p>
-</div>
-
-<!-- ======================================================================= -->
-<div class="doc_subsection"><a name="memalloc">No Memory Allocation</a></div>
-<div class="doc_text">
-  <p>To be written.</p>
-</div>
-
-<!-- ======================================================================= -->
-<div class="doc_subsection"><a name="virtuals">No Virtual Methods</a></div>
-<div class="doc_text">
-  <p>To be written.</p>
-</div>
-
-<!-- *********************************************************************** -->
-<div class="doc_section"><a name="detail">System Library Details</a></div>
-<div class="doc_text">
-  <p>To be written.</p>
+  <p>The implementation of a lib/System interface can vary drastically between
+  platforms. That's okay as long as the end result of the interface function 
+  is the same. For example, a function to create a directory is pretty straight
+  forward on all operating system. System V IPC on the other hand isn't even
+  supported on all platforms. Instead of "supporting" System V IPC, lib/System
+  should provide an interface to the basic concept of inter-process 
+  communications. The implementations might use System V IPC if that was 
+  available or named pipes, or whatever gets the job done effectively for a 
+  given operating system.  In all cases, the interface and the implementation 
+  must be semantically consistent. </p>
 </div>
 
 <!-- ======================================================================= -->
@@ -365,130 +325,6 @@ Notes:
 <div class="doc_text">
   <p>See <a href="http://llvm.cs.uiuc.edu/PR351">bug 351</a>
   for further details on the progress of this work</p>
-</div>
-
-<!-- ======================================================================= -->
-<div class="doc_subsection"><a name="bug">Rationale For #include Hierarchy</a>
-</div>
-<div class="doc_text">
-  <p>In order to provide different implementations of the lib/System interface
-  for different platforms, it is necessary for the library to "sense" which
-  operating system is being compiled for and conditionally compile only the
-  applicable parts of the library. While several operating system wrapper
-  libraries (e.g. APR, ACE) choose to use #ifdef preprocessor statements in
-  combination with autoconf variable (HAVE_* family), lib/System chooses an
-  alternate strategy. <p>
-  <p>To put it succinctly, the lib/System strategy has traded "#ifdef hell" for 
-  "#include hell". That is, a given implementation file defines one or more
-  functions for a particular operating system variant. The functions defined in
-  that file have no #ifdef's to disambiguate the platform since the file is only
-  compiled on one kind of platform. While this leads to the same function being
-  implemented differently in different files, it is our contention that this
-  leads to better maintenance and easier portability.</p>
-  <p>For example, consider a function having different implementations on a
-  variety of platforms. Many wrapper libraries choose to deal with the different
-  implementations by using #ifdef, like this:</p>
-  <pre><tt>
-      void SomeFunction(void) {
-      #if defined __LINUX
-        // .. Linux implementation
-      #elif defined __WIN32
-        // .. Win32 implementation
-      #elif defined __SunOS
-        // .. SunOS implementation
-      #else
-      #warning "Don't know how to implement SomeFunction on this platform"
-      #endif
-      }
-  </tt></pre>
-  <p>The problem with this is that its very messy to read, especially as the
-  number of operating systems and their variants grow. The above example is
-  actually tame compared to what can happen when the implementation depends on
-  specific flavors and versions of the operating system. In that case you end up
-  with multiple levels of nested #if statements. This is what we mean by "#ifdef
-  hell".</p>
-  <p>To avoid the situation above, we've chosen to locate all functions for a
-  given implementation file for a specific operating system into one place. This
-  has the following advantages:<p>
-  <ul>
-    <li>No "#ifdef hell"</li>
-    <li>When porting, the strategy is quite straight forward: copy the
-    implementation file from a similar operating system to a new directory and
-    re-implement them.<li>
-    <li>Correctness is helped during porting because the new operating system's
-    implementation is wholly contained in a separate directory. There's no
-    chance to make an error in the #if statements and affect some other
-    operating system's implementation.</li>
-  </ul>
-  <p>So, given that we have decided to use #include instead of #if to provide
-  platform specific implementations, there are actually three ways we can go
-  about doing this. None of them are perfect, but we believe we've chosen the
-  lesser of the three evils. Given that there is a variable named $OS which
-  names the platform for which we must build, here's a summary of the three 
-  approaches we could use to determine the correct directory:</p>
-  <ol>
-    <li>Provide the compiler with a -I$(OS) on the command line. This could be
-    provided in only the lib/System makefile.</li>
-    <li>Use autoconf to transform #include statements in the implementation
-    files by using substitutions of @OS@. For example, if we had a file,
-    File.cpp.in, that contained "#include &lt;@OS@/File.cpp&gt;" this would get
-    transformed to "#include &lt;actual/File.cpp&gt;" where "actual" is the
-    actual name of the operating system</li>
-    <li>Create a link from $OBJ_DIR/platform to $SRC_DIR/$OS. This allows us to
-    use a generic directory name to get the correct platform, as in #include
-    &lt;platform/File.cpp&gt;</li>
-  </ol>
-  <p>Let's look at the pitfalls of each approach.</p>
-  <p>In approach #1, we end up with some confusion as to what gets included.
-  Suppose we have lib/System/File.cpp that includes just File.cpp to get the
-  platform specific part of the implementation. In this case, the include
-  directive with the &lt;&gt; syntax will include the right file but the include
-  directive with the "" syntax will recursively include the same file,
-  lib/System/File.cpp. In the case of #include &lt;File.cpp&gt;, the -I options
-  to the compiler are searched first so it works. But in the #include "File.cpp"
-  case, the current directory is searched first. Furthermore, in both cases,
-  neither include directive documents which File.cpp is getting included.</p>
-  <p>In approach #2, we have the problem of needing to reconfigure repeatedly.
-  Developer's generally hate that and we don't want lib/System to be a thorn in
-  everyone's side because it will constantly need updating as operating systems
-  change and as new operating systems are added. The problem occurs when a new
-  implementation file is added to the library. First of all, you have to add a
-  file with the .in suffix, then you have to add that file name to the list of
-  configurable files in the autoconf/configure.ac file, then you have to run
-  AutoRegen.sh to rebuild the configure script, then you have to run the
-  configure script. This is deemed to be a pretty large hassle.</p>
-  <p>In approach #3, we have the problem that not all platforms support links.
-  Fortunately the autoconf macro used to create the link can compensate for
-  this. If a link can't be made, the configure script will copy the correct
-  directory from $BUILD_SRC_DIR to $BUILD_OBJ_DIR under the new name. The only
-  problem with this is that if a copy is made, the copy doesn't get updated if
-  the programmer adds or modifies files in the $BUILD_SRC_DIR. A reconfigure or
-  manual copying is needed to get things to compile.<p>
-  <p>The approach we have taken in lib/System is #3. Here's why:<p>
-  <ul>
-    <li>Approach #1 is rejected because it doesn't document what's actually
-    getting included and the potential for mistakes with alternate include
-    directive forms is high.</li>
-    <li>Approach #2 are both viable and only really impact development when new
-    files are added to the library.</li>
-    <li>However, approach #2 impacts every new file on every platform all the
-    time. With approach #3, only those platforms not supporting links will be
-    affected. The number of platforms not supporting links is very small and
-    they are generally archaic.</li>
-    <li>Given the above, approach #3 seems to have the least impact.</li>
-  </ul>
-</div>
-
-<!-- ======================================================================= -->
-<div class="doc_subsection">
-  <a name="refimpl">Reference Implementation</a>
-</div>
-<div class="doc_text">
-  <p>The <tt>linux</tt> implementation of the system library will always be the
-  reference implementation. This means that (a) the concepts defined by the
-  linux must be identically replicated in the other implementations and (b) the
-  linux implementation must always be complete (provide implementations for all
-  concepts).</p>
 </div>
 
 <!-- *********************************************************************** -->
