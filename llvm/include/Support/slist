@@ -1,0 +1,32 @@
+//===-- Support/slist - "Portable" wrapper around slist ---------*- C++ -*-===//
+//
+// This file provides a wrapper around the mysterious <slist> header file that
+// seems to move around between GCC releases into and out of namespaces at will.
+// #including this header will cause hash_map to be available in the global
+// namespace.
+//
+//===----------------------------------------------------------------------===//
+
+#ifndef SUPPORT_SLIST_H
+#define SUPPORT_SLIST_H
+
+// Compiler Support Matrix
+//
+// Version   Namespace   Header File
+//  2.95.x       ::        slist
+//  3.0.4       std      ext/slist
+//  3.1      __gnu_cxx   ext/slist
+//
+#if __GNUC__ == 3
+#include <ext/slist>
+
+#if __GNUC_MINOR__ == 0
+using std::slist;
+#else
+using __gnu_cxx::slist;
+#endif
+
+#else
+// GCC 2.x
+#include <slist>
+#endif
