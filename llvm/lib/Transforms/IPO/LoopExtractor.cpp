@@ -1,4 +1,11 @@
 //===- LoopExtractor.cpp - Extract each loop into a new function ----------===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // A pass wrapper around the ExtractLoop() scalar transformation to extract each
 // top-level loop into its own new function. If the loop is the ONLY loop in a
@@ -16,23 +23,19 @@
 using namespace llvm;
 
 namespace {
+  // FIXME: PassManager should allow Module passes to require FunctionPasses
+  struct LoopExtractor : public FunctionPass {
+    virtual bool run(Module &M);
+    virtual bool runOnFunction(Function &F);
+    
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.addRequired<LoopInfo>();
+    }
+  };
 
-// FIXME: PassManager should allow Module passes to require FunctionPasses
-struct LoopExtractor : public FunctionPass {
-
-public:
-  LoopExtractor() {}
-  virtual bool run(Module &M);
-  virtual bool runOnFunction(Function &F);
-
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-    AU.addRequired<LoopInfo>();
-  }
-
-};
-
-RegisterOpt<LoopExtractor> 
-X("loop-extract", "Extract loops into new functions");
+  RegisterOpt<LoopExtractor> 
+  X("loop-extract", "Extract loops into new functions");
+} // End anonymous namespace 
 
 bool LoopExtractor::run(Module &M) {
   bool Changed = false;
@@ -58,8 +61,6 @@ bool LoopExtractor::runOnFunction(Function &F) {
 
   return Changed;
 }
-
-} // End anonymous namespace 
 
 /// createLoopExtractorPass 
 ///
