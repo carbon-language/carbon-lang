@@ -57,6 +57,8 @@ PS = $(patsubst $(BUILD_SRC_DIR)/%.pod, $(BUILD_OBJ_DIR)/%.ps, $(POD))
 
 $(HTML) : html/.dir man/.dir man/man1/.dir ps/.dir
 
+html: $(HTML)
+
 $(BUILD_OBJ_DIR)/%.html: %.pod
 	$(POD2HTML) --css=manpage.css --htmlroot=. --podpath=. \
 	  --noindex --infile=$< --outfile=$@ --title=$*
