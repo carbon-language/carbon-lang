@@ -100,7 +100,7 @@ static MachineInstr *MakeMRInst(unsigned Opcode, unsigned FrameIndex,
 
 static MachineInstr *MakeMRIInst(unsigned Opcode, unsigned FrameIndex,
                                  MachineInstr *MI) {
-  return addFrameReference(BuildMI(Opcode, 5), FrameIndex)
+  return addFrameReference(BuildMI(Opcode, 6), FrameIndex)
       .addReg(MI->getOperand(1).getReg())
       .addZImm(MI->getOperand(2).getImmedValue());
 }
@@ -127,7 +127,7 @@ static MachineInstr *MakeRMInst(unsigned Opcode, unsigned FrameIndex,
 static MachineInstr *MakeRMIInst(unsigned Opcode, unsigned FrameIndex,
                                  MachineInstr *MI) {
   const MachineOperand& op = MI->getOperand(0);
-  return addFrameReference(BuildMI(Opcode, 5, op.getReg(), op.getUseType()),
+  return addFrameReference(BuildMI(Opcode, 6, op.getReg(), op.getUseType()),
                         FrameIndex).addZImm(MI->getOperand(2).getImmedValue());
 }
 
