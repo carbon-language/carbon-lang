@@ -211,10 +211,7 @@ static std::string getTypeDescription(const Type *Ty,
 
   // In order to reduce the amount of repeated computation, we cache the
   // computed value for later.
-  if (Ty->isAbstract())
-    return AbstractTypeDescriptions[Ty] = Result;
-  else
-    return ConcreteTypeDescriptions[Ty] = Result;
+  return Result;
 }
 
 
@@ -225,9 +222,7 @@ static const std::string &getOrCreateDesc(std::map<const Type*,std::string>&Map,
   if (I != Map.end()) return I->second;
     
   std::vector<const Type *> TypeStack;
-  getTypeDescription(Ty, TypeStack);
-  assert(Map.count(Ty) && "Type didn't get inserted!!");
-  return Map[Ty];
+  return Map[Ty] = getTypeDescription(Ty, TypeStack);
 }
 
 
