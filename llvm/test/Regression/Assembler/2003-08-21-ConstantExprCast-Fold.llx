@@ -1,0 +1,5 @@
+; RUN: as < %s | dis | not grep getelementptr
+
+%A = external global { float }          ; <{ float }*> [#uses=1]
+global int* cast (float* getelementptr ({ float }* %A, long 0, ubyte 0) to int*)
+
