@@ -1,4 +1,4 @@
-//===-- Support/StatisticReporter.h - Easy way to expose stats ---*- C++ -*-==//
+//===-- Support/Statistic.h - Easy way to expose stats ----------*- C++ -*-===//
 //
 // This file defines the 'Statistic' class, which is designed to be an easy way
 // to expose various success metrics from passes.  These statistics are printed
@@ -14,8 +14,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef SUPPORT_STATISTIC_REPORTER_H
-#define SUPPORT_STATISTIC_REPORTER_H
+#ifndef SUPPORT_STATISTIC_H
+#define SUPPORT_STATISTIC_H
 
 #include <iosfwd>
 
@@ -43,8 +43,12 @@ extern bool DebugFlag;
 // StatisticBase - Nontemplated base class for Statistic<> class...
 class StatisticBase {
   const char *Name;
+  const char *Desc;
+  static unsigned NumStats;
 protected:
-  StatisticBase(const char *name) : Name(name) {}
+  StatisticBase(const char *name, const char *desc) : Name(name), Desc(desc) {
+    ++NumStats;  // Keep track of how many stats are created...
+  }
   virtual ~StatisticBase() {}
 
   // destroy - Called by subclass dtor so that we can still invoke virtual
@@ -69,11 +73,12 @@ class Statistic : private StatisticBase {
   virtual bool hasSomeData() const { return Value != DataType(); }
 public:
   // Normal constructor, default initialize data item...
-  Statistic(const char *name) : StatisticBase(name), Value(DataType()) {}
+  Statistic(const char *name, const char *desc)
+    : StatisticBase(name, desc), Value(DataType()) {}
 
   // Constructor to provide an initial value...
-  Statistic(const DataType &Val, const char *name)
-    : StatisticBase(name), Value(Val) {}
+  Statistic(const DataType &Val, const char *name, const char *desc)
+    : StatisticBase(name, desc), Value(Val) {}
 
   // Print information when destroyed, iff command line option is specified
   ~Statistic() { destroy(); }
