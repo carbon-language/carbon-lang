@@ -13,10 +13,10 @@ include "SparcV9_Reg.td"
 class InstV9 : Instruction {          // Sparc instruction baseline
   field bits<32> Inst;
 
-  set Namespace = "V9";
+  let Namespace = "V9";
 
   bits<2> op;
-  set Inst{31-30} = op;               // Top two bits are the 'op' field
+  let Inst{31-30} = op;               // Top two bits are the 'op' field
 
   // Bit attributes specific to Sparc instructions
   bit isPasi       = 0; // Does this instruction affect an alternate addr space?
@@ -43,7 +43,7 @@ def ADDCccr : F3_1<2, 0b011000, "addCcc">;          // addCcc rs1, rs2, rd
 def ADDCcci : F3_2<2, 0b011000, "addCcc">;          // addCcc rs1, imm, rd
 
 // Section A.3: Branch on Integer Register with Prediction - p138
-set op2 = 0b011 in {
+let op2 = 0b011 in {
   def BRZ     : F2_4<0b001, "brz">;                 // Branch on rs1 == 0
   def BRLEZ   : F2_4<0b010, "brlez">;               // Branch on rs1 <= 0
   def BRLZ    : F2_4<0b011, "brlz">;                // Branch on rs1 <  0
@@ -55,8 +55,8 @@ set op2 = 0b011 in {
 // Section A.4: Branch on Floating-Point Condition Codes (FBfcc) p140
 // The following deprecated instructions don't seem to play nice on Sparc
 /*
-set isDeprecated = 1 in {
-  set op2 = 0b110 in {
+let isDeprecated = 1 in {
+  let op2 = 0b110 in {
     def FBA     : F2_2<0b1000, "fba">;              // Branch always
     def FBN     : F2_2<0b0000, "fbn">;              // Branch never
     def FBU     : F2_2<0b0111, "fbu">;              // Branch on unordered
@@ -78,7 +78,7 @@ set isDeprecated = 1 in {
 */
 
 // We now make these same opcodes represent the FBPfcc instructions
-set op2 = 0b101 in {
+let op2 = 0b101 in {
   def FBA     : F2_3<0b1000, "fba">;              // Branch always
   def FBN     : F2_3<0b0000, "fbn">;              // Branch never
   def FBU     : F2_3<0b0111, "fbu">;              // Branch on unordered
@@ -100,7 +100,7 @@ set op2 = 0b101 in {
 // Section A.5: Branch on FP condition codes with prediction - p143
 // Not used in the Sparc backend (directly)
 /*
-set op2 = 0b101 in {
+let op2 = 0b101 in {
   def FBPA     : F2_3<0b1000, "fba">;              // Branch always
   def FBPN     : F2_3<0b0000, "fbn">;              // Branch never
   def FBPU     : F2_3<0b0111, "fbu">;              // Branch on unordered
@@ -122,8 +122,8 @@ set op2 = 0b101 in {
 
 // Section A.6: Branch on Integer condition codes (Bicc) - p146
 /*
-set isDeprecated = 1 in {
-  set op2 = 0b010 in {
+let isDeprecated = 1 in {
+  let op2 = 0b010 in {
     def BA     : F2_2<0b1000, "ba">;              // Branch always
     def BN     : F2_2<0b0000, "bn">;              // Branch never
     def BNE    : F2_2<0b1001, "bne">;             // Branch !=
@@ -145,8 +145,8 @@ set isDeprecated = 1 in {
 */
 
 // Using the format of A.7 instructions...
-set op2 = 0b001 in {
-  set cc = 0 in { // BA and BN don't read condition codes
+let op2 = 0b001 in {
+  let cc = 0 in { // BA and BN don't read condition codes
     def BA   : F2_3<0b1000, "ba">;              // Branch always
     def BN   : F2_3<0b0000, "bn">;              // Branch never
   }
@@ -169,7 +169,7 @@ set op2 = 0b001 in {
 // Section A.7: Branch on integer condition codes with prediction - p148
 // Not used in the Sparc backend
 /*
-set op2 = 0b001 in {
+let op2 = 0b001 in {
   def BPA     : F2_3<0b1000, "bpa">;              // Branch always
   def BPN     : F2_3<0b0000, "bpn">;              // Branch never
   def BPNE    : F2_3<0b1001, "bpne">;             // Branch !=
@@ -192,10 +192,10 @@ set op2 = 0b001 in {
 // Section A.8: CALL - p151, the only Format #1 instruction
 def CALL : InstV9 {
   bits<30> disp;
-  set op = 1;
-  set Inst{29-0} = disp;
-  set Name = "call";
-  set isCall = 1;
+  let op = 1;
+  let Inst{29-0} = disp;
+  let Name = "call";
+  let isCall = 1;
 }
 
 // Section A.9: Compare and Swap - p176
@@ -205,7 +205,7 @@ def CALL : InstV9 {
 // Section A.10: Divide (64-bit / 32-bit) - p178
 // Not used in the Sparc backend
 /*
-set isDeprecated = 1 in {
+let isDeprecated = 1 in {
   def UDIVr   : F3_1<2, 0b001110, "udiv">;        // udiv r, r, r
   def UDIVi   : F3_2<2, 0b001110, "udiv">;        // udiv r, r, i
   def SDIVr   : F3_1<2, 0b001111, "sdiv">;        // sdiv r, r, r
@@ -220,7 +220,7 @@ set isDeprecated = 1 in {
 // Section A.11: DONE and RETRY - p181
 // Not used in the Sparc backend
 /*
-set isPrivileged = 1 in {
+let isPrivileged = 1 in {
   def DONE    : F3_18<0, "done">;                 // done
   def RETRY   : F3_18<1, "retry">;                // retry
 }
@@ -321,13 +321,13 @@ def LDDFr : F3_1<3, 0b100011, "ldd">;            // ldd [rs1+rs2], rd
 def LDDFi : F3_2<3, 0b100011, "ldd">;            // ldd [rs1+imm], rd
 def LDQFr : F3_1<3, 0b100010, "ldq">;            // ldq [rs1+rs2], rd
 def LDQFi : F3_2<3, 0b100010, "ldq">;            // ldq [rs1+imm], rd
-set isDeprecated = 1 in {
-  set rd = 0 in {
+let isDeprecated = 1 in {
+  let rd = 0 in {
     def LDFSRr : F3_1<3, 0b100001, "ld">;        // ld [rs1+rs2], rd
     def LDFSRi : F3_2<3, 0b100001, "ld">;        // ld [rs1+imm], rd
   }
 }
-set rd = 1 in {
+let rd = 1 in {
   def LDXFSRr : F3_1<3, 0b100001, "ldx">;         // ldx [rs1+rs2], rd
   def LDXFSRi : F3_2<3, 0b100001, "ldx">;         // ldx [rs1+imm], rd
 }
@@ -349,7 +349,7 @@ def LDUWi : F3_2<3, 0b000000, "lduw">;           // lduw [rs1+imm], rd
 def LDXr  : F3_1<3, 0b001011, "ldx">;            // ldx  [rs1+rs2], rd
 def LDXi  : F3_2<3, 0b001011, "ldx">;            // ldx  [rs1+imm], rd
 /*
-set isDeprecated = 1 in {
+let isDeprecated = 1 in {
   def LDDr : F3_1<3, 0b000011, "ldd">;            // ldd [rs1+rs2], rd
   def LDDi : F3_2<3, 0b000011, "ldd">;            // ldd [rs1+imm], rd
 }
@@ -615,13 +615,13 @@ def UDIVXi : F3_2<2, 0b001101, "udivx">;       // udivx  r, i, r
 // Section A.38: Multiply (32-bit) - p200
 // Not used in the Sparc backend
 /*
-set Inst{13} = 0 in {
+let Inst{13} = 0 in {
   def UMULr   : F3_1<2, 0b001010, "umul">;        // umul   r, r, r
   def SMULr   : F3_1<2, 0b001011, "smul">;        // smul   r, r, r
   def UMULCCr : F3_1<2, 0b011010, "umulcc">;      // mulcc  r, r, r
   def SMULCCr : F3_1<2, 0b011011, "smulcc">;      // smulcc r, r, r
 }
-set Inst{13} = 1 in {
+let Inst{13} = 1 in {
   def UMULi   : F3_1<2, 0b001010, "umul">;        // umul   r, i, r
   def SMULi   : F3_1<2, 0b001011, "smul">;        // smul   r, i, r
   def UMULCCi : F3_1<2, 0b011010, "umulcc">;      // umulcc r, i, r
@@ -634,9 +634,9 @@ set Inst{13} = 1 in {
 
 // Section A.40: No operation - p204
 // NOP is really a pseudo-instruction (special case of SETHI)
-set op2 = 0b100 in {
-  set rd = 0 in {
-    set imm = 0 in {
+let op2 = 0b100 in {
+  let rd = 0 in {
+    let imm = 0 in {
       def NOP : F2_1<"nop">;                     // nop
     }
   }
@@ -653,12 +653,12 @@ set op2 = 0b100 in {
 
 // Section A.44: Read State Register
 // The only instr from this section currently used is RDCCR
-set rs1 = 2 in {
+let rs1 = 2 in {
   def RDCCR : F3_17<2, 0b101000, "rd">;             // rd %ccr, r
 }
 
 // Section A.45: RETURN - p216
-set isReturn = 1 in {
+let isReturn = 1 in {
   def RETURNr : F3_3<2, 0b111001, "return">;      // return
   def RETURNi : F3_4<2, 0b111001, "return">;      // return
 }
@@ -673,7 +673,7 @@ def RESTOREi : F3_2<2, 0b111101, "restore">;    // restore r, i, r
 // Not currently used in Sparc backend
 
 // Section A.48: SETHI - p220
-set op2 = 0b100 in {
+let op2 = 0b100 in {
   def SETHI : F2_1<"sethi">;                      // sethi
 }
 
@@ -681,7 +681,7 @@ set op2 = 0b100 in {
 // Not currently used in the Sparc backend
 /*
  uses 5 least significant bits of rs2
-set x = 0 in {
+let x = 0 in {
   def SLLr5  : F3_11<2, 0b100101, "sll">;                // sll r, r, r
   def SRLr5  : F3_11<2, 0b100110, "srl">;                // srl r, r, r
   def SRAr5  : F3_11<2, 0b100111, "sra">;                // sra r, r, r
@@ -692,12 +692,12 @@ set x = 0 in {
 */
 
 // uses 6 least significant bits of rs2
-set x = 0 in { 
+let x = 0 in { 
   def SLLr5  : F3_11<2, 0b100101, "sll">;                // sll r, r, r
   def SRLr5  : F3_11<2, 0b100110, "srl">;                // srl r, r, r
   def SRAr5  : F3_11<2, 0b100111, "sra">;                // sra r, r, r
 }
-set x = 1 in {
+let x = 1 in {
   def SLLXr6 : F3_11<2, 0b100101, "sllx">;               // sllx r, r, r
   def SRLXr6 : F3_11<2, 0b100110, "srlx">;               // srlx r, r, r
   def SRAXr6 : F3_11<2, 0b100111, "srax">;               // srax r, r, r
@@ -733,7 +733,7 @@ def STQFi : F3_2rd<3, 0b100110, "stq">;                     // stq r, [r+i]
 // while STXFSRx expect rd=1, but assembly syntax dictates %fsr as first arg.
 // These are being disabled because they aren't used in the Sparc backend.
 /*
-set isDeprecated = 1 in {
+let isDeprecated = 1 in {
   def STFSRr : F3_1<3, 0b100101, "st">;                   // st  %fsr, [r+r]
   def STFSRi : F3_2<3, 0b100101, "st">;                   // st  %fsr, [r+i]
 }
@@ -771,7 +771,7 @@ def SUBCcci : F3_2<2, 0b011100, "subccc">;                // subccc r, i, r
 // FIXME: More...?
 
 // Section A.63: Write State Register - p244
-set rd = 2 in {
+let rd = 2 in {
   def WRCCRr : F3_1<2, 0b110000, "wr">;                 // wr r, r, %y/ccr/etc
   def WRCCRi : F3_2<2, 0b110000, "wr">;                 // wr r, i, %y/ccr/etc
 }

@@ -11,7 +11,7 @@ class Ri<bits<5> num> : Register {
   field bits<5> Num = num;        // Numbers are identified with a 5 bit ID
 }
 
-set Namespace = "SparcV9" in {
+let Namespace = "SparcV9" in {
   def G0 : Ri< 0>;    def G1 : Ri< 1>;    def G2 : Ri< 2>;    def G3 : Ri< 3>;
   def G4 : Ri< 4>;    def G5 : Ri< 5>;    def G6 : Ri< 6>;    def G7 : Ri< 7>;
   def O0 : Ri< 8>;    def O1 : Ri< 9>;    def O2 : Ri<10>;    def O3 : Ri<11>;
