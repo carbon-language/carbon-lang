@@ -1,7 +1,7 @@
 //===-- LiveRangeInfo.h - Track all LiveRanges for a Function ----*- C++ -*-==//
 //
 // This file contains the class LiveRangeInfo which constructs and keeps 
-// the LiveRangMap which contains all the live ranges used in a method.
+// the LiveRangeMap which contains all the live ranges used in a method.
 //
 // Assumptions: 
 //
@@ -36,7 +36,7 @@ typedef hash_map<const Value*, LiveRange*> LiveRangeMapType;
 //----------------------------------------------------------------------------
 // Class LiveRangeInfo
 //
-// Constructs and keeps the LiveRangMap which contains all the live 
+// Constructs and keeps the LiveRangeMap which contains all the live 
 // ranges used in a method. Also contain methods to coalesce live ranges.
 //----------------------------------------------------------------------------
 
