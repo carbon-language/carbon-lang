@@ -39,6 +39,8 @@ static string getCaption(const DSNode *N, const DSGraph *G) {
   if (N->NodeType & DSNode::NewNode   ) OS << "N";
   if (N->NodeType & DSNode::GlobalNode) OS << "G";
   if (N->NodeType & DSNode::Incomplete) OS << "I";
+  if (N->NodeType & DSNode::Modified  ) OS << "M";
+  if (N->NodeType & DSNode::Read      ) OS << "R";
 
   for (unsigned i = 0, e = N->getGlobals().size(); i != e; ++i) {
     WriteAsOperand(OS, N->getGlobals()[i], false, true, M);
