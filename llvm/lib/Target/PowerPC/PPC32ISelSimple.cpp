@@ -32,9 +32,6 @@
 using namespace llvm;
 
 namespace {
-  Statistic<>
-  MultiUseGEP("ppc-codegen", "Number of GEPs folded with more than one use");
-  
   /// TypeClass - Used by the PowerPC backend to group LLVM types by their basic
   /// PPC Representation.
   ///
@@ -491,34 +488,27 @@ bool PPC32ISel::canUseAsImmediateForOpcode(ConstantInt *CI, unsigned Operator) {
   ConstantUInt *Op1Cu;
       
   // ADDI, Compare, and non-indexed Load take SIMM
-  bool cond1 = (Operator == 0) 
-    && (Op1Cs = dyn_cast<ConstantSInt>(CI))
-    && (Op1Cs->getValue() <= 32767)
-    && (Op1Cs->getValue() >= -32768);
+  bool cond1 = (Operator == 0)
+    && ((int32_t)CI->getRawValue() <= 32767)
+    && ((int32_t)CI->getRawValue() >= -32768);
 
   // SUBI takes -SIMM since it is a mnemonic for ADDI
   bool cond2 = (Operator == 1)
-    && (Op1Cs = dyn_cast<ConstantSInt>(CI)) 
-    && (Op1Cs->getValue() <= 32768)
-    && (Op1Cs->getValue() >= -32767);
+    && ((int32_t)CI->getRawValue() <= 32768)
+    && ((int32_t)CI->getRawValue() >= -32767);
       
   // ANDIo, ORI, and XORI take unsigned values
   bool cond3 = (Operator >= 2)
     && (Op1Cs = dyn_cast<ConstantSInt>(CI))
     && (Op1Cs->getValue() >= 0)
-    && (Op1Cs->getValue() <= 32767);
-
-  // ADDI and SUBI take SIMMs, so we have to make sure the UInt would fit
-  bool cond4 = (Operator < 2)
-    && (Op1Cu = dyn_cast<ConstantUInt>(CI)) 
-    && (Op1Cu->getValue() <= 32767);
+    && (Op1Cs->getValue() <= 65535);
 
   // ANDIo, ORI, and XORI take UIMMs, so they can be larger
-  bool cond5 = (Operator >= 2)
+  bool cond4 = (Operator >= 2)
     && (Op1Cu = dyn_cast<ConstantUInt>(CI))
     && (Op1Cu->getValue() <= 65535);
 
-  if (cond1 || cond2 || cond3 || cond4 || cond5)
+  if (cond1 || cond2 || cond3 || cond4)
     return true;
 
   return false;
@@ -3321,10 +3311,8 @@ void PPC32ISel::emitGEPOperation(MachineBasicBlock *MBB,
                                  GetElementPtrInst *GEPI, bool GEPIsFolded) {
   // If we've already emitted this particular GEP, just return to avoid
   // multiple definitions of the base register.
-  if (GEPIsFolded && (GEPMap[GEPI].base != 0)) {
-    MultiUseGEP++;
+  if (GEPIsFolded && (GEPMap[GEPI].base != 0))
     return;
-  }
   
   Value *Src = GEPI->getOperand(0);
   User::op_iterator IdxBegin = GEPI->op_begin()+1;
