@@ -114,7 +114,7 @@ bool PowerPCTargetMachine::addPassesToEmitAssembly(PassManager &PM,
 }
 
 void PowerPCJITInfo::addPassesToJITCompile(FunctionPassManager &PM) {
-  return true;
+  return;
   // FIXME: Implement efficient support for garbage collection intrinsics.
   PM.add(createLowerGCPass());
 
