@@ -25,6 +25,7 @@
 #include "llvm/Pass.h"
 #include "Support/Debug.h"
 #include "Support/Statistic.h"
+#include <set>
 using namespace llvm;
 
 namespace {
@@ -52,16 +53,23 @@ static bool ContainingFunctionIsTriviallyDead(Instruction *I) {
 /// isStoredThrough - Return false if the specified pointer is provably never
 /// stored through.  If we can't tell, we must conservatively assume it might.
 ///
-static bool isStoredThrough(Value *V) {
+static bool isStoredThrough(Value *V, std::set<PHINode*> &PHIUsers) {
   for (Value::use_iterator UI = V->use_begin(), E = V->use_end(); UI != E; ++UI)
     if (ConstantExpr *CE = dyn_cast<ConstantExpr>(*UI)) {
-      if (isStoredThrough(CE))
+      if (isStoredThrough(CE, PHIUsers))
         return true;
     } else if (Instruction *I = dyn_cast<Instruction>(*UI)) {
       if (!ContainingFunctionIsTriviallyDead(I)) {
-        if (I->getOpcode() == Instruction::GetElementPtr) {
-          if (isStoredThrough(I)) return true;
-        } else if (!isa<LoadInst>(*UI) && !isa<SetCondInst>(*UI)) {
+        if (I->getOpcode() == Instruction::GetElementPtr ||
+            I->getOpcode() == Instruction::Select) {
+          if (isStoredThrough(I, PHIUsers)) return true;
+        } else if (PHINode *PN = dyn_cast<PHINode>(I)) {
+          // PHI nodes we can check just like select or GEP instructions, but we
+          // have to be careful about infinite recursion.
+          if (PHIUsers.insert(PN).second)  // Not already visited.
+            if (isStoredThrough(I, PHIUsers)) return true;
+
+        } else if (!isa<LoadInst>(I) && !isa<SetCondInst>(I)) {
           return true;  // Any other non-load instruction might store!
         }
       }
@@ -75,14 +83,16 @@ static bool isStoredThrough(Value *V) {
 
 bool Constifier::run(Module &M) {
   bool Changed = false;
+  std::set<PHINode*> PHIUsers;
   for (Module::giterator GV = M.gbegin(), E = M.gend(); GV != E; ++GV)
     if (!GV->isConstant() && GV->hasInternalLinkage() && GV->hasInitializer()) {
-      if (!isStoredThrough(GV)) {
+      if (!isStoredThrough(GV, PHIUsers)) {
         DEBUG(std::cerr << "MARKING CONSTANT: " << *GV << "\n");
         GV->setConstant(true);
         ++NumMarked;
         Changed = true;
       }
+      PHIUsers.clear();
     }
   return Changed;
 }
