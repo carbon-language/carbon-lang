@@ -10,20 +10,20 @@
 #include "llvm/iTerminators.h"
 #include "llvm/Type.h"
 #include "llvm/Constants.h"
-#include "llvm/CodeGen/MFunction.h"
-#include "llvm/CodeGen/MInstBuilder.h"
+#include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/Support/InstVisitor.h"
 #include <map>
 
 namespace {
-  struct ISel : public InstVisitor<ISel> {  // eventually will be a FunctionPass
-    MFunction   *F;               // The function we are compiling into
-    MBasicBlock *BB;              // The current basic block we are compiling
+  struct ISel : public InstVisitor<ISel> { // eventually will be a FunctionPass
+    MachineFunction *F;                    // The function we are compiling into
+    MachineBasicBlock *BB;                 // The current MBB we are compiling
 
     unsigned CurReg;
     std::map<Value*, unsigned> RegMap;  // Mapping between Val's and SSA Regs
 
-    ISel(MFunction *f)
+    ISel(MachineFunction *f)
       : F(f), BB(0), CurReg(MRegisterInfo::FirstVirtualRegister) {}
 
     /// runOnFunction - Top level implementation of instruction selection for
@@ -41,7 +41,7 @@ namespace {
     /// invoked for all instructions in the basic block.
     ///
     void visitBasicBlock(BasicBlock &LLVM_BB) {
-      BB = new MBasicBlock();
+      BB = new MachineBasicBlock();
       // FIXME: Use the auto-insert form when it's available
       F->getBasicBlockList().push_back(BB);
     }
@@ -94,22 +94,22 @@ void ISel::copyConstantToRegister(Constant *C, unsigned R) {
 
   switch (C->getType()->getPrimitiveID()) {
   case Type::SByteTyID:
-    BuildMInst(BB, X86::MOVir8, R).addSImm(cast<ConstantSInt>(C)->getValue());
+    BuildMI(BB, X86::MOVir8, R).addSImm(cast<ConstantSInt>(C)->getValue());
     break;
   case Type::UByteTyID:
-    BuildMInst(BB, X86::MOVir8, R).addZImm(cast<ConstantUInt>(C)->getValue());
+    BuildMI(BB, X86::MOVir8, R).addZImm(cast<ConstantUInt>(C)->getValue());
     break;
   case Type::ShortTyID:
-    BuildMInst(BB, X86::MOVir16, R).addSImm(cast<ConstantSInt>(C)->getValue());
+    BuildMI(BB, X86::MOVir16, R).addSImm(cast<ConstantSInt>(C)->getValue());
     break;
   case Type::UShortTyID:
-    BuildMInst(BB, X86::MOVir16, R).addZImm(cast<ConstantUInt>(C)->getValue());
+    BuildMI(BB, X86::MOVir16, R).addZImm(cast<ConstantUInt>(C)->getValue());
     break;
   case Type::IntTyID:
-    BuildMInst(BB, X86::MOVir32, R).addSImm(cast<ConstantSInt>(C)->getValue());
+    BuildMI(BB, X86::MOVir32, R).addSImm(cast<ConstantSInt>(C)->getValue());
     break;
   case Type::UIntTyID:
-    BuildMInst(BB, X86::MOVir32, R).addZImm(cast<ConstantUInt>(C)->getValue());
+    BuildMI(BB, X86::MOVir32, R).addZImm(cast<ConstantUInt>(C)->getValue());
     break;
   default: assert(0 && "Type not handled yet!");      
   }
@@ -135,7 +135,7 @@ void ISel::visitReturnInst(ReturnInst &I) {
 
   // Emit a simple 'ret' instruction... appending it to the end of the basic
   // block
-  new MInstruction(BB, X86::RET);
+  BuildMI(BB, X86::RET, 0);
 }
 
 
@@ -146,13 +146,13 @@ void ISel::visitAdd(BinaryOperator &B) {
 
   switch (B.getType()->getPrimitiveSize()) {
   case 1:   // UByte, SByte
-    BuildMInst(BB, X86::ADDrr8, DestReg).addReg(Op0r).addReg(Op1r);
+    BuildMI(BB, X86::ADDrr8, DestReg).addReg(Op0r).addReg(Op1r);
     break;
   case 2:   // UShort, Short
-    BuildMInst(BB, X86::ADDrr16, DestReg).addReg(Op0r).addReg(Op1r);
+    BuildMI(BB, X86::ADDrr16, DestReg).addReg(Op0r).addReg(Op1r);
     break;
   case 4:   // UInt, Int
-    BuildMInst(BB, X86::ADDrr32, DestReg).addReg(Op0r).addReg(Op1r);
+    BuildMI(BB, X86::ADDrr32, DestReg).addReg(Op0r).addReg(Op1r);
     break;
 
   case 8:   // ULong, Long
@@ -167,8 +167,8 @@ void ISel::visitAdd(BinaryOperator &B) {
 /// a machine code representation is a very simple peep-hole fashion.  The
 /// generated code sucks but the implementation is nice and simple.
 ///
-MFunction *X86SimpleInstructionSelection(Function &F) {
-  MFunction *Result = new MFunction();
+MachineFunction *X86SimpleInstructionSelection(Function &F, TargetMachine &TM) {
+  MachineFunction *Result = new MachineFunction(&F, TM);
   ISel(Result).runOnFunction(F);
   return Result;
 }
