@@ -185,7 +185,7 @@ int main(int argc, char **argv) {
          << "' for writing!\n";
     return 1;
   }
-  Out2 << "#!/bin/sh\nlli -q $0.bc $*\n";
+  Out2 << "#!/bin/sh\nlli -q -abort-on-exception $0.bc $*\n";
   Out2.close();
   
   // Make the script executable...
