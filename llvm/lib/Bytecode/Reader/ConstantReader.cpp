@@ -76,7 +76,7 @@ const Type *BytecodeParser::parseTypeConstant(const unsigned char *&Buf,
   case Type::PointerTyID: {
     unsigned ElTyp;
     if (read_vbr(Buf, EndBuf, ElTyp)) return Val;
-    BCR_TRACE(5, "Pointer Type Constant #" << (ElTyp-14) << "\n");
+    BCR_TRACE(5, "Pointer Type Constant #" << ElTyp << "\n");
     const Type *ElementType = getType(ElTyp);
     if (ElementType == 0) return Val;
     return PointerType::get(ElementType);
@@ -99,9 +99,6 @@ const Type *BytecodeParser::parseTypeConstant(const unsigned char *&Buf,
 //
 void BytecodeParser::refineAbstractType(const DerivedType *OldType, 
 					const Type *NewType) {
-  if (OldType == NewType &&
-      OldType->isAbstract()) return;  // Type is modified, but same
-
   TypeValuesListTy::iterator I = find(FunctionTypeValues.begin(), 
 				      FunctionTypeValues.end(), OldType);
   if (I == FunctionTypeValues.end()) {
