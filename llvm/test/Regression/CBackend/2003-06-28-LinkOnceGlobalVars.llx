@@ -1,0 +1,4 @@
+; RUN: as < %s | dis -c | grep common | grep X
+
+%X = linkonce global int 5
+
