@@ -14,8 +14,11 @@
 #ifndef LLVM_TRANSFORMS_UTILS_FUNCTION_H
 #define LLVM_TRANSFORMS_UTILS_FUNCTION_H
 
+#include <vector>
+
 namespace llvm {
 
+  class BasicBlock;
 class Function;
 class Loop;
 
