@@ -74,7 +74,7 @@ static inline TypeClass getClassB(const Type *Ty) {
 }
 
 namespace {
-  struct ISel : public FunctionPass, InstVisitor<ISel> {
+  struct X86ISel : public FunctionPass, InstVisitor<X86ISel> {
     TargetMachine &TM;
     MachineFunction *F;                 // The function we are compiling into
     MachineBasicBlock *BB;              // The current MBB we are compiling
@@ -90,7 +90,7 @@ namespace {
     // FrameIndex for the alloca.
     std::map<AllocaInst*, unsigned> AllocaMap;
 
-    ISel(TargetMachine &tm) : TM(tm), F(0), BB(0) {}
+    X86ISel(TargetMachine &tm) : TM(tm), F(0), BB(0) {}
 
     /// runOnFunction - Top level implementation of instruction selection for
     /// the entire function.
@@ -388,8 +388,8 @@ static AllocaInst *dyn_castFixedAlloca(Value *V) {
 
 /// getReg - This method turns an LLVM value into a register number.
 ///
-unsigned ISel::getReg(Value *V, MachineBasicBlock *MBB,
-                      MachineBasicBlock::iterator IPt) {
+unsigned X86ISel::getReg(Value *V, MachineBasicBlock *MBB,
+                         MachineBasicBlock::iterator IPt) {
   // If this operand is a constant, emit the code to copy the constant into
   // the register here...
   if (Constant *C = dyn_cast<Constant>(V)) {
@@ -423,7 +423,7 @@ unsigned ISel::getReg(Value *V, MachineBasicBlock *MBB,
 /// getFixedSizedAllocaFI - Return the frame index for a fixed sized alloca
 /// that is to be statically allocated with the initial stack frame
 /// adjustment.
-unsigned ISel::getFixedSizedAllocaFI(AllocaInst *AI) {
+unsigned X86ISel::getFixedSizedAllocaFI(AllocaInst *AI) {
   // Already computed this?
   std::map<AllocaInst*, unsigned>::iterator I = AllocaMap.lower_bound(AI);
   if (I != AllocaMap.end() && I->first == AI) return I->second;
@@ -444,9 +444,9 @@ unsigned ISel::getFixedSizedAllocaFI(AllocaInst *AI) {
 /// copyConstantToRegister - Output the instructions required to put the
 /// specified constant into the specified register.
 ///
-void ISel::copyConstantToRegister(MachineBasicBlock *MBB,
-                                  MachineBasicBlock::iterator IP,
-                                  Constant *C, unsigned R) {
+void X86ISel::copyConstantToRegister(MachineBasicBlock *MBB,
+                                     MachineBasicBlock::iterator IP,
+                                     Constant *C, unsigned R) {
   if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C)) {
     unsigned Class = 0;
     switch (CE->getOpcode()) {
@@ -557,7 +557,7 @@ void ISel::copyConstantToRegister(MachineBasicBlock *MBB,
 /// LoadArgumentsToVirtualRegs - Load all of the arguments to this function from
 /// the stack into virtual registers.
 ///
-void ISel::LoadArgumentsToVirtualRegs(Function &Fn) {
+void X86ISel::LoadArgumentsToVirtualRegs(Function &Fn) {
   // Emit instructions to load the arguments...  On entry to a function on the
   // X86, the stack frame looks like this:
   //
@@ -634,7 +634,7 @@ void ISel::LoadArgumentsToVirtualRegs(Function &Fn) {
 /// because we have to generate our sources into the source basic blocks, not
 /// the current one.
 ///
-void ISel::SelectPHINodes() {
+void X86ISel::SelectPHINodes() {
   const TargetInstrInfo &TII = *TM.getInstrInfo();
   const Function &LF = *F->getFunction();  // The LLVM function...
   for (Function::const_iterator I = LF.begin(), E = LF.end(); I != E; ++I) {
@@ -772,7 +772,7 @@ static bool RequiresFPRegKill(const MachineBasicBlock *MBB) {
 // break critical edges as needed (to make a place to put compensation code),
 // but this will require some infrastructure improvements as well.
 //
-void ISel::InsertFPRegKills() {
+void X86ISel::InsertFPRegKills() {
   SSARegMap &RegMap = *F->getSSARegMap();
 
   for (MachineFunction::iterator BB = F->begin(), E = F->end(); BB != E; ++BB) {
@@ -810,7 +810,7 @@ void ISel::InsertFPRegKills() {
 }
 
 
-void ISel::getAddressingMode(Value *Addr, X86AddressMode &AM) {
+void X86ISel::getAddressingMode(Value *Addr, X86AddressMode &AM) {
   AM.BaseType = X86AddressMode::RegBase;
   AM.Base.Reg = 0; AM.Scale = 1; AM.IndexReg = 0; AM.Disp = 0;
   if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(Addr)) {
@@ -888,8 +888,8 @@ static const unsigned SetCCOpcodeTab[2][8] = {
 
 /// emitUCOMr - In the future when we support processors before the P6, this
 /// wraps the logic for emitting an FUCOMr vs FUCOMIr.
-void ISel::emitUCOMr(MachineBasicBlock *MBB, MachineBasicBlock::iterator IP,
-                     unsigned LHS, unsigned RHS) {
+void X86ISel::emitUCOMr(MachineBasicBlock *MBB, MachineBasicBlock::iterator IP,
+                        unsigned LHS, unsigned RHS) {
   if (0) { // for processors prior to the P6
     BuildMI(*MBB, IP, X86::FUCOMr, 2).addReg(LHS).addReg(RHS);
     BuildMI(*MBB, IP, X86::FNSTSW8r, 0);
@@ -901,9 +901,9 @@ void ISel::emitUCOMr(MachineBasicBlock *MBB, MachineBasicBlock::iterator IP,
 
 // EmitComparison - This function emits a comparison of the two operands,
 // returning the extended setcc code to use.
-unsigned ISel::EmitComparison(unsigned OpNum, Value *Op0, Value *Op1,
-                              MachineBasicBlock *MBB,
-                              MachineBasicBlock::iterator IP) {
+unsigned X86ISel::EmitComparison(unsigned OpNum, Value *Op0, Value *Op1,
+                                 MachineBasicBlock *MBB,
+                                 MachineBasicBlock::iterator IP) {
   // The arguments are already supposed to be of the same type.
   const Type *CompTy = Op0->getType();
   unsigned Class = getClassB(CompTy);
@@ -1061,7 +1061,7 @@ unsigned ISel::EmitComparison(unsigned OpNum, Value *Op0, Value *Op1,
 /// SetCC instructions - Here we just emit boilerplate code to set a byte-sized
 /// register, then move it to wherever the result should be. 
 ///
-void ISel::visitSetCondInst(SetCondInst &I) {
+void X86ISel::visitSetCondInst(SetCondInst &I) {
   if (canFoldSetCCIntoBranchOrSelect(&I))
     return;  // Fold this into a branch or select.
 
@@ -1074,10 +1074,10 @@ void ISel::visitSetCondInst(SetCondInst &I) {
 /// emitSetCCOperation - Common code shared between visitSetCondInst and
 /// constant expression support.
 ///
-void ISel::emitSetCCOperation(MachineBasicBlock *MBB,
-                              MachineBasicBlock::iterator IP,
-                              Value *Op0, Value *Op1, unsigned Opcode,
-                              unsigned TargetReg) {
+void X86ISel::emitSetCCOperation(MachineBasicBlock *MBB,
+                                 MachineBasicBlock::iterator IP,
+                                 Value *Op0, Value *Op1, unsigned Opcode,
+                                 unsigned TargetReg) {
   unsigned OpNum = getSetCCNumber(Opcode);
   OpNum = EmitComparison(OpNum, Op0, Op1, MBB, IP);
 
@@ -1095,7 +1095,7 @@ void ISel::emitSetCCOperation(MachineBasicBlock *MBB,
   }
 }
 
-void ISel::visitSelectInst(SelectInst &SI) {
+void X86ISel::visitSelectInst(SelectInst &SI) {
   unsigned DestReg = getReg(SI);
   MachineBasicBlock::iterator MII = BB->end();
   emitSelectOperation(BB, MII, SI.getCondition(), SI.getTrueValue(),
@@ -1104,10 +1104,10 @@ void ISel::visitSelectInst(SelectInst &SI) {
  
 /// emitSelect - Common code shared between visitSelectInst and the constant
 /// expression support.
-void ISel::emitSelectOperation(MachineBasicBlock *MBB,
-                               MachineBasicBlock::iterator IP,
-                               Value *Cond, Value *TrueVal, Value *FalseVal,
-                               unsigned DestReg) {
+void X86ISel::emitSelectOperation(MachineBasicBlock *MBB,
+                                  MachineBasicBlock::iterator IP,
+                                  Value *Cond, Value *TrueVal, Value *FalseVal,
+                                  unsigned DestReg) {
   unsigned SelectClass = getClassB(TrueVal->getType());
   
   // We don't support 8-bit conditional moves.  If we have incoming constants,
@@ -1267,7 +1267,7 @@ void ISel::emitSelectOperation(MachineBasicBlock *MBB,
 /// promote32 - Emit instructions to turn a narrow operand into a 32-bit-wide
 /// operand, in the specified target register.
 ///
-void ISel::promote32(unsigned targetReg, const ValueRecord &VR) {
+void X86ISel::promote32(unsigned targetReg, const ValueRecord &VR) {
   bool isUnsigned = VR.Ty->isUnsigned() || VR.Ty == Type::BoolTy;
 
   Value *Val = VR.Val;
@@ -1325,7 +1325,7 @@ void ISel::promote32(unsigned targetReg, const ValueRecord &VR) {
 ///   ret long, ulong  : Move value into EAX/EDX and return
 ///   ret float/double : Top of FP stack
 ///
-void ISel::visitReturnInst(ReturnInst &I) {
+void X86ISel::visitReturnInst(ReturnInst &I) {
   if (I.getNumOperands() == 0) {
     BuildMI(BB, X86::RET, 0); // Just emit a 'ret' instruction
     return;
@@ -1375,7 +1375,7 @@ static inline BasicBlock *getBlockAfter(BasicBlock *BB) {
 /// jump to a block that is the immediate successor of the current block, we can
 /// just make a fall-through (but we don't currently).
 ///
-void ISel::visitBranchInst(BranchInst &BI) {
+void X86ISel::visitBranchInst(BranchInst &BI) {
   // Update machine-CFG edges
   BB->addSuccessor (MBBMap[BI.getSuccessor(0)]);
   if (BI.isConditional())
@@ -1454,9 +1454,8 @@ void ISel::visitBranchInst(BranchInst &BI) {
 /// and the return value as appropriate.  For the actual function call itself,
 /// it inserts the specified CallMI instruction into the stream.
 ///
-void ISel::doCall(const ValueRecord &Ret, MachineInstr *CallMI,
-                  const std::vector<ValueRecord> &Args) {
-
+void X86ISel::doCall(const ValueRecord &Ret, MachineInstr *CallMI,
+                     const std::vector<ValueRecord> &Args) {
   // Count how many bytes are to be pushed on the stack...
   unsigned NumBytes = 0;
 
@@ -1591,7 +1590,7 @@ void ISel::doCall(const ValueRecord &Ret, MachineInstr *CallMI,
 
 
 /// visitCallInst - Push args on stack and do a procedure call instruction.
-void ISel::visitCallInst(CallInst &CI) {
+void X86ISel::visitCallInst(CallInst &CI) {
   MachineInstr *TheCall;
   if (Function *F = CI.getCalledFunction()) {
     // Is it an intrinsic function call?
@@ -1619,7 +1618,7 @@ void ISel::visitCallInst(CallInst &CI) {
 /// function, lowering any calls to unknown intrinsic functions into the
 /// equivalent LLVM code.
 ///
-void ISel::LowerUnknownIntrinsicFunctionCalls(Function &F) {
+void X86ISel::LowerUnknownIntrinsicFunctionCalls(Function &F) {
   for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
     for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; )
       if (CallInst *CI = dyn_cast<CallInst>(I++))
@@ -1669,7 +1668,7 @@ void ISel::LowerUnknownIntrinsicFunctionCalls(Function &F) {
           }
 }
 
-void ISel::visitIntrinsicCall(Intrinsic::ID ID, CallInst &CI) {
+void X86ISel::visitIntrinsicCall(Intrinsic::ID ID, CallInst &CI) {
   unsigned TmpReg1, TmpReg2;
   switch (ID) {
   case Intrinsic::vastart:
@@ -1952,7 +1951,7 @@ static bool isSafeToFoldLoadIntoInstruction(LoadInst &LI, Instruction &User) {
 /// OperatorClass is one of: 0 for Add, 1 for Sub, 2 for And, 3 for Or, 4 for
 /// Xor.
 ///
-void ISel::visitSimpleBinary(BinaryOperator &B, unsigned OperatorClass) {
+void X86ISel::visitSimpleBinary(BinaryOperator &B, unsigned OperatorClass) {
   unsigned DestReg = getReg(B);
   MachineBasicBlock::iterator MI = BB->end();
   Value *Op0 = B.getOperand(0), *Op1 = B.getOperand(1);
@@ -2035,11 +2034,10 @@ void ISel::visitSimpleBinary(BinaryOperator &B, unsigned OperatorClass) {
 
 /// emitBinaryFPOperation - This method handles emission of floating point
 /// Add (0), Sub (1), Mul (2), and Div (3) operations.
-void ISel::emitBinaryFPOperation(MachineBasicBlock *BB,
-                                 MachineBasicBlock::iterator IP,
-                                 Value *Op0, Value *Op1,
-                                 unsigned OperatorClass, unsigned DestReg) {
-
+void X86ISel::emitBinaryFPOperation(MachineBasicBlock *BB,
+                                    MachineBasicBlock::iterator IP,
+                                    Value *Op0, Value *Op1,
+                                    unsigned OperatorClass, unsigned DestReg) {
   // Special case: op Reg, <const fp>
   if (ConstantFP *Op1C = dyn_cast<ConstantFP>(Op1))
     if (!Op1C->isExactlyValue(+0.0) && !Op1C->isExactlyValue(+1.0)) {
@@ -2107,10 +2105,11 @@ void ISel::emitBinaryFPOperation(MachineBasicBlock *BB,
 /// emitSimpleBinaryOperation - Common code shared between visitSimpleBinary
 /// and constant expression support.
 ///
-void ISel::emitSimpleBinaryOperation(MachineBasicBlock *MBB,
-                                     MachineBasicBlock::iterator IP,
-                                     Value *Op0, Value *Op1,
-                                     unsigned OperatorClass, unsigned DestReg) {
+void X86ISel::emitSimpleBinaryOperation(MachineBasicBlock *MBB,
+                                        MachineBasicBlock::iterator IP,
+                                        Value *Op0, Value *Op1,
+                                        unsigned OperatorClass, 
+                                        unsigned DestReg) {
   unsigned Class = getClassB(Op0->getType());
 
   if (Class == cFP) {
@@ -2280,9 +2279,10 @@ void ISel::emitSimpleBinaryOperation(MachineBasicBlock *MBB,
 /// registers op0Reg and op1Reg, and put the result in DestReg.  The type of the
 /// result should be given as DestTy.
 ///
-void ISel::doMultiply(MachineBasicBlock *MBB, MachineBasicBlock::iterator MBBI,
-                      unsigned DestReg, const Type *DestTy,
-                      unsigned op0Reg, unsigned op1Reg) {
+void X86ISel::doMultiply(MachineBasicBlock *MBB,
+                         MachineBasicBlock::iterator MBBI,
+                         unsigned DestReg, const Type *DestTy,
+                         unsigned op0Reg, unsigned op1Reg) {
   unsigned Class = getClass(DestTy);
   switch (Class) {
   case cInt:
@@ -2316,10 +2316,10 @@ static unsigned ExactLog2(unsigned Val) {
 
 /// doMultiplyConst - This function is specialized to efficiently codegen an 8,
 /// 16, or 32-bit integer multiply by a constant.
-void ISel::doMultiplyConst(MachineBasicBlock *MBB,
-                           MachineBasicBlock::iterator IP,
-                           unsigned DestReg, const Type *DestTy,
-                           unsigned op0Reg, unsigned ConstRHS) {
+void X86ISel::doMultiplyConst(MachineBasicBlock *MBB,
+                              MachineBasicBlock::iterator IP,
+                              unsigned DestReg, const Type *DestTy,
+                              unsigned op0Reg, unsigned ConstRHS) {
   static const unsigned MOVrrTab[] = {X86::MOV8rr, X86::MOV16rr, X86::MOV32rr};
   static const unsigned MOVriTab[] = {X86::MOV8ri, X86::MOV16ri, X86::MOV32ri};
   static const unsigned ADDrrTab[] = {X86::ADD8rr, X86::ADD16rr, X86::ADD32rr};
@@ -2431,7 +2431,7 @@ void ISel::doMultiplyConst(MachineBasicBlock *MBB,
 /// visitMul - Multiplies are not simple binary operators because they must deal
 /// with the EAX register explicitly.
 ///
-void ISel::visitMul(BinaryOperator &I) {
+void X86ISel::visitMul(BinaryOperator &I) {
   unsigned ResultReg = getReg(I);
 
   Value *Op0 = I.getOperand(0);
@@ -2466,8 +2466,9 @@ void ISel::visitMul(BinaryOperator &I) {
   emitMultiply(BB, IP, Op0, Op1, ResultReg);
 }
 
-void ISel::emitMultiply(MachineBasicBlock *MBB, MachineBasicBlock::iterator IP,
-                        Value *Op0, Value *Op1, unsigned DestReg) {
+void X86ISel::emitMultiply(MachineBasicBlock *MBB, 
+                           MachineBasicBlock::iterator IP,
+                           Value *Op0, Value *Op1, unsigned DestReg) {
   MachineBasicBlock &BB = *MBB;
   TypeClass Class = getClass(Op0->getType());
 
@@ -2578,7 +2579,7 @@ void ISel::emitMultiply(MachineBasicBlock *MBB, MachineBasicBlock::iterator IP,
 /// select the result from a different register.  Note that both of these
 /// instructions work differently for signed and unsigned operands.
 ///
-void ISel::visitDivRem(BinaryOperator &I) {
+void X86ISel::visitDivRem(BinaryOperator &I) {
   unsigned ResultReg = getReg(I);
   Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
 
@@ -2628,10 +2629,10 @@ void ISel::visitDivRem(BinaryOperator &I) {
                       I.getOpcode() == Instruction::Div, ResultReg);
 }
 
-void ISel::emitDivRemOperation(MachineBasicBlock *BB,
-                               MachineBasicBlock::iterator IP,
-                               Value *Op0, Value *Op1, bool isDiv,
-                               unsigned ResultReg) {
+void X86ISel::emitDivRemOperation(MachineBasicBlock *BB,
+                                  MachineBasicBlock::iterator IP,
+                                  Value *Op0, Value *Op1, bool isDiv,
+                                  unsigned ResultReg) {
   const Type *Ty = Op0->getType();
   unsigned Class = getClass(Ty);
   switch (Class) {
@@ -2770,7 +2771,7 @@ void ISel::emitDivRemOperation(MachineBasicBlock *BB,
 /// shift values equal to 1. Even the general case is sort of special,
 /// because the shift amount has to be in CL, not just any old register.
 ///
-void ISel::visitShiftInst(ShiftInst &I) {
+void X86ISel::visitShiftInst(ShiftInst &I) {
   MachineBasicBlock::iterator IP = BB->end ();
   emitShiftOperation (BB, IP, I.getOperand (0), I.getOperand (1),
                       I.getOpcode () == Instruction::Shl, I.getType (),
@@ -2779,10 +2780,11 @@ void ISel::visitShiftInst(ShiftInst &I) {
 
 /// emitShiftOperation - Common code shared between visitShiftInst and
 /// constant expression support.
-void ISel::emitShiftOperation(MachineBasicBlock *MBB,
-                              MachineBasicBlock::iterator IP,
-                              Value *Op, Value *ShiftAmount, bool isLeftShift,
-                              const Type *ResultTy, unsigned DestReg) {
+void X86ISel::emitShiftOperation(MachineBasicBlock *MBB,
+                                 MachineBasicBlock::iterator IP,
+                                 Value *Op, Value *ShiftAmount, 
+                                 bool isLeftShift, const Type *ResultTy, 
+                                 unsigned DestReg) {
   unsigned SrcReg = getReg (Op, MBB, IP);
   bool isSigned = ResultTy->isSigned ();
   unsigned Class = getClass (ResultTy);
@@ -2919,7 +2921,7 @@ void ISel::emitShiftOperation(MachineBasicBlock *MBB,
 /// instruction.  The load and store instructions are the only place where we
 /// need to worry about the memory layout of the target machine.
 ///
-void ISel::visitLoadInst(LoadInst &I) {
+void X86ISel::visitLoadInst(LoadInst &I) {
   // Check to see if this load instruction is going to be folded into a binary
   // instruction, like add.  If so, we don't want to emit it.  Wouldn't a real
   // pattern matching instruction selector be nice?
@@ -3030,7 +3032,7 @@ void ISel::visitLoadInst(LoadInst &I) {
 /// visitStoreInst - Implement LLVM store instructions in terms of the x86 'mov'
 /// instruction.
 ///
-void ISel::visitStoreInst(StoreInst &I) {
+void X86ISel::visitStoreInst(StoreInst &I) {
   X86AddressMode AM;
   getAddressingMode(I.getOperand(1), AM);
 
@@ -3097,7 +3099,7 @@ void ISel::visitStoreInst(StoreInst &I) {
 /// visitCastInst - Here we have various kinds of copying with or without sign
 /// extension going on.
 ///
-void ISel::visitCastInst(CastInst &CI) {
+void X86ISel::visitCastInst(CastInst &CI) {
   Value *Op = CI.getOperand(0);
 
   unsigned SrcClass = getClassB(Op->getType());
@@ -3143,10 +3145,10 @@ void ISel::visitCastInst(CastInst &CI) {
 /// emitCastOperation - Common code shared between visitCastInst and constant
 /// expression cast support.
 ///
-void ISel::emitCastOperation(MachineBasicBlock *BB,
-                             MachineBasicBlock::iterator IP,
-                             Value *Src, const Type *DestTy,
-                             unsigned DestReg) {
+void X86ISel::emitCastOperation(MachineBasicBlock *BB,
+                                MachineBasicBlock::iterator IP,
+                                Value *Src, const Type *DestTy,
+                                unsigned DestReg) {
   const Type *SrcTy = Src->getType();
   unsigned SrcClass = getClassB(SrcTy);
   unsigned DestClass = getClassB(DestTy);
@@ -3432,7 +3434,7 @@ void ISel::emitCastOperation(MachineBasicBlock *BB,
 
 /// visitVANextInst - Implement the va_next instruction...
 ///
-void ISel::visitVANextInst(VANextInst &I) {
+void X86ISel::visitVANextInst(VANextInst &I) {
   unsigned VAList = getReg(I.getOperand(0));
   unsigned DestReg = getReg(I);
 
@@ -3458,7 +3460,7 @@ void ISel::visitVANextInst(VANextInst &I) {
   BuildMI(BB, X86::ADD32ri, 2, DestReg).addReg(VAList).addImm(Size);
 }
 
-void ISel::visitVAArgInst(VAArgInst &I) {
+void X86ISel::visitVAArgInst(VAArgInst &I) {
   unsigned VAList = getReg(I.getOperand(0));
   unsigned DestReg = getReg(I);
 
@@ -3485,7 +3487,7 @@ void ISel::visitVAArgInst(VAArgInst &I) {
 
 /// visitGetElementPtrInst - instruction-select GEP instructions
 ///
-void ISel::visitGetElementPtrInst(GetElementPtrInst &I) {
+void X86ISel::visitGetElementPtrInst(GetElementPtrInst &I) {
   // If this GEP instruction will be folded into all of its users, we don't need
   // to explicitly calculate it!
   X86AddressMode AM;
@@ -3522,10 +3524,11 @@ void ISel::visitGetElementPtrInst(GetElementPtrInst &I) {
 ///
 /// Note that there is one fewer entry in GEPTypes than there is in GEPOps.
 ///
-void ISel::getGEPIndex(MachineBasicBlock *MBB, MachineBasicBlock::iterator IP,
-                       std::vector<Value*> &GEPOps,
-                       std::vector<const Type*> &GEPTypes,
-                       X86AddressMode &AM) {
+void X86ISel::getGEPIndex(MachineBasicBlock *MBB, 
+                          MachineBasicBlock::iterator IP,
+                          std::vector<Value*> &GEPOps,
+                          std::vector<const Type*> &GEPTypes,
+                          X86AddressMode &AM) {
   const TargetData &TD = TM.getTargetData();
 
   // Clear out the state we are working with...
@@ -3619,9 +3622,9 @@ void ISel::getGEPIndex(MachineBasicBlock *MBB, MachineBasicBlock::iterator IP,
 
 /// isGEPFoldable - Return true if the specified GEP can be completely
 /// folded into the addressing mode of a load/store or lea instruction.
-bool ISel::isGEPFoldable(MachineBasicBlock *MBB,
-                         Value *Src, User::op_iterator IdxBegin,
-                         User::op_iterator IdxEnd, X86AddressMode &AM) {
+bool X86ISel::isGEPFoldable(MachineBasicBlock *MBB,
+                            Value *Src, User::op_iterator IdxBegin,
+                            User::op_iterator IdxEnd, X86AddressMode &AM) {
 
   std::vector<Value*> GEPOps;
   GEPOps.resize(IdxEnd-IdxBegin+1);
@@ -3640,10 +3643,10 @@ bool ISel::isGEPFoldable(MachineBasicBlock *MBB,
   return GEPOps.empty();
 }
 
-void ISel::emitGEPOperation(MachineBasicBlock *MBB,
-                            MachineBasicBlock::iterator IP,
-                            Value *Src, User::op_iterator IdxBegin,
-                            User::op_iterator IdxEnd, unsigned TargetReg) {
+void X86ISel::emitGEPOperation(MachineBasicBlock *MBB,
+                               MachineBasicBlock::iterator IP,
+                               Value *Src, User::op_iterator IdxBegin,
+                               User::op_iterator IdxEnd, unsigned TargetReg) {
   const TargetData &TD = TM.getTargetData();
 
   // If this is a getelementptr null, with all constant integer indices, just
@@ -3774,7 +3777,7 @@ void ISel::emitGEPOperation(MachineBasicBlock *MBB,
 /// visitAllocaInst - If this is a fixed size alloca, allocate space from the
 /// frame manager, otherwise do it the hard way.
 ///
-void ISel::visitAllocaInst(AllocaInst &I) {
+void X86ISel::visitAllocaInst(AllocaInst &I) {
   // If this is a fixed size alloca in the entry block for the function, we
   // statically stack allocate the space, so we don't need to do anything here.
   //
@@ -3816,7 +3819,7 @@ void ISel::visitAllocaInst(AllocaInst &I) {
 /// visitMallocInst - Malloc instructions are code generated into direct calls
 /// to the library malloc.
 ///
-void ISel::visitMallocInst(MallocInst &I) {
+void X86ISel::visitMallocInst(MallocInst &I) {
   unsigned AllocSize = TM.getTargetData().getTypeSize(I.getAllocatedType());
   unsigned Arg;
 
@@ -3840,7 +3843,7 @@ void ISel::visitMallocInst(MallocInst &I) {
 /// visitFreeInst - Free instructions are code gen'd to call the free libc
 /// function.
 ///
-void ISel::visitFreeInst(FreeInst &I) {
+void X86ISel::visitFreeInst(FreeInst &I) {
   std::vector<ValueRecord> Args;
   Args.push_back(ValueRecord(I.getOperand(0)));
   MachineInstr *TheCall = BuildMI(X86::CALLpcrel32,
@@ -3853,5 +3856,5 @@ void ISel::visitFreeInst(FreeInst &I) {
 /// generated code sucks but the implementation is nice and simple.
 ///
 FunctionPass *llvm::createX86SimpleInstructionSelector(TargetMachine &TM) {
-  return new ISel(TM);
+  return new X86ISel(TM);
 }
