@@ -291,7 +291,8 @@ static const std::string &getOrCreateDesc(std::map<const Type*,std::string>&Map,
   if (I != Map.end()) return I->second;
     
   std::vector<const Type *> TypeStack;
-  return Map[Ty] = getTypeDescription(Ty, TypeStack);
+  std::string Result = getTypeDescription(Ty, TypeStack);
+  return Map[Ty] = Result;
 }
 
 
