@@ -9,7 +9,6 @@
 #include "llvm/iMemory.h"
 #include "llvm/SymbolTable.h"
 #include "llvm/Module.h"
-#include "llvm/SlotCalculator.h"
 #include "Support/StringExtras.h"
 #include <algorithm>
 
@@ -80,7 +79,25 @@ Constant *Constant::getNullValue(const Type *Ty) {
 
   case Type::PointerTyID: 
     return ConstantPointerNull::get(cast<PointerType>(Ty));
+  case Type::StructTyID: {
+    const StructType *ST = cast<StructType>(Ty);
+
+    const StructType::ElementTypes &ETs = ST->getElementTypes();
+    std::vector<Constant*> Elements;
+    Elements.resize(ETs.size());
+    for (unsigned i = 0, e = ETs.size(); i != e; ++i)
+      Elements[i] = Constant::getNullValue(ETs[i]);
+    return ConstantStruct::get(ST, Elements);
+  }
+  case Type::ArrayTyID: {
+    const ArrayType *AT = cast<ArrayType>(Ty);
+    Constant *El = Constant::getNullValue(AT->getElementType());
+    unsigned NumElements = AT->getNumElements();
+    return ConstantArray::get(AT, std::vector<Constant*>(NumElements, El));
+  }
   default:
+    // Function, Type, Label, or Opaque type?
+    assert(0 && "Cannot create a null constant of that type!");
     return 0;
   }
 }
