@@ -624,9 +624,7 @@ void ISel::copyConstantToRegister(MachineBasicBlock *MBB,
       .addConstantPoolIndex(CPI);
     BuildMI(*MBB, IP, PPC::LOADLoDirect, 2, Reg2).addReg(Reg1)
       .addConstantPoolIndex(CPI);
-
-    unsigned LoadOpcode = (Ty == Type::FloatTy) ? PPC::LFS : PPC::LFD;
-    BuildMI(*MBB, IP, LoadOpcode, 2, R).addSImm(0).addReg(Reg2);
+    BuildMI(*MBB, IP, PPC::LFD, 2, R).addSImm(0).addReg(Reg2);
   } else if (isa<ConstantPointerNull>(C)) {
     // Copy zero (null pointer) to the register.
     BuildMI(*MBB, IP, PPC::LI, 1, R).addSImm(0);
@@ -634,7 +632,8 @@ void ISel::copyConstantToRegister(MachineBasicBlock *MBB,
     // GV is located at base + distance
     unsigned GlobalBase = makeAnotherReg(Type::IntTy);
     unsigned TmpReg = makeAnotherReg(GV->getType());
-    unsigned Opcode = (GV->hasWeakLinkage() || GV->isExternal()) ? 
+    unsigned Opcode = (GV->hasWeakLinkage() || GV->isExternal() 
+                                            || dyn_cast<Function>(GV)) ? 
       PPC::LOADLoIndirect : PPC::LOADLoDirect;
     
     // Move value at base + distance into return reg
@@ -1809,6 +1808,11 @@ void ISel::emitBinaryFPOperation(MachineBasicBlock *BB,
                                  Value *Op0, Value *Op1,
                                  unsigned OperatorClass, unsigned DestReg) {
 
+  static const unsigned OpcodeTab[][4] = {
+    { PPC::FADDS, PPC::FSUBS, PPC::FMULS, PPC::FDIVS },  // Float
+    { PPC::FADD,  PPC::FSUB,  PPC::FMUL,  PPC::FDIV },   // Double
+  };
+
   // Special case: op Reg, <const fp>
   if (ConstantFP *Op1C = dyn_cast<ConstantFP>(Op1)) {
     // Create a constant pool entry for this constant.
@@ -1817,15 +1821,16 @@ void ISel::emitBinaryFPOperation(MachineBasicBlock *BB,
     const Type *Ty = Op1->getType();
     assert(Ty == Type::FloatTy || Ty == Type::DoubleTy && "Unknown FP type!");
 
-    static const unsigned OpcodeTab[][4] = {
-      { PPC::FADDS, PPC::FSUBS, PPC::FMULS, PPC::FDIVS },  // Float
-      { PPC::FADD,  PPC::FSUB,  PPC::FMUL,  PPC::FDIV },   // Double
-    };
-
-    unsigned Opcode = OpcodeTab[Ty != Type::FloatTy][OperatorClass];
+    unsigned Opcode = OpcodeTab[1][OperatorClass];
     unsigned Op1Reg = getReg(Op1C, BB, IP);
-    unsigned Op0r = getReg(Op0, BB, IP);
-    BuildMI(*BB, IP, Opcode, 2, DestReg).addReg(Op0r).addReg(Op1Reg);
+    unsigned Op0Reg = getReg(Op0, BB, IP);
+    if (Ty == Type::DoubleTy) {
+      BuildMI(*BB, IP, Opcode, 2, DestReg).addReg(Op0Reg).addReg(Op1Reg);
+    } else {
+      unsigned TmpReg = makeAnotherReg(Type::DoubleTy);
+      BuildMI(*BB, IP, Opcode, 2, TmpReg).addReg(Op0Reg).addReg(Op1Reg);
+      BuildMI(*BB, IP, PPC::FRSP, 1, DestReg).addReg(TmpReg);
+    }
     return;
   }
   
@@ -1837,32 +1842,27 @@ void ISel::emitBinaryFPOperation(MachineBasicBlock *BB,
       BuildMI(*BB, IP, PPC::FNEG, 1, DestReg).addReg(op1Reg);
       return;
     } else {
-      // R1 = op CST, R2  -->  R1 = opr R2, CST
-
       // Create a constant pool entry for this constant.
       MachineConstantPool *CP = F->getConstantPool();
       unsigned CPI = CP->getConstantPoolIndex(Op0C);
       const Type *Ty = Op0C->getType();
       assert(Ty == Type::FloatTy || Ty == Type::DoubleTy && "Unknown FP type!");
 
-      static const unsigned OpcodeTab[][4] = {
-        { PPC::FADDS, PPC::FSUBS, PPC::FMULS, PPC::FDIVS },  // Float
-        { PPC::FADD,  PPC::FSUB,  PPC::FMUL,  PPC::FDIV },   // Double
-      };
-
-      unsigned Opcode = OpcodeTab[Ty != Type::FloatTy][OperatorClass];
+      unsigned Opcode = OpcodeTab[1][OperatorClass];
       unsigned Op0Reg = getReg(Op0C, BB, IP);
       unsigned Op1Reg = getReg(Op1, BB, IP);
-      BuildMI(*BB, IP, Opcode, 2, DestReg).addReg(Op0Reg).addReg(Op1Reg);
+      if (Ty == Type::DoubleTy) {
+        BuildMI(*BB, IP, Opcode, 2, DestReg).addReg(Op0Reg).addReg(Op1Reg);
+      } else {
+        unsigned TmpReg = makeAnotherReg(Type::DoubleTy);
+        BuildMI(*BB, IP, Opcode, 2, TmpReg).addReg(Op0Reg).addReg(Op1Reg);
+        BuildMI(*BB, IP, PPC::FRSP, 1, DestReg).addReg(TmpReg);
+      }
       return;
     }
 
-  // General case.
-  static const unsigned OpcodeTab[] = {
-    PPC::FADD, PPC::FSUB, PPC::FMUL, PPC::FDIV
-  };
-
-  unsigned Opcode = OpcodeTab[OperatorClass];
+  unsigned Opcode = OpcodeTab[Op0->getType() != Type::FloatTy][OperatorClass];
+  //unsigned Opcode = OpcodeTab[OperatorClass];
   unsigned Op0r = getReg(Op0, BB, IP);
   unsigned Op1r = getReg(Op1, BB, IP);
   BuildMI(*BB, IP, Opcode, 2, DestReg).addReg(Op0r).addReg(Op1r);
