@@ -60,20 +60,17 @@
     <b>$NumDirsInCVS</b> dirs, <b>$NumFilesInCVS</b> files, <b>$LOC</b>
     lines of code, checked out in <b>$CVSCheckoutTime</b> seconds<br></ul>
 <li><a href="$DATE-Build-Log.txt">Compilation Log</a>
-<ul>
-    $BuildError
-    Time to configure CVS tree:      <b>$ConfigTime</b> seconds
-               (<b>$ConfigWallTime</b> seconds wall time)<br>
-    Time to build CVS tree:      <b>$BuildTime</b> seconds
-               (<b>$BuildWallTime</b> seconds wall time)<br>
-    Time to run feature tests:      <b>$FeatureTime</b> seconds
-               (<b>$FeatureWallTime</b> seconds wall time)<br>
-    Time to run regression tests:   <b>$RegressionTime</b> seconds
-               (<b>$RegressionWallTime</b> seconds wall time)<br>
-    Number of object files compiled: <b>$NumObjects</b><br>
-    Number of libraries linked: <b>$NumLibraries</b><br>
-    Number of executables linked:<b> $NumExecutables</b><br>
-</ul>
+<table>
+<tr><td><b>Item</b></td><td><b>CPU Time</b></td><td><b>Wall Clock</b></td></tr>
+<tr><td>Configure CVS Tree</td><td>$ConfigTime</td><td>$ConfigWallTime</td></tr>
+<tr><td>Build CVS Tree</td><td>$BuildTime</td><td>$BuildWallTime</td></tr>
+<tr><td>Run Feature Tests</td><td>$FeatureTime</td><td>$FeatureWallTime</td></tr>
+<tr><td>Run Regression Tests</td><td>$RegressionTime</td><td>$RegressionWallTime</td></tr>
+</table></li>
+<li>Number of object files compiled: <b>$NumObjects</b></li>
+<li>Number of libraries linked: <b>$NumLibraries</b></li>
+<li>Number of executables linked:<b> $NumExecutables</b></li>
+<li>Build Error: $BuildError</li>
 </ul>
 
 <h2>Warnings during the build:</h2>
