@@ -166,29 +166,47 @@ struct UnsignedIntType : public Type {
   virtual bool isInteger() const { return 1; }
 };
 
+struct OtherType : public Type {
+  OtherType(const std::string &N, PrimitiveID id) : Type(N, id) {}
+};
+
 static struct TypeType : public Type {
   TypeType() : Type("type", TypeTyID) {}
-} TheTypeType;   // Implement the type that is global.
+} TheTypeTy;   // Implement the type that is global.
 
 
 //===----------------------------------------------------------------------===//
 //                           Static 'Type' data
 //===----------------------------------------------------------------------===//
 
-Type *Type::VoidTy   = new            Type("void"  , VoidTyID),
-     *Type::BoolTy   = new            Type("bool"  , BoolTyID),
-     *Type::SByteTy  = new   SignedIntType("sbyte" , SByteTyID),
-     *Type::UByteTy  = new UnsignedIntType("ubyte" , UByteTyID),
-     *Type::ShortTy  = new   SignedIntType("short" ,  ShortTyID),
-     *Type::UShortTy = new UnsignedIntType("ushort", UShortTyID),
-     *Type::IntTy    = new   SignedIntType("int"   ,  IntTyID), 
-     *Type::UIntTy   = new UnsignedIntType("uint"  , UIntTyID),
-     *Type::LongTy   = new   SignedIntType("long"  ,  LongTyID),
-     *Type::ULongTy  = new UnsignedIntType("ulong" , ULongTyID),
-     *Type::FloatTy  = new            Type("float" , FloatTyID),
-     *Type::DoubleTy = new            Type("double", DoubleTyID),
-     *Type::TypeTy   =        &TheTypeType,
-     *Type::LabelTy  = new            Type("label" , LabelTyID);
+static OtherType       TheVoidTy  ("void"  , Type::VoidTyID);
+static OtherType       TheBoolTy  ("bool"  , Type::BoolTyID);
+static SignedIntType   TheSByteTy ("sbyte" , Type::SByteTyID);
+static UnsignedIntType TheUByteTy ("ubyte" , Type::UByteTyID);
+static SignedIntType   TheShortTy ("short" , Type::ShortTyID);
+static UnsignedIntType TheUShortTy("ushort", Type::UShortTyID);
+static SignedIntType   TheIntTy   ("int"   , Type::IntTyID); 
+static UnsignedIntType TheUIntTy  ("uint"  , Type::UIntTyID);
+static SignedIntType   TheLongTy  ("long"  , Type::LongTyID);
+static UnsignedIntType TheULongTy ("ulong" , Type::ULongTyID);
+static OtherType       TheFloatTy ("float" , Type::FloatTyID);
+static OtherType       TheDoubleTy("double", Type::DoubleTyID);
+static OtherType       TheLabelTy ("label" , Type::LabelTyID);
+
+Type *Type::VoidTy   = &TheVoidTy;
+Type *Type::BoolTy   = &TheBoolTy;
+Type *Type::SByteTy  = &TheSByteTy;
+Type *Type::UByteTy  = &TheUByteTy;
+Type *Type::ShortTy  = &TheShortTy;
+Type *Type::UShortTy = &TheUShortTy;
+Type *Type::IntTy    = &TheIntTy;
+Type *Type::UIntTy   = &TheUIntTy;
+Type *Type::LongTy   = &TheLongTy;
+Type *Type::ULongTy  = &TheULongTy;
+Type *Type::FloatTy  = &TheFloatTy;
+Type *Type::DoubleTy = &TheDoubleTy;
+Type *Type::TypeTy   = &TheTypeTy;
+Type *Type::LabelTy  = &TheLabelTy;
 
 
 //===----------------------------------------------------------------------===//
