@@ -91,7 +91,7 @@ static GetElementPtrInst* getGlobalAddr(Value* ptr, Instruction& insertBefore) {
   return (isa<GlobalVariable>(ptr))
     ? new GetElementPtrInst(ptr,
                     std::vector<Value*>(1, ConstantSInt::get(Type::LongTy, 0U)),
-                    "addrOfGlobal", &insertBefore)
+                    "addrOfGlobal:" + ptr->getName(), &insertBefore)
     : NULL;
 }
 
@@ -123,7 +123,7 @@ static Instruction* DecomposeConstantExpr(ConstantExpr* CE,
         getArg1 = gep;
       return new GetElementPtrInst(getArg1,
                           std::vector<Value*>(CE->op_begin()+1, CE->op_end()),
-                          "constantGEP", &insertBefore);
+                          "constantGEP:" + getArg1->getName(), &insertBefore);
                           
     case Instruction::Select: {
       Value *C, *S1, *S2;
