@@ -30,12 +30,12 @@ using namespace llvm;
 
 // Error - Simple wrapper function to conditionally assign to E and return true.
 // This just makes error return conditions a little bit simpler...
-//
 static inline bool Error(std::string *E, const std::string &Message) {
   if (E) *E = Message;
   return true;
 }
 
+// ToStr - Simple wrapper function to convert a type to a string.
 static std::string ToStr(const Type *Ty, const Module *M) {
   std::ostringstream OS;
   WriteTypeSymbolic(OS, Ty, M);
@@ -91,7 +91,6 @@ static const StructType *getST(const PATypeHolder &TH) {
 // RecursiveResolveTypes - This is just like ResolveTypes, except that it
 // recurses down into derived types, merging the used types if the parent types
 // are compatible.
-//
 static bool RecursiveResolveTypesI(const PATypeHolder &DestTy,
                                    const PATypeHolder &SrcTy,
                                    SymbolTable *DestST, const std::string &Name,
@@ -145,7 +144,6 @@ static bool RecursiveResolveTypesI(const PATypeHolder &DestTy,
     // so, we are in a recursive branch.  Cut off the search now.  We cannot use
     // an associative container for this search, because the type pointers (keys
     // in the container) change whenever types get resolved...
-    //
     for (unsigned i = 0, e = Pointers.size(); i != e; ++i)
       if (Pointers[i].first == DestTy)
         return Pointers[i].second != SrcTy;
@@ -175,7 +173,6 @@ static bool RecursiveResolveTypes(const PATypeHolder &DestTy,
 // LinkTypes - Go through the symbol table of the Src module and see if any
 // types are named in the src module that are not named in the Dst module.
 // Make sure there are no type name conflicts.
-//
 static bool LinkTypes(Module *Dest, const Module *Src, std::string *Err) {
   SymbolTable       *DestST = &Dest->getSymbolTable();
   const SymbolTable *SrcST  = &Src->getSymbolTable();
@@ -278,7 +275,6 @@ static void PrintMap(const std::map<const Value*, Value*> &M) {
 // RemapOperand - Use ValueMap to convert references from one module to another.
 // This is somewhat sophisticated in that it can automatically handle constant
 // references correctly as well...
-//
 static Value *RemapOperand(const Value *In,
                            std::map<const Value*, Value*> &ValueMap) {
   std::map<const Value*,Value*>::const_iterator I = ValueMap.find(In);
@@ -381,7 +377,6 @@ static void ForceRenaming(GlobalValue *GV, const std::string &Name) {
 
 // LinkGlobals - Loop through the global variables in the src module and merge
 // them into the dest module.
-//
 static bool LinkGlobals(Module *Dest, const Module *Src,
                         std::map<const Value*, Value*> &ValueMap,
                     std::multimap<std::string, GlobalVariable *> &AppendingVars,
@@ -392,7 +387,6 @@ static bool LinkGlobals(Module *Dest, const Module *Src,
   SymbolTable *ST = (SymbolTable*)&Dest->getSymbolTable();
   
   // Loop over all of the globals in the src module, mapping them over as we go
-  //
   for (Module::const_giterator I = Src->gbegin(), E = Src->gend(); I != E; ++I){
     const GlobalVariable *SGV = I;
     GlobalVariable *DGV = 0;
@@ -418,7 +412,6 @@ static bool LinkGlobals(Module *Dest, const Module *Src,
       // No linking to be performed, simply create an identical version of the
       // symbol over in the dest module... the initializer will be filled in
       // later by LinkGlobalInits...
-      //
       GlobalVariable *NewDGV =
         new GlobalVariable(SGV->getType()->getElementType(),
                            SGV->isConstant(), SGV->getLinkage(), /*init*/0,
@@ -534,13 +527,11 @@ static bool LinkGlobals(Module *Dest, const Module *Src,
 
 // LinkGlobalInits - Update the initializers in the Dest module now that all
 // globals that may be referenced are in Dest.
-//
 static bool LinkGlobalInits(Module *Dest, const Module *Src,
                             std::map<const Value*, Value*> &ValueMap,
                             std::string *Err) {
 
   // Loop over all of the globals in the src module, mapping them over as we go
-  //
   for (Module::const_giterator I = Src->gbegin(), E = Src->gend(); I != E; ++I){
     const GlobalVariable *SGV = I;
 
@@ -588,7 +579,6 @@ static bool LinkFunctionProtos(Module *Dest, const Module *Src,
   
   // Loop over all of the functions in the src module, mapping them over as we
   // go
-  //
   for (Module::const_iterator I = Src->begin(), E = Src->end(); I != E; ++I) {
     const Function *SF = I;   // SrcFunction
     Function *DF = 0;
@@ -659,7 +649,6 @@ static bool LinkFunctionProtos(Module *Dest, const Module *Src,
 // LinkFunctionBody - Copy the source function over into the dest function and
 // fix up references to values.  At this point we know that Dest is an external
 // function, and that Src is not.
-//
 static bool LinkFunctionBody(Function *Dest, Function *Src,
                              std::map<const Value*, Value*> &GlobalMap,
                              std::string *Err) {
@@ -701,14 +690,12 @@ static bool LinkFunctionBody(Function *Dest, Function *Src,
 // LinkFunctionBodies - Link in the function bodies that are defined in the
 // source module into the DestModule.  This consists basically of copying the
 // function over and fixing up references to values.
-//
 static bool LinkFunctionBodies(Module *Dest, Module *Src,
                                std::map<const Value*, Value*> &ValueMap,
                                std::string *Err) {
 
   // Loop over all of the functions in the src module, mapping them over as we
   // go
-  //
   for (Module::iterator SF = Src->begin(), E = Src->end(); SF != E; ++SF) {
     if (!SF->isExternal()) {                  // No body if function is external
       Function *DF = cast<Function>(ValueMap[SF]); // Destination function
@@ -726,7 +713,6 @@ static bool LinkFunctionBodies(Module *Dest, Module *Src,
 
 // LinkAppendingVars - If there were any appending global variables, link them
 // together now.  Return true on error.
-//
 static bool LinkAppendingVars(Module *M,
                   std::multimap<std::string, GlobalVariable *> &AppendingVars,
                               std::string *ErrorMsg) {
@@ -736,7 +722,6 @@ static bool LinkAppendingVars(Module *M,
   // same name, forming a new appending global variable with both of the
   // initializers merged together, then rewrite references to the old variables
   // and delete them.
-  //
   std::vector<Constant*> Inits;
   while (AppendingVars.size() > 1) {
     // Get the first two elements in the map...
@@ -833,7 +818,7 @@ bool llvm::LinkModules(Module *Dest, Module *Src, std::string *ErrorMsg) {
       Dest->getPointerSize() != Src->getPointerSize())
     std::cerr << "WARNING: Linking two modules of different pointer size!\n";
 
-  // Update the destination module's dependent libraries list with the libraries 
+  // Update the destination module's dependent libraries list with the libraries
   // from the source module. There's no opportunity for duplicates here as the
   // Module ensures that duplicate insertions are discarded.
   Module::lib_iterator SI = Src->lib_begin();
@@ -846,18 +831,15 @@ bool llvm::LinkModules(Module *Dest, Module *Src, std::string *ErrorMsg) {
   // LinkTypes - Go through the symbol table of the Src module and see if any
   // types are named in the src module that are not named in the Dst module.
   // Make sure there are no type name conflicts.
-  //
   if (LinkTypes(Dest, Src, ErrorMsg)) return true;
 
   // ValueMap - Mapping of values from what they used to be in Src, to what they
   // are now in Dest.
-  //
   std::map<const Value*, Value*> ValueMap;
 
   // AppendingVars - Keep track of global variables in the destination module
   // with appending linkage.  After the module is linked together, they are
   // appended and the module is rewritten.
-  //
   std::multimap<std::string, GlobalVariable *> AppendingVars;
 
   // GlobalsByName - The LLVM SymbolTable class fights our best efforts at
@@ -883,7 +865,6 @@ bool llvm::LinkModules(Module *Dest, Module *Src, std::string *ErrorMsg) {
 
   // Insert all of the globals in src into the Dest module... without linking
   // initializers (which could refer to functions not yet mapped over).
-  //
   if (LinkGlobals(Dest, Src, ValueMap, AppendingVars, GlobalsByName, ErrorMsg))
     return true;
 
@@ -892,23 +873,19 @@ bool llvm::LinkModules(Module *Dest, Module *Src, std::string *ErrorMsg) {
   // function...  We do this so that when we begin processing function bodies,
   // all of the global values that may be referenced are available in our
   // ValueMap.
-  //
   if (LinkFunctionProtos(Dest, Src, ValueMap, GlobalsByName, ErrorMsg))
     return true;
 
   // Update the initializers in the Dest module now that all globals that may
   // be referenced are in Dest.
-  //
   if (LinkGlobalInits(Dest, Src, ValueMap, ErrorMsg)) return true;
 
   // Link in the function bodies that are defined in the source module into the
   // DestModule.  This consists basically of copying the function over and
   // fixing up references to values.
-  //
   if (LinkFunctionBodies(Dest, Src, ValueMap, ErrorMsg)) return true;
 
   // If there were any appending global variables, link them together now.
-  //
   if (LinkAppendingVars(Dest, AppendingVars, ErrorMsg)) return true;
 
   // If the source library's module id is in the dependent library list of the
