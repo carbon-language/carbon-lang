@@ -1089,14 +1089,14 @@ void ISel::visitBranchInst(BranchInst &BI) {
   // Update machine-CFG edges
   BB->addSuccessor (MBBMap[BI.getSuccessor(0)]);
   if (BI.isConditional())
-      BB->addSuccessor (MBBMap[BI.getSuccessor(1)]);
+    BB->addSuccessor (MBBMap[BI.getSuccessor(1)]);
   
   BasicBlock *NextBB = getBlockAfter(BI.getParent());  // BB after current one
   
   if (!BI.isConditional()) {  // Unconditional branch?
-      if (BI.getSuccessor(0) != NextBB)
-          BuildMI(BB, PPC32::B, 1).addMBB(MBBMap[BI.getSuccessor(0)]);
-      return;
+    if (BI.getSuccessor(0) != NextBB)
+      BuildMI(BB, PPC32::B, 1).addMBB(MBBMap[BI.getSuccessor(0)]);
+    return;
   }
   
   // See if we can fold the setcc into the branch itself...
@@ -1144,10 +1144,10 @@ void ISel::visitBranchInst(BranchInst &BI) {
   unsigned BIval = BITab[0];
 
   if (BI.getSuccessor(0) != NextBB) {
-        BuildMI(BB, PPC32::BC, 3).addImm(BO_true).addImm(BIval)
-          .addMBB(MBBMap[BI.getSuccessor(0)]);
+    BuildMI(BB, PPC32::BC, 3).addImm(BO_true).addImm(BIval)
+      .addMBB(MBBMap[BI.getSuccessor(0)]);
     if (BI.getSuccessor(1) != NextBB)
-        BuildMI(BB, PPC32::B, 1).addMBB(MBBMap[BI.getSuccessor(1)]);
+      BuildMI(BB, PPC32::B, 1).addMBB(MBBMap[BI.getSuccessor(1)]);
   } else {
     // Change to the inverse condition...
     if (BI.getSuccessor(1) != NextBB) {
@@ -1203,11 +1203,11 @@ void ISel::doCall(const ValueRecord &Ret, MachineInstr *CallMI,
           
         // Reg or stack?
         if (GPR_remaining > 0) {
-            BuildMI(BB, PPC32::OR, 2, PPC32::R0 + GPR_idx).addReg(ArgReg)
-              .addReg(ArgReg);
+          BuildMI(BB, PPC32::OR, 2, PPC32::R0 + GPR_idx).addReg(ArgReg)
+            .addReg(ArgReg);
         } else {
-            BuildMI(BB, PPC32::STW, 3).addReg(ArgReg).addImm(ArgOffset)
-              .addReg(PPC32::R1);
+          BuildMI(BB, PPC32::STW, 3).addReg(ArgReg).addImm(ArgOffset)
+            .addReg(PPC32::R1);
         }
         break;
       case cInt:
@@ -1215,11 +1215,11 @@ void ISel::doCall(const ValueRecord &Ret, MachineInstr *CallMI,
 
         // Reg or stack?
         if (GPR_remaining > 0) {
-            BuildMI(BB, PPC32::OR, 2, PPC32::R0 + GPR_idx).addReg(ArgReg)
-              .addReg(ArgReg);
+          BuildMI(BB, PPC32::OR, 2, PPC32::R0 + GPR_idx).addReg(ArgReg)
+            .addReg(ArgReg);
         } else {
-            BuildMI(BB, PPC32::STW, 3).addReg(ArgReg).addImm(ArgOffset)
-              .addReg(PPC32::R1);
+          BuildMI(BB, PPC32::STW, 3).addReg(ArgReg).addImm(ArgOffset)
+            .addReg(PPC32::R1);
         }
         break;
       case cLong:
@@ -1227,21 +1227,21 @@ void ISel::doCall(const ValueRecord &Ret, MachineInstr *CallMI,
 
         // Reg or stack?
         if (GPR_remaining > 1) {
-            BuildMI(BB, PPC32::OR, 2, PPC32::R0 + GPR_idx).addReg(ArgReg)
-              .addReg(ArgReg);
-            BuildMI(BB, PPC32::OR, 2, PPC32::R0 + GPR_idx + 1).addReg(ArgReg+1)
-              .addReg(ArgReg+1);
+          BuildMI(BB, PPC32::OR, 2, PPC32::R0 + GPR_idx).addReg(ArgReg)
+            .addReg(ArgReg);
+          BuildMI(BB, PPC32::OR, 2, PPC32::R0 + GPR_idx + 1).addReg(ArgReg+1)
+            .addReg(ArgReg+1);
         } else {
-            BuildMI(BB, PPC32::STW, 3).addReg(ArgReg).addImm(ArgOffset)
-              .addReg(PPC32::R1);
-            BuildMI(BB, PPC32::STW, 3).addReg(ArgReg+1).addImm(ArgOffset+4)
-              .addReg(PPC32::R1);
+          BuildMI(BB, PPC32::STW, 3).addReg(ArgReg).addImm(ArgOffset)
+            .addReg(PPC32::R1);
+          BuildMI(BB, PPC32::STW, 3).addReg(ArgReg+1).addImm(ArgOffset+4)
+            .addReg(PPC32::R1);
         }
 
         ArgOffset += 4;        // 8 byte entry, not 4.
         if (GPR_remaining > 0) {
-            GPR_remaining -= 1;    // uses up 2 GPRs
-            GPR_idx += 1;
+          GPR_remaining -= 1;    // uses up 2 GPRs
+          GPR_idx += 1;
         }
         break;
       case cFP:
@@ -1249,29 +1249,29 @@ void ISel::doCall(const ValueRecord &Ret, MachineInstr *CallMI,
         if (Args[i].Ty == Type::FloatTy) {
           // Reg or stack?
           if (FPR_remaining > 0) {
-              BuildMI(BB, PPC32::FMR, 1, PPC32::F0 + FPR_idx).addReg(ArgReg);
-              FPR_remaining--;
-              FPR_idx++;
+            BuildMI(BB, PPC32::FMR, 1, PPC32::F0 + FPR_idx).addReg(ArgReg);
+            FPR_remaining--;
+            FPR_idx++;
           } else {
-              BuildMI(BB, PPC32::STFS, 3).addReg(ArgReg).addImm(ArgOffset)
-                .addReg(PPC32::R1);
+            BuildMI(BB, PPC32::STFS, 3).addReg(ArgReg).addImm(ArgOffset)
+              .addReg(PPC32::R1);
           }
         } else {
           assert(Args[i].Ty == Type::DoubleTy && "Unknown FP type!");
           // Reg or stack?
           if (FPR_remaining > 0) {
-              BuildMI(BB, PPC32::FMR, 1, PPC32::F0 + FPR_idx).addReg(ArgReg);
-              FPR_remaining--;
-              FPR_idx++;
+            BuildMI(BB, PPC32::FMR, 1, PPC32::F0 + FPR_idx).addReg(ArgReg);
+            FPR_remaining--;
+            FPR_idx++;
           } else {
-              BuildMI(BB, PPC32::STFD, 3).addReg(ArgReg).addImm(ArgOffset)
-                .addReg(PPC32::R1);
+            BuildMI(BB, PPC32::STFD, 3).addReg(ArgReg).addImm(ArgOffset)
+              .addReg(PPC32::R1);
           }
 
           ArgOffset += 4;       // 8 byte entry, not 4.
           if (GPR_remaining > 0) {
-              GPR_remaining--;    // uses up 2 GPRs
-              GPR_idx++;
+            GPR_remaining--;    // uses up 2 GPRs
+            GPR_idx++;
           }
         }
         break;
@@ -1494,26 +1494,26 @@ void ISel::emitBinaryFPOperation(MachineBasicBlock *BB,
 
   // Special case: op Reg, <const fp>
   if (ConstantFP *Op1C = dyn_cast<ConstantFP>(Op1)) {
-      // Create a constant pool entry for this constant.
-      MachineConstantPool *CP = F->getConstantPool();
-      unsigned CPI = CP->getConstantPoolIndex(Op1C);
-      const Type *Ty = Op1->getType();
+    // Create a constant pool entry for this constant.
+    MachineConstantPool *CP = F->getConstantPool();
+    unsigned CPI = CP->getConstantPoolIndex(Op1C);
+    const Type *Ty = Op1->getType();
 
-      static const unsigned OpcodeTab[][4] = {
-        { PPC32::FADDS, PPC32::FSUBS, PPC32::FMULS, PPC32::FDIVS },   // Float
-        { PPC32::FADD, PPC32::FSUB, PPC32::FMUL, PPC32::FDIV },   // Double
-      };
+    static const unsigned OpcodeTab[][4] = {
+      { PPC32::FADDS, PPC32::FSUBS, PPC32::FMULS, PPC32::FDIVS },   // Float
+      { PPC32::FADD, PPC32::FSUB, PPC32::FMUL, PPC32::FDIV },   // Double
+    };
 
-      assert(Ty == Type::FloatTy || Ty == Type::DoubleTy && "Unknown FP type!");
-      unsigned TempReg = makeAnotherReg(Ty);
-      unsigned LoadOpcode = Ty == Type::FloatTy ? PPC32::LFS : PPC32::LFD;
-      addConstantPoolReference(BuildMI(*BB, IP, LoadOpcode, 2, TempReg), CPI);
+    assert(Ty == Type::FloatTy || Ty == Type::DoubleTy && "Unknown FP type!");
+    unsigned TempReg = makeAnotherReg(Ty);
+    unsigned LoadOpcode = Ty == Type::FloatTy ? PPC32::LFS : PPC32::LFD;
+    addConstantPoolReference(BuildMI(*BB, IP, LoadOpcode, 2, TempReg), CPI);
 
-      unsigned Opcode = OpcodeTab[Ty != Type::FloatTy][OperatorClass];
-      unsigned Op0r = getReg(Op0, BB, IP);
-      BuildMI(*BB, IP, Opcode, DestReg).addReg(Op0r).addReg(TempReg);
-      return;
-    }
+    unsigned Opcode = OpcodeTab[Ty != Type::FloatTy][OperatorClass];
+    unsigned Op0r = getReg(Op0, BB, IP);
+    BuildMI(*BB, IP, Opcode, DestReg).addReg(Op0r).addReg(TempReg);
+    return;
+  }
   
   // Special case: R1 = op <const fp>, R2
   if (ConstantFP *CFP = dyn_cast<ConstantFP>(Op0))
@@ -2081,11 +2081,11 @@ void ISel::emitShiftOperation(MachineBasicBlock *MBB,
         } else {
           if (Amount != 0) {
             if (isSigned)
-                BuildMI(*MBB, IP, PPC32::SRAWI, 2, DestReg).addReg(SrcReg+1)
-                  .addImm(Amount);
+              BuildMI(*MBB, IP, PPC32::SRAWI, 2, DestReg).addReg(SrcReg+1)
+                .addImm(Amount);
             else
-                BuildMI(*MBB, IP, PPC32::RLWINM, 4, DestReg).addReg(SrcReg+1)
-                  .addImm(32-Amount).addImm(Amount).addImm(31);
+              BuildMI(*MBB, IP, PPC32::RLWINM, 4, DestReg).addReg(SrcReg+1)
+                .addImm(32-Amount).addImm(Amount).addImm(31);
           } else {
             BuildMI(*MBB, IP, PPC32::OR, 2, DestReg).addReg(SrcReg+1)
               .addReg(SrcReg+1);
