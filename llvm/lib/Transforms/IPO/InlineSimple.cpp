@@ -11,10 +11,14 @@
 #include "llvm/iOther.h"
 #include "llvm/iMemory.h"
 #include "Support/Statistic.h"
+#include "Support/CommandLine.h"
 #include <set>
 
 namespace {
   Statistic<> NumInlined("inline", "Number of functions inlined");
+  cl::opt<unsigned>             // FIXME: 200 is VERY conservative
+  InlineLimit("inline-threshold", cl::Hidden, cl::init(200),
+              cl::desc("Control the amount of inlining to perform (default = 200)"));
 
   struct FunctionInlining : public Pass {
     virtual bool run(Module &M) {
@@ -55,7 +59,7 @@ static inline bool ShouldInlineFunction(const CallInst *CI) {
   // inliner is.  If this value is negative after the final computation,
   // inlining is not performed.
   //
-  int InlineQuality = 200;            // FIXME: This is VERY conservative
+  int InlineQuality = InlineLimit;
 
   // If there is only one call of the function, and it has internal linkage,
   // make it almost guaranteed to be inlined.
