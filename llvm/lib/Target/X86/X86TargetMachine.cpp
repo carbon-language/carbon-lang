@@ -34,8 +34,6 @@ namespace {
   cl::opt<bool> DisableOutput("disable-x86-llc-output", cl::Hidden,
                               cl::desc("Disable the X86 asm printer, for use "
                                        "when profiling the code generator."));
-  cl::opt<bool> NoSimpleISel("disable-simple-isel", cl::init(true),
-	     cl::desc("Use the hand coded 'simple' X86 instruction selector"));
 
   // Register the target.
   RegisterTarget<X86TargetMachine> X("x86", "  IA-32 (Pentium and above)");
@@ -85,10 +83,8 @@ bool X86TargetMachine::addPassesToEmitAssembly(PassManager &PM,
   // Make sure that no unreachable blocks are instruction selected.
   PM.add(createUnreachableBlockEliminationPass());
 
-  if (NoPatternISel && NoSimpleISel)
+  if (NoPatternISel)
     PM.add(createX86SimpleInstructionSelector(*this));
-  else if (NoPatternISel)
-    PM.add(createX86ReallySimpleInstructionSelector(*this));
   else
     PM.add(createX86PatternInstructionSelector(*this));
 
