@@ -75,10 +75,8 @@ int main(int argc, char** argv) {
   }
 #endif
 
-  // FIXME: This should look at the PointerSize and endianness of the bytecode
-  // file to determine the endianness and pointer size of target machine to use.
-  unsigned Config = TM::PtrSize64 | TM::BigEndian;
-
+  unsigned Config = (M->isLittleEndian()   ? TM::LittleEndian : TM::BigEndian) |
+                    (M->has32BitPointers() ? TM::PtrSize32    : TM::PtrSize64);
   ExecutionEngine *EE = 0;
 
   // If there is nothing that is forcing us to use the interpreter, make a JIT.
