@@ -180,7 +180,6 @@ class PhyRegAlloc;
 
 class UltraSparcRegInfo : public MachineRegInfo
 {
-
  private:
 
   // The actual register classes in the Sparc
@@ -336,20 +335,21 @@ class UltraSparcRegInfo : public MachineRegInfo
 
 
 
-
+  bool isVarArgCall(const MachineInstr *CallMI) const;
 
 
 
  public:
 
 
-  UltraSparcRegInfo(const TargetMachine& tgt ) :    MachineRegInfo(tgt),
-                                                    UltraSparcInfo(& (const UltraSparc&) tgt), 
-						    NumOfIntArgRegs(6), 
-						    NumOfFloatArgRegs(32),
-						    InvalidRegNum(1000),
-						    SizeOfOperandOnStack(8)
-  {    
+  UltraSparcRegInfo(const TargetMachine& tgt ) :    
+    MachineRegInfo(tgt),
+    UltraSparcInfo(& (const UltraSparc&) tgt), 
+    NumOfIntArgRegs(6), 
+    NumOfFloatArgRegs(32),
+    InvalidRegNum(1000),
+    SizeOfOperandOnStack(8) {
+   
     MachineRegClassArr.push_back( new SparcIntRegClass(IntRegClassID) );
     MachineRegClassArr.push_back( new SparcFloatRegClass(FloatRegClassID) );
     MachineRegClassArr.push_back( new SparcIntCCRegClass(IntCCRegClassID) );
@@ -421,7 +421,8 @@ class UltraSparcRegInfo : public MachineRegInfo
 		       AddedInstrns *const FirstAI) const;
 
   void colorCallArgs(const MachineInstr *const CallMI, LiveRangeInfo& LRI,
-		     AddedInstrns *const CallAI,  PhyRegAlloc &PRA) const;
+		     AddedInstrns *const CallAI,  PhyRegAlloc &PRA,
+		     const BasicBlock *BB) const;
 
   void colorRetValue(const MachineInstr *const RetI,   LiveRangeInfo& LRI,
 		     AddedInstrns *const RetAI) const;
@@ -478,6 +479,14 @@ class UltraSparcRegInfo : public MachineRegInfo
     return (reg != InvalidRegNum && reg < 32);
   }
   
+
+
+  inline int getSpilledRegSize(const int RegType) const {
+    return 8;
+    //
+    // for Sparc, we allocate 8 bytes on stack for all register types
+  }
+
   const Value * getCallInstRetVal(const MachineInstr *CallMI) const;
 
   MachineInstr * cpReg2RegMI(const unsigned SrcReg, const unsigned DestReg,

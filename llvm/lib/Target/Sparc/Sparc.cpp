@@ -291,14 +291,17 @@ UltraSparc::compileMethod(Method *method)
 	   << "\n\n";
       return true;
     }
-  
+
+  /*  
   if (ScheduleInstructionsWithSSA(method, *this))
     {
       cerr << "Instruction scheduling before allocation failed for method "
 	   << method->getName() << "\n\n";
       return true;
     }
+  */
   
+
   AllocateRegisters(method, *this);          // allocate registers
   
   ApplyPeepholeOptimizations(method, *this); // machine-dependent peephole opts
