@@ -70,3 +70,48 @@ int %regpressure2(int* %P) {
 	ret int %s9
 }
 
+;; adds should be the same as muls.
+int %regpressure3(short* %P, bool %Cond, int* %Other) {
+	%A = load short* %P
+	%Bp = getelementptr short* %P, int 1
+	%B = load short* %Bp
+	%Cp = getelementptr short* %P, int 2
+	%C = load short* %Cp
+	%Dp = getelementptr short* %P, int 3
+	%D = load short* %Dp
+	%Ep = getelementptr short* %P, int 4
+	%E = load short* %Ep
+	%Fp = getelementptr short* %P, int 5
+	%F = load short* %Fp
+	%Gp = getelementptr short* %P, int 6
+	%G = load short* %Gp
+	%Hp = getelementptr short* %P, int 7
+	%H = load short* %Hp
+	%Ip = getelementptr short* %P, int 8
+	%I = load short* %Ip
+	%Jp = getelementptr short* %P, int 9
+	%J = load short* %Jp
+
+        ;; These casts prevent folding the loads into the adds.
+	%A = cast short %A to int
+	%B = cast short %B to int
+	%D = cast short %D to int
+	%C = cast short %C to int
+	%E = cast short %E to int
+	%F = cast short %F to int
+	%G = cast short %G to int
+	%H = cast short %H to int
+	%I = cast short %I to int
+	%J = cast short %J to int
+	%s1 = add int %A, %B
+	%s2 = add int %C, %s1
+	%s3 = add int %D, %s2
+	%s4 = add int %E, %s3
+	%s5 = add int %F, %s4
+	%s6 = add int %G, %s5
+	%s7 = add int %H, %s6
+	%s8 = add int %I, %s7
+	%s9 = add int %J, %s8
+	ret int %s9
+}
+
