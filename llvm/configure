@@ -22988,10 +22988,10 @@ ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
-  oldcflags=${CFLAGS}
-  CFLAGS="${CFLAGS} -Wl,-R."
+  oldcflags="$CFLAGS"
+  CFLAGS="$CFLAGS -Wl,-R."
   cat >conftest.$ac_ext <<_ACEOF
-int main() { return 0;}
+int main() { return 0; }
 _ACEOF
 rm -f conftest.$ac_objext conftest$ac_exeext
 if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
@@ -23010,19 +23010,20 @@ else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-ac_cv_link_se_r=no
+ac_cv_link_use_r=no
 fi
 rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
-  CFLAGS=${oldcflags}
+  CFLAGS="$oldcflags"
   ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
 ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
-  if test "$ac_cv_link_use_r = yes"
+  if test "$ac_cv_link_use_r" = yes
   then
-    cat >>confdefs.h <<\_ACEOF
+
+cat >>confdefs.h <<\_ACEOF
 #define HAVE_LINK_R 1
 _ACEOF
 
