@@ -251,11 +251,17 @@ dnl We will use the build machine information to set some variables.
 dnl
 case $build in
 	*i*86*)  AC_SUBST(OS,[Linux])
-	         AC_SUBST(LLVMGCCDIR,[/home/vadve/lattner/local/x86/llvm-gcc/])
+			 if test -d /home/vadve/lattner/local/x86/llvm-gcc
+			 then
+			   AC_SUBST(LLVMGCCDIR,[/home/vadve/lattner/local/x86/llvm-gcc/])
+			 fi
 	         ;;
 
 	*sparc*) AC_SUBST(OS,[SunOS])
-	         AC_SUBST(LLVMGCCDIR,[/home/vadve/lattner/local/sparc/llvm-gcc/])
+			 if test -d /home/vadve/lattner/local/sparc/llvm-gcc
+			 then
+	           AC_SUBST(LLVMGCCDIR,[/home/vadve/lattner/local/sparc/llvm-gcc/])
+			 fi
 	         ;;
 
 	*)       AC_SUBST(OS,[Unknown])
@@ -401,11 +407,11 @@ then
 	then
 		if test "$pyminor" -lt "2"
 		then
-			AC_MSG_ERROR([Python 2.2 or greater required])
+			AC_MSG_WARN([Python 2.2 or greater required for qmtest])
 		fi
 	fi
 else
-	AC_MSG_ERROR([Python 2.2 or greater required])
+	AC_MSG_WARN([Python 2.2 or greater required for qmtest])
 fi
 
 dnl Verify that the source directory is valid
@@ -603,6 +609,40 @@ dnl **************************************************************************
 dnl Location of the LLVM C front end
 AC_ARG_WITH(llvmgccdir,AC_HELP_STRING([--with-llvmgccdir],[Location of LLVM GCC front-end]),AC_SUBST(LLVMGCCDIR,[$withval]))
 
+AC_MSG_CHECKING([for llvm-gcc])
+LLVM_GCC_CHECK=no
+if test -d "$LLVMGCCDIR"
+then
+	if test -x "$LLVMGCCDIR/bin/gcc"
+	then
+		LLVM_GCC_CHECK="$LLVMGCCDIR/bin/gcc"
+	fi
+fi
+llvmgccwarn=no
+AC_MSG_RESULT($LLVM_GCC_CHECK)
+if test "$LLVM_GCC_CHECK" = "no"
+then
+    llvmgccwarn=yes
+fi
+
+AC_MSG_CHECKING([whether llvm-gcc is sane])
+LLVM_GCC_SANE=no
+if test -x "$LLVM_GCC_CHECK"
+then
+	cp /dev/null conftest.c
+    "$LLVM_GCC_CHECK" -S -o - conftest.c | grep implementation > /dev/null 2>&1
+	if test $? -eq 0
+	then
+		LLVM_GCC_SANE=yes
+	fi
+	rm conftest.c
+fi
+AC_MSG_RESULT($LLVM_GCC_SANE)
+if test "$LLVM_GCC_SANE" = "no"
+then
+	llvmgccwarn=yes
+fi
+
 dnl Location of the bytecode repository
 AC_ARG_WITH(bcrepos,AC_HELP_STRING([--with-bcrepos],[Location of Bytecode Repository]),AC_SUBST(BCR,[$withval]),AC_SUBST(BCR,[/home/vadve/lattner/LLVMPrograms]))
 
@@ -620,3 +660,13 @@ dnl **************************************************************************
 dnl * Create the output files
 dnl **************************************************************************
 AC_OUTPUT(Makefile.config)
+
+if test $llvmgccwarn = yes
+then
+	AC_MSG_WARN([***** llvm C/C++ front end was not found, or does not])
+	AC_MSG_WARN([***** appear to be working.])
+	AC_MSG_WARN([***** ])
+	AC_MSG_WARN([***** Please check configure's --with-llvmgccdir option.])
+	AC_MSG_WARN([***** Runtime libraries (in llvm/runtime) will not be built,])
+	AC_MSG_WARN([***** but you should be able to build the llvm tools.])
+fi
