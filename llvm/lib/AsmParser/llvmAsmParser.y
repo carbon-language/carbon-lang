@@ -69,6 +69,11 @@ static struct PerModuleInfo {
   std::vector<PATypeHolder>    Types;
   std::map<ValID, PATypeHolder> LateResolveTypes;
 
+  /// PlaceHolderInfo - When temporary placeholder objects are created, remember
+  /// how they were referenced and one which line of the input they came from so
+  /// that we can resolve them alter and print error messages as appropriate.
+  std::map<Value*, std::pair<ValID, int> > PlaceHolderInfo;
+
   // GlobalRefs - This maintains a mapping between <Type, ValID>'s and forward
   // references to global values.  Global values may be referenced before they
   // are defined, and if so, the temporary object that they represent is held
@@ -356,7 +361,6 @@ static Value *getValNonImprovising(const Type *Ty, const ValID &D) {
   return 0;
 }
 
-
 // getVal - This function is identical to getValNonImprovising, except that if a
 // value is not already defined, it "improvises" by creating a placeholder var
 // that looks and acts just like the requested variable.  When the value is
@@ -373,18 +377,21 @@ static Value *getVal(const Type *Ty, const ValID &D) {
   // or an id number that hasn't been read yet.  We may be referencing something
   // forward, so just create an entry to be resolved later and get to it...
   //
-  Value *d = 0;
-  switch (Ty->getTypeID()) {
-  case Type::LabelTyID:  d = new   BBPlaceHolder(Ty, D); break;
-  default:               d = new ValuePlaceHolder(Ty, D); break;
-  }
+  if (Ty == Type::LabelTy)
+    V = new BasicBlock();
+  else
+    V = new Argument(Ty);
 
-  assert(d != 0 && "How did we not make something?");
+  // Remember where this forward reference came from.  FIXME, shouldn't we try
+  // to recycle these things??
+  CurModule.PlaceHolderInfo.insert(std::make_pair(V, std::make_pair(D,
+                                                               llvmAsmlineno)));
+
   if (inFunctionScope())
-    InsertValue(d, CurFun.LateResolveValues);
+    InsertValue(V, CurFun.LateResolveValues);
   else 
-    InsertValue(d, CurModule.LateResolveValues);
-  return d;
+    InsertValue(V, CurModule.LateResolveValues);
+  return V;
 }
 
 
@@ -413,12 +420,18 @@ static void ResolveDefinitions(std::map<const Type*,ValueList> &LateResolvers,
     while (!List.empty()) {
       Value *V = List.back();
       List.pop_back();
-      ValID &DID = getValIDFromPlaceHolder(V);
+
+      std::map<Value*, std::pair<ValID, int> >::iterator PHI =
+        CurModule.PlaceHolderInfo.find(V);
+      assert(PHI != CurModule.PlaceHolderInfo.end() && "Placeholder error!");
+
+      ValID &DID = PHI->second.first;
 
       Value *TheRealValue = getValNonImprovising(LRI->first, DID);
       if (TheRealValue) {
         V->replaceAllUsesWith(TheRealValue);
         delete V;
+        CurModule.PlaceHolderInfo.erase(PHI);
       } else if (FutureLateResolvers) {
         // Functions have their unresolved items forwarded to the module late
         // resolver table
@@ -427,12 +440,12 @@ static void ResolveDefinitions(std::map<const Type*,ValueList> &LateResolvers,
 	if (DID.Type == ValID::NameVal)
 	  ThrowException("Reference to an invalid definition: '" +DID.getName()+
 			 "' of type '" + V->getType()->getDescription() + "'",
-			 getLineNumFromPlaceHolder(V));
+			 PHI->second.second);
 	else
 	  ThrowException("Reference to an invalid definition: #" +
 			 itostr(DID.Num) + " of type '" + 
 			 V->getType()->getDescription() + "'",
-			 getLineNumFromPlaceHolder(V));
+			 PHI->second.second);
       }
     }
   }

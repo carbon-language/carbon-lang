@@ -158,60 +158,6 @@ struct ValID {
   }
 };
 
-
-
-template<class SuperType>
-class PlaceholderValue : public SuperType {
-  ValID D;
-  int LineNum;
-public:
-  PlaceholderValue(const Type *Ty, const ValID &d) : SuperType(Ty), D(d) {
-    LineNum = llvmAsmlineno;
-  }
-  ValID &getDef() { return D; }
-  int getLineNum() const { return LineNum; }
-};
-
-struct InstPlaceHolderHelper : public Instruction {
-  InstPlaceHolderHelper(const Type *Ty) : Instruction(Ty, UserOp1, "") {}
-
-  virtual Instruction *clone() const { abort(); return 0; }
-  virtual const char *getOpcodeName() const { return "placeholder"; }
-};
-
-struct BBPlaceHolderHelper : public BasicBlock {
-  BBPlaceHolderHelper(const Type *Ty) : BasicBlock() {
-    assert(Ty == Type::LabelTy);
-  }
-};
-
-typedef PlaceholderValue<InstPlaceHolderHelper>  ValuePlaceHolder;
-typedef PlaceholderValue<BBPlaceHolderHelper>    BBPlaceHolder;
-
-static inline ValID &getValIDFromPlaceHolder(const Value *Val) {
-  const Type *Ty = Val->getType();
-  if (isa<PointerType>(Ty) &&
-      isa<FunctionType>(cast<PointerType>(Ty)->getElementType()))
-    Ty = cast<PointerType>(Ty)->getElementType();
-
-  switch (Ty->getTypeID()) {
-  case Type::LabelTyID:  return ((BBPlaceHolder*)Val)->getDef();
-  default:               return ((ValuePlaceHolder*)Val)->getDef();
-  }
-}
-
-static inline int getLineNumFromPlaceHolder(const Value *Val) {
-  const Type *Ty = Val->getType();
-  if (isa<PointerType>(Ty) &&
-      isa<FunctionType>(cast<PointerType>(Ty)->getElementType()))
-    Ty = cast<PointerType>(Ty)->getElementType();
-
-  switch (Ty->getTypeID()) {
-  case Type::LabelTyID:  return ((BBPlaceHolder*)Val)->getLineNum();
-  default:               return ((ValuePlaceHolder*)Val)->getLineNum();
-  }
-}
-
 } // End llvm namespace
 
 #endif
