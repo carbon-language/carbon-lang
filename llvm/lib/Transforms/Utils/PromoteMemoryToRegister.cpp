@@ -146,10 +146,18 @@ bool PromoteInstance::PromoteFunction(Function *F, DominanceFrontier &DF) {
     }
   }
 
+  // Set the incoming values for the basic block to be null values for all of
+  // the alloca's.  We do this in case there is a load of a value that has not
+  // been stored yet.  In this case, it will get this null value.
+  //
+  CurrentValue.push_back(vector<Value *>(Allocas.size()));
+  for (unsigned i = 0, e = Allocas.size(); i != e; ++i)
+    CurrentValue[0][i] =
+      Constant::getNullValue(Allocas[i]->getType()->getElementType());
+
   // Walks all basic blocks in the function performing the SSA rename algorithm
   // and inserting the phi nodes we marked as necessary
   //
-  CurrentValue.push_back(vector<Value *>(Allocas.size()));
   traverse(F->front(), 0);  // there is no predecessor of the root node
 
   // Remove all instructions marked by being placed in the KillList...
@@ -197,13 +205,13 @@ void PromoteInstance::traverse(BasicBlock *BB, BasicBlock *Pred) {
   // variable we need phinodes for.
   vector<PHINode *> &BBPNs = NewPhiNodes[BB];
   for (unsigned k = 0; k != BBPNs.size(); ++k)
-    if (BBPNs[k]) {
+    if (PHINode *PN = BBPNs[k]) {
       // at this point we can assume that the array has phi nodes.. let's add
       // the incoming data
-      BBPNs[k]->addIncoming(TOS[k], Pred);
+      PN->addIncoming(TOS[k], Pred);
 
       // also note that the active variable IS designated by the phi node
-      TOS[k] = BBPNs[k];
+      TOS[k] = PN;
     }
 
   // don't revisit nodes
