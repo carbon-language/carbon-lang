@@ -1,4 +1,4 @@
-//===-- Emitter.cpp - Write machine code to executable memory -------------===//
+//===-- SparcEmitter.cpp - Write machine code to executable memory --------===//
 //
 // This file defines a MachineCodeEmitter object that is used by Jello to write
 // machine code to memory and remember where relocatable values lie.
@@ -9,14 +9,17 @@
 #include "llvm/CodeGen/MachineCodeEmitter.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
+#include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Function.h"
 #include "Support/Statistic.h"
+// FIXME
+#include "../../../lib/Target/Sparc/SparcV9CodeEmitter.h"
 
 namespace {
   Statistic<> NumBytes("jello", "Number of bytes of machine code compiled");
 
-  class Emitter : public MachineCodeEmitter {
+  class SparcEmitter : public MachineCodeEmitter {
     VM &TheVM;
 
     unsigned char *CurBlock, *CurByte;
@@ -25,11 +28,12 @@ namespace {
     // save CurBlock and CurByte here.
     unsigned char *SavedCurBlock, *SavedCurByte;
     
-    std::vector<std::pair<BasicBlock*, unsigned *> > BBRefs;
+    std::vector<std::pair<BasicBlock*,
+                          std::pair<unsigned*,MachineInstr*> > > BBRefs;
     std::map<BasicBlock*, unsigned> BBLocations;
     std::vector<void*> ConstantPoolAddresses;
   public:
-    Emitter(VM &vm) : TheVM(vm) {}
+    SparcEmitter(VM &vm) : TheVM(vm) {}
 
     virtual void startFunction(MachineFunction &F);
     virtual void finishFunction(MachineFunction &F);
@@ -43,13 +47,16 @@ namespace {
     virtual void emitGlobalAddress(const std::string &Name, bool isPCRelative);
     virtual void emitFunctionConstantValueAddress(unsigned ConstantNum,
 						  int Offset);
+
+    virtual void saveBBreference(BasicBlock *BB, MachineInstr &MI);
+
   private:
     void emitAddress(void *Addr, bool isPCRelative);
   };
 }
 
-MachineCodeEmitter *VM::createX86Emitter(VM &V) {
-  return new Emitter(V);
+MachineCodeEmitter *VM::createSparcEmitter(VM &V) {
+  return new SparcEmitter(V);
 }
 
 
@@ -65,18 +72,28 @@ static void *getMemory(unsigned NumPages) {
 }
 
 
-void Emitter::startFunction(MachineFunction &F) {
+void SparcEmitter::startFunction(MachineFunction &F) {
   CurBlock = (unsigned char *)getMemory(8);
   CurByte = CurBlock;  // Start writing at the beginning of the fn.
   TheVM.addGlobalMapping(F.getFunction(), CurBlock);
 }
 
-void Emitter::finishFunction(MachineFunction &F) {
+void SparcEmitter::finishFunction(MachineFunction &F) {
   ConstantPoolAddresses.clear();
   for (unsigned i = 0, e = BBRefs.size(); i != e; ++i) {
+    // Re-write branches to BasicBlocks for the entire function
     unsigned Location = BBLocations[BBRefs[i].first];
-    unsigned *Ref = BBRefs[i].second;
-    *Ref = Location-(unsigned)(intptr_t)Ref-4;
+    unsigned *Ref = BBRefs[i].second.first;
+    MachineInstr *MI = BBRefs[i].second.second;
+    for (unsigned i=0, e = MI->getNumOperands(); i != e; ++i) {
+      MachineOperand &op = MI->getOperand(i);
+      if (op.isImmediate()) {
+        MI->SetMachineOperandConst(i, op.getType(), Location);
+        break;
+      }
+    }
+    unsigned fixedInstr = SparcV9CodeEmitter::getBinaryCodeForInstr(*MI);
+    *Ref = fixedInstr;
   }
   BBRefs.clear();
   BBLocations.clear();
@@ -89,7 +106,7 @@ void Emitter::finishFunction(MachineFunction &F) {
                   << ": " << CurByte-CurBlock << " bytes of text\n");
 }
 
-void Emitter::emitConstantPool(MachineConstantPool *MCP) {
+void SparcEmitter::emitConstantPool(MachineConstantPool *MCP) {
   const std::vector<Constant*> &Constants = MCP->getConstants();
   for (unsigned i = 0, e = Constants.size(); i != e; ++i) {
     // For now we just allocate some memory on the heap, this can be
@@ -102,19 +119,19 @@ void Emitter::emitConstantPool(MachineConstantPool *MCP) {
 }
 
 
-void Emitter::startBasicBlock(MachineBasicBlock &BB) {
+void SparcEmitter::startBasicBlock(MachineBasicBlock &BB) {
   BBLocations[BB.getBasicBlock()] = (unsigned)(intptr_t)CurByte;
 }
 
 
-void Emitter::startFunctionStub(const Function &F, unsigned StubSize) {
+void SparcEmitter::startFunctionStub(const Function &F, unsigned StubSize) {
   SavedCurBlock = CurBlock;  SavedCurByte = CurByte;
   // FIXME: this is a huge waste of memory.
   CurBlock = (unsigned char *)getMemory((StubSize+4095)/4096);
   CurByte = CurBlock;  // Start writing at the beginning of the fn.
 }
 
-void *Emitter::finishFunctionStub(const Function &F) {
+void *SparcEmitter::finishFunctionStub(const Function &F) {
   NumBytes += CurByte-CurBlock;
   DEBUG(std::cerr << "Finished CodeGen of [0x" << std::hex
                   << (unsigned)(intptr_t)CurBlock
@@ -125,8 +142,15 @@ void *Emitter::finishFunctionStub(const Function &F) {
   return SavedCurBlock;
 }
 
-void Emitter::emitByte(unsigned char B) {
+void SparcEmitter::emitByte(unsigned char B) {
   *CurByte++ = B;   // Write the byte to memory
+}
+
+// BasicBlock -> pair<memloc, MachineInstr>
+// when the BB is emitted, machineinstr is modified with then-currbyte, 
+// processed with MCE, and written out at memloc.
+void SparcEmitter::saveBBreference(BasicBlock *BB, MachineInstr &MI) {
+  BBRefs.push_back(std::make_pair(BB, std::make_pair((unsigned*)CurByte, &MI)));
 }
 
 
@@ -137,24 +161,32 @@ void Emitter::emitByte(unsigned char B) {
 // For basic block references, keep track of where the references are so they
 // may be patched up when the basic block is defined.
 //
-void Emitter::emitPCRelativeDisp(Value *V) {
+// BasicBlock -> pair<memloc, MachineInstr>
+// when the BB is emitted, machineinstr is modified with then-currbyte, 
+// processed with MCE, and written out at memloc.
+
+void SparcEmitter::emitPCRelativeDisp(Value *V) {
+#if 0
   BasicBlock *BB = cast<BasicBlock>(V);     // Keep track of reference...
   BBRefs.push_back(std::make_pair(BB, (unsigned*)CurByte));
   CurByte += 4;
+#endif
 }
 
 // emitAddress - Emit an address in either direct or PCRelative form...
 //
-void Emitter::emitAddress(void *Addr, bool isPCRelative) {
+void SparcEmitter::emitAddress(void *Addr, bool isPCRelative) {
+#if 0
   if (isPCRelative) {
     *(intptr_t*)CurByte = (intptr_t)Addr - (intptr_t)CurByte-4;
   } else {
     *(void**)CurByte = Addr;
   }
   CurByte += 4;
+#endif
 }
 
-void Emitter::emitGlobalAddress(GlobalValue *V, bool isPCRelative) {
+void SparcEmitter::emitGlobalAddress(GlobalValue *V, bool isPCRelative) {
   if (isPCRelative) { // must be a call, this is a major hack!
     // Try looking up the function to see if it is already compiled!
     if (void *Addr = TheVM.getPointerToGlobalIfAvailable(V)) {
@@ -170,11 +202,14 @@ void Emitter::emitGlobalAddress(GlobalValue *V, bool isPCRelative) {
   }
 }
 
-void Emitter::emitGlobalAddress(const std::string &Name, bool isPCRelative) {
+void SparcEmitter::emitGlobalAddress(const std::string &Name, bool isPCRelative)
+{
+#if 0
   emitAddress(TheVM.getPointerToNamedFunction(Name), isPCRelative);
+#endif
 }
 
-void Emitter::emitFunctionConstantValueAddress(unsigned ConstantNum,
+void SparcEmitter::emitFunctionConstantValueAddress(unsigned ConstantNum,
 					       int Offset) {
   assert(ConstantNum < ConstantPoolAddresses.size() &&
 	 "Invalid ConstantPoolIndex!");

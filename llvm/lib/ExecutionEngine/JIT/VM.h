@@ -62,7 +62,8 @@ public:
   static void runAtExitHandlers();
 
 private:
-  static MachineCodeEmitter *createEmitter(VM &V);
+  static MachineCodeEmitter *createX86Emitter(VM &V);
+  static MachineCodeEmitter *createSparcEmitter(VM &V);
   void setupPassManager();
   void *getPointerToFunction(const Function *F);
 

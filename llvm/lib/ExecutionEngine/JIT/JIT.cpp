@@ -9,28 +9,65 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetMachineImpls.h"
 #include "llvm/Module.h"
+#include "Support/CommandLine.h"
+
+namespace {
+  cl::opt<std::string>
+  Arch("march", cl::desc("Architecture: `x86' or `sparc'"), cl::Prefix,
+       cl::value_desc("machine architecture"));
+  
+  static std::string DefaultArch = 
+#if defined(i386) || defined(__i386__) || defined(__x86__)
+  "x86";
+#elif defined(sparc) || defined(__sparc__) || defined(__sparcv9)
+  "sparc";
+#else
+  "";
+#endif
+
+}
 
 
 /// createJIT - Create an return a new JIT compiler if there is one available
 /// for the current target.  Otherwise it returns null.
 ///
 ExecutionEngine *ExecutionEngine::createJIT(Module *M, unsigned Config) {
-  // FIXME: This should be controlled by which subdirectory gets linked in!
-#if !defined(i386) && !defined(__i386__) && !defined(__x86__)
-  return 0;
-#endif
-  // Allocate a target... in the future this will be controllable on the
-  // command line.
-  TargetMachine *Target = allocateX86TargetMachine(Config);
-  assert(Target && "Could not allocate X86 target machine!");
+  
+  TargetMachine* (*TargetMachineAllocator)(unsigned) = 0;
+  if (Arch == "")
+    Arch = DefaultArch;
 
-  // Create the virtual machine object...
-  return new VM(M, Target);
+  // Allow a command-line switch to override what *should* be the default target
+  // machine for this platform. This allows for debugging a Sparc JIT on X86 --
+  // our X86 machines are much faster at recompiling LLVM and linking lli.
+  if (Arch == "x86") {
+    TargetMachineAllocator = allocateX86TargetMachine;
+  } else if (Arch == "sparc") {
+    TargetMachineAllocator = allocateSparcTargetMachine;
+  }
+
+  if (TargetMachineAllocator) {
+    // Allocate a target...
+    TargetMachine *Target = (*TargetMachineAllocator)(Config);
+    assert(Target && "Could not allocate target machine!");
+
+    // Create the virtual machine object...
+    return new VM(M, Target);
+  } else {
+    return 0;
+  }
 }
 
 VM::VM(Module *M, TargetMachine *tm) : ExecutionEngine(M), TM(*tm) {
   setTargetData(TM.getTargetData());
-  MCE = createEmitter(*this);  // Initialize MCE
+
+  // Initialize MCE
+  if (Arch == "x86") {
+    MCE = createX86Emitter(*this);
+  } else if (Arch == "sparc") {
+    MCE = createSparcEmitter(*this);
+  }
+
   setupPassManager();
   registerCallback();
   emitGlobals();
