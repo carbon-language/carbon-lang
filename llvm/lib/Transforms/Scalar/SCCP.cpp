@@ -596,19 +596,11 @@ void SCCP::visitBinaryOperator(Instruction &I) {
               Result.markOverdefined();
               break;  // Cannot fold this operation over the PHI nodes!
             } else if (In1.isConstant() && In2.isConstant()) {
-              Constant *Val = 0;
-              if (isa<BinaryOperator>(I))
-                Val = ConstantExpr::get(I.getOpcode(), In1.getConstant(),
-                                           In2.getConstant());
-              else {
-                assert(isa<ShiftInst>(I) &&
-                       "Can only handle binops and shifts here!");
-                Val = ConstantExpr::getShift(I.getOpcode(), In1.getConstant(),
-                                             In2.getConstant());
-              }
+              Constant *V = ConstantExpr::get(I.getOpcode(), In1.getConstant(),
+                                              In2.getConstant());
               if (Result.isUndefined())
-                Result.markConstant(Val);
-              else if (Result.isConstant() && Result.getConstant() != Val) {
+                Result.markConstant(V);
+              else if (Result.isConstant() && Result.getConstant() != V) {
                 Result.markOverdefined();
                 break;
               }
@@ -652,17 +644,8 @@ void SCCP::visitBinaryOperator(Instruction &I) {
 
     markOverdefined(IV, &I);
   } else if (V1State.isConstant() && V2State.isConstant()) {
-    Constant *Result = 0;
-    if (isa<BinaryOperator>(I))
-      Result = ConstantExpr::get(I.getOpcode(), V1State.getConstant(),
-                                 V2State.getConstant());
-    else {
-      assert (isa<ShiftInst>(I) && "Can only handle binops and shifts here!");
-      Result = ConstantExpr::getShift(I.getOpcode(), V1State.getConstant(),
-                                      V2State.getConstant());
-    }
-      
-    markConstant(IV, &I, Result);      // This instruction constant folds!
+    markConstant(IV, &I, ConstantExpr::get(I.getOpcode(), V1State.getConstant(),
+                                           V2State.getConstant()));
   }
 }
 

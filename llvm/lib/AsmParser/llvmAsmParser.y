@@ -1218,7 +1218,7 @@ ConstExpr: CAST '(' ConstVal TO Types ')' {
       ThrowException("Shift count for shift constant must be unsigned byte!");
     if (!$3->getType()->isInteger())
       ThrowException("Shift constant expression requires integer operand!");
-    $$ = ConstantExpr::getShift($1, $3, $5);
+    $$ = ConstantExpr::get($1, $3, $5);
   };
 
 
