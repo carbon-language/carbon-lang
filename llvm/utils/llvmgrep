@@ -1,6 +1,23 @@
 #!/bin/sh
-# This is useful because it prints out all of the source files.  Useful for
-# greps.
+##===- utils/llvmgrep - Counts Lines Of Code -----------------*- Script -*-===##
+# 
+#                     The LLVM Compiler Infrastructure
+#
+# This file was developed by Reid Spencer and is distributed under the 
+# University of Illinois Open Source License. See LICENSE.TXT for details.
+# 
+##===----------------------------------------------------------------------===##
+#
+# This script searches your srcdir for an egrep style pattern. This can quickly
+# help you build a list of the places you need to modify when changing a header
+# or other "global" name. The only argument is the pattern you want to search
+# for. It should be quoted to escape shell interpretation of the pattern's
+# special characters.
+#
+# Note that the implementation is based on llvmdo. See that script for more
+# details.
+##===----------------------------------------------------------------------===##
+
 TOPDIR=`pwd | sed -e 's#\(.*/llvm\).*#\1#'`
 if test -d "$TOPDIR" ; then
   cd $TOPDIR
