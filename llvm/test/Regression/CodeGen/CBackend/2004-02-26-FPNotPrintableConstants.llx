@@ -1,7 +1,7 @@
-; This is a non-normal FP value: it's a nan.
+; This is a non-normal FP value
 ; RUN: llvm-as < %s | llc -march=c | grep FPConstant | grep static
 
 float %func () {
-  ret float 0xFF20000000000000
+  ret float 0xFFF0000000000000  ; -inf
 }
 
