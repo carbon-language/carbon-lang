@@ -8,8 +8,8 @@
 
 
 // Value types - These values correspond to the register types defined in the
-// MRegsterInfo.h file.
-class ValueType {}
+// ValueTypes.h file.
+class ValueType { string Namespace = "MVT"; }
 def i1   : ValueType;    // One bit boolean value
 def i8   : ValueType;    // 8-bit integer value
 def i16  : ValueType;    // 16-bit integer value
@@ -35,7 +35,9 @@ class Instruction {
 
   // These bits capture information about the high-level semantics of the
   // instruction.
-  bit isReturn     = 0;      // Is this instruction a return instruction?
-  bit isBranch     = 0;      // Is this instruction a branch instruction?
-  bit isCall       = 0;      // Is this instruction a call instruction?
+  bit isReturn     = 0;     // Is this instruction a return instruction?
+  bit isBranch     = 0;     // Is this instruction a branch instruction?
+  bit isCall       = 0;     // Is this instruction a call instruction?
+  bit isTwoAddress = 0;     // Is this a two address instruction?
+  bit isTerminator = 0;     // Is this part of the terminator for a basic block?
 }
