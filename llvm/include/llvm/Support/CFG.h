@@ -104,6 +104,7 @@ public:
   inline const _Self &operator=(const _Self &I) {
     assert(Term == I.Term &&"Cannot assign iterators to two different blocks!");
     idx = I.idx;
+    return *this;
   }
     
   inline bool operator==(const _Self& x) const { return idx == x.idx; }
