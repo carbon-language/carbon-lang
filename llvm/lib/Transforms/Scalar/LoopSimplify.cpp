@@ -34,8 +34,7 @@
 
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Constant.h"
-#include "llvm/iTerminators.h"
-#include "llvm/iPHINode.h"
+#include "llvm/Instructions.h"
 #include "llvm/Function.h"
 #include "llvm/Type.h"
 #include "llvm/Analysis/Dominators.h"

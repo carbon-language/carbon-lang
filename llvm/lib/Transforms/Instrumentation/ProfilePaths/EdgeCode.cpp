@@ -17,11 +17,7 @@
 #include "Graph.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
-#include "llvm/iMemory.h"
-#include "llvm/iTerminators.h"
-#include "llvm/iOther.h"
-#include "llvm/iOperators.h"
-#include "llvm/iPHINode.h"
+#include "llvm/Instructions.h"
 #include "llvm/Module.h"
 
 #define INSERT_LOAD_COUNT

@@ -18,9 +18,7 @@
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
-#include "llvm/iOther.h"
-#include "llvm/iMemory.h"
-#include "llvm/iPHINode.h"
+#include "llvm/Instructions.h"
 #include "ProfilingUtils.h"
 #include "Support/Debug.h"
 #include <set>

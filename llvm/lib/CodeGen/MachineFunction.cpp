@@ -23,7 +23,7 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetFrameInfo.h"
 #include "llvm/Function.h"
-#include "llvm/iOther.h"
+#include "llvm/Instructions.h"
 #include "llvm/Type.h"
 #include "Support/LeakDetector.h"
 #include "Support/GraphWriter.h"

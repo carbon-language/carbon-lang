@@ -14,7 +14,7 @@
 #include "llvm/Analysis/DataStructure/DSGraphTraits.h"
 #include "llvm/Function.h"
 #include "llvm/GlobalVariable.h"
-#include "llvm/iOther.h"
+#include "llvm/Instructions.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Assembly/Writer.h"

@@ -18,7 +18,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Function.h"
-#include "llvm/iTerminators.h"
+#include "llvm/Instructions.h"
 #include "llvm/Pass.h"
 #include "llvm/Analysis/CFGPrinter.h"
 #include "llvm/Assembly/Writer.h"

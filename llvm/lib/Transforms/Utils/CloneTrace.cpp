@@ -17,7 +17,7 @@
 
 #include "llvm/Analysis/Trace.h"
 #include "llvm/Transforms/Utils/Cloning.h"
-#include "llvm/iPHINode.h"
+#include "llvm/Instructions.h"
 #include "llvm/Function.h"
 #include "ValueMapper.h"
 using namespace llvm;

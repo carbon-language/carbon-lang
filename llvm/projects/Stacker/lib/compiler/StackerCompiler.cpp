@@ -17,10 +17,7 @@
 //===----------------------------------------------------------------------===//
 
 #include <llvm/Analysis/Verifier.h>
-#include <llvm/iMemory.h>
-#include <llvm/iOperators.h>
-#include <llvm/iOther.h>
-#include <llvm/iTerminators.h>
+#include <llvm/Instructions.h>
 #include <Support/Statistic.h>
 #include "StackerCompiler.h"
 #include "StackerParser.h"

@@ -20,7 +20,7 @@
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Function.h"
-#include "llvm/iTerminators.h"
+#include "llvm/Instructions.h"
 #include "llvm/iPHINode.h"
 #include "llvm/Support/CFG.h"
 #include "Support/Statistic.h"

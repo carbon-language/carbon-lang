@@ -15,8 +15,7 @@
 
 #include "Inliner.h"
 #include "llvm/Module.h"
-#include "llvm/iOther.h"
-#include "llvm/iTerminators.h"
+#include "llvm/Instructions.h"
 #include "llvm/Analysis/CallGraph.h"
 #include "llvm/Support/CallSite.h"
 #include "llvm/Transforms/Utils/Cloning.h"

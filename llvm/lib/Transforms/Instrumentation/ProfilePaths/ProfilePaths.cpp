@@ -35,9 +35,7 @@
 #include "llvm/Support/CFG.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
-#include "llvm/iMemory.h"
-#include "llvm/iOperators.h"
-#include "llvm/iOther.h"
+#include "llvm/Instructions.h"
 #include "llvm/Module.h"
 #include "Graph.h"
 #include <fstream>

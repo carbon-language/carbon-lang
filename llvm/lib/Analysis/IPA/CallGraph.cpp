@@ -14,8 +14,7 @@
 #include "llvm/Analysis/CallGraph.h"
 #include "llvm/Constants.h"     // Remove when ConstantPointerRefs are gone
 #include "llvm/Module.h"
-#include "llvm/iOther.h"
-#include "llvm/iTerminators.h"
+#include "llvm/Instructions.h"
 #include "llvm/Support/CallSite.h"
 #include "Support/STLExtras.h"
 using namespace llvm;

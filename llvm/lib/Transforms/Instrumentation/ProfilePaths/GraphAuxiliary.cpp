@@ -14,7 +14,7 @@
 
 #include "llvm/Pass.h"
 #include "llvm/Module.h"
-#include "llvm/iTerminators.h"
+#include "llvm/Instructions.h"
 #include "Support/Debug.h"
 #include <algorithm>
 #include "Graph.h"

@@ -14,8 +14,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Support/CFG.h"
-#include "llvm/iTerminators.h"
-#include "llvm/iPHINode.h"
+#include "llvm/Instructions.h"
 #include "llvm/Function.h"
 #include "llvm/Pass.h"
 

@@ -15,7 +15,7 @@
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/Utils/PromoteMemToReg.h"
 #include "llvm/Analysis/Dominators.h"
-#include "llvm/iMemory.h"
+#include "llvm/Instructions.h"
 #include "llvm/Function.h"
 #include "llvm/Target/TargetData.h"
 #include "Support/Statistic.h"

@@ -22,7 +22,7 @@
 #include "llvm/Module.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Pass.h"
-#include "llvm/iOther.h"
+#include "llvm/Instructions.h"
 #include "llvm/Constants.h"
 #include "llvm/Support/CallSite.h"
 #include "llvm/Target/TargetData.h"

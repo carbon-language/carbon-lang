@@ -12,8 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Module.h"
-#include "llvm/iTerminators.h"
-#include "llvm/iOther.h"
+#include "llvm/Instructions.h"
 #include "llvm/Support/CFG.h"
 #include "Graph.h"
 #include <iostream>

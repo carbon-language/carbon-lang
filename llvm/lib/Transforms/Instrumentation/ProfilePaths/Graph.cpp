@@ -13,7 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "Graph.h"
-#include "llvm/iTerminators.h"
+#include "llvm/Instructions.h"
 #include "Support/Debug.h"
 #include <algorithm>
 

@@ -16,12 +16,10 @@
 
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Support/CFG.h"
-#include "llvm/iOther.h"
-#include "llvm/Type.h"
-#include "llvm/iTerminators.h"
-#include "llvm/iPHINode.h"
+#include "llvm/Instructions.h"
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
+#include "llvm/Type.h"
 #include "Support/Debug.h"
 #include "../ProfilingUtils.h"
 

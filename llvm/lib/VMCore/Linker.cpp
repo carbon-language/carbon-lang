@@ -21,7 +21,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
 #include "llvm/SymbolTable.h"
-#include "llvm/iOther.h"
+#include "llvm/Instructions.h"
 #include "llvm/Assembly/Writer.h"
 #include <iostream>
 

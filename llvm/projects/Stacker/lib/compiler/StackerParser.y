@@ -15,10 +15,7 @@
 #include "StackerCompiler.h"
 #include "llvm/SymbolTable.h"
 #include "llvm/Module.h"
-#include "llvm/iTerminators.h"
-#include "llvm/iMemory.h"
-#include "llvm/iOperators.h"
-#include "llvm/iPHINode.h"
+#include "llvm/Instructions.h"
 #include "Support/STLExtras.h"
 #include "Support/DepthFirstIterator.h"
 #include <list>

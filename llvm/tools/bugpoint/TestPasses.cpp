@@ -14,7 +14,7 @@
 
 #include "llvm/BasicBlock.h"
 #include "llvm/Constant.h"
-#include "llvm/iOther.h"
+#include "llvm/Instructions.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/InstVisitor.h"
 

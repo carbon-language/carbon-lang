@@ -11,8 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/iOther.h"
-#include "llvm/iPHINode.h"
+#include "llvm/Instructions.h"
 #include "llvm/Function.h"
 #include "llvm/SymbolTable.h"
 #include "llvm/Constant.h"

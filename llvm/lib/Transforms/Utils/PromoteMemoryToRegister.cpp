@@ -18,9 +18,7 @@
 
 #include "llvm/Transforms/Utils/PromoteMemToReg.h"
 #include "llvm/Analysis/Dominators.h"
-#include "llvm/iMemory.h"
-#include "llvm/iPHINode.h"
-#include "llvm/iOther.h"
+#include "llvm/Instructions.h"
 #include "llvm/Function.h"
 #include "llvm/Constant.h"
 #include "llvm/Support/CFG.h"

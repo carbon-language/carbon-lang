@@ -12,7 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Analysis/PostDominators.h"
-#include "llvm/iTerminators.h"
+#include "llvm/Instructions.h"
 #include "llvm/Support/CFG.h"
 #include "Support/DepthFirstIterator.h"
 #include "Support/SetOperations.h"

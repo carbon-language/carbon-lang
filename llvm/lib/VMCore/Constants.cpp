@@ -15,7 +15,7 @@
 #include "ConstantFolding.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/GlobalValue.h"
-#include "llvm/iMemory.h"
+#include "llvm/Instructions.h"
 #include "llvm/SymbolTable.h"
 #include "llvm/Module.h"
 #include "Support/StringExtras.h"

@@ -18,8 +18,7 @@
 #include "llvm/CallGraphSCCPass.h"
 #include "llvm/Function.h"
 #include "llvm/Intrinsics.h"
-#include "llvm/iTerminators.h"
-#include "llvm/iOther.h"
+#include "llvm/Instructions.h"
 #include "llvm/Analysis/CallGraph.h"
 #include "Support/Statistic.h"
 #include <set>

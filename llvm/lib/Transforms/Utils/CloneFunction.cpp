@@ -14,7 +14,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/Utils/Cloning.h"
-#include "llvm/iTerminators.h"
+#include "llvm/Instructions.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
 #include "ValueMapper.h"

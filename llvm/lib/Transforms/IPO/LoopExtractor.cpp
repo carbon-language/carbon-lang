@@ -15,7 +15,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/IPO.h"
-#include "llvm/iTerminators.h"
+#include "llvm/Instructions.h"
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
 #include "llvm/Analysis/Dominators.h"

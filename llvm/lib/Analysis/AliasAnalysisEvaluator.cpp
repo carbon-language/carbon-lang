@@ -18,8 +18,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Function.h"
-#include "llvm/iOther.h"
-#include "llvm/iTerminators.h"
+#include "llvm/Instructions.h"
 #include "llvm/Pass.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Analysis/AliasAnalysis.h"

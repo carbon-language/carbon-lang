@@ -14,7 +14,7 @@
 
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Function.h"
-#include "llvm/iTerminators.h"
+#include "llvm/Instructions.h"
 #include "llvm/Constant.h"
 #include "llvm/Type.h"
 #include <algorithm>
