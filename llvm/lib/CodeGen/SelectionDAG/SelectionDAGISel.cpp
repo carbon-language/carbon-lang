@@ -852,7 +852,14 @@ static BasicBlock *IsOnlyUsedInOneBasicBlock(Argument *A) {
        ++UI)
     if (isa<PHINode>(*UI) || cast<Instruction>(*UI)->getParent() != BB)
       return 0;  // Disagreement among the users?
-  return BB;
+
+  // Okay, there is a single BB user.  Only permit this optimization if this is
+  // the entry block, otherwise, we might sink argument loads into loops and
+  // stuff.  Later, when we have global instruction selection, this won't be an
+  // issue clearly.
+  if (BB == BB->getParent()->begin())
+    return BB;
+  return 0;
 }
 
 void SelectionDAGISel::
