@@ -41,8 +41,7 @@
 /// not copied over from one table to another since it is no longer useful.
 ///--------------------------------------------------------------------------
 
-struct ModRefTable
-{
+struct ModRefTable {
   typedef hash_map<Instruction*, ModRefInfo> ModRefMap;
   typedef ModRefMap::const_iterator                 const_map_iterator;
   typedef ModRefMap::      iterator                        map_iterator;
@@ -197,6 +196,17 @@ public:
 //----------------------------------------------------------------------------
 // class MemoryDepAnalysis: A dep. graph for load/store/call instructions
 //----------------------------------------------------------------------------
+
+
+/// getAnalysisUsage - This does not modify anything.  It uses the Top-Down DS
+/// Graph and IPModRef.
+///
+void MemoryDepAnalysis::getAnalysisUsage(AnalysisUsage &AU) const {
+  AU.setPreservesAll();
+  AU.addRequired<TDDataStructures>();
+  AU.addRequired<IPModRef>();
+}
+
 
 /// Basic dependence gathering algorithm, using TarjanSCCIterator on CFG:
 /// 
