@@ -156,6 +156,14 @@ const Type* GetElementPtrInst::getIndexedType(const Type *Ptr,
       return 0;  // Can only index into pointer types at the first index!
     if (!CT->indexValid(Index)) return 0;
     Ptr = CT->getTypeAtIndex(Index);
+
+    // If the new type forwards to another type, then it is in the middle
+    // of being refined to another type (and hence, may have dropped all
+    // references to what it was using before).  So, use the new forwarded
+    // type.
+    if (Ptr->getForwardedType()) {
+      Ptr = Ptr->getForwardedType();
+    }
   }
   return CurIdx == Idx.size() ? Ptr : 0;
 }
