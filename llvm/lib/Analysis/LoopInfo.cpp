@@ -326,6 +326,18 @@ Loop *LoopInfo::removeLoop(iterator I) {
   return L;
 }
 
+/// removeBlock - This method completely removes BB from all data structures,
+/// including all of the Loop objects it is nested in and our mapping from
+/// BasicBlocks to loops.
+void LoopInfo::removeBlock(BasicBlock *BB) {
+  std::map<BasicBlock *, Loop*>::iterator I = BBMap.find(BB);
+  if (I != BBMap.end()) {
+    for (Loop *L = I->second; L; L = L->getParentLoop())
+      L->removeBlockFromLoop(BB);
+    
+    BBMap.erase(I);
+  }
+}
 
 
 //===----------------------------------------------------------------------===//
