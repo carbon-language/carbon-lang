@@ -109,7 +109,12 @@ bool AAEval::runOnFunction(Function &F) {
   for (inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I) {
     if (isa<PointerType>(I->getType())) // Add all pointer instructions
       Pointers.insert(&*I);
-    for (User::op_iterator OI = (*I).op_begin(); OI != (*I).op_end(); ++OI)
+    Instruction &Inst = *I;
+    User::op_iterator OI = Inst.op_begin();
+    if ((isa<InvokeInst>(Inst) || isa<CallInst>(Inst)) &&
+        isa<Function>(Inst.getOperand(0)))
+      ++OI;  // Skip actual functions for direct function calls.
+    for (; OI != Inst.op_end(); ++OI)
       if (isa<PointerType>((*OI)->getType()))
         Pointers.insert(*OI);
 
