@@ -230,7 +230,6 @@ test    :: $(addsuffix /.maketest   , $(PARALLEL_DIRS))
 
 %/.makeall %/.makeinstall %/.makeclean %/.maketest:
 	$(VERB) cd $(@D); $(MAKE) $(subst $(@D)/.make,,$@)
-
 endif
 
 #---------------------------------------------------------
@@ -396,19 +395,25 @@ USED_LIB_PATHS_O := $(addprefix $(LIBRELEASE)/, $(STATICUSEDLIBS))
 USED_LIB_PATHS_P := $(addprefix $(LIBPROFILE)/, $(STATICUSEDLIBS))
 LINK_OPTS        := $(TOOLLINKOPTS) $(PLATFORMLINKOPTS)
 
+
+# Tell make that we need to rebuild subdirectories before we can link the tool.
+# This affects things like LLI which has library subdirectories.
+$(USED_LIB_PATHS_G) $(USED_LIB_PATHS_O) $(USED_LIB_PATHS_P): \
+        $(addsuffix /.makeall, $(PARALLEL_DIRS))
+
 all::   $(TOOLEXENAMES)
 clean::
 	$(VERB) rm -f $(TOOLEXENAMES)
 
-$(TOOLEXENAME_G): $(ObjectsG) $(USED_LIB_PATHS_G) $(BUILD_ROOT_TOP)/tools/Debug/.dir
+$(TOOLEXENAME_G): $(ObjectsG) $(USED_LIB_PATHS_G) $(TOOLDEBUG)/.dir
 	@echo ======= Linking $(TOOLNAME) debug executable $(WARN_MSG) =======
 	$(VERB) $(LinkG) -o $@ $(ObjectsG) $(USED_LIBS_OPTIONS_G) $(LINK_OPTS)
 
-$(TOOLEXENAME_O): $(ObjectsO) $(USED_LIB_PATHS_O) $(BUILD_ROOT_TOP)/tools/Release/.dir
+$(TOOLEXENAME_O): $(ObjectsO) $(USED_LIB_PATHS_O) $(TOOLRELEASE)/.dir
 	@echo ======= Linking $(TOOLNAME) release executable =======
 	$(VERB) $(LinkO) -o $@ $(ObjectsO) $(USED_LIBS_OPTIONS_O) $(LINK_OPTS)
 
-$(TOOLEXENAME_P): $(ObjectsP) $(USED_LIB_PATHS_P) $(BUILD_ROOT_TOP)/tools/Profile/.dir
+$(TOOLEXENAME_P): $(ObjectsP) $(USED_LIB_PATHS_P) $(TOOLPROFILE)/.dir
 	@echo ======= Linking $(TOOLNAME) profile executable =======
 	$(VERB) $(LinkP) -o $@ $(ObjectsP) $(USED_LIBS_OPTIONS_P) $(LINK_OPTS)
 
