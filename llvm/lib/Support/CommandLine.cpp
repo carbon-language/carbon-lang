@@ -216,7 +216,7 @@ void cl::ParseCommandLineOptions(int &argc, char **argv,
 
     // Check to see if this is a positional argument.  This argument is
     // considered to be positional if it doesn't start with '-', if it is "-"
-    // itself, or if we have see "--" already.
+    // itself, or if we have seen "--" already.
     //
     if (argv[i][0] != '-' || argv[i][1] == 0 || DashDashFound) {
       // Positional argument!
