@@ -65,8 +65,8 @@ LCC1XX = @LLVMCC1PLUS@
 # object files.
 OBJ_ROOT := .
 
-# Path to location for LLVM front-end this should only be specified here if you
-# want to override the value set in Makefile.$(uname)
+# Path to location for LLVM C/C++ front-end. You can modify this if you
+# want to override the value set by configure.
 LLVMGCCDIR := @LLVMGCCDIR@
 
 # When this variable is set to 1, programs in the llvm/test/Programs hierarchy
