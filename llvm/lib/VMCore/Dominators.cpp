@@ -8,6 +8,7 @@
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Transforms/Utils/UnifyFunctionExitNodes.h"
 #include "llvm/Support/CFG.h"
+#include "llvm/Assembly/Writer.h"
 #include "Support/DepthFirstIterator.h"
 #include "Support/STLExtras.h"
 #include "Support/SetOperations.h"
@@ -23,8 +24,8 @@ A("domset", "Dominator Set Construction");
 static RegisterAnalysis<PostDominatorSet>
 B("postdomset", "Post-Dominator Set Construction");
 
-AnalysisID DominatorSet::ID(AnalysisID::create<DominatorSet>(), true);
-AnalysisID PostDominatorSet::ID(AnalysisID::create<PostDominatorSet>(), true);
+AnalysisID DominatorSet::ID = A;
+AnalysisID PostDominatorSet::ID = B;
 
 // dominates - Return true if A dominates B.  This performs the special checks
 // neccesary if A and B are in the same basic block.
@@ -151,6 +152,22 @@ void PostDominatorSet::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequired(UnifyFunctionExitNodes::ID);
 }
 
+static ostream &operator<<(ostream &o, const set<BasicBlock*> &BBs) {
+  for (set<BasicBlock*>::const_iterator I = BBs.begin(), E = BBs.end();
+       I != E; ++I) {
+    o << "  ";
+    WriteAsOperand(o, *I, false);
+    o << "\n";
+   }
+  return o;
+}
+
+void DominatorSetBase::print(std::ostream &o) const {
+  for (const_iterator I = begin(), E = end(); I != E; ++I)
+    o << "=============================--------------------------------\n"
+      << "\nDominator Set For Basic Block\n" << I->first
+      << "-------------------------------\n" << I->second << "\n";
+}
 
 //===----------------------------------------------------------------------===//
 //  ImmediateDominators Implementation
@@ -161,8 +178,8 @@ C("idom", "Immediate Dominators Construction");
 static RegisterAnalysis<ImmediatePostDominators>
 D("postidom", "Immediate Post-Dominators Construction");
 
-AnalysisID ImmediateDominators::ID(AnalysisID::create<ImmediateDominators>(), true);
-AnalysisID ImmediatePostDominators::ID(AnalysisID::create<ImmediatePostDominators>(), true);
+AnalysisID ImmediateDominators::ID = C;
+AnalysisID ImmediatePostDominators::ID = D;
 
 // calcIDoms - Calculate the immediate dominator mapping, given a set of
 // dominators for every basic block.
@@ -200,6 +217,13 @@ void ImmediateDominatorsBase::calcIDoms(const DominatorSetBase &DS) {
   }
 }
 
+void ImmediateDominatorsBase::print(ostream &o) const {
+  for (const_iterator I = begin(), E = end(); I != E; ++I)
+    o << "=============================--------------------------------\n"
+      << "\nImmediate Dominator For Basic Block\n" << *I->first
+      << "is: \n" << *I->second << "\n";
+}
+
 
 //===----------------------------------------------------------------------===//
 //  DominatorTree Implementation
@@ -210,8 +234,8 @@ E("domtree", "Dominator Tree Construction");
 static RegisterAnalysis<PostDominatorTree>
 F("postdomtree", "Post-Dominator Tree Construction");
 
-AnalysisID DominatorTree::ID(AnalysisID::create<DominatorTree>(), true);
-AnalysisID PostDominatorTree::ID(AnalysisID::create<PostDominatorTree>(), true);
+AnalysisID DominatorTree::ID = E;
+AnalysisID PostDominatorTree::ID = F;
 
 // DominatorTreeBase::reset - Free all of the tree node memory.
 //
@@ -316,6 +340,25 @@ void PostDominatorTree::calculate(const PostDominatorSet &DS) {
   }
 }
 
+static ostream &operator<<(ostream &o, const DominatorTreeBase::Node *Node) {
+  return o << Node->getNode()
+           << "\n------------------------------------------\n";
+}
+
+static void PrintDomTree(const DominatorTreeBase::Node *N, ostream &o,
+                         unsigned Lev) {
+  o << "Level #" << Lev << ":  " << N;
+  for (DominatorTreeBase::Node::const_iterator I = N->begin(), E = N->end(); 
+       I != E; ++I) {
+    PrintDomTree(*I, o, Lev+1);
+  }
+}
+
+void DominatorTreeBase::print(std::ostream &o) const {
+  o << "=============================--------------------------------\n"
+    << "Inorder Dominator Tree:\n";
+  PrintDomTree(Nodes.find(getRoot())->second, o, 1);
+}
 
 
 //===----------------------------------------------------------------------===//
@@ -327,8 +370,8 @@ G("domfrontier", "Dominance Frontier Construction");
 static RegisterAnalysis<PostDominanceFrontier>
 H("postdomfrontier", "Post-Dominance Frontier Construction");
 
-AnalysisID DominanceFrontier::ID(AnalysisID::create<DominanceFrontier>(), true);
-AnalysisID PostDominanceFrontier::ID(AnalysisID::create<PostDominanceFrontier>(), true);
+AnalysisID DominanceFrontier::ID = G;
+AnalysisID PostDominanceFrontier::ID = H;
 
 const DominanceFrontier::DomSetType &
 DominanceFrontier::calculate(const DominatorTree &DT, 
@@ -395,4 +438,13 @@ PostDominanceFrontier::calculate(const PostDominatorTree &DT,
   }
 
   return S;
+}
+
+void DominanceFrontierBase::print(std::ostream &o) const {
+  for (const_iterator I = begin(), E = end(); I != E; ++I) {
+    o << "=============================--------------------------------\n"
+      << "\nDominance Frontier For Basic Block\n";
+    WriteAsOperand(o, I->first, false);
+    o << " is: \n" << I->second << "\n";
+  }
 }

@@ -13,7 +13,7 @@ using std::make_pair;
 static RegisterAnalysis<IntervalPartition>
 X("intervals", "Interval Partition Construction");
 
-AnalysisID IntervalPartition::ID(AnalysisID::create<IntervalPartition>(), true);
+AnalysisID IntervalPartition::ID = X;
 
 //===----------------------------------------------------------------------===//
 // IntervalPartition Implementation
@@ -24,6 +24,11 @@ void IntervalPartition::destroy() {
   for_each(begin(), end(), deleter<Interval>);
   IntervalMap.clear();
   RootInterval = 0;
+}
+
+void IntervalPartition::print(ostream &O) const {
+  std::copy(begin(), end(),
+            std::ostream_iterator<const Interval *>(O, "\n"));
 }
 
 // addIntervalToPartition - Add an interval to the internal list of intervals,

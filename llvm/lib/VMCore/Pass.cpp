@@ -22,7 +22,7 @@
 //
 
 static std::vector<AnalysisID> CFGOnlyAnalyses;
-
+#if 0
 // Source of unique analysis ID #'s.
 unsigned AnalysisID::NextID = 0;
 
@@ -35,6 +35,7 @@ AnalysisID::AnalysisID(const AnalysisID &AID, bool DependsOnlyOnCFG) {
   if (DependsOnlyOnCFG)
     CFGOnlyAnalyses.push_back(AID);
 }
+#endif
 
 //===----------------------------------------------------------------------===//
 //   AnalysisResolver Class Implementation
@@ -190,7 +191,8 @@ void PMDebug::PrintAnalysisSetInfo(unsigned Depth, const char *Msg,
   if (PassDebugging >= Details && !Set.empty()) {
     std::cerr << (void*)P << std::string(Depth*2+3, ' ') << Msg << " Analyses:";
     for (unsigned i = 0; i != Set.size(); ++i) {
-      Pass *P = Set[i].createPass();   // Good thing this is just debug code...
+      // FIXME: This can use the local pass map!
+      Pass *P = Set[i]->createPass();   // Good thing this is just debug code...
       std::cerr << "  " << P->getPassName();
       delete P;
     }
@@ -216,6 +218,19 @@ void Pass::addToPassManager(PassManagerT<Module> *PM, AnalysisUsage &AU) {
 // getPassName - Use C++ RTTI to get a SOMEWHAT intelligable name for the pass.
 //
 const char *Pass::getPassName() const { return typeid(*this).name(); }
+
+// print - Print out the internal state of the pass.  This is called by Analyse
+// to print out the contents of an analysis.  Otherwise it is not neccesary to
+// implement this method.
+//
+void Pass::print(std::ostream &O) const {
+  O << "Pass::print not implemented for pass: '" << getPassName() << "'!\n";
+}
+
+// dump - call print(std::cerr);
+void Pass::dump() const {
+  print(std::cerr, 0);
+}
 
 //===----------------------------------------------------------------------===//
 // FunctionPass Implementation

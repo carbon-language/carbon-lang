@@ -8,7 +8,6 @@
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Analysis/InductionVariable.h"
 #include "llvm/Analysis/LoopInfo.h"
-#include "llvm/Analysis/Writer.h"
 #include "llvm/iPHINode.h"
 #include "llvm/iOther.h"
 #include "llvm/Type.h"
@@ -127,7 +126,7 @@ static bool TransformLoop(LoopInfo *Loops, Loop *Loop) {
   for (unsigned i = 0; i < IndVars.size(); ++i) {
     InductionVariable *IV = &IndVars[i];
 
-    DEBUG(std::cerr << IV);
+    DEBUG(IV->print(std::cerr));
 
     // Don't modify the cannonical indvar or unrecognized indvars...
     if (IV != Cannonical && IV->InductionType != InductionVariable::Unknown) {

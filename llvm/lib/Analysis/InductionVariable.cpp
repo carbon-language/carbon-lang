@@ -23,6 +23,7 @@
 #include "llvm/InstrTypes.h"
 #include "llvm/Type.h"
 #include "llvm/Constants.h"
+#include "llvm/Assembly/Writer.h"
 
 using analysis::ExprType;
 
@@ -153,4 +154,25 @@ InductionVariable::InductionVariable(PHINode *P, LoopInfo *LoopInfo) {
 
   // Classify the induction variable type now...
   InductionType = InductionVariable::Classify(Start, Step, L);
+}
+
+void InductionVariable::print(std::ostream &o) const {
+  switch (InductionType) {
+  case InductionVariable::Cannonical:   o << "Cannonical ";   break;
+  case InductionVariable::SimpleLinear: o << "SimpleLinear "; break;
+  case InductionVariable::Linear:       o << "Linear ";       break;
+  case InductionVariable::Unknown:      o << "Unrecognized "; break;
+  }
+  o << "Induction Variable";
+  if (Phi) {
+    WriteAsOperand(o, Phi);
+    o << ":\n" << Phi;
+  } else {
+    o << "\n";
+  }
+  if (InductionType == InductionVariable::Unknown) return;
+
+  o << "  Start ="; WriteAsOperand(o, Start);
+  o << "  Step =" ; WriteAsOperand(o, Step);
+  o << "\n";
 }

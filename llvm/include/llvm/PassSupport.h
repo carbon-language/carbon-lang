@@ -77,6 +77,13 @@ public:
     return NormalCtor;
   }
 
+  // createPass() - Use this 
+  Pass *createPass() const {
+    assert(NormalCtor &&
+           "Cannot call createPass on PassInfo without default ctor!");
+    return NormalCtor();
+  }
+
   // getDataCtor - Return a pointer to a function that creates an instance of
   // the pass and returns it.  This returns a constructor for a version of the
   // pass that takes a TArgetData object as a parameter.
@@ -110,6 +117,8 @@ struct RegisterPassBase {
   const PassInfo *getPassInfo() const { return PIObj; }
 
   ~RegisterPassBase();   // Intentionally non-virtual...
+
+  inline operator PassInfo* () const { return PIObj; }
 
 protected:
   PassInfo *PIObj;       // The PassInfo object for this pass

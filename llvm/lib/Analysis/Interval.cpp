@@ -8,6 +8,7 @@
 #include "llvm/Analysis/Interval.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/Support/CFG.h"
+#include <algorithm>
 
 //===----------------------------------------------------------------------===//
 // Interval Implementation
@@ -26,3 +27,19 @@ bool Interval::isLoop() const {
 }
 
 
+void Interval::print(ostream &o) const {
+  o << "-------------------------------------------------------------\n"
+       << "Interval Contents:\n";
+  
+  // Print out all of the basic blocks in the interval...
+  std::copy(Nodes.begin(), Nodes.end(), 
+            std::ostream_iterator<BasicBlock*>(o, "\n"));
+
+  o << "Interval Predecessors:\n";
+  std::copy(Predecessors.begin(), Predecessors.end(), 
+            std::ostream_iterator<BasicBlock*>(o, "\n"));
+  
+  o << "Interval Successors:\n";
+  std::copy(Successors.begin(), Successors.end(), 
+            std::ostream_iterator<BasicBlock*>(o, "\n"));
+}

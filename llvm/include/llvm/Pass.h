@@ -24,15 +24,19 @@
 
 #include <vector>
 #include <map>
+#include <iosfwd>
 class Value;
 class BasicBlock;
 class Function;
 class Module;
 class AnalysisUsage;
-class AnalysisID;
 class PassInfo;
 template<class UnitType> class PassManagerT;
 struct AnalysisResolver;
+
+// AnalysisID - Use the PassInfo to identify a pass...
+typedef const PassInfo* AnalysisID;
+
 
 //===----------------------------------------------------------------------===//
 // Pass interface - Implemented by all 'passes'.  Subclass this if you are an
@@ -60,6 +64,18 @@ public:
   // module argument.  This should be implemented by all concrete subclasses.
   //
   virtual bool run(Module &M) = 0;
+
+  // print - Print out the internal state of the pass.  This is called by
+  // Analyze to print out the contents of an analysis.  Otherwise it is not
+  // neccesary to implement this method.  Beware that the module pointer MAY be
+  // null.  This automatically forwards to a virtual function that does not
+  // provide the Module* in case the analysis doesn't need it it can just be
+  // ignored.
+  //
+  virtual void print(std::ostream &O, const Module *M) const { print(O); }
+  virtual void print(std::ostream &O) const;
+  void dump() const; // dump - call print(std::cerr, 0);
+
 
   // getAnalysisUsage - This function should be overriden by passes that need
   // analysis information to do their job.  If a pass specifies that it uses a
@@ -117,6 +133,9 @@ private:
   virtual void addToPassManager(PassManagerT<Module> *PM, AnalysisUsage &AU);
 };
 
+inline std::ostream &operator<<(std::ostream &OS, const Pass &P) {
+  P.print(OS, 0); return OS;
+}
 
 //===----------------------------------------------------------------------===//
 // FunctionPass class - This class is used to implement most global

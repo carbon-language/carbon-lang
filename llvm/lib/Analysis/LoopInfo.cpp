@@ -10,18 +10,42 @@
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Support/CFG.h"
+#include "llvm/Assembly/Writer.h"
 #include "Support/DepthFirstIterator.h"
 #include <algorithm>
 
 static RegisterAnalysis<LoopInfo>
 X("loops", "Natural Loop Construction");
-AnalysisID LoopInfo::ID(AnalysisID::create<LoopInfo>(), true);
+AnalysisID LoopInfo::ID = X;
 
 //===----------------------------------------------------------------------===//
 // Loop implementation
 //
 bool Loop::contains(const BasicBlock *BB) const {
   return find(Blocks.begin(), Blocks.end(), BB) != Blocks.end();
+}
+
+void Loop::print(std::ostream &OS) const {
+  OS << std::string(getLoopDepth()*2, ' ') << "Loop Containing: ";
+
+  for (unsigned i = 0; i < getBlocks().size(); ++i) {
+    if (i) OS << ",";
+    WriteAsOperand(OS, (const Value*)getBlocks()[i]);
+  }
+  OS << "\n";
+
+  std::copy(getSubLoops().begin(), getSubLoops().end(),
+            std::ostream_iterator<const Loop*>(OS, "\n"));
+}
+
+//===----------------------------------------------------------------------===//
+// LoopInfo implementation
+//
+
+bool LoopInfo::runOnFunction(Function &) {
+  releaseMemory();
+  Calculate(getAnalysis<DominatorSet>());    // Update
+  return false;
 }
 
 void LoopInfo::releaseMemory() {
@@ -33,15 +57,6 @@ void LoopInfo::releaseMemory() {
   TopLevelLoops.clear();
 }
 
-
-//===----------------------------------------------------------------------===//
-// LoopInfo implementation
-//
-bool LoopInfo::runOnFunction(Function &) {
-  releaseMemory();
-  Calculate(getAnalysis<DominatorSet>());    // Update
-  return false;
-}
 
 void LoopInfo::Calculate(const DominatorSet &DS) {
   BasicBlock *RootNode = DS.getRoot();
@@ -61,6 +76,10 @@ void LoopInfo::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addProvided(ID);
 }
 
+void LoopInfo::print(std::ostream &OS) const {
+  std::copy(getTopLevelLoops().begin(), getTopLevelLoops().end(),
+            std::ostream_iterator<const Loop*>(OS, "\n"));
+}
 
 Loop *LoopInfo::ConsiderForLoop(BasicBlock *BB, const DominatorSet &DS) {
   if (BBMap.find(BB) != BBMap.end()) return 0;   // Havn't processed this node?

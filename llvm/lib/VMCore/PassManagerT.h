@@ -297,7 +297,7 @@ public:
     for (std::vector<AnalysisID>::const_iterator I = Required.begin(),
            E = Required.end(); I != E; ++I) {
       if (getAnalysisOrNullDown(*I) == 0)
-        add((PassClass*)I->createPass());
+        add((PassClass*)(*I)->createPass());
     }
 
     // Tell the pass to add itself to this PassManager... the way it does so

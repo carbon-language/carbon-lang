@@ -25,7 +25,7 @@
 
 static RegisterAnalysis<FindUnsafePointerTypes>
 X("unsafepointertypes", "Find Unsafe Pointer Types");
-AnalysisID FindUnsafePointerTypes::ID(AnalysisID::create<FindUnsafePointerTypes>());
+AnalysisID FindUnsafePointerTypes::ID = X;
 
 // Provide a command line option to turn on printing of which instructions cause
 // a type to become invalid
@@ -77,8 +77,7 @@ bool FindUnsafePointerTypes::run(Module &Mod) {
 // printResults - Loop over the results of the analysis, printing out unsafe
 // types.
 //
-void FindUnsafePointerTypes::printResults(const Module *M,
-                                          std::ostream &o) const {
+void FindUnsafePointerTypes::print(std::ostream &o, const Module *M) const {
   if (UnsafeTypes.empty()) {
     o << "SafePointerAccess Analysis: No unsafe types found!\n";
     return;

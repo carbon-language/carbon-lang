@@ -13,7 +13,7 @@
 
 static RegisterAnalysis<FindUsedTypes>
 X("printusedtypes", "Find Used Types");
-AnalysisID FindUsedTypes::ID(AnalysisID::create<FindUsedTypes>());
+AnalysisID FindUsedTypes::ID = X;
 
 // IncorporateType - Incorporate one type and all of its subtypes into the
 // collection of used types.
@@ -68,7 +68,7 @@ bool FindUsedTypes::run(Module &m) {
 // passed in, then the types are printed symbolically if possible, using the
 // symbol table from the module.
 //
-void FindUsedTypes::printTypes(std::ostream &o, const Module *M) const {
+void FindUsedTypes::print(std::ostream &o, const Module *M) const {
   o << "Types in use by this module:\n";
   if (M) {
     CachedWriter CW(M, o);
