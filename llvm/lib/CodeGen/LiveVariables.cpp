@@ -31,28 +31,22 @@
 #include "llvm/Target/MRegisterInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/Support/CFG.h"
 #include "Support/DepthFirstIterator.h"
 #include "Support/STLExtras.h"
 using namespace llvm;
 
 static RegisterAnalysis<LiveVariables> X("livevars", "Live Variable Analysis");
 
-const std::pair<MachineBasicBlock*, unsigned> &
-LiveVariables::getMachineBasicBlockInfo(MachineBasicBlock *MBB) const{
-  return BBMap.find(MBB->getBasicBlock())->second;
-}
-  
 /// getIndexMachineBasicBlock() - Given a block index, return the
 /// MachineBasicBlock corresponding to it.
 MachineBasicBlock *LiveVariables::getIndexMachineBasicBlock(unsigned Idx) {
   if (BBIdxMap.empty()) {
     BBIdxMap.resize(BBMap.size());
-    for (std::map<const BasicBlock*, std::pair<MachineBasicBlock*, unsigned> >
-           ::iterator I = BBMap.begin(), E = BBMap.end(); I != E; ++I) {
-      assert(BBIdxMap.size() > I->second.second &&"Indices are not sequential");
-      assert(BBIdxMap[I->second.second] == 0 && "Multiple idx collision!");
-      BBIdxMap[I->second.second] = I->second.first;
+    for (std::map<MachineBasicBlock*, unsigned>::iterator I = BBMap.begin(),
+           E = BBMap.end(); I != E; ++I) {
+      assert(BBIdxMap.size() > I->second && "Indices are not sequential");
+      assert(BBIdxMap[I->second] == 0 && "Multiple idx collision!");
+      BBIdxMap[I->second] = I->first;
     }
   }
   assert(Idx < BBIdxMap.size() && "BB Index out of range!");
@@ -75,10 +69,8 @@ LiveVariables::VarInfo &LiveVariables::getVarInfo(unsigned RegIdx) {
 
 
 void LiveVariables::MarkVirtRegAliveInBlock(VarInfo &VRInfo,
-					    const BasicBlock *BB) {
-  const std::pair<MachineBasicBlock*,unsigned> &Info = BBMap.find(BB)->second;
-  MachineBasicBlock *MBB = Info.first;
-  unsigned BBNum = Info.second;
+					    MachineBasicBlock *MBB) {
+  unsigned BBNum = getMachineBasicBlockIndex(MBB);
 
   // Check to see if this basic block is one of the killing blocks.  If so,
   // remove it...
@@ -99,7 +91,8 @@ void LiveVariables::MarkVirtRegAliveInBlock(VarInfo &VRInfo,
   // Mark the variable known alive in this bb
   VRInfo.AliveBlocks[BBNum] = true;
 
-  for (pred_const_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI)
+  for (MachineBasicBlock::const_pred_iterator PI = MBB->pred_begin(),
+         E = MBB->pred_end(); PI != E; ++PI)
     MarkVirtRegAliveInBlock(VRInfo, *PI);
 }
 
@@ -125,8 +118,8 @@ void LiveVariables::HandleVirtRegUse(VarInfo &VRInfo, MachineBasicBlock *MBB,
 
   // Update all dominating blocks to mark them known live.
   const BasicBlock *BB = MBB->getBasicBlock();
-  for (pred_const_iterator PI = pred_begin(BB), E = pred_end(BB);
-       PI != E; ++PI)
+  for (MachineBasicBlock::const_pred_iterator PI = MBB->pred_begin(),
+         E = MBB->pred_end(); PI != E; ++PI)
     MarkVirtRegAliveInBlock(VRInfo, *PI);
 }
 
@@ -182,7 +175,7 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &MF) {
   // Build BBMap... 
   unsigned BBNum = 0;
   for (MachineFunction::iterator I = MF.begin(), E = MF.end(); I != E; ++I)
-    BBMap[I->getBasicBlock()] = std::make_pair(I, BBNum++);
+    BBMap[I] = BBNum++;
 
   // PhysRegInfo - Keep track of which instruction was the last use of a
   // physical register.  This is a purely local property, because all physical
@@ -202,13 +195,11 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &MF) {
   // register before its uses due to dominance properties of SSA (except for PHI
   // nodes, which are treated as a special case).
   //
-  const BasicBlock *Entry = MF.getFunction()->begin();
-  for (df_iterator<const BasicBlock*> DFI = df_begin(Entry), E = df_end(Entry);
+  MachineBasicBlock *Entry = MF.begin();
+  for (df_iterator<MachineBasicBlock*> DFI = df_begin(Entry), E = df_end(Entry);
        DFI != E; ++DFI) {
-    const BasicBlock *BB = *DFI;
-    std::pair<MachineBasicBlock*, unsigned> &BBRec = BBMap.find(BB)->second;
-    MachineBasicBlock *MBB = BBRec.first;
-    unsigned BBNum = BBRec.second;
+    MachineBasicBlock *MBB = *DFI;
+    unsigned BBNum = getMachineBasicBlockIndex(MBB);
 
     // Loop over all of the instructions, processing them.
     for (MachineBasicBlock::iterator I = MBB->begin(), E = MBB->end();
@@ -270,9 +261,9 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &MF) {
     // bottom of this basic block.  We check all of our successor blocks to see
     // if they have PHI nodes, and if so, we simulate an assignment at the end
     // of the current block.
-    for (succ_const_iterator SI = succ_begin(BB), E = succ_end(BB);
-         SI != E; ++SI) {
-      MachineBasicBlock *Succ = BBMap.find(*SI)->second.first;
+    for (MachineBasicBlock::succ_iterator SI = MBB->succ_begin(),
+           E = MBB->succ_end(); SI != E; ++SI) {
+      MachineBasicBlock *Succ = *SI;
       
       // PHI nodes are guaranteed to be at the top of the block...
       for (MachineBasicBlock::iterator MI = Succ->begin(), ME = Succ->end();
@@ -286,7 +277,7 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &MF) {
 	      VarInfo &VRInfo = getVarInfo(MO.getReg());
 
 	      // Only mark it alive only in the block we are representing...
-	      MarkVirtRegAliveInBlock(VRInfo, BB);
+	      MarkVirtRegAliveInBlock(VRInfo, MBB);
 	      break;   // Found the PHI entry for this block...
 	    }
 	  }
