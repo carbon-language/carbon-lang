@@ -517,17 +517,17 @@ def CMPmi32 : X86Inst<"cmp", 0x81, MRMS7m    , Arg32>;              // compare [
 // Sign/Zero extenders
 def MOVSXr16r8 : X86Inst<"movsx", 0xBE, MRMSrcReg, Arg8>, TB, OpSize; // R16 = signext(R8)
 def MOVSXr32r8 : X86Inst<"movsx", 0xBE, MRMSrcReg, Arg8>, TB;         // R32 = signext(R8)
-def MOVSXr32r16: X86Inst<"movsx", 0xBF, MRMSrcReg, Arg8>, TB;         // R32 = signext(R16)
+def MOVSXr32r16: X86Inst<"movsx", 0xBF, MRMSrcReg, Arg16>,TB;         // R32 = signext(R16)
 def MOVSXr16m8 : X86Inst<"movsx", 0xBE, MRMSrcMem, Arg8>, TB, OpSize; // R16 = signext([mem8])
 def MOVSXr32m8 : X86Inst<"movsx", 0xBE, MRMSrcMem, Arg8>, TB;         // R32 = signext([mem8])
-def MOVSXr32m16: X86Inst<"movsx", 0xBF, MRMSrcMem, Arg8>, TB;         // R32 = signext([mem16])
+def MOVSXr32m16: X86Inst<"movsx", 0xBF, MRMSrcMem, Arg16>,TB;         // R32 = signext([mem16])
 
 def MOVZXr16r8 : X86Inst<"movzx", 0xB6, MRMSrcReg, Arg8>, TB, OpSize; // R16 = zeroext(R8)
 def MOVZXr32r8 : X86Inst<"movzx", 0xB6, MRMSrcReg, Arg8>, TB;         // R32 = zeroext(R8)
-def MOVZXr32r16: X86Inst<"movzx", 0xB7, MRMSrcReg, Arg8>, TB;         // R32 = zeroext(R16)
+def MOVZXr32r16: X86Inst<"movzx", 0xB7, MRMSrcReg, Arg16>,TB;         // R32 = zeroext(R16)
 def MOVZXr16m8 : X86Inst<"movzx", 0xB6, MRMSrcMem, Arg8>, TB, OpSize; // R16 = zeroext([mem8])
 def MOVZXr32m8 : X86Inst<"movzx", 0xB6, MRMSrcMem, Arg8>, TB;         // R32 = zeroext([mem8])
-def MOVZXr32m16: X86Inst<"movzx", 0xB7, MRMSrcMem, Arg8>, TB;         // R32 = zeroext([mem16])
+def MOVZXr32m16: X86Inst<"movzx", 0xB7, MRMSrcMem, Arg16>,TB;         // R32 = zeroext([mem16])
 
 
 //===----------------------------------------------------------------------===//
