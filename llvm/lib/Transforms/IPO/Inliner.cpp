@@ -23,8 +23,7 @@
 #include "Support/CommandLine.h"
 #include "Support/Debug.h"
 #include "Support/Statistic.h"
-
-namespace llvm {
+using namespace llvm;
 
 namespace {
   Statistic<> NumInlined("inline", "Number of functions inlined");
@@ -77,7 +76,10 @@ bool Inliner::runOnSCC(const std::vector<CallGraphNode*> &SCC) {
               // try to do so...
               int InlineCost = inSCC ? getRecursiveInlineCost(CS) :
                                        getInlineCost(CS);
-              if (InlineCost < (int)InlineThreshold) {
+              if (InlineCost >= (int)InlineThreshold) {
+                DEBUG(std::cerr << "    NOT Inlining: cost=" << InlineCost
+                                << ", Call: " << *CS.getInstruction());
+              } else {
                 DEBUG(std::cerr << "    Inlining: cost=" << InlineCost
                                 << ", Call: " << *CS.getInstruction());
 
@@ -137,4 +139,3 @@ bool Inliner::performInlining(CallSite CS, std::set<Function*> &SCC) {
   return true; 
 }
 
-} // End llvm namespace
