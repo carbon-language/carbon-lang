@@ -455,7 +455,33 @@ designed for internal LLVM research and will not work outside of the LLVM
 research group.  They may still be valuable, however, as a guide to writing your
 own TEST Makefile for any optimization or analysis passes that you develop with
 LLVM.</p>
-      
+
+<p>Note, when configuring the <tt>llvm-test</tt> module, you might want to
+specify the following configuration options:</p>
+<dl>
+  <dt><i>--enable-spec2000</i>
+  <dt><i>--enable-spec2000=&lt;<tt>directory</tt>&gt;</i>
+  <dd>
+    Enable the use of SPEC2000 when testing LLVM.  This is disabled by default
+    (unless <tt>configure</tt> finds SPEC2000 installed).  By specifying
+    <tt>directory</tt>, you can tell configure where to find the SPEC2000
+    benchmarks.  If <tt>directory</tt> is left unspecified, <tt>configure</tt>
+    uses the default value
+    <tt>/home/vadve/shared/benchmarks/speccpu2000/benchspec</tt>.
+    <p>
+  <dt><i>--enable-spec95</i>
+  <dt><i>--enable-spec95=&lt;<tt>directory</tt>&gt;</i>
+  <dd>
+    Enable the use of SPEC95 when testing LLVM.  It is similar to the
+    <i>--enable-spec2000</i> option.
+    <p>
+  <dt><i>--enable-povray</i>
+  <dt><i>--enable-povray=&lt;<tt>directory</tt>&gt;</i>
+  <dd>
+    Enable the use of Povray as an external test.  Versions of Povray written
+    in C should work.  This option is similar to the <i>--enable-spec2000</i>
+    option.
+</dl>
 </div>
 
 <!--=========================================================================-->
