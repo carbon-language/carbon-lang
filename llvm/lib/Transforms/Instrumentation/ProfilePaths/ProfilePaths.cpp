@@ -176,18 +176,16 @@ bool ProfilePaths::runOnFunction(Function &F){
 
   if(fr->getParent()->getName() == "main"){
     //intialize threshold
-    vector<const Type*> initialize_args;
-    initialize_args.push_back(PointerType::get(Type::IntTy));
-    
-    const FunctionType *Fty = FunctionType::get(Type::VoidTy, initialize_args,
-                                                false);
-    Function *initialMeth = fr->getParent()->getParent()->getOrInsertFunction("reoptimizerInitialize", Fty);
-    assert(initialMeth && "Initialize method could not be inserted!");
+
+    // FIXME: THIS IS HORRIBLY BROKEN.  FUNCTION PASSES CANNOT DO THIS, EXCEPT
+    // IN THEIR INITIALIZE METHOD!!
+    Function *initialize =
+      F.getParent()->getOrInsertFunction("reoptimizerInitialize", Type::VoidTy,
+                                         PointerType::get(Type::IntTy), 0);
     
     vector<Value *> trargs;
     trargs.push_back(threshold);
-  
-    new CallInst(initialMeth, trargs, "", fr->begin());
+    new CallInst(initialize, trargs, "", fr->begin());
   }
 
 

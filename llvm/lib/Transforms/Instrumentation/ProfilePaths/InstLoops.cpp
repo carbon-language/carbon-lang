@@ -121,6 +121,12 @@ void InstLoops::findAndInstrumentBackEdges(Function &F){
 
   removeRedundant(be);
 
+  // FIXME: THIS IS HORRIBLY BROKEN.  FunctionPass's cannot do this, except in
+  // their initialize function!!
+  Function *inCountMth = 
+    F.getParent()->getOrInsertFunction("llvm_first_trigger",
+                                       Type::VoidTy, 0);
+
   for(std::map<BasicBlock *, BasicBlock *>::iterator MI = be.begin(),
 	ME = be.end(); MI != ME; ++MI){
     BasicBlock *u = MI->first;
@@ -137,15 +143,6 @@ void InstLoops::findAndInstrumentBackEdges(Function &F){
     ti->setSuccessor(index, newBB);
         
     BasicBlock::InstListType &lt = newBB->getInstList();
-
-    std::vector<const Type*> inCountArgs;
-    const FunctionType *cFty = FunctionType::get(Type::VoidTy, inCountArgs, 
-						 false);
-    Function *inCountMth = 
-      u->getParent()->getParent()->getOrInsertFunction("llvm_first_trigger",
-						       cFty);
-        
-    assert(inCountMth && "Initial method could not be inserted!");
 
     Instruction *call = new CallInst(inCountMth);
     lt.push_back(call);
