@@ -11,9 +11,8 @@
 #include "llvm/Codegen/MachineInstr.h"
 
 Instruction::Instruction(const Type *ty, unsigned it, const string &Name) 
-  : User(ty, Value::InstructionVal, Name),
-    machineInstrVec(new MachineCodeForVMInstr)
-{
+  : User(ty, Value::InstructionVal, Name), 
+    machineInstrVec(new MachineCodeForVMInstr) {
   Parent = 0;
   iType = it;
 }
@@ -32,9 +31,7 @@ void Instruction::setName(const string &name) {
   if (PP && hasName()) PP->getSymbolTableSure()->insert(this);
 }
 
-void
-Instruction::addMachineInstruction(MachineInstr* minstr)
-{
+void Instruction::addMachineInstruction(MachineInstr* minstr) {
   machineInstrVec->push_back(minstr);
 }
 
@@ -44,15 +41,12 @@ Instruction::addMachineInstruction(MachineInstr* minstr)
 // sequence of forward declarations.  Trying to fix that will
 // cause a serious circularity in link order.
 // 
-const vector<Value*>&
-Instruction::getTempValuesForMachineCode() const
-{
+const vector<Value*> &Instruction::getTempValuesForMachineCode() const {
   return machineInstrVec->getTempValues();
 }
 #endif
 
-void
-Instruction::dropAllReferences() {
+void Instruction::dropAllReferences() {
   machineInstrVec->dropAllReferences();
   User::dropAllReferences();
 }
