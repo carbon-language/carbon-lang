@@ -248,15 +248,16 @@ public:
   // GlobalValue, viz., the constant address of a global variable or function.
   // The generated instructions are returned in `mvec'.
   // Any temp. registers (TmpInstruction) created are recorded in mcfi.
-  // Any stack space required is allocated via mcff.
+  // Symbolic constants or constants that must be accessed from memory
+  // are added to the constant pool via MachineCodeForMethod::get(F).
   // 
   virtual void  CreateCodeToLoadConst(const TargetMachine& target,
                                       Function* F,
                                       Value* val,
                                       Instruction* dest,
                                       std::vector<MachineInstr*>& mvec,
-                                      MachineCodeForInstruction& mcfi)const=0;
-
+                                      MachineCodeForInstruction& mcfi) const=0;
+  
   // Create an instruction sequence to copy an integer value `val'
   // to a floating point value `dest' by copying to memory and back.
   // val must be an integral type.  dest must be a Float or Double.
