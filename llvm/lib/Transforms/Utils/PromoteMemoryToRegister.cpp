@@ -27,39 +27,40 @@
 #include "llvm/BasicBlock.h"
 #include "llvm/ConstantVals.h"
 
-using namespace std;
+using std::vector;
+using std::map;
+using std::set;
 
 namespace {
+  struct PromotePass : public FunctionPass {
+    vector<AllocaInst*>          Allocas;      // the alloca instruction..
+    map<Instruction*, unsigned>  AllocaLookup; // reverse mapping of above
+    
+    vector<vector<BasicBlock*> > PhiNodes;     // index corresponds to Allocas
+    
+    // List of instructions to remove at end of pass
+    vector<Instruction *>        KillList;
+    
+    map<BasicBlock*,vector<PHINode*> > NewPhiNodes; // the PhiNodes we're adding
 
-// instance of the promoter -- to keep all the local function data.
-// gets re-created for each function processed
-class PromoteInstance {
-protected:
-  vector<AllocaInst*>          Allocas;      // the alloca instruction..
-  map<Instruction*, unsigned>  AllocaLookup; // reverse mapping of above
-  
-  vector<vector<BasicBlock*> > PhiNodes;     // index corresponds to Allocas
-  
-  //list of instructions to remove at end of pass :)
-  vector<Instruction *>        KillList;
+  public:
+    // runOnFunction - To run this pass, first we calculate the alloca
+    // instructions that are safe for promotion, then we promote each one.
+    //
+    virtual bool runOnFunction(Function *F);
 
-  map<BasicBlock*, vector<PHINode*> > NewPhiNodes; // the phinodes we're adding
+    // getAnalysisUsage - We need dominance frontiers
+    //
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.addRequired(DominanceFrontier::ID);
+    }
 
-  bool didchange;
-
-  void traverse(BasicBlock *BB, BasicBlock *Pred, vector<Value*> &IncVals,
-                set<BasicBlock*> &Visited);
-  bool PromoteFunction(Function *F, DominanceFrontier &DF);
-  bool QueuePhiNode(BasicBlock *bb, unsigned alloca_index);
-  void findSafeAllocas(Function *M);
-public:
-  // I do this so that I can force the deconstruction of the local variables
-  PromoteInstance(Function *F, DominanceFrontier &DF) {
-    didchange = PromoteFunction(F, DF);
-  }
-  //This returns whether the pass changes anything
-  operator bool () { return didchange; }
-};
+  private:
+    void Traverse(BasicBlock *BB, BasicBlock *Pred, vector<Value*> &IncVals,
+                  set<BasicBlock*> &Visited);
+    bool QueuePhiNode(BasicBlock *BB, unsigned AllocaIdx);
+    void FindSafeAllocas(Function *F);
+  };
 
 }  // end of anonymous namespace
 
@@ -70,7 +71,7 @@ public:
 static inline bool isSafeAlloca(const AllocaInst *AI) {
   if (AI->isArrayAllocation()) return false;
 
-  for (Value::use_iterator UI = AI->use_begin(), UE = AI->use_end();
+  for (Value::use_const_iterator UI = AI->use_begin(), UE = AI->use_end();
        UI != UE; ++UI) {   // Loop over all of the uses of the alloca
 
     // Only allow nonindexed memory access instructions...
@@ -86,11 +87,13 @@ static inline bool isSafeAlloca(const AllocaInst *AI) {
       return false;   // Not a load or store?
     }
   }
+  
+  return true;
 }
 
-// findSafeAllocas - Find allocas that are safe to promote
+// FindSafeAllocas - Find allocas that are safe to promote
 //
-void PromoteInstance::findSafeAllocas(Function *F) {
+void PromotePass::FindSafeAllocas(Function *F) {
   BasicBlock *BB = F->getEntryNode();  // Get the entry node for the function
 
   // Look at all instructions in the entry node
@@ -104,9 +107,12 @@ void PromoteInstance::findSafeAllocas(Function *F) {
 
 
 
-bool PromoteInstance::PromoteFunction(Function *F, DominanceFrontier &DF) {
+bool PromotePass::runOnFunction(Function *F) {
   // Calculate the set of safe allocas
-  findSafeAllocas(F);
+  FindSafeAllocas(F);
+
+  // If there is nothing to do, bail out...
+  if (Allocas.empty()) return false;
 
   // Add each alloca to the KillList.  Note: KillList is destroyed MOST recently
   // added to least recently.
@@ -123,6 +129,9 @@ bool PromoteInstance::PromoteFunction(Function *F, DominanceFrontier &DF) {
         // jot down the basic-block it came from
         WriteSets[i].push_back(SI->getParent());
   }
+
+  // Get dominance frontier information...
+  DominanceFrontier &DF = getAnalysis<DominanceFrontier>();
 
   // Compute the locations where PhiNodes need to be inserted.  Look at the
   // dominance frontier of EACH basic-block we have a write in
@@ -160,7 +169,7 @@ bool PromoteInstance::PromoteFunction(Function *F, DominanceFrontier &DF) {
   // and inserting the phi nodes we marked as necessary
   //
   set<BasicBlock*> Visited;         // The basic blocks we've already visited
-  traverse(F->front(), 0, Values, Visited);
+  Traverse(F->front(), 0, Values, Visited);
 
   // Remove all instructions marked by being placed in the KillList...
   //
@@ -168,19 +177,23 @@ bool PromoteInstance::PromoteFunction(Function *F, DominanceFrontier &DF) {
     Instruction *I = KillList.back();
     KillList.pop_back();
 
-    //now go find..
     I->getParent()->getInstList().remove(I);
     delete I;
   }
 
-  return !Allocas.empty();
+  // Purge data structurse so they are available the next iteration...
+  Allocas.clear();
+  AllocaLookup.clear();
+  PhiNodes.clear();
+  NewPhiNodes.clear();
+  return true;
 }
 
 
 // QueuePhiNode - queues a phi-node to be added to a basic-block for a specific
 // Alloca returns true if there wasn't already a phi-node for that variable
 //
-bool PromoteInstance::QueuePhiNode(BasicBlock *BB, unsigned AllocaNo) {
+bool PromotePass::QueuePhiNode(BasicBlock *BB, unsigned AllocaNo) {
   // Look up the basic-block in question
   vector<PHINode*> &BBPNs = NewPhiNodes[BB];
   if (BBPNs.empty()) BBPNs.resize(Allocas.size());
@@ -188,7 +201,7 @@ bool PromoteInstance::QueuePhiNode(BasicBlock *BB, unsigned AllocaNo) {
   // If the BB already has a phi node added for the i'th alloca then we're done!
   if (BBPNs[AllocaNo]) return false;
 
-  // Create a phi-node using the dereferenced type...
+  // Create a PhiNode using the dereferenced type...
   PHINode *PN = new PHINode(Allocas[AllocaNo]->getType()->getElementType(),
                             Allocas[AllocaNo]->getName()+".mem2reg");
   BBPNs[AllocaNo] = PN;
@@ -200,9 +213,9 @@ bool PromoteInstance::QueuePhiNode(BasicBlock *BB, unsigned AllocaNo) {
   return true;
 }
 
-void PromoteInstance::traverse(BasicBlock *BB, BasicBlock *Pred,
-                               vector<Value*> &IncomingVals,
-                               set<BasicBlock*> &Visited) {
+void PromotePass::Traverse(BasicBlock *BB, BasicBlock *Pred,
+                           vector<Value*> &IncomingVals,
+                           set<BasicBlock*> &Visited) {
   // If this is a BB needing a phi node, lookup/create the phinode for each
   // variable we need phinodes for.
   vector<PHINode *> &BBPNs = NewPhiNodes[BB];
@@ -256,31 +269,12 @@ void PromoteInstance::traverse(BasicBlock *BB, BasicBlock *Pred,
       // Recurse across our successors
       for (unsigned i = 0; i != TI->getNumSuccessors(); i++) {
         vector<Value*> OutgoingVals(IncomingVals);
-        traverse(TI->getSuccessor(i), BB, OutgoingVals, Visited);
+        Traverse(TI->getSuccessor(i), BB, OutgoingVals, Visited);
       }
     }
   }
 }
 
-
-namespace {
-  struct PromotePass : public FunctionPass {
-
-    // runOnFunction - To run this pass, first we calculate the alloca
-    // instructions that are safe for promotion, then we promote each one.
-    //
-    virtual bool runOnFunction(Function *F) {
-      return (bool)PromoteInstance(F, getAnalysis<DominanceFrontier>());
-    }
-
-    // getAnalysisUsage - We need dominance frontiers
-    //
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-      AU.addRequired(DominanceFrontier::ID);
-    }
-  };
-}
-  
 
 // createPromoteMemoryToRegister - Provide an entry point to create this pass.
 //
