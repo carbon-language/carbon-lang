@@ -79,13 +79,13 @@ let Uses = [R29, R28] in {
   def STT_SYM : PseudoInstAlpha<(ops GPRC:$RA, s64imm:$DISP), "stt $RA,$DISP">; //store double
 }
 
-let Uses = [R28, R23, R24, R25, R26, R29],
-    Defs = [R29] in
+let Uses = [R29], 
+    Defs = [R28, R29, R23, R24, R25, R27] in
 {
   def REMQU : PseudoInstAlpha<(ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "remqu $RA,$RB,$RC">; //unsigned remander
-  def REMQ  : PseudoInstAlpha<(ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "remq $RA,$RB,$RC">; //unsigned remander
-  def DIVQU : PseudoInstAlpha<(ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "divqu $RA,$RB,$RC">; //unsigned remander
-  def DIVQ  : PseudoInstAlpha<(ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "divq $RA,$RB,$RC">; //unsigned remander
+  def REMQ  : PseudoInstAlpha<(ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "remq $RA,$RB,$RC">; //signed remander
+  def DIVQU : PseudoInstAlpha<(ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "divqu $RA,$RB,$RC">; //unsigned division
+  def DIVQ  : PseudoInstAlpha<(ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "divq $RA,$RB,$RC">; //signed division
 }
 
 //***********************
