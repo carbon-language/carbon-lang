@@ -6,5 +6,6 @@
 
 LEVEL = .
 DIRS = lib tools
+EXTRA_DIST = samples test
 
 include $(LEVEL)/Makefile.common
