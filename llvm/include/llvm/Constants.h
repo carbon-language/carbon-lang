@@ -518,9 +518,7 @@ public:
   /// ConstantExpr::get - Return a binary or shift operator constant expression,
   /// folding if possible.
   ///
-  static Constant *get(unsigned Opcode, Constant *C1, Constant *C2) {
-    return getTy(C1->getType(), Opcode, C1, C2);
-  }
+  static Constant *get(unsigned Opcode, Constant *C1, Constant *C2);
 
   /// ConstantExpr::get* - Return some common constants without having to
   /// specify the full Instruction::OPCODE identifier.
