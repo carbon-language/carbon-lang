@@ -23,7 +23,7 @@ using namespace sys;
 //===----------------------------------------------------------------------===//
 
 LLVMFileType 
-IdentifyFileType(const char*magic, unsigned length) {
+sys::IdentifyFileType(const char*magic, unsigned length) {
   assert(magic && "Invalid magic number string");
   assert(length >=4 && "Invalid magic number length");
   switch (magic[0]) {
