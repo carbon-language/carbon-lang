@@ -1395,6 +1395,9 @@ FunctionHeaderH : TypesV Name '(' ArgList ')' {
   UnEscapeLexed($2);
   std::string FunctionName($2);
   
+  if (!(*$1)->isFirstClassType() && *$1 != Type::VoidTy)
+    ThrowException("LLVM functions cannot return aggregate types!");
+
   std::vector<const Type*> ParamTypeList;
   if ($4) {   // If there are arguments...
     for (std::vector<std::pair<PATypeHolder*,char*> >::iterator I = $4->begin();

@@ -95,6 +95,9 @@ Function::Function(const FunctionType *Ty, LinkageTypes Linkage,
   ArgumentList.setParent(this);
   SymTab = new SymbolTable();
 
+  assert((getReturnType()->isFirstClassType() ||getReturnType() == Type::VoidTy)
+         && "LLVM functions cannot return aggregate values!");
+
   // Create the arguments vector, all arguments start out unnamed.
   for (unsigned i = 0, e = Ty->getNumParams(); i != e; ++i) {
     assert(Ty->getParamType(i) != Type::VoidTy &&

@@ -241,6 +241,9 @@ void Verifier::visitFunction(Function &F) {
   Assert2(FT->getNumParams() == NumArgs,
           "# formal arguments must match # of arguments for function type!",
           &F, FT);
+  Assert1(F.getReturnType()->isFirstClassType() ||
+          F.getReturnType() == Type::VoidTy,
+          "Functions cannot return aggregate values!", &F);
 
   // Check that the argument values match the function type for this function...
   unsigned i = 0;
