@@ -840,6 +840,8 @@ void Andersens::visitCastInst(CastInst &CI) {
 #if 0
       Constraints.push_back(Constraint(Constraint::Copy, getNodeValue(CI),
                                        &GraphNodes[UniversalSet]));
+#else
+      getNodeValue(CI);
 #endif
     }
   } else if (isa<PointerType>(Op->getType())) {
@@ -848,6 +850,8 @@ void Andersens::visitCastInst(CastInst &CI) {
     Constraints.push_back(Constraint(Constraint::Copy,
                                      &GraphNodes[UniversalSet],
                                      getNode(CI.getOperand(0))));
+#else
+    getNode(CI.getOperand(0));
 #endif
   }
 }
