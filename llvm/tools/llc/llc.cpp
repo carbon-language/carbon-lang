@@ -57,6 +57,7 @@ int main(int argc, char **argv) {
     }
   }
   
+  Target->emitAssembly(M.get(), cout);
   return 0;
 }
 
