@@ -19,32 +19,23 @@
 
 namespace llvm {
 
-  /// This class provides an abstraction for compressing a block of memory using
-  /// a standard compression utility such as bzip2 or libz. This interface
-  /// allows us to abstract the notion of compression and deal with alternate
-  /// compression scheme availability depending on the configured platform. This
-  /// facility will always favor a bzip2 implementation if its available.
-  /// Otherwise, libz will be used if it is available. If neither zlib nor bzip2
-  /// are available, a very simple algorithm provided by the Compressor class
-  /// will be used. The type of compression used can be determined by inspecting 
-  /// the first byte of the compressed output. ASCII values '0', '1', and '2', 
-  /// denote the compression type as given in the Algorithm enumeration below.
-  /// The Compressor is intended for use with memory mapped files where the 
-  /// entire data block to be compressed or decompressed is available in 
-  /// memory. However, output can be gathered in repeated calls to a callback.
+  /// This class provides an abstraction for compression and decompression of
+  /// a block of memory.  The algorithm used here is currently bzip2 but that
+  /// may change without notice. Should newer algorithms prove to compress
+  /// bytecode better than bzip2, that newer algorithm will be added, but won't
+  /// replace bzip2. This interface allows us to abstract the notion of 
+  /// compression and deal with alternate compression schemes over time. 
+  /// The type of compression used can be determined by inspecting the 
+  /// first byte of the compressed output. Currently value '0' means no 
+  /// compression was used (for very small files) and value '2' means bzip2
+  /// compression was used.  The Compressor is intended for use with memory 
+  /// mapped files where the entire data block to be compressed or decompressed
+  /// is available in memory. However, output can be gathered in repeated calls
+  /// to a callback.  Utilities for sending compressed or decompressed output 
+  /// to a stream or directly to a memory block are also provided.
   /// @since 1.4
   /// @brief An abstraction for memory to memory data (de)compression
   class Compressor {
-    /// @name Types
-    /// @{
-    public:
-      enum Algorithm {
-        COMP_TYPE_SIMPLE = '0',  ///< Use simple but ubiquitous algorithm
-        COMP_TYPE_ZLIB = '1',    ///< Use zlib algorithm, if available
-        COMP_TYPE_BZIP2 = '2',   ///< Use bzip2 algorithm (preferred)
-      };
-
-    /// @}
     /// @name High Level Interface
     /// @{
     public:
@@ -58,9 +49,7 @@ namespace llvm {
       static uint64_t compressToNewBuffer(
         const char* in,           ///< The buffer to be compressed
         unsigned size,            ///< The size of the buffer to be compressed
-        char*&out,                ///< The returned output buffer
-        Algorithm hint            ///< Hint for type of compression to perform
-          = COMP_TYPE_BZIP2
+        char*&out                 ///< The returned output buffer
       );
 
       /// This method compresses a block of memory pointed to by \p in with 
@@ -73,9 +62,7 @@ namespace llvm {
       static uint64_t compressToStream(
         const char*in,            ///< The buffer to be compressed
         unsigned size,            ///< The size of the buffer to be compressed
-        std::ostream& out,        ///< The output stream to write data on
-        Algorithm hint            ///< Hint for type of compression to perform
-          = COMP_TYPE_BZIP2
+        std::ostream& out         ///< The output stream to write data on
       );
 
       /// This method decompresses a block of memory pointed to by \p in with 
@@ -140,10 +127,7 @@ namespace llvm {
         const char* in,            ///< The buffer to be compressed
         unsigned size,             ///< The size of the buffer to be compressed
         OutputDataCallback* cb,    ///< Call back for memory allocation
-        Algorithm hint             ///< Hint for type of compression to perform
-          = COMP_TYPE_BZIP2,
-        void* context              ///< Context for callback
-          = 0
+        void* context = 0          ///< Context for callback
       );
 
       /// This function does the decompression work. The block of memory
@@ -163,8 +147,7 @@ namespace llvm {
         const char *in,              ///< The buffer to be decompressed
         unsigned size,               ///< Size of the buffer to be decompressed
         OutputDataCallback* cb,      ///< Call back for memory allocation
-        void* context                ///< Context for callback
-          = 0
+        void* context = 0            ///< Context for callback
       );
 
     /// @}
