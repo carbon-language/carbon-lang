@@ -452,7 +452,7 @@ CheckGEPInstructions(const Type* BasePtr1Ty, std::vector<Value*> &GEP1Ops,
     
     bool AllAreZeros = true;
     for (unsigned i = UnequalOper; i != MaxOperands; ++i)
-      if (!isa<Constant>(GEP1Ops[i]) || 
+      if (!isa<Constant>(GEP1Ops[i]) ||
           !cast<Constant>(GEP1Ops[i])->isNullValue()) {
         AllAreZeros = false;
         break;
@@ -478,8 +478,8 @@ CheckGEPInstructions(const Type* BasePtr1Ty, std::vector<Value*> &GEP1Ops,
     const Value *G2Oper = GEP2Ops[FirstConstantOper];
     
     if (G1Oper != G2Oper)   // Found non-equal constant indexes...
-      if (Constant *G1OC = dyn_cast<Constant>(const_cast<Value*>(G1Oper)))
-        if (Constant *G2OC = dyn_cast<Constant>(const_cast<Value*>(G2Oper))) {
+      if (Constant *G1OC = dyn_cast<ConstantInt>(const_cast<Value*>(G1Oper)))
+        if (Constant *G2OC = dyn_cast<ConstantInt>(const_cast<Value*>(G2Oper))){
           if (G1OC->getType() != G2OC->getType()) {
             // Sign extend both operands to long.
             G1OC = ConstantExpr::getSignExtend(G1OC, Type::LongTy);
@@ -489,8 +489,8 @@ CheckGEPInstructions(const Type* BasePtr1Ty, std::vector<Value*> &GEP1Ops,
           }
 
           if (G1OC != G2OC) {
-            // Make sure they are comparable (ie, not constant expressions)...
-            // and make sure the GEP with the smaller leading constant is GEP1.
+            // Make sure they are comparable (ie, not constant expressions), and
+            // make sure the GEP with the smaller leading constant is GEP1.
             Constant *Compare = ConstantExpr::getSetGT(G1OC, G2OC);
             if (ConstantBool *CV = dyn_cast<ConstantBool>(Compare)) {
               if (CV->getValue())   // If they are comparable and G2 > G1
@@ -555,11 +555,9 @@ CheckGEPInstructions(const Type* BasePtr1Ty, std::vector<Value*> &GEP1Ops,
   // offset that each of the GEP's is reaching.  To do this, we have to convert
   // all variable references to constant references.  To do this, we convert the
   // initial equal sequence of variables into constant zeros to start with.
-  for (unsigned i = 0; i != FirstConstantOper; ++i) {
-    if (!isa<Constant>(GEP1Ops[i]) || isa<ConstantExpr>(GEP1Ops[i]) ||
-        !isa<Constant>(GEP2Ops[i]) || isa<ConstantExpr>(GEP2Ops[i]))
+  for (unsigned i = 0; i != FirstConstantOper; ++i)
+    if (!isa<ConstantInt>(GEP1Ops[i]) || !isa<ConstantInt>(GEP2Ops[i]))
       GEP1Ops[i] = GEP2Ops[i] = Constant::getNullValue(Type::UIntTy);
-  }
 
   // We know that GEP1Ops[FirstConstantOper] & GEP2Ops[FirstConstantOper] are ok
   
@@ -569,7 +567,7 @@ CheckGEPInstructions(const Type* BasePtr1Ty, std::vector<Value*> &GEP1Ops,
     const Value *Op2 = i < GEP2Ops.size() ? GEP2Ops[i] : 0;
     // If they are equal, use a zero index...
     if (Op1 == Op2 && BasePtr1Ty == BasePtr2Ty) {
-      if (!isa<Constant>(Op1) || isa<ConstantExpr>(Op1))
+      if (!isa<ConstantInt>(Op1))
         GEP1Ops[i] = GEP2Ops[i] = Constant::getNullValue(Op1->getType());
       // Otherwise, just keep the constants we have.
     } else {
