@@ -1,7 +1,7 @@
 ; RUN: llvm-as -f %s -o %t.bc
 ; RUN: lli %t.bc > /dev/null
 
-; This tests to make sure that we can evaluate wierd constant expressions
+; This tests to make sure that we can evaluate weird constant expressions
 %A = global int 5
 %B = global int 6
 
