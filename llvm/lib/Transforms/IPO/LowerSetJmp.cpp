@@ -132,13 +132,11 @@ bool LowerSetJmp::run(Module& M)
   doInitialization(M);
 
   if (SetJmp) {
-    std::set<BasicBlock*> BBSet;
-    
     for (Value::use_iterator B = SetJmp->use_begin(), E = SetJmp->use_end();
          B != E; ++B) {
       BasicBlock* BB = cast<Instruction>(*B)->getParent();
-      for (df_ext_iterator<BasicBlock*> I = df_ext_begin(BB, BBSet),
-             E = df_ext_end(BB, BBSet); I != E; ++I)
+      for (df_ext_iterator<BasicBlock*> I = df_ext_begin(BB, DFSBlocks),
+             E = df_ext_end(BB, DFSBlocks); I != E; ++I)
         /* empty */;
     }
 
