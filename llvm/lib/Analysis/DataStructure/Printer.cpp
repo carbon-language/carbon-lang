@@ -40,11 +40,17 @@ static std::string getCaption(const DSNode *N, const DSGraph *G) {
   std::stringstream OS;
   Module *M = 0;
 
-  if (G) G = N->getParentGraph();
+  if (!G) G = N->getParentGraph();
 
   // Get the module from ONE of the functions in the graph it is available.
   if (G && !G->getReturnNodes().empty())
     M = G->getReturnNodes().begin()->first->getParent();
+  if (M == 0 && G) {
+    // If there is a global in the graph, we can use it to find the module.
+    const DSScalarMap &SM = G->getScalarMap();
+    if (SM.global_begin() != SM.global_end())
+      M = (*SM.global_begin())->getParent();
+  }
 
   if (N->isNodeCompletelyFolded())
     OS << "COLLAPSED";
@@ -108,6 +114,13 @@ struct DOTGraphTraits<const DSGraph*> : public DefaultDOTGraphTraits {
     Module *CurMod = 0;
     if (!G->getReturnNodes().empty())
       CurMod = G->getReturnNodes().begin()->first->getParent();
+    else {
+      // If there is a global in the graph, we can use it to find the module.
+      const DSScalarMap &SM = G->getScalarMap();
+      if (SM.global_begin() != SM.global_end())
+        CurMod = (*SM.global_begin())->getParent();
+    }
+
 
     // Add scalar nodes to the graph...
     const DSGraph::ScalarMapTy &VM = G->getScalarMap();
