@@ -31,6 +31,7 @@ do
       "Java")         AC_CONFIG_SUBDIRS([projects/Java])      ;;
       "llvm-tv")      AC_CONFIG_SUBDIRS([projects/llvm-tv])   ;;
       "llvm-fefw")    AC_CONFIG_SUBDIRS([projects/llvm-fefw]) ;;
+      "poolalloc")    AC_CONFIG_SUBDIRS([projects/poolalloc]) ;;
       *)              
         AC_MSG_WARN([Unknown project (${i}) won't be configured automatically])
         ;;
