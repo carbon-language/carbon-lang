@@ -111,7 +111,8 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
 
     if (AliasSet *AS = KillLocs.getAliasSetForPointerIfExists(Ptr, ValSize))
       for (AliasSet::iterator ASI = AS->begin(), E = AS->end(); ASI != E; ++ASI)
-        if (AA.alias(ASI.getPointer(), ASI.getSize(), Ptr, ValSize)
+        if (ASI.getSize() >= ValSize &&  // Overwriting all of this store.
+            AA.alias(ASI.getPointer(), ASI.getSize(), Ptr, ValSize)
                == AliasAnalysis::MustAlias) {
           // If we found a must alias in the killed set, then this store really
           // is dead.  Remember that the various operands of the store now have
