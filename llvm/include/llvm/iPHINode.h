@@ -76,10 +76,10 @@ public:
 
   /// addIncoming - Add an incoming value to the end of the PHI list
   ///
-  void addIncoming(Value *D, BasicBlock *BB) {
-    assert(getType() == D->getType() &&
+  void addIncoming(Value *V, BasicBlock *BB) {
+    assert(getType() == V->getType() &&
            "All operands to PHI node must be the same type as the PHI node!");
-    Operands.push_back(Use(D, this));
+    Operands.push_back(Use(V, this));
     Operands.push_back(Use(reinterpret_cast<Value*>(BB), this));
   }
   
