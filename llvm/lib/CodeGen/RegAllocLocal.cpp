@@ -19,7 +19,6 @@
 #include "llvm/CodeGen/SSARegMap.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/LiveVariables.h"
-#include "llvm/CodeGen/TwoAddressInstructionPass.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "Support/CommandLine.h"
@@ -113,7 +112,7 @@ namespace {
       if (!DisableKill)
 	AU.addRequired<LiveVariables>();
       AU.addRequiredID(PHIEliminationID);
-      AU.addRequired<TwoAddressInstructionPass>();
+      AU.addRequiredID(TwoAddressInstructionPassID);
       MachineFunctionPass::getAnalysisUsage(AU);
     }
 

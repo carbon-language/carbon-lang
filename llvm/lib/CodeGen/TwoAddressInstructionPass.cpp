@@ -16,7 +16,6 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "twoaddrinstr"
-#include "llvm/CodeGen/TwoAddressInstructionPass.h"
 #include "llvm/Function.h"
 #include "llvm/CodeGen/LiveVariables.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
@@ -36,7 +35,23 @@
 using namespace llvm;
 
 namespace {
-    RegisterAnalysis<TwoAddressInstructionPass> X(
+    class TwoAddressInstructionPass : public MachineFunctionPass
+    {
+    private:
+        MachineFunction* mf_;
+        const TargetMachine* tm_;
+        const MRegisterInfo* mri_;
+        LiveVariables* lv_;
+
+    public:
+        virtual void getAnalysisUsage(AnalysisUsage &AU) const;
+
+    private:
+        /// runOnMachineFunction - pass entry point
+        bool runOnMachineFunction(MachineFunction&);
+    };
+
+    RegisterPass<TwoAddressInstructionPass> X(
         "twoaddressinstruction", "Two-Address instruction pass");
 
     Statistic<> numTwoAddressInstrs("twoaddressinstruction",
@@ -44,6 +59,8 @@ namespace {
     Statistic<> numInstrsAdded("twoaddressinstruction",
                                "Number of instructions added");
 };
+
+const PassInfo *llvm::TwoAddressInstructionPassID = X.getPassInfo();
 
 void TwoAddressInstructionPass::getAnalysisUsage(AnalysisUsage &AU) const
 {

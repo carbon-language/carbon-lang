@@ -28,6 +28,11 @@ class TargetMachine;
 //
 extern const PassInfo *PHIEliminationID;
 
+// TwoAddressInstruction pass - This pass reduces two-address
+// instructions to use two operands. This destroys SSA information but
+// it is desired by register allocators.
+extern const PassInfo *TwoAddressInstructionPassID;
+
 /// Creates a register allocator as the user specified on the command
 /// line.
 FunctionPass *createRegisterAllocator();
