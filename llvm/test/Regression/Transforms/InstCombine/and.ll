@@ -137,12 +137,6 @@ ubyte %test20(ubyte %A) {
 	ret ubyte %D
 }
 
-sbyte %test21(sbyte %A) {
-	%C = shr sbyte %A, ubyte 7   ;; sign extend
-	%D = and sbyte %C, 1         ;; chop off sign
-	ret sbyte %D
-}
-
 bool %test22(int %A) {
 	%B = seteq int %A, 1
 	%C = setge int %A, 3
