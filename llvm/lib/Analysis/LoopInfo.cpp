@@ -235,8 +235,8 @@ void Loop::addBasicBlockToLoop(BasicBlock *NewBB, LoopInfo &LI) {
   }
 }
 
-/// changeExitBlock - This method is used to update loop information.  One
-/// instance of the specified Old basic block is removed from the exit list
+/// changeExitBlock - This method is used to update loop information.  All
+/// instances of the specified Old basic block are removed from the exit list
 /// and replaced with New.
 ///
 void Loop::changeExitBlock(BasicBlock *Old, BasicBlock *New) {
@@ -246,4 +246,10 @@ void Loop::changeExitBlock(BasicBlock *Old, BasicBlock *New) {
     std::find(ExitBlocks.begin(), ExitBlocks.end(), Old);
   assert(I != ExitBlocks.end() && "Old exit block not found!");
   *I = New;
+
+  I = std::find(I+1, ExitBlocks.end(), Old);
+  while (I != ExitBlocks.end()) {
+    *I = New;
+    I = std::find(I+1, ExitBlocks.end(), Old);
+  }
 }

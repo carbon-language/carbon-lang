@@ -89,8 +89,8 @@ public:
   ///
   void addBasicBlockToLoop(BasicBlock *NewBB, LoopInfo &LI);
 
-  /// changeExitBlock - This method is used to update loop information.  One
-  /// instance of the specified Old basic block is removed from the exit list
+  /// changeExitBlock - This method is used to update loop information.  All
+  /// instances of the specified Old basic block are removed from the exit list
   /// and replaced with New.
   ///
   void changeExitBlock(BasicBlock *Old, BasicBlock *New);
