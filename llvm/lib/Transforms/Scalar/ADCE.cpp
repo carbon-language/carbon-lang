@@ -14,21 +14,21 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/Scalar.h"
-#include "llvm/Transforms/Utils/Local.h"
-#include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Type.h"
 #include "llvm/Analysis/PostDominators.h"
 #include "llvm/iTerminators.h"
 #include "llvm/iPHINode.h"
 #include "llvm/Constant.h"
 #include "llvm/Support/CFG.h"
+#include "llvm/Transforms/Utils/BasicBlockUtils.h"
+#include "llvm/Transforms/Utils/Local.h"
+#include "llvm/Transforms/Utils/UnifyFunctionExitNodes.h"
 #include "Support/Debug.h"
 #include "Support/DepthFirstIterator.h"
 #include "Support/Statistic.h"
 #include "Support/STLExtras.h"
 #include <algorithm>
-
-namespace llvm {
+using namespace llvm;
 
 namespace {
   Statistic<> NumBlockRemoved("adce", "Number of basic blocks removed");
@@ -61,6 +61,9 @@ public:
   // getAnalysisUsage - We require post dominance frontiers (aka Control
   // Dependence Graph)
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    // We require that all function nodes are unified, because otherwise code
+    // can be marked live that wouldn't necessarily be otherwise.
+    AU.addRequired<UnifyFunctionExitNodes>();
     AU.addRequired<PostDominatorTree>();
     AU.addRequired<PostDominanceFrontier>();
   }
@@ -101,7 +104,7 @@ private:
   RegisterOpt<ADCE> X("adce", "Aggressive Dead Code Elimination");
 } // End of anonymous namespace
 
-Pass *createAggressiveDCEPass() { return new ADCE(); }
+Pass *llvm::createAggressiveDCEPass() { return new ADCE(); }
 
 void ADCE::markBlockAlive(BasicBlock *BB) {
   // Mark the basic block as being newly ALIVE... and mark all branches that
@@ -474,5 +477,3 @@ bool ADCE::doADCE() {
 
   return MadeChanges;
 }
-
-} // End llvm namespace
