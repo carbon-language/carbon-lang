@@ -213,7 +213,8 @@ protected:
   virtual void destroyConstant();
 public:
   static ConstPoolArray *get(const ArrayType *T, const vector<ConstPoolVal*> &);
-
+  static ConstPoolArray *get(const string& stringConstant);
+  
   virtual string getStrValue() const;
 
   inline const vector<Use> &getValues() const { return Operands; }
