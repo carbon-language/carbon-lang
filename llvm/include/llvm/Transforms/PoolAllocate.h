@@ -72,6 +72,8 @@ class PoolAllocate : public Pass {
   BUDataStructures *BU;
 
   TDDataStructures *TDDS;
+
+  hash_set<Function*> InlinedFuncs;
   
   std::map<Function*, PA::FuncInfo> FunctionInfo;
 
@@ -98,7 +100,7 @@ class PoolAllocate : public Pass {
   // If an equivalence class does not require pool arguments, it is not
   // on this map.
   std::map<Function *, int> EqClass2LastPoolArg;
-
+  
  public:
   bool run(Module &M);
   
@@ -141,6 +143,9 @@ class PoolAllocate : public Pass {
   
   void TransformFunctionBody(Function &F, Function &OldF,
                              DSGraph &G, PA::FuncInfo &FI);
+
+  void InlineIndirectCalls(Function &F, DSGraph &G, 
+			   hash_set<Function*> &visited);
 };
 
 #endif
