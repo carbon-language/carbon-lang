@@ -1,7 +1,7 @@
 ; New testcase, this contains a bunch of simple instructions that should be 
 ; handled by a code generator.
 
-; RUN: llvm-as < %S | llc
+; RUN: llvm-as < %s | llc
 
 int %add(int %A, int %B) {
 	%R = add int %A, %B
