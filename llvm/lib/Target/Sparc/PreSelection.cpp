@@ -73,6 +73,7 @@ namespace {
     void visitInstruction(Instruction &I);   // common work for every instr. 
     void visitGetElementPtrInst(GetElementPtrInst &I);
     void visitCallInst(CallInst &I);
+    void visitPHINode(PHINode &PN);
 
     // Helper functions for visiting operands of every instruction
     // 
@@ -210,19 +211,21 @@ PreSelection::visitOneOperand(Instruction &I, Value* Op, unsigned opNum,
 //  
 inline void PreSelection::visitOperands(Instruction &I, int firstOp) {
   // For any instruction other than PHI, copies go just before the instr.
+  for (unsigned i = firstOp, e = I.getNumOperands(); i != e; ++i)
+    visitOneOperand(I, I.getOperand(i), i, I);
+}
+
+
+void PreSelection::visitPHINode(PHINode &PN) {
   // For a PHI, operand copies must be before the terminator of the
   // appropriate predecessor basic block.  Remaining logic is simple
   // so just handle PHIs and other instructions separately.
   // 
-  if (PHINode* phi = dyn_cast<PHINode>(&I)) {
-    for (unsigned i=firstOp, N=phi->getNumIncomingValues(); i != N; ++i)
-      visitOneOperand(I, phi->getIncomingValue(i),
-                      phi->getOperandNumForIncomingValue(i),
-                      * phi->getIncomingBlock(i)->getTerminator());
-  } else {
-    for (unsigned i=firstOp, N=lastOp; i != I.getNumOperands(); ++i)
-      visitOneOperand(I, I.getOperand(i), i, I);
-  }
+  for (unsigned i = 0, e = PN.getNumIncomingValues(); i != e; ++i)
+    visitOneOperand(I, PN.getIncomingValue(i),
+                    PN.getOperandNumForIncomingValue(i),
+                    *PN.getIncomingBlock(i)->getTerminator());
+  // do not call visitOperands!
 }
 
 
