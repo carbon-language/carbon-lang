@@ -81,7 +81,8 @@ Value *MapValue(const Value *V, std::map<const Value*, Value*> &VM) {
       assert(0 && "Unknown type of constant!");
     }
   }
-  
+
+  V->dump();
   assert(0 && "Unknown value type: why didn't it get resolved?!");
   return 0;
 }
