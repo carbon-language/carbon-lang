@@ -167,10 +167,11 @@ bool ReduceMisCodegenFunctions::TestFuncs(const std::vector<Function*> &Funcs,
             // actually use the resolved function
             Inst->replaceUsesOfWith(F, castResolver);
           } else {
-            // FIXME: need to take care of cases where a function is used that
-            // is not an instruction, e.g. global variable initializer...
-            std::cerr <<
-              "UNSUPPORTED: External function used as global initializer!\n";
+            // FIXME: need to take care of cases where a function is used by
+            // something other than an instruction; e.g., global variable
+            // initializers and constant expressions.
+            std::cerr << "UNSUPPORTED: Non-instruction is using an external "
+                      << "function, " << F->getName() << "().\n";
             abort();
           }
       }
