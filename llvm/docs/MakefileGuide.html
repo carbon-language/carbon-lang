@@ -54,6 +54,8 @@
       <li><a href="#install">install</a></li>
       <li><a href="#preconditions">preconditions</a></li>
       <li><a href="#printvars">printvars</a></li>
+      <li><a href="#reconfigure">reconfigure</a></li>
+      <li><a href="#spotless">spotless</a></li>
       <li><a href="#tags">tags</a></li>
       <li><a href="#uninstall">uninstall</a></li>
     </ol>
@@ -517,6 +519,28 @@
 <div class="doc_text">
   <p>This utility target just causes the LLVM makefiles to print out some of 
   the makefile variables so that you can double check how things are set. </p>
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection"><a name="reconfigure">reconfigure</a></div>
+<div class="doc_text">
+  <p>This utility target will force a reconfigure of LLVM or your project. It 
+  simply runs <tt>$(BUILD_OBJ_ROOT)/config.status --recheck</tt> to rerun the
+  configuration tests and rebuild the configured files. This isn't generally
+  useful as the makefiles will reconfigure themselves whenever its necessary.
+  </p>
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection"><a name="spotless">spotless</a></div>
+<div class="doc_text">
+  <p>This utility target, only available when <tt>$(BUILD_OBJ_ROOT)</tt> is not 
+  the same as <tt>$(BUILD_SRC_ROOT)</tt>, will completely clean the
+  <tt>$(BUILD_OBJ_ROOT)</tt> directoy by removing its content entirely and 
+  reconfiguring the directory. This returns the <tt>$(BUILD_OBJ_ROOT)</tt> 
+  directory to a completely fresh state. All content in the directory except 
+  configured files and top-level makefiles will be lost.
+  <font color="red">Use with caution.</font></p>
 </div>
 
 <!-- ======================================================================= -->
