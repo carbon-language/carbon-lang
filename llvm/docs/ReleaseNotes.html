@@ -145,6 +145,7 @@ In this release, the following Code Quality issues were fixed:
 <ol>
 <li><a href="http://llvm.cs.uiuc.edu/PR187">[loopsimplify] Many pointless phi nodes are created</a></li>
 <li>The X86 backend didn't generate <tt>fchs</tt> to negate floating point numbers</li>
+<li>The X86 backend didn't expand memcpy() into the <tt>rep movs</tt> instruction</li> 
 </ol>
 
 
@@ -184,6 +185,7 @@ management functions in libc runtime to allow them to be overriden</a></li>
 <li><a href="http://llvm.cs.uiuc.edu/PR204">[llvmg++] Dynamically initialized constants cannot be marked 'constant'</a></li>
 <li><a href="http://llvm.cs.uiuc.edu/PR216">[llvmgcc] floating-point unary minus is incorrect for +0.0</a></li>
 <li><a href="http://llvm.cs.uiuc.edu/PR221">[llvm-gcc] miscompilation of 'X = Y = Z' with aggregate values</a></li>
+<li><a href="http://llvm.cs.uiuc.edu/PR233">[llvmgcc] Structure copies result in a LOT of code</a></li>
 </ol>
 
 </div>
