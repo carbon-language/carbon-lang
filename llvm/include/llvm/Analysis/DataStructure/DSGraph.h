@@ -264,6 +264,13 @@ public:
     return I->second;
   }
 
+  /// retnodes_* iterator methods: expose iteration over return nodes in the
+  /// graph, which are also the set of functions incorporated in this graph.
+  typedef ReturnNodesTy::const_iterator retnodes_iterator;
+  retnodes_iterator retnodes_begin() const { return ReturnNodes.begin(); }
+  retnodes_iterator retnodes_end() const { return ReturnNodes.end(); }
+
+
   /// getReturnNodes - Return the mapping of functions to their return nodes for
   /// this graph.
   ///
