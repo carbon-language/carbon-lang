@@ -20,15 +20,20 @@ analyze
 SYNOPSIS
 </h3>
 
-analyze [options] &lt; filename&gt;
+analyze [options] [filename]
 <h3>
 DESCRIPTION
 </h3>
 
-The analyze command performs various analysis of LLVM bytecode.  It will
-usually print the results on standard output, but in a few cases it will print
-output to standard error or generate a file with the analysis output (which is
-usually done when generating output for another program).
+The analyze command performs various analysis of LLVM assembly code or
+bytecode.  It will usually print the results on standard output, but in a few
+cases, it will print output to standard error or generate a file with the
+analysis output (which is usually done when the output is meant for another
+program).
+<p>
+If filename is omitted or is -, analyze reads its input from standard input.
+It first attempts to interpret its input as LLVM bytecode.  If it encounters an
+error, it then attempts to parse the input as LLVM assembly language.
 <h3>
 OPTIONS
 </h3>
