@@ -1,0 +1,11 @@
+; RUN: llvm-as < %s | llc -march=sparcv9 | not grep 'CPI'
+; PR368 - make sure nulls are not spilled to constant pool
+
+implementation
+
+declare void %foobar (sbyte* %arg)
+
+void %caller () {
+  call void %foobar (sbyte* null)
+  ret void
+}
