@@ -7,6 +7,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/IPO/PoolAllocate.h"
+#include "llvm/Transforms/CloneFunction.h"
 #include "llvm/Analysis/DataStructure.h"
 #include "llvm/Pass.h"
 #include "llvm/Module.h"
@@ -56,7 +57,19 @@ namespace {
     TransformFunctionInfo() : Func(0) {}
     
     inline bool operator<(const TransformFunctionInfo &TFI) const {
-      return Func < TFI.Func || (Func == TFI.Func && ArgInfo < TFI.ArgInfo);
+      if (Func < TFI.Func) return true;
+      if (Func > TFI.Func) return false;
+
+      // Loop over the arguments, checking to see if only the arg _numbers_ are
+      // less...
+      if (ArgInfo.size() < TFI.ArgInfo.size()) return true;
+      if (ArgInfo.size() > TFI.ArgInfo.size()) return false;
+
+      for (unsigned i = 0, e = TFI.ArgInfo.size(); i != e; ++i) {
+        if (ArgInfo[i].first < TFI.ArgInfo[i].first) return true;
+        if (ArgInfo[i].first > TFI.ArgInfo[i].first) return false;
+      }
+      return false;  // They must be equal
     }
 
     void finalizeConstruction() {
@@ -291,7 +304,7 @@ void PoolAllocate::transformFunctionBody(Function *F,
         // than once!  It will get multiple entries for the first pointer.
 
         // Add the operand number and pool handle to the call table...
-        addCallInfo(CallMap[CI], CI, OI-CI->op_begin(), Scalars[i].PoolHandle);
+        addCallInfo(CallMap[CI], CI, OI-CI->op_begin()-1,Scalars[i].PoolHandle);
       }
     }
   }
@@ -302,7 +315,7 @@ void PoolAllocate::transformFunctionBody(Function *F,
     cerr << "\nFor call: ";
     I->first->dump();
     I->second.finalizeConstruction();
-    cerr << "  must pass pool pointer for arg #";
+    cerr << I->second.Func->getName() << " must pass pool pointer for arg #";
     for (unsigned i = 0; i < I->second.ArgInfo.size(); ++i)
       cerr << I->second.ArgInfo[i].first << " ";
     cerr << "\n";
@@ -330,8 +343,60 @@ void PoolAllocate::transformFunctionBody(Function *F,
 void PoolAllocate::transformFunction(TransformFunctionInfo &TFI) {
   if (getTransformedFunction(TFI)) return;  // Function xformation already done?
 
+  Function *FuncToXForm = TFI.Func;
+  const FunctionType *OldFuncType = FuncToXForm->getFunctionType();
 
+  assert(!OldFuncType->isVarArg() && "Vararg functions not handled yet!");
 
+  // Build the type for the new function that we are transforming
+  vector<const Type*> ArgTys;
+  for (unsigned i = 0, e = OldFuncType->getNumParams(); i != e; ++i)
+    ArgTys.push_back(OldFuncType->getParamType(i));
+
+  // Add one pool pointer for every argument that needs to be supplemented.
+  ArgTys.insert(ArgTys.end(), TFI.ArgInfo.size(), PoolTy);
+
+  // Build the new function type...
+  const // FIXME when types are not const
+  FunctionType *NewFuncType = FunctionType::get(OldFuncType->getReturnType(),
+                                                ArgTys,OldFuncType->isVarArg());
+
+  // The new function is internal, because we know that only we can call it.
+  // This also helps subsequent IP transformations to eliminate duplicated pool
+  // pointers. [in the future when they are implemented].
+  //
+  Function *NewFunc = new Function(NewFuncType, true,
+                                   FuncToXForm->getName()+".poolxform");
+  CurModule->getFunctionList().push_back(NewFunc);
+
+  // Add the newly formed function to the TransformedFunctions table so that
+  // infinite recursion does not occur!
+  //
+  TransformedFunctions[TFI] = NewFunc;
+
+  // Add arguments to the function... starting with all of the old arguments
+  vector<Value*> ArgMap;
+  for (unsigned i = 0, e = FuncToXForm->getArgumentList().size(); i != e; ++i) {
+    const FunctionArgument *OFA = FuncToXForm->getArgumentList()[i];
+    FunctionArgument *NFA = new FunctionArgument(OFA->getType(),OFA->getName());
+    NewFunc->getArgumentList().push_back(NFA);
+    ArgMap.push_back(NFA);  // Keep track of the arguments 
+  }
+
+  // Now add all of the arguments corresponding to pools passed in...
+  for (unsigned i = 0, e = TFI.ArgInfo.size(); i != e; ++i) {
+    string Name;
+    if (TFI.ArgInfo[i].first == -1)
+      Name = "retpool";
+    else
+      Name = ArgMap[TFI.ArgInfo[i].first]->getName();  // Get the arg name
+    FunctionArgument *NFA = new FunctionArgument(PoolTy, Name+".pool");
+    NewFunc->getArgumentList().push_back(NFA);
+  }
+
+  // Now clone the body of the old function into the new function...
+  CloneFunctionInto(NewFunc, FuncToXForm, ArgMap);
+  
 }
 
 
@@ -427,9 +492,12 @@ bool PoolAllocate::run(Module *M) {
   
   DS = &getAnalysis<DataStructure>();
   bool Changed = false;
-  for (Module::iterator I = M->begin(); I != M->end(); ++I)
-    if (!(*I)->isExternal())
-      Changed |= processFunction(*I);
+
+  // We cannot use an iterator here because it will get invalidated when we add
+  // functions to the module later...
+  for (unsigned i = 0; i != M->size(); ++i)
+    if (!M->getFunctionList()[i]->isExternal())
+      Changed |= processFunction(M->getFunctionList()[i]);
 
   CurModule = 0;
   DS = 0;
