@@ -14,17 +14,17 @@ ChooseLoadInstruction(const Type *DestTy)
 {
   switch (DestTy->getPrimitiveID()) {
   case Type::BoolTyID:
-  case Type::UByteTyID:   return V9::LDUB;
-  case Type::SByteTyID:   return V9::LDSB;
-  case Type::UShortTyID:  return V9::LDUH;
-  case Type::ShortTyID:   return V9::LDSH;
-  case Type::UIntTyID:    return V9::LDUW;
-  case Type::IntTyID:     return V9::LDSW;
+  case Type::UByteTyID:   return V9::LDUBr;
+  case Type::SByteTyID:   return V9::LDSBr;
+  case Type::UShortTyID:  return V9::LDUHr;
+  case Type::ShortTyID:   return V9::LDSHr;
+  case Type::UIntTyID:    return V9::LDUWr;
+  case Type::IntTyID:     return V9::LDSWr;
   case Type::PointerTyID:
   case Type::ULongTyID:
-  case Type::LongTyID:    return V9::LDX;
-  case Type::FloatTyID:   return V9::LD;
-  case Type::DoubleTyID:  return V9::LDD;
+  case Type::LongTyID:    return V9::LDXr;
+  case Type::FloatTyID:   return V9::LDFr;
+  case Type::DoubleTyID:  return V9::LDDFr;
   default: assert(0 && "Invalid type for Load instruction");
   }
   
@@ -37,16 +37,16 @@ ChooseStoreInstruction(const Type *DestTy)
   switch (DestTy->getPrimitiveID()) {
   case Type::BoolTyID:
   case Type::UByteTyID:
-  case Type::SByteTyID:   return V9::STB;
+  case Type::SByteTyID:   return V9::STBr;
   case Type::UShortTyID:
-  case Type::ShortTyID:   return V9::STH;
+  case Type::ShortTyID:   return V9::STHr;
   case Type::UIntTyID:
-  case Type::IntTyID:     return V9::STW;
+  case Type::IntTyID:     return V9::STWr;
   case Type::PointerTyID:
   case Type::ULongTyID:
-  case Type::LongTyID:    return V9::STX;
-  case Type::FloatTyID:   return V9::ST;
-  case Type::DoubleTyID:  return V9::STD;
+  case Type::LongTyID:    return V9::STXr;
+  case Type::FloatTyID:   return V9::STFr;
+  case Type::DoubleTyID:  return V9::STDFr;
   default: assert(0 && "Invalid type for Store instruction");
   }
   
@@ -64,7 +64,7 @@ ChooseAddInstructionByType(const Type* resultType)
       isa<FunctionType>(resultType) ||
       resultType == Type::LabelTy)
   {
-    opCode = V9::ADD;
+    opCode = V9::ADDr;
   }
   else
     switch(resultType->getPrimitiveID())
