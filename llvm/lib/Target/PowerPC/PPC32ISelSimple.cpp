@@ -2910,7 +2910,9 @@ void PPC32ISel::emitShiftOperation(MachineBasicBlock *MBB,
       return;
     
     unsigned SrcReg = getReg (Op, MBB, IP);
-    if (isLeftShift) {
+    if (Amount == 0) {
+      BuildMI(*MBB, IP, PPC::OR, 2, DestReg).addReg(SrcReg).addReg(SrcReg);
+    } else if (isLeftShift) {
       BuildMI(*MBB, IP, PPC::RLWINM, 4, DestReg).addReg(SrcReg)
         .addImm(Amount).addImm(0).addImm(31-Amount);
     } else {
