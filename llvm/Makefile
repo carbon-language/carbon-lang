@@ -19,34 +19,4 @@ include $(LEVEL)/Makefile.common
 test :: all
 	cd test; $(MAKE)
 
-distclean:: clean
-	$(VERB) $(RM) -rf $(LEVEL)/Makefile.config \
-	                  $(LEVEL)/include/llvm/Config/config.h \
-	                  $(LEVEL)/autoconf/autom4te.cache \
-	                  $(LEVEL)/config.log \
-	                  $(LEVEL)/TAGS
-
 tools-only: all
-
-# Install support for llvm include files:
-.PHONY: install-includes
-
-install-includes:
-	$(MKDIR) $(DESTDIR)$(includedir)/llvm
-	cd include && find * -path '*/Internal' -prune -o '(' '!' '(' -name '*~' -o -name .cvsignore ')' -print ')' | grep -v CVS | pax -rwdvpe $(DESTDIR)$(includedir)/llvm
-ifneq ($(BUILD_SRC_ROOT),$(BUILD_OBJ_ROOT))
-	cd $(BUILD_SRC_ROOT)/include && find * -path '*/Internal' -prune -o '(' '!' '(' -name '*~' -o -name .cvsignore ')' -print ')' | grep -v CVS | pax -rwdvpe $(DESTDIR)$(includedir)/llvm
-endif
-
-install:: install-includes
-
-# Build tags database for Emacs/Xemacs:
-.PHONY: tags
-
-TAGS: tags
-
-all::
-
-tags:
-	find $(wildcard $(SourceDir)/include $(SourceDir)/lib $(SourceDir)/tools) -name '*.cpp' -o -name '*.h' | $(ETAGS) $(ETAGSFLAGS) -
-
