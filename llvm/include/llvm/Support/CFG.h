@@ -26,15 +26,7 @@ public:
   typedef PredIterator<_Ptr,_USE_iterator> _Self;
   typedef typename super::pointer pointer;
   
-  inline void advancePastConstants() {
-    // TODO: This is bad
-    // Loop to ignore constant pool references
-    while (It != BB->use_end() && !isa<TerminatorInst>(*It))
-      ++It;
-  }
-  
   inline PredIterator(_Ptr *bb) : BB(bb), It(bb->use_begin()) {
-    advancePastConstants();
   }
   inline PredIterator(_Ptr *bb, bool) : BB(bb), It(bb->use_end()) {}
     
@@ -43,13 +35,13 @@ public:
   
   inline pointer operator*() const { 
     assert(It != BB->use_end() && "pred_iterator out of range!");
-    return cast<Instruction>(*It)->getParent(); 
+    return cast<TerminatorInst>(*It)->getParent(); 
   }
   inline pointer *operator->() const { return &(operator*()); }
   
   inline _Self& operator++() {   // Preincrement
     assert(It != BB->use_end() && "pred_iterator out of range!");
-    ++It; advancePastConstants();
+    ++It;
     return *this; 
   }
   
