@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "Inliner.h"
+#include "llvm/Constants.h"   // ConstantPointerRef should die
 #include "llvm/Module.h"
 #include "llvm/iOther.h"
 #include "llvm/iTerminators.h"
@@ -108,12 +109,18 @@ bool Inliner::performInlining(CallSite CS, std::set<Function*> &SCC) {
   // Attempt to inline the function...
   if (!InlineFunction(CS)) return false;
   ++NumInlined;
-              
+  
+  if (Callee->hasOneUse())
+    if (ConstantPointerRef *CPR =
+        dyn_cast<ConstantPointerRef>(Callee->use_back()))
+      if (CPR->use_empty())
+        CPR->destroyConstant();
+  
   // If we inlined the last possible call site to the function,
   // delete the function body now.
   if (Callee->use_empty() && Callee != Caller &&
       (Callee->hasInternalLinkage() || Callee->hasLinkOnceLinkage())) {
-    DEBUG(std::cerr << "    -> Deleting dead function: "
+    DEBUG(std::cerr << "    -> Deleting dead function: " << (void*)Callee
                     << Callee->getName() << "\n");
     std::set<Function*>::iterator I = SCC.find(Callee);
     if (I != SCC.end())       // Remove function from this SCC...
