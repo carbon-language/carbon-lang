@@ -138,6 +138,7 @@ void BasicBlock::dropAllReferences() {
 void BasicBlock::removePredecessor(BasicBlock *Pred) {
   assert(find(pred_begin(this), pred_end(this), Pred) != pred_end(this) &&
 	 "removePredecessor: BB is not a predecessor!");
+  if (InstList.empty()) return;
   PHINode *APN = dyn_cast<PHINode>(&front());
   if (!APN) return;   // Quick exit.
 
