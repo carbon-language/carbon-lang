@@ -1,4 +1,4 @@
-//===------------------------------------------------------------------------===
+//===--- llvm-as.cpp - The low-level LLVM assembler -----------------------===//
 // 
 //                     The LLVM Compiler Infrastructure
 //
@@ -6,8 +6,6 @@
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
 // 
 //===----------------------------------------------------------------------===//
-// 
-// LLVM 'AS' UTILITY 
 //
 //  This utility may be invoked in the following manner:
 //   llvm-as --help         - Output information about command line switches
