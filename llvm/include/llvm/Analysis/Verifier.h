@@ -1,6 +1,6 @@
 //===-- llvm/Analysis/Verifier.h - Module Verifier ---------------*- C++ -*-==//
 //
-// This file defines the method verifier interface, that can be used for some
+// This file defines the function verifier interface, that can be used for some
 // sanity checking of input to the system.
 //
 // Note that this does not provide full 'java style' security and verifications,
@@ -17,7 +17,7 @@ class Pass;
 class Module;
 class Function;
 
-// createVerifierPass - Check a module or method for validity.  If errors are
+// createVerifierPass - Check a module or function for validity.  If errors are
 // detected, error messages corresponding to the problem are printed to stderr.
 //
 Pass *createVerifierPass();
@@ -27,8 +27,8 @@ Pass *createVerifierPass();
 //
 bool verifyModule(const Module *M);
 
-// verifyMethod - Check a method for errors, useful for use when debugging a
+// verifyFunction - Check a function for errors, useful for use when debugging a
 // pass.
-bool verifyMethod(const Function *M);
+bool verifyFunction(const Function *F);
 
 #endif
