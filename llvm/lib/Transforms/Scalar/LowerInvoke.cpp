@@ -22,8 +22,7 @@
 #include "llvm/Type.h"
 #include "llvm/Constant.h"
 #include "Support/Statistic.h"
-
-namespace llvm {
+using namespace llvm;
 
 namespace {
   Statistic<> NumLowered("lowerinvoke", "Number of invoke & unwinds replaced");
@@ -40,7 +39,7 @@ namespace {
 }
 
 // Public Interface To the LowerInvoke pass.
-FunctionPass *createLowerInvokePass() { return new LowerInvoke(); }
+FunctionPass *llvm::createLowerInvokePass() { return new LowerInvoke(); }
 
 // doInitialization - Make sure that there is a prototype for abort in the
 // current module.
@@ -51,8 +50,8 @@ bool LowerInvoke::doInitialization(Module &M) {
 
 bool LowerInvoke::runOnFunction(Function &F) {
   bool Changed = false;
-  for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I)
-    if (InvokeInst *II = dyn_cast<InvokeInst>(I->getTerminator())) {
+  for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
+    if (InvokeInst *II = dyn_cast<InvokeInst>(BB->getTerminator())) {
       // Insert a normal call instruction...
       std::string Name = II->getName(); II->setName("");
       Value *NewCall = new CallInst(II->getCalledValue(),
@@ -60,14 +59,17 @@ bool LowerInvoke::runOnFunction(Function &F) {
                                                         II->op_end()), Name,II);
       II->replaceAllUsesWith(NewCall);
       
-      // Insert an unconditional branch to the normal destination
+      // Insert an unconditional branch to the normal destination.
       new BranchInst(II->getNormalDest(), II);
 
+      // Remove any PHI node entries from the exception destination.
+      II->getExceptionalDest()->removePredecessor(BB);
+
       // Remove the invoke instruction now.
-      I->getInstList().erase(II);
+      BB->getInstList().erase(II);
 
       ++NumLowered; Changed = true;
-    } else if (UnwindInst *UI = dyn_cast<UnwindInst>(I->getTerminator())) {
+    } else if (UnwindInst *UI = dyn_cast<UnwindInst>(BB->getTerminator())) {
       // Insert a call to abort()
       new CallInst(AbortFn, std::vector<Value*>(), "", UI);
 
@@ -76,11 +78,9 @@ bool LowerInvoke::runOnFunction(Function &F) {
                             Constant::getNullValue(F.getReturnType()), UI);
 
       // Remove the unwind instruction now.
-      I->getInstList().erase(UI);
+      BB->getInstList().erase(UI);
 
       ++NumLowered; Changed = true;
     }
   return Changed;
 }
-
-} // End llvm namespace
