@@ -17,7 +17,6 @@
 
 #include "Support/GraphTraits.h"
 #include "llvm/Function.h"
-#include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/InstrTypes.h"
 #include "Support/iterator"
 
@@ -264,129 +263,6 @@ template <> struct GraphTraits<Inverse<const Function*> > :
   public GraphTraits<Inverse<const BasicBlock*> > {
   static NodeType *getEntryNode(Inverse<const Function *> G) {
     return &G.Graph->getEntryBlock();
-  }
-};
-
-//===--------------------------------------------------------------------===//
-// GraphTraits specializations for machine basic block graphs (machine-CFGs)
-//===--------------------------------------------------------------------===//
-
-// Provide specializations of GraphTraits to be able to treat a
-// MachineFunction as a graph of MachineBasicBlocks...
-//
-
-template <> struct GraphTraits<MachineBasicBlock *> {
-  typedef MachineBasicBlock NodeType;
-  typedef MachineBasicBlock::succ_iterator ChildIteratorType;
-
-  static NodeType *getEntryNode(MachineBasicBlock *BB) { return BB; }
-  static inline ChildIteratorType child_begin(NodeType *N) { 
-    return N->succ_begin();
-  }
-  static inline ChildIteratorType child_end(NodeType *N) { 
-    return N->succ_end();
-  }
-};
-
-template <> struct GraphTraits<const MachineBasicBlock *> {
-  typedef const MachineBasicBlock NodeType;
-  typedef MachineBasicBlock::const_succ_iterator ChildIteratorType;
-
-  static NodeType *getEntryNode(const MachineBasicBlock *BB) { return BB; }
-  static inline ChildIteratorType child_begin(NodeType *N) { 
-    return N->succ_begin();
-  }
-  static inline ChildIteratorType child_end(NodeType *N) { 
-    return N->succ_end();
-  }
-};
-
-// Provide specializations of GraphTraits to be able to treat a
-// MachineFunction as a graph of MachineBasicBlocks... and to walk it
-// in inverse order.  Inverse order for a function is considered
-// to be when traversing the predecessor edges of a MBB
-// instead of the successor edges.
-//
-template <> struct GraphTraits<Inverse<MachineBasicBlock*> > {
-  typedef MachineBasicBlock NodeType;
-  typedef MachineBasicBlock::pred_iterator ChildIteratorType;
-  static NodeType *getEntryNode(Inverse<MachineBasicBlock *> G) {
-    return G.Graph;
-  }
-  static inline ChildIteratorType child_begin(NodeType *N) { 
-    return N->pred_begin();
-  }
-  static inline ChildIteratorType child_end(NodeType *N) { 
-    return N->pred_end();
-  }
-};
-
-template <> struct GraphTraits<Inverse<const MachineBasicBlock*> > {
-  typedef const MachineBasicBlock NodeType;
-  typedef MachineBasicBlock::const_pred_iterator ChildIteratorType;
-  static NodeType *getEntryNode(Inverse<const MachineBasicBlock*> G) {
-    return G.Graph; 
-  }
-  static inline ChildIteratorType child_begin(NodeType *N) { 
-    return N->pred_begin();
-  }
-  static inline ChildIteratorType child_end(NodeType *N) { 
-    return N->pred_end();
-  }
-};
-
-
-//===--------------------------------------------------------------------===//
-// GraphTraits specializations for MachineFunction bb graphs (machine-CFGs)
-//===--------------------------------------------------------------------===//
-
-// Provide specializations of GraphTraits to be able to treat a
-// MachineFunction as a graph of MachineBasicBlocks... these are the
-// same as the MachineBasicBlock iterators, except that the root node
-// is implicitly the first node of the MachineFunction.
-//
-template <> struct GraphTraits<MachineFunction*> :
-  public GraphTraits<MachineBasicBlock*> {
-  static NodeType *getEntryNode(MachineFunction *F) {
-    return &F->front();
-  }
-  // nodes_iterator/begin/end - Allow iteration over all nodes in the graph
-  typedef MachineFunction::iterator nodes_iterator;
-  static nodes_iterator nodes_begin(MachineFunction *F) { return F->begin(); }
-  static nodes_iterator nodes_end  (MachineFunction *F) { return F->end(); }
-};
-template <> struct GraphTraits<const MachineFunction*> :
-  public GraphTraits<const MachineBasicBlock*> {
-  static NodeType *getEntryNode(const MachineFunction *F) {
-    return &F->front();
-  }
-  // nodes_iterator/begin/end - Allow iteration over all nodes in the graph
-  typedef MachineFunction::const_iterator nodes_iterator;
-  static nodes_iterator nodes_begin(const MachineFunction *F) {
-    return F->begin();
-  }
-  static nodes_iterator nodes_end  (const MachineFunction *F) {
-    return F->end();
-  }
-};
-
-
-// Provide specializations of GraphTraits to be able to treat a
-// MachineFunction as a graph of MachineBasicBlocks... and to walk it
-// in inverse order.  Inverse order for a MachineFunction is considered
-// to be when traversing the predecessor edges of a MBB instead of the
-// successor edges.
-//
-template <> struct GraphTraits<Inverse<MachineFunction*> > :
-  public GraphTraits<Inverse<MachineBasicBlock*> > {
-  static NodeType *getEntryNode(Inverse<MachineFunction*> G) {
-    return &G.Graph->front();
-  }
-};
-template <> struct GraphTraits<Inverse<const MachineFunction*> > :
-  public GraphTraits<Inverse<const MachineBasicBlock*> > {
-  static NodeType *getEntryNode(Inverse<const MachineFunction *> G) {
-    return &G.Graph->front();
   }
 };
 

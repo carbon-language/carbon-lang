@@ -15,6 +15,7 @@
 #define LLVM_CODEGEN_MACHINEBASICBLOCK_H
 
 #include "llvm/CodeGen/MachineInstr.h"
+#include "Support/GraphTraits.h"
 #include "Support/ilist"
 #include <iosfwd>
 
@@ -194,6 +195,75 @@ private:   // Methods used to maintain doubly linked list of blocks...
     assert (goner != Predecessors.end ()
             && "Trying to removePredecessor a MBB which isn't my predecessor");
     Predecessors.erase (goner);
+  }
+};
+
+
+//===--------------------------------------------------------------------===//
+// GraphTraits specializations for machine basic block graphs (machine-CFGs)
+//===--------------------------------------------------------------------===//
+
+// Provide specializations of GraphTraits to be able to treat a
+// MachineFunction as a graph of MachineBasicBlocks...
+//
+
+template <> struct GraphTraits<MachineBasicBlock *> {
+  typedef MachineBasicBlock NodeType;
+  typedef MachineBasicBlock::succ_iterator ChildIteratorType;
+
+  static NodeType *getEntryNode(MachineBasicBlock *BB) { return BB; }
+  static inline ChildIteratorType child_begin(NodeType *N) { 
+    return N->succ_begin();
+  }
+  static inline ChildIteratorType child_end(NodeType *N) { 
+    return N->succ_end();
+  }
+};
+
+template <> struct GraphTraits<const MachineBasicBlock *> {
+  typedef const MachineBasicBlock NodeType;
+  typedef MachineBasicBlock::const_succ_iterator ChildIteratorType;
+
+  static NodeType *getEntryNode(const MachineBasicBlock *BB) { return BB; }
+  static inline ChildIteratorType child_begin(NodeType *N) { 
+    return N->succ_begin();
+  }
+  static inline ChildIteratorType child_end(NodeType *N) { 
+    return N->succ_end();
+  }
+};
+
+// Provide specializations of GraphTraits to be able to treat a
+// MachineFunction as a graph of MachineBasicBlocks... and to walk it
+// in inverse order.  Inverse order for a function is considered
+// to be when traversing the predecessor edges of a MBB
+// instead of the successor edges.
+//
+template <> struct GraphTraits<Inverse<MachineBasicBlock*> > {
+  typedef MachineBasicBlock NodeType;
+  typedef MachineBasicBlock::pred_iterator ChildIteratorType;
+  static NodeType *getEntryNode(Inverse<MachineBasicBlock *> G) {
+    return G.Graph;
+  }
+  static inline ChildIteratorType child_begin(NodeType *N) { 
+    return N->pred_begin();
+  }
+  static inline ChildIteratorType child_end(NodeType *N) { 
+    return N->pred_end();
+  }
+};
+
+template <> struct GraphTraits<Inverse<const MachineBasicBlock*> > {
+  typedef const MachineBasicBlock NodeType;
+  typedef MachineBasicBlock::const_pred_iterator ChildIteratorType;
+  static NodeType *getEntryNode(Inverse<const MachineBasicBlock*> G) {
+    return G.Graph; 
+  }
+  static inline ChildIteratorType child_begin(NodeType *N) { 
+    return N->pred_begin();
+  }
+  static inline ChildIteratorType child_end(NodeType *N) { 
+    return N->pred_end();
   }
 };
 
