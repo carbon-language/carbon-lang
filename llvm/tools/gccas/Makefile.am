@@ -16,4 +16,4 @@ gccas_SOURCES = gccas.cpp
 gccas_LDADD = \
   $(call GETOBJS,AsmParser,BCWriter,Core) \
   $(call GETLIBS,Transforms,IPO,IPA,ScalarOpts,Analysis,Target,TransformUtils) \
-  $(call GETLIBS,,Support,System)
+  $(call GETLIBS,Support,System)
