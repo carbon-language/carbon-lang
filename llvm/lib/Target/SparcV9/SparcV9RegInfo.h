@@ -53,7 +53,7 @@ public:
   // This defaults to marking a single register but may mark multiple
   // registers when a single number denotes paired registers.
   // 
-  void markColorsUsed(unsigned RegInClass,
+  virtual void markColorsUsed(unsigned RegInClass,
                               int UserRegType,
                               int RegTypeWanted,
                               std::vector<bool> &IsColorUsedArr) const {
@@ -69,7 +69,7 @@ public:
   // for paired registers and other such silliness.
   // It returns -1 if no unused color is found.
   // 
-  int findUnusedColor(int RegTypeWanted,
+  virtual int findUnusedColor(int RegTypeWanted,
                           const std::vector<bool> &IsColorUsedArr) const {
     // find first unused color in the IsColorUsedArr directly
     unsigned NC = this->getNumOfAvailRegs();
@@ -82,18 +82,18 @@ public:
 
   // This method should find a color which is not used by neighbors
   // (i.e., a false position in IsColorUsedArr) and 
-  void colorIGNode(IGNode *Node,
-                           const std::vector<bool> &IsColorUsedArr) const;
+  virtual void colorIGNode(IGNode *Node,
+                           const std::vector<bool> &IsColorUsedArr) const = 0;
 
   // Check whether a specific register is volatile, i.e., whether it is not
   // preserved across calls
-  bool isRegVolatile(int Reg) const;
+  virtual bool isRegVolatile(int Reg) const = 0;
 
   // Check whether a specific register is modified as a side-effect of the
   // call instruction itself,
-  bool modifiedByCall(int Reg) const {return false; }
+  virtual bool modifiedByCall(int Reg) const { return false; }
 
-  virtual const char* const getRegName(unsigned reg) const;
+  virtual const char* const getRegName(unsigned reg) const = 0;
 
   TargetRegClassInfo(unsigned ID, unsigned NVR, unsigned NAR)
     : RegClassID(ID), NumOfAvailRegs(NVR), NumOfAllRegs(NAR) {}
