@@ -1019,7 +1019,7 @@ void AssemblyWriter::printInfoComment(const Value &V) {
       else
         Out << ':' << SlotNum; // Print out the def slot taken.
     }
-    Out << " [#uses=" << V.use_size() << ']';  // Output # uses
+    Out << " [#uses=" << V.getNumUses() << ']';  // Output # uses
   }
 }
 
