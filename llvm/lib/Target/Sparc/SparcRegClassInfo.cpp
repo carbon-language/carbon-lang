@@ -5,8 +5,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "SparcRegClassInfo.h"
-#include "llvm/CodeGen/RegAllocCommon.h"
 #include "llvm/Type.h"
+#include "../../CodeGen/RegAlloc/RegAllocCommon.h"   // FIXME!
 using std::cerr;
 using std::vector;
 

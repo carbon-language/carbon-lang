@@ -13,8 +13,8 @@
 #include "llvm/CodeGen/InstrSelection.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineInstrAnnot.h"
-#include "llvm/CodeGen/RegAllocCommon.h"
 #include "llvm/CodeGen/FunctionLiveVarInfo.h"   // FIXME: Remove
+#include "../../CodeGen/RegAlloc/RegAllocCommon.h"   // FIXME!
 #include "llvm/iTerminators.h"
 #include "llvm/iOther.h"
 #include "llvm/Function.h"
