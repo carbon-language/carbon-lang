@@ -81,6 +81,8 @@ namespace {
     // in the program.  Add the new instruction to the worklist.
     //
     void InsertNewInstBefore(Instruction *New, Instruction &Old) {
+      assert(New && New->getParent() == 0 &&
+             "New instruction already inserted into a basic block!");
       BasicBlock *BB = Old.getParent();
       BB->getInstList().insert(&Old, New);  // Insert inst
       WorkList.push_back(New);              // Add to worklist
@@ -291,6 +293,16 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
   if (ConstantIntegral *RHS = dyn_cast<ConstantIntegral>(Op1))
     if (RHS->isAllOnesValue())
       return ReplaceInstUsesWith(I, Op0);
+
+  // and (not A), (not B) == not (or A, B)
+  if (Op0->use_size() == 1 && Op1->use_size() == 1)
+    if (Value *A = dyn_castNotInst(Op0))
+      if (Value *B = dyn_castNotInst(Op1)) {
+        Instruction *Or = BinaryOperator::create(Instruction::Or, A, B,
+                                                 I.getName()+".demorgan");
+        InsertNewInstBefore(Or, I);
+        return BinaryOperator::createNot(Or, I.getName());
+      }
 
   return Changed ? &I : 0;
 }
