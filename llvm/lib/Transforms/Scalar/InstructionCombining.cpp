@@ -2947,6 +2947,30 @@ static Constant *GetGEPGlobalInitializer(Constant *C, ConstantExpr *CE) {
   return C;
 }
 
+static Instruction *InstCombineLoadCast(InstCombiner &IC, LoadInst &LI) {
+  User *CI = cast<User>(LI.getOperand(0));
+
+  const Type *DestPTy = cast<PointerType>(CI->getType())->getElementType();
+  if (const PointerType *SrcTy =
+      dyn_cast<PointerType>(CI->getOperand(0)->getType())) {
+    const Type *SrcPTy = SrcTy->getElementType();
+    if (SrcPTy->isSized() && DestPTy->isSized() &&
+        IC.getTargetData().getTypeSize(SrcPTy) == 
+            IC.getTargetData().getTypeSize(DestPTy) &&
+        (SrcPTy->isInteger() || isa<PointerType>(SrcPTy)) &&
+        (DestPTy->isInteger() || isa<PointerType>(DestPTy))) {
+      // Okay, we are casting from one integer or pointer type to another of
+      // the same size.  Instead of casting the pointer before the load, cast
+      // the result of the loaded value.
+      Value *NewLoad = IC.InsertNewInstBefore(new LoadInst(CI->getOperand(0),
+                                                           CI->getName()), LI);
+      // Now cast the result of the load.
+      return new CastInst(NewLoad, LI.getType());
+    }
+  }
+  return 0;
+}
+
 Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
   Value *Op = LI.getOperand(0);
   if (LI.isVolatile()) return 0;
@@ -2964,33 +2988,21 @@ Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
 
   // Instcombine load (constantexpr_GEP global, 0, ...) into the value loaded...
   if (ConstantExpr *CE = dyn_cast<ConstantExpr>(Op))
-    if (CE->getOpcode() == Instruction::GetElementPtr)
+    if (CE->getOpcode() == Instruction::GetElementPtr) {
       if (ConstantPointerRef *G=dyn_cast<ConstantPointerRef>(CE->getOperand(0)))
         if (GlobalVariable *GV = dyn_cast<GlobalVariable>(G->getValue()))
           if (GV->isConstant() && !GV->isExternal())
             if (Constant *V = GetGEPGlobalInitializer(GV->getInitializer(), CE))
               return ReplaceInstUsesWith(LI, V);
+    } else if (CE->getOpcode() == Instruction::Cast) {
+      if (Instruction *Res = InstCombineLoadCast(*this, LI))
+        return Res;
+    }
 
   // load (cast X) --> cast (load X) iff safe
-  if (CastInst *CI = dyn_cast<CastInst>(Op)) {
-    const Type *DestPTy = cast<PointerType>(CI->getType())->getElementType();
-    if (const PointerType *SrcTy =
-        dyn_cast<PointerType>(CI->getOperand(0)->getType())) {
-      const Type *SrcPTy = SrcTy->getElementType();
-      if (SrcPTy->isSized() && DestPTy->isSized() &&
-          TD->getTypeSize(SrcPTy) == TD->getTypeSize(DestPTy) &&
-          (SrcPTy->isInteger() || isa<PointerType>(SrcPTy)) &&
-          (DestPTy->isInteger() || isa<PointerType>(DestPTy))) {
-        // Okay, we are casting from one integer or pointer type to another of
-        // the same size.  Instead of casting the pointer before the load, cast
-        // the result of the loaded value.
-        Value *NewLoad = InsertNewInstBefore(new LoadInst(CI->getOperand(0),
-                                                          CI->getName()), LI);
-        // Now cast the result of the load.
-        return new CastInst(NewLoad, LI.getType());
-      }
-    }
-  }
+  if (CastInst *CI = dyn_cast<CastInst>(Op))
+    if (Instruction *Res = InstCombineLoadCast(*this, LI))
+      return Res;
 
   return 0;
 }
