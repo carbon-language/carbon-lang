@@ -63,7 +63,7 @@ X86InstrInfo::reverseBranchCondition(MachineBasicBlock::iterator MI) const {
   case X86::JLE: ROpcode = X86::JG;
   case X86::JG:  ROpcode = X86::JLE;
   default:
-    assert(0 && "Cannot reverse uncodnitional branches!");
+    assert(0 && "Cannot reverse unconditional branches!");
   }
   MachineBasicBlock* MBB = MI->getParent();
   MachineBasicBlock* TMBB = MI->getOperand(0).getMachineBasicBlock();
