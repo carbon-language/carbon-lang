@@ -40,37 +40,32 @@ projects that use LLVM header files, libraries, and tools.  In order to use
 these facilities, a Makefile from a project must do the following things:</p>
 
 <ol>
-<li>Set environment variables.There are several environment variables that a
-Makefile needs to set to use the LLVM build system:
-
-<ul>
-  <li><tt>LLVM_SRC_ROOT</tt> - The root of the LLVM source tree.</li>
-  <li><tt>LLVM_OBJ_ROOT</tt> - The root of the LLVM object tree.</li>
-  <li><tt>BUILD_SRC_ROOT</tt> - The root of the project's source tree.</li>
-  <li><tt>BUILD_OBJ_ROOT</tt> - The root of the project's object tree.</li>
-  <li><tt>BUILD_SRC_DIR</tt> - The directory containing the current source to be
-  compiled.</li>
-  <li><tt>BUILD_OBJ_DIR</tt> - The directory where the current source will place
-  the new object files.  This should always be the current directory.</li>
-  <li><tt>LEVEL</tt> - The relative path from the current directory to the root
-  of the object tree.</li>
-</ul></li>
-<li>Include <tt>Makefile.config</tt> from <tt>$(LLVM_OBJ_ROOT)</tt>.</li>
-<li>Include <tt>Makefile.rules</tt> from <tt>$(LLVM_SRC_ROOT)</tt>.</li>
+  <li>Set <tt>make</tt> variables. There are several variables that a Makefile
+  needs to set to use the LLVM build system:
+  <ul>
+    <li><tt>PROJECT_NAME</tt> - The name by which your project is known.</li>
+    <li><tt>LLVM_SRC_ROOT</tt> - The root of the LLVM source tree.</li>
+    <li><tt>LLVM_OBJ_ROOT</tt> - The root of the LLVM object tree.</li>
+    <li><tt>PROJ_SRC_ROOT</tt> - The root of the project's source tree.</li>
+    <li><tt>PROJ_OBJ_ROOT</tt> - The root of the project's object tree.</li>
+    <li><tt>PROJ_INSTALL_ROOT</tt> - The root installation directory.</li>
+    <li><tt>LEVEL</tt> - The relative path from the current directory to the 
+    project's root ($PROJ_OBJ_ROOT).</li>
+  </ul></li>
+  <li>Include <tt>Makefile.config</tt> from <tt>$(LLVM_OBJ_ROOT)</tt>.</li>
+  <li>Include <tt>Makefile.rules</tt> from <tt>$(LLVM_SRC_ROOT)</tt>.</li>
 </ol>
 
 <p>There are two ways that you can set all of these variables:</p>
-
 <ol>
-<li>You can write your own Makefiles which hard-code these values.</li>
-
-<li> You can use the pre-made LLVM sample project.  This sample project includes
-Makefiles, a configure script that can be used to configure the location of
-LLVM, and the ability to support multiple object directories from a single
-source directory.</li>
+  <li>You can write your own Makefiles which hard-code these values.</li>
+  <li>You can use the pre-made LLVM sample project. This sample project 
+  includes Makefiles, a configure script that can be used to configure the 
+  location of LLVM, and the ability to support multiple object directories 
+  from a single source directory.</li>
 </ol>
 
-<p>This document assumes that you will base your project off of the LLVM sample
+<p>This document assumes that you will base your project on the LLVM sample
 project found in <tt>llvm/projects/sample</tt>.  If you want to devise your own
 build system, studying the sample project and LLVM Makefiles will probably
 provide enough information on how to write your own Makefiles.</p>
