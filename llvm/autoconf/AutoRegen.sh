@@ -3,17 +3,8 @@ die () {
 	echo "$@" 1>&2
 	exit 1
 }
-if test "$1" = --with-automake ; then
-  outfile=configure_am
-  configfile=configure.am
-  with_automake=1
-elif test -z "$1" ; then
-  outfile=configure
-  configfile=configure.ac
-  with_automake=0
-else
-  die "Invalid option: $1"
-fi
+outfile=configure
+configfile=configure.ac
 test -d autoconf && test -f autoconf/$configfile && cd autoconf
 test -f $configfile || die "Can't find 'autoconf' dir; please cd into it first"
 autoconf --version | egrep '2\.59' > /dev/null
