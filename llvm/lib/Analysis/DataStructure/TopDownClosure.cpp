@@ -243,7 +243,7 @@ void TDDataStructures::inlineGraphIntoCallees(DSGraph &Graph) {
     DSGraph &CalleeGraph = *CSI->first;
     // Iterate through all of the call sites of this graph, cloning and merging
     // any nodes required by the call.
-    ReachabilityCloner RC(CalleeGraph, Graph, DSGraph::StripModRefBits);
+    ReachabilityCloner RC(CalleeGraph, Graph, 0);
 
     // Clone over any global nodes that appear in both graphs.
     for (DSScalarMap::global_iterator
