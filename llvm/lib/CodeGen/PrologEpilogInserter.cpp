@@ -24,8 +24,7 @@
 #include "llvm/Target/MRegisterInfo.h"
 #include "llvm/Target/TargetFrameInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"
-
-namespace llvm {
+using namespace llvm;
 
 namespace {
   struct PEI : public MachineFunctionPass {
@@ -72,7 +71,7 @@ namespace {
 /// createPrologEpilogCodeInserter - This function returns a pass that inserts
 /// prolog and epilog code, and eliminates abstract frame references.
 ///
-FunctionPass *createPrologEpilogCodeInserter() { return new PEI(); }
+FunctionPass *llvm::createPrologEpilogCodeInserter() { return new PEI(); }
 
 
 /// saveCallerSavedRegisters - Scan the function for modified caller saved
@@ -203,8 +202,18 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
 
   unsigned StackAlignment = TFI.getStackAlignment();
 
-  // Start at the beginning of the local area...
+  // Start at the beginning of the local area.
   int Offset = TFI.getOffsetOfLocalArea();
+
+  // Check to see if there are any fixed sized objects that are preallocated in
+  // the local area.  We currently don't support filling in holes in between
+  // fixed sized objects, so we just skip to the end of the last fixed sized
+  // preallocated object.
+  for (int i = FFI->getObjectIndexBegin(); i != 0; ++i) {
+    int FixedOff = -FFI->getObjectOffset(i);
+    if (FixedOff > Offset) Offset = FixedOff;
+  }
+
   for (unsigned i = 0, e = FFI->getObjectIndexEnd(); i != e; ++i) {
     Offset += FFI->getObjectSize(i);         // Allocate Size bytes...
 
@@ -265,5 +274,3 @@ void PEI::replaceFrameIndices(MachineFunction &Fn) {
 	  break;
 	}
 }
-
-} // End llvm namespace
