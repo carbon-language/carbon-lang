@@ -106,7 +106,7 @@ class RegisterClass<ValueType regType, int alignment, list<Register> regList> {
 // the Target/TargetInstrInfo.h file.
 //
 class Instruction {
-  string Name;              // The opcode string for this instruction
+  string Name = "";         // The opcode string for this instruction
   string Namespace = "";
 
   dag OperandList;          // An dag containing the MI operand list.
@@ -151,7 +151,10 @@ class InstrInfo {
 /// list for an instruction.  This should be used like this:
 ///     (ops R32:$dst, R32:$src) or something similar.
 def ops;
-
+def i8imm;
+def i16imm;
+def i32imm;
+def i64imm;
 
 //===----------------------------------------------------------------------===//
 // Target - This class contains the "global" target information
