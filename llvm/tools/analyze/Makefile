@@ -1,6 +1,6 @@
 LEVEL = ../..
 TOOLNAME = analyze
-USEDLIBS = opt asmparser bcreader vmcore asmwriter analysis opt support
+USEDLIBS = opt analysis asmparser bcreader asmwriter vmcore analysis opt support
 
 include $(LEVEL)/Makefile.common
 
