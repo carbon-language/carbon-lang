@@ -1529,9 +1529,9 @@ void DSGraph::removeDeadNodes(unsigned Flags) {
   GlobalNodeMap.clear();
   GlobalsGraph->removeTriviallyDeadNodes();
 
-  // At this point, any nodes which are visited, but not alive, are nodes which
-  // should be moved to the globals graph.  Loop over all nodes, eliminating
-  // completely unreachable nodes, and moving visited nodes to the globals graph
+  // At this point, any nodes which are visited, but not alive, are nodes
+  // which can be removed.  Loop over all nodes, eliminating completely
+  // unreachable nodes.
   //
   std::vector<DSNode*> DeadNodes;
   DeadNodes.reserve(Nodes.size());
