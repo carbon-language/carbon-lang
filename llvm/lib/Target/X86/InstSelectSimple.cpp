@@ -597,17 +597,24 @@ void ISel::SelectPHINodes() {
           // If this is a constant or GlobalValue, we may have to insert code
           // into the basic block to compute it into a virtual register.
           if (isa<Constant>(Val) || isa<GlobalValue>(Val)) {
-            // Because we don't want to clobber any values which might be in
-            // physical registers with the computation of this constant (which
-            // might be arbitrarily complex if it is a constant expression),
-            // just insert the computation at the top of the basic block.
-            MachineBasicBlock::iterator PI = PredMBB->begin();
-
-            // Skip over any PHI nodes though!
-            while (PI != PredMBB->end() && PI->getOpcode() == X86::PHI)
-              ++PI;
-
-            ValReg = getReg(Val, PredMBB, PI);
+            if (isa<ConstantExpr>(Val)) {
+              // Because we don't want to clobber any values which might be in
+              // physical registers with the computation of this constant (which
+              // might be arbitrarily complex if it is a constant expression),
+              // just insert the computation at the top of the basic block.
+              MachineBasicBlock::iterator PI = PredMBB->begin();
+              
+              // Skip over any PHI nodes though!
+              while (PI != PredMBB->end() && PI->getOpcode() == X86::PHI)
+                ++PI;
+              
+              ValReg = getReg(Val, PredMBB, PI);
+            } else {
+              // Simple constants get emitted at the end of the basic block,
+              // before any terminator instructions.  We "know" that the code to
+              // move a constant into a register will never clobber any flags.
+              ValReg = getReg(Val, PredMBB, PredMBB->getFirstTerminator());
+            }
           } else {
             ValReg = getReg(Val);
           }
