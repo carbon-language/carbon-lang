@@ -181,13 +181,10 @@ void LowerSwitch::processSwitchInst(SwitchInst *SI) {
   Value *Val = SI->getOperand(0);  // The value we are switching on...
   BasicBlock* Default = SI->getDefaultDest();
 
-  // Unlink the switch instruction from it's block.
-  CurBlock->getInstList().remove(SI);
-
   // If there is only the default destination, don't bother with the code below.
   if (SI->getNumOperands() == 2) {
     new BranchInst(SI->getDefaultDest(), CurBlock);
-    delete SI;
+    CurBlock->getInstList().erase(SI);
     return;
   }
 
@@ -222,5 +219,5 @@ void LowerSwitch::processSwitchInst(SwitchInst *SI) {
   new BranchInst(SwitchBlock, OrigBlock);
 
   // We are now done with the switch instruction, delete it.
-  delete SI;
+  CurBlock->getInstList().erase(SI);
 }
