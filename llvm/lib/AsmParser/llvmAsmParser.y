@@ -1294,7 +1294,10 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
     delete $1;
   }
   | Types ZEROINITIALIZER {
-    $$ = Constant::getNullValue($1->get());
+    const Type *Ty = $1->get();
+    if (isa<FunctionType>(Ty) || Ty == Type::LabelTy || isa<OpaqueType>(Ty))
+      ThrowException("Cannot create a null initialized value of this type!");
+    $$ = Constant::getNullValue(Ty);
     delete $1;
   };
 
