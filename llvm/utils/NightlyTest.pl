@@ -751,7 +751,7 @@ if ( $VERBOSE ) {
 #
 # Rebuild the graphs now...
 #
-$GNUPLOT = "/usr/dcs/software/supported/bin/gnuplot";
+$GNUPLOT = "/usr/bin/gnuplot";
 $GNUPLOT = "gnuplot" if ! -x $GNUPLOT;
 system ("$GNUPLOT", $PlotScriptFilename);
 
