@@ -20,7 +20,7 @@
 #    in the current directory.
 #
 
-# Default Rule:
+# Default Rule:  Make sure it's also a :: rule
 all ::
 
 # Default for install is to at least build everything...
@@ -115,11 +115,11 @@ all:: $(LIBNAME_G)
 #$(LIBNAME_O)
 # TODO: Enable optimized builds
 
-$(LIBNAME_O): $(ObjectsO) $(LibSubDirs) Release/.dir
+$(LIBNAME_O): $(ObjectsO) $(LibSubDirs) Release/.dir Depend/.dir
 	@echo ======= Linking $(LIBRARYNAME) release library =======
 	$(MakeSOO) -o $@ $(ObjectsO) $(LibSubDirs) $(LibLinkOpts)
 
-$(LIBNAME_G): $(ObjectsG) $(LibSubDirs) Debug/.dir
+$(LIBNAME_G): $(ObjectsG) $(LibSubDirs) Debug/.dir Depend/.dir
 	@echo ======= Linking $(LIBRARYNAME) debug library =======
 	$(MakeSOG) -o $@ $(ObjectsG) $(LibSubDirs) $(LibLinkOpts)
 
