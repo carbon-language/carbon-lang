@@ -26,7 +26,7 @@
           <li><a href="#t_function">Function Type</a></li>
           <li><a href="#t_pointer">Pointer Type</a></li>
           <li><a href="#t_struct">Structure Type</a></li>
-<!-- <li><a href="#t_packed" >Packed Type</a> -->
+          <li><a href="#t_packed">Packed Type</a></li>
         </ol>
       </li>
     </ol>
@@ -398,7 +398,7 @@ classifications:</p>
     <tr>
       <td><a name="t_firstclass">first class</a></td>
       <td><tt>bool, ubyte, sbyte, ushort, short,<br>
-uint, int, ulong, long, float, double, <a href="#t_pointer">pointer</a></tt></td>
+uint, int, ulong, long, float, double, <a href="#t_pointer">pointer</a>, <a href="#t_packed">packed</a></tt></td>
     </tr>
   </tbody>
 </table>
@@ -555,22 +555,29 @@ an <tt>int</tt>.</td>
     </tr>
   </tbody>
 </table>
-
 </div>
-<!-- _______________________________________________________________________ --><!--
-<div class="doc_subsubsection">
-  <a name="t_packed">Packed Type</a>
-</div>
-
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection"> <a name="t_packed">Packed Type</a> </div>
 <div class="doc_text">
-
-Mention/decide that packed types work with saturation or not. Maybe have a packed+saturated type in addition to just a packed type.<p>
-
-Packed types should be 'nonsaturated' because standard data types are not saturated.  Maybe have a saturated packed type?<p>
-
+<h5>Overview:</h5>
+<p>A packed type is a simple derived type that represents a vector
+of elements.  Packed types are used when multiple primitive data 
+are operated in parallel using a single instruction (SIMD). 
+A packed type requires a size (number of
+elements) and an underlying primitive data type.  Packed types are
+considered <a href="#t_firstclass">first class</a>.</p>
+<h5>Syntax:</h5>
+<pre>  &lt; &lt;# elements&gt; x &lt;elementtype&gt; &gt;<br></pre>
+<p>The number of elements is a constant integer value, elementtype may
+be any integral or floating point type.</p>
+<h5>Examples:</h5>
+<p> <tt>&lt;4 x int&gt;</tt>: Packed vector of 4 integer values.<br>
+<tt>&lt;8 x float&gt;</tt>: Packed vector of 8 floating-point values.<br>
+<tt>&lt;2 x uint&gt;</tt>: Packed vector of 2 unsigned integer values.</p>
+<p> </p>
 </div>
 
---><!-- *********************************************************************** -->
+<!-- *********************************************************************** -->
 <div class="doc_section"> <a name="highlevel">High Level Structure</a> </div>
 <!-- *********************************************************************** --><!-- ======================================================================= -->
 <div class="doc_subsection"> <a name="modulestructure">Module Structure</a> </div>
@@ -930,7 +937,9 @@ undefined behavior results.</p>
 <div class="doc_text">
 <p>Binary operators are used to do most of the computation in a
 program.  They require two operands, execute an operation on them, and
-produce a single value. The result value of a binary operator is not
+produce a single value.  Although, that single value might represent 
+multiple data, as is the case with the <a href="#t_packed">packed</a> data type. 
+The result value of a binary operator is not
 necessarily the same type as its operands.</p>
 <p>There are several different binary operators:</p>
 </div>
@@ -945,8 +954,9 @@ Instruction</a> </div>
 <p>The '<tt>add</tt>' instruction returns the sum of its two operands.</p>
 <h5>Arguments:</h5>
 <p>The two arguments to the '<tt>add</tt>' instruction must be either <a
- href="#t_integer">integer</a> or <a href="#t_floating">floating point</a>
-values. Both arguments must have identical types.</p>
+ href="#t_integer">integer</a> or <a href="#t_floating">floating point</a> values.
+ This instruction can also take <a href="#t_packed">packed</a> versions of the values.
+Both arguments must have identical types.</p>
 <h5>Semantics:</h5>
 <p>The value produced is the integer or floating point sum of the two
 operands.</p>
@@ -969,7 +979,9 @@ instruction present in most other intermediate representations.</p>
 <h5>Arguments:</h5>
 <p>The two arguments to the '<tt>sub</tt>' instruction must be either <a
  href="#t_integer">integer</a> or <a href="#t_floating">floating point</a>
-values. Both arguments must have identical types.</p>
+values. 
+This instruction can also take <a href="#t_packed">packed</a> versions of the values.
+Both arguments must have identical types.</p>
 <h5>Semantics:</h5>
 <p>The value produced is the integer or floating point difference of
 the two operands.</p>
@@ -991,7 +1003,9 @@ operands.</p>
 <h5>Arguments:</h5>
 <p>The two arguments to the '<tt>mul</tt>' instruction must be either <a
  href="#t_integer">integer</a> or <a href="#t_floating">floating point</a>
-values. Both arguments must have identical types.</p>
+values. 
+This instruction can also take <a href="#t_packed">packed</a> versions of the values.
+Both arguments must have identical types.</p>
 <h5>Semantics:</h5>
 <p>The value produced is the integer or floating point product of the
 two operands.</p>
@@ -1014,7 +1028,9 @@ operands.</p>
 <h5>Arguments:</h5>
 <p>The two arguments to the '<tt>div</tt>' instruction must be either <a
  href="#t_integer">integer</a> or <a href="#t_floating">floating point</a>
-values. Both arguments must have identical types.</p>
+values. 
+This instruction can also take <a href="#t_packed">packed</a> versions of the values.
+Both arguments must have identical types.</p>
 <h5>Semantics:</h5>
 <p>The value produced is the integer or floating point quotient of the
 two operands.</p>
@@ -1035,7 +1051,9 @@ division of its two operands.</p>
 <h5>Arguments:</h5>
 <p>The two arguments to the '<tt>rem</tt>' instruction must be either <a
  href="#t_integer">integer</a> or <a href="#t_floating">floating point</a>
-values. Both arguments must have identical types.</p>
+values. 
+This instruction can also take <a href="#t_packed">packed</a> versions of the values.
+Both arguments must have identical types.</p>
 <h5>Semantics:</h5>
 <p>This returns the <i>remainder</i> of a division (where the result
 has the same sign as the divisor), not the <i>modulus</i> (where the
