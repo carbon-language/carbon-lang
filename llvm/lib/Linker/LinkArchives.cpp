@@ -163,9 +163,9 @@ static std::auto_ptr<Module> LoadObject(const std::string &FN,
 ///  FALSE - No errors.
 ///
 bool llvm::LinkInArchive(Module *M,
-                          const std::string &Filename,
-                          std::string* ErrorMessage,
-                          bool Verbose)
+                         const std::string &Filename,
+                         std::string* ErrorMessage,
+                         bool Verbose)
 {
   // Find all of the symbols currently undefined in the bytecode program.
   // If all the symbols are defined, the program is complete, and there is
@@ -179,13 +179,16 @@ bool llvm::LinkInArchive(Module *M,
 
   // Open the archive file
   if (Verbose) std::cerr << "  Loading archive file '" << Filename << "'\n";
-  Archive* arch = Archive::OpenAndLoadSymbols(sys::Path(Filename));
+  std::auto_ptr<Archive> AutoArch (
+    Archive::OpenAndLoadSymbols(sys::Path(Filename)));
+
+  Archive* arch = AutoArch.get();
 
   // While we are linking in object files, loop.
   while (true) {     
     std::set<ModuleProvider*> Modules;
     // Find the modules we need to link
-    arch->findModulesDefiningSymbols(UndefinedSymbols,Modules);
+    arch->findModulesDefiningSymbols(UndefinedSymbols, Modules);
 
     // If we didn't find any more modules to link this time, we are done.
     if (Modules.empty())
@@ -195,14 +198,13 @@ bool llvm::LinkInArchive(Module *M,
     for (std::set<ModuleProvider*>::iterator I=Modules.begin(), E=Modules.end();
          I != E; ++I) {
       // Get the module we must link in.
-      std::auto_ptr<Module> aModule((*I)->releaseModule());
+      std::auto_ptr<Module> AutoModule( (*I)->releaseModule() );
 
-      // Link it in.
-      if (LinkModules(M, aModule.get(), ErrorMessage)) {
-        // don't create a memory leak
-        delete arch;
+      Module* aModule = AutoModule.get();
+
+      // Link it in
+      if (LinkModules(M, aModule, ErrorMessage))
         return true;   // Couldn't link in the right object file...        
-      }
     }
 
     // We have linked in a set of modules determined by the archive to satisfy
