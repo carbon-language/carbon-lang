@@ -45,7 +45,9 @@ namespace Intrinsic {
     dbg_declare,      // Declare a local object
 
     // Standard libc functions...
-    memcpy,
+    memcpy,         // Used to copy non-overlapping memory blocks
+    memmove,        // Used to copy overlapping memory blocks
+
 
     // Standard libm functions...
     

@@ -98,6 +98,7 @@
       <li><a href="#int_libc">Standard C Library Intrinsics</a>
         <ol>
           <li><a href="#i_memcpy">'<tt>llvm.memcpy</tt>' Intrinsic</a></li>
+          <li><a href="#i_memmove">'<tt>llvm.memmove</tt>' Intrinsic</a></li>
         </ol>
       </li>
       <li><a href="#int_debugger">Debugger intrinsics</a>
@@ -1789,6 +1790,52 @@ be set to 0 or 1.
 </p>
 </div>
 
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="i_memmove">'<tt>llvm.memmove</tt>' Intrinsic</a>
+</div>
+
+<div class="doc_text">
+
+<h5>Syntax:</h5>
+<pre>
+  call void (sbyte*, sbyte*, uint, uint)* %llvm.memmove(sbyte* &lt;dest&gt;, sbyte* &lt;src&gt;,
+                                                       uint &lt;len&gt;, uint &lt;align&gt;)
+</pre>
+
+<h5>Overview:</h5>
+
+<p>
+The '<tt>llvm.memmove</tt>' intrinsic moves a block of memory from the source
+location to the destination location. It is similar to the '<tt>llvm.memcpy</tt>' 
+intrinsic but allows the two memory locations to overlap.
+</p>
+
+<p>
+Note that, unlike the standard libc function, the <tt>llvm.memmove</tt> intrinsic
+does not return a value, and takes an extra alignment argument.
+</p>
+
+<h5>Arguments:</h5>
+
+<p>
+The first argument is a pointer to the destination, the second is a pointer to
+the source.  The third argument is an (arbitrarily sized) integer argument
+specifying the number of bytes to copy, and the fourth argument is the alignment
+of the source and destination locations.
+</p>
+
+<h5>Semantics:</h5>
+
+<p>
+The '<tt>llvm.memmove</tt>' intrinsic copies a block of memory from the source
+location to the destination location, which may overlap.  It
+copies "len" bytes of memory over.  If the argument is known to be aligned to
+some boundary, this can be specified as the fourth argument, otherwise it should
+be set to 0 or 1.
+</p>
+</div>
 
 
 <!-- ======================================================================= -->
