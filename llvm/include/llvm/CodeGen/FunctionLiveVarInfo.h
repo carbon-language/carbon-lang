@@ -63,21 +63,9 @@
 
 #include "llvm/Pass.h"
 #include "llvm/Analysis/LiveVar/ValueSet.h"
-#include "Support/CommandLine.h"
 
 class BBLiveVar;
 class MachineInstr;
-
-
-enum LiveVarDebugLevel_t {
-  LV_DEBUG_None,
-  LV_DEBUG_Normal,
-  LV_DEBUG_Instr,
-  LV_DEBUG_Verbose
-};
-
-extern cl::Enum<LiveVarDebugLevel_t> DEBUG_LV;
-
 
 class FunctionLiveVarInfo : public FunctionPass {
   // Machine Instr to LiveVarSet Map for providing LVset BEFORE each inst

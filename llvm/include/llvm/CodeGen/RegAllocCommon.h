@@ -1,9 +1,7 @@
 
 
 #ifndef REG_ALLOC_COMMON_H
-#define  REG_ALLOC_COMMON_H
-
-#include "Support/CommandLine.h"
+#define REG_ALLOC_COMMON_H
 
 // set DEBUG_RA for printing out debug messages
 // if DEBUG_RA is 1 normal output messages
@@ -15,6 +13,6 @@ enum RegAllocDebugLevel_t {
   RA_DEBUG_Verbose = 2,
 };
 
-extern cl::Enum<RegAllocDebugLevel_t> DEBUG_RA;
+extern RegAllocDebugLevel_t DEBUG_RA;
 
 #endif
