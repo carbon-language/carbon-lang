@@ -30,23 +30,25 @@ DeleteInstruction(MachineCodeForBasicBlock& mvec,
                   const TargetMachine& target)
 {
   // Check if this instruction is in a delay slot of its predecessor.
-  // If so, replace this instruction with a nop, else just delete it.
-  // By replacing in place, we save having to update the I-I maps.
   if (BBI != mvec.begin())
     {
       const MachineInstrInfo& mii = target.getInstrInfo();
       MachineInstr* predMI = *(BBI-1);
       if (unsigned ndelay = mii.getNumDelaySlots(predMI->getOpCode()))
         {
+          // This instruction is in a delay slot of its predecessor, so
+          // replace it with a nop. By replacing in place, we save having
+          // to update the I-I maps.
+          // 
           assert(ndelay == 1 && "Not yet handling multiple-delay-slot targets");
           (*BBI)->replace(mii.getNOPOpCode(), 0);
+          return;
         }
     }
-  else
-    {
-      mvec.erase(BBI);
-      BBI = mvec.end();
-    }
+  
+  // The instruction is not in a delay slot, so we can simply erase it.
+  mvec.erase(BBI);
+  BBI = mvec.end();
 }
 
 //******************* Individual Peephole Optimizations ********************/
