@@ -41,7 +41,7 @@ class SparcV9CodeEmitter : public MachineFunctionPass {
 
 public:
   SparcV9CodeEmitter(TargetMachine &T, MachineCodeEmitter &M);
-  ~SparcV9CodeEmitter();
+  ~SparcV9CodeEmitter() {}
 
   const char *getPassName() const { return "SparcV9 Machine Code Emitter"; }
 
@@ -58,12 +58,6 @@ public:
   /// machine instructions.
   ///
   unsigned getBinaryCodeForInstr(MachineInstr &MI);
-
-  /// emitFarCall - produces a code sequence to make a call to a destination
-  /// that does not fit in the 30 bits that a call instruction allows.
-  /// If the function F is non-null, this also saves the return address in
-  /// the LazyResolver map of the JITResolver.
-  void emitFarCall(uint64_t Addr, Function *F = 0);
 
 private:    
   /// getMachineOpValue - 
