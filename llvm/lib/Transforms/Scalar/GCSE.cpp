@@ -54,7 +54,7 @@ namespace {
 }
 
 // createGCSEPass - The public interface to this file...
-Pass *createGCSEPass() { return new GCSE(); }
+FunctionPass *createGCSEPass() { return new GCSE(); }
 
 
 // GCSE::runOnFunction - This is the main transformation entry point for a

@@ -58,7 +58,7 @@ namespace {
   RegisterOpt<Reassociate> X("reassociate", "Reassociate expressions");
 }
 
-Pass *createReassociatePass() { return new Reassociate(); }
+FunctionPass *createReassociatePass() { return new Reassociate(); }
 
 void Reassociate::BuildRankMap(Function &F) {
   unsigned i = 2;

@@ -174,7 +174,7 @@ namespace {
   RegisterOpt<LICM> X("licm", "Loop Invariant Code Motion");
 }
 
-Pass *createLICMPass() { return new LICM(); }
+FunctionPass *createLICMPass() { return new LICM(); }
 
 /// runOnFunction - For LICM, this simply traverses the loop structure of the
 /// function, hoisting expressions out of loops if possible.
