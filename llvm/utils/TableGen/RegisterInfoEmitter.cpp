@@ -62,9 +62,6 @@ void RegisterInfoEmitter::runHeader(std::ostream &OS) {
 
   OS << "namespace " << TargetName << " { // Register classes\n";
   for (unsigned i = 0, e = RegisterClasses.size(); i != e; ++i) {
-    if (RegisterClasses[i]->getValueAsBit("isDummyClass"))
-      continue; // Ignore dummies
-
     const std::string &Name = RegisterClasses[i]->getName();
     if (Name.size() < 9 || Name[9] != '.')       // Ignore anonymous classes
       OS << "  extern TargetRegisterClass *" << Name << "RegisterClass;\n";
@@ -76,6 +73,8 @@ void RegisterInfoEmitter::runHeader(std::ostream &OS) {
 // RegisterInfoEmitter::run - Main register file description emitter.
 //
 void RegisterInfoEmitter::run(std::ostream &OS) {
+  CodeGenTarget Target;
+
   EmitSourceFileHeader("Register Information Source Fragment", OS);
 
   // Start out by emitting each of the register classes... to do this, we build
@@ -95,7 +94,6 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
 
   for (unsigned rc = 0, e = RegisterClasses.size(); rc != e; ++rc) {
     Record *RC = RegisterClasses[rc];
-    if (RC->getValueAsBit("isDummyClass")) continue; // Ignore dummies
 
     std::string Name = RC->getName();
     if (Name.size() > 9 && Name[9] == '.') {
@@ -210,13 +208,8 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
   OS << "  };\n";      // End of register descriptors...
   OS << "}\n\n";       // End of anonymous namespace...
 
-  CodeGenTarget Target;
-
   OS << "namespace " << Target.getName() << " { // Register classes\n";
   for (unsigned i = 0, e = RegisterClasses.size(); i != e; ++i) {
-    if (RegisterClasses[i]->getValueAsBit("isDummyClass"))
-      continue; // Ignore dummies
-
     const std::string &Name = RegisterClasses[i]->getName();
     if (Name.size() < 9 || Name[9] != '.')    // Ignore anonymous classes
       OS << "  TargetRegisterClass *" << Name << "RegisterClass = &"
