@@ -63,6 +63,10 @@ public:
   /// is automatically inserted at the end of the function.
   ///
   BasicBlock(const std::string &Name = "", Function *Parent = 0);
+
+  /// BasicBlock ctor - If the InsertBefore parameter is specified, the basic
+  /// block is automatically inserted right before the specified block.
+  BasicBlock(const std::string &Name, BasicBlock *InsertBefore);
   ~BasicBlock();
 
   // Specialize setName to take care of symbol table majik
