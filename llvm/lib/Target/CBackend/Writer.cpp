@@ -206,8 +206,6 @@ namespace {
     bool isGotoCodeNecessary(BasicBlock *From, BasicBlock *To);
     void printPHICopiesForSuccessor(BasicBlock *CurBlock,
                                     BasicBlock *Successor, unsigned Indent);
-    void printPHICopiesForSuccessors(BasicBlock *CurBlock, 
-                                     unsigned Indent);
     void printBranchToBlock(BasicBlock *CurBlock, BasicBlock *SuccBlock,
                             unsigned Indent);
     void printIndexingExpression(Value *Ptr, gep_type_iterator I,
@@ -1248,25 +1246,6 @@ void CWriter::printPHICopiesForSuccessor (BasicBlock *CurBlock,
     }
   }
 }
-
-
-void CWriter::printPHICopiesForSuccessors(BasicBlock *CurBlock, 
-                                          unsigned Indent) {
-  for (succ_iterator SI = succ_begin(CurBlock), E = succ_end(CurBlock);
-       SI != E; ++SI)
-    for (BasicBlock::iterator I = SI->begin(); isa<PHINode>(I); ++I) {
-      PHINode *PN = cast<PHINode>(I);
-      // Now we have to do the printing.
-      Value *IV = PN->getIncomingValueForBlock(CurBlock);
-      if (!isa<UndefValue>(IV)) {
-        Out << std::string(Indent, ' ');
-        Out << "  " << Mang->getValueName(I) << "__PHI_TEMPORARY = ";
-        writeOperand(IV);
-        Out << ";   /* for PHI node */\n";
-      }
-    }
-}
-
 
 void CWriter::printBranchToBlock(BasicBlock *CurBB, BasicBlock *Succ,
                                  unsigned Indent) {
