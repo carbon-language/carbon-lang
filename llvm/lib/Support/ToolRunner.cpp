@@ -109,7 +109,7 @@ int LLI::ExecuteProgram(const std::string &Bytecode,
 AbstractInterpreter *AbstractInterpreter::createLLI(const std::string &ProgPath,
                                                     std::string &Message,
                                      const std::vector<std::string> *ToolArgs) {
-  std::string LLIPath = FindExecutable("lli", ProgPath);
+  std::string LLIPath = FindExecutable("lli", ProgPath).toString();
   if (!LLIPath.empty()) {
     Message = "Found lli: " + LLIPath + "\n";
     return new LLI(LLIPath, ToolArgs);
@@ -175,7 +175,7 @@ int LLC::ExecuteProgram(const std::string &Bytecode,
 LLC *AbstractInterpreter::createLLC(const std::string &ProgramPath,
                                     std::string &Message,
                                     const std::vector<std::string> *Args) {
-  std::string LLCPath = FindExecutable("llc", ProgramPath);
+  std::string LLCPath = FindExecutable("llc", ProgramPath).toString();
   if (LLCPath.empty()) {
     Message = "Cannot find `llc' in executable directory or PATH!\n";
     return 0;
@@ -253,7 +253,7 @@ int JIT::ExecuteProgram(const std::string &Bytecode,
 ///
 AbstractInterpreter *AbstractInterpreter::createJIT(const std::string &ProgPath,
                    std::string &Message, const std::vector<std::string> *Args) {
-  std::string LLIPath = FindExecutable("lli", ProgPath);
+  std::string LLIPath = FindExecutable("lli", ProgPath).toString();
   if (!LLIPath.empty()) {
     Message = "Found lli: " + LLIPath + "\n";
     return new JIT(LLIPath, Args);
@@ -317,7 +317,7 @@ int CBE::ExecuteProgram(const std::string &Bytecode,
 CBE *AbstractInterpreter::createCBE(const std::string &ProgramPath,
                                     std::string &Message,
                                     const std::vector<std::string> *Args) {
-  std::string LLCPath = FindExecutable("llc", ProgramPath);
+  std::string LLCPath = FindExecutable("llc", ProgramPath).toString();
   if (LLCPath.empty()) {
     Message = 
       "Cannot find `llc' in executable directory or PATH!\n";
@@ -434,7 +434,7 @@ int GCC::MakeSharedObject(const std::string &InputFile, FileType fileType,
 /// create - Try to find the `gcc' executable
 ///
 GCC *GCC::create(const std::string &ProgramPath, std::string &Message) {
-  std::string GCCPath = FindExecutable("gcc", ProgramPath);
+  std::string GCCPath = FindExecutable("gcc", ProgramPath).toString();
   if (GCCPath.empty()) {
     Message = "Cannot find `gcc' in executable directory or PATH!\n";
     return 0;
