@@ -110,9 +110,6 @@ void LoopInfo::Calculate(const DominatorSet &DS) {
 	 NE = df_end(RootNode); NI != NE; ++NI)
     if (Loop *L = ConsiderForLoop(*NI, DS))
       TopLevelLoops.push_back(L);
-
-  for (unsigned i = 0; i < TopLevelLoops.size(); ++i)
-    TopLevelLoops[i]->setLoopDepth(1);
 }
 
 void LoopInfo::getAnalysisUsage(AnalysisUsage &AU) const {
@@ -127,7 +124,7 @@ void LoopInfo::print(std::ostream &OS) const {
   for (std::map<BasicBlock*, Loop*>::const_iterator I = BBMap.begin(),
          E = BBMap.end(); I != E; ++I)
     OS << "BB '" << I->first->getName() << "' level = "
-       << I->second->LoopDepth << "\n";
+       << I->second->getLoopDepth() << "\n";
 #endif
 }
 
@@ -497,9 +494,6 @@ void Loop::replaceChildLoopWith(Loop *OldChild, Loop *NewChild) {
   *I = NewChild;
   OldChild->ParentLoop = 0;
   NewChild->ParentLoop = this;
-
-  // Update the loop depth of the new child.
-  NewChild->setLoopDepth(LoopDepth+1);
 }
 
 /// addChildLoop - Add the specified loop to be a child of this loop.
@@ -508,9 +502,6 @@ void Loop::addChildLoop(Loop *NewChild) {
   assert(NewChild->ParentLoop == 0 && "NewChild already has a parent!");
   NewChild->ParentLoop = this;
   SubLoops.push_back(NewChild);
-
-  // Update the loop depth of the new child.
-  NewChild->setLoopDepth(LoopDepth+1);
 }
 
 template<typename T>
