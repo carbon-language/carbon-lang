@@ -35,15 +35,19 @@
 // 
 // TODO: We can do better than this simplistic N^2 algorithm...
 //
-static bool MergeConstantPoolReferences(ConstantPool &CP) {
+bool DoConstantPoolMerging(Method *M) {
+  return DoConstantPoolMerging(M->getConstantPool());
+}
+
+bool DoConstantPoolMerging(ConstantPool &CP) {
   bool Modified = false;
   for (ConstantPool::plane_iterator PI = CP.begin(); PI != CP.end(); ++PI) {
     for (ConstantPool::PlaneType::iterator I = (*PI)->begin(); 
-	 I != (*PI)->end(); I++) {
+	 I != (*PI)->end(); ++I) {
       ConstPoolVal *C = *I;
 
       ConstantPool::PlaneType::iterator J = I;
-      for (++J; J != (*PI)->end(); J++) {
+      for (++J; J != (*PI)->end(); ++J) {
 	if (C->equals(*J)) {
 	  Modified = true;
 	  // Okay we know that *I == *J.  So now we need to make all uses of *I
@@ -68,12 +72,8 @@ static bool MergeConstantPoolReferences(ConstantPool &CP) {
 inline static bool 
 ConstantFoldUnaryInst(Method *M, Method::inst_iterator &DI,
                       UnaryOperator *Op, ConstPoolVal *D) {
-  ConstPoolVal *ReplaceWith = 0;
-
-  switch (Op->getInstType()) {
-  case Instruction::Not:  ReplaceWith = !*D; break;
-  case Instruction::Neg:  ReplaceWith = -*D; break;
-  }
+  ConstPoolVal *ReplaceWith = 
+    ConstantFoldUnaryInstruction(Op->getInstType(), D);
 
   if (!ReplaceWith) return false;   // Nothing new to change...
 
@@ -99,20 +99,8 @@ inline static bool
 ConstantFoldBinaryInst(Method *M, Method::inst_iterator &DI,
 		       BinaryOperator *Op,
 		       ConstPoolVal *D1, ConstPoolVal *D2) {
-  ConstPoolVal *ReplaceWith = 0;
-
-  switch (Op->getInstType()) {
-  case Instruction::Add:     ReplaceWith = *D1 + *D2; break;
-  case Instruction::Sub:     ReplaceWith = *D1 - *D2; break;
-
-  case Instruction::SetEQ:   ReplaceWith = *D1 == *D2; break;
-  case Instruction::SetNE:   ReplaceWith = *D1 != *D2; break;
-  case Instruction::SetLE:   ReplaceWith = *D1 <= *D2; break;
-  case Instruction::SetGE:   ReplaceWith = *D1 >= *D2; break;
-  case Instruction::SetLT:   ReplaceWith = *D1 <  *D2; break;
-  case Instruction::SetGT:   ReplaceWith = *D1 >  *D2; break;
-  }
-
+  ConstPoolVal *ReplaceWith =
+    ConstantFoldBinaryInstruction(Op->getInstType(), D1, D2);
   if (!ReplaceWith) return false;   // Nothing new to change...
 
   // Add the new value to the constant pool...
@@ -137,7 +125,7 @@ inline static bool ConstantFoldTerminator(TerminatorInst *T) {
   if (T->getInstType() == Instruction::Br) {
     BranchInst *BI = (BranchInst*)T;
     if (!BI->isUnconditional() &&              // Are we branching on constant?
-        BI->getOperand(2)->getValueType() == Value::ConstantVal) {
+        BI->getOperand(2)->isConstant()) {
       // YES.  Change to unconditional branch...
       ConstPoolBool *Cond = (ConstPoolBool*)BI->getOperand(2);
       Value *Destination = BI->getOperand(Cond->getValue() ? 0 : 1);
@@ -158,21 +146,19 @@ inline static bool
 ConstantFoldInstruction(Method *M, Method::inst_iterator &II) {
   Instruction *Inst = *II;
   if (Inst->isBinaryOp()) {
-    Value *D1, *D2;
-    if (((D1 = Inst->getOperand(0))->getValueType() == Value::ConstantVal) &
-        ((D2 = Inst->getOperand(1))->getValueType() == Value::ConstantVal))
-      return ConstantFoldBinaryInst(M, II, (BinaryOperator*)Inst, 
-                                    (ConstPoolVal*)D1, (ConstPoolVal*)D2);
+    ConstPoolVal *D1 = Inst->getOperand(0)->castConstant();
+    ConstPoolVal *D2 = Inst->getOperand(1)->castConstant();
+
+    if (D1 && D2)
+      return ConstantFoldBinaryInst(M, II, (BinaryOperator*)Inst, D1, D2);
 
   } else if (Inst->isUnaryOp()) {
-    Value *D;
-    if ((D = Inst->getOperand(0))->getValueType() == Value::ConstantVal)
-      return ConstantFoldUnaryInst(M, II, (UnaryOperator*)Inst, 
-                                   (ConstPoolVal*)D);
+    ConstPoolVal *D = Inst->getOperand(0)->castConstant();
+    if (D) return ConstantFoldUnaryInst(M, II, (UnaryOperator*)Inst, D);
   } else if (Inst->isTerminator()) {
     return ConstantFoldTerminator((TerminatorInst*)Inst);
 
-  } else if (Inst->getInstType() == Instruction::PHINode) {
+  } else if (Inst->isPHINode()) {
     PHINode *PN = (PHINode*)Inst; // If it's a PHI node and only has one operand
                                   // Then replace it directly with that operand.
     assert(PN->getOperand(0) && "PHI Node must have at least one operand!");
@@ -209,13 +195,11 @@ static bool DoConstPropPass(Method *M) {
       ++It;
     }
 #else
-  Method::BasicBlocksType::iterator BBIt = M->getBasicBlocks().begin();
-  for (; BBIt != M->getBasicBlocks().end(); BBIt++) {
+  for (Method::iterator BBIt = M->begin(); BBIt != M->end(); ++BBIt) {
     BasicBlock *BB = *BBIt;
 
-    BasicBlock::InstListType::iterator DI = BB->getInstList().begin();
-    for (; DI != BB->getInstList().end(); DI++) 
-      SomethingChanged |= ConstantFoldInstruction(M, DI);
+    reduce_apply_bool(BB->begin(), BB->end(),
+		      bind1st(ConstantFoldInstruction, M));
   }
 #endif
   return SomethingChanged;
@@ -233,7 +217,7 @@ bool DoConstantPropogation(Method *M) {
   // Merge identical constants last: this is important because we may have just
   // introduced constants that already exist!
   //
-  Modified |= MergeConstantPoolReferences(M->getConstantPool());
+  Modified |= DoConstantPoolMerging(M->getConstantPool());
 
   return Modified;
 }
