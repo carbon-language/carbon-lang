@@ -23,6 +23,7 @@
 //---------------------------------------------------------------------------
 
 #include "llvm/CodeGen/InstrForest.h"
+#include "llvm/CodeGen/MachineCodeForInstruction.h"
 #include "llvm/Method.h"
 #include "llvm/iTerminators.h"
 #include "llvm/iMemory.h"
@@ -125,16 +126,17 @@ InstructionNode::dumpNode(int indent) const
     cerr << "    ";
   
   cerr << getInstruction()->getOpcodeName();
-  
-  const vector<MachineInstr*> &mvec = getInstruction()->getMachineInstrVec();
+  const MachineCodeForInstruction &mvec =
+    MachineCodeForInstruction::get(getInstruction());
+
   if (mvec.size() > 0)
     cerr << "\tMachine Instructions:  ";
-  for (unsigned int i=0; i < mvec.size(); i++)
-    {
-      mvec[i]->dump(0);
-      if (i < mvec.size() - 1)
-	cerr << ";  ";
-    }
+
+  for (unsigned int i=0; i < mvec.size(); ++i) {
+    mvec[i]->dump(0);
+    if (i < mvec.size() - 1)
+      cerr << ";  ";
+  }
   
   cerr << "\n";
 }
