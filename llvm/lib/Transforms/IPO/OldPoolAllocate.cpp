@@ -10,7 +10,6 @@
 #include "llvm/Transforms/CloneFunction.h"
 #include "llvm/Analysis/DataStructure.h"
 #include "llvm/Analysis/DataStructureGraph.h"
-#include "llvm/Pass.h"
 #include "llvm/Module.h"
 #include "llvm/Function.h"
 #include "llvm/BasicBlock.h"
@@ -30,7 +29,12 @@
 // DEBUG_CREATE_POOLS - Enable this to turn on debug output for the pool
 // creation phase in the top level function of a transformed data structure.
 //
-#define DEBUG_CREATE_POOLS 1
+//#define DEBUG_CREATE_POOLS 1
+
+// DEBUG_TRANSFORM_PROGRESS - Enable this to get lots of debug output on what
+// the transformation is doing.
+//
+//#define DEBUG_TRANSFORM_PROGRESS 1
 
 #include "Support/CommandLine.h"
 enum PtrSize {
@@ -38,7 +42,7 @@ enum PtrSize {
 };
 
 static cl::Enum<enum PtrSize> ReqPointerSize("ptrsize", 0,
-                                      "Set pointer size for pool allocation",
+                                      "Set pointer size for -poolalloc pass",
   clEnumValN(Ptr32bits, "32", "Use 32 bit indices for pointers"),
   clEnumValN(Ptr16bits, "16", "Use 16 bit indices for pointers"),
   clEnumValN(Ptr8bits ,  "8", "Use 8 bit indices for pointers"), 0);
@@ -326,7 +330,9 @@ bool PoolAllocate::processFunction(Function *F) {
   map<DSNode*, PoolInfo> PoolDescs;
   CreatePools(F, Allocs, PoolDescs);
 
+#ifdef DEBUG_TRANSFORM_PROGRESS
   cerr << "Transformed Entry Function: \n" << F;
+#endif
 
   // Now we need to figure out what called functions we need to transform, and
   // how.  To do this, we look at all of the scalars, seeing which functions are
@@ -659,7 +665,9 @@ void PoolAllocate::transformFunctionBody(Function *F, FunctionDSGraph &IPFGraph,
   map<Value*, PointerValSet> &ValMap = IPFGraph.getValueMap();
   vector<ScalarInfo> Scalars;
 
+#ifdef DEBUG_TRANSFORM_PROGRESS
   cerr << "Building scalar map:\n";
+#endif
 
   for (map<Value*, PointerValSet>::iterator I = ValMap.begin(),
          E = ValMap.end(); I != E; ++I) {
@@ -673,20 +681,22 @@ void PoolAllocate::transformFunctionBody(Function *F, FunctionDSGraph &IPFGraph,
       map<DSNode*, PoolInfo>::iterator AI = PoolDescs.find(PVS[i].Node);
       if (AI != PoolDescs.end()) {              // Add it to the list of scalars
         Scalars.push_back(ScalarInfo(I->first, AI->second));
+#ifdef DEBUG_TRANSFORM_PROGRESS
         cerr << "\nScalar Mapping from:" << I->first
              << "Scalar Mapping to: "; PVS.print(cerr);
+#endif
       }
     }
   }
 
-
-
+#ifdef DEBUG_TRANSFORM_PROGRESS
   cerr << "\nIn '" << F->getName()
        << "': Found the following values that point to poolable nodes:\n";
 
   for (unsigned i = 0, e = Scalars.size(); i != e; ++i)
     cerr << Scalars[i].Val;
   cerr << "\n";
+#endif
 
   // CallMap - Contain an entry for every call instruction that needs to be
   // transformed.  Each entry in the map contains information about what we need
@@ -726,6 +736,7 @@ void PoolAllocate::transformFunctionBody(Function *F, FunctionDSGraph &IPFGraph,
     }
   }
 
+#ifdef DEBUG_TRANSFORM_PROGRESS
   // Print out call map...
   for (map<CallInst*, TransformFunctionInfo>::iterator I = CallMap.begin();
        I != CallMap.end(); ++I) {
@@ -736,6 +747,7 @@ void PoolAllocate::transformFunctionBody(Function *F, FunctionDSGraph &IPFGraph,
       cerr << I->second.ArgInfo[i].ArgNo << ", ";
     cerr << "\n\n";
   }
+#endif
 
   // Loop through all of the call nodes, recursively creating the new functions
   // that we want to call...  This uses a map to prevent infinite recursion and
@@ -806,11 +818,14 @@ void PoolAllocate::transformFunctionBody(Function *F, FunctionDSGraph &IPFGraph,
   // Visit all instructions... creating the new instructions that we need and
   // unlinking the old instructions from the function...
   //
+#ifdef DEBUG_TRANSFORM_PROGRESS
   for (unsigned i = 0, e = InstToFix.size(); i != e; ++i) {
     cerr << "Fixing: " << InstToFix[i];
     NIC.visit(InstToFix[i]);
   }
-  //NIC.visit(InstToFix.begin(), InstToFix.end());
+#else
+  NIC.visit(InstToFix.begin(), InstToFix.end());
+#endif
 
   // Make all instructions we will delete "let go" of their operands... so that
   // we can safely delete Arguments whose types have changed...
@@ -844,8 +859,9 @@ void PoolAllocate::transformFunctionBody(Function *F, FunctionDSGraph &IPFGraph,
   //
   NIC.updateReferences();
 
+#ifdef DEBUG_TRANSFORM_PROGRESS
   cerr << "TRANSFORMED FUNCTION:\n" << F;
-
+#endif
 
   // Delete all of the "instructions to fix"
   for_each(InstToFix.begin(), InstToFix.end(), deleter<Instruction>);
@@ -931,11 +947,13 @@ void PoolAllocate::transformFunction(TransformFunctionInfo &TFI,
                                      map<DSNode*, PoolInfo> &CallerPoolDesc) {
   if (getTransformedFunction(TFI)) return;  // Function xformation already done?
 
+#ifdef DEBUG_TRANSFORM_PROGRESS
   cerr << "********** Entering transformFunction for "
        << TFI.Func->getName() << ":\n";
   for (unsigned i = 0, e = TFI.ArgInfo.size(); i != e; ++i)
     cerr << "  ArgInfo[" << i << "] = " << TFI.ArgInfo[i].ArgNo << "\n";
   cerr << "\n";
+#endif
 
   const FunctionType *OldFuncType = TFI.Func->getFunctionType();
 
@@ -973,7 +991,9 @@ void PoolAllocate::transformFunction(TransformFunctionInfo &TFI,
   CurModule->getFunctionList().push_back(NewFunc);
 
 
+#ifdef DEBUG_TRANSFORM_PROGRESS
   cerr << "Created function prototype: " << NewFunc << "\n";
+#endif
 
   // Add the newly formed function to the TransformedFunctions table so that
   // infinite recursion does not occur!
@@ -1026,6 +1046,7 @@ void PoolAllocate::transformFunction(TransformFunctionInfo &TFI,
                        NodeMapping);
 
   // Print out the node mapping...
+#ifdef DEBUG_TRANSFORM_PROGRESS
   cerr << "\nNode mapping for call of " << NewFunc->getName() << "\n";
   for (map<DSNode*, PointerValSet>::iterator I = NodeMapping.begin();
        I != NodeMapping.end(); ++I) {
@@ -1033,6 +1054,7 @@ void PoolAllocate::transformFunction(TransformFunctionInfo &TFI,
     cerr << "To:  "; I->second.print(cerr);
     cerr << "\n";
   }
+#endif
 
   // Fill in the PoolDescriptor information for the transformed function so that
   // it can determine which value holds the pool descriptor for each data
@@ -1040,7 +1062,9 @@ void PoolAllocate::transformFunction(TransformFunctionInfo &TFI,
   //
   map<DSNode*, PoolInfo> PoolDescs;
 
+#ifdef DEBUG_TRANSFORM_PROGRESS
   cerr << "\nCalculating the pool descriptor map:\n";
+#endif
 
   // Calculate as much of the pool descriptor map as possible.  Since we have
   // the node mapping between the caller and callee functions, and we have the
@@ -1066,7 +1090,9 @@ void PoolAllocate::transformFunction(TransformFunctionInfo &TFI,
         // call...  The call instruction should not have the pool operands added
         // yet.
         unsigned ArgNo = TFI.Call->getNumOperands()-1+a;
+#ifdef DEBUG_TRANSFORM_PROGRESS
         cerr << "Should be argument #: " << ArgNo << "[i = " << a << "]\n";
+#endif
         assert(ArgNo < NewFunc->getArgumentList().size() &&
                "Call already has pool arguments added??");
 
@@ -1103,7 +1129,9 @@ void PoolAllocate::transformFunction(TransformFunctionInfo &TFI,
   //
   transformFunctionBody(NewFunc, DSGraph, PoolDescs);
   
+#ifdef DEBUG_TRANSFORM_PROGRESS
   cerr << "Function after transformation:\n" << NewFunc;
+#endif
 }
 
 static unsigned countPointerTypes(const Type *Ty) {
@@ -1239,8 +1267,7 @@ void PoolAllocate::CreatePools(Function *F, const vector<AllocDSNode*> &Allocs,
     // our purposes here, we assume we are allocating a scalar, or array of
     // constant size.
     //
-    unsigned ElSize = TargetData.getTypeSize(AI->getAllocatedType());
-    ElSize *= cast<ConstantUInt>(AI->getArraySize())->getValue();
+    unsigned ElSize = TargetData.getTypeSize(PI.NewType);
 
     vector<Value*> Args;
     Args.push_back(ConstantUInt::get(Type::UIntTy, ElSize));
