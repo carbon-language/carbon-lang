@@ -74,7 +74,9 @@ bool LiveInterval::overlapsFrom(const LiveInterval& other,
     i = std::upper_bound(i, ie, j->start);
     if (i != ranges.begin()) --i;
   } else if (j->start < i->start) {
-    if ((++StartPos)->start <= i->start) {
+    ++StartPos;
+    if (StartPos != other.end() && StartPos->start <= i->start) {
+      assert(StartPos < other.end() && i < end());
       j = std::upper_bound(j, je, i->start);
       if (j != other.ranges.begin()) --j;
     }
