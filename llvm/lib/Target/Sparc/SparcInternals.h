@@ -9,10 +9,7 @@
 #define SPARC_INTERNALS_H
 
 #include "SparcRegInfo.h"
-#include "llvm/Target/TargetMachine.h"
-#include "llvm/Target/MachineInstrInfo.h"
 #include "llvm/Target/MachineSchedInfo.h"
-#include "llvm/Target/MachineRegInfo.h"
 #include "llvm/Type.h"
 
 #include <sys/types.h>
