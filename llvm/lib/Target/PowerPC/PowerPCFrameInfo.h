@@ -25,10 +25,10 @@ class PowerPCFrameInfo: public TargetFrameInfo {
   std::pair<unsigned, int> LR[1];
   
 public:
-  PowerPCFrameInfo(const TargetMachine &tm)
+  PowerPCFrameInfo(const TargetMachine &tm, bool LP64)
     : TargetFrameInfo(TargetFrameInfo::StackGrowsDown, 16, 0), TM(tm) {
     LR[0].first = PPC::LR;
-    LR[0].second = 8;
+    LR[0].second = LP64 ? 16 : 8;
   }
 
   const std::pair<unsigned, int> *

@@ -42,8 +42,8 @@ namespace {
   // Register the targets
   RegisterTarget<PPC32TargetMachine> 
   X("ppc32", "  PowerPC 32-bit (experimental)");
-  //RegisterTarget<PPC64TargetMachine> 
-  //Y("ppc64", "  PowerPC 64-bit (unimplemented)");
+  RegisterTarget<PPC64TargetMachine> 
+  Y("ppc64", "  PowerPC 64-bit (unimplemented)");
 }
 
 PowerPCTargetMachine::PowerPCTargetMachine(const std::string &name,
@@ -145,14 +145,14 @@ void *PowerPCJITInfo::getJITStubForFunction(Function *F,
 PPC32TargetMachine::PPC32TargetMachine(const Module &M, IntrinsicLowering *IL)
   : PowerPCTargetMachine(PPC32ID, IL, 
                          TargetData(PPC32ID,false,4,4,4,4,4,4,2,1,4),
-                         PowerPCFrameInfo(*this), PPC32JITInfo(*this)) {}
+                         PowerPCFrameInfo(*this, false), PPC32JITInfo(*this)) {}
 
 /// PPC64TargetMachine ctor - Create a LP64 architecture model
 ///
 PPC64TargetMachine::PPC64TargetMachine(const Module &M, IntrinsicLowering *IL)
   : PowerPCTargetMachine(PPC64ID, IL,
                          TargetData(PPC64ID,false,8,4,4,4,4,4,2,1,4),
-                         PowerPCFrameInfo(*this), PPC64JITInfo(*this)) {}
+                         PowerPCFrameInfo(*this, true), PPC64JITInfo(*this)) {}
 
 unsigned PPC32TargetMachine::getModuleMatchQuality(const Module &M) {
   if (M.getEndianness()  == Module::BigEndian &&
