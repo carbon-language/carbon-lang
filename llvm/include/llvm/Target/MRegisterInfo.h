@@ -186,8 +186,8 @@ public:
 
   //===--------------------------------------------------------------------===//
   // All basic block modifier functions below return the number of
-  // instructions added to/removed from the basic block passed as their
-  // first argument.
+  // instructions added to (negative if removed from) the basic block
+  // passed as their first argument.
   //
   // FIXME: This is only needed because we use a std::vector instead
   // of an ilist to keep MachineBasicBlock instructions. Inserting an
@@ -199,10 +199,10 @@ public:
   //
 
   //===--------------------------------------------------------------------===//
-  // Interfaces used by the register allocator and stack frame manipulation
-  // passes to move data around between registers, immediates and memory.
-  // The return value is the number of instructions added/deleted to/from the
-  // basic block.
+  // Interfaces used by the register allocator and stack frame
+  // manipulation passes to move data around between registers,
+  // immediates and memory.  The return value is the number of
+  // instructions added to (negative if removed from) the basic block.
   //
 
   virtual int storeRegToStackSlot(MachineBasicBlock &MBB,
@@ -237,7 +237,7 @@ public:
   /// for eliminating these instructions, replacing them with concrete
   /// instructions.  This method need only be implemented if using call frame
   /// setup/destroy pseudo instructions. The return value is the number of
-  /// instructions added/deleted to/from the basic block.
+  /// instructions added to (negative if removed from) the basic block.
   ///
   virtual int eliminateCallFramePseudoInstr(MachineFunction &MF,
 					     MachineBasicBlock &MBB,
@@ -252,7 +252,8 @@ public:
   /// before the specified functions frame layout (MF.getFrameInfo()) is
   /// finalized.  Once the frame is finalized, MO_FrameIndex operands are
   /// replaced with direct constants.  This method is optional. The return value
-  /// is the number of instructions added/deleted to/from the basic block
+  /// is the number of instructions added to (negative if removed from) the
+  /// basic block
   ///
   virtual int processFunctionBeforeFrameFinalized(MachineFunction &MF) const {
     return 0;
@@ -264,14 +265,15 @@ public:
   /// eliminated by this method.  This method may modify or replace the
   /// specified instruction, as long as it keeps the iterator pointing the the
   /// finished product. The return value is the number of instructions
-  /// added/deleted to/from the basic block
+  /// added to (negative if removed from) the basic block.
   ///
   virtual int eliminateFrameIndex(MachineFunction &MF,
                                   MachineBasicBlock::iterator &II) const = 0;
 
   /// emitProlog/emitEpilog - These methods insert prolog and epilog code into
   /// the function. The return value is the number of instructions
-  /// added/deleted to/from the basic block (entry for prologue, 
+  /// added to (negative if removed from) the basic block (entry for prologue).
+  ///
   virtual int emitPrologue(MachineFunction &MF) const = 0;
   virtual int emitEpilogue(MachineFunction &MF,
                            MachineBasicBlock &MBB) const = 0;
