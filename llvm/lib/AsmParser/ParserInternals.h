@@ -31,15 +31,27 @@ extern string CurFilename;
 Module *RunVMAsmParser(const string &Filename, FILE *F);
 
 
+// UnEscapeLexed - Run through the specified buffer and change \xx codes to the
+// appropriate character.  If AllowNull is set to false, a \00 value will cause
+// an exception to be thrown.
+//
+// If AllowNull is set to true, the return value of the function points to the
+// last character of the string in memory.
+//
+char *UnEscapeLexed(char *Buffer, bool AllowNull = false);
+
+
 // ThrowException - Wrapper around the ParseException class that automatically
 // fills in file line number and column number and options info.
 //
 // This also helps me because I keep typing 'throw new ParseException' instead 
 // of just 'throw ParseException'... sigh...
 //
-static inline void ThrowException(const string &message) {
+static inline void ThrowException(const string &message,
+				  int LineNo = -1) {
+  if (LineNo == -1) LineNo = llvmAsmlineno;
   // TODO: column number in exception
-  throw ParseException(CurFilename, message, llvmAsmlineno);
+  throw ParseException(CurFilename, message, LineNo);
 }
 
 // ValID - Represents a reference of a definition of some sort.  This may either
@@ -111,13 +123,15 @@ struct ValID {
 
 
 template<class SuperType>
-class PlaceholderDef : public SuperType {
+class PlaceholderValue : public SuperType {
   ValID D;
-  // TODO: Placeholder def should hold Line #/Column # of definition in case
-  // there is an error resolving the defintition!
+  int LineNum;
 public:
-  PlaceholderDef(const Type *Ty, const ValID &d) : SuperType(Ty), D(d) {}
+  PlaceholderValue(const Type *Ty, const ValID &d) : SuperType(Ty), D(d) {
+    LineNum = llvmAsmlineno;
+  }
   ValID &getDef() { return D; }
+  int getLineNum() const { return LineNum; }
 };
 
 struct InstPlaceHolderHelper : public Instruction {
@@ -140,17 +154,23 @@ struct MethPlaceHolderHelper : public Method {
   }
 };
 
-typedef PlaceholderDef<InstPlaceHolderHelper>  DefPlaceHolder;
-typedef PlaceholderDef<BBPlaceHolderHelper>    BBPlaceHolder;
-typedef PlaceholderDef<MethPlaceHolderHelper>  MethPlaceHolder;
-//typedef PlaceholderDef<ModulePlaceHolderHelper> ModulePlaceHolder;
+typedef PlaceholderValue<InstPlaceHolderHelper>  ValuePlaceHolder;
+typedef PlaceholderValue<BBPlaceHolderHelper>    BBPlaceHolder;
+typedef PlaceholderValue<MethPlaceHolderHelper>  MethPlaceHolder;
 
-static inline ValID &getValIDFromPlaceHolder(Value *Def) {
-  switch (Def->getType()->getPrimitiveID()) {
-  case Type::LabelTyID:  return ((BBPlaceHolder*)Def)->getDef();
-  case Type::MethodTyID: return ((MethPlaceHolder*)Def)->getDef();
-//case Type::ModuleTyID:  return ((ModulePlaceHolder*)Def)->getDef();
-  default:               return ((DefPlaceHolder*)Def)->getDef();
+static inline ValID &getValIDFromPlaceHolder(Value *Val) {
+  switch (Val->getType()->getPrimitiveID()) {
+  case Type::LabelTyID:  return ((BBPlaceHolder*)Val)->getDef();
+  case Type::MethodTyID: return ((MethPlaceHolder*)Val)->getDef();
+  default:               return ((ValuePlaceHolder*)Val)->getDef();
+  }
+}
+
+static inline int getLineNumFromPlaceHolder(Value *Val) {
+  switch (Val->getType()->getPrimitiveID()) {
+  case Type::LabelTyID:  return ((BBPlaceHolder*)Val)->getLineNum();
+  case Type::MethodTyID: return ((MethPlaceHolder*)Val)->getLineNum();
+  default:               return ((ValuePlaceHolder*)Val)->getLineNum();
   }
 }
 

@@ -24,6 +24,8 @@
 #include "llvm/Module.h"
 #include <list>
 #include "llvmAsmParser.h"
+#include <ctype.h>
+#include <stdlib.h>
 
 #define RET_TOK(type, Enum, sym) \
   llvmAsmlval.type = Instruction::Enum; return sym
@@ -48,6 +50,34 @@ uint64_t atoull(const char *Buffer) {
     }
   }
   return Result;
+}
+
+
+// UnEscapeLexed - Run through the specified buffer and change \xx codes to the
+// appropriate character.  If AllowNull is set to false, a \00 value will cause
+// an exception to be thrown.
+//
+// If AllowNull is set to true, the return value of the function points to the
+// last character of the string in memory.
+//
+char *UnEscapeLexed(char *Buffer, bool AllowNull = false) {
+  char *BOut = Buffer;
+  for (char *BIn = Buffer; *BIn; ) {
+    if (BIn[0] == '\\' && isxdigit(BIn[1]) && isxdigit(BIn[2])) {
+      char Tmp = BIn[3]; BIn[3] = 0;     // Terminate string
+      *BOut = strtol(BIn+1, 0, 16);  // Convert to number
+      if (!AllowNull && !*BOut)
+        ThrowException("String literal cannot accept \\00 escape!");
+      
+      BIn[3] = Tmp;                  // Restore character
+      BIn += 3;                      // Skip over handled chars
+      ++BOut;
+    } else {
+      *BOut++ = *BIn++;
+    }
+  }
+
+  return BOut;
 }
 
 
@@ -95,6 +125,7 @@ false           { return FALSE; }
 declare         { return DECLARE; }
 implementation  { return IMPLEMENTATION; }
 \.\.\.          { return DOTDOTDOT; }
+string          { return STRING; }
 
 void            { llvmAsmlval.TypeVal = Type::VoidTy  ; return VOID;   }
 bool            { llvmAsmlval.TypeVal = Type::BoolTy  ; return BOOL;   }
@@ -148,18 +179,27 @@ store           { RET_TOK(MemOpVal, Store, STORE); }
 getelementptr   { RET_TOK(MemOpVal, GetElementPtr, GETELEMENTPTR); }
 
 
-{VarID}         { llvmAsmlval.StrVal = strdup(yytext+1); return VAR_ID; }
-{Label}         { 
+{VarID}         {
+                  UnEscapeLexed(yytext+1);
+                  llvmAsmlval.StrVal = strdup(yytext+1);             // Skip %
+                  return VAR_ID; 
+                }
+{Label}         {
                   yytext[strlen(yytext)-1] = 0;  // nuke colon
-		  llvmAsmlval.StrVal = strdup(yytext); 
+                  UnEscapeLexed(yytext);
+		  llvmAsmlval.StrVal = strdup(yytext);
 		  return LABELSTR; 
                 }
 
-{StringConstant} { 
+{StringConstant} { // Note that we cannot unescape a string constant here!  The
+                   // string constant might contain a \00 which would not be 
+                   // understood by the string stuff.  It is valid to make a
+                   // [sbyte] c"Hello World\00" constant, for example.
+                   //
                   yytext[strlen(yytext)-1] = 0;           // nuke end quote
-		  llvmAsmlval.StrVal = strdup(yytext+1);  // Nuke start quote 
+		  llvmAsmlval.StrVal = strdup(yytext+1);  // Nuke start quote
 		  return STRINGCONSTANT;
-                }
+                 }
 
 
 {PInteger}      { llvmAsmlval.UInt64Val = atoull(yytext); return EUINT64VAL; }
