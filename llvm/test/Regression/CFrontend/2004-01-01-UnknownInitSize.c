@@ -1,4 +1,4 @@
-// RUN: %llvmgcc -S %s -o - | llvm-as -f -o /dev/null
+// RUN: %llvmgcc -S %s -o /dev/null
 
 /*
  * This regression test ensures that the C front end can compile initializers

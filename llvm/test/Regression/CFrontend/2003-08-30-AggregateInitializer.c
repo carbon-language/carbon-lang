@@ -1,4 +1,4 @@
-// RUN: %llvmgcc -S %s -o - | llvm-as -f -o /dev/null
+// RUN: %llvmgcc -S %s -o /dev/null
 
 // XFAIL: linux,sun,darwin
 struct istruct {

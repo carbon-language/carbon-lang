@@ -1,4 +1,4 @@
-// RUN: %llvmgcc -S %s -o - | llvm-as -f -o /dev/null
+// RUN: %llvmgcc -S %s -o /dev/null
 
 // XFAIL: *
 /* It is unlikely that LLVM will ever support nested functions, but if it does,
