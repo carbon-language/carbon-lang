@@ -605,7 +605,6 @@ void ISel::copyConstantToRegister(MachineBasicBlock *MBB,
       }
       return;
     }
-    
     std::cerr << "Unhandled integer constant!\n";
     abort();
   } else if (ConstantFP *CFP = dyn_cast<ConstantFP>(C)) {
@@ -1243,7 +1242,7 @@ void ISel::emitSelectOperation(MachineBasicBlock *MBB,
   BuildMI(BB, PPC::PHI, 4, DestReg).addReg(FalseValue)
     .addMBB(copy0MBB).addReg(TrueValue).addMBB(copy1MBB);
   // For a register pair representing a long value, define the second reg
-  if (getClass(TrueVal->getType()) == cLong)
+  if (getClassB(TrueVal->getType()) == cLong)
     BuildMI(BB, PPC::LI, 1, DestReg+1).addImm(0);
   return;
 }
