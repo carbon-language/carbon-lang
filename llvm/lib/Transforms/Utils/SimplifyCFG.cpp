@@ -613,16 +613,23 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
 
   // If this is a returning block with only PHI nodes in it, fold the return
   // instruction into any unconditional branch predecessors.
+  //
+  // If any predecessor is a conditional branch that just selects among
+  // different return values, fold the replace the branch/return with a select
+  // and return.
   if (ReturnInst *RI = dyn_cast<ReturnInst>(BB->getTerminator())) {
     BasicBlock::iterator BBI = BB->getTerminator();
     if (BBI == BB->begin() || isa<PHINode>(--BBI)) {
-      // Find predecessors that end with unconditional branches.
+      // Find predecessors that end with branches.
       std::vector<BasicBlock*> UncondBranchPreds;
+      std::vector<BranchInst*> CondBranchPreds;
       for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI) {
         TerminatorInst *PTI = (*PI)->getTerminator();
         if (BranchInst *BI = dyn_cast<BranchInst>(PTI))
           if (BI->isUnconditional())
             UncondBranchPreds.push_back(*PI);
+          else
+            CondBranchPreds.push_back(BI);
       }
       
       // If we found some, do the transformation!
@@ -653,6 +660,55 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
           M->getBasicBlockList().erase(BB);
 
         return true;
+      }
+
+      // Check out all of the conditional branches going to this return
+      // instruction.  If any of them just select between returns, change the
+      // branch itself into a select/return pair.
+      while (!CondBranchPreds.empty()) {
+        BranchInst *BI = CondBranchPreds.back();
+        CondBranchPreds.pop_back();
+        BasicBlock *TrueSucc = BI->getSuccessor(0);
+        BasicBlock *FalseSucc = BI->getSuccessor(1);
+        BasicBlock *OtherSucc = TrueSucc == BB ? FalseSucc : TrueSucc;
+
+        // Check to see if the non-BB successor is also a return block.
+        if (isa<ReturnInst>(OtherSucc->getTerminator())) {
+          // Check to see if there are only PHI instructions in this block.
+          BasicBlock::iterator OSI = OtherSucc->getTerminator();
+          if (OSI == OtherSucc->begin() || isa<PHINode>(--OSI)) {
+            // Okay, we found a branch that is going to two return nodes.  If
+            // there is no return value for this function, just change the
+            // branch into a return.
+            if (RI->getNumOperands() == 0) {
+              TrueSucc->removePredecessor(BI->getParent());
+              FalseSucc->removePredecessor(BI->getParent());
+              new ReturnInst(0, BI);
+              BI->getParent()->getInstList().erase(BI);
+              return true;
+            }
+
+            // Otherwise, figure out what the true and false return values are
+            // so we can insert a new select instruction.
+            Value *TrueValue = TrueSucc->getTerminator()->getOperand(0);
+            Value *FalseValue = FalseSucc->getTerminator()->getOperand(0);
+
+            // Unwrap any PHI nodes in the return blocks.
+            if (PHINode *TVPN = dyn_cast<PHINode>(TrueValue))
+              if (TVPN->getParent() == TrueSucc)
+                TrueValue = TVPN->getIncomingValueForBlock(BI->getParent());
+            if (PHINode *FVPN = dyn_cast<PHINode>(FalseValue))
+              if (FVPN->getParent() == FalseSucc)
+                FalseValue = FVPN->getIncomingValueForBlock(BI->getParent());
+
+            // Insert a new select instruction.
+            Value *NewRetVal = new SelectInst(BI->getCondition(), TrueValue,
+                                              FalseValue, "retval", BI);
+            new ReturnInst(NewRetVal, BI);
+            BI->getParent()->getInstList().erase(BI);
+            return true;
+          }
+        }
       }
     }
   } else if (UnwindInst *UI = dyn_cast<UnwindInst>(BB->begin())) {
