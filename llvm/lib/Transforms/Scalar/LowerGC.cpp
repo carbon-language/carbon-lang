@@ -15,7 +15,7 @@
 //
 // This pass implements the code transformation described in this paper:
 //   "Accurate Garbage Collection in an Uncooperative Environment"
-//   Fergus Hendersen, ISMM, 2002
+//   Fergus Henderson, ISMM, 2002
 //
 //===----------------------------------------------------------------------===//
 
