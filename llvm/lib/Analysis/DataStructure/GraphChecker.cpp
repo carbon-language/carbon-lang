@@ -125,7 +125,7 @@ void DSGC::verify(const DSGraph &G) {
     
     for (cl::list<std::string>::iterator I = CheckFlags.begin(),
            E = CheckFlags.end(); I != E; ++I) {
-      unsigned ColonPos = I->rfind(':');
+      std::string::size_type ColonPos = I->rfind(':');
       if (ColonPos == std::string::npos) {
         std::cerr << "Error: '" << *I
                << "' is an invalid value for the --dsgc-check-flags option!\n";
