@@ -27,6 +27,7 @@
 #include "Support/CommandLine.h"
 #include "Support/Debug.h"
 #include "Support/Statistic.h"
+#include "Support/STLExtras.h"
 #include <cstdio>
 using namespace llvm;
 
@@ -34,7 +35,7 @@ namespace {
   Statistic<> NumUnrolled("loop-unroll", "Number of loops completely unrolled");
 
   cl::opt<unsigned>
-  UnrollThreshold("unroll-threshold", cl::init(100), cl::Hidden,
+  UnrollThreshold("unroll-threshold", cl::init(250), cl::Hidden,
                   cl::desc("The cut-off point for loop unrolling"));
 
   class LoopUnroll : public FunctionPass {
@@ -105,6 +106,17 @@ static inline void RemapInstruction(Instruction *I,
     std::map<const Value *, Value*>::iterator It = ValueMap.find(Op);
     if (It != ValueMap.end()) Op = It->second;
     I->setOperand(op, Op);
+  }
+}
+
+static void ChangeExitBlocksFromTo(Loop::iterator I, Loop::iterator E,
+                                   BasicBlock *Old, BasicBlock *New) {
+  for (; I != E; ++I) {
+    Loop *L = *I;
+    if (L->hasExitBlock(Old)) {
+      L->changeExitBlock(Old, New);
+      ChangeExitBlocksFromTo(L->begin(), L->end(), Old, New);
+    }
   }
 }
 
@@ -256,7 +268,36 @@ bool LoopUnroll::visitLoop(Loop *L) {
 
   // FIXME: Should update dominator analyses
 
-  // FIXME: Should fold into preheader and exit block
+
+  // Now that everything is up-to-date that will be, we fold the loop block into
+  // the preheader and exit block, updating our analyses as we go.
+  LoopExit->getInstList().splice(LoopExit->begin(), BB->getInstList(),
+                                 BB->getInstList().begin(),
+                                 prior(BB->getInstList().end()));
+  LoopExit->getInstList().splice(LoopExit->begin(), Preheader->getInstList(),
+                                 Preheader->getInstList().begin(),
+                                 prior(Preheader->getInstList().end()));
+
+  // Make all other blocks in the program branch to LoopExit now instead of
+  // Preheader.
+  Preheader->replaceAllUsesWith(LoopExit);
+
+  // Remove BB and LoopExit from our analyses.
+  LI->removeBlock(Preheader);
+  LI->removeBlock(BB);
+
+  // If any loops used Preheader as an exit block, update them to use LoopExit.
+  if (Parent)
+    ChangeExitBlocksFromTo(Parent->begin(), Parent->end(),
+                           Preheader, LoopExit);
+  else
+    ChangeExitBlocksFromTo(LI->begin(), LI->end(),
+                           Preheader, LoopExit);
+
+
+  // Actually delete the blocks now.
+  LoopExit->getParent()->getBasicBlockList().erase(Preheader);
+  LoopExit->getParent()->getBasicBlockList().erase(BB);
 
   ++NumUnrolled;
   return true;
