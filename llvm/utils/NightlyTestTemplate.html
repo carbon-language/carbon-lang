@@ -52,7 +52,8 @@
 <li><a href="$DATE-Build-Log.txt">Compilation Log</a>
 <ul>
     $BuildError
-    Time to build CVS tree:      <b>$BuildTime</b> seconds<br>
+    Time to build CVS tree:      <b>$BuildTime</b> seconds
+               (<b>$BuildWallTime</b> seconds wall time)<br>
     Number of object files compiled: <b>$NumObjects</b><br>
     Number of libraries linked: <b>$NumLibraries</b><br>
     Number of executables linked:<b> $NumExecutables</b><br>
@@ -85,10 +86,10 @@ $WarningsList<p>
 
 <h2>Changes in the test suite:</h2>
 <ul>
-<li>New Tests: ...
-<li>Removed Tests: ...
-<li>Newly passing tests: ...
-<li>Newly failing tests: ...
+<li>New Tests: $TestsAdded
+<li>Removed Tests: $TestsRemoved
+<li>Newly passing tests: $TestsFixed
+<li>Newly failing tests: $TestsBroken
 </ul>
 
 <br><br><center>

@@ -39,7 +39,7 @@ sub WriteFile {  # (filename, contents)
 }
 
 sub GetRegex {   # (Regex with ()'s, value)
-  $_[1] =~ /$_[0]/;
+  $_[1] =~ /$_[0]/m;
   return $1;
 }
 
@@ -134,6 +134,8 @@ system "(time -p cvs -d $CVSRootDir co llvm) > $Prefix-CVS-Log.txt 2>&1"
 
 chdir "llvm" or die "Could not change into llvm directory!";
 
+system "cvs up -P -d > /dev/null 2>&1" if (!$NOCHECKOUT);
+
 # Read in the HTML template file...
 undef $/;
 my $TemplateContents = ReadFile $Template;
@@ -172,7 +174,10 @@ my @Linked = split '\n', `grep Linking $Prefix-Build-Log.txt`;
 my $NumExecutables = scalar(grep(/executable/, @Linked));
 my $NumLibraries   = scalar(grep(!/executable/, @Linked));
 my $NumObjects     = `grep '^Compiling' $Prefix-Build-Log.txt | wc -l` + 0;
-my $BuildTime = GetRegex "([0-9.]+)", `grep '^real' $Prefix-Build-Log.txt`;
+my $BuildTimeU = GetRegex "([0-9.]+)", `grep '^user' $Prefix-Build-Log.txt`;
+my $BuildTimeS = GetRegex "([0-9.]+)", `grep '^sys' $Prefix-Build-Log.txt`;
+my $BuildWallTime = GetRegex "([0-9.]+)", `grep '^real' $Prefix-Build-Log.txt`;
+my $BuildTime  = $BuildTimeU+$BuildTimeS;  # BuildTime = User+System
 my $BuildError = "";
 if (`grep '^gmake: .*Error' $Prefix-Build-Log.txt | wc -l` + 0) {
   $BuildError = "<h3>Build error: compilation <a href=\"$DATE-Build-Log.txt\">"
@@ -219,27 +224,35 @@ $WarningsRemoved = AddPreTag $WarningsRemoved;
 my (%AddedFiles, %ModifiedFiles, %RemovedFiles,
     %UsersCommitted, %UsersUpdated);
 
+my $DateRE = "[-:0-9 ]+\\+[0-9]+";
+
 # Loop over every record from the CVS history, filling in the hashes.
 foreach $File (@CVSHistory) {
   my ($Type, $Date, $UID, $Rev, $Filename);
-  if ($File =~ /([AMR]) ([-:0-9 ]+\+[0-9]+) ([^ ]+) ([0-9.]+) +([^ ]+) +([^ ]+)/) {
+  if ($File =~ /([AMRUGC])\s($DateRE)\s([^\s]+)\s+([0-9.]+)\s+([^\s]+)\s+([^\s]+)/) {
     ($Type, $Date, $UID, $Rev, $Filename) = ($1, $2, $3, $4, "$6/$5");
-  } elsif ($File =~ /([OCGUW]) ([-:0-9 ]+\+[0-9]+) ([^ ]+)/) {
-    ($Type, $Date, $UID, $Rev, $Filename) = ($1, $2, $3, "", "");
-  }
-  #print "Ty = $Type Date = '$Date' UID=$UID Rev=$Rev File = '$Filename'\n";
-
-  if ($Type eq 'M') {        # Modified
-    $ModifiedFiles{$Filename} = 1;
-    $UsersCommitted{$UID} = 1;
-  } elsif ($Type eq 'A') {   # Added
-    $AddedFiles{$Filename} = 1;
-    $UsersCommitted{$UID} = 1;
-  } elsif ($Type eq 'R') {   # Removed
-    $RemovedFiles{$Filename} = 1;
-    $UsersCommitted{$UID} = 1;
+  } elsif ($File =~ /([W])\s($DateRE)\s([^\s]+) +([^\s]+)\s+([^\s]+)/) {
+    ($Type, $Date, $UID, $Rev, $Filename) = ($1, $2, $3, $4, "$6/$5");
+  } elsif ($File =~ /([O]) ($DateRE) ([^ ]+) +([^\s]+)/) {
+    ($Type, $Date, $UID, $Rev, $Filename) = ($1, $2, $3, "", "$4/");
   } else {
-    $UsersUpdated{$UID} = 1;
+    print "UNMATCHABLE: $File\n";
+  }
+  # print "$File\nTy = $Type Date = '$Date' UID=$UID Rev=$Rev File = '$Filename'\n";
+
+  if ($Filename =~ /^llvm/) {
+    if ($Type eq 'M') {        # Modified
+      $ModifiedFiles{$Filename} = 1;
+      $UsersCommitted{$UID} = 1;
+    } elsif ($Type eq 'A') {   # Added
+      $AddedFiles{$Filename} = 1;
+      $UsersCommitted{$UID} = 1;
+    } elsif ($Type eq 'R') {   # Removed
+      $RemovedFiles{$Filename} = 1;
+      $UsersCommitted{$UID} = 1;
+    } else {
+      $UsersUpdated{$UID} = 1;
+    }
   }
 }
 
@@ -259,6 +272,43 @@ system "gmake $MAKEOPTS report.nightly.html TEST=nightly "
      . "> $Prefix-ProgramTest.txt 2>&1" if (!$NOTEST);
 
 my $ProgramsTable = ReadFile "report.nightly.html";
+
+#
+# Create a list of the tests which were run...
+#
+system "grep -E 'TEST-(PASS|FAIL)' < $Prefix-ProgramTest.txt "
+     . "| sort --key=3 > $Prefix-Tests.txt";
+
+my ($RTestsAdded, $RTestsRemoved) = DiffFiles "-Tests.txt";
+
+my @RawTestsAddedArray = split '\n', $RTestsAdded;
+my @RawTestsRemovedArray = split '\n', $RTestsRemoved;
+
+my %OldTests = map {GetRegex('TEST-....: (.+)', $_)=>$_} @RawTestsRemovedArray;
+my %NewTests = map {GetRegex('TEST-....: (.+)', $_)=>$_} @RawTestsAddedArray;
+
+my ($TestsAdded, $TestsRemoved, $TestsFixed, $TestsBroken) = ("","","","");
+
+foreach $Test (keys %NewTests) {
+  if (!exists $OldTests{$Test}) {  # TestAdded if in New but not old
+    $TestsAdded = "$TestsAdded$Test\n";
+  } else {
+    if ($OldTests{$Test} =~ /TEST-PASS/) {  # Was the old one a pass?
+      $TestsBroken = "$TestsBroken$Test\n";  # New one must be a failure
+    } else {
+      $TestsFixed = "$TestsFixed$Test\n";    # No, new one is a pass.
+    }
+  }
+}
+foreach $Test (keys %OldTests) {  # TestRemoved if in Old but not New
+  $TestsRemoved = "$TestsRemoved$Test\n" if (!exists $NewTests{$Test});
+}
+
+$TestsAdded   = AddPreTag $TestsAdded;
+$TestsRemoved = AddPreTag $TestsRemoved;
+$TestsFixed   = AddPreTag $TestsFixed;
+$TestsBroken  = AddPreTag $TestsBroken;
+
 
 #
 # Get a list of the previous days that we can link to...
