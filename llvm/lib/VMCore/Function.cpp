@@ -266,5 +266,5 @@ void GlobalVariable::setName(const std::string &name, SymbolTable *ST) {
 	 "Invalid symtab argument!");
   if ((P = getParent()) && hasName()) P->getSymbolTable().remove(this);
   Value::setName(name);
-  if (P && getName() != "") P->getSymbolTable().insert(this);
+  if (P && hasName()) P->getSymbolTable().insert(this);
 }

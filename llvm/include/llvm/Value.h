@@ -78,7 +78,7 @@ public:
   inline const Type *getType() const { return Ty; }
   
   // All values can potentially be named...
-  inline bool               hasName() const { return Name != ""; }
+  inline bool               hasName() const { return !Name.empty(); }
   inline const std::string &getName() const { return Name; }
 
   virtual void setName(const std::string &name, SymbolTable * = 0) {
