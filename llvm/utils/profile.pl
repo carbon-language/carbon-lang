@@ -8,14 +8,19 @@
 # Syntax:   profile.pl [OPTIONS] bytecodefile <arguments>
 #
 # OPTIONS may include one or more of the following:
-#     -block - Enable basic block level profiling
+#     -block    - Enable basicblock-level profiling
+#     -function - Enable function-level profiling
+#     -o <filename> - Emit profiling information to the specified file, instead
+#                     of llvmprof.out
 #
 # Any unrecognized options are passed into the invocation of llvm-prof
 #
 
-my $ProfilePass = "-insert-function-profiling";
+my $ProfilePass = "-insert-block-profiling";
 
 my $LLVMProfOpts = "";
+my $ProgramOpts = "";
+my $ProfileFile = "";
 
 # Parse arguments...
 while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
@@ -24,12 +29,22 @@ while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
 
   # List command line options here...
   if (/^-?-block$/) { $ProfilePass = "-insert-block-profiling"; next; }
+  if (/^-?-function$/) { $ProfilePass = "-insert-function-profiling"; next; }
+  if (/^-?-o$/) {         # Read -o filename...
+    die "-o option requires a filename argument!" if (!scalar(@ARGV));
+    $ProgramOpts .= " -llvmprof-output $ARGV[0]";
+    $ProfileFile = $ARGV[0];
+    shift;
+    next;
+  }
   if (/^-?-help$/) {
     print "OVERVIEW: profile.pl - Instrumentation and profile printer.\n\n";
     print "USAGE: profile.pl [options] program.bc <program args>\n\n";
     print "OPTIONS:\n";
-    print "  -block - Enable basic block level profiling\n";
-    print "  -help  - Print this usage information\n";
+    print "  -block    - Enable basicblock-level profiling\n";
+    print "  -function - Enable function-level profiling\n";
+    print "  -o <file> - Specify an output file other than llvm-prof.out.\n";
+    print "  -help     - Print this usage information\n";
     print "\nAll other options are passed into llvm-prof.\n";
     exit 1;
   }
@@ -51,6 +66,6 @@ chomp $LLIPath;
 my $LibProfPath = $LLIPath . "/../../lib/Debug/libprofile_rt.so";
 
 system "opt -q $ProfilePass < $BytecodeFile | lli -fake-argv0 '$BytecodeFile'" .
-       " -load $LibProfPath - " . (join ' ', @ARGV);
+       " -load $LibProfPath -$ProgramOpts " . (join ' ', @ARGV);
 
-system "llvm-prof $LLVMProfOpts $BytecodeFile";
+system "llvm-prof $LLVMProfOpts $BytecodeFile $ProfileFile";
