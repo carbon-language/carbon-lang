@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Target/TargetData.h"
+#include "llvm/Module.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Constants.h"
 
@@ -101,6 +102,23 @@ TargetData::TargetData(const std::string &TargetName,
   IntAlignment     = IntAl;
   ShortAlignment   = ShortAl;
   ByteAlignment    = ByteAl;
+}
+
+TargetData::TargetData(const std::string &ToolName, const Module *M)
+  : AID(AnnotationManager::getID("TargetData::" + ToolName)) {
+  AnnotationManager::registerAnnotationFactory(AID, TypeAnFactory, this);
+
+  LittleEndian     = M->isLittleEndian();
+  SubWordDataSize  = 1;
+  IntegerRegSize   = 8;
+  PointerSize      = M->has32BitPointers() ? 32 : 64;
+  PointerAlignment = PointerSize;
+  DoubleAlignment  = 8;
+  FloatAlignment   = 4;
+  LongAlignment    = 8;
+  IntAlignment     = 4;
+  ShortAlignment   = 2;
+  ByteAlignment    = 1;
 }
 
 TargetData::~TargetData() {
