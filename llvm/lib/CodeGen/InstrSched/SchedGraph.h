@@ -16,6 +16,7 @@
 
 #include "llvm/CodeGen/MachineInstr.h"
 #include "Support/GraphTraits.h"
+#include "Support/hash_map"
 
 class Value;
 class Instruction;
