@@ -65,7 +65,7 @@ namespace {
 
     public:
         virtual const char* getPassName() const {
-            return "Linear Scan Register Allocator";
+            return "Iterative Scan Register Allocator";
         }
 
         virtual void getAnalysisUsage(AnalysisUsage &AU) const {
