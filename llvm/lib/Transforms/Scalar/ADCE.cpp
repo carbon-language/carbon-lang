@@ -305,9 +305,7 @@ bool ADCE::doADCE() {
       }
     });
 
-  // Find the first postdominator of the entry node that is alive.  Make it the
-  // new entry node...
-  //
+  // All blocks being live is a common case, handle it specially.
   if (AliveBlocks.size() == Func->size()) {  // No dead blocks?
     for (Function::iterator I = Func->begin(), E = Func->end(); I != E; ++I) {
       // Loop over all of the instructions in the function deleting instructions
@@ -319,123 +317,125 @@ bool ADCE::doADCE() {
       // unconditional branch), is not needed to make the decision of where to
       // go to, because all outgoing edges go to the same place.  We must remove
       // the use of the condition (because it's probably dead), so we convert
-      // the terminator to a conditional branch.
+      // the terminator to an unconditional branch.
       //
       TerminatorInst *TI = I->getTerminator();
       if (!LiveSet.count(TI))
         convertToUnconditionalBranch(TI);
     }
+
+    return MadeChanges;
+  }
+  
+
+  // If the entry node is dead, insert a new entry node to eliminate the entry
+  // node as a special case.
+  //
+  if (!AliveBlocks.count(&Func->front())) {
+    BasicBlock *NewEntry = new BasicBlock();
+    new BranchInst(&Func->front(), NewEntry);
+    Func->getBasicBlockList().push_front(NewEntry);
+    AliveBlocks.insert(NewEntry);    // This block is always alive!
+    LiveSet.insert(NewEntry->getTerminator());  // The branch is live
+  }
     
-  } else {                                   // If there are some blocks dead...
-    // If the entry node is dead, insert a new entry node to eliminate the entry
-    // node as a special case.
-    //
-    if (!AliveBlocks.count(&Func->front())) {
-      BasicBlock *NewEntry = new BasicBlock();
-      new BranchInst(&Func->front(), NewEntry);
-      Func->getBasicBlockList().push_front(NewEntry);
-      AliveBlocks.insert(NewEntry);    // This block is always alive!
-      LiveSet.insert(NewEntry->getTerminator());  // The branch is live
-    }
-    
-    // Loop over all of the alive blocks in the function.  If any successor
-    // blocks are not alive, we adjust the outgoing branches to branch to the
-    // first live postdominator of the live block, adjusting any PHI nodes in
-    // the block to reflect this.
-    //
-    for (Function::iterator I = Func->begin(), E = Func->end(); I != E; ++I)
-      if (AliveBlocks.count(I)) {
-        BasicBlock *BB = I;
-        TerminatorInst *TI = BB->getTerminator();
+  // Loop over all of the alive blocks in the function.  If any successor
+  // blocks are not alive, we adjust the outgoing branches to branch to the
+  // first live postdominator of the live block, adjusting any PHI nodes in
+  // the block to reflect this.
+  //
+  for (Function::iterator I = Func->begin(), E = Func->end(); I != E; ++I)
+    if (AliveBlocks.count(I)) {
+      BasicBlock *BB = I;
+      TerminatorInst *TI = BB->getTerminator();
       
-        // If the terminator instruction is alive, but the block it is contained
-        // in IS alive, this means that this terminator is a conditional branch
-        // on a condition that doesn't matter.  Make it an unconditional branch
-        // to ONE of the successors.  This has the side effect of dropping a use
-        // of the conditional value, which may also be dead.
-        if (!LiveSet.count(TI))
-          TI = convertToUnconditionalBranch(TI);
+      // If the terminator instruction is alive, but the block it is contained
+      // in IS alive, this means that this terminator is a conditional branch on
+      // a condition that doesn't matter.  Make it an unconditional branch to
+      // ONE of the successors.  This has the side effect of dropping a use of
+      // the conditional value, which may also be dead.
+      if (!LiveSet.count(TI))
+        TI = convertToUnconditionalBranch(TI);
 
-        // Loop over all of the successors, looking for ones that are not alive.
-        // We cannot save the number of successors in the terminator instruction
-        // here because we may remove them if we don't have a postdominator...
-        //
-        for (unsigned i = 0; i != TI->getNumSuccessors(); ++i)
-          if (!AliveBlocks.count(TI->getSuccessor(i))) {
-            // Scan up the postdominator tree, looking for the first
-            // postdominator that is alive, and the last postdominator that is
-            // dead...
+      // Loop over all of the successors, looking for ones that are not alive.
+      // We cannot save the number of successors in the terminator instruction
+      // here because we may remove them if we don't have a postdominator...
+      //
+      for (unsigned i = 0; i != TI->getNumSuccessors(); ++i)
+        if (!AliveBlocks.count(TI->getSuccessor(i))) {
+          // Scan up the postdominator tree, looking for the first
+          // postdominator that is alive, and the last postdominator that is
+          // dead...
+          //
+          PostDominatorTree::Node *LastNode = DT[TI->getSuccessor(i)];
+
+          // There is a special case here... if there IS no post-dominator for
+          // the block we have no owhere to point our branch to.  Instead,
+          // convert it to a return.  This can only happen if the code branched
+          // into an infinite loop.  Note that this may not be desirable,
+          // because we _are_ altering the behavior of the code.  This is a well
+          // known drawback of ADCE, so in the future if we choose to revisit
+          // the decision, this is where it should be.
+          //
+          if (LastNode == 0) {        // No postdominator!
+            // Call RemoveSuccessor to transmogrify the terminator instruction
+            // to not contain the outgoing branch, or to create a new terminator
+            // if the form fundamentally changes (i.e., unconditional branch to
+            // return).  Note that this will change a branch into an infinite
+            // loop into a return instruction!
             //
-            PostDominatorTree::Node *LastNode = DT[TI->getSuccessor(i)];
+            RemoveSuccessor(TI, i);
 
-            // There is a special case here... if there IS no post-dominator for
-            // the block we have no owhere to point our branch to.  Instead,
-            // convert it to a return.  This can only happen if the code
-            // branched into an infinite loop.  Note that this may not be
-            // desirable, because we _are_ altering the behavior of the code.
-            // This is a well known drawback of ADCE, so in the future if we
-            // choose to revisit the decision, this is where it should be.
+            // RemoveSuccessor may replace TI... make sure we have a fresh
+            // pointer... and e variable.
             //
-            if (LastNode == 0) {        // No postdominator!
-              // Call RemoveSuccessor to transmogrify the terminator instruction
-              // to not contain the outgoing branch, or to create a new
-              // terminator if the form fundamentally changes (i.e.,
-              // unconditional branch to return).  Note that this will change a
-              // branch into an infinite loop into a return instruction!
-              //
-              RemoveSuccessor(TI, i);
+            TI = BB->getTerminator();
 
-              // RemoveSuccessor may replace TI... make sure we have a fresh
-              // pointer... and e variable.
-              //
-              TI = BB->getTerminator();
+            // Rescan this successor...
+            --i;
+          } else {
+            PostDominatorTree::Node *NextNode = LastNode->getIDom();
 
-              // Rescan this successor...
-              --i;
-            } else {
-              PostDominatorTree::Node *NextNode = LastNode->getIDom();
-
-              while (!AliveBlocks.count(NextNode->getBlock())) {
-                LastNode = NextNode;
-                NextNode = NextNode->getIDom();
-              }
+            while (!AliveBlocks.count(NextNode->getBlock())) {
+              LastNode = NextNode;
+              NextNode = NextNode->getIDom();
+            }
             
-              // Get the basic blocks that we need...
-              BasicBlock *LastDead = LastNode->getBlock();
-              BasicBlock *NextAlive = NextNode->getBlock();
+            // Get the basic blocks that we need...
+            BasicBlock *LastDead = LastNode->getBlock();
+            BasicBlock *NextAlive = NextNode->getBlock();
 
-              // Make the conditional branch now go to the next alive block...
-              TI->getSuccessor(i)->removePredecessor(BB);
-              TI->setSuccessor(i, NextAlive);
+            // Make the conditional branch now go to the next alive block...
+            TI->getSuccessor(i)->removePredecessor(BB);
+            TI->setSuccessor(i, NextAlive);
 
-              // If there are PHI nodes in NextAlive, we need to add entries to
-              // the PHI nodes for the new incoming edge.  The incoming values
-              // should be identical to the incoming values for LastDead.
-              //
-              for (BasicBlock::iterator II = NextAlive->begin();
-                   isa<PHINode>(II); ++II) {
-                PHINode *PN = cast<PHINode>(II);
-                if (LiveSet.count(PN)) {  // Only modify live phi nodes
-                  // Get the incoming value for LastDead...
-                  int OldIdx = PN->getBasicBlockIndex(LastDead);
-                  assert(OldIdx != -1 &&"LastDead is not a pred of NextAlive!");
-                  Value *InVal = PN->getIncomingValue(OldIdx);
+            // If there are PHI nodes in NextAlive, we need to add entries to
+            // the PHI nodes for the new incoming edge.  The incoming values
+            // should be identical to the incoming values for LastDead.
+            //
+            for (BasicBlock::iterator II = NextAlive->begin();
+                 isa<PHINode>(II); ++II) {
+              PHINode *PN = cast<PHINode>(II);
+              if (LiveSet.count(PN)) {  // Only modify live phi nodes
+                // Get the incoming value for LastDead...
+                int OldIdx = PN->getBasicBlockIndex(LastDead);
+                assert(OldIdx != -1 &&"LastDead is not a pred of NextAlive!");
+                Value *InVal = PN->getIncomingValue(OldIdx);
                   
-                  // Add an incoming value for BB now...
-                  PN->addIncoming(InVal, BB);
-                }
+                // Add an incoming value for BB now...
+                PN->addIncoming(InVal, BB);
               }
             }
           }
+        }
 
-        // Now loop over all of the instructions in the basic block, deleting
-        // dead instructions.  This is so that the next sweep over the program
-        // can safely delete dead instructions without other dead instructions
-        // still referring to them.
-        //
-        deleteDeadInstructionsInLiveBlock(BB);
-      }
-  }
+      // Now loop over all of the instructions in the basic block, deleting
+      // dead instructions.  This is so that the next sweep over the program
+      // can safely delete dead instructions without other dead instructions
+      // still referring to them.
+      //
+      deleteDeadInstructionsInLiveBlock(BB);
+    }
 
   // Loop over all of the basic blocks in the function, dropping references of
   // the dead basic blocks.  We must do this after the previous step to avoid
