@@ -34,8 +34,9 @@ address     { clear: right; }
                   margin: 1.5em 0.5em 1.5em 0.5em }
 
 .doc_subsubsection { margin: 1.5em 0.5em 1.5 0.5em;
+                     padding: 20pt 4pt 4pt 4pt;
                      font-weight: bold; font-style: oblique;
-                     border-bottom: 1px solid #999999 }
+                     border-bottom: 1px solid #999999; font-size: 12pt }
 
 .doc_text       { text-align: left; padding-left: 20pt }
 
