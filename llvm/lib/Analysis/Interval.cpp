@@ -40,14 +40,13 @@ IntervalPartition::~IntervalPartition() {
   for_each(begin(), end(), deleter<cfg::Interval>);
 }
 
-
+#if 0
 // getNodeHeader - Given a source graph node and the source graph, return the 
 // BasicBlock that is the header node.  This is the opposite of
 // getSourceGraphNode.
 //
 inline static BasicBlock *getNodeHeader(BasicBlock *BB) { return BB; }
 inline static BasicBlock *getNodeHeader(Interval *I) { return I->getHeaderNode(); }
-
 
 // getSourceGraphNode - Given a BasicBlock and the source graph, return the 
 // source graph node that corresponds to the BasicBlock.  This is the opposite
@@ -60,6 +59,7 @@ inline static Interval *getSourceGraphNode(IntervalPartition *IP,
 					   BasicBlock *BB) { 
   return IP->getBlockInterval(BB);
 }
+#endif
 
 
 // addNodeToInterval - This method exists to assist the generic ProcessNode
