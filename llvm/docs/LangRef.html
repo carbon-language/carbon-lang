@@ -671,7 +671,8 @@ used to implement constructs in C such as "<tt>int X;</tt>" at global scope.<p>
 <a name="linkage_appending">
 <dt><tt><b>appending</b></tt>:
 
-<dd>"<tt>appending</tt>" linkage may only applied to global variables of pointer
+<dd>"<tt>appending</tt>" linkage may only be applied to global variables of
+pointer
 to array type.  When two global variables with appending linkage are linked
 together, the two global arrays are appended together.  This is the LLVM,
 typesafe, equivalent of having the system linker append together "sections" with
