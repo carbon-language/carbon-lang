@@ -7,7 +7,8 @@
 // 
 //===----------------------------------------------------------------------===//
 //
-// This header defines the data structure graph.
+// This header defines the data structure graph (DSGraph) and the
+// ReachabilityCloner class.
 //
 //===----------------------------------------------------------------------===//
 
@@ -243,18 +244,7 @@ public:
     UpdateInlinedGlobals  = 1 << 5, DontUpdateInlinedGlobals = 0,
   };
 
-private:
-  void cloneReachableNodes(const DSNode*  Node, unsigned BitsToClear,
-                           NodeMapTy& OldNodeMap, GlobalSetTy &Globals);
-
-public:
   void updateFromGlobalGraph();
-
-  void cloneReachableSubgraph(const DSGraph &G,
-                              hash_set<const DSNode*> &RootNodes,
-                              NodeMapTy &OldNodeMap,
-                              unsigned CloneFlags = 0);
-
 
   /// computeNodeMapping - Given roots in two different DSGraphs, traverse the
   /// nodes reachable from the two graphs, computing the mapping of nodes from
@@ -277,24 +267,6 @@ public:
                  ReturnNodesTy &OldReturnNodes, NodeMapTy &OldNodeMap,
                  unsigned CloneFlags = 0);
 
-  /// clonePartiallyInto - Clone the reachable subset of the specified DSGraph
-  /// into the current graph, for the specified function.
-  ///
-  /// This differs from cloneInto in that it only clones nodes reachable from
-  /// globals, call nodes, the scalars specified in ValBindings, and the return
-  /// value of the specified function.  This method merges the the cloned
-  /// version of the scalars and return value with the specified DSNodeHandles.
-  ///
-  /// On return, OldNodeMap contains a mapping from the original nodes to the
-  /// newly cloned nodes, for the subset of nodes that were actually cloned.
-  ///
-  /// The CloneFlags member controls various aspects of the cloning process.
-  ///
-  void clonePartiallyInto(const DSGraph &G, Function &F,
-                          const DSNodeHandle &RetVal,
-                          const ScalarMapTy &ValBindings, NodeMapTy &OldNodeMap,
-                          unsigned CloneFlags = 0);
-
   /// mergeInGraph - The method is used for merging graphs together.  If the
   /// argument graph is not *this, it makes a clone of the specified graph, then
   /// merges the nodes specified in the call site with the formal arguments in
@@ -312,7 +284,7 @@ public:
 
   // Methods for checking to make sure graphs are well formed...
   void AssertNodeInGraph(const DSNode *N) const {
-    assert((!N || find(Nodes.begin(), Nodes.end(), N) != Nodes.end()) &&
+    assert((!N || N->getParentGraph() == this) &&
            "AssertNodeInGraph: Node is not in graph!");
   }
   void AssertNodeContainsGlobal(const DSNode *N, GlobalValue *GV) const {
@@ -339,13 +311,6 @@ public:
 
   void AssertGraphOK() const;
 
-  /// mergeInGlobalsGraph - This method is useful for clients to incorporate the
-  /// globals graph into the DS, BU or TD graph for a function.  This code
-  /// retains all globals, i.e., does not delete unreachable globals after they
-  /// are inlined.
-  ///
-  void mergeInGlobalsGraph();
-
   /// removeTriviallyDeadNodes - After the graph has been constructed, this
   /// method removes all unreachable nodes that are created because they got
   /// merged with other nodes in the graph.  This is used as the first step of
@@ -354,6 +319,49 @@ public:
   void removeTriviallyDeadNodes();
 };
 
+
+  /// ReachabilityCloner - This class is used to incrementally clone and merge
+  /// nodes from a non-changing source graph into a potentially mutating
+  /// destination graph.  Nodes are only cloned over on demand, either in
+  /// responds to a merge() or getClonedNH() call.  When a node is cloned over,
+  /// all of the nodes reachable from it are automatically brought over as well.
+  class ReachabilityCloner {
+    DSGraph &Dest;
+    const DSGraph &Src;
+
+    /// BitsToKeep - These bits are retained from the source node when the
+    /// source nodes are merged into the destination graph.
+    unsigned BitsToKeep;
+    unsigned CloneFlags;
+
+    // NodeMap - A mapping from nodes in the source graph to the nodes that
+    // represent them in the destination graph.
+    DSGraph::NodeMapTy NodeMap;
+  public:
+    ReachabilityCloner(DSGraph &dest, const DSGraph &src, unsigned cloneFlags)
+      : Dest(dest), Src(src), CloneFlags(cloneFlags) {
+      assert(&Dest != &Src && "Cannot clone from graph to same graph!");
+      BitsToKeep = ~DSNode::DEAD;
+      if (CloneFlags & DSGraph::StripAllocaBit)
+        BitsToKeep &= ~DSNode::AllocaNode;
+      if (CloneFlags & DSGraph::StripModRefBits)
+        BitsToKeep &= ~(DSNode::Modified | DSNode::Read);
+      if (CloneFlags & DSGraph::StripIncompleteBit)
+        BitsToKeep &= ~DSNode::Incomplete;
+    }
+    
+    DSNodeHandle getClonedNH(const DSNodeHandle &SrcNH);
+
+    void merge(const DSNodeHandle &NH, const DSNodeHandle &SrcNH);
+
+    /// mergeCallSite - Merge the nodes reachable from the specified src call
+    /// site into the nodes reachable from DestCS.
+    void mergeCallSite(const DSCallSite &DestCS, const DSCallSite &SrcCS);
+
+    bool clonedNode() const { return !NodeMap.empty(); }
+
+    void destroy() { NodeMap.clear(); }
+  };
 } // End llvm namespace
 
 #endif
