@@ -1116,16 +1116,16 @@ void ISel::visitMul(BinaryOperator &I) {
     BuildMI(BB, X86::MOVrr32, 1, OverflowReg).addReg(X86::EDX); // AL*BL >> 32
 
     MachineBasicBlock::iterator MBBI = BB->end();
-    unsigned AHBLReg = makeAnotherReg(Type::UIntTy);
-    doMultiply(BB, MBBI, AHBLReg, Type::UIntTy, Op0Reg+1, Op1Reg); // AH*BL
+    unsigned AHBLReg = makeAnotherReg(Type::UIntTy);   // AH*BL
+    BMI(BB, MBBI, X86::IMULr32, 2, AHBLReg).addReg(Op0Reg+1).addReg(Op1Reg);
 
     unsigned AHBLplusOverflowReg = makeAnotherReg(Type::UIntTy);
     BuildMI(BB, X86::ADDrr32, 2,                         // AH*BL+(AL*BL >> 32)
 	    AHBLplusOverflowReg).addReg(AHBLReg).addReg(OverflowReg);
     
     MBBI = BB->end();
-    unsigned ALBHReg = makeAnotherReg(Type::UIntTy);
-    doMultiply(BB, MBBI, ALBHReg, Type::UIntTy, Op0Reg, Op1Reg+1); // AL*BH
+    unsigned ALBHReg = makeAnotherReg(Type::UIntTy); // AL*BH
+    BMI(BB, MBBI, X86::IMULr32, 2, ALBHReg).addReg(Op0Reg).addReg(Op1Reg+1);
     
     BuildMI(BB, X86::ADDrr32, 2,               // AL*BH + AH*BL + (AL*BL >> 32)
 	    DestReg+1).addReg(AHBLplusOverflowReg).addReg(ALBHReg);
