@@ -1,4 +1,4 @@
-;; Author:      Misha Brukman <brukman@cs.uiuc.edu>
+;; Maintainer:  The LLVM team, http://llvm.cs.uiuc.edu/
 ;; Description: Major mode for the LLVM assembler language.
 ;; Updated:     2003-06-02
 
