@@ -209,6 +209,3 @@ class Nonterminal<dag pattern> {
   bit BuiltIn = 0;
 }
 
-// imm - Immediate value...
-//def imm : Nonterminal<(Constant)> { let BuiltIn = 1; }
-
