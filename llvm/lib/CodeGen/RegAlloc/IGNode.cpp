@@ -1,13 +1,12 @@
-//===-- IGNode.cpp -------------------------------------------------------===//
+//===-- IGNode.cpp --------------------------------------------------------===//
 // 
 //  class IGNode for coloring-based register allocation for LLVM.
 // 
 //===----------------------------------------------------------------------===//
 
-#include "llvm/CodeGen/IGNode.h"
+#include "IGNode.h"
 #include <algorithm>
 #include <iostream>
-using std::cerr;
 
 //-----------------------------------------------------------------------------
 // Sets this IGNode on stack and reduce the degree of neighbors  
@@ -18,7 +17,7 @@ void IGNode::pushOnStack() {
   int neighs = AdjList.size();
 
   if (neighs < 0) {
-    cerr << "\nAdj List size = " << neighs;
+    std::cerr << "\nAdj List size = " << neighs;
     assert(0 && "Invalid adj list size");
   }
 

@@ -6,9 +6,8 @@
 
 #include "RegClass.h"
 #include "RegAllocCommon.h"
-#include "llvm/CodeGen/IGNode.h"
+#include "IGNode.h"
 #include "llvm/Target/TargetRegInfo.h"
-using std::cerr;
 
 //----------------------------------------------------------------------------
 // This constructor inits IG. The actual matrix is created by a call to 
@@ -21,7 +20,7 @@ RegClass::RegClass(const Function *M,
                      RegClassID( _MRC_->getRegClassID() ),
                      IG(this), IGNodeStack() {
   if( DEBUG_RA >= RA_DEBUG_Interference)
-    cerr << "Created Reg Class: " << RegClassID << "\n";
+    std::cerr << "Created Reg Class: " << RegClassID << "\n";
 
   IsColorUsedArr.resize(MRC->getNumOfAllRegs());
 }
@@ -34,7 +33,7 @@ RegClass::RegClass(const Function *M,
 void RegClass::colorAllRegs()
 {
   if(DEBUG_RA >= RA_DEBUG_Coloring)
-    cerr << "Coloring IG of reg class " << RegClassID << " ...\n";
+    std::cerr << "Coloring IG of reg class " << RegClassID << " ...\n";
 
                                         // pre-color IGNodes
   pushAllIGNodes();                     // push all IG Nodes
@@ -68,9 +67,9 @@ void RegClass::pushAllIGNodes()
   bool PushedAll  = pushUnconstrainedIGNodes(); 
 
   if( DEBUG_RA >= RA_DEBUG_Coloring) {
-    cerr << " Puhsed all-unconstrained IGNodes. ";
-    if( PushedAll ) cerr << " No constrained nodes left.";
-    cerr << "\n";
+    std::cerr << " Puhsed all-unconstrained IGNodes. ";
+    if( PushedAll ) std::cerr << " No constrained nodes left.";
+    std::cerr << "\n";
   }
 
   if( PushedAll )                       // if NO constrained nodes left
@@ -99,7 +98,7 @@ void RegClass::pushAllIGNodes()
     NeedMoreSpills = !pushUnconstrainedIGNodes(); 
 
     if (DEBUG_RA >= RA_DEBUG_Coloring)
-      cerr << "\nConstrained IG Node found !@!" << IGNodeSpill->getIndex();
+      std::cerr << "\nConstrained IG Node found !@!" << IGNodeSpill->getIndex();
 
   } while(NeedMoreSpills);            // repeat until we have pushed all 
 
@@ -140,8 +139,8 @@ bool  RegClass::pushUnconstrainedIGNodes()
       IGNode->pushOnStack();            // set OnStack and dec deg of neighs
 
       if (DEBUG_RA >= RA_DEBUG_Coloring) {
-	cerr << " pushed un-constrained IGNode " << IGNode->getIndex() ;
-	cerr << " on to stack\n";
+	std::cerr << " pushed un-constrained IGNode " << IGNode->getIndex()
+                  << " on to stack\n";
       }
     }
     else pushedall = false;             // we didn't push all live ranges
@@ -239,16 +238,16 @@ void RegClass::colorIGNode(IGNode *const Node)
   }
   else {
     if( DEBUG_RA >= RA_DEBUG_Coloring) {
-      cerr << " Node " << Node->getIndex();
-      cerr << " already colored with color " << Node->getColor() << "\n";
+      std::cerr << " Node " << Node->getIndex();
+      std::cerr << " already colored with color " << Node->getColor() << "\n";
     }
   }
 
 
   if( !Node->hasColor() ) {
     if( DEBUG_RA >= RA_DEBUG_Coloring) {
-      cerr << " Node " << Node->getIndex();
-      cerr << " - could not find a color (needs spilling)\n";
+      std::cerr << " Node " << Node->getIndex();
+      std::cerr << " - could not find a color (needs spilling)\n";
     }
   }
 

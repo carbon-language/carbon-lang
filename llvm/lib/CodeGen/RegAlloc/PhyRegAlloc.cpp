@@ -7,7 +7,7 @@
 #include "llvm/CodeGen/RegisterAllocation.h"
 #include "RegAllocCommon.h"
 #include "RegClass.h"
-#include "llvm/CodeGen/IGNode.h"
+#include "IGNode.h"
 #include "llvm/CodeGen/PhyRegAlloc.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineInstrAnnot.h"
@@ -27,8 +27,6 @@
 #include "Support/SetOperations.h"
 #include "Support/CommandLine.h"
 #include <math.h>
-using std::cerr;
-using std::vector;
 
 RegAllocDebugLevel_t DEBUG_RA;
 
@@ -57,13 +55,13 @@ namespace {
     
     bool runOnFunction(Function &F) {
       if (DEBUG_RA)
-        cerr << "\n********* Function "<< F.getName() << " ***********\n";
+        std::cerr << "\n********* Function "<< F.getName() << " ***********\n";
       
       PhyRegAlloc PRA(&F, Target, &getAnalysis<FunctionLiveVarInfo>(),
                       &getAnalysis<LoopInfo>());
       PRA.allocateRegisters();
       
-      if (DEBUG_RA) cerr << "\nRegister allocation complete!\n";
+      if (DEBUG_RA) std::cerr << "\nRegister allocation complete!\n";
       return false;
     }
 
@@ -110,7 +108,7 @@ PhyRegAlloc::~PhyRegAlloc() {
 // and IGNodeList (one in each IG). The actual nodes will be pushed later. 
 //----------------------------------------------------------------------------
 void PhyRegAlloc::createIGNodeListsAndIGs() {
-  if (DEBUG_RA >= RA_DEBUG_LiveRanges) cerr << "Creating LR lists ...\n";
+  if (DEBUG_RA >= RA_DEBUG_LiveRanges) std::cerr << "Creating LR lists ...\n";
 
   // hash map iterator
   LiveRangeMapType::const_iterator HMI = LRI.getLiveRangeMap()->begin();   
@@ -123,7 +121,7 @@ void PhyRegAlloc::createIGNodeListsAndIGs() {
       LiveRange *L = HMI->second;   // get the LiveRange
       if (!L) { 
         if (DEBUG_RA)
-          cerr << "\n**** ?!?WARNING: NULL LIVE RANGE FOUND FOR: "
+          std::cerr << "\n**** ?!?WARNING: NULL LIVE RANGE FOUND FOR: "
                << RAV(HMI->first) << "****\n";
         continue;
       }
@@ -141,7 +139,7 @@ void PhyRegAlloc::createIGNodeListsAndIGs() {
   for ( unsigned rc=0; rc < NumOfRegClasses ; rc++)  
     RegClassList[rc]->createInterferenceGraph();
 
-  if (DEBUG_RA >= RA_DEBUG_LiveRanges) cerr << "LRLists Created!\n";
+  if (DEBUG_RA >= RA_DEBUG_LiveRanges) std::cerr << "LRLists Created!\n";
 }
 
 
@@ -172,7 +170,7 @@ void PhyRegAlloc::addInterference(const Value *Def,
   for ( ; LIt != LVSet->end(); ++LIt) {
 
     if (DEBUG_RA >= RA_DEBUG_Verbose)
-      cerr << "< Def=" << RAV(Def) << ", Lvar=" << RAV(*LIt) << "> ";
+      std::cerr << "< Def=" << RAV(Def) << ", Lvar=" << RAV(*LIt) << "> ";
 
     //  get the live range corresponding to live var
     // 
@@ -201,7 +199,7 @@ void PhyRegAlloc::setCallInterferences(const MachineInstr *MInst,
 				       const ValueSet *LVSetAft) {
 
   if (DEBUG_RA >= RA_DEBUG_Interference)
-    cerr << "\n For call inst: " << *MInst;
+    std::cerr << "\n For call inst: " << *MInst;
 
   // for each live var in live variable set after machine inst
   //
@@ -217,12 +215,12 @@ void PhyRegAlloc::setCallInterferences(const MachineInstr *MInst,
     //
     if (LR ) {  
       if (DEBUG_RA >= RA_DEBUG_Interference) {
-        cerr << "\n\tLR after Call: ";
+        std::cerr << "\n\tLR after Call: ";
         printSet(*LR);
       }
       LR->setCallInterference();
       if (DEBUG_RA >= RA_DEBUG_Interference) {
-	cerr << "\n  ++After adding call interference for LR: " ;
+	std::cerr << "\n  ++After adding call interference for LR: " ;
 	printSet(*LR);
       }
     }
@@ -265,7 +263,7 @@ void PhyRegAlloc::buildInterferenceGraphs()
 {
 
   if (DEBUG_RA >= RA_DEBUG_Interference)
-    cerr << "Creating interference graphs ...\n";
+    std::cerr << "Creating interference graphs ...\n";
 
   unsigned BBLoopDepthCost;
   for (MachineFunction::iterator BBI = MF.begin(), BBE = MF.end();
@@ -339,7 +337,7 @@ void PhyRegAlloc::buildInterferenceGraphs()
   addInterferencesForArgs();          
 
   if (DEBUG_RA >= RA_DEBUG_Interference)
-    cerr << "Interference graphs calculated!\n";
+    std::cerr << "Interference graphs calculated!\n";
 }
 
 
@@ -359,7 +357,7 @@ void PhyRegAlloc::addInterf4PseudoInstr(const MachineInstr *MInst) {
   for (MachineInstr::const_val_op_iterator It1 = MInst->begin(),
          ItE = MInst->end(); It1 != ItE; ++It1) {
     const LiveRange *LROfOp1 = LRI.getLiveRangeForValue(*It1); 
-    assert((LROfOp1 || !It1.isUseOnly())&& "No LR for Def in PSEUDO insruction");
+    assert((LROfOp1 || !It1.isUseOnly())&&"No LR for Def in PSEUDO insruction");
 
     MachineInstr::const_val_op_iterator It2 = It1;
     for (++It2; It2 != ItE; ++It2) {
@@ -378,8 +376,8 @@ void PhyRegAlloc::addInterf4PseudoInstr(const MachineInstr *MInst) {
   } // for all operands in an instruction
 
   if (!setInterf && MInst->getNumOperands() > 2) {
-    cerr << "\nInterf not set for any operand in pseudo instr:\n";
-    cerr << *MInst;
+    std::cerr << "\nInterf not set for any operand in pseudo instr:\n";
+    std::cerr << *MInst;
     assert(0 && "Interf not set for pseudo instr with > 2 operands" );
   }
 } 
@@ -399,7 +397,7 @@ void PhyRegAlloc::addInterferencesForArgs() {
     addInterference(AI, &InSet, false);
     
     if (DEBUG_RA >= RA_DEBUG_Interference)
-      cerr << " - %% adding interference for  argument " << RAV(AI) << "\n";
+      std::cerr << " - %% adding interference for  argument " << RAV(AI) << "\n";
   }
 }
 
@@ -450,7 +448,7 @@ SubstituteInPlace(MachineInstr* newMI,
 }
 
 inline void
-PrependInstructions(vector<MachineInstr *> &IBef,
+PrependInstructions(std::vector<MachineInstr *> &IBef,
                     MachineBasicBlock& MBB,
                     MachineBasicBlock::iterator& MII,
                     const std::string& msg)
@@ -462,8 +460,8 @@ PrependInstructions(vector<MachineInstr *> &IBef,
       for (AdIt = IBef.begin(); AdIt != IBef.end() ; ++AdIt)
         {
           if (DEBUG_RA) {
-            if (OrigMI) cerr << "For MInst:\n  " << *OrigMI;
-            cerr << msg << "PREPENDed instr:\n  " << **AdIt << "\n";
+            if (OrigMI) std::cerr << "For MInst:\n  " << *OrigMI;
+            std::cerr << msg << "PREPENDed instr:\n  " << **AdIt << "\n";
           }
           InsertBefore(*AdIt, MBB, MII);
         }
@@ -483,8 +481,8 @@ AppendInstructions(std::vector<MachineInstr *> &IAft,
       for ( AdIt = IAft.begin(); AdIt != IAft.end() ; ++AdIt )
         {
           if (DEBUG_RA) {
-            if (OrigMI) cerr << "For MInst:\n  " << *OrigMI;
-            cerr << msg << "APPENDed instr:\n  "  << **AdIt << "\n";
+            if (OrigMI) std::cerr << "For MInst:\n  " << *OrigMI;
+            std::cerr << msg << "APPENDed instr:\n  "  << **AdIt << "\n";
           }
           InsertAfter(*AdIt, MBB, MII);
         }
@@ -647,7 +645,7 @@ void PhyRegAlloc::updateMachineCode()
                                   MBB, MII+1);        // replace with NOP
 
               if (DEBUG_RA) {
-                cerr << "\nRegAlloc: Moved instr. with added code: "
+                std::cerr << "\nRegAlloc: Moved instr. with added code: "
                      << *DelaySlotMI
                      << "           out of delay slots of instr: " << *MInst;
               }
@@ -766,8 +764,8 @@ void PhyRegAlloc::insertCode4SpilledLR(const LiveRange *LR,
 
   MF.getInfo()->pushTempValue(MRI.getSpilledRegSize(RegType) );
   
-  vector<MachineInstr*> MIBef, MIAft;
-  vector<MachineInstr*> AdIMid;
+  std::vector<MachineInstr*> MIBef, MIAft;
+  std::vector<MachineInstr*> AdIMid;
   
   // Choose a register to hold the spilled value, if one was not preallocated.
   // This may insert code before and after MInst to free up the value.  If so,
@@ -826,9 +824,9 @@ void PhyRegAlloc::insertCode4SpilledLR(const LiveRange *LR,
   AI.InstrnsAfter.insert(AI.InstrnsAfter.begin(), MIAft.begin(), MIAft.end());
   
   if (DEBUG_RA) {
-    cerr << "\nFor Inst:\n  " << *MInst;
-    cerr << "SPILLED LR# " << LR->getUserIGNode()->getIndex();
-    cerr << "; added Instructions:";
+    std::cerr << "\nFor Inst:\n  " << *MInst;
+    std::cerr << "SPILLED LR# " << LR->getUserIGNode()->getIndex();
+    std::cerr << "; added Instructions:";
     for_each(MIBef.begin(), MIBef.end(), std::mem_fun(&MachineInstr::dump));
     for_each(MIAft.begin(), MIAft.end(), std::mem_fun(&MachineInstr::dump));
   }
@@ -972,7 +970,6 @@ PhyRegAlloc::insertCallerSavingCode(std::vector<MachineInstr*> &instrnsBefore,
                                    AdIAft.begin(), AdIAft.end());
             
 	    //---- Insert code for popping the reg from the stack ----------
-
 	    AdIBef.clear();
             AdIAft.clear();
             
@@ -1212,8 +1209,8 @@ void PhyRegAlloc::move2DelayedInstr(const MachineInstr *OrigMI,
   std::vector<MachineInstr *> &OrigAft = AddedInstrMap[OrigMI].InstrnsAfter;
 
   if (DEBUG_RA && OrigAft.size() > 0) {
-    cerr << "\nRegAlloc: Moved InstrnsAfter for: " << *OrigMI;
-    cerr << "         to last delay slot instrn: " << *DelayedMI;
+    std::cerr << "\nRegAlloc: Moved InstrnsAfter for: " << *OrigMI;
+    std::cerr << "         to last delay slot instrn: " << *DelayedMI;
   }
 
   // "added after" instructions of the delayed instr
@@ -1235,12 +1232,12 @@ void PhyRegAlloc::move2DelayedInstr(const MachineInstr *OrigMI,
 void PhyRegAlloc::printMachineCode()
 {
 
-  cerr << "\n;************** Function " << Fn->getName()
+  std::cerr << "\n;************** Function " << Fn->getName()
        << " *****************\n";
 
   for (MachineFunction::iterator BBI = MF.begin(), BBE = MF.end();
        BBI != BBE; ++BBI) {
-    cerr << "\n"; printLabel(BBI->getBasicBlock()); cerr << ": ";
+    std::cerr << "\n"; printLabel(BBI->getBasicBlock()); std::cerr << ": ";
 
     // get the iterator for machine instructions
     MachineBasicBlock& MBB = *BBI;
@@ -1250,8 +1247,8 @@ void PhyRegAlloc::printMachineCode()
     for ( ; MII != MBB.end(); ++MII) {  
       MachineInstr *MInst = *MII; 
 
-      cerr << "\n\t";
-      cerr << TM.getInstrInfo().getName(MInst->getOpCode());
+      std::cerr << "\n\t";
+      std::cerr << TM.getInstrInfo().getName(MInst->getOpCode());
 
       for (unsigned OpNum=0; OpNum < MInst->getNumOperands(); ++OpNum) {
 	MachineOperand& Op = MInst->getOperand(OpNum);
@@ -1263,58 +1260,58 @@ void PhyRegAlloc::printMachineCode()
 	  const Value *const Val = Op.getVRegValue () ;
 	  // ****this code is temporary till NULL Values are fixed
 	  if (! Val ) {
-	    cerr << "\t<*NULL*>";
+	    std::cerr << "\t<*NULL*>";
 	    continue;
 	  }
 
 	  // if a label or a constant
 	  if (isa<BasicBlock>(Val)) {
-	    cerr << "\t"; printLabel(	Op.getVRegValue	() );
+	    std::cerr << "\t"; printLabel(	Op.getVRegValue	() );
 	  } else {
 	    // else it must be a register value
 	    const int RegNum = Op.getAllocatedRegNum();
 
-	    cerr << "\t" << "%" << MRI.getUnifiedRegName( RegNum );
+	    std::cerr << "\t" << "%" << MRI.getUnifiedRegName( RegNum );
 	    if (Val->hasName() )
-	      cerr << "(" << Val->getName() << ")";
+	      std::cerr << "(" << Val->getName() << ")";
 	    else 
-	      cerr << "(" << Val << ")";
+	      std::cerr << "(" << Val << ")";
 
 	    if (Op.opIsDefOnly() || Op.opIsDefAndUse())
-	      cerr << "*";
+	      std::cerr << "*";
 
 	    const LiveRange *LROfVal = LRI.getLiveRangeForValue(Val);
 	    if (LROfVal )
 	      if (LROfVal->hasSpillOffset() )
-		cerr << "$";
+		std::cerr << "$";
 	  }
 
 	} 
 	else if (Op.getType() ==  MachineOperand::MO_MachineRegister) {
-	  cerr << "\t" << "%" << MRI.getUnifiedRegName(Op.getMachineRegNum());
+	  std::cerr << "\t%" << MRI.getUnifiedRegName(Op.getMachineRegNum());
 	}
 
 	else 
-	  cerr << "\t" << Op;      // use dump field
+	  std::cerr << "\t" << Op;      // use dump field
       }
 
     
 
       unsigned NumOfImpRefs =  MInst->getNumImplicitRefs();
       if (NumOfImpRefs > 0) {
-	cerr << "\tImplicit:";
+	std::cerr << "\tImplicit:";
 
 	for (unsigned z=0; z < NumOfImpRefs; z++)
-	  cerr << RAV(MInst->getImplicitRef(z)) << "\t";
+	  std::cerr << RAV(MInst->getImplicitRef(z)) << "\t";
       }
 
     } // for all machine instructions
 
-    cerr << "\n";
+    std::cerr << "\n";
 
   } // for all BBs
 
-  cerr << "\n";
+  std::cerr << "\n";
 }
 
 
@@ -1333,9 +1330,9 @@ void PhyRegAlloc::colorIncomingArgs()
 //----------------------------------------------------------------------------
 void PhyRegAlloc::printLabel(const Value *Val) {
   if (Val->hasName())
-    cerr  << Val->getName();
+    std::cerr  << Val->getName();
   else
-    cerr << "Label" << Val;
+    std::cerr << "Label" << Val;
 }
 
 
@@ -1379,7 +1376,7 @@ void PhyRegAlloc::markUnusableSugColors()
 //----------------------------------------------------------------------------
 
 void PhyRegAlloc::allocateStackSpace4SpilledLRs() {
-  if (DEBUG_RA) cerr << "\nSetting LR stack offsets for spills...\n";
+  if (DEBUG_RA) std::cerr << "\nSetting LR stack offsets for spills...\n";
 
   LiveRangeMapType::const_iterator HMI    = LRI.getLiveRangeMap()->begin();   
   LiveRangeMapType::const_iterator HMIEnd = LRI.getLiveRangeMap()->end();   
@@ -1391,7 +1388,7 @@ void PhyRegAlloc::allocateStackSpace4SpilledLRs() {
         int stackOffset = MF.getInfo()->allocateSpilledValue(Type::LongTy);
         L->setSpillOffFromFP(stackOffset);
         if (DEBUG_RA)
-          cerr << "  LR# " << L->getUserIGNode()->getIndex()
+          std::cerr << "  LR# " << L->getUserIGNode()->getIndex()
                << ": stack-offset = " << stackOffset << "\n";
       }
     }
@@ -1474,7 +1471,7 @@ void PhyRegAlloc::allocateRegisters()
   updateMachineCode(); 
 
   if (DEBUG_RA) {
-    cerr << "\n**** Machine Code After Register Allocation:\n\n";
+    std::cerr << "\n**** Machine Code After Register Allocation:\n\n";
     MF.dump();
   }
 }

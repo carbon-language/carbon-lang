@@ -7,7 +7,7 @@
 #include "llvm/CodeGen/LiveRangeInfo.h"
 #include "RegAllocCommon.h"
 #include "RegClass.h"
-#include "llvm/CodeGen/IGNode.h"
+#include "IGNode.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/Target/TargetMachine.h"
@@ -15,7 +15,6 @@
 #include "llvm/Target/TargetRegInfo.h"
 #include "llvm/Function.h"
 #include "Support/SetOperations.h"
-using std::cerr;
 
 unsigned LiveRange::getRegClassID() const { return getRegClass()->getID(); }
 
@@ -105,9 +104,9 @@ LiveRangeInfo::createNewLiveRange(const Value* Def, bool isCC /* = false*/)
                                                              isCC)]);
 
   if (DEBUG_RA >= RA_DEBUG_LiveRanges) {
-    cerr << "  Creating a LR for def ";
-    if (isCC) cerr << " (CC Register!)";
-    cerr << " : " << RAV(Def) << "\n";
+    std::cerr << "  Creating a LR for def ";
+    if (isCC) std::cerr << " (CC Register!)";
+    std::cerr << " : " << RAV(Def) << "\n";
   }
   return DefRange;
 }
@@ -125,7 +124,7 @@ LiveRangeInfo::createOrAddToLiveRange(const Value* Def, bool isCC /* = false*/)
     DefRange->insert(Def);          // add the operand to the range
     LiveRangeMap[Def] = DefRange;   // make operand point to merged set
     if (DEBUG_RA >= RA_DEBUG_LiveRanges)
-      cerr << "   Added to existing LR for def: " << RAV(Def) << "\n";
+      std::cerr << "   Added to existing LR for def: " << RAV(Def) << "\n";
   }
   return DefRange;
 }
@@ -139,7 +138,7 @@ LiveRangeInfo::createOrAddToLiveRange(const Value* Def, bool isCC /* = false*/)
 void LiveRangeInfo::constructLiveRanges() {  
 
   if (DEBUG_RA >= RA_DEBUG_LiveRanges) 
-    cerr << "Constructing Live Ranges ...\n";
+    std::cerr << "Constructing Live Ranges ...\n";
 
   // first find the live ranges for all incoming args of the function since
   // those LRs start from the start of the function
@@ -221,7 +220,7 @@ void LiveRangeInfo::constructLiveRanges() {
   suggestRegs4CallRets();
 
   if( DEBUG_RA >= RA_DEBUG_LiveRanges) 
-    cerr << "Initial Live Ranges constructed!\n";
+    std::cerr << "Initial Live Ranges constructed!\n";
 }
 
 
@@ -318,7 +317,7 @@ inline bool InterfsPreventCoalescing(const LiveRange& LROfDef,
 void LiveRangeInfo::coalesceLRs()  
 {
   if(DEBUG_RA >= RA_DEBUG_LiveRanges) 
-    cerr << "\nCoalescing LRs ...\n";
+    std::cerr << "\nCoalescing LRs ...\n";
 
   MachineFunction &MF = MachineFunction::get(Meth);
   for (MachineFunction::iterator BBI = MF.begin(); BBI != MF.end(); ++BBI) {
@@ -329,9 +328,9 @@ void LiveRangeInfo::coalesceLRs()
       const MachineInstr *MI = *MII;
 
       if( DEBUG_RA >= RA_DEBUG_LiveRanges) {
-	cerr << " *Iterating over machine instr ";
+	std::cerr << " *Iterating over machine instr ";
 	MI->dump();
-	cerr << "\n";
+	std::cerr << "\n";
       }
 
       // iterate over  MI operands to find defs
@@ -348,7 +347,7 @@ void LiveRangeInfo::coalesceLRs()
 	    if (!LROfUse) {             // if LR of use is not found
 	      //don't warn about labels
 	      if (!isa<BasicBlock>(*UseI) && DEBUG_RA >= RA_DEBUG_LiveRanges)
-		cerr << " !! Warning: No LR for use " << RAV(*UseI) << "\n";
+		std::cerr << " !! Warning: No LR for use " << RAV(*UseI)<< "\n";
 	      continue;                 // ignore and continue
 	    }
 
@@ -388,7 +387,7 @@ void LiveRangeInfo::coalesceLRs()
   } // for all BBs
 
   if (DEBUG_RA >= RA_DEBUG_LiveRanges) 
-    cerr << "\nCoalescing Done!\n";
+    std::cerr << "\nCoalescing Done!\n";
 }
 
 /*--------------------------- Debug code for printing ---------------*/
@@ -396,15 +395,15 @@ void LiveRangeInfo::coalesceLRs()
 
 void LiveRangeInfo::printLiveRanges() {
   LiveRangeMapType::iterator HMI = LiveRangeMap.begin();   // hash map iterator
-  cerr << "\nPrinting Live Ranges from Hash Map:\n";
+  std::cerr << "\nPrinting Live Ranges from Hash Map:\n";
   for( ; HMI != LiveRangeMap.end(); ++HMI) {
     if (HMI->first && HMI->second) {
-      cerr << " Value* " << RAV(HMI->first) << "\t: "; 
+      std::cerr << " Value* " << RAV(HMI->first) << "\t: "; 
       if (IGNode* igNode = HMI->second->getUserIGNode())
-        cerr << "LR# " << igNode->getIndex();
+        std::cerr << "LR# " << igNode->getIndex();
       else
-        cerr << "LR# " << "<no-IGNode>";
-      cerr << "\t:Values = "; printSet(*HMI->second); cerr << "\n";
+        std::cerr << "LR# " << "<no-IGNode>";
+      std::cerr << "\t:Values = "; printSet(*HMI->second); std::cerr << "\n";
     }
   }
 }

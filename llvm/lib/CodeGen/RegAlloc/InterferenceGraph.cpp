@@ -6,7 +6,7 @@
 
 #include "RegAllocCommon.h"
 #include "InterferenceGraph.h"
-#include "llvm/CodeGen/IGNode.h"
+#include "IGNode.h"
 #include "Support/STLExtras.h"
 #include <algorithm>
 using std::cerr;
@@ -22,22 +22,18 @@ inline static void assertIGNode(const InterferenceGraph *IG,
 // The matrix is NOT yet created by the constructor. Call createGraph() 
 // to create it after adding all IGNodes to the IGNodeList.
 //-----------------------------------------------------------------------------
-InterferenceGraph::InterferenceGraph(RegClass *const RC) : RegCl(RC), 
-							   IGNodeList() 
-{   
+InterferenceGraph::InterferenceGraph(RegClass *const RC) : RegCl(RC) {
   IG = NULL;         
   Size = 0;            
-  if( DEBUG_RA >= RA_DEBUG_Interference) {
-    cerr << "Interference graph created!\n";
-  }
+  if( DEBUG_RA >= RA_DEBUG_Interference)
+    std::cerr << "Interference graph created!\n";
 }
 
 
 //-----------------------------------------------------------------------------
 // destructor. Deletes the bit matrix and all IGNodes
 //-----------------------------------------------------------------------------
-InterferenceGraph:: ~InterferenceGraph() {             
-
+InterferenceGraph:: ~InterferenceGraph() {
   // delete the matrix
   for(unsigned int r=0; r < IGNodeList.size(); ++r)
     delete[] IG[r];
@@ -98,7 +94,7 @@ void InterferenceGraph::setInterference(const LiveRange *const LR1,
   char *val;
 
   if( DEBUG_RA >= RA_DEBUG_Interference) 
-    cerr << "setting intf for: [" << row << "][" <<  col << "]\n"; 
+    std::cerr << "setting intf for: [" << row << "][" <<  col << "]\n"; 
 
   ( row > col) ?  val = &IG[row][col]: val = &IG[col][row]; 
 
@@ -152,9 +148,9 @@ void InterferenceGraph::mergeIGNodesOfLRs(const LiveRange *LR1,
   assertIGNode(this, SrcNode);
 
   if( DEBUG_RA >= RA_DEBUG_Interference) {
-    cerr << "Merging LRs: \""; printSet(*LR1); 
-    cerr << "\" and \""; printSet(*LR2);
-    cerr << "\"\n";
+    std::cerr << "Merging LRs: \""; printSet(*LR1);
+    std::cerr << "\" and \""; printSet(*LR2);
+    std::cerr << "\"\n";
   }
 
   unsigned SrcDegree = SrcNode->getNumOfNeighbors();
@@ -215,20 +211,16 @@ void InterferenceGraph::setCurDegreeOfIGNodes()
 //----------------------------------------------------------------------------
 // Print the IGnodes 
 //----------------------------------------------------------------------------
-void InterferenceGraph::printIG() const
-{
-
-  for(unsigned int i=0; i < Size; i++) {   
-
+void InterferenceGraph::printIG() const {
+  for(unsigned i=0; i < Size; i++) {   
     const IGNode *const Node = IGNodeList[i];
     if(Node) {
-      cerr << " [" << i << "] ";
+      std::cerr << " [" << i << "] ";
 
-      for( unsigned int j=0; j < Size; j++) {
+      for( unsigned int j=0; j < Size; j++)
 	if(IG[i][j])
-          cerr << "(" << i << "," << j << ") ";
-      }
-      cerr << "\n";
+          std::cerr << "(" << i << "," << j << ") ";
+      std::cerr << "\n";
     }
   }
 }
@@ -236,16 +228,15 @@ void InterferenceGraph::printIG() const
 //----------------------------------------------------------------------------
 // Print the IGnodes in the IGNode List
 //----------------------------------------------------------------------------
-void InterferenceGraph::printIGNodeList() const
-{
+void InterferenceGraph::printIGNodeList() const {
   for(unsigned i=0; i < IGNodeList.size() ; ++i) {
     const IGNode *const Node = IGNodeList[i];
 
     if (Node) {
-      cerr << " [" << Node->getIndex() << "] ";
+      std::cerr << " [" << Node->getIndex() << "] ";
       printSet(*Node->getParentLR());
       //int Deg = Node->getCurDegree();
-      cerr << "\t <# of Neighs: " << Node->getNumOfNeighbors() << ">\n";
+      std::cerr << "\t <# of Neighs: " << Node->getNumOfNeighbors() << ">\n";
     }
   }
 }
