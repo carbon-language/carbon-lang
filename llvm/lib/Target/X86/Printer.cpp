@@ -82,7 +82,6 @@ namespace {
     bool doInitialization(Module &M);
     bool doFinalization(Module &M);
     void printConstantValueOnly(const Constant* CV);
-    void printSingleConstantValue(const Constant* CV);
   };
 } // end of anonymous namespace
 
@@ -174,91 +173,6 @@ std::string Printer::ConstantExprToString(const ConstantExpr* CE) {
   }
 }
 
-/// printSingleConstantValue - Print a single constant value.
-///
-void
-Printer::printSingleConstantValue(const Constant* CV)
-{
-  assert(CV->getType() != Type::VoidTy &&
-         CV->getType() != Type::TypeTy &&
-         CV->getType() != Type::LabelTy &&
-         "Unexpected type for Constant");
-  
-  assert((!isa<ConstantArray>(CV) && ! isa<ConstantStruct>(CV))
-         && "Aggregate types should be handled outside this function");
-
-  const Type *type = CV->getType();
-  O << "\t";
-  switch(type->getPrimitiveID())
-    {
-    case Type::BoolTyID: case Type::UByteTyID: case Type::SByteTyID:
-      O << ".byte";
-      break;
-    case Type::UShortTyID: case Type::ShortTyID:
-      O << ".word";
-      break;
-    case Type::UIntTyID: case Type::IntTyID: case Type::PointerTyID:
-      O << ".long";
-      break;
-    case Type::ULongTyID: case Type::LongTyID:
-      O << ".quad";
-      break;
-    case Type::FloatTyID:
-      O << ".long";
-      break;
-    case Type::DoubleTyID:
-      O << ".quad";
-      break;
-    case Type::ArrayTyID:
-      if ((cast<ArrayType>(type)->getElementType() == Type::UByteTy) ||
-	  (cast<ArrayType>(type)->getElementType() == Type::SByteTy))
-	O << ".string";
-      else
-	assert (0 && "Can't handle printing this type of array");
-      break;
-    default:
-      assert (0 && "Can't handle printing this type of thing");
-      break;
-    }
-  O << "\t";
-  
-  if (const ConstantExpr* CE = dyn_cast<ConstantExpr>(CV)) {
-    // Constant expression built from operators, constants, and
-    // symbolic addrs
-    O << ConstantExprToString(CE) << "\n";
-  } else if (const ConstantBool *CB = dyn_cast<ConstantBool>(CV)) {
-    O << (CB->getValue() ? "1\n" : "0\n");
-  } else if (type->isFloatingPoint()) {
-    // FP Constants are printed as integer constants to avoid losing
-    // precision...
-    double Val = cast<ConstantFP>(CV)->getValue();
-    if (type == Type::FloatTy) {
-      float FVal = (float)Val;
-      char *ProxyPtr = (char*)&FVal;        // Abide by C TBAA rules
-      O << *(unsigned int*)ProxyPtr;            
-    } else if (type == Type::DoubleTy) {
-      char *ProxyPtr = (char*)&Val;         // Abide by C TBAA rules
-      O << *(uint64_t*)ProxyPtr;            
-    } else {
-      assert(0 && "Unknown floating point type!");
-    }
-    
-    O << "\t# " << type->getDescription() << " value: " << Val << "\n";
-  } else if (type->isPrimitiveType()) {
-    
-    WriteAsOperand(O, CV, false, false) << "\n";
-  } else if (const ConstantPointerRef* CPR = dyn_cast<ConstantPointerRef>(CV)) {
-    // This is a constant address for a global variable or method.
-    // Use the name of the variable or method as the address value.
-    O << Mang->getValueName(CPR->getValue()) << "\n";
-  } else if (isa<ConstantPointerNull>(CV)) {
-    // Null pointer value
-    O << "0\n";
-  } else {
-    assert(0 && "Unknown elementary type for constant");
-  }
-}
-
 /// isStringCompatible - Can we treat the specified array as a string?
 /// Only if it is an array of ubytes or non-negative sbytes.
 ///
@@ -319,12 +233,12 @@ static std::string getAsCString(const ConstantArray *CVA) {
 }
 
 // Print a constant value or values (it may be an aggregate).
-// Uses printSingleConstantValue() to print each individual value.
 void Printer::printConstantValueOnly(const Constant *CV) {  
   const TargetData &TD = TM.getTargetData();
 
   if (CV->isNullValue()) {
     O << "\t.zero\t " << TD.getTypeSize(CV->getType()) << "\n";      
+    return;
   } else if (const ConstantArray *CVA = dyn_cast<ConstantArray>(CV)) {
     if (isStringCompatible(CVA)) {
       // print the string alone and return
@@ -334,6 +248,7 @@ void Printer::printConstantValueOnly(const Constant *CV) {
       for (unsigned i=0; i < constValues.size(); i++)
         printConstantValueOnly(cast<Constant>(constValues[i].get()));
     }
+    return;
   } else if (const ConstantStruct *CVS = dyn_cast<ConstantStruct>(CV)) {
     // Print the fields in successive locations. Pad to align if needed!
     const StructLayout *cvsLayout = TD.getStructLayout(CVS->getType());
@@ -358,8 +273,70 @@ void Printer::printConstantValueOnly(const Constant *CV) {
     }
     assert(sizeSoFar == cvsLayout->StructSize &&
            "Layout of constant struct may be incorrect!");
-  } else
-    printSingleConstantValue(CV);
+    return;
+  }
+
+  const Type *type = CV->getType();
+  O << "\t";
+  switch (type->getPrimitiveID()) {
+  case Type::BoolTyID: case Type::UByteTyID: case Type::SByteTyID:
+    O << ".byte";
+    break;
+  case Type::UShortTyID: case Type::ShortTyID:
+    O << ".word";
+    break;
+  case Type::FloatTyID: case Type::PointerTyID:
+  case Type::UIntTyID: case Type::IntTyID:
+    O << ".long";
+    break;
+  case Type::DoubleTyID:
+  case Type::ULongTyID: case Type::LongTyID:
+    O << ".quad";
+    break;
+  default:
+    assert (0 && "Can't handle printing this type of thing");
+    break;
+  }
+  O << "\t";
+  
+  if (const ConstantExpr* CE = dyn_cast<ConstantExpr>(CV)) {
+    // Constant expression built from operators, constants, and
+    // symbolic addrs
+    O << ConstantExprToString(CE) << "\n";
+  } else if (const ConstantBool *CB = dyn_cast<ConstantBool>(CV)) {
+    O << (CB->getValue() ? "1\n" : "0\n");
+  } else if (type->isFloatingPoint()) {
+    // FP Constants are printed as integer constants to avoid losing
+    // precision...
+    double Val = cast<ConstantFP>(CV)->getValue();
+    if (type == Type::FloatTy) {
+      union FU {                            // Abide by C TBAA rules
+        float FVal;
+        unsigned UVal;
+      } U;
+      U.FVal = Val;
+      O << U.UVal;
+    } else if (type == Type::DoubleTy) {
+      union DU {                            // Abide by C TBAA rules
+        double FVal;
+        uint64_t UVal;
+      } U;
+      U.FVal = Val;
+      O << U.UVal;
+    } else {
+      assert(0 && "Unknown floating point type!");
+    }
+    
+    O << "\t# " << *type << " value: " << Val << "\n";
+  } else if (type->isPrimitiveType()) {
+    WriteAsOperand(O, CV, false, false) << "\n";
+  } else if (const ConstantPointerRef* CPR = dyn_cast<ConstantPointerRef>(CV)) {
+    // This is a constant address for a global variable or method.
+    // Use the name of the variable or method as the address value.
+    O << Mang->getValueName(CPR->getValue()) << "\n";
+  } else {
+    assert(0 && "Unknown elementary type for constant");
+  }
 }
 
 /// printConstantPool - Print to the current output stream assembly
