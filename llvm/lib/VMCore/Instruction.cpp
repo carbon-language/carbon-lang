@@ -5,7 +5,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Instruction.h"
-#include "llvm/BasicBlock.h"
 #include "llvm/Method.h"
 #include "llvm/SymbolTable.h"
 #include "llvm/CodeGen/MachineInstr.h"

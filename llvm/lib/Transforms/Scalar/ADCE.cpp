@@ -15,7 +15,6 @@
 #include "llvm/iPHINode.h"
 #include "Support/STLExtras.h"
 #include "Support/DepthFirstIterator.h"
-#include <set>
 #include <algorithm>
 #include <iostream>
 using std::cerr;
