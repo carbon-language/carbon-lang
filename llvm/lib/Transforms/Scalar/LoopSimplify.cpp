@@ -1,7 +1,8 @@
-//===- LoopPreheaders.cpp - Loop Preheader Insertion Pass -----------------===//
+//===- LoopPreheaders.cpp - Loop Canonicalization Pass --------------------===//
 //
-// Insert Loop pre-headers and exit blocks into the CFG for each function in the
-// module.  This pass updates loop information and dominator information.
+// This pass performs several transformations to transform natural loops into a
+// simpler form, which makes subsequent analyses and transformations simpler and
+// more effective.
 //
 // Loop pre-header insertion guarantees that there is a single, non-critical
 // entry edge from outside of the loop to the loop header.  This simplifies a
@@ -13,8 +14,11 @@
 // as store-sinking that are built into LICM.
 //
 // Note that the simplifycfg pass will clean up blocks which are split out but
-// end up being unnecessary, so usage of this pass does not necessarily
-// pessimize generated code.
+// end up being unnecessary, so usage of this pass should not pessimize
+// generated code.
+//
+// This pass obviously modifies the CFG, but updates loop information and
+// dominator information.
 //
 //===----------------------------------------------------------------------===//
 
@@ -31,9 +35,10 @@
 #include "Support/DepthFirstIterator.h"
 
 namespace {
-  Statistic<> NumInserted("preheaders", "Number of pre-header nodes inserted");
+  Statistic<>
+  NumInserted("loopsimplify", "Number of pre-header blocks inserted");
 
-  struct Preheaders : public FunctionPass {
+  struct LoopSimplify : public FunctionPass {
     virtual bool runOnFunction(Function &F);
     
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
@@ -56,19 +61,19 @@ namespace {
     void InsertPreheaderForLoop(Loop *L);
   };
 
-  RegisterOpt<Preheaders> X("preheaders", "Natural loop pre-header insertion",
-                            true);
+  RegisterOpt<LoopSimplify>
+  X("loopsimplify", "Canonicalize natural loops", true);
 }
 
 // Publically exposed interface to pass...
 const PassInfo *LoopPreheadersID = X.getPassInfo();
-Pass *createLoopPreheaderInsertionPass() { return new Preheaders(); }
+Pass *createLoopPreheaderInsertionPass() { return new LoopSimplify(); }
 
 
 /// runOnFunction - Run down all loops in the CFG (recursively, but we could do
 /// it in any convenient order) inserting preheaders...
 ///
-bool Preheaders::runOnFunction(Function &F) {
+bool LoopSimplify::runOnFunction(Function &F) {
   bool Changed = false;
   LoopInfo &LI = getAnalysis<LoopInfo>();
 
@@ -82,7 +87,7 @@ bool Preheaders::runOnFunction(Function &F) {
 /// ProcessLoop - Walk the loop structure in depth first order, ensuring that
 /// all loops have preheaders.
 ///
-bool Preheaders::ProcessLoop(Loop *L) {
+bool LoopSimplify::ProcessLoop(Loop *L) {
   bool Changed = false;
 
   // Does the loop already have a preheader?  If so, don't modify the loop...
@@ -117,8 +122,8 @@ bool Preheaders::ProcessLoop(Loop *L) {
 /// block, leaving the remaining predecessors pointing to BB.  This method
 /// updates the SSA PHINode's, but no other analyses.
 ///
-BasicBlock *Preheaders::SplitBlockPredecessors(BasicBlock *BB,
-                                               const char *Suffix,
+BasicBlock *LoopSimplify::SplitBlockPredecessors(BasicBlock *BB,
+                                                 const char *Suffix,
                                        const std::vector<BasicBlock*> &Preds) {
   
   // Create new basic block, insert right before the original block...
@@ -189,7 +194,7 @@ static void ChangeExitBlock(Loop *L, BasicBlock *OldExit, BasicBlock *NewExit) {
 /// preheader, this method is called to insert one.  This method has two phases:
 /// preheader insertion and analysis updating.
 ///
-void Preheaders::InsertPreheaderForLoop(Loop *L) {
+void LoopSimplify::InsertPreheaderForLoop(Loop *L) {
   BasicBlock *Header = L->getHeader();
 
   // Compute the set of predecessors of the loop that are not in the loop.
@@ -303,7 +308,7 @@ void Preheaders::InsertPreheaderForLoop(Loop *L) {
   }
 }
 
-void Preheaders::RewriteLoopExitBlock(Loop *L, BasicBlock *Exit) {
+void LoopSimplify::RewriteLoopExitBlock(Loop *L, BasicBlock *Exit) {
   DominatorSet &DS = getAnalysis<DominatorSet>();
   assert(!DS.dominates(L->getHeader(), Exit) &&
          "Loop already dominates exit block??");
