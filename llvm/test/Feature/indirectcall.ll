@@ -1,11 +1,6 @@
-%FmtString1 = constant [ubyte] c"fib = \00"
-%FmtString2 = constant [ubyte] c"\0A\00"
+implementation
 
 declare int "atoi"(sbyte *)
-declare void "printInt"(int)
-declare void "printString"([ubyte]*)
-
-implementation
 
 ulong "fib"(ulong %n)
 begin
@@ -40,13 +35,16 @@ Continue:
   ret ulong %F
 end
 
+ulong "trampoline"(ulong %n, ulong(ulong)* %fibfunc)
+begin
+  %F = call ulong(ulong) *%fibfunc(ulong %n)
+  ret ulong %F
+end
+
 int "main"()
 begin
-  %Result = call ulong %fib(ulong 10)
+  %Result = call ulong %trampoline(ulong 10, ulong(ulong) *%fib)
   %Result = cast ulong %Result to int
-  call void %printString([ubyte]* %FmtString1)
-  call void %printInt(int %Result)
-  call void %printString([ubyte]* %FmtString2)
   ret int %Result
 end
 
