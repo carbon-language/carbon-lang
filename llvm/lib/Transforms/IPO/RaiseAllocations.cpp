@@ -93,6 +93,13 @@ bool RaiseAllocations::doInitialization(Module &M) {
     FreeFunc = M.getFunction("free", FreeType);
   }
 
+  // One last try, check to see if we can find free as 'int (...)* free'.  This
+  // handles the case where NOTHING was declared.
+  if (FreeFunc == 0) {
+    FreeType = FunctionType::get(Type::IntTy, std::vector<const Type*>(),true);
+    FreeFunc = M.getFunction("free", FreeType);
+  }
+
 
   // Don't mess with locally defined versions of these functions...
   if (MallocFunc && !MallocFunc->isExternal()) MallocFunc = 0;
