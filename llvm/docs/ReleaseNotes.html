@@ -651,7 +651,13 @@ href="http://gcc.gnu.org/gcc-3.4/changes.html">GCC 3.4 release notes</a>.</li>
 <div class="doc_text">
 
 <ul>
-<li>None so far.
+  <li>Optimized (Release) versions of LLVM built with GCC 3.3.2 or 3.3.3 will 
+  produce an llc tool that always enters an infinite loop due to what 
+  appears to be an optimization bug (-O2 and -O3) in those versions of GCC. 
+  This problem does not happen in GCC 3.3.1 nor GCC 3.4.0 nor does it happen if
+  you build a Debug version of LLVM. You are cautioned not to use GCC 3.3.2 or 
+  GCC 3.3.3 to build Optimized versions of LLVM. It is unclear whether this problem 
+  affects other backends but it is unlikely.</li>
 </ul>
 
 </div>
