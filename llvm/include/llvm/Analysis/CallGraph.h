@@ -3,37 +3,37 @@
 // This interface is used to build and manipulate a call graph, which is a very 
 // useful tool for interprocedural optimization.
 //
-// Every method in a module is represented as a node in the call graph.  The
-// callgraph node keeps track of which methods the are called by the method
+// Every function in a module is represented as a node in the call graph.  The
+// callgraph node keeps track of which functions the are called by the function
 // corresponding to the node.
 //
-// A call graph will contain nodes where the method that they correspond to is
+// A call graph will contain nodes where the function that they correspond to is
 // null.  This 'external' node is used to represent control flow that is not
 // represented (or analyzable) in the module.  As such, the external node will
-// have edges to methods with the following properties:
-//   1. All methods in the module without internal linkage, since they could
-//      be called by methods outside of the our analysis capability.
-//   2. All methods whose address is used for something more than a direct call,
-//      for example being stored into a memory location.  Since they may be
-//      called by an unknown caller later, they must be tracked as such.
+// have edges to functions with the following properties:
+//   1. All functions in the module without internal linkage, since they could
+//      be called by functions outside of the our analysis capability.
+//   2. All functions whose address is used for something more than a direct
+//      call, for example being stored into a memory location.  Since they may
+//      be called by an unknown caller later, they must be tracked as such.
 //
-// Similarly, methods have a call edge to the external node iff:
-//   1. The method is external, reflecting the fact that they could call
+// Similarly, functions have a call edge to the external node iff:
+//   1. The function is external, reflecting the fact that they could call
 //      anything without internal linkage or that has its address taken.
-//   2. The method contains an indirect method call.
+//   2. The function contains an indirect function call.
 //
 // As an extension in the future, there may be multiple nodes with a null
-// method.  These will be used when we can prove (through pointer analysis) that
-// an indirect call site can call only a specific set of methods.
+// function.  These will be used when we can prove (through pointer analysis)
+// that an indirect call site can call only a specific set of functions.
 //
 // Because of these properties, the CallGraph captures a conservative superset
 // of all of the caller-callee relationships, which is useful for
 // transformations.
 //
 // The CallGraph class also attempts to figure out what the root of the
-// CallGraph is, which is currently does by looking for a method named 'main'.
-// If no method named 'main' is found, the external node is used as the entry
-// node, reflecting the fact that any method without internal linkage could
+// CallGraph is, which is currently does by looking for a function named 'main'.
+// If no function named 'main' is found, the external node is used as the entry
+// node, reflecting the fact that any function without internal linkage could
 // be called into (which is common for libraries).
 //
 //===----------------------------------------------------------------------===//
@@ -53,8 +53,8 @@ class CallGraphNode;
 class CallGraph : public Pass {
   Module *Mod;              // The module this call graph represents
 
-  typedef std::map<const Function *, CallGraphNode *> MethodMapTy;
-  MethodMapTy MethodMap;    // Map from a method to its node
+  typedef std::map<const Function *, CallGraphNode *> FunctionMapTy;
+  FunctionMapTy FunctionMap;    // Map from a function to its node
 
   // Root is root of the call graph, or the external node if a 'main' function
   // couldn't be found.  ExternalNode is equivalent to (*this)[0].
@@ -65,45 +65,56 @@ public:
   //===---------------------------------------------------------------------
   // Accessors...
   //
-  typedef MethodMapTy::iterator iterator;
-  typedef MethodMapTy::const_iterator const_iterator;
+  typedef FunctionMapTy::iterator iterator;
+  typedef FunctionMapTy::const_iterator const_iterator;
 
-  inline       CallGraphNode *getRoot()       { return Root; }
-  inline const CallGraphNode *getRoot() const { return Root; }
-  inline       iterator begin()       { return MethodMap.begin(); }
-  inline       iterator end()         { return MethodMap.end();   }
-  inline const_iterator begin() const { return MethodMap.begin(); }
-  inline const_iterator end()   const { return MethodMap.end();   }
+  // getExternalNode - Return the node that points to all functions that are
+  // accessable from outside of the current program.
+  //
+        CallGraphNode *getExternalNode()       { return ExternalNode; }
+  const CallGraphNode *getExternalNode() const { return ExternalNode; }
+
+  // getRoot - Return the root of the call graph, which is either main, or if
+  // main cannot be found, the external node.
+  //
+        CallGraphNode *getRoot()       { return Root; }
+  const CallGraphNode *getRoot() const { return Root; }
+
+  inline       iterator begin()       { return FunctionMap.begin(); }
+  inline       iterator end()         { return FunctionMap.end();   }
+  inline const_iterator begin() const { return FunctionMap.begin(); }
+  inline const_iterator end()   const { return FunctionMap.end();   }
 
 
-  // Subscripting operators, return the call graph node for the provided method
+  // Subscripting operators, return the call graph node for the provided
+  // function
   inline const CallGraphNode *operator[](const Function *F) const {
-    const_iterator I = MethodMap.find(F);
-    assert(I != MethodMap.end() && "Method not in callgraph!");
+    const_iterator I = FunctionMap.find(F);
+    assert(I != FunctionMap.end() && "Function not in callgraph!");
     return I->second;
   }
   inline CallGraphNode *operator[](const Function *F) {
-    const_iterator I = MethodMap.find(F);
-    assert(I != MethodMap.end() && "Method not in callgraph!");
+    const_iterator I = FunctionMap.find(F);
+    assert(I != FunctionMap.end() && "Function not in callgraph!");
     return I->second;
   }
 
   //===---------------------------------------------------------------------
-  // Methods to keep a call graph up to date with a method that has been
+  // Functions to keep a call graph up to date with a function that has been
   // modified
   //
-  void addMethodToModule(Function *Meth);
+  void addFunctionToModule(Function *Meth);
 
 
-  // removeMethodFromModule - Unlink the method from this module, returning it.
-  // Because this removes the method from the module, the call graph node is
-  // destroyed.  This is only valid if the method does not call any other
-  // methods (ie, there are no edges in it's CGN).  The easiest way to do this
+  // removeFunctionFromModule - Unlink the function from this module, returning
+  // it.  Because this removes the function from the module, the call graph node
+  // is destroyed.  This is only valid if the function does not call any other
+  // functions (ie, there are no edges in it's CGN).  The easiest way to do this
   // is to dropAllReferences before calling this.
   //
-  Function *removeMethodFromModule(CallGraphNode *CGN);
-  Function *removeMethodFromModule(Function *Meth) {
-    return removeMethodFromModule((*this)[Meth]);
+  Function *removeFunctionFromModule(CallGraphNode *CGN);
+  Function *removeFunctionFromModule(Function *Meth) {
+    return removeFunctionFromModule((*this)[Meth]);
   }
 
 
@@ -142,7 +153,7 @@ private:
   CallGraphNode *getNodeFor(Function *F);
 
   // addToCallGraph - Add a function to the call graph, and link the node to all
-  // of the methods that it calls.
+  // of the functions that it calls.
   //
   void addToCallGraph(Function *F);
 
@@ -156,7 +167,7 @@ private:
 //
 class CallGraphNode {
   Function *Meth;
-  std::vector<CallGraphNode*> CalledMethods;
+  std::vector<CallGraphNode*> CalledFunctions;
 
   CallGraphNode(const CallGraphNode &);           // Do not implement
 public:
@@ -167,38 +178,39 @@ public:
   typedef std::vector<CallGraphNode*>::iterator iterator;
   typedef std::vector<CallGraphNode*>::const_iterator const_iterator;
 
-  // getMethod - Return the method that this call graph node represents...
-  Function *getMethod() const { return Meth; }
+  // getFunction - Return the function that this call graph node represents...
+  Function *getFunction() const { return Meth; }
 
-  inline iterator begin() { return CalledMethods.begin(); }
-  inline iterator end()   { return CalledMethods.end();   }
-  inline const_iterator begin() const { return CalledMethods.begin(); }
-  inline const_iterator end()   const { return CalledMethods.end();   }
-  inline unsigned size() const { return CalledMethods.size(); }
+  inline iterator begin() { return CalledFunctions.begin(); }
+  inline iterator end()   { return CalledFunctions.end();   }
+  inline const_iterator begin() const { return CalledFunctions.begin(); }
+  inline const_iterator end()   const { return CalledFunctions.end();   }
+  inline unsigned size() const { return CalledFunctions.size(); }
 
-  // Subscripting operator - Return the i'th called method...
+  // Subscripting operator - Return the i'th called function...
   //
-  inline CallGraphNode *operator[](unsigned i) const { return CalledMethods[i];}
+  CallGraphNode *operator[](unsigned i) const { return CalledFunctions[i];}
 
 
   //===---------------------------------------------------------------------
-  // Methods to keep a call graph up to date with a method that has been
+  // Methods to keep a call graph up to date with a function that has been
   // modified
   //
 
-  void removeAllCalledMethods() {
-    CalledMethods.clear();
+  void removeAllCalledFunctions() {
+    CalledFunctions.clear();
   }
 
 private:                    // Stuff to construct the node, used by CallGraph
   friend class CallGraph;
 
-  // CallGraphNode ctor - Create a node for the specified method...
+  // CallGraphNode ctor - Create a node for the specified function...
   inline CallGraphNode(Function *F) : Meth(F) {}
   
-  // addCalledMethod add a method to the list of methods called by this one
-  void addCalledMethod(CallGraphNode *M) {
-    CalledMethods.push_back(M);
+  // addCalledFunction add a function to the list of functions called by this
+  // one
+  void addCalledFunction(CallGraphNode *M) {
+    CalledFunctions.push_back(M);
   }
 };
 
@@ -233,13 +245,13 @@ template <> struct GraphTraits<const CallGraphNode*> {
 template<> struct GraphTraits<CallGraph*> :
   public GraphTraits<CallGraphNode*> {
   static NodeType *getEntryNode(CallGraph *CGN) {
-    return CGN->getRoot();
+    return CGN->getExternalNode();  // Start at the external node!
   }
 };
 template<> struct GraphTraits<const CallGraph*> :
   public GraphTraits<const CallGraphNode*> {
   static NodeType *getEntryNode(const CallGraph *CGN) {
-    return CGN->getRoot();
+    return CGN->getExternalNode();
   }
 };
 
