@@ -699,17 +699,16 @@ void Printer::printMachineInstruction(const MachineInstr *MI) {
     //
     assert(MI->getOperand(0).isRegister() &&
            (MI->getNumOperands() == 1+4 && isMem(MI, 1)) || 
-           (MI->getNumOperands() == 2+4 && MI->getOperand(1).isRegister() && 
-            isMem(MI, 2))
+(MI->getNumOperands() == 2+4 && MI->getOperand(5).isImmediate() && isMem(MI, 1))
            && "Bad format for MRMSrcMem!");
-    if (MI->getNumOperands() == 2+4 &&
-        MI->getOperand(0).getReg() != MI->getOperand(1).getReg())
-      O << "**";
-
     O << TII.getName(MI->getOpcode()) << " ";
     printOp(MI->getOperand(0));
     O << ", " << sizePtr(Desc) << " ";
-    printMemReference(MI, MI->getNumOperands()-4);
+    printMemReference(MI, 1);
+    if (MI->getNumOperands() == 2+4) {
+      O << ", ";
+      printOp(MI->getOperand(5));
+    }
     O << "\n";
     return;
   }

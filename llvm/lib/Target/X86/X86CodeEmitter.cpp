@@ -574,8 +574,9 @@ void Emitter::emitInstruction(MachineInstr &MI) {
 
   case X86II::MRMSrcMem:
     MCE.emitByte(BaseOpcode);
-    emitMemModRMByte(MI, MI.getNumOperands()-4,
-                     getX86RegNum(MI.getOperand(0).getReg()));
+    emitMemModRMByte(MI, 1, getX86RegNum(MI.getOperand(0).getReg()));
+    if (MI.getNumOperands() == 2+4)
+      emitConstant(MI.getOperand(5).getImmedValue(), sizeOfPtr(Desc));
     break;
 
   case X86II::MRMS0r: case X86II::MRMS1r:
