@@ -1,9 +1,6 @@
-; Basic block #2 should be merged into BB #3!
+; Basic block #2 should not be merged into BB #3!
 ;
-; RUN: if as < %s | opt -dce | dis | grep 'br label'
-; RUN: then exit 1
-; RUN: else exit 0
-; RUN: fi
+; RUN: as < %s | opt -simplifycfg | dis | grep 'br label'
 ;
 void "cprop_test12"(int* %data) {
 bb0:
