@@ -50,7 +50,11 @@
 #
 # Configuration file to set paths specific to local installation of LLVM
 # 
+ifdef LLVM_SRC_ROOT
+include $(LLVM_SRC_ROOT)/Makefile.config
+else
 include $(LEVEL)/Makefile.config
+endif
 
 ###########################################################################
 # Directory Configuration
