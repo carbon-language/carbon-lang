@@ -78,7 +78,8 @@ int main(int argc, char **argv) {
 
   // Allocate target machine.  First, check whether the user has
   // explicitly specified an architecture to compile for.
-  TargetMachine* (*TargetMachineAllocator)(const Module&) = 0;
+  TargetMachine* (*TargetMachineAllocator)(const Module&,
+                                           IntrinsicLowering *) = 0;
   switch (Arch) {
   case x86:
     TargetMachineAllocator = allocateX86TargetMachine;
@@ -112,7 +113,7 @@ int main(int argc, char **argv) {
     } 
     break;
   }
-  std::auto_ptr<TargetMachine> target(TargetMachineAllocator(mod));
+  std::auto_ptr<TargetMachine> target(TargetMachineAllocator(mod, 0));
   assert(target.get() && "Could not allocate target machine!");
   TargetMachine &Target = *target.get();
   const TargetData &TD = Target.getTargetData();

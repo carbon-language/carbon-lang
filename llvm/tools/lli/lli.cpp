@@ -57,8 +57,7 @@ int main(int argc, char **argv, char * const *envp) {
     exit(1);
   }
 
-  ExecutionEngine *EE =
-    ExecutionEngine::create(MP, ForceInterpreter);
+  ExecutionEngine *EE = ExecutionEngine::create(MP, ForceInterpreter);
   assert(EE && "Couldn't create an ExecutionEngine, not even an interpreter?");
 
   // If the user specifically requested an argv[0] to pass into the program, do
