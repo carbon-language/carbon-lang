@@ -13,7 +13,6 @@
 #include "llvm/DerivedTypes.h"
 
 class MachineInstrDescriptor;
-class TmpInstruction;
 class MachineInstr;
 class TargetMachine;
 class Value;
@@ -27,7 +26,7 @@ class MachineCodeForInstruction;
 
 typedef int MachineOpCode;
 typedef int OpCodeMask;
-typedef int InstrSchedClass;
+typedef unsigned InstrSchedClass;
 
 const MachineOpCode INVALID_MACHINE_OPCODE = -1;
 

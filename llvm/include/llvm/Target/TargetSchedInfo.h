@@ -196,9 +196,8 @@ protected:
     assert(opCode >= 0 && opCode < (int) instrRUsages.size());
     return instrRUsages[opCode];
   }
-  inline const InstrClassRUsage&
-			getClassRUsage(const InstrSchedClass& sc) const {
-    assert(sc >= 0 && sc < numSchedClasses);
+  const InstrClassRUsage& getClassRUsage(const InstrSchedClass& sc) const {
+    assert(sc < numSchedClasses);
     return classRUsages[sc];
   }
   
@@ -225,7 +224,7 @@ public:
   }
   
   inline  unsigned getMaxIssueForClass(const InstrSchedClass& sc) const {
-    assert(sc >= 0 && sc < numSchedClasses);
+    assert(sc < numSchedClasses);
     return classRUsages[sc].maxNumIssue;
   }
 
@@ -283,7 +282,7 @@ private:
   }
   
 protected:
-  int		           numSchedClasses;
+  unsigned	           numSchedClasses;
   const MachineInstrInfo*  mii;
   const	InstrClassRUsage*  classRUsages;        // raw array by sclass
   const	InstrRUsageDelta*  usageDeltas;	        // raw array [1:numUsageDeltas]
