@@ -27,7 +27,7 @@
 #include "Support/CommandLine.h"
 #include <list>
 #include <ext/hash_set>
-#include <ostream>
+#include <iostream>
 class Method;
 class MachineInstr;
 class SchedulingManager;
