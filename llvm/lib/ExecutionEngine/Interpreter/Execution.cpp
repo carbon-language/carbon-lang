@@ -907,6 +907,8 @@ void Interpreter::nextInstruction() {  // Do the 'next' command
     // able the step into a function, if it's external for example.
     if (ECStack.size() != StackSize)
       finish(); // Finish executing the function...
+    else
+      printCurrentInstruction();
 
   } else {
     // Normal instruction, just step...
