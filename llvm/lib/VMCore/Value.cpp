@@ -86,10 +86,6 @@ void Value::replaceAllUsesWith(Value *New) {
 //                                 User Class
 //===----------------------------------------------------------------------===//
 
-User::User(const Type *Ty, ValueTy vty, const std::string &name) 
-  : Value(Ty, vty, name) {
-}
-
 // replaceUsesOfWith - Replaces all references to the "From" definition with
 // references to the "To" definition.
 //
