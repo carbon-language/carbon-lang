@@ -74,14 +74,9 @@ bool ProfilePaths::runOnFunction(Function &F){
     return false;
   }
  
-  //std::cerr<<"Instrumenting\n-----------------\n";
-  //std::cerr<<F;
   //increment counter for instrumented functions. mn is now function#
   mn++;
   
-  //std::cerr<<"MN = "<<mn<<"\n";;
-  //std::cerr<<F;
-
   // Transform the cfg s.t. we have just one exit node
   BasicBlock *ExitNode = getAnalysis<UnifyFunctionExitNodes>().getExitNode();  
 
@@ -120,10 +115,10 @@ bool ProfilePaths::runOnFunction(Function &F){
   
   Graph g(nodes,edges, startNode, exitNode);
 
-  //#ifdef DEBUG_PATH_PROFILES  
-  //std::cerr<<"Original graph\n";
-  //printGraph(g);
-  //#endif
+#ifdef DEBUG_PATH_PROFILES  
+  std::cerr<<"Original graph\n";
+  printGraph(g);
+#endif
 
   BasicBlock *fr = &F.front();
   
@@ -132,19 +127,15 @@ bool ProfilePaths::runOnFunction(Function &F){
   vector<Edge> be;
   std::map<Node *, int> nodePriority; //it ranks nodes in depth first order traversal
   g.getBackEdges(be, nodePriority);
-  /*
-  std::cerr<<"Node priority--------------\n";
-  for(std::map<Node *, int>::iterator MI = nodePriority.begin(), 
-        ME = nodePriority.end(); MI!=ME; ++MI)
-    std::cerr<<MI->first->getElement()->getName()<<"->"<<MI->second<<"\n";
-  std::cerr<<"End Node priority--------------\n";
-  */
-  //std::cerr<<"BackEdges-------------\n";
-  //   for(vector<Edge>::iterator VI=be.begin(); VI!=be.end(); ++VI){
-  //printEdge(*VI);
-  //cerr<<"\n";
-  //}
-  //std::cerr<<"------\n";
+  
+#ifdef DEBUG_PATH_PROFILES
+  std::cerr<<"BackEdges-------------\n";
+  for(vector<Edge>::iterator VI=be.begin(); VI!=be.end(); ++VI){
+    printEdge(*VI);
+    cerr<<"\n";
+  }
+  std::cerr<<"------\n";
+#endif
 
 #ifdef DEBUG_PATH_PROFILES
   cerr<<"Backedges:"<<be.size()<<endl;
@@ -159,20 +150,25 @@ bool ProfilePaths::runOnFunction(Function &F){
   vector<Edge> exDummy;
   addDummyEdges(stDummy, exDummy, g, be);
 
-  //std::cerr<<"After adding dummy edges\n";
-  //printGraph(g);
-    
+#ifdef DEBUG_PATH_PROFILES
+  std::cerr<<"After adding dummy edges\n";
+  printGraph(g);
+#endif
+
   // Now, every edge in the graph is assigned a weight
   // This weight later adds on to assign path
   // numbers to different paths in the graph
   //  All paths for now are acyclic,
   // since no back edges in the graph now
   // numPaths is the number of acyclic paths in the graph
-  int numPaths=valueAssignmentToEdges(g, nodePriority);
+  int numPaths=valueAssignmentToEdges(g, nodePriority, be);
 
   if(numPaths<=1 || numPaths >5000) return false;
-  //std::cerr<<"Numpaths="<<numPaths<<std::endl;
-  //printGraph(g);
+  
+#ifdef DEBUG_PATH_PROFILES  
+  printGraph(g);
+#endif
+
   //create instruction allocation r and count
   //r is the variable that'll act like an accumulator
   //all along the path, we just add edge values to r
@@ -181,13 +177,13 @@ bool ProfilePaths::runOnFunction(Function &F){
   //the number of executions of path numbered x
 
   Instruction *rVar=new 
-    AllocaInst(PointerType::get(Type::IntTy), 
+    AllocaInst(Type::IntTy, 
                ConstantUInt::get(Type::UIntTy,1),"R");
-    
+
   Instruction *countVar=new 
-    AllocaInst(PointerType::get(Type::IntTy), 
+    AllocaInst(Type::IntTy, 
                ConstantUInt::get(Type::UIntTy, numPaths), "Count");
-    
+  
   // insert initialization code in first (entry) BB
   // this includes initializing r and count
   insertInTopBB(&F.getEntryNode(),numPaths, rVar, countVar);
