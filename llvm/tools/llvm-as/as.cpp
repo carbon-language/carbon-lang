@@ -2,10 +2,10 @@
 // LLVM 'AS' UTILITY 
 //
 //  This utility may be invoked in the following manner:
-//   as --help     - Output information about command line switches
-//   as [options]      - Read LLVM assembly from stdin, write bytecode to stdout
-//   as [options] x.ll - Read LLVM assembly from the x.ll file, write bytecode
-//                       to the x.bc file.
+//   llvm-as --help         - Output information about command line switches
+//   llvm-as [options]      - Read LLVM asm from stdin, write bytecode to stdout
+//   llvm-as [options] x.ll - Read LLVM asm from the x.ll file, write bytecode
+//                            to the x.bc file.
 // 
 //===------------------------------------------------------------------------===
 
