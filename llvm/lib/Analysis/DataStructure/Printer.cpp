@@ -283,20 +283,25 @@ static void printCollection(const Collection &C, std::ostream &O,
   for (Module::const_iterator I = M->begin(), E = M->end(); I != E; ++I)
     if (C.hasGraph(*I)) {
       DSGraph &Gr = C.getDSGraph((Function&)*I);
-      TotalNumNodes += Gr.getGraphSize();
       unsigned NumCalls = Gr.shouldPrintAuxCalls() ?
         Gr.getAuxFunctionCalls().size() : Gr.getFunctionCalls().size();
 
-      TotalCallNodes += NumCalls;
       if (I->getName() == "main" || !OnlyPrintMain) {
         Function *SCCFn = Gr.retnodes_begin()->first;
-        if (&*I == SCCFn)
+        if (&*I == SCCFn) {
+          TotalNumNodes += Gr.getGraphSize();
+          TotalCallNodes += NumCalls;
+
           Gr.writeGraphToFile(O, Prefix+I->getName());
-        else
+        } else {
+          // Don't double count node/call nodes.
           O << "Didn't write '" << Prefix+I->getName()
             << ".dot' - Graph already emitted to '" << Prefix+SCCFn->getName()
             << "\n";
+        }
       } else {
+        TotalNumNodes += Gr.getGraphSize();
+        TotalCallNodes += NumCalls;
         O << "Skipped Writing '" << Prefix+I->getName() << ".dot'... ["
           << Gr.getGraphSize() << "+" << NumCalls << "]\n";
       }
