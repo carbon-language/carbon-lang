@@ -398,23 +398,54 @@ SDOperand SelectionDAG::getSetCC(ISD::CondCode Cond, SDOperand N1,
     Cond = UOF == 0 ? ISD::SETUO : ISD::SETO;
   }
 
-  // Simplify (X+Y) == (X+Z) -->  Y == Z
   if ((Cond == ISD::SETEQ || Cond == ISD::SETNE) &&
-      N1.getOpcode() == N2.getOpcode() && MVT::isInteger(N1.getValueType()))
-    if (N1.getOpcode() == ISD::ADD || N1.getOpcode() == ISD::SUB) {
-      if (N1.getOperand(0) == N2.getOperand(0))
-        return getSetCC(Cond, N1.getOperand(1), N2.getOperand(1));
-      if (N1.getOperand(1) == N2.getOperand(1))
-        return getSetCC(Cond, N1.getOperand(0), N2.getOperand(0));
-      if (isCommutativeBinOp(N1.getOpcode())) {
-        // If X op Y == Y op X, try other combinations.
-        if (N1.getOperand(0) == N2.getOperand(1))
-          return getSetCC(Cond, N1.getOperand(1), N2.getOperand(0));
-        if (N1.getOperand(1) == N2.getOperand(0))
+      MVT::isInteger(N1.getValueType())) {
+    if (N1.getOpcode() == ISD::ADD || N1.getOpcode() == ISD::SUB ||
+        N1.getOpcode() == ISD::XOR) {
+      // Simplify (X+Y) == (X+Z) -->  Y == Z
+      if (N1.getOpcode() == N2.getOpcode()) {
+        if (N1.getOperand(0) == N2.getOperand(0))
           return getSetCC(Cond, N1.getOperand(1), N2.getOperand(1));
+        if (N1.getOperand(1) == N2.getOperand(1))
+          return getSetCC(Cond, N1.getOperand(0), N2.getOperand(0));
+        if (isCommutativeBinOp(N1.getOpcode())) {
+          // If X op Y == Y op X, try other combinations.
+          if (N1.getOperand(0) == N2.getOperand(1))
+            return getSetCC(Cond, N1.getOperand(1), N2.getOperand(0));
+          if (N1.getOperand(1) == N2.getOperand(0))
+            return getSetCC(Cond, N1.getOperand(1), N2.getOperand(1));
+        }
+      }
+      
+      // Simplify (X+Z) == X -->  Z == 0
+      if (N1.getOperand(0) == N2)
+        return getSetCC(Cond, N1.getOperand(1),
+                        getConstant(0, N1.getValueType()));
+      if (N1.getOperand(1) == N2) {
+        if (isCommutativeBinOp(N1.getOpcode()))
+          return getSetCC(Cond, N1.getOperand(0),
+                          getConstant(0, N1.getValueType()));
+        else {
+          assert(N1.getOpcode() == ISD::SUB && "Unexpected operation!");
+          // (Z-X) == X  --> Z == X<<1
+          return getSetCC(Cond, N1.getOperand(0),
+                          getNode(ISD::SHL, N2.getValueType(), 
+                                  N2, getConstant(1, MVT::i8)));
+        }
       }
     }
 
+    if (N2.getOpcode() == ISD::ADD || N2.getOpcode() == ISD::SUB ||
+        N2.getOpcode() == ISD::XOR) {
+      // Simplify  X == (X+Z) -->  Z == 0
+      if (N2.getOperand(0) == N1)
+        return getSetCC(Cond, N2.getOperand(1),
+                        getConstant(0, N2.getValueType()));
+      else if (N2.getOperand(1) == N1)
+        return getSetCC(Cond, N2.getOperand(0),
+                        getConstant(0, N2.getValueType()));
+    }
+  }
 
   SetCCSDNode *&N = SetCCs[std::make_pair(std::make_pair(N1, N2), Cond)];
   if (N) return SDOperand(N, 0);
