@@ -9,8 +9,9 @@
 //     pred_iterator, pred_const_iterator, pred_begin, pred_end
 //  2. Iterate over the successors of a basic block:
 //     succ_iterator, succ_const_iterator, succ_begin, succ_end
-//an iterator to iterate over the basic 
-// blocks of a method in depth first order.
+//  3. Iterate over the basic blocks of a method in depth first ordering or 
+//     reverse depth first order.  df_iterator, df_const_iterator, 
+//     df_begin, df_end.  df_begin takes an arg to specify reverse or not.
 //
 //===----------------------------------------------------------------------===//
 
@@ -19,6 +20,7 @@
 
 #include <set>
 #include <stack>
+#include "llvm/Method.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/InstrTypes.h"
 
@@ -70,7 +72,9 @@ inline succ_const_iterator succ_end  (const BasicBlock *BB);
 // Depth First CFG iterator code
 //===--------------------------------------------------------------------===//
 // 
-// This is used to figure out what basic blocks we could be going to...
+// This is used to visit basic blocks in a method in either depth first, or 
+// reverse depth first ordering, depending on the value passed to the df_begin
+// method.
 //
 
 // Forward declare iterator class template...
@@ -80,8 +84,13 @@ typedef DFIterator<BasicBlock, succ_iterator> df_iterator;
 typedef DFIterator<const BasicBlock, 
 		   succ_const_iterator> df_const_iterator;
 
-inline df_iterator       df_begin(      BasicBlock *BB);
-inline df_const_iterator df_begin(const BasicBlock *BB);
+inline df_iterator       df_begin(      Method *BB, bool Reverse = false);
+inline df_const_iterator df_begin(const Method *BB, bool Reverse = false);
+inline df_iterator       df_end  (      Method *BB);
+inline df_const_iterator df_end  (const Method *BB);
+
+inline df_iterator       df_begin(      BasicBlock *BB, bool Reverse = false);
+inline df_const_iterator df_begin(const BasicBlock *BB, bool Reverse = false);
 inline df_iterator       df_end  (      BasicBlock *BB);
 inline df_const_iterator df_end  (const BasicBlock *BB);
 
@@ -213,17 +222,19 @@ class DFIterator {            // BasicBlock Depth First Iterator
   // VisitStack - Used to maintain the ordering.  Top = current block
   // First element is basic block pointer, second is the 'next child' to visit
   stack<pair<BBType *, SuccItTy> > VisitStack;
+  const bool Reverse;         // Iterate over children before self?
 public:
   typedef DFIterator<BBType, SuccItTy> _Self;
 
   typedef forward_iterator_tag iterator_category;
   typedef BBType *pointer;
 
-  inline DFIterator(BBType *BB) {
+  inline DFIterator(BBType *BB, bool reverse) : Reverse(reverse) {
     Visited.insert(BB);
     VisitStack.push(make_pair(BB, succ_begin(BB)));
+    if (Reverse) reverseEnterNode();
   }
-  inline DFIterator(BBType *BB, bool) { /* End is when stack is empty */ }
+  inline DFIterator() { /* End is when stack is empty */ }
 
   inline bool operator==(const _Self& x) const { 
     return VisitStack == x.VisitStack;
@@ -240,24 +251,47 @@ public:
   //
   inline BBType *operator->() const { return operator*(); }
 
+  void reverseEnterNode() {
+    pair<BBType *, SuccItTy> &Top = VisitStack.top();
+    BBType *BB    = Top.first;
+    SuccItTy &It  = Top.second;
+    for (; It != succ_end(BB); ++It) {
+      BBType *Child = *It;
+      if (!Visited.count(Child)) {
+	Visited.insert(Child);
+	VisitStack.push(make_pair(Child, succ_begin(Child)));
+	reverseEnterNode();
+	return;
+      }
+    }
+  }
+
   inline _Self& operator++() {   // Preincrement
-    do {
-      pair<BBType *, SuccItTy> &Top = VisitStack.top();
-      BBType *BB    = Top.first;
-      SuccItTy &It  = Top.second;
-
+    if (Reverse) {               // Reverse Depth First Iterator
+      if (VisitStack.top().second == succ_end(VisitStack.top().first))
+	VisitStack.pop();
+      if (!VisitStack.empty())
+	reverseEnterNode();
+    } else {                     // Normal Depth First Iterator
       do {
-	BBType *Next = *It++;
-	if (!Visited.count(Next)) {  // Has our next sibling been visited?
-	  // No, do it now.
-	  VisitStack.push(make_pair(Next, succ_begin(BB)));
-	  return *this;
-	}
-      } while (It != succ_end(BB));
+	pair<BBType *, SuccItTy> &Top = VisitStack.top();
+	BBType *BB    = Top.first;
+	SuccItTy &It  = Top.second;
 
-      // Oops, ran out of successors... go up a level on the stack.
-      VisitStack.pop();
-    } while (!VisitStack.empty());
+	while (It != succ_end(BB)) {
+	  BBType *Next = *It++;
+	  if (!Visited.count(Next)) {  // Has our next sibling been visited?
+	    // No, do it now.
+	    Visited.insert(Next);
+	    VisitStack.push(make_pair(Next, succ_begin(Next)));
+	    return *this;
+	  }
+	}
+	
+	// Oops, ran out of successors... go up a level on the stack.
+	VisitStack.pop();
+      } while (!VisitStack.empty());
+    }
     return *this; 
   }
 
@@ -266,17 +300,32 @@ public:
   }
 };
 
-inline df_iterator df_begin(BasicBlock *BB) { 
-  return df_iterator(BB); 
+inline df_iterator df_begin(Method *M, bool Reverse = false) {
+  return df_iterator(M->getBasicBlocks().front(), Reverse);
 }
-inline df_const_iterator df_begin(const BasicBlock *BB) { 
-  return df_const_iterator(BB); 
+
+inline df_const_iterator df_begin(const Method *M, bool Reverse = false) {
+  return df_const_iterator(M->getBasicBlocks().front(), Reverse);
 }
-inline df_iterator df_end(BasicBlock *BB) { 
-  return df_iterator(BB, true); 
+inline df_iterator       df_end(Method*) { 
+  return df_iterator(); 
 }
-inline df_const_iterator df_end(const BasicBlock *BB) { 
-  return df_const_iterator(BB, true); 
+inline df_const_iterator df_end(const Method*) {
+  return df_const_iterator();
+}
+
+inline df_iterator df_begin(BasicBlock *BB, bool Reverse = false) { 
+  return df_iterator(BB, Reverse);
+}
+inline df_const_iterator df_begin(const BasicBlock *BB, bool Reverse = false) { 
+  return df_const_iterator(BB, Reverse);
+}
+
+inline df_iterator       df_end(BasicBlock*) { 
+  return df_iterator(); 
+}
+inline df_const_iterator df_end(const BasicBlock*) {
+  return df_const_iterator();
 }
 
 #endif
