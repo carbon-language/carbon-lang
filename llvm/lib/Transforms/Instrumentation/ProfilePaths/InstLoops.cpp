@@ -176,4 +176,8 @@ bool InstLoops::runOnFunction(Function &F){
   return true;  // Function was modified.
 }
 
+FunctionPass *createLoopInstrumentationPass () {
+  return new InstLoops();
+}
+
 } // End llvm namespace

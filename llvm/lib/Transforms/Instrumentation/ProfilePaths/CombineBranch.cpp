@@ -181,4 +181,8 @@ bool CombineBranches::runOnFunction(Function &F){
   return true; // FIXME: assumes a modification was always made.
 }
 
+FunctionPass *createCombineBranchesPass () {
+  return new CombineBranches();
+}
+
 } // End llvm namespace
