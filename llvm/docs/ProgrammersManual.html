@@ -574,18 +574,18 @@ easy to iterate over the individual instructions that make up
 <tt>BasicBlock</tt>s. Here's a code snippet that prints out each instruction in
 a <tt>BasicBlock</tt>:</p>
 
-  <pre>  // blk is a pointer to a BasicBlock instance<br>  for (BasicBlock::iterator i = blk-&gt;begin(), e = blk-&gt;end(); i != e; ++i)<br>     // the next statement works since operator&lt;&lt;(ostream&amp;,...) <br>     // is overloaded for Instruction&amp;<br>     cerr &lt;&lt; *i &lt;&lt; "\n";<br></pre>
+<pre>
+  // blk is a pointer to a BasicBlock instance
+  for (BasicBlock::iterator i = blk-&gt;begin(), e = blk-&gt;end(); i != e; ++i)
+     // the next statement works since operator&lt;&lt;(ostream&amp;,...)
+     // is overloaded for Instruction&amp;
+     std::cerr &lt;&lt; *i &lt;&lt; "\n";
+</pre>
 
 <p>However, this isn't really the best way to print out the contents of a
 <tt>BasicBlock</tt>!  Since the ostream operators are overloaded for virtually
 anything you'll care about, you could have just invoked the print routine on the
-basic block itself: <tt>cerr &lt;&lt; *blk &lt;&lt; "\n";</tt>.</p>
-
-<p>Note that currently operator&lt;&lt; is implemented for <tt>Value*</tt>, so
-it will print out the contents of the pointer, instead of the pointer value you
-might expect.  This is a deprecated interface that will be removed in the
-future, so it's best not to depend on it.  To print out the pointer value for
-now, you must cast to <tt>void*</tt>.</p>
+basic block itself: <tt>std::cerr &lt;&lt; *blk &lt;&lt; "\n";</tt>.</p>
 
 </div>
 
@@ -2035,9 +2035,6 @@ will loop infinitely.</p>
   <dd>This method returns a plane_iterator for iteration over the
   type planes starting at a specific plane, given by \p Ty.</dd>
 
-  <dt><tt>const ValueMap* findPlane( const Type* Typ ) cons</tt>:</dt>
-  <dd>This method returns a ValueMap* for a specific type plane. This
-  interface is deprecated and may go away in the future.</dd>
 </dl>
 </div>
 
