@@ -20,6 +20,9 @@ class Instruction;
 class LiveRange;
 class AddedInstrns;
 class MachineInstr;
+class RegClass;
+class CallInst;
+class ReturnInst;
 
 
 //-----------------------------------------------------------------------------
@@ -114,17 +117,31 @@ public:
   //virtual unsigned getRCIDOfMachineOp (const MachineOperand &MO) const = 0;
 
 
-  virtual void colorArgs(const Method *const Meth, 
+  virtual void suggestRegs4MethodArgs(const Method *const Meth, 
 			 LiveRangeInfo & LRI) const = 0;
 
-  virtual void colorCallArgs(vector<const Instruction *> & CallInstrList, 
-			     LiveRangeInfo& LRI, 
-			     AddedInstrMapType& AddedInstrMap ) const = 0 ;
+  virtual void suggestRegs4CallArgs(const CallInst *const CallI, 
+			LiveRangeInfo& LRI, vector<RegClass *> RCL) const = 0;
 
-  virtual void colorRetArg(vector<const Instruction *> & 
-			   RetInstrList, LiveRangeInfo& LRI,
-			   AddedInstrMapType &AddedInstrMap) const =0;
+  virtual void suggestReg4RetValue(const ReturnInst *const RetI, 
+				   LiveRangeInfo& LRI) const = 0;
 
+
+
+  virtual void colorMethodArgs(const Method *const Meth,  LiveRangeInfo& LRI,
+		       AddedInstrns *const FirstAI) const = 0;
+
+  virtual void colorCallArgs(const CallInst *const CalI, LiveRangeInfo& LRI,
+		     AddedInstrns *const CallAI) const = 0;
+
+  virtual void colorRetValue(const ReturnInst *const RetI, LiveRangeInfo& LRI,
+		     AddedInstrns *const RetAI) const = 0;
+
+
+
+  virtual bool handleSpecialMInstr(const MachineInstr * MInst, 
+		       LiveRangeInfo& LRI,  vector<RegClass *> RCL) const  = 0;
+ 
   // returns the reg used for pushing the address when a method is called.
   // This can be used for other purposes between calls
   virtual unsigned getCallAddressReg() const = 0;
