@@ -25,12 +25,3 @@ std::string TableGenBackend::getQualifiedName(Record *R) const {
   return Namespace + "::" + R->getName();
 }
 
-/// getTarget - Return the current instance of the Target class.
-///
-Record *TableGenBackend::getTarget(RecordKeeper &RC) const {
-  std::vector<Record*> Targets = RC.getAllDerivedDefinitions("Target");
-
-  if (Targets.size() != 1)
-    throw std::string("ERROR: Multiple subclasses of Target defined!");
-  return Targets[0];
-}

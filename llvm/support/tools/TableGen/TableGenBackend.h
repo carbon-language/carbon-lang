@@ -29,9 +29,6 @@ public:   // Useful helper routines...
   /// getQualifiedName - Return the name of the specified record, with a
   /// namespace qualifier if the record contains one.
   std::string getQualifiedName(Record *R) const;
-
-  /// getTarget - Return the current instance of the Target class.
-  Record *getTarget(RecordKeeper &RC) const;
 };
 
 #endif
