@@ -61,6 +61,10 @@ class PhyRegAlloc : public NonCopyable {
   const TargetRegInfo &MRI;             // Machine Register information
   const unsigned NumOfRegClasses;       // recorded here for efficiency
 
+  // Map to indicate whether operands of each MachineInstr have been updated
+  // according to their assigned colors.  This is primarily for debugging and
+  // could be removed in the long run.
+  std::map<const MachineInstr *, bool> OperandsColoredMap;
   
   // AddedInstrMap - Used to store instrns added in this phase
   std::map<const MachineInstr *, AddedInstrns> AddedInstrMap;
@@ -116,6 +120,7 @@ private:
   void colorIncomingArgs();
   void colorCallRetArgs();
   void updateMachineCode();
+  void updateInstruction(MachineInstr* MInst, BasicBlock* BB);
 
   void printLabel(const Value *const Val);
   void printMachineCode();
