@@ -16,7 +16,6 @@
 #include "llvm/Function.h"
 #include "llvm/PassManager.h"
 #include "llvm/Assembly/PrintModulePass.h"
-#include "llvm/CodeGen/InstrSelection.h"
 #include "llvm/CodeGen/InstrScheduling.h"
 #include "llvm/CodeGen/IntrinsicLowering.h"
 #include "llvm/CodeGen/MachineFunction.h"
@@ -29,6 +28,7 @@
 #include "MappingInfo.h" 
 #include "SparcV9Internals.h"
 #include "SparcV9TargetMachine.h"
+#include "SparcV9BurgISel.h"
 #include "Support/CommandLine.h"
 using namespace llvm;
 
@@ -184,7 +184,7 @@ SparcV9TargetMachine::addPassesToEmitAssembly(PassManager &PM, std::ostream &Out
   // so %fp+offset-8 and %fp+offset-16 are empty slots now!
   PM.add(createStackSlotsPass(*this));
   
-  PM.add(createInstructionSelectionPass(*this));
+  PM.add(createSparcV9BurgInstSelector(*this));
 
   if (!DisableSched)
     PM.add(createInstructionSchedulingWithSSAPass(*this));
@@ -268,7 +268,7 @@ void SparcV9JITInfo::addPassesToJITCompile(FunctionPassManager &PM) {
   // Construct and initialize the MachineFunction object for this fn.
   PM.add(createMachineCodeConstructionPass(TM));
 
-  PM.add(createInstructionSelectionPass(TM));
+  PM.add(createSparcV9BurgInstSelector(TM));
 
   if (PrintMachineCode)
     PM.add(createMachineFunctionPrinterPass(&std::cerr, "Before reg alloc:\n"));
