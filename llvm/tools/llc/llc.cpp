@@ -14,13 +14,14 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Bytecode/Reader.h"
-#include "llvm/Target/TargetMachineImpls.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/TargetMachineRegistry.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Module.h"
 #include "llvm/PassManager.h"
 #include "llvm/Pass.h"
 #include "Support/CommandLine.h"
+#include "Support/PluginLoader.h"
 #include "llvm/System/Signals.h"
 #include <fstream>
 #include <iostream>
@@ -40,21 +41,13 @@ OutputFilename("o", cl::desc("Output filename"), cl::value_desc("filename"));
 
 static cl::opt<bool> Force("f", cl::desc("Overwrite output files"));
 
-enum ArchName { noarch, X86, SparcV9, PowerPC, CBackend };
 
-static cl::opt<ArchName>
-Arch("march", cl::desc("Architecture to generate assembly for:"), cl::Prefix,
-     cl::values(clEnumValN(X86,      "x86",     "  IA-32 (Pentium and above)"),
-                clEnumValN(SparcV9,  "sparcv9", "  SPARC V9"),
-                clEnumValN(PowerPC,  "powerpc", "  PowerPC (experimental)"),
-                clEnumValN(CBackend, "c",       "  C backend"),
-		0),
-     cl::init(noarch));
-
+static cl::opt<const TargetMachineRegistry::Entry*, false, TargetNameParser>
+MArch("march", cl::desc("Architecture to generate assembly for:"));
+               
 // GetFileNameRoot - Helper function to get the basename of a filename...
 static inline std::string
-GetFileNameRoot(const std::string &InputFilename)
-{
+GetFileNameRoot(const std::string &InputFilename) {
   std::string IFN = InputFilename;
   std::string outputFilename;
   int Len = IFN.length();
@@ -86,52 +79,18 @@ int main(int argc, char **argv) {
   // explicitly specified an architecture to compile for.
   TargetMachine* (*TargetMachineAllocator)(const Module&,
                                            IntrinsicLowering *) = 0;
-  switch (Arch) {
-  case CBackend:
-    TargetMachineAllocator = allocateCTargetMachine;
-    break;
-  case X86:
-    TargetMachineAllocator = allocateX86TargetMachine;
-    break;
-  case SparcV9:
-    TargetMachineAllocator = allocateSparcV9TargetMachine;
-    break;
-  case PowerPC:
-    TargetMachineAllocator = allocatePowerPCTargetMachine;
-    break;
-  default:
-    // Decide what the default target machine should be, by looking at
-    // the module. This heuristic (ILP32, LE -> IA32; LP64, BE ->
-    // SPARCV9) is kind of gross, but it will work until we have more
-    // sophisticated target information to work from.
-    if (mod.getEndianness()  == Module::LittleEndian &&
-        mod.getPointerSize() == Module::Pointer32) { 
-      TargetMachineAllocator = allocateX86TargetMachine;
-    } else if (mod.getEndianness() == Module::BigEndian &&
-        mod.getPointerSize() == Module::Pointer32) { 
-      TargetMachineAllocator = allocatePowerPCTargetMachine;
-    } else if (mod.getEndianness()  == Module::BigEndian &&
-               mod.getPointerSize() == Module::Pointer64) { 
-      TargetMachineAllocator = allocateSparcV9TargetMachine;
-    } else {
-      // If the module is target independent, favor a target which matches the
-      // current build system.
-#if defined(i386) || defined(__i386__) || defined(__x86__)
-      TargetMachineAllocator = allocateX86TargetMachine;
-#elif defined(sparc) || defined(__sparc__) || defined(__sparcv9)
-      TargetMachineAllocator = allocateSparcV9TargetMachine;
-#elif defined(__POWERPC__) || defined(__ppc__) || defined(__APPLE__)
-      TargetMachineAllocator = allocatePowerPCTargetMachine;
-#else
-      std::cerr << argv[0] << ": module does not specify a target to use.  "
-                << "You must use the -march option.  If no native target is "
-                << "available, use -march=c to emit C code.\n";
+  if (MArch == 0) {
+    std::string Err;
+    MArch = TargetMachineRegistry::getClosestStaticTargetForModule(mod, Err);
+    if (MArch == 0) {
+      std::cerr << argv[0] << ": error auto-selecting target for module '"
+                << Err << "'.  Please use the -march option to explicitly "
+                << "pick a target.\n";
       return 1;
-#endif
-    } 
-    break;
+    }
   }
-  std::auto_ptr<TargetMachine> target(TargetMachineAllocator(mod, 0));
+
+  std::auto_ptr<TargetMachine> target(MArch->CtorFn(mod, 0));
   assert(target.get() && "Could not allocate target machine!");
   TargetMachine &Target = *target.get();
   const TargetData &TD = Target.getTargetData();
@@ -169,7 +128,7 @@ int main(int argc, char **argv) {
     } else {
       OutputFilename = GetFileNameRoot(InputFilename); 
 
-      if (Arch != CBackend)
+      if (MArch->Name[0] != 'c' || MArch->Name[1] != 0)  // not CBE
         OutputFilename += ".s";
       else
         OutputFilename += ".cbe.c";
