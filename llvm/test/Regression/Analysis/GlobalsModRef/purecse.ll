@@ -7,8 +7,16 @@ int %pure(int %X) {
 	ret int %Y
 }
 
-int %test(int %X) {
+int %test1(int %X) {
 	%A = call int %pure(int %X)
+	%B = call int %pure(int %X)
+	%C = sub int %A, %B
+	ret int %C
+}
+
+int %test2(int %X, int* %P) {
+	%A = call int %pure(int %X)
+	store int %X, int* %P          ;; Does not invalidate 'pure' call.
 	%B = call int %pure(int %X)
 	%C = sub int %A, %B
 	ret int %C
