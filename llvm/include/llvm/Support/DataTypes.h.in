@@ -21,6 +21,8 @@
 #ifndef SUPPORT_DATATYPES_H
 #define SUPPORT_DATATYPES_H
 
+#include <llvm/Config/config.h>
+
 // Note that this header's correct operation depends on __STDC_LIMIT_MACROS
 // being defined.  We would define it here, but in order to prevent Bad Things
 // happening when system headers or C++ STL headers include stdint.h before
@@ -34,6 +36,16 @@
 @INCLUDE_INTTYPES_H@
 @INCLUDE_SYS_TYPES_H@
 @INCLUDE_STDINT_H@
+
+// Handle incorrect definition of uint64_t as u_int64_t
+#ifndef HAVE_UINT64_T
+#ifdef HAVE_U_INT64_T
+typedef u_int64_t uint64_t;
+#else
+# error "Don't have a definition for uint64_t on this platform"
+#endif
+#endif
+
 #else
 // Visual C++ doesn't provide standard integer headers, but it does provide
 // built-in data types.
