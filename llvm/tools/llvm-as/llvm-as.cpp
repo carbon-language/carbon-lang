@@ -57,7 +57,7 @@ int main(int argc, char **argv) {
       return 1;
     }
 
-    if (!DisableVerify && verifyModule(*M.get())) {
+    if (!DisableVerify && verifyModule(*M.get(), PrintMessageAction)) {
       std::cerr << argv[0]
                 << ": assembly parsed, but does not verify as correct!\n";
       return 1;
