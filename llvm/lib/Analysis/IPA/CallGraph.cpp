@@ -12,7 +12,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Analysis/CallGraph.h"
-#include "llvm/Constants.h"     // Remove when ConstantPointerRefs are gone
 #include "llvm/Module.h"
 #include "llvm/Instructions.h"
 #include "llvm/Support/CallSite.h"
