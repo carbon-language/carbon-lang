@@ -25,9 +25,7 @@
 //  3.1      __gnu_cxx   ext/hash_map
 //
 
-#include "Config/config.h"
-
-#ifdef HAVE_GNU_EXT_HASH_MAP
+#if @HAVE_GNU_EXT_HASH_MAP@
 // This is for GCC-3.1+ which puts hash in ext/hash_map
 # include <ext/hash_map>
 # ifndef HASH_NAMESPACE
@@ -35,7 +33,7 @@
 # endif
 
 // GCC 3.0.x puts hash_map in <ext/hash_map> and in the std namespace.
-#elif defined(HAVE_STD_EXT_HASH_MAP)
+#elif @HAVE_STD_EXT_HASH_MAP@
 # include <ext/hash_map>
 # ifndef HASH_NAMESPACE
 #  define HASH_NAMESPACE std
@@ -43,7 +41,7 @@
 
 // Older compilers such as GCC before version 3.0 do not keep
 // extensions in the `ext' directory, and ignore the `std' namespace.
-#elif defined(HAVE_GLOBAL_HASH_MAP)
+#elif @HAVE_GLOBAL_HASH_MAP@
 # include <hash_map>
 # ifndef HASH_NAMESPACE
 #  define HASH_NAMESPACE std
