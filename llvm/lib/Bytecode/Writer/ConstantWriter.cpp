@@ -80,7 +80,6 @@ void BytecodeWriter::outputType(const Type *T) {
     break;
   }
 
-  case Type::ModuleTyID:
   //case Type::PackedTyID:
   default:
     cerr << __FILE__ << ":" << __LINE__ << ": Don't know how to serialize"

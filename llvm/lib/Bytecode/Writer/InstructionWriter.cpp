@@ -215,7 +215,7 @@ void BytecodeWriter::processInstruction(const Instruction *I) {
     if (Slots[1] > MaxOpSlot) MaxOpSlot = Slots[1];
     NumOperands++;
   } else if (I->getOpcode() == Instruction::Call &&  // Handle VarArg calls
-	     I->getOperand(0)->getType()->isMethodType()->isVarArg()) {
+	     I->getOperand(0)->getType()->castMethodType()->isVarArg()) {
     outputInstrVarArgsCall(I, Table, Type, Out);
     return;
   }
