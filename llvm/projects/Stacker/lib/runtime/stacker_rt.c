@@ -20,8 +20,7 @@
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdint.h>
-#include <sys/types.h>
+#include <inttypes.h>
 
 extern int64_t _index_;
 extern int64_t _stack_[];
