@@ -509,8 +509,10 @@ static Value *FoldOperationIntoSelectOperand(Instruction &BI, Value *SO,
     New = BinaryOperator::create(BO->getOpcode(), Op0, Op1);
   else if (ShiftInst *SI = dyn_cast<ShiftInst>(&BI))
     New = new ShiftInst(SI->getOpcode(), Op0, Op1);
-  else
+  else {
     assert(0 && "Unknown binary instruction type!");
+    abort();
+  }
   return IC->InsertNewInstBefore(New, BI);
 }
 
