@@ -5,6 +5,6 @@ implementation
 int "foo"(int %in) 
 begin
 label: 
-  ret void 
+  ret int 2
 end
 
