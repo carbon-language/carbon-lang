@@ -257,7 +257,7 @@ Note however, that it's okay to put extra implementation methods a public class 
 <!-- _______________________________________________________________________ -->
 </ul><a name="hl_assert"><h4><hr size=0>Assert Liberally</h4><ul>
 
-Use the "<tt>assert</tt>" function to its fullest.  Check all of your preconditions and assumptions, you never know when a bug (not neccesarily even yours) might be caught early by an assertion, which reduces debugging time dramatically.  The "<tt>assert.h</tt>" header file is probably already included by the header files you are using, so it doesn't cost anything to use it.<p>
+Use the "<tt>assert</tt>" function to its fullest.  Check all of your preconditions and assumptions, you never know when a bug (not neccesarily even yours) might be caught early by an assertion, which reduces debugging time dramatically.  The "<tt>&lt;cassert&gt;</tt>" header file is probably already included by the header files you are using, so it doesn't cost anything to use it.<p>
 
 To further assist with debugging, make sure to put some kind of error message in the assertion statement (which is printed if the assertion is tripped). This helps the poor debugging make sense of why an assertion is being made and enforced, and hopefully what to do about it.  Here is one complete example:<p>
 
@@ -660,7 +660,7 @@ If you get some free time, and you haven't read them: do so, you might learn som
 <address><a href="mailto:sabre@nondot.org">Chris Lattner</a></address>
 <!-- Created: Tue Jan 23 15:19:28 CST 2001 -->
 <!-- hhmts start -->
-Last modified: Wed Apr 23 11:20:49 CDT 2003
+Last modified: Fri Jul 25 12:29:52 CDT 2003
 <!-- hhmts end -->
 </font>
 </body></html>
