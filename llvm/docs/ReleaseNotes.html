@@ -69,20 +69,28 @@ href="http://llvm.cs.uiuc.edu/releases/">releases page</a>.</p>
 
 <div class="doc_text">
 
-<p>This is the third public release of the LLVM compiler infrastructure.
+<p>
+This is the third public release of the LLVM compiler infrastructure.  This
+release incorporates several <a href="#newfeatures">new features</a> (including
+exception handling support for the native code generators, the start of a
+source-level debugger, and profile guided optimizer components), many <a
+href="#qualityofimp">speedups</a> and <a href="#codequality">code quality</a>
+improvements, documentation improvements, and a small collection of important <a
+href="bugfix">bug fixes</a>.  Overall, this is our highest quality release to
+date, and we encourage you to upgrade if you are using LLVM 1.0 or 1.1.
 </p>
 
-<p>At this time, LLVM is known to correctly compile and run all C
+<p><B> FIXME: UPDATE: </b>
+At this time, LLVM is known to correctly compile and run all C
 &amp; C++ SPEC CPU2000 benchmarks, the Olden benchmarks, and the Ptrdist
 benchmarks.  It has also been used to compile <b>many</b> other programs.  LLVM
 now also works with a broad variety of C++ programs, though it has still
 received less testing than the C front-end.
 </p>
 
-
 <!--=========================================================================-->
 <div class="doc_subsubsection">
-This release implements the following new features:
+<a name="newfeatures">This release implements the following new features:</a>
 </div>
 
 <ol>
@@ -90,8 +98,23 @@ This release implements the following new features:
 <li>LLVM 1.2 encodes bytecode files for large programs in 10-30% less space.</li>
 <li>LLVM can now feed profile information back into optimizers for Profile Guided Optimization, and includes a simple basic block reordering pass.</li>
 <li>The LLVM JIT lazily initializes global variables, reducing startup time for programs with lots of globals (like C++ programs).</li>
+
+<li>The build and installation infrastructure in this release is dramatically
+improved. There is now an <a
+href="http://llvm.cs.uiuc.edu/PR105"><tt>autoconf/AutoRegen.sh</tt> script</a>
+that you can run to rebuild the <tt>configure</tt> script and its associated
+files as well as beta support for "<a
+href="http://llvm.cs.uiuc.edu/PR208">make</a> <a
+href="http://llvm.cs.uiuc.edu/PR220">install</a>" and <a
+href="http://llvm.cs.uiuc.edu/PR203">RPM package generation</a>.</li>
+
 <li>The "tblgen" tool is <a href="TableGenFundamentals.html">now documented</a>.</li>
+<li>The LLVM code generator can now fold spill code into instructions on targets
+that support it.</li>
 <li><a href="http://llvm.cs.uiuc.edu/PR253">LLVM now no longer depends on the boost library</a>.</li>
+<li>The X86 backend now generates <b>substantially</b> better native code, and is faster.</li>
+<li>The C backend has been turned moved from the "llvm-dis" tool to the "llc"
+tool.  You can activate it with "<tt>llc -march=c foo.bc -o foo.c</tt>".</li>
 </ol>
 
 
@@ -110,7 +133,7 @@ In this release, the following missing features were implemented:
 
 <!--=========================================================================-->
 <div class="doc_subsubsection">
-In this release, the following Quality of Implementation issues were fixed:
+<a name="qualityofimp">In this release, the following Quality of Implementation issues were fixed:</a>
 </div>
 
 <ol>
@@ -123,20 +146,13 @@ In this release, the following Quality of Implementation issues were fixed:
 <li><a href="http://llvm.cs.uiuc.edu/PR209">[loadvn/inline/scalarrepl] Slow optimizations with extremely large basic blocks</a></li>
 <li><a href="http://llvm.cs.uiuc.edu/PR224">[asmparser] Really slow parsing of types with complex upreferences</a></li>
 <li><a href="http://llvm.cs.uiuc.edu/PR205">[llvmgcc] C front-end does not emit 'zeroinitializer' when possible</a></li>
+<li><a href="http://llvm.cs.uiuc.edu/PR233">[llvmgcc] Structure copies result in a LOT of code</a></li>
 <li><a href="http://llvm.cs.uiuc.edu/PR239">LLVM is now much more memory efficient when handling large zero initialized arrays</a></li>
 </ol>
 
 <!--=========================================================================-->
 <div class="doc_subsubsection">
-LLVM gained several improvements to its build and installation
-infrastructure in this release. There is now
-a <tt>autoconf/AutoRegen.sh</tt> script that you can run to rebuild the
-<tt>configure</tt> script and its associated files
-(<a href="http://llvm.cs.uiuc.edu/PR105">Bug 105</a>) as well as beta support
-for "make install" (<a href="http://llvm.cs.uiuc.edu/PR208">Bug 208</a> and
-<a href="http://llvm.cs.uiuc.edu/PR220">Bug 220</a>) and RPM package generation
-(<a href="http://llvm.cs.uiuc.edu/PR203">Bug 203</a>).
-Additionally, in this release, the following build problems were fixed:
+In this release, the following build problems were fixed:
 </div>
 
 <ol>
@@ -147,20 +163,22 @@ Additionally, in this release, the following build problems were fixed:
 
 <!--=========================================================================-->
 <div class="doc_subsubsection">
-In this release, the following Code Quality issues were fixed:
+<a name="codequality">In this release, the following Code Quality issues were fixed:</a>
 </div>
 
 <ol>
 <li><a href="http://llvm.cs.uiuc.edu/PR187">[loopsimplify] Many pointless phi nodes are created</a></li>
-<li>The X86 backend didn't generate <tt>fchs</tt> to negate floating point numbers</li>
-<li>The X86 backend didn't expand memcpy() into the <tt>rep movs</tt> instruction</li> 
 <li><a href="http://llvm.cs.uiuc.edu/PR237">[x86] wierd stack/frame pointer manipulation</a></li>
+
+<li>The X86 backend now generate <tt>fchs</tt> to negate floating point numbers,
+compiles memcpy() into the <tt>rep movs</tt> instruction, and makes much better
+use of powerful addressing modes and instructions.</li>
 </ol>
 
 
 <!--=========================================================================-->
 <div class="doc_subsubsection">
-In this release, the following bugs in the previous release were fixed:
+<a name="bugfix">In this release, the following bugs in the previous release were fixed:</a>
 </div>
 
 <p>Bugs in the LLVM Core:</p>
@@ -197,7 +215,6 @@ management functions in libc runtime to allow them to be overriden</a></li>
 <li><a href="http://llvm.cs.uiuc.edu/PR204">[llvmg++] Dynamically initialized constants cannot be marked 'constant'</a></li>
 <li><a href="http://llvm.cs.uiuc.edu/PR216">[llvmgcc] floating-point unary minus is incorrect for +0.0</a></li>
 <li><a href="http://llvm.cs.uiuc.edu/PR221">[llvm-gcc] miscompilation of 'X = Y = Z' with aggregate values</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR233">[llvmgcc] Structure copies result in a LOT of code</a></li>
 <li><a href="http://llvm.cs.uiuc.edu/PR244">[llvm-gcc] miscompilation when a function is re-declared as static</a></li>
 </ol>
 
