@@ -37,7 +37,7 @@ using namespace llvm;
 static cl::opt<std::string>
   InputFilename(cl::Positional, cl::desc("<input bytecode>"), cl::init("-"));
 
-static cl::opt<bool> Detailed ("details", cl::desc("Detailed output"));
+static cl::opt<bool> Detailed ("nodetails", cl::desc("Skip detailed output"));
 static cl::opt<bool> Dump     ("dump", cl::desc("Detailed output"));
 
 int 
@@ -55,7 +55,7 @@ main(int argc, char **argv)
 
   /// Determine what to generate
   bca.dumpBytecode = Dump;
-  bca.detailedResults = Detailed;
+  bca.detailedResults = !Detailed;
 
   /// Analyze the bytecode file
   AnalyzeBytecodeFile(InputFilename, bca, &ErrorMessage);
