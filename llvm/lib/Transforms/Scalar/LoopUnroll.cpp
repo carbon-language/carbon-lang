@@ -29,6 +29,7 @@
 #include "Support/Statistic.h"
 #include "Support/STLExtras.h"
 #include <cstdio>
+#include <set>
 using namespace llvm;
 
 namespace {
