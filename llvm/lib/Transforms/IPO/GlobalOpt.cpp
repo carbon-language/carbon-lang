@@ -259,6 +259,17 @@ static bool CleanupConstantGlobalUsers(Value *V, Constant *Init) {
     } else if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(U)) {
       if (Constant *SubInit = TraverseGEPInitializer(GEP, Init))
         Changed |= CleanupConstantGlobalUsers(GEP, SubInit);
+      else {
+        // If this GEP has variable indexes, we should still be able to delete
+        // any stores through it.
+        for (Value::use_iterator GUI = GEP->use_begin(), E = GEP->use_end();
+             GUI != E;)
+          if (StoreInst *SI = dyn_cast<StoreInst>(*GUI++)) {
+            SI->getParent()->getInstList().erase(SI);
+            Changed = true;
+          }
+      }
+
       if (GEP->use_empty()) {
         GEP->getParent()->getInstList().erase(GEP);
         Changed = true;
