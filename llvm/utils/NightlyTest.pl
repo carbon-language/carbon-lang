@@ -604,6 +604,7 @@ if ($BuildError eq "") {
     system "cat $Prefix-SingleSource-Tests.txt $Prefix-MultiSource-Tests.txt ".
          " $Prefix-External-Tests.txt | sort > $Prefix-Tests.txt";
   } else {
+    $ExternalProgramsTable = '<tr><td>External TEST STAGE SKIPPED</td></tr>';
     if ( $VERBOSE ) {
       print "External TEST STAGE SKIPPED\n";
     }
