@@ -1808,7 +1808,7 @@ BBTerminatorInst : RET ResolvedVal {              // Return with a result...
     $$ = new BranchInst(getBBVal($6), getBBVal($9), getVal(Type::BoolTy, $3));
   }
   | SWITCH IntType ValueRef ',' LABEL ValueRef '[' JumpTable ']' {
-    SwitchInst *S = new SwitchInst(getVal($2, $3), getBBVal($6));
+    SwitchInst *S = new SwitchInst(getVal($2, $3), getBBVal($6), $8->size());
     $$ = S;
 
     std::vector<std::pair<Constant*,BasicBlock*> >::iterator I = $8->begin(),
@@ -1818,7 +1818,7 @@ BBTerminatorInst : RET ResolvedVal {              // Return with a result...
     delete $8;
   }
   | SWITCH IntType ValueRef ',' LABEL ValueRef '[' ']' {
-    SwitchInst *S = new SwitchInst(getVal($2, $3), getBBVal($6));
+    SwitchInst *S = new SwitchInst(getVal($2, $3), getBBVal($6), 0);
     $$ = S;
   }
   | INVOKE TypesV ValueRef '(' ValueRefListE ')' TO LABEL ValueRef
@@ -2031,7 +2031,7 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
     if (!Ty->isFirstClassType())
       ThrowException("PHI node operands must be of first class type!");
     $$ = new PHINode(Ty);
-    $$->op_reserve($2->size()*2);
+    ((PHINode*)$$)->reserveOperandSpace($2->size());
     while ($2->begin() != $2->end()) {
       if ($2->front().first->getType() != Ty) 
         ThrowException("All elements of a PHI node must be of the same type!");
