@@ -615,8 +615,10 @@ endif
 
 ifdef ETAGS
 ifeq ($(LEVEL), .)
+SRCDIRS := $(wildcard include lib tools)
+
 tags:
-	$(ETAGS) -l c++ `find include lib tools -name '*.cpp' -o -name '*.h'`
+	$(ETAGS) -l c++ `find $(SRCDIRS) -name '*.cpp' -o -name '*.h'`
 all:: tags
 endif
 else
