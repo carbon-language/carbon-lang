@@ -12,35 +12,59 @@
 namespace {
   class AliasAnalysisCounter : public Pass, public AliasAnalysis {
     unsigned No, May, Must;
+    unsigned NoMR, JustRef, JustMod, MR;
     const char *Name;
   public:
-    AliasAnalysisCounter() : No(0), May(0), Must(0) {}
+    AliasAnalysisCounter() {
+      No = May = Must = 0;
+      NoMR = JustRef = JustMod = MR = 0;
+    }
+
+    void printLine(const char *Desc, unsigned Val, unsigned Sum) {
+      std::cerr <<  "  " << Val << " " << Desc << " responses ("
+                << Val*100/Sum << "%)\n";
+    }
     ~AliasAnalysisCounter() {
-      unsigned Sum = No+May+Must;
-      if (Sum) {            // Print a report if any counted queries occurred...
+      unsigned AASum = No+May+Must;
+      unsigned MRSum = NoMR+JustRef+JustMod+MR;
+      if (AASum + MRSum) { // Print a report if any counted queries occurred...
         std::cerr
           << "\n===== Alias Analysis Counter Report =====\n"
           << "  Analysis counted: " << Name << "\n"
-          << "  " << Sum << " Total Alias Queries Performed\n"
-          << "  " << No << " no alias responses (" << No*100/Sum << "%)\n"
-          << "  " << May << " may alias responses (" << May*100/Sum << "%)\n"
-          << "  " << Must << " must alias responses (" <<Must*100/Sum<<"%)\n"
-          << "  Alias Analysis Counter Summary: " << No*100/Sum << "%/"
-          << May*100/Sum << "%/" << Must*100/Sum<<"%\n\n";
+          << "  " << AASum << " Total Alias Queries Performed\n";
+        printLine("no alias",     No, AASum);
+        printLine("may alias",   May, AASum);
+        printLine("must alias", Must, AASum);
+        std::cerr
+          << "  Alias Analysis Counter Summary: " << No*100/AASum << "%/"
+          << May*100/AASum << "%/" << Must*100/AASum<<"%\n\n";
+
+        std::cerr
+          << "  " << MRSum    << " Total Mod/Ref Queries Performed\n";
+        printLine("no mod/ref",    NoMR, MRSum);
+        printLine("ref",        JustRef, MRSum);
+        printLine("mod",        JustMod, MRSum);
+        printLine("mod/ref",         MR, MRSum);
+        std::cerr
+          << "  Mod/Ref Analysis Counter Summary: " << NoMR*100/MRSum<< "%/"
+          << JustRef*100/MRSum << "%/" << JustMod*100/MRSum << "%/" 
+          << MR*100/MRSum <<"%\n\n";
       }
     }
 
     bool run(Module &M) {
+      InitializeAliasAnalysis(this);
       Name = dynamic_cast<Pass*>(&getAnalysis<AliasAnalysis>())->getPassName();
       return false;
     }
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AliasAnalysis::getAnalysisUsage(AU);
       AU.addRequired<AliasAnalysis>();
       AU.setPreservesAll();
     }
 
-    Result count(Result R) {
+    AliasResult count(AliasResult R) {
       switch (R) {
       default: assert(0 && "Unknown alias type!");
       case NoAlias:   No++; return NoAlias;
@@ -48,17 +72,24 @@ namespace {
       case MustAlias: Must++; return MustAlias;
       }
     }
+    ModRefResult count(ModRefResult R) {
+      switch (R) {
+      default:       assert(0 && "Unknown mod/ref type!");
+      case NoModRef: NoMR++;     return NoModRef;
+      case Ref:      JustRef++;  return Ref;
+      case Mod:      JustMod++;  return Mod;
+      case ModRef:   MR++;       return ModRef;
+      }
+    }
     
     // Forwarding functions: just delegate to a real AA implementation, counting
     // the number of responses...
-    Result alias(const Value *V1, const Value *V2) {
-      return count(getAnalysis<AliasAnalysis>().alias(V1, V2));
+    AliasResult alias(const Value *V1, unsigned V1Size,
+                      const Value *V2, unsigned V2Size) {
+      return count(getAnalysis<AliasAnalysis>().alias(V1, V1Size, V2, V2Size));
     }
-    Result canCallModify(const CallInst &CI, const Value *Ptr) {
-      return count(getAnalysis<AliasAnalysis>().canCallModify(CI, Ptr));
-    }
-    Result canInvokeModify(const InvokeInst &I, const Value *Ptr) {
-      return count(getAnalysis<AliasAnalysis>().canInvokeModify(I, Ptr));
+    ModRefResult getModRefInfo(CallSite CS, Value *P, unsigned Size) {
+      return count(getAnalysis<AliasAnalysis>().getModRefInfo(CS, P, Size));
     }
   };
 
