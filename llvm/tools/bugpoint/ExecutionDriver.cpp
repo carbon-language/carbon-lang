@@ -195,7 +195,11 @@ bool BugDriver::diffProgram(const std::string &BytecodeFile,
     }
     FilesDifferent = true;
   }
+  
+  // Remove the generated output.
+  removeFile(Output);
 
+  // Remove the bytecode file if we are supposed to.
   if (RemoveBytecode) removeFile(BytecodeFile);
   return FilesDifferent;
 }
