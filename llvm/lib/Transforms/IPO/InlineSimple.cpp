@@ -13,6 +13,7 @@
 
 #include "Inliner.h"
 #include "llvm/Instructions.h"
+#include "llvm/IntrinsicInst.h"
 #include "llvm/Function.h"
 #include "llvm/Type.h"
 #include "llvm/Support/CallSite.h"
@@ -147,7 +148,7 @@ void FunctionInfo::analyzeFunction(Function *F) {
   for (Function::const_iterator BB = F->begin(), E = F->end(); BB != E; ++BB) {
     for (BasicBlock::const_iterator II = BB->begin(), E = BB->end();
          II != E; ++II) {
-      ++NumInsts;
+      if (!isa<DbgInfoIntrinsic>(II)) ++NumInsts;
 
       // If there is an alloca in the body of the function, we cannot currently
       // inline the function without the risk of exploding the stack.
