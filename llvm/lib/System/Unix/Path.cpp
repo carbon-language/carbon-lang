@@ -16,8 +16,7 @@
 //===          is guaranteed to work on *all* UNIX variants.
 //===----------------------------------------------------------------------===//
 
-#include <llvm/Config/config.h>
-#include <llvm/Config/alloca.h>
+#include "llvm/Config/alloca.h"
 #include "Unix.h"
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -27,9 +26,7 @@
 namespace llvm {
 using namespace sys;
 
-Path::Path(const std::string& unverified_path) 
-  : path(unverified_path)
-{
+Path::Path(const std::string& unverified_path) : path(unverified_path) {
   if (unverified_path.empty())
     return;
   if (this->isValid()) 
@@ -64,6 +61,7 @@ static void getPathList(const char*path, std::vector<sys::Path>& Paths) {
         Paths.push_back(tmpPath);
 
 }
+
 void 
 Path::GetSystemLibraryPaths(std::vector<sys::Path>& Paths) {
 #ifdef LTDL_SHLIBPATH_VAR
