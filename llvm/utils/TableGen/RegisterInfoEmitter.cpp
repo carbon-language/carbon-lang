@@ -128,7 +128,7 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
 
     OS << "  struct " << Name << "Class : public TargetRegisterClass {\n"
        << "    " << Name << "Class() : TargetRegisterClass("
-       << RC.SpillSize/8 << ", " << RC.SpillAlignment << ", " << Name << ", "
+       << RC.SpillSize/8 << ", " << RC.SpillAlignment/8 << ", " << Name << ", "
        << Name << " + " << RC.Elements.size() << ") {}\n"
        << RC.MethodDefinitions << "  } " << Name << "Instance;\n\n";
   }
