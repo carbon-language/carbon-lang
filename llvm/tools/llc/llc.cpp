@@ -27,7 +27,6 @@ cl::String OutputFilename("o", "Output filename", cl::NoFlags, "");
 cl::Flag   Force         ("f", "Overwrite output files");
 cl::Flag   DumpAsm       ("d", "Print bytecode before native code generation",
                           cl::Hidden);
-cl::Flag   DoNotEmitAssembly("noasm", "Do not emit assembly code", cl::Hidden);
 cl::Flag   TraceBBValues ("trace",
                           "Trace values at basic block and method exits");
 cl::Flag   TraceMethodValues("tracem", "Trace values only at method exits");
@@ -45,73 +44,6 @@ static inline string GetFileNameRoot(const string &InputFilename) {
   }
   return outputFilename;
 }
-
-
-//===---------------------------------------------------------------------===//
-// GenerateCodeForTarget Pass
-// 
-// Native code generation for a specified target.
-//===---------------------------------------------------------------------===//
-
-class GenerateCodeForTarget : public MethodPass {
-  TargetMachine &Target;
-public:
-  inline GenerateCodeForTarget(TargetMachine &T) : Target(T) {}
-
-  // runOnMethod - This method does the actual work of generating code for
-  // the specified method.
-  //
-  bool runOnMethod(Method *M) {
-    if (Target.compileMethod(M))
-      cerr << "Error compiling " << InputFilename << "!\n";
-    
-    return true;
-  }
-};
-
-
-//===---------------------------------------------------------------------===//
-// EmitMethodAssembly Pass
-// 
-// Write assembly code for each method to specified output stream
-//===---------------------------------------------------------------------===//
-
-class EmitMethodAssembly : public MethodPass {
-  TargetMachine &Target;   // Target to compile for
-  std::ostream *Out;             // Stream to print on
-public:
-  inline EmitMethodAssembly(TargetMachine &T, std::ostream *O)
-    : Target(T), Out(O) {}
-
-  virtual bool runOnMethod(Method *M) {
-    Target.emitAssembly(M, *Out);
-    Target.freeCompiledMethod(M);  // Release memory for the method
-    return false;
-  }
-};
-
-
-//===---------------------------------------------------------------------===//
-// EmitGlobalsAssembly Pass
-// 
-// Write assembly code for global values to specified output stream
-//===---------------------------------------------------------------------===//
-
-class EmitGlobalsAssembly : public Pass {
-  const TargetMachine &Target;   // Target to compile for
-  std::ostream *Out;             // Stream to print on
-  bool DeleteStream;             // Delete stream in dtor?
-public:
-  inline EmitGlobalsAssembly(const TargetMachine &T, std::ostream *O, bool D)
-    : Target(T), Out(O), DeleteStream(D) {}
-
-  virtual bool run(Module *M) {
-    Target.emitAssembly(M, *Out);
-    if (DeleteStream) delete Out;
-    return false;
-  }
-};
-
 
 
 //===---------------------------------------------------------------------===//
@@ -181,62 +113,48 @@ int main(int argc, char **argv) {
   
   // If LLVM dumping after transformations is requested, add it to the pipeline
   if (DumpAsm)
-    Passes.add(new PrintMethodPass("Code after xformations: \n",&cerr));
+    Passes.add(new PrintMethodPass("Code after xformations: \n", &cerr));
 
-  // Generate Target code...
-  Passes.add(new GenerateCodeForTarget(Target));
+  // Figure out where we are going to send the output...
+  std::ostream *Out = 0;
+  if (OutputFilename != "") {   // Specified an output filename?
+    if (!Force && std::ifstream(OutputFilename.c_str())) {
+      // If force is not specified, make sure not to overwrite a file!
+      cerr << "Error opening '" << OutputFilename << "': File exists!\n"
+           << "Use -f command line argument to force output\n";
+      return 1;
+    }
+    Out = new std::ofstream(OutputFilename.c_str());
+  } else {
+    if (InputFilename == "-") {
+      OutputFilename = "-";
+      Out = &std::cout;
+    } else {
+      string OutputFilename = GetFileNameRoot(InputFilename); 
+      OutputFilename += ".s";
 
-  if (!DoNotEmitAssembly) {                // If asm output is enabled...
-    // Figure out where we are going to send the output...
-    std::ostream *Out = 0;
-    if (OutputFilename != "") {   // Specified an output filename?
       if (!Force && std::ifstream(OutputFilename.c_str())) {
         // If force is not specified, make sure not to overwrite a file!
         cerr << "Error opening '" << OutputFilename << "': File exists!\n"
              << "Use -f command line argument to force output\n";
         return 1;
       }
+
       Out = new std::ofstream(OutputFilename.c_str());
-    } else {
-      if (InputFilename == "-") {
-        OutputFilename = "-";
-        Out = &std::cout;
-      } else {
-        string OutputFilename = GetFileNameRoot(InputFilename); 
-        OutputFilename += ".s";
-
-        if (!Force && std::ifstream(OutputFilename.c_str())) {
-          // If force is not specified, make sure not to overwrite a file!
-          cerr << "Error opening '" << OutputFilename << "': File exists!\n"
-               << "Use -f command line argument to force output\n";
-          return 1;
-        }
-
-        Out = new std::ofstream(OutputFilename.c_str());
-        if (!Out->good()) {
-          cerr << "Error opening " << OutputFilename << "!\n";
-          delete Out;
-          return 1;
-        }
+      if (!Out->good()) {
+        cerr << "Error opening " << OutputFilename << "!\n";
+        delete Out;
+        return 1;
       }
     }
-    
-    // Output assembly language to the .s file.  Assembly emission is split into
-    // two parts: Method output and Global value output.  This is because method
-    // output is pipelined with all of the rest of code generation stuff,
-    // allowing machine code representations for methods to be free'd after the
-    // method has been emitted.
-    //
-    Passes.add(new EmitMethodAssembly(Target, Out));  // for methods
-
-    // For global values...
-    Passes.add(new EmitGlobalsAssembly(Target, Out, Out != &std::cout));
   }
+  
+  Target.addPassesToEmitAssembly(Passes, *Out);
   
   // Run our queue of passes all at once now, efficiently.
   Passes.run(M.get());
 
+  if (Out != &std::cout) delete Out;
+
   return 0;
 }
-
-
