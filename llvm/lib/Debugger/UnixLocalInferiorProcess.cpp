@@ -24,12 +24,12 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Debugger/InferiorProcess.h"
-#include "llvm/IntrinsicLowering.h"
 #include "llvm/Constant.h"
 #include "llvm/Module.h"
 #include "llvm/ModuleProvider.h"
 #include "llvm/Type.h"
 #include "llvm/iOther.h"
+#include "llvm/CodeGen/IntrinsicLowering.h"
 #include "llvm/ExecutionEngine/GenericValue.h"
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
 #include "Support/FileUtilities.h"

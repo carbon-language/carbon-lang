@@ -51,8 +51,8 @@ void SimpleInstrSelEmitter::run(std::ostream &OS) {
 //   OS << "#include \"llvm/DerivedTypes.h\"\n";
 //   OS << "#include \"llvm/Function.h\"\n";
 //   OS << "#include \"llvm/Instructions.h\"\n";
-//   OS << "#include \"llvm/IntrinsicLowering.h\"\n";
 //   OS << "#include \"llvm/Pass.h\"\n";
+//   OS << "#include \"llvm/CodeGen/IntrinsicLowering.h\"\n";
 //   OS << "#include \"llvm/CodeGen/MachineConstantPool.h\"\n";
 //   OS << "#include \"llvm/CodeGen/MachineFrameInfo.h\"\n";
 //   OS << "#include \"llvm/CodeGen/MachineFunction.h\"\n";

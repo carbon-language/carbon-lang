@@ -13,7 +13,7 @@
 
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Type.h"
-#include "llvm/IntrinsicLowering.h"
+#include "llvm/CodeGen/IntrinsicLowering.h"
 #include "Support/CommandLine.h"
 using namespace llvm;
 

@@ -16,7 +16,7 @@
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Instructions.h"
-#include "llvm/IntrinsicLowering.h"
+#include "llvm/CodeGen/IntrinsicLowering.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "Support/Statistic.h"
 #include "Support/Debug.h"

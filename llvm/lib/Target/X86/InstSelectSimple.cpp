@@ -18,8 +18,8 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
-#include "llvm/IntrinsicLowering.h"
 #include "llvm/Pass.h"
+#include "llvm/CodeGen/IntrinsicLowering.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
@@ -2155,7 +2155,8 @@ void ISel::emitSimpleBinaryOperation(MachineBasicBlock *MBB,
         unsigned op1Reg = getReg(Op1, MBB, IP);
         unsigned Tmp = makeAnotherReg(Op0->getType());
         BuildMI(*MBB, IP, NEGTab[Class], 1, Tmp).addReg(op1Reg);
-        BuildMI(*MBB, IP, ADDRITab[Class], 2, DestReg).addReg(Tmp).addImm(CI->getRawValue());
+        BuildMI(*MBB, IP, ADDRITab[Class], 2,
+                DestReg).addReg(Tmp).addImm(CI->getRawValue());
         return;
       }
     }

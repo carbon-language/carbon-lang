@@ -16,11 +16,11 @@
 
 #include "llvm/CodeGen/InstrSelection.h"
 #include "llvm/Function.h"
-#include "llvm/IntrinsicLowering.h"
 #include "llvm/iPHINode.h"
 #include "llvm/iOther.h"
 #include "llvm/Pass.h"
 #include "llvm/CodeGen/InstrForest.h"
+#include "llvm/CodeGen/IntrinsicLowering.h"
 #include "llvm/CodeGen/MachineCodeForInstruction.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/Target/TargetMachine.h"

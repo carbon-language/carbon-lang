@@ -14,11 +14,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Function.h"
-#include "llvm/IntrinsicLowering.h"
 #include "llvm/PassManager.h"
 #include "llvm/Assembly/PrintModulePass.h"
 #include "llvm/CodeGen/InstrSelection.h"
 #include "llvm/CodeGen/InstrScheduling.h"
+#include "llvm/CodeGen/IntrinsicLowering.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFunctionInfo.h"
 #include "llvm/CodeGen/MachineCodeForInstruction.h"
