@@ -76,8 +76,8 @@ def : RegisterAliases<SP, [ESP]>;     def : RegisterAliases<BP, [EBP]>;
 // top-level register classes.  The order specified in the register list is
 // implicitly defined to be the register allocation order.
 //
-def R8  : RegisterClass<i8,  1, [AL, AH, CL, CH, DL, DH, BL, BH]>;
-def R16 : RegisterClass<i16, 2, [AX, CX, DX, SI, DI, BX, BP, SP]> {
+def R8  : RegisterClass<i8,  8, [AL, AH, CL, CH, DL, DH, BL, BH]>;
+def R16 : RegisterClass<i16, 16, [AX, CX, DX, SI, DI, BX, BP, SP]> {
   let Methods = [{
     iterator allocation_order_end(MachineFunction &MF) const {
       if (hasFP(MF))     // Does the function dedicate EBP to being a frame ptr?
@@ -88,7 +88,7 @@ def R16 : RegisterClass<i16, 2, [AX, CX, DX, SI, DI, BX, BP, SP]> {
   }];
 }
 
-def R32 : RegisterClass<i32, 4, [EAX, ECX, EDX, ESI, EDI, EBX, EBP, ESP]> {
+def R32 : RegisterClass<i32, 32, [EAX, ECX, EDX, ESI, EDI, EBX, EBP, ESP]> {
   let Methods = [{
     iterator allocation_order_end(MachineFunction &MF) const {
       if (hasFP(MF))     // Does the function dedicate EBP to being a frame ptr?
@@ -99,12 +99,7 @@ def R32 : RegisterClass<i32, 4, [EAX, ECX, EDX, ESI, EDI, EBX, EBP, ESP]> {
   }];
 }
 
-def RFP : RegisterClass<f80, 4, [FP0, FP1, FP2, FP3, FP4, FP5, FP6]>;
+def RFP : RegisterClass<f80, 32, [FP0, FP1, FP2, FP3, FP4, FP5, FP6]>;
 
 // Floating point stack registers.
-def RST : RegisterClass<f80, 4, [ST0, ST1, ST2, ST3, ST4, ST5, ST6, ST7]>;
-
-
-// Registers which cannot be allocated.
-//def : RegisterClass<i16, 2, [EFLAGS]>;
-
+def RST : RegisterClass<f80, 32, [ST0, ST1, ST2, ST3, ST4, ST5, ST6, ST7]>;
