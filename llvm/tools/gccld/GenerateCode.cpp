@@ -22,6 +22,13 @@
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/Utils/Linker.h"
 #include "Support/SystemUtils.h"
+#include "Support/CommandLine.h"
+
+namespace {
+  cl::opt<bool>
+  DisableInline("disable-inlining", cl::desc("Do not run the inliner pass"));
+}
+
 
 /// GenerateBytecode - generates a bytecode file from the specified module.
 ///
@@ -73,6 +80,9 @@ GenerateBytecode (Module *M, bool Strip, bool Internalize, std::ostream *Out) {
 
   // Remove unused arguments from functions...
   Passes.add(createDeadArgEliminationPass());
+
+  if (!DisableInline)
+    Passes.add(createFunctionInliningPass());   // Inline small functions
 
   // The FuncResolve pass may leave cruft around if functions were prototyped
   // differently than they were defined.  Remove this cruft.
