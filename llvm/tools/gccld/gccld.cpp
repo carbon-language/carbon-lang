@@ -21,7 +21,7 @@
 #include "llvm/Bytecode/WriteBytecodePass.h"
 #include "llvm/Transforms/CleanupGCCOutput.h"
 #include "llvm/Transforms/ConstantMerge.h"
-#include "llvm/Transforms/ScalarSymbolStripping.h"
+#include "llvm/Transforms/Scalar/SymbolStripping.h"
 #include "llvm/Transforms/IPO/GlobalDCE.h"
 #include "llvm/Transforms/IPO/Internalize.h"
 #include "Support/CommandLine.h"
