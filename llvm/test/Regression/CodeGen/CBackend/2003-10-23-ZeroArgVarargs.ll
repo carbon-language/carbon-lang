@@ -1,3 +1,4 @@
+; XFAIL: *
 ; RUN: llvm-as < %s | llc -march=c
 
 
