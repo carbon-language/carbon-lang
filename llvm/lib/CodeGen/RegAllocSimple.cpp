@@ -14,6 +14,7 @@
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
+#include "Support/Debug.h"
 #include "Support/Statistic.h"
 #include <iostream>
 

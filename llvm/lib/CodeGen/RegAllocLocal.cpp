@@ -13,8 +13,9 @@
 #include "llvm/CodeGen/LiveVariables.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
-#include "Support/Statistic.h"
 #include "Support/CommandLine.h"
+#include "Support/Debug.h"
+#include "Support/Statistic.h"
 #include <iostream>
 
 namespace {

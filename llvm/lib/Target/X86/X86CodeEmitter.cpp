@@ -12,6 +12,7 @@
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/Value.h"
+#include "Support/Debug.h"
 #include "Support/Statistic.h"
 #include "Config/alloca.h"
 
