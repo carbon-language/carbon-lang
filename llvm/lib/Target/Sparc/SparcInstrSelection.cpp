@@ -1004,8 +1004,8 @@ SetOperandsForMemInstr(vector<MachineInstr*>& mvec,
   // Append the index vector of the current instruction, if any.
   // Discard any leading [0] index.
   if (memInst->getNumIndices() > 0)
-    idxVec.insert(idxVec.end(), memInst->idx_begin()
-                    + (IndexIsZero(*memInst->idx_begin())? 1 : 0),
+    idxVec.insert(idxVec.end(),
+                  memInst->idx_begin() + IsZero(*memInst->idx_begin()),
                   memInst->idx_end());
 
   // Now create the appropriate operands for the machine instruction
@@ -1056,12 +1056,10 @@ SetMemOperands_Internal(vector<MachineInstr*>& mvec,
           // offset.  (An extra leading zero offset, if any, can be ignored.)
           // Generate code sequence to compute address from index.
           // 
-          bool firstIndexIsZero = IndexIsZero(idxVec[0]);
-
-          assert(idxVec.size() == 1 + (unsigned) (firstIndexIsZero? 1 : 0)
+          assert(idxVec.size() == 1U + IsZero(idxVec[0])
                  && "Array refs must be lowered before Instruction Selection");
 
-          Value* idxVal = idxVec[(firstIndexIsZero? 1 : 0)];
+          Value* idxVal = idxVec[IsZero(idxVec[0])];
 
           vector<MachineInstr*> mulVec;
           Instruction* addr = new TmpInstruction(Type::UIntTy, memInst);
