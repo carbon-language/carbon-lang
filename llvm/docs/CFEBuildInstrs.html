@@ -71,7 +71,7 @@ good GCC hacker.</p>
  % gmake all; gmake install
 </pre>
 
- <p><b>Common Problem 1:</b> You may get error messages regarding the fact
+ <p><b>Common Problem:</b> You may get error messages regarding the fact
  that LLVM does not support inline assembly. Here are two common
  fixes:</p>
 
@@ -88,19 +88,26 @@ good GCC hacker.</p>
    and apply a patch so that it does not use inline assembly.</p></li>
  </ul>
 
- <p><b>Common Problem 2:</b> <b>FIXME:</b> Chris should add a section about
- common problems porting to a new architecture, including changes you
- might have to make to the <tt>gcc/gcc/config/<i>name-of-cpu</i></tt>
- directory. For example (expand these):</p>
+ <p><b>Porting to a new architecture:</b> If you are porting the new front-end
+ to a new architecture, or compiling in a different configuration that we have
+ previously, there are probably several changes you will have to make to the GCC
+ target to get it to work correctly.  These include:<p>
 
  <ul>
-  <li>Munge linker flags so they are compatible with <tt>gccld</tt>.</li>
-  <li>Change the target so it doesn't have long double; just use double
-      instead.</li>
-  <li>No inline assembly for position independent code.</li>
-  <li>We handle init and fini differently.</li>
-  <li>Do not include inline assembly map things for SPARC, or profile
-      things.</li>
+  <li>Often targets include special or assembler linker flags which
+      <tt>gccas</tt>/<tt>gccld</tt> does not understand.  In general, these can
+      just be removed.</li>
+  <li>LLVM currently does not support any floating point values other than 
+      32-bit and 64-bit IEEE floating point.  The primary effect of this is
+      that you may have to map "long double" onto "double".</li>
+  <li>The profiling hooks in GCC do not apply at all to the LLVM front-end.
+      These may need to be disabled.</li>
+  <li>No inline assembly for position independent code.  At the LLVM level,
+      everything is position independent.</li>
+  <li>We handle <tt>.init</tt> and <tt>.fini</tt> differently.</li>
+  <li>Did we mention that we don't support inline assembly?  You'll probably
+      have to add some fixinclude hacks to disable it in the system
+      headers.</li>
  </ul>
 </li>
 
@@ -129,8 +136,8 @@ libgcc.a library, which you can find by running
 <li><p>Test the newly-installed C frontend by one or more of the
 following means:</p>
  <ul>
-  <li> compiling and running a "hello, world" program in C or C++.</li>
-  <li> running the tests under test/Programs using <code>gmake -C
+  <li> compiling and running a "hello, LLVM" program in C and C++.</li>
+  <li> running the tests under <tt>test/Programs</tt> using <code>gmake -C
    test/Programs</code></li>
  </ul>
   </p>
