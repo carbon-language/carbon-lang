@@ -11,6 +11,7 @@
 #include "llvm/Constants.h"
 #include "llvm/Module.h"
 #include "llvm/Target/TargetData.h"
+#include "Support/Debug.h"
 #include "Support/Statistic.h"
 #include "Config/dlfcn.h"
 
@@ -295,13 +296,11 @@ void ExecutionEngine::InitializeMemory(const Constant *Init, void *Addr) {
   }
 }
 
-
-
 void *ExecutionEngine::CreateArgv(const std::vector<std::string> &InputArgv) {
   if (getTargetData().getPointerSize() == 8) {   // 64 bit target?
     PointerTy *Result = new PointerTy[InputArgv.size()+1];
     DEBUG(std::cerr << "ARGV = " << (void*)Result << "\n");
-    
+
     for (unsigned i = 0; i < InputArgv.size(); ++i) {
       unsigned Size = InputArgv[i].size()+1;
       char *Dest = new char[Size];

@@ -17,7 +17,7 @@ BUGPOINT NOTES:
 #include "BugDriver.h"
 #include "SystemUtils.h"
 #include "Support/CommandLine.h"
-#include "Support/Statistic.h"
+#include "Support/Debug.h"
 #include "Support/FileUtilities.h"
 #include <fstream>
 #include <iostream>

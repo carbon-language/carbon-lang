@@ -12,6 +12,7 @@
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Module.h"
+#include "Support/Debug.h"
 #include "Support/Statistic.h"
 #include <stdio.h>
 

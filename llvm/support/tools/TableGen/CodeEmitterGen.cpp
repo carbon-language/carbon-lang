@@ -6,7 +6,7 @@
 
 #include "CodeEmitterGen.h"
 #include "Record.h"
-#include "Support/Statistic.h"
+#include "Support/Debug.h"
 
 void CodeEmitterGen::run(std::ostream &o) {
   std::vector<Record*> Insts = Records.getAllDerivedDefinitions("Instruction");

@@ -21,7 +21,7 @@
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Transforms/Utils/Linker.h"
 #include "Support/CommandLine.h"
-#include "Support/Statistic.h"
+#include "Support/Debug.h"
 #include "Support/StringExtras.h"
 #include <algorithm>
 #include <set>
