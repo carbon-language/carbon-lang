@@ -19,7 +19,9 @@
 // independent code co-exist via conditional compilation until it is verified
 // that the new code works correctly on Unix.
 
-//#define PLATFORMINDEPENDENT
+#ifdef _MSC_VER
+#define PLATFORMINDEPENDENT
+#endif
 
 #include "BugDriver.h"
 #include "llvm/Module.h"
