@@ -25,7 +25,7 @@ bool Loop::contains(const BasicBlock *BB) const {
 }
 
 bool Loop::isLoopExit(const BasicBlock *BB) const {
-  for (BasicBlock::succ_const_iterator SI = succ_begin(BB), SE = succ_end(BB);
+  for (succ_const_iterator SI = succ_begin(BB), SE = succ_end(BB);
        SI != SE; ++SI) {
     if (!contains(*SI))
       return true;
@@ -39,7 +39,7 @@ unsigned Loop::getNumBackEdges() const {
 
   for (std::vector<BasicBlock*>::const_iterator I = Blocks.begin(),
          E = Blocks.end(); I != E; ++I)
-    for (BasicBlock::succ_iterator SI = succ_begin(*I), SE = succ_end(*I);
+    for (succ_iterator SI = succ_begin(*I), SE = succ_end(*I);
          SI != SE; ++SI)
       if (*SI == H)
 	++NumBackEdges;
