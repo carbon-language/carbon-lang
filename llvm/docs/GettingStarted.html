@@ -1142,18 +1142,19 @@ are code generators for parts of LLVM infrastructure.</p>
 
       <p><tt>% llvm-dis &lt; hello.bc | less</tt><p></li>
 
-  <li><p>Compile the program to native Sparc assembly using the code
-      generator (assuming you are currently on a Sparc system):</p>
+  <li><p>Compile the program to native assembly using the LLC code
+      generator:</p>
 
       <p><tt>% llc hello.bc -o hello.s</tt></p>
 
-  <li><p>Assemble the native sparc assemble file into a program:</p>
+  <li><p>Assemble the native assembly language file into a program:</p>
 
-      <p><tt>% /opt/SUNWspro/bin/cc -xarch=v9 hello.s -o hello.sparc</tt></p>
+      <p><b>Solaris:</b><tt>% /opt/SUNWspro/bin/cc -xarch=v9 hello.s -o hello.native</tt></p>
+      <p><b>Others:</b><tt>% gcc hello.s -o hello.native</tt></p>
 
-  <li><p>Execute the native sparc program:</p>
+  <li><p>Execute the native code program:</p>
 
-      <p><tt>% ./hello.sparc</tt></p></li>
+      <p><tt>% ./hello.native</tt></p></li>
 
 </ol>
 
