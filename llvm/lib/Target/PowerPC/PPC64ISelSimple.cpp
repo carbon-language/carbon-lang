@@ -1222,7 +1222,7 @@ void ISel::visitReturnInst(ReturnInst &I) {
       visitInstruction(I);
     }
   }
-  BuildMI(BB, PPC::BLR, 1).addImm(0);
+  BuildMI(BB, PPC::BLR, 1).addImm(1);
 }
 
 // getBlockAfter - Return the basic block which occurs lexically after the
@@ -1457,7 +1457,7 @@ void ISel::doCall(const ValueRecord &Ret, MachineInstr *CallMI,
 
   BuildMI(BB, PPC::IMPLICIT_DEF, 0, PPC::LR);
   BB->push_back(CallMI);
-  BuildMI(BB, PPC::NOP, 1).addImm(0);
+  BuildMI(BB, PPC::NOP, 0);
   
   // These functions are automatically eliminated by the prolog/epilog pass
   BuildMI(BB, PPC::ADJCALLSTACKUP, 1).addImm(NumBytes);
