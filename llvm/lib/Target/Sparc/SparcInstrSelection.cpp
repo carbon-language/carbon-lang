@@ -402,19 +402,26 @@ ChooseBccInstruction(const InstructionNode* instrNode,
 }
 
 
+// WARNING: since this function has only one caller, it always returns
+// the opcode that expects an immediate and a register. If this function
+// is ever used in cases where an opcode that takes two registers is required,
+// then modify this function and use convertOpcodeFromRegToImm() where required.
+//
+// It will be necessary to expand convertOpcodeFromRegToImm() to handle the
+// new cases of opcodes.
 static inline MachineOpCode 
-ChooseMovFpccInstruction(const InstructionNode* instrNode)
+ChooseMovFpcciInstruction(const InstructionNode* instrNode)
 {
   MachineOpCode opCode = V9::INVALID_OPCODE;
   
   switch(instrNode->getInstruction()->getOpcode())
   {
-  case Instruction::SetEQ: opCode = V9::MOVFE;  break;
-  case Instruction::SetNE: opCode = V9::MOVFNE; break;
-  case Instruction::SetLE: opCode = V9::MOVFLE; break;
-  case Instruction::SetGE: opCode = V9::MOVFGE; break;
-  case Instruction::SetLT: opCode = V9::MOVFL;  break;
-  case Instruction::SetGT: opCode = V9::MOVFG;  break;
+  case Instruction::SetEQ: opCode = V9::MOVFEi;  break;
+  case Instruction::SetNE: opCode = V9::MOVFNEi; break;
+  case Instruction::SetLE: opCode = V9::MOVFLEi; break;
+  case Instruction::SetGE: opCode = V9::MOVFGEi; break;
+  case Instruction::SetLT: opCode = V9::MOVFLi;  break;
+  case Instruction::SetGT: opCode = V9::MOVFGi;  break;
   default:
     assert(0 && "Unrecognized VM instruction!");
     break; 
@@ -432,19 +439,26 @@ ChooseMovFpccInstruction(const InstructionNode* instrNode)
 //                      (i.e., we want to test inverse of a condition)
 // (The latter two cases do not seem to arise because SetNE needs nothing.)
 // 
+// WARNING: since this function has only one caller, it always returns
+// the opcode that expects an immediate and a register. If this function
+// is ever used in cases where an opcode that takes two registers is required,
+// then modify this function and use convertOpcodeFromRegToImm() where required.
+//
+// It will be necessary to expand convertOpcodeFromRegToImm() to handle the
+// new cases of opcodes.
 static MachineOpCode
-ChooseMovpccAfterSub(const InstructionNode* instrNode)
+ChooseMovpcciAfterSub(const InstructionNode* instrNode)
 {
   MachineOpCode opCode = V9::INVALID_OPCODE;
   
   switch(instrNode->getInstruction()->getOpcode())
   {
-  case Instruction::SetEQ: opCode = V9::MOVE;  break;
-  case Instruction::SetLE: opCode = V9::MOVLE; break;
-  case Instruction::SetGE: opCode = V9::MOVGE; break;
-  case Instruction::SetLT: opCode = V9::MOVL;  break;
-  case Instruction::SetGT: opCode = V9::MOVG;  break;
-  case Instruction::SetNE: opCode = V9::MOVNE; break;
+  case Instruction::SetEQ: opCode = V9::MOVEi;  break;
+  case Instruction::SetLE: opCode = V9::MOVLEi; break;
+  case Instruction::SetGE: opCode = V9::MOVGEi; break;
+  case Instruction::SetLT: opCode = V9::MOVLi;  break;
+  case Instruction::SetGT: opCode = V9::MOVGi;  break;
+  case Instruction::SetNE: opCode = V9::MOVNEi; break;
   default: assert(0 && "Unrecognized VM instr!"); break; 
   }
   
@@ -2049,8 +2063,8 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         
         if (computeBoolVal) {
           MachineOpCode movOpCode = (isFPCompare
-                                     ? ChooseMovFpccInstruction(subtreeRoot)
-                                     : ChooseMovpccAfterSub(subtreeRoot));
+                                     ? ChooseMovFpcciInstruction(subtreeRoot)
+                                     : ChooseMovpcciAfterSub(subtreeRoot));
 
           // Unconditionally set register to 0
           M = BuildMI(V9::SETHI, 2).addZImm(0).addRegDef(setCCInstr);

@@ -53,8 +53,23 @@ class F4_rs1rs2 : F4_rs1 {
   set Inst{4-0} = rs2;
 }
 
+// F4_cc - Common class of instructions that have a cond field
+class F4_cond : F4 {
+  bits<4> cond;
+  set Inst{17-14} = cond;
+}
+
+// F4_cc - Common class of instructions that have cc register as first operand
+class F4_condcc : F4_cond {
+  bits<3> cc;
+  set Inst{18} = cc{2};
+  set Inst{12} = cc{1};
+  set Inst{11} = cc{0};
+}
+
 // Actual F4 instruction classes
 
+// FIXME: order of operands is incorrect!!
 class F4_1<bits<2> opVal, bits<6> op3Val, string name> : F4_rdrs1rs2 {
   bits<2> cc;
 
@@ -66,6 +81,7 @@ class F4_1<bits<2> opVal, bits<6> op3Val, string name> : F4_rdrs1rs2 {
   //set Inst{10-5} = dontcare;
 }
 
+// FIXME: order of operands is incorrect!!
 class F4_2<bits<2> opVal, bits<6> op3Val, string name> : F4_rdsimm11rs1 {
   bits<2> cc;
 
@@ -76,15 +92,31 @@ class F4_2<bits<2> opVal, bits<6> op3Val, string name> : F4_rdsimm11rs1 {
   set Inst{12-11} = cc;
 }
 
-class F4_3<bits<2> opVal, bits<6> op3Val, string name> : F3_rd {
+class F4_3<bits<2> opVal, bits<6> op3Val, bits<4> condVal,
+           string name> : F4_condcc {
   bits<5> rs2;
-  bits<2> cc;
 
   set op = opVal;
   set op3 = op3Val;
+  set cond = condVal;
   set Name = name;
   set Inst{13} = 0; // i bit
-  set Inst{12-11} = cc;
   //set Inst{10-5} = dontcare;
   set Inst{4-0} = rs2;
 }
+
+class F4_4<bits<2> opVal, bits<6> op3Val, bits<4> condVal,
+           string name> : F4_condcc {
+  bits<11> sim11;
+  bits<5>  rd;
+
+  set op = opVal;
+  set op3 = op3Val;
+  set cond = condVal;
+  set Name = name;
+  set Inst{13} = 1; // i bit
+  set Inst{10-0} = sim11;
+}  
+  
+
+// FIXME: F4 classes 4
