@@ -14,6 +14,7 @@
 #include "llvm/ConstPoolVals.h"
 #include "llvm/Optimizations/ConstantHandling.h"
 #include "llvm/Optimizations/DCE.h"
+#include "llvm/Analysis/Expressions.h"
 #include <map>
 #include <algorithm>
 
@@ -21,45 +22,158 @@
 
 //#define DEBUG_EXPR_CONVERT 1
 
-static inline const Type *getTy(const Value *V, ValueTypeCache &CT) {
-  ValueTypeCache::iterator I = CT.find(V);
-  if (I == CT.end()) return V->getType();
-  return I->second;
-}
-
-GetElementPtrInst *getAddToGEPResult(const Type *Ty, const Value *V) {
-  const StructType *StructTy = getPointedToStruct(Ty);
-  if (StructTy == 0) return 0;    // Must be a pointer to a struct...
-
-  // Must be a constant unsigned offset value... get it now...
-  if (!isa<ConstPoolUInt>(V)) return 0;
-  unsigned Offset = cast<ConstPoolUInt>(V)->getValue();
- 
-  // Check to make sure the offset is somewhat legitiment w.r.t the struct
-  // type...
-  if (Offset >= TD.getTypeSize(StructTy)) return 0;
-  
-  // If we get this far, we have succeeded... TODO: We need to handle array
-  // indexing as well...
-  const StructLayout *SL = TD.getStructLayout(StructTy);
-  vector<ConstPoolVal*> Offsets;
-  unsigned ActualOffset = Offset;
-  const Type *ElTy = getStructOffsetType(StructTy, ActualOffset, Offsets);
-
-  if (ActualOffset != Offset) return 0;  // TODO: Handle Array indexing...
- 
-  // Success!  Return the GEP instruction, with a dummy first argument.
-  ConstPoolVal *Dummy = ConstPoolVal::getNullConstant(Ty);
-  return new GetElementPtrInst(Dummy, Offsets);
-}
-
-
-
 static bool OperandConvertableToType(User *U, Value *V, const Type *Ty,
                                      ValueTypeCache &ConvertedTypes);
 
 static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
                                  ValueMapCache &VMC);
+
+// AllIndicesZero - Return true if all of the indices of the specified memory
+// access instruction are zero, indicating an effectively nil offset to the 
+// pointer value.
+//
+static bool AllIndicesZero(const MemAccessInst *MAI) {
+  for (User::op_const_iterator S = MAI->idx_begin(), E = MAI->idx_end();
+       S != E; ++S)
+    if (!isa<ConstPoolVal>(*S) || !cast<ConstPoolVal>(*S)->isNullValue())
+      return false;
+  return true;
+}
+
+static unsigned getBaseTypeSize(const Type *Ty) {
+  if (const ArrayType *ATy = dyn_cast<ArrayType>(Ty))
+    if (ATy->isUnsized())
+      return getBaseTypeSize(ATy->getElementType());
+  return TD.getTypeSize(Ty);
+}
+
+
+// Peephole Malloc instructions: we take a look at the use chain of the
+// malloc instruction, and try to find out if the following conditions hold:
+//   1. The malloc is of the form: 'malloc [sbyte], uint <constant>'
+//   2. The only users of the malloc are cast & add instructions
+//   3. Of the cast instructions, there is only one destination pointer type
+//      [RTy] where the size of the pointed to object is equal to the number
+//      of bytes allocated.
+//
+// If these conditions hold, we convert the malloc to allocate an [RTy]
+// element.  TODO: This comment is out of date WRT arrays
+//
+static bool MallocConvertableToType(MallocInst *MI, const Type *Ty,
+                                    ValueTypeCache &CTMap) {
+  if (!MI->isArrayAllocation() ||            // No array allocation?
+      !isa<PointerType>(Ty)) return false;   // Malloc always returns pointers
+
+  // Deal with the type to allocate, not the pointer type...
+  Ty = cast<PointerType>(Ty)->getValueType();
+
+  // Analyze the number of bytes allocated...
+  analysis::ExprType Expr = analysis::ClassifyExpression(MI->getArraySize());
+
+  // Must have a scale or offset to analyze it...
+  if (!Expr.Offset && !Expr.Scale) return false;
+
+  if (Expr.Offset && (Expr.Scale || Expr.Var)) {
+    // This is wierd, shouldn't happen, but if it does, I wanna know about it!
+    cerr << "LevelRaise.cpp: Crazy allocation detected!\n";
+    return false;    
+  }
+
+  // Get the number of bytes allocated...
+  int SizeVal = getConstantValue(Expr.Offset ? Expr.Offset : Expr.Scale);
+  if (SizeVal <= 0) {
+    cerr << "malloc of a negative number???\n";
+    return false;
+  }
+  unsigned Size = (unsigned)SizeVal;
+  unsigned ReqTypeSize = getBaseTypeSize(Ty);
+
+  // Does the size of the allocated type match the number of bytes
+  // allocated?
+  //
+  if (ReqTypeSize == Size)
+    return true;
+
+  // If not, it's possible that an array of constant size is being allocated.
+  // In this case, the Size will be a multiple of the data size.
+  //
+  if (!Expr.Offset) return false;  // Offset must be set, not scale...
+
+#if 1
+  return false;
+#else   // THIS CAN ONLY BE RUN VERY LATE, after several passes to make sure
+        // things are adequately raised!
+  // See if the allocated amount is a multiple of the type size...
+  if (Size/ReqTypeSize*ReqTypeSize != Size)
+    return false;   // Nope.
+
+  // Unfortunately things tend to be powers of two, so there may be
+  // many false hits.  We don't want to optimistically assume that we
+  // have the right type on the first try, so scan the use list of the
+  // malloc instruction, looking for the cast to the biggest type...
+  //
+  for (Value::use_iterator I = MI->use_begin(), E = MI->use_end(); I != E; ++I)
+    if (CastInst *CI = dyn_cast<CastInst>(*I))
+      if (const PointerType *PT = 
+          dyn_cast<PointerType>(CI->getOperand(0)->getType()))
+        if (getBaseTypeSize(PT->getValueType()) > ReqTypeSize)
+          return false;     // We found a type bigger than this one!
+  
+  return true;
+#endif
+}
+
+static Instruction *ConvertMallocToType(MallocInst *MI, const Type *Ty,
+                                        const string &Name, ValueMapCache &VMC){
+  BasicBlock *BB = MI->getParent();
+  BasicBlock::iterator It = BB->end();
+
+  // Analyze the number of bytes allocated...
+  analysis::ExprType Expr = analysis::ClassifyExpression(MI->getArraySize());
+
+  const PointerType *AllocTy = cast<PointerType>(Ty);
+  const Type *ElType = AllocTy->getValueType();
+
+  if (Expr.Var && !isa<ArrayType>(ElType)) {
+    ElType = ArrayType::get(AllocTy->getValueType());
+    AllocTy = PointerType::get(ElType);
+  }
+
+  // If the array size specifier is not an unsigned integer, insert a cast now.
+  if (Expr.Var && Expr.Var->getType() != Type::UIntTy) {
+    It = find(BB->getInstList().begin(), BB->getInstList().end(), MI);
+    CastInst *SizeCast = new CastInst(Expr.Var, Type::UIntTy);
+    It = BB->getInstList().insert(It, SizeCast)+1;
+    Expr.Var = SizeCast;
+  }
+
+  // Check to see if they are allocating a constant sized array of a type...
+#if 0   // THIS CAN ONLY BE RUN VERY LATE
+  if (!Expr.Var) {
+    unsigned OffsetAmount  = (unsigned)getConstantValue(Expr.Offset);
+    unsigned DataSize = TD.getTypeSize(ElType);
+    
+    if (OffsetAmount > DataSize) // Allocate a sized array amount...
+      Expr.Var = ConstPoolUInt::get(Type::UIntTy, OffsetAmount/DataSize);
+  }
+#endif
+
+  Instruction *NewI = new MallocInst(AllocTy, Expr.Var, Name);
+
+  if (AllocTy != Ty) { // Create a cast instruction to cast it to the correct ty
+    if (It == BB->end())
+      It = find(BB->getInstList().begin(), BB->getInstList().end(), MI);
+                
+    // Insert the new malloc directly into the code ourselves
+    assert(It != BB->getInstList().end());
+    It = BB->getInstList().insert(It, NewI)+1;
+
+    // Return the cast as the value to use...
+    NewI = new CastInst(NewI, Ty);
+  }
+
+  return NewI;
+}
 
 
 // ExpressionConvertableToType - Return true if it is possible
@@ -94,7 +208,7 @@ bool ExpressionConvertableToType(Value *V, const Type *Ty,
   case Instruction::Cast:
     // We can convert the expr if the cast destination type is losslessly
     // convertable to the requested type.
-    if (!losslessCastableTypes(Ty, I->getType())) return false;
+    if (!Ty->isLosslesslyConvertableTo(I->getType())) return false;
 #if 1
     // We also do not allow conversion of a cast that casts from a ptr to array
     // of X to a *X.  For example: cast [4 x %List *] * %val to %List * *
@@ -105,7 +219,7 @@ bool ExpressionConvertableToType(Value *V, const Type *Ty,
           if (AT->getElementType() == DPT->getValueType())
             return false;
 #endif
-    return true;
+    break;
 
   case Instruction::Add:
   case Instruction::Sub:
@@ -123,12 +237,10 @@ bool ExpressionConvertableToType(Value *V, const Type *Ty,
 
   case Instruction::Load: {
     LoadInst *LI = cast<LoadInst>(I);
-    if (LI->hasIndices()) {
+    if (LI->hasIndices() && !AllIndicesZero(LI)) {
       // We can't convert a load expression if it has indices... unless they are
       // all zero.
-      const vector<ConstPoolVal*> &CPV = LI->getIndices();
-      for (unsigned i = 0; i < CPV.size(); ++i)
-        if (!CPV[i]->isNullValue()) return false;
+      return false;
     }
 
     if (!ExpressionConvertableToType(LI->getPointerOperand(),
@@ -144,6 +256,12 @@ bool ExpressionConvertableToType(Value *V, const Type *Ty,
     break;
   }
 
+  case Instruction::Malloc:
+    if (!MallocConvertableToType(cast<MallocInst>(I), Ty, CTMap))
+      return false;
+    break;
+
+#if 1
   case Instruction::GetElementPtr: {
     // GetElementPtr's are directly convertable to a pointer type if they have
     // a number of zeros at the end.  Because removing these values does not
@@ -162,19 +280,24 @@ bool ExpressionConvertableToType(Value *V, const Type *Ty,
     // index array.  If there are, check to see if removing them causes us to
     // get to the right type...
     //
-    vector<ConstPoolVal*> Indices = GEP->getIndices();
+    vector<Value*> Indices = GEP->copyIndices();
     const Type *BaseType = GEP->getPointerOperand()->getType();
+    const Type *ElTy = 0;
 
-    while (Indices.size() &&
+    while (!Indices.empty() && isa<ConstPoolUInt>(Indices.back()) &&
            cast<ConstPoolUInt>(Indices.back())->getValue() == 0) {
       Indices.pop_back();
-      const Type *ElTy = GetElementPtrInst::getIndexedType(BaseType, Indices,
+      ElTy = GetElementPtrInst::getIndexedType(BaseType, Indices,
                                                            true);
       if (ElTy == PTy->getValueType())
         break;  // Found a match!!
+      ElTy = 0;
     }
+
+    if (ElTy) break;
     return false;   // No match, maybe next time.
   }
+#endif
 
   default:
     return false;
@@ -184,11 +307,9 @@ bool ExpressionConvertableToType(Value *V, const Type *Ty,
   // have this value converted.  This makes use of the map to avoid infinite
   // recursion.
   //
-  if (isa<Instruction>(V)) {
-    for (Value::use_iterator I = V->use_begin(), E = V->use_end(); I != E; ++I)
-      if (!OperandConvertableToType(*I, V, Ty, CTMap))
-        return false;
-  }
+  for (Value::use_iterator It = I->use_begin(), E = I->use_end(); It != E; ++It)
+    if (!OperandConvertableToType(*It, I, Ty, CTMap))
+      return false;
 
   return true;
 }
@@ -256,15 +377,8 @@ Value *ConvertExpressionToType(Value *V, const Type *Ty, ValueMapCache &VMC) {
 
   case Instruction::Load: {
     LoadInst *LI = cast<LoadInst>(I);
-#ifndef NDEBUG
-    if (LI->hasIndices()) {
-      // We can't convert a load expression if it has indices... unless they are
-      // all zero.
-      const vector<ConstPoolVal*> &CPV = LI->getIndices();
-      for (unsigned i = 0; i < CPV.size(); ++i)
-        assert(CPV[i]->isNullValue() && "Load index not 0!");
-    }
-#endif
+    assert(!LI->hasIndices() || AllIndicesZero(LI));
+
     Res = new LoadInst(ConstPoolVal::getNullConstant(PointerType::get(Ty)), 
                        Name);
     VMC.ExprMap[I] = Res;
@@ -293,6 +407,11 @@ Value *ConvertExpressionToType(Value *V, const Type *Ty, ValueMapCache &VMC) {
     break;
   }
 
+  case Instruction::Malloc: {
+    Res = ConvertMallocToType(cast<MallocInst>(I), Ty, Name, VMC);
+    break;
+  }
+
   case Instruction::GetElementPtr: {
     // GetElementPtr's are directly convertable to a pointer type if they have
     // a number of zeros at the end.  Because removing these values does not
@@ -309,11 +428,11 @@ Value *ConvertExpressionToType(Value *V, const Type *Ty, ValueMapCache &VMC) {
     // index array.  If there are, check to see if removing them causes us to
     // get to the right type...
     //
-    vector<ConstPoolVal*> Indices = GEP->getIndices();
+    vector<Value*> Indices = GEP->copyIndices();
     const Type *BaseType = GEP->getPointerOperand()->getType();
     const Type *PVTy = cast<PointerType>(Ty)->getValueType();
     Res = 0;
-    while (Indices.size() &&
+    while (!Indices.empty() && isa<ConstPoolUInt>(Indices.back()) &&
            cast<ConstPoolUInt>(Indices.back())->getValue() == 0) {
       Indices.pop_back();
       if (GetElementPtrInst::getIndexedType(BaseType, Indices, true) == PVTy) {
@@ -366,6 +485,8 @@ Value *ConvertExpressionToType(Value *V, const Type *Ty, ValueMapCache &VMC) {
     cerr << "EXPR DELETING: " << (void*)I << " " << I;
 #endif
     BIL.remove(I);
+    VMC.OperandsMapped.erase(I);
+    VMC.ExprMap.erase(I);
     delete I;
   }
 
@@ -374,14 +495,12 @@ Value *ConvertExpressionToType(Value *V, const Type *Ty, ValueMapCache &VMC) {
 
 
 
-// RetValConvertableToType - Return true if it is possible
-bool RetValConvertableToType(Value *V, const Type *Ty,
+// ValueConvertableToType - Return true if it is possible
+bool ValueConvertableToType(Value *V, const Type *Ty,
                              ValueTypeCache &ConvertedTypes) {
   ValueTypeCache::iterator I = ConvertedTypes.find(V);
   if (I != ConvertedTypes.end()) return I->second == Ty;
   ConvertedTypes[V] = Ty;
-
-  assert(isa<Instruction>(V) && "Can't convert ret val of non instruction");
 
   // It is safe to convert the specified value to the specified type IFF all of
   // the uses of the value can be converted to accept the new typed value.
@@ -405,8 +524,7 @@ bool RetValConvertableToType(Value *V, const Type *Ty,
 //
 static bool OperandConvertableToType(User *U, Value *V, const Type *Ty,
                                      ValueTypeCache &CTMap) {
-  // TODO: IS THIS A BUG????
-  if (V->getType() == Ty) return true;   // Already the right type?
+  if (V->getType() == Ty) return true;   // Operand already the right type?
 
   // Expression type must be holdable in a register.
   if (!isFirstClassType(Ty))
@@ -420,7 +538,7 @@ static bool OperandConvertableToType(User *U, Value *V, const Type *Ty,
     assert(I->getOperand(0) == V);
     // We can convert the expr if the cast destination type is losslessly
     // convertable to the requested type.
-    if (!losslessCastableTypes(Ty, I->getOperand(0)->getType()))
+    if (!Ty->isLosslesslyConvertableTo(I->getOperand(0)->getType()))
       return false;
 #if 1
     // We also do not allow conversion of a cast that casts from a ptr to array
@@ -435,20 +553,24 @@ static bool OperandConvertableToType(User *U, Value *V, const Type *Ty,
     return true;
 
   case Instruction::Add:
-    if (V == I->getOperand(0) && isa<CastInst>(I->getOperand(1))) {
-      Instruction *GEP =
-        getAddToGEPResult(Ty, cast<CastInst>(I->getOperand(1))->getOperand(0));
-      if (GEP) {  // If successful, this Add can be converted to a GEP.
-        const Type *RetTy = GEP->getType();  // Get the new type...
-        delete GEP;  // We don't want the actual instruction yet...
+    if (V == I->getOperand(0) && isa<CastInst>(I->getOperand(1)) &&
+        isa<PointerType>(Ty)) {
+      Value *IndexVal = cast<CastInst>(I->getOperand(1))->getOperand(0);
+      vector<Value*> Indices;
+      if (const Type *ETy = ConvertableToGEP(Ty, IndexVal, Indices)) {
+        const Type *RetTy = PointerType::get(ETy);
+
         // Only successful if we can convert this type to the required type
-        return RetValConvertableToType(I, RetTy, CTMap);
+        if (ValueConvertableToType(I, RetTy, CTMap)) {
+          CTMap[I] = RetTy;
+          return true;
+        }
       }
     }
     // FALLTHROUGH
   case Instruction::Sub: {
     Value *OtherOp = I->getOperand((V == I->getOperand(0)) ? 1 : 0);
-    return RetValConvertableToType(I, Ty, CTMap) &&
+    return ValueConvertableToType(I, Ty, CTMap) &&
            ExpressionConvertableToType(OtherOp, Ty, CTMap);
   }
   case Instruction::SetEQ:
@@ -461,38 +583,35 @@ static bool OperandConvertableToType(User *U, Value *V, const Type *Ty,
     // FALL THROUGH
   case Instruction::Shl:
     assert(I->getOperand(0) == V);
-    return RetValConvertableToType(I, Ty, CTMap);
+    return ValueConvertableToType(I, Ty, CTMap);
 
   case Instruction::Load:
-    assert(I->getOperand(0) == V);
+    // Cannot convert the types of any subscripts...
+    if (I->getOperand(0) != V) return false;
+
     if (const PointerType *PT = dyn_cast<PointerType>(Ty)) {
       LoadInst *LI = cast<LoadInst>(I);
-      const Type *PVTy = PT->getValueType();
-
-      if (LI->hasIndices() || isa<ArrayType>(PVTy))
+      
+      if (LI->hasIndices() && !AllIndicesZero(LI))
         return false;
 
-      if (!isFirstClassType(PVTy)) {
-        // They could be loading the first element of a structure type...
-        if (const StructType *ST = dyn_cast<StructType>(PVTy)) {
-          unsigned Offset = 0;   // No offset, get first leaf.
-          vector<ConstPoolVal*> Offsets;  // Discarded...
-          const Type *Ty = getStructOffsetType(ST, Offset, Offsets, false);
-          assert(Offset == 0 && "Offset changed from zero???");
-          if (!isFirstClassType(Ty)) return false;
+      const Type *LoadedTy = PT->getValueType();
 
-          // See if the leaf type is compatible with the old return type...
-          if (TD.getTypeSize(Ty) != TD.getTypeSize(LI->getType()))
-            return false;
-          return RetValConvertableToType(LI, Ty, CTMap);
-        }
-        return false;
+      // They could be loading the first element of a composite type...
+      if (const CompositeType *CT = dyn_cast<CompositeType>(LoadedTy)) {
+        unsigned Offset = 0;     // No offset, get first leaf.
+        vector<Value*> Indices;  // Discarded...
+        LoadedTy = getStructOffsetType(CT, Offset, Indices, false);
+        assert(Offset == 0 && "Offset changed from zero???");
       }
 
-      if (TD.getTypeSize(PVTy) != TD.getTypeSize(LI->getType()))
+      if (!isFirstClassType(LoadedTy))
         return false;
 
-      return RetValConvertableToType(LI, PVTy, CTMap);
+      if (TD.getTypeSize(LoadedTy) != TD.getTypeSize(LI->getType()))
+        return false;
+
+      return ValueConvertableToType(LI, LoadedTy, CTMap);
     }
     return false;
 
@@ -521,53 +640,50 @@ static bool OperandConvertableToType(User *U, Value *V, const Type *Ty,
     return false;
   }
 
+  case Instruction::GetElementPtr:
+    // Convert a getelementptr [sbyte] * %reg111, uint 16 freely back to
+    // anything that is a pointer type...
+    //
+    if (I->getType() != PointerType::get(Type::SByteTy) ||
+        I->getNumOperands() != 2 || V != I->getOperand(0) ||
+        I->getOperand(1)->getType() != Type::UIntTy || !isa<PointerType>(Ty))
+      return false;
+    return true;
+
   case Instruction::PHINode: {
     PHINode *PN = cast<PHINode>(I);
     for (unsigned i = 0; i < PN->getNumIncomingValues(); ++i)
       if (!ExpressionConvertableToType(PN->getIncomingValue(i), Ty, CTMap))
         return false;
-    return RetValConvertableToType(PN, Ty, CTMap);
+    return ValueConvertableToType(PN, Ty, CTMap);
   }
 
-#if 0
-  case Instruction::GetElementPtr: {
-    // GetElementPtr's are directly convertable to a pointer type if they have
-    // a number of zeros at the end.  Because removing these values does not
-    // change the logical offset of the GEP, it is okay and fair to remove them.
-    // This can change this:
-    //   %t1 = getelementptr %Hosp * %hosp, ubyte 4, ubyte 0  ; <%List **>
-    //   %t2 = cast %List * * %t1 to %List *
-    // into
-    //   %t2 = getelementptr %Hosp * %hosp, ubyte 4           ; <%List *>
-    // 
-    GetElementPtrInst *GEP = cast<GetElementPtrInst>(I);
-    const PointerType *PTy = dyn_cast<PointerType>(Ty);
-    if (!PTy) return false;
+  case Instruction::Call: {
+    User::op_iterator OI = find(I->op_begin(), I->op_end(), V);
+    assert (OI != I->op_end() && "Not using value!");
+    unsigned OpNum = OI - I->op_begin();
 
-    // Check to see if there are zero elements that we can remove from the
-    // index array.  If there are, check to see if removing them causes us to
-    // get to the right type...
+    if (OpNum == 0)
+      return false; // Can't convert method pointer type yet.  FIXME
+    
+    const PointerType *MPtr = cast<PointerType>(I->getOperand(0)->getType());
+    const MethodType *MTy = cast<MethodType>(MPtr->getValueType());
+    if (!MTy->isVarArg()) return false;
+
+    if ((OpNum-1) < MTy->getParamTypes().size())
+      return false;  // It's not in the varargs section...
+
+    // If we get this far, we know the value is in the varargs section of the
+    // method!  We can convert if we don't reinterpret the value...
     //
-    vector<ConstPoolVal*> Indices = GEP->getIndices();
-    const Type *BaseType = GEP->getPointerOperand()->getType();
-
-    while (Indices.size() &&
-           cast<ConstPoolUInt>(Indices.back())->getValue() == 0) {
-      Indices.pop_back();
-      const Type *ElTy = GetElementPtrInst::getIndexedType(BaseType, Indices,
-                                                           true);
-      if (ElTy == PTy->getValueType())
-        return true;  // Found a match!!
-    }
-    break;   // No match, maybe next time.
+    return Ty->isLosslesslyConvertableTo(V->getType());
   }
-#endif
   }
   return false;
 }
 
 
-void ConvertUsersType(Value *V, Value *NewVal, ValueMapCache &VMC) {
+void ConvertValueToNewType(Value *V, Value *NewVal, ValueMapCache &VMC) {
   ValueHandle VH(VMC, V);
 
   unsigned NumUses = V->use_size();
@@ -616,12 +732,19 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
     break;
 
   case Instruction::Add:
-    if (OldVal == I->getOperand(0) && isa<CastInst>(I->getOperand(1))) {
-      Res = getAddToGEPResult(NewVal->getType(),
-                              cast<CastInst>(I->getOperand(1))->getOperand(0));
-      if (Res) {  // If successful, this Add should be converted to a GEP.
+    if (OldVal == I->getOperand(0) && isa<CastInst>(I->getOperand(1)) &&
+        isa<PointerType>(NewTy)) {
+      Value *IndexVal = cast<CastInst>(I->getOperand(1))->getOperand(0);
+      vector<Value*> Indices;
+      BasicBlock::iterator It = find(BIL.begin(), BIL.end(), I);
+
+      if (const Type *ETy = ConvertableToGEP(NewTy, IndexVal, Indices, &It)) {
+        // If successful, convert the add to a GEP
+        const Type *RetTy = PointerType::get(ETy);
         // First operand is actually the given pointer...
-        Res->setOperand(0, NewVal);
+        Res = new GetElementPtrInst(NewVal, Indices);
+        assert(cast<PointerType>(Res->getType())->getValueType() == ETy &&
+               "ConvertableToGEP broken!");
         break;
       }
     }
@@ -651,19 +774,21 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
 
   case Instruction::Load: {
     assert(I->getOperand(0) == OldVal && isa<PointerType>(NewVal->getType()));
-    const Type *PVTy = cast<PointerType>(NewVal->getType())->getValueType();
-    if (!isFirstClassType(PVTy)) {  // Must be an indirect load then...
-      assert(isa<StructType>(PVTy));
+    const Type *LoadedTy = cast<PointerType>(NewVal->getType())->getValueType();
+
+    vector<Value*> Indices;
+
+    if (const CompositeType *CT = dyn_cast<CompositeType>(LoadedTy)) {
       unsigned Offset = 0;   // No offset, get first leaf.
-      vector<ConstPoolVal*> Offsets;  // Discarded...
-      const Type *Ty = getStructOffsetType(PVTy, Offset, Offsets, false);
-      Res = new LoadInst(NewVal, Offsets, Name);
-    } else {
-      Res = new LoadInst(NewVal, Name);
+      LoadedTy = getStructOffsetType(CT, Offset, Indices, false);
     }
+    assert(isFirstClassType(LoadedTy));
+
+    Res = new LoadInst(NewVal, Indices, Name);
     assert(isFirstClassType(Res->getType()) && "Load of structure or array!");
     break;
   }
+
   case Instruction::Store: {
     if (I->getOperand(0) == OldVal) {  // Replace the source value
       const PointerType *NewPT = PointerType::get(NewTy);
@@ -676,6 +801,27 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
       VMC.ExprMap[I] = Res;
       Res->setOperand(0, ConvertExpressionToType(I->getOperand(0), ValTy, VMC));
     }
+    break;
+  }
+
+
+  case Instruction::GetElementPtr: {
+    // Convert a getelementptr [sbyte] * %reg111, uint 16 freely back to
+    // anything that is a pointer type...
+    //
+    BasicBlock::iterator It = find(BIL.begin(), BIL.end(), I);
+    
+    // Insert a cast right before this instruction of the index value...
+    CastInst *CIdx = new CastInst(I->getOperand(1), NewTy);
+    It = BIL.insert(It, CIdx)+1;
+    
+    // Insert an add right before this instruction 
+    Instruction *AddInst = BinaryOperator::create(Instruction::Add, NewVal,
+                                                  CIdx, Name);
+    It = BIL.insert(It, AddInst)+1;
+
+    // Finally, cast the result back to our previous type...
+    Res = new CastInst(AddInst, I->getType());
     break;
   }
 
@@ -695,44 +841,17 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
     break;
   }
 
-#if 0
-  case Instruction::GetElementPtr: {
-    // GetElementPtr's are directly convertable to a pointer type if they have
-    // a number of zeros at the end.  Because removing these values does not
-    // change the logical offset of the GEP, it is okay and fair to remove them.
-    // This can change this:
-    //   %t1 = getelementptr %Hosp * %hosp, ubyte 4, ubyte 0  ; <%List **>
-    //   %t2 = cast %List * * %t1 to %List *
-    // into
-    //   %t2 = getelementptr %Hosp * %hosp, ubyte 4           ; <%List *>
-    // 
-    GetElementPtrInst *GEP = cast<GetElementPtrInst>(I);
+  case Instruction::Call: {
+    Value *Meth = I->getOperand(0);
+    vector<Value*> Params(I->op_begin()+1, I->op_end());
 
-    // Check to see if there are zero elements that we can remove from the
-    // index array.  If there are, check to see if removing them causes us to
-    // get to the right type...
-    //
-    vector<ConstPoolVal*> Indices = GEP->getIndices();
-    const Type *BaseType = GEP->getPointerOperand()->getType();
-    const Type *PVTy = cast<PointerType>(Ty)->getValueType();
-    Res = 0;
-    while (Indices.size() &&
-           cast<ConstPoolUInt>(Indices.back())->getValue() == 0) {
-      Indices.pop_back();
-      if (GetElementPtrInst::getIndexedType(BaseType, Indices, true) == PVTy) {
-        if (Indices.size() == 0) {
-          Res = new CastInst(GEP->getPointerOperand(), BaseType); // NOOP
-        } else {
-          Res = new GetElementPtrInst(GEP->getPointerOperand(), Indices, Name);
-        }
-        break;
-      }
-    }
-    assert(Res && "Didn't find match!");
-    break;   // No match, maybe next time.
+    vector<Value*>::iterator OI = find(Params.begin(), Params.end(), OldVal);
+    assert (OI != Params.end() && "Not using value!");
+
+    *OI = NewVal;
+    Res = new CallInst(Meth, Params, Name);
+    break;
   }
-#endif
-
   default:
     assert(0 && "Expression convertable, but don't know how to convert?");
     return;
@@ -751,7 +870,7 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
   VMC.ExprMap[I] = Res;
 
   if (I->getType() != Res->getType())
-    ConvertUsersType(I, Res, VMC);
+    ConvertValueToNewType(I, Res, VMC);
   else {
     for (unsigned It = 0; It < I->use_size(); ) {
       User *Use = *(I->use_begin()+It);
@@ -770,6 +889,8 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
       cerr << "DELETING: " << (void*)I << " " << I;
 #endif
       BIL.remove(I);
+      VMC.OperandsMapped.erase(I);
+      VMC.ExprMap.erase(I);
       delete I;
     } else {
       for (Value::use_iterator UI = I->use_begin(), UE = I->use_end();
@@ -780,8 +901,8 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
 }
 
 
-ValueHandle::ValueHandle(ValueMapCache &VMC, Value *V) : Instruction(Type::VoidTy, UserOp1, ""), 
-                                                         Cache(VMC) {
+ValueHandle::ValueHandle(ValueMapCache &VMC, Value *V)
+  : Instruction(Type::VoidTy, UserOp1, ""), Cache(VMC) {
 #ifdef DEBUG_EXPR_CONVERT
   cerr << "VH AQUIRING: " << (void*)V << " " << V;
 #endif
