@@ -210,7 +210,7 @@ void PowerPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
     // Store the incoming LR so it is preserved across calls
     MI = BuildMI(PPC32::MFLR, 0, PPC32::R0);
     MBB.insert(MBBI, MI);
-    MI = BuildMI(PPC32::STW, 3).addReg(PPC32::R0).addImm(8).addReg(PPC32::R1);
+    MI = BuildMI(PPC32::STW, 3).addReg(PPC32::R0).addSImm(8).addReg(PPC32::R1);
     MBB.insert(MBBI, MI);
   }
 
@@ -219,7 +219,7 @@ void PowerPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
   
   // adjust stack pointer: r1 -= numbytes
   if (NumBytes) {
-    MI = BuildMI(PPC32::STWU, 2, PPC32::R1).addImm(-NumBytes).addReg(PPC32::R1);
+    MI = BuildMI(PPC32::STWU, 2, PPC32::R1).addSImm(-NumBytes).addReg(PPC32::R1);
     MBB.insert(MBBI, MI);
   }
 }
@@ -247,7 +247,7 @@ void PowerPCRegisterInfo::emitEpilogue(MachineFunction &MF,
     MBB.insert(MBBI, MI);
   }
   // Adjust stack pointer back
-  MI = BuildMI(PPC32::ADDI, 2, PPC32::R1).addReg(PPC32::R1).addImm(NumBytes);
+  MI = BuildMI(PPC32::ADDI, 2, PPC32::R1).addReg(PPC32::R1).addSImm(NumBytes);
   MBB.insert(MBBI, MI);
 }
 
