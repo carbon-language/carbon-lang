@@ -161,21 +161,22 @@ namespace {
             }
             std::cerr << '\n';
         }
+
         void printIntervals(const char* const str,
                             RA::IntervalPtrs::const_iterator i,
                             RA::IntervalPtrs::const_iterator e) const {
             if (str) std::cerr << str << " intervals:\n";
             for (; i != e; ++i) {
                 std::cerr << "\t\t" << **i << " -> ";
-                if ((*i)->reg < MRegisterInfo::FirstVirtualRegister) {
-                    std::cerr << mri_->getName((*i)->reg);
+                unsigned reg = (*i)->reg;
+                if (reg >= MRegisterInfo::FirstVirtualRegister) {
+                    Virt2PhysMap::const_iterator it = v2pMap_.find(reg);
+                    reg = (it == v2pMap_.end() ? 0 : it->second);
                 }
-                else {
-                    std::cerr << mri_->getName(v2pMap_.find((*i)->reg)->second);
-                }
-                std::cerr << '\n';
+                std::cerr << mri_->getName((*i)->reg) << '\n';
             }
         }
+
         void printFreeRegs(const char* const str,
                            const TargetRegisterClass* rc) const {
             if (str) std::cerr << str << ':';
