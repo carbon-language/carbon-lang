@@ -21,13 +21,16 @@ using std::vector;
 
 SchedDebugLevel_t SchedDebugLevel;
 
-static cl::Enum<enum SchedDebugLevel_t> Opt(SchedDebugLevel,"dsched",cl::Hidden,
-  "enable instruction scheduling debugging information",
-  clEnumValN(Sched_NoDebugInfo,      "n", "disable debug output"),
-  clEnumValN(Sched_Disable,        "off", "disable instruction scheduling"),
-  clEnumValN(Sched_PrintMachineCode, "y", "print machine code after scheduling"),
-  clEnumValN(Sched_PrintSchedTrace,  "t", "print trace of scheduling actions"),
-  clEnumValN(Sched_PrintSchedGraphs, "g", "print scheduling graphs"), 0);
+static cl::opt<SchedDebugLevel_t, true>
+SDL_opt("dsched", cl::Hidden, cl::location(SchedDebugLevel),
+        cl::desc("enable instruction scheduling debugging information"),
+        cl::values(
+ clEnumValN(Sched_NoDebugInfo,      "n", "disable debug output"),
+ clEnumValN(Sched_Disable,        "off", "disable instruction scheduling"),
+ clEnumValN(Sched_PrintMachineCode, "y", "print machine code after scheduling"),
+ clEnumValN(Sched_PrintSchedTrace,  "t", "print trace of scheduling actions"),
+ clEnumValN(Sched_PrintSchedGraphs, "g", "print scheduling graphs"),
+                   0));
 
 
 //************************* Internal Data Types *****************************/

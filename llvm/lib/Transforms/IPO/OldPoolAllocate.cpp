@@ -52,13 +52,18 @@ enum PtrSize {
   Ptr8bits, Ptr16bits, Ptr32bits
 };
 
-static cl::Enum<enum PtrSize> ReqPointerSize("ptrsize", 0,
-                                      "Set pointer size for -poolalloc pass",
+static cl::opt<PtrSize>
+ReqPointerSize("poolalloc-ptr-size",
+               cl::desc("Set pointer size for -poolalloc pass"),
+               cl::values(
   clEnumValN(Ptr32bits, "32", "Use 32 bit indices for pointers"),
   clEnumValN(Ptr16bits, "16", "Use 16 bit indices for pointers"),
-  clEnumValN(Ptr8bits ,  "8", "Use 8 bit indices for pointers"), 0);
+  clEnumValN(Ptr8bits ,  "8", "Use 8 bit indices for pointers"),
+                          0));
 
-static cl::Flag DisableRLE("no-pool-load-elim", "Disable pool load elimination after poolalloc pass", cl::Hidden);
+static cl::opt<bool>
+DisableRLE("no-pool-load-elim",  cl::Hidden,
+           cl::desc("Disable pool load elimination after poolalloc pass"));
 
 const Type *POINTERTYPE;
 

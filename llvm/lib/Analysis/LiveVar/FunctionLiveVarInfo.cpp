@@ -19,12 +19,16 @@ AnalysisID FunctionLiveVarInfo::ID(AnalysisID::create<FunctionLiveVarInfo>());
 
 LiveVarDebugLevel_t DEBUG_LV;
 
-static cl::Enum<LiveVarDebugLevel_t> DEBUG_LV_opt(DEBUG_LV, "dlivevar", cl::Hidden,
-  "enable live-variable debugging information",
-  clEnumValN(LV_DEBUG_None   , "n", "disable debug output"),
-  clEnumValN(LV_DEBUG_Normal , "y", "enable debug output"),
-  clEnumValN(LV_DEBUG_Instr,   "i", "print live-var sets before/after every machine instrn"),
-  clEnumValN(LV_DEBUG_Verbose, "v", "print def, use sets for every instrn also"), 0);
+static cl::opt<LiveVarDebugLevel_t, true>
+DEBUG_LV_opt("dlivevar", cl::Hidden, cl::location(DEBUG_LV),
+             cl::desc("enable live-variable debugging information"),
+             cl::values(
+clEnumValN(LV_DEBUG_None   , "n", "disable debug output"),
+clEnumValN(LV_DEBUG_Normal , "y", "enable debug output"),
+clEnumValN(LV_DEBUG_Instr,   "i", "print live-var sets before/after "
+           "every machine instrn"),
+clEnumValN(LV_DEBUG_Verbose, "v", "print def, use sets for every instrn also"),
+                        0));
 
 
 

@@ -26,7 +26,6 @@
 #include "llvm/Function.h"
 #include "llvm/iPHINode.h"
 #include "Support/CommandLine.h"
-#include <iostream>
 using std::cerr;
 using std::vector;
 
@@ -40,13 +39,18 @@ enum SelectDebugLevel_t {
   Select_DebugBurgTrees,
 };
 
+
 // Enable Debug Options to be specified on the command line
-cl::Enum<enum SelectDebugLevel_t> SelectDebugLevel("dselect", cl::Hidden,
-   "enable instruction selection debugging information",
+static cl::opt<SelectDebugLevel_t>
+SelectDebugLevel("dselect", cl::Hidden,
+                 cl::desc("enable instruction selection debugging information"),
+                 cl::values(
    clEnumValN(Select_NoDebugInfo,      "n", "disable debug output"),
    clEnumValN(Select_PrintMachineCode, "y", "print generated machine code"),
-   clEnumValN(Select_DebugInstTrees,   "i", "print debugging info for instruction selection "),
-   clEnumValN(Select_DebugBurgTrees,   "b", "print burg trees"), 0);
+   clEnumValN(Select_DebugInstTrees,   "i",
+              "print debugging info for instruction selection"),
+   clEnumValN(Select_DebugBurgTrees,   "b", "print burg trees"),
+                            0));
 
 
 //******************** Forward Function Declarations ***********************/

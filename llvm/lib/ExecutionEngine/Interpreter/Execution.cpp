@@ -24,10 +24,18 @@ using std::vector;
 using std::cout;
 using std::cerr;
 
-cl::Flag   QuietMode ("quiet"  , "Do not emit any non-program output");
-cl::Alias  QuietModeA("q"      , "Alias for -quiet", cl::NoFlags, QuietMode);
-cl::Flag   ArrayChecksEnabled("array-checks", "Enable array bound checks");
-cl::Flag   AbortOnExceptions("abort-on-exception", "Halt execution on a machine exception");
+static cl::opt<bool>
+QuietMode("quiet", cl::desc("Do not emit any non-program output"));
+
+static cl::alias 
+QuietModeA("q", cl::desc("Alias for -quiet"), cl::aliasopt(QuietMode));
+
+static cl::opt<bool>
+ArrayChecksEnabled("array-checks", cl::desc("Enable array bound checks"));
+
+static cl::opt<bool>
+AbortOnExceptions("abort-on-exception",
+                  cl::desc("Halt execution on a machine exception"));
 
 // Create a TargetData structure to handle memory addressing and size/alignment
 // computations
@@ -37,8 +45,9 @@ CachedWriter CW;     // Object to accelerate printing of LLVM
 
 
 #ifdef PROFILE_STRUCTURE_FIELDS
-static cl::Flag ProfileStructureFields("profilestructfields", 
-                                       "Profile Structure Field Accesses");
+static cl::opt<bool>
+ProfileStructureFields("profilestructfields", 
+                       cl::desc("Profile Structure Field Accesses"));
 #include <map>
 static std::map<const StructType *, vector<unsigned> > FieldAccessCounts;
 #endif

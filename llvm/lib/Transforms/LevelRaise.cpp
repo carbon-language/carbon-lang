@@ -26,17 +26,24 @@ using std::cerr;
 // raising pass to start at instruction "foo", which is immensely useful for
 // debugging!
 //
-static cl::String StartInst("raise-start-inst", "Start raise pass at the "
-                            "instruction with the specified name", cl::Hidden);
+static cl::opt<std::string>
+StartInst("raise-start-inst", cl::Hidden, cl::value_desc("inst name"),
+       cl::desc("Start raise pass at the instruction with the specified name"));
 
-static Statistic<> NumLoadStorePeepholes("raise\t\t- Number of load/store "
-                                         "peepholes");
-static Statistic<> NumGEPInstFormed("raise\t\t- Number of other "
-                                    "getelementptr's formed");
-static Statistic<> NumExprTreesConv("raise\t\t- Number of expression trees"
-                                    " converted");
-static Statistic<> NumCastOfCast("raise\t\t- Number of cast-of-self removed");
-static Statistic<> NumDCEorCP("raise\t\t- Number of insts DCEd or constprop'd");
+static Statistic<>
+NumLoadStorePeepholes("raise\t\t- Number of load/store peepholes");
+
+static Statistic<> 
+NumGEPInstFormed("raise\t\t- Number of other getelementptr's formed");
+
+static Statistic<>
+NumExprTreesConv("raise\t\t- Number of expression trees converted");
+
+static Statistic<>
+NumCastOfCast("raise\t\t- Number of cast-of-self removed");
+
+static Statistic<>
+NumDCEorCP("raise\t\t- Number of insts DCEd or constprop'd");
 
 
 #define PRINT_PEEPHOLE(ID, NUM, I)            \

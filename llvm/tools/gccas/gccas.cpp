@@ -23,14 +23,25 @@
 #include <fstream>
 using std::cerr;
 
-static cl::String InputFilename   ("", "Parse <arg> file, compile to bytecode",
-                                   cl::Required, "");
-static cl::String OutputFilename  ("o", "Override output filename");
-static cl::Int    RunNPasses      ("stopAfterNPasses", "Only run the first N "
-                                   "passes of gccas", cl::Hidden);
-static cl::Flag   StopAtLevelRaise("stopraise", "Stop optimization before "
-                                   "level raise", cl::Hidden);
-static cl::Flag   Verify          ("verify", "Verify each pass result");
+static cl::opt<string>
+InputFilename(cl::Positional, cl::desc("<input llvm assembly>"), cl::Required);
+
+static cl::opt<string> 
+OutputFilename("o", cl::desc("Override output filename"),
+               cl::value_desc("filename"));
+
+static cl::opt<int>
+RunNPasses("stopAfterNPasses",
+           cl::desc("Only run the first N passes of gccas"), cl::Hidden,
+           cl::value_desc("# passes"));
+
+static cl::opt<bool> 
+StopAtLevelRaise("stopraise", cl::desc("Stop optimization before level raise"),
+                 cl::Hidden);
+
+static cl::opt<bool>   
+Verify("verify", cl::desc("Verify each pass result"));
+
 
 static inline void addPass(PassManager &PM, Pass *P) {
   static int NumPassesCreated = 0;

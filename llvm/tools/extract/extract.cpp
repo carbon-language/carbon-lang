@@ -18,8 +18,17 @@
 #include "Support/CommandLine.h"
 #include <memory>
 
-static cl::String InputFilename("", "Specify input bytecode file", 0, "-");
-static cl::String ExtractFunc("func", "Specify function to extract", 0, "main");
+// InputFilename - The filename to read from.
+static cl::opt<string>
+InputFilename(cl::Positional, cl::desc("<input bytecode file>"),
+              cl::init("-"), cl::value_desc("filename"));
+              
+
+// ExtractFunc - The function to extract from the module... defaults to main.
+static cl::opt<string>
+ExtractFunc("func", cl::desc("Specify function to extract"), cl::init("main"),
+            cl::value_desc("function"));
+
 
 struct FunctionExtractorPass : public Pass {
   const char *getPassName() const { return "Function Extractor"; }

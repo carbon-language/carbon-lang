@@ -27,13 +27,22 @@ enum OutputMode {
   c,                  // Generate C code
 };
 
-cl::String InputFilename ("", "Load <arg> file, print as assembly", 0, "-");
-cl::String OutputFilename("o", "Override output filename", cl::NoFlags, "");
-cl::Flag   Force         ("f", "Overwrite output files", cl::NoFlags, false);
-cl::EnumFlags<enum OutputMode> WriteMode(cl::NoFlags,
-  clEnumVal(llvm, "Output LLVM assembly"),
-  clEnumVal(c   , "Output C code for program"),
- 0);
+static cl::opt<string>
+InputFilename(cl::Positional, cl::desc("<input bytecode>"), cl::init("-"));
+
+static cl::opt<string>
+OutputFilename("o", cl::desc("Override output filename"),
+               cl::value_desc("filename"));
+
+static cl::opt<bool>
+Force("f", cl::desc("Overwrite output files"));
+
+static cl::opt<enum OutputMode>
+WriteMode(cl::desc("Specify the output format:"),
+          cl::values(
+                     clEnumVal(llvm, "Output LLVM assembly"),
+                     clEnumVal(c   , "Output C code for program"),
+                    0));
 
 int main(int argc, char **argv) {
   cl::ParseCommandLineOptions(argc, argv, " llvm .bc -> .ll disassembler\n");

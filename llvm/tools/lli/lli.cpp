@@ -10,12 +10,27 @@
 #include "Interpreter.h"
 #include "Support/CommandLine.h"
 
-cl::StringList InputArgv(""   , "Input command line", cl::ConsumeAfter);
-cl::String MainFunction ("f"      , "Function to execute", cl::NoFlags, "main");
-cl::Flag   DebugMode    ("debug"  , "Start program in debugger");
-cl::Alias  DebugModeA   ("d"      , "Alias for -debug", cl::NoFlags, DebugMode);
-cl::Flag   TraceMode    ("trace"  , "Enable Tracing");
-cl::Flag   ProfileMode  ("profile", "Enable Profiling [unimp]");
+static cl::opt<string>
+InputFile(cl::desc("<input bytecode>"), cl::Positional, cl::init("-"));
+
+static cl::list<std::string>
+InputArgv(cl::ConsumeAfter, cl::desc("<program arguments>..."));
+
+static cl::opt<string>
+MainFunction ("f", cl::desc("Function to execute"), cl::init("main"),
+              cl::value_desc("function name"));
+
+static cl::opt<bool>
+DebugMode("debug", cl::desc("Start program in debugger"));
+
+static cl::alias
+DebugModeA("d", cl::desc("Alias for -debug"), cl::aliasopt(DebugMode));
+
+static cl::opt<bool>
+TraceMode("trace", cl::desc("Enable Tracing"));
+
+static cl::opt<bool>
+ProfileMode("profile", cl::desc("Enable Profiling [unimp]"));
 
 
 //===----------------------------------------------------------------------===//
@@ -24,7 +39,7 @@ cl::Flag   ProfileMode  ("profile", "Enable Profiling [unimp]");
 Interpreter::Interpreter() : ExitCode(0), Profile(ProfileMode), 
                              Trace(TraceMode), CurFrame(-1) {
   CurMod = 0;
-  loadModule(InputArgv.size() ? InputArgv[0] : "-");
+  loadModule(InputFile);
 
   // Initialize the "backend"
   initializeExecutionEngine();
@@ -36,6 +51,12 @@ Interpreter::Interpreter() : ExitCode(0), Profile(ProfileMode),
 //
 int main(int argc, char** argv) {
   cl::ParseCommandLineOptions(argc, argv, " llvm interpreter\n");
+
+  // Add the module name to the start of the argv vector...
+  //
+  InputArgv.insert(InputArgv.begin(), InputFile);
+
+
 
   // Create the interpreter...
   Interpreter I;
@@ -51,13 +72,6 @@ int main(int argc, char** argv) {
   // If running with the profiler, enable it now...
   if (ProfileMode) I.enableProfiling();
   if (TraceMode) I.enableTracing();
-
-  // Ensure that there is at least one argument... the name of the program.
-  // This is only unavailable if the program was read from stdin, instead of a
-  // file.
-  //
-  if (InputArgv.empty())
-    InputArgv.push_back("from-stdin-prog");
 
   // Start interpreter into the main function...
   //

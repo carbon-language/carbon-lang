@@ -33,13 +33,28 @@
 #include <sys/stat.h>
 using std::cerr;
 
-cl::StringList InputFilenames("", "Load <arg> files, linking them together", 
-			      cl::OneOrMore);
-cl::String OutputFilename("o", "Override output filename", cl::NoFlags,"a.out");
-cl::Flag   Verbose       ("v", "Print information about actions taken");
-cl::StringList LibPaths  ("L", "Specify a library search path", cl::ZeroOrMore);
-cl::StringList Libraries ("l", "Specify libraries to link to", cl::ZeroOrMore);
-cl::Flag       Strip     ("s", "Strip symbol info from executable");
+static cl::list<string> 
+InputFilenames(cl::Positional, cl::desc("<input bytecode files>"),
+               cl::OneOrMore);
+
+static cl::opt<string> 
+OutputFilename("o", cl::desc("Override output filename"), cl::init("a.out"),
+               cl::value_desc("filename"));
+
+static cl::opt<bool>    
+Verbose("v", cl::desc("Print information about actions taken"));
+
+static cl::list<string> 
+LibPaths("L", cl::desc("Specify a library search path"), cl::Prefix,
+         cl::value_desc("directory"));
+
+static cl::list<string> 
+Libraries("l", cl::desc("Specify libraries to link to"), cl::Prefix,
+          cl::value_desc("library prefix"));
+
+static cl::opt<bool>
+Strip("s", cl::desc("Strip symbol info from executable"));
+
 
 // FileExists - Return true if the specified string is an openable file...
 static inline bool FileExists(const std::string &FN) {
@@ -83,10 +98,7 @@ static inline std::auto_ptr<Module> LoadFile(const std::string &FN) {
 
 
 int main(int argc, char **argv) {
-  cl::ParseCommandLineOptions(argc, argv, " llvm linker for GCC\n",
-			      cl::EnableSingleLetterArgValue |
-			      cl::DisableSingleLetterArgGrouping);
-  assert(InputFilenames.size() > 0 && "OneOrMore is not working");
+  cl::ParseCommandLineOptions(argc, argv, " llvm linker for GCC\n");
 
   unsigned BaseArg = 0;
   std::string ErrorMessage;

@@ -24,22 +24,33 @@
 using std::string;
 using std::cerr;
 
-static cl::String InputFilename ("", "Input filename", cl::NoFlags, "-");
-static cl::String OutputFilename("o", "Output filename", cl::NoFlags, "");
-static cl::Flag   Force         ("f", "Overwrite output files");
-static cl::Flag   DumpAsm       ("d", "Print bytecode before native code generation", cl::Hidden);
-static cl::String TraceLibPath  ("tracelibpath", "Path to libinstr for trace code", cl::Hidden, "");
+static cl::opt<string>
+InputFilename(cl::Positional, cl::desc("<input bytecode>"), cl::init("-"));
+
+static cl::opt<string>
+OutputFilename("o", cl::desc("Output filename"), cl::value_desc("filename"));
+
+static cl::opt<bool> Force("f", cl::desc("Overwrite output files"));
+
+static cl::opt<bool>
+DumpAsm("d", cl::desc("Print bytecode before native code generation"),
+        cl::Hidden);
+
+static cl::opt<string>
+TraceLibPath("tracelibpath", cl::desc("Path to libinstr for trace code"),
+             cl::value_desc("directory"), cl::Hidden);
 
 enum TraceLevel {
   TraceOff, TraceFunctions, TraceBasicBlocks
 };
 
-static cl::Enum<enum TraceLevel> TraceValues("trace", cl::NoFlags,
-  "Trace values through functions or basic blocks",
+static cl::opt<TraceLevel>
+TraceValues("trace", cl::desc("Trace values through functions or basic blocks"),
+            cl::values(
   clEnumValN(TraceOff        , "off",        "Disable trace code"),
   clEnumValN(TraceFunctions  , "function",   "Trace each function"),
-  clEnumValN(TraceBasicBlocks, "basicblock", "Trace each basic block"), 0);
-
+  clEnumValN(TraceBasicBlocks, "basicblock", "Trace each basic block"),
+                       0));
 
 // GetFileNameRoot - Helper function to get the basename of a filename...
 static inline string GetFileNameRoot(const string &InputFilename) {

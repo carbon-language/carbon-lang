@@ -123,13 +123,27 @@ struct {
 
 // Command line option handling code...
 //
-cl::String InputFilename ("", "Load <arg> file to optimize", cl::NoFlags, "-");
-cl::String OutputFilename("o", "Override output filename", cl::NoFlags, "");
-cl::Flag   Force         ("f", "Overwrite output files", cl::NoFlags, false);
-cl::Flag   PrintEachXForm("p", "Print module after each transformation");
-cl::Flag   Quiet         ("q", "Don't print modifying pass names", 0, false);
-cl::Alias  QuietA        ("quiet", "Alias for -q", cl::NoFlags, Quiet);
-cl::EnumList<enum Opts> OptimizationList(cl::NoFlags,
+static cl::opt<string>
+InputFilename(cl::Positional, cl::desc("<input bytecode>"), cl::init("-"));
+
+static cl::opt<string>
+OutputFilename("o", cl::desc("Override output filename"),
+               cl::value_desc("filename"));
+
+static cl::opt<bool>
+Force("f", cl::desc("Overwrite output files"));
+
+static cl::opt<bool>
+PrintEachXForm("p", cl::desc("Print module after each transformation"));
+
+static cl::opt<bool>
+Quiet("q", cl::desc("Don't print modifying pass names"));
+
+static cl::alias
+QuietA("quiet", cl::desc("Alias for -q"), cl::aliasopt(Quiet));
+
+static cl::list<enum Opts>
+OptimizationList(cl::desc("Optimizations available:"), cl::values(
   clEnumVal(dce        , "Dead Code Elimination"),
   clEnumVal(die        , "Dead Instruction Elimination"),
   clEnumVal(constprop  , "Simple constant propogation"),
@@ -169,7 +183,7 @@ cl::EnumList<enum Opts> OptimizationList(cl::NoFlags,
   clEnumVal(printm     , "Print working module to stderr"),
   clEnumVal(verify     , "Verify module is well formed"),
   clEnumVal(lowerrefs  , "Decompose multi-dimensional structure/array refs to use one index per instruction"),
-0);
+0));
 
 
 

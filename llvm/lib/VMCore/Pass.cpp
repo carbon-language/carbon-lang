@@ -81,8 +81,9 @@ bool PassManager::run(Module &M) { return PM->run(M); }
 // amount of time each pass takes to execute.  This only happens with
 // -time-passes is enabled on the command line.
 //
-static cl::Flag EnableTiming("time-passes", "Time each pass, printing elapsed"
-                             " time for each on exit");
+static cl::opt<bool>
+EnableTiming("time-passes",
+            cl::desc("Time each pass, printing elapsed time for each on exit"));
 
 static double getTime() {
   struct timeval T;
@@ -143,24 +144,28 @@ TimingInfo::~TimingInfo() {
 
 // Different debug levels that can be enabled...
 enum PassDebugLevel {
-  None, PassStructure, PassExecutions, PassDetails
+  None, Structure, Executions, Details
 };
 
-static cl::Enum<enum PassDebugLevel> PassDebugging("debug-pass", cl::Hidden,
-  "Print PassManager debugging information",
-  clEnumVal(None          , "disable debug output"),
-  clEnumVal(PassStructure , "print pass structure before run()"),
-  clEnumVal(PassExecutions, "print pass name before it is executed"),
-  clEnumVal(PassDetails   , "print pass details when it is executed"), 0); 
+static cl::opt<enum PassDebugLevel>
+PassDebugging("debug-pass", cl::Hidden,
+              cl::desc("Print PassManager debugging information"),
+              cl::values(
+  clEnumVal(None      , "disable debug output"),
+  // TODO: add option to print out pass names "PassOptions"
+  clEnumVal(Structure , "print pass structure before run()"),
+  clEnumVal(Executions, "print pass name before it is executed"),
+  clEnumVal(Details   , "print pass details when it is executed"),
+                         0));
 
 void PMDebug::PrintPassStructure(Pass *P) {
-  if (PassDebugging >= PassStructure)
+  if (PassDebugging >= Structure)
     P->dumpPassStructure();
 }
 
 void PMDebug::PrintPassInformation(unsigned Depth, const char *Action,
                                    Pass *P, Annotable *V) {
-  if (PassDebugging >= PassExecutions) {
+  if (PassDebugging >= Executions) {
     std::cerr << (void*)P << std::string(Depth*2+1, ' ') << Action << " '" 
               << P->getPassName();
     if (V) {
@@ -181,7 +186,7 @@ void PMDebug::PrintPassInformation(unsigned Depth, const char *Action,
 
 void PMDebug::PrintAnalysisSetInfo(unsigned Depth, const char *Msg,
                                    Pass *P, const std::vector<AnalysisID> &Set){
-  if (PassDebugging >= PassDetails && !Set.empty()) {
+  if (PassDebugging >= Details && !Set.empty()) {
     std::cerr << (void*)P << std::string(Depth*2+3, ' ') << Msg << " Analyses:";
     for (unsigned i = 0; i != Set.size(); ++i) {
       Pass *P = Set[i].createPass();   // Good thing this is just debug code...
@@ -192,7 +197,7 @@ void PMDebug::PrintAnalysisSetInfo(unsigned Depth, const char *Msg,
   }
 }
 
-// dumpPassStructure - Implement the -debug-passes=PassStructure option
+// dumpPassStructure - Implement the -debug-passes=Structure option
 void Pass::dumpPassStructure(unsigned Offset = 0) {
   std::cerr << std::string(Offset*2, ' ') << getPassName() << "\n";
 }

@@ -20,8 +20,16 @@
 
 bool DebugFlag;  // DebugFlag - Exported boolean set by the -debug option
 
-static cl::Flag Enabled("stats", "Enable statistics output from program");
-static cl::Flag Debug(DebugFlag, "debug", "Enable debug output", cl::Hidden);
+// -stats - Command line option to cause transformations to emit stats about
+// what they did.
+//
+static cl::opt<bool>
+Enabled("stats", cl::desc("Enable statistics output from program"));
+
+// -debug - Command line option to enable the DEBUG statements in the passes.
+static cl::opt<bool, true>
+Debug("debug", cl::desc("Enable debug output"), cl::Hidden,
+      cl::location(DebugFlag));
 
 // Print information when destroyed, iff command line option is specified
 void StatisticBase::destroy() const {

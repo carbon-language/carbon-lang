@@ -19,25 +19,25 @@
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/MachineFrameInfo.h"
-#include "llvm/BasicBlock.h"
 #include "llvm/Function.h"
 #include "llvm/Type.h"
 #include "llvm/iOther.h"
 #include "llvm/CodeGen/RegAllocCommon.h"
 #include "Support/CommandLine.h"
 #include "Support/STLExtras.h"
-#include <iostream>
 #include <math.h>
 using std::cerr;
 using std::vector;
 
 RegAllocDebugLevel_t DEBUG_RA;
-static cl::Enum<RegAllocDebugLevel_t> DEBUG_RA_c(DEBUG_RA, "dregalloc",
-                                                 cl::Hidden,
-  "enable register allocation debugging information",
+static cl::opt<RegAllocDebugLevel_t, true>
+DRA_opt("dregalloc", cl::Hidden, cl::location(DEBUG_RA),
+        cl::desc("enable register allocation debugging information"),
+        cl::values(
   clEnumValN(RA_DEBUG_None   , "n", "disable debug output"),
   clEnumValN(RA_DEBUG_Normal , "y", "enable debug output"),
-  clEnumValN(RA_DEBUG_Verbose, "v", "enable extra debug output"), 0);
+  clEnumValN(RA_DEBUG_Verbose, "v", "enable extra debug output"),
+                   0));
 
 
 //----------------------------------------------------------------------------

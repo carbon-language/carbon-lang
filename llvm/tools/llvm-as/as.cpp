@@ -18,10 +18,18 @@
 #include <memory>
 using std::cerr;
 
-cl::String InputFilename ("", "Parse <arg> file, compile to bytecode", 0, "-");
-cl::String OutputFilename("o", "Override output filename", cl::NoFlags, "");
-cl::Flag   Force         ("f", "Overwrite output files", cl::NoFlags, false);
-cl::Flag   DumpAsm       ("d", "Print assembly as parsed", cl::Hidden, false);
+static cl::opt<string> 
+InputFilename(cl::Positional, cl::desc("<input .llvm file>"), cl::init("-"));
+
+static cl::opt<string>
+OutputFilename("o", cl::desc("Override output filename"),
+               cl::value_desc("filename"));
+
+static cl::opt<bool>
+Force("f", cl::desc("Overwrite output files"));
+
+static cl::opt<bool>
+DumpAsm("d", cl::desc("Print assembly as parsed"), cl::Hidden);
 
 int main(int argc, char **argv) {
   cl::ParseCommandLineOptions(argc, argv, " llvm .ll -> .bc assembler\n");

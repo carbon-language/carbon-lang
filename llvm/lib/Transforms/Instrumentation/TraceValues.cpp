@@ -12,8 +12,6 @@
 #include "llvm/iMemory.h"
 #include "llvm/iTerminators.h"
 #include "llvm/iOther.h"
-#include "llvm/BasicBlock.h"
-#include "llvm/Function.h"
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
 #include "llvm/Assembly/Writer.h"
@@ -24,11 +22,13 @@
 using std::vector;
 using std::string;
 
-static cl::Flag DisablePtrHashing("tracedisablehashdisable",
-                                  "Disable pointer hashing", cl::NoFlags);
+static cl::opt<bool>
+DisablePtrHashing("tracedisablehashdisable", cl::Hidden,
+                  cl::desc("Disable pointer hashing"));
 
-static cl::StringList TraceFuncName ("tracefunc", "trace only specific funct"
-                                     "ions", cl::NoFlags);
+static cl::list<string>
+TraceFuncName("tracefunc", cl::desc("trace only specific functions"),
+              cl::value_desc("function"));
 
 
 // We trace a particular function if no functions to trace were specified
@@ -37,7 +37,7 @@ static cl::StringList TraceFuncName ("tracefunc", "trace only specific funct"
 inline bool
 TraceThisFunction(Function* func)
 {
-  if (TraceFuncName.getNumOccurances() == 0)
+  if (TraceFuncName.size() == 0)
     return true;
 
   return std::find(TraceFuncName.begin(), TraceFuncName.end(), func->getName())
