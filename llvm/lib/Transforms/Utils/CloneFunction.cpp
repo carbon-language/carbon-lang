@@ -117,9 +117,9 @@ Function *CloneFunction(const Function *F,
   // Loop over the arguments, copying the names of the mapped arguments over...
   Function::aiterator DestI = NewF->abegin();
   for (Function::const_aiterator I = F->abegin(), E = F->aend(); I != E; ++I)
-    if (ValueMap.count(I)) {        // Is this argument preserved?
+    if (ValueMap.count(I) == 0) {   // Is this argument preserved?
       DestI->setName(I->getName()); // Copy the name over...
-      ValueMap[I] = DestI;          // Add mapping to ValueMap
+      ValueMap[I] = DestI++;        // Add mapping to ValueMap
     }
 
   std::vector<ReturnInst*> Returns;  // Ignore returns cloned...
