@@ -710,17 +710,17 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
   case ISD::MEMSET:
   case ISD::MEMCPY:
   case ISD::MEMMOVE: {
-    Tmp1 = LegalizeOp(Node->getOperand(0));      // Function
+    Tmp1 = LegalizeOp(Node->getOperand(0));      // Chain
     Tmp2 = LegalizeOp(Node->getOperand(1));      // Pointer
 
     if (Node->getOpcode() == ISD::MEMSET) {      // memset = ubyte
       switch (getTypeAction(Node->getOperand(2).getValueType())) {
       case Expand: assert(0 && "Cannot expand a byte!");
       case Legal:
-        Tmp3 = LegalizeOp(Node->getOperand(1));
+        Tmp3 = LegalizeOp(Node->getOperand(2));
         break;
       case Promote:
-        Tmp3 = PromoteOp(Node->getOperand(1));
+        Tmp3 = PromoteOp(Node->getOperand(2));
         break;
       }
     } else {
