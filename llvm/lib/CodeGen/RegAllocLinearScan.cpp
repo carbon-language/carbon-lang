@@ -704,7 +704,8 @@ void RA::addSpillCode(IntervalPtrs::value_type li, int slot)
             // ignore deleted instructions
             while (!li_->getInstructionFromIndex(index)) index += 2;
             mi = li_->getInstructionFromIndex(index);
-            DEBUG(std::cerr << "\t\t\t\texamining: \t\t\t\t\t" << index << '\t';
+            DEBUG(std::cerr << "\t\t\t\texamining: \t\t\t\t\t"
+                  << LiveIntervals::getBaseIndex(index) << '\t';
                   mi->print(std::cerr, *tm_));
 
             // if it is used in this instruction load it
