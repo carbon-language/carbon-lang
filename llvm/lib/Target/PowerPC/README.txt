@@ -1,12 +1,25 @@
 Currently unimplemented:
 * cast fp to bool
-* signed right shift
+* signed right shift of long by reg
 
 Current bugs:
-* use of a cByte/cShort by setCC not first truncated or sign extended
-  (uByte r3 = 250, r3 + 100; setlt r3, 200 will get wrong result).
 * conditional branches assume target is within 32k bytes
-* large fixed-size allocas not correct
+* large fixed-size allocas not correct, although should
+  be closer to working.  Added code in PPCRegisterInfo.cpp
+  to do >16bit subtractions to the stack pointer.
+
+Codegen improvements needed:
+* we unconditionally emit save/restore of LR even if we don't use it
+* no alias analysis causes us to generate slow code for Shootout/matrix
+* setCondInst needs to know branchless versions of seteq/setne/etc
+* cast elimination pass (uint -> sbyte -> short, kill the byte -> short)
+
+Current hacks:
+* lazy insert of GlobalBaseReg definition at front of first MBB
+  A prime candidate for sabre's "slightly above ISel" passes.
+* cast code is huge, unwieldy.  Should probably be broken up into
+  smaller pieces.
+* visitLoadInst is getting awfully cluttered as well.
 
 Currently failing tests:
 * Regression
@@ -14,13 +27,9 @@ Currently failing tests:
   `- Benchmarks
   |  `- Shootout-C++ : most programs fail, miscompilations
   `- UnitTests
-  |  `- 2002-05-02-CastTest
-  |  `- 2003-05-07-VarArgs
   |  `- 2003-05-26-Shorts
   |  `- 2003-07-09-LoadShorts
-  |  `- 2003-07-09-SignedArgs
-  |  `- 2003-08-11-VaListArg
-  |  `- 2003-05-22-VarSizeArray
+  |  `- 2004-06-20-StaticBitfieldInt
   `- C++Catch
   `- SimpleC++Test
   `- ConditionalExpr
@@ -34,8 +43,4 @@ Currently failing tests:
   |  `- hbd: miscompilation
   |  `- d (make_dparser): miscompilation
   `- Benchmarks
-     `- McCat/12-IOtest: miscompilation
-     `- Ptrdist/bc: branch target too far
-     `- FreeBench/pifft
-     `- MallocBench/espresso: same as bc
-     `- MallocBench/make: same as bc
+     `- MallocBench/make: branch target too far
