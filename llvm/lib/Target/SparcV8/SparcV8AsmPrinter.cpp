@@ -396,6 +396,12 @@ void V8Printer::printOperand(const MachineOperand &MO) {
     O << (int)MO.getImmedValue();
     return;
   case MachineOperand::MO_PCRelativeDisp: {
+    if (isa<GlobalValue> (MO.getVRegValue ())) {
+      O << Mang->getValueName (MO.getVRegValue ());
+      return;
+    }
+    assert (isa<BasicBlock> (MO.getVRegValue ())
+      && "Trying to look up something which is not a BB in the NumberForBB map");
     ValueMapTy::const_iterator i = NumberForBB.find(MO.getVRegValue());
     assert (i != NumberForBB.end()
             && "Could not find a BB in the NumberForBB map!");
