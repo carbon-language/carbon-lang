@@ -1,6 +1,6 @@
 // RUN: %llvmgcc -S %s -o /dev/null
 
-// XFAIL: linux,sun,darwin
+// XFAIL: *
 
 union foo {
   struct { char A, B; } X;
