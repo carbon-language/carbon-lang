@@ -105,8 +105,6 @@ constrained to be the same as the CFG for the LLVM input code.</li>
 <li>LLVM now has new loop unrolling and loop unswitching passes.</li>
 <li>The induction variable substitution pass performs linear function test
 replacement and exit value replacement optimizations.</li>
-<li>The <a href="BytecodeFormat.html">LLVM Bytecode file format</a> is now 
-    documented.</li>
 <li>LLVM now has first-class support for <a href="GarbageCollection.html">Accurate 
 Garbage Collection</a>, enabling the use of aggressive copying and generational 
 collectors.</li>
@@ -119,6 +117,15 @@ basic blocks</a> to track down reduce miscompilation testcases.</li>
 This includes the JIT compiler.</li>
 <li>The LLVM code generator is now being <a 
     href="CodeGenerator.html">documented</a>.</li>
+<li>There is a new tool, llvm-abcd, the Analysis of ByteCode Dumper (abcd). 
+This tool can compute basic statistics and bytecode density statistics on a
+module or function basis and also dump out bytecode in a textual format that
+is lower level than assembly (values are not resolved from slot numbers).
+It should only be of interest to (a) those who are working to improve the
+bytecode format and (b) those who really want to understand or document the
+details of the bytecode format.</li>
+<li>The <a href="BytecodeFormat.html">LLVM Bytecode file format</a> is now 
+    being documented.</li>
 </ol>
 
 </div>
