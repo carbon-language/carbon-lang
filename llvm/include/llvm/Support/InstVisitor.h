@@ -101,6 +101,7 @@ struct InstVisitor {
 #include "llvm/Instruction.def"
 
     default: assert(0 && "Unknown instruction type encountered!");
+             abort();
     }
   }
 
