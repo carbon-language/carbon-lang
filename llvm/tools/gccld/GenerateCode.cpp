@@ -118,12 +118,12 @@ GenerateAssembly(const std::string &OutputFilename,
   // Run LLC to convert the bytecode file into assembly code.
   const char *cmd[8];
 
-  cmd[0] =  llc.c_str();
-  cmd[1] =  "-f";
-  cmd[2] =  "-o";
-  cmd[3] =  OutputFilename.c_str();
-  cmd[4] =  InputFilename.c_str();
-  cmd[5] =  NULL;
+  cmd[0] = llc.c_str();
+  cmd[1] = "-f";
+  cmd[2] = "-o";
+  cmd[3] = OutputFilename.c_str();
+  cmd[4] = InputFilename.c_str();
+  cmd[5] = NULL;
 
   return ExecWait(cmd, envp);
 }
@@ -186,12 +186,12 @@ GenerateNative(const std::string &OutputFilename,
   cmd.push_back(OutputFilename.c_str());
   cmd.push_back(InputFilename.c_str());
 
-  //  Adding the library paths creates a problem for native generation.  If we
-  //  include the search paths from llvmgcc, then we'll be telling normal gcc
-  //  to look inside of llvmgcc's library directories for libraries.  This is
-  //  bad because those libraries hold only bytecode files (not native object
-  //  files).  In the end, we attempt to link the bytecode libgcc into a native
-  //  program.
+  // Adding the library paths creates a problem for native generation.  If we
+  // include the search paths from llvmgcc, then we'll be telling normal gcc
+  // to look inside of llvmgcc's library directories for libraries.  This is
+  // bad because those libraries hold only bytecode files (not native object
+  // files).  In the end, we attempt to link the bytecode libgcc into a native
+  // program.
 #if 0
   // Add in the library path options.
   for (unsigned index=0; index < LibPaths.size(); index++) {
