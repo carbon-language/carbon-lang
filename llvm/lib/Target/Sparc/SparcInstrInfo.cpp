@@ -97,31 +97,28 @@ CreateSETUWConst(const TargetMachine& target, uint32_t C,
   bool smallNegValue =isSigned && sC < 0 && sC != -sC && -sC < (int32_t)MAXSIMM;
 
   // Set the high 22 bits in dest if non-zero and simm13 field of OR not enough
-  if (!smallNegValue && (C & ~MAXLO) && C > MAXSIMM)
-    {
-      miSETHI = BuildMI(V9::SETHI, 2).addZImm(C).addRegDef(dest);
-      miSETHI->setOperandHi32(0);
-      mvec.push_back(miSETHI);
-    }
+  if (!smallNegValue && (C & ~MAXLO) && C > MAXSIMM) {
+    miSETHI = BuildMI(V9::SETHI, 2).addZImm(C).addRegDef(dest);
+    miSETHI->setOperandHi32(0);
+    mvec.push_back(miSETHI);
+  }
   
   // Set the low 10 or 12 bits in dest.  This is necessary if no SETHI
   // was generated, or if the low 10 bits are non-zero.
-  if (miSETHI==NULL || C & MAXLO)
-    {
-      if (miSETHI)
-        { // unsigned value with high-order bits set using SETHI
-          miOR = BuildMI(V9::OR,3).addReg(dest).addZImm(C).addRegDef(dest);
-          miOR->setOperandLo32(1);
-        }
-      else
-        { // unsigned or small signed value that fits in simm13 field of OR
-          assert(smallNegValue || (C & ~MAXSIMM) == 0);
-          miOR = BuildMI(V9::OR, 3).addMReg(target.getRegInfo()
-                                                 .getZeroRegNum())
-            .addSImm(sC).addRegDef(dest);
-        }
-      mvec.push_back(miOR);
+  if (miSETHI==NULL || C & MAXLO) {
+    if (miSETHI) {
+      // unsigned value with high-order bits set using SETHI
+      miOR = BuildMI(V9::OR,3).addReg(dest).addZImm(C).addRegDef(dest);
+      miOR->setOperandLo32(1);
+    } else {
+      // unsigned or small signed value that fits in simm13 field of OR
+      assert(smallNegValue || (C & ~MAXSIMM) == 0);
+      miOR = BuildMI(V9::OR, 3).addMReg(target.getRegInfo()
+                                        .getZeroRegNum())
+        .addSImm(sC).addRegDef(dest);
     }
+    mvec.push_back(miOR);
+  }
   
   assert((miSETHI || miOR) && "Oops, no code was generated!");
 }
@@ -266,17 +263,16 @@ CreateUIntSetInstruction(const TargetMachine& target,
   static const uint64_t lo32 = (uint32_t) ~0;
   if (C <= lo32)                        // High 32 bits are 0.  Set low 32 bits.
     CreateSETUWConst(target, (uint32_t) C, dest, mvec);
-  else if ((C & ~lo32) == ~lo32 && (C & (1 << 31)))
-    { // All high 33 (not 32) bits are 1s: sign-extension will take care
-      // of high 32 bits, so use the sequence for signed int
-      CreateSETSWConst(target, (int32_t) C, dest, mvec);
-    }
-  else if (C > lo32)
-    { // C does not fit in 32 bits
-      TmpInstruction* tmpReg = new TmpInstruction(Type::IntTy);
-      mcfi.addTemp(tmpReg);
-      CreateSETXConst(target, C, tmpReg, dest, mvec);
-    }
+  else if ((C & ~lo32) == ~lo32 && (C & (1 << 31))) {
+    // All high 33 (not 32) bits are 1s: sign-extension will take care
+    // of high 32 bits, so use the sequence for signed int
+    CreateSETSWConst(target, (int32_t) C, dest, mvec);
+  } else if (C > lo32) {
+    // C does not fit in 32 bits
+    TmpInstruction* tmpReg = new TmpInstruction(Type::IntTy);
+    mcfi.addTemp(tmpReg);
+    CreateSETXConst(target, C, tmpReg, dest, mvec);
+  }
 }
 
 
@@ -425,80 +421,72 @@ UltraSparcInstrInfo::CreateCodeToLoadConst(const TargetMachine& target,
   if (isa<ConstantPointerRef>(val))
     val = cast<ConstantPointerRef>(val)->getValue();
 
-  if (isa<GlobalValue>(val))
-    {
+  if (isa<GlobalValue>(val)) {
       TmpInstruction* tmpReg =
         new TmpInstruction(PointerType::get(val->getType()), val);
       mcfi.addTemp(tmpReg);
       CreateSETXLabel(target, val, tmpReg, dest, mvec);
-    }
-  else if (valType->isIntegral())
-    {
-      bool isValidConstant;
-      unsigned opSize = target.getTargetData().getTypeSize(val->getType());
-      unsigned destSize = target.getTargetData().getTypeSize(dest->getType());
+  } else if (valType->isIntegral()) {
+    bool isValidConstant;
+    unsigned opSize = target.getTargetData().getTypeSize(val->getType());
+    unsigned destSize = target.getTargetData().getTypeSize(dest->getType());
       
-      if (! dest->getType()->isSigned())
-        {
-          uint64_t C = GetConstantValueAsUnsignedInt(val, isValidConstant);
-          assert(isValidConstant && "Unrecognized constant");
+    if (! dest->getType()->isSigned()) {
+      uint64_t C = GetConstantValueAsUnsignedInt(val, isValidConstant);
+      assert(isValidConstant && "Unrecognized constant");
 
-          if (opSize > destSize || (val->getType()->isSigned() && destSize < 8))
-            { // operand is larger than dest,
-              //    OR both are equal but smaller than the full register size
-              //       AND operand is signed, so it may have extra sign bits:
-              // mask high bits
-              C = C & ((1U << 8*destSize) - 1);
-            }
-          CreateUIntSetInstruction(target, C, dest, mvec, mcfi);
-        }
-      else
-        {
-          int64_t C = GetConstantValueAsSignedInt(val, isValidConstant);
-          assert(isValidConstant && "Unrecognized constant");
+      if (opSize > destSize || (val->getType()->isSigned() && destSize < 8)) {
+        // operand is larger than dest,
+        //    OR both are equal but smaller than the full register size
+        //       AND operand is signed, so it may have extra sign bits:
+        // mask high bits
+        C = C & ((1U << 8*destSize) - 1);
+      }
+      CreateUIntSetInstruction(target, C, dest, mvec, mcfi);
+    } else {
+      int64_t C = GetConstantValueAsSignedInt(val, isValidConstant);
+      assert(isValidConstant && "Unrecognized constant");
 
-          if (opSize > destSize)
-            // operand is larger than dest: mask high bits
-            C = C & ((1U << 8*destSize) - 1);
+      if (opSize > destSize)
+        // operand is larger than dest: mask high bits
+        C = C & ((1U << 8*destSize) - 1);
 
-          if (opSize > destSize ||
-              (opSize == destSize && !val->getType()->isSigned()))
-            // sign-extend from destSize to 64 bits
-            C = ((C & (1U << (8*destSize - 1)))
-                 ? C | ~((1U << 8*destSize) - 1)
-                 : C);
+      if (opSize > destSize ||
+          (opSize == destSize && !val->getType()->isSigned()))
+        // sign-extend from destSize to 64 bits
+        C = ((C & (1U << (8*destSize - 1)))
+             ? C | ~((1U << 8*destSize) - 1)
+             : C);
           
-          CreateIntSetInstruction(target, C, dest, mvec, mcfi);
-        }
+      CreateIntSetInstruction(target, C, dest, mvec, mcfi);
     }
-  else
-    {
-      // Make an instruction sequence to load the constant, viz:
-      //            SETX <addr-of-constant>, tmpReg, addrReg
-      //            LOAD  /*addr*/ addrReg, /*offset*/ 0, dest
+  } else {
+    // Make an instruction sequence to load the constant, viz:
+    //            SETX <addr-of-constant>, tmpReg, addrReg
+    //            LOAD  /*addr*/ addrReg, /*offset*/ 0, dest
       
-      // First, create a tmp register to be used by the SETX sequence.
-      TmpInstruction* tmpReg =
-        new TmpInstruction(PointerType::get(val->getType()), val);
-      mcfi.addTemp(tmpReg);
+    // First, create a tmp register to be used by the SETX sequence.
+    TmpInstruction* tmpReg =
+      new TmpInstruction(PointerType::get(val->getType()), val);
+    mcfi.addTemp(tmpReg);
       
-      // Create another TmpInstruction for the address register
-      TmpInstruction* addrReg =
-            new TmpInstruction(PointerType::get(val->getType()), val);
-      mcfi.addTemp(addrReg);
+    // Create another TmpInstruction for the address register
+    TmpInstruction* addrReg =
+      new TmpInstruction(PointerType::get(val->getType()), val);
+    mcfi.addTemp(addrReg);
       
-      // Put the address (a symbolic name) into a register
-      CreateSETXLabel(target, val, tmpReg, addrReg, mvec);
+    // Put the address (a symbolic name) into a register
+    CreateSETXLabel(target, val, tmpReg, addrReg, mvec);
       
-      // Generate the load instruction
-      int64_t zeroOffset = 0;           // to avoid ambiguity with (Value*) 0
-      unsigned Opcode = ChooseLoadInstruction(val->getType());
-      mvec.push_back(BuildMI(Opcode, 3).addReg(addrReg).
-                     addSImm(zeroOffset).addRegDef(dest));
+    // Generate the load instruction
+    int64_t zeroOffset = 0;           // to avoid ambiguity with (Value*) 0
+    unsigned Opcode = ChooseLoadInstruction(val->getType());
+    mvec.push_back(BuildMI(Opcode, 3).addReg(addrReg).
+                   addSImm(zeroOffset).addRegDef(dest));
       
-      // Make sure constant is emitted to constant pool in assembly code.
-      MachineFunction::get(F).getInfo()->addToConstantPool(cast<Constant>(val));
-    }
+    // Make sure constant is emitted to constant pool in assembly code.
+    MachineFunction::get(F).getInfo()->addToConstantPool(cast<Constant>(val));
+  }
 }
 
 
@@ -535,16 +523,16 @@ UltraSparcInstrInfo::CreateCodeToCopyIntToFloat(const TargetMachine& target,
   // Note that the store instruction is the same for signed and unsigned ints.
   const Type* storeType = (srcSize <= 4)? Type::IntTy : Type::LongTy;
   Value* storeVal = val;
-  if (srcSize < target.getTargetData().getTypeSize(Type::FloatTy))
-    { // sign- or zero-extend respectively
-      storeVal = new TmpInstruction(storeType, val);
-      if (val->getType()->isSigned())
-        CreateSignExtensionInstructions(target, F, val, storeVal, 8*srcSize,
-                                        mvec, mcfi);
-      else
-        CreateZeroExtensionInstructions(target, F, val, storeVal, 8*srcSize,
-                                        mvec, mcfi);
-    }
+  if (srcSize < target.getTargetData().getTypeSize(Type::FloatTy)) {
+    // sign- or zero-extend respectively
+    storeVal = new TmpInstruction(storeType, val);
+    if (val->getType()->isSigned())
+      CreateSignExtensionInstructions(target, F, val, storeVal, 8*srcSize,
+                                      mvec, mcfi);
+    else
+      CreateZeroExtensionInstructions(target, F, val, storeVal, 8*srcSize,
+                                      mvec, mcfi);
+  }
 
   unsigned FPReg = target.getRegInfo().getFramePointer();
   mvec.push_back(BuildMI(ChooseStoreInstruction(storeType), 3)
@@ -622,8 +610,7 @@ UltraSparcInstrInfo::CreateCopyInstructionsByType(const TargetMachine& target,
   const Type* resultType = dest->getType();
   
   MachineOpCode opCode = ChooseAddInstructionByType(resultType);
-  if (opCode == V9::INVALID_OPCODE)
-  {
+  if (opCode == V9::INVALID_OPCODE) {
     assert(0 && "Unsupported result type in CreateCopyInstructionsByType()");
     return;
   }
@@ -632,8 +619,7 @@ UltraSparcInstrInfo::CreateCopyInstructionsByType(const TargetMachine& target,
   // a global variable (i.e., a constant address), generate a load
   // instruction instead of an add
   // 
-  if (isa<Constant>(src))
-  {
+  if (isa<Constant>(src)) {
     unsigned int machineRegNum;
     int64_t immedValue;
     MachineOperand::MachineOperandType opType =
@@ -646,14 +632,13 @@ UltraSparcInstrInfo::CreateCopyInstructionsByType(const TargetMachine& target,
   else if (isa<GlobalValue>(src))
     loadConstantToReg = true;
   
-  if (loadConstantToReg)
-  { // `src' is constant and cannot fit in immed field for the ADD
+  if (loadConstantToReg) { 
+    // `src' is constant and cannot fit in immed field for the ADD
     // Insert instructions to "load" the constant into a register
     target.getInstrInfo().CreateCodeToLoadConst(target, F, src, dest,
                                                 mvec, mcfi);
-  }
-  else
-  { // Create an add-with-0 instruction of the appropriate type.
+  } else { 
+    // Create an add-with-0 instruction of the appropriate type.
     // Make `src' the second operand, in case it is a constant
     // Use (unsigned long) 0 for a NULL pointer value.
     // 
@@ -682,8 +667,8 @@ CreateBitExtensionInstructions(bool signExtend,
 
   assert(numLowBits <= 32 && "Otherwise, nothing should be done here!");
 
-  if (numLowBits < 32)
-  { // SLL is needed since operand size is < 32 bits.
+  if (numLowBits < 32) {
+    // SLL is needed since operand size is < 32 bits.
     TmpInstruction *tmpI = new TmpInstruction(destVal->getType(),
                                               srcVal, destVal, "make32");
     mcfi.addTemp(tmpI);

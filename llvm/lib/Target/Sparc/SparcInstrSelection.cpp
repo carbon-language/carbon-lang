@@ -97,50 +97,49 @@ FoldGetElemChain(InstrTreeNode* ptrNode, std::vector<Value*>& chainIdxVec,
   InstructionNode* ptrChild = gepNode;
   while (ptrChild && (ptrChild->getOpLabel() == Instruction::GetElementPtr ||
                       ptrChild->getOpLabel() == GetElemPtrIdx))
-    {
-      // Child is a GetElemPtr instruction
-      gepInst = cast<GetElementPtrInst>(ptrChild->getValue());
-      User::op_iterator OI, firstIdx = gepInst->idx_begin();
-      User::op_iterator lastIdx = gepInst->idx_end();
-      bool allConstantOffsets = true;
+  {
+    // Child is a GetElemPtr instruction
+    gepInst = cast<GetElementPtrInst>(ptrChild->getValue());
+    User::op_iterator OI, firstIdx = gepInst->idx_begin();
+    User::op_iterator lastIdx = gepInst->idx_end();
+    bool allConstantOffsets = true;
 
-      // The first index of every GEP must be an array index.
-      assert((*firstIdx)->getType() == Type::LongTy &&
-             "INTERNAL ERROR: Structure index for a pointer type!");
+    // The first index of every GEP must be an array index.
+    assert((*firstIdx)->getType() == Type::LongTy &&
+           "INTERNAL ERROR: Structure index for a pointer type!");
 
-      // If the last instruction had a leading non-zero index, check if the
-      // current one references a sequential (i.e., indexable) type.
-      // If not, the code is not type-safe and we would create an illegal GEP
-      // by folding them, so don't fold any more instructions.
-      // 
-      if (lastInstHasLeadingNonZero)
-        if (! isa<SequentialType>(gepInst->getType()->getElementType()))
-          break;   // cannot fold in any preceding getElementPtr instrs.
+    // If the last instruction had a leading non-zero index, check if the
+    // current one references a sequential (i.e., indexable) type.
+    // If not, the code is not type-safe and we would create an illegal GEP
+    // by folding them, so don't fold any more instructions.
+    // 
+    if (lastInstHasLeadingNonZero)
+      if (! isa<SequentialType>(gepInst->getType()->getElementType()))
+        break;   // cannot fold in any preceding getElementPtr instrs.
 
-      // Check that all offsets are constant for this instruction
-      for (OI = firstIdx; allConstantOffsets && OI != lastIdx; ++OI)
-        allConstantOffsets = isa<ConstantInt>(*OI);
+    // Check that all offsets are constant for this instruction
+    for (OI = firstIdx; allConstantOffsets && OI != lastIdx; ++OI)
+      allConstantOffsets = isa<ConstantInt>(*OI);
 
-      if (allConstantOffsets)
-        { // Get pointer value out of ptrChild.
-          ptrVal = gepInst->getPointerOperand();
+    if (allConstantOffsets) {
+      // Get pointer value out of ptrChild.
+      ptrVal = gepInst->getPointerOperand();
 
-          // Remember if it has leading zero index: it will be discarded later.
-          lastInstHasLeadingNonZero = ! IsZero(*firstIdx);
+      // Remember if it has leading zero index: it will be discarded later.
+      lastInstHasLeadingNonZero = ! IsZero(*firstIdx);
 
-          // Insert its index vector at the start, skipping any leading [0]
-          chainIdxVec.insert(chainIdxVec.begin(),
-                             firstIdx + !lastInstHasLeadingNonZero, lastIdx);
+      // Insert its index vector at the start, skipping any leading [0]
+      chainIdxVec.insert(chainIdxVec.begin(),
+                         firstIdx + !lastInstHasLeadingNonZero, lastIdx);
 
-          // Mark the folded node so no code is generated for it.
-          ((InstructionNode*) ptrChild)->markFoldedIntoParent();
+      // Mark the folded node so no code is generated for it.
+      ((InstructionNode*) ptrChild)->markFoldedIntoParent();
 
-          // Get the previous GEP instruction and continue trying to fold
-          ptrChild = dyn_cast<InstructionNode>(ptrChild->leftChild());
-        }
-      else // cannot fold this getElementPtr instr. or any preceding ones
-        break;
-    }
+      // Get the previous GEP instruction and continue trying to fold
+      ptrChild = dyn_cast<InstructionNode>(ptrChild->leftChild());
+    } else // cannot fold this getElementPtr instr. or any preceding ones
+      break;
+  }
 
   // If the first getElementPtr instruction had a leading [0], add it back.
   // Note that this instruction is the *last* one successfully folded above.
@@ -186,11 +185,10 @@ GetGEPInstArgs(InstructionNode* gepNode,
   bool foldedGEPs = false;
   bool leadingNonZeroIdx = gepI && ! IsZero(*gepI->idx_begin());
   if (allConstantIndices)
-    if (Value* newPtr = FoldGetElemChain(ptrChild, idxVec, leadingNonZeroIdx))
-      {
-        ptrVal = newPtr;
-        foldedGEPs = true;
-      }
+    if (Value* newPtr = FoldGetElemChain(ptrChild, idxVec, leadingNonZeroIdx)) {
+      ptrVal = newPtr;
+      foldedGEPs = true;
+    }
 
   // Append the index vector of the current instruction.
   // Skip the leading [0] index if preceding GEPs were folded into this.
@@ -242,12 +240,12 @@ GetMemInstArgs(InstructionNode* memInstrNode,
   InstructionNode* gepNode = NULL;
   if (isa<GetElementPtrInst>(memInst))
     gepNode = memInstrNode;
-  else if (isa<InstructionNode>(ptrChild) && isa<GetElementPtrInst>(ptrVal))
-    { // Child of load/store is a GEP and memInst is its only use.
-      // Use its indices and mark it as folded.
-      gepNode = cast<InstructionNode>(ptrChild);
-      gepNode->markFoldedIntoParent();
-    }
+  else if (isa<InstructionNode>(ptrChild) && isa<GetElementPtrInst>(ptrVal)) {
+    // Child of load/store is a GEP and memInst is its only use.
+    // Use its indices and mark it as folded.
+    gepNode = cast<InstructionNode>(ptrChild);
+    gepNode->markFoldedIntoParent();
+  }
 
   // If there are no indices, return the current pointer.
   // Else extract the pointer from the GEP and fold the indices.
@@ -268,18 +266,18 @@ ChooseBprInstruction(const InstructionNode* instrNode)
     ((InstructionNode*) instrNode->leftChild())->getInstruction();
   
   switch(setCCInstr->getOpcode())
-    {
-    case Instruction::SetEQ: opCode = V9::BRZ;   break;
-    case Instruction::SetNE: opCode = V9::BRNZ;  break;
-    case Instruction::SetLE: opCode = V9::BRLEZ; break;
-    case Instruction::SetGE: opCode = V9::BRGEZ; break;
-    case Instruction::SetLT: opCode = V9::BRLZ;  break;
-    case Instruction::SetGT: opCode = V9::BRGZ;  break;
-    default:
-      assert(0 && "Unrecognized VM instruction!");
-      opCode = V9::INVALID_OPCODE;
-      break; 
-    }
+  {
+  case Instruction::SetEQ: opCode = V9::BRZ;   break;
+  case Instruction::SetNE: opCode = V9::BRNZ;  break;
+  case Instruction::SetLE: opCode = V9::BRLEZ; break;
+  case Instruction::SetGE: opCode = V9::BRGEZ; break;
+  case Instruction::SetLT: opCode = V9::BRLZ;  break;
+  case Instruction::SetGT: opCode = V9::BRGZ;  break;
+  default:
+    assert(0 && "Unrecognized VM instruction!");
+    opCode = V9::INVALID_OPCODE;
+    break; 
+  }
   
   return opCode;
 }
@@ -293,36 +291,33 @@ ChooseBpccInstruction(const InstructionNode* instrNode,
   
   bool isSigned = setCCInstr->getOperand(0)->getType()->isSigned();
   
-  if (isSigned)
+  if (isSigned) {
+    switch(setCCInstr->getOpcode())
     {
-      switch(setCCInstr->getOpcode())
-        {
-        case Instruction::SetEQ: opCode = V9::BE;  break;
-        case Instruction::SetNE: opCode = V9::BNE; break;
-        case Instruction::SetLE: opCode = V9::BLE; break;
-        case Instruction::SetGE: opCode = V9::BGE; break;
-        case Instruction::SetLT: opCode = V9::BL;  break;
-        case Instruction::SetGT: opCode = V9::BG;  break;
-        default:
-          assert(0 && "Unrecognized VM instruction!");
-          break; 
-        }
+    case Instruction::SetEQ: opCode = V9::BE;  break;
+    case Instruction::SetNE: opCode = V9::BNE; break;
+    case Instruction::SetLE: opCode = V9::BLE; break;
+    case Instruction::SetGE: opCode = V9::BGE; break;
+    case Instruction::SetLT: opCode = V9::BL;  break;
+    case Instruction::SetGT: opCode = V9::BG;  break;
+    default:
+      assert(0 && "Unrecognized VM instruction!");
+      break; 
     }
-  else
+  } else {
+    switch(setCCInstr->getOpcode())
     {
-      switch(setCCInstr->getOpcode())
-        {
-        case Instruction::SetEQ: opCode = V9::BE;   break;
-        case Instruction::SetNE: opCode = V9::BNE;  break;
-        case Instruction::SetLE: opCode = V9::BLEU; break;
-        case Instruction::SetGE: opCode = V9::BCC;  break;
-        case Instruction::SetLT: opCode = V9::BCS;  break;
-        case Instruction::SetGT: opCode = V9::BGU;  break;
-        default:
-          assert(0 && "Unrecognized VM instruction!");
-          break; 
-        }
+    case Instruction::SetEQ: opCode = V9::BE;   break;
+    case Instruction::SetNE: opCode = V9::BNE;  break;
+    case Instruction::SetLE: opCode = V9::BLEU; break;
+    case Instruction::SetGE: opCode = V9::BCC;  break;
+    case Instruction::SetLT: opCode = V9::BCS;  break;
+    case Instruction::SetGT: opCode = V9::BGU;  break;
+    default:
+      assert(0 && "Unrecognized VM instruction!");
+      break; 
     }
+  }
   
   return opCode;
 }
@@ -334,17 +329,17 @@ ChooseBFpccInstruction(const InstructionNode* instrNode,
   MachineOpCode opCode = V9::INVALID_OPCODE;
   
   switch(setCCInstr->getOpcode())
-    {
-    case Instruction::SetEQ: opCode = V9::FBE;  break;
-    case Instruction::SetNE: opCode = V9::FBNE; break;
-    case Instruction::SetLE: opCode = V9::FBLE; break;
-    case Instruction::SetGE: opCode = V9::FBGE; break;
-    case Instruction::SetLT: opCode = V9::FBL;  break;
-    case Instruction::SetGT: opCode = V9::FBG;  break;
-    default:
-      assert(0 && "Unrecognized VM instruction!");
-      break; 
-    }
+  {
+  case Instruction::SetEQ: opCode = V9::FBE;  break;
+  case Instruction::SetNE: opCode = V9::FBNE; break;
+  case Instruction::SetLE: opCode = V9::FBLE; break;
+  case Instruction::SetGE: opCode = V9::FBGE; break;
+  case Instruction::SetLT: opCode = V9::FBL;  break;
+  case Instruction::SetGT: opCode = V9::FBG;  break;
+  default:
+    assert(0 && "Unrecognized VM instruction!");
+    break; 
+  }
   
   return opCode;
 }
@@ -367,11 +362,10 @@ GetTmpForCC(Value* boolVal, const Function *F, const Type* ccType)
   
   assert(boolVal->getType() == Type::BoolTy && "Weird but ok! Delete assert");
   
-  if (lastFunction != F)
-    {
-      lastFunction = F;
-      boolToTmpCache.clear();
-    }
+  if (lastFunction != F) {
+    lastFunction = F;
+    boolToTmpCache.clear();
+  }
   
   // Look for tmpI and create a new one otherwise.  The new value is
   // directly written to map using the ref returned by operator[].
@@ -407,17 +401,17 @@ ChooseMovFpccInstruction(const InstructionNode* instrNode)
   MachineOpCode opCode = V9::INVALID_OPCODE;
   
   switch(instrNode->getInstruction()->getOpcode())
-    {
-    case Instruction::SetEQ: opCode = V9::MOVFE;  break;
-    case Instruction::SetNE: opCode = V9::MOVFNE; break;
-    case Instruction::SetLE: opCode = V9::MOVFLE; break;
-    case Instruction::SetGE: opCode = V9::MOVFGE; break;
-    case Instruction::SetLT: opCode = V9::MOVFL;  break;
-    case Instruction::SetGT: opCode = V9::MOVFG;  break;
-    default:
-      assert(0 && "Unrecognized VM instruction!");
-      break; 
-    }
+  {
+  case Instruction::SetEQ: opCode = V9::MOVFE;  break;
+  case Instruction::SetNE: opCode = V9::MOVFNE; break;
+  case Instruction::SetLE: opCode = V9::MOVFLE; break;
+  case Instruction::SetGE: opCode = V9::MOVFGE; break;
+  case Instruction::SetLT: opCode = V9::MOVFL;  break;
+  case Instruction::SetGT: opCode = V9::MOVFG;  break;
+  default:
+    assert(0 && "Unrecognized VM instruction!");
+    break; 
+  }
   
   return opCode;
 }
@@ -441,15 +435,15 @@ ChooseMovpccAfterSub(const InstructionNode* instrNode,
   valueToMove = 1;
   
   switch(instrNode->getInstruction()->getOpcode())
-    {
-    case Instruction::SetEQ: opCode = V9::MOVE;  break;
-    case Instruction::SetLE: opCode = V9::MOVLE; break;
-    case Instruction::SetGE: opCode = V9::MOVGE; break;
-    case Instruction::SetLT: opCode = V9::MOVL;  break;
-    case Instruction::SetGT: opCode = V9::MOVG;  break;
-    case Instruction::SetNE: assert(0 && "No move required!"); break;
-    default:		     assert(0 && "Unrecognized VM instr!"); break; 
-    }
+  {
+  case Instruction::SetEQ: opCode = V9::MOVE;  break;
+  case Instruction::SetLE: opCode = V9::MOVLE; break;
+  case Instruction::SetGE: opCode = V9::MOVGE; break;
+  case Instruction::SetLT: opCode = V9::MOVL;  break;
+  case Instruction::SetGT: opCode = V9::MOVG;  break;
+  case Instruction::SetNE: assert(0 && "No move required!"); break;
+  default:		     assert(0 && "Unrecognized VM instr!"); break; 
+  }
   
   return opCode;
 }
@@ -460,41 +454,42 @@ ChooseConvertToFloatInstr(OpLabel vopCode, const Type* opType)
   MachineOpCode opCode = V9::INVALID_OPCODE;
   
   switch(vopCode)
-    {
-    case ToFloatTy: 
-      if (opType == Type::SByteTy || opType == Type::ShortTy || opType == Type::IntTy)
-        opCode = V9::FITOS;
-      else if (opType == Type::LongTy)
-        opCode = V9::FXTOS;
-      else if (opType == Type::DoubleTy)
-        opCode = V9::FDTOS;
-      else if (opType == Type::FloatTy)
-        ;
-      else
-        assert(0 && "Cannot convert this type to FLOAT on SPARC");
-      break;
+  {
+  case ToFloatTy: 
+    if (opType == Type::SByteTy || opType == Type::ShortTy ||
+        opType == Type::IntTy)
+      opCode = V9::FITOS;
+    else if (opType == Type::LongTy)
+      opCode = V9::FXTOS;
+    else if (opType == Type::DoubleTy)
+      opCode = V9::FDTOS;
+    else if (opType == Type::FloatTy)
+      ;
+    else
+      assert(0 && "Cannot convert this type to FLOAT on SPARC");
+    break;
       
-    case ToDoubleTy: 
-      // This is usually used in conjunction with CreateCodeToCopyIntToFloat().
-      // Both functions should treat the integer as a 32-bit value for types
-      // of 4 bytes or less, and as a 64-bit value otherwise.
-      if (opType == Type::SByteTy || opType == Type::UByteTy ||
-          opType == Type::ShortTy || opType == Type::UShortTy ||
-          opType == Type::IntTy   || opType == Type::UIntTy)
-        opCode = V9::FITOD;
-      else if (opType == Type::LongTy || opType == Type::ULongTy)
-        opCode = V9::FXTOD;
-      else if (opType == Type::FloatTy)
-        opCode = V9::FSTOD;
-      else if (opType == Type::DoubleTy)
-        ;
-      else
-        assert(0 && "Cannot convert this type to DOUBLE on SPARC");
-      break;
+  case ToDoubleTy: 
+    // This is usually used in conjunction with CreateCodeToCopyIntToFloat().
+    // Both functions should treat the integer as a 32-bit value for types
+    // of 4 bytes or less, and as a 64-bit value otherwise.
+    if (opType == Type::SByteTy || opType == Type::UByteTy ||
+        opType == Type::ShortTy || opType == Type::UShortTy ||
+        opType == Type::IntTy   || opType == Type::UIntTy)
+      opCode = V9::FITOD;
+    else if (opType == Type::LongTy || opType == Type::ULongTy)
+      opCode = V9::FXTOD;
+    else if (opType == Type::FloatTy)
+      opCode = V9::FSTOD;
+    else if (opType == Type::DoubleTy)
+      ;
+    else
+      assert(0 && "Cannot convert this type to DOUBLE on SPARC");
+    break;
       
-    default:
-      break;
-    }
+  default:
+    break;
+  }
   
   return opCode;
 }
@@ -507,22 +502,17 @@ ChooseConvertFPToIntInstr(Type::PrimitiveID tid, const Type* opType)
   assert((opType == Type::FloatTy || opType == Type::DoubleTy)
          && "This function should only be called for FLOAT or DOUBLE");
 
-  if (tid==Type::UIntTyID)
-    {
-      assert(tid != Type::UIntTyID && "FP-to-uint conversions must be expanded"
-             " into FP->long->uint for SPARC v9:  SO RUN PRESELECTION PASS!");
-    }
-  else if (tid==Type::SByteTyID || tid==Type::ShortTyID || tid==Type::IntTyID ||
-           tid==Type::UByteTyID || tid==Type::UShortTyID)
-    {
-      opCode = (opType == Type::FloatTy)? V9::FSTOI : V9::FDTOI;
-    }
-  else if (tid==Type::LongTyID || tid==Type::ULongTyID)
-    {
+  if (tid == Type::UIntTyID) {
+    assert(tid != Type::UIntTyID && "FP-to-uint conversions must be expanded"
+           " into FP->long->uint for SPARC v9:  SO RUN PRESELECTION PASS!");
+  } else if (tid == Type::SByteTyID || tid == Type::ShortTyID || 
+             tid == Type::IntTyID   || tid == Type::UByteTyID ||
+             tid == Type::UShortTyID) {
+    opCode = (opType == Type::FloatTy)? V9::FSTOI : V9::FDTOI;
+  } else if (tid == Type::LongTyID || tid == Type::ULongTyID) {
       opCode = (opType == Type::FloatTy)? V9::FSTOX : V9::FDTOX;
-    }
-  else
-      assert(0 && "Should not get here, Mo!");
+  } else
+    assert(0 && "Should not get here, Mo!");
 
   return opCode;
 }
@@ -611,11 +601,11 @@ CreateAddConstInstruction(const InstructionNode* instrNode)
   //	 instead of an FADD (1 vs 3 cycles).  There is no integer MOV.
   // 
   if (ConstantFP *FPC = dyn_cast<ConstantFP>(constOp)) {
-      double dval = FPC->getValue();
-      if (dval == 0.0)
-        minstr = CreateMovFloatInstruction(instrNode,
-                                   instrNode->getInstruction()->getType());
-    }
+    double dval = FPC->getValue();
+    if (dval == 0.0)
+      minstr = CreateMovFloatInstruction(instrNode,
+                                        instrNode->getInstruction()->getType());
+  }
   
   return minstr;
 }
@@ -626,18 +616,17 @@ ChooseSubInstructionByType(const Type* resultType)
 {
   MachineOpCode opCode = V9::INVALID_OPCODE;
   
-  if (resultType->isInteger() || isa<PointerType>(resultType))
-    {
+  if (resultType->isInteger() || isa<PointerType>(resultType)) {
       opCode = V9::SUB;
-    }
-  else
+  } else {
     switch(resultType->getPrimitiveID())
-      {
-      case Type::FloatTyID:  opCode = V9::FSUBS; break;
-      case Type::DoubleTyID: opCode = V9::FSUBD; break;
-      default: assert(0 && "Invalid type for SUB instruction"); break; 
-      }
-  
+    {
+    case Type::FloatTyID:  opCode = V9::FSUBS; break;
+    case Type::DoubleTyID: opCode = V9::FSUBD; break;
+    default: assert(0 && "Invalid type for SUB instruction"); break; 
+    }
+  }
+
   return opCode;
 }
 
