@@ -32,27 +32,6 @@
 static Statistic<> NumInlined("inline", "Number of functions inlined");
 using std::cerr;
 
-// RemapInstruction - Convert the instruction operands from referencing the 
-// current values into those specified by ValueMap.
-//
-static inline void RemapInstruction(Instruction *I, 
-				    std::map<const Value *, Value*> &ValueMap) {
-
-  for (unsigned op = 0, E = I->getNumOperands(); op != E; ++op) {
-    const Value *Op = I->getOperand(op);
-    Value *V = ValueMap[Op];
-    if (!V && (isa<GlobalValue>(Op) || isa<Constant>(Op)))
-      continue;  // Globals and constants don't get relocated
-
-    if (!V) {
-      cerr << "Val = \n" << Op << "Addr = " << (void*)Op;
-      cerr << "\nInst = " << I;
-    }
-    assert(V && "Referenced value not in value map!");
-    I->setOperand(op, V);
-  }
-}
-
 // InlineFunction - This function forcibly inlines the called function into the
 // basic block of the caller.  This returns false if it is not possible to
 // inline this call.  The program is still in a well defined state if this 
@@ -92,7 +71,7 @@ bool InlineFunction(CallInst *CI) {
   // function.
   //
   PHINode *PHI = 0;
-  if (CalledFunc->getReturnType() != Type::VoidTy) {
+  if (!CI->use_empty()) {
     // The PHI node should go at the front of the new basic block to merge all 
     // possible incoming values.
     //
@@ -105,102 +84,52 @@ bool InlineFunction(CallInst *CI) {
     CI->replaceAllUsesWith(PHI);
   }
 
-  // Keep a mapping between the original function's values and the new
-  // duplicated code's values.  This includes all of: Function arguments,
-  // instruction values, constant pool entries, and basic blocks.
+  // Get a pointer to the last basic block in the function, which will have the
+  // new function inlined after it.
   //
-  std::map<const Value *, Value*> ValueMap;
+  Function::iterator LastBlock = &OrigBB->getParent()->back();
 
-  // Add the function arguments to the mapping: (start counting at 1 to skip the
-  // function reference itself)
-  //
-  Function::const_aiterator PTI = CalledFunc->abegin();
-  for (unsigned a = 1, E = CI->getNumOperands(); a != E; ++a, ++PTI)
-    ValueMap[PTI] = CI->getOperand(a);
-  
-  ValueMap[NewBB] = NewBB;  // Returns get converted to reference NewBB
+  // Calculate the vector of arguments to pass into the function cloner...
+  std::vector<Value*> ArgVector;
+  for (unsigned i = 1, e = CI->getNumOperands(); i != e; ++i)
+    ArgVector.push_back(CI->getOperand(i));
 
-  // Loop over all of the basic blocks in the function, inlining them as 
-  // appropriate.  Keep track of the first basic block of the function...
-  //
-  for (Function::const_iterator BB = CalledFunc->begin(); 
-       BB != CalledFunc->end(); ++BB) {
-    assert(BB->getTerminator() && "BasicBlock doesn't have terminator!?!?");
-    
-    // Create a new basic block to copy instructions into!
-    BasicBlock *IBB = new BasicBlock("", NewBB->getParent());
-    if (BB->hasName()) IBB->setName(BB->getName()+".i");  // .i = inlined once
+  // Since we are now done with the CallInst, we can delete it.
+  delete CI;
 
-    ValueMap[BB] = IBB;                       // Add basic block mapping.
+  // Make a vector to capture the return instructions in the cloned function...
+  std::vector<ReturnInst*> Returns;
 
-    // Make sure to capture the mapping that a return will use...
-    // TODO: This assumes that the RET is returning a value computed in the same
-    //       basic block as the return was issued from!
-    //
-    const TerminatorInst *TI = BB->getTerminator();
-   
-    // Loop over all instructions copying them over...
-    Instruction *NewInst;
-    for (BasicBlock::const_iterator II = BB->begin();
-	 II != --BB->end(); ++II) {
-      IBB->getInstList().push_back((NewInst = II->clone()));
-      ValueMap[II] = NewInst;                  // Add instruction map to value.
-      if (II->hasName())
-        NewInst->setName(II->getName()+".i");  // .i = inlined once
+  // Do all of the hard part of cloning the callee into the caller...
+  CloneFunctionInto(OrigBB->getParent(), CalledFunc, ArgVector, Returns, ".i");
+
+  // Loop over all of the return instructions, turning them into unconditional
+  // branches to the merge point now...
+  for (unsigned i = 0, e = Returns.size(); i != e; ++i) {
+    ReturnInst *RI = Returns[i];
+    BasicBlock *BB = RI->getParent();
+
+    // Add a branch to the merge point where the PHI node would live...
+    new BranchInst(NewBB, RI);
+
+    if (PHI) {   // The PHI node should include this value!
+      assert(RI->getReturnValue() && "Ret should have value!");
+      assert(RI->getReturnValue()->getType() == PHI->getType() && 
+             "Ret value not consistent in function!");
+      PHI->addIncoming(RI->getReturnValue(), BB);
     }
 
-    // Copy over the terminator now...
-    switch (TI->getOpcode()) {
-    case Instruction::Ret: {
-      const ReturnInst *RI = cast<ReturnInst>(TI);
-
-      if (PHI) {   // The PHI node should include this value!
-	assert(RI->getReturnValue() && "Ret should have value!");
-	assert(RI->getReturnValue()->getType() == PHI->getType() && 
-	       "Ret value not consistent in function!");
-	PHI->addIncoming((Value*)RI->getReturnValue(),
-                         (BasicBlock*)cast<BasicBlock>(&*BB));
-      }
-
-      // Add a branch to the code that was after the original Call.
-      IBB->getInstList().push_back(new BranchInst(NewBB));
-      break;
-    }
-    case Instruction::Br:
-      IBB->getInstList().push_back(TI->clone());
-      break;
-
-    default:
-      cerr << "FunctionInlining: Don't know how to handle terminator: " << TI;
-      abort();
-    }
+    // Delete the return instruction now
+    BB->getInstList().erase(RI);
   }
 
-
-  // Loop over all of the instructions in the function, fixing up operand 
-  // references as we go.  This uses ValueMap to do all the hard work.
+  // Check to see if the PHI node only has one argument.  This is a common
+  // case resulting from there only being a single return instruction in the
+  // function call.  Because this is so common, eliminate the PHI node.
   //
-  for (Function::const_iterator BB = CalledFunc->begin(); 
-       BB != CalledFunc->end(); ++BB) {
-    BasicBlock *NBB = (BasicBlock*)ValueMap[BB];
-
-    // Loop over all instructions, fixing each one as we find it...
-    //
-    for (BasicBlock::iterator II = NBB->begin(); II != NBB->end(); ++II)
-      RemapInstruction(II, ValueMap);
-  }
-
-  if (PHI) {
-    RemapInstruction(PHI, ValueMap);  // Fix the PHI node also...
-
-    // Check to see if the PHI node only has one argument.  This is a common
-    // case resulting from there only being a single return instruction in the
-    // function call.  Because this is so common, eliminate the PHI node.
-    //
-    if (PHI->getNumIncomingValues() == 1) {
-      PHI->replaceAllUsesWith(PHI->getIncomingValue(0));
-      PHI->getParent()->getInstList().erase(PHI);
-    }
+  if (PHI && PHI->getNumIncomingValues() == 1) {
+    PHI->replaceAllUsesWith(PHI->getIncomingValue(0));
+    PHI->getParent()->getInstList().erase(PHI);
   }
 
   // Change the branch that used to go to NewBB to branch to the first basic 
@@ -209,10 +138,7 @@ bool InlineFunction(CallInst *CI) {
   TerminatorInst *Br = OrigBB->getTerminator();
   assert(Br && Br->getOpcode() == Instruction::Br && 
 	 "splitBasicBlock broken!");
-  Br->setOperand(0, ValueMap[&CalledFunc->front()]);
-
-  // Since we are now done with the CallInst, we can finally delete it.
-  delete CI;
+  Br->setOperand(0, ++LastBlock);
   return true;
 }
 

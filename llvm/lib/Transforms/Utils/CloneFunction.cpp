@@ -4,6 +4,7 @@
 // FIXME: document
 
 #include "llvm/Transforms/Utils/Cloning.h"
+#include "llvm/iTerminators.h"
 #include "llvm/Function.h"
 #include <map>
 
@@ -35,9 +36,10 @@ static inline void RemapInstruction(Instruction *I,
 // ArgMap values.
 //
 void CloneFunctionInto(Function *NewFunc, const Function *OldFunc,
-                       const std::vector<Value*> &ArgMap) {
-  assert(OldFunc->aempty() || !NewFunc->aempty() &&
-         "Synthesization of arguments is not implemented yet!");
+                       const std::vector<Value*> &ArgMap,
+                       std::vector<ReturnInst*> &Returns,
+                       const char *NameSuffix) {
+  assert(NameSuffix && "NameSuffix cannot be null!");
   assert(OldFunc->asize() == ArgMap.size() &&
          "Improper number of argument values to map specified!");
   
@@ -55,25 +57,30 @@ void CloneFunctionInto(Function *NewFunc, const Function *OldFunc,
 
 
   // Loop over all of the basic blocks in the function, cloning them as
-  // appropriate.
+  // appropriate.  Note that we save BE this way in order to handle cloning of
+  // recursive functions into themselves.
   //
   for (Function::const_iterator BI = OldFunc->begin(), BE = OldFunc->end();
        BI != BE; ++BI) {
     const BasicBlock &BB = *BI;
-    assert(BB.getTerminator() && "BasicBlock doesn't have terminator!?!?");
     
     // Create a new basic block to copy instructions into!
-    BasicBlock *CBB = new BasicBlock(BB.getName(), NewFunc);
+    BasicBlock *CBB = new BasicBlock("", NewFunc);
+    if (BB.hasName()) CBB->setName(BB.getName()+NameSuffix);
     ValueMap[&BB] = CBB;                       // Add basic block mapping.
 
     // Loop over all instructions copying them over...
     for (BasicBlock::const_iterator II = BB.begin(), IE = BB.end();
          II != IE; ++II) {
       Instruction *NewInst = II->clone();
-      NewInst->setName(II->getName());       // Name is not cloned...
+      if (II->hasName())
+        NewInst->setName(II->getName()+NameSuffix);     // Name is not cloned...
       CBB->getInstList().push_back(NewInst);
       ValueMap[II] = NewInst;                // Add instruction map to value.
     }
+
+    if (ReturnInst *RI = dyn_cast<ReturnInst>(CBB->getTerminator()))
+      Returns.push_back(RI);
   }
 
   // Loop over all of the instructions in the function, fixing up operand 
