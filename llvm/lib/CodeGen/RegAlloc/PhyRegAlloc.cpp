@@ -1397,25 +1397,22 @@ void PhyRegAlloc::allocateStackSpace4SpilledLRs() {
 
 
 //----------------------------------------------------------------------------
-// The entry pont to Register Allocation
+// The entry point to Register Allocation
 //----------------------------------------------------------------------------
 
 void PhyRegAlloc::allocateRegisters()
 {
-
   // make sure that we put all register classes into the RegClassList 
   // before we call constructLiveRanges (now done in the constructor of 
   // PhyRegAlloc class).
   //
   LRI.constructLiveRanges();            // create LR info
-
   if (DEBUG_RA >= RA_DEBUG_LiveRanges)
     LRI.printLiveRanges();
   
   createIGNodeListsAndIGs();            // create IGNode list and IGs
 
   buildInterferenceGraphs();            // build IGs in all reg classes
-  
   
   if (DEBUG_RA >= RA_DEBUG_LiveRanges) {
     // print all LRs in all reg classes
