@@ -7,12 +7,17 @@
 // 
 //===----------------------------------------------------------------------===//
 //
-// This pass is a simple loop invariant code motion pass.  An interesting aspect
-// of this pass is that it uses alias analysis for two purposes:
+// This pass performs loop invariant code motion, attempting to remove as much
+// code from the body of a loop as possible.  It does this by either hoisting
+// code into the preheader block, or by sinking code to the exit blocks if it is
+// safe.  This pass also promotes must-aliased memory locations in the loop to
+// live in registers.
+//
+// This pass uses alias analysis for two purposes:
 //
 //  1. Moving loop invariant loads out of loops.  If we can determine that a
 //     load inside of a loop never aliases anything stored to, we can hoist it
-//     like any other instruction.
+//     or sink it like any other instruction.
 //  2. Scalar Promotion of Memory - If there is a store instruction inside of
 //     the loop, we try to move the store to happen AFTER the loop instead of
 //     inside of the loop.  This can only happen if a few conditions are true:
@@ -43,8 +48,7 @@
 #include "Support/Statistic.h"
 #include "llvm/Assembly/Writer.h"
 #include <algorithm>
-
-namespace llvm {
+using namespace llvm;
 
 namespace {
   cl::opt<bool>
@@ -72,14 +76,17 @@ namespace {
     }
 
   private:
-    LoopInfo      *LI;       // Current LoopInfo
+    // Various analyses that we use...
     AliasAnalysis *AA;       // Current AliasAnalysis information
+    LoopInfo      *LI;       // Current LoopInfo
+    DominatorTree *DT;       // Dominator Tree for the current Loop...
     DominanceFrontier *DF;   // Current Dominance Frontier
+
+    // State that is updated as we process loops
     bool Changed;            // Set to true when we change anything.
     BasicBlock *Preheader;   // The preheader block of the current loop...
     Loop *CurLoop;           // The current loop we are working on...
     AliasSetTracker *CurAST; // AliasSet information for the current loop...
-    DominatorTree *DT;       // Dominator Tree for the current Loop...
 
     /// visitLoop - Hoist expressions out of the specified loop...    
     ///
@@ -176,7 +183,7 @@ namespace {
   RegisterOpt<LICM> X("licm", "Loop Invariant Code Motion");
 }
 
-FunctionPass *createLICMPass() { return new LICM(); }
+FunctionPass *llvm::createLICMPass() { return new LICM(); }
 
 /// runOnFunction - For LICM, this simply traverses the loop structure of the
 /// function, hoisting expressions out of loops if possible.
@@ -296,34 +303,41 @@ void LICM::hoist(Instruction &Inst) {
 /// or if it is a trapping instruction and is guaranteed to execute
 ///
 bool LICM::SafeToHoist(Instruction &Inst) {
+  // If it is not a trapping instruction, it is always safe to hoist.
+  if (!Inst.isTrapping()) return true;
+  
+  // Otherwise we have to check to make sure that the instruction dominates all
+  // of the exit blocks.  If it doesn't, then there is a path out of the loop
+  // which does not execute this instruction, so we can't hoist it.
 
-  //If it is a trapping instruction, then check if its guaranteed to execute.
-  if(Inst.isTrapping()) {
+  // If the instruction is in the header block for the loop (which is very
+  // common), it is always guaranteed to dominate the exit blocks.  Since this
+  // is a common case, and can save some work, check it now.
+  BasicBlock *LoopHeader = CurLoop->getHeader();
+  if (Inst.getParent() == LoopHeader)
+    return true;
 
-    //Get the instruction's basic block.
-    BasicBlock *InstBB = Inst.getParent();
+  // Get the Dominator Tree Node for the instruction's basic block.
+  DominatorTree::Node *InstDTNode = DT->getNode(Inst.getParent());
+  
+  // Get the exit blocks for the current loop.
+  const std::vector<BasicBlock* > &ExitBlocks = CurLoop->getExitBlocks();
+
+  // For each exit block, get the DT node and walk up the DT until the
+  // instruction's basic block is found or we exit the loop.
+  for (unsigned i = 0, e = ExitBlocks.size(); i != e; ++i) {
+    DominatorTree::Node *IDom = DT->getNode(ExitBlocks[i]);
     
-    //Get the Dominator Tree Node for the instruction's basic block/
-    DominatorTree::Node *InstDTNode = DT->getNode(InstBB);
+    do {
+      // Get next Immediate Dominator.
+      IDom = IDom->getIDom();
 
-    //Get the exit blocks for the current loop.
-    const std::vector<BasicBlock* > &ExitBlocks = CurLoop->getExitBlocks();
+      // If we have got to the header of the loop, then the instructions block
+      // did not dominate the exit node, so we can't hoist it.
+      if (IDom->getBlock() == LoopHeader)
+        return false;
 
-    //For each exit block, get the DT node and walk up the DT until
-    //the instruction's basic block is found or we exit the loop.
-    for(unsigned i=0; i < ExitBlocks.size(); ++i) {
-      DominatorTree::Node *IDom = DT->getNode(ExitBlocks[i]);
-      
-      while(IDom != InstDTNode) {
- 
-        //Get next Immediate Dominator.
-        IDom = IDom->getIDom();
-
-        //See if we exited the loop.
-        if(!CurLoop->contains(IDom->getBlock()))
-          return false;
-      }
-    }
+    } while(IDom != InstDTNode);
   }
   
   return true;
@@ -468,5 +482,3 @@ void LICM::findPromotableValuesInLoop(
     }
   }
 }
-
-} // End llvm namespace
