@@ -684,76 +684,48 @@ IfUnequal:
 
 <h5>Syntax:</h5>
 <pre>
-  <i>; Definitions for lookup indirect branch</i>
-  %switchtype = type [&lt;anysize&gt; x { uint, label }]
+  switch int &lt;value&gt;, label &lt;defaultdest&gt; [ int &lt;val&gt;, label &dest&gt;, ... ]
 
-  <i>; Lookup indirect branch</i>
-  switch uint &lt;value&gt;, label &lt;defaultdest&gt;, %switchtype &lt;switchtable&gt;
-<!--
-  <i>; Indexed indirect branch</i>
-  switch uint &lt;idxvalue&gt;, label &lt;defaultdest&gt;, [&lt;anysize&gt; x label] &lt;desttable&gt;
--->
 </pre>
 
 <h5>Overview:</h5>
-
-<b>NOTE:</b> The switch instruction may go away in the future.  It is not very
-well supported in LLVM anyway, so don't go to great lengths to support it.  Talk
-to <a href="mailto:sabre@nondot.org">Chris</a> for more info if this concerns
-you.<p>
 
 The '<tt>switch</tt>' instruction is used to transfer control flow to one of
 several different places.  It is a generalization of the '<tt>br</tt>'
 instruction, allowing a branch to occur to one of many possible destinations.<p>
 
-The '<tt>switch</tt>' statement supports two different styles of indirect
-branching: lookup branching and indexed branching.  Lookup branching is
-generally useful if the values to switch on are spread far appart, where index
-branching is useful if the values to switch on are generally dense.<p>
-
-The two different forms of the '<tt>switch</tt>' statement are simple hints to
-the underlying implementation.  For example, the compiler may choose to
-implement a small indirect branch table as a series of predicated comparisons:
-if it is faster for the target architecture.<p>
-
 <h5>Arguments:</h5>
 
-The lookup form of the '<tt>switch</tt>' instruction uses three parameters: a
-'<tt>uint</tt>' comparison value '<tt>value</tt>', a default '<tt>label</tt>'
-destination, and an array of pairs of comparison value constants and
-'<tt>label</tt>'s.  The sized array must be a constant value.<p>
-
-The indexed form of the '<tt>switch</tt>' instruction uses three parameters: an
-'<tt>uint</tt>' index value, a default '<tt>label</tt>' and a sized array of
-'<tt>label</tt>'s.  The '<tt>dests</tt>' array must be a constant array.
+The '<tt>switch</tt>' instruction uses three parameters: a '<tt>uint</tt>'
+comparison value '<tt>value</tt>', a default '<tt>label</tt>' destination, and
+an array of pairs of comparison value constants and '<tt>label</tt>'s.<p>
 
 <h5>Semantics:</h5>
 
-The lookup style switch statement specifies a table of values and destinations.
+The <tt>switch</tt> instruction specifies a table of values and destinations.
 When the '<tt>switch</tt>' instruction is executed, this table is searched for
 the given value.  If the value is found, the corresponding destination is
-branched to. <p>
+branched to, otherwise the default value it transfered to.<p>
 
-The index branch form simply looks up a label element directly in a table and
-branches to it.<p>
+<h5>Implementation:</h5>
 
-In either case, the compiler knows the static size of the array, because it is
-provided as part of the constant values type.<p>
+Depending on properties of the target machine and the particular <tt>switch</tt>
+instruction, this instruction may be code generated as a series of chained
+conditional branches, or with a lookup table.<p>
 
 <h5>Example:</h5>
 <pre>
   <i>; Emulate a conditional br instruction</i>
   %Val = <a href="#i_cast">cast</a> bool %value to uint
-  switch uint %Val, label %truedest, [1 x label] [label %falsedest ]
+  switch int %Val, label %truedest [int 0, label %falsedest ]
 
   <i>; Emulate an unconditional br instruction</i>
-  switch uint 0, label %dest, [ 0 x label] [ ]
+  switch int 0, label %dest [ ]
 
   <i>; Implement a jump table:</i>
-  switch uint %val, label %otherwise, [3 x label] [ label %onzero, 
-                                                    label %onone, 
-                                                    label %ontwo ]
-
+  switch int %val, label %otherwise [ int 0, label %onzero, 
+                                      int 1, label %onone, 
+                                      int 2, label %ontwo ]
 </pre>
 
 
@@ -1840,7 +1812,7 @@ arbitrarily complex and require memory allocation, for example.<p>
 <address><a href="mailto:sabre@nondot.org">Chris Lattner</a></address>
 <!-- Created: Tue Jan 23 15:19:28 CST 2001 -->
 <!-- hhmts start -->
-Last modified: Wed May  7 23:56:16 CDT 2003
+Last modified: Thu May  8 00:06:36 CDT 2003
 <!-- hhmts end -->
 </font>
 </body></html>
