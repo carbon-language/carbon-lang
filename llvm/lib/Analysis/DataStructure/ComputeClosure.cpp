@@ -83,8 +83,11 @@ static bool isResolvableCallNode(CallDSNode *CN) {
 // of their corresponding method data structure graph...
 //
 void FunctionDSGraph::computeClosure(const DataStructure &DS) {
+  // Note that this cannot be a real vector because the keys will be changing
+  // as nodes are eliminated!
+  //
   typedef pair<vector<PointerValSet>, CallInst *> CallDescriptor;
-  map<CallDescriptor, PointerValSet> CallMap;
+  vector<pair<CallDescriptor, PointerValSet> > CallMap;
 
   unsigned NumInlines = 0;
 
@@ -95,7 +98,7 @@ void FunctionDSGraph::computeClosure(const DataStructure &DS) {
     CallDSNode *CN = *NI;
     Function *F = CN->getCall()->getCalledFunction();
 
-    if (NumInlines++ == 30) {      // CUTE hack huh?
+    if (NumInlines++ == 20) {      // CUTE hack huh?
       cerr << "Infinite (?) recursion halted\n";
       return;
     }
@@ -107,17 +110,50 @@ void FunctionDSGraph::computeClosure(const DataStructure &DS) {
     // Find out if we have already incorporated this node... if so, it will be
     // in the CallMap...
     //
-    CallDescriptor FDesc(CN->getArgs(), CN->getCall());
-    map<CallDescriptor, PointerValSet>::iterator CMI = CallMap.find(FDesc);
+    
+#if 0
+    cerr << "\nSearching for: " << (void*)CN->getCall() << ": ";
+    for (unsigned X = 0; X != CN->getArgs().size(); ++X) {
+      cerr << " " << X << " is\n";
+      CN->getArgs().first[X].print(cerr);
+    }
+#endif
+
+    const vector<PointerValSet> &Args = CN->getArgs();
+    PointerValSet *CMI = 0;
+    for (unsigned i = 0, e = CallMap.size(); i != e; ++i) {
+#if 0
+      cerr << "Found: " << (void*)CallMap[i].first.second << ": ";
+      for (unsigned X = 0; X != CallMap[i].first.first.size(); ++X) {
+        cerr << " " << X << " is\n"; CallMap[i].first.first[X].print(cerr);
+      }
+#endif
+
+      // Look to see if the function call takes a superset of the values we are
+      // providing as input
+      // 
+      CallDescriptor &CD = CallMap[i].first;
+      if (CD.second == CN->getCall() && CD.first.size() == Args.size()) {
+        bool FoundMismatch = false;
+        for (unsigned j = 0, je = Args.size(); j != je; ++j) {
+          PointerValSet ArgSet = CD.first[j];
+          if (ArgSet.add(Args[j])) {
+            FoundMismatch = true; break;
+          }            
+        }
+
+        if (!FoundMismatch) { CMI = &CallMap[i].second; break; }
+      }
+    }
 
     // Hold the set of values that correspond to the incorporated methods
     // return set.
     //
     PointerValSet RetVals;
 
-    if (CMI != CallMap.end()) {
+    if (CMI) {
       // We have already inlined an identical function call!
-      RetVals = CMI->second;
+      RetVals = *CMI;
     } else {
       // Get the datastructure graph for the new method.  Note that we are not
       // allowed to modify this graph because it will be the cached graph that
@@ -136,8 +172,9 @@ void FunctionDSGraph::computeClosure(const DataStructure &DS) {
       // allowing us to do local transformations to local graph to link
       // arguments to call values, and call node to return value...
       //
-      RetVals = cloneFunctionIntoSelf(NewFunction, F == Func);
-      CallMap[FDesc] = RetVals;
+      RetVals = cloneFunctionIntoSelf(NewFunction, false);
+      CallMap.push_back(make_pair(CallDescriptor(CN->getArgs(), CN->getCall()),
+                                  RetVals));
 
       // If the call node has arguments, process them now!
       if (CN->getNumArgs()) {
