@@ -110,7 +110,7 @@ int main(int argc, char **argv) {
     // TODO: Iterate over the -l list and link in any modules containing
     // global symbols that have not been resolved so far.
 
-    if (DumpAsm) std::cerr << "Here's the assembly:\n" << Composite.get();
+    if (DumpAsm) std::cerr << "Here's the assembly:\n" << *Composite.get();
 
     // FIXME: cout is not binary!
     std::ostream *Out = &std::cout;  // Default to printing to stdout...

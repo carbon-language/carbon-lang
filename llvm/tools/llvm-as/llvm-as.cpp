@@ -73,7 +73,7 @@ int main(int argc, char **argv) {
       return 1;
     }
   
-    if (DumpAsm) std::cerr << "Here's the assembly:\n" << M.get();
+    if (DumpAsm) std::cerr << "Here's the assembly:\n" << *M.get();
 
     if (OutputFilename != "") {   // Specified an output filename?
       if (OutputFilename != "-") {  // Not stdout?
