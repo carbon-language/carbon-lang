@@ -29,7 +29,7 @@ I(PHI         , "phi",                0, 0)
 I(NOOP        , "nop",                0, 0)      // nop          90
 
 // Miscellaneous instructions
-I(RET         , "ret",         MIF::RET, 0)      // ret          CB
+I(RET         , "ret",       M_RET_FLAG, 0)      // ret          CB
 
 // Move instructions
 I(MOVir8      , "movb",               0, 0)      // R = imm8     B0+ rb
