@@ -159,7 +159,6 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
         }
     }
 
-    intervals_.sort();
     DEBUG(std::cerr << "********** INTERVALS **********\n");
     DEBUG(std::copy(intervals_.begin(), intervals_.end(),
                     std::ostream_iterator<LiveInterval>(std::cerr, "\n")));
@@ -263,15 +262,6 @@ std::vector<LiveInterval*> LiveIntervals::addIntervalsForSpills(
         }
     }
 
-    // FIXME: This method MUST return intervals in sorted order.  If a 
-    // particular machine instruction both uses and defines the vreg being
-    // spilled (e.g.,  vr = vr + 1) and if the def is processed before the
-    // use, the list ends up not sorted.
-    //
-    // The proper way to fix this is to process all uses of the vreg before we 
-    // process any defs.  However, this would require refactoring the above 
-    // blob of code, which I'm not feeling up to right now.
-    std::sort(added.begin(), added.end(), less_ptr<LiveInterval>());
     return added;
 }
 
