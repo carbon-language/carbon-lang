@@ -195,6 +195,16 @@ bool llvm::MakeFileReadable(const std::string &Filename) {
   return AddPermissionsBits(Filename, 0444);
 }
 
+/// getFileSize - Return the size of the specified file in bytes, or -1 if the
+/// file cannot be read or does not exist.
+long long llvm::getFileSize(const std::string &Filename) {
+  struct stat StatBuf;
+  if (stat(Filename.c_str(), &StatBuf) == -1)
+    return -1;
+  return StatBuf.st_size;  
+}
+
+
 //===----------------------------------------------------------------------===//
 // FDHandle class implementation
 //
