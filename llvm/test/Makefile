@@ -136,7 +136,7 @@ site.exp: Makefile $(LLVM_OBJ_ROOT)/Makefile.config
 	@echo '# Do not edit here.  If you wish to override these values' >>site.tmp
 	@echo '# edit the last section' >>site.tmp
 	@echo "set target_triplet $(TARGET_TRIPLE)" >> site.tmp
-	@echo 'set prcontext $(LLVM_SRC_ROOT)/test/Scripts/prcontext.py' >> site.tmp
+	@echo 'set prcontext "$(PYTHON) $(LLVM_SRC_ROOT)/test/Scripts/prcontext.py"' >> site.tmp
 	@echo 'set srcdir $(LLVM_SRC_ROOT)/test' >>site.tmp
 	@echo "set objdir $(LLVM_OBJ_ROOT)/test" >>site.tmp
 	@echo 'set llvmgcc $(LLVMGCCDIR)/bin/gcc' >> site.tmp
