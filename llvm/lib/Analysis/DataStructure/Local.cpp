@@ -629,9 +629,12 @@ void GraphBuilder::visitCallSite(CallSite CS) {
 
           // If this is freopen, merge the file descriptor passed in with the
           // result.
-          if (F->getName() == "freopen")
-            Result.mergeWith(getValueDest(**--CS.arg_end()));
-
+          if (F->getName() == "freopen") {
+            // ICC doesn't handle getting the iterator, decrementing and
+            // dereferencing it in one operation without error. Do it in 2 steps
+            CallSite::arg_iterator compit = CS.arg_end();
+            Result.mergeWith(getValueDest(**--compit));
+          }
           return;
         } else if (F->getName() == "fclose" && CS.arg_end()-CS.arg_begin() ==1){
           // fclose reads and deallocates the memory in an unknown way for the
@@ -665,7 +668,8 @@ void GraphBuilder::visitCallSite(CallSite CS) {
                    (F->getName() == "fwrite" || F->getName() == "fread")) {
           // fread writes the first operand, fwrite reads it.  They both
           // read/write the FILE descriptor, and merges the FILE type.
-          DSNodeHandle H = getValueDest(**--CS.arg_end());
+          CallSite::arg_iterator compit = CS.arg_end();
+          DSNodeHandle H = getValueDest(**--compit);
           if (DSNode *N = H.getNode()) {
             N->setReadMarker()->setModifiedMarker();
             const Type *ArgTy = F->getFunctionType()->getParamType(3);
@@ -706,10 +710,12 @@ void GraphBuilder::visitCallSite(CallSite CS) {
                    F->getName() == "_IO_putc") {
           // These functions read and write the memory for the file descriptor,
           // which is passes as the last argument.
-          DSNodeHandle H = getValueDest(**--CS.arg_end());
+          CallSite::arg_iterator compit = CS.arg_end();
+          DSNodeHandle H = getValueDest(**--compit);
           if (DSNode *N = H.getNode()) {
             N->setReadMarker()->setModifiedMarker();
-            const Type *ArgTy = *--F->getFunctionType()->param_end();
+            FunctionType::param_iterator compit2 = F->getFunctionType()->param_end();
+            const Type *ArgTy = *--compit2;
             if (const PointerType *PTy = dyn_cast<PointerType>(ArgTy))
               N->mergeTypeInfo(PTy->getElementType(), H.getOffset());
           }
@@ -727,7 +733,8 @@ void GraphBuilder::visitCallSite(CallSite CS) {
           // and read/write all other arguments.
           DSNodeHandle H = getValueDest(**CS.arg_begin());
           if (DSNode *N = H.getNode()) {
-            const Type *ArgTy = *--F->getFunctionType()->param_end();
+            FunctionType::param_iterator compit2 = F->getFunctionType()->param_end();
+            const Type *ArgTy = *--compit2;
             if (const PointerType *PTy = dyn_cast<PointerType>(ArgTy))
               N->mergeTypeInfo(PTy->getElementType(), H.getOffset());
           }
@@ -897,7 +904,8 @@ void GraphBuilder::visitCallSite(CallSite CS) {
           return;
         } else if (F->getName() == "modf" && CS.arg_end()-CS.arg_begin() == 2) {
           // This writes its second argument, and forces it to double.
-          DSNodeHandle H = getValueDest(**--CS.arg_end());
+          CallSite::arg_iterator compit = CS.arg_end();
+          DSNodeHandle H = getValueDest(**--compit);
           if (DSNode *N = H.getNode()) {
             N->setModifiedMarker();
             N->mergeTypeInfo(Type::DoubleTy, H.getOffset());
