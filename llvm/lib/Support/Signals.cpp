@@ -31,7 +31,7 @@ static std::vector<std::string> FilesToRemove;
 
 // IntSigs - Signals that may interrupt the program at any time.
 static const int IntSigs[] = {
-  SIGHUP, SIGINT, SIGQUIT, SIGKILL, SIGPIPE, SIGTERM, SIGUSR1, SIGUSR2
+  SIGHUP, SIGINT, SIGQUIT, SIGPIPE, SIGTERM, SIGUSR1, SIGUSR2
 };
 static const int *IntSigsEnd = IntSigs + sizeof(IntSigs)/sizeof(IntSigs[0]);
 
