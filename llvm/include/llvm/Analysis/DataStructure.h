@@ -168,8 +168,6 @@ public:
 private:
   void calculateGraph(Function &F);
   DSGraph &getOrCreateDSGraph(Function &F);
-
-  void ResolveCallSite(DSGraph &Graph, const DSCallSite &CallSite);
 };
 
 #endif
