@@ -11,7 +11,7 @@
 #include <ext/hash_map>
 
 typedef long long cycles_t; 
-const cycles_t HUGE_LATENCY = ~((unsigned long long) 1 << sizeof(cycles_t)-2);
+const cycles_t HUGE_LATENCY = ~((long long) 1 << (sizeof(cycles_t)-2));
 const cycles_t INVALID_LATENCY = -HUGE_LATENCY; 
 static const unsigned MAX_OPCODE_SIZE = 16;
 
