@@ -17,6 +17,9 @@ class PointerType;
 
 template<class ConstantClass, class TypeClass, class ValType>
 struct ConstantCreator;
+template<class ConstantClass, class TypeClass>
+struct ConvertConstantType;
+
 
 //===---------------------------------------------------------------------------
 /// ConstantIntegral - Shared superclass of boolean and integer constants.
@@ -482,6 +485,7 @@ class ConstantExpr : public Constant {
   unsigned iType;      // Operation type (an Instruction opcode)
   friend struct ConstantCreator<ConstantExpr,Type,
                             std::pair<unsigned, std::vector<Constant*> > >;
+  friend struct ConvertConstantType<ConstantExpr, Type>;
   
 protected:
   // Cast creation ctor
@@ -491,6 +495,15 @@ protected:
   // GEP instruction creation ctor
   ConstantExpr(Constant *C, const std::vector<Constant*> &IdxList,
                const Type *DestTy);
+
+  // These private methods are used by the type resolution code to create
+  // ConstantExprs in intermediate forms.
+  static Constant *getTy(const Type *Ty, unsigned Opcode,
+                         Constant *C1, Constant *C2);
+  static Constant *getShiftTy(const Type *Ty,
+                              unsigned Opcode, Constant *C1, Constant *C2);
+  static Constant *getGetElementPtrTy(const Type *Ty, Constant *C,
+                                      const std::vector<Constant*> &IdxList);
   
 public:
   // Static methods to construct a ConstantExpr of different kinds.  Note that
@@ -499,15 +512,23 @@ public:
   // expression into something simpler if possible.
   
   /// Cast constant expr
+  ///
   static Constant *getCast(Constant *C, const Type *Ty);
 
   /// Binary constant expr - Use with binary operators...
-  static Constant *get(unsigned Opcode, Constant *C1, Constant *C2);
+  ///
+  static Constant *get(unsigned Opcode, Constant *C1, Constant *C2) {
+    return getTy(C1->getType(), Opcode, C1, C2);
+  }
 
   /// getShift - Return a shift left or shift right constant expr
-  static Constant *getShift(unsigned Opcode, Constant *C1, Constant *C2);
+  ///
+  static Constant *getShift(unsigned Opcode, Constant *C1, Constant *C2) {
+    return getShiftTy(C1->getType(), Opcode, C1, C2);
+  }
 
   /// Getelementptr form...
+  ///
   static Constant *getGetElementPtr(Constant *C,
                                     const std::vector<Constant*> &IdxList);
   
