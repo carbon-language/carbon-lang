@@ -61,16 +61,17 @@ namespace {
 
     void MarkPhysRegRecentlyUsed(unsigned Reg) {
       assert(!PhysRegsUseOrder.empty() && "No registers used!");
-      if (PhysRegsUseOrder.back() != Reg) {
-        for (unsigned i = PhysRegsUseOrder.size(); i != 0; --i)
-          if (areRegsEqual(Reg, PhysRegsUseOrder[i-1])) { // remove from middle
-            unsigned RegMatch = PhysRegsUseOrder[i-1];
-            PhysRegsUseOrder.erase(PhysRegsUseOrder.begin()+i-1);
-            PhysRegsUseOrder.push_back(RegMatch);  // Add it to the end of the list
-            if (RegMatch == Reg) 
-              return;    // Found an exact match, exit early
-          }
-      }
+      if (PhysRegsUseOrder.back() == Reg) return;  // Already most recently used
+
+      for (unsigned i = PhysRegsUseOrder.size(); i != 0; --i)
+	if (areRegsEqual(Reg, PhysRegsUseOrder[i-1])) {
+	  unsigned RegMatch = PhysRegsUseOrder[i-1];       // remove from middle
+	  PhysRegsUseOrder.erase(PhysRegsUseOrder.begin()+i-1);
+	  // Add it to the end of the list
+	  PhysRegsUseOrder.push_back(RegMatch);
+	  if (RegMatch == Reg) 
+	    return;    // Found an exact match, exit early
+	}
     }
 
   public:
@@ -160,11 +161,11 @@ namespace {
     void spillPhysReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator &I,
                       unsigned PhysReg) {
       std::map<unsigned, unsigned>::iterator PI = PhysRegsUsed.find(PhysReg);
-      if (PI != PhysRegsUsed.end()) {               // Only spill it if it's used!
+      if (PI != PhysRegsUsed.end()) {             // Only spill it if it's used!
         spillVirtReg(MBB, I, PI->second, PhysReg);
       } else if (const unsigned *AliasSet = RegInfo.getAliasSet(PhysReg)) {
-        // If the selected register aliases any other registers, we must make sure
-        // that one of the aliases isn't alive...
+        // If the selected register aliases any other registers, we must make
+        // sure that one of the aliases isn't alive...
         for (unsigned i = 0; AliasSet[i]; ++i) {
           PI = PhysRegsUsed.find(AliasSet[i]);
           if (PI != PhysRegsUsed.end())     // Spill aliased register...
@@ -503,12 +504,15 @@ void RA::AllocateBasicBlock(MachineBasicBlock &MBB) {
 
     // Loop over all of the operands of the instruction, spilling registers that
     // are defined, and marking explicit destinations in the PhysRegsUsed map.
+
+    // FIXME: We don't need to spill a register if this is the last use of the
+    // value!
     for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i)
       if (MI->getOperand(i).opIsDef() &&
           MI->getOperand(i).isPhysicalRegister()) {
         unsigned Reg = MI->getOperand(i).getAllocatedRegNum();
         spillPhysReg(MBB, I, Reg);
-        PhysRegsUsed[Reg] = 0;  // It's free now, and it's reserved
+        PhysRegsUsed[Reg] = 0;            // It is free and reserved now
         PhysRegsUseOrder.push_back(Reg);
       }
 
@@ -520,11 +524,14 @@ void RA::AllocateBasicBlock(MachineBasicBlock &MBB) {
         // We don't want to spill implicit definitions if they were explicitly
         // chosen.  For this reason, check to see now if the register we are
         // to spill has a vreg of 0.
-        if (PhysRegsUsed.count(Reg) && PhysRegsUsed[Reg] != 0) {
+        if (PhysRegsUsed.count(Reg) && PhysRegsUsed[Reg] != 0)
           spillPhysReg(MBB, I, Reg);
-          PhysRegsUsed[Reg] = 0;  // It's free now, and it's reserved
-          PhysRegsUseOrder.push_back(Reg);
-        }
+	else if (PhysRegsUsed.count(Reg)) {
+	  // Remove the entry from PhysRegsUseOrder to avoid having two entries!
+	  removePhysReg(Reg);
+	}
+	PhysRegsUseOrder.push_back(Reg);
+	PhysRegsUsed[Reg] = 0;           // It is free and reserved now
       }
 
     // Loop over the implicit uses, making sure that they are at the head of the
@@ -534,8 +541,8 @@ void RA::AllocateBasicBlock(MachineBasicBlock &MBB) {
         MarkPhysRegRecentlyUsed(ImplicitUses[i]);
 
     // Loop over all of the operands again, getting the used operands into
-    // registers.  This has the potiential to spill incoming values because we
-    // are out of registers.
+    // registers.  This has the potiential to spill incoming values if we are
+    // out of registers.
     //
     for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i)
       if (MI->getOperand(i).opIsUse() &&
@@ -576,16 +583,17 @@ void RA::AllocateBasicBlock(MachineBasicBlock &MBB) {
       }
 
     if (!DisableKill) {
-      // If this instruction is the last user of anything in registers, kill the 
-      // value, freeing the register being used, so it doesn't need to be spilled
-      // to memory at the end of the block.
+      // If this instruction is the last user of anything in registers, kill the
+      // value, freeing the register being used, so it doesn't need to be
+      // spilled to memory at the end of the block.
       std::multimap<MachineInstr*, unsigned>::iterator LUOI = 
              LastUserOf.lower_bound(MI);
-      for (; LUOI != LastUserOf.end() && LUOI->first == MI; ++MI) {// entry found?
-        unsigned VirtReg = LUOI->second;
+      for (; LUOI != LastUserOf.end() && LUOI->first == MI; ++MI) {
+        unsigned VirtReg = LUOI->second;                       // entry found?
         unsigned PhysReg = Virt2PhysRegMap[VirtReg];
         if (PhysReg) {
-          DEBUG(std::cout << "V: " << VirtReg << " P: " << PhysReg << " Last use of: " << *MI);
+          DEBUG(std::cout << "V: " << VirtReg << " P: " << PhysReg
+		          << " Last use of: " << *MI);
           removePhysReg(PhysReg);
         }
         Virt2PhysRegMap.erase(VirtReg);
@@ -646,7 +654,7 @@ void RA::EmitPrologue() {
 ///
 void RA::EmitEpilogue(MachineBasicBlock &MBB) {
   // Insert instructions before the return.
-  MachineBasicBlock::iterator I = --MBB.end();
+  MachineBasicBlock::iterator I = MBB.end()-1;
 
   const unsigned *CSRegs = RegInfo.getCalleeSaveRegs();
   for (unsigned i = 0; CSRegs[i]; ++i) {
