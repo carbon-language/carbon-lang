@@ -105,7 +105,7 @@ bool Inliner::runOnSCC(const std::vector<CallGraphNode*> &SCC) {
           if (Callee->use_empty() && Callee != Caller &&
               (Callee->hasInternalLinkage() || Callee->hasLinkOnceLinkage())) {
             DEBUG(std::cerr << "    -> Deleting dead function: "
-                  << (void*)Callee << Callee->getName() << "\n");
+                            << Callee->getName() << "\n");
             std::set<Function*>::iterator I = SCCFunctions.find(Callee);
             if (I != SCCFunctions.end())    // Remove function from this SCC.
               SCCFunctions.erase(I);
