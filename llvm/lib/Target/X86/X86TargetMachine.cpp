@@ -36,8 +36,12 @@ bool X86TargetMachine::addPassesToJITCompile(PassManager &PM) {
   PM.add(createMachineFunctionPrinterPass());
 
   // Perform register allocation to convert to a concrete x86 representation
-  //PM.add(createSimpleX86RegisterAllocator(*this));
+  PM.add(createSimpleX86RegisterAllocator(*this));
 
+  // Print the instruction selected machine code...
+  // PM.add(createMachineFunctionPrinterPass());
+
+  // Print the register-allocated code
   PM.add(createX86CodePrinterPass(*this, std::cerr));
 
   //PM.add(createEmitX86CodeToMemory(*this));
