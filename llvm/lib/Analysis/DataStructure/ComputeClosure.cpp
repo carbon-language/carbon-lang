@@ -18,11 +18,21 @@
 // Make all of the pointers that point to Val also point to N.
 //
 static void copyEdgesFromTo(PointerVal Val, DSNode *N) {
-  assert(Val.Index == 0 && "copyEdgesFromTo:index != 0 TODO");
+  unsigned ValIdx = Val.Index;
+  unsigned NLinks = N->getNumLinks();
 
-  const vector<PointerValSet*> &PVSToUpdate(Val.Node->getReferrers());
-  for (unsigned i = 0, e = PVSToUpdate.size(); i != e; ++i)
-    PVSToUpdate[i]->add(N);  // TODO: support index
+  const vector<PointerValSet*> &PVSsToUpdate(Val.Node->getReferrers());
+  for (unsigned i = 0, e = PVSsToUpdate.size(); i != e; ++i) {
+    // Loop over all of the pointers pointing to Val...
+    PointerValSet &PVS = *PVSsToUpdate[i];
+    for (unsigned j = 0, je = PVS.size(); j != je; ++j) {
+      if (PVS[j].Node == Val.Node && PVS[j].Index >= ValIdx && 
+          PVS[j].Index < ValIdx+NLinks)
+        PVS.add(PointerVal(N, PVS[j].Index-ValIdx));
+                
+      //PVS.add(PointerVal(N, Val.Index));  // TODO: support index
+    }
+  }
 }
 
 static void ResolveNodesTo(const PointerVal &FromPtr,
