@@ -121,6 +121,7 @@ private:
   void createIGNodeListsAndIGs();
   void buildInterferenceGraphs();
   void saveState();
+  void verifySavedState();
 
   void setCallInterferences(const MachineInstr *MI, 
 			    const ValueSet *LVSetAft);
