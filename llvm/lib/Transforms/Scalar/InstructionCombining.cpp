@@ -4622,6 +4622,7 @@ static Constant *GetGEPGlobalInitializer(Constant *C, ConstantExpr *CE) {
   return C;
 }
 
+/// InstCombineLoadCast - Fold 'load (cast P)' -> cast (load P)' when possible.
 static Instruction *InstCombineLoadCast(InstCombiner &IC, LoadInst &LI) {
   User *CI = cast<User>(LI.getOperand(0));
   Value *CastOp = CI->getOperand(0);
@@ -4805,6 +4806,51 @@ Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
   return 0;
 }
 
+/// InstCombineStoreToCast - Fold 'store V, (cast P)' -> store (cast V), P'
+/// when possible.
+static Instruction *InstCombineStoreToCast(InstCombiner &IC, StoreInst &SI) {
+  User *CI = cast<User>(SI.getOperand(1));
+  Value *CastOp = CI->getOperand(0);
+
+  const Type *DestPTy = cast<PointerType>(CI->getType())->getElementType();
+  if (const PointerType *SrcTy = dyn_cast<PointerType>(CastOp->getType())) {
+    const Type *SrcPTy = SrcTy->getElementType();
+
+    if (DestPTy->isInteger() || isa<PointerType>(DestPTy)) {
+      // If the source is an array, the code below will not succeed.  Check to
+      // see if a trivial 'gep P, 0, 0' will help matters.  Only do this for
+      // constants.
+      if (const ArrayType *ASrcTy = dyn_cast<ArrayType>(SrcPTy))
+        if (Constant *CSrc = dyn_cast<Constant>(CastOp))
+          if (ASrcTy->getNumElements() != 0) {
+            std::vector<Value*> Idxs(2, Constant::getNullValue(Type::IntTy));
+            CastOp = ConstantExpr::getGetElementPtr(CSrc, Idxs);
+            SrcTy = cast<PointerType>(CastOp->getType());
+            SrcPTy = SrcTy->getElementType();
+          }
+
+      if ((SrcPTy->isInteger() || isa<PointerType>(SrcPTy)) &&
+          IC.getTargetData().getTypeSize(SrcPTy) == 
+               IC.getTargetData().getTypeSize(DestPTy)) {
+
+        // Okay, we are casting from one integer or pointer type to another of
+        // the same size.  Instead of casting the pointer before the store, cast
+        // the value to be stored.
+        Value *NewCast;
+        if (Constant *C = dyn_cast<Constant>(SI.getOperand(0)))
+          NewCast = ConstantExpr::getCast(C, SrcPTy);
+        else
+          NewCast = IC.InsertNewInstBefore(new CastInst(SI.getOperand(0),
+                                                        SrcPTy,
+                                         SI.getOperand(0)->getName()+".c"), SI);
+
+        return new StoreInst(NewCast, CastOp);
+      }
+    }
+  }
+  return 0;
+}
+
 Instruction *InstCombiner::visitStoreInst(StoreInst &SI) {
   Value *Val = SI.getOperand(0);
   Value *Ptr = SI.getOperand(1);
@@ -4836,6 +4882,16 @@ Instruction *InstCombiner::visitStoreInst(StoreInst &SI) {
     ++NumCombined;
     return 0;
   }
+
+  // If the pointer destination is a cast, see if we can fold the cast into the
+  // source instead.
+  if (CastInst *CI = dyn_cast<CastInst>(Ptr))
+    if (Instruction *Res = InstCombineStoreToCast(*this, SI))
+      return Res;
+  if (ConstantExpr *CE = dyn_cast<ConstantExpr>(Ptr))
+    if (CE->getOpcode() == Instruction::Cast)
+      if (Instruction *Res = InstCombineStoreToCast(*this, SI))
+        return Res;
 
   return 0;
 }
