@@ -32,8 +32,9 @@
 using namespace llvm;
 
 namespace {
-  Statistic<> NumSetCC("ppc-codegen", "Number of SetCC straight-lined");
-
+  Statistic<>
+  MultiUseGEP("ppc-codegen", "Number of GEPs folded with more than one use");
+  
   /// TypeClass - Used by the PowerPC backend to group LLVM types by their basic
   /// PPC Representation.
   ///
@@ -79,12 +80,34 @@ namespace {
     MachineBasicBlock *BB;              // The current MBB we are compiling
     int VarArgsFrameIndex;              // FrameIndex for start of varargs area
     
-    std::map<Value*, unsigned> RegMap;  // Mapping between Values and SSA Regs
+    /// CollapsedGepOp - This struct is for recording the intermediate results 
+    /// used to calculate the base, index, and offset of a GEP instruction.
+    struct CollapsedGepOp {
+      ConstantSInt *offset; // the current offset into the struct/array
+      Value *index;         // the index of the array element
+      ConstantUInt *size;   // the size of each array element
+      CollapsedGepOp(ConstantSInt *o, Value *i, ConstantUInt *s) :
+        offset(o), index(i), size(s) {}
+    };
+
+    /// FoldedGEP - This struct is for recording the necessary information to 
+    /// emit the GEP in a load or store instruction, used by emitGEPOperation.
+    struct FoldedGEP {
+      unsigned base;
+      unsigned index;
+      ConstantSInt *offset;
+      FoldedGEP() : base(0), index(0), offset(0) {}
+      FoldedGEP(unsigned b, unsigned i, ConstantSInt *o) : 
+        base(b), index(i), offset(o) {}
+    };
 
     // External functions used in the Module
     Function *fmodfFn, *fmodFn, *__cmpdi2Fn, *__moddi3Fn, *__divdi3Fn, 
       *__umoddi3Fn,  *__udivdi3Fn, *__fixsfdiFn, *__fixdfdiFn, *__fixunssfdiFn,
       *__fixunsdfdiFn, *__floatdisfFn, *__floatdidfFn, *mallocFn, *freeFn;
+
+    // Mapping between Values and SSA Regs
+    std::map<Value*, unsigned> RegMap;
 
     // MBBMap - Mapping between LLVM BB -> Machine BB
     std::map<const BasicBlock*, MachineBasicBlock*> MBBMap;
@@ -92,6 +115,9 @@ namespace {
     // AllocaMap - Mapping from fixed sized alloca instructions to the
     // FrameIndex for the alloca.
     std::map<AllocaInst*, unsigned> AllocaMap;
+
+    // GEPMap - Mapping between basic blocks and GEP definitions
+    std::map<GetElementPtrInst*, FoldedGEP> GEPMap;
 
     // A Reg to hold the base address used for global loads and stores, and a
     // flag to set whether or not we need to emit it for this function.
@@ -170,6 +196,7 @@ namespace {
       // Select the PHI nodes
       SelectPHINodes();
 
+      GEPMap.clear();
       RegMap.clear();
       MBBMap.clear();
       AllocaMap.clear();
@@ -221,15 +248,6 @@ namespace {
       const Type *Ty;
       ValueRecord(unsigned R, const Type *T) : Val(0), Reg(R), Ty(T) {}
       ValueRecord(Value *V) : Val(V), Reg(0), Ty(V->getType()) {}
-    };
-    
-    // This struct is for recording the necessary operations to emit the GEP
-    struct CollapsedGepOp {
-      bool isMul;
-      Value *index;
-      ConstantSInt *size;
-      CollapsedGepOp(bool mul, Value *i, ConstantSInt *s) :
-        isMul(mul), index(i), size(s) {}
     };
 
     void doCall(const ValueRecord &Ret, MachineInstr *CallMI,
@@ -292,10 +310,7 @@ namespace {
     /// constant expression GEP support.
     ///
     void emitGEPOperation(MachineBasicBlock *BB, MachineBasicBlock::iterator IP,
-                          Value *Src, User::op_iterator IdxBegin,
-                          User::op_iterator IdxEnd, unsigned TargetReg,
-                          bool CollapseRemainder, ConstantSInt **Remainder,
-                          unsigned *PendingAddReg);
+                          GetElementPtrInst *GEPI, bool foldGEP);
 
     /// emitCastOperation - Common code shared between visitCastInst and
     /// constant expression cast support.
@@ -376,6 +391,13 @@ namespace {
 
     void emitUCOM(MachineBasicBlock *MBB, MachineBasicBlock::iterator MBBI,
                    unsigned LHS, unsigned RHS);
+
+    /// emitAdd - A convenience function to emit the necessary code to add a
+    /// constant signed value to a register.
+    ///
+    void emitAdd(MachineBasicBlock *MBB, 
+                 MachineBasicBlock::iterator IP,
+                 unsigned Op0Reg, ConstantSInt *Op1, unsigned DestReg);
 
     /// makeAnotherReg - This method returns the next register number we haven't
     /// yet used.
@@ -905,26 +927,38 @@ static SetCondInst *canFoldSetCCIntoBranchOrSelect(Value *V) {
   return 0;
 }
 
-
 // canFoldGEPIntoLoadOrStore - Return the GEP instruction if we can fold it into
 // the load or store instruction that is the only user of the GEP.
 //
 static GetElementPtrInst *canFoldGEPIntoLoadOrStore(Value *V) {
-  if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(V))
-    if (GEPI->hasOneUse()) {
-      Instruction *User = cast<Instruction>(GEPI->use_back());
+  if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(V)) {
+    bool AllUsesAreMem = true;
+    for (Value::use_iterator I = GEPI->use_begin(), E = GEPI->use_end(); 
+         I != E; ++I) {
+      Instruction *User = cast<Instruction>(*I);
+
+      // If the GEP is the target of a store, but not the source, then we are ok
+      // to fold it.
       if (isa<StoreInst>(User) &&
           GEPI->getParent() == User->getParent() &&
           User->getOperand(0) != GEPI &&
-          User->getOperand(1) == GEPI) {
-        return GEPI;
-      }
+          User->getOperand(1) == GEPI)
+        continue;
+
+      // If the GEP is the source of a load, then we're always ok to fold it
       if (isa<LoadInst>(User) &&
           GEPI->getParent() == User->getParent() &&
-          User->getOperand(0) == GEPI) {
-        return GEPI;
-      }
+          User->getOperand(0) == GEPI)
+        continue;
+
+      // if we got to this point, than the instruction was not a load or store
+      // that we are capable of folding the GEP into.
+      AllUsesAreMem = false;
+      break;
     }
+    if (AllUsesAreMem)
+      return GEPI;
+  }
   return 0;
 }
 
@@ -1125,7 +1159,6 @@ void PPC32ISel::visitSetCondInst(SetCondInst &I) {
     ConstantInt *CI = dyn_cast<ConstantInt>(Op1);
 
     if (CI && CI->getRawValue() == 0) {
-      ++NumSetCC;
       unsigned Op0Reg = ExtendOrClear(BB, MI, Op0);
     
       // comparisons against constant zero and negative one often have shorter
@@ -1249,8 +1282,6 @@ void PPC32ISel::visitSelectInst(SelectInst &SI) {
  
 /// emitSelect - Common code shared between visitSelectInst and the constant
 /// expression support.
-/// FIXME: this is most likely broken in one or more ways.  Namely, PowerPC has
-/// no select instruction.  FSEL only works for comparisons against zero.
 void PPC32ISel::emitSelectOperation(MachineBasicBlock *MBB,
                                     MachineBasicBlock::iterator IP,
                                     Value *Cond, Value *TrueVal, 
@@ -2565,47 +2596,33 @@ void PPC32ISel::visitLoadInst(LoadInst &I) {
     return;
   }
   
-  // If this load is the only use of the GEP instruction that is its address,
-  // then we can fold the GEP directly into the load instruction.
-  // emitGEPOperation with a second to last arg of 'true' will place the
-  // base register for the GEP into baseReg, and the constant offset from that
-  // into offset.  If the offset fits in 16 bits, we can emit a reg+imm store
-  // otherwise, we copy the offset into another reg, and use reg+reg addressing.
+  // If the offset fits in 16 bits, we can emit a reg+imm load, otherwise, we
+  // use the index from the FoldedGEP struct and use reg+reg addressing.
   if (GetElementPtrInst *GEPI = canFoldGEPIntoLoadOrStore(SourceAddr)) {
-    unsigned baseReg = getReg(GEPI);
-    unsigned pendingAdd;
-    ConstantSInt *offset;
-    
-    emitGEPOperation(BB, BB->end(), GEPI->getOperand(0), GEPI->op_begin()+1, 
-                     GEPI->op_end(), baseReg, true, &offset, &pendingAdd);
 
-    if (pendingAdd == 0 && Class != cLong && 
-        canUseAsImmediateForOpcode(offset, 0)) {
-      if (LoadNeedsSignExtend(I)) {
-        unsigned TmpReg = makeAnotherReg(I.getType());
+    // Generate the code for the GEP and get the components of the folded GEP
+    emitGEPOperation(BB, BB->end(), GEPI, true);
+    unsigned baseReg = GEPMap[GEPI].base;
+    unsigned indexReg = GEPMap[GEPI].index;
+    ConstantSInt *offset = GEPMap[GEPI].offset;
+
+    if (Class != cLong) {
+      unsigned TmpReg = makeAnotherReg(I.getType());
+      if (indexReg == 0)
         BuildMI(BB, ImmOpcode, 2, TmpReg).addSImm(offset->getValue())
           .addReg(baseReg);
+      else
+        BuildMI(BB, IdxOpcode, 2, TmpReg).addReg(indexReg).addReg(baseReg);
+      if (LoadNeedsSignExtend(I))
         BuildMI(BB, PPC::EXTSB, 1, DestReg).addReg(TmpReg);
-      } else {
-        BuildMI(BB, ImmOpcode, 2, DestReg).addSImm(offset->getValue())
-          .addReg(baseReg);
-      }
-      return;
-    }
-    
-    unsigned indexReg = (pendingAdd != 0) ? pendingAdd : getReg(offset);
-
-    if (Class == cLong) {
+      else
+        BuildMI(BB, PPC::OR, 2, DestReg).addReg(TmpReg).addReg(TmpReg);
+    } else {
+      indexReg = (indexReg != 0) ? indexReg : getReg(offset);
       unsigned indexPlus4 = makeAnotherReg(Type::IntTy);
       BuildMI(BB, PPC::ADDI, 2, indexPlus4).addReg(indexReg).addSImm(4);
       BuildMI(BB, IdxOpcode, 2, DestReg).addReg(indexReg).addReg(baseReg);
       BuildMI(BB, IdxOpcode, 2, DestReg+1).addReg(indexPlus4).addReg(baseReg);
-    } else if (LoadNeedsSignExtend(I)) {
-      unsigned TmpReg = makeAnotherReg(I.getType());
-      BuildMI(BB, IdxOpcode, 2, TmpReg).addReg(indexReg).addReg(baseReg);
-      BuildMI(BB, PPC::EXTSB, 1, DestReg).addReg(TmpReg);
-    } else {
-      BuildMI(BB, IdxOpcode, 2, DestReg).addReg(indexReg).addReg(baseReg);
     }
     return;
   }
@@ -2647,38 +2664,30 @@ void PPC32ISel::visitStoreInst(StoreInst &I) {
   unsigned IdxOpcode = IdxOpcodes[Class];
   unsigned ValReg    = getReg(I.getOperand(0));
 
-  // If this store is the only use of the GEP instruction that is its address,
-  // then we can fold the GEP directly into the store instruction.
-  // emitGEPOperation with a second to last arg of 'true' will place the
-  // base register for the GEP into baseReg, and the constant offset from that
-  // into offset.  If the offset fits in 16 bits, we can emit a reg+imm store
-  // otherwise, we copy the offset into another reg, and use reg+reg addressing.
+  // If the offset fits in 16 bits, we can emit a reg+imm store, otherwise, we
+  // use the index from the FoldedGEP struct and use reg+reg addressing.
   if (GetElementPtrInst *GEPI = canFoldGEPIntoLoadOrStore(SourceAddr)) {
-    unsigned baseReg = getReg(GEPI);
-    unsigned pendingAdd;
-    ConstantSInt *offset;
+    // Generate the code for the GEP and get the components of the folded GEP
+    emitGEPOperation(BB, BB->end(), GEPI, true);
+    unsigned baseReg = GEPMap[GEPI].base;
+    unsigned indexReg = GEPMap[GEPI].index;
+    ConstantSInt *offset = GEPMap[GEPI].offset;
     
-    emitGEPOperation(BB, BB->end(), GEPI->getOperand(0), GEPI->op_begin()+1, 
-                     GEPI->op_end(), baseReg, true, &offset, &pendingAdd);
-
-    if (0 == pendingAdd && Class != cLong && 
-        canUseAsImmediateForOpcode(offset, 0)) {
-      BuildMI(BB, ImmOpcode, 3).addReg(ValReg).addSImm(offset->getValue())
-        .addReg(baseReg);
-      return;
-    }
-    
-    unsigned indexReg = (pendingAdd != 0) ? pendingAdd : getReg(offset);
-
-    if (Class == cLong) {
+    if (Class != cLong) {
+      if (indexReg == 0)
+        BuildMI(BB, ImmOpcode, 3).addReg(ValReg).addSImm(offset->getValue())
+          .addReg(baseReg);
+      else
+        BuildMI(BB, IdxOpcode, 3).addReg(ValReg).addReg(indexReg)
+          .addReg(baseReg);
+    } else {
+      indexReg = (indexReg != 0) ? indexReg : getReg(offset);
       unsigned indexPlus4 = makeAnotherReg(Type::IntTy);
       BuildMI(BB, PPC::ADDI, 2, indexPlus4).addReg(indexReg).addSImm(4);
       BuildMI(BB, IdxOpcode, 3).addReg(ValReg).addReg(indexReg).addReg(baseReg);
       BuildMI(BB, IdxOpcode, 3).addReg(ValReg+1).addReg(indexPlus4)
         .addReg(baseReg);
-      return;
     }
-    BuildMI(BB, IdxOpcode, 3).addReg(ValReg).addReg(indexReg).addReg(baseReg);
     return;
   }
   
@@ -3286,9 +3295,22 @@ void PPC32ISel::visitGetElementPtrInst(GetElementPtrInst &I) {
   if (canFoldGEPIntoLoadOrStore(&I))
     return;
 
-  unsigned outputReg = getReg(I);
-  emitGEPOperation(BB, BB->end(), I.getOperand(0), I.op_begin()+1, I.op_end(), 
-                   outputReg, false, 0, 0);
+  emitGEPOperation(BB, BB->end(), &I, false);
+}
+
+/// emitAdd - A convenience function to emit the necessary code to add a
+/// constant signed value to a register.
+///
+void PPC32ISel::emitAdd(MachineBasicBlock *MBB, 
+                        MachineBasicBlock::iterator IP,
+                        unsigned Op0Reg, ConstantSInt *Op1, unsigned DestReg) {
+  if (canUseAsImmediateForOpcode(Op1, 0)) {
+    BuildMI(*MBB, IP, PPC::ADDI, 2, DestReg).addReg(Op0Reg)
+      .addSImm(Op1->getValue());
+  } else {
+    unsigned Op1Reg = getReg(Op1, MBB, IP);
+    BuildMI(*MBB, IP, PPC::ADD, 2, DestReg).addReg(Op0Reg).addReg(Op1Reg);
+  }
 }
 
 /// emitGEPOperation - Common code shared between visitGetElementPtrInst and
@@ -3296,13 +3318,19 @@ void PPC32ISel::visitGetElementPtrInst(GetElementPtrInst &I) {
 ///
 void PPC32ISel::emitGEPOperation(MachineBasicBlock *MBB,
                                  MachineBasicBlock::iterator IP,
-                                 Value *Src, User::op_iterator IdxBegin,
-                                 User::op_iterator IdxEnd, unsigned TargetReg,
-                                 bool GEPIsFolded, ConstantSInt **RemainderPtr,
-                                 unsigned *PendingAddReg) {
+                                 GetElementPtrInst *GEPI, bool GEPIsFolded) {
+  // If we've already emitted this particular GEP, just return to avoid
+  // multiple definitions of the base register.
+  if (GEPIsFolded && (GEPMap[GEPI].base != 0)) {
+    MultiUseGEP++;
+    return;
+  }
+  
+  Value *Src = GEPI->getOperand(0);
+  User::op_iterator IdxBegin = GEPI->op_begin()+1;
+  User::op_iterator IdxEnd = GEPI->op_end();
   const TargetData &TD = TM.getTargetData();
   const Type *Ty = Src->getType();
-  unsigned basePtrReg = getReg(Src, MBB, IP);
   int64_t constValue = 0;
   
   // Record the operations to emit the GEP in a vector so that we can emit them
@@ -3322,17 +3350,14 @@ void PPC32ISel::emitGEPOperation(MachineBasicBlock *MBB,
       // right byte offset from the StructLayout class's list of
       // structure member offsets.
       unsigned fieldIndex = cast<ConstantUInt>(idx)->getValue();
-      unsigned memberOffset =
-        TD.getStructLayout(StTy)->MemberOffsets[fieldIndex];
 
       // StructType member offsets are always constant values.  Add it to the
       // running total.
-      constValue += memberOffset;
+      constValue += TD.getStructLayout(StTy)->MemberOffsets[fieldIndex];
 
-      // The next type is the member of the structure selected by the
-      // index.
+      // The next type is the member of the structure selected by the index.
       Ty = StTy->getElementType (fieldIndex);
-    } else if (const SequentialType *SqTy = dyn_cast<SequentialType> (Ty)) {
+    } else if (const SequentialType *SqTy = dyn_cast<SequentialType>(Ty)) {
       // Many GEP instructions use a [cast (int/uint) to LongTy] as their
       // operand.  Handle this case directly now...
       if (CastInst *CI = dyn_cast<CastInst>(idx))
@@ -3355,111 +3380,71 @@ void PPC32ISel::emitGEPOperation(MachineBasicBlock *MBB,
         else
           assert(0 && "Invalid ConstantInt GEP index type!");
       } else {
-        // Push current gep state to this point as an add
-        ops.push_back(CollapsedGepOp(false, 0, 
-          ConstantSInt::get(Type::IntTy,constValue)));
-        
-        // Push multiply gep op and reset constant value
-        ops.push_back(CollapsedGepOp(true, idx, 
-          ConstantSInt::get(Type::IntTy, elementSize)));
-        
+        // Push current gep state to this point as an add and multiply
+        ops.push_back(CollapsedGepOp(
+          ConstantSInt::get(Type::IntTy, constValue),
+          idx, ConstantUInt::get(Type::UIntTy, elementSize)));
+
         constValue = 0;
       }
     }
   }
   // Emit instructions for all the collapsed ops
-  bool pendingAdd = false;
-  unsigned pendingAddReg = 0;
-  
+  unsigned indexReg = 0;
   for(std::vector<CollapsedGepOp>::iterator cgo_i = ops.begin(),
       cgo_e = ops.end(); cgo_i != cgo_e; ++cgo_i) {
     CollapsedGepOp& cgo = *cgo_i;
-    unsigned nextBasePtrReg = makeAnotherReg(Type::IntTy);
-  
-    // If we didn't emit an add last time through the loop, we need to now so
-    // that the base reg is updated appropriately.
-    if (pendingAdd) {
-      assert(pendingAddReg != 0 && "Uninitialized register in pending add!");
-      BuildMI(*MBB, IP, PPC::ADD, 2, nextBasePtrReg).addReg(basePtrReg)
-        .addReg(pendingAddReg);
-      basePtrReg = nextBasePtrReg;
-      nextBasePtrReg = makeAnotherReg(Type::IntTy);
-      pendingAddReg = 0;
-      pendingAdd = false;
-    }
 
-    if (cgo.isMul) {
-      // We know the elementSize is a constant, so we can emit a constant mul
-      unsigned TmpReg = makeAnotherReg(Type::IntTy);
-      doMultiplyConst(MBB, IP, nextBasePtrReg, cgo.index, cgo.size);
-      pendingAddReg = basePtrReg;
-      pendingAdd = true;
-    } else {
-      // Try and generate an immediate addition if possible
-      if (cgo.size->isNullValue()) {
-        BuildMI(*MBB, IP, PPC::OR, 2, nextBasePtrReg).addReg(basePtrReg)
-          .addReg(basePtrReg);
-      } else if (canUseAsImmediateForOpcode(cgo.size, 0)) {
-        BuildMI(*MBB, IP, PPC::ADDI, 2, nextBasePtrReg).addReg(basePtrReg)
-          .addSImm(cgo.size->getValue());
-      } else {
-        unsigned Op1r = getReg(cgo.size, MBB, IP);
-        BuildMI(*MBB, IP, PPC::ADD, 2, nextBasePtrReg).addReg(basePtrReg)
-          .addReg(Op1r);
-      }
+    unsigned TmpReg1 = makeAnotherReg(Type::IntTy);
+    unsigned TmpReg2 = makeAnotherReg(Type::IntTy);
+    doMultiplyConst(MBB, IP, TmpReg1, cgo.index, cgo.size);
+    emitAdd(MBB, IP, TmpReg1, cgo.offset, TmpReg2);
+    
+    if (indexReg == 0)
+      indexReg = TmpReg2;
+    else {
+      unsigned TmpReg3 = makeAnotherReg(Type::IntTy);
+      BuildMI(*MBB, IP, PPC::ADD, 2, TmpReg3).addReg(indexReg).addReg(TmpReg2);
+      indexReg = TmpReg3;
     }
-
-    basePtrReg = nextBasePtrReg;
   }
-  // Add the current base register plus any accumulated constant value
+  
+  // We now have a base register, an index register, and possibly a constant
+  // remainder.  If the GEP is going to be folded, we try to generate the
+  // optimal addressing mode.
+  unsigned TargetReg = getReg(GEPI, MBB, IP);
+  unsigned basePtrReg = getReg(Src, MBB, IP);
   ConstantSInt *remainder = ConstantSInt::get(Type::IntTy, constValue);
   
   // If we are emitting this during a fold, copy the current base register to
   // the target, and save the current constant offset so the folding load or
   // store can try and use it as an immediate.
   if (GEPIsFolded) {
-    // If this is a folded GEP and the last element was an index, then we need
-    // to do some extra work to turn a shift/add/stw into a shift/stwx
-    if (pendingAdd && 0 == remainder->getValue()) {
-      assert(pendingAddReg != 0 && "Uninitialized register in pending add!");
-      *PendingAddReg = pendingAddReg;
-    } else {
-      *PendingAddReg = 0;
-      if (pendingAdd) {
-        unsigned nextBasePtrReg = makeAnotherReg(Type::IntTy);
-        assert(pendingAddReg != 0 && "Uninitialized register in pending add!");
-        BuildMI(*MBB, IP, PPC::ADD, 2, nextBasePtrReg).addReg(basePtrReg)
-          .addReg(pendingAddReg);
-        basePtrReg = nextBasePtrReg;
+    if (indexReg == 0) {
+      if (!canUseAsImmediateForOpcode(remainder, 0)) {
+        indexReg = getReg(remainder, MBB, IP);
+        remainder = 0;
       }
+    } else {
+      unsigned TmpReg = makeAnotherReg(Type::IntTy);
+      emitAdd(MBB, IP, indexReg, remainder, TmpReg);
+      indexReg = TmpReg;
+      remainder = 0;
     }
     BuildMI (*MBB, IP, PPC::OR, 2, TargetReg).addReg(basePtrReg)
       .addReg(basePtrReg);
-    *RemainderPtr = remainder;
+    GEPMap[GEPI] = FoldedGEP(TargetReg, indexReg, remainder);
     return;
   }
 
-  // If we still have a pending add at this point, emit it now
-  if (pendingAdd) {
+  // We're not folding, so collapse the base, index, and any remainder into the
+  // destination register.
+  if (indexReg != 0) { 
     unsigned TmpReg = makeAnotherReg(Type::IntTy);
-    BuildMI(*MBB, IP, PPC::ADD, 2, TmpReg).addReg(pendingAddReg)
-      .addReg(basePtrReg);
+    BuildMI(*MBB, IP, PPC::ADD, 2, TmpReg).addReg(indexReg).addReg(basePtrReg);
     basePtrReg = TmpReg;
   }
-  
-  // After we have processed all the indices, the result is left in
-  // basePtrReg.  Move it to the register where we were expected to
-  // put the answer.
-  if (remainder->isNullValue()) {
-    BuildMI (*MBB, IP, PPC::OR, 2, TargetReg).addReg(basePtrReg)
-      .addReg(basePtrReg);
-  } else if (canUseAsImmediateForOpcode(remainder, 0)) {
-    BuildMI(*MBB, IP, PPC::ADDI, 2, TargetReg).addReg(basePtrReg)
-      .addSImm(remainder->getValue());
-  } else {
-    unsigned Op1r = getReg(remainder, MBB, IP);
-    BuildMI(*MBB, IP, PPC::ADD, 2, TargetReg).addReg(basePtrReg).addReg(Op1r);
-  }
+  emitAdd(MBB, IP, basePtrReg, remainder, TargetReg);
 }
 
 /// visitAllocaInst - If this is a fixed size alloca, allocate space from the
