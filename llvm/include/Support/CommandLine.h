@@ -34,7 +34,7 @@ void cl::ParseCommandLineOptions(int &argc, char **argv,
 // Flags permitted to be passed to command line arguments
 //
 
-enum NumOccurances {           // Flags for the number of occurances allowed...
+enum NumOccurrences {           // Flags for the number of occurances allowed...
   Optional        = 0x01,      // Zero or One occurance
   ZeroOrMore      = 0x02,      // Zero or more occurances allowed
   Required        = 0x03,      // One occurance required
@@ -49,7 +49,7 @@ enum NumOccurances {           // Flags for the number of occurances allowed...
   //
   ConsumeAfter    = 0x05,
 
-  OccurancesMask  = 0x07,
+  OccurrencesMask  = 0x07,
 };
 
 enum ValueExpected {           // Is a value required for the option?
@@ -104,13 +104,13 @@ class Option {
   friend void cl::ParseCommandLineOptions(int &, char **, const char *, int);
   friend class alias;
 
-  // handleOccurances - Overriden by subclasses to handle the value passed into
+  // handleOccurrences - Overriden by subclasses to handle the value passed into
   // an argument.  Should return true if there was an error processing the
   // argument and the program should exit.
   //
-  virtual bool handleOccurance(const char *ArgName, const std::string &Arg) = 0;
+  virtual bool handleOccurrence(const char *ArgName, const std::string &Arg) = 0;
 
-  virtual enum NumOccurances getNumOccurancesFlagDefault() const { 
+  virtual enum NumOccurrences getNumOccurrencesFlagDefault() const { 
     return Optional;
   }
   virtual enum ValueExpected getValueExpectedFlagDefault() const {
@@ -123,16 +123,16 @@ class Option {
     return NormalFormatting;
   }
 
-  int NumOccurances;    // The number of times specified
+  int NumOccurrences;    // The number of times specified
   int Flags;            // Flags for the argument
 public:
   const char *ArgStr;   // The argument string itself (ex: "help", "o")
   const char *HelpStr;  // The descriptive text message for --help
   const char *ValueStr; // String describing what the value of this option is
 
-  inline enum NumOccurances getNumOccurancesFlag() const {
-    int NO = Flags & OccurancesMask;
-    return NO ? (enum NumOccurances)NO : getNumOccurancesFlagDefault();
+  inline enum NumOccurrences getNumOccurrencesFlag() const {
+    int NO = Flags & OccurrencesMask;
+    return NO ? (enum NumOccurrences)NO : getNumOccurrencesFlagDefault();
   }
   inline enum ValueExpected getValueExpectedFlag() const {
     int VE = Flags & ValueMask;
@@ -169,15 +169,15 @@ public:
     Flags |= Flag;
   }
 
-  void setNumOccurancesFlag(enum NumOccurances Val) {
-    setFlag(Val, OccurancesMask);
+  void setNumOccurrencesFlag(enum NumOccurrences Val) {
+    setFlag(Val, OccurrencesMask);
   }
   void setValueExpectedFlag(enum ValueExpected Val) { setFlag(Val, ValueMask); }
   void setHiddenFlag(enum OptionHidden Val) { setFlag(Val, HiddenMask); }
   void setFormattingFlag(enum FormattingFlags V) { setFlag(V, FormattingMask); }
   void setMiscFlag(enum MiscFlags M) { setFlag(M, M); }
 protected:
-  Option() : NumOccurances(0), Flags(0),
+  Option() : NumOccurrences(0), Flags(0),
              ArgStr(""), HelpStr(""), ValueStr("") {}
 
 public:
@@ -195,15 +195,15 @@ public:
   //
   virtual void printOptionInfo(unsigned GlobalWidth) const = 0;
 
-  // addOccurance - Wrapper around handleOccurance that enforces Flags
+  // addOccurrence - Wrapper around handleOccurrence that enforces Flags
   //
-  bool addOccurance(const char *ArgName, const std::string &Value);
+  bool addOccurrence(const char *ArgName, const std::string &Value);
 
   // Prints option name followed by message.  Always returns true.
   bool error(std::string Message, const char *ArgName = 0);
 
 public:
-  inline int getNumOccurances() const { return NumOccurances; }
+  inline int getNumOccurrences() const { return NumOccurrences; }
   virtual ~Option() {}
 };
 
@@ -598,8 +598,8 @@ template<> struct applicator<const char*> {
   static void opt(const char *Str, Opt &O) { O.setArgStr(Str); }
 };
 
-template<> struct applicator<NumOccurances> {
-  static void opt(NumOccurances NO, Option &O) { O.setNumOccurancesFlag(NO); }
+template<> struct applicator<NumOccurrences> {
+  static void opt(NumOccurrences NO, Option &O) { O.setNumOccurrencesFlag(NO); }
 };
 template<> struct applicator<ValueExpected> {
   static void opt(ValueExpected VE, Option &O) { O.setValueExpectedFlag(VE); }
@@ -700,7 +700,7 @@ class opt : public Option,
                                ::boost::is_class<DataType>::value> {
   ParserClass Parser;
 
-  virtual bool handleOccurance(const char *ArgName, const std::string &Arg) {
+  virtual bool handleOccurrence(const char *ArgName, const std::string &Arg) {
     typename ParserClass::parser_data_type Val;
     if (Parser.parse(*this, ArgName, Arg, Val))
       return true;                            // Parse error!
@@ -846,14 +846,14 @@ template <class DataType, class Storage = bool,
 class list : public Option, public list_storage<DataType, Storage> {
   ParserClass Parser;
 
-  virtual enum NumOccurances getNumOccurancesFlagDefault() const { 
+  virtual enum NumOccurrences getNumOccurrencesFlagDefault() const { 
     return ZeroOrMore;
   }
   virtual enum ValueExpected getValueExpectedFlagDefault() const {
     return Parser.getValueExpectedFlagDefault();
   }
 
-  virtual bool handleOccurance(const char *ArgName, const std::string &Arg) {
+  virtual bool handleOccurrence(const char *ArgName, const std::string &Arg) {
     typename ParserClass::parser_data_type Val;
     if (Parser.parse(*this, ArgName, Arg, Val))
       return true;  // Parse Error!
@@ -943,8 +943,8 @@ public:
 
 class alias : public Option {
   Option *AliasFor;
-  virtual bool handleOccurance(const char *ArgName, const std::string &Arg) {
-    return AliasFor->handleOccurance(AliasFor->ArgStr, Arg);
+  virtual bool handleOccurrence(const char *ArgName, const std::string &Arg) {
+    return AliasFor->handleOccurrence(AliasFor->ArgStr, Arg);
   }
   // Aliases default to be hidden...
   virtual enum OptionHidden getOptionHiddenFlagDefault() const {return Hidden;}
