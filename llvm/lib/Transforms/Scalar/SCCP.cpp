@@ -25,6 +25,7 @@
 #include "llvm/iTerminators.h"
 #include "llvm/iOther.h"
 #include "llvm/Pass.h"
+#include "llvm/Support/InstVisitor.h"
 #include "Support/STLExtras.h"
 #include <algorithm>
 #include <map>
@@ -84,7 +85,7 @@ public:
 // This class does all of the work of Sparse Conditional Constant Propogation.
 // It's public interface consists of a constructor and a doSCCP() method.
 //
-class SCCP {
+class SCCP : public InstVisitor<SCCP> {
   Function *M;                           // The function that we are working on
 
   std::set<BasicBlock*>     BBExecutable;// The basic blocks that are executable
@@ -109,6 +110,7 @@ public:
   // The implementation of this class
   //
 private:
+  friend class InstVisitor<SCCP>;        // Allow callbacks from visitor
 
   // markValueOverdefined - Make a value be marked as "constant".  If the value
   // is not already a constant, add it to the instruction work list so that 
@@ -168,11 +170,34 @@ private:
   }
 
 
-  // UpdateInstruction - Something changed in this instruction... Either an 
+  // visit implementations - Something changed in this instruction... Either an 
   // operand made a transition, or the instruction is newly executable.  Change
   // the value type of I to reflect these changes if appropriate.
   //
-  void UpdateInstruction(Instruction *I);
+  void visitPHINode(PHINode *I);
+
+  // Terminators
+  void visitReturnInst(ReturnInst *I) { /*does not have an effect*/ }
+  void visitBranchInst(BranchInst *I);
+  void visitSwitchInst(SwitchInst *I);
+
+  void visitUnaryOperator(Instruction *I);
+  void visitCastInst(CastInst *I) { visitUnaryOperator(I); }
+  void visitBinaryOperator(Instruction *I);
+  void visitShiftInst(ShiftInst *I) { visitBinaryOperator(I); }
+
+  // Instructions that cannot be folded away...
+  void visitMemAccessInst (Instruction *I) { markOverdefined(I); }
+  void visitCallInst      (Instruction *I) { markOverdefined(I); }
+  void visitInvokeInst    (Instruction *I) { markOverdefined(I); }
+  void visitAllocationInst(Instruction *I) { markOverdefined(I); }
+  void visitFreeInst      (Instruction *I) { markOverdefined(I); }
+
+  void visitInstruction(Instruction *I) {
+    // If a new instruction is added to LLVM that we don't handle...
+    cerr << "SCCP: Don't know how to handle: " << I;
+    markOverdefined(I);   // Just in case
+  }
 
   // OperandChangedState - This method is invoked on all of the users of an
   // instruction that was just changed state somehow....  Based on this
@@ -225,10 +250,9 @@ bool SCCP::doSCCP() {
       if (BB->getTerminator()->getNumSuccessors() == 1)
         markExecutable(BB->getTerminator()->getSuccessor(0));
 
-      // Loop over all of the instructions and notify them that they are newly
-      // executable...
-      for_each(BB->begin(), BB->end(),
-               bind_obj(this, &SCCP::UpdateInstruction));
+      // Notify all instructions in this basic block that they are newly
+      // executable.
+      visit(BB);
     }
   }
 
@@ -284,7 +308,7 @@ bool SCCP::doSCCP() {
 }
 
 
-// UpdateInstruction - Something changed in this instruction... Either an
+// visit Implementations - Something changed in this instruction... Either an
 // operand made a transition, or the instruction is newly executable.  Change
 // the value type of I to reflect these changes if appropriate.  This method
 // makes sure to do the following actions:
@@ -302,199 +326,130 @@ bool SCCP::doSCCP() {
 // 7. If a conditional branch has a value that is overdefined, make all
 //    successors executable.
 //
-void SCCP::UpdateInstruction(Instruction *I) {
-  InstVal &IValue = ValueState[I];
-  if (IValue.isOverdefined())
-    return; // If already overdefined, we aren't going to effect anything
 
-  switch (I->getOpcode()) {
-    //===-----------------------------------------------------------------===//
-    // Handle PHI nodes...
-    //
-  case Instruction::PHINode: {
-    PHINode *PN = cast<PHINode>(I);
-    unsigned NumValues = PN->getNumIncomingValues(), i;
-    InstVal *OperandIV = 0;
+void SCCP::visitPHINode(PHINode *PN) {
+  unsigned NumValues = PN->getNumIncomingValues(), i;
+  InstVal *OperandIV = 0;
 
-    // Look at all of the executable operands of the PHI node.  If any of them
-    // are overdefined, the PHI becomes overdefined as well.  If they are all
-    // constant, and they agree with each other, the PHI becomes the identical
-    // constant.  If they are constant and don't agree, the PHI is overdefined.
-    // If there are no executable operands, the PHI remains undefined.
-    //
-    for (i = 0; i < NumValues; ++i) {
-      if (BBExecutable.count(PN->getIncomingBlock(i))) {
-        InstVal &IV = getValueState(PN->getIncomingValue(i));
-        if (IV.isUndefined()) continue;  // Doesn't influence PHI node.
-        if (IV.isOverdefined()) {   // PHI node becomes overdefined!
-          markOverdefined(PN);
-          return;
-        }
+  // Look at all of the executable operands of the PHI node.  If any of them
+  // are overdefined, the PHI becomes overdefined as well.  If they are all
+  // constant, and they agree with each other, the PHI becomes the identical
+  // constant.  If they are constant and don't agree, the PHI is overdefined.
+  // If there are no executable operands, the PHI remains undefined.
+  //
+  for (i = 0; i < NumValues; ++i) {
+    if (BBExecutable.count(PN->getIncomingBlock(i))) {
+      InstVal &IV = getValueState(PN->getIncomingValue(i));
+      if (IV.isUndefined()) continue;  // Doesn't influence PHI node.
+      if (IV.isOverdefined()) {   // PHI node becomes overdefined!
+        markOverdefined(PN);
+        return;
+      }
 
-        if (OperandIV == 0) {   // Grab the first value...
-          OperandIV = &IV;
-        } else {                // Another value is being merged in!
-          // There is already a reachable operand.  If we conflict with it,
-          // then the PHI node becomes overdefined.  If we agree with it, we
-          // can continue on.
+      if (OperandIV == 0) {   // Grab the first value...
+        OperandIV = &IV;
+      } else {                // Another value is being merged in!
+        // There is already a reachable operand.  If we conflict with it,
+        // then the PHI node becomes overdefined.  If we agree with it, we
+        // can continue on.
 
-          // Check to see if there are two different constants merging...
-          if (IV.getConstant() != OperandIV->getConstant()) {
-            // Yes there is.  This means the PHI node is not constant.
-            // You must be overdefined poor PHI.
-            //
-            markOverdefined(I);         // The PHI node now becomes overdefined
-            return;    // I'm done analyzing you
-          }
+        // Check to see if there are two different constants merging...
+        if (IV.getConstant() != OperandIV->getConstant()) {
+          // Yes there is.  This means the PHI node is not constant.
+          // You must be overdefined poor PHI.
+          //
+          markOverdefined(PN);         // The PHI node now becomes overdefined
+          return;    // I'm done analyzing you
         }
       }
     }
-
-    // If we exited the loop, this means that the PHI node only has constant
-    // arguments that agree with each other(and OperandIV is a pointer to one
-    // of their InstVal's) or OperandIV is null because there are no defined
-    // incoming arguments.  If this is the case, the PHI remains undefined.
-    //
-    if (OperandIV) {
-      assert(OperandIV->isConstant() && "Should only be here for constants!");
-      markConstant(I, OperandIV->getConstant());  // Aquire operand value
-    }
-    return;
   }
 
-    //===-----------------------------------------------------------------===//
-    // Handle instructions that unconditionally provide overdefined values...
-    //
-  case Instruction::Malloc:
-  case Instruction::Free:
-  case Instruction::Alloca:
-  case Instruction::Load:
-  case Instruction::Store:
-    // TODO: getfield
-  case Instruction::Call:
-  case Instruction::Invoke:
-    markOverdefined(I);          // Memory and call's are all overdefined
-    return;
-
-    //===-----------------------------------------------------------------===//
-    // Handle Terminator instructions...
-    //
-  case Instruction::Ret: return;  // Function return doesn't affect anything
-  case Instruction::Br: {         // Handle conditional branches...
-    BranchInst *BI = cast<BranchInst>(I);
-    if (BI->isUnconditional())
-      return; // Unconditional branches are already handled!
-
-    InstVal &BCValue = getValueState(BI->getCondition());
-    if (BCValue.isOverdefined()) {
-      // Overdefined condition variables mean the branch could go either way.
-      markExecutable(BI->getSuccessor(0));
-      markExecutable(BI->getSuccessor(1));
-    } else if (BCValue.isConstant()) {
-      // Constant condition variables mean the branch can only go a single way.
-      ConstantBool *CPB = cast<ConstantBool>(BCValue.getConstant());
-      if (CPB->getValue())       // If the branch condition is TRUE...
-        markExecutable(BI->getSuccessor(0));
-      else                       // Else if the br cond is FALSE...
-        markExecutable(BI->getSuccessor(1));
-    }
-    return;
-  }
-
-  case Instruction::Switch: {
-    SwitchInst *SI = cast<SwitchInst>(I);
-    InstVal &SCValue = getValueState(SI->getCondition());
-    if (SCValue.isOverdefined()) {  // Overdefined condition?  All dests are exe
-      for(unsigned i = 0; BasicBlock *Succ = SI->getSuccessor(i); ++i)
-        markExecutable(Succ);
-    } else if (SCValue.isConstant()) {
-      Constant *CPV = SCValue.getConstant();
-      // Make sure to skip the "default value" which isn't a value
-      for (unsigned i = 1, E = SI->getNumSuccessors(); i != E; ++i) {
-        if (SI->getSuccessorValue(i) == CPV) {// Found the right branch...
-          markExecutable(SI->getSuccessor(i));
-          return;
-        }
-      }
-
-      // Constant value not equal to any of the branches... must execute
-      // default branch then...
-      markExecutable(SI->getDefaultDest());
-    }
-    return;
-  }
-
-  default: break;  // Handle math operators as groups.
-  } // end switch(I->getOpcode())
-
-
-  //===-------------------------------------------------------------------===//
-  // Handle Unary and cast instructions...
+  // If we exited the loop, this means that the PHI node only has constant
+  // arguments that agree with each other(and OperandIV is a pointer to one
+  // of their InstVal's) or OperandIV is null because there are no defined
+  // incoming arguments.  If this is the case, the PHI remains undefined.
   //
-  if (isa<UnaryOperator>(I) || isa<CastInst>(I)) {
-    Value *V = I->getOperand(0);
-    InstVal &VState = getValueState(V);
-    if (VState.isOverdefined()) {        // Inherit overdefinedness of operand
-      markOverdefined(I);
-    } else if (VState.isConstant()) {    // Propogate constant value
-      Constant *Result = isa<CastInst>(I)
-        ? ConstantFoldCastInstruction(VState.getConstant(), I->getType())
-        : ConstantFoldUnaryInstruction(I->getOpcode(), VState.getConstant());
-
-      if (Result) {
-        // This instruction constant folds!
-        markConstant(I, Result);
-      } else {
-        markOverdefined(I);   // Don't know how to fold this instruction.  :(
-      }
-    }
-    return;
+  if (OperandIV) {
+    assert(OperandIV->isConstant() && "Should only be here for constants!");
+    markConstant(PN, OperandIV->getConstant());  // Aquire operand value
   }
-
-
-  //===-----------------------------------------------------------------===//
-  // Handle GetElementPtr instructions...
-  //
-  if (isa<GetElementPtrInst>(I)) {
-    markOverdefined(I);
-    return;
-  }
-
-
-  //===-----------------------------------------------------------------===//
-  // Handle Binary instructions...
-  //
-  if (isa<BinaryOperator>(I) || isa<ShiftInst>(I)) {
-    Value *V1 = I->getOperand(0);
-    Value *V2 = I->getOperand(1);
-
-    InstVal &V1State = getValueState(V1);
-    InstVal &V2State = getValueState(V2);
-    if (V1State.isOverdefined() || V2State.isOverdefined()) {
-      markOverdefined(I);
-    } else if (V1State.isConstant() && V2State.isConstant()) {
-      Constant *Result =
-        ConstantFoldBinaryInstruction(I->getOpcode(),
-                                      V1State.getConstant(),
-                                      V2State.getConstant());
-      if (Result) {
-        // This instruction constant folds!
-        markConstant(I, Result);
-      } else {
-        markOverdefined(I);   // Don't know how to fold this instruction.  :(
-      }
-    }
-    return;
-  }
-
-  // Shouldn't get here... either the switch statement or one of the group
-  // handlers should have kicked in...
-  //
-  cerr << "SCCP: Don't know how to handle: " << I;
-  markOverdefined(I);   // Just in case
 }
 
+void SCCP::visitBranchInst(BranchInst *BI) {
+  if (BI->isUnconditional())
+    return; // Unconditional branches are already handled!
 
+  InstVal &BCValue = getValueState(BI->getCondition());
+  if (BCValue.isOverdefined()) {
+    // Overdefined condition variables mean the branch could go either way.
+    markExecutable(BI->getSuccessor(0));
+    markExecutable(BI->getSuccessor(1));
+  } else if (BCValue.isConstant()) {
+    // Constant condition variables mean the branch can only go a single way.
+    if (BCValue.getConstant() == ConstantBool::True)
+      markExecutable(BI->getSuccessor(0));
+    else
+      markExecutable(BI->getSuccessor(1));
+  }
+}
+
+void SCCP::visitSwitchInst(SwitchInst *SI) {
+  InstVal &SCValue = getValueState(SI->getCondition());
+  if (SCValue.isOverdefined()) {  // Overdefined condition?  All dests are exe
+    for(unsigned i = 0; BasicBlock *Succ = SI->getSuccessor(i); ++i)
+      markExecutable(Succ);
+  } else if (SCValue.isConstant()) {
+    Constant *CPV = SCValue.getConstant();
+    // Make sure to skip the "default value" which isn't a value
+    for (unsigned i = 1, E = SI->getNumSuccessors(); i != E; ++i) {
+      if (SI->getSuccessorValue(i) == CPV) {// Found the right branch...
+        markExecutable(SI->getSuccessor(i));
+        return;
+      }
+    }
+
+    // Constant value not equal to any of the branches... must execute
+    // default branch then...
+    markExecutable(SI->getDefaultDest());
+  }
+}
+
+void SCCP::visitUnaryOperator(Instruction *I) {
+  Value *V = I->getOperand(0);
+  InstVal &VState = getValueState(V);
+  if (VState.isOverdefined()) {        // Inherit overdefinedness of operand
+    markOverdefined(I);
+  } else if (VState.isConstant()) {    // Propogate constant value
+    Constant *Result = isa<CastInst>(I)
+      ? ConstantFoldCastInstruction(VState.getConstant(), I->getType())
+      : ConstantFoldUnaryInstruction(I->getOpcode(), VState.getConstant());
+
+    if (Result) {
+      // This instruction constant folds!
+      markConstant(I, Result);
+    } else {
+      markOverdefined(I);   // Don't know how to fold this instruction.  :(
+    }
+  }
+}
+
+// Handle BinaryOperators and Shift Instructions...
+void SCCP::visitBinaryOperator(Instruction *I) {
+  InstVal &V1State = getValueState(I->getOperand(0));
+  InstVal &V2State = getValueState(I->getOperand(1));
+  if (V1State.isOverdefined() || V2State.isOverdefined()) {
+    markOverdefined(I);
+  } else if (V1State.isConstant() && V2State.isConstant()) {
+    Constant *Result = ConstantFoldBinaryInstruction(I->getOpcode(),
+                                                     V1State.getConstant(),
+                                                     V2State.getConstant());
+    if (Result)
+      markConstant(I, Result);      // This instruction constant fold!s
+    else
+      markOverdefined(I);   // Don't know how to fold this instruction.  :(
+  }
+}
 
 // OperandChangedState - This method is invoked on all of the users of an
 // instruction that was just changed state somehow....  Based on this
@@ -505,7 +460,7 @@ void SCCP::OperandChangedState(User *U) {
   Instruction *I = cast<Instruction>(U);
   if (!BBExecutable.count(I->getParent())) return;  // Inst not executable yet!
 
-  UpdateInstruction(I);
+  visit(I);
 }
 
 namespace {
