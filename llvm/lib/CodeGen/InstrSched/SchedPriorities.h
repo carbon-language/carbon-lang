@@ -25,13 +25,22 @@
 #include "llvm/CodeGen/InstrScheduling.h"
 #include "llvm/Analysis/LiveVar/MethodLiveVarInfo.h"
 #include "llvm/Target/MachineSchedInfo.h"
+#include "Support/CommandLine.h"
 #include <list>
-//#include <ostream>
 
 class Method;
 class MachineInstr;
 class SchedulingManager;
 
+// Debug option levels for instruction scheduling
+enum SchedDebugLevel_t {
+  Sched_NoDebugInfo,
+  Sched_PrintMachineCode, 
+  Sched_PrintSchedTrace,
+  Sched_PrintSchedGraphs,
+};
+
+extern cl::Enum<SchedDebugLevel_t> SchedDebugLevel;
 
 struct NodeDelayPair {
   const SchedGraphNode* node;

@@ -13,24 +13,11 @@
 #define LLVM_CODEGEN_INSTR_SCHEDULING_H
 
 #include "llvm/CodeGen/MachineInstr.h"
-#include "Support/CommandLine.h"
 
 class Method;
 class SchedulingManager;
 class TargetMachine;
 class MachineSchedInfo;
-
-// Debug option levels for instruction scheduling
-enum SchedDebugLevel_t {
-  Sched_NoDebugInfo,
-  Sched_PrintMachineCode, 
-  Sched_PrintSchedTrace,
-  Sched_PrintSchedGraphs,
-};
-
-extern cl::Enum<SchedDebugLevel_t> SchedDebugLevel;
-
-
 
 //---------------------------------------------------------------------------
 // Function: ScheduleInstructionsWithSSA
@@ -42,7 +29,7 @@ extern cl::Enum<SchedDebugLevel_t> SchedDebugLevel;
 //   are still in SSA form.
 //---------------------------------------------------------------------------
 
-bool ScheduleInstructionsWithSSA(Method* method, const TargetMachine &Target);
+bool ScheduleInstructionsWithSSA(Method *M, const TargetMachine &Target);
 
 
 //---------------------------------------------------------------------------
