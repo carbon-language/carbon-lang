@@ -141,8 +141,10 @@ bool SimplifyCFG(BasicBlock *BB) {
         //
 	if (!PropagatePredecessorsForPHIs(BB, Succ)) {
           //cerr << "Killing Trivial BB: \n" << BB;
-          BB->replaceAllUsesWith(Succ);
           std::string OldName = BB->getName();
+
+          std::vector<BasicBlock*>
+            OldSuccPreds(pred_begin(Succ), pred_end(Succ));
 
           // Move all PHI nodes in BB to Succ if they are alive, otherwise
           // delete them.
@@ -152,10 +154,25 @@ bool SimplifyCFG(BasicBlock *BB) {
             else {
               // The instruction is alive, so this means that Succ must have
               // *ONLY* had BB as a predecessor, and the PHI node is still valid
-              // now.  Simply move it into Succ.
+              // now.  Simply move it into Succ, because we know that BB
+              // strictly dominated Succ.
               BB->getInstList().remove(BB->begin());
               Succ->getInstList().push_front(PN);
+
+              // We need to add new entries for the PHI node to account for
+              // predecessors of Succ that the PHI node does not take into
+              // account.  At this point, since we know that BB dominated succ,
+              // this means that we should any newly added incoming edges should
+              // use the PHI node as the value for these edges, because they are
+              // loop back edges.
+              
+              for (unsigned i = 0, e = OldSuccPreds.size(); i != e; ++i)
+                if (OldSuccPreds[i] != BB)
+                  PN->addIncoming(PN, OldSuccPreds[i]);
             }
+
+          // Everything that jumped to BB now goes to Succ...
+          BB->replaceAllUsesWith(Succ);
 
           // Delete the old basic block...
           M->getBasicBlockList().erase(BB);
