@@ -339,20 +339,20 @@ ChooseRegOrImmed(Value* val,
 
 
 void
-PrintMachineInstructions(Method* method)
+PrintMachineInstructions(const Method* method)
 {
   cout << "\n" << method->getReturnType()
        << " \"" << method->getName() << "\"" << endl;
   
   for (Method::const_iterator BI = method->begin(); BI != method->end(); ++BI)
     {
-      BasicBlock* bb = *BI;
+      const BasicBlock* bb = *BI;
       cout << "\n"
 	   << (bb->hasName()? bb->getName() : "Label")
 	   << " (" << bb << ")" << ":"
 	   << endl;
       
-      MachineCodeForBasicBlock& mvec = bb->getMachineInstrVec();
+      const MachineCodeForBasicBlock& mvec = bb->getMachineInstrVec();
       for (unsigned i=0; i < mvec.size(); i++)
 	cout << "\t" << *mvec[i] << endl;
     } 

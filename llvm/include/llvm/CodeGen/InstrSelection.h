@@ -53,11 +53,6 @@ extern bool	ThisIsAChainRule	(int eruleno);
 bool		SelectInstructionsForMethod	(Method* method,
 						 TargetMachine &Target);
 
-
-// Debugging function to print the generated instructions
-void		PrintMachineInstructions	(Method* method);
-
-
 //---------------------------------------------------------------------------
 // Function: FoldGetElemChain
 // 
