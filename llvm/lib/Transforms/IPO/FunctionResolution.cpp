@@ -69,7 +69,9 @@ static bool ResolveFunctions(Module &M, std::vector<GlobalValue*> &Globals,
             std::cerr << "WARNING: Function [" << Old->getName()
                       << "]: Parameter types conflict for: '" << OldMT
                       << "' and '" << ConcreteMT << "'\n";
-            return Changed;
+            if (OldMT->getParamTypes()[i]->getPrimitiveID() != 
+                ConcreteMT->getParamTypes()[i]->getPrimitiveID())
+              return Changed;
           }
       
       // Attempt to convert all of the uses of the old function to the concrete
