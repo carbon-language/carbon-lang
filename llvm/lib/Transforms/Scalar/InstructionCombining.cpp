@@ -2624,8 +2624,7 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
     bool EndsWithSequential = false;
     for (gep_type_iterator I = gep_type_begin(*cast<User>(PtrOp)),
            E = gep_type_end(*cast<User>(PtrOp)); I != E; ++I)
-      if (!isa<StructType>(*I))
-        EndsWithSequential = true;
+      EndsWithSequential = !isa<StructType>(*I);
   
     // Can we combine the two pointer arithmetics offsets?
     if (EndsWithSequential) {
