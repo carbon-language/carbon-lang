@@ -124,7 +124,8 @@ void ArchiveMember::replaceWith(const sys::Path& newFile) {
 // Archive class. Everything else (default,copy) is deprecated. This just 
 // initializes and maps the file into memory, if requested.
 Archive::Archive(const sys::Path& filename, bool map ) 
-  : archPath(filename), members(), mapfile(0), base(0), symTab(), symTabSize(0)
+  : archPath(filename), members(), mapfile(0), base(0), symTab(), strtab(),
+    symTabSize(0), firstFileOffset(0), modules(), foreignST(0)
 {
   if (map) {
     mapfile = new sys::MappedFile(filename);
