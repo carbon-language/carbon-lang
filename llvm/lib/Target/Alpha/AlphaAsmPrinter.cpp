@@ -37,7 +37,7 @@ namespace {
     unsigned LabelNumber;
  
      AlphaAsmPrinter(std::ostream &o, TargetMachine &tm) 
-      : AsmPrinter(o, tm), LabelNumber(0)
+       : AsmPrinter(o, tm), LabelNumber(0),  AlignmentIsInBytes(false)
     { }
 
     /// We name each basic block in a Function with a unique number, so
@@ -162,17 +162,12 @@ bool AlphaAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   setupMachineFunction(MF);
   O << "\n\n";
 
-  if (CurrentFnName.compare("main") == 0)
-    {
-      //      O << "\n\n#HACK\n\t.text\n\t.ent __main\n__main:\n\tret $31,($26),1\n\t.end __main\n#ENDHACK\n\n";
-    }
-
   // Print out constants referenced by the function
   printConstantPool(MF.getConstantPool());
 
   // Print out labels for the function.
   O << "\t.text\n";
-  emitAlignment(2);
+  emitAlignment(4);
   O << "\t.globl\t" << CurrentFnName << "\n";
   O << "\t.ent\t" << CurrentFnName << "\n";
 
