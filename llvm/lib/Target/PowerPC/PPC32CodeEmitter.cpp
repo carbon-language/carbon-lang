@@ -190,19 +190,22 @@ int PPC32CodeEmitter::getMachineOpValue(MachineInstr &MI, MachineOperand &MO) {
     rv = MO.getImmedValue();
   } else if (MO.isGlobalAddress()) {
     unsigned Reloc = 0;
+    int Offset = 0;
     if (MI.getOpcode() == PPC::CALLpcrel)
       Reloc = PPC::reloc_pcrel_bx;
     else if (MI.getOpcode() == PPC::LOADHiAddr) {
+      assert(MovePCtoLROffset && "MovePCtoLR not seen yet?");
       Reloc = PPC::reloc_absolute_loadhi;
+      Offset = -((intptr_t)MovePCtoLROffset+4);
     } else if (MI.getOpcode() == PPC::LA) {
+      assert(MovePCtoLROffset && "MovePCtoLR not seen yet?");
       Reloc = PPC::reloc_absolute_la;
+      Offset = -((intptr_t)MovePCtoLROffset+4);
     } else {
       assert(0 && "Unknown instruction for relocation!");
     }
-    assert(MovePCtoLROffset && "MovePCtoLR not seen yet?");
     MCE.addRelocation(MachineRelocation(MCE.getCurrentPCOffset(),
-                                        Reloc, MO.getGlobal(),
-                                        -((intptr_t)MovePCtoLROffset+4)));
+                                        Reloc, MO.getGlobal(), Offset));
   } else if (MO.isMachineBasicBlock()) {
     const BasicBlock *BB = MO.getMachineBasicBlock()->getBasicBlock();
     unsigned* CurrPC = (unsigned*)(intptr_t)MCE.getCurrentPCValue();
