@@ -11,7 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 class Format<bits<5> val> {
-	bits<5> Value = val;
+  bits<5> Value = val;
 }
 
 def Pseudo: Format<0>;
@@ -65,7 +65,7 @@ class I<bits<6> opcode, bit ppc64, bit vmx, dag OL, string asmstr>
 // 1.7.1 I-Form
 class IForm<bits<6> opcode, bit aa, bit lk, bit ppc64, bit vmx,
             dag OL, string asmstr> : I<opcode, ppc64, vmx, OL, asmstr> {
-  field bits<24> LI;
+  bits<24> LI;
 
   let ArgCount = 1;
   let Arg0Type = Imm24.Value;
@@ -82,9 +82,9 @@ class IForm<bits<6> opcode, bit aa, bit lk, bit ppc64, bit vmx,
 // 1.7.2 B-Form
 class BForm<bits<6> opcode, bit aa, bit lk, bit ppc64, bit vmx,
             dag OL, string asmstr> : I<opcode, ppc64, vmx, OL, asmstr> {
-  field bits<5>  BO;
-  field bits<5>  BI;
-  field bits<14> BD;
+  bits<5>  BO;
+  bits<5>  BI;
+  bits<14> BD;
 
   let ArgCount = 3;
   let Arg0Type = Imm5.Value;
@@ -114,9 +114,9 @@ class BForm_ext<bits<6> opcode, bit aa, bit lk, bits<5> bo, bits<5> bi,
 // 1.7.4 D-Form
 class DForm_base<bits<6> opcode, bit ppc64, bit vmx, dag OL, string asmstr>
   : I<opcode, ppc64, vmx, OL, asmstr> {
-  field bits<5>  A;
-  field bits<5>  B;
-  field bits<16> C;
+  bits<5>  A;
+  bits<5>  B;
+  bits<16> C;
   
   let ArgCount = 3;
   let Arg0Type = Gpr.Value;
@@ -141,8 +141,8 @@ class DForm_2<bits<6> opcode, bit ppc64, bit vmx, dag OL, string asmstr>
 
 class DForm_2_r0<bits<6> opcode, bit ppc64, bit vmx, dag OL, string asmstr>
   : I<opcode, ppc64, vmx, OL, asmstr> {
-  field bits<5>  A;
-  field bits<16> B;
+  bits<5>  A;
+  bits<16> B;
   
   let ArgCount = 2;
   let Arg0Type = Gpr.Value;
@@ -176,10 +176,10 @@ class DForm_4_zero<bits<6> opcode, bit ppc64, bit vmx, dag OL, string asmstr>
 
 class DForm_5<bits<6> opcode, bit ppc64, bit vmx, dag OL, string asmstr>
   : I<opcode, ppc64, vmx, OL, asmstr> {
-  field bits<3>  BF;
-  field bits<1>  L;
-  field bits<5>  RA;
-  field bits<16> I;
+  bits<3>  BF;
+  bits<1>  L;
+  bits<5>  RA;
+  bits<16> I;
 
   let ArgCount = 4;
   let Arg0Type = Imm3.Value;
@@ -231,9 +231,9 @@ class DForm_9<bits<6> opcode, bit ppc64, bit vmx, dag OL, string asmstr>
 // 1.7.5 DS-Form
 class DSForm_1<bits<6> opcode, bits<2> xo, bit ppc64, bit vmx,
                dag OL, string asmstr> : I<opcode, ppc64, vmx, OL, asmstr> {
-  field bits<5>  RST;
-  field bits<14> DS;
-  field bits<5>  RA;
+  bits<5>  RST;
+  bits<14> DS;
+  bits<5>  RA;
 
   let ArgCount = 3;
   let Arg0Type = Gpr.Value;
@@ -256,9 +256,9 @@ class DSForm_2<bits<6> opcode, bits<2> xo, bit ppc64, bit vmx,
 class XForm_base_r3xo<bits<6> opcode, bits<10> xo, bit rc, bit ppc64, bit vmx,
                       dag OL, string asmstr> 
   : I<opcode, ppc64, vmx, OL, asmstr> {
-  field bits<5> RST;
-  field bits<5> A;
-  field bits<5> B;
+  bits<5> RST;
+  bits<5> A;
+  bits<5> B;
 
   let ArgCount = 3;
   let Arg0Type = Gpr.Value;
@@ -313,10 +313,10 @@ class XForm_11<bits<6> opcode, bits<10> xo, bit rc, bit ppc64, bit vmx,
 
 class XForm_16<bits<6> opcode, bits<10> xo, bit ppc64, bit vmx,
                dag OL, string asmstr> : I<opcode, ppc64, vmx, OL, asmstr> {
-  field bits<3>  BF;
-  field bits<1>  L; 
-  field bits<5>  RA;
-  field bits<5>  RB;
+  bits<3> BF;
+  bits<1> L; 
+  bits<5> RA;
+  bits<5> RB;
   
   let ArgCount = 4;
   let Arg0Type = Imm3.Value;
@@ -346,9 +346,9 @@ class XForm_16_ext<bits<6> opcode, bits<10> xo, bit ppc64, bit vmx,
 
 class XForm_17<bits<6> opcode, bits<10> xo, bit ppc64, bit vmx,
                dag OL, string asmstr> : I<opcode, ppc64, vmx, OL, asmstr> {
-  field bits<3> BF;
-  field bits<5> FRA;
-  field bits<5> FRB;
+  bits<3> BF;
+  bits<5> FRA;
+  bits<5> FRB;
   
   let ArgCount = 3;
   let Arg0Type = Imm3.Value;
@@ -400,9 +400,9 @@ class XLForm_1<bits<6> opcode, bits<10> xo, bit ppc64, bit vmx,
 
 class XLForm_2<bits<6> opcode, bits<10> xo, bit lk, bit ppc64, bit vmx, 
                dag OL, string asmstr> : I<opcode, ppc64, vmx, OL, asmstr> {
-  field bits<5>  BO;
-  field bits<5>  BI;
-  field bits<2>  BH;
+  bits<5> BO;
+  bits<5> BI;
+  bits<2> BH;
   
   let ArgCount = 3;
   let Arg0Type = Imm5.Value;
@@ -435,8 +435,8 @@ class XLForm_2_ext<bits<6> opcode, bits<10> xo, bits<5> bo,
 // 1.7.8 XFX-Form
 class XFXForm_1<bits<6> opcode, bits<10> xo, bit ppc64, bit vmx, 
                 dag OL, string asmstr> : I<opcode, ppc64, vmx, OL, asmstr> {
-  field bits<5>  ST;
-  field bits<10> SPR;
+  bits<5>  ST;
+  bits<10> SPR;
 
   let ArgCount = 2;
   let Arg0Type = Imm5.Value;
@@ -476,9 +476,9 @@ class XFXForm_7_ext<bits<6> opcode, bits<10> xo, bits<10> spr,
 // 1.7.10 XS-Form
 class XSForm_1<bits<6> opcode, bits<9> xo, bit rc, bit ppc64, bit vmx,
                dag OL, string asmstr> : I<opcode, ppc64, vmx, OL, asmstr> {
-  field bits<5> RS;
-  field bits<5> A;
-  field bits<6> SH;
+  bits<5> RS;
+  bits<5> A;
+  bits<6> SH;
 
   let ArgCount = 3;
   let Arg0Type = Gpr.Value;
@@ -498,9 +498,9 @@ class XSForm_1<bits<6> opcode, bits<9> xo, bit rc, bit ppc64, bit vmx,
 // 1.7.11 XO-Form
 class XOForm_1<bits<6> opcode, bits<9> xo, bit oe, bit rc, bit ppc64, bit vmx,
                dag OL, string asmstr> : I<opcode, ppc64, vmx, OL, asmstr> {
-  field bits<5>  RT;
-  field bits<5>  RA;
-  field bits<5>  RB;
+  bits<5> RT;
+  bits<5> RA;
+  bits<5> RB;
 
   let ArgCount = 3;
   let Arg0Type = Gpr.Value;
@@ -535,10 +535,10 @@ class XOForm_3<bits<6> opcode, bits<9> xo, bit oe, bit rc, bit ppc64, bit vmx,
 class AForm_1<bits<6> opcode, bits<5> xo, bit rc, bit ppc64, bit vmx, 
               dag OL, string asmstr> : I<opcode, ppc64, vmx, OL, asmstr> {
   let ArgCount = 4;
-  field bits<5>  FRT;
-  field bits<5>  FRA;
-  field bits<5>  FRB;
-  field bits<5>  FRC;
+  bits<5> FRT;
+  bits<5> FRA;
+  bits<5> FRB;
+  bits<5> FRC;
 
   let Arg0Type = Fpr.Value;
   let Arg1Type = Fpr.Value;
@@ -574,11 +574,11 @@ class AForm_3<bits<6> opcode, bits<5> xo, bit rc, bit ppc64, bit vmx, dag OL,
 class MForm_1<bits<6> opcode, bit rc, bit ppc64, bit vmx,
               dag OL, string asmstr> : I<opcode, ppc64, vmx, OL, asmstr> {
   let ArgCount = 5;
-  field bits<5>  RS;
-  field bits<5>  RA;
-  field bits<5>  RB;
-  field bits<5>  MB;
-  field bits<5>  ME;
+  bits<5> RS;
+  bits<5> RA;
+  bits<5> RB;
+  bits<5> MB;
+  bits<5> ME;
 
   let Arg0Type = Gpr.Value;
   let Arg1Type = Gpr.Value;
@@ -604,10 +604,10 @@ class MForm_2<bits<6> opcode, bit rc, bit ppc64, bit vmx,
 class MDForm_1<bits<6> opcode, bits<3> xo, bit rc, bit ppc64, bit vmx,
                dag OL, string asmstr> : I<opcode, ppc64, vmx, OL, asmstr> {
   let ArgCount = 4;
-  field bits<5>  RS;
-  field bits<5>  RA;
-  field bits<6>  SH;
-  field bits<6>  MBE;
+  bits<5> RS;
+  bits<5> RA;
+  bits<6> SH;
+  bits<6> MBE;
 
   let Arg0Type = Gpr.Value;
   let Arg1Type = Gpr.Value;
