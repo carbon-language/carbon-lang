@@ -906,7 +906,8 @@ void DSGraph::removeTriviallyDeadNodes() {
     if ((Node->NodeType & ~DSNode::DEAD) == 0 && Node->hasNoReferrers()) {
       // This node is dead!
       delete Node;                        // Free memory...
-      Nodes.erase(Nodes.begin()+i--);         // Remove from node list...
+      Nodes[i--] = Nodes.back();
+      Nodes.pop_back();                   // Remove from node list...
     }
   }
 }
