@@ -1,10 +1,16 @@
 LLC  := ../tools/Debug/llc
 AS   := ../tools/Debug/as
 LLCOPTS := -dsched y
+ARCHFLAGS = ## -xarch=v9
+
+CC = /opt/SUNWspro/bin/cc
+CCFLAGS = -g $(ARCHFLAGS)
+## CC = gcc
+## CCFLAGS = -g $(ARCHFLAGS) ## -mcpu=v9
 
 TESTS := $(wildcard *.ll)
 
-LLCTESTS := $(shell /bin/ls *.ll | grep -v testmemory | grep -v testswitch | grep -v sumarray | grep -v opttest | grep -v xx.ll | grep -v select.ll )
+LLCTESTS := $(shell /bin/ls *.ll | grep -v testswitch | grep -v opttest | grep -v xx.ll | grep -v select.ll )
 
 
 test all : testasmdis testopt testcodegen
@@ -20,6 +26,8 @@ testselect  : $(LLCTESTS:%.ll=%.mc)
 testsched   : $(LLCTESTS:%.ll=%.mc)
 
 testcodegen : $(LLCTESTS:%.ll=%.mc)
+
+testsparc   : $(LLCTESTS:%.ll=%.s)
 
 clean :
 	rm -f *.[123] *.bc *.mc core
@@ -42,6 +50,10 @@ clean :
 %.s: %.ll $(LLC) $(AS)
 	$(AS) < $<  | $(LLC) > $@
 
-%.o: %.s %.ll
-	/usr/ccs/bin/as -xarch=v9 $<
+## %.o: %.s %.ll
+## 	/usr/ccs/bin/as $(ARCHFLAGS) $<
+
+
+%.o: %.s
+	$(CC) -c $(CCFLAGS) $<
 
