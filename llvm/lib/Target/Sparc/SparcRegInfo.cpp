@@ -29,7 +29,7 @@ void UltraSparcRegInfo::suggestReg4RetAddr(const MachineInstr * RetMI,
 
 
   // TODO (Optimize): 
-  //Instead of setting the color, we can suggest one. In that case,
+  // Instead of setting the color, we can suggest one. In that case,
   // we have to test later whether it received the suggested color.
   // In that case, a LR has to be created at the start of method.
   // It has to be done as follows (remove the setRegVal above):
@@ -393,7 +393,7 @@ void UltraSparcRegInfo::colorCallArgs(const MachineInstr *const CallMI,
 	    UniRetReg = getUnifiedRegNum( RegClassID, SparcFloatRegOrder::f0);
 
 
-	  AdMI = cpReg2RegMI(UniRetLRReg, UniRetReg, RegType ); 	
+	  AdMI = cpReg2RegMI(UniRetReg, UniRetLRReg, RegType ); 	
 	  CallAI->InstrnsAfter.push_back( AdMI );
       
 	
@@ -613,7 +613,7 @@ MachineInstr * UltraSparcRegInfo::cpReg2RegMI(const unsigned SrcReg,
 					      const unsigned DestReg,
 					      const int RegType) const {
 
-  assert( (SrcReg != InvalidRegNum) && (DestReg != InvalidRegNum) &&
+  assert( ((int)SrcReg != InvalidRegNum) && ((int)DestReg != InvalidRegNum) &&
 	  "Invalid Register");
   
   MachineInstr * MI = NULL;
@@ -647,6 +647,107 @@ MachineInstr * UltraSparcRegInfo::cpReg2RegMI(const unsigned SrcReg,
 }
 
 
+//---------------------------------------------------------------------------
+// Copy from a register to memory. Register number must be the unified
+// register number
+//---------------------------------------------------------------------------
+
+
+MachineInstr * UltraSparcRegInfo::cpReg2MemMI(const unsigned SrcReg, 
+					      const unsigned DestPtrReg,
+					      const int Offset,
+					      const int RegType) const {
+
+
+  MachineInstr * MI = NULL;
+
+  switch( RegType ) {
+    
+  case IntRegType:
+    MI = new MachineInstr(STX, 3);
+    MI->SetMachineOperand(0, DestPtrReg, false);
+    MI->SetMachineOperand(1, SrcReg, false);
+    MI->SetMachineOperand(2, MachineOperand:: MO_SignExtendedImmed, 
+			  (int64_t) Offset, false);
+    break;
+
+  case FPSingleRegType:
+    MI = new MachineInstr(ST, 3);
+    MI->SetMachineOperand(0, DestPtrReg, false);
+    MI->SetMachineOperand(1, SrcReg, false);
+    MI->SetMachineOperand(2, MachineOperand:: MO_SignExtendedImmed, 
+			  (int64_t) Offset, false);
+    break;
+
+  case FPDoubleRegType:
+    MI = new MachineInstr(STD, 3);
+    MI->SetMachineOperand(0, DestPtrReg, false);
+    MI->SetMachineOperand(1, SrcReg, false);
+    MI->SetMachineOperand(2, MachineOperand:: MO_SignExtendedImmed, 
+			  (int64_t) Offset, false);
+    break;
+
+  default:
+    assert(0 && "Unknow RegType");
+  }
+
+  return MI;
+}
+
+
+//---------------------------------------------------------------------------
+// Copy from memory to a reg. Register number must be the unified
+// register number
+//---------------------------------------------------------------------------
+
+
+MachineInstr * UltraSparcRegInfo::cpMem2RegMI(const unsigned SrcPtrReg,	
+					      const int Offset,
+					      const unsigned DestReg,
+					      const int RegType) const {
+  
+  MachineInstr * MI = NULL;
+
+  switch( RegType ) {
+    
+  case IntRegType:
+    MI = new MachineInstr(LDX, 3);
+    MI->SetMachineOperand(0, SrcPtrReg, false);
+    MI->SetMachineOperand(1, MachineOperand:: MO_SignExtendedImmed, 
+			  (int64_t) Offset, false);
+    MI->SetMachineOperand(2, DestReg, false);
+    break;
+
+  case FPSingleRegType:
+    MI = new MachineInstr(LD, 3);
+    MI->SetMachineOperand(0, SrcPtrReg, false);
+    MI->SetMachineOperand(1, MachineOperand:: MO_SignExtendedImmed, 
+			  (int64_t) Offset, false);
+    MI->SetMachineOperand(2, DestReg, false);
+
+    break;
+
+  case FPDoubleRegType:
+    MI = new MachineInstr(LDD, 3);
+    MI->SetMachineOperand(0, SrcPtrReg, false);
+    MI->SetMachineOperand(1, MachineOperand:: MO_SignExtendedImmed, 
+			  (int64_t) Offset, false);
+    MI->SetMachineOperand(2, DestReg, false);
+    break;
+
+  default:
+    assert(0 && "Unknow RegType");
+  }
+
+  return MI;
+}
+
+
+
+
+
+
+
 
 
 //---------------------------------------------------------------------------
@@ -659,7 +760,7 @@ MachineInstr * UltraSparcRegInfo::cpValue2RegMI(Value * Val,
 						const unsigned DestReg,
 						const int RegType) const {
 
-  assert( (DestReg != InvalidRegNum) && "Invalid Register");
+  assert( ((int)DestReg != InvalidRegNum) && "Invalid Register");
 
   /*
   unsigned MReg;

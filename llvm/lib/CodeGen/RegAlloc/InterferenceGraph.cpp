@@ -7,7 +7,7 @@ InterferenceGraph::InterferenceGraph(RegClass *const RC) : RegCl(RC),
   IG = NULL;         
   Size = 0;            
   if( DEBUG_RA) {
-    cerr << "Interference graph created!" << endl;
+    cout << "Interference graph created!" << endl;
   }
 }
 
@@ -65,7 +65,7 @@ void InterferenceGraph::setInterference(const LiveRange *const LR1,
   char *val;
 
   if( DEBUG_RA > 1) 
-    cerr << "setting intf for: [" << row << "][" <<  col << "]" << endl; 
+    cout << "setting intf for: [" << row << "][" <<  col << "]" << endl; 
 
   ( row > col) ?  val = &IG[row][col]: val = &IG[col][row]; 
 
@@ -118,9 +118,9 @@ void InterferenceGraph::mergeIGNodesOfLRs(const LiveRange *const LR1,
   assertIGNode( SrcNode );
 
   if( DEBUG_RA > 1) {
-    cerr << "Merging LRs: \""; LR1->printSet(); 
-    cerr << "\" and \""; LR2->printSet();
-    cerr << "\"" << endl;
+    cout << "Merging LRs: \""; LR1->printSet(); 
+    cout << "\" and \""; LR2->printSet();
+    cout << "\"" << endl;
   }
 
   unsigned SrcDegree = SrcNode->getNumOfNeighbors();
@@ -147,10 +147,10 @@ void InterferenceGraph::mergeIGNodesOfLRs(const LiveRange *const LR1,
       setInterference(LR1, LROfNeigh );  
     }
     
-    //cerr<< "  #Neighs - Neigh: ["<< NeighNode->getIndex()<< "] ";
-    //cerr << NeighNode->getNumOfNeighbors();
-    //cerr << " Dest: [" << DestNode->getIndex() << "] ";
-    //cerr << DestNode->getNumOfNeighbors()  << endl;
+    //cout<< "  #Neighs - Neigh: ["<< NeighNode->getIndex()<< "] ";
+    //cout << NeighNode->getNumOfNeighbors();
+    //cout << " Dest: [" << DestNode->getIndex() << "] ";
+    //cout << DestNode->getNumOfNeighbors()  << endl;
 
   }
 
@@ -193,13 +193,13 @@ void InterferenceGraph::printIG() const
     if( ! Node )
       continue;                         // skip empty rows
 
-    cerr << " [" << i << "] ";
+    cout << " [" << i << "] ";
 
       for( unsigned int j=0; j < Size; j++) {
 	if( j >= i) break;
-	if( IG[i][j] ) cerr << "(" << i << "," << j << ") ";
+	if( IG[i][j] ) cout << "(" << i << "," << j << ") ";
       }
-      cerr << endl;
+      cout << endl;
     }
 }
 
@@ -215,10 +215,10 @@ void InterferenceGraph::printIGNodeList() const
     if( ! Node )
       continue;
 
-    cerr << " [" << Node->getIndex() << "] ";
+    cout << " [" << Node->getIndex() << "] ";
     (Node->getParentLR())->printSet(); 
     //int Deg = Node->getCurDegree();
-    cerr << "\t <# of Neighs: " << Node->getNumOfNeighbors() << ">" << endl;
+    cout << "\t <# of Neighs: " << Node->getNumOfNeighbors() << ">" << endl;
     
   }
 }

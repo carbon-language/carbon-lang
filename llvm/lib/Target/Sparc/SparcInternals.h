@@ -148,7 +148,7 @@ class UltraSparcRegInfo : public MachineRegInfo
   // %o0 to %o5 (cannot be changed)
   unsigned const NumOfIntArgRegs;
   unsigned const NumOfFloatArgRegs;
-  unsigned const InvalidRegNum;
+  int const InvalidRegNum;
 
   //void setCallArgColor(LiveRange *const LR, const unsigned RegNo) const;
 
@@ -221,9 +221,7 @@ class UltraSparcRegInfo : public MachineRegInfo
 
 
 
-
-  MachineInstr * cpReg2RegMI(const unsigned SrcReg,  const unsigned DestReg,
-			     const int RegType) const;
+  // ***TODO: See this method is necessary
 
   MachineInstr * cpValue2RegMI(Value * Val,  const unsigned DestReg,
 			       const int RegType) const;
@@ -329,8 +327,8 @@ class UltraSparcRegInfo : public MachineRegInfo
       return reg + 32 + 64;             // 32 int, 64 float
     else if( RegClassID == IntCCRegClassID ) 
       return 4+ 32 + 64;                // only int cc reg
-    else if (reg==1000)                 //****** TODO: Remove 
-      return 1000;
+    else if (reg==InvalidRegNum)                
+      return InvalidRegNum;
     else  
       assert(0 && "Invalid register class or reg number");
 
@@ -347,12 +345,38 @@ class UltraSparcRegInfo : public MachineRegInfo
     else if ( reg == 64+32+4)
       return "xcc";                     // only integer cc reg
 
-    else if (reg==1000)                 //****** TODO: Remove
+    else if (reg== InvalidRegNum)       //****** TODO: Remove
       return "<*NoReg*>";
     else 
       assert(0 && "Invalid register number");
   }
 
+
+  MachineInstr * cpReg2RegMI(const unsigned SrcReg, const unsigned DestReg,
+			     const int RegType) const;
+
+  MachineInstr * cpReg2MemMI(const unsigned SrcReg,  const unsigned DestPtrReg,
+			     const int Offset, const int RegType) const;
+
+  MachineInstr * cpMem2RegMI(const unsigned SrcPtrReg, const int Offset,
+			     const unsigned DestReg, const int RegType) const;
+
+  inline bool isRegVolatile(const int RegClassID, const int Reg) const {
+    return  (MachineRegClassArr[RegClassID])->isRegVolatile(Reg);
+  }
+
+
+  inline unsigned getFramePointer() const {
+    return SparcIntRegOrder::i6;
+  }
+
+  inline unsigned getStackPointer() const {
+    return SparcIntRegOrder::o6;
+  }
+
+  inline int getInvalidRegNum() const {
+    return InvalidRegNum;
+  }
 
 };
 
@@ -495,7 +519,7 @@ const InstrClassRUsage NoneClassRUsage = {
   /*numEntries*/ 0,
   /* V[] */ {
     /*Cycle G */
-    /*Cycle E */
+    /*Ccle E */
     /*Cycle C */
     /*Cycle N1*/
     /*Cycle N1*/

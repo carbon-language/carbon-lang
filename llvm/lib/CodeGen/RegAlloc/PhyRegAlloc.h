@@ -81,6 +81,9 @@ class PhyRegAlloc
   void addInterferencesForArgs();
   void createIGNodeListsAndIGs();
   void buildInterferenceGraphs();
+  void insertCallerSavingCode(const MachineInstr *MInst, 
+			      const BasicBlock *BB );
+
 
   inline void constructLiveRanges() 
     { LRI.constructLiveRanges(); }      

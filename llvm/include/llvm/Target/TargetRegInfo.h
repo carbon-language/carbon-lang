@@ -54,7 +54,7 @@ public:
   // This method should find a color which is not used by neighbors
   // (i.e., a false position in IsColorUsedArr) and 
   virtual void colorIGNode(IGNode * Node, bool IsColorUsedArr[] ) const = 0;
-
+  virtual bool isRegVolatile(const int Reg) const = 0;
 
   MachineRegClassInfo(const unsigned ID, const unsigned NVR, 
 		      const unsigned NAR): RegClassID(ID), NumOfAvailRegs(NVR),
@@ -138,6 +138,22 @@ public:
 
 
 
+  virtual MachineInstr * 
+  cpReg2RegMI(const unsigned SrcReg, const unsigned DestReg,
+	      const int RegType) const=0;
+
+   virtual MachineInstr * 
+   cpReg2MemMI(const unsigned SrcReg, const unsigned DestPtrReg,
+	       const int Offset, const int RegType) const=0;
+
+   virtual MachineInstr *
+   cpMem2RegMI(const unsigned SrcPtrReg, const int Offset,
+	       const unsigned DestReg, const int RegType) const=0;
+
+  virtual bool isRegVolatile(const int RegClassID, const int Reg) const=0;
+
+
+
   //virtual bool handleSpecialMInstr(const MachineInstr * MInst, 
   //		       LiveRangeInfo& LRI,  vector<RegClass *> RCL) const  = 0;
  
@@ -152,6 +168,16 @@ public:
   virtual int getUnifiedRegNum(int RegClassID, int reg) const = 0;
 
   virtual const string getUnifiedRegName(int UnifiedRegNum) const = 0;
+
+  virtual int getRegType(const LiveRange *const LR) const=0;
+
+
+  inline virtual unsigned getFramePointer() const=0;
+
+  inline virtual unsigned getStackPointer() const=0;
+
+  inline virtual int getInvalidRegNum() const=0;
+
 
   //virtual void printReg(const LiveRange *const LR) const =0;
 

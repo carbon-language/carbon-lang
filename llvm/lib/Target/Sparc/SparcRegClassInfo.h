@@ -58,6 +58,8 @@ class SparcIntRegOrder{
 
      g0,  g1, g2, g3, g4, g5, g6, g7, i6, i7,  o6
 
+     //*** NOTE: If we decide to use globals, some of them are volatile 
+     //**** see sparc64ABI (change isRegVloatile method below)
  
 
    };
@@ -90,6 +92,10 @@ class SparcIntRegClass : public MachineRegClassInfo
     {  }
 
   void colorIGNode(IGNode * Node, bool IsColorUsedArr[] ) const;
+
+  inline bool isRegVolatile(const int Reg) const {
+    return (Reg < (int) SparcIntRegOrder::StartOfNonVolatileRegs); 
+  }
 
 };
 
@@ -163,6 +169,10 @@ class SparcFloatRegClass : public MachineRegClassInfo
 
   void colorIGNode(IGNode * Node, bool IsColorUsedArr[] ) const;
 
+  // according to  Sparc 64 ABI, all %fp regs are volatile
+  inline bool isRegVolatile(const int Reg) const { return true; }
+
+
 };
 
 
@@ -184,6 +194,9 @@ public:
   inline void colorIGNode(IGNode * Node, bool IsColorUsedArr[] ) const {
     Node->setColor(0);    // only one int cc reg is available
   }
+
+  // *** TODO: Check this
+  inline bool isRegVolatile(const int Reg) const { return true; }
 
 };
 
@@ -215,6 +228,10 @@ class SparcFloatCCRegOrder{
     return FloatCCRegNames[reg];
   }
 
+  // according to  Sparc 64 ABI, all %fp regs are volatile
+  inline bool isRegVolatile(const int Reg) const { return true; }
+
+
 };
 
 
@@ -232,6 +249,10 @@ public:
     assert( (c < 4)  && "Can allocate only 4 float cc registers");
     Node->setColor(c);   
   }
+
+  // *** TODO: Check this
+  inline bool isRegVolatile(const int Reg) const { return true; }
+
 
 };
 

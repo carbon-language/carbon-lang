@@ -46,7 +46,7 @@ void LiveRangeInfo::constructLiveRanges()
 {  
 
   if( DEBUG_RA) 
-    cerr << "Consturcting Live Ranges ..." << endl;
+    cout << "Consturcting Live Ranges ..." << endl;
 
   // first find the live ranges for all incoming args of the method since
   // those LRs start from the start of the method
@@ -75,8 +75,8 @@ void LiveRangeInfo::constructLiveRanges()
 
     			   
     if( DEBUG_RA > 1) {     
-      cerr << " adding LiveRange for argument ";    
-      printValue( (const Value *) *ArgIt); cerr  << endl;
+      cout << " adding LiveRange for argument ";    
+      printValue( (const Value *) *ArgIt); cout  << endl;
     }
   }
 
@@ -124,9 +124,9 @@ void LiveRangeInfo::constructLiveRanges()
 	    OpI.getMachineOperand().getOperandType();
 
 	  if ( OpTyp == MachineOperand::MO_CCRegister) {
-	    cerr << "\n**CC reg found. Is Def=" << OpI.isDef() << " Val:";
+	    cout << "\n**CC reg found. Is Def=" << OpI.isDef() << " Val:";
 	    printValue( OpI.getMachineOperand().getVRegValue() );
-	    cerr << endl;
+	    cout << endl;
 	  }
 	}
 
@@ -139,8 +139,8 @@ void LiveRangeInfo::constructLiveRanges()
 	  // Only instruction values are accepted for live ranges here
 
 	  if( Def->getValueType() != Value::InstructionVal ) {
-	    cerr << "\n**%%Error: Def is not an instruction val. Def=";
-	    printValue( Def ); cerr << endl;
+	    cout << "\n**%%Error: Def is not an instruction val. Def=";
+	    printValue( Def ); cout << endl;
 	    continue;
 	  }
 
@@ -156,8 +156,8 @@ void LiveRangeInfo::constructLiveRanges()
 	    LiveRangeMap[ Def ] = DefRange; // update the map
 
 	    if( DEBUG_RA > 1) { 	    
-	      cerr << "  creating a LR for def: ";    
-	      printValue(Def); cerr  << endl;
+	      cout << "  creating a LR for def: ";    
+	      printValue(Def); cout  << endl;
 	    }
 
 	    // set the register class of the new live range
@@ -171,7 +171,7 @@ void LiveRangeInfo::constructLiveRanges()
 
 
 	    if(isCC && DEBUG_RA) {
-	      cerr  << "\a**created a LR for a CC reg:";
+	      cout  << "\a**created a LR for a CC reg:";
 	      printValue( OpI.getMachineOperand().getVRegValue() );
 	    }
 
@@ -185,8 +185,8 @@ void LiveRangeInfo::constructLiveRanges()
 	    LiveRangeMap[ Def ] = DefRange; 
 
 	    if( DEBUG_RA > 1) { 
-	      cerr << "   added to an existing LR for def: ";  
-	      printValue( Def ); cerr  << endl;
+	      cout << "   added to an existing LR for def: ";  
+	      printValue( Def ); cout  << endl;
 	    }
 	  }
 
@@ -206,7 +206,7 @@ void LiveRangeInfo::constructLiveRanges()
   suggestRegs4CallRets();
 
   if( DEBUG_RA) 
-    cerr << "Initial Live Ranges constructed!" << endl;
+    cout << "Initial Live Ranges constructed!" << endl;
 
 }
 
@@ -257,7 +257,7 @@ void LiveRangeInfo::coalesceLRs()
 */
 
   if( DEBUG_RA) 
-    cerr << endl << "Coalscing LRs ..." << endl;
+    cout << endl << "Coalscing LRs ..." << endl;
 
   Method::const_iterator BBI = Meth->begin();  // random iterator for BBs   
 
@@ -274,9 +274,9 @@ void LiveRangeInfo::coalesceLRs()
       const MachineInstr * MInst = *MInstIterator; 
 
       if( DEBUG_RA > 1) {
-	cerr << " *Iterating over machine instr ";
+	cout << " *Iterating over machine instr ";
 	MInst->dump();
-	cerr << endl;
+	cout << endl;
       }
 
 
@@ -298,8 +298,8 @@ void LiveRangeInfo::coalesceLRs()
 
 	      //don't warn about labels
 	      if (!((*UseI)->getType())->isLabelType() && DEBUG_RA) {
-		cerr<<" !! Warning: No LR for use "; printValue(*UseI);
-		cerr << endl;
+		cout<<" !! Warning: No LR for use "; printValue(*UseI);
+		cout << endl;
 	      }
 	      continue;                 // ignore and continue
 	    }
@@ -345,7 +345,7 @@ void LiveRangeInfo::coalesceLRs()
   } // for all BBs
 
   if( DEBUG_RA) 
-    cerr << endl << "Coalscing Done!" << endl;
+    cout << endl << "Coalscing Done!" << endl;
 
 }
 
@@ -359,11 +359,11 @@ void LiveRangeInfo::coalesceLRs()
 void LiveRangeInfo::printLiveRanges()
 {
   LiveRangeMapType::iterator HMI = LiveRangeMap.begin();   // hash map iterator
-  cerr << endl << "Printing Live Ranges from Hash Map:" << endl;
+  cout << endl << "Printing Live Ranges from Hash Map:" << endl;
   for( ; HMI != LiveRangeMap.end() ; HMI ++ ) {
     if( (*HMI).first && (*HMI).second ) {
-      cerr <<" "; printValue((*HMI).first);  cerr  << "\t: "; 
-      ((*HMI).second)->printSet(); cerr << endl;
+      cout <<" "; printValue((*HMI).first);  cout  << "\t: "; 
+      ((*HMI).second)->printSet(); cout << endl;
     }
   }
 }
