@@ -88,10 +88,16 @@ the C front-end.
 
 <ol>
 <li>The LLVM <a href="LangRef.html#i_select"><tt>select</tt></a> instruction is
-now fully implemented and supported by all targets, including
-<a href="http://llvm.cs.uiuc.edu/PR322">interpreter support.</a></li>
+now fully implemented and supported by all transformations, native code
+generators, and the interpreter.</li>
 <li>Bugpoint can now narrow down code-generation bugs to a loop nest, where
 before it could only narrow them down to a function being miscompiled.</li>
+<li>The Control Flow Graph in the native code generators is no longer
+constrained to be the same as the CFG for the LLVM input code.</li>
+<li>The LLVM induction variable analysis routines have been rewritten.</li>
+<li>LLVM now has new loop unrolling and loop unswitching passes.</li>
+<li>The induction variable substitution pass performs linear function test
+replacement and exit value replacement optimizations.</li>
 </ol>
 
 
@@ -132,13 +138,13 @@ In this release, the following build problems were fixed:
 
 <!--=========================================================================-->
 <div class="doc_subsubsection">
-<a name="codequality">In this release, the following Code Quality issues were
-fixed:</a>
+<a name="codequality">This release includes the following Code Quality
+improvements:</a>
 </div>
 
 <ol>
-<li><a href="http://llvm.cs.uiuc.edu/PR309">[vmcore] Code quality problem due to
-long operand of getelementptr</a></li>
+<li>Fixed: <a href="http://llvm.cs.uiuc.edu/PR309">[vmcore] Code quality problem
+due to long operand of getelementptr</a></li>
 
 <li>The X86 backend now generates substantially better code for 64-bit integer
 and floating point operations.</li>
@@ -162,6 +168,11 @@ memory.</li>
 
 <li>The link-time optimizer now runs the -prune-eh pass (to remove unused
 exception handlers.</li>
+
+<li>The -simplifycfg pass can now eliminate simple correlated branches (such as
+"<tt>if (A &lt; B &amp;&amp; A &lt; B)</tt>", and can turn short-circuiting
+operators into the strict versions when useful (such as "<tt>if (A &lt; B || A
+&gt; C)</tt>" into "<tt>if (A &lt; B | A &gt; C)</tt>"</li>
 
 </ol>
 
