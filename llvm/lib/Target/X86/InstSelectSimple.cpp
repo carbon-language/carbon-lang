@@ -1179,7 +1179,7 @@ void ISel::visitDivRem(BinaryOperator &I) {
 
   static const unsigned Regs[]     ={ X86::AL    , X86::AX     , X86::EAX     };
   static const unsigned MovOpcode[]={ X86::MOVrr8, X86::MOVrr16, X86::MOVrr32 };
-  static const unsigned ExtOpcode[]={ X86::CBW   , X86::CWD    , X86::CDQ     };
+  static const unsigned SarOpcode[]={ X86::SARir8, X86::SARir16, X86::SARir32 };
   static const unsigned ClrOpcode[]={ X86::XORrr8, X86::XORrr16, X86::XORrr32 };
   static const unsigned ExtRegs[]  ={ X86::AH    , X86::DX     , X86::EDX     };
 
@@ -1197,7 +1197,9 @@ void ISel::visitDivRem(BinaryOperator &I) {
 
   if (isSigned) {
     // Emit a sign extension instruction...
-    BuildMI(BB, ExtOpcode[Class], 0);
+    unsigned ShiftResult = makeAnotherReg(I.getType());
+    BuildMI(BB, SarOpcode[Class], 2, ShiftResult).addReg(Op0Reg).addZImm(31);
+    BuildMI(BB, MovOpcode[Class], 1, ExtReg).addReg(ShiftResult);
   } else {
     // If unsigned, emit a zeroing instruction... (reg = xor reg, reg)
     BuildMI(BB, ClrOpcode[Class], 2, ExtReg).addReg(ExtReg).addReg(ExtReg);
