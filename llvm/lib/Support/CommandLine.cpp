@@ -917,7 +917,7 @@ public:
   void operator=(bool OptionWasSpecified) {
     if (OptionWasSpecified) {
       std::cerr << "Low Level Virtual Machine (" << PACKAGE_NAME << ") " 
-        << PACKAGE_VERSION << " (see http://llvm.org/)\n";
+                << PACKAGE_VERSION << " (see http://llvm.cs.uiuc.edu/)\n";
       exit(1);
     }
   }
