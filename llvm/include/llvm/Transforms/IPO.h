@@ -24,6 +24,13 @@ class Function;
 class BasicBlock;
 
 //===----------------------------------------------------------------------===//
+//
+// These functions removes symbols from functions and modules.  If OnlyDebugInfo
+// is true, only debugging information is removed from the module.
+//
+ModulePass *createStripSymbolsPass(bool OnlyDebugInfo = false);
+
+//===----------------------------------------------------------------------===//
 /// createLowerSetJmpPass - This function lowers the setjmp/longjmp intrinsics
 /// to invoke/unwind instructions.  This should really be part of the C/C++
 /// front-end, but it's so much easier to write transformations in LLVM proper.

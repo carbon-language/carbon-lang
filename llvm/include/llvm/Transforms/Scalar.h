@@ -276,14 +276,6 @@ FunctionPass *createLowerGCPass();
 // into regular LLVM instructions.
 FunctionPass* createLowerConstantExpressionsPass();
   
-
-//===----------------------------------------------------------------------===//
-//
-// These functions removes symbols from functions and modules.
-//
-FunctionPass *createSymbolStrippingPass();
-FunctionPass *createFullSymbolStrippingPass();
-
 } // End llvm namespace
 
 #endif
