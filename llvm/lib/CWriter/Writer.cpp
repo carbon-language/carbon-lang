@@ -20,12 +20,9 @@
 #include "llvm/Support/Mangler.h"
 #include "Support/StringExtras.h"
 #include "Support/STLExtras.h"
+#include "Config/config.h"
 #include <algorithm>
 #include <sstream>
-
-
-/* FIXME: This should be autoconf'd! */
-#define HAS_C99_HEXADECIMAL_CONSTANTS 1
 
 namespace {
   class CWriter : public Pass, public InstVisitor<CWriter> {
@@ -341,7 +338,7 @@ void CWriter::printConstantArray(ConstantArray *CPA) {
 // only deal in IEEE FP).
 //
 static bool isFPCSafeToPrint(const ConstantFP *CFP) {
-#if HAS_C99_HEXADECIMAL_CONSTANTS
+#if HAVE_PRINTF_A
   char Buffer[100];
   sprintf(Buffer, "%a", CFP->getValue());
 
@@ -457,7 +454,7 @@ void CWriter::printConstant(Constant *CPV) {
       Out << "(*(" << (FPC->getType() == Type::FloatTy ? "float" : "double")
           << "*)&FPConstant" << I->second << ")";
     } else {
-#if HAS_C99_HEXADECIMAL_CONSTANTS
+#if HAVE_PRINTF_A
       // Print out the constant as a floating point number.
       char Buffer[100];
       sprintf(Buffer, "%a", FPC->getValue());
