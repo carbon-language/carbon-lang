@@ -67,7 +67,7 @@ const unsigned  M_PSEUDO_FLAG           = 1 << 14;
 
 
 struct MachineInstrDescriptor {
-  const char *    opCodeString;  // Assembly language mnemonic for the opcode.
+  const char *    Name;          // Assembly language mnemonic for the opcode.
   int             numOperands;   // Number of args; -1 if variable #args
   int             resultPos;     // Position of the result; -1 if no result
   unsigned        maxImmedConst; // Largest +ve constant in IMMMED field or 0.
@@ -101,6 +101,10 @@ public:
   const MachineInstrDescriptor& get(MachineOpCode opCode) const {
     assert(opCode >= 0 && opCode < (int)descSize);
     return desc[opCode];
+  }
+
+  const char *getName(MachineOpCode opCode) const {
+    return get(opCode).Name;
   }
   
   int getNumOperands(MachineOpCode opCode) const {
