@@ -112,33 +112,44 @@ namespace {
         eatLineRemnant();
     }
 
+    bool parseCompleteItem(std::string& result) {
+      result.clear();
+      while (next_is_real()) {
+        switch (token ) {
+          case STRING :
+          case OPTION : 
+            result += ConfigLexerState.StringVal;
+            break;
+          case SEPARATOR:
+            result += ".";
+            break;
+          case SPACE:
+            return true;
+          default:
+            return false;
+        }
+      }
+      return false;
+    }
+
     std::string parseName() {
       std::string result;
       if (next() == EQUALS) {
-        while (next_is_real()) {
-          switch (token ) {
-            case STRING :
-            case OPTION : 
-              result += ConfigLexerState.StringVal + " ";
-              break;
-            default:
-              error("Invalid name");
-              break;
-          }
-        }
+        if (parseCompleteItem(result))
+          eatLineRemnant();
         if (result.empty())
           error("Name exepected");
-        else
-          result.erase(result.size()-1,1);
       } else
-        error("= expected");
+        error("Expecting '='");
       return result;
     }
 
     bool parseBoolean() {
       bool result = true;
       if (next() == EQUALS) {
-        if (next() == FALSETOK) {
+        if (next() == SPACE)
+          next();
+        if (token == FALSETOK) {
           result = false;
         } else if (token != TRUETOK) {
           error("Expecting boolean value");
@@ -166,6 +177,9 @@ namespace {
         case STATS_SUBST:       optList.push_back("%stats%"); break;
         case TIME_SUBST:        optList.push_back("%time%"); break;
         case VERBOSE_SUBST:     optList.push_back("%verbose%"); break;
+        case FOPTS_SUBST:       optList.push_back("%fOpts%"); break;
+        case MOPTS_SUBST:       optList.push_back("%Mopts%"); break;
+        case WOPTS_SUBST:       optList.push_back("%Wopts%"); break;
         default:
           return false;
       }
@@ -187,19 +201,34 @@ namespace {
     }
 
     void parseVersion() {
-      if (next() == EQUALS) {
-        while (next_is_real()) {
-          if (token == STRING || token == OPTION)
-            confDat->version = ConfigLexerState.StringVal;
-          else
-            error("Expecting a version string");
-        }
-      } else
+      if (next() != EQUALS)
         error("Expecting '='");
+      while (next_is_real()) {
+        if (token == STRING || token == OPTION)
+          confDat->version = ConfigLexerState.StringVal;
+        else
+          error("Expecting a version string");
+      }
+    }
+
+    void parseLibs() {
+      if (next() != EQUALS)
+        error("Expecting '='");
+      std::string lib;
+      while (parseCompleteItem(lib)) {
+        if (!lib.empty()) {
+          confDat->libpaths.push_back(lib);
+        }
+      }
     }
 
     void parseLang() {
+      if (next() != SEPARATOR)
+        error("Expecting '.'");
       switch (next() ) {
+        case LIBS:
+          parseLibs();
+          break;
         case NAME: 
           confDat->langName = parseName(); 
           break;
@@ -225,24 +254,103 @@ namespace {
       }
     }
 
+    bool parseProgramName(std::string& str) {
+      str.clear();
+      do {
+        switch (token) {
+          case OPTION:
+          case STRING:
+          case ARGS_SUBST:
+          case DEFS_SUBST:
+          case IN_SUBST:
+          case INCLS_SUBST:
+          case LIBS_SUBST:
+          case OPT_SUBST:
+          case OUT_SUBST:
+          case STATS_SUBST:
+          case TARGET_SUBST:
+          case TIME_SUBST:
+          case VERBOSE_SUBST:
+          case FOPTS_SUBST:
+          case MOPTS_SUBST:
+          case WOPTS_SUBST:
+            str += ConfigLexerState.StringVal;
+            break;
+          case SEPARATOR:
+            str += ".";
+            break;
+          case ASSEMBLY:
+            str += "assembly";
+            break;
+          case BYTECODE:
+            str += "bytecode";
+            break;
+          case TRUETOK:
+            str += "true";
+            break;
+          case FALSETOK:
+            str += "false";
+            break;
+          default:
+            break;
+        }
+        next();
+      } while (token != SPACE && token != EOFTOK && token != EOLTOK && 
+               token != ERRORTOK);
+      return !str.empty();
+    }
+
     void parseCommand(CompilerDriver::Action& action) {
-      if (next() == EQUALS) {
-        if (next() == EOLTOK) {
+      if (next() != EQUALS)
+        error("Expecting '='");
+      switch (next()) {
+        case EOLTOK:
           // no value (valid)
           action.program.clear();
           action.args.clear();
-        } else {
-          if (token == STRING || token == OPTION) {
-            action.program.setFile(ConfigLexerState.StringVal);
-          } else {
+          break;
+        case SPACE:
+          next();
+          /* FALL THROUGH */
+        default: 
+        {
+          std::string progname;
+          if (parseProgramName(progname))
+            action.program.setFile(progname);
+          else
             error("Expecting a program name");
-          }
+
+          // Get the options
+          std::string anOption;
           while (next_is_real()) {
-            if (token == STRING || token == OPTION) {
-              action.args.push_back(ConfigLexerState.StringVal);
-            } else if (!parseSubstitution(action.args)) {
-              error("Expecting a program argument or substitution", false);
-              break;
+            switch (token) {
+              case STRING:
+              case OPTION:
+                anOption += ConfigLexerState.StringVal;
+                break;
+              case ASSEMBLY:
+                anOption += "assembly";
+                break;
+              case BYTECODE:
+                anOption += "bytecode";
+                break;
+              case TRUETOK:
+                anOption += "true";
+                break;
+              case FALSETOK:
+                anOption += "false";
+                break;
+              case SEPARATOR:
+                anOption += ".";
+                break;
+              case SPACE:
+                action.args.push_back(anOption);
+                anOption.clear();
+                break;
+              default:
+                if (!parseSubstitution(action.args))
+                  error("Expecting a program argument or substitution", false);
+                break;
             }
           }
         }
@@ -250,6 +358,8 @@ namespace {
     }
 
     void parsePreprocessor() {
+      if (next() != SEPARATOR)
+        error("Expecting '.'");
       switch (next()) {
         case COMMAND:
           parseCommand(confDat->PreProcessor);
@@ -269,7 +379,9 @@ namespace {
 
     bool parseOutputFlag() {
       if (next() == EQUALS) {
-        if (next() == ASSEMBLY) {
+        if (next() == SPACE)
+          next();
+        if (token == ASSEMBLY) {
           return true;
         } else if (token == BYTECODE) {
           return false;
@@ -287,6 +399,8 @@ namespace {
     }
 
     void parseTranslator() {
+      if (next() != SEPARATOR)
+        error("Expecting '.'");
       switch (next()) {
         case COMMAND: 
           parseCommand(confDat->Translator);
@@ -319,6 +433,8 @@ namespace {
     }
 
     void parseOptimizer() {
+      if (next() != SEPARATOR)
+        error("Expecting '.'");
       switch (next()) {
         case COMMAND:
           parseCommand(confDat->Optimizer);
@@ -356,6 +472,8 @@ namespace {
     }
 
     void parseAssembler() {
+      if (next() != SEPARATOR)
+        error("Expecting '.'");
       switch(next()) {
         case COMMAND:
           parseCommand(confDat->Assembler);
@@ -367,6 +485,8 @@ namespace {
     }
 
     void parseLinker() {
+      if (next() != SEPARATOR)
+        error("Expecting '.'");
       switch(next()) {
         case LIBS:
           break; //FIXME
