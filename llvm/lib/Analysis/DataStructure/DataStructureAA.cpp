@@ -56,6 +56,9 @@ namespace {
     void getMustAliases(Value *P, std::vector<Value*> &RetVals);
 
     ModRefResult getModRefInfo(CallSite CS, Value *P, unsigned Size);
+    ModRefResult getModRefInfo(CallSite CS1, CallSite CS2) {
+      return AliasAnalysis::getModRefInfo(CS1,CS2);
+    }
 
   private:
     DSGraph *getGraphForValue(const Value *V);

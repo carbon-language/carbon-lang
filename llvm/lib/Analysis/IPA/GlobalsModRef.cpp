@@ -96,6 +96,9 @@ namespace {
     AliasResult alias(const Value *V1, unsigned V1Size,
                       const Value *V2, unsigned V2Size);
     ModRefResult getModRefInfo(CallSite CS, Value *P, unsigned Size);
+    ModRefResult getModRefInfo(CallSite CS1, CallSite CS2) {
+      return AliasAnalysis::getModRefInfo(CS1,CS2);
+    }
     bool hasNoModRefInfoForCalls() const { return false; }
 
     bool doesNotAccessMemory(Function *F) {

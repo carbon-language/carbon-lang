@@ -82,6 +82,9 @@ namespace {
                       const Value *V2, unsigned V2Size);
 
     ModRefResult getModRefInfo(CallSite CS, Value *P, unsigned Size);
+    ModRefResult getModRefInfo(CallSite CS1, CallSite CS2) {
+      return NoAA::getModRefInfo(CS1,CS2);
+    }
 
     /// hasNoModRefInfoForCalls - We can provide mod/ref information against
     /// non-escaping allocations.

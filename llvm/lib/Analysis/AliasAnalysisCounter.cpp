@@ -115,6 +115,9 @@ namespace {
     ModRefResult getModRefInfo(CallSite CS, Value *P, unsigned Size) {
       return count(getAnalysis<AliasAnalysis>().getModRefInfo(CS, P, Size));
     }
+    ModRefResult getModRefInfo(CallSite CS1, CallSite CS2) {
+      return AliasAnalysis::getModRefInfo(CS1,CS2);
+    }
   };
 
   RegisterOpt<AliasAnalysisCounter>
