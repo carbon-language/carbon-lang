@@ -975,6 +975,17 @@ Constant *ConstantExpr::getGetElementPtr(Constant *C,
   const Type *Ty = GetElementPtrInst::getIndexedType(C->getType(), VIdxList,
                                                      true);
   assert(Ty && "GEP indices invalid!");
+
+  if (C->isNullValue()) {
+    bool isNull = true;
+    for (unsigned i = 0, e = IdxList.size(); i != e; ++i)
+      if (!IdxList[i]->isNullValue()) {
+        isNull = false;
+        break;
+      }
+    if (isNull) return ConstantPointerNull::get(PointerType::get(Ty));
+  }
+
   return getGetElementPtrTy(PointerType::get(Ty), C, IdxList);
 }
 
