@@ -123,22 +123,27 @@ static bool SimplifyBinOp(BinaryOperator &I) {
 // instruction if the LHS is a constant zero (which is the 'negate' form).
 //
 static inline Value *dyn_castNegInst(Value *V) {
-  Instruction *I = dyn_cast<Instruction>(V);
-  if (!I || I->getOpcode() != Instruction::Sub) return 0;
-
-  if (I->getOperand(0) == Constant::getNullValue(I->getType()))
-    return I->getOperand(1);
-  return 0;
+  return BinaryOperator::isNeg(V) ?
+    BinaryOperator::getNegArgument(cast<BinaryOperator>(V)) : 0;
 }
 
 static inline Value *dyn_castNotInst(Value *V) {
-  Instruction *I = dyn_cast<Instruction>(V);
-  if (!I || I->getOpcode() != Instruction::Xor) return 0;
+  return BinaryOperator::isNot(V) ?
+    BinaryOperator::getNotArgument(cast<BinaryOperator>(V)) : 0;
+}
 
-  if (ConstantIntegral *CI = dyn_cast<ConstantIntegral>(I->getOperand(1)))
-    if (CI->isAllOnesValue())
-      return I->getOperand(0);
-  return 0;
+
+// Log2 - Calculate the log base 2 for the specified value if it is exactly a
+// power of 2.
+static unsigned Log2(uint64_t Val) {
+  assert(Val > 1 && "Values 0 and 1 should be handled elsewhere!");
+  unsigned Count = 0;
+  while (Val != 1) {
+    if (Val & 1) return 0;    // Multiple bits set?
+    Val >>= 1;
+    ++Count;
+  }
+  return Count;
 }
 
 Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
@@ -197,56 +202,119 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
   if (Value *V = dyn_castNegInst(Op1))
     return BinaryOperator::create(Instruction::Add, Op0, V);
 
-  // Replace (x - (y - z)) with (x + (z - y)) if the (y - z) subexpression is
-  // not used by anyone else...
-  //
-  if (BinaryOperator *Op1I = dyn_cast<BinaryOperator>(Op1))
-    if (Op1I->use_size() == 1 && Op1I->getOpcode() == Instruction::Sub) {
-      // Swap the two operands of the subexpr...
-      Value *IIOp0 = Op1I->getOperand(0), *IIOp1 = Op1I->getOperand(1);
-      Op1I->setOperand(0, IIOp1);
-      Op1I->setOperand(1, IIOp0);
+  // Replace (-1 - A) with (~A)...
+  if (ConstantInt *C = dyn_cast<ConstantInt>(Op0))
+    if (C->isAllOnesValue())
+      return BinaryOperator::createNot(Op1);
 
-      // Create the new top level add instruction...
-      return BinaryOperator::create(Instruction::Add, Op0, Op1);
+  if (BinaryOperator *Op1I = dyn_cast<BinaryOperator>(Op1))
+    if (Op1I->use_size() == 1) {
+      // Replace (x - (y - z)) with (x + (z - y)) if the (y - z) subexpression
+      // is not used by anyone else...
+      //
+      if (Op1I->getOpcode() == Instruction::Sub) {
+        // Swap the two operands of the subexpr...
+        Value *IIOp0 = Op1I->getOperand(0), *IIOp1 = Op1I->getOperand(1);
+        Op1I->setOperand(0, IIOp1);
+        Op1I->setOperand(1, IIOp0);
+        
+        // Create the new top level add instruction...
+        return BinaryOperator::create(Instruction::Add, Op0, Op1);
+      }
+
+      // Replace (A - (A & B)) with (A & ~B) if this is the only use of (A&B)...
+      //
+      if (Op1I->getOpcode() == Instruction::And &&
+          (Op1I->getOperand(0) == Op0 || Op1I->getOperand(1) == Op0)) {
+        Value *OtherOp = Op1I->getOperand(Op1I->getOperand(0) == Op0);
+
+        Instruction *NewNot = BinaryOperator::createNot(OtherOp, "B.not", &I);
+        return BinaryOperator::create(Instruction::And, Op0, NewNot);
+      }
     }
+
   return 0;
 }
 
 Instruction *InstCombiner::visitMul(BinaryOperator &I) {
   bool Changed = SimplifyBinOp(I);
-  Value *Op1 = I.getOperand(0);
+  Value *Op0 = I.getOperand(0);
 
   // Simplify mul instructions with a constant RHS...
-  if (Constant *Op2 = dyn_cast<Constant>(I.getOperand(1))) {
-    if (I.getType()->isInteger() && cast<ConstantInt>(Op2)->equalsInt(1))
-      return ReplaceInstUsesWith(I, Op1);  // Eliminate 'mul int %X, 1'
+  if (Constant *Op1 = dyn_cast<Constant>(I.getOperand(1))) {
+    if (ConstantInt *CI = dyn_cast<ConstantInt>(Op1)) {
+      const Type *Ty = CI->getType();
+      uint64_t Val = Ty->isSigned() ?
+                          (uint64_t)cast<ConstantSInt>(CI)->getValue() : 
+                                    cast<ConstantUInt>(CI)->getValue();
+      switch (Val) {
+      case 0:
+        return ReplaceInstUsesWith(I, Op1);  // Eliminate 'mul double %X, 0'
+      case 1:
+        return ReplaceInstUsesWith(I, Op0);  // Eliminate 'mul int %X, 1'
+      case 2:                     // Convert 'mul int %X, 2' to 'add int %X, %X'
+        return BinaryOperator::create(Instruction::Add, Op0, Op0, I.getName());
+      }
 
-    if (I.getType()->isInteger() && cast<ConstantInt>(Op2)->equalsInt(2))
-      // Convert 'mul int %X, 2' to 'add int %X, %X'
-      return BinaryOperator::create(Instruction::Add, Op1, Op1, I.getName());
+      if (uint64_t C = Log2(Val))            // Replace X*(2^C) with X << C
+        return new ShiftInst(Instruction::Shl, Op0,
+                             ConstantUInt::get(Type::UByteTy, C));
+    } else {
+      ConstantFP *Op1F = cast<ConstantFP>(Op1);
+      if (Op1F->isNullValue())
+        return ReplaceInstUsesWith(I, Op1);
 
-    if (Op2->isNullValue())
-      return ReplaceInstUsesWith(I, Op2);  // Eliminate 'mul int %X, 0'
+      // "In IEEE floating point, x*1 is not equivalent to x for nans.  However,
+      // ANSI says we can drop signals, so we can do this anyway." (from GCC)
+      if (Op1F->getValue() == 1.0)
+        return ReplaceInstUsesWith(I, Op0);  // Eliminate 'mul double %X, 1.0'
+    }
   }
 
   return Changed ? &I : 0;
 }
 
-
 Instruction *InstCombiner::visitDiv(BinaryOperator &I) {
   // div X, 1 == X
-  if (ConstantInt *RHS = dyn_cast<ConstantInt>(I.getOperand(1)))
+  if (ConstantInt *RHS = dyn_cast<ConstantInt>(I.getOperand(1))) {
     if (RHS->equalsInt(1))
       return ReplaceInstUsesWith(I, I.getOperand(0));
+
+    // Check to see if this is an unsigned division with an exact power of 2,
+    // if so, convert to a right shift.
+    if (ConstantUInt *C = dyn_cast<ConstantUInt>(RHS))
+      if (uint64_t Val = C->getValue())    // Don't break X / 0
+        if (uint64_t C = Log2(Val))
+          return new ShiftInst(Instruction::Shr, I.getOperand(0),
+                               ConstantUInt::get(Type::UByteTy, C));
+  }
+
+  // 0 / X == 0, we don't need to preserve faults!
+  if (ConstantInt *LHS = dyn_cast<ConstantInt>(I.getOperand(0)))
+    if (LHS->equalsInt(0))
+      return ReplaceInstUsesWith(I, Constant::getNullValue(I.getType()));
+
   return 0;
 }
 
 
 Instruction *InstCombiner::visitRem(BinaryOperator &I) {
-  // rem X, 1 == 0
-  if (ConstantInt *RHS = dyn_cast<ConstantInt>(I.getOperand(1)))
-    if (RHS->equalsInt(1))
+  if (ConstantInt *RHS = dyn_cast<ConstantInt>(I.getOperand(1))) {
+    if (RHS->equalsInt(1))  // X % 1 == 0
+      return ReplaceInstUsesWith(I, Constant::getNullValue(I.getType()));
+
+    // Check to see if this is an unsigned remainder with an exact power of 2,
+    // if so, convert to a bitwise and.
+    if (ConstantUInt *C = dyn_cast<ConstantUInt>(RHS))
+      if (uint64_t Val = C->getValue())    // Don't break X % 0 (divide by zero)
+        if (Log2(Val))
+          return BinaryOperator::create(Instruction::And, I.getOperand(0),
+                                        ConstantUInt::get(I.getType(), Val-1));
+  }
+
+  // 0 % X == 0, we don't need to preserve faults!
+  if (ConstantInt *LHS = dyn_cast<ConstantInt>(I.getOperand(0)))
+    if (LHS->equalsInt(0))
       return ReplaceInstUsesWith(I, Constant::getNullValue(I.getType()));
 
   return 0;
@@ -299,15 +367,19 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
     if (RHS->isAllOnesValue())
       return ReplaceInstUsesWith(I, Op0);
 
-  // and (not A), (not B) == not (or A, B)
-  if (Op0->use_size() == 1 && Op1->use_size() == 1)
-    if (Value *A = dyn_castNotInst(Op0))
-      if (Value *B = dyn_castNotInst(Op1)) {
-        Instruction *Or = BinaryOperator::create(Instruction::Or, A, B,
-                                                 I.getName()+".demorgan");
-        InsertNewInstBefore(Or, I);
-        return BinaryOperator::createNot(Or, I.getName());
-      }
+  Value *Op0NotVal = dyn_castNotInst(Op0);
+  Value *Op1NotVal = dyn_castNotInst(Op1);
+
+  // (~A & ~B) == (~(A | B)) - Demorgan's Law
+  if (Op0->use_size() == 1 && Op1->use_size() == 1 && Op0NotVal && Op1NotVal) {
+    Instruction *Or = BinaryOperator::create(Instruction::Or, Op0NotVal,
+                                             Op1NotVal,I.getName()+".demorgan",
+                                             &I);
+    return BinaryOperator::createNot(Or);
+  }
+
+  if (Op0NotVal == Op1 || Op1NotVal == Op0)  // A & ~A  == ~A & A == 0
+    return ReplaceInstUsesWith(I, Constant::getNullValue(I.getType()));
 
   return Changed ? &I : 0;
 }
@@ -326,6 +398,16 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
   if (ConstantIntegral *RHS = dyn_cast<ConstantIntegral>(Op1))
     if (RHS->isAllOnesValue())
       return ReplaceInstUsesWith(I, Op1);
+
+  if (Value *X = dyn_castNotInst(Op0))   // ~A | A == -1
+    if (X == Op1)
+      return ReplaceInstUsesWith(I, 
+                            ConstantIntegral::getAllOnesValue(I.getType()));
+
+  if (Value *X = dyn_castNotInst(Op1))   // A | ~A == -1
+    if (X == Op0)
+      return ReplaceInstUsesWith(I, 
+                            ConstantIntegral::getAllOnesValue(I.getType()));
 
   return Changed ? &I : 0;
 }
@@ -358,6 +440,16 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
                                  SCI->getOperand(0), SCI->getOperand(1));
     }
   }
+
+  if (Value *X = dyn_castNotInst(Op0))   // ~A ^ A == -1
+    if (X == Op1)
+      return ReplaceInstUsesWith(I,
+                                ConstantIntegral::getAllOnesValue(I.getType()));
+
+  if (Value *X = dyn_castNotInst(Op1))   // A ^ ~A == -1
+    if (X == Op0)
+      return ReplaceInstUsesWith(I,
+                                ConstantIntegral::getAllOnesValue(I.getType()));
 
   return Changed ? &I : 0;
 }
@@ -501,7 +593,7 @@ Instruction *InstCombiner::visitShiftInst(Instruction &I) {
     // Check to see if we are shifting left by 1.  If so, turn it into an add
     // instruction.
     if (I.getOpcode() == Instruction::Shl && CUI->equalsInt(1))
-      // Convert 'shl int %X, 2' to 'add int %X, %X'
+      // Convert 'shl int %X, 1' to 'add int %X, %X'
       return BinaryOperator::create(Instruction::Add, Op0, Op0, I.getName());
 
   }
