@@ -34,12 +34,6 @@ using std::cerr;
 
 static Statistic<> NumInstRemoved("sccp\t\t- Number of instructions removed");
 
-#if 0    // Enable this to get SCCP debug output
-#define DEBUG_SCCP(X) X
-#else
-#define DEBUG_SCCP(X)
-#endif
-
 // InstVal class - This class represents the different lattice values that an 
 // instruction may occupy.  It is a simple class with value semantics.
 //
@@ -125,7 +119,7 @@ private:
   // the users of the instruction are updated later.
   //
   inline bool markConstant(Instruction *I, Constant *V) {
-    DEBUG_SCCP(cerr << "markConstant: " << V << " = " << I);
+    DEBUG(cerr << "markConstant: " << V << " = " << I);
 
     if (ValueState[I].markConstant(V)) {
       InstWorkList.push_back(I);
@@ -141,7 +135,7 @@ private:
   inline bool markOverdefined(Value *V) {
     if (ValueState[V].markOverdefined()) {
       if (Instruction *I = dyn_cast<Instruction>(V)) {
-	DEBUG_SCCP(cerr << "markOverdefined: " << V);
+	DEBUG(cerr << "markOverdefined: " << V);
 	InstWorkList.push_back(I);  // Only instructions go on the work list
       }
       return true;
@@ -173,7 +167,7 @@ private:
   // 
   void markExecutable(BasicBlock *BB) {
     if (BBExecutable.count(BB)) return;
-    DEBUG_SCCP(cerr << "Marking BB Executable: " << BB);
+    DEBUG(cerr << "Marking BB Executable: " << BB);
     BBExecutable.insert(BB);   // Basic block is executable!
     BBWorkList.push_back(BB);  // Add the block to the work list!
   }
@@ -258,7 +252,7 @@ bool SCCP::runOnFunction(Function *F) {
       Instruction *I = InstWorkList.back();
       InstWorkList.pop_back();
 
-      DEBUG_SCCP(cerr << "\nPopped off I-WL: " << I);
+      DEBUG(cerr << "\nPopped off I-WL: " << I);
 
       
       // "I" got into the work list because it either made the transition from
@@ -275,7 +269,7 @@ bool SCCP::runOnFunction(Function *F) {
       BasicBlock *BB = BBWorkList.back();
       BBWorkList.pop_back();
 
-      DEBUG_SCCP(cerr << "\nPopped off BBWL: " << BB);
+      DEBUG(cerr << "\nPopped off BBWL: " << BB);
 
       // If this block only has a single successor, mark it as executable as
       // well... if not, terminate the do loop.
@@ -289,13 +283,11 @@ bool SCCP::runOnFunction(Function *F) {
     }
   }
 
-#if 0
-  for (Function::iterator BBI = F->begin(), BBEnd = F->end();
-       BBI != BBEnd; ++BBI)
-    if (!BBExecutable.count(*BBI))
-      cerr << "BasicBlock Dead:" << *BBI;
-#endif
-
+  if (DebugFlag) {
+    for (Function::iterator I = F->begin(), E = F->end(); I != E; ++I)
+      if (!BBExecutable.count(*I))
+        cerr << "BasicBlock Dead:" << *I;
+  }
 
   // Iterate over all of the instructions in a function, replacing them with
   // constants if we have found them to be of constant values.
@@ -308,7 +300,7 @@ bool SCCP::runOnFunction(Function *F) {
       InstVal &IV = ValueState[Inst];
       if (IV.isConstant()) {
         Constant *Const = IV.getConstant();
-        DEBUG_SCCP(cerr << "Constant: " << Const << " = " << Inst);
+        DEBUG(cerr << "Constant: " << Const << " = " << Inst);
 
         // Replaces all of the uses of a variable with uses of the constant.
         Inst->replaceAllUsesWith(Const);

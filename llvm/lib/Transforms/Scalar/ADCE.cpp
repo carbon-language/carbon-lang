@@ -16,11 +16,10 @@
 #include "llvm/Support/CFG.h"
 #include "Support/STLExtras.h"
 #include "Support/DepthFirstIterator.h"
+#include "Support/StatisticReporter.h"
 #include <algorithm>
 #include <iostream>
 using std::cerr;
-
-#define DEBUG_ADCE 1
 
 namespace {
 
@@ -69,17 +68,13 @@ private:
 
   inline void markInstructionLive(Instruction *I) {
     if (LiveSet.count(I)) return;
-#ifdef DEBUG_ADCE
-    cerr << "Insn Live: " << I;
-#endif
+    DEBUG(cerr << "Insn Live: " << I);
     LiveSet.insert(I);
     WorkList.push_back(I);
   }
 
   inline void markTerminatorLive(const BasicBlock *BB) {
-#ifdef DEBUG_ADCE
-    cerr << "Terminat Live: " << BB->getTerminator();
-#endif
+    DEBUG(cerr << "Terminat Live: " << BB->getTerminator());
     markInstructionLive((Instruction*)BB->getTerminator());
   }
 
@@ -101,9 +96,7 @@ Pass *createAggressiveDCEPass() {
 // true if the function was modified.
 //
 void ADCE::doADCE(DominanceFrontier &CDG) {
-#ifdef DEBUG_ADCE
-  cerr << "Function: " << Func;
-#endif
+  DEBUG(cerr << "Function: " << Func);
 
   // Iterate over all of the instructions in the function, eliminating trivially
   // dead instructions, and marking instructions live that are known to be 
@@ -130,9 +123,7 @@ void ADCE::doADCE(DominanceFrontier &CDG) {
     }
   }
 
-#ifdef DEBUG_ADCE
-  cerr << "Processing work list\n";
-#endif
+  DEBUG(cerr << "Processing work list\n");
 
   // AliveBlocks - Set of basic blocks that we know have instructions that are
   // alive in them...
@@ -173,15 +164,15 @@ void ADCE::doADCE(DominanceFrontier &CDG) {
 	markInstructionLive(Operand);
   }
 
-#ifdef DEBUG_ADCE
-  cerr << "Current Function: X = Live\n";
-  for (Function::iterator I = Func->begin(), E = Func->end(); I != E; ++I)
-    for (BasicBlock::iterator BI = (*I)->begin(), BE = (*I)->end();
-         BI != BE; ++BI) {
-      if (LiveSet.count(*BI)) cerr << "X ";
-      cerr << *BI;
-    }
-#endif
+  if (DebugFlag) {
+    cerr << "Current Function: X = Live\n";
+    for (Function::iterator I = Func->begin(), E = Func->end(); I != E; ++I)
+      for (BasicBlock::iterator BI = (*I)->begin(), BE = (*I)->end();
+           BI != BE; ++BI) {
+        if (LiveSet.count(*BI)) cerr << "X ";
+        cerr << *BI;
+      }
+  }
 
   // After the worklist is processed, recursively walk the CFG in depth first
   // order, patching up references to dead blocks...
@@ -266,9 +257,7 @@ BasicBlock *ADCE::fixupCFG(BasicBlock *BB, std::set<BasicBlock*> &VisitedBlocks,
   if (VisitedBlocks.count(BB)) return 0;   // Revisiting a node? No update.
   VisitedBlocks.insert(BB);                // We have now visited this node!
 
-#ifdef DEBUG_ADCE
-  cerr << "Fixing up BB: " << BB;
-#endif
+  DEBUG(cerr << "Fixing up BB: " << BB);
 
   if (AliveBlocks.count(BB)) {             // Is the block alive?
     // Yes it's alive: loop through and eliminate all dead instructions in block

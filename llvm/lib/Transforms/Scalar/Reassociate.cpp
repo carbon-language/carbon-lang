@@ -27,9 +27,6 @@
 #include "Support/PostOrderIterator.h"
 #include "Support/StatisticReporter.h"
 
-//#define DEBUG_REASSOC(x) std::cerr << x
-#define DEBUG_REASSOC(x)
-
 static Statistic<> NumLinear ("reassociate\t- Number of insts linearized");
 static Statistic<> NumChanged("reassociate\t- Number of insts reassociated");
 static Statistic<> NumSwapped("reassociate\t- Number of insts with operands swapped");
@@ -125,7 +122,7 @@ bool Reassociate::ReassociateExpr(BinaryOperator *I) {
     std::swap(LHSRank, RHSRank);
     Changed = true;
     ++NumSwapped;
-    DEBUG_REASSOC("Transposed: " << I << " Result BB: " << I->getParent());
+    DEBUG(std::cerr << "Transposed: " << I << " Result BB: " << I->getParent());
   }
   
   // If the LHS is the same operator as the current one is, and if we are the
@@ -147,7 +144,8 @@ bool Reassociate::ReassociateExpr(BinaryOperator *I) {
         I->setOperand(1, LHSI);
 
         ++NumChanged;
-        DEBUG_REASSOC("Reassociated: " << I << " Result BB: " <<I->getParent());
+        DEBUG(std::cerr << "Reassociated: " << I << " Result BB: "
+                        << I->getParent());
 
         // Since we modified the RHS instruction, make sure that we recheck it.
         ReassociateExpr(LHSI);
@@ -238,7 +236,7 @@ bool Reassociate::ReassociateBB(BasicBlock *BB) {
           I = Tmp;
           ++NumLinear;
           Changed = true;
-          DEBUG_REASSOC("Linearized: " << I << " Result BB: " << BB);
+          DEBUG(std::cerr << "Linearized: " << I << " Result BB: " << BB);
         }
 
         // Make sure that this expression is correctly reassociated with respect
@@ -269,7 +267,7 @@ bool Reassociate::ReassociateBB(BasicBlock *BB) {
       New->setOperand(1, NegateValue(NegatedValue, BB, BI));
       --BI;
       Changed = true;
-      DEBUG_REASSOC("Negated: " << New << " Result BB: " << BB);
+      DEBUG(std::cerr << "Negated: " << New << " Result BB: " << BB);
     }
   }
 

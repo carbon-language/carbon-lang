@@ -8,6 +8,7 @@
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Analysis/InductionVariable.h"
 #include "llvm/Analysis/LoopInfo.h"
+#include "llvm/Analysis/Writer.h"
 #include "llvm/iPHINode.h"
 #include "llvm/iOther.h"
 #include "llvm/Type.h"
@@ -19,10 +20,6 @@
 static Statistic<> NumRemoved ("indvars\t\t- Number of aux indvars removed");
 static Statistic<> NumInserted("indvars\t\t- Number of cannonical indvars added");
 
-#if 0
-#define DEBUG
-#include "llvm/Analysis/Writer.h"
-#endif
 
 // InsertCast - Cast Val to Ty, setting a useful name on the cast if Val has a
 // name...
@@ -116,9 +113,7 @@ static bool TransformLoop(LoopInfo *Loops, Loop *Loop) {
     Changed = true;
   }
 
-#ifdef DEBUG
-  cerr << "Induction variables:\n";
-#endif
+  DEBUG(cerr << "Induction variables:\n");
 
   // Get the current loop iteration count, which is always the value of the
   // cannonical phi node...
@@ -131,9 +126,9 @@ static bool TransformLoop(LoopInfo *Loops, Loop *Loop) {
   unsigned InsertPos = IndVars.size();
   for (unsigned i = 0; i < IndVars.size(); ++i) {
     InductionVariable *IV = &IndVars[i];
-#ifdef DEBUG
-    cerr << IndVars[i];
-#endif
+
+    DEBUG(cerr << IV);
+
     // Don't modify the cannonical indvar or unrecognized indvars...
     if (IV != Cannonical && IV->InductionType != InductionVariable::Unknown) {
       Instruction *Val = IterCount;
