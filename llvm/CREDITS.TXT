@@ -67,6 +67,10 @@ N: Brad Jones
 E: kungfoomaster@nondot.org
 D: Support for packed types
 
+N: Sumant Kowshik
+E: kowshik@uiuc.edu
+D: Author of the original C backend
+
 N: Chris Lattner
 E: sabre@nondot.org
 W: http://nondot.org/~sabre/
