@@ -133,7 +133,7 @@ bool opt::InlineMethod(BasicBlock::iterator CIIt) {
     // Create a new basic block to copy instructions into!
     BasicBlock *IBB = new BasicBlock("", NewBB->getParent());
 
-    ValueMap[*BI] = IBB;                       // Add basic block mapping.
+    ValueMap[BB] = IBB;                       // Add basic block mapping.
 
     // Make sure to capture the mapping that a return will use...
     // TODO: This assumes that the RET is returning a value computed in the same
