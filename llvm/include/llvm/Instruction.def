@@ -77,7 +77,8 @@ HANDLE_TERM_INST  ( 1, Ret   , ReturnInst)
 HANDLE_TERM_INST  ( 2, Br    , BranchInst)
 HANDLE_TERM_INST  ( 3, Switch, SwitchInst)
 HANDLE_TERM_INST  ( 4, Invoke, InvokeInst)
-  LAST_TERM_INST  ( 4)
+HANDLE_TERM_INST  ( 5, Unwind, UnwindInst)
+  LAST_TERM_INST  ( 5)
 
 // Standard binary operators...
  FIRST_BINARY_INST( 6)
