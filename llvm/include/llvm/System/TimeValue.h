@@ -315,6 +315,15 @@ namespace sys {
       this->normalize();
     }
 
+    /// Converts the \p seconds argument from PosixTime to the corresponding
+    /// TimeValue and assigns that value to \p this.
+    /// @brief Convert seconds form PosixTime to TimeValue
+    void fromPosixTime( SecondsType seconds  ) {
+      seconds_ = seconds + PosixZeroTime.seconds_;
+      nanos_ = 0;
+      this->normalize();
+    }
+
   /// @}
   /// @name Implementation
   /// @{
