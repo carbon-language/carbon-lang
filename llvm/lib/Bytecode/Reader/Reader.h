@@ -102,7 +102,7 @@ public:
   /// This map is needed so that forward references to constants can be looked 
   /// up by Type and slot number when resolving those references.
   /// @brief A mapping of a Type/slot pair to a Constant*.
-  typedef std::map<std::pair<const Type*,unsigned>, Constant*> ConstantRefsType;
+  typedef std::map<std::pair<unsigned,unsigned>, Constant*> ConstantRefsType;
 
   /// For lazy read-in of functions, we need to save the location in the
   /// data stream where the function is located. This structure provides that
@@ -453,7 +453,7 @@ private:
 
   /// @brief Resolve all references to the placeholder (if any) for the 
   /// given constant.
-  void ResolveReferencesToConstant(Constant *C, unsigned Slot);
+  void ResolveReferencesToConstant(Constant *C, unsigned Typ, unsigned Slot);
 
   /// @brief Release our memory.
   void freeState() {

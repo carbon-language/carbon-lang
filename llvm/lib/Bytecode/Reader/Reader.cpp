@@ -35,14 +35,11 @@ namespace {
 /// @brief A class for maintaining the slot number definition
 /// as a placeholder for the actual definition for forward constants defs.
 class ConstantPlaceHolder : public ConstantExpr {
-  unsigned ID;
   ConstantPlaceHolder();                       // DO NOT IMPLEMENT
   void operator=(const ConstantPlaceHolder &); // DO NOT IMPLEMENT
 public:
-  ConstantPlaceHolder(const Type *Ty, unsigned id) 
-    : ConstantExpr(Instruction::UserOp1, Constant::getNullValue(Ty), Ty),
-    ID(id) {}
-  unsigned getID() { return ID; }
+  ConstantPlaceHolder(const Type *Ty) 
+    : ConstantExpr(Instruction::UserOp1, Constant::getNullValue(Ty), Ty) {}
 };
 
 }
@@ -494,8 +491,7 @@ Constant* BytecodeReader::getConstantValue(unsigned TypeSlot, unsigned Slot) {
       error("Value for slot " + utostr(Slot) + 
             " is expected to be a constant!");
 
-  const Type *Ty = getType(TypeSlot);
-  std::pair<const Type*, unsigned> Key(Ty, Slot);
+  std::pair<unsigned, unsigned> Key(TypeSlot, Slot);
   ConstantRefsType::iterator I = ConstantFwdRefs.lower_bound(Key);
 
   if (I != ConstantFwdRefs.end() && I->first == Key) {
@@ -503,7 +499,7 @@ Constant* BytecodeReader::getConstantValue(unsigned TypeSlot, unsigned Slot) {
   } else {
     // Create a placeholder for the constant reference and
     // keep track of the fact that we have a forward ref to recycle it
-    Constant *C = new ConstantPlaceHolder(Ty, Slot);
+    Constant *C = new ConstantPlaceHolder(getType(TypeSlot));
     
     // Keep track of the fact that we have a forward ref to recycle it
     ConstantFwdRefs.insert(I, std::make_pair(Key, C));
@@ -1477,9 +1473,10 @@ Constant *BytecodeReader::ParseConstantValue(unsigned TypeID) {
 /// referenced constants in the ConstantFwdRefs map. It uses the 
 /// replaceAllUsesWith method of Value class to substitute the placeholder
 /// instance with the actual instance.
-void BytecodeReader::ResolveReferencesToConstant(Constant *NewV, unsigned Slot){
+void BytecodeReader::ResolveReferencesToConstant(Constant *NewV, unsigned Typ,
+                                                 unsigned Slot) {
   ConstantRefsType::iterator I =
-    ConstantFwdRefs.find(std::make_pair(NewV->getType(), Slot));
+    ConstantFwdRefs.find(std::make_pair(Typ, Slot));
   if (I == ConstantFwdRefs.end()) return;   // Never forward referenced?
 
   Value *PH = I->second;   // Get the placeholder...
@@ -1518,7 +1515,7 @@ void BytecodeReader::ParseStringConstants(unsigned NumEntries, ValueTable &Tab){
     // Create the constant, inserting it as needed.
     Constant *C = ConstantArray::get(ATy, Elements);
     unsigned Slot = insertValue(C, Typ, Tab);
-    ResolveReferencesToConstant(C, Slot);
+    ResolveReferencesToConstant(C, Typ, Slot);
     if (Handler) Handler->handleConstantString(cast<ConstantArray>(C));
   }
 }
@@ -1564,7 +1561,7 @@ void BytecodeReader::ParseConstantPool(ValueTable &Tab,
         if (&Tab != &ModuleValues && Typ < ModuleValues.size() &&
             ModuleValues[Typ])
           Slot += ModuleValues[Typ]->size();
-        ResolveReferencesToConstant(C, Slot);
+        ResolveReferencesToConstant(C, Typ, Slot);
       }
     }
   }
@@ -1572,14 +1569,12 @@ void BytecodeReader::ParseConstantPool(ValueTable &Tab,
   // After we have finished parsing the constant pool, we had better not have
   // any dangling references left.
   if (!ConstantFwdRefs.empty()) {
-  typedef std::map<std::pair<const Type*,unsigned>, Constant*> ConstantRefsType;
     ConstantRefsType::const_iterator I = ConstantFwdRefs.begin();
-    const Type* missingType = I->first.first;
     Constant* missingConst = I->second;
     error(utostr(ConstantFwdRefs.size()) + 
           " unresolved constant reference exist. First one is '" + 
           missingConst->getName() + "' of type '" + 
-          missingType->getDescription() + "'.");
+          missingConst->getType()->getDescription() + "'.");
   }
 
   checkPastBlockEnd("Constant Pool");
