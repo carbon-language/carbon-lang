@@ -50,7 +50,7 @@ int LLI::ExecuteProgram(const std::string &Bytecode,
 
   std::cout << "<lli>" << std::flush;
   DEBUG(std::cerr << "\nAbout to run:\n\t";
-        for (unsigned i=0, e = LLIArgs.size(); i != e; ++i)
+        for (unsigned i=0, e = LLIArgs.size()-1; i != e; ++i)
           std::cerr << " " << LLIArgs[i];
         std::cerr << "\n";
         );
@@ -174,7 +174,7 @@ int JIT::ExecuteProgram(const std::string &Bytecode,
 
   std::cout << "<jit>" << std::flush;
   DEBUG(std::cerr << "\nAbout to run:\n\t";
-        for (unsigned i=0, e = JITArgs.size(); i != e; ++i)
+        for (unsigned i=0, e = JITArgs.size()-1; i != e; ++i)
           std::cerr << " " << JITArgs[i];
         std::cerr << "\n";
         );
@@ -309,7 +309,7 @@ int GCC::ExecuteProgram(const std::string &ProgramFile,
   // Now that we have a binary, run it!
   std::cout << "<program>" << std::flush;
   DEBUG(std::cerr << "\nAbout to run:\n\t";
-        for (unsigned i=0, e = ProgramArgs.size(); i != e; ++i)
+        for (unsigned i=0, e = ProgramArgs.size()-1; i != e; ++i)
           std::cerr << " " << ProgramArgs[i];
         std::cerr << "\n";
         );
