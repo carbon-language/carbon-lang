@@ -175,6 +175,7 @@ namespace {
     // Control flow operators
     void visitReturnInst(ReturnInst &RI);
     void visitBranchInst(BranchInst &BI);
+    void visitUnreachableInst(UnreachableInst &UI) {}
 
     struct ValueRecord {
       Value *Val;
@@ -447,7 +448,20 @@ unsigned X86ISel::getFixedSizedAllocaFI(AllocaInst *AI) {
 void X86ISel::copyConstantToRegister(MachineBasicBlock *MBB,
                                      MachineBasicBlock::iterator IP,
                                      Constant *C, unsigned R) {
-  if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C)) {
+  if (isa<UndefValue>(C)) {
+    switch (getClassB(C->getType())) {
+    case cFP:
+      // FIXME: SHOULD TEACH STACKIFIER ABOUT UNDEF VALUES!
+      BuildMI(*MBB, IP, X86::FLD0, 0, R);
+      return;
+    case cLong:
+      BuildMI(*MBB, IP, X86::IMPLICIT_DEF, 0, R+1);
+      // FALL THROUGH
+    default:
+      BuildMI(*MBB, IP, X86::IMPLICIT_DEF, 0, R);
+      return;
+    }
+  } else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C)) {
     unsigned Class = 0;
     switch (CE->getOpcode()) {
     case Instruction::GetElementPtr:
