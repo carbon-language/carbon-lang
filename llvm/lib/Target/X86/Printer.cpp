@@ -65,15 +65,14 @@ namespace {
     void printOp(const MachineOperand &MO,
 		 bool elideOffsetKeyword = false) const;
     void printMemReference(const MachineInstr *MI, unsigned Op) const;
-    void printConstantPool(MachineConstantPool *MCP);
+    void printConstantPool(MachineConstantPool *MCP) const;
     bool runOnMachineFunction(MachineFunction &F);    
-    std::string ConstantExprToString(const ConstantExpr* CE);
-    std::string valToExprString(const Value* V);
+    std::string ConstantExprToString(const ConstantExpr* CE) const;
+    std::string valToExprString(const Value* V) const;
     bool doInitialization(Module &M);
     bool doFinalization(Module &M);
-    void PrintZeroBytesToPad(int numBytes);
-    void printConstantValueOnly(const Constant* CV, int numPadBytesAfter = 0);
-    void printSingleConstantValue(const Constant* CV);
+    void printConstantValueOnly(const Constant* CV, int numPadBytesAfter = 0) const;
+    void printSingleConstantValue(const Constant* CV) const;
   };
 } // end of anonymous namespace
 
@@ -128,7 +127,7 @@ static std::string getValueName(const Value *V) {
 /// valToExprString - Helper function for ConstantExprToString().
 /// Appends result to argument string S.
 /// 
-std::string Printer::valToExprString(const Value* V) {
+std::string Printer::valToExprString(const Value* V) const {
   std::string S;
   bool failed = false;
   if (const Constant* CV = dyn_cast<Constant>(V)) { // symbolic or known
@@ -164,7 +163,7 @@ std::string Printer::valToExprString(const Value* V) {
 /// ConstantExprToString - Convert a ConstantExpr to an asm expression
 /// and return this as a string.
 ///
-std::string Printer::ConstantExprToString(const ConstantExpr* CE) {
+std::string Printer::ConstantExprToString(const ConstantExpr* CE) const {
   std::string S;
   const TargetData &TD = TM.getTargetData();
   switch(CE->getOpcode()) {
@@ -178,11 +177,21 @@ std::string Printer::ConstantExprToString(const ConstantExpr* CE) {
     }
 
   case Instruction::Cast:
-    // Support only non-converting casts for now, i.e., a no-op.
-    // This assertion is not a complete check.
-    assert(TD.getTypeSize(CE->getType()) ==
-	   TD.getTypeSize(CE->getOperand(0)->getType()));
-    S += "(" + valToExprString(CE->getOperand(0)) + ")";
+    // Support only non-converting or widening casts for now, that is,
+    // ones that do not involve a change in value.  This assertion is
+    // not a complete check.
+    {
+      Constant *Op = CE->getOperand(0);
+      const Type *OpTy = Op->getType(), *Ty = CE->getType();
+      assert(((isa<PointerType>(OpTy)
+	       && (Ty == Type::LongTy || Ty == Type::ULongTy))
+	      || (isa<PointerType>(Ty)
+		  && (OpTy == Type::LongTy || OpTy == Type::ULongTy)))
+	     || (((TD.getTypeSize(Ty) >= TD.getTypeSize(OpTy))
+		  && (OpTy-> isLosslesslyConvertibleTo(Ty))))
+	     && "FIXME: Don't yet support this kind of constant cast expr");
+      S += "(" + valToExprString(Op) + ")";
+    }
     break;
 
   case Instruction::Add:
@@ -201,7 +210,7 @@ std::string Printer::ConstantExprToString(const ConstantExpr* CE) {
 /// printSingleConstantValue - Print a single constant value.
 ///
 void
-Printer::printSingleConstantValue(const Constant* CV)
+Printer::printSingleConstantValue(const Constant* CV) const
 {
   assert(CV->getType() != Type::VoidTy &&
          CV->getType() != Type::TypeTy &&
@@ -356,7 +365,7 @@ static std::string getAsCString(const ConstantArray *CVA) {
 // Uses printSingleConstantValue() to print each individual value.
 void
 Printer::printConstantValueOnly(const Constant* CV,
-				int numPadBytesAfter /* = 0 */)
+				int numPadBytesAfter /* = 0 */) const
 {
   const ConstantArray *CVA = dyn_cast<ConstantArray>(CV);
   const TargetData &TD = TM.getTargetData();
@@ -416,7 +425,7 @@ Printer::printConstantValueOnly(const Constant* CV,
 /// used to print out constants which have been "spilled to memory" by
 /// the code generator.
 ///
-void Printer::printConstantPool(MachineConstantPool *MCP){
+void Printer::printConstantPool(MachineConstantPool *MCP) const {
   const std::vector<Constant*> &CP = MCP->getConstants();
   const TargetData &TD = TM.getTargetData();
  
