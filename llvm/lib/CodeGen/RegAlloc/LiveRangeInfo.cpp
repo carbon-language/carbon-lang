@@ -110,6 +110,7 @@ void LiveRangeInfo::constructLiveRanges()
 
       // Now if the machine instruction has special operands that must be
       // set with a "suggested color", do it here.
+      // This will be true for call/return instructions
 
 
       if(  MRI.handleSpecialMInstr(MInst, *this, RegClassList) )
@@ -254,7 +255,7 @@ void LiveRangeInfo::coalesceLRs()
      for each machine instruction (inst)
        for each definition (def) in inst
          for each operand (op) of inst that is a use
-           if the def and op are of the same type
+           if the def and op are of the same register class
 	     if the def and op do not interfere //i.e., not simultaneously live
 	       if (degree(LR of def) + degree(LR of op)) <= # avail regs
 	         if both LRs do not have suggested colors
@@ -313,12 +314,11 @@ void LiveRangeInfo::coalesceLRs()
 	    if( LROfUse == LROfDef)     // nothing to merge if they are same
 	      continue;
 
-	    // RegClass *const RCOfUse = LROfUse->getRegClass();
+	    RegClass *const RCOfUse = LROfUse->getRegClass();
 
-	    //if( RCOfDef == RCOfUse ) {  // if the reg classes are the same
+	    if( RCOfDef == RCOfUse ) {  // if the reg classes are the same
 
-
-	    if( LROfUse->getTypeID() == LROfDef->getTypeID() ) { 
+	      // if( LROfUse->getTypeID() == LROfDef->getTypeID() ) { 
 
 	      if( ! RCOfDef->getInterference(LROfDef, LROfUse) ) {
 
@@ -341,7 +341,7 @@ void LiveRangeInfo::coalesceLRs()
 
 	      } // if def and use do not interfere
 
-	    } // if reg classes are the same
+	    }// if reg classes are the same
 
 	  } // for all uses
 
