@@ -224,6 +224,13 @@ namespace {
                             MachineBasicBlock::iterator &IP,
                             Value *Op0, Value *Op1, unsigned Opcode,
                             unsigned TargetReg);
+
+    /// emitShiftOperation - Common code shared between visitShiftInst and
+    /// constant expression support.
+    void emitShiftOperation(MachineBasicBlock *BB,
+                            MachineBasicBlock::iterator &IP,
+                            Value *Op0, Value *Op1, unsigned Opcode,
+                            unsigned TargetReg);
  
 
     /// copyConstantToRegister - Output the instructions required to put the
@@ -383,6 +390,12 @@ void ISel::copyConstantToRegister(MachineBasicBlock *MBB,
       emitSetCCOperation(MBB, IP, CE->getOperand(0), CE->getOperand(1),
                          CE->getOpcode(), R);
       return;
+
+    case Instruction::Shl:
+    case Instruction::Shr:
+      emitShiftOperation(MBB, IP, CE->getOperand(0), CE->getOperand(1),
+                         CE->getOpcode(), R);
+      break;
 
     default:
       std::cerr << "Offending expr: " << C << "\n";
@@ -1566,6 +1579,16 @@ void ISel::visitShiftInst(ShiftInst &I) {
     const unsigned *Opc = NonConstantOperand[isLeftShift*2+isSigned];
     BuildMI(BB, Opc[Class], 1, DestReg).addReg(SrcReg);
   }
+}
+
+/// emitShiftOperation - Common code shared between visitShiftInst and
+/// constant expression support.
+void ISel::emitShiftOperation(MachineBasicBlock *MBB,
+                              MachineBasicBlock::iterator &IP,
+                              Value *Op0, Value *Op1, unsigned Opcode,
+                              unsigned TargetReg) {
+  // FIXME: Should do all the stuff from visitShiftInst, but use BMI
+  assert (0 && "Constant shift operations not yet handled");
 }
 
 
