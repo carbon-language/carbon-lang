@@ -168,19 +168,19 @@ static inline void getTypeInfo(const Type *Ty, const TargetData *TD,
     Size = TD->getPointerSize(); Alignment = TD->getPointerAlignment();
     return;
   case Type::ArrayTyID: {
-    const ArrayType *ATy = (const ArrayType *)Ty;
+    const ArrayType *ATy = cast<ArrayType>(Ty);
+    unsigned AlignedSize = (Size + Alignment - 1)/Alignment*Alignment;
     getTypeInfo(ATy->getElementType(), TD, Size, Alignment);
-    Size *= ATy->getNumElements();
+    Size = AlignedSize*ATy->getNumElements();
     return;
   }
   case Type::StructTyID: {
     // Get the layout annotation... which is lazily created on demand.
-    const StructLayout *Layout = TD->getStructLayout((const StructType*)Ty);
+    const StructLayout *Layout = TD->getStructLayout(cast<StructType>(Ty));
     Size = Layout->StructSize; Alignment = Layout->StructAlignment;
     return;
   }
     
-  case Type::TypeTyID:
   default:
     assert(0 && "Bad type for getTypeInfo!!!");
     return;
