@@ -49,8 +49,9 @@
 #include <stdint.h>
 #endif
 
-// Fix AIX definitions of INT64_{MIN,MAX}
-#include "llvm/Support/DataTypesFix.h"
+#ifdef _AIX
+#include "llvm/Support/AIXDataTypesFix.h"
+#endif
 
 // Handle incorrect definition of uint64_t as u_int64_t
 #ifndef HAVE_UINT64_T

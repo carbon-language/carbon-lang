@@ -1,4 +1,4 @@
-//===-- include/Support/DataTypesFix.h - Fix datatype defs ------*- C++ -*-===//
+//===-- include/Support/AIXDataTypesFix.h - Fix datatype defs ---*- C++ -*-===//
 // 
 //                     The LLVM Compiler Infrastructure
 //
@@ -13,17 +13,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef SUPPORT_DATATYPESFIX_H
-#define SUPPORT_DATATYPESFIX_H
+// No include guards desired!
 
-#include "llvm/Config/config.h"
-
-#if defined(_POWER) && defined(_AIX)
-// GCC is strict about defining large constants: they must have LL modifier.
-#undef INT64_MAX
-#define INT64_MAX 9223372036854775807LL
-#undef INT64_MIN
-#define INT64_MIN (-INT64_MAX-1) 
+#ifndef SUPPORT_DATATYPES_H
+#error "AIXDataTypesFix.h must only be included via DataTypes.h!"
 #endif
 
-#endif  /* SUPPORT_DATATYPESFIX_H */
+// GCC is strict about defining large constants: they must have LL modifier.
+// These will be defined properly at the end of DataTypes.h
+#undef INT64_MAX
+#undef INT64_MIN
