@@ -182,34 +182,23 @@ int llvm::RunProgramWithTimeout(const std::string &ProgramPath,
     alarm(NumSeconds);
 
   int Status;
-  while (wait(&Status) != Child) {
+  while (wait(&Status) != Child)
     if (errno == EINTR) {
       if (Timeout) {
-        static bool FirstTimeout = true;
-        if (FirstTimeout) {
-          std::cout <<
- "*** Program execution timed out!  This mechanism is designed to handle\n"
- "    programs stuck in infinite loops gracefully.  The -timeout option\n"
- "    can be used to change the timeout threshold or disable it completely\n"
- "    (with -timeout=0).  This message is only displayed once.\n";
-          FirstTimeout = false;
-        }
+        // Kill the child.
+        kill(Child, SIGKILL);
+        
+        if (wait(&Status) != Child)
+          std::cerr << "Something funny happened waiting for the child!\n";
+        
+        alarm(0);
+        sigaction(SIGALRM, &Old, 0);
+        return -1;   // Timeout detected
+      } else {
+        std::cerr << "Error waiting for child process!\n";
+        exit(1);
       }
-
-      // Kill the child.
-      kill(Child, SIGKILL);
-
-      if (wait(&Status) != Child)
-        std::cerr << "Something funny happened waiting for the child!\n";
-
-      alarm(0);
-      sigaction(SIGALRM, &Old, 0);
-      return -1;   // Timeout detected
-    } else {
-      std::cerr << "Error waiting for child process!\n";
-      exit(1);
     }
-  }
 
   alarm(0);
   sigaction(SIGALRM, &Old, 0);
