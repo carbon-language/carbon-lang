@@ -65,15 +65,15 @@ int main(int argc, char **argv) {
   // a little bit.  Do this now.
   //
   PassManager Passes;
-  Passes.add(new DeadInstElimination());       // Remove Dead code/vars
-  Passes.add(new RaiseAllocations());          // call %malloc -> malloc inst
-  Passes.add(new CleanupGCCOutput());          // Fix gccisms
-  Passes.add(new InductionVariableSimplify()); // Simplify indvars
-  Passes.add(new RaisePointerReferences());    // Eliminate casts
-  Passes.add(new ConstantMerge());             // Merge dup global consts
-  Passes.add(new InstructionCombining());      // Combine silly seq's
-  Passes.add(new DeadCodeElimination());       // Remove Dead code/vars
-  Passes.add(new WriteBytecodePass(&Out));     // Write bytecode to file...
+  Passes.add(createDeadInstEliminationPass());    // Remove Dead code/vars
+  Passes.add(createRaiseAllocationsPass());       // call %malloc -> malloc inst
+  Passes.add(createCleanupGCCOutputPass());       // Fix gccisms
+  Passes.add(createIndVarSimplifyPass());         // Simplify indvars
+  Passes.add(createRaisePointerReferencesPass()); // Eliminate casts
+  Passes.add(createConstantMergePass());          // Merge dup global consts
+  Passes.add(createInstructionCombiningPass());   // Combine silly seq's
+  Passes.add(createDeadCodeEliminationPass());    // Remove Dead code/vars
+  Passes.add(new WriteBytecodePass(&Out));        // Write bytecode to file...
 
   // Run our queue of passes all at once now, efficiently.
   Passes.run(M.get());
