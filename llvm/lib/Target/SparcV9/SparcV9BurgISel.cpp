@@ -606,7 +606,7 @@ uint64_t ConvertConstantToIntType(const TargetMachine &target, const Value *V,
 /// (2) isSigned = true and C is a small negative signed value, i.e.,
 ///     high bits are 1, and the remaining bits fit in simm13(OR).
 static inline void
-CreateSETUWConst(const TargetMachine& target, uint32_t C,
+CreateSETUWConst(uint32_t C,
                  Instruction* dest, std::vector<MachineInstr*>& mvec,
                  bool isSigned = false) {
   MachineInstr *miSETHI = NULL, *miOR = NULL;
@@ -636,7 +636,7 @@ CreateSETUWConst(const TargetMachine& target, uint32_t C,
     } else {
       // unsigned or small signed value that fits in simm13 field of OR
       assert(smallNegValue || (C & ~MAXSIMM) == 0);
-      miOR = BuildMI(V9::ORi, 3).addMReg(target.getRegInfo()->getZeroRegNum())
+      miOR = BuildMI(V9::ORi, 3).addMReg(SparcV9::g0)
         .addSImm(sC).addRegDef(dest);
     }
     mvec.push_back(miOR);
@@ -652,10 +652,10 @@ CreateSETUWConst(const TargetMachine& target, uint32_t C,
 /// (1) SRA is not needed for positive or small negative values.
 /// 
 static inline void
-CreateSETSWConst(const TargetMachine& target, int32_t C,
+CreateSETSWConst(int32_t C,
                  Instruction* dest, std::vector<MachineInstr*>& mvec) {
   // Set the low 32 bits of dest
-  CreateSETUWConst(target, (uint32_t) C,  dest, mvec, /*isSigned*/true);
+  CreateSETUWConst((uint32_t) C,  dest, mvec, /*isSigned*/true);
 
   // Sign-extend to the high 32 bits if needed.
   // NOTE: The value C = 0x80000000 is bad: -C == C and so -C is < MAXSIMM
@@ -670,7 +670,7 @@ CreateSETSWConst(const TargetMachine& target, int32_t C,
 /// 32 bit word.
 /// 
 static inline void
-CreateSETXConst(const TargetMachine& target, uint64_t C,
+CreateSETXConst(uint64_t C,
                 Instruction* tmpReg, Instruction* dest,
                 std::vector<MachineInstr*>& mvec) {
   assert(C > (unsigned int) ~0 && "Use SETUW/SETSW for 32-bit values!");
@@ -678,14 +678,14 @@ CreateSETXConst(const TargetMachine& target, uint64_t C,
   MachineInstr* MI;
   
   // Code to set the upper 32 bits of the value in register `tmpReg'
-  CreateSETUWConst(target, (C >> 32), tmpReg, mvec);
+  CreateSETUWConst((C >> 32), tmpReg, mvec);
   
   // Shift tmpReg left by 32 bits
   mvec.push_back(BuildMI(V9::SLLXi6, 3).addReg(tmpReg).addZImm(32)
                  .addRegDef(tmpReg));
   
   // Code to set the low 32 bits of the value in register `dest'
-  CreateSETUWConst(target, C, dest, mvec);
+  CreateSETUWConst(C, dest, mvec);
   
   // dest = OR(tmpReg, dest)
   mvec.push_back(BuildMI(V9::ORr,3).addReg(dest).addReg(tmpReg).addRegDef(dest));
@@ -695,7 +695,7 @@ CreateSETXConst(const TargetMachine& target, uint64_t C,
 /// the register `dest'.
 /// 
 static inline void
-CreateSETUWLabel(const TargetMachine& target, Value* val,
+CreateSETUWLabel(Value* val,
                  Instruction* dest, std::vector<MachineInstr*>& mvec) {
   MachineInstr* MI;
   
@@ -714,7 +714,7 @@ CreateSETUWLabel(const TargetMachine& target, Value* val,
 /// register `dest'.
 /// 
 static inline void
-CreateSETXLabel(const TargetMachine& target, Value* val, Instruction* tmpReg,
+CreateSETXLabel(Value* val, Instruction* tmpReg,
                 Instruction* dest, std::vector<MachineInstr*>& mvec) {
   assert(isa<Constant>(val) && 
          "I only know about constant values and global addresses");
@@ -750,21 +750,20 @@ CreateSETXLabel(const TargetMachine& target, Value* val, Instruction* tmpReg,
 /// them all).
 /// 
 static inline void
-CreateUIntSetInstruction(const TargetMachine& target,
-                         uint64_t C, Instruction* dest,
+CreateUIntSetInstruction(uint64_t C, Instruction* dest,
                          std::vector<MachineInstr*>& mvec,
                          MachineCodeForInstruction& mcfi) {
   static const uint64_t lo32 = (uint32_t) ~0;
   if (C <= lo32)                        // High 32 bits are 0.  Set low 32 bits.
-    CreateSETUWConst(target, (uint32_t) C, dest, mvec);
+    CreateSETUWConst((uint32_t) C, dest, mvec);
   else if ((C & ~lo32) == ~lo32 && (C & (1U << 31))) {
     // All high 33 (not 32) bits are 1s: sign-extension will take care
     // of high 32 bits, so use the sequence for signed int
-    CreateSETSWConst(target, (int32_t) C, dest, mvec);
+    CreateSETSWConst((int32_t) C, dest, mvec);
   } else if (C > lo32) {
     // C does not fit in 32 bits
     TmpInstruction* tmpReg = new TmpInstruction(mcfi, Type::IntTy);
-    CreateSETXConst(target, C, tmpReg, dest, mvec);
+    CreateSETXConst(C, tmpReg, dest, mvec);
   }
 }
 
@@ -772,11 +771,10 @@ CreateUIntSetInstruction(const TargetMachine& target,
 /// register `dest'.  Really the same as CreateUIntSetInstruction.
 /// 
 static inline void
-CreateIntSetInstruction(const TargetMachine& target,
-                        int64_t C, Instruction* dest,
+CreateIntSetInstruction(int64_t C, Instruction* dest,
                         std::vector<MachineInstr*>& mvec,
                         MachineCodeForInstruction& mcfi) {
-  CreateUIntSetInstruction(target, (uint64_t) C, dest, mvec, mcfi);
+  CreateUIntSetInstruction((uint64_t) C, dest, mvec, mcfi);
 }
 
 /// MaxConstantsTableTy - Table mapping LLVM opcodes to the max. immediate
@@ -1069,7 +1067,7 @@ void CreateCodeToLoadConst(const TargetMachine& target, Function* F,
   if (isa<GlobalValue>(val)) {
       TmpInstruction* tmpReg =
         new TmpInstruction(mcfi, PointerType::get(val->getType()), val);
-      CreateSETXLabel(target, val, tmpReg, dest, mvec);
+      CreateSETXLabel(val, tmpReg, dest, mvec);
       return;
   }
 
@@ -1077,9 +1075,9 @@ void CreateCodeToLoadConst(const TargetMachine& target, Function* F,
   uint64_t C = ConvertConstantToIntType(target, val, dest->getType(), isValid);
   if (isValid) {
     if (dest->getType()->isSigned())
-      CreateUIntSetInstruction(target, C, dest, mvec, mcfi);
+      CreateUIntSetInstruction(C, dest, mvec, mcfi);
     else
-      CreateIntSetInstruction(target, (int64_t) C, dest, mvec, mcfi);
+      CreateIntSetInstruction((int64_t) C, dest, mvec, mcfi);
 
   } else {
     // Make an instruction sequence to load the constant, viz:
