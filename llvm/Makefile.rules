@@ -708,7 +708,7 @@ install-local:: $(DestBytecodeLib)
 
 $(DestBytecodeLib): $(BytecodeDestDir) $(LibName.BCA) 
 	$(Echo) Installing $(BuildMode) Bytecode Archive $(DestBytecodeLib)
-	$(Verb) $(ProgInstall) $(LibName.BCA) $(DestBytecodeLib)
+	$(Verb) $(DataInstall) $(LibName.BCA) $(DestBytecodeLib)
 
 uninstall-local::
 	$(Echo) Uninstalling $(BuildMode) Bytecode Archive $(DestBytecodeLib)
