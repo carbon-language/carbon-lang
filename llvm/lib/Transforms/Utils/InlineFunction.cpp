@@ -51,11 +51,16 @@ bool InlineFunction(CallSite CS) {
   BasicBlock *AfterCallBB;
 
   if (InvokeInst *II = dyn_cast<InvokeInst>(TheCall)) {
-    AfterCallBB = II->getNormalDest();
     InvokeDest = II->getExceptionalDest();
 
     // Add an unconditional branch to make this look like the CallInst case...
-    new BranchInst(AfterCallBB, TheCall);
+    BranchInst *NewBr = new BranchInst(II->getNormalDest(), TheCall);
+
+    // Split the basic block.  This guarantees that no PHI nodes will have to be
+    // updated due to new incoming edges, and make the invoke case more
+    // symmetric to the call case.
+    AfterCallBB = OrigBB->splitBasicBlock(NewBr,
+                                          CalledFunc->getName()+".entry");
 
     // If there are PHI nodes in the exceptional destination block, we need to
     // keep track of which values came into them from this invoke, then remove
