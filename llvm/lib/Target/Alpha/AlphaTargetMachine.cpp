@@ -26,6 +26,12 @@ namespace {
   RegisterTarget<AlphaTargetMachine> X("alpha", "  Alpha (incomplete)");
 }
 
+namespace llvm {
+  cl::opt<bool> EnableAlphaLSR("enable-lsr-for-alpha", 
+                             cl::desc("Enable LSR for Alpha (beta option!)"), 
+                             cl::Hidden);
+}
+
 unsigned AlphaTargetMachine::getModuleMatchQuality(const Module &M) {
   // We strongly match "alpha*".
   std::string TT = M.getTargetTriple();
@@ -54,6 +60,9 @@ AlphaTargetMachine::AlphaTargetMachine( const Module &M, IntrinsicLowering *IL)
 bool AlphaTargetMachine::addPassesToEmitAssembly(PassManager &PM,
                                                    std::ostream &Out) {
   
+  if (EnableAlphaLSR)
+    PM.add(createLoopStrengthReducePass());
+
   // FIXME: Implement efficient support for garbage collection intrinsics.
   PM.add(createLowerGCPass());
 
