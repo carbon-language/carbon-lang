@@ -8,11 +8,10 @@
 #ifndef SPARC_INTERNALS_H
 #define SPARC_INTERNALS_H
 
-#include "llvm/Target/Machine.h"
 #include "SparcRegInfo.h"
-
-#include <sys/types.h>
+#include "llvm/Target/SchedInfo.h"
 #include "llvm/Type.h"
+#include <sys/types.h>
 
 class UltraSparc;
 
@@ -39,17 +38,6 @@ enum SparcInstrSchedClass {
   SPARC_NUM_SCHED_CLASSES = SPARC_INV
 };
 
-// inline operator int (const SparcInstrSchedClass& si) {
-//   return (int) si;
-// }
-// 
-// inline operator SparcInstrSchedClass (int i) {
-//   return (SparcInstrSchedClass) si;
-// }
-// 
-// inline operator const SparcInstrSchedClass (int i) {
-//   return (const SparcInstrSchedClass) si;
-// }
 
 //---------------------------------------------------------------------------
 // enum SparcMachineOpCode. 
@@ -59,7 +47,6 @@ enum SparcInstrSchedClass {
 //   Description of UltraSparc machine instructions.
 // 
 //---------------------------------------------------------------------------
-
 
 enum SparcMachineOpCode {
 

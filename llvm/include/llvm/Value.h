@@ -8,7 +8,7 @@
 #ifndef LLVM_VALUE_H
 #define LLVM_VALUE_H
 
-#include <list>
+#include <vector>
 #include "llvm/Annotation.h"
 #include "llvm/AbstractTypeUser.h"
 
@@ -44,7 +44,7 @@ public:
   };
 
 private:
-  list<User *> Uses;
+  vector<User *> Uses;
   string Name;
   PATypeHandle<Type> Ty;
   ValueTy VTy;
@@ -130,10 +130,10 @@ public:
   virtual void refineAbstractType(const DerivedType *OldTy, const Type *NewTy);
 
   //----------------------------------------------------------------------
-  // Methods for handling the list of uses of this DEF.
+  // Methods for handling the vector of uses of this Value.
   //
-  typedef list<User*>::iterator       use_iterator;
-  typedef list<User*>::const_iterator use_const_iterator;
+  typedef vector<User*>::iterator       use_iterator;
+  typedef vector<User*>::const_iterator use_const_iterator;
 
   inline unsigned           use_size()  const { return Uses.size();  }
   inline bool               use_empty() const { return Uses.empty(); }

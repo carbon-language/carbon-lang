@@ -21,9 +21,9 @@
 #ifndef LLVM_CODEGEN_SCHEDPRIORITIES_H
 #define LLVM_CODEGEN_SCHEDPRIORITIES_H
 
+#include "SchedGraph.h"
 #include "llvm/CodeGen/InstrScheduling.h"
 #include "llvm/Analysis/LiveVar/MethodLiveVarInfo.h"
-#include "llvm/CodeGen/SchedGraph.h"
 #include "llvm/Target/SchedInfo.h"
 
 class Method;

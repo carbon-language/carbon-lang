@@ -14,7 +14,6 @@
 #define LLVM_TARGET_DATA_H
 
 #include "llvm/Type.h"
-#include <vector>
 
 class StructType;
 class StructLayout;

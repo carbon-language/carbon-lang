@@ -10,7 +10,6 @@
 
 #include "llvm/InstrTypes.h"
 #include "llvm/Method.h"
-#include <vector>
 
 //===----------------------------------------------------------------------===//
 //                               PHINode Class

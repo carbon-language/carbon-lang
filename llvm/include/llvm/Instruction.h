@@ -13,7 +13,7 @@
 class Type;
 class BasicBlock;
 class Method;
-class MachineInstr;		// do not include header file MachineInstr.h
+class MachineInstr;
 class MachineCodeForVMInstr;
 
 class Instruction : public User {

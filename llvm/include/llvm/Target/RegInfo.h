@@ -8,9 +8,14 @@
 #ifndef LLVM_TARGET_REGINFO_H
 #define LLVM_TARGET_REGINFO_H
 
-class LiveRangeInfo;
-class Method;
+#include "llvm/Support/NonCopyable.h"
+#include <hash_map>
+#include <string>
+
+class Value;
 class Instruction;
+class Method;
+class LiveRangeInfo;
 class LiveRange;
 class AddedInstrns;
 class MachineInstr;

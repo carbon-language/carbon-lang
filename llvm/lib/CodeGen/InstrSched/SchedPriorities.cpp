@@ -18,7 +18,7 @@
  *	7/30/01	 -  Vikram Adve  -  Created
  ***************************************************************************/
 
-#include "llvm/CodeGen/SchedPriorities.h"
+#include "SchedPriorities.h"
 
 
 SchedPriorities::SchedPriorities(const Method* method,

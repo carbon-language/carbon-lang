@@ -19,7 +19,7 @@
 #include "llvm/CodeGen/InstrForest.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/NonCopyable.h"
-#include "llvm/Target/Machine.h"
+#include "llvm/Target/InstInfo.h"
 
 template<class _MI, class _V> class ValOpIterator;
 

@@ -1,6 +1,6 @@
 //===-- Value.cpp - Implement the Value class -----------------------------===//
 //
-// This file implements the Value class. 
+// This file implements the Value, User, and SymTabValue classes. 
 //
 //===----------------------------------------------------------------------===//
 
@@ -44,7 +44,7 @@ void Value::replaceAllUsesWith(Value *D) {
   assert(D && "Value::replaceAllUsesWith(<null>) is invalid!");
   assert(D != this && "V->replaceAllUsesWith(V) is NOT valid!");
   while (!Uses.empty()) {
-    User *Use = Uses.front();
+    User *Use = Uses.back();
 #ifndef NDEBUG
     unsigned NumUses = Uses.size();
 #endif

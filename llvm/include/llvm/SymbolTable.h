@@ -17,7 +17,6 @@
 #define LLVM_SYMBOL_TABLE_H
 
 #include "llvm/Value.h"
-#include <vector>
 #include <map>
 
 class Value;

@@ -10,8 +10,6 @@
 #define LLVM_INSTRUCTION_TYPES_H
 
 #include "llvm/Instruction.h"
-#include <list>
-#include <vector>
 
 class Method;
 class SymTabValue;

@@ -12,7 +12,6 @@
 #define LLVM_DERIVED_TYPES_H
 
 #include "llvm/Type.h"
-#include <vector>
 
 class DerivedType : public Type {
   // AbstractTypeUsers - Implement a list of the users that need to be notified

@@ -9,7 +9,7 @@
 //***************************************************************************
 
 #include "llvm/CodeGen/InstrScheduling.h"
-#include "llvm/CodeGen/SchedPriorities.h"
+#include "SchedPriorities.h"
 #include "llvm/Analysis/LiveVar/BBLiveVar.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/Support/CommandLine.h"

@@ -8,12 +8,16 @@
 //	7/15/01	 -  Vikram Adve  -  Created
 //**************************************************************************/
 
-#include "llvm/CodeGen/Sparc.h"
+#include "llvm/Target/Sparc.h"
 #include "SparcInternals.h"
 #include "llvm/Method.h"
 #include "llvm/CodeGen/InstrScheduling.h"
 #include "llvm/CodeGen/InstrSelection.h"
 
+// allocateSparcTargetMachine - Allocate and return a subclass of TargetMachine
+// that implements the Sparc backend. (the llvm/CodeGen/Sparc.h interface)
+//
+TargetMachine *allocateSparcTargetMachine() { return new UltraSparc(); }
 
 
 //---------------------------------------------------------------------------
@@ -115,7 +119,3 @@ bool UltraSparc::compileMethod(Method *M) {
   return false;
 }
 
-// allocateSparcTargetMachine - Allocate and return a subclass of TargetMachine
-// that implements the Sparc backend.
-//
-TargetMachine *allocateSparcTargetMachine() { return new UltraSparc(); }

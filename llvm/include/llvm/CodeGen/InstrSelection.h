@@ -13,7 +13,6 @@
 #define LLVM_CODEGEN_INSTR_SELECTION_H
 
 #include "llvm/Instruction.h"
-#include <vector>
 class Method;
 class InstrForest;
 class MachineInstr;

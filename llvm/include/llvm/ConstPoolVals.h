@@ -10,7 +10,6 @@
 
 #include "llvm/User.h"
 #include "llvm/Support/DataTypes.h"
-#include <vector>
 
 class ArrayType;
 class StructType;

@@ -13,7 +13,6 @@
 #define LLVM_USER_H
 
 #include "llvm/Value.h"
-#include <vector>
 
 class User : public Value {
   User(const User &);             // Do not implement

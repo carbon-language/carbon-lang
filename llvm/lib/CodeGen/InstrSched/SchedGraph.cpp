@@ -11,11 +11,11 @@
  *	7/20/01	 -  Vikram Adve  -  Created
  ***************************************************************************/
 
+#include "SchedGraph.h"
 #include "llvm/InstrTypes.h"
 #include "llvm/Instruction.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/Method.h"
-#include "llvm/CodeGen/SchedGraph.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/Target/InstInfo.h"
 #include "llvm/Support/StringExtras.h"

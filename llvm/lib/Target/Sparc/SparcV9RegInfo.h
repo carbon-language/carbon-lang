@@ -7,7 +7,7 @@
 #ifndef SPARC_INT_REG_CLASS_H
 #define SPARC_INT_REG_CLASS_H
 
-#include "llvm/Target/Machine.h"
+#include "llvm/Target/RegInfo.h"
 
 //-----------------------------------------------------------------------------
 // Integer Register Class
