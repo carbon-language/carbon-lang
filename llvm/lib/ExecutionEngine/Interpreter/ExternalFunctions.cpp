@@ -245,6 +245,21 @@ GenericValue lle_X_drand48(MethodType *M, const vector<GenericValue> &Args) {
   return GV;
 }
 
+// long lrand48()
+GenericValue lle_X_lrand48(MethodType *M, const vector<GenericValue> &Args) {
+  assert(Args.size() == 0);
+  GenericValue GV;
+  GV.IntVal = lrand48();
+  return GV;
+}
+
+// void srand48(long)
+GenericValue lle_X_srand48(MethodType *M, const vector<GenericValue> &Args) {
+  assert(Args.size() == 1);
+  srand48(Args[0].IntVal);
+  return GenericValue();
+}
+
 
 // int printf(sbyte *, ...) - a very rough implementation to make output useful.
 GenericValue lle_X_printf(MethodType *M, const vector<GenericValue> &Args) {
@@ -338,6 +353,10 @@ void Interpreter::initializeExternalMethods() {
   FuncNames["lle_X_malloc"]       = lle_X_malloc;
   FuncNames["lle_X_free"]         = lle_X_free;
   FuncNames["lle_X_pow"]          = lle_X_pow;
+  FuncNames["lle_X_log"]          = lle_X_log;
+  FuncNames["lle_X_drand48"]      = lle_X_drand48;
+  FuncNames["lle_X_srand48"]      = lle_X_srand48;
+  FuncNames["lle_X_lrand48"]      = lle_X_lrand48;
   FuncNames["lle_X_sqrt"]         = lle_X_sqrt;
   FuncNames["lle_X_printf"]       = lle_X_printf;
 }
