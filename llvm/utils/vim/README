@@ -1,0 +1,29 @@
+-*- llvm/utils/vim/README -*-
+
+These are syntax highlighting files for the VIM editor. Included are:
+
+* llvm.vim
+
+  Syntax highlighting mode for LLVM assembly files. To use, COPY `llvm.vim' to
+  ~/.vim/syntax and add this code to your ~/.vimrc :
+
+  augroup filetype
+    au! BufRead,BufNewFile *.ll     set filetype=llvm
+  augroup END
+
+* tablegen.vim
+
+  Syntax highlighting mode for TableGen description files. To use, COPY
+  `tablegen.vim' to ~/.vim/syntax and add this code to your ~/.vimrc :
+
+  augroup filetype
+    au! BufRead,BufNewFile *.td     set filetype=tablegen
+  augroup END
+
+
+IMPORTANT: Making symlinks from ~/.vim/syntax/... to the syntax files in your
+LLVM source tree does not work, you DO need to copy the files directly.
+
+Note: If you notice missing or incorrect syntax highlighting, please contact
+<llvmbugs [at] cs.uiuc.edu>; if you wish to provide a patch to improve the
+functionality, it will be most appreciated. Thank you.
