@@ -189,7 +189,7 @@ void LoopStrengthReduce::strengthReduceGEP(GetElementPtrInst *GEPI, Loop *L,
   // that it was the induction variable, and has been replaced by a constant
   // null value.  In this case, replace the GEP with a use of pointer directly.
   PHINode *NewPHI;
-  if (1) {
+  if (Cache->CachedPHINode == 0) {
     Value *PreGEP;
     if (AllConstantOperands && isa<Constant>(GEPI->getOperand(0))) {
       Constant *C = dyn_cast<Constant>(GEPI->getOperand(0));
