@@ -486,7 +486,8 @@ ConstRules &ConstRules::get(const Constant *V1, const Constant *V2) {
   static DirectFPRules <ConstantFP  , double        , &Type::DoubleTy> DoubleR;
 
   if (isa<ConstantExpr>(V1) || isa<ConstantExpr>(V2) ||
-      isa<GlobalValue>(V1) || isa<GlobalValue>(V2))
+      isa<GlobalValue>(V1) || isa<GlobalValue>(V2) ||
+      isa<UndefValue>(V1) || isa<UndefValue>(V2))
     return EmptyR;
 
   switch (V1->getType()->getTypeID()) {
@@ -525,15 +526,14 @@ Constant *llvm::ConstantFoldCastInstruction(const Constant *V,
   if (V->getType() == DestTy) return (Constant*)V;
 
   // Cast of a global address to boolean is always true.
-  if (const GlobalValue *GV = dyn_cast<GlobalValue>(V))
+  if (const GlobalValue *GV = dyn_cast<GlobalValue>(V)) {
     if (DestTy == Type::BoolTy)
       // FIXME: When we support 'external weak' references, we have to prevent
       // this transformation from happening.  In the meantime we avoid folding
       // any cast of an external symbol.
       if (!GV->isExternal())
         return ConstantBool::True;
-
-  if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(V))
+  } else if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(V)) {
     if (CE->getOpcode() == Instruction::Cast) {
       Constant *Op = const_cast<Constant*>(CE->getOperand(0));
       // Try to not produce a cast of a cast, which is almost always redundant.
@@ -561,6 +561,9 @@ Constant *llvm::ConstantFoldCastInstruction(const Constant *V,
       if (isAllNull)
         return ConstantExpr::getCast(CE->getOperand(0), DestTy);
     }
+  } else if (isa<UndefValue>(V)) {
+    return UndefValue::get(DestTy);
+  }
 
   // Check to see if we are casting an array of X to a pointer to X.  If so, use
   // a GEP to get to the first element of the array instead of a cast!
@@ -600,6 +603,10 @@ Constant *llvm::ConstantFoldSelectInstruction(const Constant *Cond,
     return const_cast<Constant*>(V1);
   else if (Cond == ConstantBool::False)
     return const_cast<Constant*>(V2);
+
+  if (isa<UndefValue>(V1)) return const_cast<Constant*>(V2);
+  if (isa<UndefValue>(V2)) return const_cast<Constant*>(V1);
+  if (isa<UndefValue>(Cond)) return const_cast<Constant*>(V1);
   return 0;
 }
 
@@ -864,6 +871,49 @@ Constant *llvm::ConstantFoldBinaryInstruction(unsigned Opcode,
       if (Opcode == Instruction::SetNE) return ConstantBool::True;
       break;
     }
+
+  if (isa<UndefValue>(V1) || isa<UndefValue>(V2)) {
+    switch (Opcode) {
+    case Instruction::Add:
+    case Instruction::Sub:
+    case Instruction::SetEQ:
+    case Instruction::SetNE:
+    case Instruction::SetLT:
+    case Instruction::SetLE:
+    case Instruction::SetGT:
+    case Instruction::SetGE:
+    case Instruction::Xor:
+      return UndefValue::get(V1->getType());
+
+    case Instruction::Mul:
+    case Instruction::And:
+      return Constant::getNullValue(V1->getType());
+    case Instruction::Div:
+    case Instruction::Rem:
+      if (!isa<UndefValue>(V2))     // undef/X -> 0
+        return Constant::getNullValue(V1->getType());
+      return const_cast<Constant*>(V2);                // X/undef -> undef
+    case Instruction::Or:           // X|undef -> -1
+      return ConstantInt::getAllOnesValue(V1->getType());
+    case Instruction::Shr:
+      if (!isa<UndefValue>(V2)) {
+        if (V1->getType()->isSigned())
+          return const_cast<Constant*>(V1);  // undef >>s X -> undef
+        // undef >>u X -> 0
+      } else if (isa<UndefValue>(V1)) {
+        return const_cast<Constant*>(V1);   //  undef >> undef -> undef
+      } else {
+        if (V1->getType()->isSigned())
+          return const_cast<Constant*>(V1);  // X >>s undef -> X
+        // X >>u undef -> 0
+      }
+      return Constant::getNullValue(V1->getType());
+
+    case Instruction::Shl:
+      // undef << X -> 0   X << undef -> 0
+      return Constant::getNullValue(V1->getType());
+    }
+  }
 
   if (const ConstantExpr *CE1 = dyn_cast<ConstantExpr>(V1)) {
     if (const ConstantExpr *CE2 = dyn_cast<ConstantExpr>(V2)) {
