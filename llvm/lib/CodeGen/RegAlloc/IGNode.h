@@ -72,6 +72,9 @@ public:
 
   inline unsigned getNumOfNeighbors() const { return AdjList.size(); }
 
+  // Get the number of unique neighbors if these two nodes are merged
+  unsigned getCombinedDegree(const IGNode* otherNode) const;
+
   inline bool isOnStack() const { return OnStack; }
 
   // remove form IG and pushes on to stack (reduce the degree of neighbors)
