@@ -557,7 +557,7 @@ void Verifier::visitIntrinsicFunctionCall(LLVMIntrinsic::ID ID, CallInst &CI) {
 //  Implement the public interfaces to this file...
 //===----------------------------------------------------------------------===//
 
-Pass *createVerifierPass() {
+FunctionPass *createVerifierPass() {
   return new Verifier();
 }
 

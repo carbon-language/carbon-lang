@@ -14,14 +14,14 @@
 #ifndef LLVM_ANALYSIS_VERIFIER_H
 #define LLVM_ANALYSIS_VERIFIER_H
 
-class Pass;
+class FunctionPass;
 class Module;
 class Function;
 
 // createVerifierPass - Check a module or function for validity.  If errors are
 // detected, error messages corresponding to the problem are printed to stderr.
 //
-Pass *createVerifierPass();
+FunctionPass *createVerifierPass();
 
 // verifyModule - Check a module for errors, printing messages on stderr.
 // Return true if the module is corrupt.  This should only be used for

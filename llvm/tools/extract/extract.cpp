@@ -8,6 +8,7 @@
 
 #include "llvm/Module.h"
 #include "llvm/PassManager.h"
+#include "llvm/Pass.h"
 #include "llvm/Bytecode/Reader.h"
 #include "llvm/Bytecode/WriteBytecodePass.h"
 #include "llvm/Transforms/IPO.h"
