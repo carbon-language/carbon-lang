@@ -694,6 +694,7 @@ endif
 
 # 'make clean' nukes the tree
 clean-local::
+	$(VERB) $(RM) -rf $(OBJDIR)
 	$(VERB) $(RM) -f core core.[0-9][0-9]* *.o *.d *~ *.flc
 ifneq ($(strip $(SHLIBEXT)),) # Extra paranoia - make real sure SHLIBEXT is set
 	$(VERB)	$(RM) -f *$(SHLIBEXT)
