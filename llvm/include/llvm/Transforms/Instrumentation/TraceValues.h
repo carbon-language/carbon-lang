@@ -15,9 +15,8 @@
 #ifndef LLVM_TRANSFORMS_INSTRUMENTATION_TRACEVALUES_H
 #define LLVM_TRANSFORMS_INSTRUMENTATION_TRACEVALUES_H
 
-class Module;
-class Method;
-class BasicBlock;
+#include "llvm/Transforms/Pass.h"
+
 class Instruction;
 class Value;
 class Type;
@@ -70,6 +69,20 @@ void            InsertCodeToTraceValues (Method* method,
                                          bool traceBasicBlockExits,
                                          bool traceMethodExits);
 
-//**************************************************************************/
 
-#endif LLVM_TRANSFORMS_INSTRUMENTATION_TRACEVALUES_H
+class InsertTraceCode : public ConcretePass<InsertTraceCode> {
+  bool TraceBasicBlockExits, TraceMethodExits;
+public:
+  InsertTraceCode(bool traceBasicBlockExits, bool traceMethodExits)
+    : TraceBasicBlockExits(traceBasicBlockExits), 
+      TraceMethodExits(traceMethodExits) {}
+
+  // doPerMethodWork - This method does the work.  Always successful.
+  //
+  bool doPerMethodWorkVirt(Method *M) {
+    InsertCodeToTraceValues(M, TraceBasicBlockExits, TraceMethodExits);
+    return false;
+  }
+};
+
+#endif /*LLVM_TRANSFORMS_INSTRUMENTATION_TRACEVALUES_H*/
