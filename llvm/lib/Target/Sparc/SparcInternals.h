@@ -1435,8 +1435,20 @@ public:
   // module. The specified module must have been compiled before this may be
   // used.
   //
-  virtual void emitAssembly(const Module *M, std::ostream &OutStr) const;
-};
+  virtual void emitAssembly(const Method *M, std::ostream &OutStr) const;
 
+  //
+  // emitAssembly - Output assembly language code (a .s file) for global
+  // components of the specified module.  This assumes that methods have been
+  // previously output.
+  //
+  virtual void emitAssembly(const Module *M, std::ostream &OutStr) const;
+
+  //
+  // freeCompiledMethod - Release all memory associated with the compiled image
+  // for this method.
+  //
+  virtual void freeCompiledMethod(Method *M);
+};
 
 #endif
