@@ -20,6 +20,7 @@
 #include "llvm/Bytecode/Writer.h"
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/SystemUtils.h"
 #include "llvm/System/Signals.h"
 #include <fstream>
 #include <iostream>
@@ -124,7 +125,9 @@ int main(int argc, char **argv) {
       return 1;
     }
    
-    WriteBytecodeToFile(M.get(), *Out, !NoCompress);
+    if (Force || !CheckBytecodeOutputToConsole(Out,true)) {
+      WriteBytecodeToFile(M.get(), *Out, !NoCompress);
+    }
   } catch (const ParseException &E) {
     std::cerr << argv[0] << ": " << E.getMessage() << "\n";
     exitCode = 1;
