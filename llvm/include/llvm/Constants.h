@@ -315,7 +315,8 @@ public:
   }
 
   virtual void destroyConstant();
-  virtual void replaceUsesOfWithOnConstant(Value *From, Value *To);
+  virtual void replaceUsesOfWithOnConstant(Value *From, Value *To,
+                                           bool DisableChecking = false);
 
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const ConstantArray *) { return true; }
@@ -362,7 +363,8 @@ public:
   }
 
   virtual void destroyConstant();
-  virtual void replaceUsesOfWithOnConstant(Value *From, Value *To);
+  virtual void replaceUsesOfWithOnConstant(Value *From, Value *To,
+                                           bool DisableChecking = false);
   
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const ConstantStruct *) { return true; }
@@ -456,7 +458,8 @@ public:
   }
 
   virtual void destroyConstant();
-  virtual void replaceUsesOfWithOnConstant(Value *From, Value *To);
+  virtual void replaceUsesOfWithOnConstant(Value *From, Value *To,
+                                           bool DisableChecking = false);
 
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const ConstantPointerRef *) { return true; }
@@ -526,7 +529,8 @@ public:
   virtual bool isConstantExpr() const { return true; }
 
   virtual void destroyConstant();
-  virtual void replaceUsesOfWithOnConstant(Value *From, Value *To);
+  virtual void replaceUsesOfWithOnConstant(Value *From, Value *To,
+                                           bool DisableChecking = false);
     
   /// Override methods to provide more type information...
   inline Constant *getOperand(unsigned i) { 
