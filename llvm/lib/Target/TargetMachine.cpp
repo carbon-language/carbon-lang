@@ -11,9 +11,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Target/TargetMachine.h"
 #include "llvm/Type.h"
 #include "llvm/CodeGen/IntrinsicLowering.h"
+#include "llvm/Target/TargetMachine.h"
 #include "Support/CommandLine.h"
 using namespace llvm;
 
@@ -23,11 +23,18 @@ using namespace llvm;
 
 namespace llvm { 
   bool PrintMachineCode;
+  bool NoFPElim;
 };
+
 namespace {
   cl::opt<bool, true> PrintCode("print-machineinstrs",
     cl::desc("Print generated machine code"),
     cl::location(PrintMachineCode), cl::init(false));
+
+  cl::opt<bool, true> 
+    DisableFPElim("disable-fp-elim",
+                  cl::desc("Disable frame pointer elimination optimization"),
+                  cl::location(NoFPElim), cl::init(false));
 };
 
 //---------------------------------------------------------------------------
