@@ -136,9 +136,7 @@ bool LowerSetJmp::run(Module& M)
     
     for (Value::use_iterator B = SetJmp->use_begin(), E = SetJmp->use_end();
          B != E; ++B) {
-      Instruction* I = cast<Instruction>(*B);
-      BasicBlock* BB = I->getParent();
-      Function* Func = BB->getParent();
+      BasicBlock* BB = cast<Instruction>(*B)->getParent();
       DFSBlocks.insert(df_begin(BB), df_end(BB));
     }
 
@@ -414,7 +412,6 @@ void LowerSetJmp::visitCallInst(CallInst& CI)
         CI.getCalledFunction()->isIntrinsic()) return;
 
   BasicBlock* OldBB = CI.getParent();
-  Function* Func = OldBB->getParent();
 
   // If not reachable from a setjmp call, don't transform.
   if (!DFSBlocks.count(OldBB)) return;
@@ -424,6 +421,7 @@ void LowerSetJmp::visitCallInst(CallInst& CI)
   NewBB->setName("Call2Invoke");
 
   // Reposition the split BB in the BB list to make things tidier.
+  Function* Func = OldBB->getParent();
   Func->getBasicBlockList().remove(NewBB);
   Func->getBasicBlockList().insert(++Function::iterator(OldBB), NewBB);
 
@@ -453,7 +451,6 @@ void LowerSetJmp::visitInvokeInst(InvokeInst& II)
         II.getCalledFunction()->isIntrinsic()) return;
 
   BasicBlock* BB = II.getParent();
-  Function* Func = BB->getParent();
 
   // If not reachable from a setjmp call, don't transform.
   if (!DFSBlocks.count(BB)) return;
@@ -461,6 +458,7 @@ void LowerSetJmp::visitInvokeInst(InvokeInst& II)
   BasicBlock* NormalBB = II.getNormalDest();
   BasicBlock* ExceptBB = II.getExceptionalDest();
 
+  Function* Func = BB->getParent();
   BasicBlock* NewExceptBB = new BasicBlock("InvokeExcept", Func);
   BasicBlock::InstListType& InstList = NewExceptBB->getInstList();
 
