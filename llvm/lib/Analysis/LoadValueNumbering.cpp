@@ -284,43 +284,13 @@ void LoadVN::getEqualNumberNodes(Value *V,
   if (LI->isVolatile())
     return getAnalysis<ValueNumbering>().getEqualNumberNodes(V, RetVals);
   
-  Value *PointerSource = LI->getOperand(0);
+  Value *LoadPtr = LI->getOperand(0);
   BasicBlock *LoadBB = LI->getParent();
   Function *F = LoadBB->getParent();
-  
-  // Now that we know the set of equivalent source pointers for the load
-  // instruction, look to see if there are any load or store candidates that are
-  // identical.
-  //
-  std::map<BasicBlock*, std::vector<LoadInst*> >  CandidateLoads;
-  std::map<BasicBlock*, std::vector<StoreInst*> > CandidateStores;
-    
-  for (Value::use_iterator UI = PointerSource->use_begin(),
-         UE = PointerSource->use_end(); UI != UE; ++UI)
-    if (LoadInst *Cand = dyn_cast<LoadInst>(*UI)) {// Is a load of source?
-      if (Cand->getParent()->getParent() == F &&   // In the same function?
-          Cand != LI && !Cand->isVolatile())       // Not LI itself?
-        CandidateLoads[Cand->getParent()].push_back(Cand);     // Got one...
-    } else if (StoreInst *Cand = dyn_cast<StoreInst>(*UI)) {
-      if (Cand->getParent()->getParent() == F && !Cand->isVolatile() &&
-          Cand->getOperand(1) == PointerSource) // It's a store THROUGH the ptr.
-        CandidateStores[Cand->getParent()].push_back(Cand);
-    }
-  
-  // Get alias analysis & dominators.
-  AliasAnalysis &AA = getAnalysis<AliasAnalysis>();
-  DominatorSet &DomSetInfo = getAnalysis<DominatorSet>();
-  Value *LoadPtr = LI->getOperand(0);
+
   // Find out how many bytes of memory are loaded by the load instruction...
   unsigned LoadSize = getAnalysis<TargetData>().getTypeSize(LI->getType());
-
-  // Find all of the candidate loads and stores that are in the same block as
-  // the defining instruction.
-  std::set<Instruction*> Instrs;
-  Instrs.insert(CandidateLoads[LoadBB].begin(), CandidateLoads[LoadBB].end());
-  CandidateLoads.erase(LoadBB);
-  Instrs.insert(CandidateStores[LoadBB].begin(), CandidateStores[LoadBB].end());
-  CandidateStores.erase(LoadBB);
+  AliasAnalysis &AA = getAnalysis<AliasAnalysis>();
 
   // Figure out if the load is invalidated from the entry of the block it is in
   // until the actual instruction.  This scans the block backwards from LI.  If
@@ -332,27 +302,26 @@ void LoadVN::getEqualNumberNodes(Value *V,
     // If this instruction is a candidate load before LI, we know there are no
     // invalidating instructions between it and LI, so they have the same value
     // number.
-    if (isa<LoadInst>(I) && cast<LoadInst>(I)->getOperand(0) == PointerSource) {
+    if (isa<LoadInst>(I) && cast<LoadInst>(I)->getOperand(0) == LoadPtr) {
       RetVals.push_back(I);
-      Instrs.erase(I);
-    } else if (AllocationInst *AI = dyn_cast<AllocationInst>(I)) {
+    } else if (I == LoadPtr) {
       // If we run into an allocation of the value being loaded, then the
       // contents are not initialized.
-      if ((Value*)AI == PointerSource) {
-        LoadInvalidatedInBBBefore = true;
+      if (isa<AllocationInst>(I))
         RetVals.push_back(UndefValue::get(LI->getType()));
-        break;
-      }
+
+      // Otherwise, since this is the definition of what we are loading, this
+      // loaded value cannot occur before this block.
+      LoadInvalidatedInBBBefore = true;
+      break;
     }
 
     if (AA.getModRefInfo(I, LoadPtr, LoadSize) & AliasAnalysis::Mod) {
       // If the invalidating instruction is a store, and its in our candidate
       // set, then we can do store-load forwarding: the load has the same value
       // # as the stored value.
-      if (isa<StoreInst>(I) && I->getOperand(1) == PointerSource) {
-        Instrs.erase(I);
+      if (isa<StoreInst>(I) && I->getOperand(1) == LoadPtr)
         RetVals.push_back(I->getOperand(0));
-      }
 
       LoadInvalidatedInBBBefore = true;
       break;
@@ -367,16 +336,51 @@ void LoadVN::getEqualNumberNodes(Value *V,
   for (BasicBlock::iterator I = LI->getNext(); I != LoadBB->end(); ++I) {
     // If this instruction is a load, then this instruction returns the same
     // value as LI.
-    if (isa<LoadInst>(I) && cast<LoadInst>(I)->getOperand(0) == PointerSource) {
+    if (isa<LoadInst>(I) && cast<LoadInst>(I)->getOperand(0) == LoadPtr)
       RetVals.push_back(I);
-      Instrs.erase(I);
-    }
 
     if (AA.getModRefInfo(I, LoadPtr, LoadSize) & AliasAnalysis::Mod) {
       LoadInvalidatedInBBAfter = true;
       break;
     }
   }
+
+  // If the pointer is clobbered on entry and on exit to the function, there is
+  // no need to do any global analysis at all.
+  if (LoadInvalidatedInBBBefore && LoadInvalidatedInBBAfter)
+    return;
+  
+  // Now that we know the set of equivalent source pointers for the load
+  // instruction, look to see if there are any load or store candidates that are
+  // identical.
+  //
+  std::map<BasicBlock*, std::vector<LoadInst*> >  CandidateLoads;
+  std::map<BasicBlock*, std::vector<StoreInst*> > CandidateStores;
+    
+  for (Value::use_iterator UI = LoadPtr->use_begin(), UE = LoadPtr->use_end();
+       UI != UE; ++UI)
+    if (LoadInst *Cand = dyn_cast<LoadInst>(*UI)) {// Is a load of source?
+      if (Cand->getParent()->getParent() == F &&   // In the same function?
+          // Not in LI's block?
+          Cand->getParent() != LoadBB && !Cand->isVolatile())
+        CandidateLoads[Cand->getParent()].push_back(Cand);     // Got one...
+    } else if (StoreInst *Cand = dyn_cast<StoreInst>(*UI)) {
+      if (Cand->getParent()->getParent() == F && !Cand->isVolatile() &&
+          Cand->getParent() != LoadBB &&
+          Cand->getOperand(1) == LoadPtr) // It's a store THROUGH the ptr.
+        CandidateStores[Cand->getParent()].push_back(Cand);
+    }
+  
+  // Get dominators.
+  DominatorSet &DomSetInfo = getAnalysis<DominatorSet>();
+
+  // Find all of the candidate loads and stores that are in the same block as
+  // the defining instruction.
+  std::set<Instruction*> Instrs;
+  Instrs.insert(CandidateLoads[LoadBB].begin(), CandidateLoads[LoadBB].end());
+  CandidateLoads.erase(LoadBB);
+  Instrs.insert(CandidateStores[LoadBB].begin(), CandidateStores[LoadBB].end());
+  CandidateStores.erase(LoadBB);
 
   // If there is anything left in the Instrs set, it could not possibly equal
   // LI.
