@@ -148,7 +148,7 @@ static TimeRecord getTimeRecord(bool Start) {
   }
 
   TimeRecord Result;
-  Result.Elapsed    =           T.tv_sec +           T.tv_usec/1000000.0;
+  Result.Elapsed    = double(T.tv_sec) + T.tv_usec/1000000.0;
   Result.UserTime   = RU.ru_utime.tv_sec + RU.ru_utime.tv_usec/1000000.0;
   Result.SystemTime = RU.ru_stime.tv_sec + RU.ru_stime.tv_usec/1000000.0;
   Result.MemUsed = MemUsed;
