@@ -235,14 +235,15 @@ public:
   const unsigned int getNumNodes() const {
     return size() + 2;
   }
+
   //return wether the BasicBlock 'bb' contains a loop
-  bool isLoop(const BasicBlock * bb);
+  bool isLoop(const BasicBlock *bb);
 
   //return this basibBlock contains a loop
   bool isLoop();
 
   //return the node for the input instruction
-  ModuloSchedGraphNode *getGraphNodeForInst(const Instruction * inst) const {
+  ModuloSchedGraphNode *getGraphNodeForInst(const Instruction *inst) const {
     const_iterator onePair = this->find(inst);
     return (onePair != this->end()) ? (*onePair).second : NULL;
   }
@@ -252,10 +253,10 @@ public:
   void dump() const;
 
   // dump the basicBlock
-  void dump(const BasicBlock * bb);
+  void dump(const BasicBlock *bb);
 
   //dump the basicBlock into 'os' stream
-  void dump(const BasicBlock * bb, std::ostream & os);
+  void dump(const BasicBlock *bb, std::ostream &os);
 
   //dump the node property
   void dumpNodeProperty() const;
@@ -287,14 +288,13 @@ public:
     (*this)[inst] = node;
   }
 
-  //Graph builder
-
+  // Graph builder
   ModuloSchedGraphNode *getNode(const unsigned nodeId) const;
 
-  //build the graph from the basicBlock
-  void buildGraph(const TargetMachine & target);
+  // Build the graph from the basicBlock
+  void buildGraph(const TargetMachine &target);
 
-  //Build nodes for BasicBlock
+  // Build nodes for BasicBlock
   void buildNodesforBB(const TargetMachine &target,
                        const BasicBlock *bb,
                        NodeVec &memNode,

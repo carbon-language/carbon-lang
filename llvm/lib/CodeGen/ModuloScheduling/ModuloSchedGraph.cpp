@@ -19,13 +19,11 @@
 #include <algorithm>
 #include <ostream>
 #include <vector>
-
 // FIXME: Should be using #include <cmath>
 #include <math.h>
 //#include <swig.h>
 
 #define UNIDELAY 1
-
 
 //*********************** Internal Data Structures *************************/
 
@@ -52,7 +50,6 @@ struct ValueToDefVecMap:public hash_map<const Instruction*,RefVec> {
 
 // class Modulo SchedGraphNode
 
-/*ctor*/
 ModuloSchedGraphNode::ModuloSchedGraphNode(unsigned int _nodeId,
                                            const BasicBlock * _bb,
                                            const Instruction * _inst,
@@ -113,8 +110,8 @@ void ModuloSchedGraph::addDefUseEdges(const BasicBlock *bb)
   for (unsigned int i = 0; i < defVec.size(); i++) {
     for (Value::use_const_iterator I = defVec[i]->getInst()->use_begin();
          I != defVec[i]->getInst()->use_end(); I++) {
-      //for each use of a def, add a flow edge from the def instruction to the ref instruction
-
+      //for each use of a def, add a flow edge from the def instruction to the
+      //ref instruction
 
       const Instruction *value = defVec[i]->getInst();
       Instruction *inst = (Instruction *) (*I);
@@ -969,7 +966,6 @@ ModuloSchedGraphNode *ModuloSchedGraph::getNode(const unsigned nodeId) const
 
 int ModuloSchedGraph::computeRecII(const BasicBlock *bb)
 {
-
   int RecII = 0;
 
   //os<<"begining computerRecII()"<<"\n";
@@ -1269,7 +1265,6 @@ void ModuloSchedGraph::dump(const BasicBlock * bb)
   DEBUG(std::cerr << "dumping basic block:");
   DEBUG(std::cerr << (bb->hasName()? bb->getName() : "block")
         << " (" << bb << ")" << "\n");
-
 }
 
 void ModuloSchedGraph::dump(const BasicBlock * bb, std::ostream & os)
@@ -1319,16 +1314,15 @@ void ModuloSchedGraph::dumpNodeProperty() const
   }
 }
 
-void ModuloSchedGraphSet::buildGraphsForMethod(const Function * F,
-                                               const TargetMachine &
-                                               target)
+void ModuloSchedGraphSet::buildGraphsForMethod(const Function *F,
+                                               const TargetMachine &target)
 {
   for (Function::const_iterator BI = F->begin(); BI != F->end(); ++BI)
     addGraph(new ModuloSchedGraph(BI, target));
 }
 
-std::ostream & operator<<(std::ostream & os,
-                          const ModuloSchedGraphNode & node)
+std::ostream& operator<<(std::ostream &os,
+                         const ModuloSchedGraphNode &node)
 {
   os << std::string(8, ' ')
       << "Node " << node.nodeId << " : "
@@ -1347,7 +1341,6 @@ std::ostream & operator<<(std::ostream & os,
     for (unsigned i = 0, N = node.outEdges.size(); i < N; i++)
       os << std::string(16, ' ') << *node.outEdges[i];
   }
-
 
   return os;
 }
