@@ -1,0 +1,8 @@
+; RUN: llvm-as < %s | opt -dse | llvm-dis | not grep DEAD
+
+void %test(int* %Q, int* %P) {
+	%DEAD = load int* %Q
+	store int %DEAD, int* %P
+	store int 0, int* %P
+	ret void
+}
