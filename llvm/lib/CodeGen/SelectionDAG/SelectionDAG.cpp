@@ -946,6 +946,9 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,SDOperand N1,
            "Cannot FP_ROUND_INREG integer types");
     if (EVT == VT) return N1;  // Not actually rounding
     assert(EVT < VT && "Not rounding down!");
+
+    if (isa<ConstantFPSDNode>(N1))
+      return getNode(ISD::FP_EXTEND, VT, getNode(ISD::FP_ROUND, EVT, N1));
     break;
   case ISD::ZERO_EXTEND_INREG:
   case ISD::SIGN_EXTEND_INREG:
@@ -954,6 +957,15 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,SDOperand N1,
            "Cannot *_EXTEND_INREG FP types");
     if (EVT == VT) return N1;  // Not actually extending
     assert(EVT < VT && "Not extending!");
+
+    // Extending a constant?  Just return the constant.
+    if (ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1.Val)) {
+      SDOperand Tmp = getNode(ISD::TRUNCATE, EVT, N1);
+      if (N1.getOpcode() == ISD::ZERO_EXTEND_INREG)
+        return getNode(ISD::ZERO_EXTEND, VT, Tmp);
+      else
+        return getNode(ISD::SIGN_EXTEND, VT, Tmp);
+    }
 
     // If we are sign extending an extension, use the original source.
     if (N1.getOpcode() == ISD::ZERO_EXTEND_INREG ||
