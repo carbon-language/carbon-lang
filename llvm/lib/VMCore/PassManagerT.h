@@ -440,6 +440,10 @@ template<> struct PassManagerTraits<BasicBlock> : public BasicBlockPass {
   virtual bool doInitialization(Module *M);
   virtual bool runOnBasicBlock(BasicBlock *BB);
   virtual bool doFinalization(Module *M);
+
+  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    AU.setPreservesAll();
+  }
 };
 
 
@@ -484,6 +488,10 @@ template<> struct PassManagerTraits<Function> : public FunctionPass {
   virtual bool doInitialization(Module *M);
   virtual bool runOnFunction(Function *F);
   virtual bool doFinalization(Module *M);
+
+  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    AU.setPreservesAll();
+  }
 };
 
 
