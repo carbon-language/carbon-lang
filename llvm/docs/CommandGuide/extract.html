@@ -35,11 +35,17 @@ unused types.
 The <tt>extract</tt> command reads its input from standard input if filename is
 omitted or if filename is -.  The output is always written to standard output.
 
-<h3>
-OPTIONS
-</h3>
+<h3>OPTIONS</h3>
 
 <ul>
+<ul>
+	<li> -f
+	<br>
+	Force overwrite.  Normally, <tt>extract</tt> will refuse to overwrite an
+	output file that already exists.  With this option, <tt>extract</tt>
+	will overwrite the output file and replace it with new bytecode.
+	<p>
+
 	<li>-func &lt;function&gt;
 	<br>
 	Extract the specified function from the LLVM bytecode.
@@ -48,6 +54,12 @@ OPTIONS
 	<li> -help
 	<br>
 	Print a summary of command line options.
+	<p>
+
+	<li> -o &lt;filename&gt;
+	<br>
+	Specify the output filename.  If filename is "-" (the default), then
+	<tt>extract</tt> sends its output to standard output.
 	<p>
 </ul>
 
