@@ -5,7 +5,7 @@
 //  link a.bc b.bc c.bc -o x.bc
 //
 // Alternatively, this can be used as an 'ar' tool as well.  If invoked as
-// either 'ar' or 'llvm-ar', it accepts a 'cr' parameter as well.
+// either 'ar' or 'llvm-ar', it accepts a 'rc' parameter as well.
 //
 //===----------------------------------------------------------------------===//
 
@@ -26,34 +26,53 @@ cl::String OutputFilename("o", "Override output filename", cl::NoFlags, "-");
 cl::Flag   Force         ("f", "Overwrite output files", cl::NoFlags, false);
 cl::Flag   Verbose       ("v", "Print information about actions taken");
 cl::Flag   DumpAsm       ("d", "Print assembly as linked", cl::Hidden, false);
+cl::StringList LibPaths  ("L", "Specify a library search path", cl::ZeroOrMore);
 
+static inline std::auto_ptr<Module> LoadFile(const string &FN) {
+  string Filename = FN;
+  string ErrorMessage;
+
+  unsigned NextLibPathIdx = 0;
+
+  while (1) {
+    if (Verbose) cerr << "Loading '" << Filename << "'\n";
+    Module *Result = ParseBytecodeFile(Filename, &ErrorMessage);
+    if (Result) return std::auto_ptr<Module>(Result);   // Load successful!
+
+    if (Verbose) {
+      cerr << "Error opening bytecode file: '" << Filename << "'";
+      if (ErrorMessage.size()) cerr << ": " << ErrorMessage;
+      cerr << endl;
+    }
+    
+    if (NextLibPathIdx == LibPaths.size()) break;
+    Filename = LibPaths[NextLibPathIdx++] + "/" + FN;
+  }
+
+  cerr << "Could not locate bytecode file: '" << FN << "'\n";
+  return std::auto_ptr<Module>();
+}
 
 int main(int argc, char **argv) {
   cl::ParseCommandLineOptions(argc, argv, " llvm linker\n");
   assert(InputFilenames.size() > 0 && "OneOrMore is not working");
 
-  // TODO: TEST argv[0]
+  unsigned BaseArg = 0;
   string ErrorMessage;
-    
-  if (Verbose) cerr << "Loading '" << InputFilenames[0] << "'\n";
-  std::auto_ptr<Module> Composite(ParseBytecodeFile(InputFilenames[0],
-                                                    &ErrorMessage));
-  if (Composite.get() == 0) {
-    cerr << "Error opening bytecode file: '" << InputFilenames[0] << "'";
-    if (ErrorMessage.size()) cerr << ": " << ErrorMessage;
-    cerr << endl;
-    return 1;
+
+  // TODO: TEST argv[0] for llvm-ar forms... for now, this is a huge hack.
+  if (InputFilenames.size() >= 3 && InputFilenames[0] == "rc" &&
+      OutputFilename == "-") {
+    BaseArg = 2;
+    OutputFilename = InputFilenames[1];
   }
 
-  for (unsigned i = 1; i < InputFilenames.size(); ++i) {
-  if (Verbose) cerr << "Loading '" << InputFilenames[i] << "'\n";
-    auto_ptr<Module> M(ParseBytecodeFile(InputFilenames[i], &ErrorMessage));
-    if (M.get() == 0) {
-      cerr << "Error opening bytecode file: '" << InputFilenames[i] << "'";
-      if (ErrorMessage.size()) cerr << ": " << ErrorMessage;
-      cerr << endl;
-      return 1;
-    }
+  std::auto_ptr<Module> Composite(LoadFile(InputFilenames[BaseArg]));
+  if (Composite.get() == 0) return 1;
+
+  for (unsigned i = BaseArg+1; i < InputFilenames.size(); ++i) {
+    auto_ptr<Module> M(LoadFile(InputFilenames[i]));
+    if (M.get() == 0) return 1;
 
     if (Verbose) cerr << "Linking in '" << InputFilenames[i] << "'\n";
 
