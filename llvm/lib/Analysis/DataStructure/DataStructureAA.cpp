@@ -12,6 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/Constants.h"
+#include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/Passes.h"
@@ -196,6 +198,14 @@ DSAA::getModRefInfo(CallSite CS, Value *P, unsigned Size) {
       Result = ModRefResult(Result & ~Mod);
     if (!N->isRead())       // We proved it was not read.
       Result = ModRefResult(Result & ~Ref);
+  } else {
+    if (isa<ConstantPointerNull>(P))
+      Result = NoModRef;
+    else
+      assert(isa<GlobalVariable>(P) &&
+    cast<GlobalVariable>(P)->getType()->getElementType()->isFirstClassType() &&
+             "This isn't a global that DSA inconsiderately dropped "
+             "from the graph?");
   }
   return Result;
 }
