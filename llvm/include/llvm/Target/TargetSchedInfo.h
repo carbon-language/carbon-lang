@@ -245,14 +245,14 @@ public:
   
   inline  int 	getMinIssueGap		(MachineOpCode fromOp,
 					 MachineOpCode toOp)   const {
-    std::hash_map<OpCodePair,int>::const_iterator
+    hash_map<OpCodePair,int>::const_iterator
       I = issueGaps.find(OpCodePair(fromOp, toOp));
     return (I == issueGaps.end())? 0 : (*I).second;
   }
   
   inline const std::vector<MachineOpCode>*
 		getConflictList(MachineOpCode opCode) const {
-    std::hash_map<MachineOpCode, std::vector<MachineOpCode> >::const_iterator
+    hash_map<MachineOpCode, std::vector<MachineOpCode> >::const_iterator
       I = conflictLists.find(opCode);
     return (I == conflictLists.end())? NULL : & (*I).second;
   }
@@ -286,8 +286,8 @@ protected:
   unsigned 		   numIssueDeltas;
   
   std::vector<InstrRUsage>      instrRUsages;   // indexed by opcode
-  std::hash_map<OpCodePair,int> issueGaps;      // indexed by opcode pair
-  std::hash_map<MachineOpCode, std::vector<MachineOpCode> >
+  hash_map<OpCodePair,int> issueGaps;      // indexed by opcode pair
+  hash_map<MachineOpCode, std::vector<MachineOpCode> >
 			   conflictLists;       // indexed by opcode
 };
 

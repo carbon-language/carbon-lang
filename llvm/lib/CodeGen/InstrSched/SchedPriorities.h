@@ -157,13 +157,13 @@ private:
   cycles_t curTime;
   const SchedGraph* graph;
   FunctionLiveVarInfo &methodLiveVarInfo;
-  std::hash_map<const MachineInstr*, bool> lastUseMap;
+  hash_map<const MachineInstr*, bool> lastUseMap;
   std::vector<cycles_t> nodeDelayVec;
   std::vector<cycles_t> nodeEarliestUseVec;
   std::vector<cycles_t> earliestReadyTimeForNode;
   cycles_t earliestReadyTime;
   NodeHeap candsAsHeap;				// candidate nodes, ready to go
-  std::hash_set<const SchedGraphNode*> candsAsSet;//same entries as candsAsHeap,
+  hash_set<const SchedGraphNode*> candsAsSet;   //same entries as candsAsHeap,
 						//   but as set for fast lookup
   std::vector<candIndex> mcands;                // holds pointers into cands
   candIndex nextToTry;				// next cand after the last
