@@ -6,7 +6,7 @@
 %MyIntList = global { \2 *, int } { { \2, int }* null, int 17 }
              external global int      ; int*:0
 
-%AConst    = constant int 123
+%AConst    = linkonce constant int 123
 
 %Intern1   = internal constant int 42
 %Intern2   = internal constant int 792
