@@ -106,9 +106,9 @@ int main(int argc, char **argv) {
 
   switch (WriteMode) {
   case llvm:           // Output LLVM assembly
-    Passes.add(new PrintModulePass(Out, false));
+    Passes.add(new PrintModulePass(Out));
     break;
-  case c:     // Convert LLVM to C
+  case c:              // Convert LLVM to C
     Passes.add(createWriteToCPass(*Out));
     break;
   }
