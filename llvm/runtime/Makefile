@@ -1,9 +1,9 @@
-# Libraries Makefile:  Build all subdirectories automatically
+# llvm/runtime Makefile:  Build all subdirectories automatically
 
-LEVEL = ../..
+LEVEL = ..
 PARALLEL_DIRS  := $(sort $(filter-out Output/, $(filter-out CVS/, $(wildcard */))))
 
-include ${LEVEL}/Makefile.common
+include $(LEVEL)/Makefile.common
 
 # Install target for libraries: Copy into the gcc install directory in chris's
 # tree...
