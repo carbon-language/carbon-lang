@@ -18,6 +18,8 @@
 
 #include "SparcV9Internals.h"
 #include "SparcV9RegClassInfo.h"
+#include "SparcV9RegisterInfo.h"
+#include "SparcV9FrameInfo.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineFunctionInfo.h"
 #include "llvm/CodeGen/MachineCodeForInstruction.h"
@@ -123,13 +125,12 @@ void InsertPrologEpilogCode::InsertPrologCode(MachineFunction &MF)
     int numArgRegs      = TM.getRegInfo()->getNumOfIntArgRegs();
     if (numFixedArgs < numArgRegs) {
       const TargetFrameInfo &FI = *TM.getFrameInfo();
-      bool ignore;
       int firstArgReg   = TM.getRegInfo()->getUnifiedRegNum(
                              TM.getRegInfo()->getRegClassIDOfType(Type::IntTy),
                              SparcV9IntRegClass::i0);
-      int fpReg         = FI.getIncomingArgBaseRegNum();
-      int argSize       = FI.getSizeOfEachArgOnStack();
-      int firstArgOffset= FI.getFirstIncomingArgOffset(MF,ignore);
+      int fpReg         = SparcV9::i6;
+      int argSize       = 8;
+      int firstArgOffset= SparcV9FrameInfo::FirstIncomingArgOffsetFromFP;
       int nextArgOffset = firstArgOffset + numFixedArgs * argSize;
 
       for (int i=numFixedArgs; i < numArgRegs; ++i) {

@@ -19,6 +19,8 @@
 #include "SparcV9InstrForest.h"
 #include "SparcV9Internals.h"
 #include "SparcV9TmpInstr.h"
+#include "SparcV9FrameInfo.h"
+#include "SparcV9RegisterInfo.h"
 #include "llvm/CodeGen/IntrinsicLowering.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineFunction.h"
@@ -2779,13 +2781,11 @@ static bool CodeGenIntrinsic(Intrinsic::ID iid, CallInst &callInstr,
     assert(0 && "Unknown intrinsic function call should have been lowered!");
   case Intrinsic::vastart: {
     // Get the address of the first incoming vararg argument on the stack
-    bool ignore;
     Function* func = cast<Function>(callInstr.getParent()->getParent());
     int numFixedArgs   = func->getFunctionType()->getNumParams();
-    int fpReg          = target.getFrameInfo()->getIncomingArgBaseRegNum();
-    int argSize        = target.getFrameInfo()->getSizeOfEachArgOnStack();
-    int firstVarArgOff = numFixedArgs * argSize + target.getFrameInfo()->
-      getFirstIncomingArgOffset(MachineFunction::get(func), ignore);
+    int fpReg          = SparcV9::i6;
+    int firstVarArgOff = numFixedArgs * 8 + 
+                         SparcV9FrameInfo::FirstIncomingArgOffsetFromFP;
     mvec.push_back(BuildMI(V9::ADDi, 3).addMReg(fpReg).addSImm(firstVarArgOff).
                    addRegDef(&callInstr));
     return true;

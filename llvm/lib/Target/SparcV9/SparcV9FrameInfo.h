@@ -112,7 +112,6 @@ public:
     return growUp ? firstArg + relativeOffset : firstArg - relativeOffset; 
   }
   
-private:
   /*----------------------------------------------------------------------
     This diagram shows the stack frame layout used by llc on SparcV9 V9.
     Note that only the location of automatic variables, spill area,
