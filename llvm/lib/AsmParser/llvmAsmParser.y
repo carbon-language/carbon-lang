@@ -656,7 +656,8 @@ static bool setTypeName(const Type *T, char *NameStr) {
 // TypeContains - Returns true if Ty directly contains E in it.
 //
 static bool TypeContains(const Type *Ty, const Type *E) {
-  return find(Ty->subtype_begin(), Ty->subtype_end(), E) != Ty->subtype_end();
+  return std::find(Ty->subtype_begin(), Ty->subtype_end(), 
+                   E) != Ty->subtype_end();
 }
 
 namespace {
