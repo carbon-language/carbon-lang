@@ -18,7 +18,7 @@
 using namespace cl;
 
 // Return the global command line option vector.  Making it a function scoped
-// static ensures that it will be initialized before its first use correctly.
+// static ensures that it will be initialized correctly before its first use.
 //
 static map<string, Option*> &getOpts() {
   static map<string,Option*> CommandLineOptions;
@@ -30,7 +30,8 @@ static void AddArgument(const string &ArgName, Option *Opt) {
     cerr << "CommandLine Error: Argument '" << ArgName
 	 << "' specified more than once!\n";
   } else {
-    getOpts()[ArgName] = Opt;  // Add argument to the argument map!
+    // Add argument to the argument map!
+    getOpts().insert(make_pair(ArgName, Opt));
   }
 }
 
@@ -65,9 +66,29 @@ static inline bool ProvideOption(Option *Handler, const char *ArgName,
   return Handler->addOccurance(ArgName, Value);
 }
 
+// ValueGroupedArgs - Return true if the specified string is valid as a group
+// of single letter arguments stuck together like the 'ls -la' case.
+//
+static inline bool ValidGroupedArgs(string Args) {
+  for (unsigned i = 0; i < Args.size(); ++i) {
+    map<string, Option*>::iterator I = getOpts().find(string(1, Args[i]));
+    if (I == getOpts().end()) return false;   // Make sure option exists
+
+    // Grouped arguments have no value specified, make sure that if this option
+    // exists that it can accept no argument.
+    //
+    switch (I->second->getValueExpectedFlag()) {
+    case ValueDisallowed:
+    case ValueOptional: break;
+    default: return false;
+    }
+  }
+
+  return true;
+}
 
 void cl::ParseCommandLineOptions(int &argc, char **argv,
-				 const char *Overview = 0) {
+				 const char *Overview = 0, int Flags = 0) {
   ProgramName = argv[0];  // Save this away safe and snug
   ProgramOverview = Overview;
   bool ErrorParsing = false;
@@ -86,18 +107,55 @@ void cl::ParseCommandLineOptions(int &argc, char **argv,
       while (*ArgName == '-') ++ArgName;  // Eat leading dashes
 
       const char *ArgNameEnd = ArgName;
-      while (*ArgNameEnd && *ArgNameEnd != '=' &&
-             *ArgNameEnd != '/') ++ArgNameEnd; // Scan till end
-      // TODO: Remove '/' case.  Implement single letter args properly!
+      while (*ArgNameEnd && *ArgNameEnd != '=')
+	++ArgNameEnd; // Scan till end of argument name...
 
       Value = ArgNameEnd;
       if (*Value)           // If we have an equals sign...
 	++Value;            // Advance to value...
 
       if (*ArgName != 0) {
+	string RealName(ArgName, ArgNameEnd);
 	// Extract arg name part
-        map<string, Option*>::iterator I = 
-          getOpts().find(string(ArgName, ArgNameEnd));
+        map<string, Option*>::iterator I = getOpts().find(RealName);
+
+	if (I == getOpts().end() && !*Value && RealName.size() > 1) {
+	  // If grouping of single letter arguments is enabled, see if this is a
+	  // legal grouping...
+	  //
+	  if (!(Flags & DisableSingleLetterArgGrouping) &&
+	      ValidGroupedArgs(RealName)) {
+
+	    for (unsigned i = 0; i < RealName.size(); ++i) {
+	      char ArgName[2] = { 0, 0 }; int Dummy;
+	      ArgName[0] = RealName[i];
+	      I = getOpts().find(ArgName);
+	      assert(I != getOpts().end() && "ValidGroupedArgs failed!");
+
+	      // Because ValueRequired is an invalid flag for grouped arguments,
+	      // we don't need to pass argc/argv in...
+	      //
+	      ErrorParsing |= ProvideOption(I->second, ArgName, "",
+					    0, 0, Dummy);
+	    }
+	    continue;
+	  } else if (Flags & EnableSingleLetterArgValue) {
+	    // Check to see if the first letter is a single letter argument that
+	    // have a value that is equal to the rest of the string.  If this
+	    // is the case, recognize it now.  (Example:  -lfoo for a linker)
+	    //
+	    I = getOpts().find(string(1, RealName[0]));
+	    if (I != getOpts().end()) {
+	      // If we are successful, fall through to later processing, by
+	      // setting up the argument name flags and value fields.
+	      //
+	      ArgNameEnd = ArgName+1;
+	      Value = ArgNameEnd;
+	    }
+	  }
+	}
+
+
         Handler = I != getOpts().end() ? I->second : 0;
       }
     }
