@@ -37,7 +37,8 @@ class DSGraph {
 
   void operator=(const DSGraph &); // DO NOT IMPLEMENT
 public:
-  DSGraph() : Func(0), GlobalsGraph(0) {}      // Create a new, empty, DSGraph.
+  // Create a new, empty, DSGraph.
+  DSGraph() : Func(0), GlobalsGraph(0), PrintAuxCalls(false) {}
   DSGraph(Function &F, DSGraph *GlobalsGraph); // Compute the local DSGraph
 
   // Copy ctor - If you want to capture the node mapping between the source and
