@@ -1790,6 +1790,12 @@ fi
           ac_config_commands="$ac_config_commands test/Programs/External/SPEC/CINT2000/197.parser/Makefile"
 
 
+          ac_config_commands="$ac_config_commands test/Programs/External/SPEC/CINT2000/252.eon/Makefile"
+
+
+          ac_config_commands="$ac_config_commands test/Programs/External/SPEC/CINT2000/253.perlbmk/Makefile"
+
+
           ac_config_commands="$ac_config_commands test/Programs/External/SPEC/CINT2000/254.gap/Makefile"
 
 
@@ -4404,7 +4410,7 @@ ia64-*-hpux*)
   ;;
 *-*-irix6*)
   # Find out which ABI we are using.
-  echo '#line 4407 "configure"' > conftest.$ac_ext
+  echo '#line 4413 "configure"' > conftest.$ac_ext
   if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
@@ -5245,7 +5251,7 @@ fi
 
 
 # Provide some information about the compiler.
-echo "$as_me:5248:" \
+echo "$as_me:5254:" \
      "checking for Fortran 77 compiler version" >&5
 ac_compiler=`set X $ac_compile; echo $2`
 { (eval echo "$as_me:$LINENO: \"$ac_compiler --version </dev/null >&5\"") >&5
@@ -6254,11 +6260,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:6257: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:6263: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:6261: \$? = $ac_status" >&5
+   echo "$as_me:6267: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -6486,11 +6492,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:6489: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:6495: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:6493: \$? = $ac_status" >&5
+   echo "$as_me:6499: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -6553,11 +6559,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:6556: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:6562: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:6560: \$? = $ac_status" >&5
+   echo "$as_me:6566: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -8565,7 +8571,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 8568 "configure"
+#line 8574 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -8663,7 +8669,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 8666 "configure"
+#line 8672 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -10799,11 +10805,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:10802: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:10808: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:10806: \$? = $ac_status" >&5
+   echo "$as_me:10812: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -10866,11 +10872,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:10869: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:10875: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:10873: \$? = $ac_status" >&5
+   echo "$as_me:10879: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -12109,7 +12115,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 12112 "configure"
+#line 12118 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -12207,7 +12213,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 12210 "configure"
+#line 12216 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -13029,11 +13035,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:13032: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:13038: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:13036: \$? = $ac_status" >&5
+   echo "$as_me:13042: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -13096,11 +13102,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:13099: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:13105: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:13103: \$? = $ac_status" >&5
+   echo "$as_me:13109: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -15040,11 +15046,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:15043: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:15049: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:15047: \$? = $ac_status" >&5
+   echo "$as_me:15053: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -15272,11 +15278,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:15275: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:15281: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:15279: \$? = $ac_status" >&5
+   echo "$as_me:15285: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -15339,11 +15345,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:15342: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:15348: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:15346: \$? = $ac_status" >&5
+   echo "$as_me:15352: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -17351,7 +17357,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 17354 "configure"
+#line 17360 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -17449,7 +17455,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 17452 "configure"
+#line 17458 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -23504,6 +23510,8 @@ ${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/External/SPEC/CINT2000/1
 ${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/External/SPEC/CINT2000/181.mcf/Makefile`
 ${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/External/SPEC/CINT2000/186.crafty/Makefile`
 ${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/External/SPEC/CINT2000/197.parser/Makefile`
+${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/External/SPEC/CINT2000/252.eon/Makefile`
+${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/External/SPEC/CINT2000/253.perlbmk/Makefile`
 ${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/External/SPEC/CINT2000/254.gap/Makefile`
 ${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/External/SPEC/CINT2000/255.vortex/Makefile`
 ${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/External/SPEC/CINT2000/256.bzip2/Makefile`
@@ -23688,6 +23696,8 @@ do
   "test/Programs/External/SPEC/CINT2000/181.mcf/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/External/SPEC/CINT2000/181.mcf/Makefile" ;;
   "test/Programs/External/SPEC/CINT2000/186.crafty/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/External/SPEC/CINT2000/186.crafty/Makefile" ;;
   "test/Programs/External/SPEC/CINT2000/197.parser/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/External/SPEC/CINT2000/197.parser/Makefile" ;;
+  "test/Programs/External/SPEC/CINT2000/252.eon/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/External/SPEC/CINT2000/252.eon/Makefile" ;;
+  "test/Programs/External/SPEC/CINT2000/253.perlbmk/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/External/SPEC/CINT2000/253.perlbmk/Makefile" ;;
   "test/Programs/External/SPEC/CINT2000/254.gap/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/External/SPEC/CINT2000/254.gap/Makefile" ;;
   "test/Programs/External/SPEC/CINT2000/255.vortex/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/External/SPEC/CINT2000/255.vortex/Makefile" ;;
   "test/Programs/External/SPEC/CINT2000/256.bzip2/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/External/SPEC/CINT2000/256.bzip2/Makefile" ;;
@@ -24503,6 +24513,8 @@ echo "$as_me: executing $ac_dest commands" >&6;}
     test/Programs/External/SPEC/CINT2000/181.mcf/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/External/SPEC/CINT2000/181.mcf/Makefile test/Programs/External/SPEC/CINT2000/181.mcf/Makefile ;;
     test/Programs/External/SPEC/CINT2000/186.crafty/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/External/SPEC/CINT2000/186.crafty/Makefile test/Programs/External/SPEC/CINT2000/186.crafty/Makefile ;;
     test/Programs/External/SPEC/CINT2000/197.parser/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/External/SPEC/CINT2000/197.parser/Makefile test/Programs/External/SPEC/CINT2000/197.parser/Makefile ;;
+    test/Programs/External/SPEC/CINT2000/252.eon/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/External/SPEC/CINT2000/252.eon/Makefile test/Programs/External/SPEC/CINT2000/252.eon/Makefile ;;
+    test/Programs/External/SPEC/CINT2000/253.perlbmk/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/External/SPEC/CINT2000/253.perlbmk/Makefile test/Programs/External/SPEC/CINT2000/253.perlbmk/Makefile ;;
     test/Programs/External/SPEC/CINT2000/254.gap/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/External/SPEC/CINT2000/254.gap/Makefile test/Programs/External/SPEC/CINT2000/254.gap/Makefile ;;
     test/Programs/External/SPEC/CINT2000/255.vortex/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/External/SPEC/CINT2000/255.vortex/Makefile test/Programs/External/SPEC/CINT2000/255.vortex/Makefile ;;
     test/Programs/External/SPEC/CINT2000/256.bzip2/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/External/SPEC/CINT2000/256.bzip2/Makefile test/Programs/External/SPEC/CINT2000/256.bzip2/Makefile ;;
