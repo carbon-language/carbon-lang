@@ -447,27 +447,30 @@ static bool OptimizeOnceStoredGlobal(GlobalVariable *GV, Value *StoredOnceVal) {
   // initializer.  Instead, replace all of the loads with the stored value.
   if (isa<PointerType>(GV->getInitializer()->getType()) &&
       GV->getInitializer()->isNullValue()) {
-    if (isa<Constant>(StoredOnceVal) &&
-        AllUsesOfLoadedValueWillTrapIfNull(GV)) {
-      DEBUG(std::cerr << "REPLACING STORED GLOBAL POINTER: " << *GV);
+    if (Constant *SOVC = dyn_cast<Constant>(StoredOnceVal))
+      if (AllUsesOfLoadedValueWillTrapIfNull(GV)) {
+        DEBUG(std::cerr << "REPLACING STORED GLOBAL POINTER: " << *GV);
 
-      //std::cerr << " Stored Value: " << *StoredOnceVal << "\n";
+        if (GV->getInitializer()->getType() != SOVC->getType())
+          SOVC = ConstantExpr::getCast(SOVC, GV->getInitializer()->getType());
 
-      // Replace all uses of loads with uses of uses of the stored value.
-      while (!GV->use_empty())
-        if (LoadInst *LI = dyn_cast<LoadInst>(GV->use_back())) {
-          LI->replaceAllUsesWith(StoredOnceVal);
-          LI->getParent()->getInstList().erase(LI); // Nuke the load.
-        } else if (StoreInst *SI = dyn_cast<StoreInst>(GV->use_back())) {
-          SI->getParent()->getInstList().erase(SI); // Nuke the store
-        } else {
-          assert(0 && "Unknown user of stored once global!");
-        }
+        //std::cerr << " Stored Value: " << *SOVC << "\n";
 
-      // Nuke the now-dead global.
-      GV->getParent()->getGlobalList().erase(GV);
-      return true;
-    }
+        // Replace all uses of loads with uses of uses of the stored value.
+        while (!GV->use_empty())
+          if (LoadInst *LI = dyn_cast<LoadInst>(GV->use_back())) {
+            LI->replaceAllUsesWith(SOVC);
+            LI->getParent()->getInstList().erase(LI); // Nuke the load.
+          } else if (StoreInst *SI = dyn_cast<StoreInst>(GV->use_back())) {
+            SI->getParent()->getInstList().erase(SI); // Nuke the store
+          } else {
+            assert(0 && "Unknown user of stored once global!");
+          }
+
+        // Nuke the now-dead global.
+        GV->getParent()->getGlobalList().erase(GV);
+        return true;
+      }
     //if (isa<MallocInst>(StoredOnceValue))
   }
   return false;
