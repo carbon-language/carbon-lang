@@ -190,8 +190,11 @@ int main(int argc, char **argv) {
     Passes.push_back(new EmitAssembly(Target, Out, Out != &cout));
   }
   
-  // Run our queue of passes all at once now, efficiently.
-  return Pass::runAllPassesAndFree(M.get(), Passes);
+  // Run our queue of passes all at once now, efficiently.  This form of
+  // runAllPasses frees the Pass objects after runAllPasses completes.
+  Pass::runAllPassesAndFree(M.get(), Passes);
+
+  return 0;
 }
 
 
