@@ -380,6 +380,10 @@ public:
     // Nothing of interest
   }
 
+  void visitSetCondInst(SetCondInst *SCI) {
+    // hrm, notice a pattern?
+  }
+
   void visitInstruction(Instruction *I) {
     cerr << "Unknown instruction to FunctionBodyTransformer:\n";
     I->dump();
