@@ -48,14 +48,17 @@ bool GlobalDCE::run(Module &M) {
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I) {
     Changed |= RemoveUnusedConstantPointerRef(*I);
     // Functions with external linkage are needed if they have a body
-    if (I->hasExternalLinkage() && !I->isExternal())
+    if ((!I->hasInternalLinkage() && !I->hasLinkOnceLinkage()) &&
+        !I->isExternal())
       GlobalIsNeeded(I);
   }
 
   for (Module::giterator I = M.gbegin(), E = M.gend(); I != E; ++I) {
     Changed |= RemoveUnusedConstantPointerRef(*I);
-    // Externally visible globals are needed, if they have an initializer.
-    if (I->hasExternalLinkage() && !I->isExternal())
+    // Externally visible & appending globals are needed, if they have an
+    // initializer.
+    if ((!I->hasInternalLinkage() && !I->hasLinkOnceLinkage()) &&
+        !I->isExternal())
       GlobalIsNeeded(I);
   }
 
