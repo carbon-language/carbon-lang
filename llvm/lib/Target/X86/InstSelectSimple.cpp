@@ -990,10 +990,37 @@ void ISel::emitSelectOperation(MachineBasicBlock *MBB,
     //          cmovS
     
     switch (SelectClass) {
-    default:
-    case cFP:
-      assert(0 && "We don't support floating point selects yet, they should "
-             "have been lowered!");
+    default: assert(0 && "Unknown value class!");
+    case cFP: {
+      // Annoyingly, we don't have a full set of floating point conditional
+      // moves.  :(
+      static const unsigned OpcodeTab[2][8] = {
+        { X86::FCMOVNE, X86::FCMOVE, X86::FCMOVAE, X86::FCMOVB,
+          X86::FCMOVBE, X86::FCMOVA, 0, 0 },
+        { X86::FCMOVNE, X86::FCMOVE, 0, 0, 0, 0, 0, 0 },
+      };
+      Opcode = OpcodeTab[isSigned][OpNum];
+
+      // If opcode == 0, we hit a case that we don't support.  Output a setcc
+      // and compare the result against zero.
+      if (Opcode == 0) {
+        unsigned CompClass = getClassB(CompTy);
+        unsigned CondReg;
+        if (CompClass != cLong || OpNum < 2) {
+          CondReg = makeAnotherReg(Type::BoolTy);
+          // Handle normal comparisons with a setcc instruction...
+          BuildMI(*MBB, IP, SetCCOpcodeTab[isSigned][OpNum], 0, CondReg);
+        } else {
+          // Long comparisons end up in the BL register.
+          CondReg = X86::BL;
+        }
+        
+        // FIXME: Should generate a 'tst r, r'
+        BuildMI(*MBB, IP, X86::CMP8ri, 2).addReg(CondReg).addImm(0);
+        Opcode = X86::FCMOVE;
+      }
+      break;
+    }
     case cByte:
     case cShort: {
       static const unsigned OpcodeTab[2][8] = {
@@ -1020,20 +1047,15 @@ void ISel::emitSelectOperation(MachineBasicBlock *MBB,
   } else {
     // Get the value being branched on, and use it to set the condition codes.
     unsigned CondReg = getReg(Cond, MBB, IP);
+    // FIXME: Should generate a 'tst r, r'
     BuildMI(*MBB, IP, X86::CMP8ri, 2).addReg(CondReg).addImm(0);
     switch (SelectClass) {
-    default:
-    case cFP:
-      assert(0 && "We don't support floating point selects yet, they should "
-             "have been lowered!");
+    default: assert(0 && "Unknown value class!");
+    case cFP:    Opcode = X86::FCMOVE; break;
     case cByte:
-    case cShort:
-      Opcode = X86::CMOVE16rr;
-      break;
+    case cShort: Opcode = X86::CMOVE16rr; break;
     case cInt:
-    case cLong:
-      Opcode = X86::CMOVE32rr;
-      break;
+    case cLong:  Opcode = X86::CMOVE32rr; break;
     }
   }
 
