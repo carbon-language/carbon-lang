@@ -304,11 +304,13 @@ bool BugDriver::debugCrash() {
   // to a return instruction then running simplifycfg, which can potentially
   // shrinks the code dramatically quickly
   //
-  std::vector<BasicBlock*> Blocks;
-  for (Module::iterator I = Program->begin(), E = Program->end(); I != E; ++I)
-    for (Function::iterator FI = I->begin(), E = I->end(); FI != E; ++FI)
-      Blocks.push_back(FI);
-  ReduceCrashingBlocks(*this).reduceList(Blocks);
+  if (!DisableSimplifyCFG) {
+    std::vector<BasicBlock*> Blocks;
+    for (Module::iterator I = Program->begin(), E = Program->end(); I != E; ++I)
+      for (Function::iterator FI = I->begin(), E = I->end(); FI != E; ++FI)
+        Blocks.push_back(FI);
+    ReduceCrashingBlocks(*this).reduceList(Blocks);
+  }
 
   // FIXME: This should use the list reducer to converge faster by deleting
   // larger chunks of instructions at a time!

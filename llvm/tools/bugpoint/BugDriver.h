@@ -27,6 +27,8 @@ class ReduceCrashingBlocks;
 class CBE;
 class GCC;
 
+extern bool DisableSimplifyCFG;
+
 class BugDriver {
   const std::string ToolName;  // Name of bugpoint
   std::string ReferenceOutputFile; // Name of `good' output file

@@ -16,6 +16,8 @@
 #include "llvm/Constant.h"
 #include "Support/CommandLine.h"
 
+bool DisableSimplifyCFG = false;
+
 namespace {
   cl::opt<bool>
   NoADCE("disable-adce",
@@ -23,8 +25,8 @@ namespace {
   cl::opt<bool>
   NoDCE ("disable-dce",
          cl::desc("Do not use the -dce pass to reduce testcases"));
-  cl::opt<bool>
-  NoSCFG("disable-simplifycfg",
+  cl::opt<bool, true>
+  NoSCFG("disable-simplifycfg", cl::location(DisableSimplifyCFG),
          cl::desc("Do not use the -simplifycfg pass to reduce testcases"));
   cl::opt<bool>
   NoFinalCleanup("disable-final-cleanup",
@@ -67,7 +69,7 @@ Module *BugDriver::deleteInstructionFromProgram(Instruction *I,
   //Passes.add(createInstructionCombiningPass());
   if (Simplification > 1 && !NoDCE)
     Passes.add(createDeadCodeEliminationPass());
-  if (Simplification && !NoSCFG)
+  if (Simplification && !DisableSimplifyCFG)
     Passes.add(createCFGSimplificationPass());      // Delete dead control flow
 
   Passes.add(createVerifierPass());
