@@ -40,12 +40,12 @@ public:
   // Operand Iterator interface...
   //
   typedef vector<Use>::iterator       op_iterator;
-  typedef vector<Use>::const_iterator op_const_iterator;
+  typedef vector<Use>::const_iterator const_op_iterator;
 
   inline op_iterator       op_begin()       { return Operands.begin(); }
-  inline op_const_iterator op_begin() const { return Operands.begin(); }
+  inline const_op_iterator op_begin() const { return Operands.begin(); }
   inline op_iterator       op_end()         { return Operands.end(); }
-  inline op_const_iterator op_end()   const { return Operands.end(); }
+  inline const_op_iterator op_end()   const { return Operands.end(); }
 
   // dropAllReferences() - This function is in charge of "letting go" of all
   // objects that this User refers to.  This allows one to

@@ -51,7 +51,7 @@ static inline bool isSafeInstruction(const Instruction *I) {
 //
 bool FindUnsafePointerTypes::doPerMethodWork(Method *Meth) {
   const Method *M = Meth;  // We don't need/want write access
-  for (Method::inst_const_iterator I = M->inst_begin(), E = M->inst_end();
+  for (Method::const_inst_iterator I = M->inst_begin(), E = M->inst_end();
        I != E; ++I) {
     const Instruction *Inst = *I;
     const Type *ITy = Inst->getType();

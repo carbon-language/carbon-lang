@@ -17,7 +17,7 @@ string MangleTypeName(const Type *Ty) {
     const string &longName = Ty->getDescription();
     return string(longName.c_str(), (longName.length() < 2) ? 1 : 2);
   } else if (PointerType *PTy = dyn_cast<PointerType>(Ty)) {
-    mangledName = string("P_" + MangleTypeName(PTy->getValueType()));
+    mangledName = string("P_" + MangleTypeName(PTy->getElementType()));
   } else if (StructType *STy = dyn_cast<StructType>(Ty)) {
     mangledName = string("S_");
     for (unsigned i=0; i < STy->getNumContainedTypes(); ++i)
@@ -41,6 +41,6 @@ string MangleName(const string &privateName, const Value *V) {
   // Lets drop the P_ before every global name since all globals are ptrs
   return privateName + "_" +
     MangleTypeName(isa<GlobalValue>(V)
-                   ? cast<GlobalValue>(V)->getType()->getValueType()
+                   ? cast<GlobalValue>(V)->getType()->getElementType()
                    : V->getType());
 }

@@ -297,7 +297,7 @@ static string getTypeProps(const Type *Ty, vector<const Type *> &TypeStack,
       }
       case Type::PointerTyID: {
 	const PointerType *PTy = cast<const PointerType>(Ty);
-	Result = getTypeProps(PTy->getValueType(), TypeStack,
+	Result = getTypeProps(PTy->getElementType(), TypeStack,
 			      isAbstract, isRecursive) + " *";
 	break;
       }

@@ -983,7 +983,8 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
 	// TODO: GlobalVariable here that includes the said information!
 	
 	// Create a placeholder for the global variable reference...
-	GlobalVariable *GV = new GlobalVariable(PT->getValueType(), false,true);
+	GlobalVariable *GV = new GlobalVariable(PT->getElementType(),
+                                                false, true);
 	// Keep track of the fact that we have a forward ref to recycle it
 	CurModule.GlobalRefs.insert(make_pair(make_pair(PT, $2), GV));
 
@@ -1351,7 +1352,7 @@ BBTerminatorInst : RET ResolvedVal {              // Return with a result...
     const MethodType *Ty;
 
     if (!(PMTy = dyn_cast<PointerType>($2->get())) ||
-        !(Ty = dyn_cast<MethodType>(PMTy->getValueType()))) {
+        !(Ty = dyn_cast<MethodType>(PMTy->getElementType()))) {
       // Pull out the types of all of the arguments...
       vector<const Type*> ParamTypes;
       if ($5) {
@@ -1487,7 +1488,7 @@ InstVal : BinaryOps Types ValueRef ',' ValueRef {
     const MethodType *Ty;
 
     if (!(PMTy = dyn_cast<PointerType>($2->get())) ||
-        !(Ty = dyn_cast<MethodType>(PMTy->getValueType()))) {
+        !(Ty = dyn_cast<MethodType>(PMTy->getElementType()))) {
       // Pull out the types of all of the arguments...
       vector<const Type*> ParamTypes;
       if ($5) {

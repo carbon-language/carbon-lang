@@ -130,8 +130,8 @@ GenericValue lle_X_printVal(MethodType *M, const vector<GenericValue> &ArgVal) {
 
   // Specialize print([ubyte {x N} ] *) and print(sbyte *)
   if (PointerType *PTy = dyn_cast<PointerType>(M->getParamTypes()[0].get()))
-    if (PTy->getValueType() == Type::SByteTy ||
-        isa<ArrayType>(PTy->getValueType())) {
+    if (PTy->getElementType() == Type::SByteTy ||
+        isa<ArrayType>(PTy->getElementType())) {
       return lle_VP_printstr(M, ArgVal);
     }
 

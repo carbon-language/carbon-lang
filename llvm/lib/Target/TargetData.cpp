@@ -151,7 +151,7 @@ unsigned TargetData::getIndexedOffset(const Type *ptrTy,
   unsigned Result = 0;
 
   // Get the type pointed to...
-  const Type *Ty = PtrTy->getValueType();
+  const Type *Ty = PtrTy->getElementType();
 
   for (unsigned CurIDX = 0; CurIDX < Idx.size(); ++CurIDX) {
     if (const StructType *STy = dyn_cast<const StructType>(Ty)) {

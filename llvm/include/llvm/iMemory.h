@@ -27,8 +27,8 @@ public:
 
     if (ArraySize) {
       // Make sure they didn't try to specify a size for !(unsized array) type
-      assert(getType()->getValueType()->isArrayType() && 
-             cast<ArrayType>(getType()->getValueType())->isUnsized() && 
+      assert(getType()->getElementType()->isArrayType() && 
+             cast<ArrayType>(getType()->getElementType())->isUnsized() && 
            "Trying to allocate something other than unsized array, with size!");
       assert(ArraySize->getType() == Type::UIntTy &&
              "Malloc/Allocation array size != UIntTy!");
@@ -37,8 +37,8 @@ public:
       Operands.push_back(Use(ArraySize, this));
     } else {
       // Make sure that the pointer is not to an unsized array!
-      assert(!getType()->getValueType()->isArrayType() ||
-	     cast<const ArrayType>(getType()->getValueType())->isSized() && 
+      assert(!getType()->getElementType()->isArrayType() ||
+	     cast<const ArrayType>(getType()->getElementType())->isSized() && 
 	     "Trying to allocate unsized array without size!");
     }
   }
@@ -63,7 +63,7 @@ public:
   // getAllocatedType - Return the type that is being allocated by the
   // instruction.
   inline const Type *getAllocatedType() const {
-    return getType()->getValueType();
+    return getType()->getElementType();
   }
 
   virtual Instruction *clone() const = 0;
@@ -183,11 +183,11 @@ public:
   inline op_iterator       idx_begin()       {
     return op_begin()+getFirstIndexOperandNumber();
   }
-  inline op_const_iterator idx_begin() const {
+  inline const_op_iterator idx_begin() const {
     return op_begin()+getFirstIndexOperandNumber();
   }
   inline op_iterator       idx_end()         { return op_end(); }
-  inline op_const_iterator idx_end()   const { return op_end(); }
+  inline const_op_iterator idx_end()   const { return op_end(); }
 
 
   vector<Value*> copyIndices() const {

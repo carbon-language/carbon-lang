@@ -179,7 +179,7 @@ static bool LinkGlobals(Module *Dest, const Module *Src,
       // later by LinkGlobalInits...
       //
       GlobalVariable *DGV = 
-        new GlobalVariable(SGV->getType()->getValueType(), SGV->isConstant(),
+        new GlobalVariable(SGV->getType()->getElementType(), SGV->isConstant(),
                            SGV->hasInternalLinkage(), 0, SGV->getName());
 
       // Add the new global to the dest module

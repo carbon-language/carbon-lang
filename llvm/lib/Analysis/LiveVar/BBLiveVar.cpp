@@ -39,7 +39,7 @@ void BBLiveVar::calcDefUseSets()
     }
 
     // iterate over  MI operands to find defs
-    for( MachineInstr::val_op_const_iterator OpI(MInst); !OpI.done() ; ++OpI) {
+    for( MachineInstr::val_const_op_iterator OpI(MInst); !OpI.done() ; ++OpI) {
 
       if( OpI.isDef() )      // add to Defs only if this operand is a def
 	addDef( *OpI );
@@ -56,7 +56,7 @@ void BBLiveVar::calcDefUseSets()
 
  
     // iterate over  MI operands to find uses
-    for(MachineInstr::val_op_const_iterator OpI(MInst); !OpI.done() ;  ++OpI) {
+    for (MachineInstr::val_const_op_iterator OpI(MInst); !OpI.done() ;  ++OpI) {
       const Value *Op = *OpI;
 
       if ( ((Op)->getType())->isLabelType() )    

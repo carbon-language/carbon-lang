@@ -87,7 +87,7 @@ bool CleanupGCCOutput::PatchUpMethodReferences(Module *M) {
   //
   for (SymbolTable::iterator I = ST->begin(), E = ST->end(); I != E; ++I)
     if (const PointerType *PT = dyn_cast<PointerType>(I->first))
-      if (const MethodType *MT = dyn_cast<MethodType>(PT->getValueType())) {
+      if (const MethodType *MT = dyn_cast<MethodType>(PT->getElementType())) {
         SymbolTable::VarMap &Plane = I->second;
         for (SymbolTable::type_iterator PI = Plane.begin(), PE = Plane.end();
              PI != PE; ++PI) {
@@ -208,7 +208,7 @@ static inline bool ShouldNukeSymtabEntry(const pair<string, Value*> &E) {
 
   // Nuke all pointers to primitive types as well...
   if (const PointerType *PT = dyn_cast<PointerType>(E.second))
-    if (PT->getValueType()->isPrimitiveType()) return true;
+    if (PT->getElementType()->isPrimitiveType()) return true;
 
   // The only types that could contain .'s in the program are things generated
   // by GCC itself, including "complex.float" and friends.  Nuke them too.

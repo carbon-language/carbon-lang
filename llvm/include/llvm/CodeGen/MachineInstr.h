@@ -267,7 +267,7 @@ private:
   vector<bool>          implicitIsDef;  // machine instruction (eg, call args)
   
 public:
-  typedef ValOpIterator<const MachineInstr, const Value> val_op_const_iterator;
+  typedef ValOpIterator<const MachineInstr, const Value> val_const_op_iterator;
   typedef ValOpIterator<const MachineInstr,       Value> val_op_iterator;
   
 public:
@@ -307,7 +307,7 @@ public:
   
 public:
   friend ostream& operator<<(ostream& os, const MachineInstr& minstr);
-  friend val_op_const_iterator;
+  friend val_const_op_iterator;
   friend val_op_iterator;
 
 public:

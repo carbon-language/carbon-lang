@@ -262,7 +262,7 @@ void PhyRegAlloc::buildInterferenceGraphs()
 
 
       // iterate over  MI operands to find defs
-      for( MachineInstr::val_op_const_iterator OpI(MInst);!OpI.done(); ++OpI) {
+      for( MachineInstr::val_const_op_iterator OpI(MInst);!OpI.done(); ++OpI) {
 
        	if( OpI.isDef() ) {     
 	  // create a new LR iff this operand is a def
@@ -318,7 +318,7 @@ void PhyRegAlloc::addInterf4PseudoInstr(const MachineInstr *MInst) {
   bool setInterf = false;
 
   // iterate over  MI operands to find defs
-  for( MachineInstr::val_op_const_iterator It1(MInst);!It1.done(); ++It1) {
+  for( MachineInstr::val_const_op_iterator It1(MInst);!It1.done(); ++It1) {
     
     const LiveRange *const LROfOp1 = LRI.getLiveRangeForValue( *It1 ); 
 
@@ -327,7 +327,7 @@ void PhyRegAlloc::addInterf4PseudoInstr(const MachineInstr *MInst) {
 
     //if( !LROfOp1 ) continue;
 
-    MachineInstr::val_op_const_iterator It2 = It1;
+    MachineInstr::val_const_op_iterator It2 = It1;
     ++It2;
 	
     for(  ; !It2.done(); ++It2) {
@@ -429,7 +429,7 @@ void PhyRegAlloc::updateMachineCode()
       //mcInfo.popAllTempValues(TM);
       // TODO ** : do later
       
-      //for(MachineInstr::val_op_const_iterator OpI(MInst);!OpI.done();++OpI) {
+      //for(MachineInstr::val_const_op_iterator OpI(MInst);!OpI.done();++OpI) {
 
 
       // Now replace set the registers for operands in the machine instruction
@@ -928,7 +928,7 @@ void PhyRegAlloc::printMachineCode()
       cout << TargetInstrDescriptors[MInst->getOpCode()].opCodeString;
       
 
-      //for(MachineInstr::val_op_const_iterator OpI(MInst);!OpI.done();++OpI) {
+      //for(MachineInstr::val_const_op_iterator OpI(MInst);!OpI.done();++OpI) {
 
       for(unsigned OpNum=0; OpNum < MInst->getNumOperands(); ++OpNum) {
 

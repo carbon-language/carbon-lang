@@ -12,7 +12,7 @@
 void LiveVarSet::applyTranferFuncForMInst(const MachineInstr *const MInst)
 {
 
-  for( MachineInstr::val_op_const_iterator OpI(MInst); !OpI.done() ; OpI++) {
+  for( MachineInstr::val_const_op_iterator OpI(MInst); !OpI.done() ; OpI++) {
 
     if( OpI.isDef() )      // kill only if this operand is a def
          remove(*OpI);        // this definition kills any uses
@@ -25,7 +25,7 @@ void LiveVarSet::applyTranferFuncForMInst(const MachineInstr *const MInst)
   }
 
 
-  for( MachineInstr::val_op_const_iterator OpI(MInst); !OpI.done() ; OpI++) {
+  for( MachineInstr::val_const_op_iterator OpI(MInst); !OpI.done() ; OpI++) {
 
     if ( ((*OpI)->getType())->isLabelType()) continue; // don't process labels
     
@@ -50,7 +50,7 @@ void LiveVarSet::applyTranferFuncForInst(const Instruction *const Inst)
   if( Inst->isDefinition() ) {  // add to Defs iff this instr is a definition
        remove(Inst);            // this definition kills any uses
   }
-  Instruction::op_const_iterator OpI = Inst->op_begin();  // get operand iterat
+  Instruction::const_op_iterator OpI = Inst->op_begin();  // get operand iterat
 
   for( ; OpI != Inst->op_end() ; OpI++) {              // iterate over operands
     if ( ((*OpI)->getType())->isLabelType()) continue; // don't process labels 

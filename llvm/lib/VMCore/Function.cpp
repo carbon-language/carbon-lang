@@ -62,7 +62,7 @@ void Method::setParent(Module *parent) {
 }
 
 const MethodType *Method::getMethodType() const {
-  return cast<MethodType>(cast<PointerType>(getType())->getValueType());
+  return cast<MethodType>(cast<PointerType>(getType())->getElementType());
 }
 
 const Type *Method::getReturnType() const { 

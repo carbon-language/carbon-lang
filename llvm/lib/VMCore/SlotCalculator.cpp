@@ -237,7 +237,7 @@ int SlotCalculator::insertValue(const Value *D) {
     // of const ints), that they are inserted also.  Same for global variable
     // initializers.
     //
-    for(User::op_const_iterator I = U->op_begin(), E = U->op_end(); I != E; ++I)
+    for(User::const_op_iterator I = U->op_begin(), E = U->op_end(); I != E; ++I)
       if (!isa<GlobalValue>(*I))  // Don't chain insert global values
 	insertValue(*I);
   }

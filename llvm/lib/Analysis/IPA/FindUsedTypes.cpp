@@ -59,13 +59,13 @@ bool FindUsedTypes::doPerMethodWork(Method *m) {
   // Loop over all of the instructions in the method, adding their return type
   // as well as the types of their operands.
   //
-  for (Method::inst_const_iterator II = M->inst_begin(), IE = M->inst_end();
+  for (Method::const_inst_iterator II = M->inst_begin(), IE = M->inst_end();
        II != IE; ++II) {
     const Instruction *I = *II;
     const Type *Ty = I->getType();
     
     IncorporateType(Ty);  // Incorporate the type of the instruction
-    for (User::op_const_iterator OI = I->op_begin(), OE = I->op_end();
+    for (User::const_op_iterator OI = I->op_begin(), OE = I->op_end();
          OI != OE; ++OI)
       if ((*OI)->getType() != Ty)          // Avoid set lookup in common case
         IncorporateType((*OI)->getType()); // Insert inst operand types as well

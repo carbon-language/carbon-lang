@@ -227,7 +227,7 @@ bool BytecodeParser::ParseInstruction(const uchar *&Buf, const uchar *EndBuf,
     // Check to make sure we have a pointer to method type
     PointerType *PTy = dyn_cast<PointerType>(M->getType());
     if (PTy == 0) return failure(true);
-    MethodType *MTy = dyn_cast<MethodType>(PTy->getValueType());
+    MethodType *MTy = dyn_cast<MethodType>(PTy->getElementType());
     if (MTy == 0) return failure(true);
 
     vector<Value *> Params;
@@ -287,7 +287,7 @@ bool BytecodeParser::ParseInstruction(const uchar *&Buf, const uchar *EndBuf,
     // Check to make sure we have a pointer to method type
     PointerType *PTy = dyn_cast<PointerType>(M->getType());
     if (PTy == 0) return failure(true);
-    MethodType *MTy = dyn_cast<MethodType>(PTy->getValueType());
+    MethodType *MTy = dyn_cast<MethodType>(PTy->getElementType());
     if (MTy == 0) return failure(true);
 
     vector<Value *> Params;
@@ -351,7 +351,7 @@ bool BytecodeParser::ParseInstruction(const uchar *&Buf, const uchar *EndBuf,
     vector<Value*> Idx;
     if (!isa<PointerType>(Raw.Ty)) return failure(true);
     const CompositeType *TopTy =
-      dyn_cast<CompositeType>(cast<PointerType>(Raw.Ty)->getValueType());
+      dyn_cast<CompositeType>(cast<PointerType>(Raw.Ty)->getElementType());
 
     switch (Raw.NumOperands) {
     case 0: cerr << "Invalid load encountered!\n"; return failure(true);
@@ -405,7 +405,7 @@ bool BytecodeParser::ParseInstruction(const uchar *&Buf, const uchar *EndBuf,
     vector<Value*> Idx;
     if (!isa<PointerType>(Raw.Ty)) return failure(true);
     const CompositeType *TopTy =
-      dyn_cast<CompositeType>(cast<PointerType>(Raw.Ty)->getValueType());
+      dyn_cast<CompositeType>(cast<PointerType>(Raw.Ty)->getElementType());
 
     switch (Raw.NumOperands) {
     case 0: 

@@ -39,10 +39,10 @@ PrintMethodNameForType(const Type* type)
   if (PointerType* pty = dyn_cast<PointerType>(type))
     {
       const Type* elemTy;
-      if (ArrayType* aty = dyn_cast<ArrayType>(pty->getValueType()))
+      if (ArrayType* aty = dyn_cast<ArrayType>(pty->getElementType()))
         elemTy = aty->getElementType();
       else
-        elemTy = pty->getValueType();
+        elemTy = pty->getElementType();
       if (elemTy == Type::SByteTy || elemTy == Type::UByteTy)
         return "printString";
     }

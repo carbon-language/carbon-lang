@@ -111,7 +111,7 @@ static void fillTypeNameTable(const Module *M,
         //
         const Type *Ty = cast<const Type>(I->second);
         if (!isa<PointerType>(Ty) ||
-            !cast<PointerType>(Ty)->getValueType()->isPrimitiveType())
+            !cast<PointerType>(Ty)->getElementType()->isPrimitiveType())
           TypeNames.insert(make_pair(Ty, "%"+I->first));
       }
     }
@@ -174,7 +174,7 @@ static string calcTypeName(const Type *Ty, vector<const Type *> &TypeStack,
     break;
   }
   case Type::PointerTyID:
-    Result = calcTypeName(cast<const PointerType>(Ty)->getValueType(), 
+    Result = calcTypeName(cast<const PointerType>(Ty)->getElementType(), 
                           TypeStack, TypeNames) + " *";
     break;
   case Type::ArrayTyID: {
@@ -325,7 +325,7 @@ void AssemblyWriter::printGlobal(const GlobalVariable *GV) {
   if (!GV->hasInitializer()) Out << "uninitialized ";
 
   Out << (GV->isConstant() ? "constant " : "global ");
-  printType(GV->getType()->getValueType());
+  printType(GV->getType()->getElementType());
 
   if (GV->hasInitializer())
     writeOperand(GV->getInitializer(), false, false);
@@ -534,7 +534,7 @@ void AssemblyWriter::printInstruction(const Instruction *I) {
     Out << " void";
   } else if (isa<CallInst>(I)) {
     const PointerType *PTy = dyn_cast<PointerType>(Operand->getType());
-    const MethodType  *MTy = PTy ? dyn_cast<MethodType>(PTy->getValueType()) :0;
+    const MethodType  *MTy = PTy ?dyn_cast<MethodType>(PTy->getElementType()):0;
     const Type      *RetTy = MTy ? MTy->getReturnType() : 0;
 
     // If possible, print out the short form of the call instruction, but we can
@@ -574,7 +574,7 @@ void AssemblyWriter::printInstruction(const Instruction *I) {
   } else if (I->getOpcode() == Instruction::Malloc || 
 	     I->getOpcode() == Instruction::Alloca) {
     Out << " ";
-    printType(cast<const PointerType>(I->getType())->getValueType());
+    printType(cast<const PointerType>(I->getType())->getElementType());
     if (I->getNumOperands()) {
       Out << ",";
       writeOperand(I->getOperand(0), true);

@@ -34,7 +34,7 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
 // pointer value.
 //
 static bool AllIndicesZero(const MemAccessInst *MAI) {
-  for (User::op_const_iterator S = MAI->idx_begin(), E = MAI->idx_end();
+  for (User::const_op_iterator S = MAI->idx_begin(), E = MAI->idx_end();
        S != E; ++S)
     if (!isa<Constant>(*S) || !cast<Constant>(*S)->isNullValue())
       return false;
@@ -66,7 +66,7 @@ static bool MallocConvertableToType(MallocInst *MI, const Type *Ty,
       !isa<PointerType>(Ty)) return false;   // Malloc always returns pointers
 
   // Deal with the type to allocate, not the pointer type...
-  Ty = cast<PointerType>(Ty)->getValueType();
+  Ty = cast<PointerType>(Ty)->getElementType();
 
   // Analyze the number of bytes allocated...
   analysis::ExprType Expr = analysis::ClassifyExpression(MI->getArraySize());
@@ -117,7 +117,7 @@ static bool MallocConvertableToType(MallocInst *MI, const Type *Ty,
     if (CastInst *CI = dyn_cast<CastInst>(*I))
       if (const PointerType *PT = 
           dyn_cast<PointerType>(CI->getOperand(0)->getType()))
-        if (getBaseTypeSize(PT->getValueType()) > ReqTypeSize)
+        if (getBaseTypeSize(PT->getElementType()) > ReqTypeSize)
           return false;     // We found a type bigger than this one!
   
   return true;
@@ -133,10 +133,10 @@ static Instruction *ConvertMallocToType(MallocInst *MI, const Type *Ty,
   analysis::ExprType Expr = analysis::ClassifyExpression(MI->getArraySize());
 
   const PointerType *AllocTy = cast<PointerType>(Ty);
-  const Type *ElType = AllocTy->getValueType();
+  const Type *ElType = AllocTy->getElementType();
 
   if (Expr.Var && !isa<ArrayType>(ElType)) {
-    ElType = ArrayType::get(AllocTy->getValueType());
+    ElType = ArrayType::get(AllocTy->getElementType());
     AllocTy = PointerType::get(ElType);
   }
 
@@ -216,8 +216,8 @@ bool ExpressionConvertableToType(Value *V, const Type *Ty,
     //
     if (PointerType *SPT = dyn_cast<PointerType>(I->getOperand(0)->getType()))
       if (PointerType *DPT = dyn_cast<PointerType>(I->getType()))
-        if (ArrayType *AT = dyn_cast<ArrayType>(SPT->getValueType()))
-          if (AT->getElementType() == DPT->getValueType())
+        if (ArrayType *AT = dyn_cast<ArrayType>(SPT->getElementType()))
+          if (AT->getElementType() == DPT->getElementType())
             return false;
 #endif
     break;
@@ -290,7 +290,7 @@ bool ExpressionConvertableToType(Value *V, const Type *Ty,
       Indices.pop_back();
       ElTy = GetElementPtrInst::getIndexedType(BaseType, Indices,
                                                            true);
-      if (ElTy == PTy->getValueType())
+      if (ElTy == PTy->getElementType())
         break;  // Found a match!!
       ElTy = 0;
     }
@@ -430,7 +430,7 @@ Value *ConvertExpressionToType(Value *V, const Type *Ty, ValueMapCache &VMC) {
     //
     vector<Value*> Indices = GEP->copyIndices();
     const Type *BaseType = GEP->getPointerOperand()->getType();
-    const Type *PVTy = cast<PointerType>(Ty)->getValueType();
+    const Type *PVTy = cast<PointerType>(Ty)->getElementType();
     Res = 0;
     while (!Indices.empty() && isa<ConstantUInt>(Indices.back()) &&
            cast<ConstantUInt>(Indices.back())->getValue() == 0) {
@@ -546,8 +546,8 @@ static bool OperandConvertableToType(User *U, Value *V, const Type *Ty,
     //
     if (PointerType *SPT = dyn_cast<PointerType>(I->getOperand(0)->getType()))
       if (PointerType *DPT = dyn_cast<PointerType>(I->getType()))
-        if (ArrayType *AT = dyn_cast<ArrayType>(SPT->getValueType()))
-          if (AT->getElementType() == DPT->getValueType())
+        if (ArrayType *AT = dyn_cast<ArrayType>(SPT->getElementType()))
+          if (AT->getElementType() == DPT->getElementType())
             return false;
 #endif
     return true;
@@ -595,7 +595,7 @@ static bool OperandConvertableToType(User *U, Value *V, const Type *Ty,
       if (LI->hasIndices() && !AllIndicesZero(LI))
         return false;
 
-      const Type *LoadedTy = PT->getValueType();
+      const Type *LoadedTy = PT->getElementType();
 
       // They could be loading the first element of a composite type...
       if (const CompositeType *CT = dyn_cast<CompositeType>(LoadedTy)) {
@@ -625,16 +625,16 @@ static bool OperandConvertableToType(User *U, Value *V, const Type *Ty,
       return ExpressionConvertableToType(I->getOperand(1), PointerType::get(Ty),
                                          CTMap);
     } else if (const PointerType *PT = dyn_cast<PointerType>(Ty)) {
-      if (isa<ArrayType>(PT->getValueType()))
+      if (isa<ArrayType>(PT->getElementType()))
         return false;  // Avoid getDataSize on unsized array type!
       assert(V == I->getOperand(1));
 
       // Must move the same amount of data...
-      if (TD.getTypeSize(PT->getValueType()) != 
+      if (TD.getTypeSize(PT->getElementType()) != 
           TD.getTypeSize(I->getOperand(0)->getType())) return false;
 
       // Can convert store if the incoming value is convertable...
-      return ExpressionConvertableToType(I->getOperand(0), PT->getValueType(),
+      return ExpressionConvertableToType(I->getOperand(0), PT->getElementType(),
                                          CTMap);
     }
     return false;
@@ -667,7 +667,7 @@ static bool OperandConvertableToType(User *U, Value *V, const Type *Ty,
       return false; // Can't convert method pointer type yet.  FIXME
     
     const PointerType *MPtr = cast<PointerType>(I->getOperand(0)->getType());
-    const MethodType *MTy = cast<MethodType>(MPtr->getValueType());
+    const MethodType *MTy = cast<MethodType>(MPtr->getElementType());
     if (!MTy->isVarArg()) return false;
 
     if ((OpNum-1) < MTy->getParamTypes().size())
@@ -743,7 +743,7 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
         const Type *RetTy = PointerType::get(ETy);
         // First operand is actually the given pointer...
         Res = new GetElementPtrInst(NewVal, Indices);
-        assert(cast<PointerType>(Res->getType())->getValueType() == ETy &&
+        assert(cast<PointerType>(Res->getType())->getElementType() == ETy &&
                "ConvertableToGEP broken!");
         break;
       }
@@ -774,7 +774,7 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
 
   case Instruction::Load: {
     assert(I->getOperand(0) == OldVal && isa<PointerType>(NewVal->getType()));
-    const Type *LoadedTy = cast<PointerType>(NewVal->getType())->getValueType();
+    const Type *LoadedTy = cast<PointerType>(NewVal->getType())->getElementType();
 
     vector<Value*> Indices;
 
@@ -796,7 +796,7 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
       VMC.ExprMap[I] = Res;
       Res->setOperand(1, ConvertExpressionToType(I->getOperand(1), NewPT, VMC));
     } else {                           // Replace the source pointer
-      const Type *ValTy = cast<PointerType>(NewTy)->getValueType();
+      const Type *ValTy = cast<PointerType>(NewTy)->getElementType();
       Res = new StoreInst(Constant::getNullConstant(ValTy), NewVal);
       VMC.ExprMap[I] = Res;
       Res->setOperand(0, ConvertExpressionToType(I->getOperand(0), ValTy, VMC));

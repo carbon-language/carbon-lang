@@ -54,7 +54,7 @@ inline bool ModuleAnalyzer::handleType(set<const Type *> &TypeSet,
   }
 
   case Type::PointerTyID:
-    if (handleType(TypeSet, ((const PointerType *)T)->getValueType()))
+    if (handleType(TypeSet, cast<const PointerType>(T)->getElementType()))
       return true;
     break;
 

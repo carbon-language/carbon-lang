@@ -237,7 +237,7 @@ Annotation *GlobalAddress::Create(AnnotationID AID, const Annotable *O, void *){
   GlobalVariable *GV = cast<GlobalVariable>(GVal);
   
   // First off, we must allocate space for the global variable to point at...
-  const Type *Ty = GV->getType()->getValueType();  // Type to be allocated
+  const Type *Ty = GV->getType()->getElementType();  // Type to be allocated
   unsigned NumElements = 1;
 
   if (isa<ArrayType>(Ty) && cast<ArrayType>(Ty)->isUnsized()) {
@@ -728,7 +728,7 @@ void Interpreter::executeBrInst(BranchInst *I, ExecutionContext &SF) {
 //===----------------------------------------------------------------------===//
 
 void Interpreter::executeAllocInst(AllocationInst *I, ExecutionContext &SF) {
-  const Type *Ty = I->getType()->getValueType();  // Type to be allocated
+  const Type *Ty = I->getType()->getElementType();  // Type to be allocated
   unsigned NumElements = 1;
 
   if (I->getNumOperands()) {   // Allocating a unsized array type?
@@ -771,7 +771,7 @@ static PointerTy getElementOffset(MemAccessInst *I, ExecutionContext &SF) {
 
   PointerTy Total = 0;
   const Type *Ty =
-    cast<PointerType>(I->getPointerOperand()->getType())->getValueType();
+    cast<PointerType>(I->getPointerOperand()->getType())->getElementType();
   
   unsigned ArgOff = I->getFirstIndexOperandNumber();
   while (ArgOff < I->getNumOperands()) {

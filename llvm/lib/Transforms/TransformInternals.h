@@ -43,7 +43,7 @@ static inline bool isFirstClassType(const Type *Ty) {
 //
 static inline const CompositeType *getPointedToComposite(const Type *Ty) {
   const PointerType *PT = dyn_cast<PointerType>(Ty);
-  return PT ? dyn_cast<CompositeType>(PT->getValueType()) : 0;
+  return PT ? dyn_cast<CompositeType>(PT->getElementType()) : 0;
 }
 
 

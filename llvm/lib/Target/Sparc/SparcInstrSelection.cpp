@@ -771,7 +771,7 @@ SetOperandsForMemInstr(MachineInstr* minstr,
       newIdxVec->insert(newIdxVec->end(), idxVec->begin(), idxVec->end());
       idxVec = newIdxVec;
       
-      assert(! ((PointerType*)ptrVal->getType())->getValueType()->isArrayType()
+      assert(!((PointerType*)ptrVal->getType())->getElementType()->isArrayType()
              && "GetElemPtr cannot be folded into array refs in selection");
     }
   else
@@ -782,7 +782,7 @@ SetOperandsForMemInstr(MachineInstr* minstr,
       // 
       ptrVal = memInst->getPointerOperand();
 
-      const Type* opType = cast<PointerType>(ptrVal->getType())->getValueType();
+      const Type* opType = cast<PointerType>(ptrVal->getType())->getElementType();
       if (opType->isArrayType())
         {
           assert((memInst->getNumOperands()
@@ -826,7 +826,7 @@ SetMemOperands_Internal(MachineInstr* minstr,
       
       const PointerType* ptrType = (PointerType*) ptrVal->getType();
       
-      if (ptrType->getValueType()->isStructType())
+      if (ptrType->getElementType()->isStructType())
         {
           // the offset is always constant for structs
           isConstantOffset = true;
@@ -839,7 +839,7 @@ SetMemOperands_Internal(MachineInstr* minstr,
           // It must be an array ref.  Check if the offset is a constant,
           // and that the indexing has been lowered to a single offset.
           // 
-          assert(ptrType->getValueType()->isArrayType());
+          assert(ptrType->getElementType()->isArrayType());
           assert(arrayOffsetVal != NULL
                  && "Expect to be given Value* for array offsets");
           
@@ -1835,7 +1835,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
                   cast<GetElementPtrInst>(subtreeRoot->getInstruction());
                 const PointerType* ptrType =
                   cast<PointerType>(getElemInst->getPointerOperand()->getType());
-                if (! ptrType->getValueType()->isArrayType())
+                if (! ptrType->getElementType()->isArrayType())
                   {// we don't need a separate instr
                     numInstr = 0;		// don't forward operand!
                     break;
@@ -1853,7 +1853,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         const PointerType* instrType = (const PointerType*) instr->getType();
         assert(instrType->isPointerType());
         int tsize = (int)
-          target.findOptimalStorageSize(instrType->getValueType());
+          target.findOptimalStorageSize(instrType->getElementType());
         assert(tsize != 0 && "Just to check when this can happen");
         
         Method* method = instr->getParent()->getParent();
@@ -1881,9 +1881,9 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         Instruction* instr = subtreeRoot->getInstruction();
         const PointerType* instrType = (const PointerType*) instr->getType();
         assert(instrType->isPointerType() &&
-               instrType->getValueType()->isArrayType());
+               instrType->getElementType()->isArrayType());
         const Type* eltType =
-          ((ArrayType*) instrType->getValueType())->getElementType();
+          ((ArrayType*) instrType->getElementType())->getElementType();
         int tsize = (int) target.findOptimalStorageSize(eltType);
         
         assert(tsize != 0 && "Just to check when this can happen");

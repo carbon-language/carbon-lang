@@ -184,8 +184,8 @@ typedef PlaceholderValue<BBPlaceHolderHelper>    BBPlaceHolder;
 static inline ValID &getValIDFromPlaceHolder(const Value *Val) {
   const Type *Ty = Val->getType();
   if (isa<PointerType>(Ty) &&
-      isa<MethodType>(cast<PointerType>(Ty)->getValueType()))
-    Ty = cast<PointerType>(Ty)->getValueType();
+      isa<MethodType>(cast<PointerType>(Ty)->getElementType()))
+    Ty = cast<PointerType>(Ty)->getElementType();
 
   switch (Ty->getPrimitiveID()) {
   case Type::LabelTyID:  return ((BBPlaceHolder*)Val)->getDef();
@@ -196,8 +196,8 @@ static inline ValID &getValIDFromPlaceHolder(const Value *Val) {
 static inline int getLineNumFromPlaceHolder(const Value *Val) {
   const Type *Ty = Val->getType();
   if (isa<PointerType>(Ty) &&
-      isa<MethodType>(cast<PointerType>(Ty)->getValueType()))
-    Ty = cast<PointerType>(Ty)->getValueType();
+      isa<MethodType>(cast<PointerType>(Ty)->getElementType()))
+    Ty = cast<PointerType>(Ty)->getElementType();
 
   switch (Ty->getPrimitiveID()) {
   case Type::LabelTyID:  return ((BBPlaceHolder*)Val)->getLineNum();

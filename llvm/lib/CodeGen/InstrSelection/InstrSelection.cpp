@@ -250,8 +250,7 @@ void InsertCode4AllPhisInMeth(Method *method, TargetMachine &target) {
 
 	PHINode *PN = (PHINode *) (*IIt);
 
-	Value *PhiCpRes = 
-	  new Value(PN->getType(), PN->getValueType() );
+	Value *PhiCpRes = new Value(PN->getType(), PN->getValueType());
 
 	string *Name = new string("PhiCp:");
 	(*Name) += (int) PhiCpRes;

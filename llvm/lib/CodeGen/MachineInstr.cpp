@@ -102,7 +102,7 @@ operator<< (ostream& os, const MachineInstr& minstr)
 #undef DEBUG_VAL_OP_ITERATOR
 #ifdef DEBUG_VAL_OP_ITERATOR
   os << endl << "\tValue operands are: ";
-  for (MachineInstr::val_op_const_iterator vo(&minstr); ! vo.done(); ++vo)
+  for (MachineInstr::val_const_op_iterator vo(&minstr); ! vo.done(); ++vo)
     {
       const Value* val = *vo;
       os << val << (vo.isDef()? "(def), " : ", ");
@@ -218,7 +218,7 @@ ComputeMaxOptionalArgsSize(const TargetMachine& target, const Method* method)
   
   unsigned int maxSize = 0;
   
-  for (Method::inst_const_iterator I=method->inst_begin(),E=method->inst_end();
+  for (Method::const_inst_iterator I=method->inst_begin(),E=method->inst_end();
        I != E; ++I)
     if ((*I)->getOpcode() == Instruction::Call)
       {

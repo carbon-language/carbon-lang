@@ -122,7 +122,7 @@ void LiveRangeInfo::constructLiveRanges()
  
              
       // iterate over  MI operands to find defs
-      for( MachineInstr::val_op_const_iterator OpI(MInst);!OpI.done(); ++OpI) {
+      for( MachineInstr::val_const_op_iterator OpI(MInst);!OpI.done(); ++OpI) {
 	
 	if( DEBUG_RA) {
 	  MachineOperand::MachineOperandType OpTyp = 
@@ -286,7 +286,7 @@ void LiveRangeInfo::coalesceLRs()
 
 
       // iterate over  MI operands to find defs
-      for(MachineInstr::val_op_const_iterator DefI(MInst);!DefI.done();++DefI){
+      for(MachineInstr::val_const_op_iterator DefI(MInst);!DefI.done();++DefI){
 	
 	if( DefI.isDef() ) {            // iff this operand is a def
 
@@ -294,7 +294,7 @@ void LiveRangeInfo::coalesceLRs()
 	  assert( LROfDef );
 	  RegClass *const RCOfDef = LROfDef->getRegClass();
 
-	  MachineInstr::val_op_const_iterator UseI(MInst);
+	  MachineInstr::val_const_op_iterator UseI(MInst);
 	  for( ; !UseI.done(); ++UseI){ // for all uses
 
  	    LiveRange *const LROfUse = getLiveRangeForValue( *UseI );

@@ -114,10 +114,10 @@ public:
 		       BasicBlock::iterator, Instruction*> inst_iterator;
   typedef InstIterator<const BasicBlocksType, const_iterator, 
 		       BasicBlock::const_iterator,
-		       const Instruction*> inst_const_iterator;
+		       const Instruction*> const_inst_iterator;
 
   // This inner class is used to implement inst_begin() & inst_end() for
-  // inst_iterator and inst_const_iterator's.
+  // inst_iterator and const_inst_iterator's.
   //
   template <class _BB_t, class _BB_i_t, class _BI_t, class _II_t>
   class InstIterator {
@@ -197,8 +197,8 @@ public:
 
   inline inst_iterator inst_begin() { return inst_iterator(*this); }
   inline inst_iterator inst_end()   { return inst_iterator(*this, true); }
-  inline inst_const_iterator inst_begin() const { return inst_const_iterator(*this); }
-  inline inst_const_iterator inst_end()   const { return inst_const_iterator(*this, true); }
+  inline const_inst_iterator inst_begin() const { return const_inst_iterator(*this); }
+  inline const_inst_iterator inst_end()   const { return const_inst_iterator(*this, true); }
 };
 
 // Provide specializations of GraphTraits to be able to treat a method as a 

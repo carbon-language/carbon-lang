@@ -130,7 +130,7 @@ bool IsLeafMethod(const Method* M, const cfg::CallGraph* CG) {
     return (cgn->begin() == cgn->end());
   }
 
-  for (Method::inst_const_iterator I = M->inst_begin(), E = M->inst_end();
+  for (Method::const_inst_iterator I = M->inst_begin(), E = M->inst_end();
        I != E; ++I)
     if ((*I)->getOpcode() == Instruction::Call)
       return false;

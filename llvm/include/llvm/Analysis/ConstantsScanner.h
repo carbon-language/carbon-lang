@@ -16,7 +16,7 @@ class Constant;
 
 class constant_iterator
   : public std::forward_iterator<const Constant, ptrdiff_t> {
-  Method::inst_const_iterator InstI;        // Method instruction iterator
+  Method::const_inst_iterator InstI;        // Method instruction iterator
   unsigned OpIdx;                           // Operand index
 
   typedef constant_iterator _Self;

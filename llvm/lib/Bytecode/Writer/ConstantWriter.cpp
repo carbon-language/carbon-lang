@@ -74,7 +74,7 @@ void BytecodeWriter::outputType(const Type *T) {
 
   case Type::PointerTyID: {
     const PointerType *PT = cast<const PointerType>(T);
-    int Slot = Table.getValSlot(PT->getValueType());
+    int Slot = Table.getValSlot(PT->getElementType());
     assert(Slot != -1 && "Type used but not available!!");
     output_vbr((unsigned)Slot, Out);
     break;

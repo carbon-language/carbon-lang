@@ -612,10 +612,10 @@ SparcAsmPrinter::printGlobalVariable(const GlobalVariable* GV)
     printConstant(GV->getInitializer(), getID(GV));
   else {
     toAsm << "\t.align\t"
-          << TypeToAlignment(GV->getType()->getValueType(), Target) << endl;
+          << TypeToAlignment(GV->getType()->getElementType(), Target) << endl;
     toAsm << "\t.type\t" << getID(GV) << ",#object" << endl;
     toAsm << "\t.reserve\t" << getID(GV) << ","
-          << TypeToSize(GV->getType()->getValueType(), Target)
+          << TypeToSize(GV->getType()->getElementType(), Target)
           << endl;
   }
 }

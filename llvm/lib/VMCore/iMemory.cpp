@@ -22,7 +22,7 @@ const Type* MemAccessInst::getIndexedType(const Type *Ptr,
   if (!Ptr->isPointerType()) return 0;   // Type isn't a pointer type!
  
   // Get the type pointed to...
-  Ptr = cast<PointerType>(Ptr)->getValueType();
+  Ptr = cast<PointerType>(Ptr)->getElementType();
   
   unsigned CurIDX = 0;
   while (const CompositeType *ST = dyn_cast<CompositeType>(Ptr)) {
@@ -71,7 +71,7 @@ LoadInst::LoadInst(Value *Ptr, const vector<Value*> &Idx,
 }
 
 LoadInst::LoadInst(Value *Ptr, const string &Name = "")
-  : MemAccessInst(cast<PointerType>(Ptr->getType())->getValueType(),
+  : MemAccessInst(cast<PointerType>(Ptr->getType())->getElementType(),
                   Load, Name) {
   Operands.reserve(1);
   Operands.push_back(Use(Ptr, this));
@@ -121,5 +121,5 @@ GetElementPtrInst::GetElementPtrInst(Value *Ptr, const vector<Value*> &Idx,
 }
 
 bool GetElementPtrInst::isStructSelector() const {
-  return ((PointerType*)Operands[0]->getType())->getValueType()->isStructType();
+  return ((PointerType*)Operands[0]->getType())->getElementType()->isStructType();
 }

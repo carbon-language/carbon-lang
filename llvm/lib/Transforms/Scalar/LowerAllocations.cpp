@@ -67,7 +67,7 @@ bool LowerAllocations::doPerMethodWork(Method *M) {
       if (MallocInst *MI = dyn_cast<MallocInst>(*(BBIL.begin()+i))) {
         BBIL.remove(BBIL.begin()+i);   // remove the malloc instr...
         
-        const Type *AllocTy = cast<PointerType>(MI->getType())->getValueType();
+        const Type *AllocTy =cast<PointerType>(MI->getType())->getElementType();
 
         // If the user is allocating an unsized array with a dynamic size arg,
         // start by getting the size of one element.

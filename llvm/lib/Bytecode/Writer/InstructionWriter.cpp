@@ -226,13 +226,13 @@ void BytecodeWriter::processInstruction(const Instruction *I) {
     NumOperands++;
   } else if (const CallInst *CI = dyn_cast<CallInst>(I)) {// Handle VarArg calls
     PointerType *Ty = cast<PointerType>(CI->getCalledValue()->getType());
-    if (cast<MethodType>(Ty->getValueType())->isVarArg()) {
+    if (cast<MethodType>(Ty->getElementType())->isVarArg()) {
       outputInstrVarArgsCall(I, Table, Type, Out);
       return;
     }
   } else if (const InvokeInst *II = dyn_cast<InvokeInst>(I)) { // ...  & Invokes
     PointerType *Ty = cast<PointerType>(II->getCalledValue()->getType());
-    if (cast<MethodType>(Ty->getValueType())->isVarArg()) {
+    if (cast<MethodType>(Ty->getElementType())->isVarArg()) {
       outputInstrVarArgsCall(I, Table, Type, Out);
       return;
     }

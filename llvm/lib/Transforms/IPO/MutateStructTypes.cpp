@@ -86,7 +86,7 @@ const Type *MutateStructTypes::ConvertType(const Type *Ty) {
 
   case Type::PointerTyID:
     DestTy = PointerType::get(
-                 ConvertType(cast<PointerType>(Ty)->getValueType()));
+                 ConvertType(cast<PointerType>(Ty)->getElementType()));
     break;
   default:
     assert(0 && "Unknown type!");
@@ -432,7 +432,7 @@ bool MutateStructTypes::doPerMethodWork(Method *m) {
         const Value *Ptr = MAI->getPointerOperand();
         Value *NewPtr = ConvertValue(Ptr);
         if (!Indices.empty()) {
-          const Type *PTy = cast<PointerType>(Ptr->getType())->getValueType();
+          const Type *PTy = cast<PointerType>(Ptr->getType())->getElementType();
           AdjustIndices(cast<CompositeType>(PTy), Indices);
         }
 

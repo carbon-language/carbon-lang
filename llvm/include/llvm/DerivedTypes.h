@@ -312,7 +312,7 @@ protected:
   PointerType(const Type *ElType);
 public:
 
-  inline const Type *getValueType() const { return ValueType; }
+  inline const Type *getElementType() const { return ValueType; }
 
   virtual const Type *getContainedType(unsigned i) const { 
     return i == 0 ? ValueType.get() : 0;

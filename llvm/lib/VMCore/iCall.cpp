@@ -16,13 +16,13 @@
 CallInst::CallInst(Value *Meth, const vector<Value*> &params, 
                    const string &Name) 
   : Instruction(cast<MethodType>(cast<PointerType>(Meth->getType())
-				 ->getValueType())->getReturnType(),
+				 ->getElementType())->getReturnType(),
 		Instruction::Call, Name) {
   Operands.reserve(1+params.size());
   Operands.push_back(Use(Meth, this));
 
   const MethodType *MTy = 
-    cast<MethodType>(cast<PointerType>(Meth->getType())->getValueType());
+    cast<MethodType>(cast<PointerType>(Meth->getType())->getElementType());
 
   const MethodType::ParamTypes &PL = MTy->getParamTypes();
   assert((params.size() == PL.size()) || 
@@ -47,14 +47,14 @@ InvokeInst::InvokeInst(Value *Meth, BasicBlock *IfNormal, \
 		       BasicBlock *IfException, const vector<Value*>&params,
 		       const string &Name)
   : TerminatorInst(cast<MethodType>(cast<PointerType>(Meth->getType())
-				    ->getValueType())->getReturnType(),
+				    ->getElementType())->getReturnType(),
 		   Instruction::Invoke, Name) {
   Operands.reserve(3+params.size());
   Operands.push_back(Use(Meth, this));
   Operands.push_back(Use(IfNormal, this));
   Operands.push_back(Use(IfException, this));
   const MethodType *MTy = 
-    cast<MethodType>(cast<PointerType>(Meth->getType())->getValueType());
+    cast<MethodType>(cast<PointerType>(Meth->getType())->getElementType());
   
   const MethodType::ParamTypes &PL = MTy->getParamTypes();
   assert((params.size() == PL.size()) || 

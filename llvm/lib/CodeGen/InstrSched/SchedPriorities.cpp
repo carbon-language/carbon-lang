@@ -268,7 +268,7 @@ SchedPriorities::instructionHasLastUse(MethodLiveVarInfo& methodLiveVarInfo,
   const LiveVarSet* liveVars =
     methodLiveVarInfo.getLiveVarSetBeforeMInst(minstr, bb);
   
-  for (MachineInstr::val_op_const_iterator vo(minstr); ! vo.done(); ++vo)
+  for (MachineInstr::val_const_op_iterator vo(minstr); ! vo.done(); ++vo)
     if (liveVars->find(*vo) == liveVars->end())
       {
 	hasLastUse = true;

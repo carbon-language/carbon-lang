@@ -220,7 +220,7 @@ static bool PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
         // type.
         //
         if (!HasAddUse) {
-          const Type *DestPointedTy = DestPTy->getValueType();
+          const Type *DestPointedTy = DestPTy->getElementType();
           unsigned Depth = 1;
           const CompositeType *CurCTy = CTy;
           const Type *ElTy = 0;
@@ -313,12 +313,12 @@ static bool PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
       if (Value *CastSrc = CI->getOperand(0)) // CSPT = CastSrcPointerType
         if (PointerType *CSPT = dyn_cast<PointerType>(CastSrc->getType()))
           // convertable types?
-          if (Val->getType()->isLosslesslyConvertableTo(CSPT->getValueType()) &&
+          if (Val->getType()->isLosslesslyConvertableTo(CSPT->getElementType()) &&
               !SI->hasIndices()) {      // No subscripts yet!
             PRINT_PEEPHOLE3("st-src-cast:in ", Pointer, Val, SI);
 
             // Insert the new T cast instruction... stealing old T's name
-            CastInst *NCI = new CastInst(Val, CSPT->getValueType(),
+            CastInst *NCI = new CastInst(Val, CSPT->getElementType(),
                                          CI->getName());
             CI->setName("");
             BI = BB->getInstList().insert(BI, NCI)+1;
@@ -372,7 +372,7 @@ static bool PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
     if (CastInst *CI = dyn_cast<CastInst>(Pointer)) {
       Value *SrcVal = CI->getOperand(0);
       const PointerType *SrcTy = dyn_cast<PointerType>(SrcVal->getType());
-      const Type *ElTy = SrcTy ? SrcTy->getValueType() : 0;
+      const Type *ElTy = SrcTy ? SrcTy->getElementType() : 0;
 
       // Make sure that nothing will be lost in the new cast...
       if (!LI->hasIndices() && SrcTy &&
@@ -445,7 +445,7 @@ static bool DoInsertArrayCast(Value *V, BasicBlock *BB,
   const PointerType *ThePtrType = dyn_cast<PointerType>(V->getType());
   if (!ThePtrType) return false;
 
-  const Type *ElTy = ThePtrType->getValueType();
+  const Type *ElTy = ThePtrType->getElementType();
   if (isa<MethodType>(ElTy) || isa<ArrayType>(ElTy)) return false;
 
   unsigned ElementSize = TD.getTypeSize(ElTy);
@@ -456,8 +456,8 @@ static bool DoInsertArrayCast(Value *V, BasicBlock *BB,
     switch (Inst->getOpcode()) {
     case Instruction::Cast:          // There is already a cast instruction!
       if (const PointerType *PT = dyn_cast<const PointerType>(Inst->getType()))
-	if (const ArrayType *AT = dyn_cast<const ArrayType>(PT->getValueType()))
-	  if (AT->getElementType() == ThePtrType->getValueType()) {
+	if (const ArrayType *AT = dyn_cast<const ArrayType>(PT->getElementType()))
+	  if (AT->getElementType() == ThePtrType->getElementType()) {
 	    // Cast already exists! Don't mess around with it.
 	    return false;       // No changes made to program though...
 	  }

@@ -262,7 +262,7 @@ bool BytecodeParser::ParseMethod(const uchar *&Buf, const uchar *EndBuf,
   }
 
   const PointerType *PMTy = MethodSignatureList.front().first; // PtrMeth
-  const MethodType  *MTy  = dyn_cast<const MethodType>(PMTy->getValueType());
+  const MethodType  *MTy  = dyn_cast<const MethodType>(PMTy->getElementType());
   if (MTy == 0) return failure(true);  // Not ptr to method!
 
   unsigned isInternal;
@@ -392,7 +392,7 @@ bool BytecodeParser::ParseModuleGlobalInfo(const uchar *&Buf, const uchar *End,
     }
 
     const PointerType *PTy = cast<const PointerType>(Ty);
-    const Type *ElTy = PTy->getValueType();
+    const Type *ElTy = PTy->getElementType();
 
     Constant *Initializer = 0;
     if (VarType & 2) { // Does it have an initalizer?
@@ -430,13 +430,13 @@ bool BytecodeParser::ParseModuleGlobalInfo(const uchar *&Buf, const uchar *End,
   while (MethSignature != Type::VoidTyID) { // List is terminated by Void
     const Type *Ty = getType(MethSignature);
     if (!Ty || !isa<PointerType>(Ty) ||
-        !isa<MethodType>(cast<PointerType>(Ty)->getValueType())) { 
+        !isa<MethodType>(cast<PointerType>(Ty)->getElementType())) { 
       Error = "Method not ptr to meth type!  Ty = " + Ty->getDescription();
       return failure(true); 
     }
     
     // We create methods by passing the underlying MethodType to create...
-    Ty = cast<PointerType>(Ty)->getValueType();
+    Ty = cast<PointerType>(Ty)->getElementType();
 
     // When the ModuleGlobalInfo section is read, we load the type of each 
     // method and the 'ModuleValues' slot that it lands in.  We then load a 
