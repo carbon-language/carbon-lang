@@ -289,7 +289,14 @@ public:
 
   /// isNullValue - Return true if this is the value that would be returned by
   /// getNullValue.
-  virtual bool isNullValue() const { return false; }
+  virtual bool isNullValue() const {
+    // FIXME: This should be made to be MUCH faster.  Just check against well
+    // known null value!
+    for (unsigned i = 0, e = getNumOperands(); i != e; ++i)
+      if (!cast<Constant>(getOperand(i))->isNullValue())
+        return false; 
+    return true;
+  }
 
   virtual void destroyConstant();
   virtual void replaceUsesOfWithOnConstant(Value *From, Value *To);
@@ -328,7 +335,14 @@ public:
 
   /// isNullValue - Return true if this is the value that would be returned by
   /// getNullValue.
-  virtual bool isNullValue() const { return false; }
+  virtual bool isNullValue() const {
+    // FIXME: This should be made to be MUCH faster.  Just check against well
+    // known null value!
+    for (unsigned i = 0, e = getNumOperands(); i != e; ++i)
+      if (!cast<Constant>(getOperand(i))->isNullValue())
+        return false; 
+    return true;
+  }
 
   virtual void destroyConstant();
   virtual void replaceUsesOfWithOnConstant(Value *From, Value *To);
