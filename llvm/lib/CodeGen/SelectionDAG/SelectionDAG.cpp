@@ -1123,6 +1123,8 @@ void SDNode::dump() const {
   } else if (const ExternalSymbolSDNode *ES =
              dyn_cast<ExternalSymbolSDNode>(this)) {
     std::cerr << "'" << ES->getSymbol() << "'";
+  } else if (const MVTSDNode *M = dyn_cast<MVTSDNode>(this)) {
+    std::cerr << " - Ty = " << MVT::getValueTypeString(M->getExtraValueType());
   }
 }
 
