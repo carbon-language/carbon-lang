@@ -200,7 +200,7 @@ public:
   /// getUseType - Returns the MachineOperandUseType of this operand.
   ///
   MOTy::UseType getUseType() const {
-      return isUse() ^ isDef() ? MOTy::UseAndDef :
+      return isUse() & isDef() ? MOTy::UseAndDef :
           (isUse() ? MOTy::Use : MOTy::Def);
   }
 
