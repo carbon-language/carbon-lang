@@ -16,6 +16,7 @@
 #define LLVM_CODEGEN_SCHEDGRAPHCOMMON_H
 
 #include "llvm/Value.h"
+#include "Support/iterator"
 #include <vector>
 
 namespace llvm {
@@ -81,6 +82,8 @@ protected:
   
   inline SchedGraphNodeCommon(unsigned Id, int index) : ID(Id), latency(0), 
 							origIndexInBB(index) {}
+  inline SchedGraphNodeCommon(unsigned Id, int late, int index) : ID(Id), latency(late), origIndexInBB(index) {}
+  
   virtual ~SchedGraphNodeCommon();
   
   //Functions to add and remove edges
@@ -88,6 +91,7 @@ protected:
   inline void addOutEdge(SchedGraphEdge* edge) { outEdges.push_back(edge); }
   void removeInEdge(const SchedGraphEdge* edge);
   void removeOutEdge(const SchedGraphEdge* edge);
+  
 };
 
 // ostream << operator for SchedGraphNode class
@@ -219,6 +223,69 @@ public:
   ~SchedGraphCommon();
 };
 
+
+//********************** Sched Graph Iterators *****************************/
+
+// Ok to make it a template because it shd get instantiated at most twice:
+// for <SchedGraphNode, SchedGraphNode::iterator> and
+// for <const SchedGraphNode, SchedGraphNode::const_iterator>.
+// 
+template <class _NodeType, class _EdgeType, class _EdgeIter>
+class SGPredIterator: public bidirectional_iterator<_NodeType, ptrdiff_t> {
+protected:
+  _EdgeIter oi;
+public:
+  typedef SGPredIterator<_NodeType, _EdgeType, _EdgeIter> _Self;
+  
+  inline SGPredIterator(_EdgeIter startEdge) : oi(startEdge) {}
+  
+  inline bool operator==(const _Self& x) const { return oi == x.oi; }
+  inline bool operator!=(const _Self& x) const { return !operator==(x); }
+  
+  // operator*() differs for pred or succ iterator
+  inline _NodeType* operator*() const { return (_NodeType*)(*oi)->getSrc(); }
+  inline _NodeType* operator->() const { return operator*(); }
+  
+  inline _EdgeType* getEdge() const { return *(oi); }
+  
+  inline _Self &operator++() { ++oi; return *this; }    // Preincrement
+  inline _Self operator++(int) {                      	// Postincrement
+    _Self tmp(*this); ++*this; return tmp; 
+  }
+  
+  inline _Self &operator--() { --oi; return *this; }    // Predecrement
+  inline _Self operator--(int) {                       	// Postdecrement
+    _Self tmp = *this; --*this; return tmp;
+  }
+};
+
+template <class _NodeType, class _EdgeType, class _EdgeIter>
+class SGSuccIterator : public bidirectional_iterator<_NodeType, ptrdiff_t> {
+protected:
+  _EdgeIter oi;
+public:
+  typedef SGSuccIterator<_NodeType, _EdgeType, _EdgeIter> _Self;
+  
+  inline SGSuccIterator(_EdgeIter startEdge) : oi(startEdge) {}
+  
+  inline bool operator==(const _Self& x) const { return oi == x.oi; }
+  inline bool operator!=(const _Self& x) const { return !operator==(x); }
+  
+  inline _NodeType* operator*() const { return (_NodeType*)(*oi)->getSink(); }
+  inline _NodeType* operator->() const { return operator*(); }
+  
+  inline _EdgeType* getEdge() const { return *(oi); }
+  
+  inline _Self &operator++() { ++oi; return *this; }    // Preincrement
+  inline _Self operator++(int) {                      	// Postincrement
+    _Self tmp(*this); ++*this; return tmp; 
+  }
+  
+  inline _Self &operator--() { --oi; return *this; }    // Predecrement
+  inline _Self operator--(int) {                       	// Postdecrement
+    _Self tmp = *this; --*this; return tmp;
+  }
+};
 } // End llvm namespace
 
 #endif
