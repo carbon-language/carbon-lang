@@ -12,6 +12,7 @@
 #include <hash_map>
 #include <string>
 
+class TargetMachine;
 class IGNode;
 class Value;
 class LiveRangeInfo;
@@ -37,7 +38,6 @@ class BasicBlock;
 
 
 class MachineRegClassInfo {
-
 protected:
   
   const unsigned RegClassID;        // integer ID of a reg class
@@ -59,7 +59,7 @@ public:
 
   MachineRegClassInfo(const unsigned ID, const unsigned NVR, 
 		      const unsigned NAR): RegClassID(ID), NumOfAvailRegs(NVR),
-					     NumOfAllRegs(NAR)
+                                             NumOfAllRegs(NAR)
   { }                         // empty constructor
 
 };
@@ -83,6 +83,8 @@ typedef vector<const MachineRegClassInfo *> MachineRegClassArrayType;
 
 
 class MachineRegInfo : public NonCopyableV {
+public:
+  const TargetMachine& target;
 
 protected:
 
@@ -190,7 +192,7 @@ public:
 
   //virtual void printReg(const LiveRange *const LR) const =0;
 
-  MachineRegInfo() { }
+  MachineRegInfo(const TargetMachine& tgt) : target(tgt) { }
 
 };
 

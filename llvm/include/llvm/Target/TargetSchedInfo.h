@@ -280,6 +280,8 @@ InstrRUsage::addUsageDelta(const InstrRUsageDelta& delta)
 
 class MachineSchedInfo : public NonCopyableV {
 public:
+  const TargetMachine& target;
+  
   unsigned int	maxNumIssueTotal;
   int	longestIssueConflict;
   
@@ -305,8 +307,8 @@ protected:
   }
   
 public:
-  /*ctor*/	   MachineSchedInfo	(int _numSchedClasses,
-					 const MachineInstrInfo* _mii,
+  /*ctor*/	   MachineSchedInfo	(const TargetMachine& tgt,
+                                         int                  _numSchedClasses,
 					 const InstrClassRUsage* _classRUsages,
 					 const InstrRUsageDelta* _usageDeltas,
 					 const InstrIssueDelta*  _issueDeltas,
