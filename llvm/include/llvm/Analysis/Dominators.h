@@ -19,9 +19,10 @@
 #define LLVM_ANALYSIS_DOMINATORS_H
 
 #include "llvm/Pass.h"
-#include "Support/GraphTraits.h"
 #include <set>
 class Instruction;
+
+template <typename GraphType> struct GraphTraits;
 
 //===----------------------------------------------------------------------===//
 //
