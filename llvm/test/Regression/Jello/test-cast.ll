@@ -30,8 +30,8 @@ int %main() {
   cast short 0 to double
 
   ; cast ushort to ...
-  ;cast ushort 0 to float
-  ;cast ushort 0 to double
+  cast ushort 0 to float
+  cast ushort 0 to double
 
   ; cast int to ...
   cast int 6 to bool
@@ -45,8 +45,8 @@ int %main() {
   ; cast uint to ...
   cast uint 0 to long
   cast uint 0 to ulong
-  ;cast uint 0 to float
-  ;cast uint 0 to double
+  cast uint 0 to float
+  cast uint 0 to double
 
   ; cast long to ...
   cast long 0 to sbyte
