@@ -11,7 +11,6 @@
 
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/Annotation.h"
-#include "Support/NonCopyable.h"
 #include "Support/HashExtras.h"
 #include "Support/hash_set"
 #include "Support/ilist"
