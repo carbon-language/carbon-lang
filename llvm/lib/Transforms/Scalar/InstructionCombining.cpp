@@ -186,12 +186,9 @@ static inline Value *dyn_castNegVal(Value *V) {
   if (BinaryOperator::isNeg(V))
     return BinaryOperator::getNegArgument(cast<BinaryOperator>(V));
 
-  // Constants can be considered to be negated values...
-  if (Constant *C = dyn_cast<Constant>(V)) {
-    Constant *NC = *Constant::getNullValue(V->getType()) - *C;
-    assert(NC && "Couldn't constant fold a subtract!");
-    return NC;
-  }
+  // Constants can be considered to be negated values if they can be folded...
+  if (Constant *C = dyn_cast<Constant>(V))
+    return *Constant::getNullValue(V->getType()) - *C;
   return 0;
 }
 
