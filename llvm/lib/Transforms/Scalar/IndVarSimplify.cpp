@@ -8,7 +8,6 @@
 #include "llvm/Transforms/Scalar/IndVarSimplify.h"
 #include "llvm/Analysis/InductionVariable.h"
 #include "llvm/Analysis/LoopInfo.h"
-#include "llvm/Analysis/Dominators.h"
 #include "llvm/iPHINode.h"
 #include "llvm/iOther.h"
 #include "llvm/Type.h"
@@ -185,14 +184,21 @@ static bool TransformLoop(cfg::LoopInfo *Loops, cfg::Loop *Loop) {
   return Changed;
 }
 
-bool InductionVariableSimplify::doit(Method *M) {
+bool InductionVariableSimplify::doit(Method *M, cfg::LoopInfo &Loops) {
   if (M->isExternal()) return false;
-
-  // Figure out the loop structure of the method...
-  cfg::LoopInfo Loops(M);
 
   // Induction Variables live in the header nodes of the loops of the method...
   return reduce_apply_bool(Loops.getTopLevelLoops().begin(),
                            Loops.getTopLevelLoops().end(),
                            std::bind1st(std::ptr_fun(TransformLoop), &Loops));
+}
+
+bool InductionVariableSimplify::runOnMethod(Method *M) {
+  return doit(M, getAnalysis<cfg::LoopInfo>());
+}
+
+void InductionVariableSimplify::getAnalysisUsageInfo(Pass::AnalysisSet &Req,
+                                                     Pass::AnalysisSet &Dest,
+                                                     Pass::AnalysisSet &Prov) {
+  Req.push_back(cfg::LoopInfo::ID);
 }

@@ -16,6 +16,8 @@
 
 #include "llvm/Transforms/ConstantMerge.h"
 #include "llvm/GlobalVariable.h"
+#include "llvm/Module.h"
+#include "llvm/Method.h"
 
 // mergeDuplicateConstants - Workhorse for the pass.  This eliminates duplicate
 // constants, starting at global ConstantNo, and adds vars to the map if they

@@ -46,8 +46,17 @@ static bool RemoveUnreachableMethods(Module *M, cfg::CallGraph &CallGraph) {
 }
 
 bool GlobalDCE::run(Module *M) {
-  // TODO: FIXME: GET THE CALL GRAPH FROM THE PASS!
-  // Create a call graph if one is not already available...
-  cfg::CallGraph CallGraph(M);
-  return RemoveUnreachableMethods(M, CallGraph);
+  return RemoveUnreachableMethods(M, getAnalysis<cfg::CallGraph>());
+}
+
+// getAnalysisUsageInfo - This function works on the call graph of a module.
+// It is capable of updating the call graph to reflect the new state of the
+// module.
+//
+void GlobalDCE::getAnalysisUsageInfo(Pass::AnalysisSet &Required,
+                                     Pass::AnalysisSet &Destroyed,
+                                     Pass::AnalysisSet &Provided) {
+  Required.push_back(cfg::CallGraph::ID);
+  // FIXME: This should update the callgraph, not destroy it!
+  Destroyed.push_back(cfg::CallGraph::ID);
 }

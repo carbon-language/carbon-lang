@@ -89,24 +89,16 @@ static inline void GetTransformation(const StructType *ST,
 
 SimpleStructMutation::TransformsType
   SimpleStructMutation::getTransforms(Module *M, enum Transform XForm) {
-
-  // FIXME: These should be calculated by the Pass framework!
-
   // We need to know which types to modify, and which types we CAN'T modify
-  FindUsedTypes          *FUT = new FindUsedTypes(/*true*/); // TODO: Do symbol tables as well
-  FindUnsafePointerTypes *FUPT = new FindUnsafePointerTypes();
-
-  // Simutaneously find all of the types used, and all of the types that aren't
-  // safe.
-  //
-  PassManager Analyses;
-  Analyses.add(FUT);
-  Analyses.add(FUPT);
-  Analyses.run(M);  // Do analyses
+  // TODO: Do symbol tables as well
 
   // Get the results out of the analyzers...
-  const set<PointerType*> &UnsafePTys = FUPT->getUnsafeTypes();
-  const set<const Type *> &UsedTypes  = FUT->getTypes();
+  FindUsedTypes          &FUT = getAnalysis<FindUsedTypes>();
+  const set<const Type *> &UsedTypes  = FUT.getTypes();
+
+  FindUnsafePointerTypes &FUPT = getAnalysis<FindUnsafePointerTypes>();
+  const set<PointerType*> &UnsafePTys = FUPT.getUnsafeTypes();
+
 
 
   // Combine the two sets, weeding out non structure types.  Closures in C++
@@ -144,3 +136,14 @@ SimpleStructMutation::TransformsType
   return Transforms;
 }
 
+
+// getAnalysisUsageInfo - This function needs the results of the
+// FindUsedTypes and FindUnsafePointerTypes analysis passes...
+//
+void SimpleStructMutation::getAnalysisUsageInfo(Pass::AnalysisSet &Required,
+                                                Pass::AnalysisSet &Destroyed,
+                                                Pass::AnalysisSet &Provided){
+  Required.push_back(FindUsedTypes::ID);
+  Required.push_back(FindUnsafePointerTypes::ID);
+  MutateStructTypes::getAnalysisUsageInfo(Required, Destroyed, Provided);
+}

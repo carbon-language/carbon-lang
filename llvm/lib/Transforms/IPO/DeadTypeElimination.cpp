@@ -13,7 +13,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/CleanupGCCOutput.h"
+#include "llvm/Analysis/FindUsedTypes.h"
 #include "TransformInternals.h"
+#include "llvm/Module.h"
 #include "llvm/SymbolTable.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/iPHINode.h"
@@ -224,8 +226,6 @@ static inline bool ShouldNukeSymtabEntry(const std::pair<string, Value*> &E) {
 //
 bool CleanupGCCOutput::doInitialization(Module *M) {
   bool Changed = false;
-
-  FUT.doInitialization(M);
 
   if (PtrSByte == 0)
     PtrSByte = PointerType::get(Type::SByteTy);
@@ -491,19 +491,17 @@ static bool fixLocalProblems(Method *M) {
 // doPerMethodWork - This method simplifies the specified method hopefully.
 //
 bool CleanupGCCOutput::runOnMethod(Method *M) {
-  bool Changed = fixLocalProblems(M);
-
-  FUT.runOnMethod(M);
-  return Changed;
+  return fixLocalProblems(M);
 }
 
 bool CleanupGCCOutput::doFinalization(Module *M) {
   bool Changed = false;
-  FUT.doFinalization(M);
+  
 
   if (M->hasSymbolTable()) {
     SymbolTable *ST = M->getSymbolTable();
-    const std::set<const Type *> &UsedTypes = FUT.getTypes();
+    const std::set<const Type *> &UsedTypes =
+      getAnalysis<FindUsedTypes>().getTypes();
 
     // Check the symbol table for superfluous type entries that aren't used in
     // the program
@@ -528,4 +526,14 @@ bool CleanupGCCOutput::doFinalization(Module *M) {
     }
   }
   return Changed;
+}
+
+// getAnalysisUsageInfo - This function needs the results of the
+// FindUsedTypes and FindUnsafePointerTypes analysis passes...
+//
+void CleanupGCCOutput::getAnalysisUsageInfo(Pass::AnalysisSet &Required,
+                                            Pass::AnalysisSet &Destroyed,
+                                            Pass::AnalysisSet &Provided) {
+  // FIXME: Invalidates the CFG
+  Required.push_back(FindUsedTypes::ID);
 }

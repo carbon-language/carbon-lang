@@ -42,7 +42,7 @@ public:
 
   // doADCE() - Run the Agressive Dead Code Elimination algorithm, returning
   // true if the method was modified.
-  bool doADCE();
+  bool doADCE(cfg::DominanceFrontier &CDG);
 
   //===--------------------------------------------------------------------===//
   // The implementation of this class
@@ -76,12 +76,7 @@ private:
 // doADCE() - Run the Agressive Dead Code Elimination algorithm, returning
 // true if the method was modified.
 //
-bool ADCE::doADCE() {
-  // Compute the control dependence graph...  Note that this has a side effect
-  // on the CFG: a new return bb is added and all returns are merged here.
-  //
-  cfg::DominanceFrontier CDG(cfg::DominatorSet(M, true));
-
+bool ADCE::doADCE(cfg::DominanceFrontier &CDG) {
 #ifdef DEBUG_ADCE
   cerr << "Method: " << M;
 #endif
@@ -296,8 +291,19 @@ BasicBlock *ADCE::fixupCFG(BasicBlock *BB, std::set<BasicBlock*> &VisitedBlocks,
 
 // doADCE - Execute the Agressive Dead Code Elimination Algorithm
 //
-bool AgressiveDCE::doADCE(Method *M) {
+bool AgressiveDCE::runOnMethod(Method *M) {
   if (M->isExternal()) return false;
   ADCE DCE(M);
-  return DCE.doADCE();
+  return DCE.doADCE(
+       getAnalysis<cfg::DominanceFrontier>(cfg::DominanceFrontier::PostDomID));
+}
+
+
+// getAnalysisUsageInfo - We require post dominance frontiers (aka Control
+// Dependence Graph)
+//
+void AgressiveDCE::getAnalysisUsageInfo(Pass::AnalysisSet &Requires,
+                                        Pass::AnalysisSet &Destroyed,
+                                        Pass::AnalysisSet &Provided) {
+  Requires.push_back(cfg::DominanceFrontier::PostDomID);
 }

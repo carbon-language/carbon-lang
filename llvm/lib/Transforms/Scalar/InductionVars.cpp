@@ -25,12 +25,11 @@
 #include "llvm/Assembly/Writer.h"
 #include "llvm/SymbolTable.h"
 #include "llvm/iPHINode.h"
+#include "llvm/Method.h"
 #include "Support/STLExtras.h"
 #include <algorithm>
 #include <iostream>
 using std::cerr;
-
-#include "llvm/Analysis/LoopDepth.h"
 
 // isLoopInvariant - Return true if the specified value/basic block source is 
 // an interval invariant computation.
@@ -371,19 +370,11 @@ static bool ProcessIntervalPartition(cfg::IntervalPartition &IP) {
 // This function loops over an interval partition of a program, reducing it
 // until the graph is gone.
 //
-bool InductionVariableCannonicalize::doIt(Method *M) {
-  // TODO: REMOVE
-  if (0) {   // Print basic blocks with their depth
-    LoopDepthCalculator LDC(M);
-    for (Method::iterator I = M->begin(); I != M->end(); ++I) {
-      cerr << "Basic Block Depth: " << LDC.getLoopDepth(*I) << *I;
-    }
-  }
-
-
-  cfg::IntervalPartition *IP = new cfg::IntervalPartition(M);
+bool InductionVariableCannonicalize::doIt(Method *M, 
+                                          cfg::IntervalPartition &IP) {
   bool Changed = false;
 
+#if 0
   while (!IP->isDegeneratePartition()) {
     Changed |= ProcessIntervalPartition(*IP);
 
@@ -400,5 +391,22 @@ bool InductionVariableCannonicalize::doIt(Method *M) {
   }
 
   delete IP;
+#endif
   return Changed;
+}
+
+
+bool InductionVariableCannonicalize::runOnMethod(Method *M) {
+  return doIt(M, getAnalysis<cfg::IntervalPartition>());
+}
+
+// getAnalysisUsageInfo - This function works on the call graph of a module.
+// It is capable of updating the call graph to reflect the new state of the
+// module.
+//
+void InductionVariableCannonicalize::getAnalysisUsageInfo(
+                                           Pass::AnalysisSet &Required,
+                                           Pass::AnalysisSet &Destroyed,
+                                           Pass::AnalysisSet &Provided) {
+  Required.push_back(cfg::IntervalPartition::ID);
 }

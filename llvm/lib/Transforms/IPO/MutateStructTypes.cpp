@@ -13,6 +13,7 @@
 
 #include "llvm/Transforms/IPO/MutateStructTypes.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/Module.h"
 #include "llvm/Method.h"
 #include "llvm/GlobalVariable.h"
 #include "llvm/SymbolTable.h"
@@ -24,6 +25,12 @@
 #include <algorithm>
 using std::map;
 using std::vector;
+
+//FIXME: These headers are only included because the analyses are killed!!!
+#include "llvm/Analysis/CallGraph.h"
+#include "llvm/Analysis/FindUsedTypes.h"
+#include "llvm/Analysis/FindUnsafePointerTypes.h"
+//FIXME end
 
 // To enable debugging, uncomment this...
 //#define DEBUG_MST(x) x
@@ -514,4 +521,15 @@ bool MutateStructTypes::run(Module *M) {
 
   removeDeadGlobals(M);
   return true;
+}
+
+// getAnalysisUsageInfo - This function needs the results of the
+// FindUsedTypes and FindUnsafePointerTypes analysis passes...
+//
+void MutateStructTypes::getAnalysisUsageInfo(Pass::AnalysisSet &Required,
+                                             Pass::AnalysisSet &Destroyed,
+                                             Pass::AnalysisSet &Provided) {
+  Destroyed.push_back(FindUsedTypes::ID);
+  Destroyed.push_back(FindUnsafePointerTypes::ID);
+  Destroyed.push_back(cfg::CallGraph::ID);
 }
