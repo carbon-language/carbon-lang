@@ -194,7 +194,7 @@ bool Steens::run(Module &M) {
   ResultGraph->markIncompleteNodes(false);
 
   // Remove any nodes that are dead after all of the merging we have done...
-  ResultGraph->removeTriviallyDeadNodes();
+  ResultGraph->removeDeadNodes(true, true);
 
   DEBUG(print(std::cerr, &M));
   return false;

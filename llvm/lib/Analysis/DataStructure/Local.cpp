@@ -74,9 +74,6 @@ namespace {
           getValueDest(*I);
 
       visit(G.getFunction());  // Single pass over the function
-
-      // Not inlining, only eliminate trivially dead nodes.
-      G.removeTriviallyDeadNodes();
     }
 
   private:
@@ -135,6 +132,9 @@ DSGraph::DSGraph(Function &F, DSGraph *GG) : Func(&F), GlobalsGraph(GG) {
   // Use the graph builder to construct the local version of the graph
   GraphBuilder B(*this, Nodes, RetNode, ScalarMap, FunctionCalls);
   markIncompleteNodes();
+
+  // Remove any nodes made dead due to merging...
+  removeDeadNodes(true, true);
 }
 
 

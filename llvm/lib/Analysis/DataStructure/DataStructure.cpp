@@ -772,8 +772,7 @@ static void removeRefsToGlobal(DSNode* N,
 //
 bool DSGraph::isNodeDead(DSNode *N) {
   // Is it a trivially dead shadow node...
-  if (N->getReferrers().empty() &&
-      (N->NodeType == 0 || N->NodeType == DSNode::DEAD))
+  if (N->getReferrers().empty() && (N->NodeType & ~DSNode::DEAD) == 0)
     return true;
 
   // Is it a function node or some other trivially unused global?
