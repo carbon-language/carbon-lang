@@ -34,6 +34,7 @@ using namespace llvm;
 namespace {
     Statistic<> numStores("ra-linearscan", "Number of stores added");
     Statistic<> numLoads ("ra-linearscan", "Number of loads added");
+    Statistic<> numSpills("ra-linearscan", "Number of register spills");
 
     class RA : public MachineFunctionPass {
     private:
@@ -737,6 +738,7 @@ int RA::assignVirt2StackSlot(unsigned virtReg)
 
     bool inserted = v2ssMap_.insert(std::make_pair(virtReg, frameIndex)).second;
     assert(inserted && "attempt to assign stack slot to spilled register!");
+    ++numSpills;
     return frameIndex;
 }
 
