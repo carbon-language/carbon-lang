@@ -12,6 +12,7 @@
 #include "llvm/Module.h"
 #include "llvm/Target/TargetData.h"
 #include "Support/Statistic.h"
+#include <dlfcn.h>
 
 Statistic<> NumInitBytes("lli", "Number of bytes of global vars initialized");
 
@@ -29,10 +30,28 @@ void *ExecutionEngine::getPointerToGlobal(const GlobalValue *GV) {
 
 GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
   GenericValue Result;
-#define GET_CONST_VAL(TY, CLASS) \
-  case Type::TY##TyID: Result.TY##Val = cast<CLASS>(C)->getValue(); break
+
+  if (ConstantExpr *CE = (ConstantExpr*)dyn_cast<ConstantExpr>(C))
+    switch (CE->getOpcode()) {
+    case Instruction::GetElementPtr: {
+      Result = getConstantValue(cast<Constant>(CE->getOperand(0)));
+      std::vector<Value*> Indexes(CE->op_begin()+1, CE->op_end());
+      uint64_t Offset =
+        TD->getIndexedOffset(CE->getOperand(0)->getType(), Indexes);
+                             
+      Result.LongVal += Offset;
+      return Result;
+    }
+
+    default:
+      std::cerr << "ConstantExpr not handled as global var init: " << *CE
+                << "\n";
+      abort();
+    }
 
   switch (C->getType()->getPrimitiveID()) {
+#define GET_CONST_VAL(TY, CLASS) \
+  case Type::TY##TyID: Result.TY##Val = cast<CLASS>(C)->getValue(); break
     GET_CONST_VAL(Bool   , ConstantBool);
     GET_CONST_VAL(UByte  , ConstantUInt);
     GET_CONST_VAL(SByte  , ConstantSInt);
@@ -57,6 +76,7 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
     break;
   default:
     std::cout << "ERROR: Constant unimp for type: " << C->getType() << "\n";
+    abort();
   }
   return Result;
 }
@@ -213,15 +233,16 @@ void ExecutionEngine::emitGlobals() {
 
       DEBUG(std::cerr << "Global '" << I->getName() << "' -> "
 	              << (void*)GlobalAddress[I] << "\n");
-    } else if (I->getName() == "stdout") {
-      GlobalAddress[I] = &stdout;
-    } else if (I->getName() == "stderr") {
-      GlobalAddress[I] = &stderr;
-    } else if (I->getName() == "stdin") {
-      GlobalAddress[I] = &stdin;
     } else {
-      std::cerr << "Global: " << I->getName() << "\n";
-      assert(0 && "References to external globals not handled yet!");
+      // External variable reference, try to use dlsym to get a pointer to it in
+      // the LLI image.
+      if (void *SymAddr = dlsym(0, I->getName().c_str()))
+        GlobalAddress[I] = SymAddr;
+      else {
+        std::cerr << "Could not resolve external global address: "
+                  << I->getName() << "\n";
+        abort();
+      }
     }
   
   // Now that all of the globals are set up in memory, loop through them all and
