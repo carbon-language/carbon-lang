@@ -518,6 +518,8 @@ protected:
   ConstantExpr(unsigned Opcode, Constant *C, const Type *Ty);
   // Binary/Shift instruction creation ctor
   ConstantExpr(unsigned Opcode, Constant *C1, Constant *C2);
+  // Select instruction creation ctor
+  ConstantExpr(Constant *C, Constant *V1, Constant *V2);
   // GEP instruction creation ctor
   ConstantExpr(Constant *C, const std::vector<Constant*> &IdxList,
                const Type *DestTy);
@@ -528,6 +530,8 @@ protected:
                          Constant *C1, Constant *C2);
   static Constant *getShiftTy(const Type *Ty,
                               unsigned Opcode, Constant *C1, Constant *C2);
+  static Constant *getSelectTy(const Type *Ty,
+                               Constant *C1, Constant *C2, Constant *C3);
   static Constant *getGetElementPtrTy(const Type *Ty, Constant *C,
                                       const std::vector<Constant*> &IdxList);
   
@@ -540,6 +544,13 @@ public:
   /// Cast constant expr
   ///
   static Constant *getCast(Constant *C, const Type *Ty);
+
+  /// Select constant expr
+  ///
+  static Constant *getSelect(Constant *C, Constant *V1, Constant *V2) {
+    return getSelectTy(V1->getType(), C, V1, V2);
+  }
+
 
   /// ConstantExpr::get - Return a binary or shift operator constant expression,
   /// folding if possible.
