@@ -72,7 +72,7 @@
         Makefile in that directory:
 	</p>
 	<pre>
-	 % make -C llvm/test
+	 % gmake -C llvm/test
 	</pre>
 
 	<p>
@@ -81,7 +81,7 @@
 	</p>
 
 	<pre>
-	 % make -C llvm/test qmtest
+	 % gmake -C llvm/test qmtest
 	</pre>
 
 	<p>
@@ -90,7 +90,7 @@
 	</p>
 
 	<pre>
-	 % make -C llvm/test/Programs
+	 % gmake -C llvm/test/Programs
 	</pre>
         </div>
 
@@ -374,19 +374,19 @@
 	QMTest driven tests and the Programs tests.  By default, it will run
 	all of the tests.
 	</p><p>
-	To run only the QMTest driven tests, run <tt>make qmtest</tt> at the
+	To run only the QMTest driven tests, run <tt>gmake qmtest</tt> at the
 	command line in llvm/tests.  To run a specific qmtest, suffix the test
-	name with ".t" when running make.
+	name with ".t" when running gmake.
 	</p><p>
 	For example, to run the Regression.LLC tests, type
-	<tt>make Regression.LLC.t</tt> in llvm/tests.
+	<tt>gmake Regression.LLC.t</tt> in llvm/tests.
 	</p><p>
 	Note that the Makefiles in llvm/test/Features and llvm/test/Regression
 	are gone.  You must now use QMTest from the llvm/test directory to run
 	them.
 	</p><p>
 	To run the Programs test, cd into the llvm/test/Programs directory and
-	type <tt>make</tt>.  Alternatively, you can type <tt>make
+	type <tt>gmake</tt>.  Alternatively, you can type <tt>gmake
 	TEST=&lt;type&gt; test</tt> to run one of the specialized tests in
 	llvm/test/Programs/TEST.&lt;type&gt;.Makefile.  For example, you could
 	run the nightly tester tests using the following commands:
@@ -394,7 +394,7 @@
 
 	<pre>
 	 % cd llvm/test/Programs
-	 % make TEST=nightly test
+	 % gmake TEST=nightly test
 	</pre>
 
 	<p>
