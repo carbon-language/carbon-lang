@@ -11,6 +11,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Module.h"
 #include "llvm/Method.h"
+#include <memory>
 
 cl::String InputFilename ("", "Input filename", cl::NoFlags, "-");
 cl::String OutputFilename("o", "Output filename", cl::NoFlags, "");
@@ -18,9 +19,7 @@ cl::String OutputFilename("o", "Output filename", cl::NoFlags, "");
 
 //-------------------------- Internal Functions -----------------------------//
 
-static void
-NormalizeMethod(Method* method)
-{
+static void NormalizeMethod(Method* method) {
   NormalizePhiConstantArgs(method);
 }
 
@@ -31,39 +30,34 @@ NormalizeMethod(Method* method)
 // Entry point for the llc compiler.
 //===---------------------------------------------------------------------===//
 
-int
-main(int argc, char** argv)
-{
+int main(int argc, char **argv) {
+  // Parse command line options...
   cl::ParseCommandLineOptions(argc, argv, " llvm system compiler\n");
-  TargetMachine *Target = allocateSparcTargetMachine();
-  
-  Module *M = ParseBytecodeFile(InputFilename);
-  if (M == 0)
-    {
-      cerr << "bytecode didn't read correctly.\n";
-      delete Target;
+
+  // Allocate a target... in the future this will be controllable on the
+  // command line.
+  auto_ptr<TargetMachine> Target(allocateSparcTargetMachine());
+
+  // Load the module to be compiled...
+  auto_ptr<Module> M(ParseBytecodeFile(InputFilename));
+  if (M.get() == 0) {
+    cerr << "bytecode didn't read correctly.\n";
+    return 1;
+  }
+
+  // Loop over all of the methods in the module, compiling them.
+  for (Module::const_iterator MI = M->begin(), ME = M->end(); MI != ME; ++MI) {
+    Method *Meth = *MI;
+    
+    NormalizeMethod(Meth);
+    
+    if (Target.get()->compileMethod(Meth)) {
+      cerr << "Error compiling " << InputFilename << "!\n";
       return 1;
     }
-
-  bool Failed = false;
-  for (Module::const_iterator MI = M->begin(), ME = M->end(); MI != ME; ++MI)
-    {
-      Method *Meth = *MI;
-    
-      NormalizeMethod(Meth);
-    
-      if (Target->compileMethod(Meth))
-	{
-	  cerr << "Error compiling " << InputFilename << "!\n";
-	  Failed = true;
-	  break;
-	}
-    }
+  }
   
-  // Clean up and exit
-  delete M;
-  delete Target;
-  return Failed;
+  return 0;
 }
 
 
