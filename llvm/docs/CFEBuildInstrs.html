@@ -109,13 +109,14 @@ and Settings" directory).  We welcome patches to fix this issue.
 
 <p>
 <b>Linux/x86:</b><br>
-<b>MacOS X/PowerPC</b> (requires dlcompat library):
+<b>MacOS X/PowerPC</b> (requires dlcompat library):<br>
+<b>AIX/PowerPC:</b>
 </p>
 
 <pre>
  % cd build
- % ../src/configure --prefix=$CFEINSTALL --disable-threads --disable-nls --disable-shared \
-   --enable-languages=c,c++
+ % ../src/configure --prefix=$CFEINSTALL --disable-threads --disable-nls \
+   --disable-shared --enable-languages=c,c++
  % gmake
  % setenv LLVM_LIB_SEARCH_PATH `pwd`/gcc 
  % gmake all; gmake install
@@ -125,8 +126,8 @@ and Settings" directory).  We welcome patches to fix this issue.
 
 <pre>
  % cd build
- % ../src/configure --prefix=$CFEINSTALL --disable-threads --disable-nls --disable-shared \
-   --enable-languages=c,c++ --disable-c-mbchar
+ % ../src/configure --prefix=$CFEINSTALL --disable-threads --disable-nls \
+   --disable-shared --enable-languages=c,c++ --disable-c-mbchar
  % gmake
  % setenv LLVM_LIB_SEARCH_PATH `pwd`/gcc 
  % gmake all; gmake install
