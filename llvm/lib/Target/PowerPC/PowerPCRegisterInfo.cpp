@@ -196,10 +196,11 @@ void PowerPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
     //
     NumBytes += MFI->getMaxCallFrameSize() + 
                 24   /* Predefined PowerPC link area */ + 
-                // FIXME: must calculate #non-volatile int regs actually spilled
-                19*4 /* Spilled int regs */ +
-                // FIXME: must calculate #non-volatile fp regs actually spilled
-                0*8  /* Spilled fp regs */;
+                32   /* Predefined PowerPC params area */ +
+                 0   /* local variables - managed by llvm*/ +
+             0 * 4   /* volatile GPRs used - managed by llvm */ +
+             0 * 8   /* volatile FPRs used - managed by llvm */;
+             
     
     // Round the size to a multiple of the alignment (don't forget the 4 byte
     // offset though).
@@ -209,11 +210,7 @@ void PowerPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
     // Store the incoming LR so it is preserved across calls
     MI = BuildMI(PPC32::MFLR, 0, PPC32::R0);
     MBB.insert(MBBI, MI);
-    // FIXME: store only CLOBBERED registers in R[13-31]
-    MI = BuildMI(PPC32::STMW, 3).addReg(PPC32::R13).addSImm(-76)
-           .addReg(PPC32::R1);
-    MBB.insert(MBBI, MI);
-    MI = BuildMI(PPC32::STW, 3).addReg(PPC32::R0).addSImm(8).addReg(PPC32::R1);
+    MI = BuildMI(PPC32::STW, 3).addReg(PPC32::R0).addImm(8).addReg(PPC32::R1);
     MBB.insert(MBBI, MI);
   }
 
@@ -238,24 +235,20 @@ void PowerPCRegisterInfo::emitEpilogue(MachineFunction &MF,
   // Get the number of bytes allocated from the FrameInfo...
   unsigned NumBytes = MFI->getStackSize();
 
-  // Adjust stack pointer back
-  MI = BuildMI(PPC32::LWZ, 2, PPC32::R1).addImm(0).addReg(PPC32::R1);
-  MBB.insert(MBBI, MI);
-
   // If we have calls, restore the LR value before we branch to it
   // FIXME: the assembly printer inserts "calls" aka branch-and-link to get the
   // PC address. We may not know about those calls at this time, so be
   // conservative.
   if (MFI->hasCalls() || true) {
-    // Read old LR from stack into R0
-    MI = BuildMI(PPC32::LWZ, 2, PPC32::R0).addSImm(8).addReg(PPC32::R1);
-    MBB.insert(MBBI, MI);
-    // FIXME: restore only SAVED registers in R[13-31]
-    MI = BuildMI(PPC32::LMW, 2, PPC32::R13).addSImm(-76).addReg(PPC32::R1);
+    // Restore LR
+    MI = BuildMI(PPC32::LWZ, 2, PPC32::R0).addSImm(NumBytes+8).addReg(PPC32::R1);
     MBB.insert(MBBI, MI);
     MI = BuildMI(PPC32::MTLR, 1).addReg(PPC32::R0);
     MBB.insert(MBBI, MI);
   }
+  // Adjust stack pointer back
+  MI = BuildMI(PPC32::ADDI, 2, PPC32::R1).addReg(PPC32::R1).addImm(NumBytes);
+  MBB.insert(MBBI, MI);
 }
 
 #include "PowerPCGenRegisterInfo.inc"
