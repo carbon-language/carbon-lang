@@ -1582,19 +1582,18 @@ void DSGraph::AssertGraphOK() const {
   AssertAuxCallNodesInGraph();
 }
 
-// A function useful for clients to incorporate the globals graph
-// into the DS, BU or TD graph for a function.  This code retains
-// all globals, i.e., does not delete unreachable globals after they
-// are inlined.
-//  
-void DSGraph::mergeInGlobalsGraph()
-{
+/// mergeInGlobalsGraph - This method is useful for clients to incorporate the
+/// globals graph into the DS, BU or TD graph for a function.  This code retains
+/// all globals, i.e., does not delete unreachable globals after they are
+/// inlined.
+///
+void DSGraph::mergeInGlobalsGraph() {
   NodeMapTy GlobalNodeMap;
   ScalarMapTy OldValMap;
   ReturnNodesTy OldRetNodes;
-  this->cloneInto(*GlobalsGraph, OldValMap, OldRetNodes, GlobalNodeMap,
-                  DSGraph::KeepAllocaBit | DSGraph::DontCloneCallNodes |
-                  DSGraph::DontCloneAuxCallNodes);
+  cloneInto(*GlobalsGraph, OldValMap, OldRetNodes, GlobalNodeMap,
+            DSGraph::KeepAllocaBit | DSGraph::DontCloneCallNodes |
+            DSGraph::DontCloneAuxCallNodes);
   
   // Now merge existing global nodes in the GlobalsGraph with their copies
   for (ScalarMapTy::iterator I = ScalarMap.begin(), E = ScalarMap.end(); 
