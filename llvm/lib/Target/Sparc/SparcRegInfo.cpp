@@ -351,23 +351,21 @@ void UltraSparcRegInfo::suggestReg4RetAddr(MachineInstr *RetMI,
 // Suggests a register for the ret address in the JMPL/CALL machine instr.
 // Sparc ABI dictates that %o7 be used for this purpose.
 //---------------------------------------------------------------------------
-void UltraSparcRegInfo::suggestReg4CallAddr(MachineInstr * CallMI,
-					    LiveRangeInfo& LRI,
-					 std::vector<RegClass *> RCList) const {
+void
+UltraSparcRegInfo::suggestReg4CallAddr(MachineInstr * CallMI,
+                                       LiveRangeInfo& LRI) const
+{
   CallArgsDescriptor* argDesc = CallArgsDescriptor::get(CallMI); 
   const Value *RetAddrVal = argDesc->getReturnAddrReg();
-  assert(RetAddrVal && "Return address value is required");
-  
-  // create a new LR for the return address and color it
-  LiveRange * RetAddrLR = new LiveRange();  
-  RetAddrLR->insert( RetAddrVal );
-  unsigned RegClassID = getRegClassIDOfValue( RetAddrVal );
-  RetAddrLR->setRegClass( RCList[RegClassID] );
-  RetAddrLR->setColor(getUnifiedRegNum(IntRegClassID,SparcIntRegClass::o7));
-  LRI.addLRToMap( RetAddrVal, RetAddrLR);
-  
-}
+  assert(RetAddrVal && "INTERNAL ERROR: Return address value is required");
 
+  // A LR must already exist for the return address.
+  LiveRange *RetAddrLR = LRI.getLiveRangeForValue(RetAddrVal);
+  assert(RetAddrLR && "INTERNAL ERROR: No LR for return address of call!");
+
+  unsigned RegClassID = RetAddrLR->getRegClass()->getID();
+  RetAddrLR->setColor(getUnifiedRegNum(IntRegClassID, SparcIntRegClass::o7));
+}
 
 
 
@@ -565,39 +563,24 @@ void UltraSparcRegInfo::colorMethodArgs(const Function *Meth,
 // outgoing call args and the return value of the call.
 //---------------------------------------------------------------------------
 void UltraSparcRegInfo::suggestRegs4CallArgs(MachineInstr *CallMI, 
-					     LiveRangeInfo& LRI,
-					 std::vector<RegClass *> RCList) const {
+					     LiveRangeInfo& LRI) const {
   assert ( (UltraSparcInfo->getInstrInfo()).isCall(CallMI->getOpCode()) );
 
   CallArgsDescriptor* argDesc = CallArgsDescriptor::get(CallMI); 
   
-  suggestReg4CallAddr(CallMI, LRI, RCList);
+  suggestReg4CallAddr(CallMI, LRI);
 
-  // First color the return value of the call instruction. The return value
-  // will be in %o0 if the value is an integer type, or in %f0 if the 
-  // value is a float type.
+  // First color the return value of the call instruction, if any.
+  // The return value will be in %o0 if the value is an integer type,
+  // or in %f0 if the value is a float type.
+  // 
+  if (const Value *RetVal = argDesc->getReturnValue()) {
+    LiveRange *RetValLR = LRI.getLiveRangeForValue(RetVal);
+    assert(RetValLR && "No LR for return Value of call!");
 
-  // the return value cannot have a LR in machine instruction since it is
-  // only defined by the call instruction
+    unsigned RegClassID = RetValLR->getRegClass()->getID();
 
-  // if type is not void,  create a new live range and set its 
-  // register class and add to LRI
-
-  const Value *RetVal = argDesc->getReturnValue();
-
-  if (RetVal) {
-    assert ((!LRI.getLiveRangeForValue(RetVal)) && 
-	    "LR for ret Value of call already definded!");
-
-    // create a new LR for the return value
-    LiveRange *RetValLR = new LiveRange();  
-    RetValLR->insert(RetVal);
-    unsigned RegClassID = getRegClassIDOfValue(RetVal);
-    RetValLR->setRegClass(RCList[RegClassID]);
-    LRI.addLRToMap(RetVal, RetValLR);
-    
     // now suggest a register depending on the register class of ret arg
-
     if( RegClassID == IntRegClassID ) 
       RetValLR->setSuggestedColor(SparcIntRegClass::o0);
     else if (RegClassID == FloatRegClassID ) 
@@ -605,7 +588,6 @@ void UltraSparcRegInfo::suggestRegs4CallArgs(MachineInstr *CallMI,
     else assert( 0 && "Unknown reg class for return value of call\n");
   }
 
-  
   // Now suggest colors for arguments (operands) of the call instruction.
   // Colors are suggested only if the arg number is smaller than the
   // the number of registers allocated for argument passing.
@@ -620,17 +602,12 @@ void UltraSparcRegInfo::suggestRegs4CallArgs(MachineInstr *CallMI,
     
     // get the LR of call operand (parameter)
     LiveRange *const LR = LRI.getLiveRangeForValue(CallArg); 
-    
-    // not possible to have a null LR since all args (even consts)  
-    // must be defined before
-    if (!LR) {          
-      cerr << " ERROR: In call instr, no LR for arg: " << RAV(CallArg) << "\n";
-      assert(0 && "NO LR for call arg");  
-    }
-    
+    assert (LR && "Must have a LR for all arguments since "
+                  "all args (even consts) must be defined before");
+
     unsigned regType = getRegType( LR );
     unsigned regClassIDOfArgReg = MAXINT; // reg class of chosen reg (unused)
-    
+
     // Choose a register for this arg depending on whether it is
     // an INT or FP value.  Here we ignore whether or not it is a
     // varargs calls, because FP arguments will be explicitly copied
