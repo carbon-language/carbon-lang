@@ -642,7 +642,8 @@ class opt_storage {
 
   void check() {
     assert(Location != 0 && "cl::location(...) not specified for a command "
-           "line option with external storage!");
+           "line option with external storage, "
+           "or cl::init specified before cl::location()!!");
   }
 public:
   opt_storage() : Location(0) {}
