@@ -35,10 +35,10 @@ set Namespace = "X86" in {
   def FP6 : Register; 
 
   // Floating point stack registers
-  def ST0 : Register; def ST1 : Register;
-  def ST2 : Register; def ST3 : Register;
-  def ST4 : Register; def ST5 : Register;
-  def ST6 : Register; def ST7 : Register; 
+  def ST0 : NamedReg<"ST(0)">; def ST1 : NamedReg<"ST(1)">;
+  def ST2 : NamedReg<"ST(2)">; def ST3 : NamedReg<"ST(3)">;
+  def ST4 : NamedReg<"ST(4)">; def ST5 : NamedReg<"ST(5)">;
+  def ST6 : NamedReg<"ST(6)">; def ST7 : NamedReg<"ST(7)">; 
   
   // Flags, Segment registers, etc...
   
