@@ -142,6 +142,7 @@ In this release, the following build problems were fixed:
 
 <ol>
 <li><a href="http://llvm.cs.uiuc.edu/PR301">Minor configure bugs with -disable/enable-povray and -disable-spec</a></li>
+<li><a href="http://llvm.cs.uiuc.edu/PR289">shell scripts output by gccld don't work if you change PATH</a></li>
 </ol>
 
 <!--=========================================================================-->
@@ -227,14 +228,17 @@ the same name, both having constant pools</a></li>
 
 <div class="doc_text">
 
-<p>LLVM has been extensively tested on Intel and AMD machines running Red
-Hat Linux and FreeBSD.  It has also been tested on Sun UltraSPARC workstations
-running Solaris 8.  Additionally, LLVM works on Mac OS X 10.3 and above, but
-only with the C backend or interpreter (no native backend for the PowerPC is
-available yet).  The core LLVM infrastructure uses "autoconf" for portability,
-so hopefully we work on more platforms than that.  However, it is likely that we
-missed something and that minor porting is required to get LLVM to work on new
-platforms.  We welcome portability patches and error messages.</p>
+<p>LLVM has been extensively tested on Intel and AMD machines running Red Hat
+Linux.  It has also been tested under FreeBSD, and on Sun UltraSPARC
+workstations running Solaris 8.  Additionally, LLVM works on Mac OS X 10.3 and
+above, but only with the C backend and interpreter; no native machine-code
+generator for the PowerPC is available yet.</p>
+
+<p>The core LLVM infrastructure uses
+<a href="http://www.gnu.org/software/autoconf/">GNU autoconf</a> to adapt itself
+to the machine and operating system on which it is built.  However, minor
+porting may be required to get LLVM to work on new platforms.  We welcome your
+portability patches and reports of successful builds or error messages.</p>
 
 </div>
 
