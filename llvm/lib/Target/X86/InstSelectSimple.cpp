@@ -78,6 +78,27 @@ namespace {
       for (Function::iterator I = Fn.begin(), E = Fn.end(); I != E; ++I)
         F->getBasicBlockList().push_back(MBBMap[I] = new MachineBasicBlock(I));
 
+      // Emit instructions to load the arguments...  The function's arguments
+      // look like this:
+      //
+      // [EBP]     -- copy of old EBP
+      // [EBP + 4] -- return address
+      // [EBP + 8] -- first argument (leftmost lexically)
+      //
+      // So we want to start with counter = 2.
+      //
+      BB = &F->front();
+      unsigned ArgOffset = 8;
+      for (Function::aiterator I = Fn.abegin(), E = Fn.aend(); I != E;
+           ++I, ArgOffset += 4) {
+        unsigned Reg = getReg(*I);
+
+	// Load it out of the stack frame at EBP + 4*argPos.
+
+        // FIXME: This should load the argument of the appropriate size!!
+	addRegOffset(BuildMI(BB, X86::MOVmr32, 4, Reg), X86::EBP, ArgOffset);
+      }
+
       // Instruction select everything except PHI nodes
       visit(Fn);
 
@@ -213,30 +234,11 @@ namespace {
       //
       if (Constant *C = dyn_cast<Constant>(V)) {
         copyConstantToRegister(MBB, IPt, C, Reg);
+        RegMap.erase(V);  // Assign a new name to this constant if ref'd again
       } else if (GlobalValue *GV = dyn_cast<GlobalValue>(V)) {
         // Move the address of the global into the register
         BMI(MBB, IPt, X86::MOVir32, 1, Reg).addReg(GV);
-      } else if (Argument *A = dyn_cast<Argument>(V)) {
-	// Find the position of the argument in the argument list.
-	const Function *f = F->getFunction ();
-	// The function's arguments look like this:
-	// [EBP]     -- copy of old EBP
-	// [EBP + 4] -- return address
-	// [EBP + 8] -- first argument (leftmost lexically)
-	// So we want to start with counter = 2.
-	int counter = 2, argPos = -1;
-	for (Function::const_aiterator ai = f->abegin (), ae = f->aend ();
-	     ai != ae; ++ai) {
-	  if (&(*ai) == A) {
-	    argPos = counter;
-	    break; // Only need to find it once. ;-)
-	  }
-	  ++counter;
-	}
-	assert (argPos != -1
-		&& "Argument not found in current function's argument list");
-	// Load it out of the stack frame at EBP + 4*argPos.
-	addRegOffset(BMI(MBB, IPt, X86::MOVmr32, 4, Reg), X86::EBP, 4*argPos);
+        RegMap.erase(V);  // Assign a new name to this address if ref'd again
       }
 
       return Reg;
