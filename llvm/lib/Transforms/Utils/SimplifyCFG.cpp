@@ -12,11 +12,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/Utils/Local.h"
-#include "llvm/Constant.h"
-#include "llvm/Intrinsics.h"
-#include "llvm/iPHINode.h"
-#include "llvm/iTerminators.h"
-#include "llvm/iOther.h"
+#include "llvm/Constants.h"
+#include "llvm/Instructions.h"
 #include "llvm/Support/CFG.h"
 #include <algorithm>
 #include <functional>
@@ -89,6 +86,119 @@ static bool PropagatePredecessorsForPHIs(BasicBlock *BB, BasicBlock *Succ) {
   return false;
 }
 
+/// GetIfCondition - Given a basic block (BB) with two predecessors (and
+/// presumably PHI nodes in it), check to see if the merge at this block is due
+/// to an "if condition".  If so, return the boolean condition that determines
+/// which entry into BB will be taken.  Also, return by references the block
+/// that will be entered from if the condition is true, and the block that will
+/// be entered if the condition is false.
+/// 
+///
+static Value *GetIfCondition(BasicBlock *BB,
+                             BasicBlock *&IfTrue, BasicBlock *&IfFalse) {
+  assert(std::distance(pred_begin(BB), pred_end(BB)) == 2 &&
+         "Function can only handle blocks with 2 predecessors!");
+  BasicBlock *Pred1 = *pred_begin(BB);
+  BasicBlock *Pred2 = *++pred_begin(BB);
+
+  // We can only handle branches.  Other control flow will be lowered to
+  // branches if possible anyway.
+  if (!isa<BranchInst>(Pred1->getTerminator()) ||
+      !isa<BranchInst>(Pred2->getTerminator()))
+    return 0;
+  BranchInst *Pred1Br = cast<BranchInst>(Pred1->getTerminator());
+  BranchInst *Pred2Br = cast<BranchInst>(Pred2->getTerminator());
+
+  // Eliminate code duplication by ensuring that Pred1Br is conditional if
+  // either are.
+  if (Pred2Br->isConditional()) {
+    // If both branches are conditional, we don't have an "if statement".  In
+    // reality, we could transform this case, but since the condition will be
+    // required anyway, we stand no chance of eliminating it, so the xform is
+    // probably not profitable.
+    if (Pred1Br->isConditional())
+      return 0;
+
+    std::swap(Pred1, Pred2);
+    std::swap(Pred1Br, Pred2Br);
+  }
+
+  if (Pred1Br->isConditional()) {
+    // If we found a conditional branch predecessor, make sure that it branches
+    // to BB and Pred2Br.  If it doesn't, this isn't an "if statement".
+    if (Pred1Br->getSuccessor(0) == BB &&
+        Pred1Br->getSuccessor(1) == Pred2) {
+      IfTrue = Pred1;
+      IfFalse = Pred2;
+    } else if (Pred1Br->getSuccessor(0) == Pred2 &&
+               Pred1Br->getSuccessor(1) == BB) {
+      IfTrue = Pred2;
+      IfFalse = Pred1;
+    } else {
+      // We know that one arm of the conditional goes to BB, so the other must
+      // go somewhere unrelated, and this must not be an "if statement".
+      return 0;
+    }
+
+    // The only thing we have to watch out for here is to make sure that Pred2
+    // doesn't have incoming edges from other blocks.  If it does, the condition
+    // doesn't dominate BB.
+    if (++pred_begin(Pred2) != pred_end(Pred2))
+      return 0;
+
+    return Pred1Br->getCondition();
+  }
+
+  // Ok, if we got here, both predecessors end with an unconditional branch to
+  // BB.  Don't panic!  If both blocks only have a single (identical)
+  // predecessor, and THAT is a conditional branch, then we're all ok!
+  if (pred_begin(Pred1) == pred_end(Pred1) ||
+      ++pred_begin(Pred1) != pred_end(Pred1) ||
+      pred_begin(Pred2) == pred_end(Pred2) ||
+      ++pred_begin(Pred2) != pred_end(Pred2) ||
+      *pred_begin(Pred1) != *pred_begin(Pred2))
+    return 0;
+
+  // Otherwise, if this is a conditional branch, then we can use it!
+  BasicBlock *CommonPred = *pred_begin(Pred1);
+  if (BranchInst *BI = dyn_cast<BranchInst>(CommonPred->getTerminator())) {
+    assert(BI->isConditional() && "Two successors but not conditional?");
+    if (BI->getSuccessor(0) == Pred1) {
+      IfTrue = Pred1;
+      IfFalse = Pred2;
+    } else {
+      IfTrue = Pred2;
+      IfFalse = Pred1;
+    }
+    return BI->getCondition();
+  }
+  return 0;
+}
+
+
+// If we have a merge point of an "if condition" as accepted above, return true
+// if the specified value dominates the block.  We don't handle the true
+// generality of domination here, just a special case which works well enough
+// for us.
+static bool DominatesMergePoint(Value *V, BasicBlock *BB) {
+  if (Instruction *I = dyn_cast<Instruction>(V)) {
+    BasicBlock *PBB = I->getParent();
+    // If this instruction is defined in a block that contains an unconditional
+    // branch to BB, then it must be in the 'conditional' part of the "if
+    // statement".
+    if (isa<BranchInst>(PBB->getTerminator()) && 
+        cast<BranchInst>(PBB->getTerminator())->isUnconditional() && 
+        cast<BranchInst>(PBB->getTerminator())->getSuccessor(0) == BB)
+      return false;
+
+    // We also don't want to allow wierd loops that might have the "if
+    // condition" in the bottom of this block.
+    if (PBB == BB) return false;
+  }
+
+  // Non-instructions all dominate instructions.
+  return true;
+}
 
 // SimplifyCFG - This function is used to do simplification of a CFG.  For
 // example, it adjusts branches to branches to eliminate the extra hop, it
@@ -293,6 +403,125 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
       
     return true;
   }
+
+  // If there is a trivial two-entry PHI node in this basic block, and we can
+  // eliminate it, do so now.
+  if (PHINode *PN = dyn_cast<PHINode>(BB->begin()))
+    if (PN->getNumIncomingValues() == 2) {
+      // Ok, this is a two entry PHI node.  Check to see if this is a simple "if
+      // statement", which has a very simple dominance structure.  Basically, we
+      // are trying to find the condition that is being branched on, which
+      // subsequently causes this merge to happen.  We really want control
+      // dependence information for this check, but simplifycfg can't keep it up
+      // to date, and this catches most of the cases we care about anyway.
+      //
+      BasicBlock *IfTrue, *IfFalse;
+      if (Value *IfCond = GetIfCondition(BB, IfTrue, IfFalse)) {
+        //std::cerr << "FOUND IF CONDITION!  " << *IfCond << "  T: "
+        //       << IfTrue->getName() << "  F: " << IfFalse->getName() << "\n";
+
+        // Figure out where to insert instructions as necessary.
+        BasicBlock::iterator AfterPHIIt = BB->begin();
+        while (isa<PHINode>(AfterPHIIt)) ++AfterPHIIt;
+
+        BasicBlock::iterator I = BB->begin();
+        while (PHINode *PN = dyn_cast<PHINode>(I)) {
+          ++I;
+
+          // If we can eliminate this PHI by directly computing it based on the
+          // condition, do so now.  We can't eliminate PHI nodes where the
+          // incoming values are defined in the conditional parts of the branch,
+          // so check for this.
+          //
+          if (DominatesMergePoint(PN->getIncomingValue(0), BB) &&
+              DominatesMergePoint(PN->getIncomingValue(1), BB)) {
+            Value *TrueVal =
+              PN->getIncomingValue(PN->getIncomingBlock(0) == IfFalse);
+            Value *FalseVal =
+              PN->getIncomingValue(PN->getIncomingBlock(0) == IfTrue);
+
+            // FIXME: when we have a 'select' statement, we can be completely
+            // generic and clean here and let the instcombine pass clean up
+            // after us, by folding the select instructions away when possible.
+            //
+            if (TrueVal == FalseVal) {
+              // Degenerate case...
+              PN->replaceAllUsesWith(TrueVal);
+              BB->getInstList().erase(PN);
+              Changed = true;
+            } else if (isa<ConstantBool>(TrueVal) &&
+                       isa<ConstantBool>(FalseVal)) {
+              if (TrueVal == ConstantBool::True) {
+                // The PHI node produces the same thing as the condition.
+                PN->replaceAllUsesWith(IfCond);
+              } else {
+                // The PHI node produces the inverse of the condition.  Insert a
+                // "NOT" instruction, which is really a XOR.
+                Value *InverseCond =
+                  BinaryOperator::createNot(IfCond, IfCond->getName()+".inv",
+                                            AfterPHIIt);
+                PN->replaceAllUsesWith(InverseCond);
+              }
+              BB->getInstList().erase(PN);
+              Changed = true;
+            } else if (isa<ConstantInt>(TrueVal) && isa<ConstantInt>(FalseVal)){
+              // If this is a PHI of two constant integers, we insert a cast of
+              // the boolean to the integer type in question, giving us 0 or 1.
+              // Then we multiply this by the difference of the two constants,
+              // giving us 0 if false, and the difference if true.  We add this
+              // result to the base constant, giving us our final value.  We
+              // rely on the instruction combiner to eliminate many special
+              // cases, like turning multiplies into shifts when possible.
+              std::string Name = PN->getName(); PN->setName("");
+              Value *TheCast = new CastInst(IfCond, TrueVal->getType(),
+                                            Name, AfterPHIIt);
+              Constant *TheDiff = ConstantExpr::get(Instruction::Sub,
+                                                    cast<Constant>(TrueVal),
+                                                    cast<Constant>(FalseVal));
+              Value *V = TheCast;
+              if (TheDiff != ConstantInt::get(TrueVal->getType(), 1))
+                V = BinaryOperator::create(Instruction::Mul, TheCast,
+                                           TheDiff, TheCast->getName()+".scale",
+                                           AfterPHIIt);
+              if (!cast<Constant>(FalseVal)->isNullValue())
+                V = BinaryOperator::create(Instruction::Add, V, FalseVal,
+                                           V->getName()+".offs", AfterPHIIt);
+              PN->replaceAllUsesWith(V);
+              BB->getInstList().erase(PN);
+              Changed = true;
+            } else if (isa<ConstantInt>(FalseVal) &&
+                       cast<Constant>(FalseVal)->isNullValue()) {
+              // If the false condition is an integral zero value, we can
+              // compute the PHI by multiplying the condition by the other
+              // value.
+              std::string Name = PN->getName(); PN->setName("");
+              Value *TheCast = new CastInst(IfCond, TrueVal->getType(),
+                                            Name+".c", AfterPHIIt);
+              Value *V = BinaryOperator::create(Instruction::Mul, TrueVal,
+                                                TheCast, Name, AfterPHIIt);
+              PN->replaceAllUsesWith(V);
+              BB->getInstList().erase(PN);
+              Changed = true;
+            } else if (isa<ConstantInt>(TrueVal) &&
+                       cast<Constant>(TrueVal)->isNullValue()) {
+              // If the true condition is an integral zero value, we can compute
+              // the PHI by multiplying the inverse condition by the other
+              // value.
+              std::string Name = PN->getName(); PN->setName("");
+              Value *NotCond = BinaryOperator::createNot(IfCond, Name+".inv",
+                                                         AfterPHIIt);
+              Value *TheCast = new CastInst(NotCond, TrueVal->getType(),
+                                            Name+".inv", AfterPHIIt);
+              Value *V = BinaryOperator::create(Instruction::Mul, FalseVal,
+                                                TheCast, Name, AfterPHIIt);
+              PN->replaceAllUsesWith(V);
+              BB->getInstList().erase(PN);
+              Changed = true;
+            }
+          }
+        }
+      }
+    }
   
   return Changed;
 }
