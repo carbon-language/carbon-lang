@@ -23,7 +23,10 @@ void ReturnInst::setSuccessor(unsigned idx, BasicBlock *NewSucc) {
   assert(0 && "ReturnInst has no successors!");
 }
 
-
+// Likewise for UnwindInst
+void UnwindInst::setSuccessor(unsigned idx, BasicBlock *NewSucc) {
+  assert(0 && "UnwindInst has no successors!");
+}
 
 BranchInst::BranchInst(BasicBlock *True, BasicBlock *False, Value *Cond,
                        Instruction *InsertBefore) 

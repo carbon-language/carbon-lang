@@ -311,6 +311,9 @@ struct UnwindInst : public TerminatorInst {
   UnwindInst(Instruction *InsertBefore = 0)
     : TerminatorInst(Instruction::Unwind, InsertBefore) {
   }
+  UnwindInst(BasicBlock *InsertAtEnd)
+    : TerminatorInst(Instruction::Unwind, InsertAtEnd) {
+  }
 
   virtual Instruction *clone() const { return new UnwindInst(); }
 
@@ -319,9 +322,7 @@ struct UnwindInst : public TerminatorInst {
     abort();
     return 0;
   }
-  virtual void setSuccessor(unsigned idx, BasicBlock *NewSucc) {
-    assert(0 && "UnwindInst has no successors!");
-  }
+  virtual void setSuccessor(unsigned idx, BasicBlock *NewSucc);
   virtual unsigned getNumSuccessors() const { return 0; }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
