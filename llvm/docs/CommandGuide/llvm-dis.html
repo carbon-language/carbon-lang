@@ -5,39 +5,30 @@ LLVM: llvm-dis tool
 
 <body bgcolor=white>
 
-<center>
-<h1>LLVM: llvm-dis tool</h1>
-</center>
+<center><h1>LLVM: <tt>llvm-dis</tt> tool</h1></center>
 <HR>
 
-<h3>
-NAME
-</h3>
+<h3>NAME</h3>
+<tt>llvm-dis</tt>
 
-llvm-dis
+<h3>SYNOPSIS</h3>
+<tt>llvm-dis [options] [filename]</tt>
 
-<h3>
-SYNOPSIS
-</h3>
+<h3>DESCRIPTION</h3>
 
-llvm-dis [options] [filename]
-<h3>
-DESCRIPTION
-</h3>
-
-The llvm-dis command is the LLVM disassembler.  It takes an LLVM bytecode file
-and converts it into LLVM assembly language or C source code with equivalent
-functionality.
+The <tt>llvm-dis</tt> command is the LLVM disassembler.  It takes an LLVM
+bytecode file and converts it into LLVM assembly language or C source code with
+equivalent functionality.
 <p>
 
-If filename is omitted, llvm-dis reads its input from standard input.
+If filename is omitted, <tt>llvm-dis</tt> reads its input from standard input.
 <p>
 
-The default output file for llvm-dis is determined by the following logic:
+The default output file for <tt>llvm-dis</tt> is determined by the following logic:
 <ul>
 	<li>
-	If the input is standard input or the file -, then the output is standard
-	output.
+	If the input is standard input or the file -, then the output is
+	standard output.
 	<p>
 
 	<li>
@@ -47,33 +38,31 @@ The default output file for llvm-dis is determined by the following logic:
 	<p>
 
 	<li>
-	If the input filename does not end in .bc, then the output filename will be
-	identical to the input filename, except that the .ll or .c suffix will be
-	appended to the filename (for LLVM assembly language and C code,
+	If the input filename does not end in .bc, then the output filename will
+	be identical to the input filename, except that the .ll or .c suffix
+	will be appended to the filename (for LLVM assembly language and C code,
 	respectively).
 </ul>
 
-<h3>
-OPTIONS
-</h3>
+<h3>OPTIONS</h3>
 
 <ul>
 	<li> -llvm
 	<br>
-	Instruct llvm-dis to generate LLVM assembly code in human readable
-	format.  This is the default behavior.
+	Instruct <tt>llvm-dis</tt> to generate LLVM assembly code in human
+	readable format.  This is the default behavior.
 	<p>
 
 	<li> -c
 	<br>
-	Instruct llvm-dis to generate C source code.
+	Instruct <tt>llvm-dis</tt> to generate C source code.
 	<p>
 
 	<li> -f
 	<br>
-	Force overwrite.  Normally, llvm-dis will refuse to overwrite an output
-	file that already exists.  With this option, llvm-dis will overwrite the
-	output file.
+	Force overwrite.  Normally, <tt>llvm-dis</tt> will refuse to overwrite
+	an output file that already exists.  With this option, <tt>llvm-dis</tt>
+	will overwrite the output file.
 	<p>
 
 	<li> -help
@@ -83,8 +72,8 @@ OPTIONS
 
 	<li> -o &lt;filename&gt;
 	<br>
-	Specify the output filename.  If filename is -, then the output is sent to
-	standard output.
+	Specify the output filename.  If filename is -, then the output is sent
+	to standard output.
 	<p>
 
 	<li> -time-passes
@@ -94,17 +83,14 @@ OPTIONS
 	<p>
 </ul>
 
-<h3>
-EXIT STATUS
-</h3>
+<h3>EXIT STATUS</h3>
 
-If llvm-dis succeeds, it will exit with 0.  Otherwise, if an error occurs, it
-will exit with a non-zero value.
+If <tt>llvm-dis</tt> succeeds, it will exit with 0.  Otherwise, if an error
+occurs, it will exit with a non-zero value.
 
-<h3>
-SEE ALSO
-</h3>
-llvm-as
+<h3>SEE ALSO</h3>
+
+<a href="llvm-as.html"><tt>llvm-as</tt></a>
 
 <HR>
 Maintained by the <a href="http://llvm.cs.uiuc.edu">LLVM Team</a>.

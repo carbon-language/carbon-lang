@@ -1,56 +1,46 @@
 <html>
-<title>
-LLVM: opt tool
-</title>
+<title>LLVM: opt tool</title>
 
 <body bgcolor=white>
 
-<center>
-<h1>LLVM: opt tool</h1>
-</center>
+<center><h1>LLVM: <tt>opt</tt> tool</h1></center>
 <HR>
 
-<h3>
-NAME
-</h3>
+<h3>NAME</h3>
+<tt>opt</tt>
 
-opt
+<h3>SYNOPSIS</h3>
+<tt>opt [options] [filename]</tt>
 
-<h3>
-SYNOPSIS
-</h3>
+<h3>DESCRIPTION</h3>
 
-opt [options] [filename]
-<h3>
-DESCRIPTION
-</h3>
-
-The opt command is the LLVM optimizer.  It takes LLVM bytecode as input, runs
-the specified optimizations on it, and then outputs the optimized LLVM
-bytecode.
+The <tt>opt</tt> command is the modular LLVM optimizer.  It takes LLVM bytecode
+as input, runs the specified optimizations on it, and then outputs the optimized
+LLVM bytecode.
 <p>
 
-The optimizations available via opt depend upon what libraries were linked
-into it as well as any additional libraries that have been loaded with the
--load option.  Use the -help option to determine what optimizations you can use.
+The optimizations available via <tt>opt</tt> depend upon what libraries were
+linked into it as well as any additional libraries that have been loaded with
+the <tt>-load</tt> option.  Use the <tt>-help</tt> option to determine what
+optimizations you can use.
 <p>
 
-If no filename is specified on the command line, opt reads its input from
-standard input.
+If no filename is specified on the command line, <tt>opt</tt> reads its input
+from standard input.
 <p>
 
-If an output filename is not specified with the -o option, opt writes its
-output to the standard output.
-<h3>
-OPTIONS
-</h3>
+If an output filename is not specified with the <tt>-o</tt> option, <tt>opt</tt>
+writes its output to the standard output.
+
+
+<h3>OPTIONS</h3>
 
 <ul>
 	<li> -f
 	<br>
-	Force overwrite.  Normally, opt will refuse to overwrite an output
-	file that already exists.  With this option, opt will overwrite the
-	output file and replace it with new bytecode.
+	Force overwrite.  Normally, <tt>opt</tt> will refuse to overwrite an
+	output file that already exists.  With this option, <tt>opt</tt> will
+	overwrite the output file and replace it with new bytecode.
 	<p>
 
 	<li> -help
@@ -105,7 +95,7 @@ OPTIONS
 	options to enable various optimizations.  To see the new complete list
 	of optimizations, use the -help and -load options together:
 	<p>
-	opt -load  &lt;plugin.so&gt; -help
+	<tt>opt -load  &lt;plugin.so&gt; -help</tt>
 	<p>
 
 	<li> -p
@@ -114,17 +104,14 @@ OPTIONS
 	<p>
 </ul>
 
-<h3>
-EXIT STATUS
-</h3>
+<h3>EXIT STATUS</h3>
 
-If opt succeeds, it will exit with 0.  Otherwise, if an error occurs, it
-will exit with a non-zero value.
+If <tt>opt</tt> succeeds, it will exit with 0.  Otherwise, if an error occurs,
+it will exit with a non-zero value.
 
-<h3>
-SEE ALSO
-</h3>
-analyze
+<h3>SEE ALSO</h3>
+
+<a href="analyze.html"><tt>analyze</tt></a>
 
 <HR>
 Maintained by the <a href="http://llvm.cs.uiuc.edu">LLVM Team</a>.
