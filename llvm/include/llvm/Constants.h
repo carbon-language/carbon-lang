@@ -562,6 +562,10 @@ public:
   ///
   static Constant *getSizeOf(const Type *Ty);
 
+  /// getPtrPtrFromArrayPtr constant expr - given a pointer to a constant array,
+  /// return a pointer to a pointer of the array element type.
+  static Constant *getPtrPtrFromArrayPtr(Constant *C);
+
   /// ConstantExpr::get - Return a binary or shift operator constant expression,
   /// folding if possible.
   ///

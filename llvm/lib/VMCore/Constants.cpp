@@ -1298,6 +1298,13 @@ Constant *ConstantExpr::getSizeOf(const Type *Ty) {
     Type::ULongTy);
 }
 
+Constant *ConstantExpr::getPtrPtrFromArrayPtr(Constant *C) {
+  // pointer from array is implemented as: getelementptr arr ptr, 0, 0
+  static std::vector<Constant*> Indices(2, ConstantUInt::get(Type::UIntTy, 0));
+
+  return ConstantExpr::getGetElementPtr(C, Indices);
+}
+
 Constant *ConstantExpr::getTy(const Type *ReqTy, unsigned Opcode,
                               Constant *C1, Constant *C2) {
   if (Opcode == Instruction::Shl || Opcode == Instruction::Shr)
