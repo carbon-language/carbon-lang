@@ -32,7 +32,8 @@ public:
 
   /// print - Print out an x86 instruction in intel syntax
   ///
-  virtual void print(const MachineInstr *MI, std::ostream &O) const;
+  virtual void print(const MachineInstr *MI, std::ostream &O,
+                     const TargetMachine &TM) const;
 
 
   //===--------------------------------------------------------------------===//

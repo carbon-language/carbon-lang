@@ -41,7 +41,7 @@ bool Printer::runOnFunction (Function & F)
   MachineFunction & MF = MachineFunction::get (&F);
   const MachineInstrInfo & MII = TM.getInstrInfo ();
 
-  O << "# x86 printing only sorta implemented so far!\n";
+  O << "; x86 printing only sorta implemented so far!\n";
 
   // Print out labels for the function.
   O << "\t.globl\t" << F.getName () << "\n";
@@ -59,7 +59,7 @@ bool Printer::runOnFunction (Function & F)
 	{
 	  // Print the assembly for the instruction.
 	  O << "\t";
-          MII.print(*i_i, O);
+          MII.print(*i_i, O, TM);
 	}
     }
 
@@ -69,7 +69,8 @@ bool Printer::runOnFunction (Function & F)
 
 
 // print - Print out an x86 instruction in intel syntax
-void X86InstrInfo::print(const MachineInstr *MI, std::ostream &O) const {
+void X86InstrInfo::print(const MachineInstr *MI, std::ostream &O,
+                         const TargetMachine &TM) const {
   // FIXME: This sucks.
   O << getName(MI->getOpCode()) << "\n";
 }
