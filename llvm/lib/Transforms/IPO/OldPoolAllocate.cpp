@@ -165,7 +165,16 @@ namespace {
       PoolElements.push_back(PointerType::get(NodeType));
       PoolElements.push_back(PointerType::get(Type::SByteTy));
       PoolElements.push_back(Type::UIntTy);
-      return StructType::get(PoolElements);
+      StructType *Result = StructType::get(PoolElements);
+
+      // Add a name to the symbol table to correspond to the backend
+      // representation of this pool...
+      assert(CurModule && "No current module!?");
+      string Name = CurModule->getTypeName(NodeType);
+      if (Name.empty()) Name = CurModule->getTypeName(PoolElements[0]);
+      CurModule->addTypeName(Name+"oolbe", Result);
+
+      return Result;
     }
 
     bool run(Module *M);
@@ -1052,6 +1061,21 @@ void PoolAllocate::transformFunction(TransformFunctionInfo &TFI,
   cerr << "Function after transformation:\n" << NewFunc;
 }
 
+static unsigned countPointerTypes(const Type *Ty) {
+  if (isa<PointerType>(Ty)) {
+    return 1;
+  } else if (StructType *STy = dyn_cast<StructType>(Ty)) {
+    unsigned Num = 0;
+    for (unsigned i = 0, e = STy->getElementTypes().size(); i != e; ++i)
+      Num += countPointerTypes(STy->getElementTypes()[i]);
+    return Num;
+  } else if (ArrayType *ATy = dyn_cast<ArrayType>(Ty)) {
+    return countPointerTypes(ATy->getElementType());
+  } else {
+    assert(Ty->isPrimitiveType() && "Unknown derived type!");
+    return 0;
+  }
+}
 
 // CreatePools - Insert instructions into the function we are processing to
 // create all of the memory pool objects themselves.  This also inserts
@@ -1076,6 +1100,12 @@ void PoolAllocate::CreatePools(Function *F, const vector<AllocDSNode*> &Allocs,
     map<DSNode*, PoolInfo>::iterator PI =
       PoolDescs.insert(make_pair(Allocs[i], PoolInfo(Allocs[i]))).first;
 
+    // Add a symbol table entry for the new type if there was one for the old
+    // type...
+    string OldName = CurModule->getTypeName(Allocs[i]->getType());
+    if (!OldName.empty())
+      CurModule->addTypeName(OldName+".p", PI->second.NewType);
+
     // Create the abstract pool types that will need to be resolved in a second
     // pass once an abstract type is created for each pool.
     //
@@ -1085,19 +1115,21 @@ void PoolAllocate::CreatePools(Function *F, const vector<AllocDSNode*> &Allocs,
 
     // Pool type is the first element of the pool descriptor type...
     PoolTypes.push_back(getPoolType(PoolDescs[Allocs[i]].NewType));
-    
-    for (unsigned j = 0, e = OldNodeTy->getElementTypes().size(); j != e; ++j) {
-      if (isa<PointerType>(OldNodeTy->getElementTypes()[j]))
-        PoolTypes.push_back(OpaqueType::get());
-      else
-        assert(OldNodeTy->getElementTypes()[j]->isPrimitiveType() &&
-               "Complex types not handled yet!");
-    }
+
+    unsigned NumPointers = countPointerTypes(OldNodeTy);
+    while (NumPointers--)   // Add a different opaque type for each pointer
+      PoolTypes.push_back(OpaqueType::get());
+
     assert(Allocs[i]->getNumLinks() == PoolTypes.size()-1 &&
            "Node should have same number of pointers as pool!");
 
+    StructType *PoolType = StructType::get(PoolTypes);
+
+    // Add a symbol table entry for the pooltype if possible...
+    if (!OldName.empty()) CurModule->addTypeName(OldName+".pool", PoolType);
+
     // Create the pool type, with opaque values for pointers...
-    AbsPoolTyMap.insert(make_pair(Allocs[i], StructType::get(PoolTypes)));
+    AbsPoolTyMap.insert(make_pair(Allocs[i], PoolType));
 #ifdef DEBUG_CREATE_POOLS
     cerr << "POOL TY: " << AbsPoolTyMap.find(Allocs[i])->second.get() << "\n";
 #endif
@@ -1173,7 +1205,9 @@ void PoolAllocate::CreatePools(Function *F, const vector<AllocDSNode*> &Allocs,
     cerr << "TODO: add code to initialize inter pool links!\n";
 
     // Add code to destroy the pool in all of the exit nodes of the function...
-    Args.pop_back();
+    Args.clear();
+    Args.push_back(PoolAlloc);    // Pool to initialize
+    
     for (unsigned EN = 0, ENE = ReturnNodes.size(); EN != ENE; ++EN) {
       Instruction *Destroy = new CallInst(PoolDestroy, Args);
 
