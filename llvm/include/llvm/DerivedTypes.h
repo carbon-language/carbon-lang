@@ -273,7 +273,7 @@ public:
 ///
 class ArrayType : public SequentialType {
   friend class TypeMap<ArrayValType, ArrayType>;
-  unsigned NumElements;
+  uint64_t NumElements;
 
   ArrayType(const ArrayType &);                   // Do not implement
   const ArrayType &operator=(const ArrayType &);  // Do not implement
@@ -284,15 +284,15 @@ protected:
   ///
   /// Private ctor - Only can be created by a static member...
   ///
-  ArrayType(const Type *ElType, unsigned NumEl);
+  ArrayType(const Type *ElType, uint64_t NumEl);
 
 public:
   /// ArrayType::get - This static method is the primary way to construct an
   /// ArrayType
   ///
-  static ArrayType *get(const Type *ElementType, unsigned NumElements);
+  static ArrayType *get(const Type *ElementType, uint64_t NumElements);
 
-  inline unsigned    getNumElements() const { return NumElements; }
+  inline uint64_t getNumElements() const { return NumElements; }
 
   // Implement the AbstractTypeUser interface.
   virtual void refineAbstractType(const DerivedType *OldTy, const Type *NewTy);
