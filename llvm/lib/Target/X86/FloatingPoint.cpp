@@ -638,6 +638,9 @@ void FPS::handleCompareFP(MachineBasicBlock::iterator &I) {
   // anywhere.
   moveToTop(Op0, I);
 
+  MI->getOperand(0).setReg(getSTReg(Op1));
+  MI->RemoveOperand(1);
+
   // If any of the operands are killed by this instruction, free them.
   if (KillsOp0) freeStackSlotAfter(I, Op0);
   if (KillsOp1 && Op0 != Op1) freeStackSlotAfter(I, Op1);
