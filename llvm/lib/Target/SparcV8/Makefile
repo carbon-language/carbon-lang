@@ -16,7 +16,7 @@ TDFILE  := $(SourceDir)/SparcV8.td
 # Make sure that tblgen is run, first thing.
 $(SourceDepend): SparcV8GenRegisterInfo.h.inc SparcV8GenRegisterNames.inc \
                  SparcV8GenRegisterInfo.inc SparcV8GenInstrNames.inc \
-                 SparcV8GenInstrInfo.inc
+                 SparcV8GenInstrInfo.inc SparcV8GenCodeEmitter.inc
 
 SparcV8GenRegisterNames.inc:: $(TDFILES) $(TBLGEN)
 	@echo "Building SparcV8.td register names with tblgen"
@@ -37,6 +37,10 @@ SparcV8GenInstrNames.inc:: $(TDFILES) $(TBLGEN)
 SparcV8GenInstrInfo.inc:: $(TDFILES) $(TBLGEN)
 	@echo "Building SparcV8.td instruction information with tblgen"
 	$(VERB) $(TBLGEN) -I $(BUILD_SRC_DIR) $(TDFILE) -gen-instr-desc -o $@
+
+SparcV8GenCodeEmitter.inc:: $(TDFILES) $(TBLGEN)
+	@echo "Building SparcV8.td code emitter with tblgen"
+	$(VERB) $(TBLGEN) -I $(SourceDir) $(TDFILE) -gen-emitter -o $@
 
 clean::
 	$(VERB) rm -f *.inc
