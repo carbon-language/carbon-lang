@@ -49,7 +49,9 @@ struct X86AddressMode {
     GlobalValue *GV;
 
     X86AddressMode() : BaseType(RegBase), Scale(1), IndexReg(0), Disp(0),
-                       GV(NULL) {}
+                       GV(NULL) {
+      Base.Reg = 0;
+    }
 };
 
 /// addDirectMem - This function is used to add a direct memory reference to the
@@ -71,6 +73,13 @@ inline const MachineInstrBuilder &addDirectMem(const MachineInstrBuilder &MIB,
 inline const MachineInstrBuilder &addRegOffset(const MachineInstrBuilder &MIB,
                                                unsigned Reg, int Offset) {
   return MIB.addReg(Reg).addZImm(1).addReg(0).addSImm(Offset);
+}
+
+/// addRegReg - This function is used to add a memory reference of the form:
+/// [Reg + Reg].
+inline const MachineInstrBuilder &addRegReg(const MachineInstrBuilder &MIB,
+                                            unsigned Reg1, unsigned Reg2) {
+  return MIB.addReg(Reg1).addZImm(1).addReg(Reg2).addSImm(0);
 }
 
 inline const MachineInstrBuilder &addFullAddress(const MachineInstrBuilder &MIB,
