@@ -216,13 +216,13 @@ int main(int argc, char **argv) {
 
     // Deal with unimplemented options.
     if (PipeCommands)
-      throw "Not implemented yet: -pipe";
+      throw std::string("Not implemented yet: -pipe");
 
     if (OutputFilename.empty())
       if (OptLevel == CompilerDriver::LINKING)
         OutputFilename = "a.out";
       else
-        throw "An output file must be specified. Please use the -o option";
+        throw std::string("An output file must be specified. Please use the -o option");
 
     // Construct the ConfigDataProvider object
     LLVMC_ConfigDataProvider Provider;
@@ -300,7 +300,7 @@ int main(int argc, char **argv) {
     // Tell the driver to do its thing
     int result = CD->execute(InpList,sys::Path(OutputFilename));
     if (result != 0) {
-      throw "Error executing actions. Terminated.\n";
+      throw std::string("Error executing actions. Terminated.");
       return result;
     }
 
