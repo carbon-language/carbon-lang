@@ -20,7 +20,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "Interpreter.h"
-#include "ExecutionAnnotations.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
 #include "llvm/SymbolTable.h"
