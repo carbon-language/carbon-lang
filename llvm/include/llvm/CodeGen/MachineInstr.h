@@ -1,38 +1,18 @@
-// $Id$ -*-c++-*-
-//***************************************************************************
-// File:
-//	MachineInstr.h
-// 
-// Purpose:
-//	
-// 
-// Strategy:
-// 
-// History:
-//	7/2/01	 -  Vikram Adve  -  Created
-//**************************************************************************/
+//===-- llvm/CodeGen/MachineInstr.h - MachineInstr class ---------*- C++ -*--=//
+//
+// This file contains the declaration of the MachineInstr class, which is the
+// basic representation for all target dependant machine instructions used by
+// the back end.
+//
+//===----------------------------------------------------------------------===//
 
 #ifndef LLVM_CODEGEN_MACHINEINSTR_H
 #define LLVM_CODEGEN_MACHINEINSTR_H
 
-#include "Support/DataTypes.h"
-#include "Support/NonCopyable.h"
-#include "llvm/CodeGen/InstrForest.h"
 #include "llvm/Target/MachineInstrInfo.h"
-#include "llvm/Annotation.h"
-#include "llvm/Method.h"
 #include <iterator>
-#include <values.h>
-
+class Instruction;
 template<class _MI, class _V> class ValOpIterator;
-
-
-//************************** External Constants ****************************/
-
-const int INVALID_FRAME_OFFSET = MAXINT;
-
-
-//*************************** External Classes *****************************/
 
 
 //---------------------------------------------------------------------------
@@ -428,67 +408,6 @@ public:
 
 
 //---------------------------------------------------------------------------
-// class MachineCodeForVMInstr
-// 
-// Purpose:
-//   Representation of the sequence of machine instructions created
-//   for a single VM instruction.  Additionally records information
-//   about hidden and implicit values used by the machine instructions:
-//   about hidden values used by the machine instructions:
-// 
-//   "Temporary values" are intermediate values used in the machine
-//   instruction sequence, but not in the VM instruction
-//   Note that such values should be treated as pure SSA values with
-//   no interpretation of their operands (i.e., as a TmpInstruction
-//   object which actually represents such a value).
-// 
-//   (2) "Implicit uses" are values used in the VM instruction but not in
-//       the machine instruction sequence
-// 
-//---------------------------------------------------------------------------
-
-class MachineCodeForVMInstr: public std::vector<MachineInstr*>
-{
-private:
-  std::vector<Value*> tempVec;         // used by m/c instr but not VM instr
-  
-public:
-  /*ctor*/	MachineCodeForVMInstr	()	{}
-  /*ctor*/	~MachineCodeForVMInstr	();
-  
-  const std::vector<Value*>& getTempValues  () const { return tempVec; }
-        std::vector<Value*>& getTempValues  ()       { return tempVec; }
-  
-  void    addTempValue  (Value* val)            { tempVec.push_back(val); }
-  
-  // dropAllReferences() - This function drops all references within
-  // temporary (hidden) instructions created in implementing the original
-  // VM intruction.  This ensures there are no remaining "uses" within
-  // these hidden instructions, before the values of a method are freed.
-  //
-  // Make this inline because it has to be called from class Instruction
-  // and inlining it avoids a serious circurality in link order.
-  inline void dropAllReferences() {
-    for (unsigned i=0, N=tempVec.size(); i < N; i++)
-      if (Instruction *I = dyn_cast<Instruction>(tempVec[i]))
-        I->dropAllReferences();
-  }
-};
-
-inline
-MachineCodeForVMInstr::~MachineCodeForVMInstr()
-{
-  // Free the Value objects created to hold intermediate values
-  for (unsigned i=0, N=tempVec.size(); i < N; i++)
-    delete tempVec[i];
-  
-  // Free the MachineInstr objects allocated, if any.
-  for (unsigned i=0, N=this->size(); i < N; i++)
-    delete (*this)[i];
-}
-
-
-//---------------------------------------------------------------------------
 // class MachineCodeForBasicBlock
 // 
 // Purpose:
@@ -501,123 +420,6 @@ class MachineCodeForBasicBlock: public std::vector<MachineInstr*> {
 public:
   typedef std::vector<MachineInstr*>::iterator iterator;
   typedef std::vector<MachineInstr*>::const_iterator const_iterator;
-};
-
-
-//---------------------------------------------------------------------------
-// class MachineCodeForMethod
-// 
-// Purpose:
-//   Collect native machine code information for a method.
-//   This allows target-specific information about the generated code
-//   to be stored with each method.
-//---------------------------------------------------------------------------
-
-
-
-class MachineCodeForMethod: public NonCopyable, private Annotation {
-private:
-  static AnnotationID AID;
-private:
-  const Method* method;
-  bool          compiledAsLeaf;
-  unsigned	staticStackSize;
-  unsigned	automaticVarsSize;
-  unsigned	regSpillsSize;
-  unsigned	currentOptionalArgsSize;
-  unsigned	maxOptionalArgsSize;
-  unsigned	currentTmpValuesSize;
-  std::hash_set<const Constant*> constantsForConstPool;
-  std::hash_map<const Value*, int> offsets;
-  // hash_map<const Value*, int> offsetsFromSP;
-  
-public:
-  /*ctor*/      MachineCodeForMethod(const Method* method,
-                                     const TargetMachine& target);
-  
-  // The next two methods are used to construct and to retrieve
-  // the MachineCodeForMethod object for the given method.
-  // construct() -- Allocates and initializes for a given method and target
-  // get()       -- Returns a handle to the object.
-  //                This should not be called before "construct()"
-  //                for a given Method.
-  // 
-  inline static MachineCodeForMethod& construct(const Method* method,
-                                                const TargetMachine& target)
-  {
-    assert(method->getAnnotation(MachineCodeForMethod::AID) == NULL &&
-           "Object already exists for this method!");
-    MachineCodeForMethod* mcInfo = new MachineCodeForMethod(method, target);
-    method->addAnnotation(mcInfo);
-    return *mcInfo;
-  }
-  
-  inline static MachineCodeForMethod& get(const Method* method)
-  {
-    MachineCodeForMethod* mc = (MachineCodeForMethod*)
-      method->getAnnotation(MachineCodeForMethod::AID);
-    assert(mc && "Call construct() method first to allocate the object");
-    return *mc;
-  }
-  
-  //
-  // Accessors for global information about generated code for a method.
-  // 
-  inline bool     isCompiledAsLeafMethod() const { return compiledAsLeaf; }
-  inline unsigned getStaticStackSize()     const { return staticStackSize; }
-  inline unsigned getAutomaticVarsSize()   const { return automaticVarsSize; }
-  inline unsigned getRegSpillsSize()       const { return regSpillsSize; }
-  inline unsigned getMaxOptionalArgsSize() const { return maxOptionalArgsSize;}
-  inline unsigned getCurrentOptionalArgsSize() const
-                                             { return currentOptionalArgsSize;}
-  inline const std::hash_set<const Constant*>&
-                  getConstantPoolValues() const {return constantsForConstPool;}
-  
-  //
-  // Modifiers used during code generation
-  // 
-  void            initializeFrameLayout    (const TargetMachine& target);
-  
-  void            addToConstantPool        (const Constant* constVal)
-                                    { constantsForConstPool.insert(constVal); }
-  
-  inline void     markAsLeafMethod()              { compiledAsLeaf = true; }
-  
-  int             allocateLocalVar         (const TargetMachine& target,
-                                            const Value* local,
-                                            unsigned int size = 0);
-  
-  int             allocateSpilledValue     (const TargetMachine& target,
-                                            const Type* type);
-  
-  int             allocateOptionalArg      (const TargetMachine& target,
-                                            const Type* type);
-  
-  void            resetOptionalArgs        (const TargetMachine& target);
-  
-  int             pushTempValue            (const TargetMachine& target,
-                                            unsigned int size);
-  
-  void            popAllTempValues         (const TargetMachine& target);
-  
-  int             getOffset                (const Value* val) const;
-  
-  // int          getOffsetFromFP       (const Value* val) const;
-  
-  void            dump                     () const;
-
-private:
-  inline void     incrementAutomaticVarsSize(int incr) {
-    automaticVarsSize+= incr;
-    staticStackSize += incr;
-  }
-  inline void     incrementRegSpillsSize(int incr) {
-    regSpillsSize+= incr;
-    staticStackSize += incr;
-  }
-  inline void     incrementCurrentOptionalArgsSize(int incr) {
-    currentOptionalArgsSize+= incr;     // stack size already includes this!
-  }
 };
 
 
