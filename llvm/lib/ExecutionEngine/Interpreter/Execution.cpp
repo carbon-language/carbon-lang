@@ -845,27 +845,17 @@ void Interpreter::visitCastInst(CastInst &I) {
   SetValue(&I, executeCastOperation(I.getOperand(0), I.getType(), SF), SF);
 }
 
-void Interpreter::visitVarArgInst(VarArgInst &I) {
+void Interpreter::visitVANextInst(VANextInst &I) {
   ExecutionContext &SF = ECStack.back();
 
-  // Get the pointer to the valist element.  LLI treats the valist in memory as
-  // an integer.
-  GenericValue VAListPtr = getOperandValue(I.getOperand(0), SF);
-
-  // Load the pointer
-  GenericValue VAList = 
-    TheEE->LoadValueFromMemory((GenericValue *)GVTOP(VAListPtr), Type::UIntTy);
-
+  // Get the incoming valist element.  LLI treats the valist as an integer.
+  GenericValue VAList = getOperandValue(I.getOperand(0), SF);
+  
+  // Move to the next operand.
   unsigned Argument = VAList.IntVal++;
-
-  // Update the valist to point to the next argument...
-  TheEE->StoreValueToMemory(VAList, (GenericValue *)GVTOP(VAListPtr),
-                            Type::UIntTy);
-
-  // Set the value...
   assert(Argument < SF.VarArgs.size() &&
          "Accessing past the last vararg argument!");
-  SetValue(&I, SF.VarArgs[Argument], SF);
+  SetValue(&I, VAList, SF);
 }
 
 //===----------------------------------------------------------------------===//

@@ -687,14 +687,12 @@ GenericValue lle_X_fprintf(FunctionType *M, const vector<GenericValue> &Args) {
 // LLVM Intrinsic Functions...
 //===----------------------------------------------------------------------===//
 
-// void llvm.va_start(<va_list> *) - Implement the va_start operation...
+// <va_list> llvm.va_start() - Implement the va_start operation...
 GenericValue llvm_va_start(FunctionType *F, const vector<GenericValue> &Args) {
-  assert(Args.size() == 1);
-  GenericValue *VAListP = (GenericValue *)GVTOP(Args[0]);
+  assert(Args.size() == 0);
   GenericValue Val;
   Val.UIntVal = 0;   // Start at the first '...' argument...
-  TheInterpreter->StoreValueToMemory(Val, VAListP, Type::UIntTy);
-  return GenericValue();
+  return Val;
 }
 
 // void llvm.va_end(<va_list> *) - Implement the va_end operation...
@@ -703,13 +701,10 @@ GenericValue llvm_va_end(FunctionType *F, const vector<GenericValue> &Args) {
   return GenericValue();    // Noop!
 }
 
-// void llvm.va_copy(<va_list> *, <va_list>) - Implement the va_copy
-// operation...
+// <va_list> llvm.va_copy(<va_list>) - Implement the va_copy operation...
 GenericValue llvm_va_copy(FunctionType *F, const vector<GenericValue> &Args) {
-  assert(Args.size() == 2);
-  GenericValue *DestVAList = (GenericValue*)GVTOP(Args[0]);
-  TheInterpreter->StoreValueToMemory(Args[1], DestVAList, Type::UIntTy);
-  return GenericValue();
+  assert(Args.size() == 1);
+  return Args[0];
 }
 
 } // End extern "C"
