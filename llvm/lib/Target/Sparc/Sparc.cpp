@@ -42,9 +42,6 @@ const TargetInstrDescriptor SparcMachineInstrDesc[] = {
 // Command line options to control choice of code generation passes.
 //---------------------------------------------------------------------------
 
-static cl::opt<bool> DisablePreOpt("disable-preopt",
-              cl::desc("Disable optimizations prior to instruction selection"));
-
 static cl::opt<bool> DisableSched("disable-sched",
                                   cl::desc("Disable local scheduling pass"));
 
@@ -178,15 +175,13 @@ bool UltraSparc::addPassesToEmitAssembly(PassManager &PM, std::ostream &Out)
   //so %fp+offset-8 and %fp+offset-16 are empty slots now!
   PM.add(createStackSlotsPass(*this));
 
-  if (!DisablePreOpt) {
-    // Specialize LLVM code for this target machine
-    PM.add(createPreSelectionPass(*this));
-    // Run basic dataflow optimizations on LLVM code
-    PM.add(createReassociatePass());
-    PM.add(createLICMPass());
-    PM.add(createGCSEPass());
-  }
-  
+  // Specialize LLVM code for this target machine
+  PM.add(createPreSelectionPass(*this));
+  // Run basic dataflow optimizations on LLVM code
+  PM.add(createReassociatePass());
+  PM.add(createLICMPass());
+  PM.add(createGCSEPass());
+
   // If LLVM dumping after transformations is requested, add it to the pipeline
   if (DumpInput)
     PM.add(new PrintFunctionPass("Input code to instr. selection:\n",
@@ -251,6 +246,14 @@ bool UltraSparc::addPassesToJITCompile(FunctionPassManager &PM) {
   
   // Construct and initialize the MachineFunction object for this fn.
   PM.add(createMachineCodeConstructionPass(*this));
+
+  // Specialize LLVM code for this target machine and then
+  // run basic dataflow optimizations on LLVM code.
+  PM.add(createPreSelectionPass(*this));
+  // Run basic dataflow optimizations on LLVM code
+  PM.add(createReassociatePass());
+  PM.add(createLICMPass());
+  PM.add(createGCSEPass());
 
   PM.add(createInstructionSelectionPass(*this));
 
