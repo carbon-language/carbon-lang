@@ -134,11 +134,11 @@ void RegisterHandler(int Signal) {
 namespace llvm {
 
 // RemoveFileOnSignal - The public API
-void sys::RemoveFileOnSignal(const std::string &Filename) {
+void sys::RemoveFileOnSignal(const sys::Path &Filename) {
   if (FilesToRemove == 0)
     FilesToRemove = new std::vector<std::string>;
 
-  FilesToRemove->push_back(Filename);
+  FilesToRemove->push_back(Filename.get());
 
   std::for_each(IntSigs, IntSigsEnd, RegisterHandler);
   std::for_each(KillSigs, KillSigsEnd, RegisterHandler);
