@@ -284,6 +284,11 @@ void AsmPrinter::emitGlobalConstant(const Constant *CV) {
     O << Data16bitsDirective;
     break;
   case Type::PointerTyID:
+    if (TD.getPointerSize() == 8) {
+      O << Data64bitsDirective;
+      break;
+    }
+    //Fall through for pointer size == int size
   case Type::UIntTyID: case Type::IntTyID:
     O << Data32bitsDirective;
     break;
