@@ -72,8 +72,8 @@ void Loop::print(std::ostream &OS, unsigned Depth) const {
 
   OS << "\n";
 
-  for (unsigned i = 0, e = getSubLoops().size(); i != e; ++i)
-    getSubLoops()[i]->print(OS, Depth+2);
+  for (iterator I = begin(), E = end(); I != E; ++I)
+    (*I)->print(OS, Depth+2);
 }
 
 void Loop::dump() const {

@@ -113,8 +113,8 @@ namespace {
     ///
     bool inSubLoop(BasicBlock *BB) {
       assert(CurLoop->contains(BB) && "Only valid if BB is IN the loop");
-      for (unsigned i = 0, e = CurLoop->getSubLoops().size(); i != e; ++i)
-        if (CurLoop->getSubLoops()[i]->contains(BB))
+      for (Loop::iterator I = CurLoop->begin(), E = CurLoop->end(); I != E; ++I)
+        if ((*I)->contains(BB))
           return true;  // A subloop actually contains this block!
       return false;
     }
@@ -221,9 +221,7 @@ bool LICM::runOnFunction(Function &) {
   DT = &getAnalysis<DominatorTree>();
 
   // Hoist expressions out of all of the top-level loops.
-  const std::vector<Loop*> &TopLevelLoops = LI->getTopLevelLoops();
-  for (std::vector<Loop*>::const_iterator I = TopLevelLoops.begin(),
-         E = TopLevelLoops.end(); I != E; ++I) {
+  for (LoopInfo::iterator I = LI->begin(), E = LI->end(); I != E; ++I) {
     AliasSetTracker AST(*AA);
     visitLoop(*I, AST);
   }
@@ -235,8 +233,7 @@ bool LICM::runOnFunction(Function &) {
 ///
 void LICM::visitLoop(Loop *L, AliasSetTracker &AST) {
   // Recurse through all subloops before we process this loop...
-  for (std::vector<Loop*>::const_iterator I = L->getSubLoops().begin(),
-         E = L->getSubLoops().end(); I != E; ++I) {
+  for (Loop::iterator I = L->begin(), E = L->end(); I != E; ++I) {
     AliasSetTracker SubAST(*AA);
     visitLoop(*I, SubAST);
 

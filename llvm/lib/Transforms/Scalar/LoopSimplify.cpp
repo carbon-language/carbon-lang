@@ -91,8 +91,8 @@ bool LoopSimplify::runOnFunction(Function &F) {
   bool Changed = false;
   LoopInfo &LI = getAnalysis<LoopInfo>();
 
-  for (unsigned i = 0, e = LI.getTopLevelLoops().size(); i != e; ++i)
-    Changed |= ProcessLoop(LI.getTopLevelLoops()[i]);
+  for (LoopInfo::iterator I = LI.begin(), E = LI.end(); I != E; ++I)
+    Changed |= ProcessLoop(*I);
 
   return Changed;
 }
@@ -136,9 +136,8 @@ bool LoopSimplify::ProcessLoop(Loop *L) {
     Changed = true;
   }
 
-  const std::vector<Loop*> &SubLoops = L->getSubLoops();
-  for (unsigned i = 0, e = SubLoops.size(); i != e; ++i)
-    Changed |= ProcessLoop(SubLoops[i]);
+  for (Loop::iterator I = L->begin(), E = L->end(); I != E; ++I)
+    Changed |= ProcessLoop(*I);
   return Changed;
 }
 
@@ -227,9 +226,8 @@ BasicBlock *LoopSimplify::SplitBlockPredecessors(BasicBlock *BB,
 static void ChangeExitBlock(Loop *L, BasicBlock *OldExit, BasicBlock *NewExit) {
   if (L->hasExitBlock(OldExit)) {
     L->changeExitBlock(OldExit, NewExit);
-    const std::vector<Loop*> &SubLoops = L->getSubLoops();
-    for (unsigned i = 0, e = SubLoops.size(); i != e; ++i)
-      ChangeExitBlock(SubLoops[i], OldExit, NewExit);
+    for (Loop::iterator I = L->begin(), E = L->end(); I != E; ++I)
+      ChangeExitBlock(*I, OldExit, NewExit);
   }
 }
 
@@ -266,16 +264,19 @@ void LoopSimplify::InsertPreheaderForLoop(Loop *L) {
   // is a sibling loop, ie, one with the same parent loop, or one if it's
   // children.
   //
-  const std::vector<Loop*> *ParentSubLoops;
-  if (Loop *Parent = L->getParentLoop())
-    ParentSubLoops = &Parent->getSubLoops();
-  else       // Must check top-level loops...
-    ParentSubLoops = &getAnalysis<LoopInfo>().getTopLevelLoops();
+  LoopInfo::iterator ParentLoops, ParentLoopsE;
+  if (Loop *Parent = L->getParentLoop()) {
+    ParentLoops = Parent->begin();
+    ParentLoopsE = Parent->end();
+  } else {      // Must check top-level loops...
+    ParentLoops = getAnalysis<LoopInfo>().begin();
+    ParentLoopsE = getAnalysis<LoopInfo>().end();
+  }
 
   // Loop over all sibling loops, performing the substitution (recursively to
   // include child loops)...
-  for (unsigned i = 0, e = ParentSubLoops->size(); i != e; ++i)
-    ChangeExitBlock((*ParentSubLoops)[i], Header, NewBB);
+  for (; ParentLoops != ParentLoopsE; ++ParentLoops)
+    ChangeExitBlock(*ParentLoops, Header, NewBB);
   
   DominatorSet &DS = getAnalysis<DominatorSet>();  // Update dominator info
   {

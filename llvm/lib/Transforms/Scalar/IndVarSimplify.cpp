@@ -43,8 +43,8 @@ namespace {
       Changed = false;
 
       // Induction Variables live in the header nodes of loops
-      for (unsigned i = 0, e = Loops->getTopLevelLoops().size(); i != e; ++i)
-        runOnLoop(Loops->getTopLevelLoops()[i]);
+      for (LoopInfo::iterator I = Loops->begin(), E = Loops->end(); I != E; ++I)
+        runOnLoop(*I);
       return Changed;
     }
 
@@ -77,8 +77,8 @@ Pass *llvm::createIndVarSimplifyPass() {
 
 void IndVarSimplify::runOnLoop(Loop *Loop) {
   // Transform all subloops before this loop...
-  for (unsigned i = 0, e = Loop->getSubLoops().size(); i != e; ++i)
-    runOnLoop(Loop->getSubLoops()[i]);
+  for (LoopInfo::iterator I = Loop->begin(), E = Loop->end(); I != E; ++I)
+    runOnLoop(*I);
 
   // Get the header node for this loop.  All of the phi nodes that could be
   // induction variables must live in this basic block.

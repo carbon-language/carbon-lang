@@ -56,9 +56,11 @@ public:
   /// contains - Return true of the specified basic block is in this loop
   bool contains(const BasicBlock *BB) const;
 
-  /// getSubLoops - Return the loops contained entirely within this loop
+  /// iterator/begin/end - Return the loops contained entirely within this loop.
   ///
-  const std::vector<Loop*> &getSubLoops() const { return SubLoops; }
+  typedef std::vector<Loop*>::const_iterator iterator;
+  iterator begin() const { return SubLoops.begin(); }
+  iterator end() const { return SubLoops.end(); }
 
   /// getBlocks - Get a list of the basic blocks which make up this loop.
   ///
@@ -147,7 +149,12 @@ class LoopInfo : public FunctionPass {
 public:
   ~LoopInfo() { releaseMemory(); }
 
-  const std::vector<Loop*> &getTopLevelLoops() const { return TopLevelLoops; }
+  /// iterator/begin/end - The interface to the top-level loops in the current
+  /// function.
+  ///
+  typedef std::vector<Loop*>::const_iterator iterator;
+  iterator begin() const { return TopLevelLoops.begin(); }
+  iterator end() const { return TopLevelLoops.end(); }
 
   /// getLoopFor - Return the inner most loop that BB lives in.  If a basic
   /// block is in no loop (for example the entry node), null is returned.
@@ -206,10 +213,10 @@ template <> struct GraphTraits<const Loop*> {
 
   static NodeType *getEntryNode(const Loop *L) { return L; }
   static inline ChildIteratorType child_begin(NodeType *N) { 
-    return N->getSubLoops().begin();
+    return N->begin();
   }
   static inline ChildIteratorType child_end(NodeType *N) { 
-    return N->getSubLoops().end();
+    return N->end();
   }
 };
 
@@ -219,10 +226,10 @@ template <> struct GraphTraits<Loop*> {
 
   static NodeType *getEntryNode(Loop *L) { return L; }
   static inline ChildIteratorType child_begin(NodeType *N) { 
-    return N->getSubLoops().begin();
+    return N->begin();
   }
   static inline ChildIteratorType child_end(NodeType *N) { 
-    return N->getSubLoops().end();
+    return N->end();
   }
 };
 
