@@ -1119,58 +1119,124 @@ void V8ISel::emitShift64 (MachineBasicBlock *MBB,
   bool isSigned = I.getType()->isSigned();
 
   switch (I.getOpcode ()) {
+  case Instruction::Shr: {
+    unsigned CarryReg = makeAnotherReg (Type::IntTy),
+             ThirtyTwo = makeAnotherReg (Type::IntTy),
+             HalfShiftReg = makeAnotherReg (Type::IntTy),
+             NegHalfShiftReg = makeAnotherReg (Type::IntTy),
+             TempReg = makeAnotherReg (Type::IntTy);
+    unsigned OneShiftOutReg = makeAnotherReg (Type::ULongTy),
+             TwoShiftsOutReg = makeAnotherReg (Type::ULongTy);
+
+    MachineBasicBlock *thisMBB = BB;
+    const BasicBlock *LLVM_BB = BB->getBasicBlock ();
+    MachineBasicBlock *shiftMBB = new MachineBasicBlock (LLVM_BB);
+    F->getBasicBlockList ().push_back (shiftMBB);
+    MachineBasicBlock *oneShiftMBB = new MachineBasicBlock (LLVM_BB);
+    F->getBasicBlockList ().push_back (oneShiftMBB);
+    MachineBasicBlock *twoShiftsMBB = new MachineBasicBlock (LLVM_BB);
+    F->getBasicBlockList ().push_back (twoShiftsMBB);
+    MachineBasicBlock *continueMBB = new MachineBasicBlock (LLVM_BB);
+    F->getBasicBlockList ().push_back (continueMBB);
+
+    // .lshr_begin:
+    //   ...
+    //   subcc %g0, ShiftAmtReg, %g0                   ! Is ShAmt == 0?
+    //   be .lshr_continue                             ! Then don't shift.
+    //   ba .lshr_shift                                ! else shift.
+
+    BuildMI (BB, V8::SUBCCrr, 2, V8::G0).addReg (V8::G0)
+      .addReg (ShiftAmtReg);
+    BuildMI (BB, V8::BE, 1).addMBB (continueMBB);
+    BuildMI (BB, V8::BA, 1).addMBB (shiftMBB);
+
+    // Update machine-CFG edges
+    BB->addSuccessor (continueMBB);
+    BB->addSuccessor (shiftMBB);
+
+    // .lshr_shift: ! [preds: begin]
+    //   or %g0, 32, ThirtyTwo
+    //   subcc ThirtyTwo, ShiftAmtReg, HalfShiftReg    ! Calculate 32 - shamt
+    //   bg .lshr_two_shifts                           ! If >0, b two_shifts
+    //   ba .lshr_one_shift                            ! else one_shift.
+
+    BB = shiftMBB;
+
+    BuildMI (BB, V8::ORri, 2, ThirtyTwo).addReg (V8::G0).addSImm (32);
+    BuildMI (BB, V8::SUBCCrr, 2, HalfShiftReg).addReg (ThirtyTwo)
+      .addReg (ShiftAmtReg);
+    BuildMI (BB, V8::BG, 1).addMBB (twoShiftsMBB);
+    BuildMI (BB, V8::BA, 1).addMBB (oneShiftMBB);
+
+    // Update machine-CFG edges
+    BB->addSuccessor (twoShiftsMBB);
+    BB->addSuccessor (oneShiftMBB);
+
+    // .lshr_two_shifts: ! [preds: shift]
+    //   sll SrcReg, HalfShiftReg, CarryReg            ! Save the borrows
+    //  ! <SHIFT> in following is sra if signed, srl if unsigned
+    //   <SHIFT> SrcReg, ShiftAmtReg, TwoShiftsOutReg  ! Shift top half
+    //   srl SrcReg+1, ShiftAmtReg, TempReg            ! Shift bottom half
+    //   or TempReg, CarryReg, TwoShiftsOutReg+1       ! Restore the borrows
+    //   ba .lshr_continue
+    unsigned ShiftOpcode = (isSigned ? V8::SRArr : V8::SRLrr);
+
+    BB = twoShiftsMBB;
+
+    BuildMI (BB, V8::SLLrr, 2, CarryReg).addReg (SrcReg)
+      .addReg (HalfShiftReg);
+    BuildMI (BB, ShiftOpcode, 2, TwoShiftsOutReg).addReg (SrcReg)
+      .addReg (ShiftAmtReg);
+    BuildMI (BB, V8::SRLrr, 2, TempReg).addReg (SrcReg+1)
+      .addReg (ShiftAmtReg);
+    BuildMI (BB, V8::ORrr, 2, TwoShiftsOutReg+1).addReg (TempReg)
+      .addReg (CarryReg);
+    BuildMI (BB, V8::BA, 1).addMBB (continueMBB);
+
+    // Update machine-CFG edges
+    BB->addSuccessor (continueMBB);
+
+    // .lshr_one_shift: ! [preds: shift]
+    //  ! if unsigned:
+    //   or %g0, %g0, OneShiftOutReg                       ! Zero top half
+    //  ! or, if signed:
+    //   sra SrcReg, 31, OneShiftOutReg                    ! Sign-ext top half
+    //   sub %g0, HalfShiftReg, NegHalfShiftReg            ! Make ShiftAmt >0
+    //   <SHIFT> SrcReg, NegHalfShiftReg, OneShiftOutReg+1 ! Shift bottom half
+    //   ba .lshr_continue
+
+    BB = oneShiftMBB;
+    
+    if (isSigned)
+      BuildMI (BB, V8::SRAri, 2, OneShiftOutReg).addReg (SrcReg).addZImm (31);
+    else
+      BuildMI (BB, V8::ORrr, 2, OneShiftOutReg).addReg (V8::G0)
+        .addReg (V8::G0);
+    BuildMI (BB, V8::SUBrr, 2, NegHalfShiftReg).addReg (V8::G0)
+      .addReg (HalfShiftReg);
+    BuildMI (BB, ShiftOpcode, 2, OneShiftOutReg+1).addReg (SrcReg)
+      .addReg (NegHalfShiftReg);
+    BuildMI (BB, V8::BA, 1).addMBB (continueMBB);
+
+    // Update machine-CFG edges
+    BB->addSuccessor (continueMBB);
+
+    // .lshr_continue: ! [preds: begin, do_one_shift, do_two_shifts]
+    //   phi (SrcReg, begin), (TwoShiftsOutReg, two_shifts),
+    //       (OneShiftOutReg, one_shift), DestReg      ! Phi top half...
+    //   phi (SrcReg+1, begin), (TwoShiftsOutReg+1, two_shifts),
+    //       (OneShiftOutReg+1, one_shift), DestReg+1  ! And phi bottom half.
+
+    BB = continueMBB;
+    BuildMI (BB, V8::PHI, 6, DestReg).addReg (SrcReg).addMBB (thisMBB)
+      .addReg (TwoShiftsOutReg).addMBB (twoShiftsMBB)
+      .addReg (OneShiftOutReg).addMBB (oneShiftMBB);
+    BuildMI (BB, V8::PHI, 6, DestReg+1).addReg (SrcReg+1).addMBB (thisMBB)
+      .addReg (TwoShiftsOutReg+1).addMBB (twoShiftsMBB)
+      .addReg (OneShiftOutReg+1).addMBB (oneShiftMBB);
+    return;
+  }
   case Instruction::Shl:
-  case Instruction::Shr:
-    if (!isSigned) {
-      unsigned CarryReg = makeAnotherReg (Type::IntTy),
-               ThirtyTwo = makeAnotherReg (Type::IntTy),
-               HalfShiftReg = makeAnotherReg (Type::IntTy),
-               NegHalfShiftReg = makeAnotherReg (Type::IntTy),
-               TempReg = makeAnotherReg (Type::IntTy);
-      unsigned OneShiftOutReg = makeAnotherReg (Type::ULongTy),
-               TwoShiftsOutReg = makeAnotherReg (Type::ULongTy);
-
-      /*
-      .lshr_begin:
-      ...
-      // Check whether the shift amount is zero:
-      V8::G0 = V8::SUBCCrr V8::G0, ShiftAmountReg
-      V8::BE .lshr_continue
-      V8::BA .lshr_shift
-
-      .lshr_shift: // [preds: begin]
-      // Calculate 32 - shamt:
-      ThirtyTwo = V8::ORri V8::G0, 32
-      HalfShiftReg = V8::SUBCCrr ThirtyTwo, ShiftAmountReg
-      // See whether it was greater than 0:
-      V8::BG .lshr_two_shifts
-      V8::BA .lshr_one_shift
-
-      .lshr_two_shifts: // [preds: shift]
-      CarryReg = V8::SLLrr SrcReg, HalfShiftReg
-      TwoShiftsOutReg = V8::SRLrr SrcReg, ShiftAmountReg
-      TempReg = V8::SRLrr SrcReg+1, ShiftAmountReg
-      TwoShiftsOutReg+1 = V8::ORrr TempReg, CarryReg
-      V8::BA .lshr_continue
-
-      .lshr_one_shift: // [preds: shift]
-      OneShiftOutReg = V8::ORrr V8::G0, V8::G0
-      NegHalfShiftReg = V8::SUBrr V8::G0, HalfShiftReg
-      OneShiftOutReg+1 = V8::SRLrr SrcReg, NegHalfShiftReg
-      V8::BA .lshr_continue
-
-      .lshr_continue: // [preds: begin, do_one_shift, do_two_shifts]
-      DestReg = V8::PHI (SrcReg, begin), (TwoShiftsOutReg, two_shifts),
-                        (OneShiftOutReg, one_shift)
-      DestReg+1 = V8::PHI (SrcReg+1, begin), (TwoShiftsOutReg+1, two_shifts),
-                          (OneShiftOutReg+1, one_shift)
-      ...
-      */
-
-      std::cerr << "Sorry, 64-bit lshr is not yet supported:\n" << I;
-      abort ();
-      return;
-    }
   default:
     std::cerr << "Sorry, 64-bit shifts are not yet supported:\n" << I;
     abort ();
