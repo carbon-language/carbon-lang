@@ -127,17 +127,12 @@ ostream &operator<<(ostream &os, const MachineOperand &mop) {
   case MachineOperand::MO_CCRegister:
     os << "%ccreg";
     return OutputOperand(os, mop);
-    
   case MachineOperand::MO_SignExtendedImmed:
     return os << mop.immedVal;
-    
   case MachineOperand::MO_UnextendedImmed:
     return os << mop.immedVal;
-    
   case MachineOperand::MO_PCRelativeDisp:
-    os << "%disp(label ";
-    return OutputOperand(os, mop) << ")";
-    
+    return os << "%disp(label " << mop.getVRegValue() << ")";
   default:
     assert(0 && "Unrecognized operand type");
     break;
@@ -212,12 +207,12 @@ Set3OperandsFromInstrJUNK(MachineInstr* minstr,
     minstr->SetMachineOperand(op1Position, /*regNum*/ target.zeroRegNum);
   else
     {
-      if (op1Value->getValueType() == Value::ConstantVal)
-	{// value is constant and must be loaded from constant pool
-	  returnFlags = returnFlags | (1 << op1Position);
-	}
-      minstr->SetMachineOperand(op1Position,MachineOperand::MO_VirtualRegister,
-					    op1Value);
+      if (op1Value->isConstant()) {
+	// value is constant and must be loaded from constant pool
+	returnFlags = returnFlags | (1 << op1Position);
+      }
+      minstr->SetMachineOperand(op1Position, MachineOperand::MO_VirtualRegister,
+				op1Value);
     }
   
   // Check if operand 2 (if any) fits in the immed. field of the instruction,
@@ -237,10 +232,10 @@ Set3OperandsFromInstrJUNK(MachineInstr* minstr,
 	minstr->SetMachineOperand(op2Position, machineRegNum);
       else if (op2type == MachineOperand::MO_VirtualRegister)
 	{
-	  if (op2Value->getValueType() == Value::ConstantVal)
-	    {// value is constant and must be loaded from constant pool
-	      returnFlags = returnFlags | (1 << op2Position);
-	    }
+	  if (op2Value->isConstant()) {
+	    // value is constant and must be loaded from constant pool
+	    returnFlags = returnFlags | (1 << op2Position);
+	  }
 	  minstr->SetMachineOperand(op2Position, op2type, op2Value);
 	}
       else
