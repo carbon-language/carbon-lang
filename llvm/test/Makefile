@@ -14,8 +14,8 @@ all:: qmtest
 #
 
 # QMTest option specifying the location of the QMTest database.
-QMDB= -D $(LLVM_SRC_ROOT)/test/QMTestDB
-QMCLASSES=$(LLVM_OBJ_ROOT)/test/QMTestDB/QMTest
+QMDB= -D $(LLVM_SRC_ROOT)/test
+QMCLASSES=$(LLVM_OBJ_ROOT)/test/QMTest
 
 #
 # This is configuration information used by the test suite.  In QM Test, it's
@@ -42,10 +42,10 @@ QMTEST= QMTEST_CLASS_PATH=$(QMCLASSES) qmtest $(QMDB)
 # Execute the tests
 #
 qmtest:: $(LLVM_OBJ_ROOT)/test/tmp register
-	$(QMTEST) run -O $(LLVM_SRC_ROOT)/test/QMTestDB/expectations.qmr $(CONTEXT)
+	$(QMTEST) run -O $(LLVM_SRC_ROOT)/test/expectations.qmr $(CONTEXT)
 
 %.t:: $(LLVM_OBJ_ROOT)/test/tmp register
-	$(QMTEST) run -O $(LLVM_SRC_ROOT)/test/QMTestDB/expectations.qmr $(CONTEXT) $*
+	$(QMTEST) run -O $(LLVM_SRC_ROOT)/test/expectations.qmr $(CONTEXT) $*
 
 #
 # Create the temporary directory used by the test suite.

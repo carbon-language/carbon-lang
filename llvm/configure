@@ -1692,7 +1692,10 @@ fi
           ac_config_commands="$ac_config_commands test/Makefile.tests"
 
 
-          ac_config_commands="$ac_config_commands test/QMTestDB/QMTest/llvm.py"
+          ac_config_commands="$ac_config_commands test/QMTest/llvm.py"
+
+
+          ac_config_commands="$ac_config_commands test/QMTest/llvmdb.py"
 
 
           ac_config_commands="$ac_config_commands test/Programs/Makefile"
@@ -4420,7 +4423,7 @@ ia64-*-hpux*)
   ;;
 *-*-irix6*)
   # Find out which ABI we are using.
-  echo '#line 4423 "configure"' > conftest.$ac_ext
+  echo '#line 4426 "configure"' > conftest.$ac_ext
   if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
@@ -5261,7 +5264,7 @@ fi
 
 
 # Provide some information about the compiler.
-echo "$as_me:5264:" \
+echo "$as_me:5267:" \
      "checking for Fortran 77 compiler version" >&5
 ac_compiler=`set X $ac_compile; echo $2`
 { (eval echo "$as_me:$LINENO: \"$ac_compiler --version </dev/null >&5\"") >&5
@@ -6270,11 +6273,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:6273: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:6276: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:6277: \$? = $ac_status" >&5
+   echo "$as_me:6280: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -6502,11 +6505,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:6505: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:6508: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:6509: \$? = $ac_status" >&5
+   echo "$as_me:6512: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -6569,11 +6572,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:6572: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:6575: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:6576: \$? = $ac_status" >&5
+   echo "$as_me:6579: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -8581,7 +8584,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 8584 "configure"
+#line 8587 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -8679,7 +8682,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 8682 "configure"
+#line 8685 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -10815,11 +10818,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:10818: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:10821: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:10822: \$? = $ac_status" >&5
+   echo "$as_me:10825: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -10882,11 +10885,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:10885: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:10888: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:10889: \$? = $ac_status" >&5
+   echo "$as_me:10892: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -12125,7 +12128,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 12128 "configure"
+#line 12131 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -12223,7 +12226,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 12226 "configure"
+#line 12229 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -13045,11 +13048,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:13048: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:13051: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:13052: \$? = $ac_status" >&5
+   echo "$as_me:13055: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -13112,11 +13115,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:13115: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:13118: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:13119: \$? = $ac_status" >&5
+   echo "$as_me:13122: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -15056,11 +15059,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:15059: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:15062: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:15063: \$? = $ac_status" >&5
+   echo "$as_me:15066: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -15288,11 +15291,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:15291: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:15294: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:15295: \$? = $ac_status" >&5
+   echo "$as_me:15298: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -15355,11 +15358,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:15358: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:15361: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:15362: \$? = $ac_status" >&5
+   echo "$as_me:15365: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -17367,7 +17370,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 17370 "configure"
+#line 17373 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -17465,7 +17468,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 17468 "configure"
+#line 17471 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -23407,7 +23410,8 @@ ${srcdir}/autoconf/mkinstalldirs `dirname runtime/libdummy/Makefile`
 ${srcdir}/autoconf/mkinstalldirs `dirname runtime/libtrace/Makefile`
 ${srcdir}/autoconf/mkinstalldirs `dirname test/Makefile`
 ${srcdir}/autoconf/mkinstalldirs `dirname test/Makefile.tests`
-${srcdir}/autoconf/mkinstalldirs `dirname test/QMTestDB/QMTest/llvm.py`
+${srcdir}/autoconf/mkinstalldirs `dirname test/QMTest/llvm.py`
+${srcdir}/autoconf/mkinstalldirs `dirname test/QMTest/llvmdb.py`
 ${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/Makefile`
 ${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/Makefile.programs`
 ${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/TEST.aa.Makefile`
@@ -23596,7 +23600,8 @@ do
   "runtime/libtrace/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS runtime/libtrace/Makefile" ;;
   "test/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Makefile" ;;
   "test/Makefile.tests" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Makefile.tests" ;;
-  "test/QMTestDB/QMTest/llvm.py" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/QMTestDB/QMTest/llvm.py" ;;
+  "test/QMTest/llvm.py" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/QMTest/llvm.py" ;;
+  "test/QMTest/llvmdb.py" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/QMTest/llvmdb.py" ;;
   "test/Programs/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/Makefile" ;;
   "test/Programs/Makefile.programs" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/Makefile.programs" ;;
   "test/Programs/TEST.aa.Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/TEST.aa.Makefile" ;;
@@ -24416,7 +24421,8 @@ echo "$as_me: executing $ac_dest commands" >&6;}
     runtime/libtrace/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/runtime/libtrace/Makefile runtime/libtrace/Makefile ;;
     test/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Makefile test/Makefile ;;
     test/Makefile.tests ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Makefile.tests test/Makefile.tests ;;
-    test/QMTestDB/QMTest/llvm.py ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/QMTestDB/QMTest/llvm.py test/QMTestDB/QMTest/llvm.py ;;
+    test/QMTest/llvm.py ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/QMTest/llvm.py test/QMTest/llvm.py ;;
+    test/QMTest/llvmdb.py ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/QMTest/llvmdb.py test/QMTest/llvmdb.py ;;
     test/Programs/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/Makefile test/Programs/Makefile ;;
     test/Programs/Makefile.programs ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/Makefile.programs test/Programs/Makefile.programs ;;
     test/Programs/TEST.aa.Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/TEST.aa.Makefile test/Programs/TEST.aa.Makefile ;;
