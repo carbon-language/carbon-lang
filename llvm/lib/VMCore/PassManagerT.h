@@ -16,16 +16,10 @@
 #include <string>
 
 //===----------------------------------------------------------------------===//
-// PMDebug class - a set of debugging functions that are enabled when compiling
-// with -g on.  If compiling at -O, all functions are inlined noops.
+// PMDebug class - a set of debugging functions, that are not to be
+// instantiated by the template.
 //
 struct PMDebug {
-#ifdef NDEBUG
-  inline static void PrintPassStructure(Pass *) {}
-  inline static void PrintPassInformation(unsigned,const char*,Pass*,Value*) {}
-  inline static void PrintAnalysisSetInfo(unsigned,const char*,Pass *P, 
-                                          const Pass::AnalysisSet &) {}
-#else
   // If compiled in debug mode, these functions can be enabled by setting
   // -debug-pass on the command line of the tool being used.
   //
@@ -33,7 +27,6 @@ struct PMDebug {
   static void PrintPassInformation(unsigned,const char*,Pass *, Value *);
   static void PrintAnalysisSetInfo(unsigned,const char*,Pass *P,
                                    const Pass::AnalysisSet&);
-#endif
 };
 
 
@@ -159,7 +152,6 @@ public:
     return MadeChanges;
   }
 
-#ifndef NDEBUG
   // dumpPassStructure - Implement the -debug-passes=PassStructure option
   virtual void dumpPassStructure(unsigned Offset = 0) {
     std::cerr << std::string(Offset*2, ' ') << Traits::getPMName()
@@ -179,7 +171,6 @@ public:
       }
     }
   }
-#endif
 
   Pass *getAnalysisOrNullDown(AnalysisID ID) const {
     std::map<AnalysisID, Pass*>::const_iterator I = CurrentAnalyses.find(ID);
