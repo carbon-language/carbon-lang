@@ -233,6 +233,14 @@ AC_CONFIG_MAKEFILE(projects/ModuleMaker/Makefile)
 AC_CONFIG_MAKEFILE(projects/ModuleMaker/Makefile.common)
 AC_CONFIG_MAKEFILE(projects/ModuleMaker/tools/Makefile)
 AC_CONFIG_MAKEFILE(projects/ModuleMaker/tools/ModuleMaker/Makefile)
+AC_CONFIG_MAKEFILE(projects/Stacker/Makefile)
+AC_CONFIG_MAKEFILE(projects/Stacker/lib/Makefile)
+AC_CONFIG_MAKEFILE(projects/Stacker/lib/compiler/Makefile)
+AC_CONFIG_MAKEFILE(projects/Stacker/lib/runtime/Makefile)
+AC_CONFIG_MAKEFILE(projects/Stacker/tools/Makefile)
+AC_CONFIG_MAKEFILE(projects/Stacker/tools/stkrc/Makefile)
+AC_CONFIG_MAKEFILE(projects/Stacker/test/Makefile)
+AC_CONFIG_MAKEFILE(projects/Stacker/samples/Makefile)
 
 dnl **************************************************************************
 dnl * Determine which system we are building on
