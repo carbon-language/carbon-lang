@@ -250,6 +250,11 @@ AC_CHECK_HEADER([inttypes.h],
                 [INCLUDE_INTTYPES_H='#include <inttypes.h>'],
                 [INCLUDE_INTTYPES_H=''])
 AC_SUBST(INCLUDE_INTTYPES_H)
+AC_CHECK_HEADER([stdint.h],
+                [INCLUDE_STDINT_H='#include <stdint.h>'],
+                [INCLUDE_STDINT_H=''])
+AC_SUBST(INCLUDE_STDINT_H)
+
 
 dnl Check for types
 AC_TYPE_PID_T
