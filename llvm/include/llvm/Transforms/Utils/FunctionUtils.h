@@ -7,7 +7,7 @@
 // 
 //===----------------------------------------------------------------------===//
 //
-// This family of functions perform manipulations on functions.
+// This family of transformations manipulate LLVM functions.
 //
 //===----------------------------------------------------------------------===//
 
@@ -18,6 +18,10 @@ namespace llvm {
 
 class Function;
 class Loop;
+
+/// ExtractCodeRegion - rip out a sequence of basic blocks into a new function
+///
+Function* ExtractCodeRegion(const std::vector<BasicBlock*> &code);
 
 /// ExtractLoop - rip out a natural loop into a new function
 ///
