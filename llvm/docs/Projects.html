@@ -94,7 +94,7 @@ then you need to edit <tt>autoconf/configure.ac</tt> as follows:
   <ul>
     <li><b>AC_INIT</b>. Place the name of your project, its version number and
     a contact email address for your project as the arguments to this macro</li>
-    <li><b>AC_CONFIG_AUC_DIR</tt>. If your project isn't in the
+    <li><b>AC_CONFIG_AUC_DIR</b>. If your project isn't in the
     <tt>llvm/projects</tt> directory then you might need to adjust this so that
     it specifies a relative path to the <tt>llvm/autoconf</tt> directory.</li>
     <li><b>LLVM_CONFIG_PROJECT</b>. Just leave this alone.</li>
@@ -203,19 +203,15 @@ directories:</p>
     test procedure uses RUN lines in the actual test case to determine
     how to run the test.  See the <a
     href="TestingGuide.html">TestingGuide</a> for more details. You
-    can easily write Makefile support similar to the Makefiles in <tt>llvm/test</tt>
-    to use Dejagnu to run your project's tests.</li>
-
-    <p>
-
+    can easily write Makefile support similar to the Makefiles in 
+    <tt>llvm/test</tt> to use Dejagnu to run your project's tests.<br/></li>
     <li>
     LLVM contains an optional package called <tt>llvm-test</tt>
     which provides benchmarks and programs that are known to compile with the
     LLVM GCC front ends.  You can use these
     programs to test your code, gather statistics information, and
     compare it to the current LLVM performance statistics.
-    <p>
-    Currently, there is no way to hook your tests directly into the
+    <br/>Currently, there is no way to hook your tests directly into the
     <tt>llvm/test</tt> testing harness.  You will simply
     need to find a way to use the source provided within that directory
     on your own.
