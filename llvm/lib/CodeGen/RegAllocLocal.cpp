@@ -25,6 +25,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/Statistic.h"
+#include <algorithm>
 using namespace llvm;
 
 namespace {

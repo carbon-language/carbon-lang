@@ -28,6 +28,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
+#include <algorithm>
 using namespace llvm;
 
 namespace {
