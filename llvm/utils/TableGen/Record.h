@@ -304,6 +304,15 @@ struct Init {
     return 0;
   }
 
+  /// convertInitListSlice - This method is used to implement the list slice
+  /// selection operator.  Given an initializer, it selects the specified list
+  /// elements, returning them as a new init of list type.  If it is not legal
+  /// to take a slice of this, return null.
+  ///
+  virtual Init *convertInitListSlice(const std::vector<unsigned> &Elements) {
+    return 0;
+  }
+
   /// getFieldType - This method is used to implement the FieldInit class.
   /// Implementors of this method should return the type of the named field if
   /// they are of record type.
@@ -465,6 +474,8 @@ public:
     assert(i < Values.size() && "List element index out of range!");
     return Values[i];
   }
+
+  Init *convertInitListSlice(const std::vector<unsigned> &Elements);
 
   virtual Init *convertInitializerTo(RecTy *Ty) {
     return Ty->convertValue(this);

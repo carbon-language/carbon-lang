@@ -300,6 +300,14 @@ Value : INTVAL {
     }
     $$ = new DagInit(D, *$3);
     delete $2; delete $3;
+  } | Value '[' BitList ']' {
+    std::reverse($3->begin(), $3->end());
+    $$ = $1->convertInitListSlice(*$3);
+    if ($$ == 0) {
+      err() << "Invalid list slice for value '" << *$1 << "'!\n";
+      exit(1);
+    }
+    delete $3;
   };
 
 OptVarName : /* empty */ {
@@ -330,41 +338,61 @@ RBitList : INTVAL {
     $$ = new std::vector<unsigned>();
     $$->push_back($1);
   } | INTVAL '-' INTVAL {
-    if ($1 < $3 || $1 < 0 || $3 < 0) {
-      err() << "Invalid bit range: " << $1 << "-" << $3 << "!\n";
+    if ($1 < 0 || $3 < 0) {
+      err() << "Invalid range: " << $1 << "-" << $3 << "!\n";
       exit(1);
     }
     $$ = new std::vector<unsigned>();
-    for (int i = $1; i >= $3; --i)
-      $$->push_back(i);
+    if ($1 < $3) {
+      for (int i = $1; i <= $3; ++i)
+        $$->push_back(i);
+    } else {
+      for (int i = $1; i >= $3; --i)
+        $$->push_back(i);
+    }
   } | INTVAL INTVAL {
     $2 = -$2;
-    if ($1 < $2 || $1 < 0 || $2 < 0) {
-      err() << "Invalid bit range: " << $1 << "-" << $2 << "!\n";
+    if ($1 < 0 || $2 < 0) {
+      err() << "Invalid range: " << $1 << "-" << $2 << "!\n";
       exit(1);
     }
     $$ = new std::vector<unsigned>();
-    for (int i = $1; i >= $2; --i)
-      $$->push_back(i);
+    if ($1 < $2) {
+      for (int i = $1; i <= $2; ++i)
+        $$->push_back(i);
+    } else {
+      for (int i = $1; i >= $2; --i)
+        $$->push_back(i);
+    }
   } | RBitList ',' INTVAL {
     ($$=$1)->push_back($3);
   } | RBitList ',' INTVAL '-' INTVAL {
-    if ($3 < $5 || $3 < 0 || $5 < 0) {
-      err() << "Invalid bit range: " << $3 << "-" << $5 << "!\n";
+    if ($3 < 0 || $5 < 0) {
+      err() << "Invalid range: " << $3 << "-" << $5 << "!\n";
       exit(1);
     }
     $$ = $1;
-    for (int i = $3; i >= $5; --i)
-      $$->push_back(i);
+    if ($3 < $5) {
+      for (int i = $3; i <= $5; ++i)
+        $$->push_back(i);
+    } else {
+      for (int i = $3; i >= $5; --i)
+        $$->push_back(i);
+    }
   } | RBitList ',' INTVAL INTVAL {
     $4 = -$4;
-    if ($3 < $4 || $3 < 0 || $4 < 0) {
-      err() << "Invalid bit range: " << $3 << "-" << $4 << "!\n";
+    if ($3 < 0 || $4 < 0) {
+      err() << "Invalid range: " << $3 << "-" << $4 << "!\n";
       exit(1);
     }
     $$ = $1;
-    for (int i = $3; i >= $4; --i)
-      $$->push_back(i);
+    if ($3 < $4) {
+      for (int i = $3; i <= $4; ++i)
+        $$->push_back(i);
+    } else {
+      for (int i = $3; i >= $4; --i)
+        $$->push_back(i);
+    }
   };
 
 BitList : RBitList { $$ = $1; std::reverse($1->begin(), $1->end()); };

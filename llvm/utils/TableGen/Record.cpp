@@ -310,6 +310,16 @@ Init *IntInit::convertInitializerBitRange(const std::vector<unsigned> &Bits) {
   return BI;
 }
 
+Init *ListInit::convertInitListSlice(const std::vector<unsigned> &Elements) {
+  std::vector<Init*> Vals;
+  for (unsigned i = 0, e = Elements.size(); i != e; ++i) {
+    if (Elements[i] >= getSize())
+      return 0;
+    Vals.push_back(getElement(Elements[i]));
+  }
+  return new ListInit(Vals);
+}
+
 void ListInit::print(std::ostream &OS) const {
   OS << "[";
   for (unsigned i = 0, e = Values.size(); i != e; ++i) {
