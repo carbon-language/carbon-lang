@@ -36,6 +36,8 @@ Codegen improvements needed:
 	b .LBBl42__2E_expand_function_8_674	; loopentry.24
 	b .LBBl42__2E_expand_function_8_42	; NewDefault
 	b .LBBl42__2E_expand_function_8_42	; NewDefault
+* conditional restore of link register (tricky, temporarily backed out
+  part of first attempt)
 
 Current hacks:
 * lazy insert of GlobalBaseReg definition at front of first MBB
@@ -48,15 +50,13 @@ Currently failing tests:
 * SingleSource
   `- Regression
   |  `- 2003-05-22-VarSizeArray
+  |  `- casts (ulong to fp failure)
   `- Benchmarks
   |  `- Shootout-C++ : most programs fail, miscompilations
   `- UnitTests
-  |   `- C++Catch
-  |   `- SimpleC++Test
-  `- ConditionalExpr
-  `- casts
-  `- sumarray2d: large alloca miscompiled
-  `- test_indvars
+  |  `- C++Catch
+  |  `- SimpleC++Test
+  |  `- ConditionalExpr (also C++)
 * MultiSource
   |- Applications
   |  `- burg: miscompilation
@@ -64,4 +64,4 @@ Currently failing tests:
   |  `- hbd: miscompilation
   |  `- d (make_dparser): miscompilation
   `- Benchmarks
-     `- MallocBench/make: branch target too far
+     `- MallocBench/make: miscompilation
