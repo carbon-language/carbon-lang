@@ -45,8 +45,8 @@ public:
   static void setPrev(MachineInstr* N, MachineInstr* prev) { N->prev = prev; }
   static void setNext(MachineInstr* N, MachineInstr* next) { N->next = next; }
 
-  static MachineInstr* createSentinal();
-  static void destroySentinal(MachineInstr *MI) { delete MI; }
+  static MachineInstr* createSentinel();
+  static void destroySentinel(MachineInstr *MI) { delete MI; }
   void addNodeToList(MachineInstr* N);
   void removeNodeFromList(MachineInstr* N);
   void transferNodesFromList(
