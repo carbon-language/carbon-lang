@@ -90,14 +90,14 @@ class PoolAllocate : public Pass {
   EquivalenceClasses<Function *> FuncECs;
 
   // Map from an Indirect CallInst to the set of Functions that it can point to
-  map<CallInst *, vector<Function *> > CallInstTargets;
+  std::multimap<CallInst *, Function *> CallInstTargets;
 
   // This maps an equivalence class to the last pool argument number for that 
   // class. This is used because the pool arguments for all functions within
   // an equivalence class is passed to all the functions in that class.
   // If an equivalence class does not require pool arguments, it is not
   // on this map.
-  map<Function *, int> EqClass2LastPoolArg;
+  std::map<Function *, int> EqClass2LastPoolArg;
 
  public:
   bool run(Module &M);

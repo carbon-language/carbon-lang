@@ -17,16 +17,25 @@
 #include "llvm/Support/InstVisitor.h"
 #include "Support/Statistic.h"
 #include "Support/VectorExtras.h"
-
+using std::vector;
+using std::map;
+using std::multimap;
 using namespace PA;
 
 namespace {
   const Type *VoidPtrTy = PointerType::get(Type::SByteTy);
-  // The type to allocate for a pool descriptor: { sbyte*, uint }
-  const Type *PoolDescType =
-    StructType::get(make_vector<const Type*>(VoidPtrTy, Type::UIntTy, 0));
-  const PointerType *PoolDescPtr = PointerType::get(PoolDescType);
 
+  // The type to allocate for a pool descriptor: { sbyte*, uint, uint }
+  // void *Data (the data)
+  // unsigned NodeSize  (size of an allocated node)
+  // unsigned FreeablePool (are slabs in the pool freeable upon calls to 
+  //                        poolfree?)
+  const Type *PoolDescType = 
+  StructType::get(make_vector<const Type*>(VoidPtrTy, Type::UIntTy, 
+					   Type::UIntTy, 0));
+  
+  const PointerType *PoolDescPtr = PointerType::get(PoolDescType);
+  
   RegisterOpt<PoolAllocate>
   X("poolalloc", "Pool allocate disjoint data structures");
 }
@@ -40,7 +49,7 @@ void PoolAllocate::getAnalysisUsage(AnalysisUsage &AU) const {
 // Prints out the functions mapped to the leader of the equivalence class they
 // belong to.
 void PoolAllocate::printFuncECs() {
-  map<Function*, Function*> leaderMap = FuncECs.getLeaderMap();
+  map<Function*, Function*> &leaderMap = FuncECs.getLeaderMap();
   std::cerr << "Indirect Function Map \n";
   for (map<Function*, Function*>::iterator LI = leaderMap.begin(),
 	 LE = leaderMap.end(); LI != LE; ++LI) {
@@ -73,23 +82,28 @@ void PoolAllocate::buildIndirectFunctionSets(Module &M) {
 	   CSE = callSites.end(); CSI != CSE ; ++CSI) {
       if (CSI->isIndirectCall()) {
 	DSNode *DSN = CSI->getCalleeNode();
+	if (DSN->NodeType == DSNode::Incomplete) 
+	  std::cerr << "Incomplete node " << CSI->getCallInst();
 	// assert(DSN->NodeType == DSNode::GlobalNode);
-	std::vector<GlobalValue*> Callees = DSN->getGlobals();
+	std::vector<GlobalValue*> &Callees = DSN->getGlobals();
 	if (Callees.size() > 0) {
 	  Function *firstCalledF = dyn_cast<Function>(*Callees.begin());
 	  FuncECs.addElement(firstCalledF);
-	  CallInstTargets[&CSI->getCallInst()].push_back(firstCalledF);
+	  CallInstTargets.insert(std::pair<CallInst*,Function*>
+				 (&CSI->getCallInst(),
+				  firstCalledF));
 	  if (Callees.size() > 1) {
 	    for (std::vector<GlobalValue*>::iterator CalleesI = 
 		   ++Callees.begin(), CalleesE = Callees.end(); 
 		 CalleesI != CalleesE; ++CalleesI) {
 	      Function *calledF = dyn_cast<Function>(*CalleesI);
-	      FuncECs.unionElements(firstCalledF, calledF);
-	      CallInstTargets[&CSI->getCallInst()].push_back(calledF);
+	      FuncECs.unionSetsWith(firstCalledF, calledF);
+	      CallInstTargets.insert(std::pair<CallInst*,Function*>
+				     (&CSI->getCallInst(), calledF));
 	    }
 	  }
 	} else {
-	  std::cerr << "Callee has no targets\n";
+	  std::cerr << "No targets " << CSI->getCallInst();
 	}
       }
     }
@@ -97,7 +111,6 @@ void PoolAllocate::buildIndirectFunctionSets(Module &M) {
   
   // Print the equivalence classes
   DEBUG(printFuncECs());
-  
 }
 
 bool PoolAllocate::run(Module &M) {
@@ -523,7 +536,7 @@ namespace {
 
     Function* getFuncClass(Value *V);
 
-    Value* retCloneIfNotFP(Value *V);
+    Value* retCloneIfFunc(Value *V);
   };
 }
 
@@ -534,13 +547,8 @@ void PoolAllocate::TransformFunctionBody(Function &F, DSGraph &G, FuncInfo &FI){
 
 // Returns true if V is a function pointer
 bool FuncTransform::isFuncPtr(Value *V) {
-  if (V->getType()->getPrimitiveID() == Type::PointerTyID) {
-    const PointerType *PTy = dyn_cast<PointerType>(V->getType());
-    
-    if (PTy->getElementType()->getPrimitiveID() == Type::FunctionTyID)
-      return true;
-  }
-
+  if (const PointerType *PTy = dyn_cast<PointerType>(V->getType()))
+     return isa<FunctionType>(PTy->getElementType());
   return false;
 }
 
@@ -569,7 +577,7 @@ Function* FuncTransform::getFuncClass(Value *V) {
   if (!DSN) {
     return 0;
   }
-  std::vector<GlobalValue*> Callees = DSN->getGlobals();
+  std::vector<GlobalValue*> &Callees = DSN->getGlobals();
   if (Callees.size() > 0) {
     Function *calledF = dyn_cast<Function>(*Callees.begin());
     assert(PAInfo.FuncECs.findClass(calledF) && "should exist in some eq. class");
@@ -580,40 +588,36 @@ Function* FuncTransform::getFuncClass(Value *V) {
   return 0;
 }
 
-// Returns the clone if  V is not a function pointer 
-Value* FuncTransform::retCloneIfNotFP(Value *V) {
-  if (isFuncPtr(V))
-    if (isa<Function>(V))
-      if (getFuncClass(V)) {
-	Function *fixedFunc = dyn_cast<Function>(V);
-	return PAInfo.getFuncInfo(*fixedFunc)->Clone;
-      }
+// Returns the clone if  V is a static function (not a pointer) and belongs 
+// to an equivalence class i.e. is pool allocated
+Value* FuncTransform::retCloneIfFunc(Value *V) {
+  if (Function *fixedFunc = dyn_cast<Function>(V))
+    if (getFuncClass(V))
+      return PAInfo.getFuncInfo(*fixedFunc)->Clone;
   
   return 0;
 }
 
 void FuncTransform::visitReturnInst (ReturnInst &I) {
   if (I.getNumOperands())
-    if (Value *clonedFunc = retCloneIfNotFP(I.getOperand(0))) {
+    if (Value *clonedFunc = retCloneIfFunc(I.getOperand(0))) {
       // Cast the clone of I.getOperand(0) to the non-pool-allocated type
       CastInst *CastI = new CastInst(clonedFunc, I.getOperand(0)->getType(), 
-				     "", &I);
+				     "tmp", &I);
       // Insert return instruction that returns the casted value
       new ReturnInst(CastI, &I);
 
       // Remove original return instruction
-      I.setName("");
       I.getParent()->getInstList().erase(&I);
     }
 }
 
 void FuncTransform::visitStoreInst (StoreInst &I) {
   // Check if a constant function is being stored
-  if (Value *clonedFunc = retCloneIfNotFP(I.getOperand(0))) {
-    CastInst *CastI = new CastInst(clonedFunc, I.getOperand(0)->getType(), "", 
-				   &I);
+  if (Value *clonedFunc = retCloneIfFunc(I.getOperand(0))) {
+    CastInst *CastI = new CastInst(clonedFunc, I.getOperand(0)->getType(), 
+				   "tmp", &I);
     new StoreInst(CastI, I.getOperand(1), &I);
-    I.setName("");
     I.getParent()->getInstList().erase(&I);
   }
 }
@@ -626,11 +630,11 @@ void FuncTransform::visitPHINode(PHINode &I) {
   if (isFuncPtr(&I)) {
     PHINode *V = new PHINode(I.getType(), I.getName(), &I);
     for (unsigned i = 0 ; i < I.getNumIncomingValues(); ++i) {
-      if (Value *clonedFunc = retCloneIfNotFP(I.getIncomingValue(i))) {
+      if (Value *clonedFunc = retCloneIfFunc(I.getIncomingValue(i))) {
 	// Insert CastInst at the end of  I.getIncomingBlock(i)
 	BasicBlock::iterator BBI = --I.getIncomingBlock(i)->end();
 	// BBI now points to the terminator instruction of the basic block.
-	CastInst *CastI = new CastInst(clonedFunc, I.getType(), "", BBI);
+	CastInst *CastI = new CastInst(clonedFunc, I.getType(), "tmp", BBI);
 	V->addIncoming(CastI, I.getIncomingBlock(i));
       } else {
 	V->addIncoming(I.getIncomingValue(i), I.getIncomingBlock(i));
@@ -638,7 +642,6 @@ void FuncTransform::visitPHINode(PHINode &I) {
       
     }
     I.replaceAllUsesWith(V);
-    I.setName("");
     I.getParent()->getInstList().erase(&I);
   }
 }
@@ -739,8 +742,7 @@ void FuncTransform::visitCallInst(CallInst &CI) {
       if (isa<Function>(CastI->getOperand(0)) && 
 	  CastI->getOperand(0)->getType() == CastI->getType())
 	CF = dyn_cast<Function>(CastI->getOperand(0));
-    } else if (isa<ConstantExpr>(CI.getOperand(0))) {
-      ConstantExpr *CE = dyn_cast<ConstantExpr>(CI.getOperand(0));
+    } else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(CI.getOperand(0))) {
       if (CE->getOpcode() == Instruction::Cast) {
 	if (isa<ConstantPointerRef>(CE->getOperand(0)))
 	  return;
@@ -760,24 +762,25 @@ void FuncTransform::visitCallInst(CallInst &CI) {
     std::map<unsigned, Value*> PoolArgs;
     Function *FuncClass;
     
-    for (vector<Function *>::iterator TFI = PAInfo.CallInstTargets[&CI].begin(),
-	   TFE = PAInfo.CallInstTargets[&CI].end(); TFI != TFE; ++TFI) {
-      if (TFI == PAInfo.CallInstTargets[&CI].begin()) {
-	FuncClass = PAInfo.FuncECs.findClass(*TFI);
+    std::pair<multimap<CallInst*, Function*>::iterator, multimap<CallInst*, Function*>::iterator> Targets = PAInfo.CallInstTargets.equal_range(&CI);
+    for (multimap<CallInst*, Function*>::iterator TFI = Targets.first,
+	   TFE = Targets.second; TFI != TFE; ++TFI) {
+      if (TFI == Targets.first) {
+	FuncClass = PAInfo.FuncECs.findClass(TFI->second);
 	// Nothing to transform if there are no pool arguments in this
 	// equivalence class of functions.
 	if (!PAInfo.EqClass2LastPoolArg.count(FuncClass))
 	  return;
       }
       
-      FuncInfo *CFI = PAInfo.getFuncInfo(**TFI);
+      FuncInfo *CFI = PAInfo.getFuncInfo(*TFI->second);
 
       if (!CFI->ArgNodes.size()) continue;  // Nothing to transform...
       
-      DSGraph &CG = PAInfo.getBUDataStructures().getDSGraph(**TFI);  
+      DSGraph &CG = PAInfo.getBUDataStructures().getDSGraph(*TFI->second);  
       std::map<DSNode*, DSNode*> NodeMapping;
       
-      Function::aiterator AI = (*TFI)->abegin(), AE = (*TFI)->aend();
+      Function::aiterator AI = TFI->second->abegin(), AE = TFI->second->aend();
       unsigned OpNum = 1;
       for ( ; AI != AE; ++AI, ++OpNum) {
 	if (!isa<Constant>(CI.getOperand(OpNum)))
@@ -832,15 +835,16 @@ void FuncTransform::visitCallInst(CallInst &CI) {
     
     Value *NewCall;
     if (Args.size() > CI.getNumOperands() - 1) {
+      // If there are any pool arguments
       CastInst *CastI = 
 	new CastInst(CI.getOperand(0), 
-		     PAInfo.getFuncInfo(*FuncClass)->Clone->getType(), "", &CI);
+		     PAInfo.getFuncInfo(*FuncClass)->Clone->getType(), "tmp", 
+		     &CI);
       NewCall = new CallInst(CastI, Args, Name, &CI);
     } else {
       NewCall = new CallInst(CI.getOperand(0), Args, Name, &CI);
     }
 
-    CI.setName("");
     CI.replaceAllUsesWith(NewCall);
     DEBUG(std::cerr << "  Result Call: " << *NewCall);
   }
@@ -914,7 +918,7 @@ void FuncTransform::visitCallInst(CallInst &CI) {
     // Add the rest of the arguments...
     Args.insert(Args.end(), CI.op_begin()+1, CI.op_end());
     
-    std::string Name = CI.getName(); CI.setName("");
+    std::string Name = CI.getName(); 
     Value *NewCall = new CallInst(CFI->Clone, Args, Name, &CI);
     CI.replaceAllUsesWith(NewCall);
     DEBUG(std::cerr << "  Result Call: " << *NewCall);
