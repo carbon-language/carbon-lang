@@ -613,7 +613,7 @@ Module *ParseBytecodeFile(const std::string &Filename, std::string *ErrorStr) {
       free(FileData); return 0;
     }
 
-#define ALIGN_PTRS 1
+#define ALIGN_PTRS 0
 #if ALIGN_PTRS
     uchar *Buf = (uchar*)mmap(0, FileSize, PROT_READ|PROT_WRITE, 
 			      MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
