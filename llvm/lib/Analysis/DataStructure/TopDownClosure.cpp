@@ -54,7 +54,7 @@ bool TDDataStructures::run(Module &M) {
   if (Function *F = M.getMainFunction())
     ComputePostOrder(*F, VisitedGraph, PostOrder, ActualCallees);
 
-  // Next calculate the graphs for each function unreachable function...
+  // Next calculate the graphs for each unreachable function...
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
     ComputePostOrder(*I, VisitedGraph, PostOrder, ActualCallees);
 
@@ -147,12 +147,27 @@ void TDDataStructures::inlineGraphIntoCallees(DSGraph &Graph) {
       HasIncompleteArgs = true;
       break;
     }
-  
+
+  // Now fold in the necessary globals from the GlobalsGraph.  A global G
+  // must be folded in if it exists in the current graph (i.e., is not dead)
+  // and it was not inlined from any of my callers.  If it was inlined from
+  // a caller, it would have been fully consistent with the GlobalsGraph
+  // in the caller so folding in is not necessary.  Otherwise, this node came
+  // solely from this function's BU graph and so has to be made consistent.
+  // 
+  Graph.updateFromGlobalGraph();
+
+  // Recompute the Incomplete markers.  Depends on whether args are complete
   unsigned Flags
     = HasIncompleteArgs ? DSGraph::MarkFormalArgs : DSGraph::IgnoreFormalArgs;
   Graph.markIncompleteNodes(Flags | DSGraph::IgnoreGlobals);
+
+  // Delete dead nodes.  Treat globals that are unreachable as dead also.
   Graph.removeDeadNodes(DSGraph::RemoveUnreachableGlobals);
 
+  // We are done with computing the current TD Graph! Now move on to
+  // inlining the current graph into the graphs for its callees, if any.
+  // 
   const std::vector<DSCallSite> &FunctionCalls = Graph.getFunctionCalls();
   if (FunctionCalls.empty()) {
     DEBUG(std::cerr << "  [TD] No callees for: " << Graph.getFunctionNames()
@@ -161,7 +176,9 @@ void TDDataStructures::inlineGraphIntoCallees(DSGraph &Graph) {
   }
 
   // Now that we have information about all of the callees, propagate the
-  // current graph into the callees.
+  // current graph into the callees.  Clone only the reachable subgraph at
+  // each call-site, not the entire graph (even though the entire graph
+  // would be cloned only once, this should still be better on average).
   //
   DEBUG(std::cerr << "  [TD] Inlining '" << Graph.getFunctionNames() <<"' into "
                   << FunctionCalls.size() << " call nodes.\n");
@@ -169,70 +186,80 @@ void TDDataStructures::inlineGraphIntoCallees(DSGraph &Graph) {
   const BUDataStructures::ActualCalleesTy &ActualCallees =
     getAnalysis<BUDataStructures>().getActualCallees();
 
-  // Only inline this function into each real callee once.  After that, just
-  // merge information into arguments...
-  hash_map<DSGraph*, DSGraph::NodeMapTy> InlinedSites;
-
-  // Loop over all the callees... cloning this graph into each one exactly once,
-  // keeping track of the node mapping information...
+  // Loop over all the call sites and all the callees at each call site.
+  // Clone and merge the reachable subgraph from the call into callee's graph.
+  // 
   for (unsigned i = 0, e = FunctionCalls.size(); i != e; ++i) {
-    // Inline this graph into each function in the invoked function list.
+    // For each function in the invoked function list at this call site...
     std::pair<BUDataStructures::ActualCalleesTy::const_iterator,
       BUDataStructures::ActualCalleesTy::const_iterator>
           IP = ActualCallees.equal_range(&FunctionCalls[i].getCallInst());
 
-    int NumArgs = 0;
-    if (IP.first != IP.second) {
-      NumArgs = IP.first->second->getFunctionType()->getNumParams();
-      for (BUDataStructures::ActualCalleesTy::const_iterator I = IP.first;
-           I != IP.second; ++I)
-        if (NumArgs != (int)I->second->getFunctionType()->getNumParams()) {
-          NumArgs = -1;
-          break;
+    // Multiple callees may have the same graph, so try to inline and merge
+    // only once for each <callSite,calleeGraph> pair, not once for each
+    // <callSite,calleeFunction> pair; the latter will be correct but slower.
+    hash_set<DSGraph*> GraphsSeen;
+
+    // Loop over each actual callee at this call site
+    for (BUDataStructures::ActualCalleesTy::const_iterator I = IP.first;
+         I != IP.second; ++I) {
+      DSGraph& CalleeGraph = getDSGraph(*I->second);
+      assert(&CalleeGraph != &Graph && "TD need not inline graph into self!");
+
+      // if this callee graph is already done at this site, skip this callee
+      if (GraphsSeen.find(&CalleeGraph) != GraphsSeen.end())
+        continue;
+      GraphsSeen.insert(&CalleeGraph);
+
+      // Get the root nodes for cloning the reachable subgraph into each callee:
+      // -- all global nodes that appear in both the caller and the callee
+      // -- return value at this call site, if any
+      // -- actual arguments passed at this call site
+      // -- callee node at this call site, if this is an indirect call (this may
+      //    not be needed for merging, but allows us to create CS and therefore
+      //    simplify the merging below).
+      hash_set<const DSNode*> RootNodeSet;
+      for (DSGraph::ScalarMapTy::const_iterator
+             SI = CalleeGraph.getScalarMap().begin(),
+             SE = CalleeGraph.getScalarMap().end(); SI != SE; ++SI)
+        if (GlobalValue* GV = dyn_cast<GlobalValue>(SI->first)) {
+          DSGraph::ScalarMapTy::const_iterator GI=Graph.getScalarMap().find(GV);
+          if (GI != Graph.getScalarMap().end())
+            RootNodeSet.insert(GI->second.getNode());
         }
-    }
-    
-    if (NumArgs == -1) {
-      std::cerr << "ERROR: NONSAME NUMBER OF ARGUMENTS TO CALLEES\n";
-    }
- 
-    for (BUDataStructures::ActualCalleesTy::const_iterator I = IP.first;
-         I != IP.second; ++I) {
-      DSGraph &CG = getDSGraph(*I->second);
-      assert(&CG != &Graph && "TD need not inline graph into self!");
 
-      if (!InlinedSites.count(&CG)) {  // If we haven't already inlined into CG
-        DEBUG(std::cerr << "     [TD] Inlining graph into callee graph '"
-              << CG.getFunctionNames() << "': " << I->second->getFunctionType()->getNumParams() << " args\n");
-        DSGraph::ScalarMapTy OldScalarMap;
-        DSGraph::ReturnNodesTy ReturnNodes;
-        CG.cloneInto(Graph, OldScalarMap, ReturnNodes, InlinedSites[&CG],
-                     DSGraph::StripModRefBits | DSGraph::KeepAllocaBit |
-                     DSGraph::DontCloneCallNodes |
-                     DSGraph::DontCloneAuxCallNodes);
-        ++NumTDInlines;
-      }
-    }
-  }
+      if (const DSNode* RetNode = FunctionCalls[i].getRetVal().getNode())
+        RootNodeSet.insert(RetNode);
 
-  // Loop over all the callees...
-  for (unsigned i = 0, e = FunctionCalls.size(); i != e; ++i) {
-    // Inline this graph into each function in the invoked function list.
-    std::pair<BUDataStructures::ActualCalleesTy::const_iterator,
-      BUDataStructures::ActualCalleesTy::const_iterator>
-          IP = ActualCallees.equal_range(&FunctionCalls[i].getCallInst());
-    for (BUDataStructures::ActualCalleesTy::const_iterator I = IP.first;
-         I != IP.second; ++I) {
-      DSGraph &CG = getDSGraph(*I->second);
+      for (unsigned j=0, N=FunctionCalls[i].getNumPtrArgs(); j < N; ++j)
+        if (const DSNode* ArgTarget = FunctionCalls[i].getPtrArg(j).getNode())
+          RootNodeSet.insert(ArgTarget);
+
+      if (FunctionCalls[i].isIndirectCall())
+        RootNodeSet.insert(FunctionCalls[i].getCalleeNode());
+
       DEBUG(std::cerr << "     [TD] Resolving arguments for callee graph '"
-                      << CG.getFunctionNames() << "'\n");
+            << CalleeGraph.getFunctionNames()
+            << "': " << I->second->getFunctionType()->getNumParams()
+            << " args\n          at call site (DSCallSite*) 0x"
+            << &FunctionCalls[i] << "\n");
+      
+      DSGraph::NodeMapTy NodeMapInCallee; // map from nodes to clones in callee
+      DSGraph::NodeMapTy CompletedMap;    // unused map for nodes not to do
+      CalleeGraph.cloneReachableSubgraph(Graph, RootNodeSet,
+                                         NodeMapInCallee, CompletedMap,
+                                         DSGraph::StripModRefBits |
+                                         DSGraph::KeepAllocaBit);
 
-      // Transform our call site information into the cloned version for CG
-      DSCallSite CS(FunctionCalls[i], InlinedSites[&CG]);
+      // Transform our call site info into the cloned version for CalleeGraph
+      DSCallSite CS(FunctionCalls[i], NodeMapInCallee);
 
-      // Get the arguments bindings for the called function in CG... and merge
-      // them with the cloned graph.
-      CG.getCallSiteForArguments(*I->second).mergeWith(CS);
+      // Get the formal argument and return nodes for the called function
+      // and merge them with the cloned subgraph.  Global nodes were merged  
+      // already by cloneReachableSubgraph() above.
+      CalleeGraph.getCallSiteForArguments(*I->second).mergeWith(CS);
+
+      ++NumTDInlines;
     }
   }
 
