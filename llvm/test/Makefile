@@ -1,3 +1,12 @@
+#===- test/Makefile ----------------------------------------*- Makefile -*--===#
+# 
+#                     The LLVM Compiler Infrastructure
+#
+# This file was developed by the LLVM research group and is distributed under
+# the University of Illinois Open Source License. See LICENSE.TXT for details.
+# 
+#===------------------------------------------------------------------------===#
+
 LEVEL  = ..
 DIRS   = 
 
@@ -7,16 +16,12 @@ DIRS   =
 #
 all:: qmtest
 
-#
 # Include other test rules
-#
 include Makefile.tests
 
-#
 # New QMTest functionality:
 #	The test suite is being transitioned over to QMTest.  Eventually, it
 #	will use QMTest by default.
-#
 
 # QMTest option specifying the location of the QMTest database.
 QMDB= -D $(LLVM_SRC_ROOT)/test
@@ -110,6 +115,10 @@ qmtest-clean:
 	$(RM) -f $(LLVM_SRC_ROOT)/test/results.qmr \
 		$(LLVM_OBJ_ROOT)/test/results.qmr
 
+#===------------------------------------------------------------------------===#
+# DejaGNU testing support
+#===------------------------------------------------------------------------===#
+
 EXPECT = expect
 RUNTEST = runtest
 
@@ -117,9 +126,7 @@ check-dejagnu: site.exp
 	$(RUNTEST)
 
 dejagnu-clean:
-	cd $(LLVM_OBJ_ROOT)/test/
-	$(RM) -rf Regression/*/Output
-	$(RM) -rf Regression/*/*/Output
+	$(RM) -rf `find $(LLVM_OBJ_ROOT)/test/Regression -name Output -type d -print`
 
 site.exp: Makefile $(LLVM_OBJ_ROOT)/Makefile.config
 	@echo 'Making a new site.exp file...'
@@ -138,3 +145,4 @@ site.exp: Makefile $(LLVM_OBJ_ROOT)/Makefile.config
 	@-rm -f site.bak
 	@test ! -f site.exp || mv site.exp site.bak
 	@mv site.tmp site.exp
+
