@@ -562,7 +562,7 @@ bool RPR::DoRaisePass(Function &F) {
   bool Changed = false;
   for (Function::iterator BB = F.begin(), BBE = F.end(); BB != BBE; ++BB)
     for (BasicBlock::iterator BI = BB->begin(); BI != BB->end();) {
-      DEBUG(std::cerr << "Processing: " << *BI);
+      DEBUG(std::cerr << "LevelRaising: " << *BI);
       if (dceInstruction(BI) || doConstantPropagation(BI)) {
         Changed = true; 
         ++NumDCEorCP;

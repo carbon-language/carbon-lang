@@ -211,7 +211,7 @@ bool Reassociate::ReassociateBB(BasicBlock *BB) {
   bool Changed = false;
   for (BasicBlock::iterator BI = BB->begin(); BI != BB->end(); ++BI) {
 
-    DEBUG(std::cerr << "Processing: " << *BI);
+    DEBUG(std::cerr << "Reassociating: " << *BI);
     if (BI->getOpcode() == Instruction::Sub && !BinaryOperator::isNeg(BI)) {
       // Convert a subtract into an add and a neg instruction... so that sub
       // instructions can be commuted with other add instructions...
