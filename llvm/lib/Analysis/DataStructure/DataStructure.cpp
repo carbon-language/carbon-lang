@@ -248,9 +248,9 @@ void DSGraph::markIncompleteNodes() {
       markIncompleteNode(Args[i]);
   }
 
-  // Mark all of the nodes pointed to by global nodes as incomplete...
+  // Mark all of the nodes pointed to by global or cast nodes as incomplete...
   for (unsigned i = 0, e = Nodes.size(); i != e; ++i)
-    if (Nodes[i]->NodeType & DSNode::GlobalNode) {
+    if (Nodes[i]->NodeType & (DSNode::GlobalNode | DSNode::CastNode)) {
       DSNode *N = Nodes[i];
       for (unsigned i = 0, e = N->getNumLinks(); i != e; ++i)
         markIncompleteNode(N->getLink(i));

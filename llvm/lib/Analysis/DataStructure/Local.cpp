@@ -5,6 +5,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/Analysis/DataStructure.h"
 #include "llvm/Function.h"
 #include "llvm/iMemory.h"
 #include "llvm/iTerminators.h"
@@ -14,7 +15,6 @@
 #include "llvm/GlobalVariable.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Support/InstVisitor.h"
-#include "llvm/Analysis/DataStructure.h" // FIXME:
 using std::map;
 using std::vector;
 
@@ -66,17 +66,7 @@ namespace {
     void visitCallInst(CallInst &CI);
     void visitSetCondInst(SetCondInst &SCI) {}  // SetEQ & friends are ignored
     void visitFreeInst(FreeInst &FI) {}         // Ignore free instructions
-    void visitInstruction(Instruction &I) {
-#ifndef NDEBUG
-      bool bad = isa<PointerType>(I.getType());
-      for (Instruction::op_iterator i = I.op_begin(), E = I.op_end(); i!=E; ++i)
-        bad |= isa<PointerType>(i->get()->getType());
-      if (bad) {
-        std::cerr << "\n\n\nUNKNOWN PTR INSTRUCTION type: " << I << "\n\n\n";
-        assert(0 && "Cannot proceed");
-      }
-#endif
-    }
+    void visitInstruction(Instruction &I);      // Visit unsafe ptr instruction
 
   private:
     // Helper functions used to implement the visitation functions...
@@ -307,3 +297,18 @@ void GraphBuilder::visitCallInst(CallInst &CI) {
     if (isa<PointerType>(CI.getOperand(i)->getType()))
       Args.push_back(getLink(getValueNode(*CI.getOperand(i)), 0));
 }
+
+// visitInstruction - All safe instructions have been processed above, this case
+// is where unsafe ptr instructions land.
+//
+void GraphBuilder::visitInstruction(Instruction &I) {
+  // If the return type is a pointer, mark the pointed node as being a cast node
+  if (isa<PointerType>(I.getType()))
+    getLink(getValueNode(I), 0)->NodeType |= DSNode::CastNode;
+
+  // If any operands are pointers, mark the pointed nodes as being a cast node
+  for (Instruction::op_iterator i = I.op_begin(), E = I.op_end(); i!=E; ++i)
+    if (isa<PointerType>(i->get()->getType()))
+      getLink(getValueNode(*i->get()), 0)->NodeType |= DSNode::CastNode;
+}
+
