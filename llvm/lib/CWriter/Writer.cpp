@@ -287,7 +287,10 @@ void CWriter::printConstantArray(ConstantArray *CPA) {
         (unsigned char)cast<ConstantUInt>(CPA->getOperand(i))->getValue();
       
       if (isprint(C)) {
-        Out << C;
+        if (C == '"')
+          Out << "\\\"";
+        else
+          Out << C;
       } else {
         switch (C) {
         case '\n': Out << "\\n"; break;
@@ -295,6 +298,8 @@ void CWriter::printConstantArray(ConstantArray *CPA) {
         case '\r': Out << "\\r"; break;
         case '\v': Out << "\\v"; break;
         case '\a': Out << "\\a"; break;
+        case '\"': Out << "\\\""; break;
+        case '\'': Out << "\\\'"; break;           
         default:
           Out << "\\x";
           Out << ( C/16  < 10) ? ( C/16 +'0') : ( C/16 -10+'A');
