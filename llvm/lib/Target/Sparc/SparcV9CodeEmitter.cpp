@@ -449,7 +449,7 @@ int64_t SparcV9CodeEmitter::getMachineOpValue(MachineInstr &MI,
             if (ConstantMap.find(C) != ConstantMap.end()) {
               rv = MCE.getConstantPoolEntryAddress(ConstantMap[C]);
             } else {
-              std::cerr << "Constant: 0x" << std::hex << &*C << std::dec
+              std::cerr << "Constant: 0x" << std::hex << (intptr_t)C
                         << ", " << *V << " not found in ConstantMap!\n";
               abort();
             }
