@@ -16,10 +16,6 @@
 
 #include "llvm/Config/config.h"
 
-#ifdef HAVE_LTDL_H
-#include <ltdl.h>
-#endif
-
 #ifdef HAVE_DLFCN_H
 #include <dlfcn.h>
 #endif
