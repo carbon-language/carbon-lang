@@ -210,7 +210,7 @@ void SlotCalculator::processSymbolTableConstants(const SymbolTable *ST) {
   for (SymbolTable::const_iterator I = ST->begin(), E = ST->end(); I != E; ++I)
     for (SymbolTable::type_const_iterator TI = I->second.begin(), 
 	   TE = I->second.end(); TI != TE; ++TI)
-      if (isa<Constant>(TI->second))
+      if (isa<Constant>(TI->second) || isa<Type>(TI->second))
 	getOrCreateSlot(TI->second);
 }
 
@@ -236,12 +236,6 @@ void SlotCalculator::incorporateFunction(const Function *F) {
   // bytecode writer.
   //
   if (BuildBytecodeInfo) {                // Assembly writer does not need this!
-    SC_DEBUG("Inserting function constants:\n";
-	     for (constant_iterator I = constant_begin(F), E = constant_end(F);
-		  I != E; ++I) {
-	       std::cerr << "  " << *I->getType() << " " << *I << "\n";
-	     });
-
     // Emit all of the constants that are being used by the instructions in the
     // function...
     for_each(constant_begin(F), constant_end(F),
@@ -256,25 +250,16 @@ void SlotCalculator::incorporateFunction(const Function *F) {
     processSymbolTableConstants(&F->getSymbolTable());
   }
 
-  SC_DEBUG("Inserting Labels:\n");
-
-  // Iterate over basic blocks, adding them to the value table...
-  for (Function::const_iterator I = F->begin(), E = F->end(); I != E; ++I)
-    getOrCreateSlot(I);
-
   SC_DEBUG("Inserting Instructions:\n");
 
   // Add all of the instructions to the type planes...
-  for (Function::const_iterator BB = F->begin(), E = F->end(); BB != E; ++BB)
+  for (Function::const_iterator BB = F->begin(), E = F->end(); BB != E; ++BB) {
+    getOrCreateSlot(BB);
     for (BasicBlock::const_iterator I = BB->begin(), E = BB->end(); I!=E; ++I) {
       getOrCreateSlot(I);
       if (const VANextInst *VAN = dyn_cast<VANextInst>(I))
         getOrCreateSlot(VAN->getArgType());
     }
-
-  if (BuildBytecodeInfo) {
-    SC_DEBUG("Inserting SymbolTable values:\n");
-    processSymbolTable(&F->getSymbolTable());
   }
 
   SC_DEBUG("end processFunction!\n");
