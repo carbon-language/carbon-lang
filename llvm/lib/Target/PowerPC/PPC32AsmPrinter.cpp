@@ -50,7 +50,7 @@ namespace {
     /// Name-mangler for global names.
     ///
     Mangler *Mang;
-    std::set< std::string > Stubs;
+    std::set<std::string> Stubs;
     std::set<std::string> Strings;
 
     Printer(std::ostream &o, TargetMachine &tm) : O(o), TM(tm) { }
@@ -66,8 +66,7 @@ namespace {
     }
 
     void printMachineInstruction(const MachineInstr *MI);
-    void printOp(const MachineOperand &MO,
-    bool elideOffsetKeyword = false);
+    void printOp(const MachineOperand &MO, bool elideOffsetKeyword = false);
     void printConstantPool(MachineConstantPool *MCP);
     bool runOnMachineFunction(MachineFunction &F);    
     bool doInitialization(Module &M);
@@ -82,7 +81,7 @@ namespace {
 /// using the given target machine description.  This should work
 /// regardless of whether the function is in SSA form.
 ///
-FunctionPass *createPPCCodePrinterPass(std::ostream &o,TargetMachine &tm){
+FunctionPass *createPPCCodePrinterPass(std::ostream &o,TargetMachine &tm) {
   return new Printer(o, tm);
 }
 
@@ -428,7 +427,7 @@ void Printer::printOp(const MachineOperand &MO,
     return;
   case MachineOperand::MO_GlobalAddress:
     if (!elideOffsetKeyword) {
-      if(isa<Function>(MO.getGlobal())) {
+      if (isa<Function>(MO.getGlobal())) {
         Stubs.insert(Mang->getValueName(MO.getGlobal()));
         O << "L" << Mang->getValueName(MO.getGlobal()) << "$stub";
       } else {
