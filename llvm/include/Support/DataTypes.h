@@ -25,7 +25,10 @@
 
 #include "Config/config.h"
 
-#define __STDC_LIMIT_MACROS 1
+// Note that this header's correct operation depends on __STDC_LIMIT_MACROS
+// being defined.  We would define it here, but in order to prevent Bad Things
+// happening when system headers or C++ STL headers include stdint.h before
+// we define it here, we define it on the g++ command line (in Makefile.rules).
 
 #ifdef HAVE_INTTYPES_H
 #include <inttypes.h>
