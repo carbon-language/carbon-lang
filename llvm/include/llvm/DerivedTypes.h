@@ -145,6 +145,8 @@ public:
   }
 };
 
+// TODO: FIXME
+#define FunctionType MethodType
 
 // CompositeType - Common super class of ArrayType, StructType, and PointerType
 //
