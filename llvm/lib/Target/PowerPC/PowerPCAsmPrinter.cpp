@@ -564,6 +564,7 @@ void Printer::printMachineInstruction(const MachineInstr *MI) {
   } else {
     for (i = 0; i < ArgCount; ++i) {
       if (i == 1 && ArgCount == 3 && ArgType[2] == PPC32II::Simm16 &&
+          MI->getOperand(1).hasAllocatedReg() && 
           MI->getOperand(1).getReg() == PPC32::R0) {
         O << "0";
       } else {
