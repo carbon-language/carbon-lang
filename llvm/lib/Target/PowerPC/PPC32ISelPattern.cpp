@@ -488,6 +488,7 @@ static unsigned canUseAsImmediateForOpcode(SDOperand N, unsigned Opcode,
     if ((v & 0x0000FFFF) == 0) { Imm = v >> 16; return 2; }
     break;
   case ISD::MUL:
+  case ISD::SUB:
     if (v <= 32767 && v >= -32768) { Imm = v & 0xFFFF; return 1; }
     break;
   case ISD::SETCC:
@@ -903,10 +904,6 @@ unsigned ISel::SelectExpr(SDOperand N) {
     Node->dump();
     assert(0 && "Node not handled!\n");
   case ISD::UNDEF:
-    if (Result != 1)
-      ExprMap[N.getValue(1)] = 1;
-    else
-      Result = ExprMap[N.getValue(0)] = MakeReg(N.getValue(0).getValueType());
     BuildMI(BB, PPC::IMPLICIT_DEF, 0, Result);
     return Result;
   case ISD::DYNAMIC_STACKALLOC:
@@ -1212,9 +1209,13 @@ unsigned ISel::SelectExpr(SDOperand N) {
 
   case ISD::SUB:
     assert (DestType == MVT::i32 && "Only do arithmetic on i32s!");
-    Tmp1 = SelectExpr(N.getOperand(0));
     Tmp2 = SelectExpr(N.getOperand(1));
-    BuildMI(BB, PPC::SUBF, 2, Result).addReg(Tmp2).addReg(Tmp1);
+    if (1 == canUseAsImmediateForOpcode(N.getOperand(0), opcode, Tmp1))
+      BuildMI(BB, PPC::SUBFIC, 2, Result).addReg(Tmp2).addSImm(Tmp1);
+    else {
+      Tmp1 = SelectExpr(N.getOperand(0));
+      BuildMI(BB, PPC::SUBF, 2, Result).addReg(Tmp2).addReg(Tmp1);
+    }
     return Result;
     
   case ISD::MUL:
@@ -1524,8 +1525,8 @@ void ISel::Select(SDOperand N) {
       Select(N.getOperand(0));
       Tmp1 = SelectExpr(N.getOperand(1));
       Tmp2 = SelectExpr(N.getOperand(2));
-      BuildMI(BB, PPC::OR, 2, PPC::R3).addReg(Tmp1).addReg(Tmp1);
-      BuildMI(BB, PPC::OR, 2, PPC::R4).addReg(Tmp2).addReg(Tmp2);
+      BuildMI(BB, PPC::OR, 2, PPC::R3).addReg(Tmp2).addReg(Tmp2);
+      BuildMI(BB, PPC::OR, 2, PPC::R4).addReg(Tmp1).addReg(Tmp1);
       break;
     case 2:
       Select(N.getOperand(0));
