@@ -1107,36 +1107,34 @@ void DSGraph::cloneInto(const DSGraph &G, DSScalarMap &OldValMap,
   assert(OldNodeMap.empty() && "Returned OldNodeMap should be empty!");
   assert(&G != this && "Cannot clone graph into itself!");
 
-  // Remember the last node that existed before, or node_end() if there are no
-  // nodes.
-  node_iterator FN = node_end();
-  if (FN != node_begin()) --FN;
-
   // Remove alloca or mod/ref bits as specified...
   unsigned BitsToClear = ((CloneFlags & StripAllocaBit)? DSNode::AllocaNode : 0)
     | ((CloneFlags & StripModRefBits)? (DSNode::Modified | DSNode::Read) : 0)
     | ((CloneFlags & StripIncompleteBit)? DSNode::Incomplete : 0);
   BitsToClear |= DSNode::DEAD;  // Clear dead flag...
-  for (node_iterator I = G.node_begin(), E = G.node_end(); I != E; ++I)
-    if (!(*I)->isForwarding()) {
-      DSNode *New = new DSNode(**I, this);
-      New->maskNodeTypes(~BitsToClear);
-      OldNodeMap[*I] = New;
-    }
 
+  for (node_iterator I = G.node_begin(), E = G.node_end(); I != E; ++I) {
+    assert(!(*I)->isForwarding() &&
+           "Forward nodes shouldn't be in node list!");
+    DSNode *New = new DSNode(**I, this);
+    New->maskNodeTypes(~BitsToClear);
+    OldNodeMap[*I] = New;
+  }
+  
 #ifndef NDEBUG
   Timer::addPeakMemoryMeasurement();
 #endif
-
-  // Move FN to the first newly added node.
-  if (FN != node_end())
-    ++FN;
-  else
-    FN = node_begin();
-
+  
   // Rewrite the links in the new nodes to point into the current graph now.
-  for (; FN != node_end(); ++FN)
-    (*FN)->remapLinks(OldNodeMap);
+  // Note that we don't loop over the node's list to do this.  The problem is
+  // that remaping links can cause recursive merging to happen, which means
+  // that node_iterator's can get easily invalidated!  Because of this, we
+  // loop over the OldNodeMap, which contains all of the new nodes as the
+  // .second element of the map elements.  Also note that if we remap a node
+  // more than once, we won't break anything.
+  for (NodeMapTy::iterator I = OldNodeMap.begin(), E = OldNodeMap.end();
+       I != E; ++I)
+    I->second.getNode()->remapLinks(OldNodeMap);
 
   // Copy the scalar map... merging all of the global nodes...
   for (DSScalarMap::const_iterator I = G.ScalarMap.begin(),
@@ -1238,6 +1236,7 @@ void DSGraph::mergeInGraph(const DSCallSite &CS, Function &F,
     // If the user requested it, add the nodes that we need to clone to the
     // RootNodes set.
     if (!EnableDSNodeGlobalRootsHack)
+      // FIXME: Why is this not iterating over the globals in the graph??
       for (node_iterator NI = Graph.node_begin(), E = Graph.node_end();
            NI != E; ++NI)
         if (!(*NI)->getGlobals().empty())
