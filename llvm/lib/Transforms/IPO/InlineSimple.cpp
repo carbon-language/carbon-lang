@@ -18,7 +18,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Transforms/FunctionInlining.h"
+#include "llvm/Transforms/IPO.h"
+#include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
 #include "llvm/iTerminators.h"

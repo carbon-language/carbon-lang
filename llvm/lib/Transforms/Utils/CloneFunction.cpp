@@ -1,10 +1,10 @@
 
+
+
 // FIXME: document
 
-#include "llvm/Transforms/Utils/CloneFunction.h"
+#include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Function.h"
-#include "llvm/BasicBlock.h"
-#include "llvm/Instruction.h"
 #include <map>
 
 // FIXME: This should be merged with FunctionInlining
