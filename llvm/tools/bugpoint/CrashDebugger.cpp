@@ -6,12 +6,14 @@
 
 #include "BugDriver.h"
 #include "SystemUtils.h"
+#include "ListReducer.h"
 #include "llvm/Module.h"
+#include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Bytecode/Writer.h"
 #include "llvm/Pass.h"
 #include <fstream>
+#include <set>
 
-#if 0
 class DebugCrashes : public ListReducer<const PassInfo*> {
   BugDriver &BD;
 public:
@@ -21,140 +23,148 @@ public:
   // the "Kept" passes fail when run on the output of the "removed" passes.  If
   // we return true, we update the current module of bugpoint.
   //
-  virtual bool doTest(const std::vector<ElTy> &Removed,
-                      const std::vector<ElTy> &Kept) {
-    return BD.runPasses(Kept);
-  }
+  virtual TestResult doTest(std::vector<const PassInfo*> &Removed,
+                            std::vector<const PassInfo*> &Kept);
 };
-#endif
+
+DebugCrashes::TestResult
+DebugCrashes::doTest(std::vector<const PassInfo*> &Prefix,
+                     std::vector<const PassInfo*> &Suffix) {
+  std::string PrefixOutput;
+  if (!Prefix.empty()) {
+    std::cout << "Checking to see if these passes crash: "
+              << getPassesString(Prefix) << ": ";
+    if (BD.runPasses(Prefix, PrefixOutput))
+      return KeepPrefix;
+  }
+
+  std::cout << "Checking to see if these passes crash: "
+            << getPassesString(Suffix) << ": ";
+  Module *OrigProgram = BD.Program;
+  BD.Program = BD.ParseInputFile(PrefixOutput);
+  if (BD.Program == 0) {
+    std::cerr << BD.getToolName() << ": Error reading bytecode file '"
+              << PrefixOutput << "'!\n";
+    exit(1);
+  }
+  removeFile(PrefixOutput);
+
+  if (BD.runPasses(Suffix)) {
+    delete OrigProgram;            // The suffix crashes alone...
+    return KeepSuffix;
+  }
+
+  // Nothing failed, restore state...
+  delete BD.Program;
+  BD.Program = OrigProgram;
+  return NoFailure;
+}
+
+class ReduceCrashingFunctions : public ListReducer<Function*> {
+  BugDriver &BD;
+public:
+  ReduceCrashingFunctions(BugDriver &bd) : BD(bd) {}
+
+  virtual TestResult doTest(std::vector<Function*> &Prefix,
+                            std::vector<Function*> &Kept) {
+    if (TestFuncs(Kept))
+      return KeepSuffix;
+    if (!Prefix.empty() && TestFuncs(Prefix))
+      return KeepPrefix;
+    return NoFailure;
+  }
+  
+  bool TestFuncs(std::vector<Function*> &Prefix);
+};
+
+bool ReduceCrashingFunctions::TestFuncs(std::vector<Function*> &Funcs) {
+  // Clone the program to try hacking it appart...
+  Module *M = CloneModule(BD.Program);
+  
+  // Convert list to set for fast lookup...
+  std::set<Function*> Functions;
+  for (unsigned i = 0, e = Funcs.size(); i != e; ++i) {
+    Function *CMF = M->getFunction(Funcs[i]->getName(), 
+                                   Funcs[i]->getFunctionType());
+    assert(CMF && "Function not in module?!");
+    Functions.insert(CMF);    
+  }
+
+  std::cout << "Checking for crash with only these functions:";
+  for (unsigned i = 0, e = Funcs.size(); i != e; ++i)
+    std::cout << " " << Funcs[i]->getName();
+  std::cout << ": ";
+
+  // Loop over and delete any functions which we aren't supposed to be playing
+  // with...
+  for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I)
+    if (I->isExternal() && !Functions.count(I))
+      DeleteFunctionBody(I);
+
+  // Try running the hacked up program...
+  std::swap(BD.Program, M);
+  if (BD.runPasses(BD.PassesToRun)) {
+    delete M;         // It crashed, keep the trimmed version...
+
+    // Make sure to use function pointers that point into the now-current
+    // module.
+    Funcs.assign(Functions.begin(), Functions.end());
+    return true;
+  }
+  delete BD.Program;  // It didn't crash, revert...
+  BD.Program = M;
+  return false;
+}
+
 
 /// debugCrash - This method is called when some pass crashes on input.  It
 /// attempts to prune down the testcase to something reasonable, and figure
 /// out exactly which pass is crashing.
 ///
 bool BugDriver::debugCrash() {
+  bool AnyReduction = false;
   std::cout << "\n*** Debugging optimizer crash!\n";
 
-#if 0
   // Reduce the list of passes which causes the optimizer to crash...
+  unsigned OldSize = PassesToRun.size();
   DebugCrashes(*this).reduceList(PassesToRun);
-#endif
 
-  unsigned LastToPass = 0, LastToCrash = PassesToRun.size();
-  while (LastToPass != LastToCrash) {
-    unsigned Mid = (LastToCrash+LastToPass+1) / 2;
-    std::vector<const PassInfo*> P(PassesToRun.begin(),
-                                   PassesToRun.begin()+Mid);
-    std::cout << "Checking to see if the first " << Mid << " passes crash: ";
-
-    if (runPasses(P))
-      LastToCrash = Mid-1;
-    else
-      LastToPass = Mid;
-  }
-
-  // Make sure something crashed.  :)
-  if (LastToCrash >= PassesToRun.size()) {
+  if (PassesToRun.size() == OldSize) { // Make sure something crashed.  :)
     std::cerr << "ERROR: No passes crashed!\n";
     return true;
   }
 
-  // Calculate which pass it is that crashes...
-  const PassInfo *CrashingPass = PassesToRun[LastToCrash];
-  
-  std::cout << "\n*** Found crashing pass '-" << CrashingPass->getPassArgument()
-            << "': " << CrashingPass->getPassName() << "\n";
+  std::cout << "\n*** Found crashing pass"
+            << (PassesToRun.size() == 1 ? ": " : "es: ")
+            << getPassesString(PassesToRun) << "\n";
 
-  // Compile the program with just the passes that don't crash.
-  if (LastToPass != 0) { // Don't bother doing this if the first pass crashes...
-    std::vector<const PassInfo*> P(PassesToRun.begin(), 
-                                   PassesToRun.begin()+LastToPass);
-    std::string Filename;
-    std::cout << "Running passes that don't crash to get input for pass: ";
-    if (runPasses(P, Filename)) {
-      std::cerr << "ERROR: Running the first " << LastToPass
-                << " passes crashed this time!\n";
-      return true;
-    }
-
-    // Assuming everything was successful, we now have a valid bytecode file in
-    // OutputName.  Use it for "Program" Instead.
-    delete Program;
-    Program = ParseInputFile(Filename);
-
-    // Delete the file now.
-    removeFile(Filename);
-  }
-
-  PassesToRun.clear();
-  PassesToRun.push_back(CrashingPass);
-
-  return debugPassCrash(CrashingPass);
-}
-
-/// CountFunctions - return the number of non-external functions defined in the
-/// module.
-static unsigned CountFunctions(Module *M) {
-  unsigned N = 0;
-  for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I)
-    if (!I->isExternal())
-      ++N;
-  return N;
-}
-
-/// debugPassCrash - This method is called when the specified pass crashes on
-/// Program as input.  It tries to reduce the testcase to something that still
-/// crashes, but it smaller.
-///
-bool BugDriver::debugPassCrash(const PassInfo *Pass) {
   EmitProgressBytecode("passinput");
-  bool Reduced = false, AnyReduction = false;
+  
+  // Now try to reduce the number of functions in the module to something small.
+  std::vector<Function*> Functions;
+  for (Module::iterator I = Program->begin(), E = Program->end(); I != E; ++I)
+    if (!I->isExternal())
+      Functions.push_back(I);
 
-  if (CountFunctions(Program) > 1) {
-    // Attempt to reduce the input program down to a single function that still
-    // crashes.  Do this by removing everything except for that one function...
-    //
-    std::cout << "\n*** Attempting to reduce the testcase to one function\n";
+  if (Functions.size() > 1) {
+    std::cout << "\n*** Attempting to reduce the number of functions "
+      "in the testcase\n";
 
-    for (Module::iterator I = Program->begin(), E = Program->end(); I != E; ++I)
-      if (!I->isExternal()) {
-        // Extract one function from the module...
-        Module *M = extractFunctionFromModule(I);
+    OldSize = Functions.size();
+    ReduceCrashingFunctions(*this).reduceList(Functions);
 
-        // Make the function the current program...
-        std::swap(Program, M);
-        
-        // Find out if the pass still crashes on this pass...
-        std::cout << "Checking function '" << I->getName() << "': ";
-        if (runPass(Pass)) {
-          // Yup, it does, we delete the old module, and continue trying to
-          // reduce the testcase...
-          delete M;
-
-          Reduced = AnyReduction = true;
-          break;
-        }
-        
-        // This pass didn't crash on this function, try the next one.
-        delete Program;
-        Program = M;
-      }
-
-    if (CountFunctions(Program) > 1) {
-      std::cout << "\n*** Couldn't reduce testcase to one function.\n"
-                << "    Attempting to remove individual functions.\n";
-      std::cout << "XXX Individual function removal unimplemented!\n";
+    if (Functions.size() < OldSize) {
+      EmitProgressBytecode("reduced-function");
+      AnyReduction = true;
     }
-  }
-
-  if (Reduced) {
-    EmitProgressBytecode("reduced-function");
-    Reduced = false;
   }
 
   // FIXME: This should attempt to delete entire basic blocks at a time to speed
   // up convergence...
 
+  // FIXME: This should use the list reducer to converge faster by deleting
+  // larger chunks of instructions at a time!
+  bool Reduced = false;
   unsigned Simplification = 4;
   do {
     --Simplification;
@@ -186,7 +196,7 @@ bool BugDriver::debugPassCrash(const PassInfo *Pass) {
             
             // Find out if the pass still crashes on this pass...
             std::cout << "Checking instruction '" << I->getName() << "': ";
-            if (runPass(Pass)) {
+            if (runPasses(PassesToRun)) {
               // Yup, it does, we delete the old module, and continue trying to
               // reduce the testcase...
               delete M;
@@ -209,7 +219,7 @@ bool BugDriver::debugPassCrash(const PassInfo *Pass) {
     std::swap(Program, M);
             
     // Find out if the pass still crashes on the cleaned up program...
-    if (runPass(Pass)) {
+    if (runPasses(PassesToRun)) {
       // Yup, it does, keep the reduced version...
       delete M;
       Reduced = AnyReduction = true;

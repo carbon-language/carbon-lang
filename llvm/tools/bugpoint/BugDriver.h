@@ -17,8 +17,10 @@ class Function;
 class AbstractInterpreter;
 class Instruction;
 
+class DebugCrashes;
 class ReduceMiscompilingPasses;
 class ReduceMiscompilingFunctions;
+class ReduceCrashingFunctions;
 
 class BugDriver {
   const std::string ToolName;  // Name of bugpoint
@@ -26,8 +28,11 @@ class BugDriver {
   std::vector<const PassInfo*> PassesToRun;
   AbstractInterpreter *Interpreter;   // How to run the program
 
+  // FIXME: sort out public/private distinctions...
+  friend class DebugCrashes;
   friend class ReduceMiscompilingPasses;
   friend class ReduceMiscompilingFunctions;
+  friend class ReduceCrashingFunctions;
 public:
   BugDriver(const char *toolname)
     : ToolName(toolname), Program(0), Interpreter(0) {}
@@ -51,12 +56,6 @@ public:
   /// out exactly which pass is crashing.
   ///
   bool debugCrash();
-
-  /// debugPassCrash - This method is called when the specified pass crashes on
-  /// Program as input.  It tries to reduce the testcase to something that still
-  /// crashes, but it smaller.
-  ///
-  bool debugPassCrash(const PassInfo *PI);
 
   /// debugMiscompilation - This method is used when the passes selected are not
   /// crashing, but the generated output is semantically different from the
@@ -162,5 +161,10 @@ private:
 /// command line options that must be passed to add the passes.
 ///
 std::string getPassesString(const std::vector<const PassInfo*> &Passes);
+
+// DeleteFunctionBody - "Remove" the function by deleting all of it's basic
+// blocks, making it external.
+//
+void DeleteFunctionBody(Function *F);
 
 #endif
