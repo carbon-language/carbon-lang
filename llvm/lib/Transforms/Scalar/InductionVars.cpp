@@ -322,12 +322,23 @@ static bool ProcessIntervalPartition(cfg::IntervalPartition &IP) {
 		      ptr_fun(ProcessInterval));
 }
 
+#include "llvm/Analysis/LoopDepth.h"
 
 // DoInductionVariableCannonicalize - Simplify induction variables in loops.
 // This function loops over an interval partition of a program, reducing it
 // until the graph is gone.
 //
 bool DoInductionVariableCannonicalize(Method *M) {
+  if (1) {   // Print basic blocks with their depth
+    LoopDepthCalculator LDC(M);
+    for (Method::iterator I = M->getBasicBlocks().begin(); 
+	 I != M->getBasicBlocks().end(); ++I) {
+      cerr << "Basic Block Depth: " << LDC.getLoopDepth(*I) << *I;
+    }
+    
+  }
+
+
   cfg::IntervalPartition *IP = new cfg::IntervalPartition(M);
   bool Changed = false;
 
