@@ -43,7 +43,7 @@ Path::GetTemporaryDirectory() {
   free(pathname);
   assert(result.isValid() && "tempnam didn't create a valid pathname!");
   if (0 != mkdir(result.c_str(), S_IRWXU))
-    ThrowErrno(result.get() + ": Can't create temporary directory");
+    ThrowErrno(result.toString() + ": Can't create temporary directory");
   return result;
 }
 

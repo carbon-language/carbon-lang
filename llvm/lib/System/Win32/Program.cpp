@@ -71,7 +71,7 @@ int
 Program::ExecuteAndWait(const Path& path, 
                         const std::vector<std::string>& args) {
   if (!path.executable())
-    throw path.get() + " is not executable"; 
+    throw path.toString() + " is not executable"; 
 
   // Windows wants a command line, not an array of args, to pass to the new
   // process.  We have to concatenate them all, while quoting the args that
@@ -124,10 +124,11 @@ Program::ExecuteAndWait(const Path& path,
   PROCESS_INFORMATION pi;
   memset(&pi, 0, sizeof(pi));
 
-  if (!CreateProcess(path.get().c_str(), command, NULL, NULL, FALSE, 0,
+  if (!CreateProcess(path.c_str(), command, NULL, NULL, FALSE, 0,
                      NULL, NULL, &si, &pi))
   {
-    ThrowError(std::string("Couldn't execute program '") + path.get() + "'");
+    ThrowError(std::string("Couldn't execute program '") + 
+               path.toString() + "'");
   }
 
   // Wait for it to terminate.
@@ -142,7 +143,8 @@ Program::ExecuteAndWait(const Path& path,
   CloseHandle(pi.hThread);
 
   if (!rc)
-    ThrowError(std::string("Failed getting status for program '") + path.get() + "'");
+    ThrowError(std::string("Failed getting status for program '") + 
+               path.toString() + "'");
 
   return status;
 }

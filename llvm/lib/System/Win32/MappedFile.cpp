@@ -42,7 +42,7 @@ void MappedFile::initialize() {
   if (info_->hFile == INVALID_HANDLE_VALUE) {
     delete info_;
     info_ = NULL;
-    ThrowError(std::string("Can't open file: ") + path_.get());
+    ThrowError(std::string("Can't open file: ") + path_.toString());
   }
 
   LARGE_INTEGER size;
@@ -51,7 +51,7 @@ void MappedFile::initialize() {
     CloseHandle(info_->hFile);
     delete info_;
     info_ = NULL;
-    ThrowError(std::string("Can't get size of file: ") + path_.get());
+    ThrowError(std::string("Can't get size of file: ") + path_.toString());
   }
 }
 
@@ -84,14 +84,14 @@ void* MappedFile::map() {
       prot = PAGE_READWRITE;
     info_->hMapping = CreateFileMapping(info_->hFile, NULL, prot, 0, 0, NULL);
     if (info_->hMapping == NULL)
-      ThrowError(std::string("Can't map file: ") + path_.get());
+      ThrowError(std::string("Can't map file: ") + path_.toString());
 
     prot = (options_ & WRITE_ACCESS) ? FILE_MAP_WRITE : FILE_MAP_READ;
     base_ = MapViewOfFileEx(info_->hMapping, prot, 0, 0, 0, NULL);
     if (base_ == NULL) {
       CloseHandle(info_->hMapping);
       info_->hMapping = NULL;
-      ThrowError(std::string("Can't map file: ") + path_.get());
+      ThrowError(std::string("Can't map file: ") + path_.toString());
     }
   }
   return base_;
@@ -117,9 +117,9 @@ void MappedFile::size(size_t new_size) {
     LARGE_INTEGER eof;
     eof.QuadPart = new_size;
     if (!SetFilePointerEx(info_->hFile, eof, NULL, FILE_BEGIN))
-      ThrowError(std::string("Can't set end of file: ") + path_.get());
+      ThrowError(std::string("Can't set end of file: ") + path_.toString());
     if (!SetEndOfFile(info_->hFile))
-      ThrowError(std::string("Can't set end of file: ") + path_.get());
+      ThrowError(std::string("Can't set end of file: ") + path_.toString());
     info_->size = new_size;
   }
 
