@@ -13,3 +13,10 @@ CONFIG_FILES = c cpp ll st
 EXTRA_DIST = c cpp ll st
 
 include $(LEVEL)/Makefile.common
+
+install::
+	@$(ECHO) Installing additional C++ configuration clones
+	$(Verb)$(INSTALL) $(BUILD_OBJ_DIR)/cpp $(sysconfdir)/cc
+	$(Verb)$(INSTALL) $(BUILD_OBJ_DIR)/cpp $(sysconfdir)/c++
+	$(Verb)$(INSTALL) $(BUILD_OBJ_DIR)/cpp $(sysconfdir)/cxx
+	$(Verb)$(INSTALL) $(BUILD_OBJ_DIR)/cpp $(sysconfdir)/C
