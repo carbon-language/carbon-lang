@@ -182,7 +182,6 @@ namespace {
     void visitCastInst (CastInst &I);
     void visitSelectInst(SelectInst &I);
     void visitCallInst (CallInst &I);
-    void visitCallSite (CallSite CS);
     void visitShiftInst(ShiftInst &I) { visitBinaryOperator(I); }
 
     void visitMallocInst(MallocInst &I);
@@ -1466,23 +1465,71 @@ void CWriter::visitCallInst(CallInst &I) {
         return;
       }
     }
-  visitCallSite(&I);
-}
 
-void CWriter::visitCallSite(CallSite CS) {
-  const PointerType  *PTy   = cast<PointerType>(CS.getCalledValue()->getType());
+  Value *Callee = I.getCalledValue();
+  
+  // GCC is really a PITA.  It does not permit codegening casts of functions to
+  // function pointers if they are in a call (it generates a trap instruction
+  // instead!).  We work around this by inserting a cast to void* in between the
+  // function and the function pointer cast.  Unfortunately, we can't just form
+  // the constant expression here, because the folder will immediately nuke it.
+  //
+  // Note finally, that this is completely unsafe.  ANSI C does not guarantee
+  // that void* and function pointers have the same size. :( To deal with this
+  // in the common case, we handle casts where the number of arguments passed
+  // match exactly.
+  //
+  bool WroteCallee = false;
+  if (ConstantExpr *CE = dyn_cast<ConstantExpr>(Callee))
+    if (CE->getOpcode() == Instruction::Cast)
+      if (Function *RF = dyn_cast<Function>(CE->getOperand(0))) {
+        const FunctionType *RFTy = RF->getFunctionType();
+        if (RFTy->getNumParams() == I.getNumOperands()-1) {
+          // If the call site expects a value, and the actual callee doesn't
+          // provide one, return 0.
+          if (I.getType() != Type::VoidTy &&
+              RFTy->getReturnType() == Type::VoidTy)
+            Out << "0 /*actual callee doesn't return value*/; ";
+          Callee = RF;
+        } else {
+          // Ok, just cast the pointer type.
+          Out << "((";
+          printType(Out, CE->getType());
+          Out << ")(void*)";
+          printConstant(RF);
+          Out << ")";
+          WroteCallee = true;
+        }
+      }
+
+  const PointerType  *PTy   = cast<PointerType>(Callee->getType());
   const FunctionType *FTy   = cast<FunctionType>(PTy->getElementType());
   const Type         *RetTy = FTy->getReturnType();
   
-  writeOperand(CS.getCalledValue());
+  if (!WroteCallee) writeOperand(Callee);
   Out << "(";
 
-  if (CS.arg_begin() != CS.arg_end()) {
-    CallSite::arg_iterator AI = CS.arg_begin(), AE = CS.arg_end();
+  unsigned NumDeclaredParams = FTy->getNumParams();
+
+  if (I.getNumOperands() != 1) {
+    CallSite::arg_iterator AI = I.op_begin()+1, AE = I.op_end();
+    if (NumDeclaredParams && (*AI)->getType() != FTy->getParamType(0)) {
+      Out << "(";
+      printType(Out, FTy->getParamType(0));
+      Out << ")";
+    }
+
     writeOperand(*AI);
 
-    for (++AI; AI != AE; ++AI) {
+    unsigned ArgNo;
+    for (ArgNo = 1, ++AI; AI != AE; ++AI, ++ArgNo) {
       Out << ", ";
+      if (ArgNo < NumDeclaredParams &&
+          (*AI)->getType() != FTy->getParamType(ArgNo)) {
+        Out << "(";
+        printType(Out, FTy->getParamType(ArgNo));
+        Out << ")";
+      }
       writeOperand(*AI);
     }
   }
