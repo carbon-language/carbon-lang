@@ -58,9 +58,10 @@ private :
   void emitBasicBlock(const BasicBlock *BB);
   void emitMachineInst(const MachineInstr *MI);
   
-  void printGlobalVariable(const GlobalVariable* GV);
-  void printSingleConstant(const ConstPoolVal* CV, string valID = string(""));
-  void printConstant(      const ConstPoolVal* CV, string valID = string(""));
+  void printGlobalVariable(   const GlobalVariable* GV);
+  void printSingleConstant(   const ConstPoolVal* CV);
+  void printConstantValueOnly(const ConstPoolVal* CV);
+  void printConstant(         const ConstPoolVal* CV, string valID=string(""));
   
   unsigned int printOperands(const MachineInstr *MI, unsigned int opNum);
   void printOneOperand(const MachineOperand &Op);
@@ -376,16 +377,23 @@ TypeToDataDirective(const Type* type)
     }
 }
 
+// Get the size of the constant for the given target.
+// If this is an unsized array, return 0.
+// 
 inline unsigned int
 ConstantToSize(const ConstPoolVal* CV, const TargetMachine& target)
 {
-  if (ConstPoolArray* AV = dyn_cast<ConstPoolArray>(CV))
-    if (ArrayTypeIsString((ArrayType*) CV->getType()))
-      return 1 + AV->getNumOperands();
+  if (ConstPoolArray* CPA = dyn_cast<ConstPoolArray>(CV))
+    {
+      ArrayType *aty = cast<ArrayType>(CPA->getType());
+      if (ArrayTypeIsString(aty))
+        return 1 + CPA->getNumOperands();
+      else if (! aty->isSized())
+        return 0;
+    }
   
   return target.findOptimalStorageSize(CV->getType());
 }
-
 
 inline
 unsigned int TypeToSize(const Type* type, const TargetMachine& target)
@@ -395,28 +403,52 @@ unsigned int TypeToSize(const Type* type, const TargetMachine& target)
 
 
 // Align data larger than one L1 cache line on L1 cache line boundaries.
-// Align all smaller types on the next higher 2^x boundary (4, 8, ...).
+// Align all smaller data on the next higher 2^x boundary (4, 8, ...).
+// 
+inline unsigned int
+SizeToAlignment(unsigned int size, const TargetMachine& target)
+{
+  unsigned short cacheLineSize = target.getCacheInfo().getCacheLineSize(1); 
+  if (size > (unsigned) cacheLineSize / 2)
+    return cacheLineSize;
+  else
+    for (unsigned sz=1; /*no condition*/; sz *= 2)
+      if (sz >= size)
+        return sz;
+}
+
+// Get the size of the type and then use SizeToAlignment.
+// If this is an unsized array, just return the L1 cache line size
+// (viz., the default behavior for large global objects).
 // 
 inline unsigned int
 TypeToAlignment(const Type* type, const TargetMachine& target)
 {
-  unsigned int typeSize = target.findOptimalStorageSize(type);
-  unsigned short cacheLineSize = target.getCacheInfo().getCacheLineSize(1); 
-  if (typeSize > (int) cacheLineSize / 2)
-    return cacheLineSize;
-  else
-    for (unsigned sz=1; /*no condition*/; sz *= 2)
-      if (sz >= typeSize)
-        return sz;
+  if (ArrayType* aty = dyn_cast<ArrayType>(type))
+    if (! aty->isSized())
+      return target.getCacheInfo().getCacheLineSize(1);
+  
+  return SizeToAlignment(target.findOptimalStorageSize(type), target);
+}
+
+// Get the size of the constant and then use SizeToAlignment.
+// Handles strings as a special case;
+inline unsigned int
+ConstantToAlignment(const ConstPoolVal* CV, const TargetMachine& target)
+{
+  unsigned int constantSize;
+  if (ConstPoolArray* CPA = dyn_cast<ConstPoolArray>(CV))
+    if (ArrayTypeIsString(cast<ArrayType>(CPA->getType())))
+      return SizeToAlignment(1 + CPA->getNumOperands(), target);
+  
+  return TypeToAlignment(CV->getType(), target);
 }
 
 
+// Print a single constant value.
 void
-SparcAsmPrinter::printSingleConstant(const ConstPoolVal* CV,string valID)
+SparcAsmPrinter::printSingleConstant(const ConstPoolVal* CV)
 {
-  if (valID.length() == 0)
-    valID = getID(CV);
-  
   assert(CV->getType() != Type::VoidTy &&
          CV->getType() != Type::TypeTy &&
          CV->getType() != Type::LabelTy &&
@@ -451,50 +483,64 @@ SparcAsmPrinter::printSingleConstant(const ConstPoolVal* CV,string valID)
     }
 }
 
+// Print a constant value or values (it may be an aggregate).
+// Uses printSingleConstant() to print each individual value.
+void
+SparcAsmPrinter::printConstantValueOnly(const ConstPoolVal* CV)
+{
+  ConstPoolArray *CPA = dyn_cast<ConstPoolArray>(CV);
+  
+  if (CPA && isStringCompatible(CPA))
+    { // print the string alone and return
+      toAsm << "\t" << ".ascii" << "\t" << getAsCString(CPA) << endl;
+    }
+  else if (CPA)
+    { // Not a string.  Print the values in successive locations
+      const vector<Use>& constValues = CPA->getValues();
+      for (unsigned i=1; i < constValues.size(); i++)
+        this->printConstantValueOnly(cast<ConstPoolVal>(constValues[i].get()));
+    }
+  else if (ConstPoolStruct *CPS = dyn_cast<ConstPoolStruct>(CV))
+    { // Print the fields in successive locations
+      const vector<Use>& constValues = CPS->getValues();
+      for (unsigned i=1; i < constValues.size(); i++)
+        this->printConstantValueOnly(cast<ConstPoolVal>(constValues[i].get()));
+    }
+  else
+    this->printSingleConstant(CV);
+}
+
+// Print a constant (which may be an aggregate) prefixed by all the
+// appropriate directives.  Uses printConstantValueOnly() to print the
+// value or values.
 void
 SparcAsmPrinter::printConstant(const ConstPoolVal* CV, string valID)
 {
   if (valID.length() == 0)
     valID = getID(CV);
   
-  assert(CV->getType() != Type::VoidTy &&
-         CV->getType() != Type::TypeTy &&
-         CV->getType() != Type::LabelTy &&
-         "Unexpected type for ConstPoolVal");
-  
-  toAsm << "\t.align\t" << TypeToAlignment(CV->getType(), Target)
+  toAsm << "\t.align\t" << ConstantToAlignment(CV, Target)
         << endl;
   
   // Print .size and .type only if it is not a string.
   ConstPoolArray *CPA = dyn_cast<ConstPoolArray>(CV);
-  
   if (CPA && isStringCompatible(CPA))
     { // print it as a string and return
       toAsm << valID << ":" << endl;
-      toAsm << "\t" << TypeToDataDirective(CV->getType()) << "\t"
-            << getAsCString(CPA) << endl;
+      toAsm << "\t" << ".ascii" << "\t" << getAsCString(CPA) << endl;
       return;
     }
-      
+  
   toAsm << "\t.type" << "\t" << valID << ",#object" << endl;
-  toAsm << "\t.size" << "\t" << valID << ","
-        << ConstantToSize(CV, Target) << endl;
+
+  unsigned int constSize = ConstantToSize(CV, Target);
+  if (constSize)
+    toAsm << "\t.size" << "\t" << valID << ","
+          << constSize << endl;
+  
   toAsm << valID << ":" << endl;
   
-  if (CPA)
-    { // Not a string.  Print the values in successive locations
-      const vector<Use>& constValues = CPA->getValues();
-      for (unsigned i=1; i < constValues.size(); i++)
-        this->printSingleConstant(cast<ConstPoolVal>(constValues[i].get()));
-    }
-  else if (ConstPoolStruct *CPS = dyn_cast<ConstPoolStruct>(CV))
-    { // Print the fields in successive locations
-      const vector<Use>& constValues = CPA->getValues();
-      for (unsigned i=1; i < constValues.size(); i++)
-        this->printSingleConstant(cast<ConstPoolVal>(constValues[i].get()));
-    }
-  else
-    this->printSingleConstant(CV, valID);
+  this->printConstantValueOnly(CV);
 }
 
 
