@@ -8,27 +8,27 @@
 
 implementation
 
-int "test1"(int %A) {
+int %test1(int %A) {
 	%B = shl int %A, ubyte 0
 	ret int %B
 }
 
-int "test2"(ubyte %A) {
+int %test2(ubyte %A) {
 	%B = shl int 0, ubyte %A
 	ret int %B
 }
 
-int "test3"(int %A) {
+int %test3(int %A) {
 	%B = shr int %A, ubyte 0
 	ret int %B
 }
 
-int "test4"(ubyte %A) {
+int %test4(ubyte %A) {
 	%B = shr int 0, ubyte %A
 	ret int %B
 }
 
-uint "test5"(uint %A) {
+uint %test5(uint %A) {
 	%B = shr uint %A, ubyte 32  ;; shift all bits out
 	ret uint %B
 }
