@@ -167,7 +167,8 @@ bool ReduceMisCodegenFunctions::TestFuncs(const std::vector<Function*> &Funcs,
           } else {
             // FIXME: need to take care of cases where a function is used that
             // is not an instruction, e.g. global variable initializer...
-            std::cerr << "Non-instruction is using an external function!\n";
+            std::cerr <<
+              "UNSUPPORTED: External function used as global initializer!\n";
             abort();
           }
       }
