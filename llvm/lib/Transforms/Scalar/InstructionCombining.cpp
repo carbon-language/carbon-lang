@@ -288,7 +288,7 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
     return ReplaceInstUsesWith(I, Op1);
 
   // and X, -1 == X
-  if (ConstantGenericIntegral *RHS = dyn_cast<ConstantGenericIntegral>(Op1))
+  if (ConstantIntegral *RHS = dyn_cast<ConstantIntegral>(Op1))
     if (RHS->isAllOnesValue())
       return ReplaceInstUsesWith(I, Op0);
 
@@ -306,7 +306,7 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
     return ReplaceInstUsesWith(I, Op0);
 
   // or X, -1 == -1
-  if (ConstantGenericIntegral *RHS = dyn_cast<ConstantGenericIntegral>(Op1))
+  if (ConstantIntegral *RHS = dyn_cast<ConstantIntegral>(Op1))
     if (RHS->isAllOnesValue())
       return ReplaceInstUsesWith(I, Op1);
 
@@ -323,7 +323,7 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
   if (Op0 == Op1)
     return ReplaceInstUsesWith(I, Constant::getNullValue(I.getType()));
 
-  if (ConstantGenericIntegral *Op1C = dyn_cast<ConstantGenericIntegral>(Op1)) {
+  if (ConstantIntegral *Op1C = dyn_cast<ConstantIntegral>(Op1)) {
     // xor X, 0 == X
     if (Op1C->isNullValue())
       return ReplaceInstUsesWith(I, Op0);
