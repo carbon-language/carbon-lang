@@ -128,9 +128,11 @@ bool BugDriver::run() {
   // a bytecode file, then we know the compiler didn't crash, so try to diagnose
   // a miscompilation.
   //
-  std::cout << "Running selected passes on program to test for crash: ";
-  if (runPasses(PassesToRun))
-    return debugCrash();
+  if (!PassesToRun.empty()) {
+    std::cout << "Running selected passes on program to test for crash: ";
+    if (runPasses(PassesToRun))
+      return debugCrash();
+  }
 
   std::cout << "Checking for a miscompilation...\n";
 
