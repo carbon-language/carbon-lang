@@ -62,13 +62,16 @@ namespace {
   cl::opt<bool>
   NoInternalize("disable-internalize",
                 cl::desc("Do not mark all symbols as internal"));
-  static cl::alias
+  cl::alias
   ExportDynamic("export-dynamic", cl::desc("Alias for -disable-internalize"),
                 cl::aliasopt(NoInternalize));
 
   cl::opt<bool>
   LinkAsLibrary("link-as-library", cl::desc("Link the .bc files together as a"
                                             " library, not an executable"));
+  cl::alias
+  Relink("r", cl::desc("Alias for -link-as-library"),
+         cl::aliasopt(LinkAsLibrary));
 
   cl::opt<bool>    
   Native("native",
@@ -81,8 +84,6 @@ namespace {
   CO4("version-script", cl::Hidden, cl::desc("Compatibility option: ignored"));
   cl::opt<bool>
   CO5("eh-frame-hdr", cl::Hidden, cl::desc("Compatibility option: ignored"));
-  cl::opt<bool>
-  CO6("r", cl::Hidden, cl::desc("Compatibility option: ignored"));
 }
 
 //
