@@ -24,16 +24,12 @@
 #include "llvm/Module.h"
 
 namespace {
-
-
+  unsigned fnIndex;
   std::set<const Value*> MangledGlobals;
   struct Printer : public MachineFunctionPass {
-
     std::ostream &O;
-    unsigned ConstIdx;
-    Printer(std::ostream &o) : O(o), ConstIdx(0) {}
+    Printer(std::ostream &o) : O(o) {}
     const TargetData *TD;
-
     virtual const char *getPassName() const {
       return "X86 Assembly Printer";
     }
@@ -393,11 +389,11 @@ void Printer::printConstantPool(MachineConstantPool *MCP){
 
   for (unsigned i = 0, e = CP.size(); i != e; ++i) {
     O << "\t.section .rodata\n";
-    O << "\t.align " << (unsigned)TD->getTypeAlignment(CP[i]->getType()) << "\n";
-    O << ".CPI" << i+ConstIdx << ":\t\t\t\t\t#" << *CP[i] << "\n";
+    O << "\t.align " << (unsigned)TD->getTypeAlignment(CP[i]->getType())
+      << "\n";
+    O << ".CPI" << fnIndex << "_" << i << ":\t\t\t\t\t#" << *CP[i] << "\n";
     printConstantValueOnly (CP[i]);
   }
-  ConstIdx += CP.size();  // Don't recycle constant pool index numbers
 }
 
 /// runOnMachineFunction - This uses the X86InstructionInfo::print method
@@ -438,6 +434,7 @@ bool Printer::runOnMachineFunction(MachineFunction &MF) {
     }
   }
 
+  fnIndex++;
   // We didn't modify anything.
   return false;
 }
@@ -515,7 +512,8 @@ static void printMemReference(std::ostream &O, const MachineInstr *MI,
     O << "]";
     return;
   } else if (MI->getOperand(Op).isConstantPoolIndex()) {
-    O << "[.CPI" << MI->getOperand(Op).getConstantPoolIndex();
+    O << "[.CPI" << fnIndex << "_"
+      << MI->getOperand(Op).getConstantPoolIndex();
     if (MI->getOperand(Op+3).getImmedValue())
       O << " + " << MI->getOperand(Op+3).getImmedValue();
     O << "]";
@@ -822,6 +820,9 @@ bool Printer::doInitialization(Module &M)
   // Tell gas we are outputting Intel syntax (not AT&T syntax) assembly,
   // with no % decorations on register names.
   O << "\t.intel_syntax noprefix\n";
+
+  // Start function index at 0
+  fnIndex = 0;
 
   // Ripped from CWriter:
   // Calculate which global values have names that will collide when we throw
