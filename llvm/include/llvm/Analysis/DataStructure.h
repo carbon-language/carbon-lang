@@ -118,7 +118,7 @@ class DSNode {
   void operator=(const DSNode &); // DO NOT IMPLEMENT
 public:
   enum NodeTy {
-    NewNode, CallNode, ShadowNode, ArgNode, GlobalNode
+    NewNode, CallNode, ShadowNode, GlobalNode
   } NodeType;
 
   DSNode(enum NodeTy NT, const Type *T);
@@ -254,6 +254,9 @@ class CallDSNode : public DSNode {
   std::vector<PointerValSet> ArgLinks;
 public:
   CallDSNode(CallInst *CI);
+  ~CallDSNode() {
+    ArgLinks.clear();
+  }
 
   CallInst *getCall() const { return CI; }
 
@@ -315,30 +318,19 @@ private:
 // to.  When functions are integrated into each other, shadow nodes are
 // resolved.
 //
-// Shadow nodes may be marked as "critical" nodes when they are created.  This
-// mark indicates that the node is the result of a function call, the value
-// pointed to by an incoming argument, or the value pointed to by a global
-// variable [fixme todo].  Since it is not possible to know what these nodes
-// point to, given just the current context, they are marked "Critical" to avoid
-// having the shadow node merger eliminate them.
-//
 class ShadowDSNode : public DSNode {
   friend class FunctionDSGraph;
   Module *Mod;
   ShadowDSNode *ShadowParent;   // Nonnull if this is a synthesized node...
   std::vector<std::pair<const Type *, ShadowDSNode *> > SynthNodes;
-  bool CriticalNode;
 public:
-  ShadowDSNode(const Type *Ty, Module *M, bool Critical = false);
+  ShadowDSNode(const Type *Ty, Module *M);
   virtual std::string getCaption() const;
 
   // synthesizeNode - Create a new shadow node that is to be linked into this
   // chain..
   //
   ShadowDSNode *synthesizeNode(const Type *Ty, FunctionRepBuilder *Rep);
-
-  bool isCriticalNode() const { return CriticalNode; }
-  void resetCriticalMark() { CriticalNode = false; }
 
   // isEquivalentTo - Return true if the nodes should be merged...
   virtual bool isEquivalentTo(DSNode *Node) const;
@@ -356,7 +348,7 @@ protected:
     if (ShadowParent)
       return new ShadowDSNode(getType(), Mod, ShadowParent);
     else
-      return new ShadowDSNode(getType(), Mod, CriticalNode);
+      return new ShadowDSNode(getType(), Mod);
   }
 };
 
