@@ -1,6 +1,6 @@
 #include "llvm/Analysis/LiveVar/LiveVarSet.h"
 #include "llvm/CodeGen/MachineInstr.h"
-
+#include "llvm/Type.h"
 
 // This function applies a machine instr to a live var set (accepts OutSet) and
 // makes necessary changes to it (produces InSet). Note that two for loops are
@@ -9,53 +9,29 @@
 // machine instruction operand.
 
 
-void LiveVarSet::applyTranferFuncForMInst(const MachineInstr *const MInst)
-{
-
-  for( MachineInstr::val_const_op_iterator OpI(MInst); !OpI.done() ; OpI++) {
-
-    if( OpI.isDef() )      // kill only if this operand is a def
+void LiveVarSet::applyTranferFuncForMInst(const MachineInstr *MInst) {
+  for (MachineInstr::val_const_op_iterator OpI(MInst); !OpI.done(); ++OpI) {
+    if (OpI.isDef())      // kill only if this operand is a def
          remove(*OpI);        // this definition kills any uses
   }
 
   // do for implicit operands as well
-  for( unsigned i=0; i < MInst->getNumImplicitRefs(); ++i) {
-    if( MInst->implicitRefIsDefined(i) )
-      remove( MInst->getImplicitRef(i) );
+  for ( unsigned i=0; i < MInst->getNumImplicitRefs(); ++i) {
+    if (MInst->implicitRefIsDefined(i))
+      remove(MInst->getImplicitRef(i));
   }
 
 
-  for( MachineInstr::val_const_op_iterator OpI(MInst); !OpI.done() ; OpI++) {
-
-    if ( ((*OpI)->getType())->isLabelType()) continue; // don't process labels
+  for (MachineInstr::val_const_op_iterator OpI(MInst); !OpI.done(); ++OpI) {
+    if ((*OpI)->getType()->isLabelType()) continue; // don't process labels
     
-    if( ! OpI.isDef() )      // add only if this operand is a use
-       add( *OpI );            // An operand is a use - so add to use set
+    if (!OpI.isDef())      // add only if this operand is a use
+       add(*OpI);            // An operand is a use - so add to use set
   }
 
   // do for implicit operands as well
-  for( unsigned i=0; i < MInst->getNumImplicitRefs(); ++i) {
-    if(  ! MInst->implicitRefIsDefined(i) )
-      add( MInst->getImplicitRef(i) );
+  for (unsigned i=0; i < MInst->getNumImplicitRefs(); ++i) {
+    if (!MInst->implicitRefIsDefined(i))
+      add(MInst->getImplicitRef(i));
   }
-
 }
-
-  
-
-#if 0
-void LiveVarSet::applyTranferFuncForInst(const Instruction *const Inst) 
-{
-
-  if( Inst->isDefinition() ) {  // add to Defs iff this instr is a definition
-       remove(Inst);            // this definition kills any uses
-  }
-  Instruction::const_op_iterator OpI = Inst->op_begin();  // get operand iterat
-
-  for( ; OpI != Inst->op_end() ; OpI++) {              // iterate over operands
-    if ( ((*OpI)->getType())->isLabelType()) continue; // don't process labels 
-    add( *OpI );                     // An operand is a use - so add to use set
-  }
-
-}
-#endif
