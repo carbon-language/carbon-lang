@@ -109,10 +109,14 @@ namespace {
 //===----------------------------------------------------------------------===//
 // DSGraph constructor - Simply use the GraphBuilder to construct the local
 // graph.
-DSGraph::DSGraph(Function &F) : Func(F), RetNode(0) {
-  // Use the graph builder to construct the local version of the graph
-  GraphBuilder B(*this, Nodes, RetNode, ValueMap, FunctionCalls);
-  markIncompleteNodes();
+DSGraph::DSGraph(Function &F, GlobalDSGraph* GlobalsG)
+  : Func(F), RetNode(0), GlobalsGraph(GlobalsG) {
+  if (GlobalsGraph != this) {
+    GlobalsGraph->addReference(this);
+    // Use the graph builder to construct the local version of the graph
+    GraphBuilder B(*this, Nodes, RetNode, ValueMap, FunctionCalls);
+    markIncompleteNodes();
+  }
 }
 
 
