@@ -404,7 +404,7 @@ int64_t SparcV9CodeEmitter::getMachineOpValue(MachineInstr &MI,
                   // or things that get fixed up later by the JIT.
 
   if (MO.isVirtualRegister()) {
-    DEBUG(std::cerr << "ERROR: virtual register found in machine code.\n");
+    std::cerr << "ERROR: virtual register found in machine code.\n";
     abort();
   } else if (MO.isPCRelativeDisp()) {
     DEBUG(std::cerr << "PCRelativeDisp: ");
@@ -418,7 +418,7 @@ int64_t SparcV9CodeEmitter::getMachineOpValue(MachineInstr &MI,
         rv = (int64_t)MCE.getConstantPoolEntryAddress(ConstantMap[C]);
         DEBUG(std::cerr << "const: 0x" << std::hex << rv << "\n");
       } else {
-        DEBUG(std::cerr << "ERROR: constant not in map:" << MO << "\n");
+        std::cerr << "ERROR: constant not in map:" << MO << "\n";
         abort();
       }
     } else if (GlobalValue *GV = dyn_cast<GlobalValue>(V)) {
@@ -444,7 +444,7 @@ int64_t SparcV9CodeEmitter::getMachineOpValue(MachineInstr &MI,
         }
       } else {
         DEBUG(std::cerr << "not a function: " << *GV << "\n");
-        abort();
+        rv = (int64_t)MCE.getGlobalValueAddress(GV);
       }
       // The real target of the call is Addr = PC + (rv * 4)
       // So undo that: give the instruction (Addr - PC) / 4
