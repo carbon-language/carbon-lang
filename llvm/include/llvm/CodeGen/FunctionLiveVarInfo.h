@@ -110,13 +110,17 @@ public:
   // gets InSet of a BB
   const ValueSet &getInSetOfBB(const BasicBlock *BB) const;
 
-  // gets the Live var set BEFORE an instruction
+  // gets the Live var set BEFORE an instruction.
+  // if BB is specified and the live var set has not yet been computed,
+  // it will be computed on demand.
   const ValueSet &getLiveVarSetBeforeMInst(const MachineInstr *MI,
-                                           const BasicBlock *BB);
+                                           const BasicBlock *BB = 0);
 
   // gets the Live var set AFTER an instruction
+  // if BB is specified and the live var set has not yet been computed,
+  // it will be computed on demand.
   const ValueSet &getLiveVarSetAfterMInst(const MachineInstr *MI,
-                                          const BasicBlock *BB);
+                                          const BasicBlock *BB = 0);
 };
 
 #endif
