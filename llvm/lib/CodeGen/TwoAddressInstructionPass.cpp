@@ -146,10 +146,10 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
                     varInfo.DefInst = prevMi;
 
                     // update live variables for regB
-                    if (LV->removeVirtualRegisterKilled(regB, &*mbbi, mi))
+                    if (LV->removeVirtualRegisterKilled(regB, mbbi, mi))
                         LV->addVirtualRegisterKilled(regB, prevMi);
 
-                    if (LV->removeVirtualRegisterDead(regB, &*mbbi, mi))
+                    if (LV->removeVirtualRegisterDead(regB, mbbi, mi))
                         LV->addVirtualRegisterDead(regB, prevMi);
                 }
 
