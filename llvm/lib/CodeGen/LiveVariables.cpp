@@ -102,7 +102,6 @@ void LiveVariables::HandleVirtRegUse(VarInfo &VRInfo, MachineBasicBlock *MBB,
   VRInfo.Kills.push_back(MI);
 
   // Update all dominating blocks to mark them known live.
-  const BasicBlock *BB = MBB->getBasicBlock();
   for (MachineBasicBlock::const_pred_iterator PI = MBB->pred_begin(),
          E = MBB->pred_end(); PI != E; ++PI)
     MarkVirtRegAliveInBlock(VRInfo, *PI);
