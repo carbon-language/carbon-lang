@@ -261,7 +261,8 @@ void V8Printer::emitGlobalConstant(const Constant *CV) {
         uint64_t UVal;
       } U;
       U.FVal = Val;
-      O << ".quad\t" << U.UVal << "\t! double " << Val << "\n";
+      O << ".word\t0x" << std::hex << (U.UVal >> 32) << std::dec << "\t! double " << Val << "\n";
+      O << ".word\t0x" << std::hex << (U.UVal & 0xffffffffUL) << std::dec << "\t! double " << Val << "\n";
       return;
     }
     }
