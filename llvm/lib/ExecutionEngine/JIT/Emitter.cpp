@@ -8,6 +8,8 @@
 #include "VM.h"
 #include "llvm/CodeGen/MachineCodeEmitter.h"
 #include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/CodeGen/MachineConstantPool.h"
+#include "llvm/Target/TargetData.h"
 #include "llvm/Function.h"
 #include "Support/Statistic.h"
 
@@ -22,15 +24,22 @@ namespace {
     
     std::vector<std::pair<BasicBlock*, unsigned *> > BBRefs;
     std::map<BasicBlock*, unsigned> BBLocations;
+    std::vector<void*> ConstantPoolAddresses;
   public:
     Emitter(VM &vm) : TheVM(vm) {}
 
     virtual void startFunction(MachineFunction &F);
     virtual void finishFunction(MachineFunction &F);
+    virtual void emitConstantPool(MachineConstantPool *MCP);
     virtual void startBasicBlock(MachineBasicBlock &BB);
     virtual void emitByte(unsigned char B);
     virtual void emitPCRelativeDisp(Value *V);
-    virtual void emitGlobalAddress(GlobalValue *V);
+    virtual void emitGlobalAddress(GlobalValue *V, bool isPCRelative);
+    virtual void emitGlobalAddress(const std::string &Name, bool isPCRelative);
+    virtual void emitFunctionConstantValueAddress(unsigned ConstantNum,
+						  int Offset);
+  private:
+    void emitAddress(void *Addr, bool isPCRelative);
   };
 }
 
@@ -44,7 +53,7 @@ MachineCodeEmitter *VM::createEmitter(VM &V) {
 #include <sys/mman.h>
 
 static void *getMemory() {
-  return mmap(0, 4096*2, PROT_READ|PROT_WRITE|PROT_EXEC,
+  return mmap(0, 4096*8, PROT_READ|PROT_WRITE|PROT_EXEC,
               MAP_PRIVATE|MAP_ANONYMOUS, 0, 0);
 }
 
@@ -56,6 +65,7 @@ void Emitter::startFunction(MachineFunction &F) {
 }
 
 void Emitter::finishFunction(MachineFunction &F) {
+  ConstantPoolAddresses.clear();
   for (unsigned i = 0, e = BBRefs.size(); i != e; ++i) {
     unsigned Location = BBLocations[BBRefs[i].first];
     unsigned *Ref = BBRefs[i].second;
@@ -66,10 +76,23 @@ void Emitter::finishFunction(MachineFunction &F) {
 
   NumBytes += CurByte-CurBlock;
 
-  DEBUG(std::cerr << "Finished CodeGen of [" << std::hex << (unsigned)CurBlock
+  DEBUG(std::cerr << "Finished CodeGen of [0x" << std::hex << (unsigned)CurBlock
                   << std::dec << "] Function: " << F.getFunction()->getName()
                   << ": " << CurByte-CurBlock << " bytes of text\n");
 }
+
+void Emitter::emitConstantPool(MachineConstantPool *MCP) {
+  const std::vector<Constant*> &Constants = MCP->getConstants();
+  for (unsigned i = 0, e = Constants.size(); i != e; ++i) {
+    // For now we just allocate some memory on the heap, this can be
+    // dramatically improved.
+    const Type *Ty = ((Value*)Constants[i])->getType();
+    void *Addr = malloc(TheVM.getTargetData().getTypeSize(Ty));
+    TheVM.InitializeMemory(Constants[i], Addr);
+    ConstantPoolAddresses.push_back(Addr);
+  }
+}
+
 
 void Emitter::startBasicBlock(MachineBasicBlock &BB) {
   BBLocations[BB.getBasicBlock()] = (unsigned)CurByte;
@@ -89,19 +112,39 @@ void Emitter::emitByte(unsigned char B) {
 // may be patched up when the basic block is defined.
 //
 void Emitter::emitPCRelativeDisp(Value *V) {
-  if (Function *F = dyn_cast<Function>(V)) {
-    TheVM.addFunctionRef(CurByte, F);
-    unsigned ZeroAddr = -(unsigned)CurByte-4; // Calculate displacement to null
-    *(unsigned*)CurByte = ZeroAddr;           // 4 byte offset
-    CurByte += 4;
+  BasicBlock *BB = cast<BasicBlock>(V);     // Keep track of reference...
+  BBRefs.push_back(std::make_pair(BB, (unsigned*)CurByte));
+  CurByte += 4;
+}
+
+// emitAddress - Emit an address in either direct or PCRelative form...
+//
+void Emitter::emitAddress(void *Addr, bool isPCRelative) {
+  if (isPCRelative) {
+    *(unsigned*)CurByte = (unsigned)Addr - (unsigned)CurByte-4;
   } else {
-    BasicBlock *BB = cast<BasicBlock>(V);     // Keep track of reference...
-    BBRefs.push_back(std::make_pair(BB, (unsigned*)CurByte));
-    CurByte += 4;
+    *(void**)CurByte = Addr;
+  }
+  CurByte += 4;
+}
+
+void Emitter::emitGlobalAddress(GlobalValue *V, bool isPCRelative) {
+  if (isPCRelative) { // must be a call, this is a major hack!
+    TheVM.addFunctionRef(CurByte, cast<Function>(V));
+    emitAddress(0, isPCRelative);  // Delayed resolution...
+  } else {
+    emitAddress(TheVM.getPointerToGlobal(V), isPCRelative);
   }
 }
 
-void Emitter::emitGlobalAddress(GlobalValue *V) {
-  *(void**)CurByte = TheVM.getPointerToGlobal(V);
+void Emitter::emitGlobalAddress(const std::string &Name, bool isPCRelative) {
+  emitAddress(TheVM.getPointerToNamedFunction(Name), isPCRelative);
+}
+
+void Emitter::emitFunctionConstantValueAddress(unsigned ConstantNum,
+					       int Offset) {
+  assert(ConstantNum < ConstantPoolAddresses.size() &&
+	 "Invalid ConstantPoolIndex!");
+  *(void**)CurByte = (char*)ConstantPoolAddresses[ConstantNum]+Offset;
   CurByte += 4;
 }
