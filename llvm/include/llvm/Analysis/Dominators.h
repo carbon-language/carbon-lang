@@ -32,12 +32,15 @@ template <typename GraphType> struct GraphTraits;
 //
 class DominatorBase : public FunctionPass {
 protected:
-  BasicBlock *Root;
+  std::vector<BasicBlock*> Roots;
   const bool IsPostDominators;
 
-  inline DominatorBase(bool isPostDom) : Root(0), IsPostDominators(isPostDom) {}
+  inline DominatorBase(bool isPostDom) : Roots(), IsPostDominators(isPostDom) {}
 public:
-  inline BasicBlock *getRoot() const { return Root; }
+  // Return the root blocks of the current CFG.  This may include multiple
+  // blocks if we are computing post dominators.  For forward dominators, this
+  // will always be a single block (the entry node).
+  inline const std::vector<BasicBlock*> &getRoots() const { return Roots; }
 
   // Returns true if analysis based of postdoms
   bool isPostDominator() const { return IsPostDominators; }
@@ -144,6 +147,11 @@ struct DominatorSet : public DominatorSetBase {
   /// obviously really slow, so it should be avoided if at all possible.
   void recalculate();
 
+  BasicBlock *getRoot() const {
+    assert(Roots.size() == 1 && "Should always have entry node!");
+    return Roots[0];
+  }
+
   // getAnalysisUsage - This simply provides a dominator set
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
     AU.setPreservesAll();
@@ -219,10 +227,15 @@ public:
 struct ImmediateDominators : public ImmediateDominatorsBase {
   ImmediateDominators() : ImmediateDominatorsBase(false) {}
 
+  BasicBlock *getRoot() const {
+    assert(Roots.size() == 1 && "Should always have entry node!");
+    return Roots[0];
+  }
+
   virtual bool runOnFunction(Function &F) {
     IDoms.clear();     // Reset from the last time we were run...
     DominatorSet &DS = getAnalysis<DominatorSet>();
-    Root = DS.getRoot();
+    Roots = DS.getRoots();
     calcIDoms(DS);
     return false;
   }
@@ -247,6 +260,8 @@ protected:
   std::map<BasicBlock*, Node*> Nodes;
   void reset();
   typedef std::map<BasicBlock*, Node*> NodeMapType;
+
+  Node *RootNode;
 public:
   class Node2 {
     friend class DominatorTree;
@@ -303,7 +318,18 @@ public:
     return getNode(BB);
   }
 
-  //===--------------------------------------------------------------------===//  // API to update (Post)DominatorTree information based on modifications to
+  // getRootNode - This returns the entry node for the CFG of the function.  If
+  // this tree represents the post-dominance relations for a function, however,
+  // this root may be a node with the block == NULL.  This is the case when
+  // there are multiple exit nodes from a particular function.  Consumers of
+  // post-dominance information must be capable of dealing with this
+  // possibility.
+  //
+  Node *getRootNode() { return RootNode; }
+  const Node *getRootNode() const { return RootNode; }
+
+  //===--------------------------------------------------------------------===//
+  // API to update (Post)DominatorTree information based on modifications to
   // the CFG...
 
   /// createNewNode - Add a new node to the dominator tree information.  This
@@ -336,10 +362,15 @@ public:
 struct DominatorTree : public DominatorTreeBase {
   DominatorTree() : DominatorTreeBase(false) {}
 
+  BasicBlock *getRoot() const {
+    assert(Roots.size() == 1 && "Should always have entry node!");
+    return Roots[0];
+  }
+
   virtual bool runOnFunction(Function &F) {
     reset();     // Reset from the last time we were run...
     DominatorSet &DS = getAnalysis<DominatorSet>();
-    Root = DS.getRoot();
+    Roots = DS.getRoots();
     calculate(DS);
     return false;
   }
@@ -374,7 +405,7 @@ template <> struct GraphTraits<DominatorTree::Node*> {
 template <> struct GraphTraits<DominatorTree*>
   : public GraphTraits<DominatorTree::Node*> {
   static NodeType *getEntryNode(DominatorTree *DT) {
-    return DT->getNode(DT->getRoot());
+    return DT->getRootNode();
   }
 };
 
@@ -431,11 +462,17 @@ public:
 struct DominanceFrontier : public DominanceFrontierBase {
   DominanceFrontier() : DominanceFrontierBase(false) {}
 
+  BasicBlock *getRoot() const {
+    assert(Roots.size() == 1 && "Should always have entry node!");
+    return Roots[0];
+  }
+
   virtual bool runOnFunction(Function &) {
     Frontiers.clear();
     DominatorTree &DT = getAnalysis<DominatorTree>();
-    Root = DT.getRoot();
-    calculate(DT, DT[Root]);
+    Roots = DT.getRoots();
+    assert(Roots.size() == 1 && "Only one entry block for forward domfronts!");
+    calculate(DT, DT[Roots[0]]);
     return false;
   }
 

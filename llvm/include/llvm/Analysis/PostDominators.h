@@ -10,19 +10,23 @@
 #include "llvm/Analysis/Dominators.h"
 
 
-//===-------------------------------------
-// DominatorSet Class - Concrete subclass of DominatorSetBase that is used to
-// compute the post-dominator set.
-//
+/// PostDominatorSet Class - Concrete subclass of DominatorSetBase that is used
+/// to compute the post-dominator set.  Because there can be multiple exit nodes
+/// in an LLVM function, we calculate post dominators with a special null block
+/// which is the virtual exit node that the real exit nodes all virtually branch
+/// to.  Clients should be prepared to see an entry in the dominator sets with a
+/// null BasicBlock*.
+///
 struct PostDominatorSet : public DominatorSetBase {
   PostDominatorSet() : DominatorSetBase(true) {}
 
   virtual bool runOnFunction(Function &F);
 
-  // getAnalysisUsage - This obviously provides a dominator set, but it also
-  // uses the UnifyFunctionExitNode pass if building post-dominators
+  // getAnalysisUsage - This pass does not modify the function at all.
   //
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const;
+  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    AU.setPreservesAll();
+  }
 };
 
 
@@ -37,7 +41,7 @@ struct ImmediatePostDominators : public ImmediateDominatorsBase {
   virtual bool runOnFunction(Function &F) {
     IDoms.clear();     // Reset from the last time we were run...
     PostDominatorSet &DS = getAnalysis<PostDominatorSet>();
-    Root = DS.getRoot();
+    Roots = DS.getRoots();
     calcIDoms(DS);
     return false;
   }
@@ -59,7 +63,7 @@ struct PostDominatorTree : public DominatorTreeBase {
   virtual bool runOnFunction(Function &F) {
     reset();     // Reset from the last time we were run...
     PostDominatorSet &DS = getAnalysis<PostDominatorSet>();
-    Root = DS.getRoot();
+    Roots = DS.getRoots();
     calculate(DS);
     return false;
   }
@@ -83,8 +87,8 @@ struct PostDominanceFrontier : public DominanceFrontierBase {
   virtual bool runOnFunction(Function &) {
     Frontiers.clear();
     PostDominatorTree &DT = getAnalysis<PostDominatorTree>();
-    Root = DT.getRoot();
-    calculate(DT, DT[Root]);
+    Roots = DT.getRoots();
+    calculate(DT, DT.getRootNode());
     return false;
   }
 
