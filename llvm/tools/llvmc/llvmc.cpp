@@ -100,6 +100,14 @@ cl::list<std::string> LibPaths("L", cl::Prefix,
 cl::list<std::string> Libraries("l", cl::Prefix,
   cl::desc("Specify libraries to link to"), cl::value_desc("library prefix"));
 
+cl::list<std::string> Includes("I", cl::Prefix,
+  cl::desc("Specify location to search for included source"), 
+  cl::value_desc("include directory"));
+
+cl::list<std::string> Defines("D", cl::Prefix,
+  cl::desc("Specify a symbol to define for source configuration"),
+  cl::value_desc("symbol definition"));
+
 
 //===------------------------------------------------------------------------===
 //===          OUTPUT OPTIONS
@@ -116,6 +124,9 @@ cl::opt<std::string> OutputMachine("m", cl::Prefix,
                                                                                                                                             
 cl::opt<bool> Native("native", cl::init(false),
   cl::desc("Generative native object and executables instead of bytecode"));
+
+cl::opt<bool> DebugOutput("g", cl::init(false),
+  cl::desc("Generate objects that include debug symbols"));
 
 //===------------------------------------------------------------------------===
 //===          INFORMATION OPTIONS
@@ -144,6 +155,10 @@ cl::opt<bool> TimeActions("time-actions", cl::Optional, cl::init(false),
 
 cl::opt<bool> ShowStats("stats", cl::Optional, cl::init(false),
   cl::desc("Print statistics accumulated during optimization"));
+
+cl::list<std::string> Warnings("W", cl::Prefix,
+  cl::desc("Provide warnings for additional classes of errors"),
+  cl::value_desc("warning category"));
 
 //===------------------------------------------------------------------------===
 //===          ADVANCED OPTIONS
@@ -255,6 +270,8 @@ int main(int argc, char **argv) {
     CD->setFinalPhase(FinalPhase);
     CD->setOptimization(OptLevel);
     CD->setOutputMachine(OutputMachine);
+    CD->setIncludePaths(Includes);
+    CD->setSymbolDefines(Defines);
     CD->setLibraryPaths(LibPaths);
 
     // Provide additional tool arguments
