@@ -752,7 +752,7 @@ static void markIncomplete(DSCallSite &Call) {
 //
 void DSGraph::markIncompleteNodes(unsigned Flags) {
   // Mark any incoming arguments as incomplete...
-  if ((Flags & DSGraph::MarkFormalArgs) && Func)
+  if ((Flags & DSGraph::MarkFormalArgs) && Func && Func->getName() != "main")
     for (Function::aiterator I = Func->abegin(), E = Func->aend(); I != E; ++I)
       if (isPointerType(I->getType()) && ScalarMap.find(I) != ScalarMap.end())
         markIncompleteNode(ScalarMap[I].getNode());
