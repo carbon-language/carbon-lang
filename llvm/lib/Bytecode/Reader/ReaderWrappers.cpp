@@ -20,6 +20,7 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/System/MappedFile.h"
 #include <cerrno>
+#include <iostream>
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
@@ -39,10 +40,6 @@ namespace {
   public:
     BytecodeFileReader(const std::string &Filename, llvm::BytecodeHandler* H=0);
   };
-}
-
-static std::string ErrnoMessage (int savedErrNum, std::string descr) {
-   return ::strerror(savedErrNum) + std::string(", while trying to ") + descr;
 }
 
 BytecodeFileReader::BytecodeFileReader(const std::string &Filename,
@@ -133,14 +130,14 @@ namespace {
 BytecodeStdinReader::BytecodeStdinReader( BytecodeHandler* H ) 
   : BytecodeReader(H)
 {
-  int BlockSize;
-  unsigned char Buffer[4096*4];
+  char Buffer[4096*4];
 
   // Read in all of the data from stdin, we cannot mmap stdin...
-  while ((BlockSize = ::read(0 /*stdin*/, Buffer, 4096*4))) {
-    if (BlockSize == -1)
-      throw ErrnoMessage(errno, "read from standard input");
-    
+  while (std::cin.good()) {
+    std::cin.read(Buffer, 4096*4);
+    int BlockSize = std::cin.gcount();
+    if (0 >= BlockSize)
+      break;
     FileData.insert(FileData.end(), Buffer, Buffer+BlockSize);
   }
 
