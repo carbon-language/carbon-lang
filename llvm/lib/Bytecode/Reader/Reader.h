@@ -193,7 +193,7 @@ protected:
   void ParseFunctionBody(Function* Func);
 
   /// @brief Parse the type list portion of a compaction table
-  void BytecodeReader::ParseCompactionTypes( unsigned NumEntries );
+  void ParseCompactionTypes(unsigned NumEntries);
 
   /// @brief Parse a compaction table
   void ParseCompactionTable();
@@ -243,12 +243,13 @@ private:
   BufPtr At;           ///< Where we're currently parsing at
 
   /// Information about the module, extracted from the bytecode revision number.
+  ///
   unsigned char RevisionNum;        // The rev # itself
 
   /// Flags to distinguish LLVM 1.0 & 1.1 bytecode formats (revision #0)
 
-  /// Revision #0 had an explicit alignment of data only for the ModuleGlobalInfo
-  /// block.  This was fixed to be like all other blocks in 1.2
+  /// Revision #0 had an explicit alignment of data only for the
+  /// ModuleGlobalInfo block.  This was fixed to be like all other blocks in 1.2
   bool hasInconsistentModuleGlobalInfo;
 
   /// Revision #0 also explicitly encoded zero values for primitive types like
@@ -270,12 +271,12 @@ private:
   bool hasTypeDerivedFromValue;
 
   /// LLVM 1.2 and earlier encoded block headers as two uint (8 bytes), one for
-  /// the size and one for the type. This is a bit wasteful, especially for small 
-  /// files where the 8 bytes per block is a large fraction of the total block 
-  /// size. In LLVM 1.3, the block type and length are encoded into a single 
-  /// uint32 by restricting the number of block types (limit 31) and the maximum
-  /// size of a block (limit 2^27-1=134,217,727). Note that the module block
-  /// still uses the 8-byte format so the maximum size of a file can be
+  /// the size and one for the type. This is a bit wasteful, especially for
+  /// small files where the 8 bytes per block is a large fraction of the total
+  /// block size. In LLVM 1.3, the block type and length are encoded into a
+  /// single uint32 by restricting the number of block types (limit 31) and the
+  /// maximum size of a block (limit 2^27-1=134,217,727). Note that the module
+  /// block still uses the 8-byte format so the maximum size of a file can be
   /// 2^32-1 bytes long.
   bool hasLongBlockHeaders;
 
@@ -295,9 +296,10 @@ private:
   /// LLVM 1.2 and earlier encoded the file version as part of the module block
   /// but this information may be needed to
 
-  /// CompactionTable - If a compaction table is active in the current function,
-  /// this is the mapping that it contains.
-  std::vector<const Type*> CompactionTypes;
+  /// CompactionTypes - If a compaction table is active in the current function,
+  /// this is the mapping that it contains.  We keep track of what resolved type
+  /// it is as well as what global type entry it is.
+  std::vector<std::pair<const Type*, unsigned> > CompactionTypes;
 
   /// @brief If a compaction table is active in the current function,
   /// this is the mapping that it contains.

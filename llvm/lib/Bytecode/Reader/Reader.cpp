@@ -26,7 +26,6 @@
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "Support/StringExtras.h"
 #include <sstream>
-
 using namespace llvm;
 
 namespace {
@@ -294,7 +293,7 @@ const Type *BytecodeReader::getType(unsigned ID) {
   if (!CompactionTypes.empty()) {
     if (ID >= CompactionTypes.size())
       error("Type ID out of range for compaction table!");
-    return CompactionTypes[ID];
+    return CompactionTypes[ID].first;
   }
 
   // Is it a module-level type?
@@ -337,12 +336,11 @@ unsigned BytecodeReader::getTypeSlot(const Type *Ty) {
 
   // Scan the compaction table for the type if needed.
   if (!CompactionTypes.empty()) {
-    std::vector<const Type*>::const_iterator I = 
-      find(CompactionTypes.begin(), CompactionTypes.end(), Ty);
+    for (unsigned i = 0, e = CompactionTypes.size(); i != e; ++i)
+      if (CompactionTypes[i].first == Ty)
+        return Type::FirstDerivedTyID + i; 
 
-    if (I == CompactionTypes.end())
-      error("Couldn't find type specified in compaction table!");
-    return Type::FirstDerivedTyID + (&*I - &CompactionTypes[0]);
+    error("Couldn't find type specified in compaction table!");
   }
 
   // Check the function level types first...
@@ -403,15 +401,10 @@ Value * BytecodeReader::getValue(unsigned type, unsigned oNum, bool Create) {
     // By default, the global type id is the type id passed in
     unsigned GlobalTyID = type;
 
-    // If the type plane was compactified, figure out the global type ID
-    // by adding the derived type ids and the distance.
-    if (!CompactionTypes.empty() && type >= Type::FirstDerivedTyID) {
-      const Type *Ty = CompactionTypes[type-Type::FirstDerivedTyID];
-      TypeListTy::iterator I = 
-        find(ModuleTypes.begin(), ModuleTypes.end(), Ty);
-      assert(I != ModuleTypes.end());
-      GlobalTyID = Type::FirstDerivedTyID + (&*I - &ModuleTypes[0]);
-    }
+    // If the type plane was compactified, figure out the global type ID by
+    // adding the derived type ids and the distance.
+    if (!CompactionTypes.empty() && type >= Type::FirstDerivedTyID)
+      GlobalTyID = CompactionTypes[type-Type::FirstDerivedTyID].second;
 
     if (hasImplicitNull(GlobalTyID)) {
       if (Num == 0)
@@ -1053,7 +1046,7 @@ void BytecodeReader::ParseCompactionTypes(unsigned NumEntries) {
     if (read_typeid(TypeSlot))
       error("Invalid type in compaction table: type type");
     const Type *Typ = getGlobalTableType(TypeSlot);
-    CompactionTypes.push_back(Typ);
+    CompactionTypes.push_back(std::make_pair(Typ, TypeSlot));
     if (Handler) Handler->handleCompactionTableType(i, TypeSlot, Typ);
   }
 }
