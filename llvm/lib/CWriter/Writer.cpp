@@ -27,91 +27,6 @@ using std::string;
 using std::map;
 using std::ostream;
 
-
-
-// Pass the Type* variable and and the variable name and this prints out the 
-// variable declaration.
-//
-static string calcTypeNameVar(const Type *Ty,
-                              map<const Type *, string> &TypeNames, 
-                              const string &NameSoFar, bool ignoreName = false){
-  if (Ty->isPrimitiveType())
-    switch (Ty->getPrimitiveID()) {
-    case Type::VoidTyID:   return "void " + NameSoFar;
-    case Type::BoolTyID:   return "bool " + NameSoFar;
-    case Type::UByteTyID:  return "unsigned char " + NameSoFar;
-    case Type::SByteTyID:  return "signed char " + NameSoFar;
-    case Type::UShortTyID: return "unsigned short " + NameSoFar;
-    case Type::ShortTyID:  return "short " + NameSoFar;
-    case Type::UIntTyID:   return "unsigned " + NameSoFar;
-    case Type::IntTyID:    return "int " + NameSoFar;
-    case Type::ULongTyID:  return "unsigned long long " + NameSoFar;
-    case Type::LongTyID:   return "signed long long " + NameSoFar;
-    case Type::FloatTyID:  return "float " + NameSoFar;
-    case Type::DoubleTyID: return "double " + NameSoFar;
-    default :
-      std::cerr << "Unknown primitive type: " << Ty << "\n";
-      abort();
-    }
-  
-  // Check to see if the type is named.
-  if (!ignoreName) {
-    map<const Type *, string>::iterator I = TypeNames.find(Ty);
-    if (I != TypeNames.end())
-      return I->second + " " + NameSoFar;
-  }  
-
-  string Result;
-  switch (Ty->getPrimitiveID()) {
-  case Type::FunctionTyID: {
-    const FunctionType *MTy = cast<FunctionType>(Ty);
-    Result += calcTypeNameVar(MTy->getReturnType(), TypeNames, "");
-    Result += " " + NameSoFar + " (";
-    for (FunctionType::ParamTypes::const_iterator
-           I = MTy->getParamTypes().begin(),
-           E = MTy->getParamTypes().end(); I != E; ++I) {
-      if (I != MTy->getParamTypes().begin())
-        Result += ", ";
-      Result += calcTypeNameVar(*I, TypeNames, "");
-    }
-    if (MTy->isVarArg()) {
-      if (!MTy->getParamTypes().empty()) 
-	Result += ", ";
-      Result += "...";
-    }
-    return Result + ")";
-  }
-  case Type::StructTyID: {
-    const StructType *STy = cast<const StructType>(Ty);
-    Result = NameSoFar + " {\n";
-    unsigned indx = 0;
-    for (StructType::ElementTypes::const_iterator
-           I = STy->getElementTypes().begin(),
-           E = STy->getElementTypes().end(); I != E; ++I) {
-      Result += "  " +calcTypeNameVar(*I, TypeNames, "field" + utostr(indx++));
-      Result += ";\n";
-    }
-    return Result + "}";
-  }  
-
-  case Type::PointerTyID:
-    return calcTypeNameVar(cast<const PointerType>(Ty)->getElementType(), 
-                           TypeNames, "*" + NameSoFar);
-  
-  case Type::ArrayTyID: {
-    const ArrayType *ATy = cast<const ArrayType>(Ty);
-    int NumElements = ATy->getNumElements();
-    return calcTypeNameVar(ATy->getElementType(), TypeNames, 
-                           NameSoFar + "[" + itostr(NumElements) + "]");
-  }
-  default:
-    assert(0 && "Unhandled case in getTypeProps!");
-    abort();
-  }
-
-  return Result;
-}
-
 namespace {
   class CWriter : public InstVisitor<CWriter> {
     ostream& Out; 
@@ -126,9 +41,8 @@ namespace {
     
     inline void write(Module *M) { printModule(M); }
 
-    ostream& printType(const Type *Ty, const string &VariableName = "") {
-      return Out << calcTypeNameVar(Ty, TypeNames, VariableName);
-    }
+    ostream &printType(const Type *Ty, const string &VariableName = "",
+                       bool IgnoreName = false);
 
     void writeOperand(Value *Operand);
     void writeOperandInternal(Value *Operand);
@@ -226,6 +140,99 @@ string CWriter::getValueName(const Value *V) {
   int Slot = Table.getValSlot(V);
   assert(Slot >= 0 && "Invalid value!");
   return "ltmp_" + itostr(Slot) + "_" + utostr(V->getType()->getUniqueID());
+}
+
+// Pass the Type* and the variable name and this prints out the variable
+// declaration.
+//
+ostream &CWriter::printType(const Type *Ty, const string &NameSoFar,
+                            bool IgnoreName = false) {
+  if (Ty->isPrimitiveType())
+    switch (Ty->getPrimitiveID()) {
+    case Type::VoidTyID:   return Out << "void "               << NameSoFar;
+    case Type::BoolTyID:   return Out << "bool "               << NameSoFar;
+    case Type::UByteTyID:  return Out << "unsigned char "      << NameSoFar;
+    case Type::SByteTyID:  return Out << "signed char "        << NameSoFar;
+    case Type::UShortTyID: return Out << "unsigned short "     << NameSoFar;
+    case Type::ShortTyID:  return Out << "short "              << NameSoFar;
+    case Type::UIntTyID:   return Out << "unsigned "           << NameSoFar;
+    case Type::IntTyID:    return Out << "int "                << NameSoFar;
+    case Type::ULongTyID:  return Out << "unsigned long long " << NameSoFar;
+    case Type::LongTyID:   return Out << "signed long long "   << NameSoFar;
+    case Type::FloatTyID:  return Out << "float "              << NameSoFar;
+    case Type::DoubleTyID: return Out << "double "             << NameSoFar;
+    default :
+      std::cerr << "Unknown primitive type: " << Ty << "\n";
+      abort();
+    }
+  
+  // Check to see if the type is named.
+  if (!IgnoreName) {
+    map<const Type *, string>::iterator I = TypeNames.find(Ty);
+    if (I != TypeNames.end()) {
+      return Out << I->second << " " << NameSoFar;
+    }
+  }  
+
+  string Result;
+  switch (Ty->getPrimitiveID()) {
+  case Type::FunctionTyID: {
+    const FunctionType *MTy = cast<FunctionType>(Ty);
+    printType(MTy->getReturnType(), "");
+    Out << " " << NameSoFar << " (";
+
+    for (FunctionType::ParamTypes::const_iterator
+           I = MTy->getParamTypes().begin(),
+           E = MTy->getParamTypes().end(); I != E; ++I) {
+      if (I != MTy->getParamTypes().begin())
+        Out << ", ";
+      printType(*I, "");
+    }
+    if (MTy->isVarArg()) {
+      if (!MTy->getParamTypes().empty()) 
+	Out << ", ";
+      Out << "...";
+    }
+    return Out << ")";
+  }
+  case Type::StructTyID: {
+    const StructType *STy = cast<StructType>(Ty);
+    Out << NameSoFar + " {\n";
+    unsigned Idx = 0;
+    for (StructType::ElementTypes::const_iterator
+           I = STy->getElementTypes().begin(),
+           E = STy->getElementTypes().end(); I != E; ++I) {
+      Out << "  ";
+      printType(*I, "field" + utostr(Idx++));
+      Out << ";\n";
+    }
+    return Out << "}";
+  }  
+
+  case Type::PointerTyID: {
+    const PointerType *PTy = cast<PointerType>(Ty);
+    // If this is a pointer to a function, we need parens.  In all other cases,
+    // we don't though, and adding them all the time clutters stuff up a ton, so
+    // special case this.
+    //
+    if (isa<FunctionType>(PTy->getElementType()))
+      return printType(PTy->getElementType(), "(*" + NameSoFar + ")");
+    else
+      return printType(PTy->getElementType(), "*" + NameSoFar);
+  }
+
+  case Type::ArrayTyID: {
+    const ArrayType *ATy = cast<ArrayType>(Ty);
+    unsigned NumElements = ATy->getNumElements();
+    return printType(ATy->getElementType(),
+                     NameSoFar + "[" + utostr(NumElements) + "]");
+  }
+  default:
+    assert(0 && "Unhandled case in getTypeProps!");
+    abort();
+  }
+
+  return Out;
 }
 
 void CWriter::printConstantArray(ConstantArray *CPA) {
@@ -497,7 +504,8 @@ void CWriter::printSymbolTable(const SymbolTable &ST) {
         else
           Out << "typedef ";
 
-	Out << calcTypeNameVar(Ty, TypeNames, Name, true) << ";\n";
+	printType(Ty, Name, true);
+        Out << ";\n";
       }
     }
   }
