@@ -1351,9 +1351,9 @@ void DSGraph::markIncompleteNodes(unsigned Flags) {
 
   // Mark all global nodes as incomplete...
   if ((Flags & DSGraph::IgnoreGlobals) == 0)
-    for (node_iterator NI = node_begin(), E = node_end(); NI != E; ++NI)
-      if ((*NI)->isGlobalNode() && (*NI)->getNumLinks())
-        markIncompleteNode(*NI);
+    for (DSScalarMap::global_iterator I = ScalarMap.global_begin(),
+           E = ScalarMap.global_end(); I != E; ++I)
+      markIncompleteNode(ScalarMap[*I].getNode());
 }
 
 static inline void killIfUselessEdge(DSNodeHandle &Edge) {
@@ -1773,16 +1773,18 @@ void DSGraph::removeDeadNodes(unsigned Flags) {
   //
   std::vector<DSNode*> DeadNodes;
   DeadNodes.reserve(Nodes.size());
-  for (NodeListTy::iterator NI = Nodes.begin(), E = Nodes.end(); NI != E;)
-    if (!Alive.count(NI)) {
-      ++NumDNE;
-      DSNode *N = Nodes.remove(NI++);
+  for (NodeListTy::iterator NI = Nodes.begin(), E = Nodes.end(); NI != E;) {
+    DSNode *N = NI++;
+    assert(!N->isForwarding() && "Forwarded node in nodes list?");
+
+    if (!Alive.count(N)) {
+      Nodes.remove(N);
+      assert(!N->isForwarding() && "Cannot remove a forwarding node!");
       DeadNodes.push_back(N);
       N->dropAllReferences();
-    } else {
-      assert(NI->getForwardNode() == 0 && "Alive forwarded node?");
-      ++NI;
+      ++NumDNE;
     }
+  }
 
   // Remove all unreachable globals from the ScalarMap.
   // If flag RemoveUnreachableGlobals is set, GlobalNodes has only dead nodes.
