@@ -1,4 +1,4 @@
-//===- llvm/Analysis/BasicAliasAnalysis.h - Alias Analysis Impl -*- C++ -*-===//
+//===- BasicAliasAnalysis.cpp - Local Alias Analysis Impl -----------------===//
 // 
 //                     The LLVM Compiler Infrastructure
 //
