@@ -55,8 +55,7 @@ std::ostream &WriteGraph(std::ostream &O, const GraphType &G) {
   typedef typename GTraits::NodeType NodeType;
 
   O << "digraph foo {\n"         // Graph name doesn't matter
-    << "\tsize=\"10,7.5\";\n"    // Size to fit on a page
-    << "\trotate=\"90\";\n";     // Orient correctly
+    << "\tsize=\"7.5,10\";\n";   // Size to fit on a page
 
   std::string GraphName = DOTTraits::getGraphName(G);
   if (!GraphName.empty())
