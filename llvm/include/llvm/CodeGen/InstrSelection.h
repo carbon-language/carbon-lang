@@ -15,7 +15,7 @@ class MachineInstr;
 class InstructionNode;
 class TargetMachine;
 class MachineCodeForInstruction;
-class Pass;
+class FunctionPass;
 
 //===--------------------- Required Functions ---------------------------------
 // Target-dependent functions that MUST be implemented for each target.
@@ -43,7 +43,7 @@ extern bool	ThisIsAChainRule	(int eruleno);
 //   Return a pass that performs machine dependant instruction selection.
 //---------------------------------------------------------------------------
 
-Pass *createInstructionSelectionPass(TargetMachine &Target);
+FunctionPass *createInstructionSelectionPass(TargetMachine &Target);
 
 
 //************************ Exported Data Types *****************************/

@@ -8,8 +8,8 @@
 #define LLVM_CODEGEN_PEEPHOLE_OPTS_H
 
 class TargetMachine;
-class Pass;
+class FunctionPass;
 
-Pass *createPeepholeOptsPass(TargetMachine &Target);
+FunctionPass *createPeepholeOptsPass(TargetMachine &Target);
 
 #endif

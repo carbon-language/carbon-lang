@@ -29,7 +29,7 @@ namespace {
 RegisterOpt<DecomposePass> X("lowerrefs", "Decompose multi-dimensional "
                              "structure/array references");
 
-Pass
+FunctionPass
 *createDecomposeMultiDimRefsPass()
 {
   return new DecomposePass();

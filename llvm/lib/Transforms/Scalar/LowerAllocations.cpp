@@ -47,7 +47,7 @@ namespace {
 }
 
 // createLowerAllocationsPass - Interface to this file...
-Pass *createLowerAllocationsPass() {
+FunctionPass *createLowerAllocationsPass() {
   return new LowerAllocations();
 }
 

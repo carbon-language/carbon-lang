@@ -74,7 +74,7 @@ namespace {
   };
 }
 
-Pass *getRegisterAllocator(TargetMachine &T) {
+FunctionPass *getRegisterAllocator(TargetMachine &T) {
   return new RegisterAllocator(T);
 }
 

@@ -1491,6 +1491,6 @@ bool InstructionSchedulingWithSSA::runOnFunction(Function &F)
 }
 
 
-Pass *createInstructionSchedulingWithSSAPass(const TargetMachine &tgt) {
+FunctionPass *createInstructionSchedulingWithSSAPass(const TargetMachine &tgt) {
   return new InstructionSchedulingWithSSA(tgt);
 }

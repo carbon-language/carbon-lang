@@ -72,7 +72,7 @@ Pass *createScalarReplAggregatesPass();
 // index of [0]).
 
 // This pass decomposes all multi-dimensional references in a function.
-Pass *createDecomposeMultiDimRefsPass();
+FunctionPass *createDecomposeMultiDimRefsPass();
 
 // This function decomposes a single instance of such a reference.
 // Return value: true if the instruction was replaced; false otherwise.
@@ -238,7 +238,7 @@ extern const PassInfo *LoopPreheadersID;
 // These two passes convert malloc and free instructions to and from %malloc &
 // %free function calls.
 //
-Pass *createLowerAllocationsPass();
+FunctionPass *createLowerAllocationsPass();
 Pass *createRaiseAllocationsPass();
 
 //===----------------------------------------------------------------------===//

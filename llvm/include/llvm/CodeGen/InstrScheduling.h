@@ -8,7 +8,7 @@
 #ifndef LLVM_CODEGEN_INSTR_SCHEDULING_H
 #define LLVM_CODEGEN_INSTR_SCHEDULING_H
 
-class Pass;
+class FunctionPass;
 class TargetMachine;
 
 //---------------------------------------------------------------------------
@@ -21,6 +21,6 @@ class TargetMachine;
 //   are still in SSA form.
 //---------------------------------------------------------------------------
 
-Pass *createInstructionSchedulingWithSSAPass(const TargetMachine &Target);
+FunctionPass *createInstructionSchedulingWithSSAPass(const TargetMachine &Target);
 
 #endif
