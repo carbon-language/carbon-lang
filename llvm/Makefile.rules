@@ -704,6 +704,7 @@ endif
 #---------------------------------------------------------
 .PRECIOUS: $(BUILD_OBJ_DIR)/Depend/.dir $(BUILD_OBJ_DIR)/BytecodeObj/.dir
 .PRECIOUS: $(BUILD_OBJ_DIR)/Debug/.dir $(BUILD_OBJ_DIR)/Release/.dir
+.PRECIOUS: $(BUILD_OBJ_DIR)/Profile/.dir
 
 # Create .lo files in the ObjectFiles directory from the .cpp and .c files...
 $(BUILD_OBJ_DIR)/Release/%.lo: %.cpp $(BUILD_OBJ_DIR)/Release/.dir
