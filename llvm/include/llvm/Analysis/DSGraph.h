@@ -140,8 +140,9 @@ public:
   // CloneFlags enum - Bits that may be passed into the cloneInto method to
   // specify how to clone the function graph.
   enum CloneFlags {
-    StripAllocaBit     = 1 << 0, KeepAllocaBit  = 0 << 0,
-    DontCloneCallNodes = 2 << 0, CloneCallNodes = 0 << 0,
+    StripAllocaBit        = 1 << 0, KeepAllocaBit     = 0 << 0,
+    DontCloneCallNodes    = 1 << 1, CloneCallNodes    = 0 << 0,
+    DontCloneAuxCallNodes = 1 << 2, CloneAuxCallNodes = 0 << 0,
   };
 
   // cloneInto - Clone the specified DSGraph into the current graph, returning
