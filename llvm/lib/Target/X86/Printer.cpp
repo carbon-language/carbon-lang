@@ -7,25 +7,23 @@
 
 #include "X86.h"
 #include "X86InstrInfo.h"
-#include "llvm/Pass.h"
 #include "llvm/Function.h"
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "Support/Statistic.h"
 
 namespace {
-  struct Printer : public FunctionPass {
-    TargetMachine &TM;
+  struct Printer : public MachineFunctionPass {
     std::ostream &O;
 
-    Printer(TargetMachine &tm, std::ostream &o) : TM(tm), O(o) {}
+    Printer(std::ostream &o) : O(o) {}
 
     virtual const char *getPassName() const {
       return "X86 Assembly Printer";
     }
 
-    bool runOnFunction(Function &F);
+    bool runOnMachineFunction(MachineFunction &F);
   };
 }
 
@@ -33,38 +31,35 @@ namespace {
 /// the specified stream.  This function should work regardless of whether or
 /// not the function is in SSA form or not.
 ///
-Pass *createX86CodePrinterPass(TargetMachine &TM, std::ostream &O) {
-  return new Printer(TM, O);
+Pass *createX86CodePrinterPass(std::ostream &O) {
+  return new Printer(O);
 }
 
 
 /// runOnFunction - This uses the X86InstructionInfo::print method
 /// to print assembly for each instruction.
-bool Printer::runOnFunction (Function & F)
-{
-  static unsigned bbnumber = 0;
-  MachineFunction & MF = MachineFunction::get (&F);
-  const MachineInstrInfo & MII = TM.getInstrInfo ();
+bool Printer::runOnMachineFunction(MachineFunction &MF) {
+  static unsigned BBNumber = 0;
+  const TargetMachine &TM = MF.getTarget();
+  const MachineInstrInfo &MII = TM.getInstrInfo();
 
   // Print out labels for the function.
-  O << "\t.globl\t" << F.getName () << "\n";
-  O << "\t.type\t" << F.getName () << ", @function\n";
-  O << F.getName () << ":\n";
+  O << "\t.globl\t" << MF.getFunction()->getName() << "\n";
+  O << "\t.type\t" << MF.getFunction()->getName() << ", @function\n";
+  O << MF.getFunction()->getName() << ":\n";
 
   // Print out code for the function.
-  for (MachineFunction::const_iterator bb_i = MF.begin (), bb_e = MF.end ();
-       bb_i != bb_e; ++bb_i)
-    {
-      // Print a label for the basic block.
-      O << ".BB" << bbnumber++ << ":\n";
-      for (MachineBasicBlock::const_iterator i_i = bb_i->begin (), i_e =
-	   bb_i->end (); i_i != i_e; ++i_i)
-	{
-	  // Print the assembly for the instruction.
-	  O << "\t";
-          MII.print(*i_i, O, TM);
-	}
+  for (MachineFunction::const_iterator I = MF.begin(), E = MF.end();
+       I != E; ++I) {
+    // Print a label for the basic block.
+    O << ".BB" << BBNumber++ << ":\n";
+    for (MachineBasicBlock::const_iterator II = I->begin(), E = I->end();
+	 II != E; ++II) {
+      // Print the assembly for the instruction.
+      O << "\t";
+      MII.print(*II, O, TM);
     }
+  }
 
   // We didn't modify anything.
   return false;
@@ -109,7 +104,7 @@ static void printOp(std::ostream &O, const MachineOperand &MO,
   }
 }
 
-static const std::string sizePtr (const MachineInstrDescriptor &Desc) {
+static const std::string sizePtr(const MachineInstrDescriptor &Desc) {
   switch (Desc.TSFlags & X86II::ArgMask) {
     default: assert(0 && "Unknown arg size!");
     case X86II::Arg8:   return "BYTE PTR"; 
@@ -125,9 +120,9 @@ static void printMemReference(std::ostream &O, const MachineInstr *MI,
                               unsigned Op, const MRegisterInfo &RI) {
   assert(isMem(MI, Op) && "Invalid memory reference!");
   const MachineOperand &BaseReg  = MI->getOperand(Op);
-  const MachineOperand &Scale    = MI->getOperand(Op+1);
+  int ScaleVal                   = MI->getOperand(Op+1).getImmedValue();
   const MachineOperand &IndexReg = MI->getOperand(Op+2);
-  const MachineOperand &Disp     = MI->getOperand(Op+3);
+  int DispVal                    = MI->getOperand(Op+3).getImmedValue();
 
   O << "[";
   bool NeedPlus = false;
@@ -138,15 +133,21 @@ static void printMemReference(std::ostream &O, const MachineInstr *MI,
 
   if (IndexReg.getReg()) {
     if (NeedPlus) O << " + ";
-    if (Scale.getImmedValue() != 1)
-      O << Scale.getImmedValue() << "*";
+    if (ScaleVal != 1)
+      O << ScaleVal << "*";
     printOp(O, IndexReg, RI);
     NeedPlus = true;
   }
 
-  if (Disp.getImmedValue()) {
-    if (NeedPlus) O << " + ";
-    printOp(O, Disp, RI);
+  if (DispVal) {
+    if (NeedPlus)
+      if (DispVal > 0)
+	O << " + ";
+      else {
+	O << " - ";
+	DispVal = -DispVal;
+      }
+    O << DispVal;
   }
   O << "]";
 }
