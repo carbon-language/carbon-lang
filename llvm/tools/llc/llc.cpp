@@ -1,6 +1,6 @@
-//===-- llc.cpp - Implement the LLVM Compiler -----------------------------===//
+//===-- llc.cpp - Implement the LLVM Native Code Generator ----------------===//
 //
-// This is the llc compiler driver.
+// This is the llc code generator.
 //
 //===----------------------------------------------------------------------===//
 
@@ -15,11 +15,6 @@
 #include "Support/Signals.h"
 #include <memory>
 #include <fstream>
-#include <cstdio>
-
-//------------------------------------------------------------------------------
-// Option declarations for LLC.
-//------------------------------------------------------------------------------
 
 // General options for llc.  Other pass-specific options are specified
 // within the corresponding llc passes, and target-specific options
@@ -58,29 +53,22 @@ GetFileNameRoot(const std::string &InputFilename)
 }
 
 
-//===---------------------------------------------------------------------===//
-// Function main()
-// 
-// Entry point for the llc compiler.
-//===---------------------------------------------------------------------===//
-
-int
-main(int argc, char **argv)
-{
+// main - Entry point for the llc compiler.
+//
+int main(int argc, char **argv) {
   cl::ParseCommandLineOptions(argc, argv, " llvm system compiler\n");
   
   // Load the module to be compiled...
   std::auto_ptr<Module> M(ParseBytecodeFile(InputFilename));
-  if (M.get() == 0)
-    {
-      std::cerr << argv[0] << ": bytecode didn't read correctly.\n";
-      return 1;
-    }
+  if (M.get() == 0) {
+    std::cerr << argv[0] << ": bytecode didn't read correctly.\n";
+    return 1;
+  }
   Module &mod = *M.get();
 
   // Allocate target machine.  First, check whether the user has
   // explicitly specified an architecture to compile for.
-  unsigned Config = (mod.isLittleEndian()   ? TM::LittleEndian : TM::BigEndian) |
+  unsigned Config = (mod.isLittleEndian()   ? TM::LittleEndian : TM::BigEndian)|
                     (mod.has32BitPointers() ? TM::PtrSize32    : TM::PtrSize64);
   TargetMachine* (*TargetMachineAllocator)(unsigned) = 0;
   switch (Arch) {
