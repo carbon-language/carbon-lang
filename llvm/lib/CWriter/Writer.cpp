@@ -778,11 +778,12 @@ void CWriter::printFunction(Function *F) {
           Out << "  const ConstantDoubleTy FloatConstant" << FPCounter++
               << " = 0x" << std::hex << *(unsigned long long*)&Val << std::dec
               << ";    /* " << Val << " */\n";
-        else if (FPC->getType() == Type::FloatTy)
+        else if (FPC->getType() == Type::FloatTy) {
+          float fVal = Val;
           Out << "  const ConstantFloatTy FloatConstant" << FPCounter++
-              << " = 0x" << std::hex << *(unsigned*)&Val << std::dec
+              << " = 0x" << std::hex << *(unsigned*)&fVal << std::dec
               << ";    /* " << Val << " */\n";
-        else
+        } else
           assert(0 && "Unknown float type!");
       }
 
