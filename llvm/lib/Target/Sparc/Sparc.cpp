@@ -260,7 +260,7 @@ void UltraSparc::addPassesToEmitAssembly(PassManager &PM, std::ostream &Out) {
 
   //PM.add(new InstructionScheduling(*this));
 
-  PM.add(new RegisterAllocation(*this));
+  PM.add(getRegisterAllocator(*this));
   
   //PM.add(new OptimizeLeafProcedures());
   //PM.add(new DeleteFallThroughBranches());

@@ -32,21 +32,35 @@ cl::Enum<RegAllocDebugLevel_t> DEBUG_RA("dregalloc", cl::NoFlags,
   clEnumValN(RA_DEBUG_Verbose, "v", "enable extra debug output"), 0);
 
 
-bool RegisterAllocation::runOnMethod(Method *M) {
-  if (DEBUG_RA)
-    cerr << "\n******************** Method "<< M->getName()
-         << " ********************\n";
+//----------------------------------------------------------------------------
+// RegisterAllocation pass front end...
+//----------------------------------------------------------------------------
+namespace {
+  class RegisterAllocator : public MethodPass {
+    TargetMachine &Target;
+  public:
+    inline RegisterAllocator(TargetMachine &T) : Target(T) {}
     
-  MethodLiveVarInfo LVI(M);   // Analyze live varaibles
-  LVI.analyze();
-    
-  PhyRegAlloc PRA(M, Target, &LVI); // allocate registers
-  PRA.allocateRegisters();
-
-  if (DEBUG_RA) cerr << "\nRegister allocation complete!\n";
-  return false;
+    bool runOnMethod(Method *M) {
+      if (DEBUG_RA)
+        cerr << "\n******************** Method "<< M->getName()
+             << " ********************\n";
+      
+      MethodLiveVarInfo LVI(M);   // Analyze live varaibles
+      LVI.analyze();
+      
+      PhyRegAlloc PRA(M, Target, &LVI); // allocate registers
+      PRA.allocateRegisters();
+      
+      if (DEBUG_RA) cerr << "\nRegister allocation complete!\n";
+      return false;
+    }
+  };
 }
 
+MethodPass *getRegisterAllocator(TargetMachine &T) {
+  return new RegisterAllocator(T);
+}
 
 //----------------------------------------------------------------------------
 // Constructor: Init local composite objects and create register classes.

@@ -9,16 +9,12 @@
 
 #include "llvm/Pass.h"
 class TargetMachine;
+class MethodPass;
 
 //----------------------------------------------------------------------------
 // Entry point for register allocation for a module
 //----------------------------------------------------------------------------
 
-class RegisterAllocation : public MethodPass {
-  TargetMachine &Target;
-public:
-  inline RegisterAllocation(TargetMachine &T) : Target(T) {}
-  bool runOnMethod(Method *M);
-};
+MethodPass *getRegisterAllocator(TargetMachine &T);
 
 #endif
