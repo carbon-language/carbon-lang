@@ -34,7 +34,6 @@
 #define LLVM_CONSTANTHANDLING_H
 
 #include "llvm/Constants.h"
-#include "llvm/Instruction.h"
 #include "llvm/Type.h"
 class PointerType;
 
@@ -198,47 +197,17 @@ inline ConstantBool *operator<=(const Constant &V1,
 //  Implement higher level instruction folding type instructions
 //===----------------------------------------------------------------------===//
 
-inline Constant *ConstantFoldCastInstruction(const Constant *V,
-                                             const Type *DestTy) {
-  return ConstRules::get(*V)->castTo(V, DestTy);
-}
+// ConstantFoldInstruction - Attempt to constant fold the specified instruction.
+// If successful, the constant result is returned, if not, null is returned.
+//
+Constant *ConstantFoldInstruction(Instruction *I);
 
-inline Constant *ConstantFoldUnaryInstruction(unsigned Opcode, 
-                                              const Constant *V) {
-  switch (Opcode) {
-  case Instruction::Not:  return ~*V;
-  }
-  return 0;
-}
-
-inline Constant *ConstantFoldBinaryInstruction(unsigned Opcode,
-                                               const Constant *V1, 
-                                               const Constant *V2) {
-  switch (Opcode) {
-  case Instruction::Add:     return *V1 + *V2;
-  case Instruction::Sub:     return *V1 - *V2;
-  case Instruction::Mul:     return *V1 * *V2;
-  case Instruction::Div:     return *V1 / *V2;
-  case Instruction::Rem:     return *V1 % *V2;
-
-  case Instruction::SetEQ:   return *V1 == *V2;
-  case Instruction::SetNE:   return *V1 != *V2;
-  case Instruction::SetLE:   return *V1 <= *V2;
-  case Instruction::SetGE:   return *V1 >= *V2;
-  case Instruction::SetLT:   return *V1 <  *V2;
-  case Instruction::SetGT:   return *V1 >  *V2;
-  }
-  return 0;
-}
-
-inline Constant *ConstantFoldShiftInstruction(unsigned Opcode,
-                                              const Constant *V1, 
-                                              const Constant *V2) {
-  switch (Opcode) {
-  case Instruction::Shl:     return *V1 << *V2;
-  case Instruction::Shr:     return *V1 >> *V2;
-  default:                   return 0;
-  }
-}
+// Constant fold various types of instruction...
+Constant *ConstantFoldCastInstruction(const Constant *V, const Type *DestTy);
+Constant *ConstantFoldUnaryInstruction(unsigned Opcode, const Constant *V);
+Constant *ConstantFoldBinaryInstruction(unsigned Opcode, const Constant *V1,
+                                        const Constant *V2);
+Constant *ConstantFoldShiftInstruction(unsigned Opcode, const Constant *V1,
+                                       const Constant *V2);
 
 #endif
