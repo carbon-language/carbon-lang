@@ -122,13 +122,15 @@ public:
   /// (and Instruction must be last).
   ///
   enum ValueTy {
-    ArgumentVal,            // This is an instance of Argument
-    BasicBlockVal,          // This is an instance of BasicBlock
-    FunctionVal,            // This is an instance of Function
-    GlobalVariableVal,      // This is an instance of GlobalVariable
-    ConstantVal,            // This is an instance of Constant
-    InstructionVal,         // This is an instance of Instruction
-    ValueListVal            // This is for bcreader, a special ValTy
+    ArgumentVal,              // This is an instance of Argument
+    BasicBlockVal,            // This is an instance of BasicBlock
+    FunctionVal,              // This is an instance of Function
+    GlobalVariableVal,        // This is an instance of GlobalVariable
+    ConstantExprVal,          // This is an instance of ConstantExpr
+    ConstantAggregateZeroVal, // This is an instance of ConstantAggregateNull
+    SimpleConstantVal,        // This is some other type of Constant
+    InstructionVal,           // This is an instance of Instruction
+    ValueListVal              // This is for bcreader, a special ValTy
   };
   unsigned getValueType() const {
     return SubclassID;
@@ -178,7 +180,9 @@ void Use::set(Value *V) {
 // the subtype header files to test to see if the value is a subclass...
 //
 template <> inline bool isa_impl<Constant, Value>(const Value &Val) { 
-  return Val.getValueType() == Value::ConstantVal ||
+  return Val.getValueType() == Value::ConstantExprVal ||
+         Val.getValueType() == Value::SimpleConstantVal ||
+         Val.getValueType() == Value::ConstantAggregateZeroVal ||
          Val.getValueType() == Value::FunctionVal ||
 	 Val.getValueType() == Value::GlobalVariableVal;
 }
