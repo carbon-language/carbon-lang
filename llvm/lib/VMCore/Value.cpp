@@ -89,7 +89,8 @@ void Value::killUse(User *U) {
     /* empty */;
 
   assert(i < Uses.size() && "Use not in uses list!!");
-  Uses.erase(Uses.begin()+i);
+  Uses[i] = Uses.back();
+  Uses.pop_back();
 }
 
 //===----------------------------------------------------------------------===//
