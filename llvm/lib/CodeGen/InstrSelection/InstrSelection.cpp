@@ -10,14 +10,6 @@
 //***************************************************************************
 
 
-//************************** System Include Files **************************/
-
-#include <assert.h>
-#include <stdio.h>
-#include <iostream.h>
-#include <bool.h>
-#include <string>
-
 //*************************** User Include Files ***************************/
 
 #include "llvm/Method.h"
@@ -75,7 +67,7 @@ SelectInstructionsForMethod(Method* method,
 	  >= DEBUG_BURG_TREES)
 	{
 	  printcover(basicNode, 1, 0);
-	  printf("\nCover cost == %d\n\n", treecost(basicNode, 1, 0));
+	  cerr << "\nCover cost == " << treecost(basicNode, 1, 0) << "\n\n";
 	  printMatches(basicNode);
 	}
       
