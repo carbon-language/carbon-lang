@@ -111,8 +111,12 @@ bool ReduceCrashingFunctions::TestFuncs(std::vector<Function*> &Funcs) {
   }
 
   std::cout << "Checking for crash with only these functions:";
-  for (unsigned i = 0, e = Funcs.size(); i != e; ++i)
+  unsigned NumPrint = Funcs.size();
+  if (NumPrint > 10) NumPrint = 10;
+  for (unsigned i = 0; i != NumPrint; ++i)
     std::cout << " " << Funcs[i]->getName();
+  if (NumPrint < Funcs.size())
+    std::cout << "... <" << Funcs.size() << " total>";
   std::cout << ": ";
 
   // Loop over and delete any functions which we aren't supposed to be playing
@@ -178,8 +182,12 @@ bool ReduceCrashingBlocks::TestBlocks(std::vector<BasicBlock*> &BBs) {
   }
 
   std::cout << "Checking for crash with only these blocks:";
-  for (unsigned i = 0, e = Blocks.size(); i != e; ++i)
+  unsigned NumPrint = Blocks.size();
+  if (NumPrint > 10) NumPrint = 10;
+  for (unsigned i = 0, e = NumPrint; i != e; ++i)
     std::cout << " " << BBs[i]->getName();
+  if (NumPrint < Blocks.size())
+    std::cout << "... <" << Blocks.size() << " total>";
   std::cout << ": ";
 
   // Loop over and delete any hack up any blocks that are not listed...
