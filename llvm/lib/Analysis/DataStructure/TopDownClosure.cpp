@@ -105,8 +105,8 @@ bool TDDataStructures::runOnModule(Module &M) {
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
     if (!I->isExternal())
       getOrCreateDSGraph(*I);
+  return false;
 }
-//return false;
 #endif
 
 
@@ -154,6 +154,13 @@ DSGraph &TDDataStructures::getOrCreateDSGraph(Function &F) {
     assert(G->getAuxFunctionCalls().empty() && "Cloned aux calls?");
     G->setPrintAuxCalls();
     G->setGlobalsGraph(GlobalsGraph);
+
+    // Note that this graph is the graph for ALL of the function in the SCC, not
+    // just F.
+    for (DSGraph::retnodes_iterator RI = G->retnodes_begin(),
+           E = G->retnodes_end(); RI != E; ++RI)
+      if (RI->first != &F)
+        DSInfo[RI->first] = G;
   }
   return *G;
 }
