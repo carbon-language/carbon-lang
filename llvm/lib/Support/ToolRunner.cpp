@@ -78,7 +78,6 @@ int LLI::ExecuteProgram(const std::string &Bytecode,
 
   std::vector<const char*> LLIArgs;
   LLIArgs.push_back(LLIPath.c_str());
-  LLIArgs.push_back("-quiet");
   LLIArgs.push_back("-force-interpreter=true");
   LLIArgs.push_back(Bytecode.c_str());
   // Add optional parameters to the running program from Argv
@@ -195,7 +194,6 @@ int JIT::ExecuteProgram(const std::string &Bytecode,
   // Construct a vector of parameters, incorporating those from the command-line
   std::vector<const char*> JITArgs;
   JITArgs.push_back(LLIPath.c_str());
-  JITArgs.push_back("-quiet");
   JITArgs.push_back("-force-interpreter=false");
 
   for (unsigned i = 0, e = SharedLibs.size(); i != e; ++i) {
