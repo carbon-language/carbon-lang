@@ -506,14 +506,6 @@ inline static PATypeHolder<TypeTy> *newTH(const PATypeHolder<TypeTy> &TH) {
 }
 
 
-// newTHC - Allocate a new type holder for the specified type that can be
-// casted to a new Type type.
-template <class TypeTy, class OldTy>
-inline static PATypeHolder<TypeTy> *newTHC(const PATypeHolder<OldTy> &Old) {
-  return new PATypeHolder<TypeTy>((const TypeTy*)Old.get());
-}
-
-
 //===----------------------------------------------------------------------===//
 //            RunVMAsmParser - Define an interface to this parser
 //===----------------------------------------------------------------------===//
@@ -545,9 +537,6 @@ Module *RunVMAsmParser(const string &Filename, FILE *F) {
 
   const Type                       *PrimType;
   PATypeHolder<Type>               *TypeVal;
-  PATypeHolder<ArrayType>          *ArrayTypeTy;
-  PATypeHolder<StructType>         *StructTypeTy;
-  PATypeHolder<PointerType>        *PointerTypeTy;
   Value                            *ValueVal;
 
   list<MethodArgument*>            *MethodArgList;
@@ -611,9 +600,6 @@ Module *RunVMAsmParser(const string &Filename, FILE *F) {
 %token <TypeVal>  OPAQUE
 %token <PrimType> VOID BOOL SBYTE UBYTE SHORT USHORT INT UINT LONG ULONG
 %token <PrimType> FLOAT DOUBLE TYPE LABEL
-%type  <ArrayTypeTy> ArrayType ArrayTypeI
-%type  <StructTypeTy> StructType StructTypeI
-%type  <PointerTypeTy> PointerType PointerTypeI
 
 %token <StrVal>     VAR_ID LABELSTR STRINGCONSTANT
 %type  <StrVal>  OptVAR_ID OptAssign
@@ -710,34 +696,6 @@ UpRTypes : ValueRef {                    // Named types are also simple types...
   $$ = newTH(getTypeVal($1));
 }
 
-// ArrayTypeI - Internal version of ArrayType that can have incomplete uprefs
-//
-ArrayTypeI : '[' UpRTypesV ']' {               // Unsized array type?
-    $$ = newTHC<ArrayType>(HandleUpRefs(ArrayType::get(*$2)));
-    delete $2;
-  }
-  | '[' EUINT64VAL 'x' UpRTypes ']' {          // Sized array type?
-    $$ = newTHC<ArrayType>(HandleUpRefs(ArrayType::get(*$4, (int)$2)));
-    delete $4;
-  }
-
-StructTypeI : '{' TypeListI '}' {              // Structure type?
-    vector<const Type*> Elements;
-    mapto($2->begin(), $2->end(), back_inserter(Elements), 
-	mem_fun_ref(&PATypeHandle<Type>::get));
-
-    $$ = newTHC<StructType>(HandleUpRefs(StructType::get(Elements)));
-    delete $2;
-  }
-  | '{' '}' {                                  // Empty structure type?
-    $$ = newTH(StructType::get(vector<const Type*>()));
-  }
-
-PointerTypeI : UpRTypes '*' {                             // Pointer type?
-    $$ = newTHC<PointerType>(HandleUpRefs(PointerType::get(*$1)));
-    delete $1;  // Delete the type handle
-  }
-
 // Include derived types in the Types production.
 //
 UpRTypes : '\\' EUINT64VAL {                   // Type UpReference
@@ -755,22 +713,29 @@ UpRTypes : '\\' EUINT64VAL {                   // Type UpReference
     delete $3;      // Delete the argument list
     delete $1;      // Delete the old type handle
   }
-  | ArrayTypeI {                               // [Un]sized array type?
-    $$ = newTHC<Type>(*$1); delete $1;
+  | '[' UpRTypesV ']' {                        // Unsized array type?
+    $$ = newTH<Type>(HandleUpRefs(ArrayType::get(*$2)));
+    delete $2;
   }
-  | StructTypeI {                              // Structure type?
-    $$ = newTHC<Type>(*$1); delete $1;
+  | '[' EUINT64VAL 'x' UpRTypes ']' {          // Sized array type?
+    $$ = newTH<Type>(HandleUpRefs(ArrayType::get(*$4, (int)$2)));
+    delete $4;
   }
-  | PointerTypeI {                             // Pointer type?
-    $$ = newTHC<Type>(*$1); delete $1;
-  }
+  | '{' TypeListI '}' {                        // Structure type?
+    vector<const Type*> Elements;
+    mapto($2->begin(), $2->end(), back_inserter(Elements), 
+	mem_fun_ref(&PATypeHandle<Type>::get));
 
-// Define some helpful top level types that do not allow UpReferences to escape
-//
-ArrayType   : ArrayTypeI   { TypeDone($$ = $1); }
-StructType  : StructTypeI  { TypeDone($$ = $1); }
-PointerType : PointerTypeI { TypeDone($$ = $1); }
-
+    $$ = newTH<Type>(HandleUpRefs(StructType::get(Elements)));
+    delete $2;
+  }
+  | '{' '}' {                                  // Empty structure type?
+    $$ = newTH<Type>(StructType::get(vector<const Type*>()));
+  }
+  | UpRTypes '*' {                             // Pointer type?
+    $$ = newTH<Type>(HandleUpRefs(PointerType::get(*$1)));
+    delete $1;
+  }
 
 // TypeList - Used for struct declarations and as a basis for method type 
 // declaration type lists
@@ -799,8 +764,11 @@ ArgTypeListI : TypeListI
 // ConstVal - The various declarations that go into the constant pool.  This
 // includes all forward declarations of types, constants, and functions.
 //
-ConstVal: ArrayType '[' ConstVector ']' { // Nonempty unsized arr
-    const ArrayType *ATy = *$1;
+ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
+    const ArrayType *ATy = dyn_cast<const ArrayType>($1->get());
+    if (ATy == 0)
+      ThrowException("Cannot make array constant with type: '" + 
+                     (*$1)->getDescription() + "'!");
     const Type *ETy = ATy->getElementType();
     int NumElements = ATy->getNumElements();
 
@@ -821,16 +789,25 @@ ConstVal: ArrayType '[' ConstVector ']' { // Nonempty unsized arr
     $$ = ConstPoolArray::get(ATy, *$3);
     delete $1; delete $3;
   }
-  | ArrayType '[' ']' {
-    int NumElements = (*$1)->getNumElements();
+  | Types '[' ']' {
+    const ArrayType *ATy = dyn_cast<const ArrayType>($1->get());
+    if (ATy == 0)
+      ThrowException("Cannot make array constant with type: '" + 
+                     (*$1)->getDescription() + "'!");
+
+    int NumElements = ATy->getNumElements();
     if (NumElements != -1 && NumElements != 0) 
       ThrowException("Type mismatch: constant sized array initialized with 0"
 		     " arguments, but has size of " + itostr(NumElements) +"!");
-    $$ = ConstPoolArray::get((*$1), vector<ConstPoolVal*>());
+    $$ = ConstPoolArray::get(ATy, vector<ConstPoolVal*>());
     delete $1;
   }
-  | ArrayType 'c' STRINGCONSTANT {
-    const ArrayType *ATy = *$1;
+  | Types 'c' STRINGCONSTANT {
+    const ArrayType *ATy = dyn_cast<const ArrayType>($1->get());
+    if (ATy == 0)
+      ThrowException("Cannot make array constant with type: '" + 
+                     (*$1)->getDescription() + "'!");
+
     int NumElements = ATy->getNumElements();
     const Type *ETy = ATy->getElementType();
     char *EndStr = UnEscapeLexed($3, true);
@@ -853,14 +830,23 @@ ConstVal: ArrayType '[' ConstVector ']' { // Nonempty unsized arr
     $$ = ConstPoolArray::get(ATy, Vals);
     delete $1;
   }
-  | StructType '{' ConstVector '}' {
+  | Types '{' ConstVector '}' {
+    const StructType *STy = dyn_cast<const StructType>($1->get());
+    if (STy == 0)
+      ThrowException("Cannot make struct constant with type: '" + 
+                     (*$1)->getDescription() + "'!");
     // FIXME: TODO: Check to see that the constants are compatible with the type
     // initializer!
-    $$ = ConstPoolStruct::get(*$1, *$3);
+    $$ = ConstPoolStruct::get(STy, *$3);
     delete $1; delete $3;
   }
-  | PointerType NULL_TOK {
-    $$ = ConstPoolPointer::getNullPointer(*$1);
+  | Types NULL_TOK {
+    const PointerType *PTy = dyn_cast<const PointerType>($1->get());
+    if (PTy == 0)
+      ThrowException("Cannot make null pointer constant with type: '" + 
+                     (*$1)->getDescription() + "'!");
+
+    $$ = ConstPoolPointer::getNullPointer(PTy);
     delete $1;
   }
 /*
