@@ -87,12 +87,10 @@ public:
   void endModule() {
   }
 
-  // Check if a name is external or accessible from external code.
-  // Only functions can currently be external.  "main" is the only name
-  // that is visible externally.
+  // Check if a value is external or accessible from external code.
   bool isExternal(const Value* V) {
-    const Function *F = dyn_cast<Function>(V);
-    return F && (F->isExternal() || F->getName() == "main");
+    const GlobalValue *GV = dyn_cast<GlobalValue>(V);
+    return GV && GV->hasExternalLinkage();
   }
   
   // enterSection - Use this method to enter a different section of the output
@@ -148,7 +146,7 @@ public:
   string getID(const Value *V, const char *Prefix, const char *FPrefix = 0) {
     string Result = FPrefix ? FPrefix : "";  // "Forced prefix"
     
-    Result = Result + (V->hasName()? V->getName() : string(Prefix));
+    Result +=  V->hasName() ? V->getName() : string(Prefix);
     
     // Qualify all internal names with a unique id.
     if (!isExternal(V)) {
@@ -174,10 +172,18 @@ public:
     return getID(BB, "LL", (".L_"+getID(BB->getParent())+"_").c_str());
   }
   string getID(const GlobalVariable *GV) {
-    return getID(GV, "LLVMGlobal_", ".G_");
+    return getID(GV, "LLVMGlobal_");
   }
   string getID(const Constant *CV) {
     return getID(CV, "LLVMConst_", ".C_");
+  }
+  string getID(const GlobalValue *GV) {
+    if (const GlobalVariable *V = dyn_cast<GlobalVariable>(GV))
+      return getID(V);
+    else if (const Function *F = dyn_cast<Function>(GV))
+      return getID(F);
+    assert(0 && "Unexpected type of GlobalValue!");
+    return "";
   }
 };
 
@@ -661,12 +667,7 @@ SparcModuleAsmPrinter::printSingleConstant(const Constant* CV)
   else if (const ConstantPointerRef* CPR = dyn_cast<ConstantPointerRef>(CV))
     { // This is a constant address for a global variable or method.
       // Use the name of the variable or method as the address value.
-      if (const GlobalVariable* GV = dyn_cast<GlobalVariable>(CPR->getValue()))
-        toAsm << getID(GV);
-      else if (const Function* F = dyn_cast<Function>(CPR->getValue()))
-        toAsm << getID(F);
-      else
-        assert(0 && "Unexpected constant reference type");
+      toAsm << getID(CPR->getValue()) << "\n";
     }
   else if (const ConstantPointer* CPP = dyn_cast<ConstantPointer>(CV))
     {
