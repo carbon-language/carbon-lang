@@ -1,4 +1,4 @@
-//===- ConfigData.cpp - Configuration Data Mgmt -----------------*- C++ -*-===//
+//===- Configuration.cpp - Configuration Data Mgmt --------------*- C++ -*-===//
 // 
 //                     The LLVM Compiler Infrastructure
 //
