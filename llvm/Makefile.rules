@@ -334,8 +334,8 @@ LinkP    := $(Link) -O3 -L$(PROJLIBPROFILESOURCE) -L$(LLVMLIBPROFILESOURCE) $(PR
 # e.g. usage TOOLLINKOPTSB =  -L/home/xxx/lib
 ifdef TOOLLINKOPTSB
 LinkG    := $(LinkG) $(TOOLLINKOPTSB) 
-LinkO    := $(LinkG) $(TOOLLINKOPTSB) 
-LinkP    := $(LinkG) $(TOOLLINKOPTSB) 
+LinkO    := $(LinkO) $(TOOLLINKOPTSB) 
+LinkP    := $(LinkP) $(TOOLLINKOPTSB) 
 endif
 
 # Create one .o file from a bunch of .o files...
