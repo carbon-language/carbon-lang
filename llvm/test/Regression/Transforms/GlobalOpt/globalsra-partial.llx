@@ -1,0 +1,23 @@
+; In this case, the global can only be broken up by one level.
+
+; RUN: llvm-as < %s | opt -globalopt | llvm-dis | not grep 12345
+
+%G = internal global { int, [4 x float] } zeroinitializer
+
+void %onlystore() {
+	store int 12345, int* getelementptr ({ int, [4 x float] }* %G, int 0, uint 0)
+	ret void
+}
+
+void %storeinit(int %i) {
+	%Ptr = getelementptr { int, [4 x float] }* %G, int 0, uint 1, int %i
+	store float 1.0, float* %Ptr
+	ret void
+}
+
+float %readval(int %i) {
+	%Ptr = getelementptr { int, [4 x float] }* %G, int 0, uint 1, int %i
+	%V = load float* %Ptr
+	ret float %V
+}
+
