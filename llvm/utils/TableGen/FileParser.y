@@ -467,7 +467,8 @@ ObjectBody : OptID {
   for (unsigned i = 0, e = $4->size(); i != e; ++i) {
     Record *SuperClass = (*$4)[i].first;
     for (unsigned i = 0, e = SuperClass->getTemplateArgs().size(); i != e; ++i)
-    CurRec->removeValue(SuperClass->getTemplateArgs()[i]);
+      if (!CurRec->isTemplateArg(SuperClass->getTemplateArgs()[i]))
+        CurRec->removeValue(SuperClass->getTemplateArgs()[i]);
   }
   delete $4;   // Delete the class list...
 
