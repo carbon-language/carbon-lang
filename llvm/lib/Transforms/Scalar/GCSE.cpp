@@ -223,6 +223,11 @@ Instruction *GCSE::EliminateCSE(Instruction *I, Instruction *Other) {
     Instruction *Second = I != First ? I : Other; // Get iterator to second inst
     BI = Second;
 
+    if (isa<LoadInst>(Second))
+      ++NumLoadRemoved;  // Keep track of loads eliminated
+    if (isa<CallInst>(Second))
+      ++NumCallRemoved;  // Keep track of calls eliminated
+
     // Destroy Second, using First instead.
     ReplaceInstWithInst(First, BI);
     Ret = First;
@@ -231,9 +236,19 @@ Instruction *GCSE::EliminateCSE(Instruction *I, Instruction *Other) {
     // dominates the other instruction, we can simply use it
     //
   } else if (DomSetInfo->dominates(BB1, BB2)) {    // I dom Other?
+    if (isa<LoadInst>(Other))
+      ++NumLoadRemoved;  // Keep track of loads eliminated
+    if (isa<CallInst>(Other))
+      ++NumCallRemoved;  // Keep track of calls eliminated
+
     ReplaceInstWithInst(I, Other);
     Ret = I;
   } else if (DomSetInfo->dominates(BB2, BB1)) {    // Other dom I?
+    if (isa<LoadInst>(I))
+      ++NumLoadRemoved;  // Keep track of loads eliminated
+    if (isa<CallInst>(I))
+      ++NumCallRemoved;  // Keep track of calls eliminated
+
     ReplaceInstWithInst(Other, I);
     Ret = Other;
   } else {
@@ -266,10 +281,6 @@ Instruction *GCSE::EliminateCSE(Instruction *I, Instruction *Other) {
     return 0;
   }
 
-  if (isa<LoadInst>(Ret))
-    ++NumLoadRemoved;  // Keep track of loads eliminated
-  if (isa<CallInst>(Ret))
-    ++NumCallRemoved;  // Keep track of calls eliminated
   ++NumInstRemoved;   // Keep track of number of instructions eliminated
 
   // Add all users of Ret to the worklist...
