@@ -694,14 +694,14 @@ href="http://llvm.cs.uiuc.edu/doxygen/classAnalysisUsage.html">AnalysisUsage</a>
   <i>// setPreservesAll - Call this if the pass does not modify its input at all</i>
   <b>void</b> AnalysisUsage::setPreservesAll();
 
-  <i>// preservesCFG - This function should be called by the pass, iff they do not:
+  <i>// setPreservesCFG - This function should be called by the pass, iff they do not:
   //
   //  1. Add or remove basic blocks from the function
   //  2. Modify terminator instructions in any way.
   //
   //  This is automatically implied for <a href="#BasicBlockPass">BasicBlockPass</a>'s
   //</i>
-  <b>void</b> AnalysisUsage::preservesCFG();
+  <b>void</b> AnalysisUsage::setPreservesCFG();
 </pre><p>
 
 Some examples of how to use these methods are:<p>
@@ -720,7 +720,7 @@ and:<p>
 <pre>
   <i>// This example modifies the program, but does not modify the CFG</i>
   <b>void</b> <a href="http://llvm.cs.uiuc.edu/doxygen/structLICM.html">LICM</a>::getAnalysisUsage(AnalysisUsage &amp;AU) <b>const</b> {
-    AU.preservesCFG();
+    AU.setPreservesCFG();
     AU.addRequired&lt;<a href="http://llvm.cs.uiuc.edu/doxygen/classLoopInfo.html">LoopInfo</a>&gt;();
   }
 </pre><p>
@@ -1223,6 +1223,6 @@ href="#Pass"><tt>Pass</tt></a>, only the other way around.<p>
 <address><a href="mailto:sabre@nondot.org">Chris Lattner</a></address>
 <!-- Created: Tue Aug  6 15:00:33 CDT 2002 -->
 <!-- hhmts start -->
-Last modified: Wed Sep 25 17:20:10 CDT 2002
+Last modified: Mon Oct 21 14:52:55 CDT 2002
 <!-- hhmts end -->
 </font></body></html>
