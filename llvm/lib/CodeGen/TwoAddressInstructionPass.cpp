@@ -28,8 +28,8 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "twoaddrinstr"
-#include "llvm/Function.h"
 #include "llvm/CodeGen/Passes.h"
+#include "llvm/Function.h"
 #include "llvm/CodeGen/LiveVariables.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstr.h"
@@ -105,13 +105,8 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
                    "two address instruction invalid");
 
             // if the two operands are the same we just remove the use
-            // and mark the def as def&use
-            if (mi->getOperand(0).getReg() ==
-                mi->getOperand(1).getReg()) {
-            }
-            else {
-                MadeChange = true;
-
+            // and mark the def as def&use, otherwise we have to insert a copy.
+            if (mi->getOperand(0).getReg() != mi->getOperand(1).getReg()) {
                 // rewrite:
                 //     a = b op c
                 // to:
@@ -128,9 +123,11 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
                 // instruction (a = b + a for example) because our
                 // transformation will not work. This should never occur
                 // because we are in SSA form.
+#ifndef NDEBUG
                 for (unsigned i = 1; i != mi->getNumOperands(); ++i)
                     assert(!mi->getOperand(i).isRegister() ||
                            mi->getOperand(i).getReg() != regA);
+#endif
 
                 const TargetRegisterClass* rc =
                     MF.getSSARegMap()->getRegClass(regA);
@@ -167,6 +164,7 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
             assert(mi->getOperand(0).isDef());
             mi->getOperand(0).setUse();
             mi->RemoveOperand(1);
+            MadeChange = true;
 
             DEBUG(std::cerr << "\t\trewrite to:\t";
                   mi->print(std::cerr, &TM));
