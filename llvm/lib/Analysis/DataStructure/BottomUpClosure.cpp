@@ -40,9 +40,13 @@ bool BUDataStructures::runOnModule(Module &M) {
   GlobalsGraph = new DSGraph(LocalDSA.getGlobalsGraph());
   GlobalsGraph->setPrintAuxCalls();
 
+  std::vector<Function*> Stack;
+  hash_map<Function*, unsigned> ValMap;
+  unsigned NextID = 1;
+
   Function *MainFunc = M.getMainFunction();
   if (MainFunc)
-    calculateReachableGraphs(MainFunc);
+    calculateGraphs(MainFunc, Stack, NextID, ValMap);
 
   // Calculate the graphs for any functions that are unreachable from main...
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
@@ -52,7 +56,7 @@ bool BUDataStructures::runOnModule(Module &M) {
         std::cerr << "*** Function unreachable from main: "
                   << I->getName() << "\n";
 #endif
-      calculateReachableGraphs(I);    // Calculate all graphs...
+      calculateGraphs(I, Stack, NextID, ValMap);     // Calculate all graphs.
     }
 
   NumCallEdges += ActualCallees.size();
@@ -69,10 +73,6 @@ bool BUDataStructures::runOnModule(Module &M) {
 }
 
 void BUDataStructures::calculateReachableGraphs(Function *F) {
-  std::vector<Function*> Stack;
-  hash_map<Function*, unsigned> ValMap;
-  unsigned NextID = 1;
-  calculateGraphs(F, Stack, NextID, ValMap);
 }
 
 DSGraph &BUDataStructures::getOrCreateGraph(Function *F) {
@@ -253,7 +253,29 @@ void BUDataStructures::calculateGraph(DSGraph &Graph) {
 
   DSGraph::ReturnNodesTy &ReturnNodes = Graph.getReturnNodes();
 
-  // Loop over all of the resolvable call sites
+  // Print out multi-call sites.
+  bool Printed = false;
+  for (std::list<DSCallSite>::iterator I = TempFCs.begin(), E = TempFCs.end();
+       I != E; ++I) {
+    if (!I->isDirectCall()) {
+      DSNode *Node = I->getCalleeNode();
+      if (Node->getGlobals().size() > 1) {
+        if (!Printed)
+          std::cerr << "In Fns: " << Graph.getFunctionNames() << "\n";
+        std::cerr << "  calls " << Node->getGlobals().size()
+                  << " fns from site: " << *I->getCallSite().getInstruction();
+        unsigned NumToPrint = Node->getGlobals().size();
+        if (NumToPrint > 5) NumToPrint = 5;
+        std::cerr << "   Fns =";
+        for (unsigned i = 0; i != NumToPrint; ++i) 
+          std::cerr << " " << Node->getGlobals()[i]->getName();
+        std::cerr << "\n";
+      }
+    }
+  }
+
+
+  // Loop over all of the resolvable call sites.
   DSCallSiteIterator I = DSCallSiteIterator::begin(TempFCs);
   DSCallSiteIterator E = DSCallSiteIterator::end(TempFCs);
 
