@@ -65,11 +65,9 @@ void LiveRangeInfo::unionAndUpdateLRs(LiveRange *L1, LiveRange *L2) {
   assert(! (L1->hasColor() && L2->hasColor()) ||
          L1->getColor() == L2->getColor());
 
-  set_union(*L1, *L2);                   // add elements of L2 to L1
+  L2->insert (L1->begin(), L1->end());   // add elements of L2 to L1
 
-  for(ValueSet::iterator L2It = L2->begin(); L2It != L2->end(); ++L2It) {
-    //assert(( L1->getTypeID() == L2->getTypeID()) && "Merge:Different types");
-
+  for(LiveRange::iterator L2It = L2->begin(); L2It != L2->end(); ++L2It) {
     L1->insert(*L2It);                  // add the var in L2 to L1
     LiveRangeMap[*L2It] = L1;           // now the elements in L2 should map 
                                         //to L1    
@@ -408,7 +406,7 @@ void LiveRangeInfo::printLiveRanges() {
         std::cerr << "LR# " << igNode->getIndex();
       else
         std::cerr << "LR# " << "<no-IGNode>";
-      std::cerr << "\t:Values = "; printSet(*HMI->second); std::cerr << "\n";
+      std::cerr << "\t:Values = " << *HMI->second << "\n";
     }
   }
 }

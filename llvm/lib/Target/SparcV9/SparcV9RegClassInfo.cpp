@@ -41,10 +41,9 @@ void SparcV9IntRegClass::colorIGNode(IGNode * Node,
 {
   LiveRange *LR = Node->getParentLR();
 
-  if (DEBUG_RA) {
-    std::cerr << "\nColoring LR [CallInt=" << LR->isCallInterference() <<"]:"; 
-    printSet(*LR);
-  }
+  if (DEBUG_RA)
+    std::cerr << "\nColoring LR [CallInt=" << LR->isCallInterference() <<"]:"
+              << *LR << "\n"; 
 
   if (LR->hasSuggestedColor()) {
     unsigned SugCol = LR->getSuggestedColor();
@@ -61,8 +60,8 @@ void SparcV9IntRegClass::colorIGNode(IGNode * Node,
         std::cerr << "\n Couldn't alloc Sug col - LR volatile & calls interf";
       }
     } else if (DEBUG_RA) {                // can't allocate the suggested col
-      std::cerr << "\n  Could NOT allocate the suggested color (already used) ";
-      printSet(*LR); std::cerr << "\n";
+      std::cerr << "\n  Could NOT allocate the suggested color (already used) "
+                << *LR << "\n";
     }
   }
 
@@ -162,7 +161,7 @@ void SparcV9IntCCRegClass::colorIGNode(IGNode *Node,
 #ifndef NDEBUG
   // Let's just make sure values of two different types have not been
   // coalesced into this LR.
-  for (ValueSet::const_iterator I=ccLR->begin(), E=ccLR->end(); I!=E; ++I) {
+  for (LiveRange::const_iterator I=ccLR->begin(), E=ccLR->end(); I!=E; ++I) {
     const Type* ccType = (*I)->getType();
     assert((ccReg == xcc && (isa<PointerType>(ccType)
                              || ccType == Type::LongTy)) ||
@@ -251,8 +250,8 @@ void SparcV9FloatRegClass::colorIGNode(IGNode * Node,
       LR->setColor(  LR->getSuggestedColor() );
       return;
     } else if (DEBUG_RA)  {                 // can't allocate the suggested col
-      std::cerr << " Could NOT allocate the suggested color for LR ";
-      printSet(*LR); std::cerr << "\n";
+      std::cerr << " Could NOT allocate the suggested color for LR " << *LR
+                << "\n";
     }
   }
 
