@@ -11,6 +11,7 @@
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/Utils/Cloning.h"
+#include "llvm/Analysis/Verifier.h"
 #include "llvm/Type.h"
 #include "llvm/Constant.h"
 
@@ -33,6 +34,7 @@ Module *BugDriver::extractFunctionFromModule(Function *F) const {
   Passes.add(createGlobalDCEPass());              // Delete unreachable globals
   Passes.add(createFunctionResolvingPass());      // Delete prototypes
   Passes.add(createDeadTypeEliminationPass());    // Remove dead types...
+  Passes.add(createVerifierPass());
   Passes.run(*Result);
   return Result;
 }
@@ -78,6 +80,8 @@ Module *BugDriver::deleteInstructionFromProgram(Instruction *I,
     Passes.add(createDeadCodeEliminationPass());
   if (Simplification)
     Passes.add(createCFGSimplificationPass());      // Delete dead control flow
+
+  Passes.add(createVerifierPass());
   Passes.run(*Result);
   return Result;
 }
@@ -90,6 +94,7 @@ Module *BugDriver::performFinalCleanups() const {
   PassManager CleanupPasses;
   CleanupPasses.add(createFunctionResolvingPass());
   CleanupPasses.add(createGlobalDCEPass());
+  CleanupPasses.add(createVerifierPass());
   Module *M = CloneModule(Program);
   CleanupPasses.run(*M);
   return M;
