@@ -11,8 +11,6 @@
 #define LLVM_ITERMINATORS_H
 
 #include "llvm/InstrTypes.h"
-#include "llvm/BasicBlock.h"
-#include "llvm/ConstantVals.h"
 
 //===----------------------------------------------------------------------===//
 //         Classes to represent Basic Block "Terminator" instructions
@@ -98,16 +96,16 @@ public:
   void setUnconditionalDest(BasicBlock *Dest) {
     if (Operands.size() == 3)
       Operands.erase(Operands.begin()+1, Operands.end());
-    Operands[0] = Dest;
+    Operands[0] = (Value*)Dest;
   }
 
   // Additionally, they must provide a method to get at the successors of this
   // terminator instruction.
   //
   virtual const BasicBlock *getSuccessor(unsigned i) const {
-    return (i == 0) ? cast<const BasicBlock>(Operands[0]) : 
+    return (i == 0) ? cast<BasicBlock>(Operands[0].get()) : 
           ((i == 1 && Operands.size() > 1) 
-               ? cast<const BasicBlock>(Operands[1]) : 0);
+               ? cast<BasicBlock>(Operands[1].get()) : 0);
   }
   inline BasicBlock *getSuccessor(unsigned idx) {
     return (BasicBlock*)((const BranchInst *)this)->getSuccessor(idx);
@@ -145,10 +143,10 @@ public:
   inline const Value *getCondition() const { return Operands[0]; }
   inline       Value *getCondition()       { return Operands[0]; }
   inline const BasicBlock *getDefaultDest() const {
-    return cast<const BasicBlock>(Operands[1]);
+    return cast<BasicBlock>(Operands[1].get());
   }
   inline       BasicBlock *getDefaultDest()       {
-    return cast<BasicBlock>(Operands[1]);
+    return cast<BasicBlock>(Operands[1].get());
   }
 
   void dest_push_back(Constant *OnVal, BasicBlock *Dest);
@@ -161,22 +159,22 @@ public:
   //
   virtual const BasicBlock *getSuccessor(unsigned idx) const {
     if (idx >= Operands.size()/2) return 0;
-    return cast<const BasicBlock>(Operands[idx*2+1]);
+    return cast<BasicBlock>(Operands[idx*2+1].get());
   }
   inline BasicBlock *getSuccessor(unsigned idx) {
     if (idx >= Operands.size()/2) return 0;
-    return cast<BasicBlock>(Operands[idx*2+1]);
+    return cast<BasicBlock>(Operands[idx*2+1].get());
   }
 
   // getSuccessorValue - Return the value associated with the specified
   // successor. WARNING: This does not gracefully accept idx's out of range!
   inline const Constant *getSuccessorValue(unsigned idx) const {
     assert(idx < getNumSuccessors() && "Successor # out of range!");
-    return cast<const Constant>(Operands[idx*2]);
+    return cast<Constant>(Operands[idx*2].get());
   }
   inline Constant *getSuccessorValue(unsigned idx) {
     assert(idx < getNumSuccessors() && "Successor # out of range!");
-    return cast<Constant>(Operands[idx*2]);
+    return cast<Constant>(Operands[idx*2].get());
   }
   virtual unsigned getNumSuccessors() const { return Operands.size()/2; }
 
@@ -218,16 +216,16 @@ public:
 
   // get*Dest - Return the destination basic blocks...
   inline const BasicBlock *getNormalDest() const {
-    return cast<BasicBlock>(Operands[1]);
+    return cast<BasicBlock>(Operands[1].get());
   }
   inline       BasicBlock *getNormalDest() {
-    return cast<BasicBlock>(Operands[1]);
+    return cast<BasicBlock>(Operands[1].get());
   }
   inline const BasicBlock *getExceptionalDest() const {
-    return cast<BasicBlock>(Operands[2]);
+    return cast<BasicBlock>(Operands[2].get());
   }
   inline       BasicBlock *getExceptionalDest() {
-    return cast<BasicBlock>(Operands[2]);
+    return cast<BasicBlock>(Operands[2].get());
   }
 
   virtual const char *getOpcodeName() const { return "invoke"; }
