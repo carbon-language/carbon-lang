@@ -127,7 +127,7 @@ UltraSparcFrameInfo::getDynamicAreaOffset(MachineFunction& mcInfo,
 //---------------------------------------------------------------------------
 
 UltraSparc::UltraSparc()
-  : TargetMachine("UltraSparc-Native", 4),
+  : TargetMachine("UltraSparc-Native", false, 4),
     schedInfo(*this),
     regInfo(*this),
     frameInfo(*this),
