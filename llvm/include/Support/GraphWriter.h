@@ -69,9 +69,9 @@ std::ostream &WriteGraph(std::ostream &O, const GraphType &G) {
 
     std::string NodeAttributes = DOTTraits::getNodeAttributes(Node);
 
-    O << "\tNode" << (void*)Node << " [";
+    O << "\tNode" << (void*)Node << " [shape=record,";
     if (!NodeAttributes.empty()) O << NodeAttributes << ",";
-    O << "shape=record,label=\"{"
+    O << "label=\"{"
       << DOT::EscapeString(DOTTraits::getNodeLabel(Node, G));
     
     // Print out the fields of the current node...
@@ -94,23 +94,24 @@ std::ostream &WriteGraph(std::ostream &O, const GraphType &G) {
     // Output all of the edges now
     EI = GTraits::child_begin(Node);
     for (unsigned i = 0; EI != EE && i != 64; ++EI, ++i) {
-      NodeType *TargetNode = *EI;
-      O << "\tNode" << (void*)Node << ":g" << i << " -> Node"
-        << (void*)TargetNode;
-      if (DOTTraits::edgeTargetsEdgeSource(Node, EI)) {
-        typename GTraits::ChildIteratorType TargetIt =
-          DOTTraits::getEdgeTarget(Node, EI);
-        // Figure out which edge this targets...
-        unsigned Offset = std::distance(GTraits::child_begin(TargetNode),
-                                        TargetIt);
-        if (Offset > 64) Offset = 64;  // Targetting the trancated part?
-        O << ":g" << Offset;        
+      if (NodeType *TargetNode = *EI) {
+        O << "\tNode" << (void*)Node << ":g" << i << " -> Node"
+          << (void*)TargetNode;
+        if (DOTTraits::edgeTargetsEdgeSource(Node, EI)) {
+          typename GTraits::ChildIteratorType TargetIt =
+            DOTTraits::getEdgeTarget(Node, EI);
+          // Figure out which edge this targets...
+          unsigned Offset = std::distance(GTraits::child_begin(TargetNode),
+                                          TargetIt);
+          if (Offset > 64) Offset = 64;  // Targetting the trancated part?
+          O << ":g" << Offset;        
+        }
+        
+        std::string EdgeAttributes = DOTTraits::getEdgeAttributes(Node, EI);
+        if (!EdgeAttributes.empty())
+          O << "[" << EdgeAttributes << "]";
+        O << ";\n";
       }
-
-      std::string EdgeAttributes = DOTTraits::getEdgeAttributes(Node, EI);
-      if (!EdgeAttributes.empty())
-        O << "[" << EdgeAttributes << "]";
-      O << ";\n";
     }
   }
 
