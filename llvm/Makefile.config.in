@@ -161,10 +161,6 @@ ifndef LLVM_SRC_ROOT
 LLVM_SRC_ROOT := $(BUILD_SRC_ROOT)
 endif
 
-# Handle configured libraries
-HAVE_BZIP2 := @HAVE_BZIP2@
-HAVE_ZLIB  := @HAVE_ZLIB@
-
 # Installation directories, as provided by the configure script.
 exec_prefix = @exec_prefix@
 prefix = @prefix@

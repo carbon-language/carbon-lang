@@ -476,7 +476,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS LLVM_COPYRIGHT subdirs build build_cpu build_vendor build_os host host_cpu host_vendor host_os target target_cpu target_vendor target_os OS ARCH ENDIAN CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT ENABLE_OPTIMIZED JIT LLVMGCCDIR CPP CXX CXXFLAGS ac_ct_CXX LEX LEXLIB LEX_OUTPUT_ROOT FLEX YACC BISON EGREP LN_S ECHO AR ac_ct_AR RANLIB ac_ct_RANLIB STRIP ac_ct_STRIP CXXCPP F77 FFLAGS ac_ct_F77 LIBTOOL ifGNUmake FIND GREP MKDIR MV RM SED TAR INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA DOT ETAGS PYTHON QMTEST RUNTEST ETAGSFLAGS HAVE_ZLIB HAVE_BZIP2 ALLOCA MMAP_FILE LLVMGCC LLVMCC1 LLVMCC1PLUS SHLIBEXT LLVM_PREFIX LLVM_BINDIR LLVM_LIBDIR LLVM_DATADIR LLVM_DOCSDIR LLVM_ETCDIR LLVM_INCLUDEDIR LLVM_INFODIR LLVM_MANDIR LLVM_CONFIGTIME LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS LLVM_COPYRIGHT subdirs build build_cpu build_vendor build_os host host_cpu host_vendor host_os target target_cpu target_vendor target_os OS ARCH ENDIAN CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT ENABLE_OPTIMIZED JIT LLVMGCCDIR CPP CXX CXXFLAGS ac_ct_CXX LEX LEXLIB LEX_OUTPUT_ROOT FLEX YACC BISON EGREP LN_S ECHO AR ac_ct_AR RANLIB ac_ct_RANLIB STRIP ac_ct_STRIP CXXCPP F77 FFLAGS ac_ct_F77 LIBTOOL ifGNUmake FIND GREP MKDIR MV RM SED TAR INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA DOT ETAGS PYTHON QMTEST RUNTEST ETAGSFLAGS ALLOCA MMAP_FILE LLVMGCC LLVMCC1 LLVMCC1PLUS SHLIBEXT LLVM_PREFIX LLVM_BINDIR LLVM_LIBDIR LLVM_DATADIR LLVM_DOCSDIR LLVM_ETCDIR LLVM_INCLUDEDIR LLVM_INFODIR LLVM_MANDIR LLVM_CONFIGTIME LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -20667,171 +20667,6 @@ _ACEOF
 fi
 
 
-echo "$as_me:$LINENO: checking for gzopen in -lz" >&5
-echo $ECHO_N "checking for gzopen in -lz... $ECHO_C" >&6
-if test "${ac_cv_lib_z_gzopen+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lz  $LIBS"
-cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-
-/* Override any gcc2 internal prototype to avoid an error.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
-char gzopen ();
-int
-main ()
-{
-gzopen ();
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
-  (eval $ac_link) 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"
-			 || test ! -s conftest.err'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; } &&
-	 { ac_try='test -s conftest$ac_exeext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  ac_cv_lib_z_gzopen=yes
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-ac_cv_lib_z_gzopen=no
-fi
-rm -f conftest.err conftest.$ac_objext \
-      conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-echo "$as_me:$LINENO: result: $ac_cv_lib_z_gzopen" >&5
-echo "${ECHO_T}$ac_cv_lib_z_gzopen" >&6
-if test $ac_cv_lib_z_gzopen = yes; then
-  zlib_found=1
-else
-  zlib_found=0
-fi
-
-if test $zlib_found -eq 1; then
-
-cat >>confdefs.h <<\_ACEOF
-#define HAVE_ZLIB 1
-_ACEOF
-
-  HAVE_ZLIB=1
-
-else
-  HAVE_ZLIB=0
-
-fi
-echo "$as_me:$LINENO: checking for BZ2_bzCompressInit in -lbz2" >&5
-echo $ECHO_N "checking for BZ2_bzCompressInit in -lbz2... $ECHO_C" >&6
-if test "${ac_cv_lib_bz2_BZ2_bzCompressInit+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lbz2  $LIBS"
-cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-
-/* Override any gcc2 internal prototype to avoid an error.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
-char BZ2_bzCompressInit ();
-int
-main ()
-{
-BZ2_bzCompressInit ();
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
-  (eval $ac_link) 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"
-			 || test ! -s conftest.err'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; } &&
-	 { ac_try='test -s conftest$ac_exeext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  ac_cv_lib_bz2_BZ2_bzCompressInit=yes
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-ac_cv_lib_bz2_BZ2_bzCompressInit=no
-fi
-rm -f conftest.err conftest.$ac_objext \
-      conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-echo "$as_me:$LINENO: result: $ac_cv_lib_bz2_BZ2_bzCompressInit" >&5
-echo "${ECHO_T}$ac_cv_lib_bz2_BZ2_bzCompressInit" >&6
-if test $ac_cv_lib_bz2_BZ2_bzCompressInit = yes; then
-  bzip2_found=1
-else
-  bzip2_found=0
-fi
-
-if test $bzip2_found -eq 1 ; then
-
-cat >>confdefs.h <<\_ACEOF
-#define HAVE_BZIP2 1
-_ACEOF
-
-  HAVE_BZIP2=1
-
-else
-  HAVE_BZIP2=0
-
-fi
-
 echo "$as_me:$LINENO: checking for library containing lt_dlopen" >&5
 echo $ECHO_N "checking for library containing lt_dlopen... $ECHO_C" >&6
 if test "${ac_cv_search_lt_dlopen+set}" = set; then
@@ -26454,8 +26289,6 @@ s,@PYTHON@,$PYTHON,;t t
 s,@QMTEST@,$QMTEST,;t t
 s,@RUNTEST@,$RUNTEST,;t t
 s,@ETAGSFLAGS@,$ETAGSFLAGS,;t t
-s,@HAVE_ZLIB@,$HAVE_ZLIB,;t t
-s,@HAVE_BZIP2@,$HAVE_BZIP2,;t t
 s,@ALLOCA@,$ALLOCA,;t t
 s,@MMAP_FILE@,$MMAP_FILE,;t t
 s,@LLVMGCC@,$LLVMGCC,;t t

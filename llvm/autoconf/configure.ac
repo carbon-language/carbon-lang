@@ -326,25 +326,6 @@ dnl===-----------------------------------------------------------------------===
 dnl libelf is for sparc only; we can ignore it if we don't have it
 AC_CHECK_LIB(elf, elf_begin)
 
-dnl Check for bzip2 and zlib compression libraries needed for archive 
-dnl and bytecode compression.
-AC_CHECK_LIB(z,gzopen,[zlib_found=1],[zlib_found=0])
-if test $zlib_found -eq 1; then
-  AC_DEFINE([HAVE_ZLIB],[1],
-            [Define if zlib library is available on this platform.])
-  AC_SUBST([HAVE_ZLIB],[1])
-else
-  AC_SUBST([HAVE_ZLIB],[0])
-fi
-AC_CHECK_LIB(bz2,BZ2_bzCompressInit,[bzip2_found=1],[bzip2_found=0])
-if test $bzip2_found -eq 1 ; then
-  AC_DEFINE([HAVE_BZIP2],[1],
-            [Define if bzip2 library is available on this platform.])
-  AC_SUBST([HAVE_BZIP2],[1])
-else
-  AC_SUBST([HAVE_BZIP2],[0])
-fi
-
 dnl lt_dlopen may be required for plugin support.
 AC_SEARCH_LIBS(lt_dlopen,ltdl,AC_DEFINE([HAVE_LT_DLOPEN],[1],
               [Define if lt_dlopen() is available on this platform]),
