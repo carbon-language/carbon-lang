@@ -16,10 +16,7 @@
 #include "llvm/Constants.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/DerivedTypes.h"
-#include "../../Target/Sparc/SparcInstrSelectionSupport.h"
-using std::vector;
-
-//*************************** Local Functions ******************************/
+#include "../../Target/Sparc/SparcInstrSelectionSupport.h"  // FIXME!
 
 
 // Generate code to load the constant into a TmpInstruction (virtual reg) and
@@ -29,7 +26,7 @@ static TmpInstruction*
 InsertCodeToLoadConstant(Function *F,
                          Value* opValue,
                          Instruction* vmInstr,
-                         vector<MachineInstr*>& loadConstVec,
+                         std::vector<MachineInstr*>& loadConstVec,
                          TargetMachine& target)
 {
   // Create a tmp virtual register to hold the constant.
@@ -143,12 +140,12 @@ ChooseRegOrImmed(Value* val,
 // fall under case 3; these must be inserted before `minstr'.
 //---------------------------------------------------------------------------
 
-vector<MachineInstr*>
+std::vector<MachineInstr*>
 FixConstantOperandsForInstr(Instruction* vmInstr,
                             MachineInstr* minstr,
                             TargetMachine& target)
 {
-  vector<MachineInstr*> MVec;
+  std::vector<MachineInstr*> MVec;
   
   MachineOpCode opCode = minstr->getOpCode();
   const TargetInstrInfo& instrInfo = target.getInstrInfo();
