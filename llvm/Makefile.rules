@@ -394,7 +394,7 @@ $(TOOLEXENAME_O): $(ObjectsO) $(USED_LIB_PATHS_O) $(BUILD_ROOT_TOP)/tools/Releas
 
 $(TOOLEXENAME_P): $(ObjectsP) $(USED_LIB_PATHS_P) $(BUILD_ROOT_TOP)/tools/Profile/.dir
 	@echo ======= Linking $(TOOLNAME) profile executable =======
-	$(VERB) $(LinkP) -o $@ $(ObjectsG) $(USED_LIBS_OPTIONS_P) $(TOOLLINKOPTS)
+	$(VERB) $(LinkP) -o $@ $(ObjectsP) $(USED_LIBS_OPTIONS_P) $(TOOLLINKOPTS)
 
 endif
 
