@@ -5,11 +5,13 @@
 
 void printValue( const Value *const v)  // func to print a Value 
 {
-  if( (*v).hasName() ) cout << v << "(" << ((*v).getName()) << ") ";
-  //if( (*v).hasName() ) cout <<  ((*v).getName()) << " ";
-  else if (v->getValueType() == Value::ConstantVal) // if const
+  
+  if( (*v).hasName() ) 
+    cout << v << "(" << ((*v).getName()) << ") ";
+  else if (v->getValueType() == Value::ConstantVal)         // if const
     cout << v << "(" << ((ConstPoolVal *) v)->getStrValue() << ") ";
-  else  cout << v  << " ";
+  else
+      cout << v  << " ";
 }
 
 
@@ -18,15 +20,15 @@ void printValue( const Value *const v)  // func to print a Value
 
 ValueSet:: ValueSet() : hash_set<const Value *,  hashFuncValue> () { }
 
-                                                 // for performing two set unions
+                                             // for performing two set unions
 bool ValueSet::setUnion( const ValueSet *const set1) {   
   const_iterator set1it;
   pair<iterator, bool> result;
   bool changed = false;
 
   for( set1it = set1->begin() ; set1it != set1->end(); set1it++) {  
-                                                  // for all all elements in set1
-    result = insert( *set1it );                   // insert to this set
+                                             // for all all elements in set1
+    result = insert( *set1it );              // insert to this set
       if( result.second == true) changed = true;
   }
 
@@ -34,7 +36,7 @@ bool ValueSet::setUnion( const ValueSet *const set1) {
 }
 
 
-                                              // for performing set difference
+                                             // for performing set difference
 void ValueSet::setDifference( const ValueSet *const set1, 
 			      const ValueSet *const set2) { 
 
@@ -48,7 +50,7 @@ void ValueSet::setDifference( const ValueSet *const set1,
 }
 
 
-                                         // for performing set subtraction
+                                        // for performing set subtraction
 void ValueSet::setSubtract( const ValueSet *const set1) { 
   const_iterator set1it;
   for( set1it = set1->begin() ; set1it != set1->end(); set1it++)  
@@ -59,7 +61,7 @@ void ValueSet::setSubtract( const ValueSet *const set1) {
 
 
 
-void ValueSet::printSet()  const {   // for printing a live variable set
+void ValueSet::printSet()  const {     // for printing a live variable set
       const_iterator it;
       for( it = begin() ; it != end(); it++) 
 	printValue( *it );

@@ -1,35 +1,38 @@
-/* Title:   ValueSet.h
+/* Title:   MethodLiveVarInfo.cpp
    Author:  Ruchira Sasanka
    Date:    Jun 30, 01
    Purpose: 
 
-   This is the interface for live variable info of a method that is required by 
-   any other part of the compiler.
+   This is the interface for live variable info of a method that is required 
+   by any other part of the compiler.
 
 */
 
 
 #include "llvm/Analysis/LiveVar/MethodLiveVarInfo.h"
-
+#include "llvm/CodeGen/MachineInstr.h"
 
 
 
 /************************** Constructor/Destructor ***************************/
 
 
-MethodLiveVarInfo::MethodLiveVarInfo(Method *const MethPtr) :  BB2BBLVMap()  
-{
-  Meth = MethPtr;  // init BB2BBLVMap and records Method for future use
+MethodLiveVarInfo::MethodLiveVarInfo(const Method *const M) : Meth(M),  
+							      BB2BBLVMap()
+{ 
+  assert(! M->isExternal() );           // cannot be a prototype decleration
+  HasAnalyzed = false;                  // still we haven't called analyze()
 }
 
 
 
 MethodLiveVarInfo:: ~MethodLiveVarInfo()
 {
-  BBToBBLiveVarMapType::iterator HMI = BB2BBLVMap.begin();   // hash map iterator
+  // hash map iterator
+  BBToBBLiveVarMapType::iterator HMI = BB2BBLVMap.begin(); 
 
   for( ; HMI != BB2BBLVMap.end() ; HMI ++ ) {  
-    if( (*HMI).first )                    // delete all LiveVarSets in BB2BBLVMap
+    if( (*HMI).first )                  // delete all LiveVarSets in BB2BBLVMap
       delete (*HMI).second;
    }
 }
@@ -39,38 +42,40 @@ MethodLiveVarInfo:: ~MethodLiveVarInfo()
 
 
 
-                                // constructs BBLiveVars and init Def and In sets
+// constructs BBLiveVars and init Def and In sets
 void MethodLiveVarInfo::constructBBs()   
 {
-  unsigned int POId = 0;   // Reverse Depth-first Order ID
+  unsigned int POId = 0;                // Reverse Depth-first Order ID
 
   cfg::po_const_iterator BBI = cfg::po_begin(Meth);
 
   for(  ; BBI != cfg::po_end(Meth) ; ++BBI, ++POId) 
   { 
 
-    if(DEBUG_LV) cout << "-- For BB " << (*BBI)->getName() << ":" << endl ;
+    if(DEBUG_LV) cout << " For BB " << (*BBI)->getName() << ":" << endl ;
 
-    const BasicBlock *BB = *BBI;      // get the current BB 
-    BBLiveVar * LVBB = new BBLiveVar( BB, POId );  // create a new BBLiveVar
+    const BasicBlock *BB = *BBI;        // get the current BB 
+                                        // create a new BBLiveVar
+    BBLiveVar * LVBB = new BBLiveVar( BB, POId );  
     
-    BB2BBLVMap[ BB ] = LVBB;  // insert the pair to Map
+    BB2BBLVMap[ BB ] = LVBB;            // insert the pair to Map
     
-    LVBB->calcDefUseSets();  // calculates the def and in set
+    LVBB->calcDefUseSets();             // calculates the def and in set
 
-    if(DEBUG_LV) LVBB->printAllSets();
-    //cout << "InSetChanged: " << LVBB->isInSetChanged() << endl; 
+    if(DEBUG_LV) 
+      LVBB->printAllSets();
   }
-
- 
 }
 
-                                             // do one backward pass over the CFG
+
+
+// do one backward pass over the CFG
 bool MethodLiveVarInfo::doSingleBackwardPass()  
 {
   bool ResultFlow, NeedAnotherIteration = false;
 
-  if(DEBUG_LV) cout << endl <<  "------- After Backward Pass --------" << endl;
+  if(DEBUG_LV) 
+    cout << endl <<  " After Backward Pass ..." << endl;
 
   cfg::po_const_iterator BBI = cfg::po_begin(Meth);
 
@@ -80,102 +85,131 @@ bool MethodLiveVarInfo::doSingleBackwardPass()
     BBLiveVar* LVBB = BB2BBLVMap[*BBI];
     assert( LVBB );
 
-    if(DEBUG_LV) cout << "-- For BB " << (*BBI)->getName() << ":"  << endl;
+    if(DEBUG_LV) cout << " For BB " << (*BBI)->getName() << ":"  << endl;
     // cout << " (POId=" << LVBB->getPOId() << ")" << endl ;
 
     ResultFlow = false;
 
     if( LVBB->isOutSetChanged() ) 
-      LVBB->applyTransferFunc();   // apply the Transfer Func to calc the InSet
-    if( LVBB->isInSetChanged() )  
-      ResultFlow = LVBB->applyFlowFunc( BB2BBLVMap ); // to calc Outsets of preds
+      LVBB->applyTransferFunc();        // apply the Tran Func to calc InSet
+
+    if( LVBB->isInSetChanged() )        // to calc Outsets of preds
+      ResultFlow = LVBB->applyFlowFunc(BB2BBLVMap); 
 
     if(DEBUG_LV) LVBB->printInOutSets();
-    //cout << "InChanged = " << LVBB->isInSetChanged() 
-    //cout << "   UpdatedBBwithLowerPOId = " << ResultFlow  << endl;
+
 
     if( ResultFlow ) NeedAnotherIteration = true;
 
   }
 
-  return NeedAnotherIteration; // true if we need to reiterate over the CFG
+  // true if we need to reiterate over the CFG
+  return NeedAnotherIteration;         
 }
 
 
 
 
 
-void MethodLiveVarInfo::analyze()          // performs live var anal for a method
+// performs live var anal for a method
+void MethodLiveVarInfo::analyze()        
 {
-  //cout << "In analyze . . ." << cout;
 
-  constructBBs();          // create and initialize all the BBLiveVars of the CFG
+  if( DEBUG_LV) cout << "Analysing live variables ..." << endl;
+
+  // create and initialize all the BBLiveVars of the CFG
+  constructBBs();        
 
   bool NeedAnotherIteration = false;
-  do {
-    NeedAnotherIteration = doSingleBackwardPass( );   // do one  pass over  CFG
-  } while (NeedAnotherIteration );      // repeat until we need more iterations
+  do {                                // do one  pass over  CFG
+    NeedAnotherIteration = doSingleBackwardPass( );   
+  } while (NeedAnotherIteration );    // repeat until we need more iterations
+
+  
+  HasAnalyzed  = true;                // finished analysing
+
+  if( DEBUG_LV) cout << "Live Variable Analysis complete!" << endl;
 }
 
 
 
 
-/* This function will give the LiveVar info for any instruction in a method. It 
-   should be called after a call to analyze().
+/* Thsese functions will give the LiveVar info for any machine instruction in
+   a method. It should be called after a call to analyze().
 
-   This function calucluates live var info for all the instructions in a BB, 
-   when LVInfo for one inst is requested. Hence, this function is useful when 
-   live var info is required for many (or all) instructions in a basic block
-   Also, the arguments to this method does not require specific iterators
+   Thsese functions calucluates live var info for all the machine instrs in a 
+   BB when LVInfo for one inst is requested. Hence, this function is useful 
+   when live var info is required for many (or all) instructions in a basic 
+   block. Also, the arguments to this method does not require specific 
+   iterators.
 */
 
 
 const LiveVarSet * 
-MethodLiveVarInfo::getLiveVarSetBeforeInst(const Instruction *const Inst) 
+MethodLiveVarInfo::getLiveVarSetBeforeMInst(const MachineInstr *const MInst,
+					    const BasicBlock *const CurBB) 
 {
-                                   // get the BB corresponding to the instruction
-  const BasicBlock *const CurBB = Inst->getParent();  
+  const LiveVarSet *LVSet = MInst2LVSetBI[MInst];
 
-  const LiveVarSet *LVSet = Inst2LVSetMap[Inst];
+  if( LVSet  ) return LVSet;              // if found, just return the set
+  else { 
+    calcLiveVarSetsForBB( CurBB );        // else, calc for all instrs in BB
+    assert( MInst2LVSetBI[ MInst ] );
+    return  MInst2LVSetBI[ MInst ];
+  }
+}
 
-  if( LVSet  ) return LVSet;                     // if found, just return the set
 
-  const BasicBlock::InstListType&  InstListInBB = CurBB->getInstList();         
-  BasicBlock::InstListType::const_reverse_iterator 
-    InstItEnd= InstListInBB.rend() - 1;    // InstItEnd is set to the first instr
+const LiveVarSet * 
+MethodLiveVarInfo::getLiveVarSetAfterMInst(const MachineInstr *const MInst,
+					    const BasicBlock *const CurBB) 
+{
+  const LiveVarSet *LVSet = MInst2LVSetAI[MInst];
 
-                                                  // LVSet of first instr = InSet
-  Inst2LVSetMap[*InstItEnd] = getInSetOfBB( CurBB );  
+  if( LVSet  ) return LVSet;              // if found, just return the set
+  else { 
+    calcLiveVarSetsForBB( CurBB );        // else, calc for all instrs in BB
+    assert( MInst2LVSetAI[ MInst ] );
+    return  MInst2LVSetAI[ MInst ];
+  }
+}
 
-                  // if the first instruction is requested, just return the InSet
-  if( Inst == *InstItEnd) return  Inst2LVSetMap[Inst];      
 
-                 // else calculate for all other instruction in the BB
-
-  BasicBlock::InstListType::const_reverse_iterator 
-    InstIt= InstListInBB.rbegin();  // get the iterator for instructions in BB
+void MethodLiveVarInfo::calcLiveVarSetsForBB(const BasicBlock *const BB)
+{
+  const MachineCodeForBasicBlock& MIVec = BB->getMachineInstrVec();
+  MachineCodeForBasicBlock::const_reverse_iterator 
+    MInstIterator = MIVec.rbegin();
 
   LiveVarSet *CurSet = new LiveVarSet();
-  CurSet->setUnion( getOutSetOfBB( CurBB ));   // LVSet now contains the OutSet
+  const LiveVarSet *SetAI = getOutSetOfBB(BB); // init SetAI with OutSet
+  CurSet->setUnion(SetAI);                     // CurSet now contains OutSet
 
-    // calculate LVSet for all instructions in the basic block (except the first)
-  for( ; InstIt != InstItEnd ;  InstIt++) {    
+  // iterate over all the machine instructions in BB
+  for( ; MInstIterator != MIVec.rend(); MInstIterator++) {  
 
-    CurSet->applyTranferFuncForInst( *InstIt );  // apply the transfer Func
-    LiveVarSet *NewSet = new LiveVarSet();       // create a new set and
-    NewSet->setUnion( CurSet );                  // copy the set after T/F to it 
-    Inst2LVSetMap[*InstIt] = NewSet;             // record that in the map
+    // MInst is cur machine inst
+    const MachineInstr * MInst  = *MInstIterator;  
+
+    MInst2LVSetAI[MInst] = SetAI;              // record in After Inst map
+    
+    CurSet->applyTranferFuncForMInst( MInst ); // apply the transfer Func
+    LiveVarSet *NewSet = new LiveVarSet();     // create a new set and
+    NewSet->setUnion( CurSet );                // copy the set after T/F to it
+ 
+    MInst2LVSetBI[MInst] = NewSet;             // record in Before Inst map
+
+    // SetAI will be used in the next iteration
+    SetAI = NewSet;                 
   }
-
-  return Inst2LVSetMap[Inst];
+  
 }
 
 
 
-/*
-NOTES: delete all the LVBBs allocated by adding a destructor to the BB2BBLVMap???
-            use the dfo_iterator in the doSingleBackwardPass  
-*/
+
+
+
 
 
 
