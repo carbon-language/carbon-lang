@@ -71,7 +71,7 @@ bool PNE::EliminatePHINodes(MachineFunction &MF, MachineBasicBlock &MBB) {
     const TargetRegisterClass *RC = MF.getSSARegMap()->getRegClass(DestReg);
     unsigned IncomingReg = MF.getSSARegMap()->createVirtualRegister(RC);
 
-    // Insert a register to register copy in the top of the current block (by
+    // Insert a register to register copy in the top of the current block (but
     // after any remaining phi nodes) which copies the new incoming register
     // into the phi node destination.
     //
@@ -79,18 +79,47 @@ bool PNE::EliminatePHINodes(MachineFunction &MF, MachineBasicBlock &MBB) {
     if (AfterPHIsIt != MBB.end())
       while ((*AfterPHIsIt)->getOpcode() == TargetInstrInfo::PHI) ++AfterPHIsIt;
     RegInfo->copyRegToReg(MBB, AfterPHIsIt, DestReg, IncomingReg, RC);
+    
+    // Update live variable information if there is any...
+    if (LV) {
+      MachineInstr *PHICopy = *(AfterPHIsIt-1);
 
-    // Add information to LiveVariables to know that the incoming value is dead
-    if (LV) LV->addVirtualRegisterKill(IncomingReg, *(AfterPHIsIt-1));
+      // Add information to LiveVariables to know that the incoming value is
+      // dead.  This says that the register is dead, not killed, because we
+      // cannot use the live variable information to indicate that the variable
+      // is defined in multiple entry blocks.  Instead, we pretend that this
+      // instruction defined it and killed it at the same time.
+      //
+      LV->addVirtualRegisterDead(IncomingReg, PHICopy);
 
-    // Now loop over all of the incoming arguments turning them into copies into
+      // Since we are going to be deleting the PHI node, if it is the last use
+      // of any registers, or if the value itself is dead, we need to move this
+      // information over to the new copy we just inserted...
+      //
+      std::pair<LiveVariables::killed_iterator, LiveVariables::killed_iterator> 
+        RKs = LV->killed_range(MI);
+      if (RKs.first != RKs.second) {
+        for (LiveVariables::killed_iterator I = RKs.first; I != RKs.second; ++I)
+          LV->addVirtualRegisterKilled(I->second, PHICopy);
+        LV->removeVirtualRegistersKilled(RKs.first, RKs.second);
+      }
+
+      RKs = LV->dead_range(MI);
+      if (RKs.first != RKs.second) {
+        for (LiveVariables::killed_iterator I = RKs.first; I != RKs.second; ++I)
+          LV->addVirtualRegisterDead(I->second, PHICopy);
+        LV->removeVirtualRegistersDead(RKs.first, RKs.second);
+      }
+    }
+
+    // Now loop over all of the incoming arguments, changing them to copy into
     // the IncomingReg register in the corresponding predecessor basic block.
     //
     for (int i = MI->getNumOperands() - 1; i >= 2; i-=2) {
       MachineOperand &opVal = MI->getOperand(i-1);
       
       // Get the MachineBasicBlock equivalent of the BasicBlock that is the
-      // source path the phi
+      // source path the PHI.
       MachineBasicBlock &opBlock = *MI->getOperand(i).getMachineBasicBlock();
 
       // Check to make sure we haven't already emitted the copy for this block.
@@ -99,7 +128,9 @@ bool PNE::EliminatePHINodes(MachineFunction &MF, MachineBasicBlock &MBB) {
       // all incoming values are guaranteed to be the same for a particular bb.
       //
       // Note that this is N^2 in the number of phi node entries, but since the
-      // # of entries is tiny, this is not a problem.
+      // # of entries is usually small, this is not a problem.  FIXME: this
+      // should just check to see if there is already a copy in the bottom of
+      // this basic block!
       //
       bool HaveNotEmitted = true;
       for (int op = MI->getNumOperands() - 1; op != i; op -= 2)
