@@ -61,18 +61,27 @@ bool RaiseAllocations::doInitialization(Module &M) {
   //
   const FunctionType *MallocType =   // Get the type for malloc
     FunctionType::get(PointerType::get(Type::SByteTy),
-                    std::vector<const Type*>(1, Type::UIntTy), false);
+                    std::vector<const Type*>(1, Type::ULongTy), false);
 
   const FunctionType *FreeType =     // Get the type for free
     FunctionType::get(Type::VoidTy,
                    std::vector<const Type*>(1, PointerType::get(Type::SByteTy)),
                       false);
 
+  // Get Malloc and free prototypes if they exist!
   MallocFunc = M.getFunction("malloc", MallocType);
   FreeFunc   = M.getFunction("free"  , FreeType);
 
+  // Check to see if the prototype is wrong, giving us sbyte*(uint) * malloc
+  // This handles the common declaration of: 'void *malloc(unsigned);'
+  if (MallocFunc == 0) {
+    MallocType = FunctionType::get(PointerType::get(Type::SByteTy),
+                            std::vector<const Type*>(1, Type::UIntTy), false);
+    MallocFunc = M.getFunction("malloc", MallocType);
+  }
+
   // Check to see if the prototype is missing, giving us sbyte*(...) * malloc
-  // This handles the common declaration of: 'char *malloc();'
+  // This handles the common declaration of: 'void *malloc();'
   if (MallocFunc == 0) {
     MallocType = FunctionType::get(PointerType::get(Type::SByteTy),
                                    std::vector<const Type*>(), true);
