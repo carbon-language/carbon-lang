@@ -196,7 +196,7 @@ void LiveIntervals::updateSpilledInterval(Interval& li,
                                           VirtRegMap& vrm,
                                           int slot)
 {
-    assert(li.weight != std::numeric_limits<float>::infinity() &&
+    assert(li.weight != HUGE_VAL &&
            "attempt to spill already spilled interval!");
     Interval::Ranges oldRanges;
     swap(oldRanges, li.ranges);
@@ -253,7 +253,7 @@ void LiveIntervals::updateSpilledInterval(Interval& li,
         }
     }
     // the new spill weight is now infinity as it cannot be spilled again
-    li.weight = std::numeric_limits<float>::infinity();
+    li.weight = HUGE_VAL;
     DEBUG(std::cerr << '\n');
     DEBUG(std::cerr << "\t\t\t\tupdated interval: " << li << '\n');
 }
@@ -556,15 +556,13 @@ LiveIntervals::Interval& LiveIntervals::getOrCreateInterval(unsigned reg)
 
 LiveIntervals::Interval::Interval(unsigned r)
     : reg(r),
-      weight((MRegisterInfo::isPhysicalRegister(r) ?
-              std::numeric_limits<float>::infinity() : 0.0F))
+      weight((MRegisterInfo::isPhysicalRegister(r) ?  HUGE_VAL : 0.0F))
 {
-
 }
 
 bool LiveIntervals::Interval::spilled() const
 {
-    return (weight == std::numeric_limits<float>::infinity() &&
+    return (weight == HUGE_VAL &&
             MRegisterInfo::isVirtualRegister(reg));
 }
 
