@@ -1674,18 +1674,11 @@ void ISel::emitSimpleBinaryOperation(MachineBasicBlock *MBB,
     if (ConstantInt *CI = dyn_cast<ConstantInt>(Op0)) {
       if (CI->isNullValue()) {
         unsigned op1Reg = getReg(Op1, MBB, IP);
-        switch (Class) {
-        default: assert(0 && "Unknown class for this function!");
-        case cByte:
-          BuildMI(*MBB, IP, X86::NEG8r, 1, DestReg).addReg(op1Reg);
-          return;
-        case cShort:
-          BuildMI(*MBB, IP, X86::NEG16r, 1, DestReg).addReg(op1Reg);
-          return;
-        case cInt:
-          BuildMI(*MBB, IP, X86::NEG32r, 1, DestReg).addReg(op1Reg);
-          return;
-        }
+        static unsigned const NEGTab[] = {
+          X86::NEG8r, X86::NEG16r, X86::NEG32r
+        };
+        BuildMI(*MBB, IP, NEGTab[Class], 1, DestReg).addReg(op1Reg);
+        return;
       }
     } else if (ConstantFP *CFP = dyn_cast<ConstantFP>(Op0))
       if (CFP->isExactlyValue(-0.0)) {
@@ -1716,8 +1709,8 @@ void ISel::emitSimpleBinaryOperation(MachineBasicBlock *MBB,
 
     // add X, 1 -> inc X
     if (OperatorClass == 0 && Op1C->equalsInt(1)) {
-      static unsigned const DECTab[] = { X86::INC8r, X86::INC16r, X86::INC32r };
-      BuildMI(*MBB, IP, DECTab[Class], 1, DestReg).addReg(Op0r);
+      static unsigned const INCTab[] = { X86::INC8r, X86::INC16r, X86::INC32r };
+      BuildMI(*MBB, IP, INCTab[Class], 1, DestReg).addReg(Op0r);
       return;
     }
   
