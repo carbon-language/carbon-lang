@@ -283,11 +283,17 @@ void BUDataStructures::calculateGraph(DSGraph &Graph) {
 
   TempFCs.clear();
 
-  // Recompute the Incomplete markers.  If there are any function calls left
-  // now that are complete, we must loop!
+  // Re-materialize nodes from the globals graph.
+  // Do not ignore globals inlined from callees -- they are not up-to-date!
+  Graph.getInlinedGlobals().clear();
+  Graph.updateFromGlobalGraph();
+
+  // Recompute the Incomplete markers
   Graph.maskIncompleteMarkers();
   Graph.markIncompleteNodes(DSGraph::MarkFormalArgs);
-  // FIXME: materialize nodes from the globals graph as neccesary...
+
+  // Delete dead nodes.  Treat globals that are unreachable but that can
+  // reach live nodes as live.
   Graph.removeDeadNodes(DSGraph::KeepUnreachableGlobals);
 
   //Graph.writeGraphToFile(std::cerr, "bu_" + F.getName());
