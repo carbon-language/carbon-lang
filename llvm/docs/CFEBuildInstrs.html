@@ -14,12 +14,17 @@
 
 <ol>
   <li><a href="#cautionarynote">A Cautionary Note</a>
-  <li><a href="#instructions">Instructions</a>
-  <li><a href="#license">License Information</a>
+    <ul>
+      <li><a href="#cygwin">Building under cygwin</a></li>
+    </ul>
+  </li>
+  <li><a href="#instructions">Instructions</a></li>
+  <li><a href="#license">License Information</a></li>
 </ol>
 
 <div class="doc_author">    
-  <p>Written by Brian R. Gaeke</p>
+  <p>Written by Brian R. Gaeke and 
+     <a href="http://nondot.org/sabre">Chris Lattner</a></p>
 </div>
 
 <!-- *********************************************************************** -->
@@ -46,6 +51,23 @@ process, and you should <b>only</b> try to do it if:</p>
 <p>We welcome patches to help make this process simpler.</p>
 </div>
 
+<!--=========================================================================-->
+<div class="doc_subsection">
+  <a name="cygwin">Building under cygwin</a>
+</div>
+<!--=========================================================================-->
+
+<div class="doc_text">
+<p>If you are building LLVM and the C front-end under cygwin, please note that
+the LLVM and GCC makefiles do not correctly handle spaces in paths.  To deal
+with this issue, make sure that your LLVM and GCC source and build trees are 
+located in a top-level directory (like <tt>/cygdrive/c/llvm</tt> and 
+<tt>/cygdrive/c/llvm-cfrontend</tt>), not in a directory that contains a space
+(which includes your "home directory", because it lives under the "Documents 
+and Settings" directory).  We welcome patches to fix this issue.
+</p>
+</div>
+
 <!-- *********************************************************************** -->
 <div class="doc_section">
   <a name="instructions">Instructions</a>
@@ -59,12 +81,11 @@ process, and you should <b>only</b> try to do it if:</p>
 <pre>
  % cd llvm
  % ./configure [options...]
- % gmake tools-only
+ % gmake 
 </pre>
-    <p>The use of the non-default target "tools-only" means that the
-    LLVM tools and libraries will build, and the binaries will be
-    deposited in llvm/tools/Debug, but the runtime (bytecode)
-    libraries will not build.</p></li>
+    <p>This will build all of the LLVM tools and libraries, but you will see 
+       warnings about missing the C front-end (certain runtime libraries can't
+       be built without it).  Ignore these warnings for now.</p></li>
 
 <li><p>Add the directory containing the tools to your PATH.</p>
 <pre>
@@ -72,9 +93,6 @@ process, and you should <b>only</b> try to do it if:</p>
 </pre></li>
 
 <li><p>Unpack the C/C++ front-end source into cfrontend/src.</p></li>
-
-<li><p>Edit src/configure.  Change the first line (starting w/ #!) to
-       contain the correct full pathname of sh.</p></li>
 
 <li><p>Make "build" and "install" directories as siblings of the "src"
        tree.</p>
@@ -86,12 +104,13 @@ process, and you should <b>only</b> try to do it if:</p>
  % set CFEINSTALL = `pwd`/install
 </pre></li>
 
+
 <li><p>Configure, build, and install the C front-end:</p>
 
 <p>
-<b>Linux/x86:</b>
-<br>
-<b>MacOS X/PowerPC:</b>
+<b>Linux/x86:</b> <br>
+<b>MacOS X/PowerPC:</b><br>
+<b>cygwin/x86:</b>
 </p>
 
 <pre>
@@ -170,11 +189,9 @@ functions from C as referenced from C++, so we typically configure with
  </ul>
 </li>
 
-<li><p>Go back into the LLVM source tree proper. Edit Makefile.config
-to redefine <code>LLVMGCCDIR</code> to the full pathname of the
-<code>$CFEINSTALL</code> directory, which is the directory you just
-installed the C front-end into. (The ./configure script is likely to
-have set this to a directory which does not exist on your system.)</p></li>
+<li><p>Go back into the LLVM source tree proper.  Rerun configure, using
+the <code>--with-llvmgccdir=$CFEINSTALL</code> option to specify the path
+to the newly built C front-end.</p></li>
 
 <li><p>If you edited header files during the C/C++ front-end build as
 described in "Fix 1" above, you must now copy those header files from
@@ -184,9 +201,12 @@ described in "Fix 1" above, you must now copy those header files from
 libgcc.a library, which you can find by running
 <code>$CFEINSTALL/bin/gcc --print-libgcc-file-name</code>.)</p></li>
 
-<li><p>Build and install the runtime (bytecode) libraries by running:</p>
+<li><p>Rebuild your CVS tree.  This shouldn't cause the whole thing to be
+  rebuilt, but it should build the runtime libraries.  After the tree is
+  built, install the runtime libraries into your C front-end build tree.
+  These are the commands you need.</p>
 <pre>
- % gmake -C runtime
+ % gmake
  % mkdir $CFEINSTALL/bytecode-libs
  % gmake -C runtime install-bytecode
  % setenv LLVM_LIB_SEARCH_PATH $CFEINSTALL/bytecode-libs
