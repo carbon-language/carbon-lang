@@ -410,17 +410,111 @@ GenericValue lle_X_printf(FunctionType *M, const vector<GenericValue> &Args) {
   return GV;
 }
 
+static void ByteswapSCANFResults(const char *Fmt, void *Arg0, void *Arg1,
+                                 void *Arg2, void *Arg3, void *Arg4, void *Arg5,
+                                 void *Arg6, void *Arg7, void *Arg8) {
+  void *Args[] = { Arg0, Arg1, Arg2, Arg3, Arg4, Arg5, Arg6, Arg7, Arg8, 0 };
+
+  // Loop over the format string, munging read values as appropriate (performs
+  // byteswaps as neccesary).
+  unsigned ArgNo = 0;
+  while (*Fmt) {
+    if (*Fmt++ == '%') {
+      // Read any flag characters that may be present...
+      bool Suppress = false;
+      bool Half = false;
+      bool Long = false;
+      bool LongLong = false;  // long long or long double
+
+      while (1) {
+        switch (*Fmt++) {
+        case '*': Suppress = true; break;
+        case 'a': /*Allocate = true;*/ break;  // We don't need to track this
+        case 'h': Half = true; break;
+        case 'l': Long = true; break;
+        case 'q':
+        case 'L': LongLong = true; break;
+        default:
+          if (Fmt[-1] > '9' || Fmt[-1] < '0')   // Ignore field width specs
+            goto Out;
+        }
+      }
+    Out:
+
+      // Read the conversion character
+      if (!Suppress && Fmt[-1] != '%') { // Nothing to do?
+        unsigned Size = 0;
+        const Type *Ty = 0;
+
+        switch (Fmt[-1]) {
+        case 'i': case 'o': case 'u': case 'x': case 'X': case 'n': case 'p':
+        case 'd':
+          if (Long || LongLong) {
+            Size = 8; Ty = Type::ULongTy;
+          } else if (Half) {
+            Size = 4; Ty = Type::UShortTy;
+          } else {
+            Size = 4; Ty = Type::UIntTy;
+          }
+          break;
+
+        case 'e': case 'g': case 'E':
+        case 'f':
+          if (Long || LongLong) {
+            Size = 8; Ty = Type::DoubleTy;
+          } else {
+            Size = 4; Ty = Type::FloatTy;
+          }
+          break;
+
+        case 's': case 'c': case '[':  // No byteswap needed
+          Size = 1;
+          Ty = Type::SByteTy;
+          break;
+
+        default: break;
+        }
+
+        if (Size) {
+          GenericValue GV;
+          void *Arg = Args[ArgNo++];
+          memcpy(&GV, Arg, Size);
+          TheInterpreter->StoreValueToMemory(GV, (GenericValue*)Arg, Ty);
+        }
+      }
+    }
+  }
+}
+
 // int sscanf(const char *format, ...);
 GenericValue lle_X_sscanf(FunctionType *M, const vector<GenericValue> &args) {
   assert(args.size() < 10 && "Only handle up to 10 args to sscanf right now!");
 
-  const char *Args[10];
+  char *Args[10];
   for (unsigned i = 0; i < args.size(); ++i)
-    Args[i] = (const char*)GVTOP(args[i]);
+    Args[i] = (char*)GVTOP(args[i]);
 
   GenericValue GV;
   GV.IntVal = sscanf(Args[0], Args[1], Args[2], Args[3], Args[4],
                      Args[5], Args[6], Args[7], Args[8], Args[9]);
+  ByteswapSCANFResults(Args[1], Args[2], Args[3], Args[4],
+                       Args[5], Args[6], Args[7], Args[8], Args[9], 0);
+  return GV;
+}
+
+// int scanf(const char *format, ...);
+GenericValue lle_X_scanf(FunctionType *M, const vector<GenericValue> &args) {
+  assert(args.size() < 10 && "Only handle up to 10 args to scanf right now!");
+
+  char *Args[10];
+  for (unsigned i = 0; i < args.size(); ++i)
+    Args[i] = (char*)GVTOP(args[i]);
+
+  GenericValue GV;
+  GV.IntVal = scanf(Args[0], Args[1], Args[2], Args[3], Args[4],
+                    Args[5], Args[6], Args[7], Args[8], Args[9]);
+  ByteswapSCANFResults(Args[0], Args[1], Args[2], Args[3], Args[4],
+                       Args[5], Args[6], Args[7], Args[8], Args[9]);
   return GV;
 }
 
@@ -644,6 +738,7 @@ void Interpreter::initializeExternalMethods() {
   FuncNames["lle_X_printf"]       = lle_X_printf;
   FuncNames["lle_X_sprintf"]      = lle_X_sprintf;
   FuncNames["lle_X_sscanf"]       = lle_X_sscanf;
+  FuncNames["lle_X_scanf"]        = lle_X_scanf;
   FuncNames["lle_i_clock"]        = lle_i_clock;
   FuncNames["lle_X_fopen"]        = lle_X_fopen;
   FuncNames["lle_X_fclose"]       = lle_X_fclose;
