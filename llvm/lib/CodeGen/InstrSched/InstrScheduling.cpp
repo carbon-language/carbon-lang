@@ -16,7 +16,7 @@
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineCodeForInstruction.h"
 #include "llvm/CodeGen/MachineFunction.h"
-#include "../../Target/Sparc/LiveVar/FunctionLiveVarInfo.h"
+#include "../../Target/SparcV9/LiveVar/FunctionLiveVarInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/BasicBlock.h"
 #include "Support/CommandLine.h"

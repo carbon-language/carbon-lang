@@ -38,7 +38,7 @@ namespace {
                   clEnumVal(x86, "  IA-32 (Pentium and above)"),
 #endif
 #ifdef ENABLE_SPARC_JIT
-                  clEnumValN(Sparc, "sparcv9", "  Sparc-V9"),
+                  clEnumValN(SparcV9, "sparcv9", "  Sparc-V9"),
 #endif
                   0),
 #if defined(ENABLE_X86_JIT)
