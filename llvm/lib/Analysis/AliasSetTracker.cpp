@@ -288,6 +288,9 @@ bool AliasSetTracker::add(FreeInst *FI) {
   bool NewPtr;
   AliasSet &AS = addPointer(FI->getOperand(0), ~0,
                             AliasSet::Mods, NewPtr);
+
+  // Free operations are volatile ops (cannot be moved).
+  AS.setVolatile();
   return NewPtr;
 }
 
