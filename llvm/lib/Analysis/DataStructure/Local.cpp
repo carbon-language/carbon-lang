@@ -110,8 +110,11 @@ namespace {
     ///
     DSNode *createNode(DSNode::NodeTy NodeType, const Type *Ty = 0) {
       DSNode *N = new DSNode(NodeType, Ty, &G);   // Create the node
-      if (DisableFieldSensitivity)
+      if (DisableFieldSensitivity) {
         N->foldNodeCompletely();
+        if (DSNode *FN = N->getForwardNode())
+          N = FN;
+      }
       return N;
     }
 
