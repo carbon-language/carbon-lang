@@ -22,11 +22,11 @@ class SymTabValue;
 // block.  Thus, these are all the flow control type of operations.
 //
 class TerminatorInst : public Instruction {
-public:
+protected:
   TerminatorInst(Instruction::TermOps iType);
   TerminatorInst(const Type *Ty, Instruction::TermOps iType,
 		 const std::string &Name = "");
-  inline ~TerminatorInst() {}
+public:
 
   // Terminators must implement the methods required by Instruction...
   virtual Instruction *clone() const = 0;
@@ -59,18 +59,18 @@ public:
 //===----------------------------------------------------------------------===//
 
 class UnaryOperator : public Instruction {
+protected:
+  UnaryOperator(Value *S, UnaryOps iType, const std::string &Name = "")
+      : Instruction(S->getType(), iType, Name) {
+    Operands.reserve(1);
+    Operands.push_back(Use(S, this));
+  }
 public:
 
   // create() - Construct a unary instruction, given the opcode
   // and its operand.
   //
   static UnaryOperator *create(UnaryOps Op, Value *Source);
-
-  UnaryOperator(Value *S, UnaryOps iType, const std::string &Name = "")
-      : Instruction(S->getType(), iType, Name) {
-    Operands.reserve(1);
-    Operands.push_back(Use(S, this));
-  }
 
   inline UnaryOps getOpcode() const { 
     return (UnaryOps)Instruction::getOpcode();
@@ -99,14 +99,7 @@ public:
 //===----------------------------------------------------------------------===//
 
 class BinaryOperator : public Instruction {
-public:
-
-  // create() - Construct a binary instruction, given the opcode
-  // and the two operands.
-  //
-  static BinaryOperator *create(BinaryOps Op, Value *S1, Value *S2,
-				const std::string &Name = "");
-
+protected:
   BinaryOperator(BinaryOps iType, Value *S1, Value *S2, 
                  const std::string &Name = "") 
     : Instruction(S1->getType(), iType, Name) {
@@ -116,6 +109,14 @@ public:
     assert(Operands[0] && Operands[1] && 
 	   Operands[0]->getType() == Operands[1]->getType());
   }
+
+public:
+
+  // create() - Construct a binary instruction, given the opcode
+  // and the two operands.
+  //
+  static BinaryOperator *create(BinaryOps Op, Value *S1, Value *S2,
+				const std::string &Name = "");
 
   inline BinaryOps getOpcode() const { 
     return (BinaryOps)Instruction::getOpcode();
