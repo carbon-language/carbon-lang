@@ -13,6 +13,7 @@
 
 #include "X86TargetMachine.h"
 #include "X86.h"
+#include "llvm/IntrinsicLowering.h"
 #include "llvm/Module.h"
 #include "llvm/PassManager.h"
 #include "llvm/Target/TargetMachineImpls.h"
@@ -29,23 +30,30 @@ namespace {
   cl::opt<bool> NoPatternISel("disable-pattern-isel", cl::init(true),
                         cl::desc("Use the 'simple' X86 instruction selector"));
   cl::opt<bool> NoSSAPeephole("disable-ssa-peephole", cl::init(true),
-                        cl::desc("Disable the ssa-based peephole optimizer (defaults to disabled)"));
+                        cl::desc("Disable the ssa-based peephole optimizer "
+                                 "(defaults to disabled)"));
 }
 
 // allocateX86TargetMachine - Allocate and return a subclass of TargetMachine
 // that implements the X86 backend.
 //
-TargetMachine *llvm::allocateX86TargetMachine(const Module &M) {
-  return new X86TargetMachine(M);
+TargetMachine *llvm::allocateX86TargetMachine(const Module &M,
+                                              IntrinsicLowering *IL) {
+  return new X86TargetMachine(M, IL);
 }
 
 
 /// X86TargetMachine ctor - Create an ILP32 architecture model
 ///
-X86TargetMachine::X86TargetMachine(const Module &M)
+X86TargetMachine::X86TargetMachine(const Module &M, IntrinsicLowering *il)
   : TargetMachine("X86", true, 4, 4, 4, 4, 4),
+    IL(il ? il : new DefaultIntrinsicLowering()),
     FrameInfo(TargetFrameInfo::StackGrowsDown, 8/*16 for SSE*/, 4),
-    JITInfo(*this) {
+    JITInfo(*this, *IL) {
+}
+
+X86TargetMachine::~X86TargetMachine() {
+  delete IL;
 }
 
 
@@ -64,9 +72,9 @@ bool X86TargetMachine::addPassesToEmitAssembly(PassManager &PM,
   PM.add(createCFGSimplificationPass());
 
   if (NoPatternISel)
-    PM.add(createX86SimpleInstructionSelector(*this));
+    PM.add(createX86SimpleInstructionSelector(*this, *IL));
   else
-    PM.add(createX86PatternInstructionSelector(*this));
+    PM.add(createX86PatternInstructionSelector(*this, *IL));
 
   // Run optional SSA-based machine code optimizations next...
   if (!NoSSAPeephole)
@@ -119,9 +127,9 @@ void X86JITInfo::addPassesToJITCompile(FunctionPassManager &PM) {
   PM.add(createCFGSimplificationPass());
 
   if (NoPatternISel)
-    PM.add(createX86SimpleInstructionSelector(TM));
+    PM.add(createX86SimpleInstructionSelector(TM, IL));
   else
-    PM.add(createX86PatternInstructionSelector(TM));
+    PM.add(createX86PatternInstructionSelector(TM, IL));
 
   // Run optional SSA-based machine code optimizations next...
   if (!NoSSAPeephole)

@@ -19,6 +19,7 @@
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
 #include "llvm/Intrinsics.h"
+#include "llvm/IntrinsicLowering.h"
 #include "llvm/Pass.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
@@ -28,8 +29,7 @@
 #include "llvm/Target/MRegisterInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/InstVisitor.h"
-
-namespace llvm {
+using namespace llvm;
 
 /// BMI - A special BuildMI variant that takes an iterator to insert the
 /// instruction at as well as a basic block.  This is the version for when you
@@ -59,6 +59,7 @@ inline static MachineInstrBuilder BMI(MachineBasicBlock *MBB,
 namespace {
   struct ISel : public FunctionPass, InstVisitor<ISel> {
     TargetMachine &TM;
+    IntrinsicLowering &IL;
     MachineFunction *F;                 // The function we are compiling into
     MachineBasicBlock *BB;              // The current MBB we are compiling
     int VarArgsFrameIndex;              // FrameIndex for start of varargs area
@@ -68,12 +69,17 @@ namespace {
     // MBBMap - Mapping between LLVM BB -> Machine BB
     std::map<const BasicBlock*, MachineBasicBlock*> MBBMap;
 
-    ISel(TargetMachine &tm) : TM(tm), F(0), BB(0) {}
+    ISel(TargetMachine &tm, IntrinsicLowering &il)
+      : TM(tm), IL(il), F(0), BB(0) {}
 
     /// runOnFunction - Top level implementation of instruction selection for
     /// the entire function.
     ///
     bool runOnFunction(Function &Fn) {
+      // First pass over the function, lower any unknown intrinsic functions
+      // with the IntrinsicLowering class.
+      LowerUnknownIntrinsicFunctionCalls(Fn);
+
       F = &MachineFunction::construct(&Fn, TM);
 
       // Create all of the machine basic blocks for the function...
@@ -110,6 +116,11 @@ namespace {
     void visitBasicBlock(BasicBlock &LLVM_BB) {
       BB = MBBMap[&LLVM_BB];
     }
+
+    /// LowerUnknownIntrinsicFunctionCalls - This performs a prepass over the
+    /// function, lowering any calls to unknown intrinsic functions into the
+    /// equivalent LLVM code.
+    void LowerUnknownIntrinsicFunctionCalls(Function &F);
 
     /// LoadArgumentsToVirtualRegs - Load all of the arguments to this function
     /// from the stack into virtual registers.
@@ -1087,6 +1098,33 @@ void ISel::visitCallInst(CallInst &CI) {
 }         
 
 
+/// LowerUnknownIntrinsicFunctionCalls - This performs a prepass over the
+/// function, lowering any calls to unknown intrinsic functions into the
+/// equivalent LLVM code.
+void ISel::LowerUnknownIntrinsicFunctionCalls(Function &F) {
+  for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
+    for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; )
+      if (CallInst *CI = dyn_cast<CallInst>(I++))
+        if (Function *F = CI->getCalledFunction())
+          switch (F->getIntrinsicID()) {
+          case Intrinsic::va_start:
+          case Intrinsic::va_copy:
+          case Intrinsic::va_end:
+            // We directly implement these intrinsics
+            break;
+          default:
+            // All other intrinsic calls we must lower.
+            Instruction *Before = CI->getPrev();
+            IL.LowerIntrinsicCall(CI);
+            if (Before) {        // Move iterator to instruction after call
+              I = Before;  ++I;
+            } else {
+              I = BB->begin();
+            }
+          }
+
+}
+
 void ISel::visitIntrinsicCall(Intrinsic::ID ID, CallInst &CI) {
   unsigned TmpReg1, TmpReg2;
   switch (ID) {
@@ -1103,17 +1141,7 @@ void ISel::visitIntrinsicCall(Intrinsic::ID ID, CallInst &CI) {
     return;
   case Intrinsic::va_end: return;   // Noop on X86
 
-  case Intrinsic::longjmp:
-  case Intrinsic::siglongjmp:
-    BuildMI(BB, X86::CALLpcrel32, 1).addExternalSymbol("abort", true); 
-    return;
-
-  case Intrinsic::setjmp:
-  case Intrinsic::sigsetjmp:
-    // Setjmp always returns zero...
-    BuildMI(BB, X86::MOVir32, 1, getReg(CI)).addZImm(0);
-    return;
-  default: assert(0 && "Unknown intrinsic for X86!");
+  default: assert(0 && "Error: unknown intrinsics should have been lowered!");
   }
 }
 
@@ -2167,8 +2195,7 @@ void ISel::visitFreeInst(FreeInst &I) {
 /// into a machine code representation is a very simple peep-hole fashion.  The
 /// generated code sucks but the implementation is nice and simple.
 ///
-FunctionPass *createX86SimpleInstructionSelector(TargetMachine &TM) {
-  return new ISel(TM);
+FunctionPass *llvm::createX86SimpleInstructionSelector(TargetMachine &TM,
+                                                       IntrinsicLowering &IL) {
+  return new ISel(TM, IL);
 }
-
-} // End llvm namespace

@@ -27,8 +27,7 @@
 
 // Include the generated instruction selector...
 #include "X86GenInstrSelector.inc"
-
-namespace llvm {
+using namespace llvm;
 
 namespace {
   struct ISel : public FunctionPass, SelectionDAGTargetBuilder {
@@ -120,8 +119,7 @@ void ISel::expandCall(SelectionDAG &SD, CallInst &CI) {
 /// into a machine code representation using pattern matching and a machine
 /// description file.
 ///
-FunctionPass *createX86PatternInstructionSelector(TargetMachine &TM) {
+FunctionPass *llvm::createX86PatternInstructionSelector(TargetMachine &TM,
+                                                        IntrinsicLowering &IL) {
   return new ISel(TM);  
 }
-
-} // End llvm namespace

@@ -21,13 +21,16 @@
 #include "X86JITInfo.h"
 
 namespace llvm {
+class IntrinsicLowering;
 
 class X86TargetMachine : public TargetMachine {
+  IntrinsicLowering *IL;
   X86InstrInfo    InstrInfo;
   TargetFrameInfo FrameInfo;
   X86JITInfo      JITInfo;
 public:
-  X86TargetMachine(const Module &M);
+  X86TargetMachine(const Module &M, IntrinsicLowering *IL);
+  ~X86TargetMachine();
 
   virtual const X86InstrInfo     &getInstrInfo() const { return InstrInfo; }
   virtual const TargetFrameInfo  &getFrameInfo() const { return FrameInfo; }

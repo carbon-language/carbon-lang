@@ -18,10 +18,13 @@
 
 namespace llvm {
   class TargetMachine;
+  class IntrinsicLowering;
+
   class X86JITInfo : public TargetJITInfo {
     TargetMachine &TM;
+    IntrinsicLowering &IL;
   public:
-    X86JITInfo(TargetMachine &tm) : TM(tm) {}
+    X86JITInfo(TargetMachine &tm, IntrinsicLowering &il) : TM(tm), IL(il) {}
 
     /// addPassesToJITCompile - Add passes to the specified pass manager to
     /// implement a fast dynamic compiler for this target.  Return true if this
