@@ -41,6 +41,7 @@ namespace llvm {
     ///
     std::string CurrentFnName;
 
+    //===------------------------------------------------------------------===//
     // Properties to be set by the derived class ctor, used to configure the
     // asmwriter.
 
@@ -48,8 +49,33 @@ namespace llvm {
     /// onto all global symbols.  This is often used for "_" or ".".
     const char *GlobalPrefix;
 
+    /// ZeroDirective - this should be set to the directive used to get some
+    /// number of zero bytes emitted to the current section.  Common cases are
+    /// "\t.zero\t" and "\t.space\t".  If this is set to null, the
+    /// Data*bitsDirective's will be used to emit zero bytes.
+    const char *ZeroDirective;   // Defaults to "\t.zero\t"
+
+    /// AsciiDirective - This directive allows emission of an ascii string with
+    /// the standard C escape characters embedded into it.
+    const char *AsciiDirective;
+    
+    /// DataDirectives - These directives are used to output some unit of
+    /// integer data to the current section.  If a data directive is set to
+    /// null, smaller data directives will be used to emit the large sizes.
+    const char *Data8bitsDirective;   // Defaults to "\t.byte\t"
+    const char *Data16bitsDirective;  // Defaults to "\t.short\t"
+    const char *Data32bitsDirective;  // Defaults to "\t.long\t"
+    const char *Data64bitsDirective;  // Defaults to "\t.quad\t"
+
     AsmPrinter(std::ostream &o, TargetMachine &tm)
-      : O(o), TM(tm), GlobalPrefix("") { }
+      : O(o), TM(tm),
+        GlobalPrefix(""),
+        ZeroDirective("\t.zero\t"),
+        AsciiDirective("\t.ascii\t"),
+        Data8bitsDirective("\t.byte\t"),
+        Data16bitsDirective("\t.short\t"),
+        Data32bitsDirective(".long\t"),
+        Data64bitsDirective("\t.quad\t") { }
 
     /// doInitialization - Set up the AsmPrinter when we are working on a new
     /// module.  If your pass overrides this, it must make sure to explicitly
@@ -67,6 +93,10 @@ namespace llvm {
     /// emitConstantValueOnly - Print out the specified constant, without a
     /// storage class.  Only constants of first-class type are allowed here.
     void emitConstantValueOnly(const Constant *CV);
+
+    /// emitGlobalConstant - Print a general LLVM constant to the .s file.
+    ///
+    void emitGlobalConstant(const Constant* CV);
   };
 }
 
