@@ -17,23 +17,23 @@
 #include <vector>
 
 namespace llvm {
-
   class BasicBlock;
-class Function;
-class Loop;
+  class DominatorSet;
+  class Function;
+  class Loop;
+  
+  /// ExtractCodeRegion - rip out a sequence of basic blocks into a new function
+  ///
+  Function* ExtractCodeRegion(DominatorSet &DS,
+                              const std::vector<BasicBlock*> &code);
 
-/// ExtractCodeRegion - rip out a sequence of basic blocks into a new function
-///
-Function* ExtractCodeRegion(const std::vector<BasicBlock*> &code);
+  /// ExtractLoop - rip out a natural loop into a new function
+  ///
+  Function* ExtractLoop(DominatorSet &DS, Loop *L);
 
-/// ExtractLoop - rip out a natural loop into a new function
-///
-Function* ExtractLoop(Loop *L);
-
-/// ExtractBasicBlock - rip out a basic block into a new function
-///
-Function* ExtractBasicBlock(BasicBlock *BB);
-
+  /// ExtractBasicBlock - rip out a basic block into a new function
+  ///
+  Function* ExtractBasicBlock(BasicBlock *BB);
 }
 
 #endif
