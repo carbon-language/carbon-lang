@@ -150,7 +150,11 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
     if (isa<ConstantPointerNull>(C)) {
       Result.PointerVal = 0;
     } else if (const ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(C)){
-      Result = PTOGV(getPointerToGlobal(CPR->getValue()));
+      if (Function *F =
+          const_cast<Function*>(dyn_cast<Function>(CPR->getValue())))
+        Result = PTOGV(getPointerToFunctionOrStub(F));
+      else 
+        Result = PTOGV(getPointerToGlobal(CPR->getValue()));
 
     } else {
       assert(0 && "Unknown constant pointer type!");
