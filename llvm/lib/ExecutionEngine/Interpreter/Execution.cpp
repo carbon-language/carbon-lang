@@ -815,8 +815,28 @@ void Interpreter::executeCallInst(CallInst &I, ExecutionContext &SF) {
   ECStack.back().Caller = &I;
   vector<GenericValue> ArgVals;
   ArgVals.reserve(I.getNumOperands()-1);
-  for (unsigned i = 1; i < I.getNumOperands(); ++i)
+  for (unsigned i = 1; i < I.getNumOperands(); ++i) {
     ArgVals.push_back(getOperandValue(I.getOperand(i), SF));
+    // Promote all integral types whose size is < sizeof(int) into ints.  We do
+    // this by zero or sign extending the value as appropriate according to the
+    // source type.
+    if (I.getOperand(i)->getType()->isIntegral() &&
+	I.getOperand(i)->getType()->getPrimitiveSize() < 4) {
+      const Type *Ty = I.getOperand(i)->getType();
+      if (Ty == Type::ShortTy)
+	ArgVals.back().IntVal = ArgVals.back().ShortVal;
+      else if (Ty == Type::UShortTy)
+	ArgVals.back().UIntVal = ArgVals.back().UShortVal;
+      else if (Ty == Type::SByteTy)
+	ArgVals.back().IntVal = ArgVals.back().SByteVal;
+      else if (Ty == Type::UByteTy)
+	ArgVals.back().UIntVal = ArgVals.back().UByteVal;
+      else if (Ty == Type::BoolTy)
+	ArgVals.back().UIntVal = ArgVals.back().BoolVal;
+      else
+	assert(0 && "Unknown type!");
+    }
+  }
 
   // To handle indirect calls, we must get the pointer value from the argument 
   // and treat it as a function pointer.
