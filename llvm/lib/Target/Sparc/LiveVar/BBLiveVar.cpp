@@ -21,7 +21,9 @@
 
 namespace llvm {
 
-BBLiveVar::BBLiveVar(const BasicBlock &bb, MachineBasicBlock &mbb, unsigned id)
+BBLiveVar::BBLiveVar(const BasicBlock &bb,
+                     const MachineBasicBlock &mbb,
+                     unsigned id)
   : BB(bb), MBB(mbb), POID(id) {
   InSetChanged = OutSetChanged = false;
 

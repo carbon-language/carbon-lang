@@ -35,7 +35,7 @@ extern LiveVarDebugLevel_t DEBUG_LV;
 
 class BBLiveVar {
   const BasicBlock &BB;         // pointer to BasicBlock
-  MachineBasicBlock &MBB;       // Pointer to MachineBasicBlock
+  const MachineBasicBlock &MBB; // Pointer to MachineBasicBlock
   unsigned POID;                // Post-Order ID
 
   ValueSet DefSet;           // Def set (with no preceding uses) for LV analysis
@@ -61,12 +61,12 @@ class BBLiveVar {
   void calcDefUseSets();         // calculates the Def & Use sets for this BB
 public:
 
-  BBLiveVar(const BasicBlock &BB, MachineBasicBlock &MBB, unsigned POID);
+  BBLiveVar(const BasicBlock &BB, const MachineBasicBlock &MBB, unsigned POID);
 
   inline bool isInSetChanged() const  { return InSetChanged; }    
   inline bool isOutSetChanged() const { return OutSetChanged; }
 
-  MachineBasicBlock &getMachineBasicBlock() const { return MBB; }
+  const MachineBasicBlock &getMachineBasicBlock() const { return MBB; }
 
   inline unsigned getPOId() const { return POID; }
 
