@@ -166,13 +166,13 @@ public:
         || getDescriptor(opCode).iclass & M_PREFETCH_FLAG
         || getDescriptor(opCode).iclass & M_STORE_FLAG;
   }
-  bool isDummyPhiInstr(MachineOpCode opCode) const {
+  bool isDummyPhiInstr(const MachineOpCode opCode) const {
     return getDescriptor(opCode).iclass & M_DUMMY_PHI_FLAG;
   }
 
 
   // delete this later *******
-  bool isPhi(MachineOpCode opCode) { return isDummyPhiInstr(opCode); }  
+  bool isPhi(const MachineOpCode opCode) { return isDummyPhiInstr(opCode); }  
   
 
   // Check if an instruction can be issued before its operands are ready,

@@ -142,13 +142,16 @@ public:
   cpReg2RegMI(const unsigned SrcReg, const unsigned DestReg,
 	      const int RegType) const=0;
 
-   virtual MachineInstr * 
-   cpReg2MemMI(const unsigned SrcReg, const unsigned DestPtrReg,
+  virtual MachineInstr * 
+  cpReg2MemMI(const unsigned SrcReg, const unsigned DestPtrReg,
 	       const int Offset, const int RegType) const=0;
 
-   virtual MachineInstr *
+  virtual MachineInstr *
    cpMem2RegMI(const unsigned SrcPtrReg, const int Offset,
 	       const unsigned DestReg, const int RegType) const=0;
+
+  virtual MachineInstr *cpValue2Value( Value *Src, Value *Dest) const=0;
+
 
   virtual bool isRegVolatile(const int RegClassID, const int Reg) const=0;
 
