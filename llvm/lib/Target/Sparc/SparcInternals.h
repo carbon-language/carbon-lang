@@ -62,7 +62,7 @@ enum SparcMachineOpCode {
 
   // End-of-array marker
   INVALID_OPCODE,
-  NUM_REAL_OPCODES = RETURN+1,		// number of valid opcodes
+  NUM_REAL_OPCODES = PHI,		// number of valid opcodes
   NUM_TOTAL_OPCODES = INVALID_OPCODE
 };
 
@@ -358,13 +358,22 @@ class UltraSparcRegInfo : public MachineRegInfo
     else if ( reg == 64+32+4)
       return "xcc";                     // only integer cc reg
 
-    else if (reg== InvalidRegNum)       //****** TODO: Remove
+    else if (reg== InvalidRegNum)       //****** TODO: Remove */
       return "<*NoReg*>";
     else 
       assert(0 && "Invalid register number");
   }
 
-
+  inline unsigned int getRegNumInCallersWindow(int reg) {
+    if (reg == InvalidRegNum || reg >= 32)
+      return reg;
+    return SparcIntRegOrder::getRegNumInCallersWindow(reg);
+  }
+  
+  inline bool mustBeRemappedInCallersWindow(int reg) {
+    return (reg != InvalidRegNum && reg < 32);
+  }
+  
   const Value * getCallInstRetVal(const MachineInstr *CallMI) const;
 
   MachineInstr * cpReg2RegMI(const unsigned SrcReg, const unsigned DestReg,
@@ -813,8 +822,6 @@ const InstrIssueDelta  SparcInstrIssueDeltas[] = {
   { ADDCcc,	true,	true,	0 },
   { SUBC,	true,	true,	0 },
   { SUBCcc,	true,	true,	0 },
-//{ SAVE,	true,	true,	0 },
-//{ RESTORE,	true,	true,	0 },
 //{ LDSTUB,	true,	true,	0 },
 //{ SWAP,	true,	true,	0 },
 //{ SWAPA,	true,	true,	0 },
@@ -848,7 +855,8 @@ const InstrIssueDelta  SparcInstrIssueDeltas[] = {
 				// Special cases for breaking group *before*
 				// CURRENTLY NOT SUPPORTED!
   { CALL,	false,	false,	0 },
-  { JMPL,	false,	false,	0 },
+  { JMPLCALL,	false,	false,	0 },
+  { JMPLRET,	false,	false,	0 },
   
 				// Special cases for breaking the group *after*
   { MULX,	true,	true,	(4+34)/2 },
@@ -888,7 +896,8 @@ const InstrRUsageDelta SparcInstrUsageDeltas[] = {
   // 
   // JMPL counts as a load/store instruction for issue!
   //
-  { JMPL,     LSIssueSlots.rid,  0,  1 },
+  { JMPLCALL, LSIssueSlots.rid,  0,  1 },
+  { JMPLRET,  LSIssueSlots.rid,  0,  1 },
   
   // 
   // Many instructions cannot issue for the next 2 cycles after an FCMP
@@ -1093,6 +1102,28 @@ protected:
 
 
 //---------------------------------------------------------------------------
+// class UltraSparcFrameInfo 
+// 
+// Purpose:
+//   Interface to stack frame layout info for the UltraSPARC.
+//   Note that there is no machine-independent interface to this information
+//---------------------------------------------------------------------------
+
+class UltraSparcFrameInfo: public NonCopyable {
+public:
+  static const int MinStackFrameSize                       = 176;
+  static const int FirstOutgoingArgOffsetFromSP            = 128;
+  static const int FirstOptionalOutgoingArgOffsetFromSP    = 176;
+  static const int StaticStackAreaOffsetFromFP             =  -1;
+  
+  static int       getFirstAutomaticVarOffsetFromFP (const Method* method);
+  static int       getRegSpillAreaOffsetFromFP      (const Method* method);
+  static int       getFrameSizeBelowDynamicArea     (const Method* method);
+};
+
+
+
+//---------------------------------------------------------------------------
 // class UltraSparcMachine 
 // 
 // Purpose:
@@ -1107,6 +1138,7 @@ private:
   UltraSparcInstrInfo instrInfo;
   UltraSparcSchedInfo schedInfo;
   UltraSparcRegInfo   regInfo;
+  UltraSparcFrameInfo frameInfo;
 public:
   UltraSparc();
   virtual ~UltraSparc() {}
@@ -1114,6 +1146,8 @@ public:
   virtual const MachineInstrInfo &getInstrInfo() const { return instrInfo; }
   virtual const MachineSchedInfo &getSchedInfo() const { return schedInfo; }
   virtual const MachineRegInfo   &getRegInfo()   const { return regInfo; }
+       const UltraSparcFrameInfo &getFrameInfo() const { return frameInfo; }
+  
   
   // compileMethod - For the sparc, we do instruction selection, followed by
   // delay slot scheduling, then register allocation.
