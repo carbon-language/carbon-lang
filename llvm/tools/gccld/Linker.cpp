@@ -30,50 +30,15 @@
 #include <memory>
 #include <set>
 
-/// IsArchive - Returns true IFF the file named FN appears to be a "ar" library
-/// archive. The file named FN must exist.
+/// FindLib - Try to convert Filename into the name of a file that we can open,
+/// if it does not already name a file we can open, by first trying to open
+/// Filename, then libFilename.<suffix> for each of a set of several common
+/// library suffixes, in each of the directories in Paths and the directory
+/// named by the value of the environment variable LLVM_LIB_SEARCH_PATH. Returns
+/// an empty string if no matching file can be found.
 ///
-static inline bool IsArchive(const std::string &FN) {
-  // Inspect the beginning of the file to see if it contains the "ar" magic
-  // string.
-  std::string Magic("!<arch>\012");
-  char buf[1 + Magic.size()];
-  std::ifstream f(FN.c_str());
-  f.read(buf, Magic.size());
-  buf[Magic.size()] = '\0';
-  return Magic == buf;
-}
-
-/// IsBytecode - Returns true IFF the file named FN appears to be an
-/// LLVM bytecode file. The file named FN must exist.
-///
-static inline bool IsBytecode(const std::string &FN) {
-  // Inspect the beginning of the file to see if it contains the LLVM
-  // bytecode format magic string.
-  std::string Magic("llvm");
-  char buf[1 + Magic.size()];
-  std::ifstream f(FN.c_str());
-  f.read(buf, Magic.size());
-  buf[Magic.size()] = '\0';
-  return Magic == buf;
-}
-
-/// FindLib - locates a particular library.  It will prepend and append
-/// various directories, prefixes, and suffixes until it can find the library.
-///
-/// Inputs:
-///  Filename  - Name of the file to find.
-///  Paths     - List of directories to search.
-///
-/// Outputs:
-///  None.
-///
-/// Return value:
-///  The name of the file is returned.
-///  If the file is not found, an empty string is returned.
-///
-static std::string
-FindLib(const std::string &Filename, const std::vector<std::string> &Paths) {
+static std::string FindLib(const std::string &Filename,
+                           const std::vector<std::string> &Paths) {
   // Determine if the pathname can be found as it stands.
   if (FileOpenable(Filename))
     return Filename;
@@ -165,25 +130,17 @@ GetAllUndefinedSymbols(Module *M, std::set<std::string> &UndefinedSymbols) {
 }
 
 
-/// LoadObject - reads the specified bytecode object file.
+/// LoadObject - Read in and parse the bytecode file named by FN and return the
+/// module it contains (wrapped in an auto_ptr), or 0 and set ErrorMessage if an
+/// error occurs.
 ///
-/// Inputs:
-///  FN - The name of the file to load.
-///
-/// Outputs:
-///  OutErrorMessage - The error message to give back to the caller.
-///
-/// Return Value:
-///  A pointer to a module represening the bytecode file is returned.
-///  If an error occurs, the pointer is 0.
-///
-std::auto_ptr<Module>
-LoadObject(const std::string & FN, std::string &OutErrorMessage) {
-  std::string ErrorMessage;
-  Module *Result = ParseBytecodeFile(FN, &ErrorMessage);
+std::auto_ptr<Module> LoadObject(const std::string &FN,
+                                 std::string &ErrorMessage) {
+  std::string ParserErrorMessage;
+  Module *Result = ParseBytecodeFile(FN, &ParserErrorMessage);
   if (Result) return std::auto_ptr<Module>(Result);
-  OutErrorMessage = "Bytecode file '" + FN + "' corrupt!";
-  if (ErrorMessage.size()) OutErrorMessage += ": " + ErrorMessage;
+  ErrorMessage = "Bytecode file '" + FN + "' could not be loaded";
+  if (ParserErrorMessage.size()) ErrorMessage += ": " + ParserErrorMessage;
   return std::auto_ptr<Module>();
 }
 
