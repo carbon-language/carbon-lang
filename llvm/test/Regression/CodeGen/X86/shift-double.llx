@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -x86-asm-syntax=intel -disable-pattern-isel=0 | grep sh[lr]d | wc -l | grep 4
+; RUN: llvm-as < %s | llc -march=x86 -x86-asm-syntax=intel -disable-pattern-isel=0 | grep sh[lr]d | wc -l | grep 5
 
 long %test1(long %X, ubyte %C) {
 	%Y = shl long %X, ubyte %C
@@ -19,4 +19,12 @@ uint %test4(uint %A, uint %B, ubyte %C) {
 	%Y = shr uint %B, ubyte %Cv
 	%Z = or uint %Y, %X
 	ret uint %Z
+}
+
+ushort %test5(ushort %A, ushort %B, ubyte %C) {
+	%X = shl ushort %A, ubyte %C
+	%Cv = sub ubyte 16, %C
+	%Y = shr ushort %B, ubyte %Cv
+	%Z = or ushort %Y, %X
+	ret ushort %Z
 }
