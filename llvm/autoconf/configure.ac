@@ -35,6 +35,11 @@ then
   AC_CONFIG_SUBDIRS(projects/reopt)
 fi
 
+if test -d ${srcdir}/projects/poolalloc
+then
+  AC_CONFIG_SUBDIRS(projects/poolalloc)
+fi
+
 dnl Configure a header file
 AC_CONFIG_HEADERS(include/Config/config.h)
 AC_CONFIG_MAKEFILE(Makefile)
