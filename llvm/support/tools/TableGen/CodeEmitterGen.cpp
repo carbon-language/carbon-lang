@@ -53,9 +53,7 @@ void CodeEmitterGen::run(std::ostream &o) {
     std::map<std::string, unsigned> OpOrder;
     std::map<std::string, bool> OpContinuous;
     for (unsigned i = 0, e = Vals.size(); i != e; ++i) {
-      if (!Vals[i].getPrefix() &&  !Vals[i].getValue()->isComplete() &&
-          // ignore annul and predict bits since no one sets them yet
-          Vals[i].getName() != "annul" && Vals[i].getName() != "predict") {
+      if (!Vals[i].getPrefix() &&  !Vals[i].getValue()->isComplete()) {
         // Is the operand continuous? If so, we can just mask and OR it in
         // instead of doing it bit-by-bit, saving a lot in runtime cost.        
         const BitsInit *InstInit = BI;
@@ -198,11 +196,6 @@ void CodeEmitterGen::run(std::ostream &o) {
               o << "Error: UNIMPLEMENTED\n";
             }
           }
-        }
-      } else {
-        // ignore annul and predict bits since no one sets them yet
-        if (Vals[f].getName() == "annul" || Vals[f].getName() == "predict") {
-          o << "      // found " << Vals[f].getName() << "\n";
         }
       }
     }
