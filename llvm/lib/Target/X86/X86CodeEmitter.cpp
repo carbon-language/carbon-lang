@@ -172,8 +172,8 @@ namespace {
   class Emitter : public MachineFunctionPass {
     const X86InstrInfo  *II;
     MachineCodeEmitter  &MCE;
-    std::map<const BasicBlock*, unsigned> BasicBlockAddrs;
-    std::vector<std::pair<const BasicBlock*, unsigned> > BBRefs;
+    std::map<const MachineBasicBlock*, unsigned> BasicBlockAddrs;
+    std::vector<std::pair<const MachineBasicBlock *, unsigned> > BBRefs;
   public:
     explicit Emitter(MachineCodeEmitter &mce) : II(0), MCE(mce) {}
     Emitter(MachineCodeEmitter &mce, const X86InstrInfo& ii)
@@ -190,7 +190,7 @@ namespace {
   private:
     void emitBasicBlock(const MachineBasicBlock &MBB);
 
-    void emitPCRelativeBlockAddress(const BasicBlock *BB);
+    void emitPCRelativeBlockAddress(const MachineBasicBlock *BB);
     void emitMaybePCRelativeValue(unsigned Address, bool isPCRelative);
     void emitGlobalAddressForCall(GlobalValue *GV);
     void emitGlobalAddressForPtr(GlobalValue *GV);
@@ -249,22 +249,21 @@ bool Emitter::runOnMachineFunction(MachineFunction &MF) {
 
 void Emitter::emitBasicBlock(const MachineBasicBlock &MBB) {
   if (uint64_t Addr = MCE.getCurrentPCValue())
-    BasicBlockAddrs[MBB.getBasicBlock()] = Addr;
+    BasicBlockAddrs[&MBB] = Addr;
 
   for (MachineBasicBlock::const_iterator I = MBB.begin(), E = MBB.end(); I != E; ++I)
     emitInstruction(*I);
 }
-
 
 /// emitPCRelativeBlockAddress - This method emits the PC relative address of
 /// the specified basic block, or if the basic block hasn't been emitted yet
 /// (because this is a forward branch), it keeps track of the information
 /// necessary to resolve this address later (and emits a dummy value).
 ///
-void Emitter::emitPCRelativeBlockAddress(const BasicBlock *BB) {
+void Emitter::emitPCRelativeBlockAddress(const MachineBasicBlock *MBB) {
   // FIXME: Emit backward branches directly
-  BBRefs.push_back(std::make_pair(BB, MCE.getCurrentPCValue()));
-  MCE.emitWord(0);   // Emit a dummy value
+  BBRefs.push_back(std::make_pair(MBB, MCE.getCurrentPCValue()));
+  MCE.emitWord(0);
 }
 
 /// emitMaybePCRelativeValue - Emit a 32-bit address which may be PC relative.
@@ -527,9 +526,8 @@ void Emitter::emitInstruction(const MachineInstr &MI) {
     MCE.emitByte(BaseOpcode);
     if (MI.getNumOperands() == 1) {
       const MachineOperand &MO = MI.getOperand(0);
-      if (MO.isPCRelativeDisp()) {
-        // Conditional branch... FIXME: this should use an MBB destination!
-        emitPCRelativeBlockAddress(cast<BasicBlock>(MO.getVRegValue()));
+      if (MO.isMachineBasicBlock()) {
+        emitPCRelativeBlockAddress(MO.getMachineBasicBlock());
       } else if (MO.isGlobalAddress()) {
         assert(MO.isPCRelative() && "Call target is not PC Relative?");
         emitGlobalAddressForCall(MO.getGlobal());
