@@ -70,7 +70,7 @@ needed in order to understand what files should be linked into your program.
 <tr class="doc_table">
 	<td>libipo.a</td>
 	<td>
-		An archive of all inter-procedural optimizations.
+		An archive of all interprocedural optimizations.
 	</td>
 </tr>
 <tr class="doc_table">
@@ -81,55 +81,39 @@ needed in order to understand what files should be linked into your program.
 </tr>
 <tr class="doc_table">
 	<td>libtransforms.a</td>
-	<td>
-		An archive of just the level raise pass.
-	</td>
+	<td>Uncategorized transformations.</td>
 </tr>
 <tr class="doc_table">
 	<td>libtarget.a</td>
-	<td>
-		An archive containing code generator support for describing
-		target architectures.
-	</td>
+	<td>An archive containing generic code generator support.</td>
 </tr>
 <tr class="doc_table">
 	<td>libanalysis.a</td>
-	<td>
-		An archive containing intra-procedural analyses.
-	</td>
+	<td>An archive containing intraprocedural analyses.</td>
 </tr>
 <tr class="doc_table">
 	<td>libdatastructure.a</td>
-	<td>
-		An archive containing optimizations for data structures.
-	</td>
+	<td>An archive containing DataStructure Analysis.</td>
 </tr>
 <tr class="doc_table">
 	<td>libinstrument.a</td>
-	<td>No idea.</td>
+	<td>Intraprocedural instrumentation and utilities.</td>
 </tr>
 <tr class="doc_table">
-	<td>libregalloc.a</td>
-	<td>Register Allocation code.</td>
+	<td>libsparcv9regalloc.a</td>
+	<td>SparcV9 graph-coloring register allocator.</td>
 </tr>
 <tr class="doc_table">
 	<td>libipa.a</td>
-	<td>
-		An archive containing inter-procedural analyses</td>
+	<td>An archive containing interprocedural analyses</td>
 </tr>
 <tr class="doc_table">
 	<td>libtransformutils.a</td>
-	<td>
-		Utiltities for transformations?
-	</td>
+	<td>Utility functions for transformations.</td>
 </tr>
 <tr class="doc_table">
 	<td>libsupport.a</td>
 	<td>General support utilities</td>
-</tr>
-<tr class="doc_table">
-	<td>libevar.a</td>
-	<td>Live variable analysis for SPARC</td>
 </tr>
 <tr class="doc_table">
 	<td><h2><u>Object File</u></h2></td>
@@ -145,15 +129,15 @@ needed in order to understand what files should be linked into your program.
 </tr>
 <tr class="doc_table">
 	<td>bcreader.o</td>
-	<td>Byte Code Reader</td>
+	<td>Bytecode Reader</td>
 </tr>
 <tr class="doc_table">
 	<td>bcwriter.o</td>
-	<td>Byte Code Writer</td>
+	<td>Bytecode Writer</td>
 </tr>
 <tr class="doc_table">
 	<td>sched.o</td>
-	<td>SPARC instruction scheduler</td>
+	<td>SparcV9 instruction scheduler</td>
 </tr>
 <tr class="doc_table">
 	<td>selectiondag.o</td>
@@ -165,11 +149,11 @@ needed in order to understand what files should be linked into your program.
 </tr>
 <tr class="doc_table">
 	<td>ipa.o</td>
-	<td>Inter-Procedural Analysis Optimizations</td>
+	<td>Interprocedural Analyses</td>
 </tr>
 <tr class="doc_table">
-	<td>select.o</td>
-	<td>SPARC instruction selector</td>
+	<td>sparcv9select.o</td>
+	<td>SparcV9 instruction selector</td>
 </tr>
 <tr class="doc_table">
 	<td>cwriter.o</td>
@@ -180,24 +164,24 @@ needed in order to understand what files should be linked into your program.
 	<td>Path profiling instrumentation</td>
 </tr>
 <tr class="doc_table">
-	<td>regalloc.o</td>
-	<td>Register Allocation</td>
+	<td>sparcv9regalloc.o</td>
+	<td>SparcV9 graph-coloring register allocator</td>
 </tr>
 <tr class="doc_table">
 	<td>instrument.o</td>
-	<td>Instrumentation? Of What?</td>
+	<td>Intraprocedural instrumentation and utilities.</td>
 </tr>
 <tr class="doc_table">
 	<td>datastructure.o</td>
-	<td>Data Structure Analysis</td>
+	<td>DataStructure Analysis</td>
 </tr>
 <tr class="doc_table">
 	<td>codegen.o</td>
 	<td>Native code generation</td>
 </tr>
 <tr class="doc_table">
-	<td>livevar.o</td>
-	<td>Live Variable Analysis</td>
+	<td>sparcv9livevar.o</td>
+	<td>SparcV9 Live Variable Analysis</td>
 </tr>
 <tr class="doc_table">
 	<td>vmcore.o</td>
@@ -223,27 +207,27 @@ needed in order to understand what files should be linked into your program.
 </tr>
 <tr class="doc_table">
 	<td>analysis.o</td>
-	<td>General Framework For Analysis?</td>
+	<td>General framework for Analysis</td>
 </tr>
 <tr class="doc_table">
-	<td>sparc.o</td>
-	<td>Sun SPARC Processor Specific</td>
+	<td>sparcv9.o</td>
+	<td>SparcV9 backend</td>
 </tr>
 <tr class="doc_table">
 	<td>target.o</td>
-	<td>Target Machine Support?</td>
+	<td>Generic backend support</td>
 </tr>
 <tr class="doc_table">
 	<td>transforms.o</td>
-	<td>Code Transformations</td>
+	<td>Uncategorized transformations.</td>
 </tr>
 <tr class="doc_table">
 	<td>x86.o</td>
-	<td>Intel x86 Processor Specific</td>
+	<td>Intel x86 backend</td>
 </tr>
 <tr class="doc_table">
 	<td>powerpc.o</td>
-	<td>PowerPC Processor Specific</td>
+	<td>PowerPC backend</td>
 </tr>
 <tr class="doc_table">
 	<td>scalaropts.o</td>
@@ -251,7 +235,7 @@ needed in order to understand what files should be linked into your program.
 </tr>
 <tr class="doc_table">
 	<td>ipo.o</td>
-	<td>Inter-Procedural Optimization</td>
+	<td>Interprocedural Optimizations</td>
 </tr>
 <tr class="doc_table">
 	<td>trace.o</td>
