@@ -20,6 +20,21 @@
 #include <iostream>
 #include <cstdio>
 
+/// FileOpenable - Returns true IFF Filename names an existing regular
+/// file which we can successfully open.
+///
+bool FileOpenable (const std::string &Filename) {
+  struct stat s;
+  if (stat (Filename.c_str (), &s) == -1)
+    return false; // Cannot stat file
+  if (!S_ISREG (s.st_mode))
+    return false; // File is not a regular file
+  std::ifstream FileStream (Filename.c_str ());
+  if (!FileStream)
+    return false; // File is not openable
+  return true;
+}
+
 /// DiffFiles - Compare the two files specified, returning true if they are
 /// different or if there is a file error.  If you specify a string to fill in
 /// for the error option, it will set the string to an error message if an error
@@ -100,111 +115,41 @@ std::string getUniqueFilename(const std::string &FilenameBase) {
   return Result;
 }
 
-///
-/// Method: MakeFileExecutable ()
-///
-/// Description:
-///	This method makes the specified filename executable by giving it
-///	execute permission.  It respects the umask value of the process, and it
-///	does not enable any unnecessary access bits.
-///
-/// Algorithm:
-///	o Get file's current permissions.
-///	o Get the process's current umask.
-///	o Take the set of all execute bits and disable those found in the umask.
-///	o Add the remaining permissions to the file's permissions.
-///
-bool
-MakeFileExecutable (const std::string & Filename)
-{
-  // Permissions masking value of the user
-  mode_t mask;
-
-  // Permissions currently enabled on the file
-  struct stat fstat;
-
-  //
-  // Grab the umask value from the operating system.  We want to use it when
-  // changing the file's permissions.
-  //
-  // Note:
-  //  Umask() is one of those annoying system calls.  You have to call it
-  //  to get the current value and then set it back.
-  //
-  mask = umask (0x777);
+static bool AddPermissionsBits (const std::string &Filename, mode_t bits) {
+  // Get the umask value from the operating system.  We want to use it
+  // when changing the file's permissions. Since calling umask() sets
+  // the umask and returns its old value, we must call it a second
+  // time to reset it to the user's preference.
+  mode_t mask = umask (0777); // The arg. to umask is arbitrary...
   umask (mask);
 
-  //
-  // Go fetch the file's current permission bits.  We want to *add* execute
-  // access to the file.
-  //
-  if ((stat (Filename.c_str(), &fstat)) == -1)
-  {
+  // Get the file's current mode.
+  struct stat st;
+  if ((stat (Filename.c_str(), &st)) == -1)
     return false;
-  }
 
-  //
-  // Make the file executable...
-  //
-  if ((chmod(Filename.c_str(), (fstat.st_mode | (0111 & ~mask)))) == -1)
-  {
+  // Change the file to have whichever permissions bits from 'bits'
+  // that the umask would not disable.
+  if ((chmod(Filename.c_str(), (st.st_mode | (bits & ~mask)))) == -1)
     return false;
-  }
 
   return true;
 }
 
+/// MakeFileExecutable - Make the file named Filename executable by
+/// setting whichever execute permissions bits the process's current
+/// umask would allow. Filename must name an existing file or
+/// directory.  Returns true on success, false on error.
 ///
-/// Method: MakeFileReadable ()
-///
-/// Description:
-///	This method makes the specified filename readable by giving it
-///	read permission.  It respects the umask value of the process, and it
-///	does not enable any unnecessary access bits.
-///
-/// Algorithm:
-///	o Get file's current permissions.
-///	o Get the process's current umask.
-///	o Take the set of all read bits and disable those found in the umask.
-///	o Add the remaining permissions to the file's permissions.
-///
-bool
-MakeFileReadable (const std::string & Filename)
-{
-  // Permissions masking value of the user
-  mode_t mask;
-
-  // Permissions currently enabled on the file
-  struct stat fstat;
-
-  //
-  // Grab the umask value from the operating system.  We want to use it when
-  // changing the file's permissions.
-  //
-  // Note:
-  //  Umask() is one of those annoying system calls.  You have to call it
-  //  to get the current value and then set it back.
-  //
-  mask = umask (0x777);
-  umask (mask);
-
-  //
-  // Go fetch the file's current permission bits.  We want to *add* execute
-  // access to the file.
-  //
-  if ((stat (Filename.c_str(), &fstat)) == -1)
-  {
-    return false;
-  }
-
-  //
-  // Make the file executable...
-  //
-  if ((chmod(Filename.c_str(), (fstat.st_mode | (0444 & ~mask)))) == -1)
-  {
-    return false;
-  }
-
-  return true;
+bool MakeFileExecutable (const std::string &Filename) {
+  return AddPermissionsBits (Filename, 0111);
 }
 
+/// MakeFileReadable - Make the file named Filename readable by
+/// setting whichever read permissions bits the process's current
+/// umask would allow. Filename must name an existing file or
+/// directory.  Returns true on success, false on error.
+///
+bool MakeFileReadable (const std::string &Filename) {
+  return AddPermissionsBits (Filename, 0444);
+}
