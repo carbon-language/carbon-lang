@@ -79,7 +79,7 @@ private:
 //----------------------------------------------------------------------
 
 template<class _NodeType>
-class ScheduleIterator : public forward_iterator<_NodeType, ptrdiff_t> {
+class ScheduleIterator: public std::forward_iterator<_NodeType, ptrdiff_t> {
 private:
   unsigned cycleNum;
   unsigned slotNum;
@@ -352,18 +352,18 @@ private:
   unsigned int totalInstrCount;
   cycles_t curTime;
   cycles_t nextEarliestIssueTime;		// next cycle we can issue
-  vector<hash_set<const SchedGraphNode*> > choicesForSlot; // indexed by slot#
+  vector<std::hash_set<const SchedGraphNode*> > choicesForSlot; // indexed by slot#
   vector<const SchedGraphNode*> choiceVec;	// indexed by node ptr
   vector<int> numInClass;			// indexed by sched class
   vector<cycles_t> nextEarliestStartTime;	// indexed by opCode
-  hash_map<const SchedGraphNode*, DelaySlotInfo*> delaySlotInfoForBranches;
+  std::hash_map<const SchedGraphNode*, DelaySlotInfo*> delaySlotInfoForBranches;
 						// indexed by branch node ptr 
   
 public:
   SchedulingManager(const TargetMachine& _target, const SchedGraph* graph,
                     SchedPriorities& schedPrio);
   ~SchedulingManager() {
-    for (hash_map<const SchedGraphNode*,
+    for (std::hash_map<const SchedGraphNode*,
            DelaySlotInfo*>::iterator I = delaySlotInfoForBranches.begin(),
            E = delaySlotInfoForBranches.end(); I != E; ++I)
       delete I->second;
@@ -422,7 +422,7 @@ public:
     return choiceVec[i];
   }
   
-  inline hash_set<const SchedGraphNode*>& getChoicesForSlot(unsigned slotNum) {
+  inline std::hash_set<const SchedGraphNode*>& getChoicesForSlot(unsigned slotNum) {
     assert(slotNum < nslots);
     return choicesForSlot[slotNum];
   }
@@ -497,7 +497,7 @@ public:
   inline DelaySlotInfo* getDelaySlotInfoForInstr(const SchedGraphNode* bn,
 						 bool createIfMissing=false)
   {
-    hash_map<const SchedGraphNode*, DelaySlotInfo*>::const_iterator
+    std::hash_map<const SchedGraphNode*, DelaySlotInfo*>::const_iterator
       I = delaySlotInfoForBranches.find(bn);
     if (I != delaySlotInfoForBranches.end())
       return I->second;
@@ -1243,8 +1243,20 @@ ReplaceNopsWithUsefulInstr(SchedulingManager& S,
       if (sdelayNodeVec.size() < ndelays)
         sdelayNodeVec.push_back(graph->getGraphNodeForInstr(bbMvec[i]));
       else
-        nopNodeVec.push_back(graph->getGraphNodeForInstr(bbMvec[i]));
-  
+	{
+	  nopNodeVec.push_back(graph->getGraphNodeForInstr(bbMvec[i]));
+	  
+	  //remove the MI from the Machine Code For Instruction
+	  MachineCodeForInstruction& llvmMvec = 
+	    MachineCodeForInstruction::get((Instruction *)
+					   (node->getBB()->getTerminator()));
+	  for(MachineCodeForInstruction::iterator mciI=llvmMvec.begin(), 
+		mciE=llvmMvec.end(); mciI!=mciE; ++mciI){
+	    if(*mciI==bbMvec[i])
+	      llvmMvec.erase(mciI);
+	  }
+	}
+
   assert(sdelayNodeVec.size() >= ndelays);
   
   // If some delay slots were already filled, throw away that many new choices
