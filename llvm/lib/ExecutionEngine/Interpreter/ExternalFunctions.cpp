@@ -18,6 +18,7 @@
 
 typedef GenericValue (*ExFunc)(MethodType *, const vector<GenericValue> &);
 static map<const Method *, ExFunc> Functions;
+static map<string, ExFunc> FuncNames;
 
 static Interpreter *TheInterpreter;
 
@@ -70,7 +71,11 @@ static ExFunc lookupMethod(const Method *M) {
   ExtName += "_" + M->getName();
 
   //cout << "Tried: '" << ExtName << "'\n";
-  ExFunc FnPtr = (ExFunc)dlsym(RTLD_DEFAULT, ExtName.c_str());
+  ExFunc FnPtr = FuncNames[ExtName];
+  if (FnPtr == 0)
+    FnPtr = (ExFunc)dlsym(RTLD_DEFAULT, ExtName.c_str());
+  if (FnPtr == 0)
+    FnPtr = FuncNames["lle_X_"+M->getName()];
   if (FnPtr == 0)  // Try calling a generic function... if it exists...
     FnPtr = (ExFunc)dlsym(RTLD_DEFAULT, ("lle_X_"+M->getName()).c_str());
   if (FnPtr != 0)
@@ -78,8 +83,8 @@ static ExFunc lookupMethod(const Method *M) {
   return FnPtr;
 }
 
-void Interpreter::callExternalMethod(Method *M,
-				     const vector<GenericValue> &ArgVals) {
+GenericValue Interpreter::callExternalMethod(Method *M,
+                                         const vector<GenericValue> &ArgVals) {
   TheInterpreter = this;
 
   // Do a lookup to see if the method is in our cache... this should just be a
@@ -89,21 +94,12 @@ void Interpreter::callExternalMethod(Method *M,
   if (Fn == 0) {
     cout << "Tried to execute an unknown external method: "
 	 << M->getType()->getDescription() << " " << M->getName() << endl;
-    return;
+    return GenericValue();
   }
 
   // TODO: FIXME when types are not const!
   GenericValue Result = Fn(const_cast<MethodType*>(M->getMethodType()),ArgVals);
-  
-  // Copy the result back into the result variable if we are not returning void.
-  if (M->getReturnType() != Type::VoidTy) {
-    CallInst *Caller = ECStack.back().Caller;
-    if (Caller) {
-
-    } else {
-      // print it.
-    }
-  }
+  return Result;
 }
 
 
@@ -159,7 +155,7 @@ GenericValue lle_X_printString(MethodType *M, const vector<GenericValue> &ArgVal
     return GenericValue();\
   }
 
-PRINT_TYPE_FUNC(Byte,    SByteTyID)
+PRINT_TYPE_FUNC(SByte,   SByteTyID)
 PRINT_TYPE_FUNC(UByte,   UByteTyID)
 PRINT_TYPE_FUNC(Short,   ShortTyID)
 PRINT_TYPE_FUNC(UShort,  UShortTyID)
@@ -203,14 +199,15 @@ GenericValue lle_Vi_exit(MethodType *M, const vector<GenericValue> &Args) {
 
 // void *malloc(uint)
 GenericValue lle_PI_malloc(MethodType *M, const vector<GenericValue> &Args) {
+  assert(Args.size() == 1 && "Malloc expects one argument!");
   GenericValue GV;
-  GV.LongVal = (uint64_t)malloc(Args[0].UIntVal);
+  GV.PointerVal = (uint64_t)malloc(Args[0].UIntVal);
   return GV;
 }
 
 // void free(void *)
 GenericValue lle_VP_free(MethodType *M, const vector<GenericValue> &Args) {
-  free((void*)Args[0].LongVal);
+  free((void*)Args[0].PointerVal);
   return GenericValue();
 }
 
@@ -276,5 +273,32 @@ GenericValue lle_iP_printf(MethodType *M, const vector<GenericValue> &Args) {
   }
 }
 
-
 } // End extern "C"
+
+
+void Interpreter::initializeExternalMethods() {
+  FuncNames["lle_VP_printstr"] = lle_VP_printstr;
+  FuncNames["lle_X_print"] = lle_X_print;
+  FuncNames["lle_X_printVal"] = lle_X_printVal;
+  FuncNames["lle_X_printString"] = lle_X_printString;
+  FuncNames["lle_X_printUByte"] = lle_X_printUByte;
+  FuncNames["lle_X_printSByte"] = lle_X_printSByte;
+  FuncNames["lle_X_printUShort"] = lle_X_printUShort;
+  FuncNames["lle_X_printShort"] = lle_X_printShort;
+  FuncNames["lle_X_printInt"] = lle_X_printInt;
+  FuncNames["lle_X_printUInt"] = lle_X_printUInt;
+  FuncNames["lle_X_printLong"] = lle_X_printLong;
+  FuncNames["lle_X_printULong"] = lle_X_printULong;
+  FuncNames["lle_X_printFloat"] = lle_X_printFloat;
+  FuncNames["lle_X_printDouble"] = lle_X_printDouble;
+  FuncNames["lle_X_printPointer"] = lle_X_printPointer;
+  FuncNames["lle_Vb_putchar"] = lle_Vb_putchar;
+  FuncNames["lle_ii_putchar"] = lle_ii_putchar;
+  FuncNames["lle_VB_putchar"] = lle_VB_putchar;
+  FuncNames["lle_V___main"] = lle_V___main;
+  FuncNames["lle_Vi_exit"] = lle_Vi_exit;
+  FuncNames["lle_PI_malloc"] = lle_PI_malloc;
+  FuncNames["lle_VP_free"] = lle_VP_free;
+  FuncNames["lle_DDD_pow"] = lle_DDD_pow;
+  FuncNames["lle_iP_printf"] = lle_iP_printf;
+}
