@@ -87,10 +87,8 @@ public:
   //
   virtual void releaseMemory() {}
 
-#ifndef NDEBUG
   // dumpPassStructure - Implement the -debug-passes=PassStructure option
   virtual void dumpPassStructure(unsigned Offset = 0);
-#endif
 
 protected:
   // getAnalysis<AnalysisType>() - This function is used by subclasses to get to
