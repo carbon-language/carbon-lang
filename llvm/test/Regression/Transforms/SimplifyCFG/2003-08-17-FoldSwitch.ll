@@ -47,3 +47,14 @@ int %test4(uint %C) {   ; Test folding switch -> branch
 L1:	ret int 0
 L2:	ret int 1
 }
+
+int %test5(uint %C) {
+	switch uint %C, label %L1 [   ; Can fold into a cond branch!
+		uint 0, label %L2
+		uint 123, label %L1
+	]
+L1:	ret int 0
+L2:	ret int 1
+}
+
+
