@@ -12,8 +12,8 @@ all:: $(addprefix Output/, $(TESTS:%.ll=%.ll.out))
 
 Output/%.ll.out: %.ll Output/.dir $(LAS) $(LBUGPOINT)
 	-$(TESTRUNR) $<
-	-# Remove temporary files generated...
-	@rm -f bugpoint-$<-*
+	-@# Remove temporary files generated...
+	-@rm -f bugpoint-*
 
 clean::
 	rm -f *.bc
