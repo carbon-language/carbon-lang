@@ -480,7 +480,6 @@ namespace {
 
     void printModule(const Module *M);
     void printSymbolTable(const SymbolTable &ST);
-    void printConstant(const Constant *CPV);
     void printGlobal(const GlobalVariable *GV);
     void printFunctionSignature(const Function *F);
     void printFunctionDecl(const Function *F); // Print just the forward decl
@@ -761,22 +760,22 @@ void CInstPrintVisitor::visitBinaryOperator(Instruction *I) {
   CW.writeOperand(I->getOperand(0));
 
   switch (I->getOpcode()) {
-  case Instruction::Add: Out << "+"; break;
-  case Instruction::Sub: Out << "-"; break;
+  case Instruction::Add: Out << " + "; break;
+  case Instruction::Sub: Out << " - "; break;
   case Instruction::Mul: Out << "*"; break;
   case Instruction::Div: Out << "/"; break;
   case Instruction::Rem: Out << "%"; break;
-  case Instruction::And: Out << "&"; break;
-  case Instruction::Or: Out << "|"; break;
-  case Instruction::Xor: Out << "^"; break;
-  case Instruction::SetEQ: Out << "=="; break;
-  case Instruction::SetNE: Out << "!="; break;
-  case Instruction::SetLE: Out << "<="; break;
-  case Instruction::SetGE: Out << ">="; break;
-  case Instruction::SetLT: Out << "<"; break;
-  case Instruction::SetGT: Out << ">"; break;
-  case Instruction::Shl : Out << "<<"; break;
-  case Instruction::Shr : Out << ">>"; break;
+  case Instruction::And: Out << " & "; break;
+  case Instruction::Or: Out << " | "; break;
+  case Instruction::Xor: Out << " ^ "; break;
+  case Instruction::SetEQ: Out << " == "; break;
+  case Instruction::SetNE: Out << " != "; break;
+  case Instruction::SetLE: Out << " <= "; break;
+  case Instruction::SetGE: Out << " >= "; break;
+  case Instruction::SetLT: Out << " < "; break;
+  case Instruction::SetGT: Out << " > "; break;
+  case Instruction::Shl : Out << " << "; break;
+  case Instruction::Shr : Out << " >> "; break;
   default: cerr << "Invalid operator type!" << I; abort();
   }
 
@@ -808,14 +807,13 @@ string CWriter::getValueName(const Value *V) {
     if (isa<GlobalValue>(V))  // Do not mangle globals...
       return makeNameProper(V->getName());
 
-    return "l_" + makeNameProper(V->getName()) + "_" +
-      utostr(V->getType()->getUniqueID());
+    return "l" + utostr(V->getType()->getUniqueID()) + "_" +
+           makeNameProper(V->getName());      
   }
 
   int Slot = Table.getValSlot(V);
   assert(Slot >= 0 && "Invalid value!");
-  return "ltmp_" + itostr(Slot) + "_" +
-         utostr(V->getType()->getUniqueID());
+  return "ltmp_" + itostr(Slot) + "_" + utostr(V->getType()->getUniqueID());
 }
 
 void CWriter::printModule(const Module *M) {
@@ -887,9 +885,7 @@ void CWriter::printSymbolTable(const SymbolTable &ST) {
     // But for now we have
     for (; I != End; ++I) {
       const Value *V = I->second;
-      if (const Constant *CPV = dyn_cast<const Constant>(V)) {
-	printConstant(CPV);
-      } else if (const Type *Ty = dyn_cast<const Type>(V)) {
+      if (const Type *Ty = dyn_cast<const Type>(V)) {
 	string tempostr;
 	string tempstr = "";
 	Out << "typedef ";
@@ -903,26 +899,6 @@ void CWriter::printSymbolTable(const SymbolTable &ST) {
       }
     }
   }
-}
-
-
-// printConstant - Print out a constant pool entry...
-//
-void CWriter::printConstant(const Constant *CPV) {
-  // TODO
-  // Dinakar : Don't know what to do with unnamed constants
-  // should do something about it later.
-
-  string tempostr = getValueName(CPV);
-  
-  // Print out the constant type...
-  printTypeVar(CPV->getType(), tempostr);
-  
-  Out << " = ";
-  // Write the value out now...
-  writeOperand(CPV, false);
-  
-  Out << "\n";
 }
 
 // printFunctionDecl - Print function declaration
@@ -1026,8 +1002,8 @@ void CWriter::outputBasicBlock(const BasicBlock* BB) {
 }
 
 void CWriter::writeOperand(const Value *Operand, bool PrintName = true) {
-  if (isa<GlobalValue>(Operand))
-    Out << "(&";  // Global values are references as their addresses by llvm
+  if (isa<GlobalVariable>(Operand))
+    Out << "(&";  // Global variables are references as their addresses by llvm
 
   if (PrintName && Operand->hasName()) {   
     Out << getValueName(Operand);
@@ -1038,13 +1014,11 @@ void CWriter::writeOperand(const Value *Operand, bool PrintName = true) {
       Out << getConstStrValue(CPV); 
   } else {
     int Slot = Table.getValSlot(Operand);
-    if (Slot >= 0)  
-      Out << "ltmp_" << Slot << "_" << Operand->getType()->getUniqueID();
-    else if (PrintName)
-      Out << "<badref>";
+    assert(Slot >= 0 && "Malformed LLVM!");
+    Out << "ltmp_" << Slot << "_" << Operand->getType()->getUniqueID();
   }
 
-  if (isa<GlobalValue>(Operand))
+  if (isa<GlobalVariable>(Operand))
     Out << ")";
 }
 
