@@ -194,7 +194,7 @@ int PPC32CodeEmitter::getMachineOpValue(MachineInstr &MI, MachineOperand &MO) {
   } else if (MO.isImmediate()) {
     rv = MO.getImmedValue();
   } else if (MO.isGlobalAddress()) {
-    unsigned Reloc;
+    unsigned Reloc = 0;
     if (MI.getOpcode() == PPC::CALLpcrel)
       Reloc = PPC::reloc_pcrel_bx;
     else if (MI.getOpcode() == PPC::LOADHiAddr) {
