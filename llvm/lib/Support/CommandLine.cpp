@@ -397,7 +397,7 @@ void cl::ParseCommandLineOptions(int &argc, char **argv,
       Handler = LookupOption(ArgName, Value);
 
       // Check to see if this "option" is really a prefixed or grouped argument.
-      if (Handler == 0 && *Value == 0) {
+      if (Handler == 0) {
         std::string RealName(ArgName);
         if (RealName.size() > 1) {
           unsigned Length = 0;
