@@ -22,6 +22,7 @@
     </ul>
   </li>
   <li><a href="#tree">LLVM Test Suite Tree</a></li>
+  <li><a href="#dgstructure">DejaGNU Structure</a></li>
   <li><a href="#qmstructure">QMTest Structure</a></li>
   <li><a href="#progstructure"><tt>llvm-test</tt> Structure</a></li>
   <li><a href="#run">Running the LLVM Tests</a></li>
@@ -29,8 +30,8 @@
 </ol>
 
 <div class="doc_author">
-  <p>Written by John T. Criswell and <a
-  href="http://llvm.x10sys.com/rspencer">Reid Spencer</a></p>
+  <p>Written by John T. Criswell, <a
+  href="http://llvm.x10sys.com/rspencer">Reid Spencer</a>, and Tanya Lattner</p>
 </div>
 
 <!--=========================================================================-->
@@ -55,15 +56,22 @@ and run tests.</p>
 required to build LLVM, plus the following:</p>
 
 <dl>
+<dt><a href="http://www.gnu.org/software/dejagnu/">DejaGNU</a></dt>
+<dd>The Feature and Regressions tests are organized and run by DejaGNU.</dd>
+<dt><a href="http://expect.nist.gov/">Expect</a></dt>
+<dd>Expect is required by DejaGNU.</dd>
+<dt>tclsh</dt>
+<dd>Tclsh is required by DejaGNU. </dd>
+
 <dt><a href="http://www.qmtest.com">QMTest</a></dt>
 <dd>The LLVM test suite uses QMTest to organize and run tests. <b>Note:
 you will need <a href="http://llvm.cs.uiuc.edu/qm-2.0.3.tar.gz">QMTest
 2.0.3 (source tar.gz file)</a> to be successful. The tests do not run with
-any other version.</b></dd>
+any other version.</b> (optional, required only for QMTest)</dd>
 
 <dt><a href="http://www.python.org">Python</a></dt>
 <dd>You will need a Python interpreter that works with QMTest. Python will
-need zlib and SAX support enabled.</dd>
+need zlib and SAX support enabled. (optional, required only for QMTest) </dd>
 
 <dt><a href="http://www.netlib.org/f2c">F2C</a></dt>
 <dd>For now, LLVM does not have a Fortran front-end, but using F2C, we can run
@@ -106,14 +114,23 @@ programs in C and C++ is in the <tt>llvm-test</tt> module. This module should
 be checked out to the <tt>llvm/projects</tt> directory. When you
 <tt>configure</tt> the <tt>llvm</tt> module, the <tt>llvm-test</tt> module
 will be automatically configured. Or you can do it manually.</p>
-<p>To run all of the simple tests in LLVM, use the master Makefile in the
+<p>To run all of the simple tests in LLVM using DejaGNU, use the master Makefile in the
 <tt>llvm/test</tt> directory:</p>
 <pre>
 % gmake -C llvm/test
 </pre>
+or<br>
+<pre>
+% gmake check
+</pre>
+<p>To run only a subdirectory of tests in llvm/test using DejaGNU (ie. Regression/Transforms). Just substitute the path to the subdirectory:</p>
+<pre>
+% gmake -C llvm/test TESTSUITE=Regression/Transforms
+</pre>
+<dd><b>Note: If you are running the tests with <tt>objdir != subdir</tt> you must have run the complete testsuite before you can specify a subdirectory.</b></dd>
 
-<p>To run only the code fragment tests (i.e. those that do basic testing of
-LLVM), run the tests organized by QMTest:</p>
+<p>To run the simple tests (i.e. those that do basic testing of
+LLVM), using QMTest:</p>
 <pre>
 % gmake -C llvm/test qmtest
 </pre>
@@ -169,7 +186,7 @@ language front end.</p>
 <p>Code fragments are not complete programs, and they are never executed to
 determine correct behavior.</p> 
 
-<p>Thes code fragment tests are located in the <tt>llvm/test/Features</tt> and 
+<p>These code fragment tests are located in the <tt>llvm/test/Features</tt> and 
 <tt>llvm/test/Regression</tt> directories.</p>
 
 </div>
@@ -261,6 +278,82 @@ test and database classes.</p></li>
 </ul>
 
 </div>
+<!--=========================================================================-->
+<div class="doc_section"><a name="dgstructure">DejaGNU Structure</a></div>
+<!--=========================================================================-->
+
+<div class="doc_text">
+<p>The LLVM test suite is partially driven by DejaGNU and partially
+driven by GNU Make. Specifically, the Features and Regression tests
+are all driven by DejaGNU (and optionally QMTest). The llvm-test
+module is currently driven by a set of Makefiles.</p>
+
+<p>The DejaGNU structure is very simple, but does require some
+information to be set. This information is gathered via configure and
+is written to a file, <tt>site.exp</tt> in llvm/test. The llvm/test
+Makefile does this work for you.</p>
+
+<p>In order for DejaGNU to work, each directory of tests must have a
+<tt>dg.exp</tt> file. This file is a program written in tcl that calls
+the <tt>llvm-runtests</tt> procedure on each test file. The
+llvm-runtests procedure is defined in
+<tt>llvm/test/lib/llvm-dg.exp</tt>. Any directory that contains only
+directories does not need the <tt>dg.exp</tt> file.</p>
+
+<p>In order for a test to be run, it must contain information within
+the test file on how to run the test. These are called <tt>RUN</tt>
+lines. Run lines are specified in the comments of the test program
+using the keyword <tt>RUN</tt> followed by a colon, and lastly the
+commands to execute. These commands will be executed in a bash script,
+so any bash syntax is acceptable. You can specify as many RUN lines as
+necessary.  Each RUN line translates to one line in the resulting bash
+script. Below is an example of legal RUN lines in a <tt>.ll</tt>
+file:</p>
+<pre>
+; RUN: llvm-as < %s | llvm-dis > %t1
+; RUN: llvm-dis < %s.bc-13 > %t2
+; RUN: diff %t1 %t2
+</pre>
+<p>There are a couple patterns within a <tt>RUN</tt> line that the
+llvm-runtest procedure looks for and replaces with the appropriate
+syntax:</p>
+<ul>
+<dt>%p</dt> 
+<dd>The path to the source directory. This is for locating
+any supporting files that are not generated by the test, but used by
+the test.</dd> 
+<dt>%s</dt> 
+<dd>The test file.</dd> 
+
+<dt>$t</dt>
+<dd>Temporary filename: testscript.test_filename.tmp, where
+test_filename is the name of the test file. All temporary files are
+placed in the Output directory within the directory the test is
+located.</dd> 
+
+<dt>%prcontext</dt> 
+<dd>Path to a script that performs grep -C. Use this since not all
+platforms support grep -C.</dd>
+
+<dt>%llvmgcc</dt> <dd>Full path to the llvmgcc executable.</dd>
+<dt>%llvmgxx</dt> <dd>Full path to the llvmg++ executable.</dd>
+</ul>
+
+<p>There are also several scripts in the llvm/test/Scripts directory
+that you might find useful when writing <tt>RUN</tt> lines.</p>
+
+<p>Lastly, you can easily mark a test that is expected to fail on a
+specific platform by using the <tt>XFAIL</tt> keyword. Xfail lines are
+specified in the comments of the test program using <tt>XFAIL</tt>,
+followed by a colon, and one or more regular expressions (separated by
+a comma) that will match against the target triplet for the
+machine. You can use * to match all targets. Here is an example of an
+<tt>XFAIL</tt> line:</p>
+<pre>
+; XFAIL: darwin,sun
+</pre>
+
+</div>
 
 <!--=========================================================================-->
 <div class="doc_section"><a name="qmstructure">QMTest Structure</a></div>
@@ -268,9 +361,7 @@ test and database classes.</p></li>
 
 <div class="doc_text">
 
-<p>The LLVM test suite is partially driven by QMTest and partially driven by GNU
-Make.  Specifically, the Features and Regression tests are all driven by QMTest.
-The <tt>llvm-test</tt> module is currently driven by a set of Makefiles.</p>
+<p>The Feature and Regression tests can also be run using QMTest.</p>
 
 <p>The QMTest system needs to have several pieces of information available;
 these pieces of configuration information are known collectively as the
