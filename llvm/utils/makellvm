@@ -6,20 +6,11 @@ set LLVMDIR = $THISEXEC:h
 set EXEC = opt
 
 if ($#argv > 0) then
-    if (&& $argv[1] == "-h") then
+    if ($argv[1] == "-h") then
 	echo 'USAGE: makellvm [toolname]   (toolname defaults to "opt").'
 	exit 0
     endif
-
-    set EXEC = NO_SUCH_TOOL
-    set TOOLS = `grep DIRS ${LLVMDIR}/tools/Makefile | sed 's/DIRS[ 	]*=[ 	]*//'`
-    foreach T ( $TOOLS )
-        if ($argv[1] == "$T") then
-            set EXEC = $T
-            shift argv
-            break
-        endif
-    end
+    set EXEC = $argv[1]
 endif
 
 gnumake && (cd $LLVMDIR/tools/$EXEC && gnumake)
