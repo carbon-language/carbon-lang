@@ -273,7 +273,7 @@ Constant *llvm::ConstantFoldCall(Function *F,
   if (Operands.size() == 1) {
     if (ConstantFP *Op = dyn_cast<ConstantFP>(Operands[0])) {
       double V = Op->getValue();
-      else if (Name == "sin")
+      if (Name == "sin")
         return ConstantFP::get(Ty, sin(V));
       else if (Name == "cos")
         return ConstantFP::get(Ty, cos(V));
