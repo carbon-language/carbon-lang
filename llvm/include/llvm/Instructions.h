@@ -1187,6 +1187,43 @@ struct UnwindInst : public TerminatorInst {
   }
 };
 
+//===----------------------------------------------------------------------===//
+//                           UnreachableInst Class
+//===----------------------------------------------------------------------===//
+
+//===---------------------------------------------------------------------------
+/// UnreachableInst - This function has undefined behavior.  In particular, the
+/// presence of this instruction indicates some higher level knowledge that the
+/// end of the block cannot be reached.
+///
+struct UnreachableInst : public TerminatorInst {
+  UnreachableInst(Instruction *InsertBefore = 0)
+    : TerminatorInst(Instruction::Unreachable, InsertBefore) {
+  }
+  UnreachableInst(BasicBlock *InsertAtEnd)
+    : TerminatorInst(Instruction::Unreachable, InsertAtEnd) {
+  }
+
+  virtual UnreachableInst *clone() const;
+
+  virtual const BasicBlock *getSuccessor(unsigned idx) const {
+    assert(0 && "UnreachableInst has no successors!");
+    abort();
+    return 0;
+  }
+  virtual void setSuccessor(unsigned idx, BasicBlock *NewSucc);
+  virtual unsigned getNumSuccessors() const { return 0; }
+
+  // Methods for support type inquiry through isa, cast, and dyn_cast:
+  static inline bool classof(const UnreachableInst *) { return true; }
+  static inline bool classof(const Instruction *I) {
+    return I->getOpcode() == Instruction::Unreachable;
+  }
+  static inline bool classof(const Value *V) {
+    return isa<Instruction>(V) && classof(cast<Instruction>(V));
+  }
+};
+
 } // End llvm namespace
 
 #endif
