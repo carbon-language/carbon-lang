@@ -8,8 +8,12 @@
 #include "llvm/DerivedTypes.h"
 #include "Support/STLExtras.h"
 #include "Support/StatisticReporter.h"
+#include "Support/STLExtras.h"
 #include <algorithm>
+#include <set>
 #include "llvm/Analysis/DataStructure.h"
+
+using std::vector;
 
 AnalysisID LocalDataStructures::ID(AnalysisID::create<LocalDataStructures>());
 
@@ -37,7 +41,7 @@ DSNode::DSNode(const DSNode &N)
 void DSNode::removeReferrer(DSNodeHandle *H) {
   // Search backwards, because we depopulate the list from the back for
   // efficiency (because it's a vector).
-  std::vector<DSNodeHandle*>::reverse_iterator I =
+  vector<DSNodeHandle*>::reverse_iterator I =
     std::find(Referrers.rbegin(), Referrers.rend(), H);
   assert(I != Referrers.rend() && "Referrer not pointing to node!");
   Referrers.erase(I.base()-1);
@@ -48,7 +52,7 @@ void DSNode::removeReferrer(DSNodeHandle *H) {
 //
 void DSNode::addGlobal(GlobalValue *GV) {
   // Keep the list sorted.
-  std::vector<GlobalValue*>::iterator I =
+  vector<GlobalValue*>::iterator I =
     std::lower_bound(Globals.begin(), Globals.end(), GV);
 
   if (I == Globals.end() || *I != GV) {
@@ -103,7 +107,7 @@ void DSNode::mergeWith(DSNode *N) {
   // Merge the globals list...
   if (!N->Globals.empty()) {
     // Save the current globals off to the side...
-    std::vector<GlobalValue*> OldGlobals(Globals);
+    vector<GlobalValue*> OldGlobals(Globals);
 
     // Resize the globals vector to be big enough to hold both of them...
     Globals.resize(Globals.size()+N->Globals.size());
@@ -149,24 +153,6 @@ DSGraph::~DSGraph() {
 void DSGraph::dump() const { print(std::cerr); }
 
 
-// Helper function used to clone a function list.
-// Each call really shd have an explicit representation as a separate class. 
-void
-CopyFunctionCallsList(const std::vector<std::vector<DSNodeHandle> >& fromCalls,
-                      std::vector<std::vector<DSNodeHandle> >& toCalls,
-                      std::map<const DSNode*, DSNode*>& NodeMap) {
-  
-  unsigned FC = toCalls.size();  // FirstCall
-  toCalls.reserve(FC+fromCalls.size());
-  for (unsigned i = 0, ei = fromCalls.size(); i != ei; ++i) {
-    toCalls.push_back(std::vector<DSNodeHandle>());
-    toCalls[FC+i].reserve(fromCalls[i].size());
-    for (unsigned j = 0, ej = fromCalls[i].size(); j != ej; ++j)
-      toCalls[FC+i].push_back(NodeMap[fromCalls[i][j]]);
-  }
-}
-
-
 // cloneInto - Clone the specified DSGraph into the current graph, returning the
 // Return node of the graph.  The translated ValueMap for the old function is
 // filled into the OldValMap member.  If StripLocals is set to true, Scalar and
@@ -175,7 +161,7 @@ CopyFunctionCallsList(const std::vector<std::vector<DSNodeHandle> >& fromCalls,
 //
 DSNode *DSGraph::cloneInto(const DSGraph &G, 
                            std::map<Value*, DSNodeHandle> &OldValMap,
-                           std::map<const DSNode*, DSNode*>& OldNodeMap,
+                           std::map<const DSNode*, DSNode*> &OldNodeMap,
                            bool StripLocals) {
 
   assert(OldNodeMap.size()==0 && "Return argument OldNodeMap should be empty");
@@ -208,9 +194,15 @@ DSNode *DSGraph::cloneInto(const DSGraph &G,
          E = G.ValueMap.end(); I != E; ++I)
     OldValMap[I->first] = OldNodeMap[I->second];
 
-  // Copy the current function calls list and the orig function calls list ...
-  CopyFunctionCallsList(G.FunctionCalls, FunctionCalls, OldNodeMap);
-  CopyFunctionCallsList(G.OrigFunctionCalls, OrigFunctionCalls, OldNodeMap);
+  // Copy the function calls list...
+  unsigned FC = FunctionCalls.size();  // FirstCall
+  FunctionCalls.reserve(FC+G.FunctionCalls.size());
+  for (unsigned i = 0, e = G.FunctionCalls.size(); i != e; ++i) {
+    FunctionCalls.push_back(std::vector<DSNodeHandle>());
+    FunctionCalls[FC+i].reserve(G.FunctionCalls[i].size());
+    for (unsigned j = 0, e = G.FunctionCalls[i].size(); j != e; ++j)
+      FunctionCalls[FC+i].push_back(OldNodeMap[G.FunctionCalls[i][j]]);
+  }
 
   // Copy the list of unresolved callers
   PendingCallers.insert(PendingCallers.end(),
@@ -258,10 +250,9 @@ void DSGraph::markIncompleteNodes() {
 
   // Mark stuff passed into functions calls as being incomplete...
   for (unsigned i = 0, e = FunctionCalls.size(); i != e; ++i) {
-    std::vector<DSNodeHandle> &Args = FunctionCalls[i];
-    if (Args[0])                // If the call returns a pointer...
-      // Then the return value is certainly incomplete!
-      markIncompleteNode(Args[0]);
+    vector<DSNodeHandle> &Args = FunctionCalls[i];
+    // Then the return value is certainly incomplete!
+    markIncompleteNode(Args[0]);
 
     // The call does not make the function argument incomplete...
  
@@ -308,19 +299,19 @@ bool DSGraph::isNodeDead(DSNode *N) {
 }
 
 
-// removeDeadNodes - After the graph has been constructed, this method removes
-// all unreachable nodes that are created because they got merged with other
-// nodes in the graph.  These nodes will all be trivially unreachable, so we
-// don't have to perform any non-trivial analysis here.
+// removeTriviallyDeadNodes - After the graph has been constructed, this method
+// removes all unreachable nodes that are created because they got merged with
+// other nodes in the graph.  These nodes will all be trivially unreachable, so
+// we don't have to perform any non-trivial analysis here.
 //
-void DSGraph::removeDeadNodes() {
+void DSGraph::removeTriviallyDeadNodes() {
   for (unsigned i = 0; i != Nodes.size(); ++i)
     if (isNodeDead(Nodes[i])) {               // This node is dead!
       delete Nodes[i];                        // Free memory...
       Nodes.erase(Nodes.begin()+i--);         // Remove from node list...
     }
 
-  // Remove identical function calls
+  // Remove trivially identical function calls
   unsigned NumFns = FunctionCalls.size();
   std::sort(FunctionCalls.begin(), FunctionCalls.end());
   FunctionCalls.erase(std::unique(FunctionCalls.begin(), FunctionCalls.end()),
@@ -330,6 +321,68 @@ void DSGraph::removeDeadNodes() {
         std::cerr << "Merged " << (NumFns-FunctionCalls.size())
         << " call nodes in " << Func.getName() << "\n";);
 }
+
+
+// markAlive - Simple graph traverser that recursively walks the graph marking
+// stuff to be alive.
+//
+static void markAlive(DSNode *N, std::set<DSNode*> &Alive) {
+  if (N == 0 || Alive.count(N)) return;
+
+  Alive.insert(N);
+  for (unsigned i = 0, e = N->getNumLinks(); i != e; ++i)
+    markAlive(N->getLink(i), Alive);
+}
+
+
+// removeDeadNodes - Use a more powerful reachability analysis to eliminate
+// subgraphs that are unreachable.  This often occurs because the data
+// structure doesn't "escape" into it's caller, and thus should be eliminated
+// from the caller's graph entirely.  This is only appropriate to use when
+// inlining graphs.
+//
+void DSGraph::removeDeadNodes() {
+  // Reduce the amount of work we have to do...
+  removeTriviallyDeadNodes();
+  
+  // FIXME: Merge nontrivially identical call nodes...
+
+  // Alive - a set that holds all nodes found to be reachable/alive.
+  std::set<DSNode*> Alive;
+
+  // Mark all nodes reachable by call nodes as alive...
+  for (unsigned i = 0, e = FunctionCalls.size(); i != e; ++i)
+    for (unsigned j = 0, e = FunctionCalls[i].size(); j != e; ++j)
+      markAlive(FunctionCalls[i][j], Alive);
+
+  for (unsigned i = 0, e = OrigFunctionCalls.size(); i != e; ++i)
+    for (unsigned j = 0, e = OrigFunctionCalls[i].size(); j != e; ++j)
+      markAlive(OrigFunctionCalls[i][j], Alive);
+
+  // Mark all nodes reachable by scalar, global, or incomplete nodes as
+  // reachable...
+  for (unsigned i = 0, e = Nodes.size(); i != e; ++i)
+    if (Nodes[i]->NodeType & (DSNode::ScalarNode | DSNode::GlobalNode))
+      markAlive(Nodes[i], Alive);
+
+  // Loop over all unreachable nodes, dropping their references...
+  std::vector<DSNode*> DeadNodes;
+  DeadNodes.reserve(Nodes.size());     // Only one allocation is allowed.
+  for (unsigned i = 0; i != Nodes.size(); ++i)
+    if (!Alive.count(Nodes[i])) {
+      DSNode *N = Nodes[i];
+      Nodes.erase(Nodes.begin()+i--);  // Erase node from alive list.
+      DeadNodes.push_back(N);          // Add node to our list of dead nodes
+      N->dropAllReferences();          // Drop all outgoing edges
+    }
+  
+  // The return value is alive as well...
+  markAlive(RetNode, Alive);
+
+  // Delete all dead nodes...
+  std::for_each(DeadNodes.begin(), DeadNodes.end(), deleter<DSNode>);
+}
+
 
 
 // maskNodeTypes - Apply a mask to all of the node types in the graph.  This
