@@ -2,7 +2,7 @@
 //
 // InstructionCombining - Combine instructions to form fewer, simple
 //   instructions.  This pass does not modify the CFG, and has a tendancy to
-//   make instructions dead, so a subsequent DCE pass is useful.
+//   make instructions dead, so a subsequent DIE pass is useful.
 //
 // This pass combines things like:
 //    %Y = add int 1, %X
@@ -75,8 +75,7 @@ namespace {
 //
 static bool SimplifyBinOp(BinaryOperator *I) {
   if (isa<Constant>(I->getOperand(0)) && !isa<Constant>(I->getOperand(1)))
-    if (!I->swapOperands())
-      return true;
+    return !I->swapOperands();
   return false;
 }
 
@@ -145,6 +144,17 @@ Instruction *InstCombiner::visitMul(BinaryOperator *I) {
       // Eliminate 'mul int %X, 1'
       AddUsesToWorkList(I);         // Add all modified instrs to worklist
       I->replaceAllUsesWith(Op1);
+      return I;
+
+    } else if (I->getType()->isIntegral() &&
+               cast<ConstantInt>(Op2)->equalsInt(2)) {
+      // Convert 'mul int %X, 2' to 'add int %X, %X'
+      return BinaryOperator::create(Instruction::Add, Op1, Op1, I->getName());
+
+    } else if (Op2->isNullValue()) {
+      // Eliminate 'mul int %X, 0'
+      AddUsesToWorkList(I);         // Add all modified instrs to worklist
+      I->replaceAllUsesWith(Op2);   // Set this value to zero directly
       return I;
     }
   }
