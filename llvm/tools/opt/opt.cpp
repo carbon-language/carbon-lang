@@ -16,8 +16,6 @@
 //
 // TODO: Add a -all option to keep applying all optimizations until the program
 //       stops permuting.
-// TODO: Add a -h command line arg that prints all available optimizations
-// TODO: Add a -q command line arg that quiets "XXX pass made modifications"
 //
 //===------------------------------------------------------------------------===
 
@@ -29,25 +27,6 @@
 #include "llvm/Tools/CommandLine.h"
 #include "llvm/Opt/AllOpts.h"
 
-#if 1  // Testcase, TODO: REMOVE
-#include "llvm/CFG.h"
-#include "llvm/Assembly/Writer.h"
-#include "llvm/Method.h"
-static bool DoPrintM(Method *M) {
-  df_iterator I = df_begin(M->getBasicBlocks().front(), false);
-  df_iterator E = df_end(M->getBasicBlocks().front());
-  unsigned i = 0;
-  for (; I != E; ++I, ++i) {
-    cerr << "Basic Block Visited #" << i << *I;
-  }
-  return false;
-}
-
-static bool DoPrint(Module *C) {
-  return ApplyOptToAllMethods(C, DoPrintM);
-}
-#endif
-
 struct {
   const string ArgName, Name;
   bool (*OptPtr)(Module *C);
@@ -57,7 +36,6 @@ struct {
   { "-inline"   ,"Method Inlining",       DoMethodInlining      },
   { "-strip"    ,"Strip Symbols",         DoSymbolStripping     },
   { "-mstrip"   ,"Strip Module Symbols",  DoFullSymbolStripping },
-  { "-print"    ,"Test printing stuff",   DoPrint               },
 };
 
 int main(int argc, char **argv) {
@@ -68,6 +46,10 @@ int main(int argc, char **argv) {
     if (string(argv[i]) == string("--help")) {
       cerr << argv[0] << " usage:\n"
            << "  " << argv[0] << " --help  - Print this usage information\n";
+      for (unsigned j = 0; j < sizeof(OptTable)/sizeof(OptTable[0]); ++j) {
+	cerr << "\t" << OptTable[j].ArgName << "\t - Enable " 
+	     << OptTable[j].Name << endl;
+      }
       return 1;
     } else if (string(argv[i]) == string("-q")) {
       Quiet = true; argv[i] = 0;
