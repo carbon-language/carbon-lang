@@ -2925,7 +2925,12 @@ void X86ISel::emitShiftOperation(MachineBasicBlock *MBB,
     //
     if (ConstantUInt *CUI = dyn_cast<ConstantUInt>(ShiftAmount)) {
       unsigned Amount = CUI->getValue();
-      if (Amount < 32) {
+      if (Amount == 1) {   // X << 1 == X+X
+        BuildMI(*MBB, IP, X86::ADD32rr, 2,
+                DestReg).addReg(SrcReg).addReg(SrcReg);
+        BuildMI(*MBB, IP, X86::ADC32rr, 2,
+                DestReg+1).addReg(SrcReg+1).addReg(SrcReg+1);
+      } else if (Amount < 32) {
         const unsigned *Opc = ConstantOperand[isLeftShift*2+isSigned];
         if (isLeftShift) {
           BuildMI(*MBB, IP, Opc[3], 3, 
@@ -3018,9 +3023,14 @@ void X86ISel::emitShiftOperation(MachineBasicBlock *MBB,
     // The shift amount is constant, guaranteed to be a ubyte. Get its value.
     assert(CUI->getType() == Type::UByteTy && "Shift amount not a ubyte?");
 
-    const unsigned *Opc = ConstantOperand[isLeftShift*2+isSigned];
-    BuildMI(*MBB, IP, Opc[Class], 2,
-        DestReg).addReg(SrcReg).addImm(CUI->getValue());
+    if (CUI->getValue() == 1 && isLeftShift) {    // X << 1 -> X+X
+      static const int AddOpC[] = { X86::ADD8rr, X86::ADD16rr, X86::ADD32rr };
+      BuildMI(*MBB, IP, AddOpC[Class], 2,DestReg).addReg(SrcReg).addReg(SrcReg);
+    } else {
+      const unsigned *Opc = ConstantOperand[isLeftShift*2+isSigned];
+      BuildMI(*MBB, IP, Opc[Class], 2,
+              DestReg).addReg(SrcReg).addImm(CUI->getValue());
+    }
   } else {                  // The shift amount is non-constant.
     unsigned ShiftAmountReg = getReg (ShiftAmount, MBB, IP);
     BuildMI(*MBB, IP, X86::MOV8rr, 1, X86::CL).addReg(ShiftAmountReg);
