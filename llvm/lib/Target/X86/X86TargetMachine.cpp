@@ -35,7 +35,6 @@ TargetMachine *allocateX86TargetMachine(unsigned Configuration) {
 X86TargetMachine::X86TargetMachine(unsigned Config)
   : TargetMachine("X86", 
 		  (Config & TM::EndianMask) == TM::LittleEndian,
-		  1, 4, 
 		  (Config & TM::PtrSizeMask) == TM::PtrSize64 ? 8 : 4,
 		  (Config & TM::PtrSizeMask) == TM::PtrSize64 ? 8 : 4,
 		  (Config & TM::PtrSizeMask) == TM::PtrSize64 ? 8 : 4),

@@ -25,7 +25,6 @@ Interpreter::Interpreter(Module *M, unsigned Config,
 			 bool DebugMode, bool TraceMode)
   : ExecutionEngine(M), ExitCode(0), Debug(DebugMode), Trace(TraceMode),
     CurFrame(-1), TD("lli", (Config & TM::EndianMask) == TM::LittleEndian,
-		     1, 4,
 		     (Config & TM::PtrSizeMask) == TM::PtrSize64 ? 8 : 4,
 		     (Config & TM::PtrSizeMask) == TM::PtrSize64 ? 8 : 4,
 		     (Config & TM::PtrSizeMask) == TM::PtrSize64 ? 8 : 4) {

@@ -82,8 +82,7 @@ Annotation *TargetData::TypeAnFactory(AnnotationID AID, const Annotable *T,
 //===----------------------------------------------------------------------===//
 
 TargetData::TargetData(const std::string &TargetName,
-                       bool isLittleEndian, unsigned char SubWordSize,
-                       unsigned char IntRegSize, unsigned char PtrSize,
+                       bool isLittleEndian, unsigned char PtrSize,
                        unsigned char PtrAl, unsigned char DoubleAl,
                        unsigned char FloatAl, unsigned char LongAl, 
                        unsigned char IntAl, unsigned char ShortAl,
@@ -99,8 +98,6 @@ TargetData::TargetData(const std::string &TargetName,
          "ERROR: Tool did not specify a target data to use!");
 
   LittleEndian     = isLittleEndian;
-  SubWordDataSize  = SubWordSize;
-  IntegerRegSize   = IntRegSize;
   PointerSize      = PtrSize;
   PointerAlignment = PtrAl;
   DoubleAlignment  = DoubleAl;
@@ -118,8 +115,6 @@ TargetData::TargetData(const std::string &ToolName, const Module *M)
   AnnotationManager::registerAnnotationFactory(AID, TypeAnFactory, this);
 
   LittleEndian     = M->isLittleEndian();
-  SubWordDataSize  = 1;
-  IntegerRegSize   = 8;
   PointerSize      = M->has32BitPointers() ? 4 : 8;
   PointerAlignment = PointerSize;
   DoubleAlignment  = PointerSize;

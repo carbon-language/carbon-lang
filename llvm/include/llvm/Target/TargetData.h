@@ -24,7 +24,6 @@ class StructLayout;
 
 class TargetData : public ImmutablePass {
   bool          LittleEndian;          // Defaults to false
-  unsigned char SubWordDataSize;       // Defaults to 1 byte (no rounding up)
   unsigned char ByteAlignment;         // Defaults to 1 bytes
   unsigned char ShortAlignment;        // Defaults to 2 bytes
   unsigned char IntAlignment;          // Defaults to 4 bytes
@@ -32,7 +31,6 @@ class TargetData : public ImmutablePass {
   unsigned char FloatAlignment;        // Defaults to 4 bytes
   unsigned char DoubleAlignment;       // Defaults to 8 bytes
   unsigned char PointerSize;           // Defaults to 8 bytes
-  unsigned char IntegerRegSize;        // Defaults to PointerSize = 8 bytes
   unsigned char PointerAlignment;      // Defaults to 8 bytes
   AnnotationID  AID;                   // AID for structure layout annotation
  
@@ -40,8 +38,6 @@ class TargetData : public ImmutablePass {
 public:
   TargetData(const std::string &TargetName = "",
              bool LittleEndian = false,
-             unsigned char SubWordDataSize = 1,
-             unsigned char IntRegSize = 8,
              unsigned char PtrSize = 8,
 	     unsigned char PtrAl = 8, unsigned char DoubleAl = 8,
 	     unsigned char FloatAl = 4, unsigned char LongAl = 8, 
@@ -55,7 +51,6 @@ public:
   bool          isBigEndian()         const { return    !LittleEndian; }
 
   /// Target alignment constraints
-  unsigned char getSubWordDataSize()  const { return  SubWordDataSize; }
   unsigned char getByteAlignment()    const { return    ByteAlignment; }
   unsigned char getShortAlignment()   const { return   ShortAlignment; }
   unsigned char getIntAlignment()     const { return     IntAlignment; }
@@ -64,7 +59,6 @@ public:
   unsigned char getDoubleAlignment()  const { return  DoubleAlignment; }
   unsigned char getPointerAlignment() const { return PointerAlignment; }
   unsigned char getPointerSize()      const { return      PointerSize; }
-  unsigned char getIntegerRegSize()   const { return   IntegerRegSize; }
   AnnotationID  getStructLayoutAID()  const { return AID; }
 
   // getTypeSize - Return the number of bytes neccesary to hold the specified

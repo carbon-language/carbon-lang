@@ -184,8 +184,7 @@ main(int argc, char **argv)
   // Build up all of the passes that we want to do to the module...
   PassManager Passes;
 
-  Passes.add(new TargetData("llc", TD.isLittleEndian(), TD.getSubWordDataSize(),
-                            TD.getIntegerRegSize(), TD.getPointerSize(),
+  Passes.add(new TargetData("llc", TD.isLittleEndian(), TD.getPointerSize(),
                             TD.getPointerAlignment(), TD.getDoubleAlignment()));
 
   // Create a new optimization pass for each one specified on the command line
