@@ -121,16 +121,9 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
     OS << "  struct " << Name << "Class : public TargetRegisterClass {\n"
        << "    " << Name << "Class() : TargetRegisterClass("
        << RC.SpillSize/8 << ", " << RC.SpillAlignment << ", " << Name << ", "
-       << Name << " + " << RC.Elements.size() << ") {}\n";
-    
-    if (CodeInit *CI =
-        dynamic_cast<CodeInit*>(RC.TheDef->getValueInit("Methods")))
-      OS << CI->getValue();
-    else
-      throw "Expected 'code' fragment for 'Methods' value in register class '"+
-            RC.getName() + "'!";
-
-    OS << "  } " << Name << "Instance;\n\n";
+       << Name << " + " << RC.Elements.size() << ") {}\n"
+       << RC.MethodDefinitions
+       << "  } " << Name << "Instance;\n\n";
   }
 
   OS << "  const TargetRegisterClass* const RegisterClasses[] = {\n";

@@ -26,7 +26,6 @@ namespace llvm {
     Record *TheDef;
     const std::string &getName() const;
     unsigned DeclaredSpillSize, DeclaredSpillAlignment;
-    
     CodeGenRegister(Record *R);
   };
 
@@ -36,6 +35,7 @@ namespace llvm {
     std::vector<Record*> Elements;
     unsigned SpillSize;
     unsigned SpillAlignment;
+    std::string MethodDefinitions;
 
     const std::string &getName() const;
 
