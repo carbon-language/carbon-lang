@@ -95,9 +95,6 @@ public:
   static inline bool classof(const Type *T) {
     return T->isDerivedType();
   }
-  static inline bool classof(const Value *V) {
-    return isa<Type>(V) && classof(cast<Type>(V));
-  }
 };
 
 
@@ -151,9 +148,6 @@ public:
   static inline bool classof(const Type *T) {
     return T->getTypeID() == FunctionTyID;
   }
-  static inline bool classof(const Value *V) {
-    return isa<Type>(V) && classof(cast<Type>(V));
-  }
 };
 
 
@@ -176,9 +170,6 @@ public:
     return T->getTypeID() == ArrayTyID || 
            T->getTypeID() == StructTyID ||
            T->getTypeID() == PointerTyID;
-  }
-  static inline bool classof(const Value *V) {
-    return isa<Type>(V) && classof(cast<Type>(V));
   }
 };
 
@@ -232,9 +223,6 @@ public:
   static inline bool classof(const Type *T) {
     return T->getTypeID() == StructTyID;
   }
-  static inline bool classof(const Value *V) {
-    return isa<Type>(V) && classof(cast<Type>(V));
-  }
 };
 
 
@@ -256,23 +244,13 @@ protected:
 public:
   inline const Type *getElementType() const { return ContainedTys[0]; }
 
+  virtual bool indexValid(const Value *V) const;
+
   /// getTypeAtIndex - Given an index value into the type, return the type of
   /// the element.  For sequential types, there is only one subtype...
   ///
   virtual const Type *getTypeAtIndex(const Value *V) const {
     return ContainedTys[0];
-  }
-  virtual bool indexValid(const Value *V) const {
-    const Type *Ty = V->getType();
-    switch (Ty->getTypeID()) {
-    case Type::IntTyID:
-    case Type::UIntTyID:
-    case Type::LongTyID:
-    case Type::ULongTyID:
-      return true;
-    default:
-      return false;
-    }
   }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
@@ -280,9 +258,6 @@ public:
   static inline bool classof(const Type *T) {
     return T->getTypeID() == ArrayTyID ||
            T->getTypeID() == PointerTyID;
-  }
-  static inline bool classof(const Value *V) {
-    return isa<Type>(V) && classof(cast<Type>(V));
   }
 };
 
@@ -321,9 +296,6 @@ public:
   static inline bool classof(const Type *T) {
     return T->getTypeID() == ArrayTyID;
   }
-  static inline bool classof(const Value *V) {
-    return isa<Type>(V) && classof(cast<Type>(V));
-  }
 };
 
 
@@ -353,9 +325,6 @@ public:
   static inline bool classof(const PointerType *T) { return true; }
   static inline bool classof(const Type *T) {
     return T->getTypeID() == PointerTyID;
-  }
-  static inline bool classof(const Value *V) {
-    return isa<Type>(V) && classof(cast<Type>(V));
   }
 };
 
@@ -392,9 +361,6 @@ public:
   static inline bool classof(const OpaqueType *T) { return true; }
   static inline bool classof(const Type *T) {
     return T->getTypeID() == OpaqueTyID;
-  }
-  static inline bool classof(const Value *V) {
-    return isa<Type>(V) && classof(cast<Type>(V));
   }
 };
 
