@@ -25,15 +25,19 @@ SYNOPSIS
 DESCRIPTION
 </h3>
 
-The <tt>lli</tt> command is the LLVM interpreter.  It takes a program in LLVM
-bytecode format and executes it using an interpreter or a Just In Time (JIT)
-compiler.  <tt>lli</tt> takes all of the same code generator option as the
-<tt><a href="llc.html">llc</a></tt> tool as well.
+<tt>lli</tt> directly executes programs in LLVM format. 
+It takes a program in LLVM
+bytecode format and executes it using a just-in-time
+compiler, if one is available for the current architecture, or an interpreter.
+<tt>lli</tt> takes all of the same code generator options as the
+<tt><a href="llc.html">llc</a></tt> tool, but they are only applicable when
+the just-in-time compiler is being used.
 <p>
 
-If filename is not specified, then lli reads its input from standard input.
+If filename is not specified, then <tt>lli</tt> reads the LLVM bytecode for
+the program from standard input.
 <p>
-The optional "args" specified on the command line are passed to the executed
+The optional "args" specified on the command line are passed to the
 program as arguments.
 <p>
 
@@ -43,34 +47,74 @@ OPTIONS
 </h3>
 
 <ul>
-	<li> -array-checks (interpreter specific)
+	<li> <tt>-array-checks</tt>
 	<br>
-	Enable array bound checks.
+	Enable array bound checks. If an LLVM program attempts to access an
+    element of an array which is not within the size of that array,
+    <tt>lli</tt> will print an error message and call <tt>abort(3)</tt>.
+    This is presently only applicable to the interpreter.
 	<p>
 
-	<li> -help
+	<li> <tt>-help</tt>
 	<br>
 	Print a summary of command line options.
 	<p>
 
-	<li> -stats
+	<li> <tt>-stats</tt>
 	<br>
-	Print statistics.
+	Print statistics from the code-generation passes. This is only meaningful
+    for the just-in-time compiler, at present.
 	<p>
 
-	<li> -time-passes
+	<li> <tt>-time-passes</tt>
 	<br>
-	Record the amount of time needed for each pass and print it to standard
-	error.
+	Record the amount of time needed for each code-generation pass and print
+    it to standard error.
 	<p>
+
+	<li> <tt>-march=&lt;arch&gt;</tt>
+	<br>
+    Use the specified non-default architecture when selecting a code generator
+    for the just-in-time compiler. This may result in a crash if you pick an
+    architecture which is not compatible with the hardware you are running
+    <tt>lli</tt> on.
+	<p>
+
+    <li> <tt>-quiet, -q</tt>
+    <br>
+    Do not print any output about the return values of functions.
+    This is presently only applicable to the interpreter.
+    <p>
+
+    <li> <tt>-force-interpreter={false,true}</tt>
+    <br>
+    If set to true, use the interpreter even if a just-in-time compiler is
+    available for this architecture. Defaults to false.
+    <p>
+
+    <li> <tt>-trace</tt>
+    <br>
+    Print an LLVM-instruction-level dynamic execution trace. This is
+    presently only applicable to the interpreter.
+    <p>
+
+    <li> <tt>-f=&lt;name&gt;</tt>
+    <br>
+    Call the function named <tt>&lt;name&gt;</tt> to start the program.
+    Note: The function is assumed to have the C signature <tt>int
+    <tt>&lt;name&gt;</tt> (int, char **, char **)</tt>. 
+    If you try to use this option to call a function of incompatible type,
+    undefined behavior may result. Defaults to "main".
+    <p>
+
 </ul>
 
 <h3>
 EXIT STATUS
 </h3>
 
-If lli succeeds, it will exit with 0.  Otherwise, if an error occurs, it
-will exit with a non-zero value.
+If <tt>lli</tt> fails to load the program, it will exit with an exit code of 1.
+Otherwise, it will return the exit code of the program it executes.
 
 <h3>
 SEE ALSO
@@ -81,4 +125,3 @@ SEE ALSO
 Maintained by the <a href="http://llvm.cs.uiuc.edu">LLVM Team</a>.
 </body>
 </html>
-
