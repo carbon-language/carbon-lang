@@ -17,6 +17,7 @@
 #define LLVM_CODEGEN_ASMPRINTER_H
 
 #include "llvm/CodeGen/MachineFunctionPass.h"
+#include "llvm/Support/DataTypes.h"
 
 namespace llvm {
   class Constant;
@@ -116,7 +117,7 @@ namespace llvm {
 
     /// emitZeros - Emit a block of zeros.
     ///
-    void emitZeros(unsigned NumZeros) const;
+    void emitZeros(uint64_t NumZeros) const;
 
     /// emitConstantValueOnly - Print out the specified constant, without a
     /// storage class.  Only constants of first-class type are allowed here.
