@@ -108,6 +108,30 @@ retlbl:
 end
 
 
+;; Test use of a boolean result in cast operations.
+;; Requires converting a condition code result into a 0/1 value in a reg.
+;; 
+implementation
+
+int %castbool(int %A, int %B) {
+bb0:						; [#uses=0]
+    %cond213 = setlt int %A, %B			; <bool> [#uses=1]
+    %cast110 = cast bool %cond213 to ubyte      ; <ubyte> [#uses=1]
+    %cast109 = cast ubyte %cast110 to int       ; <int> [#uses=1]
+    ret int %cast109
+}
+
+
+;; Test use of a boolean result in arithmetic and logical operations.
+;; Requires converting a condition code result into a 0/1 value in a reg.
+;; 
+bool %boolexpr(bool %b, int %N) {
+    %b2 = setge int %N, 0
+    %b3 = and bool %b, %b2
+    ret bool %b3
+}
+
+
 ; Test branch on floating point comparison
 ;
 void "testfloatbool"(float %x, float %y)   ; Def %0, %1 - float
