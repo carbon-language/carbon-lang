@@ -37,11 +37,11 @@ TARGET_NAME := SparcV9
 
 TABLEGEN_FILES := $(notdir $(wildcard $(SourceDir)/*.td))
 
-$(SourceDir)/$(TARGET_NAME)CodeEmitter.cpp:: $(TARGET_NAME)CodeEmitter.inc
+$(TARGET_NAME)CodeEmitter.cpp:: $(TARGET_NAME)CodeEmitter.inc
 
-$(TARGET_NAME)CodeEmitter.inc:: $(TABLEGEN_FILES) $(TBLGEN)
-	@echo "Tblgen'ing $(TARGET_NAME).td"
-	$(TBLGEN) -I $(SourceDir) $(SourceDir)/$(TARGET_NAME).td -gen-emitter -o $@
+$(TARGET_NAME)CodeEmitter.inc:: $(TARGET_NAME).td $(TABLEGEN_FILES) $(TBLGEN)
+	@echo "Tblgen'ing $<"
+	$(TBLGEN) -I $(SourceDir) $< -gen-emitter -o $@
 
 clean::
 	${RM} -f $(TARGET_NAME)CodeEmitter.inc Sparc.burg.in1 Sparc.burm Sparc.burm.cpp
