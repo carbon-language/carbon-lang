@@ -146,7 +146,7 @@ string CWriter::getValueName(const Value *V) {
 // declaration.
 //
 ostream &CWriter::printType(const Type *Ty, const string &NameSoFar,
-                            bool IgnoreName = false) {
+                            bool IgnoreName) {
   if (Ty->isPrimitiveType())
     switch (Ty->getPrimitiveID()) {
     case Type::VoidTyID:   return Out << "void "               << NameSoFar;
