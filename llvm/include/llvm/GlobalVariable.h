@@ -1,4 +1,4 @@
-//===-- llvm/Global.h - Class to represent a global variable ----*- C++ -*-===//
+//===-- llvm/GlobalVariable.h - GlobalVariable class ------------*- C++ -*-===//
 // 
 //                     The LLVM Compiler Infrastructure
 //
