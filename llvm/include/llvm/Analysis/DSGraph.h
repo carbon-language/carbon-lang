@@ -360,6 +360,10 @@ public:
   ///
   DSCallSite getCallSiteForArguments(Function &F) const;
 
+  /// getDSCallSiteForCallSite - Given an LLVM CallSite object that is live in
+  /// the context of this graph, return the DSCallSite for it.
+  DSCallSite getDSCallSiteForCallSite(CallSite CS) const;
+
   // Methods for checking to make sure graphs are well formed...
   void AssertNodeInGraph(const DSNode *N) const {
     assert((!N || N->getParentGraph() == this) &&
