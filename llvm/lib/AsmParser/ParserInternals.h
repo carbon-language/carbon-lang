@@ -175,11 +175,6 @@ struct BBPlaceHolderHelper : public BasicBlock {
   }
 };
 
-struct MethPlaceHolderHelper : public Function {
-  MethPlaceHolderHelper(const Type *Ty)
-    : Function(cast<FunctionType>(Ty), InternalLinkage) {}
-};
-
 typedef PlaceholderValue<InstPlaceHolderHelper>  ValuePlaceHolder;
 typedef PlaceholderValue<BBPlaceHolderHelper>    BBPlaceHolder;
 
