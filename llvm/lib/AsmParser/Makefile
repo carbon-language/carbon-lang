@@ -1,5 +1,5 @@
 
-LEVEL = ../../..
+LEVEL = ../..
 
 LIBRARYNAME = asmparser
 
