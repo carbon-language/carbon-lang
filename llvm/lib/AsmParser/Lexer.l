@@ -129,7 +129,7 @@ VarID       %[-a-zA-Z$._][-a-zA-Z$._0-9]*
 Label       [-a-zA-Z$._0-9]+:
 
 /* Quoted names can contain any character except " and \ */
-StringConstant \"[^\"]+\"
+StringConstant \"[^\"]*\"
 
 
 /* [PN]Integer: match positive and negative literal integer values that
@@ -224,7 +224,9 @@ call            { RET_TOK(OtherOpVal, Call, CALL); }
 cast            { RET_TOK(OtherOpVal, Cast, CAST); }
 shl             { RET_TOK(OtherOpVal, Shl, SHL); }
 shr             { RET_TOK(OtherOpVal, Shr, SHR); }
-va_arg          { RET_TOK(OtherOpVal, VarArg, VA_ARG); }
+va_arg          { return VA_ARG; /* FIXME: OBSOLETE */}
+vanext          { RET_TOK(OtherOpVal, VANext, VANEXT); }
+vaarg           { RET_TOK(OtherOpVal, VAArg , VAARG); }
 
 ret             { RET_TOK(TermOpVal, Ret, RET); }
 br              { RET_TOK(TermOpVal, Br, BR); }

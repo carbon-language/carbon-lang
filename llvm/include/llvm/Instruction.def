@@ -120,11 +120,12 @@ HANDLE_OTHER_INST(28, Call   , CallInst   )  // Call a function
 
 HANDLE_OTHER_INST(29, Shl    , ShiftInst  )  // Shift operations
 HANDLE_OTHER_INST(30, Shr    , ShiftInst  )
-HANDLE_OTHER_INST(31, VarArg , VarArgInst )  // va_arg instruction
+HANDLE_OTHER_INST(31, VANext , VANextInst )  // vanext instruction
+HANDLE_OTHER_INST(32, VAArg  , VAArgInst  )  // vaarg  instruction
 
-HANDLE_OTHER_INST(32, UserOp1, Instruction)  // May be used internally in a pass
-HANDLE_OTHER_INST(33, UserOp2, Instruction)
-  LAST_OTHER_INST(33)
+HANDLE_OTHER_INST(33, UserOp1, Instruction)  // May be used internally in a pass
+HANDLE_OTHER_INST(34, UserOp2, Instruction)
+  LAST_OTHER_INST(34)
 
 #undef  FIRST_TERM_INST
 #undef HANDLE_TERM_INST

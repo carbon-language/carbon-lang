@@ -18,9 +18,9 @@ namespace LLVMIntrinsic {
     not_intrinsic = 0,   // Must be zero
 
     // Varargs handling intrinsics...
-    va_start,       // Used to represent a va_start call in C
-    va_end,         // Used to represent a va_end call in C
-    va_copy,        // Used to represent a va_copy call in C
+    va_start,       // Used to implement the va_start macro in C
+    va_end,         // Used to implement the va_end macro in C
+    va_copy,        // Used to implement the va_copy macro in C
 
     // Setjmp/Longjmp intrinsics...
     setjmp,         // Used to represent a setjmp call in C

@@ -136,7 +136,7 @@ struct InstVisitor {
   //
 #define HANDLE_INST(NUM, OPCODE, CLASS) \
     RetTy visit##OPCODE(CLASS &I) { DELEGATE(CLASS); }
-#define HANDLE_OTHER_INST(NUM, OPCODE, CLASS)   // Ignore "other" instructions
+#define HANDLE_OTHER_INST(NUM, OPCODE, CLASS)  // Handle "other" insts specially
 #include "llvm/Instruction.def"
 
   // Implement all "other" instructions, except for PHINode
@@ -144,7 +144,8 @@ struct InstVisitor {
   RetTy visitCall(CallInst &I)       { DELEGATE(CallInst);    }
   RetTy visitShr(ShiftInst &I)       { DELEGATE(ShiftInst);   }
   RetTy visitShl(ShiftInst &I)       { DELEGATE(ShiftInst);   }
-  RetTy visitVarArg(VarArgInst &I)   { DELEGATE(VarArgInst);  }
+  RetTy visitVANext(VANextInst &I)   { DELEGATE(VANextInst);  }
+  RetTy visitVAArg (VAArgInst &I)    { DELEGATE(VAArgInst);  }
   RetTy visitUserOp1(Instruction &I) { DELEGATE(Instruction); }
   RetTy visitUserOp2(Instruction &I) { DELEGATE(Instruction); }
 
@@ -168,7 +169,8 @@ struct InstVisitor {
   RetTy visitCastInst(CastInst     &I)              { DELEGATE(Instruction); }
   RetTy visitCallInst(CallInst     &I)              { DELEGATE(Instruction); }
   RetTy visitShiftInst(ShiftInst   &I)              { DELEGATE(Instruction); }
-  RetTy visitVarArgInst(VarArgInst &I)              { DELEGATE(Instruction); }
+  RetTy visitVANextInst(VANextInst &I)              { DELEGATE(Instruction); }
+  RetTy visitVAArgInst(VAArgInst   &I)              { DELEGATE(Instruction); }
 
   // Next level propagators... if the user does not overload a specific
   // instruction type, they can overload one of these to get the whole class

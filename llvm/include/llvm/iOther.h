@@ -123,34 +123,67 @@ public:
 
 
 //===----------------------------------------------------------------------===//
-//                               VarArgInst Class
+//                                VANextInst Class
 //===----------------------------------------------------------------------===//
 
-/// VarArgInst - This class represents the va_arg llvm instruction, which reads
-/// an argument of the destination type from the va_list operand pointed to by
-/// the only operand.
+/// VANextInst - This class represents the va_next llvm instruction, which
+/// advances a vararg list passed an argument of the specified type, returning
+/// the resultant list.
 ///
-class VarArgInst : public Instruction {
-  VarArgInst(const VarArgInst &VAI) : Instruction(VAI.getType(), VarArg) {
+class VANextInst : public Instruction {
+  PATypeHolder ArgTy;
+  VANextInst(const VANextInst &VAN)
+    : Instruction(VAN.getType(), VANext), ArgTy(VAN.getArgType()) {
     Operands.reserve(1);
-    Operands.push_back(Use(VAI.Operands[0], this));
+    Operands.push_back(Use(VAN.Operands[0], this));
   }
 public:
-  VarArgInst(Value *S, const Type *Ty, const std::string &Name = "",
+  VANextInst(Value *List, const Type *Ty, const std::string &Name = "",
              Instruction *InsertBefore = 0)
-    : Instruction(Ty, VarArg, Name, InsertBefore) {
+    : Instruction(List->getType(), VANext, Name, InsertBefore), ArgTy(Ty) {
     Operands.reserve(1);
-    Operands.push_back(Use(S, this));
+    Operands.push_back(Use(List, this));
   }
 
-  virtual Instruction *clone() const { return new VarArgInst(*this); }
+  const Type *getArgType() const { return ArgTy; }
+
+  virtual Instruction *clone() const { return new VANextInst(*this); }
+
+  // Methods for support type inquiry through isa, cast, and dyn_cast:
+  static inline bool classof(const VANextInst *) { return true; }
+  static inline bool classof(const Instruction *I) {
+    return I->getOpcode() == VANext;
+  }
+  static inline bool classof(const Value *V) {
+    return isa<Instruction>(V) && classof(cast<Instruction>(V));
+  }
+};
+
+/// VAArgInst - This class represents the va_arg llvm instruction, which returns
+/// an argument of the specified type given a va_list.
+///
+class VAArgInst : public Instruction {
+  VAArgInst(const VAArgInst &VAA)
+    : Instruction(VAA.getType(), VAArg) {
+    Operands.reserve(1);
+    Operands.push_back(Use(VAA.Operands[0], this));
+  }
+public:
+  VAArgInst(Value *List, const Type *Ty, const std::string &Name = "",
+             Instruction *InsertBefore = 0)
+    : Instruction(Ty, VAArg, Name, InsertBefore) {
+    Operands.reserve(1);
+    Operands.push_back(Use(List, this));
+  }
+
+  virtual Instruction *clone() const { return new VAArgInst(*this); }
 
   bool mayWriteToMemory() const { return true; }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool classof(const VarArgInst *) { return true; }
+  static inline bool classof(const VAArgInst *) { return true; }
   static inline bool classof(const Instruction *I) {
-    return I->getOpcode() == VarArg;
+    return I->getOpcode() == VAArg;
   }
   static inline bool classof(const Value *V) {
     return isa<Instruction>(V) && classof(cast<Instruction>(V));

@@ -37,6 +37,14 @@ std::string CurFilename;
 
 #define YYERROR_VERBOSE 1
 
+// HACK ALERT: This variable is used to implement the automatic conversion of
+// variable argument instructions from their old to new forms.  When this
+// compatiblity "Feature" is removed, this should be too.
+//
+static BasicBlock *CurBB;
+static bool ObsoleteVarArgs;
+
+
 // This contains info used when building the body of a function.  It is
 // destroyed when the function is completed.
 //
@@ -595,11 +603,76 @@ Module *RunVMAsmParser(const std::string &Filename, FILE *F) {
   llvmAsmin = F;
   CurFilename = Filename;
   llvmAsmlineno = 1;      // Reset the current line number...
+  ObsoleteVarArgs = false;
 
   // Allocate a new module to read
   CurModule.CurrentModule = new Module(Filename);
   yyparse();       // Parse the file.
+
   Module *Result = ParserResult;
+
+  // Check to see if they called va_start but not va_arg..
+  if (!ObsoleteVarArgs)
+    if (Function *F = Result->getNamedFunction("llvm.va_start"))
+      if (F->asize() == 1) {
+        std::cerr << "WARNING: this file uses obsolete features.  "
+                  << "Assemble and disassemble to update it.\n";
+        ObsoleteVarArgs = true;
+      }
+
+
+  if (ObsoleteVarArgs) {
+    // If the user is making use of obsolete varargs intrinsics, adjust them for
+    // the user.
+    if (Function *F = Result->getNamedFunction("llvm.va_start")) {
+      assert(F->asize() == 1 && "Obsolete va_start takes 1 argument!");
+
+      const Type *RetTy = F->getFunctionType()->getParamType(0);
+      RetTy = cast<PointerType>(RetTy)->getElementType();
+      Function *NF = Result->getOrInsertFunction("llvm.va_start", RetTy, 0);
+      
+      while (!F->use_empty()) {
+        CallInst *CI = cast<CallInst>(F->use_back());
+        Value *V = new CallInst(NF, "", CI);
+        new StoreInst(V, CI->getOperand(1), CI);
+        CI->getParent()->getInstList().erase(CI);
+      }
+      Result->getFunctionList().erase(F);
+    }
+    
+    if (Function *F = Result->getNamedFunction("llvm.va_end")) {
+      assert(F->asize() == 1 && "Obsolete va_end takes 1 argument!");
+      const Type *ArgTy = F->getFunctionType()->getParamType(0);
+      ArgTy = cast<PointerType>(ArgTy)->getElementType();
+      Function *NF = Result->getOrInsertFunction("llvm.va_end", Type::VoidTy,
+                                                 ArgTy, 0);
+
+      while (!F->use_empty()) {
+        CallInst *CI = cast<CallInst>(F->use_back());
+        Value *V = new LoadInst(CI->getOperand(1), "", CI);
+        new CallInst(NF, V, "", CI);
+        CI->getParent()->getInstList().erase(CI);
+      }
+      Result->getFunctionList().erase(F);
+    }
+
+    if (Function *F = Result->getNamedFunction("llvm.va_copy")) {
+      assert(F->asize() == 2 && "Obsolete va_copy takes 2 argument!");
+      const Type *ArgTy = F->getFunctionType()->getParamType(0);
+      ArgTy = cast<PointerType>(ArgTy)->getElementType();
+      Function *NF = Result->getOrInsertFunction("llvm.va_copy", ArgTy,
+                                                 ArgTy, 0);
+
+      while (!F->use_empty()) {
+        CallInst *CI = cast<CallInst>(F->use_back());
+        Value *V = new CallInst(NF, CI->getOperand(2), "", CI);
+        new StoreInst(V, CI->getOperand(1), CI);
+        CI->getParent()->getInstList().erase(CI);
+      }
+      Result->getFunctionList().erase(F);
+    }
+  }
+
   llvmAsmin = stdin;    // F is about to go away, don't use it anymore...
   ParserResult = 0;
 
@@ -712,7 +785,8 @@ Module *RunVMAsmParser(const std::string &Filename, FILE *F) {
 
 // Other Operators
 %type  <OtherOpVal> ShiftOps
-%token <OtherOpVal> PHI CALL CAST SHL SHR VA_ARG
+%token <OtherOpVal> PHI CALL CAST SHL SHR VAARG VANEXT
+%token VA_ARG // FIXME: OBSOLETE
 
 %start Module
 %%
@@ -1452,7 +1526,7 @@ InstructionList : InstructionList Inst {
     $$ = $1;
   }
   | /* empty */ {
-    $$ = new BasicBlock();
+    $$ = CurBB = new BasicBlock();
   };
 
 BBTerminatorInst : RET ResolvedVal {              // Return with a result...
@@ -1643,7 +1717,34 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
     delete $4;
   }
   | VA_ARG ResolvedVal ',' Types {
-    $$ = new VarArgInst($2, *$4);
+    // FIXME: This is emulation code for an obsolete syntax.  This should be
+    // removed at some point.
+    if (!ObsoleteVarArgs) {
+      std::cerr << "WARNING: this file uses obsolete features.  "
+                << "Assemble and disassemble to update it.\n";
+      ObsoleteVarArgs = true;
+    }
+
+    // First, load the valist...
+    Instruction *CurVAList = new LoadInst($2, "");
+    CurBB->getInstList().push_back(CurVAList);
+
+    // Emit the vaarg instruction.
+    $$ = new VAArgInst(CurVAList, *$4);
+    
+    // Now we must advance the pointer and update it in memory.
+    Instruction *TheVANext = new VANextInst(CurVAList, *$4);
+    CurBB->getInstList().push_back(TheVANext);
+
+    CurBB->getInstList().push_back(new StoreInst(TheVANext, $2));
+    delete $4;
+  }
+  | VAARG ResolvedVal ',' Types {
+    $$ = new VAArgInst($2, *$4);
+    delete $4;
+  }
+  | VANEXT ResolvedVal ',' Types {
+    $$ = new VANextInst($2, *$4);
     delete $4;
   }
   | PHI PHIList {
