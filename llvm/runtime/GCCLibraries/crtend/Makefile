@@ -32,8 +32,9 @@ CRTEND_A   = $(LIBDIR)/libcrtend.a
 all:: $(CRTEND_A)
 
 # Installation simply requires copying the archive to it's new home.
-$(DESTDIR)$(bytecode_libdir)/libcrtend.a: $(CRTEND_A)
-	$(INSTALL) $(CRTEND_A) $(DESTDIR)$(bytecode_libdir)
+$(bytecode_libdir)/libcrtend.a: $(CRTEND_A) $(bytecode_libdir)
+	@$(ECHO) Installing $(CRTEND_A)
+	$(VERB) $(INSTALL) $(CRTEND_A) $(bytecode_libdir)
 
 install:: $(DESTDIR)$(bytecode_libdir)/libcrtend.a
 install-bytecode:: $(DESTDIR)$(bytecode_libdir)/libcrtend.a
@@ -46,7 +47,7 @@ ComponentLibs := $(Components:%=$(OBJDIR)/comp_%.bc)
 
 # We build libcrtend.a from the four components described in the README.
 $(CRTEND_A) : $(ComponentLibs) $(LIBDIR)/.dir
-	@echo Building final libcrtend.a file from components
+	@$(ECHO) Building final libcrtend.a file from components
 	$(VERB) $(Archive) $@ $(ComponentLibs)
 
 MainObj      := $(OBJDIR)/crtend.bc $(OBJDIR)/listend.bc
@@ -55,17 +56,15 @@ SJLJEHObj    := $(OBJDIR)/SJLJ-Exception.bc
 
 # __main and ctor/dtor support component
 $(OBJDIR)/comp_main.bc: $(MainObj)
-	@echo Linking $(notdir $@) component...
+	@$(ECHO) Linking $(notdir $@) component...
 	$(VERB) $(GCCLD) -link-as-library -internalize-public-api-file=$(BUILD_SRC_DIR)/comp_main.lst $(MainObj) -o $@
 
 # Generic exception handling support runtime.
 $(OBJDIR)/comp_genericeh.bc: $(GenericEHObj)
-	@echo Linking $(notdir $@) component...
+	@$(ECHO) Linking $(notdir $@) component...
 	$(VERB) $(GCCLD) -link-as-library -internalize-public-api-file=$(BUILD_SRC_DIR)/comp_genericeh.lst $(GenericEHObj) -o $@
 
 # setjmp/longjmp exception handling support runtime.
 $(OBJDIR)/comp_sjljeh.bc: $(SJLJEHObj)
-	@echo Linking $(notdir $@) component...
+	@$(ECHO) Linking $(notdir $@) component...
 	$(VERB) $(GCCLD) -link-as-library -internalize-public-api-file=$(BUILD_SRC_DIR)/comp_sjljeh.lst $(SJLJEHObj) -o $@
-
-
