@@ -223,10 +223,10 @@ protected:
   Constant* ParseConstantValue(unsigned TypeID);
 
   /// @brief Parse a block of types constants
-  void ParseTypeConstants(TypeListTy &Tab, unsigned NumEntries);
+  void ParseTypes(TypeListTy &Tab, unsigned NumEntries);
 
   /// @brief Parse a single type constant
-  const Type *ParseTypeConstant();
+  const Type *ParseType();
 
   /// @brief Parse a string constants block
   void ParseStringConstants(unsigned NumEntries, ValueTable &Tab);
@@ -438,6 +438,12 @@ private:
 
   /// @brief Read a string
   inline std::string read_str();
+
+  /// @brief Read a float value
+  inline void read_float(float& FloatVal);
+
+  /// @brief Read a double value
+  inline void read_double(double& DoubleVal);
 
   /// @brief Read an arbitrary data chunk of fixed length
   inline void read_data(void *Ptr, void *End);
