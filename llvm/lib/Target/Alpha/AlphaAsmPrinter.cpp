@@ -1,4 +1,4 @@
-//===-- AlphaAsmPrinter.cpp - Alpha LLVM assembly writer --------------===//
+//===-- AlphaAsmPrinter.cpp - Alpha LLVM assembly writer ------------------===//
 // 
 //                     The LLVM Compiler Infrastructure
 //
@@ -14,25 +14,17 @@
 
 #include "Alpha.h"
 #include "AlphaInstrInfo.h"
-#include "llvm/Constants.h"
-#include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
 #include "llvm/Assembly/Writer.h"
-#include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
-#include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/Target/MRegisterInfo.h"
-#include "llvm/Target/TargetInstrInfo.h"
 
 #include "llvm/Support/Mangler.h"
 #include "llvm/ADT/Statistic.h"
-#include "llvm/ADT/StringExtras.h"
-#include "llvm/Support/CommandLine.h"
-#include <cctype>
+
 using namespace llvm;
 
 namespace {
@@ -87,7 +79,7 @@ void AlphaAsmPrinter::printOperand(const MachineInstr *MI, int opNum, MVT::Value
   const MachineOperand &MO = MI->getOperand(opNum);
   if (MO.getType() == MachineOperand::MO_MachineRegister) {
     assert(MRegisterInfo::isPhysicalRegister(MO.getReg())&&"Not physreg??");
-    O << LowercaseString(TM.getRegisterInfo()->get(MO.getReg()).Name);
+    O << TM.getRegisterInfo()->get(MO.getReg()).Name;
   } else if (MO.isImmediate()) {
     O << MO.getImmedValue();
   } else {
@@ -109,7 +101,7 @@ void AlphaAsmPrinter::printOp(const MachineOperand &MO, bool IsCallOp) {
     // FALLTHROUGH
   case MachineOperand::MO_MachineRegister:
   case MachineOperand::MO_CCRegister:
-    O << LowercaseString(RI.get(MO.getReg()).Name);
+    O << RI.get(MO.getReg()).Name;
     return;
 
   case MachineOperand::MO_SignExtendedImmed:
@@ -119,7 +111,7 @@ void AlphaAsmPrinter::printOp(const MachineOperand &MO, bool IsCallOp) {
     return;
 
   case MachineOperand::MO_PCRelativeDisp:
-    std::cerr << "Shouldn't use addPCDisp() when building PPC MachineInstrs";
+    std::cerr << "Shouldn't use addPCDisp() when building Alpha MachineInstrs";
     abort();
     return;
     
@@ -140,8 +132,6 @@ void AlphaAsmPrinter::printOp(const MachineOperand &MO, bool IsCallOp) {
     return;
 
   case MachineOperand::MO_GlobalAddress: 
-    //std::cerr << "Global Addresses?  Are you kidding?\n"
-    //abort();
     O << Mang->getValueName(MO.getGlobal());
     return;
     
