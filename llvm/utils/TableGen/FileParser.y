@@ -68,13 +68,20 @@ static void addSuperClass(Record *SC) {
 
 static void setValue(const std::string &ValName, 
 		     std::vector<unsigned> *BitList, Init *V) {
-  if (!V) return ;
+  if (!V) return;
 
   RecordVal *RV = CurRec->getValue(ValName);
   if (RV == 0) {
     err() << "Value '" << ValName << "' unknown!\n";
     exit(1);
   }
+
+  // Do not allow assignments like 'X = X'.  This will just cause infinite loops
+  // in the resolution machinery.
+  if (!BitList)
+    if (VarInit *VI = dynamic_cast<VarInit*>(V))
+      if (VI->getName() == ValName)
+        return;
   
   // If we are assigning to a subset of the bits in the value... then we must be
   // assigning to a field of BitsRecTy, which must have a BitsInit
@@ -154,10 +161,9 @@ static void addSubClass(Record *SC, const std::vector<Init*> &TemplateArgs) {
     }
   }
 
-
   // Since everything went well, we can now set the "superclass" list for the
   // current record.
-  const std::vector<Record*>   &SCs  = SC->getSuperClasses();
+  const std::vector<Record*> &SCs  = SC->getSuperClasses();
   for (unsigned i = 0, e = SCs.size(); i != e; ++i)
     addSuperClass(SCs[i]);
   addSuperClass(SC);
