@@ -1,4 +1,4 @@
-##===- tools/gccld/Makefile --------------------------------*- Makefile -*-===##
+##===- tools/llvm-ld/Makefile ------------------------------*- Makefile -*-===##
 # 
 #                     The LLVM Compiler Infrastructure
 #
