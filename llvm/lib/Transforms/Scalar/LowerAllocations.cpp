@@ -7,8 +7,6 @@
 
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Module.h"
-#include "llvm/Function.h"
-#include "llvm/BasicBlock.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/iMemory.h"
 #include "llvm/iOther.h"
