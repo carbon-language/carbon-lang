@@ -28,9 +28,12 @@ C programs and compiles them into LLVM bytecode or assembly language, depending
 upon the options.
 <p>
 
-The <tt>llvmgcc</tt> program uses the <a href="gccas.html"><tt>gccas</tt></a>
-and <a href="gccld.html"><tt>gccld</tt></a> programs to do the work of creating
-complete programs.
+Unless the <tt>-S</tt> option is specified, <tt>llvmgcc</tt> will use the
+<a href="gccas.html"><tt>gccas</tt></a> program to perform some optimizations
+and create an LLVM bytecode file. Unless the <tt>-c</tt> option is specified,
+<tt>llvmgcc</tt> will also use the <a href="gccld.html"><tt>gccld</tt></a>
+program to perform further optimizations and link the resulting bytecode
+file(s) with support libraries to create an executable program.
 <p>
 
 Being derived from GCC, llvmgcc has many of GCC's features and accepts most of
@@ -100,7 +103,8 @@ SEE ALSO
 </h3>
 <A HREF="llvmgxx.html"><tt>llvmg++</tt></A>,
 <A HREF="gccas.html"><tt>gccas</tt></A>,
-<A HREF="gccld.html"><tt>gccld</tt></A>
+<A HREF="gccld.html"><tt>gccld</tt></A>,
+and the Info documentation for <tt>gcc</tt>.
 
 <HR>
 Maintained by the <a href="http://llvm.cs.uiuc.edu">LLVM Team</a>.
