@@ -28,7 +28,7 @@ static inline std::string utohexstr(uint64_t X) {
   if (X == 0) *--BufPtr = '0';  // Handle special case...
 
   while (X) {
-    unsigned Mod = X & 15;
+    unsigned char Mod = unsigned char(X) & 15;
     if (Mod < 10)
       *--BufPtr = '0' + Mod;
     else
@@ -46,7 +46,7 @@ static inline std::string utostr(unsigned long long X, bool isNeg = false) {
   if (X == 0) *--BufPtr = '0';  // Handle special case...
 
   while (X) {
-    *--BufPtr = '0' + (X % 10);
+    *--BufPtr = '0' + char(X % 10);
     X /= 10;
   }
 
@@ -75,7 +75,7 @@ static inline std::string utostr(unsigned X, bool isNeg = false) {
   if (X == 0) *--BufPtr = '0';  // Handle special case...
 
   while (X) {
-    *--BufPtr = '0' + (X % 10);
+    *--BufPtr = '0' + char(X % 10);
     X /= 10;
   }
 
@@ -93,7 +93,7 @@ static inline std::string itostr(int X) {
 
 static inline std::string ftostr(double V) {
   char Buffer[200];
-  snprintf(Buffer, 200, "%20.6e", V);
+  sprintf(Buffer, "%20.6e", V);
   return Buffer;
 }
 
