@@ -12,6 +12,7 @@
 
 #include "llvm/User.h"
 class PointerType;
+class Module;
 
 class GlobalValue : public User {
   GlobalValue(const GlobalValue &);             // do not implement
