@@ -34,10 +34,6 @@ namespace {
   cl::list<std::string>
   InputArgv(cl::ConsumeAfter, cl::desc("<program arguments>..."));
 
-  cl::opt<std::string>
-  MainFunction("f", cl::desc("Function to execute"), cl::init("main"),
-               cl::value_desc("function name"));
-
   cl::opt<bool> ForceInterpreter("force-interpreter",
                                  cl::desc("Force interpretation: disable JIT"),
                                  cl::init(false));
@@ -96,32 +92,6 @@ static void *CreateArgv(ExecutionEngine *EE,
   }
 }
 
-/// callAsMain - Call the function named FnName from M as if its
-/// signature were int main (int argc, char **argv, const char
-/// **envp), using the contents of Args to determine argc & argv, and
-/// the contents of EnvVars to determine envp.  Returns the result
-/// from calling FnName, or -1 and prints an error msg. if the named
-/// function cannot be found.
-///
-int callAsMain(ExecutionEngine *EE, ModuleProvider *MP,
-               const std::string &FnName,
-               const std::vector<std::string> &Args,
-               const std::vector<std::string> &EnvVars) {
-  Function *Fn = MP->getModule()->getNamedFunction(FnName);
-  if (!Fn) {
-    std::cerr << "Function '" << FnName << "' not found in module.\n";
-    return -1;
-  }
-  std::vector<GenericValue> GVArgs;
-  GenericValue GVArgc;
-  GVArgc.IntVal = Args.size();
-  GVArgs.push_back(GVArgc); // Arg #0 = argc.
-  GVArgs.push_back(PTOGV(CreateArgv(EE, Args))); // Arg #1 = argv.
-  assert(((char **)GVTOP(GVArgs[1]))[0] && "argv[0] was null after CreateArgv");
-  GVArgs.push_back(PTOGV(CreateArgv(EE, EnvVars))); // Arg #2 = envp.
-  return EE->run(Fn, GVArgs).IntVal;
-}
-
 //===----------------------------------------------------------------------===//
 // main Driver function
 //
@@ -157,11 +127,37 @@ int main(int argc, char **argv, char * const *envp) {
   // Add the module's name to the start of the vector of arguments to main().
   InputArgv.insert(InputArgv.begin(), InputFile);
 
-  // Run the main function!
-  int ExitCode = callAsMain(EE, MP, MainFunction, InputArgv,
-                            makeStringVector(envp)); 
+  // Call the main function from M as if its signature were:
+  //   int main (int argc, char **argv, const char **envp)
+  // using the contents of Args to determine argc & argv, and the contents of
+  // EnvVars to determine envp.
+  //
+  Function *Fn = MP->getModule()->getMainFunction();
+  if (!Fn) {
+    std::cerr << "'main' function not found in module.\n";
+    return -1;
+  }
 
-  // Now that we are done executing the program, shut down the execution engine
-  delete EE;
-  return ExitCode;
+  std::vector<GenericValue> GVArgs;
+  GenericValue GVArgc;
+  GVArgc.IntVal = InputArgv.size();
+  GVArgs.push_back(GVArgc); // Arg #0 = argc.
+  GVArgs.push_back(PTOGV(CreateArgv(EE, InputArgv))); // Arg #1 = argv.
+  assert(((char **)GVTOP(GVArgs[1]))[0] && "argv[0] was null after CreateArgv");
+
+  std::vector<std::string> EnvVars = makeStringVector(envp);
+  GVArgs.push_back(PTOGV(CreateArgv(EE, EnvVars))); // Arg #2 = envp.
+  GenericValue Result = EE->runFunction(Fn, GVArgs);
+
+  // If the program didn't explicitly call exit, call exit now, for the program.
+  // This ensures that any atexit handlers get called correctly.
+  Function *Exit = MP->getModule()->getOrInsertFunction("exit", Type::VoidTy,
+                                                        Type::IntTy, 0);
+  
+  GVArgs.clear();
+  GVArgs.push_back(Result);
+  EE->runFunction(Exit, GVArgs);
+
+  std::cerr << "ERROR: exit(" << Result.IntVal << ") returned!\n";
+  abort();
 }
