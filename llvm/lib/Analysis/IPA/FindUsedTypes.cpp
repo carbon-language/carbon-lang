@@ -78,7 +78,7 @@ bool FindUsedTypes::run(Module &m) {
 // passed in, then the types are printed symbolically if possible, using the
 // symbol table from the module.
 //
-void FindUsedTypes::printTypes(std::ostream &o, const Module *M = 0) const {
+void FindUsedTypes::printTypes(std::ostream &o, const Module *M) const {
   o << "Types in use by this module:\n";
   if (M) {
     CachedWriter CW(M, o);
