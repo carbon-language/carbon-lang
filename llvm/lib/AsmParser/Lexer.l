@@ -314,7 +314,7 @@ getelementptr   { RET_TOK(MemOpVal, GetElementPtr, GETELEMENTPTR); }
                   return EOF;
                 }
 
-[ \t\n]         { /* Ignore whitespace */ }
+[ \r\t\n]       { /* Ignore whitespace */ }
 .               { return yytext[0]; }
 
 %%
