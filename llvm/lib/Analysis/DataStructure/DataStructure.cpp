@@ -1041,11 +1041,11 @@ DSGraph::~DSGraph() {
   ReturnNodes.clear();
 
   // Drop all intra-node references, so that assertions don't fail...
-  std::for_each(Nodes.begin(), Nodes.end(),
-                std::mem_fun(&DSNode::dropAllReferences));
+  for (node_iterator NI = node_begin(), E = node_end(); NI != E; ++NI)
+    (*NI)->dropAllReferences();
 
-  // Delete all of the nodes themselves...
-  std::for_each(Nodes.begin(), Nodes.end(), deleter<DSNode>);
+  // Free all of the nodes.
+  Nodes.clear();
 }
 
 // dump - Allow inspection of graph in a debugger.
@@ -1496,45 +1496,44 @@ void DSGraph::removeTriviallyDeadNodes() {
   bool isGlobalsGraph = !GlobalsGraph;
 
   for (NodeListTy::iterator NI = Nodes.begin(), E = Nodes.end(); NI != E; ) {
-    DSNode *Node = *NI;
+    DSNode &Node = *NI;
 
     // Do not remove *any* global nodes in the globals graph.
     // This is a special case because such nodes may not have I, M, R flags set.
-    if (Node->isGlobalNode() && isGlobalsGraph) {
+    if (Node.isGlobalNode() && isGlobalsGraph) {
       ++NI;
       continue;
     }
 
-    if (Node->isComplete() && !Node->isModified() && !Node->isRead()) {
+    if (Node.isComplete() && !Node.isModified() && !Node.isRead()) {
       // This is a useless node if it has no mod/ref info (checked above),
       // outgoing edges (which it cannot, as it is not modified in this
       // context), and it has no incoming edges.  If it is a global node it may
       // have all of these properties and still have incoming edges, due to the
       // scalar map, so we check those now.
       //
-      if (Node->getNumReferrers() == Node->getGlobals().size()) {
-        const std::vector<GlobalValue*> &Globals = Node->getGlobals();
+      if (Node.getNumReferrers() == Node.getGlobals().size()) {
+        const std::vector<GlobalValue*> &Globals = Node.getGlobals();
 
         // Loop through and make sure all of the globals are referring directly
         // to the node...
         for (unsigned j = 0, e = Globals.size(); j != e; ++j) {
           DSNode *N = getNodeForValue(Globals[j]).getNode();
-          assert(N == Node && "ScalarMap doesn't match globals list!");
+          assert(N == &Node && "ScalarMap doesn't match globals list!");
         }
 
         // Make sure NumReferrers still agrees, if so, the node is truly dead.
-        if (Node->getNumReferrers() == Globals.size()) {
+        if (Node.getNumReferrers() == Globals.size()) {
           for (unsigned j = 0, e = Globals.size(); j != e; ++j)
             ScalarMap.erase(Globals[j]);
-          Node->makeNodeDead();
+          Node.makeNodeDead();
         }
       }
     }
 
-    if (Node->getNodeFlags() == 0 && Node->hasNoReferrers()) {
+    if (Node.getNodeFlags() == 0 && Node.hasNoReferrers()) {
       // This node is dead!
-      delete Node;                        // Free node memory.
-      NI = Nodes.erase(NI);               // Remove from node list.
+      NI = Nodes.erase(NI);    // Erase & remove from node list.
     } else {
       ++NI;
     }
@@ -1766,14 +1765,13 @@ void DSGraph::removeDeadNodes(unsigned Flags) {
   std::vector<DSNode*> DeadNodes;
   DeadNodes.reserve(Nodes.size());
   for (NodeListTy::iterator NI = Nodes.begin(), E = Nodes.end(); NI != E;)
-    if (!Alive.count(*NI)) {
+    if (!Alive.count(NI)) {
       ++NumDNE;
-      DSNode *N = *NI;
-      NI = Nodes.erase(NI);          // Erase node from list.
+      DSNode *N = Nodes.remove(NI++);
       DeadNodes.push_back(N);
       N->dropAllReferences();
     } else {
-      assert((*NI)->getForwardNode() == 0 && "Alive forwarded node?");
+      assert(NI->getForwardNode() == 0 && "Alive forwarded node?");
       ++NI;
     }
 

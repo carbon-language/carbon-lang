@@ -42,6 +42,11 @@ class DSNode {
   /// null.
   DSNodeHandle ForwardNH;
 
+  /// Next, Prev - These instance variables are used to keep the node on a
+  /// doubly-linked ilist in the DSGraph.
+  DSNode *Next, *Prev;
+  friend class ilist_traits<DSNode>;
+
   /// Size - The current size of the node.  This should be equal to the size of
   /// the current type record.
   ///
@@ -334,6 +339,30 @@ private:
   static void MergeNodes(DSNodeHandle& CurNodeH, DSNodeHandle& NH);
 };
 
+//===----------------------------------------------------------------------===//
+// Define the ilist_traits specialization for the DSGraph ilist.
+//
+template<>
+struct ilist_traits<DSNode> {
+  static DSNode *getPrev(const DSNode *N) { return N->Prev; }
+  static DSNode *getNext(const DSNode *N) { return N->Next; }
+
+  static void setPrev(DSNode *N, DSNode *Prev) { N->Prev = Prev; }
+  static void setNext(DSNode *N, DSNode *Next) { N->Next = Next; }
+
+  static DSNode *createNode() { return new DSNode(0,0); }
+  //static DSNode *createNode(const DSNode &V) { return new DSNode(V); }
+
+
+  void addNodeToList(DSNode *NTy) {}
+  void removeNodeFromList(DSNode *NTy) {}
+  void transferNodesFromList(iplist<DSNode, ilist_traits> &L2,
+                             ilist_iterator<DSNode> first,
+                             ilist_iterator<DSNode> last) {}
+};
+
+template<>
+struct ilist_traits<const DSNode> : public ilist_traits<DSNode> {};
 
 //===----------------------------------------------------------------------===//
 // Define inline DSNodeHandle functions that depend on the definition of DSNode

@@ -92,7 +92,7 @@ struct DSGraph {
   typedef DSScalarMap ScalarMapTy;
   typedef hash_map<Function*, DSNodeHandle> ReturnNodesTy;
   typedef hash_set<GlobalValue*> GlobalSetTy;
-  typedef std::vector<DSNode*> NodeListTy;
+  typedef ilist<DSNode> NodeListTy;
 
   /// NodeMapTy - This data type is used when cloning one graph into another to
   /// keep track of the correspondence between the nodes in the old and new
@@ -171,9 +171,9 @@ public:
 
   /// getNodes - Get a vector of all the nodes in the graph
   /// 
-  typedef NodeListTy::const_iterator node_iterator;
-  node_iterator node_begin() const { return Nodes.begin(); }
-  node_iterator node_end()   const { return Nodes.end(); }
+  typedef NodeListTy::compat_iterator node_iterator;
+  node_iterator node_begin() const { return Nodes.compat_begin(); }
+  node_iterator node_end()   const { return Nodes.compat_end(); }
 
   /// getFunctionNames - Return a space separated list of the name of the
   /// functions in this graph (if any)
