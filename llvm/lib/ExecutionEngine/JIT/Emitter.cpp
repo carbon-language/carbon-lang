@@ -187,28 +187,13 @@ void Emitter::finishFunction(MachineFunction &F) {
 
 void Emitter::emitConstantPool(MachineConstantPool *MCP) {
   const std::vector<Constant*> &Constants = MCP->getConstants();
-  if (Constants.size() == 0) return;
-
-  std::vector<unsigned> ConstantSizes;
-  unsigned TotalSize = 0;
-  // Calculate how much space we will need for all the constants
   for (unsigned i = 0, e = Constants.size(); i != e; ++i) {
+    // For now we just allocate some memory on the heap, this can be
+    // dramatically improved.
     const Type *Ty = ((Value*)Constants[i])->getType();
-    unsigned TySize = TheVM->getTargetData().getTypeSize(Ty);
-    ConstantSizes.push_back(TySize);
-    TotalSize += TySize;
-  }
-  // Allocate a 'pool' of memory just once
-  void *ConstPool = malloc(TotalSize);
-  if (!ConstPool) {
-    perror("malloc");
-    abort();
-  }
-  // Initialize each slot in the 'pool' appropriately
-  for (unsigned i = 0, e = Constants.size(); i != e; ++i) {
-    TheVM->InitializeMemory(Constants[i], ConstPool);
-    ConstantPoolAddresses.push_back(ConstPool);
-    ConstPool = (void*) ((intptr_t)ConstPool + ConstantSizes[i]);
+    void *Addr = malloc(TheVM->getTargetData().getTypeSize(Ty));
+    TheVM->InitializeMemory(Constants[i], Addr);
+    ConstantPoolAddresses.push_back(Addr);
   }
 }
 
