@@ -61,6 +61,7 @@ namespace {
     // Arithmetic operators
     void visitAdd(BinaryOperator &B) { visitSimpleBinary(B, 0); }
     void visitSub(BinaryOperator &B) { visitSimpleBinary(B, 1); }
+    void visitMul(BinaryOperator &B);
 
     // Bitwise operators
     void visitAnd(BinaryOperator &B) { visitSimpleBinary(B, 2); }
@@ -221,7 +222,33 @@ void ISel::visitSimpleBinary(BinaryOperator &B, unsigned OperatorClass) {
   BuildMI(BB, Opcode, 2, getReg(B)).addReg(Op0r).addReg(Op1r);
 }
 
+/// visitMul - Multiplies are not simple binary operators because they must deal
+/// with the EAX register explicitly.
+///
+void ISel::visitMul(BinaryOperator &I) {
+  unsigned Class = getClass(I.getType());
+  if (Class > 2)  // FIXME: Handle longs
+    visitInstruction(I);
 
+  static const unsigned Regs[]     ={ X86::AL    , X86::AX     , X86::EAX     };
+  static const unsigned MulOpcode[]={ X86::MULrr8, X86::MULrr16, X86::MULrr32 };
+  static const unsigned MovOpcode[]={ X86::MOVrr8, X86::MOVrr16, X86::MOVrr32 };
+
+  unsigned Reg = Regs[Class];
+  unsigned Op0Reg = getReg(I.getOperand(1));
+  unsigned Op1Reg = getReg(I.getOperand(1));
+
+  // Put the first operand into one of the A registers...
+  BuildMI(BB, MovOpcode[Class], 1, Reg).addReg(Op0Reg);
+  
+  // Emit the appropriate multiple instruction...
+  // FIXME: We need to mark that this modified AH, DX, or EDX also!!
+  BuildMI(BB, MulOpcode[Class], 2, Reg).addReg(Reg).addReg(Op1Reg);
+
+  // Put the result into the destination register...
+  BuildMI(BB, MovOpcode[Class], 1, getReg(I)).addReg(Reg);
+
+}
 
 /// Shift instructions: 'shl', 'sar', 'shr' - Some special cases here
 /// for constant immediate shift values, and for constant immediate
@@ -269,7 +296,7 @@ ISel::visitShiftInst (ShiftInst & I)
       //
 
       // Emit: move cl, shiftAmount (put the shift amount in CL.)
-      BuildMI (BB, X86::MOVrr8, 2, X86::CL).addReg(getReg(I.getOperand(1)));
+      BuildMI(BB, X86::MOVrr8, 1, X86::CL).addReg(getReg(I.getOperand(1)));
 
       // This is a shift right (SHR).
       static const unsigned NonConstantOperand[][4] = {
