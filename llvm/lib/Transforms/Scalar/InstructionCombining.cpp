@@ -768,7 +768,9 @@ Instruction *InstCombiner::OptAndOp(Instruction *Op,
                                     ConstantIntegral *AndRHS,
                                     BinaryOperator &TheAnd) {
   Value *X = Op->getOperand(0);
-  Constant *Together = ConstantExpr::get(Instruction::And, AndRHS, OpRHS);
+  Constant *Together = 0;
+  if (!isa<ShiftInst>(Op))
+    Together = ConstantExpr::get(Instruction::And, AndRHS, OpRHS);
 
   switch (Op->getOpcode()) {
   case Instruction::Xor:
