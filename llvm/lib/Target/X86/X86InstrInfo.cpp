@@ -48,10 +48,9 @@ MachineInstr* X86InstrInfo::createNOPinstr() const {
 }
 
 
-// isNOPinstr - since we no longer have a special NOP opcode, we need to know
-// if a given instruction is interpreted as an `official' NOP instr, i.e.,
-// there may be more than one way to `do nothing' but only one canonical
-// way to slack off.
+/// isNOPinstr - not having a special NOP opcode, we need to know if a given
+/// instruction is interpreted as an `official' NOP instr, i.e., there may be
+/// more than one way to `do nothing' but only one canonical way to slack off.
 //
 bool X86InstrInfo::isNOPinstr(const MachineInstr &MI) const {
   // Make sure the instruction is EXACTLY `xchg ax, ax'

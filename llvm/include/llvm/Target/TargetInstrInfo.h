@@ -280,10 +280,9 @@ public:
   ///
   virtual MachineInstr* createNOPinstr() const = 0;
 
-  /// isNOPinstr - since we no longer have a special NOP opcode, we need to know
-  /// if a given instruction is interpreted as an `official' NOP instr, i.e.,
-  /// there may be more than one way to `do nothing' but only one canonical
-  /// way to slack off.
+  /// isNOPinstr - not having a special NOP opcode, we need to know if a given
+  /// instruction is interpreted as an `official' NOP instr, i.e., there may be
+  /// more than one way to `do nothing' but only one canonical way to slack off.
   ///
   virtual bool isNOPinstr(const MachineInstr &MI) const = 0;
 
