@@ -83,7 +83,7 @@ bool %test12(ubyte %A) {
 
 bool %test13(ubyte %A, ubyte %b) {
         %B = add ubyte %A, %b
-        %C = cast ubyte %B to bool    ; === A != 1
+        %C = cast ubyte %B to bool    ; === A != -b
         ret bool %C
 }
 
