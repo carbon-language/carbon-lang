@@ -10,7 +10,6 @@
 //
 //===------------------------------------------------------------------------===
 
-#include <iostream>
 #include "llvm/Instruction.h"
 #include "llvm/Module.h"
 #include "llvm/Method.h"
@@ -23,6 +22,8 @@
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/IntervalPartition.h"
 #include "llvm/Analysis/Expressions.h"
+#include "llvm/Analysis/CallGraph.h"
+#include <algorithm>
 
 static void PrintMethod(Method *M) {
   cout << M;
@@ -63,6 +64,9 @@ static void PrintClassifiedExprs(Method *M) {
 static void PrintInstForest(Method *M) {
   cout << analysis::InstForest<char>(M);
 }
+static void PrintCallGraph(Module *M) {
+  cout << cfg::CallGraph(M);
+}
 
 static void PrintDominatorSets(Method *M) {
   cout << cfg::DominatorSet(M);
@@ -90,8 +94,10 @@ static void PrintPostDomFrontier(Method *M) {
   cout << cfg::DominanceFrontier(cfg::DominatorSet(M, true));
 }
 
+
 enum Ans {
-  print, intervals, exprclassify, instforest,
+  PassDone,   // Unique Marker
+  print, intervals, exprclassify, instforest, callgraph,
   domset, idom, domtree, domfrontier,
   postdomset, postidom, postdomtree, postdomfrontier,
 };
@@ -104,6 +110,7 @@ cl::EnumList<enum Ans> AnalysesList(cl::NoFlags,
   clEnumVal(intervals      , "Print Interval Partitions"),
   clEnumVal(exprclassify   , "Classify Expressions"),
   clEnumVal(instforest     , "Print Instruction Forest"),
+  clEnumVal(callgraph      , "Print Call Graph"),
 
   clEnumVal(domset         , "Print Dominator Sets"),
   clEnumVal(idom           , "Print Immediate Dominators"),
@@ -119,7 +126,7 @@ cl::EnumList<enum Ans> AnalysesList(cl::NoFlags,
 struct {
   enum Ans AnID;
   void (*AnPtr)(Method *M);
-} AnTable[] = {
+} MethAnTable[] = {
   { print          , PrintMethod              },
   { intervals      , PrintIntervalPartition   },
   { exprclassify   , PrintClassifiedExprs     },
@@ -136,6 +143,12 @@ struct {
   { postdomfrontier, PrintPostDomFrontier     },
 };
 
+pair<enum Ans, void (*)(Module *)> ModAnTable[] = {
+  pair<enum Ans, void (*)(Module *)>(callgraph      , PrintCallGraph),
+};
+
+
+
 int main(int argc, char **argv) {
   cl::ParseCommandLineOptions(argc, argv, " llvm analysis printer tool\n");
 
@@ -145,6 +158,22 @@ int main(int argc, char **argv) {
     return 1;
   }
 
+  // Loop over all of the analyses looking for module level analyses to run...
+  for (unsigned i = 0; i < AnalysesList.size(); ++i) {
+    enum Ans AnalysisPass = AnalysesList[i];
+
+    for (unsigned j = 0; j < sizeof(ModAnTable)/sizeof(ModAnTable[0]); ++j) {
+      if (ModAnTable[j].first == AnalysisPass) {
+        if (!Quiet)
+          cerr << "Running: " << AnalysesList.getArgDescription(AnalysisPass) 
+               << " analysis on module!\n";
+        ModAnTable[j].second(C);
+        AnalysesList[i] = PassDone;  // Mark pass as complete so that we don't
+        break;                       // get an error later
+      }
+    }
+  }  
+
   // Loop over all of the methods in the module...
   for (Module::iterator I = C->begin(), E = C->end(); I != E; ++I) {
     Method *M = *I;
@@ -152,19 +181,20 @@ int main(int argc, char **argv) {
 
     for (unsigned i = 0; i < AnalysesList.size(); ++i) {
       enum Ans AnalysisPass = AnalysesList[i];
+      if (AnalysisPass == PassDone) continue;  // Don't rerun module analyses
 
       // Loop over all of the analyses to be run...
       unsigned j;
-      for (j = 0; j < sizeof(AnTable)/sizeof(AnTable[0]); ++j) {
-	if (AnalysisPass == AnTable[j].AnID) {
+      for (j = 0; j < sizeof(MethAnTable)/sizeof(MethAnTable[0]); ++j) {
+	if (AnalysisPass == MethAnTable[j].AnID) {
 	  if (!Quiet)
 	    cerr << "Running: " << AnalysesList.getArgDescription(AnalysisPass) 
 		 << " analysis on '" << ((Value*)M)->getName() << "'!\n";
-	  AnTable[j].AnPtr(M);
+	  MethAnTable[j].AnPtr(M);
 	  break;
 	}
       }
-      if (j == sizeof(AnTable)/sizeof(AnTable[0])) 
+      if (j == sizeof(MethAnTable)/sizeof(MethAnTable[0])) 
 	cerr << "Analysis tables inconsistent!\n";
     }
   }
