@@ -1524,10 +1524,10 @@ void ISel::doMultiplyConst(MachineBasicBlock *MBB,
   }
   
   if (Class == cShort) {
-    BMI(MBB, IP, X86::IMULri16, 2, DestReg).addReg(op0Reg).addZImm(ConstRHS);
+    BMI(MBB, IP, X86::IMULrri16, 2, DestReg).addReg(op0Reg).addZImm(ConstRHS);
     return;
   } else if (Class == cInt) {
-    BMI(MBB, IP, X86::IMULri32, 2, DestReg).addReg(op0Reg).addZImm(ConstRHS);
+    BMI(MBB, IP, X86::IMULrri32, 2, DestReg).addReg(op0Reg).addZImm(ConstRHS);
     return;
   }
 

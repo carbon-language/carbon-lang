@@ -665,7 +665,7 @@ void Printer::printMachineInstruction(const MachineInstr *MI) {
     // like: add r32, r/m32
     //
     // 3 Operands: in this form, we can have 'INST R1, R2, imm', which is used
-    // for instructions like the IMULri instructions.
+    // for instructions like the IMULrri instructions.
     //
     //
     assert(MI->getOperand(0).isRegister() &&

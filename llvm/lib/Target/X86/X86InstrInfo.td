@@ -299,12 +299,20 @@ def SBBrr32  : I2A32<"sbb", 0x19, MRMDestReg>;                // R32 -= R32+Carr
 
 def IMULrr16 : I2A16<"imul", 0xAF, MRMSrcReg>, TB, OpSize, Pattern<(set R16, (times R16, R16))>;
 def IMULrr32 : I2A32<"imul", 0xAF, MRMSrcReg>, TB        , Pattern<(set R32, (times R32, R32))>;
+def IMULrm16 : I2A16<"imul", 0xAF, MRMSrcMem>, TB, OpSize;
+def IMULrm32 : I2A32<"imul", 0xAF, MRMSrcMem>, TB        ;
 
-// These are suprisingly enough not two addres instructions!
-def IMULri16 : X86Inst<"imul", 0x69, MRMSrcReg, Arg16>,     OpSize;
-def IMULri32 : X86Inst<"imul", 0x69, MRMSrcReg, Arg32>;
-def IMULri16b : X86Inst<"imul", 0x6B, MRMSrcReg, Arg8>,     OpSize;
-def IMULri32b : X86Inst<"imul", 0x6B, MRMSrcReg, Arg8>;
+
+// These are suprisingly enough not two address instructions!
+def IMULrri16  : X86Inst<"imul", 0x69, MRMSrcReg, Arg16>,     OpSize;  // R16 = R16*I16
+def IMULrri32  : X86Inst<"imul", 0x69, MRMSrcReg, Arg32>;              // R32 = R32*I32
+def IMULrri16b : X86Inst<"imul", 0x6B, MRMSrcReg, Arg8 >,     OpSize;  // R16 = R16*I8
+def IMULrri32b : X86Inst<"imul", 0x6B, MRMSrcReg, Arg8 >;              // R32 = R32*I8
+def IMULrmi16  : X86Inst<"imul", 0x69, MRMSrcMem, Arg16>,     OpSize;  // R16 = [mem16]*I16
+def IMULrmi32  : X86Inst<"imul", 0x69, MRMSrcMem, Arg32>;              // R32 = [mem32]*I32
+def IMULrmi16b : X86Inst<"imul", 0x6B, MRMSrcMem, Arg8 >,     OpSize;  // R16 = [mem16]*I8
+def IMULrmi32b : X86Inst<"imul", 0x6B, MRMSrcMem, Arg8 >;              // R32 = [mem32]*I8
+
 
 
 // Logical operators...

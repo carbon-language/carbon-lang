@@ -72,7 +72,7 @@ bool PH::PeepholeOptimize(MachineBasicBlock &MBB,
     // immediate despite the fact that the operands are 16 or 32 bits.  Because
     // this can save three bytes of code size (and icache space), we want to
     // shrink them if possible.
-  case X86::IMULri16: case X86::IMULri32:
+  case X86::IMULrri16: case X86::IMULrri32:
     assert(MI->getNumOperands() == 3 && "These should all have 3 operands!");
     if (MI->getOperand(2).isImmediate()) {
       int Val = MI->getOperand(2).getImmedValue();
@@ -81,13 +81,38 @@ bool PH::PeepholeOptimize(MachineBasicBlock &MBB,
         unsigned Opcode;
         switch (MI->getOpcode()) {
         default: assert(0 && "Unknown opcode value!");
-        case X86::IMULri16: Opcode = X86::IMULri16b; break;
-        case X86::IMULri32: Opcode = X86::IMULri32b; break;
+        case X86::IMULrri16: Opcode = X86::IMULrri16b; break;
+        case X86::IMULrri32: Opcode = X86::IMULrri32b; break;
         }
         unsigned R0 = MI->getOperand(0).getReg();
         unsigned R1 = MI->getOperand(1).getReg();
         I = MBB.insert(MBB.erase(I),
                        BuildMI(Opcode, 2, R0).addReg(R1).addZImm((char)Val));
+        return true;
+      }
+    }
+    return false;
+
+  case X86::IMULrmi16: case X86::IMULrmi32:
+    assert(MI->getNumOperands() == 6 && "These should all have 6 operands!");
+    if (MI->getOperand(5).isImmediate()) {
+      int Val = MI->getOperand(5).getImmedValue();
+      // If the value is the same when signed extended from 8 bits...
+      if (Val == (signed int)(signed char)Val) {
+        unsigned Opcode;
+        switch (MI->getOpcode()) {
+        default: assert(0 && "Unknown opcode value!");
+        case X86::IMULrmi16: Opcode = X86::IMULrmi16b; break;
+        case X86::IMULrmi32: Opcode = X86::IMULrmi32b; break;
+        }
+        unsigned R0 = MI->getOperand(0).getReg();
+        unsigned R1 = MI->getOperand(1).getReg();
+        unsigned Scale = MI->getOperand(2).getImmedValue();
+        unsigned R2 = MI->getOperand(3).getReg();
+        unsigned Offset = MI->getOperand(3).getImmedValue();
+        I = MBB.insert(MBB.erase(I),
+                       BuildMI(Opcode, 2, R0).addReg(R1).addZImm(Scale).
+                             addReg(R2).addSImm(Offset).addZImm((char)Val));
         return true;
       }
     }
