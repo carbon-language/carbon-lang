@@ -157,7 +157,7 @@ OutputReg(std::ostream &os, unsigned int regNum)
 
 std::ostream &operator<<(std::ostream& os, const MachineInstr& minstr)
 {
-  os << TargetInstrDescriptors[minstr.opCode].opCodeString;
+  os << TargetInstrDescriptors[minstr.opCode].Name;
   
   for (unsigned i=0, N=minstr.getNumOperands(); i < N; i++) {
     os << "\t" << minstr.getOperand(i);

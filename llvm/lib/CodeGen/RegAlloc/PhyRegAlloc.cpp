@@ -954,10 +954,10 @@ void PhyRegAlloc::printMachineCode()
 
     // iterate over all the machine instructions in BB
     for ( ; MII != MBB.end(); ++MII) {  
-      MachineInstr *const MInst = *MII; 
+      MachineInstr *MInst = *MII; 
 
       cerr << "\n\t";
-      cerr << TargetInstrDescriptors[MInst->getOpCode()].opCodeString;
+      cerr << TM.getInstrInfo().getName(MInst->getOpCode());
 
       for (unsigned OpNum=0; OpNum < MInst->getNumOperands(); ++OpNum) {
 	MachineOperand& Op = MInst->getOperand(OpNum);
