@@ -249,8 +249,13 @@ struct UltraSparcInstrInfo : public TargetInstrInfo {
 //----------------------------------------------------------------------------
 
 class UltraSparcRegInfo : public TargetRegInfo {
+public:
   // The actual register classes in the Sparc
   //
+  // **** WARNING: If this enum order is changed, also modify 
+  // getRegisterClassOfValue method below since it assumes this particular 
+  // order for efficiency.
+  // 
   enum RegClassIDs { 
     IntRegClassID,                      // Integer
     FloatRegClassID,                    // Float (both single/double)
@@ -259,10 +264,7 @@ class UltraSparcRegInfo : public TargetRegInfo {
     SpecialRegClassID                   // Special (unallocated) registers
   };
 
-  // **** WARNING: If the above enum order is changed, also modify 
-  // getRegisterClassOfValue method below since it assumes this particular 
-  // order for efficiency.
-
+private:
 
   // Number of registers used for passing int args (usually 6: %o0 - %o5)
   //
