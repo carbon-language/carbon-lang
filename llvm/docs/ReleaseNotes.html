@@ -136,23 +136,31 @@ were fixed:</a>
 
 <div class="doc_text">
 
-<p>Bugs fixed in the LLVM Core:</p>
 
+<p>Bugs fixed in the LLVM Core:</p>
 <ol>
-   <li><a href="http://llvm.cs.uiuc.edu/PR490">[cbackend] Logical constant 
-       expressions (and/or/xor) not implemented</a></li>
    <li><a href="http://llvm.cs.uiuc.edu/PR491">[dse] DSE deletes stores that 
        are partially overwritten by smaller stores</a></li>
 </ol>
 
-<p>Bugs in the C/C++ front-end:</p>
+<p>Code Generator Bugs:</p>
+<ol>
+   <li><a href="http://llvm.cs.uiuc.edu/PR490">[cbackend] Logical constant 
+       expressions (and/or/xor) not implemented</a></li>
+   <li><a href="http://llvm.cs.uiuc.edu/PR511">[cbackend] C backend does not 
+       respect 'volatile'</a></li>
+</ol>
 
+<p>Bugs in the C/C++ front-end:</p>
 <ol>
    <li><a href="http://llvm.cs.uiuc.edu/PR487">[llvmgcc] llvm-gcc incorrectly 
        rejects some constant initializers involving the addresses of array 
        elements</a></li>
    <li><a href="http://llvm.cs.uiuc.edu/PR501">[llvm-g++] Crash compiling 
        anonymous union</a></li>
+   <li><a href="http://llvm.cs.uiuc.edu/PR509">[llvm-g++] Do not use dynamic 
+       initialization where static init will do</a></li>
+   <li>
 </ol>
 
 </div>
