@@ -290,14 +290,13 @@ void PhyRegAlloc::buildInterferenceGraphs()
     // get the iterator for machine instructions
     //
     const MachineCodeForBasicBlock& MIVec = (*BBI)->getMachineInstrVec();
-    MachineCodeForBasicBlock::const_iterator 
-      MInstIterator = MIVec.begin();
+    MachineCodeForBasicBlock::const_iterator MII = MIVec.begin();
 
     // iterate over all the machine instructions in BB
     //
-    for( ; MInstIterator != MIVec.end(); ++MInstIterator) {  
+    for( ; MII != MIVec.end(); ++MII) {  
 
-      const MachineInstr *MInst = *MInstIterator; 
+      const MachineInstr *MInst = *MII; 
 
       // get the LV set after the instruction
       //
@@ -428,8 +427,6 @@ void PhyRegAlloc::addInterferencesForArgs() {
 }
 
 
-
-
 //----------------------------------------------------------------------------
 // This method is called after register allocation is complete to set the
 // allocated reisters in the machine code. This code will add register numbers
@@ -438,21 +435,79 @@ void PhyRegAlloc::addInterferencesForArgs() {
 // additional instructions produced by the register allocator to the 
 // instruction stream. 
 //----------------------------------------------------------------------------
+
+//-----------------------------
+// Utility functions used below
+//-----------------------------
+inline void
+PrependInstructions(std::deque<MachineInstr *> &IBef,
+                    MachineCodeForBasicBlock& MIVec,
+                    MachineCodeForBasicBlock::iterator& MII,
+                    const std::string& msg)
+{
+  if (!IBef.empty())
+    {
+      MachineInstr* OrigMI = *MII;
+      std::deque<MachineInstr *>::iterator AdIt; 
+      for (AdIt = IBef.begin(); AdIt != IBef.end() ; ++AdIt)
+        {
+          if (DEBUG_RA) {
+            if (OrigMI) cerr << "For MInst: " << *OrigMI;
+            cerr << msg << " PREPENDed instr: " << **AdIt << "\n";
+          }
+          MII = MIVec.insert(MII, *AdIt);
+          ++MII;
+        }
+    }
+}
+
+inline void
+AppendInstructions(std::deque<MachineInstr *> &IAft,
+                   MachineCodeForBasicBlock& MIVec,
+                   MachineCodeForBasicBlock::iterator& MII,
+                   const std::string& msg)
+{
+  if (!IAft.empty())
+    {
+      MachineInstr* OrigMI = *MII;
+      std::deque<MachineInstr *>::iterator AdIt; 
+      for( AdIt = IAft.begin(); AdIt != IAft.end() ; ++AdIt )
+        {
+          if(DEBUG_RA) {
+            if (OrigMI) cerr << "For MInst: " << *OrigMI;
+            cerr << msg << " APPENDed instr: "  << **AdIt << "\n";
+          }
+          ++MII;    // insert before the next instruction
+          MII = MIVec.insert(MII, *AdIt);
+        }
+    }
+}
+
+
 void PhyRegAlloc::updateMachineCode()
 {
-
+  const BasicBlock* entryBB = Meth->getEntryNode();
+  if (entryBB) {
+    MachineCodeForBasicBlock& MIVec = entryBB->getMachineInstrVec();
+    MachineCodeForBasicBlock::iterator MII = MIVec.begin();
+    
+    // Insert any instructions needed at method entry
+    PrependInstructions(AddedInstrAtEntry.InstrnsBefore, MIVec, MII,
+                        "At function entry: \n");
+    assert(AddedInstrAtEntry.InstrnsAfter.empty() &&
+           "InstrsAfter should be unnecessary since we are just inserting at "
+           "the function entry point here.");
+  }
+  
   for (Function::const_iterator BBI = Meth->begin(), BBE = Meth->end();
        BBI != BBE; ++BBI) {
-    // get the iterator for machine instructions
-    //
-    MachineCodeForBasicBlock& MIVec = (*BBI)->getMachineInstrVec();
-    MachineCodeForBasicBlock::iterator MInstIterator = MIVec.begin();
-
+    
     // iterate over all the machine instructions in BB
-    //
-    for( ; MInstIterator != MIVec.end(); ++MInstIterator) {  
+    MachineCodeForBasicBlock& MIVec = (*BBI)->getMachineInstrVec();
+    for(MachineCodeForBasicBlock::iterator MII = MIVec.begin();
+        MII != MIVec.end(); ++MII) {  
       
-      MachineInstr *MInst = *MInstIterator; 
+      MachineInstr *MInst = *MII; 
       
       unsigned Opcode =  MInst->getOpCode();
     
@@ -565,26 +620,9 @@ void PhyRegAlloc::updateMachineCode()
       // instruction, add them now.
       //      
       if(AddedInstrMap.count(MInst)) {
-	std::deque<MachineInstr *> &IBef = AddedInstrMap[MInst].InstrnsBefore;
-
-	if( ! IBef.empty() ) {
-	  std::deque<MachineInstr *>::iterator AdIt; 
-
-	  for( AdIt = IBef.begin(); AdIt != IBef.end() ; ++AdIt ) {
-
-	    if( DEBUG_RA) {
-	      cerr << "For inst " << *MInst;
-	      cerr << " PREPENDed instr: " << **AdIt << "\n";
-	    }
-	  	    
-	    MInstIterator = MIVec.insert( MInstIterator, *AdIt );
-	    ++MInstIterator;
-	  }
-
-	}
-
+        PrependInstructions(AddedInstrMap[MInst].InstrnsBefore, MIVec, MII,"");
       }
-
+      
       // If there are instructions to be added *after* this machine
       // instruction, add them now
       //
@@ -597,41 +635,15 @@ void PhyRegAlloc::updateMachineCode()
 	
 	unsigned delay;
 	if ((delay=TM.getInstrInfo().getNumDelaySlots(MInst->getOpCode())) >0){ 
-	  move2DelayedInstr(MInst,  *(MInstIterator+delay) );
+	  move2DelayedInstr(MInst,  *(MII+delay) );
 
 	  if(DEBUG_RA)  cerr<< "\nMoved an added instr after the delay slot";
 	}
        
 	else {
-	
-
 	  // Here we can add the "instructions after" to the current
 	  // instruction since there are no delay slots for this instruction
-
-	  std::deque<MachineInstr *> &IAft = AddedInstrMap[MInst].InstrnsAfter;
-	  
-	  if (!IAft.empty()) {
-	    ++MInstIterator;   // advance to the next instruction
-	    
-	    std::deque<MachineInstr *>::iterator AdIt; 
-	    for( AdIt = IAft.begin(); AdIt != IAft.end() ; ++AdIt ) {
-	      
-	      if(DEBUG_RA) {
-		cerr << "For inst " << *MInst;
-		cerr << " APPENDed instr: "  << **AdIt << "\n";
-	      }	      
-
-	      MInstIterator = MIVec.insert( MInstIterator, *AdIt );
-	      ++MInstIterator;
-	    }
-
-	    // MInsterator already points to the next instr. Since the
-	    // for loop also increments it, decrement it to point to the
-	    // instruction added last
-	    --MInstIterator;  
-	    
-	  }
-	  
+	  AppendInstructions(AddedInstrMap[MInst].InstrnsAfter, MIVec, MII,"");
 	}  // if not delay
 	
       }
@@ -944,11 +956,11 @@ void PhyRegAlloc::printMachineCode()
 
     // get the iterator for machine instructions
     MachineCodeForBasicBlock& MIVec = (*BBI)->getMachineInstrVec();
-    MachineCodeForBasicBlock::iterator MInstIterator = MIVec.begin();
+    MachineCodeForBasicBlock::iterator MII = MIVec.begin();
 
     // iterate over all the machine instructions in BB
-    for( ; MInstIterator != MIVec.end(); ++MInstIterator) {  
-      MachineInstr *const MInst = *MInstIterator; 
+    for( ; MII != MIVec.end(); ++MII) {  
+      MachineInstr *const MInst = *MII; 
 
       cerr << "\n\t";
       cerr << TargetInstrDescriptors[MInst->getOpCode()].opCodeString;
@@ -1063,7 +1075,7 @@ void PhyRegAlloc::colorIncomingArgs()
   const MachineInstr *FirstMI = FirstBB->getMachineInstrVec().front();
   assert(FirstMI && "No machine instruction in entry BB");
 
-  MRI.colorMethodArgs(Meth, LRI, &AddedInstrMap[FirstMI]);
+  MRI.colorMethodArgs(Meth, LRI, &AddedInstrAtEntry);
 }
 
 
