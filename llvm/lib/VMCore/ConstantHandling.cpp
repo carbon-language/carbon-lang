@@ -168,7 +168,7 @@ struct BoolRules : public TemplateRules<ConstPoolBool, BoolRules> {
 // different types.  This allows the C++ compiler to automatically generate our
 // constant handling operations in a typesafe and accurate manner.
 //
-template<class ConstPoolClass, class BuiltinType, const Type **Ty>
+template<class ConstPoolClass, class BuiltinType, Type **Ty>
 struct DirectRules 
   : public TemplateRules<ConstPoolClass, 
                          DirectRules<ConstPoolClass, BuiltinType, Ty> > {
