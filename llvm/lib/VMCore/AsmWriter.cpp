@@ -766,10 +766,7 @@ void AssemblyWriter::printGlobal(const GlobalVariable *GV) {
   if (GV->hasInitializer()) {
     Constant* C = cast<Constant>(GV->getInitializer());
     assert(C &&  "GlobalVar initializer isn't constant?");
-    if (isa<GlobalValue>(C))
-      writeOperand(GV->getInitializer(), false, true);
-    else
-      writeOperand(GV->getInitializer(), false, false);
+    writeOperand(GV->getInitializer(), false, isa<GlobalValue>(C));
   }
 
   printInfoComment(*GV);
