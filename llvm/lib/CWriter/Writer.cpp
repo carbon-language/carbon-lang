@@ -280,7 +280,7 @@ std::ostream &CWriter::printType(std::ostream &Out, const Type *Ty,
       ptrName = "(" + ptrName + ")";    // 
 
     return printType(Out, PTy->getElementType(), ptrName);
-  }Out <<"--";
+  }
 
   case Type::ArrayTyID: {
     const ArrayType *ATy = cast<ArrayType>(Ty);
