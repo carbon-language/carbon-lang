@@ -14,40 +14,52 @@
 #include "llvm/Analysis/Intervals.h"
 #include "llvm/Opt/AllOpts.h"
 #include "llvm/Assembly/Writer.h"
+#include "llvm/Tools/STLExtras.h"
 
-static void PrintIntervalInfo(cfg::Interval *I) {
-  cerr << "-------------------------------------------------------------\n"
-       << "Interval Contents:\n";
-  
-  // Print out all of the basic blocks in the interval...
-  copy(I->Nodes.begin(), I->Nodes.end(), 
-       ostream_iterator<BasicBlock*>(cerr, "\n"));
+static bool ProcessInterval(cfg::Interval *Int) {
+  if (!Int->isLoop()) return false;  // Not a loop?  Ignore it!
 
-  cerr << "Interval Predecessors:\n";
-  copy(I->Predecessors.begin(), I->Predecessors.end(), 
-       ostream_iterator<BasicBlock*>(cerr, "\n"));
-  
-  cerr << "Interval Successors:\n";
-  copy(I->Successors.begin(), I->Successors.end(), 
-       ostream_iterator<BasicBlock*>(cerr, "\n"));
+  cerr << "Found Looping Interval: " << Int; //->HeaderNode;
+  return false;
+}
+
+static bool ProcessIntervalPartition(cfg::IntervalPartition &IP) {
+  // This currently just prints out information about the interval structure
+  // of the method...
+  static unsigned N = 0;
+  cerr << "\n***********Interval Partition #" << (++N) << "************\n\n";
+  copy(IP.begin(), IP.end(), ostream_iterator<cfg::Interval*>(cerr, "\n"));
+
+  cerr << "\n*********** PERFORMING WORK ************\n\n";
+
+  // Loop over all of the intervals in the partition and look for induction
+  // variables in intervals that represent loops.
+  //
+  return reduce_apply(IP.begin(), IP.end(), bitwise_or<bool>(), false,
+		      ptr_fun(ProcessInterval));
 }
 
 // DoInductionVariableCannonicalize - Simplify induction variables in loops
 //
 bool DoInductionVariableCannonicalize(Method *M) {
-  cfg::IntervalPartition Intervals(M);
+  cfg::IntervalPartition *IP = new cfg::IntervalPartition(M);
+  bool Changed = false;
 
-  // This currently just prints out information about the interval structure
-  // of the method...
-  for_each(Intervals.begin(), Intervals.end(), PrintIntervalInfo);
+  while (!IP->isDegeneratePartition()) {
+    Changed |= ProcessIntervalPartition(*IP);
 
-  cerr << "*************Reduced Interval**************\n\n";
+    // Calculate the reduced version of this graph until we get to an 
+    // irreducible graph or a degenerate graph...
+    //
+    cfg::IntervalPartition *NewIP = new cfg::IntervalPartition(*IP, false);
+    if (NewIP->size() == IP->size()) {
+      cerr << "IRREDUCIBLE GRAPH FOUND!!!\n";
+      return Changed;
+    }
+    delete IP;
+    IP = NewIP;
+  }
 
-  cfg::IntervalPartition Intervals2(Intervals, false);
-  
-  // This currently just prints out information about the interval structure
-  // of the method...
-  for_each(Intervals2.begin(), Intervals2.end(), PrintIntervalInfo);
-
-  return false;
+  delete IP;
+  return Changed;
 }
