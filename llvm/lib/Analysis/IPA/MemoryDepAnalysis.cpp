@@ -1,4 +1,4 @@
-//===- MemoryDepAnalysis.cpp - Compute dep graph for memory ops --*-C++-*--===//
+//===- MemoryDepAnalysis.cpp - Compute dep graph for memory ops -----------===//
 // 
 //                     The LLVM Compiler Infrastructure
 //
@@ -14,15 +14,16 @@
 //
 // The result of this pass is a DependenceGraph for each function
 // representing the memory-based data dependences between instructions.
+//
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Analysis/MemoryDepAnalysis.h"
-#include "llvm/Analysis/IPModRef.h"
-#include "llvm/Analysis/DataStructure.h"
-#include "llvm/Analysis/DSGraph.h"
 #include "llvm/Module.h"
 #include "llvm/iMemory.h"
 #include "llvm/iOther.h"
+#include "llvm/Analysis/IPModRef.h"
+#include "llvm/Analysis/DataStructure.h"
+#include "llvm/Analysis/DSGraph.h"
 #include "llvm/Support/InstVisitor.h"
 #include "llvm/Support/CFG.h"
 #include "Support/SCCIterator.h"
