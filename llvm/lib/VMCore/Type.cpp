@@ -262,7 +262,7 @@ const std::string &Type::getDescription() const {
 
 bool StructType::indexValid(const Value *V) const {
   // Structure indexes require unsigned integer constants.
-  if (ConstantUInt *CU = dyn_cast<ConstantUInt>(V))
+  if (const ConstantUInt *CU = dyn_cast<ConstantUInt>(V))
     return CU->getValue() < ETypes.size();
   return false;
 }
