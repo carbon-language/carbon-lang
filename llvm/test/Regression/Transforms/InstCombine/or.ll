@@ -58,3 +58,14 @@ int %test10(int %A) {
 	ret int %B
 }
 
+int %test11(int %A) {    ; A ^ ~A == -1
+        %NotA = xor int -1, %A
+        %B = xor int %A, %NotA
+        ret int %B
+}
+
+int %test12(int %A) {    ; A | ~A == -1
+        %NotA = xor int -1, %A
+        %B = or int %A, %NotA
+        ret int %B
+}

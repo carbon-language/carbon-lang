@@ -35,3 +35,15 @@ int "test5"(int %A, int %Bok, int %Cok) {
 	%E = sub int %A, %D
 	ret int %E
 }
+
+int %test6(int %A, int %B) {
+	%C = and int %A, %B   ; A - (A & B) => A & ~B
+	%D = sub int %A, %C
+	ret int %D
+}
+
+int %test7(int %A) {
+	%B = sub int -1, %A   ; B = ~A
+	ret int %B
+}
+

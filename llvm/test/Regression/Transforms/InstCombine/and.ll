@@ -38,3 +38,8 @@ bool %test6(bool %A) {
 	ret bool %B
 }
 
+int %test7(int %A) {         ; A & ~A == 0
+        %NotA = xor int %A, -1
+        %B = and int %A, %NotA
+        ret int %B
+}

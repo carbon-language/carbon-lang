@@ -26,3 +26,12 @@ begin
 	ret int %B
 end
 
+double %test4(double %A) {
+	%B = mul double 1.0, %A   ; This is safe for FP
+	ret double %B
+}
+
+int %test5(int %A) {
+	%B = mul int %A, 8
+	ret int %B
+}
