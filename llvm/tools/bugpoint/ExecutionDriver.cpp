@@ -15,11 +15,11 @@ BUGPOINT NOTES:
 */
 
 #include "BugDriver.h"
-#include "Support/ToolRunner.h"
 #include "Support/CommandLine.h"
 #include "Support/Debug.h"
 #include "Support/FileUtilities.h"
 #include "Support/SystemUtils.h"
+#include "llvm/Support/ToolRunner.h"
 #include <fstream>
 #include <iostream>
 
