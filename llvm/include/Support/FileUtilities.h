@@ -137,11 +137,11 @@ public:
   /// specified (if deleteIt is true).
   ///
   class FileRemover {
-    bool DeleteIt; 
     std::string Filename;
+    bool DeleteIt;
   public:
-    FileRemover(bool deleteIt, const std::string &filename)
-      : DeleteIt(deleteIt), Filename(filename) {}
+    FileRemover(const std::string &filename, bool deleteIt = true)
+      : Filename(filename), DeleteIt(deleteIt) {}
     
     ~FileRemover() {
       if (DeleteIt) removeFile(Filename);
