@@ -84,12 +84,14 @@ public:
   
 private:
   // Bit fields of the flags variable used for different operand properties
-  static const char DEFFLAG    = 0x1;  // this is a def of the operand
-  static const char DEFUSEFLAG = 0x2;  // this is both a def and a use
-  static const char HIFLAG32   = 0x4;  // operand is %hi32(value_or_immedVal)
-  static const char LOFLAG32   = 0x8;  // operand is %lo32(value_or_immedVal)
+  static const char DEFFLAG    = 0x01; // this is a def of the operand
+  static const char DEFUSEFLAG = 0x02; // this is both a def and a use
+  static const char HIFLAG32   = 0x04; // operand is %hi32(value_or_immedVal)
+  static const char LOFLAG32   = 0x08; // operand is %lo32(value_or_immedVal)
   static const char HIFLAG64   = 0x10; // operand is %hi64(value_or_immedVal)
   static const char LOFLAG64   = 0x20; // operand is %lo64(value_or_immedVal)
+
+  static const char USEDEFMASK = 0x03;
   
 private:
   union {
@@ -203,6 +205,7 @@ public:
     return MBB;
   }
 
+  bool          opIsUse         () const { return (flags & USEDEFMASK) == 0; }
   bool		opIsDef		() const { return flags & DEFFLAG; }
   bool		opIsDefAndUse	() const { return flags & DEFUSEFLAG; }
   bool          opHiBits32      () const { return flags & HIFLAG32; }
