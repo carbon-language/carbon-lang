@@ -44,11 +44,10 @@ struct LazyFunctionInfo {
 };
 
 class BytecodeParser : public AbstractTypeUser, public AbstractModuleProvider {
-  unsigned char *Buffer;
   BytecodeParser(const BytecodeParser &);  // DO NOT IMPLEMENT
   void operator=(const BytecodeParser &);  // DO NOT IMPLEMENT
 public:
-  BytecodeParser() : Buffer(0) {
+  BytecodeParser() {
     // Define this in case we don't see a ModuleGlobalInfo block.
     FirstDerivedTyID = Type::FirstDerivedTyID;
   }
@@ -60,8 +59,6 @@ public:
     freeTable(Values);
     freeTable(LateResolveValues);
     freeTable(ModuleValues);
-    delete [] Buffer;
-    Buffer = 0;
   }
 
   Module* releaseModule() {
