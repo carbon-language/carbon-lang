@@ -311,8 +311,11 @@ These different primitive types fall into a few useful classifications:<p>
 <tr><td><a name="t_firstclass">first class</td><td><tt>bool, ubyte, sbyte, ushort, short,<br> uint, int, ulong, long, float, double, <a href="#t_pointer">pointer</a></tt></td></tr>
 </table><p>
 
-
-
+The <a href="#t_firstclass">first class</a> types are perhaps the most
+important.  Values of these types are the only ones which can be produced by
+instructions, passed as arguments, or used as operands to instructions.  This
+means that all structures and arrays must be manipulated either by pointer or by
+component.<p>
 
 
 <!-- ======================================================================= -->
@@ -1053,10 +1056,10 @@ Forum</a>.<p>
 boolean value based on a comparison of their two operands.<p>
 
 <h5>Arguments:</h5> The two arguments to the '<tt>set<i>cc</i></tt>'
-instructions must be of <a href="#t_firstclass">first class</a> or <a
-href="#t_pointer">pointer</a> type (it is not possible to compare
-'<tt>label</tt>'s, '<tt>array</tt>'s, '<tt>structure</tt>' or '<tt>void</tt>'
-values, etc...).  Both arguments must have identical types.<p>
+instructions must be of <a href="#t_firstclass">first class</a> type (it is not
+possible to compare '<tt>label</tt>'s, '<tt>array</tt>'s, '<tt>structure</tt>'
+or '<tt>void</tt>' values, etc...).  Both arguments must have identical
+types.<p>
 
 <h5>Semantics:</h5>
 
@@ -1601,7 +1604,9 @@ graph representing the function.<p>
 
 The type of the incoming values are specified with the first type field.  After
 this, the '<tt>phi</tt>' instruction takes a list of pairs as arguments, with
-one pair for each predecessor basic block of the current block.<p>
+one pair for each predecessor basic block of the current block.  Only values of
+<a href="#t_firstclass">first class</a> type may be used as the value arguments
+to the PHI node.  Only labels be used as the label arguments.<p>
 
 There must be no non-phi instructions between the start of a basic block and the
 PHI instructions: i.e. PHI instructions must be first in a basic block.<p>
@@ -1639,7 +1644,8 @@ casting pointers).<p>
 <h5>Arguments:</h5>
 
 The '<tt>cast</tt>' instruction takes a value to cast, which must be a first
-class value, and a type to cast it to, which must also be a first class type.<p>
+class value, and a type to cast it to, which must also be a <a
+href="#t_firstclass">first class</a> type.<p>
 
 <h5>Semantics:</h5>
 
@@ -1951,7 +1957,7 @@ arbitrarily complex and require memory allocation, for example.<p>
 <br>
 <!-- Created: Tue Jan 23 15:19:28 CST 2001 -->
 <!-- hhmts start -->
-Last modified: Mon Oct 27 12:00:00 CDT 2003
+Last modified: Wed Oct 29 19:30:46 CST 2003
 <!-- hhmts end -->
 </font>
 </body></html>
