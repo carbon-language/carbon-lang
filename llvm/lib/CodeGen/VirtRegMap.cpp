@@ -45,8 +45,7 @@ namespace {
                cl::values(clEnumVal(simple, "  simple spiller"),
                           clEnumVal(local,  "  local spiller"),
                           0),
-//               cl::init(local));
-               cl::init(simple));
+               cl::init(local));
 }
 
 int VirtRegMap::assignVirt2StackSlot(unsigned virtReg)
