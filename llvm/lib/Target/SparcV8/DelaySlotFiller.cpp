@@ -54,6 +54,17 @@ FunctionPass *llvm::createSparcV8DelaySlotFillerPass (TargetMachine &tm) {
 
 static bool hasDelaySlot (unsigned Opcode) {
   switch (Opcode) {
+    case V8::BA:
+    case V8::BCC:
+    case V8::BCS:
+    case V8::BE:
+    case V8::BG:
+    case V8::BGE:
+    case V8::BGU:
+    case V8::BL:
+    case V8::BLE:
+    case V8::BLEU:
+    case V8::BNE:
     case V8::CALL:
     case V8::RETL:
       return true;
