@@ -8,10 +8,16 @@
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Target/TargetMachineImpls.h"
 #include "llvm/CodeGen/MachineFunction.h"
-#include "Support/Statistic.h"
 #include "llvm/PassManager.h"
 #include "X86.h"
+#include "Support/CommandLine.h"
+#include "Support/Statistic.h"
 #include <iostream>
+
+namespace {
+  cl::opt<bool> UseLocalRA("local-ra",
+                           cl::desc("Use Local RegAlloc instead of Simple RA"));
+}
 
 // allocateX86TargetMachine - Allocate and return a subclass of TargetMachine
 // that implements the X86 backend.
@@ -43,7 +49,10 @@ bool X86TargetMachine::addPassesToJITCompile(PassManager &PM) {
   DEBUG(PM.add(createMachineFunctionPrinterPass()));
 
   // Perform register allocation to convert to a concrete x86 representation
-  PM.add(createSimpleRegisterAllocator(*this));
+  if (UseLocalRA)
+    PM.add(createLocalRegisterAllocator(*this));
+  else
+    PM.add(createSimpleRegisterAllocator(*this));
 
   // Print the instruction selected machine code...
   // PM.add(createMachineFunctionPrinterPass());
