@@ -109,7 +109,6 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
 
     // join intervals if requested
     if (EnableJoining) joinIntervals();
-    //DEBUG(mf_->viewCFG());
 
     numIntervalsAfter += intervals_.size();
 
@@ -581,13 +580,44 @@ void LiveIntervals::joinIntervalsInMachineBB(MachineBasicBlock *MBB) {
     }
 }
 
-void LiveIntervals::joinIntervals()
-{
-    DEBUG(std::cerr << "********** JOINING INTERVALS ***********\n");
+namespace {
+  // DepthMBBCompare - Comparison predicate that sort first based on the loop
+  // depth of the basic block (the unsigned), and then on the MBB number.
+  struct DepthMBBCompare {
+    typedef std::pair<unsigned, MachineBasicBlock*> DepthMBBPair;
+    bool operator()(const DepthMBBPair &LHS, const DepthMBBPair &RHS) const {
+      if (LHS.first > RHS.first) return true;   // Deeper loops first
+      return LHS.first == RHS.first && 
+             LHS.second->getNumber() < RHS.second->getNumber();
+    }
+  };
+}
 
+void LiveIntervals::joinIntervals() {
+  DEBUG(std::cerr << "********** JOINING INTERVALS ***********\n");
+
+  const LoopInfo &LI = getAnalysis<LoopInfo>();
+  if (LI.begin() == LI.end()) {
+    // If there are no loops in the function, join intervals in function order.
     for (MachineFunction::iterator I = mf_->begin(), E = mf_->end();
          I != E; ++I)
       joinIntervalsInMachineBB(I);
+  } else {
+    // Otherwise, join intervals in inner loops before other intervals.
+    // Unfortunately we can't just iterate over loop hierarchy here because
+    // there may be more MBB's than BB's.  Collect MBB's for sorting.
+    std::vector<std::pair<unsigned, MachineBasicBlock*> > MBBs;
+    for (MachineFunction::iterator I = mf_->begin(), E = mf_->end();
+         I != E; ++I)
+      MBBs.push_back(std::make_pair(LI.getLoopDepth(I->getBasicBlock()), I));
+
+    // Sort by loop depth.
+    std::sort(MBBs.begin(), MBBs.end(), DepthMBBCompare());
+
+    // Finally, join intervals in loop nest order. 
+    for (unsigned i = 0, e = MBBs.size(); i != e; ++i)
+      joinIntervalsInMachineBB(MBBs[i].second);
+  }
 }
 
 bool LiveIntervals::overlapsAliases(const LiveInterval& lhs,
