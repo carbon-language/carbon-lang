@@ -127,8 +127,32 @@ In this release, the following build problems were fixed:
 </div>
 
 <ol>
-<li><a href="http://llvm.cs.uiuc.edu/PR309">[vmcore] Code quality problem due to long operand of getelementptr</a></li>
-<li>The X86 backend now generates substantially better code for 64-bit integer operations.</li>
+<li><a href="http://llvm.cs.uiuc.edu/PR309">[vmcore] Code quality problem due to
+long operand of getelementptr</a></li>
+
+<li>The X86 backend now generates substantially better code for 64-bit integer
+and floating point operations.</li>
+
+<li>The -inline pass no longer inlines mutually recursive functions until it
+hits the inlining threshold.</li>
+
+<li>The -inline pass no longer misses obvious inlining opportunities just
+because the callee eventually calls into an external function.</li>
+
+<li>The -simplifycfg pass can now "if convert" simple statements into the new
+<tt>select</tt> instruction.</li>
+
+<li>The -loopsimplify pass can now break <a
+href="http://llvm.cs.uiuc.edu/PR35">natural loops with multiple backedges</a>
+into multiple nested loops.  This enables a variety of subsequent
+optimizations.</li>
+
+<li>The -adce pass can now eliminate calls to functions that do not not write to
+memory.</li>
+
+<li>The link-time optimizer now runs the -prune-eh pass (to remove unused
+exception handlers.</li>
+
 </ol>
 
 
