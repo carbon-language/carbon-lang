@@ -72,7 +72,13 @@ inline bool operator!=(const MallocAllocator<T>&, const MallocAllocator<T>&) {
 }
 } // End llvm namespace
 
-#if defined(__linux__) && !(defined (sparc) || defined (_sparc))
+/*
+ * This specialization was used for optimization earlier, but doesn't appear
+ * to work with newer versions of GCC, Linux or otherwise.
+ *
+ * This can be re-enabled if desired, but by default, it won't be included.
+ */ 
+#if 0
 namespace std {
   template<typename Type, typename Type2>
   struct _Alloc_traits<Type, ::llvm::MallocAllocator<Type2> > {
