@@ -14,8 +14,7 @@
 #include "X86.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
-
-namespace llvm {
+using namespace llvm;
 
 namespace {
   struct PH : public MachineFunctionPass {
@@ -28,7 +27,7 @@ namespace {
   };
 }
 
-FunctionPass *createX86PeepholeOptimizerPass() { return new PH(); }
+FunctionPass *llvm::createX86PeepholeOptimizerPass() { return new PH(); }
 
 bool PH::runOnMachineFunction(MachineFunction &MF) {
   bool Changed = false;
@@ -134,4 +133,3 @@ bool PH::PeepholeOptimize(MachineBasicBlock &MBB,
   }
 }
 
-} // End llvm namespace
