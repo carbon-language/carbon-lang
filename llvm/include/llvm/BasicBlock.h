@@ -133,13 +133,6 @@ public:
     return V->getValueType() == Value::BasicBlockVal;
   }
 
-  /// hasConstantReferences() - This predicate is true if there is a 
-  /// reference to this basic block in the constant pool for this method.  For
-  /// example, if a block is reached through a switch table, that table resides
-  /// in the constant pool, and the basic block is reference from it.
-  ///
-  bool hasConstantReferences() const;
-
   /// dropAllReferences() - This function causes all the subinstructions to "let
   /// go" of all references that they are maintaining.  This allows one to
   /// 'delete' a whole class at a time, even though there may be circular
