@@ -272,6 +272,21 @@ LIBTOOL=$(LLVM_SRC_ROOT)/mklib --silent
 endif
 
 #
+# If we're not building a shared library, use the disable-shared tag with
+# libtool.  This will disable the building of objects for shared libraries and
+# only generate static library objects.
+#
+# For dynamic libraries, we'll take the performance hit for now, since we
+# almost never build them.
+#
+# This should speed up compilation and require no modifications to future
+# versions of libtool.
+#
+ifndef SHARED_LIBRARY
+LIBTOOL := $(LIBTOOL) --tag=disable-shared
+endif
+
+#
 # Verbosity levels
 #
 ifndef VERBOSE
@@ -323,18 +338,6 @@ CompileOptimizeOpts := -O3 -DNDEBUG -finline-functions -fshort-enums
 Compile  := $(LIBTOOL) --mode=compile $(CXX) -c $(CPPFLAGS) $(CXXFLAGS) $(CompileCommonOpts)
 CompileC  := $(LIBTOOL) --mode=compile $(CC) -c $(CPPFLAGS) $(CCFLAGS) $(CompileCommonOpts)
 
-#
-# Add the LLVM specific "-only-static" option so that we only compile .o files
-# once when not building a shared library.
-#
-# For shared libraries, we will end up building twice, but that doesn't happen
-# very often, so we'll let it go.
-#
-ifndef SHARED_LIBRARY
-Compile  := $(Compile)  -only-static
-CompileC := $(CompileC) -only-static
-endif
-
 # Compile a cpp file, don't link...
 CompileG := $(Compile) -g  -D_DEBUG
 CompileO := $(Compile) $(CompileOptimizeOpts) -felide-constructors -fomit-frame-pointer
@@ -365,7 +368,11 @@ LinkO    := $(Link) -O3 -L$(PROJLIBRELEASESOURCE) -L$(LLVMLIBRELEASESOURCE)
 LinkP    := $(Link) -O3 -L$(PROJLIBPROFILESOURCE) -L$(LLVMLIBPROFILESOURCE) $(PROFILE)
 
 # Create one .o file from a bunch of .o files...
+#ifdef SHARED_LIBRARY
 Relink = ${LIBTOOL} --mode=link $(CXX)
+#else
+Relink = ${LIBTOOL} --mode=link $(CXX) -only-static
+#endif
 
 # MakeSO - Create a .so file from a .o files...
 #MakeSO   := $(LIBTOOL) --mode=link $(CXX) $(MakeSharedObjectOption)
@@ -400,10 +407,21 @@ ifndef Source
 Source  := $(ExtraSource) $(wildcard *.cpp *.c *.y *.l)
 endif
 
+#
+# Libtool Objects
+#
 Objs := $(sort $(patsubst Debug/%.lo, %.lo, $(addsuffix .lo,$(notdir $(basename $(Source))))))
 ObjectsO := $(addprefix $(BUILD_OBJ_DIR)/Release/,$(Objs))
 ObjectsP := $(addprefix $(BUILD_OBJ_DIR)/Profile/,$(Objs))
 ObjectsG := $(addprefix $(BUILD_OBJ_DIR)/Debug/,$(Objs))
+
+#
+# The real objects underlying the libtool objects
+#
+RObjs := $(sort $(patsubst Debug/%.o, %.o, $(addsuffix .o,$(notdir $(basename $(Source))))))
+RObjectsO := $(addprefix $(BUILD_OBJ_DIR)/Release/,$(RObjs))
+RObjectsP := $(addprefix $(BUILD_OBJ_DIR)/Profile/,$(RObjs))
+RObjectsG := $(addprefix $(BUILD_OBJ_DIR)/Debug/,$(RObjs))
 
 #---------------------------------------------------------
 # Handle the DIRS and PARALLEL_DIRS options
@@ -536,17 +554,28 @@ $(LIBNAME_AG): $(ObjectsG) $(LibSubDirs) $(DESTLIBDEBUG)/.dir
 #
 # Rules for building .o libraries.
 #
+#	JTC:
+#	Note that for this special case, we specify the actual object files
+#	instead of their libtool counterparts.  This is because libtool
+#	doesn't want to generate a reloadable object file unless it is given
+#	.o files explicitly.
+#
+#	Note that we're making an assumption here: If we build a .lo file,
+#	it's corresponding .o file will be placed in the same directory.
+#
+#	I think that is safe.
+#
 $(LIBNAME_OBJO): $(ObjectsO) $(LibSubDirs) $(DESTLIBRELEASE)/.dir
 	@echo "Linking $@"
-	$(VERB) $(Relink) -o $@ $(ObjectsO) $(LibSubDirs)
+	$(VERB) $(Relink) -o $@ $(RObjectsO) $(LibSubDirs)
 
 $(LIBNAME_OBJP): $(ObjectsP) $(LibSubDirs) $(DESTLIBPROFILE)/.dir
 	@echo "Linking $@"
-	$(VERB) $(Relink) -o $@ $(ObjectsP) $(LibSubDirs)
+	$(VERB) $(Relink) -o $@ $(RObjectsP) $(LibSubDirs)
 
 $(LIBNAME_OBJG): $(ObjectsG) $(LibSubDirs) $(DESTLIBDEBUG)/.dir
 	@echo "Linking $@"
-	$(VERB) $(Relink) -o $@ $(ObjectsG) $(LibSubDirs)
+	$(VERB) $(Relink) -o $@ $(RObjectsG) $(LibSubDirs)
 
 endif
 
@@ -788,13 +817,6 @@ distclean:: clean
 #
 SourceBaseNames := $(basename $(notdir $(filter-out Debug/%, $(Source))))
 SourceDepend := $(SourceBaseNames:%=$(BUILD_OBJ_DIR)/Depend/%.d)
-
-#
-# Depend target:
-#	This allows a user to manually ask for an update in the dependencies
-#
-depend: $(SourceDepend)
-
 
 # Create dependencies for the *.cpp files...
 #$(SourceDepend): \x
