@@ -83,8 +83,7 @@ static inline bool isZeroConst (Value *V) {
 bool llvm::DecomposeArrayRef(GetElementPtrInst* GEP) {
   if (GEP->getNumIndices() < 2
       || (GEP->getNumIndices() == 2
-          && isZeroConst(GEP->getOperand(1))
-          && isa<ConstantInt>(GEP->getOperand(2)))) {
+          && isZeroConst(GEP->getOperand(1)))) {
     DEBUG (std::cerr << "DecomposeArrayRef: Skipping " << *GEP);
     return false;
   } else {
