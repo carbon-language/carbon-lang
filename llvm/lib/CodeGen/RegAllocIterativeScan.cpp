@@ -19,7 +19,6 @@
 
 #define DEBUG_TYPE "regalloc"
 #include "llvm/Function.h"
-#include "llvm/CodeGen/LiveVariables.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/Passes.h"
@@ -68,7 +67,6 @@ namespace {
     }
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-      AU.addRequired<LiveVariables>();
       AU.addRequired<LiveIntervals>();
       MachineFunctionPass::getAnalysisUsage(AU);
     }
