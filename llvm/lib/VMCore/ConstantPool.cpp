@@ -6,199 +6,43 @@
 
 #define __STDC_LIMIT_MACROS           // Get defs for INT64_MAX and friends...
 #include "llvm/ConstPoolVals.h"
-#include "llvm/ConstantPool.h"
 #include "llvm/Support/StringExtras.h"  // itostr
 #include "llvm/DerivedTypes.h"
 #include "llvm/SymbolTable.h"
 #include <algorithm>
 #include <assert.h>
 
-//===----------------------------------------------------------------------===//
-//                             ConstantPool Class
-//===----------------------------------------------------------------------===//
+ConstPoolBool *ConstPoolBool::True  = new ConstPoolBool(true);
+ConstPoolBool *ConstPoolBool::False = new ConstPoolBool(false);
 
-void ConstantPool::setParent(SymTabValue *STV) {
-  Parent = STV;
-  for (unsigned i = 0; i < Planes.size(); i++)
-    Planes[i]->setParent(Parent);  
-}
-
-const Value *ConstantPool::getParentV() const { return Parent->getSTVParent(); }
-Value *ConstantPool::getParentV() { return Parent->getSTVParent(); }
-
-
-
-// Constant getPlane - Returns true if the type plane does not exist, otherwise
-// updates the pointer to point to the correct plane.
-//
-bool ConstantPool::getPlane(const Type *T, const PlaneType *&Plane) const {
-  unsigned Ty = T->getUniqueID();
-  if (Ty >= Planes.size()) return true;
-  Plane = Planes[Ty];
-  return false;
-}
-
-// Constant getPlane - Returns true if the type plane does not exist, otherwise
-// updates the pointer to point to the correct plane.
-//
-bool ConstantPool::getPlane(const Type *T, PlaneType *&Plane) {
-  unsigned Ty = T->getUniqueID();
-  if (Ty >= Planes.size()) return true;
-  Plane = Planes[Ty];
-  return false;
-}
-
-void ConstantPool::resize(unsigned size) {
-  unsigned oldSize = Planes.size();
-  Planes.resize(size, 0);
-  while (oldSize < size)
-    Planes[oldSize++] = new PlaneType(Parent, Parent);
-}
-
-ConstantPool::PlaneType &ConstantPool::getPlane(const Type *T) {
-  unsigned Ty = T->getUniqueID();
-  if (Ty >= Planes.size()) resize(Ty+1);
-  return *Planes[Ty];
-}
-
-// insert - Add constant into the symbol table...
-void ConstantPool::insert(ConstPoolVal *N) {
-  unsigned Ty = N->getType()->getUniqueID();
-  if (Ty >= Planes.size()) resize(Ty+1);
-  Planes[Ty]->push_back(N);
-}
-
-bool ConstantPool::remove(ConstPoolVal *N) {
-  unsigned Ty = N->getType()->getUniqueID();
-  if (Ty >= Planes.size()) return true;     // Doesn't contain any of that type
-
-  PlaneType::iterator I = ::find(Planes[Ty]->begin(), Planes[Ty]->end(), N);
-  if (I == Planes[Ty]->end()) return true;
-  Planes[Ty]->remove(I);
-  return false;
-}
-
-void ConstantPool::delete_all() {
-  dropAllReferences();
-  for (unsigned i = 0; i < Planes.size(); i++) {
-    Planes[i]->delete_all();
-    Planes[i]->setParent(0);
-    delete Planes[i];
-  }
-  Planes.clear();
-}
-
-void ConstantPool::dropAllReferences() {
-  for (unsigned i = 0; i < Planes.size(); i++)
-    for_each(Planes[i]->begin(), Planes[i]->end(),
-	     mem_fun(&ConstPoolVal::dropAllReferences));
-}
-
-struct EqualsConstant {
-  const ConstPoolVal *v;
-  inline EqualsConstant(const ConstPoolVal *V) { v = V; }
-  inline bool operator()(const ConstPoolVal *V) const {
-    return v->equals(V);
-  }
-};
-
-
-ConstPoolVal *ConstantPool::find(const ConstPoolVal *V) {
-  const PlaneType *P;
-  if (getPlane(V->getType(), P)) return 0;
-  PlaneType::const_iterator PI = find_if(P->begin(), P->end(), 
-					 EqualsConstant(V));
-  if (PI == P->end()) return 0;
-  return *PI;
-}
-
-const ConstPoolVal *ConstantPool::find(const ConstPoolVal *V) const {
-  const PlaneType *P;
-  if (getPlane(V->getType(), P)) return 0;
-  PlaneType::const_iterator PI = find_if(P->begin(), P->end(), 
-					 EqualsConstant(V));
-  if (PI == P->end()) return 0;
-  return *PI;
-}
-
-ConstPoolVal *ConstantPool::find(const Type *Ty) {
-  const PlaneType *P;
-  if (getPlane(Type::TypeTy, P)) return 0;
-
-  // TODO: This is kinda silly
-  ConstPoolType V(Ty);
-
-  PlaneType::const_iterator PI = 
-    find_if(P->begin(), P->end(), EqualsConstant(&V));
-  if (PI == P->end()) return 0;
-  return *PI;
-}
-
-const ConstPoolVal *ConstantPool::find(const Type *Ty) const {
-  const PlaneType *P;
-  if (getPlane(Type::TypeTy, P)) return 0;
-
-  // TODO: This is kinda silly
-  ConstPoolType V(Ty);
-
-  PlaneType::const_iterator PI = 
-    find_if(P->begin(), P->end(), EqualsConstant(&V));
-  if (PI == P->end()) return 0;
-  return *PI;
-}
-
-struct EqualsType {
-  const Type *T;
-  inline EqualsType(const Type *t) { T = t; }
-  inline bool operator()(const ConstPoolVal *CPV) const {
-    return static_cast<const ConstPoolType*>(CPV)->getValue() == T;
-  }
-};
-
-// ensureTypeAvailable - This is used to make sure that the specified type is
-// in the constant pool.  If it is not already in the constant pool, it is
-// added.
-//
-const Type *ConstantPool::ensureTypeAvailable(const Type *Ty) {
-  // Get the type type plane...
-  PlaneType &P = getPlane(Type::TypeTy);
-  PlaneType::const_iterator PI = find_if(P.begin(), P.end(), EqualsType(Ty));
-					 
-  if (PI == P.end()) {
-    ConstPoolVal *CPT = new ConstPoolType(Ty);
-    insert(CPT);
-  }
-  return Ty;
-}
 
 //===----------------------------------------------------------------------===//
 //                              ConstPoolVal Class
 //===----------------------------------------------------------------------===//
 
 // Specialize setName to take care of symbol table majik
-void ConstPoolVal::setName(const string &name) {
-  SymTabValue *P;
-  if ((P = getParent()) && hasName()) P->getSymbolTable()->remove(this);
-  Value::setName(name);
-  if (P && hasName()) P->getSymbolTable()->insert(this);
+void ConstPoolVal::setName(const string &Name, SymbolTable *ST) {
+  assert(ST && "Type::setName - Must provide symbol table argument!");
+
+  if (Name.size()) ST->insert(Name, this);
 }
 
 // Static constructor to create a '0' constant of arbitrary type...
 ConstPoolVal *ConstPoolVal::getNullConstant(const Type *Ty) {
   switch (Ty->getPrimitiveID()) {
-  case Type::BoolTyID:   return new ConstPoolBool(false);
+  case Type::BoolTyID:   return ConstPoolBool::get(false);
   case Type::SByteTyID:
   case Type::ShortTyID:
   case Type::IntTyID:
-  case Type::LongTyID:   return new ConstPoolSInt(Ty, 0);
+  case Type::LongTyID:   return ConstPoolSInt::get(Ty, 0);
 
   case Type::UByteTyID:
   case Type::UShortTyID:
   case Type::UIntTyID:
-  case Type::ULongTyID:  return new ConstPoolUInt(Ty, 0);
+  case Type::ULongTyID:  return ConstPoolUInt::get(Ty, 0);
 
   case Type::FloatTyID:
-  case Type::DoubleTyID: return new ConstPoolFP(Ty, 0);
+  case Type::DoubleTyID: return ConstPoolFP::get(Ty, 0);
   default:
     return 0;
   }
@@ -213,99 +57,47 @@ ConstPoolVal *ConstPoolVal::getNullConstant(const Type *Ty) {
 //===----------------------------------------------------------------------===//
 //                             Normal Constructors
 
-ConstPoolBool::ConstPoolBool(bool V, const string &Name = "") 
-  : ConstPoolVal(Type::BoolTy, Name) {
+ConstPoolBool::ConstPoolBool(bool V) : ConstPoolVal(Type::BoolTy) {
   Val = V;
 }
-ConstPoolBool::ConstPoolBool(const Type *Ty, bool V, const string &Name = "") 
-  : ConstPoolVal(Type::BoolTy, Name) {
-  Val = V;
-  assert(Ty == Type::BoolTy && "BoolTy is only valid type for bool constant");
+
+ConstPoolInt::ConstPoolInt(const Type *Ty, uint64_t V) : ConstPoolVal(Ty) {
+  Val.Unsigned = V;
 }
 
-ConstPoolInt::ConstPoolInt(const Type *Ty, uint64_t V, const string &Name)
-  : ConstPoolVal(Ty, Name) { Val.Unsigned = V; }
-ConstPoolInt::ConstPoolInt(const Type *Ty, int64_t V, const string &Name)
-  : ConstPoolVal(Ty, Name) { Val.Signed = V; }
-
-ConstPoolSInt::ConstPoolSInt(const Type *Ty, int64_t V, const string &Name)
-  : ConstPoolInt(Ty, V, Name) {
-  //cerr << "value = " << (int)V << ": " << Ty->getName() << endl;
+ConstPoolSInt::ConstPoolSInt(const Type *Ty, int64_t V) : ConstPoolInt(Ty, V) {
   assert(isValueValidForType(Ty, V) && "Value too large for type!");
 }
 
-ConstPoolUInt::ConstPoolUInt(const Type *Ty, uint64_t V, const string &Name)
-  : ConstPoolInt(Ty, V, Name) {
-  //cerr << "Uvalue = " << (int)V << ": " << Ty->getName() << endl;
+ConstPoolUInt::ConstPoolUInt(const Type *Ty, uint64_t V) : ConstPoolInt(Ty, V) {
   assert(isValueValidForType(Ty, V) && "Value too large for type!");
 }
 
-ConstPoolFP::ConstPoolFP(const Type *Ty, double V, const string &Name)
-  : ConstPoolVal(Ty, Name) {
+ConstPoolFP::ConstPoolFP(const Type *Ty, double V) : ConstPoolVal(Ty) {
   assert(isValueValidForType(Ty, V) && "Value too large for type!");
   Val = V;
 }
 
-ConstPoolType::ConstPoolType(const Type *V, const string &Name) 
-  : ConstPoolVal(Type::TypeTy, Name), Val(V) {
-}
-
-ConstPoolArray::ConstPoolArray(const ArrayType *T, 
-			       vector<ConstPoolVal*> &V, 
-			       const string &Name)
-  : ConstPoolVal(T, Name) {
+ConstPoolArray::ConstPoolArray(const ArrayType *T,
+			       const vector<ConstPoolVal*> &V)
+  : ConstPoolVal(T) {
   for (unsigned i = 0; i < V.size(); i++) {
     assert(V[i]->getType() == T->getElementType());
     Operands.push_back(Use(V[i], this));
   }
 }
 
-ConstPoolStruct::ConstPoolStruct(const StructType *T, 
-				 vector<ConstPoolVal*> &V, 
-				 const string &Name)
-  : ConstPoolVal(T, Name) {
+ConstPoolStruct::ConstPoolStruct(const StructType *T,
+				 const vector<ConstPoolVal*> &V)
+  : ConstPoolVal(T) {
   const StructType::ElementTypes &ETypes = T->getElementTypes();
-
+  
   for (unsigned i = 0; i < V.size(); i++) {
     assert(V[i]->getType() == ETypes[i]);
     Operands.push_back(Use(V[i], this));
   }
 }
 
-
-//===----------------------------------------------------------------------===//
-//                               Copy Constructors
-
-ConstPoolBool::ConstPoolBool(const ConstPoolBool &CPB)
-  : ConstPoolVal(Type::BoolTy) {
-  Val = CPB.Val;
-}
-
-ConstPoolInt::ConstPoolInt(const ConstPoolInt &CPI)
-  : ConstPoolVal(CPI.getType()) {
-  Val.Signed = CPI.Val.Signed;
-}
-
-ConstPoolFP::ConstPoolFP(const ConstPoolFP &CPFP)
-  : ConstPoolVal(CPFP.getType()) {
-  Val = CPFP.Val;
-}
-
-ConstPoolType::ConstPoolType(const ConstPoolType &CPT) 
-  : ConstPoolVal(Type::TypeTy), Val(CPT.Val) {
-}
-
-ConstPoolArray::ConstPoolArray(const ConstPoolArray &CPA)
-  : ConstPoolVal(CPA.getType()) {
-  for (unsigned i = 0; i < CPA.Operands.size(); i++)
-    Operands.push_back(Use(CPA.Operands[i], this));
-}
-
-ConstPoolStruct::ConstPoolStruct(const ConstPoolStruct &CPS)
-  : ConstPoolVal(CPS.getType()) {
-  for (unsigned i = 0; i < CPS.Operands.size(); i++)
-    Operands.push_back(Use(CPS.Operands[i], this));
-}
 
 //===----------------------------------------------------------------------===//
 //                          getStrValue implementations
@@ -326,17 +118,13 @@ string ConstPoolFP::getStrValue() const {
   return ftostr(Val);
 }
 
-string ConstPoolType::getStrValue() const {
-  return Val->getName();
-}
-
 string ConstPoolArray::getStrValue() const {
   string Result = "[";
   if (Operands.size()) {
-    Result += " " + Operands[0]->getType()->getName() + 
+    Result += " " + Operands[0]->getType()->getDescription() + 
 	      " " + Operands[0]->castConstantAsserting()->getStrValue();
     for (unsigned i = 1; i < Operands.size(); i++)
-      Result += ", " + Operands[i]->getType()->getName() + 
+      Result += ", " + Operands[i]->getType()->getDescription() + 
 	         " " + Operands[i]->castConstantAsserting()->getStrValue();
   }
 
@@ -346,61 +134,14 @@ string ConstPoolArray::getStrValue() const {
 string ConstPoolStruct::getStrValue() const {
   string Result = "{";
   if (Operands.size()) {
-    Result += " " + Operands[0]->getType()->getName() + 
+    Result += " " + Operands[0]->getType()->getDescription() + 
 	      " " + Operands[0]->castConstantAsserting()->getStrValue();
     for (unsigned i = 1; i < Operands.size(); i++)
-      Result += ", " + Operands[i]->getType()->getName() + 
+      Result += ", " + Operands[i]->getType()->getDescription() + 
 	         " " + Operands[i]->castConstantAsserting()->getStrValue();
   }
 
   return Result + " }";
-}
-
-//===----------------------------------------------------------------------===//
-//                             equals implementations
-
-bool ConstPoolBool::equals(const ConstPoolVal *V) const {
-  assert(getType() == V->getType());
-  return ((ConstPoolBool*)V)->getValue() == Val;
-}
-
-bool ConstPoolInt::equals(const ConstPoolVal *V) const {
-  assert(getType() == V->getType());
-  return ((ConstPoolInt*)V)->Val.Signed == Val.Signed;
-}
-
-bool ConstPoolFP::equals(const ConstPoolVal *V) const {
-  assert(getType() == V->getType());
-  return ((ConstPoolFP*)V)->getValue() == Val;
-}
-
-bool ConstPoolType::equals(const ConstPoolVal *V) const {
-  assert(getType() == V->getType());
-  return ((ConstPoolType*)V)->getValue() == Val;
-}
-
-bool ConstPoolArray::equals(const ConstPoolVal *V) const {
-  assert(getType() == V->getType());
-  ConstPoolArray *AV = (ConstPoolArray*)V;
-  if (Operands.size() != AV->Operands.size()) return false;
-  for (unsigned i = 0; i < Operands.size(); i++)
-    if (!Operands[i]->castConstantAsserting()->equals(
-               AV->Operands[i]->castConstantAsserting()))
-      return false;
-
-  return true;
-}
-
-bool ConstPoolStruct::equals(const ConstPoolVal *V) const {
-  assert(getType() == V->getType());
-  ConstPoolStruct *SV = (ConstPoolStruct*)V;
-  if (Operands.size() != SV->Operands.size()) return false;
-  for (unsigned i = 0; i < Operands.size(); i++)
-    if (!Operands[i]->castConstantAsserting()->equals(
-           SV->Operands[i]->castConstantAsserting()))
-      return false;
-
-  return true;
 }
 
 //===----------------------------------------------------------------------===//
@@ -459,12 +200,214 @@ bool ConstPoolFP::isValueValidForType(const Type *Ty, double Val) {
   }
 };
 
+//===----------------------------------------------------------------------===//
+//                      Hash Function Implementations
+#if 0
+unsigned ConstPoolSInt::hash(const Type *Ty, int64_t V) {
+  return unsigned(Ty->getPrimitiveID() ^ V);
+}
+
+unsigned ConstPoolUInt::hash(const Type *Ty, uint64_t V) {
+  return unsigned(Ty->getPrimitiveID() ^ V);
+}
+
+unsigned ConstPoolFP::hash(const Type *Ty, double V) {
+  return Ty->getPrimitiveID() ^ unsigned(V);
+}
+
+unsigned ConstPoolArray::hash(const ArrayType *Ty,
+			      const vector<ConstPoolVal*> &V) {
+  unsigned Result = (Ty->getUniqueID() << 5) ^ (Ty->getUniqueID() * 7);
+  for (unsigned i = 0; i < V.size(); ++i)
+    Result ^= V[i]->getHash() << (i & 7);
+  return Result;
+}
+
+unsigned ConstPoolStruct::hash(const StructType *Ty,
+			       const vector<ConstPoolVal*> &V) {
+  unsigned Result = (Ty->getUniqueID() << 5) ^ (Ty->getUniqueID() * 7);
+  for (unsigned i = 0; i < V.size(); ++i)
+    Result ^= V[i]->getHash() << (i & 7);
+  return Result;
+}
+#endif
+
+//===----------------------------------------------------------------------===//
+//                      Factory Function Implementation
+
+template<class ValType, class ConstPoolClass>
+struct ValueMap {
+  typedef pair<const Type*, ValType> ConstHashKey;
+  map<ConstHashKey, ConstPoolClass *> Map;
+
+  inline ConstPoolClass *get(const Type *Ty, ValType V) {
+    map<ConstHashKey,ConstPoolClass *>::iterator I =
+      Map.find(ConstHashKey(Ty, V));
+    return (I != Map.end()) ? I->second : 0;
+  }
+
+  inline void add(const Type *Ty, ValType V, ConstPoolClass *CP) {
+    Map.insert(make_pair(ConstHashKey(Ty, V), CP));
+  }
+};
+
+//---- ConstPoolUInt::get() and ConstPoolSInt::get() implementations...
+//
+static ValueMap<uint64_t, ConstPoolInt> IntConstants;
+
+ConstPoolSInt *ConstPoolSInt::get(const Type *Ty, int64_t V) {
+  ConstPoolSInt *Result = (ConstPoolSInt*)IntConstants.get(Ty, (uint64_t)V);
+  if (!Result)   // If no preexisting value, create one now...
+    IntConstants.add(Ty, V, Result = new ConstPoolSInt(Ty, V));
+  return Result;
+}
+
+ConstPoolUInt *ConstPoolUInt::get(const Type *Ty, uint64_t V) {
+  ConstPoolUInt *Result = (ConstPoolUInt*)IntConstants.get(Ty, V);
+  if (!Result)   // If no preexisting value, create one now...
+    IntConstants.add(Ty, V, Result = new ConstPoolUInt(Ty, V));
+  return Result;
+}
+
+ConstPoolInt *ConstPoolInt::get(const Type *Ty, unsigned char V) {
+  assert(V <= 127 && "Can only be used with very small positive constants!");
+  if (Ty->isSigned()) return ConstPoolSInt::get(Ty, V);
+  return ConstPoolUInt::get(Ty, V);
+}
+
+//---- ConstPoolFP::get() implementation...
+//
+static ValueMap<double, ConstPoolFP> FPConstants;
+
+ConstPoolFP *ConstPoolFP::get(const Type *Ty, double V) {
+  ConstPoolFP *Result = FPConstants.get(Ty, V);
+  if (!Result)   // If no preexisting value, create one now...
+    FPConstants.add(Ty, V, Result = new ConstPoolFP(Ty, V));
+  return Result;
+}
+
+//---- ConstPoolArray::get() implementation...
+//
+static ValueMap<vector<ConstPoolVal*>, ConstPoolArray> ArrayConstants;
+
+ConstPoolArray *ConstPoolArray::get(const ArrayType *Ty,
+				    const vector<ConstPoolVal*> &V) {
+  ConstPoolArray *Result = ArrayConstants.get(Ty, V);
+  if (!Result)   // If no preexisting value, create one now...
+    ArrayConstants.add(Ty, V, Result = new ConstPoolArray(Ty, V));
+  return Result;
+}
+
+//---- ConstPoolStruct::get() implementation...
+//
+static ValueMap<vector<ConstPoolVal*>, ConstPoolStruct> StructConstants;
+
+ConstPoolStruct *ConstPoolStruct::get(const StructType *Ty,
+				      const vector<ConstPoolVal*> &V) {
+  ConstPoolStruct *Result = StructConstants.get(Ty, V);
+  if (!Result)   // If no preexisting value, create one now...
+    StructConstants.add(Ty, V, Result = new ConstPoolStruct(Ty, V));
+  return Result;
+}
+
+
+
 
 //===----------------------------------------------------------------------===//
 //                      Extra Method implementations
 
-ConstPoolInt *ConstPoolInt::get(const Type *Ty, unsigned char V) {
-  assert(V <= 127 && "equals: Can only be used with very small constants!");
-  if (Ty->isSigned()) return new ConstPoolSInt(Ty, V);
-  return new ConstPoolUInt(Ty, V);
+
+
+
+
+
+// Convenience functions to get the value of an integer constant, for an
+// appropriate integer or non-integer type that can be held in an integer.
+// The type of the argument must be the following:
+//   GetSignedIntConstantValue:   signed integer or bool
+//   GetUnsignedIntConstantValue: unsigned integer, bool, or pointer
+//   GetConstantValueAsSignedInt: any of the above, but the value
+//                                must fit into a int64_t.
+// 
+// isValidConstant is set to true if a valid constant was found.
+// 
+int64_t
+GetSignedIntConstantValue(const Value* val, bool& isValidConstant)
+{
+  int64_t intValue = 0;
+  isValidConstant = false;
+  
+  if (val->getValueType() == Value::ConstantVal)
+    {
+      switch(val->getType()->getPrimitiveID())
+        {
+        case Type::BoolTyID:
+          intValue = ((ConstPoolBool*) val)->getValue()? 1 : 0;
+          isValidConstant = true;
+          break;
+        case Type::SByteTyID:
+        case Type::ShortTyID:
+        case Type::IntTyID:
+        case Type::LongTyID:
+          intValue = ((ConstPoolSInt*) val)->getValue();
+          isValidConstant = true;
+          break;
+        default:
+          break;
+        }
+    }
+  
+  return intValue;
+}
+
+uint64_t
+GetUnsignedIntConstantValue(const Value* val, bool& isValidConstant)
+{
+  uint64_t intValue = 0;
+  isValidConstant = false;
+  
+  if (val->getValueType() == Value::ConstantVal)
+    {
+      switch(val->getType()->getPrimitiveID())
+        {
+        case Type::BoolTyID:
+          intValue = ((ConstPoolBool*) val)->getValue()? 1 : 0;
+          isValidConstant = true;
+          break;
+        case Type::UByteTyID:
+        case Type::UShortTyID:
+        case Type::UIntTyID:
+        case Type::ULongTyID:
+        case Type::PointerTyID:
+          intValue = ((ConstPoolUInt*) val)->getValue();
+          isValidConstant = true;
+          break;
+        default:
+          break;
+        }
+    }
+  
+  return intValue;
+}
+
+
+int64_t
+GetConstantValueAsSignedInt(const Value* val, bool& isValidConstant)
+{
+  int64_t intValue = 0;
+  
+  if (val->getType()->isSigned())
+    {
+      intValue = GetSignedIntConstantValue(val, isValidConstant);
+    }
+  else                          // non-numeric types will fall here
+    {
+      uint64_t uintValue = GetUnsignedIntConstantValue(val, isValidConstant);
+      if (isValidConstant && uintValue < INT64_MAX)     // then safe to cast to signed
+        intValue = (int64_t) uintValue;
+      else 
+        isValidConstant = false;
+    }
+  
+  return intValue;
 }
