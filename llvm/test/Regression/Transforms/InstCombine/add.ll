@@ -93,3 +93,15 @@ uint %test14(uint %offset, uint %difference) {
         ret uint %tmp.8
 }
 
+ubyte %test15(ubyte %A) {
+        %B = add ubyte %A, 192  ; Does not effect result
+        %C = and ubyte %B, 16   ; Only one bit set
+        ret ubyte %C
+}
+
+ubyte %test16(ubyte %A) {
+        %B = add ubyte %A, 16   ; Turn this into a XOR
+        %C = and ubyte %B, 16   ; Only one bit set
+        ret ubyte %C
+}
+
