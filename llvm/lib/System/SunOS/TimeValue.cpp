@@ -12,7 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 // Include the generic Unix implementation
-#include "../Unix/Unix.cpp"
+#include "../Unix/TimeValue.cpp"
 
 namespace llvm {
 using namespace sys;

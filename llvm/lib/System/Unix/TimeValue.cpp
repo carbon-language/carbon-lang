@@ -37,7 +37,7 @@ std::string TimeValue::toString() {
 
 TimeValue TimeValue::now() {
   struct timeval the_time;
-  ::timerclear(&the_time);
+  timerclear(&the_time);
   if (0 != ::gettimeofday(&the_time,0)) 
     ThrowErrno("Couldn't obtain time of day");
 
