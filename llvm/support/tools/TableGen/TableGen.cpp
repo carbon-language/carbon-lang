@@ -402,6 +402,9 @@ int main(int argc, char **argv) {
 
   try {
     switch (Action) {
+    case PrintRecords:
+      *Out << Records;           // No argument, dump all contents
+      break;
     case Parse:
       ParseMachineCode();
       break;
@@ -414,18 +417,8 @@ int main(int argc, char **argv) {
     case GenRegisterHeader:
       RegisterInfoEmitter(Records).runHeader(*Out);
       break;
-    case PrintRecords:
-      *Out << Records;           // No argument, dump all contents
-      break;
     case PrintEnums:
-      Record *R = Records.getClass(Class);
-      if (R == 0) {
-        std::cerr << "Cannot find class '" << Class << "'!\n";
-        abort();
-      }
-      
       std::vector<Record*> Recs = Records.getAllDerivedDefinitions(Class);
-
       for (unsigned i = 0, e = Recs.size(); i != e; ++i)
         *Out << Recs[i] << ", ";
       *Out << "\n";
