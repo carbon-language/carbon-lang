@@ -70,10 +70,6 @@ public:
     *Out << X;
     return *this;
   }
-  inline CachedWriter& operator<<(const std::string &X) {
-    *Out << X;
-    return *this;
-  }
 
   inline CachedWriter &operator<<(enum TypeWriter tw) {
     SymbolicTypes = (tw == SymTypeOn);
