@@ -12,8 +12,6 @@
 #include "llvm/BasicBlock.h"
 #include "llvm/Function.h"
 #include "llvm/Pass.h"
-#include <map>
-#include <vector>
 
 typedef std::pair<BasicBlock *, Value*> BBConstTy;
 typedef std::map<BBConstTy, CastInst *> CachedCopyMap;

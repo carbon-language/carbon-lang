@@ -15,7 +15,6 @@
 #include "llvm/Target/Sparc.h"
 #include "llvm/CodeGen/InstrSelection.h"
 #include "llvm/CodeGen/InstrSelectionSupport.h"
-#include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineCodeForMethod.h"
 #include "llvm/Function.h"
 #include "llvm/Constants.h"

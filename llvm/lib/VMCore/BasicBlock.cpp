@@ -6,7 +6,6 @@
 
 #include "ValueHolderImpl.h"
 #include "llvm/iTerminators.h"
-#include "llvm/SymbolTable.h"
 #include "llvm/Type.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/iPHINode.h"

@@ -5,7 +5,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/CodeGen/InstrScheduling.h"
+#include "SchedPriorities.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineCodeForInstruction.h"
 #include "llvm/CodeGen/MachineCodeForMethod.h"
@@ -13,11 +13,7 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/Instruction.h"
-#include "SchedPriorities.h"
-#include <ext/hash_set>
 #include <algorithm>
-#include <iterator>
-#include <iostream>
 using std::cerr;
 using std::vector;
 

@@ -25,7 +25,6 @@
 #include "Support/StringExtras.h"
 #include "Support/STLExtras.h"
 #include <algorithm>
-#include <map>
 using std::string;
 using std::map;
 using std::vector;

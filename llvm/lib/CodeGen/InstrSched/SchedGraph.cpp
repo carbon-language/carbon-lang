@@ -14,9 +14,7 @@
 
 #include "SchedGraph.h"
 #include "llvm/CodeGen/InstrSelection.h"
-#include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineCodeForInstruction.h"
-#include "llvm/Target/MachineInstrInfo.h"
 #include "llvm/Target/MachineRegInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/BasicBlock.h"

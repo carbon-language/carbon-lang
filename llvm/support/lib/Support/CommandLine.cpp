@@ -11,7 +11,6 @@
 
 #include "Support/CommandLine.h"
 #include "Support/STLExtras.h"
-#include <vector>
 #include <algorithm>
 #include <map>
 #include <set>

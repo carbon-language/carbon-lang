@@ -24,7 +24,6 @@
 #include "Support/Signals.h"
 #include <memory>
 #include <fstream>
-#include <string>
 
 cl::String InputFilename ("", "Parse <arg> file, compile to bytecode",
                           cl::Required, "");

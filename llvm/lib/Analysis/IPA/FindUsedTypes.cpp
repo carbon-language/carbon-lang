@@ -10,7 +10,6 @@
 #include "llvm/GlobalVariable.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
-#include "llvm/Function.h"
 #include "llvm/Instruction.h"
 #include "llvm/Support/InstIterator.h"
 

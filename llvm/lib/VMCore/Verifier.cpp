@@ -36,9 +36,7 @@
 
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/Pass.h"
-#include "llvm/Function.h"
 #include "llvm/Module.h"
-#include "llvm/BasicBlock.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/iPHINode.h"
 #include "llvm/iTerminators.h"

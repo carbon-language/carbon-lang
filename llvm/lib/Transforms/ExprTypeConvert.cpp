@@ -7,16 +7,13 @@
 //===----------------------------------------------------------------------===//
 
 #include "TransformInternals.h"
-#include "llvm/Function.h"
 #include "llvm/iOther.h"
 #include "llvm/iPHINode.h"
 #include "llvm/iMemory.h"
-#include "llvm/Constants.h"
 #include "llvm/ConstantHandling.h"
 #include "llvm/Transforms/Scalar/DCE.h"
 #include "llvm/Analysis/Expressions.h"
 #include "Support/STLExtras.h"
-#include <map>
 #include <algorithm>
 #include <iostream>
 using std::cerr;

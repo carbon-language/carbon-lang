@@ -28,7 +28,6 @@
 #include "llvm/Type.h"
 #include "llvm/Argument.h"
 #include <algorithm>
-#include <map>
 #include <iostream>
 using std::cerr;
 

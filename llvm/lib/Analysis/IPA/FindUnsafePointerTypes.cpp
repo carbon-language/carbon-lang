@@ -20,7 +20,6 @@
 #include "llvm/Assembly/CachedWriter.h"
 #include "llvm/Type.h"
 #include "llvm/Instruction.h"
-#include "llvm/Function.h"
 #include "llvm/Module.h"
 #include "llvm/Support/InstIterator.h"
 #include "Support/CommandLine.h"

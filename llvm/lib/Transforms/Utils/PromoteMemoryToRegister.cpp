@@ -22,7 +22,6 @@
 #include "llvm/iMemory.h"
 #include "llvm/iPHINode.h"
 #include "llvm/iTerminators.h"
-#include "llvm/Pass.h"
 #include "llvm/Function.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/Constant.h"

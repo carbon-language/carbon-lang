@@ -25,7 +25,6 @@
 #include "llvm/iTerminators.h"
 #include "llvm/iOther.h"
 #include "llvm/Support/CFG.h"
-#include "llvm/Pass.h"
 #include <algorithm>
 #include <iostream>
 using std::vector;

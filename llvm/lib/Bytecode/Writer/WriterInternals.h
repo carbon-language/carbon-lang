@@ -17,7 +17,6 @@
 #include "llvm/Bytecode/Primitives.h"
 #include "llvm/SlotCalculator.h"
 #include "llvm/Instruction.h"
-#include <deque>
 
 class BytecodeWriter {
   std::deque<unsigned char> &Out;

@@ -18,7 +18,6 @@
 
 #include "llvm/Module.h"
 #include "llvm/Bytecode/Reader.h"
-#include "llvm/Function.h"
 #include "llvm/Support/CFG.h"
 #include "Support/DepthFirstIterator.h"
 #include "Support/PostOrderIterator.h"

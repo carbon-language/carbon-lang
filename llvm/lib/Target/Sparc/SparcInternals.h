@@ -13,7 +13,6 @@
 #define SPARC_INTERNALS_H
 
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/Target/MachineInstrInfo.h"
 #include "llvm/Target/MachineSchedInfo.h"
 #include "llvm/Target/MachineFrameInfo.h"
 #include "llvm/Target/MachineCacheInfo.h"

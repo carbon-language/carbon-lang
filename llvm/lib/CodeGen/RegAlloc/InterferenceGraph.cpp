@@ -1,6 +1,6 @@
 #include "llvm/CodeGen/InterferenceGraph.h"
 #include "Support/STLExtras.h"
-#include <iostream>
+#include "llvm/CodeGen/RegAllocCommon.h"
 #include <algorithm>
 using std::cerr;
 

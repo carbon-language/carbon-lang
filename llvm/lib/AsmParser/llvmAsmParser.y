@@ -6,13 +6,9 @@
 
 %{
 #include "ParserInternals.h"
-#include "llvm/Assembly/Parser.h"
 #include "llvm/SymbolTable.h"
 #include "llvm/Module.h"
 #include "llvm/GlobalVariable.h"
-#include "llvm/Function.h"
-#include "llvm/BasicBlock.h"
-#include "llvm/DerivedTypes.h"
 #include "llvm/iTerminators.h"
 #include "llvm/iMemory.h"
 #include "llvm/iPHINode.h"
@@ -22,7 +18,6 @@
 #include <list>
 #include <utility>            // Get definition of pair class
 #include <algorithm>
-#include <stdio.h>            // This embarasment is due to our flex lexer...
 #include <iostream>
 using std::list;
 using std::vector;

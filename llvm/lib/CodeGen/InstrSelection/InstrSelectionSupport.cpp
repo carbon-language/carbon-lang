@@ -13,7 +13,6 @@
 
 #include "llvm/CodeGen/InstrSelectionSupport.h"
 #include "llvm/CodeGen/InstrSelection.h"
-#include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineCodeForInstruction.h"
 #include "llvm/CodeGen/MachineCodeForMethod.h"
 #include "llvm/CodeGen/InstrForest.h"

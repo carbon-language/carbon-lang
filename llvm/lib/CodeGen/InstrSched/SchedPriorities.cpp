@@ -22,7 +22,6 @@
 #include "llvm/Analysis/LiveVar/FunctionLiveVarInfo.h"
 #include "llvm/Support/CFG.h"
 #include "Support/PostOrderIterator.h"
-#include <iostream>
 using std::cerr;
 
 SchedPriorities::SchedPriorities(const Function *, const SchedGraph *G,

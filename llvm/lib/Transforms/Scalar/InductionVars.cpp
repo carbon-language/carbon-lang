@@ -21,13 +21,10 @@
 
 #include "llvm/Transforms/Scalar/InductionVars.h"
 #include "llvm/Constants.h"
-#include "llvm/Analysis/IntervalPartition.h"
 #include "llvm/iPHINode.h"
-#include "llvm/Function.h"
-#include "llvm/BasicBlock.h"
-#include "llvm/InstrTypes.h"
 #include "llvm/Type.h"
 #include "llvm/Support/CFG.h"
+#include "llvm/Analysis/IntervalPartition.h"
 #include "Support/STLExtras.h"
 #include <algorithm>
 #include <iostream>

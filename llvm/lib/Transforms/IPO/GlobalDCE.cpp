@@ -9,9 +9,7 @@
 #include "llvm/Analysis/CallGraph.h"
 #include "llvm/Module.h"
 #include "llvm/Function.h"
-#include "llvm/Pass.h"
 #include "Support/DepthFirstIterator.h"
-#include <set>
 
 static bool RemoveUnreachableFunctions(Module *M, CallGraph &CallGraph) {
   // Calculate which functions are reachable from the external functions in the

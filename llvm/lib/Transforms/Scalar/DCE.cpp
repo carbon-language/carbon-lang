@@ -26,8 +26,6 @@
 #include "llvm/Transforms/Scalar/DCE.h"
 #include "llvm/Module.h"
 #include "llvm/GlobalVariable.h"
-#include "llvm/Function.h"
-#include "llvm/BasicBlock.h"
 #include "llvm/iTerminators.h"
 #include "llvm/iPHINode.h"
 #include "llvm/Constant.h"

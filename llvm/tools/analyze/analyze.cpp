@@ -10,9 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Instruction.h"
 #include "llvm/Module.h"
-#include "llvm/Function.h"
 #include "llvm/iPHINode.h"
 #include "llvm/Type.h"
 #include "llvm/PassManager.h"
@@ -34,7 +32,6 @@
 #include "llvm/Support/InstIterator.h"
 #include "Support/CommandLine.h"
 #include <algorithm>
-#include <iostream>
 
 using std::ostream;
 using std::string;

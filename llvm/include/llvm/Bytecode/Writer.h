@@ -17,9 +17,9 @@
 #ifndef LLVM_BYTECODE_WRITER_H
 #define LLVM_BYTECODE_WRITER_H
 
-#include <iostream.h>
+#include <iosfwd>
 
 class Module;
-void WriteBytecodeToFile(const Module *C, ostream &Out);
+void WriteBytecodeToFile(const Module *C, std::ostream &Out);
 
 #endif

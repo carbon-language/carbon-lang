@@ -7,7 +7,6 @@
 
 #include "llvm/Function.h"
 #include "llvm/DerivedTypes.h"
-#include "llvm/SymbolTable.h"
 #include "llvm/Module.h"
 #include "llvm/GlobalVariable.h"
 #include "llvm/BasicBlock.h"

@@ -11,7 +11,6 @@
 
 #include "llvm/Transforms/IPO/PoolAllocate.h"
 #include "llvm/Transforms/CloneFunction.h"
-#include "llvm/Analysis/DataStructure.h"
 #include "llvm/Analysis/DataStructureGraph.h"
 #include "llvm/Module.h"
 #include "llvm/Function.h"

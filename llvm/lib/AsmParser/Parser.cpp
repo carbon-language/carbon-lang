@@ -7,7 +7,6 @@
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/Module.h"
 #include "ParserInternals.h"
-#include <stdio.h>  // for sprintf
 using std::string;
 
 // The useful interface defined by this file... Parse an ascii file, and return

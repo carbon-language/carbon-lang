@@ -27,12 +27,9 @@
 #include "llvm/Transforms/Instrumentation/ProfilePaths.h"
 #include "llvm/Transforms/UnifyFunctionExitNodes.h"
 #include "llvm/Support/CFG.h"
-#include "llvm/Function.h"
-#include "llvm/BasicBlock.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/iMemory.h"
-#include "llvm/Pass.h"
 #include "Graph.h"
 
 using std::vector;

@@ -5,7 +5,7 @@
 #include "llvm/Function.h"
 #include "llvm/BasicBlock.h"
 #include "Support/SetOperations.h"
-#include <iostream>
+#include "llvm/CodeGen/RegAllocCommon.h"
 using std::cerr;
 
 LiveRangeInfo::LiveRangeInfo(const Function *F, const TargetMachine &tm,

@@ -1,5 +1,5 @@
 #include "SparcRegClassInfo.h"
-#include "llvm/CodeGen/IGNode.h"
+#include "llvm/CodeGen/RegAllocCommon.h"
 #include "llvm/Target/Sparc.h"
 #include "llvm/Type.h"
 #include <iostream>

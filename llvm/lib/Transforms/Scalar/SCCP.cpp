@@ -18,8 +18,6 @@
 #include "llvm/Transforms/Scalar/ConstantProp.h"
 #include "llvm/ConstantHandling.h"
 #include "llvm/Function.h"
-#include "llvm/BasicBlock.h"
-#include "llvm/Constants.h"
 #include "llvm/iPHINode.h"
 #include "llvm/iMemory.h"
 #include "llvm/iTerminators.h"
@@ -28,7 +26,6 @@
 #include "llvm/Support/InstVisitor.h"
 #include "Support/STLExtras.h"
 #include <algorithm>
-#include <map>
 #include <set>
 #include <iostream>
 using std::cerr;

@@ -15,7 +15,6 @@
 #include "Support/CommandLine.h"
 #include "Support/Signals.h"
 #include <fstream>
-#include <string>
 #include <memory>
 
 cl::String InputFilename ("", "Parse <arg> file, compile to bytecode", 0, "-");

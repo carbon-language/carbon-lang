@@ -1,5 +1,5 @@
 #include "llvm/CodeGen/RegClass.h"
-#include <iostream>
+#include "llvm/CodeGen/RegAllocCommon.h"
 using std::cerr;
 
 //----------------------------------------------------------------------------

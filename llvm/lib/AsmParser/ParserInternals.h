@@ -8,10 +8,7 @@
 #ifndef PARSER_INTERNALS_H
 #define PARSER_INTERNALS_H
 
-#include <stdio.h>
 #define __STDC_LIMIT_MACROS
-
-#include "llvm/InstrTypes.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/Constants.h"
 #include "llvm/iOther.h"

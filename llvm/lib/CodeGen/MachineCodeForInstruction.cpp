@@ -19,7 +19,6 @@
 #include "llvm/CodeGen/MachineCodeForInstruction.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/InstrSelection.h"
-#include "llvm/Instruction.h"
 
 static AnnotationID MCFI_AID(
              AnnotationManager::getID("CodeGen::MachineCodeForInstruction"));

@@ -21,6 +21,7 @@
 #include "llvm/BasicBlock.h"
 #include "llvm/Function.h"
 #include "llvm/Type.h"
+#include "llvm/CodeGen/RegAllocCommon.h"
 #include <iostream>
 #include <math.h>
 using std::cerr;
