@@ -86,7 +86,9 @@ void AddConfiguredTransformationPasses(PassManager &PM) {
   // Disabling until this is fixed -- Vikram, 7/7/02.
   // addPass(PM, createReassociatePass());          // Reassociate expressions
   addPass(PM, createInstructionCombiningPass()); // Combine silly seq's
-  addPass(PM, createDeadInstEliminationPass());  // Kill InstCombine remnants
+  addPass(PM, createCorrelatedExpressionEliminationPass());
+  addPass(PM, createInstructionCombiningPass()); // Combine silly seq's
+  addPass(PM, createCFGSimplificationPass());    // Merge & remove BBs
   addPass(PM, createLICMPass());                 // Hoist loop invariants
   addPass(PM, createLoadValueNumberingPass());   // GVN for load instructions
   addPass(PM, createGCSEPass());                 // Remove common subexprs
@@ -95,8 +97,8 @@ void AddConfiguredTransformationPasses(PassManager &PM) {
   // Run instcombine after redundancy elimination to exploit opportunities
   // opened up by them.
   addPass(PM, createInstructionCombiningPass());
-  addPass(PM, createAggressiveDCEPass());         // SSA based 'Agressive DCE'
-  addPass(PM, createCFGSimplificationPass());     // Merge & remove BBs
+  addPass(PM, createAggressiveDCEPass());        // SSA based 'Agressive DCE'
+  addPass(PM, createCFGSimplificationPass());    // Merge & remove BBs
 }
 
 
