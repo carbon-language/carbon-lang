@@ -91,9 +91,10 @@ ChooseRegOrImmed(Value* val,
 
   // To use reg or immed, constant needs to be integer, bool, or a NULL pointer
   Constant *CPV = dyn_cast<Constant>(val);
-  if (CPV == NULL ||
-      (! CPV->getType()->isIntegral() &&
-       ! (isa<PointerType>(CPV->getType()) && CPV->isNullValue())))
+  if (CPV == NULL
+      || CPV->isConstantExpr()
+      || (! CPV->getType()->isIntegral() &&
+          ! (isa<PointerType>(CPV->getType()) && CPV->isNullValue())))
     return MachineOperand::MO_VirtualRegister;
 
   // Now get the constant value and check if it fits in the IMMED field.
