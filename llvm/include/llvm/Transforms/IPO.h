@@ -115,6 +115,12 @@ Pass *createDeadArgEliminationPass();
 Pass *createDeadArgHackingPass();
 
 //===----------------------------------------------------------------------===//
+// createArgumentPromotionPass - This pass promotes "by reference" arguments to
+// be passed by value.
+//
+Pass *createArgumentPromotionPass();
+
+//===----------------------------------------------------------------------===//
 // createIPConstantPropagationPass - This pass propagates constants from call
 // sites into the bodies of functions.
 //
