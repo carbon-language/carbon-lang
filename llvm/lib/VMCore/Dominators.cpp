@@ -65,7 +65,8 @@ void DominatorSet::calculateDominatorsFromBlock(BasicBlock *RootBB) {
           }
         }
       } else {
-        assert(BB == Root && "We got into unreachable code somehow!");
+        assert(Roots.size() == 1 && BB == Roots[0] &&
+               "We got into unreachable code somehow!");
       }
 	
       WorkingSet.insert(BB);           // A block always dominates itself
@@ -86,7 +87,9 @@ void DominatorSet::calculateDominatorsFromBlock(BasicBlock *RootBB) {
 // specified function.
 //
 bool DominatorSet::runOnFunction(Function &F) {
-  Root = &F.getEntryNode();
+  BasicBlock *Root = &F.getEntryNode();
+  Roots.clear();
+  Roots.push_back(Root);
   assert(pred_begin(Root) == pred_end(Root) &&
 	 "Root node has predecessors in function!");
   recalculate();
@@ -94,16 +97,17 @@ bool DominatorSet::runOnFunction(Function &F) {
 }
 
 void DominatorSet::recalculate() {
+  assert(Roots.size() == 1 && "DominatorSet should have single root block!");
   Doms.clear();   // Reset from the last time we were run...
 
   // Calculate dominator sets for the reachable basic blocks...
-  calculateDominatorsFromBlock(Root);
+  calculateDominatorsFromBlock(Roots[0]);
 
 
   // Loop through the function, ensuring that every basic block has at least an
   // empty set of nodes.  This is important for the case when there is
   // unreachable blocks.
-  Function *F = Root->getParent();
+  Function *F = Roots[0]->getParent();
   for (Function::iterator I = F->begin(), E = F->end(); I != E; ++I) Doms[I];
 }
 
@@ -111,20 +115,22 @@ void DominatorSet::recalculate() {
 static std::ostream &operator<<(std::ostream &o,
                                 const std::set<BasicBlock*> &BBs) {
   for (std::set<BasicBlock*>::const_iterator I = BBs.begin(), E = BBs.end();
-       I != E; ++I) {
-    o << "  ";
-    WriteAsOperand(o, *I, false);
-    o << "\n";
-   }
+       I != E; ++I)
+    if (*I)
+      WriteAsOperand(o, *I, false);
+    else
+      o << " <<exit node>>";
   return o;
 }
 
 void DominatorSetBase::print(std::ostream &o) const {
   for (const_iterator I = begin(), E = end(); I != E; ++I) {
-    o << "=============================--------------------------------\n"
-      << "\nDominator Set For Basic Block: ";
-    WriteAsOperand(o, I->first, false);
-    o  << "\n-------------------------------\n" << I->second << "\n";
+    o << "  DomSet For BB: ";
+    if (I->first)
+      WriteAsOperand(o, I->first, false);
+    else
+      o << " <<exit node>>";
+    o << " is:\t" << I->second << "\n";
   }
 }
 
@@ -173,13 +179,19 @@ void ImmediateDominatorsBase::calcIDoms(const DominatorSetBase &DS) {
 
 void ImmediateDominatorsBase::print(std::ostream &o) const {
   for (const_iterator I = begin(), E = end(); I != E; ++I) {
-    o << "=============================--------------------------------\n"
-      << "\nImmediate Dominator For Basic Block:";
-    WriteAsOperand(o, I->first, false);
+    o << "  Immediate Dominator For Basic Block:";
+    if (I->first)
+      WriteAsOperand(o, I->first, false);
+    else
+      o << " <<exit node>>";
     o << " is:";
-    WriteAsOperand(o, I->second, false);
+    if (I->second)
+      WriteAsOperand(o, I->second, false);
+    else
+      o << " <<exit node>>";
     o << "\n";
   }
+  o << "\n";
 }
 
 
@@ -196,6 +208,7 @@ void DominatorTreeBase::reset() {
   for (NodeMapType::iterator I = Nodes.begin(), E = Nodes.end(); I != E; ++I)
     delete I->second;
   Nodes.clear();
+  RootNode = 0;
 }
 
 void DominatorTreeBase::Node2::setIDom(Node2 *NewIDom) {
@@ -217,7 +230,9 @@ void DominatorTreeBase::Node2::setIDom(Node2 *NewIDom) {
 
 
 void DominatorTree::calculate(const DominatorSet &DS) {
-  Nodes[Root] = new Node(Root, 0);   // Add a node for the root...
+  assert(Roots.size() == 1 && "DominatorTree should have 1 root block!");
+  BasicBlock *Root = Roots[0];
+  Nodes[Root] = RootNode = new Node(Root, 0); // Add a node for the root...
 
   // Iterate over all nodes in depth first order...
   for (df_iterator<BasicBlock*> I = df_begin(Root), E = df_end(Root);
@@ -264,23 +279,25 @@ void DominatorTree::calculate(const DominatorSet &DS) {
 
 static std::ostream &operator<<(std::ostream &o,
                                 const DominatorTreeBase::Node *Node) {
-  return o << Node->getNode()
-           << "\n------------------------------------------\n";
+  if (Node->getNode())
+    WriteAsOperand(o, Node->getNode(), false);
+  else
+    o << " <<exit node>>";
+  return o << "\n";
 }
 
 static void PrintDomTree(const DominatorTreeBase::Node *N, std::ostream &o,
                          unsigned Lev) {
-  o << "Level #" << Lev << ":  " << N;
+  o << std::string(2*Lev, ' ') << "[" << Lev << "] " << N;
   for (DominatorTreeBase::Node::const_iterator I = N->begin(), E = N->end(); 
-       I != E; ++I) {
+       I != E; ++I)
     PrintDomTree(*I, o, Lev+1);
-  }
 }
 
 void DominatorTreeBase::print(std::ostream &o) const {
   o << "=============================--------------------------------\n"
     << "Inorder Dominator Tree:\n";
-  PrintDomTree(Nodes.find(getRoot())->second, o, 1);
+  PrintDomTree(getRootNode(), o, 1);
 }
 
 
@@ -326,9 +343,11 @@ DominanceFrontier::calculate(const DominatorTree &DT,
 
 void DominanceFrontierBase::print(std::ostream &o) const {
   for (const_iterator I = begin(), E = end(); I != E; ++I) {
-    o << "=============================--------------------------------\n"
-      << "\nDominance Frontier For Basic Block\n";
-    WriteAsOperand(o, I->first, false);
-    o << " is: \n" << I->second << "\n";
+    o << "  DomFrontier for BB";
+    if (I->first)
+      WriteAsOperand(o, I->first, false);
+    else
+      o << " <<exit node>>";
+    o << " is:\t" << I->second << "\n";
   }
 }
