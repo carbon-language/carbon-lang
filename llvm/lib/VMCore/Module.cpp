@@ -246,7 +246,7 @@ GlobalVariable *Module::getGlobalVariable(const std::string &Name,
 bool Module::addTypeName(const std::string &Name, const Type *Ty) {
   SymbolTable &ST = getSymbolTable();
 
-  if (ST.lookup(Type::TypeTy, Name)) return true;  // Already in symtab...
+  if (ST.lookupType(Name)) return true;  // Already in symtab...
   
   // Not in symbol table?  Set the name with the Symtab as an argument so the
   // type knows what to update...
@@ -259,7 +259,7 @@ bool Module::addTypeName(const std::string &Name, const Type *Ty) {
 /// null if there is none by that name.
 const Type *Module::getTypeByName(const std::string &Name) const {
   const SymbolTable &ST = getSymbolTable();
-  return cast_or_null<Type>(ST.lookup(Type::TypeTy, Name));
+  return cast_or_null<Type>(ST.lookupType(Name));
 }
 
 // getTypeName - If there is at least one entry in the symbol table for the
@@ -267,13 +267,12 @@ const Type *Module::getTypeByName(const std::string &Name) const {
 //
 std::string Module::getTypeName(const Type *Ty) const {
   const SymbolTable &ST = getSymbolTable();
-  if (ST.find(Type::TypeTy) == ST.end())
-    return ""; // No names for types...
 
-  SymbolTable::type_const_iterator TI = ST.type_begin(Type::TypeTy);
-  SymbolTable::type_const_iterator TE = ST.type_end(Type::TypeTy);
+  SymbolTable::type_const_iterator TI = ST.type_begin();
+  SymbolTable::type_const_iterator TE = ST.type_end();
+  if ( TI == TE ) return ""; // No names for types
 
-  while (TI != TE && TI->second != (const Value*)Ty)
+  while (TI != TE && TI->second != Ty)
     ++TI;
 
   if (TI != TE)  // Must have found an entry!

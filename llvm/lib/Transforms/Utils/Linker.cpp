@@ -172,22 +172,21 @@ static bool LinkTypes(Module *Dest, const Module *Src, std::string *Err) {
   const SymbolTable *SrcST  = &Src->getSymbolTable();
 
   // Look for a type plane for Type's...
-  SymbolTable::const_iterator PI = SrcST->find(Type::TypeTy);
-  if (PI == SrcST->end()) return false;  // No named types, do nothing.
+  SymbolTable::type_const_iterator TI = SrcST->type_begin();
+  SymbolTable::type_const_iterator TE = SrcST->type_end();
+  if (TI == TE) return false;  // No named types, do nothing.
 
   // Some types cannot be resolved immediately because they depend on other
   // types being resolved to each other first.  This contains a list of types we
   // are waiting to recheck.
   std::vector<std::string> DelayedTypesToResolve;
 
-  const SymbolTable::VarMap &VM = PI->second;
-  for (SymbolTable::type_const_iterator I = VM.begin(), E = VM.end();
-       I != E; ++I) {
-    const std::string &Name = I->first;
-    Type *RHS = cast<Type>(I->second);
+  for ( ; TI != TE; ++TI ) {
+    const std::string &Name = TI->first;
+    Type *RHS = TI->second;
 
     // Check to see if this type name is already in the dest module...
-    Type *Entry = cast_or_null<Type>(DestST->lookup(Type::TypeTy, Name));
+    Type *Entry = DestST->lookupType(Name);
 
     if (ResolveTypes(Entry, RHS, DestST, Name)) {
       // They look different, save the types 'till later to resolve.
@@ -203,8 +202,8 @@ static bool LinkTypes(Module *Dest, const Module *Src, std::string *Err) {
     // Try direct resolution by name...
     for (unsigned i = 0; i != DelayedTypesToResolve.size(); ++i) {
       const std::string &Name = DelayedTypesToResolve[i];
-      Type *T1 = cast<Type>(VM.find(Name)->second);
-      Type *T2 = cast<Type>(DestST->lookup(Type::TypeTy, Name));
+      Type *T1 = SrcST->lookupType(Name);
+      Type *T2 = DestST->lookupType(Name);
       if (!ResolveTypes(T2, T1, DestST, Name)) {
         // We are making progress!
         DelayedTypesToResolve.erase(DelayedTypesToResolve.begin()+i);
@@ -218,8 +217,8 @@ static bool LinkTypes(Module *Dest, const Module *Src, std::string *Err) {
       // two types: { int* } and { opaque* }
       for (unsigned i = 0, e = DelayedTypesToResolve.size(); i != e; ++i) {
         const std::string &Name = DelayedTypesToResolve[i];
-        PATypeHolder T1(cast<Type>(VM.find(Name)->second));
-        PATypeHolder T2(cast<Type>(DestST->lookup(Type::TypeTy, Name)));
+        PATypeHolder T1(SrcST->lookupType(Name));
+        PATypeHolder T2(DestST->lookupType(Name));
 
         if (!RecursiveResolveTypes(T2, T1, DestST, Name)) {
           // We are making progress!
@@ -236,8 +235,8 @@ static bool LinkTypes(Module *Dest, const Module *Src, std::string *Err) {
       if (DelayedTypesToResolve.size() == OldSize) {
         const std::string &Name = DelayedTypesToResolve.back();
         
-        const Type *T1 = cast<Type>(VM.find(Name)->second);
-        const Type *T2 = cast<Type>(DestST->lookup(Type::TypeTy, Name));
+        const Type *T1 = SrcST->lookupType(Name);
+        const Type *T2 = DestST->lookupType(Name);
         std::cerr << "WARNING: Type conflict between types named '" << Name
                   <<  "'.\n    Src='";
         WriteTypeSymbolic(std::cerr, T1, Src);
@@ -383,29 +382,29 @@ static GlobalValue *FindGlobalNamed(const std::string &Name, const Type *Ty,
   // It doesn't exist exactly, scan through all of the type planes in the symbol
   // table, checking each of them for a type-compatible version.
   //
-  for (SymbolTable::iterator I = ST->begin(), E = ST->end(); I != E; ++I)
-    if (I->first != Type::TypeTy) {
-      SymbolTable::VarMap &VM = I->second;
+  for (SymbolTable::plane_iterator PI = ST->plane_begin(), PE = ST->plane_end(); 
+       PI != PE; ++PI) {
+    SymbolTable::ValueMap &VM = PI->second;
 
-      // Does this type plane contain an entry with the specified name?
-      SymbolTable::type_iterator TI = VM.find(Name);
-      if (TI != VM.end()) {
+    // Does this type plane contain an entry with the specified name?
+    SymbolTable::value_iterator VI = VM.find(Name);
+      if (VI != VM.end()) {
         //
         // Ensure that this type if placed correctly into the symbol table.
         //
-        assert(TI->second->getType() == I->first && "Type conflict!");
+        assert(VI->second->getType() == PI->first && "Type conflict!");
 
         //
         // Save a reference to the new type.  Resolving the type can modify the
         // symbol table, invalidating the TI variable.
         //
-        Value *ValPtr = TI->second;
+        Value *ValPtr = VI->second;
 
         //
         // Determine whether we can fold the two types together, resolving them.
         // If so, we can use this value.
         //
-        if (!RecursiveResolveTypes(Ty, I->first, ST, ""))
+        if (!RecursiveResolveTypes(Ty, PI->first, ST, ""))
           return cast<GlobalValue>(ValPtr);
       }
     }
@@ -925,3 +924,4 @@ bool llvm::LinkModules(Module *Dest, const Module *Src, std::string *ErrorMsg) {
   return false;
 }
 
+// vim: sw=2
