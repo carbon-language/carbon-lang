@@ -7,7 +7,7 @@
 # 
 ##===----------------------------------------------------------------------===##
 
-LEVEL := ../..
+LEVEL = ../..
 LIBRARYNAME := LLVMAsmParser
 BUILT_SOURCES := llvmAsmParser.cpp llvmAsmParser.h Lexer.cpp
 
