@@ -8,9 +8,20 @@
 //===----------------------------------------------------------------------===//
 
 // NOTE: No include guards desired
-
 #ifndef R
 #errror "Must define R macro before including X86/X86RegisterInfo.def!"
+#endif
+
+#ifndef R8
+#define R8(ENUM, NAME, FLAGS, TSFLAGS) R(ENUM, NAME, FLAGS, TSFLAGS)
+#endif
+
+#ifndef R16
+#define R16(ENUM, NAME, FLAGS, TSFLAGS) R(ENUM, NAME, FLAGS, TSFLAGS)
+#endif
+
+#ifndef R32
+#define R32(ENUM, NAME, FLAGS, TSFLAGS) R(ENUM, NAME, FLAGS, TSFLAGS)
 #endif
 
 // Arguments passed into the R macro
@@ -33,36 +44,35 @@
 //
 R(NoReg, "none", 0, 0)
 
-
 // 32 bit registers, ordered as the processor does...
-R(EAX, "EAX", MRF::INT32, 0)
-R(ECX, "ECX", MRF::INT32, 0)
-R(EDX, "EDX", MRF::INT32, 0)
-R(EBX, "EBX", MRF::INT32, 0)
-R(ESP, "ESP", MRF::INT32, 0)
-R(EBP, "EBP", MRF::INT32, 0)
-R(ESI, "ESI", MRF::INT32, 0)
-R(EDI, "EDI", MRF::INT32, 0)
+R32(EAX, "EAX", MRF::INT32, 0)
+R32(ECX, "ECX", MRF::INT32, 0)
+R32(EDX, "EDX", MRF::INT32, 0)
+R32(EBX, "EBX", MRF::INT32, 0)
+R32(ESP, "ESP", MRF::INT32, 0)
+R32(EBP, "EBP", MRF::INT32, 0)
+R32(ESI, "ESI", MRF::INT32, 0)
+R32(EDI, "EDI", MRF::INT32, 0)
 
 // 16 bit registers, aliased with the corresponding 32 bit registers above
-R(AX, "AX", MRF::INT16, 0)
-R(CX, "CX", MRF::INT16, 0)
-R(DX, "DX", MRF::INT16, 0)
-R(BX, "BX", MRF::INT16, 0)
-R(SP, "SP", MRF::INT16, 0)
-R(BP, "BP", MRF::INT16, 0)
-R(SI, "SI", MRF::INT16, 0)
-R(DI, "DI", MRF::INT16, 0)
+R16(AX, "AX", MRF::INT16, 0)
+R16(CX, "CX", MRF::INT16, 0)
+R16(DX, "DX", MRF::INT16, 0)
+R16(BX, "BX", MRF::INT16, 0)
+R16(SP, "SP", MRF::INT16, 0)
+R16(BP, "BP", MRF::INT16, 0)
+R16(SI, "SI", MRF::INT16, 0)
+R16(DI, "DI", MRF::INT16, 0)
 
 // 8 bit registers aliased with registers above as well
-R(AL, "AL", MRF::INT8, 0)
-R(CL, "CL", MRF::INT8, 0)
-R(DL, "DL", MRF::INT8, 0)
-R(BL, "BL", MRF::INT8, 0)
-R(AH, "AH", MRF::INT8, 0)
-R(CH, "CH", MRF::INT8, 0)
-R(DH, "DH", MRF::INT8, 0)
-R(BH, "BH", MRF::INT8, 0)
+R8(AL, "AL", MRF::INT8, 0)
+R8(CL, "CL", MRF::INT8, 0)
+R8(DL, "DL", MRF::INT8, 0)
+R8(BL, "BL", MRF::INT8, 0)
+R8(AH, "AH", MRF::INT8, 0)
+R8(CH, "CH", MRF::INT8, 0)
+R8(DH, "DH", MRF::INT8, 0)
+R8(BH, "BH", MRF::INT8, 0)
 
 // Flags, Segment registers, etc...
 
@@ -71,5 +81,8 @@ R(BH, "BH", MRF::INT8, 0)
 // could clobber. 
 R(EFLAGS, "EFLAGS", MRF::INT16, 0)
 
-// We are now done with the R macro
+// We are now done with the R* macros
 #undef R
+#undef R8
+#undef R16
+#undef R32
