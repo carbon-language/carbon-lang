@@ -38,7 +38,8 @@ static TargetData TD("opt target");
 // Opts enum - All of the transformations we can do...
 enum Opts {
   // Basic optimizations
-  dce, die, constprop, gcse, inlining, constmerge, strip, mstrip, mergereturn,
+  dce, die, constprop, gcse, licm, inlining, constmerge,
+  strip, mstrip, mergereturn,
 
   // Miscellaneous Transformations
   raiseallocs, lowerallocs, funcresolve, cleangcc, lowerrefs,
@@ -78,6 +79,7 @@ struct {
   { die        , createDeadInstEliminationPass  },
   { constprop  , createConstantPropogationPass  }, 
   { gcse       , createGCSEPass                 },
+  { licm       , createLICMPass                 },
   { inlining   , createFunctionInliningPass     },
   { constmerge , createConstantMergePass        },
   { strip      , createSymbolStrippingPass      },
@@ -128,6 +130,7 @@ cl::EnumList<enum Opts> OptimizationList(cl::NoFlags,
   clEnumVal(die        , "Dead Instruction Elimination"),
   clEnumVal(constprop  , "Simple constant propogation"),
   clEnumVal(gcse       , "Global Common Subexpression Elimination"),
+  clEnumVal(licm       , "Loop Invariant Code Motion"),
  clEnumValN(inlining   , "inline", "Function integration"),
   clEnumVal(constmerge , "Merge identical global constants"),
   clEnumVal(strip      , "Strip symbols"),
