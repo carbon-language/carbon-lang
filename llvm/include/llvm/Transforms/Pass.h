@@ -46,14 +46,15 @@ struct Pass {
 
   // runAllPasses - Run a bunch of passes on the specified module, efficiently.
   static bool runAllPasses(Module *M, vector<Pass*> &Passes) {
+    bool MadeChanges = false;
     for (unsigned i = 0; i < Passes.size(); ++i)
-      if (Passes[i]->doPassInitializationVirt(M)) return true;
+      MadeChanges |= Passes[i]->doPassInitializationVirt(M);
     
     // Loop over all of the methods, applying all of the passes to them
     for (Module::iterator I = M->begin(); I != M->end(); ++I)
       for (unsigned i = 0; i < Passes.size(); ++i)
-        if (Passes[i]->doPerMethodWorkVirt(*I)) return true;
-    return false;
+        MadeChanges |= Passes[i]->doPerMethodWorkVirt(*I);
+    return MadeChanges;
   }
 
   // runAllPassesAndFree - Run a bunch of passes on the specified module,
@@ -61,12 +62,12 @@ struct Pass {
   //
   static bool runAllPassesAndFree(Module *M, vector<Pass*> &Passes) {
     // First run all of the passes
-    bool Result = runAllPasses(M, Passes);
+    bool MadeChanges = runAllPasses(M, Passes);
 
     // Free all of the passes.
     for (unsigned i = 0; i < Passes.size(); ++i)
       delete Passes[i];
-    return Result;
+    return MadeChanges;
   }
 
 
@@ -74,22 +75,21 @@ struct Pass {
   // within it.  Returns false on success.
   //
   bool run(Module *M) {
-    if (doPassInitializationVirt(M)) return true;
+    bool MadeChanges = doPassInitializationVirt(M);
 
     // Loop over methods in the module.  doPerMethodWork could add a method to
     // the Module, so we have to keep checking for end of method list condition.
     //
     for (Module::iterator I = M->begin(); I != M->end(); ++I)
-      if (doPerMethodWorkVirt(*I)) return true;
-    return false;
+      MadeChanges = doPerMethodWorkVirt(*I);
+    return MadeChanges;
   }
 
   // run(Method*) - Run this pass on a module and one specific method.  Returns
   // false on success.
   //
   bool run(Method *M) {
-    if (doPassInitializationVirt(M->getParent())) return true;
-    return doPerMethodWorkVirt(M);
+    return doPassInitializationVirt(M->getParent()) | doPerMethodWorkVirt(M);
   }
 
 
@@ -151,22 +151,21 @@ struct StatelessPass : public ConcretePass {
   // within it.  Returns false on success.
   //
   static bool run(Module *M) {
-    if (doPassInitialization(M->getParent())) return true;
+    bool MadeChange = doPassInitialization(M->getParent());
 
     // Loop over methods in the module.  doPerMethodWork could add a method to
     // the Module, so we have to keep checking for end of method list condition.
     //
     for (Module::iterator I = M->begin(); I != M->end(); ++I)
-      if (doPerMethodWork(*I)) return true;
-    return false;
+      MadeChange |= doPerMethodWork(*I);
+    return MadeChange;
   }
 
   // run(Method*) - Run this pass on a module and one specific method.  Returns
   // false on success.
   //
   static bool run(Method *M) {
-    if (doPassInitialization(M->getParent())) return true;
-    return doPerMethodWork(M);
+    return doPassInitialization(M->getParent()) | doPerMethodWork(M);
   }
 
   //===--------------------------------------------------------------------===//
