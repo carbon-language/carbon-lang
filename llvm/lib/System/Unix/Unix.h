@@ -23,6 +23,7 @@
 #include <cstring>
 #include <cerrno>
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <sys/param.h>
 #include <assert.h>
 #include <string>

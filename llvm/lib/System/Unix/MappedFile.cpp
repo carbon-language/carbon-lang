@@ -18,7 +18,7 @@
 
 #include "llvm/System/Process.h"
 #include "Unix.h"
-#include <sys/fcntl.h>
+#include <fcntl.h>
 #include <sys/mman.h>
 
 namespace llvm {
