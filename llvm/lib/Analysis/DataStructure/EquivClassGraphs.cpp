@@ -89,9 +89,9 @@ bool EquivClassGraphs::runOnModule(Module &M) {
   std::map<DSGraph*, unsigned> ValMap;
   unsigned NextID = 1;
 
-  if (Function *Main = M.getMainFunction()) {
-    if (!Main->isExternal())
-      processSCC(getOrCreateGraph(*Main), Stack, NextID, ValMap);
+  Function *MainFunc = M.getMainFunction();
+  if (MainFunc && !MainFunc->isExternal()) {
+    processSCC(getOrCreateGraph(*MainFunc), Stack, NextID, ValMap);
   } else {
     std::cerr << "Fold Graphs: No 'main' function found!\n";
   }
@@ -103,6 +103,27 @@ bool EquivClassGraphs::runOnModule(Module &M) {
   DEBUG(CheckAllGraphs(&M, *this));
 
   getGlobalsGraph().removeTriviallyDeadNodes();
+
+  // Merge the globals variables (not the calls) from the globals graph back
+  // into the main function's graph so that the main function contains all of
+  // the information about global pools and GV usage in the program.
+  if (MainFunc) {
+    DSGraph &MainGraph = getOrCreateGraph(*MainFunc);
+    const DSGraph &GG = *MainGraph.getGlobalsGraph();
+    ReachabilityCloner RC(MainGraph, GG, 
+                          DSGraph::DontCloneCallNodes |
+                          DSGraph::DontCloneAuxCallNodes);
+
+    // Clone the global nodes into this graph.
+    for (DSScalarMap::global_iterator I = GG.getScalarMap().global_begin(),
+           E = GG.getScalarMap().global_end(); I != E; ++I)
+      if (isa<GlobalVariable>(*I))
+        RC.getClonedNH(GG.getNodeForValue(*I));
+
+    MainGraph.markIncompleteNodes(DSGraph::MarkFormalArgs | 
+                                  DSGraph::IgnoreGlobals);
+  }
+
   return false;
 }
 

@@ -81,6 +81,27 @@ bool BUDataStructures::runOnModule(Module &M) {
   // 
   GlobalsGraph->removeTriviallyDeadNodes();
   GlobalsGraph->maskIncompleteMarkers();
+
+  // Merge the globals variables (not the calls) from the globals graph back
+  // into the main function's graph so that the main function contains all of
+  // the information about global pools and GV usage in the program.
+  if (MainFunc) {
+    DSGraph &MainGraph = getOrCreateGraph(MainFunc);
+    const DSGraph &GG = *MainGraph.getGlobalsGraph();
+    ReachabilityCloner RC(MainGraph, GG, 
+                          DSGraph::DontCloneCallNodes |
+                          DSGraph::DontCloneAuxCallNodes);
+
+    // Clone the global nodes into this graph.
+    for (DSScalarMap::global_iterator I = GG.getScalarMap().global_begin(),
+           E = GG.getScalarMap().global_end(); I != E; ++I)
+      if (isa<GlobalVariable>(*I))
+        RC.getClonedNH(GG.getNodeForValue(*I));
+
+    MainGraph.markIncompleteNodes(DSGraph::MarkFormalArgs | 
+                                  DSGraph::IgnoreGlobals);
+  }
+
   return false;
 }
 
