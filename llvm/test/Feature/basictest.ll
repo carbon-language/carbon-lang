@@ -7,10 +7,12 @@ void "void"(int, int)   ; Def %0, %1
 	const int 0          ; Def 2
 	const int -4         ; Def 3
 begin
+	br label %1
+
 	add int %0, %1    ; Def 4
 	sub int %4, %3    ; Def 5
 	setle int %5, %2  ; Def 0 - bool plane
-	br bool %0, label %1, label %0
+	br bool %0, label %2, label %1
 
 	add int %0, %1    ; Def 6
 	sub int %4, %3    ; Def 7
