@@ -44,8 +44,8 @@ void
 MachineInstr::SetMachineOperandVal(unsigned int i,
                                    MachineOperand::MachineOperandType opType,
                                    Value* _val,
-                                   bool isdef=false,
-                                   bool isDefAndUse=false)
+                                   bool isdef,
+                                   bool isDefAndUse)
 {
   assert(i < operands.size());
   operands[i].Initialize(opType, _val);
@@ -69,9 +69,9 @@ MachineInstr::SetMachineOperandConst(unsigned int i,
 void
 MachineInstr::SetMachineOperandReg(unsigned int i,
                                    int regNum,
-                                   bool isdef=false,
-                                   bool isDefAndUse=false,
-                                   bool isCCReg=false)
+                                   bool isdef,
+                                   bool isDefAndUse,
+                                   bool isCCReg)
 {
   assert(i < operands.size());
   operands[i].InitializeReg(regNum, isCCReg);

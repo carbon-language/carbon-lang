@@ -139,7 +139,7 @@ int
 MachineCodeForMethod::computeOffsetforLocalVar(const TargetMachine& target,
                                                const Value* val,
                                                unsigned int& getPaddedSize,
-                                               unsigned int  sizeToUse = 0)
+                                               unsigned int  sizeToUse)
 {
   bool growUp;
   int firstOffset =target.getFrameInfo().getFirstAutomaticVarOffset(*this,
@@ -174,7 +174,7 @@ MachineCodeForMethod::computeOffsetforLocalVar(const TargetMachine& target,
 int
 MachineCodeForMethod::allocateLocalVar(const TargetMachine& target,
                                        const Value* val,
-                                       unsigned int sizeToUse = 0)
+                                       unsigned int sizeToUse)
 {
   assert(! automaticVarsAreaFrozen &&
          "Size of auto vars area has been used to compute an offset so "

@@ -108,7 +108,7 @@ const Type *MutateStructTypes::ConvertType(const Type *Ty) {
 //
 void MutateStructTypes::AdjustIndices(const CompositeType *OldTy,
                                       vector<Value*> &Idx,
-                                      unsigned i = 0) {
+                                      unsigned i) {
   assert(i < Idx.size() && "i out of range!");
   const CompositeType *NewCT = cast<CompositeType>(ConvertType(OldTy));
   if (NewCT == OldTy) return;  // No adjustment unless type changes

@@ -74,11 +74,11 @@ Annotation *TargetData::TypeAnFactory(AnnotationID AID, const Annotable *T,
 //===----------------------------------------------------------------------===//
 
 TargetData::TargetData(const std::string &TargetName,
-             unsigned char IntRegSize = 8, unsigned char PtrSize = 8,
-	     unsigned char PtrAl = 8, unsigned char DoubleAl = 8,
-	     unsigned char FloatAl = 4, unsigned char LongAl = 8, 
-	     unsigned char IntAl = 4, unsigned char ShortAl = 2,
-	     unsigned char ByteAl = 1)
+             unsigned char IntRegSize, unsigned char PtrSize,
+	     unsigned char PtrAl, unsigned char DoubleAl,
+	     unsigned char FloatAl, unsigned char LongAl, 
+	     unsigned char IntAl, unsigned char ShortAl,
+	     unsigned char ByteAl)
   : AID(AnnotationManager::getID("TargetData::" + TargetName)) {
   AnnotationManager::registerAnnotationFactory(AID, TypeAnFactory, this);
 

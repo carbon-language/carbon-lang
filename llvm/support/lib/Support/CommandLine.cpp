@@ -138,7 +138,7 @@ static bool EatsUnboundedNumberOfValues(const Option *O) {
 }
 
 void cl::ParseCommandLineOptions(int &argc, char **argv,
-                                 const char *Overview = 0) {
+                                 const char *Overview) {
   assert((!getOpts().empty() || !getPositionalOpts().empty()) &&
          "No options specified, or ParseCommandLineOptions called more"
          " than once!");
@@ -396,7 +396,7 @@ void cl::ParseCommandLineOptions(int &argc, char **argv,
 // Option Base class implementation
 //
 
-bool Option::error(string Message, const char *ArgName = 0) {
+bool Option::error(string Message, const char *ArgName) {
   if (ArgName == 0) ArgName = ArgStr;
   if (ArgName[0] == 0)
     cerr << HelpStr;  // Be nice for positional arguments

@@ -377,7 +377,7 @@ private:
 // for <const SchedGraphNode, SchedGraphNode::const_iterator>.
 // 
 template <class _NodeType, class _EdgeType, class _EdgeIter>
-class SGPredIterator: public std::bidirectional_iterator<_NodeType, ptrdiff_t> {
+class SGPredIterator: public bidirectional_iterator<_NodeType, ptrdiff_t> {
 protected:
   _EdgeIter oi;
 public:
@@ -406,7 +406,7 @@ public:
 };
 
 template <class _NodeType, class _EdgeType, class _EdgeIter>
-class SGSuccIterator: public std::bidirectional_iterator<_NodeType, ptrdiff_t> {
+class SGSuccIterator : public bidirectional_iterator<_NodeType, ptrdiff_t> {
 protected:
   _EdgeIter oi;
 public:

@@ -52,7 +52,7 @@ static const Type *getStructOffsetStep(const StructType *STy, unsigned &Offset,
 //
 const Type *getStructOffsetType(const Type *Ty, unsigned &Offset,
                                 std::vector<Value*> &Indices,
-                                bool StopEarly = true) {
+                                bool StopEarly) {
   if (Offset == 0 && StopEarly && !Indices.empty())
     return Ty;    // Return the leaf type
 
@@ -87,7 +87,7 @@ const Type *getStructOffsetType(const Type *Ty, unsigned &Offset,
 //
 const Type *ConvertableToGEP(const Type *Ty, Value *OffsetVal,
                              std::vector<Value*> &Indices,
-                             BasicBlock::iterator *BI = 0) {
+                             BasicBlock::iterator *BI) {
   const CompositeType *CompTy = dyn_cast<CompositeType>(Ty);
   if (CompTy == 0) return 0;
 

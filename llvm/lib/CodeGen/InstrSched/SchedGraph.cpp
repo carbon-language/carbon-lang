@@ -132,7 +132,7 @@ SchedGraphEdge::~SchedGraphEdge()
 {
 }
 
-void SchedGraphEdge::dump(int indent=0) const {
+void SchedGraphEdge::dump(int indent) const {
   cerr << std::string(indent*2, ' ') << *this; 
 }
 
@@ -171,7 +171,7 @@ SchedGraphNode::~SchedGraphNode()
                 deleter<SchedGraphEdge>);
 }
 
-void SchedGraphNode::dump(int indent=0) const {
+void SchedGraphNode::dump(int indent) const {
   cerr << std::string(indent*2, ' ') << *this; 
 }
 

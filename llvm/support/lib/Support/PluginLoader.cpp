@@ -13,6 +13,7 @@
 #include "Support/CommandLine.h"
 #include <dlfcn.h>
 #include <link.h>
+#include <iostream>
 
 namespace {
   struct PluginLoader {
@@ -25,6 +26,6 @@ namespace {
 }
 
 // This causes operator= above to be invoked for every -load option.
-static cl::opt<PluginLoader, false, cl::parser<string> >
+static cl::opt<PluginLoader, false, cl::parser<std::string> >
 LoadOpt("load", cl::ZeroOrMore, cl::value_desc("plugin.so"),
         cl::desc("Load the specified plugin"));

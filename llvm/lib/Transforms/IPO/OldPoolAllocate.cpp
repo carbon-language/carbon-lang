@@ -1759,5 +1759,6 @@ bool PoolAllocate::run(Module &M) {
 //
 Pass *createPoolAllocatePass() { 
   assert(0 && "Pool allocator disabled!");
+  return 0;
   //return new PoolAllocate(); 
 }

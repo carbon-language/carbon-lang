@@ -79,7 +79,7 @@ private:
 //----------------------------------------------------------------------
 
 template<class _NodeType>
-class ScheduleIterator: public std::forward_iterator<_NodeType, ptrdiff_t> {
+class ScheduleIterator : public forward_iterator<_NodeType, ptrdiff_t> {
 private:
   unsigned cycleNum;
   unsigned slotNum;

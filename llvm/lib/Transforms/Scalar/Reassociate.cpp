@@ -33,7 +33,7 @@ static Statistic<> NumSwapped("reassociate\t- Number of insts with operands swap
 
 namespace {
   class Reassociate : public FunctionPass {
-    map<BasicBlock*, unsigned> RankMap;
+    std::map<BasicBlock*, unsigned> RankMap;
   public:
     bool runOnFunction(Function &F);
 
