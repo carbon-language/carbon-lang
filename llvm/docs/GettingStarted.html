@@ -113,10 +113,12 @@ and performance.
   <li>Remember that you were warned twice about reading the documentation.</li>
   <li>Install the GCC front end:
     <ol>
-      <li><tt>cd <i>where-you-want-the-C-front-end-to-live</i></tt>
+      <li><tt>cd <i>where-you-want-the-C-front-end-to-live</i></tt></li>
       <li><tt>gunzip --stdout cfrontend.<i>platform</i>.tar.gz | tar -xvf -</tt>
+      </li>
       <li><tt>cd cfrontend/<i>platform</i><br>
-          ./fixheaders</tt>
+        ./fixheaders</tt></li>
+      <li>Add the cfrontend's "bin" directory to your PATH variable</li>
     </ol></li>
 
   <li>Get the Source Code
@@ -173,9 +175,9 @@ and performance.
         files and run <tt>configure</tt> to configure the Makefiles and
         header files for the default platform. Useful options include:
       <ul>
-        <li><tt>--with-llvmgccdir=<i>directory</i></tt>
-            <p>Specify the full pathname of where the LLVM GCC frontend is
-            installed.</p></li>
+        <li><tt>--prefix=<i>directory</i></tt>
+        <p>Specify for <i>directory</i> the full pathname of where you
+        want the LLVM tools and libraries to be installed.</p></li>
         <li><tt>--enable-spec2000=<i>directory</i></tt>
             <p>Enable the SPEC2000 benchmarks for testing.  The SPEC2000
             benchmarks should be available in
@@ -552,11 +554,11 @@ You can set these on the command line, or better yet, set them in your
   of your bytecode libraries. It is optional and provided only a convenience 
   since you can specify the paths using the -L options of the tools.</dd>
 
-  <dt>alias llvmgcc <i>LLVMGCCDIR</i><tt>/bin/gcc</tt></dt>
-  <dt>alias llvmg++ <i>LLVMGCCDIR</i><tt>/bin/g++</tt></dt>
+  <dt><tt>alias llvmgcc='llvm-gcc'</tt></dt>
+  <dt><tt>alias llvmg++='llvm-g++'</tt></dt>
   <dd></dt>These aliases allow you to use the LLVM C and C++ front ends 
-  without putting them in your <tt>PATH</tt> or typing in their complete 
-  pathnames.</dd>
+  under alternative names. It is assumed that llvm-gcc and llvm-g++ are 
+  in your path. The LLVM makefiles will use llvm-gcc and llvm-g++ directly.</dd>
 </dl>
 
 </div>
@@ -749,13 +751,6 @@ script to configure the build system:</p>
 <p>The following options can be used to set or enable LLVM specific options:</p>
 
 <dl>
-  <dt><i>--with-llvmgccdir=LLVMGCCDIR</i></dt>
-  <dd>
-    Path to the location where the LLVM GCC front end binaries and
-    associated libraries were installed.  This must be specified as an
-    absolute pathname.
-    <p></p>
-  </dd>
   <dt><i>--with-tclinclude</i></dt>
   <dd>Path to the tcl include directory under which the <tt>tclsh</tt> can be
   found. Use this if you have multiple tcl installations on your machine and you
@@ -1251,21 +1246,21 @@ information is in the <a href="CommandGuide/index.html">Command Guide</a>.</p>
   translates LLVM bytecode to a SPARC or x86 assembly file, or to C code (with
   the -march=c option).</dd>
 
-  <dt><tt><b>llvmgcc</b></tt></dt>
-  <dd><tt>llvmgcc</tt> is a GCC-based C frontend
+  <dt><tt><b>llvm-gcc</b></tt></dt>
+  <dd><tt>llvm-gcc</tt> is a GCC-based C frontend
   that has been retargeted to emit LLVM code as the machine code output.  It
   works just like any other GCC compiler, taking the typical <tt>-c, -S, -E,
   -o</tt> options that are typically used.  The source code for the
-  <tt>llvmgcc</tt> tool is currently not included in the LLVM CVS tree
+  <tt>llvm-gcc</tt> tool is currently not included in the LLVM CVS tree
   because it is quite large and not very interesting.
   <blockquote>
     <dl>
       <dt><tt><b>gccas</b></tt></dt>
-      <dd>This tool is invoked by the <tt>llvmgcc</tt> frontend as the 
+      <dd>This tool is invoked by the <tt>llvm-gcc</tt> frontend as the 
       "assembler" part of the compiler.  This tool actually assembles LLVM 
       assembly to LLVM bytecode, performs a variety of optimizations, and 
       outputs LLVM bytecode.  Thus when you invoke 
-      <tt>llvmgcc -c x.c -o x.o</tt>, you are causing <tt>gccas</tt> to be 
+      <tt>llvm-gcc -c x.c -o x.o</tt>, you are causing <tt>gccas</tt> to be 
       run, which writes the <tt>x.o</tt> file (which is an LLVM bytecode file 
       that can be disassembled or manipulated just like any other bytecode 
       file).  The command line interface to <tt>gccas</tt> is designed to be 
@@ -1397,7 +1392,7 @@ are code generators for parts of LLVM infrastructure.</p>
        </pre></li>
 
   <li><p>Next, compile the C file into a LLVM bytecode file:</p>
-      <p><tt>% llvmgcc hello.c -o hello</tt></p>
+      <p><tt>% llvm-gcc hello.c -o hello</tt></p>
 
       <p>Note that you should have already built the tools and they have to be
       in your path, at least <tt>gccas</tt> and <tt>gccld</tt>.</p>
