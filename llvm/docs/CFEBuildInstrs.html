@@ -172,7 +172,7 @@ functions from C as referenced from C++, so we typically configure with
   <li><p><b>Fix 1:</b> If you have system header files that include
    inline assembly, you may have to modify them to remove the inline
    assembly, and install the modified versions in
-   <code>$CFEINSTALL/<i>target-triplet</i>/sys-include</code>.</li>
+   <code>$CFEINSTALL/lib/gcc/<i>target-triplet</i>/3.4-llvm/include</code>.</li>
 
   <li><b>Fix 2:</b> If you are building the C++ front-end on a CPU we
    haven't tried yet, you will probably have to edit the appropriate
