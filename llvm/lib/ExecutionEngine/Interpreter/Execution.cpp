@@ -20,9 +20,6 @@
 #include <math.h>  // For fmod
 #include <signal.h>
 #include <setjmp.h>
-using std::vector;
-using std::cout;
-using std::cerr;
 
 Interpreter *TheEE = 0;
 
@@ -54,7 +51,7 @@ static cl::opt<bool>
 ProfileStructureFields("profilestructfields", 
                        cl::desc("Profile Structure Field Accesses"));
 #include <map>
-static std::map<const StructType *, vector<unsigned> > FieldAccessCounts;
+static std::map<const StructType *, std::vector<unsigned> > FieldAccessCounts;
 #endif
 
 sigjmp_buf SignalRecoverBuffer;
@@ -109,7 +106,7 @@ static GenericValue getOperandValue(Value *V, ExecutionContext &SF) {
                             getOperandValue(CE->getOperand(1), SF),
                             CE->getType());
     default:
-      cerr << "Unhandled ConstantExpr: " << CE << "\n";
+      std::cerr << "Unhandled ConstantExpr: " << CE << "\n";
       abort();
       return GenericValue();
     }
@@ -128,23 +125,23 @@ static GenericValue getOperandValue(Value *V, ExecutionContext &SF) {
 
 static void printOperandInfo(Value *V, ExecutionContext &SF) {
   if (isa<Constant>(V)) {
-    cout << "Constant Pool Value\n";
+    std::cout << "Constant Pool Value\n";
   } else if (isa<GlobalValue>(V)) {
-    cout << "Global Value\n";
+    std::cout << "Global Value\n";
   } else {
     unsigned TyP  = V->getType()->getUniqueID();   // TypePlane for value
     unsigned Slot = getOperandSlot(V);
-    cout << "Value=" << (void*)V << " TypeID=" << TyP << " Slot=" << Slot
-         << " Addr=" << &SF.Values[TyP][Slot] << " SF=" << &SF
-         << " Contents=0x";
+    std::cout << "Value=" << (void*)V << " TypeID=" << TyP << " Slot=" << Slot
+              << " Addr=" << &SF.Values[TyP][Slot] << " SF=" << &SF
+              << " Contents=0x";
 
     const unsigned char *Buf = (const unsigned char*)&SF.Values[TyP][Slot];
     for (unsigned i = 0; i < sizeof(GenericValue); ++i) {
       unsigned char Cur = Buf[i];
-      cout << ( Cur     >= 160? char((Cur>>4)+'A'-10) : char((Cur>>4) + '0'))
-           << ((Cur&15) >=  10? char((Cur&15)+'A'-10) : char((Cur&15) + '0'));
+      std::cout << ( Cur     >= 160?char((Cur>>4)+'A'-10):char((Cur>>4) + '0'))
+                << ((Cur&15) >=  10?char((Cur&15)+'A'-10):char((Cur&15) + '0'));
     }
-    cout << "\n";
+    std::cout << "\n";
   }
 }
 
@@ -153,7 +150,7 @@ static void printOperandInfo(Value *V, ExecutionContext &SF) {
 static void SetValue(Value *V, GenericValue Val, ExecutionContext &SF) {
   unsigned TyP = V->getType()->getUniqueID();   // TypePlane for value
 
-  //cout << "Setting value: " << &SF.Values[TyP][getOperandSlot(V)] << "\n";
+  //std::cout << "Setting value: " << &SF.Values[TyP][getOperandSlot(V)]<< "\n";
   SF.Values[TyP][getOperandSlot(V)] = Val;
 }
 
@@ -190,9 +187,9 @@ static GenericValue executeAddInst(GenericValue Src1, GenericValue Src2,
     IMPLEMENT_BINARY_OPERATOR(+, Long);
     IMPLEMENT_BINARY_OPERATOR(+, Float);
     IMPLEMENT_BINARY_OPERATOR(+, Double);
-    IMPLEMENT_BINARY_OPERATOR(+, Pointer);
   default:
-    cout << "Unhandled type for Add instruction: " << Ty << "\n";
+    std::cout << "Unhandled type for Add instruction: " << *Ty << "\n";
+    abort();
   }
   return Dest;
 }
@@ -211,9 +208,9 @@ static GenericValue executeSubInst(GenericValue Src1, GenericValue Src2,
     IMPLEMENT_BINARY_OPERATOR(-, Long);
     IMPLEMENT_BINARY_OPERATOR(-, Float);
     IMPLEMENT_BINARY_OPERATOR(-, Double);
-    IMPLEMENT_BINARY_OPERATOR(-, Pointer);
   default:
-    cout << "Unhandled type for Sub instruction: " << Ty << "\n";
+    std::cout << "Unhandled type for Sub instruction: " << *Ty << "\n";
+    abort();
   }
   return Dest;
 }
@@ -232,9 +229,9 @@ static GenericValue executeMulInst(GenericValue Src1, GenericValue Src2,
     IMPLEMENT_BINARY_OPERATOR(*, Long);
     IMPLEMENT_BINARY_OPERATOR(*, Float);
     IMPLEMENT_BINARY_OPERATOR(*, Double);
-    IMPLEMENT_BINARY_OPERATOR(*, Pointer);
   default:
-    cout << "Unhandled type for Mul instruction: " << Ty << "\n";
+    std::cout << "Unhandled type for Mul instruction: " << Ty << "\n";
+    abort();
   }
   return Dest;
 }
@@ -253,9 +250,9 @@ static GenericValue executeDivInst(GenericValue Src1, GenericValue Src2,
     IMPLEMENT_BINARY_OPERATOR(/, Long);
     IMPLEMENT_BINARY_OPERATOR(/, Float);
     IMPLEMENT_BINARY_OPERATOR(/, Double);
-    IMPLEMENT_BINARY_OPERATOR(/, Pointer);
   default:
-    cout << "Unhandled type for Div instruction: " << Ty << "\n";
+    std::cout << "Unhandled type for Div instruction: " << *Ty << "\n";
+    abort();
   }
   return Dest;
 }
@@ -272,7 +269,6 @@ static GenericValue executeRemInst(GenericValue Src1, GenericValue Src2,
     IMPLEMENT_BINARY_OPERATOR(%, Int);
     IMPLEMENT_BINARY_OPERATOR(%, ULong);
     IMPLEMENT_BINARY_OPERATOR(%, Long);
-    IMPLEMENT_BINARY_OPERATOR(%, Pointer);
   case Type::FloatTyID:
     Dest.FloatVal = fmod(Src1.FloatVal, Src2.FloatVal);
     break;
@@ -280,7 +276,8 @@ static GenericValue executeRemInst(GenericValue Src1, GenericValue Src2,
     Dest.DoubleVal = fmod(Src1.DoubleVal, Src2.DoubleVal);
     break;
   default:
-    cout << "Unhandled type for Rem instruction: " << Ty << "\n";
+    std::cout << "Unhandled type for Rem instruction: " << *Ty << "\n";
+    abort();
   }
   return Dest;
 }
@@ -297,9 +294,9 @@ static GenericValue executeAndInst(GenericValue Src1, GenericValue Src2,
     IMPLEMENT_BINARY_OPERATOR(&, Int);
     IMPLEMENT_BINARY_OPERATOR(&, ULong);
     IMPLEMENT_BINARY_OPERATOR(&, Long);
-    IMPLEMENT_BINARY_OPERATOR(&, Pointer);
   default:
-    cout << "Unhandled type for And instruction: " << Ty << "\n";
+    std::cout << "Unhandled type for And instruction: " << *Ty << "\n";
+    abort();
   }
   return Dest;
 }
@@ -317,9 +314,9 @@ static GenericValue executeOrInst(GenericValue Src1, GenericValue Src2,
     IMPLEMENT_BINARY_OPERATOR(|, Int);
     IMPLEMENT_BINARY_OPERATOR(|, ULong);
     IMPLEMENT_BINARY_OPERATOR(|, Long);
-    IMPLEMENT_BINARY_OPERATOR(|, Pointer);
   default:
-    cout << "Unhandled type for Or instruction: " << Ty << "\n";
+    std::cout << "Unhandled type for Or instruction: " << *Ty << "\n";
+    abort();
   }
   return Dest;
 }
@@ -337,9 +334,9 @@ static GenericValue executeXorInst(GenericValue Src1, GenericValue Src2,
     IMPLEMENT_BINARY_OPERATOR(^, Int);
     IMPLEMENT_BINARY_OPERATOR(^, ULong);
     IMPLEMENT_BINARY_OPERATOR(^, Long);
-    IMPLEMENT_BINARY_OPERATOR(^, Pointer);
   default:
-    cout << "Unhandled type for Xor instruction: " << Ty << "\n";
+    std::cout << "Unhandled type for Xor instruction: " << *Ty << "\n";
+    abort();
   }
   return Dest;
 }
@@ -364,7 +361,8 @@ static GenericValue executeSetEQInst(GenericValue Src1, GenericValue Src2,
     IMPLEMENT_SETCC(==, Double);
     IMPLEMENT_SETCC(==, Pointer);
   default:
-    cout << "Unhandled type for SetEQ instruction: " << Ty << "\n";
+    std::cout << "Unhandled type for SetEQ instruction: " << *Ty << "\n";
+    abort();
   }
   return Dest;
 }
@@ -386,7 +384,8 @@ static GenericValue executeSetNEInst(GenericValue Src1, GenericValue Src2,
     IMPLEMENT_SETCC(!=, Pointer);
 
   default:
-    cout << "Unhandled type for SetNE instruction: " << Ty << "\n";
+    std::cout << "Unhandled type for SetNE instruction: " << *Ty << "\n";
+    abort();
   }
   return Dest;
 }
@@ -407,7 +406,8 @@ static GenericValue executeSetLEInst(GenericValue Src1, GenericValue Src2,
     IMPLEMENT_SETCC(<=, Double);
     IMPLEMENT_SETCC(<=, Pointer);
   default:
-    cout << "Unhandled type for SetLE instruction: " << Ty << "\n";
+    std::cout << "Unhandled type for SetLE instruction: " << Ty << "\n";
+    abort();
   }
   return Dest;
 }
@@ -428,7 +428,8 @@ static GenericValue executeSetGEInst(GenericValue Src1, GenericValue Src2,
     IMPLEMENT_SETCC(>=, Double);
     IMPLEMENT_SETCC(>=, Pointer);
   default:
-    cout << "Unhandled type for SetGE instruction: " << Ty << "\n";
+    std::cout << "Unhandled type for SetGE instruction: " << *Ty << "\n";
+    abort();
   }
   return Dest;
 }
@@ -449,7 +450,8 @@ static GenericValue executeSetLTInst(GenericValue Src1, GenericValue Src2,
     IMPLEMENT_SETCC(<, Double);
     IMPLEMENT_SETCC(<, Pointer);
   default:
-    cout << "Unhandled type for SetLT instruction: " << Ty << "\n";
+    std::cout << "Unhandled type for SetLT instruction: " << *Ty << "\n";
+    abort();
   }
   return Dest;
 }
@@ -470,7 +472,8 @@ static GenericValue executeSetGTInst(GenericValue Src1, GenericValue Src2,
     IMPLEMENT_SETCC(>, Double);
     IMPLEMENT_SETCC(>, Pointer);
   default:
-    cout << "Unhandled type for SetGT instruction: " << Ty << "\n";
+    std::cout << "Unhandled type for SetGT instruction: " << *Ty << "\n";
+    abort();
   }
   return Dest;
 }
@@ -497,8 +500,8 @@ static void executeBinaryInst(BinaryOperator &I, ExecutionContext &SF) {
   case Instruction::SetLT: R = executeSetLTInst(Src1, Src2, Ty); break;
   case Instruction::SetGT: R = executeSetGTInst(Src1, Src2, Ty); break;
   default:
-    cout << "Don't know how to handle this binary operator!\n-->" << I;
-    R = Src1;
+    std::cout << "Don't know how to handle this binary operator!\n-->" << I;
+    abort();
   }
 
   SetValue(&I, R, SF);
@@ -513,10 +516,10 @@ static void PerformExitStuff() {
   // Print out structure field accounting information...
   if (!FieldAccessCounts.empty()) {
     CW << "Profile Field Access Counts:\n";
-    std::map<const StructType *, vector<unsigned> >::iterator 
+    std::map<const StructType *, std::vector<unsigned> >::iterator 
       I = FieldAccessCounts.begin(), E = FieldAccessCounts.end();
     for (; I != E; ++I) {
-      vector<unsigned> &OfC = I->second;
+      std::vector<unsigned> &OfC = I->second;
       CW << "  '" << (Value*)I->first << "'\t- Sum=";
       
       unsigned Sum = 0;
@@ -533,9 +536,9 @@ static void PerformExitStuff() {
     CW << "\n";
 
     CW << "Profile Field Access Percentages:\n";
-    cout.precision(3);
+    std::cout.precision(3);
     for (I = FieldAccessCounts.begin(); I != E; ++I) {
-      vector<unsigned> &OfC = I->second;
+      std::vector<unsigned> &OfC = I->second;
       unsigned Sum = 0;
       for (unsigned i = 0; i < OfC.size(); ++i)
         Sum += OfC[i];
@@ -556,9 +559,9 @@ static void PerformExitStuff() {
 
 void Interpreter::exitCalled(GenericValue GV) {
   if (!QuietMode) {
-    cout << "Program returned ";
+    std::cout << "Program returned ";
     print(Type::IntTy, GV);
-    cout << " via 'void exit(int)'\n";
+    std::cout << " via 'void exit(int)'\n";
   }
 
   ExitCode = GV.SByteVal;
@@ -588,7 +591,7 @@ void Interpreter::executeRetInst(ReturnInst &I, ExecutionContext &SF) {
         CW << "Function " << M->getType() << " \"" << M->getName()
            << "\" returned ";
         print(RetTy, Result);
-        cout << "\n";
+        std::cout << "\n";
       }
 
       if (RetTy->isIntegral())
@@ -616,7 +619,7 @@ void Interpreter::executeRetInst(ReturnInst &I, ExecutionContext &SF) {
     CW << "Function " << M->getType() << " \"" << M->getName()
        << "\" returned ";
     print(RetTy, Result);
-    cout << "\n";
+    std::cout << "\n";
   }
 }
 
@@ -709,7 +712,7 @@ GenericValue Interpreter::executeGEPOperation(Value *Ptr, User::op_iterator I,
 #ifdef PROFILE_STRUCTURE_FIELDS
       if (ProfileStructureFields) {
         // Do accounting for this field...
-        vector<unsigned> &OfC = FieldAccessCounts[STy];
+        std::vector<unsigned> &OfC = FieldAccessCounts[STy];
         if (OfC.size() == 0) OfC.resize(STy->getElementTypes().size());
         OfC[Index]++;
       }
@@ -724,9 +727,9 @@ GenericValue Interpreter::executeGEPOperation(Value *Ptr, User::op_iterator I,
       unsigned Idx = getOperandValue(*I, SF).LongVal;
       if (const ArrayType *AT = dyn_cast<ArrayType>(ST))
         if (Idx >= AT->getNumElements() && ArrayChecksEnabled) {
-          cerr << "Out of range memory access to element #" << Idx
-               << " of a " << AT->getNumElements() << " element array."
-               << " Subscript #" << *I << "\n";
+          std::cerr << "Out of range memory access to element #" << Idx
+                    << " of a " << AT->getNumElements() << " element array."
+                    << " Subscript #" << *I << "\n";
           // Get outta here!!!
           siglongjmp(SignalRecoverBuffer, SIGTRAP);
         }
@@ -781,7 +784,8 @@ void Interpreter::executeLoadInst(LoadInst &I, ExecutionContext &SF) {
                                              ((uint64_t)Ptr->Untyped[7] << 56);
                             break;
     default:
-      cout << "Cannot load value of type " << I.getType() << "!\n";
+      std::cout << "Cannot load value of type " << *I.getType() << "!\n";
+      abort();
     }
   } else {
     switch (I.getType()->getPrimitiveID()) {
@@ -812,7 +816,8 @@ void Interpreter::executeLoadInst(LoadInst &I, ExecutionContext &SF) {
                                              ((uint64_t)Ptr->Untyped[0] << 56);
                             break;
     default:
-      cout << "Cannot load value of type " << I.getType() << "!\n";
+      std::cout << "Cannot load value of type " << *I.getType() << "!\n";
+      abort();
     }
   }
 
@@ -834,7 +839,7 @@ void Interpreter::executeStoreInst(StoreInst &I, ExecutionContext &SF) {
 
 void Interpreter::executeCallInst(CallInst &I, ExecutionContext &SF) {
   ECStack.back().Caller = &I;
-  vector<GenericValue> ArgVals;
+  std::vector<GenericValue> ArgVals;
   ArgVals.reserve(I.getNumOperands()-1);
   for (unsigned i = 1; i < I.getNumOperands(); ++i) {
     ArgVals.push_back(getOperandValue(I.getOperand(i), SF));
@@ -901,9 +906,8 @@ static void executeShlInst(ShiftInst &I, ExecutionContext &SF) {
     IMPLEMENT_SHIFT(<<, Int);
     IMPLEMENT_SHIFT(<<, ULong);
     IMPLEMENT_SHIFT(<<, Long);
-    IMPLEMENT_SHIFT(<<, Pointer);
   default:
-    cout << "Unhandled type for Shl instruction: " << Ty << "\n";
+    std::cout << "Unhandled type for Shl instruction: " << *Ty << "\n";
   }
   SetValue(&I, Dest, SF);
 }
@@ -923,9 +927,9 @@ static void executeShrInst(ShiftInst &I, ExecutionContext &SF) {
     IMPLEMENT_SHIFT(>>, Int);
     IMPLEMENT_SHIFT(>>, ULong);
     IMPLEMENT_SHIFT(>>, Long);
-    IMPLEMENT_SHIFT(>>, Pointer);
   default:
-    cout << "Unhandled type for Shr instruction: " << Ty << "\n";
+    std::cout << "Unhandled type for Shr instruction: " << *Ty << "\n";
+    abort();
   }
   SetValue(&I, Dest, SF);
 }
@@ -952,8 +956,8 @@ static void executeShrInst(ShiftInst &I, ExecutionContext &SF) {
       IMPLEMENT_CAST(DESTTY, DESTCTY, Double)
 
 #define IMPLEMENT_CAST_CASE_END()    \
-    default: cout << "Unhandled cast: " << SrcTy << " to " << Ty << "\n";  \
-      break;                                    \
+    default: std::cout << "Unhandled cast: " << SrcTy << " to " << Ty << "\n"; \
+      abort();                                  \
     }                                           \
     break
 
@@ -981,7 +985,7 @@ static GenericValue executeCastOperation(Value *SrcVal, const Type *Ty,
     IMPLEMENT_CAST_CASE(Double , (double));
     IMPLEMENT_CAST_CASE(Bool   , (bool));
   default:
-    cout << "Unhandled dest type for cast instruction: " << Ty << "\n";
+    std::cout << "Unhandled dest type for cast instruction: " << *Ty << "\n";
     abort();
   }
 
@@ -1022,7 +1026,8 @@ unsigned MethodInfo::getValueSlot(const Value *V) {
 //===----------------------------------------------------------------------===//
 // callMethod - Execute the specified function...
 //
-void Interpreter::callMethod(Function *M, const vector<GenericValue> &ArgVals) {
+void Interpreter::callMethod(Function *M,
+                             const std::vector<GenericValue> &ArgVals) {
   assert((ECStack.empty() || ECStack.back().Caller == 0 || 
 	  ECStack.back().Caller->getNumOperands()-1 == ArgVals.size()) &&
 	 "Incorrect number of arguments passed into function call!");
@@ -1043,7 +1048,7 @@ void Interpreter::callMethod(Function *M, const vector<GenericValue> &ArgVals) {
         CW << "Function " << M->getType() << " \"" << M->getName()
            << "\" returned ";
         print(RetTy, Result); 
-        cout << "\n";
+        std::cout << "\n";
         
         if (RetTy->isIntegral())
           ExitCode = Result.IntVal;   // Capture the exit code of the program
@@ -1108,14 +1113,14 @@ bool Interpreter::executeInstruction() {
   if (int SigNo = sigsetjmp(SignalRecoverBuffer, 1)) {
     --SF.CurInst;   // Back up to erroring instruction
     if (SigNo != SIGINT) {
-      cout << "EXCEPTION OCCURRED [" << strsignal(SigNo) << "]:\n";
+      std::cout << "EXCEPTION OCCURRED [" << strsignal(SigNo) << "]:\n";
       printStackTrace();
       // If -abort-on-exception was specified, terminate LLI instead of trying
       // to debug it.
       //
       if (AbortOnExceptions) exit(1);
     } else if (SigNo == SIGINT) {
-      cout << "CTRL-C Detected, execution halted.\n";
+      std::cout << "CTRL-C Detected, execution halted.\n";
     }
     InInstruction = false;
     return true;
@@ -1146,7 +1151,8 @@ bool Interpreter::executeInstruction() {
     case Instruction::Shr:     executeShrInst  (cast<ShiftInst>(I), SF); break;
     case Instruction::Cast:    executeCastInst (cast<CastInst> (I), SF); break;
     default:
-      cout << "Don't know how to execute this instruction!\n-->" << I;
+      std::cout << "Don't know how to execute this instruction!\n-->" << I;
+      abort();
     }
   }
   InInstruction = false;
@@ -1162,7 +1168,7 @@ bool Interpreter::executeInstruction() {
 
 void Interpreter::stepInstruction() {  // Do the 'step' command
   if (ECStack.empty()) {
-    cout << "Error: no program running, cannot step!\n";
+    std::cout << "Error: no program running, cannot step!\n";
     return;
   }
 
@@ -1176,7 +1182,7 @@ void Interpreter::stepInstruction() {  // Do the 'step' command
 // --- UI Stuff...
 void Interpreter::nextInstruction() {  // Do the 'next' command
   if (ECStack.empty()) {
-    cout << "Error: no program running, cannot 'next'!\n";
+    std::cout << "Error: no program running, cannot 'next'!\n";
     return;
   }
 
@@ -1187,7 +1193,7 @@ void Interpreter::nextInstruction() {  // Do the 'next' command
     // Step into the function...
     if (executeInstruction()) {
       // Hit a breakpoint, print current instruction, then return to user...
-      cout << "Breakpoint hit!\n";
+      std::cout << "Breakpoint hit!\n";
       printCurrentInstruction();
       return;
     }
@@ -1207,7 +1213,7 @@ void Interpreter::nextInstruction() {  // Do the 'next' command
 
 void Interpreter::run() {
   if (ECStack.empty()) {
-    cout << "Error: no program running, cannot run!\n";
+    std::cout << "Error: no program running, cannot run!\n";
     return;
   }
 
@@ -1217,16 +1223,16 @@ void Interpreter::run() {
     HitBreakpoint = executeInstruction();
   }
 
-  if (HitBreakpoint) {
-    cout << "Breakpoint hit!\n";
-  }
+  if (HitBreakpoint)
+    std::cout << "Breakpoint hit!\n";
+
   // Print the next instruction to execute...
   printCurrentInstruction();
 }
 
 void Interpreter::finish() {
   if (ECStack.empty()) {
-    cout << "Error: no program running, cannot run!\n";
+    std::cout << "Error: no program running, cannot run!\n";
     return;
   }
 
@@ -1237,9 +1243,8 @@ void Interpreter::finish() {
     HitBreakpoint = executeInstruction();
   }
 
-  if (HitBreakpoint) {
-    cout << "Breakpoint hit!\n";
-  }
+  if (HitBreakpoint)
+    std::cout << "Breakpoint hit!\n";
 
   // Print the next instruction to execute...
   printCurrentInstruction();
@@ -1253,33 +1258,33 @@ void Interpreter::finish() {
 void Interpreter::printCurrentInstruction() {
   if (!ECStack.empty()) {
     if (ECStack.back().CurBB->begin() == ECStack.back().CurInst)  // print label
-      WriteAsOperand(cout, ECStack.back().CurBB) << ":\n";
+      WriteAsOperand(std::cout, ECStack.back().CurBB) << ":\n";
 
     Instruction &I = *ECStack.back().CurInst;
     InstNumber *IN = (InstNumber*)I.getAnnotation(SlotNumberAID);
     assert(IN && "Instruction has no numbering annotation!");
-    cout << "#" << IN->InstNum << I;
+    std::cout << "#" << IN->InstNum << I;
   }
 }
 
 void Interpreter::printValue(const Type *Ty, GenericValue V) {
   switch (Ty->getPrimitiveID()) {
-  case Type::BoolTyID:   cout << (V.BoolVal?"true":"false"); break;
+  case Type::BoolTyID:   std::cout << (V.BoolVal?"true":"false"); break;
   case Type::SByteTyID:
-    cout << (int)V.SByteVal << " '" << V.SByteVal << "'";  break;
+    std::cout << (int)V.SByteVal << " '" << V.SByteVal << "'";  break;
   case Type::UByteTyID:
-    cout << (unsigned)V.UByteVal << " '" << V.UByteVal << "'";  break;
-  case Type::ShortTyID:  cout << V.ShortVal;  break;
-  case Type::UShortTyID: cout << V.UShortVal; break;
-  case Type::IntTyID:    cout << V.IntVal;    break;
-  case Type::UIntTyID:   cout << V.UIntVal;   break;
-  case Type::LongTyID:   cout << (long)V.LongVal;   break;
-  case Type::ULongTyID:  cout << (unsigned long)V.ULongVal;  break;
-  case Type::FloatTyID:  cout << V.FloatVal;  break;
-  case Type::DoubleTyID: cout << V.DoubleVal; break;
-  case Type::PointerTyID:cout << (void*)GVTOP(V); break;
+    std::cout << (unsigned)V.UByteVal << " '" << V.UByteVal << "'";  break;
+  case Type::ShortTyID:  std::cout << V.ShortVal;  break;
+  case Type::UShortTyID: std::cout << V.UShortVal; break;
+  case Type::IntTyID:    std::cout << V.IntVal;    break;
+  case Type::UIntTyID:   std::cout << V.UIntVal;   break;
+  case Type::LongTyID:   std::cout << (long)V.LongVal;   break;
+  case Type::ULongTyID:  std::cout << (unsigned long)V.ULongVal;  break;
+  case Type::FloatTyID:  std::cout << V.FloatVal;  break;
+  case Type::DoubleTyID: std::cout << V.DoubleVal; break;
+  case Type::PointerTyID:std::cout << (void*)GVTOP(V); break;
   default:
-    cout << "- Don't know how to print value of this type!";
+    std::cout << "- Don't know how to print value of this type!";
     break;
   }
 }
@@ -1302,7 +1307,7 @@ void Interpreter::print(const std::string &Name) {
   } else {      // Otherwise there should be an annotation for the slot#
     print(PickedVal->getType(), 
           getOperandValue(PickedVal, ECStack[CurFrame]));
-    cout << "\n";
+    std::cout << "\n";
   }
 }
 
@@ -1310,10 +1315,10 @@ void Interpreter::infoValue(const std::string &Name) {
   Value *PickedVal = ChooseOneOption(Name, LookupMatchingNames(Name));
   if (!PickedVal) return;
 
-  cout << "Value: ";
+  std::cout << "Value: ";
   print(PickedVal->getType(), 
         getOperandValue(PickedVal, ECStack[CurFrame]));
-  cout << "\n";
+  std::cout << "\n";
   printOperandInfo(PickedVal, ECStack[CurFrame]);
 }
 
@@ -1330,13 +1335,13 @@ void Interpreter::printStackFrame(int FrameNo) {
   
   unsigned i = 0;
   for (Function::aiterator I = F->abegin(), E = F->aend(); I != E; ++I, ++i) {
-    if (i != 0) cout << ", ";
+    if (i != 0) std::cout << ", ";
     CW << *I << "=";
     
     printValue(I->getType(), getOperandValue(I, ECStack[FrameNo]));
   }
 
-  cout << ")\n";
+  std::cout << ")\n";
 
   if (FrameNo != int(ECStack.size()-1)) {
     BasicBlock::iterator I = ECStack[FrameNo].CurInst;
