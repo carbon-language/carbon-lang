@@ -27,7 +27,8 @@ bool MSSchedule::insert(MSchedGraphNode *node, int cycle) {
     if (schedule[cycle].size() < numIssue) {
       //Now check if all the resources in their respective cycles are available
       if(resourcesFree(node, cycle)) {
-	schedule[cycle].push_back(node);
+	//Insert to preserve dependencies
+	addToSchedule(cycle,node);
 	DEBUG(std::cerr << "Found spot in map, and there is an issue slot\n");
 	return false;
       }
@@ -48,6 +49,24 @@ bool MSSchedule::insert(MSchedGraphNode *node, int cycle) {
   return true;
   
 }
+
+void MSSchedule::addToSchedule(int cycle, MSchedGraphNode *node) {
+  std::vector<MSchedGraphNode*> nodesAtCycle = schedule[cycle];
+
+  std::map<unsigned, MSchedGraphNode*> indexMap;
+  for(unsigned i=0; i < nodesAtCycle.size(); ++i) {
+    indexMap[nodesAtCycle[i]->getIndex()] = nodesAtCycle[i];
+  }
+
+  indexMap[node->getIndex()] = node;
+
+  std::vector<MSchedGraphNode*> nodes;
+  for(std::map<unsigned, MSchedGraphNode*>::iterator I = indexMap.begin(), E = indexMap.end(); I != E; ++I)
+    nodes.push_back(I->second);
+  
+  schedule[cycle] =  nodes;
+}
+
 
 bool MSSchedule::resourcesFree(MSchedGraphNode *node, int cycle) {
   

@@ -22,9 +22,9 @@
 using namespace llvm;
 
 MSchedGraphNode::MSchedGraphNode(const MachineInstr* inst, 
-				 MSchedGraph *graph, 
+				 MSchedGraph *graph, unsigned idx,
 				 unsigned late, bool isBranch) 
-  : Inst(inst), Parent(graph), latency(late), isBranchInstr(isBranch) {
+  : Inst(inst), Parent(graph), index(idx), latency(late), isBranchInstr(isBranch) {
 
   //Add to the graph
   graph->addNode(inst, this);
@@ -113,7 +113,7 @@ void MSchedGraph::buildNodesAndEdges() {
 
   //Save PHI instructions to deal with later
   std::vector<const MachineInstr*> phiInstrs;
-
+  unsigned index = 0;
   //Loop over instructions in MBB and add nodes and edges
   for (MachineBasicBlock::const_iterator MI = BB->begin(), e = BB->end(); MI != e; ++MI) {
     //Get each instruction of machine basic block, get the delay
@@ -149,7 +149,7 @@ void MSchedGraph::buildNodesAndEdges() {
       isBranch = true;
 
     //Node is created and added to the graph automatically
-    MSchedGraphNode *node =  new MSchedGraphNode(MI, this, delay, isBranch);
+    MSchedGraphNode *node =  new MSchedGraphNode(MI, this, index, delay, isBranch);
 
     DEBUG(std::cerr << "Created Node: " << *node << "\n"); 
 
@@ -211,6 +211,7 @@ void MSchedGraph::buildNodesAndEdges() {
 	}
       } 
     }
+    ++index;
   }
   addMemEdges(memInstructions);
   addMachRegEdges(regNumtoNodeMap);

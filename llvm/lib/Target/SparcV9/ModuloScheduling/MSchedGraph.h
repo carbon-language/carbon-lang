@@ -58,15 +58,17 @@ namespace llvm {
    
     const MachineInstr* Inst; //Machine Instruction
     MSchedGraph* Parent; //Graph this node belongs to
+    unsigned index; //Index in BB
     unsigned latency; //Latency of Instruction
     bool isBranchInstr; //Is this node the branch instr or not
+    
 
     std::vector<MSchedGraphNode*> Predecessors; //Predecessor Nodes
     std::vector<MSchedGraphEdge> Successors;
 
   public:
     MSchedGraphNode(const MachineInstr *inst, MSchedGraph *graph, 
-		    unsigned late=0, bool isBranch=false);
+		    unsigned index, unsigned late=0, bool isBranch=false);
 
     //Iterators
     typedef std::vector<MSchedGraphNode*>::iterator pred_iterator;
@@ -102,7 +104,7 @@ namespace llvm {
     bool hasSuccessors() { return (Successors.size() > 0); }
     unsigned getLatency() { return latency; }
     unsigned getLatency() const { return latency; }
-
+    unsigned getIndex() { return index; }
     MSchedGraphEdge getInEdge(MSchedGraphNode *pred);
     unsigned getInEdgeNum(MSchedGraphNode *pred);
 

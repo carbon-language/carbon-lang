@@ -35,6 +35,9 @@ namespace llvm {
     //Max stage count
     int maxStage;
 
+    //add at the right spot in the schedule
+    void addToSchedule(int, MSchedGraphNode*);
+
   public:
     MSSchedule(int num) : numIssue(num) {}
     MSSchedule() : numIssue(4) {}
