@@ -15,6 +15,8 @@
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/Target/MRegisterInfo.h"
+#include "llvm/Target/TargetInstrInfo.h"
+#include "llvm/Target/TargetMachine.h"
 #include "Support/Statistic.h"
 #include "Support/STLExtras.h"
 
@@ -23,6 +25,7 @@ using namespace llvm;
 namespace {
   Statistic<> NumPHOpts("x86-peephole",
                         "Number of peephole optimization performed");
+  Statistic<> NumPHMoves("x86-peephole", "Number of peephole moves folded");
   struct PH : public MachineFunctionPass {
     virtual bool runOnMachineFunction(MachineFunction &MF);
 
@@ -449,22 +452,26 @@ bool SSAPH::PeepholeOptimize(MachineBasicBlock &MBB,
 
   bool Changed = false;
 
+  const TargetInstrInfo &TII = MBB.getParent()->getTarget().getInstrInfo();
+
   // Scan the operands of this instruction.  If any operands are
   // register-register copies, replace the operand with the source.
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i)
     // Is this an SSA register use?
-    if (MachineInstr *DefInst = getDefiningInst(MI->getOperand(i)))
+    if (MachineInstr *DefInst = getDefiningInst(MI->getOperand(i))) {
       // If the operand is a vreg-vreg copy, it is always safe to replace the
       // source value with the input operand.
-      if (DefInst->getOpcode() == X86::MOVrr8  ||
-          DefInst->getOpcode() == X86::MOVrr16 ||
-          DefInst->getOpcode() == X86::MOVrr32) {
-        // Don't propagate physical registers into PHI nodes...
-        if (MI->getOpcode() != X86::PHI ||
-            (DefInst->getOperand(1).isRegister() &&
-             MRegisterInfo::isVirtualRegister(DefInst->getOperand(1).getReg())))
-        Changed = Propagate(MI, i, DefInst, 1);
+      unsigned Source, Dest;
+      if (TII.isMoveInstr(*DefInst, Source, Dest)) {
+        // Don't propagate physical registers into any instructions.
+        if (DefInst->getOperand(1).isRegister() &&
+            MRegisterInfo::isVirtualRegister(Source)) {
+          MI->getOperand(i).setReg(Source);
+          Changed = true;
+          ++NumPHMoves;
+        }
       }
+    }
   
   
   // Perform instruction specific optimizations.
