@@ -806,9 +806,9 @@ unsigned ISel::EmitComparison(unsigned OpNum, Value *Op0, Value *Op1,
   unsigned Op0r = getReg(Op0, MBB, IP);
 
   // Special case handling of: cmp R, i
-  if (Class == cByte || Class == cShort || Class == cInt)
-    if (ConstantInt *CI = dyn_cast<ConstantInt>(Op1)) {
-      uint64_t Op1v = cast<ConstantInt>(CI)->getRawValue();
+  if (ConstantInt *CI = dyn_cast<ConstantInt>(Op1)) {
+    if (Class == cByte || Class == cShort || Class == cInt) {
+      unsigned Op1v = CI->getRawValue();
 
       // Mask off any upper bits of the constant, if there are any...
       Op1v &= (1ULL << (8 << Class)) - 1;
@@ -833,7 +833,27 @@ unsigned ISel::EmitComparison(unsigned OpNum, Value *Op0, Value *Op1,
 
       BuildMI(*MBB, IP, CMPTab[Class], 2).addReg(Op0r).addImm(Op1v);
       return OpNum;
+    } else {
+      assert(Class == cLong && "Unknown integer class!");
+      unsigned LowCst = CI->getRawValue();
+      unsigned HiCst = CI->getRawValue() >> 32;
+      if (OpNum < 2) {    // seteq, setne
+        unsigned LoTmp = Op0r;
+        if (LowCst != 0) {
+          LoTmp = makeAnotherReg(Type::IntTy);
+          BuildMI(*MBB, IP, X86::XOR32ri, 2, LoTmp).addReg(Op0r).addImm(LowCst);
+        }
+        unsigned HiTmp = Op0r+1;
+        if (HiCst != 0) {
+          HiTmp = makeAnotherReg(Type::IntTy);
+          BuildMI(*MBB, IP, X86::XOR32rr, 2,HiTmp).addReg(Op0r+1).addImm(HiCst);
+        }
+        unsigned FinalTmp = makeAnotherReg(Type::IntTy);
+        BuildMI(*MBB, IP, X86::OR32rr, 2, FinalTmp).addReg(LoTmp).addReg(HiTmp);
+        return OpNum;
+      }
     }
+  }
 
   // Special case handling of comparison against +/- 0.0
   if (ConstantFP *CFP = dyn_cast<ConstantFP>(Op1))
