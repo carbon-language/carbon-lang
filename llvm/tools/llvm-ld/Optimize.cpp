@@ -126,10 +126,10 @@ void Optimize(Module* M) {
     addPass(Passes, createConstantMergePass());
 
     // If the -s command line option was specified, strip the symbols out of the
-    // resulting program to make it smaller.  -s is a GCC option that we are
+    // resulting program to make it smaller.  -s is a GLD option that we are
     // supporting.
     if (Strip)
-      addPass(Passes, createSymbolStrippingPass());
+      addPass(Passes, createStripSymbolsPass());
 
     // Propagate constants at call sites into the functions they call.
     addPass(Passes, createIPConstantPropagationPass());
