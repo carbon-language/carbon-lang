@@ -112,6 +112,21 @@ static struct PerModuleInfo {
   }
 
 
+  // GetForwardRefForGlobal - Check to see if there is a forward reference
+  // for this global.  If so, remove it from the GlobalRefs map and return it.
+  // If not, just return null.
+  GlobalValue *GetForwardRefForGlobal(const PointerType *PTy, ValID ID) {
+    // Check to see if there is a forward reference to this global variable...
+    // if there is, eliminate it and patch the reference to use the new def'n.
+    GlobalRefsType::iterator I = GlobalRefs.find(std::make_pair(PTy, ID));
+    GlobalValue *Ret = 0;
+    if (I != GlobalRefs.end()) {
+      Ret = I->second;
+      GlobalRefs.erase(I);
+    }
+    return Ret;
+  }
+
   // DeclareNewGlobalValue - Called every time a new GV has been defined.  This
   // is used to remove things from the forward declaration map, resolving them
   // to the correct thing as needed.
@@ -626,15 +641,30 @@ static void ParseGlobalVariable(char *NameStr,GlobalValue::LinkageTypes Linkage,
     }
   }
 
-  GlobalVariable *GV = new GlobalVariable(Ty, isConstantGlobal, Linkage,
-                                          Initializer, Name, 
-                                          CurModule.CurrentModule);
-  int Slot = InsertValue(GV, CurModule.Values);
-  
-  if (Slot != -1) {
-    CurModule.DeclareNewGlobalValue(GV, ValID::create(Slot));
+  const PointerType *PTy = PointerType::get(Ty); 
+
+  // See if this global value was forward referenced.  If so, recycle the
+  // object.
+  ValID ID; 
+  if (!Name.empty()) {
+    ID = ValID::create((char*)Name.c_str());
   } else {
-    CurModule.DeclareNewGlobalValue(GV, ValID::create((char*)Name.c_str()));
+    ID = ValID::create((int)CurModule.Values[PTy].size());
+  }
+
+  if (GlobalValue *FWGV = CurModule.GetForwardRefForGlobal(PTy, ID)) {
+    // Move the global to the end of the list, from whereever it was 
+    // previously inserted.
+    GlobalVariable *GV = cast<GlobalVariable>(FWGV);
+    CurModule.CurrentModule->getGlobalList().remove(GV);
+    CurModule.CurrentModule->getGlobalList().push_back(GV);
+    GV->setInitializer(Initializer);
+    GV->setLinkage(Linkage);
+    GV->setConstant(isConstantGlobal);
+  } else {
+    // Otherwise there is no existing GV to use, create one now.
+    new GlobalVariable(Ty, isConstantGlobal, Linkage, Initializer, Name, 
+                       CurModule.CurrentModule);
   }
 }
 
@@ -1261,15 +1291,20 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
 	V = I->second;             // Placeholder already exists, use it...
         $2.destroy();
       } else {
+        std::string Name;
+
+        /// FIXME: We shouldn't be creating global vars as forward refs for
+        /// functions at all here!
+        if (!isa<FunctionType>(PT->getElementType()))
+          if ($2.Type == ValID::NameVal) Name = $2.Name;
+
 	// Create a placeholder for the global variable reference...
-	GlobalVariable *GV = new GlobalVariable(PT->getElementType(),
-                                                false,
-                                                GlobalValue::ExternalLinkage);
+	GlobalVariable *GV = new GlobalVariable(PT->getElementType(), false,
+                                                GlobalValue::ExternalLinkage,0,
+                                                Name, CurModule.CurrentModule);
+
 	// Keep track of the fact that we have a forward ref to recycle it
 	CurModule.GlobalRefs.insert(std::make_pair(std::make_pair(PT, $2), GV));
-
-	// Must temporarily push this value into the module table...
-	CurModule.CurrentModule->getGlobalList().push_back(GV);
 	V = GV;
       }
     }
