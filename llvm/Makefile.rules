@@ -568,7 +568,7 @@ $(LIBNAME_BC): $(ObjectsBC) $(LibSubDirs) $(DESTLIBBYTECODE)/.dir
 $(LIBNAME_O): $(ObjectsO) $(LibSubDirs) $(DESTLIBRELEASE)/.dir
 	@${ECHO} Linking $(LIBRARYNAME) dynamic release library
 	$(VERB) $(Link) -o $@ $(ObjectsO) $(LibSubDirs) $(LibLinkOpts)
-	$(VERB) $(LIBTOOL) --mode=install $(INSTALL) $*.la $(DESTLIBCURRENT)
+	$(VERB) $(LIBTOOL) --mode=install $(INSTALL) $@ $(DESTLIBCURRENT)
 	@${ECHO} ======= Finished building $(LIBRARYNAME) dynamic release library =======
 
 $(LIBNAME_P): $(ObjectsP) $(LibSubDirs) $(DESTLIBPROFILE)/.dir
