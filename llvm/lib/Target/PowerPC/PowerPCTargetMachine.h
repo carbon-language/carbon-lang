@@ -15,7 +15,6 @@
 #define POWERPC_TARGETMACHINE_H
 
 #include "PowerPCFrameInfo.h"
-#include "PowerPCJITInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/PassManager.h"
 #include <set>
@@ -27,19 +26,12 @@ class IntrinsicLowering;
 
 class PowerPCTargetMachine : public TargetMachine {
   PowerPCFrameInfo FrameInfo;
-  PowerPCJITInfo JITInfo;
 
 protected:
   PowerPCTargetMachine(const std::string &name, IntrinsicLowering *IL,
-                       const TargetData &TD, const PowerPCFrameInfo &TFI,
-                       const PowerPCJITInfo &TJI);
+                       const TargetData &TD, const PowerPCFrameInfo &TFI);
 public:
   virtual const TargetFrameInfo  *getFrameInfo() const { return &FrameInfo; }
-  virtual TargetJITInfo *getJITInfo() {
-    return &JITInfo;
-  }
-
-  static unsigned getJITMatchQuality();
 
   virtual bool addPassesToEmitAssembly(PassManager &PM, std::ostream &Out);
 
