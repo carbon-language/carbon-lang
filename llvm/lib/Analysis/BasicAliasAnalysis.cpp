@@ -290,13 +290,13 @@ BasicAliasAnalysis::alias(const Value *V1, unsigned V1Size,
     if (!isa<Argument>(O1) && isa<ConstantPointerNull>(V2))
       return NoAlias;                    // Unique values don't alias null
 
-    if (const GlobalVariable *GV = dyn_cast<GlobalVariable>(O1))
-      if (GV->getType()->getElementType()->isSized()) {
+    if (isa<GlobalVariable>(O1) || isa<AllocationInst>(O1))
+      if (cast<PointerType>(O1->getType())->getElementType()->isSized()) {
         // If the size of the other access is larger than the total size of the
-        // global, it cannot be accessing the global (it's undefined to load or
-        // store bytes after the global).
-        unsigned GlobalSize =
-          getTargetData().getTypeSize(GV->getType()->getElementType());
+        // global/alloca/malloc, it cannot be accessing the global (it's
+        // undefined to load or store bytes before or after an object).
+        const Type *ElTy = cast<PointerType>(O1->getType())->getElementType();
+        unsigned GlobalSize = getTargetData().getTypeSize(ElTy);
         if (GlobalSize < V2Size)
           return NoAlias;
       }
@@ -306,13 +306,13 @@ BasicAliasAnalysis::alias(const Value *V1, unsigned V1Size,
     if (!isa<Argument>(O2) && isa<ConstantPointerNull>(V1))
       return NoAlias;                    // Unique values don't alias null
 
-    if (const GlobalVariable *GV = dyn_cast<GlobalVariable>(O2))
-      if (GV->getType()->getElementType()->isSized()) {
+    if (isa<GlobalVariable>(O2) || isa<AllocationInst>(O2))
+      if (cast<PointerType>(O2->getType())->getElementType()->isSized()) {
         // If the size of the other access is larger than the total size of the
-        // global, it cannot be accessing the global (it's undefined to load or
-        // store bytes after the global).
-        unsigned GlobalSize =
-          getTargetData().getTypeSize(GV->getType()->getElementType());
+        // global/alloca/malloc, it cannot be accessing the object (it's
+        // undefined to load or store bytes before or after an object).
+        const Type *ElTy = cast<PointerType>(O2->getType())->getElementType();
+        unsigned GlobalSize = getTargetData().getTypeSize(ElTy);
         if (GlobalSize < V1Size)
           return NoAlias;
       }
