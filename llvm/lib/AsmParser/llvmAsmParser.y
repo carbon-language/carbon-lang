@@ -175,6 +175,23 @@ static const Type *getTypeVal(const ValID &D, bool DoNotImprovise = false) {
   return Typ;
 }
 
+static Value *lookupInSymbolTable(const Type *Ty, const string &Name) {
+  SymbolTable *SymTab = 
+    CurMeth.CurrentMethod ? CurMeth.CurrentMethod->getSymbolTable() : 0;
+  Value *N = SymTab ? SymTab->lookup(Ty, Name) : 0;
+
+  if (N == 0) {
+    // Symbol table doesn't automatically chain yet... because the method
+    // hasn't been added to the module...
+    //
+    SymTab = CurModule.CurrentModule->getSymbolTable();
+    if (SymTab)
+      N = SymTab->lookup(Ty, Name);
+  }
+
+  return N;
+}
+
 static Value *getVal(const Type *Ty, const ValID &D, 
                      bool DoNotImprovise = false) {
   assert(Ty != Type::TypeTy && "Should use getTypeVal for types!");
@@ -204,20 +221,8 @@ static Value *getVal(const Type *Ty, const ValID &D,
   }
   case ValID::NameVal: {                // Is it a named definition?
     string Name(D.Name);
-    SymbolTable *SymTab = 0;
-    if (CurMeth.CurrentMethod) 
-      SymTab = CurMeth.CurrentMethod->getSymbolTable();
-    Value *N = SymTab ? SymTab->lookup(Ty, Name) : 0;
-
-    if (N == 0) {
-      // Symbol table doesn't automatically chain yet... because the method
-      // hasn't been added to the module...
-      //
-      SymTab = CurModule.CurrentModule->getSymbolTable();
-      if (SymTab)
-        N = SymTab->lookup(Ty, Name);
-      if (N == 0) break;
-    }
+    Value *N = lookupInSymbolTable(Ty, Name);
+    if (N == 0) break;
 
     D.destroy();  // Free old strdup'd memory...
     return N;
@@ -849,12 +854,28 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
     $$ = ConstPoolPointer::getNullPointer(PTy);
     delete $1;
   }
-/*
-  | Types '*' ConstVal {
-    assert(0);
-    $$ = 0;
+  | Types VAR_ID {
+    string Name($2); free($2);  // Change to a responsible mem manager
+    const PointerType *Ty = dyn_cast<const PointerType>($1->get());
+    if (Ty == 0)
+      ThrowException("Global const reference must be a pointer type!");
+
+    Value *N = lookupInSymbolTable(Ty, Name);
+    if (N == 0)
+      ThrowException("Global pointer reference '%" + Name +
+                     "' must be defined before use!");    
+
+    // TODO FIXME: This should also allow methods... when common baseclass
+    // exists
+    if (GlobalVariable *GV = dyn_cast<GlobalVariable>(N)) {
+      $$ = ConstPoolPointerReference::get(GV);
+    } else {
+      ThrowException("'%" + Name + "' is not a global value reference!");
+    }
+
+    delete $1;
   }
-*/
+
 
 ConstVal : SIntType EINT64VAL {     // integral constants
     if (!ConstPoolSInt::isValueValidForType($1, $2))

@@ -9,6 +9,7 @@
 #include "llvm/Support/StringExtras.h"  // itostr
 #include "llvm/DerivedTypes.h"
 #include "llvm/SymbolTable.h"
+#include "llvm/GlobalVariable.h"   // TODO make this GlobalValue.h
 #include <algorithm>
 #include <assert.h>
 
@@ -105,6 +106,12 @@ ConstPoolStruct::ConstPoolStruct(const StructType *T,
 
 ConstPoolPointer::ConstPoolPointer(const PointerType *T) : ConstPoolVal(T) {}
 
+ConstPoolPointerReference::ConstPoolPointerReference(GlobalVariable *GV)
+  : ConstPoolPointer(GV->getType()) {
+  Operands.push_back(Use(GV, this));
+}
+
+
 
 //===----------------------------------------------------------------------===//
 //                          getStrValue implementations
@@ -153,6 +160,10 @@ string ConstPoolStruct::getStrValue() const {
 
 string ConstPoolPointer::getStrValue() const {
   return "null";
+}
+
+string ConstPoolPointerReference::getStrValue() const {
+  return "<pointer reference>";
 }
 
 //===----------------------------------------------------------------------===//
