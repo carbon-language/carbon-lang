@@ -167,7 +167,6 @@ public:
   }
 
 private:
-  void calculateGraphFrom(Function &F);
   void inlineGraphIntoCallees(DSGraph &G);
   DSGraph &getOrCreateDSGraph(Function &F);
   void ComputePostOrder(Function &F, hash_set<DSGraph*> &Visited,
