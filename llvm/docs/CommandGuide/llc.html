@@ -1,0 +1,147 @@
+<html>
+<title>
+llc
+</title>
+
+<body>
+
+<center>
+<h1>Low Level Virtual Machine</h1>
+</center>
+<HR>
+
+<h3>
+NAME
+</h3>
+
+llc
+
+<h3>
+SYNOPSIS
+</h3>
+
+llc [options] &lt; filename&gt;
+<h3>
+DESCRIPTION
+</h3>
+
+The llc command compiles LLVM bytecode into assembly language for a specified
+architecture.  The assembly language output can then be passed through a native
+assembler and linker to generate native code.
+
+<h3>
+OPTIONS
+</h3>
+
+<ul>
+	<li>-disable-fp-elim     
+	<br>
+	Disable frame pointer elimination optimization
+	<p>
+
+	<li>-disable-local-ra    
+	<br>
+	Use Simple RA instead of Local RegAlloc
+	<p>
+
+	<li>-disable-pattern-isel
+	<br>
+	Use the 'simple' X86 instruction selector
+	<p>
+
+	<li>-disable-peephole    
+	<br>
+	Disable peephole optimization pass
+	<p>
+
+	<li>-disable-preopt      
+	<br>
+	Disable optimizations prior to instruction selection
+	<p>
+
+	<li>-disable-sched       
+	<br>
+	Disable local scheduling pass
+	<p>
+
+	<li>-disable-strip       
+	<br>
+	Do not strip the LLVM bytecode included in executable
+	<p>
+
+	<li>-enable-maps         
+	<br>
+	Emit LLVM-to-MachineCode mapping info to assembly
+	<p>
+
+	<li>-f                   
+	<br>
+	Overwrite output files
+	<p>
+
+	<li>-load=&lt;plugin.so&gt;
+	<br>
+	Load the specified plugin
+	<p>
+
+	<li>-m&lt;arch&gt;
+	<br>
+	Specify the architecture for which to generate assembly.  Valid
+	<p>
+	architectures are:
+
+	<dl compact>
+		<di> x86               
+		<dd>
+		IA-32 (Pentium and above)
+		<p>
+
+		<di> sparc             
+		<dd>SPARC V9
+	</dl>
+	<p>
+
+	<li>-o &lt;filename&gt;
+	<br>
+	Output filename
+	<p>
+
+	<li>-print-machineinstrs 
+	<br>
+	Print generated machine code
+	<p>
+
+	<li> -help
+	<br>
+	Print a summary of command line options.
+	<p>
+
+	<li> -stats
+	<br>
+	Print statistics.
+	<p>
+
+	<li> -time-passes
+	<br>
+	Record the amount of time needed for each pass and print it to standard
+	error.
+	<p>
+</ul>
+
+<h3>
+EXIT STATUS
+</h3>
+
+If llc succeeds, it will exit with 0.  Otherwise, if an error occurs, it
+will exit with a non-zero value.
+
+<h3>
+SEE ALSO
+</h3>
+llvm-dis, lli
+
+<HR>
+<a href="http://llvm.cs.uiuc.edu">LLVM Team</a>
+</body>
+</html>
+
