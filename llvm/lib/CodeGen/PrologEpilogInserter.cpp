@@ -160,7 +160,7 @@ void PEI::saveCallerSavedRegisters(MachineFunction &Fn) {
   const TargetInstrInfo &TII = Fn.getTarget().getInstrInfo();
   for (MachineFunction::iterator FI = Fn.begin(), E = Fn.end(); FI != E; ++FI) {
     // If last instruction is a return instruction, add an epilogue
-    if (TII.isReturn(FI->back()->getOpcode())) {
+    if (!FI->empty() && TII.isReturn(FI->back()->getOpcode())) {
       MBB = FI; I = MBB->end()-1;
 
       for (unsigned i = 0, e = RegsToSave.size(); i != e; ++i) {
