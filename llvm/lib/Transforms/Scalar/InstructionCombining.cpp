@@ -849,10 +849,14 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
 }
 
 Instruction *InstCombiner::visitDiv(BinaryOperator &I) {
-  // div X, 1 == X
   if (ConstantInt *RHS = dyn_cast<ConstantInt>(I.getOperand(1))) {
+    // div X, 1 == X
     if (RHS->equalsInt(1))
       return ReplaceInstUsesWith(I, I.getOperand(0));
+
+    // div X, -1 == -X
+    if (RHS->isAllOnesValue())
+      return BinaryOperator::createNeg(I.getOperand(0));
 
     // Check to see if this is an unsigned division with an exact power of 2,
     // if so, convert to a right shift.
