@@ -56,6 +56,14 @@ unsigned Loop::getNumBackEdges() const {
   return NumBackEdges;
 }
 
+/// isLoopInvariant - Return true if the specified value is loop invariant
+///
+bool Loop::isLoopInvariant(Value *V) const {
+  if (Instruction *I = dyn_cast<Instruction>(V))
+    return !contains(I->getParent());
+  return true;  // All non-instructions are loop invariant
+}
+
 void Loop::print(std::ostream &OS, unsigned Depth) const {
   OS << std::string(Depth*2, ' ') << "Loop Containing: ";
 
