@@ -122,9 +122,11 @@ namespace {
     void visitBranchInst(BranchInst &BI);
 
     struct ValueRecord {
+      Value *Val;
       unsigned Reg;
       const Type *Ty;
-      ValueRecord(unsigned R, const Type *T) : Reg(R), Ty(T) {}
+      ValueRecord(unsigned R, const Type *T) : Val(0), Reg(R), Ty(T) {}
+      ValueRecord(Value *V) : Val(V), Reg(0), Ty(V->getType()) {}
     };
     void doCall(const ValueRecord &Ret, MachineInstr *CallMI,
 		const std::vector<ValueRecord> &Args);
@@ -679,24 +681,28 @@ void ISel::visitSetCondInst(SetCondInst &I) {
 /// operand, in the specified target register.
 void ISel::promote32(unsigned targetReg, const ValueRecord &VR) {
   bool isUnsigned = VR.Ty->isUnsigned();
+
+  // Make sure we have the register number for this value...
+  unsigned Reg = VR.Val ? getReg(VR.Val) : VR.Reg;
+
   switch (getClassB(VR.Ty)) {
   case cByte:
     // Extend value into target register (8->32)
     if (isUnsigned)
-      BuildMI(BB, X86::MOVZXr32r8, 1, targetReg).addReg(VR.Reg);
+      BuildMI(BB, X86::MOVZXr32r8, 1, targetReg).addReg(Reg);
     else
-      BuildMI(BB, X86::MOVSXr32r8, 1, targetReg).addReg(VR.Reg);
+      BuildMI(BB, X86::MOVSXr32r8, 1, targetReg).addReg(Reg);
     break;
   case cShort:
     // Extend value into target register (16->32)
     if (isUnsigned)
-      BuildMI(BB, X86::MOVZXr32r16, 1, targetReg).addReg(VR.Reg);
+      BuildMI(BB, X86::MOVZXr32r16, 1, targetReg).addReg(Reg);
     else
-      BuildMI(BB, X86::MOVSXr32r16, 1, targetReg).addReg(VR.Reg);
+      BuildMI(BB, X86::MOVSXr32r16, 1, targetReg).addReg(Reg);
     break;
   case cInt:
     // Move value into target register (32->32)
-    BuildMI(BB, X86::MOVrr32, 1, targetReg).addReg(VR.Reg);
+    BuildMI(BB, X86::MOVrr32, 1, targetReg).addReg(Reg);
     break;
   default:
     assert(0 && "Unpromotable operand class in promote32");
@@ -848,7 +854,7 @@ void ISel::doCall(const ValueRecord &Ret, MachineInstr *CallMI,
     // Arguments go on the stack in reverse order, as specified by the ABI.
     unsigned ArgOffset = 0;
     for (unsigned i = 0, e = Args.size(); i != e; ++i) {
-      unsigned ArgReg = Args[i].Reg;
+      unsigned ArgReg = Args[i].Val ? getReg(Args[i].Val) : Args[i].Reg;
       switch (getClassB(Args[i].Ty)) {
       case cByte:
       case cShort: {
@@ -945,8 +951,7 @@ void ISel::visitCallInst(CallInst &CI) {
 
   std::vector<ValueRecord> Args;
   for (unsigned i = 1, e = CI.getNumOperands(); i != e; ++i)
-    Args.push_back(ValueRecord(getReg(CI.getOperand(i)),
-			       CI.getOperand(i)->getType()));
+    Args.push_back(ValueRecord(CI.getOperand(i)));
 
   unsigned DestReg = CI.getType() != Type::VoidTy ? getReg(CI) : 0;
   doCall(ValueRecord(DestReg, CI.getType()), TheCall, Args);
@@ -1135,21 +1140,21 @@ void ISel::visitMul(BinaryOperator &I) {
 /// instructions work differently for signed and unsigned operands.
 ///
 void ISel::visitDivRem(BinaryOperator &I) {
-  unsigned Class     = getClass(I.getType());
-  unsigned Op0Reg    = getReg(I.getOperand(0));
-  unsigned Op1Reg    = getReg(I.getOperand(1));
-  unsigned ResultReg = getReg(I);
+  unsigned Class = getClass(I.getType());
+  unsigned Op0Reg, Op1Reg, ResultReg = getReg(I);
 
   switch (Class) {
   case cFP:              // Floating point divide
-    if (I.getOpcode() == Instruction::Div)
+    if (I.getOpcode() == Instruction::Div) {
+      Op0Reg = getReg(I.getOperand(0));
+      Op1Reg = getReg(I.getOperand(1));
       BuildMI(BB, X86::FpDIV, 2, ResultReg).addReg(Op0Reg).addReg(Op1Reg);
-    else {               // Floating point remainder...
+    } else {               // Floating point remainder...
       MachineInstr *TheCall =
 	BuildMI(X86::CALLpcrel32, 1).addExternalSymbol("fmod", true);
       std::vector<ValueRecord> Args;
-      Args.push_back(ValueRecord(Op0Reg, Type::DoubleTy));
-      Args.push_back(ValueRecord(Op1Reg, Type::DoubleTy));
+      Args.push_back(ValueRecord(I.getOperand(0)));
+      Args.push_back(ValueRecord(I.getOperand(1)));
       doCall(ValueRecord(ResultReg, Type::DoubleTy), TheCall, Args);
     }
     return;
@@ -1163,8 +1168,8 @@ void ISel::visitDivRem(BinaryOperator &I) {
       BuildMI(X86::CALLpcrel32, 1).addExternalSymbol(FnName[NameIdx], true);
 
     std::vector<ValueRecord> Args;
-    Args.push_back(ValueRecord(Op0Reg, Type::LongTy));
-    Args.push_back(ValueRecord(Op1Reg, Type::LongTy));
+    Args.push_back(ValueRecord(I.getOperand(0)));
+    Args.push_back(ValueRecord(I.getOperand(1)));
     doCall(ValueRecord(ResultReg, Type::LongTy), TheCall, Args);
     return;
   }
@@ -1189,6 +1194,7 @@ void ISel::visitDivRem(BinaryOperator &I) {
   unsigned ExtReg = ExtRegs[Class];
 
   // Put the first operand into one of the A registers...
+  Op0Reg = getReg(I.getOperand(0));
   BuildMI(BB, MovOpcode[Class], 1, Reg).addReg(Op0Reg);
 
   if (isSigned) {
@@ -1202,6 +1208,7 @@ void ISel::visitDivRem(BinaryOperator &I) {
   }
 
   // Emit the appropriate divide or remainder instruction...
+  Op1Reg = getReg(I.getOperand(1));
   BuildMI(BB, DivOpcode[isSigned][Class], 1).addReg(Op1Reg);
 
   // Figure out which register we want to pick the result out of...
@@ -2085,8 +2092,7 @@ void ISel::visitMallocInst(MallocInst &I) {
 ///
 void ISel::visitFreeInst(FreeInst &I) {
   std::vector<ValueRecord> Args;
-  Args.push_back(ValueRecord(getReg(I.getOperand(0)),
-			     I.getOperand(0)->getType()));
+  Args.push_back(ValueRecord(I.getOperand(0)));
   MachineInstr *TheCall = BuildMI(X86::CALLpcrel32,
 				  1).addExternalSymbol("free", true);
   doCall(ValueRecord(0, Type::VoidTy), TheCall, Args);
