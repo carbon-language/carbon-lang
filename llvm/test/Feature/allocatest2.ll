@@ -10,7 +10,7 @@ bb1:            ;;<label>
         %reg110 = shl uint %n, ubyte 2          ;;<uint>
         %reg108 = alloca [ubyte], uint %reg110            ;;<ubyte*>
         %cast1000 = cast [ubyte]* %reg108 to uint*                ;;<uint*>
-        call void(uint, uint*) %_Z12combinationsjPj(uint %n, uint* %cast1000)                ;;<void>
+        call void %_Z12combinationsjPj(uint %n, uint* %cast1000)                ;;<void>
         %cast113 = cast uint %reg110 to ulong*          ;;<ulong*>
 	cast uint 7 to ulong *
         %reg114 = add ulong* %cast113, %0                ;;<ulong*>
@@ -19,7 +19,7 @@ bb1:            ;;<label>
         %cast1001 = cast ulong* %reg117 to uint         ;;<uint>
         %reg118 = alloca [ubyte], uint %cast1001          ;;<ubyte*>
         %cast1002 = cast [ubyte]* %reg118 to uint*                ;;<uint*>
-        call void(uint, uint*) %_Z12combinationsjPj(uint %n, uint* %cast1002)                ;;<void>
+        call void %_Z12combinationsjPj(uint %n, uint* %cast1002)                ;;<void>
         ret void                ;;<void>
 end
 

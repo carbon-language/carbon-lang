@@ -5,7 +5,7 @@ implementation
 
 int "main"(int %argc)   ; TODO: , sbyte **argv, sbyte **envp)
 begin
-        %retval = call int (int) %test(int %argc)
+        %retval = call int (int) *%test(int %argc)
         %two    = add int %retval, %retval
         ret int %two
 end

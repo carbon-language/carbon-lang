@@ -25,6 +25,6 @@ bb1:
 
 bb2:
 	%Msg = cast ulong 0 to sbyte *
-	call int (sbyte*, int, float) %printf(sbyte* %Msg, int %m1, float %z3)
+	call int %printf(sbyte* %Msg, int %m1, float %z3)
 	ret int 0
 end

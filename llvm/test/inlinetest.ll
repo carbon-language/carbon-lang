@@ -12,7 +12,7 @@ int "FuncToInlineInto"(int %arg)     ; Instrs can be const prop'd away
 begin
 	%x = add int %arg, 1
         %y = sub int 1, -1
-        %p = call int() %FuncToInline()
+        %p = call int %FuncToInline()
         %z = add int %x, %y
         %q = add int %p, %z
 
@@ -21,7 +21,7 @@ end
 
 int "main"()
 begin
-        %z = call int(int) %FuncToInlineInto(int 1)
+        %z = call int %FuncToInlineInto(int 1)
         ret int %z
 end
 

@@ -13,8 +13,8 @@ BaseCase:
 RecurseCase:
   %n2 = sub ulong %n, 2
   %n1 = sub ulong %n, 1
-  %f2 = call ulong(ulong) %fib(ulong %n2)
-  %f1 = call ulong(ulong) %fib(ulong %n1)
+  %f2 = call ulong(ulong) * %fib(ulong %n2)
+  %f1 = call ulong(ulong) * %fib(ulong %n1)
   %result = add ulong %f2, %f1
   ret ulong %result
 end
@@ -31,6 +31,6 @@ HasArg:
 Continue:
   %n = phi int [%n1, %HasArg], [1, %0]
   %N = cast int %n to ulong
-  %F = call ulong(ulong) %fib(ulong %N)
+  %F = call ulong(ulong) *%fib(ulong %N)
   ret ulong %F
 end
