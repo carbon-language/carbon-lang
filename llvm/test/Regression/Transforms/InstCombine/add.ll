@@ -30,3 +30,15 @@ begin
 	ret int %C
 end
 
+int "test4"(int %A, int %B) {
+        %C = sub int 0, %A
+        %D = add int %B, %C      ; D = B + -A = B - A
+        ret int %D
+}
+
+int "test5"(int %A, int %B) {
+        %C = sub int 0, %A
+        %D = add int %C, %B      ; D = -A + B = B - A
+        ret int %D
+}
+
