@@ -654,6 +654,6 @@ BytecodeParser::ParseBytecode(const unsigned char *Buf, unsigned Length,
     freeState();       // Must destroy handles before deleting module!
     delete TheModule;
     TheModule = 0;
-    throw Error;
+    throw;
   }
 }
