@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "Support/DynamicLinker.h"
 #include "Support/CommandLine.h"
 #include "Config/dlfcn.h"
 #include "Config/link.h"
@@ -18,9 +19,10 @@
 namespace {
   struct PluginLoader {
     void operator=(const std::string &Filename) {
-      if (dlopen(Filename.c_str(), RTLD_NOW|RTLD_GLOBAL) == 0)
-        std::cerr << "Error opening '" << Filename << "': " << dlerror()
-                  << "\n  -load request ignored.\n";
+      std::string ErrorMessage;
+      if (LinkDynamicObject (Filename.c_str (), &ErrorMessage))
+        std::cerr << "Error opening '" << Filename << "': " << ErrorMessage
+                  << "\n  -load request ignored.\n";	
     }
   };
 }
