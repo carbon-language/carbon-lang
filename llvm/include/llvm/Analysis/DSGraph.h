@@ -19,7 +19,7 @@ class DSGraph {
 
   DSNodeHandle RetNode;    // The node that gets returned...
   std::vector<DSNode*> Nodes;
-  std::map<Value*, DSNodeHandle> ScalarMap;
+  hash_map<Value*, DSNodeHandle> ScalarMap;
 
   // FunctionCalls - This vector maintains a single entry for each call
   // instruction in the current graph.  The first entry in the vector is the
@@ -49,7 +49,7 @@ public:
   // method.
   //
   DSGraph(const DSGraph &DSG);
-  DSGraph(const DSGraph &DSG, std::map<const DSNode*, DSNodeHandle> &NodeMap);
+  DSGraph(const DSGraph &DSG, hash_map<const DSNode*, DSNodeHandle> &NodeMap);
   ~DSGraph();
 
   bool hasFunction() const { return Func != 0; }
@@ -76,8 +76,8 @@ public:
   /// getScalarMap - Get a map that describes what the nodes the scalars in this
   /// function point to...
   ///
-  std::map<Value*, DSNodeHandle> &getScalarMap() { return ScalarMap; }
-  const std::map<Value*, DSNodeHandle> &getScalarMap() const {return ScalarMap;}
+  hash_map<Value*, DSNodeHandle> &getScalarMap() { return ScalarMap; }
+  const hash_map<Value*, DSNodeHandle> &getScalarMap() const {return ScalarMap;}
 
   /// getFunctionCalls - Return the list of call sites in the original local
   /// graph...
@@ -102,7 +102,7 @@ public:
   DSNodeHandle &getNodeForValue(Value *V) { return ScalarMap[V]; }
 
   const DSNodeHandle &getNodeForValue(Value *V) const {
-    std::map<Value*, DSNodeHandle>::const_iterator I = ScalarMap.find(V);
+    hash_map<Value*, DSNodeHandle>::const_iterator I = ScalarMap.find(V);
     assert(I != ScalarMap.end() &&
            "Use non-const lookup function if node may not be in the map");
     return I->second;
@@ -168,8 +168,8 @@ public:
   // being cloned.
   //
   DSNodeHandle cloneInto(const DSGraph &G,
-                         std::map<Value*, DSNodeHandle> &OldValMap,
-                         std::map<const DSNode*, DSNodeHandle> &OldNodeMap,
+                         hash_map<Value*, DSNodeHandle> &OldValMap,
+                         hash_map<const DSNode*, DSNodeHandle> &OldNodeMap,
                          unsigned CloneFlags = 0);
 
   /// mergeInGraph - The method is used for merging graphs together.  If the

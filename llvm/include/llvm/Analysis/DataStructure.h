@@ -8,7 +8,8 @@
 #define LLVM_ANALYSIS_DATA_STRUCTURE_H
 
 #include "llvm/Pass.h"
-#include <set>
+#include "Support/HashExtras.h"
+#include "Support/hash_set"
 
 class Type;
 class DSGraph;
@@ -32,7 +33,7 @@ namespace DataStructureAnalysis {
 //
 class LocalDataStructures : public Pass {
   // DSInfo, one graph for each function
-  std::map<const Function*, DSGraph*> DSInfo;
+  hash_map<const Function*, DSGraph*> DSInfo;
   DSGraph *GlobalsGraph;
 public:
   ~LocalDataStructures() { releaseMemory(); }
@@ -45,7 +46,7 @@ public:
 
   // getDSGraph - Return the data structure graph for the specified function.
   DSGraph &getDSGraph(const Function &F) const {
-    std::map<const Function*, DSGraph*>::const_iterator I = DSInfo.find(&F);
+    hash_map<const Function*, DSGraph*>::const_iterator I = DSInfo.find(&F);
     assert(I != DSInfo.end() && "Function not in module!");
     return *I->second;
   }
@@ -71,7 +72,7 @@ public:
 //
 class BUDataStructures : public Pass {
   // DSInfo, one graph for each function
-  std::map<const Function*, DSGraph*> DSInfo;
+  hash_map<const Function*, DSGraph*> DSInfo;
   DSGraph *GlobalsGraph;
 public:
   ~BUDataStructures() { releaseMemory(); }
@@ -84,7 +85,7 @@ public:
 
   // getDSGraph - Return the data structure graph for the specified function.
   DSGraph &getDSGraph(const Function &F) const {
-    std::map<const Function*, DSGraph*>::const_iterator I = DSInfo.find(&F);
+    hash_map<const Function*, DSGraph*>::const_iterator I = DSInfo.find(&F);
     assert(I != DSInfo.end() && "Function not in module!");
     return *I->second;
   }
@@ -110,10 +111,10 @@ private:
   // functions IN the SCC at all.
   //
   DSGraph &inlineNonSCCGraphs(Function &F,
-                              std::set<Function*> &SCCFunctions);
+                              hash_set<Function*> &SCCFunctions);
  
   DSGraph &calculateSCCGraph(Function &F,
-                             std::set<Function*> &InlinedSCCFunctions);
+                             hash_set<Function*> &InlinedSCCFunctions);
   void calculateReachableGraphs(Function *F);
 
 
@@ -121,7 +122,7 @@ private:
 
   unsigned calculateGraphs(Function *F, std::vector<Function*> &Stack,
                            unsigned &NextID, 
-                           std::map<Function*, unsigned> &ValMap);
+                           hash_map<Function*, unsigned> &ValMap);
 };
 
 
@@ -131,8 +132,8 @@ private:
 //
 class TDDataStructures : public Pass {
   // DSInfo, one graph for each function
-  std::map<const Function*, DSGraph*> DSInfo;
-  std::set<const Function*> GraphDone;
+  hash_map<const Function*, DSGraph*> DSInfo;
+  hash_set<const Function*> GraphDone;
   DSGraph *GlobalsGraph;
 public:
   ~TDDataStructures() { releaseMemory(); }
@@ -145,7 +146,7 @@ public:
 
   // getDSGraph - Return the data structure graph for the specified function.
   DSGraph &getDSGraph(const Function &F) const {
-    std::map<const Function*, DSGraph*>::const_iterator I = DSInfo.find(&F);
+    hash_map<const Function*, DSGraph*>::const_iterator I = DSInfo.find(&F);
     assert(I != DSInfo.end() && "Function not in module!");
     return *I->second;
   }

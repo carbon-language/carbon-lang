@@ -43,7 +43,7 @@ namespace {
     /// MarkedNodes - The set of nodes which are not locally pool allocatable in
     /// the current function.
     ///
-    std::set<DSNode*> MarkedNodes;
+    hash_set<DSNode*> MarkedNodes;
 
     /// Clone - The cloned version of the function, if applicable.
     Function *Clone;
@@ -204,7 +204,7 @@ Function *PA::MakeFunctionClone(Function &F) {
   // Find DataStructure nodes which are allocated in pools non-local to the
   // current function.  This set will contain all of the DSNodes which require
   // pools to be passed in from outside of the function.
-  std::set<DSNode*> &MarkedNodes = FI.MarkedNodes;
+  hash_set<DSNode*> &MarkedNodes = FI.MarkedNodes;
 
   // Mark globals and incomplete nodes as live... (this handles arguments)
   if (F.getName() != "main")
@@ -225,7 +225,7 @@ Function *PA::MakeFunctionClone(Function &F) {
   ArgTys.reserve(OldFuncTy->getParamTypes().size() + MarkedNodes.size());
 
   FI.ArgNodes.reserve(MarkedNodes.size());
-  for (std::set<DSNode*>::iterator I = MarkedNodes.begin(),
+  for (hash_set<DSNode*>::iterator I = MarkedNodes.begin(),
          E = MarkedNodes.end(); I != E; ++I)
     if ((*I)->NodeType & DSNode::Incomplete) {
       ArgTys.push_back(PoolDescPtr);      // Add the appropriate # of pool descs
@@ -289,7 +289,7 @@ void PA::ProcessFunctionBody(Function &F, Function &NewF) {
   if (Nodes.empty()) return;     // Quick exit if nothing to do...
 
   FuncInfo &FI = FunctionInfo[&F];   // Get FuncInfo for F
-  std::set<DSNode*> &MarkedNodes = FI.MarkedNodes;
+  hash_set<DSNode*> &MarkedNodes = FI.MarkedNodes;
  
   DEBUG(std::cerr << "[" << F.getName() << "] Pool Allocate: ");
 
@@ -414,8 +414,8 @@ void FuncTransform::visitMallocInst(MallocInst &MI) {
   // Remove old malloc instruction
   MI.getParent()->getInstList().erase(&MI);
   
-  std::map<Value*, DSNodeHandle> &SM = G.getScalarMap();
-  std::map<Value*, DSNodeHandle>::iterator MII = SM.find(&MI);
+  hash_map<Value*, DSNodeHandle> &SM = G.getScalarMap();
+  hash_map<Value*, DSNodeHandle>::iterator MII = SM.find(&MI);
   
   // If we are modifying the original function, update the DSGraph... 
   if (MII != SM.end()) {

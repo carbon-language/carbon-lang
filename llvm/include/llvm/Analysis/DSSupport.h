@@ -8,10 +8,10 @@
 #define LLVM_ANALYSIS_DSSUPPORT_H
 
 #include <vector>
-#include <map>
-#include <set>
 #include <functional>
 #include <string>
+#include "Support/HashExtras.h"
+#include "Support/hash_set"
 
 class Function;
 class CallInst;
@@ -118,9 +118,9 @@ class DSCallSite {
   Function    *ResolvingCaller;         // See comments above
 
   static void InitNH(DSNodeHandle &NH, const DSNodeHandle &Src,
-                     const std::map<const DSNode*, DSNode*> &NodeMap) {
+                     const hash_map<const DSNode*, DSNode*> &NodeMap) {
     if (DSNode *N = Src.getNode()) {
-      std::map<const DSNode*, DSNode*>::const_iterator I = NodeMap.find(N);
+      hash_map<const DSNode*, DSNode*>::const_iterator I = NodeMap.find(N);
       assert(I != NodeMap.end() && "Not not in mapping!");
 
       NH.setOffset(Src.getOffset());
@@ -129,9 +129,9 @@ class DSCallSite {
   }
 
   static void InitNH(DSNodeHandle &NH, const DSNodeHandle &Src,
-                     const std::map<const DSNode*, DSNodeHandle> &NodeMap) {
+                     const hash_map<const DSNode*, DSNodeHandle> &NodeMap) {
     if (DSNode *N = Src.getNode()) {
-      std::map<const DSNode*, DSNodeHandle>::const_iterator I = NodeMap.find(N);
+      hash_map<const DSNode*, DSNodeHandle>::const_iterator I = NodeMap.find(N);
       assert(I != NodeMap.end() && "Not not in mapping!");
 
       NH.setOffset(Src.getOffset()+I->second.getOffset());
@@ -219,7 +219,7 @@ public:
   /// DSNodes, marking any nodes which are reachable.  All reachable nodes it
   /// adds to the set, which allows it to only traverse visited nodes once.
   ///
-  void markReachableNodes(std::set<DSNode*> &Nodes);
+  void markReachableNodes(hash_set<DSNode*> &Nodes);
 
   bool operator<(const DSCallSite &CS) const {
     if (Callee < CS.Callee) return true;   // This must sort by callee first!

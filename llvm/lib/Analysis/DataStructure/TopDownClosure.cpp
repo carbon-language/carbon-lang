@@ -40,7 +40,7 @@ bool TDDataStructures::run(Module &M) {
 // our memory... here...
 //
 void TDDataStructures::releaseMemory() {
-  for (std::map<const Function*, DSGraph*>::iterator I = DSInfo.begin(),
+  for (hash_map<const Function*, DSGraph*>::iterator I = DSInfo.begin(),
          E = DSInfo.end(); I != E; ++I)
     delete I->second;
 
@@ -140,8 +140,8 @@ void TDDataStructures::calculateGraph(Function &F) {
             << "'\n");
       
       // Clone our current graph into the callee...
-      std::map<Value*, DSNodeHandle> OldValMap;
-      std::map<const DSNode*, DSNodeHandle> OldNodeMap;
+      hash_map<Value*, DSNodeHandle> OldValMap;
+      hash_map<const DSNode*, DSNodeHandle> OldNodeMap;
       CG.cloneInto(Graph, OldValMap, OldNodeMap,
                    DSGraph::StripModRefBits |
                    DSGraph::KeepAllocaBit | DSGraph::DontCloneCallNodes);

@@ -540,12 +540,12 @@ Function &DSCallSite::getCaller() const {
 
 DSGraph::DSGraph(const DSGraph &G) : Func(G.Func), GlobalsGraph(0) {
   PrintAuxCalls = false;
-  std::map<const DSNode*, DSNodeHandle> NodeMap;
+  hash_map<const DSNode*, DSNodeHandle> NodeMap;
   RetNode = cloneInto(G, ScalarMap, NodeMap);
 }
 
 DSGraph::DSGraph(const DSGraph &G,
-                 std::map<const DSNode*, DSNodeHandle> &NodeMap)
+                 hash_map<const DSNode*, DSNodeHandle> &NodeMap)
   : Func(G.Func), GlobalsGraph(0) {
   PrintAuxCalls = false;
   RetNode = cloneInto(G, ScalarMap, NodeMap);
@@ -572,7 +572,7 @@ void DSGraph::dump() const { print(std::cerr); }
 /// remapLinks - Change all of the Links in the current node according to the
 /// specified mapping.
 ///
-void DSNode::remapLinks(std::map<const DSNode*, DSNodeHandle> &OldNodeMap) {
+void DSNode::remapLinks(hash_map<const DSNode*, DSNodeHandle> &OldNodeMap) {
   for (unsigned i = 0, e = Links.size(); i != e; ++i) {
     DSNodeHandle &H = OldNodeMap[Links[i].getNode()];
     Links[i].setNode(H.getNode());
@@ -588,8 +588,8 @@ void DSNode::remapLinks(std::map<const DSNode*, DSNodeHandle> &OldNodeMap) {
 // calling function's graph.
 //
 DSNodeHandle DSGraph::cloneInto(const DSGraph &G, 
-                                std::map<Value*, DSNodeHandle> &OldValMap,
-                              std::map<const DSNode*, DSNodeHandle> &OldNodeMap,
+                                hash_map<Value*, DSNodeHandle> &OldValMap,
+                              hash_map<const DSNode*, DSNodeHandle> &OldNodeMap,
                                 unsigned CloneFlags) {
   assert(OldNodeMap.empty() && "Returned OldNodeMap should be empty!");
   assert(&G != this && "Cannot clone graph into itself!");
@@ -625,7 +625,7 @@ DSNodeHandle DSGraph::cloneInto(const DSGraph &G,
   }
 
   // Copy the value map... and merge all of the global nodes...
-  for (std::map<Value*, DSNodeHandle>::const_iterator I = G.ScalarMap.begin(),
+  for (hash_map<Value*, DSNodeHandle>::const_iterator I = G.ScalarMap.begin(),
          E = G.ScalarMap.end(); I != E; ++I) {
     DSNodeHandle &H = OldValMap[I->first];
     DSNodeHandle &MappedNode = OldNodeMap[I->second.getNode()];
@@ -633,7 +633,7 @@ DSNodeHandle DSGraph::cloneInto(const DSGraph &G,
     H.setOffset(I->second.getOffset()+MappedNode.getOffset());
 
     if (isa<GlobalValue>(I->first)) {  // Is this a global?
-      std::map<Value*, DSNodeHandle>::iterator GVI = ScalarMap.find(I->first);
+      hash_map<Value*, DSNodeHandle>::iterator GVI = ScalarMap.find(I->first);
       if (GVI != ScalarMap.end()) {   // Is the global value in this fn already?
         GVI->second.mergeWith(H);
       } else {
@@ -671,16 +671,16 @@ DSNodeHandle DSGraph::cloneInto(const DSGraph &G,
 ///
 void DSGraph::mergeInGraph(DSCallSite &CS, const DSGraph &Graph,
                            unsigned CloneFlags) {
-  std::map<Value*, DSNodeHandle> OldValMap;
+  hash_map<Value*, DSNodeHandle> OldValMap;
   DSNodeHandle RetVal;
-  std::map<Value*, DSNodeHandle> *ScalarMap = &OldValMap;
+  hash_map<Value*, DSNodeHandle> *ScalarMap = &OldValMap;
 
   // If this is not a recursive call, clone the graph into this graph...
   if (&Graph != this) {
     // Clone the callee's graph into the current graph, keeping
     // track of where scalars in the old graph _used_ to point,
     // and of the new nodes matching nodes of the old graph.
-    std::map<const DSNode*, DSNodeHandle> OldNodeMap;
+    hash_map<const DSNode*, DSNodeHandle> OldNodeMap;
     
     // The clone call may invalidate any of the vectors in the data
     // structure graph.  Strip locals and don't copy the list of callers
@@ -811,7 +811,7 @@ void DSGraph::markIncompleteNodes(unsigned Flags) {
 // removeRefsToGlobal - Helper function that removes globals from the
 // ScalarMap so that the referrer count will go down to zero.
 static void removeRefsToGlobal(DSNode* N,
-                               std::map<Value*, DSNodeHandle> &ScalarMap) {
+                               hash_map<Value*, DSNodeHandle> &ScalarMap) {
   while (!N->getGlobals().empty()) {
     GlobalValue *GV = N->getGlobals().back();
     N->getGlobals().pop_back();      
@@ -939,18 +939,16 @@ void DSGraph::removeTriviallyDeadNodes() {
 /// DSNodes, marking any nodes which are reachable.  All reachable nodes it adds
 /// to the set, which allows it to only traverse visited nodes once.
 ///
-void DSNode::markReachableNodes(std::set<DSNode*> &ReachableNodes) {
+void DSNode::markReachableNodes(hash_set<DSNode*> &ReachableNodes) {
   if (this == 0) return;
-  std::set<DSNode*>::iterator I = ReachableNodes.lower_bound(this);
-  if (I != ReachableNodes.end() && *I == this)
-    return;                                        // Already marked reachable
-  ReachableNodes.insert(I, this);                  // Is reachable now
+  if (ReachableNodes.count(this)) return;          // Already marked reachable
+  ReachableNodes.insert(this);                     // Is reachable now
 
   for (unsigned i = 0, e = getSize(); i < e; i += DS::PointerSize)
     getLink(i).getNode()->markReachableNodes(ReachableNodes);
 }
 
-void DSCallSite::markReachableNodes(std::set<DSNode*> &Nodes) {
+void DSCallSite::markReachableNodes(hash_set<DSNode*> &Nodes) {
   getRetVal().getNode()->markReachableNodes(Nodes);
   getCallee().getNode()->markReachableNodes(Nodes);
   
@@ -965,8 +963,8 @@ void DSCallSite::markReachableNodes(std::set<DSNode*> &Nodes) {
 //
 // This function returns true if the specified node is alive.
 //
-static bool markAliveIfCanReachAlive(DSNode *N, std::set<DSNode*> &Alive,
-                                     std::set<DSNode*> &Visited) {
+static bool markAliveIfCanReachAlive(DSNode *N, hash_set<DSNode*> &Alive,
+                                     hash_set<DSNode*> &Visited) {
   if (N == 0) return false;
 
   // If we know that this node is alive, return so!
@@ -974,10 +972,9 @@ static bool markAliveIfCanReachAlive(DSNode *N, std::set<DSNode*> &Alive,
 
   // Otherwise, we don't think the node is alive yet, check for infinite
   // recursion.
-  std::set<DSNode*>::iterator VI = Visited.lower_bound(N);
-  if (VI != Visited.end() && *VI == N) return false;  // Found a cycle
+  if (Visited.count(N)) return false;  // Found a cycle
   // No recursion, insert into Visited...
-  Visited.insert(VI, N);
+  Visited.insert(N);
 
   if (N->NodeType & DSNode::GlobalNode)
     return false; // Global nodes will be marked on their own
@@ -992,8 +989,8 @@ static bool markAliveIfCanReachAlive(DSNode *N, std::set<DSNode*> &Alive,
   return ChildrenAreAlive;
 }
 
-static bool CallSiteUsesAliveArgs(DSCallSite &CS, std::set<DSNode*> &Alive,
-                                  std::set<DSNode*> &Visited) {
+static bool CallSiteUsesAliveArgs(DSCallSite &CS, hash_set<DSNode*> &Alive,
+                                  hash_set<DSNode*> &Visited) {
   if (markAliveIfCanReachAlive(CS.getRetVal().getNode(), Alive, Visited) ||
       markAliveIfCanReachAlive(CS.getCallee().getNode(), Alive, Visited))
     return true;
@@ -1034,11 +1031,11 @@ void DSGraph::removeDeadNodes(unsigned Flags) {
   // FIXME: Merge nontrivially identical call nodes...
 
   // Alive - a set that holds all nodes found to be reachable/alive.
-  std::set<DSNode*> Alive;
+  hash_set<DSNode*> Alive;
   std::vector<std::pair<Value*, DSNode*> > GlobalNodes;
 
   // Mark all nodes reachable by (non-global) scalar nodes as alive...
-  for (std::map<Value*, DSNodeHandle>::iterator I = ScalarMap.begin(),
+  for (hash_map<Value*, DSNodeHandle>::iterator I = ScalarMap.begin(),
          E = ScalarMap.end(); I != E; ++I)
     if (!isa<GlobalValue>(I->first) ||
         GlobalIsAlivenessRoot(I->second.getNode(), Flags))
@@ -1052,7 +1049,7 @@ void DSGraph::removeDeadNodes(unsigned Flags) {
   // If any global nodes points to a non-global that is "alive", the global is
   // "alive" as well...
   //
-  std::set<DSNode*> Visited;
+  hash_set<DSNode*> Visited;
   for (unsigned i = 0, e = GlobalNodes.size(); i != e; ++i)
     markAliveIfCanReachAlive(GlobalNodes[i].second, Alive, Visited);
 
@@ -1129,7 +1126,7 @@ static const char ExternalTypeBits = DSNode::GlobalNode | DSNode::HeapNode;
 // This is a helper function for cloneGlobals and cloneCalls.
 // 
 DSNode* GlobalDSGraph::cloneNodeInto(DSNode *OldNode,
-                                    std::map<const DSNode*, DSNode*> &NodeCache,
+                                    hash_map<const DSNode*, DSNode*> &NodeCache,
                                     bool GlobalsAreFinal) {
   if (OldNode == 0) return 0;
 
@@ -1208,7 +1205,7 @@ DSNode* GlobalDSGraph::cloneNodeInto(DSNode *OldNode,
 // links (and recursively their such links) into this graph.
 // 
 void GlobalDSGraph::cloneCalls(DSGraph& Graph) {
-  std::map<const DSNode*, DSNode*> NodeCache;
+  hash_map<const DSNode*, DSNode*> NodeCache;
   std::vector<DSCallSite >& FromCalls =Graph.FunctionCalls;
 
   FunctionCalls.reserve(FunctionCalls.size() + FromCalls.size());

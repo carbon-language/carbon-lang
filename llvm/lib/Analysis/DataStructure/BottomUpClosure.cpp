@@ -11,6 +11,7 @@
 #include "llvm/Analysis/DSGraph.h"
 #include "llvm/Module.h"
 #include "Support/Statistic.h"
+#include "Support/hash_map"
 
 namespace {
   Statistic<> MaxSCC("budatastructure", "Maximum SCC Size in Call Graph");
@@ -128,7 +129,7 @@ bool BUDataStructures::run(Module &M) {
 
 void BUDataStructures::calculateReachableGraphs(Function *F) {
   std::vector<Function*> Stack;
-  std::map<Function*, unsigned> ValMap;
+  hash_map<Function*, unsigned> ValMap;
   unsigned NextID = 1;
   calculateGraphs(F, Stack, NextID, ValMap);
 }
@@ -152,7 +153,7 @@ DSGraph &BUDataStructures::getOrCreateGraph(Function *F) {
 unsigned BUDataStructures::calculateGraphs(Function *F,
                                            std::vector<Function*> &Stack,
                                            unsigned &NextID, 
-                                     std::map<Function*, unsigned> &ValMap) {
+                                     hash_map<Function*, unsigned> &ValMap) {
   assert(ValMap.find(F) == ValMap.end() && "Shouldn't revisit functions!");
   unsigned Min = NextID++, MyID = Min;
   ValMap[F] = Min;
@@ -173,7 +174,7 @@ unsigned BUDataStructures::calculateGraphs(Function *F,
     Function *Callee = *I;
     unsigned M;
     // Have we visited the destination function yet?
-    std::map<Function*, unsigned>::iterator It = ValMap.find(Callee);
+    hash_map<Function*, unsigned>::iterator It = ValMap.find(Callee);
     if (It == ValMap.end())  // No, visit it now.
       M = calculateGraphs(Callee, Stack, NextID, ValMap);
     else                    // Yes, get it's number.
@@ -206,7 +207,7 @@ unsigned BUDataStructures::calculateGraphs(Function *F,
   } else {
     // SCCFunctions - Keep track of the functions in the current SCC
     //
-    std::set<Function*> SCCFunctions;
+    hash_set<Function*> SCCFunctions;
 
     Function *NF;
     std::vector<Function*>::iterator FirstInSCC = Stack.end();
@@ -283,7 +284,7 @@ unsigned BUDataStructures::calculateGraphs(Function *F,
 // our memory... here...
 //
 void BUDataStructures::releaseMemory() {
-  for (std::map<const Function*, DSGraph*>::iterator I = DSInfo.begin(),
+  for (hash_map<const Function*, DSGraph*>::iterator I = DSInfo.begin(),
          E = DSInfo.end(); I != E; ++I)
     delete I->second;
 
@@ -383,7 +384,7 @@ DSGraph &BUDataStructures::calculateGraph(Function &F) {
 // IN the SCC at all.
 //
 DSGraph &BUDataStructures::inlineNonSCCGraphs(Function &F,
-                                             std::set<Function*> &SCCFunctions){
+                                             hash_set<Function*> &SCCFunctions){
   DSGraph &Graph = getDSGraph(F);
   DEBUG(std::cerr << "  [BU] Inlining Non-SCC graphs for: "
                   << F.getName() << "\n");
@@ -452,12 +453,12 @@ DSGraph &BUDataStructures::inlineNonSCCGraphs(Function &F,
 
 
 DSGraph &BUDataStructures::calculateSCCGraph(Function &F,
-                                             std::set<Function*> &SCCFunctions){
+                                             hash_set<Function*> &SCCFunctions){
   DSGraph &Graph = getDSGraph(F);
   DEBUG(std::cerr << "  [BU] Calculating SCC graph for: " << F.getName()<<"\n");
 
   std::vector<DSCallSite> UnresolvableCalls;
-  std::map<Function*, DSCallSite> SCCCallSiteMap;
+  hash_map<Function*, DSCallSite> SCCCallSiteMap;
   std::vector<DSCallSite> &AuxCallsList = Graph.getAuxFunctionCalls();
 
   while (1) {  // Loop until we run out of resolvable call sites!

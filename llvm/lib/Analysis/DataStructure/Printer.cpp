@@ -87,8 +87,8 @@ struct DOTGraphTraits<const DSGraph*> : public DefaultDOTGraphTraits {
   static void addCustomGraphFeatures(const DSGraph *G,
                                      GraphWriter<const DSGraph*> &GW) {
     // Add scalar nodes to the graph...
-    const std::map<Value*, DSNodeHandle> &VM = G->getScalarMap();
-    for (std::map<Value*, DSNodeHandle>::const_iterator I = VM.begin();
+    const hash_map<Value*, DSNodeHandle> &VM = G->getScalarMap();
+    for (hash_map<Value*, DSNodeHandle>::const_iterator I = VM.begin();
          I != VM.end(); ++I)
       if (!isa<GlobalValue>(I->first)) {
         std::stringstream OS;

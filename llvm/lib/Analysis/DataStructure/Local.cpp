@@ -56,12 +56,12 @@ namespace {
     DSGraph &G;
     std::vector<DSNode*> &Nodes;
     DSNodeHandle &RetNode;               // Node that gets returned...
-    std::map<Value*, DSNodeHandle> &ScalarMap;
+    hash_map<Value*, DSNodeHandle> &ScalarMap;
     std::vector<DSCallSite> &FunctionCalls;
 
   public:
     GraphBuilder(DSGraph &g, std::vector<DSNode*> &nodes, DSNodeHandle &retNode,
-                 std::map<Value*, DSNodeHandle> &SM,
+                 hash_map<Value*, DSNodeHandle> &SM,
                  std::vector<DSCallSite> &fc)
       : G(g), Nodes(nodes), RetNode(retNode), ScalarMap(SM), FunctionCalls(fc) {
 
@@ -166,7 +166,7 @@ DSNodeHandle GraphBuilder::getValueDest(Value &Val) {
         return NH = getValueDest(*CE->getOperand(0));
       if (CE->getOpcode() == Instruction::GetElementPtr) {
         visitGetElementPtrInst(*CE);
-        std::map<Value*, DSNodeHandle>::iterator I = ScalarMap.find(CE);
+        hash_map<Value*, DSNodeHandle>::iterator I = ScalarMap.find(CE);
         assert(I != ScalarMap.end() && "GEP didn't get processed right?");
         return NH = I->second;
       }
@@ -431,7 +431,7 @@ bool LocalDataStructures::run(Module &M) {
 // our memory... here...
 //
 void LocalDataStructures::releaseMemory() {
-  for (std::map<const Function*, DSGraph*>::iterator I = DSInfo.begin(),
+  for (hash_map<const Function*, DSGraph*>::iterator I = DSInfo.begin(),
          E = DSInfo.end(); I != E; ++I)
     delete I->second;
 

@@ -89,7 +89,7 @@ void Steens::ResolveFunctionCall(Function *F,
                                  const DSCallSite &Call,
                                  DSNodeHandle &RetVal) {
   assert(ResultGraph != 0 && "Result graph not allocated!");
-  std::map<Value*, DSNodeHandle> &ValMap = ResultGraph->getScalarMap();
+  hash_map<Value*, DSNodeHandle> &ValMap = ResultGraph->getScalarMap();
 
   // Handle the return value of the function...
   if (Call.getRetVal().getNode() && RetVal.getNode())
@@ -98,7 +98,7 @@ void Steens::ResolveFunctionCall(Function *F,
   // Loop over all pointer arguments, resolving them to their provided pointers
   unsigned PtrArgIdx = 0;
   for (Function::aiterator AI = F->abegin(), AE = F->aend(); AI != AE; ++AI) {
-    std::map<Value*, DSNodeHandle>::iterator I = ValMap.find(AI);
+    hash_map<Value*, DSNodeHandle>::iterator I = ValMap.find(AI);
     if (I != ValMap.end())    // If its a pointer argument...
       I->second.addEdgeTo(Call.getPtrArg(PtrArgIdx++));
   }
@@ -120,16 +120,16 @@ bool Steens::run(Module &M) {
   // RetValMap - Keep track of the return values for all functions that return
   // valid pointers.
   //
-  std::map<Function*, DSNodeHandle> RetValMap;
+  hash_map<Function*, DSNodeHandle> RetValMap;
 
   // Loop over the rest of the module, merging graphs for non-external functions
   // into this graph.
   //
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
     if (!I->isExternal()) {
-      std::map<Value*, DSNodeHandle> ValMap;
+      hash_map<Value*, DSNodeHandle> ValMap;
       {  // Scope to free NodeMap memory ASAP
-        std::map<const DSNode*, DSNodeHandle> NodeMap;
+        hash_map<const DSNode*, DSNodeHandle> NodeMap;
         const DSGraph &FDSG = LDS.getDSGraph(*I);
         DSNodeHandle RetNode = ResultGraph->cloneInto(FDSG, ValMap, NodeMap);
 
@@ -142,11 +142,11 @@ bool Steens::run(Module &M) {
 
       // Incorporate the inlined Function's ScalarMap into the global
       // ScalarMap...
-      std::map<Value*, DSNodeHandle> &GVM = ResultGraph->getScalarMap();
+      hash_map<Value*, DSNodeHandle> &GVM = ResultGraph->getScalarMap();
 
       while (!ValMap.empty()) { // Loop over value map, moving entries over...
         const std::pair<Value*, DSNodeHandle> &DSN = *ValMap.begin();
-        std::map<Value*, DSNodeHandle>::iterator I = GVM.find(DSN.first);
+        hash_map<Value*, DSNodeHandle>::iterator I = GVM.find(DSN.first);
         if (I == GVM.end())
           GVM[DSN.first] = DSN.second;
         else
@@ -209,12 +209,12 @@ bool Steens::run(Module &M) {
 AliasAnalysis::Result Steens::alias(const Value *V1, const Value *V2) {
   assert(ResultGraph && "Result graph has not been computed yet!");
 
-  std::map<Value*, DSNodeHandle> &GVM = ResultGraph->getScalarMap();
+  hash_map<Value*, DSNodeHandle> &GVM = ResultGraph->getScalarMap();
 
-  std::map<Value*, DSNodeHandle>::iterator I = GVM.find(const_cast<Value*>(V1));
+  hash_map<Value*, DSNodeHandle>::iterator I = GVM.find(const_cast<Value*>(V1));
   if (I != GVM.end() && I->second.getNode()) {
     DSNodeHandle &V1H = I->second;
-    std::map<Value*, DSNodeHandle>::iterator J=GVM.find(const_cast<Value*>(V2));
+    hash_map<Value*, DSNodeHandle>::iterator J=GVM.find(const_cast<Value*>(V2));
     if (J != GVM.end() && J->second.getNode()) {
       DSNodeHandle &V2H = J->second;
       // If the two pointers point to different data structure graph nodes, they

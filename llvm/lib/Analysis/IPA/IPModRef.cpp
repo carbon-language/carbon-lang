@@ -118,7 +118,7 @@ void FunctionModRefInfo::computeModRef(const Function &func)
 //       function or we cannot determine the complete set of functions invoked).
 //
 DSGraph* FunctionModRefInfo::ResolveCallSiteModRefInfo(CallInst &CI,
-                               std::map<const DSNode*, DSNodeHandle> &NodeMap)
+                               hash_map<const DSNode*, DSNodeHandle> &NodeMap)
 {
   // Step #0: Quick check if we are going to fail anyway: avoid
   // all the graph cloning and map copying in steps #1 and #2.
@@ -194,7 +194,7 @@ FunctionModRefInfo::computeModRef(const CallInst& callInst)
   callSiteModRefInfo[&callInst] = callModRefInfo;
 
   // Get a copy of the graph for the callee with the callee inlined
-  std::map<const DSNode*, DSNodeHandle> NodeMap;
+  hash_map<const DSNode*, DSNodeHandle> NodeMap;
   DSGraph* csgp = ResolveCallSiteModRefInfo(const_cast<CallInst&>(callInst),
                                             NodeMap);
   if (!csgp)
@@ -238,7 +238,7 @@ public:
     knownValues.resize(tdGraph.getGraphSize());
 
     // For every identifiable value, save Value pointer in knownValues[i]
-    for (std::map<Value*, DSNodeHandle>::const_iterator
+    for (hash_map<Value*, DSNodeHandle>::const_iterator
            I = tdGraph.getScalarMap().begin(),
            E = tdGraph.getScalarMap().end(); I != E; ++I)
       if (isa<GlobalValue>(I->first) ||

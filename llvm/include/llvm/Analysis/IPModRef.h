@@ -41,6 +41,7 @@
 
 #include "llvm/Pass.h"
 #include "Support/BitSetVector.h"
+#include "Support/hash_map"
 
 class Module;
 class Function;
@@ -125,7 +126,7 @@ class FunctionModRefInfo {
   void          computeModRef   (const Function &func);
   void          computeModRef   (const CallInst& callInst);
   DSGraph *ResolveCallSiteModRefInfo(CallInst &CI,
-                                std::map<const DSNode*, DSNodeHandle> &NodeMap);
+                                hash_map<const DSNode*, DSNodeHandle> &NodeMap);
 
 public:
   /* ctor */    FunctionModRefInfo      (const Function& func,
