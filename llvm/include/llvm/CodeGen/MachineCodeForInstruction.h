@@ -7,6 +7,9 @@
 // 
 //===----------------------------------------------------------------------===//
 //
+// FIXME: This file is SparcV9 specific.  Do not rely on this class for new 
+// targets, it will go away in the future.
+//
 // Representation of the sequence of machine instructions created for a single
 // VM instruction.  Additionally records information about hidden and implicit
 // values used by the machine instructions: about hidden values used by the
