@@ -155,6 +155,9 @@ void *JITResolver::getFunctionStub(Function *F) {
   // resolver function.
   Stub = TheJIT->getJITInfo().emitFunctionStub((void*)LazyResolverFn, MCE);
 
+  DEBUG(std::cerr << "JIT: Stub emitted at [" << Stub << "] for function '"
+                  << F->getName() << "\n");
+
   // Finally, keep track of the stub-to-Function mapping so that the
   // JITCompilerFn knows which function to compile!
   StubToFunctionMap[Stub] = F;
@@ -178,7 +181,7 @@ void *JITResolver::JITCompilerFn(void *Stub) {
   // function is no longer called from this stub.
   JR.StubToFunctionMap.erase(I);
 
-  DEBUG(std::cerr << "Lazily resolving function '" << F->getName()
+  DEBUG(std::cerr << "JIT: Lazily resolving function '" << F->getName()
                   << "' In stub ptr = " << Stub << " actual ptr = "
                   << I->first << "\n");
 
@@ -312,7 +315,7 @@ void Emitter::finishFunction(MachineFunction &F) {
                                   Relocations.size());
   }
 
-  DEBUG(std::cerr << "Finished CodeGen of [" << (void*)CurBlock
+  DEBUG(std::cerr << "JIT: Finished CodeGen of [" << (void*)CurBlock
                   << "] Function: " << F.getFunction()->getName()
                   << ": " << CurByte-CurBlock << " bytes of text, "
                   << Relocations.size() << " relocations\n");
@@ -359,9 +362,6 @@ void Emitter::startFunctionStub(unsigned StubSize) {
 
 void *Emitter::finishFunctionStub(const Function *F) {
   NumBytes += CurByte-CurBlock;
-  DEBUG(std::cerr << "Finished CodeGen of [0x" << (void*)CurBlock
-                  << "] Function stub for: " << (F ? F->getName() : "")
-                  << ": " << CurByte-CurBlock << " bytes of text\n");
   std::swap(CurBlock, SavedCurBlock);
   CurByte = SavedCurByte;
   return SavedCurBlock;
