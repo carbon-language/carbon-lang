@@ -28,7 +28,9 @@
 //
 static bool PropogatePredecessorsForPHIs(BasicBlock *BB, BasicBlock *Succ) {
   assert(*succ_begin(BB) == Succ && "Succ is not successor of BB!");
-  assert(isa<PHINode>(Succ->front()) && "Only works on PHId BBs!");
+
+  if (!isa<PHINode>(Succ->front()))
+    return false;  // We can make the transformation, no problem.
 
   // If there is more than one predecessor, and there are PHI nodes in
   // the successor, then we need to add incoming edges for the PHI nodes
@@ -39,10 +41,9 @@ static bool PropogatePredecessorsForPHIs(BasicBlock *BB, BasicBlock *Succ) {
   // Succ.  If so, we cannot do the transformation!
   //
   for (pred_iterator PI = pred_begin(Succ), PE = pred_end(Succ);
-       PI != PE; ++PI) {
+       PI != PE; ++PI)
     if (find(BBPreds.begin(), BBPreds.end(), *PI) != BBPreds.end())
       return true;
-  }
 
   // Loop over all of the PHI nodes in the successor BB
   for (BasicBlock::iterator I = Succ->begin();
@@ -118,11 +119,8 @@ bool SimplifyCFG(BasicBlock *BB) {
         // Be careful though, if this transformation fails (returns true) then
         // we cannot do this transformation!
         //
-	if (!isa<PHINode>(Succ->front()) ||
-            !PropogatePredecessorsForPHIs(BB, Succ)) {
-
+	if (!PropogatePredecessorsForPHIs(BB, Succ)) {
           //cerr << "Killing Trivial BB: \n" << BB;
-
           BB->replaceAllUsesWith(Succ);
           std::string OldName = BB->getName();
 
