@@ -216,7 +216,14 @@ int SimpleInliner::getInlineCost(CallSite CS) {
 
   // Don't inline into something too big, which would make it bigger.  Here, we
   // count each basic block as a single unit.
-  InlineCost += Caller->size()/20;
+  //
+  // FIXME: THIS IS A TOTAL HACK.  The problem is that we don't keep track of
+  // which call sites are the result of an inlining operation.  Because of this,
+  // if we inline a recursive function into a callee, we will see a new call to
+  // the recursive function.  Every time we inline we get a new callsite for the
+  // function, which only stops when the caller reaches its inlining limit.
+  // Until the real problem is fixed, we apply this gnasty hack.
+  InlineCost += Caller->size();
 
 
   // Look at the size of the callee.  Each basic block counts as 20 units, and
