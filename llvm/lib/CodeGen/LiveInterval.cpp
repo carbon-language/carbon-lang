@@ -25,10 +25,10 @@ using namespace llvm;
 
 // An example for liveAt():
 //
-// this = [1,4), liveAt(0) will return false. The instruction defining
-// this spans slots [0,3]. The interval belongs to an spilled
-// definition of the variable it represents. This is because slot 1 is
-// used (def slot) and spans up to slot 3 (store slot).
+// this = [1,4), liveAt(0) will return false. The instruction defining this
+// spans slots [0,3]. The interval belongs to an spilled definition of the
+// variable it represents. This is because slot 1 is used (def slot) and spans
+// up to slot 3 (store slot).
 //
 bool LiveInterval::liveAt(unsigned I) const {
   Ranges::const_iterator r = std::upper_bound(ranges.begin(), ranges.end(), I);
@@ -37,7 +37,7 @@ bool LiveInterval::liveAt(unsigned I) const {
     return false;
 
   --r;
-  return I >= r->start && I < r->end;
+  return r->contains(I);
 }
 
 // An example for overlaps():
@@ -60,12 +60,13 @@ bool LiveInterval::overlaps(const LiveInterval& other) const {
   Ranges::const_iterator j = other.ranges.begin();
   Ranges::const_iterator je = other.ranges.end();
   if (i->start < j->start) {
-    i = std::upper_bound(i, ie, *j);
+    i = std::upper_bound(i, ie, j->start);
     if (i != ranges.begin()) --i;
-  }
-  else if (j->start < i->start) {
-    j = std::upper_bound(j, je, *i);
+  } else if (j->start < i->start) {
+    j = std::upper_bound(j, je, i->start);
     if (j != other.ranges.begin()) --j;
+  } else {
+    return true;
   }
 
   while (i != ie && j != je) {
@@ -88,7 +89,7 @@ bool LiveInterval::overlaps(const LiveInterval& other) const {
 
 void LiveInterval::addRange(LiveRange LR) {
   Ranges::iterator it =
-    ranges.insert(std::upper_bound(ranges.begin(), ranges.end(), LR), LR);
+    ranges.insert(std::upper_bound(ranges.begin(), ranges.end(), LR.start), LR);
 
   mergeRangesBackward(mergeRangesForward(it));
 }
@@ -99,7 +100,7 @@ void LiveInterval::join(const LiveInterval& other) {
 
   for (Ranges::const_iterator i = other.ranges.begin(),
          e = other.ranges.end(); i != e; ++i) {
-    cur = ranges.insert(std::upper_bound(cur, ranges.end(), *i), *i);
+    cur = ranges.insert(std::upper_bound(cur, ranges.end(), i->start), *i);
     cur = mergeRangesBackward(mergeRangesForward(cur));
   }
   weight += other.weight;
