@@ -618,7 +618,7 @@ ChooseSubInstructionByType(const Type* resultType)
   MachineOpCode opCode = V9::INVALID_OPCODE;
   
   if (resultType->isInteger() || isa<PointerType>(resultType)) {
-      opCode = V9::SUB;
+      opCode = V9::SUBr;
   } else {
     switch(resultType->getPrimitiveID())
     {
@@ -695,7 +695,7 @@ ChooseMulInstructionByType(const Type* resultType)
   MachineOpCode opCode = V9::INVALID_OPCODE;
   
   if (resultType->isInteger())
-    opCode = V9::MULX;
+    opCode = V9::MULXr;
   else
     switch(resultType->getPrimitiveID())
       {
@@ -713,7 +713,7 @@ static inline MachineInstr*
 CreateIntNegInstruction(const TargetMachine& target,
                         Value* vreg)
 {
-  return BuildMI(V9::SUB, 3).addMReg(target.getRegInfo().getZeroRegNum())
+  return BuildMI(V9::SUBr, 3).addMReg(target.getRegInfo().getZeroRegNum())
     .addReg(vreg).addRegDef(vreg);
 }
 
@@ -747,7 +747,7 @@ CreateShiftInstructions(const TargetMachine& target,
   // 
   Value* shiftDest = destVal;
   unsigned opSize = target.getTargetData().getTypeSize(argVal1->getType());
-  if ((shiftOpCode == V9::SLL || shiftOpCode == V9::SLLX) && opSize < 8)
+  if ((shiftOpCode == V9::SLLr6 || shiftOpCode == V9::SLLXr6) && opSize < 8)
     { // put SLL result into a temporary
       shiftDest = new TmpInstruction(argVal1, optArgVal2, "sllTmp");
       mcfi.addTemp(shiftDest);
@@ -781,7 +781,7 @@ CreateMulConstInstruction(const TargetMachine &target, Function* F,
                           MachineCodeForInstruction& mcfi)
 {
   /* Use max. multiply cost, viz., cost of MULX */
-  unsigned cost = target.getInstrInfo().minLatency(V9::MULX);
+  unsigned cost = target.getInstrInfo().minLatency(V9::MULXr);
   unsigned firstNewInstr = mvec.size();
   
   Value* constOp = rval;
@@ -806,18 +806,18 @@ CreateMulConstInstruction(const TargetMachine &target, Function* F,
       }
           
       if (C == 0 || C == 1) {
-        cost = target.getInstrInfo().minLatency(V9::ADD);
+        cost = target.getInstrInfo().minLatency(V9::ADDr);
         unsigned Zero = target.getRegInfo().getZeroRegNum();
         MachineInstr* M;
         if (C == 0)
-          M = BuildMI(V9::ADD,3).addMReg(Zero).addMReg(Zero).addRegDef(destVal);
+          M =BuildMI(V9::ADDr,3).addMReg(Zero).addMReg(Zero).addRegDef(destVal);
         else
-          M = BuildMI(V9::ADD,3).addReg(lval).addMReg(Zero).addRegDef(destVal);
+          M = BuildMI(V9::ADDr,3).addReg(lval).addMReg(Zero).addRegDef(destVal);
         mvec.push_back(M);
       }
       else if (isPowerOf2(C, pow)) {
         unsigned opSize = target.getTargetData().getTypeSize(resultType);
-        MachineOpCode opCode = (opSize <= 32)? V9::SLL : V9::SLLX;
+        MachineOpCode opCode = (opSize <= 32)? V9::SLLr6 : V9::SLLXr6;
         CreateShiftInstructions(target, F, opCode, lval, NULL, pow,
                                 destVal, mvec, mcfi);
       }
@@ -913,7 +913,7 @@ ChooseDivInstruction(TargetMachine &target,
   const Type* resultType = instrNode->getInstruction()->getType();
   
   if (resultType->isInteger())
-    opCode = resultType->isSigned()? V9::SDIVX : V9::UDIVX;
+    opCode = resultType->isSigned()? V9::SDIVXr : V9::UDIVXr;
   else
     switch(resultType->getPrimitiveID())
       {
@@ -959,7 +959,7 @@ CreateDivConstInstruction(TargetMachine &target,
       }
           
       if (C == 1) {
-        mvec.push_back(BuildMI(V9::ADD, 3).addReg(LHS).addMReg(ZeroReg)
+        mvec.push_back(BuildMI(V9::ADDr, 3).addReg(LHS).addMReg(ZeroReg)
                        .addRegDef(destVal));
       } else if (isPowerOf2(C, pow)) {
         unsigned opCode;
@@ -982,23 +982,24 @@ CreateDivConstInstruction(TargetMachine &target,
           mcfi.addTemp(addTmp);
 
           // Create the SRL or SRLX instruction to get the sign bit
-          mvec.push_back(BuildMI((resultType==Type::LongTy)? V9::SRLX:V9::SRL,3)
+          mvec.push_back(BuildMI((resultType==Type::LongTy) ?
+                                 V9::SRLXi6 : V9::SRLi6, 3)
                          .addReg(LHS)
                          .addSImm((resultType==Type::LongTy)? 63 : 31)
                          .addRegDef(srlTmp));
 
           // Create the ADD instruction to add 1 for negative values
-          mvec.push_back(BuildMI(V9::ADD, 3).addReg(LHS).addReg(srlTmp)
+          mvec.push_back(BuildMI(V9::ADDr, 3).addReg(LHS).addReg(srlTmp)
                          .addRegDef(addTmp));
 
           // Get the shift operand and "right-shift" opcode to do the divide
           shiftOperand = addTmp;
-          opCode = (resultType==Type::LongTy) ? V9::SRAX : V9::SRA;
+          opCode = (resultType==Type::LongTy) ? V9::SRAXi6 : V9::SRAi6;
         }
         else {
           // Get the shift operand and "right-shift" opcode to do the divide
           shiftOperand = LHS;
-          opCode = (resultType==Type::LongTy) ? V9::SRLX : V9::SRL;
+          opCode = (resultType==Type::LongTy) ? V9::SRLXi6 : V9::SRLi6;
         }
 
         // Now do the actual shift!
@@ -1088,11 +1089,11 @@ CreateCodeForVariableSizeAlloca(const TargetMachine& target,
   unsigned SPReg = target.getRegInfo().getStackPointer();
 
   // Instruction 2: sub %sp, totalSizeVal -> %sp
-  getMvec.push_back(BuildMI(V9::SUB, 3).addMReg(SPReg).addReg(totalSizeVal)
+  getMvec.push_back(BuildMI(V9::SUBr, 3).addMReg(SPReg).addReg(totalSizeVal)
                     .addMReg(SPReg,MOTy::Def));
 
   // Instruction 3: add %sp, frameSizeBelowDynamicArea -> result
-  getMvec.push_back(BuildMI(V9::ADD, 3).addMReg(SPReg).addReg(dynamicAreaOffset)
+  getMvec.push_back(BuildMI(V9::ADDr,3).addMReg(SPReg).addReg(dynamicAreaOffset)
                     .addRegDef(result));
 }        
 
@@ -1118,7 +1119,7 @@ CreateCodeForFixedSizeAlloca(const TargetMachine& target,
   int offsetFromFP = mcInfo.getInfo()->computeOffsetforLocalVar(result,
                                                      paddedSizeIgnored,
                                                      tsize * numElements);
-  if (! target.getInstrInfo().constantFitsInImmedField(V9::LDX, offsetFromFP)) {
+  if (! target.getInstrInfo().constantFitsInImmedField(V9::LDXi,offsetFromFP)) {
     CreateCodeForVariableSizeAlloca(target, result, tsize, 
 				    ConstantSInt::get(Type::IntTy,numElements),
 				    getMvec);
@@ -1134,8 +1135,41 @@ CreateCodeForFixedSizeAlloca(const TargetMachine& target,
   
   // Instruction 1: add %fp, offsetFromFP -> result
   unsigned FPReg = target.getRegInfo().getFramePointer();
-  getMvec.push_back(BuildMI(V9::ADD, 3).addMReg(FPReg).addReg(offsetVal)
+  getMvec.push_back(BuildMI(V9::ADDr, 3).addMReg(FPReg).addReg(offsetVal)
                     .addRegDef(result));
+}
+
+
+static unsigned
+convertOpcodeFromRegToImm(unsigned Opcode) {
+  switch (Opcode) {
+  case V9::ADDr: return V9::ADDi;
+   
+    /* load opcodes */
+  case V9::LDUBr: return V9::LDUBi;
+  case V9::LDSBr: return V9::LDSBi;
+  case V9::LDUHr: return V9::LDUHi;
+  case V9::LDSHr: return V9::LDSHi;
+  case V9::LDUWr: return V9::LDUWi;
+  case V9::LDSWr: return V9::LDSWi;
+  case V9::LDXr: return V9::LDXi;
+  case V9::LDFr: return V9::LDFi;
+  case V9::LDDFr: return V9::LDDFi;
+
+    /* store opcodes */
+  case V9::STBr: return V9::STBi;
+  case V9::STHr: return V9::STHi;
+  case V9::STWr: return V9::STWi;
+  case V9::STXr: return V9::STXi;
+  case V9::STFr: return V9::STFi;
+  case V9::STDFr: return V9::STDFi;
+
+  default:
+    std::cerr << "Not handled opcode in convert from reg to imm: " << Opcode
+              << "\n";
+    abort();
+    return 0;
+  }
 }
 
 
@@ -1248,16 +1282,20 @@ SetOperandsForMemInstr(unsigned Opcode,
     if (offsetOpType == MachineOperand::MO_VirtualRegister)
       MI = BuildMI(Opcode, 3).addReg(vmInstrNode->leftChild()->getValue())
                              .addReg(ptrVal).addReg(valueForRegOffset);
-    else
+    else {
+      Opcode = convertOpcodeFromRegToImm(Opcode);
       MI = BuildMI(Opcode, 3).addReg(vmInstrNode->leftChild()->getValue())
                              .addReg(ptrVal).addSImm(smallConstOffset);
+    }
   } else {
     if (offsetOpType == MachineOperand::MO_VirtualRegister)
       MI = BuildMI(Opcode, 3).addReg(ptrVal).addReg(valueForRegOffset)
                              .addRegDef(memInst);
-    else
+    else {
+      Opcode = convertOpcodeFromRegToImm(Opcode);
       MI = BuildMI(Opcode, 3).addReg(ptrVal).addSImm(smallConstOffset)
                              .addRegDef(memInst);
+    }
   }
   mvec.push_back(MI);
 }
@@ -1355,7 +1393,7 @@ bool CodeGenIntrinsic(LLVMIntrinsic::ID iid, CallInst &callInstr,
     int argSize        = target.getFrameInfo().getSizeOfEachArgOnStack();
     int firstVarArgOff = numFixedArgs * argSize + target.getFrameInfo().
       getFirstIncomingArgOffset(MachineFunction::get(func), ignore);
-    mvec.push_back(BuildMI(V9::ADD, 3).addMReg(fpReg).addSImm(firstVarArgOff).
+    mvec.push_back(BuildMI(V9::ADDi, 3).addMReg(fpReg).addSImm(firstVarArgOff).
                    addReg(callInstr.getOperand(1)));
     return true;
   }
@@ -1365,7 +1403,7 @@ bool CodeGenIntrinsic(LLVMIntrinsic::ID iid, CallInst &callInstr,
 
   case LLVMIntrinsic::va_copy:
     // Simple copy of current va_list (arg2) to new va_list (arg1)
-    mvec.push_back(BuildMI(V9::OR, 3).
+    mvec.push_back(BuildMI(V9::ORr, 3).
                    addMReg(target.getRegInfo().getZeroRegNum()).
                    addReg(callInstr.getOperand(2)).
                    addReg(callInstr.getOperand(1)));
@@ -1482,7 +1520,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         Instruction* returnReg = new TmpInstruction(returnInstr);
         MachineCodeForInstruction::get(returnInstr).addTemp(returnReg);
         
-        M = BuildMI(V9::JMPLRET, 3).addReg(returnReg).addSImm(8)
+        M = BuildMI(V9::JMPLRETi, 3).addReg(returnReg).addSImm(8)
           .addMReg(target.getRegInfo().getZeroRegNum(), MOTy::Def);
         
         if (returnInstr->getReturnValue() != NULL)
@@ -1634,7 +1672,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         Value* notArg = BinaryOperator::getNotArgument(
                            cast<BinaryOperator>(subtreeRoot->getInstruction()));
         unsigned ZeroReg = target.getRegInfo().getZeroRegNum();
-        mvec.push_back(BuildMI(V9::XNOR, 3).addReg(notArg).addMReg(ZeroReg)
+        mvec.push_back(BuildMI(V9::XNORr, 3).addReg(notArg).addMReg(ZeroReg)
                                        .addRegDef(subtreeRoot->getValue()));
         break;
       }
@@ -1935,7 +1973,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
       case 238:	// bool:   And(bool, boolconst)
       case 338:	// reg :   BAnd(reg, reg)
       case 538:	// reg :   BAnd(reg, Constant)
-        Add3OperandInstr(V9::AND, subtreeRoot, mvec);
+        Add3OperandInstr(V9::ANDr, subtreeRoot, mvec);
         break;
 
       case 138:	// bool:   And(bool, not)
@@ -1948,7 +1986,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         notNode->markFoldedIntoParent();
         Value *LHS = subtreeRoot->leftChild()->getValue();
         Value *Dest = subtreeRoot->getValue();
-        mvec.push_back(BuildMI(V9::ANDN, 3).addReg(LHS).addReg(notArg)
+        mvec.push_back(BuildMI(V9::ANDNr, 3).addReg(LHS).addReg(notArg)
                                        .addReg(Dest, MOTy::Def));
         break;
       }
@@ -1957,7 +1995,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
       case 239:	// bool:   Or(bool, boolconst)
       case 339:	// reg :   BOr(reg, reg)
       case 539:	// reg :   BOr(reg, Constant)
-        Add3OperandInstr(V9::OR, subtreeRoot, mvec);
+        Add3OperandInstr(V9::ORr, subtreeRoot, mvec);
         break;
 
       case 139:	// bool:   Or(bool, not)
@@ -1970,7 +2008,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         notNode->markFoldedIntoParent();
         Value *LHS = subtreeRoot->leftChild()->getValue();
         Value *Dest = subtreeRoot->getValue();
-        mvec.push_back(BuildMI(V9::ORN, 3).addReg(LHS).addReg(notArg)
+        mvec.push_back(BuildMI(V9::ORNr, 3).addReg(LHS).addReg(notArg)
                        .addReg(Dest, MOTy::Def));
         break;
       }
@@ -1979,7 +2017,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
       case 240:	// bool:   Xor(bool, boolconst)
       case 340:	// reg :   BXor(reg, reg)
       case 540:	// reg :   BXor(reg, Constant)
-        Add3OperandInstr(V9::XOR, subtreeRoot, mvec);
+        Add3OperandInstr(V9::XORr, subtreeRoot, mvec);
         break;
 
       case 140:	// bool:   Xor(bool, not)
@@ -1992,7 +2030,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         notNode->markFoldedIntoParent();
         Value *LHS = subtreeRoot->leftChild()->getValue();
         Value *Dest = subtreeRoot->getValue();
-        mvec.push_back(BuildMI(V9::XNOR, 3).addReg(LHS).addReg(notArg)
+        mvec.push_back(BuildMI(V9::XNORr, 3).addReg(LHS).addReg(notArg)
                        .addReg(Dest, MOTy::Def));
         break;
       }
@@ -2059,13 +2097,13 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
             // result of SUBcc instruction anyway.
             // 
             if (keepSubVal) {
-              M = BuildMI(V9::SUBcc, 4)
+              M = BuildMI(V9::SUBccr, 4)
                 .addReg(subtreeRoot->leftChild()->getValue())
                 .addReg(subtreeRoot->rightChild()->getValue())
                 .addRegDef(subtreeRoot->getValue())
                 .addCCReg(tmpForCC, MOTy::Def);
             } else {
-              M = BuildMI(V9::SUBcc, 4)
+              M = BuildMI(V9::SUBccr, 4)
                 .addReg(subtreeRoot->leftChild()->getValue())
                 .addReg(subtreeRoot->rightChild()->getValue())
                 .addMReg(target.getRegInfo().getZeroRegNum(), MOTy::Def)
@@ -2125,7 +2163,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
       case 56:	// reg:   GetElemPtrIdx(reg,reg)
         // If the GetElemPtr was folded into the user (parent), it will be
         // caught above.  For other cases, we have to compute the address.
-        SetOperandsForMemInstr(V9::ADD, mvec, subtreeRoot, target);
+        SetOperandsForMemInstr(V9::ADDr, mvec, subtreeRoot, target);
         break;
 
       case 57:	// reg:  Alloca: Implement as 1 instruction:
@@ -2207,7 +2245,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
             if (calledFunc)             // direct function call
               M = BuildMI(V9::CALL, 1).addPCDisp(callee);
             else                        // indirect function call
-              M = BuildMI(V9::JMPLCALL, 3).addReg(callee).addSImm((int64_t)0)
+              M = BuildMI(V9::JMPLCALLi, 3).addReg(callee).addSImm((int64_t)0)
                 .addRegDef(retAddrReg);
             mvec.push_back(M);
 
@@ -2299,7 +2337,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
                "Shl unsupported for other types");
         
         CreateShiftInstructions(target, shlInstr->getParent()->getParent(),
-                                (opType == Type::LongTy)? V9::SLLX : V9::SLL,
+                                (opType == Type::LongTy)? V9::SLLXr6:V9::SLLr6,
                                 argVal1, argVal2, 0, shlInstr, mvec,
                                 MachineCodeForInstruction::get(shlInstr));
         break;
@@ -2310,8 +2348,8 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         assert((opType->isInteger() || isa<PointerType>(opType)) &&
                "Shr unsupported for other types");
         Add3OperandInstr(opType->isSigned()
-                               ? (opType == Type::LongTy ? V9::SRAX : V9::SRA)
-                               : (opType == Type::LongTy ? V9::SRLX : V9::SRL),
+                         ? (opType == Type::LongTy ? V9::SRAXr6 : V9::SRAr6)
+                         : (opType == Type::LongTy ? V9::SRLXr6 : V9::SRLr6),
                          subtreeRoot, mvec);
         break;
       }
@@ -2325,9 +2363,9 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         // Load argument via current pointer value, then increment pointer.
         int argSize = target.getFrameInfo().getSizeOfEachArgOnStack();
         Instruction* vaArgI = subtreeRoot->getInstruction();
-        mvec.push_back(BuildMI(V9::LDX, 3).addReg(vaArgI->getOperand(0)).
+        mvec.push_back(BuildMI(V9::LDXi, 3).addReg(vaArgI->getOperand(0)).
                        addSImm(0).addRegDef(vaArgI));
-        mvec.push_back(BuildMI(V9::ADD, 3).addReg(vaArgI->getOperand(0)).
+        mvec.push_back(BuildMI(V9::ADDi, 3).addReg(vaArgI->getOperand(0)).
                        addSImm(argSize).addRegDef(vaArgI->getOperand(0)));
         break;
       }
@@ -2384,7 +2422,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
               for (unsigned i=0, N=mvec.size(); i < N; ++i)
                 mvec[i]->substituteValue(dest, tmpI);
 
-              M = BuildMI(V9::SRL, 3).addReg(tmpI).addZImm(8*(4-destSize))
+              M = BuildMI(V9::SRLi6, 3).addReg(tmpI).addZImm(8*(4-destSize))
                 .addReg(dest, MOTy::Def);
               mvec.push_back(M);
             }
