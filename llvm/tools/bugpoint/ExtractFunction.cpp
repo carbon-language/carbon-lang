@@ -26,6 +26,9 @@ namespace {
   cl::opt<bool>
   NoSCFG("disable-simplifycfg",
          cl::desc("Do not use the -simplifycfg pass to reduce testcases"));
+  cl::opt<bool>
+  NoFinalCleanup("disable-final-cleanup",
+                 cl::desc("Disable the final cleanup phase of narrowing"));
 }
 
 /// deleteInstructionFromProgram - This method clones the current Program and
@@ -79,10 +82,17 @@ Module *BugDriver::deleteInstructionFromProgram(Instruction *I,
 Module *BugDriver::performFinalCleanups() const {
   Module *M = CloneModule(Program);
 
+  // Allow disabling these passes if they crash bugpoint.
+  //
+  // FIXME: This should eventually run these passes in a pass list to prevent
+  // them from being able to crash bugpoint at all!
+  //
+  if (NoFinalCleanup) return M;
+
   // Make all functions external, so GlobalDCE doesn't delete them...
   for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I)
     I->setLinkage(GlobalValue::ExternalLinkage);
-
+  
   PassManager CleanupPasses;
   CleanupPasses.add(createFunctionResolvingPass());
   CleanupPasses.add(createGlobalDCEPass());
