@@ -698,15 +698,54 @@ ConstantInt *ConstantInt::get(const Type *Ty, unsigned char V) {
 
 //---- ConstantFP::get() implementation...
 //
-static ValueMap<double, Type, ConstantFP> FPConstants;
+namespace llvm {
+  template<>
+  struct ConstantCreator<ConstantFP, Type, uint64_t> {
+    static ConstantFP *create(const Type *Ty, uint64_t V) {
+      assert(Ty == Type::DoubleTy);
+      union {
+        double F;
+        uint64_t I;
+      } T;
+      T.I = V;
+      return new ConstantFP(Ty, T.F);
+    }
+  };
+  template<>
+  struct ConstantCreator<ConstantFP, Type, uint32_t> {
+    static ConstantFP *create(const Type *Ty, uint32_t V) {
+      assert(Ty == Type::FloatTy);
+      union {
+        float F;
+        uint32_t I;
+      } T;
+      T.I = V;
+      return new ConstantFP(Ty, T.F);
+    }
+  };
+}
+
+static ValueMap<uint64_t, Type, ConstantFP> DoubleConstants;
+static ValueMap<uint32_t, Type, ConstantFP> FloatConstants;
 
 ConstantFP *ConstantFP::get(const Type *Ty, double V) {
   if (Ty == Type::FloatTy) {
     // Force the value through memory to normalize it.
-    volatile float Tmp = V;
-    V = Tmp;
+    union {
+      float F;
+      uint32_t I;
+    } T;
+    T.F = (float)V;
+    return FloatConstants.getOrCreate(Ty, T.I);
+  } else {
+    assert(Ty == Type::DoubleTy);
+    union {
+      double F;
+      uint64_t I;
+    } T;
+    T.F = V;
+    return DoubleConstants.getOrCreate(Ty, T.I);
   }
-  return FPConstants.getOrCreate(Ty, V);
 }
 
 //---- ConstantArray::get() implementation...
