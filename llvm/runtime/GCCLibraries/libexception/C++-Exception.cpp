@@ -9,7 +9,6 @@
 
 #include "c++-exception.h"
 #include <cstdlib>
-#include <cassert>
 
 //===----------------------------------------------------------------------===//
 // Generic exception support
@@ -75,8 +74,7 @@ void __llvm_cxxeh_free_exception(void *ObjectPtr) {
 // exception.
 //
 static void cxx_destructor(llvm_exception *LE) {
-  void *ObjectPtr = LE+1;
-  llvm_cxx_exception *E = (llvm_cxx_exception *)ObjectPtr - 1;
+  llvm_cxx_exception *E = get_cxx_exception(LE);
 
   // The exception is no longer caught.
   assert(CaughtExceptionStack == LE &&
@@ -132,7 +130,7 @@ void *__llvm_cxxeh_current_uncaught_exception_isa(
   // to see if TypeID matches and, if so, to adjust the exception object
   // pointer.
   //
-  llvm_cxx_exception *E = (llvm_cxx_exception*)UncaughtExceptionStack;
+  llvm_cxx_exception *E = get_cxx_exception(UncaughtExceptionStack);
 
   // ThrownPtr is a pointer to the object being thrown...
   void *ThrownPtr = E+1;
@@ -170,7 +168,7 @@ void *__llvm_cxxeh_begin_catch(void) {
   
   // The exception is now caught.
   E->Next = CaughtExceptionStack;
-  CaughtExceptionStack = E->Next;
+  CaughtExceptionStack = E;
 
   // Increment the handler count for this exception.
   E->HandlerCount++;
@@ -204,10 +202,8 @@ void __llvm_cxxeh_end_catch(void) {
   assert(E && "There are no caught exceptions!");
   
   // If this is the last handler using the exception, destroy it now!
-  if (--E->HandlerCount == 0) {
-    CaughtExceptionStack = E->Next;   // Unlink from the stack
+  if (--E->HandlerCount == 0)
     E->ExceptionDestructor(E);        // Release memory for the exception
-  }
 }
 
 // __llvm_cxxeh_rethrow - This function turns the top-level caught exception
@@ -229,9 +225,6 @@ void __llvm_cxxeh_rethrow(void) {
   CaughtExceptionStack = E->Next;
   E->Next = UncaughtExceptionStack;
   UncaughtExceptionStack = E;
-
-  // Decrement the number of handlers which are using the exception.
-  --E->HandlerCount;
   
   // Return to the caller, which should perform the unwind now.
 }
