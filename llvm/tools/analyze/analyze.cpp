@@ -126,11 +126,10 @@ Pass *New(const string &Message) {
 }
 
 
-
-Pass *NewPrintFunction(const string &Message) {
+Pass *createPrintFunctionPass(const string &Message) {
   return new PrintFunctionPass(Message, &std::cout);
 }
-Pass *NewPrintModule(const string &Message) {
+Pass *createPrintModulePass(const string &Message) {
   return new PrintModulePass(&std::cout);
 }
 
@@ -262,7 +261,7 @@ struct {
   Pass *(*PassConstructor)(const string &Message);
 } AnTable[] = {
   // Global analyses
-  { print             , NewPrintFunction                        },
+  { print             , createPrintFunctionPass                 },
   { intervals         , New<FunctionPass, IntervalPartition>    },
   { loops             , New<FunctionPass, LoopInfo>             },
   { instforest        , Create<PrinterPass<InstForest> >        },
@@ -270,7 +269,7 @@ struct {
   { exprs             , Create<PrinterPass<Exprs> >             },
 
   // IP Analyses...
-  { printmodule       , NewPrintModule                    },
+  { printmodule       , createPrintModulePass            },
   { printusedtypes    , New<Pass, FindUsedTypes>          },
   { callgraph         , New<Pass, CallGraph>              },
   { datastructure     , New<Pass, DataStructure>          },
