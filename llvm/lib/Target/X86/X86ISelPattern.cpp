@@ -1499,7 +1499,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
   case ISD::MUL:
   case ISD::AND:
   case ISD::OR:
-  case ISD::XOR:
+  case ISD::XOR: {
     static const unsigned SUBTab[] = {
       X86::SUB8ri, X86::SUB16ri, X86::SUB32ri, 0, 0,
       X86::SUB8rm, X86::SUB16rm, X86::SUB32rm, X86::FSUB32m, X86::FSUB64m,
@@ -1680,7 +1680,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
       BuildMI(BB, X86::MOV8rr, 1, Result).addReg(X86::AL);
     }
     return Result;
-
+  }
   case ISD::SELECT:
     if (N.getValueType() != MVT::i1 && N.getValueType() != MVT::i8) {
       if (getRegPressure(N.getOperand(1)) > getRegPressure(N.getOperand(2))) {
