@@ -203,6 +203,23 @@ bool RA::runOnMachineFunction(MachineFunction &fn) {
     v2pMap_.clear();
     v2ssMap_.clear();
 
+    DEBUG(
+        for (MachineBasicBlockPtrs::iterator
+                 mbbi = mbbs_.begin(), mbbe = mbbs_.end();
+             mbbi != mbbe; ++mbbi) {
+            MachineBasicBlock* mbb = *mbbi;
+            std::cerr << mbb->getBasicBlock()->getName() << '\n';
+            for (MachineBasicBlock::iterator
+                     ii = mbb->begin(), ie = mbb->end();
+                 ii != ie; ++ii) {
+                MachineInstr* instr = *ii;
+                     
+                std::cerr << "\t";
+                instr->print(std::cerr, *tm_);
+            }
+        }
+        );
+
     // FIXME: this will work only for the X86 backend. I need to
     // device an algorthm to select the minimal (considering register
     // aliasing) number of temp registers to reserve so that we have 2
@@ -276,12 +293,6 @@ bool RA::runOnMachineFunction(MachineFunction &fn) {
 
             DEBUG(std::cerr << "\tinstruction: ";
                   (*currentInstr_)->print(std::cerr, *tm_););
-            DEBUG(std::cerr << "\t\tspilling temporarily defined operands "
-                  "of previous instruction:\n");
-            for (unsigned i = 0, e = tempDefOperands_.size(); i != e; ++i) {
-                spillVirtReg(tempDefOperands_[i]);
-            }
-            tempDefOperands_.clear();
 
             // use our current mapping and actually replace and
             // virtual register with its allocated physical registers
@@ -422,6 +433,15 @@ bool RA::runOnMachineFunction(MachineFunction &fn) {
                     (*currentInstr_)->SetMachineOperandReg(1, regA);
                 }
             }
+
+            DEBUG(std::cerr << "\t\tspilling temporarily defined operands "
+                  "of this instruction:\n");
+            ++currentInstr_; // we want to insert after this instruction
+            for (unsigned i = 0, e = tempDefOperands_.size(); i != e; ++i) {
+                spillVirtReg(tempDefOperands_[i]);
+            }
+            --currentInstr_; // restore currentInstr_ iterator
+            tempDefOperands_.clear();
         }
 
         for (unsigned i = 0, e = p2vMap_.size(); i != e; ++i) {
