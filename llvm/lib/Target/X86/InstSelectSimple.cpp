@@ -8,6 +8,7 @@
 #include "X86InstrInfo.h"
 #include "llvm/Function.h"
 #include "llvm/iTerminators.h"
+#include "llvm/iOperators.h"
 #include "llvm/iOther.h"
 #include "llvm/iPHINode.h"
 #include "llvm/Type.h"
@@ -77,6 +78,7 @@ namespace {
 
     // Other operators
     void visitShiftInst(ShiftInst &I);
+    void visitSetCondInst(SetCondInst &I);
     void visitPHINode(PHINode &I);
 
     void visitInstruction(Instruction &I) {
@@ -160,6 +162,157 @@ void ISel::copyConstantToRegister(Constant *C, unsigned R) {
   }
 }
 
+/// SetCC instructions - Here we just emit boilerplate code to set a byte-sized
+/// register, then move it to wherever the result should be. 
+/// We handle FP setcc instructions by pushing them, doing a
+/// compare-and-pop-twice, and then copying the concodes to the main
+/// processor's concodes (I didn't make this up, it's in the Intel manual)
+///
+void
+ISel::visitSetCondInst (SetCondInst & I)
+{
+  // The arguments are already supposed to be of the same type.
+  Value *var1 = I.getOperand (0);
+  Value *var2 = I.getOperand (1);
+  unsigned reg1 = getReg (var1);
+  unsigned reg2 = getReg (var2);
+  unsigned resultReg = getReg (I);
+  unsigned comparisonWidth = var1->getType ()->getPrimitiveSize ();
+  unsigned unsignedComparison = var1->getType ()->isUnsigned ();
+  unsigned resultWidth = I.getType ()->getPrimitiveSize ();
+  bool fpComparison = var1->getType ()->isFloatingPoint ();
+  if (fpComparison)
+    {
+      // Push the variables on the stack with fldl opcodes.
+      // FIXME: assuming var1, var2 are in memory, if not, spill to
+      // stack first
+      switch (comparisonWidth)
+	{
+	case 4:
+	  BuildMI (BB, X86::FLDr4, 1, X86::NoReg).addReg (reg1);
+	  break;
+	case 8:
+	  BuildMI (BB, X86::FLDr8, 1, X86::NoReg).addReg (reg1);
+	  break;
+	default:
+	  visitInstruction (I);
+	  break;
+	}
+      switch (comparisonWidth)
+	{
+	case 4:
+	  BuildMI (BB, X86::FLDr4, 1, X86::NoReg).addReg (reg2);
+	  break;
+	case 8:
+	  BuildMI (BB, X86::FLDr8, 1, X86::NoReg).addReg (reg2);
+	  break;
+	default:
+	  visitInstruction (I);
+	  break;
+	}
+      // (Non-trapping) compare and pop twice.
+      // FIXME: Result of comparison -> condition codes, not a register.
+      BuildMI (BB, X86::FUCOMPP, 0);
+      // Move fp status word (concodes) to ax.
+      BuildMI (BB, X86::FNSTSWr8, 1, X86::AX);
+      // Load real concodes from ax.
+      // FIXME: Once again, flags are not modeled.
+      BuildMI (BB, X86::SAHF, 0);
+    }
+  else
+    {				// integer comparison
+      // Emit: cmp <var1>, <var2> (do the comparison).  We can
+      // compare 8-bit with 8-bit, 16-bit with 16-bit, 32-bit with
+      // 32-bit.
+      // FIXME: Result of comparison -> condition codes, not a register.
+      switch (comparisonWidth)
+	{
+	case 1:
+	  BuildMI (BB, X86::CMPrr8, 2,
+		   X86::NoReg).addReg (reg1).addReg (reg2);
+	  break;
+	case 2:
+	  BuildMI (BB, X86::CMPrr16, 2,
+		   X86::NoReg).addReg (reg1).addReg (reg2);
+	  break;
+	case 4:
+	  BuildMI (BB, X86::CMPrr32, 2,
+		   X86::NoReg).addReg (reg1).addReg (reg2);
+	  break;
+	case 8:
+	default:
+	  visitInstruction (I);
+	  break;
+	}
+    }
+  // Emit setOp instruction (extract concode; clobbers ax),
+  // using the following mapping:
+  // LLVM  -> X86 signed  X86 unsigned
+  // -----    -----       -----
+  // seteq -> sete        sete
+  // setne -> setne       setne
+  // setlt -> setl        setb
+  // setgt -> setg        seta
+  // setle -> setle       setbe
+  // setge -> setge       setae
+  switch (I.getOpcode ())
+    {
+    case Instruction::SetEQ:
+      BuildMI (BB, X86::SETE, 0, X86::AL);
+      break;
+    case Instruction::SetGE:
+	if (unsignedComparison)
+	  BuildMI (BB, X86::SETAE, 0, X86::AL);
+	else
+	  BuildMI (BB, X86::SETGE, 0, X86::AL);
+      break;
+    case Instruction::SetGT:
+	if (unsignedComparison)
+	  BuildMI (BB, X86::SETA, 0, X86::AL);
+	else
+	  BuildMI (BB, X86::SETG, 0, X86::AL);
+      break;
+    case Instruction::SetLE:
+	if (unsignedComparison)
+	  BuildMI (BB, X86::SETBE, 0, X86::AL);
+	else
+	  BuildMI (BB, X86::SETLE, 0, X86::AL);
+      break;
+    case Instruction::SetLT:
+	if (unsignedComparison)
+	  BuildMI (BB, X86::SETB, 0, X86::AL);
+	else
+	  BuildMI (BB, X86::SETL, 0, X86::AL);
+      break;
+    case Instruction::SetNE:
+      BuildMI (BB, X86::SETNE, 0, X86::AL);
+      break;
+    default:
+      visitInstruction (I);
+      break;
+    }
+  // Put it in the result using a move.
+  switch (resultWidth)
+    {
+    case 1:
+      BuildMI (BB, X86::MOVrr8, 1, resultReg).addReg (X86::AL);
+      break;
+      // FIXME: What to do about implicit destination registers?
+      // E.g., you don't specify it, but CBW is more like AX = CBW(AL).
+    case 2:
+      BuildMI (BB, X86::CBW, 0, X86::AX);
+      BuildMI (BB, X86::MOVrr16, 1, resultReg).addReg (X86::AX);
+      break;
+    case 4:
+      BuildMI (BB, X86::CWDE, 0, X86::EAX);
+      BuildMI (BB, X86::MOVrr32, 1, resultReg).addReg (X86::EAX);
+      break;
+    case 8:
+    default:
+      visitInstruction (I);
+      break;
+    }
+}
 
 
 /// 'ret' instruction - Here we are interested in meeting the x86 ABI.  As such,

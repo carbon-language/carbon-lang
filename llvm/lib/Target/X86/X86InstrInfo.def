@@ -66,7 +66,6 @@ I(IDIVrr8     , "idivb",              0, 0)           // AX/r8= AL&AH  F6/6
 I(IDIVrr16    , "idivw",              0, 0)           // DA/r16=AX&DX  F7/6
 I(IDIVrr32    , "idivl",              0, 0)           // DA/r32=EAX&DX F7/6
 
-
 // Logical operators
 I(ANDrr8      , "andb",               0, 0)           // R8  &= R8    20/r
 I(ANDrr16     , "andw",               0, 0)           // R16 &= R16   21/r
@@ -98,11 +97,39 @@ I(SARir16     , "sarw",               0, 0)           // R16  >>= imm8 C1/7 ib
 I(SARrr32     , "sarl",               0, 0)           // R32  >>= cl   D3/7
 I(SARir32     , "sarl",               0, 0)           // R32  >>= imm8 C1/7 ib
 
+// Floating point loads
+I(FLDr4       , "flds",               0, 0)           // push float    D9/0
+I(FLDr8       , "fldl ",              0, 0)           // push double   DD/0
 
-// Miscellaneous instructions...
+// Floating point compares
+I(FUCOMPP     , "fucompp",            0, 0)           // compare+pop2x DA E9
+
+// Floating point flag ops
+I(FNSTSWr8    , "fnstsw",             0, 0)           // AX = fp flags DF E0
+
+// Condition code ops, incl. set if equal/not equal/...
+I(SAHF        , "sahf",               0, 0)           // flags = AH    9E
+I(SETA        , "seta",               0, 0)           // R8 = > unsign 0F 97
+I(SETAE       , "setae",              0, 0)           // R8 = >=unsign 0F 93
+I(SETB        , "setb",               0, 0)           // R8 = < unsign 0F 92
+I(SETBE       , "setbe",              0, 0)           // R8 = <=unsign 0F 96
+I(SETE        , "sete",               0, 0)           // R8 = ==       0F 94
+I(SETG        , "setg",               0, 0)           // R8 = > signed 0F 9F
+I(SETGE       , "setge",              0, 0)           // R8 = >=signed 0F 9D
+I(SETL        , "setl",               0, 0)           // R8 = < signed 0F 9C
+I(SETLE       , "setle",              0, 0)           // R8 = <=signed 0F 9E
+I(SETNE       , "setne",              0, 0)           // R8 = !=       0F 95
+
+// Integer comparisons
+I(CMPrr8      , "cmpb",               0, 0)           // compare R8,R8   38/r
+I(CMPrr16     , "cmpw",               0, 0)           // compare R16,R16 39/r
+I(CMPrr32     , "cmpl",               0, 0)           // compare R32,R32 39/r
+
+// Sign extenders
 I(CBW         , "cbw",                0, 0)           // AH = signext(AL)  98
 I(CWD         , "cwd",                0, 0)           // DX = signext(AX)  99
 I(CWQ         , "cwq",                0, 0)           // EDX= signext(EAX) 99
+I(CWDE        , "cwde",               0, 0)           // EAX = extend AX  98
 
 // At this point, I is dead, so undefine the macro
 #undef I
