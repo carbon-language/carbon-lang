@@ -27,8 +27,7 @@ namespace {
 char doDFS(BasicBlock * node,std::map<BasicBlock *, Color > &color){
   color[node] = GREY;
 
-  for(BasicBlock::succ_iterator vl = succ_begin(node), 
-	ve = succ_end(node); vl != ve; ++vl){
+  for(succ_iterator vl = succ_begin(node), ve = succ_end(node); vl != ve; ++vl){
    
     BasicBlock *BB = *vl; 
     
