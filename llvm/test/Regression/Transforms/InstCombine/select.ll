@@ -136,3 +136,9 @@ int %test15d(int %X) {       ;; Alternate code sequence for (X & 16) ? 16 : 0
         %t3 = select bool %t2, int 16, int 0 ;; X & 16
         ret int %t3
 }
+
+int %test16(bool %C, int* %P) {
+	%P2 = select bool %C, int* %P, int* null
+	%V = load int* %P2
+	ret int %V
+}
