@@ -48,10 +48,9 @@ namespace {
     // instruction being checked.  They should return true if a common
     // subexpression was folded.
     //
-    bool visitUnaryOperator(Instruction &I);
     bool visitBinaryOperator(Instruction &I);
     bool visitGetElementPtrInst(GetElementPtrInst &I);
-    bool visitCastInst(CastInst &I){return visitUnaryOperator((Instruction&)I);}
+    bool visitCastInst(CastInst &I);
     bool visitShiftInst(ShiftInst &I) {
       return visitBinaryOperator((Instruction&)I);
     }
@@ -254,14 +253,14 @@ void GCSE::CommonSubExpressionFound(Instruction *I, Instruction *Other) {
 //
 //===----------------------------------------------------------------------===//
 
-bool GCSE::visitUnaryOperator(Instruction &I) {
+bool GCSE::visitCastInst(CastInst &I) {
   Value *Op = I.getOperand(0);
   Function *F = I.getParent()->getParent();
   
   for (Value::use_iterator UI = Op->use_begin(), UE = Op->use_end();
        UI != UE; ++UI)
     if (Instruction *Other = dyn_cast<Instruction>(*UI))
-      // Check to see if this new binary operator is not I, but same operand...
+      // Check to see if this new cast is not I, but has the same operand...
       if (Other != &I && Other->getOpcode() == I.getOpcode() &&
           Other->getOperand(0) == Op &&     // Is the operand the same?
           // Is it embeded in the same function?  (This could be false if LHS

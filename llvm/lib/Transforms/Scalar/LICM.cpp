@@ -84,15 +84,13 @@ namespace {
     // the specified instruction types are hoisted.
     //
     friend class InstVisitor<LICM>;
-    void visitUnaryOperator(Instruction &I) {
-      if (isLoopInvariant(I.getOperand(0))) hoist(I);
-    }
     void visitBinaryOperator(Instruction &I) {
       if (isLoopInvariant(I.getOperand(0)) && isLoopInvariant(I.getOperand(1)))
         hoist(I);
     }
-
-    void visitCastInst(CastInst &I) { visitUnaryOperator((Instruction&)I); }
+    void visitCastInst(CastInst &I) {
+      if (isLoopInvariant(I.getOperand(0))) hoist((Instruction&)I);
+    }
     void visitShiftInst(ShiftInst &I) { visitBinaryOperator((Instruction&)I); }
 
     void visitGetElementPtrInst(GetElementPtrInst &GEPI) {

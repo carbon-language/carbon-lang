@@ -30,14 +30,11 @@ void Instruction::setName(const std::string &name, SymbolTable *ST) {
 const char *Instruction::getOpcodeName(unsigned OpCode) {
   switch (OpCode) {
   // Terminators
-  case Ret: return "ret";
-  case Br: return "br";
+  case Ret:    return "ret";
+  case Br:     return "br";
   case Switch: return "switch";
   case Invoke: return "invoke";
     
-  // Standard unary operators...
-  case Not: return "not";
-
   // Standard binary operators...
   case Add: return "add";
   case Sub: return "sub";
