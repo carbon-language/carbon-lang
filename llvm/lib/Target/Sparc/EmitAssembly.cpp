@@ -191,19 +191,21 @@ public:
   //
   std::string ConstantExprToString(const ConstantExpr* CE,
                                    const TargetMachine& target) {
-    std::string S("");
+    std::string S;
 
     switch(CE->getOpcode()) {
     case Instruction::GetElementPtr:
       {
         const Value* ptrVal = CE->getOperand(0);
         valToExprString(ptrVal, target, S);
-        std::vector<Value*> idxVec = CE->copyOperands();
-        idxVec.erase(idxVec.begin());
-        uint64_t byteOffset = target.DataLayout.getIndexedOffset(ptrVal->getType(),
-                                                                 idxVec);
-        uint64_t eltSize = target.DataLayout.getTypeSize(
-                                                         cast<PointerType>(ptrVal->getType())->getElementType());
+        std::vector<Value*> idxVec(CE->op_begin()+1, CE->op_end());
+        uint64_t byteOffset =
+          target.DataLayout.getIndexedOffset(ptrVal->getType(), idxVec);
+
+        const Type *PtrElTy =
+          cast<PointerType>(ptrVal->getType())->getElementType();
+        uint64_t eltSize = target.DataLayout.getTypeSize(PtrElTy);
+
         S += " + " + utostr(byteOffset / eltSize);
         break;
       }
