@@ -437,10 +437,8 @@ void LICM::sink(Instruction &I) {
       BasicBlock *ExitBlock = ExitBlocks[i];
 
       if (isExitBlockDominatedByBlockInLoop(ExitBlock, InstOrigBB)) {
-        std::set<BasicBlock*>::iterator SI =
-          InsertedBlocks.lower_bound(ExitBlock);
         // If we haven't already processed this exit block, do so now.
-        if (SI == InsertedBlocks.end() || *SI != ExitBlock) {
+        if (InsertedBlocks.insert(ExitBlock).second) {
           // Insert the code after the last PHI node...
           BasicBlock::iterator InsertPt = ExitBlock->begin();
           while (isa<PHINode>(InsertPt)) ++InsertPt;
@@ -461,9 +459,6 @@ void LICM::sink(Instruction &I) {
           
           // Now that we have inserted the instruction, store it into the alloca
           new StoreInst(New, AI, InsertPt);
-          
-          // Remember we processed this block
-          InsertedBlocks.insert(SI, ExitBlock);
         }
       }
     }
