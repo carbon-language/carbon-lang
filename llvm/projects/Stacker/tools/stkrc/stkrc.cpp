@@ -39,12 +39,12 @@ OutputFilename("o", cl::desc("Override output filename"),
 static cl::opt<bool>
 Force("f", cl::desc("Overwrite output files"));
 
-static cl::opt<bool>
-DumpAsm("d", cl::desc("Print LLVM Assembly as parsed"), cl::Hidden);
-
 static cl::opt<uint32_t>
 StackSize("s", cl::desc("Specify program maximum stack size"),
-	cl::value_desc("stacksize"));
+	cl::init(1024), cl::value_desc("stack size"));
+
+static cl::opt<bool>
+DumpAsm("d", cl::desc("Print LLVM Assembly as parsed"), cl::Hidden);
 
 #ifdef PARSE_DEBUG 
 static cl::opt<bool>
@@ -57,8 +57,7 @@ FlexDebug("x", cl::desc("Turn on Flex Debugging"), cl::Hidden);
 #endif
 
 static cl::opt<bool>
-EchoSource("e", cl::desc("Print Stacker Source as parsed"), 
-	cl::value_desc("echo"));
+EchoSource("e", cl::desc("Print Stacker Source as parsed"), cl::Hidden);
 
 int main(int argc, char **argv) 
 {
@@ -83,7 +82,7 @@ int main(int argc, char **argv)
     // Parse the file now...
     
     std::auto_ptr<Module> M ( 
-	compiler.compile(InputFilename,EchoSource, 1024) );
+	compiler.compile(InputFilename,EchoSource, StackSize) );
     if (M.get() == 0) {
       std::cerr << argv[0] << ": assembly didn't read correctly.\n";
       return 1;
