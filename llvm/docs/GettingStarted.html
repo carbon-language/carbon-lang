@@ -107,10 +107,10 @@
 
             <li>With anonymous CVS access:
             <ol>
-                <li>Find the path to the CVS repository containing LLVM (we'll
-                call this <i>CVSROOTDIR</i>).
                 <li><tt>cd <i>where-you-want-llvm-to-live</i></tt>
-                <li><tt>cvs -d <i>CVSROOTDIR</i> checkout llvm</tt>
+                <li><tt>cvs -d :pserver:anon@llvm-cvs.cs.uiuc.edu:/var/cvs/llvm login</tt>
+				<li>Hit the return key when prompted for the password.
+                <li><tt>cvs -d :pserver:anon@llvm-cvs.cs.uiuc.edu:/var/cvs/llvm co llvm</tt>
                 <li><tt>cd llvm</tt>
             </ol>
         </ul>
@@ -280,13 +280,6 @@
     each of these names with the appropriate pathname on your local system.
     All these paths are absolute:</p>
     <dl compact>
-        <dt>CVSROOTDIR
-        <dd>
-        This is the path for the CVS repository containing the LLVM source
-        code.  Ask the person responsible for your local LLVM installation to
-        give you this path.
-        <p>
-
         <dt>SRC_ROOT
         <dd>
         This is the top level directory of the LLVM source tree.
@@ -364,7 +357,9 @@
     follows:
     <ul>
     <li><tt>cd <i>where-you-want-llvm-to-live</i></tt>
-    <li><tt>cvs -d <i>CVSROOTDIR</i> checkout llvm</tt></p>
+	<li><tt>cvs -d :pserver:anon@llvm-cvs.cs.uiuc.edu:/var/cvs/llvm login</tt>
+	<li>Hit the return key when prompted for the password.
+	<li><tt>cvs -d :pserver:anon@llvm-cvs.cs.uiuc.edu:/var/cvs/llvm co llvm</tt>
     </ul>
 
     <p>This will create an '<tt>llvm</tt>' directory in the current
@@ -402,8 +397,8 @@
     <p>Once checked out from the CVS repository, the LLVM suite source code
     must be configured via the <tt>configure</tt> script.  This script sets
     variables in <tt>llvm/Makefile.config</tt> and
-    <tt>llvm/include/Config/config.h</tt>.  It also populates <i>OBJ_ROOT</i> with
-    the Makefiles needed to build LLVM.
+    <tt>llvm/include/Config/config.h</tt>.  It also populates <i>OBJ_ROOT</i>
+    with the Makefiles needed to build LLVM.
 
     <p>
     The following environment variables are used by the <tt>configure</tt>
