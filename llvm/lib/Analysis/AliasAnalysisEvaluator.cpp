@@ -32,6 +32,8 @@
 using namespace llvm;
 
 namespace {
+  cl::opt<bool> PrintAll("print-all-alias-modref-info", cl::ReallyHidden);
+
   cl::opt<bool> PrintNoAlias("print-no-aliases", cl::ReallyHidden);
   cl::opt<bool> PrintMayAlias("print-may-aliases", cl::ReallyHidden);
   cl::opt<bool> PrintMustAlias("print-must-aliases", cl::ReallyHidden);
@@ -54,6 +56,11 @@ namespace {
     bool doInitialization(Module &M) { 
       NoAlias = MayAlias = MustAlias = 0; 
       NoModRef = Mod = Ref = ModRef = 0;
+
+      if (PrintAll) {
+        PrintNoAlias = PrintMayAlias = PrintMustAlias = true;
+        PrintNoModRef = PrintMod = PrintRef = PrintModRef = true;
+      }
       return false; 
     }
 
@@ -90,16 +97,15 @@ bool AAEval::runOnFunction(Function &F) {
     for (User::op_iterator OI = (*I).op_begin(); OI != (*I).op_end(); ++OI)
       if (isa<PointerType>((*OI)->getType()))
         Pointers.insert(*OI);
-  }
 
-  for (inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I) {
     CallSite CS = CallSite::get(&*I);
     if (CS.getInstruction()) CallSites.insert(CS);
   }
 
   if (PrintNoAlias || PrintMayAlias || PrintMustAlias ||
       PrintNoModRef || PrintMod || PrintRef || PrintModRef)
-    std::cerr << "Function: " << F.getName() << "\n";
+    std::cerr << "Function: " << F.getName() << ": " << Pointers.size()
+              << " pointers, " << CallSites.size() << " call sites\n";
 
   // iterate over the worklist, and run the full (n^2)/2 disambiguations
   for (std::set<Value *>::iterator I1 = Pointers.begin(), E = Pointers.end();
