@@ -25,6 +25,7 @@
 #include <iostream>
 #include <cstdlib>
 #include <cerrno>
+#include "Config/windows.h"
 using namespace llvm;
 
 /// isExecutableFile - This function returns true if the filename specified
@@ -63,6 +64,7 @@ bool llvm::isStandardOutAConsole() {
 /// directory, nor in the PATH.  If the executable cannot be found, return an
 /// empty string.
 /// 
+#undef FindExecutable   // needed on windows :(
 std::string llvm::FindExecutable(const std::string &ExeName,
                                  const std::string &ProgramPath) {
   // First check the directory that bugpoint is in.  We can do this if
@@ -277,6 +279,17 @@ int llvm::ExecWait(const char * const old_argv[],
 ///
 void *llvm::AllocateRWXMemory(unsigned NumBytes) {
   if (NumBytes == 0) return 0;
+
+#if defined(HAVE_WINDOWS_H)
+  // On windows we use VirtualAlloc.
+  void *P = VirtualAlloc(0, NumBytes, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+  if (P == 0) {
+    std::cerr << "Error allocating executable memory!\n";
+    abort();
+  }
+  return P;
+
+#elif defined(HAVE_MMAP)
   static const long pageSize = sysconf(_SC_PAGESIZE);
   unsigned NumPages = (NumBytes+pageSize-1)/pageSize;
 
@@ -289,12 +302,11 @@ void *llvm::AllocateRWXMemory(unsigned NumBytes) {
 #elif defined(sparc) || defined(__sparc__) || defined(__sparcv9)
 /* nothing */
 #else
-  std::cerr << "This architecture is not supported by the JIT!\n";
+  std::cerr << "This architecture has an unknown MMAP implementation!\n";
   abort();
   return 0;
 #endif
 
-#ifdef HAVE_MMAP
   int fd = -1;
 #if defined(__linux__)
   fd = 0;
