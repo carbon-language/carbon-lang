@@ -39,6 +39,9 @@ public:
     Nodes.push_back(Header);
   }
 
+  inline Interval(const Interval &I) // copy ctor
+    : HeaderNode(I.HeaderNode), Nodes(I.Nodes), Successors(I.Successors) {}
+
   inline BasicBlock *getHeaderNode() const { return HeaderNode; }
 
   // Nodes - The basic blocks in this interval.
@@ -72,6 +75,14 @@ public:
     return false;
     // I don't want the dependency on <algorithm>
     //return find(Successors.begin(), Successors.end(), BB) != Successors.end();
+  }
+
+  // Equality operator.  It is only valid to compare two intervals from the same
+  // partition, because of this, all we have to check is the header node for 
+  // equality.
+  //
+  inline bool operator==(const Interval &I) const {
+    return HeaderNode == I.HeaderNode;
   }
 
   // isLoop - Find out if there is a back edge in this interval...

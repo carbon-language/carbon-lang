@@ -4,7 +4,22 @@
 // graph of some sort.  This iterator is parametric, allowing iterator over the
 // following types of graphs:
 // 
-//  TODO
+//  1. A Method* object, composed of BasicBlock nodes.
+//  2. An IntervalPartition& object, composed of Interval nodes.
+//
+// This iterator is defined to walk the control flow graph, returning intervals
+// in depth first order.  These intervals are completely filled in except for
+// the predecessor fields (the successor information is filled in however).
+//
+// By default, the intervals created by this iterator are deleted after they 
+// are no longer any use to the iterator.  This behavior can be changed by
+// passing a false value into the intervals_begin() function. This causes the 
+// IOwnMem member to be set, and the intervals to not be deleted.
+//
+// It is only safe to use this if all of the intervals are deleted by the caller
+// and all of the intervals are processed.  However, the user of the iterator is
+// not allowed to modify or delete the intervals until after the iterator has
+// been used completely.  The IntervalPartition class uses this functionality.
 //
 //===----------------------------------------------------------------------===//
 
@@ -19,14 +34,6 @@
 #include <algorithm>
 
 namespace cfg {
-
-// TODO: Provide an interval iterator that codifies the internals of 
-// IntervalPartition.  Inside, it would have a stack of Interval*'s, and would
-// walk the interval partition in depth first order.  IntervalPartition would
-// then be a client of this iterator.  The iterator should work on Method*,
-// const Method*, IntervalPartition*, and const IntervalPartition*.
-//
-
 
 // getNodeHeader - Given a source graph node and the source graph, return the 
 // BasicBlock that is the header node.  This is the opposite of
@@ -51,7 +58,7 @@ inline Interval *getSourceGraphNode(IntervalPartition *IP, BasicBlock *BB) {
 // type of the source node.  In the case of a CFG source graph (BasicBlock 
 // case), the BasicBlock itself is added to the interval.
 //
-inline void addNodeToInterval(Interval *Int, BasicBlock *BB){
+inline void addNodeToInterval(Interval *Int, BasicBlock *BB) {
   Int->Nodes.push_back(BB);
 }
 
@@ -68,11 +75,16 @@ inline void addNodeToInterval(Interval *Int, Interval *I) {
 }
 
 
+
+
+
 template<class NodeTy, class OrigContainer_t>
 class IntervalIterator {
-  stack<pair<Interval, typename Interval::succ_iterator> > IntStack;
+  stack<pair<Interval*, typename Interval::succ_iterator> > IntStack;
   set<BasicBlock*> Visited;
   OrigContainer_t *OrigContainer;
+  bool IOwnMem;     // If True, delete intervals when done with them
+                    // See file header for conditions of use
 public:
   typedef BasicBlock* _BB;
 
@@ -80,36 +92,51 @@ public:
   typedef forward_iterator_tag iterator_category;
  
   IntervalIterator() {} // End iterator, empty stack
-  IntervalIterator(Method *M) {
+  IntervalIterator(Method *M, bool OwnMemory) : IOwnMem(OwnMemory) {
     OrigContainer = M;
     if (!ProcessInterval(M->getBasicBlocks().front())) {
       assert(0 && "ProcessInterval should never fail for first interval!");
     }
   }
 
-  IntervalIterator(IntervalPartition &IP) {
+  IntervalIterator(IntervalPartition &IP, bool OwnMemory) : IOwnMem(OwnMemory) {
     OrigContainer = &IP;
     if (!ProcessInterval(IP.getRootInterval())) {
       assert(0 && "ProcessInterval should never fail for first interval!");
     }
   }
 
-  inline bool operator==(const _Self& x) const { return IntStack == x.IntStack; }
+  inline ~IntervalIterator() {
+    if (IOwnMem)
+      while (!IntStack.empty()) {
+	delete operator*();
+	IntStack.pop();
+      }
+  }
+
+  inline bool operator==(const _Self& x) const { return IntStack == x.IntStack;}
   inline bool operator!=(const _Self& x) const { return !operator==(x); }
 
-  inline Interval &operator*() const { return IntStack.top(); }
-  inline Interval *operator->() const { return &(operator*()); }
+  inline const Interval *operator*() const { return IntStack.top().first; }
+  inline       Interval *operator*()       { return IntStack.top().first; }
+  inline const Interval *operator->() const { return operator*(); }
+  inline       Interval *operator->()       { return operator*(); }
 
-  inline _Self& operator++() {  // Preincrement
+  _Self& operator++() {  // Preincrement
+    assert(!IntStack.empty() && "Attempting to use interval iterator at end!");
     do {
-      // All of the intervals on the stack have been visited.  Try visiting their
-      // successors now.
-      Interval           &CurInt = IntStack.top().first;
-      Interval::iterator &SuccIt = IntStack.top().second,End = succ_end(&CurInt);
+      // All of the intervals on the stack have been visited.  Try visiting
+      // their successors now.
+      Interval::succ_iterator &SuccIt =  IntStack.top().second,
+	                        EndIt =  succ_end(IntStack.top().first);
+      while (SuccIt != EndIt) {                 // Loop over all interval succs
+	bool Done = ProcessInterval(getSourceGraphNode(OrigContainer, *SuccIt));
+	++SuccIt;                               // Increment iterator
+	if (Done) return *this;                 // Found a new interval! Use it!
+      }
 
-      for (; SuccIt != End; ++SuccIt)    // Loop over all interval successors
-	if (ProcessInterval(*SuccIt))    // Found a new interval!
-	  return *this;                  // Use it!
+      // Free interval memory... if neccesary
+      if (IOwnMem) delete IntStack.top().first;
 
       // We ran out of successors for this interval... pop off the stack
       IntStack.pop();
@@ -134,15 +161,15 @@ private:
     BasicBlock *Header = getNodeHeader(Node);
     if (Visited.count(Header)) return false;
 
-    Interval Int(Header);
+    Interval *Int = new Interval(Header);
     Visited.insert(Header);   // The header has now been visited!
 
     // Check all of our successors to see if they are in the interval...
-    for (typename NodeTy::succ_iterator I = succ_begin(Node), E = succ_end(Node);
+    for (typename NodeTy::succ_iterator I = succ_begin(Node),E = succ_end(Node);
 	 I != E; ++I)
-      ProcessNode(&Int, getSourceGraphNode(OrigContainer, *I));
+      ProcessNode(Int, getSourceGraphNode(OrigContainer, *I));
 
-    IntStack.push(make_pair(Int, succ_begin(&Int)));
+    IntStack.push(make_pair(Int, succ_begin(Int)));
     return true;
   }
   
@@ -164,7 +191,7 @@ private:
     if (Visited.count(NodeHeader)) {     // Node already been visited?
       if (Int->contains(NodeHeader)) {   // Already in this interval...
 	return;
-      } else {                           // In another interval, add as successor
+      } else {                           // In other interval, add as successor
 	if (!Int->isSuccessor(NodeHeader)) // Add only if not already in set
 	  Int->Successors.push_back(NodeHeader);
       }
@@ -203,15 +230,17 @@ typedef IntervalIterator<BasicBlock, Method> method_interval_iterator;
 typedef IntervalIterator<Interval, IntervalPartition> interval_part_interval_iterator;
 
 
-inline method_interval_iterator intervals_begin(Method *M) {
-  return method_interval_iterator(M);
+inline method_interval_iterator intervals_begin(Method *M, 
+						bool DeleteInts = true) {
+  return method_interval_iterator(M, DeleteInts);
 }
 inline method_interval_iterator intervals_end(Method *M) {
   return method_interval_iterator();
 }
 
-inline interval_part_interval_iterator intervals_begin(IntervalPartition &IP) {
-  return interval_part_interval_iterator(IP);
+inline interval_part_interval_iterator 
+   intervals_begin(IntervalPartition &IP, bool DeleteIntervals = true) {
+  return interval_part_interval_iterator(IP, DeleteIntervals);
 }
 
 inline interval_part_interval_iterator intervals_end(IntervalPartition &IP) {

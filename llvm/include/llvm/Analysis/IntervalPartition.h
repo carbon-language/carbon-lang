@@ -77,38 +77,11 @@ public:
   inline unsigned size()  { return IntervalList.size(); }
 
 private:
-  // ProcessInterval - This method is used during the construction of the 
-  // interval graph.  It walks through the source graph, recursively creating
-  // an interval per invokation until the entire graph is covered.  This uses
-  // the ProcessNode method to add all of the nodes to the interval.
+  // addIntervalToPartition - Add an interval to the internal list of intervals,
+  // and then add mappings from all of the basic blocks in the interval to the
+  // interval itself (in the IntervalMap).
   //
-  // This method is templated because it may operate on two different source
-  // graphs: a basic block graph, or a preexisting interval graph.
-  //
-  template<class NodeTy, class OrigContainer>
-  void ProcessInterval(NodeTy *Node, OrigContainer *OC);
-
-  // ProcessNode - This method is called by ProcessInterval to add nodes to the
-  // interval being constructed, and it is also called recursively as it walks
-  // the source graph.  A node is added to the current interval only if all of
-  // its predecessors are already in the graph.  This also takes care of keeping
-  // the successor set of an interval up to date.
-  //
-  // This method is templated because it may operate on two different source
-  // graphs: a basic block graph, or a preexisting interval graph.
-  //
-  template<class NodeTy, class OrigContainer>
-  void ProcessNode(Interval *Int, NodeTy *Node, OrigContainer *OC);
-
-  // addNodeToInterval - This method exists to assist the generic ProcessNode
-  // with the task of adding a node to the new interval, depending on the 
-  // type of the source node.  In the case of a CFG source graph (BasicBlock 
-  // case), the BasicBlock itself is added to the interval.  In the case of
-  // an IntervalPartition source graph (Interval case), all of the member
-  // BasicBlocks are added to the interval.
-  //
-  inline void addNodeToInterval(Interval *Int, Interval *I);
-  inline void addNodeToInterval(Interval *Int, BasicBlock *BB);
+  void addIntervalToPartition(Interval *I);
 
   // updatePredecessors - Interval generation only sets the successor fields of
   // the interval data structures.  After interval generation is complete,
