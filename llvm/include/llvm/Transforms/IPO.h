@@ -68,6 +68,12 @@ Pass *createFunctionInliningPass();
 //
 Pass *createInternalizePass();
 
+//===----------------------------------------------------------------------===//
+// createDeadArgEliminationPass - This pass removes arguments from functions
+// which are not used by the body of the function.
+//
+Pass *createDeadArgEliminationPass();
+
 
 //===----------------------------------------------------------------------===//
 // These passes are wrappers that can do a few simple structure mutation
