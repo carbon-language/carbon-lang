@@ -445,7 +445,10 @@ AC_DEFINE_UNQUOTED(SHLIBEXT,"$SHLIBEXT",
                    [Extension that shared libraries have, e.g., ".so".])
 
 dnl Create the output files
-AC_OUTPUT(Makefile.config include/Support/iterator)
+AC_OUTPUT(Makefile.config
+ include/Support/iterator
+ include/Support/hash_map
+ include/Support/hash_set)
 
 dnl Warn loudly if llvm-gcc was not obviously working
 if test $llvmgccwarn = yes
