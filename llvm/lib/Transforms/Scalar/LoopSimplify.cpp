@@ -516,7 +516,7 @@ void LoopSimplify::UpdateDomInfoForRevectoredPreds(BasicBlock *NewBB,
     if (NewBBDominatesNewBBSucc)
       for (pred_iterator PI = pred_begin(NewBBSucc), E = pred_end(NewBBSucc);
            PI != E; ++PI)
-        if (*PI != NewBB && !DS.dominates(OnePred, *PI)) {
+        if (*PI != NewBB && !DS.dominates(NewBBSucc, *PI)) {
           NewBBDominatesNewBBSucc = false;
           break;
         }
