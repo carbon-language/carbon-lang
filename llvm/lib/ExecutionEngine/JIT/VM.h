@@ -54,11 +54,21 @@ public:
 
   /// getPointerToFunction - This returns the address of the specified function,
   /// compiling it if necessary.
+  ///
   void *getPointerToFunction(Function *F);
+
+  /// recompileAndRelinkFunction - This method is used to force a function
+  /// which has already been compiled, to be compiled again, possibly
+  /// after it has been modified. Then the entry to the old copy is overwritten
+  /// with a branch to the new copy. If there was no old copy, this acts
+  /// just like VM::getPointerToFunction().
+  ///
+  void *recompileAndRelinkFunction(Function *F);
 
 private:
   static MachineCodeEmitter *createEmitter(VM &V);
   void setupPassManager();
+  void runJITOnFunction (Function *F);
 };
 
 #endif
