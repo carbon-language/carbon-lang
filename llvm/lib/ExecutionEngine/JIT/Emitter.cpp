@@ -73,6 +73,7 @@ static void *getMemory(unsigned NumPages) {
   static const long pageSize = sysconf(_SC_PAGESIZE);
 
 #if defined(i386) || defined(__i386__) || defined(__x86__)
+  /* Linux and *BSD tend to have these flags named differently. */
 #if defined(MAP_ANON) && !defined(MAP_ANONYMOUS)
 # define MAP_ANONYMOUS MAP_ANON
 #endif
