@@ -21,6 +21,7 @@ namespace {
 namespace {
   class Steens : public Pass, public AliasAnalysis {
     DSGraph *ResultGraph;
+    DSGraph *GlobalsGraph;  // FIXME: Eliminate globals graph stuff from DNE
   public:
     Steens() : ResultGraph(0) {}
     ~Steens() { assert(ResultGraph == 0 && "releaseMemory not called?"); }
@@ -85,8 +86,7 @@ namespace {
 /// with the specified call site descriptor.  This function links the arguments
 /// and the return value for the call site context-insensitively.
 ///
-void Steens::ResolveFunctionCall(Function *F,
-                                 const DSCallSite &Call,
+void Steens::ResolveFunctionCall(Function *F, const DSCallSite &Call,
                                  DSNodeHandle &RetVal) {
   assert(ResultGraph != 0 && "Result graph not allocated!");
   hash_map<Value*, DSNodeHandle> &ValMap = ResultGraph->getScalarMap();
@@ -100,7 +100,7 @@ void Steens::ResolveFunctionCall(Function *F,
   for (Function::aiterator AI = F->abegin(), AE = F->aend(); AI != AE; ++AI) {
     hash_map<Value*, DSNodeHandle>::iterator I = ValMap.find(AI);
     if (I != ValMap.end())    // If its a pointer argument...
-      I->second.addEdgeTo(Call.getPtrArg(PtrArgIdx++));
+      I->second.mergeWith(Call.getPtrArg(PtrArgIdx++));
   }
 
   assert(PtrArgIdx == Call.getNumPtrArgs() && "Argument resolution mismatch!");
@@ -116,7 +116,8 @@ bool Steens::run(Module &M) {
 
   // Create a new, empty, graph...
   ResultGraph = new DSGraph();
-
+  GlobalsGraph = new DSGraph();
+  ResultGraph->setGlobalsGraph(GlobalsGraph);
   // RetValMap - Keep track of the return values for all functions that return
   // valid pointers.
   //
@@ -143,16 +144,9 @@ bool Steens::run(Module &M) {
       // Incorporate the inlined Function's ScalarMap into the global
       // ScalarMap...
       hash_map<Value*, DSNodeHandle> &GVM = ResultGraph->getScalarMap();
-
-      while (!ValMap.empty()) { // Loop over value map, moving entries over...
-        const std::pair<Value*, DSNodeHandle> &DSN = *ValMap.begin();
-        hash_map<Value*, DSNodeHandle>::iterator I = GVM.find(DSN.first);
-        if (I == GVM.end())
-          GVM[DSN.first] = DSN.second;
-        else
-          I->second.mergeWith(DSN.second);
-        ValMap.erase(ValMap.begin());
-      }
+      for (hash_map<Value*, DSNodeHandle>::iterator I = ValMap.begin(),
+             E = ValMap.end(); I != E; ++I)
+        GVM[I->first].mergeWith(I->second);
     }
 
   // FIXME: Must recalculate and use the Incomplete markers!!
@@ -199,6 +193,7 @@ bool Steens::run(Module &M) {
   ResultGraph->markIncompleteNodes(DSGraph::IgnoreFormalArgs);
 
   // Remove any nodes that are dead after all of the merging we have done...
+  // FIXME: We should be able to disable the globals graph for steens!
   ResultGraph->removeDeadNodes(DSGraph::KeepUnreachableGlobals);
 
   DEBUG(print(std::cerr, &M));
