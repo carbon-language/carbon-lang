@@ -19,7 +19,6 @@ struct MachineFrameInfo : public NonCopyableV {
 public:
   MachineFrameInfo(const TargetMachine& tgt) : target(tgt) {}
   
-  //
   // These methods provide constant parameters of the frame layout.
   // 
   virtual int  getStackFrameSizeAlignment       () const = 0;
@@ -27,8 +26,15 @@ public:
   virtual int  getNumFixedOutgoingArgs          () const = 0;
   virtual int  getSizeOfEachArgOnStack          () const = 0;
   virtual bool argsOnStackHaveFixedSize         () const = 0;
-  
-  //
+
+  // This method adjusts a stack offset to meet alignment rules of target.
+  // 
+  virtual int  adjustAlignment                  (int unalignedOffset,
+                                                 bool growUp,
+                                                 unsigned int align) const {
+    return unalignedOffset + (growUp? +1:-1)*(unalignedOffset % align);
+  }
+
   // These methods compute offsets using the frame contents for a
   // particular method.  The frame contents are obtained from the
   // MachineCodeInfoForMethod object for the given method.
