@@ -274,24 +274,18 @@ BasicAliasAnalysis::CheckGEPInstructions(GetElementPtrInst *GEP1, unsigned G1S,
         Indices1.push_back((Value*)Op1);
       else {
         // GEP1 is known to produce a value less than GEP2.  To be
-        // conservatively correct, we must assume the largest
-        // possible constant is used in this position.  This cannot
-        // be the initial index to the GEP instructions (because we
-        // know we have at least one element before this one with
-        // the different constant arguments), so we know that the
-        // current index must be into either a struct or array.
-        // Because of this, we can calculate the maximum value
-        // possible.
+        // conservatively correct, we must assume the largest possible constant
+        // is used in this position.  This cannot be the initial index to the
+        // GEP instructions (because we know we have at least one element before
+        // this one with the different constant arguments), so we know that the
+        // current index must be into either a struct or array.  Because we know
+        // it's not constant, this cannot be a structure index.  Because of
+        // this, we can calculate the maximum value possible.
         //
-        const Type *ElTy = GEP1->getIndexedType(GEPPointerTy,
-                                                Indices1, true);
-        if (const StructType *STy = dyn_cast<StructType>(ElTy)) {
-          Indices1.push_back(ConstantUInt::get(Type::UByteTy,
-                                               STy->getNumContainedTypes()));
-        } else {
-          Indices1.push_back(ConstantSInt::get(Type::LongTy,
-                                               cast<ArrayType>(ElTy)->getNumElements()));
-        }
+        const ArrayType *ElTy =
+          cast<ArrayType>(GEP1->getIndexedType(GEPPointerTy, Indices1, true));
+        Indices1.push_back(ConstantSInt::get(Type::LongTy,
+                                             ElTy->getNumElements()-1));
       }
       
       if (isa<Constant>(Op2))
