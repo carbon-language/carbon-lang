@@ -52,7 +52,7 @@ bool llvm::IsArchive(const std::string &FN) {
 bool llvm::IsBytecode(const std::string &FN) {
   // Inspect the beginning of the file to see if it contains the LLVM
   // bytecode format magic string.
-  return CheckMagic (FN, "llvm");
+  return CheckMagic(FN, "llvm") || CheckMagic(FN, "llvc");
 }
 
 /// IsSharedObject - Returns trus IFF the file named FN appears to be a shared
