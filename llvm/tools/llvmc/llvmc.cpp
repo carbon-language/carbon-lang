@@ -16,6 +16,7 @@
 
 #include "CompilerDriver.h"
 #include "Configuration.h"
+#include "llvm/Pass.h"
 #include "llvm/System/Signals.h"
 #include "Support/CommandLine.h"
 #include <iostream>
@@ -138,9 +139,6 @@ cl::alias DebugAlias("d", cl::Optional,
 cl::opt<bool> TimeActions("time-actions", cl::Optional, cl::init(false),
   cl::desc("Print execution time for each action taken"));
 
-cl::opt<bool> TimePasses("time-passes", cl::Optional, cl::init(false),
-  cl::desc("Print execution time for each optimization pass"));
-
 cl::opt<bool> ShowStats("stats", cl::Optional, cl::init(false),
   cl::desc("Print statistics accumulated during optimization"));
 
@@ -240,7 +238,7 @@ int main(int argc, char **argv) {
     CD.setEmitNativeCode(Native);
     CD.setEmitRawCode(EmitRawCode);
     CD.setTimeActions(TimeActions);
-    CD.setTimePasses(TimePasses);
+    CD.setTimePasses(TimePassesIsEnabled);
     CD.setShowStats(ShowStats);
     CD.setKeepTemporaries(KeepTemporaries);
     CD.setLibraryPaths(LibPaths);
