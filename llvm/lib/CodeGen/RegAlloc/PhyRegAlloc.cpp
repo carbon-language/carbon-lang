@@ -263,14 +263,18 @@ void PhyRegAlloc::buildInterferenceGraphs()
 
       // iterate over  MI operands to find defs
       for( MachineInstr::val_op_const_iterator OpI(MInst);!OpI.done(); ++OpI) {
-	
-	if( OpI.isDef() ) {     
+
+       	if( OpI.isDef() ) {     
 	  // create a new LR iff this operand is a def
 	  addInterference(*OpI, LVSetAI, isCallInst );
-
 	} //if this is a def
-
       } // for all operands
+
+
+      // if there are multiple defs in this instruction e.g. in SETX
+      //   
+      if( (TM.getInstrInfo()).isPseudoInstr( MInst->getOpCode()) )
+      	addInterf4PseudoInstr(MInst);
 
 
       // Also add interference for any implicit definitions in a machine
@@ -303,6 +307,46 @@ void PhyRegAlloc::buildInterferenceGraphs()
     cout << "Interference graphs calculted!" << endl;
 
 }
+
+//--------------------------------------------------------------------------
+// Pseudo instructions will be exapnded to multiple instructions by the
+// assembler. Consequently, all the opernds must get distinct registers
+//--------------------------------------------------------------------------
+
+void PhyRegAlloc::addInterf4PseudoInstr(const MachineInstr *MInst) {
+
+  // iterate over  MI operands to find defs
+  for( MachineInstr::val_op_const_iterator It1(MInst);!It1.done(); ++It1) {
+    
+    const LiveRange *const LROfOp1 = LRI.getLiveRangeForValue( *It1 ); 
+
+    if( !LROfOp1 ) continue;
+
+    MachineInstr::val_op_const_iterator It2 = It1;
+    ++It2;
+	
+    for(  ; !It2.done(); ++It2) {
+
+      const LiveRange *const LROfOp2 = LRI.getLiveRangeForValue( *It2 ); 
+
+      if( LROfOp2) {
+	    
+	RegClass *const RCOfOp1 = LROfOp1->getRegClass(); 
+	RegClass *const RCOfOp2 = LROfOp2->getRegClass(); 
+ 
+	if( RCOfOp1 == RCOfOp2 ){ 
+	  RCOfOp1->setInterference( LROfOp1, LROfOp2 );  
+	  //cerr << "\nSet interfs for PSEUDO inst: " << *MInst;
+	}
+
+      } // if Op2 has a LR
+
+    } // for all other defs in machine instr
+
+  } // for all operands in an instruction
+
+} 
+
 
 
 
@@ -1062,10 +1106,6 @@ void PhyRegAlloc::allocateRegisters()
   // make sure that we put all register classes into the RegClassList 
   // before we call constructLiveRanges (now done in the constructor of 
   // PhyRegAlloc class).
-
-  //cout << "\n\n ******** AFTER SCHEDULING **********";
-  //MachineCodeForMethod::get(Meth).dump();
-
 
   constructLiveRanges();                // create LR info
 
