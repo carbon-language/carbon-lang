@@ -196,10 +196,15 @@ void SelectionDAG::DeleteNodeIfDead(SDNode *N, void *NodeSet) {
     Constants.erase(std::make_pair(cast<ConstantSDNode>(N)->getValue(),
                                    N->getValueType(0)));
     break;
-  case ISD::ConstantFP:
-    ConstantFPs.erase(std::make_pair(cast<ConstantFPSDNode>(N)->getValue(),
-                                     N->getValueType(0)));
+  case ISD::ConstantFP: {
+    union {
+      double DV;
+      uint64_t IV;
+    };
+    DV = cast<ConstantFPSDNode>(N)->getValue();
+    ConstantFPs.erase(std::make_pair(IV, N->getValueType(0)));
     break;
+  }
   case ISD::GlobalAddress:
     GlobalValues.erase(cast<GlobalAddressSDNode>(N)->getGlobal());
     break;
@@ -299,7 +304,17 @@ SDOperand SelectionDAG::getConstantFP(double Val, MVT::ValueType VT) {
   if (VT == MVT::f32)
     Val = (float)Val;  // Mask out extra precision.
 
-  SDNode *&N = ConstantFPs[std::make_pair(Val, VT)];
+  // Do the map lookup using the actual bit pattern for the floating point
+  // value, so that we don't have problems with 0.0 comparing equal to -0.0, and
+  // we don't have issues with SNANs.
+  union {
+    double DV;
+    uint64_t IV;
+  };
+  
+  DV = Val;
+
+  SDNode *&N = ConstantFPs[std::make_pair(IV, VT)];
   if (N) return SDOperand(N, 0);
   N = new ConstantFPSDNode(Val, VT);
   AllNodes.push_back(N);
