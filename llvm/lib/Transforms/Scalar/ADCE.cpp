@@ -17,7 +17,7 @@
 #include <set>
 #include <algorithm>
 
-//#define DEBUG_ADCE 1
+#define DEBUG_ADCE 1
 
 //===----------------------------------------------------------------------===//
 // ADCE Class
@@ -184,6 +184,11 @@ bool ADCE::doADCE() {
 	MadeChanges = true;
       }
       AliveBlocks.insert(E);
+
+      // Next we need to change any PHI nodes in the entry block to refer to the
+      // new predecessor node...
+
+
     } else {
       // We need to move the new entry block to be the first bb of the method.
       Method::iterator EBI = find(M->begin(), M->end(), EntryBlock);
