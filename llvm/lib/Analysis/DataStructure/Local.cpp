@@ -133,19 +133,30 @@ DSNode *GraphBuilder::createNode(DSNode::NodeTy NodeType, const Type *Ty) {
 //
 DSNode *GraphBuilder::getValueNode(Value &V) {
   assert(isa<PointerType>(V.getType()) && "Should only use pointer scalars!");
-  DSNodeHandle &N = ValueMap[&V];
-  if (N) return N;             // Already have a node?  Just return it...
+  if (!isa<GlobalValue>(V)) {
+    DSNodeHandle &N = ValueMap[&V];
+    if (N) return N;             // Already have a node?  Just return it...
+  }
   
   // Otherwise we need to create a new scalar node...
-  N = createNode(DSNode::ScalarNode, V.getType());
+  DSNode *N = createNode(DSNode::ScalarNode, V.getType());
 
-  if (isa<GlobalValue>(V)) {
-    // Traverse the global graph, adding nodes for them all, and marking them
-    // all globals.  Be careful to mark functions global as well as the
-    // potential graph of global variables.
-    //
+  if (GlobalValue *GV = dyn_cast<GlobalValue>(&V)) {
+    DSNodeHandle &GVH = ValueMap[GV];
     DSNode *G = getLink(N, 0);
-    G->NodeType |= DSNode::GlobalNode;
+
+    if (GVH == 0) {
+      // Traverse the global graph, adding nodes for them all, and marking them
+      // all globals.  Be careful to mark functions global as well as the
+      // potential graph of global variables.
+      //
+      G->addGlobal(GV);
+      GVH = G;
+    } else {
+      GVH->mergeWith(G);
+    }
+  } else {
+    ValueMap[&V] = N;
   }
 
   return N;
@@ -211,7 +222,7 @@ DSNode *GraphBuilder::getSubscriptedNode(MemAccessInst &MAI, DSNode *Ptr) {
 //
 void GraphBuilder::removeDeadNodes() {
   for (unsigned i = 0; i != Nodes.size(); )
-    if (!Nodes[i]->getReferrers().empty())
+    if (Nodes[i]->NodeType || !Nodes[i]->getReferrers().empty())
       ++i;                                    // This node is alive!
     else {                                    // This node is dead!
       delete Nodes[i];                        // Free memory...
@@ -241,33 +252,33 @@ void GraphBuilder::handleAlloc(AllocationInst &AI, DSNode::NodeTy NodeType) {
 void GraphBuilder::visitPHINode(PHINode &PN) {
   if (!isa<PointerType>(PN.getType())) return; // Only pointer PHIs
 
-  DSNode *Scalar = getValueNode(PN);
+  DSNode *Scalar     = getValueNode(PN);
+  DSNode *ScalarDest = getLink(Scalar, 0);
   for (unsigned i = 0, e = PN.getNumIncomingValues(); i != e; ++i)
-    Scalar->mergeWith(getValueNode(*PN.getIncomingValue(i)));
+    ScalarDest->mergeWith(getLink(getValueNode(*PN.getIncomingValue(i)), 0));
 }
 
 void GraphBuilder::visitGetElementPtrInst(GetElementPtrInst &GEP) {
-  DSNode *Scalar = getValueNode(GEP);
   DSNode *Ptr    = getSubscriptedNode(GEP, getValueNode(*GEP.getOperand(0)));
-  Scalar->addEdgeTo(Ptr);
+  getValueNode(GEP)->addEdgeTo(Ptr);
 }
 
 void GraphBuilder::visitLoadInst(LoadInst &LI) {
   if (!isa<PointerType>(LI.getType())) return; // Only pointer PHIs
   DSNode *Ptr    = getSubscriptedNode(LI, getValueNode(*LI.getOperand(0)));
-  getValueNode(LI)->mergeWith(Ptr);
+  getValueNode(LI)->addEdgeTo(getLink(Ptr, 0));
 }
 
 void GraphBuilder::visitStoreInst(StoreInst &SI) {
   if (!isa<PointerType>(SI.getOperand(0)->getType())) return;
   DSNode *Value   = getValueNode(*SI.getOperand(0));
   DSNode *DestPtr = getValueNode(*SI.getOperand(1));
-  Value->mergeWith(getSubscriptedNode(SI, DestPtr));
+  getSubscriptedNode(SI, DestPtr)->addEdgeTo(getLink(Value, 0));
 }
 
 void GraphBuilder::visitReturnInst(ReturnInst &RI) {
   if (RI.getNumOperands() && isa<PointerType>(RI.getOperand(0)->getType())) {
-    DSNode *Value = getValueNode(*RI.getOperand(0));
+    DSNode *Value = getLink(getValueNode(*RI.getOperand(0)), 0);
     Value->mergeWith(RetNode);
     RetNode = Value;
   }
@@ -277,6 +288,13 @@ void GraphBuilder::visitCallInst(CallInst &CI) {
   FunctionCalls.push_back(vector<DSNodeHandle>());
   vector<DSNodeHandle> &Args = FunctionCalls.back();
 
+  // Set up the return value...
+  if (isa<PointerType>(CI.getType()))
+    Args.push_back(getValueNode(CI));
+  else
+    Args.push_back(0);
+
+  // Pass the arguments in...
   for (unsigned i = 0, e = CI.getNumOperands(); i != e; ++i)
     if (isa<PointerType>(CI.getOperand(i)->getType()))
       Args.push_back(getValueNode(*CI.getOperand(i)));
