@@ -97,7 +97,12 @@ namespace llvm {
 
     bool overlaps(const LiveInterval& other) const;
 
-    void addRange(LiveRange R);
+    /// addRange - Add the specified LiveRange to this interval, merging
+    /// intervals as appropriate.  This returns an iterator to the inserted live
+    /// range (which may have grown since it was inserted.
+    void addRange(LiveRange LR) {
+      addRangeFrom(LR, ranges.begin());
+    }
 
     void join(const LiveInterval& other);
 
@@ -110,8 +115,9 @@ namespace llvm {
     }
 
   private:
-    Ranges::iterator mergeRangesForward(Ranges::iterator it);
-    Ranges::iterator mergeRangesBackward(Ranges::iterator it);
+    Ranges::iterator addRangeFrom(LiveRange LR, Ranges::iterator From);
+    void extendIntervalEndTo(Ranges::iterator I, unsigned NewEnd);
+    Ranges::iterator extendIntervalStartTo(Ranges::iterator I, unsigned NewStr);
   };
 
   std::ostream& operator<<(std::ostream& os, const LiveInterval& li);

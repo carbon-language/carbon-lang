@@ -87,50 +87,93 @@ bool LiveInterval::overlaps(const LiveInterval& other) const {
   return false;
 }
 
-void LiveInterval::addRange(LiveRange LR) {
-  Ranges::iterator it =
-    ranges.insert(std::upper_bound(ranges.begin(), ranges.end(), LR.start), LR);
+/// extendIntervalEndTo - This method is used when we want to extend the range
+/// specified by I to end at the specified endpoint.  To do this, we should
+/// merge and eliminate all ranges that this will overlap with.  The iterator is
+/// not invalidated.
+void LiveInterval::extendIntervalEndTo(Ranges::iterator I, unsigned NewEnd) {
+  assert(I != ranges.end() && "Not a valid interval!");
 
-  mergeRangesBackward(mergeRangesForward(it));
+  // Search for the first interval that we can't merge with.
+  Ranges::iterator MergeTo = next(I);
+  for (; MergeTo != ranges.end() && NewEnd >= MergeTo->end; ++MergeTo)
+    /*empty*/;
+
+  // If NewEnd was in the middle of an interval, make sure to get its endpoint.
+  I->end = std::max(NewEnd, prior(MergeTo)->end);
+
+  // Erase any dead ranges
+  ranges.erase(next(I), MergeTo);
+}
+
+
+/// extendIntervalStartTo - This method is used when we want to extend the range
+/// specified by I to start at the specified endpoint.  To do this, we should
+/// merge and eliminate all ranges that this will overlap with.
+LiveInterval::Ranges::iterator 
+LiveInterval::extendIntervalStartTo(Ranges::iterator I, unsigned NewStart) {
+  assert(I != ranges.end() && "Not a valid interval!");
+
+  // Search for the first interval that we can't merge with.
+  Ranges::iterator MergeTo = I;
+  do {
+    if (MergeTo == ranges.begin()) {
+      I->start = NewStart;
+      return I;
+    }
+    --MergeTo;
+  } while (NewStart <= MergeTo->start);
+
+  // If we start in the middle of another interval, just delete a range and
+  // extend that interval.
+  if (MergeTo->end >= NewStart) {
+    MergeTo->end = I->end;
+  } else {
+    // Otherwise, extend the interval right after.
+    ++MergeTo;
+    MergeTo->start = NewStart;
+    MergeTo->end = I->end;
+  }
+
+  ranges.erase(next(MergeTo), next(I));
+  return MergeTo;
+}
+
+LiveInterval::Ranges::iterator
+LiveInterval::addRangeFrom(LiveRange LR, Ranges::iterator From) {
+  unsigned Start = LR.start, End = LR.end;
+  Ranges::iterator it = std::upper_bound(From, ranges.end(), Start);
+
+  // If the inserted interval starts in the middle or right at the end of
+  // another interval, just extend that interval to contain the range of LR.
+  if (it != ranges.begin()) {
+    Ranges::iterator B = prior(it);
+    if (B->start <= Start && B->end >= Start) {
+      extendIntervalEndTo(B, End);
+      return B;
+    }
+  }
+
+  // Otherwise, if this range ends in the middle of, or right next to, another
+  // interval, merge it into that interval.
+  if (it != ranges.end() && it->start <= End)
+    return extendIntervalStartTo(it, Start);
+
+  // Otherwise, this is just a new range that doesn't interact with anything.
+  // Insert it.
+  return ranges.insert(it, LR);
 }
 
 void LiveInterval::join(const LiveInterval& other) {
-  Ranges::iterator cur = ranges.begin();
   isDefinedOnce &= other.isDefinedOnce;
 
+  // Join the ranges of other into the ranges of this interval.
+  Ranges::iterator cur = ranges.begin();
   for (Ranges::const_iterator i = other.ranges.begin(),
-         e = other.ranges.end(); i != e; ++i) {
-    cur = ranges.insert(std::upper_bound(cur, ranges.end(), i->start), *i);
-    cur = mergeRangesBackward(mergeRangesForward(cur));
-  }
+         e = other.ranges.end(); i != e; ++i)
+    cur = addRangeFrom(*i, cur);
+
   weight += other.weight;
-}
-
-LiveInterval::Ranges::iterator
-LiveInterval::mergeRangesForward(Ranges::iterator it) {
-  Ranges::iterator n;
-  while ((n = next(it)) != ranges.end()) {
-    if (n->start > it->end)
-      break;
-    it->end = std::max(it->end, n->end);
-    n = ranges.erase(n);
-  }
-  return it;
-}
-
-LiveInterval::Ranges::iterator
-LiveInterval::mergeRangesBackward(Ranges::iterator it) {
-  while (it != ranges.begin()) {
-    Ranges::iterator p = prior(it);
-    if (it->start > p->end)
-      break;
-
-    it->start = std::min(it->start, p->start);
-    it->end = std::max(it->end, p->end);
-    it = ranges.erase(p);
-  }
-
-  return it;
 }
 
 std::ostream& llvm::operator<<(std::ostream& os, const LiveRange &LR) {
