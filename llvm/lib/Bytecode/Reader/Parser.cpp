@@ -156,7 +156,8 @@ void AbstractBytecodeParser::ParseBasicBlock(BufPtr &Buf,
 /// ParseInstructionList - Parse all of the BasicBlock's & Instruction's in the
 /// body of a function.  In post 1.0 bytecode files, we no longer emit basic
 /// block individually, in order to avoid per-basic-block overhead.
-unsigned AbstractBytecodeParser::ParseInstructionList( BufPtr &Buf, BufPtr EndBuf) {
+unsigned AbstractBytecodeParser::ParseInstructionList( BufPtr &Buf, 
+                                                       BufPtr EndBuf) {
   unsigned BlockNo = 0;
   std::vector<unsigned> Args;
 
@@ -698,12 +699,11 @@ void AbstractBytecodeParser::ParseModuleGlobalInfo(BufPtr &Buf, BufPtr End) {
     const Type *ElTy = cast<PointerType>(Ty)->getElementType();
 
     // Create the global variable...
-    if (hasInitializer)
-      handler->handleGlobalVariable( ElTy, isConstant, Linkage );
-    else {
+    if (hasInitializer) {
       unsigned initSlot = read_vbr_uint(Buf,End);
       handler->handleInitializedGV( ElTy, isConstant, Linkage, initSlot );
-    }
+    } else 
+      handler->handleGlobalVariable( ElTy, isConstant, Linkage );
 
     // Get next item
     VarType = read_vbr_uint(Buf, End);
