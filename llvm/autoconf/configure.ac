@@ -298,87 +298,50 @@ else
 	AC_SUBST(ENABLE_OPTIMIZED,[[ENABLE_OPTIMIZED=1]])
 fi
 
-dnl Spec 2000 Benchmarks
-AC_ARG_ENABLE(spec2000,AC_HELP_STRING([--enable-spec2000],[Compile SPEC 2000 benchmarks (default is NO)]),,enableval=no)
-if test ${enableval} = "no"
-then
-	if test -d /home/vadve/shared/benchmarks/speccpu2000/benchspec
-	then
-		AC_SUBST(SPEC2000_ROOT,[/home/vadve/shared/benchmarks/speccpu2000/benchspec])
-		AC_SUBST(USE_SPEC2000,[[USE_SPEC2000=1]])
-	else
-		AC_SUBST(USE_SPEC2000,[[]])
-		AC_SUBST(SPEC2000_ROOT,[])
-	fi
-else
-	if test ${enableval} = ""
-	then
-		AC_SUBST(SPEC2000_ROOT,[/home/vadve/shared/benchmarks/speccpu2000/benchspec])
-	else
-		AC_SUBST(SPEC2000_ROOT,[${enableval}])
-	fi
-	AC_SUBST(USE_SPEC2000,[[USE_SPEC2000=1]])
-fi
-
-dnl Spec 95 Benchmarks
-AC_ARG_ENABLE(spec95,AC_HELP_STRING([--enable-spec95],[Compile SPEC 95 benchmarks (default is NO)]),,enableval=no)
-if test ${enableval} = "no"
-then
-	if test -d /home/vadve/shared/benchmarks/spec95/benchspec
-	then
-		AC_SUBST(SPEC95_ROOT,[/home/vadve/shared/benchmarks/spec95/benchspec])
-		AC_SUBST(USE_SPEC95,[[USE_SPEC95=1]])
-	else
-		AC_SUBST(USE_SPEC95,[[]])
-		AC_SUBST(SPEC95_ROOT,[])
-	fi
-else
-	if test ${enableval} = ""
-	then
-		AC_SUBST(SPEC95_ROOT,[/home/vadve/shared/benchmarks/spec95/benchspec])
-	else
-		AC_SUBST(SPEC95_ROOT,[${enableval}])
-	fi
-	AC_SUBST(USE_SPEC95,[[USE_SPEC95=1]])
-fi
-
-dnl We can use POV-Ray as an external benchmark, if they have the sources.
-AC_ARG_ENABLE(povray,
- AC_HELP_STRING([--enable-povray=ARG], 
-                [Use POV-Ray as a benchmark (srcs in DIR)]),
- povray=$enableval,
- povray=auto)
-AC_MSG_CHECKING([for POV-Ray benchmark sources])
-case "$povray" in
+AC_DEFUN(EXTERNAL_BENCHMARK,
+[m4_define([allcapsname],translit($1,a-z,A-Z))
+ AC_ARG_ENABLE($1,
+ AC_HELP_STRING([--enable-$1=ARG], 
+                [Use $1 as a benchmark (srcs in DIR)]),
+ checkresult=$enableval,
+ checkresult=auto)
+AC_MSG_CHECKING([for $1 benchmark sources])
+case "$checkresult" in
 auto|yes)
-    defaultdir=/home/vadve/shared/benchmarks/povray31
-	if test -d $defaultdir
+    defaultdir=$2
+	if test -d "$defaultdir"
 	then
-		AC_SUBST(POVRAY_ROOT,[$defaultdir])
-		AC_SUBST(USE_POVRAY,[[USE_POVRAY=1]])
-        povray="yes, found in $defaultdir"
+		AC_SUBST(allcapsname()[_ROOT],[$defaultdir])
+		AC_SUBST([USE_]allcapsname(),[USE_]allcapsname()=1)
+        checkresult="yes, found in $defaultdir"
     else
-        povray=no
+        checkresult=no
     fi
     ;;
 no)
-    AC_SUBST(POVRAY_ROOT,[])
-    AC_SUBST(USE_POVRAY,[[]])
-    povray=no
+    AC_SUBST(allcapsname()[_ROOT],[])
+    AC_SUBST([USE_]allcapsname(),[])
+    checkresult=no
     ;;
-*)  if test -d "$povray"
+*)  if test -d "$checkresult"
     then
-        AC_SUBST(POVRAY_ROOT,"$povray")
-        AC_SUBST(USE_POVRAY,[[USE_POVRAY=1]])
-        povray="yes, in $povray"
+        AC_SUBST(allcapsname()[_ROOT],"$checkresult")
+        AC_SUBST([USE_]allcapsname(),[USE_]allcapsname()=1)
+        checkresult="yes, in $checkresult"
     else
-        AC_SUBST(POVRAY_ROOT,[])
-        AC_SUBST(USE_POVRAY,[[]])
-        povray="no, not found in $povray"
+        AC_SUBST(allcapsname()[_ROOT],[])
+        AC_SUBST([USE_]allcapsname(),[])
+        checkresult="no, not found in $checkresult"
     fi
     ;;
 esac
-AC_MSG_RESULT($povray)
+AC_MSG_RESULT($checkresult)
+m4_undefine([allcapsname])
+])
+
+EXTERNAL_BENCHMARK(spec95,/home/vadve/shared/benchmarks/spec95/benchspec)
+EXTERNAL_BENCHMARK(spec2000,/home/vadve/shared/benchmarks/speccpu2000/benchspec)
+EXTERNAL_BENCHMARK(povray,/home/vadve/shared/benchmarks/povray31)
 
 dnl Precompiled Bytecode Option
 AC_ARG_ENABLE(precompiled_bytecode,AC_HELP_STRING([--enable-precompiled_bytecode],[Use pre-compiled bytecode (default is NO)]),,enableval=no)
