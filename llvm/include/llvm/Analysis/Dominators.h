@@ -1,4 +1,4 @@
-//===- llvm/Analysis/Dominators.h - Dominator Info Calculation ---*- C++ -*--=//
+//===- llvm/Analysis/Dominators.h - Dominator Info Calculation --*- C++ -*-===//
 //
 // This file defines the following classes:
 //  1. DominatorSet: Calculates the [reverse] dominator set for a function
@@ -46,7 +46,9 @@ public:
 //===----------------------------------------------------------------------===//
 //
 // DominatorSet - Maintain a set<BasicBlock*> for every basic block in a
-// function, that represents the blocks that dominate the block.
+// function, that represents the blocks that dominate the block.  If the block
+// is unreachable in this function, the set will be empty.  This cannot happen
+// for reachable code, because every block dominates at least itself.
 //
 class DominatorSetBase : public DominatorBase {
 public:
@@ -78,6 +80,12 @@ public:
     const_iterator I = find(BB);
     assert(I != end() && "BB not in function!");
     return I->second;
+  }
+
+  /// isReachable - Return true if the specified basicblock is reachable.  If
+  /// the block is reachable, we have dominator set information for it.
+  bool isReachable(BasicBlock *BB) const {
+    return !getDominators(BB).empty();
   }
 
   /// dominates - Return true if A dominates B.
