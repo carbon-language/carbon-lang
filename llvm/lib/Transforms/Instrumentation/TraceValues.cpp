@@ -200,7 +200,7 @@ static string getPrintfCodeFor(const Value *V) {
     return "0x%p";
   else if (isa<PointerType>(V->getType()))
     return DisablePtrHashing ? "0x%p" : "%d";
-  else if (V->getType()->isIntegral() || V->getType() == Type::BoolTy)
+  else if (V->getType()->isIntegral())
     return "%d";
   
   assert(0 && "Illegal value to print out...");
