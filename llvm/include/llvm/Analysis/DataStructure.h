@@ -7,13 +7,12 @@
 #ifndef LLVM_ANALYSIS_DATA_STRUCTURE_H
 #define LLVM_ANALYSIS_DATA_STRUCTURE_H
 
+#include "llvm/Analysis/DSSupport.h"
 #include "llvm/Pass.h"
 
 class Type;
 class DSGraph;
 class DSNode;
-class DSNodeHandle;
-class DSCallSite;
 class LocalDataStructures;     // A collection of local graphs for a program
 class BUDataStructures;        // A collection of bu graphs for a program
 class TDDataStructures;        // A collection of td graphs for a program
