@@ -111,7 +111,7 @@ static GenericValue getOperandValue(Value *V, ExecutionContext &SF) {
     default:
       cerr << "Unhandled ConstantExpr: " << CE << "\n";
       abort();
-      { GenericValue V; return V; }
+      return GenericValue();
     }
   } else if (Constant *CPV = dyn_cast<Constant>(V)) {
     return TheEE->getConstantValue(CPV);
