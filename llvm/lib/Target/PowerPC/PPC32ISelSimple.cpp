@@ -1615,16 +1615,16 @@ void ISel::emitBinaryFPOperation(MachineBasicBlock *BB,
       { PPC32::FADD,  PPC32::FSUB,  PPC32::FMUL,  PPC32::FDIV },   // Double
     };
 
-    unsigned Op1Reg = getReg(Op1C);
     unsigned Opcode = OpcodeTab[Ty != Type::FloatTy][OperatorClass];
+    unsigned Op1Reg = getReg(Op1C, BB, IP);
     unsigned Op0r = getReg(Op0, BB, IP);
-    BuildMI(*BB, IP, Opcode, DestReg).addReg(Op0r).addReg(Op1Reg);
+    BuildMI(*BB, IP, Opcode, 2, DestReg).addReg(Op0r).addReg(Op1Reg);
     return;
   }
   
   // Special case: R1 = op <const fp>, R2
-  if (ConstantFP *CFP = dyn_cast<ConstantFP>(Op0))
-    if (CFP->isExactlyValue(-0.0) && OperatorClass == 1) {
+  if (ConstantFP *Op0C = dyn_cast<ConstantFP>(Op0))
+    if (Op0C->isExactlyValue(-0.0) && OperatorClass == 1) {
       // -0.0 - X === -X
       unsigned op1Reg = getReg(Op1, BB, IP);
       BuildMI(*BB, IP, PPC32::FNEG, 1, DestReg).addReg(op1Reg);
@@ -1634,22 +1634,19 @@ void ISel::emitBinaryFPOperation(MachineBasicBlock *BB,
 
       // Create a constant pool entry for this constant.
       MachineConstantPool *CP = F->getConstantPool();
-      unsigned CPI = CP->getConstantPoolIndex(CFP);
-      const Type *Ty = CFP->getType();
+      unsigned CPI = CP->getConstantPoolIndex(Op0C);
+      const Type *Ty = Op0C->getType();
+      assert(Ty == Type::FloatTy || Ty == Type::DoubleTy && "Unknown FP type!");
 
       static const unsigned OpcodeTab[][4] = {
         { PPC32::FADDS, PPC32::FSUBS, PPC32::FMULS, PPC32::FDIVS },  // Float
         { PPC32::FADD,  PPC32::FSUB,  PPC32::FMUL,  PPC32::FDIV },   // Double
       };
 
-      assert(Ty == Type::FloatTy || Ty == Type::DoubleTy && "Unknown FP type!");
-      unsigned TempReg = makeAnotherReg(Ty);
-      unsigned LoadOpcode = (Ty == Type::FloatTy) ? PPC32::LFS : PPC32::LFD;
-      addConstantPoolReference(BuildMI(*BB, IP, LoadOpcode, 2, TempReg), CPI);
-
       unsigned Opcode = OpcodeTab[Ty != Type::FloatTy][OperatorClass];
-      unsigned Op1r = getReg(Op1, BB, IP);
-      BuildMI(*BB, IP, Opcode, DestReg).addReg(TempReg).addReg(Op1r);
+      unsigned Op0Reg = getReg(Op0C, BB, IP);
+      unsigned Op1Reg = getReg(Op1, BB, IP);
+      BuildMI(*BB, IP, Opcode, 2, DestReg).addReg(Op0Reg).addReg(Op1Reg);
       return;
     }
 
