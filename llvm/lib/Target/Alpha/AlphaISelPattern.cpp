@@ -333,7 +333,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
     if (ConstantFPSDNode *CN = dyn_cast<ConstantFPSDNode>(N)) {
       if (CN->isExactlyValue(+0.0) ||
           CN->isExactlyValue(-0.0)) {
-        BuildMI(BB, Alpha::CPYS, 2, Result).addReg(R31).addReg(R31);
+        BuildMI(BB, Alpha::CPYS, 2, Result).addReg(Alpha::F31).addReg(Alpha::F31);
       } else {
         abort();
       }
