@@ -13,16 +13,12 @@
 
 <div class="doc_text">
 
-<p>This document is the reference manual for the LLVM utilities.  It will
-show you how to use the LLVM commands and what their options are.  Note that in
-the descriptions below, `bytecode' and `program' refer to LLVM bytecode files
-and assembly programs, respectively.</p>
-
-<ul>
-  <li><a href="#basic">Basic Commands</a></li>
-  <li><a href="#frontend">C and C++ Frond-end Commands</a></li>
-  <li><a href="#debug">Debugging commands</a></li>
-</ul>
+<p>These documents are HTML versions of the <a href="man/man1/">man pages</a>
+for all of the LLVM tools.  These pages describe how to use the LLVM commands
+and what their options are.  Note that these pages do not describe all of the 
+options available for all tools.  To get a complete listing, pass the 
+<tt>--help</tt> (general options) or <tt>--help-hidden</tt> (general+debugging
+options) arguments to the tool you are interested in.</p>
 
 </div>
 
@@ -37,31 +33,32 @@ and assembly programs, respectively.</p>
 <ul>
 
 <li><a href="html/llvm-as.html"><b>llvm-as</b></a> - 
-    assemble a human-readable program into bytecode</li>
+    assemble a human-readable .ll file into bytecode</li>
 
 <li><a href="html/llvm-dis.html"><b>llvm-dis</b></a> -
-    disassemble a bytecode file into human-readable form</li>
-
-<li><a href="html/analyze.html"><b>analyze</b></a> -
-    analyze a program compiled to bytecode</li>
+    disassemble a bytecode file into a human-readable .ll file</li>
 
 <li><a href="html/opt.html"><b>opt</b></a> -
-    optimize a bytecode file</li>
+    run a series of LLVM-to-LLVM optimizations on a bytecode file</li>
 
 <li><a href="html/llc.html"><b>llc</b></a> - 
-    compile a bytecode program into native machine code</li>
+    generate native machine code for a bytecode file</li>
 
 <li><a href="html/lli.html"><b>lli</b></a> - 
-    run a bytecode program using either an interpreter or a JIT compiler</li>
+    directly run a program compiled to bytecode using a JIT compiler or 
+    interpreter</li>
 
 <li><a href="html/llvm-link.html"><b>llvm-link</b></A>
     link several bytecode files into one</li>
+
+<li><a href="html/analyze.html"><b>analyze</b></a> -
+    run LLVM analyses on a bytecode file and print the results</li>
 
 <li><a href="html/llvm-nm.html"><b>llvm-nm</b></a>
     print out the names and types of symbols in a bytecode file</li>
 
 <li><a href="html/llvm-prof.html"><b>llvm-prof</b></a> -
-    transform raw `<tt>llvmprof.out</tt>' data into a human-readable report</li>
+    format raw `<tt>llvmprof.out</tt>' data into a human-readable report</li>
 
 </ul>
 
@@ -78,16 +75,16 @@ and assembly programs, respectively.</p>
 <ul>
 
 <li><a href="html/llvmgcc.html"><b>llvmgcc</b></a> -
-    GCC-based C front end for LLVM
+    GCC-based C front-end for LLVM
 
 <li><a href="html/llvmgxx.html"><b>llvmg++</b></a> -
-    GCC-based C++ front end for LLVM</li>
+    GCC-based C++ front-end for LLVM</li>
 
 <li><a href="html/gccas.html"><b>gccas</b></a> -
-    optimizing assembler used by llvm-g++ and llvm-gcc</li>
+    compile-time optimizer used by llvm-g++ and llvm-gcc</li>
 
 <li><a href="html/gccld.html"><b>gccld</b></a> -
-    optimizing linker used by llvm-g++ and llvm-gcc</li>
+    linker and link-time optimizer used by llvm-g++ and llvm-gcc</li>
 
 </ul>
 
