@@ -5,7 +5,7 @@
 AC_DEFUN([AC_NEED_DEV_ZERO_FOR_MMAP],
 [AC_CACHE_CHECK([if /dev/zero is needed for mmap],
 ac_cv_need_dev_zero_for_mmap,
-[if test "$llvm_cv_os_type" == "Interix" ; then
+[if test "$llvm_cv_os_type" = "Interix" ; then
    ac_cv_need_dev_zero_for_mmap=yes
  else
    ac_cv_need_dev_zero_for_mmap=no
