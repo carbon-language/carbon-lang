@@ -83,7 +83,7 @@ public:
   /// handle the situation.
   ///
   virtual uint64_t getGlobalValueAddress(GlobalValue *V) = 0;
-  virtual uint64_t getGlobalValueAddress(const std::string &Name) = 0;
+  virtual uint64_t getGlobalValueAddress(const char *SymName) = 0;
 
   // getConstantPoolEntryAddress - Return the address of the 'Index' entry in
   // the constant pool that was last emitted with the 'emitConstantPool' method.
