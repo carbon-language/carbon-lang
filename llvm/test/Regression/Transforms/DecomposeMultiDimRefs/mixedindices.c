@@ -25,35 +25,42 @@ typedef struct Mixed_struct {
 
 
 double
-InitializeMixed(Mixed_t* M, int base)
+AddMixed(Mixed_t* M)
 {
   double sum = 0;
   int i, j;
   
-  for (i=0; i < 10; ++i) {
-    int coord;
-    coord = i + base;
-    M->A[i] = coord;
-    sum += coord;
-  }
+  for (i=0; i < 10; ++i)
+    sum += M->A[i];
   
   for (i=0; i < 10; ++i)
-    for (j=0; j < 10; ++j) {
-      int coord;
-      coord = i*10 + j + base;
-      M->B[i][j] = coord;
-      sum += coord;
-    }
+    for (j=0; j < 10; ++j)
+      sum += M->B[i][j];
   
   for (i=0; i < 10; ++i) {
-    double ratio;
-    M->F[i].c = 'Q';
-    ratio = i / 10 + base;
-    M->F[i].x = ratio;
-    sum += ratio;
+    sum += (double) M->F[i].c;
+    sum += M->F[i].x;
   }
   
   return sum;
+}
+
+void
+InitializeMixed(Mixed_t* M, int base)
+{
+  int i, j;
+  
+  for (i=0; i < 10; ++i)
+    M->A[i] = i + base;
+    
+  for (i=0; i < 10; ++i)
+    for (j=0; j < 10; ++j)
+      M->B[i][j] = i*10 + j + base;
+  
+  for (i=0; i < 10; ++i) {
+    M->F[i].c = 'Q';
+    M->F[i].x = i / 10 + base;
+  }
 }
 
 int
@@ -63,10 +70,13 @@ main(int argc, char** argv)
   Mixed_t MA[4];
   int i;
   
-  printf("Sum(M)  = %.2f\n", InitializeMixed(&M, 100));
+  InitializeMixed(&M, 100);
+  printf("Sum(M)  = %.2f\n", AddMixed(&M));
   
-  for (i=0; i < 4; i++)
-    printf("Sum(MA[%d]) = %.2f\n", i, InitializeMixed(&MA[i], 400));
+  for (i=0; i < 4; i++) {
+    InitializeMixed(&MA[i], 100 * (i+2));
+    printf("Sum(MA[%d]) = %.2f\n", i, AddMixed(&MA[i]));
+  }
 
   return 0;
 }
