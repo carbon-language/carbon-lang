@@ -616,6 +616,11 @@ void LiveIntervals::joinIntervals() {
     for (unsigned i = 0, e = MBBs.size(); i != e; ++i)
       joinIntervalsInMachineBB(MBBs[i].second);
   }
+
+  DEBUG(std::cerr << "*** Register mapping ***\n");
+  DEBUG(for (std::map<unsigned, unsigned>::iterator I = r2rMap_.begin(),
+             E = r2rMap_.end(); I != E; ++I)
+          std::cerr << "  reg " << I->first << " -> reg " << I->second << "\n";);
 }
 
 /// Return true if the two specified registers belong to different register
