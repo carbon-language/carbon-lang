@@ -1978,8 +1978,10 @@ void ISel::emitCastOperation(MachineBasicBlock *BB,
       break;
     }
     case cFP:
-      assert(0 && "FIXME: implement cast FP to bool");
-      abort();
+      BMI(BB, IP, X86::FTST, 1).addReg(SrcReg);
+      BMI(BB, IP, X86::FNSTSWr8, 0);
+      BMI(BB, IP, X86::SAHF, 1);
+      break;
     }
 
     // If the zero flag is not set, then the value is true, set the byte to
