@@ -31,24 +31,12 @@ namespace {
 
   cl::opt<bool>
   ArrayChecksEnabled("array-checks", cl::desc("Enable array bound checks"));
-
-  cl::opt<bool>
-  AbortOnExceptions("abort-on-exception",
-                    cl::desc("Halt execution on a machine exception"));
 }
 
 // Create a TargetData structure to handle memory addressing and size/alignment
 // computations
 //
 CachedWriter CW;     // Object to accelerate printing of LLVM
-
-#ifdef PROFILE_STRUCTURE_FIELDS
-static cl::opt<bool>
-ProfileStructureFields("profilestructfields", 
-                       cl::desc("Profile Structure Field Accesses"));
-#include <map>
-static std::map<const StructType *, std::vector<unsigned> > FieldAccessCounts;
-#endif
 
 sigjmp_buf SignalRecoverBuffer;
 static bool InInstruction = false;
@@ -520,54 +508,6 @@ void Interpreter::visitBinaryOperator(BinaryOperator &I) {
 //                     Terminator Instruction Implementations
 //===----------------------------------------------------------------------===//
 
-// PerformExitStuff - Print out counters and profiling information if
-// applicable...
-void Interpreter::PerformExitStuff() {
-#ifdef PROFILE_STRUCTURE_FIELDS
-  // Print out structure field accounting information...
-  if (!FieldAccessCounts.empty()) {
-    CW << "Profile Field Access Counts:\n";
-    std::map<const StructType *, std::vector<unsigned> >::iterator 
-      I = FieldAccessCounts.begin(), E = FieldAccessCounts.end();
-    for (; I != E; ++I) {
-      std::vector<unsigned> &OfC = I->second;
-      CW << "  '" << (Value*)I->first << "'\t- Sum=";
-      
-      unsigned Sum = 0;
-      for (unsigned i = 0; i < OfC.size(); ++i)
-        Sum += OfC[i];
-      CW << Sum << " - ";
-      
-      for (unsigned i = 0; i < OfC.size(); ++i) {
-        if (i) CW << ", ";
-        CW << OfC[i];
-      }
-      CW << "\n";
-    }
-    CW << "\n";
-
-    CW << "Profile Field Access Percentages:\n";
-    std::cout.precision(3);
-    for (I = FieldAccessCounts.begin(); I != E; ++I) {
-      std::vector<unsigned> &OfC = I->second;
-      unsigned Sum = 0;
-      for (unsigned i = 0; i < OfC.size(); ++i)
-        Sum += OfC[i];
-      
-      CW << "  '" << (Value*)I->first << "'\t- ";
-      for (unsigned i = 0; i < OfC.size(); ++i) {
-        if (i) CW << ", ";
-        CW << double(OfC[i])/Sum;
-      }
-      CW << "\n";
-    }
-    CW << "\n";
-
-    FieldAccessCounts.clear();
-  }
-#endif
-}
-
 void Interpreter::exitCalled(GenericValue GV) {
   if (!QuietMode) {
     std::cout << "Program returned ";
@@ -755,15 +695,6 @@ GenericValue Interpreter::executeGEPOperation(Value *Ptr, User::op_iterator I,
       const ConstantUInt *CPU = cast<ConstantUInt>(*I);
       assert(CPU->getType() == Type::UByteTy);
       unsigned Index = CPU->getValue();
-      
-#ifdef PROFILE_STRUCTURE_FIELDS
-      if (ProfileStructureFields) {
-        // Do accounting for this field...
-        std::vector<unsigned> &OfC = FieldAccessCounts[STy];
-        if (OfC.size() == 0) OfC.resize(STy->getElementTypes().size());
-        OfC[Index]++;
-      }
-#endif
       
       Total += SLO->MemberOffsets[Index];
       Ty = STy->getElementTypes()[Index];
@@ -1107,16 +1038,8 @@ bool Interpreter::executeInstruction() {
   //
   if (int SigNo = sigsetjmp(SignalRecoverBuffer, 1)) {
     --SF.CurInst;   // Back up to erroring instruction
-    if (SigNo != SIGINT) {
-      std::cout << "EXCEPTION OCCURRED [" << strsignal(SigNo) << "]:\n";
-      printStackTrace();
-      // If -abort-on-exception was specified, terminate LLI instead of trying
-      // to debug it.
-      //
-      if (AbortOnExceptions) exit(1);
-    } else if (SigNo == SIGINT) {
-      std::cout << "CTRL-C Detected, execution halted.\n";
-    }
+    std::cout << "EXCEPTION OCCURRED [" << strsignal(SigNo) << "]\n";
+    exit(1);
     InInstruction = false;
     return true;
   }

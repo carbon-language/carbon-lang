@@ -49,7 +49,7 @@ public:
                   const char ** envp) = 0;
 
   static ExecutionEngine *create (Module *M, bool ForceInterpreter,
-				  bool DebugMode, bool TraceMode);
+				  bool TraceMode);
 
   /// createJIT - Create an return a new JIT compiler if there is one available
   /// for the current target.  Otherwise it returns null.
@@ -58,8 +58,7 @@ public:
 
   /// createInterpreter - Create a new interpreter object.  This can never fail.
   ///
-  static ExecutionEngine *createInterpreter(Module *M, bool DebugMode,
-                                            bool TraceMode);
+  static ExecutionEngine *createInterpreter(Module *M, bool TraceMode);
 
   void addGlobalMapping(const Function *F, void *Addr) {
     void *&CurVal = GlobalAddress[(const GlobalValue*)F];

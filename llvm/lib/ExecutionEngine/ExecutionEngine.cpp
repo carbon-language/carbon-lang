@@ -21,16 +21,16 @@
 Statistic<> NumInitBytes("lli", "Number of bytes of global vars initialized");
 
 ExecutionEngine *ExecutionEngine::create (Module *M, bool ForceInterpreter,
-					  bool DebugMode, bool TraceMode) {
+					  bool TraceMode) {
   ExecutionEngine *EE = 0;
 
   // If there is nothing that is forcing us to use the interpreter, make a JIT.
-  if (!ForceInterpreter && !DebugMode && !TraceMode)
+  if (!ForceInterpreter && !TraceMode)
     EE = VM::create(M);
 
   // If we can't make a JIT, make an interpreter instead.
   if (EE == 0)
-    EE = Interpreter::create(M, DebugMode, TraceMode);
+    EE = Interpreter::create(M, TraceMode);
   return EE;
 }
 

@@ -7,9 +7,6 @@
 #ifndef LLI_INTERPRETER_H
 #define LLI_INTERPRETER_H
 
-// Uncomment this line to enable profiling of structure field accesses.
-//#define PROFILE_STRUCTURE_FIELDS 1
-
 #include "../ExecutionEngine.h"
 #include "../GenericValue.h"
 #include "Support/DataTypes.h"
@@ -74,7 +71,6 @@ struct ExecutionContext {
 //
 class Interpreter : public ExecutionEngine, public InstVisitor<Interpreter> {
   int ExitCode;                // The exit code to be returned by the lli util
-  bool Debug;                  // Debug mode enabled?
   bool Profile;                // Profiling enabled?
   bool Trace;                  // Tracing enabled?
   int CurFrame;                // The current stack frame being inspected
@@ -88,12 +84,12 @@ class Interpreter : public ExecutionEngine, public InstVisitor<Interpreter> {
   std::vector<Function*> AtExitHandlers;
 public:
   Interpreter(Module *M, bool isLittleEndian, bool isLongPointer,
-              bool DebugMode, bool TraceMode);
+              bool TraceMode);
   inline ~Interpreter() { CW.setModule(0); }
 
   /// create - Create an interpreter ExecutionEngine. This can never fail.
   ///
-  static ExecutionEngine *create(Module *M, bool DebugMode, bool TraceMode);
+  static ExecutionEngine *create(Module *M, bool TraceMode);
 
   /// getExitCode - return the code that should be the exit code for the lli
   /// utility.
@@ -219,10 +215,6 @@ private:  // Helper functions
   //
   Value *ChooseOneOption(const std::string &Name,
                          const std::vector<Value*> &Opts);
-
-  // PerformExitStuff - Print out counters and profiling information if
-  // applicable...
-  void PerformExitStuff();
 
   void initializeExecutionEngine();
   void initializeExternalFunctions();

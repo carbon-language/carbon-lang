@@ -26,8 +26,6 @@ namespace {
   MainFunction ("f", cl::desc("Function to execute"), cl::init("main"),
 		cl::value_desc("function name"));
 
-  cl::opt<bool> DebugMode("d", cl::desc("Start program in debugger"));
-
   cl::opt<bool> TraceMode("trace", cl::desc("Enable Tracing"));
 
   cl::opt<bool> ForceInterpreter("force-interpreter",
@@ -60,10 +58,10 @@ int main(int argc, char** argv, const char ** envp) {
   }
 
   ExecutionEngine *EE =
-    ExecutionEngine::create (M, ForceInterpreter, DebugMode, TraceMode);
+    ExecutionEngine::create (M, ForceInterpreter, TraceMode);
   assert (EE && "Couldn't create an ExecutionEngine, not even an interpreter?");
 
-  // Add the module name to the start of the argv vector...
+  // Add the module's name to the start of the vector of arguments to main().
   // But delete .bc first, since programs (and users) might not expect to
   // see it.
   const std::string ByteCodeFileSuffix (".bc");

@@ -11,7 +11,7 @@
 
 /// create - Create a new interpreter object.  This can never fail.
 ///
-ExecutionEngine *Interpreter::create(Module *M, bool DebugMode, bool TraceMode){
+ExecutionEngine *Interpreter::create(Module *M, bool TraceMode){
   bool isLittleEndian;
   switch (M->getEndianness()) {
   case Module::LittleEndian: isLittleEndian = true; break;
@@ -32,15 +32,15 @@ ExecutionEngine *Interpreter::create(Module *M, bool DebugMode, bool TraceMode){
     break;
   }
 
-  return new Interpreter(M, isLittleEndian, isLongPointer, DebugMode,TraceMode);
+  return new Interpreter(M, isLittleEndian, isLongPointer, TraceMode);
 }
 
 //===----------------------------------------------------------------------===//
 // Interpreter ctor - Initialize stuff
 //
 Interpreter::Interpreter(Module *M, bool isLittleEndian, bool isLongPointer,
-                         bool DebugMode, bool TraceMode)
-  : ExecutionEngine(M), ExitCode(0), Debug(DebugMode), Trace(TraceMode),
+                         bool TraceMode)
+  : ExecutionEngine(M), ExitCode(0), Trace(TraceMode),
     CurFrame(-1), TD("lli", isLittleEndian, isLongPointer ? 8 : 4,
                      isLongPointer ? 8 : 4, isLongPointer ? 8 : 4) {
 
@@ -59,17 +59,12 @@ int Interpreter::run(const std::string &MainFunction,
                      const char ** envp) {
   // Start interpreter into the main function...
   //
-  if (!callMainFunction(MainFunction, Args) && !Debug) {
-    // If not in debug mode and if the call succeeded, run the code now...
+  if (!callMainFunction(MainFunction, Args)) {
+    // If the call succeeded, run the code now...
     run();
   }
 
   do {
-    // If debug mode, allow the user to interact... also, if the user pressed 
-    // ctrl-c or execution hit an error, enter the event loop...
-    if (Debug || isStopped())
-      handleUserInput();
-
     // If the program has exited, run atexit handlers...
     if (ECStack.empty() && !AtExitHandlers.empty()) {
       callFunction(AtExitHandlers.back(), std::vector<GenericValue>());
@@ -78,7 +73,6 @@ int Interpreter::run(const std::string &MainFunction,
     }
   } while (!ECStack.empty());
 
-  PerformExitStuff();
   return ExitCode;
 }
 
