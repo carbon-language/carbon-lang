@@ -24,7 +24,7 @@
 #include "llvm/Module.h"
 #include "llvm/Bytecode/Reader.h"
 #include "llvm/Bytecode/Writer.h"
-#include "llvm/Tools/CommandLine.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Optimizations/AllOpts.h"
 
 using namespace opt;

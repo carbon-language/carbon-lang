@@ -23,7 +23,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Optimizations/DCE.h"
-#include "llvm/Tools/STLExtras.h"
+#include "llvm/Support/STLExtras.h"
 #include "llvm/Module.h"
 #include "llvm/Method.h"
 #include "llvm/BasicBlock.h"

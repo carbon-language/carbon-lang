@@ -16,7 +16,7 @@
 #include "llvm/Assembly/Parser.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Bytecode/Writer.h"
-#include "llvm/Tools/CommandLine.h"
+#include "llvm/Support/CommandLine.h"
 
 cl::String InputFilename ("", "Parse <arg> file, compile to bytecode", 0, "-");
 cl::String OutputFilename("o", "Override output filename", 0, "");

@@ -17,7 +17,7 @@
 #include "llvm/Bytecode/Writer.h"
 #include "llvm/CodeGen/InstrSelection.h"
 #include "llvm/CodeGen/Sparc.h"
-#include "llvm/Tools/CommandLine.h"
+#include "llvm/Support/CommandLine.h"
 
 cl::String InputFilename ("", "Input filename", cl::NoFlags, "");
 cl::String OutputFilename("o", "Output filename", cl::NoFlags, "");

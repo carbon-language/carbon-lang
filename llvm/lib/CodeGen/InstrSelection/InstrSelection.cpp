@@ -17,7 +17,7 @@
 #include "llvm/iMemory.h"
 #include "llvm/Instruction.h"
 #include "llvm/CodeGen/MachineInstr.h"
-#include "llvm/Tools/CommandLine.h"
+#include "llvm/Support/CommandLine.h"
 
 enum DebugLev {
   NoDebugInfo,

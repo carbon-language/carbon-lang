@@ -5,7 +5,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/DerivedTypes.h"
-#include "llvm/Tools/StringExtras.h"
+#include "llvm/Support/StringExtras.h"
 
 //===----------------------------------------------------------------------===//
 //                         Type Class Implementation

@@ -13,7 +13,7 @@
 #define LLVM_CODEGEN_TARGETMACHINE_H
 
 #include "llvm/Support/Unique.h"
-#include "llvm/Tools/DataTypes.h"
+#include "llvm/Support/DataTypes.h"
 #include <string>
 
 class Type;

@@ -7,7 +7,7 @@
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/SimplifyCFG.h"   // To get cfg::UnifyAllExitNodes
 #include "llvm/CFG.h"
-#include "llvm/Tools/STLExtras.h"
+#include "llvm/Support/STLExtras.h"
 #include <algorithm>
 
 //===----------------------------------------------------------------------===//

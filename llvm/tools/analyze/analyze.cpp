@@ -16,7 +16,7 @@
 #include "llvm/Method.h"
 #include "llvm/Bytecode/Reader.h"
 #include "llvm/Assembly/Parser.h"
-#include "llvm/Tools/CommandLine.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Analysis/Writer.h"
 
 #include "llvm/Analysis/Dominators.h"

@@ -16,7 +16,7 @@
 #include "llvm/Bytecode/Format.h"
 #include "llvm/Bytecode/Primitives.h"
 #include "llvm/Analysis/SlotCalculator.h"
-#include "llvm/Tools/DataTypes.h"
+#include "llvm/Support/DataTypes.h"
 #include "llvm/Instruction.h"
 
 class BytecodeWriter : public ModuleAnalyzer {

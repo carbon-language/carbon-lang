@@ -10,7 +10,7 @@
 #include "llvm/Instruction.h"
 #include "llvm/Type.h"
 #include "llvm/Analysis/Dominators.h"
-#include "llvm/Tools/STLExtras.h"
+#include "llvm/Support/STLExtras.h"
 #include "llvm/Analysis/Writer.h"
 #include <set>
 #include <algorithm>

@@ -10,7 +10,7 @@
 
 #include <string>
 #include <stdio.h>
-#include "llvm/Tools/DataTypes.h"
+#include "llvm/Support/DataTypes.h"
 
 static inline string utostr(uint64_t X, bool isNeg = false) {
   char Buffer[40];

@@ -21,7 +21,7 @@
 #include "llvm/Module.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Bytecode/Reader.h"
-#include "llvm/Tools/CommandLine.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Method.h"
 #include "llvm/CFG.h"
 

@@ -3,8 +3,8 @@
 // autoconfiscated anyways. Major FIXME
 
 
-#ifndef LLVM_TOOLS_DATATYPES_H
-#define LLVM_TOOLS_DATATYPES_H
+#ifndef LLVM_SUPPORT_DATATYPES_H
+#define LLVM_SUPPORT_DATATYPES_H
 
 // Should define the following:
 //   LITTLE_ENDIAN if applicable
@@ -21,6 +21,5 @@
 #define LITTLE_ENDIAN 1
 #endif
 #endif
-
 
 #endif

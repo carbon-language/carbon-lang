@@ -9,7 +9,7 @@
 #include "llvm/BasicBlock.h"
 #include "llvm/InstrTypes.h"
 #include "llvm/ValueHolderImpl.h"
-#include "llvm/Tools/STLExtras.h"
+#include "llvm/Support/STLExtras.h"
 
 // Instantiate Templates - This ugliness is the price we have to pay
 // for having a DefHolderImpl.h file seperate from DefHolder.h!  :(

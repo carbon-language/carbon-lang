@@ -7,7 +7,7 @@
 #define __STDC_LIMIT_MACROS           // Get defs for INT64_MAX and friends...
 #include "llvm/ConstPoolVals.h"
 #include "llvm/ConstantPool.h"
-#include "llvm/Tools/StringExtras.h"  // itostr
+#include "llvm/Support/StringExtras.h"  // itostr
 #include "llvm/DerivedTypes.h"
 #include "llvm/SymbolTable.h"
 #include <algorithm>

@@ -1,4 +1,4 @@
-//===-- STLExtras.h - Useful functions when working with the STL --*- C++ -*--=//
+//===-- STLExtras.h - Useful functions when working with the STL -*- C++ -*--=//
 //
 // This file contains some templates that are useful if you are working with the
 // STL at all.
@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TOOLS_STL_EXTRAS_H
-#define LLVM_TOOLS_STL_EXTRAS_H
+#ifndef LLVM_SUPPORT_STL_EXTRAS_H
+#define LLVM_SUPPORT_STL_EXTRAS_H
 
 #include <functional>
 

@@ -16,7 +16,7 @@
 #define LLVM_CODEGEN_MACHINEINSTR_H
 
 #include "llvm/CodeGen/InstrForest.h"
-#include "llvm/Tools/DataTypes.h"
+#include "llvm/Support/DataTypes.h"
 #include "llvm/Support/Unique.h"
 #include "llvm/CodeGen/TargetMachine.h"
 

@@ -6,7 +6,7 @@
 
 #include "llvm/SymbolTable.h"
 #include "llvm/InstrTypes.h"
-#include "llvm/Tools/StringExtras.h"
+#include "llvm/Support/StringExtras.h"
 #ifndef NDEBUG
 #include "llvm/BasicBlock.h"   // Required for assertions to work.
 #include "llvm/Type.h"

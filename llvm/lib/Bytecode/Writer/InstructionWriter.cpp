@@ -15,7 +15,6 @@
 #include "llvm/BasicBlock.h"
 #include "llvm/Instruction.h"
 #include "llvm/DerivedTypes.h"
-#include "llvm/Tools/DataTypes.h"
 #include <algorithm>
 
 typedef unsigned char uchar;

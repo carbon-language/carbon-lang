@@ -25,7 +25,7 @@
 #include "llvm/iOther.h"
 #include "llvm/iMemory.h"
 #include "llvm/iTerminators.h"
-#include "llvm/Tools/STLExtras.h"
+#include "llvm/Support/STLExtras.h"
 #include "llvm/Assembly/Writer.h"
 #include <algorithm>
 #include <map>

@@ -12,7 +12,7 @@
 #ifndef LLVM_BYTECODE_PRIMITIVES_H
 #define LLVM_BYTECODE_PRIMITIVES_H
 
-#include "llvm/Tools/DataTypes.h"
+#include "llvm/Support/DataTypes.h"
 #include <string>
 #include <vector>
 
