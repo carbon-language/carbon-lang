@@ -226,7 +226,7 @@ bool CBackendNameAllUsedStructs::run(Module &M) {
       // If this is not used, remove it from the symbol table.
       std::set<const Type *>::iterator UTI = UT.find(STy);
       if (UTI == UT.end())
-        MST.remove(I->first, I->second);
+        MST.remove(I->first, (Type*)I->second);
       else
         UT.erase(UTI);
     }
