@@ -22,6 +22,7 @@
 #include "llvm/Target/TargetMachineImpls.h"
 #include "llvm/Support/PassNameParser.h"
 #include "llvm/System/Signals.h"
+#include "Support/PluginLoader.h"
 #include "Support/SystemUtils.h"
 #include <fstream>
 #include <memory>

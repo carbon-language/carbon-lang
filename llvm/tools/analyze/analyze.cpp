@@ -24,6 +24,7 @@
 #include "llvm/Target/TargetData.h"
 #include "llvm/Support/PassNameParser.h"
 #include "llvm/System/Signals.h"
+#include "Support/PluginLoader.h"
 #include "Support/Timer.h"
 #include <algorithm>
 

@@ -18,6 +18,7 @@
 #include "llvm/Support/ToolRunner.h"
 #include "Support/CommandLine.h"
 #include "llvm/System/Signals.h"
+#include "Support/PluginLoader.h"
 #include "Config/unistd.h"
 #include <sys/resource.h>
 using namespace llvm;

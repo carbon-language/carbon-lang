@@ -14,6 +14,7 @@
 
 #include "CLIDebugger.h"
 #include "Support/CommandLine.h"
+#include "Support/PluginLoader.h"
 #include "llvm/System/Signals.h"
 #include <iostream>
 
