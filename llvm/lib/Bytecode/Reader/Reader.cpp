@@ -425,12 +425,9 @@ Constant* BytecodeReader::getConstantValue(unsigned TypeSlot, unsigned Slot) {
   if (Value *V = getValue(TypeSlot, Slot, false))
     if (Constant *C = dyn_cast<Constant>(V))
       return C;   // If we already have the value parsed, just return it
-    else if (GlobalValue *GV = dyn_cast<GlobalValue>(V))
-      // ConstantPointerRef's are an abomination, but at least they don't have
-      // to infest bytecode files.
-      return ConstantPointerRef::get(GV);
     else
-      error("Reference of a value is expected to be a constant!");
+      error("Value for slot " + utostr(Slot) + 
+            " is expected to be a constant!");
 
   const Type *Ty = getType(TypeSlot);
   std::pair<const Type*, unsigned> Key(Ty, Slot);
@@ -1356,14 +1353,13 @@ Constant *BytecodeReader::ParseConstantValue(unsigned TypeID) {
     GlobalValue *GV;
     if (Val) {
       if (!(GV = dyn_cast<GlobalValue>(Val))) 
-        error("Value of ConstantPointerRef not in ValueTable!");
+        error("GlobalValue not in ValueTable!");
     } else {
       error("Forward references are not allowed here.");
     }
     
-    Constant* Result = ConstantPointerRef::get(GV);
-    if (Handler) Handler->handleConstantPointer(PT, Slot, GV, Result);
-    return Result;
+    if (Handler) Handler->handleConstantPointer(PT, Slot, GV );
+    return GV;
   }
 
   default:
