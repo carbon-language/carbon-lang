@@ -7,7 +7,7 @@
 //top block of cfg
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Transforms/Instrumentation/Graph.h"
+#include "Graph.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/iMemory.h"
@@ -16,7 +16,6 @@
 #include "llvm/iOperators.h"
 #include "llvm/iPHINode.h"
 #include "llvm/Module.h"
-#include "llvm/Instruction.h"
 #include <stdio.h>
 
 #define INSERT_LOAD_COUNT

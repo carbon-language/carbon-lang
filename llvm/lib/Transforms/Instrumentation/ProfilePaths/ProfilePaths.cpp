@@ -24,16 +24,13 @@
 // update can be collapsed into minimum number of edges.
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Transforms/Instrumentation/ProfilePaths.h"
 #include "llvm/Transforms/Utils/UnifyFunctionExitNodes.h"
-#include "llvm/Transforms/Instrumentation/Graph.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/iMemory.h"
-#include "llvm/GlobalVariable.h"
 #include "llvm/Module.h"
-#include <iostream>
+#include "Graph.h"
 #include <fstream>
 
 using std::vector;
@@ -50,13 +47,6 @@ struct ProfilePaths : public FunctionPass {
 };
 
 static RegisterOpt<ProfilePaths> X("paths", "Profile Paths");
-
-// createProfilePathsPass - Create a new pass to add path profiling
-//
-Pass *createProfilePathsPass() {
-  return new ProfilePaths();
-}
-
 
 static Node *findBB(std::vector<Node *> &st, BasicBlock *BB){
   for(std::vector<Node *>::iterator si=st.begin(); si!=st.end(); ++si){

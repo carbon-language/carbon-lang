@@ -5,14 +5,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Transforms/Instrumentation/Graph.h"
+#include "Graph.h"
 #include "llvm/iTerminators.h"
-#include "llvm/BasicBlock.h"
 #include "Support/Statistic.h"
 #include <algorithm>
 
-//using std::list;
-//using std::set;
 using std::map;
 using std::vector;
 using std::cerr;

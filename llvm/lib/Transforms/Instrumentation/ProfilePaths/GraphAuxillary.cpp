@@ -7,12 +7,12 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/Utils/UnifyFunctionExitNodes.h"
-#include "llvm/Transforms/Instrumentation/Graph.h"
 #include "llvm/Pass.h"
 #include "llvm/Module.h"
 #include "llvm/iTerminators.h"
 #include "Support/Statistic.h"
 #include <algorithm>
+#include "Graph.h"
 
 //using std::list;
 using std::map;

@@ -4,17 +4,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Transforms/Instrumentation/Graph.h"
 #include "llvm/Module.h"
-#include "llvm/BasicBlock.h"
 #include "llvm/iTerminators.h"
-#include "llvm/Support/CFG.h"
-#include "llvm/Function.h"
 #include "llvm/iOther.h"
-#include "Support/Casting.h"
-#include <iostream>
-#include <vector>
-#include <map>
+#include "llvm/Support/CFG.h"
+#include "Graph.h"
 
 using std::vector;
 using std::map;
