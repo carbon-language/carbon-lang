@@ -229,6 +229,7 @@ namespace {
     }
 
     void writeOperand(const Value *Operand);
+    void writeOperandInternal(const Value *Operand);
 
     string getValueName(const Value *V);
 
@@ -240,6 +241,22 @@ namespace {
     void printFunctionDecl(const Function *F); // Print just the forward decl
     
     void printFunction(Function *);
+
+    // isInlinableInst - Attempt to inline instructions into their uses to build
+    // trees as much as possible.  To do this, we have to consistently decide
+    // what is acceptable to inline, so that variable declarations don't get
+    // printed and an extra copy of the expr is not emitted.
+    //
+    static bool isInlinableInst(Instruction *I) {
+      // Must be an expression, must be used exactly once.  If it is dead, we
+      // emit it inline where it would go.
+      if (I->getType() == Type::VoidTy || I->use_size() != 1 ||
+          isa<TerminatorInst>(I) || isa<CallInst>(I) || isa<PHINode>(I))
+        return false;
+
+      // Only inline instruction it it's use is in the same BB as the inst.
+      return I->getParent() == cast<Instruction>(I->use_back())->getParent();
+    }
 
     // Instruction visitation functions
     friend class InstVisitor<CWriter>;
@@ -306,10 +323,7 @@ string CWriter::getValueName(const Value *V) {
   return "ltmp_" + itostr(Slot) + "_" + utostr(V->getType()->getUniqueID());
 }
 
-void CWriter::writeOperand(const Value *Operand) {
-  if (isa<GlobalVariable>(Operand))
-    Out << "(&";  // Global variables are references as their addresses by llvm
-
+void CWriter::writeOperandInternal(const Value *Operand) {
   if (Operand->hasName()) {   
     Out << getValueName(Operand);
   } else if (const Constant *CPV = dyn_cast<const Constant>(Operand)) {
@@ -324,6 +338,22 @@ void CWriter::writeOperand(const Value *Operand) {
     assert(Slot >= 0 && "Malformed LLVM!");
     Out << "ltmp_" << Slot << "_" << Operand->getType()->getUniqueID();
   }
+}
+
+void CWriter::writeOperand(const Value *Operand) {
+  if (Instruction *I = dyn_cast<Instruction>(Operand))
+    if (isInlinableInst(I)) {
+      // Should we inline this instruction to build a tree?
+      Out << "(";
+      visit(I);
+      Out << ")";    
+      return;
+    }
+
+  if (isa<GlobalVariable>(Operand))
+    Out << "(&";  // Global variables are references as their addresses by llvm
+
+  writeOperandInternal(Operand);
 
   if (isa<GlobalVariable>(Operand))
     Out << ")";
@@ -469,7 +499,7 @@ void CWriter::printFunction(Function *F) {
 
   // print local variable information for the function
   for (inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I)
-    if ((*I)->getType() != Type::VoidTy) {
+    if ((*I)->getType() != Type::VoidTy && !isInlinableInst(*I)) {
       Out << "  ";
       printTypeVar((*I)->getType(), getValueName(*I));
       Out << ";\n";
@@ -496,8 +526,21 @@ void CWriter::printFunction(Function *F) {
     if (NeedsLabel) Out << getValueName(BB) << ":\n";
 
     // Output all of the instructions in the basic block...
-    // print the basic blocks
-    visit(BB);
+    for (BasicBlock::iterator II = BB->begin(), E = BB->end()-1;
+         II != E; ++II) {
+      if (!isInlinableInst(*II) && !isa<PHINode>(*II)) {
+        Instruction *I = *II;
+        if (I->getType() != Type::VoidTy)
+          outputLValue(I);
+        else
+          Out << "  ";
+        visit(I);
+        Out << ";\n";
+      }
+    }
+
+    // Don't emit prefix or suffix for the terminator...
+    visit(BB->getTerminator());
   }
   
   Out << "}\n\n";
@@ -591,15 +634,12 @@ void CWriter::visitBranchInst(BranchInst *I) {
 
 
 void CWriter::visitNot(GenericUnaryInst *I) {
-  outputLValue(I);
   Out << "~";
   writeOperand(I->getOperand(0));
-  Out << ";\n";
 }
 
 void CWriter::visitBinaryOperator(Instruction *I) {
   // binary instructions, shift instructions, setCond instructions.
-  outputLValue(I);
   if (isa<PointerType>(I->getType())) {
     Out << "(";
     printType(I->getType());
@@ -631,24 +671,16 @@ void CWriter::visitBinaryOperator(Instruction *I) {
 
   if (isa<PointerType>(I->getType())) Out << "(long long)";
   writeOperand(I->getOperand(1));
-  Out << ";\n";
 }
 
 void CWriter::visitCastInst(CastInst *I) {
-  outputLValue(I);
   Out << "(";
   printType(I->getType());
   Out << ")";
   writeOperand(I->getOperand(0));
-  Out << ";\n";
 }
 
 void CWriter::visitCallInst(CallInst *I) {
-  if (I->getType() != Type::VoidTy)
-    outputLValue(I);
-  else
-    Out << "  ";
-
   const PointerType  *PTy   = cast<PointerType>(I->getCalledValue()->getType());
   const FunctionType *FTy   = cast<FunctionType>(PTy->getElementType());
   const Type         *RetTy = FTy->getReturnType();
@@ -663,11 +695,10 @@ void CWriter::visitCallInst(CallInst *I) {
       writeOperand(I->getOperand(op));
     }
   }
-  Out << ");\n";
+  Out << ")";
 }  
 
 void CWriter::visitMallocInst(MallocInst *I) {
-  outputLValue(I);
   Out << "(";
   printType(I->getType());
   Out << ")malloc(sizeof(";
@@ -678,11 +709,10 @@ void CWriter::visitMallocInst(MallocInst *I) {
     Out << " * " ;
     writeOperand(I->getOperand(0));
   }
-  Out << ");\n";
+  Out << ")";
 }
 
 void CWriter::visitAllocaInst(AllocaInst *I) {
-  outputLValue(I);
   Out << "(";
   printType(I->getType());
   Out << ") alloca(sizeof(";
@@ -692,19 +722,26 @@ void CWriter::visitAllocaInst(AllocaInst *I) {
     Out << " * " ;
     writeOperand(I->getOperand(0));
   }
-  Out << ");\n";
+  Out << ")";
 }
 
 void CWriter::visitFreeInst(FreeInst *I) {
-  Out << "  free(";
+  Out << "free(";
   writeOperand(I->getOperand(0));
-  Out << ");\n";
+  Out << ")";
 }
 
 void CWriter::printIndexingExpr(MemAccessInst *MAI) {
   MemAccessInst::op_iterator I = MAI->idx_begin(), E = MAI->idx_end();
-  if (I == E)
+  if (I == E) {
+    // If accessing a global value with no indexing, avoid *(&GV) syndrome
+    if (GlobalValue *V = dyn_cast<GlobalValue>(MAI->getPointerOperand())) {
+      writeOperandInternal(V);
+      return;
+    }
+
     Out << "*";  // Implicit zero first argument: '*x' is equivalent to 'x[0]'
+  }
 
   writeOperand(MAI->getPointerOperand());
 
@@ -714,9 +751,8 @@ void CWriter::printIndexingExpr(MemAccessInst *MAI) {
   Constant *CI = dyn_cast<Constant>(*I);
   if (CI && CI->isNullValue() && I+1 != E &&
       (*(I+1))->getType() == Type::UByteTy) {
-    ++I;
-    Out << "->field" << cast<ConstantUInt>(*I)->getValue();
-    ++I;
+    Out << "->field" << cast<ConstantUInt>(*(I+1))->getValue();
+    I += 2;
   }
     
   for (; I != E; ++I)
@@ -730,24 +766,18 @@ void CWriter::printIndexingExpr(MemAccessInst *MAI) {
 }
 
 void CWriter::visitLoadInst(LoadInst *I) {
-  outputLValue(I);
   printIndexingExpr(I);
-  Out << ";\n";
 }
 
 void CWriter::visitStoreInst(StoreInst *I) {
-  Out << "  ";
   printIndexingExpr(I);
   Out << " = ";
   writeOperand(I->getOperand(0));
-  Out << ";\n";
 }
 
 void CWriter::visitGetElementPtrInst(GetElementPtrInst *I) {
-  outputLValue(I);
   Out << "&";
   printIndexingExpr(I);
-  Out << ";\n";
 }
 
 //===----------------------------------------------------------------------===//
