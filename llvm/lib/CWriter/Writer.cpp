@@ -164,14 +164,25 @@ static std::string makeNameProper(std::string x) {
 }
 
 std::string CWriter::getValueName(const Value *V) {
-  if (V->hasName()) {              // Print out the label if it exists...
-    if (isa<GlobalValue>(V) &&     // Do not mangle globals...
-        (cast<GlobalValue>(V)->hasExternalLinkage() &&// Unless it's internal or
-         !MangledGlobals.count(V))) // Unless the name would collide if we don't
-      return makeNameProper(V->getName());
-
+  if (V->hasName()) { // Print out the label if it exists...
+    
+    // Name mangling occurs as follows:
+    // - If V is not a global, mangling always occurs.
+    // - Otherwise, mangling occurs when any of the following are true:
+    //   1) V has internal linkage
+    //   2) V's name would collide if it is not mangled.
+    //
+    
+    if(const GlobalValue* gv = dyn_cast<GlobalValue>(V)) {
+      if(!gv->hasInternalLinkage() && !MangledGlobals.count(gv)) {
+        // No internal linkage, name will not collide -> no mangling.
+        return makeNameProper(gv->getName());
+      }
+    }
+    
+    // Non-global, or global with internal linkage / colliding name -> mangle.
     return "l" + utostr(V->getType()->getUniqueID()) + "_" +
-           makeNameProper(V->getName());      
+      makeNameProper(V->getName());      
   }
 
   int Slot = Table->getValSlot(V);
@@ -220,23 +231,23 @@ std::ostream &CWriter::printType(std::ostream &Out, const Type *Ty,
   switch (Ty->getPrimitiveID()) {
   case Type::FunctionTyID: {
     const FunctionType *MTy = cast<FunctionType>(Ty);
-    std::stringstream FunctionInards; 
-    FunctionInards << " (" << NameSoFar << ") (";
+    std::stringstream FunctionInnards; 
+    FunctionInnards << " (" << NameSoFar << ") (";
     for (FunctionType::ParamTypes::const_iterator
            I = MTy->getParamTypes().begin(),
            E = MTy->getParamTypes().end(); I != E; ++I) {
       if (I != MTy->getParamTypes().begin())
-        FunctionInards << ", ";
-      printType(FunctionInards, *I, "");
+        FunctionInnards << ", ";
+      printType(FunctionInnards, *I, "");
     }
     if (MTy->isVarArg()) {
       if (!MTy->getParamTypes().empty()) 
-    	FunctionInards << ", ...";
+    	FunctionInnards << ", ...";
     } else if (MTy->getParamTypes().empty()) {
-      FunctionInards << "void";
+      FunctionInnards << "void";
     }
-    FunctionInards << ")";
-    std::string tstr = FunctionInards.str();
+    FunctionInnards << ")";
+    std::string tstr = FunctionInnards.str();
     printType(Out, MTy->getReturnType(), tstr);
     return Out;
   }
@@ -650,9 +661,9 @@ void CWriter::printModule(Module *M) {
     Out << "extern void * malloc(size_t);\n\n";
   }
 
-  // Output the global variable declerations
+  // Output the global variable declarations
   if (!M->gempty()) {
-    Out << "\n\n/* Global Variable Declerations */\n";
+    Out << "\n\n/* Global Variable Declarations */\n";
     for (Module::giterator I = M->gbegin(), E = M->gend(); I != E; ++I)
       if (!I->isExternal()) {
         Out << "extern ";
@@ -768,33 +779,36 @@ void CWriter::printContainedStructs(const Type *Ty,
 
 
 void CWriter::printFunctionSignature(const Function *F, bool Prototype) {
-  // If the program provides it's own malloc prototype we don't need
+  // If the program provides its own malloc prototype we don't need
   // to include the general one.  
   if (getValueName(F) == "malloc")
     needsMalloc = false;
-  if (F->hasInternalLinkage()) Out << "static ";  
+
+  if (F->hasInternalLinkage()) Out << "static ";
+  if (F->hasLinkOnceLinkage()) Out << "inline ";
+  
   // Loop over the arguments, printing them...
   const FunctionType *FT = cast<FunctionType>(F->getFunctionType());
   
-  std::stringstream FunctionInards; 
+  std::stringstream FunctionInnards; 
     
   // Print out the name...
-  FunctionInards << getValueName(F) << "(";
+  FunctionInnards << getValueName(F) << "(";
     
   if (!F->isExternal()) {
     if (!F->aempty()) {
       std::string ArgName;
       if (F->abegin()->hasName() || !Prototype)
         ArgName = getValueName(F->abegin());
-      printType(FunctionInards, F->afront().getType(), ArgName);
+      printType(FunctionInnards, F->afront().getType(), ArgName);
       for (Function::const_aiterator I = ++F->abegin(), E = F->aend();
            I != E; ++I) {
-        FunctionInards << ", ";
+        FunctionInnards << ", ";
         if (I->hasName() || !Prototype)
           ArgName = getValueName(I);
         else 
           ArgName = "";
-        printType(FunctionInards, I->getType(), ArgName);
+        printType(FunctionInnards, I->getType(), ArgName);
       }
     }
   } else {
@@ -802,8 +816,8 @@ void CWriter::printFunctionSignature(const Function *F, bool Prototype) {
     for (FunctionType::ParamTypes::const_iterator I = 
 	   FT->getParamTypes().begin(),
 	   E = FT->getParamTypes().end(); I != E; ++I) {
-      if (I != FT->getParamTypes().begin()) FunctionInards << ", ";
-      printType(FunctionInards, *I);
+      if (I != FT->getParamTypes().begin()) FunctionInnards << ", ";
+      printType(FunctionInnards, *I);
     }
   }
 
@@ -811,12 +825,12 @@ void CWriter::printFunctionSignature(const Function *F, bool Prototype) {
   // unless there are no known types, in which case, we just emit ().
   //
   if (FT->isVarArg() && !FT->getParamTypes().empty()) {
-    if (FT->getParamTypes().size()) FunctionInards << ", ";
-    FunctionInards << "...";  // Output varargs portion of signature!
+    if (FT->getParamTypes().size()) FunctionInnards << ", ";
+    FunctionInnards << "...";  // Output varargs portion of signature!
   }
-  FunctionInards << ")";
+  FunctionInnards << ")";
   // Print out the return type and the entire signature for that matter
-  printType(Out, F->getReturnType(), FunctionInards.str());
+  printType(Out, F->getReturnType(), FunctionInnards.str());
   
 }
 
