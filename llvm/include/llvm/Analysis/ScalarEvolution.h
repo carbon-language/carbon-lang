@@ -250,6 +250,14 @@ namespace llvm {
     /// starts at zero and steps by one on each iteration.
     Value *GetOrInsertCanonicalInductionVariable(const Loop *L, const Type *Ty);
 
+
+    /// addInsertedValue - Remember the specified instruction as being the
+    /// canonical form for the specified SCEV.
+    void addInsertedValue(Instruction *I, SCEV *S) {
+      InsertedExpressions[S] = I;
+      InsertedInstructions.insert(I);
+    }
+
     /// ExpandCodeFor - Insert code to directly compute the specified SCEV
     /// expression into the program.  The inserted code is inserted into the
     /// specified block.
