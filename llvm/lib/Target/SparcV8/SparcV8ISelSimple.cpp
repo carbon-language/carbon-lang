@@ -1256,12 +1256,12 @@ void V8ISel::emitShift64 (MachineBasicBlock *MBB,
 void V8ISel::visitBinaryOperator (Instruction &I) {
   unsigned DestReg = getReg (I);
   unsigned Op0Reg = getReg (I.getOperand (0));
-  unsigned Op1Reg = getReg (I.getOperand (1));
 
   unsigned Class = getClassB (I.getType());
   unsigned OpCase = ~0;
 
   if (Class > cLong) {
+    unsigned Op1Reg = getReg (I.getOperand (1));
     switch (I.getOpcode ()) {
     case Instruction::Add: OpCase = 0; break;
     case Instruction::Sub: OpCase = 1; break;
@@ -1284,6 +1284,7 @@ void V8ISel::visitBinaryOperator (Instruction &I) {
 
   if (Class == cLong) {
     const char *FuncName;
+    unsigned Op1Reg = getReg (I.getOperand (1));
     DEBUG (std::cerr << "Class = cLong\n");
     DEBUG (std::cerr << "Op0Reg = " << Op0Reg << ", " << Op0Reg+1 << "\n");
     DEBUG (std::cerr << "Op1Reg = " << Op1Reg << ", " << Op1Reg+1 << "\n");
@@ -1319,7 +1320,6 @@ void V8ISel::visitBinaryOperator (Instruction &I) {
     }
   }
 
-  // FIXME: support long, ulong.
   switch (I.getOpcode ()) {
   case Instruction::Add: OpCase = 0; break;
   case Instruction::Sub: OpCase = 1; break;
@@ -1333,6 +1333,7 @@ void V8ISel::visitBinaryOperator (Instruction &I) {
   case Instruction::Div:
   case Instruction::Rem: {
     unsigned Dest = ResultReg;
+    unsigned Op1Reg = getReg (I.getOperand (1));
     if (I.getOpcode() == Instruction::Rem)
       Dest = makeAnotherReg(I.getType());
 
@@ -1365,8 +1366,25 @@ void V8ISel::visitBinaryOperator (Instruction &I) {
     V8::ADDrr, V8::SUBrr, V8::SMULrr, V8::ANDrr, V8::ORrr, V8::XORrr,
     V8::SLLrr, V8::SRLrr, V8::SRArr
   };
+  static const unsigned OpcodesRI[] = {
+    V8::ADDri, V8::SUBri, V8::SMULri, V8::ANDri, V8::ORri, V8::XORri,
+    V8::SLLri, V8::SRLri, V8::SRAri
+  };
+  unsigned Op1Reg = ~0U;
   if (OpCase != ~0U) {
-    BuildMI (BB, Opcodes[OpCase], 2, ResultReg).addReg (Op0Reg).addReg (Op1Reg);
+    Value *Arg1 = I.getOperand (1);
+    bool useImmed = false;
+    int64_t Val = 0;
+    if ((getClassB (I.getType ()) <= cInt) && (isa<ConstantIntegral> (Arg1))) {
+      Val = cast<ConstantIntegral> (Arg1)->getRawValue ();
+      useImmed = (Val > -4096 && Val < 4095);
+    }
+    if (useImmed) {
+      BuildMI (BB, OpcodesRI[OpCase], 2, ResultReg).addReg (Op0Reg).addSImm (Val);
+    } else {
+      Op1Reg = getReg (I.getOperand (1));
+      BuildMI (BB, Opcodes[OpCase], 2, ResultReg).addReg (Op0Reg).addReg (Op1Reg);
+    }
   }
 
   switch (getClassB (I.getType ())) {
@@ -1393,7 +1411,7 @@ void V8ISel::visitBinaryOperator (Instruction &I) {
     case cInt:
       // Nothing to do here.
       break;
-    case cLong:
+    case cLong: {
       // Only support and, or, xor here - others taken care of above.
       if (OpCase < 3 || OpCase > 5) {
         visitInstruction (I);
@@ -1403,6 +1421,7 @@ void V8ISel::visitBinaryOperator (Instruction &I) {
       BuildMI (BB, Opcodes[OpCase], 2, ResultReg+1).addReg (Op0Reg+1)
         .addReg (Op1Reg+1);
       break;
+    }
     default:
       visitInstruction (I);
   }
