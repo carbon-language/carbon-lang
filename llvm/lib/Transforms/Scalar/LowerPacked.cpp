@@ -12,6 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/Transforms/Scalar.h"
 #include "llvm/Argument.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
@@ -98,7 +99,7 @@ X("lower-packed",
 
 } // end namespace   
 
-FunctionPass *createLowerPackedPass() { return new LowerPacked(); }
+FunctionPass *llvm::createLowerPackedPass() { return new LowerPacked(); }
 
 
 // This function sets lowered values for a corresponding
