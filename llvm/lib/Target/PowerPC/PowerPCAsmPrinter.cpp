@@ -291,7 +291,7 @@ void Printer::emitGlobalConstant(const Constant *CV) {
       
       O << ".long\t" << U.T.MSWord << "\t; double most significant word " 
         << Val << "\n";
-      O << ".long\t" << U.T.LSWord << "\t; double least significant word" 
+      O << ".long\t" << U.T.LSWord << "\t; double least significant word " 
         << Val << "\n";
       return;
     }
@@ -309,7 +309,7 @@ void Printer::emitGlobalConstant(const Constant *CV) {
         
       O << ".long\t" << U.T.MSWord << "\t; Double-word most significant word " 
         << U.UVal << "\n";
-      O << ".long\t" << U.T.LSWord << "\t; Double-word least significant word" 
+      O << ".long\t" << U.T.LSWord << "\t; Double-word least significant word " 
         << U.UVal << "\n";
       return;
     }
@@ -522,6 +522,12 @@ void Printer::printMachineInstruction(const MachineInstr *MI) {
   //assert ( ValidOpcodes(MI, ArgType) && "Instruction has invalid inputs");
   ++EmittedInsts;
 
+  if (Opcode == PPC32::IMPLICIT_DEF) {
+    O << "; IMPLICIT DEF ";
+    printOp(MI->getOperand(0));
+    O << "\n";
+    return;
+  }
   // FIXME: should probably be converted to cout.width and cout.fill
   if (Opcode == PPC32::MovePCtoLR) {
     O << "bl \"L0000" << labelNumber << "$pb\"\n";
