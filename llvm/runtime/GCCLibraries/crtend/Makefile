@@ -47,18 +47,18 @@ $(ObjDir)/comp_main.bc: $(MainObj)
 	$(Echo) Linking $(notdir $@) component...
 	$(Verb) $(GCCLD) -link-as-library \
 	-internalize-public-api-file=$(BUILD_SRC_DIR)/comp_main.lst \
-	$(MainObj) -o $@ -L$(LLVMGCCStdCXXLibDir)
+	$(MainObj) -o $@
 
 # Generic exception handling support runtime.
 $(ObjDir)/comp_genericeh.bc: $(GenericEHObj)
 	$(Echo) Linking $(notdir $@) component...
 	$(Verb) $(GCCLD) -link-as-library \
 	-internalize-public-api-file=$(BUILD_SRC_DIR)/comp_genericeh.lst \
-	$(GenericEHObj) -o $@ -L$(LLVMGCCStdCXXLibDir)
+	$(GenericEHObj) -o $@ 
 
 # setjmp/longjmp exception handling support runtime.
 $(ObjDir)/comp_sjljeh.bc: $(SJLJEHObj)
 	$(Echo) Linking $(notdir $@) component...
 	$(Verb) $(GCCLD) -link-as-library \
 	-internalize-public-api-file=$(BUILD_SRC_DIR)/comp_sjljeh.lst \
-	$(SJLJEHObj) -o $@ -L$(LLVMGCCStdCXXLibDir)
+	$(SJLJEHObj) -o $@
