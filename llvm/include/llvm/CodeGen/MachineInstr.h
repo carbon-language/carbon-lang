@@ -153,10 +153,20 @@ private:
   }
 
   MachineOperand(Value *V, MachineOperandType OpTy, UseType UseTy,
+		 bool isPCRelative = false)
+    : flags(UseTy | (isPCRelative?PCRELATIVE:0)), opType(OpTy) {
+    assert(OpTy != MachineOperand::MO_GlobalAddress);
+    zeroContents();
+    contents.value = V;
+    extra.regNum = -1;
+  }
+
+  MachineOperand(GlobalValue *V, MachineOperandType OpTy, UseType UseTy,
 		 bool isPCRelative = false, int Offset = 0)
     : flags(UseTy | (isPCRelative?PCRELATIVE:0)), opType(OpTy) {
+    assert(OpTy == MachineOperand::MO_GlobalAddress);
     zeroContents ();
-    contents.value = V;
+    contents.value = (Value*)V;
     extra.offset = Offset;
   }
 
@@ -642,7 +652,7 @@ public:
     assert(!OperandsComplete() &&
            "Trying to add an operand to a machine instr that is already done!");
     operands.push_back(
-      MachineOperand((Value*)GV, MachineOperand::MO_GlobalAddress,
+      MachineOperand(GV, MachineOperand::MO_GlobalAddress,
                      MachineOperand::Use, isPCRelative, Offset));
   }
 
