@@ -1,6 +1,6 @@
-#include <stdio.h>
 int tcount;
+void test(char *, const char*, int);
 void foo() {
 	char Buf[10];
-	sprintf(Buf, "n%%%d", tcount++);
+	test(Buf, "n%%%d", tcount++);
 }
