@@ -21,7 +21,6 @@
 
 %{
 #include "Record.h"
-#include "Support/CommandLine.h"
 typedef std::pair<Record*, std::vector<Init*>*> SubClassRefTy;
 #include "FileParser.h"
 
