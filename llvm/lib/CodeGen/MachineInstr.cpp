@@ -19,6 +19,7 @@
 #include "llvm/Instruction.h"
 
 
+
 //************************ Class Implementations **************************/
 
 // Constructor for instructions with fixed #operands (nearly all)
@@ -100,6 +101,25 @@ operator<< (ostream& os, const MachineInstr& minstr)
     }
 #endif
   
+ 
+
+#if 1
+  // code for printing implict references
+
+  unsigned NumOfImpRefs =  minstr.getNumImplicitRefs();
+  if(  NumOfImpRefs > 0 ) {
+	
+    os << "\tImplicit:";
+
+    for(unsigned z=0; z < NumOfImpRefs; z++) {
+      os << minstr.getImplicitRef(z);
+	  cout << "\t";
+    }
+  }
+
+#endif
+
+
   os << endl;
   
   return os;
