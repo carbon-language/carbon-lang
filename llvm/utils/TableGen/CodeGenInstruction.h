@@ -71,6 +71,8 @@ namespace llvm {
     bool isBranch;
     bool isBarrier;
     bool isCall;
+    bool isLoad;
+    bool isStore;
     bool isTwoAddress;
     bool isTerminator;
     bool hasDelaySlot;

@@ -195,6 +195,8 @@ CodeGenInstruction::CodeGenInstruction(Record *R, const std::string &AsmStr)
   isBranch     = R->getValueAsBit("isBranch");
   isBarrier    = R->getValueAsBit("isBarrier");
   isCall       = R->getValueAsBit("isCall");
+  isLoad       = R->getValueAsBit("isLoad");
+  isStore      = R->getValueAsBit("isStore");
   isTwoAddress = R->getValueAsBit("isTwoAddress");
   isTerminator = R->getValueAsBit("isTerminator");
   hasDelaySlot = R->getValueAsBit("hasDelaySlot");
