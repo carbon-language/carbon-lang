@@ -32,7 +32,7 @@ tools-only: all
 .PHONY: install-includes
 
 install-includes:
-	$(MKDIR) $(includedir)/llvm
+	$(MKDIR) $(DESTDIR)$(includedir)/llvm
 	cd include && find * '!' '(' -name '*~' -o -name .cvsignore ')' -print | grep -v CVS | pax -rwdvpe $(DESTDIR)$(includedir)/llvm
 
 install:: install-includes

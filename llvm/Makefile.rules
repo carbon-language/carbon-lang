@@ -548,7 +548,7 @@ $(LIBNAME_G): $(ObjectsG) $(LibSubDirs) $(DESTLIBDEBUG)/.dir
 	@${ECHO} ======= Finished building $(LIBRARYNAME) dynamic debug library =======
 
 install-dynamic-library: $(LIBNAME_CUR)
-	$(MKDIR) $(libdir)
+	$(MKDIR) $(DESTDIR)$(libdir)
 	$(VERB) $(LIBTOOL) --mode=install $(INSTALL) $(LIBNAME_CUR) $(DESTDIR)$(libdir)/lib$(LIBRARYNAME)$(SHLIBEXT)
 
 #
@@ -573,7 +573,7 @@ $(LIBNAME_AG): $(ObjectsG) $(LibSubDirs) $(DESTLIBDEBUG)/.dir
 	@${ECHO} ======= Finished building $(LIBRARYNAME) archive debug library =======
 
 install-archive-library: $(LIBNAME_ACUR)
-	$(MKDIR) $(libdir)
+	$(MKDIR) $(DESTDIR)$(libdir)
 	$(VERB) $(LIBTOOL) --mode=install $(INSTALL) $(LIBNAME_ACUR) $(DESTDIR)$(libdir)/lib$(LIBRARYNAME).a
 
 #
@@ -603,7 +603,7 @@ $(LIBNAME_OBJG): $(ObjectsG) $(LibSubDirs) $(DESTLIBDEBUG)/.dir
 	$(VERB) $(Relink) -o $@ $(RObjectsG) $(LibSubDirs)
 
 install-single-object-library: $(LIBNAME_OBJCUR)
-	$(MKDIR) $(libdir)
+	$(MKDIR) $(DESTDIR)$(libdir)
 	$(VERB) $(LIBTOOL) --mode=install $(INSTALL) $(LIBNAME_OBJCUR) $(DESTDIR)$(libdir)/$(LIBRARYNAME).o
 
 endif
@@ -686,7 +686,7 @@ $(TOOLEXENAME_P): $(ObjectsP) $(USED_LIB_PATHS_P) $(DESTTOOLPROFILE)/.dir
 	@${ECHO} ======= Finished building $(TOOLNAME) profile executable =======
 
 install:: $(TOOLEXENAMES)
-	$(MKDIR) $(bindir)
+	$(MKDIR) $(DESTDIR)$(bindir)
 	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) -c -m 0755 $(TOOLEXENAMES) $(DESTDIR)$(bindir)/$(TOOLNAME)
 
 endif
