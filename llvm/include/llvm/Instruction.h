@@ -74,6 +74,27 @@ public:
     return iType >= BinaryOpsBegin && iType < BinaryOpsEnd;
   }
 
+  /// isAssociative - Return true if the instruction is associative:
+  ///
+  ///   Associative operators satisfy:  x op (y op z) === (x op y) op z)
+  ///
+  /// In LLVM, the Add, Mul, And, Or, and Xor operators are associative, when
+  /// not applied to floating point types.
+  ///
+  bool isAssociative() const { return isAssociative(getOpcode(), getType()); }
+  static bool isAssociative(unsigned op, const Type *Ty);
+
+  /// isCommutative - Return true if the instruction is commutative:
+  ///
+  ///   Commutative operators satistify: (x op y) === (y op x)
+  ///
+  /// In LLVM, these are the associative operators, plus SetEQ and SetNE, when
+  /// applied to any type.
+  ///
+  bool isCommutative() const { return isCommutative(getOpcode()); }
+  static bool isCommutative(unsigned op);
+
+
   virtual void print(std::ostream &OS) const;
 
   /// Methods for support type inquiry through isa, cast, and dyn_cast:

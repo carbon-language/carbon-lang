@@ -97,3 +97,42 @@ const char *Instruction::getOpcodeName(unsigned OpCode) {
   
   return 0;
 }
+
+
+/// isAssociative - Return true if the instruction is associative:
+///
+///   Associative operators satisfy:  x op (y op z) === (x op y) op z)
+///
+/// In LLVM, the Add, Mul, And, Or, and Xor operators are associative, when not
+/// applied to floating point types.
+///
+bool Instruction::isAssociative(unsigned Opcode, const Type *Ty) {
+  if (Opcode == Add || Opcode == Mul ||
+      Opcode == And || Opcode == Or || Opcode == Xor) {
+    // Floating point operations do not associate!
+    return !Ty->isFloatingPoint();
+  }
+  return 0;
+}
+
+/// isCommutative - Return true if the instruction is commutative:
+///
+///   Commutative operators satistify: (x op y) === (y op x)
+///
+/// In LLVM, these are the associative operators, plus SetEQ and SetNE, when
+/// applied to any type.
+///
+bool Instruction::isCommutative(unsigned op) {
+  switch (op) {
+  case Add:
+  case Mul:
+  case And: 
+  case Or:
+  case Xor:
+  case SetEQ:
+  case SetNE:
+    return true;
+  default:
+    return false;
+  }
+}
