@@ -262,60 +262,77 @@ my $AddedFilesList = AddPreTag join "\n", keys %AddedFiles;
 my $ModifiedFilesList = AddPreTag join "\n", keys %ModifiedFiles;
 my $RemovedFilesList = AddPreTag join "\n", keys %RemovedFiles;
 
-#
-# Run the nightly programs tests...
-#
-chdir "test/Programs" or die "Could not change into programs testdir!";
+my $TestError = 1;
+my $ProgramsTable;
 
-# Run the programs tests... creating a report.nightly.html file
-if (!$NOTEST) {
-  system "gmake $MAKEOPTS report.nightly.html TEST=nightly "
-       . "RUNTIMELIMIT=300 > $Prefix-ProgramTest.txt 2>&1";
-} else {
-  system "gunzip $Prefix-ProgramTest.txt.gz";
+# If we build the tree successfully, the nightly programs tests...
+if ($BuildError eq "") {
+  chdir "test/Programs" or die "Could not change into programs testdir!";
+
+  # Run the programs tests... creating a report.nightly.html file
+  if (!$NOTEST) {
+    system "gmake $MAKEOPTS report.nightly.html TEST=nightly "
+         . "RUNTIMELIMIT=300 > $Prefix-ProgramTest.txt 2>&1";
+  } else {
+    system "gunzip $Prefix-ProgramTest.txt.gz";
+  }
+
+  if (`grep '^gmake: .*Error' $Prefix-ProgramTest.txt | wc -l` + 0) {
+    $TestError = 1;
+    $ProgramsTable = "<h2>Error running tests!</h2>";
+  } else {
+    $TestError = 0;
+    $ProgramsTable = ReadFile "report.nightly.html";
+
+    #
+    # Create a list of the tests which were run...
+    #
+    system "grep -E 'TEST-(PASS|FAIL)' < $Prefix-ProgramTest.txt "
+         . "| sort > $Prefix-Tests.txt";
+  }
+
+  # Compress the test output
+  system "gzip $Prefix-ProgramTest.txt";
 }
-
-my $ProgramsTable = ReadFile "report.nightly.html";
-
-#
-# Create a list of the tests which were run...
-#
-system "grep -E 'TEST-(PASS|FAIL)' < $Prefix-ProgramTest.txt "
-     . "| sort > $Prefix-Tests.txt";
-
-# Compress the test output
-system "gzip $Prefix-ProgramTest.txt";
-
-my ($RTestsAdded, $RTestsRemoved) = DiffFiles "-Tests.txt";
-
-my @RawTestsAddedArray = split '\n', $RTestsAdded;
-my @RawTestsRemovedArray = split '\n', $RTestsRemoved;
-
-my %OldTests = map {GetRegex('TEST-....: (.+)', $_)=>$_} @RawTestsRemovedArray;
-my %NewTests = map {GetRegex('TEST-....: (.+)', $_)=>$_} @RawTestsAddedArray;
 
 my ($TestsAdded, $TestsRemoved, $TestsFixed, $TestsBroken) = ("","","","");
 
-foreach $Test (keys %NewTests) {
-  if (!exists $OldTests{$Test}) {  # TestAdded if in New but not old
-    $TestsAdded = "$TestsAdded$Test\n";
-  } else {
-    if ($OldTests{$Test} =~ /TEST-PASS/) {  # Was the old one a pass?
-      $TestsBroken = "$TestsBroken$Test\n";  # New one must be a failure
+if ($TestError) {
+  $TestsAdded   = "<b>error testing</b><br>";
+  $TestsRemoved = "<b>error testing</b><br>";
+  $TestsFixed   = "<b>error testing</b><br>";
+  $TestsBroken  = "<b>error testing</b><br>";
+} else {
+  my ($RTestsAdded, $RTestsRemoved) = DiffFiles "-Tests.txt";
+
+  my @RawTestsAddedArray = split '\n', $RTestsAdded;
+  my @RawTestsRemovedArray = split '\n', $RTestsRemoved;
+
+  my %OldTests = map {GetRegex('TEST-....: (.+)', $_)=>$_}
+    @RawTestsRemovedArray;
+  my %NewTests = map {GetRegex('TEST-....: (.+)', $_)=>$_}
+    @RawTestsAddedArray;
+
+  foreach $Test (keys %NewTests) {
+    if (!exists $OldTests{$Test}) {  # TestAdded if in New but not old
+      $TestsAdded = "$TestsAdded$Test\n";
     } else {
-      $TestsFixed = "$TestsFixed$Test\n";    # No, new one is a pass.
+      if ($OldTests{$Test} =~ /TEST-PASS/) {  # Was the old one a pass?
+        $TestsBroken = "$TestsBroken$Test\n";  # New one must be a failure
+      } else {
+        $TestsFixed = "$TestsFixed$Test\n";    # No, new one is a pass.
+      }
     }
   }
-}
-foreach $Test (keys %OldTests) {  # TestRemoved if in Old but not New
-  $TestsRemoved = "$TestsRemoved$Test\n" if (!exists $NewTests{$Test});
-}
+  foreach $Test (keys %OldTests) {  # TestRemoved if in Old but not New
+    $TestsRemoved = "$TestsRemoved$Test\n" if (!exists $NewTests{$Test});
+  }
 
-$TestsAdded   = AddPreTag $TestsAdded;
-$TestsRemoved = AddPreTag $TestsRemoved;
-$TestsFixed   = AddPreTag $TestsFixed;
-$TestsBroken  = AddPreTag $TestsBroken;
-
+  $TestsAdded   = AddPreTag $TestsAdded;
+  $TestsRemoved = AddPreTag $TestsRemoved;
+  $TestsFixed   = AddPreTag $TestsFixed;
+  $TestsBroken  = AddPreTag $TestsBroken;
+}
 
 #
 # Get a list of the previous days that we can link to...
