@@ -9,19 +9,22 @@
 
 // NOTE: No include guards desired
 #ifndef R
-#errror "Must define R macro before including X86/X86RegisterInfo.def!"
+#define R(ENUM, NAME, FLAGS, TSFLAGS, A1, A2, A3)
 #endif
 
 #ifndef R8
-#define R8(ENUM, NAME, FLAGS, TSFLAGS) R(ENUM, NAME, FLAGS, TSFLAGS)
+#define R8(ENUM, NAME, FLAGS, TSFLAGS, A1, A2, A3) \
+   R(ENUM, NAME, FLAGS, TSFLAGS, A1, A2, A3)
 #endif
 
 #ifndef R16
-#define R16(ENUM, NAME, FLAGS, TSFLAGS) R(ENUM, NAME, FLAGS, TSFLAGS)
+#define R16(ENUM, NAME, FLAGS, TSFLAGS, A1, A2, A3) \
+   R(ENUM, NAME, FLAGS, TSFLAGS, A1, A2, A3)
 #endif
 
 #ifndef R32
-#define R32(ENUM, NAME, FLAGS, TSFLAGS) R(ENUM, NAME, FLAGS, TSFLAGS)
+#define R32(ENUM, NAME, FLAGS, TSFLAGS, A1, A2, A3) \
+   R(ENUM, NAME, FLAGS, TSFLAGS, A1, A2, A3)
 #endif
 
 // Arguments passed into the R macro
@@ -42,44 +45,45 @@
 // The X86 backend uses this value as an operand register only in memory
 // references where it means that there is no base or index register.
 //
-R(NoReg, "none", 0, 0)
+R(NoReg,"none",          0, 0,       0,       0,       0)
 
 // 32 bit registers, ordered as the processor does...
-R32(EAX, "EAX", MRF::INT32, 0)
-R32(ECX, "ECX", MRF::INT32, 0)
-R32(EDX, "EDX", MRF::INT32, 0)
-R32(EBX, "EBX", MRF::INT32, 0)
-R32(ESP, "ESP", MRF::INT32, 0)
-R32(EBP, "EBP", MRF::INT32, 0)
-R32(ESI, "ESI", MRF::INT32, 0)
-R32(EDI, "EDI", MRF::INT32, 0)
+R32(EAX, "EAX", MRF::INT32, 0, X86::AX, X86::AH, X86::AL)
+R32(ECX, "ECX", MRF::INT32, 0, X86::CX, X86::CH, X86::CL)
+R32(EDX, "EDX", MRF::INT32, 0, X86::DX, X86::DH, X86::DL)
+R32(EBX, "EBX", MRF::INT32, 0, X86::BX, X86::BH, X86::BL)
+R32(ESP, "ESP", MRF::INT32, 0, X86::SP,       0,       0)
+R32(EBP, "EBP", MRF::INT32, 0, X86::BP,       0,       0)
+R32(ESI, "ESI", MRF::INT32, 0, X86::SI,       0,       0)
+R32(EDI, "EDI", MRF::INT32, 0, X86::DI,       0,       0)
 
 // 16 bit registers, aliased with the corresponding 32 bit registers above
-R16(AX, "AX", MRF::INT16, 0)
-R16(CX, "CX", MRF::INT16, 0)
-R16(DX, "DX", MRF::INT16, 0)
-R16(BX, "BX", MRF::INT16, 0)
-R16(SP, "SP", MRF::INT16, 0)
-R16(BP, "BP", MRF::INT16, 0)
-R16(SI, "SI", MRF::INT16, 0)
-R16(DI, "DI", MRF::INT16, 0)
+R16( AX, "AX" , MRF::INT16, 0, X86::EAX, X86::AH, X86::AL)
+R16( CX, "CX" , MRF::INT16, 0, X86::ECX, X86::CH, X86::CL)
+R16( DX, "DX" , MRF::INT16, 0, X86::EDX, X86::DH, X86::DL)
+R16( BX, "BX" , MRF::INT16, 0, X86::EBX, X86::BH, X86::BL)
+R16( SP, "SP" , MRF::INT16, 0, X86::ESP,       0,       0)
+R16( BP, "BP" , MRF::INT16, 0, X86::EBP,       0,       0)
+R16( SI, "SI" , MRF::INT16, 0, X86::ESI,       0,       0)
+R16( DI, "DI" , MRF::INT16, 0, X86::EDI,       0,       0)
 
 // 8 bit registers aliased with registers above as well
-R8(AL, "AL", MRF::INT8, 0)
-R8(CL, "CL", MRF::INT8, 0)
-R8(DL, "DL", MRF::INT8, 0)
-R8(BL, "BL", MRF::INT8, 0)
-R8(AH, "AH", MRF::INT8, 0)
-R8(CH, "CH", MRF::INT8, 0)
-R8(DH, "DH", MRF::INT8, 0)
-R8(BH, "BH", MRF::INT8, 0)
+R8 ( AL, "AL" , MRF::INT8 , 0, X86::EAX, X86::AX,       0)
+R8 ( CL, "CL" , MRF::INT8 , 0, X86::ECX, X86::CX,       0)
+R8 ( DL, "DL" , MRF::INT8 , 0, X86::EDX, X86::DX,       0)
+R8 ( BL, "BL" , MRF::INT8 , 0, X86::EBX, X86::BX,       0)
+R8 ( AH, "AH" , MRF::INT8 , 0, X86::EAX, X86::AX,       0)
+R8 ( CH, "CH" , MRF::INT8 , 0, X86::ECX, X86::CX,       0)
+R8 ( DH, "DH" , MRF::INT8 , 0, X86::EDX, X86::DX,       0)
+R8 ( BH, "BH" , MRF::INT8 , 0, X86::EBX, X86::BX,       0)
 
 // Flags, Segment registers, etc...
 
 // This is a slimy hack to make it possible to say that flags are clobbered...
 // Ideally we'd model instructions based on which particular flag(s) they
 // could clobber. 
-R(EFLAGS, "EFLAGS", MRF::INT16, 0)
+R(EFLAGS, "EFLAGS", MRF::INT16, 0,    0,       0,       0)
+
 
 // We are now done with the R* macros
 #undef R
