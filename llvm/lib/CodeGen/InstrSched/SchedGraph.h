@@ -336,49 +336,35 @@ private:
 
 class SchedGraphSet :  
   public NonCopyable,
-  private std::hash_map<const BasicBlock*, SchedGraph*>
+  private std::vector<SchedGraph*>
 {
 private:
   const Function* method;
   
 public:
-  typedef std::hash_map<const BasicBlock*, SchedGraph*> map_base;
-  using map_base::iterator;
-  using map_base::const_iterator;
+  typedef std::vector<SchedGraph*> baseVector;
+  using baseVector::iterator;
+  using baseVector::const_iterator;
   
 public:
   /*ctor*/	SchedGraphSet		(const Function * function,
 					 const TargetMachine& target);
   /*dtor*/	~SchedGraphSet		();
   
-  //
-  // Accessors
-  //
-  SchedGraph*	getGraphForBasicBlock	(const BasicBlock* bb) const {
-    const_iterator onePair = this->find(bb);
-    return (onePair != this->end())? (*onePair).second : NULL;
-  }
-  
-  //
   // Iterators
-  //
-  using map_base::begin;
-  using map_base::end;
+  using baseVector::begin;
+  using baseVector::end;
   
-  //
   // Debugging support
-  // 
   void		dump	() const;
   
 private:
-  inline void	noteGraphForBlock(const BasicBlock* bb, SchedGraph* graph) {
-    assert((*this)[bb] == NULL);
-    (*this)[bb] = graph;
+  inline void	addGraph(SchedGraph* graph) {
+    assert(graph != NULL);
+    this->push_back(graph);
   }
-
-  //
+  
   // Graph builder
-  //
   void		buildGraphsForMethod	(const Function *F,
 					 const TargetMachine& target);
 };
