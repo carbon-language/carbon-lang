@@ -185,15 +185,19 @@ void Printer::emitConstantValueOnly(const Constant *CV) {
     }
     case Instruction::Cast: {
       // Support only non-converting or widening casts for now, that is, ones
-      // that do not involve a change in value.  This assertion is not a
-      // complete check.
+      // that do not involve a change in value.  This assertion is really gross,
+      // and may not even be a complete check.
       Constant *Op = CE->getOperand(0);
       const Type *OpTy = Op->getType(), *Ty = CE->getType();
 
+      // Remember, kids, pointers on x86 can be losslessly converted back and
+      // forth into 32-bit or wider integers, regardless of signedness. :-P
       assert(((isa<PointerType>(OpTy)
-               && (Ty == Type::LongTy || Ty == Type::ULongTy))
+               && (Ty == Type::LongTy || Ty == Type::ULongTy
+                   || Ty == Type::IntTy || Ty == Type::UIntTy))
               || (isa<PointerType>(Ty)
-                  && (OpTy == Type::LongTy || OpTy == Type::ULongTy))
+                  && (OpTy == Type::LongTy || OpTy == Type::ULongTy
+                      || OpTy == Type::IntTy || OpTy == Type::UIntTy))
               || (((TD.getTypeSize(Ty) >= TD.getTypeSize(OpTy))
                    && OpTy->isLosslesslyConvertibleTo(Ty))))
              && "FIXME: Don't yet support this kind of constant cast expr");
