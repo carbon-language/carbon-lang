@@ -297,6 +297,11 @@ AC_LIBTOOL_DLOPEN
 AC_LIB_LTDL
 AC_PROG_LIBTOOL
 
+if test "$lt_cv_dlopen_self" = "yes" ; then
+  AC_DEFINE([CAN_DLOPEN_SELF],[1],
+              [Define if dlopen(0) will open the symbols of the program])
+fi
+
 dnl Check if we know how to tell etags we are using C++:
 etags_version=`$ETAGS --version 2>&1`
 case "$etags_version" in
@@ -465,7 +470,7 @@ AC_CHECK_FUNC(mprotect,,
 
 if test "$ac_cv_func_mmap_fixed_mapped" = "no"
 then
-  AC_MSG_WARN([mmap() required but not found])
+  AC_MSG_WARN([mmap() of a fixed address required but not supported])
 fi
 if test "$ac_cv_func_mmap_file" = "no"
 then

@@ -1,5 +1,8 @@
 /* include/llvm/Config/config.h.in.  Generated from autoconf/configure.ac by autoheader.  */
 
+/* Define if dlopen(0) will open the symbols of the program */
+#undef CAN_DLOPEN_SELF
+
 /* Define to one of `_getb67', `GETB67', `getb67' for Cray-2 and Cray-YMP
    systems. This function is required for `alloca.c' support on those systems.
    */

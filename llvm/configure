@@ -5514,7 +5514,7 @@ fi
 if test x"${ac_cv_path_tclsh}" = x ; then
   echo "$as_me:$LINENO: result: none" >&5
 echo "${ECHO_T}none" >&6
-  for ac_prog in tclsh8.4 tclsh8.4.8 tclsh8.4.7 tclsh8.4.6 tclsh8.4.5 tclsh8.4.4 tclsh8.4.3 tclsh8.4.2 tclsh8.4.1 tclsh8.4.0 tclsh8.3 tclsh8.3.5 tclsh8.3.4 tclsh8.3.3 .tclsh8.3.2 tclsh8.3.1 tclsh8.3.0 tclsh
+  for ac_prog in tclsh8.4 tclsh8.4.8 tclsh8.4.7 tclsh8.4.6 tclsh8.4.5 tclsh8.4.4 tclsh8.4.3 tclsh8.4.2 tclsh8.4.1 tclsh8.4.0 tclsh8.3 tclsh8.3.5 tclsh8.3.4 tclsh8.3.3 tclsh8.3.2 tclsh8.3.1 tclsh8.3.0 tclsh
 do
   # Extract the first word of "$ac_prog", so it can be a program name with args.
 set dummy $ac_prog; ac_word=$2
@@ -24589,6 +24589,14 @@ LIBTOOL='$(SHELL) $(top_builddir)/mklib'
 
 
 
+if test "$lt_cv_dlopen_self" = "yes" ; then
+
+cat >>confdefs.h <<\_ACEOF
+#define CAN_DLOPEN_SELF 1
+_ACEOF
+
+fi
+
 etags_version=`$ETAGS --version 2>&1`
 case "$etags_version" in
 	*Eexuberant*) ETAGSFLAGS="--language-force=c++" ;;
@@ -29852,7 +29860,7 @@ echo $ECHO_N "checking if /dev/zero is needed for mmap... $ECHO_C" >&6
 if test "${ac_cv_need_dev_zero_for_mmap+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
-  if test "$llvm_cv_os_type" == "Interix" ; then
+  if test "$llvm_cv_os_type" = "Interix" ; then
    ac_cv_need_dev_zero_for_mmap=yes
  else
    ac_cv_need_dev_zero_for_mmap=no
@@ -29969,8 +29977,8 @@ fi
 
 if test "$ac_cv_func_mmap_fixed_mapped" = "no"
 then
-  { echo "$as_me:$LINENO: WARNING: mmap() required but not found" >&5
-echo "$as_me: WARNING: mmap() required but not found" >&2;}
+  { echo "$as_me:$LINENO: WARNING: mmap() of a fixed address required but not supported" >&5
+echo "$as_me: WARNING: mmap() of a fixed address required but not supported" >&2;}
 fi
 if test "$ac_cv_func_mmap_file" = "no"
 then
