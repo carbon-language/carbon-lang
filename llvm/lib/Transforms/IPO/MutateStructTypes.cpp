@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Transforms/IPO/MutateStructTypes.h"
+#include "llvm/Transforms/MutateStructTypes.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
 #include "llvm/SymbolTable.h"

@@ -6,7 +6,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/IPO.h"
-#include "llvm/Transforms/IPO/MutateStructTypes.h"
+#include "llvm/Transforms/MutateStructTypes.h"
 #include "llvm/Analysis/FindUsedTypes.h"
 #include "llvm/Analysis/FindUnsafePointerTypes.h"
 #include "llvm/Target/TargetData.h"
