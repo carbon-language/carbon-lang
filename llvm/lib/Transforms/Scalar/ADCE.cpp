@@ -84,8 +84,8 @@ private:
   }
 
   inline void markTerminatorLive(const BasicBlock *BB) {
-    DEBUG(std::cerr << "Terminat Live: " << BB->getTerminator());
-    markInstructionLive((Instruction*)BB->getTerminator());
+    DEBUG(std::cerr << "Terminator Live: " << BB->getTerminator());
+    markInstructionLive(const_cast<TerminatorInst*>(BB->getTerminator()));
   }
 };
 
@@ -176,7 +176,7 @@ bool ADCE::doADCE() {
        BBI != BBE; ++BBI) {
     BasicBlock *BB = *BBI;
     for (BasicBlock::iterator II = BB->begin(), EI = BB->end(); II != EI; ) {
-      if (II->mayWriteToMemory() || II->getOpcode() == Instruction::Ret) {
+      if (II->mayWriteToMemory() || isa<ReturnInst>(II) || isa<UnwindInst>(II)){
 	markInstructionLive(II);
         ++II;  // Increment the inst iterator if the inst wasn't deleted
       } else if (isInstructionTriviallyDead(II)) {
