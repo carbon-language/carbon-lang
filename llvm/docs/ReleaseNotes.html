@@ -126,6 +126,8 @@ bytecode format and (b) those who really want to understand or document the
 details of the bytecode format.</li>
 <li>The <a href="BytecodeFormat.html">LLVM Bytecode file format</a> is now 
     being documented.</li>
+<li>LLVM now provides an <a href="LangRef.html#i_isnan">llvm.isnan</a> intrinsic
+for efficient implementation of unordered floating point comparisons.</li>
 </ol>
 
 </div>
@@ -266,6 +268,7 @@ of the same name, both having constant pools</a></li>
 physical register use of aliased definition</a></li>
 <li><a href="http://llvm.cs.uiuc.edu/PR340">Verifier misses malformed switch instruction</a></li>
 <li><a href="http://llvm.cs.uiuc.edu/PR315">[jit] abort, don't warn, when missing external functions encountered</a></li>
+<li><a href="http://llvm.cs.uiuc.edu/PR369">[X86] stackifier crash on floating point setcc X, X</a></li>
 </ol>
 
 <p>Bugs in the C/C++ front-end:</p>
