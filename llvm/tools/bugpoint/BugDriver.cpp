@@ -147,6 +147,16 @@ bool BugDriver::run() {
   // Set up the execution environment, selecting a method to run LLVM bytecode.
   if (initializeExecutionEnvironment()) return true;
 
+  // Test to see if we have a code generator crash.
+  std::cout << "Running the code generator to test for a crash: ";
+  try {
+    compileProgram(Program);
+  } catch (ToolExecutionError &TEE) {
+    std::cout << TEE.what();
+    return debugCodeGeneratorCrash();
+  }
+
+
   // Run the raw input to see where we are coming from.  If a reference output
   // was specified, make sure that the raw output matches it.  If not, it's a
   // problem in the front-end or the code generator.
@@ -189,7 +199,12 @@ bool BugDriver::run() {
 
   std::cout << "\n*** Input program does not match reference diff!\n";
   std::cout << "Debugging code generator problem!\n";
-  return debugCodeGenerator();
+  try {
+    return debugCodeGenerator();
+  } catch (ToolExecutionError &TEE) {
+    std::cerr << TEE.what();
+    return debugCodeGeneratorCrash();
+  }
 }
 
 void BugDriver::PrintFunctionList(const std::vector<Function*> &Funcs) {
