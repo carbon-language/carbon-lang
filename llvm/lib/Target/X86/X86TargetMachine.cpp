@@ -39,7 +39,8 @@ X86TargetMachine::X86TargetMachine(unsigned Config)
 		  (Config & TM::EndianMask) == TM::LittleEndian,
 		  (Config & TM::PtrSizeMask) == TM::PtrSize64 ? 8 : 4,
 		  (Config & TM::PtrSizeMask) == TM::PtrSize64 ? 8 : 4,
-		  (Config & TM::PtrSizeMask) == TM::PtrSize64 ? 8 : 4),
+		  (Config & TM::PtrSizeMask) == TM::PtrSize64 ? 8 : 4,
+                  4, (Config & TM::PtrSizeMask) == TM::PtrSize64 ? 8 : 4),
   FrameInfo(TargetFrameInfo::StackGrowsDown, 8/*16 for SSE*/, 4) {
 }
 
