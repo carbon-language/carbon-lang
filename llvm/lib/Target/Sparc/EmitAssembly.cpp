@@ -68,6 +68,23 @@ private :
     Out << "\"\n";
   }
 
+  string getEscapedString(const string &S) {
+    string Result;
+
+    for (unsigned i = 0; i < S.size(); ++i) {
+      char C = S[i];
+      if ((C >= 'a' && C <= 'z') || (C >= 'A' && C <= 'Z') ||
+          (C >= '0' && C <= '9')) {
+        Result += C;
+      } else {
+        Result += '$';
+        Result += char('0' + ((unsigned char)C >> 4));
+        Result += char('0' + (C & 0xF));
+      }
+    }
+    return Result;
+  }
+
   // getID - Return a valid identifier for the specified value.  Base it on
   // the name of the identifier if possible, use a numbered value based on
   // prefix otherwise.  FPrefix is always prepended to the output identifier.
@@ -75,7 +92,7 @@ private :
   string getID(const Value *V, const char *Prefix, const char *FPrefix = 0) {
     string FP(FPrefix ? FPrefix : "");  // "Forced prefix"
     if (V->hasName()) {
-      return FP + V->getName();  // TODO: Escape name if needed
+      return FP + getEscapedString(V->getName());
     } else {
       assert(Table.getValSlot(V) != -1 && "Value not in value table!");
       return FP + string(Prefix) + itostr(Table.getValSlot(V));
@@ -91,7 +108,10 @@ private :
   unsigned getOperandMask(unsigned Opcode) {
     switch (Opcode) {
     case SUBcc:   return 1 << 3;  // Remove CC argument
-    case BA:      return 1 << 0;  // Remove Arg #0, which is always null
+    case BA:    case BRZ:         // Remove Arg #0, which is always null or xcc
+    case BRLEZ: case BRLZ:
+    case BRNZ:  case BRGZ:
+    case BRGEZ:   return 1 << 0;
     default:      return 0;       // By default, don't hack operands...
     }
   }
@@ -176,7 +196,7 @@ void SparcAsmPrinter::emitMethod(const Method *M) {
   Out << "!****** Outputing Method: " << MethName << " ******\n";
   enterSection(Text);
   Out << "\t.align 4\n\t.global\t" << MethName << "\n";
-  Out << "\t.type\t" << MethName << ",#function\n";
+  //Out << "\t.type\t" << MethName << ",#function\n";
   Out << MethName << ":\n";
 
   // Output code for all of the basic blocks in the method...
