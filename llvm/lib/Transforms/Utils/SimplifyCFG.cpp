@@ -852,84 +852,15 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
             Value *FalseVal =
               PN->getIncomingValue(PN->getIncomingBlock(0) == IfTrue);
 
-            // FIXME: when we have a 'select' statement, we can be completely
-            // generic and clean here and let the instcombine pass clean up
-            // after us, by folding the select instructions away when possible.
-            //
-            if (TrueVal == FalseVal) {
-              // Degenerate case...
-              PN->replaceAllUsesWith(TrueVal);
-              BB->getInstList().erase(PN);
-              Changed = true;
-            } else if (isa<ConstantBool>(TrueVal) &&
-                       isa<ConstantBool>(FalseVal)) {
-              if (TrueVal == ConstantBool::True) {
-                // The PHI node produces the same thing as the condition.
-                PN->replaceAllUsesWith(IfCond);
-              } else {
-                // The PHI node produces the inverse of the condition.  Insert a
-                // "NOT" instruction, which is really a XOR.
-                Value *InverseCond =
-                  BinaryOperator::createNot(IfCond, IfCond->getName()+".inv",
-                                            AfterPHIIt);
-                PN->replaceAllUsesWith(InverseCond);
-              }
-              BB->getInstList().erase(PN);
-              Changed = true;
-            } else if (isa<ConstantInt>(TrueVal) && isa<ConstantInt>(FalseVal)){
-              // If this is a PHI of two constant integers, we insert a cast of
-              // the boolean to the integer type in question, giving us 0 or 1.
-              // Then we multiply this by the difference of the two constants,
-              // giving us 0 if false, and the difference if true.  We add this
-              // result to the base constant, giving us our final value.  We
-              // rely on the instruction combiner to eliminate many special
-              // cases, like turning multiplies into shifts when possible.
-              std::string Name = PN->getName(); PN->setName("");
-              Value *TheCast = new CastInst(IfCond, TrueVal->getType(),
-                                            Name, AfterPHIIt);
-              Constant *TheDiff = ConstantExpr::get(Instruction::Sub,
-                                                    cast<Constant>(TrueVal),
-                                                    cast<Constant>(FalseVal));
-              Value *V = TheCast;
-              if (TheDiff != ConstantInt::get(TrueVal->getType(), 1))
-                V = BinaryOperator::create(Instruction::Mul, TheCast,
-                                           TheDiff, TheCast->getName()+".scale",
-                                           AfterPHIIt);
-              if (!cast<Constant>(FalseVal)->isNullValue())
-                V = BinaryOperator::create(Instruction::Add, V, FalseVal,
-                                           V->getName()+".offs", AfterPHIIt);
-              PN->replaceAllUsesWith(V);
-              BB->getInstList().erase(PN);
-              Changed = true;
-            } else if (isa<ConstantInt>(FalseVal) &&
-                       cast<Constant>(FalseVal)->isNullValue()) {
-              // If the false condition is an integral zero value, we can
-              // compute the PHI by multiplying the condition by the other
-              // value.
-              std::string Name = PN->getName(); PN->setName("");
-              Value *TheCast = new CastInst(IfCond, TrueVal->getType(),
-                                            Name+".c", AfterPHIIt);
-              Value *V = BinaryOperator::create(Instruction::Mul, TrueVal,
-                                                TheCast, Name, AfterPHIIt);
-              PN->replaceAllUsesWith(V);
-              BB->getInstList().erase(PN);
-              Changed = true;
-            } else if (isa<ConstantInt>(TrueVal) &&
-                       cast<Constant>(TrueVal)->isNullValue()) {
-              // If the true condition is an integral zero value, we can compute
-              // the PHI by multiplying the inverse condition by the other
-              // value.
-              std::string Name = PN->getName(); PN->setName("");
-              Value *NotCond = BinaryOperator::createNot(IfCond, Name+".inv",
-                                                         AfterPHIIt);
-              Value *TheCast = new CastInst(NotCond, TrueVal->getType(),
-                                            Name+".inv", AfterPHIIt);
-              Value *V = BinaryOperator::create(Instruction::Mul, FalseVal,
-                                                TheCast, Name, AfterPHIIt);
-              PN->replaceAllUsesWith(V);
-              BB->getInstList().erase(PN);
-              Changed = true;
-            }
+            // Change the PHI node into a select instruction.
+            BasicBlock::iterator InsertPos = PN;
+            while (isa<PHINode>(InsertPos)) ++InsertPos;
+
+            std::string Name = PN->getName(); PN->setName("");
+            PN->replaceAllUsesWith(new SelectInst(IfCond, TrueVal, FalseVal,
+                                                  Name, InsertPos));
+            BB->getInstList().erase(PN);
+            Changed = true;
           }
         }
       }
