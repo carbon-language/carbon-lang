@@ -2244,9 +2244,9 @@ Instruction *InstCombiner::FoldGEPSetCC(User *GEPLHS, Value *RHS,
       unsigned DiffOperand = 0;     // The operand that differs.
       for (unsigned i = 1, e = GEPRHS->getNumOperands(); i != e; ++i)
         if (GEPLHS->getOperand(i) != GEPRHS->getOperand(i)) {
-          if (GEPLHS->getOperand(i)->getType() != 
-                     GEPRHS->getOperand(i)->getType()) {
-            // Irreconsilable differences.
+          if (GEPLHS->getOperand(i)->getType()->getPrimitiveSize() != 
+                     GEPRHS->getOperand(i)->getType()->getPrimitiveSize()) {
+            // Irreconcilable differences.
             NumDifferences = 2;
             break;
           } else {
@@ -2259,8 +2259,12 @@ Instruction *InstCombiner::FoldGEPSetCC(User *GEPLHS, Value *RHS,
         return ReplaceInstUsesWith(I, // No comparison is needed here.
                                  ConstantBool::get(Cond == Instruction::SetEQ));
       else if (NumDifferences == 1) {
-        return new SetCondInst(Cond, GEPLHS->getOperand(DiffOperand),
-                               GEPRHS->getOperand(DiffOperand));
+        Value *LHSV = GEPLHS->getOperand(DiffOperand);
+        Value *RHSV = GEPRHS->getOperand(DiffOperand);
+        if (LHSV->getType() != RHSV->getType())
+          LHSV = InsertNewInstBefore(new CastInst(LHSV, RHSV->getType(),
+                                                  LHSV->getName()+".c"), I);
+          return new SetCondInst(Cond, LHSV, RHSV);
       }
     }
 
