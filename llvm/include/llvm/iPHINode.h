@@ -61,7 +61,12 @@ public:
   }
 
   /// addIncoming - Add an incoming value to the end of the PHI list
-  void addIncoming(Value *D, BasicBlock *BB);
+  void addIncoming(Value *D, BasicBlock *BB) {
+    assert(getType() == D->getType() &&
+           "All operands to PHI node must be the same type as the PHI node!");
+    Operands.push_back(Use(D, this));
+    Operands.push_back(Use((Value*)BB, this));
+  }
   
   /// removeIncomingValue - Remove an incoming value.  This is useful if a
   /// predecessor basic block is deleted.  The value removed is returned.
@@ -71,8 +76,13 @@ public:
   /// dummy values.  The only time there should be zero incoming values to a PHI
   /// node is when the block is dead, so this strategy is sound.
   ///
-  Value *removeIncomingValue(const BasicBlock *BB,
-                             bool DeletePHIIfEmpty = true);
+  Value *removeIncomingValue(unsigned Idx, bool DeletePHIIfEmpty = true);
+
+  Value *removeIncomingValue(const BasicBlock *BB, bool DeletePHIIfEmpty =true){
+    int Idx = getBasicBlockIndex(BB);
+    assert(Idx >= 0 && "Invalid basic block argument to remove!");
+    return removeIncomingValue(Idx, DeletePHIIfEmpty);
+  }
 
   /// getBasicBlockIndex - Return the first index of the specified basic 
   /// block in the value list for this PHI.  Returns -1 if no instance.

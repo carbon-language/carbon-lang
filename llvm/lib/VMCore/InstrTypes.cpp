@@ -33,22 +33,13 @@ PHINode::PHINode(const PHINode &PN)
   }
 }
 
-void PHINode::addIncoming(Value *D, BasicBlock *BB) {
-  assert(getType() == D->getType() &&
-         "All operands to PHI node must be the same type as the PHI node!");
-  Operands.push_back(Use(D, this));
-  Operands.push_back(Use(BB, this));
-}
-
 // removeIncomingValue - Remove an incoming value.  This is useful if a
 // predecessor basic block is deleted.
-Value *PHINode::removeIncomingValue(const BasicBlock *BB,
-                                    bool DeletePHIIfEmpty) {
-  op_iterator Idx = find(Operands.begin(), Operands.end(), (const Value*)BB);
-  assert(Idx != Operands.end() && "BB not in PHI node!");
-  --Idx;  // Back up to value prior to Basic block
-  Value *Removed = *Idx;
-  Operands.erase(Idx, Idx+2);  // Erase Value and BasicBlock
+Value *PHINode::removeIncomingValue(unsigned Idx, bool DeletePHIIfEmpty) {
+  assert(Idx*2 < Operands.size() && "BB not in PHI node!");
+  Value *Removed = Operands[Idx*2];
+  Operands.erase(Operands.begin()+Idx*2,     // Erase Value and BasicBlock
+                 Operands.begin()+Idx*2+2);
 
   // If the PHI node is dead, because it has zero entries, nuke it now.
   if (getNumOperands() == 0 && DeletePHIIfEmpty) {
