@@ -8,6 +8,7 @@
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/AliasAnalysis.h"
+#include "llvm/Analysis/Dominators.h"
 #include "llvm/iOperators.h"
 #include "llvm/iMemory.h"
 #include "llvm/Support/InstVisitor.h"
@@ -30,6 +31,7 @@ namespace {
       AU.preservesCFG();
       AU.addRequiredID(LoopPreheadersID);
       AU.addRequired<LoopInfo>();
+      AU.addRequired<DominatorTree>();
       AU.addRequired<AliasAnalysis>();
     }
 
@@ -42,6 +44,14 @@ namespace {
     /// visitLoop - Hoist expressions out of the specified loop...    
     ///
     void visitLoop(Loop *L);
+
+    /// HoistRegion - Walk the specified region of the CFG (defined by all
+    /// blocks dominated by the specified block, and that are in the current
+    /// loop) in depth first order w.r.t the DominatorTree.  This allows us to
+    /// visit defintions before uses, allowing us to hoist a loop body in one
+    /// pass without iteration.
+    ///
+    void HoistRegion(DominatorTree::Node *N);
 
     /// inCurrentLoop - Little predicate that returns false if the specified
     /// basic block is in a subloop of the current one, not the current one
@@ -139,22 +149,42 @@ void LICM::visitLoop(Loop *L) {
   // their loop, into this loop, so there is no need to process the BODIES of
   // the subloops).
   //
-  for (std::vector<BasicBlock*>::const_iterator
-         I = L->getBlocks().begin(), E = L->getBlocks().end(); I != E; ++I)
-    if (inCurrentLoop(*I))
-      visit(**I);
+  // Traverse the body of the loop in depth first order on the dominator tree so
+  // that we are guaranteed to see definitions before we see uses.  This allows
+  // us to perform the LICM transformation in one pass, without iteration.
+  //
+  HoistRegion(getAnalysis<DominatorTree>()[L->getHeader()]);
 
   // Clear out loops state information for the next iteration
   CurLoop = 0;
   Preheader = 0;
 }
 
+/// HoistRegion - Walk the specified region of the CFG (defined by all blocks
+/// dominated by the specified block, and that are in the current loop) in depth
+/// first order w.r.t the DominatorTree.  This allows us to visit defintions
+/// before uses, allowing us to hoist a loop body in one pass without iteration.
+///
+void LICM::HoistRegion(DominatorTree::Node *N) {
+  assert(N != 0 && "Null dominator tree node?");
+
+  // This subregion is not in the loop, it has already been already been hoisted
+  if (!inCurrentLoop(N->getNode()))
+    return;
+
+  visit(*N->getNode());
+
+  const std::vector<DominatorTree::Node*> &Children = N->getChildren();
+  for (unsigned i = 0, e = Children.size(); i != e; ++i)
+    HoistRegion(Children[i]);
+}
+
+
 /// hoist - When an instruction is found to only use loop invariant operands
 /// that is safe to hoist, this instruction is called to do the dirty work.
 ///
 void LICM::hoist(Instruction &Inst) {
-  if (Inst.use_empty()) return;  // Don't (re) hoist dead instructions!
-  //cerr << "Hoisting " << Inst;
+  DEBUG(std::cerr << "LICM hoisting: " << Inst);
 
   BasicBlock *Header = CurLoop->getHeader();
 
