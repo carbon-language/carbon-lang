@@ -47,7 +47,6 @@ Constant *ConstantFoldInstruction(Instruction *I) {
   switch (I->getOpcode()) {
   case Instruction::Cast:
     return ConstRules::get(*Op0)->castTo(Op0, I->getType());
-  case Instruction::Not:     return ~*Op0;
   case Instruction::Add:     return *Op0 + *Op1;
   case Instruction::Sub:     return *Op0 - *Op1;
   case Instruction::Mul:     return *Op0 * *Op1;
@@ -72,13 +71,6 @@ Constant *ConstantFoldInstruction(Instruction *I) {
 
 Constant *ConstantFoldCastInstruction(const Constant *V, const Type *DestTy) {
   return ConstRules::get(*V)->castTo(V, DestTy);
-}
-
-Constant *ConstantFoldUnaryInstruction(unsigned Opcode, const Constant *V) {
-  switch (Opcode) {
-  case Instruction::Not:  return ~*V;
-  }
-  return 0;
 }
 
 Constant *ConstantFoldBinaryInstruction(unsigned Opcode, const Constant *V1,
@@ -132,10 +124,6 @@ class TemplateRules : public ConstRules {
   // Redirecting functions that cast to the appropriate types
   //===--------------------------------------------------------------------===//
 
-  virtual Constant *op_not(const Constant *V) const {
-    return SubClassName::Not((const ArgType *)V);
-  }
-  
   virtual Constant *add(const Constant *V1, const Constant *V2) const { 
     return SubClassName::Add((const ArgType *)V1, (const ArgType *)V2);  
   }
@@ -215,8 +203,6 @@ class TemplateRules : public ConstRules {
   // Default "noop" implementations
   //===--------------------------------------------------------------------===//
 
-  static Constant *Not(const ArgType *V) { return 0; }
-
   static Constant *Add(const ArgType *V1, const ArgType *V2) { return 0; }
   static Constant *Sub(const ArgType *V1, const ArgType *V2) { return 0; }
   static Constant *Mul(const ArgType *V1, const ArgType *V2) { return 0; }
@@ -267,10 +253,6 @@ struct EmptyRules : public TemplateRules<Constant, EmptyRules> {
 // BoolRules provides a concrete base class of ConstRules for the 'bool' type.
 //
 struct BoolRules : public TemplateRules<ConstantBool, BoolRules> {
-
-  static Constant *Not(const ConstantBool *V) { 
-    return ConstantBool::get(!V->getValue());
-  }
 
   static Constant *And(const ConstantBool *V1, const ConstantBool *V2) {
     return ConstantBool::get(V1->getValue() & V2->getValue());
@@ -425,9 +407,6 @@ template <class ConstantClass, class BuiltinType, Type **Ty>
 struct DirectIntRules
   : public DirectRules<ConstantClass, BuiltinType, Ty,
                        DirectIntRules<ConstantClass, BuiltinType, Ty> > {
-  static Constant *Not(const ConstantClass *V) { 
-    return ConstantClass::get(*Ty, ~(BuiltinType)V->getValue());;
-  }
 
   static Constant *Rem(const ConstantClass *V1,
                        const ConstantClass *V2) {
