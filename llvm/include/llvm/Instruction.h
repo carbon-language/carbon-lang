@@ -68,7 +68,6 @@ public:
   inline bool isTerminator() const {   // Instance of TerminatorInst?
     return iType >= FirstTermOp && iType < NumTermOps;
   }
-  inline bool isDefinition() const { return !isTerminator(); }
   inline bool isUnaryOp() const {
     return iType >= FirstUnaryOp && iType < NumUnaryOps;
   }
