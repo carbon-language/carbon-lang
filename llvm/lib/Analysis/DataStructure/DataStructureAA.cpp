@@ -174,13 +174,13 @@ AliasAnalysis::AliasResult DSAA::alias(const Value *V1, unsigned V1Size,
 AliasAnalysis::ModRefResult
 DSAA::getModRefInfo(CallSite CS, Value *P, unsigned Size) {
   Function *F = CS.getCalledFunction();
-  if (!F) return pointsToConstantMemory(P) ? Ref : ModRef;
-  if (F->isExternal()) return ModRef;
+  if (!F || F->isExternal())
+    return AliasAnalysis::getModRefInfo(CS, P, Size);
 
   // Clone the function TD graph, clearing off Mod/Ref flags
   const Function *csParent = CS.getInstruction()->getParent()->getParent();
   DSGraph TDGraph(TD->getDSGraph(*csParent));
-  TDGraph.maskNodeTypes(0);
+  TDGraph.maskNodeTypes(~(DSNode::Modified|DSNode::Read));
   
   // Insert the callee's BU graph into the TD graph
   const DSGraph &BUGraph = BU->getDSGraph(*F);
