@@ -15,6 +15,7 @@
 #include "VM.h"
 #include "llvm/Function.h"
 #include "llvm/ModuleProvider.h"
+#include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineCodeEmitter.h"
 #include "llvm/Target/TargetMachine.h"
 
@@ -91,6 +92,7 @@ void *VM::recompileAndRelinkFunction(Function *F) {
 
   void *OldAddr = Addr;
   Addr = 0;
+  MachineFunction::destruct (F);
   runJITOnFunction (F);
   assert(Addr && "Code generation didn't add function to GlobalAddress table!");
   TM.replaceMachineCodeForFunction (OldAddr, Addr);
