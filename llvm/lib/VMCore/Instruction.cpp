@@ -35,13 +35,13 @@ Instruction::Instruction(const Type *ty, unsigned it, const std::string &Name,
 }
 
 void Instruction::setParent(BasicBlock *P) {
-  if (getParent())
-    LeakDetector::addGarbageObject(this);
+  if (getParent()) {
+    if (!P) LeakDetector::addGarbageObject(this);
+  } else {
+    if (P) LeakDetector::removeGarbageObject(this);
+  }
 
   Parent = P;
-
-  if (getParent())
-    LeakDetector::removeGarbageObject(this);
 }
 
 // Specialize setName to take care of symbol table majik
