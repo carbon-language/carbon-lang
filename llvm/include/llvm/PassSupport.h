@@ -20,61 +20,64 @@ class TargetData;
 class TargetMachine;
 
 //===---------------------------------------------------------------------------
-// PassInfo class - An instance of this class exists for every pass known by the
-// system, and can be obtained from a live Pass by calling its getPassInfo()
-// method.  These objects are set up by the RegisterPass<> template, defined
-// below.
-//
+/// PassInfo class - An instance of this class exists for every pass known by
+/// the system, and can be obtained from a live Pass by calling its
+/// getPassInfo() method.  These objects are set up by the RegisterPass<>
+/// template, defined below.
+///
 class PassInfo {
   const char           *PassName;      // Nice name for Pass
   const char           *PassArgument;  // Command Line argument to run this pass
   const std::type_info &TypeInfo;      // type_info object for this Pass class
   unsigned char PassType;              // Set of enums values below...
+  std::vector<const PassInfo*> ItfImpl;// Interfaces implemented by this pass
 
   Pass *(*NormalCtor)();               // No argument ctor
   Pass *(*DataCtor)(const TargetData&);// Ctor taking TargetData object...
 
 public:
-  // PassType - Define symbolic constants that can be used to test to see if
-  // this pass should be listed by analyze or opt.  Passes can use none, one or
-  // many of these flags or'd together.  It is not legal to combine the
-  // AnalysisGroup flag with others.
-  //
+  /// PassType - Define symbolic constants that can be used to test to see if
+  /// this pass should be listed by analyze or opt.  Passes can use none, one or
+  /// many of these flags or'd together.  It is not legal to combine the
+  /// AnalysisGroup flag with others.
+  ///
   enum {
     Analysis = 1, Optimization = 2, LLC = 4, AnalysisGroup = 8
   };
 
-  // PassInfo ctor - Do not call this directly, this should only be invoked
-  // through RegisterPass.
+  /// PassInfo ctor - Do not call this directly, this should only be invoked
+  /// through RegisterPass.
   PassInfo(const char *name, const char *arg, const std::type_info &ti, 
            unsigned pt, Pass *(*normal)(), Pass *(*data)(const TargetData &))
     : PassName(name), PassArgument(arg), TypeInfo(ti), PassType(pt),
       NormalCtor(normal), DataCtor(data) {
   }
 
-  // getPassName - Return the friendly name for the pass, never returns null
+  /// getPassName - Return the friendly name for the pass, never returns null
+  ///
   const char *getPassName() const { return PassName; }
   void setPassName(const char *Name) { PassName = Name; }
 
-  // getPassArgument - Return the command line option that may be passed to
-  // 'opt' that will cause this pass to be run.  This will return null if there
-  // is no argument.
-  //
+  /// getPassArgument - Return the command line option that may be passed to
+  /// 'opt' that will cause this pass to be run.  This will return null if there
+  /// is no argument.
+  ///
   const char *getPassArgument() const { return PassArgument; }
 
-  // getTypeInfo - Return the type_info object for the pass...
+  /// getTypeInfo - Return the type_info object for the pass...
+  ///
   const std::type_info &getTypeInfo() const { return TypeInfo; }
 
-  // getPassType - Return the PassType of a pass.  Note that this can be several
-  // different types or'd together.  This is _strictly_ for use by opt, analyze
-  // and llc for deciding which passes to use as command line options.
-  //
+  /// getPassType - Return the PassType of a pass.  Note that this can be
+  /// several different types or'd together.  This is _strictly_ for use by opt,
+  /// analyze and llc for deciding which passes to use as command line options.
+  ///
   unsigned getPassType() const { return PassType; }
 
-  // getNormalCtor - Return a pointer to a function, that when called, creates
-  // an instance of the pass and returns it.  This pointer may be null if there
-  // is no default constructor for the pass.
-  
+  /// getNormalCtor - Return a pointer to a function, that when called, creates
+  /// an instance of the pass and returns it.  This pointer may be null if there
+  /// is no default constructor for the pass.
+  /// 
   Pass *(*getNormalCtor() const)() {
     return NormalCtor;
   }
@@ -82,7 +85,7 @@ public:
     NormalCtor = Ctor;
   }
 
-  // createPass() - Use this 
+  /// createPass() - Use this method to create an instance of this pass.
   Pass *createPass() const {
     assert((PassType != AnalysisGroup || NormalCtor) &&
            "No default implementation found for analysis group!");
@@ -91,36 +94,52 @@ public:
     return NormalCtor();
   }
 
-  // getDataCtor - Return a pointer to a function that creates an instance of
-  // the pass and returns it.  This returns a constructor for a version of the
-  // pass that takes a TArgetData object as a parameter.
-  //
+  /// getDataCtor - Return a pointer to a function that creates an instance of
+  /// the pass and returns it.  This returns a constructor for a version of the
+  /// pass that takes a TArgetData object as a parameter.
+  ///
   Pass *(*getDataCtor() const)(const TargetData &) {
     return DataCtor;
+  }
+
+  /// addInterfaceImplemented - This method is called when this pass is
+  /// registered as a member of an analysis group with the RegisterAnalysisGroup
+  /// template.
+  ///
+  void addInterfaceImplemented(const PassInfo *ItfPI) {
+    ItfImpl.push_back(ItfPI);
+  }
+
+  /// getInterfacesImplemented - Return a list of all of the analysis group
+  /// interfaces implemented by this pass.
+  ///
+  const std::vector<const PassInfo*> &getInterfacesImplemented() const {
+    return ItfImpl;
   }
 };
 
 
 //===---------------------------------------------------------------------------
-// RegisterPass<t> template - This template class is used to notify the system
-// that a Pass is available for use, and registers it into the internal database
-// maintained by the PassManager.  Unless this template is used, opt, for
-// example will not be able to see the pass and attempts to create the pass will
-// fail. This template is used in the follow manner (at global scope, in your
-// .cpp file):
-// 
-// static RegisterPass<YourPassClassName> tmp("passopt", "My Pass Name");
-//
-// This statement will cause your pass to be created by calling the default
-// constructor exposed by the pass.  If you have a different constructor that
-// must be called, create a global constructor function (which takes the
-// arguments you need and returns a Pass*) and register your pass like this:
-//
-// Pass *createMyPass(foo &opt) { return new MyPass(opt); }
-// static RegisterPass<PassClassName> tmp("passopt", "My Name", createMyPass);
-// 
+/// RegisterPass<t> template - This template class is used to notify the system
+/// that a Pass is available for use, and registers it into the internal
+/// database maintained by the PassManager.  Unless this template is used, opt,
+/// for example will not be able to see the pass and attempts to create the pass
+/// will fail. This template is used in the follow manner (at global scope, in
+/// your .cpp file):
+/// 
+/// static RegisterPass<YourPassClassName> tmp("passopt", "My Pass Name");
+///
+/// This statement will cause your pass to be created by calling the default
+/// constructor exposed by the pass.  If you have a different constructor that
+/// must be called, create a global constructor function (which takes the
+/// arguments you need and returns a Pass*) and register your pass like this:
+///
+/// Pass *createMyPass(foo &opt) { return new MyPass(opt); }
+/// static RegisterPass<PassClassName> tmp("passopt", "My Name", createMyPass);
+/// 
 struct RegisterPassBase {
-  // getPassInfo - Get the pass info for the registered class...
+  /// getPassInfo - Get the pass info for the registered class...
+  ///
   const PassInfo *getPassInfo() const { return PIObj; }
 
   RegisterPassBase() : PIObj(0) {}
@@ -133,9 +152,9 @@ protected:
   void registerPass(PassInfo *);
   void unregisterPass(PassInfo *);
 
-  // setPreservesCFG - Notice that this pass only depends on the CFG, so
-  // transformations that do not modify the CFG do not invalidate this pass.
-  //
+  /// setPreservesCFG - Notice that this pass only depends on the CFG, so
+  /// transformations that do not modify the CFG do not invalidate this pass.
+  ///
   void setPreservesCFG();
 };
 
@@ -172,9 +191,9 @@ struct RegisterPass : public RegisterPassBase {
   }
 };
 
-// RegisterOpt - Register something that is to show up in Opt, this is just a
-// shortcut for specifying RegisterPass...
-//
+/// RegisterOpt - Register something that is to show up in Opt, this is just a
+/// shortcut for specifying RegisterPass...
+///
 template<typename PassName>
 struct RegisterOpt : public RegisterPassBase {
   RegisterOpt(const char *PassArg, const char *Name) {
@@ -183,13 +202,15 @@ struct RegisterOpt : public RegisterPassBase {
                               callDefaultCtor<PassName>, 0));
   }
 
-  // Register Pass using default constructor explicitly...
+  /// Register Pass using default constructor explicitly...
+  ///
   RegisterOpt(const char *PassArg, const char *Name, Pass *(*ctor)()) {
     registerPass(new PassInfo(Name, PassArg, typeid(PassName),
                               PassInfo::Optimization, ctor, 0));
   }
 
-  // Register Pass using TargetData constructor...
+  /// Register Pass using TargetData constructor...
+  ///
   RegisterOpt(const char *PassArg, const char *Name,
                Pass *(*datactor)(const TargetData &)) {
     registerPass(new PassInfo(Name, PassArg, typeid(PassName),
@@ -197,12 +218,12 @@ struct RegisterOpt : public RegisterPassBase {
   }
 };
 
-// RegisterAnalysis - Register something that is to show up in Analysis, this is
-// just a shortcut for specifying RegisterPass...  Analyses take a special
-// argument that, when set to true, tells the system that the analysis ONLY
-// depends on the shape of the CFG, so if a transformation preserves the CFG
-// that the analysis is not invalidated.
-//
+/// RegisterAnalysis - Register something that is to show up in Analysis, this
+/// is just a shortcut for specifying RegisterPass...  Analyses take a special
+/// argument that, when set to true, tells the system that the analysis ONLY
+/// depends on the shape of the CFG, so if a transformation preserves the CFG
+/// that the analysis is not invalidated.
+///
 template<typename PassName>
 struct RegisterAnalysis : public RegisterPassBase {
   RegisterAnalysis(const char *PassArg, const char *Name,
@@ -215,9 +236,9 @@ struct RegisterAnalysis : public RegisterPassBase {
   }
 };
 
-// RegisterLLC - Register something that is to show up in LLC, this is just a
-// shortcut for specifying RegisterPass...
-//
+/// RegisterLLC - Register something that is to show up in LLC, this is just a
+/// shortcut for specifying RegisterPass...
+///
 template<typename PassName>
 struct RegisterLLC : public RegisterPassBase {
   RegisterLLC(const char *PassArg, const char *Name) {
@@ -226,20 +247,23 @@ struct RegisterLLC : public RegisterPassBase {
                               callDefaultCtor<PassName>, 0));
   }
 
-  // Register Pass using default constructor explicitly...
+  /// Register Pass using default constructor explicitly...
+  ///
   RegisterLLC(const char *PassArg, const char *Name, Pass *(*ctor)()) {
     registerPass(new PassInfo(Name, PassArg, typeid(PassName),
                               PassInfo::LLC, ctor, 0));
   }
 
-  // Register Pass using TargetData constructor...
+  /// Register Pass using TargetData constructor...
+  ///
   RegisterLLC(const char *PassArg, const char *Name,
                Pass *(*datactor)(const TargetData &)) {
     registerPass(new PassInfo(Name, PassArg, typeid(PassName),
                               PassInfo::LLC, 0, datactor));
   }
 
-  // Register Pass using TargetMachine constructor...
+  /// Register Pass using TargetMachine constructor...
+  ///
   RegisterLLC(const char *PassArg, const char *Name,
                Pass *(*datactor)(TargetMachine &)) {
     registerPass(new PassInfo(Name, PassArg, typeid(PassName),
@@ -248,25 +272,25 @@ struct RegisterLLC : public RegisterPassBase {
 };
 
 
-// RegisterAnalysisGroup - Register a Pass as a member of an analysis _group_.
-// Analysis groups are used to define an interface (which need not derive from
-// Pass) that is required by passes to do their job.  Analysis Groups differ
-// from normal analyses because any available implementation of the group will
-// be used if it is available.
-//
-// If no analysis implementing the interface is available, a default
-// implementation is created and added.  A pass registers itself as the default
-// implementation by specifying 'true' as the third template argument of this
-// class.
-//
-// In addition to registering itself as an analysis group member, a pass must
-// register itself normally as well.  Passes may be members of multiple groups
-// and may still be "required" specifically by name.
-//
-// The actual interface may also be registered as well (by not specifying the
-// second template argument).  The interface should be registered to associate a
-// nice name with the interface.
-//
+/// RegisterAnalysisGroup - Register a Pass as a member of an analysis _group_.
+/// Analysis groups are used to define an interface (which need not derive from
+/// Pass) that is required by passes to do their job.  Analysis Groups differ
+/// from normal analyses because any available implementation of the group will
+/// be used if it is available.
+///
+/// If no analysis implementing the interface is available, a default
+/// implementation is created and added.  A pass registers itself as the default
+/// implementation by specifying 'true' as the third template argument of this
+/// class.
+///
+/// In addition to registering itself as an analysis group member, a pass must
+/// register itself normally as well.  Passes may be members of multiple groups
+/// and may still be "required" specifically by name.
+///
+/// The actual interface may also be registered as well (by not specifying the
+/// second template argument).  The interface should be registered to associate
+/// a nice name with the interface.
+///
 class RegisterAGBase : public RegisterPassBase {
   PassInfo *InterfaceInfo;
   const PassInfo *ImplementationInfo;
@@ -290,9 +314,9 @@ struct RegisterAnalysisGroup : public RegisterAGBase {
   }
 };
 
-// Define a specialization of RegisterAnalysisGroup that is used to set the name
-// for the analysis group.
-//
+/// Define a specialization of RegisterAnalysisGroup that is used to set the
+/// name for the analysis group.
+///
 template<typename Interface>
 struct RegisterAnalysisGroup<Interface, void, false> : public RegisterAGBase {
   RegisterAnalysisGroup(const char *Name)
@@ -304,46 +328,48 @@ struct RegisterAnalysisGroup<Interface, void, false> : public RegisterAGBase {
 
 
 //===---------------------------------------------------------------------------
-// PassRegistrationListener class - This class is meant to be derived from by
-// clients that are interested in which passes get registered and unregistered
-// at runtime (which can be because of the RegisterPass constructors being run
-// as the program starts up, or may be because a shared object just got loaded).
-// Deriving from the PassRegistationListener class automatically registers your
-// object to receive callbacks indicating when passes are loaded and removed.
-//
+/// PassRegistrationListener class - This class is meant to be derived from by
+/// clients that are interested in which passes get registered and unregistered
+/// at runtime (which can be because of the RegisterPass constructors being run
+/// as the program starts up, or may be because a shared object just got
+/// loaded).  Deriving from the PassRegistationListener class automatically
+/// registers your object to receive callbacks indicating when passes are loaded
+/// and removed.
+///
 struct PassRegistrationListener {
 
-  // PassRegistrationListener ctor - Add the current object to the list of
-  // PassRegistrationListeners...
+  /// PassRegistrationListener ctor - Add the current object to the list of
+  /// PassRegistrationListeners...
   PassRegistrationListener();
 
-  // dtor - Remove object from list of listeners...
+  /// dtor - Remove object from list of listeners...
+  ///
   virtual ~PassRegistrationListener();
 
-  // Callback functions - These functions are invoked whenever a pass is loaded
-  // or removed from the current executable.
-  //
+  /// Callback functions - These functions are invoked whenever a pass is loaded
+  /// or removed from the current executable.
+  ///
   virtual void passRegistered(const PassInfo *P) {}
   virtual void passUnregistered(const PassInfo *P) {}
 
-  // enumeratePasses - Iterate over the registered passes, calling the
-  // passEnumerate callback on each PassInfo object.
-  //
+  /// enumeratePasses - Iterate over the registered passes, calling the
+  /// passEnumerate callback on each PassInfo object.
+  ///
   void enumeratePasses();
 
-  // passEnumerate - Callback function invoked when someone calls
-  // enumeratePasses on this PassRegistrationListener object.
-  //
+  /// passEnumerate - Callback function invoked when someone calls
+  /// enumeratePasses on this PassRegistrationListener object.
+  ///
   virtual void passEnumerate(const PassInfo *P) {}
 };
 
 
 //===---------------------------------------------------------------------------
-// IncludeFile class - This class is used as a hack to make sure that the
-// implementation of a header file is included into a tool that uses the header.
-// This is solely to overcome problems linking .a files and not getting the
-// implementation of passes we need.
-//
+/// IncludeFile class - This class is used as a hack to make sure that the
+/// implementation of a header file is included into a tool that uses the
+/// header.  This is solely to overcome problems linking .a files and not
+/// getting the implementation of passes we need.
+///
 struct IncludeFile {
   IncludeFile(void *);
 };
