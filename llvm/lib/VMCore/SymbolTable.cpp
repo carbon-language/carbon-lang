@@ -84,21 +84,11 @@ Value *SymbolTable::lookup(const Type *Ty, const std::string &Name) const {
 
 
 // lookup a type by name - returns null on failure
-Type* SymbolTable::lookupType( const std::string& Name ) const {
-  type_const_iterator TI = tmap.find( Name );
-  if ( TI != tmap.end() )
+Type* SymbolTable::lookupType(const std::string& Name) const {
+  type_const_iterator TI = tmap.find(Name);
+  if (TI != tmap.end())
     return const_cast<Type*>(TI->second);
   return 0;
-}
-
-// Remove a value
-void SymbolTable::remove(Value *N) {
-  assert(N->hasName() && "Value doesn't have name!");
-
-  plane_iterator PI = pmap.find(N->getType());
-  assert(PI != pmap.end() &&
-         "Trying to remove a value that doesn't have a type plane yet!");
-  removeEntry(PI, PI->second.find(N->getName()));
 }
 
 /// changeName - Given a value with a non-empty name, remove its existing entry
@@ -133,42 +123,45 @@ void SymbolTable::changeName(Value *V, const std::string &name) {
   }
 }
 
+// Remove a value
+void SymbolTable::remove(Value *N) {
+  assert(N->hasName() && "Value doesn't have name!");
 
-// removeEntry - Remove a value from the symbol table...
-Value *SymbolTable::removeEntry(plane_iterator Plane, value_iterator Entry) {
-  assert(Plane != pmap.end() &&
-         Entry != Plane->second.end() && "Invalid entry to remove!");
+  plane_iterator PI = pmap.find(N->getType());
+  assert(PI != pmap.end() &&
+         "Trying to remove a value that doesn't have a type plane yet!");
+  ValueMap &VM = PI->second;
+  value_iterator Entry = VM.find(N->getName());
+  assert(Entry != VM.end() && "Invalid entry to remove!");
 
-  Value *Result = Entry->second;
 #if DEBUG_SYMBOL_TABLE
   dump();
-  std::cerr << " Removing Value: " << Result->getName() << "\n";
+  std::cerr << " Removing Value: " << Entry->second->getName() << "\n";
 #endif
 
   // Remove the value from the plane...
-  Plane->second.erase(Entry);
+  VM.erase(Entry);
 
   // If the plane is empty, remove it now!
-  if (Plane->second.empty()) {
+  if (VM.empty()) {
     // If the plane represented an abstract type that we were interested in,
     // unlink ourselves from this plane.
     //
-    if (Plane->first->isAbstract()) {
+    if (N->getType()->isAbstract()) {
 #if DEBUG_ABSTYPE
       std::cerr << "Plane Empty: Removing type: "
-                << Plane->first->getDescription() << "\n";
+                << N->getType()->getDescription() << "\n";
 #endif
-      cast<DerivedType>(Plane->first)->removeAbstractTypeUser(this);
+      cast<DerivedType>(N->getType())->removeAbstractTypeUser(this);
     }
 
-    pmap.erase(Plane);
+    pmap.erase(PI);
   }
-  return Result;
 }
 
-// removeEntry - Remove a type from the symbol table...
+// remove - Remove a type from the symbol table...
 Type* SymbolTable::remove(type_iterator Entry) {
-  assert( Entry != tmap.end() && "Invalid entry to remove!");
+  assert(Entry != tmap.end() && "Invalid entry to remove!");
 
   const Type* Result = Entry->second;
 
