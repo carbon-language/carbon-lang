@@ -3,7 +3,7 @@
 // This file implements the ReadArchiveFile interface, which allows a linker to
 // read all of the LLVM bytecode files contained in a .a file.  This file
 // understands the standard system .a file format.  This can only handle the .a
-// variant prevelant on linux systems so far, but may be extended.  See
+// variant prevalent on Linux systems so far, but may be extended.  See
 // information in this source file for more information:
 //   http://sources.redhat.com/cgi-bin/cvsweb.cgi/src/bfd/archive.c?cvsroot=src
 //
