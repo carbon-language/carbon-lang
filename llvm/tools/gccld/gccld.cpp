@@ -93,108 +93,16 @@ namespace {
   CO6("h", cl::Hidden, cl::desc("Compatibility option: ignored"));
 }
 
-namespace llvm {
-
-/// PrintAndReturn - Prints a message to standard error and returns a value
-/// usable for an exit status.
+/// PrintAndReturn - Prints a message to standard error and returns true.
 ///
 /// Inputs:
 ///  progname - The name of the program (i.e. argv[0]).
 ///  Message  - The message to print to standard error.
-///  Extra    - Extra information to print between the program name and thei
-///             message.  It is optional.
 ///
-/// Return value:
-///  Returns a value that can be used as the exit status (i.e. for exit()).
-///
-int
-PrintAndReturn(const char *progname,
-               const std::string &Message,
-               const std::string &Extra)
-{
-  std::cerr << progname << Extra << ": " << Message << "\n";
+static int PrintAndReturn(const char *progname, const std::string &Message) {
+  std::cerr << progname << ": " << Message << "\n";
   return 1;
 }
-
-/// CopyEnv - This function takes an array of environment variables and makes a
-/// copy of it.  This copy can then be manipulated any way the caller likes
-/// without affecting the process's real environment.
-///
-/// Inputs:
-///  envp - An array of C strings containing an environment.
-///
-/// Return value:
-///  NULL - An error occurred.
-///
-///  Otherwise, a pointer to a new array of C strings is returned.  Every string
-///  in the array is a duplicate of the one in the original array (i.e. we do
-///  not copy the char *'s from one array to another).
-///
-char ** CopyEnv(char ** const envp) {
-  // Count the number of entries in the old list;
-  unsigned entries;   // The number of entries in the old environment list
-  for (entries = 0; envp[entries] != NULL; entries++)
-    /*empty*/;
-
-  // Add one more entry for the NULL pointer that ends the list.
-  ++entries;
-
-  // If there are no entries at all, just return NULL.
-  if (entries == 0)
-    return NULL;
-
-  // Allocate a new environment list.
-  char **newenv = new char* [entries];
-  if ((newenv = new char* [entries]) == NULL)
-    return NULL;
-
-  // Make a copy of the list.  Don't forget the NULL that ends the list.
-  entries = 0;
-  while (envp[entries] != NULL) {
-    newenv[entries] = new char[strlen (envp[entries]) + 1];
-    strcpy (newenv[entries], envp[entries]);
-    ++entries;
-  }
-  newenv[entries] = NULL;
-
-  return newenv;
-}
-
-
-/// RemoveEnv - Remove the specified environment variable from the environment
-/// array.
-///
-/// Inputs:
-///  name - The name of the variable to remove.  It cannot be NULL.
-///  envp - The array of environment variables.  It cannot be NULL.
-///
-/// Notes:
-///  This is mainly done because functions to remove items from the environment
-///  are not available across all platforms.  In particular, Solaris does not
-///  seem to have an unsetenv() function or a setenv() function (or they are
-///  undocumented if they do exist).
-///
-void RemoveEnv(const char * name, char ** const envp) {
-  for (unsigned index=0; envp[index] != NULL; index++) {
-    // Find the first equals sign in the array and make it an EOS character.
-    char *p = strchr (envp[index], '=');
-    if (p == NULL)
-      continue;
-    else
-      *p = '\0';
-
-    // Compare the two strings.  If they are equal, zap this string.
-    // Otherwise, restore it.
-    if (!strcmp(name, envp[index]))
-      *envp[index] = '\0';
-    else
-      *p = '=';
-  }
-
-  return;
-}
-
-} // end LLVM namespace
 
 /// EmitShellScript - Output the wrapper file that invokes the JIT on the LLVM
 /// bytecode file for the program.

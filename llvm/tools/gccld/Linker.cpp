@@ -332,8 +332,8 @@ bool llvm::LinkFiles(const char *progname, Module *HeadModule,
         std::cerr << "Trying to link archive '" << Pathname << "'\n";
 
       if (LinkInArchive(HeadModule, Pathname, ErrorMessage, Verbose)) {
-        PrintAndReturn(progname, ErrorMessage,
-                       ": Error linking in archive '" + Pathname + "'");
+        std::cerr << progname << ": Error linking in archive '" << Pathname 
+                  << "': " << ErrorMessage << "\n";
         return true;
       }
     } else if (IsBytecode(Pathname)) {
@@ -341,8 +341,8 @@ bool llvm::LinkFiles(const char *progname, Module *HeadModule,
         std::cerr << "Trying to link bytecode file '" << Pathname << "'\n";
 
       if (LinkInFile(HeadModule, Pathname, ErrorMessage, Verbose)) {
-        PrintAndReturn(progname, ErrorMessage,
-                       ": Error linking in bytecode file '" + Pathname + "'");
+        std::cerr << progname << ": Error linking in bytecode file '"
+                  << Pathname << "': " << ErrorMessage << "\n";
         return true;
       }
     }

@@ -19,22 +19,11 @@
 
 namespace llvm {
 
-int
-PrintAndReturn (const char *progname,
-                const std::string &Message,
-                const std::string &Extra = "");
-
 void
 GetAllDefinedSymbols (Module *M, std::set<std::string> &DefinedSymbols);
 
 void
 GetAllUndefinedSymbols(Module *M, std::set<std::string> &UndefinedSymbols);
-
-char **
-CopyEnv (char ** const envp);
-
-void
-RemoveEnv (const char * name, char ** const envp);
 
 int
 GenerateBytecode (Module * M,
