@@ -1,20 +1,4 @@
-dnl Autoconf requirements
-dnl AC_INIT(package, version, bug-report-address)
-dnl information on the package
-dnl checks for programs
-dnl checks for libraries
-dnl checks for header files
-dnl checks for types
-dnl checks for structures
-dnl checks for compiler characteristics
-dnl checks for library functions
-dnl checks for system services
-dnl AC_CONFIG_FILES([file...])
-dnl AC_OUTPUT
-
-dnl **************************************************************************
-dnl * Initialize
-dnl **************************************************************************
+dnl Initialize autoconf
 AC_INIT([[[LLVM]]],[[[1.1]]],[llvmbugs@cs.uiuc.edu])
 
 dnl Place all of the extra autoconf files into the config subdirectory
@@ -30,9 +14,7 @@ then
 	fi
 fi
 
-dnl
 dnl Configure all of the projects present in our source tree.
-dnl
 for i in `ls ${srcdir}/projects`
 do
   if test ${i} != "CVS"
@@ -94,11 +76,7 @@ AC_CONFIG_MAKEFILE(tools/Makefile)
 AC_CONFIG_MAKEFILE(utils/Makefile)
 AC_CONFIG_MAKEFILE(projects/Makefile)
 
-dnl **************************************************************************
-dnl * Determine which system we are building on
-dnl **************************************************************************
-
-dnl Check the install program (needs to be done before canonical stuff)
+dnl Find the install program (needs to be done before canonical stuff)
 AC_PROG_INSTALL
 
 dnl Check which host for which we're compiling.  This will tell us which LLVM
@@ -154,10 +132,6 @@ case $target in
 	                  ;;
 esac
 
-dnl **************************************************************************
-dnl * Check for programs.
-dnl **************************************************************************
-
 dnl Check for compilation tools
 AC_PROG_CXX
 AC_PROG_CC(gcc)
@@ -168,7 +142,6 @@ if test "$GCC" != "yes"
 then
 	AC_MSG_ERROR([gcc required but not found])
 fi
-
 if test "$GXX" != "yes"
 then
 	AC_MSG_ERROR([g++ required but not found])
@@ -178,86 +151,33 @@ dnl Verify that GCC is version 3.0 or higher
 gccmajor=`$CC --version | head -n 1 | awk '{print $NF;}' | cut -d. -f1`
 if test "$gccmajor" -lt "3"
 then
-	AC_MSG_ERROR([gcc 3.x required])
+	AC_MSG_ERROR([gcc 3.x required, but you have a lower version])
 fi
 
-dnl Check for GNU Make.  We use its extensions to, so don't build without it
+dnl Check for GNU Make.  We use its extensions too, so don't build without it
 CHECK_GNU_MAKE
 if test -z "$_cv_gnu_make_command"
 then
 	AC_MSG_ERROR([GNU Make required but not found])
 fi
 
-dnl Check for compiler-compiler tools (reminds me of Little Caesar's Pizza)
+dnl Checks for other tools
 AC_PROG_FLEX
 AC_PROG_BISON
-
-dnl Check for libtool
 AC_PROG_LIBTOOL
 
-dnl Check for our special programs
-AC_PATH_PROG(RPWD,[pwd],[false])
-if test ${RPWD} = "false"
+dnl Checks for tools we can get away with not having:
+AC_PATH_PROG(DOT,[dot],[true dot])
+AC_PATH_PROG(ETAGS,[etags],[true etags])
+AC_PATH_PROG(PYTHON,[python],[true python])
+if test "$PYTHON" = "false"
 then
-	AC_MSG_ERROR([pwd required but not found])
+	AC_MSG_WARN([Python is required for the test suite, but it was not found])
 fi
-
-AC_PATH_PROG(AR,[ar],[false])
-if test ${AR} = "false"
+AC_PATH_PROG(QMTEST,[qmtest],[true qmtest])
+if test "$QMTEST" = "false"
 then
-	AC_MSG_ERROR([ar required but not found])
-fi
-
-AC_PATH_PROG(SED,[sed],[false])
-if test ${SED} = "false"
-then
-	AC_MSG_ERROR([sed required but not found])
-fi
-
-AC_PATH_PROG(RM,[rm],[false])
-if test ${RM} = "false"
-then
-	AC_MSG_ERROR([rm required but not found])
-fi
-
-AC_PATH_PROG(ECHO,[echo],[false])
-if test ${ECHO} = "false"
-then
-	AC_MSG_ERROR([echo required but not found])
-fi
-
-AC_PATH_PROG(MKDIR,[mkdir],[false])
-if test ${MKDIR} = "false"
-then
-	AC_MSG_ERROR([mkdir required but not found])
-fi
-
-AC_PATH_PROG(DATE,[date],[false])
-if test ${DATE} = "false"
-then
-	AC_MSG_ERROR([date required but not found])
-fi
-
-AC_PATH_PROG(MV,[mv],[false])
-if test ${MV} = "false"
-then
-	AC_MSG_ERROR([mv required but not found])
-fi
-
-AC_PATH_PROG(DOT,[dot],[false])
-
-AC_PATH_PROG(ETAGS,[etags],[false])
-
-AC_PATH_PROG(PYTHON,[python],[false])
-if test ${PYTHON} = "false"
-then
-	AC_MSG_WARN([python required but not found])
-fi
-
-AC_PATH_PROG(QMTEST,[qmtest],[false])
-if test ${QMTEST} = "false"
-then
-	AC_MSG_WARN([qmtest required but not found])
+	AC_MSG_WARN([QMTest is required for the test suite, but it was not found])
 fi
 
 dnl Verify that the version of python available is high enough for qmtest
@@ -271,20 +191,17 @@ then
 	then
 		if test "$pyminor" -lt "2"
 		then
-			AC_MSG_WARN([Python 2.2 or greater required for qmtest])
+			AC_MSG_WARN([QMTest requires Python 2.2 or later])
 		fi
 	fi
 else
-	AC_MSG_WARN([Python 2.2 or greater required for qmtest])
+	AC_MSG_WARN([QMTest requires Python 2.2 or later])
 fi
 
 dnl Verify that the source directory is valid
 AC_CONFIG_SRCDIR(["Makefile.config.in"])
 
-dnl **************************************************************************
-dnl * Check for libraries.
-dnl **************************************************************************
-
+dnl Checks for libraries:
 dnl libelf is for sparc only; we can ignore it if we don't have it
 AC_CHECK_LIB(elf, elf_begin)
 
@@ -298,41 +215,14 @@ dnl pthread locking functions are optional - but llvm will not be thread-safe
 dnl without locks.
 AC_SEARCH_LIBS(pthread_mutex_lock,pthread,AC_DEFINE(HAVE_PTHREAD_MUTEX_LOCK,1,[Define if PThread mutexes (e.g., pthread_mutex_lock) are available in the system's thread library.]))
 
-dnl
-dnl The math libraries are used by the test code, but not by the actual LLVM
-dnl code.
-dnl
-dnl AC_CHECK_LIB(m, cos)
-
-dnl **************************************************************************
-dnl * Checks for header files.
-dnl *	Chances are, if the standard C or POSIX type header files are missing,
-dnl *	then LLVM just isn't going to compile.  However, it is possible that
-dnl *	the necessary functions/macros will be included from other
-dnl *	(non-standard and non-obvious) header files.
-dnl *
-dnl *	So, we'll be gracious, give it a chance, and try to go on without
-dnl *	them.
-dnl **************************************************************************
+dnl Checks for header files.
+dnl We don't check for ancient stuff or things that are guaranteed to be there
+dnl by the C++ standard. We always use the <cfoo> versions of <foo.h> C headers.
 AC_HEADER_STDC
 AC_HEADER_SYS_WAIT
 
-dnl Check for ANSI C/POSIX header files
-AC_CHECK_HEADERS(assert.h fcntl.h limits.h sys/time.h unistd.h errno.h signal.h math.h)
-
-dnl Check for system specific header files
-AC_CHECK_HEADERS(malloc.h sys/mman.h sys/resource.h)
-
-dnl Check for header files associated with dlopen and friends
-AC_CHECK_HEADERS(dlfcn.h link.h)
-
-dnl **************************************************************************
-dnl * Checks for typedefs, structures, and compiler characteristics.
-dnl **************************************************************************
-
-dnl Check for const and inline keywords
-AC_C_CONST
-AC_C_INLINE
+dnl Checks for POSIX and other various system-specific header files
+AC_CHECK_HEADERS(fcntl.h limits.h sys/time.h unistd.h malloc.h sys/mman.h sys/resource.h dlfcn.h link.h)
 
 dnl Check for machine endian-ness
 AC_C_BIGENDIAN(AC_DEFINE([ENDIAN_BIG],[],[Define if the machine is Big-Endian]),AC_DEFINE([ENDIAN_LITTLE],[],[Define if the machine is Little-Endian]))
@@ -356,54 +246,28 @@ AC_CXX_HAVE_STD_ITERATOR
 AC_CXX_HAVE_BI_ITERATOR
 AC_CXX_HAVE_FWD_ITERATOR
 
-dnl **************************************************************************
-dnl * Checks for library functions.
-dnl **************************************************************************
+dnl Checks for library functions.
 AC_FUNC_ALLOCA
-AC_PROG_GCC_TRADITIONAL
-AC_FUNC_MEMCMP
 AC_FUNC_MMAP
+if test "$ac_cv_func_mmap_fixed_mapped" = "no"
+then
+	AC_MSG_ERROR([mmap() required but not found])
+fi
 AC_FUNC_MMAP_FILE
-if test ${ac_cv_func_mmap_file} = "no"
+if test "$ac_cv_func_mmap_file" = "no"
 then
 	AC_MSG_ERROR([mmap() of files required but not found])
 fi
 AC_HEADER_MMAP_ANONYMOUS
 AC_TYPE_SIGNAL
-AC_CHECK_FUNCS(getcwd gettimeofday strcspn strdup strerror strspn strstr strtod strtol strtoq strtoll)
-
-dnl
-dnl Need to check mmap for MAP_PRIVATE, MAP_ANONYMOUS, MAP_ANON, MAP_FIXED
-dnl MAP_FIXED is only needed for Sparc
-dnl MAP_ANON is used for Sparc and BSD
-dnl Everyone should have MAP_PRIVATE
-dnl
-
-dnl Check for certain functions (even if we've already found them) so that we
-dnl can quit with an error if they are unavailable.
-dnl
-dnl As the code is made more portable (i.e. less reliant on these functions,
-dnl these checks should go away.
-AC_CHECK_FUNC(mmap,,AC_MSG_ERROR([Function mmap() required but not found]))
+AC_CHECK_FUNCS(getcwd gettimeofday strdup strtoq strtoll)
 AC_CHECK_FUNC(mprotect,,AC_MSG_ERROR([Function mprotect() required but not found]))
 
 dnl Determine if the linker supports the -R option.
-AC_LINK_USE_R()
+AC_LINK_USE_R
 
-dnl **************************************************************************
-dnl * Enable various compile-time options
-dnl **************************************************************************
-
-dnl Purify Option
-AC_ARG_ENABLE(purify,AC_HELP_STRING([--enable-purify],[Compile with purify (default is NO)]),,enableval="no")
-if test ${enableval} = "no"
-then
-	AC_SUBST(ENABLE_PURIFY,[[]])
-else
-	AC_SUBST(ENABLE_PURIFY,[[ENABLE_PURIFY=1]])
-fi
-
-dnl Optimized Option
+dnl --enable/--with command-line options:
+dnl Check whether they want to do an optimized build:
 AC_ARG_ENABLE(optimized,AC_HELP_STRING([--enable-optimized],[Compile with optimizations enabled (default is NO)]),,enableval=no)
 if test ${enableval} = "no"
 then
@@ -443,7 +307,6 @@ else
 	AC_SUBST(UPB,[[USE_PRECOMPILED_BYTECODE=1]])
 fi
 
-
 dnl LLC Diff Option
 AC_ARG_ENABLE(llc_diffs,AC_HELP_STRING([--enable-llc_diffs],[Enable LLC Diffs when testing (default is YES)]),,enableval=yes)
 if test ${enableval} = "no"
@@ -455,7 +318,6 @@ fi
 
 dnl JIT Option
 AC_ARG_ENABLE(jit,AC_HELP_STRING([--enable-jit],[Enable Just In Time Compiling (default is YES)]),,enableval=default)
-
 if test ${enableval} = "no"
 then
 	AC_SUBST(JIT,[[]])
@@ -473,13 +335,8 @@ else
 	esac
 fi
 
-dnl **************************************************************************
-dnl * Set the location of various third-party software packages
-dnl **************************************************************************
-
-dnl Location of the LLVM C front end
+dnl Find the LLVM GCC-based C/C++ front end
 AC_ARG_WITH(llvmgccdir,AC_HELP_STRING([--with-llvmgccdir],[Location of LLVM GCC front-end]),AC_SUBST(LLVMGCCDIR,[$withval]))
-
 AC_MSG_CHECKING([for llvm-gcc])
 LLVM_GCC_CHECK=no
 if test -d "$LLVMGCCDIR"
@@ -495,7 +352,6 @@ if test "$LLVM_GCC_CHECK" = "no"
 then
     llvmgccwarn=yes
 fi
-
 AC_MSG_CHECKING([whether llvm-gcc is sane])
 LLVM_GCC_SANE=no
 if test -x "$LLVM_GCC_CHECK"
@@ -520,18 +376,10 @@ AC_ARG_WITH(bcrepos,AC_HELP_STRING([--with-bcrepos],[Location of Bytecode Reposi
 dnl Location of PAPI
 AC_ARG_WITH(papi,AC_HELP_STRING([--with-papi],[Location of PAPI]),AC_SUBST(PAPIDIR,[$withval]),AC_SUBST(PAPIDIR,[/home/vadve/shared/Sparc/papi-2.3.4.1]))
 
-dnl Location of the purify program
-AC_ARG_WITH(purify,AC_HELP_STRING([--with-purify],[Location of purify program]),AC_SUBST(PURIFY,[$withval]))
-
-dnl **************************************************************************
-dnl * Configure other software packages (via AC_CONFIG_SUBDIRS)
-dnl **************************************************************************
-
-dnl **************************************************************************
-dnl * Create the output files
-dnl **************************************************************************
+dnl Create the output files
 AC_OUTPUT(Makefile.config)
 
+dnl Warn loudly if llvm-gcc was not obviously working
 if test $llvmgccwarn = yes
 then
 	AC_MSG_WARN([***** llvm C/C++ front end was not found, or does not])
