@@ -60,15 +60,6 @@ std::string llvm::getPassesString(const std::vector<const PassInfo*> &Passes) {
   return Result;
 }
 
-// DeleteFunctionBody - "Remove" the function by deleting all of its basic
-// blocks, making it external.
-//
-void llvm::DeleteFunctionBody(Function *F) {
-  // delete the body of the function...
-  F->deleteBody();
-  assert(F->isExternal() && "This didn't make the function external!");
-}
-
 BugDriver::BugDriver(const char *toolname)
   : ToolName(toolname), ReferenceOutputFile(OutputFile),
     Program(0), Interpreter(0), cbe(0), gcc(0) {}

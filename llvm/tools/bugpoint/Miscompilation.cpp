@@ -132,93 +132,37 @@ namespace llvm {
     
     virtual TestResult doTest(std::vector<Function*> &Prefix,
                               std::vector<Function*> &Suffix) {
-      if (!Suffix.empty() && TestFuncs(Suffix, false))
+      if (!Suffix.empty() && TestFuncs(Suffix))
         return KeepSuffix;
-      if (!Prefix.empty() && TestFuncs(Prefix, false))
+      if (!Prefix.empty() && TestFuncs(Prefix))
         return KeepPrefix;
       return NoFailure;
     }
     
-    bool TestFuncs(const std::vector<Function*> &Prefix, bool EmitBytecode);
+    bool TestFuncs(const std::vector<Function*> &Prefix);
   };
 }
 
-bool ReduceMiscompilingFunctions::TestFuncs(const std::vector<Function*> &Funcs,
-                                            bool EmitBytecode) {
+bool ReduceMiscompilingFunctions::TestFuncs(const std::vector<Function*>&Funcs){
   // Test to see if the function is misoptimized if we ONLY run it on the
   // functions listed in Funcs.
-  if (!EmitBytecode) {
-    std::cout << "Checking to see if the program is misoptimized when "
-              << (Funcs.size()==1 ? "this function is" : "these functions are")
-              << " run through the pass"
-              << (BD.PassesToRun.size() == 1 ? "" : "es") << ": ";
-    BD.PrintFunctionList(Funcs);
-    std::cout << "\n";
-  } else {
-    std::cout <<"Outputting reduced bytecode files which expose the problem:\n";
-  }
+  std::cout << "Checking to see if the program is misoptimized when "
+            << (Funcs.size()==1 ? "this function is" : "these functions are")
+            << " run through the pass"
+            << (BD.PassesToRun.size() == 1 ? "" : "es") << ": ";
+  BD.PrintFunctionList(Funcs);
+  std::cout << "\n";
 
-  // First step: clone the module for the two halves of the program we want.
+  // Split the module into the two halves of the program we want.
   Module *ToOptimize = CloneModule(BD.getProgram());
+  Module *ToNotOptimize = SplitFunctionsOutOfModule(ToOptimize, Funcs);
 
-  // Second step: Make sure functions & globals are all external so that linkage
-  // between the two modules will work.
-  for (Module::iterator I = ToOptimize->begin(), E = ToOptimize->end();I!=E;++I)
-    I->setLinkage(GlobalValue::ExternalLinkage);
-  for (Module::giterator I = ToOptimize->gbegin(), E = ToOptimize->gend();
-       I != E; ++I)
-    I->setLinkage(GlobalValue::ExternalLinkage);
-
-  // Third step: make a clone of the externalized program for the non-optimized
-  // part.
-  Module *ToNotOptimize = CloneModule(ToOptimize);
-
-  // Fourth step: Remove the test functions from the ToNotOptimize module, and
-  // all of the global variables.
-  for (unsigned i = 0, e = Funcs.size(); i != e; ++i) {
-    Function *TNOF = ToNotOptimize->getFunction(Funcs[i]->getName(),
-                                                Funcs[i]->getFunctionType());
-    assert(TNOF && "Function doesn't exist in module!");
-    DeleteFunctionBody(TNOF);       // Function is now external in this module!
-  }
-  for (Module::giterator I = ToNotOptimize->gbegin(), E = ToNotOptimize->gend();
-       I != E; ++I)
-    I->setInitializer(0);  // Delete the initializer to make it external
-
-  if (EmitBytecode) {
-    std::cout << "  Non-optimized portion: ";
-    std::swap(BD.Program, ToNotOptimize);
-    BD.EmitProgressBytecode("tonotoptimize", true);
-    std::swap(BD.Program, ToNotOptimize);
-  }
-
-  // Fifth step: Remove all functions from the ToOptimize module EXCEPT for the
-  // ones specified in Funcs.  We know which ones these are because they are
-  // non-external in ToOptimize, but external in ToNotOptimize.
-  //
-  for (Module::iterator I = ToOptimize->begin(), E = ToOptimize->end();I!=E;++I)
-    if (!I->isExternal()) {
-      Function *TNOF = ToNotOptimize->getFunction(I->getName(),
-                                                  I->getFunctionType());
-      assert(TNOF && "Function doesn't exist in ToNotOptimize module??");
-      if (!TNOF->isExternal())
-        DeleteFunctionBody(I);
-    }
-
-  if (EmitBytecode) {
-    std::cout << "  Portion that is input to optimizer: ";
-    std::swap(BD.Program, ToOptimize);
-    BD.EmitProgressBytecode("tooptimize");
-    std::swap(BD.Program, ToOptimize);
-  }
-
-  // Sixth step: Run the optimization passes on ToOptimize, producing a
-  // transformed version of the functions being tested.
+  // Run the optimization passes on ToOptimize, producing a transformed version
+  // of the functions being tested.
   Module *OldProgram = BD.Program;
   BD.Program = ToOptimize;
 
-  if (!EmitBytecode)
-    std::cout << "  Optimizing functions being tested: ";
+  std::cout << "  Optimizing functions being tested: ";
   std::string BytecodeResult;
   if (BD.runPasses(BD.PassesToRun, BytecodeResult, false/*delete*/,
                    true/*quiet*/)) {
@@ -228,16 +172,10 @@ bool ReduceMiscompilingFunctions::TestFuncs(const std::vector<Function*> &Funcs,
     exit(BD.debugOptimizerCrash());
   }
 
-  if (!EmitBytecode)
-    std::cout << "done.\n";
+  std::cout << "done.\n";
 
   delete BD.getProgram();   // Delete the old "ToOptimize" module
   BD.Program = BD.ParseInputFile(BytecodeResult);
-
-  if (EmitBytecode) {
-    std::cout << "  'tooptimize' after being optimized: ";
-    BD.EmitProgressBytecode("optimized", true);
-  }
 
   if (BD.Program == 0) {
     std::cerr << BD.getToolName() << ": Error reading bytecode file '"
@@ -256,14 +194,6 @@ bool ReduceMiscompilingFunctions::TestFuncs(const std::vector<Function*> &Funcs,
   }
   delete ToNotOptimize;  // We are done with this module...
 
-  if (EmitBytecode) {
-    std::cout << "  Program as tested: ";
-    BD.EmitProgressBytecode("linked", true);
-    delete BD.Program;
-    BD.Program = OldProgram;
-    return false;   // We don't need to actually execute the program here.
-  }
-
   std::cout << "  Checking to see if the merged program executes correctly: ";
 
   // Eighth step: Execute the program.  If it does not match the expected
@@ -276,7 +206,6 @@ bool ReduceMiscompilingFunctions::TestFuncs(const std::vector<Function*> &Funcs,
   std::cout << (Broken ? " nope.\n" : " yup.\n");
   return Broken;
 }
-
 
 /// debugMiscompilation - This method is used when the passes selected are not
 /// crashing, but the generated output is semantically different from the
@@ -314,7 +243,20 @@ bool BugDriver::debugMiscompilation() {
   std::cout << "\n";
 
   // Output a bunch of bytecode files for the user...
-  ReduceMiscompilingFunctions(*this).TestFuncs(MiscompiledFunctions, true);
+  std::cout << "Outputting reduced bytecode files which expose the problem:\n";
+  Module *ToOptimize = CloneModule(getProgram());
+  Module *ToNotOptimize = SplitFunctionsOutOfModule(ToOptimize,
+                                                    MiscompiledFunctions);
+
+  std::cout << "  Non-optimized portion: ";
+  std::swap(Program, ToNotOptimize);
+  EmitProgressBytecode("tonotoptimize", true);
+  setNewProgram(ToNotOptimize);   // Delete hacked module.
+  
+  std::cout << "  Portion that is input to optimizer: ";
+  std::swap(Program, ToOptimize);
+  EmitProgressBytecode("tooptimize");
+  setNewProgram(ToOptimize);      // Delete hacked module.
 
   return false;
 }

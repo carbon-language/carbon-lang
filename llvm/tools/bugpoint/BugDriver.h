@@ -231,6 +231,11 @@ std::string getPassesString(const std::vector<const PassInfo*> &Passes);
 //
 void DeleteFunctionBody(Function *F);
 
+/// SplitFunctionsOutOfModule - Given a module and a list of functions in the
+/// module, split the functions OUT of the specified module, and place them in
+/// the new module.
+Module *SplitFunctionsOutOfModule(Module *M, const std::vector<Function*> &F);
+
 } // End llvm namespace
 
 #endif

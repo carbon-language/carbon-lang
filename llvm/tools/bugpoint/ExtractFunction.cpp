@@ -24,6 +24,7 @@
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Target/TargetData.h"
 #include "Support/CommandLine.h"
+#include "Support/Debug.h"
 #include "Support/FileUtilities.h"
 using namespace llvm;
 
@@ -128,4 +129,53 @@ Module *BugDriver::performFinalCleanups(Module *M, bool MayModifySemantics) {
     removeFile(Filename);
   }
   return M;
+}
+
+
+// DeleteFunctionBody - "Remove" the function by deleting all of its basic
+// blocks, making it external.
+//
+void llvm::DeleteFunctionBody(Function *F) {
+  // delete the body of the function...
+  F->deleteBody();
+  assert(F->isExternal() && "This didn't make the function external!");
+}
+
+/// SplitFunctionsOutOfModule - Given a module and a list of functions in the
+/// module, split the functions OUT of the specified module, and place them in
+/// the new module.
+Module *llvm::SplitFunctionsOutOfModule(Module *M,
+                                        const std::vector<Function*> &F) {
+  // Make sure functions & globals are all external so that linkage
+  // between the two modules will work.
+  for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I)
+    I->setLinkage(GlobalValue::ExternalLinkage);
+  for (Module::giterator I = M->gbegin(), E = M->gend(); I != E; ++I)
+    I->setLinkage(GlobalValue::ExternalLinkage);
+
+  Module *New = CloneModule(M);
+
+  // Make sure global initializers exist only in the safe module (CBE->.so)
+  for (Module::giterator I = New->gbegin(), E = New->gend(); I != E; ++I)
+    I->setInitializer(0);  // Delete the initializer to make it external
+
+  // Remove the Test functions from the Safe module
+  for (unsigned i = 0, e = F.size(); i != e; ++i) {
+    Function *TNOF = M->getFunction(F[i]->getName(), F[i]->getFunctionType());
+    DEBUG(std::cerr << "Removing function " << F[i]->getName() << "\n");
+    assert(TNOF && "Function doesn't exist in module!");
+    DeleteFunctionBody(TNOF);       // Function is now external in this module!
+  }
+
+  // Remove the Safe functions from the Test module
+  for (Module::iterator I = New->begin(), E = New->end(); I != E; ++I) {
+    bool funcFound = false;
+    for (std::vector<Function*>::const_iterator FI = F.begin(), Fe = F.end();
+         FI != Fe; ++FI)
+      if (I->getName() == (*FI)->getName()) funcFound = true;
+
+    if (!funcFound)
+      DeleteFunctionBody(I);
+  }
+  return New;
 }

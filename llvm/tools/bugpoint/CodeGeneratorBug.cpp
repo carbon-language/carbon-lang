@@ -63,40 +63,15 @@ bool ReduceMisCodegenFunctions::TestFuncs(const std::vector<Function*> &Funcs,
   std::cout << "\t";
 
   // Clone the module for the two halves of the program we want.
-  Module *SafeModule = CloneModule(BD.Program);
+  Module *SafeModule = CloneModule(BD.getProgram());
 
-  // Make sure functions & globals are all external so that linkage
-  // between the two modules will work.
-  for (Module::iterator I = SafeModule->begin(), E = SafeModule->end();I!=E;++I)
-    I->setLinkage(GlobalValue::ExternalLinkage);
-  for (Module::giterator I=SafeModule->gbegin(),E = SafeModule->gend();I!=E;++I)
-    I->setLinkage(GlobalValue::ExternalLinkage);
-
-  Module *TestModule = CloneModule(SafeModule);
-
-  // Make sure global initializers exist only in the safe module (CBE->.so)
-  for (Module::giterator I=TestModule->gbegin(),E = TestModule->gend();I!=E;++I)
-    I->setInitializer(0);  // Delete the initializer to make it external
-
-  // Remove the Test functions from the Safe module
-  for (unsigned i = 0, e = Funcs.size(); i != e; ++i) {
-    Function *TNOF = SafeModule->getFunction(Funcs[i]->getName(),
-                                             Funcs[i]->getFunctionType());
-    DEBUG(std::cerr << "Removing function " << Funcs[i]->getName() << "\n");
-    assert(TNOF && "Function doesn't exist in module!");
-    DeleteFunctionBody(TNOF);       // Function is now external in this module!
+  // The JIT must extract the 'main' function.
+  std::vector<Function*> RealFuncs(Funcs);
+  if (BD.isExecutingJIT()) {
+    if (Function *F = BD.Program->getMainFunction())
+      RealFuncs.push_back(F);
   }
-
-  // Remove the Safe functions from the Test module
-  for (Module::iterator I=TestModule->begin(),E=TestModule->end(); I!=E; ++I) {
-    bool funcFound = false;
-    for (std::vector<Function*>::const_iterator F=Funcs.begin(),Fe=Funcs.end();
-         F != Fe; ++F)
-      if (I->getName() == (*F)->getName()) funcFound = true;
-
-    if (!funcFound && !(BD.isExecutingJIT() && I->getName() == "main"))
-      DeleteFunctionBody(I);
-  }
+  Module *TestModule = SplitFunctionsOutOfModule(SafeModule, RealFuncs);
 
   // This is only applicable if we are debugging the JIT:
   // Find all external functions in the Safe modules that are actually used
