@@ -20,7 +20,8 @@ implementation
 int "foo"(int %blah)
 begin
 	store int %blah, int *%MyVar
-	store int 12, { \2 *, int } * %MyIntList, uint 0, ubyte 1
+	%idx = getelementptr { \2 *, int } * %MyIntList, uint 0, ubyte 1
+	store int 12, int* %idx
 
 	%ack = load int * %0   ;; Load from the unnamed constant
 	%fzo = add int %ack, %blah

@@ -15,7 +15,8 @@ implementation
 
 int "test"([20 x [10 x [5 x int]]] * %A)
 begin
-	%i = load [20 x [10 x [5 x int]]] * %A, uint 1, uint 2, uint 3, uint 4
+	%idx = getelementptr [20 x [10 x [5 x int]]] * %A, uint 1, uint 2, uint 3, uint 4
+	%i = load int* %idx
 
 	;; same as above but via a GEP
 	%iptr = getelementptr [20 x [10 x [5 x int]]] * %A, uint 1, uint 2, uint 3, uint 4
@@ -37,7 +38,8 @@ bb0:					;[#uses=2]
 	%reg164-idxcast = cast int %reg112 to uint		; <uint> [#uses=1]
 
 	;; Store to a structure field
-	store sbyte 81, %Mixed_struct * %M, uint 0, ubyte 3, uint %reg164-idxcast, ubyte 0
+	%idx1 = getelementptr %Mixed_struct * %M, uint 0, ubyte 3, uint %reg164-idxcast, ubyte 0
+	store sbyte 81, sbyte* %idx1
 
 	;; EXPECTED RESULT: decomposed indices for above STORE
 	;; %ptr1 = getelementptr %Mixed_struct * %M,             uint 0, ubyte 3
@@ -45,7 +47,8 @@ bb0:					;[#uses=2]
 	;; store sbyte 81, {sbyte,float}* %ptr2, uint 0, ubyte 0
 
 	;; Store to an array field within a structure
-	store double 2.17, %Mixed_struct * %M, uint 0, ubyte 1, uint %reg164-idxcast
+	%idx2 = getelementptr %Mixed_struct * %M, uint 0, ubyte 1, uint %reg164-idxcast
+	store double 2.17, double* %idx2
 
 	;; EXPECTED RESULT: decomposed indices for above STORE
 	;; %ptr1 = getelementptr %Mixed_struct * %M, uint 0, ubyte 1
@@ -73,13 +76,15 @@ end
 int "ArrayRef"([100 x int] * %Array, uint %I, uint %J)
 begin
 bb0:					;[#uses=3]
-        %reg121 = load [100 x int]* %Array, uint %I, uint %J	; <int> [#uses=1]			
+	%idx = getelementptr [100 x int]* %Array, uint %I, uint %J	; <int> [#uses=1]			
+        %reg121 = load int* %idx
 	ret int %reg121;
 end
 
 sbyte "PtrRef"(sbyte** %argv, uint %I, uint %J)
 begin
 bb0:					;[#uses=3]
-	%reg222 = load sbyte** %argv, uint %I, uint %J		; <sbyte> [#uses=1]
+	%idx = getelementptr sbyte** %argv, uint %I, uint %J
+	%reg222 = load sbyte* %idx
 	ret sbyte %reg222;
 end
