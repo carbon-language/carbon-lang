@@ -158,8 +158,7 @@ public:
   virtual void handleCompactionTableValue(
     unsigned i,       ///< Index in the compaction table's type plane
     unsigned TypSlot, ///< The slot (plane) of the type of this value
-    unsigned ValSlot, ///< The global value slot of the value
-    const Type*       ///< The resolved type of the value.
+    unsigned ValSlot  ///< The global value slot of the value
   ) {}
 
   /// @brief Handle end of a compaction table
