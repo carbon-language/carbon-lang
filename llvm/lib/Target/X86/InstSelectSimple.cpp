@@ -502,7 +502,7 @@ void ISel::visitDivRem(BinaryOperator &I) {
 
   if (isSigned) {
     // Emit a sign extension instruction...
-    BuildMI(BB, ExtOpcode[Class], 1, ExtReg).addReg(Reg);
+    BuildMI(BB, ExtOpcode[Class], 0);
   } else {
     // If unsigned, emit a zeroing instruction... (reg = xor reg, reg)
     BuildMI(BB, ClrOpcode[Class], 2, ExtReg).addReg(ExtReg).addReg(ExtReg);
