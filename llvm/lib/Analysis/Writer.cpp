@@ -51,7 +51,12 @@ void WriteToOutput(const IntervalPartition &IP, ostream &o) {
 //===----------------------------------------------------------------------===//
 
 ostream &operator<<(ostream &o, const set<BasicBlock*> &BBs) {
-  copy(BBs.begin(),BBs.end(), std::ostream_iterator<BasicBlock*>(o, "\n"));
+  for (set<BasicBlock*>::const_iterator I = BBs.begin(), E = BBs.end();
+       I != E; ++I) {
+    o << "  ";
+    WriteAsOperand(o, (Value*)*I, false);
+    o << "\n";
+   }
   return o;
 }
 
@@ -98,8 +103,9 @@ void WriteToOutput(const DominanceFrontier &DF, ostream &o) {
   for (DominanceFrontier::const_iterator I = DF.begin(), E = DF.end();
        I != E; ++I) {
     o << "=============================--------------------------------\n"
-      << "\nDominance Frontier For Basic Block\n" << I->first
-      << "is: \n" << I->second << "\n";
+      << "\nDominance Frontier For Basic Block\n";
+    WriteAsOperand(o, (Value*)I->first, false);
+    o << " is: \n" << I->second << "\n";
   }
 }
 
