@@ -258,6 +258,13 @@ Value : INTVAL {
   } | '[' DefList ']' {
     $$ = new ListInit(*$2);
     delete $2;
+  } | Value '.' ID {
+    if (!$1->getFieldType(*$3)) {
+      err() << "Cannot access field '" << *$3 << "' of value '" << *$1 << "!\n";
+      abort();
+    }
+    $$ = new FieldInit($1, *$3);
+    delete $3;
   };
 
 DefList : /*empty */ {
