@@ -292,6 +292,9 @@ public:
 
     for (unsigned a = 0; a != MinArgs; ++a)
       getPtrArg(a).mergeWith(CS.getPtrArg(a));
+
+    for (unsigned a = MinArgs, e = CS.getNumPtrArgs(); a != e; ++a)
+      CallArgs.push_back(CS.getPtrArg(a));
   }
 
   /// markReachableNodes - This method recursively traverses the specified
