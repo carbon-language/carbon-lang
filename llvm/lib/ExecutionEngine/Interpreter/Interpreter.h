@@ -182,7 +182,7 @@ private:  // Helper functions
   // 
   void SwitchToNewBasicBlock(BasicBlock *Dest, ExecutionContext &SF);
 
-  void *getPointerToFunction(const Function *F) { return (void*)F; }
+  void *getPointerToFunction(Function *F) { return (void*)F; }
 
   // getCurrentExecutablePath() - Return the directory that the lli executable
   // lives in.

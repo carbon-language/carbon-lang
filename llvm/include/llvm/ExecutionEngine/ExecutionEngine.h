@@ -79,7 +79,7 @@ public:
   // different ways.  They should each implement this to say what a function
   // pointer should look like.
   //
-  virtual void *getPointerToFunction(const Function *F) = 0;
+  virtual void *getPointerToFunction(Function *F) = 0;
 
 protected:
   void emitGlobals();
