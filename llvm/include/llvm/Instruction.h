@@ -10,9 +10,6 @@
 
 #include "llvm/User.h"
 
-class BasicBlock;
-class Method;
-
 class Instruction : public User {
   BasicBlock *Parent;
 
