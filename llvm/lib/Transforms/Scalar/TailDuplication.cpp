@@ -49,7 +49,7 @@ namespace {
 }
 
 // Public interface to the Tail Duplication pass
-Pass *llvm::createTailDuplicationPass() { return new TailDup(); }
+FunctionPass *llvm::createTailDuplicationPass() { return new TailDup(); }
 
 /// runOnFunction - Top level algorithm - Loop over each unconditional branch in
 /// the function, eliminating it if it looks attractive enough.

@@ -64,7 +64,7 @@ namespace {
 }
 
 // Public interface to the ScalarReplAggregates pass
-Pass *llvm::createScalarReplAggregatesPass() { return new SROA(); }
+FunctionPass *llvm::createScalarReplAggregatesPass() { return new SROA(); }
 
 
 bool SROA::runOnFunction(Function &F) {

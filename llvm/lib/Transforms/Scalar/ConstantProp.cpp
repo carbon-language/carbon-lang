@@ -42,7 +42,7 @@ namespace {
   RegisterOpt<ConstantPropagation> X("constprop","Simple constant propagation");
 }
 
-Pass *llvm::createConstantPropagationPass() {
+FunctionPass *llvm::createConstantPropagationPass() {
   return new ConstantPropagation();
 }
 

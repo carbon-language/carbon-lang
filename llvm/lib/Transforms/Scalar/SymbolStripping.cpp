@@ -47,10 +47,10 @@ namespace {
                                      "Strip symbols from module and functions");
 }
 
-Pass *llvm::createSymbolStrippingPass() {
+FunctionPass *llvm::createSymbolStrippingPass() {
   return new SymbolStripping();
 }
 
-Pass *llvm::createFullSymbolStrippingPass() {
+FunctionPass *llvm::createFullSymbolStrippingPass() {
   return new FullSymbolStripping();
 }

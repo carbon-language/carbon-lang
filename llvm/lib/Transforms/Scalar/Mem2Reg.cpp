@@ -76,7 +76,7 @@ bool PromotePass::runOnFunction(Function &F) {
 
 // createPromoteMemoryToRegister - Provide an entry point to create this pass.
 //
-Pass *llvm::createPromoteMemoryToRegister() {
+FunctionPass *llvm::createPromoteMemoryToRegister() {
   return new PromotePass();
 }
 

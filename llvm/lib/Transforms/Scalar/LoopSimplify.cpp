@@ -88,7 +88,7 @@ namespace {
 
 // Publically exposed interface to pass...
 const PassInfo *llvm::LoopSimplifyID = X.getPassInfo();
-Pass *llvm::createLoopSimplifyPass() { return new LoopSimplify(); }
+FunctionPass *llvm::createLoopSimplifyPass() { return new LoopSimplify(); }
 
 /// runOnFunction - Run down all loops in the CFG (recursively, but we could do
 /// it in any convenient order) inserting preheaders...

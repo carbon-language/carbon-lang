@@ -285,7 +285,9 @@ namespace {
   RegisterOpt<CEE> X("cee", "Correlated Expression Elimination");
 }
 
-Pass *llvm::createCorrelatedExpressionEliminationPass() { return new CEE(); }
+FunctionPass *llvm::createCorrelatedExpressionEliminationPass() {
+  return new CEE();
+}
 
 
 bool CEE::runOnFunction(Function &F) {

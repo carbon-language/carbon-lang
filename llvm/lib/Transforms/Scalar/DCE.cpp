@@ -53,7 +53,7 @@ namespace {
   RegisterOpt<DeadInstElimination> X("die", "Dead Instruction Elimination");
 }
 
-Pass *llvm::createDeadInstEliminationPass() {
+FunctionPass *llvm::createDeadInstEliminationPass() {
   return new DeadInstElimination();
 }
 

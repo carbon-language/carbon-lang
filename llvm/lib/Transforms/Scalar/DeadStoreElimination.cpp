@@ -56,7 +56,7 @@ namespace {
   RegisterOpt<DSE> X("dse", "Dead Store Elimination");
 }
 
-Pass *llvm::createDeadStoreEliminationPass() { return new DSE(); }
+FunctionPass *llvm::createDeadStoreEliminationPass() { return new DSE(); }
 
 bool DSE::runOnBasicBlock(BasicBlock &BB) {
   TargetData &TD = getAnalysis<TargetData>();

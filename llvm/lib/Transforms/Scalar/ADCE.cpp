@@ -106,7 +106,7 @@ private:
   RegisterOpt<ADCE> X("adce", "Aggressive Dead Code Elimination");
 } // End of anonymous namespace
 
-Pass *llvm::createAggressiveDCEPass() { return new ADCE(); }
+FunctionPass *llvm::createAggressiveDCEPass() { return new ADCE(); }
 
 void ADCE::markBlockAlive(BasicBlock *BB) {
   // Mark the basic block as being newly ALIVE... and mark all branches that

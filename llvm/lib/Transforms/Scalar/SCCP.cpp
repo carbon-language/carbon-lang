@@ -274,7 +274,7 @@ private:
 
 
 // createSCCPPass - This is the public interface to this file...
-Pass *llvm::createSCCPPass() {
+FunctionPass *llvm::createSCCPPass() {
   return new SCCP();
 }
 

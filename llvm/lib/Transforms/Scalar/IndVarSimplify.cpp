@@ -328,7 +328,7 @@ namespace {
   RegisterOpt<IndVarSimplify> X("indvars", "Canonicalize Induction Variables");
 }
 
-Pass *llvm::createIndVarSimplifyPass() {
+FunctionPass *llvm::createIndVarSimplifyPass() {
   return new IndVarSimplify();
 }
 
