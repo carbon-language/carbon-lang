@@ -1,0 +1,204 @@
+
+=pod
+
+=head1 NAME
+
+llc - LLVM static compiler
+
+=head1 SYNOPSIS
+
+llc [options] [filename]
+
+=head1 DESCRIPTION
+
+The B<llc> command compiles LLVM bytecode into assembly language for a
+specified architecture.  The assembly language output can then be passed through
+a native assembler and linker to generate native code.
+
+The choice of architecture for the output assembly code is determined as
+follows, by attempting to satisfy each of the following rules in turn (first
+one wins):
+
+=over
+
+=item *
+
+If the user has specified an architecture with the -m option, use that
+architecture.
+
+=item *
+
+Examine the input LLVM bytecode file: if it is little endian and has a
+pointer size of 32 bits, select the Intel IA-32 architecture.  If it is big
+endian and has a pointer size of 64 bits, select the SparcV9 architecture.
+
+=item *
+
+If B<llc> was compiled on an architecture for which it can generate code, select
+the architecture upon which B<llc> was compiled.
+
+=item *
+
+Exit with an error message telling the user to specify the output
+architecture explicitly.
+
+=back
+
+=head1 OPTIONS
+
+If I<filename> is - or omitted, B<llc> reads LLVM bytecode from standard input.
+Otherwise, it will read LLVM bytecode from I<filename>.
+
+If the B<-o> option is omitted, then B<llc> will send its output to standard
+output if the input is from standard input.  If the B<-o> option specifies -,
+then the output will also be sent to standard output.
+
+If no B<-o> option is specified and an input file other than - is specified,
+then B<llc> creates the output filename by taking the input filename,
+removing any existing F<.bc> extension, and adding a F<.s> suffix.
+
+Other B<llc> options are as follows:
+
+=over
+
+=item B<-f>
+
+Overwrite output files. By default, B<llc> will refuse to overwrite
+an output file which already exists.
+
+=item B<-march>=I<arch>
+
+Specify the architecture for which to generate assembly.  Valid
+architectures are:
+
+=over
+
+=item I<x86>
+
+Intel IA-32 (Pentium and above)
+
+=item I<sparcv9>
+
+64-bit SPARC V9
+
+=item I<c>
+
+Emit C code, not assembly
+
+=back
+
+=item B<-enable-correct-eh-support>
+
+Instruct the B<-lowerinvoke> pass to insert code for correct exception handling
+support.  This is expensive and is by default omitted for efficiency.
+
+=item B<-help>
+
+Print a summary of command line options.
+
+=item B<-stats>
+
+Print statistics recorded by code-generation passes.
+
+=item B<-time-passes>
+
+Record the amount of time needed for each pass and print a report to standard
+error.
+
+=back
+
+=head2 Intel IA-32-specific Options
+
+=over
+
+=item B<--disable-fp-elim>
+
+Disable frame pointer elimination optimization.
+
+=item B<--disable-pattern-isel>
+
+Use the 'simple' X86 instruction selector (the default).
+
+=item B<--print-machineinstrs>
+
+Print generated machine code.
+
+=item B<--regalloc>=I<allocator>
+
+Specify the register allocator to use. The default I<allocator> is I<local>.
+Valid register allocators are:
+
+=over
+
+=item I<simple>
+
+Very simple "always spill" register allocator
+
+=item I<local>
+
+Local register allocator
+
+=item I<linearscan>
+
+Linear scan global register allocator (experimental)
+
+=back
+
+=item B<--spiller>=I<spiller>
+
+Specify the spiller to use for register allocators that support it.  Currently
+this option is used only by the linear scan register allocator. The default
+I<spiller> is I<local>.  Valid spillers are:
+
+=over
+
+=item I<simple>
+
+Simple spiller
+
+=item I<local>
+
+Local spiller
+
+=back
+
+=back
+
+=head2 SPARCV9-specific Options
+
+=over
+
+=item B<--disable-peephole>
+
+Disable peephole optimization pass.
+
+=item B<--disable-sched>
+
+Disable local scheduling pass.
+
+=item B<--disable-strip>
+
+The Sparc backend embeds the LLVM bytecode into the assembly output.  This
+option requests that symbol names be retained; by default, they are stripped out.
+
+=item B<--enable-maps>
+
+Emit LLVM-to-machine code mapping information into the assembly output.
+
+=back
+
+=head1 EXIT STATUS
+
+If B<llc> succeeds, it will exit with 0.  Otherwise, if an error occurs,
+it will exit with a non-zero value.
+
+=head1 SEE ALSO
+
+L<lli>
+
+=head1 AUTHORS
+
+Maintained by the LLVM Team (L<http://llvm.cs.uiuc.edu>).
+
+=cut
+

@@ -1,0 +1,76 @@
+=pod
+
+=head1 NAME
+
+lli - directly execute programs from LLVM bytecode
+
+=head1 SYNOPSIS
+
+lli [options] [filename] [args ...]
+
+=head1 DESCRIPTION
+
+B<lli> directly executes programs in LLVM bytecode format.  It takes a program in
+LLVM bytecode format and executes it using a just-in-time compiler, if one is
+available for the current architecture, or an interpreter.  B<lli> takes
+all of the same code generator options as L<llc|llc>, but they are only effective
+when B<lli> is using the just-in-time compiler.
+
+If I<filename> is not specified, then B<lli> reads the LLVM bytecode for the
+program from standard input.
+
+The optional I<args> specified on the command line are passed to the program as
+arguments.
+
+=head1 OPTIONS
+
+=over
+
+=item B<-help>
+
+Print a summary of command line options.
+
+=item B<-stats>
+
+Print statistics from the code-generation passes. This is only meaningful for
+the just-in-time compiler, at present.
+
+=item B<-time-passes>
+
+Record the amount of time needed for each code-generation pass and print it to
+standard error.
+
+=item B<-march>=I<arch>
+
+Use the specified non-default architecture arch when selecting a code generator
+for the just-in-time compiler. This may result in a crash if you pick an
+architecture which is not compatible with the hardware you are running B<lli> on.
+
+=item B<-force-interpreter>=I<{false,true}>
+
+If set to true, use the interpreter even if a just-in-time compiler is available
+for this architecture. Defaults to false.
+
+=item B<-f>=I<name>
+
+Call the function named I<name> to start the program.  Note: The
+function is assumed to have the C signature C<int> I<name> C<(int,
+char **, char **)>.  If you try to use this option to call a function of
+incompatible type, undefined behavior may result. Defaults to C<main>.
+
+=back
+
+=head1 EXIT STATUS
+
+If B<lli> fails to load the program, it will exit with an exit code of 1.
+Otherwise, it will return the exit code of the program it executes.
+
+=head1 SEE ALSO
+
+L<llc>
+
+=head1 AUTHOR
+
+Maintained by the LLVM Team (L<http://llvm.cs.uiuc.edu>).
+
+=cut
