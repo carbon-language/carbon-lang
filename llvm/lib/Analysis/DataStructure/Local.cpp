@@ -382,8 +382,9 @@ void GraphBuilder::visitGetElementPtrInst(User &GEP) {
   for (gep_type_iterator I = gep_type_begin(GEP), E = gep_type_end(GEP);
        I != E; ++I)
     if (const StructType *STy = dyn_cast<StructType>(*I)) {
-      unsigned FieldNo = cast<ConstantUInt>(I.getOperand())->getValue();
-      Offset += TD.getStructLayout(STy)->MemberOffsets[FieldNo];
+      unsigned FieldNo =
+           (unsigned)cast<ConstantUInt>(I.getOperand())->getValue();
+      Offset += (unsigned)TD.getStructLayout(STy)->MemberOffsets[FieldNo];
     } else if (const PointerType *PTy = dyn_cast<PointerType>(*I)) {
       if (!isa<Constant>(I.getOperand()) ||
           !cast<Constant>(I.getOperand())->isNullValue())
@@ -1030,7 +1031,7 @@ void GraphBuilder::MergeConstantInitIntoNode(DSNodeHandle &NH, Constant *C) {
     const StructLayout *SL = TD.getStructLayout(CS->getType());
     for (unsigned i = 0, e = CS->getNumOperands(); i != e; ++i) {
       DSNode *NHN = NH.getNode();
-      DSNodeHandle NewNH(NHN, NH.getOffset()+SL->MemberOffsets[i]);
+      DSNodeHandle NewNH(NHN, NH.getOffset()+(unsigned)SL->MemberOffsets[i]);
       MergeConstantInitIntoNode(NewNH, cast<Constant>(CS->getOperand(i)));
     }
   } else if (isa<ConstantAggregateZero>(C) || isa<UndefValue>(C)) {

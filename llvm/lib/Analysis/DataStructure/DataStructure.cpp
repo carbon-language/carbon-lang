@@ -249,7 +249,8 @@ namespace {
           ++SS.Idx;
           if (SS.Idx != ST->getNumElements()) {
             const StructLayout *SL = TD.getStructLayout(ST);
-            SS.Offset += SL->MemberOffsets[SS.Idx]-SL->MemberOffsets[SS.Idx-1];
+            SS.Offset += 
+               unsigned(SL->MemberOffsets[SS.Idx]-SL->MemberOffsets[SS.Idx-1]);
             return;
           }
           Stack.pop_back();  // At the end of the structure
@@ -257,7 +258,7 @@ namespace {
           const ArrayType *AT = cast<ArrayType>(SS.Ty);
           ++SS.Idx;
           if (SS.Idx != AT->getNumElements()) {
-            SS.Offset += TD.getTypeSize(AT->getElementType());
+            SS.Offset += unsigned(TD.getTypeSize(AT->getElementType()));
             return;
           }
           Stack.pop_back();  // At the end of the array
@@ -280,7 +281,7 @@ namespace {
             assert(SS.Idx < ST->getNumElements());
             const StructLayout *SL = TD.getStructLayout(ST);
             Stack.push_back(StackState(ST->getElementType(SS.Idx),
-                                       SS.Offset+SL->MemberOffsets[SS.Idx]));
+                            SS.Offset+unsigned(SL->MemberOffsets[SS.Idx])));
           }
         } else {
           const ArrayType *AT = cast<ArrayType>(SS.Ty);
@@ -292,7 +293,7 @@ namespace {
             assert(SS.Idx < AT->getNumElements());
             Stack.push_back(StackState(AT->getElementType(),
                                        SS.Offset+SS.Idx*
-                                       TD.getTypeSize(AT->getElementType())));
+                             unsigned(TD.getTypeSize(AT->getElementType()))));
           }
         }
       }
@@ -371,7 +372,7 @@ bool DSNode::mergeTypeInfo(const Type *NewTy, unsigned Offset,
   }
 
   // Figure out how big the new type we're merging in is...
-  unsigned NewTySize = NewTy->isSized() ? TD.getTypeSize(NewTy) : 0;
+  unsigned NewTySize = NewTy->isSized() ? (unsigned)TD.getTypeSize(NewTy) : 0;
 
   // Otherwise check to see if we can fold this type into the current node.  If
   // we can't, we fold the node completely, if we can, we potentially update our
@@ -450,12 +451,12 @@ bool DSNode::mergeTypeInfo(const Type *NewTy, unsigned Offset,
 
       // The offset we are looking for must be in the i'th element...
       SubType = STy->getElementType(i);
-      O += SL.MemberOffsets[i];
+      O += (unsigned)SL.MemberOffsets[i];
       break;
     }
     case Type::ArrayTyID: {
       SubType = cast<ArrayType>(SubType)->getElementType();
-      unsigned ElSize = TD.getTypeSize(SubType);
+      unsigned ElSize = (unsigned)TD.getTypeSize(SubType);
       unsigned Remainder = (Offset-O) % ElSize;
       O = Offset-Remainder;
       break;
@@ -476,7 +477,8 @@ bool DSNode::mergeTypeInfo(const Type *NewTy, unsigned Offset,
   if (isa<FunctionType>(SubType) &&
       isa<FunctionType>(NewTy)) return false;
 
-  unsigned SubTypeSize = SubType->isSized() ? TD.getTypeSize(SubType) : 0;
+  unsigned SubTypeSize = SubType->isSized() ? 
+       (unsigned)TD.getTypeSize(SubType) : 0;
 
   // Ok, we are getting desperate now.  Check for physical subtyping, where we
   // just require each element in the node to be compatible.
@@ -500,16 +502,16 @@ bool DSNode::mergeTypeInfo(const Type *NewTy, unsigned Offset,
       const StructType *STy = cast<StructType>(SubType);
       const StructLayout &SL = *TD.getStructLayout(STy);
       if (SL.MemberOffsets.size() > 1)
-        NextPadSize = SL.MemberOffsets[1];
+        NextPadSize = (unsigned)SL.MemberOffsets[1];
       else
         NextPadSize = SubTypeSize;
       NextSubType = STy->getElementType(0);
-      NextSubTypeSize = TD.getTypeSize(NextSubType);
+      NextSubTypeSize = (unsigned)TD.getTypeSize(NextSubType);
       break;
     }
     case Type::ArrayTyID:
       NextSubType = cast<ArrayType>(SubType)->getElementType();
-      NextSubTypeSize = TD.getTypeSize(NextSubType);
+      NextSubTypeSize = (unsigned)TD.getTypeSize(NextSubType);
       NextPadSize = NextSubTypeSize;
       break;
     default: ;

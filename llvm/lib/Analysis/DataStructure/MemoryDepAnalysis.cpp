@@ -124,7 +124,7 @@ public:
 class ModRefInfoBuilder : public InstVisitor<ModRefInfoBuilder> {
   const DSGraph&            funcGraph;
   const FunctionModRefInfo& funcModRef;
-  struct ModRefTable&       modRefTable;
+  class ModRefTable&       modRefTable;
 
   ModRefInfoBuilder();                         // DO NOT IMPLEMENT
   ModRefInfoBuilder(const ModRefInfoBuilder&); // DO NOT IMPLEMENT
@@ -333,6 +333,7 @@ void MemoryDepAnalysis::ProcessSCC(std::vector<BasicBlock*> &S,
       ///                       Add true-dep: U -> D
       ///                   if (HasLoop(S))
       ///                       Add anti-dep: D -> U
+  {
       ModRefTable::ref_iterator JI=ModRefCurrent.usersBegin();
       ModRefTable::ref_iterator JE = ModRefCurrent.usersBeforeDef_End(II);
       for ( ; JI != JE; ++JI)
@@ -344,7 +345,7 @@ void MemoryDepAnalysis::ProcessSCC(std::vector<BasicBlock*> &S,
             if (hasLoop)
               funcDepGraph->AddSimpleDependence(**JI, **II, AntiDependence);
           }
-
+  
       ///           for every use U in UseSetCurrent that was seen *after* D
       ///               // NOTE: U comes before D in execution order
       ///               if (U & D)
@@ -361,6 +362,7 @@ void MemoryDepAnalysis::ProcessSCC(std::vector<BasicBlock*> &S,
             if (hasLoop)
               funcDepGraph->AddSimpleDependence(**II, **JI, TrueDependence);
           }
+  }
 
       ///           for every def Dnext in DefSetPrev
       ///               // NOTE: Dnext comes after D in execution order

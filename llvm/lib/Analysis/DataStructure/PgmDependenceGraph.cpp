@@ -176,7 +176,7 @@ void DepIterState::Next()
       firstSsaDone = true;                   // flags if we just rolled over
     } 
 
-  if (depFlags & ControlDeps != 0)
+  if ((depFlags & ControlDeps) != 0)
     {
       assert(0 && "Cannot handle control deps");
       // iterFlags &= ~FirstTimeFlag;           // clear "firstTime" flag
