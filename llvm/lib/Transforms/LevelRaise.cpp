@@ -504,8 +504,18 @@ bool RPR::PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
       PointerType *NewPFunTy = PointerType::get(NewFT);
 
       // Create a new cast, inserting it right before the function call...
-      CastInst *NewCast = new CastInst(CI->getCalledValue(), NewPFunTy,
-                                       CI->getCalledValue()->getName()+"_c",CI);
+      Value *NewCast;
+      Constant *ConstantCallSrc = 0;
+      if (Constant *CS = dyn_cast<Constant>(CI->getCalledValue()))
+        ConstantCallSrc = CS;
+      else if (GlobalValue *GV = dyn_cast<GlobalValue>(CI->getCalledValue()))
+        ConstantCallSrc = ConstantPointerRef::get(GV);
+
+      if (ConstantCallSrc)
+        NewCast = ConstantExpr::getCast(ConstantCallSrc, NewPFunTy);
+      else
+        NewCast = new CastInst(CI->getCalledValue(), NewPFunTy,
+                               CI->getCalledValue()->getName()+"_c",CI);
 
       // Create a new call instruction...
       CallInst *NewCall = new CallInst(NewCast,
