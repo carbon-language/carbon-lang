@@ -438,10 +438,9 @@ void ISel::copyConstantToRegister(MachineBasicBlock *MBB,
       BMI(MBB, IP, IntegralOpcodeTab[Class], 1, R).addZImm(CI->getRawValue());
     }
   } else if (ConstantFP *CFP = dyn_cast<ConstantFP>(C)) {
-    double Value = CFP->getValue();
-    if (Value == +0.0)
+    if (CFP->isExactlyValue(+0.0))
       BMI(MBB, IP, X86::FLD0, 0, R);
-    else if (Value == +1.0)
+    else if (CFP->isExactlyValue(+1.0))
       BMI(MBB, IP, X86::FLD1, 0, R);
     else {
       // Otherwise we need to spill the constant to memory...
@@ -1212,7 +1211,7 @@ void ISel::emitSimpleBinaryOperation(MachineBasicBlock *MBB,
 
   // sub 0, X -> neg X
   if (OperatorClass == 1 && Class != cLong)
-    if (ConstantInt *CI = dyn_cast<ConstantInt>(Op0))
+    if (ConstantInt *CI = dyn_cast<ConstantInt>(Op0)) {
       if (CI->isNullValue()) {
         unsigned op1Reg = getReg(Op1, MBB, IP);
         switch (Class) {
@@ -1228,6 +1227,7 @@ void ISel::emitSimpleBinaryOperation(MachineBasicBlock *MBB,
           return;
         }
       }
+    }
 
   if (!isa<ConstantInt>(Op1) || Class == cLong) {
     static const unsigned OpcodeTab[][4] = {
