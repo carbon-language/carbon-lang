@@ -40,13 +40,6 @@ namespace {
 
   cl::opt<bool>   
   Verify("verify", cl::desc("Verify each pass result"));
-
-
-  cl::opt<std::string>    // Be compatible with what GCC expects
-  QOption("Q", cl::desc("Compatibility option (ignored)"),
-          cl::Hidden, cl::Prefix);
-  cl::opt<bool>
-  PrintVersion("V", cl::desc("Print GCCAS version number"), cl::Hidden);
 }
 
 
@@ -148,9 +141,6 @@ int main(int argc, char **argv) {
     std::cerr << argv[0] << ": error opening " << OutputFilename << "!\n";
     return 1;
   }
-
-  if (PrintVersion)  /* For GNU compatibility */
-    std::cerr << "LLVM GCCAS version xx\n" << std::flush;
 
   // In addition to just parsing the input from GCC, we also want to spiff it up
   // a little bit.  Do this now.
