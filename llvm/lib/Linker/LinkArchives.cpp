@@ -371,12 +371,19 @@ bool llvm::LinkFiles(const char *progname, Module *HeadModule,
 ///  TRUE  - Error.
 ///
 void llvm::LinkLibraries(const char *progname, Module *HeadModule,
-                         const std::vector<std::string> &Libraries,
+                         const std::vector<std::string> &Libs,
                          const std::vector<std::string> &LibPaths,
                          bool Verbose, bool Native) {
   // String in which to receive error messages.
   std::string ErrorMessage;
 
+  // Build a set of library names that we should try, including the 
+  // HeadModule's dependent libraries. We use a set here to eliminate 
+  // duplicates between the module's libraries and the argument Libs.
+  Module::LibraryListType Libraries(HeadModule->getLibraries());
+  Libraries.insert(Libs.begin(),Libs.end());
+
+  // For each library
   for (unsigned i = 0; i < Libraries.size(); ++i) {
     // Determine where this library lives.
     std::string Pathname = FindLib(Libraries[i], LibPaths);
