@@ -297,9 +297,6 @@ sub GetDejagnuTestResults { # (filename, log)
   push(@lines, "</pre>\n");
   close SRCHFILE;
 
-  #add link to complete testing log
-  push(@lines, "<p>A complete log of testing <a href=\"$DejagnuLog\">Feature and Regression</a> is available for further analysis.</p>\n");
-
   my $content = join("",@lines);
   return "$content</li></ol>\n";
 }
