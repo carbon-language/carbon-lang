@@ -304,7 +304,7 @@ void TDDataStructures::deleteValue(Value *V) {
     return;
   }
 
-  if (Function *F = dyn_cast<Function>(F)) {
+  if (Function *F = dyn_cast<Function>(V)) {
     assert(getDSGraph(*F).getReturnNodes().size() == 1 &&
            "cannot handle scc's");
     delete DSInfo[F];
