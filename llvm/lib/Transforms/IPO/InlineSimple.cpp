@@ -193,7 +193,7 @@ int SimpleInliner::getInlineCost(CallSite CS) {
   // make it almost guaranteed to be inlined.
   //
   if (Callee->hasInternalLinkage() && Callee->hasOneUse())
-    InlineCost -= 5000;
+    InlineCost -= 30000;
 
   // Get information about the callee...
   FunctionInfo &CalleeFI = CachedFunctionInfo[Callee];
