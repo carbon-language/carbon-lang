@@ -49,15 +49,9 @@ static inline bool DoConstantPoolMerging(Module *M) {
 // Sparse Conditional Constant Propogation Pass
 //
 
-bool DoSparseConditionalConstantProp(Method *M);
-
-static inline bool DoSparseConditionalConstantProp(Module *M) {
-  return M->reduceApply(DoSparseConditionalConstantProp);
-}
-
-// Define a shorter version of the name...
-template <class Unit> bool DoSCCP(Unit *M) { 
-  return DoSparseConditionalConstantProp(M); 
+bool DoSCCP(Method *M);
+static inline bool DoSCCP(Module *M) {
+  return M->reduceApply(DoSCCP);
 }
 
 }  // End Namespace opt
