@@ -24,26 +24,32 @@
 //              not continue in this method any longer.
 //
 class ReturnInst : public TerminatorInst {
-  Use Val;   // Will be null if returning void...
-  ReturnInst(const ReturnInst &RI);
+  ReturnInst(const ReturnInst &RI) : TerminatorInst(Instruction::Ret) {
+    if (RI.Operands.size()) {
+      assert(RI.Operands.size() == 1 && "Return insn can only have 1 operand!");
+      Operands.reserve(1);
+      Operands.push_back(Use(RI.Operands[0], this));
+    }
+  }
 public:
-  ReturnInst(Value *value = 0);
+  ReturnInst(Value *RetVal = 0) : TerminatorInst(Instruction::Ret) {
+    if (RetVal) {
+      Operands.reserve(1);
+      Operands.push_back(Use(RetVal, this));
+    }
+  }
   inline ~ReturnInst() { dropAllReferences(); }
 
   virtual Instruction *clone() const { return new ReturnInst(*this); }
 
   virtual string getOpcode() const { return "ret"; }
 
-  inline const Value *getReturnValue() const { return Val; }
-  inline       Value *getReturnValue()       { return Val; }
-
-  virtual void dropAllReferences();
-  virtual const Value *getOperand(unsigned i) const {
-    return (i == 0) ? Val : 0;
+  inline const Value *getReturnValue() const {
+    return Operands.size() ? Operands[0] : 0; 
   }
-  inline Value *getOperand(unsigned i) { return (i == 0) ? Val : 0;  }
-  virtual bool setOperand(unsigned i, Value *Val);
-  virtual unsigned getNumOperands() const { return Val != 0; }
+  inline       Value *getReturnValue()       {
+    return Operands.size() ? Operands[0] : 0;
+  }
 
   // Additionally, they must provide a method to get at the successors of this
   // terminator instruction.  If 'idx' is out of range, a null pointer shall be
@@ -58,9 +64,6 @@ public:
 // BranchInst - Conditional or Unconditional Branch instruction.
 //
 class BranchInst : public TerminatorInst {
-  BasicBlockUse TrueDest, FalseDest;
-  Use Condition;
-
   BranchInst(const BranchInst &BI);
 public:
   // If cond = null, then is an unconditional br...
@@ -69,32 +72,40 @@ public:
 
   virtual Instruction *clone() const { return new BranchInst(*this); }
 
-  virtual void dropAllReferences();
- 
-  inline const Value *getCondition() const { return Condition; }
-  inline       Value *getCondition()       { return Condition; }
-
   inline bool isUnconditional() const {
-    return Condition == 0 || !FalseDest;
+    return Operands.size() == 1;
+  }
+
+  inline const Value *getCondition() const {
+    return isUnconditional() ? 0 : Operands[2];
+  }
+  inline       Value *getCondition()       {
+    return isUnconditional() ? 0 : Operands[2];
   }
 
   virtual string getOpcode() const { return "br"; }
 
-  inline Value *getOperand(unsigned i) {
-    return (Value*)((const BranchInst *)this)->getOperand(i);
+  // setUnconditionalDest - Change the current branch to an unconditional branch
+  // targeting the specified block.
+  //
+  void setUnconditionalDest(BasicBlock *Dest) {
+    if (Operands.size() == 3)
+      Operands.erase(Operands.begin()+1, Operands.end());
+    Operands[0] = Dest;
   }
-  virtual const Value *getOperand(unsigned i) const;
-  virtual bool setOperand(unsigned i, Value *Val);
-  virtual unsigned getNumOperands() const { return isUnconditional() ? 1 : 3; }
+
+  // Additionally, they must provide a method to get at the successors of this
+  // terminator instruction.
+  //
+  virtual const BasicBlock *getSuccessor(unsigned i) const {
+    return (i == 0) ? Operands[0]->castBasicBlockAsserting() : 
+          ((i == 1 && Operands.size() > 1) 
+               ? Operands[1]->castBasicBlockAsserting() : 0);
+  }
   inline BasicBlock *getSuccessor(unsigned idx) {
     return (BasicBlock*)((const BranchInst *)this)->getSuccessor(idx);
   }
 
-  // Additionally, they must provide a method to get at the successors of this
-  // terminator instruction.  If 'idx' is out of range, a null pointer shall be
-  // returned.
-  //
-  virtual const BasicBlock *getSuccessor(unsigned idx) const;
   virtual unsigned getNumSuccessors() const { return 1+!isUnconditional(); }
 };
 
@@ -103,17 +114,12 @@ public:
 // SwitchInst - Multiway switch
 //
 class SwitchInst : public TerminatorInst {
-public:
-  typedef pair<ConstPoolUse, BasicBlockUse> dest_value;
-private:
-  BasicBlockUse DefaultDest;
-  Use Val;
-  vector<dest_value> Destinations;
-
+  // Operand[0] = Value to switch on
+  // Operand[1] = Default basic block destination
   SwitchInst(const SwitchInst &RI);
 public:
-  typedef vector<dest_value>::iterator       dest_iterator;
-  typedef vector<dest_value>::const_iterator dest_const_iterator;
+  //typedef vector<dest_value>::iterator       dest_iterator;
+  //typedef vector<dest_value>::const_iterator dest_const_iterator;
 
   SwitchInst(Value *Value, BasicBlock *Default);
   inline ~SwitchInst() { dropAllReferences(); }
@@ -122,36 +128,50 @@ public:
 
   // Accessor Methods for Switch stmt
   //
+  /*
   inline dest_iterator dest_begin() { return Destinations.begin(); }
   inline dest_iterator dest_end  () { return Destinations.end(); }
   inline dest_const_iterator dest_begin() const { return Destinations.begin(); }
   inline dest_const_iterator dest_end  () const { return Destinations.end(); }
+  */
 
-  inline const Value *getCondition() const { return Val; }
-  inline       Value *getCondition()       { return Val; }
-  inline const BasicBlock *getDefaultDest() const { return DefaultDest; }
-  inline       BasicBlock *getDefaultDest()       { return DefaultDest; }
+  inline const Value *getCondition() const { return Operands[0]; }
+  inline       Value *getCondition()       { return Operands[0]; }
+  inline const BasicBlock *getDefaultDest() const {
+    return Operands[1]->castBasicBlockAsserting();
+  }
+  inline       BasicBlock *getDefaultDest()       {
+    return Operands[1]->castBasicBlockAsserting();
+  }
 
   void dest_push_back(ConstPoolVal *OnVal, BasicBlock *Dest);
 
   virtual string getOpcode() const { return "switch"; }
-  inline Value *getOperand(unsigned i) {
-    return (Value*)((const SwitchInst*)this)->getOperand(i);
-  }
-  virtual const Value *getOperand(unsigned i) const;
-  virtual bool setOperand(unsigned i, Value *Val);
-  virtual unsigned getNumOperands() const;
-  virtual void dropAllReferences();  
 
   // Additionally, they must provide a method to get at the successors of this
   // terminator instruction.  If 'idx' is out of range, a null pointer shall be
   // returned.
   //
-  virtual const BasicBlock *getSuccessor(unsigned idx) const;
-  virtual unsigned getNumSuccessors() const { return 1+Destinations.size(); }
-  inline BasicBlock *getSuccessor(unsigned idx) {
-    return (BasicBlock*)((const SwitchInst *)this)->getSuccessor(idx);
+  virtual const BasicBlock *getSuccessor(unsigned idx) const {
+    if (idx >= Operands.size()/2) return 0;
+    return Operands[idx*2+1]->castBasicBlockAsserting();
   }
+  inline BasicBlock *getSuccessor(unsigned idx) {
+    if (idx >= Operands.size()/2) return 0;
+    return Operands[idx*2+1]->castBasicBlockAsserting();
+  }
+
+  // getSuccessorValue - Return the value associated with the specified successor
+  // WARNING: This does not gracefully accept idx's out of range!
+  inline const ConstPoolVal *getSuccessorValue(unsigned idx) const {
+    assert(idx < getNumSuccessors() && "Successor # out of range!");
+    return Operands[idx*2]->castConstantAsserting();
+  }
+  inline ConstPoolVal *getSuccessorValue(unsigned idx) {
+    assert(idx < getNumSuccessors() && "Successor # out of range!");
+    return Operands[idx*2]->castConstantAsserting();
+  }
+  virtual unsigned getNumSuccessors() const { return Operands.size()/2; }
 };
 
 #endif

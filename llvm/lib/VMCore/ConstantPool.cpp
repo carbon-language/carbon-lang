@@ -219,7 +219,7 @@ ConstPoolArray::ConstPoolArray(const ArrayType *T,
   : ConstPoolVal(T, Name) {
   for (unsigned i = 0; i < V.size(); i++) {
     assert(V[i]->getType() == T->getElementType());
-    Val.push_back(ConstPoolUse(V[i], this));
+    Operands.push_back(Use(V[i], this));
   }
 }
 
@@ -231,7 +231,7 @@ ConstPoolStruct::ConstPoolStruct(const StructType *T,
 
   for (unsigned i = 0; i < V.size(); i++) {
     assert(V[i]->getType() == ETypes[i]);
-    Val.push_back(ConstPoolUse(V[i], this));
+    Operands.push_back(Use(V[i], this));
   }
 }
 
@@ -265,14 +265,14 @@ ConstPoolType::ConstPoolType(const ConstPoolType &CPT)
 
 ConstPoolArray::ConstPoolArray(const ConstPoolArray &CPA)
   : ConstPoolVal(CPA.getType()) {
-  for (unsigned i = 0; i < CPA.Val.size(); i++)
-    Val.push_back(ConstPoolUse((ConstPoolVal*)CPA.Val[i], this));
+  for (unsigned i = 0; i < CPA.Operands.size(); i++)
+    Operands.push_back(Use(CPA.Operands[i], this));
 }
 
 ConstPoolStruct::ConstPoolStruct(const ConstPoolStruct &CPS)
   : ConstPoolVal(CPS.getType()) {
-  for (unsigned i = 0; i < CPS.Val.size(); i++)
-    Val.push_back(ConstPoolUse((ConstPoolVal*)CPS.Val[i], this));
+  for (unsigned i = 0; i < CPS.Operands.size(); i++)
+    Operands.push_back(Use(CPS.Operands[i], this));
 }
 
 //===----------------------------------------------------------------------===//
@@ -301,12 +301,12 @@ string ConstPoolType::getStrValue() const {
 
 string ConstPoolArray::getStrValue() const {
   string Result = "[";
-  if (Val.size()) {
-    Result += " " + Val[0]->getType()->getName() + 
-	      " " + Val[0]->getStrValue();
-    for (unsigned i = 1; i < Val.size(); i++)
-      Result += ", " + Val[i]->getType()->getName() + 
-	         " " + Val[i]->getStrValue();
+  if (Operands.size()) {
+    Result += " " + Operands[0]->getType()->getName() + 
+	      " " + Operands[0]->castConstantAsserting()->getStrValue();
+    for (unsigned i = 1; i < Operands.size(); i++)
+      Result += ", " + Operands[i]->getType()->getName() + 
+	         " " + Operands[i]->castConstantAsserting()->getStrValue();
   }
 
   return Result + " ]";
@@ -314,12 +314,12 @@ string ConstPoolArray::getStrValue() const {
 
 string ConstPoolStruct::getStrValue() const {
   string Result = "{";
-  if (Val.size()) {
-    Result += " " + Val[0]->getType()->getName() + 
-	      " " + Val[0]->getStrValue();
-    for (unsigned i = 1; i < Val.size(); i++)
-      Result += ", " + Val[i]->getType()->getName() + 
-	         " " + Val[i]->getStrValue();
+  if (Operands.size()) {
+    Result += " " + Operands[0]->getType()->getName() + 
+	      " " + Operands[0]->castConstantAsserting()->getStrValue();
+    for (unsigned i = 1; i < Operands.size(); i++)
+      Result += ", " + Operands[i]->getType()->getName() + 
+	         " " + Operands[i]->castConstantAsserting()->getStrValue();
   }
 
   return Result + " }";
@@ -356,9 +356,11 @@ bool ConstPoolType::equals(const ConstPoolVal *V) const {
 bool ConstPoolArray::equals(const ConstPoolVal *V) const {
   assert(getType() == V->getType());
   ConstPoolArray *AV = (ConstPoolArray*)V;
-  if (Val.size() != AV->Val.size()) return false;
-  for (unsigned i = 0; i < Val.size(); i++)
-    if (!Val[i]->equals(AV->Val[i])) return false;
+  if (Operands.size() != AV->Operands.size()) return false;
+  for (unsigned i = 0; i < Operands.size(); i++)
+    if (!Operands[i]->castConstantAsserting()->equals(
+               AV->Operands[i]->castConstantAsserting()))
+      return false;
 
   return true;
 }
@@ -366,9 +368,11 @@ bool ConstPoolArray::equals(const ConstPoolVal *V) const {
 bool ConstPoolStruct::equals(const ConstPoolVal *V) const {
   assert(getType() == V->getType());
   ConstPoolStruct *SV = (ConstPoolStruct*)V;
-  if (Val.size() != SV->Val.size()) return false;
-  for (unsigned i = 0; i < Val.size(); i++)
-    if (!Val[i]->equals(SV->Val[i])) return false;
+  if (Operands.size() != SV->Operands.size()) return false;
+  for (unsigned i = 0; i < Operands.size(); i++)
+    if (!Operands[i]->castConstantAsserting()->equals(
+           SV->Operands[i]->castConstantAsserting()))
+      return false;
 
   return true;
 }

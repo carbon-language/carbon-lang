@@ -13,9 +13,17 @@
 #endif
 
 BranchInst::BranchInst(BasicBlock *True, BasicBlock *False, Value *Cond) 
-  : TerminatorInst(Instruction::Br), TrueDest(True, this), 
-    FalseDest(False, this), Condition(Cond, this) {
+  : TerminatorInst(Instruction::Br) {
   assert(True != 0 && "True branch destination may not be null!!!");
+  Operands.reserve(False ? 3 : 1);
+  Operands.push_back(Use(True, this));
+  if (False) {
+    Operands.push_back(Use(False, this));
+    Operands.push_back(Use(Cond, this));
+  }
+
+  assert(!!False == !!Cond &&
+	 "Either both cond and false or neither can be specified!");
 
 #ifndef NDEBUG
   if (Cond != 0 && Cond->getType() != Type::BoolTy)
@@ -25,45 +33,12 @@ BranchInst::BranchInst(BasicBlock *True, BasicBlock *False, Value *Cond)
          "May only branch on boolean predicates!!!!");
 }
 
-BranchInst::BranchInst(const BranchInst &BI) 
-  : TerminatorInst(Instruction::Br), TrueDest(BI.TrueDest, this), 
-    FalseDest(BI.FalseDest, this), Condition(BI.Condition, this) {
-}
-
-
-void BranchInst::dropAllReferences() {
-  Condition = 0;
-  TrueDest = FalseDest = 0;
-}
-
-const Value *BranchInst::getOperand(unsigned i) const {
-    return (i == 0) ? (Value*)TrueDest : 
-          ((i == 1) ? (Value*)FalseDest : 
-          ((i == 2) ? (Value*)Condition : 0));
-}
-
-const BasicBlock *BranchInst::getSuccessor(unsigned i) const {
-  return (i == 0) ? (const BasicBlock*)TrueDest : 
-        ((i == 1) ? (const BasicBlock*)FalseDest : 0);
-}
-
-bool BranchInst::setOperand(unsigned i, Value *Val) { 
-  switch (i) {
-  case 0:
-    assert(Val && "Can't change primary direction to 0!");
-    assert(Val->getType() == Type::LabelTy);
-    TrueDest = (BasicBlock*)Val;
-    return true;
-  case 1:
-    assert(Val == 0 || Val->getType() == Type::LabelTy);
-    FalseDest = (BasicBlock*)Val;
-    return true;
-  case 2:
-    Condition = Val;
-    assert(!Condition || Condition->getType() == Type::BoolTy && 
-           "Condition expr must be a boolean expression!");
-    return true;
-  } 
-
-  return false;
+BranchInst::BranchInst(const BranchInst &BI) : TerminatorInst(Instruction::Br) {
+  Operands.reserve(BI.Operands.size());
+  Operands.push_back(Use(BI.Operands[0], this));
+  if (BI.Operands.size() != 1) {
+    assert(BI.Operands.size() == 3 && "BR can have 1 or 3 operands!");
+    Operands.push_back(Use(BI.Operands[1], this));
+    Operands.push_back(Use(BI.Operands[2], this));
+  }
 }

@@ -30,14 +30,7 @@ public:
 
   // Terminators must implement the methods required by Instruction...
   virtual Instruction *clone() const = 0;
-  virtual void dropAllReferences() = 0;
   virtual string getOpcode() const = 0;
-
-  virtual bool setOperand(unsigned i, Value *Val) = 0;
-  virtual const Value *getOperand(unsigned i) const = 0;
-  inline Value *getOperand(unsigned i) {
-    return (Value*)((const Instruction *)this)->getOperand(i);
-  }
 
   // Additionally, they must provide a method to get at the successors of this
   // terminator instruction.  If 'idx' is out of range, a null pointer shall be
@@ -57,7 +50,6 @@ public:
 //===----------------------------------------------------------------------===//
 
 class UnaryOperator : public Instruction {
-  Use Source;
 public:
 
   // create() - Construct a unary instruction, given the opcode
@@ -66,33 +58,17 @@ public:
   static UnaryOperator *create(unsigned Op, Value *Source);
 
   UnaryOperator(Value *S, unsigned iType, const string &Name = "")
-      : Instruction(S->getType(), iType, Name), Source(S, this) {
+      : Instruction(S->getType(), iType, Name) {
+    Operands.reserve(1);
+    Operands.push_back(Use(S, this));
   }
   inline ~UnaryOperator() { dropAllReferences(); }
 
   virtual Instruction *clone() const { 
-    return create(getInstType(), Source);
-  }
-
-  virtual void dropAllReferences() {
-    Source = 0;
+    return create(getInstType(), Operands[0]);
   }
 
   virtual string getOpcode() const = 0;
-
-  virtual unsigned getNumOperands() const { return 1; }
-  inline Value *getOperand(unsigned i) {
-    return (i == 0) ? Source : 0;
-  }
-  virtual const Value *getOperand(unsigned i) const {
-    return (i == 0) ? Source : 0;
-  }
-  virtual bool setOperand(unsigned i, Value *Val) {
-    // assert(Val && "operand must not be null!");
-    if (i) return false;
-    Source = Val;
-    return true;
-  }
 };
 
 
@@ -102,7 +78,6 @@ public:
 //===----------------------------------------------------------------------===//
 
 class BinaryOperator : public Instruction {
-  Use Source1, Source2;
 public:
 
   // create() - Construct a binary instruction, given the opcode
@@ -113,41 +88,20 @@ public:
 
   BinaryOperator(unsigned iType, Value *S1, Value *S2, 
                  const string &Name = "") 
-    : Instruction(S1->getType(), iType, Name), Source1(S1, this), 
-      Source2(S2, this){
-    assert(S1 && S2 && S1->getType() == S2->getType());
+    : Instruction(S1->getType(), iType, Name) {
+    Operands.reserve(2);
+    Operands.push_back(Use(S1, this));
+    Operands.push_back(Use(S2, this));
+    assert(Operands[0] && Operands[1] && 
+	   Operands[0]->getType() == Operands[1]->getType());
   }
   inline ~BinaryOperator() { dropAllReferences(); }
 
   virtual Instruction *clone() const {
-    return create(getInstType(), Source1, Source2);
-  }
-
-  virtual void dropAllReferences() {
-    Source1 = Source2 = 0;
+    return create(getInstType(), Operands[0], Operands[1]);
   }
 
   virtual string getOpcode() const = 0;
-
-  virtual unsigned getNumOperands() const { return 2; }
-  virtual const Value *getOperand(unsigned i) const {
-    return (i == 0) ? Source1 : ((i == 1) ? Source2 : 0);
-  }
-  inline Value *getOperand(unsigned i) {
-    return (i == 0) ? Source1 : ((i == 1) ? Source2 : 0);
-  }
-
-  virtual bool setOperand(unsigned i, Value *Val) {
-    // assert(Val && "operand must not be null!");
-    if (i == 0) {
-      Source1 = Val; //assert(Val->getType() == Source2->getType());
-    } else if (i == 1) {
-      Source2 = Val; //assert(Val->getType() == Source1->getType());
-    } else {
-      return false;
-    }
-    return true;
-  }
 };
 
 #endif

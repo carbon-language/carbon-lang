@@ -37,7 +37,8 @@ using namespace opt;
 static inline void RemapInstruction(Instruction *I, 
 				    map<const Value *, Value*> &ValueMap) {
 
-  for (unsigned op = 0; const Value *Op = I->getOperand(op); ++op) {
+  for (unsigned op = 0, E = I->getNumOperands(); op != E; ++op) {
+    const Value *Op = I->getOperand(op);
     Value *V = ValueMap[Op];
     if (!V && Op->isMethod()) 
       continue;  // Methods don't get relocated
@@ -115,11 +116,9 @@ bool opt::InlineMethod(BasicBlock::iterator CIIt) {
   //
   Method::ArgumentListType::const_iterator PTI = 
     CalledMeth->getArgumentList().begin();
-  for (unsigned a = 1; Value *Operand = CI->getOperand(a); ++a, ++PTI) {
-    ValueMap[*PTI] = Operand;
-  }
+  for (unsigned a = 1, E = CI->getNumOperands(); a != E; ++a, ++PTI)
+    ValueMap[*PTI] = CI->getOperand(a);
   
-
   ValueMap[NewBB] = NewBB;  // Returns get converted to reference NewBB
 
   // Loop over all of the basic blocks in the method, inlining them as 

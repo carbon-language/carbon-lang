@@ -42,32 +42,6 @@ public:
   bool hasSideEffects() const { return false; }  // Memory & Call insts = true
 
   // ---------------------------------------------------------------------------
-  // Implement the User interface 
-  // if i > the number of operands, then getOperand() returns 0, and setOperand
-  // returns false.  setOperand() may also return false if the operand is of
-  // the wrong type.
-  //
-  inline Value *getOperand(unsigned i) {
-    return (Value*)((const Instruction *)this)->getOperand(i);
-  }
-  virtual const Value *getOperand(unsigned i) const = 0;
-  virtual bool setOperand(unsigned i, Value *Val) = 0;
-  virtual unsigned getNumOperands() const = 0;
-
-  // ---------------------------------------------------------------------------
-  // Operand Iterator interface...
-  //
-  template <class _Inst, class _Val> class OperandIterator;
-  typedef OperandIterator<Instruction *, Value *> op_iterator;
-  typedef OperandIterator<const Instruction *, const Value *> op_const_iterator;
-
-  inline op_iterator       op_begin()      ;
-  inline op_const_iterator op_begin() const;
-  inline op_iterator       op_end()        ;
-  inline op_const_iterator op_end()   const;
-
-
-  // ---------------------------------------------------------------------------
   // Subclass classification... getInstType() returns a member of 
   // one of the enums that is coming soon (down below)...
   //
@@ -148,52 +122,6 @@ public:
     NumOps,                          // Must be the last 'op' defined.
     UserOp1, UserOp2                 // May be used internally to a pass...
   };
-
-public:
-  template <class _Inst, class _Val>         // Operand Iterator Implementation
-  class OperandIterator {
-    const _Inst Inst;
-    unsigned idx;
-  public:
-    typedef OperandIterator<_Inst, _Val> _Self;
-    typedef bidirectional_iterator_tag iterator_category;
-    typedef _Val pointer;
-    
-    inline OperandIterator(_Inst T) : Inst(T), idx(0) {}    // begin iterator
-    inline OperandIterator(_Inst T, bool) 
-      : Inst(T), idx(Inst->getNumOperands()) {}             // end iterator
-    
-    inline bool operator==(const _Self& x) const { return idx == x.idx; }
-    inline bool operator!=(const _Self& x) const { return !operator==(x); }
-
-    inline pointer operator*() const { return Inst->getOperand(idx); }
-    inline pointer *operator->() const { return &(operator*()); }
-    
-    inline _Self& operator++() { ++idx; return *this; } // Preincrement
-    inline _Self operator++(int) { // Postincrement
-      _Self tmp = *this; ++*this; return tmp; 
-    }
-
-    inline _Self& operator--() { --idx; return *this; }  // Predecrement
-    inline _Self operator--(int) { // Postdecrement
-      _Self tmp = *this; --*this; return tmp;
-    }
-  };
-
 };
-
-inline Instruction::op_iterator       Instruction::op_begin()       {
-  return op_iterator(this);
-}
-inline Instruction::op_const_iterator Instruction::op_begin() const {
-  return op_const_iterator(this);
-}
-inline Instruction::op_iterator       Instruction::op_end()         {
-  return op_iterator(this,true);
-}
-inline Instruction::op_const_iterator Instruction::op_end()   const {
-  return op_const_iterator(this,true);
-}
-
 
 #endif

@@ -1,6 +1,6 @@
-//===-- iCall.cpp - Implement the Call & Invoke instructions -----*- C++ -*--=//
+//===-- iCall.cpp - Implement the call & icall instructions ------*- C++ -*--=//
 //
-// This file implements the call and invoke instructions.
+// This file implements the call and icall instructions.
 //
 //===----------------------------------------------------------------------===//
 
@@ -8,9 +8,12 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Method.h"
 
-CallInst::CallInst(Method *m, vector<Value*> &params, 
+CallInst::CallInst(Method *M, vector<Value*> &params, 
                    const string &Name) 
-  : Instruction(m->getReturnType(), Instruction::Call, Name), M(m, this) {
+  : Instruction(M->getReturnType(), Instruction::Call, Name) {
+
+  Operands.reserve(1+params.size());
+  Operands.push_back(Use(M, this));
 
   const MethodType* MT = M->getMethodType();
   const MethodType::ParamTypes &PL = MT->getParamTypes();
@@ -19,29 +22,15 @@ CallInst::CallInst(Method *m, vector<Value*> &params,
   MethodType::ParamTypes::const_iterator It = PL.begin();
 #endif
   for (unsigned i = 0; i < params.size(); i++) {
-    assert(*It++ == params[i]->getType());
-    Params.push_back(Use(params[i], this));
+    assert(*It++ == params[i]->getType() && "Call Operands not correct type!");
+    Operands.push_back(Use(params[i], this));
   }
 }
 
 CallInst::CallInst(const CallInst &CI) 
-  : Instruction(CI.getType(), Instruction::Call), M(CI.M, this) {
-  for (unsigned i = 0; i < CI.Params.size(); i++)
-    Params.push_back(Use(CI.Params[i], this));
+  : Instruction(CI.getType(), Instruction::Call) {
+  Operands.reserve(CI.Operands.size());
+  for (unsigned i = 0; i < CI.Operands.size(); ++i)
+    Operands.push_back(Use(CI.Operands[i], this));
 }
 
-void CallInst::dropAllReferences() { 
-  M = 0;
-  Params.clear(); 
-}
-
-bool CallInst::setOperand(unsigned i, Value *Val) {
-  if (i > Params.size()) return false;
-  if (i == 0) {
-    M = Val->castMethodAsserting();
-  } else {
-    // TODO: assert = method arg type
-    Params[i-1] = Val;
-  }
-  return true;
-}

@@ -28,10 +28,7 @@
 
 class Instruction;
 class Method;
-class BasicBlock;
 class TerminatorInst;
-
-typedef UseTy<BasicBlock> BasicBlockUse;
 
 class BasicBlock : public Value {       // Basic blocks are data objects also
 public:

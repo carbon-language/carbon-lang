@@ -132,9 +132,9 @@ bool opt::ConstantFoldTerminator(TerminatorInst *T) {
     BasicBlock *Dest1 = BI->getOperand(0)->castBasicBlockAsserting();
     BasicBlock *Dest2 = BI->getOperand(1)->castBasicBlockAsserting();
 
-    if (BI->getOperand(2)->isConstant()) {    // Are we branching on constant?
+    if (BI->getCondition()->isConstant()) {    // Are we branching on constant?
       // YES.  Change to unconditional branch...
-      ConstPoolBool *Cond = (ConstPoolBool*)BI->getOperand(2);
+      ConstPoolBool *Cond = (ConstPoolBool*)BI->getCondition();
       BasicBlock *Destination = Cond->getValue() ? Dest1 : Dest2;
       BasicBlock *OldDest     = Cond->getValue() ? Dest2 : Dest1;
 
@@ -147,9 +147,9 @@ bool opt::ConstantFoldTerminator(TerminatorInst *T) {
       assert(BI->getParent() && "Terminator not inserted in block!");
       OldDest->removePredecessor(BI->getParent());
 
-      BI->setOperand(0, Destination);  // Set the unconditional destination
-      BI->setOperand(1, 0);            // Clear the conditional destination
-      BI->setOperand(2, 0);            // Clear the condition...
+      // Set the unconditional destination, and change the insn to be an
+      // unconditional branch.
+      BI->setUnconditionalDest(Destination);
       return true;
     } else if (Dest2 == Dest1) {       // Conditional branch to same location?
       // This branch matches something like this:  
@@ -160,9 +160,8 @@ bool opt::ConstantFoldTerminator(TerminatorInst *T) {
       assert(BI->getParent() && "Terminator not inserted in block!");
       Dest1->removePredecessor(BI->getParent());
 
-      // Nuke the second destination, and the use of the condition variable
-      BI->setOperand(1, 0);            // Clear the conditional destination
-      BI->setOperand(2, 0);            // Clear the condition...
+      // Change a conditional branch to unconditional.
+      BI->setUnconditionalDest(Dest1);
       return true;
     }
   }
@@ -192,7 +191,7 @@ ConstantFoldInstruction(Method *M, Method::inst_iterator &II) {
     PHINode *PN = (PHINode*)Inst; // If it's a PHI node and only has one operand
                                   // Then replace it directly with that operand.
     assert(PN->getOperand(0) && "PHI Node must have at least one operand!");
-    if (PN->getOperand(1) == 0) {       // If the PHI Node has exactly 1 operand
+    if (PN->getNumOperands() == 1) {    // If the PHI Node has exactly 1 operand
       Value *V = PN->getOperand(0);
       PN->replaceAllUsesWith(V);                 // Replace all uses of this PHI
                                                  // Unlink from basic block

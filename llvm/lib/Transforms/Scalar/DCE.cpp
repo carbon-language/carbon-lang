@@ -91,7 +91,7 @@ static bool RemoveSingularPHIs(BasicBlock *BB) {
 
   do {
     PHINode *PN = (PHINode*)I;
-    assert(PN->getOperand(2) == 0 && "PHI node should only have one value!");
+    assert(PN->getNumOperands() == 2 && "PHI node should only have one value!");
     Value *V = PN->getOperand(0);
 
     PN->replaceAllUsesWith(V);      // Replace PHI node with its single value.

@@ -21,42 +21,31 @@
 // scientist's overactive imagination.
 //
 class PHINode : public Instruction {
-  typedef pair<Use,BasicBlockUse> PairTy;
-  vector<PairTy> IncomingValues;
-
   PHINode(const PHINode &PN);
 public:
   PHINode(const Type *Ty, const string &Name = "");
   inline ~PHINode() { dropAllReferences(); }
 
   virtual Instruction *clone() const { return new PHINode(*this); }
-
-  // Implement all of the functionality required by User...
-  //
-  virtual void dropAllReferences();
-  virtual const Value *getOperand(unsigned i) const {
-    if (i >= IncomingValues.size()*2) return 0;
-    if (i & 1) return IncomingValues[i/2].second;
-    else       return IncomingValues[i/2].first;
-  }
-  inline Value *getOperand(unsigned i) {
-    return (Value*)((const PHINode*)this)->getOperand(i);
-  }
-  virtual unsigned getNumOperands() const { return IncomingValues.size()*2; }
-  virtual bool setOperand(unsigned i, Value *Val);
   virtual string getOpcode() const { return "phi"; }
 
   // getNumIncomingValues - Return the number of incoming edges the PHI node has
-  inline unsigned getNumIncomingValues() const { return IncomingValues.size(); }
+  inline unsigned getNumIncomingValues() const { return Operands.size()/2; }
 
   // getIncomingValue - Return incoming value #x
-  inline Value *getIncomingValue(unsigned i) const { 
-    return IncomingValues[i].first; 
+  inline const Value *getIncomingValue(unsigned i) const {
+    return Operands[i*2];
+  }
+  inline Value *getIncomingValue(unsigned i) {
+    return Operands[i*2];
   }
 
   // getIncomingBlock - Return incoming basic block #x
-  inline BasicBlock *getIncomingBlock(unsigned i) const { 
-    return IncomingValues[i].second; 
+  inline const BasicBlock *getIncomingBlock(unsigned i) const { 
+    return Operands[i*2+1]->castBasicBlockAsserting();
+  }
+  inline BasicBlock *getIncomingBlock(unsigned i) { 
+    return Operands[i*2+1]->castBasicBlockAsserting();
   }
 
   // addIncoming - Add an incoming value to the end of the PHI list
@@ -97,8 +86,6 @@ public:
 //===----------------------------------------------------------------------===//
 
 class CallInst : public Instruction {
-  MethodUse M;
-  vector<Use> Params;
   CallInst(const CallInst &CI);
 public:
   CallInst(Method *M, vector<Value*> &params, const string &Name = "");
@@ -110,21 +97,12 @@ public:
   bool hasSideEffects() const { return true; }
 
 
-  const Method *getCalledMethod() const { return M; }
-        Method *getCalledMethod()       { return M; }
-
-  // Implement all of the functionality required by Instruction...
-  //
-  virtual void dropAllReferences();
-  virtual const Value *getOperand(unsigned i) const { 
-    return i == 0 ? M : ((i <= Params.size()) ? Params[i-1] : 0);
+  const Method *getCalledMethod() const {
+    return Operands[0]->castMethodAsserting(); 
   }
-  inline Value *getOperand(unsigned i) {
-    return (Value*)((const CallInst*)this)->getOperand(i);
+  Method *getCalledMethod() {
+    return Operands[0]->castMethodAsserting(); 
   }
-  virtual unsigned getNumOperands() const { return Params.size()+1; }
-
-  virtual bool setOperand(unsigned i, Value *Val);
 };
 
 #endif

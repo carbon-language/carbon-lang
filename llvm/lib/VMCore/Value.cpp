@@ -89,14 +89,13 @@ User::User(const Type *Ty, ValueTy vty, const string &name)
 void User::replaceUsesOfWith(Value *From, Value *To) {
   if (From == To) return;   // Duh what?
 
-  for (unsigned OpNum = 0; Value *D = getOperand(OpNum); ++OpNum) {   
-    if (D == From) {  // Okay, this operand is pointing to our fake def.
+  for (unsigned i = 0, E = getNumOperands(); i != E; ++i)
+    if (getOperand(i) == From) {  // Is This operand is pointing to oldval?
       // The side effects of this setOperand call include linking to
       // "To", adding "this" to the uses list of To, and
       // most importantly, removing "this" from the use list of "From".
-      setOperand(OpNum, To); // Fix it now...
+      setOperand(i, To); // Fix it now...
     }
-  }
 }
 
 

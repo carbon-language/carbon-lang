@@ -20,9 +20,6 @@ class StructType;
 //                            ConstPoolVal Class
 //===----------------------------------------------------------------------===//
 
-class ConstPoolVal;
-typedef UseTy<ConstPoolVal> ConstPoolUse;
-
 class ConstPoolVal : public User {
   SymTabValue *Parent;
 
@@ -53,17 +50,6 @@ public:
 
   inline const SymTabValue *getParent() const { return Parent; }
   inline       SymTabValue *getParent()       { return Parent; }
-
-  // if i > the number of operands, then getOperand() returns 0, and setOperand
-  // returns false.  setOperand() may also return false if the operand is of
-  // the wrong type.
-  //
-  // Note that some subclasses may change this default no argument behavior
-  //
-  virtual Value *getOperand(unsigned i) { return 0; }
-  virtual const Value *getOperand(unsigned i) const { return 0; }
-  virtual bool setOperand(unsigned i, Value *Val) { return false; }
-  virtual void dropAllReferences() {}
 };
 
 
@@ -172,7 +158,6 @@ public:
 // ConstPoolArray - Constant Array Declarations
 //
 class ConstPoolArray : public ConstPoolVal {
-  vector<ConstPoolUse> Val;
   ConstPoolArray(const ConstPoolArray &CPT);
 public:
   ConstPoolArray(const ArrayType *T, vector<ConstPoolVal*> &V, 
@@ -183,20 +168,7 @@ public:
   virtual string getStrValue() const;
   virtual bool equals(const ConstPoolVal *V) const;
 
-  inline const vector<ConstPoolUse> &getValues() const { return Val; }
-
-  // Implement User stuff...
-  //
-  virtual Value *getOperand(unsigned i) { 
-    return (i < Val.size()) ? Val[i] : 0; 
-  }
-  virtual const Value *getOperand(unsigned i) const {
-    return (i < Val.size()) ? Val[i] : 0; 
-  }
-
-  // setOperand fails! You can't change a constant!
-  virtual bool setOperand(unsigned i, Value *Val) { return false; }
-  virtual void dropAllReferences() { Val.clear(); }
+  inline const vector<Use> &getValues() const { return Operands; }
 };
 
 
@@ -204,7 +176,6 @@ public:
 // ConstPoolStruct - Constant Struct Declarations
 //
 class ConstPoolStruct : public ConstPoolVal {
-  vector<ConstPoolUse> Val;
   ConstPoolStruct(const ConstPoolStruct &CPT);
 public:
   ConstPoolStruct(const StructType *T, vector<ConstPoolVal*> &V, 
@@ -215,20 +186,7 @@ public:
   virtual string getStrValue() const;
   virtual bool equals(const ConstPoolVal *V) const;
 
-  inline const vector<ConstPoolUse> &getValues() const { return Val; }
-
-  // Implement User stuff...
-  //
-  virtual Value *getOperand(unsigned i) { 
-    return (i < Val.size()) ? Val[i] : 0; 
-  }
-  virtual const Value *getOperand(unsigned i) const {
-    return (i < Val.size()) ? Val[i] : 0; 
-  }
-
-  // setOperand fails! You can't change a constant!
-  virtual bool setOperand(unsigned i, Value *Val) { return false; }
-  virtual void dropAllReferences() { Val.clear(); }
+  inline const vector<Use> &getValues() const { return Operands; }
 };
 
 #endif

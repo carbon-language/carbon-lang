@@ -32,14 +32,13 @@ static void outputInstructionFormat0(const Instruction *I,
   output_vbr(I->getInstType(), Out);             // Instruction Opcode ID
   output_vbr(Type, Out);                         // Result type
 
-  unsigned NumArgs;  // Count the number of arguments to the instruction
-  for (NumArgs = 0; I->getOperand(NumArgs); NumArgs++) /*empty*/;
+  unsigned NumArgs = I->getNumOperands();
   output_vbr(NumArgs, Out);
 
-  for (unsigned i = 0; const Value *N = I->getOperand(i); i++) {
-    assert(i < NumArgs && "Count of arguments failed!");
-
+  for (unsigned i = 0; i < NumArgs; ++i) {
+    const Value *N = I->getOperand(i);
     int Slot = Table.getValSlot(N);
+    assert(Slot >= 0 && "No slot number for value!?!?");      
     output_vbr((unsigned)Slot, Out);
   }
   align32(Out);    // We must maintain correct alignment!
@@ -110,25 +109,24 @@ static void outputInstructionFormat3(const Instruction *I,
   //
   unsigned Opcode = (3 << 30) | (IType << 24) | (Type << 18) |
                     (Slots[0] << 12) | (Slots[1] << 6) | (Slots[2] << 0);
-  //  cerr << "3 " << IType << " " << Type << " " << Slots[0] << " " 
-  //       << Slots[1] << " " << Slots[2] << endl;
+  //cerr << "3 " << IType << " " << Type << " " << Slots[0] << " " 
+  //     << Slots[1] << " " << Slots[2] << endl;
   output(Opcode, Out);
 }
 
 bool BytecodeWriter::processInstruction(const Instruction *I) {
   assert(I->getInstType() < 64 && "Opcode too big???");
 
-  unsigned NumOperands = 0;
+  unsigned NumOperands = I->getNumOperands();
   int MaxOpSlot = 0;
-  int Slots[3]; Slots[0] = (1 << 12)-1;
+  int Slots[3]; Slots[0] = (1 << 12)-1;   // Marker to signify 0 operands
 
-  const Value *Def;
-  while ((Def = I->getOperand(NumOperands))) {
+  for (unsigned i = 0; i < NumOperands; ++i) {
+    const Value *Def = I->getOperand(i);
     int slot = Table.getValSlot(Def);
     assert(slot != -1 && "Broken bytecode!");
     if (slot > MaxOpSlot) MaxOpSlot = slot;
-    if (NumOperands < 3) Slots[NumOperands] = slot;
-    NumOperands++;
+    if (i < 3) Slots[i] = slot;
   }
 
   // Figure out which type to encode with the instruction.  Typically we want
@@ -137,12 +135,10 @@ bool BytecodeWriter::processInstruction(const Instruction *I) {
   // the first param is actually interesting).  But if we have no arguments
   // we take the type of the instruction itself.  
   //
-
-  const Type *Ty;
-  if (NumOperands)
-    Ty = I->getOperand(0)->getType();
-  else
-    Ty = I->getType();
+  const Type *Ty = NumOperands ? I->getOperand(0)->getType() : I->getType();
+  if (I->getInstType() == Instruction::Malloc || 
+      I->getInstType() == Instruction::Alloca)
+    Ty = I->getType();  // Malloc & Alloca ALWAYS want to encode the return type
 
   unsigned Type;
   int Slot = Table.getValSlot(Ty);
@@ -179,6 +175,8 @@ bool BytecodeWriter::processInstruction(const Instruction *I) {
     break;
   }
 
+  // If we weren't handled before here, we either have a large number of operands
+  // or a large operand index that we are refering to.
   outputInstructionFormat0(I, Table, Type, Out);
   return false;
 }

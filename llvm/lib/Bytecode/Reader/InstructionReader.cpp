@@ -80,8 +80,11 @@ bool BytecodeParser::ParseRawInst(const uchar *&Buf, const uchar *EndBuf,
     break;
   }
 
-  //cerr << "NO: "  << Result.NumOperands   << " opcode: " << Result.Opcode 
-  //   << " Ty: " << Result.Ty->getName() << " arg1: "   << Result.Arg1 << endl;
+#if 0
+  cerr << "NO: "  << Result.NumOperands   << " opcode: " << Result.Opcode 
+       << " Ty: " << Result.Ty->getName() << " arg1: "   << Result.Arg1 
+       << " arg2: "   << Result.Arg2 << " arg3: "   << Result.Arg3 << endl;
+#endif
   return false;
 }
 
@@ -198,13 +201,13 @@ bool BytecodeParser::ParseInstruction(const uchar *&Buf, const uchar *EndBuf,
     return false;
   } else if (Raw.Opcode == Instruction::Malloc) {
     if (Raw.NumOperands > 2) return true;
-    Value *Sz = (Raw.NumOperands == 2) ? getValue(Type::UIntTy, Raw.Arg2) : 0;
-    Res = new MallocInst((ConstPoolType*)getValue(Type::TypeTy, Raw.Arg1), Sz);
+    Value *Sz = Raw.NumOperands ? getValue(Type::UIntTy, Raw.Arg1) : 0;
+    Res = new MallocInst(Raw.Ty, Sz);
     return false;
   } else if (Raw.Opcode == Instruction::Alloca) {
     if (Raw.NumOperands > 2) return true;
-    Value *Sz = (Raw.NumOperands == 2) ? getValue(Type::UIntTy, Raw.Arg2) : 0;
-    Res = new AllocaInst((ConstPoolType*)getValue(Type::TypeTy, Raw.Arg1), Sz);
+    Value *Sz = Raw.NumOperands ? getValue(Type::UIntTy, Raw.Arg1) : 0;
+    Res = new AllocaInst(Raw.Ty, Sz);
     return false;
   } else if (Raw.Opcode == Instruction::Free) {
     Value *Val = getValue(Raw.Ty, Raw.Arg1);
@@ -213,6 +216,7 @@ bool BytecodeParser::ParseInstruction(const uchar *&Buf, const uchar *EndBuf,
     return false;
   }
 
-  cerr << "Unrecognized instruction! " << Raw.Opcode << endl;
+  cerr << "Unrecognized instruction! " << Raw.Opcode 
+       << " ADDR = 0x" << (void*)Buf << endl;
   return true;
 }

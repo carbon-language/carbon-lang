@@ -408,10 +408,10 @@ void SCCP::UpdateInstruction(Instruction *I) {
 	markExecutable(Succ);
     } else if (SCValue.isConstant()) {
       ConstPoolVal *CPV = SCValue.getConstant();
-      for (SwitchInst::dest_iterator I = SI->dest_begin(), E = SI->dest_end();
-	   I != E; ++I) {
-	if (I->first->equals(CPV)) {   // Found the right branch...
-	  markExecutable(I->second);
+      // Make sure to skip the "default value" which isn't a value
+      for (unsigned i = 1, E = SI->getNumSuccessors(); i != E; ++i) {
+	if (SI->getSuccessorValue(i)->equals(CPV)) {// Found the right branch...
+	  markExecutable(SI->getSuccessor(i));
 	  return;
 	}
       }

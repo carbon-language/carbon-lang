@@ -157,10 +157,10 @@ bool AssemblyWriter::processInstruction(const Instruction *I) {
   Out << I->getOpcode();
 
   // Print out the type of the operands...
-  const Value *Operand = I->getOperand(0);
+  const Value *Operand = I->getNumOperands() ? I->getOperand(0) : 0;
 
   // Special case conditional branches to swizzle the condition out to the front
-  if (I->getInstType() == Instruction::Br && I->getOperand(1)) {
+  if (I->getInstType() == Instruction::Br && I->getNumOperands() > 1) {
     writeOperand(I->getOperand(2), true);
     Out << ",";
     writeOperand(Operand, true);
@@ -172,9 +172,9 @@ bool AssemblyWriter::processInstruction(const Instruction *I) {
     writeOperand(Operand         , true); Out << ",";
     writeOperand(I->getOperand(1), true); Out << " [";
 
-    for (unsigned op = 2; (Operand = I->getOperand(op)); op += 2) {
+    for (unsigned op = 2, Eop = I->getNumOperands(); op < Eop; op += 2) {
       Out << "\n\t\t";
-      writeOperand(Operand, true); Out << ",";
+      writeOperand(I->getOperand(op  ), true); Out << ",";
       writeOperand(I->getOperand(op+1), true);
     }
     Out << "\n\t]";
@@ -183,8 +183,9 @@ bool AssemblyWriter::processInstruction(const Instruction *I) {
 
     Out << " [";  writeOperand(Operand, false); Out << ",";
     writeOperand(I->getOperand(1), false); Out << " ]";
-    for (unsigned op = 2; (Operand = I->getOperand(op)); op += 2) {
-      Out << ", [";  writeOperand(Operand, false); Out << ",";
+    for (unsigned op = 2, Eop = I->getNumOperands(); op < Eop; op += 2) {
+      Out << ", [";  
+      writeOperand(I->getOperand(op  ), false); Out << ",";
       writeOperand(I->getOperand(op+1), false); Out << " ]";
     }
   } else if (I->getInstType() == Instruction::Ret && !Operand) {
@@ -192,20 +193,19 @@ bool AssemblyWriter::processInstruction(const Instruction *I) {
   } else if (I->getInstType() == Instruction::Call) {
     writeOperand(Operand, true);
     Out << "(";
-    Operand = I->getOperand(1);
-    if (Operand) writeOperand(Operand, true);
-    for (unsigned op = 2; (Operand = I->getOperand(op)); ++op) {
+    if (I->getNumOperands() > 1) writeOperand(I->getOperand(1), true);
+    for (unsigned op = 2, Eop = I->getNumOperands(); op < Eop; ++op) {
       Out << ",";
-      writeOperand(Operand, true);
+      writeOperand(I->getOperand(op), true);
     }
 
     Out << " )";
   } else if (I->getInstType() == Instruction::Malloc || 
 	     I->getInstType() == Instruction::Alloca) {
-    Out << " " << ((const PointerType*)((ConstPoolType*)Operand)
-		   ->getValue())->getValueType();
-    if ((Operand = I->getOperand(1))) {
-      Out << ","; writeOperand(Operand, true);
+    Out << " " << ((const PointerType*)I->getType())->getValueType();
+    if (I->getNumOperands()) {
+      Out << ",";
+      writeOperand(I->getOperand(0), true);
     }
 
   } else if (Operand) {   // Print the normal way...
@@ -215,9 +215,9 @@ bool AssemblyWriter::processInstruction(const Instruction *I) {
     // different type operands (for example br), then they are all printed.
     bool PrintAllTypes = false;
     const Type *TheType = Operand->getType();
-    unsigned i;
 
-    for (i = 1; (Operand = I->getOperand(i)); i++) {
+    for (unsigned i = 1, E = I->getNumOperands(); i != E; ++i) {
+      Operand = I->getOperand(i);
       if (Operand->getType() != TheType) {
 	PrintAllTypes = true;       // We have differing types!  Print them all!
 	break;
@@ -227,9 +227,9 @@ bool AssemblyWriter::processInstruction(const Instruction *I) {
     if (!PrintAllTypes)
       Out << " " << I->getOperand(0)->getType();
 
-    for (unsigned i = 0; (Operand = I->getOperand(i)); i++) {
+    for (unsigned i = 0, E = I->getNumOperands(); i != E; ++i) {
       if (i) Out << ",";
-      writeOperand(Operand, PrintAllTypes);
+      writeOperand(I->getOperand(i), PrintAllTypes);
     }
   }
 
@@ -262,8 +262,8 @@ void AssemblyWriter::writeOperand(const Value *Operand, bool PrintType,
   } else {
     int Slot = Table.getValSlot(Operand);
     
-    if (Operand->isConstant()) {
-      Out << " " << ((ConstPoolVal*)Operand)->getStrValue();
+    if (const ConstPoolVal *CPV = Operand->castConstant()) {
+      Out << " " << CPV->getStrValue();
     } else {
       if (Slot >= 0)  Out << " %" << Slot;
       else if (PrintName)

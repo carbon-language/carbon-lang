@@ -13,20 +13,40 @@
 #define LLVM_USER_H
 
 #include "llvm/Value.h"
+#include <vector>
 
 class User : public Value {
   User(const User &);             // Do not implement
+protected:
+  vector<Use> Operands;
 public:
   User(const Type *Ty, ValueTy vty, const string &name = "");
-  virtual ~User() {}
+  virtual ~User() { dropAllReferences(); }
 
-  // if i > the number of operands, then getOperand() returns 0, and setOperand
-  // returns false.  setOperand() may also return false if the operand is of
-  // the wrong type.
+  inline Value *getOperand(unsigned i) { 
+    assert(i < Operands.size() && "getOperand() out of range!");
+    return Operands[i]; 
+  }
+  inline const Value *getOperand(unsigned i) const {
+    assert(i < Operands.size() && "getOperand() const out of range!");
+    return Operands[i]; 
+  }
+  inline void setOperand(unsigned i, Value *Val) {
+    assert(i < Operands.size() && "setOperand() out of range!");
+    Operands[i] = Val;
+  }
+  inline unsigned getNumOperands() const { return Operands.size(); }
+
+  // ---------------------------------------------------------------------------
+  // Operand Iterator interface...
   //
-  virtual Value *getOperand(unsigned i) = 0;
-  virtual const Value *getOperand(unsigned i) const = 0;
-  virtual bool setOperand(unsigned i, Value *Val) = 0;
+  typedef vector<Use>::iterator       op_iterator;
+  typedef vector<Use>::const_iterator op_const_iterator;
+
+  inline op_iterator       op_begin()       { return Operands.begin(); }
+  inline op_const_iterator op_begin() const { return Operands.end(); }
+  inline op_iterator       op_end()         { return Operands.end(); }
+  inline op_const_iterator op_end()   const { return Operands.end(); }
 
   // dropAllReferences() - This virtual function should be overridden to "let
   // go" of all references that this user is maintaining.  This allows one to 
@@ -36,7 +56,9 @@ public:
   // valid on an object that has "dropped all references", except operator 
   // delete.
   //
-  virtual void dropAllReferences() = 0;
+  virtual void dropAllReferences() {
+    Operands.clear();
+  }
 
   // replaceUsesOfWith - Replaces all references to the "From" definition with
   // references to the "To" definition.  (defined in Value.cpp)

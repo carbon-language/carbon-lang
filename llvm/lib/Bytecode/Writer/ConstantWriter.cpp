@@ -128,7 +128,7 @@ bool BytecodeWriter::outputConstant(const ConstPoolVal *CPV) {
 
   case Type::StructTyID: {
     const ConstPoolStruct *CPS = (const ConstPoolStruct*)CPV;
-    const vector<ConstPoolUse> &Vals = CPS->getValues();
+    const vector<Use> &Vals = CPS->getValues();
 
     for (unsigned i = 0; i < Vals.size(); ++i) {
       int Slot = Table.getValSlot(Vals[i]);

@@ -19,10 +19,7 @@ class Instruction;
 class BasicBlock;
 class MethodArgument;
 class MethodType;
-class Method;
 class Module;
-
-typedef UseTy<Method> MethodUse;
 
 class Method : public SymTabValue {
 public:
