@@ -111,11 +111,12 @@ static inline bool ProvideOption(Option *Handler, const char *ArgName,
   }
 
   // Run the handler now!
-  return Handler->addOccurrence(ArgName, Value);
+  return Handler->addOccurrence(i, ArgName, Value);
 }
 
-static bool ProvidePositionalOption(Option *Handler, const std::string &Arg) {
-  int Dummy;
+static bool ProvidePositionalOption(Option *Handler, const std::string &Arg, 
+                                    int i) {
+  int Dummy = i;
   return ProvideOption(Handler, Handler->ArgStr, Arg.c_str(), 0, 0, Dummy);
 }
 
@@ -323,10 +324,10 @@ void cl::ParseCommandLineOptions(int &argc, char **argv,
     }
   }
 
-  // PositionalVals - A vector of "positional" arguments we accumulate into to
-  // processes at the end...
+  // PositionalVals - A vector of "positional" arguments we accumulate into
+  // the process at the end...
   //
-  std::vector<std::string> PositionalVals;
+  std::vector<std::pair<std::string,unsigned> > PositionalVals;
 
   // If the program has named positional arguments, and the name has been run
   // across, keep track of which positional argument was named.  Otherwise put
@@ -347,10 +348,10 @@ void cl::ParseCommandLineOptions(int &argc, char **argv,
     if (argv[i][0] != '-' || argv[i][1] == 0 || DashDashFound) {
       // Positional argument!
       if (ActivePositionalArg) {
-        ProvidePositionalOption(ActivePositionalArg, argv[i]);
+        ProvidePositionalOption(ActivePositionalArg, argv[i], i);
         continue;  // We are done!
       } else if (!PositionalOpts.empty()) {
-        PositionalVals.push_back(argv[i]);
+        PositionalVals.push_back(std::make_pair(argv[i],i));
 
         // All of the positional arguments have been fulfulled, give the rest to
         // the consume after option... if it's specified...
@@ -358,7 +359,7 @@ void cl::ParseCommandLineOptions(int &argc, char **argv,
         if (PositionalVals.size() >= NumPositionalRequired && 
             ConsumeAfterOpt != 0) {
           for (++i; i < argc; ++i)
-            PositionalVals.push_back(argv[i]);
+            PositionalVals.push_back(std::make_pair(argv[i],i));
           break;   // Handle outside of the argument processing loop...
         }
 
@@ -377,7 +378,7 @@ void cl::ParseCommandLineOptions(int &argc, char **argv,
       ArgName = argv[i]+1;
       Handler = LookupOption(ArgName, Value);
       if (!Handler || Handler->getFormattingFlag() != cl::Positional) {
-        ProvidePositionalOption(ActivePositionalArg, argv[i]);
+        ProvidePositionalOption(ActivePositionalArg, argv[i], i);
         continue;  // We are done!
       }
 
@@ -479,7 +480,9 @@ void cl::ParseCommandLineOptions(int &argc, char **argv,
     unsigned ValNo = 0, NumVals = PositionalVals.size();
     for (unsigned i = 0, e = PositionalOpts.size(); i != e; ++i) {
       if (RequiresValue(PositionalOpts[i])) {
-        ProvidePositionalOption(PositionalOpts[i], PositionalVals[ValNo++]);
+        ProvidePositionalOption(PositionalOpts[i], PositionalVals[ValNo].first, 
+                                PositionalVals[ValNo].second);
+        ValNo++;
         --NumPositionalRequired;  // We fulfilled our duty...
       }
 
@@ -495,7 +498,10 @@ void cl::ParseCommandLineOptions(int &argc, char **argv,
           // FALL THROUGH
         case cl::ZeroOrMore:    // Zero or more will take all they can get...
         case cl::OneOrMore:     // One or more will take all they can get...
-          ProvidePositionalOption(PositionalOpts[i], PositionalVals[ValNo++]);
+          ProvidePositionalOption(PositionalOpts[i],
+                                  PositionalVals[ValNo].first,
+                                  PositionalVals[ValNo].second);
+          ValNo++;
           break;
         default:
           assert(0 && "Internal error, unexpected NumOccurrences flag in "
@@ -507,24 +513,31 @@ void cl::ParseCommandLineOptions(int &argc, char **argv,
     assert(ConsumeAfterOpt && NumPositionalRequired <= PositionalVals.size());
     unsigned ValNo = 0;
     for (unsigned j = 1, e = PositionalOpts.size(); j != e; ++j)
-      if (RequiresValue(PositionalOpts[j]))
+      if (RequiresValue(PositionalOpts[j])) {
         ErrorParsing |= ProvidePositionalOption(PositionalOpts[j],
-                                                PositionalVals[ValNo++]);
+                                                PositionalVals[ValNo].first,
+                                                PositionalVals[ValNo].second);
+        ValNo++;
+      }
 
     // Handle the case where there is just one positional option, and it's
     // optional.  In this case, we want to give JUST THE FIRST option to the
     // positional option and keep the rest for the consume after.  The above
     // loop would have assigned no values to positional options in this case.
     //
-    if (PositionalOpts.size() == 2 && ValNo == 0 && !PositionalVals.empty())
+    if (PositionalOpts.size() == 2 && ValNo == 0 && !PositionalVals.empty()) {
       ErrorParsing |= ProvidePositionalOption(PositionalOpts[1],
-                                              PositionalVals[ValNo++]);
+                                              PositionalVals[ValNo].first,
+                                              PositionalVals[ValNo].second);
+      ValNo++;
+    }
     
     // Handle over all of the rest of the arguments to the
     // cl::ConsumeAfter command line option...
     for (; ValNo != PositionalVals.size(); ++ValNo)
       ErrorParsing |= ProvidePositionalOption(ConsumeAfterOpt,
-                                              PositionalVals[ValNo]);
+                                              PositionalVals[ValNo].first,
+                                              PositionalVals[ValNo].second);
   }
 
   // Loop over args and make sure all required args are specified!
@@ -567,7 +580,7 @@ bool Option::error(std::string Message, const char *ArgName) {
   return true;
 }
 
-bool Option::addOccurrence(const char *ArgName, const std::string &Value) {
+bool Option::addOccurrence(unsigned pos, const char *ArgName, const std::string &Value) {
   NumOccurrences++;   // Increment the number of times we have been seen
 
   switch (getNumOccurrencesFlag()) {
@@ -585,7 +598,7 @@ bool Option::addOccurrence(const char *ArgName, const std::string &Value) {
   default: return error(": bad num occurrences flag value!");
   }
 
-  return handleOccurrence(ArgName, Value);
+  return handleOccurrence(pos, ArgName, Value);
 }
 
 // addArgument - Tell the system that this Option subclass will handle all

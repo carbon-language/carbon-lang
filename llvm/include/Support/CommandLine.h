@@ -51,7 +51,7 @@ void ParseEnvironmentOptions(const char *progName, const char *envvar,
 // Flags permitted to be passed to command line arguments
 //
 
-enum NumOccurrences {           // Flags for the number of occurrences allowed
+enum NumOccurrences {          // Flags for the number of occurrences allowed
   Optional        = 0x01,      // Zero or One occurrence
   ZeroOrMore      = 0x02,      // Zero or more occurrences allowed
   Required        = 0x03,      // One occurrence required
@@ -103,13 +103,13 @@ enum FormattingFlags {
   Positional       = 0x080,     // Is a positional argument, no '-' required
   Prefix           = 0x100,     // Can this option directly prefix its value?
   Grouping         = 0x180,     // Can this option group with other options?
-  FormattingMask   = 0x180,
+  FormattingMask   = 0x180,     // Union of the above flags.
 };
 
-enum MiscFlags {                // Miscellaneous flags to adjust argument
-  CommaSeparated     = 0x200,   // Should this cl::list split between commas?
-  PositionalEatsArgs = 0x400,   // Should this positional cl::list eat -args?
-  MiscMask           = 0x600,
+enum MiscFlags {               // Miscellaneous flags to adjust argument
+  CommaSeparated     = 0x200,  // Should this cl::list split between commas?
+  PositionalEatsArgs = 0x400,  // Should this positional cl::list eat -args?
+  MiscMask           = 0x600,  // Union of the above flags.
 };
 
 
@@ -126,7 +126,8 @@ class Option {
   // an argument.  Should return true if there was an error processing the
   // argument and the program should exit.
   //
-  virtual bool handleOccurrence(const char *ArgName, const std::string &Arg) = 0;
+  virtual bool handleOccurrence(unsigned pos, const char *ArgName, 
+                                const std::string &Arg) = 0;
 
   virtual enum NumOccurrences getNumOccurrencesFlagDefault() const { 
     return Optional;
@@ -141,8 +142,9 @@ class Option {
     return NormalFormatting;
   }
 
-  int NumOccurrences;    // The number of times specified
+  int NumOccurrences;   // The number of times specified
   int Flags;            // Flags for the argument
+  unsigned Position;    // Position of last occurrence of the option
 public:
   const char *ArgStr;   // The argument string itself (ex: "help", "o")
   const char *HelpStr;  // The descriptive text message for --help
@@ -171,6 +173,7 @@ public:
   inline unsigned getMiscFlags() const {
     return Flags & MiscMask;
   }
+  inline unsigned getPosition() const { return Position; }
 
   // hasArgStr - Return true if the argstr != ""
   bool hasArgStr() const { return ArgStr[0] != 0; }
@@ -198,8 +201,9 @@ public:
   void setHiddenFlag(enum OptionHidden Val) { setFlag(Val, HiddenMask); }
   void setFormattingFlag(enum FormattingFlags V) { setFlag(V, FormattingMask); }
   void setMiscFlag(enum MiscFlags M) { setFlag(M, M); }
+  void setPosition(unsigned pos) { Position = pos; }
 protected:
-  Option() : NumOccurrences(0), Flags(0),
+  Option() : NumOccurrences(0), Flags(0), Position(0),
              ArgStr(""), HelpStr(""), ValueStr("") {}
 
 public:
@@ -219,7 +223,8 @@ public:
 
   // addOccurrence - Wrapper around handleOccurrence that enforces Flags
   //
-  bool addOccurrence(const char *ArgName, const std::string &Value);
+  bool addOccurrence(unsigned pos, const char *ArgName, 
+                     const std::string &Value);
 
   // Prints option name followed by message.  Always returns true.
   bool error(std::string Message, const char *ArgName = 0);
@@ -249,7 +254,6 @@ struct value_desc {
   value_desc(const char *Str) : Desc(Str) {}
   void apply(Option &O) const { O.setValueStr(Desc); }
 };
-
 
 // init - Specify a default (initial) value for the command line argument, if
 // the default constructor for the argument type does not give you what you
@@ -438,7 +442,7 @@ public:
   }
 
   // parse - Return true on error.
-  bool parse(Option &O, const char *ArgName, const std::string &Arg,
+  bool parse(Option &O, const char *ArgName, const std::string &Arg, 
              DataType &V) {
     std::string ArgVal;
     if (hasArgStr)
@@ -492,7 +496,6 @@ struct basic_parser_impl {  // non-template implementation of basic_parser<t>
   //
   void printOptionInfo(const Option &O, unsigned GlobalWidth) const;
 
-
   // getValueName - Overload in subclass to provide a better default value.
   virtual const char *getValueName() const { return "value"; }
 };
@@ -545,8 +548,7 @@ template<>
 struct parser<unsigned> : public basic_parser<unsigned> {
   
   // parse - Return true on error.
-  bool parse(Option &O, const char *ArgName, const std::string &Arg,
-             unsigned &Val);
+  bool parse(Option &O, const char *AN, const std::string &Arg, unsigned &Val);
 
   // getValueName - Overload in subclass to provide a better default value.
   virtual const char *getValueName() const { return "uint"; }
@@ -585,7 +587,7 @@ struct parser<float> : public basic_parser<float> {
 template<>
 struct parser<std::string> : public basic_parser<std::string> {
   // parse - Return true on error.
-  bool parse(Option &O, const char *ArgName, const std::string &Arg,
+  bool parse(Option &O, const char *AN, const std::string &Arg, 
              std::string &Value) {
     Value = Arg;
     return false;
@@ -594,8 +596,6 @@ struct parser<std::string> : public basic_parser<std::string> {
   // getValueName - Overload in subclass to provide a better default value.
   virtual const char *getValueName() const { return "string"; }
 };
-
-
 
 //===----------------------------------------------------------------------===//
 // applicator class - This class is used because we must use partial
@@ -728,11 +728,13 @@ class opt : public Option,
                                is_class<DataType>::value> {
   ParserClass Parser;
 
-  virtual bool handleOccurrence(const char *ArgName, const std::string &Arg) {
+  virtual bool handleOccurrence(unsigned pos, const char *ArgName, 
+                                const std::string &Arg) {
     typename ParserClass::parser_data_type Val;
     if (Parser.parse(*this, ArgName, Arg, Val))
       return true;                            // Parse error!
     setValue(Val);
+    setPosition(pos);
     return false;
   }
 
@@ -875,6 +877,7 @@ struct list_storage<DataType, bool> : public std::vector<DataType> {
 template <class DataType, class Storage = bool,
           class ParserClass = parser<DataType> >
 class list : public Option, public list_storage<DataType, Storage> {
+  std::vector<unsigned> Positions;
   ParserClass Parser;
 
   virtual enum NumOccurrences getNumOccurrencesFlagDefault() const { 
@@ -884,11 +887,14 @@ class list : public Option, public list_storage<DataType, Storage> {
     return Parser.getValueExpectedFlagDefault();
   }
 
-  virtual bool handleOccurrence(const char *ArgName, const std::string &Arg) {
+  virtual bool handleOccurrence(unsigned pos, const char *ArgName, 
+                                const std::string &Arg) {
     typename ParserClass::parser_data_type Val;
     if (Parser.parse(*this, ArgName, Arg, Val))
       return true;  // Parse Error!
     addValue(Val);
+    setPosition(pos);
+    Positions.push_back(pos);
     return false;
   }
 
@@ -904,6 +910,11 @@ class list : public Option, public list_storage<DataType, Storage> {
   }
 public:
   ParserClass &getParser() { return Parser; }
+
+  unsigned getPosition(unsigned optnum) { 
+    assert(optnum < this->size() && "Invalid option index");
+    return Positions[optnum]; 
+  }
 
   // One option...
   template<class M0t>
@@ -966,16 +977,15 @@ public:
   }
 };
 
-
-
 //===----------------------------------------------------------------------===//
 // Aliased command line option (alias this name to a preexisting name)
 //
 
 class alias : public Option {
   Option *AliasFor;
-  virtual bool handleOccurrence(const char *ArgName, const std::string &Arg) {
-    return AliasFor->handleOccurrence(AliasFor->ArgStr, Arg);
+  virtual bool handleOccurrence(unsigned pos, const char *ArgName, 
+                                const std::string &Arg) {
+    return AliasFor->handleOccurrence(pos, AliasFor->ArgStr, Arg);
   }
   // Aliases default to be hidden...
   virtual enum OptionHidden getOptionHiddenFlagDefault() const {return Hidden;}
