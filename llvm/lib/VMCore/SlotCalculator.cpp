@@ -177,8 +177,8 @@ void SlotCalculator::incorporateFunction(const Function *F) {
   for (Function::const_iterator BB = F->begin(), E = F->end(); BB != E; ++BB)
     for (BasicBlock::const_iterator I = BB->begin(), E = BB->end(); I!=E; ++I) {
       getOrCreateSlot(I);
-      //if (const VANextInst *VAN = dyn_cast<VANextInst>(I))
-      //  getOrCreateSlot(VAN->getArgType());
+      if (const VANextInst *VAN = dyn_cast<VANextInst>(I))
+        getOrCreateSlot(VAN->getArgType());
     }
 
   if (!IgnoreNamedNodes) {
