@@ -17,10 +17,11 @@ class BitsInit;
 class IntInit;
 class StringInit;
 class ListInit;
-class VarInit;
-class VarBitInit;
 class DefInit;
+class TypedInit;
+class VarInit;
 class FieldInit;
+class VarBitInit;
 class Record;
 
 //===----------------------------------------------------------------------===//
@@ -36,10 +37,15 @@ struct RecTy {
   virtual Init *convertValue(   IntInit *II) { return 0; }
   virtual Init *convertValue(StringInit *SI) { return 0; }
   virtual Init *convertValue(  ListInit *LI) { return 0; }
-  virtual Init *convertValue(   VarInit *VI) { return 0; }
   virtual Init *convertValue(VarBitInit *VB) { return 0; }
   virtual Init *convertValue(   DefInit *DI) { return 0; }
-  virtual Init *convertValue( FieldInit *FI) { return 0; }
+  virtual Init *convertValue( TypedInit *TI) { return 0; }
+  virtual Init *convertValue(   VarInit *VI) {
+    return convertValue((TypedInit*)VI);
+  }
+  virtual Init *convertValue( FieldInit *FI) {
+    return convertValue((TypedInit*)FI);
+  }
 
   virtual void print(std::ostream &OS) const = 0;
   void dump() const;
@@ -58,7 +64,7 @@ struct BitRecTy : public RecTy {
   Init *convertValue(BitInit *BI) { return (Init*)BI; }
   Init *convertValue(BitsInit *BI);
   Init *convertValue(IntInit *II);
-  Init *convertValue(VarInit *VI);
+  Init *convertValue(TypedInit *VI);
   Init *convertValue(VarBitInit *VB) { return (Init*)VB; }
 
   void print(std::ostream &OS) const { OS << "bit"; }
@@ -78,8 +84,7 @@ public:
   Init *convertValue(BitInit *UI);
   Init *convertValue(BitsInit *BI);
   Init *convertValue(IntInit *II);
-  Init *convertValue(VarInit *VI);
-  Init *convertValue(FieldInit *VI);
+  Init *convertValue(TypedInit *VI);
 
   void print(std::ostream &OS) const { OS << "bits<" << Size << ">"; }
 };
@@ -91,7 +96,7 @@ struct IntRecTy : public RecTy {
   Init *convertValue(UnsetInit *UI) { return (Init*)UI; }
   Init *convertValue(IntInit *II) { return (Init*)II; }
   Init *convertValue(BitsInit *BI);
-  Init *convertValue(VarInit *VI);
+  Init *convertValue(TypedInit *TI);
 
   void print(std::ostream &OS) const { OS << "int"; }
 };
@@ -101,7 +106,7 @@ struct IntRecTy : public RecTy {
 struct StringRecTy : public RecTy {
   Init *convertValue(UnsetInit *UI) { return (Init*)UI; }
   Init *convertValue(StringInit *SI) { return (Init*)SI; }
-  Init *convertValue(VarInit *VI);
+  Init *convertValue(TypedInit *VI);
   void print(std::ostream &OS) const { OS << "string"; }
 };
 

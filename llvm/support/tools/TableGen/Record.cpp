@@ -24,7 +24,7 @@ Init *BitRecTy::convertValue(IntInit *II) {
   return new BitInit(Val != 0); 
 }
 
-Init *BitRecTy::convertValue(VarInit *VI) {
+Init *BitRecTy::convertValue(TypedInit *VI) {
   if (dynamic_cast<BitRecTy*>(VI->getType()))
     return VI;  // Accept variable if it is already of bit type!
   return 0;
@@ -65,7 +65,7 @@ Init *BitsRecTy::convertValue(BitsInit *BI) {
   return 0;
 }
 
-Init *BitsRecTy::convertValue(VarInit *VI) {
+Init *BitsRecTy::convertValue(TypedInit *VI) {
   if (BitsRecTy *BRT = dynamic_cast<BitsRecTy*>(VI->getType()))
     if (BRT->Size == Size) {
       BitsInit *Ret = new BitsInit(Size);
@@ -82,9 +82,23 @@ Init *BitsRecTy::convertValue(VarInit *VI) {
   return 0;
 }
 
+#if 0
 Init *BitsRecTy::convertValue(FieldInit *VI) {
+  if (BitsRecTy *BRT = dynamic_cast<BitsRecTy*>(VI->getType()))
+    if (BRT->Size == Size) {
+      BitsInit *Ret = new BitsInit(Size);
+      for (unsigned i = 0; i != Size; ++i)
+	Ret->setBit(i, new VarBitInit(VI, i));
+      return Ret;
+    }
+  if (Size == 1 && dynamic_cast<BitRecTy*>(VI->getType())) {
+    BitsInit *Ret = new BitsInit(1);
+    Ret->setBit(0, VI);
+    return Ret;
+  }
   return 0;
 }
+#endif
 
 
 Init *IntRecTy::convertValue(BitsInit *BI) {
@@ -98,15 +112,15 @@ Init *IntRecTy::convertValue(BitsInit *BI) {
   return new IntInit(Result);
 }
 
-Init *IntRecTy::convertValue(VarInit *VI) {
-  if (dynamic_cast<IntRecTy*>(VI->getType()))
-    return VI;  // Accept variable if already of the right type!
+Init *IntRecTy::convertValue(TypedInit *TI) {
+  if (dynamic_cast<IntRecTy*>(TI->getType()))
+    return TI;  // Accept variable if already of the right type!
   return 0;
 }
 
-Init *StringRecTy::convertValue(VarInit *VI) {
-  if (dynamic_cast<StringRecTy*>(VI->getType()))
-    return VI;  // Accept variable if already of the right type!
+Init *StringRecTy::convertValue(TypedInit *TI) {
+  if (dynamic_cast<StringRecTy*>(TI->getType()))
+    return TI;  // Accept variable if already of the right type!
   return 0;
 }
 
