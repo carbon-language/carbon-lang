@@ -32,6 +32,9 @@ JIT::JIT(ModuleProvider *MP, TargetMachine &tm, TargetJITInfo &tji)
   // Initialize MCE
   MCE = createEmitter(*this);
   
+  // Add target data
+  PM.add (new TargetData (TM.getTargetData ()));
+
   // Compile LLVM Code down to machine code in the intermediate representation
   TJI.addPassesToJITCompile(PM);
 
