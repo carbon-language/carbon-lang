@@ -98,9 +98,9 @@ void ilist_traits<MachineBasicBlock>::transferNodesFromList(
     ilist_iterator<MachineBasicBlock> first,
     ilist_iterator<MachineBasicBlock> last)
 {
-    if (parent != toList.parent)
+    if (Parent != toList.Parent)
         for (; first != last; ++first)
-            first->Parent = toList.parent;
+            first->Parent = toList.Parent;
 }
 
 MachineFunction::MachineFunction(const Function *F,
@@ -110,7 +110,7 @@ MachineFunction::MachineFunction(const Function *F,
   MFInfo = new MachineFunctionInfo(*this);
   FrameInfo = new MachineFrameInfo();
   ConstantPool = new MachineConstantPool();
-  BasicBlocks.parent = this;
+  BasicBlocks.Parent = this;
 }
 
 MachineFunction::~MachineFunction() { 

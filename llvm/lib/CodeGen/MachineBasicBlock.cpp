@@ -20,14 +20,20 @@
 #include "Support/LeakDetector.h"
 using namespace llvm;
 
+MachineBasicBlock::~MachineBasicBlock() {
+  LeakDetector::removeGarbageObject(this);
+}
+  
+
+
 // MBBs start out as #-1. When a MBB is added to a MachineFunction, it 
 // gets the next available unique MBB number. If it is removed from a
 // MachineFunction, it goes back to being #-1.
 void ilist_traits<MachineBasicBlock>::addNodeToList (MachineBasicBlock* N)
 {
   assert(N->Parent == 0 && "machine instruction already in a basic block");
-  N->Parent = parent;
-  N->Number = parent->getNextMBBNumber();
+  N->Parent = Parent;
+  N->Number = Parent->getNextMBBNumber();
   LeakDetector::removeGarbageObject(N);
   
 

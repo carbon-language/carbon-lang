@@ -71,7 +71,8 @@ public:
                                                 Number(-1), Parent(0) {
     Insts.parent = this;
   }
-  ~MachineBasicBlock() {}
+
+  ~MachineBasicBlock();
   
   /// getBasicBlock - Return the LLVM basic block that this instance
   /// corresponded to originally.

@@ -28,10 +28,10 @@ template <>
 class ilist_traits<MachineBasicBlock> {
   // this is only set by the MachineFunction owning the ilist
   friend class MachineFunction;
-  MachineFunction* parent;
+  MachineFunction* Parent;
   
 public:
-  ilist_traits<MachineBasicBlock>() : parent(0) { }
+  ilist_traits<MachineBasicBlock>() : Parent(0) { }
   
   static MachineBasicBlock* getPrev(MachineBasicBlock* N) { return N->Prev; }
   static MachineBasicBlock* getNext(MachineBasicBlock* N) { return N->Next; }
@@ -68,7 +68,7 @@ class MachineFunction : private Annotation {
   const TargetMachine &Target;
 
   // List of machine basic blocks in function
-  iplist<MachineBasicBlock> BasicBlocks;
+  ilist<MachineBasicBlock> BasicBlocks;
 
   // Keeping track of mapping from SSA values to registers
   SSARegMap *SSARegMapping;
@@ -145,7 +145,7 @@ public:
   static MachineFunction& get(const Function *F);
 
   // Provide accessors for the MachineBasicBlock list...
-  typedef iplist<MachineBasicBlock> BasicBlockListType;
+  typedef ilist<MachineBasicBlock> BasicBlockListType;
   typedef BasicBlockListType::iterator iterator;
   typedef BasicBlockListType::const_iterator const_iterator;
   typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
