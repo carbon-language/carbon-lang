@@ -487,9 +487,12 @@ bool LocalDataStructures::run(Module &M) {
 // our memory... here...
 //
 void LocalDataStructures::releaseMemory() {
-  for (hash_map<const Function*, DSGraph*>::iterator I = DSInfo.begin(),
-         E = DSInfo.end(); I != E; ++I)
-    delete I->second;
+  for (hash_map<Function*, DSGraph*>::iterator I = DSInfo.begin(),
+         E = DSInfo.end(); I != E; ++I) {
+    I->second->getReturnNodes().erase(I->first);
+    if (I->second->getReturnNodes().empty())
+      delete I->second;
+  }
 
   // Empty map so next time memory is released, data structures are not
   // re-deleted.
