@@ -53,7 +53,7 @@ bool PruneEH::runOnSCC(const std::vector<CallGraphNode *> &SCC) {
   bool SCCMightThrow = false;
   for (unsigned i = 0, e = SCC.size(); !SCCMightThrow && i != e; ++i)
     if (Function *F = SCC[i]->getFunction())
-      if (F->isExternal()) {
+      if (F->isExternal() && !F->getIntrinsicID()) {
         SCCMightThrow = true;
       } else {
         // Check to see if this function performs an unwind or calls an
