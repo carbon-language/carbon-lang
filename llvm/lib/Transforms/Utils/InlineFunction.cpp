@@ -191,12 +191,12 @@ bool InlineFunction(CallSite CS) {
           
           if (Function *F = CI->getCalledFunction())
             if (unsigned ID = F->getIntrinsicID())
-              if (ID == LLVMIntrinsic::exc_rethrow) {
-                // llvm.exc.rethrow requires special handling when it gets
-                // inlined into an invoke site.  Once this happens, we know that
-                // the rethrow would cause a control transfer to the invoke
-                // exception destination, so we can transform it into a direct
-                // branch to the exception destination.
+              if (ID == LLVMIntrinsic::unwind) {
+                // llvm.unwind requires special handling when it gets inlined
+                // into an invoke site.  Once this happens, we know that the
+                // unwind would cause a control transfer to the invoke exception
+                // destination, so we can transform it into a direct branch to
+                // the exception destination.
                 BranchInst *BI = new BranchInst(InvokeDest, CI);
 
                 // Note that since any instructions after the rethrow/branch are
@@ -211,7 +211,7 @@ bool InlineFunction(CallSite CS) {
                 }
 
                 break;  // Done with this basic block!
-              } else if (ID == LLVMIntrinsic::exc_throw ||
+              } else if (ID == LLVMIntrinsic::exc_setcurrent ||
                          ID == LLVMIntrinsic::exc_getcurrent) {
                 ShouldInvokify = false; // Not correct to invokify exc.throw!
               }
