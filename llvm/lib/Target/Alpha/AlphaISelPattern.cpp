@@ -137,10 +137,12 @@ AlphaTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG)
 			 Alpha::R19, Alpha::R20, Alpha::R21};
   unsigned args_float[] = {Alpha::F16, Alpha::F17, Alpha::F18, 
 			   Alpha::F19, Alpha::F20, Alpha::F21};
-  std::vector<unsigned> argVreg;
-  std::vector<unsigned> argPreg;
-  std::vector<unsigned> argOpc;
+  unsigned argVreg[6];
+  unsigned argPreg[6];
+  unsigned argOpc[6];
+
   int count = 0;
+
   for (Function::aiterator I = F.abegin(), E = F.aend(); I != E; ++I)
     {
       SDOperand newroot, argt;
@@ -150,9 +152,9 @@ AlphaTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG)
         case MVT::f64:
         case MVT::f32:
           BuildMI(&BB, Alpha::IDEF, 0, args_float[count]);
-          argVreg.push_back(MF.getSSARegMap()->createVirtualRegister(getRegClassFor(getValueType(I->getType()))));
-          argPreg.push_back(args_float[count]);
-          argOpc.push_back(Alpha::CPYS);
+          argVreg[count] = MF.getSSARegMap()->createVirtualRegister(getRegClassFor(getValueType(I->getType())));
+          argPreg[count] = args_float[count];
+          argOpc[count] = Alpha::CPYS;
           argt = newroot = DAG.getCopyFromReg(argVreg[count], getValueType(I->getType()), DAG.getRoot());
           break;
         case MVT::i1:
@@ -161,14 +163,15 @@ AlphaTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG)
         case MVT::i32:
         case MVT::i64:
           BuildMI(&BB, Alpha::IDEF, 0, args_int[count]);
-          argVreg.push_back(MF.getSSARegMap()->createVirtualRegister(getRegClassFor(MVT::i64)));
-          argPreg.push_back(args_int[count]);
-          argOpc.push_back(Alpha::BIS);
+          argVreg[count] =MF.getSSARegMap()->createVirtualRegister(getRegClassFor(MVT::i64));
+          argPreg[count] = args_int[count];
+          argOpc[count] = Alpha::BIS;
           argt = newroot = DAG.getCopyFromReg(argVreg[count], MVT::i64, DAG.getRoot());
           if (getValueType(I->getType()) != MVT::i64)
             argt = DAG.getNode(ISD::TRUNCATE, getValueType(I->getType()), newroot);
           break;
         }
+        ++count;
       } else { //more args
         // Create the frame index object for this incoming parameter...
         int FI = MFI->CreateFixedObject(8, 8 * (count - 6));
@@ -179,13 +182,19 @@ AlphaTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG)
       }
       DAG.setRoot(newroot.getValue(1));
       ArgValues.push_back(argt);
-      ++count;
     }
 
   BuildMI(&BB, Alpha::IDEF, 0, Alpha::R29);
   BuildMI(&BB, Alpha::BIS, 2, GP).addReg(Alpha::R29).addReg(Alpha::R29);
-  for (int i = 0; i < std::min(count,6); ++i)
-    BuildMI(&BB, argOpc[i], 2, argVreg[i]).addReg(argPreg[i]).addReg(argPreg[i]);
+  for (int i = 0; i < count; ++i)
+    {
+      if (argPreg[i] == Alpha::F16 || argPreg[i] == Alpha::F17 || argPreg[i] == Alpha::F18 || 
+          argPreg[i] == Alpha::F19 || argPreg[i] == Alpha::F20 || argPreg[i] == Alpha::F21)
+        {
+          assert(argOpc[i] == Alpha::CPYS && "Using BIS for a float??");
+        }
+      BuildMI(&BB, argOpc[i], 2, argVreg[i]).addReg(argPreg[i]).addReg(argPreg[i]);
+    }
   
   return ArgValues;
 }
