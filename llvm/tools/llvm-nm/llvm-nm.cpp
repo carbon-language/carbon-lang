@@ -19,6 +19,7 @@
 #include "llvm/Module.h"
 #include "llvm/Bytecode/Reader.h"
 #include "Support/CommandLine.h"
+#include "Support/FileUtilities.h"
 #include <cctype>
 
 using namespace llvm;
@@ -96,26 +97,36 @@ void DumpSymbolNameForGlobalValue (GlobalValue &GV) {
 }
 
 void DumpSymbolNamesFromModule (Module *M) {
+  const std::string &Filename = M->getModuleIdentifier ();
+  if (OutputFormat == posix && MultipleFiles) {
+    std::cout << Filename << ":\n";
+  } else if (OutputFormat == bsd && MultipleFiles) {
+    std::cout << "\n" << Filename << ":\n";
+  } else if (OutputFormat == sysv) {
+    std::cout << "\n\nSymbols from " << Filename << ":\n\n"
+              << "Name                  Value   Class        Type"
+              << "         Size   Line  Section\n";
+  }
   std::for_each (M->begin (), M->end (), DumpSymbolNameForGlobalValue);
   std::for_each (M->gbegin (), M->gend (), DumpSymbolNameForGlobalValue);
 }
 
 void DumpSymbolNamesFromFile (std::string &Filename) {
   std::string ErrorMessage;
-  Module *Result = ParseBytecodeFile(Filename, &ErrorMessage);
-  if (Result) {
-    if (OutputFormat == posix && MultipleFiles) {
-      std::cout << Filename << ":\n";
-    } else if (OutputFormat == bsd && MultipleFiles) {
-      std::cout << "\n" << Filename << ":\n";
-    } else if (OutputFormat == sysv) {
-      std::cout << "\n\nSymbols from " << Filename << ":\n\n"
-                << "Name                  Value   Class        Type"
-                << "         Size   Line  Section\n";
+  if (IsBytecode (Filename)) {
+    Module *Result = ParseBytecodeFile(Filename, &ErrorMessage);
+    if (Result) {
+      DumpSymbolNamesFromModule (Result);
+    } else {
+      std::cerr << ToolName << ": " << Filename << ": " << ErrorMessage << "\n";
     }
-    DumpSymbolNamesFromModule (Result);
-  } else {
-    std::cerr << ToolName << ": " << Filename << ": " << ErrorMessage << "\n";
+  } else if (IsArchive (Filename)) {
+    std::vector<Module *> Modules;
+    if (ReadArchiveFile (Filename, Modules, &ErrorMessage))
+      std::cerr << ToolName << ": " << Filename << ": "
+                << ErrorMessage << "\n";
+    MultipleFiles = true;
+    std::for_each (Modules.begin (), Modules.end (), DumpSymbolNamesFromModule);
   }
 }
 
