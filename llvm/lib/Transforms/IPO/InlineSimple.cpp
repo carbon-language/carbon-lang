@@ -25,11 +25,10 @@
 #include "llvm/iPHINode.h"
 #include "llvm/iOther.h"
 #include "llvm/Type.h"
-#include "Support/StatisticReporter.h"
+#include "Support/Statistic.h"
 #include <algorithm>
-#include <iostream>
 
-static Statistic<> NumInlined("inline\t\t- Number of functions inlined");
+static Statistic<> NumInlined("inline", "Number of functions inlined");
 using std::cerr;
 
 // RemapInstruction - Convert the instruction operands from referencing the 

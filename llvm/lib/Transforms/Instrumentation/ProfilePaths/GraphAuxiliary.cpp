@@ -10,12 +10,9 @@
 #include "llvm/Transforms/Instrumentation/Graph.h"
 #include "llvm/Pass.h"
 #include "llvm/Module.h"
-#include "llvm/InstrTypes.h"
 #include "llvm/iTerminators.h"
+#include "Support/Statistic.h"
 #include <algorithm>
-#include <iostream>
-#include <sstream>
-#include <vector>
 
 //using std::list;
 using std::map;

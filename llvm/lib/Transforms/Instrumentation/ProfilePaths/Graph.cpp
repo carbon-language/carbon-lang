@@ -8,8 +8,8 @@
 #include "llvm/Transforms/Instrumentation/Graph.h"
 #include "llvm/iTerminators.h"
 #include "llvm/BasicBlock.h"
+#include "Support/Statistic.h"
 #include <algorithm>
-#include <iostream>
 
 //using std::list;
 //using std::set;

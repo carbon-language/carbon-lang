@@ -17,7 +17,7 @@
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "Support/STLExtras.h"
-#include "Support/StatisticReporter.h"
+#include "Support/Statistic.h"
 #include "Support/CommandLine.h"
 #include <algorithm>
 using std::cerr;
@@ -31,19 +31,19 @@ StartInst("raise-start-inst", cl::Hidden, cl::value_desc("inst name"),
        cl::desc("Start raise pass at the instruction with the specified name"));
 
 static Statistic<>
-NumLoadStorePeepholes("raise\t\t- Number of load/store peepholes");
+NumLoadStorePeepholes("raise", "Number of load/store peepholes");
 
 static Statistic<> 
-NumGEPInstFormed("raise\t\t- Number of other getelementptr's formed");
+NumGEPInstFormed("raise", "Number of other getelementptr's formed");
 
 static Statistic<>
-NumExprTreesConv("raise\t\t- Number of expression trees converted");
+NumExprTreesConv("raise", "Number of expression trees converted");
 
 static Statistic<>
-NumCastOfCast("raise\t\t- Number of cast-of-self removed");
+NumCastOfCast("raise", "Number of cast-of-self removed");
 
 static Statistic<>
-NumDCEorCP("raise\t\t- Number of insts DCEd or constprop'd");
+NumDCEorCP("raise", "Number of insts DCEd or constprop'd");
 
 
 #define PRINT_PEEPHOLE(ID, NUM, I)            \
