@@ -887,7 +887,7 @@ Instruction *InstCombiner::visitRem(BinaryOperator &I) {
     // if so, convert to a bitwise and.
     if (ConstantUInt *C = dyn_cast<ConstantUInt>(RHS))
       if (uint64_t Val = C->getValue())    // Don't break X % 0 (divide by zero)
-        if (!(Val & Val-1))                // Power of 2
+        if (!(Val & (Val-1)))              // Power of 2
           return BinaryOperator::create(Instruction::And, I.getOperand(0),
                                         ConstantUInt::get(I.getType(), Val-1));
   }
@@ -2869,7 +2869,8 @@ Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
     if (const PointerType *SrcTy =
         dyn_cast<PointerType>(CI->getOperand(0)->getType())) {
       const Type *SrcPTy = SrcTy->getElementType();
-      if (TD->getTypeSize(SrcPTy) == TD->getTypeSize(DestPTy) &&
+      if (SrcPTy->isSized() && DestPTy->isSized() &&
+          TD->getTypeSize(SrcPTy) == TD->getTypeSize(DestPTy) &&
           (SrcPTy->isInteger() || isa<PointerType>(SrcPTy)) &&
           (DestPTy->isInteger() || isa<PointerType>(DestPTy))) {
         // Okay, we are casting from one integer or pointer type to another of
