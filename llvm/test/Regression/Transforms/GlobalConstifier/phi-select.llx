@@ -1,7 +1,7 @@
 ; Test that PHI nodes and select instructions do not necessarily make stuff
 ; non-constant.
 
-; RUN: llvm-as < %s | opt -constify | llvm-dis | not grep global
+; RUN: llvm-as < %s | opt -globalopt | llvm-dis | not grep global
 
 %X = internal global int 4
 %Y = internal global int 5

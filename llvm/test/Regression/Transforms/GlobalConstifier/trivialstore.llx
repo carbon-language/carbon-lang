@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -constify | llvm-dis | not grep G
+; RUN: llvm-as < %s | opt -globalopt | llvm-dis | not grep G
 
 %G = internal global int 17
 
