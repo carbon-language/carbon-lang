@@ -5888,10 +5888,8 @@ if test "$ac_cv_cxx_namespaces" = yes; then
 fi
 ])
 
-#
 # Check for hash_map extension.  This is from
 # http://www.gnu.org/software/ac-archive/htmldoc/ac_cxx_have_ext_hash_map.html
-#
 AC_DEFUN([AC_CXX_HAVE_STD_EXT_HASH_MAP],
 [AC_CACHE_CHECK([whether the compiler has <ext/hash_map> defining template class std::hash_map],
  ac_cv_cxx_have_std_ext_hash_map,
@@ -5904,9 +5902,12 @@ using namespace std;
 #endif],[hash_map<int, int> t;],
   [ac_cv_cxx_have_std_ext_hash_map=yes], [ac_cv_cxx_have_std_ext_hash_map=no])
   AC_LANG_RESTORE])
- if test "$ac_cv_cxx_have_std_ext_hash_map" = yes; then
-   AC_DEFINE(HAVE_STD_EXT_HASH_MAP,,[Define if the compiler has a header <ext/hash_map> that defines template class std::hash_map.])
- fi])
+ HAVE_STD_EXT_HASH_MAP=0
+ if test "$ac_cv_cxx_have_std_ext_hash_map" = yes
+ then
+   HAVE_STD_EXT_HASH_MAP=1
+ fi
+ AC_SUBST(HAVE_STD_EXT_HASH_MAP)])
 
 AC_DEFUN([AC_CXX_HAVE_GNU_EXT_HASH_MAP],
 [AC_CACHE_CHECK([whether the compiler has <ext/hash_map> defining template class __gnu_cxx::hash_map],
@@ -5920,9 +5921,12 @@ using namespace __gnu_cxx;
 #endif],[hash_map<int,int> t; ],
   [ac_cv_cxx_have_gnu_ext_hash_map=yes],[ac_cv_cxx_have_gnu_ext_hash_map=no])
   AC_LANG_RESTORE])
- if test "$ac_cv_cxx_have_gnu_ext_hash_map" = yes; then
-   AC_DEFINE(HAVE_GNU_EXT_HASH_MAP,,[Define if the compiler has a header <ext/hash_map> that defines template class __gnu_cxx::hash_map.])
- fi])
+ HAVE_GNU_EXT_HASH_MAP=0
+ if test "$ac_cv_cxx_have_gnu_ext_hash_map" = yes
+ then
+   HAVE_GNU_EXT_HASH_MAP=1
+ fi
+ AC_SUBST(HAVE_GNU_EXT_HASH_MAP)])
 
 AC_DEFUN([AC_CXX_HAVE_GLOBAL_HASH_MAP],
 [AC_CACHE_CHECK([whether the compiler has <hash_map> defining template class ::hash_map],
@@ -5933,18 +5937,20 @@ AC_DEFUN([AC_CXX_HAVE_GLOBAL_HASH_MAP],
   AC_TRY_COMPILE([#include <hash_map>],[hash_map<int,int> t; ],
   [ac_cv_cxx_have_global_hash_map=yes], [ac_cv_cxx_have_global_hash_map=no])
   AC_LANG_RESTORE])
- if test "$ac_cv_cxx_have_global_hash_map" = yes; then
-   AC_DEFINE(HAVE_GLOBAL_HASH_MAP,,[Define if the compiler has a header <hash_map> that defines template class ::hash_map.])
- fi])
+ HAVE_GLOBAL_HASH_MAP=0
+ if test "$ac_cv_cxx_have_global_hash_map" = yes
+ then
+   HAVE_GLOBAL_HASH_MAP=1
+ fi
+ AC_SUBST(HAVE_GLOBAL_HASH_MAP)])
 
 AC_DEFUN([AC_CXX_HAVE_HASH_MAP],
 [AC_CXX_HAVE_STD_EXT_HASH_MAP
  AC_CXX_HAVE_GNU_EXT_HASH_MAP
  AC_CXX_HAVE_GLOBAL_HASH_MAP])
-#
+
 # Check for hash_set extension.  This is modified from
 # http://www.gnu.org/software/ac-archive/htmldoc/ac_cxx_have_ext_hash_set.html
-#
 AC_DEFUN([AC_CXX_HAVE_STD_EXT_HASH_SET],
 [AC_CACHE_CHECK([whether the compiler has <ext/hash_set> defining template class std::hash_set],
  ac_cv_cxx_have_std_ext_hash_set,
@@ -5957,9 +5963,12 @@ using namespace std;
 #endif],[hash_set<int> t; ],
   [ac_cv_cxx_have_std_ext_hash_set=yes], [ac_cv_cxx_have_std_ext_hash_set=no])
   AC_LANG_RESTORE])
- if test "$ac_cv_cxx_have_std_ext_hash_set" = yes; then
-   AC_DEFINE(HAVE_STD_EXT_HASH_SET,,[Define if the compiler has a header <ext/hash_set> that defines template class std::hash_set.])
- fi])
+ HAVE_STD_EXT_HASH_SET=0
+ if test "$ac_cv_cxx_have_std_ext_hash_set" = yes
+ then
+   HAVE_STD_EXT_HASH_SET=1
+ fi
+ AC_SUBST(HAVE_STD_EXT_HASH_SET)])
 
 AC_DEFUN([AC_CXX_HAVE_GNU_EXT_HASH_SET],
 [AC_CACHE_CHECK(
@@ -5974,9 +5983,12 @@ using namespace __gnu_cxx;
 #endif],[hash_set<int> t; ],
   [ac_cv_cxx_have_gnu_ext_hash_set=yes], [ac_cv_cxx_have_gnu_ext_hash_set=no])
   AC_LANG_RESTORE])
- if test "$ac_cv_cxx_have_gnu_ext_hash_set" = yes; then
-   AC_DEFINE(HAVE_GNU_EXT_HASH_SET,,[Define if the compiler has a header <ext/hash_set> that defines template class __gnu_cxx::hash_set.])
- fi])
+ HAVE_GNU_EXT_HASH_SET=0
+ if test "$ac_cv_cxx_have_gnu_ext_hash_set" = yes
+ then
+   HAVE_GNU_EXT_HASH_SET=1
+ fi
+ AC_SUBST(HAVE_GNU_EXT_HASH_SET)])
 
 AC_DEFUN([AC_CXX_HAVE_GLOBAL_HASH_SET],
 [AC_CACHE_CHECK([whether the compiler has <hash_set> defining template class ::hash_set],
@@ -5987,19 +5999,20 @@ AC_DEFUN([AC_CXX_HAVE_GLOBAL_HASH_SET],
   AC_TRY_COMPILE([#include <hash_set>],[hash_set<int> t; return 0;],
   [ac_cv_cxx_have_global_hash_set=yes], [ac_cv_cxx_have_global_hash_set=no])
   AC_LANG_RESTORE])
- if test "$ac_cv_cxx_have_global_hash_set" = yes; then
-   AC_DEFINE(HAVE_GLOBAL_HASH_SET,,[Define if the compiler has a header <hash_set> that defines template class ::hash_set.])
- fi])
+ HAVE_GLOBAL_HASH_SET=0
+ if test "$ac_cv_cxx_have_global_hash_set" = yes
+ then
+   HAVE_GLOBAL_HASH_SET=1
+ fi
+ AC_SUBST(HAVE_GLOBAL_HASH_SET)])
 
 AC_DEFUN([AC_CXX_HAVE_HASH_SET],
 [AC_CXX_HAVE_STD_EXT_HASH_SET
  AC_CXX_HAVE_GNU_EXT_HASH_SET
  AC_CXX_HAVE_GLOBAL_HASH_SET])
 
-#
 # Check for standard iterator extension.  This is modified from
 # http://www.gnu.org/software/ac-archive/htmldoc/ac_cxx_have_ext_hash_set.html
-#
 AC_DEFUN([AC_CXX_HAVE_STD_ITERATOR],
 [AC_CACHE_CHECK(whether the compiler has the standard iterator,
 ac_cv_cxx_have_std_iterator,
@@ -6018,8 +6031,7 @@ if test "$ac_cv_cxx_have_std_iterator" = yes
 then
    HAVE_STD_ITERATOR=1
 fi
-AC_SUBST(HAVE_STD_ITERATOR)
-])
+AC_SUBST(HAVE_STD_ITERATOR)])
 
 #
 # Check for bidirectional iterator extension.  This is modified from
@@ -6043,13 +6055,10 @@ if test "$ac_cv_cxx_have_bi_iterator" = yes
 then
    HAVE_BI_ITERATOR=1
 fi
-AC_SUBST(HAVE_BI_ITERATOR)
-])
+AC_SUBST(HAVE_BI_ITERATOR)])
 
-#
 # Check for forward iterator extension.  This is modified from
 # http://www.gnu.org/software/ac-archive/htmldoc/ac_cxx_have_ext_hash_set.html
-#
 AC_DEFUN([AC_CXX_HAVE_FWD_ITERATOR],
 [AC_CACHE_CHECK(whether the compiler has forward iterators,
 ac_cv_cxx_have_fwd_iterator,
@@ -6068,8 +6077,7 @@ if test "$ac_cv_cxx_have_fwd_iterator" = yes
 then
    HAVE_FWD_ITERATOR=1
 fi
-AC_SUBST(HAVE_FWD_ITERATOR)
-])
+AC_SUBST(HAVE_FWD_ITERATOR)])
 
 #
 # Check for slist extension.  This is from
