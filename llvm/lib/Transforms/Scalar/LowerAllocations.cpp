@@ -22,7 +22,7 @@
 bool LowerAllocations::doPassInitialization(Module *M) {
   bool Changed = false;
   const MethodType *MallocType = 
-    MethodType::get(PointerType::get(Type::UByteTy),
+    MethodType::get(PointerType::get(Type::SByteTy),
                     vector<const Type*>(1, Type::UIntTy), false);
 
   SymbolTable *SymTab = M->getSymbolTableSure();
@@ -37,7 +37,7 @@ bool LowerAllocations::doPassInitialization(Module *M) {
 
   const MethodType *FreeType = 
     MethodType::get(Type::VoidTy,
-                    vector<const Type*>(1, PointerType::get(Type::UByteTy)),
+                    vector<const Type*>(1, PointerType::get(Type::SByteTy)),
 		    false);
 
   // Check for a definition of free
