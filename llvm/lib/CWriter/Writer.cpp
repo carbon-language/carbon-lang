@@ -26,6 +26,7 @@
 using std::string;
 using std::map;
 using std::ostream;
+using std::cerr;
 
 static std::string getConstStrValue(const Constant* CPV);
 

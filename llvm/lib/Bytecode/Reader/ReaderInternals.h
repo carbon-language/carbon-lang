@@ -15,12 +15,13 @@
 #include <map>
 #include <utility>
 #include <list>
+#include <iostream>
 
 // Enable to trace to figure out what the heck is going on when parsing fails
 #define TRACE_LEVEL 0
 
 #if TRACE_LEVEL    // ByteCodeReading_TRACEer
-#define BCR_TRACE(n, X) if (n < TRACE_LEVEL) cerr << std::string(n*2, ' ') << X
+#define BCR_TRACE(n, X) if (n < TRACE_LEVEL) std::cerr << std::string(n*2, ' ') << X
 #else
 #define BCR_TRACE(n, X)
 #endif
@@ -51,7 +52,7 @@ public:
   std::string getError() const { return Error; }
 
   void dump() const {
-    cerr << "BytecodeParser instance!\n";
+    std::cerr << "BytecodeParser instance!\n";
   }
 
 private:          // All of this data is transient across calls to ParseBytecode
@@ -167,7 +168,7 @@ static inline bool readBlock(const uchar *&Buf, const uchar *EndBuf,
 			     unsigned &Type, unsigned &Size) {
 #if DEBUG_OUTPUT
   bool Result = read(Buf, EndBuf, Type) || read(Buf, EndBuf, Size);
-  cerr << "StartLoc = " << ((unsigned)Buf & 4095)
+  std::cerr << "StartLoc = " << ((unsigned)Buf & 4095)
        << " Type = " << Type << " Size = " << Size << endl;
   return Result;
 #else

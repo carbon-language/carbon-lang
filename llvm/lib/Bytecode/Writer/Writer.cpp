@@ -199,7 +199,7 @@ void BytecodeWriter::outputSymbolTable(const SymbolTable &MST) {
   }
 }
 
-void WriteBytecodeToFile(const Module *C, ostream &Out) {
+void WriteBytecodeToFile(const Module *C, std::ostream &Out) {
   assert(C && "You can't write a null module!!");
 
   std::deque<unsigned char> Buffer;
