@@ -11,6 +11,9 @@
 #include "llvm/GlobalVariable.h"
 #include "llvm/Analysis/CallGraph.h"
 #include "Support/DepthFirstIterator.h"
+#include "Support/StatisticReporter.h"
+
+static Statistic<> NumRemoved("globaldce\t- Number of global values removed");
 
 static bool RemoveUnreachableFunctions(Module *M, CallGraph &CallGraph) {
   // Calculate which functions are reachable from the external functions in the
@@ -30,6 +33,7 @@ static bool RemoveUnreachableFunctions(Module *M, CallGraph &CallGraph) {
       (*I)->dropAllReferences();
       N->removeAllCalledMethods();
       FunctionsToDelete.push_back(N);
+      ++NumRemoved;
     }
   }
 
@@ -57,6 +61,7 @@ static bool RemoveUnreachableGlobalVariables(Module *M) {
       ++I;                     // Cannot eliminate global variable
     else {
       delete M->getGlobalList().remove(I);
+      ++NumRemoved;
       Changed = true;
     }
   return Changed;

@@ -26,6 +26,9 @@
 #include "llvm/BasicBlock.h"
 #include "llvm/Constant.h"
 #include "llvm/Type.h"
+#include "Support/StatisticReporter.h"
+
+static Statistic<> NumPromoted("mem2reg\t\t- Number of alloca's promoted");
 
 using std::vector;
 using std::map;
@@ -186,6 +189,8 @@ bool PromotePass::runOnFunction(Function *F) {
     I->getParent()->getInstList().remove(I);
     delete I;
   }
+
+  NumPromoted += Allocas.size();
 
   // Purge data structurse so they are available the next iteration...
   Allocas.clear();

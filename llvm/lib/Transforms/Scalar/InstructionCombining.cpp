@@ -25,7 +25,9 @@
 #include "llvm/Pass.h"
 #include "llvm/Support/InstIterator.h"
 #include "llvm/Support/InstVisitor.h"
+#include "Support/StatisticReporter.h"
 
+static Statistic<> NumCombined("instcombine\t- Number of insts combined");
 
 namespace {
   class InstCombiner : public FunctionPass,
@@ -547,6 +549,7 @@ bool InstCombiner::runOnFunction(Function *F) {
     // Now that we have an instruction, try combining it to simplify it...
     Instruction *Result = visit(I);
     if (Result) {
+      ++NumCombined;
       // Should we replace the old instruction with a new one?
       if (Result != I)
         ReplaceInstWithInst(I, Result);

@@ -19,6 +19,9 @@
 #include "llvm/Module.h"
 #include "llvm/Function.h"
 #include "llvm/Pass.h"
+#include "Support/StatisticReporter.h"
+
+static Statistic<> NumMerged("constmerge\t\t- Number of global constants merged");
 
 // mergeDuplicateConstants - Workhorse for the pass.  This eliminates duplicate
 // constants, starting at global ConstantNo, and adds vars to the map if they
@@ -50,6 +53,7 @@ bool mergeDuplicateConstants(Module *M, unsigned &ConstantNo,
         delete GList.remove(GList.begin()+ConstantNo);
 
         --ConstantNo;  // Don't skip the next constant.
+        ++NumMerged;
         MadeChanges = true;
       }
     }

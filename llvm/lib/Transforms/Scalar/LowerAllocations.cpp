@@ -15,6 +15,9 @@
 #include "llvm/Constants.h"
 #include "llvm/Pass.h"
 #include "llvm/Target/TargetData.h"
+#include "Support/StatisticReporter.h"
+
+static Statistic<> NumLowered("lowerallocs\t- Number of allocations lowered");
 using std::vector;
 
 namespace {
@@ -81,7 +84,7 @@ bool LowerAllocations::runOnBasicBlock(BasicBlock *BB) {
   assert(MallocFunc && FreeFunc && BB && "Pass not initialized!");
 
   // Loop over all of the instructions, looking for malloc or free instructions
-  for (unsigned i = 0; i < BB->size(); ++i) {
+  for (unsigned i = 0; i != BB->size(); ++i) {
     BasicBlock::InstListType &BBIL = BB->getInstList();
     if (MallocInst *MI = dyn_cast<MallocInst>(*(BBIL.begin()+i))) {
       BBIL.remove(BBIL.begin()+i);   // remove the malloc instr...
@@ -116,6 +119,7 @@ bool LowerAllocations::runOnBasicBlock(BasicBlock *BB) {
       MI->replaceAllUsesWith(MCast);
       delete MI;                          // Delete the malloc inst
       Changed = true;
+      ++NumLowered;
     } else if (FreeInst *FI = dyn_cast<FreeInst>(*(BBIL.begin()+i))) {
       BBIL.remove(BB->getInstList().begin()+i);
       
@@ -132,6 +136,7 @@ bool LowerAllocations::runOnBasicBlock(BasicBlock *BB) {
       // Delete the old free instruction
       delete FI;
       Changed = true;
+      ++NumLowered;
     }
   }
 

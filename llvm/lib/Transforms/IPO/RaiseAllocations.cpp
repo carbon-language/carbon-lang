@@ -13,6 +13,9 @@
 #include "llvm/iMemory.h"
 #include "llvm/iOther.h"
 #include "llvm/Pass.h"
+#include "Support/StatisticReporter.h"
+
+static Statistic<> NumRaised("raiseallocs\t- Number of allocations raised");
 
 namespace {
 
@@ -91,11 +94,13 @@ bool RaiseAllocations::runOnBasicBlock(BasicBlock *BB) {
         CI->setName("");
         ReplaceInstWithInst(BIL, BI, MallocI);
         Changed = true;
+        ++NumRaised;
         continue;  // Skip the ++BI
       } else if (CI->getCalledValue() == FreeFunc) { // Replace call to free?
         ReplaceInstWithInst(BIL, BI, new FreeInst(CI->getOperand(1)));
         Changed = true;
         continue;  // Skip the ++BI
+        ++NumRaised;
       }
     }
 

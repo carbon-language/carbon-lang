@@ -26,10 +26,13 @@
 #include "llvm/Pass.h"
 #include "llvm/Support/InstVisitor.h"
 #include "Support/STLExtras.h"
+#include "Support/StatisticReporter.h"
 #include <algorithm>
 #include <set>
 #include <iostream>
 using std::cerr;
+
+static Statistic<> NumInstRemoved("sccp\t\t- Number of instructions removed");
 
 #if 0    // Enable this to get SCCP debug output
 #define DEBUG_SCCP(X) X
@@ -315,6 +318,7 @@ bool SCCP::runOnFunction(Function *F) {
 
         // Hey, we just changed something!
         MadeChanges = true;
+        ++NumInstRemoved;
       } else {
         ++BI;
       }

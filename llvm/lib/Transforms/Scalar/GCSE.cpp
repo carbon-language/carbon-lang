@@ -20,7 +20,10 @@
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Support/InstVisitor.h"
 #include "llvm/Support/InstIterator.h"
+#include "Support/StatisticReporter.h"
 #include <algorithm>
+
+static Statistic<> NumInstRemoved("gcse\t\t- Number of instructions removed");
 
 namespace {
   class GCSE : public FunctionPass, public InstVisitor<GCSE, bool> {
@@ -130,6 +133,8 @@ void GCSE::CommonSubExpressionFound(Instruction *I, Instruction *Other) {
   assert(I != Other && WorkList.count(I) == 0 && "I shouldn't be on worklist!");
 
   WorkList.erase(Other); // Other may not actually be on the worklist anymore...
+
+  ++NumInstRemoved;   // Keep track of number of instructions eliminated
 
   // Handle the easy case, where both instructions are in the same basic block
   BasicBlock *BB1 = I->getParent(), *BB2 = Other->getParent();

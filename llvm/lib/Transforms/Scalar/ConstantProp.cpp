@@ -19,6 +19,9 @@
 #include "llvm/Support/InstIterator.h"
 #include <set>
 
+#include "Support/StatisticReporter.h"
+static Statistic<> NumInstKilled("constprop - Number of instructions killed");
+
 namespace {
   struct ConstantPropogation : public FunctionPass {
     const char *getPassName() const { return "Simple Constant Propogation"; }
@@ -55,9 +58,10 @@ bool ConstantPropogation::runOnFunction(Function *F) {
         
         // Replace all of the uses of a variable with uses of the constant.
         I->replaceAllUsesWith(C);
-        
+
         // We made a change to the function...
         Changed = true;
+        ++NumInstKilled;
       }
   }
   return Changed;

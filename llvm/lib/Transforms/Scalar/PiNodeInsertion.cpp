@@ -34,6 +34,9 @@
 #include "llvm/iOperators.h"
 #include "llvm/iPHINode.h"
 #include "llvm/Support/CFG.h"
+#include "Support/StatisticReporter.h"
+
+static Statistic<> NumInserted("pinodes\t\t- Number of Pi nodes inserted");
 
 namespace {
   struct PiNodeInserter : public FunctionPass {
@@ -180,6 +183,8 @@ bool PiNodeInserter::insertPiNodeFor(Value *V, BasicBlock *Succ, Value *Rep) {
   if (Rep == 0)
     cast<PHINode>(Pi)->addIncoming(V, Pred);
  
+
+  ++NumInserted;
   return true;
 }
 

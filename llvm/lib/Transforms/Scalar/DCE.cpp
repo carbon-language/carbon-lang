@@ -14,7 +14,11 @@
 #include "llvm/Instruction.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/InstIterator.h"
+#include "Support/StatisticReporter.h"
 #include <set>
+
+static Statistic<> DIEEliminated("die\t\t- Number of insts removed");
+static Statistic<> DCEEliminated("dce\t\t- Number of insts removed");
 
 //===----------------------------------------------------------------------===//
 // DeadInstElimination pass implementation
@@ -28,9 +32,10 @@ namespace {
       BasicBlock::InstListType &Vals = BB->getInstList();
       bool Changed = false;
       for (BasicBlock::iterator DI = Vals.begin(); DI != Vals.end(); )
-        if (dceInstruction(Vals, DI))
+        if (dceInstruction(Vals, DI)) {
           Changed = true;
-        else
+          ++DIEEliminated;
+        } else
           ++DI;
       return Changed;
     }
@@ -103,6 +108,7 @@ bool DCE::runOnFunction(Function *F) {
     for (BasicBlock::iterator BI = BBIL.begin(); BI != BBIL.end(); )
       if (DeadInsts.count(*BI)) {            // Is this instruction dead?
         delete BBIL.remove(BI);              // Yup, remove and delete inst
+        ++DCEEliminated;
       } else {                               // This instruction is not dead
         ++BI;                                // Continue on to the next one...
       }

@@ -27,6 +27,13 @@
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include <algorithm>
 #include <iostream>
+#include "Support/StatisticReporter.h"
+
+static Statistic<> NumResolved("funcresolve\t- Number of varargs functions resolved");
+static Statistic<> NumTypeSymtabEntriesKilled("cleangcc\t- Number of unused typenames removed from symtab");
+static Statistic<> NumCastsMoved("cleangcc\t- Number of casts removed from head of basic block");
+static Statistic<> NumRefactoredPreds("cleangcc\t- Number of predecessor blocks refactored");
+
 using std::vector;
 using std::string;
 using std::cerr;
@@ -112,6 +119,7 @@ bool CleanupGCCOutput::doInitialization(Module *M) {
           Plane.erase(PI);          // Alas, GCC 2.95.3 doesn't  *SIGH*
           PI = Plane.begin();
 #endif
+          ++NumTypeSymtabEntriesKilled;
           Changed = true;
         } else {
           ++PI;
@@ -159,6 +167,9 @@ static inline bool FixCastsAndPHIs(BasicBlock *BB) {
       // Move the cast instruction to the current insert position...
       --InsertPos;                 // New position for cast to go...
       std::swap(*InsertPos, *I);   // Cast goes down, PHI goes up
+      Changed = true;
+
+      ++NumCastsMoved;
 
       if (isa<PHINode>(Src) &&                                // Handle case #1
           cast<PHINode>(Src)->getParent() == BB) {
@@ -196,6 +207,7 @@ static inline bool FixCastsAndPHIs(BasicBlock *BB) {
 
         // Reinsert the cast right before the terminator in Pred.
         Pred->getInstList().insert(Pred->end()-1, CI);
+        Changed = true;
       }
     } else {
       ++I;
@@ -281,6 +293,7 @@ bool CleanupGCCOutput::runOnFunction(Function *M) {
       for (unsigned i = 0; i < Preds.size(); ++i) {
         if (SortedPreds[i] == LastOne) {   // Found a duplicate.
           RefactorPredecessor(BB, SortedPreds[i]);
+          ++NumRefactoredPreds;
           Changed = true;
         }
         LastOne = SortedPreds[i];
@@ -430,6 +443,7 @@ bool FunctionResolvingPass::run(Module *M) {
           delete Functions[i];
           Functions.erase(Functions.begin()+i);
           Changed = true;
+          ++NumResolved;
           continue;
         }
       }
@@ -499,11 +513,13 @@ bool FunctionResolvingPass::run(Module *M) {
                 assert(CI->getOperand(0) == Old);
                 CI->setOperand(0, Concrete);
                 Changed = true;
+                ++NumResolved;
               } else if (CallInst *CI = dyn_cast<CallInst>(U)) {
                 // Can only fix up calls TO the argument, not args passed in.
                 if (CI->getCalledValue() == Old) {
                   ConvertCallTo(CI, Concrete);
                   Changed = true;
+                  ++NumResolved;
                 } else {
                   cerr << "Couldn't cleanup this function call, must be an"
                        << " argument or something!" << CI;

@@ -15,6 +15,9 @@
 #include "llvm/iOther.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/Pass.h"
+#include "Support/StatisticReporter.h"
+
+static Statistic<> NumAdded("lowerrefs\t\t- New instructions added");
 
 namespace {
   struct DecomposePass : public BasicBlockPass {
@@ -112,6 +115,7 @@ void DecomposePass::decomposeArrayRef(BasicBlock::iterator &BBI) {
     if (!indexIsZero) {
       LastPtr = new GetElementPtrInst(LastPtr, Indices, "ptr1");
       NewInsts.push_back(cast<Instruction>(LastPtr));
+      ++NumAdded;
     }
       
     // Instruction 2: nextPtr2 = cast nextPtr1 to NextPtrTy
@@ -120,6 +124,7 @@ void DecomposePass::decomposeArrayRef(BasicBlock::iterator &BBI) {
     if (LastPtr->getType() != NextPtrTy) {
       LastPtr = new CastInst(LastPtr, NextPtrTy, "ptr2");
       NewInsts.push_back(cast<Instruction>(LastPtr));
+      ++NumAdded;
     }
   }
   

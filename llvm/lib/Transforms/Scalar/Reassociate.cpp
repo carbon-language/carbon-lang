@@ -25,6 +25,10 @@
 #include "llvm/Constant.h"
 #include "llvm/Support/CFG.h"
 #include "Support/PostOrderIterator.h"
+#include "Support/StatisticReporter.h"
+
+static Statistic<> NumChanged("reassociate\t- Number of insts reassociated");
+static Statistic<> NumSwapped("reassociate\t- Number of insts with operands swapped");
 
 namespace {
   class Reassociate : public FunctionPass {
@@ -115,6 +119,7 @@ bool Reassociate::ReassociateExpr(BinaryOperator *I) {
     std::swap(LHS, RHS);
     std::swap(LHSRank, RHSRank);
     Changed = true;
+    ++NumSwapped;
     //cerr << "Transposed: " << I << " Result BB: " << I->getParent();
   }
   
@@ -136,6 +141,7 @@ bool Reassociate::ReassociateExpr(BinaryOperator *I) {
         LHSI->setOperand(TakeOp, RHS);
         I->setOperand(1, LHSI);
 
+        ++NumChanged;
         //cerr << "Reassociated: " << I << " Result BB: " << I->getParent();
 
         // Since we modified the RHS instruction, make sure that we recheck it.

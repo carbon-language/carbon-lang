@@ -27,6 +27,9 @@
 #include "llvm/iOther.h"
 #include "llvm/Type.h"
 #include "llvm/Argument.h"
+#include "Support/StatisticReporter.h"
+
+static Statistic<> NumInlined("inline\t\t- Number of functions inlined");
 #include <algorithm>
 #include <iostream>
 using std::cerr;
@@ -258,6 +261,7 @@ static bool doFunctionInlining(Function *F) {
   // Loop through now and inline instructions a basic block at a time...
   for (Function::iterator I = F->begin(); I != F->end(); )
     if (DoFunctionInlining(*I)) {
+      ++NumInlined;
       Changed = true;
       // Iterator is now invalidated by new basic blocks inserted
       I = F->begin();

@@ -14,6 +14,10 @@
 #include "llvm/Constants.h"
 #include "llvm/Support/CFG.h"
 #include "Support/STLExtras.h"
+#include "Support/StatisticReporter.h"
+
+static Statistic<> NumRemoved ("indvars\t\t- Number of aux indvars removed");
+static Statistic<> NumInserted("indvars\t\t- Number of cannonical indvars added");
 
 #if 0
 #define DEBUG
@@ -38,7 +42,8 @@ static bool TransformLoop(LoopInfo *Loops, Loop *Loop) {
                               std::bind1st(std::ptr_fun(TransformLoop), Loops));
   // Get the header node for this loop.  All of the phi nodes that could be
   // induction variables must live in this basic block.
-  BasicBlock *Header = (BasicBlock*)Loop->getBlocks().front();
+  //
+  BasicBlock *Header = Loop->getBlocks().front();
   
   // Loop over all of the PHI nodes in the basic block, calculating the
   // induction variables that they represent... stuffing the induction variable
@@ -107,6 +112,7 @@ static bool TransformLoop(LoopInfo *Loops, Loop *Loop) {
     assert(IndVars.back().InductionType == InductionVariable::Cannonical &&
            "Just inserted cannonical indvar that is not cannonical!");
     Cannonical = &IndVars.back();
+    ++NumInserted;
     Changed = true;
   }
 
@@ -179,19 +185,12 @@ static bool TransformLoop(LoopInfo *Loops, Loop *Loop) {
       delete IV->Phi;
       InsertPos--;            // Deleted an instr, decrement insert position
       Changed = true;
+      ++NumRemoved;
     }
   }
 
   return Changed;
 }
-
-static bool doit(Function *M, LoopInfo &Loops) {
-  // Induction Variables live in the header nodes of the loops of the function
-  return reduce_apply_bool(Loops.getTopLevelLoops().begin(),
-                           Loops.getTopLevelLoops().end(),
-                           std::bind1st(std::ptr_fun(TransformLoop), &Loops));
-}
-
 
 namespace {
   struct InductionVariableSimplify : public FunctionPass {
@@ -200,7 +199,12 @@ namespace {
     }
 
     virtual bool runOnFunction(Function *F) {
-      return doit(F, getAnalysis<LoopInfo>());
+      LoopInfo &LI = getAnalysis<LoopInfo>();
+
+      // Induction Variables live in the header nodes of loops
+      return reduce_apply_bool(LI.getTopLevelLoops().begin(),
+                               LI.getTopLevelLoops().end(),
+                               std::bind1st(std::ptr_fun(TransformLoop), &LI));
     }
     
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
