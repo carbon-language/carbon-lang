@@ -82,6 +82,7 @@ public:
   typedef size_t size_type;
 
   ilist_iterator(pointer NP) : NodePtr(NP) {}
+  ilist_iterator(reference NR) : NodePtr(&NR) {}
   ilist_iterator() : NodePtr(0) {}
 
   // This is templated so that we can allow constructing a const iterator from
