@@ -229,6 +229,7 @@ ret             { RET_TOK(TermOpVal, Ret, RET); }
 br              { RET_TOK(TermOpVal, Br, BR); }
 switch          { RET_TOK(TermOpVal, Switch, SWITCH); }
 invoke          { RET_TOK(TermOpVal, Invoke, INVOKE); }
+unwind          { RET_TOK(TermOpVal, Unwind, UNWIND); }
 
 
 malloc          { RET_TOK(MemOpVal, Malloc, MALLOC); }

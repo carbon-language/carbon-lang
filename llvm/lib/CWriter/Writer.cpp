@@ -117,6 +117,7 @@ namespace {
     void visitBranchInst(BranchInst &I);
     void visitSwitchInst(SwitchInst &I);
     void visitInvokeInst(InvokeInst &I);
+    void visitUnwindInst(UnwindInst &I);
 
     void visitPHINode(PHINode &I);
     void visitBinaryOperator(Instruction &I);
@@ -979,6 +980,19 @@ void CWriter::visitInvokeInst(InvokeInst &II) {
   emittedInvoke = true;
 }
 
+
+void CWriter::visitUnwindInst(UnwindInst &I) {
+  // The unwind instructions causes a control flow transfer out of the current
+  // function, unwinding the stack until a caller who used the invoke
+  // instruction is found.  In this context, we code generated the invoke
+  // instruction to add an entry to the top of the jmpbuf_list.  Thus, here we
+  // just have to longjmp to the specified handler.
+  Out << "  if (__llvm_jmpbuf_list == 0) {  /* llvm.unwind */\n"
+      << "    printf(\"throw found with no handler!\\n\"); abort();\n"
+      << "  }\n"
+      << "  longjmp(__llvm_jmpbuf_list->buf, 1);\n";
+  emittedInvoke = true;
+}
 
 static bool isGotoCodeNeccessary(BasicBlock *From, BasicBlock *To) {
   // If PHI nodes need copies, we need the copy code...

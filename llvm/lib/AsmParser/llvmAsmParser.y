@@ -701,7 +701,7 @@ Module *RunVMAsmParser(const std::string &Filename, FILE *F) {
 %token OPAQUE NOT EXTERNAL TARGET ENDIAN POINTERSIZE LITTLE BIG
 
 // Basic Block Terminating Operators 
-%token <TermOpVal> RET BR SWITCH
+%token <TermOpVal> RET BR SWITCH INVOKE UNWIND
 
 // Binary Operators 
 %type  <BinaryOpVal> BinaryOps  // all the binary operators
@@ -714,7 +714,7 @@ Module *RunVMAsmParser(const std::string &Filename, FILE *F) {
 
 // Other Operators
 %type  <OtherOpVal> ShiftOps
-%token <OtherOpVal> PHI CALL INVOKE CAST SHL SHR VA_ARG
+%token <OtherOpVal> PHI CALL CAST SHL SHR VA_ARG
 
 %start Module
 %%
@@ -1535,6 +1535,9 @@ BBTerminatorInst : RET ResolvedVal {              // Return with a result...
       $$ = new InvokeInst(V, Normal, Except, *$5);
     }
     delete $5;
+  }
+  | UNWIND {
+    $$ = new UnwindInst();
   };
 
 

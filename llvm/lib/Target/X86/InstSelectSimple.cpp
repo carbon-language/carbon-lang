@@ -132,6 +132,7 @@ namespace {
 		const std::vector<ValueRecord> &Args);
     void visitCallInst(CallInst &I);
     void visitInvokeInst(InvokeInst &II);
+    void visitUnwindInst(UnwindInst &UI);
     void visitIntrinsicCall(LLVMIntrinsic::ID ID, CallInst &I);
 
     // Arithmetic operators
@@ -1020,6 +1021,10 @@ void ISel::visitInvokeInst(InvokeInst &II) {
     BuildMI(BB, X86::JMP, 1).addPCDisp(II.getNormalDest());
 }
 
+void ISel::visitUnwindInst(UnwindInst &UI) {
+  // unwind is not supported yet!  Just abort when the unwind inst is executed!
+  BuildMI(BB, X86::CALLpcrel32, 1).addExternalSymbol("abort", true); 
+}
 
 void ISel::visitIntrinsicCall(LLVMIntrinsic::ID ID, CallInst &CI) {
   unsigned TmpReg1, TmpReg2;

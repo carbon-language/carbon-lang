@@ -196,6 +196,7 @@ private:
     markOverdefined(&I);
     visitTerminatorInst(I);
   }
+  void visitUnwindInst    (TerminatorInst &I) { /*returns void*/ }
   void visitAllocationInst(Instruction &I) { markOverdefined(&I); }
   void visitVarArgInst    (Instruction &I) { markOverdefined(&I); }
   void visitFreeInst      (Instruction &I) { /*returns void*/ }

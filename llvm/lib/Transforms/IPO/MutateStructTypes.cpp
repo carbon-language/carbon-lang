@@ -352,6 +352,7 @@ void MutateStructTypes::transformFunction(Function *m) {
       }
       case Instruction::Switch:
       case Instruction::Invoke:
+      case Instruction::Unwind:
         assert(0 && "Insn not implemented!");
 
         // Binary Instructions
