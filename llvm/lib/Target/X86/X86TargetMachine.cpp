@@ -33,6 +33,8 @@ namespace {
   cl::opt<bool> DisableOutput("disable-x86-llc-output", cl::Hidden,
                               cl::desc("Disable the X86 asm printer, for use "
                                        "when profiling the code generator."));
+  cl::opt<bool> NoSimpleISel("disable-simple-isel", cl::init(true),
+	     cl::desc("Use the hand coded 'simple' X86 instruction selector"));
 }
 
 // allocateX86TargetMachine - Allocate and return a subclass of TargetMachine
@@ -67,8 +69,10 @@ bool X86TargetMachine::addPassesToEmitAssembly(PassManager &PM,
   // FIXME: Implement the switch instruction in the instruction selector!
   PM.add(createLowerSwitchPass());
 
-  if (NoPatternISel)
+  if (NoPatternISel && NoSimpleISel)
     PM.add(createX86SimpleInstructionSelector(*this));
+  else if (NoPatternISel)
+    PM.add(createX86ReallySimpleInstructionSelector(*this));
   else
     PM.add(createX86PatternInstructionSelector(*this));
 

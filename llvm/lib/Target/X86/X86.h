@@ -29,6 +29,12 @@ class IntrinsicLowering;
 ///
 FunctionPass *createX86SimpleInstructionSelector(TargetMachine &TM);
 
+/// createX86ReallySimpleInstructionSelector - This pass converts an LLVM
+/// function into a machine code representation in an even simpler fashion
+/// than above.
+///
+FunctionPass *createX86ReallySimpleInstructionSelector(TargetMachine &TM);
+
 /// createX86PatternInstructionSelector - This pass converts an LLVM function
 /// into a machine code representation using pattern matching and a machine
 /// description file.

@@ -13,7 +13,8 @@ include $(LEVEL)/Makefile.common
 # Make sure that tblgen is run, first thing.
 $(SourceDepend): X86GenRegisterInfo.h.inc X86GenRegisterNames.inc \
                  X86GenRegisterInfo.inc X86GenInstrNames.inc \
-                 X86GenInstrInfo.inc X86GenInstrSelector.inc
+                 X86GenInstrInfo.inc X86GenSimpInstrSelector.inc \
+		 X86GenInstrSelector.inc
 
 X86GenRegisterNames.inc::  $(SourceDir)/X86.td $(SourceDir)/X86RegisterInfo.td \
                            $(SourceDir)/../Target.td $(TBLGEN)
@@ -40,10 +41,16 @@ X86GenInstrInfo.inc:: $(SourceDir)/X86.td $(SourceDir)/X86InstrInfo.td \
 	@echo "Building X86.td instruction information with tblgen"
 	$(VERB) $(TBLGEN) -I $(BUILD_SRC_DIR) $< -gen-instr-desc -o $@
 
+X86GenSimpInstrSelector.inc:: $(SourceDir)/X86InstrSel.td $(TBLGEN)
+	@echo "Building X86.td simple instruction selector with tblgen"
+	$(VERB) $(TBLGEN) -I $(BUILD_SRC_DIR) $< -gen-simp-instr-sel -o $@
+
 X86GenInstrSelector.inc:: $(SourceDir)/X86.td $(SourceDir)/X86InstrInfo.td \
                           $(SourceDir)/../Target.td $(TBLGEN)
 	@echo "Building X86.td instruction selector with tblgen"
 	$(VERB) $(TBLGEN) -I $(BUILD_SRC_DIR) $< -gen-instr-selector -o $@
+
+
 
 clean::
 	$(VERB) rm -f *.inc
