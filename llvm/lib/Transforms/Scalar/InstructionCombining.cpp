@@ -837,7 +837,6 @@ Instruction *InstCombiner::visitDiv(BinaryOperator &I) {
     if (Instruction *LHS = dyn_cast<Instruction>(I.getOperand(0)))
       if (LHS->getOpcode() == Instruction::Div)
         if (ConstantInt *LHSRHS = dyn_cast<ConstantInt>(LHS->getOperand(1))) {
-          std::cerr << "DIV: " << *LHS << "   : " << I;
           // (X / C1) / C2  -> X / (C1*C2)
           return BinaryOperator::createDiv(LHS->getOperand(0),
                                            ConstantExpr::getMul(RHS, LHSRHS));
@@ -1764,6 +1763,44 @@ Instruction *InstCombiner::visitSetCondInst(BinaryOperator &I) {
         }
         break;
 
+      case Instruction::Cast: {       // (setcc (cast X to larger), CI)
+        const Type *SrcTy = LHSI->getOperand(0)->getType();
+        if (SrcTy->isIntegral() && LHSI->getType()->isIntegral()) {
+          unsigned SrcBits = SrcTy->getPrimitiveSize();
+          if (SrcTy == Type::BoolTy) SrcBits = 1;
+          unsigned DestBits = LHSI->getType()->getPrimitiveSize();
+          if (LHSI->getType() == Type::BoolTy) DestBits = 1;
+          if (SrcBits < DestBits) {
+            // Check to see if the comparison is always true or false.
+            Constant *NewCst = ConstantExpr::getCast(CI, SrcTy);
+            if (ConstantExpr::getCast(NewCst, LHSI->getType()) != CI) {
+              Constant *Min = ConstantIntegral::getMinValue(SrcTy);
+              Constant *Max = ConstantIntegral::getMaxValue(SrcTy);
+              Min = ConstantExpr::getCast(Min, LHSI->getType());
+              Max = ConstantExpr::getCast(Max, LHSI->getType());
+              switch (I.getOpcode()) {
+              default: assert(0 && "unknown integer comparison");
+              case Instruction::SetEQ:
+                return ReplaceInstUsesWith(I, ConstantBool::False);
+              case Instruction::SetNE:
+                return ReplaceInstUsesWith(I, ConstantBool::True);
+              case Instruction::SetLT:
+                return ReplaceInstUsesWith(I, ConstantExpr::getSetLT(Max, CI));
+              case Instruction::SetLE:
+                return ReplaceInstUsesWith(I, ConstantExpr::getSetLE(Max, CI));
+              case Instruction::SetGT:
+                return ReplaceInstUsesWith(I, ConstantExpr::getSetGT(Min, CI));
+              case Instruction::SetGE:
+                return ReplaceInstUsesWith(I, ConstantExpr::getSetGE(Min, CI));
+              }
+            }
+
+            return new SetCondInst(I.getOpcode(), LHSI->getOperand(0),
+                                   ConstantExpr::getCast(CI, SrcTy));
+          }
+        }
+        break;
+      }
       case Instruction::Shl:         // (setcc (shl X, ShAmt), CI)
         if (ConstantUInt *ShAmt = dyn_cast<ConstantUInt>(LHSI->getOperand(1))) {
           switch (I.getOpcode()) {
