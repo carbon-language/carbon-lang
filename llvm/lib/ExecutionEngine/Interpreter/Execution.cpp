@@ -777,6 +777,8 @@ void Interpreter::callMethod(Method *M, const vector<GenericValue> &ArgVals) {
 
 
   // Run through the method arguments and initialize their values...
+  assert(ArgVals.size() == M->getArgumentList().size() &&
+         "Invalid number of values passed to method invocation!");
   unsigned i = 0;
   for (Method::ArgumentListType::iterator MI = M->getArgumentList().begin(),
 	 ME = M->getArgumentList().end(); MI != ME; ++MI, ++i) {

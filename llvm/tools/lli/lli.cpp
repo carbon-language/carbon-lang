@@ -49,7 +49,7 @@ int main(int argc, char** argv) {
 
   // Start interpreter into the main function...
   //
-  if (!I.callMethod(MainFunction) && !DebugMode) {
+  if (!I.callMainMethod(MainFunction, InputFilename) && !DebugMode) {
     // If not in debug mode and if the call succeeded, run the code now...
     I.run();
   }

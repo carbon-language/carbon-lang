@@ -110,9 +110,10 @@ GenericValue lle_X_print(MethodType *M, const vector<GenericValue> &ArgVals) {
 GenericValue lle_X_printVal(MethodType *M, const vector<GenericValue> &ArgVal) {
   assert(ArgVal.size() == 1 && "generic print only takes one argument!");
 
-  // Specialize print([ubyte {x N} ] *)
+  // Specialize print([ubyte {x N} ] *) and print(sbyte *)
   if (PointerType *PTy = dyn_cast<PointerType>(M->getParamTypes()[0].get()))
-    if (const ArrayType *ATy = dyn_cast<ArrayType>(PTy->getValueType())) {
+    if (PTy->getValueType() == Type::SByteTy ||
+        isa<ArrayType>(PTy->getValueType())) {
       return lle_VP_printstr(M, ArgVal);
     }
 
@@ -129,6 +130,11 @@ GenericValue lle_Vb_putchar(MethodType *M, const vector<GenericValue> &Args) {
 // void "putchar"(ubyte)
 GenericValue lle_VB_putchar(MethodType *M, const vector<GenericValue> &Args) {
   cout << Args[0].UByteVal;
+  return GenericValue();
+}
+
+// void "__main"()
+GenericValue lle_V___main(MethodType *M, const vector<GenericValue> &Args) {
   return GenericValue();
 }
 

@@ -86,6 +86,9 @@ public:
   static void print(const Type *Ty, GenericValue V);
   static void printValue(const Type *Ty, GenericValue V);
 
+  // Hack until we can parse command line args...
+  bool callMainMethod(const string &MainName,
+                      const string &InputFilename);
 
   void list();             // Do the 'list' command
   void printStackTrace();  // Do the 'backtrace' command

@@ -7,6 +7,7 @@
 #include "Interpreter.h"
 #include "llvm/Bytecode/Reader.h"
 #include "llvm/Assembly/Writer.h"
+#include "llvm/DerivedTypes.h"
 #include <algorithm>
 
 enum CommandID {
@@ -191,6 +192,66 @@ bool Interpreter::callMethod(const string &Name) {
 
   vector<GenericValue> Args;
   // TODO, get args from user...
+
+  callMethod(M, Args);  // Start executing it...
+
+  // Reset the current frame location to the top of stack
+  CurFrame = ECStack.size()-1;
+
+  return false;
+}
+
+
+// callMainMethod - This is a nasty gross hack that will dissapear when
+// callMethod can parse command line options and stuff for us.
+//
+bool Interpreter::callMainMethod(const string &Name,
+                                 const string &InputFilename) {
+  vector<Value*> Options = LookupMatchingNames(Name);
+
+  for (unsigned i = 0; i < Options.size(); ++i) { // Remove nonmethod matches...
+    if (!isa<Method>(Options[i])) {
+      Options.erase(Options.begin()+i);
+      --i;
+    }
+  }
+
+  Value *PickedMeth = ChooseOneOption(Name, Options);
+  if (PickedMeth == 0)
+    return true;
+
+  Method *M = cast<Method>(PickedMeth);
+  const MethodType *MT = M->getMethodType();
+
+  vector<GenericValue> Args;
+  switch (MT->getParamTypes().size()) {
+  default:
+    cout << "Unknown number of arguments to synthesize for '" << Name << "'!\n";
+    return true;
+  case 2: {
+    PointerType *SPP = PointerType::get(PointerType::get(Type::SByteTy));
+    if (MT->getParamTypes()[1] != SPP) {
+      cout << "Second argument of '" << Name << "' should have type: '"
+           << SPP->getDescription() << "'!\n";
+      return true;
+    }
+    // TODO:
+    GenericValue GV; GV.PointerVal = 0;
+    Args.push_back(GV);
+  }
+    // fallthrough
+  case 1:
+    if (!MT->getParamTypes()[0]->isIntegral()) {
+      cout << "First argument of '" << Name << "' should be integral!\n";
+      return true;
+    } else {
+      GenericValue GV; GV.IntVal = 1;
+      Args.insert(Args.begin(), GV);
+    }
+    // fallthrough
+  case 0:
+    break;
+  }
 
   callMethod(M, Args);  // Start executing it...
 
