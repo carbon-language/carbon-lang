@@ -114,14 +114,14 @@
 					<Tool
 						Name="VCCustomBuildTool"
 						Description="Performing TableGen Step"
-						CommandLine="..\TableGen\$(IntDir)\TableGen.exe -gen-register-enums -I ..\..\lib\Target\X86 $(InputPath) -o X86GenRegisterNames.inc
-..\TableGen\$(IntDir)\TableGen.exe -gen-register-desc-header -I ..\..\lib\Target\X86 $(InputPath) -o X86GenRegisterInfo.h.inc
-..\TableGen\$(IntDir)\TableGen.exe -gen-register-desc -I ..\..\lib\Target\X86 $(InputPath) -o X86GenRegisterInfo.inc
-..\TableGen\$(IntDir)\TableGen.exe -gen-instr-enums -I ..\..\lib\Target\X86 $(InputPath) -o X86GenInstrNames.inc
-..\TableGen\$(IntDir)\TableGen.exe -gen-instr-desc -I ..\..\lib\Target\X86 $(InputPath) -o X86GenInstrInfo.inc
-..\TableGen\$(IntDir)\TableGen.exe -gen-asm-writer -I ..\..\lib\Target\X86 $(InputPath) -o X86GenAsmWriter.inc
-..\TableGen\$(IntDir)\TableGen.exe -gen-asm-writer -asmwriternum=1 -I ..\..\lib\Target\X86 $(InputPath) -o X86GenAsmWriter1.inc"
-						AdditionalDependencies="$(InputDir)X86InstrInfo.td;$(InputDir)X86RegisterInfo.td;$(InputDir)..\Target.td;$(ProjectDir)..\TableGen\$(IntDir)\TableGen.exe"
+						CommandLine="..\$(IntDir)\TableGen.exe -gen-register-enums -I ..\..\lib\Target\X86 $(InputPath) -o X86GenRegisterNames.inc
+..\$(IntDir)\TableGen.exe -gen-register-desc-header -I ..\..\lib\Target\X86 $(InputPath) -o X86GenRegisterInfo.h.inc
+..\$(IntDir)\TableGen.exe -gen-register-desc -I ..\..\lib\Target\X86 $(InputPath) -o X86GenRegisterInfo.inc
+..\$(IntDir)\TableGen.exe -gen-instr-enums -I ..\..\lib\Target\X86 $(InputPath) -o X86GenInstrNames.inc
+..\$(IntDir)\TableGen.exe -gen-instr-desc -I ..\..\lib\Target\X86 $(InputPath) -o X86GenInstrInfo.inc
+..\$(IntDir)\TableGen.exe -gen-asm-writer -I ..\..\lib\Target\X86 $(InputPath) -o X86GenAsmWriter.inc
+..\$(IntDir)\TableGen.exe -gen-asm-writer -asmwriternum=1 -I ..\..\lib\Target\X86 $(InputPath) -o X86GenAsmWriter1.inc"
+						AdditionalDependencies="$(InputDir)X86InstrInfo.td;$(InputDir)X86RegisterInfo.td;$(InputDir)..\Target.td;$(ProjectDir)..\$(IntDir)\TableGen.exe"
 						Outputs="X86GenRegisterNames.inc;X86GenRegisterInfo.h.inc;X86GenRegisterInfo.inc;X86GenInstrNames.inc;X86GenInstrInfo.inc;X86GenAsmWriter.inc;X86GenAsmWriter1.inc"/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -129,14 +129,14 @@
 					<Tool
 						Name="VCCustomBuildTool"
 						Description="Performing TableGen Step"
-						CommandLine="..\TableGen\$(IntDir)\TableGen.exe -gen-register-enums -I ..\..\lib\Target\X86 $(InputPath) -o X86GenRegisterNames.inc
-..\TableGen\$(IntDir)\TableGen.exe -gen-register-desc-header -I ..\..\lib\Target\X86 $(InputPath) -o X86GenRegisterInfo.h.inc
-..\TableGen\$(IntDir)\TableGen.exe -gen-register-desc -I ..\..\lib\Target\X86 $(InputPath) -o X86GenRegisterInfo.inc
-..\TableGen\$(IntDir)\TableGen.exe -gen-instr-enums -I ..\..\lib\Target\X86 $(InputPath) -o X86GenInstrNames.inc
-..\TableGen\$(IntDir)\TableGen.exe -gen-instr-desc -I ..\..\lib\Target\X86 $(InputPath) -o X86GenInstrInfo.inc
-..\TableGen\$(IntDir)\TableGen.exe -gen-asm-writer -I ..\..\lib\Target\X86 $(InputPath) -o X86GenAsmWriter.inc
-..\TableGen\$(IntDir)\TableGen.exe -gen-asm-writer -asmwriternum=1 -I ..\..\lib\Target\X86 $(InputPath) -o X86GenAsmWriter1.inc"
-						AdditionalDependencies="$(InputDir)X86InstrInfo.td;$(InputDir)X86RegisterInfo.td;$(InputDir)..\Target.td;$(ProjectDir)..\TableGen\$(IntDir)\TableGen.exe"
+						CommandLine="..\$(IntDir)\TableGen.exe -gen-register-enums -I ..\..\lib\Target\X86 $(InputPath) -o X86GenRegisterNames.inc
+..\$(IntDir)\TableGen.exe -gen-register-desc-header -I ..\..\lib\Target\X86 $(InputPath) -o X86GenRegisterInfo.h.inc
+..\$(IntDir)\TableGen.exe -gen-register-desc -I ..\..\lib\Target\X86 $(InputPath) -o X86GenRegisterInfo.inc
+..\$(IntDir)\TableGen.exe -gen-instr-enums -I ..\..\lib\Target\X86 $(InputPath) -o X86GenInstrNames.inc
+..\$(IntDir)\TableGen.exe -gen-instr-desc -I ..\..\lib\Target\X86 $(InputPath) -o X86GenInstrInfo.inc
+..\$(IntDir)\TableGen.exe -gen-asm-writer -I ..\..\lib\Target\X86 $(InputPath) -o X86GenAsmWriter.inc
+..\$(IntDir)\TableGen.exe -gen-asm-writer -asmwriternum=1 -I ..\..\lib\Target\X86 $(InputPath) -o X86GenAsmWriter1.inc"
+						AdditionalDependencies="$(InputDir)X86InstrInfo.td;$(InputDir)X86RegisterInfo.td;$(InputDir)..\Target.td;$(ProjectDir)..\$(IntDir)\TableGen.exe"
 						Outputs="X86GenRegisterNames.inc;X86GenRegisterInfo.h.inc;X86GenRegisterInfo.inc;X86GenInstrNames.inc;X86GenInstrInfo.inc;X86GenAsmWriter.inc;X86GenAsmWriter1.inc"/>
 				</FileConfiguration>
 			</File>
