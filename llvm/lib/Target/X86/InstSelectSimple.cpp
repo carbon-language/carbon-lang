@@ -12,21 +12,21 @@
 //===----------------------------------------------------------------------===//
 
 #include "X86.h"
-#include "X86InstrInfo.h"
 #include "X86InstrBuilder.h"
+#include "X86InstrInfo.h"
+#include "llvm/Constants.h"
+#include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
-#include "llvm/DerivedTypes.h"
-#include "llvm/Constants.h"
-#include "llvm/Pass.h"
 #include "llvm/Intrinsics.h"
+#include "llvm/Pass.h"
+#include "llvm/CodeGen/MachineConstantPool.h"
+#include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/SSARegMap.h"
-#include "llvm/CodeGen/MachineFrameInfo.h"
-#include "llvm/CodeGen/MachineConstantPool.h"
-#include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/MRegisterInfo.h"
+#include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/InstVisitor.h"
 
 /// BMI - A special BuildMI variant that takes an iterator to insert the
@@ -136,7 +136,7 @@ namespace {
       ValueRecord(Value *V) : Val(V), Reg(0), Ty(V->getType()) {}
     };
     void doCall(const ValueRecord &Ret, MachineInstr *CallMI,
-		const std::vector<ValueRecord> &Args);
+                const std::vector<ValueRecord> &Args);
     void visitCallInst(CallInst &I);
     void visitIntrinsicCall(LLVMIntrinsic::ID ID, CallInst &I);
 
@@ -146,7 +146,7 @@ namespace {
     void visitSub(BinaryOperator &B) { visitSimpleBinary(B, 1); }
     void doMultiply(MachineBasicBlock *MBB, MachineBasicBlock::iterator &MBBI,
                     unsigned DestReg, const Type *DestTy,
-		    unsigned Op0Reg, unsigned Op1Reg);
+                    unsigned Op0Reg, unsigned Op1Reg);
     void doMultiplyConst(MachineBasicBlock *MBB, 
                          MachineBasicBlock::iterator &MBBI,
                          unsigned DestReg, const Type *DestTy,
@@ -244,11 +244,11 @@ namespace {
       const X86RegisterInfo *MRI =
         static_cast<const X86RegisterInfo*>(TM.getRegisterInfo());
       if (Ty == Type::LongTy || Ty == Type::ULongTy) {
-	const TargetRegisterClass *RC = MRI->getRegClassForType(Type::IntTy);
-	// Create the lower part
-	F->getSSARegMap()->createVirtualRegister(RC);
-	// Create the upper part.
-	return F->getSSARegMap()->createVirtualRegister(RC)-1;
+        const TargetRegisterClass *RC = MRI->getRegClassForType(Type::IntTy);
+        // Create the lower part
+        F->getSSARegMap()->createVirtualRegister(RC);
+        // Create the upper part.
+        return F->getSSARegMap()->createVirtualRegister(RC)-1;
       }
 
       // Add the mapping of regnumber => reg class to MachineFunction
@@ -464,12 +464,12 @@ void ISel::LoadArgumentsToVirtualRegs(Function &Fn) {
     case cFP:
       unsigned Opcode;
       if (I->getType() == Type::FloatTy) {
-	Opcode = X86::FLDr32;
-	FI = MFI->CreateFixedObject(4, ArgOffset);
+        Opcode = X86::FLDr32;
+        FI = MFI->CreateFixedObject(4, ArgOffset);
       } else {
-	Opcode = X86::FLDr64;
-	FI = MFI->CreateFixedObject(8, ArgOffset);
-	ArgOffset += 4;   // doubles require 4 additional bytes
+        Opcode = X86::FLDr64;
+        FI = MFI->CreateFixedObject(8, ArgOffset);
+        ArgOffset += 4;   // doubles require 4 additional bytes
       }
       addFrameReference(BuildMI(BB, Opcode, 4, Reg), FI);
       break;
@@ -510,8 +510,8 @@ void ISel::SelectPHINodes() {
 
       MachineInstr *LongPhiMI = 0;
       if (PN->getType() == Type::LongTy || PN->getType() == Type::ULongTy) {
-	LongPhiMI = BuildMI(X86::PHI, PN->getNumOperands(), PHIReg+1);
-	MBB->insert(MBB->begin()+NumPHIs++, LongPhiMI);
+        LongPhiMI = BuildMI(X86::PHI, PN->getNumOperands(), PHIReg+1);
+        MBB->insert(MBB->begin()+NumPHIs++, LongPhiMI);
       }
 
       // PHIValues - Map of blocks to incoming virtual registers.  We use this
@@ -558,12 +558,12 @@ void ISel::SelectPHINodes() {
           PHIValues.insert(EntryIt, std::make_pair(PredMBB, ValReg));
         }
 
-	PhiMI->addRegOperand(ValReg);
+        PhiMI->addRegOperand(ValReg);
         PhiMI->addMachineBasicBlockOperand(PredMBB);
-	if (LongPhiMI) {
-	  LongPhiMI->addRegOperand(ValReg+1);
-	  LongPhiMI->addMachineBasicBlockOperand(PredMBB);
-	}
+        if (LongPhiMI) {
+          LongPhiMI->addRegOperand(ValReg+1);
+          LongPhiMI->addMachineBasicBlockOperand(PredMBB);
+        }
       }
     }
   }
@@ -826,7 +826,8 @@ void ISel::visitReturnInst(ReturnInst &I) {
     BuildMI(BB, X86::MOVrr32, 1, X86::EAX).addReg(RetReg);
     BuildMI(BB, X86::MOVrr32, 1, X86::EDX).addReg(RetReg+1);
     // Declare that EAX & EDX are live on exit
-    BuildMI(BB, X86::IMPLICIT_USE, 3).addReg(X86::EAX).addReg(X86::EDX).addReg(X86::ESP);
+    BuildMI(BB, X86::IMPLICIT_USE, 3).addReg(X86::EAX).addReg(X86::EDX)
+      .addReg(X86::ESP);
     break;
   default:
     visitInstruction(I);
@@ -877,7 +878,7 @@ void ISel::visitBranchInst(BranchInst &BI) {
 
   unsigned OpNum = getSetCCNumber(SCI->getOpcode());
   MachineBasicBlock::iterator MII = BB->end();
-  OpNum = EmitComparison(OpNum, SCI->getOperand(0), SCI->getOperand(1), BB, MII);
+  OpNum = EmitComparison(OpNum, SCI->getOperand(0), SCI->getOperand(1), BB,MII);
 
   const Type *CompTy = SCI->getOperand(0)->getType();
   bool isSigned = CompTy->isSigned() && getClassB(CompTy) != cFP;
@@ -920,7 +921,7 @@ void ISel::visitBranchInst(BranchInst &BI) {
 /// it inserts the specified CallMI instruction into the stream.
 ///
 void ISel::doCall(const ValueRecord &Ret, MachineInstr *CallMI,
-		  const std::vector<ValueRecord> &Args) {
+                  const std::vector<ValueRecord> &Args) {
 
   // Count how many bytes are to be pushed on the stack...
   unsigned NumBytes = 0;
@@ -929,12 +930,12 @@ void ISel::doCall(const ValueRecord &Ret, MachineInstr *CallMI,
     for (unsigned i = 0, e = Args.size(); i != e; ++i)
       switch (getClassB(Args[i].Ty)) {
       case cByte: case cShort: case cInt:
-	NumBytes += 4; break;
+        NumBytes += 4; break;
       case cLong:
-	NumBytes += 8; break;
+        NumBytes += 8; break;
       case cFP:
-	NumBytes += Args[i].Ty == Type::FloatTy ? 4 : 8;
-	break;
+        NumBytes += Args[i].Ty == Type::FloatTy ? 4 : 8;
+        break;
       default: assert(0 && "Unknown class!");
       }
 
@@ -948,36 +949,36 @@ void ISel::doCall(const ValueRecord &Ret, MachineInstr *CallMI,
       switch (getClassB(Args[i].Ty)) {
       case cByte:
       case cShort: {
-	// Promote arg to 32 bits wide into a temporary register...
-	unsigned R = makeAnotherReg(Type::UIntTy);
-	promote32(R, Args[i]);
-	addRegOffset(BuildMI(BB, X86::MOVrm32, 5),
-		     X86::ESP, ArgOffset).addReg(R);
-	break;
+        // Promote arg to 32 bits wide into a temporary register...
+        unsigned R = makeAnotherReg(Type::UIntTy);
+        promote32(R, Args[i]);
+        addRegOffset(BuildMI(BB, X86::MOVrm32, 5),
+                     X86::ESP, ArgOffset).addReg(R);
+        break;
       }
       case cInt:
-	addRegOffset(BuildMI(BB, X86::MOVrm32, 5),
-		     X86::ESP, ArgOffset).addReg(ArgReg);
-	break;
+        addRegOffset(BuildMI(BB, X86::MOVrm32, 5),
+                     X86::ESP, ArgOffset).addReg(ArgReg);
+        break;
       case cLong:
-	addRegOffset(BuildMI(BB, X86::MOVrm32, 5),
-		     X86::ESP, ArgOffset).addReg(ArgReg);
-	addRegOffset(BuildMI(BB, X86::MOVrm32, 5),
-		     X86::ESP, ArgOffset+4).addReg(ArgReg+1);
-	ArgOffset += 4;        // 8 byte entry, not 4.
-	break;
-	
+        addRegOffset(BuildMI(BB, X86::MOVrm32, 5),
+                     X86::ESP, ArgOffset).addReg(ArgReg);
+        addRegOffset(BuildMI(BB, X86::MOVrm32, 5),
+                     X86::ESP, ArgOffset+4).addReg(ArgReg+1);
+        ArgOffset += 4;        // 8 byte entry, not 4.
+        break;
+        
       case cFP:
-	if (Args[i].Ty == Type::FloatTy) {
-	  addRegOffset(BuildMI(BB, X86::FSTr32, 5),
-		       X86::ESP, ArgOffset).addReg(ArgReg);
-	} else {
-	  assert(Args[i].Ty == Type::DoubleTy && "Unknown FP type!");
-	  addRegOffset(BuildMI(BB, X86::FSTr64, 5),
-		       X86::ESP, ArgOffset).addReg(ArgReg);
-	  ArgOffset += 4;       // 8 byte entry, not 4.
-	}
-	break;
+        if (Args[i].Ty == Type::FloatTy) {
+          addRegOffset(BuildMI(BB, X86::FSTr32, 5),
+                       X86::ESP, ArgOffset).addReg(ArgReg);
+        } else {
+          assert(Args[i].Ty == Type::DoubleTy && "Unknown FP type!");
+          addRegOffset(BuildMI(BB, X86::FSTr64, 5),
+                       X86::ESP, ArgOffset).addReg(ArgReg);
+          ArgOffset += 4;       // 8 byte entry, not 4.
+        }
+        break;
 
       default: assert(0 && "Unknown class!");
       }
@@ -1003,7 +1004,7 @@ void ISel::doCall(const ValueRecord &Ret, MachineInstr *CallMI,
       // Integral results are in %eax, or the appropriate portion
       // thereof.
       static const unsigned regRegMove[] = {
-	X86::MOVrr8, X86::MOVrr16, X86::MOVrr32
+        X86::MOVrr8, X86::MOVrr16, X86::MOVrr32
       };
       static const unsigned AReg[] = { X86::AL, X86::AX, X86::EAX };
       BuildMI(BB, regRegMove[DestClass], 1, Ret.Reg).addReg(AReg[DestClass]);
@@ -1045,7 +1046,7 @@ void ISel::visitCallInst(CallInst &CI) {
 
   unsigned DestReg = CI.getType() != Type::VoidTy ? getReg(CI) : 0;
   doCall(ValueRecord(DestReg, CI.getType()), TheCall, Args);
-}	 
+}         
 
 
 void ISel::visitIntrinsicCall(LLVMIntrinsic::ID ID, CallInst &CI) {
@@ -1320,14 +1321,14 @@ void ISel::visitMul(BinaryOperator &I) {
 
     unsigned AHBLplusOverflowReg = makeAnotherReg(Type::UIntTy);
     BuildMI(BB, X86::ADDrr32, 2,                         // AH*BL+(AL*BL >> 32)
-	    AHBLplusOverflowReg).addReg(AHBLReg).addReg(OverflowReg);
+            AHBLplusOverflowReg).addReg(AHBLReg).addReg(OverflowReg);
     
     MBBI = BB->end();
     unsigned ALBHReg = makeAnotherReg(Type::UIntTy); // AL*BH
     BMI(BB, MBBI, X86::IMULrr32, 2, ALBHReg).addReg(Op0Reg).addReg(Op1Reg+1);
     
     BuildMI(BB, X86::ADDrr32, 2,               // AL*BH + AH*BL + (AL*BL >> 32)
-	    DestReg+1).addReg(AHBLplusOverflowReg).addReg(ALBHReg);
+            DestReg+1).addReg(AHBLplusOverflowReg).addReg(ALBHReg);
   }
 }
 
@@ -1349,7 +1350,7 @@ void ISel::visitDivRem(BinaryOperator &I) {
       BuildMI(BB, X86::FpDIV, 2, ResultReg).addReg(Op0Reg).addReg(Op1Reg);
     } else {               // Floating point remainder...
       MachineInstr *TheCall =
-	BuildMI(X86::CALLpcrel32, 1).addExternalSymbol("fmod", true);
+        BuildMI(X86::CALLpcrel32, 1).addExternalSymbol("fmod", true);
       std::vector<ValueRecord> Args;
       Args.push_back(ValueRecord(I.getOperand(0)));
       Args.push_back(ValueRecord(I.getOperand(1)));
@@ -1451,26 +1452,26 @@ void ISel::visitShiftInst(ShiftInst &I) {
     if (ConstantUInt *CUI = dyn_cast<ConstantUInt>(I.getOperand(1))) {
       unsigned Amount = CUI->getValue();
       if (Amount < 32) {
-	const unsigned *Opc = ConstantOperand[isLeftShift*2+isSigned];
-	if (isLeftShift) {
-	  BuildMI(BB, Opc[3], 3, 
-		  DestReg+1).addReg(SrcReg+1).addReg(SrcReg).addZImm(Amount);
-	  BuildMI(BB, Opc[2], 2, DestReg).addReg(SrcReg).addZImm(Amount);
-	} else {
-	  BuildMI(BB, Opc[3], 3,
-		  DestReg).addReg(SrcReg  ).addReg(SrcReg+1).addZImm(Amount);
-	  BuildMI(BB, Opc[2], 2, DestReg+1).addReg(SrcReg+1).addZImm(Amount);
-	}
+        const unsigned *Opc = ConstantOperand[isLeftShift*2+isSigned];
+        if (isLeftShift) {
+          BuildMI(BB, Opc[3], 3, 
+                  DestReg+1).addReg(SrcReg+1).addReg(SrcReg).addZImm(Amount);
+          BuildMI(BB, Opc[2], 2, DestReg).addReg(SrcReg).addZImm(Amount);
+        } else {
+          BuildMI(BB, Opc[3], 3,
+                  DestReg).addReg(SrcReg  ).addReg(SrcReg+1).addZImm(Amount);
+          BuildMI(BB, Opc[2], 2, DestReg+1).addReg(SrcReg+1).addZImm(Amount);
+        }
       } else {                 // Shifting more than 32 bits
-	Amount -= 32;
-	if (isLeftShift) {
-	  BuildMI(BB, X86::SHLir32, 2,DestReg+1).addReg(SrcReg).addZImm(Amount);
-	  BuildMI(BB, X86::MOVir32, 1,DestReg  ).addZImm(0);
-	} else {
-	  unsigned Opcode = isSigned ? X86::SARir32 : X86::SHRir32;
-	  BuildMI(BB, Opcode, 2, DestReg).addReg(SrcReg+1).addZImm(Amount);
-	  BuildMI(BB, X86::MOVir32, 1, DestReg+1).addZImm(0);
-	}
+        Amount -= 32;
+        if (isLeftShift) {
+          BuildMI(BB, X86::SHLir32, 2,DestReg+1).addReg(SrcReg).addZImm(Amount);
+          BuildMI(BB, X86::MOVir32, 1,DestReg  ).addZImm(0);
+        } else {
+          unsigned Opcode = isSigned ? X86::SARir32 : X86::SHRir32;
+          BuildMI(BB, Opcode, 2, DestReg).addReg(SrcReg+1).addZImm(Amount);
+          BuildMI(BB, X86::MOVir32, 1, DestReg+1).addZImm(0);
+        }
       }
     } else {
       unsigned TmpReg = makeAnotherReg(Type::IntTy);
@@ -1697,17 +1698,17 @@ void ISel::emitCastOperation(MachineBasicBlock *BB,
       BMI(BB, IP, RegRegMove[SrcClass], 1, DestReg).addReg(SrcReg);
     } else if (SrcClass == cFP) {
       if (SrcTy == Type::FloatTy) {  // double -> float
-	assert(DestTy == Type::DoubleTy && "Unknown cFP member!");
-	BMI(BB, IP, X86::FpMOV, 1, DestReg).addReg(SrcReg);
+        assert(DestTy == Type::DoubleTy && "Unknown cFP member!");
+        BMI(BB, IP, X86::FpMOV, 1, DestReg).addReg(SrcReg);
       } else {                       // float -> double
-	assert(SrcTy == Type::DoubleTy && DestTy == Type::FloatTy &&
-	       "Unknown cFP member!");
-	// Truncate from double to float by storing to memory as short, then
-	// reading it back.
-	unsigned FltAlign = TM.getTargetData().getFloatAlignment();
+        assert(SrcTy == Type::DoubleTy && DestTy == Type::FloatTy &&
+               "Unknown cFP member!");
+        // Truncate from double to float by storing to memory as short, then
+        // reading it back.
+        unsigned FltAlign = TM.getTargetData().getFloatAlignment();
         int FrameIdx = F->getFrameInfo()->CreateStackObject(4, FltAlign);
-	addFrameReference(BMI(BB, IP, X86::FSTr32, 5), FrameIdx).addReg(SrcReg);
-	addFrameReference(BMI(BB, IP, X86::FLDr32, 5, DestReg), FrameIdx);
+        addFrameReference(BMI(BB, IP, X86::FSTr32, 5), FrameIdx).addReg(SrcReg);
+        addFrameReference(BMI(BB, IP, X86::FLDr32, 5, DestReg), FrameIdx);
       }
     } else if (SrcClass == cLong) {
       BMI(BB, IP, X86::MOVrr32, 1, DestReg).addReg(SrcReg);
@@ -1737,9 +1738,9 @@ void ISel::emitCastOperation(MachineBasicBlock *BB,
 
     if (isLong) {  // Handle upper 32 bits as appropriate...
       if (isUnsigned)     // Zero out top bits...
-	BMI(BB, IP, X86::MOVir32, 1, DestReg+1).addZImm(0);
+        BMI(BB, IP, X86::MOVir32, 1, DestReg+1).addZImm(0);
       else                // Sign extend bottom half...
-	BMI(BB, IP, X86::SARir32, 2, DestReg+1).addReg(DestReg).addZImm(31);
+        BMI(BB, IP, X86::SARir32, 2, DestReg+1).addReg(DestReg).addZImm(31);
     }
     return;
   }
@@ -1816,7 +1817,7 @@ void ISel::emitCastOperation(MachineBasicBlock *BB,
     if (SrcClass == cLong) {
       addFrameReference(BMI(BB, IP, X86::MOVrm32, 5), FrameIdx).addReg(SrcReg);
       addFrameReference(BMI(BB, IP, X86::MOVrm32, 5),
-			FrameIdx, 4).addReg(SrcReg+1);
+                        FrameIdx, 4).addReg(SrcReg+1);
     } else {
       static const unsigned Op1[] = { X86::MOVrm8, X86::MOVrm16, X86::MOVrm32 };
       addFrameReference(BMI(BB, IP, Op1[SrcClass], 5), FrameIdx).addReg(SrcReg);
@@ -1848,7 +1849,7 @@ void ISel::emitCastOperation(MachineBasicBlock *BB,
     
     // Restore the memory image of control word to original value
     addFrameReference(BMI(BB, IP, X86::MOVrm8, 5),
-		      CWFrameIdx, 1).addReg(HighPartOfCW);
+                      CWFrameIdx, 1).addReg(HighPartOfCW);
 
     // We don't have the facilities for directly storing byte sized data to
     // memory.  Promote it to 16 bits.  We also must promote unsigned values to
@@ -1973,7 +1974,7 @@ void ISel::emitGEPOperation(MachineBasicBlock *MBB,
       // which names the field. This index must have ubyte type.
       const ConstantUInt *CUI = cast<ConstantUInt>(idx);
       assert(CUI->getType() == Type::UByteTy
-	      && "Funny-looking structure index in GEP");
+              && "Funny-looking structure index in GEP");
       // Use the TargetData structure to pick out what the layout of
       // the structure is in memory.  Since the structure index must
       // be constant, we can get its value and use it to find the
@@ -1982,9 +1983,9 @@ void ISel::emitGEPOperation(MachineBasicBlock *MBB,
       unsigned idxValue = CUI->getValue();
       unsigned FieldOff = TD.getStructLayout(StTy)->MemberOffsets[idxValue];
       if (FieldOff) {
-	NextReg = makeAnotherReg(Type::UIntTy);
-	// Emit an ADD to add FieldOff to the basePtr.
-	BMI(MBB, IP, X86::ADDri32, 2,NextReg).addReg(BaseReg).addZImm(FieldOff);
+        NextReg = makeAnotherReg(Type::UIntTy);
+        // Emit an ADD to add FieldOff to the basePtr.
+        BMI(MBB, IP, X86::ADDri32, 2,NextReg).addReg(BaseReg).addZImm(FieldOff);
       }
       // The next type is the member of the structure selected by the
       // index.
@@ -2014,13 +2015,13 @@ void ISel::emitGEPOperation(MachineBasicBlock *MBB,
       if (ConstantSInt *CSI = dyn_cast<ConstantSInt>(idx)) {
         if (!CSI->isNullValue()) {
           unsigned Offset = elementSize*CSI->getValue();
-	  NextReg = makeAnotherReg(Type::UIntTy);
+          NextReg = makeAnotherReg(Type::UIntTy);
           BMI(MBB, IP, X86::ADDri32, 2,NextReg).addReg(BaseReg).addZImm(Offset);
         }
       } else if (elementSize == 1) {
         // If the element size is 1, we don't have to multiply, just add
         unsigned idxReg = getReg(idx, MBB, IP);
-	NextReg = makeAnotherReg(Type::UIntTy);
+        NextReg = makeAnotherReg(Type::UIntTy);
         BMI(MBB, IP, X86::ADDrr32, 2, NextReg).addReg(BaseReg).addReg(idxReg);
       } else {
         unsigned idxReg = getReg(idx, MBB, IP);
@@ -2029,7 +2030,7 @@ void ISel::emitGEPOperation(MachineBasicBlock *MBB,
         doMultiplyConst(MBB, IP, OffsetReg, Type::IntTy, idxReg, elementSize);
 
         // Emit an ADD to add OffsetReg to the basePtr.
-	NextReg = makeAnotherReg(Type::UIntTy);
+        NextReg = makeAnotherReg(Type::UIntTy);
         BMI(MBB, IP, X86::ADDrr32, 2,NextReg).addReg(BaseReg).addReg(OffsetReg);
       }
     }
@@ -2116,7 +2117,7 @@ void ISel::visitMallocInst(MallocInst &I) {
   std::vector<ValueRecord> Args;
   Args.push_back(ValueRecord(Arg, Type::UIntTy));
   MachineInstr *TheCall = BuildMI(X86::CALLpcrel32,
-				  1).addExternalSymbol("malloc", true);
+                                  1).addExternalSymbol("malloc", true);
   doCall(ValueRecord(getReg(I), I.getType()), TheCall, Args);
 }
 
@@ -2128,7 +2129,7 @@ void ISel::visitFreeInst(FreeInst &I) {
   std::vector<ValueRecord> Args;
   Args.push_back(ValueRecord(I.getOperand(0)));
   MachineInstr *TheCall = BuildMI(X86::CALLpcrel32,
-				  1).addExternalSymbol("free", true);
+                                  1).addExternalSymbol("free", true);
   doCall(ValueRecord(0, Type::VoidTy), TheCall, Args);
 }
    
