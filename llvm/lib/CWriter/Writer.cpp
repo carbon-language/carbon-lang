@@ -585,7 +585,28 @@ static void generateCompilerSpecificCode(std::ostream& Out) {
   // If we aren't being compiled with GCC, just drop these attributes.
   Out << "#ifndef __GNUC__  /* Can only support \"linkonce\" vars with GCC */\n"
       << "#define __attribute__(X)\n"
-      << "#endif\n";
+      << "#endif\n\n";
+
+#if 0
+  // At some point, we should support "external weak" vs. "weak" linkages.
+  // On Mac OS X, "external weak" is spelled "__attribute__((weak_import))".
+  Out << "#if defined(__GNUC__) && defined(__APPLE_CC__)\n"
+      << "#define __EXTERNAL_WEAK__ __attribute__((weak_import))\n"
+      << "#elif defined(__GNUC__)\n"
+      << "#define __EXTERNAL_WEAK__ __attribute__((weak))\n"
+      << "#else\n"
+      << "#define __EXTERNAL_WEAK__\n"
+      << "#endif\n\n";
+#endif
+
+  // For now, turn off the weak linkage attribute on Mac OS X. (See above.)
+  Out << "#if defined(__GNUC__) && defined(__APPLE_CC__)\n"
+      << "#define __ATTRIBUTE_WEAK__\n"
+      << "#elif defined(__GNUC__)\n"
+      << "#define __ATTRIBUTE_WEAK__ __attribute__((weak))\n"
+      << "#else\n"
+      << "#define __ATTRIBUTE_WEAK__\n"
+      << "#endif\n\n";
 }
 
 // generateProcessorSpecificCode - This is where we add conditional compilation
@@ -683,7 +704,7 @@ void CWriter::printModule(Module *M) {
       if ((I->hasInternalLinkage() || !MangledGlobals.count(I)) &&
           !I->getIntrinsicID()) {
         printFunctionSignature(I, true);
-        if (I->hasWeakLinkage()) Out << " __attribute__((weak))";
+        if (I->hasWeakLinkage()) Out << " __ATTRIBUTE_WEAK__";
         Out << ";\n";
       }
     }
@@ -706,7 +727,7 @@ void CWriter::printModule(Module *M) {
         if (I->hasLinkOnceLinkage())
           Out << " __attribute__((common))";
         else if (I->hasWeakLinkage())
-          Out << " __attribute__((weak))";
+          Out << " __ATTRIBUTE_WEAK__";
         Out << ";\n";
       }
   }
@@ -722,7 +743,7 @@ void CWriter::printModule(Module *M) {
         if (I->hasLinkOnceLinkage())
           Out << " __attribute__((common))";
         else if (I->hasWeakLinkage())
-          Out << " __attribute__((weak))";
+          Out << " __ATTRIBUTE_WEAK__";
 
         // If the initializer is not null, emit the initializer.  If it is null,
         // we try to avoid emitting large amounts of zeros.  The problem with
