@@ -268,12 +268,8 @@ bool BugDriver::debugMiscompilation() {
     return false;  // Problem found
   }
 
-  // Figure out which transformations miscompile the input program.
-  unsigned OldSize = PassesToRun.size();
-  ReduceMiscompilingPasses(*this).reduceList(PassesToRun);
-
   // Make sure something was miscompiled...
-  if (PassesToRun.size() == OldSize) {
+  if (!ReduceMiscompilingPasses(*this).reduceList(PassesToRun)) {
     std::cerr << "*** Optimized program matches reference output!  No problem "
 	      << "detected...\nbugpoint can't help you with your problem!\n";
     return false;

@@ -30,7 +30,24 @@ struct ListReducer {
   // list while still maintaining the "test" property.  This is the core of the
   // "work" that bugpoint does.
   //
-  void reduceList(std::vector<ElTy> &TheList) {
+  bool reduceList(std::vector<ElTy> &TheList) {
+    std::vector<ElTy> empty;
+    switch (doTest(TheList, empty)) {
+    case KeepPrefix:
+      if (TheList.size() == 1) // we are done, it's the base case and it fails
+        return true;
+      else 
+        break; // there's definitely an error, but we need to narrow it down
+
+    case KeepSuffix:
+      // cannot be reached!
+      std::cerr << "bugpoint ListReducer internal error: selected empty set.\n";
+      abort();
+
+    case NoFailure:
+      return false; // there is no failure with the full set of passes/funcs!
+    }
+
     unsigned MidTop = TheList.size();
     while (MidTop > 1) {
       unsigned Mid = MidTop / 2;
@@ -80,6 +97,8 @@ struct ListReducer {
         }
       }
     }
+
+    return true; // there are some failure and we've narrowed them down
   }
 };
 

@@ -20,10 +20,13 @@
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Transforms/Utils/Linker.h"
+#include "Support/CommandLine.h"
 #include "Support/Statistic.h"
 #include "Support/StringExtras.h"
 #include <algorithm>
 #include <set>
+
+extern cl::list<std::string> InputArgv;
 
 class ReduceMisCodegenFunctions : public ListReducer<Function*> {
   BugDriver &BD;
@@ -47,10 +50,9 @@ public:
 bool ReduceMisCodegenFunctions::TestFuncs(const std::vector<Function*> &Funcs,
                                           bool KeepFiles)
 {
-  DEBUG(std::cerr << "Test functions are:\n");
-  for (std::vector<Function*>::const_iterator I = Funcs.begin(),E = Funcs.end();
-       I != E; ++I)
-    DEBUG(std::cerr << "\t" << (*I)->getName() << "\n");
+  std::cout << "Testing functions: ";
+  BD.PrintFunctionList(Funcs);
+  std::cout << "\t";
 
   // Clone the module for the two halves of the program we want.
   Module *SafeModule = CloneModule(BD.Program);
@@ -150,7 +152,7 @@ bool ReduceMisCodegenFunctions::TestFuncs(const std::vector<Function*> &Funcs,
             // cast the result from the resolver to correctly-typed function
             CastInst *castResolver =
               new CastInst(resolve, PointerType::get(F->getFunctionType()),
-                           "", Inst);
+                           "resolverCast", Inst);
             // actually use the resolved function
             Inst->replaceUsesOfWith(F, castResolver);
           } else {
@@ -227,8 +229,12 @@ bool ReduceMisCodegenFunctions::TestFuncs(const std::vector<Function*> &Funcs,
   if (KeepFiles) {
     std::cout << "You can reproduce the problem with the command line: \n"
               << (BD.isExecutingJIT() ? "lli" : "llc")
-              << " -load " << SharedObject << " " << TestModuleBC
-              << "\n";
+              << " -load " << SharedObject << " " << TestModuleBC;
+    for (unsigned i=0, e = InputArgv.size(); i != e; ++i)
+      std::cout << " " << InputArgv[i];
+    std::cout << "\n";
+    std::cout << "The shared object " << SharedObject << " was created from "
+              << SafeModuleBC << ", using `dis -c'.\n";
   } else {
     removeFile(TestModuleBC);
     removeFile(SafeModuleBC);
@@ -346,7 +352,11 @@ bool BugDriver::debugCodeGenerator() {
   DisambiguateGlobalSymbols(Program);
 
   // Do the reduction...
-  ReduceMisCodegenFunctions(*this).reduceList(MisCodegenFunctions);
+  if (!ReduceMisCodegenFunctions(*this).reduceList(MisCodegenFunctions)) {
+    std::cerr << "*** Execution matches reference output!  No problem "
+	      << "detected...\nbugpoint can't help you with your problem!\n";
+    return false;
+  }
 
   std::cout << "\n*** The following functions are being miscompiled: ";
   PrintFunctionList(MisCodegenFunctions);
