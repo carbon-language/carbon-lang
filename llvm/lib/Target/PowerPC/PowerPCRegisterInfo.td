@@ -77,13 +77,13 @@ def TBU : SPR<5>;
 // then nonvolatiles in reverse order since stmw/lmw save from rN to r31
 def GPRC : 
   RegisterClass<i32, 4, 
-    [R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, 
+    [R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, 
      R31, R30, R29, R28, R27, R26, R25, R24, R23, R22, R21, R20, R19, R18, R17,
-     R16, R15, R14, R13, R0, R1, LR]>
+     R16, R15, R14, R13, R0, R2, R1, LR]>
 {
   let Methods = [{
     iterator allocation_order_end(MachineFunction &MF) const {
-      return end()-3;
+      return end() - (AIX ? 4 : 3);
     }
   }];
 }

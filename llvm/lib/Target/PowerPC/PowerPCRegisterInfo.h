@@ -21,8 +21,10 @@ namespace llvm {
 
 class Type;
 
-struct PowerPCRegisterInfo : public PowerPCGenRegisterInfo {
-  PowerPCRegisterInfo();
+class PowerPCRegisterInfo : public PowerPCGenRegisterInfo {
+  bool is64bit;
+public:
+  PowerPCRegisterInfo(bool is64b);
   const TargetRegisterClass* getRegClassForType(const Type* Ty) const;
 
   /// Code Generation virtual methods...

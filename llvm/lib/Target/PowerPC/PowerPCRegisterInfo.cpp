@@ -30,9 +30,14 @@
 #include <iostream>
 using namespace llvm;
 
-PowerPCRegisterInfo::PowerPCRegisterInfo()
-  : PowerPCGenRegisterInfo(PPC::ADJCALLSTACKDOWN,
-                           PPC::ADJCALLSTACKUP) {}
+namespace llvm {
+  // Switch toggling compilation for AIX
+  extern cl::opt<bool> AIX;
+}
+
+PowerPCRegisterInfo::PowerPCRegisterInfo(bool is64b)
+  : PowerPCGenRegisterInfo(PPC::ADJCALLSTACKDOWN, PPC::ADJCALLSTACKUP),
+    is64bit(is64b) {}
 
 static unsigned getIdx(const TargetRegisterClass *RC) {
   if (RC == PowerPC::GPRCRegisterClass) {
@@ -41,12 +46,13 @@ static unsigned getIdx(const TargetRegisterClass *RC) {
       case 1:  return 0;
       case 2:  return 1;
       case 4:  return 2;
+      case 8:  return 3;
     }
   } else if (RC == PowerPC::FPRCRegisterClass) {
     switch (RC->getSize()) {
       default: assert(0 && "Invalid data size!");
-      case 4:  return 3;
-      case 8:  return 4;
+      case 4:  return 4;
+      case 8:  return 5;
     }
   }
   std::cerr << "Invalid register class to getIdx()!\n";
@@ -59,7 +65,7 @@ PowerPCRegisterInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
                                          unsigned SrcReg, int FrameIdx,
                                          const TargetRegisterClass *RC) const {
   static const unsigned Opcode[] = { 
-    PPC::STB, PPC::STH, PPC::STW, PPC::STFS, PPC::STFD 
+    PPC::STB, PPC::STH, PPC::STW, PPC::STD, PPC::STFS, PPC::STFD 
   };
   unsigned OC = Opcode[getIdx(RC)];
   if (SrcReg == PPC::LR) {
@@ -78,7 +84,7 @@ PowerPCRegisterInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
                                           unsigned DestReg, int FrameIdx,
                                           const TargetRegisterClass *RC) const {
   static const unsigned Opcode[] = { 
-    PPC::LBZ, PPC::LHZ, PPC::LWZ, PPC::LFS, PPC::LFD 
+    PPC::LBZ, PPC::LHZ, PPC::LWZ, PPC::LD, PPC::LFS, PPC::LFD 
   };
   unsigned OC = Opcode[getIdx(RC)];
   if (DestReg == PPC::LR) {
@@ -221,17 +227,19 @@ void PowerPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
 
   // adjust stack pointer: r1 -= numbytes
   if (NumBytes <= 32768) {
-    MI = BuildMI(PPC::STWU, 3).addReg(PPC::R1).addSImm(-NumBytes)
+    unsigned StoreOpcode = is64bit ? PPC::STDU : PPC::STWU;
+    MI = BuildMI(StoreOpcode, 3).addReg(PPC::R1).addSImm(-NumBytes)
       .addReg(PPC::R1);
     MBB.insert(MBBI, MI);
   } else {
     int NegNumbytes = -NumBytes;
+    unsigned StoreOpcode = is64bit ? PPC::STDUX : PPC::STWUX;
     MI = BuildMI(PPC::LIS, 1, PPC::R0).addSImm(NegNumbytes >> 16);
     MBB.insert(MBBI, MI);
     MI = BuildMI(PPC::ORI, 2, PPC::R0).addReg(PPC::R0)
       .addImm(NegNumbytes & 0xFFFF);
     MBB.insert(MBBI, MI);
-    MI = BuildMI(PPC::STWUX, 3).addReg(PPC::R1).addReg(PPC::R1)
+    MI = BuildMI(StoreOpcode, 3).addReg(PPC::R1).addReg(PPC::R1)
       .addReg(PPC::R0);
     MBB.insert(MBBI, MI);
   }
@@ -249,7 +257,8 @@ void PowerPCRegisterInfo::emitEpilogue(MachineFunction &MF,
   unsigned NumBytes = MFI->getStackSize();
 
   if (NumBytes != 0) {
-    MI = BuildMI(PPC::LWZ, 2, PPC::R1).addSImm(0).addReg(PPC::R1);
+    unsigned Opcode = is64bit ? PPC::LD : PPC::LWZ;
+    MI = BuildMI(Opcode, 2, PPC::R1).addSImm(0).addReg(PPC::R1);
     MBB.insert(MBBI, MI);
   }
 }
@@ -259,9 +268,10 @@ void PowerPCRegisterInfo::emitEpilogue(MachineFunction &MF,
 const TargetRegisterClass*
 PowerPCRegisterInfo::getRegClassForType(const Type* Ty) const {
   switch (Ty->getTypeID()) {
-    case Type::LongTyID:
-    case Type::ULongTyID: assert(0 && "Long values can't fit in registers!");
     default:              assert(0 && "Invalid type to getClass!");
+    case Type::LongTyID:
+    case Type::ULongTyID:
+      if (!is64bit) assert(0 && "Long values can't fit in registers!");
     case Type::BoolTyID:
     case Type::SByteTyID:
     case Type::UByteTyID:
@@ -270,7 +280,7 @@ PowerPCRegisterInfo::getRegClassForType(const Type* Ty) const {
     case Type::IntTyID:
     case Type::UIntTyID:
     case Type::PointerTyID: return &GPRCInstance;
-      
+     
     case Type::FloatTyID:
     case Type::DoubleTyID: return &FPRCInstance;
   }
