@@ -34,3 +34,13 @@ configure: autoconf/configure.ac autoconf/aclocal.m4
 include/Config/config.h.in: autoconf/configure.ac autoconf/aclocal.m4
 	$(AUTOHEADER) -I autoconf autoconf/configure.ac
 
+# Install support for llvm include files.
+
+.PHONY: install-includes
+
+install-includes:
+	$(MKDIR) $(includedir)/llvm
+	cd include && find * '!' '(' -name '*~' -o -name .cvsignore ')' -print | grep -v CVS | pax -rwdvpe $(includedir)/llvm
+
+install:: install-includes
+
