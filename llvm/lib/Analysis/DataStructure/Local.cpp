@@ -446,6 +446,15 @@ void GraphBuilder::visitCallSite(CallSite CS) {
         if (DSNode *N = RetNH.getNode())
           N->setModifiedMarker();
         return;
+      } else if (F->getName() == "memmove") {
+        // Merge the first & second arguments with the result, and mark the
+        // memory read and modified.
+        DSNodeHandle RetNH = getValueDest(*CS.getInstruction());
+        RetNH.mergeWith(getValueDest(**CS.arg_begin()));
+        RetNH.mergeWith(getValueDest(**(CS.arg_begin()+1)));
+        if (DSNode *N = RetNH.getNode())
+          N->setModifiedMarker()->setReadMarker();
+        return;
       } else if (F->getName() == "bzero") {
         // Mark the memory modified.
         DSNodeHandle H = getValueDest(**CS.arg_begin());
