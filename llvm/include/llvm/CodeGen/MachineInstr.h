@@ -380,18 +380,21 @@ public:
 class MachineCodeForVMInstr: public vector<MachineInstr*>
 {
 private:
-  vector<      Value*> tempVec;         // used by m/c instr but not VM instr
-  vector<const Value*> implicitUses;    // used by VM instr but not m/c instr
+  vector<Value*> tempVec;         // used by m/c instr but not VM instr
+  vector<Value*> implicitUses;    // used by VM instr but not m/c instr
   
 public:
   /*ctor*/	MachineCodeForVMInstr	()	{}
   /*ctor*/	~MachineCodeForVMInstr	();
   
-  const vector<      Value*>& getTempValues  () const { return tempVec; }
-  const vector<const Value*>& getImplicitUses() const { return implicitUses; }
+  const vector<Value*>& getTempValues  () const { return tempVec; }
+        vector<Value*>& getTempValues  ()       { return tempVec; }
   
-  void    addTempValue  (      Value* val)      { tempVec.push_back(val); }
-  void    addImplicitUse(const Value* val)      { implicitUses.push_back(val);}
+  const vector<Value*>& getImplicitUses() const { return implicitUses; }
+        vector<Value*>& getImplicitUses()       { return implicitUses; }
+  
+  void    addTempValue  (Value* val)            { tempVec.push_back(val); }
+  void    addImplicitUse(Value* val)            { implicitUses.push_back(val);}
   
   // dropAllReferences() - This function drops all references within
   // temporary (hidden) instructions created in implementing the original
@@ -437,65 +440,17 @@ public:
 
 
 //---------------------------------------------------------------------------
-// Target-independent utility routines for creating machine instructions
+// Debugging Support
 //---------------------------------------------------------------------------
 
 
-//------------------------------------------------------------------------ 
-// Function Set2OperandsFromInstr
-// Function Set3OperandsFromInstr
-// 
-// For the common case of 2- and 3-operand arithmetic/logical instructions,
-// set the m/c instr. operands directly from the VM instruction's operands.
-// Check whether the first or second operand is 0 and can use a dedicated
-// "0" register.
-// Check whether the second operand should use an immediate field or register.
-// (First and third operands are never immediates for such instructions.)
-// 
-// Arguments:
-// canDiscardResult: Specifies that the result operand can be discarded
-//		     by using the dedicated "0"
-// 
-// op1position, op2position and resultPosition: Specify in which position
-//		     in the machine instruction the 3 operands (arg1, arg2
-//		     and result) should go.
-// 
-// RETURN VALUE: unsigned int flags, where
-//	flags & 0x01	=> operand 1 is constant and needs a register
-//	flags & 0x02	=> operand 2 is constant and needs a register
-//------------------------------------------------------------------------ 
-
-void		Set2OperandsFromInstr	(MachineInstr* minstr,
-					 InstructionNode* vmInstrNode,
-					 const TargetMachine& targetMachine,
-					 bool canDiscardResult = false,
-					 int op1Position = 0,
-					 int resultPosition = 1);
-
-void		Set3OperandsFromInstr	(MachineInstr* minstr,
-					 InstructionNode* vmInstrNode,
-					 const TargetMachine& targetMachine,
-					 bool canDiscardResult = false,
-					 int op1Position = 0,
-					 int op2Position = 1,
-					 int resultPosition = 2);
-
-MachineOperand::MachineOperandType
-		ChooseRegOrImmed(Value* val,
-				 MachineOpCode opCode,
-				 const TargetMachine& targetMachine,
-				 bool canUseImmed,
-				 unsigned int& getMachineRegNum,
-				 int64_t& getImmedValue);
+ostream& operator<<             (ostream& os, const MachineInstr& minstr);
 
 
-ostream& operator<<(ostream& os, const MachineInstr& minstr);
-
-
-ostream& operator<<(ostream& os, const MachineOperand& mop);
+ostream& operator<<             (ostream& os, const MachineOperand& mop);
 					 
 
-void	PrintMachineInstructions	(const Method *method);
+void	PrintMachineInstructions(const Method *method);
 
 
 //**************************************************************************/

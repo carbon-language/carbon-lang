@@ -4,10 +4,11 @@
 //	InstrSelection.h
 // 
 // Purpose:
-//	
+//	External interface to instruction selection.
+// 
 // History:
 //	7/02/01	 -  Vikram Adve  -  Created
-//***************************************************************************
+//**************************************************************************/
 
 #ifndef LLVM_CODEGEN_INSTR_SELECTION_H
 #define LLVM_CODEGEN_INSTR_SELECTION_H
@@ -21,10 +22,10 @@ class TmpInstruction;
 class ConstPoolVal;
 class TargetMachine;
 
-//---------------------------------------------------------------------------
-// GLOBAL data and an external function that must be implemented
-// for each architecture.
-//---------------------------------------------------------------------------
+
+/************************* Required Functions *******************************
+ * Target-dependent functions that MUST be implemented for each target.
+ ***************************************************************************/
 
 const unsigned MAX_INSTR_PER_VMINSTR = 8;
 
@@ -37,7 +38,7 @@ extern unsigned	GetInstructionsByRule	(InstructionNode* subtreeRoot,
 extern bool	ThisIsAChainRule	(int eruleno);
 
 
-//************************ Exported Data Types *****************************/
+//************************ Exported Functions ******************************/
 
 
 //---------------------------------------------------------------------------
@@ -52,17 +53,8 @@ extern bool	ThisIsAChainRule	(int eruleno);
 bool		SelectInstructionsForMethod	(Method* method,
 						 TargetMachine &Target);
 
-//---------------------------------------------------------------------------
-// Function: FoldGetElemChain
-// 
-// Purpose:
-//   Fold a chain of GetElementPtr instructions into an equivalent
-//   (Pointer, IndexVector) pair.  Returns the pointer Value, and
-//   stores the resulting IndexVector in argument chainIdxVec.
-//---------------------------------------------------------------------------
 
-Value*		FoldGetElemChain    (const InstructionNode* getElemInstrNode,
-				     vector<ConstPoolVal*>& chainIdxVec);
+//************************ Exported Data Types *****************************/
 
 
 //---------------------------------------------------------------------------
