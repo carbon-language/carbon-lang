@@ -567,29 +567,28 @@ void CWriter::printModule(Module *M) {
 }
 
 
-// printSymbolTable - Run through symbol table looking for named constants
-// if a named constant is found, emit it's declaration...
-// Assuming that symbol table has only types and constants.
+/// printSymbolTable - Run through symbol table looking for named constants
+/// if a named constant is found, emit it's declaration...
+/// Assuming that symbol table has only types and constants.
+///
 void CWriter::printSymbolTable(const SymbolTable &ST) {
   for (SymbolTable::const_iterator TI = ST.begin(); TI != ST.end(); ++TI) {
-    SymbolTable::type_const_iterator I = ST.type_begin(TI->first);
+    SymbolTable::type_const_iterator I   = ST.type_begin(TI->first);
     SymbolTable::type_const_iterator End = ST.type_end(TI->first);
     
-    for (; I != End; ++I){
+    for (; I != End; ++I) {
       const Value *V = I->second;
-      if (const Type *Ty = dyn_cast<Type>(V)) {
-        if (const Type *STy = dyn_cast<StructType>(V)) {
-	        string Name = "struct l_" + makeNameProper(I->first);
-	        Out << Name << ";\n";
-	        TypeNames.insert(std::make_pair(STy, Name));
-	      }
-	      else {
-	        string Name = "l_" + makeNameProper(I->first);
-	        Out << "typedef ";
-	        printType(Ty, Name, true);
-	        Out << ";\n";
-	      }
-      }
+      if (const Type *Ty = dyn_cast<Type>(V))
+        if (const Type *STy = dyn_cast<StructType>(Ty)) {
+          string Name = "struct l_" + makeNameProper(I->first);
+          Out << Name << ";\n";
+          TypeNames.insert(std::make_pair(STy, Name));
+        } else {
+          string Name = "l_" + makeNameProper(I->first);
+          Out << "typedef ";
+          printType(Ty, Name, true);
+          Out << ";\n";
+        }
     }
   }
 
@@ -601,10 +600,9 @@ void CWriter::printSymbolTable(const SymbolTable &ST) {
     SymbolTable::type_const_iterator I = ST.type_begin(TI->first);
     SymbolTable::type_const_iterator End = ST.type_end(TI->first);
     
-    for (; I != End; ++I) {
+    for (; I != End; ++I)
       if (const StructType *STy = dyn_cast<StructType>(I->second))
-	      parseStruct(STy);
-    }
+        parseStruct(STy);
   }
 }
 
@@ -614,14 +612,14 @@ void CWriter::parseStruct(const Type *Ty) {
   if (const StructType *STy = dyn_cast<StructType>(Ty)){
     //Check to see if we have already printed this struct
     if (StructPrinted.find(STy) == StructPrinted.end()){   
-    	for (StructType::ElementTypes::const_iterator
-            I = STy->getElementTypes().begin(),
-            E = STy->getElementTypes().end(); I != E; ++I) {
+      for (StructType::ElementTypes::const_iterator
+             I = STy->getElementTypes().begin(),
+             E = STy->getElementTypes().end(); I != E; ++I) {
         const Type *Ty1 = dyn_cast<Type>(I->get());
-		  	if (isa<StructType>(Ty1) || isa<ArrayType>(Ty1))
-    	    parseStruct(Ty1);
-    	}
-    
+        if (isa<StructType>(Ty1) || isa<ArrayType>(Ty1))
+          parseStruct(Ty1);
+      }
+      
       //Print struct
       StructPrinted.insert(STy);
       string Name = TypeNames[STy];  
@@ -629,7 +627,8 @@ void CWriter::parseStruct(const Type *Ty) {
       Out << ";\n";
     }
   }
-  // If it is an array check it's type and continue
+
+  // If it is an array, check it's type and continue
   else if (const ArrayType *ATy = dyn_cast<ArrayType>(Ty)){
     const Type *Ty1 = ATy->getElementType();
     if (isa<StructType>(Ty1) || isa<ArrayType>(Ty1))
