@@ -148,6 +148,7 @@ struct InstVisitor {
   RetTy visitCall(CallInst &I)       { DELEGATE(CallInst);    }
   RetTy visitShr(ShiftInst &I)       { DELEGATE(ShiftInst);   }
   RetTy visitShl(ShiftInst &I)       { DELEGATE(ShiftInst);   }
+  RetTy visitVarArg(VarArgInst &I)   { DELEGATE(VarArgInst);  }
   RetTy visitUserOp1(Instruction &I) { DELEGATE(Instruction); }
   RetTy visitUserOp2(Instruction &I) { DELEGATE(Instruction); }
 
@@ -162,14 +163,15 @@ struct InstVisitor {
   RetTy visitSetCondInst(SetCondInst &I)            { DELEGATE(BinaryOperator);}
   RetTy visitMallocInst(MallocInst &I)              { DELEGATE(AllocationInst);}
   RetTy visitAllocaInst(AllocaInst &I)              { DELEGATE(AllocationInst);}
-  RetTy visitFreeInst(FreeInst   &I)                { DELEGATE(Instruction); }
-  RetTy visitLoadInst(LoadInst   &I)                { DELEGATE(Instruction); }
-  RetTy visitStoreInst(StoreInst  &I)               { DELEGATE(Instruction); }
+  RetTy visitFreeInst(FreeInst     &I)              { DELEGATE(Instruction); }
+  RetTy visitLoadInst(LoadInst     &I)              { DELEGATE(Instruction); }
+  RetTy visitStoreInst(StoreInst   &I)              { DELEGATE(Instruction); }
   RetTy visitGetElementPtrInst(GetElementPtrInst &I){ DELEGATE(Instruction); }
-  RetTy visitPHINode(PHINode    &I)                 { DELEGATE(Instruction); }
-  RetTy visitCastInst(CastInst   &I)                { DELEGATE(Instruction); }
-  RetTy visitCallInst(CallInst   &I)                { DELEGATE(Instruction); }
-  RetTy visitShiftInst(ShiftInst  &I)               { DELEGATE(Instruction); }
+  RetTy visitPHINode(PHINode       &I)              { DELEGATE(Instruction); }
+  RetTy visitCastInst(CastInst     &I)              { DELEGATE(Instruction); }
+  RetTy visitCallInst(CallInst     &I)              { DELEGATE(Instruction); }
+  RetTy visitShiftInst(ShiftInst   &I)              { DELEGATE(Instruction); }
+  RetTy visitVarArgInst(VarArgInst &I)              { DELEGATE(Instruction); }
 
   // Next level propogators... if the user does not overload a specific
   // instruction type, they can overload one of these to get the whole class
