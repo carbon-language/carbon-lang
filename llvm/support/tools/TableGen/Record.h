@@ -10,7 +10,7 @@
 #include <vector>
 #include <map>
 #include <iostream>
-#include <assert.h>
+#include <cassert>
 
 class Init;
 class UnsetInit;
