@@ -11,14 +11,9 @@ LEVEL  = ..
 DIRS   = 
 
 #
-# Make QMTest the default for testing features and regressions
-# Do this first to force QMTest to run first
+# Make Dejagnu the default for testing
 #
-ifdef TESTSUITE
-all:: check-dejagnu
-else
-all:: qmtest
-endif
+all:: check
 
 # Include other test rules
 include Makefile.tests
@@ -110,8 +105,6 @@ gui::
 	$(QMTEST) gui --no-browser --daemon
 
 # Also get rid of qmtest garbage when we 'make clean' in this directory.
-clean:: qmtest-clean
-
 qmtest-clean:
 	$(RM) -rf $(LLVM_OBJ_ROOT)/test/tmp
 	$(RM) -f $(LLVM_SRC_ROOT)/test/QMTest/*.pyo \
@@ -127,12 +120,11 @@ ifdef TESTSUITE
 RUNTESTFLAGS := --tool $(TESTSUITE)
 endif
 
-check-dejagnu: site.exp
+check:: site.exp
 	-PATH=$(LLVMToolDir):$(LLVM_SRC_ROOT)/test/Scripts:$(PATH) \
 	$(RUNTEST) $(RUNTESTFLAGS)
 
-
-dejagnu-clean:
+clean::
 	$(RM) -rf `find $(LLVM_OBJ_ROOT)/test/Regression -name Output -type d -print`
 
 site.exp: Makefile $(LLVM_OBJ_ROOT)/Makefile.config
@@ -153,16 +145,3 @@ site.exp: Makefile $(LLVM_OBJ_ROOT)/Makefile.config
 	@test ! -f site.exp || mv site.exp site.bak
 	@mv site.tmp site.exp
 
-#===------------------------------------------------------------------------===#
-# quick-test utility. Just runs TestRunner.sh on all the *.ll files in a
-# directory. Use like this: 
-#   cd llvm/test ; make quick-test QUICKTEST=Regression/Bytecode
-# where QUICKTEST specifies the directory you want to run the tests on.
-#===------------------------------------------------------------------------===#
-quick-test:
-	@if test -d "${QUICKTEST}" ; then \
-	  cd $(LLVM_SRC_ROOT)/test/$(QUICKTEST) ; \
-	  find . -name \*.ll -print -exec $(LLVM_SRC_ROOT)/test/TestRunner.sh {} \; ; \
-	else \
-	  echo "Set QUICKTEST=<some directory with TestRunner.sh .ll files in it" ; \
-	fi

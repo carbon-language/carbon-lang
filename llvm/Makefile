@@ -44,7 +44,6 @@ dist-hook::
 	  $(TopDistDir)/include/llvm/Support/ThreadSupport.h
 
 check : 
-	$(MAKE) -C test check-dejagnu TESTSUITE=$(TESTSUITE)
+	$(MAKE) -C test check TESTSUITE=$(TESTSUITE)
 
 tools-only: all
-
