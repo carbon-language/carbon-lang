@@ -391,6 +391,7 @@ class POIterator : public std::forward_iterator<BBType,	ptrdiff_t> {
       }
     }
   }
+
 public:
   typedef POIterator<BBType, SuccItTy> _Self;
 
@@ -400,18 +401,6 @@ public:
     traverseChild();
   }
   inline POIterator() { /* End is when stack is empty */ }
-#if 0
-  inline POIterator(const _Self& x)
-    : Visited(x.Visited), VisitStack(x.VisitStack) {
-  }
-
-  inline POIterator& operator=(const _Self& x) {
-    Visited = x.Visited;
-    VisitStack = x.VisitStack;
-    return *this;
-  }
-#endif
-
 
   inline bool operator==(const _Self& x) const { 
     return VisitStack == x.VisitStack;
@@ -438,6 +427,10 @@ public:
   inline _Self operator++(int) { // Postincrement
     _Self tmp = *this; ++*this; return tmp; 
   }
+
+  // Provide default begin and end methods when nothing special is needed.
+  static inline _Self  begin  (BBType *BB) { return _Self(BB); }
+  static inline _Self  end    (BBType *BB) { return _Self(); }
 };
 
 inline po_iterator       po_begin(      Method *M) {
@@ -467,9 +460,30 @@ inline po_const_iterator po_end  (const BasicBlock *BB) {
 }
 
 
-//===----------------------------------------------------------------------===//
+//===--------------------------------------------------------------------===//
 // Reverse Post Order CFG iterator code
+//===--------------------------------------------------------------------===//
+// 
+// This is used to visit basic blocks in a method in reverse post order.  This
+// class is awkward to use because I don't know a good incremental algorithm to
+// computer RPO from a graph.  Because of this, the construction of the 
+// ReversePostOrderTraversal object is expensive (it must walk the entire graph
+// with a postorder iterator to build the data structures).  The moral of this
+// story is: Don't create more ReversePostOrderTraversal classes than neccesary.
 //
+// This class should be used like this:
+// {
+//   cfg::ReversePostOrderTraversal RPOT(MethodPtr);   // Expensive to create
+//   for (cfg::rpo_iterator I = RPOT.begin(); I != RPOT.end(); ++I) {
+//      ...
+//   }
+//   for (cfg::rpo_iterator I = RPOT.begin(); I != RPOT.end(); ++I) {
+//      ...
+//   }
+// }
+//
+
+typedef reverse_iterator<vector<BasicBlock*>::iterator> rpo_iterator;
 
 class ReversePostOrderTraversal {
   vector<BasicBlock*> Blocks;       // Block list in normal PO order
