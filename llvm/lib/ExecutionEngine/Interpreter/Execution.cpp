@@ -731,14 +731,9 @@ void Interpreter::executeBrInst(BranchInst *I, ExecutionContext &SF) {
 
 void Interpreter::executeAllocInst(AllocationInst *I, ExecutionContext &SF) {
   const Type *Ty = I->getType()->getElementType();  // Type to be allocated
-  unsigned NumElements = 1;
 
-  // FIXME: Malloc/Alloca should always have an argument!
-  if (I->getNumOperands()) {   // Allocating a unsized array type?
-    // Get the number of elements being allocated by the array...
-    GenericValue NumEl = getOperandValue(I->getOperand(0), SF);
-    NumElements = NumEl.UIntVal;
-  }
+  // Get the number of elements being allocated by the array...
+  unsigned NumElements = getOperandValue(I->getOperand(0), SF).UIntVal;
 
   // Allocate enough memory to hold the type...
   // FIXME: Don't use CALLOC, use a tainted malloc.
