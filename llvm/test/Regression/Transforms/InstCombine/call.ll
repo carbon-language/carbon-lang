@@ -1,7 +1,4 @@
-; RUN: if as < %s | opt -instcombine -die | dis | grep call | grep cast
-; RUN: then exit 1
-; RUN: else exit 0
-; RUN: fi
+; RUN: as < %s | opt -instcombine -die | dis | grep call | grep-not cast
 
 implementation
 

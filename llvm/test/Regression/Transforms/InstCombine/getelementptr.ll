@@ -1,9 +1,6 @@
 ; The %A getelementptr instruction should be eliminated here
 
-; RUN: if as < %s | opt -instcombine -die | dis | grep getelementptr | grep '%A '
-; RUN: then exit 1
-; RUN: else exit 0
-; RUN: fi
+; RUN: as < %s | opt -instcombine -die | dis | grep getelementptr | grep-not '%A '
 
 %Global = constant [10 x sbyte] c"helloworld"
 

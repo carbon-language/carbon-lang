@@ -1,10 +1,7 @@
 ; This test makes sure that these instructions are properly eliminated.
 ;
 
-; RUN: if as < %s | opt -instcombine | dis | grep set
-; RUN: then exit 1
-; RUN: else exit 0
-; RUN: fi
+; RUN: as < %s | opt -instcombine | dis | grep-not set
 
 %X = uninitialized global int
 

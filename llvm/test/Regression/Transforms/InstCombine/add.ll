@@ -3,10 +3,7 @@
 ; This also tests that a subtract with a constant is properly converted
 ; to a add w/negative constant
 
-; RUN: if as < %s | opt -instcombine -die | dis | grep add
-; RUN: then exit 1
-; RUN: else exit 0
-; RUN: fi
+; RUN: as < %s | opt -instcombine -die | dis | grep-not add
 
 implementation
 

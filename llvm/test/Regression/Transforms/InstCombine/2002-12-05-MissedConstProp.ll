@@ -1,7 +1,4 @@
-; RUN: if as < %s | opt -instcombine | dis | grep add
-; RUN: then exit 1
-; RUN: else exit 0
-; RUN: fi
+; RUN: as < %s | opt -instcombine | dis | grep-not add
 
 int %test(int %A) {
   %A.neg = sub int 0, %A

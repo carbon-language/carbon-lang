@@ -1,9 +1,6 @@
 ; Tests to make sure elimination of casts is working correctly
 
-; RUN: if as < %s | opt -instcombine -die | dis | grep '%c' | grep cast
-; RUN: then exit 1
-; RUN: else exit 0
-; RUN: fi
+; RUN: as < %s | opt -instcombine -die | dis | grep '%c' | grep-not cast
 
 implementation
 
