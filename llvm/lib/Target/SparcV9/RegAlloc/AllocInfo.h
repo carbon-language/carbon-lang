@@ -26,8 +26,8 @@ namespace llvm {
 /// structures to generate mapping information for this register allocator.
 ///
 struct AllocInfo {
-  unsigned Instruction;
-  int Operand; // (-1 if Instruction, or 0...n-1 for an operand.)
+  int Instruction; // (-1 if Argument, or 0 .. n - 1 for an instruction).
+  int Operand; // (-1 if Instruction, or 0 .. n-1 for an operand).
   enum AllocStateTy { NotAllocated = 0, Allocated, Spilled };
   AllocStateTy AllocState;
   int Placement;
@@ -41,7 +41,7 @@ struct AllocInfo {
   ///
   static StructType *getConstantType () {
     std::vector<const Type *> TV;
-    TV.push_back (Type::UIntTy);
+    TV.push_back (Type::IntTy);
     TV.push_back (Type::IntTy);
     TV.push_back (Type::UIntTy);
     TV.push_back (Type::IntTy);
@@ -54,7 +54,7 @@ struct AllocInfo {
   Constant *toConstant () const {
     StructType *ST = getConstantType ();
     std::vector<Constant *> CV;
-    CV.push_back (ConstantUInt::get (Type::UIntTy, Instruction));
+    CV.push_back (ConstantSInt::get (Type::IntTy, Instruction));
     CV.push_back (ConstantSInt::get (Type::IntTy, Operand));
     CV.push_back (ConstantUInt::get (Type::UIntTy, AllocState));
     CV.push_back (ConstantSInt::get (Type::IntTy, Placement));
