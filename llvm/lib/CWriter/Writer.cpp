@@ -817,7 +817,8 @@ void CWriter::printFunction(Function *F) {
     for (Value::use_iterator UI = BB->use_begin(), UE = BB->use_end();
          UI != UE; ++UI)
       if (TerminatorInst *TI = dyn_cast<TerminatorInst>(*UI))
-        if (TI != Prev->getTerminator()) {
+        if (TI != Prev->getTerminator() ||
+            isa<SwitchInst>(Prev->getTerminator())) {
           NeedsLabel = true;
           break;        
         }
@@ -867,8 +868,8 @@ void CWriter::visitReturnInst(ReturnInst &I) {
 void CWriter::visitSwitchInst(SwitchInst &SI) {
   Out << "  switch (";
   writeOperand(SI.getOperand(0));
-  Out << ") {\n  default: goto ";
-  writeOperand(SI.getDefaultDest());
+  Out << ") {\n  default:\n";
+  printBranchToBlock(SI.getParent(), SI.getDefaultDest(), 2);
   Out << ";\n";
   for (unsigned i = 2, e = SI.getNumOperands(); i != e; i += 2) {
     Out << "  case ";
