@@ -7,7 +7,7 @@ Source  = \
 	  Sparc.burm.o \
 	  SparcInstrSelection.o \
 	  SparcRegClassInfo.o \
-	  SparcRegInfo.o
+	  SparcRegInfo.o EmitAssembly.o
 
 include $(LEVEL)/Makefile.common
 
