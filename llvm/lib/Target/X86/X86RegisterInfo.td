@@ -9,7 +9,7 @@
 //===----------------------------------------------------------------------===//
 //  Register definitions...
 //
-set Namespace = "X86" in {
+let Namespace = "X86" in {
   // 32-bit registers
   def EAX : Register; def ECX : Register;
   def EDX : Register; def EBX : Register;
@@ -71,7 +71,7 @@ def : RegisterAliases<SP, [ESP]>;     def : RegisterAliases<BP, [EBP]>;
 //
 def r8  : RegisterClass<i8,  1, [AL, CL, DL, BL, AH, CH, DH, BH]>;
 def r16 : RegisterClass<i16, 2, [AX, CX, DX, BX, SI, DI, BP, SP]> {
-  set Methods = [{
+  let Methods = [{
     iterator allocation_order_end(MachineFunction &MF) const {
       if (hasFP(MF))     // Does the function dedicate EBP to being a frame ptr?
 	return end()-2;  // If so, don't allocate SP or BP
@@ -82,7 +82,7 @@ def r16 : RegisterClass<i16, 2, [AX, CX, DX, BX, SI, DI, BP, SP]> {
 }
 
 def r32 : RegisterClass<i32, 4, [EAX, ECX, EDX, EBX, ESI, EDI, EBP, ESP]> {
-  set Methods = [{
+  let Methods = [{
     iterator allocation_order_end(MachineFunction &MF) const {
       if (hasFP(MF))     // Does the function dedicate EBP to being a frame ptr?
         return end()-2;  // If so, don't allocate ESP or EBP

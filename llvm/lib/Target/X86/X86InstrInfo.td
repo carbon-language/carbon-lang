@@ -6,8 +6,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
-
 // Format specifies the encoding used by the instruction.  This is part of the
 // ad-hoc solution used to emit machine instruction encodings by our machine
 // code emitter.
@@ -55,9 +53,9 @@ def SpecialFP  : FPFormat<5>;
 
 
 class X86Inst<string nam, bits<8> opcod, Format f, ArgType a> : Instruction {
-  set Namespace = "X86";
+  let Namespace = "X86";
 
-  set Name = nam;
+  let Name = nam;
   bits<8> Opcode = opcod;
   Format Form = f;
   bits<5> FormBits = Form.Value;
@@ -65,7 +63,6 @@ class X86Inst<string nam, bits<8> opcod, Format f, ArgType a> : Instruction {
   bits<3> TypeBits = Type.Value;
 
   // Attributes specific to X86 instructions...
-  bit isVoid       = 0;    // Does this inst ignore the return value?
   bit hasOpSizePrefix = 0; // Does this inst have a 0x66 prefix?
   bit printImplicitUses = 0; // Should we print implicit uses of this inst?
 
@@ -101,8 +98,7 @@ class DF     { bits<4> Prefix = 9; }
 
 def PHI : X86Inst<"PHI", 0, Pseudo, NoArg>;          // PHI node...
 
-set isVoid = 1 in
-  def NOOP : X86Inst<"nop", 0x90, RawFrm, NoArg>;    // nop
+def NOOP : X86Inst<"nop", 0x90, RawFrm, NoArg>;    // nop
 
 def ADJCALLSTACKDOWN : X86Inst<"ADJCALLSTACKDOWN", 0, Pseudo, NoArg>;
 def ADJCALLSTACKUP   : X86Inst<"ADJCALLSTACKUP",   0, Pseudo, NoArg>;
@@ -113,11 +109,11 @@ def IMPLICIT_USE     : X86Inst<"IMPLICIT_USE",     0, Pseudo, NoArg>;
 //
 
 // Return instruction...
-set isTerminator = 1, isVoid = 1, isReturn = 1 in
+let isTerminator = 1, isReturn = 1 in
   def RET : X86Inst<"ret", 0xC3, RawFrm, NoArg>;
 
 // All branches are RawFrm, Void, Branch, and Terminators
-set isVoid = 1, isBranch = 1, isTerminator = 1 in
+let isBranch = 1, isTerminator = 1 in
   class IBr<string name, bits<8> opcode> : X86Inst<name, opcode, RawFrm, NoArg>;
 
 def JMP : IBr<"jmp", 0xE9>;
@@ -136,9 +132,9 @@ def JG  : IBr<"jg" , 0x8F>, TB;
 //===----------------------------------------------------------------------===//
 //  Call Instructions...
 //
-set isCall = 1, isVoid = 1 in
+let isCall = 1 in
   // All calls clobber the non-callee saved registers...
-  set Defs = [EAX, ECX, EDX, FP0, FP1, FP2, FP3, FP4, FP5, FP6] in {
+  let Defs = [EAX, ECX, EDX, FP0, FP1, FP2, FP3, FP4, FP5, FP6] in {
     def CALLpcrel32 : X86Inst<"call", 0xE8, RawFrm, NoArg>;
     def CALLr32     : X86Inst<"call", 0xFF, MRMS2r, Arg32>;
     def CALLm32     : X86Inst<"call", 0xFF, MRMS2m, Arg32>;
@@ -150,7 +146,7 @@ set isCall = 1, isVoid = 1 in
 //
 def LEAVE    : X86Inst<"leave", 0xC9, RawFrm, NoArg>, Imp<[EBP], [EBP]>;
 
-set isTwoAddress = 1 in                                      // R32 = bswap R32
+let isTwoAddress = 1 in                                      // R32 = bswap R32
   def BSWAPr32 : X86Inst<"bswap", 0xC8, AddRegFrm, Arg32>, TB;
 
 def XCHGrr8  : X86Inst<"xchg", 0x86, MRMDestReg, Arg8>;         // xchg R8, R8
@@ -177,42 +173,39 @@ def MOVmr8  : X86Inst<"mov", 0x8A, MRMSrcMem , Arg8>;             // R8  = [mem]
 def MOVmr16 : X86Inst<"mov", 0x8B, MRMSrcMem , Arg16>, OpSize;    // R16 = [mem]
 def MOVmr32 : X86Inst<"mov", 0x8B, MRMSrcMem , Arg32>;            // R32 = [mem]
 
-set isVoid = 1 in {
-  def MOVrm8  : X86Inst<"mov", 0x88, MRMDestMem, Arg8>;           // R8  = [mem]
-  def MOVrm16 : X86Inst<"mov", 0x89, MRMDestMem, Arg16>, OpSize;  // R16 = [mem]
-  def MOVrm32 : X86Inst<"mov", 0x89, MRMDestMem, Arg32>;          // R32 = [mem]
-}
+def MOVrm8  : X86Inst<"mov", 0x88, MRMDestMem, Arg8>;             // [mem] = R8
+def MOVrm16 : X86Inst<"mov", 0x89, MRMDestMem, Arg16>, OpSize;    // [mem] = R16
+def MOVrm32 : X86Inst<"mov", 0x89, MRMDestMem, Arg32>;            // [mem] = R32
 
 //===----------------------------------------------------------------------===//
 //  Fixed-Register Multiplication and Division Instructions...
 //
-set isVoid = 1 in {
-  // Extra precision multiplication
-  def MULr8  : X86Inst<"mul", 0xF6, MRMS4r, Arg8 >, Imp<[AL],[AX]>;               // AL,AH = AL*R8
-  def MULr16 : X86Inst<"mul", 0xF7, MRMS4r, Arg16>, Imp<[AX],[AX,DX]>, OpSize;    // AX,DX = AX*R16
-  def MULr32 : X86Inst<"mul", 0xF7, MRMS4r, Arg32>, Imp<[EAX],[EAX,EDX]>;         // EAX,EDX = EAX*R32
 
-  // unsigned division/remainder
-  def DIVr8  : X86Inst<"div", 0xF6, MRMS6r, Arg8 >, Imp<[AX],[AX]>;               // AX/r8 = AL,AH
-  def DIVr16 : X86Inst<"div", 0xF7, MRMS6r, Arg16>, Imp<[AX,DX],[AX,DX]>, OpSize; // DX:AX/r16 = AX,DX
-  def DIVr32 : X86Inst<"div", 0xF7, MRMS6r, Arg32>, Imp<[EAX,EDX],[EAX,EDX]>;     // EDX:EAX/r32 = EAX,EDX
+// Extra precision multiplication
+def MULr8  : X86Inst<"mul", 0xF6, MRMS4r, Arg8 >, Imp<[AL],[AX]>;               // AL,AH = AL*R8
+def MULr16 : X86Inst<"mul", 0xF7, MRMS4r, Arg16>, Imp<[AX],[AX,DX]>, OpSize;    // AX,DX = AX*R16
+def MULr32 : X86Inst<"mul", 0xF7, MRMS4r, Arg32>, Imp<[EAX],[EAX,EDX]>;         // EAX,EDX = EAX*R32
 
-  // signed division/remainder
-  def IDIVr8 : X86Inst<"idiv",0xF6, MRMS7r, Arg8 >, Imp<[AX],[AX]>;               // AX/r8 = AL,AH
-  def IDIVr16: X86Inst<"idiv",0xF7, MRMS7r, Arg16>, Imp<[AX,DX],[AX,DX]>, OpSize; // DX:AX/r16 = AX,DX
-  def IDIVr32: X86Inst<"idiv",0xF7, MRMS7r, Arg32>, Imp<[EAX,EDX],[EAX,EDX]>;     // EDX:EAX/r32 = EAX,EDX
+// unsigned division/remainder
+def DIVr8  : X86Inst<"div", 0xF6, MRMS6r, Arg8 >, Imp<[AX],[AX]>;               // AX/r8 = AL,AH
+def DIVr16 : X86Inst<"div", 0xF7, MRMS6r, Arg16>, Imp<[AX,DX],[AX,DX]>, OpSize; // DX:AX/r16 = AX,DX
+def DIVr32 : X86Inst<"div", 0xF7, MRMS6r, Arg32>, Imp<[EAX,EDX],[EAX,EDX]>;     // EDX:EAX/r32 = EAX,EDX
 
-  // Sign-extenders for division
-  def CBW    : X86Inst<"cbw", 0x98, RawFrm, Arg8 >, Imp<[AL],[AH]>;               // AX = signext(AL)
-  def CWD    : X86Inst<"cwd", 0x99, RawFrm, Arg8 >, Imp<[AX],[DX]>;               // DX:AX = signext(AX)
-  def CDQ    : X86Inst<"cdq", 0x99, RawFrm, Arg8 >, Imp<[EAX],[EDX]>;             // EDX:EAX = signext(EAX)
-}
+// signed division/remainder
+def IDIVr8 : X86Inst<"idiv",0xF6, MRMS7r, Arg8 >, Imp<[AX],[AX]>;               // AX/r8 = AL,AH
+def IDIVr16: X86Inst<"idiv",0xF7, MRMS7r, Arg16>, Imp<[AX,DX],[AX,DX]>, OpSize; // DX:AX/r16 = AX,DX
+def IDIVr32: X86Inst<"idiv",0xF7, MRMS7r, Arg32>, Imp<[EAX,EDX],[EAX,EDX]>;     // EDX:EAX/r32 = EAX,EDX
+
+// Sign-extenders for division
+def CBW    : X86Inst<"cbw", 0x98, RawFrm, Arg8 >, Imp<[AL],[AH]>;               // AX = signext(AL)
+def CWD    : X86Inst<"cwd", 0x99, RawFrm, Arg8 >, Imp<[AX],[DX]>;               // DX:AX = signext(AX)
+def CDQ    : X86Inst<"cdq", 0x99, RawFrm, Arg8 >, Imp<[EAX],[EDX]>;             // EDX:EAX = signext(EAX)
 
 
 //===----------------------------------------------------------------------===//
 //  Two address Instructions...
 //
-set isTwoAddress = 1 in {  // Define some helper classes to make defs shorter.
+let isTwoAddress = 1 in {  // Define some helper classes to make defs shorter.
   class I2A8 <string n, bits<8> o, Format F> : X86Inst<n, o, F, Arg8>;
   class I2A16<string n, bits<8> o, Format F> : X86Inst<n, o, F, Arg16>;
   class I2A32<string n, bits<8> o, Format F> : X86Inst<n, o, F, Arg32>;
@@ -237,8 +230,8 @@ def SUBri32  : I2A32<"sub", 0x81, MRMS5r    >;                // R32 -= imm32
 
 def SBBrr32  : I2A32<"sbb", 0x19, MRMDestReg>;                // R32 -= R32+Carry
 
-def IMULr16  : I2A16<"imul", 0xAF, MRMSrcReg>, TB, OpSize;               // R16 *= R16
-def IMULr32  : I2A32<"imul", 0xAF, MRMSrcReg>, TB;                       // R32 *= R32
+def IMULr16  : I2A16<"imul", 0xAF, MRMSrcReg>, TB, OpSize;    // R16 *= R16
+def IMULr32  : I2A32<"imul", 0xAF, MRMSrcReg>, TB;            // R32 *= R32
 
 // Logical operators...
 def ANDrr8   : I2A8 <"and", 0x20, MRMDestReg>;                // R8  &= R8
@@ -316,14 +309,12 @@ def CMOVErr16 : I2A16<"cmove", 0x44, MRMSrcReg>, TB, OpSize;        // if ==, R1
 def CMOVNErr32: I2A32<"cmovne",0x45, MRMSrcReg>, TB;                // if !=, R32 = R32
 
 // Integer comparisons
-set isVoid = 1 in {
-  def CMPrr8  : X86Inst<"cmp", 0x38, MRMDestReg, Arg8 >;            // compare R8, R8
-  def CMPrr16 : X86Inst<"cmp", 0x39, MRMDestReg, Arg16>, OpSize;    // compare R16, R16
-  def CMPrr32 : X86Inst<"cmp", 0x39, MRMDestReg, Arg32>;            // compare R32, R32
-  def CMPri8  : X86Inst<"cmp", 0x80, MRMS7r    , Arg8 >;            // compare R8, imm8
-  def CMPri16 : X86Inst<"cmp", 0x81, MRMS7r    , Arg16>, OpSize;    // compare R16, imm16
-  def CMPri32 : X86Inst<"cmp", 0x81, MRMS7r    , Arg32>;            // compare R32, imm32
-}
+def CMPrr8  : X86Inst<"cmp", 0x38, MRMDestReg, Arg8 >;              // compare R8, R8
+def CMPrr16 : X86Inst<"cmp", 0x39, MRMDestReg, Arg16>, OpSize;      // compare R16, R16
+def CMPrr32 : X86Inst<"cmp", 0x39, MRMDestReg, Arg32>;              // compare R32, R32
+def CMPri8  : X86Inst<"cmp", 0x80, MRMS7r    , Arg8 >;              // compare R8, imm8
+def CMPri16 : X86Inst<"cmp", 0x81, MRMS7r    , Arg16>, OpSize;      // compare R16, imm16
+def CMPri32 : X86Inst<"cmp", 0x81, MRMS7r    , Arg32>;              // compare R32, imm32
 
 // Sign/Zero extenders
 def MOVSXr16r8 : X86Inst<"movsx", 0xBE, MRMSrcReg, Arg8>, TB, OpSize; // R16 = signext(R8)
@@ -342,7 +333,7 @@ def MOVZXr32r16: X86Inst<"movzx", 0xB7, MRMSrcReg, Arg8>, TB;         // R32 = z
 
 // Floating point pseudo instructions...
 class FPInst<string n, bits<8> o, Format F, ArgType t, FPFormat fp>
-  : X86Inst<n, o, F, t> { set FPForm = fp; set FPFormBits = FPForm.Value; }
+  : X86Inst<n, o, F, t> { let FPForm = fp; let FPFormBits = FPForm.Value; }
 
 def FpMOV : FPInst<"FMOV", 0, Pseudo, ArgF80, SpecialFP>;   // f1 = fmov f2
 def FpADD : FPInst<"FADD", 0, Pseudo, ArgF80, TwoArgFP>;    // f1 = fadd f2, f3
@@ -350,40 +341,36 @@ def FpSUB : FPInst<"FSUB", 0, Pseudo, ArgF80, TwoArgFP>;    // f1 = fsub f2, f3
 def FpMUL : FPInst<"FMUL", 0, Pseudo, ArgF80, TwoArgFP>;    // f1 = fmul f2, f3
 def FpDIV : FPInst<"FDIV", 0, Pseudo, ArgF80, TwoArgFP>;    // f1 = fdiv f2, f3
 
-set isVoid = 1 in
-  def FpUCOM : FPInst<"FUCOM", 0, Pseudo, ArgF80, TwoArgFP>;  // FPSW = fucom f1, f2
+def FpUCOM : FPInst<"FUCOM", 0, Pseudo, ArgF80, TwoArgFP>;  // FPSW = fucom f1, f2
 
 def FpGETRESULT : FPInst<"FGETRESULT",0, Pseudo, ArgF80, SpecialFP>;  // FPR = ST(0)
 
-set isVoid = 1 in
-  def FpSETRESULT : FPInst<"FSETRESULT",0, Pseudo, ArgF80, SpecialFP>;  // ST(0) = FPR
+def FpSETRESULT : FPInst<"FSETRESULT",0, Pseudo, ArgF80, SpecialFP>;  // ST(0) = FPR
 
 // Floating point loads & stores...
 def FLDrr   : FPInst<"fld"   , 0xC0, AddRegFrm, ArgF80, NotFP>, D9;   // push(ST(i))
-def FLDr32  : FPInst<"fld"   , 0xD9, MRMS0m   , ArgF32, ZeroArgFP>;          // load float
-def FLDr64  : FPInst<"fld"   , 0xDD, MRMS0m   , ArgF64, ZeroArgFP>;          // load double
-def FLDr80  : FPInst<"fld"   , 0xDB, MRMS5m   , ArgF80, ZeroArgFP>;          // load extended
-def FILDr16 : FPInst<"fild"  , 0xDF, MRMS0m   , Arg16 , ZeroArgFP>;          // load signed short
-def FILDr32 : FPInst<"fild"  , 0xDB, MRMS0m   , Arg32 , ZeroArgFP>;          // load signed int
-def FILDr64 : FPInst<"fild"  , 0xDF, MRMS5m   , Arg64 , ZeroArgFP>;          // load signed long
+def FLDr32  : FPInst<"fld"   , 0xD9, MRMS0m   , ArgF32, ZeroArgFP>;        // load float
+def FLDr64  : FPInst<"fld"   , 0xDD, MRMS0m   , ArgF64, ZeroArgFP>;        // load double
+def FLDr80  : FPInst<"fld"   , 0xDB, MRMS5m   , ArgF80, ZeroArgFP>;        // load extended
+def FILDr16 : FPInst<"fild"  , 0xDF, MRMS0m   , Arg16 , ZeroArgFP>;        // load signed short
+def FILDr32 : FPInst<"fild"  , 0xDB, MRMS0m   , Arg32 , ZeroArgFP>;        // load signed int
+def FILDr64 : FPInst<"fild"  , 0xDF, MRMS5m   , Arg64 , ZeroArgFP>;        // load signed long
 
-set isVoid = 1 in {
-  def FSTr32   : FPInst<"fst" , 0xD9, MRMS2m   , ArgF32, OneArgFP>;          // store float
-  def FSTr64   : FPInst<"fst" , 0xDD, MRMS2m   , ArgF64, OneArgFP>;          // store double
-  def FSTPr32  : FPInst<"fstp", 0xD9, MRMS3m   , ArgF32, OneArgFP>;          // store float, pop
-  def FSTPr64  : FPInst<"fstp", 0xDD, MRMS3m   , ArgF64, OneArgFP>;          // store double, pop
-  def FSTPr80  : FPInst<"fstp", 0xDB, MRMS7m   , ArgF80, OneArgFP>;          // store extended, pop
-  def FSTrr    : FPInst<"fst" , 0xD0, AddRegFrm, ArgF80, NotFP   >, DD;      // ST(i) = ST(0)
-  def FSTPrr   : FPInst<"fstp", 0xD8, AddRegFrm, ArgF80, NotFP   >, DD;      // ST(i) = ST(0), pop
+def FSTr32   : FPInst<"fst" , 0xD9, MRMS2m   , ArgF32, OneArgFP>;          // store float
+def FSTr64   : FPInst<"fst" , 0xDD, MRMS2m   , ArgF64, OneArgFP>;          // store double
+def FSTPr32  : FPInst<"fstp", 0xD9, MRMS3m   , ArgF32, OneArgFP>;          // store float, pop
+def FSTPr64  : FPInst<"fstp", 0xDD, MRMS3m   , ArgF64, OneArgFP>;          // store double, pop
+def FSTPr80  : FPInst<"fstp", 0xDB, MRMS7m   , ArgF80, OneArgFP>;          // store extended, pop
+def FSTrr    : FPInst<"fst" , 0xD0, AddRegFrm, ArgF80, NotFP   >, DD;      // ST(i) = ST(0)
+def FSTPrr   : FPInst<"fstp", 0xD8, AddRegFrm, ArgF80, NotFP   >, DD;      // ST(i) = ST(0), pop
 
-  def FISTr16  : FPInst<"fist",    0xDF, MRMS2m, Arg16 , OneArgFP>;          // store signed short
-  def FISTr32  : FPInst<"fist",    0xDB, MRMS2m, Arg32 , OneArgFP>;          // store signed int
-  def FISTPr16 : FPInst<"fistp",   0xDF, MRMS3m, Arg16 , NotFP   >;          // store signed short, pop
-  def FISTPr32 : FPInst<"fistp",   0xDB, MRMS3m, Arg32 , NotFP   >;          // store signed int, pop
-  def FISTPr64 : FPInst<"fistpll", 0xDF, MRMS7m, Arg64 , OneArgFP>;          // store signed long, pop
+def FISTr16  : FPInst<"fist",    0xDF, MRMS2m, Arg16 , OneArgFP>;          // store signed short
+def FISTr32  : FPInst<"fist",    0xDB, MRMS2m, Arg32 , OneArgFP>;          // store signed int
+def FISTPr16 : FPInst<"fistp",   0xDF, MRMS3m, Arg16 , NotFP   >;          // store signed short, pop
+def FISTPr32 : FPInst<"fistp",   0xDB, MRMS3m, Arg32 , NotFP   >;          // store signed int, pop
+def FISTPr64 : FPInst<"fistpll", 0xDF, MRMS7m, Arg64 , OneArgFP>;          // store signed long, pop
 
-  def FXCH     : FPInst<"fxch",    0xC8, AddRegFrm, ArgF80, NotFP>, D9;      // fxch ST(i), ST(0)
-}
+def FXCH     : FPInst<"fxch",    0xC8, AddRegFrm, ArgF80, NotFP>, D9;      // fxch ST(i), ST(0)
 
 // Floating point constant loads...
 def FLD0 : FPInst<"fldz", 0xEE, RawFrm, ArgF80, ZeroArgFP>, D9;
@@ -430,13 +417,11 @@ def FDIVRrST0  : FPrST0Inst <"fdivr",   0xF0>;   // ST(i) = ST(0) / ST(i)
 def FDIVRPrST0 : FPrST0PInst<"fdivrp",  0xF0>;   // ST(i) = ST(0) / ST(i), pop
 
 // Floating point compares
-set isVoid = 1 in {
-  def FUCOMr    : X86Inst<"fucom"  , 0xE0, AddRegFrm, ArgF80>, DD, Imp<[ST0],[]>;  // FPSW = compare ST(0) with ST(i)
-  def FUCOMPr   : X86Inst<"fucomp" , 0xE8, AddRegFrm, ArgF80>, DD, Imp<[ST0],[]>;  // FPSW = compare ST(0) with ST(i), pop
-  def FUCOMPPr  : X86Inst<"fucompp", 0xE9, RawFrm   , ArgF80>, DA, Imp<[ST0],[]>;  // compare ST(0) with ST(1), pop, pop
+def FUCOMr    : X86Inst<"fucom"  , 0xE0, AddRegFrm, ArgF80>, DD, Imp<[ST0],[]>;  // FPSW = compare ST(0) with ST(i)
+def FUCOMPr   : X86Inst<"fucomp" , 0xE8, AddRegFrm, ArgF80>, DD, Imp<[ST0],[]>;  // FPSW = compare ST(0) with ST(i), pop
+def FUCOMPPr  : X86Inst<"fucompp", 0xE9, RawFrm   , ArgF80>, DA, Imp<[ST0],[]>;  // compare ST(0) with ST(1), pop, pop
 
-  // Floating point flag ops
-  def FNSTSWr8  : X86Inst<"fnstsw" , 0xE0, RawFrm   , ArgF80>, DF, Imp<[],[AX]>;   // AX = fp flags
-  def FNSTCWm16 : X86Inst<"fnstcw" , 0xD9, MRMS7m   , Arg16 >;                     // [mem16] = X87 control world
-  def FLDCWm16  : X86Inst<"fldcw"  , 0xD9, MRMS5m   , Arg16 >;                     // X87 control world = [mem16]
-}
+// Floating point flag ops
+def FNSTSWr8  : X86Inst<"fnstsw" , 0xE0, RawFrm   , ArgF80>, DF, Imp<[],[AX]>;   // AX = fp flags
+def FNSTCWm16 : X86Inst<"fnstcw" , 0xD9, MRMS7m   , Arg16 >;                     // [mem16] = X87 control world
+def FLDCWm16  : X86Inst<"fldcw"  , 0xD9, MRMS5m   , Arg16 >;                     // X87 control world = [mem16]

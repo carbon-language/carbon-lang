@@ -5,7 +5,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-// Get the target independent interfaces which we are implementing...
+// Get the target-independent interfaces which we are implementing...
 //
 include "../Target.td"
 
@@ -22,24 +22,24 @@ include "X86RegisterInfo.td"
 include "X86InstrInfo.td"
 
 def X86InstrInfo : InstrInfo {
-  set PHIInst  = PHI;
-  set NOOPInst = NOOP;
+  let PHIInst  = PHI;
+  let NOOPInst = NOOP;
 
   // Define how we want to layout our TargetSpecific information field... This
   // should be kept up-to-date with the fields in the X86InstrInfo.h file.
-  set TSFlagsFields = ["FormBits", "isVoid",   "hasOpSizePrefix", "Prefix",
+  let TSFlagsFields = ["FormBits",             "hasOpSizePrefix", "Prefix",
                        "TypeBits", "FPFormBits", "printImplicitUses", "Opcode"];
-  set TSFlagsShifts = [         0,        5,                   6,        7,
+  let TSFlagsShifts = [         0,                             6,        7,
                                11,       14,                  17,       18];
 }
 
 def X86 : Target {
   // Specify the callee saved registers.
-  set CalleeSavedRegisters = [ESI, EDI, EBX, EBP];
+  let CalleeSavedRegisters = [ESI, EDI, EBX, EBP];
 
   // Yes, pointers are 32-bits in size.
-  set PointerType = i32;
+  let PointerType = i32;
 
   // Information about the instructions...
-  set InstructionSet = X86InstrInfo;
+  let InstructionSet = X86InstrInfo;
 }
