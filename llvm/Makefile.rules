@@ -843,9 +843,7 @@ $(BUILD_OBJ_DIR)/Depend/%.d: $(SourceDir)%.c $(BUILD_OBJ_DIR)/Depend/.dir
 #
 ifneq ($(MAKECMDGOALS),clean)
 ifneq ($(MAKECMDGOALS),distclean)
-ifneq ($(SourceDepend),)
--include $(SourceDepend)
-endif
+-include /dev/null $(SourceDepend)
 endif
 endif
 
