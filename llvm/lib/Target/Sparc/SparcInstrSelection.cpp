@@ -821,53 +821,45 @@ CreateDivConstInstruction(const InstructionNode* instrNode,
 }
 
 
-static inline MachineOpCode 
-ChooseLoadInstruction(const Type* resultType)
-{
-  MachineOpCode opCode = INVALID_OPCODE;
+static inline MachineOpCode ChooseLoadInstruction(const Type *DestTy) {
+  switch (DestTy->getPrimitiveID()) {
+  case Type::BoolTyID:
+  case Type::UByteTyID:   return LDUB;
+  case Type::SByteTyID:   return LDSB;
+  case Type::UShortTyID:  return LDUH;
+  case Type::ShortTyID:   return LDSH;
+  case Type::UIntTyID:    return LDUW;
+  case Type::IntTyID:     return LDSW;
+  case Type::PointerTyID:
+  case Type::ULongTyID:
+  case Type::LongTyID:    return LDX;
+  case Type::FloatTyID:   return LD;
+  case Type::DoubleTyID:  return LDD;
+  default: assert(0 && "Invalid type for Load instruction");
+  }
   
-  switch (resultType->getPrimitiveID())
-    {
-    case Type::BoolTyID:	opCode = LDUB; break;
-    case Type::UByteTyID:	opCode = LDUB; break;
-    case Type::SByteTyID:	opCode = LDSB; break;
-    case Type::UShortTyID:	opCode = LDUH; break;
-    case Type::ShortTyID:	opCode = LDSH; break;
-    case Type::UIntTyID:	opCode = LDUW; break;
-    case Type::IntTyID:		opCode = LDSW; break;
-    case Type::ULongTyID:
-    case Type::LongTyID:	opCode = LDX;  break;
-    case Type::FloatTyID:	opCode = LD;   break;
-    case Type::DoubleTyID:	opCode = LDD;  break;
-    default: assert(0 && "Invalid type for Load instruction"); break; 
-    }
-  
-  return opCode;
+  return 0;
 }
 
 
-static inline MachineOpCode 
-ChooseStoreInstruction(const Type* valueType)
-{
-  MachineOpCode opCode = INVALID_OPCODE;
+static inline MachineOpCode ChooseStoreInstruction(const Type *DestTy) {
+  switch (DestTy->getPrimitiveID()) {
+  case Type::BoolTyID:
+  case Type::UByteTyID:
+  case Type::SByteTyID:   return STB;
+  case Type::UShortTyID:
+  case Type::ShortTyID:   return STH;
+  case Type::UIntTyID:
+  case Type::IntTyID:     return STW;
+  case Type::PointerTyID:
+  case Type::ULongTyID:
+  case Type::LongTyID:    return STX;
+  case Type::FloatTyID:   return ST;
+  case Type::DoubleTyID:  return STD;
+  default: assert(0 && "Invalid type for Store instruction");
+  }
   
-  switch (valueType->getPrimitiveID())
-    {
-    case Type::BoolTyID:
-    case Type::UByteTyID:
-    case Type::SByteTyID:	opCode = STB; break;
-    case Type::UShortTyID:
-    case Type::ShortTyID:	opCode = STH; break;
-    case Type::UIntTyID:
-    case Type::IntTyID:		opCode = STW; break;
-    case Type::ULongTyID:
-    case Type::LongTyID:	opCode = STX;  break;
-    case Type::FloatTyID:	opCode = ST;   break;
-    case Type::DoubleTyID:	opCode = STD;  break;
-    default: assert(0 && "Invalid type for Store instruction"); break; 
-    }
-  
-  return opCode;
+  return 0;
 }
 
 
