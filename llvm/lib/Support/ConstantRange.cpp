@@ -62,8 +62,8 @@ ConstantRange::ConstantRange(const Type *Ty, bool Full) {
 /// Lower==Upper and Lower != Min or Max for its type (or if the two constants
 /// have different types)
 ///
-ConstantRange::ConstantRange(ConstantIntegral *L,
-                             ConstantIntegral *U) : Lower(L), Upper(U) {
+ConstantRange::ConstantRange(Constant *L, Constant *U)
+  : Lower(cast<ConstantIntegral>(L)), Upper(cast<ConstantIntegral>(U)) {
   assert(Lower->getType() == Upper->getType() &&
          "Incompatible types for ConstantRange!");
   
