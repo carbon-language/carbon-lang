@@ -3103,15 +3103,6 @@ bool InstCombiner::runOnFunction(Function &F) {
       continue;
     }
 
-    // Check to see if any of the operands of this instruction are a
-    // GlobalValue.  Since they sneak in all over the place and inhibit
-    // optimization, we want to strip them out unconditionally!
-    for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i)
-      if (isa<GlobalValue>(I->getOperand(i))) {
-        I->setOperand(i, I->getOperand(i));
-        Changed = true;
-      }
-
     // Now that we have an instruction, try combining it to simplify it...
     if (Instruction *Result = visit(*I)) {
       ++NumCombined;
