@@ -68,7 +68,7 @@ struct CPUResource {
   int maxNumUsers;   // MAXINT if no restriction
   
   CPUResource(const std::string& resourceName, int maxUsers);
-
+  static CPUResource* getCPUResource(resourceId_t id);
 private:
   static resourceId_t nextId;
 };
@@ -302,8 +302,7 @@ protected:
 			   conflictLists;   // indexed by [opcode]
 
 
-  friend class ModuloSchedGraph;
-  friend class ModuloScheduling;
+  friend class ModuloSchedulingPass;
   
 };
 
