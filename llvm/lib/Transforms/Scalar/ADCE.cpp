@@ -233,8 +233,9 @@ bool ADCE::doADCE() {
           markInstructionLive(I);
         }
       } else if (I->mayWriteToMemory() || isa<ReturnInst>(I) ||
-                 isa<UnwindInst>(I)) {
-        // Unreachable instructions are not marked intrinsically live here.
+                 isa<UnwindInst>(I) || isa<UnreachableInst>(I)) {
+        // FIXME: Unreachable instructions should not be marked intrinsically
+        // live here.
 	markInstructionLive(I);
       } else if (isInstructionTriviallyDead(I)) {
         // Remove the instruction from it's basic block...
