@@ -189,6 +189,8 @@ public:
   bool isAllocaNode() const;
   bool isMallocNode() const { return !isAllocaNode(); }
 
+  AllocationInst *getAllocation() const { return Allocation; }
+
   // isEquivalentTo - Return true if the nodes should be merged...
   virtual bool isEquivalentTo(DSNode *Node) const;
 
@@ -381,6 +383,13 @@ public:
   // current function to the specified vector.
   //
   void getNonEscapingAllocations(std::vector<AllocDSNode*> &Allocs);
+
+  // getValueMap - Get a map that describes what the nodes the scalars in this
+  // function point to...
+  //
+  std::map<Value*, PointerValSet> &getValueMap() { return ValueMap; }
+
+
 
   void printFunction(std::ostream &O, const char *Label) const;
 };
