@@ -17,6 +17,9 @@
 using std::map;
 using std::pair;
 using std::make_pair;
+using std::vector;
+using std::cerr;
+using std::endl;
 
 ConstantBool *ConstantBool::True  = new ConstantBool(true);
 ConstantBool *ConstantBool::False = new ConstantBool(false);
@@ -408,8 +411,8 @@ ConstantExpr::get(unsigned opCode, Constant *C, const Type *Ty) {
   if (opCode != Instruction::Cast &&
       (opCode < Instruction::FirstUnaryOp ||
        opCode >= Instruction::NumUnaryOps)) {
-    cerr << "Invalid opcode " << ConstantExpr::getOpcodeName(opCode)
-         << " in unary constant expression" << endl;
+    std::cerr << "Invalid opcode " << ConstantExpr::getOpcodeName(opCode)
+         << " in unary constant expression" << std::endl;
     return NULL;       // Not Cast or other unary opcode
   }
   // type of operand will not match result for Cast operation
