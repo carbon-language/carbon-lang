@@ -7,7 +7,7 @@
 # 
 ##===----------------------------------------------------------------------===##
 LEVEL = ../..
-DIRS = Sparc X86
+DIRS = Sparc X86 PowerPC
 LIBRARYNAME = target
 BUILD_ARCHIVE = 1
 
