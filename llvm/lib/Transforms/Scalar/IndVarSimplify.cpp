@@ -15,19 +15,19 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/Scalar.h"
-#include "llvm/Analysis/InductionVariable.h"
-#include "llvm/Analysis/LoopInfo.h"
+#include "llvm/Constants.h"
+#include "llvm/Type.h"
 #include "llvm/iPHINode.h"
 #include "llvm/iOther.h"
-#include "llvm/Type.h"
-#include "llvm/Constants.h"
+#include "llvm/Analysis/InductionVariable.h"
+#include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Support/CFG.h"
+#include "llvm/Transforms/Utils/Local.h"
 #include "Support/Debug.h"
 #include "Support/Statistic.h"
 #include "Support/STLExtras.h"
 #include <algorithm>
-
-namespace llvm {
+using namespace llvm;
 
 namespace {
   Statistic<> NumRemoved ("indvars", "Number of aux indvars removed");
@@ -141,6 +141,8 @@ static bool TransformLoop(LoopInfo *Loops, Loop *Loop) {
 
     DEBUG(IV->print(std::cerr));
 
+    while (isa<PHINode>(AfterPHIIt)) ++AfterPHIIt;
+
     // Don't do math with pointers...
     const Type *IVTy = IV->Phi->getType();
     if (isa<PointerType>(IVTy)) IVTy = Type::ULongTy;
@@ -185,6 +187,12 @@ static bool TransformLoop(LoopInfo *Loops, Loop *Loop) {
       std::string OldName = IV->Phi->getName();
       IV->Phi->setName("");
       Val->setName(OldName);
+
+      // Get the incoming values used by the PHI node
+      std::vector<Value*> PHIOps;
+      PHIOps.reserve(IV->Phi->getNumIncomingValues());
+      for (unsigned i = 0, e = IV->Phi->getNumIncomingValues(); i != e; ++i)
+        PHIOps.push_back(IV->Phi->getIncomingValue(i));
 
       // Delete the old, now unused, phi node...
       Header->getInstList().erase(IV->Phi);
@@ -242,8 +250,7 @@ namespace {
                                            "Canonicalize Induction Variables");
 }
 
-Pass *createIndVarSimplifyPass() {
+Pass *llvm::createIndVarSimplifyPass() {
   return new InductionVariableSimplify();
 }
 
-} // End llvm namespace
