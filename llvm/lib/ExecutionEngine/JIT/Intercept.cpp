@@ -17,6 +17,7 @@
 
 #include "JIT.h"
 #include "llvm/System/DynamicLibrary.h"
+#include "llvm/Config/config.h"
 #include <iostream>
 using namespace llvm;
 
@@ -47,7 +48,9 @@ static void runAtExitHandlers() {
 // that the dynamic linker can't see. For more info, search for
 // 'libc_nonshared.a' on Google, or read http://llvm.cs.uiuc.edu/PR274.
 #if defined(__linux__)
+#if defined(HAVE_SYS_STAT_H)
 #include <sys/stat.h>
+#endif 
 void *FunctionPointers[] = {
   (void *) stat,
   (void *) fstat,
