@@ -125,25 +125,34 @@ void BytecodeWriter::outputConstants(bool isFunction) {
   BytecodeBlock CPool(BytecodeFormat::ConstantPool, Out);
 
   unsigned NumPlanes = Table.getNumPlanes();
-  
-  for (unsigned pno = 0; pno != NumPlanes; pno++) {
-    const std::vector<const Value*> &Plane = Table.getPlane(pno);
+
+  // Output the type plane before any constants!
+  if (isFunction && NumPlanes > Type::TypeTyID) {
+    const std::vector<const Value*> &Plane = Table.getPlane(Type::TypeTyID);
     if (!Plane.empty()) {              // Skip empty type planes...
-      unsigned ValNo = 0;
-      if (isFunction)                 // Don't reemit module constants
-        ValNo += Table.getModuleLevel(pno);
-      else if (pno == Type::TypeTyID) // If type plane wasn't written out above
-        continue;
-
-      if (pno >= Type::FirstDerivedTyID) {
-        // Skip zero initializer
-        if (ValNo == 0)
-          ValNo = 1;
-      }
-
-      outputConstantsInPlane(Plane, ValNo); // Write out constants in the plane
+      unsigned ValNo = Table.getModuleLevel(Type::TypeTyID);
+      outputConstantsInPlane(Plane, ValNo);
     }
   }
+  
+  for (unsigned pno = 0; pno != NumPlanes; pno++)
+    if (pno != Type::TypeTyID) {         // Type plane handled above.
+      const std::vector<const Value*> &Plane = Table.getPlane(pno);
+      if (!Plane.empty()) {              // Skip empty type planes...
+        unsigned ValNo = 0;
+        if (isFunction)                  // Don't reemit module constants
+          ValNo += Table.getModuleLevel(pno);
+        
+        if (pno >= Type::FirstDerivedTyID) {
+          // Skip zero initializer
+          if (ValNo == 0)
+            ValNo = 1;
+        }
+        
+        // Write out constants in the plane
+        outputConstantsInPlane(Plane, ValNo);
+      }
+    }
 }
 
 void BytecodeWriter::outputModuleInfoBlock(const Module *M) {
