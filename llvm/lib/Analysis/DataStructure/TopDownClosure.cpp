@@ -92,12 +92,11 @@ void TDDataStructures::calculateGraph(Function &F) {
   DSGraph &Graph = getOrCreateDSGraph(F);
 
   const std::vector<DSCallSite> &CallSites = Graph.getFunctionCalls();
-#if 0
   if (CallSites.empty()) {
     DEBUG(std::cerr << "  [TD] No callees for: " << F.getName() << "\n");
     return;  // If no call sites, the graph is the same as the BU graph!
   }
-#endif
+
   // Loop over all of the call sites, building a multi-map from Callees to
   // DSCallSite*'s.  With this map we can then loop over each callee, cloning
   // this graph once into it, then resolving arguments.
