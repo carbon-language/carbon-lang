@@ -31,10 +31,10 @@
 using namespace llvm;
 
 namespace llvm {
-  class DebugCrashes : public ListReducer<const PassInfo*> {
+  class ReducePassList : public ListReducer<const PassInfo*> {
     BugDriver &BD;
   public:
-    DebugCrashes(BugDriver &bd) : BD(bd) {}
+    ReducePassList(BugDriver &bd) : BD(bd) {}
     
     // doTest - Return true iff running the "removed" passes succeeds, and
     // running the "Kept" passes fail when run on the output of the "removed"
@@ -45,9 +45,9 @@ namespace llvm {
   };
 }
 
-DebugCrashes::TestResult
-DebugCrashes::doTest(std::vector<const PassInfo*> &Prefix,
-                     std::vector<const PassInfo*> &Suffix) {
+ReducePassList::TestResult
+ReducePassList::doTest(std::vector<const PassInfo*> &Prefix,
+                       std::vector<const PassInfo*> &Suffix) {
   std::string PrefixOutput;
   Module *OrigProgram = 0;
   if (!Prefix.empty()) {
@@ -104,7 +104,7 @@ namespace llvm {
 
 bool ReduceCrashingFunctions::TestFuncs(std::vector<Function*> &Funcs) {
   // Clone the program to try hacking it apart...
-  Module *M = CloneModule(BD.Program);
+  Module *M = CloneModule(BD.getProgram());
   
   // Convert list to set for fast lookup...
   std::set<Function*> Functions;
@@ -131,17 +131,15 @@ bool ReduceCrashingFunctions::TestFuncs(std::vector<Function*> &Funcs) {
       DeleteFunctionBody(I);
 
   // Try running the hacked up program...
-  std::swap(BD.Program, M);
-  if (BD.runPasses(BD.PassesToRun)) {
-    delete M;         // It crashed, keep the trimmed version...
+  if (BD.runPasses(M)) {
+    BD.setNewProgram(M);        // It crashed, keep the trimmed version...
 
     // Make sure to use function pointers that point into the now-current
     // module.
     Funcs.assign(Functions.begin(), Functions.end());
     return true;
   }
-  delete BD.Program;  // It didn't crash, revert...
-  BD.Program = M;
+  delete M;
   return false;
 }
 
@@ -172,7 +170,7 @@ namespace llvm {
 
 bool ReduceCrashingBlocks::TestBlocks(std::vector<BasicBlock*> &BBs) {
   // Clone the program to try hacking it apart...
-  Module *M = CloneModule(BD.Program);
+  Module *M = CloneModule(BD.getProgram());
   
   // Convert list to set for fast lookup...
   std::set<BasicBlock*> Blocks;
@@ -237,9 +235,8 @@ bool ReduceCrashingBlocks::TestBlocks(std::vector<BasicBlock*> &BBs) {
   Passes.run(*M);
 
   // Try running on the hacked up program...
-  std::swap(BD.Program, M);
-  if (BD.runPasses(BD.PassesToRun)) {
-    delete M;         // It crashed, keep the trimmed version...
+  if (BD.runPasses(M)) {
+    BD.setNewProgram(M);      // It crashed, keep the trimmed version...
 
     // Make sure to use basic block pointers that point into the now-current
     // module, and that they don't include any deleted blocks.
@@ -252,10 +249,14 @@ bool ReduceCrashingBlocks::TestBlocks(std::vector<BasicBlock*> &BBs) {
     }
     return true;
   }
-  delete BD.Program;  // It didn't crash, revert...
-  BD.Program = M;
+  delete M;  // It didn't crash, try something else.
   return false;
 }
+
+static bool TestForOptimizerCrash(BugDriver &BD) {
+  return BD.runPasses();
+}
+
 
 /// debugOptimizerCrash - This method is called when some pass crashes on input.
 /// It attempts to prune down the testcase to something reasonable, and figure
@@ -267,7 +268,7 @@ bool BugDriver::debugOptimizerCrash() {
 
   // Reduce the list of passes which causes the optimizer to crash...
   unsigned OldSize = PassesToRun.size();
-  DebugCrashes(*this).reduceList(PassesToRun);
+  ReducePassList(*this).reduceList(PassesToRun);
 
   std::cout << "\n*** Found crashing pass"
             << (PassesToRun.size() == 1 ? ": " : "es: ")
@@ -292,15 +293,13 @@ bool BugDriver::debugOptimizerCrash() {
     } else {
       // See if the program still causes a crash...
       std::cout << "\nChecking to see if we can delete global inits: ";
-      std::swap(Program, M);
-      if (runPasses(PassesToRun)) {  // Still crashes?
+      if (runPasses(M)) {  // Still crashes?
+        setNewProgram(M);
         AnyReduction = true;
-        delete M;
         std::cout << "\n*** Able to remove all global initializers!\n";
       } else {                       // No longer crashes?
-        delete Program;              // Restore program.
-        Program = M;
         std::cout << "  - Removing all global inits hides problem!\n";
+        delete M;
       }
     }
   }
@@ -365,23 +364,19 @@ bool BugDriver::debugOptimizerCrash() {
                I != E; ++I) {
             Module *M = deleteInstructionFromProgram(I, Simplification);
             
-            // Make the function the current program...
-            std::swap(Program, M);
-            
             // Find out if the pass still crashes on this pass...
             std::cout << "Checking instruction '" << I->getName() << "': ";
-            if (runPasses(PassesToRun)) {
+            if (runPasses(M)) {
               // Yup, it does, we delete the old module, and continue trying to
               // reduce the testcase...
-              delete M;
+              setNewProgram(M);
               AnyReduction = true;
               goto TryAgain;  // I wish I had a multi-level break here!
             }
             
             // This pass didn't crash without this instruction, try the next
             // one.
-            delete Program;
-            Program = M;
+            delete M;
           }
       }
   } while (Simplification);
@@ -390,16 +385,13 @@ bool BugDriver::debugOptimizerCrash() {
   std::cout << "\n*** Attempting to perform final cleanups: ";
   Module *M = CloneModule(Program);
   M = performFinalCleanups(M, true);
-  std::swap(Program, M);
             
   // Find out if the pass still crashes on the cleaned up program...
-  if (runPasses(PassesToRun)) {
-    // Yup, it does, keep the reduced version...
-    delete M;
+  if (runPasses(M)) {
+    setNewProgram(M);     // Yup, it does, keep the reduced version...
     AnyReduction = true;
   } else {
-    delete Program;   // Otherwise, restore the original module...
-    Program = M;
+    delete M;
   }
 
   if (AnyReduction)
@@ -414,6 +406,7 @@ bool BugDriver::debugOptimizerCrash() {
 /// crashes on an input.  It attempts to reduce the input as much as possible
 /// while still causing the code generator to crash.
 bool BugDriver::debugCodeGeneratorCrash() {
+  std::cerr << "*** Debugging code generator crash!\n";
 
   return false;
 }

@@ -48,12 +48,10 @@ class BugDriver {
   GCC *gcc;
 
   // FIXME: sort out public/private distinctions...
-  friend class DebugCrashes;
+  friend class ReducePassList;
   friend class ReduceMiscompilingPasses;
   friend class ReduceMiscompilingFunctions;
   friend class ReduceMisCodegenFunctions;
-  friend class ReduceCrashingFunctions;
-  friend class ReduceCrashingBlocks;
 
 public:
   BugDriver(const char *toolname);
@@ -113,6 +111,23 @@ public:
   /// isExecutingJIT - Returns true if bugpoint is currently testing the JIT
   ///
   bool isExecutingJIT();
+
+  /// runPasses - Run all of the passes in the "PassesToRun" list, discard the
+  /// output, and return true if any of the passes crashed.
+  bool runPasses(Module *M = 0) {
+    if (M == 0) M = Program;
+    std::swap(M, Program);
+    bool Result = runPasses(PassesToRun);
+    std::swap(M, Program);
+    return Result;
+  }
+
+  const Module *getProgram() const { return Program; }
+
+  /// setNewProgram - If we reduce or update the program somehow, call this
+  /// method to update bugdriver with it.  This deletes the old module and sets
+  /// the specified one as the current program.
+  void setNewProgram(Module *M);
 
 private:
   /// ParseInputFile - Given a bytecode or assembly input filename, parse and

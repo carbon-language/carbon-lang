@@ -38,6 +38,15 @@ namespace {
                                 "(for miscompilation detection)"));
 }
 
+/// setNewProgram - If we reduce or update the program somehow, call this method
+/// to update bugdriver with it.  This deletes the old module and sets the
+/// specified one as the current program.
+void BugDriver::setNewProgram(Module *M) {
+  delete Program;
+  Program = M;
+}
+
+
 /// getPassesString - Turn a list of passes into a string which indicates the
 /// command line options that must be passed to add the passes.
 ///
@@ -174,7 +183,7 @@ bool BugDriver::run() {
       return debugMiscompilation();
     }
   } catch (ToolExecutionError &TEE) {
-    std::cerr << TEE.getMessage() << "*** Debugging code generator crash!\n";
+    std::cerr << TEE.getMessage();
     return debugCodeGeneratorCrash();
   }
 
