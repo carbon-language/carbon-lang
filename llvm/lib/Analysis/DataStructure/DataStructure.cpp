@@ -956,15 +956,13 @@ void DSCallSite::markReachableNodes(hash_set<DSNode*> &Nodes) {
     getPtrArg(j).getNode()->markReachableNodes(Nodes);
 }
 
-// markAliveIfCanReachAlive - Simple graph walker that recursively traverses the
-// graph looking for a node that is marked alive.  If the node is marked alive,
-// the recursive unwind marks node alive that can point to the alive node.  This
-// is basically just a post-order traversal.
+// CanReachAliveNodes - Simple graph walker that recursively traverses the graph
+// looking for a node that is marked alive.  If an alive node is found, return
+// true, otherwise return false.  If an alive node is reachable, this node is
+// marked as alive...
 //
-// This function returns true if the specified node is alive.
-//
-static bool markAliveIfCanReachAlive(DSNode *N, hash_set<DSNode*> &Alive,
-                                     hash_set<DSNode*> &Visited) {
+static bool CanReachAliveNodes(DSNode *N, hash_set<DSNode*> &Alive,
+                               hash_set<DSNode*> &Visited) {
   if (N == 0) return false;
 
   // If we know that this node is alive, return so!
@@ -973,29 +971,29 @@ static bool markAliveIfCanReachAlive(DSNode *N, hash_set<DSNode*> &Alive,
   // Otherwise, we don't think the node is alive yet, check for infinite
   // recursion.
   if (Visited.count(N)) return false;  // Found a cycle
-  // No recursion, insert into Visited...
-  Visited.insert(N);
+  Visited.insert(N);   // No recursion, insert into Visited...
 
   if (N->NodeType & DSNode::GlobalNode)
     return false; // Global nodes will be marked on their own
 
-  bool ChildrenAreAlive = false;
-
   for (unsigned i = 0, e = N->getSize(); i < e; i += DS::PointerSize)
-    ChildrenAreAlive |= markAliveIfCanReachAlive(N->getLink(i).getNode(),
-                                                 Alive, Visited);
-  if (ChildrenAreAlive)
-    N->markReachableNodes(Alive);
-  return ChildrenAreAlive;
+    if (CanReachAliveNodes(N->getLink(i).getNode(), Alive, Visited)) {
+      N->markReachableNodes(Alive);
+      return true;
+    }
+  return false;
 }
 
+// CallSiteUsesAliveArgs - Return true if the specified call site can reach any
+// alive nodes.
+//
 static bool CallSiteUsesAliveArgs(DSCallSite &CS, hash_set<DSNode*> &Alive,
                                   hash_set<DSNode*> &Visited) {
-  if (markAliveIfCanReachAlive(CS.getRetVal().getNode(), Alive, Visited) ||
-      markAliveIfCanReachAlive(CS.getCallee().getNode(), Alive, Visited))
+  if (CanReachAliveNodes(CS.getRetVal().getNode(), Alive, Visited) ||
+      CanReachAliveNodes(CS.getCallee().getNode(), Alive, Visited))
     return true;
   for (unsigned j = 0, e = CS.getNumPtrArgs(); j != e; ++j)
-    if (markAliveIfCanReachAlive(CS.getPtrArg(j).getNode(), Alive, Visited))
+    if (CanReachAliveNodes(CS.getPtrArg(j).getNode(), Alive, Visited))
       return true;
   return false;
 }
@@ -1051,7 +1049,7 @@ void DSGraph::removeDeadNodes(unsigned Flags) {
   //
   hash_set<DSNode*> Visited;
   for (unsigned i = 0, e = GlobalNodes.size(); i != e; ++i)
-    markAliveIfCanReachAlive(GlobalNodes[i].second, Alive, Visited);
+    CanReachAliveNodes(GlobalNodes[i].second, Alive, Visited);
 
   std::vector<bool> FCallsAlive(FunctionCalls.size());
   for (unsigned i = 0, e = FunctionCalls.size(); i != e; ++i)
