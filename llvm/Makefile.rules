@@ -144,7 +144,7 @@ ifdef KEEP_SYMBOLS
 STRIP =
 WARN_MSG =
 else
-STRIP = -s
+STRIP = -Wl,-x
 WARN_MSG = "(without symbols) "
 endif
 
@@ -174,9 +174,9 @@ Link     := $(PURIFY) $(CXX) -static
 else
 Link     := $(CXX)
 endif
-LinkG    := $(Link) -g  -L $(LIBDEBUG) $(STRIP)
-LinkO    := $(Link) -O3 -L $(LIBRELEASE)
-LinkP    := $(Link) -O3 -L $(LIBPROFILE) $(PROFILE)
+LinkG    := $(Link) -g  -L$(LIBDEBUG) $(STRIP)
+LinkO    := $(Link) -O3 -L$(LIBRELEASE)
+LinkP    := $(Link) -O3 -L$(LIBPROFILE) $(PROFILE)
 
 # Create one .o file from a bunch of .o files...
 Relink = ld -r
