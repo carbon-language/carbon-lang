@@ -709,7 +709,6 @@ public:
 //---------------------------------------------------------------------------
 
 class UltraSparc : public TargetMachine {
-private:
   UltraSparcInstrInfo instrInfo;
   UltraSparcSchedInfo schedInfo;
   UltraSparcRegInfo   regInfo;
@@ -725,6 +724,8 @@ public:
   virtual const MachineFrameInfo &getFrameInfo() const { return frameInfo; }
   virtual const MachineCacheInfo &getCacheInfo() const { return cacheInfo; }
   virtual const MachineOptInfo   &getOptInfo()   const { return optInfo; }
+
+  virtual void addPassesToEmitAssembly(PassManager &PM, std::ostream &Out);
 
   // getPrologEpilogCodeInserter - Inserts prolog/epilog code.
   virtual Pass* getPrologEpilogInsertionPass();
