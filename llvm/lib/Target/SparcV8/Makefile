@@ -7,7 +7,7 @@
 # 
 ##===----------------------------------------------------------------------===##
 LEVEL = ../../../..
-LIBRARYNAME = sparcv8
+LIBRARYNAME = LLVMSparcV8
 TARGET = SparcV8
 
 # Make sure that tblgen is run, first thing.
