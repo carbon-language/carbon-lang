@@ -430,7 +430,7 @@ if ($VERBOSE) { print "CVS HISTORY ANALYSIS STAGE\n"; }
 # stuff is stored.
 my (%AddedFiles, %ModifiedFiles, %RemovedFiles, %UsersCommitted, %UsersUpdated);
 
-my $DateRE = "[-:0-9 ]+\\+[0-9]+";
+my $DateRE = '[-/:0-9 ]+\+[0-9]+';
 
 # Loop over every record from the CVS history, filling in the hashes.
 foreach $File (@CVSHistory) {
@@ -443,6 +443,7 @@ foreach $File (@CVSHistory) {
     ($Type, $Date, $UID, $Rev, $Filename) = ($1, $2, $3, "", "$4/");
   } else {
     print "UNMATCHABLE: $File\n";
+    next;
   }
   # print "$File\nTy = $Type Date = '$Date' UID=$UID Rev=$Rev File = '$Filename'\n";
 
