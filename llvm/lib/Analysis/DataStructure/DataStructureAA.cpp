@@ -107,6 +107,7 @@ AliasAnalysis::AliasResult DSAA::alias(const Value *V1, unsigned V1Size,
         if (N1 != N2)
           return NoAlias;   // Completely different nodes.
 
+#if 0  // This does not correctly handle arrays!
         // Both point to the same node and same offset, and there is only one
         // physical memory object represented in the node, return must alias.
         //
@@ -115,6 +116,7 @@ AliasAnalysis::AliasResult DSAA::alias(const Value *V1, unsigned V1Size,
 
         if (O1 == O2 && isSinglePhysicalObject(N1))
           return MustAlias; // Exactly the same object & offset
+#endif
 
         // See if they point to different offsets...  if so, we may be able to
         // determine that they do not alias...
@@ -146,6 +148,7 @@ AliasAnalysis::AliasResult DSAA::alias(const Value *V1, unsigned V1Size,
 /// specified vector.
 ///
 void DSAA::getMustAliases(Value *P, std::vector<Value*> &RetVals) {
+#if 0    // This does not correctly handle arrays!
   // Currently the only must alias information we can provide is to say that
   // something is equal to a global value. If we already have a global value,
   // don't get worked up about it.
@@ -163,6 +166,6 @@ void DSAA::getMustAliases(Value *P, std::vector<Value*> &RetVals) {
         RetVals.push_back(N->getGlobals()[0]);
     }
   }
-
+#endif
   return getAnalysis<AliasAnalysis>().getMustAliases(P, RetVals);
 }
