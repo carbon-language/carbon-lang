@@ -152,10 +152,12 @@ void cfg::DominatorSet::calcPostDominatorSet(Method *M) {
 void cfg::DominatorSet::getAnalysisUsageInfo(Pass::AnalysisSet &Requires,
                                              Pass::AnalysisSet &Destroyed,
                                              Pass::AnalysisSet &Provided) {
-  if (isPostDominator())
+  if (isPostDominator()) {
+    Provided.push_back(PostDomID);
     Requires.push_back(UnifyMethodExitNodes::ID);
-  
-  Provided.push_back(ID);
+  } else {
+    Provided.push_back(ID);
+  }
 }
 
 
