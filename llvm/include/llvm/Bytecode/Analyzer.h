@@ -29,7 +29,8 @@ namespace llvm {
 /// results.
 /// @brief Bytecode Analysis results structure
 struct BytecodeAnalysis {
-  unsigned byteSize;            ///< The size of the bytecode file in bytes
+  std::string ModuleId;     ///< Identification of the module
+  unsigned byteSize;        ///< The size of the bytecode file in bytes
   unsigned numTypes;        ///< The number of types
   unsigned numValues;       ///< The number of values
   unsigned numFunctions;    ///< The number of functions defined
@@ -38,6 +39,8 @@ struct BytecodeAnalysis {
   unsigned numInstructions; ///< The number of instructions in all functions
   unsigned numBasicBlocks;  ///< The number of BBs in all functions
   unsigned numOperands;     ///< The number of BBs in all functions
+  unsigned numCmpctnTables; ///< The number of compaction tables
+  unsigned numSymTab;       ///< The number of symbol tables
   unsigned maxTypeSlot;     ///< The maximum slot number for types
   unsigned maxValueSlot;    ///< The maximum slot number for values
   double   density;         ///< Density of file (bytes/defs) 
