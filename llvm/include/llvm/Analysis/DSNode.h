@@ -72,10 +72,8 @@ public:
   DSNode(const DSNode &);
 
   ~DSNode() {
-#ifndef NDEBUG
-    dropAllReferences();  // Only needed to satisfy assertion checks...
+    dropAllReferences();
     assert(Referrers.empty() && "Referrers to dead node exist!");
-#endif
   }
 
   // Iterator for graph interface...
