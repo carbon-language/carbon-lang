@@ -174,7 +174,7 @@ bool UltraSparc::addPassesToEmitAssembly(PassManager &PM, std::ostream &Out)
   if (!DisablePeephole)
     PM.add(createPeepholeOptsPass(*this));
 
-  PM.add(MappingInfoForFunction(Out));  
+  PM.add(getMappingInfoCollector(Out));  
 
   // Output assembly language to the .s file.  Assembly emission is split into
   // two parts: Function output and Global value output.  This is because
