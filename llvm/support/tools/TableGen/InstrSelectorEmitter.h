@@ -20,7 +20,7 @@ class InstrSelectorEmitter;
 ///
 struct NodeType {
   enum ArgResultTypes {
-    // Both argument and return types...
+    Any,            // No constraint on type
     Val,            // A non-void type
     Arg0,           // Value matches the type of Arg0
     Arg1,           // Value matches the type of Arg1

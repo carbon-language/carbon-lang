@@ -14,6 +14,7 @@
 
 NodeType::ArgResultTypes NodeType::Translate(Record *R) {
   const std::string &Name = R->getName();
+  if (Name == "DNVT_any")  return Any;
   if (Name == "DNVT_void") return Void;
   if (Name == "DNVT_val" ) return Val;
   if (Name == "DNVT_arg0") return Arg0;
@@ -204,6 +205,8 @@ TreePatternNode *Pattern::ParseTreePattern(DagInit *Dag) {
       New = new TreePatternNode(DI);
       // If it's a regclass or something else known, set the type.
       New->setType(getIntrinsicType(DI->getDef()));
+    } else if (DagInit *DI = dynamic_cast<DagInit*>(Arg)) {
+      New = ParseTreePattern(DI);
     } else {
       Arg->dump();
       error("Unknown leaf value for tree pattern!");
@@ -276,6 +279,7 @@ bool Pattern::InferTypes(TreePatternNode *N, bool &MadeChange) {
     AnyUnset |= InferTypes(Child, MadeChange);
 
     switch (NT.ArgTypes[i]) {
+    case NodeType::Any: break;
     case NodeType::I8:
       MadeChange |= Child->updateNodeType(MVT::i1, TheRecord->getName());
       break;
@@ -301,6 +305,7 @@ bool Pattern::InferTypes(TreePatternNode *N, bool &MadeChange) {
 
   // See if we can infer anything about the return type now...
   switch (NT.ResultType) {
+  case NodeType::Any: break;
   case NodeType::Void:
     MadeChange |= N->updateNodeType(MVT::isVoid, TheRecord->getName());
     break;
@@ -867,9 +872,10 @@ void InstrSelectorEmitter::PrintExpanderOperand(Init *Arg,
                                                 std::ostream &OS) {
   if (DefInit *DI = dynamic_cast<DefInit*>(Arg)) {
     Record *Arg = DI->getDef();
-    if (!ArgDeclNode->isLeaf())
+    if (!ArgDeclNode->isLeaf() && ArgDeclNode->getNumChildren() != 0)
       P->error("Expected leaf node as argument!");
-    Record *ArgDecl = ArgDeclNode->getValueRecord();
+    Record *ArgDecl = ArgDeclNode->isLeaf() ? ArgDeclNode->getValueRecord() :
+                      ArgDeclNode->getOperator();
     if (Arg->isSubClassOf("Register")) {
       // This is a physical register reference... make sure that the instruction
       // requested a register!
@@ -896,6 +902,10 @@ void InstrSelectorEmitter::PrintExpanderOperand(Init *Arg,
       if (!PrintArg) P->error("Cannot define a new frameidx value!");
       OS << ".addFrameIndex(" << NameVar << ")";
       return;
+    } else if (Arg->getName() == "basicblock") {
+      if (!PrintArg) P->error("Cannot define a new basicblock value!");
+      OS << ".addMBB(" << NameVar << ")";
+      return;
     }
     P->error("Unknown operand type '" + Arg->getName() + "' to expander!");
   } else if (IntInit *II = dynamic_cast<IntInit*>(Arg)) {
@@ -910,7 +920,7 @@ void InstrSelectorEmitter::PrintExpanderOperand(Init *Arg,
     } else {
       if (ArgDeclNode->isLeaf() || ArgDeclNode->getOperator()->getName()!="imm")
         P->error("Illegal immediate int value '" + itostr(II->getValue()) +
-               "' operand!");
+                 "' operand!");
       OS << ".addZImm(" << II->getValue() << ")";
     }
     return;
@@ -1213,7 +1223,8 @@ void InstrSelectorEmitter::run(std::ostream &OS) {
           for (unsigned IN = 0, e = Insts->getSize(); IN != e; ++IN) {
             DagInit *DIInst = dynamic_cast<DagInit*>(Insts->getElement(IN));
             if (!DIInst) P->error("Result list must contain instructions!");
-            Pattern *InstPat = getPattern(DIInst->getNodeType());
+            Record *InstRec  = DIInst->getNodeType();
+            Pattern *InstPat = getPattern(InstRec);
             if (!InstPat || InstPat->getPatternType() != Pattern::Instruction)
               P->error("Instruction list must contain Instruction patterns!");
             
@@ -1225,10 +1236,10 @@ void InstrSelectorEmitter::run(std::ostream &OS) {
 
             // Start emission of the instruction...
             OS << "    BuildMI(MBB, " << Target.getName() << "::"
-               << InstPat->getRecord()->getName() << ", "
+               << InstRec->getName() << ", "
                << DIInst->getNumArgs()-hasResult;
             // Emit register result if necessary..
-            if (Record *R = InstPat->getResult()) {
+            if (hasResult) {
               std::string ArgNameVal =
                 getArgName(P, DIInst->getArgName(0), Operands);
               PrintExpanderOperand(DIInst->getArg(0), ArgNameVal,
