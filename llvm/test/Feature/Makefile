@@ -37,3 +37,9 @@ Output/%.s: Output/%.bc $(LLC)
 	@echo "======== Generating assembly code for $<"
 	$(LLC) -f $(LLCFLAGS) $< -o $@ || \
                  ( rm -f $@; $(FAILURE) $@ )
+
+Output/%: Output/%.s $(LLC)
+	@echo "======== Generating SPARC executable for $<"
+	$(CC) $(CFLAGS) $< -o $@ || \
+                 ( rm -f $@; $(FAILURE) $@ )
+
