@@ -19,7 +19,7 @@
 enum ActionType {
   PrintRecords,
   GenEmitter,
-  GenRegister, GenRegisterHeader,
+  GenRegisterEnums, GenRegister, GenRegisterHeader,
   PrintEnums,
   Parse,
 };
@@ -31,6 +31,8 @@ namespace {
                                "Print all records to stdout (default)"),
                     clEnumValN(GenEmitter, "gen-emitter",
                                "Generate machine code emitter"),
+                    clEnumValN(GenRegisterEnums, "gen-register-enums",
+                               "Generate enum values for registers"),
                     clEnumValN(GenRegister, "gen-register-desc",
                                "Generate a register info description"),
                     clEnumValN(GenRegisterHeader, "gen-register-desc-header",
@@ -410,6 +412,9 @@ int main(int argc, char **argv) {
       break;
     case GenEmitter:
       CodeEmitterGen(Records).run(*Out);
+      break;
+    case GenRegisterEnums:
+      RegisterInfoEmitter(Records).runEnums(*Out);
       break;
     case GenRegister:
       RegisterInfoEmitter(Records).run(*Out);

@@ -22,6 +22,9 @@ public:
 
   // runHeader - Emit a header fragment for the register info emitter.
   void runHeader(std::ostream &o);
+
+  // runEnums - Print out enum values for all of the registers.
+  void runEnums(std::ostream &o);
 private:
 };
 
