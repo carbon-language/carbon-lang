@@ -6,7 +6,7 @@ USEDLIBS = bcreader bcwriter instrument profpaths \
 	   livevar scalaropts \
 	   ipo ipa.a datastructure.a transforms target.a analysis \
            transformutils vmcore support
-TOOLLINKOPTS = -ldl
+TOOLLINKOPTS = -ldl $(ExportSymbols)
 
 include $(LEVEL)/Makefile.common
 
