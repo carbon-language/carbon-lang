@@ -299,12 +299,7 @@ void LoadVN::getEqualNumberNodes(Value *V,
   bool LoadInvalidatedInBBBefore = false;
   for (BasicBlock::iterator I = LI; I != LoadBB->begin(); ) {
     --I;
-    // If this instruction is a candidate load before LI, we know there are no
-    // invalidating instructions between it and LI, so they have the same value
-    // number.
-    if (isa<LoadInst>(I) && cast<LoadInst>(I)->getOperand(0) == LoadPtr) {
-      RetVals.push_back(I);
-    } else if (I == LoadPtr) {
+    if (I == LoadPtr) {
       // If we run into an allocation of the value being loaded, then the
       // contents are not initialized.
       if (isa<AllocationInst>(I))
@@ -314,14 +309,21 @@ void LoadVN::getEqualNumberNodes(Value *V,
       // loaded value cannot occur before this block.
       LoadInvalidatedInBBBefore = true;
       break;
+    } else if (LoadInst *LI = dyn_cast<LoadInst>(I)) {
+      // If this instruction is a candidate load before LI, we know there are no
+      // invalidating instructions between it and LI, so they have the same
+      // value number.
+      if (LI->getOperand(0) == LoadPtr && !LI->isVolatile())
+        RetVals.push_back(I);
     }
-
+    
     if (AA.getModRefInfo(I, LoadPtr, LoadSize) & AliasAnalysis::Mod) {
       // If the invalidating instruction is a store, and its in our candidate
       // set, then we can do store-load forwarding: the load has the same value
       // # as the stored value.
-      if (isa<StoreInst>(I) && I->getOperand(1) == LoadPtr)
-        RetVals.push_back(I->getOperand(0));
+      if (StoreInst *SI = dyn_cast<StoreInst>(I))
+        if (SI->getOperand(1) == LoadPtr)
+          RetVals.push_back(I->getOperand(0));
 
       LoadInvalidatedInBBBefore = true;
       break;
