@@ -153,14 +153,16 @@ ISel::visitShiftInst (ShiftInst & I)
 {
   unsigned Op0r = getReg (I.getOperand (0));
   unsigned DestReg = getReg (I);
-  unsigned operandSize = I.getOperand (0)->getType ()->getPrimitiveSize ();
+  unsigned operandSize = I.getType ()->getPrimitiveSize ();
   bool isRightShift = (I.getOpcode () == Instruction::Shr);
   bool isOperandUnsigned = I.getType ()->isUnsigned ();
-  bool isConstantShiftAmount = (isa <ConstantUInt> (I.getOperand (1)));
+
   if (ConstantUInt *CUI = dyn_cast <ConstantUInt> (I.getOperand (1)))
     {
-      // The shift amount is constant. Get its value.
-      uint64_t shAmt = CUI->getValue ();
+      // The shift amount is constant, guaranteed to be a ubyte. Get its value.
+      assert(CUI->getType() == Type::UByteTy && "Shift amount not a ubyte?");
+      unsigned char shAmt = CUI->getValue();
+
       // Emit: <insn> reg, shamt  (shift-by-immediate opcode "ir" form.)
       if (isRightShift)
 	{
