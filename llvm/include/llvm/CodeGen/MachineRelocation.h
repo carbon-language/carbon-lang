@@ -27,15 +27,17 @@ class GlobalValue;
 ///
 /// A relocation is made up of the following logical portions:
 ///   1. An offset in the machine code buffer, the location to modify.
-///   2. A target specific relocation type (a number from 0 to 127).
+///   2. A target specific relocation type (a number from 0 to 63).
 ///   3. A symbol being referenced, either as a GlobalValue* or as a string.
 ///   4. An optional constant value to be added to the reference.
+///   5. A bit, CanRewrite, which indicates to the JIT that a function stub is
+///      not needed for the relocation.
 ///
 class MachineRelocation {
   /// OffsetTypeExternal - The low 24-bits of this value is the offset from the
   /// start of the code buffer of the relocation to perform.  Bit 24 of this is
-  /// set if Target should use ExtSym instead of GV, and the high 7 bits are to
-  /// hold the relocation type.
+  /// set if Target should use ExtSym instead of GV, Bit 25 is the CanRewrite
+  /// bit, and the high 6 bits hold the relocation type.
   unsigned OffsetTypeExternal;
   union {
     GlobalValue *GV;     // If this is a pointer to an LLVM global
@@ -45,19 +47,21 @@ class MachineRelocation {
   intptr_t ConstantVal;
 public:
   MachineRelocation(unsigned Offset, unsigned RelocationType, GlobalValue *GV,
-             intptr_t cst = 0)
-    : OffsetTypeExternal(Offset + (RelocationType << 25)), ConstantVal(cst) {
+                    intptr_t cst = 0, bool DoesntNeedFunctionStub = 0)
+    : OffsetTypeExternal(Offset + (RelocationType << 26)), ConstantVal(cst) {
     assert((Offset & ~((1 << 24)-1)) == 0 && "Code offset too large!");
-    assert((RelocationType & ~127) == 0 && "Relocation type too large!");
+    assert((RelocationType & ~63) == 0 && "Relocation type too large!");
     Target.GV = GV;
+    if (DoesntNeedFunctionStub)
+      OffsetTypeExternal |= 1 << 25;
   }
 
   MachineRelocation(unsigned Offset, unsigned RelocationType, const char *ES,
-             intptr_t cst = 0)
-    : OffsetTypeExternal(Offset + (1 << 24) + (RelocationType << 25)),
+                    intptr_t cst = 0)
+    : OffsetTypeExternal(Offset + (1 << 24) + (RelocationType << 26)),
     ConstantVal(cst) {
     assert((Offset & ~((1 << 24)-1)) == 0 && "Code offset too large!");
-    assert((RelocationType & ~127) == 0 && "Relocation type too large!");
+    assert((RelocationType & ~63) == 0 && "Relocation type too large!");
     Target.ExtSym = ES;
   }
 
@@ -70,7 +74,7 @@ public:
   /// getRelocationType - Return the target-specific relocation ID for this
   /// relocation.
   unsigned getRelocationType() const {
-    return OffsetTypeExternal >> 25;
+    return OffsetTypeExternal >> 26;
   }
 
   /// getConstantVal - Get the constant value associated with this relocation.
@@ -90,6 +94,15 @@ public:
   ///
   bool isString() const {
     return !isGlobalValue();
+  }
+
+  /// doesntNeedFunctionStub - This function returns true if the JIT for this
+  /// target is capable of directly handling the relocated instruction without
+  /// using a stub function.  It is always conservatively correct for this flag
+  /// to be false, but targets can improve their compilation callback functions
+  /// to handle more general cases if they want improved performance.
+  bool doesntNeedFunctionStub() const {
+    return (OffsetTypeExternal & (1 << 25)) != 0;
   }
 
   /// getGlobalValue - If this is a global value reference, return the
