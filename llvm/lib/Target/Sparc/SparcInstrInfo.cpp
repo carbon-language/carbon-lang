@@ -70,11 +70,8 @@ CreateSETUWConst(const TargetMachine& target, uint32_t C,
       else
         { // unsigned or small signed value that fits in simm13 field of OR
           assert(smallNegValue || (C & ~MAXSIMM) == 0);
-          miOR = new MachineInstr(OR);
-          miOR->SetMachineOperandReg(0, target.getRegInfo().getZeroRegNum());
-          miOR->SetMachineOperandConst(1, MachineOperand::MO_SignExtendedImmed,
-                                       sC);
-          miOR->SetMachineOperandVal(2,MachineOperand::MO_VirtualRegister,dest);
+          miOR = BuildMI(OR, 3).addMReg(target.getRegInfo().getZeroRegNum())
+                               .addSImm(sC).addRegDef(dest);
         }
       mvec.push_back(miOR);
     }
@@ -180,7 +177,7 @@ CreateSETXLabel(const TargetMachine& target,
   
   MachineInstr* MI;
   
-  MI = BuildMI(SETHI, 2).addReg(val).addRegDef(tmpReg);
+  MI = BuildMI(SETHI, 2).addPCDisp(val).addRegDef(tmpReg);
   MI->setOperandHi64(0);
   mvec.push_back(MI);
   
@@ -501,11 +498,10 @@ UltraSparcInstrInfo::CreateCodeToCopyIntToFloat(const TargetMachine& target,
         CreateZeroExtensionInstructions(target, F, val, storeVal, 8*srcSize,
                                         mvec, mcfi);
     }
-  MachineInstr* store=new MachineInstr(ChooseStoreInstruction(storeType));
-  store->SetMachineOperandVal(0, MachineOperand::MO_VirtualRegister, storeVal);
-  store->SetMachineOperandReg(1, target.getRegInfo().getFramePointer());
-  store->SetMachineOperandConst(2,MachineOperand::MO_SignExtendedImmed,offset);
-  mvec.push_back(store);
+
+  unsigned FPReg = target.getRegInfo().getFramePointer();
+  mvec.push_back(BuildMI(ChooseStoreInstruction(storeType), 3)
+                 .addReg(storeVal).addMReg(FPReg).addSImm(offset));
 
   // Load instruction loads [%fp+offset] to `dest'.
   // The type of the load opCode is the floating point type that matches the
@@ -513,11 +509,8 @@ UltraSparcInstrInfo::CreateCodeToCopyIntToFloat(const TargetMachine& target,
   // On SparcV9: float for int or smaller, double for long.
   // 
   const Type* loadType = (srcSize <= 4)? Type::FloatTy : Type::DoubleTy;
-  MachineInstr* load = new MachineInstr(ChooseLoadInstruction(loadType));
-  load->SetMachineOperandReg(0, target.getRegInfo().getFramePointer());
-  load->SetMachineOperandConst(1, MachineOperand::MO_SignExtendedImmed,offset);
-  load->SetMachineOperandVal(2, MachineOperand::MO_VirtualRegister, dest);
-  mvec.push_back(load);
+  mvec.push_back(BuildMI(ChooseLoadInstruction(loadType), 3)
+                 .addMReg(FPReg).addSImm(offset).addRegDef(dest));
 }
 
 // Similarly, create an instruction sequence to copy an FP register
@@ -543,14 +536,13 @@ UltraSparcInstrInfo::CreateCodeToCopyFloatToInt(const TargetMachine& target,
 
   int offset = MachineFunction::get(F).getInfo()->allocateLocalVar(val); 
 
+  unsigned FPReg = target.getRegInfo().getFramePointer();
+
   // Store instruction stores `val' to [%fp+offset].
   // The store opCode is based only the source value being copied.
   // 
-  MachineInstr* store=new MachineInstr(ChooseStoreInstruction(opTy));
-  store->SetMachineOperandVal(0, MachineOperand::MO_VirtualRegister, val);
-  store->SetMachineOperandReg(1, target.getRegInfo().getFramePointer());
-  store->SetMachineOperandConst(2,MachineOperand::MO_SignExtendedImmed,offset);
-  mvec.push_back(store);
+  mvec.push_back(BuildMI(ChooseStoreInstruction(opTy), 3)
+                 .addReg(val).addMReg(FPReg).addSImm(offset));
 
   // Load instruction loads [%fp+offset] to `dest'.
   // The type of the load opCode is the integer type that matches the
@@ -560,11 +552,8 @@ UltraSparcInstrInfo::CreateCodeToCopyFloatToInt(const TargetMachine& target,
   // ensure correct sign-extension for UByte, UShort or UInt:
   // 
   const Type* loadTy = (opTy == Type::FloatTy)? Type::IntTy : Type::LongTy;
-  MachineInstr* load = new MachineInstr(ChooseLoadInstruction(loadTy));
-  load->SetMachineOperandReg(0, target.getRegInfo().getFramePointer());
-  load->SetMachineOperandConst(1, MachineOperand::MO_SignExtendedImmed,offset);
-  load->SetMachineOperandVal(2, MachineOperand::MO_VirtualRegister, dest);
-  mvec.push_back(load);
+  mvec.push_back(BuildMI(ChooseLoadInstruction(loadTy), 3).addMReg(FPReg)
+                 .addSImm(offset).addRegDef(dest));
 }
 
 

@@ -26,6 +26,16 @@
 #include <math.h>
 using std::vector;
 
+static inline void Add3OperandInstr(unsigned Opcode, InstructionNode* Node,
+                                    vector<MachineInstr*>& mvec) {
+  mvec.push_back(BuildMI(Opcode, 3).addReg(Node->leftChild()->getValue())
+                                   .addReg(Node->rightChild()->getValue())
+                                   .addRegDef(Node->getValue()));
+}
+
+
+
+
 //************************ Internal Functions ******************************/
 
 
@@ -716,25 +726,26 @@ ChooseDivInstruction(TargetMachine &target,
 }
 
 
-// Return NULL if we cannot exploit constant to create a cheaper instruction
+// Return if we cannot exploit constant to create a cheaper instruction
 static inline void
 CreateDivConstInstruction(TargetMachine &target,
                           const InstructionNode* instrNode,
                           vector<MachineInstr*>& mvec)
 {
-  MachineInstr* minstr1 = NULL;
-  MachineInstr* minstr2 = NULL;
-  
+  Value* LHS  = instrNode->leftChild()->getValue();
   Value* constOp = ((InstrTreeNode*) instrNode->rightChild())->getValue();
-  if (! isa<Constant>(constOp))
+  if (!isa<Constant>(constOp))
     return;
+
+  Value* DestVal = instrNode->getValue();
+  unsigned ZeroReg = target.getRegInfo().getZeroRegNum();
   
   // Cases worth optimizing are:
   // (1) Divide by 1 for any type: replace with copy (ADD or FMOV)
   // (2) Divide by 2^x for integer types: replace with SR[L or A]{X}
   // 
   const Type* resultType = instrNode->getInstruction()->getType();
-  
+ 
   if (resultType->isInteger())
     {
       unsigned pow;
@@ -743,39 +754,25 @@ CreateDivConstInstruction(TargetMachine &target,
       if (isValidConst)
         {
           bool needNeg = false;
-          if (C < 0)
-            {
-              needNeg = true;
-              C = -C;
-            }
+          if (C < 0) {
+            needNeg = true;
+            C = -C;
+          }
           
-          if (C == 1)
-            {
-              minstr1 = new MachineInstr(ADD);
-              minstr1->SetMachineOperandVal(0,
-                                           MachineOperand::MO_VirtualRegister,
-                                           instrNode->leftChild()->getValue());
-              minstr1->SetMachineOperandReg(1,
-                                        target.getRegInfo().getZeroRegNum());
-            }
-          else if (isPowerOf2(C, pow))
-            {
-              MachineOpCode opCode= ((resultType->isSigned())
-                                     ? (resultType==Type::LongTy)? SRAX : SRA
-                                     : (resultType==Type::LongTy)? SRLX : SRL);
-              minstr1 = new MachineInstr(opCode);
-              minstr1->SetMachineOperandVal(0,
-                                           MachineOperand::MO_VirtualRegister,
-                                           instrNode->leftChild()->getValue());
-              minstr1->SetMachineOperandConst(1,
-                                          MachineOperand::MO_UnextendedImmed,
-                                          pow);
-            }
+          if (C == 1) {
+            mvec.push_back(BuildMI(ADD, 3).addReg(LHS).addMReg(ZeroReg)
+                                          .addRegDef(DestVal));
+          } else if (isPowerOf2(C, pow)) {
+            unsigned opCode= ((resultType->isSigned())
+                              ? (resultType==Type::LongTy) ? SRAX : SRA
+                              : (resultType==Type::LongTy) ? SRLX : SRL);
+            mvec.push_back(BuildMI(opCode, 3).addReg(LHS).addZImm(pow)
+                                             .addRegDef(DestVal));
+          }
           
-          if (minstr1 && needNeg)
+          if (needNeg && (C == 1 || isPowerOf2(C, pow)))
             { // insert <reg = SUB 0, reg> after the instr to flip the sign
-              minstr2 = CreateIntNegInstruction(target,
-                                                   instrNode->getValue());
+              mvec.push_back(CreateIntNegInstruction(target, DestVal));
             }
         }
     }
@@ -786,28 +783,14 @@ CreateDivConstInstruction(TargetMachine &target,
           double dval = FPC->getValue();
           if (fabs(dval) == 1)
             {
-              bool needNeg = (dval < 0);
+              unsigned opCode = 
+                (dval < 0) ? (resultType == Type::FloatTy? FNEGS : FNEGD)
+                           : (resultType == Type::FloatTy? FMOVS : FMOVD);
               
-              MachineOpCode opCode = needNeg
-                ? (resultType == Type::FloatTy? FNEGS : FNEGD)
-                : (resultType == Type::FloatTy? FMOVS : FMOVD);
-              
-              minstr1 = new MachineInstr(opCode);
-              minstr1->SetMachineOperandVal(0,
-                                           MachineOperand::MO_VirtualRegister,
-                                           instrNode->leftChild()->getValue());
+              mvec.push_back(BuildMI(opCode, 2).addReg(LHS).addRegDef(DestVal));
             } 
         }
     }
-  
-  if (minstr1 != NULL)
-    minstr1->SetMachineOperandVal(2, MachineOperand::MO_VirtualRegister,
-                                 instrNode->getValue());   
-  
-  if (minstr1)
-    mvec.push_back(minstr1);
-  if (minstr2)
-    mvec.push_back(minstr2);
 }
 
 
@@ -870,20 +853,15 @@ CreateCodeForVariableSizeAlloca(const TargetMachine& target,
                      target.getFrameInfo().getDynamicAreaOffset(mcInfo,growUp));
   assert(! growUp && "Has SPARC v9 stack frame convention changed?");
 
+  unsigned SPReg = target.getRegInfo().getStackPointer();
+
   // Instruction 2: sub %sp, totalSizeVal -> %sp
-  M = new MachineInstr(SUB);
-  M->SetMachineOperandReg(0, target.getRegInfo().getStackPointer());
-  M->SetMachineOperandVal(1, MachineOperand::MO_VirtualRegister, totalSizeVal);
-  M->SetMachineOperandReg(2, target.getRegInfo().getStackPointer());
-  getMvec.push_back(M);
+  getMvec.push_back(BuildMI(SUB, 3).addMReg(SPReg).addReg(totalSizeVal)
+                                   .addMReg(SPReg,MOTy::Def));
 
   // Instruction 3: add %sp, frameSizeBelowDynamicArea -> result
-  M = new MachineInstr(ADD);
-  M->SetMachineOperandReg(0, target.getRegInfo().getStackPointer());
-  M->SetMachineOperandVal(1, MachineOperand::MO_VirtualRegister,
-			  dynamicAreaOffset);
-  M->SetMachineOperandVal(2, MachineOperand::MO_VirtualRegister, result);
-  getMvec.push_back(M);
+  getMvec.push_back(BuildMI(ADD, 3).addMReg(SPReg).addReg(dynamicAreaOffset)
+                                   .addRegDef(result));
 }        
 
 
@@ -923,12 +901,9 @@ CreateCodeForFixedSizeAlloca(const TargetMachine& target,
   ConstantSInt* offsetVal = ConstantSInt::get(Type::IntTy, offsetFromFP);
   
   // Instruction 1: add %fp, offsetFromFP -> result
-  MachineInstr* M = new MachineInstr(ADD);
-  M->SetMachineOperandReg(0, target.getRegInfo().getFramePointer());
-  M->SetMachineOperandVal(1, MachineOperand::MO_VirtualRegister, offsetVal); 
-  M->SetMachineOperandVal(2, MachineOperand::MO_VirtualRegister, result);
-  
-  getMvec.push_back(M);
+  unsigned FPReg = target.getRegInfo().getFramePointer();
+  getMvec.push_back(BuildMI(ADD, 3).addMReg(FPReg).addReg(offsetVal)
+                                   .addRegDef(result));
 }
 
 
@@ -949,13 +924,12 @@ CreateCodeForFixedSizeAlloca(const TargetMachine& target,
 //------------------------------------------------------------------------ 
 
 static void
-SetOperandsForMemInstr(vector<MachineInstr*>& mvec,
+SetOperandsForMemInstr(unsigned Opcode,
+                       vector<MachineInstr*>& mvec,
                        InstructionNode* vmInstrNode,
                        const TargetMachine& target)
 {
   Instruction* memInst = vmInstrNode->getInstruction();
-  vector<MachineInstr*>::iterator mvecI = mvec.end() - 1;
-
   // Index vector, ptr value, and flag if all indices are const.
   vector<Value*> idxVec;
   bool allConstantIndices;
@@ -1020,12 +994,8 @@ SetOperandsForMemInstr(vector<MachineInstr*>& mvec,
                                mulVec, MachineCodeForInstruction::get(memInst),
                                INVALID_MACHINE_OPCODE);
 
-          // Insert mulVec[] before *mvecI in mvec[] and update mvecI
-          // to point to the same instruction it pointed to before.
           assert(mulVec.size() > 0 && "No multiply code created?");
-          vector<MachineInstr*>::iterator oldMvecI = mvecI;
-          for (unsigned i=0, N=mulVec.size(); i < N; ++i)
-            mvecI = mvec.insert(mvecI, mulVec[i]) + 1;  // pts to mem instr
+          mvec.insert(mvec.end(), mulVec.begin(), mulVec.end());
 
           valueForRegOffset = addr;
         }
@@ -1042,33 +1012,23 @@ SetOperandsForMemInstr(vector<MachineInstr*>& mvec,
   //   Operand 0 is ptr, operand 1 is offset, operand 2 is result.
   // 
   unsigned offsetOpNum, ptrOpNum;
-  if (memInst->getOpcode() == Instruction::Store)
-    {
-      (*mvecI)->SetMachineOperandVal(0, MachineOperand::MO_VirtualRegister,
-                                     vmInstrNode->leftChild()->getValue());
-      ptrOpNum = 1;
-      offsetOpNum = 2;
-    }
-  else
-    {
-      ptrOpNum = 0;
-      offsetOpNum = 1;
-      (*mvecI)->SetMachineOperandVal(2, MachineOperand::MO_VirtualRegister,
-                                     memInst);
-    }
-  
-  (*mvecI)->SetMachineOperandVal(ptrOpNum, MachineOperand::MO_VirtualRegister,
-                                 ptrVal);
-  
-  if (offsetOpType == MachineOperand::MO_VirtualRegister)
-    {
-      assert(valueForRegOffset != NULL);
-      (*mvecI)->SetMachineOperandVal(offsetOpNum, offsetOpType,
-                                     valueForRegOffset); 
-    }
-  else
-    (*mvecI)->SetMachineOperandConst(offsetOpNum, offsetOpType,
-                                     smallConstOffset);
+  MachineInstr *MI;
+  if (memInst->getOpcode() == Instruction::Store) {
+    if (offsetOpType == MachineOperand::MO_VirtualRegister)
+      MI = BuildMI(Opcode, 3).addReg(vmInstrNode->leftChild()->getValue())
+                             .addReg(ptrVal).addReg(valueForRegOffset);
+    else
+      MI = BuildMI(Opcode, 3).addReg(vmInstrNode->leftChild()->getValue())
+                             .addReg(ptrVal).addSImm(smallConstOffset);
+  } else {
+    if (offsetOpType == MachineOperand::MO_VirtualRegister)
+      MI = BuildMI(Opcode, 3).addReg(ptrVal).addReg(valueForRegOffset)
+                             .addRegDef(memInst);
+    else
+      MI = BuildMI(Opcode, 3).addReg(ptrVal).addSImm(smallConstOffset)
+                             .addRegDef(memInst);
+  }
+  mvec.push_back(MI);
 }
 
 
@@ -1265,21 +1225,20 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         
       case 3:	// stmt:   Store(reg,reg)
       case 4:	// stmt:   Store(reg,ptrreg)
-        mvec.push_back(new MachineInstr(
-                         ChooseStoreInstruction(
-                            subtreeRoot->leftChild()->getValue()->getType())));
-        SetOperandsForMemInstr(mvec, subtreeRoot, target);
+        SetOperandsForMemInstr(ChooseStoreInstruction(
+                        subtreeRoot->leftChild()->getValue()->getType()),
+                               mvec, subtreeRoot, target);
         break;
 
       case 5:	// stmt:   BrUncond
-        M = new MachineInstr(BA);
-        M->SetMachineOperandVal(0, MachineOperand::MO_PCRelativeDisp,
-             cast<BranchInst>(subtreeRoot->getInstruction())->getSuccessor(0));
-        mvec.push_back(M);
+        {
+          BranchInst *BI = cast<BranchInst>(subtreeRoot->getInstruction());
+          mvec.push_back(BuildMI(BA, 1).addPCDisp(BI->getSuccessor(0)));
         
-        // delay slot
-        mvec.push_back(new MachineInstr(NOP));
-        break;
+          // delay slot
+          mvec.push_back(BuildMI(NOP, 0));
+          break;
+        }
 
       case 206:	// stmt:   BrCond(setCCconst)
       { // setCCconst => boolean was computed with `%b = setCC type reg1 const'
@@ -1308,25 +1267,19 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
             
             BranchInst* brInst=cast<BranchInst>(subtreeRoot->getInstruction());
             
-            M = new MachineInstr(ChooseBprInstruction(subtreeRoot));
-            M->SetMachineOperandVal(0, MachineOperand::MO_VirtualRegister,
-                                    setCCNode->leftChild()->getValue());
-            M->SetMachineOperandVal(1, MachineOperand::MO_PCRelativeDisp,
-                                    brInst->getSuccessor(0));
+            M = BuildMI(ChooseBprInstruction(subtreeRoot), 2)
+                                .addReg(setCCNode->leftChild()->getValue())
+                                .addPCDisp(brInst->getSuccessor(0));
             mvec.push_back(M);
             
             // delay slot
-            mvec.push_back(new MachineInstr(NOP));
+            mvec.push_back(BuildMI(NOP, 0));
 
             // false branch
-            M = new MachineInstr(BA);
-            M->SetMachineOperandVal(0, MachineOperand::MO_PCRelativeDisp,
-                                    brInst->getSuccessor(1));
-            mvec.push_back(M);
+            mvec.push_back(BuildMI(BA, 1).addPCDisp(brInst->getSuccessor(1)));
             
             // delay slot
-            mvec.push_back(new MachineInstr(NOP));
-            
+            mvec.push_back(BuildMI(NOP, 0));
             break;
           }
         // ELSE FALL THROUGH
@@ -1340,28 +1293,22 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         // 
         BranchInst* brInst = cast<BranchInst>(subtreeRoot->getInstruction());
         bool isFPBranch;
-        M = new MachineInstr(ChooseBccInstruction(subtreeRoot, isFPBranch));
-
+        unsigned Opcode = ChooseBccInstruction(subtreeRoot, isFPBranch);
         Value* ccValue = GetTmpForCC(subtreeRoot->leftChild()->getValue(),
                                      brInst->getParent()->getParent(),
                                      isFPBranch? Type::FloatTy : Type::IntTy);
-        
-        M->SetMachineOperandVal(0, MachineOperand::MO_CCRegister, ccValue);
-        M->SetMachineOperandVal(1, MachineOperand::MO_PCRelativeDisp,
-                                   brInst->getSuccessor(0));
+        M = BuildMI(Opcode, 2).addCCReg(ccValue)
+                              .addPCDisp(brInst->getSuccessor(0));
         mvec.push_back(M);
 
         // delay slot
-        mvec.push_back(new MachineInstr(NOP));
+        mvec.push_back(BuildMI(NOP, 0));
 
         // false branch
-        M = new MachineInstr(BA);
-        M->SetMachineOperandVal(0, MachineOperand::MO_PCRelativeDisp,
-                                   brInst->getSuccessor(1));
-        mvec.push_back(M);
+        mvec.push_back(BuildMI(BA, 1).addPCDisp(brInst->getSuccessor(1)));
 
         // delay slot
-        mvec.push_back(new MachineInstr(NOP));
+        mvec.push_back(BuildMI(NOP, 0));
         break;
       }
         
@@ -1372,13 +1319,12 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
           cast<Constant>(subtreeRoot->leftChild()->getValue());
         unsigned dest = cast<ConstantBool>(constVal)->getValue()? 0 : 1;
         
-        M = new MachineInstr(BA);
-        M->SetMachineOperandVal(0, MachineOperand::MO_PCRelativeDisp,
+        M = BuildMI(BA, 1).addPCDisp(
           cast<BranchInst>(subtreeRoot->getInstruction())->getSuccessor(dest));
         mvec.push_back(M);
         
         // delay slot
-        mvec.push_back(new MachineInstr(NOP));
+        mvec.push_back(BuildMI(NOP, 0));
         break;
       }
         
@@ -1386,24 +1332,19 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
       { // boolreg   => boolean is stored in an existing register.
         // Just use the branch-on-integer-register instruction!
         // 
-        M = new MachineInstr(BRNZ);
-        M->SetMachineOperandVal(0, MachineOperand::MO_VirtualRegister,
-                                      subtreeRoot->leftChild()->getValue());
-        M->SetMachineOperandVal(1, MachineOperand::MO_PCRelativeDisp,
-              cast<BranchInst>(subtreeRoot->getInstruction())->getSuccessor(0));
+        BranchInst *BI = cast<BranchInst>(subtreeRoot->getInstruction());
+        M = BuildMI(BRNZ, 2).addReg(subtreeRoot->leftChild()->getValue())
+          .addPCDisp(BI->getSuccessor(0));
         mvec.push_back(M);
 
         // delay slot
-        mvec.push_back(new MachineInstr(NOP));
+        mvec.push_back(BuildMI(NOP, 0));
 
         // false branch
-        M = new MachineInstr(BA);
-        M->SetMachineOperandVal(0, MachineOperand::MO_PCRelativeDisp,
-              cast<BranchInst>(subtreeRoot->getInstruction())->getSuccessor(1));
-        mvec.push_back(M);
+        mvec.push_back(BuildMI(BA, 1).addPCDisp(BI->getSuccessor(1)));
         
         // delay slot
-        mvec.push_back(new MachineInstr(NOP));
+        mvec.push_back(BuildMI(NOP, 0));
         break;
       }  
       
@@ -1589,11 +1530,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
                 else
                   srcForCast = leftVal;
 
-                M = new MachineInstr(opCode);
-                M->SetMachineOperandVal(0, MachineOperand::MO_VirtualRegister,
-                                           srcForCast);
-                M->SetMachineOperandVal(1, MachineOperand::MO_VirtualRegister,
-                                           dest);
+                M = BuildMI(opCode, 2).addReg(srcForCast).addRegDef(dest);
                 mvec.push_back(M);
               }
           }
@@ -1616,8 +1553,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         
       case 33:	// reg:   Add(reg, reg)
         maskUnsignedResult = true;
-        mvec.push_back(new MachineInstr(ChooseAddInstruction(subtreeRoot)));
-        Set3OperandsFromInstr(mvec.back(), subtreeRoot, target);
+        Add3OperandInstr(ChooseAddInstruction(subtreeRoot), subtreeRoot, mvec);
         break;
 
       case 234:	// reg:   Sub(reg, Constant)
@@ -1632,9 +1568,9 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         
       case 34:	// reg:   Sub(reg, reg)
         maskUnsignedResult = true;
-        mvec.push_back(new MachineInstr(ChooseSubInstructionByType(
-                                   subtreeRoot->getInstruction()->getType())));
-        Set3OperandsFromInstr(mvec.back(), subtreeRoot, target);
+        Add3OperandInstr(ChooseSubInstructionByType(
+                                   subtreeRoot->getInstruction()->getType()),
+                         subtreeRoot, mvec);
         break;
 
       case 135:	// reg:   Mul(todouble, todouble)
@@ -1684,9 +1620,8 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
       
       case 36:	// reg:   Div(reg, reg)
         maskUnsignedResult = true;
-        mvec.push_back(new MachineInstr(ChooseDivInstruction(target,
-							     subtreeRoot)));
-        Set3OperandsFromInstr(mvec.back(), subtreeRoot, target);
+        Add3OperandInstr(ChooseDivInstruction(target, subtreeRoot),
+                         subtreeRoot, mvec);
         break;
 
       case  37:	// reg:   Rem(reg, reg)
@@ -1703,9 +1638,10 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
                                         subtreeRoot->rightChild()->getValue());
         MachineCodeForInstruction::get(remInstr).addTemp(quot).addTemp(prod); 
         
-        M = new MachineInstr(ChooseDivInstruction(target, subtreeRoot));
-        Set3OperandsFromInstr(M, subtreeRoot, target);
-        M->SetMachineOperandVal(2, MachineOperand::MO_VirtualRegister,quot);
+        M = BuildMI(ChooseDivInstruction(target, subtreeRoot), 3)
+                             .addReg(subtreeRoot->leftChild()->getValue())
+                             .addReg(subtreeRoot->rightChild()->getValue())
+                             .addRegDef(quot);
         mvec.push_back(M);
         
         unsigned MulOpcode =
@@ -1715,12 +1651,11 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
                                                                      MOTy::Def);
         mvec.push_back(M);
         
-        M = new MachineInstr(ChooseSubInstructionByType(
-                                   subtreeRoot->getInstruction()->getType()));
-        Set3OperandsFromInstr(M, subtreeRoot, target);
-        M->SetMachineOperandVal(1, MachineOperand::MO_VirtualRegister,prod);
+        unsigned Opcode = ChooseSubInstructionByType(
+                                   subtreeRoot->getInstruction()->getType());
+        M = BuildMI(Opcode, 3).addReg(subtreeRoot->leftChild()->getValue())
+                              .addReg(prod).addRegDef(subtreeRoot->getValue());
         mvec.push_back(M);
-        
         break;
       }
       
@@ -1728,8 +1663,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
       case 238:	// bool:   And(bool, boolconst)
       case 338:	// reg :   BAnd(reg, reg)
       case 538:	// reg :   BAnd(reg, Constant)
-        mvec.push_back(new MachineInstr(AND));
-        Set3OperandsFromInstr(mvec.back(), subtreeRoot, target);
+        Add3OperandInstr(AND, subtreeRoot, mvec);
         break;
 
       case 138:	// bool:   And(bool, not)
@@ -1751,8 +1685,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
       case 239:	// bool:   Or(bool, boolconst)
       case 339:	// reg :   BOr(reg, reg)
       case 539:	// reg :   BOr(reg, Constant)
-        mvec.push_back(new MachineInstr(OR));
-        Set3OperandsFromInstr(mvec.back(), subtreeRoot, target);
+        Add3OperandInstr(OR, subtreeRoot, mvec);
         break;
 
       case 139:	// bool:   Or(bool, not)
@@ -1774,8 +1707,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
       case 240:	// bool:   Xor(bool, boolconst)
       case 340:	// reg :   BXor(reg, reg)
       case 540:	// reg :   BXor(reg, Constant)
-        mvec.push_back(new MachineInstr(XOR));
-        Set3OperandsFromInstr(mvec.back(), subtreeRoot, target);
+        Add3OperandInstr(XOR, subtreeRoot, mvec);
         break;
 
       case 140:	// bool:   Xor(bool, not)
@@ -1854,10 +1786,17 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
             // a separate instruction to compute the bool result, so discard
             // result of SUBcc instruction anyway.
             // 
-            M = new MachineInstr(SUBcc);
-            Set3OperandsFromInstr(M, subtreeRoot, target, ! keepSubVal);
-            M->SetMachineOperandVal(3, MachineOperand::MO_CCRegister,
-                                    tmpForCC, /*def*/true);
+            if (keepSubVal) {
+              M = BuildMI(SUBcc, 4).addReg(subtreeRoot->leftChild()->getValue())
+                                  .addReg(subtreeRoot->rightChild()->getValue())
+                                  .addRegDef(subtreeRoot->getValue())
+                                  .addCCReg(tmpForCC, MOTy::Def);
+            } else {
+              M = BuildMI(SUBcc, 4).addReg(subtreeRoot->leftChild()->getValue())
+                                  .addReg(subtreeRoot->rightChild()->getValue())
+                        .addMReg(target.getRegInfo().getZeroRegNum(), MOTy::Def)
+                                  .addCCReg(tmpForCC, MOTy::Def);
+            }
             mvec.push_back(M);
             
             if (computeBoolVal)
@@ -1869,13 +1808,10 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         else
           {
             // FP condition: dest of FCMP should be some FCCn register
-            M = new MachineInstr(ChooseFcmpInstruction(subtreeRoot));
-            M->SetMachineOperandVal(0, MachineOperand::MO_CCRegister,
-                                          tmpForCC);
-            M->SetMachineOperandVal(1,MachineOperand::MO_VirtualRegister,
-                                         subtreeRoot->leftChild()->getValue());
-            M->SetMachineOperandVal(2,MachineOperand::MO_VirtualRegister,
-                                        subtreeRoot->rightChild()->getValue());
+            M = BuildMI(ChooseFcmpInstruction(subtreeRoot), 3)
+                         .addCCReg(tmpForCC, MOTy::Def)
+                         .addReg(subtreeRoot->leftChild()->getValue())
+                         .addRegDef(subtreeRoot->rightChild()->getValue());
             mvec.push_back(M);
             
             if (computeBoolVal)
@@ -1890,25 +1826,15 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
           {
             if (mustClearReg)
               {// Unconditionally set register to 0
-                M = new MachineInstr(SETHI);
-                M->SetMachineOperandConst(0,MachineOperand::MO_UnextendedImmed,
-                                          (int64_t)0);
-                M->SetMachineOperandVal(1, MachineOperand::MO_VirtualRegister,
-                                        setCCInstr);
+                M = BuildMI(SETHI, 2).addZImm(0).addRegDef(setCCInstr);
                 mvec.push_back(M);
               }
             
             // Now conditionally move `valueToMove' (0 or 1) into the register
             // Mark the register as a use (as well as a def) because the old
             // value should be retained if the condition is false.
-            M = new MachineInstr(movOpCode);
-            M->SetMachineOperandVal(0, MachineOperand::MO_CCRegister,
-                                    tmpForCC);
-            M->SetMachineOperandConst(1, MachineOperand::MO_UnextendedImmed,
-                                      valueToMove);
-            M->SetMachineOperandVal(2, MachineOperand::MO_VirtualRegister,
-                                    setCCInstr, /*isDef*/ true,
-                                    /*isDefAndUse*/ true);
+            M = BuildMI(movOpCode, 3).addCCReg(tmpForCC).addZImm(valueToMove)
+                                     .addReg(setCCInstr, MOTy::UseAndDef);
             mvec.push_back(M);
           }
         break;
@@ -1916,17 +1842,16 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
 
       case 51:	// reg:   Load(reg)
       case 52:	// reg:   Load(ptrreg)
-        mvec.push_back(new MachineInstr(ChooseLoadInstruction(
-                                     subtreeRoot->getValue()->getType())));
-        SetOperandsForMemInstr(mvec, subtreeRoot, target);
+        SetOperandsForMemInstr(ChooseLoadInstruction(
+                                   subtreeRoot->getValue()->getType()),
+                               mvec, subtreeRoot, target);
         break;
 
       case 55:	// reg:   GetElemPtr(reg)
       case 56:	// reg:   GetElemPtrIdx(reg,reg)
         // If the GetElemPtr was folded into the user (parent), it will be
         // caught above.  For other cases, we have to compute the address.
-        mvec.push_back(new MachineInstr(ADD));
-        SetOperandsForMemInstr(mvec, subtreeRoot, target);
+        SetOperandsForMemInstr(ADD, mvec, subtreeRoot, target);
         break;
 
       case 57:	// reg:  Alloca: Implement as 1 instruction:
@@ -2069,7 +1994,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
           mvec.back()->addImplicitRef(retAddrReg, /*isDef*/ true);
         
         // delay slot
-        mvec.push_back(new MachineInstr(NOP));
+        mvec.push_back(BuildMI(NOP, 0));
         break;
       }
       
@@ -2094,10 +2019,10 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
       { const Type* opType = subtreeRoot->leftChild()->getValue()->getType();
         assert((opType->isInteger() || isa<PointerType>(opType)) &&
                "Shr unsupported for other types");
-        mvec.push_back(new MachineInstr((opType->isSigned()
-                                   ? ((opType == Type::LongTy)? SRAX : SRA)
-                                   : ((opType == Type::LongTy)? SRLX : SRL))));
-        Set3OperandsFromInstr(mvec.back(), subtreeRoot, target);
+        Add3OperandInstr(opType->isSigned()
+                               ? (opType == Type::LongTy ? SRAX : SRA)
+                               : (opType == Type::LongTy ? SRLX : SRL),
+                         subtreeRoot, mvec);
         break;
       }
       
