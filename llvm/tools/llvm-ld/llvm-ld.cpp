@@ -481,11 +481,11 @@ int main(int argc, char **argv, char **envp) {
       sys::RemoveFileOnSignal(sys::Path(OutputFilename));
 
       // Determine the locations of the llc and gcc programs.
-      std::string llc = FindExecutable("llc", argv[0]);
-      std::string gcc = FindExecutable("gcc", argv[0]);
+      std::string llc = FindExecutable("llc", argv[0]).toString();
       if (llc.empty())
         return PrintAndReturn("Failed to find llc");
 
+      std::string gcc = FindExecutable("gcc", argv[0]).toString();
       if (gcc.empty())
         return PrintAndReturn("Failed to find gcc");
 
@@ -506,10 +506,11 @@ int main(int argc, char **argv, char **envp) {
       sys::RemoveFileOnSignal(sys::Path(OutputFilename));
 
       // Determine the locations of the llc and gcc programs.
-      std::string llc = FindExecutable("llc", argv[0]);
-      std::string gcc = FindExecutable("gcc", argv[0]);
+      std::string llc = FindExecutable("llc", argv[0]).toString();
       if (llc.empty())
         return PrintAndReturn("Failed to find llc");
+
+      std::string gcc = FindExecutable("gcc", argv[0]).toString();
       if (gcc.empty())
         return PrintAndReturn("Failed to find gcc");
 

@@ -119,7 +119,7 @@ static void EmitShellScript(char **argv) {
   // Windows doesn't support #!/bin/sh style shell scripts in .exe files.  To
   // support windows systems, we copy the llvm-stub.exe executable from the
   // build tree to the destination file.
-  std::string llvmstub = FindExecutable("llvm-stub.exe", argv[0]);
+  std::string llvmstub = FindExecutable("llvm-stub.exe", argv[0]).toString();
   if (llvmstub.empty()) {
     std::cerr << "Could not find llvm-stub.exe executable!\n";
     exit(1);
@@ -193,7 +193,7 @@ static void BuildLinkItems(
   }
 }
 
-int main(int argc, char **argv, char **envp) {
+int main(int argc, char **argv, char **envp ) {
   cl::ParseCommandLineOptions(argc, argv, " llvm linker for GCC\n");
   sys::PrintStackTraceOnErrorSignal();
 
@@ -283,20 +283,20 @@ int main(int argc, char **argv, char **envp) {
         sys::RemoveFileOnSignal(sys::Path(OutputFilename));
 
         // Determine the locations of the llc and gcc programs.
-        std::string llc = FindExecutable("llc", argv[0]);
-        std::string gcc = FindExecutable("gcc", argv[0]);
+        std::string llc = FindExecutable("llc", argv[0]).toString();
         if (llc.empty())
           return PrintAndReturn(argv[0], "Failed to find llc");
 
+        std::string gcc = FindExecutable("gcc", argv[0]).toString();
         if (gcc.empty())
           return PrintAndReturn(argv[0], "Failed to find gcc");
 
         // Generate an assembly language file for the bytecode.
         if (Verbose) std::cout << "Generating Assembly Code\n";
-        GenerateAssembly(AssemblyFile, RealBytecodeOutput, llc, envp);
+        GenerateAssembly(AssemblyFile, RealBytecodeOutput, llc, envp );
         if (Verbose) std::cout << "Generating Native Code\n";
-        GenerateNative(OutputFilename, AssemblyFile, Libraries, LibPaths,
-                       gcc, envp);
+        GenerateNative(OutputFilename, AssemblyFile, Libraries, LibPaths, 
+                       gcc, envp );
 
         // Remove the assembly language file.
         removeFile (AssemblyFile);
@@ -308,18 +308,19 @@ int main(int argc, char **argv, char **envp) {
         sys::RemoveFileOnSignal(sys::Path(OutputFilename));
 
         // Determine the locations of the llc and gcc programs.
-        std::string llc = FindExecutable("llc", argv[0]);
-        std::string gcc = FindExecutable("gcc", argv[0]);
+        std::string llc = FindExecutable("llc", argv[0]).toString();
         if (llc.empty())
           return PrintAndReturn(argv[0], "Failed to find llc");
+
+        std::string gcc = FindExecutable("gcc", argv[0]).toString();
         if (gcc.empty())
           return PrintAndReturn(argv[0], "Failed to find gcc");
 
         // Generate an assembly language file for the bytecode.
         if (Verbose) std::cout << "Generating Assembly Code\n";
-        GenerateCFile(CFile, RealBytecodeOutput, llc, envp);
+        GenerateCFile(CFile, RealBytecodeOutput, llc, envp );
         if (Verbose) std::cout << "Generating Native Code\n";
-        GenerateNative(OutputFilename, CFile, Libraries, LibPaths, gcc, envp);
+        GenerateNative(OutputFilename, CFile, Libraries, LibPaths, gcc, envp );
 
         // Remove the assembly language file.
         removeFile(CFile);
