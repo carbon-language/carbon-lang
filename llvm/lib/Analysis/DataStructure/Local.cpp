@@ -328,12 +328,15 @@ void GraphBuilder::visitGetElementPtrInst(GetElementPtrInst &GEP) {
 
 void GraphBuilder::visitLoadInst(LoadInst &LI) {
   DSNodeHandle &Ptr = getValueDest(*LI.getOperand(0));
+  Ptr.getNode()->NodeType |= DSNode::Read;
+  
   if (isPointerType(LI.getType()))
     getValueNode(LI).addEdgeTo(getLink(Ptr, 0, LI.getType()));
 }
 
 void GraphBuilder::visitStoreInst(StoreInst &SI) {
   DSNodeHandle &Dest = getValueDest(*SI.getOperand(1));
+  Dest.getNode()->NodeType |= DSNode::Modified;
 
   // Avoid adding edges from null, or processing non-"pointer" stores
   if (isPointerType(SI.getOperand(0)->getType()) &&
