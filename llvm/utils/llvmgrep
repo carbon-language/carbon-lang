@@ -5,7 +5,7 @@ PATTERN="$*"
 TOPDIR=`pwd | sed -e 's#(.*/llvm).*#$1#'`
 if test -d "$TOPDIR" ; then
   cd $TOPDIR
-  find docs include lib tools utils projects -type f \
+  find docs include lib tools utils examples projects -type f \
       \( -path '*/doxygen/*' -o -path '*/Burg/*' \) -prune -o \
       -name '*.[cdhylt]*' \
       \! -name '*~' \
