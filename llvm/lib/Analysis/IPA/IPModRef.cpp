@@ -158,9 +158,8 @@ DSGraph *FunctionModRefInfo::ResolveCallSiteModRefInfo(CallInst &CI,
     return 0;
   }
 
-  // Remove trivial dead nodes... don't aggressively prune graph though... the
-  // graph is short lived anyway.
-  Result->removeTriviallyDeadNodes(false);
+  // Remove dead nodes... 
+  Result->removeDeadNodes();
 
   // Step #4: Return the clone + the mapping (by ref)
   return Result;
