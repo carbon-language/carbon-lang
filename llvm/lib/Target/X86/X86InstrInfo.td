@@ -151,7 +151,6 @@ class Im32i8<string n, bits<8> o, Format f> : X86Inst<n, o, f, Mem32, Imm8>;
 
 // Helper for shift instructions
 class UsesCL { list<Register> Uses = [CL]; bit printImplicitUsesAfter = 1; }
-class PrintImpUsesAfter {bit printImplicitUsesAfter = 1;}
 class PrintImpDefsAfter {bit printImplicitDefsAfter = 1;}
 
 //===----------------------------------------------------------------------===//
@@ -248,13 +247,26 @@ def REP_STOSD : I<"rep stosd", 0xAB, RawFrm>, REP,
 //===----------------------------------------------------------------------===//
 //  Input/Output Instructions...
 //
-def IN8  : I<"in", 0xEC, RawFrm>, Imp<[DX],[AL]>,  PrintImpUsesAfter, PrintImpDefsAfter;    // in AL  = I/O address DX
-def IN16 : I<"in", 0xED, RawFrm>, Imp<[DX],[AX]>,  OpSize, PrintImpUsesAfter, PrintImpDefsAfter;    // in AX  = I/O address DX
-def IN32 : I<"in", 0xED, RawFrm>, Imp<[DX],[EAX]>, PrintImpUsesAfter, PrintImpDefsAfter;   // in EAX = I/O address DX
+let printImplicitUsesAfter = 1, printImplicitDefsAfter = 1 in {
+  def IN8rr  : I<"in", 0xEC, RawFrm>, Imp<[DX], [AL]>;         // AL  = in I/O address DX
+  def IN16rr : I<"in", 0xED, RawFrm>, Imp<[DX], [AX]>, OpSize; // AX  = in I/O address DX
+  def IN32rr : I<"in", 0xED, RawFrm>, Imp<[DX],[EAX]>;         // EAX = in I/O address DX
+}
 
-def OUT8  : I<"out", 0xEE, RawFrm>, Imp<[DX, AL],  []>, PrintImpUsesAfter;
-def OUT16 : I<"out", 0xEF, RawFrm>, Imp<[DX, AX],  []>, OpSize, PrintImpUsesAfter;
-def OUT32 : I<"out", 0xEF, RawFrm>, Imp<[DX, EAX], []>, PrintImpUsesAfter;
+let printImplicitDefsBefore = 1 in {
+  def IN8ri  : Ii16<"in", 0xE4, RawFrm>, Imp<[], [AL]>;           // AL  = in [I/O address]
+  def IN16ri : Ii16<"in", 0xE5, RawFrm>, Imp<[], [AX]>,  OpSize;  // AX  = in [I/O address]
+  def IN32ri : Ii16<"in", 0xE5, RawFrm>, Imp<[],[EAX]>;           // EAX = in [I/O address]
+}
+
+let printImplicitUsesAfter = 1 in {
+  def OUT8rr  : I<"out", 0xEE, RawFrm>, Imp<[DX,  AL], []>;
+  def OUT16rr : I<"out", 0xEF, RawFrm>, Imp<[DX,  AX], []>, OpSize;
+  def OUT32rr : I<"out", 0xEF, RawFrm>, Imp<[DX, EAX], []>;
+  def OUT8ir  : Ii16<"out", 0xE6, RawFrm>, Imp<[AL],  []>;
+  def OUT16ir : Ii16<"out", 0xE7, RawFrm>, Imp<[AX],  []>, OpSize;
+  def OUT32ir : Ii16<"out", 0xE7, RawFrm>, Imp<[EAX], []>;
+}
 
 //===----------------------------------------------------------------------===//
 //  Move Instructions...
