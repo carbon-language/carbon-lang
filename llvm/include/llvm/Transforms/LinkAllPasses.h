@@ -1,4 +1,4 @@
-//===- llvm/Transforms/IPO.h - Interprocedural Transformations --*- C++ -*-===//
+//===- llvm/Transforms/LinkAllPasses.h - Reference All Passes ---*- C++ -*-===//
 // 
 //                     The LLVM Compiler Infrastructure
 //
@@ -15,8 +15,6 @@
 
 #ifndef LLVM_TRANSFORMS_LINKALLPASSES_H
 #define LLVM_TRANSFORMS_LINKALLPASSES_H
-
-#include "llvm/Config/config.h"
 
 #ifdef LLVM_ON_WIN32
 
