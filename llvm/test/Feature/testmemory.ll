@@ -1,4 +1,4 @@
-%struct = type int *
+%struct = type { int , {float, {ubyte } } , ulong }
 
 implementation
 
@@ -15,8 +15,12 @@ begin
 
     alloca [ubyte], uint 5
     %ptr = alloca int                       ; yields {int*}:ptr
-    ;store int* %ptr, int 3                 ; yields {void}
-    ;%val = load int* %ptr                   ; yields {int}:val = int %3
+    store int 3, int* %ptr                  ; yields {void}
+    %val = load int* %ptr                   ; yields {int}:val = int %3
+
+    %sptr = alloca %struct                  ; yields {%struct*}:sptr
+    %ubsptr = getelementptr %struct * %sptr, ubyte 1, ubyte 1  ; yields {{ubyte}*}:ubsptr
+    store ubyte 4, {ubyte} * %ubsptr, ubyte 0
 
     ret int 3
 end
