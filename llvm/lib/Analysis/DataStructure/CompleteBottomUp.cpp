@@ -107,6 +107,7 @@ bool CompleteBUDataStructures::runOnModule(Module &M) {
       if (isa<GlobalVariable>(*I))
         RC.getClonedNH(GG.getNodeForValue(*I));
 
+    MainGraph.maskIncompleteMarkers();
     MainGraph.markIncompleteNodes(DSGraph::MarkFormalArgs | 
                                   DSGraph::IgnoreGlobals);
   }
