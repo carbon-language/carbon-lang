@@ -229,17 +229,18 @@ void SymbolTable::refineAbstractType(const DerivedType *OldType,
         // No action
 
       } else if (TI != NewPlane.end()) {
-        // The only thing we are allowing for now is two method prototypes being
+        // The only thing we are allowing for now is two external global values
         // folded into one.
         //
-        Function *ExistM = dyn_cast<Function>(TI->second);
-        Function *NewM = dyn_cast<Function>(V.second);
+        GlobalValue *ExistGV = dyn_cast<GlobalValue>(TI->second);
+        GlobalValue *NewGV = dyn_cast<GlobalValue>(V.second);
 
-        if (ExistM && NewM && ExistM->isExternal() && NewM->isExternal()) {
-          // Ok we have two external methods.  Make all uses of the new one
-          // use the old one...
+        if (ExistGV && NewGV && ExistGV->isExternal() && NewGV->isExternal()) {
+          // Ok we have two external global values.  Make all uses of the new
+          // one use the old one...
           //
-          NewM->replaceAllUsesWith(ExistM);
+          assert(ExistGV->use_empty() && "No uses allowed on untyped value!");
+          //NewGV->replaceAllUsesWith(ExistGV);
           
           // Now we just convert it to an unnamed method... which won't get
           // added to our symbol table.  The problem is that if we call
@@ -254,12 +255,16 @@ void SymbolTable::refineAbstractType(const DerivedType *OldType,
           InternallyInconsistent = true;
 
           // Remove newM from the symtab
-          NewM->setName("");
+          NewGV->setName("");
           InternallyInconsistent = false;
 
-          // Now we can remove this method from the module entirely...
-          NewM->getParent()->getFunctionList().remove(NewM);
-          delete NewM;
+          // Now we can remove this global from the module entirely...
+          Module *M = NewGV->getParent();
+          if (Function *F = dyn_cast<Function>(NewGV))
+            M->getFunctionList().remove(F);
+          else
+            M->getGlobalList().remove(cast<GlobalVariable>(NewGV));
+          delete NewGV;
 
         } else {
           assert(0 && "Two planes folded together with overlapping "
