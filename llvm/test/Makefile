@@ -70,7 +70,6 @@ register:
 	$(QMTEST) register test llvm.LLITest
 	$(QMTEST) register test llvm.TestRunner
 	$(QMTEST) register test llvm.VerifierTest
-	$(QMTEST) register test llvm.AnalyzeTest
 	$(QMTEST) register test llvm.CTest
 	$(QMTEST) register test llvm.CXXTest
 	$(QMTEST) register database llvmdb.llvmdb
