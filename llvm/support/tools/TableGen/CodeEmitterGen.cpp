@@ -136,7 +136,8 @@ void CodeEmitterGen::createEmitter(std::ostream &o) {
                 << ", end = " << endBitInInst << "\n");
 
         if (continuous) {
-          o << "      // continuous: op" << OpOrder[Vals[i].getName()] << "\n";
+          DEBUG(o << "      // continuous: op" << OpOrder[Vals[i].getName()]
+                  << "\n");
           
           // Mask off the right bits
           // Low mask (ie. shift, if necessary)
