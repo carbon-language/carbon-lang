@@ -18,38 +18,47 @@
 // pointer type.
 //
 const Type* MemAccessInst::getIndexedType(const Type *Ptr, 
-					  const vector<ConstPoolVal*> &Idx,
-					  bool AllowStructLeaf = false) {
+					  const vector<Value*> &Idx,
+					  bool AllowCompositeLeaf = false) {
   if (!Ptr->isPointerType()) return 0;   // Type isn't a pointer type!
  
   // Get the type pointed to...
-  Ptr = ((const PointerType*)Ptr)->getValueType();
+  Ptr = cast<PointerType>(Ptr)->getValueType();
   
-  if (Ptr->isStructType()) {
-    unsigned CurIDX = 0;
-    while (const StructType *ST = dyn_cast<StructType>(Ptr)) {
-      if (Idx.size() == CurIDX) 
-	return AllowStructLeaf ? Ptr : 0;   // Can't load a whole structure!?!?
-      if (Idx[CurIDX]->getType() != Type::UByteTy) return 0; // Illegal idx
-      unsigned NextIdx = ((ConstPoolUInt*)Idx[CurIDX++])->getValue();
-      if (NextIdx >= ST->getElementTypes().size()) return 0;
-      Ptr = ST->getElementTypes()[NextIdx];
-    }
-    return Ptr;
-  } else if (Ptr->isArrayType()) {
-    assert(0 && "Loading from arrays not implemented yet!");
-  } else {
-    return (Idx.size() == 0) ? Ptr : 0;  // Load directly through ptr
+  unsigned CurIDX = 0;
+  while (const CompositeType *ST = dyn_cast<CompositeType>(Ptr)) {
+    if (Idx.size() == CurIDX)
+      return AllowCompositeLeaf ? Ptr : 0;   // Can't load a whole structure!?!?
+
+    Value *Index = Idx[CurIDX++];
+    if (!ST->indexValid(Index)) return 0;
+    Ptr = ST->getTypeAtIndex(Index);
   }
+  return CurIDX == Idx.size() ? Ptr : 0;
 }
+
+const vector<ConstPoolVal*> MemAccessInst::getIndicesBROKEN() const {
+  cerr << "MemAccessInst::getIndices() does not do what you want it to.  Talk"
+       << " to Chris about this.  We can phase it out after the paper.\n";
+
+  vector<ConstPoolVal*> RetVal;
+
+  // THIS CODE WILL FAIL IF A NON CONSTANT INDEX IS USED AS AN ARRAY INDEX
+  // THIS IS WHY YOU SHOULD NOT USE THIS FUNCTION ANY MORE!!!
+  for (unsigned i = getFirstIndexOperandNumber(); i < getNumOperands(); ++i)
+    RetVal.push_back(cast<ConstPoolVal>(getOperand(i)));
+
+  return RetVal;
+}
+
 
 //===----------------------------------------------------------------------===//
 //                           LoadInst Implementation
 //===----------------------------------------------------------------------===//
 
-LoadInst::LoadInst(Value *Ptr, const vector<ConstPoolVal*> &Idx,
+LoadInst::LoadInst(Value *Ptr, const vector<Value*> &Idx,
 		   const string &Name = "")
-  : MemAccessInst(getIndexedType(Ptr->getType(), Idx), Load, Idx, Name) {
+  : MemAccessInst(getIndexedType(Ptr->getType(), Idx), Load, Name) {
   assert(getIndexedType(Ptr->getType(), Idx) && "Load operands invalid!");
   Operands.reserve(1+Idx.size());
   Operands.push_back(Use(Ptr, this));
@@ -61,7 +70,7 @@ LoadInst::LoadInst(Value *Ptr, const vector<ConstPoolVal*> &Idx,
 
 LoadInst::LoadInst(Value *Ptr, const string &Name = "")
   : MemAccessInst(cast<PointerType>(Ptr->getType())->getValueType(),
-                  Load, vector<ConstPoolVal*>(), Name) {
+                  Load, Name) {
   Operands.reserve(1);
   Operands.push_back(Use(Ptr, this));
 }
@@ -71,9 +80,9 @@ LoadInst::LoadInst(Value *Ptr, const string &Name = "")
 //                           StoreInst Implementation
 //===----------------------------------------------------------------------===//
 
-StoreInst::StoreInst(Value *Val, Value *Ptr, const vector<ConstPoolVal*> &Idx,
+StoreInst::StoreInst(Value *Val, Value *Ptr, const vector<Value*> &Idx,
 		     const string &Name = "")
-  : MemAccessInst(Type::VoidTy, Store, Idx, Name) {
+  : MemAccessInst(Type::VoidTy, Store, Name) {
   assert(getIndexedType(Ptr->getType(), Idx) && "Store operands invalid!");
   
   Operands.reserve(2+Idx.size());
@@ -85,7 +94,7 @@ StoreInst::StoreInst(Value *Val, Value *Ptr, const vector<ConstPoolVal*> &Idx,
 }
 
 StoreInst::StoreInst(Value *Val, Value *Ptr, const string &Name = "")
-  : MemAccessInst(Type::VoidTy, Store, vector<ConstPoolVal*>(), Name) {
+  : MemAccessInst(Type::VoidTy, Store, Name) {
   
   Operands.reserve(2);
   Operands.push_back(Use(Val, this));
@@ -97,11 +106,10 @@ StoreInst::StoreInst(Value *Val, Value *Ptr, const string &Name = "")
 //                       GetElementPtrInst Implementation
 //===----------------------------------------------------------------------===//
 
-GetElementPtrInst::GetElementPtrInst(Value *Ptr, 
-				     const vector<ConstPoolVal*> &Idx,
+GetElementPtrInst::GetElementPtrInst(Value *Ptr, const vector<Value*> &Idx,
 				     const string &Name = "")
   : MemAccessInst(PointerType::get(getIndexedType(Ptr->getType(), Idx, true)),
-		  GetElementPtr, Idx, Name) {
+		  GetElementPtr, Name) {
   assert(getIndexedType(Ptr->getType(), Idx, true) && "gep operands invalid!");
   Operands.reserve(1+Idx.size());
   Operands.push_back(Use(Ptr, this));
