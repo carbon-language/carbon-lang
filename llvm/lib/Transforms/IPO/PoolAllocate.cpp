@@ -94,7 +94,7 @@ void PoolAllocate::buildIndirectFunctionSets(Module &M) {
 				  firstCalledF));
 	  if (Callees.size() > 1) {
 	    for (std::vector<GlobalValue*>::iterator CalleesI = 
-		   ++Callees.begin(), CalleesE = Callees.end(); 
+		   Callees.begin()+1, CalleesE = Callees.end(); 
 		 CalleesI != CalleesE; ++CalleesI) {
 	      Function *calledF = dyn_cast<Function>(*CalleesI);
 	      FuncECs.unionSetsWith(firstCalledF, calledF);
