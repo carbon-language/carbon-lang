@@ -1,0 +1,19 @@
+; RUN: llvm-as < %s | opt -globalopt | llvm-dis | not grep global
+
+%G = internal global { int, float, {double} } { int 1, float 1.0, {double} {double 17.27} }
+
+void %onlystore() {
+	store int 123, int* getelementptr ({ int, float, {double} }* %G, int 0, uint 0)
+	ret void
+}
+
+float %storeinit() {
+	store float 1.0, float* getelementptr ({ int, float, {double} }* %G, int 0, uint 1)
+	%X = load float* getelementptr ({ int, float, {double} }* %G, int 0, uint 1)
+	ret float %X
+}
+
+double %constantize() {
+	%X = load double* getelementptr ({ int, float, {double} }* %G, int 0, uint 2, uint 0)
+	ret double %X
+}
