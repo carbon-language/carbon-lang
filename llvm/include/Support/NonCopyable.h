@@ -23,15 +23,4 @@ protected:
   inline ~NonCopyable() {}
 };
 
-class NonCopyableV {
-  // Disable the copy constructor and the assignment operator
-  // by making them both private:
-  // 
-  NonCopyableV(const NonCopyableV &);            // DO NOT IMPLEMENT
-  NonCopyableV &operator=(const NonCopyableV &); // DO NOT IMPLEMENT
-protected:
-  inline NonCopyableV() {}
-  virtual ~NonCopyableV() {}
-};
-
 #endif
