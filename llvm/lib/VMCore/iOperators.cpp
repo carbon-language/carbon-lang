@@ -122,3 +122,19 @@ SetCondInst::SetCondInst(BinaryOps opType, Value *S1, Value *S2,
   // Make sure it's a valid type...
   assert(getOpcodeName() != 0);
 }
+
+// getInverseCondition - Return the inverse of the current condition opcode.
+// For example seteq -> setne, setgt -> setle, setlt -> setge, etc...
+//
+Instruction::BinaryOps SetCondInst::getInverseCondition() const {
+  switch (getOpcode()) {
+  default:
+    assert(0 && "Unknown setcc opcode!");
+  case SetEQ: return SetNE;
+  case SetNE: return SetEQ;
+  case SetGT: return SetLE;
+  case SetLT: return SetGE;
+  case SetGE: return SetLT;
+  case SetLE: return SetGT;
+  }
+}
