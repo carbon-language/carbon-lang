@@ -24,6 +24,7 @@
 #include "llvm/iOperators.h"
 #include "llvm/SymbolTable.h"
 #include "llvm/Support/InstVisitor.h"
+#include "llvm/Support/InstIterator.h"
 #include "Support/StringExtras.h"
 #include "Support/STLExtras.h"
 
@@ -40,12 +41,10 @@ using std::ostream;
 
 // Appends a variable to the LocalVars map if it does not already exist
 // Also check that the type exists on the map.
-void CLocalVars::addLocalVar(const Type *t, const string & var) {
+void CLocalVars::addLocalVar(const Type *t, const string &V) {
   if (!LocalVars.count(t) || 
-      find(LocalVars[t].begin(), LocalVars[t].end(), var) 
-      == LocalVars[t].end()) {
-      LocalVars[t].push_back(var);
-  } 
+      find(LocalVars[t].begin(), LocalVars[t].end(), V) == LocalVars[t].end())
+    LocalVars[t].push_back(V);
 }
 
 static std::string getConstStrValue(const Constant* CPV);
@@ -101,7 +100,6 @@ static std::string getConstArrayStrValue(const Constant* CPV) {
       }
     }
     Result += "\"";
-    
   } else {
     Result = "{";
     if (CPV->getNumOperands()) {
@@ -193,10 +191,9 @@ static string calcTypeNameVar(const Type *Ty,
   string Result;
   switch (Ty->getPrimitiveID()) {
   case Type::FunctionTyID: {
-    const FunctionType *MTy = cast<const FunctionType>(Ty);
+    const FunctionType *MTy = cast<FunctionType>(Ty);
     Result += calcTypeNameVar(MTy->getReturnType(), TypeNames, "");
-    Result += " " + NameSoFar;
-    Result += " (";
+    Result += " " + NameSoFar + " (";
     for (FunctionType::ParamTypes::const_iterator
            I = MTy->getParamTypes().begin(),
            E = MTy->getParamTypes().end(); I != E; ++I) {
@@ -282,45 +279,6 @@ namespace {
     void printFunction(Function *);
   };
   /* END class CWriter */
-
-
-  /* CLASS InstLocalVarsVisitor */
-  class InstLocalVarsVisitor : public InstVisitor<InstLocalVarsVisitor> {
-    CWriter& CW;
-    void handleTerminator(TerminatorInst *tI, int indx);
-  public:
-    CLocalVars CLV;
-    
-    InstLocalVarsVisitor(CWriter &cw) : CW(cw) {}
-    
-    void visitInstruction(Instruction *I) {
-      if (I->getType() != Type::VoidTy)
-        CLV.addLocalVar(I->getType(), CW.getValueName(I));
-    }
-
-    void visitBranchInst(BranchInst *I) {
-      handleTerminator(I, 0);
-      if (I->isConditional())
-	handleTerminator(I, 1);
-    }
-  };
-}
-
-void InstLocalVarsVisitor::handleTerminator(TerminatorInst *tI,int indx) {
-  BasicBlock *bb = tI->getSuccessor(indx);
-
-  BasicBlock::const_iterator insIt = bb->begin();
-  while (insIt != bb->end()) {
-    if (const PHINode *pI = dyn_cast<PHINode>(*insIt)) {
-      // Its a phinode!
-      // Calculate the incoming index for this
-      assert(pI->getBasicBlockIndex(tI->getParent()) != -1);
-
-      CLV.addLocalVar(pI->getType(), CW.getValueName(pI));
-    } else
-      break;
-    insIt++;
-  }
 }
 
 namespace {
@@ -792,23 +750,20 @@ void CWriter::printFunction(Function *F) {
   // output methods on the CLocalVars and Function* objects.
     
   // gather local variable information for each basic block
-  InstLocalVarsVisitor ILV(*this);
-  ILV.visit(F);
+  CLocalVars CLV;
+  for (inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I)
+    if ((*I)->getType() != Type::VoidTy)
+      CLV.addLocalVar((*I)->getType(), getValueName(*I));
 
-  // print the local variables
-  // we assume that every local variable is alloca'ed in the C code.
-  std::map<const Type*, VarListType> &locals = ILV.CLV.LocalVars;
-  
-  map<const Type*, VarListType>::iterator iter;
-  for (iter = locals.begin(); iter != locals.end(); ++iter) {
-    VarListType::iterator listiter;
-    for (listiter = iter->second.begin(); listiter != iter->second.end(); 
-         ++listiter) {
+  // print the local variables  
+  for (map<const Type*, VarListType>::iterator I = CLV.LocalVars.begin(),
+         E = CLV.LocalVars.end(); I != E; ++I)
+    for (VarListType::iterator TI = I->second.begin(), E = I->second.end();
+         TI != E; ++TI) {
       Out << "  ";
-      printTypeVar(iter->first, *listiter);
+      printTypeVar(I->first, *TI);
       Out << ";\n";
     }
-  }
  
   // print the basic blocks
   for (Function::iterator I = F->begin(), E = F->end(); I != E; ++I) {
