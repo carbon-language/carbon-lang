@@ -333,7 +333,7 @@ static void WriteConstantInt(ostream &Out, const Constant *CV, bool PrintName,
       Out << "<pointer reference without context info>";
     }
 
-  } else if (const ConstantExpr *CE=dyn_cast<ConstantExpr>(CV)) {
+  } else if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(CV)) {
     Out << CE->getOpcodeName();
 
     bool isGEP = CE->getOpcode() == Instruction::GetElementPtr;
@@ -343,7 +343,7 @@ static void WriteConstantInt(ostream &Out, const Constant *CV, bool PrintName,
       printTypeInt(Out, (*OI)->getType(), TypeTable);
       WriteAsOperandInternal(Out, *OI, PrintName, TypeTable, Table);
       if (OI+1 != CE->op_end())
-        Out << ", ";    // ((isGEP && OI == CE->op_begin())? " " : ", ");
+        Out << ", ";
     }
     
     if (isGEP)

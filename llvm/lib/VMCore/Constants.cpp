@@ -138,21 +138,20 @@ ConstantPointerRef::ConstantPointerRef(GlobalValue *GV)
   Operands.push_back(Use(GV, this));
 }
 
-ConstantExpr::ConstantExpr(unsigned opCode, Constant *C,  const Type *Ty)
-  : Constant(Ty), iType(opCode) {
+ConstantExpr::ConstantExpr(unsigned Opcode, Constant *C, const Type *Ty)
+  : Constant(Ty), iType(Opcode) {
   Operands.push_back(Use(C, this));
 }
 
-ConstantExpr::ConstantExpr(unsigned opCode, Constant* C1,
-                           Constant* C2, const Type *Ty)
-  : Constant(Ty), iType(opCode) {
+ConstantExpr::ConstantExpr(unsigned Opcode, Constant *C1, Constant *C2)
+  : Constant(C1->getType()), iType(Opcode) {
   Operands.push_back(Use(C1, this));
   Operands.push_back(Use(C2, this));
 }
 
-ConstantExpr::ConstantExpr(unsigned opCode, Constant* C,
-                          const std::vector<Constant*> &IdxList, const Type *Ty)
-  : Constant(Ty), iType(opCode) {
+ConstantExpr::ConstantExpr(Constant *C, const std::vector<Constant*> &IdxList,
+                           const Type *DestTy)
+  : Constant(DestTy), iType(Instruction::GetElementPtr) {
   Operands.reserve(1+IdxList.size());
   Operands.push_back(Use(C, this));
   for (unsigned i = 0, E = IdxList.size(); i != E; ++i)
@@ -386,7 +385,6 @@ ConstantPointerRef *ConstantPointerRef::get(GlobalValue *GV) {
 }
 
 //---- ConstantExpr::get() implementations...
-// Return NULL on invalid expressions.
 //
 typedef pair<unsigned, vector<Constant*> > ExprMapKeyType;
 static ValueMap<const ExprMapKeyType, ConstantExpr> ExprConstants;
@@ -415,60 +413,51 @@ ConstantExpr *ConstantExpr::get(unsigned Opcode, Constant *C, const Type *Ty) {
   return Result;
 }
 
-ConstantExpr *ConstantExpr::get(unsigned Opcode, Constant *C1, Constant *C2,
-                                const Type *Ty) {
-
+ConstantExpr *ConstantExpr::get(unsigned Opcode, Constant *C1, Constant *C2) {
   // Look up the constant in the table first to ensure uniqueness
   vector<Constant*> argVec(1, C1); argVec.push_back(C2);
   const ExprMapKeyType &Key = make_pair(Opcode, argVec);
-  ConstantExpr *Result = ExprConstants.get(Ty, Key);
+  ConstantExpr *Result = ExprConstants.get(C1->getType(), Key);
   if (Result) return Result;
   
   // Its not in the table so create a new one and put it in the table.
   // Check the operands for consistency first
   assert((Opcode >= Instruction::FirstBinaryOp &&
           Opcode < Instruction::NumBinaryOps) &&
-         "Invalid opcode  in binary constant expression");
+         "Invalid opcode in binary constant expression");
 
-  assert(Ty == C1->getType() && Ty == C2->getType() &&
-         "Operand types in binary constant expression should match result");
+  assert(C1->getType() == C2->getType() &&
+         "Operand types in binary constant expression should match");
   
-  Result = new ConstantExpr(Opcode, C1, C2, Ty);
-  ExprConstants.add(Ty, Key, Result);
+  Result = new ConstantExpr(Opcode, C1, C2);
+  ExprConstants.add(C1->getType(), Key, Result);
   return Result;
 }
 
-ConstantExpr *ConstantExpr::get(unsigned Opcode, Constant *C,
-                                const std::vector<Constant*> &IdxList,
-                                const Type *Ty) {
+ConstantExpr *ConstantExpr::getGetElementPtr(Constant *C,
+                                        const std::vector<Constant*> &IdxList) {
+  const Type *Ty = C->getType();
 
   // Look up the constant in the table first to ensure uniqueness
   vector<Constant*> argVec(1, C);
   argVec.insert(argVec.end(), IdxList.begin(), IdxList.end());
   
-  const ExprMapKeyType &Key = make_pair(Opcode, argVec);
+  const ExprMapKeyType &Key = make_pair(Instruction::GetElementPtr, argVec);
   ConstantExpr *Result = ExprConstants.get(Ty, Key);
   if (Result) return Result;
-  
+
   // Its not in the table so create a new one and put it in the table.
   // Check the operands for consistency first
-  // Must be a getElementPtr.  Check for valid getElementPtr expression.
   // 
-  assert(Opcode == Instruction::GetElementPtr &&
-         "Operator other than GetElementPtr used with an index list");
-
   assert(isa<PointerType>(Ty) &&
          "Non-pointer type for constant GelElementPtr expression");
 
+  // Check that the indices list is valid...
   std::vector<Value*> ValIdxList(IdxList.begin(), IdxList.end());
-  const Type *fldType = GetElementPtrInst::getIndexedType(C->getType(),
-                                                          ValIdxList, true);
-  assert(fldType && "Invalid index list for constant GelElementPtr expression");
-
-  assert(cast<PointerType>(Ty)->getElementType() == fldType &&
-         "Type for constant GelElementPtr expression doesn't match field type");
+  const Type *DestTy = GetElementPtrInst::getIndexedType(Ty, ValIdxList, true);
+  assert(DestTy && "Invalid index list for constant GelElementPtr expression");
   
-  Result = new ConstantExpr(Opcode, C, IdxList, Ty);
+  Result = new ConstantExpr(C, IdxList, PointerType::get(DestTy));
   ExprConstants.add(Ty, Key, Result);
   return Result;
 }
@@ -480,8 +469,8 @@ void ConstantExpr::destroyConstant() {
   destroyConstantImpl();
 }
 
-const char *ConstantExpr::getOpcodeName(unsigned Opcode) {
-  return Instruction::getOpcodeName(Opcode);
+const char *ConstantExpr::getOpcodeName() const {
+  return Instruction::getOpcodeName(getOpcode());
 }
 
 

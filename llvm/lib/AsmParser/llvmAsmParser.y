@@ -8,17 +8,14 @@
 #include "ParserInternals.h"
 #include "llvm/SymbolTable.h"
 #include "llvm/Module.h"
-#include "llvm/GlobalVariable.h"
 #include "llvm/iTerminators.h"
 #include "llvm/iMemory.h"
 #include "llvm/iPHINode.h"
-#include "llvm/Argument.h"
 #include "Support/STLExtras.h"
 #include "Support/DepthFirstIterator.h"
 #include <list>
-#include <utility>            // Get definition of pair class
+#include <utility>
 #include <algorithm>
-#include <iostream>
 using std::list;
 using std::vector;
 using std::pair;
@@ -972,33 +969,53 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
 
 // FIXME: ConstExpr::get never return null!  Do checking here in the parser.
 ConstExpr: Types CAST ConstVal {
-    $$ = ConstantExpr::get($2, $3, $1->get());
+    $$ = ConstantExpr::get(Instruction::Cast, $3, $1->get());
     if ($$ == 0) ThrowException("constant expression builder returned null!");
+    delete $1;
   }
   | Types GETELEMENTPTR '(' ConstVal IndexList ')' {
+    if (!isa<PointerType>($4->getType()))
+      ThrowException("GetElementPtr requires a pointer operand!");
+
+    const Type *IdxTy =
+      GetElementPtrInst::getIndexedType($4->getType(), *$5, true);
+    if (!IdxTy)
+      ThrowException("Index list invalid for constant getelementptr!");
+    if (PointerType::get(IdxTy) != $1->get())
+      ThrowException("Declared type of constant getelementptr is incorrect!");
+
     vector<Constant*> IdxVec;
     for (unsigned i = 0, e = $5->size(); i != e; ++i)
       if (Constant *C = dyn_cast<Constant>((*$5)[i]))
         IdxVec.push_back(C);
       else
-        ThrowException("Arguments to getelementptr must be constants!");
+        ThrowException("Indices to constant getelementptr must be constants!");
 
     delete $5;
 
-    $$ = ConstantExpr::get($2, $4, IdxVec, $1->get());
-    if ($$ == 0) ThrowException("constant expression builder returned null!");
+    $$ = ConstantExpr::getGetElementPtr($4, IdxVec);
+    delete $1;
   }
   | Types UnaryOps ConstVal {
     $$ = ConstantExpr::get($2, $3, $1->get());
-    if ($$ == 0) ThrowException("constant expression builder returned null!");
+    delete $1;
   }
   | Types BinaryOps ConstVal ',' ConstVal {
-    $$ = ConstantExpr::get($2, $3, $5, $1->get());
-    if ($$ == 0) ThrowException("constant expression builder returned null!");
+    if ($3->getType() != $5->getType())
+      ThrowException("Binary operator types must match!");
+    if ($1->get() != $3->getType())
+      ThrowException("Return type of binary constant must match arguments!");
+    $$ = ConstantExpr::get($2, $3, $5);
+    delete $1;
   }
   | Types ShiftOps ConstVal ',' ConstVal {
-    $$ = ConstantExpr::get($2, $3, $5, $1->get());
-    if ($$ == 0) ThrowException("constant expression builder returned null!");
+    if ($1->get() != $3->getType())
+      ThrowException("Return type of shift constant must match argument!");
+    if ($5->getType() != Type::UByteTy)
+      ThrowException("Shift count for shift constant must be unsigned byte!");
+    
+    $$ = ConstantExpr::get($2, $3, $5);
+    delete $1;
   }
   ;
 

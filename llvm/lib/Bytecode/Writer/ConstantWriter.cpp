@@ -100,7 +100,8 @@ bool BytecodeWriter::outputConstant(const Constant *CPV) {
   // We must check for a ConstantExpr before switching by type because
   // a ConstantExpr can be of any type, and has no explicit value.
   // 
-  if (const ConstantExpr* CE = dyn_cast<ConstantExpr>(CPV)) {
+  if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(CPV)) {
+    // FIXME: Encoding of constant exprs could be much more compact!
     assert(CE->getNumOperands() > 0 && "ConstantExpr with 0 operands");
     output_vbr(CE->getNumOperands(), Out);   // flags as an expr
     output_vbr(CE->getOpcode(), Out);        // flags as an expr
@@ -113,9 +114,9 @@ bool BytecodeWriter::outputConstant(const Constant *CPV) {
       output_vbr((unsigned)Slot, Out);
     }
     return false;
-  }
-  else
+  } else {
     output_vbr((unsigned)0, Out);       // flag as not a ConstantExpr
+  }
   
   switch (CPV->getType()->getPrimitiveID()) {
   case Type::BoolTyID:    // Boolean Types
