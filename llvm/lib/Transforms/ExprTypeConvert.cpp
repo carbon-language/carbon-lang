@@ -797,7 +797,7 @@ static bool OperandConvertableToType(User *U, Value *V, const Type *Ty,
     if (OpNum == 0) {
       PointerType *PTy = dyn_cast<PointerType>(Ty);
       if (PTy == 0) return false;  // Can't convert to a non-pointer type...
-      MethodType *MTy = dyn_cast_or_null<MethodType>(PTy->getElementType());
+      MethodType *MTy = dyn_cast<MethodType>(PTy->getElementType());
       if (MTy == 0) return false;  // Can't convert to a non ptr to method...
 
       // Perform sanity checks to make sure that new method type has the
@@ -818,7 +818,10 @@ static bool OperandConvertableToType(User *U, Value *V, const Type *Ty,
 
       // Okay, at this point, we know that the call and the method type match
       // number of arguments.  Now we see if we can convert the arguments
-      // themselves.
+      // themselves.  Note that we do not require operands to be convertable,
+      // we can insert casts if they are convertible but not compatible.  The
+      // reason for this is that we prefer to have resolved methods but casted
+      // arguments if possible.
       //
       const MethodType::ParamTypes &PTs = MTy->getParamTypes();
       for (unsigned i = 0, NA = PTs.size(); i < NA; ++i)
@@ -1065,11 +1068,25 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
       MethodType *NewTy = cast<MethodType>(NewPTy->getElementType());
       const MethodType::ParamTypes &PTs = NewTy->getParamTypes();
 
+      // Get an iterator to the call instruction so that we can insert casts for
+      // operands if needbe.  Note that we do not require operands to be
+      // convertable, we can insert casts if they are convertible but not
+      // compatible.  The reason for this is that we prefer to have resolved
+      // methods but casted arguments if possible.
+      //
+      BasicBlock::iterator It = find(BIL.begin(), BIL.end(), I);
+
       // Convert over all of the call operands to their new types... but only
       // convert over the part that is not in the vararg section of the call.
       //
       for (unsigned i = 0; i < PTs.size(); ++i)
-        Params[i] = ConvertExpressionToType(Params[i], PTs[i], VMC);
+        if (Params[i]->getType() != PTs[i]) {
+          // Create a cast to convert it to the right type, we know that this
+          // is a lossless cast...
+          //
+          Params[i] = new CastInst(Params[i], PTs[i], "call.resolve.cast");
+          It = BIL.insert(It, cast<Instruction>(Params[i]))+1;
+        }
       Meth = NewVal;  // Update call destination to new value
 
     } else {                   // Changing an argument, must be in vararg area
