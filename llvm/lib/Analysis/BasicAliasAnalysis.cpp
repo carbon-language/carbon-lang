@@ -42,6 +42,14 @@ namespace {
   /// such it doesn't follow many of the rules that other alias analyses must.
   ///
   struct NoAA : public ImmutablePass, public AliasAnalysis {
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.addRequired<TargetData>();
+    }
+    
+    virtual void initializePass() {
+      TD = &getAnalysis<TargetData>();
+    }
+
     virtual AliasResult alias(const Value *V1, unsigned V1Size,
                               const Value *V2, unsigned V2Size) {
       return MayAlias;
@@ -61,7 +69,6 @@ namespace {
 
     virtual void deleteValue(Value *V) {}
     virtual void copyValue(Value *From, Value *To) {}
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const {}
   };
  
   // Register this pass...
@@ -78,14 +85,6 @@ namespace {
   /// Because it doesn't chain to a previous alias analysis (like -no-aa), it
   /// derives from the NoAA class.
   struct BasicAliasAnalysis : public NoAA {
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-      AU.addRequired<TargetData>();
-    }
-    
-    virtual void initializePass() {
-      TD = &getAnalysis<TargetData>();
-    }
-
     AliasResult alias(const Value *V1, unsigned V1Size,
                       const Value *V2, unsigned V2Size);
 
