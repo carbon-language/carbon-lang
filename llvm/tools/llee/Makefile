@@ -6,7 +6,7 @@ SRCS = ExecveHandler.c SysUtils.c
 OBJS = $(SRCS:%.c=%.o)
 SO   = execve.so
 
-all: $(SO) execve_test
+all: $(SO)
 	
 %.o: %.c
 	gcc -g -I../../include -D_GNU_SOURCE $< -c -o $@
