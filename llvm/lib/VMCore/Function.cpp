@@ -164,6 +164,12 @@ unsigned Function::getIntrinsicID() const {
     return 0;  // All intrinsics start with 'llvm.'
   
   switch (getName()[5]) {
+  case 'a':
+    if (getName() == "llvm.alpha.ctlz")  return LLVMIntrinsic::alpha_ctlz;
+    if (getName() == "llvm.alpha.cttz")  return LLVMIntrinsic::alpha_cttz;
+    if (getName() == "llvm.alpha.ctpop") return LLVMIntrinsic::alpha_ctpop;
+    if (getName() == "llvm.alpha.umulh") return LLVMIntrinsic::alpha_umulh;
+    break;
   case 'l':
     if (getName() == "llvm.longjmp")  return LLVMIntrinsic::longjmp;
     break;
