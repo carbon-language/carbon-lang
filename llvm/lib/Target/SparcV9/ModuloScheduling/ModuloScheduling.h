@@ -17,7 +17,7 @@
 #include "MSSchedule.h"
 #include "llvm/Function.h"
 #include "llvm/Pass.h"
-#include "llvm/Analysis/AliasAnalysis.h"
+#include "DependenceAnalyzer.h"
 #include "llvm/Target/TargetData.h"
 #include <set>
 
@@ -46,6 +46,9 @@ namespace llvm {
 
     //Map to hold list of instructions associate to the induction var for each BB
     std::map<const MachineBasicBlock*, std::map<const MachineInstr*, unsigned> > indVarInstrs;
+
+    //Map to hold machine to  llvm instrs for each valid BB
+    std::map<const MachineBasicBlock*, std::map<MachineInstr*, Instruction*> > machineTollvm;
 
     //LLVM Instruction we know we can add TmpInstructions to its MCFI
     Instruction *defaultInst;
@@ -145,6 +148,7 @@ namespace llvm {
   
     // getAnalysisUsage
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.addRequired<DependenceAnalyzer>();
       AU.addRequired<AliasAnalysis>();
       AU.addRequired<TargetData>();
     }

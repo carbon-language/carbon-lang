@@ -16,7 +16,7 @@
 
 #ifndef LLVM_MSCHEDGRAPH_H
 #define LLVM_MSCHEDGRAPH_H
-
+#include "DependenceAnalyzer.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/Target/TargetMachine.h"
@@ -241,18 +241,20 @@ namespace llvm {
 
     //Add Nodes and Edges to this graph for our BB
     typedef std::pair<int, MSchedGraphNode*> OpIndexNodePair;
-    void buildNodesAndEdges(AliasAnalysis &AA, TargetData &TD, std::map<const MachineInstr*, unsigned> &ignoreInstrs);
+    void buildNodesAndEdges(AliasAnalysis &AA, TargetData &TD, std::map<const MachineInstr*, unsigned> &ignoreInstrs, DependenceAnalyzer &DA, std::map<MachineInstr*, Instruction*> &machineTollvm);
     void addValueEdges(std::vector<OpIndexNodePair> &NodesInMap, 
 		       MSchedGraphNode *node,
 		       bool nodeIsUse, bool nodeIsDef, std::vector<const MachineInstr*> &phiInstrs, int diff=0);
     void addMachRegEdges(std::map<int, 
 			 std::vector<OpIndexNodePair> >& regNumtoNodeMap);
-    void addMemEdges(const std::vector<MSchedGraphNode*>& memInst, AliasAnalysis &AA, TargetData &TD);
+    void addMemEdges(const std::vector<MSchedGraphNode*>& memInst, AliasAnalysis &AA, TargetData &TD,
+		     DependenceAnalyzer &DA, std::map<MachineInstr*, Instruction*> &machineTollvm);
     void addBranchEdges();
 
   public:
-    MSchedGraph(const MachineBasicBlock *bb, const TargetMachine &targ, AliasAnalysis &AA, TargetData &TD,
-		std::map<const MachineInstr*, unsigned> &ignoreInstrs);
+    MSchedGraph(const MachineBasicBlock *bb, const TargetMachine &targ, AliasAnalysis &AA, 
+		TargetData &TD, std::map<const MachineInstr*, unsigned> &ignoreInstrs, 
+		DependenceAnalyzer &DA, std::map<MachineInstr*, Instruction*> &machineTollvm);
 
     //Copy constructor with maps to link old nodes to new nodes
     MSchedGraph(const MSchedGraph &G, std::map<MSchedGraphNode*, MSchedGraphNode*> &newNodes);

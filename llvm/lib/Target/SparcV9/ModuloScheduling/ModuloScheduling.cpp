@@ -152,6 +152,7 @@ bool ModuloSchedulingPass::runOnFunction(Function &F) {
   //Get MachineFunction
   MachineFunction &MF = MachineFunction::get(&F);
  
+  DependenceAnalyzer &DA = getAnalysis<DependenceAnalyzer>();
   AliasAnalysis &AA = getAnalysis<AliasAnalysis>();
   TargetData &TD = getAnalysis<TargetData>();
 
@@ -191,7 +192,7 @@ bool ModuloSchedulingPass::runOnFunction(Function &F) {
       continue;
     }
 
-    MSchedGraph *MSG = new MSchedGraph(*BI, target, AA, TD, indVarInstrs[*BI]);
+    MSchedGraph *MSG = new MSchedGraph(*BI, target, AA, TD, indVarInstrs[*BI], DA, machineTollvm[*BI]);
     
     //Write Graph out to file
     DEBUG(WriteGraphToFile(std::cerr, F.getName(), MSG));
@@ -349,7 +350,6 @@ bool ModuloSchedulingPass::MachineBBisValid(const MachineBasicBlock *BI) {
   if(BI->getBasicBlock()->size() == 1)
     return false;
 
-
   //Increase number of single basic block loops for stats
   ++SingleBBLoops;
 
@@ -363,8 +363,11 @@ bool ModuloSchedulingPass::MachineBBisValid(const MachineBasicBlock *BI) {
   for(MachineBasicBlock::const_iterator I = BI->begin(), E = BI->end(); I != E; ++I) {
     //Get opcode to check instruction type
     MachineOpCode OC = I->getOpcode();
+    
+    //Look for calls
     if(TMI->isCall(OC))
       return false;
+    
     //Look for conditional move
     if(OC == V9::MOVRZr || OC == V9::MOVRZi || OC == V9::MOVRLEZr || OC == V9::MOVRLEZi 
        || OC == V9::MOVRLZr || OC == V9::MOVRLZi || OC == V9::MOVRNZr || OC == V9::MOVRNZi
@@ -422,6 +425,15 @@ bool ModuloSchedulingPass::MachineBBisValid(const MachineBasicBlock *BI) {
 	  std::cerr << **N << "\n";
 	});
 
+  //Create map of machine instr to llvm instr
+  std::map<MachineInstr*, Instruction*> mllvm;
+  for(BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I) {
+    MachineCodeForInstruction & tempMvec = MachineCodeForInstruction::get(I);
+    for (unsigned j = 0; j < tempMvec.size(); j++) {
+      mllvm[tempMvec[j]] = I;
+    }
+  }
+
   //Convert list of LLVM Instructions to list of Machine instructions
   std::map<const MachineInstr*, unsigned> mIndVar;
   for(std::set<Instruction*>::iterator N = indVar.begin(), NE = indVar.end(); N != NE; ++N) {
@@ -443,7 +455,7 @@ bool ModuloSchedulingPass::MachineBBisValid(const MachineBasicBlock *BI) {
 
   //Put into a map for future access
   indVarInstrs[BI] = mIndVar;
-
+  machineTollvm[BI] = mllvm;
   return true;
 }
 
@@ -1864,7 +1876,7 @@ void ModuloSchedulingPass::writePrologues(std::vector<MachineBasicBlock *> &prol
   MSchedGraphNode *branch = 0;
   MSchedGraphNode *BAbranch = 0;
 
-  schedule.print(std::cerr);
+  DEBUG(schedule.print(std::cerr));
 
   std::vector<MSchedGraphNode*> branches;
 
