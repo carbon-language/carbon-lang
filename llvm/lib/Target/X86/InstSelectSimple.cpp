@@ -1198,21 +1198,29 @@ void ISel::visitIntrinsicCall(Intrinsic::ID ID, CallInst &CI) {
     }
 
     // Turn the byte code into # iterations
-    unsigned ByteReg = getReg(CI.getOperand(3));
+    unsigned ByteReg;
     unsigned CountReg;
     
     switch (Align & 3) {
     case 2:   // WORD aligned
-      CountReg = makeAnotherReg(Type::IntTy);
-      BuildMI(BB, X86::SHRir32, 2, CountReg).addReg(ByteReg).addZImm(1);
+      if (ConstantInt *I = dyn_cast<ConstantInt>(CI.getOperand(3))) {
+        CountReg = getReg(ConstantUInt::get(Type::UIntTy, I->getRawValue()/2));
+      } else {
+        CountReg = makeAnotherReg(Type::IntTy);
+        BuildMI(BB, X86::SHRir32, 2, CountReg).addReg(ByteReg).addZImm(1);
+      }
       break;
     case 0:   // DWORD aligned
-      CountReg = makeAnotherReg(Type::IntTy);
-      BuildMI(BB, X86::SHRir32, 2, CountReg).addReg(ByteReg).addZImm(2);
+      if (ConstantInt *I = dyn_cast<ConstantInt>(CI.getOperand(3))) {
+        CountReg = getReg(ConstantUInt::get(Type::UIntTy, I->getRawValue()/4));
+      } else {
+        CountReg = makeAnotherReg(Type::IntTy);
+        BuildMI(BB, X86::SHRir32, 2, CountReg).addReg(ByteReg).addZImm(2);
+      }
       break;
     case 1:   // BYTE aligned
     case 3:   // BYTE aligned
-      CountReg = ByteReg;
+      CountReg = getReg(CI.getOperand(3));
       break;
     }
 
@@ -1224,7 +1232,6 @@ void ISel::visitIntrinsicCall(Intrinsic::ID ID, CallInst &CI) {
     BuildMI(BB, X86::MOVrr32, 1, X86::EDI).addReg(TmpReg1);
     BuildMI(BB, X86::MOVrr32, 1, X86::ESI).addReg(TmpReg2);
 
-    unsigned Bytes = getReg(CI.getOperand(3));
     switch (Align & 3) {
     case 1:   // BYTE aligned
     case 3:   // BYTE aligned
