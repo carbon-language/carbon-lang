@@ -10,7 +10,7 @@
 // Loop exit-block insertion guarantees that all exit blocks from the loop
 // (blocks which are outside of the loop that have predecessors inside of the
 // loop) are dominated by the loop header.  This simplifies transformations such
-// as store-sinking that is built into LICM.
+// as store-sinking that are built into LICM.
 //
 // Note that the simplifycfg pass will clean up blocks which are split out but
 // end up being unnecessary, so usage of this pass does not neccesarily
@@ -91,6 +91,9 @@ bool Preheaders::ProcessLoop(Loop *L) {
     Changed = true;
   }
 
+  // Regardless of whether or not we added a preheader to the loop we must
+  // guarantee that the preheader dominates all exit nodes.  If there are any
+  // exit nodes not dominated, split them now.
   DominatorSet &DS = getAnalysis<DominatorSet>();
   BasicBlock *Header = L->getHeader();
   for (unsigned i = 0, e = L->getExitBlocks().size(); i != e; ++i)
