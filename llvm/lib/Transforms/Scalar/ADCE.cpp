@@ -91,9 +91,8 @@ private:
   TerminatorInst *convertToUnconditionalBranch(TerminatorInst *TI);
 
   inline void markInstructionLive(Instruction *I) {
-    if (LiveSet.count(I)) return;
+    if (!LiveSet.insert(I).second) return;
     DEBUG(std::cerr << "Insn Live: " << *I);
-    LiveSet.insert(I);
     WorkList.push_back(I);
   }
 
