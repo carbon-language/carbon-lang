@@ -99,7 +99,7 @@ Pattern::Pattern(PatternType pty, DagInit *RawPat, Record *TheRec,
   Resolved = !AnyUnset;
 }
 
-void Pattern::error(const std::string &Msg) {
+void Pattern::error(const std::string &Msg) const {
   std::string M = "In ";
   switch (PTy) {
   case Nonterminal: M += "nonterminal "; break;
@@ -109,16 +109,18 @@ void Pattern::error(const std::string &Msg) {
   throw M + TheRecord->getName() + ": " + Msg;  
 }
 
-static MVT::ValueType getIntrinsicType(Record *R) {
+/// getIntrinsicType - Check to see if the specified record has an intrinsic
+/// type which should be applied to it.  This infer the type of register
+/// references from the register file information, for example.
+///
+MVT::ValueType Pattern::getIntrinsicType(Record *R) const {
   // Check to see if this is a register or a register class...
-  if (R->isSubClassOf("RegisterClass")) {
+  if (R->isSubClassOf("RegisterClass"))
     return getValueType(R->getValueAsDef("RegType"));
-  } else if (R->isSubClassOf("Register")) {
+  else if (R->isSubClassOf("Nonterminal"))
+    return ISE.ReadNonterminal(R)->getTree()->getType();
+  else if (R->isSubClassOf("Register")) {
     std::cerr << "WARNING: Explicit registers not handled yet!\n";
-    return MVT::Other;
-  } else if (R->isSubClassOf("Nonterminal")) {
-    //std::cerr << "Warning nonterminal type not handled yet:" << R->getName()
-    //          << "\n";
     return MVT::Other;
   }
 
@@ -238,6 +240,15 @@ bool Pattern::InferTypes(TreePatternNode *N, bool &MadeChange) {
   return AnyUnset | N->getType() == MVT::Other;
 }
 
+/// InstantiateNonterminalsReferenced - If this pattern refers to any
+/// nonterminals which are not themselves completely resolved, clone the
+/// nonterminal and resolve it with the using context we provide.
+///
+void Pattern::InstantiateNonterminalsReferenced() {
+
+}
+
+
 std::ostream &operator<<(std::ostream &OS, const Pattern &P) {
   switch (P.getPatternType()) {
   case Pattern::Nonterminal: OS << "Nonterminal pattern "; break;
@@ -300,16 +311,23 @@ void InstrSelectorEmitter::ReadNodeTypes() {
   DEBUG(std::cerr << "DONE!\n");
 }
 
+Pattern *InstrSelectorEmitter::ReadNonterminal(Record *R) {
+  Pattern *&P = Patterns[R];
+  if (P) return P;  // Don't reread it!
+
+  DagInit *DI = R->getValueAsDag("Pattern");
+  P = new Pattern(Pattern::Nonterminal, DI, R, *this);
+  DEBUG(std::cerr << "Parsed " << *P << "\n");
+  return P;
+}
+
+
 // ReadNonTerminals - Read in all nonterminals and incorporate them into our
 // pattern database.
 void InstrSelectorEmitter::ReadNonterminals() {
   std::vector<Record*> NTs = Records.getAllDerivedDefinitions("Nonterminal");
-  for (unsigned i = 0, e = NTs.size(); i != e; ++i) {
-    DagInit *DI = NTs[i]->getValueAsDag("Pattern");
-
-    Patterns[NTs[i]] = new Pattern(Pattern::Nonterminal, DI, NTs[i], *this);
-    DEBUG(std::cerr << "Parsed " << *Patterns[NTs[i]] << "\n");
-  }
+  for (unsigned i = 0, e = NTs.size(); i != e; ++i)
+    ReadNonterminal(NTs[i]);
 }
 
 
@@ -342,11 +360,12 @@ void InstrSelectorEmitter::ReadExpanderPatterns() {
 
 // InstantiateNonterminals - Instantiate any unresolved nonterminals with
 // information from the context that they are used in.
+//
 void InstrSelectorEmitter::InstantiateNonterminals() {
   for (std::map<Record*, Pattern*>::iterator I = Patterns.begin(),
-         E = Patterns.end(); I != E; ++I) {
-
-  }
+         E = Patterns.end(); I != E; ++I)
+    if (I->second->isResolved())
+      I->second->InstantiateNonterminalsReferenced();
 }
 
 

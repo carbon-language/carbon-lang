@@ -162,10 +162,15 @@ public:
 
   bool isResolved() const { return Resolved; }
 
+  /// InstantiateNonterminalsReferenced - If this pattern refers to any
+  /// nonterminals which are not themselves completely resolved, clone the
+  /// nonterminal and resolve it with the using context we provide.
+  void InstantiateNonterminalsReferenced();
 private:
+  MVT::ValueType getIntrinsicType(Record *R) const;
   TreePatternNode *ParseTreePattern(DagInit *DI);
   bool InferTypes(TreePatternNode *N, bool &MadeChange);
-  void error(const std::string &Msg);
+  void error(const std::string &Msg) const;
 };
 
 std::ostream &operator<<(std::ostream &OS, const Pattern &P);
@@ -192,6 +197,17 @@ public:
 
   const CodeGenTarget &getTarget() const { return Target; }
   std::map<Record*, NodeType> &getNodeTypes() { return NodeTypes; }
+
+  /// getPattern - return the pattern corresponding to the specified record, or
+  /// null if there is none.
+  Pattern *getPattern(Record *R) const {
+    std::map<Record*, Pattern*>::const_iterator I = Patterns.find(R);
+    return I != Patterns.end() ? I->second : 0;
+  }
+
+  /// ReadNonterminal - This method parses the specified record as a
+  /// nonterminal, but only if it hasn't been read in already.
+  Pattern *ReadNonterminal(Record *R);
 
 private:
   // ReadNodeTypes - Read in all of the node types in the current RecordKeeper,
