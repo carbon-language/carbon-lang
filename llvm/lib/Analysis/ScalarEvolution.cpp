@@ -924,6 +924,7 @@ SCEVHandle SCEVZeroExtendExpr::get(const SCEVHandle &Op, const Type *Ty) {
 // get - Get a canonical add expression, or something simpler if possible.
 SCEVHandle SCEVAddExpr::get(std::vector<SCEVHandle> &Ops) {
   assert(!Ops.empty() && "Cannot get empty add!");
+  if (Ops.size() == 1) return Ops[0];
 
   // Sort by complexity, this groups all similar expression types together.
   std::sort(Ops.begin(), Ops.end(), SCEVComplexityCompare());
@@ -932,6 +933,7 @@ SCEVHandle SCEVAddExpr::get(std::vector<SCEVHandle> &Ops) {
   unsigned Idx = 0;
   if (SCEVConstant *LHSC = dyn_cast<SCEVConstant>(Ops[0])) {
     ++Idx;
+    assert(Idx < Ops.size());
     while (SCEVConstant *RHSC = dyn_cast<SCEVConstant>(Ops[Idx])) {
       // We found two constants, fold them together!
       Constant *Fold = ConstantExpr::getAdd(LHSC->getValue(), RHSC->getValue());
@@ -954,8 +956,7 @@ SCEVHandle SCEVAddExpr::get(std::vector<SCEVHandle> &Ops) {
     }
   }
 
-  if (Ops.size() == 1)
-    return Ops[0];
+  if (Ops.size() == 1) return Ops[0];
   
   // Okay, check to see if the same value occurs in the operand list twice.  If
   // so, merge them together into an multiply expression.  Since we sorted the
