@@ -7,20 +7,10 @@
 #ifndef LLVM_ANALYSIS_DATA_STRUCTURE_H
 #define LLVM_ANALYSIS_DATA_STRUCTURE_H
 
-#include "llvm/Analysis/DSGraph.h"
 #include "llvm/Pass.h"
-#if 0
-#include "llvm/GlobalValue.h"
-#include "Support/HashExtras.h"
-#include "Support/hash_set"
-#include <set>
-#endif
 
 class Type;
-class GlobalValue;
-#if 0
-class GlobalDSGraph;           // A common graph for globals in a program 
-#endif
+class DSGraph;
 class LocalDataStructures;     // A collection of local graphs for a program
 class BUDataStructures;        // A collection of bu graphs for a program
 class TDDataStructures;        // A collection of td graphs for a program
@@ -68,7 +58,6 @@ public:
   }
 };
 
-#if 0
 // BUDataStructures - The analysis that computes the interprocedurally closed
 // data structure graphs for all of the functions in the program.  This pass
 // only performs a "Bottom Up" propogation (hence the name).
@@ -104,6 +93,7 @@ private:
 };
 
 
+#if 0
 // TDDataStructures - Analysis that computes new data structure graphs
 // for each function using the closed graphs for the callers computed
 // by the bottom-up pass.
