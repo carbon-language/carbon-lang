@@ -16,7 +16,7 @@ Startup:
 end
 
 int "test"(int) 
-    %thisfuncty = type int (int)
+    %thisfuncty = type int (int) *
 begin
     add %thisfuncty %zarro, %test
     add %thisfuncty %test, %foozball
