@@ -20,6 +20,7 @@
 #include "Unix.h"
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <fstream>
 
 namespace llvm {
 using namespace sys;
@@ -75,6 +76,53 @@ Path::GetUserHomeDirectory() {
       return result;
   }
   return GetRootDirectory();
+}
+
+bool
+Path::is_file() const {
+  return (is_valid() && path[path.length()-1] != '/');
+}
+
+bool
+Path::is_directory() const {
+  return (is_valid() && path[path.length()-1] == '/');
+}
+
+std::string
+Path::get_basename() const {
+  // Find the last slash
+  size_t slash = path.rfind('/');
+  if (slash == std::string::npos)
+    slash = 0;
+  else
+    slash++;
+
+  return path.substr(slash, path.rfind('.'));
+}
+
+bool Path::has_magic_number(const std::string &Magic) const {
+  size_t len = Magic.size();
+  char buf[ 1 + len];
+  std::ifstream f(path.c_str());
+  f.read(buf, len);
+  buf[len] = '\0';
+  return Magic == buf;
+}
+
+bool 
+Path::is_bytecode_file() const {
+  if (readable()) {
+    return has_magic_number("llvm");
+  }
+  return false;
+}
+
+bool
+Path::is_archive() const {
+  if (readable()) {
+    return has_magic_number("!<arch>\012");
+  }
+  return false;
 }
 
 bool
