@@ -80,3 +80,16 @@ sbyte %test13(sbyte %A) {           ;; (A >> 3) << 4 === (A & -8) * 2
 	%C = shl sbyte %B, ubyte 4
 	ret sbyte %C
 }
+
+uint %test14(uint %A) {
+	%B = shr uint %A, ubyte 4
+	%C = or uint %B, 1234
+	%D = shl uint %C, ubyte 4   ;; D = ((B | 1234) << 4) === ((B << 4)|(1234 << 4)
+	ret uint %D
+}
+int %test14a(int %A) {
+	%B = shl int %A, ubyte 4
+	%C = and int %B, -1234
+	%D = shr int %C, ubyte 4   ;; D = ((B | 1234) << 4) === ((B << 4)|(1234 << 4)
+	ret int %D
+}
