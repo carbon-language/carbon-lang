@@ -28,8 +28,8 @@ namespace {
     virtual bool runOnMachineFunction(MachineFunction &MF);
     virtual const char *getPassName() const { return "Branch Folder"; }
   private:
-    bool OptimizeBlock(MachineBasicBlock *MBB, const TargetInstrInfo &TII);
-
+    bool OptimizeBlock(MachineFunction::iterator MBB,
+                       const TargetInstrInfo &TII);
 
     bool isUncondBranch(const MachineInstr *MI, const TargetInstrInfo &TII) {
       return TII.isBarrier(MI->getOpcode()) && TII.isBranch(MI->getOpcode());
@@ -108,13 +108,13 @@ static void ReplaceUsesOfBlockWith(MachineBasicBlock *BB,
 }
 
 
-bool BranchFolder::OptimizeBlock(MachineBasicBlock *MBB,
+bool BranchFolder::OptimizeBlock(MachineFunction::iterator MBB,
                                  const TargetInstrInfo &TII) {
   // If this block is empty, make everyone use it's fall-through, not the block
   // explicitly.
   if (MBB->empty()) {
     if (MBB->pred_empty()) return false;
-    MachineFunction::iterator FallThrough =next(MachineFunction::iterator(MBB));
+    MachineFunction::iterator FallThrough =next(MBB);
     assert(FallThrough != MBB->getParent()->end() &&
            "Fell off the end of the function!");
     while (!MBB->pred_empty()) {
