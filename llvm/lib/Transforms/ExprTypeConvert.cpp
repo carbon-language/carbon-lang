@@ -616,6 +616,15 @@ static bool OperandConvertableToType(User *U, Value *V, const Type *Ty,
         I->getType() == I->getOperand(0)->getType())
       return false;
 
+    // Do not allow a 'cast ushort %V to uint' to have it's first operand be
+    // converted to a 'short' type.  Doing so changes the way sign promotion
+    // happens, and breaks things.  Only allow the cast to take place if the
+    // signedness doesn't change... or if the current cast is not a lossy
+    // conversion.
+    //
+    if (!I->getType()->isLosslesslyConvertableTo(I->getOperand(0)->getType()) &&
+        I->getOperand(0)->getType()->isSigned() != Ty->isSigned())
+      return false;
 
 #if 1
     // We also do not allow conversion of a cast that casts from a ptr to array
