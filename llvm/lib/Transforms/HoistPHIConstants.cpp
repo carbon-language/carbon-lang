@@ -40,8 +40,9 @@ static Value *NormalizePhiOperand(PHINode *PN, Value *CPV,
 // Entry point for normalizing constant args in PHIs
 //---------------------------------------------------------------------------
 
-bool HoistPHIConstants::doPerMethodWork(Method *M) {
+bool HoistPHIConstants::doHoistPHIConstants(Method *M) {
   CachedCopyMap Cache;
+  bool Changed = false;
   
   for (Method::iterator BI = M->begin(), BE = M->end(); BI != BE; ++BI)
     for (BasicBlock::iterator II = (*BI)->begin(); II != (*BI)->end(); ++II) {
@@ -51,11 +52,13 @@ bool HoistPHIConstants::doPerMethodWork(Method *M) {
       PHINode *PN = cast<PHINode>(Inst);
       for (unsigned i = 0; i < PN->getNumIncomingValues(); ++i) {
         Value *Op = PN->getIncomingValue(i);
-        if (isa<ConstPoolVal>(Op))
+        if (isa<ConstPoolVal>(Op)) {
           PN->setIncomingValue(i,
                 NormalizePhiOperand(PN, Op, PN->getIncomingBlock(i), Cache));
+          Changed = true;
+        }
       }
     }
 
-  return false;
+  return Changed;
 }

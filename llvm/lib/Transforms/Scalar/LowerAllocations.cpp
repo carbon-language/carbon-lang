@@ -19,7 +19,8 @@
 //
 // This function is always successful.
 //
-bool LowerAllocations::doPassInitializationVirt(Module *M) {
+bool LowerAllocations::doPassInitialization(Module *M) {
+  bool Changed = false;
   const MethodType *MallocType = 
     MethodType::get(PointerType::get(Type::UByteTy),
                     vector<const Type*>(1, Type::UIntTy), false);
@@ -31,6 +32,7 @@ bool LowerAllocations::doPassInitializationVirt(Module *M) {
     MallocMeth = cast<Method>(V);      // Yup, got it
   } else {                             // Nope, add one
     M->getMethodList().push_back(MallocMeth = new Method(MallocType, "malloc"));
+    Changed = true;
   }
 
   const MethodType *FreeType = 
@@ -43,15 +45,17 @@ bool LowerAllocations::doPassInitializationVirt(Module *M) {
     FreeMeth = cast<Method>(V);      // Yup, got it
   } else {                             // Nope, add one
     M->getMethodList().push_back(FreeMeth = new Method(FreeType, "free"));
+    Changed = true;
   }
 
-  return false;  // Always successful
+  return Changed;  // Always successful
 }
 
 // doPerMethodWork - This method does the actual work of converting
 // instructions over, assuming that the pass has already been initialized.
 //
-bool LowerAllocations::doPerMethodWorkVirt(Method *M) {
+bool LowerAllocations::doPerMethodWork(Method *M) {
+  bool Changed = false;
   assert(MallocMeth && FreeMeth && M && "Pass not initialized!");
 
   // Loop over all of the instructions, looking for malloc or free instructions
@@ -97,6 +101,7 @@ bool LowerAllocations::doPerMethodWorkVirt(Method *M) {
         // Replace all uses of the old malloc inst with the cast inst
         MI->replaceAllUsesWith(MCast);
         delete MI;                          // Delete the malloc inst
+        Changed = true;
       } else if (FreeInst *FI = dyn_cast<FreeInst>(*(BBIL.begin()+i))) {
         BBIL.remove(BB->getInstList().begin()+i);
 
@@ -112,10 +117,11 @@ bool LowerAllocations::doPerMethodWorkVirt(Method *M) {
 
         // Delete the old free instruction
         delete FI;
+        Changed = true;
       }
     }
   }
 
-  return false;   // Always successful
+  return Changed;
 }
 
