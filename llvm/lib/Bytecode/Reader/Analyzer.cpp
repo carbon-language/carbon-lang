@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "AnalyzerInternals.h"
+#include <iostream>
 
 using namespace llvm;
 
@@ -20,22 +21,49 @@ using namespace llvm;
 namespace {
 
 class AnalyzerHandler : public BytecodeHandler {
+  BytecodeAnalysis& bca;
 public:
+  AnalyzerHandler(BytecodeAnalysis& TheBca) 
+    : bca(TheBca)
+  {
+  }  
+
   bool handleError(const std::string& str )
   {
+    std::cerr << "Analysis Error: " << str;
     return false;
   }
 
   void handleStart()
   {
+    bca.ModuleId.clear();
+    bca.numTypes = 0;
+    bca.numValues = 0;
+    bca.numFunctions = 0;
+    bca.numConstants = 0;
+    bca.numGlobalVars = 0;
+    bca.numInstructions = 0;
+    bca.numBasicBlocks = 0;
+    bca.numOperands = 0;
+    bca.numCmpctnTables = 0;
+    bca.numSymTab = 0;
+    bca.maxTypeSlot = 0;
+    bca.maxValueSlot = 0;
+    bca.density = 0.0;
+    bca.FunctionInfo.clear();
+    bca.BytecodeDump.clear();
   }
 
   void handleFinish()
   {
+    bca.density = bca.numTypes + bca.numFunctions + bca.numConstants +
+      bca.numGlobalVars + bca.numInstructions;
+    bca.density /= bca.byteSize;
   }
 
   void handleModuleBegin(const std::string& id)
   {
+    bca.ModuleId = id;
   }
 
   void handleModuleEnd(const std::string& id)
@@ -60,6 +88,7 @@ public:
     GlobalValue::LinkageTypes ///< The linkage type of the GV
   )
   {
+    bca.numGlobalVars++;
   }
 
   void handleInitializedGV( 
@@ -69,16 +98,19 @@ public:
     unsigned initSlot         ///< Slot number of GV's initializer
   )
   {
+    bca.numGlobalVars++;
   }
 
   virtual void handleType( const Type* Ty ) 
   {
+    bca.numTypes++;
   }
 
   void handleFunctionDeclaration( 
     const Type* FuncType      ///< The type of the function
   )
   {
+    bca.numFunctions++;
   }
 
   void handleModuleGlobalsEnd()
@@ -94,6 +126,7 @@ public:
     unsigned NumEntries
   )
   {
+    bca.numCmpctnTables++;
   }
 
   void handleCompactionTableType( 
@@ -118,6 +151,7 @@ public:
 
   void handleSymbolTableBegin()
   {
+    bca.numSymTab++;
   }
 
   void handleSymbolTablePlane( 
@@ -165,6 +199,7 @@ public:
     unsigned blocknum
   )
   {
+    bca.numBasicBlocks++;
   }
 
   bool handleInstruction(
@@ -173,7 +208,8 @@ public:
     std::vector<unsigned>& Operands
   )
   {
-    return false;
+    bca.numInstructions++;
+    return Instruction::isTerminator(Opcode); 
   }
 
   void handleBasicBlockEnd(unsigned blocknum)
@@ -190,31 +226,37 @@ public:
       std::vector<std::pair<const Type*,unsigned> > ArgVec 
     )
   {
+    bca.numConstants++;
   }
 
   void handleConstantValue( Constant * c )
   {
+    bca.numConstants++;
   }
 
   void handleConstantArray( 
 	  const ArrayType* AT, 
 	  std::vector<unsigned>& Elements )
   {
+    bca.numConstants++;
   }
 
   void handleConstantStruct(
 	const StructType* ST,
 	std::vector<unsigned>& ElementSlots)
   {
+    bca.numConstants++;
   }
 
   void handleConstantPointer(
 	const PointerType* PT, unsigned Slot)
   {
+    bca.numConstants++;
   }
 
   void handleConstantString( const ConstantArray* CA ) 
   {
+    bca.numConstants++;
   }
 
 
@@ -233,10 +275,12 @@ void llvm::BytecodeAnalyzer::AnalyzeBytecode(
     const std::string &ModuleID
 )
 {
-  AnalyzerHandler TheHandler;
+  bca.byteSize = Length;
+  AnalyzerHandler TheHandler(bca);
   AbstractBytecodeParser TheParser(&TheHandler);
   TheParser.ParseBytecode( Buf, Length, ModuleID );
-  TheParser.ParseAllFunctionBodies();
+  if ( bca.detailedResults )
+    TheParser.ParseAllFunctionBodies();
 }
 
 // vim: sw=2
