@@ -98,16 +98,21 @@ void SparcEmitter::finishFunction(MachineFunction &F) {
     unsigned *Ref = BBRefs[i].second.first;
     MachineInstr *MI = BBRefs[i].second.second;
     std::cerr << "attempting to resolve BB: " << i << "\n";
-    for (unsigned i=0, e = MI->getNumOperands(); i != e; ++i) {
-      MachineOperand &op = MI->getOperand(i);
+    for (unsigned ii = 0, ee = MI->getNumOperands(); ii != ee; ++ii) {
+      MachineOperand &op = MI->getOperand(ii);
       if (op.isPCRelativeDisp()) {
         // the instruction's branch target is made such that it branches to
         // PC + (br target * 4), so undo that arithmetic here:
         // Location is the target of the branch
         // Ref is the location of the instruction, and hence the PC
         unsigned branchTarget = (Location - (long)Ref) >> 2;
-        MI->SetMachineOperandConst(i, MachineOperand::MO_SignExtendedImmed,
+        MI->SetMachineOperandConst(ii, MachineOperand::MO_SignExtendedImmed,
                                    branchTarget);
+        // Copy the flags.
+        if (op.opLoBits32()) { MI->setOperandLo32(ii); }
+        else if (op.opHiBits32()) { MI->setOperandHi32(ii); }
+        else if (op.opLoBits64()) { MI->setOperandLo64(ii); }
+        else if (op.opHiBits64()) { MI->setOperandHi64(ii); }
         std::cerr << "Rewrote BB ref: ";
         unsigned fixedInstr = SparcV9CodeEmitter::getBinaryCodeForInstr(*MI);
         *Ref = fixedInstr;
