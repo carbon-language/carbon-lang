@@ -42,8 +42,8 @@ extern cl::Enum<SchedDebugLevel_t> SchedDebugLevel;
 //   are still in SSA form.
 //---------------------------------------------------------------------------
 
-bool ScheduleInstructionsWithSSA(Method* method, const TargetMachine &Target,
-				 const MachineSchedInfo &schedInfo);
+bool ScheduleInstructionsWithSSA(Method* method, const TargetMachine &Target);
+
 
 //---------------------------------------------------------------------------
 // Function: ScheduleInstructions

@@ -1,25 +1,25 @@
-/* $Id$ -*-c++-*-
- ****************************************************************************
- * File:
- *	InstrForest.h
- * 
- * Purpose:
- *	Convert SSA graph to instruction trees for instruction selection.
- * 
- * Strategy:
- *  The basic idea is that we would like to group instructions into a single
- *  tree if one or more of them might be potentially combined into a single
- *  complex instruction in the target machine.
- *  Since this grouping is completely machine-independent, it is as
- *  aggressive as possible.  In particular, we group two instructions
- *  O and I if:
- *  (1) Instruction O computes an operand of instruction I, and
- *  (2) O and I are part of the same basic block, and
- *  (3) O has only a single use, viz., I.
- * 
- * History:
- *	6/28/01	 -  Vikram Adve  -  Created
- ***************************************************************************/
+// $Id$ -*-c++-*-
+//***************************************************************************
+// File:
+//	InstrForest.h
+// 
+// Purpose:
+//	Convert SSA graph to instruction trees for instruction selection.
+// 
+// Strategy:
+//  The basic idea is that we would like to group instructions into a single
+//  tree if one or more of them might be potentially combined into a single
+//  complex instruction in the target machine.
+//  Since this grouping is completely machine-independent, it is as
+//  aggressive as possible.  In particular, we group two instructions
+//  O and I if:
+//  (1) Instruction O computes an operand of instruction I, and
+//  (2) O and I are part of the same basic block, and
+//  (3) O has only a single use, viz., I.
+// 
+// History:
+//	6/28/01	 -  Vikram Adve  -  Created
+//**************************************************************************/
 
 #ifndef LLVM_CODEGEN_INSTRFOREST_H
 #define LLVM_CODEGEN_INSTRFOREST_H
@@ -235,11 +235,13 @@ protected:
 //------------------------------------------------------------------------ 
 
 class InstrForest : private hash_map<const Instruction*, InstructionNode*> {
+private:
   hash_set<InstructionNode*> treeRoots;
   
 public:
-  InstrForest(Method *M);
-				    
+  /*ctor*/	InstrForest	(Method *M);
+  /*dtor*/	~InstrForest	();
+  
   inline InstructionNode *getTreeNodeForInstr(Instruction* instr) {
     return (*this)[instr];
   }

@@ -21,8 +21,8 @@
 
 #include "llvm/CodeGen/IGNode.h"
 #include "llvm/CodeGen/InterferenceGraph.h"
-#include "llvm/Target/Machine.h"
-#include "llvm/Target/RegInfo.h"
+#include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/MachineRegInfo.h"
 #include <stack>
 
 typedef vector<unsigned int> ReservedColorListType;

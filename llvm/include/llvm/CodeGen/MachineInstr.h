@@ -19,7 +19,7 @@
 #include "llvm/CodeGen/InstrForest.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/NonCopyable.h"
-#include "llvm/Target/InstInfo.h"
+#include "llvm/Target/MachineInstrInfo.h"
 
 template<class _MI, class _V> class ValOpIterator;
 
@@ -86,7 +86,6 @@ private:
   unsigned int regNum;	        // register number for an explicit register
                                 // will be set for a value after reg allocation
   bool isDef;                   // is this a defition for the value
-                                // made public for faster access
   
 public:
   /*ctor*/		MachineOperand	();
