@@ -7,7 +7,7 @@
 
 bool %test1(int %X) {
 	%A = cast int %X to uint
-	%c = setne uint %A, 0        ; Convert to setne int %X, 0
+	%c = setne uint %A, 12        ; Convert to setne int %X, 12
 	ret bool %c
 }
 
@@ -30,8 +30,15 @@ bool %test3(int %A, int %B) {
 
 int %test4(int %A) {
 	%B = cast int %A to uint
-	%C = shl uint %B, ubyte 1
+	%C = shl uint %B, ubyte 2
 	%D = cast uint %C to int
 	ret int %D
 }
 
+short %test5(short %A) {
+	%B = cast short %A to uint
+	%C = and uint %B, 15
+	%D = cast uint %C to short
+	ret short %D
+}
+                          
