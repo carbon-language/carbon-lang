@@ -40,12 +40,18 @@ struct DOTGraphTraits<const Function*> : public DefaultDOTGraphTraits {
 
   static std::string getNodeLabel(const BasicBlock *Node,
                                   const Function *Graph) {
-    if (CFGOnly && !Node->getName().empty()) return Node->getName() + ":";
+    if (CFGOnly && !Node->getName().empty())
+      return Node->getName() + ":";
 
     std::ostringstream Out;
     if (CFGOnly) {
       WriteAsOperand(Out, Node, false, true);
       return Out.str();
+    }
+
+    if (Node->getName().empty()) {
+      WriteAsOperand(Out, Node, false, true);
+      Out << ":";
     }
 
     Out << *Node;
