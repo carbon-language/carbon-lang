@@ -85,11 +85,10 @@ bb2:
         br bool %cond1011, label %bb4, label %bb3
 
 bb3:
-        %cast1015 = cast ulong 0 to %list*                      ;;<%list*>
-        ret %list* %cast1015
+        ret %list* null
 
 bb4:
-        %reg111 = load %list* %reg115, ubyte 1                  ;;<int>
+        %reg111 = load %list* %reg115, uint 0, ubyte 1                  ;;<int>
         %cond1013 = setne int %reg111, %Data                    ;;<bool>
         br bool %cond1013, label %bb6, label %bb5
 
@@ -97,6 +96,6 @@ bb5:
         ret %list* %reg115
 
 bb6:
-        %reg116 = load %list* %reg115, ubyte 0                  ;;<%list*>
+        %reg116 = load %list* %reg115, uint 0, ubyte 0                  ;;<%list*>
         br label %bb2
 end

@@ -10,7 +10,7 @@
 
 %CCC = type { \2* }
 %BBB = type { \2*, \2 * }
-%AAA = type { \2*, {\2*}, [{\2*}], {[1x{\2*}]} }
+%AAA = type { \2*, {\2*}, [12x{\2*}], {[1x{\2*}]} }
 
 ; Test numbered types
 type %CCC
@@ -35,7 +35,7 @@ type %BBB
 
 ; A complex recursive type...
 %Y = type { {%Y*}, %Y* }
-%Z = type { { %Z * }, [%Z] *, {{{ %Z * }}} }
+%Z = type { { %Z * }, [12x%Z] *, {{{ %Z * }}} }
 
 ; More ridiculous test cases...
 %A = type [ 123x %A*]
@@ -49,7 +49,7 @@ type %BBB
 ; Test the parser for unnamed recursive types...
 %P1 = type \1 *
 %Y1 = type { { \3 * }, \2 * }
-%Z1 = type { { \3 * }, [\3] *, { { { \5 * } } } }
+%Z1 = type { { \3 * }, [12x\3] *, { { { \5 * } } } }
 
 implementation
 
