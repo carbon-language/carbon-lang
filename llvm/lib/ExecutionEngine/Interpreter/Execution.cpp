@@ -706,8 +706,7 @@ GenericValue Interpreter::executeGEPOperation(Value *Ptr, gep_type_iterator I,
     if (const StructType *STy = dyn_cast<StructType>(*I)) {
       const StructLayout *SLO = TD.getStructLayout(STy);
       
-      // Indices must be ubyte constants...
-      const ConstantUInt *CPU = cast<ConstantUInt>(*I);
+      const ConstantUInt *CPU = cast<ConstantUInt>(I.getOperand());
       unsigned Index = CPU->getValue();
       
       Total += SLO->MemberOffsets[Index];
