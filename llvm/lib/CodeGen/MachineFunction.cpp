@@ -61,7 +61,7 @@ namespace {
 /// stream is std::cerr; the default banner is empty.
 ///
 FunctionPass *llvm::createMachineFunctionPrinterPass(std::ostream *OS,
-                                                     const std::string &Banner) {
+                                                     const std::string &Banner){
   return new Printer(OS, Banner);
 }
 
@@ -108,7 +108,7 @@ void ilist_traits<MachineBasicBlock>::transferNodesFromList(
 
 MachineFunction::MachineFunction(const Function *F,
                                  const TargetMachine &TM)
-  : Annotation(MF_AID), Fn(F), Target(TM) {
+  : Annotation(MF_AID), Fn(F), Target(TM), UsedPhysRegs(0) {
   SSARegMapping = new SSARegMap();
   MFInfo = 0;
   FrameInfo = new MachineFrameInfo();
@@ -122,6 +122,7 @@ MachineFunction::~MachineFunction() {
   delete MFInfo;
   delete FrameInfo;
   delete ConstantPool;
+  delete[] UsedPhysRegs;
 }
 
 void MachineFunction::dump() const { print(std::cerr); }
