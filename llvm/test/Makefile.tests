@@ -19,7 +19,7 @@ LLINK    = $(TOOLS)/link
 LLCFLAGS =
 
 LCC      = /home/vadve/lattner/cvs/gcc_install/bin/gcc
-LCFLAGS  = -O2 $(LOCAL_CFLAGS) -Wall
+LCFLAGS  = -O2 $(LOCAL_LCFLAGS) -Wall
 
 LLCLIB   = $(LEVEL)/test/runtime.o
 LIBS     = $(LLCLIB) $(LOCAL_LIBS)
@@ -32,9 +32,9 @@ CC      = /opt/SUNWspro/bin/cc
 AS	= /opt/SUNWspro/bin/cc
 DIS     = /usr/ccs/bin/dis
 CP	= /bin/cp -p
-CFLAGS  = -g -xarch=v9
+CFLAGS  = -g -xarch=v9 $(LOCAL_CFLAGS)
 CCFLAGS = $(CFLAGS)
-LDFLAGS = $(CFLAGS)
+LDFLAGS = $(CFLAGS) $(LOCAL_LDFLAGS)
 ASFLAGS = -c $(CFLAGS)
 
 ## Special targets to build a program from multiple source files
@@ -55,7 +55,7 @@ ifdef PROG
 	$(RM) $(PROG).tmp.bc
 
   $(PROG).native: $(OBJS:.o=.c)
-	$(CC) $(OBJS:.o=.c) -O $(LOCAL_CFLAGS) -lm -o $@
+	$(CC) $(OBJS:.o=.c) -O $(LOCAL_LCFLAGS) $(CFLAGS) -lm -o $@
 endif
 
 ## Special target to force target-dependent library to be compiled
