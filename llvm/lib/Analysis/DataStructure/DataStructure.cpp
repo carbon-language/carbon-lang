@@ -1409,10 +1409,6 @@ void DSGraph::mergeInGraph(const DSCallSite &CS,
 ///
 void DSGraph::mergeInGraph(const DSCallSite &CS, Function &F,
                            const DSGraph &Graph, unsigned CloneFlags) {
-  // Fastpath for a noop inline.
-  if (CS.getNumPtrArgs() == 0 && CS.getRetVal().isNull())
-    return;
-
   // Set up argument bindings.
   std::vector<DSNodeHandle> Args;
   Graph.getFunctionArgumentsForCall(&F, Args);
