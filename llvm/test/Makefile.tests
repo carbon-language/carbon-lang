@@ -19,6 +19,7 @@ include ${LEVEL}/Makefile.common
 # LLVM Tool Definitions...
 #
 LCC      = /home/vadve/lattner/cvs/gcc_install/bin/gcc
+LCC1     = /home/vadve/lattner/cvs/gcc_install/lib/gcc-lib/llvm/3.1/cc1
 TOOLS    = $(LEVEL)/tools/Debug
 LLI      = $(TOOLS)/lli
 LLC      = $(TOOLS)/llc
@@ -56,7 +57,7 @@ clean ::
 	$(RM) a.out core
 	$(RM) -rf Output/
 
-Output/%.ll: %.c $(LCC) Output/.dir
+Output/%.ll: %.c $(LCC1) Output/.dir
 	$(LCC) $(LCCFLAGS) -S $< -o $@
 
 Output/%.bc: Output/%.ll $(LGCCAS)
@@ -68,7 +69,7 @@ Output/%.bc: %.ll $(LAS)
 #
 # Testing versions of provided utilities...
 #
-Output/%.tll: %.c $(LCC) Output/.dir
+Output/%.tll: %.c $(LCC1) Output/.dir
 	@echo "======== Compiling $<"
 	$(LCC) $(LCCFLAGS) -S $< -o $@ || \
 	    ( rm -f $@; $(FAILURE) $@ )
