@@ -18,12 +18,9 @@
 #include "llvm/Pass.h"
 #include "llvm/iOther.h"
 #include "llvm/Constants.h"
+#include "llvm/Assembly/Writer.h"  // FIXME: remove when varargs implemented
 #include "Support/Statistic.h"
 #include <algorithm>
-
-using std::vector;
-using std::string;
-using std::cerr;
 
 namespace {
   Statistic<>NumResolved("funcresolve", "Number of varargs functions resolved");
@@ -51,14 +48,21 @@ static void ConvertCallTo(CallInst *CI, Function *Dest) {
   // argument types don't agree.
   //
   BasicBlock::iterator BBI = CI;
-  assert(CI->getNumOperands()-1 == ParamTys.size() &&
-         "Function calls resolved funny somehow, incompatible number of args");
+  if (CI->getNumOperands()-1 != ParamTys.size()) {
+    std::cerr << "WARNING: Call arguments do not match expected number of"
+              << " parameters.\n";
+    std::cerr << "WARNING: In function '"
+              << CI->getParent()->getParent()->getName() << "': call: " << *CI;
+    std::cerr << "Function resolved to: ";
+    WriteAsOperand(std::cerr, Dest);
+    std::cerr << "\n";
+  }
 
-  vector<Value*> Params;
+  std::vector<Value*> Params;
 
   // Convert all of the call arguments over... inserting cast instructions if
   // the types are not compatible.
-  for (unsigned i = 1; i < CI->getNumOperands(); ++i) {
+  for (unsigned i = 1; i <= ParamTys.size(); ++i) {
     Value *V = CI->getOperand(i);
 
     if (V->getType() != ParamTys[i-1])  // Must insert a cast...
@@ -112,7 +116,7 @@ static void ConvertCallTo(CallInst *CI, Function *Dest) {
 }
 
 
-static bool ResolveFunctions(Module &M, vector<GlobalValue*> &Globals,
+static bool ResolveFunctions(Module &M, std::vector<GlobalValue*> &Globals,
                              Function *Concrete) {
   bool Changed = false;
   for (unsigned i = 0; i != Globals.size(); ++i)
@@ -130,8 +134,8 @@ static bool ResolveFunctions(Module &M, vector<GlobalValue*> &Globals,
       //
       for (unsigned i = 0; i < OldMT->getParamTypes().size(); ++i)
         if (OldMT->getParamTypes()[i] != ConcreteMT->getParamTypes()[i]) {
-          cerr << "Parameter types conflict for: '" << OldMT
-               << "' and '" << ConcreteMT << "'\n";
+          std::cerr << "Parameter types conflict for: '" << OldMT
+                    << "' and '" << ConcreteMT << "'\n";
           return Changed;
         }
       
@@ -159,12 +163,12 @@ static bool ResolveFunctions(Module &M, vector<GlobalValue*> &Globals,
             Changed = true;
             ++NumResolved;
           } else {
-            cerr << "Couldn't cleanup this function call, must be an"
-                 << " argument or something!" << CI;
+            std::cerr << "Couldn't cleanup this function call, must be an"
+                      << " argument or something!" << CI;
             ++i;
           }
         } else {
-          cerr << "Cannot convert use of function: " << U << "\n";
+          std::cerr << "Cannot convert use of function: " << U << "\n";
           ++i;
         }
       }
@@ -173,7 +177,8 @@ static bool ResolveFunctions(Module &M, vector<GlobalValue*> &Globals,
 }
 
 
-static bool ResolveGlobalVariables(Module &M, vector<GlobalValue*> &Globals,
+static bool ResolveGlobalVariables(Module &M,
+                                   std::vector<GlobalValue*> &Globals,
                                    GlobalVariable *Concrete) {
   bool Changed = false;
   assert(isa<ArrayType>(Concrete->getType()->getElementType()) &&
@@ -214,7 +219,7 @@ static bool ResolveGlobalVariables(Module &M, vector<GlobalValue*> &Globals,
 }
 
 static bool ProcessGlobalsWithSameName(Module &M,
-                                       vector<GlobalValue*> &Globals) {
+                                       std::vector<GlobalValue*> &Globals) {
   assert(!Globals.empty() && "Globals list shouldn't be empty here!");
 
   bool isFunction = isa<Function>(Globals[0]);   // Is this group all functions?
@@ -284,13 +289,13 @@ static bool ProcessGlobalsWithSameName(Module &M,
     // uses to use it instead.
     //
     if (!Concrete) {
-      cerr << "WARNING: Found function types that are not compatible:\n";
+      std::cerr << "WARNING: Found function types that are not compatible:\n";
       for (unsigned i = 0; i < Globals.size(); ++i) {
-        cerr << "\t" << Globals[i]->getType()->getDescription() << " %"
-             << Globals[i]->getName() << "\n";
+        std::cerr << "\t" << Globals[i]->getType()->getDescription() << " %"
+                  << Globals[i]->getName() << "\n";
       }
-      cerr << "  No linkage of globals named '" << Globals[0]->getName()
-           << "' performed!\n";
+      std::cerr << "  No linkage of globals named '" << Globals[0]->getName()
+                << "' performed!\n";
       return Changed;
     }
 
@@ -306,7 +311,7 @@ static bool ProcessGlobalsWithSameName(Module &M,
 bool FunctionResolvingPass::run(Module &M) {
   SymbolTable &ST = M.getSymbolTable();
 
-  std::map<string, vector<GlobalValue*> > Globals;
+  std::map<std::string, std::vector<GlobalValue*> > Globals;
 
   // Loop over the entries in the symbol table. If an entry is a func pointer,
   // then add it to the Functions map.  We do a two pass algorithm here to avoid
@@ -330,8 +335,8 @@ bool FunctionResolvingPass::run(Module &M) {
   // Now we have a list of all functions with a particular name.  If there is
   // more than one entry in a list, merge the functions together.
   //
-  for (std::map<string, vector<GlobalValue*> >::iterator I = Globals.begin(), 
-         E = Globals.end(); I != E; ++I)
+  for (std::map<std::string, std::vector<GlobalValue*> >::iterator
+         I = Globals.begin(), E = Globals.end(); I != E; ++I)
     Changed |= ProcessGlobalsWithSameName(M, I->second);
 
   // Now loop over all of the globals, checking to see if any are trivially
