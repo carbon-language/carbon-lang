@@ -41,8 +41,9 @@ begin
 	%i      = add uint 1, 0					; i = 1
 	%iscale = mul uint %i, 4294967295			; i*-1 = -1
 	%ioff   = add uint %iscale, 3				; 3+(-i) = 2
-	%fptr   = getelementptr %Results* %fval, uint %ioff	; &fval[2]
-	%castFmt = getelementptr [39 x sbyte]* %fmtArg, uint 0, uint 0
+	%ioff   = cast uint %ioff to long
+	%fptr   = getelementptr %Results* %fval, long %ioff	; &fval[2]
+	%castFmt = getelementptr [39 x sbyte]* %fmtArg, long 0, long 0
 	call int (sbyte*, ...)* %printf(sbyte* %castFmt, uint %ioff, %Results* %fval, %Results* %fptr)
 	ret int 0
 end
