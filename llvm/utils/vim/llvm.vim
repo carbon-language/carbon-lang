@@ -1,7 +1,7 @@
 " Vim syntax file
-" Language:	llvm
-" Maintainer:	?
-" Updated:	2003-04-22
+" Language:   llvm
+" Maintainer: The LLVM team, http://llvm.cs.uiuc.edu/
+" Updated:    2003-06-02
 
 if version < 600
   syntax clear
@@ -20,7 +20,7 @@ syn keyword llvmStatement add sub mul div rem
 syn keyword llvmStatement and or xor
 syn keyword llvmStatement setne seteq setlt setgt setle setge
 
-syn keyword llvmStatement phi call cast shl shr va_arg
+syn keyword llvmStatement phi call cast to shl shr va_arg
 syn keyword llvmStatement ret br switch invoke
 syn keyword llvmStatement malloc alloca free load store getelementptr
 
@@ -32,12 +32,12 @@ syn keyword llvmStatement null to except not target endian pointersize
 syn keyword llvmStatement big little
 
 "syn match llvmFunction /%[a-zA-Z\$._\-][a-zA-Z\$._\-0-9]*/
-syn match llvmNumber /\<\d\+\>/
-syn match llvmNumber /\<\d\+\.\d*\>/
+syn match  llvmNumber /\<\d\+\>/
+syn match  llvmNumber /\<\d\+\.\d*\>/
 
-syn match llvmComment /;.*$/
+syn match  llvmComment /;.*$/
 syn region llvmString start=/"/ skip=/\\"/ end=/"/
-syn match llvmLabel /[\-a-zA-Z\$._0-9]*:/
+syn match  llvmLabel /[\-a-zA-Z\$._0-9]*:/
 
 
 if version >= 508 || !exists("did_c_syn_inits")
