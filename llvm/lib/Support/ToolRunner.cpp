@@ -31,7 +31,6 @@ int LLI::ExecuteProgram(const std::string &Bytecode,
 
   std::vector<const char*> LLIArgs;
   LLIArgs.push_back(LLIPath.c_str());
-  LLIArgs.push_back("-abort-on-exception");
   LLIArgs.push_back("-quiet");
   LLIArgs.push_back("-force-interpreter=true");
   LLIArgs.push_back(Bytecode.c_str());
