@@ -21,6 +21,8 @@
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Target/TargetData.h"
+#include "llvm/Transforms/Utils/Local.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/StringExtras.h"
 #include <set>
@@ -36,7 +38,14 @@ namespace {
   Statistic<> NumGlobUses ("globalopt", "Number of global uses devirtualized");
 
   struct GlobalOpt : public ModulePass {
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.addRequired<TargetData>();
+    }
+    
     bool runOnModule(Module &M);
+
+  private:
+    bool ProcessInternalGlobal(GlobalVariable *GV, Module::giterator &GVI);
   };
 
   RegisterOpt<GlobalOpt> X("globalopt", "Global Variable Optimizer");
@@ -161,10 +170,22 @@ static bool AnalyzeGlobal(Value *V, GlobalStatus &GS,
           }
       } else if (I->getOpcode() == Instruction::GetElementPtr) {
         if (AnalyzeGlobal(I, GS, PHIUsers)) return true;
-        // Theoretically we could SRA globals with GEP insts if all indexes are
-        // constants.  In practice, these GEPs would already be constant exprs
-        // if that was the case though.
-        GS.isNotSuitableForSRA = true;
+
+        // If the first two indices are constants, this can be SRA'd.
+        if (isa<GlobalVariable>(I->getOperand(0))) {
+          if (I->getNumOperands() < 3 || !isa<Constant>(I->getOperand(1)) ||
+              !cast<Constant>(I->getOperand(1))->isNullValue() || 
+              !isa<ConstantInt>(I->getOperand(2)))
+            GS.isNotSuitableForSRA = true;
+        } else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(I->getOperand(0))){
+          if (CE->getOpcode() != Instruction::GetElementPtr ||
+              CE->getNumOperands() < 3 || I->getNumOperands() < 2 ||
+              !isa<Constant>(I->getOperand(0)) ||
+              !cast<Constant>(I->getOperand(0))->isNullValue())
+            GS.isNotSuitableForSRA = true;
+        } else {
+          GS.isNotSuitableForSRA = true;
+        }
       } else if (I->getOpcode() == Instruction::Select) {
         if (AnalyzeGlobal(I, GS, PHIUsers)) return true;
         GS.isNotSuitableForSRA = true;
@@ -323,7 +344,7 @@ static GlobalVariable *SRAGlobal(GlobalVariable *GV) {
     else
       assert(0 && "Unknown aggregate sequential type!");
 
-    if (NumElements > 16) return 0; // It's not worth it.
+    if (NumElements > 16 && GV->use_size() > 16) return 0; // It's not worth it.
     NewGlobals.reserve(NumElements);
     for (unsigned i = 0, e = NumElements; i != e; ++i) {
       Constant *In = getAggregateConstantElement(Init,
@@ -341,38 +362,66 @@ static GlobalVariable *SRAGlobal(GlobalVariable *GV) {
   if (NewGlobals.empty())
     return 0;
 
+  DEBUG(std::cerr << "PERFORMING GLOBAL SRA ON: " << *GV);
+
   Constant *NullInt = Constant::getNullValue(Type::IntTy);
 
   // Loop over all of the uses of the global, replacing the constantexpr geps,
   // with smaller constantexpr geps or direct references.
   while (!GV->use_empty()) {
-    ConstantExpr *CE = cast<ConstantExpr>(GV->use_back());
-    assert(CE->getOpcode() == Instruction::GetElementPtr &&
-           "NonGEP CE's are not SRAable!");
+    User *GEP = GV->use_back();
+    assert(((isa<ConstantExpr>(GEP) &&
+             cast<ConstantExpr>(GEP)->getOpcode()==Instruction::GetElementPtr)||
+            isa<GetElementPtrInst>(GEP)) && "NonGEP CE's are not SRAable!");
+             
     // Ignore the 1th operand, which has to be zero or else the program is quite
     // broken (undefined).  Get the 2nd operand, which is the structure or array
     // index.
-    unsigned Val = cast<ConstantInt>(CE->getOperand(2))->getRawValue();
+    unsigned Val = cast<ConstantInt>(GEP->getOperand(2))->getRawValue();
     if (Val >= NewGlobals.size()) Val = 0; // Out of bound array access.
 
-    Constant *NewPtr = NewGlobals[Val];
+    Value *NewPtr = NewGlobals[Val];
 
     // Form a shorter GEP if needed.
-    if (CE->getNumOperands() > 3) {
-      std::vector<Constant*> Idxs;
-      Idxs.push_back(NullInt);
-      for (unsigned i = 3, e = CE->getNumOperands(); i != e; ++i)
-        Idxs.push_back(CE->getOperand(i));
-      NewPtr = ConstantExpr::getGetElementPtr(NewPtr, Idxs);
-    }
-    CE->replaceAllUsesWith(NewPtr);
-    CE->destroyConstant();
+    if (GEP->getNumOperands() > 3)
+      if (ConstantExpr *CE = dyn_cast<ConstantExpr>(GEP)) {
+        std::vector<Constant*> Idxs;
+        Idxs.push_back(NullInt);
+        for (unsigned i = 3, e = CE->getNumOperands(); i != e; ++i)
+          Idxs.push_back(CE->getOperand(i));
+        NewPtr = ConstantExpr::getGetElementPtr(cast<Constant>(NewPtr), Idxs);
+      } else {
+        GetElementPtrInst *GEPI = cast<GetElementPtrInst>(GEP);
+        std::vector<Value*> Idxs;
+        Idxs.push_back(NullInt);
+        for (unsigned i = 3, e = GEPI->getNumOperands(); i != e; ++i)
+          Idxs.push_back(GEPI->getOperand(i));
+        NewPtr = new GetElementPtrInst(NewPtr, Idxs,
+                                       GEPI->getName()+"."+utostr(Val), GEPI);
+      }
+    GEP->replaceAllUsesWith(NewPtr);
+
+    if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(GEP))
+      GEPI->getParent()->getInstList().erase(GEPI);
+    else
+      cast<ConstantExpr>(GEP)->destroyConstant();
   }
 
   // Delete the old global, now that it is dead.
   Globals.erase(GV);
   ++NumSRA;
-  return NewGlobals[0];
+
+  // Loop over the new globals array deleting any globals that are obviously
+  // dead.  This can arise due to scalarization of a structure or an array that
+  // has elements that are dead.
+  unsigned FirstGlobal = 0;
+  for (unsigned i = 0, e = NewGlobals.size(); i != e; ++i)
+    if (NewGlobals[i]->use_empty()) {
+      Globals.erase(NewGlobals[i]);
+      if (FirstGlobal == i) ++FirstGlobal;
+    }
+
+  return FirstGlobal != NewGlobals.size() ? NewGlobals[FirstGlobal] : 0;
 }
 
 /// AllUsesOfValueWillTrapIfNull - Return true if all users of the specified
@@ -535,10 +584,98 @@ static bool OptimizeAwayTrappingUsesOfLoads(GlobalVariable *GV, Constant *LV) {
   return Changed;
 }
 
+/// ConstantPropUsersOf - Walk the use list of V, constant folding all of the
+/// instructions that are foldable.
+static void ConstantPropUsersOf(Value *V) {
+  for (Value::use_iterator UI = V->use_begin(), E = V->use_end(); UI != E; )
+    if (Instruction *I = dyn_cast<Instruction>(*UI++))
+      if (Constant *NewC = ConstantFoldInstruction(I)) {
+        I->replaceAllUsesWith(NewC);
+
+        // Back up UI to avoid invalidating it!
+        bool AtBegin = false;
+        if (UI == V->use_begin())
+          AtBegin = true;
+        else
+          --UI;
+        I->getParent()->getInstList().erase(I);
+        if (AtBegin)
+          UI = V->use_begin();
+        else
+          ++UI;
+      }
+}
+
+/// OptimizeGlobalAddressOfMalloc - This function takes the specified global
+/// variable, and transforms the program as if it always contained the result of
+/// the specified malloc.  Because it is always the result of the specified
+/// malloc, there is no reason to actually DO the malloc.  Instead, turn the
+/// malloc into a global, and any laods of GV as uses of the new global.
+static GlobalVariable *OptimizeGlobalAddressOfMalloc(GlobalVariable *GV,
+                                                     MallocInst *MI) {
+  DEBUG(std::cerr << "PROMOTING MALLOC GLOBAL: " << *GV << "  MALLOC = " <<*MI);
+  ConstantInt *NElements = cast<ConstantInt>(MI->getArraySize());
+
+  if (NElements->getRawValue() != 1) {
+    // If we have an array allocation, transform it to a single element
+    // allocation to make the code below simpler.
+    Type *NewTy = ArrayType::get(MI->getAllocatedType(),
+                                 NElements->getRawValue());
+    MallocInst *NewMI =
+      new MallocInst(NewTy, Constant::getNullValue(Type::UIntTy),
+                     MI->getName(), MI);
+    std::vector<Value*> Indices;
+    Indices.push_back(Constant::getNullValue(Type::IntTy));
+    Indices.push_back(Indices[0]);
+    Value *NewGEP = new GetElementPtrInst(NewMI, Indices,
+                                          NewMI->getName()+".el0", MI);
+    MI->replaceAllUsesWith(NewGEP);
+    MI->getParent()->getInstList().erase(MI);
+    MI = NewMI;
+  }
+  
+  // Create the new global variable.
+  Constant *Init = Constant::getNullValue(MI->getAllocatedType());
+  GlobalVariable *NewGV = new GlobalVariable(MI->getAllocatedType(), false,
+                                             GlobalValue::InternalLinkage, Init,
+                                             GV->getName()+".body");
+  GV->getParent()->getGlobalList().insert(GV, NewGV);
+  
+  // Anything that used the malloc now uses the global directly.
+  MI->replaceAllUsesWith(NewGV);
+  MI->getParent()->getInstList().erase(MI);
+
+  Constant *RepValue = NewGV;
+  if (NewGV->getType() != GV->getType()->getElementType())
+    RepValue = ConstantExpr::getCast(RepValue, GV->getType()->getElementType());
+
+  // Loop over all uses of GV, processing them in turn.
+  while (!GV->use_empty())
+    if (LoadInst *LI = dyn_cast<LoadInst>(GV->use_back())) {
+      LI->replaceAllUsesWith(RepValue);
+      LI->getParent()->getInstList().erase(LI);
+    } else {
+      StoreInst *SI = cast<StoreInst>(GV->use_back());
+      SI->getParent()->getInstList().erase(SI);
+    }
+
+  // Now the GV is dead, nuke it.
+  GV->getParent()->getGlobalList().erase(GV);
+
+  // To further other optimizations, loop over all users of NewGV and try to
+  // constant prop them.  This will promote GEP instructions with constant
+  // indices into GEP constant-exprs, which will allow global-opt to hack on it.
+  ConstantPropUsersOf(NewGV);
+  if (RepValue != NewGV)
+    ConstantPropUsersOf(RepValue);
+
+  return NewGV;
+}
 
 // OptimizeOnceStoredGlobal - Try to optimize globals based on the knowledge
 // that only one value (besides its initializer) is ever stored to the global.
-static bool OptimizeOnceStoredGlobal(GlobalVariable *GV, Value *StoredOnceVal) {
+static bool OptimizeOnceStoredGlobal(GlobalVariable *GV, Value *StoredOnceVal,
+                                     Module::giterator &GVI, TargetData &TD) {
   if (CastInst *CI = dyn_cast<CastInst>(StoredOnceVal))
     StoredOnceVal = CI->getOperand(0);
   else if (GetElementPtrInst *GEPI =dyn_cast<GetElementPtrInst>(StoredOnceVal)){
@@ -567,15 +704,35 @@ static bool OptimizeOnceStoredGlobal(GlobalVariable *GV, Value *StoredOnceVal) {
       // Optimize away any trapping uses of the loaded value.
       if (OptimizeAwayTrappingUsesOfLoads(GV, SOVC))
         return true;
+    } else if (MallocInst *MI = dyn_cast<MallocInst>(StoredOnceVal)) {
+      // If we have a global that is only initialized with a fixed size malloc,
+      // and if all users of the malloc trap, and if the malloc'd address is not
+      // put anywhere else, transform the program to use global memory instead
+      // of malloc'd memory.  This eliminates dynamic allocation (good) and
+      // exposes the resultant global to further GlobalOpt (even better).  Note
+      // that we restrict this transformation to only working on small
+      // allocations (2048 bytes currently), as we don't want to introduce a 16M
+      // global or something.
+      if (ConstantInt *NElements = dyn_cast<ConstantInt>(MI->getArraySize()))
+        if (MI->getAllocatedType()->isSized() &&
+            NElements->getRawValue()*
+                     TD.getTypeSize(MI->getAllocatedType()) < 2048 &&
+            AllUsesOfLoadedValueWillTrapIfNull(GV)) {
+          // FIXME: do more correctness checking to make sure the result of the
+          // malloc isn't squirrelled away somewhere.
+          GVI = OptimizeGlobalAddressOfMalloc(GV, MI);
+          return true;
+        }
     }
-    //if (isa<MallocInst>(StoredOnceValue))
   }
+
   return false;
 }
 
 /// ProcessInternalGlobal - Analyze the specified global variable and optimize
 /// it if possible.  If we make a change, return true.
-static bool ProcessInternalGlobal(GlobalVariable *GV, Module::giterator &GVI) {
+bool GlobalOpt::ProcessInternalGlobal(GlobalVariable *GV,
+                                      Module::giterator &GVI) {
   std::set<PHINode*> PHIUsers;
   GlobalStatus GS;
   PHIUsers.clear();
@@ -625,7 +782,6 @@ static bool ProcessInternalGlobal(GlobalVariable *GV, Module::giterator &GVI) {
       return true;
     } else if (!GS.isNotSuitableForSRA &&
                !GV->getInitializer()->getType()->isFirstClassType()) {
-      DEBUG(std::cerr << "PERFORMING GLOBAL SRA ON: " << *GV);
       if (GlobalVariable *FirstNewGV = SRAGlobal(GV)) {
         GVI = FirstNewGV;  // Don't skip the newly produced globals!
         return true;
@@ -633,7 +789,8 @@ static bool ProcessInternalGlobal(GlobalVariable *GV, Module::giterator &GVI) {
     } else if (GS.StoredType == GlobalStatus::isStoredOnce) {
       // Try to optimize globals based on the knowledge that only one value
       // (besides its initializer) is ever stored to the global.
-      if (OptimizeOnceStoredGlobal(GV, GS.StoredOnceValue))
+      if (OptimizeOnceStoredGlobal(GV, GS.StoredOnceValue, GVI,
+                                   getAnalysis<TargetData>()))
         return true;
     }
   }
