@@ -1,7 +1,7 @@
 ; This testcase tests for a problem where LICM hoists 
 ; potentially trapping instructions when they are not guaranteed to execute.
 ;
-; RUN: llvm-as < %s | opt -licm | llvm-dis | grep -C 2 "IfUnEqual" | grep div 
+; RUN: llvm-as < %s | opt -licm | llvm-dis | grep -C2 "IfUnEqual" | grep div 
 
 %X = global int 0
 declare void %foo()
