@@ -97,7 +97,7 @@ static Value *RemapOperand(const Value *In, map<const Value*, Value*> &LocalMap,
 
   // Check to see if it's a constant that we are interesting in transforming...
   if (const Constant *CPV = dyn_cast<Constant>(In)) {
-    if (!isa<DerivedType>(CPV->getType()))
+    if (!isa<DerivedType>(CPV->getType()) && !isa<ConstantExpr>(CPV))
       return const_cast<Constant*>(CPV);   // Simple constants stay identical...
 
     Constant *Result = 0;
@@ -122,6 +122,33 @@ static Value *RemapOperand(const Value *In, map<const Value*, Value*> &LocalMap,
                       dyn_cast<ConstantPointerRef>(CPV)) {
       Value *V = RemapOperand(CPR->getValue(), LocalMap, GlobalMap);
       Result = ConstantPointerRef::get(cast<GlobalValue>(V));
+    } else if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(CPV)) {
+      if (CE->getNumOperands() == 1) {
+        // Cast instruction, unary operator
+        Value *V = RemapOperand(CE->getOperand(0), LocalMap, GlobalMap);
+        Result = ConstantExpr::get(CE->getOpcode(), cast<Constant>(V),
+                                   CE->getType());
+      } else if (CE->getNumOperands() == 2) {
+        // Binary operator...
+        Value *V1 = RemapOperand(CE->getOperand(0), LocalMap, GlobalMap);
+        Value *V2 = RemapOperand(CE->getOperand(1), LocalMap, GlobalMap);
+
+        Result = ConstantExpr::get(CE->getOpcode(), cast<Constant>(V1),
+                                   cast<Constant>(V2), CE->getType());        
+      } else {
+        // GetElementPtr Expression
+        assert(CE->getOpcode() == Instruction::GetElementPtr);
+        Value *Ptr = RemapOperand(CE->getOperand(0), LocalMap, GlobalMap);
+        std::vector<Constant*> Indices;
+        Indices.reserve(CE->getNumOperands()-1);
+        for (unsigned i = 1, e = CE->getNumOperands(); i != e; ++i)
+          Indices.push_back(cast<Constant>(RemapOperand(CE->getOperand(i),
+                                                        LocalMap, GlobalMap)));
+
+        Result = ConstantExpr::get(CE->getOpcode(), cast<Constant>(Ptr),
+                                   Indices, CE->getType());
+      }
+
     } else {
       assert(0 && "Unknown type of derived type constant value!");
     }
@@ -139,9 +166,7 @@ static Value *RemapOperand(const Value *In, map<const Value*, Value*> &LocalMap,
     PrintMap(*GlobalMap);
   }
 
-  cerr << "Couldn't remap value: " << (void*)In << " ";
-  In->dump();
-  cerr << "\n";
+  cerr << "Couldn't remap value: " << (void*)In << " " << *In << "\n";
   assert(0 && "Couldn't remap value!");
   return 0;
 }
@@ -398,14 +423,18 @@ bool LinkModules(Module *Dest, const Module *Src, string *ErrorMsg = 0) {
   //
   map<const Value*, Value*> ValueMap;
 
+  // FIXME:
+  // FIXME: This should be a two step process:
+  // FIXME:   1. LinkGlobals & LinkFunctionProtos
+  // FIXME:   2. LinkGlobalContents
+  // FIXME:
+  // FIXME: Global variables and functions are the same!
+  // FIXME:
+
+
   // Insert all of the globals in src into the Dest module... without
   // initializers
   if (LinkGlobals(Dest, Src, ValueMap, ErrorMsg)) return true;
-
-  // Update the initializers in the Dest module now that all globals that may
-  // be referenced are in Dest.
-  //
-  if (LinkGlobalInits(Dest, Src, ValueMap, ErrorMsg)) return true;
 
   // Link the functions together between the two modules, without doing function
   // bodies... this just adds external function prototypes to the Dest
@@ -414,6 +443,11 @@ bool LinkModules(Module *Dest, const Module *Src, string *ErrorMsg = 0) {
   // ValueMap.
   //
   if (LinkFunctionProtos(Dest, Src, ValueMap, ErrorMsg)) return true;
+
+  // Update the initializers in the Dest module now that all globals that may
+  // be referenced are in Dest.
+  //
+  if (LinkGlobalInits(Dest, Src, ValueMap, ErrorMsg)) return true;
 
   // Link in the function bodies that are defined in the source module into the
   // DestModule.  This consists basically of copying the function over and
