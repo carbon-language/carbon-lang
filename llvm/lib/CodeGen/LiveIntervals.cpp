@@ -152,11 +152,14 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock* mbb,
     for (int i = 0, e = vi.Kills.size(); i != e; ++i) {
         MachineBasicBlock* killerBlock = vi.Kills[i].first;
         MachineInstr* killerInstr = vi.Kills[i].second;
-        killedInDefiningBasicBlock |= mbb == killerBlock;
         unsigned start = (mbb == killerBlock ?
                           instrIndex :
                           getInstructionIndex(killerBlock->front()));
         unsigned end = getInstructionIndex(killerInstr) + 1;
+        if (start < end) {
+            killedInDefiningBasicBlock |= mbb == killerBlock;
+            interval->addRange(start, end);
+        }
     }
 
     if (!killedInDefiningBasicBlock) {
