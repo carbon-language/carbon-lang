@@ -163,7 +163,8 @@ static inline void output(unsigned i, std::deque<unsigned char> &Out,
   if (pos == -1) 
     Out.insert(Out.end(), (unsigned char*)&i, (unsigned char*)&i+4);
   else
-    *(unsigned*)&Out[pos] = i;
+    // This cannot use block copy because deques are not guaranteed contiguous!
+    std::copy((unsigned char*)&i, 4+(unsigned char*)&i, Out.begin()+pos);
 #else
   if (pos == -1) { // Be endian clean, little endian is our friend
     Out.push_back((unsigned char)i); 
