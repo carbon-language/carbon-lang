@@ -145,8 +145,7 @@ static inline bool isIdenticalBinaryInst(const Instruction &I1,
 }
 
 void BVNImpl::handleBinaryInst(Instruction &I) {
-  Value *LHS = I.getOperand(0), *RHS = I.getOperand(1);
-  Function *F = I.getParent()->getParent();
+  Value *LHS = I.getOperand(0);
   
   for (Value::use_iterator UI = LHS->use_begin(), UE = LHS->use_end();
        UI != UE; ++UI)
@@ -162,7 +161,7 @@ void BVNImpl::handleBinaryInst(Instruction &I) {
 // using a brute force comparison.  This is useful for instructions with an
 // arbitrary number of arguments.
 //
-static bool IdenticalComplexInst(const Instruction *I1, const Instruction *I2) {
+static inline bool IdenticalComplexInst(const Instruction *I1, const Instruction *I2) {
   assert(I1->getOpcode() == I2->getOpcode());
   // Equal if they are in the same function...
   return I1->getParent()->getParent() == I2->getParent()->getParent() &&
