@@ -37,22 +37,6 @@ using namespace llvm;
 
 static RegisterAnalysis<LiveVariables> X("livevars", "Live Variable Analysis");
 
-/// getIndexMachineBasicBlock() - Given a block index, return the
-/// MachineBasicBlock corresponding to it.
-MachineBasicBlock *LiveVariables::getIndexMachineBasicBlock(unsigned Idx) {
-  if (BBIdxMap.empty()) {
-    BBIdxMap.resize(BBMap.size());
-    for (std::map<MachineBasicBlock*, unsigned>::iterator I = BBMap.begin(),
-           E = BBMap.end(); I != E; ++I) {
-      assert(BBIdxMap.size() > I->second && "Indices are not sequential");
-      assert(BBIdxMap[I->second] == 0 && "Multiple idx collision!");
-      BBIdxMap[I->second] = I->first;
-    }
-  }
-  assert(Idx < BBIdxMap.size() && "BB Index out of range!");
-  return BBIdxMap[Idx];
-}
-
 LiveVariables::VarInfo &LiveVariables::getVarInfo(unsigned RegIdx) {
   assert(MRegisterInfo::isVirtualRegister(RegIdx) &&
          "getVarInfo: not a virtual register!");
@@ -176,10 +160,6 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &MF) {
              E = (*RCI)->allocation_order_end(MF); I != E; ++I)
         AllocatablePhysicalRegisters[*I] = true;  // The reg is allocatable!
   }
-
-  // Build BBMap... 
-  for (MachineFunction::iterator I = MF.begin(), E = MF.end(); I != E; ++I)
-    BBMap[I] = I->getNumber();
 
   // PhysRegInfo - Keep track of which instruction was the last use of a
   // physical register.  This is a purely local property, because all physical

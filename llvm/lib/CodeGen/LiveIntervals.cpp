@@ -292,7 +292,7 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock* mbb,
     if (interval.empty()) {
         for (unsigned i = 0, e = vi.AliveBlocks.size(); i != e; ++i) {
             if (vi.AliveBlocks[i]) {
-                MachineBasicBlock* mbb = lv_->getIndexMachineBasicBlock(i);
+                MachineBasicBlock* mbb = mf_->getBlockNumbered(i);
                 if (!mbb->empty()) {
                     interval.addRange(
                         getInstructionIndex(&mbb->front()),
