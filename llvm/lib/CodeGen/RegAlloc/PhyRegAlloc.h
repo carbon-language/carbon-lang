@@ -19,8 +19,8 @@
 #ifndef PHY_REG_ALLOC_H
 #define PHY_REG_ALLOC_H
 
-#include "llvm/CodeGen/RegClass.h"
 #include "llvm/CodeGen/LiveRangeInfo.h"
+#include "Support/NonCopyable.h"
 #include <map>
 
 class MachineFunction;
@@ -28,6 +28,7 @@ class TargetRegInfo;
 class FunctionLiveVarInfo;
 class MachineInstr;
 class LoopInfo;
+class RegClass;
 
 //----------------------------------------------------------------------------
 // Class AddedInstrns:
@@ -49,7 +50,7 @@ struct AddedInstrns {
 // registers for a Function.
 //----------------------------------------------------------------------------
 
-class PhyRegAlloc: public NonCopyable {
+class PhyRegAlloc : public NonCopyable {
   std::vector<RegClass *> RegClassList; // vector of register classes
   const TargetMachine &TM;              // target machine
   const Function *Fn;                   // name of the function we work on
@@ -66,7 +67,7 @@ class PhyRegAlloc: public NonCopyable {
 
   AddedInstrns AddedInstrAtEntry;       // to store instrns added at entry
   LoopInfo *LoopDepthCalc;              // to calculate loop depths 
-  ReservedColorListType ResColList;     // A set of reserved regs if desired.
+  std::vector<unsigned> ResColList;     // A set of reserved regs if desired.
                                         // currently not used
 
 public:
