@@ -194,13 +194,9 @@ void BytecodeWriter::outputConstant(const Constant *CPV) {
     break;
   }
 
-  case Type::PointerTyID: {
-    const ConstantPointerRef *CPR = cast<ConstantPointerRef>(CPV);
-    int Slot = Table.getSlot((Value*)CPR->getValue());
-    assert(Slot != -1 && "Global used but not available!!");
-    output_vbr((unsigned)Slot, Out);
-    break;
-  }
+  case Type::PointerTyID:
+    assert(0 && "No non-null, non-constant-expr constants allowed!");
+    abort();
 
   case Type::FloatTyID: {   // Floating point types...
     float Tmp = (float)cast<ConstantFP>(CPV)->getValue();
