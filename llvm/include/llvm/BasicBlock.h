@@ -95,6 +95,18 @@ public:
   TerminatorInst *getTerminator();
   const TerminatorInst *const getTerminator() const;
   
+  /// removeFromParent - This method unlinks 'this' from the containing
+  /// function, but does not delete it.
+  ///
+  void removeFromParent();
+
+  /// eraseFromParent - This method unlinks 'this' from the containing function
+  /// and deletes it.
+  ///
+  void eraseFromParent();
+
+
+
   //===--------------------------------------------------------------------===//
   /// Instruction iterator methods
   ///

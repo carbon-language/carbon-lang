@@ -97,6 +97,16 @@ public:
   ///
   bool isConstant() const { return isConstantGlobal; }
   void setConstant(bool Value) { isConstantGlobal = Value; }
+
+  /// removeFromParent - This method unlinks 'this' from the containing module,
+  /// but does not delete it.
+  ///
+  void removeFromParent();
+
+  /// eraseFromParent - This method unlinks 'this' from the containing module
+  /// and deletes it.
+  ///
+  void eraseFromParent();
   
   /// Override Constant's implementation of this method so we can 
   /// replace constant initializers.

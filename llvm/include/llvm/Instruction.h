@@ -57,6 +57,10 @@ public:
   // Specialize setName to handle symbol table majik...
   virtual void setName(const std::string &name, SymbolTable *ST = 0);
   
+  /// mayWriteToMemory - Return true if this instruction may modify memory.
+  ///
+  virtual bool mayWriteToMemory() const { return false; }
+
   /// clone() - Create a copy of 'this' instruction that is identical in all
   /// ways except the following:
   ///   * The instruction has no parent
@@ -76,9 +80,15 @@ public:
         Instruction *getPrev()       { return Prev; }
   const Instruction *getPrev() const { return Prev; }
 
-  /// mayWriteToMemory - Return true if this instruction may modify memory.
+  /// removeFromParent - This method unlinks 'this' from the containing basic
+  /// block, but does not delete it.
   ///
-  virtual bool mayWriteToMemory() const { return false; }
+  void removeFromParent();
+
+  /// eraseFromParent - This method unlinks 'this' from the containing basic
+  /// block and deletes it.
+  ///
+  void eraseFromParent();
 
   // ---------------------------------------------------------------------------
   /// Subclass classification... getOpcode() returns a member of 

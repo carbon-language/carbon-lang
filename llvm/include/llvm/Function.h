@@ -114,6 +114,17 @@ public:
     setLinkage(ExternalLinkage);
   }
 
+  /// removeFromParent - This method unlinks 'this' from the containing module,
+  /// but does not delete it.
+  ///
+  void removeFromParent();
+
+  /// eraseFromParent - This method unlinks 'this' from the containing module
+  /// and deletes it.
+  ///
+  void eraseFromParent();
+
+
   // getNext/Prev - Return the next or previous function in the list.  These
   // methods should never be used directly, and are only used to implement the
   // function list as part of the module.
