@@ -249,7 +249,7 @@ uint64_t Compressor::compress(const char* in, unsigned size,
   // For small files, we just don't bother compressing. bzip2 isn't very good
   // with tiny files and can actually make the file larger, so we just avoid
   // it altogether.
-  if (size > 256) {
+  if (size > 64*1024) {
     // Set up the bz_stream
     bz_stream bzdata;
     bzdata.bzalloc = 0;
