@@ -5,8 +5,8 @@
 // Specifically, after this executes, the following is true:
 //   - There is a single induction variable for each loop (at least loops that
 //     used to contain at least one induction variable)
-//   - This induction variable starts at 0 and steps by 1 per iteration
-//   - This induction variable is represented by the first PHI node in the
+//   * This induction variable starts at 0 and steps by 1 per iteration
+//   * This induction variable is represented by the first PHI node in the
 //     Header block, allowing it to be found easily.
 //   - All other preexisting induction variables are adjusted to operate in
 //     terms of this primary induction variable
@@ -33,11 +33,9 @@
 // an interval invariant computation.
 //
 static bool isLoopInvariant(cfg::Interval *Int, Value *V) {
-  assert(V->getValueType() == Value::ConstantVal ||
-	 V->getValueType() == Value::InstructionVal ||
-	 V->getValueType() == Value::MethodArgumentVal);
+  assert(V->isConstant() || V->isInstruction() || V->isMethodArgument());
 
-  if (V->getValueType() != Value::InstructionVal)
+  if (!V->isInstruction())
     return true;  // Constants and arguments are always loop invariant
 
   BasicBlock *ValueBlock = ((Instruction*)V)->getParent();
@@ -74,10 +72,8 @@ static LIVType isLinearInductionVariableH(cfg::Interval *Int, Value *V,
   if (V == PN) { return isLIV; }  // PHI node references are (0+PHI)
   if (isLoopInvariant(Int, V)) return isLIC;
 
-  assert(V->getValueType() == Value::InstructionVal &&
-	 "loop noninvariant computations must be instructions!");
-
-  Instruction *I = (Instruction*)V;
+  // loop variant computations must be instructions!
+  Instruction *I = V->castInstructionAsserting();
   switch (I->getInstType()) {       // Handle each instruction seperately
   case Instruction::Neg: {
     Value *SubV = ((UnaryOperator*)I)->getOperand(0);
@@ -143,8 +139,7 @@ static inline bool isLinearInductionVariable(cfg::Interval *Int, Value *V,
 static inline bool isSimpleInductionVar(PHINode *PN) {
   assert(PN->getNumIncomingValues() == 2 && "Must have cannonical PHI node!");
   Value *Initializer = PN->getIncomingValue(0);
-  if (Initializer->getValueType() != Value::ConstantVal)
-    return false;
+  if (!Initializer->isConstant()) return false;
 
   if (Initializer->getType()->isSigned()) {  // Signed constant value...
     if (((ConstPoolSInt*)Initializer)->getValue() != 0) return false;
@@ -155,17 +150,18 @@ static inline bool isSimpleInductionVar(PHINode *PN) {
   }
 
   Value *StepExpr = PN->getIncomingValue(1);
-  assert(StepExpr->getValueType() == Value::InstructionVal && "No ADD node?");
-  assert(((Instruction*)StepExpr)->getInstType() == Instruction::Add &&
-	 "No ADD node? Not a cannonical PHI!");
+  if (!StepExpr->isInstruction() ||
+      ((Instruction*)StepExpr)->getInstType() != Instruction::Add)
+    return false;
+
   BinaryOperator *I = (BinaryOperator*)StepExpr;
-  assert(I->getOperand(0)->getValueType() == Value::InstructionVal && 
-      ((Instruction*)I->getOperand(0))->getInstType() == Instruction::PHINode &&
+  assert(I->getOperand(0)->isInstruction() && 
+      ((Instruction*)I->getOperand(0))->isPHINode() &&
 	 "PHI node should be first operand of ADD instruction!");
 
   // Get the right hand side of the ADD node.  See if it is a constant 1.
   Value *StepSize = I->getOperand(1);
-  if (StepSize->getValueType() != Value::ConstantVal) return false;
+  if (!StepSize->isConstant()) return false;
 
   if (StepSize->getType()->isSigned()) {  // Signed constant value...
     if (((ConstPoolSInt*)StepSize)->getValue() != 1) return false;
@@ -235,7 +231,7 @@ static PHINode *InjectSimpleInductionVariable(cfg::Interval *Int) {
 
   // Insert the Add instruction as the first (non-phi) instruction in the 
   // header node's basic block.
-  BasicBlock::InstListType::iterator I = IL.begin();
+  BasicBlock::iterator I = IL.begin();
   while ((*I)->isPHINode()) ++I;
   IL.insert(I, AddNode);
 
@@ -270,10 +266,8 @@ static bool ProcessInterval(cfg::Interval *Int) {
 
   BasicBlock *Header = Int->getHeaderNode();
   // Loop over all of the PHI nodes in the interval header...
-  for (BasicBlock::InstListType::iterator I = Header->getInstList().begin(),
-	 E = Header->getInstList().end(); 
-       I != E && (*I)->getInstType() == Instruction::PHINode; ++I) {
-
+  for (BasicBlock::iterator I = Header->begin(), E = Header->end(); 
+       I != E && (*I)->isPHINode(); ++I) {
     PHINode *PN = (PHINode*)*I;
     if (PN->getNumIncomingValues() != 2) { // These should be eliminated by now.
       cerr << "Found interval header with more than 2 predecessors! Ignoring\n";
@@ -341,14 +335,13 @@ static bool ProcessInterval(cfg::Interval *Int) {
     // HeaderNode.
     //
     PrimaryIndVar = *It;
-    BasicBlock::InstListType::iterator i = 
-      find(Header->getInstList().begin(), Header->getInstList().end(),
-	   PrimaryIndVar);
-    assert(i != Header->getInstList().end() && 
+    BasicBlock::iterator i =
+      find(Header->begin(), Header->end(), PrimaryIndVar);
+    assert(i != Header->end() && 
 	   "How could Primary IndVar not be in the header!?!!?");
 
-    if (i != Header->getInstList().begin())
-      iter_swap(i, Header->getInstList().begin());
+    if (i != Header->begin())
+      iter_swap(i, Header->begin());
   }
 
   // Now we know that there is a simple induction variable PrimaryIndVar.
@@ -360,7 +353,7 @@ static bool ProcessInterval(cfg::Interval *Int) {
 
 
   cerr << "Found Interval Header with indvars (primary indvar should be first "
-       << "phi): \n" << Header << "\nPrimaryIndVar = " << PrimaryIndVar;
+       << "phi): \n" << Header << "\nPrimaryIndVar: " << PrimaryIndVar;
 
   return false;  // TODO: true;
 }
@@ -396,8 +389,7 @@ bool DoInductionVariableCannonicalize(Method *M) {
   // TODO: REMOVE
   if (0) {   // Print basic blocks with their depth
     LoopDepthCalculator LDC(M);
-    for (Method::iterator I = M->getBasicBlocks().begin(); 
-	 I != M->getBasicBlocks().end(); ++I) {
+    for (Method::iterator I = M->begin(); I != M->end(); ++I) {
       cerr << "Basic Block Depth: " << LDC.getLoopDepth(*I) << *I;
     }
   }
