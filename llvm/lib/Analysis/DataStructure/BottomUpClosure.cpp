@@ -109,6 +109,7 @@ public:
 //
 bool BUDataStructures::run(Module &M) {
   GlobalsGraph = new DSGraph();
+  GlobalsGraph->setPrintAuxCalls();
 
   Function *MainFunc = M.getMainFunction();
   if (MainFunc)
@@ -336,9 +337,10 @@ DSGraph &BUDataStructures::calculateGraph(Function &F) {
       DSGraph &GI = getDSGraph(*Callee);  // Graph to inline
       
       DEBUG(std::cerr << "    Inlining graph for " << Callee->getName()
-            << " in: " << F.getName() << "[" << GI.getGraphSize() << "+"
-            << GI.getAuxFunctionCalls().size() << "]\n");
-
+            << "[" << GI.getGraphSize() << "+"
+            << GI.getAuxFunctionCalls().size() << "] into: " << F.getName()
+            << "[" << Graph.getGraphSize() << "+"
+            << Graph.getAuxFunctionCalls().size() << "]\n");
 #if 0
       Graph.writeGraphToFile(std::cerr, "bu_" + F.getName() + "_before_" +
                              Callee->getName());
@@ -366,6 +368,7 @@ DSGraph &BUDataStructures::calculateGraph(Function &F) {
   // now that are complete, we must loop!
   Graph.maskIncompleteMarkers();
   Graph.markIncompleteNodes(DSGraph::MarkFormalArgs);
+  // FIXME: materialize nodes from the globals graph as neccesary...
   Graph.removeDeadNodes(DSGraph::KeepUnreachableGlobals);
 
   DEBUG(std::cerr << "  [BU] Done inlining: " << F.getName() << " ["
@@ -420,10 +423,12 @@ DSGraph &BUDataStructures::inlineNonSCCGraphs(Function &F,
       // Get the data structure graph for the called function.
       //
       DSGraph &GI = getDSGraph(*Callee);  // Graph to inline
-      
+
       DEBUG(std::cerr << "    Inlining graph for " << Callee->getName()
-            << " in: " << F.getName() << "[" << GI.getGraphSize() << "+"
-            << GI.getAuxFunctionCalls().size() << "]\n");
+            << "[" << GI.getGraphSize() << "+"
+            << GI.getAuxFunctionCalls().size() << "] into: " << F.getName()
+            << "[" << Graph.getGraphSize() << "+"
+            << Graph.getAuxFunctionCalls().size() << "]\n");
 
       // Handle self recursion by resolving the arguments and return value
       Graph.mergeInGraph(CS, GI,
@@ -447,7 +452,7 @@ DSGraph &BUDataStructures::inlineNonSCCGraphs(Function &F,
   DEBUG(std::cerr << "  [BU] Done Non-SCC inlining: " << F.getName() << " ["
         << Graph.getGraphSize() << "+" << Graph.getAuxFunctionCalls().size()
         << "]\n");
-
+  //Graph.writeGraphToFile(std::cerr, "nscc_" + F.getName());
   return Graph;
 }
 
@@ -466,7 +471,7 @@ DSGraph &BUDataStructures::calculateSCCGraph(Function &F,
     // the new call site list and doesn't invalidate our iterators!
     std::vector<DSCallSite> TempFCs;
     TempFCs.swap(AuxCallsList);
-    
+
     // Loop over all of the resolvable call sites
     unsigned LastCallSiteIdx = ~0U;
     CallSiteIterator I = CallSiteIterator::begin(TempFCs),
@@ -505,10 +510,11 @@ DSGraph &BUDataStructures::calculateSCCGraph(Function &F,
         // Get the data structure graph for the called function.
         //
         DSGraph &GI = getDSGraph(*Callee);  // Graph to inline
-        
         DEBUG(std::cerr << "    Inlining graph for " << Callee->getName()
-              << " in: " << F.getName() << "[" << GI.getGraphSize() << "+"
-              << GI.getAuxFunctionCalls().size() << "]\n");
+              << "[" << GI.getGraphSize() << "+"
+              << GI.getAuxFunctionCalls().size() << "] into: " << F.getName()
+              << "[" << Graph.getGraphSize() << "+"
+              << Graph.getAuxFunctionCalls().size() << "]\n");
         
         // Handle self recursion by resolving the arguments and return value
         Graph.mergeInGraph(CS, GI,
@@ -537,12 +543,14 @@ DSGraph &BUDataStructures::calculateSCCGraph(Function &F,
   // now that are complete, we must loop!
   Graph.maskIncompleteMarkers();
   Graph.markIncompleteNodes(DSGraph::MarkFormalArgs);
+
+  // FIXME: materialize nodes from the globals graph as neccesary...
+
   Graph.removeDeadNodes(DSGraph::KeepUnreachableGlobals);
 
   DEBUG(std::cerr << "  [BU] Done inlining: " << F.getName() << " ["
         << Graph.getGraphSize() << "+" << Graph.getAuxFunctionCalls().size()
         << "]\n");
   //Graph.writeGraphToFile(std::cerr, "bu_" + F.getName());
-
   return Graph;
 }
