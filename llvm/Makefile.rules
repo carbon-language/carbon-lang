@@ -117,7 +117,7 @@ MakeLib   = $(AR)
 # 
 Source  := $(ExtraSource) $(wildcard *.cpp *.c *.y *.l)
 
-Objs := $(sort $(addsuffix .o,$(basename $(Source))))
+Objs := $(sort $(patsubst Debug/%.o, %.o, $(addsuffix .o,$(basename $(Source)))))
 ObjectsO = $(addprefix Release/,$(Objs))
 ObjectsG = $(addprefix Debug/,$(Objs))
 
@@ -296,8 +296,8 @@ Debug/%.o: %.cpp Debug/.dir Depend/.dir
 #	$(CompileGC) $< -o $@
 
 # Create a .cpp source file from a burg input file
-%.burm.cpp: Debug/%.burg Debug/.dir
-	$(RunBurg) $< -o $@
+#Debug/%.cpp: Debug/% Debug/.dir
+#	$(RunBurg) $< -o $@
 
 # Create a .cpp source file from a flex input file... this uses sed to cut down
 # on the warnings emited by GCC...
@@ -324,7 +324,7 @@ clean::
 # If dependancies were generated for the file that included this file,
 # include the dependancies now...
 #
-SourceDepend = $(addsuffix .d,$(addprefix Depend/,$(basename $(Source))))
+SourceDepend = $(addsuffix .d,$(addprefix Depend/,$(basename $(filter-out Debug/%, $(Source)))))
 ifneq ($(SourceDepend),)
 include $(SourceDepend)
 endif
