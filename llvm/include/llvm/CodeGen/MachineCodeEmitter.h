@@ -10,10 +10,8 @@
 #ifndef LLVM_CODEGEN_MACHINE_CODE_EMITTER_H
 #define LLVM_CODEGEN_MACHINE_CODE_EMITTER_H
 
-#include <iostream>
 #include <string>
-class BasicBlock;
-class MachineInstr;
+#include "Support/DataTypes.h"
 class MachineFunction;
 class MachineBasicBlock;
 class MachineConstantPool;
@@ -38,11 +36,6 @@ struct MachineCodeEmitter {
   /// for the function.
   virtual void emitConstantPool(MachineConstantPool *MCP) {}
 
-  /// startBasicBlock - This callback is invoked when a new basic block is about
-  /// to be emitted.
-  ///
-  virtual void startBasicBlock(MachineBasicBlock &BB) {}
-
   /// startFunctionStub - This callback is invoked when the JIT needs the
   /// address of a function that has not been code generated yet.  The StubSize
   /// specifies the total size required by the stub.  Stubs are not allowed to
@@ -60,45 +53,51 @@ struct MachineCodeEmitter {
   ///
   virtual void emitByte(unsigned char B) {}
 
-  /// emitPCRelativeDisp - This callback is invoked when we need to write out a
-  /// PC relative displacement for the specified Value*.  This is used for call
-  /// and jump instructions typically.
+  /// emitWord - This callback is invoked when a word needs to be written to the
+  /// output stream.
   ///
-  virtual void emitPCRelativeDisp(Value *V) {}
+  virtual void emitWord(unsigned W) = 0;
 
-  /// emitGlobalAddress - This callback is invoked when we need to write out the
-  /// address of a global value to machine code.  This is important for indirect
-  /// calls as well as accessing global variables.
+  /// getGlobalValueAddress - This method is used to get the address of the
+  /// specified global value.  In some cases, however, the address may not yet
+  /// be known at the point that the method is called (for example, getting the
+  /// address of a function which has not yet been code generated).  If this is
+  /// the case, the function returns zero, and the callee has to be able to
+  /// handle the situation.
   ///
-  virtual void emitGlobalAddress(GlobalValue *V, bool isPCRelative) {}
-  virtual void emitGlobalAddress(const std::string &Name, bool isPCRelative) {}
+  virtual uint64_t getGlobalValueAddress(GlobalValue *V) = 0;
+  virtual uint64_t getGlobalValueAddress(const std::string &Name) = 0;
 
-  /// emitFunctionConstantValueAddress - This callback is invoked when the
-  /// address of a constant, which was spilled to memory, needs to be addressed.
-  /// This is used for constants which cannot be directly specified as operands
-  /// to instructions, such as large integer values on the sparc, or floating
-  /// point constants on the X86.
-  ///
-  virtual void emitFunctionConstantValueAddress(unsigned ConstantNum,
-						int Offset) {}
+  // getConstantPoolEntryAddress - Return the address of the 'Index' entry in
+  // the constant pool that was last emitted with the 'emitConstantPool' method.
+  //
+  virtual uint64_t getConstantPoolEntryAddress(unsigned Index) = 0;
 
-  /// createDebugMachineCodeEmitter - Return a dynamically allocated machine
+
+  // getCurrentPCValue - This returns the address that the next emitted byte
+  // will be output to.
+  //
+  virtual uint64_t getCurrentPCValue() = 0;
+
+  // forceCompilationOf - Force the compilation of the specified function, and
+  // return its address, because we REALLY need the address now.
+  //
+  // FIXME: This is JIT specific!
+  //
+  virtual uint64_t forceCompilationOf(Function *F) = 0;
+  
+
+  /// createDebugEmitter - Return a dynamically allocated machine
   /// code emitter, which just prints the opcodes and fields out the cout.  This
   /// can be used for debugging users of the MachineCodeEmitter interface.
   ///
-  static MachineCodeEmitter *createDebugMachineCodeEmitter();
+  static MachineCodeEmitter *createDebugEmitter();
 
-  /// createFilePrinterMachineCodeEmitter - Return a dynamically allocated
+  /// createFilePrinterEmitter - Return a dynamically allocated
   /// machine code emitter, which prints binary code to a file.  This
   /// can be used for debugging users of the MachineCodeEmitter interface.
   ///
-  static MachineCodeEmitter*
-  createFilePrinterMachineCodeEmitter(MachineCodeEmitter&);
-
-  /// 
-  virtual void saveBBreference(BasicBlock* BB, MachineInstr &MI) {
-    std::cerr << "Save BB reference unimplemented\n";
-  }
+  static MachineCodeEmitter *createFilePrinterEmitter(MachineCodeEmitter&);
 };
 
 #endif
