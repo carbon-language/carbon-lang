@@ -2,7 +2,7 @@
 ; getelementptr instruction... with a bad level raise pass, this code
 ; will segfault on execution.
 ;
-; RUN: llvm-as < %s | opt -raise  |lli -abort-on-exception  
+; RUN: llvm-as < %s | opt -raise  |lli 
  
  %Village = type { [4 x \3 *], \2 *, { \2 *, { int, int, int, \5 * } *, \2 * }, { int, int, int, { \2 *, { int, int, int, \6 * } *, \2 * }, { \2 *, { int, int,
   int, \6 * } *, \2 * }, { \2 *, { int, int, int, \6 * } *, \2 * }, { \2 *, { int, int, int, \6 * } *, \2 * } }, int, int }
