@@ -161,9 +161,8 @@ public:
 inline
 MachineOperand::MachineOperand()
   : opType(MO_VirtualRegister),
-    value(NULL),
-    regNum(0),
     immedVal(0),
+    regNum(0),
     isDef(false)
 {}
 
@@ -171,9 +170,8 @@ inline
 MachineOperand::MachineOperand(MachineOperandType operandType,
 			       Value* _val)
   : opType(operandType),
-    value(_val),
-    regNum(0),
     immedVal(0),
+    value(_val),
     isDef(false)
 {}
 
@@ -263,13 +261,12 @@ public:
 					 unsigned	numOperands,
 					 OpCodeMask    _opCodeMask = 0x0);
   inline           	~MachineInstr	() {}
-  
-  const MachineOpCode	getOpCode	() const { return opCode; }
-  
+  const MachineOpCode	getOpCode	() const;
+
   //
   // Information about explicit operands of the instruction
   // 
-  unsigned int		getNumOperands	() const { return operands.size(); }
+  unsigned int		getNumOperands	() const;
   
   bool			operandIsDefined(unsigned int i) const;
   
@@ -422,6 +419,7 @@ public:
 // Purpose:
 //   Representation of the sequence of machine instructions created
 //   for a single VM instruction.  Additionally records information
+//   about hidden and implicit values used by the machine instructions:
 //   about hidden values used by the machine instructions:
 // 
 //   "Temporary values" are intermediate values used in the machine
@@ -429,6 +427,9 @@ public:
 //   Note that such values should be treated as pure SSA values with
 //   no interpretation of their operands (i.e., as a TmpInstruction
 //   object which actually represents such a value).
+// 
+//   (2) "Implicit uses" are values used in the VM instruction but not in
+//       the machine instruction sequence
 // 
 //---------------------------------------------------------------------------
 
