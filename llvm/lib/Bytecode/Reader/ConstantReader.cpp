@@ -1,4 +1,4 @@
-//===- ReadConst.cpp - Code to constants and constant pools ---------------===//
+//===- ConstantReader.cpp - Code to constants and types ====---------------===//
 // 
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,11 +7,8 @@
 // 
 //===----------------------------------------------------------------------===//
 //
-// This file implements functionality to deserialize constants and entire 
-// constant pools.
-// 
-// Note that this library should be as fast as possible, reentrant, and 
-// thread-safe!!
+// This file implements functionality to deserialize constants and types from
+// bytecode files.
 //
 //===----------------------------------------------------------------------===//
 

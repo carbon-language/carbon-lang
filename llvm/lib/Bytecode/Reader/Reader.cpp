@@ -27,32 +27,47 @@ unsigned BytecodeParser::getTypeSlot(const Type *Ty) {
   if (Ty->isPrimitiveType())
     return Ty->getPrimitiveID();
 
+  // Scan the compaction table for the type if needed.
+  if (CompactionTable.size() > Type::TypeTyID) {
+    std::vector<Value*> &Plane = CompactionTable[Type::TypeTyID];
+    if (!Plane.empty()) {
+      std::vector<Value*>::iterator I = find(Plane.begin(), Plane.end(),
+                                             const_cast<Type*>(Ty));
+      if (I == Plane.end())
+        throw std::string("Couldn't find type specified in compaction table!");
+      return Type::FirstDerivedTyID + (&*I - &Plane[0]);
+    }
+  }
+
   // Check the function level types first...
   TypeValuesListTy::iterator I = find(FunctionTypeValues.begin(),
                                       FunctionTypeValues.end(), Ty);
   if (I != FunctionTypeValues.end())
-    return FirstDerivedTyID + ModuleTypeValues.size() +
+    return Type::FirstDerivedTyID + ModuleTypeValues.size() +
              (&*I - &FunctionTypeValues[0]);
 
   I = find(ModuleTypeValues.begin(), ModuleTypeValues.end(), Ty);
   if (I == ModuleTypeValues.end())
     throw std::string("Didn't find type in ModuleTypeValues.");
-  return FirstDerivedTyID + (&*I - &ModuleTypeValues[0]);
+  return Type::FirstDerivedTyID + (&*I - &ModuleTypeValues[0]);
 }
 
 const Type *BytecodeParser::getType(unsigned ID) {
-  if (ID < Type::NumPrimitiveIDs)
-    if (const Type *T = Type::getPrimitiveType((Type::PrimitiveID)ID))
-      return T;
-  
   //cerr << "Looking up Type ID: " << ID << "\n";
 
-  if (ID < Type::NumPrimitiveIDs)
+  if (ID < Type::FirstDerivedTyID)
     if (const Type *T = Type::getPrimitiveType((Type::PrimitiveID)ID))
       return T;   // Asked for a primitive type...
 
   // Otherwise, derived types need offset...
-  ID -= FirstDerivedTyID;
+  ID -= Type::FirstDerivedTyID;
+
+  if (CompactionTable.size() > Type::TypeTyID &&
+      !CompactionTable[Type::TypeTyID].empty()) {
+    if (ID >= CompactionTable[Type::TypeTyID].size())
+      throw std::string("Type ID out of range for compaction table!");
+    return cast<Type>(CompactionTable[Type::TypeTyID][ID]);
+  }
 
   // Is it a module-level type?
   if (ID < ModuleTypeValues.size())
@@ -80,10 +95,8 @@ unsigned BytecodeParser::insertValue(Value *Val, unsigned type,
          "Cannot read null values from bytecode!");
   assert(type != Type::TypeTyID && "Types should never be insertValue'd!");
 
-  if (ValueTab.size() <= type) {
-    unsigned OldSize = ValueTab.size();
+  if (ValueTab.size() <= type)
     ValueTab.resize(type+1);
-  }
 
   if (!ValueTab[type]) ValueTab[type] = new ValueList();
 
@@ -91,7 +104,7 @@ unsigned BytecodeParser::insertValue(Value *Val, unsigned type,
   //   << "] = " << Val << "\n";
   ValueTab[type]->push_back(Val);
 
-  bool HasOffset =  !Val->getType()->isPrimitiveType();
+  bool HasOffset = hasImplicitNull(type, hasExplicitPrimitiveZeros);
   return ValueTab[type]->size()-1 + HasOffset;
 }
 
@@ -100,16 +113,25 @@ Value *BytecodeParser::getValue(unsigned type, unsigned oNum, bool Create) {
   assert(type != Type::LabelTyID && "getValue() cannot get blocks!");
   unsigned Num = oNum;
 
-  if (hasImplicitNull(type, hasExplicitPrimitiveZeros)) {
-    if (Num == 0)
-      return Constant::getNullValue(getType(type));
-    --Num;
-  }
+  // If there is a compaction table active, it defines the low-level numbers.
+  // If not, the module values define the low-level numbers.
+  if (CompactionTable.size() > type && !CompactionTable[type].empty()) {
+    if (Num < CompactionTable[type].size())
+      return CompactionTable[type][Num];
+    Num -= CompactionTable[type].size();
+  } else {
 
-  if (type < ModuleValues.size() && ModuleValues[type]) {
-    if (Num < ModuleValues[type]->size())
-      return ModuleValues[type]->getOperand(Num);
-    Num -= ModuleValues[type]->size();
+    if (hasImplicitNull(type, hasExplicitPrimitiveZeros)) {
+      if (Num == 0)
+        return Constant::getNullValue(getType(type));
+      --Num;
+    }
+
+    if (type < ModuleValues.size() && ModuleValues[type]) {
+      if (Num < ModuleValues[type]->size())
+        return ModuleValues[type]->getOperand(Num);
+      Num -= ModuleValues[type]->size();
+    }
   }
 
   if (Values.size() > type && Values[type] && Num < Values[type]->size())
@@ -331,14 +353,9 @@ void BytecodeParser::materializeFunction(Function* F) {
 
   F->setLinkage(Linkage);
 
-  const FunctionType::ParamTypes &Params =F->getFunctionType()->getParamTypes();
-  Function::aiterator AI = F->abegin();
-  for (FunctionType::ParamTypes::const_iterator It = Params.begin();
-       It != Params.end(); ++It, ++AI)
-    insertValue(AI, getTypeSlot(AI->getType()), Values);
-
   // Keep track of how many basic blocks we have read in...
   unsigned BlockNum = 0;
+  bool InsertedArguments = false;
 
   while (Buf < EndBuf) {
     unsigned Type, Size;
@@ -347,11 +364,42 @@ void BytecodeParser::materializeFunction(Function* F) {
 
     switch (Type) {
     case BytecodeFormat::ConstantPool:
+      if (!InsertedArguments) {
+        // Insert arguments into the value table before we parse the first basic
+        // block in the function, but after we potentially read in the
+        // compaction table.
+        const FunctionType::ParamTypes &Params =
+          F->getFunctionType()->getParamTypes();
+        Function::aiterator AI = F->abegin();
+        for (FunctionType::ParamTypes::const_iterator It = Params.begin();
+             It != Params.end(); ++It, ++AI)
+          insertValue(AI, getTypeSlot(AI->getType()), Values);
+        InsertedArguments = true;
+      }
+
       BCR_TRACE(2, "BLOCK BytecodeFormat::ConstantPool: {\n");
       ParseConstantPool(Buf, Buf+Size, Values, FunctionTypeValues);
       break;
 
+    case BytecodeFormat::CompactionTable:
+      BCR_TRACE(2, "BLOCK BytecodeFormat::CompactionTable: {\n");
+      ParseCompactionTable(Buf, Buf+Size);
+      break;
+
     case BytecodeFormat::BasicBlock: {
+      if (!InsertedArguments) {
+        // Insert arguments into the value table before we parse the first basic
+        // block in the function, but after we potentially read in the
+        // compaction table.
+        const FunctionType::ParamTypes &Params =
+          F->getFunctionType()->getParamTypes();
+        Function::aiterator AI = F->abegin();
+        for (FunctionType::ParamTypes::const_iterator It = Params.begin();
+             It != Params.end(); ++It, ++AI)
+          insertValue(AI, getTypeSlot(AI->getType()), Values);
+        InsertedArguments = true;
+      }
+
       BCR_TRACE(2, "BLOCK BytecodeFormat::BasicBlock: {\n");
       BasicBlock *BB = ParseBasicBlock(Buf, Buf+Size, BlockNum++);
       F->getBasicBlockList().push_back(BB);
@@ -359,6 +407,19 @@ void BytecodeParser::materializeFunction(Function* F) {
     }
 
     case BytecodeFormat::InstructionList: {
+      // Insert arguments into the value table before we parse the instruction
+      // list for the function, but after we potentially read in the compaction
+      // table.
+      if (!InsertedArguments) {
+        const FunctionType::ParamTypes &Params =
+          F->getFunctionType()->getParamTypes();
+        Function::aiterator AI = F->abegin();
+        for (FunctionType::ParamTypes::const_iterator It = Params.begin();
+             It != Params.end(); ++It, ++AI)
+          insertValue(AI, getTypeSlot(AI->getType()), Values);
+        InsertedArguments = true;
+      }
+
       BCR_TRACE(2, "BLOCK BytecodeFormat::InstructionList: {\n");
       if (BlockNum) throw std::string("Already parsed basic blocks!");
       BlockNum = ParseInstructionList(F, Buf, Buf+Size);
@@ -388,13 +449,16 @@ void BytecodeParser::materializeFunction(Function* F) {
     throw std::string("Illegal basic block operand reference");
   ParsedBasicBlocks.clear();
 
-
   // Resolve forward references.  Replace any uses of a forward reference value
   // with the real value.
 
   // replaceAllUsesWith is very inefficient for instructions which have a LARGE
   // number of operands.  PHI nodes often have forward references, and can also
   // often have a very large number of operands.
+  //
+  // FIXME: REEVALUATE.  replaceAllUsesWith is _much_ faster now, and this code
+  // should be simplified back to using it!
+  //
   std::map<Value*, Value*> ForwardRefMapping;
   for (std::map<std::pair<unsigned,unsigned>, Value*>::iterator 
          I = ForwardReferences.begin(), E = ForwardReferences.end();
@@ -424,9 +488,45 @@ void BytecodeParser::materializeFunction(Function* F) {
 
   // Clear out function-level types...
   FunctionTypeValues.clear();
-
+  CompactionTable.clear();
   freeTable(Values);
 }
+
+void BytecodeParser::ParseCompactionTable(const unsigned char *&Buf,
+                                          const unsigned char *End) {
+
+  while (Buf != End) {
+    unsigned NumEntries = read_vbr_uint(Buf, End);
+    unsigned Ty         = read_vbr_uint(Buf, End);
+
+    if (Ty >= CompactionTable.size())
+      CompactionTable.resize(Ty+1);
+
+    if (!CompactionTable[Ty].empty())
+      throw std::string("Compaction table plane contains multiple entries!");
+    
+    if (Ty == Type::TypeTyID) {
+      for (unsigned i = 0; i != NumEntries; ++i) {
+        const Type *Typ = getGlobalTableType(read_vbr_uint(Buf, End));
+        CompactionTable[Type::TypeTyID].push_back(const_cast<Type*>(Typ));
+      }
+
+      CompactionTable.resize(NumEntries+Type::FirstDerivedTyID);
+    } else {
+      assert(NumEntries != 0 && "Cannot read zero entries!");
+      const Type *Typ = getType(Ty);
+      // Push the implicit zero
+      CompactionTable[Ty].push_back(Constant::getNullValue(Typ));
+      for (unsigned i = 1; i != NumEntries; ++i) {
+        Value *V = getGlobalTableValue(Typ, read_vbr_uint(Buf, End));
+        CompactionTable[Ty].push_back(V);
+      }
+    }
+  }
+
+}
+
+
 
 void BytecodeParser::ParseModuleGlobalInfo(const unsigned char *&Buf,
                                            const unsigned char *End) {
@@ -543,7 +643,6 @@ void BytecodeParser::ParseVersionInfo(const unsigned char *&Buf,
   hasVarArgCallPadding = false;
   hasInconsistentModuleGlobalInfo = false;
   hasExplicitPrimitiveZeros = false;
-  FirstDerivedTyID = 14;
 
   switch (RevisionNum) {
   case 2:               // LLVM pre-1.0 release: will be deleted on the next rev

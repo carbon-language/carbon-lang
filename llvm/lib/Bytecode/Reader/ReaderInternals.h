@@ -45,10 +45,7 @@ class BytecodeParser : public ModuleProvider {
   BytecodeParser(const BytecodeParser &);  // DO NOT IMPLEMENT
   void operator=(const BytecodeParser &);  // DO NOT IMPLEMENT
 public:
-  BytecodeParser() {
-    // Define this in case we don't see a ModuleGlobalInfo block.
-    FirstDerivedTyID = Type::FirstDerivedTyID;
-  }
+  BytecodeParser() {}
   
   ~BytecodeParser() {
     freeState();
@@ -90,7 +87,6 @@ private:
 
   // Information about the module, extracted from the bytecode revision number.
   unsigned char RevisionNum;        // The rev # itself
-  unsigned char FirstDerivedTyID;   // First variable index to use for type
   bool hasExtendedLinkageSpecs;     // Supports more than 4 linkage types
   bool hasOldStyleVarargs;          // Has old version of varargs intrinsics?
   bool hasVarArgCallPadding;        // Bytecode has extra padding in vararg call
@@ -111,6 +107,10 @@ private:
   ValueTable Values;
   ValueTable ModuleValues;
   std::map<std::pair<unsigned,unsigned>, Value*> ForwardReferences;
+
+  /// CompactionTable - If a compaction table is active in the current function,
+  /// this is the mapping that it contains.
+  std::vector<std::vector<Value*> > CompactionTable;
 
   std::vector<BasicBlock*> ParsedBasicBlocks;
 
@@ -156,6 +156,54 @@ private:
     }
   }
 
+  /// getGlobalTableType - This is just like getType, but when a compaction
+  /// table is in use, it is ignored.  Also, no forward references or other
+  /// fancy features are supported.
+  const Type *getGlobalTableType(unsigned Slot) {
+    if (Slot < Type::FirstDerivedTyID) {
+      const Type *Ty = Type::getPrimitiveType((Type::PrimitiveID)Slot);
+      assert(Ty && "Not a primitive type ID?");
+      return Ty;
+    }
+    Slot -= Type::FirstDerivedTyID;
+    if (Slot >= ModuleTypeValues.size())
+      throw std::string("Illegal compaction table type reference!");
+    return ModuleTypeValues[Slot];
+  }
+
+  unsigned getGlobalTableTypeSlot(const Type *Ty) {
+    if (Ty->isPrimitiveType())
+      return Ty->getPrimitiveID();
+    TypeValuesListTy::iterator I = find(ModuleTypeValues.begin(),
+                                        ModuleTypeValues.end(), Ty);
+    if (I == ModuleTypeValues.end())
+      throw std::string("Didn't find type in ModuleTypeValues.");
+    return Type::FirstDerivedTyID + (&*I - &ModuleTypeValues[0]);
+  }
+
+  /// getGlobalTableValue - This is just like getValue, but when a compaction
+  /// table is in use, it is ignored.  Also, no forward references or other
+  /// fancy features are supported.
+  Value *getGlobalTableValue(const Type *Ty, unsigned SlotNo) {
+    // FIXME: getTypeSlot is inefficient!
+    unsigned TyID = getGlobalTableTypeSlot(Ty);
+    
+    if (TyID != Type::LabelTyID) {
+      if (SlotNo == 0)
+        return Constant::getNullValue(Ty);
+      --SlotNo;
+    }
+
+    if (TyID >= ModuleValues.size() || ModuleValues[TyID] == 0 ||
+        SlotNo >= ModuleValues[TyID]->getNumOperands()) {
+      std::cerr << TyID << ", " << SlotNo << ": " << ModuleValues.size() << ", "
+                << (void*)ModuleValues[TyID] << ", "
+                << ModuleValues[TyID]->getNumOperands() << "\n";
+      throw std::string("Corrupt compaction table entry!");
+    }
+    return ModuleValues[TyID]->getOperand(SlotNo);
+  }
+
 public:
   void ParseModule(const unsigned char * Buf, const unsigned char *End);
   void materializeFunction(Function *F);
@@ -166,6 +214,7 @@ private:
   void ParseSymbolTable(const unsigned char *&Buf, const unsigned char *End,
                         SymbolTable *, Function *CurrentFunction);
   void ParseFunction(const unsigned char *&Buf, const unsigned char *End);
+  void ParseCompactionTable(const unsigned char *&Buf,const unsigned char *End);
   void ParseGlobalTypes(const unsigned char *&Buf, const unsigned char *EndBuf);
 
   BasicBlock *ParseBasicBlock(const unsigned char *&Buf,
