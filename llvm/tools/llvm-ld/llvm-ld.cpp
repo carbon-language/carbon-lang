@@ -390,7 +390,7 @@ static void BuildLinkItems(
   cl::list<std::string>::const_iterator libIt  = Libraries.begin();
 
   int libPos = -1, filePos = -1;
-  while ( 1 ) {
+  while ( libIt != Libraries.end() || fileIt != Files.end() ) {
     if (libIt != Libraries.end())
       libPos = Libraries.getPosition(libIt - Libraries.begin());
     else
@@ -406,8 +406,6 @@ static void BuildLinkItems(
     } else if (libPos != -1 && (filePos == -1 || libPos < filePos)) {
       // Add a library
       Items.push_back(std::make_pair(*libIt++, true));
-    } else {
-        break; // we're done with the list
     }
   }
 }
