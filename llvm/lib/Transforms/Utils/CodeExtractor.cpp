@@ -77,6 +77,7 @@ namespace {
     }
 
     void severSplitPHINodes(BasicBlock *&Header);
+    void splitReturnBlocks();
     void findInputsOutputs(Values &inputs, Values &outputs);
 
     Function *constructFunction(const Values &inputs,
@@ -184,8 +185,13 @@ void CodeExtractor::severSplitPHINodes(BasicBlock *&Header) {
       }
     }
   }
+}
 
-  verifyFunction(*NewBB->getParent());
+void CodeExtractor::splitReturnBlocks() {
+  for (std::set<BasicBlock*>::iterator I = BlocksToExtract.begin(),
+         E = BlocksToExtract.end(); I != E; ++I)
+    if (ReturnInst *RI = dyn_cast<ReturnInst>((*I)->getTerminator()))
+      (*I)->splitBasicBlock(RI, (*I)->getName()+".ret");
 }
 
 // findInputsOutputs - Find inputs to, outputs from the code region.
@@ -596,8 +602,12 @@ Function *CodeExtractor::ExtractCodeRegion(const std::vector<BasicBlock*> &code)
              "No blocks in this region may have entries from outside the region"
              " except for the first block!");
   
-  // If we have to split PHI nodes, do so now.
+  // If we have to split PHI nodes or the entry block, do so now.
   severSplitPHINodes(header);
+
+  // If we have any return instructions in the region, split those blocks so
+  // that the return is not in the region.
+  splitReturnBlocks();
 
   Function *oldFunction = header->getParent();
 
