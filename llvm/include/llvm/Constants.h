@@ -559,6 +559,28 @@ public:
     return getTy(C1->getType(), Opcode, C1, C2);
   }
 
+  /// ConstantExpr::get* - Return some common constants without having to
+  /// specify the full Instruction::OPCODE identifier.
+  ///
+  static Constant *getNeg(Constant *C);
+  static Constant *getNot(Constant *C);
+  static Constant *getAdd(Constant *C1, Constant *C2);
+  static Constant *getSub(Constant *C1, Constant *C2);
+  static Constant *getMul(Constant *C1, Constant *C2);
+  static Constant *getDiv(Constant *C1, Constant *C2);
+  static Constant *getRem(Constant *C1, Constant *C2);
+  static Constant *getAnd(Constant *C1, Constant *C2);
+  static Constant *getOr(Constant *C1, Constant *C2);
+  static Constant *getXor(Constant *C1, Constant *C2);
+  static Constant *getSetEQ(Constant *C1, Constant *C2);
+  static Constant *getSetNE(Constant *C1, Constant *C2);
+  static Constant *getSetLT(Constant *C1, Constant *C2);
+  static Constant *getSetGT(Constant *C1, Constant *C2);
+  static Constant *getSetLE(Constant *C1, Constant *C2);
+  static Constant *getSetGE(Constant *C1, Constant *C2);
+  static Constant *getShl(Constant *C1, Constant *C2);
+  static Constant *getShr(Constant *C1, Constant *C2);
+
   /// Getelementptr form...
   ///
   static Constant *getGetElementPtr(Constant *C,

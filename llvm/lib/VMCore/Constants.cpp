@@ -309,6 +309,67 @@ ConstantExpr::ConstantExpr(Constant *C, const std::vector<Constant*> &IdxList,
     Operands.push_back(Use(IdxList[i], this));
 }
 
+/// ConstantExpr::get* - Return some common constants without having to
+/// specify the full Instruction::OPCODE identifier.
+///
+Constant *ConstantExpr::getNeg(Constant *C) {
+  return get(Instruction::Sub, getNullValue(C->getType()), C);
+}
+Constant *ConstantExpr::getNot(Constant *C) {
+  assert(isa<ConstantIntegral>(C) && "Cannot NOT a nonintegral type!");
+  return get(Instruction::Xor, C,
+             ConstantIntegral::getAllOnesValue(C->getType()));
+}
+Constant *ConstantExpr::getAdd(Constant *C1, Constant *C2) {
+  return get(Instruction::Add, C1, C2);
+}
+Constant *ConstantExpr::getSub(Constant *C1, Constant *C2) {
+  return get(Instruction::Sub, C1, C2);
+}
+Constant *ConstantExpr::getMul(Constant *C1, Constant *C2) {
+  return get(Instruction::Mul, C1, C2);
+}
+Constant *ConstantExpr::getDiv(Constant *C1, Constant *C2) {
+  return get(Instruction::Div, C1, C2);
+}
+Constant *ConstantExpr::getRem(Constant *C1, Constant *C2) {
+  return get(Instruction::Rem, C1, C2);
+}
+Constant *ConstantExpr::getAnd(Constant *C1, Constant *C2) {
+  return get(Instruction::And, C1, C2);
+}
+Constant *ConstantExpr::getOr(Constant *C1, Constant *C2) {
+  return get(Instruction::Or, C1, C2);
+}
+Constant *ConstantExpr::getXor(Constant *C1, Constant *C2) {
+  return get(Instruction::Xor, C1, C2);
+}
+Constant *ConstantExpr::getSetEQ(Constant *C1, Constant *C2) {
+  return get(Instruction::SetEQ, C1, C2);
+}
+Constant *ConstantExpr::getSetNE(Constant *C1, Constant *C2) {
+  return get(Instruction::SetNE, C1, C2);
+}
+Constant *ConstantExpr::getSetLT(Constant *C1, Constant *C2) {
+  return get(Instruction::SetLT, C1, C2);
+}
+Constant *ConstantExpr::getSetGT(Constant *C1, Constant *C2) {
+  return get(Instruction::SetGT, C1, C2);
+}
+Constant *ConstantExpr::getSetLE(Constant *C1, Constant *C2) {
+  return get(Instruction::SetLE, C1, C2);
+}
+Constant *ConstantExpr::getSetGE(Constant *C1, Constant *C2) {
+  return get(Instruction::SetGE, C1, C2);
+}
+Constant *ConstantExpr::getShl(Constant *C1, Constant *C2) {
+  return get(Instruction::Shl, C1, C2);
+}
+Constant *ConstantExpr::getShr(Constant *C1, Constant *C2) {
+  return get(Instruction::Shr, C1, C2);
+}
+
+
 
 
 //===----------------------------------------------------------------------===//
