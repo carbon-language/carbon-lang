@@ -1782,7 +1782,7 @@ void ISel::emitSimpleBinaryOperation(MachineBasicBlock *MBB,
   }
 
   // Finally, handle the general case now.
-  static const unsigned OpcodeTab[][4] = {
+  static const unsigned OpcodeTab[][5] = {
     // Arithmetic operators
     { X86::ADD8rr, X86::ADD16rr, X86::ADD32rr, X86::FpADD, X86::ADD32rr },// ADD
     { X86::SUB8rr, X86::SUB16rr, X86::SUB32rr, X86::FpSUB, X86::SUB32rr },// SUB
