@@ -85,7 +85,7 @@ User *Value::use_remove(use_iterator &I) {
 
 #ifndef NDEBUG      // Only in -g mode...
 void Value::dump() const {
-  DebugValue(*this);
+  cerr << this;
 }
 #endif
 
