@@ -22,6 +22,7 @@
 #include "SparcInternals.h"
 #include "SparcRegInfo.h"
 #include "SparcFrameInfo.h"
+#include "SparcJITInfo.h"
 
 namespace llvm {
 
@@ -31,6 +32,7 @@ class SparcTargetMachine : public TargetMachine {
   SparcRegInfo   regInfo;
   SparcFrameInfo frameInfo;
   SparcCacheInfo cacheInfo;
+  SparcJITInfo   jitInfo;
 public:
   SparcTargetMachine();
 
@@ -39,19 +41,11 @@ public:
   virtual const TargetRegInfo    &getRegInfo()   const { return regInfo; }
   virtual const TargetFrameInfo  &getFrameInfo() const { return frameInfo; }
   virtual const TargetCacheInfo  &getCacheInfo() const { return cacheInfo; }
+  virtual       TargetJITInfo    *getJITInfo()         { return &jitInfo; }
 
   virtual bool addPassesToEmitAssembly(PassManager &PM, std::ostream &Out);
-  virtual bool addPassesToJITCompile(FunctionPassManager &PM);
   virtual bool addPassesToEmitMachineCode(FunctionPassManager &PM,
                                           MachineCodeEmitter &MCE);
-  virtual void replaceMachineCodeForFunction(void *Old, void *New);
-
-  /// getJITStubForFunction - Create or return a stub for the specified
-  /// function.  This stub acts just like the specified function, except that it
-  /// allows the "address" of the function to be taken without having to
-  /// generate code for it.
-  ///
-  ///virtual void *getJITStubForFunction(Function *F, MachineCodeEmitter &MCE);
 };
 
 } // End llvm namespace

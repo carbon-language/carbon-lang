@@ -73,7 +73,8 @@ SparcTargetMachine::SparcTargetMachine()
     schedInfo(*this),
     regInfo(*this),
     frameInfo(*this),
-    cacheInfo(*this) {
+    cacheInfo(*this),
+    jitInfo(*this) {
 }
 
 // addPassesToEmitAssembly - This method controls the entire code generation
@@ -152,8 +153,8 @@ SparcTargetMachine::addPassesToEmitAssembly(PassManager &PM, std::ostream &Out)
 // addPassesToJITCompile - This method controls the JIT method of code
 // generation for the UltraSparc.
 //
-bool SparcTargetMachine::addPassesToJITCompile(FunctionPassManager &PM) {
-  const TargetData &TD = getTargetData();
+void SparcJITInfo::addPassesToJITCompile(FunctionPassManager &PM) {
+  const TargetData &TD = TM.getTargetData();
 
   PM.add(new TargetData("lli", TD.isLittleEndian(), TD.getPointerSize(),
                         TD.getPointerAlignment(), TD.getDoubleAlignment()));
@@ -173,11 +174,11 @@ bool SparcTargetMachine::addPassesToJITCompile(FunctionPassManager &PM) {
   PM.add(createDecomposeMultiDimRefsPass());
   
   // Construct and initialize the MachineFunction object for this fn.
-  PM.add(createMachineCodeConstructionPass(*this));
+  PM.add(createMachineCodeConstructionPass(TM));
 
   // Specialize LLVM code for this target machine and then
   // run basic dataflow optimizations on LLVM code.
-  PM.add(createPreSelectionPass(*this));
+  PM.add(createPreSelectionPass(TM));
   // Run basic dataflow optimizations on LLVM code
   PM.add(createReassociatePass());
 
@@ -185,15 +186,13 @@ bool SparcTargetMachine::addPassesToJITCompile(FunctionPassManager &PM) {
   //PM.add(createLICMPass());
   //PM.add(createGCSEPass());
 
-  PM.add(createInstructionSelectionPass(*this));
+  PM.add(createInstructionSelectionPass(TM));
 
-  PM.add(getRegisterAllocator(*this));
+  PM.add(getRegisterAllocator(TM));
   PM.add(createPrologEpilogInsertionPass());
 
   if (!DisablePeephole)
-    PM.add(createPeepholeOptsPass(*this));
-
-  return false; // success!
+    PM.add(createPeepholeOptsPass(TM));
 }
 
 //----------------------------------------------------------------------------
@@ -201,10 +200,6 @@ bool SparcTargetMachine::addPassesToJITCompile(FunctionPassManager &PM) {
 // that implements the Sparc backend. (the llvm/CodeGen/Sparc.h interface)
 //----------------------------------------------------------------------------
 
-namespace llvm {
-
-TargetMachine *allocateSparcTargetMachine(const Module &M) {
+TargetMachine *llvm::allocateSparcTargetMachine(const Module &M) {
   return new SparcTargetMachine();
-}
-
 }

@@ -80,19 +80,20 @@ ExecutionEngine *VM::create(ModuleProvider *MP) {
   // Allocate a target...
   TargetMachine *Target = TargetMachineAllocator(*MP->getModule());
   assert(Target && "Could not allocate target machine!");
-  
-  // Create the virtual machine object...
-  return new VM(MP, Target);
+
+  // If the target supports JIT code generation, return a new JIT now.
+  if (TargetJITInfo *TJ = Target->getJITInfo())
+    return new VM(MP, *Target, *TJ);
+  return 0;
 }
 
-VM::VM(ModuleProvider *MP, TargetMachine *tm) : ExecutionEngine(MP), TM(*tm),
-  PM(MP)
-{
+VM::VM(ModuleProvider *MP, TargetMachine &tm, TargetJITInfo &tji)
+  : ExecutionEngine(MP), TM(tm), TJI(tji), PM(MP) {
   setTargetData(TM.getTargetData());
 
   // Initialize MCE
   MCE = createEmitter(*this);
-
+  
   setupPassManager();
 
   emitGlobals();

@@ -21,8 +21,7 @@
 #include "llvm/Transforms/Scalar.h"
 #include "Support/CommandLine.h"
 #include "Support/Statistic.h"
-
-namespace llvm {
+using namespace llvm;
 
 namespace {
   cl::opt<bool> PrintCode("print-machineinstrs",
@@ -36,7 +35,7 @@ namespace {
 // allocateX86TargetMachine - Allocate and return a subclass of TargetMachine
 // that implements the X86 backend.
 //
-TargetMachine *allocateX86TargetMachine(const Module &M) {
+TargetMachine *llvm::allocateX86TargetMachine(const Module &M) {
   return new X86TargetMachine(M);
 }
 
@@ -45,7 +44,8 @@ TargetMachine *allocateX86TargetMachine(const Module &M) {
 ///
 X86TargetMachine::X86TargetMachine(const Module &M)
   : TargetMachine("X86", true, 4, 4, 4, 4, 4),
-    FrameInfo(TargetFrameInfo::StackGrowsDown, 8/*16 for SSE*/, 4) {
+    FrameInfo(TargetFrameInfo::StackGrowsDown, 8/*16 for SSE*/, 4),
+    JITInfo(*this) {
 }
 
 
@@ -108,7 +108,7 @@ bool X86TargetMachine::addPassesToEmitAssembly(PassManager &PM,
 /// implement a fast dynamic compiler for this target.  Return true if this is
 /// not supported for this target.
 ///
-bool X86TargetMachine::addPassesToJITCompile(FunctionPassManager &PM) {
+void X86JITInfo::addPassesToJITCompile(FunctionPassManager &PM) {
   // FIXME: Implement the switch instruction in the instruction selector!
   PM.add(createLowerSwitchPass());
 
@@ -120,9 +120,9 @@ bool X86TargetMachine::addPassesToJITCompile(FunctionPassManager &PM) {
   PM.add(createCFGSimplificationPass());
 
   if (NoPatternISel)
-    PM.add(createX86SimpleInstructionSelector(*this));
+    PM.add(createX86SimpleInstructionSelector(TM));
   else
-    PM.add(createX86PatternInstructionSelector(*this));
+    PM.add(createX86PatternInstructionSelector(TM));
 
   // Run optional SSA-based machine code optimizations next...
   if (!NoSSAPeephole)
@@ -156,18 +156,6 @@ bool X86TargetMachine::addPassesToJITCompile(FunctionPassManager &PM) {
   PM.add(createX86PeepholeOptimizerPass());
 
   if (PrintCode)  // Print the register-allocated code
-    PM.add(createX86CodePrinterPass(std::cerr, *this));
-  return false; // success!
+    PM.add(createX86CodePrinterPass(std::cerr, TM));
 }
 
-void X86TargetMachine::replaceMachineCodeForFunction (void *Old, void *New) {
-  // FIXME: This code could perhaps live in a more appropriate place.
-  char *OldByte = (char *) Old;
-  *OldByte++ = 0xE9;                // Emit JMP opcode.
-  int32_t *OldWord = (int32_t *) OldByte;
-  int32_t NewAddr = (intptr_t) New;
-  int32_t OldAddr = (intptr_t) OldWord;
-  *OldWord = NewAddr - OldAddr - 4; // Emit PC-relative addr of New code.
-}
-
-} // End llvm namespace

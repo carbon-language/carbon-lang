@@ -53,11 +53,19 @@ namespace {
   JITResolver *TheJITResolver;
 }
 
-void *X86TargetMachine::getJITStubForFunction(Function *F,
-                                              MachineCodeEmitter &MCE) {
+void *X86JITInfo::getJITStubForFunction(Function *F, MachineCodeEmitter &MCE) {
   if (TheJITResolver == 0)
     TheJITResolver = new JITResolver(MCE);
   return (void*)((unsigned long)TheJITResolver->getLazyResolver(F));
+}
+
+void X86JITInfo::replaceMachineCodeForFunction (void *Old, void *New) {
+  char *OldByte = (char *) Old;
+  *OldByte++ = 0xE9;                // Emit JMP opcode.
+  int32_t *OldWord = (int32_t *) OldByte;
+  int32_t NewAddr = (intptr_t) New;
+  int32_t OldAddr = (intptr_t) OldWord;
+  *OldWord = NewAddr - OldAddr - 4; // Emit PC-relative addr of New code.
 }
 
 /// addFunctionReference - This method is called when we need to emit the

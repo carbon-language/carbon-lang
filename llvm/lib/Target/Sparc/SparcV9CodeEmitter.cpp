@@ -582,7 +582,7 @@ inline void SparcV9CodeEmitter::emitFarCall(uint64_t Target, Function *F) {
   }
 }
 
-void SparcTargetMachine::replaceMachineCodeForFunction (void *Old, void *New) {
+void SparcJITInfo::replaceMachineCodeForFunction (void *Old, void *New) {
   assert (TheJITResolver &&
 	"Can only call replaceMachineCodeForFunction from within JIT");
   uint64_t Target = (uint64_t)(intptr_t)New;

@@ -18,12 +18,14 @@
 #include "llvm/Target/TargetFrameInfo.h"
 #include "llvm/PassManager.h"
 #include "X86InstrInfo.h"
+#include "X86JITInfo.h"
 
 namespace llvm {
 
 class X86TargetMachine : public TargetMachine {
-  X86InstrInfo InstrInfo;
+  X86InstrInfo    InstrInfo;
   TargetFrameInfo FrameInfo;
+  X86JITInfo      JITInfo;
 public:
   X86TargetMachine(const Module &M);
 
@@ -33,15 +35,14 @@ public:
     return &InstrInfo.getRegisterInfo();
   }
 
+  virtual TargetJITInfo *getJITInfo() {
+    return &JITInfo;
+  }
+
+
   virtual const TargetSchedInfo &getSchedInfo()  const { abort(); }
   virtual const TargetRegInfo   &getRegInfo()    const { abort(); }
   virtual const TargetCacheInfo  &getCacheInfo() const { abort(); }
-
-  /// addPassesToJITCompile - Add passes to the specified pass manager to
-  /// implement a fast dynamic compiler for this target.  Return true if this is
-  /// not supported for this target.
-  ///
-  virtual bool addPassesToJITCompile(FunctionPassManager &PM);
 
   /// addPassesToEmitMachineCode - Add passes to the specified pass manager to
   /// get machine code emitted.  This uses a MachineCodeEmitter object to handle
@@ -53,14 +54,6 @@ public:
                                           MachineCodeEmitter &MCE);
   
   virtual bool addPassesToEmitAssembly(PassManager &PM, std::ostream &Out);
-
-  virtual void replaceMachineCodeForFunction (void *Old, void *New);
-
-  /// getJITStubForFunction - Create or return a stub for the specified
-  /// function.  This stub acts just like the specified function, except that it
-  /// allows the "address" of the function to be taken without having to
-  /// generate code for it.
-  virtual void *getJITStubForFunction(Function *F, MachineCodeEmitter &MCE);
 };
 
 } // End llvm namespace

@@ -18,6 +18,7 @@
 #include "llvm/CodeGen/MachineCodeEmitter.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/TargetJITInfo.h"
 using namespace llvm;
 
 VM::~VM() {
@@ -30,11 +31,7 @@ VM::~VM() {
 ///
 void VM::setupPassManager() {
   // Compile LLVM Code down to machine code in the intermediate representation
-  if (TM.addPassesToJITCompile(PM)) {
-    std::cerr << "lli: target '" << TM.getName()
-              << "' doesn't support JIT compilation!\n";
-    abort();
-  }
+  TJI.addPassesToJITCompile(PM);
 
   // Turn the machine code intermediate representation into bytes in memory that
   // may be executed.
@@ -87,7 +84,7 @@ void *VM::getPointerToFunctionOrStub(Function *F) {
   if (I != GlobalAddress.end()) return I->second;
 
   // If the target supports "stubs" for functions, get a stub now.
-  if (void *Ptr = TM.getJITStubForFunction(F, *MCE))
+  if (void *Ptr = TJI.getJITStubForFunction(F, *MCE))
     return Ptr;
 
   // Otherwise, if the target doesn't support it, just codegen the function.
@@ -112,6 +109,6 @@ void *VM::recompileAndRelinkFunction(Function *F) {
   MachineFunction::destruct(F);
   runJITOnFunction(F);
   assert(Addr && "Code generation didn't add function to GlobalAddress table!");
-  TM.replaceMachineCodeForFunction(OldAddr, Addr);
+  TJI.replaceMachineCodeForFunction(OldAddr, Addr);
   return Addr;
 }

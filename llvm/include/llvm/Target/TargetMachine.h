@@ -21,6 +21,7 @@ namespace llvm {
 
 class TargetInstrInfo;
 class TargetInstrDescriptor;
+class TargetJITInfo;
 class TargetSchedInfo;
 class TargetRegInfo;
 class TargetFrameInfo;
@@ -79,16 +80,16 @@ public:
   ///
   virtual const MRegisterInfo*          getRegisterInfo() const { return 0; }
 
-  // Data storage information
+  /// getJITInfo - If this target supports a JIT, return information for it,
+  /// otherwise return null.
+  ///
+  virtual TargetJITInfo *getJITInfo() { return 0; }
+
+  // Data storage information.  FIXME, this should be moved out to sparc
+  // specific code.
   // 
   virtual unsigned findOptimalStorageSize(const Type* ty) const;
   
-  /// addPassesToJITCompile - Add passes to the specified pass manager to
-  /// implement a fast dynamic compiler for this target.  Return true if this is
-  /// not supported for this target.
-  ///
-  virtual bool addPassesToJITCompile(FunctionPassManager &PM) { return true; }
-
   /// addPassesToEmitAssembly - Add passes to the specified pass manager to get
   /// assembly langage code emitted.  Typically this will involve several steps
   /// of code generation.  This method should return true if assembly emission
@@ -107,24 +108,6 @@ public:
   virtual bool addPassesToEmitMachineCode(FunctionPassManager &PM,
                                           MachineCodeEmitter &MCE) {
     return true;
-  }
-
-  /// replaceMachineCodeForFunction - Make it so that calling the
-  /// function whose machine code is at OLD turns into a call to NEW,
-  /// perhaps by overwriting OLD with a branch to NEW.
-  ///
-  /// FIXME: this is JIT-specific.
-  ///
-  virtual void replaceMachineCodeForFunction (void *Old, void *New) {
-    assert (0 && "Current target cannot replace machine code for functions");
-  }
-
-  /// getJITStubForFunction - Create or return a stub for the specified
-  /// function.  This stub acts just like the specified function, except that it
-  /// allows the "address" of the function to be taken without having to
-  /// generate code for it.
-  virtual void *getJITStubForFunction(Function *F, MachineCodeEmitter &MCE) {
-    return 0;
   }
 };
 

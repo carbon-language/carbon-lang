@@ -1,4 +1,4 @@
-//===- X86InstructionInfo.h - X86 Instruction Information ---------*-C++-*-===//
+//===- X86InstrInfo.h - X86 Instruction Information ------------*- C++ -*- ===//
 // 
 //                     The LLVM Compiler Infrastructure
 //

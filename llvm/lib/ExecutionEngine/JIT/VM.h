@@ -24,15 +24,18 @@ class Function;
 class GlobalValue;
 class Constant;
 class TargetMachine;
+class TargetJITInfo;
 class MachineCodeEmitter;
 
 class VM : public ExecutionEngine {
   TargetMachine &TM;       // The current target we are compiling to
+  TargetJITInfo &TJI;      // The JITInfo for the target we are compiling to
+  
   FunctionPassManager PM;  // Passes to compile a function
   MachineCodeEmitter *MCE; // MCE object
 
+  VM(ModuleProvider *MP, TargetMachine &tm, TargetJITInfo &tji);
 public:
-  VM(ModuleProvider *MP, TargetMachine *tm);
   ~VM();
 
   /// create - Create an return a new JIT compiler if there is one available
