@@ -458,6 +458,9 @@ std::ostream &WriteAsOperand(std::ostream &Out, const Value *V, bool PrintType,
   if (PrintType)
     printTypeInt(Out, V->getType(), TypeNames);
   
+  if (const Type *Ty = dyn_cast<Type> (V))
+    printTypeInt(Out, Ty, TypeNames);
+
   WriteAsOperandInternal(Out, V, PrintName, TypeNames, 0);
   return Out;
 }
