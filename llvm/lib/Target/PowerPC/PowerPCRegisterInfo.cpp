@@ -62,19 +62,34 @@ PowerPCRegisterInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
     PPC32::STB, PPC32::STH, PPC32::STW, PPC32::STFS, PPC32::STFD 
   };
   unsigned OC = Opcode[getIdx(RC)];
+  if (SrcReg == PPC32::LR) {
+    MBB.insert(MI, BuildMI(PPC32::MFLR, 0, PPC32::R0));
+    OC = PPC32::STW;
+    SrcReg = PPC32::R0;
+  }
   MBB.insert(MI, addFrameReference(BuildMI(OC, 3).addReg(SrcReg),FrameIdx));
   return 1;
 }
 
-int PowerPCRegisterInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
+int 
+PowerPCRegisterInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
                                           MachineBasicBlock::iterator MI,
                                           unsigned DestReg, int FrameIdx,
-                                          const TargetRegisterClass *RC) const{
+                                          const TargetRegisterClass *RC) const {
   static const unsigned Opcode[] = { 
     PPC32::LBZ, PPC32::LHZ, PPC32::LWZ, PPC32::LFS, PPC32::LFD 
   };
   unsigned OC = Opcode[getIdx(RC)];
+  bool LoadLR = false;
+  if (DestReg == PPC32::LR) {
+    DestReg = PPC32::R0;
+    LoadLR = true;
+    OC = PPC32::LWZ;
+  }
   MBB.insert(MI, addFrameReference(BuildMI(OC, 2, DestReg), FrameIdx));
+  if (LoadLR)
+    MBB.insert(MI, BuildMI(PPC32::MTLR, 1).addReg(PPC32::R0));
+
   return 1;
 }
 
@@ -186,14 +201,11 @@ void PowerPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
   // Get the number of bytes to allocate from the FrameInfo
   unsigned NumBytes = MFI->getStackSize();
 
-  // FIXME: the assembly printer inserts "calls" aka branch-and-link to get the
-  // PC address. We may not know about those calls at this time, so be
-  // conservative.
-  if (MFI->hasCalls() || true) {
+  // If we have calls, save the LR value on the stack
+  if (MFI->hasCalls()) {
     // When we have no frame pointer, we reserve argument space for call sites
     // in the function immediately on entry to the current function.  This
     // eliminates the need for add/sub brackets around call sites.
-    //
     NumBytes += MFI->getMaxCallFrameSize() + 
                 24 + // Predefined PowerPC link area
                 32 + // Predefined PowerPC params area
@@ -249,10 +261,7 @@ void PowerPCRegisterInfo::emitEpilogue(MachineFunction &MF,
   unsigned NumBytes = MFI->getStackSize();
 
   // If we have calls, restore the LR value before we branch to it
-  // FIXME: the assembly printer inserts "calls" aka branch-and-link to get the
-  // PC address. We may not know about those calls at this time, so be
-  // conservative.
-  if (MFI->hasCalls() || true) {
+  if (MFI->hasCalls()) {
     // Restore LR
     MI = BuildMI(PPC32::LWZ, 2,PPC32::R0).addSImm(NumBytes+8).addReg(PPC32::R1);
     MBB.insert(MBBI, MI);
