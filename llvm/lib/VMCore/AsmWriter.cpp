@@ -750,7 +750,7 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
     //
     if (RetTy && MTy && !MTy->isVarArg() &&
         (!isa<PointerType>(RetTy) || 
-         !isa<FunctionType>(cast<PointerType>(RetTy)))) {
+         !isa<FunctionType>(cast<PointerType>(RetTy)->getElementType()))) {
       Out << " "; printType(RetTy);
       writeOperand(Operand, false);
     } else {
