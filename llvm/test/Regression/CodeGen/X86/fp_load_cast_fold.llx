@@ -1,0 +1,17 @@
+; RUN: llvm-as < %s | llc -march=x86 | grep fild | not grep ESP
+double %short(short* %P) {
+	%V = load short* %P
+	%V2 = cast short %V to double
+	ret double %V2
+}
+double %int(int* %P) {
+	%V = load int* %P
+	%V2 = cast int %V to double
+	ret double %V2
+}
+double %long(long* %P) {
+	%V = load long* %P
+	%V2 = cast long %V to double
+	ret double %V2
+}
+
