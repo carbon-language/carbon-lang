@@ -979,8 +979,10 @@ static GenericValue executeCastOperation(Value *SrcVal, const Type *Ty,
     IMPLEMENT_CAST_CASE(Pointer, (PointerTy));
     IMPLEMENT_CAST_CASE(Float  , (float));
     IMPLEMENT_CAST_CASE(Double , (double));
+    IMPLEMENT_CAST_CASE(Bool   , (bool));
   default:
     cout << "Unhandled dest type for cast instruction: " << Ty << "\n";
+    abort();
   }
 
   return Dest;
