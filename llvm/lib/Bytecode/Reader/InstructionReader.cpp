@@ -125,6 +125,7 @@ Instruction *BytecodeParser::ParseInstruction(const unsigned char *&Buf,
       throw std::string("Invalid phi node encountered!\n");
 
     PHINode *PN = new PHINode(InstTy);
+    PN->op_reserve(Args.size());
     for (unsigned i = 0, e = Args.size(); i != e; i += 2)
       PN->addIncoming(getValue(RI.Type, Args[i]), getBasicBlock(Args[i+1]));
     return PN;
