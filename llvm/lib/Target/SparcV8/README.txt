@@ -10,7 +10,7 @@ Current expected test failures
 ------------------------------
 
 SingleSource/Benchmarks (excluding C++ tests): 
-fldry heapsort objinst Queens chomp misr pi whetstone
+fldry heapsort objinst misr pi whetstone 
 
 SingleSource/UnitTests:
 C++Catch SimpleC++Test 2003-05-07-VarArgs 2003-07-09-SignedArgs
