@@ -58,7 +58,7 @@ I(PHI         , "phi",      0,             0, 0, NoImpRegs, NoImpRegs)
 I(NOOP        , "nop",   0x90,             0, X86II::RawFrm | X86II::Void, NoImpRegs, NoImpRegs)       // nop
 
 // Flow control instructions
-I(RET         , "ret",   0xCB,    M_RET_FLAG, X86II::RawFrm | X86II::Void, NoImpRegs, NoImpRegs)       // ret
+I(RET         , "ret",   0xC3,    M_RET_FLAG, X86II::RawFrm | X86II::Void, NoImpRegs, NoImpRegs)       // ret
 I(JMP         , "jmp",   0xE9, M_BRANCH_FLAG, X86II::RawFrm | X86II::Void, NoImpRegs, NoImpRegs)       // jmp foo
 I(JNE         , "jne",   0x85, M_BRANCH_FLAG, X86II::RawFrm | X86II::TB | X86II::Void, NoImpRegs, NoImpRegs)
 I(JE          , "je",    0x84, M_BRANCH_FLAG, X86II::RawFrm | X86II::TB | X86II::Void, NoImpRegs, NoImpRegs)
