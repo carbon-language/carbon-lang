@@ -25,11 +25,11 @@ public:
 
   inline Value *getOperand(unsigned i) { 
     assert(i < Operands.size() && "getOperand() out of range!");
-    return Operands[i]; 
+    return Operands[i];
   }
   inline const Value *getOperand(unsigned i) const {
     assert(i < Operands.size() && "getOperand() const out of range!");
-    return Operands[i]; 
+    return Operands[i];
   }
   inline void setOperand(unsigned i, Value *Val) {
     assert(i < Operands.size() && "setOperand() out of range!");
