@@ -682,7 +682,7 @@ void Interpreter::executeRetInst(ReturnInst *I, ExecutionContext &SF) {
       }
 
       if (RetTy->isIntegral())
-	ExitCode = Result.SByteVal;   // Capture the exit code of the program
+	ExitCode = Result.IntVal;   // Capture the exit code of the program
     } else {
       ExitCode = 0;
     }
@@ -963,6 +963,7 @@ static void executeShrInst(ShiftInst *I, ExecutionContext &SF) {
 #define IMPLEMENT_CAST_CASE_START(DESTTY, DESTCTY)    \
   case Type::DESTTY##TyID:                      \
     switch (SrcTy->getPrimitiveID()) {          \
+      IMPLEMENT_CAST(DESTTY, DESTCTY, Bool);    \
       IMPLEMENT_CAST(DESTTY, DESTCTY, UByte);   \
       IMPLEMENT_CAST(DESTTY, DESTCTY, SByte);   \
       IMPLEMENT_CAST(DESTTY, DESTCTY, UShort);  \
