@@ -320,12 +320,11 @@ InsertPrintInsts(Value *Val,
 
 
 static LoadInst*
-InsertLoadInst(StoreInst* storeInst,
+InsertLoadInst(StoreInst *SI,
                BasicBlock *bb,
                BasicBlock::iterator &BBI)
 {
-  LoadInst* loadInst = new LoadInst(storeInst->getPointerOperand(),
-                                    storeInst->getIndices());
+  LoadInst* loadInst = new LoadInst(SI->getPointerOperand(), SI->copyIndices());
   BBI = bb->getInstList().insert(BBI, loadInst) + 1;
   return loadInst;
 }
