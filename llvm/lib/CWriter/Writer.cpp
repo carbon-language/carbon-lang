@@ -566,29 +566,31 @@ void CWriter::printModule(Module *M) {
 }
 
 
-/// printSymbolTable - Run through symbol table looking for named constants
-/// if a named constant is found, emit it's declaration...
-/// Assuming that symbol table has only types and constants.
+/// printSymbolTable - Run through symbol table looking for type names.  If a
+/// type name is found, emit it's declaration...
 ///
 void CWriter::printSymbolTable(const SymbolTable &ST) {
-  for (SymbolTable::const_iterator TI = ST.begin(); TI != ST.end(); ++TI) {
-    SymbolTable::type_const_iterator I   = ST.type_begin(TI->first);
-    SymbolTable::type_const_iterator End = ST.type_end(TI->first);
-    
-    for (; I != End; ++I) {
-      const Value *V = I->second;
-      if (const Type *Ty = dyn_cast<Type>(V))
-        if (const Type *STy = dyn_cast<StructType>(Ty)) {
-          string Name = "struct l_" + makeNameProper(I->first);
-          Out << Name << ";\n";
-          TypeNames.insert(std::make_pair(STy, Name));
-        } else {
-          string Name = "l_" + makeNameProper(I->first);
-          Out << "typedef ";
-          printType(Ty, Name, true);
-          Out << ";\n";
-        }
-    }
+  // If there are no type names, exit early.
+  if (ST.find(Type::TypeTy) == ST.end())
+    return;
+
+  // We are only interested in the type plane of the symbol table...
+  SymbolTable::type_const_iterator I   = ST.type_begin(Type::TypeTy);
+  SymbolTable::type_const_iterator End = ST.type_end(Type::TypeTy);
+  
+  for (; I != End; ++I) {
+    const Value *V = I->second;
+    if (const Type *Ty = dyn_cast<Type>(V))
+      if (const Type *STy = dyn_cast<StructType>(Ty)) {
+        string Name = "struct l_" + makeNameProper(I->first);
+        Out << Name << ";\n";
+        TypeNames.insert(std::make_pair(STy, Name));
+      } else {
+        string Name = "l_" + makeNameProper(I->first);
+        Out << "typedef ";
+        printType(Ty, Name, true);
+        Out << ";\n";
+      }
   }
 
   Out << "\n";
@@ -598,14 +600,10 @@ void CWriter::printSymbolTable(const SymbolTable &ST) {
 
   // Loop over all structures then push them into the stack so they are
   // printed in the correct order.
-  for (SymbolTable::const_iterator TI = ST.begin(); TI != ST.end(); ++TI) {
-    SymbolTable::type_const_iterator I = ST.type_begin(TI->first);
-    SymbolTable::type_const_iterator End = ST.type_end(TI->first);
-    
-    for (; I != End; ++I)
-      if (const StructType *STy = dyn_cast<StructType>(I->second))
-        printContainedStructs(STy, StructPrinted);
-  }
+  //
+  for (I = ST.type_begin(Type::TypeTy); I != End; ++I)
+    if (const StructType *STy = dyn_cast<StructType>(I->second))
+      printContainedStructs(STy, StructPrinted);
 }
 
 // Push the struct onto the stack and recursively push all structs
