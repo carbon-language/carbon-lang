@@ -16,10 +16,11 @@ protected:
 
   void destroyConstantImpl();
 public:
-  /// setName - Specialize setName to handle symbol table majik...
+  // setName - Specialize setName to handle symbol table majik...
   virtual void setName(const std::string &name, SymbolTable *ST = 0);
 
   /// Static constructor to get a '0' constant of arbitrary type...
+  ///
   static Constant *getNullValue(const Type *Ty);
 
   /// isNullValue - Return true if this is the value that would be returned by
@@ -29,6 +30,7 @@ public:
   virtual void print(std::ostream &O) const;
 
   /// isConstantExpr - Return true if this is a ConstantExpr
+  ///
   virtual bool isConstantExpr() const { return false; }
 
 
@@ -49,10 +51,29 @@ public:
   virtual void destroyConstant() { assert(0 && "Not reached!"); }
 
   
-  /// Methods for support type inquiry through isa, cast, and dyn_cast:
+  //// Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const Constant *) { return true; }
   static inline bool classof(const Value *V) {
     return V->getValueType() == Value::ConstantVal;
+  }
+
+  /// replaceUsesOfWithOnConstant - This method is a special form of
+  /// User::replaceUsesOfWith (which does not work on constants) that does work
+  /// on constants.  Basically this method goes through the trouble of building
+  /// a new constant that is equivalent to the current one, with all uses of
+  /// From replaced with uses of To.  After this construction is completed, all
+  /// of the users of 'this' are replaced to use the new constant, and then
+  /// 'this' is deleted.  In general, you should not call this method, instead,
+  /// use Value::replaceAllUsesWith, which automatically dispatches to this
+  /// method as needed.
+  ///
+  virtual void replaceUsesOfWithOnConstant(Value *From, Value *To) {
+    // Provide a default implementation for constants (like integers) that
+    // cannot use any other values.  This cannot be called at runtime, but needs
+    // to be here to avoid link errors.
+    assert(getNumOperands() == 0 && "replaceUsesOfWithOnConstant must be "
+           "implemented for all constants that have operands!");
+    assert(0 && "Constants that do not have operands cannot be using 'From'!");
   }
 
   // WARNING: Only to be used by Bytecode & Assembly Parsers!  USER CODE SHOULD

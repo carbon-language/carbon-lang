@@ -292,6 +292,7 @@ public:
   virtual bool isNullValue() const { return false; }
 
   virtual void destroyConstant();
+  virtual void replaceUsesOfWithOnConstant(Value *From, Value *To);
 
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const ConstantArray *) { return true; }
@@ -330,6 +331,7 @@ public:
   virtual bool isNullValue() const { return false; }
 
   virtual void destroyConstant();
+  virtual void replaceUsesOfWithOnConstant(Value *From, Value *To);
   
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const ConstantStruct *) { return true; }
@@ -423,6 +425,7 @@ public:
   }
 
   virtual void destroyConstant();
+  virtual void replaceUsesOfWithOnConstant(Value *From, Value *To);
 
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const ConstantPointerRef *) { return true; }
@@ -489,6 +492,7 @@ public:
   virtual bool isConstantExpr() const { return true; }
 
   virtual void destroyConstant();
+  virtual void replaceUsesOfWithOnConstant(Value *From, Value *To);
     
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const ConstantExpr *) { return true; }
