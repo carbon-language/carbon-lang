@@ -1968,6 +1968,35 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
 Instruction *InstCombiner::visitPHINode(PHINode &PN) {
   if (Value *V = hasConstantValue(&PN))
     return ReplaceInstUsesWith(PN, V);
+
+  // If the only user of this instruction is a cast instruction, and all of the
+  // incoming values are constants, change this PHI to merge together the casted
+  // constants.
+  if (PN.hasOneUse())
+    if (CastInst *CI = dyn_cast<CastInst>(PN.use_back()))
+      if (CI->getType() != PN.getType()) {  // noop casts will be folded
+        bool AllConstant = true;
+        for (unsigned i = 0, e = PN.getNumIncomingValues(); i != e; ++i)
+          if (!isa<Constant>(PN.getIncomingValue(i))) {
+            AllConstant = false;
+            break;
+          }
+        if (AllConstant) {
+          // Make a new PHI with all casted values.
+          PHINode *New = new PHINode(CI->getType(), PN.getName(), &PN);
+          for (unsigned i = 0, e = PN.getNumIncomingValues(); i != e; ++i) {
+            Constant *OldArg = cast<Constant>(PN.getIncomingValue(i));
+            New->addIncoming(ConstantExpr::getCast(OldArg, New->getType()),
+                             PN.getIncomingBlock(i));
+          }
+
+          // Update the cast instruction.
+          CI->setOperand(0, New);
+          WorkList.push_back(CI);    // revisit the cast instruction to fold.
+          WorkList.push_back(New);   // Make sure to revisit the new Phi
+          return &PN;                // PN is now dead!
+        }
+      }
   return 0;
 }
 
