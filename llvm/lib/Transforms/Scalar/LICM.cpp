@@ -54,8 +54,9 @@ namespace {
   DisablePromotion("disable-licm-promotion", cl::Hidden,
                    cl::desc("Disable memory promotion in LICM pass"));
 
+  Statistic<> NumSunk("licm", "Number of instructions sunk out of loop");
   Statistic<> NumHoisted("licm", "Number of instructions hoisted out of loop");
-  Statistic<> NumHoistedLoads("licm", "Number of load insts hoisted");
+  Statistic<> NumMovedLoads("licm", "Number of load insts hoisted or sunk");
   Statistic<> NumPromoted("licm",
                           "Number of memory locations promoted to registers");
 
@@ -110,16 +111,53 @@ namespace {
       return false;
     }
 
+    /// isExitBlockDominatedByBlockInLoop - This method checks to see if the
+    /// specified exit block of the loop is dominated by the specified block
+    /// that is in the body of the loop.  We use these constraints to
+    /// dramatically limit the amount of the dominator tree that needs to be
+    /// searched.
+    bool isExitBlockDominatedByBlockInLoop(BasicBlock *ExitBlock,
+                                           BasicBlock *BlockInLoop) const {
+      // If the block in the loop is the loop header, it must be dominated!
+      BasicBlock *LoopHeader = CurLoop->getHeader();
+      if (BlockInLoop == LoopHeader)
+        return true;
+      
+      DominatorTree::Node *BlockInLoopNode = DT->getNode(BlockInLoop);
+      DominatorTree::Node *IDom            = DT->getNode(ExitBlock);
+    
+      // Because the exit block is not in the loop, we know we have to get _at
+      // least_ it's immediate dominator.
+      do {
+        // Get next Immediate Dominator.
+        IDom = IDom->getIDom();
+        
+        // If we have got to the header of the loop, then the instructions block
+        // did not dominate the exit node, so we can't hoist it.
+        if (IDom->getBlock() == LoopHeader)
+          return false;
+        
+      } while (IDom != BlockInLoopNode);
+
+      return true;
+    }
+
+    /// sink - When an instruction is found to only be used outside of the loop,
+    /// this function moves it to the exit blocks and patches up SSA form as
+    /// needed.
+    ///
+    void sink(Instruction &I);
+
     /// hoist - When an instruction is found to only use loop invariant operands
     /// that is safe to hoist, this instruction is called to do the dirty work.
     ///
     void hoist(Instruction &I);
 
-    /// SafeToHoist - Only hoist an instruction if it is not a trapping
-    /// instruction or if it is a trapping instruction and is guaranteed to
-    /// execute.
+    /// isSafeToExecuteUnconditionally - Only sink or hoist an instruction if it
+    /// is not a trapping instruction or if it is a trapping instruction and is
+    /// guaranteed to execute.
     ///
-    bool SafeToHoist(Instruction &I);
+    bool isSafeToExecuteUnconditionally(Instruction &I);
 
     /// pointerInvalidatedByLoop - Return true if the body of this loop may
     /// store into the memory location pointed to by V.
@@ -136,7 +174,10 @@ namespace {
         return !CurLoop->contains(I->getParent());
       return true;  // All non-instructions are loop invariant
     }
-    bool isLoopInvariantInst(Instruction &Inst);
+
+    bool canSinkOrHoistInst(Instruction &I);
+    bool isLoopInvariantInst(Instruction &I);
+    bool isNotUsedInLoop(Instruction &I);
 
     /// PromoteValuesInLoop - Look at the stores in the loop and promote as many
     /// to scalars as we can.
@@ -205,9 +246,8 @@ void LICM::visitLoop(Loop *L, AliasSetTracker &AST) {
   // Because subloops have already been incorporated into AST, we skip blocks in
   // subloops.
   //
-  const std::vector<BasicBlock*> &LoopBBs = L->getBlocks();
-  for (std::vector<BasicBlock*>::const_iterator I = LoopBBs.begin(),
-         E = LoopBBs.end(); I != E; ++I)
+  for (std::vector<BasicBlock*>::const_iterator I = L->getBlocks().begin(),
+         E = L->getBlocks().end(); I != E; ++I)
     if (LI->getLoopFor(*I) == L)        // Ignore blocks in subloops...
       AST.add(**I);                     // Incorporate the specified basic block
 
@@ -244,13 +284,30 @@ void LICM::HoistRegion(DominatorTree::Node *N) {
   // If this subregion is not in the top level loop at all, exit.
   if (!CurLoop->contains(BB)) return;
 
-  // Only need to hoist the contents of this block if it is not part of a
-  // subloop (which would already have been hoisted)
+  // Only need to process the contents of this block if it is not part of a
+  // subloop (which would already have been processed).
   if (!inSubLoop(BB))
-    for (BasicBlock::iterator I = BB->begin(), E = --BB->end(); I != E; ) {
-      Instruction &Inst = *I++;
-      if (isLoopInvariantInst(Inst) && SafeToHoist(Inst))
-        hoist(Inst);
+    for (BasicBlock::iterator II = BB->begin(), E = BB->end(); II != E; ) {
+      Instruction &I = *II++;
+
+      // We can only handle simple expressions and loads with this code.
+      if (canSinkOrHoistInst(I)) {
+        // First check to see if we can sink this instruction to the exit blocks
+        // of the loop.  We can do this if the only users of the instruction are
+        // outside of the loop.  In this case, it doesn't even matter if the
+        // operands of the instruction are loop invariant.
+        //
+        if (isNotUsedInLoop(I))
+          sink(I);
+        
+        // If we can't sink the instruction, try hoisting it out to the
+        // preheader.  We can only do this if all of the operands of the
+        // instruction are loop invariant and if it is safe to hoist the
+        // instruction.
+        //
+        else if (isLoopInvariantInst(I) && isSafeToExecuteUnconditionally(I))
+          hoist(I);
+      }
     }
 
   const std::vector<DominatorTree::Node*> &Children = N->getChildren();
@@ -258,61 +315,204 @@ void LICM::HoistRegion(DominatorTree::Node *N) {
     HoistRegion(Children[i]);
 }
 
-bool LICM::isLoopInvariantInst(Instruction &I) {
-  assert(!isa<TerminatorInst>(I) && "Can't hoist terminator instructions!");
-
-  // We can only hoist simple expressions...
-  if (!isa<BinaryOperator>(I) && !isa<ShiftInst>(I) && !isa<LoadInst>(I) &&
-      !isa<GetElementPtrInst>(I) && !isa<CastInst>(I) && !isa<VANextInst>(I) &&
-      !isa<VAArgInst>(I))
-    return false;
-
-  // The instruction is loop invariant if all of its operands are loop-invariant
-  for (unsigned i = 0, e = I.getNumOperands(); i != e; ++i)
-    if (!isLoopInvariant(I.getOperand(i)))
-      return false;
-
+/// canSinkOrHoistInst - Return true if the hoister and sinker can handle this
+/// instruction.
+///
+bool LICM::canSinkOrHoistInst(Instruction &I) {
   // Loads have extra constraints we have to verify before we can hoist them.
   if (LoadInst *LI = dyn_cast<LoadInst>(&I)) {
     if (LI->isVolatile())
       return false;        // Don't hoist volatile loads!
 
     // Don't hoist loads which have may-aliased stores in loop.
-    if (pointerInvalidatedByLoop(I.getOperand(0)))
-      return false;
+    return !pointerInvalidatedByLoop(LI->getOperand(0));
   }
+
+  return isa<BinaryOperator>(I) || isa<ShiftInst>(I) || isa<CastInst>(I) || 
+         isa<GetElementPtrInst>(I) || isa<VANextInst>(I) || isa<VAArgInst>(I);
+}
+
+/// isNotUsedInLoop - Return true if the only users of this instruction are
+/// outside of the loop.  If this is true, we can sink the instruction to the
+/// exit blocks of the loop.
+///
+bool LICM::isNotUsedInLoop(Instruction &I) {
+  for (Value::use_iterator UI = I.use_begin(), E = I.use_end(); UI != E; ++UI)
+    if (CurLoop->contains(cast<Instruction>(*UI)->getParent()))
+      return false;
+  return true;
+}
+
+
+/// isLoopInvariantInst - Return true if all operands of this instruction are
+/// loop invariant.  We also filter out non-hoistable instructions here just for
+/// efficiency.
+///
+bool LICM::isLoopInvariantInst(Instruction &I) {
+  // The instruction is loop invariant if all of its operands are loop-invariant
+  for (unsigned i = 0, e = I.getNumOperands(); i != e; ++i)
+    if (!isLoopInvariant(I.getOperand(i)))
+      return false;
 
   // If we got this far, the instruction is loop invariant!
   return true;
 }
 
+/// sink - When an instruction is found to only be used outside of the loop,
+/// this function moves it to the exit blocks and patches up SSA form as
+/// needed.
+///
+void LICM::sink(Instruction &I) {
+  DEBUG(std::cerr << "LICM sinking instruction: " << I);
+
+  const std::vector<BasicBlock*> &ExitBlocks = CurLoop->getExitBlocks();
+  
+  // The case where there is only a single exit node of this loop is common
+  // enough that we handle it as a special (more efficient) case.  It is more
+  // efficient to handle because there are no PHI nodes that need to be placed.
+  if (ExitBlocks.size() == 1) {
+    if (!isExitBlockDominatedByBlockInLoop(ExitBlocks[0], I.getParent())) {
+      // Instruction is not used, just delete it.
+      I.getParent()->getInstList().erase(&I);
+    } else {
+      // Move the instruction to the start of the exit block, after any PHI
+      // nodes in it.
+      I.getParent()->getInstList().remove(&I);
+      
+      BasicBlock::iterator InsertPt = ExitBlocks[0]->begin();
+      while (isa<PHINode>(InsertPt)) ++InsertPt;
+      ExitBlocks[0]->getInstList().insert(InsertPt, &I);
+    }
+  } else if (ExitBlocks.size() == 0) {
+    // The instruction is actually dead if there ARE NO exit blocks.
+    I.getParent()->getInstList().erase(&I);
+    return;   // Don't count this as a sunk instruction, don't check operands.
+  } else {
+    // Otherwise, if we have multiple exits, use the PromoteMem2Reg function to
+    // do all of the hard work of inserting PHI nodes as necessary.  We convert
+    // the value into a stack object to get it to do this.
+
+    // Firstly, we create a stack object to hold the value...
+    AllocaInst *AI = new AllocaInst(I.getType(), 0, I.getName(),
+                                   I.getParent()->getParent()->front().begin());
+
+    // Secondly, insert load instructions for each use of the instruction
+    // outside of the loop.
+    while (!I.use_empty()) {
+      Instruction *U = cast<Instruction>(I.use_back());
+
+      // If the user is a PHI Node, we actually have to insert load instructions
+      // in all predecessor blocks, not in the PHI block itself!
+      if (PHINode *UPN = dyn_cast<PHINode>(U)) {
+        // Only insert into each predecessor once, so that we don't have
+        // different incoming values from the same block!
+        std::map<BasicBlock*, Value*> InsertedBlocks;
+        for (unsigned i = 0, e = UPN->getNumIncomingValues(); i != e; ++i)
+          if (UPN->getIncomingValue(i) == &I) {
+            BasicBlock *Pred = UPN->getIncomingBlock(i);
+            Value *&PredVal = InsertedBlocks[Pred];
+            if (!PredVal) {
+              // Insert a new load instruction right before the terminator in
+              // the predecessor block.
+              PredVal = new LoadInst(AI, "", Pred->getTerminator());
+            }
+
+            UPN->setIncomingValue(i, PredVal);
+          }
+
+      } else {
+        LoadInst *L = new LoadInst(AI, "", U);
+        U->replaceUsesOfWith(&I, L);
+      }
+    }
+
+    // Thirdly, insert a copy of the instruction in each exit block of the loop
+    // that is dominated by the instruction, storing the result into the memory
+    // location.  Be careful not to insert the instruction into any particular
+    // basic block more than once.
+    std::set<BasicBlock*> InsertedBlocks;
+    BasicBlock *InstOrigBB = I.getParent();
+
+    for (unsigned i = 0, e = ExitBlocks.size(); i != e; ++i) {
+      BasicBlock *ExitBlock = ExitBlocks[i];
+
+      if (isExitBlockDominatedByBlockInLoop(ExitBlock, InstOrigBB)) {
+        std::set<BasicBlock*>::iterator SI =
+          InsertedBlocks.lower_bound(ExitBlock);
+        // If we haven't already processed this exit block, do so now.
+        if (SI == InsertedBlocks.end() || *SI != ExitBlock) {
+          // Insert the code after the last PHI node...
+          BasicBlock::iterator InsertPt = ExitBlock->begin();
+          while (isa<PHINode>(InsertPt)) ++InsertPt;
+          
+          // If this is the first exit block processed, just move the original
+          // instruction, otherwise clone the original instruction and insert
+          // the copy.
+          Instruction *New;
+          if (InsertedBlocks.empty()) {
+            I.getParent()->getInstList().remove(&I);
+            ExitBlock->getInstList().insert(InsertPt, &I);
+            New = &I;
+          } else {
+            New = I.clone();
+            New->setName(I.getName()+".le");
+            ExitBlock->getInstList().insert(InsertPt, New);
+          }
+          
+          // Now that we have inserted the instruction, store it into the alloca
+          new StoreInst(New, AI, InsertPt);
+          
+          // Remember we processed this block
+          InsertedBlocks.insert(SI, ExitBlock);
+        }
+      }
+    }
+      
+    // Finally, promote the fine value to SSA form.
+    std::vector<AllocaInst*> Allocas;
+    Allocas.push_back(AI);
+    PromoteMemToReg(Allocas, *DT, *DF, AA->getTargetData());
+  }
+  
+  if (isa<LoadInst>(I)) ++NumMovedLoads;
+  ++NumSunk;
+  Changed = true;
+
+  // Since we just sunk an instruction, check to see if any other instructions
+  // used by this instruction are now sinkable.  If so, sink them too.
+  for (unsigned i = 0, e = I.getNumOperands(); i != e; ++i)
+    if (Instruction *OpI = dyn_cast<Instruction>(I.getOperand(i)))
+      if (CurLoop->contains(OpI->getParent()) && canSinkOrHoistInst(*OpI) &&
+          isNotUsedInLoop(*OpI) &&
+          isSafeToExecuteUnconditionally(*OpI))
+        sink(*OpI);
+}
 
 /// hoist - When an instruction is found to only use loop invariant operands
 /// that is safe to hoist, this instruction is called to do the dirty work.
 ///
-void LICM::hoist(Instruction &Inst) {
+void LICM::hoist(Instruction &I) {
   DEBUG(std::cerr << "LICM hoisting to";
         WriteAsOperand(std::cerr, Preheader, false);
-        std::cerr << ": " << Inst);
-
-  if (isa<LoadInst>(Inst))
-    ++NumHoistedLoads;
+        std::cerr << ": " << I);
 
   // Remove the instruction from its current basic block... but don't delete the
   // instruction.
-  Inst.getParent()->getInstList().remove(&Inst);
+  I.getParent()->getInstList().remove(&I);
 
   // Insert the new node in Preheader, before the terminator.
-  Preheader->getInstList().insert(Preheader->getTerminator(), &Inst);
+  Preheader->getInstList().insert(Preheader->getTerminator(), &I);
   
+  if (isa<LoadInst>(I)) ++NumMovedLoads;
   ++NumHoisted;
   Changed = true;
 }
 
-/// SafeToHoist - Only hoist an instruction if it is not a trapping instruction
-/// or if it is a trapping instruction and is guaranteed to execute
+/// isSafeToExecuteUnconditionally - Only sink or hoist an instruction if it is
+/// not a trapping instruction or if it is a trapping instruction and is
+/// guaranteed to execute.
 ///
-bool LICM::SafeToHoist(Instruction &Inst) {
+bool LICM::isSafeToExecuteUnconditionally(Instruction &Inst) {
   // If it is not a trapping instruction, it is always safe to hoist.
   if (!Inst.isTrapping()) return true;
   
@@ -323,32 +523,17 @@ bool LICM::SafeToHoist(Instruction &Inst) {
   // If the instruction is in the header block for the loop (which is very
   // common), it is always guaranteed to dominate the exit blocks.  Since this
   // is a common case, and can save some work, check it now.
-  BasicBlock *LoopHeader = CurLoop->getHeader();
-  if (Inst.getParent() == LoopHeader)
+  if (Inst.getParent() == CurLoop->getHeader())
     return true;
 
-  // Get the Dominator Tree Node for the instruction's basic block.
-  DominatorTree::Node *InstDTNode = DT->getNode(Inst.getParent());
-  
   // Get the exit blocks for the current loop.
-  const std::vector<BasicBlock* > &ExitBlocks = CurLoop->getExitBlocks();
+  const std::vector<BasicBlock*> &ExitBlocks = CurLoop->getExitBlocks();
 
   // For each exit block, get the DT node and walk up the DT until the
   // instruction's basic block is found or we exit the loop.
-  for (unsigned i = 0, e = ExitBlocks.size(); i != e; ++i) {
-    DominatorTree::Node *IDom = DT->getNode(ExitBlocks[i]);
-    
-    do {
-      // Get next Immediate Dominator.
-      IDom = IDom->getIDom();
-
-      // If we have got to the header of the loop, then the instructions block
-      // did not dominate the exit node, so we can't hoist it.
-      if (IDom->getBlock() == LoopHeader)
-        return false;
-
-    } while(IDom != InstDTNode);
-  }
+  for (unsigned i = 0, e = ExitBlocks.size(); i != e; ++i)
+    if (!isExitBlockDominatedByBlockInLoop(ExitBlocks[i], Inst.getParent()))
+      return false;
   
   return true;
 }
