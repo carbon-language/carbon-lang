@@ -95,28 +95,15 @@ public:
   //
   inline void decCurDegree() { assert(CurDegree > 0); --CurDegree; }
 
-
   // The following methods call the methods in ParentLR
   // They are added to this class for convenience
   // If many of these are called within a single scope,
   // consider calling the methods directly on LR
-
-  inline void setRegClass(RegClass *RC) { ParentLR->setRegClass(RC);  }
-
-  inline RegClass *getRegClass() const { return ParentLR->getRegClass(); }
-
   inline bool hasColor() const { return ParentLR->hasColor();  }
 
   inline unsigned int getColor() const { return ParentLR->getColor();  }
 
   inline void setColor(unsigned Col) { ParentLR->setColor(Col);  }
-
-  inline void markForSpill() { ParentLR->markForSpill(); }
-
-  inline void markForSaveAcrossCalls() { ParentLR->markForSaveAcrossCalls();  }
-
-  inline unsigned int isCallInterference() const 
-  { return ParentLR->isCallInterference(); } 
 
   inline LiveRange *getParentLR() const { return ParentLR; }
 };
