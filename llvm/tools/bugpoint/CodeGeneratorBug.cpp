@@ -115,7 +115,7 @@ bool ReduceMisCodegenFunctions::TestFuncs(const std::vector<Function*> &Funcs,
 
         // 2. Use `GetElementPtr *funcName, 0, 0' to convert the string to an
         // sbyte* so it matches the signature of the resolver function.
-        std::vector<Constant*> GEPargs(2, Constant::getNullValue(Type::LongTy));
+        std::vector<Constant*> GEPargs(2, Constant::getNullValue(Type::IntTy));
 
         // 3. Replace all uses of `func' with calls to resolver by:
         // (a) Iterating through the list of uses of this function
