@@ -22,7 +22,8 @@ Loop:
 
 	br bool %c, label %Out, label %Loop
 Out:
-	ret int 7
+	%X = sub int %ToRemove, %Atmp
+	ret int %X
 
 Dummy:
 	store int 7, int* %A
