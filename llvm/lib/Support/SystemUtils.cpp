@@ -14,15 +14,15 @@
 
 #include "llvm/Support/SystemUtils.h"
 #include "llvm/System/Program.h"
-#include <unistd.h>
-#include <wait.h>
-#include <sys/fcntl.h>
+#include "llvm/Config/fcntl.h"
+#include "llvm/Config/sys/wait.h"
 #include <algorithm>
 #include <cerrno>
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
 #include <signal.h>
+
 using namespace llvm;
 
 /// isStandardOutAConsole - Return true if we can tell that the standard output
@@ -159,79 +159,4 @@ int llvm::RunProgramWithTimeout(const std::string &ProgramPath,
   std::cerr << "RunProgramWithTimeout not implemented on this platform!\n";
   return -1;
 #endif
-}
-
-
-// ExecWait - executes a program with the specified arguments and environment.
-// It then waits for the progarm to termiante and then returns to the caller.
-//
-// Inputs:
-//  argv - The arguments to the program as an array of C strings.  The first
-//         argument should be the name of the program to execute, and the
-//         last argument should be a pointer to NULL.
-//
-//  envp - The environment passes to the program as an array of C strings in
-//         the form of "name=value" pairs.  The last element should be a
-//         pointer to NULL.
-//
-// Outputs:
-//  None.
-//
-// Return value:
-//  0 - No errors.
-//  1 - The program could not be executed.
-//  1 - The program returned a non-zero exit status.
-//  1 - The program terminated abnormally.
-//
-// Notes:
-//  The program will inherit the stdin, stdout, and stderr file descriptors
-//  as well as other various configuration settings (umask).
-//
-//  This function should not print anything to stdout/stderr on its own.  It is
-//  a generic library function.  The caller or executed program should report
-//  errors in the way it sees fit.
-//
-//  This function does not use $PATH to find programs.
-//
-int llvm::ExecWait(const char * const old_argv[],
-                   const char * const old_envp[]) {
-#ifdef HAVE_SYS_WAIT_H
-  // Create local versions of the parameters that can be passed into execve()
-  // without creating const problems.
-  char ** const argv = (char ** const) old_argv;
-  char ** const envp = (char ** const) old_envp;
-
-  // Create a child process.
-  switch (fork()) {
-    // An error occured:  Return to the caller.
-    case -1:
-      return 1;
-      break;
-
-    // Child process: Execute the program.
-    case 0:
-      execve (argv[0], argv, envp);
-      // If the execve() failed, we should exit and let the parent pick up
-      // our non-zero exit status.
-      exit (1);
-
-    // Parent process: Break out of the switch to do our processing.
-    default:
-      break;
-  }
-
-  // Parent process: Wait for the child process to terminate.
-  int status;
-  if ((wait (&status)) == -1)
-    return 1;
-
-  // If the program exited normally with a zero exit status, return success!
-  if (WIFEXITED (status) && (WEXITSTATUS(status) == 0))
-    return 0;
-#else
-  std::cerr << "llvm::ExecWait not implemented on this platform!\n";
-#endif
-
-  // Otherwise, return failure.
-  return 1;
 }
