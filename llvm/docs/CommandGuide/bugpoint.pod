@@ -6,8 +6,8 @@ bugpoint - automatic test case reduction tool
 
 =head1 SYNOPSIS
 
-bugpoint [options] [input LLVM ll/bc files] [LLVM passes] --args
-I<program arguments> ...
+bugpoint [options] [input LLVM ll/bc files] [LLVM passes] B<--args>
+I<program arguments>
 
 =head1 DESCRIPTION
 
