@@ -2670,7 +2670,7 @@ void ISel::emitCastOperation(MachineBasicBlock *BB,
     // a larger signed value, then use FLD on the larger value.
     //
     const Type *PromoteType = 0;
-    unsigned PromoteOpcode;
+    unsigned PromoteOpcode = 0;
     unsigned RealDestReg = DestReg;
     switch (SrcTy->getPrimitiveID()) {
     case Type::BoolTyID:
