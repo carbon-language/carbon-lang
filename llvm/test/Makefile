@@ -1,5 +1,5 @@
 LEVEL  = ..
-DIRS   = Programs
+DIRS   = 
 
 #
 # Make QMTest the default for testing features and regressions
