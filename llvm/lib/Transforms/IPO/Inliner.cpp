@@ -58,84 +58,67 @@ bool Inliner::runOnSCC(const std::vector<CallGraphNode*> &SCC) {
     if (F == 0 || F->isExternal()) continue;
     DEBUG(std::cerr << "  Inspecting function: " << F->getName() << "\n");
 
+    // Scan through and identify all call sites ahead of time so that we only
+    // inline call sites in the original functions, not call sites that result
+    // in inlining other functions.
+    std::vector<CallSite> CallSites;
     for (Function::iterator BB = F->begin(), E = F->end(); BB != E; ++BB)
-      for (BasicBlock::iterator I = BB->begin(); I != BB->end(); ) {
-        bool ShouldInc = true;
-        // Found a call or invoke instruction?
-        if (isa<CallInst>(I) || isa<InvokeInst>(I)) {
-          CallSite CS = CallSite::get(I);
-          if (Function *Callee = CS.getCalledFunction())
-            if (!Callee->isExternal() && !IsRecursiveFunction.count(Callee)) {
-              // Determine whether this is a function IN the SCC...
-              bool inSCC = SCCFunctions.count(Callee);
-
-              // Keep track of whether this is a directly recursive function.
-              if (Callee == F) IsRecursiveFunction.insert(F);
-
-              // If the policy determines that we should inline this function,
-              // try to do so...
-              int InlineCost = inSCC ? getRecursiveInlineCost(CS) :
-                                       getInlineCost(CS);
-              if (InlineCost >= (int)InlineThreshold) {
-                DEBUG(std::cerr << "    NOT Inlining: cost=" << InlineCost
-                                << ", Call: " << *CS.getInstruction());
-              } else {
-                DEBUG(std::cerr << "    Inlining: cost=" << InlineCost
-                                << ", Call: " << *CS.getInstruction());
-
-                // Save an iterator to the instruction before the call if it
-                // exists, otherwise get an iterator at the end of the
-                // block... because the call will be destroyed.
-                //
-                BasicBlock::iterator SI;
-                if (I != BB->begin()) {
-                  SI = I; --SI;           // Instruction before the call...
-                } else {
-                  SI = BB->end();
-                }
-                
-                if (performInlining(CS, SCCFunctions)) {
-                  // Move to instruction before the call...
-                  I = (SI == BB->end()) ? BB->begin() : SI;
-                  ShouldInc = false; // Don't increment iterator until next time
-                  Changed = true;
-                }
-              }
-            }
-        }
-        if (ShouldInc) ++I;
+      for (BasicBlock::iterator I = BB->begin(); I != BB->end(); ++I) {
+        CallSite CS = CallSite::get(I);
+        if (CS.getInstruction() && CS.getCalledFunction() &&
+            !CS.getCalledFunction()->isExternal())
+          CallSites.push_back(CS);
       }
+
+    // Now that we have all of the call sites, loop over them and inline them if
+    // it looks profitable to do so.
+    for (unsigned i = 0, e = CallSites.size(); i != e; ++i) {
+      CallSite CS = CallSites[i];
+      Function *Callee = CS.getCalledFunction();
+      // Determine whether this is a function IN the SCC...
+      bool inSCC = SCCFunctions.count(Callee);
+    
+      // If the policy determines that we should inline this function,
+      // try to do so...
+      int InlineCost = inSCC ? getRecursiveInlineCost(CS) : getInlineCost(CS);
+      if (InlineCost >= (int)InlineThreshold) {
+        DEBUG(std::cerr << "    NOT Inlining: cost=" << InlineCost
+              << ", Call: " << *CS.getInstruction());
+      } else {
+        DEBUG(std::cerr << "    Inlining: cost=" << InlineCost
+              << ", Call: " << *CS.getInstruction());
+      
+        Function *Caller = CS.getInstruction()->getParent()->getParent();
+
+        // Attempt to inline the function...
+        if (InlineFunction(CS)) {
+          ++NumInlined;
+  
+          if (Callee->hasOneUse())
+            if (ConstantPointerRef *CPR =
+                dyn_cast<ConstantPointerRef>(Callee->use_back()))
+              if (CPR->use_empty())
+                CPR->destroyConstant();
+        
+          // If we inlined the last possible call site to the function,
+          // delete the function body now.
+          if (Callee->use_empty() && Callee != Caller &&
+              (Callee->hasInternalLinkage() || Callee->hasLinkOnceLinkage())) {
+            DEBUG(std::cerr << "    -> Deleting dead function: "
+                  << (void*)Callee << Callee->getName() << "\n");
+            std::set<Function*>::iterator I = SCCFunctions.find(Callee);
+            if (I != SCCFunctions.end())    // Remove function from this SCC.
+              SCCFunctions.erase(I);
+
+            Callee->getParent()->getFunctionList().erase(Callee);
+            ++NumDeleted;
+          }
+          Changed = true;
+        }
+      }
+    }
   }
+
   return Changed;
-}
-
-bool Inliner::performInlining(CallSite CS, std::set<Function*> &SCC) {
-  Function *Callee = CS.getCalledFunction();
-  Function *Caller = CS.getInstruction()->getParent()->getParent();
-
-  // Attempt to inline the function...
-  if (!InlineFunction(CS)) return false;
-  ++NumInlined;
-  
-  if (Callee->hasOneUse())
-    if (ConstantPointerRef *CPR =
-        dyn_cast<ConstantPointerRef>(Callee->use_back()))
-      if (CPR->use_empty())
-        CPR->destroyConstant();
-  
-  // If we inlined the last possible call site to the function,
-  // delete the function body now.
-  if (Callee->use_empty() && Callee != Caller &&
-      (Callee->hasInternalLinkage() || Callee->hasLinkOnceLinkage())) {
-    DEBUG(std::cerr << "    -> Deleting dead function: " << (void*)Callee
-                    << Callee->getName() << "\n");
-    std::set<Function*>::iterator I = SCC.find(Callee);
-    if (I != SCC.end())       // Remove function from this SCC...
-      SCC.erase(I);
-
-    Callee->getParent()->getFunctionList().erase(Callee);
-    ++NumDeleted;
-  }
-  return true; 
 }
 

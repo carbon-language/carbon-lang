@@ -56,12 +56,6 @@ struct Inliner : public CallGraphSCCPass {
 private:
   // InlineThreshold - Cache the value here for easy access.
   unsigned InlineThreshold;
-
-  // IsRecursiveFunction - This contains all functions which are directly
-  // recursive, which we do NOT want to inline into other functions.
-  std::set<Function*> IsRecursiveFunction;
-
-  bool performInlining(CallSite CS, std::set<Function*> &SCC);
 };
 
 } // End llvm namespace
