@@ -195,7 +195,10 @@ void PowerPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
     // in the function immediately on entry to the current function.  This
     // eliminates the need for add/sub brackets around call sites.
     //
-    NumBytes += MFI->getMaxCallFrameSize();
+    NumBytes += MFI->getMaxCallFrameSize() + 
+                24   /* Predefined PowerPC link area */ + 
+                12*4 /* Spilled int regs */ +
+                0*8  /* Spilled fp regs */;
     
     // Round the size to a multiple of the alignment (don't forget the 4 byte
     // offset though).
@@ -217,7 +220,7 @@ void PowerPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
   
   // adjust stack pointer: r1 -= numbytes
   if (NumBytes) {
-    MI = BuildMI(PPC32::STWU, 2, PPC32::R1).addImm(-80).addReg(PPC32::R1);
+    MI = BuildMI(PPC32::STWU, 2, PPC32::R1).addImm(-NumBytes).addReg(PPC32::R1);
     MBB.insert(MBBI, MI);
   }
 }
