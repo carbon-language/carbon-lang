@@ -50,7 +50,7 @@ public:
 
   // Successors - List of BasicBlocks that are reachable directly from nodes in
   // this interval, but are not in the interval themselves.
-  // These nodes neccesarily must be header nodes for other intervals.
+  // These nodes necessarily must be header nodes for other intervals.
   //
   std::vector<BasicBlock*> Successors;
 

@@ -640,7 +640,7 @@ GenericValue Interpreter::executeGEPOperation(Value *Ptr, User::op_iterator I,
     if (const StructType *STy = dyn_cast<StructType>(Ty)) {
       const StructLayout *SLO = TD.getStructLayout(STy);
       
-      // Indicies must be ubyte constants...
+      // Indices must be ubyte constants...
       const ConstantUInt *CPU = cast<ConstantUInt>(*I);
       assert(CPU->getType() == Type::UByteTy);
       unsigned Index = CPU->getValue();

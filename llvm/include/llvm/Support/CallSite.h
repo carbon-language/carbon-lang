@@ -52,7 +52,7 @@ public:
     return dyn_cast<Function>(getCalledValue());
   }
 
-  /// setCalledFunction - Set the callee to the specied value...
+  /// setCalledFunction - Set the callee to the specified value...
   ///
   void setCalledFunction(Value *V) {
     I->setOperand(0, V);

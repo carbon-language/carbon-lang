@@ -81,7 +81,7 @@ GenericValue Interpreter::callExternalFunction(Function *M,
   TheInterpreter = this;
 
   // Do a lookup to see if the function is in our cache... this should just be a
-  // defered annotation!
+  // deferred annotation!
   std::map<const Function *, ExFunc>::iterator FI = Functions.find(M);
   ExFunc Fn = (FI == Functions.end()) ? lookupFunction(M) : FI->second;
   if (Fn == 0) {
