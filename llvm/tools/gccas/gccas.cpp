@@ -38,10 +38,6 @@ RunNPasses("stopAfterNPasses",
            cl::desc("Only run the first N passes of gccas"), cl::Hidden,
            cl::value_desc("# passes"));
 
-static cl::opt<bool> 
-StopAtLevelRaise("stopraise", cl::desc("Stop optimization before level raise"),
-                 cl::Hidden);
-
 static cl::opt<bool>   
 Verify("verify", cl::desc("Verify each pass result"));
 
@@ -76,16 +72,11 @@ void AddConfiguredTransformationPasses(PassManager &PM) {
   addPass(PM, createDeadInstEliminationPass());  // Remove Dead code/vars
   addPass(PM, createRaiseAllocationsPass());     // call %malloc -> malloc inst
   addPass(PM, createIndVarSimplifyPass());       // Simplify indvars
-
-  // Level raise is eternally buggy/in need of enhancements.  Allow
-  // transformation to stop right before it runs.
-  if (StopAtLevelRaise) return;
-
   addPass(PM, createRaisePointerReferencesPass(TD));// Recover type information
+  addPass(PM, createInstructionCombiningPass()); // Combine silly seq's
   addPass(PM, createPromoteMemoryToRegister());  // Promote alloca's to regs
   // Disabling until this is fixed -- Vikram, 7/7/02.
   // addPass(PM, createReassociatePass());          // Reassociate expressions
-  addPass(PM, createInstructionCombiningPass()); // Combine silly seq's
   addPass(PM, createCorrelatedExpressionEliminationPass());
   addPass(PM, createInstructionCombiningPass()); // Combine silly seq's
   addPass(PM, createCFGSimplificationPass());    // Merge & remove BBs
