@@ -28,5 +28,6 @@ void *calloc(size_t nelem, size_t elsize) __ATTRIBUTE_WEAK__;
 
 void *calloc(size_t nelem, size_t elsize) {
   void *Result = malloc(nelem*elsize);
-  return memset(Result, 0, nelem*elsize);
+  if (Result) memset(Result, 0, nelem*elsize);
+  return Result;
 }
