@@ -158,7 +158,7 @@ Path::GetBytecodeLibraryPaths(std::vector<sys::Path>& Paths) {
   }
 #ifdef LLVMGCCDIR
   {
-    Path tmpPath(std::string(LLVMGCCDIR) + "bytecode-libs/");
+    Path tmpPath(std::string(LLVMGCCDIR) + "lib/");
     if (tmpPath.readable())
       Paths.push_back(tmpPath);
   }
@@ -582,6 +582,29 @@ bool Path::getMagicNumber(std::string& Magic, unsigned len) const {
   buf[len] = '\0';
   Magic = buf;
   return true;
+}
+
+void 
+CopyFile(const sys::Path &Dest, const sys::Path &Src) {
+  if (!::CopyFile(Src.c_str(), Dest.c_str(), false))
+    ThrowError("Can't copy '" + Src.toString() + 
+               "' to '" + Dest.toString() + "'");
+}
+
+void 
+Path::makeUnique() {
+  if (!exists())
+    return; // File doesn't exist already, just use it!
+
+  Path dir (*this);
+  dir.elideFile();
+  std::string fname = this->getLast();
+
+  char* newName = alloca(MAX_PATH+1);
+  if (!GetTempFileName(dir.c_str(), fname.c_str(), 0, newName))
+    ThrowError("Cannot make unique filename for '" + path + "'");
+
+  path = newName;
 }
 
 }

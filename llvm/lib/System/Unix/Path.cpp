@@ -87,7 +87,7 @@ Path::GetBytecodeLibraryPaths(std::vector<sys::Path>& Paths) {
   }
 #ifdef LLVMGCCDIR
   {
-    Path tmpPath(std::string(LLVMGCCDIR) + "bytecode-libs/");
+    Path tmpPath(std::string(LLVMGCCDIR) + "lib/");
     if (tmpPath.readable())
       Paths.push_back(tmpPath);
   }
@@ -106,14 +106,6 @@ Path::GetBytecodeLibraryPaths(std::vector<sys::Path>& Paths) {
 Path 
 Path::GetLLVMDefaultConfigDir() {
   return Path("/etc/llvm/");
-}
-
-Path 
-Path::GetLLVMConfigDir() {
-  Path result;
-  if (result.setDirectory(LLVM_ETCDIR))
-    return result;
-  return GetLLVMDefaultConfigDir();
 }
 
 Path
@@ -491,20 +483,19 @@ Path::createFile() {
 bool
 Path::createTemporaryFile() {
   // Make sure we're dealing with a file
-  if (!isFile()) return false;
+  if (!isFile()) 
+    return false;
 
-  // Append the filename filler
-  char pathname[MAXPATHLEN];
-  path.copy(pathname,MAXPATHLEN);
-  pathname[path.length()] = 0;
-  strcat(pathname,"XXXXXX");
-  int fd = ::mkstemp(pathname);
-  if (fd < 0) {
-    ThrowErrno(path + ": Can't create temporary file");
+  // Make this into a unique file name
+  makeUnique();
+
+  // create the file
+  int outFile = ::open(path.c_str(), O_WRONLY|O_CREAT|O_TRUNC, 0666);
+  if (outFile != -1) {
+    ::close(outFile);
+    return true;
   }
-  path = pathname;
-  ::close(fd);
-  return true;
+  return false;
 }
 
 bool
@@ -565,6 +556,93 @@ Path::setStatusInfo(const StatusInfo& si) const {
   return true;
 }
 
+void 
+CopyFile(const sys::Path &Dest, const sys::Path &Src) {
+  int inFile = -1;
+  int outFile = -1;
+  try {
+    inFile = ::open(Src.c_str(), O_RDONLY);
+    if (inFile == -1)
+      ThrowErrno("Cannnot open source file to copy: " + Src.toString());
+
+    outFile = ::open(Dest.c_str(), O_WRONLY|O_CREAT, 0666);
+    if (outFile == -1)
+      ThrowErrno("Cannnot create destination file for copy: " +Dest.toString());
+
+    char Buffer[16*1024];
+    while (ssize_t Amt = ::read(inFile, Buffer, 16*1024)) {
+      if (Amt == -1) {
+        if (errno != EINTR && errno != EAGAIN) 
+          ThrowErrno("Can't read source file: " + Src.toString());
+      } else {
+        char *BufPtr = Buffer;
+        while (Amt) {
+          ssize_t AmtWritten = ::write(outFile, BufPtr, Amt);
+          if (AmtWritten == -1) {
+            if (errno != EINTR && errno != EAGAIN) 
+              ThrowErrno("Can't write destination file: " + Dest.toString());
+          } else {
+            Amt -= AmtWritten;
+            BufPtr += AmtWritten;
+          }
+        }
+      }
+    }
+    ::close(inFile);
+    ::close(outFile);
+  } catch (...) {
+    if (inFile != -1)
+      ::close(inFile);
+    if (outFile != -1)
+      ::close(outFile);
+    throw;
+  }
+}
+
+void 
+Path::makeUnique() {
+  if (!exists())
+    return; // File doesn't exist already, just use it!
+
+  // Append an XXXXXX pattern to the end of the file for use with mkstemp, 
+  // mktemp or our own implementation.
+  char *FNBuffer = (char*) alloca(path.size()+8);
+  path.copy(FNBuffer,path.size());
+  strcpy(FNBuffer+path.size(), "-XXXXXX");
+
+#if defined(HAVE_MKSTEMP)
+  int TempFD;
+  if ((TempFD = mkstemp(FNBuffer)) == -1) {
+    ThrowErrno("Cannot make unique filename for '" + path + "'");
+  }
+
+  // We don't need to hold the temp file descriptor... we will trust that no one
+  // will overwrite/delete the file before we can open it again.
+  close(TempFD);
+
+  // Save the name
+  path = FNBuffer;
+#elif defined(HAVE_MKTEMP)
+  // If we don't have mkstemp, use the old and obsolete mktemp function.
+  if (mktemp(FNBuffer) == 0) {
+    ThrowErrno("Cannot make unique filename for '" + path + "'");
+  }
+
+  // Save the name
+  path = FNBuffer;
+#else
+  // Okay, looks like we have to do it all by our lonesome.
+  static unsigned FCounter = 0;
+  unsigned offset = path.size() + 1;
+  while ( FCounter < 999999 && exists()) {
+    sprintf(FNBuffer+offset,"%06u",++FCounter);
+    path = FNBuffer;
+  }
+  if (FCounter > 999999)
+    throw std::string("Cannot make unique filename for '" + path + "'");
+#endif
+
+}
 }
 
 // vim: sw=2

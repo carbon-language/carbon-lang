@@ -23,6 +23,14 @@ using namespace sys;
 //===          independent code. 
 //===----------------------------------------------------------------------===//
 
+Path
+Path::GetLLVMConfigDir() {
+  Path result;
+  if (result.setDirectory(LLVM_ETCDIR))
+    return result;
+  return GetLLVMDefaultConfigDir();
+}
+
 LLVMFileType 
 sys::IdentifyFileType(const char*magic, unsigned length) {
   assert(magic && "Invalid magic number string");

@@ -100,7 +100,8 @@ namespace sys {
       /// Construct a vector of sys::Path that contains the "standard" bytecode
       /// library paths suitable for linking into an llvm program. This function
       /// *must* return the value of LLVM_LIB_SEARCH_PATH as well as the values
-      /// of LLVM_LIBDIR and LLVMGCCDIR/bytecode-libs. It also must provide the
+      /// of LLVM_LIBDIR and LLVMGCCDIR/lib (if --with-llvmgccdir was specified
+      /// when LLVM was configured). It also must provide the
       /// System library paths as returned by GetSystemLibraryPaths.
       /// @brief Construct a list of directories in which bytecode could be
       /// found.
@@ -487,6 +488,14 @@ namespace sys {
       /// @brief Remove the suffix from a path name.
       bool elideSuffix();
 
+      /// The current Path name is made unique in the file system. Upon return,
+      /// the Path will have been changed to make a unique file in the file 
+      /// system or it will not have been changed if the current path name is
+      /// already unique. 
+      /// @throws std::string if an unrecoverable error occurs.
+      /// @brief Make the current path name unique in the file system.
+      void makeUnique();
+
       /// This method attempts to create a directory in the file system with the
       /// same name as the Path object. The \p create_parents parameter controls
       /// whether intermediate directories are created or not. if \p
@@ -577,6 +586,12 @@ namespace sys {
   /// This utility function allows any memory block to be examined in order
   /// to determine its file type.
   LLVMFileType IdentifyFileType(const char*magic, unsigned length);
+
+  /// This function can be used to copy the file specified by Src to the
+  /// file specified by Dest. If an error occurs, Dest is removed.
+  /// @throws std::string if an error opening or writing the files occurs.
+  /// @brief Copy one file to another.
+  void CopyFiles(const Path& Dest, const Path& Src);
 }
 
 inline std::ostream& operator<<(std::ostream& strm, const sys::Path& aPath) {
