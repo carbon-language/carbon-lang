@@ -45,8 +45,8 @@ public:
   typedef std::reverse_iterator<const_giterator> const_reverse_giterator;
 
   // Function iterators...
-  typedef FunctionListType::iterator                            iterator;
-  typedef FunctionListType::const_iterator                const_iterator;
+  typedef FunctionListType::iterator                          iterator;
+  typedef FunctionListType::const_iterator              const_iterator;
   typedef std::reverse_iterator<iterator>             reverse_iterator;
   typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
 
