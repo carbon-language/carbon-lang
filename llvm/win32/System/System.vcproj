@@ -44,10 +44,8 @@
 				Name="VCPostBuildEventTool"/>
 			<Tool
 				Name="VCPreBuildEventTool"
-				CommandLine="if not exist ..\..\lib\System\platform\DynamicLibrary.cpp echo #include &quot;../win32/DynamicLibrary.cpp&quot;  &gt;..\..\lib\System\platform\DynamicLibrary.cpp
-if not exist ..\..\lib\System\platform\MappedFile.cpp echo #include &quot;../win32/MappedFile.cpp&quot;  &gt;..\..\lib\System\platform\MappedFile.cpp
+				CommandLine="if not exist ..\..\lib\System\platform\MappedFile.cpp echo #include &quot;../win32/MappedFile.cpp&quot;  &gt;..\..\lib\System\platform\MappedFile.cpp
 if not exist ..\..\lib\System\platform\Memory.cpp echo #include &quot;../win32/Memory.cpp&quot;  &gt;..\..\lib\System\platform\Memory.cpp
-if not exist ..\..\lib\System\platform\Path.cpp echo #include &quot;../win32/Path.cpp&quot;  &gt;..\..\lib\System\platform\Path.cpp
 if not exist ..\..\lib\System\platform\Process.cpp echo #include &quot;../win32/Process.cpp&quot;  &gt;..\..\lib\System\platform\Process.cpp
 if not exist ..\..\lib\System\platform\Program.cpp echo #include &quot;../win32/Program.cpp&quot;  &gt;..\..\lib\System\platform\Program.cpp
 if not exist ..\..\lib\System\platform\Signals.cpp echo #include &quot;../win32/Signals.cpp&quot;  &gt;..\..\lib\System\platform\Signals.cpp
@@ -96,10 +94,8 @@ if not exist ..\..\lib\System\platform\TimeValue.cpp echo #include &quot;../win3
 				Name="VCPostBuildEventTool"/>
 			<Tool
 				Name="VCPreBuildEventTool"
-				CommandLine="if not exist ..\..\lib\System\platform\DynamicLibrary.cpp echo #include &quot;../win32/DynamicLibrary.cpp&quot;  &gt;..\..\lib\System\platform\DynamicLibrary.cpp
-if not exist ..\..\lib\System\platform\MappedFile.cpp echo #include &quot;../win32/MappedFile.cpp&quot;  &gt;..\..\lib\System\platform\MappedFile.cpp
+				CommandLine="if not exist ..\..\lib\System\platform\MappedFile.cpp echo #include &quot;../win32/MappedFile.cpp&quot;  &gt;..\..\lib\System\platform\MappedFile.cpp
 if not exist ..\..\lib\System\platform\Memory.cpp echo #include &quot;../win32/Memory.cpp&quot;  &gt;..\..\lib\System\platform\Memory.cpp
-if not exist ..\..\lib\System\platform\Path.cpp echo #include &quot;../win32/Path.cpp&quot;  &gt;..\..\lib\System\platform\Path.cpp
 if not exist ..\..\lib\System\platform\Process.cpp echo #include &quot;../win32/Process.cpp&quot;  &gt;..\..\lib\System\platform\Process.cpp
 if not exist ..\..\lib\System\platform\Program.cpp echo #include &quot;../win32/Program.cpp&quot;  &gt;..\..\lib\System\platform\Program.cpp
 if not exist ..\..\lib\System\platform\Signals.cpp echo #include &quot;../win32/Signals.cpp&quot;  &gt;..\..\lib\System\platform\Signals.cpp
