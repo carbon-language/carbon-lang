@@ -16,13 +16,16 @@
 #include "llvm/Analysis/DataStructure.h"
 #include "llvm/Module.h"
 #include "llvm/Analysis/DSGraph.h"
+#include "Support/Debug.h"
 #include "Support/SCCIterator.h"
+#include "Support/Statistic.h"
 #include "Support/STLExtras.h"
 using namespace llvm;
 
 namespace {
   RegisterAnalysis<CompleteBUDataStructures>
   X("cbudatastructure", "'Complete' Bottom-up Data Structure Analysis");
+  Statistic<> NumCBUInlines("cbudatastructures", "Number of graphs inlined");
 }
 
 
@@ -168,26 +171,45 @@ unsigned CompleteBUDataStructures::calculateSCCGraphs(DSGraph &FG,
 /// processGraph - Process the BU graphs for the program in bottom-up order on
 /// the SCC of the __ACTUAL__ call graph.  This builds "complete" BU graphs.
 void CompleteBUDataStructures::processGraph(DSGraph &G) {
+  hash_set<Instruction*> calls;
 
   // The edges out of the current node are the call site targets...
   for (unsigned i = 0, e = G.getFunctionCalls().size(); i != e; ++i) {
     const DSCallSite &CS = G.getFunctionCalls()[i];
     Instruction *TheCall = CS.getCallSite().getInstruction();
 
+    assert(calls.insert(TheCall).second &&
+           "Call instruction occurs multiple times in graph??");
+      
+
     // The Normal BU pass will have taken care of direct calls well already,
     // don't worry about them.
+
+    // FIXME: if a direct callee had indirect callees, it seems like they could
+    // be updated and we would have to reinline even direct calls!
+
     if (!CS.getCallSite().getCalledFunction()) {
       // Loop over all of the actually called functions...
       ActualCalleesTy::iterator I, E;
-      for (tie(I, E) = ActualCallees.equal_range(TheCall); I != E; ++I) {
+      tie(I, E) = ActualCallees.equal_range(TheCall);
+      unsigned TNum = 0, Num = std::distance(I, E);
+      for (; I != E; ++I, ++TNum) {
         Function *CalleeFunc = I->second;
         if (!CalleeFunc->isExternal()) {
           // Merge the callee's graph into this graph.  This works for normal
           // calls or for self recursion within an SCC.
-          G.mergeInGraph(CS, *CalleeFunc, getOrCreateGraph(*CalleeFunc),
-                         DSGraph::KeepModRefBits |
-                         DSGraph::StripAllocaBit |
-                         DSGraph::DontCloneCallNodes);
+          DSGraph &GI = getOrCreateGraph(*CalleeFunc);
+          ++NumCBUInlines;
+          G.mergeInGraph(CS, *CalleeFunc, GI, DSGraph::KeepModRefBits |
+                         DSGraph::StripAllocaBit | DSGraph::DontCloneCallNodes |
+                         DSGraph::DontCloneAuxCallNodes);
+          DEBUG(std::cerr << "    Inlining graph [" << i << "/" << e-1
+                << ":" << TNum << "/" << Num-1 << "] for "
+                << CalleeFunc->getName() << "["
+                << GI.getGraphSize() << "+" << GI.getAuxFunctionCalls().size()
+                << "] into '" /*<< G.getFunctionNames()*/ << "' ["
+                << G.getGraphSize() << "+" << G.getAuxFunctionCalls().size()
+                << "]\n");
         }
       }
     }
@@ -200,5 +222,5 @@ void CompleteBUDataStructures::processGraph(DSGraph &G) {
 
   // Delete dead nodes.  Treat globals that are unreachable but that can
   // reach live nodes as live.
-  G.removeDeadNodes(DSGraph::KeepUnreachableGlobals);
+  G.removeDeadNodes(DSGraph::RemoveUnreachableGlobals);
 }
