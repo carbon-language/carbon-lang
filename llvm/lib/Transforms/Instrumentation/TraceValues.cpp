@@ -12,6 +12,7 @@
 #include "llvm/iMemory.h"
 #include "llvm/iTerminators.h"
 #include "llvm/iOther.h"
+#include "llvm/BasicBlock.h"
 #include "llvm/Function.h"
 #include "llvm/Module.h"
 #include "llvm/Pass.h"

@@ -15,6 +15,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
 #include "llvm/Function.h"
+#include "llvm/BasicBlock.h"
 #include "llvm/GlobalVariable.h"
 #include "llvm/SymbolTable.h"
 #include "llvm/iPHINode.h"

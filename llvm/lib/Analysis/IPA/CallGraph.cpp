@@ -41,6 +41,7 @@
 #include "llvm/Analysis/CallGraph.h"
 #include "llvm/Module.h"
 #include "llvm/Function.h"
+#include "llvm/BasicBlock.h"
 #include "llvm/iOther.h"
 #include "llvm/iTerminators.h"
 #include "Support/STLExtras.h"

@@ -20,11 +20,12 @@
 #include "llvm/Transforms/Scalar/PromoteMemoryToRegister.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/iMemory.h"
+#include "llvm/iPHINode.h"
+#include "llvm/iTerminators.h"
 #include "llvm/Pass.h"
 #include "llvm/Function.h"
 #include "llvm/BasicBlock.h"
-#include "llvm/iPHINode.h"
-#include "llvm/iTerminators.h"
+#include "llvm/ConstantVals.h"
 
 using namespace std;
 

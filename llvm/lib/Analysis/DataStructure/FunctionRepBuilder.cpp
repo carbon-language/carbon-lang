@@ -6,11 +6,13 @@
 
 #include "FunctionRepBuilder.h"
 #include "llvm/Function.h"
+#include "llvm/BasicBlock.h"
 #include "llvm/iMemory.h"
 #include "llvm/iPHINode.h"
 #include "llvm/iOther.h"
 #include "llvm/iTerminators.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/ConstantVals.h"
 #include "Support/STLExtras.h"
 #include <algorithm>
 
