@@ -946,6 +946,11 @@ Instruction *InstCombiner::visitDiv(BinaryOperator &I) {
           return new ShiftInst(Instruction::Shr, I.getOperand(0),
                                ConstantUInt::get(Type::UByteTy, C));
 
+    // -X/C -> X/-C
+    if (RHS->getType()->isSigned())
+      if (Value *LHSNeg = dyn_castNegVal(I.getOperand(0)))
+        return BinaryOperator::createDiv(LHSNeg, ConstantExpr::getNeg(RHS));
+
     if (isa<PHINode>(I.getOperand(0)) && !RHS->isNullValue())
       if (Instruction *NV = FoldOpIntoPhi(I))
         return NV;
