@@ -329,6 +329,9 @@ namespace {
                                 MachineBasicBlock::iterator MBBI,
                                 Constant *C, unsigned Reg);
 
+    void emitUCOMr(MachineBasicBlock *MBB, MachineBasicBlock::iterator MBBI,
+                   unsigned LHS, unsigned RHS);
+
     /// makeAnotherReg - This method returns the next register number we haven't
     /// yet used.
     ///
@@ -887,6 +890,19 @@ static const unsigned SetCCOpcodeTab[2][8] = {
     X86::SETSr, X86::SETNSr },
 };
 
+/// emitUCOMr - In the future when we support processors before the P6, this
+/// wraps the logic for emitting an FUCOMr vs FUCOMIr.
+void ISel::emitUCOMr(MachineBasicBlock *MBB, MachineBasicBlock::iterator IP,
+                     unsigned LHS, unsigned RHS) {
+  if (0) { // for processors prior to the P6
+    BuildMI(*MBB, IP, X86::FUCOMr, 2).addReg(LHS).addReg(RHS);
+    BuildMI(*MBB, IP, X86::FNSTSW8r, 0);
+    BuildMI(*MBB, IP, X86::SAHF, 1);
+  } else {
+    BuildMI(*MBB, IP, X86::FUCOMIr, 2).addReg(LHS).addReg(RHS);
+  }
+}
+
 // EmitComparison - This function emits a comparison of the two operands,
 // returning the extended setcc code to use.
 unsigned ISel::EmitComparison(unsigned OpNum, Value *Op0, Value *Op1,
@@ -1004,13 +1020,7 @@ unsigned ISel::EmitComparison(unsigned OpNum, Value *Op0, Value *Op1,
     BuildMI(*MBB, IP, X86::CMP32rr, 2).addReg(Op0r).addReg(Op1r);
     break;
   case cFP:
-    if (0) { // for processors prior to the P6
-      BuildMI(*MBB, IP, X86::FUCOMr, 2).addReg(Op0r).addReg(Op1r);
-      BuildMI(*MBB, IP, X86::FNSTSW8r, 0);
-      BuildMI(*MBB, IP, X86::SAHF, 1);
-    } else {
-      BuildMI(*MBB, IP, X86::FUCOMIr, 2).addReg(Op0r).addReg(Op1r);
-    }
+    emitUCOMr(MBB, IP, Op0r, Op1r);
     break;
 
   case cLong:
@@ -1609,6 +1619,31 @@ void ISel::visitCallInst(CallInst &CI) {
   doCall(ValueRecord(DestReg, CI.getType()), TheCall, Args);
 }         
 
+/// dyncastIsNan - Return the operand of an isnan operation if this is an isnan.
+///
+static Value *dyncastIsNan(Value *V) {
+  if (CallInst *CI = dyn_cast<CallInst>(V))
+    if (Function *F = CI->getCalledFunction())
+      if (F->getIntrinsicID() == Intrinsic::isnan)
+        return CI->getOperand(1);
+  return 0;
+}
+
+/// isOnlyUsedByUnorderedComparisons - Return true if this value is only used by
+/// or's whos operands are all calls to the isnan predicate.
+static bool isOnlyUsedByUnorderedComparisons(Value *V) {
+  assert(dyncastIsNan(V) && "The value isn't an isnan call!");
+
+  // Check all uses, which will be or's of isnans if this predicate is true.
+  for (Value::use_iterator UI = V->use_begin(), E = V->use_end(); UI != E;++UI){
+    Instruction *I = cast<Instruction>(*UI);
+    if (I->getOpcode() != Instruction::Or) return false;
+    if (I->getOperand(0) != V && !dyncastIsNan(I->getOperand(0))) return false;
+    if (I->getOperand(1) != V && !dyncastIsNan(I->getOperand(1))) return false;
+  }
+
+  return true;
+}
 
 /// LowerUnknownIntrinsicFunctionCalls - This performs a prepass over the
 /// function, lowering any calls to unknown intrinsic functions into the
@@ -1699,14 +1734,10 @@ void ISel::visitIntrinsicCall(Intrinsic::ID ID, CallInst &CI) {
     return;
 
   case Intrinsic::isnan:
+    // If this is only used by 'isunordered' style comparisons, don't emit it.
+    if (isOnlyUsedByUnorderedComparisons(&CI)) return;
     TmpReg1 = getReg(CI.getOperand(1));
-    if (0) { // for processors prior to the P6
-      BuildMI(BB, X86::FUCOMr, 2).addReg(TmpReg1).addReg(TmpReg1);
-      BuildMI(BB, X86::FNSTSW8r, 0);
-      BuildMI(BB, X86::SAHF, 1);
-    } else {
-      BuildMI(BB, X86::FUCOMIr, 2).addReg(TmpReg1).addReg(TmpReg1);
-    }
+    emitUCOMr(BB, BB->end(), TmpReg1, TmpReg1);
     TmpReg2 = getReg(CI);
     BuildMI(BB, X86::SETPr, 0, TmpReg2);
     return;
@@ -2120,6 +2151,20 @@ void ISel::emitSimpleBinaryOperation(MachineBasicBlock *MBB,
     assert(OperatorClass < 2 && "No logical ops for FP!");
     emitBinaryFPOperation(MBB, IP, Op0, Op1, OperatorClass, DestReg);
     return;
+  }
+
+  if (Op0->getType() == Type::BoolTy) {
+    if (OperatorClass == 3)
+      // If this is an or of two isnan's, emit an FP comparison directly instead
+      // of or'ing two isnan's together.
+      if (Value *LHS = dyncastIsNan(Op0))
+        if (Value *RHS = dyncastIsNan(Op1)) {
+          unsigned Op0Reg = getReg(RHS, MBB, IP), Op1Reg = getReg(LHS, MBB, IP);
+          emitUCOMr(MBB, IP, Op0Reg, Op1Reg);
+          BuildMI(*MBB, IP, X86::SETPr, 0, DestReg);
+          return;
+        }
+          
   }
 
   // sub 0, X -> neg X
