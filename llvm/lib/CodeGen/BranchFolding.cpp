@@ -96,7 +96,7 @@ static void ReplaceUsesOfBlockWith(MachineBasicBlock *BB,
 
   // If BB falls through into Old, insert an unconditional branch to New.
   MachineFunction::iterator BBSucc = BB; ++BBSucc;
-  if (&*BBSucc == Old)
+  if (BBSucc != BB->getParent()->end() && &*BBSucc == Old)
     TII.insertGoto(*BB, *New);
 
   std::vector<MachineBasicBlock*> Succs(BB->succ_begin(), BB->succ_end());
