@@ -17,9 +17,10 @@
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Local.h"
-#include "llvm/ConstantHandling.h"
 #include "llvm/Instructions.h"
 #include "llvm/Pass.h"
+#include "llvm/Constants.h"
+#include "llvm/ConstantHandling.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Support/InstIterator.h"
 #include "llvm/Support/InstVisitor.h"
@@ -149,9 +150,9 @@ bool InstCombiner::SimplifyCommutative(BinaryOperator &I) {
   if (BinaryOperator *Op = dyn_cast<BinaryOperator>(I.getOperand(0)))
     if (Op->getOpcode() == Opcode && isa<Constant>(Op->getOperand(1))) {
       if (isa<Constant>(I.getOperand(1))) {
-        Constant *Folded = ConstantFoldBinaryInstruction(I.getOpcode(),
-            cast<Constant>(I.getOperand(1)), cast<Constant>(Op->getOperand(1)));
-        assert(Folded && "Couldn't constant fold commutative operand?");
+        Constant *Folded = ConstantExpr::get(I.getOpcode(),
+                                             cast<Constant>(I.getOperand(1)),
+                                             cast<Constant>(Op->getOperand(1)));
         I.setOperand(0, Op->getOperand(0));
         I.setOperand(1, Folded);
         return true;
@@ -162,8 +163,7 @@ bool InstCombiner::SimplifyCommutative(BinaryOperator &I) {
           Constant *C2 = cast<Constant>(Op1->getOperand(1));
 
           // Fold (op (op V1, C1), (op V2, C2)) ==> (op (op V1, V2), (op C1,C2))
-          Constant *Folded = ConstantFoldBinaryInstruction(I.getOpcode(),C1,C2);
-          assert(Folded && "Couldn't constant fold commutative operand?");
+          Constant *Folded = ConstantExpr::get(I.getOpcode(), C1, C2);
           Instruction *New = BinaryOperator::create(Opcode, Op->getOperand(0),
                                                     Op1->getOperand(0),
                                                     Op1->getName(), &I);
@@ -185,7 +185,8 @@ static inline Value *dyn_castNegVal(Value *V) {
 
   // Constants can be considered to be negated values if they can be folded...
   if (Constant *C = dyn_cast<Constant>(V))
-    return *Constant::getNullValue(V->getType()) - *C;
+    return ConstantExpr::get(Instruction::Sub,
+                             Constant::getNullValue(V->getType()), C);
   return 0;
 }
 
@@ -195,7 +196,8 @@ static inline Value *dyn_castNotVal(Value *V) {
 
   // Constants can be considered to be not'ed values...
   if (ConstantIntegral *C = dyn_cast<ConstantIntegral>(V))
-    return *ConstantIntegral::getAllOnesValue(C->getType()) ^ *C;
+    return ConstantExpr::get(Instruction::Xor,
+                             ConstantIntegral::getAllOnesValue(C->getType()),C);
   return 0;
 }
 
@@ -256,24 +258,26 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
 
   // X*C + X --> X * (C+1)
   if (dyn_castFoldableMul(LHS) == RHS) {
-    Constant *CP1 = *cast<Constant>(cast<Instruction>(LHS)->getOperand(1)) +
-                    *ConstantInt::get(I.getType(), 1);
-    assert(CP1 && "Couldn't constant fold C + 1?");
+    Constant *CP1 =
+      ConstantExpr::get(Instruction::Add, 
+                        cast<Constant>(cast<Instruction>(LHS)->getOperand(1)),
+                        ConstantInt::get(I.getType(), 1));
     return BinaryOperator::create(Instruction::Mul, RHS, CP1);
   }
 
   // X + X*C --> X * (C+1)
   if (dyn_castFoldableMul(RHS) == LHS) {
-    Constant *CP1 = *cast<Constant>(cast<Instruction>(RHS)->getOperand(1)) +
-                    *ConstantInt::get(I.getType(), 1);
-    assert(CP1 && "Couldn't constant fold C + 1?");
+    Constant *CP1 =
+      ConstantExpr::get(Instruction::Add,
+                        cast<Constant>(cast<Instruction>(RHS)->getOperand(1)),
+                        ConstantInt::get(I.getType(), 1));
     return BinaryOperator::create(Instruction::Mul, LHS, CP1);
   }
 
   // (A & C1)+(B & C2) -> (A & C1)|(B & C2) iff C1&C2 == 0
   if (Constant *C1 = dyn_castMaskingAnd(LHS))
     if (Constant *C2 = dyn_castMaskingAnd(RHS))
-      if ((*C1 & *C2)->isNullValue())
+      if (ConstantExpr::get(Instruction::And, C1, C2)->isNullValue())
         return BinaryOperator::create(Instruction::Or, LHS, RHS);
 
   return Changed ? &I : 0;
@@ -321,8 +325,10 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
 
       // X - X*C --> X * (1-C)
       if (dyn_castFoldableMul(Op1I) == Op0) {
-        Constant *CP1 = *ConstantInt::get(I.getType(), 1) -
-                        *cast<Constant>(cast<Instruction>(Op1)->getOperand(1));
+        Constant *CP1 =
+          ConstantExpr::get(Instruction::Sub,
+                            ConstantInt::get(I.getType(), 1),
+                         cast<Constant>(cast<Instruction>(Op1)->getOperand(1)));
         assert(CP1 && "Couldn't constant fold 1-C?");
         return BinaryOperator::create(Instruction::Mul, Op0, CP1);
       }
@@ -330,8 +336,10 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
 
   // X*C - X --> X * (C-1)
   if (dyn_castFoldableMul(Op0) == Op1) {
-    Constant *CP1 = *cast<Constant>(cast<Instruction>(Op0)->getOperand(1)) -
-                    *ConstantInt::get(I.getType(), 1);
+    Constant *CP1 =
+      ConstantExpr::get(Instruction::Sub,
+                        cast<Constant>(cast<Instruction>(Op0)->getOperand(1)),
+                        ConstantInt::get(I.getType(), 1));
     assert(CP1 && "Couldn't constant fold C - 1?");
     return BinaryOperator::create(Instruction::Mul, Op1, CP1);
   }
@@ -595,7 +603,7 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
   // (A & C1)^(B & C2) -> (A & C1)|(B & C2) iff C1^C2 == 0
   if (Constant *C1 = dyn_castMaskingAnd(Op0))
     if (Constant *C2 = dyn_castMaskingAnd(Op1))
-      if ((*C1 & *C2)->isNullValue())
+      if (ConstantExpr::get(Instruction::And, C1, C2)->isNullValue())
         return BinaryOperator::create(Instruction::Or, Op0, Op1);
 
   return Changed ? &I : 0;
@@ -603,12 +611,14 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
 
 // AddOne, SubOne - Add or subtract a constant one from an integer constant...
 static Constant *AddOne(ConstantInt *C) {
-  Constant *Result = *C + *ConstantInt::get(C->getType(), 1);
+  Constant *Result = ConstantExpr::get(Instruction::Add, C,
+                                       ConstantInt::get(C->getType(), 1));
   assert(Result && "Constant folding integer addition failed!");
   return Result;
 }
 static Constant *SubOne(ConstantInt *C) {
-  Constant *Result = *C - *ConstantInt::get(C->getType(), 1);
+  Constant *Result = ConstantExpr::get(Instruction::Sub, C,
+                                       ConstantInt::get(C->getType(), 1));
   assert(Result && "Constant folding integer addition failed!");
   return Result;
 }
@@ -745,10 +755,9 @@ Instruction *InstCombiner::visitShiftInst(ShiftInst &I) {
         // Calculate bitmask for what gets shifted off the edge...
         Constant *C = ConstantIntegral::getAllOnesValue(I.getType());
         if (I.getOpcode() == Instruction::Shr)
-          C = *C >> *ShiftAmt1C;
+          C = ConstantExpr::getShift(Instruction::Shr, C, ShiftAmt1C);
         else
-          C = *C << *ShiftAmt1C;
-        assert(C && "Couldn't constant fold shift expression?");
+          C = ConstantExpr::getShift(Instruction::Shl, C, ShiftAmt1C);
           
         Instruction *Mask =
           BinaryOperator::create(Instruction::And, Op0SI->getOperand(0),
@@ -957,8 +966,9 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
         isa<Constant>(GEP.getOperand(1))) {
       // Replace: gep (gep %P, long C1), long C2, ...
       // With:    gep %P, long (C1+C2), ...
-      Value *Sum = *cast<Constant>(Src->getOperand(1)) +
-                   *cast<Constant>(GEP.getOperand(1));
+      Value *Sum = ConstantExpr::get(Instruction::Add,
+                                     cast<Constant>(Src->getOperand(1)),
+                                     cast<Constant>(GEP.getOperand(1)));
       assert(Sum && "Constant folding of longs failed!?");
       GEP.setOperand(0, Src->getOperand(0));
       GEP.setOperand(1, Sum);
