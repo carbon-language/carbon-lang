@@ -89,8 +89,8 @@ FunctionPass *llvm::createMachineCodeDeleter() {
 //===---------------------------------------------------------------------===//
 // MachineFunction implementation
 //===---------------------------------------------------------------------===//
-MachineBasicBlock* ilist_traits<MachineBasicBlock>::createNode()
-{
+
+MachineBasicBlock* ilist_traits<MachineBasicBlock>::createSentinal() {
   MachineBasicBlock* dummy = new MachineBasicBlock();
   LeakDetector::removeGarbageObject(dummy);
   return dummy;
@@ -99,8 +99,7 @@ MachineBasicBlock* ilist_traits<MachineBasicBlock>::createNode()
 void ilist_traits<MachineBasicBlock>::transferNodesFromList(
   iplist<MachineBasicBlock, ilist_traits<MachineBasicBlock> >& toList,
   ilist_iterator<MachineBasicBlock> first,
-  ilist_iterator<MachineBasicBlock> last)
-{
+  ilist_iterator<MachineBasicBlock> last) {
   if (Parent != toList.Parent)
     for (; first != last; ++first)
       first->Parent = toList.Parent;
