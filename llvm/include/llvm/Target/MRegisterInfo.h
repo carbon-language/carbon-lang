@@ -65,6 +65,14 @@ public:
     return RegsBegin[i];
   }
 
+  /// contains - Return true if the specified register is included in this
+  /// register class.
+  bool contains(unsigned Reg) const {
+    for (iterator I = begin(), E = end(); I != E; ++I)
+      if (*I == Reg) return true;
+    return false;
+  }
+
   /// allocation_order_begin/end - These methods define a range of registers
   /// which specify the registers in this class that are valid to register
   /// allocate, and the preferred order to allocate them in.  For example,
