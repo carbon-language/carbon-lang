@@ -1258,9 +1258,11 @@ ReplaceNopsWithUsefulInstr(SchedulingManager& S,
 // is found for a delay slot, use the NOP that is currently in that slot.
 // 
 // We try to fill the delay slots with useful work for all instructions
-// except CALLs.  For CALLs, it is nearly always possible to use one of the
+// EXCEPT CALLS AND RETURNS.
+// For CALLs and RETURNs, it is nearly always possible to use one of the
 // call sequence instrs and putting anything else in the delay slot could be
-// suboptimal.
+// suboptimal.  Also, it complicates generating the calling sequence code in
+// regalloc.
 // 
 static void
 ChooseInstructionsForDelaySlots(SchedulingManager& S,
@@ -1271,35 +1273,38 @@ ChooseInstructionsForDelaySlots(SchedulingManager& S,
   const TerminatorInst* termInstr = bb->getTerminator();
   MachineCodeForVMInstr& termMvec = termInstr->getMachineInstrVec();
   vector<SchedGraphNode*> delayNodeVec;
-  const MachineInstr* brInstr;
+  const MachineInstr* brInstr = NULL;
   
   assert(termInstr->getOpcode() != Instruction::Call
          && "Call used as terminator?");
   
-  // To find instructions that need delay slots without searching the entire
-  // machine code, we assume the only delayed instructions are CALLs or
-  // instructions generated for the terminator inst.
-  // Find the first branch instr in the sequence of machine instrs for term
-  // 
-  unsigned first = 0;
-  while (first < termMvec.size() &&
-         ! mii.isBranch(termMvec[first]->getOpCode()))
+  if (termInstr->getOpcode() != Instruction::Ret)
     {
-      ++first;
-    }
-  assert(first < termMvec.size() &&
-	 "No branch instructions for BR?  Ok, but weird!  Delete assertion.");
-  
-  brInstr = (first < termMvec.size())? termMvec[first] : NULL;
-  
-  // Compute a vector of the nodes chosen for delay slots and then
-  // mark delay slots to replace NOPs with these useful instructions.
-  // 
-  if (brInstr != NULL)
-    {
-      SchedGraphNode* brNode = graph->getGraphNodeForInstr(brInstr);
-      FindUsefulInstructionsForDelaySlots(S, brNode, delayNodeVec);
-      ReplaceNopsWithUsefulInstr(S, brNode, delayNodeVec, graph);
+      // To find instructions that need delay slots without searching the full
+      // machine code, we assume that the only delayed instructions are CALLs
+      // or instructions generated for the terminator inst.
+      // Find the first branch instr in the sequence of machine instrs for term
+      // 
+      unsigned first = 0;
+      while (first < termMvec.size() &&
+             ! mii.isBranch(termMvec[first]->getOpCode()))
+        {
+          ++first;
+        }
+      assert(first < termMvec.size() &&
+         "No branch instructions for BR?  Ok, but weird!  Delete assertion.");
+      
+      brInstr = (first < termMvec.size())? termMvec[first] : NULL;
+      
+      // Compute a vector of the nodes chosen for delay slots and then
+      // mark delay slots to replace NOPs with these useful instructions.
+      // 
+      if (brInstr != NULL)
+        {
+          SchedGraphNode* brNode = graph->getGraphNodeForInstr(brInstr);
+          FindUsefulInstructionsForDelaySlots(S, brNode, delayNodeVec);
+          ReplaceNopsWithUsefulInstr(S, brNode, delayNodeVec, graph);
+        }
     }
   
   // Also mark delay slots for other delayed instructions to hold NOPs. 

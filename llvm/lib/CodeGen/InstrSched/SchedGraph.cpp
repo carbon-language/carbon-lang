@@ -632,7 +632,7 @@ SchedGraph::addEdgesForInstruction(const MachineInstr& minstr,
   // machine instruction in the instruction sequence for this VM instr
   // (at least for now, there is never more than one machine instr).
   // 
-  const vector<const Value*>& implicitUses =
+  const vector<Value*>& implicitUses =
     instr.getMachineInstrVec().getImplicitUses();
   for (unsigned i=0; i < implicitUses.size(); ++i)
     addSSAEdge(node, implicitUses[i], target);
