@@ -1414,6 +1414,23 @@ void ISel::visitIntrinsicCall(Intrinsic::ID ID, CallInst &CI) {
   }
 }
 
+static bool isSafeToFoldLoadIntoInstruction(LoadInst &LI, Instruction &User) {
+  if (LI.getParent() != User.getParent())
+    return false;
+  BasicBlock::iterator It = &LI;
+  // Check all of the instructions between the load and the user.  We should
+  // really use alias analysis here, but for now we just do something simple.
+  for (++It; It != BasicBlock::iterator(&User); ++It) {
+    switch (It->getOpcode()) {
+    case Instruction::Store:
+    case Instruction::Call:
+    case Instruction::Invoke:
+      return false;
+    }
+  }
+  return true;
+}
+
 
 /// visitSimpleBinary - Implement simple binary operators for integral types...
 /// OperatorClass is one of: 0 for Add, 1 for Sub, 2 for And, 3 for Or, 4 for
@@ -1423,6 +1440,39 @@ void ISel::visitSimpleBinary(BinaryOperator &B, unsigned OperatorClass) {
   unsigned DestReg = getReg(B);
   MachineBasicBlock::iterator MI = BB->end();
   Value *Op0 = B.getOperand(0), *Op1 = B.getOperand(1);
+
+  // Special case: op Reg, load [mem]
+  if (isa<LoadInst>(Op0) && !isa<LoadInst>(Op1))
+    if (!B.swapOperands())
+      std::swap(Op0, Op1);  // Make sure any loads are in the RHS.
+
+  unsigned Class = getClassB(B.getType());
+  if (isa<LoadInst>(Op1) && Class < cFP &&
+      isSafeToFoldLoadIntoInstruction(*cast<LoadInst>(Op1), B)) {
+
+    static const unsigned OpcodeTab[][3] = {
+      // Arithmetic operators
+      { X86::ADD8rm, X86::ADD16rm, X86::ADD32rm },  // ADD
+      { X86::SUB8rm, X86::SUB16rm, X86::SUB32rm },  // SUB
+      
+      // Bitwise operators
+      { X86::AND8rm, X86::AND16rm, X86::AND32rm },  // AND
+      { X86:: OR8rm, X86:: OR16rm, X86:: OR32rm },  // OR
+      { X86::XOR8rm, X86::XOR16rm, X86::XOR32rm },  // XOR
+    };
+  
+    assert(Class < cFP && "General code handles 64-bit integer types!");
+    unsigned Opcode = OpcodeTab[OperatorClass][Class];
+
+    unsigned BaseReg, Scale, IndexReg, Disp;
+    getAddressingMode(cast<LoadInst>(Op1)->getOperand(0), BaseReg,
+                      Scale, IndexReg, Disp);
+
+    unsigned Op0r = getReg(Op0);
+    addFullAddress(BuildMI(BB, Opcode, 2, DestReg).addReg(Op0r),
+                   BaseReg, Scale, IndexReg, Disp);
+    return;
+  }
 
   emitSimpleBinaryOperation(BB, MI, Op0, Op1, OperatorClass, DestReg);
 }
@@ -1936,6 +1986,37 @@ void ISel::getAddressingMode(Value *Addr, unsigned &BaseReg, unsigned &Scale,
 /// need to worry about the memory layout of the target machine.
 ///
 void ISel::visitLoadInst(LoadInst &I) {
+  // Check to see if this load instruction is going to be folded into a binary
+  // instruction, like add.  If so, we don't want to emit it.  Wouldn't a real
+  // pattern matching instruction selector be nice?
+  if (I.hasOneUse() && getClassB(I.getType()) < cFP) {
+    Instruction *User = cast<Instruction>(I.use_back());
+    switch (User->getOpcode()) {
+    default: User = 0; break;
+    case Instruction::Add:
+    case Instruction::Sub:
+    case Instruction::And:
+    case Instruction::Or:
+    case Instruction::Xor:
+      break;
+    }
+
+    if (User) {
+      // Okay, we found a user.  If the load is the first operand and there is
+      // no second operand load, reverse the operand ordering.  Note that this
+      // can fail for a subtract (ie, no change will be made).
+      if (!isa<LoadInst>(User->getOperand(1)))
+        cast<BinaryOperator>(User)->swapOperands();
+      
+      // Okay, now that everything is set up, if this load is used by the second
+      // operand, and if there are no instructions that invalidate the load
+      // before the binary operator, eliminate the load.
+      if (User->getOperand(1) == &I &&
+          isSafeToFoldLoadIntoInstruction(I, *User))
+        return;   // Eliminate the load!
+    }
+  }
+
   unsigned DestReg = getReg(I);
   unsigned BaseReg = 0, Scale = 1, IndexReg = 0, Disp = 0;
   getAddressingMode(I.getOperand(0), BaseReg, Scale, IndexReg, Disp);
