@@ -129,7 +129,7 @@ UltraSparcRegInfo::getCallInstNumArgs(const MachineInstr *CallMI) const {
   assert( (NumArgs != -1)  && "Internal error in getCallInstNumArgs" );
   return (unsigned) NumArgs;
  
-
+  
 }
 
 
@@ -321,20 +321,56 @@ void UltraSparcRegInfo::colorMethodArgs(const Method *const Meth,
       if( isArgInReg ) 
 	AdMI = cpReg2RegMI( UniArgReg, UniLRReg, RegType );
 
-      else 
-	assert(0 && "TODO: Color an Incoming arg on stack");
+      else {
 
-      // Now add the instruction
-      FirstAI->InstrnsBefore.push_back( AdMI );
+	// Now the arg is coming on stack. Since the LR recieved a register,
+	// we just have to load the arg on stack into that register
+	int ArgStakOffFromFP = 
+	  UltraSparcFrameInfo::FirstIncomingArgOffsetFromFP + 
+	  argNo * SizeOfOperandOnStack;
+
+	AdMI = cpMem2RegMI(getFramePointer(), ArgStakOffFromFP, 
+			   UniLRReg, RegType );
+      }
+
+      FirstAI->InstrnsBefore.push_back( AdMI );   
+      
+    } // if LR received a color
+
+    else {                             
+
+      // Now, the LR did not receive a color. But it has a stack offset for
+      // spilling.
+
+      // So, if the arg is coming in UniArgReg register,  we can just move
+      // that on to the stack pos of LR
+
+
+      if( isArgInReg ) {
+
+	MachineInstr *AdIBef = 
+	  cpReg2MemMI(UniArgReg, getFramePointer(), 
+		      LR->getSpillOffFromFP(), RegType );
+
+	FirstAI->InstrnsBefore.push_back( AdMI );   
+      }
+
+      else {
+
+	// Now the arg is coming on stack. Since the LR did NOT 
+	// recieved a register as well, it is allocated a stack position. We
+	// can simply change the stack poistion of the LR. We can do this,
+	// since this method is called before any other method that makes
+	// uses of the stack pos of the LR (e.g., updateMachineInstr)
+
+	int ArgStakOffFromFP = 
+	  UltraSparcFrameInfo::FirstIncomingArgOffsetFromFP + 
+	  argNo * SizeOfOperandOnStack;
+
+	LR->modifySpillOffFromFP( ArgStakOffFromFP );
+      }
 
     }
-
-    else {                                // LR is not colored (i.e., spilled)
-      
-      assert(0 && "TODO: Color a spilled arg ");
-      
-    }
-
 
   }  // for each incoming argument
 
@@ -452,10 +488,10 @@ void UltraSparcRegInfo::suggestRegs4CallArgs(const MachineInstr *const CallMI,
 // to instert copy instructions.
 //---------------------------------------------------------------------------
 
-
 void UltraSparcRegInfo::colorCallArgs(const MachineInstr *const CallMI,
 				      LiveRangeInfo& LRI,
-				      AddedInstrns *const CallAI) const {
+				      AddedInstrns *const CallAI,
+				      PhyRegAlloc &PRA) const {
 
   assert ( (UltraSparcInfo->getInstrInfo()).isCall(CallMI->getOpCode()) );
 
@@ -502,30 +538,33 @@ void UltraSparcRegInfo::colorCallArgs(const MachineInstr *const CallMI,
     // put copy instruction
     
     if( !recvCorrectColor ) {
+
+      unsigned RegType = getRegType( RetValLR );
+
+      // the  reg that LR must be colored with 
+      unsigned UniRetReg = getUnifiedRegNum( RegClassID, CorrectCol);	
       
       if( RetValLR->hasColor() ) {
 	
-	unsigned RegType = getRegType( RetValLR );
-
 	unsigned 
 	  UniRetLRReg=getUnifiedRegNum(RegClassID,RetValLR->getColor());
-
-	// the  reg that LR must be colored with
-	unsigned UniRetReg = getUnifiedRegNum( RegClassID, CorrectCol);	
 	
 	// the return value is coming in UniRetReg but has to go into
 	// the UniRetLRReg
 
 	AdMI = cpReg2RegMI( UniRetReg, UniRetLRReg, RegType ); 	
-	CallAI->InstrnsAfter.push_back( AdMI );
-	
-	
+
       } // if LR has color
       else {
+
+	// if the LR did NOT receive a color, we have to move the return
+	// value coming in UniRetReg to the stack pos of spilled LR
 	
-	assert(0 && "LR of return value is splilled");
+	AdMI = 	cpReg2MemMI(UniRetReg, getFramePointer(), 
+			    RetValLR->getSpillOffFromFP(), RegType );
       }
-      
+
+      CallAI->InstrnsAfter.push_back( AdMI );
       
     } // the LR didn't receive the suggested color  
     
@@ -600,18 +639,74 @@ void UltraSparcRegInfo::colorCallArgs(const MachineInstr *const CallMI,
       if( isArgInReg ) 
 	AdMI = cpReg2RegMI(UniLRReg, UniArgReg, RegType );
 
-      else 
-	assert(0 && "TODO: Push an outgoing arg on stack");
+      else {
+	// Now, we have to pass the arg on stack. Since LR received a register
+	// we just have to move that register to the stack position where
+	// the argument must be passed
 
-      // Now add the instruction
-      CallAI->InstrnsBefore.push_back( AdMI );
+	int ArgStakOffFromSP = 
+	  UltraSparcFrameInfo::FirstOutgoingArgOffsetFromSP + 
+	  argNo * SizeOfOperandOnStack;
 
+	AdMI = cpReg2MemMI(UniLRReg, getStackPointer(), ArgStakOffFromSP, 
+			   RegType );
+      }
+
+      CallAI->InstrnsBefore.push_back( AdMI );  // Now add the instruction
     }
 
-    else {                                // LR is not colored (i.e., spilled)
+    else {                          // LR is not colored (i.e., spilled)      
       
-      assert(0 && "TODO: Copy a spilled call arg to an output reg ");
-      
+      if( isArgInReg ) {
+
+	// Now the LR did NOT recieve a register but has a stack poistion.
+	// Since, the outgoing arg goes in a register we just have to insert
+	// a load instruction to load the LR to outgoing register
+
+
+	AdMI = cpMem2RegMI(getStackPointer(), LR->getSpillOffFromFP(),
+			   UniArgReg, RegType );
+
+	CallAI->InstrnsBefore.push_back( AdMI );  // Now add the instruction
+      }
+
+      else {
+	// Now, we have to pass the arg on stack. Since LR  also did NOT
+	// receive a register we have to move an argument in memory to 
+	// outgoing parameter on stack.
+	
+	// Optoimize: Optimize when reverse pointers in MahineInstr are
+	// introduced. 
+	// call PRA.getUnusedRegAtMI(....) to get an unused reg. Only if this
+	// fails, then use the following code. Currently, we cannot call the
+	// above method since we cannot find LVSetBefore without the BB 
+	
+	int TReg = PRA.getRegNotUsedByThisInst( LR->getRegClass(), CallMI );
+	int TmpOff = PRA.getStackOffsets().getNewTmpPosOffFromFP();
+	int ArgStakOffFromSP = 
+	  UltraSparcFrameInfo::FirstOutgoingArgOffsetFromSP + 
+	  argNo * SizeOfOperandOnStack;
+
+	MachineInstr *Ad1, *Ad2, *Ad3, *Ad4;
+
+	// Sequence:
+	// (1) Save TReg on stack    
+	// (2) Load LR value into TReg from stack pos of LR
+	// (3) Store Treg on outgoing Arg pos on stack
+	// (4) Load the old value of TReg from stack to TReg (restore it)
+
+	Ad1 = cpReg2MemMI(TReg, getFramePointer(), TmpOff, RegType );
+	Ad2 = cpMem2RegMI(getFramePointer(), LR->getSpillOffFromFP(), 
+			  TReg, RegType ); 
+	Ad3 = cpReg2MemMI(TReg, getStackPointer(), ArgStakOffFromSP, RegType );
+	Ad4 = cpMem2RegMI(getFramePointer(), TmpOff, TReg, RegType ); 
+
+	CallAI->InstrnsBefore.push_back( Ad1 );  
+	CallAI->InstrnsBefore.push_back( Ad2 );  
+	CallAI->InstrnsBefore.push_back( Ad3 );  
+	CallAI->InstrnsBefore.push_back( Ad4 );  
+      }
+
     }
 
   }  // for each parameter in call instruction
@@ -658,8 +753,13 @@ void UltraSparcRegInfo::suggestReg4RetValue(const MachineInstr *const RetMI,
 
 }
 
-//---------------------------------------------------------------------------
 
+
+//---------------------------------------------------------------------------
+// Colors the return value of a method to %i0 or %f0, if possible. If it is
+// not possilbe to directly color the LR, insert a copy instruction to move
+// the LR to %i0 or %f0. When the LR is spilled, instead of the copy, we 
+// have to put a load instruction.
 //---------------------------------------------------------------------------
 void UltraSparcRegInfo::colorRetValue(const  MachineInstr *const RetMI, 
 				      LiveRangeInfo& LRI,
@@ -682,7 +782,7 @@ void UltraSparcRegInfo::colorRetValue(const  MachineInstr *const RetMI,
 	cerr << endl;
 	// assert( LR && "No LR for return value of non-void method");
 	return;
-   }
+    }
 
     unsigned RegClassID =  getRegClassIDOfValue(RetVal);
     unsigned RegType = getRegType( RetVal );
@@ -720,9 +820,14 @@ void UltraSparcRegInfo::colorRetValue(const  MachineInstr *const RetMI,
       AdMI = cpReg2RegMI( UniLRReg, UniRetReg, RegType); 
       RetAI->InstrnsBefore.push_back( AdMI );
     }
-    else 
-      assert(0 && "TODO: Copy the return value from stack\n");
+    else {                              // if the LR is spilled
 
+      AdMI = cpMem2RegMI(getFramePointer(), LR->getSpillOffFromFP(), 
+			 UniRetReg, RegType); 
+      RetAI->InstrnsBefore.push_back( AdMI );
+      cout << "\nCopied the return value from stack";
+    }
+  
   } // if there is a return value
 
 }
@@ -878,81 +983,118 @@ MachineInstr * UltraSparcRegInfo::cpMem2RegMI(const unsigned SrcPtrReg,
 
 
 
+//----------------------------------------------------------------------------
+// This method inserts caller saving/restoring instructons before/after
+// a call machine instruction.
+//----------------------------------------------------------------------------
 
 
+void UltraSparcRegInfo::insertCallerSavingCode(const MachineInstr *MInst, 
+					       const BasicBlock *BB,
+					       PhyRegAlloc &PRA) const {
+  // assert( (getInstrInfo()).isCall( MInst->getOpCode() ) );
 
-//---------------------------------------------------------------------------
-// Only  constant/label values are accepted.
-// ***This code is temporary ***
-//---------------------------------------------------------------------------
+ 
+  PRA.StackOffsets.resetTmpPos();
+
+  hash_set<unsigned> PushedRegSet;
+
+  // Now find the LR of the return value of the call
+  // The last *implicit operand* is the return value of a call
+  // Insert it to to he PushedRegSet since we must not save that register
+  // and restore it after the call.
+  // We do this because, we look at the LV set *after* the instruction
+  // to determine, which LRs must be saved across calls. The return value
+  // of the call is live in this set - but we must not save/restore it.
 
 
-MachineInstr * UltraSparcRegInfo::cpValue2RegMI(Value * Val, 
-						const unsigned DestReg,
-						const int RegType) const {
+  const Value *RetVal = getCallInstRetVal( MInst );
 
-  assert( ((int)DestReg != InvalidRegNum) && "Invalid Register");
+  if( RetVal ) {
 
-  /*
-  unsigned MReg;
-  int64_t Imm;
+    LiveRange *RetValLR = PRA.LRI.getLiveRangeForValue( RetVal );
+    assert( RetValLR && "No LR for RetValue of call");
 
-  MachineOperand::MachineOperandType MOTypeInt = 
-    ChooseRegOrImmed(Val, ADD,  *UltraSparcInfo, true, MReg, Imm);
-  */
-
-  MachineOperand::MachineOperandType MOType;
-
-  switch( Val->getValueType() ) {
-
-  case Value::ConstantVal: 
-  case Value::GlobalVariableVal:
-    MOType = MachineOperand:: MO_UnextendedImmed;  // TODO**** correct???
-    break;
-
-  case Value::BasicBlockVal:
-  case Value::MethodVal:
-    MOType = MachineOperand::MO_PCRelativeDisp;
-    break;
-
-  default:
-    cerr << "Value Type: " << Val->getValueType() << endl;
-    assert(0 && "Unknown val type - Only constants/globals/labels are valid");
+    PushedRegSet.insert(
+			getUnifiedRegNum((RetValLR->getRegClass())->getID(), 
+				      RetValLR->getColor() ) );
   }
 
 
+  const LiveVarSet *LVSetAft =  PRA.LVI->getLiveVarSetAfterMInst(MInst, BB);
 
-  MachineInstr * MI = NULL;
+  LiveVarSet::const_iterator LIt = LVSetAft->begin();
 
-  switch( RegType ) {
+  // for each live var in live variable set after machine inst
+  for( ; LIt != LVSetAft->end(); ++LIt) {
+
+   //  get the live range corresponding to live var
+    LiveRange *const LR = PRA.LRI.getLiveRangeForValue(*LIt );    
+
+    // LR can be null if it is a const since a const 
+    // doesn't have a dominating def - see Assumptions above
+    if( LR )   {  
+      
+      if( LR->hasColor() ) {
+
+	unsigned RCID = (LR->getRegClass())->getID();
+	unsigned Color = LR->getColor();
+
+	if ( isRegVolatile(RCID, Color) ) {
+
+	  // if the value is in both LV sets (i.e., live before and after 
+	  // the call machine instruction)
+
+	  unsigned Reg = getUnifiedRegNum(RCID, Color);
+	  
+	  if( PushedRegSet.find(Reg) == PushedRegSet.end() ) {
+	    
+	    // if we haven't already pushed that register
+
+	    unsigned RegType = getRegType( LR );
+
+	    // Now get two instructions - to push on stack and pop from stack
+	    // and add them to InstrnsBefore and InstrnsAfter of the
+	    // call instruction
+
+	    int StackOff =  PRA.StackOffsets. getNewTmpPosOffFromFP();
+
+	    /**** TODO  - Handle IntCCRegType
+		  
+
+
+	    }
+	    */
+	    
+	    MachineInstr *AdIBef = 
+	      cpReg2MemMI(Reg, getStackPointer(), StackOff, RegType ); 
+
+	    MachineInstr *AdIAft = 
+	      cpMem2RegMI(getStackPointer(), StackOff, Reg, RegType ); 
+
+	    ((PRA.AddedInstrMap[MInst])->InstrnsBefore).push_front(AdIBef);
+	    ((PRA.AddedInstrMap[MInst])->InstrnsAfter).push_back(AdIAft);
+	    
+	    PushedRegSet.insert( Reg );
+
+	    if(DEBUG_RA) {
+	      cerr << "\nFor callee save call inst:" << *MInst;
+	      cerr << "\n  -inserted caller saving instrs:\n\t ";
+	      cerr << *AdIBef << "\n\t" << *AdIAft  ;
+	    }	    
+	  } // if not already pushed
+
+	} // if LR has a volatile color
+	
+      } // if LR has color
+
+    } // if there is a LR for Var
     
-  case IntRegType:
-    MI = new MachineInstr(ADD);
-    MI->SetMachineOperand(0, MOType, Val, false);
-    MI->SetMachineOperand(1, SparcIntRegOrder::g0, false);
-    MI->SetMachineOperand(2, DestReg, true);
-    break;
-
-  case FPSingleRegType:
-    assert(0 && "FP const move not yet implemented");
-    MI = new MachineInstr(FMOVS);
-    MI->SetMachineOperand(0, MachineOperand::MO_SignExtendedImmed, Val, false);
-    MI->SetMachineOperand(1, DestReg, true);
-    break;
-
-  case FPDoubleRegType:    
-    assert(0 && "FP const move not yet implemented");
-    MI = new MachineInstr(FMOVD);
-    MI->SetMachineOperand(0, MachineOperand::MO_SignExtendedImmed, Val, false);
-    MI->SetMachineOperand(1, DestReg, true);
-    break;
-
-  default:
-    assert(0 && "Unknow RegType");
-  }
-
-  return MI;
+  } // for each value in the LV set after instruction
+  
 }
+
+
 
 
 

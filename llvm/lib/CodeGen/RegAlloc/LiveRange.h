@@ -55,6 +55,11 @@ class LiveRange : public ValueSet
 
   bool CanUseSuggestedCol;
 
+  // if this LR is spilled, its stack offset from *FP*. The spilled offsets
+  // must always be relative to the FP.
+  int SpilledStackOffsetFromFP;
+  bool HasSpillOffset;
+
  public:
 
 
@@ -87,6 +92,33 @@ class LiveRange : public ValueSet
 
   
   inline void markForSpill() { mustSpill = true; }
+
+  inline bool isMarkedForSpill() { return  mustSpill; }
+
+  inline void setSpillOffFromFP(int StackOffset) {
+    assert( mustSpill && "This LR is not spilled");
+    SpilledStackOffsetFromFP = StackOffset;
+    HasSpillOffset = true;
+  }
+
+  inline void modifySpillOffFromFP(int StackOffset) {
+    assert( mustSpill && "This LR is not spilled");
+    SpilledStackOffsetFromFP = StackOffset;
+    HasSpillOffset = true;
+  }
+
+
+
+  inline bool hasSpillOffset() {
+    return  HasSpillOffset;
+  }
+
+
+  inline int getSpillOffFromFP() const {
+    assert( HasSpillOffset && "This LR is not spilled");
+    return SpilledStackOffsetFromFP;
+  }
+
 
   inline void markForSaveAcrossCalls() { mustSaveAcrossCalls = true; }
 
@@ -135,6 +167,11 @@ class LiveRange : public ValueSet
   }
 
 
+
+
+
+
+
   inline LiveRange() : ValueSet() /* , CallInterferenceList() */
     {
       Color = SuggestedColor = -1;      // not yet colored 
@@ -143,6 +180,7 @@ class LiveRange : public ValueSet
       UserIGNode = NULL;
       doesSpanAcrossCalls = false;
       CanUseSuggestedCol = true;
+      HasSpillOffset  = false;
     }
 
 };

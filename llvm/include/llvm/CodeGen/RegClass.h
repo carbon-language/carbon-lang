@@ -100,6 +100,9 @@ class RegClass
     { IG.mergeIGNodesOfLRs(LR1, LR2); }
 
 
+  inline bool * getIsColorUsedArr() { return IsColorUsedArr; }
+
+
   inline void printIGNodeList() const {
     cerr << "IG Nodes for Register Class " << RegClassID << ":" << endl;
     IG.printIGNodeList(); 

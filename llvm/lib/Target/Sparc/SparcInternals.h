@@ -113,9 +113,17 @@ public:
 
 
 
+
+
+//----------------------------------------------------------------------------
+// class UltraSparcRegInfo
+//
+//----------------------------------------------------------------------------
+
+
 class LiveRange;
 class UltraSparc;
-
+class PhyRegAlloc;
 
 
 class UltraSparcRegInfo : public MachineRegInfo
@@ -144,6 +152,9 @@ class UltraSparcRegInfo : public MachineRegInfo
     FloatCCRegType
   };
 
+  // the size of a value (int, float, etc..) stored in the stack frame
+  
+
 
   // WARNING: If the above enum order must be changed, also modify 
   // getRegisterClassOfValue method below since it assumes this particular 
@@ -158,6 +169,9 @@ class UltraSparcRegInfo : public MachineRegInfo
   unsigned const NumOfIntArgRegs;
   unsigned const NumOfFloatArgRegs;
   int const InvalidRegNum;
+  int SizeOfOperandOnStack;
+
+
 
   //void setCallArgColor(LiveRange *const LR, const unsigned RegNo) const;
 
@@ -246,7 +260,8 @@ class UltraSparcRegInfo : public MachineRegInfo
   UltraSparcRegInfo(const UltraSparc *const USI ) : UltraSparcInfo(USI), 
 						    NumOfIntArgRegs(6), 
 						    NumOfFloatArgRegs(32),
-						    InvalidRegNum(1000)
+						    InvalidRegNum(1000),
+						    SizeOfOperandOnStack(8)
   {    
     MachineRegClassArr.push_back( new SparcIntRegClass(IntRegClassID) );
     MachineRegClassArr.push_back( new SparcFloatRegClass(FloatRegClassID) );
@@ -255,6 +270,7 @@ class UltraSparcRegInfo : public MachineRegInfo
 
     assert( SparcFloatRegOrder::StartOfNonVolatileRegs == 32 && 
 	    "32 Float regs are used for float arg passing");
+
   }
 
   // ***** TODO  Delete
@@ -317,7 +333,7 @@ class UltraSparcRegInfo : public MachineRegInfo
 		       AddedInstrns *const FirstAI) const;
 
   void colorCallArgs(const MachineInstr *const CallMI, LiveRangeInfo& LRI,
-		     AddedInstrns *const CallAI) const;
+		     AddedInstrns *const CallAI,  PhyRegAlloc &PRA) const;
 
   void colorRetValue(const MachineInstr *const RetI,   LiveRangeInfo& LRI,
 		     AddedInstrns *const RetAI) const;
@@ -401,6 +417,11 @@ class UltraSparcRegInfo : public MachineRegInfo
   inline int getInvalidRegNum() const {
     return InvalidRegNum;
   }
+
+
+  void insertCallerSavingCode(const MachineInstr *MInst, 
+			      const BasicBlock *BB, PhyRegAlloc &PRA ) const;
+
 
 };
 
@@ -1115,7 +1136,9 @@ public:
   static const int FirstOutgoingArgOffsetFromSP            = 128;
   static const int FirstOptionalOutgoingArgOffsetFromSP    = 176;
   static const int StaticStackAreaOffsetFromFP             =  -1;
-  
+
+  static const int FirstIncomingArgOffsetFromFP           = 126;
+
   static int       getFirstAutomaticVarOffsetFromFP (const Method* method);
   static int       getRegSpillAreaOffsetFromFP      (const Method* method);
   static int       getFrameSizeBelowDynamicArea     (const Method* method);
