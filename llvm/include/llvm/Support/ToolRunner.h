@@ -1,39 +1,39 @@
 //===-- Support/ToolRunner.h ------------------------------------*- C++ -*-===//
 //
-// FIXME: document
+// This file exposes an abstraction around a platform C compiler, used to
+// compile C and assembly code.  It also exposes an "AbstractIntepreter"
+// interface, which is used to execute code using one of the LLVM execution
+// engines.
 //
 //===----------------------------------------------------------------------===//
 
 #ifndef TOOLRUNNER_H
 #define TOOLRUNNER_H
 
-#include "Support/CommandLine.h"
 #include "Support/SystemUtils.h"
-#include <fstream>
-#include <iostream>
-#include <string>
 #include <vector>
 
-enum FileType { AsmFile, CFile };
+class CBE;
+class LLC;
 
 //===---------------------------------------------------------------------===//
 // GCC abstraction
 //
-// This is not a *real* AbstractInterpreter as it does not accept bytecode
-// files, but only input acceptable to GCC, i.e. C, C++, and assembly files
-//
 class GCC {
   std::string GCCPath;          // The path to the gcc executable
-public:
   GCC(const std::string &gccPath) : GCCPath(gccPath) { }
-  virtual ~GCC() {}
+public:
+  enum FileType { AsmFile, CFile };
 
-  virtual int ExecuteProgram(const std::string &ProgramFile,
-                             const cl::list<std::string> &Args,
-                             FileType fileType,
-                             const std::string &InputFile,
-                             const std::string &OutputFile,
-                             const std::string &SharedLib = "");
+  static GCC* create(const std::string &ProgramPath, std::string &Message);
+
+
+  int ExecuteProgram(const std::string &ProgramFile,
+                     const std::vector<std::string> &Args,
+                     FileType fileType,
+                     const std::string &InputFile,
+                     const std::string &OutputFile,
+                     const std::string &SharedLib = "");
 
   int MakeSharedObject(const std::string &InputFile,
                        FileType fileType,
@@ -42,14 +42,22 @@ public:
   void ProcessFailure(const char **Args);
 };
 
-GCC* createGCCtool(const std::string &ProgramPath,
-                   std::string &Message);
 
+//===---------------------------------------------------------------------===//
 /// AbstractInterpreter Class - Subclasses of this class are used to execute
 /// LLVM bytecode in a variety of ways.  This abstract interface hides this
 /// complexity behind a simple interface.
 ///
 struct AbstractInterpreter {
+  static CBE* createCBE(const std::string &ProgramPath, std::string &Message);
+  static LLC *createLLC(const std::string &ProgramPath, std::string &Message);
+
+  static AbstractInterpreter* createLLI(const std::string &ProgramPath,
+                                        std::string &Message);
+
+  static AbstractInterpreter* createJIT(const std::string &ProgramPath,
+                                        std::string &Message);
+
 
   virtual ~AbstractInterpreter() {}
 
@@ -57,7 +65,7 @@ struct AbstractInterpreter {
   /// specified filename.  This returns the exit code of the program.
   ///
   virtual int ExecuteProgram(const std::string &Bytecode,
-                             const cl::list<std::string> &Args,
+                             const std::vector<std::string> &Args,
                              const std::string &InputFile,
                              const std::string &OutputFile,
                              const std::string &SharedLib = "") = 0;
@@ -74,19 +82,17 @@ public:
   ~CBE() { delete gcc; }
 
   virtual int ExecuteProgram(const std::string &Bytecode,
-                             const cl::list<std::string> &Args,
+                             const std::vector<std::string> &Args,
                              const std::string &InputFile,
                              const std::string &OutputFile,
                              const std::string &SharedLib = "");
 
-  // Sometimes we just want to go half-way and only generate the C file,
-  // not necessarily compile it with GCC and run the program
-  virtual int OutputC(const std::string &Bytecode,
-                      std::string &OutputCFile);
-
+  // Sometimes we just want to go half-way and only generate the .c file,
+  // not necessarily compile it with GCC and run the program.
+  //
+  virtual int OutputC(const std::string &Bytecode, std::string &OutputCFile);
 };
 
-CBE* createCBEtool(const std::string &ProgramPath, std::string &Message);
 
 //===---------------------------------------------------------------------===//
 // LLC Implementation of AbstractIntepreter interface
@@ -100,22 +106,15 @@ public:
   ~LLC() { delete gcc; }
 
   virtual int ExecuteProgram(const std::string &Bytecode,
-                             const cl::list<std::string> &Args,
+                             const std::vector<std::string> &Args,
                              const std::string &InputFile,
                              const std::string &OutputFile,
                              const std::string &SharedLib = "");
 
-  int OutputAsm(const std::string &Bytecode,
-                std::string &OutputAsmFile);
+  // Sometimes we just want to go half-way and only generate the .s file,
+  // not necessarily compile it all the way and run the program.
+  //
+  int OutputAsm(const std::string &Bytecode, std::string &OutputAsmFile);
 };
-
-LLC* createLLCtool(const std::string &ProgramPath, std::string &Message);
-
-AbstractInterpreter* createLLItool(const std::string &ProgramPath,
-                                   std::string &Message);
-
-AbstractInterpreter* createJITtool(const std::string &ProgramPath,
-                                   std::string &Message);
-
 
 #endif

@@ -1,6 +1,14 @@
+//===-- ToolRunner.cpp ----------------------------------------------------===//
+//
+// This file implements the interfaces described in the ToolRunner.h file.
+//
+//===----------------------------------------------------------------------===//
+
 #include "llvm/Support/ToolRunner.h"
 #include "Support/Debug.h"
 #include "Support/FileUtilities.h"
+#include <iostream>
+#include <fstream>
 
 //===---------------------------------------------------------------------===//
 // LLI Implementation of AbstractIntepreter interface
@@ -12,14 +20,14 @@ public:
 
 
   virtual int ExecuteProgram(const std::string &Bytecode,
-                             const cl::list<std::string> &Args,
+                             const std::vector<std::string> &Args,
                              const std::string &InputFile,
                              const std::string &OutputFile,
                              const std::string &SharedLib = "");
 };
 
 int LLI::ExecuteProgram(const std::string &Bytecode,
-                        const cl::list<std::string> &Args,
+                        const std::vector<std::string> &Args,
                         const std::string &InputFile,
                         const std::string &OutputFile,
                         const std::string &SharedLib) {
@@ -50,9 +58,9 @@ int LLI::ExecuteProgram(const std::string &Bytecode,
 }
 
 // LLI create method - Try to find the LLI executable
-AbstractInterpreter *createLLItool(const std::string &ProgramPath, 
-                                   std::string &Message) {
-  std::string LLIPath = FindExecutable("lli", ProgramPath);
+AbstractInterpreter *AbstractInterpreter::createLLI(const std::string &ProgPath,
+                                                    std::string &Message) {
+  std::string LLIPath = FindExecutable("lli", ProgPath);
   if (!LLIPath.empty()) {
     Message = "Found lli: " + LLIPath + "\n";
     return new LLI(LLIPath);
@@ -65,8 +73,7 @@ AbstractInterpreter *createLLItool(const std::string &ProgramPath,
 //===----------------------------------------------------------------------===//
 // LLC Implementation of AbstractIntepreter interface
 //
-int LLC::OutputAsm(const std::string &Bytecode,
-                   std::string &OutputAsmFile) {
+int LLC::OutputAsm(const std::string &Bytecode, std::string &OutputAsmFile) {
   OutputAsmFile = getUniqueFilename(Bytecode+".llc.s");
   const char *LLCArgs[] = {
     LLCPath.c_str(),
@@ -89,11 +96,10 @@ int LLC::OutputAsm(const std::string &Bytecode,
 }
 
 int LLC::ExecuteProgram(const std::string &Bytecode,
-                        const cl::list<std::string> &Args,
+                        const std::vector<std::string> &Args,
                         const std::string &InputFile,
                         const std::string &OutputFile,
                         const std::string &SharedLib) {
-
   std::string OutputAsmFile;
   if (OutputAsm(Bytecode, OutputAsmFile)) {
     std::cerr << "Could not generate asm code with `llc', exiting.\n";
@@ -101,16 +107,16 @@ int LLC::ExecuteProgram(const std::string &Bytecode,
   }
 
   // Assuming LLC worked, compile the result with GCC and run it.
-  int Result = gcc->ExecuteProgram(OutputAsmFile, Args, AsmFile,
+  int Result = gcc->ExecuteProgram(OutputAsmFile, Args, GCC::AsmFile,
                                    InputFile, OutputFile, SharedLib);
   removeFile(OutputAsmFile);
   return Result;
 }
 
-/// createLLCtool - Try to find the LLC executable
+/// createLLC - Try to find the LLC executable
 ///
-LLC *createLLCtool(const std::string &ProgramPath, std::string &Message)
-{
+LLC *AbstractInterpreter::createLLC(const std::string &ProgramPath,
+                                    std::string &Message) {
   std::string LLCPath = FindExecutable("llc", ProgramPath);
   if (LLCPath.empty()) {
     Message = "Cannot find `llc' in executable directory or PATH!\n";
@@ -118,7 +124,7 @@ LLC *createLLCtool(const std::string &ProgramPath, std::string &Message)
   }
 
   Message = "Found llc: " + LLCPath + "\n";
-  GCC *gcc = createGCCtool(ProgramPath, Message);
+  GCC *gcc = GCC::create(ProgramPath, Message);
   if (!gcc) {
     std::cerr << Message << "\n";
     exit(1);
@@ -136,14 +142,14 @@ public:
 
 
   virtual int ExecuteProgram(const std::string &Bytecode,
-                             const cl::list<std::string> &Args,
+                             const std::vector<std::string> &Args,
                              const std::string &InputFile,
                              const std::string &OutputFile,
                              const std::string &SharedLib = "");
 };
 
 int JIT::ExecuteProgram(const std::string &Bytecode,
-                        const cl::list<std::string> &Args,
+                        const std::vector<std::string> &Args,
                         const std::string &InputFile,
                         const std::string &OutputFile,
                         const std::string &SharedLib) {
@@ -173,11 +179,11 @@ int JIT::ExecuteProgram(const std::string &Bytecode,
                                InputFile, OutputFile, OutputFile);
 }
 
-/// createJITtool - Try to find the LLI executable
+/// createJIT - Try to find the LLI executable
 ///
-AbstractInterpreter *createJITtool(const std::string &ProgramPath, 
-                                   std::string &Message) {
-  std::string LLIPath = FindExecutable("lli", ProgramPath);
+AbstractInterpreter *AbstractInterpreter::createJIT(const std::string &ProgPath,
+                                                    std::string &Message) {
+  std::string LLIPath = FindExecutable("lli", ProgPath);
   if (!LLIPath.empty()) {
     Message = "Found lli: " + LLIPath + "\n";
     return new JIT(LLIPath);
@@ -211,7 +217,7 @@ int CBE::OutputC(const std::string &Bytecode,
 }
 
 int CBE::ExecuteProgram(const std::string &Bytecode,
-                        const cl::list<std::string> &Args,
+                        const std::vector<std::string> &Args,
                         const std::string &InputFile,
                         const std::string &OutputFile,
                         const std::string &SharedLib) {
@@ -221,16 +227,17 @@ int CBE::ExecuteProgram(const std::string &Bytecode,
     exit(1);
   }
 
-  int Result = gcc->ExecuteProgram(OutputCFile, Args, CFile, 
+  int Result = gcc->ExecuteProgram(OutputCFile, Args, GCC::CFile, 
                                    InputFile, OutputFile, SharedLib);
   removeFile(OutputCFile);
 
   return Result;
 }
 
-/// createCBEtool - Try to find the 'dis' executable
+/// createCBE - Try to find the 'llvm-dis' executable
 ///
-CBE *createCBEtool(const std::string &ProgramPath, std::string &Message) {
+CBE *AbstractInterpreter::createCBE(const std::string &ProgramPath,
+                                    std::string &Message) {
   std::string DISPath = FindExecutable("llvm-dis", ProgramPath);
   if (DISPath.empty()) {
     Message = 
@@ -239,7 +246,7 @@ CBE *createCBEtool(const std::string &ProgramPath, std::string &Message) {
   }
 
   Message = "Found llvm-dis: " + DISPath + "\n";
-  GCC *gcc = createGCCtool(ProgramPath, Message);
+  GCC *gcc = GCC::create(ProgramPath, Message);
   if (!gcc) {
     std::cerr << Message << "\n";
     exit(1);
@@ -254,7 +261,7 @@ CBE *createCBEtool(const std::string &ProgramPath, std::string &Message) {
 // files, but only input acceptable to GCC, i.e. C, C++, and assembly files
 //
 int GCC::ExecuteProgram(const std::string &ProgramFile,
-                        const cl::list<std::string> &Args,
+                        const std::vector<std::string> &Args,
                         FileType fileType,
                         const std::string &InputFile,
                         const std::string &OutputFile,
@@ -358,9 +365,9 @@ void GCC::ProcessFailure(const char** GCCArgs) {
   removeFile(ErrorFilename);
 }
 
-/// createGCCtool - Try to find the `gcc' executable
+/// create - Try to find the `gcc' executable
 ///
-GCC *createGCCtool(const std::string &ProgramPath, std::string &Message) {
+GCC *GCC::create(const std::string &ProgramPath, std::string &Message) {
   std::string GCCPath = FindExecutable("gcc", ProgramPath);
   if (GCCPath.empty()) {
     Message = "Cannot find `gcc' in executable directory or PATH!\n";
