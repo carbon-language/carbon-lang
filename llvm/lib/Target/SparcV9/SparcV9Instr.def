@@ -49,13 +49,6 @@
 
 I(NOP, "nop",		0,  -1,  0, false, 0,  1,  SPARC_NONE,  M_NOP_FLAG)
 
-// Synthetic SPARC assembly opcodes for setting a register to a constant.
-// Max immediate constant should be ignored for both these instructions.
-// Use a latency > 1 since this may generate as many as 3 instructions.
-I(SETSW, "setsw",	2,   1,  0, true , 0,  2,  SPARC_IEUN,  M_PSEUDO_FLAG )
-I(SETUW, "setuw",	2,   1,  0, false, 0,  2,  SPARC_IEUN,  M_PSEUDO_FLAG )
-I(SETX,  "setx",	3,   2,  0, true,  0,  2,  SPARC_IEUN,  M_PSEUDO_FLAG )
-
 // Set high-order bits of register and clear low-order bits
 I(SETHI, "sethi",	2,  1, B22, false, 0,  1,  SPARC_IEUN,  0)
 

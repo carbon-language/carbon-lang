@@ -256,21 +256,12 @@ void PhyRegAlloc::buildInterferenceGraphs() {
 	LiveRange *LR = LRI->getLiveRangeForValue(*OpI);
 	if (LR) LR->addSpillCost(BBLoopDepthCost);
       } 
-
-      // Mark all operands of pseudo-instructions as interfering with one
-      // another.  This must be done because pseudo-instructions may be
-      // expanded to multiple instructions by the assembler, so all the
-      // operands must get distinct registers.
-      if (TM.getInstrInfo()->isPseudoInstr(MInst->getOpcode()))
-      	addInterf4PseudoInstr(MInst);
-
       // Also add interference for any implicit definitions in a machine
       // instr (currently, only calls have this).
       unsigned NumOfImpRefs =  MInst->getNumImplicitRefs();
       for (unsigned z=0; z < NumOfImpRefs; z++) 
         if (MInst->getImplicitOp(z).isDef())
 	  addInterference( MInst->getImplicitRef(z), &LVSetAI, isCallInst );
-
     } // for all machine instructions in BB
   } // for all BBs in function
 

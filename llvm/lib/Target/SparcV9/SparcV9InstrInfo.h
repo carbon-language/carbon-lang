@@ -50,8 +50,7 @@ public:
       // last store opcode
       assert(! this->isStore((MachineOpCode) V9::STXFSRi + 1));
 
-      if (opCode == V9::SETSW || opCode == V9::SETUW ||
-          opCode == V9::SETX  || opCode == V9::SETHI)
+      if (opCode == V9::SETHI)
         return 0;
       if (opCode >= V9::STBr && opCode <= V9::STXFSRi)
         return 2;
