@@ -69,6 +69,21 @@ namespace sys {
       /// @brief Prevent core file generation.
       static void PreventCoreFiles();
 
+      /// This function determines if the standard input is connected directly
+      /// to a user's input (keyboard probably), rather than coming from a file
+      /// or pipe.
+      static bool StandardInIsUserInput();
+
+      /// This function determines if the standard output is connected to a 
+      /// "tty" or "console" window. That is, the output would be displayed to
+      /// the user rather than being put on a pipe or stored in a file.
+      static bool StandardOutIsDisplayed();
+
+      /// This function determines if the standard error is connected to a 
+      /// "tty" or "console" window. That is, the output would be displayed to
+      /// the user rather than being put on a pipe or stored in a file.
+      static bool StandardErrIsDisplayed();
+
     /// @}
   };
 }

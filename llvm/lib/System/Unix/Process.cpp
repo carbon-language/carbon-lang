@@ -122,5 +122,29 @@ void Process::PreventCoreFiles() {
 #endif
 }
 
+bool Process::StandardInIsUserInput() {
+#if HAVE_ISATTY
+  return isatty(0);
+#endif
+  // If we don't have isatty, just return false.
+  return false;
+}
+
+bool Process::StandardOutIsDisplayed() {
+#if HAVE_ISATTY
+  return isatty(1);
+#endif
+  // If we don't have isatty, just return false.
+  return false;
+}
+
+bool Process::StandardErrIsDisplayed() {
+#if HAVE_ISATTY
+  return isatty(2);
+#endif
+  // If we don't have isatty, just return false.
+  return false;
+}
+
 }
 // vim: sw=2 smartindent smarttab tw=80 autoindent expandtab
