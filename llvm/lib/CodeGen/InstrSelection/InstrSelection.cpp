@@ -154,7 +154,7 @@ SelectInstructionsForMethod(Method* method, TargetMachine &target)
 // of phi elimination.
 //-------------------------------------------------------------------------
 
-void InsertPhiElimInst(BasicBlock *BB, vector<MachineInstr*>& CopyInstVec) { // bak
+void InsertPhiElimInst(BasicBlock *BB, MachineInstr *CpMI) { 
 
   TerminatorInst *TermInst = BB->getTerminator();
   MachineCodeForVMInstr &MC4Term = TermInst->getMachineInstrVec();
@@ -171,13 +171,12 @@ void InsertPhiElimInst(BasicBlock *BB, vector<MachineInstr*>& CopyInstVec) { // 
   for( ; (MCIt != bbMvec.end()) && (*MCIt != FirstMIOfTerm) ; ++MCIt ) ;
   
   assert( MCIt != bbMvec.end() && "Start inst of terminator not found");
-  assert( (CopyInstVec.size()==1) && "Must be only one copy instr");
 
   // insert the copy instruction just before the first machine instruction
   // generated for the terminator
-  bbMvec.insert( MCIt , CopyInstVec[0] );
+  bbMvec.insert( MCIt , CpMI );
 
-  cerr << "\nPhiElimination copy inst: " <<   *CopyInstVec[0];
+  //cerr << "\nPhiElimination copy inst: " <<   *CopyInstVec[0];
 
 }
 
@@ -212,19 +211,10 @@ void InsertCode4AllPhisInMeth(Method *method, TargetMachine &target) {
 
 	  vector<MachineInstr*> CopyInstVec;
 
-	  // target.getInstrInfo().CreateCopyInstructionsByType(
-	  //    target, PN->getIncomingValue(i), PN, CopyInstVec );
-
-	  MachineInstr *MI =
+	  MachineInstr *CpMI =
 	    target.getRegInfo().cpValue2Value(PN->getIncomingValue(i), PN);
 
-	  CopyInstVec.push_back( MI );
-
-	  InsertPhiElimInst( PN->getIncomingBlock(i), CopyInstVec);
-
-	  // Map the generated copy instruction in pred BB to this phi
-	  // (PN->getMachineInstrVec()).push_back( CopyInstVec[0] );
-
+	  InsertPhiElimInst( PN->getIncomingBlock(i), CpMI);
 	}
       }
       else break;   // since PHI nodes can only be at the top
