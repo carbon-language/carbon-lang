@@ -310,7 +310,8 @@ void LiveVariables::instructionChanged(MachineInstr *OldMI,
         // Update the defining instruction.
         if (VI.DefInst == OldMI)
           VI.DefInst = NewMI;
-      } else if (MO.isUse()) {
+      }
+      if (MO.isUse()) {
         // If this is a kill of the value, update the VI kills list.
         if (VI.removeKill(OldMI))
           VI.Kills.push_back(NewMI);   // Yes, there was a kill of it
