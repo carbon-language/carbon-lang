@@ -23,15 +23,16 @@ using namespace sys;
 //===          and must not be generic UNIX code (see ../Unix/TimeValue.cpp)
 //===----------------------------------------------------------------------===//
 
-void TimeValue::now() {
+TimeValue TimeValue::now() {
   struct timeval the_time;
   timerclear(&the_time);
   if (0 != ::gettimeofday(&the_time,0)) 
       ThrowErrno("Couldn't obtain time of day");
 
-  this->set( static_cast<TimeValue::SecondsType>( the_time.tv_sec ), 
-             static_cast<TimeValue::NanoSecondsType>( the_time.tv_usec * 
-               NANOSECONDS_PER_MICROSECOND ) );
+  return TimeValue(
+    static_cast<TimeValue::SecondsType>( the_time.tv_sec ), 
+    static_cast<TimeValue::NanoSecondsType>( the_time.tv_usec * 
+      NANOSECONDS_PER_MICROSECOND ) );
 }
 
 // vim: sw=2 smartindent smarttab tw=80 autoindent expandtab
