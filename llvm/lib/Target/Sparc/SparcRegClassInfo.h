@@ -25,6 +25,10 @@ struct SparcIntRegClass : public TargetRegClassInfo {
     return (Reg < (int)StartOfNonVolatileRegs); 
   }
 
+  inline bool modifiedByCall(int Reg) const {
+    return Reg==(int)ModifiedByCall;
+  }
+
   enum {   // colors possible for a LR (in preferred order)
      // --- following colors are volatile across function calls
      // %g0 can't be used for coloring - always 0
@@ -61,6 +65,8 @@ struct SparcIntRegClass : public TargetRegClassInfo {
 
      StartOfNonVolatileRegs = l0,
      StartOfAllRegs = o0,
+     
+     ModifiedByCall = o7,
   };
 
   const char * const getRegName(unsigned reg) const;

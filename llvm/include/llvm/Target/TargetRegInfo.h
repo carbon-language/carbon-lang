@@ -44,6 +44,9 @@ public:
                            std::vector<bool> &IsColorUsedArr) const = 0;
   virtual bool isRegVolatile(int Reg) const = 0;
 
+  //If any specific register needs extra information
+  virtual bool modifiedByCall(int Reg) const {return false; }
+
   virtual const char* const getRegName(unsigned reg) const = 0;
 
   TargetRegClassInfo(unsigned ID, unsigned NVR, unsigned NAR)

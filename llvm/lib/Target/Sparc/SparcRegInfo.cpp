@@ -1182,6 +1182,15 @@ UltraSparcRegInfo::insertCallerSavingCode
 
   CallArgsDescriptor* argDesc = CallArgsDescriptor::get(CallMI);
   
+  //if the call is to a instrumentation function, do not
+  //insert save and restore instructions
+  //the instrumentation function takes care of
+  //save restore for volatile regs
+  bool isLLVMFirstTrigger = false;
+  const Function *calledFunction = argDesc->getCallInst()->getCalledFunction();
+  if(calledFunction && calledFunction->getName() == "llvm_first_trigger")
+    isLLVMFirstTrigger = true;
+
   // Now check if the call has a return value (using argDesc) and if so,
   // find the LR of the TmpInstruction representing the return value register.
   // (using the last or second-last *implicit operand* of the call MI).
@@ -1227,6 +1236,11 @@ UltraSparcRegInfo::insertCallerSavingCode
 	unsigned Color = LR->getColor();
 
 	if ( isRegVolatile(RCID, Color) ) {
+
+	  //if the function is special LLVM function,
+	  //And the register is not modified by call, don't save and restore
+	  if(isLLVMFirstTrigger && !modifiedByCall(RCID, Color))
+	    continue;
 
 	  // if the value is in both LV sets (i.e., live before and after 
 	  // the call machine instruction)

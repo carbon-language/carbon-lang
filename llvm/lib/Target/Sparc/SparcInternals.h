@@ -447,6 +447,10 @@ public:
     return MachineRegClassArr[RegClassID]->isRegVolatile(Reg);
   }
 
+  inline bool modifiedByCall(int RegClassID, int Reg) const {
+    return MachineRegClassArr[RegClassID]->modifiedByCall(Reg);
+  }
+
   // Get the register type for a register identified different ways.
   int getRegType(const Type* type) const;
   int getRegType(const LiveRange *LR) const;
