@@ -3,7 +3,6 @@ Currently unimplemented:
 * signed right shift of long by reg
 
 Current bugs:
-* conditional branches assume target is within 32k bytes
 * large fixed-size allocas not correct, although should
   be closer to working.  Added code in PPCRegisterInfo.cpp
   to do >16bit subtractions to the stack pointer.
@@ -12,6 +11,14 @@ Codegen improvements needed:
 * no alias analysis causes us to generate slow code for Shootout/matrix
 * setCondInst needs to know branchless versions of seteq/setne/etc
 * cast elimination pass (uint -> sbyte -> short, kill the byte -> short)
+* should hint to the branch select pass that it doesn't need to print the
+  second unconditional branch, so we don't end up with things like:
+.LBBl42__2E_expand_function_8_21:	; LeafBlock37
+	cmplwi cr0, r29, 11
+	bne cr0, $+8
+	b .LBBl42__2E_expand_function_8_674	; loopentry.24
+	b .LBBl42__2E_expand_function_8_42	; NewDefault
+	b .LBBl42__2E_expand_function_8_42	; NewDefault
 
 Current hacks:
 * lazy insert of GlobalBaseReg definition at front of first MBB
