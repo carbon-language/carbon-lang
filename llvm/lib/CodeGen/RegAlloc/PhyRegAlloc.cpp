@@ -39,6 +39,10 @@ DRA_opt("dregalloc", cl::Hidden, cl::location(DEBUG_RA),
   clEnumValN(RA_DEBUG_Verbose,     "v", "extra debug output"),
                    0));
 
+static cl::opt<bool>
+SaveRegAllocState("save-ra-state", cl::Hidden,
+                  cl::desc("write reg. allocator state into module"));
+
 FunctionPass *getRegisterAllocator(TargetMachine &T) {
   return new PhyRegAlloc (T);
 }
@@ -76,7 +80,7 @@ void PhyRegAlloc::createIGNodeListsAndIGs() {
       // if the Value * is not null, and LR is not yet written to the IGNodeList
       if (!(L->getUserIGNode())  ) {  
         RegClass *const RC =           // RegClass of first value in the LR
-          RegClassList[ L->getRegClass()->getID() ];
+          RegClassList[ L->getRegClassID() ];
         RC->addLRToIG(L);              // add this LR to an IG
       }
     }
@@ -427,7 +431,7 @@ bool PhyRegAlloc::markAllocatedRegs(MachineInstr* MInst)
             // An operand may have a color whether or not it needs spilling
             if (LR->hasColor())
               MInst->SetRegForOperand(OpNum,
-                          MRI.getUnifiedRegNum(LR->getRegClass()->getID(),
+                          MRI.getUnifiedRegNum(LR->getRegClassID(),
                                                LR->getColor()));
           }
         }
@@ -675,7 +679,7 @@ void PhyRegAlloc::insertCode4SpilledLR(const LiveRange *LR,
   // This may insert code before and after MInst to free up the value.  If so,
   // this code should be first/last in the spill sequence before/after MInst.
   int TmpRegU=(LR->hasColor()
-               ? MRI.getUnifiedRegNum(LR->getRegClass()->getID(),LR->getColor())
+               ? MRI.getUnifiedRegNum(LR->getRegClassID(),LR->getColor())
                : getUsableUniRegAtMI(RegType, &LVSetBef, MInst, MIBef,MIAft));
   
   // Set the operand first so that it this register does not get used
@@ -1118,10 +1122,10 @@ void PhyRegAlloc::colorIncomingArgs()
 
 
 //----------------------------------------------------------------------------
-// This method calls setSugColorUsable method of each live range. This
-// will determine whether the suggested color of LR is  really usable.
-// A suggested color is not usable when the suggested color is volatile
-// AND when there are call interferences
+// This method determines whether the suggested color of each live range
+// is really usable, and then calls its setSuggestedColorUsable() method to
+// record the answer. A suggested color is NOT usable when the suggested color
+// is volatile AND when there are call interferences.
 //----------------------------------------------------------------------------
 
 void PhyRegAlloc::markUnusableSugColors()
@@ -1132,16 +1136,10 @@ void PhyRegAlloc::markUnusableSugColors()
   for (; HMI != HMIEnd ; ++HMI ) {
     if (HMI->first) { 
       LiveRange *L = HMI->second;      // get the LiveRange
-      if (L) { 
-	if (L->hasSuggestedColor()) {
-	  int RCID = L->getRegClass()->getID();
-	  if (MRI.isRegVolatile( RCID,  L->getSuggestedColor()) &&
-	      L->isCallInterference() )
-	    L->setSuggestedColorUsable( false );
-	  else
-	    L->setSuggestedColorUsable( true );
-	}
-      } // if L->hasSuggestedColor()
+      if (L && L->hasSuggestedColor ())
+	L->setSuggestedColorUsable
+	  (!(MRI.isRegVolatile (L->getRegClassID (), L->getSuggestedColor ())
+	     && L->isCallInterference ()));
     }
   } // for all LR's in hash map
 }
