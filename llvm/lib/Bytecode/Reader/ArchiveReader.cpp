@@ -1,4 +1,4 @@
-//===- ReadArchive.cpp - Code to read LLVM bytecode from .a files ---------===//
+//===- ArchiveReader.cpp - Code to read LLVM bytecode from .a files -------===//
 //
 // This file implements the ReadArchiveFile interface, which allows a linker to
 // read all of the LLVM bytecode files contained in a .a file.  This file
