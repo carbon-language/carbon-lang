@@ -118,15 +118,7 @@ struct InstPlaceHolderHelper : public Instruction {
   InstPlaceHolderHelper(const Type *Ty) : Instruction(Ty, UserOp1, "") {}
 
   virtual Instruction *clone() const { abort(); }
-
-  inline virtual void dropAllReferences() {}
   virtual string getOpcode() const { return "placeholder"; }
-
-  // No "operands"...
-  virtual Value *getOperand(unsigned i) { return 0; }
-  virtual const Value *getOperand(unsigned i) const { return 0; }
-  virtual bool setOperand(unsigned i, Value *Val) { return false; }
-  virtual unsigned getNumOperands() const { return 0; }
 };
 
 struct BBPlaceHolderHelper : public BasicBlock {

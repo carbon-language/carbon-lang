@@ -548,7 +548,7 @@ static const short yyrline[] = { 0,
    741,   744,   749,   753,   758,   762,   771,   776,   785,   789,
    793,   796,   799,   802,   807,   818,   826,   836,   844,   849,
    856,   860,   866,   866,   868,   873,   878,   889,   926,   930,
-   935,   945,   950,   960
+   935,   944,   949,   958
 };
 #endif
 
@@ -1955,9 +1955,9 @@ case 119:
 case 120:
 #line 930 "llvmAsmParser.y"
 {
-    ConstPoolVal *TyVal = new ConstPoolType(PointerType::getPointerType(yyvsp[0].TypeVal));
-    TyVal = addConstValToConstantPool(TyVal);
-    yyval.InstVal = new MallocInst((ConstPoolType*)TyVal);
+    const Type *Ty = PointerType::getPointerType(yyvsp[0].TypeVal);
+    addConstValToConstantPool(new ConstPoolType(Ty));
+    yyval.InstVal = new MallocInst(Ty);
   ;
     break;}
 case 121:
@@ -1966,36 +1966,34 @@ case 121:
     if (!yyvsp[-3].TypeVal->isArrayType() || ((const ArrayType*)yyvsp[-3].TypeVal)->isSized())
       ThrowException("Trying to allocate " + yyvsp[-3].TypeVal->getName() + 
 		     " as unsized array!");
-
+    const Type *Ty = PointerType::getPointerType(yyvsp[-3].TypeVal);
+    addConstValToConstantPool(new ConstPoolType(Ty));
     Value *ArrSize = getVal(yyvsp[-1].TypeVal, yyvsp[0].ValIDVal);
-    ConstPoolVal *TyVal = new ConstPoolType(PointerType::getPointerType(yyvsp[-3].TypeVal));
-    TyVal = addConstValToConstantPool(TyVal);
-    yyval.InstVal = new MallocInst((ConstPoolType*)TyVal, ArrSize);
+    yyval.InstVal = new MallocInst(Ty, ArrSize);
   ;
     break;}
 case 122:
-#line 945 "llvmAsmParser.y"
+#line 944 "llvmAsmParser.y"
 {
-    ConstPoolVal *TyVal = new ConstPoolType(PointerType::getPointerType(yyvsp[0].TypeVal));
-    TyVal = addConstValToConstantPool(TyVal);
-    yyval.InstVal = new AllocaInst((ConstPoolType*)TyVal);
+    const Type *Ty = PointerType::getPointerType(yyvsp[0].TypeVal);
+    addConstValToConstantPool(new ConstPoolType(Ty));
+    yyval.InstVal = new AllocaInst(Ty);
   ;
     break;}
 case 123:
-#line 950 "llvmAsmParser.y"
+#line 949 "llvmAsmParser.y"
 {
     if (!yyvsp[-3].TypeVal->isArrayType() || ((const ArrayType*)yyvsp[-3].TypeVal)->isSized())
       ThrowException("Trying to allocate " + yyvsp[-3].TypeVal->getName() + 
 		     " as unsized array!");
-
+    const Type *Ty = PointerType::getPointerType(yyvsp[-3].TypeVal);
+    addConstValToConstantPool(new ConstPoolType(Ty));
     Value *ArrSize = getVal(yyvsp[-1].TypeVal, yyvsp[0].ValIDVal);
-    ConstPoolVal *TyVal = new ConstPoolType(PointerType::getPointerType(yyvsp[-3].TypeVal));
-    TyVal = addConstValToConstantPool(TyVal);
-    yyval.InstVal = new AllocaInst((ConstPoolType*)TyVal, ArrSize);
+    yyval.InstVal = new AllocaInst(Ty, ArrSize);
   ;
     break;}
 case 124:
-#line 960 "llvmAsmParser.y"
+#line 958 "llvmAsmParser.y"
 {
     if (!yyvsp[-1].TypeVal->isPointerType())
       ThrowException("Trying to free nonpointer type " + yyvsp[-1].TypeVal->getName() + "!");
@@ -2224,7 +2222,7 @@ yyerrhandle:
     }
   return 1;
 }
-#line 966 "llvmAsmParser.y"
+#line 964 "llvmAsmParser.y"
 
 int yyerror(char *ErrorMsg) {
   ThrowException(string("Parse error: ") + ErrorMsg);

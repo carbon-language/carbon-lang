@@ -928,34 +928,32 @@ InstVal : BinaryOps Types ValueRef ',' ValueRef {
   }
 
 MemoryInst : MALLOC Types {
-    ConstPoolVal *TyVal = new ConstPoolType(PointerType::getPointerType($2));
-    TyVal = addConstValToConstantPool(TyVal);
-    $$ = new MallocInst((ConstPoolType*)TyVal);
+    const Type *Ty = PointerType::getPointerType($2);
+    addConstValToConstantPool(new ConstPoolType(Ty));
+    $$ = new MallocInst(Ty);
   }
   | MALLOC Types ',' UINT ValueRef {
     if (!$2->isArrayType() || ((const ArrayType*)$2)->isSized())
       ThrowException("Trying to allocate " + $2->getName() + 
 		     " as unsized array!");
-
+    const Type *Ty = PointerType::getPointerType($2);
+    addConstValToConstantPool(new ConstPoolType(Ty));
     Value *ArrSize = getVal($4, $5);
-    ConstPoolVal *TyVal = new ConstPoolType(PointerType::getPointerType($2));
-    TyVal = addConstValToConstantPool(TyVal);
-    $$ = new MallocInst((ConstPoolType*)TyVal, ArrSize);
+    $$ = new MallocInst(Ty, ArrSize);
   }
   | ALLOCA Types {
-    ConstPoolVal *TyVal = new ConstPoolType(PointerType::getPointerType($2));
-    TyVal = addConstValToConstantPool(TyVal);
-    $$ = new AllocaInst((ConstPoolType*)TyVal);
+    const Type *Ty = PointerType::getPointerType($2);
+    addConstValToConstantPool(new ConstPoolType(Ty));
+    $$ = new AllocaInst(Ty);
   }
   | ALLOCA Types ',' UINT ValueRef {
     if (!$2->isArrayType() || ((const ArrayType*)$2)->isSized())
       ThrowException("Trying to allocate " + $2->getName() + 
 		     " as unsized array!");
-
+    const Type *Ty = PointerType::getPointerType($2);
+    addConstValToConstantPool(new ConstPoolType(Ty));
     Value *ArrSize = getVal($4, $5);
-    ConstPoolVal *TyVal = new ConstPoolType(PointerType::getPointerType($2));
-    TyVal = addConstValToConstantPool(TyVal);
-    $$ = new AllocaInst((ConstPoolType*)TyVal, ArrSize);
+    $$ = new AllocaInst(Ty, ArrSize);
   }
   | FREE Types ValueRef {
     if (!$2->isPointerType())
