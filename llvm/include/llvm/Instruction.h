@@ -23,8 +23,6 @@ class Instruction : public User {
   friend class SymbolTableListTraits<Instruction, BasicBlock, Function,
                                      ilist_traits<Instruction> >;
   void setParent(BasicBlock *P);
-private:
-  Instruction* cln; //the newest cloned instruction
 protected:
   unsigned iType;      // InstructionType: The opcode of the instruction
 
@@ -44,9 +42,7 @@ public:
   ///   * The instruction has no name
   ///
   virtual Instruction *clone() const = 0;
-  Instruction * getClone(){return cln;}
-  void          setClone(Instruction* _cln){cln=_cln;}
-  void          clearClone(){cln=NULL;}
+  
   // Accessor methods...
   //
   inline const BasicBlock *getParent() const { return Parent; }
