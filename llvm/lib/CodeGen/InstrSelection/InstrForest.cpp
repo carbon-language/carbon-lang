@@ -176,11 +176,6 @@ inline void InstrForest::setRightChild(InstrTreeNode *Par, InstrTreeNode *Chld){
 }
 
 
-void InstrForest::buildTreesForMethod(Method *M) {
-  for_each(M->inst_begin(), M->inst_end(),
-	   bind_obj(this, &InstrForest::buildTreeForInstruction));
-}
-
 InstructionNode *InstrForest::buildTreeForInstruction(Instruction *Inst) {
   InstructionNode *treeNode = getTreeNodeForInstr(Inst);
   if (treeNode) {
@@ -210,8 +205,7 @@ InstructionNode *InstrForest::buildTreeForInstruction(Instruction *Inst) {
   static InstrTreeNode *fixedChildArray[MAX_CHILD];
   InstrTreeNode **childArray =
     (Inst->getNumOperands() > MAX_CHILD)
-    ? new (InstrTreeNode*)[Inst->getNumOperands()]
-    : fixedChildArray;
+    ? new (InstrTreeNode*)[Inst->getNumOperands()] : fixedChildArray;
   
   //
   // Walk the operands of the instruction
@@ -309,3 +303,8 @@ InstructionNode *InstrForest::buildTreeForInstruction(Instruction *Inst) {
   return treeNode;
 }
 
+
+InstrForest::InstrForest(Method *M) {
+  for_each(M->inst_begin(), M->inst_end(),
+	   bind_obj(this, &InstrForest::buildTreeForInstruction));
+}

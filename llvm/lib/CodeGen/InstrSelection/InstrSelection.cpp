@@ -31,11 +31,11 @@ enum SelectDebugLevel_t {
 };
 
 // Enable Debug Options to be specified on the command line
-cl::Enum<enum SelectDebugLevel_t> SelectDebugLevel("dselect", cl::NoFlags, // cl::Hidden
+cl::Enum<enum SelectDebugLevel_t> SelectDebugLevel("dselect", cl::NoFlags,
    "enable instruction selection debugging information",
    clEnumValN(Select_NoDebugInfo,      "n", "disable debug output"),
    clEnumValN(Select_PrintMachineCode, "y", "print generated machine code"),
-   clEnumValN(Select_DebugInstTrees,   "i", "print instr. selection debugging info"),
+   clEnumValN(Select_DebugInstTrees,   "i", "print instruction selection debug info"),
    clEnumValN(Select_DebugBurgTrees,   "b", "print burg trees"), 0);
 
 
@@ -54,8 +54,7 @@ SelectInstructionsForMethod(Method* method,
   //
   // Build the instruction trees to be given as inputs to BURG.
   // 
-  InstrForest instrForest;
-  instrForest.buildTreesForMethod(method);
+  InstrForest instrForest(method);
   
   if (SelectDebugLevel >= Select_DebugInstTrees)
     {

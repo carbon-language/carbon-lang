@@ -238,7 +238,7 @@ class InstrForest : private hash_map<const Instruction*, InstructionNode*> {
   hash_set<InstructionNode*> treeRoots;
   
 public:
-  void buildTreesForMethod(Method *M);
+  InstrForest(Method *M);
 				    
   inline InstructionNode *getTreeNodeForInstr(Instruction* instr) {
     return (*this)[instr];

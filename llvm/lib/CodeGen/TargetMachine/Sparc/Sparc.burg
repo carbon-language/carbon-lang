@@ -220,8 +220,6 @@ reg:	Constant		=   72 (3);	/* prefer direct use */
  * This code was taken from sample.gr provided with BURG.
  *-----------------------------------------------------------------------*/
 
-static char rcsid[] = "$Id$";
-
 void printcover(NODEPTR_TYPE p, int goalnt, int indent) {
 	int eruleno = burm_rule(STATE_LABEL(p), goalnt);
 	short *nts = burm_nts[eruleno];
