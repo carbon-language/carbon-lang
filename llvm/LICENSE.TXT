@@ -78,10 +78,11 @@ Ptrdist:            llvm/test/Programs/MultiSource/Benchmarks/Ptrdist
 LLUBenchmark:       llvm/test/Programs/MultiSource/Benchmarks/llubenchmark
 SIM:                llvm/test/Programs/MultiSource/Benchmarks/sim
 espresso:           llvm/test/Programs/MultiSource/Benchmarks/MallocBench/espresso
-ps:                 llvm/test/Programs/MultiSource/Benchmarks/MallocBench/ps
+gs:                 llvm/test/Programs/MultiSource/Benchmarks/MallocBench/gs
 p2c:                llvm/test/Programs/MultiSource/Benchmarks/MallocBench/p2c
 gawk:               llvm/test/Programs/MultiSource/Benchmarks/MallocBench/gawk
 make:               llvm/test/Programs/MultiSource/Benchmarks/MallocBench/make
+perl:               llvm/test/Programs/MultiSource/Benchmarks/MallocBench/perl
 Dhrystone:          llvm/test/Programs/SingleSource/Benchmarks/Dhrystone
 SingleSource Tests: llvm/test/Programs/SingleSource/Benchmarks/Misc
                     llvm/test/Programs/SingleSource/CustomChecked
