@@ -18,8 +18,8 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineCodeForInstruction.h"
 #include "llvm/CodeGen/MachineInstrAnnot.h"
-#include "../../CodeGen/RegAlloc/LiveRangeInfo.h"   // FIXME!!
-#include "../../CodeGen/RegAlloc/LiveRange.h"       // FIXME!!
+#include "RegAlloc/LiveRangeInfo.h"
+#include "RegAlloc/LiveRange.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
 #include "llvm/iTerminators.h"

@@ -15,8 +15,8 @@
 #include "SparcRegClassInfo.h"
 #include "SparcInternals.h"
 #include "SparcRegInfo.h"
-#include "../../CodeGen/RegAlloc/RegAllocCommon.h"   // FIXME!
-#include "../../CodeGen/RegAlloc/IGNode.h"           // FIXME!
+#include "RegAlloc/RegAllocCommon.h"
+#include "RegAlloc/IGNode.h"
 
 namespace llvm {
 
