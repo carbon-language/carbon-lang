@@ -36,13 +36,12 @@ TOOLS    = $(LLVMTOOLCURRENT)
 
 # LLVM Tool Definitions...
 #
-LCC      = $(LLVMGCCDIR)/bin/gcc
-LCC1     = $(LLVMGCCDIR)/lib/gcc-lib/$(LLVMGCCARCH)/cc1
-LCXX     = $(LLVMGCCDIR)/bin/g++
-LCC1XX   = $(LLVMGCCDIR)/lib/gcc-lib/$(LLVMGCCARCH)/cc1plus
+LCC      = $(LLVMGCC)   ## FIXME: remove these definitions, use LLVMGCC directly
+LCXX     = $(LLVMGXX)   ## FIXME: remove these definitions, use LLVMGXX directly
+LAS      = $(LLVMAS)    ## FIXME: remove these definitions, use LLVMAS directly
+
 LLI      = $(TOOLS)/lli
 LLC      = $(TOOLS)/llc
-LAS      = $(TOOLS)/as
 LGCCAS   = $(TOOLS)/gccas
 LGCCLD   = $(TOOLS)/gccld -L$(LLVMGCCDIR)/lib/gcc-lib/$(LLVMGCCARCH) -L$(LLVMGCCDIR)/lib
 LGCCLDPROG = $(TOOLS)/gccld
