@@ -1,25 +1,22 @@
-//===----------------------------------------------------------------------===//
-// LLVM 'ar' UTILITY 
+//===-- tools/llvm-ar/llvm-ar.cpp - LLVM archive librarian utility --------===//
 //
-// This utility may be invoked in the following manner:
-//  llvm-ar archivename files..
+// Builds up standard unix archive files (.a) containing LLVM bytecode.
 //
 //===----------------------------------------------------------------------===//
+
 #include "Support/CommandLine.h"
 #include "llvm/Bytecode/Reader.h"
 #include "llvm/Module.h"
-
 #include <string>
 #include <iostream>
 #include <fstream>
 #include <vector>
 #include <sys/stat.h>
-#include <stdio.h>
+#include <cstdio>
 #include <sys/types.h> 
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/mman.h>
-
 
 using std::string;
 using std::vector;
