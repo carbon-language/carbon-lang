@@ -108,7 +108,7 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
       unsigned Align = MF.getTarget().getFrameInfo()->getStackAlignment();
       Amount = (Amount+Align-1)/Align*Align;
 
-      MachineInstr *New;
+//    MachineInstr *New;
 //       if (Old->getOpcode() == X86::ADJCALLSTACKDOWN) {
 // 	New=BuildMI(X86::SUB32ri, 1, X86::ESP, MachineOperand::UseAndDef)
 //               .addZImm(Amount);

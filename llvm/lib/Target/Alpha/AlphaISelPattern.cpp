@@ -1149,7 +1149,7 @@ void ISel::Select(SDOperand N) {
     Tmp2 = SelectExpr(N.getOperand(2));
 
     switch (StoredTy) {
-    default: Node->dump(); assert(0 && "Unhandled Type"); break;
+    default: Node->dump(); assert(0 && "Unhandled Type");
     case MVT::i1: //FIXME: DAG does not promote this load
     case MVT::i8: Opc = Alpha::STB; break;
     case MVT::i16: Opc = Alpha::STW; break;
