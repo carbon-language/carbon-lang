@@ -119,7 +119,8 @@ const Type *getStructOffsetType(const Type *Ty, unsigned &Offset,
   }
 
   unsigned SubOffs = Offset - ThisOffset;
-  const Type *LeafTy = getStructOffsetType(NextType, SubOffs, Offsets);
+  const Type *LeafTy = getStructOffsetType(NextType, SubOffs,
+                                           Offsets, StopEarly);
   Offset = ThisOffset + SubOffs;
   return LeafTy;
 }
