@@ -11,7 +11,9 @@
 //===------------------------------------------------------------------------===
 
 #include <iostream>
+#include "llvm/Instruction.h"
 #include "llvm/Module.h"
+#include "llvm/Method.h"
 #include "llvm/Bytecode/Reader.h"
 #include "llvm/Assembly/Parser.h"
 #include "llvm/Tools/CommandLine.h"
@@ -19,6 +21,7 @@
 
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/IntervalPartition.h"
+#include "llvm/Analysis/Expressions.h"
 
 static void PrintMethod(Method *M) {
   cout << M;
@@ -26,6 +29,34 @@ static void PrintMethod(Method *M) {
 
 static void PrintIntervalPartition(Method *M) {
   cout << cfg::IntervalPartition(M);
+}
+
+static void PrintClassifiedExprs(Method *M) {
+  cout << "Classified expressions for: " << M->getName() << endl;
+  Method::inst_iterator I = M->inst_begin(), E = M->inst_end();
+  for (; I != E; ++I) {
+    cout << *I;
+
+    if ((*I)->getType() == Type::VoidTy) continue;
+    ExprAnalysisResult R = ClassifyExpression(*I);
+    if (R.Var == *I) continue;  // Doesn't tell us anything
+
+    cout << "\t\tExpr =";
+    switch (R.ExprType) {
+    case ExprAnalysisResult::ScaledLinear:
+      WriteAsOperand(cout, (Value*)R.Scale) << " *";
+      // fall through
+    case ExprAnalysisResult::Linear:
+      WriteAsOperand(cout, R.Var);
+      if (R.Offset == 0) break;
+      else cout << " +";
+      // fall through
+    case ExprAnalysisResult::Constant:
+      if (R.Offset) WriteAsOperand(cout, (Value*)R.Offset); else cout << " 0";
+      break;
+    }
+    cout << endl << endl;
+  }
 }
 
 
@@ -61,6 +92,7 @@ struct {
 } AnTable[] = {
   { "-print"          , "Print each Method"       , PrintMethod },
   { "-intervals"      , "Interval Partition"      , PrintIntervalPartition },
+  { "-exprclassify"   , "Classify Expressions"    , PrintClassifiedExprs },
 
   { "-domset"         , "Dominator Sets"          , PrintDominatorSets },
   { "-idom"           , "Immediate Dominators"    , PrintImmediateDominators },
@@ -102,8 +134,9 @@ int main(int argc, char **argv) {
   // Loop over all of the methods in the module...
   for (Module::iterator I = C->begin(), E = C->end(); I != E; ++I) {
     Method *M = *I;
+    if (M->isExternal()) continue;
 
-    // Loop over all of the optimizations to be run...
+    // Loop over all of the analyses to be run...
     for (int i = 1; i < argc; i++) {
       if (argv[i] == 0) continue;
       unsigned j;
