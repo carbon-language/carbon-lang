@@ -23,8 +23,6 @@
 #include <cstdlib>
 #include <memory>
 
-namespace llvm {
-
 template<typename T>
 struct MallocAllocator {
   typedef size_t size_type;
@@ -80,7 +78,5 @@ namespace std {
     typedef ::MallocAllocator<Type> allocator_type;
   };
 }
-
-} // End llvm namespace
 
 #endif
