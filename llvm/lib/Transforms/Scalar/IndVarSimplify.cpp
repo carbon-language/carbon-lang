@@ -15,18 +15,18 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/Scalar.h"
-#include "llvm/Analysis/InductionVariable.h"
-#include "llvm/Analysis/LoopInfo.h"
+#include "llvm/Constants.h"
+#include "llvm/Type.h"
 #include "llvm/iPHINode.h"
 #include "llvm/iOther.h"
-#include "llvm/Type.h"
-#include "llvm/Constants.h"
+#include "llvm/Analysis/InductionVariable.h"
+#include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Support/CFG.h"
+#include "llvm/Transforms/Utils/Local.h"
 #include "Support/Debug.h"
 #include "Support/Statistic.h"
 #include "Support/STLExtras.h"
-
-namespace llvm {
+using namespace llvm;
 
 namespace {
   Statistic<> NumRemoved ("indvars", "Number of aux indvars removed");
@@ -185,8 +185,28 @@ static bool TransformLoop(LoopInfo *Loops, Loop *Loop) {
       IV->Phi->setName("");
       Val->setName(OldName);
 
+      // Get the incoming values used by the PHI node
+      std::vector<Value*> PHIOps;
+      PHIOps.reserve(IV->Phi->getNumIncomingValues());
+      for (unsigned i = 0, e = IV->Phi->getNumIncomingValues(); i != e; ++i)
+        PHIOps.push_back(IV->Phi->getIncomingValue(i));
+
       // Delete the old, now unused, phi node...
       Header->getInstList().erase(IV->Phi);
+
+      // If the PHI is the last user of any instructions for computing PHI nodes
+      // that are irrelevant now, delete those instructions.
+      while (!PHIOps.empty()) {
+        Instruction *MaybeDead = dyn_cast<Instruction>(PHIOps.back());
+        PHIOps.pop_back();
+
+        if (MaybeDead && isInstructionTriviallyDead(MaybeDead)) {
+          PHIOps.insert(PHIOps.end(), MaybeDead->op_begin(),
+                        MaybeDead->op_end());
+          MaybeDead->getParent()->getInstList().erase(MaybeDead);
+        }
+      }
+
       Changed = true;
       ++NumRemoved;
     }
@@ -216,8 +236,7 @@ namespace {
                                            "Canonicalize Induction Variables");
 }
 
-Pass *createIndVarSimplifyPass() {
+Pass *llvm::createIndVarSimplifyPass() {
   return new InductionVariableSimplify();
 }
 
-} // End llvm namespace
