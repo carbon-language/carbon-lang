@@ -112,7 +112,7 @@ protected:
   /// with other global values in the DSGraphs.
   EquivalenceClasses<GlobalValue*> GlobalECs;
 public:
-  ~BUDataStructures() { releaseMemory(); }
+  ~BUDataStructures() { releaseMyMemory(); }
 
   virtual bool runOnModule(Module &M);
 
@@ -143,10 +143,9 @@ public:
   ///
   void print(std::ostream &O, const Module *M) const;
 
-  /// releaseMemory - if the pass pipeline is done with this pass, we can
-  /// release our memory...
-  ///
-  virtual void releaseMemory();
+  // FIXME: Once the pass manager is straightened out, rename this to
+  // releaseMemory.
+  void releaseMyMemory();
 
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
     AU.setPreservesAll();

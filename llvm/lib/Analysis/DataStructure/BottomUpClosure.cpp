@@ -305,7 +305,7 @@ unsigned BUDataStructures::calculateGraphs(Function *F,
 // releaseMemory - If the pass pipeline is done with this pass, we can release
 // our memory... here...
 //
-void BUDataStructures::releaseMemory() {
+void BUDataStructures::releaseMyMemory() {
   for (hash_map<Function*, DSGraph*>::iterator I = DSInfo.begin(),
          E = DSInfo.end(); I != E; ++I) {
     I->second->getReturnNodes().erase(I->first);
