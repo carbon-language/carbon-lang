@@ -96,6 +96,27 @@ void BytecodeWriter::outputType(const Type *T) {
 }
 
 bool BytecodeWriter::outputConstant(const Constant *CPV) {
+
+  // We must check for a ConstantExpr before switching by type because
+  // a ConstantExpr can be of any type, and has no explicit value.
+  // 
+  if (const ConstantExpr* CE = dyn_cast<ConstantExpr>(CPV)) {
+    assert(CE->getNumOperands() > 0 && "ConstantExpr with 0 operands");
+    output_vbr(CE->getNumOperands(), Out);   // flags as an expr
+    output_vbr(CE->getOpcode(), Out);        // flags as an expr
+    
+    for (User::const_op_iterator OI = CE->op_begin(); OI != CE->op_end(); ++OI){
+      int Slot = Table.getValSlot(*OI);
+      assert(Slot != -1 && "Unknown constant used in ConstantExpr!!");
+      output_vbr((unsigned)Slot, Out);
+      Slot = Table.getValSlot((*OI)->getType());
+      output_vbr((unsigned)Slot, Out);
+    }
+    return false;
+  }
+  else
+    output_vbr((unsigned)0, Out);       // flag as not a ConstantExpr
+  
   switch (CPV->getType()->getPrimitiveID()) {
   case Type::BoolTyID:    // Boolean Types
     if (cast<const ConstantBool>(CPV)->getValue())
@@ -125,7 +146,8 @@ bool BytecodeWriter::outputConstant(const Constant *CPV) {
   case Type::ArrayTyID: {
     const ConstantArray *CPA = cast<const ConstantArray>(CPV);
     unsigned size = CPA->getValues().size();
-    assert(size == cast<ArrayType>(CPA->getType())->getNumElements() && "ConstantArray out of whack!");
+    assert(size == cast<ArrayType>(CPA->getType())->getNumElements()
+           && "ConstantArray out of whack!");
     for (unsigned i = 0; i < size; i++) {
       int Slot = Table.getValSlot(CPA->getOperand(i));
       assert(Slot != -1 && "Constant used but not available!!");
