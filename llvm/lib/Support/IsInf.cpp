@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "Config/config.h"
+#include "llvm/Config/config.h"
 #if HAVE_ISINF_IN_MATH_H
 # include <math.h>
 #elif HAVE_ISINF_IN_CMATH

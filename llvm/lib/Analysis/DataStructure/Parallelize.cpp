@@ -46,10 +46,10 @@
 #include "llvm/Analysis/DataStructure/DSGraph.h"
 #include "llvm/Support/InstVisitor.h"
 #include "llvm/Transforms/Utils/Local.h"
-#include "Support/Statistic.h"
-#include "Support/STLExtras.h"
-#include "Support/hash_set"
-#include "Support/hash_map"
+#include "llvm/ADT/Statistic.h"
+#include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/hash_set"
+#include "llvm/ADT/hash_map"
 #include <functional>
 #include <algorithm>
 using namespace llvm;

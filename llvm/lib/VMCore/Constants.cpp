@@ -18,7 +18,7 @@
 #include "llvm/Instructions.h"
 #include "llvm/SymbolTable.h"
 #include "llvm/Module.h"
-#include "Support/StringExtras.h"
+#include "llvm/ADT/StringExtras.h"
 #include <algorithm>
 #include <iostream>
 using namespace llvm;

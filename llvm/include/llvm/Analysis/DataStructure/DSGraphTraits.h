@@ -17,9 +17,9 @@
 #define LLVM_ANALYSIS_DSGRAPHTRAITS_H
 
 #include "llvm/Analysis/DataStructure/DSGraph.h"
-#include "Support/GraphTraits.h"
-#include "Support/iterator"
-#include "Support/STLExtras.h"
+#include "llvm/ADT/GraphTraits.h"
+#include "llvm/ADT/iterator"
+#include "llvm/ADT/STLExtras.h"
 
 namespace llvm {
 

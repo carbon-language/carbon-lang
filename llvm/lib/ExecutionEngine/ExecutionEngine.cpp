@@ -23,9 +23,9 @@
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
 #include "llvm/ExecutionEngine/GenericValue.h"
 #include "llvm/Target/TargetData.h"
-#include "Support/Debug.h"
-#include "Support/Statistic.h"
-#include "Support/DynamicLinker.h"
+#include "llvm/Support/Debug.h"
+#include "llvm/ADT/Statistic.h"
+#include "llvm/Support/DynamicLinker.h"
 using namespace llvm;
 
 namespace {

@@ -18,7 +18,7 @@
 #include "Configuration.h"
 #include "llvm/Pass.h"
 #include "llvm/System/Signals.h"
-#include "Support/CommandLine.h"
+#include "llvm/Support/CommandLine.h"
 #include <iostream>
 
 using namespace llvm;

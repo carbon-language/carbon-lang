@@ -21,7 +21,7 @@
 #include "llvm/Assembly/Parser.h"
 #include "llvm/Bytecode/Writer.h"
 #include "llvm/Analysis/Verifier.h"
-#include "Support/CommandLine.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/System/Signals.h"
 #include <fstream>
 #include <iostream>

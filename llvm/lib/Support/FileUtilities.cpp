@@ -12,14 +12,14 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "Support/FileUtilities.h"
-#include "Support/DataTypes.h"
-#include "Config/unistd.h"
-#include "Config/fcntl.h"
-#include "Config/sys/types.h"
-#include "Config/sys/stat.h"
-#include "Config/sys/mman.h"
-#include "Config/alloca.h"
+#include "llvm/Support/FileUtilities.h"
+#include "llvm/Support/DataTypes.h"
+#include "llvm/Config/unistd.h"
+#include "llvm/Config/fcntl.h"
+#include "llvm/Config/sys/types.h"
+#include "llvm/Config/sys/stat.h"
+#include "llvm/Config/sys/mman.h"
+#include "llvm/Config/alloca.h"
 #include <cerrno>
 #include <cstdio>
 #include <fstream>

@@ -16,7 +16,7 @@
 #include "CodeEmitterGen.h"
 #include "CodeGenTarget.h"
 #include "Record.h"
-#include "Support/Debug.h"
+#include "llvm/Support/Debug.h"
 using namespace llvm;
 
 void CodeEmitterGen::run(std::ostream &o) {

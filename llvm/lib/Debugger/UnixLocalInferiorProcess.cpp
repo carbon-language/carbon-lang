@@ -32,8 +32,8 @@
 #include "llvm/CodeGen/IntrinsicLowering.h"
 #include "llvm/ExecutionEngine/GenericValue.h"
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
-#include "Support/FileUtilities.h"
-#include "Support/StringExtras.h"
+#include "llvm/Support/FileUtilities.h"
+#include "llvm/ADT/StringExtras.h"
 #include <cerrno>
 #include <csignal>
 #include <unistd.h>        // Unix-specific debugger support

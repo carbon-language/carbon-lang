@@ -20,7 +20,7 @@
 #ifndef LLVM_INTERVAL_H
 #define LLVM_INTERVAL_H
 
-#include "Support/GraphTraits.h"
+#include "llvm/ADT/GraphTraits.h"
 #include <vector>
 #include <iosfwd>
 

@@ -18,9 +18,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "Support/DynamicLinker.h"
-#include "Config/dlfcn.h"
-#include "Config/windows.h"
+#include "llvm/Support/DynamicLinker.h"
+#include "llvm/Config/dlfcn.h"
+#include "llvm/Config/windows.h"
 #include <cassert>
 #include <vector>
 using namespace llvm;

@@ -17,8 +17,8 @@
 #include "llvm/Bytecode/Reader.h"
 #include "llvm/Bytecode/Writer.h"
 #include "llvm/Support/Linker.h"
-#include "Support/CommandLine.h"
-#include "Support/FileUtilities.h"
+#include "llvm/Support/CommandLine.h"
+#include "llvm/Support/FileUtilities.h"
 #include "llvm/System/Signals.h"
 #include <fstream>
 #include <iostream>

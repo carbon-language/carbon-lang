@@ -24,7 +24,7 @@
 #include "llvm/Instruction.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/InstIterator.h"
-#include "Support/Statistic.h"
+#include "llvm/ADT/Statistic.h"
 #include <set>
 using namespace llvm;
 

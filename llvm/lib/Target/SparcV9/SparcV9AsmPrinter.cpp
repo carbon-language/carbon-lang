@@ -28,8 +28,8 @@
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/Support/Mangler.h"
-#include "Support/StringExtras.h"
-#include "Support/Statistic.h"
+#include "llvm/ADT/StringExtras.h"
+#include "llvm/ADT/Statistic.h"
 #include "SparcV9Internals.h"
 #include "MachineFunctionInfo.h"
 #include <string>

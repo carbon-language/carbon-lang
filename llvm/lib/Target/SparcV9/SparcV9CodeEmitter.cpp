@@ -30,15 +30,15 @@
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetData.h"
-#include "Support/Debug.h"
-#include "Support/hash_set"
-#include "Support/Statistic.h"
+#include "llvm/Support/Debug.h"
+#include "llvm/ADT/hash_set"
+#include "llvm/ADT/Statistic.h"
 #include "SparcV9Internals.h"
 #include "SparcV9TargetMachine.h"
 #include "SparcV9RegInfo.h"
 #include "SparcV9CodeEmitter.h"
 #include "MachineFunctionInfo.h"
-#include "Config/alloca.h"
+#include "llvm/Config/alloca.h"
 
 namespace llvm {
 

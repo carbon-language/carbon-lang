@@ -17,8 +17,8 @@
 #include "llvm/Constants.h"
 #include "llvm/Instructions.h"
 #include "llvm/Analysis/Expressions.h"
-#include "Support/STLExtras.h"
-#include "Support/Debug.h"
+#include "llvm/ADT/STLExtras.h"
+#include "llvm/Support/Debug.h"
 #include <algorithm>
 using namespace llvm;
 

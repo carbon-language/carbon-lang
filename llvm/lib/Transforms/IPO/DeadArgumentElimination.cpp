@@ -24,9 +24,9 @@
 #include "llvm/Constant.h"
 #include "llvm/Instructions.h"
 #include "llvm/Support/CallSite.h"
-#include "Support/Debug.h"
-#include "Support/Statistic.h"
-#include "Support/iterator"
+#include "llvm/Support/Debug.h"
+#include "llvm/ADT/Statistic.h"
+#include "llvm/ADT/iterator"
 #include <set>
 using namespace llvm;
 

@@ -15,8 +15,8 @@
 #include "llvm/InstrTypes.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
-#include "Support/STLExtras.h"
-#include "Support/LeakDetector.h"
+#include "llvm/ADT/STLExtras.h"
+#include "llvm/Support/LeakDetector.h"
 #include "SymbolTableListTraitsImpl.h"
 #include <algorithm>
 #include <cstdarg>

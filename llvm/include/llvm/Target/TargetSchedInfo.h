@@ -17,7 +17,7 @@
 #define LLVM_TARGET_TARGETSCHEDINFO_H
 
 #include "llvm/Target/TargetInstrInfo.h"
-#include "Support/hash_map"
+#include "llvm/ADT/hash_map"
 #include <string>
 
 namespace llvm {

@@ -15,7 +15,7 @@
 #define LLVM_TARGET_TARGETINSTRINFO_H
 
 #include "llvm/CodeGen/MachineBasicBlock.h"
-#include "Support/DataTypes.h"
+#include "llvm/Support/DataTypes.h"
 #include <vector>
 #include <cassert>
 

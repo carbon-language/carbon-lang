@@ -25,11 +25,11 @@
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/Support/Mangler.h"
-#include "Support/CommandLine.h"
-#include "Support/Debug.h"
-#include "Support/MathExtras.h"
-#include "Support/Statistic.h"
-#include "Support/StringExtras.h"
+#include "llvm/Support/CommandLine.h"
+#include "llvm/Support/Debug.h"
+#include "llvm/Support/MathExtras.h"
+#include "llvm/ADT/Statistic.h"
+#include "llvm/ADT/StringExtras.h"
 #include <set>
 
 namespace llvm {

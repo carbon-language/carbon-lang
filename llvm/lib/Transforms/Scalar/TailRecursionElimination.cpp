@@ -51,7 +51,7 @@
 #include "llvm/Instructions.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/CFG.h"
-#include "Support/Statistic.h"
+#include "llvm/ADT/Statistic.h"
 using namespace llvm;
 
 namespace {

@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "Support/LeakDetector.h"
+#include "llvm/Support/LeakDetector.h"
 #include "llvm/Value.h"
 #include <iostream>
 #include <set>

@@ -15,7 +15,7 @@
 #include "llvm/SymbolTable.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
-#include "Support/StringExtras.h"
+#include "llvm/ADT/StringExtras.h"
 #include <algorithm>
 #include <iostream>
 

@@ -20,9 +20,9 @@
 #include "llvm/Module.h"
 #include "llvm/Debugger/SourceFile.h"
 #include "llvm/Debugger/SourceLanguage.h"
-#include "Support/FileUtilities.h"
-#include "Support/SlowOperationInformer.h"
-#include "Support/STLExtras.h"
+#include "llvm/Support/FileUtilities.h"
+#include "llvm/Support/SlowOperationInformer.h"
+#include "llvm/ADT/STLExtras.h"
 #include <iostream>
 
 using namespace llvm;

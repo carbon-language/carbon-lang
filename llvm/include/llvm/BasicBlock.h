@@ -30,7 +30,7 @@
 
 #include "llvm/Instruction.h"
 #include "llvm/SymbolTableListTraits.h"
-#include "Support/ilist"
+#include "llvm/ADT/ilist"
 
 namespace llvm {
 

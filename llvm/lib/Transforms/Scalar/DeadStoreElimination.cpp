@@ -22,8 +22,8 @@
 #include "llvm/Analysis/AliasSetTracker.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Transforms/Utils/Local.h"
-#include "Support/SetVector.h"
-#include "Support/Statistic.h"
+#include "llvm/ADT/SetVector.h"
+#include "llvm/ADT/Statistic.h"
 using namespace llvm;
 
 namespace {

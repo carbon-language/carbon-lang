@@ -16,11 +16,12 @@
 #include "BugDriver.h"
 #include "llvm/Support/PassNameParser.h"
 #include "llvm/Support/ToolRunner.h"
-#include "Support/CommandLine.h"
+#include "llvm/System/SysConfig.h"
+#include "llvm/Support/CommandLine.h"
+#include "llvm/Support/PluginLoader.h"
 #include "llvm/System/Signals.h"
-#include "Support/PluginLoader.h"
-#include "Config/unistd.h"
-#include <sys/resource.h>
+#include "llvm/Config/unistd.h"
+//#include <sys/resource.h>
 using namespace llvm;
 
 static cl::list<std::string>
@@ -45,14 +46,8 @@ int main(int argc, char **argv) {
   D.addPasses(PassList.begin(), PassList.end());
 
   // Bugpoint has the ability of generating a plethora of core files, so to
-  // avoid filling up the disk, set the max core file size to 0.
-  struct rlimit rlim;
-  rlim.rlim_cur = rlim.rlim_max = 0;
-  int res = setrlimit(RLIMIT_CORE, &rlim);
-  if (res < 0) {
-    // setrlimit() may have failed, but we're not going to let that stop us
-    perror("setrlimit: RLIMIT_CORE");
-  }
+  // avoid filling up the disk, we prevent it
+  sys::PreventCoreFiles();
 
   try {
     return D.run();

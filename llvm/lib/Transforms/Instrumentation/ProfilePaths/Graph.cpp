@@ -14,7 +14,7 @@
 
 #include "Graph.h"
 #include "llvm/Instructions.h"
-#include "Support/Debug.h"
+#include "llvm/Support/Debug.h"
 #include <algorithm>
 
 using std::vector;

@@ -23,8 +23,8 @@
 #include "llvm/SymbolTable.h"
 #include "llvm/Type.h"
 #include "llvm/Analysis/ConstantsScanner.h"
-#include "Support/PostOrderIterator.h"
-#include "Support/STLExtras.h"
+#include "llvm/ADT/PostOrderIterator.h"
+#include "llvm/ADT/STLExtras.h"
 #include <algorithm>
 #include <functional>
 

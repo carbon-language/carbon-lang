@@ -43,9 +43,9 @@
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/Support/InstIterator.h"
 #include "llvm/Target/TargetInstrInfo.h"
-#include "Support/CommandLine.h"
-#include "Support/SetOperations.h"
-#include "Support/STLExtras.h"
+#include "llvm/Support/CommandLine.h"
+#include "llvm/ADT/SetOperations.h"
+#include "llvm/ADT/STLExtras.h"
 #include <cmath>
 #include <iostream>
 

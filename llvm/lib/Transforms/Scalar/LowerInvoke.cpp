@@ -41,8 +41,8 @@
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
-#include "Support/Statistic.h"
-#include "Support/CommandLine.h"
+#include "llvm/ADT/Statistic.h"
+#include "llvm/Support/CommandLine.h"
 #include <csetjmp>
 using namespace llvm;
 

@@ -23,8 +23,8 @@
 #include "llvm/Target/TargetFrameInfo.h"
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
-#include "Support/LeakDetector.h"
-#include "Support/GraphWriter.h"
+#include "llvm/Support/LeakDetector.h"
+#include "llvm/Support/GraphWriter.h"
 #include <fstream>
 #include <iostream>
 #include <sstream>

@@ -27,10 +27,10 @@
 #include "llvm/Target/MRegisterInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
-#include "Support/CommandLine.h"
-#include "Support/Debug.h"
-#include "Support/Statistic.h"
-#include "Support/STLExtras.h"
+#include "llvm/Support/CommandLine.h"
+#include "llvm/Support/Debug.h"
+#include "llvm/ADT/Statistic.h"
+#include "llvm/ADT/STLExtras.h"
 #include "VirtRegMap.h"
 #include <cmath>
 

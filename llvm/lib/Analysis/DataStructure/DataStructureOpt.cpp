@@ -16,7 +16,7 @@
 #include "llvm/Analysis/DataStructure/DSGraph.h"
 #include "llvm/Module.h"
 #include "llvm/Constant.h"
-#include "Support/Statistic.h"
+#include "llvm/ADT/Statistic.h"
 using namespace llvm;
 
 namespace {

@@ -19,7 +19,7 @@
 
 #include "llvm/AbstractTypeUser.h"
 #include "llvm/Use.h"
-#include "Support/Casting.h"
+#include "llvm/Support/Casting.h"
 #include <string>
 
 namespace llvm {

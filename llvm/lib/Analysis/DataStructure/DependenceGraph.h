@@ -24,7 +24,7 @@
 #ifndef LLVM_ANALYSIS_DEPENDENCEGRAPH_H
 #define LLVM_ANALYSIS_DEPENDENCEGRAPH_H
 
-#include "Support/hash_map"
+#include "llvm/ADT/hash_map"
 #include <cassert>
 #include <iosfwd>
 #include <utility>

@@ -20,8 +20,8 @@
 #include "llvm/Module.h"
 #include "llvm/PassManager.h"
 #include "llvm/Pass.h"
-#include "Support/CommandLine.h"
-#include "Support/PluginLoader.h"
+#include "llvm/Support/CommandLine.h"
+#include "llvm/Support/PluginLoader.h"
 #include "llvm/System/Signals.h"
 #include <fstream>
 #include <iostream>

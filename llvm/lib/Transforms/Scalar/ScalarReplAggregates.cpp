@@ -29,9 +29,9 @@
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Transforms/Utils/PromoteMemToReg.h"
-#include "Support/Debug.h"
-#include "Support/Statistic.h"
-#include "Support/StringExtras.h"
+#include "llvm/Support/Debug.h"
+#include "llvm/ADT/Statistic.h"
+#include "llvm/ADT/StringExtras.h"
 using namespace llvm;
 
 namespace {

@@ -23,7 +23,7 @@
 #include "llvm/Analysis/CFGPrinter.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Support/CFG.h"
-#include "Support/GraphWriter.h"
+#include "llvm/Support/GraphWriter.h"
 #include <sstream>
 #include <fstream>
 using namespace llvm;

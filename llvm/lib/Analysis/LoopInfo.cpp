@@ -20,7 +20,7 @@
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Support/CFG.h"
-#include "Support/DepthFirstIterator.h"
+#include "llvm/ADT/DepthFirstIterator.h"
 #include <algorithm>
 #include <iostream>
 

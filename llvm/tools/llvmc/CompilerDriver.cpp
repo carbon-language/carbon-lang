@@ -17,9 +17,9 @@
 #include "llvm/Module.h"
 #include "llvm/Bytecode/Reader.h"
 #include "llvm/System/Signals.h"
-#include "Support/FileUtilities.h"
-#include "Support/SetVector.h"
-#include "Support/StringExtras.h"
+#include "llvm/Support/FileUtilities.h"
+#include "llvm/ADT/SetVector.h"
+#include "llvm/ADT/StringExtras.h"
 #include <iostream>
 
 using namespace llvm;

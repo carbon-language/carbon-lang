@@ -16,10 +16,10 @@
 //===          is guaranteed to work on *all* UNIX variants.
 //===----------------------------------------------------------------------===//
 
+#include <llvm/Config/config.h>
 #include "Unix.h"
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <Config/config.h>
 #ifdef HAVE_SYS_WAIT_H
 #include <sys/wait.h>
 #endif

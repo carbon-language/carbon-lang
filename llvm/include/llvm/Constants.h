@@ -17,7 +17,7 @@
 
 #include "llvm/Constant.h"
 #include "llvm/Type.h"
-#include "Support/DataTypes.h"
+#include "llvm/Support/DataTypes.h"
 
 namespace llvm {
 

@@ -20,7 +20,7 @@
 #include "llvm/PassManager.h"
 #include "llvm/Bytecode/Reader.h"
 #include "llvm/Assembly/PrintModulePass.h"
-#include "Support/CommandLine.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/System/Signals.h"
 #include <fstream>
 #include <memory>

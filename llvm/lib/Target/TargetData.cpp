@@ -21,7 +21,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Constants.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
-#include "Support/MathExtras.h"
+#include "llvm/Support/MathExtras.h"
 using namespace llvm;
 
 // Handle the Pass registration stuff necessary to use TargetData's.

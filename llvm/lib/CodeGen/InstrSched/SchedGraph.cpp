@@ -22,7 +22,7 @@
 #include "../../Target/SparcV9/MachineCodeForInstruction.h"
 #include "../../Target/SparcV9/SparcV9RegInfo.h"
 #include "../../Target/SparcV9/SparcV9InstrInfo.h"
-#include "Support/STLExtras.h"
+#include "llvm/ADT/STLExtras.h"
 #include <iostream>
 
 namespace llvm {

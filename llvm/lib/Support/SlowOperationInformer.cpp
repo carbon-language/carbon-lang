@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "Support/SlowOperationInformer.h"
-#include "Config/config.h"     // Get the signal handler return type
+#include "llvm/Support/SlowOperationInformer.h"
+#include "llvm/Config/config.h"     // Get the signal handler return type
 #include <iostream>
 #include <sstream>
 #include <signal.h>

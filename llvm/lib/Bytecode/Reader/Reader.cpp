@@ -24,7 +24,7 @@
 #include "llvm/SymbolTable.h"
 #include "llvm/Bytecode/Format.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
-#include "Support/StringExtras.h"
+#include "llvm/ADT/StringExtras.h"
 #include <sstream>
 using namespace llvm;
 
@@ -428,14 +428,20 @@ Value * BytecodeReader::getValue(unsigned type, unsigned oNum, bool Create) {
 
   if (!Create) return 0;  // Do not create a placeholder?
 
+  // Did we already create a place holder?
   std::pair<unsigned,unsigned> KeyValue(type, oNum);
   ForwardReferenceMap::iterator I = ForwardReferences.lower_bound(KeyValue);
   if (I != ForwardReferences.end() && I->first == KeyValue)
     return I->second;   // We have already created this placeholder
 
-  Value *Val = new Argument(getType(type));
-  ForwardReferences.insert(I, std::make_pair(KeyValue, Val));
-  return Val;
+  // If the type exists (it should)
+  if (const Type* Ty = getType(type)) {
+    // Create the place holder
+    Value *Val = new Argument(Ty);
+    ForwardReferences.insert(I, std::make_pair(KeyValue, Val));
+    return Val;
+  }
+  throw "Can't create placeholder for value of type slot #" + utostr(type);
 }
 
 /// This is just like getValue, but when a compaction table is in use, it 

@@ -18,9 +18,9 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Support/CFG.h"
-#include "Support/PostOrderIterator.h"
-#include "Support/SetOperations.h"
-#include "Support/CommandLine.h"
+#include "llvm/ADT/PostOrderIterator.h"
+#include "llvm/ADT/SetOperations.h"
+#include "llvm/Support/CommandLine.h"
 #include "BBLiveVar.h"
 #include <iostream>
 

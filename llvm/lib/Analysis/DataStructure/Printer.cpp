@@ -17,9 +17,9 @@
 #include "llvm/Module.h"
 #include "llvm/Constants.h"
 #include "llvm/Assembly/Writer.h"
-#include "Support/CommandLine.h"
-#include "Support/GraphWriter.h"
-#include "Support/Statistic.h"
+#include "llvm/Support/CommandLine.h"
+#include "llvm/Support/GraphWriter.h"
+#include "llvm/ADT/Statistic.h"
 #include <fstream>
 #include <sstream>
 using namespace llvm;

@@ -24,9 +24,9 @@
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
-#include "Support/CommandLine.h"
-#include "Support/Debug.h"
-#include "Support/StringExtras.h"
+#include "llvm/Support/CommandLine.h"
+#include "llvm/Support/Debug.h"
+#include "llvm/ADT/StringExtras.h"
 #include <algorithm>
 #include <set>
 using namespace llvm;

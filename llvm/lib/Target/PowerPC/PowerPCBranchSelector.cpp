@@ -22,7 +22,7 @@
 #include "PPC32InstrInfo.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineFunction.h"
-#include "Support/Debug.h"
+#include "llvm/Support/Debug.h"
 #include <map>
 using namespace llvm;
 

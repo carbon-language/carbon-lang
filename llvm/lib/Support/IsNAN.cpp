@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "Config/config.h"
+#include "llvm/Config/config.h"
 #if HAVE_ISNAN_IN_MATH_H
 # include <math.h>
 #elif HAVE_ISNAN_IN_CMATH

@@ -17,8 +17,8 @@
 #include "llvm/Target/MRegisterInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
-#include "Support/Statistic.h"
-#include "Support/STLExtras.h"
+#include "llvm/ADT/Statistic.h"
+#include "llvm/ADT/STLExtras.h"
 
 using namespace llvm;
 

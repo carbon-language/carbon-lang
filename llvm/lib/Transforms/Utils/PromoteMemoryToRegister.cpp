@@ -23,7 +23,7 @@
 #include "llvm/Constant.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/StableBasicBlockNumbering.h"
-#include "Support/StringExtras.h"
+#include "llvm/ADT/StringExtras.h"
 using namespace llvm;
 
 /// isAllocaPromotable - Return true if this alloca is legal for promotion.

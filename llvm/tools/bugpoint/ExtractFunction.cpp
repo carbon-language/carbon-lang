@@ -24,9 +24,9 @@
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Transforms/Utils/FunctionUtils.h"
 #include "llvm/Target/TargetData.h"
-#include "Support/CommandLine.h"
-#include "Support/Debug.h"
-#include "Support/FileUtilities.h"
+#include "llvm/Support/CommandLine.h"
+#include "llvm/Support/Debug.h"
+#include "llvm/Support/FileUtilities.h"
 #include <set>
 using namespace llvm;
 

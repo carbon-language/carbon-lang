@@ -13,7 +13,7 @@
 #define DEBUG_TYPE "ModuloSched"
 
 #include "MSSchedule.h"
-#include "Support/Debug.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Target/TargetSchedInfo.h"
 
 using namespace llvm;

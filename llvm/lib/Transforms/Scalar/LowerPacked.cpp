@@ -19,7 +19,7 @@
 #include "llvm/Instructions.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/InstVisitor.h"
-#include "Support/StringExtras.h"
+#include "llvm/ADT/StringExtras.h"
 #include <algorithm>
 #include <map>
 #include <iostream>

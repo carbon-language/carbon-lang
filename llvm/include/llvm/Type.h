@@ -35,9 +35,9 @@
 #define LLVM_TYPE_H
 
 #include "AbstractTypeUser.h"
-#include "Support/Casting.h"
-#include "Support/GraphTraits.h"
-#include "Support/iterator"
+#include "llvm/Support/Casting.h"
+#include "llvm/ADT/GraphTraits.h"
+#include "llvm/ADT/iterator"
 #include <vector>
 
 namespace llvm {

@@ -23,7 +23,7 @@
 #include "llvm/Module.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Pass.h"
-#include "Support/Statistic.h"
+#include "llvm/ADT/Statistic.h"
 #include <set>
 using namespace llvm;
 

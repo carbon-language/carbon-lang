@@ -14,7 +14,7 @@
 #include "llvm/Function.h"
 #include "llvm/SymbolTable.h"
 #include "llvm/Type.h"
-#include "Support/LeakDetector.h"
+#include "llvm/Support/LeakDetector.h"
 using namespace llvm;
 
 void Instruction::init()

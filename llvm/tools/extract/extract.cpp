@@ -18,7 +18,7 @@
 #include "llvm/Bytecode/WriteBytecodePass.h"
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Target/TargetData.h"
-#include "Support/CommandLine.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/System/Signals.h"
 #include <memory>
 #include <fstream>

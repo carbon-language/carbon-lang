@@ -25,11 +25,11 @@
 #include "llvm/Analysis/DataStructure/DSGraph.h"
 #include "llvm/Support/InstVisitor.h"
 #include "llvm/Support/CFG.h"
-#include "Support/SCCIterator.h"
-#include "Support/Statistic.h"
-#include "Support/STLExtras.h"
-#include "Support/hash_map"
-#include "Support/hash_set"
+#include "llvm/ADT/SCCIterator.h"
+#include "llvm/ADT/Statistic.h"
+#include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/hash_map"
+#include "llvm/ADT/hash_set"
 
 namespace llvm {
 

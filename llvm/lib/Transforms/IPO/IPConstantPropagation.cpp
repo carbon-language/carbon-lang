@@ -20,7 +20,7 @@
 #include "llvm/Pass.h"
 #include "llvm/Constants.h"
 #include "llvm/Support/CallSite.h"
-#include "Support/Statistic.h"
+#include "llvm/ADT/Statistic.h"
 using namespace llvm;
 
 namespace {

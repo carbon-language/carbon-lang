@@ -1544,7 +1544,7 @@ ac_configure="$SHELL $ac_aux_dir/configure" # This should be Cygnus configure.
 
 if test ${srcdir} != "."
 then
-	if test -f ${srcdir}/include/Config/config.h
+	if test -f ${srcdir}/include/llvm/Config/config.h
 	then
 		{ { echo "$as_me:$LINENO: error: Already configured in ${srcdir}" >&5
 echo "$as_me: error: Already configured in ${srcdir}" >&2;}
@@ -1566,10 +1566,10 @@ subdirs="$subdirs projects/${i}"
   fi
 done
 
-          ac_config_headers="$ac_config_headers include/Config/config.h"
+          ac_config_headers="$ac_config_headers include/llvm/Config/config.h"
 
 
-                                                            ac_config_files="$ac_config_files Makefile.config include/Support/DataTypes.h include/Support/ThreadSupport.h include/Support/hash_map include/Support/hash_set include/Support/iterator"
+                                                            ac_config_files="$ac_config_files Makefile.config include/llvm/Support/DataTypes.h include/llvm/Support/ThreadSupport.h include/llvm/ADT/hash_map include/llvm/ADT/hash_set include/llvm/ADT/iterator"
 
 
           ac_config_commands="$ac_config_commands Makefile"
@@ -24450,11 +24450,11 @@ do
   case "$ac_config_target" in
   # Handling of arguments.
   "Makefile.config" ) CONFIG_FILES="$CONFIG_FILES Makefile.config" ;;
-  "include/Support/DataTypes.h" ) CONFIG_FILES="$CONFIG_FILES include/Support/DataTypes.h" ;;
-  "include/Support/ThreadSupport.h" ) CONFIG_FILES="$CONFIG_FILES include/Support/ThreadSupport.h" ;;
-  "include/Support/hash_map" ) CONFIG_FILES="$CONFIG_FILES include/Support/hash_map" ;;
-  "include/Support/hash_set" ) CONFIG_FILES="$CONFIG_FILES include/Support/hash_set" ;;
-  "include/Support/iterator" ) CONFIG_FILES="$CONFIG_FILES include/Support/iterator" ;;
+  "include/llvm/Support/DataTypes.h" ) CONFIG_FILES="$CONFIG_FILES include/llvm/Support/DataTypes.h" ;;
+  "include/llvm/Support/ThreadSupport.h" ) CONFIG_FILES="$CONFIG_FILES include/llvm/Support/ThreadSupport.h" ;;
+  "include/llvm/ADT/hash_map" ) CONFIG_FILES="$CONFIG_FILES include/llvm/ADT/hash_map" ;;
+  "include/llvm/ADT/hash_set" ) CONFIG_FILES="$CONFIG_FILES include/llvm/ADT/hash_set" ;;
+  "include/llvm/ADT/iterator" ) CONFIG_FILES="$CONFIG_FILES include/llvm/ADT/iterator" ;;
   "lib/System/platform" ) CONFIG_LINKS="$CONFIG_LINKS lib/System/platform:lib/System/$platform_type" ;;
   "Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS Makefile" ;;
   "Makefile.common" ) CONFIG_COMMANDS="$CONFIG_COMMANDS Makefile.common" ;;
@@ -24507,7 +24507,7 @@ do
   "tools/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS tools/Makefile" ;;
   "utils/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS utils/Makefile" ;;
   "projects/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS projects/Makefile" ;;
-  "include/Config/config.h" ) CONFIG_HEADERS="$CONFIG_HEADERS include/Config/config.h" ;;
+  "include/llvm/Config/config.h" ) CONFIG_HEADERS="$CONFIG_HEADERS include/llvm/Config/config.h" ;;
   *) { { echo "$as_me:$LINENO: error: invalid argument: $ac_config_target" >&5
 echo "$as_me: error: invalid argument: $ac_config_target" >&2;}
    { (exit 1); exit 1; }; };;

@@ -14,10 +14,10 @@
 
 #include "BugDriver.h"
 #include "llvm/Support/ToolRunner.h"
-#include "Support/CommandLine.h"
-#include "Support/Debug.h"
-#include "Support/FileUtilities.h"
-#include "Support/SystemUtils.h"
+#include "llvm/Support/CommandLine.h"
+#include "llvm/Support/Debug.h"
+#include "llvm/Support/FileUtilities.h"
+#include "llvm/Support/SystemUtils.h"
 #include <fstream>
 using namespace llvm;
 

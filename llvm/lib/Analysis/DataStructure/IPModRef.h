@@ -47,8 +47,8 @@
 #define LLVM_ANALYSIS_IPMODREF_H
 
 #include "llvm/Pass.h"
-#include "Support/BitSetVector.h"
-#include "Support/hash_map"
+#include "llvm/ADT/BitSetVector.h"
+#include "llvm/ADT/hash_map"
 
 namespace llvm {
 

@@ -46,8 +46,8 @@
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Transforms/Utils/Local.h"
-#include "Support/CommandLine.h"
-#include "Support/Statistic.h"
+#include "llvm/Support/CommandLine.h"
+#include "llvm/ADT/Statistic.h"
 using namespace llvm;
 
 namespace {

@@ -20,8 +20,8 @@
 #include "llvm/CodeGen/LiveVariables.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
-#include "Support/DenseMap.h"
-#include "Support/STLExtras.h"
+#include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/STLExtras.h"
 using namespace llvm;
 
 namespace {

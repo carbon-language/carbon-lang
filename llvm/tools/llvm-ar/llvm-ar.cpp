@@ -13,8 +13,8 @@
 
 #include "llvm/Module.h"
 #include "llvm/Bytecode/Reader.h"
-#include "Support/CommandLine.h"
-#include "Support/FileUtilities.h"
+#include "llvm/Support/CommandLine.h"
+#include "llvm/Support/FileUtilities.h"
 #include "llvm/System/Signals.h"
 #include <string>
 #include <fstream>

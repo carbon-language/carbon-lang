@@ -17,8 +17,8 @@
 #include "CodeGenTarget.h"
 #include "CodeGenRegisters.h"
 #include "Record.h"
-#include "Support/StringExtras.h"
-#include "Support/STLExtras.h"
+#include "llvm/ADT/StringExtras.h"
+#include "llvm/ADT/STLExtras.h"
 #include <set>
 using namespace llvm;
 

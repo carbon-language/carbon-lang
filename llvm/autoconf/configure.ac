@@ -8,7 +8,7 @@ dnl Quit if the source directory has already been configured.
 dnl NOTE: This relies upon undocumented autoconf behavior.
 if test ${srcdir} != "."
 then
-	if test -f ${srcdir}/include/Config/config.h
+	if test -f ${srcdir}/include/llvm/Config/config.h
 	then
 		AC_MSG_ERROR([Already configured in ${srcdir}])
 	fi
@@ -27,15 +27,15 @@ do
 done
 
 dnl Configure header files
-AC_CONFIG_HEADERS(include/Config/config.h)
+AC_CONFIG_HEADERS(include/llvm/Config/config.h)
 
 dnl Configure other output file
 AC_CONFIG_FILES(Makefile.config
- include/Support/DataTypes.h
- include/Support/ThreadSupport.h
- include/Support/hash_map
- include/Support/hash_set
- include/Support/iterator)
+ include/llvm/Support/DataTypes.h
+ include/llvm/Support/ThreadSupport.h
+ include/llvm/ADT/hash_map
+ include/llvm/ADT/hash_set
+ include/llvm/ADT/iterator)
 
 dnl Do special configuration of Makefiles
 AC_CONFIG_MAKEFILE(Makefile)

@@ -16,7 +16,7 @@
 //===          is guaranteed to work on all UNIX variants.
 //===----------------------------------------------------------------------===//
 
-#include "Config/config.h"     // Get autoconf configuration settings
+#include "llvm/Config/config.h"     // Get autoconf configuration settings
 #include <unistd.h>
 #include <cstdlib>
 #include <cstdio>

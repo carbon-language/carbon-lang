@@ -27,7 +27,7 @@
 #include "llvm/Support/CallSite.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Assembly/Writer.h"
-#include "Support/Statistic.h"
+#include "llvm/ADT/Statistic.h"
 #include <algorithm>
 using namespace llvm;
 

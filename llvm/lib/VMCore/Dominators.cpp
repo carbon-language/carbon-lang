@@ -17,8 +17,8 @@
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Assembly/Writer.h"
-#include "Support/DepthFirstIterator.h"
-#include "Support/SetOperations.h"
+#include "llvm/ADT/DepthFirstIterator.h"
+#include "llvm/ADT/SetOperations.h"
 #include <algorithm>
 using namespace llvm;
 

@@ -16,7 +16,7 @@
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/Support/CFG.h"
-#include "Support/SetOperations.h"
+#include "llvm/ADT/SetOperations.h"
 #include "../SparcV9Internals.h"
 #include <iostream>
 

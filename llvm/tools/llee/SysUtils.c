@@ -13,12 +13,12 @@
 \*===----------------------------------------------------------------------===*/
 
 #include "SysUtils.h"
-#include "Config/dlfcn.h"
-#include "Config/fcntl.h"
-#include "Config/unistd.h"
-#include "Config/sys/stat.h"
-#include "Config/sys/types.h"
-#include "Config/sys/wait.h"
+#include "llvm/Config/dlfcn.h"
+#include "llvm/Config/fcntl.h"
+#include "llvm/Config/unistd.h"
+#include "llvm/Config/sys/stat.h"
+#include "llvm/Config/sys/types.h"
+#include "llvm/Config/sys/wait.h"
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>

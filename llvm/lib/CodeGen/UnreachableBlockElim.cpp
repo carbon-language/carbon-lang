@@ -26,7 +26,7 @@
 #include "llvm/Function.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/CFG.h"
-#include "Support/DepthFirstIterator.h"
+#include "llvm/ADT/DepthFirstIterator.h"
 using namespace llvm;
 
 namespace {

@@ -23,7 +23,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
 #include "llvm/Target/TargetData.h"
-#include "Support/DynamicLinker.h"
+#include "llvm/Support/DynamicLinker.h"
 #include <cmath>
 #include <csignal>
 #include <map>

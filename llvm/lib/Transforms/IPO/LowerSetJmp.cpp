@@ -43,10 +43,10 @@
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/InstVisitor.h"
 #include "llvm/Transforms/Utils/Local.h"
-#include "Support/DepthFirstIterator.h"
-#include "Support/Statistic.h"
-#include "Support/StringExtras.h"
-#include "Support/VectorExtras.h"
+#include "llvm/ADT/DepthFirstIterator.h"
+#include "llvm/ADT/Statistic.h"
+#include "llvm/ADT/StringExtras.h"
+#include "llvm/ADT/VectorExtras.h"
 using namespace llvm;
 
 namespace {

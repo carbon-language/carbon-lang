@@ -16,8 +16,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "Config/config.h"
-#include "Support/CommandLine.h"
+#include "llvm/Config/config.h"
+#include "llvm/Support/CommandLine.h"
 #include <algorithm>
 #include <map>
 #include <set>

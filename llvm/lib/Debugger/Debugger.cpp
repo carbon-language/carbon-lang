@@ -16,7 +16,7 @@
 #include "llvm/ModuleProvider.h"
 #include "llvm/Bytecode/Reader.h"
 #include "llvm/Debugger/InferiorProcess.h"
-#include "Support/StringExtras.h"
+#include "llvm/ADT/StringExtras.h"
 using namespace llvm;
 
 /// Debugger constructor - Initialize the debugger to its initial, empty, state.

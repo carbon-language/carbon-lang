@@ -23,7 +23,7 @@
 #include "llvm/Bytecode/Writer.h"
 #include "llvm/Bytecode/Format.h"
 #include "llvm/Instruction.h"
-#include "Support/DataTypes.h"
+#include "llvm/Support/DataTypes.h"
 #include <string>
 #include <vector>
 

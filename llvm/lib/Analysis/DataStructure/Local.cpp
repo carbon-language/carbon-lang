@@ -21,9 +21,9 @@
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Support/InstVisitor.h"
 #include "llvm/Target/TargetData.h"
-#include "Support/CommandLine.h"
-#include "Support/Debug.h"
-#include "Support/Timer.h"
+#include "llvm/Support/CommandLine.h"
+#include "llvm/Support/Debug.h"
+#include "llvm/Support/Timer.h"
 
 // FIXME: This should eventually be a FunctionPass that is automatically
 // aggregated into a Pass.

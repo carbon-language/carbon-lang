@@ -14,7 +14,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "Support/GraphWriter.h"
+#include "llvm/Support/GraphWriter.h"
 #include "llvm/Pass.h"
 #include "llvm/Value.h"
 #include "llvm/Analysis/CallGraph.h"

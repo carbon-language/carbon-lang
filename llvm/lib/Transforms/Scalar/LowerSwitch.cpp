@@ -18,8 +18,8 @@
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
 #include "llvm/Pass.h"
-#include "Support/Debug.h"
-#include "Support/Statistic.h"
+#include "llvm/Support/Debug.h"
+#include "llvm/ADT/Statistic.h"
 using namespace llvm;
 
 namespace {

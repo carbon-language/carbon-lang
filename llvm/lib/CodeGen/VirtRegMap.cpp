@@ -22,11 +22,11 @@
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetInstrInfo.h"
-#include "Support/CommandLine.h"
-#include "Support/Debug.h"
-#include "Support/DenseMap.h"
-#include "Support/Statistic.h"
-#include "Support/STLExtras.h"
+#include "llvm/Support/CommandLine.h"
+#include "llvm/Support/Debug.h"
+#include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/Statistic.h"
+#include "llvm/ADT/STLExtras.h"
 
 using namespace llvm;
 

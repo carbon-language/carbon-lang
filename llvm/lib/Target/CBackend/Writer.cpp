@@ -32,9 +32,9 @@
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Support/InstVisitor.h"
 #include "llvm/Support/Mangler.h"
-#include "Support/StringExtras.h"
-#include "Support/MathExtras.h"
-#include "Config/config.h"
+#include "llvm/ADT/StringExtras.h"
+#include "llvm/Support/MathExtras.h"
+#include "llvm/Config/config.h"
 #include <algorithm>
 #include <iostream>
 #include <sstream>

@@ -18,7 +18,7 @@
 #include "llvm/Assembly/AsmAnnotationWriter.h"
 #include "llvm/Analysis/ProfileInfoLoader.h"
 #include "llvm/Bytecode/Reader.h"
-#include "Support/CommandLine.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/System/Signals.h"
 #include <cstdio>
 #include <iostream>

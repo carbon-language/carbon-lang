@@ -24,8 +24,8 @@
 #include "llvm/Target/TargetFrameInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
-#include "Support/CommandLine.h"
-#include "Support/STLExtras.h"
+#include "llvm/Support/CommandLine.h"
+#include "llvm/ADT/STLExtras.h"
 #include <iostream>
 
 using namespace llvm;

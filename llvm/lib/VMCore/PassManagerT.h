@@ -23,9 +23,9 @@
 #define LLVM_PASSMANAGER_T_H
 
 #include "llvm/Pass.h"
-#include "Support/CommandLine.h"
-#include "Support/LeakDetector.h"
-#include "Support/Timer.h"
+#include "llvm/Support/CommandLine.h"
+#include "llvm/Support/LeakDetector.h"
+#include "llvm/Support/Timer.h"
 #include <algorithm>
 #include <iostream>
 

@@ -20,7 +20,7 @@
 #include "llvm/Intrinsics.h"
 #include "llvm/Instructions.h"
 #include "llvm/Analysis/CallGraph.h"
-#include "Support/Statistic.h"
+#include "llvm/ADT/Statistic.h"
 #include <set>
 using namespace llvm;
 

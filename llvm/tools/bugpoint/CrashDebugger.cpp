@@ -26,7 +26,7 @@
 #include "llvm/Support/ToolRunner.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/Utils/Cloning.h"
-#include "Support/FileUtilities.h"
+#include "llvm/Support/FileUtilities.h"
 #include <fstream>
 #include <set>
 using namespace llvm;

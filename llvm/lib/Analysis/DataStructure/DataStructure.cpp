@@ -18,12 +18,12 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Assembly/Writer.h"
-#include "Support/CommandLine.h"
-#include "Support/Debug.h"
-#include "Support/DepthFirstIterator.h"
-#include "Support/STLExtras.h"
-#include "Support/Statistic.h"
-#include "Support/Timer.h"
+#include "llvm/Support/CommandLine.h"
+#include "llvm/Support/Debug.h"
+#include "llvm/ADT/DepthFirstIterator.h"
+#include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/Statistic.h"
+#include "llvm/Support/Timer.h"
 #include <algorithm>
 using namespace llvm;
 

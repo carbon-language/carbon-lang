@@ -41,10 +41,10 @@
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Transforms/Utils/Local.h"
-#include "Support/SetOperations.h"
-#include "Support/SetVector.h"
-#include "Support/Statistic.h"
-#include "Support/DepthFirstIterator.h"
+#include "llvm/ADT/SetOperations.h"
+#include "llvm/ADT/SetVector.h"
+#include "llvm/ADT/Statistic.h"
+#include "llvm/ADT/DepthFirstIterator.h"
 using namespace llvm;
 
 namespace {

@@ -23,8 +23,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "Support/Debug.h"
-#include "Support/CommandLine.h"
+#include "llvm/Support/Debug.h"
+#include "llvm/Support/CommandLine.h"
 using namespace llvm;
 
 bool llvm::DebugFlag;  // DebugFlag - Exported boolean set by the -debug option

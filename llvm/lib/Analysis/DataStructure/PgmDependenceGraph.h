@@ -43,7 +43,7 @@
 /* #include "llvm/Analysis/PostDominators.h" -- see below */
 #include "llvm/Instruction.h"
 #include "llvm/Pass.h"
-#include "Support/iterator"
+#include "llvm/ADT/iterator"
 
 namespace llvm {
 

@@ -17,7 +17,7 @@
 #ifndef LLVM_TARGET_TARGETMACHINEREGISTRY_H
 #define LLVM_TARGET_TARGETMACHINEREGISTRY_H
 
-#include "Support/CommandLine.h"
+#include "llvm/Support/CommandLine.h"
 
 namespace llvm {
   class Module;

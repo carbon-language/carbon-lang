@@ -22,7 +22,7 @@
 
 #include "DependenceGraph.h"
 #include "llvm/Pass.h"
-#include "Support/hash_map"
+#include "llvm/ADT/hash_map"
 
 namespace llvm {
 

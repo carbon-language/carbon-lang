@@ -23,7 +23,7 @@
 #include "SchedGraph.h"
 #include "llvm/CodeGen/InstrScheduling.h"
 #include "llvm/Target/TargetSchedInfo.h"
-#include "Support/hash_set"
+#include "llvm/ADT/hash_set"
 #include <list>
 
 namespace llvm {

@@ -22,8 +22,8 @@
 #include "llvm/CodeGen/SchedGraphCommon.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/Transforms/Scalar.h"
-#include "Support/hash_map"
-#include "Support/GraphTraits.h"
+#include "llvm/ADT/hash_map"
+#include "llvm/ADT/GraphTraits.h"
 
 namespace llvm {
 

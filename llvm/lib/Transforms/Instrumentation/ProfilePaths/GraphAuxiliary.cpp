@@ -15,7 +15,7 @@
 #include "llvm/Pass.h"
 #include "llvm/Module.h"
 #include "llvm/Instructions.h"
-#include "Support/Debug.h"
+#include "llvm/Support/Debug.h"
 #include <algorithm>
 #include "Graph.h"
 

@@ -21,11 +21,11 @@
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Support/Linker.h"
-#include "Config/config.h"
-#include "Support/CommandLine.h"
-#include "Support/FileUtilities.h"
+#include "llvm/Config/config.h"
+#include "llvm/Support/CommandLine.h"
+#include "llvm/Support/FileUtilities.h"
 #include "llvm/System/Signals.h"
-#include "Support/SystemUtils.h"
+#include "llvm/Support/SystemUtils.h"
 #include <algorithm>
 #include <fstream>
 #include <memory>

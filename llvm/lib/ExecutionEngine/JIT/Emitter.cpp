@@ -20,9 +20,9 @@
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/Target/TargetData.h"
-#include "Support/Debug.h"
-#include "Support/Statistic.h"
-#include "Support/SystemUtils.h"
+#include "llvm/Support/Debug.h"
+#include "llvm/ADT/Statistic.h"
+#include "llvm/Support/SystemUtils.h"
 using namespace llvm;
 
 namespace {

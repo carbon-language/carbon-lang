@@ -20,7 +20,7 @@
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
 #include "llvm/Assembly/Parser.h"
-#include "Support/StringExtras.h"
+#include "llvm/ADT/StringExtras.h"
 
 // Global variables exported from the lexer...
 extern std::FILE *llvmAsmin;

@@ -51,8 +51,8 @@
 #ifndef LLVM_ANALYSIS_CALLGRAPH_H
 #define LLVM_ANALYSIS_CALLGRAPH_H
 
-#include "Support/GraphTraits.h"
-#include "Support/STLExtras.h"
+#include "llvm/ADT/GraphTraits.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/Pass.h"
 
 namespace llvm {

@@ -30,10 +30,10 @@
 #include "llvm/Type.h"
 #include "llvm/Support/InstVisitor.h"
 #include "llvm/Transforms/Utils/Local.h"
-#include "Support/Debug.h"
-#include "Support/hash_map"
-#include "Support/Statistic.h"
-#include "Support/STLExtras.h"
+#include "llvm/Support/Debug.h"
+#include "llvm/ADT/hash_map"
+#include "llvm/ADT/Statistic.h"
+#include "llvm/ADT/STLExtras.h"
 #include <algorithm>
 #include <set>
 using namespace llvm;

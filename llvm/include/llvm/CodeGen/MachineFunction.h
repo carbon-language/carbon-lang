@@ -19,7 +19,7 @@
 #define LLVM_CODEGEN_MACHINEFUNCTION_H
 
 #include "llvm/CodeGen/MachineBasicBlock.h"
-#include "Support/Annotation.h"
+#include "llvm/Support/Annotation.h"
 
 namespace llvm {
 

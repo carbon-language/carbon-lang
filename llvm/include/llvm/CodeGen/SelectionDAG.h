@@ -23,7 +23,7 @@
 #define LLVM_CODEGEN_SELECTIONDAG_H
 
 #include "llvm/CodeGen/ValueTypes.h"
-#include "Support/DataTypes.h"
+#include "llvm/Support/DataTypes.h"
 #include <map>
 #include <vector>
 #include <cassert>

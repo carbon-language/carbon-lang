@@ -16,9 +16,9 @@
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Pass.h"
 #include "llvm/Module.h"
-#include "Support/CommandLine.h"
-#include "Support/Debug.h"
-#include "Support/Statistic.h"
+#include "llvm/Support/CommandLine.h"
+#include "llvm/Support/Debug.h"
+#include "llvm/ADT/Statistic.h"
 #include <fstream>
 #include <set>
 using namespace llvm;

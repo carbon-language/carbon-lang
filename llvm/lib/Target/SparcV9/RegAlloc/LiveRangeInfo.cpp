@@ -21,7 +21,7 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "../SparcV9RegInfo.h"
-#include "Support/SetOperations.h"
+#include "llvm/ADT/SetOperations.h"
 #include <iostream>
 
 namespace llvm {

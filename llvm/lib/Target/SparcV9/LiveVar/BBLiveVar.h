@@ -16,7 +16,7 @@
 #define LIVE_VAR_BB_H
 
 #include "llvm/CodeGen/ValueSet.h"
-#include "Support/hash_map"
+#include "llvm/ADT/hash_map"
 
 namespace llvm {
 

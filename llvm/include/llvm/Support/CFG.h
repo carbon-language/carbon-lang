@@ -15,10 +15,10 @@
 #ifndef LLVM_SUPPORT_CFG_H
 #define LLVM_SUPPORT_CFG_H
 
-#include "Support/GraphTraits.h"
+#include "llvm/ADT/GraphTraits.h"
 #include "llvm/Function.h"
 #include "llvm/InstrTypes.h"
-#include "Support/iterator"
+#include "llvm/ADT/iterator"
 
 namespace llvm {
 

@@ -21,9 +21,9 @@
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Target/TargetSchedInfo.h"
-#include "Support/Debug.h"
-#include "Support/GraphWriter.h"
-#include "Support/StringExtras.h"
+#include "llvm/Support/Debug.h"
+#include "llvm/Support/GraphWriter.h"
+#include "llvm/ADT/StringExtras.h"
 #include <cmath>
 #include <fstream>
 #include <sstream>

@@ -20,7 +20,7 @@
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
-#include "Support/STLExtras.h"
+#include "llvm/ADT/STLExtras.h"
 using namespace llvm;
 
 namespace {

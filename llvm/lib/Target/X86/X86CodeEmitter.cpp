@@ -21,9 +21,9 @@
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/Function.h"
-#include "Support/Debug.h"
-#include "Support/Statistic.h"
-#include "Config/alloca.h"
+#include "llvm/Support/Debug.h"
+#include "llvm/ADT/Statistic.h"
+#include "llvm/Config/alloca.h"
 using namespace llvm;
 
 namespace {

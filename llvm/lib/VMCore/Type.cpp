@@ -15,9 +15,9 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/SymbolTable.h"
 #include "llvm/Constants.h"
-#include "Support/DepthFirstIterator.h"
-#include "Support/StringExtras.h"
-#include "Support/STLExtras.h"
+#include "llvm/ADT/DepthFirstIterator.h"
+#include "llvm/ADT/StringExtras.h"
+#include "llvm/ADT/STLExtras.h"
 #include <algorithm>
 #include <iostream>
 using namespace llvm;

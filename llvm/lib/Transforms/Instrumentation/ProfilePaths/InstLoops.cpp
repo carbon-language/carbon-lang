@@ -20,7 +20,7 @@
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
 #include "llvm/Type.h"
-#include "Support/Debug.h"
+#include "llvm/Support/Debug.h"
 #include "../ProfilingUtils.h"
 
 namespace llvm {

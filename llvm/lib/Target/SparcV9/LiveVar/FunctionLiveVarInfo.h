@@ -35,7 +35,7 @@
 #ifndef FUNCTION_LIVE_VAR_INFO_H
 #define FUNCTION_LIVE_VAR_INFO_H
 
-#include "Support/hash_map"
+#include "llvm/ADT/hash_map"
 #include "llvm/Pass.h"
 #include "llvm/CodeGen/ValueSet.h"
 

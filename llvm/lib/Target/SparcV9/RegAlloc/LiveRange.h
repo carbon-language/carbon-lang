@@ -16,7 +16,7 @@
 #define LIVERANGE_H
 
 #include "llvm/Value.h"
-#include "Support/SetVector.h"
+#include "llvm/ADT/SetVector.h"
 #include <iostream>
 
 namespace llvm {

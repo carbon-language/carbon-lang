@@ -28,7 +28,7 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Support/InstVisitor.h"
-#include "Support/Statistic.h"
+#include "llvm/ADT/Statistic.h"
 using namespace llvm;
 
 namespace {

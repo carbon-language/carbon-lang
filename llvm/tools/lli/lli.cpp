@@ -19,8 +19,8 @@
 #include "llvm/Bytecode/Reader.h"
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
 #include "llvm/ExecutionEngine/GenericValue.h"
-#include "Support/CommandLine.h"
-#include "Support/PluginLoader.h"
+#include "llvm/Support/CommandLine.h"
+#include "llvm/Support/PluginLoader.h"
 #include "llvm/System/Signals.h"
 #include <iostream>
 

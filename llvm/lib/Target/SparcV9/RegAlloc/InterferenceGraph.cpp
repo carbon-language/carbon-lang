@@ -14,7 +14,7 @@
 #include "IGNode.h"
 #include "InterferenceGraph.h"
 #include "RegAllocCommon.h"
-#include "Support/STLExtras.h"
+#include "llvm/ADT/STLExtras.h"
 #include <algorithm>
 #include <iostream>
 

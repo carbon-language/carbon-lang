@@ -13,7 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/CodeGen/SchedGraphCommon.h"
-#include "Support/STLExtras.h"
+#include "llvm/ADT/STLExtras.h"
 #include <iostream>
 
 namespace llvm {

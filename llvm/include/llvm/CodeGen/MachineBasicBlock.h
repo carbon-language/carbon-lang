@@ -15,8 +15,8 @@
 #define LLVM_CODEGEN_MACHINEBASICBLOCK_H
 
 #include "llvm/CodeGen/MachineInstr.h"
-#include "Support/GraphTraits.h"
-#include "Support/ilist"
+#include "llvm/ADT/GraphTraits.h"
+#include "llvm/ADT/ilist"
 #include <iosfwd>
 
 namespace llvm {

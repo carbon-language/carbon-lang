@@ -13,7 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Analysis/IntervalIterator.h"
-#include "Support/STLExtras.h"
+#include "llvm/ADT/STLExtras.h"
 
 namespace llvm {
 

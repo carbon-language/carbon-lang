@@ -16,8 +16,8 @@
 
 #include "llvm/Analysis/DataStructure/DataStructure.h"
 #include "llvm/Module.h"
-#include "Support/Statistic.h"
-#include "Support/Debug.h"
+#include "llvm/ADT/Statistic.h"
+#include "llvm/Support/Debug.h"
 #include "DSCallSiteIterator.h"
 using namespace llvm;
 

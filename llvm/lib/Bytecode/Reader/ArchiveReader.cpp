@@ -18,7 +18,7 @@
 
 #include "llvm/Bytecode/Reader.h"
 #include "llvm/Module.h"
-#include "Support/FileUtilities.h"
+#include "llvm/Support/FileUtilities.h"
 #include <cstdlib>
 #include <iostream>
 using namespace llvm;

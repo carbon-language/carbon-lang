@@ -18,8 +18,8 @@
 #include "llvm/Module.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Analysis/DataStructure/DSGraph.h"
-#include "Support/Debug.h"
-#include "Support/Statistic.h"
+#include "llvm/Support/Debug.h"
+#include "llvm/ADT/Statistic.h"
 using namespace llvm;
 
 namespace {

@@ -53,7 +53,7 @@
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/InstVisitor.h"
-#include "Support/STLExtras.h"
+#include "llvm/ADT/STLExtras.h"
 #include <algorithm>
 #include <iostream>
 #include <sstream>

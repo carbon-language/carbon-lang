@@ -19,8 +19,8 @@
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
 #include "llvm/Assembly/Writer.h"
-#include "Support/CommandLine.h"
-#include "Support/StringExtras.h"
+#include "llvm/Support/CommandLine.h"
+#include "llvm/ADT/StringExtras.h"
 #include <algorithm>
 #include <sstream>
 using namespace llvm;

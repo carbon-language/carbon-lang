@@ -25,7 +25,7 @@
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Target/TargetMachineRegistry.h"
 #include "llvm/Transforms/Scalar.h"
-#include "Support/CommandLine.h"
+#include "llvm/Support/CommandLine.h"
 #include <iostream>
 using namespace llvm;
 

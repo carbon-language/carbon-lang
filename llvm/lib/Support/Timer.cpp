@@ -11,18 +11,18 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "Support/Timer.h"
-#include "Support/CommandLine.h"
+#include "llvm/Support/Timer.h"
+#include "llvm/Support/CommandLine.h"
 #include <algorithm>
 #include <iostream>
 #include <functional>
 #include <fstream>
 #include <map>
-#include "Config/sys/resource.h"
-#include "Config/sys/time.h"
-#include "Config/unistd.h"
-#include "Config/malloc.h"
-#include "Config/windows.h"
+#include "llvm/Config/sys/resource.h"
+#include "llvm/Config/sys/time.h"
+#include "llvm/Config/unistd.h"
+#include "llvm/Config/malloc.h"
+#include "llvm/Config/windows.h"
 using namespace llvm;
 
 // GetLibSupportInfoOutputFile - Return a file stream to print our output on.

@@ -14,8 +14,8 @@
 
 #include "InstrSelectorEmitter.h"
 #include "Record.h"
-#include "Support/Debug.h"
-#include "Support/StringExtras.h"
+#include "llvm/Support/Debug.h"
+#include "llvm/ADT/StringExtras.h"
 #include <set>
 using namespace llvm;
 

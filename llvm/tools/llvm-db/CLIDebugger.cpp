@@ -15,7 +15,7 @@
 #include "CLIDebugger.h"
 #include "CLICommand.h"
 #include "llvm/Debugger/SourceFile.h"
-#include "Support/StringExtras.h"
+#include "llvm/ADT/StringExtras.h"
 #include <iostream>
 using namespace llvm;
 

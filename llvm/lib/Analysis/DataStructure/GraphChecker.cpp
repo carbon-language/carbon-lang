@@ -25,7 +25,7 @@
 
 #include "llvm/Analysis/DataStructure/DataStructure.h"
 #include "llvm/Analysis/DataStructure/DSGraph.h"
-#include "Support/CommandLine.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Value.h"
 #include <iostream>
 #include <set>

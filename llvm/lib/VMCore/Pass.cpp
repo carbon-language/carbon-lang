@@ -17,8 +17,8 @@
 #include "PassManagerT.h"         // PassManagerT implementation
 #include "llvm/Module.h"
 #include "llvm/ModuleProvider.h"
-#include "Support/STLExtras.h"
-#include "Support/TypeInfo.h"
+#include "llvm/ADT/STLExtras.h"
+#include "llvm/Support/TypeInfo.h"
 #include <iostream>
 #include <set>
 using namespace llvm;

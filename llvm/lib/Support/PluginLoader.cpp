@@ -12,8 +12,8 @@
 //===----------------------------------------------------------------------===//
 
 #define DONT_GET_PLUGIN_LOADER_OPTION
-#include "Support/PluginLoader.h"
-#include "Support/DynamicLinker.h"
+#include "llvm/Support/PluginLoader.h"
+#include "llvm/Support/DynamicLinker.h"
 #include <iostream>
 using namespace llvm;
 

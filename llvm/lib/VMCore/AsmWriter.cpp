@@ -26,8 +26,8 @@
 #include "llvm/SymbolTable.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Support/CFG.h"
-#include "Support/StringExtras.h"
-#include "Support/STLExtras.h"
+#include "llvm/ADT/StringExtras.h"
+#include "llvm/ADT/STLExtras.h"
 #include <algorithm>
 using namespace llvm;
 

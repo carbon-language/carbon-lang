@@ -15,7 +15,7 @@
 #ifndef GENERIC_VALUE_H
 #define GENERIC_VALUE_H
 
-#include "Support/DataTypes.h"
+#include "llvm/Support/DataTypes.h"
 
 namespace llvm {
 

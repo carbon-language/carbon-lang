@@ -18,8 +18,8 @@
 #include "llvm/Debugger/SourceLanguage.h"
 #include "llvm/Debugger/SourceFile.h"
 #include "llvm/Debugger/InferiorProcess.h"
-#include "Support/FileUtilities.h"
-#include "Support/StringExtras.h"
+#include "llvm/Support/FileUtilities.h"
+#include "llvm/ADT/StringExtras.h"
 #include <iostream>
 using namespace llvm;
 

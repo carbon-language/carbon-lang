@@ -24,7 +24,7 @@
 #include "llvm/ExecutionEngine/GenericValue.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetJITInfo.h"
-#include "Support/DynamicLinker.h"
+#include "llvm/Support/DynamicLinker.h"
 #include <iostream>
 
 using namespace llvm;

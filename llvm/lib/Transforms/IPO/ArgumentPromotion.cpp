@@ -39,10 +39,10 @@
 #include "llvm/Target/TargetData.h"
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/CFG.h"
-#include "Support/Debug.h"
-#include "Support/DepthFirstIterator.h"
-#include "Support/Statistic.h"
-#include "Support/StringExtras.h"
+#include "llvm/Support/Debug.h"
+#include "llvm/ADT/DepthFirstIterator.h"
+#include "llvm/ADT/Statistic.h"
+#include "llvm/ADT/StringExtras.h"
 #include <set>
 using namespace llvm;
 

@@ -22,8 +22,8 @@
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/ValueNumbering.h"
 #include "llvm/Transforms/Utils/Local.h"
-#include "Support/DepthFirstIterator.h"
-#include "Support/Statistic.h"
+#include "llvm/ADT/DepthFirstIterator.h"
+#include "llvm/ADT/Statistic.h"
 #include <algorithm>
 using namespace llvm;
 

@@ -15,7 +15,7 @@
 #define LLVM_TOOLS_LLVMC_CONFIGDATA_H
 
 #include "CompilerDriver.h"
-#include <Support/hash_map>
+#include <llvm/ADT/hash_map>
 
 namespace llvm {
   /// This class provides the high level interface to the LLVM Compiler Driver.

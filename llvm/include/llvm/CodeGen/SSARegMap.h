@@ -18,7 +18,7 @@
 #define LLVM_CODEGEN_SSAREGMAP_H
 
 #include "llvm/Target/MRegisterInfo.h"
-#include "Support/DenseMap.h"
+#include "llvm/ADT/DenseMap.h"
 
 namespace llvm {
 

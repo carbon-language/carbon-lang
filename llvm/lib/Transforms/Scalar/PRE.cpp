@@ -29,11 +29,11 @@
 #include "llvm/Analysis/PostDominators.h"
 #include "llvm/Analysis/ValueNumbering.h"
 #include "llvm/Transforms/Scalar.h"
-#include "Support/Debug.h"
-#include "Support/DepthFirstIterator.h"
-#include "Support/PostOrderIterator.h"
-#include "Support/Statistic.h"
-#include "Support/hash_set"
+#include "llvm/Support/Debug.h"
+#include "llvm/ADT/DepthFirstIterator.h"
+#include "llvm/ADT/PostOrderIterator.h"
+#include "llvm/ADT/Statistic.h"
+#include "llvm/ADT/hash_set"
 using namespace llvm;
 
 namespace {

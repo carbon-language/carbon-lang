@@ -31,7 +31,7 @@
 #define LLVM_ANALYSIS_LOOP_INFO_H
 
 #include "llvm/Pass.h"
-#include "Support/GraphTraits.h"
+#include "llvm/ADT/GraphTraits.h"
 
 namespace llvm {
 

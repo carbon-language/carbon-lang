@@ -21,8 +21,8 @@
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Target/TargetMachineRegistry.h"
 #include "llvm/Transforms/Scalar.h"
-#include "Support/CommandLine.h"
-#include "Support/Statistic.h"
+#include "llvm/Support/CommandLine.h"
+#include "llvm/ADT/Statistic.h"
 using namespace llvm;
 
 X86VectorEnum llvm::X86Vector = NoSSE;

@@ -16,7 +16,7 @@
 #ifndef LLVM_CODEGEN_MACHINEINSTR_H
 #define LLVM_CODEGEN_MACHINEINSTR_H
 
-#include "Support/iterator"
+#include "llvm/ADT/iterator"
 #include <string>
 #include <vector>
 #include <cassert>

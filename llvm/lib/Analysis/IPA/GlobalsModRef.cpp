@@ -22,9 +22,9 @@
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/CallGraph.h"
 #include "llvm/Support/InstIterator.h"
-#include "Support/CommandLine.h"
-#include "Support/Statistic.h"
-#include "Support/SCCIterator.h"
+#include "llvm/Support/CommandLine.h"
+#include "llvm/ADT/Statistic.h"
+#include "llvm/ADT/SCCIterator.h"
 #include <set>
 using namespace llvm;
 

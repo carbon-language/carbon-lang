@@ -22,8 +22,8 @@
 #include "llvm/Instructions.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/Pass.h"
-#include "Support/Statistic.h"
-#include "Support/Debug.h"
+#include "llvm/ADT/Statistic.h"
+#include "llvm/Support/Debug.h"
 using namespace llvm;
 
 namespace {

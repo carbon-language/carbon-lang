@@ -29,7 +29,7 @@
 #include "llvm/Module.h"
 #include "llvm/Analysis/CallGraph.h"
 #include "llvm/Support/CFG.h"
-#include "Support/SCCIterator.h"
+#include "llvm/ADT/SCCIterator.h"
 #include <iostream>
 
 namespace llvm {

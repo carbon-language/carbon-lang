@@ -14,8 +14,8 @@
 #include "llvm/Analysis/PostDominators.h"
 #include "llvm/Instructions.h"
 #include "llvm/Support/CFG.h"
-#include "Support/DepthFirstIterator.h"
-#include "Support/SetOperations.h"
+#include "llvm/ADT/DepthFirstIterator.h"
+#include "llvm/ADT/SetOperations.h"
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//

@@ -19,7 +19,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "LiveInterval.h"
-#include "Support/STLExtras.h"
+#include "llvm/ADT/STLExtras.h"
 #include <iostream>
 #include <map>
 using namespace llvm;

@@ -21,8 +21,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "Support/Statistic.h"
-#include "Support/CommandLine.h"
+#include "llvm/ADT/Statistic.h"
+#include "llvm/Support/CommandLine.h"
 #include <sstream>
 #include <iostream>
 #include <algorithm>

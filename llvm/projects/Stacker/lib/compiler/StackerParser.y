@@ -16,8 +16,8 @@
 #include "llvm/SymbolTable.h"
 #include "llvm/Module.h"
 #include "llvm/Instructions.h"
-#include "Support/STLExtras.h"
-#include "Support/DepthFirstIterator.h"
+#include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/DepthFirstIterator.h"
 #include <list>
 #include <utility>
 #include <algorithm>

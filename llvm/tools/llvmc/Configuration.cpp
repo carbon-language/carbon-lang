@@ -15,9 +15,9 @@
 #include "Configuration.h"
 #include "ConfigLexer.h"
 #include "CompilerDriver.h"
-#include "Config/config.h"
-#include "Support/CommandLine.h"
-#include "Support/StringExtras.h"
+#include "llvm/Config/config.h"
+#include "llvm/Support/CommandLine.h"
+#include "llvm/ADT/StringExtras.h"
 #include <iostream>
 #include <fstream>
 

@@ -72,8 +72,8 @@
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/ConstantRange.h"
 #include "llvm/Support/InstIterator.h"
-#include "Support/CommandLine.h"
-#include "Support/Statistic.h"
+#include "llvm/Support/CommandLine.h"
+#include "llvm/ADT/Statistic.h"
 #include <cmath>
 using namespace llvm;
 

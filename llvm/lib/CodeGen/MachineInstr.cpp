@@ -20,7 +20,7 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/MRegisterInfo.h"
-#include "Support/LeakDetector.h"
+#include "llvm/Support/LeakDetector.h"
 #include <iostream>
 
 using namespace llvm;

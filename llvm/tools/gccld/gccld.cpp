@@ -29,10 +29,10 @@
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Support/Linker.h"
-#include "Support/CommandLine.h"
-#include "Support/FileUtilities.h"
+#include "llvm/Support/CommandLine.h"
+#include "llvm/Support/FileUtilities.h"
 #include "llvm/System/Signals.h"
-#include "Support/SystemUtils.h"
+#include "llvm/Support/SystemUtils.h"
 #include <fstream>
 #include <memory>
 using namespace llvm;

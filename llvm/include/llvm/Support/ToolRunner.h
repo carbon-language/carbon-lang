@@ -1,4 +1,4 @@
-//===-- Support/ToolRunner.h ------------------------------------*- C++ -*-===//
+//===-- llvm/Support/ToolRunner.h -------------------------------*- C++ -*-===//
 // 
 //                     The LLVM Compiler Infrastructure
 //
@@ -14,10 +14,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef TOOLRUNNER_H
-#define TOOLRUNNER_H
+#ifndef LLVM_SUPPORT_TOOLRUNNER_H
+#define LLVM_SUPPORT_TOOLRUNNER_H
 
-#include "Support/SystemUtils.h"
+#include "llvm/Support/SystemUtils.h"
 #include <exception>
 #include <vector>
 

@@ -14,7 +14,7 @@
 #include "llvm/Support/Mangler.h"
 #include "llvm/Module.h"
 #include "llvm/Type.h"
-#include "Support/StringExtras.h"
+#include "llvm/ADT/StringExtras.h"
 using namespace llvm;
 
 static char HexDigit(int V) {

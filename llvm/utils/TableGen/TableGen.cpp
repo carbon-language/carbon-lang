@@ -16,9 +16,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "Record.h"
-#include "Support/CommandLine.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/System/Signals.h"
-#include "Support/FileUtilities.h"
+#include "llvm/Support/FileUtilities.h"
 #include "CodeEmitterGen.h"
 #include "RegisterInfoEmitter.h"
 #include "InstrInfoEmitter.h"

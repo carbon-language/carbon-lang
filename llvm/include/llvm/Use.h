@@ -16,7 +16,7 @@
 #ifndef LLVM_USE_H
 #define LLVM_USE_H
 
-#include "Support/ilist"
+#include "llvm/ADT/ilist"
 
 namespace llvm {
 

@@ -49,8 +49,8 @@
 #include "llvm/Support/InstIterator.h"
 #include "llvm/Support/InstVisitor.h"
 #include "llvm/Support/PatternMatch.h"
-#include "Support/Debug.h"
-#include "Support/Statistic.h"
+#include "llvm/Support/Debug.h"
+#include "llvm/ADT/Statistic.h"
 #include <algorithm>
 using namespace llvm;
 using namespace llvm::PatternMatch;

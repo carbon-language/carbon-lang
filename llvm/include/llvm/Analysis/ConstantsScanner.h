@@ -18,7 +18,7 @@
 
 #include "llvm/Support/InstIterator.h"
 #include "llvm/Instruction.h"
-#include "Support/iterator"
+#include "llvm/ADT/iterator"
 
 namespace llvm {
 

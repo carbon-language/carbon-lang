@@ -23,7 +23,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "Config/unistd.h"  /* provides definition of execve */
+#include "llvm/Config/unistd.h"  /* provides definition of execve */
 
 int main(int argc, char** argv) {
   const char *Interp = getenv("LLVMINTERP");

@@ -20,8 +20,8 @@
 
 #include "MachineCodeForInstruction.h"
 #include "llvm/CodeGen/MachineFunction.h"
-#include "Support/HashExtras.h"
-#include "Support/hash_set"
+#include "llvm/ADT/HashExtras.h"
+#include "llvm/ADT/hash_set"
 
 namespace llvm {
 

@@ -13,15 +13,15 @@
 //===----------------------------------------------------------------------===//
 
 #define _POSIX_MAPPED_FILES
-#include "Support/SystemUtils.h"
-#include "Config/fcntl.h"
-#include "Config/pagesize.h"
-#include "Config/unistd.h"
-#include "Config/windows.h"
-#include "Config/sys/mman.h"
-#include "Config/sys/stat.h"
-#include "Config/sys/types.h"
-#include "Config/sys/wait.h"
+#include "llvm/Support/SystemUtils.h"
+#include "llvm/Config/fcntl.h"
+#include "llvm/Config/pagesize.h"
+#include "llvm/Config/unistd.h"
+#include "llvm/Config/windows.h"
+#include "llvm/Config/sys/mman.h"
+#include "llvm/Config/sys/stat.h"
+#include "llvm/Config/sys/types.h"
+#include "llvm/Config/sys/wait.h"
 #include <algorithm>
 #include <cerrno>
 #include <cstdlib>

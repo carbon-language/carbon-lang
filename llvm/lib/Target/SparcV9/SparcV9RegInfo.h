@@ -15,7 +15,7 @@
 #ifndef SPARCV9REGINFO_H
 #define SPARCV9REGINFO_H
 
-#include "Support/hash_map"
+#include "llvm/ADT/hash_map"
 #include <string>
 #include <cassert>
 

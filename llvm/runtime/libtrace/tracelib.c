@@ -10,7 +10,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include "Support/DataTypes.h"
+#include "llvm/Support/DataTypes.h"
 
 /*===---------------------------------------------------------------------=====
  * HASH FUNCTIONS

@@ -16,9 +16,9 @@
 
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/Target/TargetMachine.h"
-#include "Support/GraphTraits.h"
-#include "Support/STLExtras.h"
-#include "Support/iterator"
+#include "llvm/ADT/GraphTraits.h"
+#include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/iterator"
 #include <vector>
 
 namespace llvm {

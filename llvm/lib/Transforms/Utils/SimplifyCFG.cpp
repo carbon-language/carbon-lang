@@ -17,7 +17,7 @@
 #include "llvm/Instructions.h"
 #include "llvm/Type.h"
 #include "llvm/Support/CFG.h"
-#include "Support/Debug.h"
+#include "llvm/Support/Debug.h"
 #include <algorithm>
 #include <functional>
 #include <set>

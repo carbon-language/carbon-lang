@@ -16,7 +16,7 @@
 #define LLVM_CODEGEN_SCHEDGRAPHCOMMON_H
 
 #include "llvm/Value.h"
-#include "Support/iterator"
+#include "llvm/ADT/iterator"
 #include <vector>
 
 namespace llvm {

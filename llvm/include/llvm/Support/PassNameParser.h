@@ -23,7 +23,7 @@
 #ifndef LLVM_SUPPORT_PASS_NAME_PARSER_H
 #define LLVM_SUPPORT_PASS_NAME_PARSER_H
 
-#include "Support/CommandLine.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Pass.h"
 #include <algorithm>
 #include <iostream>

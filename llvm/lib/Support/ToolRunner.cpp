@@ -13,9 +13,9 @@
 
 #define DEBUG_TYPE "toolrunner"
 #include "llvm/Support/ToolRunner.h"
-#include "Config/config.h"   // for HAVE_LINK_R
-#include "Support/Debug.h"
-#include "Support/FileUtilities.h"
+#include "llvm/Config/config.h"   // for HAVE_LINK_R
+#include "llvm/Support/Debug.h"
+#include "llvm/Support/FileUtilities.h"
 #include <fstream>
 #include <sstream>
 using namespace llvm;

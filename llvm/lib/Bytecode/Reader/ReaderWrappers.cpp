@@ -17,9 +17,9 @@
 #include "Reader.h"
 #include "llvm/Module.h"
 #include "llvm/Instructions.h"
-#include "Support/FileUtilities.h"
-#include "Support/StringExtras.h"
-#include "Config/unistd.h"
+#include "llvm/Support/FileUtilities.h"
+#include "llvm/ADT/StringExtras.h"
+#include "llvm/Config/unistd.h"
 #include <cerrno>
 using namespace llvm;
 

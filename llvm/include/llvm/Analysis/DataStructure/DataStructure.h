@@ -16,7 +16,7 @@
 
 #include "llvm/Pass.h"
 #include "llvm/Target/TargetData.h"
-#include "Support/hash_set"
+#include "llvm/ADT/hash_set"
 
 namespace llvm {
 

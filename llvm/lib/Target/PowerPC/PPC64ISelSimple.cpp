@@ -26,8 +26,8 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Support/InstVisitor.h"
-#include "Support/Debug.h"
-#include "Support/Statistic.h"
+#include "llvm/Support/Debug.h"
+#include "llvm/ADT/Statistic.h"
 #include <vector>
 using namespace llvm;
 

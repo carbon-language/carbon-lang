@@ -14,7 +14,7 @@
 #include "llvm/Pass.h"
 #include "llvm/Function.h"
 #include "llvm/Support/InstVisitor.h"
-#include "Support/Statistic.h"
+#include "llvm/ADT/Statistic.h"
 
 namespace llvm {
 

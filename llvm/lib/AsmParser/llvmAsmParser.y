@@ -17,7 +17,7 @@
 #include "llvm/Module.h"
 #include "llvm/SymbolTable.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
-#include "Support/STLExtras.h"
+#include "llvm/ADT/STLExtras.h"
 #include <algorithm>
 #include <iostream>
 #include <list>

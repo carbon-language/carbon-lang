@@ -20,7 +20,7 @@
 
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/SSARegMap.h"
-#include "Support/DenseMap.h"
+#include "llvm/ADT/DenseMap.h"
 #include <climits>
 #include <map>
 

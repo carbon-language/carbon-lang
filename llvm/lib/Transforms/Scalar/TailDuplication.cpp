@@ -26,9 +26,9 @@
 #include "llvm/Type.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Transforms/Utils/Local.h"
-#include "Support/CommandLine.h"
-#include "Support/Debug.h"
-#include "Support/Statistic.h"
+#include "llvm/Support/CommandLine.h"
+#include "llvm/Support/Debug.h"
+#include "llvm/ADT/Statistic.h"
 using namespace llvm;
 
 namespace {

@@ -20,7 +20,7 @@
 #include "../../Target/SparcV9/MachineCodeForInstruction.h"
 #include "../../Target/SparcV9/LiveVar/FunctionLiveVarInfo.h"
 #include "../../Target/SparcV9/SparcV9InstrInfo.h"
-#include "Support/CommandLine.h"
+#include "llvm/Support/CommandLine.h"
 #include <algorithm>
 #include <iostream>
 

@@ -16,7 +16,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Constant.h"
 #include "llvm/GlobalValue.h"
-#include "Support/LeakDetector.h"
+#include "llvm/Support/LeakDetector.h"
 #include <algorithm>
 #include <iostream>
 using namespace llvm;

@@ -31,7 +31,7 @@
 
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/Bytecode/Analyzer.h"
-#include "Support/CommandLine.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/System/Signals.h"
 #include <fstream>
 #include <iostream>

@@ -24,7 +24,7 @@
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Support/InstIterator.h"
-#include "Support/CommandLine.h"
+#include "llvm/Support/CommandLine.h"
 #include <iostream>
 #include <set>
 

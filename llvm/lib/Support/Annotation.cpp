@@ -12,7 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include <map>
-#include "Support/Annotation.h"
+#include "llvm/Support/Annotation.h"
 using namespace llvm;
 
 Annotation::~Annotation() {}  // Designed to be subclassed

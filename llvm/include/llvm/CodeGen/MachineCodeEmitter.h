@@ -18,7 +18,7 @@
 #define LLVM_CODEGEN_MACHINECODEEMITTER_H
 
 #include <string>
-#include "Support/DataTypes.h"
+#include "llvm/Support/DataTypes.h"
 
 namespace llvm {
 

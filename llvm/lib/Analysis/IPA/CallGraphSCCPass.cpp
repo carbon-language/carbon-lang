@@ -17,7 +17,7 @@
 
 #include "llvm/CallGraphSCCPass.h"
 #include "llvm/Analysis/CallGraph.h"
-#include "Support/SCCIterator.h"
+#include "llvm/ADT/SCCIterator.h"
 using namespace llvm;
 
 /// getAnalysisUsage - For this class, we declare that we require and preserve

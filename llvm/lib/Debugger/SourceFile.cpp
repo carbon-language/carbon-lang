@@ -12,8 +12,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Debugger/SourceFile.h"
-#include "Support/SlowOperationInformer.h"
-#include "Support/FileUtilities.h"
+#include "llvm/Support/SlowOperationInformer.h"
+#include "llvm/Support/FileUtilities.h"
 #include <iostream>
 #include <cerrno>
 #include <fcntl.h>

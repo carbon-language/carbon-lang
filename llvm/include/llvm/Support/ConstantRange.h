@@ -24,7 +24,7 @@
 #ifndef LLVM_SUPPORT_CONSTANT_RANGE_H
 #define LLVM_SUPPORT_CONSTANT_RANGE_H
 
-#include "Support/DataTypes.h"
+#include "llvm/Support/DataTypes.h"
 #include <iosfwd>
 
 namespace llvm {

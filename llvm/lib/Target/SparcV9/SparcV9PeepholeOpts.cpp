@@ -19,7 +19,7 @@
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
-#include "Support/STLExtras.h"
+#include "llvm/ADT/STLExtras.h"
 
 namespace llvm {
 

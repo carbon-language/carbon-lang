@@ -7,10 +7,10 @@
 
 #include "OSInterface.h"
 #include "SysUtils.h"
-#include "Config/fcntl.h"
-#include "Config/unistd.h"
-#include "Config/sys/types.h"
-#include "Config/sys/stat.h"
+#include "llvm/Config/fcntl.h"
+#include "llvm/Config/unistd.h"
+#include "llvm/Config/sys/types.h"
+#include "llvm/Config/sys/stat.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>

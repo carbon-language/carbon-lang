@@ -47,7 +47,7 @@
 #include "llvm/Module.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "MachineCodeForInstruction.h"
-#include "Support/StringExtras.h"
+#include "llvm/ADT/StringExtras.h"
 
 namespace llvm {
 

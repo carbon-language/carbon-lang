@@ -29,7 +29,7 @@
 #include "SparcV9Internals.h"
 #include "SparcV9TargetMachine.h"
 #include "SparcV9BurgISel.h"
-#include "Support/CommandLine.h"
+#include "llvm/Support/CommandLine.h"
 using namespace llvm;
 
 static const unsigned ImplicitRegUseList[] = { 0 }; /* not used yet */

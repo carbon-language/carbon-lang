@@ -17,7 +17,7 @@
 #include "llvm/Pass.h"
 #include "llvm/Analysis/ProfileInfo.h"
 #include "llvm/Analysis/ProfileInfoLoader.h"
-#include "Support/CommandLine.h"
+#include "llvm/Support/CommandLine.h"
 #include <iostream>
 
 using namespace llvm;

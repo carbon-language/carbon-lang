@@ -16,7 +16,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "JIT.h"
-#include "Support/DynamicLinker.h"
+#include "llvm/Support/DynamicLinker.h"
 #include <iostream>
 #include <sys/stat.h>
 using namespace llvm;

@@ -13,7 +13,7 @@
 
 %{
 #include "Record.h"
-#include "Support/StringExtras.h"
+#include "llvm/ADT/StringExtras.h"
 #include <algorithm>
 #include <cstdio>
 #define YYERROR_VERBOSE 1

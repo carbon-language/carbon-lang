@@ -16,7 +16,7 @@
 #ifndef OS_INTERFACE_H
 #define OS_INTERFACE_H
 
-#include "Config/sys/types.h"
+#include "llvm/Config/sys/types.h"
 
 struct stat;
 

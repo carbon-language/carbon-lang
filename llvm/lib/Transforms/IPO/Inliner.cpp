@@ -19,9 +19,9 @@
 #include "llvm/Analysis/CallGraph.h"
 #include "llvm/Support/CallSite.h"
 #include "llvm/Transforms/Utils/Cloning.h"
-#include "Support/CommandLine.h"
-#include "Support/Debug.h"
-#include "Support/Statistic.h"
+#include "llvm/Support/CommandLine.h"
+#include "llvm/Support/Debug.h"
+#include "llvm/ADT/Statistic.h"
 #include <set>
 using namespace llvm;
 

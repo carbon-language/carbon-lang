@@ -28,7 +28,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
 #include "llvm/Support/InstIterator.h"
-#include "Support/CommandLine.h"
+#include "llvm/Support/CommandLine.h"
 using namespace llvm;
 
 static RegisterAnalysis<FindUnsafePointerTypes>

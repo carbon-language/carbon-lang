@@ -18,9 +18,9 @@
 #define LLVM_ANALYSIS_ALIASSETTRACKER_H
 
 #include "llvm/Support/CallSite.h"
-#include "Support/iterator"
-#include "Support/hash_map"
-#include "Support/ilist"
+#include "llvm/ADT/iterator"
+#include "llvm/ADT/hash_map"
+#include "llvm/ADT/ilist"
 
 namespace llvm {
 
