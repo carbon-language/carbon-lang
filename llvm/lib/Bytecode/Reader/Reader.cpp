@@ -547,7 +547,7 @@ void BytecodeReader::insertArguments(Function* F) {
 
 /// This method parses a single instruction. The instruction is
 /// inserted at the end of the \p BB provided. The arguments of
-/// the instruction are provided in the \p Args vector.
+/// the instruction are provided in the \p Oprnds vector.
 void BytecodeReader::ParseInstruction(std::vector<unsigned> &Oprnds,
                                       BasicBlock* BB) {
   BufPtr SaveAt = At;
