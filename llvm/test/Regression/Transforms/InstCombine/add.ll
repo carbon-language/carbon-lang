@@ -116,3 +116,11 @@ ubyte %test18(ubyte %A) {
         %C = add ubyte %B, 17      ; == sub ubyte 16, %A
         ret ubyte %C
 }
+
+int %test19(bool %C) {
+        %A = select bool %C, int 1000, int 10
+        %V = add int %A, 123
+        ret int %V
+}
+
+
