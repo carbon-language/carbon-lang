@@ -1,0 +1,16 @@
+
+; RUN: as < %s | dis -c > Output/%s.cbe.c
+; RUN: gcc -B/usr/bin/ Output/%s.cbe.c -o Output/%s.cbe
+; RUN: Output/%s.cbe
+
+bool %doTest(ubyte %x) {
+	%dec.0 = add ubyte %x, 255
+    %tmp.1001 = cast ubyte %dec.0 to bool
+    ret bool %tmp.1001
+}
+
+int %main () {
+    %result = call bool %doTest(ubyte 1)
+    %p = cast bool %result to int
+    ret int %p
+}
