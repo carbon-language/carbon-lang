@@ -13,7 +13,7 @@
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/Value.h"
 #include "Support/Statistic.h"
-#include <alloca.h>
+#include "Support/Alloca.h"
 
 namespace {
   Statistic<>

@@ -10,7 +10,7 @@
 #include <fstream>
 #include <iostream>
 #include <cstdlib>
-#include <alloca.h>
+#include "Support/Alloca.h"
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
