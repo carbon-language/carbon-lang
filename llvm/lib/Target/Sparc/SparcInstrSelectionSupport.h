@@ -17,6 +17,7 @@
 #include "llvm/DerivedTypes.h"
 #include "SparcInternals.h"
 
+// Choose load instruction opcode based on type of value
 inline MachineOpCode
 ChooseLoadInstruction(const Type *DestTy)
 {
@@ -39,6 +40,7 @@ ChooseLoadInstruction(const Type *DestTy)
   return 0;
 }
 
+// Choose store instruction opcode based on type of value
 inline MachineOpCode
 ChooseStoreInstruction(const Type *DestTy)
 {
@@ -86,6 +88,11 @@ ChooseAddInstructionByType(const Type* resultType)
 }
 
 
+// Because the Sparc instruction selector likes to re-write operands to
+// instructions, making them change from a Value* (virtual register) to a
+// Constant* (making an immediate field), we need to change the opcode from a
+// register-based instruction to an immediate-based instruction, hence this
+// mapping.
 static unsigned
 convertOpcodeFromRegToImm(unsigned Opcode) {
   switch (Opcode) {
