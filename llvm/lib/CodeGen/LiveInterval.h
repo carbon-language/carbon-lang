@@ -47,6 +47,11 @@ namespace llvm {
   };
   std::ostream& operator<<(std::ostream& os, const LiveRange &LR);
 
+  inline bool operator<(unsigned V, const LiveRange &LR) {
+    return V < LR.start;
+  }
+
+
   /// LiveInterval - This class represents some number of live ranges for a
   /// register or value.  This class also contains a bit of register allocator
   /// state.

@@ -30,16 +30,14 @@ using namespace llvm;
 // definition of the variable it represents. This is because slot 1 is
 // used (def slot) and spans up to slot 3 (store slot).
 //
-bool LiveInterval::liveAt(unsigned index) const {
-  LiveRange dummy(index, index+1);
-  Ranges::const_iterator r = std::upper_bound(ranges.begin(),
-                                              ranges.end(),
-                                              dummy);
+bool LiveInterval::liveAt(unsigned I) const {
+  Ranges::const_iterator r = std::upper_bound(ranges.begin(), ranges.end(), I);
+                                              
   if (r == ranges.begin())
     return false;
 
   --r;
-  return index >= r->start && index < r->end;
+  return I >= r->start && I < r->end;
 }
 
 // An example for overlaps():
