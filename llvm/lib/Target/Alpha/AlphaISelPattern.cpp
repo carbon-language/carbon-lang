@@ -220,6 +220,9 @@ AlphaTargetLowering::LowerCallTo(SDOperand Chain,
 	break;
       case MVT::i64:
 	break;
+      case MVT::f64:
+      case MVT::f32:
+	break;
       }
       args_to_use.push_back(Args[i].first);
     }
@@ -454,8 +457,12 @@ unsigned ISel::SelectExpr(SDOperand N) {
 				 Alpha::R19, Alpha::R20, Alpha::R21};
 	  unsigned args_float[] = {Alpha::F16, Alpha::F17, Alpha::F18, 
 				   Alpha::F19, Alpha::F20, Alpha::F21};
-	  switch(N.getOperand(i).getValueType()) {
-	  default: Node->dump(); assert(0 && "Unknown value type for call");
+	  switch(N.getOperand(i+2).getValueType()) {
+	  default: 
+	    Node->dump(); 
+	    N.getOperand(i).Val->dump();
+	    std::cerr << "Type for " << i << " is: " << N.getOperand(i+2).getValueType() << "\n";
+	    assert(0 && "Unknown value type for call");
 	  case MVT::i1:
 	  case MVT::i8:
 	  case MVT::i16:
@@ -474,20 +481,17 @@ unsigned ISel::SelectExpr(SDOperand N) {
       if (GlobalAddressSDNode *GASD =
 	  dyn_cast<GlobalAddressSDNode>(N.getOperand(1))) 
 	{
-	  Select(N.getOperand(0));
 	  AlphaLowering.restoreGP(BB);
 	  BuildMI(BB, Alpha::CALL, 1).addGlobalAddress(GASD->getGlobal(),true);
 	} 
       else if (ExternalSymbolSDNode *ESSDN =
 	       dyn_cast<ExternalSymbolSDNode>(N.getOperand(1))) 
 	{
-	  Select(N.getOperand(0));
 	  AlphaLowering.restoreGP(BB);
 	  BuildMI(BB, Alpha::CALL, 0).addExternalSymbol(ESSDN->getSymbol(), true);
 	} 
       else 
 	{
-	  Select(N.getOperand(0));
 	  Tmp1 = SelectExpr(N.getOperand(1));
 	  BuildMI(BB, Alpha::CALL, 1).addReg(Tmp1);
 	  AlphaLowering.restoreGP(BB);
