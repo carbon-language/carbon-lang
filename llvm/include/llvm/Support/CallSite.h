@@ -13,8 +13,7 @@
 // NOTE: This class is supposed to have "value semantics". So it should be
 // passed by value, not by reference; it should not be "new"ed or "delete"d. It
 // is efficiently copyable, assignable and constructable, with cost equivalent
-// to copying a pointer. (You will notice that it has only a single data
-// member.)
+// to copying a pointer (notice that it has only a single data member).
 //
 //===----------------------------------------------------------------------===//
 
@@ -55,7 +54,7 @@ public:
 
   /// getType - Return the type of the instruction that generated this call site
   ///
-  const Type *getType () const { return I->getType (); }
+  const Type *getType() const { return I->getType(); }
 
   /// getInstruction - Return the instruction this call site corresponds to
   ///
@@ -83,6 +82,11 @@ public:
   void setCalledFunction(Value *V) {
     assert(I && "Not a call or invoke instruction!");
     I->setOperand(0, V);
+  }
+
+  Value *getArgument(unsigned ArgNo) const {
+    assert(arg_begin() + ArgNo < arg_end() && "Argument # out of range!");
+    return *(arg_begin()+ArgNo);
   }
 
   /// arg_iterator - The type of iterator to use when looping over actual
