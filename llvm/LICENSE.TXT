@@ -69,6 +69,4 @@ Autoconf:           llvm/autoconf
                     llvm/projects/sample/autoconf
 Burg:               llvm/utils/Burg
 GNU Libc:           llvm/runtime/GCCLibraries/libc
-Zlib Library:       llvm/runtime/zlib
-PNG Library:        llvm/runtime/libpng
 
