@@ -126,6 +126,10 @@ namespace {
     // printed and an extra copy of the expr is not emitted.
     //
     static bool isInlinableInst(const Instruction &I) {
+      // Always inline setcc instructions, even if they are shared by multiple
+      // expressions.  GCC generates horrible code if we don't.
+      if (isa<SetCondInst>(I)) return true;
+
       // Must be an expression, must be used exactly once.  If it is dead, we
       // emit it inline where it would go.
       if (I.getType() == Type::VoidTy || !I.hasOneUse() ||
