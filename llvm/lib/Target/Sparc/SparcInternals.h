@@ -643,10 +643,10 @@ Pass *createStackSlotsPass(const TargetMachine &TM);
 
 // Interface to pre-selection pass that specializes LLVM code for a target
 // machine.
-Pass *createPreSelectionPass(TargetMachine &Target);
+FunctionPass *createPreSelectionPass(const TargetMachine &TM);
 
 // External interface to peephole optimization pass operating on machine code.
-FunctionPass *createPeepholeOptsPass(TargetMachine &Target);
+FunctionPass *createPeepholeOptsPass(const TargetMachine &TM);
 
 
 //---------------------------------------------------------------------------
