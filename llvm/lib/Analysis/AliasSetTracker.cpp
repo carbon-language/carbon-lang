@@ -41,9 +41,6 @@ void AliasSet::mergeSetIn(AliasSet &AS) {
     AS.CallSites.clear();
   }
   
-  // FIXME: If AS's refcount is zero, nuke it now...
-  assert(RefCount != 0);
-
   AS.Forward = this;  // Forward across AS now...
   addRef();           // AS is now pointing to us...
 
