@@ -94,7 +94,7 @@ namespace {
       return StackTop - 1 - getSlot(RegNo) + llvm::X86::ST0;
     }
 
-    // pushReg - Push the specifiex FP<n> register onto the stack
+    // pushReg - Push the specified FP<n> register onto the stack
     void pushReg(unsigned Reg) {
       assert(Reg < 8 && "Register number out of range!");
       assert(StackTop < 8 && "Stack overflow!");
@@ -140,6 +140,7 @@ namespace {
 
     void handleZeroArgFP(MachineBasicBlock::iterator &I);
     void handleOneArgFP(MachineBasicBlock::iterator &I);
+    void handleOneArgFPRW(MachineBasicBlock::iterator &I);
     void handleTwoArgFP(MachineBasicBlock::iterator &I);
     void handleSpecialFP(MachineBasicBlock::iterator &I);
   };
@@ -219,14 +220,11 @@ bool FPS::processBasicBlock(MachineFunction &MF, MachineBasicBlock &BB) {
 	  });
 
     switch (Flags & X86II::FPTypeMask) {
-    case X86II::ZeroArgFP: handleZeroArgFP(I); break;
-    case X86II::OneArgFP:  handleOneArgFP(I);  break;
-
-    case X86II::OneArgFPRW:   // ST(0) = fsqrt(ST(0))
-      assert(0 && "FP instr type not handled yet!");
-
-    case X86II::TwoArgFP:  handleTwoArgFP(I);  break;
-    case X86II::SpecialFP: handleSpecialFP(I); break;
+    case X86II::ZeroArgFP:  handleZeroArgFP(I); break;
+    case X86II::OneArgFP:   handleOneArgFP(I);  break;   // fstp ST(0)
+    case X86II::OneArgFPRW: handleOneArgFPRW(I); break; // ST(0) = fsqrt(ST(0))
+    case X86II::TwoArgFP:   handleTwoArgFP(I);  break;
+    case X86II::SpecialFP:  handleSpecialFP(I); break;
     default: assert(0 && "Unknown FP Type!");
     }
 
@@ -371,7 +369,7 @@ static unsigned getFPReg(const MachineOperand &MO) {
 //===----------------------------------------------------------------------===//
 
 /// handleZeroArgFP - ST(0) = fld0    ST(0) = flds <mem>
-//
+///
 void FPS::handleZeroArgFP(MachineBasicBlock::iterator &I) {
   MachineInstr *MI = *I;
   unsigned DestReg = getFPReg(MI->getOperand(0));
@@ -381,12 +379,13 @@ void FPS::handleZeroArgFP(MachineBasicBlock::iterator &I) {
   pushReg(DestReg);
 }
 
-/// handleOneArgFP - fst ST(0), <mem>
-//
+/// handleOneArgFP - fst <mem>, ST(0)
+///
 void FPS::handleOneArgFP(MachineBasicBlock::iterator &I) {
   MachineInstr *MI = *I;
   assert(MI->getNumOperands() == 5 && "Can only handle fst* instructions!");
 
+  // Is this the last use of the source register?
   unsigned Reg = getFPReg(MI->getOperand(4));
   bool KillsSrc = false;
   for (LiveVariables::killed_iterator KI = LV->killed_begin(MI),
@@ -413,6 +412,38 @@ void FPS::handleOneArgFP(MachineBasicBlock::iterator &I) {
     popStackAfter(I);
   }
 }
+
+
+/// handleOneArgFPRW - fchs - ST(0) = -ST(0)
+///
+void FPS::handleOneArgFPRW(MachineBasicBlock::iterator &I) {
+  MachineInstr *MI = *I;
+  assert(MI->getNumOperands() == 2 && "Can only handle fst* instructions!");
+
+  // Is this the last use of the source register?
+  unsigned Reg = getFPReg(MI->getOperand(1));
+  bool KillsSrc = false;
+  for (LiveVariables::killed_iterator KI = LV->killed_begin(MI),
+	 E = LV->killed_end(MI); KI != E; ++KI)
+    KillsSrc |= KI->second == X86::FP0+Reg;
+
+  if (KillsSrc) {
+    // If this is the last use of the source register, just make sure it's on
+    // the top of the stack.
+    moveToTop(Reg, I);
+    assert(StackTop > 0 && "Stack cannot be empty!");
+    --StackTop;
+    pushReg(getFPReg(MI->getOperand(0)));
+  } else {
+    // If this is not the last use of the source register, _copy_ it to the top
+    // of the stack.
+    duplicateToTop(Reg, getFPReg(MI->getOperand(0)), I);
+  }
+
+  MI->RemoveOperand(1);   // Drop the source operand.
+  MI->RemoveOperand(0);   // Drop the destination operand.
+}
+
 
 //===----------------------------------------------------------------------===//
 // Define tables of various ways to map pseudo instructions
