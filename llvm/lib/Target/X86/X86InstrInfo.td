@@ -128,6 +128,8 @@ def JE  : IBr<"je" , 0x84>, TB, Pattern<(isVoid (unspec1 basicblock))>;
 def JNE : IBr<"jne", 0x85>, TB;
 def JBE : IBr<"jbe", 0x86>, TB;
 def JA  : IBr<"ja" , 0x87>, TB;
+def JS  : IBr<"js" , 0x88>, TB;
+def JNS : IBr<"jns", 0x89>, TB;
 def JL  : IBr<"jl" , 0x8C>, TB;
 def JGE : IBr<"jge", 0x8D>, TB;
 def JLE : IBr<"jle", 0x8E>, TB;
@@ -208,7 +210,6 @@ def CBW    : X86Inst<"cbw", 0x98, RawFrm, Arg8 >, Imp<[AL],[AH]>;               
 def CWD    : X86Inst<"cwd", 0x99, RawFrm, Arg8 >, Imp<[AX],[DX]>;               // DX:AX = signext(AX)
 def CDQ    : X86Inst<"cdq", 0x99, RawFrm, Arg8 >, Imp<[EAX],[EDX]>;             // EDX:EAX = signext(EAX)
 
-
 //===----------------------------------------------------------------------===//
 //  Two address Instructions...
 //
@@ -217,6 +218,23 @@ let isTwoAddress = 1 in {  // Define some helper classes to make defs shorter.
   class I2A16<string n, bits<8> o, Format F> : X86Inst<n, o, F, Arg16>;
   class I2A32<string n, bits<8> o, Format F> : X86Inst<n, o, F, Arg32>;
 }
+
+// unary instructions
+def NEGr8  : I2A8 <"neg", 0xF6, MRMS3r>;         // R8  = -R8  = 0-R8
+def NEGr16 : I2A16<"neg", 0xF7, MRMS3r>, OpSize; // R16 = -R16 = 0-R16
+def NEGr32 : I2A32<"neg", 0xF7, MRMS3r>;         // R32 = -R32 = 0-R32
+def NOTr8  : I2A8 <"not", 0xF6, MRMS2r>;         // R8  = ~R8  = R8^-1
+def NOTr16 : I2A16<"not", 0xF7, MRMS2r>, OpSize; // R16 = ~R16 = R16^-1
+def NOTr32 : I2A32<"not", 0xF7, MRMS2r>;         // R32 = ~R32 = R32^-1
+
+def INCr8  : I2A8 <"inc", 0xFE, MRMS0r>;         // R8  = R8 +1
+def INCr16 : I2A16<"inc", 0xFF, MRMS0r>, OpSize; // R16 = R16+1
+def INCr32 : I2A32<"inc", 0xFF, MRMS0r>;         // R32 = R32+1
+def DECr8  : I2A8 <"dec", 0xFE, MRMS1r>;         // R8  = R8 -1
+def DECr16 : I2A16<"dec", 0xFF, MRMS1r>, OpSize; // R16 = R16-1
+def DECr32 : I2A32<"dec", 0xFF, MRMS1r>;         // R32 = R32-1
+
+
 
 // Arithmetic...
 def ADDrr8   : I2A8 <"add", 0x00, MRMDestReg>,         Pattern<(set R8 , (plus R8 , R8 ))>;
@@ -305,6 +323,8 @@ def SETEr    : X86Inst<"sete" , 0x94, MRMS0r, Arg8>, TB;            // R8 = ==
 def SETNEr   : X86Inst<"setne", 0x95, MRMS0r, Arg8>, TB;            // R8 = !=
 def SETBEr   : X86Inst<"setbe", 0x96, MRMS0r, Arg8>, TB;            // R8 = <= unsign
 def SETAr    : X86Inst<"seta" , 0x97, MRMS0r, Arg8>, TB;            // R8 = >  signed
+def SETSr    : X86Inst<"sets" , 0x98, MRMS0r, Arg8>, TB;            // R8 = <sign bit>
+def SETNSr   : X86Inst<"setns", 0x99, MRMS0r, Arg8>, TB;            // R8 = !<sign bit>
 def SETLr    : X86Inst<"setl" , 0x9C, MRMS0r, Arg8>, TB;            // R8 = <  signed
 def SETGEr   : X86Inst<"setge", 0x9D, MRMS0r, Arg8>, TB;            // R8 = >= signed
 def SETLEr   : X86Inst<"setle", 0x9E, MRMS0r, Arg8>, TB;            // R8 = <= signed
