@@ -1,0 +1,4 @@
+; RUN: llvm-as < %s | llc -march=x86 | not grep '.byte[[:space:]]*true'
+
+%X = global bool true
+
