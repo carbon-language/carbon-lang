@@ -196,6 +196,8 @@ X86TargetLowering::LowerCallTo(SDOperand Chain,
     unsigned ArgOffset = 0;
     SDOperand StackPtr = DAG.getCopyFromReg(X86::ESP, MVT::i32,
                                             DAG.getEntryNode());
+    std::vector<SDOperand> Stores;
+
     for (unsigned i = 0, e = Args.size(); i != e; ++i) {
       unsigned ArgReg;
       SDOperand PtrOff = DAG.getConstant(ArgOffset, getPointerTy());
@@ -216,20 +218,19 @@ X86TargetLowering::LowerCallTo(SDOperand Chain,
         // FALL THROUGH
       case MVT::i32:
       case MVT::f32:
-        // FIXME: Note that all of these stores are independent of each other.
-        Chain = DAG.getNode(ISD::STORE, MVT::Other, Chain,
-                            Args[i].first, PtrOff);
+        Stores.push_back(DAG.getNode(ISD::STORE, MVT::Other, Chain,
+                                     Args[i].first, PtrOff));
         ArgOffset += 4;
         break;
       case MVT::i64:
       case MVT::f64:
-        // FIXME: Note that all of these stores are independent of each other.
-        Chain = DAG.getNode(ISD::STORE, MVT::Other, Chain,
-                            Args[i].first, PtrOff);
+        Stores.push_back(DAG.getNode(ISD::STORE, MVT::Other, Chain,
+                                     Args[i].first, PtrOff));
         ArgOffset += 8;
         break;
       }
     }
+    Chain = DAG.getNode(ISD::TokenFactor, MVT::Other, Stores);
   }
 
   std::vector<MVT::ValueType> RetVals;
