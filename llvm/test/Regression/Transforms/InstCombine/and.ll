@@ -62,6 +62,6 @@ bool %test9(uint %A) {
 uint %test10(uint %A) {
 	%B = and uint %A, 12
 	%C = xor uint %B, 15
-	%D = and uint %C, 1
+	%D = and uint %C, 1   ; (X ^ C1) & C2 --> (X & C2) ^ (C1&C2)
 	ret uint %D
 }

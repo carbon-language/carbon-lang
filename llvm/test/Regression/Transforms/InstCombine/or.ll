@@ -129,3 +129,17 @@ bool %test20(int %A) {
 	ret bool %G
 }
 
+ubyte %test21(ubyte %A) {
+	%B = or ubyte %A, 1
+	%C = and ubyte %B, 254
+	%D = or ubyte %C, 254  ; (X & C1) | C2 --> (X | C2) & (C1|C2)
+	ret ubyte %D
+}
+
+ubyte %test22(ubyte %A) {
+	%B = or ubyte %A, 254
+	%C = xor ubyte %B, 13
+	%D = or ubyte %C, 1    ; (X ^ C1) | C2 --> (X | C2) ^ (C1&~C2)
+	%E = xor ubyte %D, 12
+	ret ubyte %E
+}
