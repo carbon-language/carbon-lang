@@ -53,6 +53,10 @@ bool FileOpenable(const std::string &Filename);
 bool DiffFiles(const std::string &FileA, const std::string &FileB,
                std::string *Error = 0);
 
+/// CopyFile - Copy the specified source file to the specified destination,
+/// overwriting destination if it exists.  This returns true on failure.
+///
+bool CopyFile(const std::string &Dest, const std::string &Src);
 
 /// MoveFileOverIfUpdated - If the file specified by New is different than Old,
 /// or if Old does not exist, move the New file over the Old file.  Otherwise,
@@ -60,7 +64,7 @@ bool DiffFiles(const std::string &FileA, const std::string &FileB,
 ///
 void MoveFileOverIfUpdated(const std::string &New, const std::string &Old);
  
-/// removeFile - Delete the specified file
+/// removeFile - Delete the specified file.
 ///
 void removeFile(const std::string &Filename);
 
