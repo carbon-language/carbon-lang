@@ -197,7 +197,7 @@ output through, e.g. C backend, the JIT, or LLC, and a selection of passes, one
 of which may be causing the error, and run, for example:
 
 <pre>
-  <b>bugpoint</b> -run-cbe -mode=compile [... optimization passes ...] file-to-test.bc
+  <b>bugpoint</b> -run-cbe [... optimization passes ...] file-to-test.bc
 </pre>
 
 <tt>bugpoint</tt> will try to narrow down your list of passes to the one pass
@@ -222,12 +222,12 @@ Backend, and then link in the shared object it generates.<p>
 
 To debug the JIT:
 <pre>
-  <b>bugpoint</b> -run-jit -mode=codegen -output=[correct output file] [bytecodefile]
+  <b>bugpoint</b> -run-jit -output=[correct output file] [bytecodefile]
 </pre>
 
 Similarly, to debug the LLC, one would run:
 <pre>
-  <b>bugpoint</b> -run-llc -mode=codegen -output=[correct output file] [bytecodefile]
+  <b>bugpoint</b> -run-llc -output=[correct output file] [bytecodefile]
 </pre>
 
 At the end of a successful <tt>bugpoint</tt> run, you will be presented
@@ -265,6 +265,6 @@ following:
 <address><a href="mailto:sabre@nondot.org">Chris Lattner</a></address>
 <!-- Created: Tue Aug  6 15:00:33 CDT 2002 -->
 <!-- hhmts start -->
-Last modified: Wed Sep 17 13:49:15 CDT 2003
+Last modified: Tue Oct 14 15:57:47 CDT 2003
 <!-- hhmts end -->
 </font></body></html>
