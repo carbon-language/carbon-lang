@@ -1,6 +1,6 @@
 LEVEL = ../..
 
 TOOLNAME = gccas
-USEDLIBS = asmparser bcwriter transforms scalaropts target analysis vmcore asmwriter support 
+USEDLIBS = asmparser bcwriter transforms scalaropts target analysis transforms vmcore asmwriter support 
 
 include $(LEVEL)/Makefile.common
