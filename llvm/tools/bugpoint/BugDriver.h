@@ -127,6 +127,31 @@ public:
   /// the specified one as the current program.
   void setNewProgram(Module *M);
 
+  /// executeProgram - This method runs "Program", capturing the output of the
+  /// program to a file, returning the filename of the file.  A recommended
+  /// filename may be optionally specified.  If there is a problem with the code
+  /// generator (e.g., llc crashes), this will throw an exception.
+  ///
+  std::string executeProgram(std::string RequestedOutputFilename = "",
+                             std::string Bytecode = "",
+                             const std::string &SharedObjects = "",
+                             AbstractInterpreter *AI = 0,
+                             bool *ProgramExitedNonzero = 0);
+
+  /// executeProgramWithCBE - Used to create reference output with the C
+  /// backend, if reference output is not provided.  If there is a problem with
+  /// the code generator (e.g., llc crashes), this will throw an exception.
+  ///
+  std::string executeProgramWithCBE(std::string OutputFile = "");
+
+  /// diffProgram - This method executes the specified module and diffs the
+  /// output against the file specified by ReferenceOutputFile.  If the output
+  /// is different, true is returned.  If there is a problem with the code
+  /// generator (e.g., llc crashes), this will throw an exception.
+  ///
+  bool diffProgram(const std::string &BytecodeFile = "",
+                   const std::string &SharedObj = "",
+                   bool RemoveBytecode = false);
 private:
   /// ParseInputFile - Given a bytecode or assembly input filename, parse and
   /// return it, or return null if not possible.
@@ -188,32 +213,6 @@ private:
   /// environment for executing LLVM programs.
   ///
   bool initializeExecutionEnvironment();
-
-  /// executeProgram - This method runs "Program", capturing the output of the
-  /// program to a file, returning the filename of the file.  A recommended
-  /// filename may be optionally specified.  If there is a problem with the code
-  /// generator (e.g., llc crashes), this will throw an exception.
-  ///
-  std::string executeProgram(std::string RequestedOutputFilename = "",
-                             std::string Bytecode = "",
-                             const std::string &SharedObjects = "",
-                             AbstractInterpreter *AI = 0,
-                             bool *ProgramExitedNonzero = 0);
-
-  /// executeProgramWithCBE - Used to create reference output with the C
-  /// backend, if reference output is not provided.  If there is a problem with
-  /// the code generator (e.g., llc crashes), this will throw an exception.
-  ///
-  std::string executeProgramWithCBE(std::string OutputFile = "");
-
-  /// diffProgram - This method executes the specified module and diffs the
-  /// output against the file specified by ReferenceOutputFile.  If the output
-  /// is different, true is returned.  If there is a problem with the code
-  /// generator (e.g., llc crashes), this will throw an exception.
-  ///
-  bool diffProgram(const std::string &BytecodeFile = "",
-                   const std::string &SharedObj = "",
-                   bool RemoveBytecode = false);
 };
 
 /// getPassesString - Turn a list of passes into a string which indicates the
