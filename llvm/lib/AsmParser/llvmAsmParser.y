@@ -10,6 +10,7 @@
 #include "llvm/Module.h"
 #include "llvm/iTerminators.h"
 #include "llvm/iMemory.h"
+#include "llvm/iOperators.h"
 #include "llvm/iPHINode.h"
 #include "Support/STLExtras.h"
 #include "Support/DepthFirstIterator.h"
@@ -1528,7 +1529,7 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
     delete $2;
   }
   | SetCondOps Types ValueRef ',' ValueRef {
-    $$ = BinaryOperator::create($1, getVal(*$2, $3), getVal(*$2, $5));
+    $$ = new SetCondInst($1, getVal(*$2, $3), getVal(*$2, $5));
     if ($$ == 0)
       ThrowException("binary operator returned null!");
     delete $2;
