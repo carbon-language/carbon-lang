@@ -454,9 +454,6 @@ void ExecutionEngine::emitGlobals() {
       // Allocate some memory for it!
       unsigned Size = TD.getTypeSize(Ty);
       addGlobalMapping(I, new char[Size]);
-
-      DEBUG(std::cerr << "Global '" << I->getName() << "' -> "
-                      << getPointerToGlobal(I) << "\n");
     } else {
       // External variable reference. Try to use the dynamic loader to
       // get a pointer to it.
@@ -482,6 +479,8 @@ void ExecutionEngine::emitGlobals() {
 // already in the map.
 void ExecutionEngine::EmitGlobalVariable(const GlobalVariable *GV) {
   void *GA = getPointerToGlobalIfAvailable(GV);
+  DEBUG(std::cerr << "Global '" << GV->getName() << "' -> " << GA << "\n");
+
   const Type *ElTy = GV->getType()->getElementType();
   if (GA == 0) {
     // If it's not already specified, allocate memory for the global.
