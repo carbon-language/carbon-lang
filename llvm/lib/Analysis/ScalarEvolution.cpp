@@ -2177,19 +2177,6 @@ void ScalarEvolution::deleteInstructionFromRecords(Instruction *I) const {
   return ((ScalarEvolutionsImpl*)Impl)->deleteInstructionFromRecords(I);
 }
 
-
-/// shouldSubstituteIndVar - Return true if we should perform induction variable
-/// substitution for this variable.  This is a hack because we don't have a
-/// strength reduction pass yet.  When we do we will promote all vars, because
-/// we can strength reduce them later as desired.
-bool ScalarEvolution::shouldSubstituteIndVar(const SCEV *S) const {
-  // Don't substitute high degree polynomials.
-  if (const SCEVAddRecExpr *AddRec = dyn_cast<SCEVAddRecExpr>(S))
-    if (AddRec->getNumOperands() > 3) return false;
-  return true;
-}
-
-
 static void PrintLoopInfo(std::ostream &OS, const ScalarEvolution *SE, 
                           const Loop *L) {
   // Print all inner loops first

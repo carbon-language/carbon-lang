@@ -199,12 +199,6 @@ namespace llvm {
     /// that no dangling references are left around.
     void deleteInstructionFromRecords(Instruction *I) const;
 
-    /// shouldSubstituteIndVar - Return true if we should perform induction
-    /// variable substitution for this variable.  This is a hack because we
-    /// don't have a strength reduction pass yet.  When we do we will promote
-    /// all vars, because we can strength reduce them later as desired.
-    bool shouldSubstituteIndVar(const SCEV *S) const;
-
     virtual bool runOnFunction(Function &F);
     virtual void releaseMemory();
     virtual void getAnalysisUsage(AnalysisUsage &AU) const;
