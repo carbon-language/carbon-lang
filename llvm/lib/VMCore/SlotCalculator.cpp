@@ -117,7 +117,7 @@ void SlotCalculator::processSymbolTableConstants(const SymbolTable *ST) {
 }
 
 
-void SlotCalculator::incorporateFunction(const Function *M) {
+void SlotCalculator::incorporateFunction(const Function *F) {
   assert(ModuleLevel.size() == 0 && "Module already incorporated!");
 
   SC_DEBUG("begin processFunction!\n");
@@ -129,7 +129,7 @@ void SlotCalculator::incorporateFunction(const Function *M) {
   SC_DEBUG("Inserting function arguments\n");
 
   // Iterate over function arguments, adding them to the value table...
-  for(Function::const_aiterator I = M->abegin(), E = M->aend(); I != E; ++I)
+  for(Function::const_aiterator I = F->abegin(), E = F->aend(); I != E; ++I)
     getOrCreateSlot(I);
 
   // Iterate over all of the instructions in the function, looking for constant
@@ -139,14 +139,14 @@ void SlotCalculator::incorporateFunction(const Function *M) {
   //
   if (!IgnoreNamedNodes) {                // Assembly writer does not need this!
     SC_DEBUG("Inserting function constants:\n";
-	     for (constant_iterator I = constant_begin(M), E = constant_end(M);
+	     for (constant_iterator I = constant_begin(F), E = constant_end(F);
 		  I != E; ++I) {
 	       std::cerr << "  " << *I->getType() << " " << *I << "\n";
 	     });
 
     // Emit all of the constants that are being used by the instructions in the
     // function...
-    for_each(constant_begin(M), constant_end(M),
+    for_each(constant_begin(F), constant_end(F),
 	     bind_obj(this, &SlotCalculator::getOrCreateSlot));
 
     // If there is a symbol table, it is possible that the user has names for
@@ -155,24 +155,24 @@ void SlotCalculator::incorporateFunction(const Function *M) {
     // symboltable references to constants not in the output.  Scan for these
     // constants now.
     //
-    processSymbolTableConstants(&M->getSymbolTable());
+    processSymbolTableConstants(&F->getSymbolTable());
   }
 
   SC_DEBUG("Inserting Labels:\n");
 
   // Iterate over basic blocks, adding them to the value table...
-  for (Function::const_iterator I = M->begin(), E = M->end(); I != E; ++I)
+  for (Function::const_iterator I = F->begin(), E = F->end(); I != E; ++I)
     getOrCreateSlot(I);
 
   SC_DEBUG("Inserting Instructions:\n");
 
   // Add all of the instructions to the type planes...
-  for_each(inst_begin(M), inst_end(M),
+  for_each(inst_begin(F), inst_end(F),
 	   bind_obj(this, &SlotCalculator::getOrCreateSlot));
 
   if (!IgnoreNamedNodes) {
     SC_DEBUG("Inserting SymbolTable values:\n");
-    processSymbolTable(&M->getSymbolTable());
+    processSymbolTable(&F->getSymbolTable());
   }
 
   SC_DEBUG("end processFunction!\n");
