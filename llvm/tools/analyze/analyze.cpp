@@ -16,6 +16,7 @@
 #include "llvm/Assembly/Parser.h"
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/Support/PassNameParser.h"
+#include "Support/Timer.h"
 #include <algorithm>
 
 
@@ -101,11 +102,14 @@ static cl::list<const PassInfo*, bool,
 AnalysesList(cl::desc("Analyses available:"));
 
 
+static Timer BytecodeLoadTimer("Bytecode Loader");
+
 int main(int argc, char **argv) {
   cl::ParseCommandLineOptions(argc, argv, " llvm analysis printer tool\n");
 
   Module *CurMod = 0;
   try {
+    TimeRegion RegionTimer(BytecodeLoadTimer);
     CurMod = ParseBytecodeFile(InputFilename);
     if (!CurMod && !(CurMod = ParseAssemblyFile(InputFilename))){
       std::cerr << argv[0] << ": input file didn't read correctly.\n";
