@@ -107,25 +107,31 @@ static bool HandleCastToPointer(BasicBlock::iterator BI,
   CastInst &CI = cast<CastInst>(*BI);
   if (CI.use_empty()) return false;
 
-  // Scan all of the uses, looking for any uses that are not add
+  // Scan all of the uses, looking for any uses that are not add or sub
   // instructions.  If we have non-adds, do not make this transformation.
   //
+  bool HasSubUse = false;  // Keep track of any subtracts...
   for (Value::use_iterator I = CI.use_begin(), E = CI.use_end();
-       I != E; ++I) {
+       I != E; ++I)
     if (BinaryOperator *BO = dyn_cast<BinaryOperator>(*I)) {
-      if (BO->getOpcode() != Instruction::Add ||
+      if ((BO->getOpcode() != Instruction::Add &&
+           BO->getOpcode() != Instruction::Sub) ||
           // Avoid add sbyte* %X, %X cases...
           BO->getOperand(0) == BO->getOperand(1))
         return false;
+      else
+        HasSubUse |= BO->getOpcode() == Instruction::Sub;
     } else {
       return false;
     }
-  }
 
   std::vector<Value*> Indices;
   Value *Src = CI.getOperand(0);
   const Type *Result = ConvertableToGEP(DestPTy, Src, Indices, TD, &BI);
   if (Result == 0) return false;  // Not convertable...
+
+  // Cannot handle subtracts if there is more than one index required...
+  if (HasSubUse && Indices.size() != 1) return false;
 
   PRINT_PEEPHOLE2("cast-add-to-gep:in", Src, CI);
 
@@ -133,7 +139,8 @@ static bool HandleCastToPointer(BasicBlock::iterator BI,
   // add instruction uses into getelementptr's.
   while (!CI.use_empty()) {
     BinaryOperator *I = cast<BinaryOperator>(*CI.use_begin());
-    assert(I->getOpcode() == Instruction::Add && I->getNumOperands() == 2 &&
+    assert((I->getOpcode() == Instruction::Add ||
+            I->getOpcode() == Instruction::Sub) && 
            "Use is not a valid add instruction!");
     
     // Get the value added to the cast result pointer...
@@ -141,6 +148,15 @@ static bool HandleCastToPointer(BasicBlock::iterator BI,
 
     Instruction *GEP = new GetElementPtrInst(OtherPtr, Indices, I->getName());
     PRINT_PEEPHOLE1("cast-add-to-gep:i", I);
+
+    // If the instruction is actually a subtract, we are guaranteed to only have
+    // one index (from code above), so we just need to negate the pointer index
+    // long value.
+    if (I->getOpcode() == Instruction::Sub) {
+      Instruction *Neg = BinaryOperator::createNeg(GEP->getOperand(1), 
+                                       GEP->getOperand(1)->getName()+".neg", I);
+      GEP->setOperand(1, Neg);
+    }
 
     if (GEP->getType() == I->getType()) {
       // Replace the old add instruction with the shiny new GEP inst
