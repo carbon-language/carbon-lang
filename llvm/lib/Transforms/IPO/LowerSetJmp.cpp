@@ -413,11 +413,6 @@ void LowerSetJmp::TransformSetJmpCall(CallInst* Inst)
 
   SetJmpContBlock->setName("SetJmpContBlock");
 
-  // Reposition the split BB in the BB list to make things tidier.
-  Func->getBasicBlockList().remove(SetJmpContBlock);
-  Func->getBasicBlockList().insert(++Function::iterator(ABlock),
-                                   SetJmpContBlock);
-
   // This PHI node will be in the new block created from the
   // splitBasicBlock call.
   PHINode* PHI = new PHINode(Type::IntTy, "SetJmpReturn", Inst);
