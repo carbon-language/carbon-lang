@@ -641,15 +641,28 @@ struct UltraSparcCacheInfo: public TargetCacheInfo {
 
 /// createStackSlotsPass - External interface to stack-slots pass that enters 2
 /// empty slots at the top of each function stack
+///
 Pass *createStackSlotsPass(const TargetMachine &TM);
 
-// Interface to pre-selection pass that specializes LLVM code for a target
-// machine.
+/// Specializes LLVM code for a target machine.
+///
 FunctionPass *createPreSelectionPass(const TargetMachine &TM);
 
-// External interface to peephole optimization pass operating on machine code.
+/// Peephole optimization pass operating on machine code
+///
 FunctionPass *createPeepholeOptsPass(const TargetMachine &TM);
 
+/// Writes out assembly code for the module, one function at a time
+///
+FunctionPass *createAsmPrinterPass(std::ostream &Out, const TargetMachine &TM);
+
+/// getPrologEpilogInsertionPass - Inserts prolog/epilog code.
+///
+FunctionPass* createPrologEpilogInsertionPass();
+
+/// getBytecodeAsmPrinterPass - Emits final LLVM bytecode to assembly file.
+///
+Pass* createBytecodeAsmPrinterPass(std::ostream &Out);
 
 //---------------------------------------------------------------------------
 // class UltraSparc 
@@ -681,18 +694,6 @@ public:
   virtual bool addPassesToEmitMachineCode(FunctionPassManager &PM,
                                           MachineCodeEmitter &MCE);
   virtual void replaceMachineCodeForFunction(void *Old, void *New);
-
-  // getPrologEpilogInsertionPass - Inserts prolog/epilog code.
-  FunctionPass* getPrologEpilogInsertionPass();
-
-  // getFunctionAsmPrinterPass - Writes out machine code for a single function
-  Pass* getFunctionAsmPrinterPass(std::ostream &Out);
-
-  // getModuleAsmPrinterPass - Writes generated machine code to assembly file.
-  Pass* getModuleAsmPrinterPass(std::ostream &Out);
-
-  // getBytecodeAsmPrinterPass - Emits final LLVM bytecode to assembly file.
-  Pass* getBytecodeAsmPrinterPass(std::ostream &Out);
 };
 
 } // End llvm namespace
