@@ -33,17 +33,16 @@ bool Loop::isLoopExit(const BasicBlock *BB) const {
   return false;
 }
 
+/// getNumBackEdges - Calculate the number of back edges to the loop header.
+///
 unsigned Loop::getNumBackEdges() const {
   unsigned NumBackEdges = 0;
   BasicBlock *H = getHeader();
 
-  for (std::vector<BasicBlock*>::const_iterator I = Blocks.begin(),
-         E = Blocks.end(); I != E; ++I)
-    for (succ_iterator SI = succ_begin(*I), SE = succ_end(*I);
-         SI != SE; ++SI)
-      if (*SI == H)
-	++NumBackEdges;
-  
+  for (pred_iterator I = pred_begin(H), E = pred_end(H); I != E; ++I)
+    if (contains(*I))
+      ++NumBackEdges;
+
   return NumBackEdges;
 }
 
