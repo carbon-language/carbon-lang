@@ -25,6 +25,13 @@
 static unsigned CurUID = 0;
 static std::vector<const Type *> UIDMappings;
 
+// Concrete/Abstract TypeDescriptions - We lazily calculate type descriptions
+// for types as they are needed.  Because resolution of types must invalidate
+// all of the abstract type descriptions, we keep them in a seperate map to make
+// this easy.
+static std::map<const Type*, std::string> ConcreteTypeDescriptions;
+static std::map<const Type*, std::string> AbstractTypeDescriptions;
+
 void PATypeHolder::dump() const {
   std::cerr << "PATypeHolder(" << (void*)this << ")\n";
 }
@@ -32,7 +39,7 @@ void PATypeHolder::dump() const {
 
 Type::Type(const std::string &name, PrimitiveID id)
   : Value(Type::TypeTy, Value::TypeVal) {
-  setDescription(name);
+  ConcreteTypeDescriptions[this] = name;
   ID = id;
   Abstract = Recursive = false;
   UID = CurUID++;       // Assign types UID's as they are created
@@ -111,6 +118,125 @@ unsigned Type::getPrimitiveSize() const {
 #include "llvm/Type.def"
   default: return 0;
   }
+}
+
+
+// getTypeDescription - This is a recursive function that walks a type hierarchy
+// calculating the description for a type.
+//
+static std::string getTypeDescription(const Type *Ty,
+                                      std::vector<const Type *> &TypeStack) {
+  if (isa<OpaqueType>(Ty)) {                     // Base case for the recursion
+    std::map<const Type*, std::string>::iterator I =
+      AbstractTypeDescriptions.lower_bound(Ty);
+    if (I != AbstractTypeDescriptions.end() && I->first == Ty)
+      return I->second;
+    std::string Desc = "opaque"+utostr(Ty->getUniqueID());
+    AbstractTypeDescriptions.insert(std::make_pair(Ty, Desc));
+    return Desc;
+  }
+  
+  if (!Ty->isAbstract() && !Ty->isRecursive()) {  // Base case for the recursion
+    std::map<const Type*, std::string>::iterator I =
+      ConcreteTypeDescriptions.find(Ty);
+    if (I != ConcreteTypeDescriptions.end()) return I->second;
+  }
+      
+  // Check to see if the Type is already on the stack...
+  unsigned Slot = 0, CurSize = TypeStack.size();
+  while (Slot < CurSize && TypeStack[Slot] != Ty) ++Slot; // Scan for type
+  
+  // This is another base case for the recursion.  In this case, we know 
+  // that we have looped back to a type that we have previously visited.
+  // Generate the appropriate upreference to handle this.
+  // 
+  if (Slot < CurSize)
+    return "\\" + utostr(CurSize-Slot);         // Here's the upreference
+
+  // Recursive case: derived types...
+  std::string Result;
+  TypeStack.push_back(Ty);    // Add us to the stack..
+      
+  switch (Ty->getPrimitiveID()) {
+  case Type::FunctionTyID: {
+    const FunctionType *FTy = cast<FunctionType>(Ty);
+    Result = getTypeDescription(FTy->getReturnType(), TypeStack) + " (";
+    for (FunctionType::ParamTypes::const_iterator
+           I = FTy->getParamTypes().begin(),
+           E = FTy->getParamTypes().end(); I != E; ++I) {
+      if (I != FTy->getParamTypes().begin())
+        Result += ", ";
+      Result += getTypeDescription(*I, TypeStack);
+    }
+    if (FTy->isVarArg()) {
+      if (!FTy->getParamTypes().empty()) Result += ", ";
+      Result += "...";
+    }
+    Result += ")";
+    break;
+  }
+  case Type::StructTyID: {
+    const StructType *STy = cast<StructType>(Ty);
+    Result = "{ ";
+    for (StructType::ElementTypes::const_iterator
+           I = STy->getElementTypes().begin(),
+           E = STy->getElementTypes().end(); I != E; ++I) {
+      if (I != STy->getElementTypes().begin())
+        Result += ", ";
+      Result += getTypeDescription(*I, TypeStack);
+    }
+    Result += " }";
+    break;
+  }
+  case Type::PointerTyID: {
+    const PointerType *PTy = cast<PointerType>(Ty);
+    Result = getTypeDescription(PTy->getElementType(), TypeStack) + " *";
+    break;
+  }
+  case Type::ArrayTyID: {
+    const ArrayType *ATy = cast<ArrayType>(Ty);
+    unsigned NumElements = ATy->getNumElements();
+    Result = "[";
+    Result += utostr(NumElements) + " x ";
+    Result += getTypeDescription(ATy->getElementType(), TypeStack) + "]";
+    break;
+  }
+  default:
+    assert(0 && "Unhandled type in getTypeDescription!");
+    Result = "<error>";
+  }
+
+  TypeStack.pop_back();       // Remove self from stack...
+
+  // In order to reduce the amount of repeated computation, we cache the computd
+  // value for later.
+  if (Ty->isAbstract())
+    AbstractTypeDescriptions[Ty] = Result;
+  else
+    ConcreteTypeDescriptions[Ty] = Result;
+
+  return Result;
+}
+
+
+
+static const std::string &getOrCreateDesc(std::map<const Type*,std::string>&Map,
+                                          const Type *Ty) {
+  std::map<const Type*, std::string>::iterator I = Map.find(Ty);
+  if (I != Map.end()) return I->second;
+    
+  std::vector<const Type *> TypeStack;
+  getTypeDescription(Ty, TypeStack);
+  assert(Map.count(Ty) && "Type didn't get inserted!!");
+  return Map[Ty];
+}
+
+
+const std::string &Type::getDescription() const {
+  if (isAbstract())
+    return getOrCreateDesc(AbstractTypeDescriptions, this);
+  else
+    return getOrCreateDesc(ConcreteTypeDescriptions, this);
 }
 
 
@@ -247,7 +373,6 @@ PointerType::PointerType(const Type *E) : SequentialType(PointerTyID, E) {
 
 OpaqueType::OpaqueType() : DerivedType(OpaqueTyID) {
   setAbstract(true);
-  setDescription("opaque"+utostr(getUniqueID()));
 #ifdef DEBUG_MERGE_TYPES
   std::cerr << "Derived new type: " << getDescription() << "\n";
 #endif
@@ -266,87 +391,64 @@ OpaqueType::OpaqueType() : DerivedType(OpaqueTyID) {
 // some whacko opaque types, but in most cases, it will do some simple stuff
 // when it hits non-abstract types that aren't recursive.
 //
-static std::string getTypeProps(const Type *Ty,
-                                std::vector<const Type *> &TypeStack,
-                                bool &isAbstract, bool &isRecursive) {
-  if (!Ty->isAbstract() && !Ty->isRecursive() && // Base case for the recursion
-      Ty->getDescription().size()) {
-    return Ty->getDescription();                 // Primitive = leaf type
-  } else if (isa<OpaqueType>(Ty)) {              // Base case for the recursion
-    isAbstract = true;                           // This whole type is abstract!
-    return Ty->getDescription();                 // Opaque = leaf type
-  } else {
-    // Check to see if the Type is already on the stack...
-    unsigned Slot = 0, CurSize = TypeStack.size();
-    while (Slot < CurSize && TypeStack[Slot] != Ty) ++Slot; // Scan for type
-    
-    // This is another base case for the recursion.  In this case, we know 
-    // that we have looped back to a type that we have previously visited.
-    // Generate the appropriate upreference to handle this.
-    // 
-    if (Slot < CurSize) {
-      isRecursive = true;                         // We know we are recursive
-      return "\\" + utostr(CurSize-Slot);         // Here's the upreference
-    } else {                      // Recursive case: abstract derived type...
-      std::string Result;
-      TypeStack.push_back(Ty);    // Add us to the stack..
-      
-      switch (Ty->getPrimitiveID()) {
-      case Type::FunctionTyID: {
-	const FunctionType *MTy = cast<FunctionType>(Ty);
-	Result = getTypeProps(MTy->getReturnType(), TypeStack,
-			      isAbstract, isRecursive)+" (";
-	for (FunctionType::ParamTypes::const_iterator
-	       I = MTy->getParamTypes().begin(),
-	       E = MTy->getParamTypes().end(); I != E; ++I) {
-	  if (I != MTy->getParamTypes().begin())
-	    Result += ", ";
-	  Result += getTypeProps(*I, TypeStack, isAbstract, isRecursive);
-	}
-	if (MTy->isVarArg()) {
-	  if (!MTy->getParamTypes().empty()) Result += ", ";
-	  Result += "...";
-	}
-	Result += ")";
-	break;
-      }
-      case Type::StructTyID: {
-	const StructType *STy = cast<StructType>(Ty);
-	Result = "{ ";
-	for (StructType::ElementTypes::const_iterator
-	       I = STy->getElementTypes().begin(),
-	       E = STy->getElementTypes().end(); I != E; ++I) {
-	  if (I != STy->getElementTypes().begin())
-	    Result += ", ";
-	  Result += getTypeProps(*I, TypeStack, isAbstract, isRecursive);
-	}
-	Result += " }";
-	break;
-      }
-      case Type::PointerTyID: {
-	const PointerType *PTy = cast<PointerType>(Ty);
-	Result = getTypeProps(PTy->getElementType(), TypeStack,
-			      isAbstract, isRecursive) + " *";
-	break;
-      }
-      case Type::ArrayTyID: {
-	const ArrayType *ATy = cast<ArrayType>(Ty);
-	unsigned NumElements = ATy->getNumElements();
-	Result = "[";
-	Result += utostr(NumElements) + " x ";
-	Result += getTypeProps(ATy->getElementType(), TypeStack,
-			       isAbstract, isRecursive) + "]";
-	break;
-      }
-      default:
-	assert(0 && "Unhandled case in getTypeProps!");
-	Result = "<error>";
-      }
-
-      TypeStack.pop_back();       // Remove self from stack...
-      return Result;
-    }
+static void getTypeProps(const Type *Ty, std::vector<const Type *> &TypeStack,
+                         bool &isAbstract, bool &isRecursive) {
+  if (!Ty->isAbstract() && !Ty->isRecursive()) // Base case for the recursion
+    return;                                    // Primitive = leaf type
+  
+  if (isa<OpaqueType>(Ty)) {                   // Base case for the recursion
+    isAbstract = true;                         // This whole type is abstract!
+    return;                                    // Opaque = leaf type
   }
+
+  // Check to see if the Type is already on the stack...
+  unsigned Slot = 0, CurSize = TypeStack.size();
+  while (Slot < CurSize && TypeStack[Slot] != Ty) ++Slot; // Scan for type
+    
+  // This is another base case for the recursion.  In this case, we know 
+  // that we have looped back to a type that we have previously visited.
+  // Generate the appropriate upreference to handle this.
+  // 
+  if (Slot < CurSize) {
+    isRecursive = true;                         // We know we are recursive
+    return;
+  }
+
+  // Recursive case: derived type...
+  TypeStack.push_back(Ty);    // Add us to the stack..
+      
+  switch (Ty->getPrimitiveID()) {
+  case Type::FunctionTyID: {
+    const FunctionType *FTy = cast<FunctionType>(Ty);
+    getTypeProps(FTy->getReturnType(), TypeStack, isAbstract, isRecursive);
+    for (FunctionType::ParamTypes::const_iterator
+           I = FTy->getParamTypes().begin(),
+           E = FTy->getParamTypes().end(); I != E; ++I)
+      getTypeProps(*I, TypeStack, isAbstract, isRecursive);
+    break;
+  }
+  case Type::StructTyID: {
+    const StructType *STy = cast<StructType>(Ty);
+    for (StructType::ElementTypes::const_iterator
+           I = STy->getElementTypes().begin(),
+           E = STy->getElementTypes().end(); I != E; ++I)
+      getTypeProps(*I, TypeStack, isAbstract, isRecursive);
+    break;
+  }
+  case Type::PointerTyID: {
+    const PointerType *PTy = cast<PointerType>(Ty);
+    getTypeProps(PTy->getElementType(), TypeStack, isAbstract, isRecursive);
+    break;
+  }
+  case Type::ArrayTyID:
+    getTypeProps(cast<ArrayType>(Ty)->getElementType(), TypeStack,
+                 isAbstract, isRecursive);
+    break;
+  default:
+    assert(0 && "Unhandled type in getTypeProps!");
+  }
+
+  TypeStack.pop_back();       // Remove self from stack...
 }
 
 
@@ -358,7 +460,7 @@ void DerivedType::setDerivedTypeProperties() {
   std::vector<const Type *> TypeStack;
   bool isAbstract = false, isRecursive = false;
   
-  setDescription(getTypeProps(this, TypeStack, isAbstract, isRecursive));
+  getTypeProps(this, TypeStack, isAbstract, isRecursive);
   setAbstract(isAbstract);
   setRecursive(isRecursive);
 }
@@ -402,8 +504,8 @@ static bool TypesEqual(const Type *Ty, const Type *Ty2,
   if (const ArrayType *ATy = dyn_cast<ArrayType>(Ty)) {
     if (ATy->getNumElements() != cast<ArrayType>(Ty2)->getNumElements())
       return false;
-  } else if (const FunctionType *MTy = dyn_cast<FunctionType>(Ty)) {
-    if (MTy->isVarArg() != cast<FunctionType>(Ty2)->isVarArg())
+  } else if (const FunctionType *FTy = dyn_cast<FunctionType>(Ty)) {
+    if (FTy->isVarArg() != cast<FunctionType>(Ty2)->isVarArg())
       return false;
   }
 
@@ -846,6 +948,9 @@ void DerivedType::removeAbstractTypeUser(AbstractTypeUser *U) const {
 void DerivedType::refineAbstractTypeTo(const Type *NewType) {
   assert(isAbstract() && "refineAbstractTypeTo: Current type is not abstract!");
   assert(this != NewType && "Can't refine to myself!");
+  
+  // The descriptions may be out of date.  Conservatively clear them all!
+  AbstractTypeDescriptions.clear();
 
 #ifdef DEBUG_MERGE_TYPES
   std::cerr << "REFINING abstract type [" << (void*)this << " "
