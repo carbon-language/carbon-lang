@@ -19,8 +19,8 @@
 #include "llvm/Support/CommandLine.h"
 
 cl::String InputFilename ("", "Parse <arg> file, compile to bytecode", 0, "-");
-cl::String OutputFilename("o", "Override output filename", 0, "");
-cl::Flag   Force         ("f", "Overwrite output files", 0, false);
+cl::String OutputFilename("o", "Override output filename", cl::NoFlags, "");
+cl::Flag   Force         ("f", "Overwrite output files", cl::NoFlags, false);
 cl::Flag   DumpAsm       ("d", "Print assembly as parsed", cl::Hidden, false);
 
 int main(int argc, char **argv) {
@@ -29,38 +29,38 @@ int main(int argc, char **argv) {
   ostream *Out = 0;
   try {
     // Parse the file now...
-    Module *C = ParseAssemblyFile(InputFilename.getValue());
+    Module *C = ParseAssemblyFile(InputFilename);
     if (C == 0) {
       cerr << "assembly didn't read correctly.\n";
       return 1;
     }
   
-    if (DumpAsm.getValue())
+    if (DumpAsm)
       cerr << "Here's the assembly:\n" << C;
 
-    if (OutputFilename.getValue() != "") {   // Specified an output filename?
-      Out = new ofstream(OutputFilename.getValue().c_str(), 
-			 (Force.getValue() ? 0 : ios::noreplace)|ios::out);
+    if (OutputFilename != "") {   // Specified an output filename?
+      Out = new ofstream(OutputFilename.c_str(), 
+			 (Force ? 0 : ios::noreplace)|ios::out);
     } else {
-      if (InputFilename.getValue() == "-") {
-	OutputFilename.setValue("-");
+      if (InputFilename == "-") {
+	OutputFilename = "-";
 	Out = &cout;
       } else {
-	string IFN = InputFilename.getValue();
+	string IFN = InputFilename;
 	int Len = IFN.length();
 	if (IFN[Len-3] == '.' && IFN[Len-2] == 'l' && IFN[Len-1] == 'l') {
 	  // Source ends in .ll
-	  OutputFilename.setValue(string(IFN.begin(), IFN.end()-3));
+	  OutputFilename = string(IFN.begin(), IFN.end()-3);
         } else {
-	  OutputFilename.setValue(IFN);   // Append a .bc to it
+	  OutputFilename = IFN;   // Append a .bc to it
 	}
-	OutputFilename.setValue(OutputFilename.getValue() + ".bc");
-	Out = new ofstream(OutputFilename.getValue().c_str(), 
-			   (Force.getValue() ? 0 : ios::noreplace)|ios::out);
+	OutputFilename += ".bc";
+	Out = new ofstream(OutputFilename.c_str(), 
+			   (Force ? 0 : ios::noreplace)|ios::out);
       }
   
       if (!Out->good()) {
-        cerr << "Error opening " << OutputFilename.getValue() << "!\n";
+        cerr << "Error opening " << OutputFilename << "!\n";
 	delete C;
 	return 1;
       }

@@ -92,7 +92,7 @@ enum Ans {
   postdomset, postidom, postdomtree, postdomfrontier,
 };
 
-cl::String InputFilename ("", "Load <arg> file to analyze", 0, "-");
+cl::String InputFilename ("", "Load <arg> file to analyze", cl::NoFlags, "-");
 cl::Flag   Quiet         ("q", "Don't print analysis pass names", 0, false);
 cl::EnumList<enum Ans> AnalysesList(cl::NoFlags,
   clEnumVal(print          , "Print each Method"),
@@ -132,8 +132,8 @@ struct {
 int main(int argc, char **argv) {
   cl::ParseCommandLineOptions(argc, argv, " llvm analysis printer tool\n");
 
-  Module *C = ParseBytecodeFile(InputFilename.getValue());
-  if (!C && !(C = ParseAssemblyFile(InputFilename.getValue()))) {
+  Module *C = ParseBytecodeFile(InputFilename);
+  if (!C && !(C = ParseAssemblyFile(InputFilename))) {
     cerr << "Input file didn't read correctly.\n";
     return 1;
   }

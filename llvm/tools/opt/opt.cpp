@@ -75,7 +75,7 @@ int main(int argc, char **argv) {
   cl::ParseCommandLineOptions(argc, argv,
 			      " llvm .bc -> .bc modular optimizer\n");
  
-  Module *C = ParseBytecodeFile(InputFilename.getValue());
+  Module *C = ParseBytecodeFile(InputFilename);
   if (C == 0) {
     cerr << "bytecode didn't read correctly.\n";
     return 1;
@@ -99,11 +99,11 @@ int main(int argc, char **argv) {
   }
 
   ostream *Out = &cout;  // Default to printing to stdout...
-  if (OutputFilename.getValue() != "") {
-    Out = new ofstream(OutputFilename.getValue().c_str(), 
-                       (Force.getValue() ? 0 : ios::noreplace)|ios::out);
+  if (OutputFilename != "") {
+    Out = new ofstream(OutputFilename.c_str(), 
+                       (Force ? 0 : ios::noreplace)|ios::out);
     if (!Out->good()) {
-      cerr << "Error opening " << OutputFilename.getValue() << "!\n";
+      cerr << "Error opening " << OutputFilename << "!\n";
       delete C;
       return 1;
     }

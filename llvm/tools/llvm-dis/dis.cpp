@@ -35,8 +35,8 @@ enum OutputMode {
 };
 
 cl::String InputFilename ("", "Load <arg> file, print as assembly", 0, "-");
-cl::String OutputFilename("o", "Override output filename", 0, "");
-cl::Flag   Force         ("f", "Overwrite output files", 0, false);
+cl::String OutputFilename("o", "Override output filename", cl::NoFlags, "");
+cl::Flag   Force         ("f", "Overwrite output files", cl::NoFlags, false);
 cl::EnumFlags<enum OutputMode> WriteMode(cl::NoFlags,
   clEnumVal(Default, "Write basic blocks in bytecode order"),
   clEnumVal(dfo    , "Write basic blocks in depth first order"),
@@ -49,36 +49,36 @@ int main(int argc, char **argv) {
   cl::ParseCommandLineOptions(argc, argv, " llvm .bc -> .ll disassembler\n");
   ostream *Out = &cout;  // Default to printing to stdout...
 
-  Module *C = ParseBytecodeFile(InputFilename.getValue());
+  Module *C = ParseBytecodeFile(InputFilename);
   if (C == 0) {
     cerr << "bytecode didn't read correctly.\n";
     return 1;
   }
   
-  if (OutputFilename.getValue() != "") {   // Specified an output filename?
-    Out = new ofstream(OutputFilename.getValue().c_str(), 
-		       (Force.getValue() ? 0 : ios::noreplace)|ios::out);
+  if (OutputFilename != "") {   // Specified an output filename?
+    Out = new ofstream(OutputFilename.c_str(), 
+		       (Force ? 0 : ios::noreplace)|ios::out);
   } else {
-    if (InputFilename.getValue() == "-") {
-      OutputFilename.setValue("-");
+    if (InputFilename == "-") {
+      OutputFilename = "-";
       Out = &cout;
     } else {
-      string IFN = InputFilename.getValue();
+      string IFN = InputFilename;
       int Len = IFN.length();
       if (IFN[Len-3] == '.' && IFN[Len-2] == 'b' && IFN[Len-1] == 'c') {
 	// Source ends in .bc
-	OutputFilename.setValue(string(IFN.begin(), IFN.end()-3));
+	OutputFilename = string(IFN.begin(), IFN.end()-3);
       } else {
-	OutputFilename.setValue(IFN);   // Append a .ll to it
+	OutputFilename = IFN;   // Append a .ll to it
       }
-      OutputFilename.setValue(OutputFilename.getValue() + ".ll");
-      Out = new ofstream(OutputFilename.getValue().c_str(), 
-			 (Force.getValue() ? 0 : ios::noreplace)|ios::out);
+      OutputFilename += ".ll";
+      Out = new ofstream(OutputFilename.c_str(), 
+			 (Force ? 0 : ios::noreplace)|ios::out);
     }
   }
 
   if (!Out->good()) {
-    cerr << "Error opening " << OutputFilename.getValue() 
+    cerr << "Error opening " << OutputFilename
 	 << ": sending to stdout instead!\n";
     Out = &cout;
   }
@@ -86,7 +86,7 @@ int main(int argc, char **argv) {
   // All that dis does is write the assembly out to a file... which is exactly
   // what the writer library is supposed to do...
   //
-  if (WriteMode.getValue() == Default) {
+  if (WriteMode == Default) {
     (*Out) << C;           // Print out in list order
   } else {
     // TODO: This does not print anything other than the basic blocks in the
@@ -97,7 +97,7 @@ int main(int argc, char **argv) {
       Method *M = *I;
       (*Out) << "-------------- Method: " << M->getName() << " -------------\n";
 
-      switch (WriteMode.getValue()) {
+      switch (WriteMode) {
       case dfo:                   // Depth First ordering
 	copy(cfg::df_begin(M), cfg::df_end(M),
 	     ostream_iterator<BasicBlock*>(*Out, "\n"));

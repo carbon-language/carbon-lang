@@ -189,7 +189,7 @@ bool Int::handleOccurance(const char *ArgName, const string &Arg) {
 // String valued command line option implementation
 //
 bool String::handleOccurance(const char *ArgName, const string &Arg) {
-  Value = Arg;
+  *this = Arg;
   return false;
 }
 

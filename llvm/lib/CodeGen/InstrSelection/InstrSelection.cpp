@@ -67,7 +67,7 @@ bool SelectInstructionsForMethod(Method* method, TargetMachine &Target) {
       // Invoke BURM to label each tree node with a state
       (void) burm_label(basicNode);
       
-      if (DebugLevel.getValue() >= DebugBurgTrees)
+      if (DebugLevel >= DebugBurgTrees)
 	{
 	  printcover(basicNode, 1, 0);
 	  cerr << "\nCover cost == " << treecost(basicNode, 1, 0) << "\n\n";
@@ -84,7 +84,7 @@ bool SelectInstructionsForMethod(Method* method, TargetMachine &Target) {
   
   if (!failed)
     {
-      if (DebugLevel.getValue() >= DebugInstTrees)
+      if (DebugLevel >= DebugInstTrees)
 	{
 	  cout << "\n\n*** Instruction trees for method "
 	       << (method->hasName()? method->getName() : "")
@@ -92,7 +92,7 @@ bool SelectInstructionsForMethod(Method* method, TargetMachine &Target) {
 	  instrForest.dump();
 	}
       
-      if (DebugLevel.getValue() > NoDebugInfo)
+      if (DebugLevel > NoDebugInfo)
 	PrintMachineInstructions(method);
     }
   
