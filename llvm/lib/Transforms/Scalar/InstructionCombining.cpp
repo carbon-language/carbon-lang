@@ -683,8 +683,16 @@ Instruction *InstCombiner::visitSetCondInst(BinaryOperator &I) {
   // integers at the end of their ranges...
   //
   if (ConstantInt *CI = dyn_cast<ConstantInt>(Op1)) {
-    if (CI->isNullValue() && I.getOpcode() == Instruction::SetNE)
-      return new CastInst(Op0, Type::BoolTy, I.getName());
+    if (CI->isNullValue()) {
+      if (I.getOpcode() == Instruction::SetNE)
+        return new CastInst(Op0, Type::BoolTy, I.getName());
+      else if (I.getOpcode() == Instruction::SetEQ) {
+        // seteq X, 0 -> not (cast X to bool)
+        Instruction *Val = new CastInst(Op0, Type::BoolTy, I.getName()+".not");
+        InsertNewInstBefore(Val, I);
+        return BinaryOperator::createNot(Val, I.getName());
+      }
+    }
 
     // Check to see if we are comparing against the minimum or maximum value...
     if (CI->isMinValue()) {
@@ -1064,15 +1072,16 @@ Instruction *InstCombiner::visitAllocationInst(AllocationInst &AI) {
 
 Instruction *InstCombiner::visitBranchInst(BranchInst &BI) {
   // Change br (not X), label True, label False to: br X, label False, True
-  if (BI.isConditional() && BinaryOperator::isNot(BI.getCondition())) {
-    BasicBlock *TrueDest = BI.getSuccessor(0);
-    BasicBlock *FalseDest = BI.getSuccessor(1);
-    // Swap Destinations and condition...
-    BI.setCondition(BinaryOperator::getNotArgument(cast<BinaryOperator>(BI.getCondition())));
-    BI.setSuccessor(0, FalseDest);
-    BI.setSuccessor(1, TrueDest);
-    return &BI;
-  }
+  if (BI.isConditional())
+    if (Value *V = dyn_castNotVal(BI.getCondition())) {
+      BasicBlock *TrueDest = BI.getSuccessor(0);
+      BasicBlock *FalseDest = BI.getSuccessor(1);
+      // Swap Destinations and condition...
+      BI.setCondition(V);
+      BI.setSuccessor(0, FalseDest);
+      BI.setSuccessor(1, TrueDest);
+      return &BI;
+    }
   return 0;
 }
 
