@@ -25,6 +25,7 @@ Pass *createSimpleX86InstructionSelector(TargetMachine &TM);
 /// every register.  Wow, great policy huh?
 ///
 Pass *createSimpleRegisterAllocator(TargetMachine &TM);
+Pass *createLocalRegisterAllocator(TargetMachine &TM);
 
 /// createX86CodePrinterPass - Print out the specified machine code function to
 /// the specified stream.  This function should work regardless of whether or
@@ -46,7 +47,7 @@ namespace X86 {
   // mapping from register name to register number.
   //
   enum Register {
-#define R(ENUM, NAME, FLAGS, TSFLAGS) ENUM,
+#define R(ENUM, NAME, FLAGS, TSFLAGS, A1, A2, A3) ENUM,
 #include "X86RegisterInfo.def"
   };
 
