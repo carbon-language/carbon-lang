@@ -18,6 +18,7 @@
 #include <set>
 #include <string>
 #include <vector>
+#include <ostream>
 
 namespace llvm {
 namespace sys {
@@ -161,7 +162,7 @@ namespace sys {
       /// @throws std::string if the path string is not legal.
       /// @param unverified_path The path to verify and assign.
       /// @brief Construct a Path from a string.
-      explicit Path(std::string unverified_path);
+      explicit Path(const std::string& unverified_path);
 
     /// @}
     /// @name Operators
@@ -545,6 +546,11 @@ namespace sys {
   /// This utility function allows any memory block to be examined in order
   /// to determine its file type.
   LLVMFileType IdentifyFileType(const char*magic, unsigned length);
+}
+
+inline std::ostream& operator<<(std::ostream& strm, const sys::Path& aPath) {
+  strm << aPath.toString();
+  return strm;
 }
 
 }

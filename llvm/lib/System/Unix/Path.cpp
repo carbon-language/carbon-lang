@@ -27,7 +27,7 @@
 namespace llvm {
 using namespace sys;
 
-Path::Path(std::string unverified_path) 
+Path::Path(const std::string& unverified_path) 
   : path(unverified_path)
 {
   if (unverified_path.empty())
