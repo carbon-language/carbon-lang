@@ -174,4 +174,9 @@ inline std::ostream &operator<<(std::ostream &O, const Module *M) {
   return O;
 }
 
+inline std::ostream &operator<<(std::ostream &O, const Module &M) {
+  M.print(O);
+  return O;
+}
+
 #endif
