@@ -444,21 +444,31 @@ void IndVarSimplify::runOnLoop(Loop *L) {
     Changed = true;
   }
 
-  DeleteTriviallyDeadInstructions(DeadInsts);
-
-  // TODO: In the future we could replace all instructions in the loop body with
-  // simpler expressions.  It's not clear how useful this would be though or if
-  // the code expansion cost would be worth it!  We probably shouldn't do this
-  // until we have a way to reuse expressions already in the code.
-#if 0
+  // Now replace all derived expressions in the loop body with simpler
+  // expressions.
   for (unsigned i = 0, e = L->getBlocks().size(); i != e; ++i)
     if (LI->getLoopFor(L->getBlocks()[i]) == L) {  // Not in a subloop...
       BasicBlock *BB = L->getBlocks()[i];
       for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I)
         if (I->getType()->isInteger() &&      // Is an integer instruction
+            !I->use_empty() &&
             !Rewriter.isInsertedInstruction(I)) {
           SCEVHandle SH = SE->getSCEV(I);
+          Value *V = Rewriter.ExpandCodeFor(SH, I, I->getType());
+          if (V != I) {
+            if (isa<Instruction>(V)) {
+              std::string Name = I->getName();
+              I->setName("");
+              V->setName(Name);
+            }
+            I->replaceAllUsesWith(V);
+            DeadInsts.insert(I);
+            ++NumRemoved;
+            Changed = true;
+          }          
         }
     }
-#endif
+
+
+  DeleteTriviallyDeadInstructions(DeadInsts);
 }
