@@ -25,9 +25,6 @@
 //
 #include "llvm/Module.h"
 
-using std::map;
-using std::vector;
-
 static RegisterAnalysis<LocalDataStructures>
 X("datastructure", "Local Data Structure Analysis");
 
@@ -57,15 +54,15 @@ namespace {
   ///
   class GraphBuilder : InstVisitor<GraphBuilder> {
     DSGraph &G;
-    vector<DSNode*> &Nodes;
+    std::vector<DSNode*> &Nodes;
     DSNodeHandle &RetNode;               // Node that gets returned...
-    map<Value*, DSNodeHandle> &ScalarMap;
-    vector<DSCallSite> &FunctionCalls;
+    std::map<Value*, DSNodeHandle> &ScalarMap;
+    std::vector<DSCallSite> &FunctionCalls;
 
   public:
-    GraphBuilder(DSGraph &g, vector<DSNode*> &nodes, DSNodeHandle &retNode,
-                 map<Value*, DSNodeHandle> &SM,
-                 vector<DSCallSite> &fc)
+    GraphBuilder(DSGraph &g, std::vector<DSNode*> &nodes, DSNodeHandle &retNode,
+                 std::map<Value*, DSNodeHandle> &SM,
+                 std::vector<DSCallSite> &fc)
       : G(g), Nodes(nodes), RetNode(retNode), ScalarMap(SM), FunctionCalls(fc) {
 
       // Create scalar nodes for all pointer arguments...

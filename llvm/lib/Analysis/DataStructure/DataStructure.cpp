@@ -14,8 +14,6 @@
 #include "Support/Timer.h"
 #include <algorithm>
 
-using std::vector;
-
 namespace {
   Statistic<> NumFolds          ("dsnode", "Number of nodes completely folded");
   Statistic<> NumCallNodesMerged("dsnode", "Number of call nodes merged");
@@ -45,7 +43,7 @@ DSNode::DSNode(const DSNode &N)
 void DSNode::removeReferrer(DSNodeHandle *H) {
   // Search backwards, because we depopulate the list from the back for
   // efficiency (because it's a vector).
-  vector<DSNodeHandle*>::reverse_iterator I =
+  std::vector<DSNodeHandle*>::reverse_iterator I =
     std::find(Referrers.rbegin(), Referrers.rend(), H);
   assert(I != Referrers.rend() && "Referrer not pointing to node!");
   Referrers.erase(I.base()-1);
@@ -56,7 +54,7 @@ void DSNode::removeReferrer(DSNodeHandle *H) {
 //
 void DSNode::addGlobal(GlobalValue *GV) {
   // Keep the list sorted.
-  vector<GlobalValue*>::iterator I =
+  std::vector<GlobalValue*>::iterator I =
     std::lower_bound(Globals.begin(), Globals.end(), GV);
 
   if (I == Globals.end() || *I != GV) {
@@ -83,8 +81,8 @@ void DSNode::foldNodeCompletely() {
 
   // Loop over all of our referrers, making them point to our zero bytes of
   // space.
-  for (vector<DSNodeHandle*>::iterator I = Referrers.begin(), E=Referrers.end();
-       I != E; ++I)
+  for (std::vector<DSNodeHandle*>::iterator I = Referrers.begin(),
+         E = Referrers.end(); I != E; ++I)
     (*I)->setOffset(0);
 
   // If we have links, merge all of our outgoing links together...
@@ -339,8 +337,8 @@ void DSNode::addEdgeTo(unsigned Offset, const DSNodeHandle &NH) {
 // duplicates are not allowed and both are sorted.  This assumes that 'T's are
 // efficiently copyable and have sane comparison semantics.
 //
-static void MergeSortedVectors(vector<GlobalValue*> &Dest,
-                               const vector<GlobalValue*> &Src) {
+static void MergeSortedVectors(std::vector<GlobalValue*> &Dest,
+                               const std::vector<GlobalValue*> &Src) {
   // By far, the most common cases will be the simple ones.  In these cases,
   // avoid having to allocate a temporary vector...
   //
@@ -350,21 +348,21 @@ static void MergeSortedVectors(vector<GlobalValue*> &Dest,
     Dest = Src;
   } else if (Src.size() == 1) {  // Insert a single element...
     const GlobalValue *V = Src[0];
-    vector<GlobalValue*>::iterator I =
+    std::vector<GlobalValue*>::iterator I =
       std::lower_bound(Dest.begin(), Dest.end(), V);
     if (I == Dest.end() || *I != Src[0])  // If not already contained...
       Dest.insert(I, Src[0]);
   } else if (Dest.size() == 1) {
     GlobalValue *Tmp = Dest[0];           // Save value in temporary...
     Dest = Src;                           // Copy over list...
-    vector<GlobalValue*>::iterator I =
+    std::vector<GlobalValue*>::iterator I =
       std::lower_bound(Dest.begin(), Dest.end(), Tmp);
     if (I == Dest.end() || *I != Tmp)     // If not already contained...
       Dest.insert(I, Tmp);
 
   } else {
     // Make a copy to the side of Dest...
-    vector<GlobalValue*> Old(Dest);
+    std::vector<GlobalValue*> Old(Dest);
     
     // Make space for all of the type entries now...
     Dest.resize(Dest.size()+Src.size());
@@ -847,7 +845,7 @@ static inline bool nodeContainsExternalFunction(const DSNode *N) {
   return false;
 }
 
-static void removeIdenticalCalls(vector<DSCallSite> &Calls,
+static void removeIdenticalCalls(std::vector<DSCallSite> &Calls,
                                  const std::string &where) {
   // Remove trivially identical function calls
   unsigned NumFns = Calls.size();
@@ -1097,7 +1095,7 @@ void DSGraph::removeDeadNodes(unsigned Flags) {
       ScalarMap.erase(GlobalNodes[i].first);
 
   // Loop over all unreachable nodes, dropping their references...
-  vector<DSNode*> DeadNodes;
+  std::vector<DSNode*> DeadNodes;
   DeadNodes.reserve(Nodes.size());     // Only one allocation is allowed.
   for (unsigned i = 0; i != Nodes.size(); ++i)
     if (!Alive.count(Nodes[i])) {
@@ -1211,7 +1209,7 @@ DSNode* GlobalDSGraph::cloneNodeInto(DSNode *OldNode,
 // 
 void GlobalDSGraph::cloneCalls(DSGraph& Graph) {
   std::map<const DSNode*, DSNode*> NodeCache;
-  vector<DSCallSite >& FromCalls =Graph.FunctionCalls;
+  std::vector<DSCallSite >& FromCalls =Graph.FunctionCalls;
 
   FunctionCalls.reserve(FunctionCalls.size() + FromCalls.size());
 

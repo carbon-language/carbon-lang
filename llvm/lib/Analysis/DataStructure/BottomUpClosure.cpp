@@ -11,7 +11,6 @@
 #include "llvm/Analysis/DSGraph.h"
 #include "llvm/Module.h"
 #include "Support/Statistic.h"
-using std::map;
 
 namespace {
   Statistic<> MaxSCC("budatastructure", "Maximum SCC Size in Call Graph");
@@ -284,7 +283,7 @@ unsigned BUDataStructures::calculateGraphs(Function *F,
 // our memory... here...
 //
 void BUDataStructures::releaseMemory() {
-  for (map<const Function*, DSGraph*>::iterator I = DSInfo.begin(),
+  for (std::map<const Function*, DSGraph*>::iterator I = DSInfo.begin(),
          E = DSInfo.end(); I != E; ++I)
     delete I->second;
 

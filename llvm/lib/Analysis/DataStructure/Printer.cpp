@@ -14,7 +14,6 @@
 #include "Support/Statistic.h"
 #include <fstream>
 #include <sstream>
-using std::string;
 
 // OnlyPrintMain - The DataStructure printer exposes this option to allow
 // printing of only the graph for "main".
@@ -28,7 +27,7 @@ namespace {
 
 void DSNode::dump() const { print(std::cerr, 0); }
 
-static string getCaption(const DSNode *N, const DSGraph *G) {
+static std::string getCaption(const DSNode *N, const DSGraph *G) {
   std::stringstream OS;
   Module *M = G && &G->getFunction() ? G->getFunction().getParent() : 0;
 
@@ -153,8 +152,9 @@ void DSGraph::print(std::ostream &O) const {
   WriteGraph(O, this, "DataStructures");
 }
 
-void DSGraph::writeGraphToFile(std::ostream &O, const string &GraphName) const {
-  string Filename = GraphName + ".dot";
+void DSGraph::writeGraphToFile(std::ostream &O,
+                               const std::string &GraphName) const {
+  std::string Filename = GraphName + ".dot";
   O << "Writing '" << Filename << "'...";
   std::ofstream F(Filename.c_str());
   
@@ -170,7 +170,7 @@ void DSGraph::writeGraphToFile(std::ostream &O, const string &GraphName) const {
 
 template <typename Collection>
 static void printCollection(const Collection &C, std::ostream &O,
-                            const Module *M, const string &Prefix) {
+                            const Module *M, const std::string &Prefix) {
   if (M == 0) {
     O << "Null Module pointer, cannot continue!\n";
     return;
