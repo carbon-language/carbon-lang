@@ -2198,14 +2198,17 @@ Instruction *InstCombiner::FoldGEPSetCC(User *GEPLHS, Value *RHS,
     // index is zero or not.
     if (Cond == Instruction::SetEQ || Cond == Instruction::SetNE) {
       Instruction *InVal = 0;
-      for (unsigned i = 1, e = GEPLHS->getNumOperands(); i != e; ++i) {
+      gep_type_iterator GTI = gep_type_begin(GEPLHS);
+      for (unsigned i = 1, e = GEPLHS->getNumOperands(); i != e; ++i, ++GTI) {
         bool EmitIt = true;
         if (Constant *C = dyn_cast<Constant>(GEPLHS->getOperand(i))) {
           if (isa<UndefValue>(C))  // undef index -> undef.
             return ReplaceInstUsesWith(I, UndefValue::get(I.getType()));
           if (C->isNullValue())
             EmitIt = false;
-          else if (isa<ConstantInt>(C))
+          else if (TD->getTypeSize(GTI.getIndexedType()) == 0) {
+            EmitIt = false;  // This is indexing into a zero sized array?
+          } else if (isa<ConstantInt>(C)) 
             return ReplaceInstUsesWith(I, // No comparison is needed here.
                                  ConstantBool::get(Cond == Instruction::SetNE));
         }
@@ -4902,7 +4905,9 @@ bool InstCombiner::runOnFunction(Function &F) {
         AddUsesToWorkList(*I);
       ++NumDeadInst;
 
-      I->getParent()->getInstList().erase(I);
+      DEBUG(std::cerr << "IC: DCE: " << *I);
+
+      I->eraseFromParent();
       removeFromWorkList(I);
       continue;
     }
@@ -4928,6 +4933,8 @@ bool InstCombiner::runOnFunction(Function &F) {
           C = ConstantExpr::getCast(C, I->getType());
         }
       }
+
+      DEBUG(std::cerr << "IC: ConstFold to: " << *C << " from: " << *I);
 
       // Add operands to the worklist...
       AddUsesToWorkList(*I);
