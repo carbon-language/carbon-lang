@@ -168,27 +168,27 @@ public:
   virtual void emitPrologue(MachineFunction &MF, unsigned Bytes) const = 0;
   virtual void emitEpilogue(MachineBasicBlock &MBB, unsigned Bytes) const = 0;
 
-  virtual MachineBasicBlock::iterator
-  storeReg2RegOffset(MachineBasicBlock &MBB,
-                     MachineBasicBlock::iterator MBBI,
-                     unsigned SrcReg, unsigned DestReg,
-                     unsigned ImmOffset, unsigned dataSize) const = 0;
+  virtual void storeReg2RegOffset(MachineBasicBlock &MBB,
+				  MachineBasicBlock::iterator &MBBI,
+				  unsigned SrcReg, unsigned DestReg,
+				  unsigned ImmOffset,
+				  const TargetRegisterClass *RC) const = 0;
 
-  virtual MachineBasicBlock::iterator
-  loadRegOffset2Reg(MachineBasicBlock &MBB,
-                    MachineBasicBlock::iterator MBBI,
-                    unsigned DestReg, unsigned SrcReg,
-                    unsigned ImmOffset, unsigned dataSize) const = 0;
+  virtual void loadRegOffset2Reg(MachineBasicBlock &MBB,
+				 MachineBasicBlock::iterator &MBBI,
+				 unsigned DestReg, unsigned SrcReg,
+				 unsigned ImmOffset,
+				 const TargetRegisterClass *RC) const = 0;
 
-  virtual MachineBasicBlock::iterator
-  moveReg2Reg(MachineBasicBlock &MBB,
-              MachineBasicBlock::iterator MBBI,
-              unsigned DestReg, unsigned SrcReg, unsigned dataSize) const = 0;
+  virtual void moveReg2Reg(MachineBasicBlock &MBB,
+			   MachineBasicBlock::iterator &MBBI,
+			   unsigned DestReg, unsigned SrcReg,
+			   const TargetRegisterClass *RC) const = 0;
 
-  virtual MachineBasicBlock::iterator
-  moveImm2Reg(MachineBasicBlock &MBB,
-              MachineBasicBlock::iterator MBBI,
-              unsigned DestReg, unsigned Imm, unsigned dataSize) const = 0;
+  virtual void moveImm2Reg(MachineBasicBlock &MBB,
+			   MachineBasicBlock::iterator &MBBI,
+			   unsigned DestReg, unsigned Imm,
+			   const TargetRegisterClass *RC) const = 0;
 };
 
 #endif
