@@ -36,6 +36,14 @@ namespace llvm {
   //
   TargetMachine *allocateX86TargetMachine(const Module &M,
                                           IntrinsicLowering *IL = 0);
+
+  // allocatePowerPCTargetMachine - Allocate and return a subclass
+  // of TargetMachine that implements the PowerPC backend.  This takes
+  // ownership of the IntrinsicLowering pointer, deleting it when
+  // the target machine is destroyed.
+  //
+  TargetMachine *allocatePowerPCTargetMachine(const Module &M,
+                                              IntrinsicLowering *IL = 0);
 } // End llvm namespace
 
 #endif
