@@ -96,6 +96,20 @@ bool SelectInstructionsForMethod(Method* method, TargetMachine &Target) {
 	PrintMachineInstructions(method);
     }
   
+  //
+  // Record instructions in the vector for each basic block
+  // 
+  for (Method::iterator BI = method->begin(); BI != method->end(); ++BI)
+    {
+      MachineCodeForBasicBlock& bbMvec = (*BI)->getMachineInstrVec();
+      for (BasicBlock::iterator II = (*BI)->begin(); II != (*BI)->end(); ++II)
+	{
+	  MachineCodeForVMInstr& mvec = (*II)->getMachineInstrVec();
+	  for (unsigned i=0; i < mvec.size(); i++)
+	    bbMvec.push_back(mvec[i]);
+	}
+    }
+  
   return false;
 }
 
