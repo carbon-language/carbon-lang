@@ -14,7 +14,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "gccld.h"
-#include "llvm/Transforms/Utils/Linker.h"
 #include "llvm/Module.h"
 #include "llvm/PassManager.h"
 #include "llvm/Bytecode/Reader.h"
@@ -22,11 +21,11 @@
 #include "llvm/Target/TargetData.h"
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Transforms/Scalar.h"
-#include "Support/FileUtilities.h"
-#include "Support/SystemUtils.h"
+#include "llvm/Transforms/Utils/Linker.h"
 #include "Support/CommandLine.h"
+#include "Support/FileUtilities.h"
 #include "Support/Signals.h"
-
+#include "Support/SystemUtils.h"
 #include <fstream>
 #include <memory>
 
@@ -107,7 +106,6 @@ PrintAndReturn (const char *progname,
   return 1;
 }
 
-
 //
 //
 // Function: CopyEnv()
@@ -130,46 +128,29 @@ PrintAndReturn (const char *progname,
 //  in the array is a duplicate of the one in the original array (i.e. we do
 //  not copy the char *'s from one array to another).
 //
-char **
-CopyEnv (char ** const envp)
-{
-  //
+char ** CopyEnv(char ** const envp) {
   // Count the number of entries in the old list;
-  //
   unsigned entries;   // The number of entries in the old environment list
   for (entries = 0; envp[entries] != NULL; entries++)
   {
     ;
   }
 
-  //
   // Add one more entry for the NULL pointer that ends the list.
-  //
   ++entries;
 
-  //
   // If there are no entries at all, just return NULL.
-  //
   if (entries == 0)
-  {
     return NULL;
-  }
 
-  //
   // Allocate a new environment list.
-  //
   char **newenv;
   if ((newenv = new (char *) [entries]) == NULL)
-  {
     return NULL;
-  }
 
-  //
   // Make a copy of the list.  Don't forget the NULL that ends the list.
-  //
   entries = 0;
-  while (envp[entries] != NULL)
-  {
+  while (envp[entries] != NULL) {
     newenv[entries] = new char[strlen (envp[entries]) + 1];
     strcpy (newenv[entries], envp[entries]);
     ++entries;
@@ -202,41 +183,28 @@ CopyEnv (char ** const envp)
 //  seem to have an unsetenv() function or a setenv() function (or they are
 //  undocumented if they do exist).
 //
-void
-RemoveEnv (const char * name, char ** const envp)
-{
+void RemoveEnv(const char * name, char ** const envp) {
   for (unsigned index=0; envp[index] != NULL; index++) {
     // Find the first equals sign in the array and make it an EOS character.
     char *p = strchr (envp[index], '=');
     if (p == NULL)
-    {
       continue;
-    }
     else
-    {
       *p = '\0';
-    }
 
     // Compare the two strings.  If they are equal, zap this string.
     // Otherwise, restore it.
-    //
-    if (!strcmp (name, envp[index]))
-    {
+    if (!strcmp(name, envp[index]))
       *envp[index] = '\0';
-    }
     else
-    {
       *p = '=';
-    }
   }
 
   return;
 }
 
 
-int
-main(int argc, char **argv, char ** envp)
-{
+int main(int argc, char **argv, char **envp) {
   cl::ParseCommandLineOptions(argc, argv, " llvm linker for GCC\n");
 
   std::string ErrorMessage;
@@ -262,9 +230,7 @@ main(int argc, char **argv, char ** envp)
 
   // Link in all of the libraries next...
 
-  //
   // Create the output file.
-  //
   std::string RealBytecodeOutput = OutputFilename;
   if (!LinkAsLibrary) RealBytecodeOutput += ".bc";
   std::ofstream Out(RealBytecodeOutput.c_str());
@@ -272,69 +238,51 @@ main(int argc, char **argv, char ** envp)
     return PrintAndReturn(argv[0], "error opening '" + RealBytecodeOutput +
                                    "' for writing!");
 
-  //
   // Ensure that the bytecode file gets removed from the disk if we get a
   // SIGINT signal.
-  //
   RemoveFileOnSignal(RealBytecodeOutput);
 
-  //
   // Generate the bytecode file.
-  //
-  if (GenerateBytecode (Composite.get(), Strip, !NoInternalize, &Out)) {
+  if (GenerateBytecode(Composite.get(), Strip, !NoInternalize, &Out)) {
     Out.close();
     return PrintAndReturn(argv[0], "error generating bytcode");
   }
 
-  //
   // Close the bytecode file.
-  //
   Out.close();
 
-  //
   // If we are not linking a library, generate either a native executable
   // or a JIT shell script, depending upon what the user wants.
-  //
   if (!LinkAsLibrary) {
-    //
     // If the user wants to generate a native executable, compile it from the
     // bytecode file.
     //
     // Otherwise, create a script that will run the bytecode through the JIT.
-    //
     if (Native) {
       // Name of the Assembly Language output file
       std::string AssemblyFile = OutputFilename + ".s";
 
-      //
       // Mark the output files for removal if we get an interrupt.
-      //
-      RemoveFileOnSignal (AssemblyFile);
-      RemoveFileOnSignal (OutputFilename);
+      RemoveFileOnSignal(AssemblyFile);
+      RemoveFileOnSignal(OutputFilename);
 
-      //
       // Determine the locations of the llc and gcc programs.
-      //
-      std::string llc=FindExecutable ("llc", argv[0]);
-      std::string gcc=FindExecutable ("gcc", argv[0]);
+      std::string llc = FindExecutable("llc", argv[0]);
+      std::string gcc = FindExecutable("gcc", argv[0]);
       if (llc.empty())
-        return PrintAndReturn (argv[0], "Failed to find llc");
+        return PrintAndReturn(argv[0], "Failed to find llc");
 
       if (gcc.empty())
-        return PrintAndReturn (argv[0], "Failed to find gcc");
+        return PrintAndReturn(argv[0], "Failed to find gcc");
 
-      //
       // Generate an assembly language file for the bytecode.
-      //
       if (Verbose) std::cout << "Generating Assembly Code\n";
       GenerateAssembly(AssemblyFile, RealBytecodeOutput, llc, envp);
       if (Verbose) std::cout << "Generating Native Code\n";
       GenerateNative(OutputFilename, AssemblyFile, Libraries, LibPaths,
                      gcc, envp);
 
-      //
       // Remove the assembly language file.
-      //
       removeFile (AssemblyFile);
     } else {
       // Output the script to start the program...
@@ -347,11 +295,11 @@ main(int argc, char **argv, char ** envp)
     }
   
     // Make the script executable...
-    MakeFileExecutable (OutputFilename);
+    MakeFileExecutable(OutputFilename);
 
     // Make the bytecode file readable and directly executable in LLEE as well
-    MakeFileExecutable (RealBytecodeOutput);
-    MakeFileReadable   (RealBytecodeOutput);
+    MakeFileExecutable(RealBytecodeOutput);
+    MakeFileReadable(RealBytecodeOutput);
   }
 
   return 0;
