@@ -1,23 +1,29 @@
-//===-- iBinaryOperators.cpp - Implement the BinaryOperators -----*- C++ -*--=//
+//===-- iOperators.cpp - Implement the Binary & Unary Operators --*- C++ -*--=//
 //
-// This file implements the nontrivial binary operator instructions.
+// This file implements the nontrivial binary & unary operator instructions.
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/iBinary.h"
+#include "llvm/iOperators.h"
 #include "llvm/Type.h"
 
-UnaryOperator *UnaryOperator::create(UnaryOps Op, Value *Source,
-				     const Type *DestTy = 0) {
-  if (DestTy == 0) DestTy = Source->getType();
+//===----------------------------------------------------------------------===//
+//                              UnaryOperator Class
+//===----------------------------------------------------------------------===//
+
+UnaryOperator *UnaryOperator::create(UnaryOps Op, Value *Source) {
   switch (Op) {
-  case Not:  assert(DestTy == Source->getType());
-  case Cast: return new GenericUnaryInst(Op, Source, DestTy);
+  case Not:  return new GenericUnaryInst(Op, Source);
   default:
-    cerr << "Don't know how to GetUnaryOperator " << Op << endl;
+    cerr << "Don't know how to Create UnaryOperator " << Op << endl;
     return 0;
   }
 }
+
+
+//===----------------------------------------------------------------------===//
+//                           GenericUnaryOperator Class
+//===----------------------------------------------------------------------===//
 
 const char *GenericUnaryInst::getOpcodeName() const {
   switch (getOpcode()) {
@@ -28,6 +34,7 @@ const char *GenericUnaryInst::getOpcodeName() const {
     abort();
   }
 }
+
 
 //===----------------------------------------------------------------------===//
 //                             BinaryOperator Class
@@ -45,6 +52,7 @@ BinaryOperator *BinaryOperator::create(BinaryOps Op, Value *S1, Value *S2,
     return new GenericBinaryInst(Op, S1, S2, Name);
   }
 }
+
 
 //===----------------------------------------------------------------------===//
 //                            GenericBinaryInst Class
@@ -68,6 +76,7 @@ const char *GenericBinaryInst::getOpcodeName() const {
     abort();
   }
 }
+
 
 //===----------------------------------------------------------------------===//
 //                             SetCondInst Class

@@ -78,7 +78,6 @@ public:
   enum UnaryOps {
     FirstUnaryOp = NumTermOps,
     Not          = NumTermOps,      // Binary inverse
-    Cast,                           // Type cast...
 
     NumUnaryOps        // Must remain at end of enum
   };
@@ -112,6 +111,7 @@ public:
   enum OtherOps {
     FirstOtherOp = NumMemoryOps,
     PHINode      = NumMemoryOps,     // PHI node instruction
+    Cast,                            // Type cast...
     Call,                            // Call a function
 
     Shl, Shr,                        // Shift operations...

@@ -404,14 +404,14 @@ Module *RunVMAsmParser(const ToolCommandLine &Opts, FILE *F) {
 
 
 %token IMPLEMENTATION TRUE FALSE BEGINTOK END DECLARE TO
-%token PHI CALL
+%token PHI CALL CAST
 
 // Basic Block Terminating Operators 
 %token <TermOpVal> RET BR SWITCH
 
 // Unary Operators 
 %type  <UnaryOpVal> UnaryOps  // all the unary operators
-%token <UnaryOpVal> NOT CAST
+%token <UnaryOpVal> NOT
 
 // Binary Operators 
 %type  <BinaryOpVal> BinaryOps  // all the binary operators
@@ -873,7 +873,7 @@ InstVal : BinaryOps Types ValueRef ',' ValueRef {
       ThrowException("unary operator returned null!");
   }
   | CAST Types ValueRef TO Types {
-    $$ = UnaryOperator::create($1, getVal($2, $3), $5);
+    $$ = new CastInst(getVal($2, $3), $5);
   }
   | PHI PHIList {
     const Type *Ty = $2->front().first->getType();

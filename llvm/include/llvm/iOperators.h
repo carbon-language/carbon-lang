@@ -15,9 +15,8 @@
 //
 class GenericUnaryInst : public UnaryOperator {
 public:
-  GenericUnaryInst(UnaryOps Opcode, Value *S1, const Type *ResultTy = 0,
-		   const string &Name = "")
-    : UnaryOperator(S1, Opcode, ResultTy, Name) {
+  GenericUnaryInst(UnaryOps Opcode, Value *S1, const string &Name = "")
+    : UnaryOperator(S1, Opcode, Name) {
   }
 
   virtual const char *getOpcodeName() const;

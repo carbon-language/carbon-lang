@@ -112,11 +112,11 @@ type            { llvmAsmlval.TypeVal = Type::TypeTy  ; return TYPE;   }
 label           { llvmAsmlval.TypeVal = Type::LabelTy ; return LABEL;  }
 
 not             { RET_TOK(UnaryOpVal, Not, NOT); }
-cast            { RET_TOK(UnaryOpVal, Cast, CAST); }
 
-to              { return TO; }
 phi             { return PHI; }
 call            { return CALL; }
+cast            { return CAST; }
+to              { return TO; }
 add             { RET_TOK(BinaryOpVal, Add, ADD); }
 sub             { RET_TOK(BinaryOpVal, Sub, SUB); }
 mul             { RET_TOK(BinaryOpVal, Mul, MUL); }

@@ -318,9 +318,9 @@ static yyconst short int yy_acclist[114] =
        59,   58,   59,   58,   59,   58,   59,   58,   59,   58,
        59,   58,   59,   58,   59,   58,   59,   58,   59,   58,
        59,   58,   59,   58,   59,   58,   59,   51,   50,   55,
-       54,   53,    1,    9,   41,   26,   52,   50,   56,   29,
-       32,    3,   16,   31,   24,   27,   33,   40,   30,   11,
-       28,   25,   45,   46,   18,    4,   22,   17,   10,    2,
+       54,   53,    1,    9,   41,   28,   52,   50,   56,   29,
+       32,    3,   16,   31,   24,   25,   33,   40,   30,   11,
+       26,   27,   45,   46,   18,    4,   22,   17,   10,    2,
         5,   20,   23,   12,   35,   39,   37,   38,   36,   34,
 
        14,   47,   13,   19,   44,   21,   43,   42,   15,    6,
@@ -980,23 +980,23 @@ YY_RULE_SETUP
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 115 "Lexer.l"
-{ RET_TOK(UnaryOpVal, Cast, CAST); }
+#line 116 "Lexer.l"
+{ return PHI; }
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
 #line 117 "Lexer.l"
-{ return TO; }
+{ return CALL; }
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
 #line 118 "Lexer.l"
-{ return PHI; }
+{ return CAST; }
 	YY_BREAK
 case 28:
 YY_RULE_SETUP
 #line 119 "Lexer.l"
-{ return CALL; }
+{ return TO; }
 	YY_BREAK
 case 29:
 YY_RULE_SETUP

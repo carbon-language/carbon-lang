@@ -106,8 +106,7 @@ bool BytecodeParser::ParseInstruction(const uchar *&Buf, const uchar *EndBuf,
 				 getValue(Raw.Ty, Raw.Arg2));
     return false;
   } else if (Raw.Opcode == Instruction::Cast) {
-    Res = UnaryOperator::create(Instruction::Cast, getValue(Raw.Ty, Raw.Arg1),
-				getType(Raw.Arg2));
+    Res = new CastInst(getValue(Raw.Ty, Raw.Arg1), getType(Raw.Arg2));
     return false;
   } else if (Raw.Opcode == Instruction::PHINode) {
     PHINode *PN = new PHINode(Raw.Ty);

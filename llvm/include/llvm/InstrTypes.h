@@ -55,12 +55,10 @@ public:
   // create() - Construct a unary instruction, given the opcode
   // and its operand.
   //
-  static UnaryOperator *create(UnaryOps Op, Value *Source,
-			       const Type *DestTy = 0);
+  static UnaryOperator *create(UnaryOps Op, Value *Source);
 
-  UnaryOperator(Value *S, UnaryOps iType, const Type *ResultType,
-		const string &Name = "")
-      : Instruction(ResultType, iType, Name) {
+  UnaryOperator(Value *S, UnaryOps iType, const string &Name = "")
+      : Instruction(S->getType(), iType, Name) {
     Operands.reserve(1);
     Operands.push_back(Use(S, this));
   }

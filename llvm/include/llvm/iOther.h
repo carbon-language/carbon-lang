@@ -13,6 +13,30 @@
 #include <vector>
 
 //===----------------------------------------------------------------------===//
+//                                 CastInst Class
+//===----------------------------------------------------------------------===//
+
+// CastInst - This function represents a cast from Operand[0] to the type of
+// the instruction (i->getType()).
+//
+class CastInst : public Instruction {
+  CastInst(const CastInst &CI) : Instruction(CI.getType(), Cast) {
+    Operands.reserve(1);
+    Operands.push_back(Use((Value*)CI.getOperand(0), this));
+  }
+public:
+  CastInst(Value *S, const Type *Ty, const string &Name = "")
+    : Instruction(Ty, Cast, Name) {
+    Operands.reserve(1);
+    Operands.push_back(Use(S, this));
+  }
+
+  virtual Instruction *clone() const { return new CastInst(*this); }
+  virtual const char *getOpcodeName() const { return "cast"; }
+};
+
+
+//===----------------------------------------------------------------------===//
 //                               PHINode Class
 //===----------------------------------------------------------------------===//
 

@@ -59,11 +59,11 @@ typedef union {
 #define	TO	285
 #define	PHI	286
 #define	CALL	287
-#define	RET	288
-#define	BR	289
-#define	SWITCH	290
-#define	NOT	291
-#define	CAST	292
+#define	CAST	288
+#define	RET	289
+#define	BR	290
+#define	SWITCH	291
+#define	NOT	292
 #define	ADD	293
 #define	SUB	294
 #define	MUL	295
