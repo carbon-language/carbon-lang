@@ -17,11 +17,14 @@
 #include "llvm/CodeGen/InstrSelection.h"
 #include "llvm/CodeGen/InstrSelectionSupport.h"
 #include "llvm/CodeGen/MachineInstr.h"
-#include "llvm/Instruction.h"
+#include "llvm/CodeGen/InstrForest.h"
+#include "llvm/CodeGen/MachineCodeForInstruction.h"
+#include "llvm/CodeGen/MachineCodeForMethod.h"
+#include "llvm/Target/MachineRegInfo.h"
+#include "llvm/Target/TargetMachine.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/Method.h"
 #include "llvm/iPHINode.h"
-#include "llvm/Target/MachineRegInfo.h"
 #include "Support/CommandLine.h"
 #include <iostream>
 using std::cerr;
@@ -126,7 +129,7 @@ SelectInstructionsForMethod(Method* method, TargetMachine &target)
       MachineCodeForBasicBlock& bbMvec = (*BI)->getMachineInstrVec();
       for (BasicBlock::iterator II = (*BI)->begin(); II != (*BI)->end(); ++II)
 	{
-	  MachineCodeForVMInstr& mvec = (*II)->getMachineInstrVec();
+	  MachineCodeForInstruction &mvec = MachineCodeForInstruction::get(*II);
 	  for (unsigned i=0; i < mvec.size(); i++)
 	    bbMvec.push_back(mvec[i]);
 	}
@@ -157,7 +160,7 @@ SelectInstructionsForMethod(Method* method, TargetMachine &target)
 void InsertPhiElimInst(BasicBlock *BB, MachineInstr *CpMI) { 
 
   TerminatorInst *TermInst = BB->getTerminator();
-  MachineCodeForVMInstr &MC4Term = TermInst->getMachineInstrVec();
+  MachineCodeForInstruction &MC4Term = MachineCodeForInstruction::get(TermInst);
   MachineInstr *FirstMIOfTerm = *( MC4Term.begin() );
 
   assert( FirstMIOfTerm && "No Machine Instrs for terminator" );
@@ -254,7 +257,6 @@ void InsertCode4AllPhisInMeth(Method *method, TargetMachine &target) {
 	// for each incoming value of the phi, insert phi elimination
 	//
         for (unsigned i = 0; i < PN->getNumIncomingValues(); ++i) {
-
 	  // insert the copy instruction to the predecessor BB
 	  MachineInstr *CpMI =
 	    target.getRegInfo().cpValue2Value(PN->getIncomingValue(i),
@@ -263,7 +265,6 @@ void InsertCode4AllPhisInMeth(Method *method, TargetMachine &target) {
 	  InsertPhiElimInst(PN->getIncomingBlock(i), CpMI);
 	}
 
-	
 	MachineInstr *CpMI2 =
 	  target.getRegInfo().cpValue2Value(PhiCpRes, PN);
 
@@ -279,32 +280,6 @@ void InsertCode4AllPhisInMeth(Method *method, TargetMachine &target) {
   } // for all BBs in method
 
 }
-
-
-
-
-
-
-
-
-
-//---------------------------------------------------------------------------
-// Function AppendMachineCodeForVMInstr
-// 
-// Append machine instr sequence to the machine code vec for a VM instr
-//---------------------------------------------------------------------------
-
-inline void
-AppendMachineCodeForVMInstr(MachineInstr** minstrVec,
-                            unsigned int N,
-                            Instruction* vmInstr)
-{
-  if (N == 0)
-    return;
-  MachineCodeForVMInstr& mvec = vmInstr->getMachineInstrVec();
-  mvec.insert(mvec.end(), minstrVec, minstrVec+N); 
-}
-
 
 
 //---------------------------------------------------------------------------
@@ -325,7 +300,7 @@ PostprocessMachineCodeForTree(InstructionNode* instrNode,
   // Walk backwards and use direct indexes to allow insertion before current
   // 
   Instruction* vmInstr = instrNode->getInstruction();
-  MachineCodeForVMInstr& mvec = vmInstr->getMachineInstrVec();
+  MachineCodeForInstruction &mvec = MachineCodeForInstruction::get(vmInstr);
   for (int i = (int) mvec.size()-1; i >= 0; i--)
     {
       std::vector<MachineInstr*> loadConstVec =
@@ -382,11 +357,10 @@ SelectInstructionsForTree(InstrTreeNode* treeRoot, int goalnt,
       
       unsigned N = GetInstructionsByRule(instrNode, ruleForNode, nts, target,
 					 minstrVec);
-      if (N > 0)
-        {
-          assert(N <= MAX_INSTR_PER_VMINSTR);
-          AppendMachineCodeForVMInstr(minstrVec,N,instrNode->getInstruction());
-        }
+      assert(N <= MAX_INSTR_PER_VMINSTR);
+      MachineCodeForInstruction &mvec = 
+        MachineCodeForInstruction::get(instrNode->getInstruction());
+      mvec.insert(mvec.end(), minstrVec, minstrVec+N); 
     }
   
   // Then, recursively compile the child nodes, if any.
