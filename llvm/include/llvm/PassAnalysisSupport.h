@@ -39,7 +39,7 @@ public:
   }
   template<class PassClass>
   AnalysisUsage &addRequired() {
-    Required.push_back(PassClass::ID);
+    Required.push_back(Pass::getClassPassInfo<PassClass>());
     return *this;
   }
 
@@ -53,7 +53,7 @@ public:
 
   template<class PassClass>
   AnalysisUsage &addPreserved() {
-    Preserved.push_back(PassClass::ID);
+    Preserved.push_back(Pass::getClassPassInfo<PassClass>());
     return *this;
   }
 

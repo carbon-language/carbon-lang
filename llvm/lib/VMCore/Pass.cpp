@@ -11,7 +11,6 @@
 #include "llvm/Module.h"
 #include "Support/STLExtras.h"
 #include "Support/TypeInfo.h"
-#include <typeinfo>
 #include <stdio.h>
 #include <sys/resource.h>
 #include <sys/unistd.h>
@@ -371,8 +370,12 @@ static std::vector<PassRegistrationListener*> *Listeners = 0;
 // pass...
 const PassInfo *Pass::getPassInfo() const {
   if (PassInfoCache) return PassInfoCache;
+  return lookupPassInfo(typeid(*this));
+}
+
+const PassInfo *Pass::lookupPassInfo(const std::type_info &TI) {
   if (PassInfoMap == 0) return 0;
-  std::map<TypeInfo, PassInfo*>::iterator I = PassInfoMap->find(typeid(*this));
+  std::map<TypeInfo, PassInfo*>::iterator I = PassInfoMap->find(TI);
   return (I != PassInfoMap->end()) ? I->second : 0;
 }
 

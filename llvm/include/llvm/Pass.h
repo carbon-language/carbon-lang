@@ -25,6 +25,7 @@
 #include <vector>
 #include <map>
 #include <iosfwd>
+#include <typeinfo>
 class Value;
 class BasicBlock;
 class Function;
@@ -108,20 +109,33 @@ public:
   // dumpPassStructure - Implement the -debug-passes=PassStructure option
   virtual void dumpPassStructure(unsigned Offset = 0);
 
+  // getPassInfo - Static method to get the pass information from a class name.
+  template<typename AnalysisClass>
+  static const PassInfo *getClassPassInfo() {
+    return lookupPassInfo(typeid(AnalysisClass));
+  }
+
 protected:
+  // lookupPassInfo - Return the pass info object for the specified pass class,
+  // or null if it is not known.
+  static const PassInfo *lookupPassInfo(const std::type_info &TI);
+
   // getAnalysis<AnalysisType>() - This function is used by subclasses to get to
   // the analysis information that they claim to use by overriding the
   // getAnalysisUsage function.
   //
   template<typename AnalysisType>
   AnalysisType &getAnalysis() {
-    assert(Resolver && "Pass not resident in a PassManager object!");
-    return *(AnalysisType*)Resolver->getAnalysis(AnalysisType::ID);
+    assert(Resolver && "Pass has not been inserted into a PassManager object!");
+    const PassInfo *PI = getClassPassInfo<AnalysisType>();
+    assert(PI && "getAnalysis for unregistered pass!");
+    return *(AnalysisType*)Resolver->getAnalysis(PI);
   }
 
   template<typename AnalysisType>
   AnalysisType &getAnalysisID(const PassInfo *PI) {
-    assert(Resolver && "Pass not resident in a PassManager object!");
+    assert(Resolver && "Pass has not been inserted into a PassManager object!");
+    assert(PI && "getAnalysis for unregistered pass!");
     return *(AnalysisType*)Resolver->getAnalysis(PI);
   }
 
@@ -134,7 +148,9 @@ protected:
   template<typename AnalysisType>
   AnalysisType *getAnalysisToUpdate() {
     assert(Resolver && "Pass not resident in a PassManager object!");
-    return (AnalysisType*)Resolver->getAnalysisToUpdate(AnalysisType::ID);
+    const PassInfo *PI = getClassPassInfo<AnalysisType>();
+    if (PI == 0) return 0;
+    return (AnalysisType*)Resolver->getAnalysisToUpdate(PI);
   }
 
 
