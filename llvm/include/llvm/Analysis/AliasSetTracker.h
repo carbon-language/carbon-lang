@@ -146,7 +146,7 @@ public:
 
   /// mergeSetIn - Merge the specified alias set into this alias set...
   ///
-  void mergeSetIn(AliasSet &AS);
+  void mergeSetIn(AliasSet &AS, AliasSetTracker &AST);
 
   // Alias Set iteration - Allow access to all of the pointer which are part of
   // this alias set...
