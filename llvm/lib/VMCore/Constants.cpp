@@ -194,7 +194,7 @@ std::string ConstantArray::getStrValue() const {
   // As a special case, print the array as a string if it is an array of
   // ubytes or an array of sbytes with positive values.
   // 
-  const Type *ETy = cast<ArrayType>(getType())->getElementType();
+  const Type *ETy = getType()->getElementType();
   bool isString = (ETy == Type::SByteTy || ETy == Type::UByteTy);
 
   if (ETy == Type::SByteTy) {
