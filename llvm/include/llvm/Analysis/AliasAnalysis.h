@@ -214,7 +214,8 @@ public:
   bool onlyReadsMemory(Function *F) {
     /// FIXME: If the analysis returns more precise info, we can reduce it to
     /// this.
-    return getModRefBehavior(F, CallSite()) == OnlyReadsMemory;
+    ModRefBehavior MRB = getModRefBehavior(F, CallSite());
+    return MRB == DoesNotAccessMemory || MRB == OnlyReadsMemory;
   }
 
 
