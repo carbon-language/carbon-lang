@@ -2343,7 +2343,7 @@ Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
 
 Instruction *InstCombiner::visitBranchInst(BranchInst &BI) {
   // Change br (not X), label True, label False to: br X, label False, True
-  if (BI.isConditional() && !isa<Constant>(BI.getCondition()))
+  if (BI.isConditional() && !isa<Constant>(BI.getCondition())) {
     if (Value *V = dyn_castNotVal(BI.getCondition())) {
       BasicBlock *TrueDest = BI.getSuccessor(0);
       BasicBlock *FalseDest = BI.getSuccessor(1);
@@ -2352,7 +2352,29 @@ Instruction *InstCombiner::visitBranchInst(BranchInst &BI) {
       BI.setSuccessor(0, FalseDest);
       BI.setSuccessor(1, TrueDest);
       return &BI;
+    } else if (SetCondInst *I = dyn_cast<SetCondInst>(BI.getCondition())) {
+      // Cannonicalize setne -> seteq
+      if ((I->getOpcode() == Instruction::SetNE ||
+           I->getOpcode() == Instruction::SetLE ||
+           I->getOpcode() == Instruction::SetGE) && I->hasOneUse()) {
+        std::string Name = I->getName(); I->setName("");
+        Instruction::BinaryOps NewOpcode =
+          SetCondInst::getInverseCondition(I->getOpcode());
+        Value *NewSCC =  BinaryOperator::create(NewOpcode, I->getOperand(0),
+                                                I->getOperand(1), Name, I);
+        BasicBlock *TrueDest = BI.getSuccessor(0);
+        BasicBlock *FalseDest = BI.getSuccessor(1);
+        // Swap Destinations and condition...
+        BI.setCondition(NewSCC);
+        BI.setSuccessor(0, FalseDest);
+        BI.setSuccessor(1, TrueDest);
+        removeFromWorkList(I);
+        I->getParent()->getInstList().erase(I);
+        WorkList.push_back(cast<Instruction>(NewSCC));
+        return &BI;
+      }
     }
+  }
   return 0;
 }
 
