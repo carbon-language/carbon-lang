@@ -2853,8 +2853,11 @@ Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
   Value *Op = LI.getOperand(0);
   if (LI.isVolatile()) return 0;
 
-  if (ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(Op))
-    Op = CPR->getValue();
+  if (Constant *C = dyn_cast<Constant>(Op))
+    if (C->isNullValue())  // load null -> 0
+      return ReplaceInstUsesWith(LI, Constant::getNullValue(LI.getType()));
+    else if (ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(C))
+      Op = CPR->getValue();
 
   // Instcombine load (constant global) into the value loaded...
   if (GlobalVariable *GV = dyn_cast<GlobalVariable>(Op))
