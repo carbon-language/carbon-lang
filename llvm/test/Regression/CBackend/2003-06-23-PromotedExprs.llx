@@ -1,7 +1,7 @@
 
-; RUN: as < %s | dis -c > Output/%s.cbe.c
-; RUN: gcc -B/usr/bin/ Output/%s.cbe.c -o Output/%s.cbe
-; RUN: Output/%s.cbe
+; RUN: as < %s | dis -c > f1.cbe.c
+; RUN: gcc -B/usr/bin/ f1.cbe.c -o f1.cbe
+; RUN: ./f1.cbe
 
 bool %doTest(ubyte %x) {
 	%dec.0 = add ubyte %x, 255

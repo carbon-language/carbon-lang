@@ -1,6 +1,6 @@
-; RUN: as < %s > Output/%s.bc
-; RUN: echo | as > Output/%s.tmp.bc
-; RUN: link Output/%s.tmp.bc Output/%s.bc
+; RUN: as < %s > %t.bc
+; RUN: echo | as > %t.tmp.bc
+; RUN: link %t.tmp.bc %t.bc
 
 %X = constant int 5
 %Y = internal global [2 x int*] [ int* %X, int * %X]

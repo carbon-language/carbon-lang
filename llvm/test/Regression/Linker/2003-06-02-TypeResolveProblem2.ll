@@ -1,6 +1,6 @@
-; RUN: echo "%T = type int" | as > Output/%s.1.bc
-; RUN: as < %s > Output/%s.2.bc
-; RUN: link Output/%s.[12].bc
+; RUN: echo "%T = type int" | as > %t.1.bc
+; RUN: as < %s > %t.2.bc
+; RUN: link %t.[12].bc
 
 %T = type opaque
 

@@ -5,9 +5,9 @@
 ; of the bug that was causing the Olden Health benchmark to output incorrect
 ; results!
 ;
-; RUN: as < %s | opt -constprop | dis > Output/%s && \
-; RUN: as < %s | dis | as | opt -constprop | dis > Output/%s2 && \
-; RUN: diff Output/%s Output/%s2
+; RUN: as < %s | opt -constprop | dis > s1 && \
+; RUN: as < %s | dis | as | opt -constprop | dis > s2 && \
+; RUN: diff s1 s2
 
 implementation
 
