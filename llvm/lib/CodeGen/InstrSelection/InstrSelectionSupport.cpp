@@ -1,4 +1,3 @@
-// $Id$ -*-c++-*-
 //***************************************************************************
 // File:
 //	InstrSelectionSupport.h
@@ -40,8 +39,6 @@ InsertCodeToLoadConstant(Function *F,
                          vector<MachineInstr*>& loadConstVec,
                          TargetMachine& target)
 {
-  vector<TmpInstruction*> tempVec;
-  
   // Create a tmp virtual register to hold the constant.
   TmpInstruction* tmpReg = new TmpInstruction(opValue);
   MachineCodeForInstruction &mcfi = MachineCodeForInstruction::get(vmInstr);
