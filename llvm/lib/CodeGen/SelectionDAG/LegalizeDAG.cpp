@@ -1237,12 +1237,15 @@ bool SelectionDAGLegalize::ExpandShift(unsigned Opc, SDOperand Op,SDOperand Amt,
   SDOperand InL, InH;
   ExpandOp(Op, InL, InH);
   SDOperand ShAmt = LegalizeOp(Amt);
-  SDOperand OShAmt = ShAmt;  // Unmasked shift amount.
   MVT::ValueType ShTy = ShAmt.getValueType();
   
   unsigned NVTBits = MVT::getSizeInBits(NVT);
   SDOperand NAmt = DAG.getNode(ISD::SUB, ShTy,           // NAmt = 32-ShAmt
                                DAG.getConstant(NVTBits, ShTy), ShAmt);
+
+  // Compare the unmasked shift amount against 32.
+  SDOperand Cond = DAG.getSetCC(ISD::SETGE, TLI.getSetCCResultTy(), ShAmt,
+                                DAG.getConstant(NVTBits, ShTy));
 
   if (TLI.getShiftAmountFlavor() != TargetLowering::Mask) {
     ShAmt = DAG.getNode(ISD::AND, ShTy, ShAmt,             // ShAmt &= 31
@@ -1255,10 +1258,8 @@ bool SelectionDAGLegalize::ExpandShift(unsigned Opc, SDOperand Op,SDOperand Amt,
     SDOperand T1 = DAG.getNode(ISD::OR, NVT,// T1 = (Hi << Amt) | (Lo >> NAmt)
                                DAG.getNode(ISD::SHL, NVT, InH, ShAmt),
                                DAG.getNode(ISD::SRL, NVT, InL, NAmt));
-    SDOperand T2 = DAG.getNode(ISD::SHL, NVT, InL, ShAmt); // T2 = Lo << Amt
+    SDOperand T2 = DAG.getNode(ISD::SHL, NVT, InL, ShAmt); // T2 = Lo << Amt&31
     
-    SDOperand Cond = DAG.getSetCC(ISD::SETGE, TLI.getSetCCResultTy(), OShAmt,
-                                  DAG.getConstant(NVTBits, ShTy));
     Hi = DAG.getNode(ISD::SELECT, NVT, Cond, T2, T1);
     Lo = DAG.getNode(ISD::SELECT, NVT, Cond, DAG.getConstant(0, NVT), T2);
   } else {
@@ -1266,17 +1267,15 @@ bool SelectionDAGLegalize::ExpandShift(unsigned Opc, SDOperand Op,SDOperand Amt,
                                DAG.getNode(ISD::SHL, NVT, InH, NAmt),
                                DAG.getNode(ISD::SRL, NVT, InL, ShAmt));
     bool isSign = Opc == ISD::SRA;
-    SDOperand T2 = DAG.getNode(Opc, NVT, InH, ShAmt);
+    SDOperand T2 = DAG.getNode(Opc, NVT, InH, ShAmt);  // T2 = InH >> ShAmt&31
 
     SDOperand HiPart;
     if (isSign)
       HiPart = DAG.getNode(Opc, NVT, InH, DAG.getConstant(NVTBits-1, ShTy));
     else
       HiPart = DAG.getConstant(0, NVT);
-    SDOperand Cond = DAG.getSetCC(ISD::SETGE, TLI.getSetCCResultTy(), OShAmt,
-                                  DAG.getConstant(NVTBits, ShTy));
     Lo = DAG.getNode(ISD::SELECT, NVT, Cond, T2, T1);
-    Hi = DAG.getNode(ISD::SELECT, NVT, Cond, HiPart,T2);
+    Hi = DAG.getNode(ISD::SELECT, NVT, Cond, HiPart, T2);
   }
   return true;
 }
