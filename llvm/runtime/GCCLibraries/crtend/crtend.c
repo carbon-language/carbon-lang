@@ -1,4 +1,11 @@
 /*===- crtend.c - Initialization code for programs ------------------------===*\
+ * 
+ *                     The LLVM Compiler Infrastructure
+ *
+ * This file was developed by the LLVM research group and is distributed under
+ * the University of Illinois Open Source License. See LICENSE.TXT for details.
+ *
+ *===----------------------------------------------------------------------===*
  *
  * This file defines the __main function, which is used to run static
  * constructors and destructors in C++ programs, or with C programs that use GCC

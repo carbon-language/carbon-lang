@@ -1,4 +1,11 @@
 //===- SJLJ-Exception.cpp - SetJmp/LongJmp Exception Handling -------------===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This file implements the API used by the Setjmp/Longjmp exception handling
 // runtime library.
