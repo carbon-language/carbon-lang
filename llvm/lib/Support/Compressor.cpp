@@ -136,7 +136,7 @@ uint64_t Compressor::compress(char* in, unsigned size, OutputDataCallback* cb,
       bzdata.avail_in = size;
       bzdata.next_out = 0;
       bzdata.avail_out = 0;
-      switch ( BZ2_bzCompressInit(&bzdata, 9, 0, 100) ) {
+      switch ( BZ2_bzCompressInit(&bzdata, 5, 0, 100) ) {
         case BZ_CONFIG_ERROR: throw std::string("bzip2 library mis-compiled");
         case BZ_PARAM_ERROR:  throw std::string("Compressor internal error");
         case BZ_MEM_ERROR:    throw std::string("Out of memory");
@@ -190,7 +190,7 @@ uint64_t Compressor::compress(char* in, unsigned size, OutputDataCallback* cb,
       zdata.opaque = Z_NULL;
       zdata.next_in = reinterpret_cast<Bytef*>(in);
       zdata.avail_in = size;
-      if (Z_OK != deflateInit(&zdata,Z_BEST_COMPRESSION))
+      if (Z_OK != deflateInit(&zdata,6))
         throw std::string(zdata.msg ? zdata.msg : "zlib error");
 
       if (0 != getdata((char*&)(zdata.next_out), zdata.avail_out,cb,context)) {
