@@ -87,6 +87,14 @@ namespace {
 
     ISel(TargetMachine &tm) : TM(tm), F(0), BB(0) {}
 
+		bool doInitialization(Module &M) {
+			Type *d = Type::DoubleTy;
+			// double fmod(double, double);
+			// M.getOrInsertFunction("fmod", d, d, d, 0);
+			// { "__moddi3", "__divdi3", "__umoddi3", "__udivdi3" };
+			return false;
+		}
+
     /// runOnFunction - Top level implementation of instruction selection for
     /// the entire function.
     ///
@@ -169,7 +177,7 @@ namespace {
       ValueRecord(Value *V) : Val(V), Reg(0), Ty(V->getType()) {}
     };
     void doCall(const ValueRecord &Ret, MachineInstr *CallMI,
-                const std::vector<ValueRecord> &Args);
+                const std::vector<ValueRecord> &Args, bool isVarArg);
     void visitCallInst(CallInst &I);
     void visitIntrinsicCall(Intrinsic::ID ID, CallInst &I);
 
@@ -466,14 +474,14 @@ void ISel::copyConstantToRegister(MachineBasicBlock *MBB,
       }
     }
   } else if (ConstantFP *CFP = dyn_cast<ConstantFP>(C)) {
-      // We need to spill the constant to memory...
-      MachineConstantPool *CP = F->getConstantPool();
-      unsigned CPI = CP->getConstantPoolIndex(CFP);
-      const Type *Ty = CFP->getType();
+    // We need to spill the constant to memory...
+    MachineConstantPool *CP = F->getConstantPool();
+    unsigned CPI = CP->getConstantPoolIndex(CFP);
+    const Type *Ty = CFP->getType();
 
-      assert(Ty == Type::FloatTy || Ty == Type::DoubleTy && "Unknown FP type!");
-      unsigned LoadOpcode = Ty == Type::FloatTy ? PPC32::LFS : PPC32::LFD;
-      addConstantPoolReference(BuildMI(*MBB, IP, LoadOpcode, 2, R), CPI);
+    assert(Ty == Type::FloatTy || Ty == Type::DoubleTy && "Unknown FP type!");
+    unsigned LoadOpcode = (Ty == Type::FloatTy) ? PPC32::LFS : PPC32::LFD;
+    addConstantPoolReference(BuildMI(*MBB, IP, LoadOpcode, 2, R), CPI);
   } else if (isa<ConstantPointerNull>(C)) {
     // Copy zero (null pointer) to the register.
     BuildMI(*MBB, IP, PPC32::ADDI, 2, R).addReg(PPC32::R0).addImm(0);
@@ -497,11 +505,18 @@ void ISel::LoadArgumentsToVirtualRegs(Function &Fn) {
   unsigned ArgOffset = 0;   // Frame mechanisms handle retaddr slot
   unsigned GPR_remaining = 8;
   unsigned FPR_remaining = 13;
-  unsigned GPR_idx = 3;
-  unsigned FPR_idx = 1;
+  unsigned GPR_idx = 0, FPR_idx = 0;
+  static const unsigned GPR[] = { 
+    PPC32::R3, PPC32::R4, PPC32::R5, PPC32::R6,
+    PPC32::R7, PPC32::R8, PPC32::R9, PPC32::R10,
+  };
+  static const unsigned FPR[] = {
+    PPC32::F1, PPC32::F2, PPC32::F3, PPC32::F4, PPC32::F5, PPC32::F6, PPC32::F7, 
+		PPC32::F8, PPC32::F9, PPC32::F10, PPC32::F11, PPC32::F12, PPC32::F13
+  };
     
   MachineFrameInfo *MFI = F->getFrameInfo();
-
+ 
   for (Function::aiterator I = Fn.abegin(), E = Fn.aend(); I != E; ++I) {
     bool ArgLive = !I->use_empty();
     unsigned Reg = ArgLive ? getReg(*I) : 0;
@@ -512,8 +527,8 @@ void ISel::LoadArgumentsToVirtualRegs(Function &Fn) {
       if (ArgLive) {
         FI = MFI->CreateFixedObject(1, ArgOffset);
         if (GPR_remaining > 0) {
-          BuildMI(BB, PPC32::OR, 2, Reg).addReg(PPC32::R0+GPR_idx)
-            .addReg(PPC32::R0+GPR_idx);
+          BuildMI(BB, PPC32::OR, 2, Reg).addReg(GPR[GPR_idx])
+            .addReg(GPR[GPR_idx]);
         } else {
           addFrameReference(BuildMI(BB, PPC32::LBZ, 2, Reg), FI);
         }
@@ -523,8 +538,8 @@ void ISel::LoadArgumentsToVirtualRegs(Function &Fn) {
       if (ArgLive) {
         FI = MFI->CreateFixedObject(2, ArgOffset);
         if (GPR_remaining > 0) {
-          BuildMI(BB, PPC32::OR, 2, Reg).addReg(PPC32::R0+GPR_idx)
-            .addReg(PPC32::R0+GPR_idx);
+          BuildMI(BB, PPC32::OR, 2, Reg).addReg(GPR[GPR_idx])
+            .addReg(GPR[GPR_idx]);
         } else {
           addFrameReference(BuildMI(BB, PPC32::LHZ, 2, Reg), FI);
         }
@@ -534,8 +549,8 @@ void ISel::LoadArgumentsToVirtualRegs(Function &Fn) {
       if (ArgLive) {
         FI = MFI->CreateFixedObject(4, ArgOffset);
         if (GPR_remaining > 0) {
-          BuildMI(BB, PPC32::OR, 2, Reg).addReg(PPC32::R0+GPR_idx)
-            .addReg(PPC32::R0+GPR_idx);
+          BuildMI(BB, PPC32::OR, 2, Reg).addReg(GPR[GPR_idx])
+            .addReg(GPR[GPR_idx]);
         } else {
           addFrameReference(BuildMI(BB, PPC32::LWZ, 2, Reg), FI);
         }
@@ -545,10 +560,10 @@ void ISel::LoadArgumentsToVirtualRegs(Function &Fn) {
       if (ArgLive) {
         FI = MFI->CreateFixedObject(8, ArgOffset);
         if (GPR_remaining > 1) {
-            BuildMI(BB, PPC32::OR, 2, Reg).addReg(PPC32::R0+GPR_idx)
-              .addReg(PPC32::R0+GPR_idx);
-            BuildMI(BB, PPC32::OR, 2, Reg+1).addReg(PPC32::R0+GPR_idx+1)
-              .addReg(PPC32::R0+GPR_idx+1);
+            BuildMI(BB, PPC32::OR, 2, Reg).addReg(GPR[GPR_idx])
+              .addReg(GPR[GPR_idx]);
+            BuildMI(BB, PPC32::OR, 2, Reg+1).addReg(GPR[GPR_idx+1])
+              .addReg(GPR[GPR_idx+1]);
         } else {
             addFrameReference(BuildMI(BB, PPC32::LWZ, 2, Reg), FI);
             addFrameReference(BuildMI(BB, PPC32::LWZ, 2, Reg+1), FI, 4);
@@ -571,18 +586,18 @@ void ISel::LoadArgumentsToVirtualRegs(Function &Fn) {
           FI = MFI->CreateFixedObject(8, ArgOffset);
         }
         if (FPR_remaining > 0) {
-            BuildMI(BB, PPC32::FMR, 1, Reg).addReg(PPC32::F0+FPR_idx);
-            FPR_remaining--;
-            FPR_idx++;
+          BuildMI(BB, PPC32::FMR, 1, Reg).addReg(FPR[FPR_idx]);
+          FPR_remaining--;
+          FPR_idx++;
         } else {
-            addFrameReference(BuildMI(BB, Opcode, 2, Reg), FI);
+          addFrameReference(BuildMI(BB, Opcode, 2, Reg), FI);
         }
       }
       if (I->getType() == Type::DoubleTy) {
         ArgOffset += 4;   // doubles require 4 additional bytes
         if (GPR_remaining > 0) {
-            GPR_remaining--;    // uses up 2 GPRs
-            GPR_idx++;
+          GPR_remaining--;    // uses up 2 GPRs
+          GPR_idx++;
         }
       }
       break;
@@ -591,8 +606,8 @@ void ISel::LoadArgumentsToVirtualRegs(Function &Fn) {
     }
     ArgOffset += 4;  // Each argument takes at least 4 bytes on the stack...
     if (GPR_remaining > 0) {
-        GPR_remaining--;    // uses up 2 GPRs
-        GPR_idx++;
+      GPR_remaining--;    // uses up 2 GPRs
+      GPR_idx++;
     }
   }
 
@@ -836,6 +851,7 @@ unsigned ISel::EmitComparison(unsigned OpNum, Value *Op0, Value *Op1,
     BuildMI(*MBB, IP, CompTy->isSigned() ? PPC32::CMP : PPC32::CMPL, 2, 
             PPC32::CR0).addReg(Op0r).addReg(Op1r);
     break;
+
   case cFP:
     emitUCOM(MBB, IP, Op0r, Op1r);
     break;
@@ -860,30 +876,22 @@ unsigned ISel::EmitComparison(unsigned OpNum, Value *Op0, Value *Op1,
   return OpNum;
 }
 
-/// visitSetCondInst - 
+/// visitSetCondInst - emit code to calculate the condition via
+/// EmitComparison(), and possibly store a 0 or 1 to a register as a result
 ///
 void ISel::visitSetCondInst(SetCondInst &I) {
-  // If the only user of this SetCC is a branch or a select, we don't have to
-  // code-gen this instruction, it will be done more compactly for us later.
-  // FIXME: perhaps there could be several branches/selects using this SetCC and
-  // this SetCC could still be a valid candidate for folding?  Then the problem
-  // becomes with live range, whether or not the uses span function calls, other
-  // branches with can overwrite the condition register, etc.
-  User *user = I.hasOneUse() ? I.use_back() : 0;
-  if (canFoldSetCCIntoBranchOrSelect(&I) && 
-      (isa<BranchInst>(user) || isa<SelectInst>(user)))
+  if (canFoldSetCCIntoBranchOrSelect(&I))
     return;
   
   unsigned Op0Reg = getReg(I.getOperand(0));
   unsigned Op1Reg = getReg(I.getOperand(1));
   unsigned DestReg = getReg(I);
+	unsigned OpNum = I.getOpcode();
   const Type *Ty = I.getOperand (0)->getType();
                    
-  assert(getClass(Ty) < cLong && "can't setcc on longs or fp yet");
-  // Compare the two values.
-  BuildMI(BB, PPC32::CMPW, 2, PPC32::CR0).addReg(Op0Reg).addReg(Op1Reg);
-  
-  unsigned Opcode = getPPCOpcodeForSetCCNumber(I.getOpcode());
+  EmitComparison(OpNum, I.getOperand(0), I.getOperand(1), BB, BB->end());
+ 
+  unsigned Opcode = getPPCOpcodeForSetCCNumber(OpNum);
   MachineBasicBlock *thisMBB = BB;
   const BasicBlock *LLVM_BB = BB->getBasicBlock();
   //  thisMBB:
@@ -1169,7 +1177,7 @@ void ISel::visitBranchInst(BranchInst &BI) {
 /// FIXME: See Documentation at the following URL for "correct" behavior
 /// <http://developer.apple.com/documentation/DeveloperTools/Conceptual/MachORuntime/2rt_powerpc_abi/chapter_9_section_5.html>
 void ISel::doCall(const ValueRecord &Ret, MachineInstr *CallMI,
-                  const std::vector<ValueRecord> &Args) {
+                  const std::vector<ValueRecord> &Args, bool isVarArg) {
   // Count how many bytes are to be pushed on the stack...
   unsigned NumBytes = 0;
 
@@ -1191,14 +1199,15 @@ void ISel::doCall(const ValueRecord &Ret, MachineInstr *CallMI,
 
     // Arguments go on the stack in reverse order, as specified by the ABI.
     unsigned ArgOffset = 0;
-    int GPR_remaining = 8, FPR_remaining = 8;
-    unsigned GPR[] = { 
+    int GPR_remaining = 8, FPR_remaining = 13;
+    static const unsigned GPR[] = { 
       PPC32::R3, PPC32::R4, PPC32::R5, PPC32::R6,
       PPC32::R7, PPC32::R8, PPC32::R9, PPC32::R10,
     };
-    unsigned FPR[] = {
-      PPC32::F1, PPC32::F2, PPC32::F3, PPC32::F4,
-      PPC32::F5, PPC32::F6, PPC32::F7, PPC32::F8
+    static const unsigned FPR[] = {
+	    PPC32::F1, PPC32::F2, PPC32::F3, PPC32::F4, PPC32::F5, PPC32::F6, 
+			PPC32::F7, PPC32::F8, PPC32::F9, PPC32::F10, PPC32::F11, PPC32::F12, 
+			PPC32::F13
     };
     unsigned GPR_idx = 0, FPR_idx = 0;
     
@@ -1264,6 +1273,7 @@ void ISel::doCall(const ValueRecord &Ret, MachineInstr *CallMI,
             BuildMI(BB, PPC32::STFS, 3).addReg(ArgReg).addImm(ArgOffset)
               .addReg(PPC32::R1);
           }
+          assert(!isVarArg && "Cannot pass floats to vararg functions!");
         } else {
           assert(Args[i].Ty == Type::DoubleTy && "Unknown FP type!");
           // Reg or stack?
@@ -1271,6 +1281,17 @@ void ISel::doCall(const ValueRecord &Ret, MachineInstr *CallMI,
             BuildMI(BB, PPC32::FMR, 1, FPR[FPR_idx]).addReg(ArgReg);
             FPR_remaining--;
             FPR_idx++;
+            // For vararg functions, must pass doubles via int regs as well
+            if (isVarArg) {
+              BuildMI(BB, PPC32::STFD, 3).addReg(ArgReg).addImm(ArgOffset)
+                .addReg(PPC32::R1);
+              if (GPR_remaining > 1) {
+                BuildMI(BB, PPC32::LWZ, 2, GPR[GPR_idx]).addImm(ArgOffset)
+                  .addReg(PPC32::R1);
+                BuildMI(BB, PPC32::LWZ, 2, GPR[GPR_idx + 1])
+                  .addImm(ArgOffset+4).addReg(PPC32::R1);
+              }
+            }
           } else {
             BuildMI(BB, PPC32::STFD, 3).addReg(ArgReg).addImm(ArgOffset)
               .addReg(PPC32::R1);
@@ -1293,7 +1314,6 @@ void ISel::doCall(const ValueRecord &Ret, MachineInstr *CallMI,
   }
 
   BB->push_back(CallMI);
-
   BuildMI(BB, PPC32::ADJCALLSTACKUP, 1).addImm(NumBytes);
 
   // If there is a return value, scavenge the result from the location the call
@@ -1324,7 +1344,8 @@ void ISel::doCall(const ValueRecord &Ret, MachineInstr *CallMI,
 /// visitCallInst - Push args on stack and do a procedure call instruction.
 void ISel::visitCallInst(CallInst &CI) {
   MachineInstr *TheCall;
-  if (Function *F = CI.getCalledFunction()) {
+  Function *F = CI.getCalledFunction();
+  if (F) {
     // Is it an intrinsic function call?
     if (Intrinsic::ID ID = (Intrinsic::ID)F->getIntrinsicID()) {
       visitIntrinsicCall(ID, CI);   // Special intrinsics are not handled here
@@ -1344,7 +1365,8 @@ void ISel::visitCallInst(CallInst &CI) {
     Args.push_back(ValueRecord(CI.getOperand(i)));
 
   unsigned DestReg = CI.getType() != Type::VoidTy ? getReg(CI) : 0;
-  doCall(ValueRecord(DestReg, CI.getType()), TheCall, Args);
+  bool isVarArg = F ? F->getFunctionType()->isVarArg() : true;
+  doCall(ValueRecord(DestReg, CI.getType()), TheCall, Args, isVarArg);
 }         
 
 
@@ -1505,13 +1527,13 @@ void ISel::emitBinaryFPOperation(MachineBasicBlock *BB,
     const Type *Ty = Op1->getType();
 
     static const unsigned OpcodeTab[][4] = {
-      { PPC32::FADDS, PPC32::FSUBS, PPC32::FMULS, PPC32::FDIVS },   // Float
-      { PPC32::FADD, PPC32::FSUB, PPC32::FMUL, PPC32::FDIV },   // Double
+      { PPC32::FADDS, PPC32::FSUBS, PPC32::FMULS, PPC32::FDIVS },  // Float
+      { PPC32::FADD,  PPC32::FSUB,  PPC32::FMUL,  PPC32::FDIV },   // Double
     };
 
     assert(Ty == Type::FloatTy || Ty == Type::DoubleTy && "Unknown FP type!");
     unsigned TempReg = makeAnotherReg(Ty);
-    unsigned LoadOpcode = Ty == Type::FloatTy ? PPC32::LFS : PPC32::LFD;
+    unsigned LoadOpcode = (Ty == Type::FloatTy) ? PPC32::LFS : PPC32::LFD;
     addConstantPoolReference(BuildMI(*BB, IP, LoadOpcode, 2, TempReg), CPI);
 
     unsigned Opcode = OpcodeTab[Ty != Type::FloatTy][OperatorClass];
@@ -1536,13 +1558,13 @@ void ISel::emitBinaryFPOperation(MachineBasicBlock *BB,
       const Type *Ty = CFP->getType();
 
       static const unsigned OpcodeTab[][4] = {
-        { PPC32::FADDS, PPC32::FSUBS, PPC32::FMULS, PPC32::FDIVS },   // Float
-        { PPC32::FADD, PPC32::FSUB, PPC32::FMUL, PPC32::FDIV },   // Double
+        { PPC32::FADDS, PPC32::FSUBS, PPC32::FMULS, PPC32::FDIVS },  // Float
+        { PPC32::FADD,  PPC32::FSUB,  PPC32::FMUL,  PPC32::FDIV },   // Double
       };
 
       assert(Ty == Type::FloatTy || Ty == Type::DoubleTy && "Unknown FP type!");
       unsigned TempReg = makeAnotherReg(Ty);
-      unsigned LoadOpcode = Ty == Type::FloatTy ? PPC32::LFS : PPC32::LFD;
+      unsigned LoadOpcode = (Ty == Type::FloatTy) ? PPC32::LFS : PPC32::LFD;
       addConstantPoolReference(BuildMI(*BB, IP, LoadOpcode, 2, TempReg), CPI);
 
       unsigned Opcode = OpcodeTab[Ty != Type::FloatTy][OperatorClass];
@@ -1924,14 +1946,12 @@ void ISel::emitDivRemOperation(MachineBasicBlock *BB,
     } else {               // Floating point remainder...
       unsigned Op0Reg = getReg(Op0, BB, IP);
       unsigned Op1Reg = getReg(Op1, BB, IP);
-      // FIXME: Make sure the module has external function
-      // double fmod(double, double)
       MachineInstr *TheCall =
         BuildMI(PPC32::CALLpcrel, 1).addExternalSymbol("fmod", true);
       std::vector<ValueRecord> Args;
       Args.push_back(ValueRecord(Op0Reg, Type::DoubleTy));
       Args.push_back(ValueRecord(Op1Reg, Type::DoubleTy));
-      doCall(ValueRecord(ResultReg, Type::DoubleTy), TheCall, Args);
+      doCall(ValueRecord(ResultReg, Type::DoubleTy), TheCall, Args, false);
     }
     return;
   case cLong: {
@@ -1947,7 +1967,7 @@ void ISel::emitDivRemOperation(MachineBasicBlock *BB,
     std::vector<ValueRecord> Args;
     Args.push_back(ValueRecord(Op0Reg, Type::LongTy));
     Args.push_back(ValueRecord(Op1Reg, Type::LongTy));
-    doCall(ValueRecord(ResultReg, Type::LongTy), TheCall, Args);
+    doCall(ValueRecord(ResultReg, Type::LongTy), TheCall, Args, false);
     return;
   }
   case cByte: case cShort: case cInt:
@@ -2315,7 +2335,8 @@ void ISel::emitCastOperation(MachineBasicBlock *BB,
       // MFCR
       // Left-align
       // SRA ?
-      break;
+      std::cerr << "Cast fp-to-bool not implemented!";
+      abort();
     }
     return;
   }
@@ -2407,7 +2428,7 @@ void ISel::emitCastOperation(MachineBasicBlock *BB,
       Args.push_back(ValueRecord(SrcReg, SrcTy));
       MachineInstr *TheCall =
         BuildMI(PPC32::CALLpcrel, 1).addExternalSymbol("__floatdidf", true);
-      doCall(ValueRecord(DestReg, DestTy), TheCall, Args);
+      doCall(ValueRecord(DestReg, DestTy), TheCall, Args, false);
       return;
     }
 
@@ -2500,7 +2521,7 @@ void ISel::emitCastOperation(MachineBasicBlock *BB,
       Args.push_back(ValueRecord(SrcReg, SrcTy));
       MachineInstr *TheCall =
         BuildMI(PPC32::CALLpcrel, 1).addExternalSymbol("__fixdfdi", true);
-      doCall(ValueRecord(DestReg, DestTy), TheCall, Args);
+      doCall(ValueRecord(DestReg, DestTy), TheCall, Args, false);
       return;
     }
 
@@ -2733,7 +2754,7 @@ void ISel::visitMallocInst(MallocInst &I) {
   Args.push_back(ValueRecord(Arg, Type::UIntTy));
   MachineInstr *TheCall = 
     BuildMI(PPC32::CALLpcrel, 1).addExternalSymbol("malloc", true);
-  doCall(ValueRecord(getReg(I), I.getType()), TheCall, Args);
+  doCall(ValueRecord(getReg(I), I.getType()), TheCall, Args, false);
 }
 
 
@@ -2745,7 +2766,7 @@ void ISel::visitFreeInst(FreeInst &I) {
   Args.push_back(ValueRecord(I.getOperand(0)));
   MachineInstr *TheCall = 
     BuildMI(PPC32::CALLpcrel, 1).addExternalSymbol("free", true);
-  doCall(ValueRecord(0, Type::VoidTy), TheCall, Args);
+  doCall(ValueRecord(0, Type::VoidTy), TheCall, Args, false);
 }
    
 /// createPPC32SimpleInstructionSelector - This pass converts an LLVM function
