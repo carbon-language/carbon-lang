@@ -30,7 +30,8 @@ void Instruction::setName(const string &name) {
   if (PP && hasName()) PP->getSymbolTableSure()->insert(this);
 }
 
-Instruction *Instruction::getBinaryOperator(unsigned Op, Value *S1, Value *S2) {
+BinaryOperator *BinaryOperator::getBinaryOperator(unsigned Op, 
+						  Value *S1, Value *S2) {
   switch (Op) {
   case Add:
     return new AddInst(S1, S2);
@@ -52,7 +53,7 @@ Instruction *Instruction::getBinaryOperator(unsigned Op, Value *S1, Value *S2) {
 }
 
 
-Instruction *Instruction::getUnaryOperator(unsigned Op, Value *Source) {
+UnaryOperator *UnaryOperator::getUnaryOperator(unsigned Op, Value *Source) {
   switch (Op) {
   default:
     cerr << "Don't know how to GetUnaryOperator " << Op << endl;

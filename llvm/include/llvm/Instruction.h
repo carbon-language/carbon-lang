@@ -85,9 +85,6 @@ public:
     return iType >= FirstBinaryOp && iType < NumBinaryOps;
   }
 
-  static Instruction *getBinaryOperator(unsigned Op, Value *S1, Value *S2);
-  static Instruction *getUnaryOperator (unsigned Op, Value *Source);
-
 
   //----------------------------------------------------------------------
   // Exported enumerations...
@@ -156,7 +153,7 @@ public:
     unsigned idx;
   public:
     typedef OperandIterator<_Inst, _Val> _Self;
-    typedef forward_iterator_tag iterator_category;
+    typedef bidirectional_iterator_tag iterator_category;
     typedef _Val pointer;
     
     inline OperandIterator(_Inst T) : Inst(T), idx(0) {}    // begin iterator
