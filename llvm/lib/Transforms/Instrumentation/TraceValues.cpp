@@ -30,17 +30,20 @@ static cl::list<string>
 TraceFuncName("tracefunc", cl::desc("trace only specific functions"),
               cl::value_desc("function"), cl::Hidden);
 
+static void TraceValuesAtBBExit(BasicBlock *BB,
+                                Function *Printf, Function* HashPtrToSeqNum,
+                                vector<Instruction*> *valuesStoredInFunction);
 
 // We trace a particular function if no functions to trace were specified
 // or if the function is in the specified list.
 // 
-inline bool
-TraceThisFunction(Function* func)
+inline static bool
+TraceThisFunction(Function &func)
 {
   if (TraceFuncName.size() == 0)
     return true;
 
-  return std::find(TraceFuncName.begin(), TraceFuncName.end(), func->getName())
+  return std::find(TraceFuncName.begin(), TraceFuncName.end(), func.getName())
                   != TraceFuncName.end();
 }
 
@@ -53,14 +56,9 @@ namespace {
   };
   
   class InsertTraceCode : public FunctionPass {
-    bool TraceBasicBlockExits, TraceFunctionExits;
+  protected:
     ExternalFuncs externalFuncs;
   public:
-    InsertTraceCode(bool traceBasicBlockExits, bool traceFunctionExits)
-      : TraceBasicBlockExits(traceBasicBlockExits), 
-        TraceFunctionExits(traceFunctionExits) {}
-
-    const char *getPassName() const { return "Trace Code Insertion"; }
     
     // Add a prototype for runtime functions not already in the program.
     //
@@ -72,29 +70,46 @@ namespace {
     // Inserts tracing code for all live values at basic block and/or function
     // exits as specified by `traceBasicBlockExits' and `traceFunctionExits'.
     //
-    static bool doit(Function *M, bool traceBasicBlockExits,
-                     bool traceFunctionExits, ExternalFuncs& externalFuncs);
+    bool doit(Function *M);
+
+    virtual void handleBasicBlock(BasicBlock *BB, vector<Instruction*> &VI) = 0;
 
     // runOnFunction - This method does the work.
     //
-    bool runOnFunction(Function &F) {
-      return doit(&F, TraceBasicBlockExits, TraceFunctionExits, externalFuncs);
-    }
+    bool runOnFunction(Function &F);
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.preservesCFG();
     }
   };
+
+  struct FunctionTracer : public InsertTraceCode {
+    // Ignore basic blocks here...
+    virtual void handleBasicBlock(BasicBlock *BB, vector<Instruction*> &VI) {}
+  };
+
+  struct BasicBlockTracer : public InsertTraceCode {
+    // Trace basic blocks here...
+    virtual void handleBasicBlock(BasicBlock *BB, vector<Instruction*> &VI) {
+      TraceValuesAtBBExit(BB, externalFuncs.PrintfFunc,
+                          externalFuncs.HashPtrFunc, &VI);
+    }
+  };
+
+  // Register the passes...
+  RegisterPass<FunctionTracer>  X("tracem","Insert Function trace code only");
+  RegisterPass<BasicBlockTracer> Y("trace","Insert BB and Function trace code");
 } // end anonymous namespace
 
 
 Pass *createTraceValuesPassForFunction() {     // Just trace functions
-  return new InsertTraceCode(false, true);
+  return new FunctionTracer();
 }
 
 Pass *createTraceValuesPassForBasicBlocks() {  // Trace BB's and functions
-  return new InsertTraceCode(true, true);
+  return new BasicBlockTracer();
 }
+
 
 // Add a prototype for external functions used by the tracing code.
 //
@@ -336,30 +351,6 @@ static void TraceValuesAtBBExit(BasicBlock *BB,
   BasicBlock::iterator InsertPos = --BB->end();
   assert(InsertPos->isTerminator());
   
-#undef CANNOT_SAVE_CCR_ACROSS_CALLS
-#ifdef CANNOT_SAVE_CCR_ACROSS_CALLS
-  // 
-  // *** DISABLING THIS BECAUSE SAVING %CCR ACROSS CALLS WORKS NOW.
-  // *** DELETE THIS CODE AFTER SOME TESTING.
-  // *** NOTE: THIS CODE IS BROKEN ANYWAY WHEN THE SETCC IS NOT JUST
-  // ***       BEFORE THE BRANCH.
-  // -- Vikram Adve, 7/7/02.
-  // 
-  // If the terminator is a conditional branch, insert the trace code just
-  // before the instruction that computes the branch condition (just to
-  // avoid putting a call between the CC-setting instruction and the branch).
-  // Use laterInstrSet to mark instructions that come after the setCC instr
-  // because those cannot be traced at the location we choose.
-  // 
-  Instruction *SetCC = 0;
-  if (BranchInst *Branch = dyn_cast<BranchInst>(BB->getTerminator()))
-    if (!Branch->isUnconditional())
-      if (Instruction *I = dyn_cast<Instruction>(Branch->getCondition()))
-        if (I->getParent() == BB) {
-          InsertPos = SetCC = I; // Back up until we can insert before the setcc
-        }
-#endif CANNOT_SAVE_CCR_ACROSS_CALLS
-
   std::ostringstream OutStr;
   WriteAsOperand(OutStr, BB, false);
   InsertPrintInst(0, BB, InsertPos, "LEAVING BB:" + OutStr.str(),
@@ -387,20 +378,20 @@ static void TraceValuesAtBBExit(BasicBlock *BB,
   }
 }
 
-static inline void InsertCodeToShowFunctionEntry(Function *M, Function *Printf,
+static inline void InsertCodeToShowFunctionEntry(Function &F, Function *Printf,
                                                  Function* HashPtrToSeqNum){
   // Get an iterator to point to the insertion location
-  BasicBlock &BB = M->getEntryNode();
+  BasicBlock &BB = F.getEntryNode();
   BasicBlock::iterator BBI = BB.begin();
 
   std::ostringstream OutStr;
-  WriteAsOperand(OutStr, M, true);
+  WriteAsOperand(OutStr, &F, true);
   InsertPrintInst(0, &BB, BBI, "ENTERING FUNCTION: " + OutStr.str(),
                   Printf, HashPtrToSeqNum);
 
   // Now print all the incoming arguments
   unsigned ArgNo = 0;
-  for (Function::aiterator I = M->abegin(), E = M->aend(); I != E; ++I,++ArgNo){
+  for (Function::aiterator I = F.abegin(), E = F.aend(); I != E; ++I, ++ArgNo){
     InsertVerbosePrintInst(I, &BB, BBI,
                            "  Arg #" + utostr(ArgNo) + ": ", Printf,
                            HashPtrToSeqNum);
@@ -427,45 +418,37 @@ static inline void InsertCodeToShowFunctionExit(BasicBlock *BB,
 }
 
 
-bool InsertTraceCode::doit(Function *M, bool traceBasicBlockExits,
-                           bool traceFunctionEvents,
-                           ExternalFuncs& externalFuncs) {
-  if (!traceBasicBlockExits && !traceFunctionEvents)
-    return false;
-
-  if (!TraceThisFunction(M))
+bool InsertTraceCode::runOnFunction(Function &F) {
+  if (!TraceThisFunction(F))
     return false;
   
   vector<Instruction*> valuesStoredInFunction;
   vector<BasicBlock*>  exitBlocks;
 
   // Insert code to trace values at function entry
-  if (traceFunctionEvents)
-    InsertCodeToShowFunctionEntry(M, externalFuncs.PrintfFunc,
-                                  externalFuncs.HashPtrFunc);
+  InsertCodeToShowFunctionEntry(F, externalFuncs.PrintfFunc,
+                                externalFuncs.HashPtrFunc);
   
   // Push a pointer set for recording alloca'd pointers at entry.
   if (!DisablePtrHashing)
-    InsertPushOnEntryFunc(M, externalFuncs.PushOnEntryFunc);
+    InsertPushOnEntryFunc(&F, externalFuncs.PushOnEntryFunc);
   
-  for (Function::iterator BB = M->begin(); BB != M->end(); ++BB) {
+  for (Function::iterator BB = F.begin(); BB != F.end(); ++BB) {
     if (isa<ReturnInst>(BB->getTerminator()))
       exitBlocks.push_back(BB); // record this as an exit block
-    
-    if (traceBasicBlockExits)
-      TraceValuesAtBBExit(BB, externalFuncs.PrintfFunc,
-                          externalFuncs.HashPtrFunc, &valuesStoredInFunction);
-    
+
+    // Insert trace code if this basic block is interesting...
+    handleBasicBlock(BB, valuesStoredInFunction);
+
     if (!DisablePtrHashing)          // release seq. numbers on free/ret
       ReleasePtrSeqNumbers(BB, externalFuncs);
   }
   
-  for (unsigned i=0; i < exitBlocks.size(); ++i)
+  for (unsigned i=0; i != exitBlocks.size(); ++i)
     {
       // Insert code to trace values at function exit
-      if (traceFunctionEvents)
-        InsertCodeToShowFunctionExit(exitBlocks[i], externalFuncs.PrintfFunc,
-                                     externalFuncs.HashPtrFunc);
+      InsertCodeToShowFunctionExit(exitBlocks[i], externalFuncs.PrintfFunc,
+                                   externalFuncs.HashPtrFunc);
       
       // Release all recorded pointers before RETURN.  Do this LAST!
       if (!DisablePtrHashing)
