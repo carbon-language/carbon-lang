@@ -6,7 +6,7 @@
 ; RUN: fi
 
 int "test"(int %A, int %B) {
-	%W = add int -5, %B
+	%W = add int 5, %B
 	%X = add int -7, %A
 	%Y = sub int %X, %W
 	%Z = add int %Y, 12
