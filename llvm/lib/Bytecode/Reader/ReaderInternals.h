@@ -80,8 +80,12 @@ private:
   // Information about the module, extracted from the bytecode revision number.
   unsigned char RevisionNum;        // The rev # itself
   unsigned char FirstDerivedTyID;   // First variable index to use for type
-  bool HasImplicitZeroInitializer;  // Is entry 0 of every slot implicity zeros?
   bool hasInternalMarkerOnly;       // Only types of linkage are intern/external
+  bool hasExtendedLinkageSpecs;     // Supports more than 4 linkage types
+  bool hasOldStyleVarargs;          // Has old version of varargs intrinsics?
+  bool hasVarArgCallPadding;        // Bytecode has extra padding in vararg call
+
+  bool usesOldStyleVarargs;         // Does this module USE old style varargs?
 
   typedef std::vector<ValueList*> ValueTable;
   ValueTable Values;
@@ -148,9 +152,8 @@ private:
                               const unsigned char *End,
                               unsigned BlockNo);
 
-  Instruction *ParseInstruction(const unsigned char *&Buf,
-                                const unsigned char *End,
-                                std::vector<unsigned> &Args);
+  void ParseInstruction(const unsigned char *&Buf, const unsigned char *End,
+                        std::vector<unsigned> &Args, BasicBlock *BB);
 
   void ParseConstantPool(const unsigned char *&Buf, const unsigned char *EndBuf,
                          ValueTable &Tab, TypeValuesListTy &TypeTab);

@@ -13,6 +13,7 @@
 #include "llvm/iMemory.h"
 #include "llvm/iPHINode.h"
 #include "llvm/iOther.h"
+#include "llvm/Module.h"
 
 namespace {
   struct RawInst {       // The raw fields out of the bytecode stream...
@@ -102,24 +103,61 @@ RawInst::RawInst(const unsigned char *&Buf, const unsigned char *EndBuf,
 }
 
 
-Instruction *BytecodeParser::ParseInstruction(const unsigned char *&Buf,
-                                              const unsigned char *EndBuf,
-                                              std::vector<unsigned> &Args) {
+void BytecodeParser::ParseInstruction(const unsigned char *&Buf,
+                                      const unsigned char *EndBuf,
+                                      std::vector<unsigned> &Args,
+                                      BasicBlock *BB) {
   Args.clear();
   RawInst RI(Buf, EndBuf, Args);
   const Type *InstTy = getType(RI.Type);
 
+  Instruction *Result = 0;
   if (RI.Opcode >= Instruction::BinaryOpsBegin &&
       RI.Opcode <  Instruction::BinaryOpsEnd  && Args.size() == 2)
-    return BinaryOperator::create((Instruction::BinaryOps)RI.Opcode,
-                                  getValue(RI.Type, Args[0]),
-                                  getValue(RI.Type, Args[1]));
+    Result = BinaryOperator::create((Instruction::BinaryOps)RI.Opcode,
+                                    getValue(RI.Type, Args[0]),
+                                    getValue(RI.Type, Args[1]));
 
   switch (RI.Opcode) {
-  case Instruction::VarArg:
-    return new VarArgInst(getValue(RI.Type, Args[0]), getType(Args[1]));
+  default: 
+    if (Result == 0) throw std::string("Illegal instruction read!");
+    break;
+  case Instruction::VAArg:
+    Result = new VAArgInst(getValue(RI.Type, Args[0]), getType(Args[1]));
+    break;
+  case Instruction::VANext:
+    if (!hasOldStyleVarargs) {
+      Result = new VANextInst(getValue(RI.Type, Args[0]), getType(Args[1]));
+    } else {
+      // In the old-style varargs scheme, this was the "va_arg" instruction.
+      // Emit emulation code now.
+      if (!usesOldStyleVarargs) {
+        usesOldStyleVarargs = true;
+        std::cerr << "WARNING: this bytecode file uses obsolete features.  "
+                  << "Disassemble and assemble to update it.\n";
+      }
+
+      Value *VAListPtr = getValue(RI.Type, Args[0]);
+      const Type *ArgTy = getType(Args[1]);
+
+      // First, load the valist...
+      Instruction *CurVAList = new LoadInst(VAListPtr, "");
+      BB->getInstList().push_back(CurVAList);
+      
+      // Construct the vaarg
+      Result = new VAArgInst(CurVAList, ArgTy);
+      
+      // Now we must advance the pointer and update it in memory.
+      Instruction *TheVANext = new VANextInst(CurVAList, ArgTy);
+      BB->getInstList().push_back(TheVANext);
+      
+      BB->getInstList().push_back(new StoreInst(TheVANext, VAListPtr));
+    }
+
+    break;
   case Instruction::Cast:
-    return new CastInst(getValue(RI.Type, Args[0]), getType(Args[1]));
+    Result = new CastInst(getValue(RI.Type, Args[0]), getType(Args[1]));
+    break;
   case Instruction::PHINode: {
     if (Args.size() == 0 || (Args.size() & 1))
       throw std::string("Invalid phi node encountered!\n");
@@ -128,29 +166,34 @@ Instruction *BytecodeParser::ParseInstruction(const unsigned char *&Buf,
     PN->op_reserve(Args.size());
     for (unsigned i = 0, e = Args.size(); i != e; i += 2)
       PN->addIncoming(getValue(RI.Type, Args[i]), getBasicBlock(Args[i+1]));
-    return PN;
+    Result = PN;
+    break;
   }
 
   case Instruction::Shl:
   case Instruction::Shr:
-    return new ShiftInst((Instruction::OtherOps)RI.Opcode,
-                         getValue(RI.Type, Args[0]),
-                         getValue(Type::UByteTyID, Args[1]));
+    Result = new ShiftInst((Instruction::OtherOps)RI.Opcode,
+                           getValue(RI.Type, Args[0]),
+                           getValue(Type::UByteTyID, Args[1]));
+    break;
   case Instruction::Ret:
     if (Args.size() == 0)
-      return new ReturnInst();
+      Result = new ReturnInst();
     else if (Args.size() == 1)
-      return new ReturnInst(getValue(RI.Type, Args[0]));
+      Result = new ReturnInst(getValue(RI.Type, Args[0]));
+    else
+      throw std::string("Unrecognized instruction!");
     break;
 
   case Instruction::Br:
     if (Args.size() == 1)
-      return new BranchInst(getBasicBlock(Args[0]));
+      Result = new BranchInst(getBasicBlock(Args[0]));
     else if (Args.size() == 3)
-      return new BranchInst(getBasicBlock(Args[0]), getBasicBlock(Args[1]),
-                            getValue(Type::BoolTyID , Args[2]));
-    throw std::string("Invalid number of operands for a 'br' instruction!");
-    
+      Result = new BranchInst(getBasicBlock(Args[0]), getBasicBlock(Args[1]),
+                              getValue(Type::BoolTyID , Args[2]));
+    else
+      throw std::string("Invalid number of operands for a 'br' instruction!");
+    break;
   case Instruction::Switch: {
     if (Args.size() & 1)
       throw std::string("Switch statement with odd number of arguments!");
@@ -160,7 +203,8 @@ Instruction *BytecodeParser::ParseInstruction(const unsigned char *&Buf,
     for (unsigned i = 2, e = Args.size(); i != e; i += 2)
       I->addCase(cast<Constant>(getValue(RI.Type, Args[i])),
                  getBasicBlock(Args[i+1]));
-    return I;
+    Result = I;
+    break;
   }
 
   case Instruction::Call: {
@@ -187,16 +231,31 @@ Instruction *BytecodeParser::ParseInstruction(const unsigned char *&Buf,
       }
       if (It != PL.end()) throw std::string("Invalid call instruction!");
     } else {
-      // FIXME: Args[1] is currently just a dummy padding field!
+      Args.erase(Args.begin(), Args.begin()+1+hasVarArgCallPadding);
 
-      if (Args.size() & 1)  // Must be pairs of type/value
+      unsigned FirstVariableOperand;
+      if (!hasVarArgCallPadding) {
+        if (Args.size() < FTy->getNumParams())
+          throw std::string("Call instruction missing operands!");
+
+        // Read all of the fixed arguments
+        for (unsigned i = 0, e = FTy->getNumParams(); i != e; ++i)
+          Params.push_back(getValue(FTy->getParamType(i), Args[i]));
+
+        FirstVariableOperand = FTy->getNumParams();
+      } else {
+        FirstVariableOperand = 0;
+      }
+
+      if ((Args.size()-FirstVariableOperand) & 1) // Must be pairs of type/value
         throw std::string("Invalid call instruction!");
-
-      for (unsigned i = 2, e = Args.size(); i != e; i += 2)
+        
+      for (unsigned i = FirstVariableOperand, e = Args.size(); i != e; i += 2)
         Params.push_back(getValue(Args[i], Args[i+1]));
     }
 
-    return new CallInst(F, Params);
+    Result = new CallInst(F, Params);
+    break;
   }
   case Instruction::Invoke: {
     if (Args.size() < 3) throw std::string("Invalid invoke instruction!");
@@ -224,46 +283,60 @@ Instruction *BytecodeParser::ParseInstruction(const unsigned char *&Buf,
       }
       if (It != PL.end()) throw std::string("Invalid invoke instruction!");
     } else {
-      // FIXME: Args[1] is a dummy padding field
+      Args.erase(Args.begin(), Args.begin()+1+hasVarArgCallPadding);
 
-      if (Args.size() < 6) throw std::string("Invalid invoke instruction!");
-      if (Args[2] != Type::LabelTyID || Args[4] != Type::LabelTyID)
-        throw std::string("Invalid invoke instruction!");
+      unsigned FirstVariableArgument;
+      if (!hasVarArgCallPadding) {
+        Normal = getBasicBlock(Args[0]);
+        Except = getBasicBlock(Args[1]);
+
+        FirstVariableArgument = FTy->getNumParams()+2;
+        for (unsigned i = 2; i != FirstVariableArgument; ++i)
+          Params.push_back(getValue(FTy->getParamType(i-2), Args[i]));
           
-      Normal = getBasicBlock(Args[3]);
-      Except = getBasicBlock(Args[5]);
+      } else {
+        if (Args.size() < 4) throw std::string("Invalid invoke instruction!");
+        if (Args[0] != Type::LabelTyID || Args[2] != Type::LabelTyID)
+          throw std::string("Invalid invoke instruction!");
+        Normal = getBasicBlock(Args[1]);
+        Except = getBasicBlock(Args[3]);
 
-      if (Args.size() & 1)   // Must be pairs of type/value
+        FirstVariableArgument = 4;
+      }
+
+      if (Args.size()-FirstVariableArgument & 1)  // Must be pairs of type/value
         throw std::string("Invalid invoke instruction!");
 
-      for (unsigned i = 6; i < Args.size(); i += 2)
+      for (unsigned i = FirstVariableArgument; i < Args.size(); i += 2)
         Params.push_back(getValue(Args[i], Args[i+1]));
     }
 
-    return new InvokeInst(F, Normal, Except, Params);
+    Result = new InvokeInst(F, Normal, Except, Params);
+    break;
   }
   case Instruction::Malloc:
     if (Args.size() > 2) throw std::string("Invalid malloc instruction!");
     if (!isa<PointerType>(InstTy))
       throw std::string("Invalid malloc instruction!");
 
-    return new MallocInst(cast<PointerType>(InstTy)->getElementType(),
-                          Args.size() ? getValue(Type::UIntTyID,
-                                                      Args[0]) : 0);
+    Result = new MallocInst(cast<PointerType>(InstTy)->getElementType(),
+                            Args.size() ? getValue(Type::UIntTyID,
+                                                   Args[0]) : 0);
+    break;
 
   case Instruction::Alloca:
     if (Args.size() > 2) throw std::string("Invalid alloca instruction!");
     if (!isa<PointerType>(InstTy))
       throw std::string("Invalid alloca instruction!");
 
-    return new AllocaInst(cast<PointerType>(InstTy)->getElementType(),
-                          Args.size() ? getValue(Type::UIntTyID,
-                                                      Args[0]) : 0);
+    Result = new AllocaInst(cast<PointerType>(InstTy)->getElementType(),
+                            Args.size() ? getValue(Type::UIntTyID, Args[0]) :0);
+    break;
   case Instruction::Free:
     if (!isa<PointerType>(InstTy))
       throw std::string("Invalid free instruction!");
-    return new FreeInst(getValue(RI.Type, Args[0]));
-
+    Result = new FreeInst(getValue(RI.Type, Args[0]));
+    break;
   case Instruction::GetElementPtr: {
     if (Args.size() == 0 || !isa<PointerType>(InstTy))
       throw std::string("Invalid getelementptr instruction!");
@@ -278,14 +351,16 @@ Instruction *BytecodeParser::ParseInstruction(const unsigned char *&Buf,
       NextTy = GetElementPtrInst::getIndexedType(InstTy, Idx, true);
     }
 
-    return new GetElementPtrInst(getValue(RI.Type, Args[0]), Idx);
+    Result = new GetElementPtrInst(getValue(RI.Type, Args[0]), Idx);
+    break;
   }
 
   case 62:   // volatile load
   case Instruction::Load:
     if (Args.size() != 1 || !isa<PointerType>(InstTy))
       throw std::string("Invalid load instruction!");
-    return new LoadInst(getValue(RI.Type, Args[0]), "", RI.Opcode == 62);
+    Result = new LoadInst(getValue(RI.Type, Args[0]), "", RI.Opcode == 62);
+    break;
 
   case 63:   // volatile store 
   case Instruction::Store: {
@@ -294,14 +369,16 @@ Instruction *BytecodeParser::ParseInstruction(const unsigned char *&Buf,
 
     Value *Ptr = getValue(RI.Type, Args[1]);
     const Type *ValTy = cast<PointerType>(Ptr->getType())->getElementType();
-    return new StoreInst(getValue(ValTy, Args[0]), Ptr, RI.Opcode == 63);
+    Result = new StoreInst(getValue(ValTy, Args[0]), Ptr, RI.Opcode == 63);
+    break;
   }
   case Instruction::Unwind:
     if (Args.size() != 0) throw std::string("Invalid unwind instruction!");
-    return new UnwindInst();
+    Result = new UnwindInst();
+    break;
   }  // end switch(RI.Opcode) 
 
-  std::cerr << "Unrecognized instruction! " << RI.Opcode 
-            << " ADDR = 0x" << (void*)Buf << "\n";
-  throw std::string("Unrecognized instruction!");
+  insertValue(Result, Values);
+  BB->getInstList().push_back(Result);
+  BCR_TRACE(4, *Result);
 }

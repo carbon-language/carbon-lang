@@ -258,64 +258,47 @@ Constant *BytecodeParser::parseConstantValue(const unsigned char *&Buf,
     return ConstantStruct::get(ST, Elements);
   }    
 
-  case Type::PointerTyID: {
+  case Type::PointerTyID: {  // ConstantPointerRef value...
     const PointerType *PT = cast<PointerType>(Ty);
-    unsigned SubClass;
-    if (HasImplicitZeroInitializer)
-      SubClass = 1;
-    else
-      if (read_vbr(Buf, EndBuf, SubClass)) throw Error_readvbr;
-
-    switch (SubClass) {
-    case 0:    // ConstantPointerNull value...
-      return ConstantPointerNull::get(PT);
-
-    case 1: {  // ConstantPointerRef value...
-      unsigned Slot;
-      if (read_vbr(Buf, EndBuf, Slot)) throw Error_readvbr;
-      BCR_TRACE(4, "CPR: Type: '" << Ty << "'  slot: " << Slot << "\n");
-
-      // Check to see if we have already read this global variable...
-      Value *Val = getValue(PT, Slot, false);
-      GlobalValue *GV;
-      if (Val) {
-        if (!(GV = dyn_cast<GlobalValue>(Val))) 
-          throw std::string("Value of ConstantPointerRef not in ValueTable!");
-        BCR_TRACE(5, "Value Found in ValueTable!\n");
-      } else if (RevisionNum > 0) {
-        // Revision #0 could have forward references to globals that were weird.
-        // We got rid of this in subsequent revs.
-        throw std::string("Forward references to globals not allowed.");
-      } else {         // Nope... find or create a forward ref. for it
-        GlobalRefsType::iterator I = GlobalRefs.find(std::make_pair(PT, Slot));
-
-        if (I != GlobalRefs.end()) {
-          BCR_TRACE(5, "Previous forward ref found!\n");
-          GV = cast<GlobalValue>(I->second);
-        } else {
-          BCR_TRACE(5, "Creating new forward ref to a global variable!\n");
-          
-          // Create a placeholder for the global variable reference...
-          GlobalVariable *GVar =
-            new GlobalVariable(PT->getElementType(), false,
-                               GlobalValue::InternalLinkage);
-          
-          // Keep track of the fact that we have a forward ref to recycle it
-          GlobalRefs.insert(std::make_pair(std::make_pair(PT, Slot), GVar));
-          
-          // Must temporarily push this value into the module table...
-          TheModule->getGlobalList().push_back(GVar);
-          GV = GVar;
-        }
+    unsigned Slot;
+    if (read_vbr(Buf, EndBuf, Slot)) throw Error_readvbr;
+    BCR_TRACE(4, "CPR: Type: '" << Ty << "'  slot: " << Slot << "\n");
+    
+    // Check to see if we have already read this global variable...
+    Value *Val = getValue(PT, Slot, false);
+    GlobalValue *GV;
+    if (Val) {
+      if (!(GV = dyn_cast<GlobalValue>(Val))) 
+        throw std::string("Value of ConstantPointerRef not in ValueTable!");
+      BCR_TRACE(5, "Value Found in ValueTable!\n");
+    } else if (RevisionNum > 0) {
+      // Revision #0 could have forward references to globals that were weird.
+      // We got rid of this in subsequent revs.
+      throw std::string("Forward references to globals not allowed.");
+    } else {         // Nope... find or create a forward ref. for it
+      GlobalRefsType::iterator I = GlobalRefs.find(std::make_pair(PT, Slot));
+      
+      if (I != GlobalRefs.end()) {
+        BCR_TRACE(5, "Previous forward ref found!\n");
+        GV = cast<GlobalValue>(I->second);
+      } else {
+        BCR_TRACE(5, "Creating new forward ref to a global variable!\n");
+        
+        // Create a placeholder for the global variable reference...
+        GlobalVariable *GVar =
+          new GlobalVariable(PT->getElementType(), false,
+                             GlobalValue::InternalLinkage);
+        
+        // Keep track of the fact that we have a forward ref to recycle it
+        GlobalRefs.insert(std::make_pair(std::make_pair(PT, Slot), GVar));
+        
+        // Must temporarily push this value into the module table...
+        TheModule->getGlobalList().push_back(GVar);
+        GV = GVar;
       }
-
-      return ConstantPointerRef::get(GV);
     }
     
-    default:
-      BCR_TRACE(5, "UNKNOWN Pointer Constant Type!\n");
-      throw std::string("Unknown pointer constant type.");
-    }
+    return ConstantPointerRef::get(GV);
   }
 
   default:

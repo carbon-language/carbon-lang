@@ -80,8 +80,7 @@ unsigned BytecodeParser::insertValue(Value *Val, ValueTable &ValueTab) {
 
 unsigned BytecodeParser::insertValue(Value *Val, unsigned type,
                                      ValueTable &ValueTab) {
-  assert((!HasImplicitZeroInitializer || !isa<Constant>(Val) ||
-          Val->getType()->isPrimitiveType() ||
+  assert((!isa<Constant>(Val) || Val->getType()->isPrimitiveType() ||
           !cast<Constant>(Val)->isNullValue()) &&
          "Cannot read null values from bytecode!");
   assert(type != Type::TypeTyID && "Types should never be insertValue'd!");
@@ -97,9 +96,7 @@ unsigned BytecodeParser::insertValue(Value *Val, unsigned type,
   //   << "] = " << Val << "\n";
   ValueTab[type]->push_back(Val);
 
-  bool HasOffset = HasImplicitZeroInitializer &&
-    !Val->getType()->isPrimitiveType();
-
+  bool HasOffset =  !Val->getType()->isPrimitiveType();
   return ValueTab[type]->size()-1 + HasOffset;
 }
 
@@ -113,7 +110,7 @@ Value *BytecodeParser::getValue(unsigned type, unsigned oNum, bool Create) {
   assert(type != Type::LabelTyID && "getValue() cannot get blocks!");
   unsigned Num = oNum;
 
-  if (HasImplicitZeroInitializer && type >= FirstDerivedTyID) {
+  if (type >= FirstDerivedTyID) {
     if (Num == 0)
       return Constant::getNullValue(getType(type));
     --Num;
@@ -203,13 +200,9 @@ BasicBlock *BytecodeParser::ParseBasicBlock(const unsigned char *&Buf,
   else
     BB = ParsedBasicBlocks[BlockNo];
 
-  while (Buf < EndBuf) {
-    std::vector<unsigned> Args;
-    Instruction *Inst = ParseInstruction(Buf, EndBuf, Args);
-    insertValue(Inst, Values);
-    BB->getInstList().push_back(Inst);
-    BCR_TRACE(4, Inst);
-  }
+  std::vector<unsigned> Args;
+  while (Buf < EndBuf)
+    ParseInstruction(Buf, EndBuf, Args, BB);
 
   return BB;
 }
@@ -313,16 +306,19 @@ void BytecodeParser::materializeFunction(Function* F) {
   GlobalValue::LinkageTypes Linkage = GlobalValue::ExternalLinkage;
 
   if (!hasInternalMarkerOnly) {
+    // We didn't support weak linkage explicitly.
     unsigned LinkageType;
     if (read_vbr(Buf, EndBuf, LinkageType)) 
       throw std::string("ParseFunction: Error reading from buffer.");
-    if (LinkageType & ~0x3) 
+    if ((!hasExtendedLinkageSpecs && LinkageType > 3) ||
+        ( hasExtendedLinkageSpecs && LinkageType > 4))
       throw std::string("Invalid linkage type for Function.");
     switch (LinkageType) {
     case 0: Linkage = GlobalValue::ExternalLinkage; break;
     case 1: Linkage = GlobalValue::WeakLinkage; break;
     case 2: Linkage = GlobalValue::AppendingLinkage; break;
     case 3: Linkage = GlobalValue::InternalLinkage; break;
+    case 4: Linkage = GlobalValue::LinkOnceLinkage; break;
     }
   } else {
     // We used to only support two linkage models: internal and external
@@ -538,31 +534,33 @@ void BytecodeParser::ParseVersionInfo(const unsigned char *&Buf,
   RevisionNum = Version >> 4;
 
   // Default values for the current bytecode version
-  HasImplicitZeroInitializer = true;
   hasInternalMarkerOnly = false;
+  hasExtendedLinkageSpecs = true;
+  hasOldStyleVarargs = false;
+  hasVarArgCallPadding = false;
   FirstDerivedTyID = 14;
 
   switch (RevisionNum) {
-  case 0:                  // Initial revision
-    // Version #0 didn't have any of the flags stored correctly, and in fact as
-    // only valid with a 14 in the flags values.  Also, it does not support
-    // encoding zero initializers for arrays compactly.
-    //
-    if (Version != 14) throw std::string("Unknown revision 0 flags?");
-    HasImplicitZeroInitializer = false;
-    Endianness  = Module::BigEndian;
-    PointerSize = Module::Pointer64;
-    hasInternalMarkerOnly = true;
-    hasNoEndianness = hasNoPointerSize = false;
-    break;
-  case 1:
+  case 1:               // LLVM pre-1.0 release: will be deleted on the next rev
     // Version #1 has four bit fields: isBigEndian, hasLongPointers,
     // hasNoEndianness, and hasNoPointerSize.
     hasInternalMarkerOnly = true;
+    hasExtendedLinkageSpecs = false;
+    hasOldStyleVarargs = true;
+    hasVarArgCallPadding = true;
     break;
-  case 2:
+  case 2:               // LLVM pre-1.0 release:
     // Version #2 added information about all 4 linkage types instead of just
     // having internal and external.
+    hasExtendedLinkageSpecs = false;
+    hasOldStyleVarargs = true;
+    hasVarArgCallPadding = true;
+    break;
+  case 0:               //  LLVM 1.0 release version
+    // Compared to rev #2, we added support for weak linkage, a more dense
+    // encoding, and better varargs support.
+
+    // FIXME: densify the encoding!
     break;
   default:
     throw std::string("Unknown bytecode version number!");
@@ -576,7 +574,6 @@ void BytecodeParser::ParseVersionInfo(const unsigned char *&Buf,
   BCR_TRACE(1, "Bytecode Rev = " << (unsigned)RevisionNum << "\n");
   BCR_TRACE(1, "Endianness/PointerSize = " << Endianness << ","
                << PointerSize << "\n");
-  BCR_TRACE(1, "HasImplicitZeroInit = " << HasImplicitZeroInitializer << "\n");
 }
 
 void BytecodeParser::ParseModule(const unsigned char *Buf,
@@ -656,9 +653,8 @@ void BytecodeParser::ParseModule(const unsigned char *Buf,
   BCR_TRACE(0, "} end block\n\n");
 }
 
-void
-BytecodeParser::ParseBytecode(const unsigned char *Buf, unsigned Length,
-                              const std::string &ModuleID) {
+void BytecodeParser::ParseBytecode(const unsigned char *Buf, unsigned Length,
+                                   const std::string &ModuleID) {
 
   unsigned char *EndBuf = (unsigned char*)(Buf + Length);
 
@@ -670,6 +666,7 @@ BytecodeParser::ParseBytecode(const unsigned char *Buf, unsigned Length,
 
   TheModule = new Module(ModuleID);
   try { 
+    usesOldStyleVarargs = false;
     ParseModule(Buf, EndBuf);
   } catch (std::string &Error) {
     freeState();       // Must destroy handles before deleting module!
