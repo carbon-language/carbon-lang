@@ -13,6 +13,7 @@
 #include "llvm/PassManager.h"
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/Bytecode/WriteBytecodePass.h"
+#include "llvm/Target/TargetData.h"
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
@@ -60,6 +61,8 @@ void BugDriver::EmitProgressBytecode(const PassInfo *Pass,
   std::cout << " " << Filename << " -" << Pass->getPassArgument() << "\n";
 }
 
+/// FIXME: This should be parameterizable!!
+static TargetData TD("bugpoint target");
 
 static void RunChild(Module *Program,const std::vector<const PassInfo*> &Passes,
                      const std::string &OutFilename) {
@@ -73,6 +76,8 @@ static void RunChild(Module *Program,const std::vector<const PassInfo*> &Passes,
   for (unsigned i = 0, e = Passes.size(); i != e; ++i) {
     if (Passes[i]->getNormalCtor())
       PM.add(Passes[i]->getNormalCtor()());
+    else if (Passes[i]->getDataCtor())
+      PM.add(Passes[i]->getDataCtor()(TD));    // Provide dummy target data...
     else
       std::cerr << "Cannot create pass yet: " << Passes[i]->getPassName()
                 << "\n";
