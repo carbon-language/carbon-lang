@@ -103,33 +103,13 @@ public:
   /// @brief Lookup a type by name.
   Type* lookupType(const std::string& name) const;
 
-  /// @returns true iff the type map is not empty.
-  /// @brief Determine if there are types in the symbol table
-  inline bool hasTypes() const { return ! tmap.empty(); }
-
   /// @returns true iff the type map and the type plane are both not 
   /// empty.
   /// @brief Determine if the symbol table is empty
   inline bool isEmpty() const { return pmap.empty() && tmap.empty(); }
 
-  /// The plane associated with the \p TypeID parameter is found
-  /// and the number of entries in the plane is returned.
-  /// @returns Number of entries in the specified type plane or 0.
-  /// @brief Get the size of a type plane.
-  unsigned type_size(const Type *TypeID) const;
-
   /// @brief The number of name/type pairs is returned.
   inline unsigned num_types() const { return (unsigned)tmap.size(); }
-
-  /// Finds the value \p val in the symbol table and returns its
-  /// name. Only the type plane associated with the type of \p val
-  /// is searched.
-  /// @brief Return the name of a value
-  std::string get_name(const Value* Val) const;
-
-  /// Finds the type \p Ty in the symbol table and returns its name.
-  /// @brief Return the name of a type
-  std::string get_name(const Type* Ty) const;
 
   /// Given a base name, return a string that is either equal to it or 
   /// derived from it that does not already occur in the symbol table 
@@ -190,13 +170,6 @@ public:
     return removeEntry(TI);
   }
 
-  /// Removes a specific value from the symbol table. 
-  /// @returns the removed value.
-  /// @brief Remove a specific value given by an iterator
-  inline Value *value_remove(const value_iterator &It) {
-    return this->removeEntry(pmap.find(It->second->getType()), It);
-  }
-
   /// changeName - Given a value with a non-empty name, remove its existing
   /// entry from the symbol table and insert a new one for Name.  This is
   /// equivalent to doing "remove(V), V->Name = Name, insert(V)", but is faster,
@@ -209,9 +182,6 @@ public:
   /// the type and values. 
   /// @brief Strip the symbol table. 
   bool strip();
-
-  /// @brief Empty the symbol table completely.
-  inline void clear() { pmap.clear(); tmap.clear(); }
 
 /// @}
 /// @name Iteration
