@@ -24,6 +24,21 @@ void AnalysisResolver::setAnalysisResolver(Pass *P, AnalysisResolver *AR) {
   P->Resolver = AR;
 }
 
+
+// preservesCFG - This function should be called to by the pass, iff they do
+// not:
+//
+//  1. Add or remove basic blocks from the function
+//  2. Modify terminator instructions in any way.
+//
+// This function annotates the AnalysisUsage info object to say that analyses
+// that only depend on the CFG are preserved by this pass.
+//
+void AnalysisUsage::preservesCFG() {
+  // FIXME: implement preservesCFG
+}
+
+
 //===----------------------------------------------------------------------===//
 // PassManager implementation - The PassManager class is a simple Pimpl class
 // that wraps the PassManagerT template.
@@ -141,20 +156,6 @@ void FunctionPass::addToPassManager(PassManagerT<Function> *PM,
                                     AnalysisUsage &AU) {
   PM->addPass(this, AU);
 }
-
-// doesNotModifyCFG - This function should be called by our subclasses to
-// implement the getAnalysisUsage virtual function, iff they do not:
-//
-//  1. Add or remove basic blocks from the function
-//  2. Modify terminator instructions in any way.
-//
-// This function annotates the AnalysisUsage info object to say that analyses
-// that only depend on the CFG are preserved by this pass.
-//
-void FunctionPass::doesNotModifyCFG(AnalysisUsage &Info) {
-
-}
-
 
 //===----------------------------------------------------------------------===//
 // BasicBlockPass Implementation

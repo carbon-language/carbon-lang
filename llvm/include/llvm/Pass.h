@@ -138,18 +138,6 @@ struct FunctionPass : public Pass {
   //
   bool run(Function *F);
 
-protected:
-  // doesNotModifyCFG - This function should be called by our subclasses to
-  // implement the getAnalysisUsage virtual function, iff they do not:
-  //
-  //  1. Add or remove basic blocks from the function
-  //  2. Modify terminator instructions in any way.
-  //
-  // This function annotates the AnalysisUsage info object to say that analyses
-  // that only depend on the CFG are preserved by this pass.
-  //
-  void doesNotModifyCFG(AnalysisUsage &Info);
-
 private:
   friend class PassManagerT<Module>;
   friend class PassManagerT<Function>;
@@ -276,6 +264,17 @@ public:
   // PreservesAll - Set by analyses that do not transform their input at all
   void setPreservesAll() { PreservesAll = true; }
   bool preservesAll() const { return PreservesAll; }
+
+  // preservesCFG - This function should be called to by the pass, iff they do
+  // not:
+  //
+  //  1. Add or remove basic blocks from the function
+  //  2. Modify terminator instructions in any way.
+  //
+  // This function annotates the AnalysisUsage info object to say that analyses
+  // that only depend on the CFG are preserved by this pass.
+  //
+  void preservesCFG();
 
   const std::vector<AnalysisID> &getRequiredSet() const { return Required; }
   const std::vector<AnalysisID> &getPreservedSet() const { return Preserved; }
