@@ -782,8 +782,12 @@ static bool OperandConvertableToType(User *U, Value *V, const Type *Ty,
     if (OpNum == 0) {
       const PointerType *PTy = dyn_cast<PointerType>(Ty);
       if (PTy == 0) return false;  // Can't convert to a non-pointer type...
-      const FunctionType *MTy = dyn_cast<FunctionType>(PTy->getElementType());
-      if (MTy == 0) return false;  // Can't convert to a non ptr to function...
+      const FunctionType *FTy = dyn_cast<FunctionType>(PTy->getElementType());
+      if (FTy == 0) return false;  // Can't convert to a non ptr to function...
+
+      // Do not allow converting to a call where all of the operands are ...'s
+      if (FTy->getNumParams() == 0 && FTy->isVarArg())
+        return false;              // Do not permit this conversion!
 
       // Perform sanity checks to make sure that new function type has the
       // correct number of arguments...
@@ -793,12 +797,12 @@ static bool OperandConvertableToType(User *U, Value *V, const Type *Ty,
       // Cannot convert to a type that requires more fixed arguments than
       // the call provides...
       //
-      if (NumArgs < MTy->getParamTypes().size()) return false;
+      if (NumArgs < FTy->getNumParams()) return false;
       
       // Unless this is a vararg function type, we cannot provide more arguments
       // than are desired...
       //
-      if (!MTy->isVarArg() && NumArgs > MTy->getParamTypes().size())
+      if (!FTy->isVarArg() && NumArgs > FTy->getNumParams())
         return false;
 
       // Okay, at this point, we know that the call and the function type match
@@ -808,7 +812,7 @@ static bool OperandConvertableToType(User *U, Value *V, const Type *Ty,
       // reason for this is that we prefer to have resolved functions but casted
       // arguments if possible.
       //
-      const FunctionType::ParamTypes &PTs = MTy->getParamTypes();
+      const FunctionType::ParamTypes &PTs = FTy->getParamTypes();
       for (unsigned i = 0, NA = PTs.size(); i < NA; ++i)
         if (!PTs[i]->isLosslesslyConvertableTo(I->getOperand(i+1)->getType()))
           return false;   // Operands must have compatible types!
@@ -817,14 +821,14 @@ static bool OperandConvertableToType(User *U, Value *V, const Type *Ty,
       // converted.  We succeed if we can change the return type if
       // neccesary...
       //
-      return ValueConvertableToType(I, MTy->getReturnType(), CTMap);
+      return ValueConvertableToType(I, FTy->getReturnType(), CTMap);
     }
     
     const PointerType *MPtr = cast<PointerType>(I->getOperand(0)->getType());
-    const FunctionType *MTy = cast<FunctionType>(MPtr->getElementType());
-    if (!MTy->isVarArg()) return false;
+    const FunctionType *FTy = cast<FunctionType>(MPtr->getElementType());
+    if (!FTy->isVarArg()) return false;
 
-    if ((OpNum-1) < MTy->getParamTypes().size())
+    if ((OpNum-1) < FTy->getParamTypes().size())
       return false;  // It's not in the varargs section...
 
     // If we get this far, we know the value is in the varargs section of the
