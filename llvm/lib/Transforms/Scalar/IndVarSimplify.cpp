@@ -52,6 +52,9 @@ namespace {
       return TD->getTypeSize(Ty);  // Must be a pointer
     }
 
+    Value *ComputeAuxIndVarValue(InductionVariable &IV, Value *CIV);  
+    void ReplaceIndVar(InductionVariable &IV, Value *Counter);
+
     bool runOnLoop(Loop *L);
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
@@ -192,104 +195,141 @@ bool IndVarSimplify::runOnLoop(Loop *Loop) {
 
     DEBUG(IV->print(std::cerr));
 
-    while (isa<PHINode>(AfterPHIIt)) ++AfterPHIIt;
-
     // Don't modify the canonical indvar or unrecognized indvars...
     if (IV != Canonical && IV->InductionType != InductionVariable::Unknown) {
-      const Type *IVTy = IV->Phi->getType();
-      if (isa<PointerType>(IVTy))    // If indexing into a pointer, make the
-        IVTy = TD->getIntPtrType();  // index the appropriate type.
-
-      Instruction *Val = IterCount;
-      if (!isa<ConstantInt>(IV->Step) ||   // If the step != 1
-          !cast<ConstantInt>(IV->Step)->equalsInt(1)) {
-
-        // If the types are not compatible, insert a cast now...
-        if (Val->getType() != IVTy)
-          Val = new CastInst(Val, IVTy, Val->getName(), AfterPHIIt);
-        if (IV->Step->getType() != IVTy)
-          IV->Step = new CastInst(IV->Step, IVTy, IV->Step->getName(),
-                                  AfterPHIIt);
-
-        Val = BinaryOperator::create(Instruction::Mul, Val, IV->Step,
-                                     IV->Phi->getName()+"-scale", AfterPHIIt);
-      }
-
-      // If this is a pointer indvar...
-      if (isa<PointerType>(IV->Phi->getType())) {
-        std::vector<Value*> Idx;
-        // FIXME: this should not be needed when we fix PR82!
-        if (Val->getType() != Type::LongTy)
-          Val = new CastInst(Val, Type::LongTy, Val->getName(), AfterPHIIt);
-        Idx.push_back(Val);
-        Val = new GetElementPtrInst(IV->Start, Idx,
-                                    IV->Phi->getName()+"-offset",
-                                    AfterPHIIt);
-        
-      } else if (!isa<Constant>(IV->Start) ||   // If Start != 0...
-                 !cast<Constant>(IV->Start)->isNullValue()) {
-        // If the types are not compatible, insert a cast now...
-        if (Val->getType() != IVTy)
-          Val = new CastInst(Val, IVTy, Val->getName(), AfterPHIIt);
-        if (IV->Start->getType() != IVTy)
-          IV->Start = new CastInst(IV->Start, IVTy, IV->Start->getName(),
-                                   AfterPHIIt);
-        
-        // Insert the instruction after the phi nodes...
-        Val = BinaryOperator::create(Instruction::Add, Val, IV->Start,
-                                     IV->Phi->getName()+"-offset", AfterPHIIt);
-      }
-
-      // If the PHI node has a different type than val is, insert a cast now...
-      if (Val->getType() != IV->Phi->getType())
-        Val = new CastInst(Val, IV->Phi->getType(), Val->getName(), AfterPHIIt);
-      
-      // Replace all uses of the old PHI node with the new computed value...
-      IV->Phi->replaceAllUsesWith(Val);
-
-      // Move the PHI name to it's new equivalent value...
-      std::string OldName = IV->Phi->getName();
-      IV->Phi->setName("");
-      Val->setName(OldName);
-
-      // Get the incoming values used by the PHI node
-      std::vector<Value*> PHIOps;
-      PHIOps.reserve(IV->Phi->getNumIncomingValues());
-      for (unsigned i = 0, e = IV->Phi->getNumIncomingValues(); i != e; ++i)
-        PHIOps.push_back(IV->Phi->getIncomingValue(i));
-
-      // Delete the old, now unused, phi node...
-      Header->getInstList().erase(IV->Phi);
-
-      // If the PHI is the last user of any instructions for computing PHI nodes
-      // that are irrelevant now, delete those instructions.
-      while (!PHIOps.empty()) {
-        Instruction *MaybeDead = dyn_cast<Instruction>(PHIOps.back());
-        PHIOps.pop_back();
-
-        if (MaybeDead && isInstructionTriviallyDead(MaybeDead)) {
-          PHIOps.insert(PHIOps.end(), MaybeDead->op_begin(),
-                        MaybeDead->op_end());
-          MaybeDead->getParent()->getInstList().erase(MaybeDead);
-          
-          // Erase any duplicates entries in the PHIOps list.
-          std::vector<Value*>::iterator It =
-            std::find(PHIOps.begin(), PHIOps.end(), MaybeDead);
-          while (It != PHIOps.end()) {
-            PHIOps.erase(It);
-            It = std::find(PHIOps.begin(), PHIOps.end(), MaybeDead);
-          }
-
-          // Erasing the instruction could invalidate the AfterPHI iterator!
-          AfterPHIIt = Header->begin();
-        }
-      }
-
+      ReplaceIndVar(*IV, IterCount);
       Changed = true;
       ++NumRemoved;
     }
   }
 
   return Changed;
+}
+
+/// ComputeAuxIndVarValue - Given an auxillary induction variable, compute and
+/// return a value which will always be equal to the induction variable PHI, but
+/// is based off of the canonical induction variable CIV.
+///
+Value *IndVarSimplify::ComputeAuxIndVarValue(InductionVariable &IV, Value *CIV){
+  Instruction *Phi = IV.Phi;
+  const Type *IVTy = Phi->getType();
+  if (isa<PointerType>(IVTy))    // If indexing into a pointer, make the
+    IVTy = TD->getIntPtrType();  // index the appropriate type.
+
+  BasicBlock::iterator AfterPHIIt = Phi;
+  while (isa<PHINode>(AfterPHIIt)) ++AfterPHIIt;
+  
+  Value *Val = CIV;
+  if (Val->getType() != IVTy)
+    Val = new CastInst(Val, IVTy, Val->getName(), AfterPHIIt);
+
+  if (!isa<ConstantInt>(IV.Step) ||   // If the step != 1
+      !cast<ConstantInt>(IV.Step)->equalsInt(1)) {
+    
+    // If the types are not compatible, insert a cast now...
+    if (IV.Step->getType() != IVTy)
+      IV.Step = new CastInst(IV.Step, IVTy, IV.Step->getName(), AfterPHIIt);
+    
+    Val = BinaryOperator::create(Instruction::Mul, Val, IV.Step,
+                                 Phi->getName()+"-scale", AfterPHIIt);
+  }
+  
+  // If this is a pointer indvar...
+  if (isa<PointerType>(Phi->getType())) {
+    std::vector<Value*> Idx;
+    // FIXME: this should not be needed when we fix PR82!
+    if (Val->getType() != Type::LongTy)
+      Val = new CastInst(Val, Type::LongTy, Val->getName(), AfterPHIIt);
+    Idx.push_back(Val);
+    Val = new GetElementPtrInst(IV.Start, Idx,
+                                Phi->getName()+"-offset",
+                                AfterPHIIt);
+    
+  } else if (!isa<Constant>(IV.Start) ||   // If Start != 0...
+             !cast<Constant>(IV.Start)->isNullValue()) {
+    // If the types are not compatible, insert a cast now...
+    if (IV.Start->getType() != IVTy)
+      IV.Start = new CastInst(IV.Start, IVTy, IV.Start->getName(),
+                               AfterPHIIt);
+    
+    // Insert the instruction after the phi nodes...
+    Val = BinaryOperator::create(Instruction::Add, Val, IV.Start,
+                                 Phi->getName()+"-offset", AfterPHIIt);
+  }
+  
+  // If the PHI node has a different type than val is, insert a cast now...
+  if (Val->getType() != Phi->getType())
+    Val = new CastInst(Val, Phi->getType(), Val->getName(), AfterPHIIt);
+
+  // Move the PHI name to it's new equivalent value...
+  std::string OldName = Phi->getName();
+  Phi->setName("");
+  Val->setName(OldName);
+
+  return Val;
+}
+
+
+// ReplaceIndVar - Replace all uses of the specified induction variable with
+// expressions computed from the specified loop iteration counter variable.
+// Return true if instructions were deleted.
+void IndVarSimplify::ReplaceIndVar(InductionVariable &IV, Value *CIV) {
+  Value *IndVarVal = 0;
+  PHINode *Phi = IV.Phi;
+  
+  assert(Phi->getNumOperands() == 4 &&
+         "Only expect induction variables in canonical loops!");
+
+  // Remember the incoming values used by the PHI node
+  std::vector<Value*> PHIOps;
+  PHIOps.reserve(2);
+  PHIOps.push_back(Phi->getIncomingValue(0));
+  PHIOps.push_back(Phi->getIncomingValue(1));
+
+  // Delete all of the operands of the PHI node... FIXME, this should be more
+  // intelligent.
+  Phi->dropAllReferences();
+
+  // Now that we are rid of unneeded uses of the PHI node, replace any remaining
+  // ones with the appropriate code using the canonical induction variable.
+  while (!Phi->use_empty()) {
+    Instruction *U = cast<Instruction>(Phi->use_back());
+
+    // TODO: Perform LFTR here if possible
+    if (0) {
+
+    } else {
+      // Replace all uses of the old PHI node with the new computed value...
+      if (IndVarVal == 0)
+        IndVarVal = ComputeAuxIndVarValue(IV, CIV);
+      U->replaceUsesOfWith(Phi, IndVarVal);
+    }
+  }
+
+  // If the PHI is the last user of any instructions for computing PHI nodes
+  // that are irrelevant now, delete those instructions.
+  while (!PHIOps.empty()) {
+    Instruction *MaybeDead = dyn_cast<Instruction>(PHIOps.back());
+    PHIOps.pop_back();
+    
+    if (MaybeDead && isInstructionTriviallyDead(MaybeDead) && 
+        (!isa<PHINode>(MaybeDead) ||
+         MaybeDead->getParent() != Phi->getParent())) {
+      PHIOps.insert(PHIOps.end(), MaybeDead->op_begin(),
+                    MaybeDead->op_end());
+      MaybeDead->getParent()->getInstList().erase(MaybeDead);
+      
+      // Erase any duplicates entries in the PHIOps list.
+      std::vector<Value*>::iterator It =
+        std::find(PHIOps.begin(), PHIOps.end(), MaybeDead);
+      while (It != PHIOps.end()) {
+        PHIOps.erase(It);
+        It = std::find(PHIOps.begin(), PHIOps.end(), MaybeDead);
+      }
+    }
+  }
+
+  // Delete the old, now unused, phi node...
+  Phi->getParent()->getInstList().erase(Phi);
 }
 
