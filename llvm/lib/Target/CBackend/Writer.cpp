@@ -1157,6 +1157,8 @@ void CWriter::lowerIntrinsics(Module &M) {
             case Intrinsic::va_start:
             case Intrinsic::va_copy:
             case Intrinsic::va_end:
+            case Intrinsic::returnaddress:
+            case Intrinsic::frameaddress:
               // We directly implement these intrinsics
               break;
             default:
@@ -1202,6 +1204,16 @@ void CWriter::visitCallInst(CallInst &I) {
         Out << "0;";
         Out << "va_copy(*(va_list*)&" << Mang->getValueName(&I) << ", ";
         Out << "*(va_list*)&";
+        writeOperand(I.getOperand(1));
+        Out << ")";
+        return;
+      case Intrinsic::returnaddress:
+        Out << "__builtin_return_address(";
+        writeOperand(I.getOperand(1));
+        Out << ")";
+        return;
+      case Intrinsic::frameaddress:
+        Out << "__builtin_frame_address(";
         writeOperand(I.getOperand(1));
         Out << ")";
         return;
