@@ -155,3 +155,9 @@ bool %test24(bool %C) {
         ret bool %c
 }
 
+void %test25(int** %P) {
+        %c = cast int** %P to float**
+        store float* null, float** %c          ;; Fold cast into null
+        ret void
+}
+
