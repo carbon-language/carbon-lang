@@ -131,12 +131,15 @@ class LiveRange : public ValueSet
   inline IGNode * getUserIGNode() const 
     { return UserIGNode; }    // NULL if the user is not allocated
 
-  inline Type::PrimitiveID getTypeID() const {
+  inline const Type* getType() const {
     const Value *val = *begin();
     assert(val && "Can't find type - Live range is empty" );
-    return (val->getType())->getPrimitiveID();
+    return val->getType();
   }
-
+  
+  inline Type::PrimitiveID getTypeID() const {
+    return this->getType()->getPrimitiveID();
+  }
 
   inline void setSuggestedColor(int Col) {
     //assert( (SuggestedColor == -1) && "Changing an already suggested color");

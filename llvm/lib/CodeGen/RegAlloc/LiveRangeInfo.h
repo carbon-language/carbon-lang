@@ -75,6 +75,8 @@ public:
 
   void constructLiveRanges();
 
+  const Method* getMethod() { return Meth; }
+
   inline void addLRToMap(const Value *Val, LiveRange *LR) {
     assert( Val && LR && "Val/LR is NULL!\n");
     assert( (! LiveRangeMap[ Val ]) && "LR already set in map");
