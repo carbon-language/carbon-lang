@@ -182,7 +182,7 @@ void PEI::calculateCallerSavedRegisters(MachineFunction &Fn) {
     if (FixedSlot == FixedSpillSlots+NumFixedSpillSlots) {
       // Nope, just spill it anywhere convenient.
       FrameIdx = FFI->CreateStackObject(RegInfo->getSpillSize(Reg),
-                                        RegInfo->getSpillAlignment(Reg));
+                                        RegInfo->getSpillAlignment(Reg)/8);
     } else {
       // Spill it to the stack where we must.
       FrameIdx = FFI->CreateFixedObject(RegInfo->getSpillSize(Reg),
