@@ -16,9 +16,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/IPO.h"
+#include "llvm/Constants.h"
+#include "llvm/Instructions.h"
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
-#include "llvm/Constants.h"
 #include "llvm/Support/CallSite.h"
 #include "llvm/ADT/Statistic.h"
 using namespace llvm;
@@ -26,13 +27,16 @@ using namespace llvm;
 namespace {
   Statistic<> NumArgumentsProped("ipconstprop",
                                  "Number of args turned into constants");
+  Statistic<> NumReturnValProped("ipconstprop",
+                                 "Number of return values turned into constants");
 
   /// IPCP - The interprocedural constant propagation pass
   ///
   struct IPCP : public ModulePass {
     bool runOnModule(Module &M);
   private:
-    bool processFunction(Function &F);
+    bool PropagateConstantsIntoArguments(Function &F);
+    bool PropagateConstantReturn(Function &F);
   };
   RegisterOpt<IPCP> X("ipconstprop", "Interprocedural constant propagation");
 }
@@ -48,22 +52,24 @@ bool IPCP::runOnModule(Module &M) {
   while (LocalChange) {
     LocalChange = false;
     for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
-      if (!I->isExternal() && I->hasInternalLinkage())
-        LocalChange |= processFunction(*I);
+      if (!I->isExternal()) {
+        // Delete any klingons.
+        I->removeDeadConstantUsers();
+        if (I->hasInternalLinkage())
+          LocalChange |= PropagateConstantsIntoArguments(*I);
+        Changed |= PropagateConstantReturn(*I);
+      }
     Changed |= LocalChange;
   }
   return Changed;
 }
 
-/// processFunction - Look at all uses of the specified function.  If all uses
-/// are direct call sites, and all pass a particular constant in for an
-/// argument, propagate that constant in as the argument.
+/// PropagateConstantsIntoArguments - Look at all uses of the specified
+/// function.  If all uses are direct call sites, and all pass a particular
+/// constant in for an argument, propagate that constant in as the argument.
 ///
-bool IPCP::processFunction(Function &F) {
+bool IPCP::PropagateConstantsIntoArguments(Function &F) {
   if (F.aempty() || F.use_empty()) return false;  // No arguments?  Early exit.
-
-  // Delete any klingons.
-  F.removeDeadConstantUsers();
 
   std::vector<std::pair<Constant*, bool> > ArgumentConstants;
   ArgumentConstants.resize(F.asize());
@@ -123,3 +129,66 @@ bool IPCP::processFunction(Function &F) {
   return MadeChange;
 }
 
+
+// Check to see if this function returns a constant.  If so, replace all callers
+// that user the return value with the returned valued.  If we can replace ALL
+// callers,
+bool IPCP::PropagateConstantReturn(Function &F) {
+  if (F.getReturnType() == Type::VoidTy)
+    return false; // No return value.
+
+  // Check to see if this function returns a constant.
+  Value *RetVal = 0;
+  for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
+    if (ReturnInst *RI = dyn_cast<ReturnInst>(BB->getTerminator()))
+      if (isa<UndefValue>(RI->getOperand(0))) {
+        // Ignore.
+      } else if (Constant *C = dyn_cast<Constant>(RI->getOperand(0))) {
+        if (RetVal == 0)
+          RetVal = C;
+        else if (RetVal != C)
+          return false;  // Does not return the same constant.
+      } else {
+        return false;  // Does not return a constant.
+      }
+
+  if (RetVal == 0) RetVal = UndefValue::get(F.getReturnType());
+
+  // If we got here, the function returns a constant value.  Loop over all
+  // users, replacing any uses of the return value with the returned constant.
+  bool ReplacedAllUsers = true;
+  bool MadeChange = false;
+  for (Value::use_iterator I = F.use_begin(), E = F.use_end(); I != E; ++I)
+    if (!isa<Instruction>(*I))
+      ReplacedAllUsers = false;
+    else {
+      CallSite CS = CallSite::get(cast<Instruction>(*I));
+      if (CS.getInstruction() == 0 || 
+          CS.getCalledFunction() != &F) {
+        ReplacedAllUsers = false;
+      } else {
+        if (!CS.getInstruction()->use_empty()) {
+          CS.getInstruction()->replaceAllUsesWith(RetVal);
+          MadeChange = true;
+        }
+      }
+    }
+
+  // If we replace all users with the returned constant, and there can be no
+  // other callers of the function, replace the constant being returned in the
+  // function with an undef value.
+  if (ReplacedAllUsers && F.hasInternalLinkage() && !isa<UndefValue>(RetVal)) {
+    Value *RV = UndefValue::get(RetVal->getType());
+    for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
+      if (ReturnInst *RI = dyn_cast<ReturnInst>(BB->getTerminator()))
+        RI->setOperand(0, RV);
+    MadeChange = true;
+  }
+
+  if (MadeChange) ++NumReturnValProped;
+
+  // FIXME: DAE should remove dead return values if the result is an undef
+  // value... or if it is never used.
+
+  return MadeChange;
+}
