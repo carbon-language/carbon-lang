@@ -107,6 +107,8 @@
         <ol>
           <li><a href="#i_readport">'<tt>llvm.readport</tt>'   Intrinsic</a></li>
           <li><a href="#i_writeport">'<tt>llvm.writeport</tt>'   Intrinsic</a></li>
+          <li><a href="#i_readio">'<tt>llvm.readio</tt>'   Intrinsic</a></li>
+          <li><a href="#i_writeio">'<tt>llvm.writeio</tt>'   Intrinsic</a></li>
         </ol>
       <li><a href="#int_libc">Standard C Library Intrinsics</a>
         <ol>
@@ -2013,6 +2015,7 @@ operating system level code.
 </p>
 
 </div>
+
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection">
   <a name="i_readport">'<tt>llvm.readport</tt>' Intrinsic</a>
@@ -2094,6 +2097,99 @@ value written must be 8, 16, or 32 bits in length.
 </p>
 
 </div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="i_readio">'<tt>llvm.readio</tt>' Intrinsic</a>
+</div>
+
+<div class="doc_text">
+
+<h5>Syntax:</h5>
+<pre>
+  call &lt;integer type&gt; (&lt;integer type&gt;)* %llvm.readio (&lt;integer type&gt; &lt;address&gt;)
+</pre>
+
+<h5>Overview:</h5>
+
+<p>
+The '<tt>llvm.readio</tt>' intrinsic reads data from a memory mapped I/O
+address.
+</p>
+
+<h5>Arguments:</h5>
+
+<p>
+The argument to this intrinsic indicates the memory address from which to read
+the data.
+</p>
+
+<h5>Semantics:</h5>
+
+<p>
+The '<tt>llvm.readio</tt>' intrinsic reads data from a memory mapped I/O
+location specified by <i>address</i> and returns the value.  The address and
+return value must be integers, but the size allowed for each is dependent upon
+the platform upon which the program is code generated.
+</p>
+
+<p>
+This intrinsic ensures that the I/O data read occurs in instruction order in
+relation to other I/O data reads and writes (as opposed to a normal load, where
+hardware scheduling can re-arrange the actual memory accesses to occur out of
+order).
+</p>
+
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="i_writeio">'<tt>llvm.writeio</tt>' Intrinsic</a>
+</div>
+
+<div class="doc_text">
+
+<h5>Syntax:</h5>
+<pre>
+  call void (&lt;integer type&gt;, &lt;integer type&gt;)* %llvm.writeio (&lt;integer type&gt; &lt;value&gt;, &lt;integer type&gt; &lt;address&gt;)
+</pre>
+
+<h5>Overview:</h5>
+
+<p>
+The '<tt>llvm.writeio</tt>' intrinsic writes data to the specified memory
+mapped I/O address.
+</p>
+
+<h5>Arguments:</h5>
+
+<p>
+The first argument to this intrinsic indicates the memory address to which data
+should be written.
+</p>
+
+<p>
+The second argument is the value to write to the memory mapped I/O location.
+</p>
+
+<h5>Semantics:</h5>
+
+<p>
+The '<tt>llvm.writeio</tt>' intrinsic writes <i>value</i> to the memory mapped
+I/O address specified by <i>address</i>.  The address and value must be
+integers, but the size is dependent upon the platform upon which the program is
+code generated.
+</p>
+
+<p>
+This intrinsic ensures that the I/O data write occurs in instruction order in
+relation to other I/O data reads and writes (as opposed to a normal store,
+where hardware scheduling can re-arrange the actual memory accesses to occur
+out of order).
+</p>
+
+</div>
+
 
 <!-- ======================================================================= -->
 <div class="doc_subsection">
