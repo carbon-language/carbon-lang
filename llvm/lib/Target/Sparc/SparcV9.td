@@ -1,5 +1,5 @@
-//===- Sparc.td - Target Description for Sparc V9 Target --------*- C++ -*-===//
-// vim:ft=cpp
+//===- SparcV9.td - Target Description for Sparc V9 Target ----------------===//
+//
 //===----------------------------------------------------------------------===//
 
 include "../Target.td"
