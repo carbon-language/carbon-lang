@@ -320,9 +320,9 @@ TBLGEN  := $(LLVMTOOLCURRENT)/tblgen
 # The LLVM GCC front-end in C and C++ flavors
 #
 LLVMGCC := PATH=$(LLVMTOOLCURRENT):$(PATH) $(LLVMGCCDIR)/bin/gcc
-LCC1    := $(LLVMGCCDIR)/lib/gcc-lib/$(LLVMGCCARCH)/cc1
+LCC1    := $(LLVMGCCDIR)/libexec/gcc/$(LLVMGCCARCH)/cc1
 LLVMGXX := PATH=$(LLVMTOOLCURRENT):$(PATH) $(LLVMGCCDIR)/bin/g++
-LCC1XX  := $(LLVMGCCDIR)/lib/gcc-lib/$(LLVMGCCARCH)/cc1plus
+LCC1XX  := $(LLVMGCCDIR)/libexec/gcc/$(LLVMGCCARCH)/cc1plus
 
 #--------------------------------------------------------------------------
 # Some of the compiled LLVM tools which are used for compilation of runtime
