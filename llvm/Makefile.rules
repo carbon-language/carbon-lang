@@ -1463,14 +1463,16 @@ install-local::
 	$(Verb) $(MKDIR) $(PROJ_includedir)
 	$(Verb) if [ -d "$(PROJ_SRC_ROOT)/include" ] ; then \
 	  cd $(PROJ_SRC_ROOT)/include && \
-	    find . -path '*/Internal' -prune -o '(' -type f \
-	      '!' '(' -name '*~' -o -name '.cvsignore' -o -name '.#*' -o -name '*.in' ')' \
-	      -print ')' | grep -v CVS | pax -rwdvpe $(PROJ_includedir) ; \
+	  for  hdr in `find . -type f '!' '(' -name '*~' -o -name '.cvsignore' \
+	      -o -name '.#*' -o -name '*.in' ')' -print | grep -v CVS ` ; do \
+	    $(INSTALL) $$hdr $(PROJ_includedir) ; \
+	  done ; \
 	fi
 	$(Verb) if [ -d "$(PROJ_OBJ_ROOT)/include" ] ; then \
-	  cd $(PROJ_OBJ_ROOT)/include && ( cd $(PROJ_SRC_ROOT)/include && \
-	    find . -path '*/Internal' -prune -o '(' -type f -name '*.in' -print ')' ) \
-	    | sed 's#.in$$##' | pax -rwdvpe $(PROJ_includedir) ; \
+	  cd $(PROJ_OBJ_ROOT)/include && \
+	  for hdr in `find . -type f -print` ; do \
+	    $(INSTALL) $$hdr $(PROJ_includedir) ; \
+	  done ; \
 	fi
 
 uninstall-local::
