@@ -255,6 +255,10 @@ my ($WarningsAdded, $WarningsRemoved) = DiffFiles "-Warnings.txt";
 $WarningsAdded = AddPreTag $WarningsAdded;
 $WarningsRemoved = AddPreTag $WarningsRemoved;
 
+# Output something to stdout if something has changed
+print "ADDED   WARNINGS:\n$WarningsAdded\n\n" if (length $WarningsAdded);
+print "REMOVED WARNINGS:\n$WarningsRemoved\n\n" if (length $WarningsRemoved);
+
 
 #
 # Get some statistics about CVS commits over the current day...
@@ -396,6 +400,12 @@ if ($TestError) {
   $TestsFixed   = AddPreTag $TestsFixed;
   $TestsBroken  = AddPreTag $TestsBroken;
 }
+
+print "TESTS ADDED:  \n$TestsAdded\n\n"   if (length $TestsAdded);
+print "TESTS REMOVED:\n$TestsRemoved\n\n" if (length $TestsRemoved);
+print "TESTS FIXED:  \n$TestsFixed\n\n"   if (length $TestsFixed);
+print "TESTS BROKEN: \n$TestsBroken\n\n"  if (length $TestsBroken);
+
 
 # If we built the tree successfully, runs of the Olden suite with
 # LARGE_PROBLEM_SIZE on so that we can get some "running" statistics.
