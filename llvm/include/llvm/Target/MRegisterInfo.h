@@ -189,6 +189,14 @@ public:
     return NumRegs;
   }
 
+  /// areAliases - Returns true if the two registers alias each other,
+  /// false otherwise
+  bool areAliases(unsigned regA, unsigned regB) const {
+    for (const unsigned *Alias = getAliasSet(regA); *Alias; ++Alias)
+      if (*Alias == regA) return true;
+    return false;
+  }
+
   virtual const unsigned* getCalleeSaveRegs() const = 0;
 
 
