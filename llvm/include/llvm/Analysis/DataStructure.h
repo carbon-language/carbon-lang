@@ -355,16 +355,30 @@ class FunctionDSGraph {
   // as the data structure graph itself.
   //
   PointerValSet cloneFunctionIntoSelf(const FunctionDSGraph &G, bool ValueMap);
-  bool RemoveUnreachableShadowNodes();
-  bool UnlinkUndistinguishableShadowNodes();
-public:
+  bool RemoveUnreachableNodes();
+  bool UnlinkUndistinguishableNodes();
+
+private:
+  // Define the interface only accessable to DataStructure
+  friend class DataStructure;
   FunctionDSGraph(Function *F);
   FunctionDSGraph(const FunctionDSGraph &DSG);
   ~FunctionDSGraph();
 
   void computeClosure(const DataStructure &DS);
+public:
 
   Function *getFunction() const { return Func; }
+
+  // getEscapingAllocations - Add all allocations that escape the current
+  // function to the specified vector.
+  //
+  void getEscapingAllocations(std::vector<AllocDSNode*> &Allocs);
+
+  // getEscapingAllocations - Add all allocations that do not escape the current
+  // function to the specified vector.
+  //
+  void getNonEscapingAllocations(std::vector<AllocDSNode*> &Allocs);
 
   void printFunction(std::ostream &O, const char *Label) const;
 };
