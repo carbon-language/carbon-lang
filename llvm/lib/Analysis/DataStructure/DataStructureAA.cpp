@@ -90,7 +90,7 @@ AliasAnalysis::AliasResult DSAA::alias(const Value *V1, unsigned V1Size,
         unsigned O1 = I->second.getOffset(), O2 = J->second.getOffset();
         
         // We can only make a judgement of one of the nodes is complete...
-        if (!N1->isIncomplete() || !N2->isIncomplete()) {
+        if (N1->isComplete() || N2->isComplete()) {
           if (N1 != N2)
             return NoAlias;   // Completely different nodes.
 

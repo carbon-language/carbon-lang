@@ -751,7 +751,7 @@ void DSGraph::mergeInGraph(DSCallSite &CS, const DSGraph &Graph,
 //
 static void markIncompleteNode(DSNode *N) {
   // Stop recursion if no node, or if node already marked...
-  if (N == 0 || (N->isIncomplete())) return;
+  if (N == 0 || N->isIncomplete()) return;
 
   // Actually mark the node
   N->setIncompleteMarker();
@@ -917,7 +917,7 @@ void DSGraph::removeTriviallyDeadNodes() {
 
   for (unsigned i = 0; i != Nodes.size(); ++i) {
     DSNode *Node = Nodes[i];
-    if (!Node->isIncomplete() && !Node->isModified() && !Node->isRead()) {
+    if (Node->isComplete() && !Node->isModified() && !Node->isRead()) {
       // This is a useless node if it has no mod/ref info (checked above),
       // outgoing edges (which it cannot, as it is not modified in this
       // context), and it has no incoming edges.  If it is a global node it may
