@@ -94,6 +94,9 @@ namespace {
   cl::alias    QuietA("quiet", cl::desc("Alias for -q"),
                       cl::aliasopt(Quiet));
 
+  cl::opt<bool> NoVerify("disable-verify", cl::Hidden,
+                         cl::desc("Do not verify input module"));
+
   // The AnalysesList is automatically populated with registered Passes by the
   // PassNameParser.
   //
@@ -130,7 +133,8 @@ int main(int argc, char **argv) {
   Passes.add(new TargetData("analyze", CurMod));
 
   // Make sure the input LLVM is well formed.
-  Passes.add(createVerifierPass());
+  if (!NoVerify)
+    Passes.add(createVerifierPass());
 
   // Create a new optimization pass for each one specified on the command line
   for (unsigned i = 0; i < AnalysesList.size(); ++i) {
