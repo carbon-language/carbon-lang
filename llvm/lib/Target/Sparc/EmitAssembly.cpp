@@ -508,7 +508,7 @@ SparcFunctionAsmPrinter::emitFunction(const Function &F)
 
 }  // End anonymous namespace
 
-Pass *UltraSparc::getFunctionAsmPrinterPass(PassManager &PM, std::ostream &Out){
+Pass *UltraSparc::getFunctionAsmPrinterPass(std::ostream &Out) {
   return new SparcFunctionAsmPrinter(Out, *this);
 }
 
@@ -830,7 +830,8 @@ void SparcModuleAsmPrinter::FoldConstants(const Module &M,
 
 void SparcModuleAsmPrinter::printGlobalVariable(const GlobalVariable* GV)
 {
-  toAsm << "\t.global\t" << getID(GV) << "\n";
+  if (GV->hasExternalLinkage())
+    toAsm << "\t.global\t" << getID(GV) << "\n";
   
   if (GV->hasInitializer())
     printConstant(GV->getInitializer(), getID(GV));
@@ -879,6 +880,6 @@ void SparcModuleAsmPrinter::emitGlobalsAndConstants(const Module &M) {
 
 }  // End anonymous namespace
 
-Pass *UltraSparc::getModuleAsmPrinterPass(PassManager &PM, std::ostream &Out) {
+Pass *UltraSparc::getModuleAsmPrinterPass(std::ostream &Out) {
   return new SparcModuleAsmPrinter(Out, *this);
 }
