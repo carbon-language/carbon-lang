@@ -437,6 +437,22 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
   if (Constant *C2 = dyn_castMaskingAnd(RHS))
     if (Instruction *R = AssociativeOpt(I, AddMaskingAnd(C2))) return R;
 
+  if (ConstantInt *CRHS = dyn_cast<ConstantInt>(RHS)) {
+    if (Instruction *ILHS = dyn_cast<Instruction>(LHS)) {
+      switch (ILHS->getOpcode()) {
+      case Instruction::Xor:
+        // ~X + C --> (C-1) - X
+        if (ConstantInt *XorRHS = dyn_cast<ConstantInt>(ILHS->getOperand(1)))
+          if (XorRHS->isAllOnesValue())
+            return BinaryOperator::create(Instruction::Sub,
+                                     *CRHS - *ConstantInt::get(I.getType(), 1),
+                                          ILHS->getOperand(0));
+        break;
+      default: break;
+      }
+    }
+  }
+
   return Changed ? &I : 0;
 }
 
