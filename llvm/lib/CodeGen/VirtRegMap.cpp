@@ -153,7 +153,7 @@ bool SimpleSpiller::runOnMachineFunction(MachineFunction& MF,
           unsigned VirtReg = MOP.getReg();
           unsigned PhysReg = VRM.getPhys(VirtReg);
           if (VRM.hasStackSlot(VirtReg)) {
-            int StackSlot    = VRM.getStackSlot(VirtReg);
+            int StackSlot = VRM.getStackSlot(VirtReg);
 
             if (MOP.isUse() &&
                 std::find(LoadedRegs.begin(), LoadedRegs.end(), VirtReg)
@@ -161,7 +161,7 @@ bool SimpleSpiller::runOnMachineFunction(MachineFunction& MF,
               MRI.loadRegFromStackSlot(MBB, &MI, PhysReg, StackSlot);
               LoadedRegs.push_back(VirtReg);
               ++NumLoads;
-              DEBUG(std::cerr << '\t'; prior(MII)->print(std::cerr, &TM));
+              DEBUG(std::cerr << '\t' << *prior(MII));
             }
 
             if (MOP.isDef()) {
@@ -173,7 +173,7 @@ bool SimpleSpiller::runOnMachineFunction(MachineFunction& MF,
           MI.SetMachineOperandReg(i, PhysReg);
         }
       }
-      DEBUG(std::cerr << '\t'; MI.print(std::cerr, &TM));
+      DEBUG(std::cerr << '\t' << MI);
       LoadedRegs.clear();
     }
   }
@@ -228,8 +228,7 @@ namespace {
           MRI->loadRegFromStackSlot(MBB, MII, PhysReg,
                                      VRM->getStackSlot(VirtReg));
           ++NumLoads;
-          DEBUG(std::cerr << "added: ";
-                prior(MII)->print(std::cerr, TM));
+          DEBUG(std::cerr << "added: " << *prior(MII));
           lastDef_[VirtReg] = MII;
         }
       }
@@ -293,10 +292,8 @@ void LocalSpiller::vacateJustPhysReg(MachineBasicBlock& MBB,
                               PhysReg,
                               VRM->getStackSlot(VirtReg));
     ++NumStores;
-    DEBUG(std::cerr << "added: ";
-          prior(nextLastRef)->print(std::cerr, TM);
-          std::cerr << "after: ";
-          lastDef->print(std::cerr, TM));
+    DEBUG(std::cerr << "added: " << *prior(nextLastRef);
+          std::cerr << "after: " << *lastDef);
     lastDef_[VirtReg] = 0;
   }
   p2vMap_[PhysReg] = 0;
@@ -360,7 +357,7 @@ void LocalSpiller::eliminateVirtRegsInMBB(MachineBasicBlock &MBB) {
         }
     }
 
-    DEBUG(std::cerr << '\t'; MI->print(std::cerr, TM));
+    DEBUG(std::cerr << '\t' << *MI);
   }
 
   for (unsigned i = 1, e = p2vMap_.size(); i != e; ++i)

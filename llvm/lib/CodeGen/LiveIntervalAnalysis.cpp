@@ -180,8 +180,7 @@ void LiveIntervals::print(std::ostream &O) const {
     O << ((Value*)mbbi->getBasicBlock())->getName() << ":\n";
     for (MachineBasicBlock::iterator mii = mbbi->begin(),
            mie = mbbi->end(); mii != mie; ++mii) {
-      O << getInstructionIndex(mii) << '\t';
-      mii->print(O, tm_);
+      O << getInstructionIndex(mii) << '\t' << *mii;
     }
   }
 }
@@ -219,6 +218,9 @@ addIntervalsForSpills(const LiveInterval &li, VirtRegMap &vrm, int slot) {
       for (unsigned i = 0; i != mi->getNumOperands(); ++i) {
         MachineOperand& mop = mi->getOperand(i);
         if (mop.isRegister() && mop.getReg() == li.reg) {
+          // First thing, attempt to fold the memory reference into the
+          // instruction.  If we can do this, we don't need to insert spill
+          // code.
           if (MachineInstr* fmi = mri_->foldMemoryOperand(mi, i, slot)) {
             if (lv_)
               lv_->instructionChanged(mi, fmi);
@@ -226,12 +228,14 @@ addIntervalsForSpills(const LiveInterval &li, VirtRegMap &vrm, int slot) {
             mi2iMap_.erase(mi);
             i2miMap_[index/InstrSlots::NUM] = fmi;
             mi2iMap_[fmi] = index;
-            MachineBasicBlock& mbb = *mi->getParent();
-            mi = mbb.insert(mbb.erase(mi), fmi);
+            MachineBasicBlock &MBB = *mi->getParent();
+            mi = MBB.insert(MBB.erase(mi), fmi);
             ++numFolded;
+
+            // Folding the load/store can completely change the instruction in
+            // unpredictable ways, rescan it from the beginning.
             goto for_operand;
-          }
-          else {
+          } else {
             // This is tricky. We need to add information in the interval about
             // the spill code so we have to use our extra load/store slots.
             //
@@ -519,8 +523,7 @@ void LiveIntervals::computeIntervals()
          mi != miEnd; ++mi) {
       const TargetInstrDescriptor& tid =
         tm_->getInstrInfo()->get(mi->getOpcode());
-      DEBUG(std::cerr << getInstructionIndex(mi) << "\t";
-            mi->print(std::cerr, tm_));
+      DEBUG(std::cerr << getInstructionIndex(mi) << "\t" << *mi);
 
       // handle implicit defs
       for (const unsigned* id = tid.ImplicitDefs; *id; ++id)
