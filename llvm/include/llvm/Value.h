@@ -1,8 +1,7 @@
 //===-- llvm/Value.h - Definition of the Value class -------------*- C++ -*--=//
 //
 // This file defines the very important Value class.  This is subclassed by a
-// bunch of other important classes, like Instruction, Function, Module, Type,
-// etc...
+// bunch of other important classes, like Instruction, Function, Type, etc...
 //
 // This file also defines the Use<> template for users of value.
 //
@@ -25,7 +24,6 @@ class BasicBlock;
 class GlobalValue;
 class Function;
 class GlobalVariable;
-class Module;
 class SymbolTable;
 template<class ValueSubclass, class ItemParentType, class SymTabType> 
   class ValueHolder;
@@ -45,7 +43,6 @@ public:
     BasicBlockVal,          // This is an instance of BasicBlock
     FunctionVal,            // This is an instance of Function
     GlobalVariableVal,      // This is an instance of GlobalVariable
-    ModuleVal,              // This is an instance of Module
   };
 
 private:
@@ -237,12 +234,6 @@ template <> inline bool isa<GlobalValue, const Value*>(const Value *Val) {
 }
 template <> inline bool isa<GlobalValue, Value*>(Value *Val) { 
   return isa<GlobalVariable>(Val) || isa<Function>(Val);
-}
-template <> inline bool isa<Module, const Value*>(const Value *Val) { 
-  return Val->getValueType() == Value::ModuleVal;
-}
-template <> inline bool isa<Module, Value*>(Value *Val) { 
-  return Val->getValueType() == Value::ModuleVal;
 }
 
 #endif
