@@ -5,6 +5,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/ConstantHandling.h"
+#include <cmath>
 
 AnnotationID ConstRules::AID(AnnotationManager::getID("opt::ConstRules",
 						      &ConstRules::find));
@@ -50,6 +51,10 @@ class TemplateRules : public ConstRules {
   virtual Constant *div(const Constant *V1, 
                         const Constant *V2) const { 
     return SubClassName::Div((const ArgType *)V1, (const ArgType *)V2);  
+  }
+  virtual Constant *rem(const Constant *V1, 
+                        const Constant *V2) const { 
+    return SubClassName::Rem((const ArgType *)V1, (const ArgType *)V2);  
   }
 
   virtual ConstantBool *lessthan(const Constant *V1, 
@@ -112,6 +117,9 @@ class TemplateRules : public ConstRules {
     return 0;
   }
   inline static Constant *Div(const ArgType *V1, const ArgType *V2) {
+    return 0;
+  }
+  inline static Constant *Rem(const ArgType *V1, const ArgType *V2) {
     return 0;
   }
   inline static ConstantBool *LessThan(const ArgType *V1, const ArgType *V2) {
@@ -242,11 +250,8 @@ struct PointerRules : public TemplateRules<ConstantPointer, PointerRules> {
 // different types.  This allows the C++ compiler to automatically generate our
 // constant handling operations in a typesafe and accurate manner.
 //
-template<class ConstantClass, class BuiltinType, Type **Ty>
-struct DirectRules 
-  : public TemplateRules<ConstantClass, 
-                         DirectRules<ConstantClass, BuiltinType, Ty> > {
-
+template<class ConstantClass, class BuiltinType, Type **Ty, class SuperClass>
+struct DirectRules : public TemplateRules<ConstantClass, SuperClass> {
   inline static Constant *Add(const ConstantClass *V1, 
                               const ConstantClass *V2) {
     BuiltinType Result = (BuiltinType)V1->getValue() + 
@@ -268,8 +273,9 @@ struct DirectRules
     return ConstantClass::get(*Ty, Result);
   }
 
-  inline static Constant *Div(const ConstantClass *V1, 
+  inline static Constant *Div(const ConstantClass *V1,
                               const ConstantClass *V2) {
+    if (V2->isNullValue()) return 0;
     BuiltinType Result = (BuiltinType)V1->getValue() /
                          (BuiltinType)V2->getValue();
     return ConstantClass::get(*Ty, Result);
@@ -317,9 +323,40 @@ struct DirectRules
 // integer types, but not all types in general.
 //
 template <class ConstantClass, class BuiltinType, Type **Ty>
-struct DirectIntRules : public DirectRules<ConstantClass, BuiltinType, Ty> {
+struct DirectIntRules
+  : public DirectRules<ConstantClass, BuiltinType, Ty,
+                       DirectIntRules<ConstantClass, BuiltinType, Ty> > {
   inline static Constant *Not(const ConstantClass *V) { 
     return ConstantClass::get(*Ty, ~(BuiltinType)V->getValue());;
+  }
+
+  inline static Constant *Rem(const ConstantClass *V1,
+                              const ConstantClass *V2) {
+    if (V2->isNullValue()) return 0;
+    BuiltinType Result = (BuiltinType)V1->getValue() %
+                         (BuiltinType)V2->getValue();
+    return ConstantClass::get(*Ty, Result);
+  }
+};
+
+
+//===----------------------------------------------------------------------===//
+//                           DirectFPRules Class
+//===----------------------------------------------------------------------===//
+//
+// DirectFPRules provides implementations of functions that are valid on
+// floating point types, but not all types in general.
+//
+template <class ConstantClass, class BuiltinType, Type **Ty>
+struct DirectFPRules
+  : public DirectRules<ConstantClass, BuiltinType, Ty,
+                       DirectFPRules<ConstantClass, BuiltinType, Ty> > {
+  inline static Constant *Rem(const ConstantClass *V1,
+                              const ConstantClass *V2) {
+    if (V2->isNullValue()) return 0;
+    BuiltinType Result = std::fmod((BuiltinType)V1->getValue(),
+                                   (BuiltinType)V2->getValue());
+    return ConstantClass::get(*Ty, Result);
   }
 };
 
@@ -360,9 +397,9 @@ Annotation *ConstRules::find(AnnotationID AID, const Annotable *TyA, void *) {
   case Type::ULongTyID:
     return new DirectIntRules<ConstantUInt, uint64_t      , &Type::ULongTy>();
   case Type::FloatTyID:
-    return new DirectRules<ConstantFP  , float         , &Type::FloatTy>();
+    return new DirectFPRules<ConstantFP  , float         , &Type::FloatTy>();
   case Type::DoubleTyID:
-    return new DirectRules<ConstantFP  , double        , &Type::DoubleTy>();
+    return new DirectFPRules<ConstantFP  , double        , &Type::DoubleTy>();
   default:
     return new EmptyRules();
   }
