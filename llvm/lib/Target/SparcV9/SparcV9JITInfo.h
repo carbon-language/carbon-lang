@@ -38,6 +38,24 @@ namespace llvm {
     /// code.
     ///
     virtual void replaceMachineCodeForFunction (void *Old, void *New);
+
+
+    /// emitFunctionStub - Use the specified MachineCodeEmitter object to emit a
+    /// small native function that simply calls the function at the specified
+    /// address.  Return the address of the resultant function.
+    virtual void *emitFunctionStub(void *Fn, MachineCodeEmitter &MCE);
+
+    /// getLazyResolverFunction - This method is used to initialize the JIT,
+    /// giving the target the function that should be used to compile a
+    /// function, and giving the JIT the target function used to do the lazy
+    /// resolving.
+    virtual LazyResolverFn getLazyResolverFunction(JITCompilerFn);
+
+    /// relocate - Before the JIT can run a block of code that has been emitted,
+    /// it must rewrite the code to contain the actual addresses of any
+    /// referenced global symbols.
+    virtual void relocate(void *Function, MachineRelocation *MR,
+                          unsigned NumRelocs);
   };
 }
 
