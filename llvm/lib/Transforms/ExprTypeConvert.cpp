@@ -275,7 +275,8 @@ bool ExpressionConvertableToType(Value *V, const Type *Ty,
     // 
     GetElementPtrInst *GEP = cast<GetElementPtrInst>(I);
     const PointerType *PTy = dyn_cast<PointerType>(Ty);
-    if (!PTy) return false;
+    if (!PTy) return false;  // GEP must always return a pointer...
+    const Type *PVTy = PTy->getElementType();
 
     // Check to see if there are zero elements that we can remove from the
     // index array.  If there are, check to see if removing them causes us to
@@ -288,14 +289,54 @@ bool ExpressionConvertableToType(Value *V, const Type *Ty,
     while (!Indices.empty() && isa<ConstantUInt>(Indices.back()) &&
            cast<ConstantUInt>(Indices.back())->getValue() == 0) {
       Indices.pop_back();
-      ElTy = GetElementPtrInst::getIndexedType(BaseType, Indices,
-                                                           true);
-      if (ElTy == PTy->getElementType())
+      ElTy = GetElementPtrInst::getIndexedType(BaseType, Indices, true);
+      if (ElTy == PVTy)
         break;  // Found a match!!
       ElTy = 0;
     }
 
-    if (ElTy) break;
+    if (ElTy) break;   // Found a number of zeros we can strip off!
+
+    // Otherwise, we can convert a GEP from one form to the other iff the
+    // current gep is of the form 'getelementptr [sbyte]*, unsigned N
+    // and we could convert this to an appropriate GEP for the new type.
+    //
+    if (GEP->getNumOperands() == 2 &&
+        GEP->getOperand(1)->getType() == Type::UIntTy &&
+        GEP->getType() == PointerType::get(Type::SByteTy)) {
+      const PointerType *NewSrcTy = PointerType::get(ArrayType::get(PVTy));
+
+      // Do not Check to see if our incoming pointer can be converted
+      // to be a ptr to an array of the right type... because in more cases than
+      // not, it is simply not analyzable because of pointer/array
+      // discrepencies.  To fix this, we will insert a cast before the GEP.
+      //
+
+      // Check to see if 'N' is an expression that can be converted to
+      // the appropriate size... if so, allow it.
+      //
+      vector<Value*> Indices;
+      const Type *ElTy = ConvertableToGEP(NewSrcTy, I->getOperand(1), Indices);
+      if (ElTy) {
+        assert(ElTy == PVTy && "Internal error, setup wrong!");
+        break;
+      }
+    }
+
+    // Otherwise, it could be that we have something like this:
+    //     getelementptr [[sbyte] *] * %reg115, uint %reg138    ; [sbyte]**
+    // and want to convert it into something like this:
+    //     getelemenptr [[int] *] * %reg115, uint %reg138      ; [int]**
+    //
+    if (GEP->getNumOperands() == 2 && 
+        GEP->getOperand(1)->getType() == Type::UIntTy &&
+        TD.getTypeSize(PTy->getElementType()) == 
+        TD.getTypeSize(GEP->getType()->getElementType())) {
+      const PointerType *NewSrcTy = PointerType::get(ArrayType::get(PVTy));
+      if (ExpressionConvertableToType(I->getOperand(0), NewSrcTy, CTMap))
+        break;
+    }
+
     return false;   // No match, maybe next time.
   }
 #endif
@@ -446,6 +487,45 @@ Value *ConvertExpressionToType(Value *V, const Type *Ty, ValueMapCache &VMC) {
         break;
       }
     }
+
+    if (Res == 0) {  // Didn't match...
+      // Otherwise, we can convert a GEP from one form to the other iff the
+      // current gep is of the form 'getelementptr [sbyte]*, unsigned N
+      // and we could convert this to an appropriate GEP for the new type.
+      //
+      const PointerType *NewSrcTy = PointerType::get(ArrayType::get(PVTy));
+      BasicBlock::iterator It = find(BIL.begin(), BIL.end(), I);
+
+      // Check to see if 'N' is an expression that can be converted to
+      // the appropriate size... if so, allow it.
+      //
+      vector<Value*> Indices;
+      const Type *ElTy = ConvertableToGEP(NewSrcTy, I->getOperand(1),
+                                          Indices, &It);
+      if (ElTy) {
+        CastInst *NewCast = new CastInst(I->getOperand(0),NewSrcTy,Name+"-adj");
+        It = BIL.insert(It, NewCast)+1;  // Insert the cast...
+        
+        assert(ElTy == PVTy && "Internal error, setup wrong!");
+        Res = new GetElementPtrInst(NewCast, Indices, Name);
+      }
+    }
+
+    // Otherwise, it could be that we have something like this:
+    //     getelementptr [[sbyte] *] * %reg115, uint %reg138    ; [sbyte]**
+    // and want to convert it into something like this:
+    //     getelemenptr [[int] *] * %reg115, uint %reg138      ; [int]**
+    //
+    if (Res == 0) {
+      const PointerType *NewSrcTy = PointerType::get(ArrayType::get(PVTy));
+      Res = new GetElementPtrInst(Constant::getNullConstant(NewSrcTy),
+                                  GEP->copyIndices(), Name);
+      VMC.ExprMap[I] = Res;
+      Res->setOperand(0, ConvertExpressionToType(I->getOperand(0),
+                                                 NewSrcTy, VMC));
+    }
+
+
     assert(Res && "Didn't find match!");
     break;   // No match, maybe next time.
   }
@@ -640,7 +720,7 @@ static bool OperandConvertableToType(User *U, Value *V, const Type *Ty,
     return false;
   }
 
-  case Instruction::GetElementPtr:
+  case Instruction::GetElementPtr: {
     // Convert a getelementptr [sbyte] * %reg111, uint 16 freely back to
     // anything that is a pointer type...
     //
@@ -648,7 +728,16 @@ static bool OperandConvertableToType(User *U, Value *V, const Type *Ty,
         I->getNumOperands() != 2 || V != I->getOperand(0) ||
         I->getOperand(1)->getType() != Type::UIntTy || !isa<PointerType>(Ty))
       return false;
-    return true;
+
+    // Check to see if the second argument is an expression that can
+    // be converted to the appropriate size... if so, allow it.
+    //
+    vector<Value*> Indices;
+    const Type *ElTy = ConvertableToGEP(Ty, I->getOperand(1), Indices);
+    if (ElTy == 0) return false;  // Cannot make conversion...
+
+    return ValueConvertableToType(I, ElTy, CTMap);
+  }
 
   case Instruction::PHINode: {
     PHINode *PN = cast<PHINode>(I);
@@ -816,17 +905,15 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
     //
     BasicBlock::iterator It = find(BIL.begin(), BIL.end(), I);
     
-    // Insert a cast right before this instruction of the index value...
-    CastInst *CIdx = new CastInst(I->getOperand(1), NewTy);
-    It = BIL.insert(It, CIdx)+1;
-    
-    // Insert an add right before this instruction 
-    Instruction *AddInst = BinaryOperator::create(Instruction::Add, NewVal,
-                                                  CIdx, Name);
-    It = BIL.insert(It, AddInst)+1;
+    // Check to see if the second argument is an expression that can
+    // be converted to the appropriate size... if so, allow it.
+    //
+    vector<Value*> Indices;
+    const Type *ElTy = ConvertableToGEP(NewVal->getType(), I->getOperand(1),
+                                        Indices, &It);
+    assert(ElTy != 0 && "GEP Conversion Failure!");
 
-    // Finally, cast the result back to our previous type...
-    Res = new CastInst(AddInst, I->getType());
+    Res = new GetElementPtrInst(NewVal, Indices, Name);
     break;
   }
 
