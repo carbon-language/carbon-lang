@@ -443,9 +443,18 @@ bool ISel::SelectAddress(SDOperand N, X86AddressMode &AM) {
   }
   }
 
-  if (AM.BaseType != X86AddressMode::RegBase ||
-      AM.Base.Reg)
+  // Is the base register already occupied?
+  if (AM.BaseType != X86AddressMode::RegBase || AM.Base.Reg) {
+    // If so, check to see if the scale index register is set.
+    if (AM.IndexReg == 0) {
+      AM.IndexReg = SelectExpr(N);
+      AM.Scale = 1;
+      return false;
+    }
+
+    // Otherwise, we cannot select it.
     return true;
+  }
 
   // Default, generate it as a register.
   AM.BaseType = X86AddressMode::RegBase;
