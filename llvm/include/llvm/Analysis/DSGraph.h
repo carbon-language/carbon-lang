@@ -254,6 +254,15 @@ public:
                               NodeMapTy& CompletedNodeMap,
                               unsigned CloneFlags = 0);
 
+
+  /// computeNodeMapping - Given roots in two different DSGraphs, traverse the
+  /// nodes reachable from the two graphs, computing the mapping of nodes from
+  /// the first to the second graph.
+  ///
+  static void computeNodeMapping(const DSNodeHandle &NH1,
+                                 const DSNodeHandle &NH2, NodeMapTy &NodeMap);
+
+
   /// cloneInto - Clone the specified DSGraph into the current graph.  The
   /// translated ScalarMap for the old function is filled into the OldValMap
   /// member, and the translated ReturnNodes map is returned into ReturnNodes.
