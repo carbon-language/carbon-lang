@@ -59,7 +59,7 @@ typedef short DependenceLevel;          // 0 means global level outside loops
 
 class Dependence {
   DepGraphNode*   toOrFromNode;
-  DependenceType  depType:8;
+  unsigned char  depType;
 
 public:
   /*ctor*/      Dependence      (DepGraphNode* toOrFromN,
@@ -78,7 +78,7 @@ public:
 
   /// Get information about the type of dependence.
   /// 
-  DependenceType  getDepType() {
+  unsigned getDepType() const {
     return depType;
   }
 
