@@ -14,7 +14,7 @@
 #include "llvm/Annotation.h"
 #include "llvm/AbstractTypeUser.h"
 #include "Support/Casting.h"
-#include <ostream>
+#include <iostream>
 
 class User;
 class Type;
