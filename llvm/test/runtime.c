@@ -67,6 +67,12 @@ printDouble(double d)
   printf("%g", d);
 }
 
+void
+printPointer(void* p)
+{
+  printf("0x%x", p);
+}
+
 #undef  TEST_RUNTIME
 #ifdef  TEST_RUNTIME
 int
@@ -76,15 +82,17 @@ main(int argc, char** argv)
   printString("argc = ");
   printLong(argc);
   printString(" = (as float) ");
-  printFloat(argc);
+  printFloat(argc * 1.0);
   printString(" = (as double) ");
-  printDouble(argc);
+  printDouble(argc * 1.0);
   for (i=0; i < argc; i++)
     {
       printString("\nargv[");
       printLong(i);
       printString("] = ");
       printString(argv[i]);
+      printString("\t@ ");
+      printPointer(argv[i]);
     }
   printString("\n");
 }
