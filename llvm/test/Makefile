@@ -1,16 +1,26 @@
+LLVM := /home/vadve/vadve/Research/DynOpt/LLVM/llvm
+LLC  := $(LLVM)/tools/llc/llc
+AS   := $(LLVM)/tools/as/as
+LLCOPTS := -dsched t
+
 TESTS := $(wildcard *.ll)
 
-SELECTTESTS := $(shell /bin/ls *.ll | grep -v testmemory | grep -v testswitch")
+LLCTESTS := $(shell /bin/ls *.ll | grep -v testmemory | grep -v testswitch | grep -v sumarray)
 
-test all : testasmdis testopt
+
+test all : testasmdis testopt testcodegen
 	@echo "All tests successfully completed!"
 
-testasmdis : $(TESTS:%.ll=%.ll.asmdis)
+testasmdis  : $(TESTS:%.ll=%.ll.asmdis)
 	@echo "All assembler/disassembler test succeeded!"
 
-testopt : $(TESTS:%.ll=%.ll.opt)
+testopt     : $(TESTS:%.ll=%.ll.opt)
 
-testselect : $(SELECTTESTS:%.ll=%.mc)
+testselect  : $(LLCTESTS:%.ll=%.mc)
+
+testsched   : $(LLCTESTS:%.ll=%.mc)
+
+testcodegen : $(LLCTESTS:%.ll=%.mc)
 
 clean :
 	rm -f *.[123] *.bc *.mc core
@@ -23,10 +33,10 @@ clean :
 	@echo "Running optimizier test on $<"
 	@./TestOptimizer.sh $<
 
-%.bc: %.ll
+%.bc: %.ll $(AS)
 	rm -f $@
-	as $<
+	$(AS) $<
 
-%.mc: %.bc
+%.mc: %.bc $(LLC)
 	@echo "Generating machine instructions for $<"
-	@llc -dselect y $< > $@
+	$(LLC) $(LLCOPTS) $< > $@
