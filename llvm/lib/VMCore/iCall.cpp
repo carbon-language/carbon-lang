@@ -26,7 +26,7 @@ CallInst::CallInst(Value *Meth, const vector<Value*> &params,
 
   const MethodType::ParamTypes &PL = MTy->getParamTypes();
   assert((params.size() == PL.size()) || 
-	 (MTy->isVarArg() && params.size() >= PL.size()-1) &&
+	 (MTy->isVarArg() && params.size() >= PL.size()) &&
 	 "Calling a function with bad signature");
   for (unsigned i = 0; i < params.size(); i++)
     Operands.push_back(Use(params[i], this));
