@@ -19,6 +19,7 @@
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/Target/TargetMachineImpls.h"
+#include "llvm/Target/TargetMachineRegistry.h"
 #include "llvm/Transforms/Scalar.h"
 #include "Support/CommandLine.h"
 #include "Support/Statistic.h"
@@ -35,6 +36,9 @@ namespace {
                                        "when profiling the code generator."));
   cl::opt<bool> NoSimpleISel("disable-simple-isel", cl::init(true),
 	     cl::desc("Use the hand coded 'simple' X86 instruction selector"));
+
+  // Register the target.
+  RegisterTarget<X86TargetMachine> X("x86", "IA-32 (Pentium and above)");
 }
 
 // allocateX86TargetMachine - Allocate and return a subclass of TargetMachine
@@ -45,6 +49,24 @@ TargetMachine *llvm::allocateX86TargetMachine(const Module &M,
   return new X86TargetMachine(M, IL);
 }
 
+unsigned X86TargetMachine::getJITMatchQuality() {
+#if defined(i386) || defined(__i386__) || defined(__x86__)
+  return 10;
+#else
+  return 0;
+#endif
+}
+
+unsigned X86TargetMachine::getModuleMatchQuality(const Module &M) {
+  if (M.getEndianness()  == Module::LittleEndian &&
+      M.getPointerSize() == Module::Pointer32)
+    return 10;                                   // Direct match
+  else if (M.getEndianness() != Module::AnyEndianness ||
+           M.getPointerSize() != Module::AnyPointerSize)
+    return 0;                                    // Match for some other target
+
+  return getJITMatchQuality()/2;
+}
 
 /// X86TargetMachine ctor - Create an ILP32 architecture model
 ///

@@ -25,6 +25,9 @@ struct CTargetMachine : public TargetMachine {
 
   // This is the only thing that actually does anything here.
   virtual bool addPassesToEmitAssembly(PassManager &PM, std::ostream &Out);
+
+  // This class always works, but shouldn't be the default in most cases.
+  static unsigned getModuleMatchQuality(const Module &M) { return 1; }
 };
 
 } // End llvm namespace

@@ -27,6 +27,7 @@
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/CodeGen/IntrinsicLowering.h"
 #include "llvm/Transforms/Scalar.h"
+#include "llvm/Target/TargetMachineRegistry.h"
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
@@ -40,6 +41,9 @@
 using namespace llvm;
 
 namespace {
+  // Register the target.
+  RegisterTarget<CTargetMachine> X("c", "C backend");
+
   /// NameAllUsedStructs - This pass inserts names for any unnamed structure
   /// types that are used by the program.
   ///

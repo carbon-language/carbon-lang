@@ -24,12 +24,12 @@
 #include "llvm/CodeGen/MachineCodeForInstruction.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/Target/TargetMachineImpls.h"
+#include "llvm/Target/TargetMachineRegistry.h"
 #include "llvm/Transforms/Scalar.h"
 #include "MappingInfo.h" 
 #include "SparcV9Internals.h"
 #include "SparcV9TargetMachine.h"
 #include "Support/CommandLine.h"
-
 using namespace llvm;
 
 static const unsigned ImplicitRegUseList[] = { 0 }; /* not used yet */
@@ -59,6 +59,28 @@ namespace {
 
   cl::opt<bool> DisableStrip("disable-strip",
                       cl::desc("Do not strip the LLVM bytecode in executable"));
+
+  // Register the target.
+  RegisterTarget<SparcV9TargetMachine> X("sparcv9", "SPARC V9");
+}
+
+unsigned SparcV9TargetMachine::getJITMatchQuality() {
+#if defined(sparc) || defined(__sparc__) || defined(__sparcv9)
+  return 10;
+#else
+  return 0;
+#endif
+}
+
+unsigned SparcV9TargetMachine::getModuleMatchQuality(const Module &M) {
+  if (M.getEndianness()  == Module::BigEndian &&
+      M.getPointerSize() == Module::Pointer64)
+    return 10;                                   // Direct match
+  else if (M.getEndianness() != Module::AnyEndianness ||
+           M.getPointerSize() != Module::AnyPointerSize)
+    return 0;                                    // Match for some other target
+
+  return getJITMatchQuality()/2;
 }
 
 //===---------------------------------------------------------------------===//
@@ -111,7 +133,8 @@ FunctionPass *llvm::createSparcV9MachineCodeDestructionPass() {
 }
 
 
-SparcV9TargetMachine::SparcV9TargetMachine(IntrinsicLowering *il)
+SparcV9TargetMachine::SparcV9TargetMachine(const Module &M,
+                                           IntrinsicLowering *il)
   : TargetMachine("UltraSparcV9-Native", il, false),
     schedInfo(*this),
     regInfo(*this),
@@ -264,10 +287,11 @@ void SparcV9JITInfo::addPassesToJITCompile(FunctionPassManager &PM) {
     PM.add(createMachineFunctionPrinterPass(&std::cerr, "Final code:\n"));
 }
 
-/// allocateSparcV9TargetMachine - Allocate and return a subclass of TargetMachine
-/// that implements the SparcV9 backend. (the llvm/CodeGen/SparcV9.h interface)
+/// allocateSparcV9TargetMachine - Allocate and return a subclass of
+/// TargetMachine that implements the SparcV9 backend. (the
+/// llvm/CodeGen/SparcV9.h interface)
 ///
 TargetMachine *llvm::allocateSparcV9TargetMachine(const Module &M,
                                                 IntrinsicLowering *IL) {
-  return new SparcV9TargetMachine(IL);
+  return new SparcV9TargetMachine(M, IL);
 }

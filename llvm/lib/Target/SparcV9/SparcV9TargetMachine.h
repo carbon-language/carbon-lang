@@ -32,7 +32,7 @@ class SparcV9TargetMachine : public TargetMachine {
   SparcV9FrameInfo frameInfo;
   SparcV9JITInfo   jitInfo;
 public:
-  SparcV9TargetMachine(IntrinsicLowering *IL);
+  SparcV9TargetMachine(const Module &M, IntrinsicLowering *IL);
   
   virtual const TargetInstrInfo  *getInstrInfo() const { return &instrInfo; }
   virtual const TargetSchedInfo  *getSchedInfo() const { return &schedInfo; }
@@ -46,6 +46,9 @@ public:
   virtual bool addPassesToEmitAssembly(PassManager &PM, std::ostream &Out);
   virtual bool addPassesToEmitMachineCode(FunctionPassManager &PM,
                                           MachineCodeEmitter &MCE);
+
+  static unsigned getModuleMatchQuality(const Module &M);
+  static unsigned getJITMatchQuality();
 };
 
 } // End llvm namespace

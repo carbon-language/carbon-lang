@@ -18,8 +18,15 @@
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/Target/TargetMachineImpls.h"
+#include "llvm/Target/TargetMachineRegistry.h"
 #include "llvm/Transforms/Scalar.h"
+#include <iostream>
 using namespace llvm;
+
+namespace {
+  // Register the target.
+  RegisterTarget<PowerPCTargetMachine> X("powerpc", "PowerPC (experimental)");
+}
 
 // allocatePowerPCTargetMachine - Allocate and return a subclass of 
 // TargetMachine that implements the PowerPC backend.

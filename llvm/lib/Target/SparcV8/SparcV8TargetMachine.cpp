@@ -17,9 +17,15 @@
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/Target/TargetMachineImpls.h"
+#include "llvm/Target/TargetMachineRegistry.h"
 #include "llvm/Transforms/Scalar.h"
 #include <iostream>
 using namespace llvm;
+
+namespace {
+  // Register the target.
+  RegisterTarget<SparcV8TargetMachine> X("sparcv8", "SPARC V8 (experimental)");
+}
 
 // allocateSparcV8TargetMachine - Allocate and return a subclass of 
 // TargetMachine that implements the SparcV8 backend.
