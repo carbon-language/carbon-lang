@@ -49,23 +49,25 @@ namespace llvm {
 ReducePassList::TestResult
 ReducePassList::doTest(std::vector<const PassInfo*> &Prefix,
                        std::vector<const PassInfo*> &Suffix) {
-  std::string PrefixOutput;
+  sys::Path PrefixOutput;
   Module *OrigProgram = 0;
   if (!Prefix.empty()) {
     std::cout << "Checking to see if these passes crash: "
               << getPassesString(Prefix) << ": ";
-    if (BD.runPasses(Prefix, PrefixOutput))
+    std::string PfxOutput;
+    if (BD.runPasses(Prefix, PfxOutput))
       return KeepPrefix;
 
+    PrefixOutput.setFile(PfxOutput);
     OrigProgram = BD.Program;
 
-    BD.Program = ParseInputFile(PrefixOutput);
+    BD.Program = ParseInputFile(PrefixOutput.toString());
     if (BD.Program == 0) {
       std::cerr << BD.getToolName() << ": Error reading bytecode file '"
                 << PrefixOutput << "'!\n";
       exit(1);
     }
-    removeFile(PrefixOutput);
+    PrefixOutput.destroyFile();
   }
 
   std::cout << "Checking to see if these passes crash: "

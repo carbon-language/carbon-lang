@@ -161,7 +161,7 @@ void BugDriver::compileProgram(Module *M) {
   }
 
     // Remove the temporary bytecode file when we are done.
-  FileRemover BytecodeFileRemover(BytecodeFile.toString());
+  FileRemover BytecodeFileRemover(BytecodeFile);
 
   // Actually compile the program!
   Interpreter->compileProgram(BytecodeFile.toString());
@@ -195,7 +195,7 @@ std::string BugDriver::executeProgram(std::string OutputFile,
   }
 
   // Remove the temporary bytecode file when we are done.
-  FileRemover BytecodeFileRemover(BytecodeFile, CreatedBytecode);
+  FileRemover BytecodeFileRemover(sys::Path(BytecodeFile), CreatedBytecode);
 
   if (OutputFile.empty()) OutputFile = "bugpoint-execution-output";
 
@@ -252,7 +252,7 @@ std::string BugDriver::executeProgramWithCBE(std::string OutputFile) {
 
 std::string BugDriver::compileSharedObject(const std::string &BytecodeFile) {
   assert(Interpreter && "Interpreter should have been created already!");
-  std::string OutputCFile;
+  sys::Path OutputCFile;
 
   // Using CBE
   cbe->OutputC(BytecodeFile, OutputCFile);
@@ -268,11 +268,12 @@ std::string BugDriver::compileSharedObject(const std::string &BytecodeFile) {
 #endif
 
   std::string SharedObjectFile;
-  if (gcc->MakeSharedObject(OutputCFile, GCC::CFile, SharedObjectFile))
+  if (gcc->MakeSharedObject(OutputCFile.toString(), GCC::CFile, 
+                            SharedObjectFile))
     exit(1);
 
   // Remove the intermediate C file
-  removeFile(OutputCFile);
+  OutputCFile.destroyFile();
 
   return "./" + SharedObjectFile;
 }
@@ -288,19 +289,20 @@ bool BugDriver::diffProgram(const std::string &BytecodeFile,
   bool ProgramExitedNonzero;
 
   // Execute the program, generating an output file...
-  std::string Output = executeProgram("", BytecodeFile, SharedObject, 0,
-                                      &ProgramExitedNonzero);
+  sys::Path Output (executeProgram("", BytecodeFile, SharedObject, 0,
+                                      &ProgramExitedNonzero));
 
   // If we're checking the program exit code, assume anything nonzero is bad.
   if (CheckProgramExitCode && ProgramExitedNonzero) {
-    removeFile(Output);
-    if (RemoveBytecode) removeFile(BytecodeFile);
+    Output.destroyFile();
+    if (RemoveBytecode) 
+      sys::Path(BytecodeFile).destroyFile();
     return true;
   }
 
   std::string Error;
   bool FilesDifferent = false;
-  if (DiffFiles(ReferenceOutputFile, Output, &Error)) {
+  if (DiffFiles(ReferenceOutputFile, Output.toString(), &Error)) {
     if (!Error.empty()) {
       std::cerr << "While diffing output: " << Error << '\n';
       exit(1);
@@ -309,10 +311,10 @@ bool BugDriver::diffProgram(const std::string &BytecodeFile,
   }
   
   // Remove the generated output.
-  removeFile(Output);
+  Output.destroyFile();
 
   // Remove the bytecode file if we are supposed to.
-  if (RemoveBytecode) removeFile(BytecodeFile);
+  if (RemoveBytecode) sys::Path(BytecodeFile).destroyFile();
   return FilesDifferent;
 }
 

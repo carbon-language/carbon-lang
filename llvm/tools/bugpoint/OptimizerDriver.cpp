@@ -143,7 +143,7 @@ bool BugDriver::runPasses(const std::vector<const PassInfo*> &Passes,
   // If we are supposed to delete the bytecode file or if the passes crashed,
   // remove it now.  This may fail if the file was never created, but that's ok.
   if (DeleteOutput || !ExitedOK)
-    removeFile(OutputFilename);
+    sys::Path(OutputFilename).destroyFile();
   
   if (!Quiet) {
     if (ExitedOK)
@@ -194,6 +194,6 @@ Module *BugDriver::runPassesOn(Module *M,
               << BytecodeResult << "'!\n";
     exit(1);
   }
-  removeFile(BytecodeResult);  // No longer need the file on disk
+  sys::Path(BytecodeResult).destroyFile();  // No longer need the file on disk
   return Ret;
 }

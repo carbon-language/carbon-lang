@@ -448,10 +448,11 @@ int main(int argc, char **argv, char **envp) {
     // Otherwise, create a script that will run the bytecode through the JIT.
     if (Native) {
       // Name of the Assembly Language output file
-      std::string AssemblyFile = OutputFilename + ".s";
+      sys::Path AssemblyFile ( OutputFilename);
+      AssemblyFile.appendSuffix("s");
 
       // Mark the output files for removal if we get an interrupt.
-      sys::RemoveFileOnSignal(sys::Path(AssemblyFile));
+      sys::RemoveFileOnSignal(AssemblyFile);
       sys::RemoveFileOnSignal(sys::Path(OutputFilename));
 
       // Determine the locations of the llc and gcc programs.
@@ -465,17 +466,19 @@ int main(int argc, char **argv, char **envp) {
 
       // Generate an assembly language file for the bytecode.
       if (Verbose) std::cout << "Generating Assembly Code\n";
-      GenerateAssembly(AssemblyFile, RealBytecodeOutput, llc);
+      GenerateAssembly(AssemblyFile.toString(), RealBytecodeOutput, llc);
       if (Verbose) std::cout << "Generating Native Code\n";
-      GenerateNative(OutputFilename, AssemblyFile, Libraries, gcc, envp);
+      GenerateNative(OutputFilename, AssemblyFile.toString(), Libraries, 
+                     gcc, envp);
 
       // Remove the assembly language file.
-      removeFile (AssemblyFile);
+      AssemblyFile.destroyFile();
     } else if (NativeCBE) {
-      std::string CFile = OutputFilename + ".cbe.c";
+      sys::Path CFile (OutputFilename);
+      CFile.appendSuffix("cbe.c");
 
       // Mark the output files for removal if we get an interrupt.
-      sys::RemoveFileOnSignal(sys::Path(CFile));
+      sys::RemoveFileOnSignal(CFile);
       sys::RemoveFileOnSignal(sys::Path(OutputFilename));
 
       // Determine the locations of the llc and gcc programs.
@@ -489,12 +492,12 @@ int main(int argc, char **argv, char **envp) {
 
       // Generate an assembly language file for the bytecode.
       if (Verbose) std::cout << "Generating Assembly Code\n";
-      GenerateCFile(CFile, RealBytecodeOutput, llc);
+      GenerateCFile(CFile.toString(), RealBytecodeOutput, llc);
       if (Verbose) std::cout << "Generating Native Code\n";
-      GenerateNative(OutputFilename, CFile, Libraries, gcc, envp);
+      GenerateNative(OutputFilename, CFile.toString(), Libraries, gcc, envp);
 
       // Remove the assembly language file.
-      removeFile(CFile);
+      CFile.destroyFile();
 
     } else {
       EmitShellScript(argv);
