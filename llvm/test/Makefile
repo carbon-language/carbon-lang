@@ -14,7 +14,11 @@ DIRS   =
 # Make QMTest the default for testing features and regressions
 # Do this first to force QMTest to run first
 #
+ifdef TESTSUITE
+all:: check-dejagnu
+else
 all:: qmtest
+endif
 
 # Include other test rules
 include Makefile.tests
