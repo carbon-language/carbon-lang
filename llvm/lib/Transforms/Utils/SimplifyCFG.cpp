@@ -1,13 +1,6 @@
 //===- SimplifyCFG.cpp - Code to perform CFG simplification ---------------===//
 //
-// SimplifyCFG - This function is used to do simplification of a CFG.  For
-// example, it adjusts branches to branches to eliminate the extra hop, it
-// eliminates unreachable basic blocks, and does other "peephole" optimization
-// of the CFG.  It returns true if a modification was made, and returns an 
-// iterator that designates the first element remaining after the block that
-// was deleted.
-//
-// WARNING:  The entry node of a function may not be simplified.
+// Peephole optimize the CFG.
 //
 //===----------------------------------------------------------------------===//
 
@@ -48,7 +41,7 @@ static bool PropogatePredecessorsForPHIs(BasicBlock *BB, BasicBlock *Succ) {
   // Loop over all of the PHI nodes in the successor BB
   for (BasicBlock::iterator I = Succ->begin();
        PHINode *PN = dyn_cast<PHINode>(&*I); ++I) {
-    Value *OldVal = PN->removeIncomingValue(BB);
+    Value *OldVal = PN->removeIncomingValue(BB, false);
     assert(OldVal && "No entry in PHI for Pred BB!");
 
     for (std::vector<BasicBlock*>::const_iterator PredI = BBPreds.begin(), 
