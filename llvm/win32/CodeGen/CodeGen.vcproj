@@ -178,6 +178,9 @@
 				<File
 					RelativePath="..\..\lib\CodeGen\SelectionDAG\SelectionDAGISel.cpp">
 				</File>
+				<File
+					RelativePath="..\..\lib\CodeGen\SelectionDAG\SelectionDAGPrinter.cpp">
+				</File>
 			</Filter>
 		</Filter>
 		<Filter
