@@ -13,8 +13,8 @@ class F2 : InstV9 {                   // Format 2 instructions
 
 // Format 2.1 instructions
 class F2_1<string name> : F2 {
-  bits<5> rd;
   bits<22> imm;
+  bits<5> rd;
 
   set Name = name;
   set Inst{29-25} = rd;
@@ -48,7 +48,6 @@ class F2_3<bits<4> cond, string name> : F2_br { // Format 2.3 instructions
 }
 
 class F2_4<bits<3> rcond, string name> : F2_br { // Format 2.4 instructions
-  // Variables exposed by the instruction...
   bit        predict;
   bits<5>    rs1;
   bits<16>   disp;
