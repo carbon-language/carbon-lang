@@ -34,6 +34,26 @@ struct MInstructionBuilder {
     return *this;
   }
 
+  /// addSImm - Add a new sign extended immediate operand...
+  ///
+  MInstructionBuilder &addSImm(int Val) {
+    MI->addOperand(Val, MOperand::SignExtImmediate);
+    return *this;
+  }
+
+  /// addZImm - Add a new zero extended immediate operand...
+  ///
+  MInstructionBuilder &addZImm(unsigned Val) {
+    MI->addOperand(Val, MOperand::ZeroExtImmediate);
+    return *this;
+  }
+
+  /// addPCDisp - Add a PC Relative Displacement operand...
+  ///
+  MInstructionBuilder &addPCDisp(int Disp) {
+    MI->addOperand(Disp, MOperand::PCRelativeDisp);
+    return *this;
+  }
 };
 
 /// BuildMInst - Builder interface.  Specify how to create the initial
