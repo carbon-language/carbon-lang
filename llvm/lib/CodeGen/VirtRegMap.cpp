@@ -352,6 +352,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, const VirtRegMap &VRM) {
               // Otherwise, reload it and remember that we have it.
               PhysReg = VRM.getPhys(VirtReg);
 
+            RecheckRegister:
               // Note that, if we reused a register for a previous operand, the
               // register we want to reload into might not actually be
               // available.  If this occurs, use the register indicated by the
@@ -361,7 +362,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, const VirtRegMap &VRM) {
                   if (ReusedOperands[ro].PhysRegReused == PhysReg) {
                     // Yup, use the reload register that we didn't use before.
                     PhysReg = ReusedOperands[ro].AssignedPhysReg;
-                    break;
+                    goto RecheckRegister;
                   } else {
                     ReusedOp &Op = ReusedOperands[ro];
                     unsigned PRRU = Op.PhysRegReused;
