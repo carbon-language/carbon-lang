@@ -32,7 +32,7 @@ namespace {
 
   cl::opt<bool> ForceInterpreter("force-interpreter",
 				 cl::desc("Force interpretation: disable JIT"),
-				 cl::init(true));
+				 cl::init(false));
 }
 
 //===----------------------------------------------------------------------===//
