@@ -671,7 +671,7 @@ public:
 
   const Module* getModule() { return TheModule; }
 
-private :
+private:
   void printModule(const Module *M);
   void printSymbolTable(const SymbolTable &ST);
   void printConstant(const Constant *CPV);
