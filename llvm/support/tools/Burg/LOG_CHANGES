@@ -1,2 +1,10 @@
 8/20/02 -- Vikram Adve
 	be.c: Replaced "char*" with "const char*" to avoid compiler warnings.
+
+9/9/03 -- John Criswell
+	b.h be.c fe.h gram.y lex.c main.c map.c nontermainl.c plan.c zalloc.c:
+	A cursory look through our logs and comments indicates that these are
+	the only modified files.  No feature enhancements have been made;
+	rather, all changes either fix minor programming errors, get rid of
+	warnings, ANSI-ify the code, or integrate Burg into our build system.
+
