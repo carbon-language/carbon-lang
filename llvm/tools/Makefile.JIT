@@ -30,21 +30,19 @@ endif
 
 # What the X86 JIT requires
 ifdef ENABLE_X86_JIT
-  CPPFLAGS += -DENABLE_X86_JIT
   JITLIBS  += x86 selectiondag
   # X86 doesn't require any ARCHLIBS
 endif
 
-# You can enable the Sparc JIT on a non-Sparc host by setting the flag
-# ENABLE_SPARC_JIT on the make command line. If not, it will still be
-# enabled automagically on an Sparc host.
+# You can enable the SparcV9 JIT on a non-SparcV9 host by setting the flag
+# ENABLE_SPARCV9_JIT on the make command line. If not, it will still be
+# enabled automagically on an SparcV9 host.
 ifeq ($(ARCH), Sparc)
-  ENABLE_SPARC_JIT = 1
+  ENABLE_SPARCV9_JIT = 1
 endif
 
 # What the Sparc JIT requires
-ifdef ENABLE_SPARC_JIT
-  CPPFLAGS += -DENABLE_SPARC_JIT
+ifdef ENABLE_SPARCV9_JIT
   JITLIBS  += sparcv9
   ARCHLIBS += sparcv9sched sparcv9livevar instrument.a profpaths \
               bcwriter transforms.a ipo.a ipa.a datastructure.a \
@@ -60,7 +58,6 @@ endif
 
 # What the PowerPC JIT requires
 ifdef ENABLE_PPC_JIT
-  CPPFLAGS += -DENABLE_PPC_JIT
   JITLIBS  += powerpc
 endif
 
