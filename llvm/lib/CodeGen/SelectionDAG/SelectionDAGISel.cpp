@@ -314,7 +314,7 @@ public:
   //
   void visitBinary(User &I, unsigned Opcode);
   void visitAdd(User &I) { visitBinary(I, ISD::ADD); }
-  void visitSub(User &I) { visitBinary(I, ISD::SUB); }
+  void visitSub(User &I);
   void visitMul(User &I) { visitBinary(I, ISD::MUL); }
   void visitDiv(User &I) {
     visitBinary(I, I.getType()->isUnsigned() ? ISD::UDIV : ISD::SDIV);
@@ -452,6 +452,18 @@ void SelectionDAGLowering::visitBr(BranchInst &I) {
 			      DAG.getBasicBlock(Succ1MBB)));
     }
   }
+}
+
+void SelectionDAGLowering::visitSub(User &I) {
+  // -0.0 - X --> fneg
+  if (ConstantFP *CFP = dyn_cast<ConstantFP>(I.getOperand(0)))
+    if (CFP->isExactlyValue(-0.0)) {
+      SDOperand Op2 = getValue(I.getOperand(1));
+      setValue(&I, DAG.getNode(ISD::FNEG, Op2.getValueType(), Op2));
+      return;
+    }
+
+  visitBinary(I, ISD::SUB);
 }
 
 void SelectionDAGLowering::visitBinary(User &I, unsigned Opcode) {
