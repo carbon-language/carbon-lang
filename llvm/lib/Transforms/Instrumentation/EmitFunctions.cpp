@@ -12,11 +12,13 @@
 
 using std::vector;
 
-struct EmitFunctionTable : public Pass {
-  const char *getPassName() const { return "EmitFunctionTablePass"; }
-
-  bool run(Module &M);
-};
+namespace {
+  struct EmitFunctionTable : public Pass {
+    bool run(Module &M);
+  };
+  
+  RegisterPass<EmitFunctionTable> X("emitfuncs", "Emit a Function Table");
+}
 
 // Create a new pass to add function table
 //

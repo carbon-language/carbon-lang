@@ -42,10 +42,6 @@ namespace {
     //
     map<BasicBlock*, bool>  BBContainsStore;
   public:
-    const char *getPassName() const {
-      return "Global Common Subexpression Elimination";
-    }
-
     virtual bool runOnFunction(Function &F);
 
     // Visitation methods, these are invoked depending on the type of
@@ -87,6 +83,8 @@ namespace {
       AU.addRequired(ImmediateDominators::ID); 
     }
   };
+
+  RegisterPass<GCSE> X("gcse", "Global Common Subexpression Elimination");
 }
 
 // createGCSEPass - The public interface to this file...

@@ -35,10 +35,6 @@ namespace {
   class Reassociate : public FunctionPass {
     map<BasicBlock*, unsigned> RankMap;
   public:
-    const char *getPassName() const {
-      return "Expression Reassociation";
-    }
-
     bool runOnFunction(Function &F);
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
@@ -50,6 +46,8 @@ namespace {
     bool ReassociateExpr(BinaryOperator *I);
     bool ReassociateBB(BasicBlock *BB);
   };
+
+  RegisterPass<Reassociate> X("reassociate", "Reassociate expressions");
 }
 
 Pass *createReassociatePass() { return new Reassociate(); }

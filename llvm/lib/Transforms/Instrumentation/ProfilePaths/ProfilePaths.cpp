@@ -37,8 +37,6 @@
 using std::vector;
 
 struct ProfilePaths : public FunctionPass {
-  const char *getPassName() const { return "ProfilePaths"; }
-
   bool runOnFunction(Function &F);
 
   // Before this pass, make sure that there is only one 
@@ -48,6 +46,8 @@ struct ProfilePaths : public FunctionPass {
     AU.addRequired(UnifyFunctionExitNodes::ID);
   }
 };
+
+static RegisterPass<ProfilePaths> X("paths", "Profile Paths");
 
 // createProfilePathsPass - Create a new pass to add path profiling
 //

@@ -34,8 +34,6 @@ static Statistic<> NumHoistedPH("licm\t\t- Number of insts hoisted to a loop "
 
 namespace {
   struct LICM : public FunctionPass, public InstVisitor<LICM> {
-    const char *getPassName() const { return "Loop Invariant Code Motion"; }
-
     virtual bool runOnFunction(Function &F);
 
     // This transformation requires natural loop information...
@@ -104,6 +102,8 @@ namespace {
       hoist(I);
     }
   };
+
+  RegisterPass<LICM> X("licm", "Loop Invariant Code Motion");
 }
 
 Pass *createLICMPass() { return new LICM(); }

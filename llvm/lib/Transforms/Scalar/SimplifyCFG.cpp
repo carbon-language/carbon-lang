@@ -24,10 +24,9 @@ static Statistic<> NumSimpl("cfgsimplify\t- Number of blocks simplified");
 
 namespace {
   struct CFGSimplifyPass : public FunctionPass {
-    const char *getPassName() const { return "Simplify CFG"; }
-    
     virtual bool runOnFunction(Function &F);
   };
+  RegisterPass<CFGSimplifyPass> X("simplifycfg", "Simplify the CFG");
 }
 
 Pass *createCFGSimplificationPass() {

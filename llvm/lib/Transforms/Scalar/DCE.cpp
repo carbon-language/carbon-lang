@@ -26,8 +26,6 @@ static Statistic<> DCEEliminated("dce\t\t- Number of insts removed");
 
 namespace {
   struct DeadInstElimination : public BasicBlockPass {
-    const char *getPassName() const { return "Dead Instruction Elimination"; }
-    
     virtual bool runOnBasicBlock(BasicBlock &BB) {
       bool Changed = false;
       for (BasicBlock::iterator DI = BB.begin(); DI != BB.end(); )
@@ -43,6 +41,8 @@ namespace {
       AU.preservesCFG();
     }
   };
+  
+  RegisterPass<DeadInstElimination> X("die", "Dead Instruction Elimination");
 }
 
 Pass *createDeadInstEliminationPass() {
@@ -57,14 +57,14 @@ Pass *createDeadInstEliminationPass() {
 
 namespace {
   struct DCE : public FunctionPass {
-    const char *getPassName() const { return "Dead Code Elimination"; }
-
     virtual bool runOnFunction(Function &F);
 
      virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.preservesCFG();
     }
  };
+
+  RegisterPass<DCE> Y("dce", "Dead Code Elimination");
 }
 
 bool DCE::runOnFunction(Function &F) {

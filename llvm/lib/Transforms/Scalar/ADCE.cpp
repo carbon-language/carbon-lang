@@ -43,8 +43,6 @@ class ADCE : public FunctionPass {
   // The public interface for this class
   //
 public:
-  const char *getPassName() const { return "Aggressive Dead Code Elimination"; }
-  
   // Execute the Aggressive Dead Code Elimination Algorithm
   //
   virtual bool runOnFunction(Function &F) {
@@ -86,10 +84,10 @@ private:
   }
 };
 
+  RegisterPass<ADCE> X("adce", "Aggressive Dead Code Elimination");
 } // End of anonymous namespace
 
 Pass *createAggressiveDCEPass() { return new ADCE(); }
-
 
 void ADCE::markBlockAlive(BasicBlock *BB) {
   // Mark the basic block as being newly ALIVE... and mark all branches that

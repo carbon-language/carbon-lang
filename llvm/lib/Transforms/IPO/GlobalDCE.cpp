@@ -70,8 +70,6 @@ static bool RemoveUnreachableGlobalVariables(Module &M) {
 
 namespace {
   struct GlobalDCE : public Pass {
-    const char *getPassName() const { return "Dead Global Elimination"; }
-
     // run - Do the GlobalDCE pass on the specified module, optionally updating
     // the specified callgraph to reflect the changes.
     //
@@ -88,6 +86,7 @@ namespace {
       AU.addRequired(CallGraph::ID);
     }
   };
+  RegisterPass<GlobalDCE> X("globaldce", "Dead Global Elimination");
 }
 
 Pass *createGlobalDCEPass() { return new GlobalDCE(); }

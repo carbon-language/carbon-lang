@@ -184,10 +184,6 @@ static bool TransformLoop(LoopInfo *Loops, Loop *Loop) {
 
 namespace {
   struct InductionVariableSimplify : public FunctionPass {
-    const char *getPassName() const {
-      return "Induction Variable Cannonicalize";
-    }
-
     virtual bool runOnFunction(Function &) {
       LoopInfo &LI = getAnalysis<LoopInfo>();
 
@@ -202,9 +198,10 @@ namespace {
       AU.preservesCFG();
     }
   };
+  RegisterPass<InductionVariableSimplify> X("indvars",
+                                           "Cannonicalize Induction Variables");
 }
 
 Pass *createIndVarSimplifyPass() {
   return new InductionVariableSimplify();
 }
-

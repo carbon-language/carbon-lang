@@ -94,10 +94,6 @@ class SCCP : public FunctionPass, public InstVisitor<SCCP> {
   std::vector<BasicBlock*>  BBWorkList;  // The BasicBlock work list
 public:
 
-  const char *getPassName() const {
-    return "Sparse Conditional Constant Propogation";
-  }
-
   // runOnFunction - Run the Sparse Conditional Constant Propogation algorithm,
   // and return true if the function was modified.
   //
@@ -223,6 +219,8 @@ private:
     visit(I);
   }
 };
+
+  RegisterPass<SCCP> X("sccp", "Sparse Conditional Constant Propogation");
 } // end anonymous namespace
 
 
@@ -231,7 +229,6 @@ private:
 Pass *createSCCPPass() {
   return new SCCP();
 }
-
 
 
 //===----------------------------------------------------------------------===//

@@ -46,8 +46,6 @@ namespace {
     }
 
   public:
-    const char *getPassName() const { return "Instruction Combining"; }
-
     virtual bool runOnFunction(Function &F);
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
@@ -80,6 +78,8 @@ namespace {
     // visitInstruction - Specify what to return for unhandled instructions...
     Instruction *visitInstruction(Instruction &I) { return 0; }
   };
+
+  RegisterPass<InstCombiner> X("instcombine", "Combine redundant instructions");
 }
 
 

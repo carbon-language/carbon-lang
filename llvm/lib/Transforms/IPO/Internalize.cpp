@@ -14,9 +14,8 @@
 
 static Statistic<> NumChanged("internalize\t- Number of functions internal'd");
 
+namespace {
 class InternalizePass : public Pass {
-  const char *getPassName() const { return "Internalize Functions"; }
-
   virtual bool run(Module &M) {
     bool FoundMain = false;   // Look for a function named main...
     for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
@@ -41,6 +40,9 @@ class InternalizePass : public Pass {
     return Changed;
   }
 };
+
+RegisterPass<InternalizePass> X("internalize", "Internalize Functions");
+} // end anonymous namespace
 
 Pass *createInternalizePass() {
   return new InternalizePass();

@@ -40,8 +40,6 @@ static Statistic<> NumInserted("pinodes\t\t- Number of Pi nodes inserted");
 
 namespace {
   struct PiNodeInserter : public FunctionPass {
-    const char *getPassName() const { return "Pi Node Insertion"; }
-    
     virtual bool runOnFunction(Function &F);
     
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
@@ -56,6 +54,8 @@ namespace {
     //
     bool insertPiNodeFor(Value *V, BasicBlock *BB, Value *Rep = 0);
   };
+
+  RegisterPass<PiNodeInserter> X("pinodes", "Pi Node Insertion");
 }
 
 Pass *createPiNodeInsertionPass() { return new PiNodeInserter(); }

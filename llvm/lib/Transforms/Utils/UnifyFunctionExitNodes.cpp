@@ -17,6 +17,8 @@ using std::vector;
 
 AnalysisID UnifyFunctionExitNodes::ID(AnalysisID::create<UnifyFunctionExitNodes>());
 
+static RegisterPass<UnifyFunctionExitNodes>
+X("mergereturn", "Unify function exit nodes");
 
 // UnifyAllExitNodes - Unify all exit nodes of the CFG by creating a new
 // BasicBlock, and converting all returns to unconditional branches to this

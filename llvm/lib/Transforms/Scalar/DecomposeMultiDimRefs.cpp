@@ -21,13 +21,14 @@ static Statistic<> NumAdded("lowerrefs\t\t- New instructions added");
 
 namespace {
   struct DecomposePass : public BasicBlockPass {
-    const char *getPassName() const { return "Decompose Subscripting Exps"; }
-
     virtual bool runOnBasicBlock(BasicBlock &BB);
 
   private:
     static void decomposeArrayRef(BasicBlock::iterator &BBI);
   };
+
+RegisterPass<DecomposePass> X("lowerrefs", "Decompose multi-dimensional "
+                              "structure/array references");
 }
 
 Pass *createDecomposeMultiDimRefsPass() {

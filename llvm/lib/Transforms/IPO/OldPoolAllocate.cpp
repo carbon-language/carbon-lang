@@ -207,8 +207,6 @@ namespace {
 
   // Define the pass class that we implement...
   struct PoolAllocate : public Pass {
-    const char *getPassName() const { return "Pool Allocate"; }
-
     PoolAllocate() {
       switch (ReqPointerSize) {
       case Ptr32bits: POINTERTYPE = Type::UIntTy; break;
@@ -316,6 +314,9 @@ namespace {
                            map<DSNode*, PoolInfo> &PoolDescs);
 
   };
+
+  RegisterPass<PoolAllocate> X("poolalloc",
+                               "Pool allocate disjoint datastructures");
 }
 
 // isNotPoolableAlloc - This is a predicate that returns true if the specified

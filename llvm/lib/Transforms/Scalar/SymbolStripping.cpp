@@ -44,8 +44,6 @@ static bool StripSymbolTable(SymbolTable *SymTab) {
 
 namespace {
   struct SymbolStripping : public FunctionPass {
-    const char *getPassName() const { return "Strip Symbols from Functions"; }
-
     virtual bool runOnFunction(Function &F) {
       return StripSymbolTable(F.getSymbolTable());
     }
@@ -53,13 +51,15 @@ namespace {
       AU.setPreservesAll();
     }
   };
+  RegisterPass<SymbolStripping> X("strip", "Strip symbols from functions");
 
   struct FullSymbolStripping : public SymbolStripping {
-    const char *getPassName() const { return "Strip Symbols from Module"; }
     virtual bool doInitialization(Module &M) {
       return StripSymbolTable(M.getSymbolTable());
     }
   };
+  RegisterPass<FullSymbolStripping> Y("mstrip",
+                                    "Strip symbols from module and functions");
 }
 
 Pass *createSymbolStrippingPass() {

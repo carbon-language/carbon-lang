@@ -24,14 +24,14 @@ static Statistic<> NumInstKilled("constprop - Number of instructions killed");
 
 namespace {
   struct ConstantPropogation : public FunctionPass {
-    const char *getPassName() const { return "Simple Constant Propogation"; }
-
     bool runOnFunction(Function &F);
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.preservesCFG();
     }
   };
+
+RegisterPass<ConstantPropogation> X("constprop", "Simple constant propogation");
 }
 
 Pass *createConstantPropogationPass() {
