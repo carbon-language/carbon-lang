@@ -97,6 +97,7 @@ template<> struct simplify_type<User::op_iterator> {
     return static_cast<SimpleType>(Val->get());
   }
 };
+
 template<> struct simplify_type<const User::op_iterator>
   : public simplify_type<User::op_iterator> {};
 
@@ -107,6 +108,7 @@ template<> struct simplify_type<User::const_op_iterator> {
     return static_cast<SimpleType>(Val->get());
   }
 };
+
 template<> struct simplify_type<const User::const_op_iterator>
   : public simplify_type<User::const_op_iterator> {};
 

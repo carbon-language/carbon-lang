@@ -2001,7 +2001,7 @@ void DSGraph::AssertCallSiteInGraph(const DSCallSite &CS) const {
 #if 0
     if (CS.getNumPtrArgs() && CS.getCalleeNode() == CS.getPtrArg(0).getNode() &&
         CS.getCalleeNode() && CS.getCalleeNode()->getGlobals().empty())
-      std::cerr << "WARNING: WIERD CALL SITE FOUND!\n";      
+      std::cerr << "WARNING: WEIRD CALL SITE FOUND!\n";      
 #endif
   }
   AssertNodeInGraph(CS.getRetVal().getNode());

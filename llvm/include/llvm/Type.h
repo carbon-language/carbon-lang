@@ -23,7 +23,7 @@
 // identical if they are pointer equals of each other.  This allows us to have 
 // two opaque types that end up resolving to different concrete types later.
 //
-// Opaque types are also kinda wierd and scary and different because they have
+// Opaque types are also kinda weird and scary and different because they have
 // to keep a list of uses of the type.  When, through linking, parsing, or
 // bytecode reading, they become resolved, they need to find and update all
 // users of the unknown type, causing them to reference a new, more concrete
