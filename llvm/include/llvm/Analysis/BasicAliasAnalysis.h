@@ -12,23 +12,26 @@
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Pass.h"
 
+class GetElementPtrInst;
+
 struct BasicAliasAnalysis : public ImmutablePass, public AliasAnalysis {
+
+  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    AliasAnalysis::getAnalysisUsage(AU);
+  }
+
+  virtual void initializePass();
 
   // alias - This is the only method here that does anything interesting...
   //
-  Result alias(const Value *V1, const Value *V2);
-    
-  /// canCallModify - We are not interprocedural, so we do nothing exciting.
-  ///
-  Result canCallModify(const CallInst &CI, const Value *Ptr) {
-    return MayAlias;
-  }
-    
-  /// canInvokeModify - We are not interprocedural, so we do nothing exciting.
-  ///
-  Result canInvokeModify(const InvokeInst &I, const Value *Ptr) {
-    return MayAlias;  // We are not interprocedural
-  }
+  AliasResult alias(const Value *V1, unsigned V1Size,
+                    const Value *V2, unsigned V2Size);
+private:
+  // CheckGEPInstructions - Check two GEP instructions of compatible types and
+  // equal number of arguments.  This checks to see if the index expressions
+  // preclude the pointers from aliasing...
+  AliasResult CheckGEPInstructions(GetElementPtrInst *GEP1, unsigned G1Size,
+                                   GetElementPtrInst *GEP2, unsigned G2Size);
 };
 
 #endif
