@@ -18,7 +18,6 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
-#include "llvm/Intrinsics.h"
 #include "llvm/IntrinsicLowering.h"
 #include "llvm/Pass.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
@@ -59,7 +58,6 @@ inline static MachineInstrBuilder BMI(MachineBasicBlock *MBB,
 namespace {
   struct ISel : public FunctionPass, InstVisitor<ISel> {
     TargetMachine &TM;
-    IntrinsicLowering &IL;
     MachineFunction *F;                 // The function we are compiling into
     MachineBasicBlock *BB;              // The current MBB we are compiling
     int VarArgsFrameIndex;              // FrameIndex for start of varargs area
@@ -69,8 +67,7 @@ namespace {
     // MBBMap - Mapping between LLVM BB -> Machine BB
     std::map<const BasicBlock*, MachineBasicBlock*> MBBMap;
 
-    ISel(TargetMachine &tm, IntrinsicLowering &il)
-      : TM(tm), IL(il), F(0), BB(0) {}
+    ISel(TargetMachine &tm) : TM(tm), F(0), BB(0) {}
 
     /// runOnFunction - Top level implementation of instruction selection for
     /// the entire function.
@@ -1116,7 +1113,7 @@ void ISel::LowerUnknownIntrinsicFunctionCalls(Function &F) {
           default:
             // All other intrinsic calls we must lower.
             Instruction *Before = CI->getPrev();
-            IL.LowerIntrinsicCall(CI);
+            TM.getIntrinsicLowering().LowerIntrinsicCall(CI);
             if (Before) {        // Move iterator to instruction after call
               I = Before;  ++I;
             } else {
@@ -2196,7 +2193,6 @@ void ISel::visitFreeInst(FreeInst &I) {
 /// into a machine code representation is a very simple peep-hole fashion.  The
 /// generated code sucks but the implementation is nice and simple.
 ///
-FunctionPass *llvm::createX86SimpleInstructionSelector(TargetMachine &TM,
-                                                       IntrinsicLowering &IL) {
-  return new ISel(TM, IL);
+FunctionPass *llvm::createX86SimpleInstructionSelector(TargetMachine &TM) {
+  return new ISel(TM);
 }

@@ -16,7 +16,6 @@
 
 #include "llvm/CodeGen/InstrSelection.h"
 #include "llvm/Function.h"
-#include "llvm/Intrinsics.h"
 #include "llvm/IntrinsicLowering.h"
 #include "llvm/iPHINode.h"
 #include "llvm/iOther.h"
@@ -68,7 +67,6 @@ namespace {
   //
   class InstructionSelection : public FunctionPass {
     TargetMachine &Target;
-    IntrinsicLowering &IL;
     void InsertCodeForPhis(Function &F);
     void InsertPhiElimInstructions(BasicBlock *BB,
                                    const std::vector<MachineInstr*>& CpVec);
@@ -76,8 +74,7 @@ namespace {
     void PostprocessMachineCodeForTree(InstructionNode* instrNode,
                                        int ruleForNode, short* nts);
   public:
-    InstructionSelection(TargetMachine &TM, IntrinsicLowering &il)
-      : Target(TM), IL(il) {}
+    InstructionSelection(TargetMachine &TM) : Target(TM) {}
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesCFG();
@@ -145,7 +142,7 @@ bool InstructionSelection::runOnFunction(Function &F) {
           default:
             // All other intrinsic calls we must lower.
             Instruction *Before = CI->getPrev();
-            IL.LowerIntrinsicCall(CI);
+            Target.getIntrinsicLowering().LowerIntrinsicCall(CI);
             if (Before) {        // Move iterator to instruction after call
               I = Before;  ++I;
             } else {
@@ -415,7 +412,6 @@ InstructionSelection::PostprocessMachineCodeForTree(InstructionNode* instrNode,
 // createInstructionSelectionPass - Public entrypoint for instruction selection
 // and this file as a whole...
 //
-FunctionPass *llvm::createInstructionSelectionPass(TargetMachine &T,
-                                                   IntrinsicLowering &IL) {
-  return new InstructionSelection(T, IL);
+FunctionPass *llvm::createInstructionSelectionPass(TargetMachine &TM) {
+  return new InstructionSelection(TM);
 }

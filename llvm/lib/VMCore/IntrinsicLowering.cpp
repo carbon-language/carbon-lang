@@ -13,7 +13,6 @@
 
 #include "llvm/IntrinsicLowering.h"
 #include "llvm/Constant.h"
-#include "llvm/Intrinsics.h"
 #include "llvm/Module.h"
 #include "llvm/Type.h"
 #include "llvm/iOther.h"

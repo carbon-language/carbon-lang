@@ -27,15 +27,13 @@ class IntrinsicLowering;
 /// into a machine code representation in a very simple peep-hole fashion.  The
 /// generated code sucks but the implementation is nice and simple.
 ///
-FunctionPass *createX86SimpleInstructionSelector(TargetMachine &TM,
-                                                 IntrinsicLowering &IL);
+FunctionPass *createX86SimpleInstructionSelector(TargetMachine &TM);
 
 /// createX86PatternInstructionSelector - This pass converts an LLVM function
 /// into a machine code representation using pattern matching and a machine
 /// description file.
 ///
-FunctionPass *createX86PatternInstructionSelector(TargetMachine &TM,
-                                                  IntrinsicLowering &IL);
+FunctionPass *createX86PatternInstructionSelector(TargetMachine &TM);
 
 /// createX86SSAPeepholeOptimizerPass - Create a pass to perform SSA-based X86
 /// specific peephole optimizations.

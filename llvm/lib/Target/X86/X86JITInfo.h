@@ -22,9 +22,8 @@ namespace llvm {
 
   class X86JITInfo : public TargetJITInfo {
     TargetMachine &TM;
-    IntrinsicLowering &IL;
   public:
-    X86JITInfo(TargetMachine &tm, IntrinsicLowering &il) : TM(tm), IL(il) {}
+    X86JITInfo(TargetMachine &tm) : TM(tm) {}
 
     /// addPassesToJITCompile - Add passes to the specified pass manager to
     /// implement a fast dynamic compiler for this target.  Return true if this
@@ -37,7 +36,7 @@ namespace llvm {
     /// overwriting OLD with a branch to NEW.  This is used for self-modifying
     /// code.
     ///
-    virtual void replaceMachineCodeForFunction (void *Old, void *New);
+    virtual void replaceMachineCodeForFunction(void *Old, void *New);
     
     /// getJITStubForFunction - Create or return a stub for the specified
     /// function.  This stub acts just like the specified function, except that

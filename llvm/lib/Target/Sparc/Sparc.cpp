@@ -116,17 +116,12 @@ FunctionPass *llvm::createSparcMachineCodeDestructionPass() {
 
 
 SparcTargetMachine::SparcTargetMachine(IntrinsicLowering *il)
-  : TargetMachine("UltraSparc-Native", false),
-    IL(il ? il : new DefaultIntrinsicLowering()),
+  : TargetMachine("UltraSparc-Native", il, false),
     schedInfo(*this),
     regInfo(*this),
     frameInfo(*this),
     cacheInfo(*this),
-    jitInfo(*this, *IL) {
-}
-
-SparcTargetMachine::~SparcTargetMachine() {
-  delete IL;
+    jitInfo(*this) {
 }
 
 // addPassesToEmitAssembly - This method controls the entire code generation
@@ -171,7 +166,7 @@ SparcTargetMachine::addPassesToEmitAssembly(PassManager &PM, std::ostream &Out)
     PM.add(new PrintFunctionPass("Input code to instr. selection:\n",
                                  &std::cerr));
 
-  PM.add(createInstructionSelectionPass(*this, *IL));
+  PM.add(createInstructionSelectionPass(*this));
 
   if (!DisableSched)
     PM.add(createInstructionSchedulingWithSSAPass(*this));
@@ -238,7 +233,7 @@ void SparcJITInfo::addPassesToJITCompile(FunctionPassManager &PM) {
   //PM.add(createLICMPass());
   //PM.add(createGCSEPass());
 
-  PM.add(createInstructionSelectionPass(TM, IL));
+  PM.add(createInstructionSelectionPass(TM));
 
   PM.add(getRegisterAllocator(TM));
   PM.add(createPrologEpilogInsertionPass());

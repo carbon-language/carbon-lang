@@ -119,7 +119,6 @@ void ISel::expandCall(SelectionDAG &SD, CallInst &CI) {
 /// into a machine code representation using pattern matching and a machine
 /// description file.
 ///
-FunctionPass *llvm::createX86PatternInstructionSelector(TargetMachine &TM,
-                                                        IntrinsicLowering &IL) {
+FunctionPass *llvm::createX86PatternInstructionSelector(TargetMachine &TM) {
   return new ISel(TM);  
 }

@@ -22,7 +22,6 @@ class Function;
 class FunctionPass;
 class InstrForest;
 class InstructionNode;
-class IntrinsicLowering;
 class MachineCodeForInstruction;
 class MachineInstr;
 class TargetMachine;
@@ -40,8 +39,6 @@ extern void	GetInstructionsByRule	(InstructionNode* subtreeRoot,
 extern bool	ThisIsAChainRule	(int eruleno);
 
 
-//************************ Exported Functions ******************************/
-
 
 //---------------------------------------------------------------------------
 // Function: createInstructionSelectionPass
@@ -51,11 +48,8 @@ extern bool	ThisIsAChainRule	(int eruleno);
 //   Return a pass that performs machine dependent instruction selection.
 //---------------------------------------------------------------------------
 
-FunctionPass *createInstructionSelectionPass(TargetMachine &Target,
-                                             IntrinsicLowering &IL);
+FunctionPass *createInstructionSelectionPass(TargetMachine &Target);
 
-
-//************************ Exported Data Types *****************************/
 
 
 //---------------------------------------------------------------------------

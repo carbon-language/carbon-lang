@@ -31,6 +31,7 @@ class MRegisterInfo;
 class FunctionPassManager;
 class PassManager;
 class Pass;
+class IntrinsicLowering;
 
 //===----------------------------------------------------------------------===//
 ///
@@ -40,24 +41,27 @@ class Pass;
 /// 
 class TargetMachine {
   const std::string Name;
-  const TargetData DataLayout;		 // Calculates type size & alignment
+  const TargetData DataLayout;       // Calculates type size & alignment
+  IntrinsicLowering *IL;             // Specifies how to lower intrinsic calls
   
   TargetMachine(const TargetMachine&);   // DO NOT IMPLEMENT
   void operator=(const TargetMachine&);  // DO NOT IMPLEMENT
-protected:
-  TargetMachine(const std::string &name, // Can only create subclasses...
+protected: // Can only create subclasses...
+  TargetMachine(const std::string &name, IntrinsicLowering *IL,                
 		bool LittleEndian = false,
 		unsigned char PtrSize = 8, unsigned char PtrAl = 8,
 		unsigned char DoubleAl = 8, unsigned char FloatAl = 4,
 		unsigned char LongAl = 8, unsigned char IntAl = 4,
-		unsigned char ShortAl = 2, unsigned char ByteAl = 1)
-    : Name(name), DataLayout(name, LittleEndian,
-			     PtrSize, PtrAl, DoubleAl, FloatAl, LongAl,
-                             IntAl, ShortAl, ByteAl) {}
+		unsigned char ShortAl = 2, unsigned char ByteAl = 1);
 public:
-  virtual ~TargetMachine() {}
+  virtual ~TargetMachine();
 
   const std::string &getName() const { return Name; }
+
+  // getIntrinsicLowering - This method returns a reference to an
+  // IntrinsicLowering instance which should be used by the code generator to
+  // lower unknown intrinsic functions to the equivalent LLVM expansion.
+  IntrinsicLowering &getIntrinsicLowering() const { return *IL; }
   
   // Interfaces to the major aspects of target machine information:
   // -- Instruction opcode and operand information

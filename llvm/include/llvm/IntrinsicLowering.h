@@ -33,6 +33,8 @@
 #ifndef LLVM_INTRINSICLOWERING_H
 #define LLVM_INTRINSICLOWERING_H
 
+#include "llvm/Intrinsics.h"
+
 namespace llvm {
   class CallInst;
   

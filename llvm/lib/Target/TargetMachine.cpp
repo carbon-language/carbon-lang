@@ -15,20 +15,33 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetCacheInfo.h"
 #include "llvm/Type.h"
-
-namespace llvm {
+#include "llvm/IntrinsicLowering.h"
+using namespace llvm;
 
 //---------------------------------------------------------------------------
-// class TargetMachine
-// 
-// Purpose:
-//   Machine description.
-// 
-//---------------------------------------------------------------------------
+// TargetMachine Class
+//
+TargetMachine::TargetMachine(const std::string &name, IntrinsicLowering *il,
+                             bool LittleEndian,
+                             unsigned char PtrSize, unsigned char PtrAl,
+                             unsigned char DoubleAl, unsigned char FloatAl,
+                             unsigned char LongAl, unsigned char IntAl,
+                             unsigned char ShortAl, unsigned char ByteAl)
+  : Name(name), DataLayout(name, LittleEndian,
+                           PtrSize, PtrAl, DoubleAl, FloatAl, LongAl,
+                           IntAl, ShortAl, ByteAl) {
+  IL = il ? il : new DefaultIntrinsicLowering();
+}
 
 
-// function TargetMachine::findOptimalStorageSize 
-// 
+
+TargetMachine::~TargetMachine() {
+  delete IL;
+}
+
+
+
+
 unsigned TargetMachine::findOptimalStorageSize(const Type *Ty) const {
   // All integer types smaller than ints promote to 4 byte integers.
   if (Ty->isIntegral() && Ty->getPrimitiveSize() < 4)
@@ -39,11 +52,8 @@ unsigned TargetMachine::findOptimalStorageSize(const Type *Ty) const {
 
 
 //---------------------------------------------------------------------------
-// class TargetCacheInfo 
-// 
-// Purpose:
-//   Describes properties of the target cache architecture.
-//---------------------------------------------------------------------------
+// TargetCacheInfo Class
+//
 
 void TargetCacheInfo::Initialize() {
   numLevels = 2;
@@ -51,5 +61,3 @@ void TargetCacheInfo::Initialize() {
   cacheSizes.push_back(1 << 15); cacheSizes.push_back(1 << 20);
   cacheAssoc.push_back(1);       cacheAssoc.push_back(4);
 }
-
-} // End llvm namespace

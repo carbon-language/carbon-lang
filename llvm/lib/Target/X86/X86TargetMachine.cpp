@@ -45,15 +45,10 @@ TargetMachine *llvm::allocateX86TargetMachine(const Module &M,
 
 /// X86TargetMachine ctor - Create an ILP32 architecture model
 ///
-X86TargetMachine::X86TargetMachine(const Module &M, IntrinsicLowering *il)
-  : TargetMachine("X86", true, 4, 4, 4, 4, 4),
-    IL(il ? il : new DefaultIntrinsicLowering()),
+X86TargetMachine::X86TargetMachine(const Module &M, IntrinsicLowering *IL)
+  : TargetMachine("X86", IL, true, 4, 4, 4, 4, 4),
     FrameInfo(TargetFrameInfo::StackGrowsDown, 8/*16 for SSE*/, 4),
-    JITInfo(*this, *IL) {
-}
-
-X86TargetMachine::~X86TargetMachine() {
-  delete IL;
+    JITInfo(*this) {
 }
 
 
@@ -72,9 +67,9 @@ bool X86TargetMachine::addPassesToEmitAssembly(PassManager &PM,
   PM.add(createCFGSimplificationPass());
 
   if (NoPatternISel)
-    PM.add(createX86SimpleInstructionSelector(*this, *IL));
+    PM.add(createX86SimpleInstructionSelector(*this));
   else
-    PM.add(createX86PatternInstructionSelector(*this, *IL));
+    PM.add(createX86PatternInstructionSelector(*this));
 
   // Run optional SSA-based machine code optimizations next...
   if (!NoSSAPeephole)
@@ -127,9 +122,9 @@ void X86JITInfo::addPassesToJITCompile(FunctionPassManager &PM) {
   PM.add(createCFGSimplificationPass());
 
   if (NoPatternISel)
-    PM.add(createX86SimpleInstructionSelector(TM, IL));
+    PM.add(createX86SimpleInstructionSelector(TM));
   else
-    PM.add(createX86PatternInstructionSelector(TM, IL));
+    PM.add(createX86PatternInstructionSelector(TM));
 
   // Run optional SSA-based machine code optimizations next...
   if (!NoSSAPeephole)

@@ -24,10 +24,8 @@
 
 namespace llvm {
   class PassManager;
-  class IntrinsicLowering;
 
 class SparcTargetMachine : public TargetMachine {
-  IntrinsicLowering *IL;
   SparcInstrInfo instrInfo;
   SparcSchedInfo schedInfo;
   SparcRegInfo   regInfo;
@@ -36,7 +34,6 @@ class SparcTargetMachine : public TargetMachine {
   SparcJITInfo   jitInfo;
 public:
   SparcTargetMachine(IntrinsicLowering *IL);
-  ~SparcTargetMachine();
   
   virtual const TargetInstrInfo  &getInstrInfo() const { return instrInfo; }
   virtual const TargetSchedInfo  &getSchedInfo() const { return schedInfo; }
