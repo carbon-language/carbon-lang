@@ -44,7 +44,7 @@ $(TARGET)GenCodeEmitter.inc:: PPC32.td $(TDFILES) $(TBLGEN)
 	@echo "Building $(TARGET) code emitter"
 	$(VERB) $(TBLGEN) -I $(SourceDir) $< -gen-emitter -o $@
 
-$(TARGET)GenAsmWriter.inc:: PPC32.td $(TDFILES) $(TBLGEN)
+$(TARGET)GenAsmWriter.inc:: PowerPC.td $(TDFILES) $(TBLGEN)
 	@echo "Building $(TARGET).td assembly writer with tblgen"
 	$(VERB) $(TBLGEN) -I $(SourceDir) $< -gen-asm-writer -o $@
 

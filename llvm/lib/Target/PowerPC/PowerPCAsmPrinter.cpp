@@ -40,11 +40,11 @@ using namespace llvm;
 namespace {
   Statistic<> EmittedInsts("asm-printer", "Number of machine instrs printed");
 
-  struct PPC32AsmPrinter : public AsmPrinter {
+  struct PowerPCAsmPrinter : public AsmPrinter {
     std::set<std::string> FnStubs, GVStubs, LinkOnceStubs;
     std::set<std::string> Strings;
     
-    PPC32AsmPrinter(std::ostream &O, TargetMachine &TM)
+    PowerPCAsmPrinter(std::ostream &O, TargetMachine &TM)
       : AsmPrinter(O, TM), LabelNumber(0) {}
 
     /// Unique incrementer for label values for referencing Global values.
@@ -142,12 +142,13 @@ namespace {
     virtual bool doFinalization(Module &M) = 0;
   };
   
-  //
-  //
-  struct DarwinAsmPrinter : public PPC32AsmPrinter {
+  /// DarwinAsmPrinter - PowerPC assembly printer, customized for Darwin/Mac OS
+  /// X
+  ///
+  struct DarwinAsmPrinter : public PowerPCAsmPrinter {
 
     DarwinAsmPrinter(std::ostream &O, TargetMachine &TM)
-      : PPC32AsmPrinter(O, TM) {
+      : PowerPCAsmPrinter(O, TM) {
       CommentString = ";";
       GlobalPrefix = "_";
       ZeroDirective = "\t.space\t";  // ".space N" emits N zeros.
@@ -164,15 +165,15 @@ namespace {
     bool doFinalization(Module &M);
   };
   
-  //
-  //
-  struct AIXAsmPrinter : public PPC32AsmPrinter {
+  /// AIXAsmPrinter - PowerPC assembly printer, customized for AIX
+  ///
+  struct AIXAsmPrinter : public PowerPCAsmPrinter {
     /// Map for labels corresponding to global variables
     ///
     std::map<const GlobalVariable*,std::string> GVToLabelMap;
 
     AIXAsmPrinter(std::ostream &O, TargetMachine &TM)
-      : PPC32AsmPrinter(O, TM) {
+      : PowerPCAsmPrinter(O, TM) {
       CommentString = "#";
       GlobalPrefix = "_";
       ZeroDirective = "\t.space\t";  // ".space N" emits N zeros.
@@ -306,7 +307,7 @@ FunctionPass *llvm::createAIXAsmPrinter(std::ostream &o, TargetMachine &tm) {
 // Include the auto-generated portion of the assembly writer
 #include "PowerPCGenAsmWriter.inc"
 
-void PPC32AsmPrinter::printOp(const MachineOperand &MO,
+void PowerPCAsmPrinter::printOp(const MachineOperand &MO,
                               bool LoadAddrOp /* = false */) {
   const MRegisterInfo &RI = *TM.getRegisterInfo();
   int new_symbol;
@@ -391,7 +392,7 @@ void PPC32AsmPrinter::printOp(const MachineOperand &MO,
 /// printMachineInstruction -- Print out a single PowerPC MI in Darwin syntax to
 /// the current output stream.
 ///
-void PPC32AsmPrinter::printMachineInstruction(const MachineInstr *MI) {
+void PowerPCAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
   ++EmittedInsts;
   if (printInstruction(MI))
     return; // Printer was automatically generated
