@@ -987,8 +987,10 @@ void CWriter::visitUnwindInst(UnwindInst &I) {
   // instruction is found.  In this context, we code generated the invoke
   // instruction to add an entry to the top of the jmpbuf_list.  Thus, here we
   // just have to longjmp to the specified handler.
-  Out << "  if (__llvm_jmpbuf_list == 0) {  /* llvm.unwind */\n"
-      << "    printf(\"throw found with no handler!\\n\"); abort();\n"
+  Out << "  if (__llvm_jmpbuf_list == 0) {  /* unwind */\n"
+      << "    extern write();\n"
+      << "    ((void (*)(int, void*, unsigned))write)(2,\n"
+      << "           \"throw found with no handler!\\n\", 31); abort();\n"
       << "  }\n"
       << "  longjmp(__llvm_jmpbuf_list->buf, 1);\n";
   emittedInvoke = true;
