@@ -1,0 +1,8 @@
+; RUN: llvm-as < %s | llc -march=x86
+
+bool %test(bool %C, bool %D, int %X, int %Y) {
+	%E = setlt int %X, %Y
+	%F = select bool %C, bool %D, bool %E
+	ret bool %F
+}
+
