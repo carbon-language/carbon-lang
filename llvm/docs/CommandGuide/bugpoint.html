@@ -1,0 +1,113 @@
+<html>
+<title>LLVM: bugpoint tool</title>
+
+<body bgcolor=white>
+
+<center><h1>LLVM: <tt>bugpoint</tt> tool</h1></center>
+<HR>
+
+<h3>NAME</h3>
+<tt>bugpoint</tt>
+
+<h3>SYNOPSIS</h3>
+<tt>extract [options] [input llvm ll/bc files] [LLVM passes] --args &lt;program arguments&gt;...</tt>
+
+<img src="../Debugging.gif" width=444 height=314 align=right>
+<h3>DESCRIPTION</h3>
+
+The <tt>bugpoint</tt> tool is a generally useful tool for narrowing down
+problems in LLVM tools and passes.<p>
+
+<tt>bugpoint</tt> reads the specified list of .bc or .ll files specified on the
+command-line and links them together.  It then runs the specified LLVM passes on
+the resultant bytecode file.  If any of the passes crash, or if they produce an
+LLVM module which is not verifiable, bugpoint enters "crash debugging mode".
+Otherwise, <tt>bugpoint</tt> tries to run the resultant program with a code
+generator.  If the code generated program does not match the reference output,
+it enters "miscompilation debugging mode".  If the <tt>-mode</tt> option is
+specified, <tt>bugpoint</tt> enters "code generator debugging mode".
+
+<h4>Crash debugging mode</h4>
+
+TODO
+
+<h4>Miscompilation debugging mode</h4>
+
+TODO
+
+<h4>Code generator debugging mode</h4>
+
+TODO
+
+
+<h3>OPTIONS</h3>
+
+<ul>
+	<li><tt>-args &lt;arguments&gt;</tt>
+	<br>
+	All arguments specified after <tt>-args</tt> are passed into the
+	executed program when the program must be executed.
+	<p>
+
+	<li><tt>-disable-(adce,dce,final-cleanup,simplifycfg)</tt>
+	<br>
+	<tt>bugpoint</tt> uses several passes internally for cleanup routines to
+	reduce the size of the program.  If you're trying to find a bug in out
+	of these passes, <tt>bugpoint</tt> may crash.  These options tell
+	<tt>bugpoint</tt> not use the specified passes.
+	<p>
+
+	<li> <tt>-help</tt>
+	<br>
+	Print a summary of command line options.
+	<p>
+
+	<li> <tt>-input &lt;filename&gt;</tt>
+	<br>
+	Specify the contents of &lt;stdin&gt; when the program must be executed.
+	<p>
+
+	<li> <tt>-load &lt;plugin.so&gt;</tt>
+	<br>
+	Load the dynamic object plugin.so.  This object should register new
+	optimization passes.  Once loaded, the object will add new command line
+	options to enable various optimizations.  To see the new complete list
+	of optimizations, use the -help and -load options together:
+	<p>
+	<tt>opt -load  &lt;plugin.so&gt; -help</tt>
+	<p>
+
+	<li> <tt>-mode=(compile|codegen)</tt>
+	<br>
+	Specify whether <tt>bugpoint</tt> should operate in compilation
+	debugging mode (detecting miscompilations and optimizer crashes), or in
+	code generator debugging mode.
+	<p>
+
+	<li> <tt>-output &lt;filename&gt;</tt>
+	<br>
+	Specify a reference output for the &lt;stdout&gt; file stream.
+	<p>
+
+	<li> <tt>-run-(lli|jit|llc|cbe)</tt>
+	<br>
+	Specify which code generator <tt>bugpoint</tt> should use to run the
+	program with.
+	<p>
+
+</ul>
+
+<h3>EXIT STATUS</h3>
+
+If <tt>bugpoint</tt> succeeds in finding a problem, it will exit with 0.
+Otherwise, if an error occurs, it will exit with a non-zero value.
+
+<h3>SEE ALSO</h3>
+<a href="opt.html"><tt>opt</tt></a>
+<a href="analyze.html"><tt>analyze</tt></a>
+
+<HR>
+Maintained by the <a href="http://llvm.cs.uiuc.edu">LLVM Team</a>.
+</body>
+</html>
+
