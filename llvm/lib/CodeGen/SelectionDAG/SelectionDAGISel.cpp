@@ -187,6 +187,12 @@ class SelectionDAGLowering {
 
   std::map<const Value*, SDOperand> NodeMap;
 
+  /// PendingLoads - Loads are not emitted to the program immediately.  We bunch
+  /// them up and then emit token factor nodes when possible.  This allows us to
+  /// get simple disambiguation between loads without worrying about alias
+  /// analysis.
+  std::vector<SDOperand> PendingLoads;
+
 public:
   // TLI - This is information that describes the available target features we
   // need for lowering.  This indicates when operations are unavailable,
@@ -208,7 +214,21 @@ public:
   /// getRoot - Return the current virtual root of the Selection DAG.
   ///
   SDOperand getRoot() {
-    return DAG.getRoot();
+    if (PendingLoads.empty())
+      return DAG.getRoot();
+    
+    if (PendingLoads.size() == 1) {
+      SDOperand Root = PendingLoads[0];
+      DAG.setRoot(Root);
+      PendingLoads.clear();
+      return Root;
+    }
+
+    // Otherwise, we have to make a token factor node.
+    SDOperand Root = DAG.getNode(ISD::TokenFactor, MVT::Other, PendingLoads);
+    PendingLoads.clear();
+    DAG.setRoot(Root);
+    return Root;
   }
 
   void visit(Instruction &I) { visit(I.getOpcode(), I); }
@@ -590,8 +610,22 @@ void SelectionDAGLowering::visitAlloca(AllocaInst &I) {
 
 void SelectionDAGLowering::visitLoad(LoadInst &I) {
   SDOperand Ptr = getValue(I.getOperand(0));
-  SDOperand L = DAG.getLoad(TLI.getValueType(I.getType()), getRoot(), Ptr);
-  DAG.setRoot(setValue(&I, L).getValue(1));
+  
+  SDOperand Root;
+  if (I.isVolatile())
+    Root = getRoot();
+  else {
+    // Do not serialize non-volatile loads against each other.
+    Root = DAG.getRoot();
+  }
+
+  SDOperand L = DAG.getLoad(TLI.getValueType(I.getType()), Root, Ptr);
+  setValue(&I, L);
+
+  if (I.isVolatile())
+    DAG.setRoot(L.getValue(1));
+  else
+    PendingLoads.push_back(L.getValue(1));
 }
 
 
@@ -982,7 +1016,7 @@ void SelectionDAGISel::BuildSelectionDAG(SelectionDAG &DAG, BasicBlock *LLVMBB,
 
   // Turn all of the unordered chains into one factored node.
   if (!UnorderedChains.empty()) {
-    UnorderedChains.push_back(DAG.getRoot());
+    UnorderedChains.push_back(SDL.getRoot());
     DAG.setRoot(DAG.getNode(ISD::TokenFactor, MVT::Other, UnorderedChains));
   }
 
