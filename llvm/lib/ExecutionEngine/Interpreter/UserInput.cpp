@@ -154,7 +154,10 @@ void Interpreter::loadModule(const string &Filename) {
     return;
   }
 
-  string RuntimeLib = getCurrentExecutablePath() + "/RuntimeLib.bc";
+  string RuntimeLib = getCurrentExecutablePath();
+  if (!RuntimeLib.empty()) RuntimeLib += "/";
+  RuntimeLib += "RuntimeLib.bc";
+
   if (Module *SupportLib = ParseBytecodeFile(RuntimeLib, &ErrorMsg)) {
     if (LinkModules(CurMod, SupportLib, &ErrorMsg))
       cerr << "Error Linking runtime library into current module: "
