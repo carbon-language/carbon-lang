@@ -1,10 +1,7 @@
 ; This test makes sure that mul instructions are properly eliminated.
 ;
 
-; RUN: if as < %s | opt -instcombine | dis | grep mul
-; RUN: then exit 1
-; RUN: else exit 0
-; RUN: fi
+; RUN: as < %s | opt -instcombine | dis | grep-not mul
 
 implementation
 
@@ -35,7 +32,7 @@ int %test5(int %A) {
 
 ubyte %test6(ubyte %A) {
 	%B = mul ubyte %A, 8
-	%C = mul ubyte %B, 13
+	%C = mul ubyte %B, 8
 	ret ubyte %C
 }
 
