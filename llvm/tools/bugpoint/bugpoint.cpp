@@ -20,8 +20,11 @@ InputFilenames(cl::Positional, cl::OneOrMore,
 static cl::list<const PassInfo*, bool, PassNameParser>
 PassList(cl::desc("Passes available:"), cl::ZeroOrMore);
 
-//cl::list<std::string>
-//InputArgv(cl::ConsumeAfter, cl::desc("<program arguments>..."));
+// Anything specified after the --args option are taken as arguments to the
+// program being debugged.
+cl::list<std::string>
+InputArgv("args", cl::Positional, cl::desc("<program arguments>..."),
+          cl::ZeroOrMore);
 
 int main(int argc, char **argv) {
   cl::ParseCommandLineOptions(argc, argv);
