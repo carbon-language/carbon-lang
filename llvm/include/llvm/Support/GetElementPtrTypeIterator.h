@@ -19,32 +19,33 @@
 #include "llvm/DerivedTypes.h"
 
 namespace llvm {
-  class gep_type_iterator
+  template<typename ItTy = User::op_iterator>
+  class generic_gep_type_iterator
     : public forward_iterator<const Type *, ptrdiff_t> {
     typedef forward_iterator<const Type*, ptrdiff_t> super;
 
-    User::op_iterator OpIt;
+    ItTy OpIt;
     const Type *CurTy;
-    gep_type_iterator() {}
+    generic_gep_type_iterator() {}
   public:
 
-    static gep_type_iterator begin(const Type *Ty, User::op_iterator It) {
-      gep_type_iterator I;
+    static generic_gep_type_iterator begin(const Type *Ty, ItTy It) {
+      generic_gep_type_iterator I;
       I.CurTy = Ty;
       I.OpIt = It;
       return I;
     }
-    static gep_type_iterator end(User::op_iterator It) {
-      gep_type_iterator I;
+    static generic_gep_type_iterator end(ItTy It) {
+      generic_gep_type_iterator I;
       I.CurTy = 0;
       I.OpIt = It;
       return I;
     }
 
-    bool operator==(const gep_type_iterator& x) const { 
+    bool operator==(const generic_gep_type_iterator& x) const { 
       return OpIt == x.OpIt;
     }
-    bool operator!=(const gep_type_iterator& x) const {
+    bool operator!=(const generic_gep_type_iterator& x) const {
       return !operator==(x);
     }
 
@@ -58,7 +59,7 @@ namespace llvm {
     
     Value *getOperand() const { return *OpIt; }
 
-    gep_type_iterator& operator++() {   // Preincrement
+    generic_gep_type_iterator& operator++() {   // Preincrement
       if (const CompositeType *CT = dyn_cast<CompositeType>(CurTy)) {
         CurTy = CT->getTypeAtIndex(getOperand());
       } else {
@@ -68,14 +69,16 @@ namespace llvm {
       return *this; 
     }
 
-    gep_type_iterator operator++(int) { // Postincrement
-      gep_type_iterator tmp = *this; ++*this; return tmp; 
+    generic_gep_type_iterator operator++(int) { // Postincrement
+      generic_gep_type_iterator tmp = *this; ++*this; return tmp; 
     }
   };
 
+  typedef generic_gep_type_iterator<> gep_type_iterator;
+
   inline gep_type_iterator gep_type_begin(User *GEP) {
     return gep_type_iterator::begin(GEP->getOperand(0)->getType(),
-                                    GEP->op_begin()+1);
+                                      GEP->op_begin()+1);
   }
   inline gep_type_iterator gep_type_end(User *GEP) {
     return gep_type_iterator::end(GEP->op_end());
@@ -87,13 +90,17 @@ namespace llvm {
   inline gep_type_iterator gep_type_end(User &GEP) {
     return gep_type_iterator::end(GEP.op_end());
   }
-  inline gep_type_iterator gep_type_begin(const Type *Op0, User::op_iterator I,
-                                          User::op_iterator E) {
-    return gep_type_iterator::begin(Op0, I);
+
+  template<typename ItTy>
+  inline generic_gep_type_iterator<ItTy>
+  gep_type_begin(const Type *Op0, ItTy I, ItTy E) {
+    return generic_gep_type_iterator<ItTy>::begin(Op0, I);
   }
-  inline gep_type_iterator gep_type_end(const Type *Op0, User::op_iterator I,
-                                        User::op_iterator E) {
-    return gep_type_iterator::end(E);
+
+  template<typename ItTy>
+  inline generic_gep_type_iterator<ItTy>
+  gep_type_end(const Type *Op0, ItTy I, ItTy E) {
+    return generic_gep_type_iterator<ItTy>::end(E);
   }
 } // end namespace llvm
 
