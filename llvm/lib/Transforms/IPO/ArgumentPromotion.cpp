@@ -87,7 +87,6 @@ bool ArgPromotion::runOnSCC(const std::vector<CallGraphNode *> &SCC) {
     // Attempt to promote arguments from all functions in this SCC.
     for (unsigned i = 0, e = SCC.size(); i != e; ++i)
       LocalChange |= PromoteArguments(SCC[i]);
-    if (LocalChange) return true;
     Changed |= LocalChange;               // Remember that we changed something.
   } while (LocalChange);
   
