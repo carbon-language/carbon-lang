@@ -1,10 +1,7 @@
-typedef enum { FALSE, TRUE } flagT;
-
-struct Word
-{
+struct Word {
   short bar;
   short baz;
-  flagT final:1;
+  int final:1;
   short quux;
 } *word_limit;
 
