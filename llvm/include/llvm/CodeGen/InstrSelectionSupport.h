@@ -137,6 +137,27 @@ Create2OperandInstr_SImmed(MachineOpCode opCode,
 }
 
 inline MachineInstr*
+Create2OperandInstr_Reg(MachineOpCode opCode,
+                        Value* argVal1, unsigned int regNum)
+{
+  MachineInstr* M = new MachineInstr(opCode);
+  M->SetMachineOperandVal(0, MachineOperand::MO_VirtualRegister, argVal1);
+  M->SetMachineOperandReg(1, regNum);
+  return M;
+}
+
+inline MachineInstr*
+Create2OperandInstr_Reg(MachineOpCode opCode,
+                        unsigned int regNum1, unsigned int regNum2)
+                 
+{
+  MachineInstr* M = new MachineInstr(opCode);
+  M->SetMachineOperandReg(0, regNum1);
+  M->SetMachineOperandReg(1, regNum2);
+  return M;
+}
+
+inline MachineInstr*
 Create3OperandInstr(MachineOpCode opCode,
                     Value* argVal1, MachineOperand::MachineOperandType type1,
                     Value* argVal2, MachineOperand::MachineOperandType type2,
