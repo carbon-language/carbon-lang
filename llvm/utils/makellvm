@@ -1,16 +1,46 @@
 #!/bin/csh -f
 
+set pstatus = 0
+onintr cleanup
+alias usage 'echo "USAGE: $0:t [-h] [-n] [gmake-flag...] [toolname]"; set pstatus = 1; goto cleanup'
+
 	## LLVMDIR is simply the directory where this script resides!
 set thisExec = $0		## cannot use :h on $0 for some reason
 set LLVMDIR = `echo {$thisExec:h} | sed 's/\/utils$//'`
 set EXEC = opt
+set GMAKE_OPTS = ""
+
+set doit = 1
+unset options_done
+while ( !( $?options_done ) && ($#argv > 0))
+    switch ($argv[1])
+	case -h :
+	    usage
+	case -n :
+	    set doit = 0; shift argv; breaksw
+	case -* :
+	    set GMAKE_OPTS = ( $GMAKE_OPTS $argv[1] ); shift argv; breaksw
+	default :
+	    set options_done; breaksw
+    endsw
+end
 
 if ($#argv > 0) then
-    if ($argv[1] == "-h") then
-	echo 'USAGE: makellvm [toolname]   (toolname defaults to "opt").'
-	exit 0
-    endif
     set EXEC = $argv[1]
 endif
 
-gmake && (cd $LLVMDIR/tools/$EXEC && gmake)
+set CMD = "gmake $GMAKE_OPTS && (cd $LLVMDIR/tools/$EXEC && gmake $GMAKE_OPTS)"
+
+if ($doit == 1) then
+    csh -f -c "$CMD"
+else
+    echo '(NOT EXECUTING) COMMAND:'
+    echo "  $CMD"
+endif
+
+
+#=========================================================
+# CODE TO BE EXECUTED IF INTERRUPT IS RECEIVED
+#=========================================================
+cleanup:
+    exit($pstatus)
