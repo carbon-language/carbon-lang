@@ -20,7 +20,6 @@ protected:
   std::vector<Use> Operands;
 public:
   User(const Type *Ty, ValueTy vty, const std::string &name = "");
-  virtual ~User() { dropAllReferences(); }
 
   inline Value *getOperand(unsigned i) { 
     assert(i < Operands.size() && "getOperand() out of range!");

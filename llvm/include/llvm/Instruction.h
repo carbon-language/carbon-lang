@@ -30,9 +30,6 @@ protected:
   Instruction(const Type *Ty, unsigned iType, const std::string &Name = "",
               Instruction *InsertBefore = 0);
 public:
-  virtual ~Instruction() {
-    assert(Parent == 0 && "Instruction still embedded in basic block!");
-  }
 
   // Specialize setName to handle symbol table majik...
   virtual void setName(const std::string &name, SymbolTable *ST = 0);
