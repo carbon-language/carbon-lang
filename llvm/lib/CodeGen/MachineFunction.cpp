@@ -26,7 +26,10 @@
 #include "llvm/iOther.h"
 #include "llvm/Type.h"
 #include "Support/LeakDetector.h"
+#include "Support/GraphWriter.h"
+#include <fstream>
 #include <iostream>
+#include <sstream>
 
 using namespace llvm;
 
@@ -138,6 +141,80 @@ void MachineFunction::print(std::ostream &OS) const {
     BB->print(OS);
 
   OS << "\n# End machine code for " << Fn->getName () << "().\n\n";
+}
+
+/// CFGOnly flag - This is used to control whether or not the CFG graph printer
+/// prints out the contents of basic blocks or not.  This is acceptable because
+/// this code is only really used for debugging purposes.
+///
+static bool CFGOnly = false;
+
+namespace llvm {
+template<>
+struct DOTGraphTraits<const MachineFunction*> : public DefaultDOTGraphTraits {
+  static std::string getGraphName(const MachineFunction *F) {
+    return "CFG for '" + F->getFunction()->getName() + "' function";
+  }
+
+  static std::string getNodeLabel(const MachineBasicBlock *Node,
+                                  const MachineFunction *Graph) {
+    if (CFGOnly && Node->getBasicBlock() &&
+        !Node->getBasicBlock()->getName().empty())
+      return Node->getBasicBlock()->getName() + ":";
+
+    std::ostringstream Out;
+    if (CFGOnly) {
+      Out << Node->getNumber() << ':';
+      return Out.str();
+    }
+
+    Node->print(Out);
+
+    std::string OutStr = Out.str();
+    if (OutStr[0] == '\n') OutStr.erase(OutStr.begin());
+
+    // Process string output to make it nicer...
+    for (unsigned i = 0; i != OutStr.length(); ++i)
+      if (OutStr[i] == '\n') {                            // Left justify
+        OutStr[i] = '\\';
+        OutStr.insert(OutStr.begin()+i+1, 'l');
+      }
+    return OutStr;
+  }
+};
+}
+
+void MachineFunction::viewCFG() const
+{
+  std::string Filename = "/tmp/cfg." + getFunction()->getName() + ".dot";
+  std::cerr << "Writing '" << Filename << "'... ";
+  std::ofstream F(Filename.c_str());
+  
+  if (!F) {
+    std::cerr << "  error opening file for writing!\n";
+    return;
+  }
+
+  WriteGraph(F, this);
+  F.close();
+  std::cerr << "\n";
+
+  std::cerr << "Running 'dot' program... " << std::flush;
+  if (system(("dot -Tps -Nfontname=Courier -Gsize=7.5,10 " + Filename
+              + " > /tmp/cfg.tempgraph.ps").c_str())) {
+    std::cerr << "Error running dot: 'dot' not in path?\n";
+  } else {
+    std::cerr << "\n";
+    system("gv /tmp/cfg.tempgraph.ps");
+  }
+  system(("rm " + Filename + " /tmp/cfg.tempgraph.ps").c_str());
+}
+
+void MachineFunction::viewCFGOnly() const
+{
+  CFGOnly = true;
+  viewCFG();
+  CFGOnly = false;
 }
 
 // The next two methods are used to construct and to retrieve
@@ -405,4 +482,3 @@ MachineFunctionInfo::pushTempValue(unsigned size)
 void MachineFunctionInfo::popAllTempValues() {
   resetTmpAreaSize();            // clear tmp area to reuse
 }
-

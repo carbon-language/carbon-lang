@@ -135,6 +135,21 @@ public:
   ///
   void print(std::ostream &OS) const;
 
+  /// viewCFG - This function is meant for use from the debugger.  You can just
+  /// say 'call F->viewCFG()' and a ghostview window should pop up from the
+  /// program, displaying the CFG of the current function with the code for each
+  /// basic block inside.  This depends on there being a 'dot' and 'gv' program
+  /// in your path.
+  ///
+  void viewCFG() const;
+  
+  /// viewCFGOnly - This function is meant for use from the debugger.  It works
+  /// just like viewCFG, but it does not include the contents of basic blocks
+  /// into the nodes, just the label.  If you are only interested in the CFG
+  /// this can make the graph smaller.
+  ///
+  void viewCFGOnly() const;
+
   /// dump - Print the current MachineFunction to cerr, useful for debugger use.
   ///
   void dump() const;
@@ -203,6 +218,57 @@ public:
   void removeFromMBBNumbering(unsigned N) {
     assert(N < MBBNumbering.size() && "Illegal basic block #");
     MBBNumbering[N] = 0;
+  }
+};
+
+//===--------------------------------------------------------------------===//
+// GraphTraits specializations for function basic block graphs (CFGs)
+//===--------------------------------------------------------------------===//
+
+// Provide specializations of GraphTraits to be able to treat a
+// machine function as a graph of machine basic blocks... these are
+// the same as the machine basic block iterators, except that the root
+// node is implicitly the first node of the function.
+//
+template <> struct GraphTraits<MachineFunction*> :
+  public GraphTraits<MachineBasicBlock*> {
+  static NodeType *getEntryNode(MachineFunction *F) {
+    return &F->front();
+  }
+
+  // nodes_iterator/begin/end - Allow iteration over all nodes in the graph
+  typedef MachineFunction::iterator nodes_iterator;
+  static nodes_iterator nodes_begin(MachineFunction *F) { return F->begin(); }
+  static nodes_iterator nodes_end  (MachineFunction *F) { return F->end(); }
+};
+template <> struct GraphTraits<const MachineFunction*> :
+  public GraphTraits<const MachineBasicBlock*> {
+  static NodeType *getEntryNode(const MachineFunction *F) {
+    return &F->front();
+  }
+
+  // nodes_iterator/begin/end - Allow iteration over all nodes in the graph
+  typedef MachineFunction::const_iterator nodes_iterator;
+  static nodes_iterator nodes_begin(const MachineFunction *F) { return F->begin(); }
+  static nodes_iterator nodes_end  (const MachineFunction *F) { return F->end(); }
+};
+
+
+// Provide specializations of GraphTraits to be able to treat a function as a 
+// graph of basic blocks... and to walk it in inverse order.  Inverse order for
+// a function is considered to be when traversing the predecessor edges of a BB
+// instead of the successor edges.
+//
+template <> struct GraphTraits<Inverse<MachineFunction*> > :
+  public GraphTraits<Inverse<MachineBasicBlock*> > {
+  static NodeType *getEntryNode(Inverse<MachineFunction*> G) {
+    return &G.Graph->front();
+  }
+};
+template <> struct GraphTraits<Inverse<const MachineFunction*> > :
+  public GraphTraits<Inverse<const MachineBasicBlock*> > {
+  static NodeType *getEntryNode(Inverse<const MachineFunction *> G) {
+    return &G.Graph->front();
   }
 };
 
