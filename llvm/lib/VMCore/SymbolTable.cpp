@@ -17,6 +17,7 @@
 #include "llvm/Module.h"
 #include "Support/StringExtras.h"
 #include <algorithm>
+#include <iostream>
 
 using namespace llvm;
 
@@ -86,14 +87,13 @@ Value *SymbolTable::lookup(const Type *Ty, const std::string &Name) const {
 Type* SymbolTable::lookupType( const std::string& Name ) const {
   type_const_iterator TI = tmap.find( Name );
   if ( TI != tmap.end() )
-    return TI->second;
+    return const_cast<Type*>(TI->second);
   return 0;
 }
 
 // Remove a value
 void SymbolTable::remove(Value *N) {
   assert(N->hasName() && "Value doesn't have name!");
-  assert(!isa<Type>(N) && "Can't remove types through this interface.");
   if (InternallyInconsistent) return;
 
   plane_iterator PI = pmap.find(N->getType());
@@ -110,7 +110,6 @@ Value *SymbolTable::removeEntry(plane_iterator Plane, value_iterator Entry) {
          Entry != Plane->second.end() && "Invalid entry to remove!");
 
   Value *Result = Entry->second;
-  assert(!isa<Type>(Result) && "Can't remove types through this interface.");
 #if DEBUG_SYMBOL_TABLE
   dump();
   std::cerr << " Removing Value: " << Result->getName() << "\n";
@@ -139,7 +138,7 @@ Value *SymbolTable::removeEntry(plane_iterator Plane, value_iterator Entry) {
 
 
 // remove - Remove a type
-void SymbolTable::remove(Type* Ty ) {
+void SymbolTable::remove(const Type* Ty ) {
   type_iterator TI = this->type_begin();
   type_iterator TE = this->type_end();
 
@@ -157,7 +156,7 @@ Type* SymbolTable::removeEntry(type_iterator Entry) {
   if (InternallyInconsistent) return 0;
   assert( Entry != tmap.end() && "Invalid entry to remove!");
 
-  Type* Result = Entry->second;
+  const Type* Result = Entry->second;
 
 #if DEBUG_SYMBOL_TABLE
   dump();
@@ -175,14 +174,13 @@ Type* SymbolTable::removeEntry(type_iterator Entry) {
     cast<DerivedType>(Result)->removeAbstractTypeUser(this);
   }
 
-  return Result;
+  return const_cast<Type*>(Result);
 }
 
 
 // insertEntry - Insert a value into the symbol table with the specified name.
 void SymbolTable::insertEntry(const std::string &Name, const Type *VTy,
                               Value *V) {
-  assert(!isa<Type>(V) && "Can't insert types through this interface.");
   // Check to see if there is a naming conflict.  If so, rename this value!
   if (lookup(VTy, Name)) {
     std::string UniqueName = getUniqueName(VTy, Name);
@@ -225,7 +223,7 @@ void SymbolTable::insertEntry(const std::string &Name, const Type *VTy,
 // insertEntry - Insert a value into the symbol table with the specified
 // name...
 //
-void SymbolTable::insertEntry(const std::string& Name, Type* T) {
+void SymbolTable::insertEntry(const std::string& Name, const Type* T) {
 
   // Check to see if there is a naming conflict.  If so, rename this type!
   std::string UniqueName = Name;
@@ -261,7 +259,6 @@ unsigned SymbolTable::type_size(const Type *Ty) const {
 
 // Get the name of a value
 std::string SymbolTable::get_name( const Value* V ) const {
-  assert(!isa<Type>(V) && "Can't get name of types through this interface.");
   value_const_iterator VI = this->value_begin( V->getType() );
   value_const_iterator VE = this->value_end( V->getType() );
 
@@ -318,7 +315,7 @@ bool SymbolTable::strip( void ) {
   }
 
   for (type_iterator TI = tmap.begin(); TI != tmap.end(); ) {
-    Type* T = (TI++)->second;
+    const Type* T = (TI++)->second;
     remove(T);
     RemovedSymbol = true;
   }
@@ -483,7 +480,7 @@ static void DumpPlane(const std::pair<const Type *,
   for_each(P.second.begin(), P.second.end(), DumpVal);
 }
 
-static void DumpTypes(const std::pair<const std::string, Type*>& T ) {
+static void DumpTypes(const std::pair<const std::string, const Type*>& T ) {
   std::cerr << "  '" << T.first << "' = ";
   T.second->dump();
   std::cerr << "\n";
