@@ -7,11 +7,11 @@
 # 
 #===------------------------------------------------------------------------===#
 
-include $(top_srcdir)/Makefile.rules.am
+include $(top_srcdir)/Makefile_config
 
-lib_LIBRARIES = libexecve.a
+lib_LTLIBRARIES = libexecve.la
 
-libexecve_a_SOURCES = ExecveHandler.c StorageProxy.c SysUtils.c
+libexecve_la_SOURCES = ExecveHandler.c StorageProxy.c SysUtils.c
 
 all: llee
 

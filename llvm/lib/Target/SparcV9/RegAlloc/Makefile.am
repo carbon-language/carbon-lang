@@ -7,10 +7,9 @@
 # 
 #===------------------------------------------------------------------------===#
 
-include $(top_srcdir)/Makefile.rules.am
+include $(top_srcdir)/Makefile_config
 
 lib_LIBRARIES = libLLVMSparcV9RegAlloc.a
-libexec_PROGRAMS = LLVMSparcV9RegAlloc.o
 
 MYSOURCES = \
   IGNode.cpp \
@@ -20,5 +19,5 @@ MYSOURCES = \
   RegClass.cpp
 
 libLLVMSparcV9RegAlloc_a_SOURCES = $(MYSOURCES)
-LLVMSparcV9RegAlloc_o_SOURCES = $(MYSOURCES)
-LIBS=
+
+PRELINK=libLLVMSparcV9RegAlloc.a

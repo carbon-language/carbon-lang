@@ -7,10 +7,9 @@
 # 
 #===------------------------------------------------------------------------===#
 
-include $(top_srcdir)/Makefile.rules.am
+include $(top_srcdir)/Makefile_config
 
 lib_LIBRARIES = libLLVMSparcV9InstrSched.a
-libexec_PROGRAMS = LLVMSparcV9InstrSched.o
 
 MYSOURCES = \
   InstrScheduling.cpp \
@@ -19,5 +18,5 @@ MYSOURCES = \
   SchedPriorities.cpp
 
 libLLVMSparcV9InstrSched_a_SOURCES = $(MYSOURCES)
-LLVMSparcV9InstrSched_o_SOURCES = $(MYSOURCES)
-LIBS=
+
+PRELINK=libLLVMSparcV9InstrSched.a

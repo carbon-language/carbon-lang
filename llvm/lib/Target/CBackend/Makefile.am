@@ -7,9 +7,10 @@
 # 
 #===------------------------------------------------------------------------===#
 
-include $(top_srcdir)/Makefile.rules.am
+include $(top_srcdir)/Makefile_config
 
-libexec_PROGRAMS = LLVMCWriter.o
+lib_LIBRARIES = libLLVMCWriter.a
 
-LLVMCWriter_o_SOURCES = Writer.cpp
-LIBS=
+libLLVMCWriter_a_SOURCES = Writer.cpp
+
+PRELINK=libLLVMCWriter.a

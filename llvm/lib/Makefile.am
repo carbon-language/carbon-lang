@@ -7,7 +7,7 @@
 # 
 #===------------------------------------------------------------------------===#
 
-include $(top_srcdir)/Makefile.rules.am
+include $(top_srcdir)/Makefile_config
 
-SUBDIRS = Analysis AsmParser Bytecode CodeGen Debugger ExecutionEngine Target \
-          Transforms VMCore
+SUBDIRS = VMCore Bytecode AsmParser Analysis Transforms CodeGen Target \
+          ExecutionEngine Debugger

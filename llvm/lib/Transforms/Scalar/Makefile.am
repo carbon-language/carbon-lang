@@ -7,10 +7,10 @@
 # 
 #===------------------------------------------------------------------------===#
 
-include $(top_srcdir)/Makefile.rules.am
+include $(top_srcdir)/Makefile_config
 
 lib_LIBRARIES = libLLVMScalarOpts.a
-libexec_PROGRAMS = LLVMScalarOpts.o
+PRELINK=libLLVMScalarOpts.a
 
 MYSOURCES = \
   ADCE.cpp \
@@ -46,5 +46,3 @@ MYSOURCES = \
 
 libLLVMScalarOpts_a_SOURCES = $(MYSOURCES)
 
-LLVMScalarOpts_o_SOURCES = $(MYSOURCES)
-LIBS=

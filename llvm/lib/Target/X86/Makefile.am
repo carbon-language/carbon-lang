@@ -7,9 +7,9 @@
 # 
 #===------------------------------------------------------------------------===#
 
-include $(top_srcdir)/Makefile.rules.am
+include $(top_srcdir)/Makefile_config
 
-libexec_PROGRAMS = LLVMX86.o
+lib_LIBRARIES = libLLVMX86.a
 
 BUILT_SOURCES = \
   X86GenRegisterInfo.h.inc \
@@ -20,7 +20,7 @@ BUILT_SOURCES = \
   X86GenATTAsmWriter.inc \
   X86GenIntelAsmWriter.inc
 
-LLVMX86_o_SOURCES = \
+libLLVMX86_a_SOURCES = \
   X86AsmPrinter.cpp \
   X86CodeEmitter.cpp \
   X86FloatingPoint.cpp \
@@ -31,6 +31,6 @@ LLVMX86_o_SOURCES = \
   X86RegisterInfo.cpp \
   X86TargetMachine.cpp
 
-LIBS=
+PRELINK=libLLVMX86.a
 
 $(BUILT_SOURCES) : $(LLVM_TDFILES) $(TBLGEN)

@@ -8,9 +8,9 @@
 #===------------------------------------------------------------------------===#
 
 
-include $(top_srcdir)/Makefile.rules.am
+include $(top_srcdir)/Makefile_config
 
-libexec_PROGRAMS = LLVMSkeleton.o
+lib_LIBRARIES = libLLVMSkeleton.a
 
 BUILT_SOURCES = \
   SkeletonGenRegisterInfo.h.inc \
@@ -19,13 +19,13 @@ BUILT_SOURCES = \
   SkeletonGenInstrNames.inc \
   SkeletonGenInstrInfo.inc
 
-LLVMSkeleton_o_SOURCES = \
+libLLVMSkeleton_a_SOURCES = \
   SkeletonInstrInfo.cpp \
   SkeletonJITInfo.cpp \
   SkeletonRegisterInfo.cpp \
   SkeletonTargetMachine.cpp \
   $(BUILT_SOURCES)
 
-LIBS=
+PRELINK=libLLVMSkeleton.a
 
 $(BUILT_SOURCES) : $(TDFILES) $(TBLGEN)

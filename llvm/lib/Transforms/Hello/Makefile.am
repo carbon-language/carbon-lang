@@ -7,9 +7,9 @@
 # 
 #===------------------------------------------------------------------------===#
 
-include $(top_srcdir)/Makefile.rules.am
+include $(top_srcdir)/Makefile_config
 
-libexec_PROGRAMS = LLVMHello.o
+lib_LIBRARIES = libLLVMHello.a
 
-LLVMHello_o_SOURCES = Hello.cpp
-LIBS=
+libLLVMHello_a_SOURCES = Hello.cpp
+PRELINK=libLLVMHello.a

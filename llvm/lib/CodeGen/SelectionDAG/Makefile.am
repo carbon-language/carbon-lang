@@ -7,9 +7,10 @@
 # 
 #===------------------------------------------------------------------------===#
 
-include $(top_srcdir)/Makefile.rules.am
+include $(top_srcdir)/Makefile_config
 
-libexec_PROGRAMS = LLVMSelectionDAG.o
+lib_LIBRARIES = libLLVMSelectionDAG.a
 
-LLVMSelectionDAG_o_SOURCES = DAGBuilder.cpp SelectionDAG.cpp
-LIBS=
+libLLVMSelectionDAG_a_SOURCES = DAGBuilder.cpp SelectionDAG.cpp
+
+PRELINK=libLLVMSelectionDAG.a

@@ -7,15 +7,15 @@
 # 
 #===------------------------------------------------------------------------===#
 
-include $(top_srcdir)/Makefile.rules.am
+include $(top_srcdir)/Makefile_config
 
-libexec_PROGRAMS = LLVMBCReader.o
+lib_LIBRARIES = libLLVMBCReader.a
 
-LLVMBCReader_o_SOURCES = \
+libLLVMBCReader_a_SOURCES = \
   Analyzer.cpp \
   ArchiveReader.cpp \
   LibraryReader.cpp \
   Reader.cpp \
   ReaderWrappers.cpp
 
-LIBS=
+PRELINK=libLLVMBCReader.a

@@ -7,11 +7,11 @@
 # 
 #===------------------------------------------------------------------------===#
 
-include $(top_srcdir)/Makefile.rules.am
+include $(top_srcdir)/Makefile_config
 
-libexec_PROGRAMS = LLVMInterpreter.o
+lib_LIBRARIES = libLLVMInterpreter.a
 
-LLVMInterpreter_o_SOURCES = \
+libLLVMInterpreter_a_SOURCES = \
   Execution.cpp ExternalFunctions.cpp Interpreter.cpp
 
-LIBS=
+PRELINK=libLLVMInterpreter.a

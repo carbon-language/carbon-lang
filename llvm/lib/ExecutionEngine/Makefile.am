@@ -7,11 +7,12 @@
 # 
 #===------------------------------------------------------------------------===#
 
-include $(top_srcdir)/Makefile.rules.am
+include $(top_srcdir)/Makefile_config
 
 SUBDIRS = Interpreter JIT
 
-libexec_PROGRAMS = LLVMExecutionEngine.o
+lib_LIBRARIES = libLLVMExecutionEngine.a
 
-LLVMExecutionEngine_o_SOURCES = ExecutionEngine.cpp
-LIBS=
+libLLVMExecutionEngine_a_SOURCES = ExecutionEngine.cpp
+
+PRELINK=libLLVMExecutionEngine.a

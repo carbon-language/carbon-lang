@@ -7,11 +7,11 @@
 # 
 #===------------------------------------------------------------------------===#
 
-include $(top_srcdir)/Makefile.rules.am
+include $(top_srcdir)/Makefile_config
 
-libexec_PROGRAMS = LLVMCore.o
+lib_LIBRARIES = libLLVMCore.a
 
-LLVMCore_o_SOURCES = \
+libLLVMCore_a_SOURCES = \
   AsmWriter.cpp \
   BasicBlock.cpp \
   ConstantFolding.cpp \
@@ -34,4 +34,4 @@ LLVMCore_o_SOURCES = \
   Value.cpp \
   Verifier.cpp
 
-LIBS=
+PRELINK=libLLVMCore.a

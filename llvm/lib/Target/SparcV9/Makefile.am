@@ -7,17 +7,17 @@
 # 
 #===------------------------------------------------------------------------===#
 
-include $(top_srcdir)/Makefile.rules.am
+include $(top_srcdir)/Makefile_config
 
 SUBDIRS = InstrSched LiveVar ModuloScheduling RegAlloc
 
-libexec_PROGRAMS = LLVMSparcV9.o
+lib_LIBRARIES = libLLVMSparcV9.a
 
 BUILT_SOURCES = \
   SparcV9CodeEmitter.inc \
   SparcV9.burm.cpp 
 
-LLVMSparcV9_o_SOURCES = \
+libLLVMSparcV9_a_SOURCES = \
   EmitBytecodeToAssembly.cpp \
   InternalGlobalMapper.cpp \
   MachineCodeForInstruction.cpp \
@@ -39,7 +39,7 @@ LLVMSparcV9_o_SOURCES = \
   SparcV9TmpInstr.cpp \
   $(BUILT_SOURCES)
 
-LIBS=
+PRELINK=libLLVMSparcV9.a
 
 SparcV9.burg.in1 : SparcV9.burg.in
 	$(CXX) -E $(AM_CPPFLAGS) -x c++ $< | $(SED) '/^#/d' | $(SED) 's/Ydefine/#define/' > $@

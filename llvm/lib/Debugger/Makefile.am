@@ -7,11 +7,11 @@
 # 
 #===------------------------------------------------------------------------===#
 
-include $(top_srcdir)/Makefile.rules.am
+include $(top_srcdir)/Makefile_config
 
-libexec_PROGRAMS = LLVMDebugger.o
+lib_LIBRARIES = libLLVMDebugger.a
 
-LLVMDebugger_o_SOURCES = \
+libLLVMDebugger_a_SOURCES = \
   Debugger.cpp \
   ProgramInfo.cpp \
   RuntimeInfo.cpp \
@@ -22,4 +22,4 @@ LLVMDebugger_o_SOURCES = \
   SourceLanguage-Unknown.cpp \
   UnixLocalInferiorProcess.cpp
 
-LIBS=
+PRELINK=libLLVMDebugger.a

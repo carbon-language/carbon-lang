@@ -7,10 +7,9 @@
 # 
 #===------------------------------------------------------------------------===#
 
-include $(top_srcdir)/Makefile.rules.am
+include $(top_srcdir)/Makefile_config
 
 lib_LIBRARIES = libLLVMTransformUtils.a
-libexec_PROGRAMS = LLVMTransformUtils.o
 
 MYSOURCES = \
   BasicBlockUtils.cpp \
@@ -28,5 +27,5 @@ MYSOURCES = \
   ValueMapper.cpp
 
 libLLVMTransformUtils_a_SOURCES = $(MYSOURCES)
-LLVMTransformUtils_o_SOURCES = $(MYSOURCES)
-LIBS=
+
+PRELINK=libLLVMTransformUtils.a

@@ -7,12 +7,13 @@
 # 
 #===------------------------------------------------------------------------===#
 
-include $(top_srcdir)/Makefile.rules.am
+include $(top_srcdir)/Makefile_config
 
-libexec_PROGRAMS = LLVMJIT.o
+lib_LIBRARIES = libLLVMJIT.a
 
-LLVMJIT_o_SOURCES = Emitter.cpp Intercept.cpp JIT.cpp TargetSelect.cpp
-LIBS=
+libLLVMJIT_a_SOURCES = Emitter.cpp Intercept.cpp JIT.cpp TargetSelect.cpp
+
+PRELINK=libLLVMJIT.a
 
 # Enable the X86 JIT if compiling on X86
 if ARCH_X86

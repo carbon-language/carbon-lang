@@ -7,10 +7,9 @@
 # 
 #===------------------------------------------------------------------------===#
 
-include $(top_srcdir)/Makefile.rules.am
+include $(top_srcdir)/Makefile_config
 
 lib_LIBRARIES = libLLVMProfilePaths.a
-libexec_PROGRAMS = LLVMProfilePaths.o
 
 MYSOURCES= \
   CombineBranch.cpp \
@@ -22,5 +21,5 @@ MYSOURCES= \
   RetracePath.cpp
 
 libLLVMProfilePaths_a_SOURCES = $(MYSOURCES)
-LLVMProfilePaths_o_SOURCES = $(MYSOURCES)
-LIBS=
+
+PRELINK=libLLVMProfilePaths.a

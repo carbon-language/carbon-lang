@@ -7,10 +7,9 @@
 # 
 #===------------------------------------------------------------------------===#
 
-include $(top_srcdir)/Makefile.rules.am
+include $(top_srcdir)/Makefile_config
 
-lib_LIBRARIES = libLLVMIPA.a
-libexec_PROGRAMS = LLVMIPA.o
+lib_LIBRARIES = libLLVMIPA.a 
 
 MYSOURCES = \
   Andersens.cpp \
@@ -20,6 +19,7 @@ MYSOURCES = \
   FindUsedTypes.cpp \
   GlobalsModRef.cpp \
   PrintSCC.cpp
+
 libLLVMIPA_a_SOURCES = $(MYSOURCES)
-LLVMIPA_o_SOURCES = $(MYSOURCES)
-LIBS=
+
+PRELINK=libLLVMIPA.a

@@ -7,10 +7,9 @@
 # 
 #===------------------------------------------------------------------------===#
 
-include $(top_srcdir)/Makefile.rules.am
+include $(top_srcdir)/Makefile_config
 
 lib_LIBRARIES = libLLVMDataStructure.a
-libexec_PROGRAMS = LLVMDataStructure.o
 
 MYSOURCES = \
   BottomUpClosure.cpp\
@@ -31,5 +30,4 @@ MYSOURCES = \
   TopDownClosure.cpp
 
 libLLVMDataStructure_a_SOURCES = $(MYSOURCES)
-LLVMDataStructure_o_SOURCES = $(MYSOURCES)
-LIBS=
+PRELINK=libLLVMDataStructure.a

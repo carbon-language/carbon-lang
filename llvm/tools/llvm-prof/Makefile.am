@@ -7,7 +7,7 @@
 # 
 #===------------------------------------------------------------------------===#
 
-include $(top_srcdir)/Makefile.rules.am
+include $(top_srcdir)/Makefile_config
 
 bin_PROGRAMS = llvm-prof
 

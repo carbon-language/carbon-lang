@@ -7,7 +7,7 @@
 # 
 #===------------------------------------------------------------------------===#
 
-include $(top_srcdir)/Makefile.rules.am
+include $(top_srcdir)/Makefile_config
 
 SUBDIRS = analyze llvmc bugpoint extract gccas gccld llvm-bcanalyzer llc \
           llee lli llvm-ar llvm-as llvm-db llvm-dis llvm-link llvm-nm \

@@ -7,15 +7,14 @@
 # 
 #===------------------------------------------------------------------------===#
 
-include $(top_srcdir)/Makefile.rules.am
+include $(top_srcdir)/Makefile_config
 
 SUBDIRS = Utils Instrumentation Scalar IPO
 
 lib_LIBRARIES = libLLVMTransforms.a
-libexec_PROGRAMS = LLVMTransforms.o
 
 MYSOURCES = ExprTypeConvert.cpp LevelRaise.cpp TransformInternals.cpp
 
 libLLVMTransforms_a_SOURCES = $(MYSOURCES)
-LLVMTransforms_o_SOURCES = $(MYSOURCES)
-LIBS=
+
+PRELINK=libLLVMTransforms.a

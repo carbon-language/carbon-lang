@@ -7,7 +7,7 @@
 # 
 #===------------------------------------------------------------------------===#
 
-include $(top_srcdir)/Makefile.rules.am
+include $(top_srcdir)/Makefile_config
 
 bin_PROGRAMS = analyze
 
@@ -15,9 +15,6 @@ analyze_SOURCES = \
   AnalysisWrappers.cpp \
   analyze.cpp \
   GraphPrinters.cpp
-
-#USEDLIBS = asmparser bcreader analysis ipa datastructure scalaropts.a transforms.a \
-#           target.a scalaropts.a transformutils.a vmcore support LLVMsystem.a
 
 analyze_LDADD = \
   $(call GETOBJS,AsmParser,BCReader,Core) \

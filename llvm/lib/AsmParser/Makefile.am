@@ -7,13 +7,14 @@
 # 
 #===------------------------------------------------------------------------===#
 
-include $(top_srcdir)/Makefile.rules.am
+include $(top_srcdir)/Makefile_config
 
-libexec_PROGRAMS = LLVMAsmParser.o
+lib_LIBRARIES = libLLVMAsmParser.a
 
 BUILT_SOURCES = llvmAsmParser.cpp Lexer.cpp llvmAsmParser.h
 
-LLVMAsmParser_o_SOURCES = Parser.cpp $(BUILT_SOURCES)
-LIBS=
+libLLVMAsmParser_a_SOURCES = Parser.cpp $(BUILT_SOURCES)
+
+PRELINK=libLLVMAsmParser.a
 
 Lexer.o: llvmAsmParser.h

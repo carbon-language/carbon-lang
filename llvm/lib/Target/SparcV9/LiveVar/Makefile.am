@@ -7,10 +7,9 @@
 # 
 #===------------------------------------------------------------------------===#
 
-include $(top_srcdir)/Makefile.rules.am
+include $(top_srcdir)/Makefile_config
 
 lib_LIBRARIES = libLLVMSparcV9LiveVar.a
-libexec_PROGRAMS = LLVMSparcV9LiveVar.o
 
 MYSOURCES = \
   BBLiveVar.cpp \
@@ -18,5 +17,5 @@ MYSOURCES = \
   ValueSet.cpp
 
 libLLVMSparcV9LiveVar_a_SOURCES = $(MYSOURCES)
-LLVMSparcV9LiveVar_o_SOURCES = $(MYSOURCES)
-LIBS=
+
+PRELINK=libLLVMSparcV9LiveVar.a

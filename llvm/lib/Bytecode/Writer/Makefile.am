@@ -7,9 +7,9 @@
 # 
 #===------------------------------------------------------------------------===#
 
-include $(top_srcdir)/Makefile.rules.am
+include $(top_srcdir)/Makefile_config
 
-libexec_PROGRAMS = LLVMBCWriter.o
+lib_LIBRARIES = libLLVMBCWriter.a
 
-LLVMBCWriter_o_SOURCES = SlotCalculator.cpp Writer.cpp
-LIBS=
+libLLVMBCWriter_a_SOURCES = SlotCalculator.cpp Writer.cpp
+PRELINK=libLLVMBCWriter.a

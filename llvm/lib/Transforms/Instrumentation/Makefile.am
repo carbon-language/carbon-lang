@@ -7,12 +7,11 @@
 # 
 #===------------------------------------------------------------------------===#
 
-include $(top_srcdir)/Makefile.rules.am
+include $(top_srcdir)/Makefile_config
 
 SUBDIRS = ProfilePaths
 
 lib_LIBRARIES = libLLVMInstrument.a
-libexec_PROGRAMS = LLVMInstrument.o
 
 MYSOURCES = \
   BlockProfiling.cpp \
@@ -23,5 +22,5 @@ MYSOURCES = \
   TraceValues.cpp
 
 libLLVMInstrument_a_SOURCES = $(MYSOURCES)
-LLVMInstrument_o_SOURCES = $(MYSOURCES)
-LIBS=
+
+PRELINK=libLLVMInstrument.a

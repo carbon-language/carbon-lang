@@ -7,7 +7,7 @@
 # 
 #===------------------------------------------------------------------------===#
 
-include $(top_srcdir)/Makefile.rules.am
+include $(top_srcdir)/Makefile_config
 
 bin_PROGRAMS = bugpoint
 
@@ -22,6 +22,8 @@ bugpoint_SOURCES = \
   TestPasses.cpp
 
 bugpoint_LDADD = \
-  $(call GETOBJS,AsmParser,BCReader,BCWriter,Core,ProfilePaths) \
-  $(call GETLIBS,IPO,ScalarOpts,Analysis,Transforms,Instrument) \
-  $(call GETLIBS,DataStructure,IPA,Target,TransformUtils,Support,System)
+  $(call GETOBJS,IPO,ScalarOpts,Analysis,Transforms,Instrument,ProfilePaths) \
+  $(call GETOBJS,DataStructure,IPA) \
+  $(call GETLIBS,Target) \
+  $(call GETOBJS,TransformUtils,AsmParser,BCReader,BCWriter,Core) \
+  $(call GETLIBS,Support,System)

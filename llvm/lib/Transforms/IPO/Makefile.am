@@ -7,10 +7,9 @@
 # 
 #===------------------------------------------------------------------------===#
 
-include $(top_srcdir)/Makefile.rules.am
+include $(top_srcdir)/Makefile_config
 
 lib_LIBRARIES = libLLVMIPO.a
-libexec_PROGRAMS = LLVMIPO.o
 
 MYSOURCES= \
   ArgumentPromotion.cpp \
@@ -31,5 +30,5 @@ MYSOURCES= \
   RaiseAllocations.cpp
 
 libLLVMIPO_a_SOURCES = $(MYSOURCES)
-LLVMIPO_o_SOURCES = $(MYSOURCES)
-LIBS=
+
+PRELINK=libLLVMIPO.a

@@ -7,12 +7,11 @@
 # 
 #===------------------------------------------------------------------------===#
 
-include $(top_srcdir)/Makefile.rules.am
+include $(top_srcdir)/Makefile_config
 
 SUBDIRS = IPA DataStructure
 
 lib_LIBRARIES = libLLVMAnalysis.a
-libexec_PROGRAMS = LLVMAnalysis.o
 
 MYSOURCES = \
   AliasAnalysisCounter.cpp \
@@ -36,5 +35,4 @@ MYSOURCES = \
   ValueNumbering.cpp
 
 libLLVMAnalysis_a_SOURCES = $(MYSOURCES)
-LLVMAnalysis_o_SOURCES = $(MYSOURCES)
-LIBS=
+PRELINK=libLLVMAnalysis.a

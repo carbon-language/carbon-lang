@@ -7,13 +7,13 @@
 # 
 #===------------------------------------------------------------------------===#
 
-include $(top_srcdir)/Makefile.rules.am
+include $(top_srcdir)/Makefile_config
 
 SUBDIRS = SelectionDAG
 
-libexec_PROGRAMS = LLVMCodeGen.o
+lib_LIBRARIES = libLLVMCodeGen.a
 
-LLVMCodeGen_o_SOURCES = \
+libLLVMCodeGen_a_SOURCES = \
   AsmPrinter.cpp \
   BranchFolding.cpp \
   IntrinsicLowering.cpp \
@@ -35,4 +35,4 @@ LLVMCodeGen_o_SOURCES = \
   UnreachableBlockElim.cpp \
   VirtRegMap.cpp
 
-LIBS=
+PRELINK=libLLVMCodeGen.a

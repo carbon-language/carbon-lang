@@ -7,9 +7,9 @@
 # 
 #===------------------------------------------------------------------------===#
 
-include $(top_srcdir)/Makefile.rules.am
+include $(top_srcdir)/Makefile_config
 
-libexec_PROGRAMS = LLVMPowerPC.o
+lib_LIBRARIES = libLLVMPowerPC.a
 
 BUILT_SOURCES = \
   PowerPCGenInstrNames.inc \
@@ -23,7 +23,7 @@ BUILT_SOURCES = \
   PPC64GenRegisterInfo.inc \
   PPC64GenInstrInfo.inc
 
-LLVMPowerPC_o_SOURCES = \
+libLLVMPowerPC_a_SOURCES = \
   PowerPCAsmPrinter.cpp \
   PowerPCBranchSelector.cpp \
   PowerPCTargetMachine.cpp \
@@ -36,6 +36,6 @@ LLVMPowerPC_o_SOURCES = \
   PPC64ISelSimple.cpp \
   PPC64RegisterInfo.cpp
 
-LIBS=
+PRELINK=libLLVMPowerPC.a
 
 $(BUILT_SOURCES) : $(LLVM_TDFILES) $(TBLGEN)
