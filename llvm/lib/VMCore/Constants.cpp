@@ -1239,18 +1239,26 @@ Constant *ConstantExpr::getCast(Constant *C, const Type *Ty) {
 }
 
 Constant *ConstantExpr::getSignExtend(Constant *C, const Type *Ty) {
-  assert(C->getType()->isInteger() && Ty->isInteger() &&
+  assert(C->getType()->isIntegral() && Ty->isIntegral() &&
          C->getType()->getPrimitiveSize() <= Ty->getPrimitiveSize() &&
          "This is an illegal sign extension!");
-  C = ConstantExpr::getCast(C, C->getType()->getSignedVersion());
-  return ConstantExpr::getCast(C, Ty);
+  if (C->getType() != Type::BoolTy) {
+    C = ConstantExpr::getCast(C, C->getType()->getSignedVersion());
+    return ConstantExpr::getCast(C, Ty);
+  } else {
+    if (C == ConstantBool::True)
+      return ConstantIntegral::getAllOnesValue(Ty);
+    else
+      return ConstantIntegral::getNullValue(Ty);
+  }
 }
 
 Constant *ConstantExpr::getZeroExtend(Constant *C, const Type *Ty) {
-  assert(C->getType()->isInteger() && Ty->isInteger() &&
+  assert(C->getType()->isIntegral() && Ty->isIntegral() &&
          C->getType()->getPrimitiveSize() <= Ty->getPrimitiveSize() &&
          "This is an illegal zero extension!");
-  C = ConstantExpr::getCast(C, C->getType()->getUnsignedVersion());
+  if (C->getType() != Type::BoolTy)
+    C = ConstantExpr::getCast(C, C->getType()->getUnsignedVersion());
   return ConstantExpr::getCast(C, Ty);
 }
 
