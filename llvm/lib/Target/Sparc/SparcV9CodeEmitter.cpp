@@ -810,6 +810,7 @@ void* SparcV9CodeEmitter::getGlobalAddress(GlobalValue *V, MachineInstr &MI,
   }
 }
 
+#include "SparcV9CodeEmitter.inc"
+
 } // End llvm namespace
 
-#include "SparcV9CodeEmitter.inc"
