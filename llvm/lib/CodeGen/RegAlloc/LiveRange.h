@@ -49,6 +49,12 @@ class LiveRange : public ValueSet
 
   int SuggestedColor;        // The suggested color for this LR
 
+  // if this LR has a suggested color, can it be really alloated?
+  // A suggested color cannot be allocated when the suggested color is
+  // volatile and when there are call interferences.
+
+  bool CanUseSuggestedCol;
+
  public:
 
 
@@ -70,22 +76,14 @@ class LiveRange : public ValueSet
     { Color = (int) Col ; }
 
   
-  inline void setCallInterference() 
-    { doesSpanAcrossCalls = 1;
-      //CallInterferenceList.push_back( Inst ); 
-    }
-
-
-
-  /*
-  inline const Instruction *const getCallInterference(const unsigned i) const {
-    assert( i < CallInterferenceList.size() ); 
-    return CallInterferenceList[i];  
+  inline void setCallInterference() { 
+    doesSpanAcrossCalls = 1;
   }
-  */
 
-  inline bool isCallInterference() const 
-    { return (doesSpanAcrossCalls == 1); } 
+
+  inline bool isCallInterference() const { 
+    return (doesSpanAcrossCalls == 1); 
+  } 
 
   
   inline void markForSpill() { mustSpill = true; }
@@ -126,6 +124,17 @@ class LiveRange : public ValueSet
     return ( SuggestedColor > -1);
   }
 
+  inline bool isSuggestedColorUsable() const {
+    assert( hasSuggestedColor() && "No suggested color");
+    return CanUseSuggestedCol;
+  }
+
+  inline void setSuggestedColorUsable(const bool val) {
+    assert( hasSuggestedColor() && "No suggested color");
+    CanUseSuggestedCol = val;
+  }
+
+
   inline LiveRange() : ValueSet() /* , CallInterferenceList() */
     {
       Color = SuggestedColor = -1;      // not yet colored 
@@ -133,7 +142,7 @@ class LiveRange : public ValueSet
       MyRegClass = NULL;
       UserIGNode = NULL;
       doesSpanAcrossCalls = false;
-
+      CanUseSuggestedCol = true;
     }
 
 };
