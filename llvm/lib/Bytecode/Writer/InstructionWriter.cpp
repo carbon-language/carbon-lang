@@ -30,7 +30,8 @@ static void outputInstructionFormat0(const Instruction *I, unsigned Opcode,
   output_vbr(Type, Out);                         // Result type
 
   unsigned NumArgs = I->getNumOperands();
-  output_vbr(NumArgs + (isa<CastInst>(I) || isa<VarArgInst>(I)), Out);
+  output_vbr(NumArgs + (isa<CastInst>(I) || isa<VANextInst>(I) ||
+                        isa<VAArgInst>(I)), Out);
 
   for (unsigned i = 0; i < NumArgs; ++i) {
     int Slot = Table.getSlot(I->getOperand(i));
@@ -38,9 +39,13 @@ static void outputInstructionFormat0(const Instruction *I, unsigned Opcode,
     output_vbr((unsigned)Slot, Out);
   }
 
-  if (isa<CastInst>(I) || isa<VarArgInst>(I)) {
+  if (isa<CastInst>(I) || isa<VAArgInst>(I)) {
     int Slot = Table.getSlot(I->getType());
-    assert(Slot != -1 && "Cast/VarArg return type unknown?");
+    assert(Slot != -1 && "Cast return type unknown?");
+    output_vbr((unsigned)Slot, Out);
+  } else if (const VANextInst *VAI = dyn_cast<VANextInst>(I)) {
+    int Slot = Table.getSlot(VAI->getArgType());
+    assert(Slot != -1 && "VarArg argument type unknown?");
     output_vbr((unsigned)Slot, Out);
   }
 
@@ -65,29 +70,37 @@ static void outputInstrVarArgsCall(const Instruction *I, unsigned Opcode,
   output_vbr(Opcode << 2, Out);                  // Instruction Opcode ID
   output_vbr(Type, Out);                         // Result type (varargs type)
 
-  unsigned NumArgs = I->getNumOperands();
-  output_vbr(NumArgs*2, Out);
-  // TODO: Don't need to emit types for the fixed types of the varargs function
-  // prototype...
+  const PointerType *PTy = cast<PointerType>(I->getOperand(0)->getType());
+  const FunctionType *FTy = cast<FunctionType>(PTy->getElementType());
+  unsigned NumParams = FTy->getNumParams();
+
+  unsigned NumFixedOperands;
+  if (isa<CallInst>(I)) {
+    // Output an operand for the callee and each fixed argument, then two for
+    // each variable argument.
+    NumFixedOperands = 1+NumParams;
+  } else {
+    assert(isa<InvokeInst>(I) && "Not call or invoke??");
+    // Output an operand for the callee and destinations, then two for each
+    // variable argument.
+    NumFixedOperands = 3+NumParams;
+  }
+  output_vbr(2 * I->getNumOperands()-NumFixedOperands, Out);
 
   // The type for the function has already been emitted in the type field of the
   // instruction.  Just emit the slot # now.
-  int Slot = Table.getSlot(I->getOperand(0));
-  assert(Slot >= 0 && "No slot number for value!?!?");      
-  output_vbr((unsigned)Slot, Out);
-
-  // Output a dummy field to fill Arg#2 in the reader that is currently unused
-  // for varargs calls.  This is a gross hack to make the code simpler, but we
-  // aren't really doing very small bytecode for varargs calls anyways.
-  // FIXME in the future: Smaller bytecode for varargs calls
-  output_vbr(0, Out);
-
-  for (unsigned i = 1; i < NumArgs; ++i) {
-    // Output Arg Type ID
-    Slot = Table.getSlot(I->getOperand(i)->getType());
+  for (unsigned i = 0; i != NumFixedOperands; ++i) {
+    int Slot = Table.getSlot(I->getOperand(i));
     assert(Slot >= 0 && "No slot number for value!?!?");      
     output_vbr((unsigned)Slot, Out);
+  }
 
+  for (unsigned i = NumFixedOperands, e = I->getNumOperands(); i != e; ++i) {
+    // Output Arg Type ID
+    int Slot = Table.getSlot(I->getOperand(i)->getType());
+    assert(Slot >= 0 && "No slot number for value!?!?");      
+    output_vbr((unsigned)Slot, Out);
+    
     // Output arg ID itself
     Slot = Table.getSlot(I->getOperand(i));
     assert(Slot >= 0 && "No slot number for value!?!?");      
@@ -214,11 +227,16 @@ void BytecodeWriter::processInstruction(const Instruction &I) {
   if (Slot > MaxOpSlot) MaxOpSlot = Slot;
 
   // Handle the special case for cast...
-  if (isa<CastInst>(I) || isa<VarArgInst>(I)) {
+  if (isa<CastInst>(I) || isa<VAArgInst>(I)) {
     // Cast has to encode the destination type as the second argument in the
     // packet, or else we won't know what type to cast to!
     Slots[1] = Table.getSlot(I.getType());
     assert(Slots[1] != -1 && "Cast return type unknown?");
+    if (Slots[1] > MaxOpSlot) MaxOpSlot = Slots[1];
+    NumOperands++;
+  } else if (const VANextInst *VANI = dyn_cast<VANextInst>(&I)) {
+    Slots[1] = Table.getSlot(VANI->getArgType());
+    assert(Slots[1] != -1 && "va_next return type unknown?");
     if (Slots[1] > MaxOpSlot) MaxOpSlot = Slots[1];
     NumOperands++;
   } else if (const CallInst *CI = dyn_cast<CallInst>(&I)){// Handle VarArg calls
