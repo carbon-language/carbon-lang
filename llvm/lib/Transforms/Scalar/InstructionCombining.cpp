@@ -3002,12 +3002,12 @@ static bool isSafeToLoadUnconditionally(Value *V, Instruction *ScanFrom) {
 
   // Otherwise, be a little bit agressive by scanning the local block where we
   // want to check to see if the pointer is already being loaded or stored
-  // from/to.  If so, the previous load or store would hav already trapped, so
-  // there is no harm doing an extra load (also, CSE will later eliminate the
-  // load entirely).
+  // from/to.  If so, the previous load or store would have already trapped,
+  // so there is no harm doing an extra load (also, CSE will later eliminate
+  // the load entirely).
   BasicBlock::iterator BBI = ScanFrom, E = ScanFrom->getParent()->begin();
 
-  do {
+  while (BBI != E) {
     --BBI;
 
     if (LoadInst *LI = dyn_cast<LoadInst>(BBI)) {
@@ -3015,7 +3015,7 @@ static bool isSafeToLoadUnconditionally(Value *V, Instruction *ScanFrom) {
     } else if (StoreInst *SI = dyn_cast<StoreInst>(BBI))
       if (SI->getOperand(1) == V) return true;
     
-  } while (BBI != E);
+  }
   return false;
 }
 
