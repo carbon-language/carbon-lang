@@ -23,7 +23,7 @@
 // computations
 //
 static TargetData TD("lli Interpreter");
-CachedWriter CW;     // Object to accellerate printing of LLVM
+CachedWriter CW;     // Object to accelerate printing of LLVM
 
 
 sigjmp_buf SignalRecoverBuffer;
@@ -44,7 +44,7 @@ static void initializeSignalHandlers() {
   sigaction(SIGSEGV, &Action, 0);
   sigaction(SIGBUS, &Action, 0);
   sigaction(SIGINT, &Action, 0);
-  //sigaction(SIGFP, &Action, 0);
+  sigaction(SIGFPE, &Action, 0);
 }
 
 
@@ -78,7 +78,7 @@ static GenericValue getOperandValue(Value *V, ExecutionContext &SF) {
       GET_CONST_VAL(Double , ConstPoolFP);
     case Type::PointerTyID:
       if (isa<ConstPoolPointerNull>(CPV)) {
-        Result.ULongVal = 0;
+        Result.PointerVal = 0;
       } else if (ConstPoolPointerRef *CPR =dyn_cast<ConstPoolPointerRef>(CPV)) {
         assert(0 && "Not implemented!");
       } else {
@@ -93,7 +93,7 @@ static GenericValue getOperandValue(Value *V, ExecutionContext &SF) {
     GlobalAddress *Address = 
       (GlobalAddress*)GV->getOrCreateAnnotation(GlobalAddressAID);
     GenericValue Result;
-    Result.ULongVal = (uint64_t)(GenericValue*)Address->Ptr;
+    Result.PointerVal = (PointerTy)(GenericValue*)Address->Ptr;
     return Result;
   } else {
     unsigned TyP = V->getType()->getUniqueID();   // TypePlane for value
@@ -113,7 +113,16 @@ static void printOperandInfo(Value *V, ExecutionContext &SF) {
     unsigned TyP  = V->getType()->getUniqueID();   // TypePlane for value
     unsigned Slot = getOperandSlot(V);
     cout << "Value=" << (void*)V << " TypeID=" << TyP << " Slot=" << Slot
-         << " Addr=" << &SF.Values[TyP][Slot] << " SF=" << &SF << endl;
+         << " Addr=" << &SF.Values[TyP][Slot] << " SF=" << &SF
+         << " Contents=0x";
+
+    const unsigned char *Buf = (const unsigned char*)&SF.Values[TyP][Slot];
+    for (unsigned i = 0; i < sizeof(GenericValue); ++i) {
+      unsigned char Cur = Buf[i];
+      cout << ( Cur     >= 160? char((Cur>>4)+'A'-10) : char((Cur>>4) + '0'))
+           << ((Cur&15) >=  10? char((Cur&15)+'A'-10) : char((Cur&15) + '0'));
+    }
+    cout << endl;
   }
 }
 
@@ -232,7 +241,7 @@ Annotation *GlobalAddress::Create(AnnotationID AID, const Annotable *O, void *){
   }
 
   // Allocate enough memory to hold the type...
-  void *Addr = malloc(NumElements * TD.getTypeSize(Ty));
+  void *Addr = calloc(NumElements, TD.getTypeSize(Ty));
   assert(Addr != 0 && "Null pointer returned by malloc!");
 
   // Initialize the memory if there is an initializer...
@@ -359,8 +368,48 @@ static GenericValue executeRemInst(GenericValue Src1, GenericValue Src2,
   return Dest;
 }
 
-static GenericValue executeXorInst(GenericValue Src1, GenericValue Src2, 
+static GenericValue executeAndInst(GenericValue Src1, GenericValue Src2, 
 				   const Type *Ty, ExecutionContext &SF) {
+  GenericValue Dest;
+  switch (Ty->getPrimitiveID()) {
+    IMPLEMENT_BINARY_OPERATOR(&, UByte);
+    IMPLEMENT_BINARY_OPERATOR(&, SByte);
+    IMPLEMENT_BINARY_OPERATOR(&, UShort);
+    IMPLEMENT_BINARY_OPERATOR(&, Short);
+    IMPLEMENT_BINARY_OPERATOR(&, UInt);
+    IMPLEMENT_BINARY_OPERATOR(&, Int);
+    IMPLEMENT_BINARY_OPERATOR(&, ULong);
+    IMPLEMENT_BINARY_OPERATOR(&, Long);
+    IMPLEMENT_BINARY_OPERATOR(&, Pointer);
+  default:
+    cout << "Unhandled type for And instruction: " << Ty << endl;
+  }
+  return Dest;
+}
+
+
+static GenericValue executeOrInst(GenericValue Src1, GenericValue Src2, 
+                                  const Type *Ty, ExecutionContext &SF) {
+  GenericValue Dest;
+  switch (Ty->getPrimitiveID()) {
+    IMPLEMENT_BINARY_OPERATOR(|, UByte);
+    IMPLEMENT_BINARY_OPERATOR(|, SByte);
+    IMPLEMENT_BINARY_OPERATOR(|, UShort);
+    IMPLEMENT_BINARY_OPERATOR(|, Short);
+    IMPLEMENT_BINARY_OPERATOR(|, UInt);
+    IMPLEMENT_BINARY_OPERATOR(|, Int);
+    IMPLEMENT_BINARY_OPERATOR(|, ULong);
+    IMPLEMENT_BINARY_OPERATOR(|, Long);
+    IMPLEMENT_BINARY_OPERATOR(|, Pointer);
+  default:
+    cout << "Unhandled type for Or instruction: " << Ty << endl;
+  }
+  return Dest;
+}
+
+
+static GenericValue executeXorInst(GenericValue Src1, GenericValue Src2, 
+                                   const Type *Ty, ExecutionContext &SF) {
   GenericValue Dest;
   switch (Ty->getPrimitiveID()) {
     IMPLEMENT_BINARY_OPERATOR(^, UByte);
@@ -418,6 +467,7 @@ static GenericValue executeSetNEInst(GenericValue Src1, GenericValue Src2,
     IMPLEMENT_SETCC(!=, Float);
     IMPLEMENT_SETCC(!=, Double);
     IMPLEMENT_SETCC(!=, Pointer);
+
   default:
     cout << "Unhandled type for SetNE instruction: " << Ty << endl;
   }
@@ -520,6 +570,8 @@ static void executeBinaryInst(BinaryOperator *I, ExecutionContext &SF) {
   case Instruction::Mul:   R = executeMulInst  (Src1, Src2, Ty, SF); break;
   case Instruction::Div:   R = executeDivInst  (Src1, Src2, Ty, SF); break;
   case Instruction::Rem:   R = executeRemInst  (Src1, Src2, Ty, SF); break;
+  case Instruction::And:   R = executeAndInst  (Src1, Src2, Ty, SF); break;
+  case Instruction::Or:    R = executeOrInst   (Src1, Src2, Ty, SF); break;
   case Instruction::Xor:   R = executeXorInst  (Src1, Src2, Ty, SF); break;
   case Instruction::SetEQ: R = executeSetEQInst(Src1, Src2, Ty, SF); break;
   case Instruction::SetNE: R = executeSetNEInst(Src1, Src2, Ty, SF); break;
@@ -633,8 +685,9 @@ void Interpreter::executeAllocInst(AllocationInst *I, ExecutionContext &SF) {
 
   // Allocate enough memory to hold the type...
   GenericValue Result;
-  Result.ULongVal = (uint64_t)malloc(NumElements * TD.getTypeSize(Ty));
-  assert(Result.ULongVal != 0 && "Null pointer returned by malloc!");
+  // FIXME: Don't use CALLOC, use a tainted malloc.
+  Result.PointerVal = (PointerTy)calloc(NumElements, TD.getTypeSize(Ty));
+  assert(Result.PointerVal != 0 && "Null pointer returned by malloc!");
   SetValue(I, Result, SF);
 
   if (I->getOpcode() == Instruction::Alloca) {
@@ -646,7 +699,7 @@ static void executeFreeInst(FreeInst *I, ExecutionContext &SF) {
   assert(I->getOperand(0)->getType()->isPointerType() && "Freeing nonptr?");
   GenericValue Value = getOperandValue(I->getOperand(0), SF);
   // TODO: Check to make sure memory is allocated
-  free((void*)Value.ULongVal);   // Free memory
+  free((void*)Value.PointerVal);   // Free memory
 }
 
 
@@ -654,11 +707,11 @@ static void executeFreeInst(FreeInst *I, ExecutionContext &SF) {
 // function returns the offset that arguments ArgOff+1 -> NumArgs specify for
 // the pointer type specified by argument Arg.
 //
-static uint64_t getElementOffset(Instruction *I, unsigned ArgOff) {
+static PointerTy getElementOffset(Instruction *I, unsigned ArgOff) {
   assert(isa<PointerType>(I->getOperand(ArgOff)->getType()) &&
          "Cannot getElementOffset of a nonpointer type!");
 
-  uint64_t Total = 0;
+  PointerTy Total = 0;
   const Type *Ty =
     cast<PointerType>(I->getOperand(ArgOff++)->getType())->getValueType();
   
@@ -678,16 +731,18 @@ static uint64_t getElementOffset(Instruction *I, unsigned ArgOff) {
 }
 
 static void executeGEPInst(GetElementPtrInst *I, ExecutionContext &SF) {
-  uint64_t SrcPtr = getOperandValue(I->getPtrOperand(), SF).ULongVal;
+  GenericValue SRC = getOperandValue(I->getPtrOperand(), SF);
+  PointerTy SrcPtr = SRC.PointerVal;
 
   GenericValue Result;
-  Result.ULongVal = SrcPtr + getElementOffset(I, 0);
+  Result.PointerVal = SrcPtr + getElementOffset(I, 0);
   SetValue(I, Result, SF);
 }
 
 static void executeLoadInst(LoadInst *I, ExecutionContext &SF) {
-  uint64_t SrcPtr = getOperandValue(I->getPtrOperand(), SF).ULongVal;
-  uint64_t Offset = getElementOffset(I, 0);  // Handle any structure indices
+  GenericValue SRC = getOperandValue(I->getPtrOperand(), SF);
+  PointerTy SrcPtr = SRC.PointerVal;
+  PointerTy Offset = getElementOffset(I, 0);  // Handle any structure indices
   SrcPtr += Offset;
 
   GenericValue *Ptr = (GenericValue*)SrcPtr;
@@ -696,16 +751,16 @@ static void executeLoadInst(LoadInst *I, ExecutionContext &SF) {
   switch (I->getType()->getPrimitiveID()) {
   case Type::BoolTyID:
   case Type::UByteTyID:
-  case Type::SByteTyID:   Result.SByteVal = Ptr->SByteVal; break;
+  case Type::SByteTyID:   Result.SByteVal   = Ptr->SByteVal; break;
   case Type::UShortTyID:
-  case Type::ShortTyID:   Result.ShortVal = Ptr->ShortVal; break;
+  case Type::ShortTyID:   Result.ShortVal   = Ptr->ShortVal; break;
   case Type::UIntTyID:
-  case Type::IntTyID:     Result.IntVal = Ptr->IntVal; break;
+  case Type::IntTyID:     Result.IntVal     = Ptr->IntVal; break;
   case Type::ULongTyID:
-  case Type::LongTyID:
-  case Type::PointerTyID: Result.ULongVal = Ptr->PointerVal; break;
-  case Type::FloatTyID:   Result.FloatVal = Ptr->FloatVal; break;
-  case Type::DoubleTyID:  Result.DoubleVal = Ptr->DoubleVal; break;
+  case Type::LongTyID:    Result.ULongVal   = Ptr->ULongVal; break;
+  case Type::PointerTyID: Result.PointerVal = Ptr->PointerVal; break;
+  case Type::FloatTyID:   Result.FloatVal   = Ptr->FloatVal; break;
+  case Type::DoubleTyID:  Result.DoubleVal  = Ptr->DoubleVal; break;
   default:
     cout << "Cannot load value of type " << I->getType() << "!\n";
   }
@@ -714,7 +769,8 @@ static void executeLoadInst(LoadInst *I, ExecutionContext &SF) {
 }
 
 static void executeStoreInst(StoreInst *I, ExecutionContext &SF) {
-  uint64_t SrcPtr = getOperandValue(I->getPtrOperand(), SF).ULongVal;
+  GenericValue SRC = getOperandValue(I->getPtrOperand(), SF);
+  PointerTy SrcPtr = SRC.PointerVal;
   SrcPtr += getElementOffset(I, 1);  // Handle any structure indices
 
   GenericValue *Ptr = (GenericValue *)SrcPtr;
@@ -729,8 +785,8 @@ static void executeStoreInst(StoreInst *I, ExecutionContext &SF) {
   case Type::UIntTyID:
   case Type::IntTyID:     Ptr->IntVal = Val.IntVal; break;
   case Type::ULongTyID:
-  case Type::LongTyID:
-  case Type::PointerTyID: Ptr->LongVal = Val.LongVal; break;
+  case Type::LongTyID:    Ptr->LongVal = Val.LongVal; break;
+  case Type::PointerTyID: Ptr->PointerVal = Val.PointerVal; break;
   case Type::FloatTyID:   Ptr->FloatVal = Val.FloatVal; break;
   case Type::DoubleTyID:  Ptr->DoubleVal = Val.DoubleVal; break;
   default:
@@ -816,7 +872,7 @@ static void executeShrInst(ShiftInst *I, ExecutionContext &SF) {
 }
 
 #define IMPLEMENT_CAST(DTY, DCTY, STY) \
-   case Type::STY##TyID: Dest.DTY##Val = (DCTY)Src.STY##Val; break;
+   case Type::STY##TyID: Dest.DTY##Val = DCTY Src.STY##Val; break;
 
 #define IMPLEMENT_CAST_CASE_START(DESTTY, DESTCTY)    \
   case Type::DESTTY##TyID:                      \
@@ -853,17 +909,17 @@ static void executeCastInst(CastInst *I, ExecutionContext &SF) {
   GenericValue Dest;
 
   switch (Ty->getPrimitiveID()) {
-    IMPLEMENT_CAST_CASE(UByte  , unsigned char);
-    IMPLEMENT_CAST_CASE(SByte  ,   signed char);
-    IMPLEMENT_CAST_CASE(UShort , unsigned short);
-    IMPLEMENT_CAST_CASE(Short  ,   signed char);
-    IMPLEMENT_CAST_CASE(UInt   , unsigned int );
-    IMPLEMENT_CAST_CASE(Int    ,   signed int );
-    IMPLEMENT_CAST_CASE(ULong  , uint64_t);
-    IMPLEMENT_CAST_CASE(Long   ,  int64_t);
-    IMPLEMENT_CAST_CASE(Pointer, uint64_t);
-    IMPLEMENT_CAST_CASE(Float  ,          float);
-    IMPLEMENT_CAST_CASE(Double ,          double);
+    IMPLEMENT_CAST_CASE(UByte  , (unsigned char));
+    IMPLEMENT_CAST_CASE(SByte  , (  signed char));
+    IMPLEMENT_CAST_CASE(UShort , (unsigned short));
+    IMPLEMENT_CAST_CASE(Short  , (  signed char));
+    IMPLEMENT_CAST_CASE(UInt   , (unsigned int ));
+    IMPLEMENT_CAST_CASE(Int    , (  signed int ));
+    IMPLEMENT_CAST_CASE(ULong  , (uint64_t));
+    IMPLEMENT_CAST_CASE(Long   , ( int64_t));
+    IMPLEMENT_CAST_CASE(Pointer, (PointerTy)(uint32_t));
+    IMPLEMENT_CAST_CASE(Float  , (float));
+    IMPLEMENT_CAST_CASE(Double , (double));
   default:
     cout << "Unhandled dest type for cast instruction: " << Ty << endl;
   }
@@ -952,8 +1008,13 @@ void Interpreter::callMethod(Method *M, const vector<GenericValue> &ArgVals) {
 
   // Initialize the values to nothing...
   StackFrame.Values.resize(MethInfo->NumPlaneElements.size());
-  for (unsigned i = 0; i < MethInfo->NumPlaneElements.size(); ++i)
+  for (unsigned i = 0; i < MethInfo->NumPlaneElements.size(); ++i) {
     StackFrame.Values[i].resize(MethInfo->NumPlaneElements[i]);
+
+    // Taint the initial values of stuff
+    memset(&StackFrame.Values[i][0], 42,
+           MethInfo->NumPlaneElements[i]*sizeof(GenericValue));
+  }
 
   StackFrame.PrevBB = 0;  // No previous BB for PHI nodes...
 
@@ -986,7 +1047,7 @@ bool Interpreter::executeInstruction() {
   if (int SigNo = sigsetjmp(SignalRecoverBuffer, 1)) {
     --SF.CurInst;   // Back up to erroring instruction
     if (SigNo != SIGINT) {
-      cout << "EXCEPTION OCCURRED [Signal " << _sys_siglistp[SigNo] << "]:\n";
+      cout << "EXCEPTION OCCURRED [" << _sys_siglistp[SigNo] << "]:\n";
       printStackTrace();
     } else {
       cout << "CTRL-C Detected, execution halted.\n";
@@ -1148,7 +1209,7 @@ void Interpreter::printValue(const Type *Ty, GenericValue V) {
   case Type::ULongTyID:  cout << V.ULongVal;  break;
   case Type::FloatTyID:  cout << V.FloatVal;  break;
   case Type::DoubleTyID: cout << V.DoubleVal; break;
-  case Type::PointerTyID:cout << (void*)V.ULongVal; break;
+  case Type::PointerTyID:cout << (void*)V.PointerVal; break;
   default:
     cout << "- Don't know how to print value of this type!";
     break;
@@ -1166,6 +1227,10 @@ void Interpreter::print(const string &Name) {
 
   if (const Method *M = dyn_cast<const Method>(PickedVal)) {
     CW << M;  // Print the method
+  } else if (const Type *Ty = dyn_cast<const Type>(PickedVal)) {
+    CW << "type %" << Name << " = " << Ty->getDescription() << endl;
+  } else if (const BasicBlock *BB = dyn_cast<const BasicBlock>(PickedVal)) {
+    CW << BB;   // Print the basic block
   } else {      // Otherwise there should be an annotation for the slot#
     print(PickedVal->getType(), 
           getOperandValue(PickedVal, ECStack[CurFrame]));
@@ -1189,10 +1254,11 @@ void Interpreter::infoValue(const string &Name) {
 //
 void Interpreter::printStackFrame(int FrameNo = -1) {
   if (FrameNo == -1) FrameNo = CurFrame;
-  cout << ((FrameNo == CurFrame) ? '>' : '-');
   Method *Meth = ECStack[FrameNo].CurMethod;
-  CW << "#" << FrameNo << ". " << (Value*)Meth->getType() << " \""
-     << Meth->getName() << "\"(";
+  const Type *RetTy = Meth->getReturnType();
+
+  CW << ((FrameNo == CurFrame) ? '>' : '-') << "#" << FrameNo << ". "
+     << (Value*)RetTy << " \"" << Meth->getName() << "\"(";
   
   Method::ArgumentListType &Args = Meth->getArgumentList();
   for (unsigned i = 0; i < Args.size(); ++i) {

@@ -202,7 +202,7 @@ GenericValue lle_X_exit(MethodType *M, const vector<GenericValue> &Args) {
 GenericValue lle_X_malloc(MethodType *M, const vector<GenericValue> &Args) {
   assert(Args.size() == 1 && "Malloc expects one argument!");
   GenericValue GV;
-  GV.PointerVal = (uint64_t)malloc(Args[0].UIntVal);
+  GV.PointerVal = (PointerTy)malloc(Args[0].UIntVal);
   return GV;
 }
 
@@ -269,39 +269,44 @@ GenericValue lle_X_printf(MethodType *M, const vector<GenericValue> &Args) {
       break;
     }
     case '%': {                    // Handle format specifiers
-      bool isLong = false;
-      ++FmtStr;
-      if (*FmtStr == 'l') {
-        isLong = true;
-        FmtStr++;
+      char FmtBuf[100] = "", Buffer[1000] = "";
+      char *FB = FmtBuf;
+      *FB++ = *FmtStr++;
+      char Last = *FB++ = *FmtStr++;
+      unsigned HowLong = 0;
+      while (Last != 'c' && Last != 'd' && Last != 'i' && Last != 'u' &&
+             Last != 'o' && Last != 'x' && Last != 'X' && Last != 'e' &&
+             Last != 'E' && Last != 'g' && Last != 'G' && Last != 'f' &&
+             Last != 'p' && Last != 's' && Last != '%') {
+        if (Last == 'l' || Last == 'L') HowLong++;  // Keep track of l's
+        Last = *FB++ = *FmtStr++;
       }
-
-      if (*FmtStr == '%') 
-        cout << *FmtStr;                  // %%
-      else {
-        char Fmt[] = "%d", Buffer[1000] = "";
-        Fmt[1] = *FmtStr;
-
-        switch (*FmtStr) {
-        case 'c':
-          sprintf(Buffer, Fmt, Args[ArgNo++].SByteVal); break;
-        case 'd': case 'i':
-        case 'u': case 'o':
-        case 'x': case 'X':
-          sprintf(Buffer, Fmt, Args[ArgNo++].IntVal); break;
-        case 'e': case 'E': case 'g': case 'G': case 'f':
-          sprintf(Buffer, Fmt, Args[ArgNo++].DoubleVal); break;
-        case 'p':
-          sprintf(Buffer, Fmt, (void*)Args[ArgNo++].PointerVal); break;
-        case 's': cout << (char*)Args[ArgNo++].PointerVal; break;     // %s
-        default:  cout << "<unknown printf code '" << *FmtStr << "'!>";
-          ArgNo++; break;
-        }
-        cout << Buffer;
+      *FB = 0;
+      
+      switch (Last) {
+      case '%':
+        sprintf(Buffer, FmtBuf); break;
+      case 'c':
+        sprintf(Buffer, FmtBuf, Args[ArgNo++].SByteVal); break;
+      case 'd': case 'i':
+      case 'u': case 'o':
+      case 'x': case 'X':
+        if (HowLong == 2)
+          sprintf(Buffer, FmtBuf, Args[ArgNo++].ULongVal);
+        else
+          sprintf(Buffer, FmtBuf, Args[ArgNo++].IntVal); break;
+      case 'e': case 'E': case 'g': case 'G': case 'f':
+        sprintf(Buffer, FmtBuf, Args[ArgNo++].DoubleVal); break;
+      case 'p':
+        sprintf(Buffer, FmtBuf, (void*)Args[ArgNo++].PointerVal); break;
+      case 's': 
+        sprintf(Buffer, FmtBuf, (char*)Args[ArgNo++].PointerVal); break;
+      default:  cout << "<unknown printf code '" << *FmtStr << "'!>";
+        ArgNo++; break;
       }
-      ++FmtStr;
+      cout << Buffer;
+      }
       break;
-    }
     }
   }
 }

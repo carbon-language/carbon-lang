@@ -20,6 +20,8 @@ class ReturnInst;
 class BranchInst;
 class AllocationInst;
 
+typedef uint64_t PointerTy;
+
 union GenericValue {
   bool            BoolVal;
   unsigned char   UByteVal;
@@ -32,7 +34,7 @@ union GenericValue {
   int64_t         LongVal;
   double          DoubleVal;
   float           FloatVal;
-  uint64_t      PointerVal;
+  PointerTy       PointerVal;
 };
 
 typedef vector<GenericValue> ValuePlaneTy;
