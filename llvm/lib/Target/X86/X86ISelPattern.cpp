@@ -2087,6 +2087,10 @@ void ISel::Select(SDOperand N) {
     Node->dump(); std::cerr << "\n";
     assert(0 && "Node not handled yet!");
   case ISD::EntryToken: return;  // Noop
+  case ISD::TokenFactor:
+    for (unsigned i = 0, e = Node->getNumOperands(); i != e; ++i)
+      Select(Node->getOperand(i));
+    return;
   case ISD::CopyToReg:
     if (getRegPressure(N.getOperand(0)) > getRegPressure(N.getOperand(1))) {
       Select(N.getOperand(0));
