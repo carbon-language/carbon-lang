@@ -32,12 +32,6 @@ libtool --version | grep '1\.5\.10' > /dev/null
 if test $? -ne 0 ; then
   die "Your libtool was not detected as being 1.5.10"
 fi
-if test $with_automake -eq 1 ; then
-  automake --version | grep 'automake.*1.9.2' > /dev/null
-  if test $? -ne 0 ; then
-    die "Your automake was not detected as being 1.9.2"
-  fi
-fi
 echo ""
 echo "### NOTE: ############################################################"
 echo "### If you get *any* warnings from autoconf below you MUST fix the"
@@ -49,22 +43,10 @@ echo "######################################################################"
 echo ""
 echo "Regenerating aclocal.m4 with aclocal 1.9.2"
 cwd=`pwd`
-if test $with_automake -eq 1 ; then
-  mv configure.ac .configure.ac.save
-  cp configure.am configure.ac
-  cp configure.am ../configure.ac
-fi
 aclocal --force -I $cwd/m4 || die "aclocal failed"
 echo "Regenerating configure with autoconf 2.59"
 autoconf --force --warnings=all -o ../$outfile $configfile || die "autoconf failed"
 cd ..
 echo "Regenerating config.h.in with autoheader 2.59"
 autoheader -I autoconf -I autoconf/m4 autoconf/$configfile || die "autoheader failed"
-if test $with_automake -eq 1 ; then
-  echo "Regenerating makefiles with automake 1.9.2"
-  cp autoconf/aclocal.m4 .
-  automake --gnu --add-missing --copy --force-missing
-  cd $cwd
-  mv .configure.ac.save configure.ac
-fi
 exit 0
