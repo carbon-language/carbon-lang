@@ -125,6 +125,16 @@ public:
     return RegistersKilled.equal_range(MI);
   }
 
+  /// KillsRegister - Return true if the specified instruction kills the
+  /// specified register.
+  bool KillsRegister(MachineInstr *MI, unsigned Reg) {
+    std::pair<killed_iterator, killed_iterator> KIP = killed_range(MI);
+    for (; KIP.first != KIP.second; ++KIP.first)
+      if (KIP.first->second == Reg)
+        return true;
+    return false;
+  }
+
   killed_iterator dead_begin(MachineInstr *MI) {
     return RegistersDead.lower_bound(MI);
   }
