@@ -717,7 +717,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
     Instruction* phi = subtreeRoot->getInstruction();
     mvec[0] = new MachineInstr(PHI, 1 + phi->getNumOperands());
     mvec[0]->SetMachineOperand(0, MachineOperand::MO_VirtualRegister,
-			          subtreeRoot->getValue());
+			          subtreeRoot->getValue(), true);
     for (unsigned i=0, N=phi->getNumOperands(); i < N; i++)
       mvec[0]->SetMachineOperand(i+1, MachineOperand::MO_VirtualRegister,
 				      phi->getOperand(i));
