@@ -383,11 +383,11 @@ more complex example </h4><ul>
 
 Say that you're writing a FunctionPass and would like to count all the
 locations in the entire module (that is, across every
-<tt>Function</tt>) where a certain function (i.e. <tt>Function</tt>*)
-passed into the FunctionPass constructor.  As you'll learn later, you
-may want to use an <tt>InstVisitor</tt> to accomplish this in a much
-more straightforward manner, but this example will allow us to explore
-how you'd do it if you didn't have <tt>InstVisitor</tt> around.  In
+<tt>Function</tt>) where a certain function (i.e. some
+<tt>Function</tt>*) already in scope.  As you'll learn later, you may
+want to use an <tt>InstVisitor</tt> to accomplish this in a much more
+straightforward manner, but this example will allow us to explore how
+you'd do it if you didn't have <tt>InstVisitor</tt> around.  In
 pseudocode, this is what we want to do:
 
 <pre>
@@ -400,15 +400,16 @@ for each Function f in the Module
 </pre>
 
 And the actual code is (remember, since we're writing a
-<tt>FunctionPass</tt> our <tt>FunctionPass</tt>-derived class simply
+<tt>FunctionPass</tt>, our <tt>FunctionPass</tt>-derived class simply
 has to override the <tt>runOnFunction</tt> method...):
 
 <pre>
+
+Function* targetFunc = ...;
+
 class OurFunctionPass : public FunctionPass {
   public:
-    OurFunctionPass(Function* func): m_func(func) { }
-
-    virtual doInitialization(Module&amp M) { callCounter = 0; };
+    OurFunctionPass(): callCounter(0) { }
 
     virtual runOnFunction(Function&amp F) {
  	for(Function::iterator b = F.begin(), be = F.end(); b != be; ++b) {
@@ -418,15 +419,14 @@ class OurFunctionPass : public FunctionPass {
  		    // need to determine if it's a call to the
 	            // function pointed to by m_func or not.
   
- 		    if(callInst-&gt;getCalledFunction() == m_func)
+ 		    if(callInst-&gt;getCalledFunction() == targetFunc)
  			++callCounter;
  	    }
  	}
     }
     
   private:
-    Function* m_func; // we're counting calls to this function.
-    static unsigned callCounter;
+    unsigned  callCounter;
 };
 </pre>
 
@@ -1280,6 +1280,6 @@ pointer to the parent Function.
 <a href="mailto:sabre@nondot.org">Chris Lattner</a></address>
 <!-- Created: Tue Aug  6 15:00:33 CDT 2002 -->
 <!-- hhmts start -->
-Last modified: Mon Sep  9 10:47:48 CDT 2002
+Last modified: Mon Sep  9 11:29:35 CDT 2002
 <!-- hhmts end -->
 </font></body></html>
