@@ -59,11 +59,11 @@ namespace {
 
       // These should never be called
       virtual void emitWord(unsigned W) { assert(0); }
-      virtual uint64_t getGlobalValueAddress(GlobalValue *V) { assert(0); }
-      virtual uint64_t getGlobalValueAddress(const std::string &Name) { assert(0); }
-      virtual uint64_t getConstantPoolEntryAddress(unsigned Index) { assert(0); }
-      virtual uint64_t getCurrentPCValue() { assert(0); }
-      virtual uint64_t forceCompilationOf(Function *F) { assert(0); }
+      virtual uint64_t getGlobalValueAddress(GlobalValue *V) { abort(); }
+      virtual uint64_t getGlobalValueAddress(const std::string &Name) { abort(); }
+      virtual uint64_t getConstantPoolEntryAddress(unsigned Index) { abort(); }
+      virtual uint64_t getCurrentPCValue() { abort(); }
+      virtual uint64_t forceCompilationOf(Function *F) { abort(); }
 
   private:
       std::ostream& O;
