@@ -440,6 +440,9 @@ int main(int argc, char **argv) {
   
     // Make the script executable...
     chmod(OutputFilename.c_str(), 0755);
+
+    // Make the bytecode file directly executable in LLEE as well
+    chmod(RealBytecodeOutput.c_str(), 0755);
   }
 
   return 0;
