@@ -454,6 +454,13 @@ public:
 
   virtual void destroyConstant();
 
+  /// getType - Specialize the getType() method to always return an PointerType,
+  /// which reduces the amount of casting needed in parts of the compiler.
+  ///
+  inline const PointerType *getType() const {
+    return reinterpret_cast<const PointerType*>(Value::getType());
+  }
+
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const ConstantPointerNull *) { return true; }
   static bool classof(const Value *V) {
