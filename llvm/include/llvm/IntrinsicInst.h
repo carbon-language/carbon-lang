@@ -46,11 +46,11 @@ namespace llvm {
   /// MemIntrinsic - This is the common base class for memset/memcpy/memmove.
   ///
   struct MemIntrinsic : public IntrinsicInst {
-    Value *getRawDest() const { return const_cast<Value*>(getOperand(0)); }
+    Value *getRawDest() const { return const_cast<Value*>(getOperand(1)); }
 
-    Value *getLength() const { return const_cast<Value*>(getOperand(2)); }
+    Value *getLength() const { return const_cast<Value*>(getOperand(3)); }
     ConstantInt *getAlignment() const {
-      return cast<ConstantInt>(const_cast<Value*>(getOperand(3)));
+      return cast<ConstantInt>(const_cast<Value*>(getOperand(4)));
     }
 
     /// getDest - This is just like getRawDest, but it strips off any cast
@@ -63,18 +63,18 @@ namespace llvm {
     void setDest(Value *Ptr) {
       assert(getRawDest()->getType() == Ptr->getType() &&
              "setDest called with pointer of wrong type!");
-      setOperand(0, Ptr);
+      setOperand(1, Ptr);
     }
 
     void setLength(Value *L) {
       assert(getLength()->getType() == L->getType() &&
              "setLength called with value of wrong type!");
-      setOperand(2, L);
+      setOperand(3, L);
     }
     void setAlignment(ConstantInt *A) {
       assert(getAlignment()->getType() == A->getType() &&
              "setAlignment called with value of wrong type!");
-      setOperand(3, A);
+      setOperand(4, A);
     }
 
     // Methods for support type inquiry through isa, cast, and dyn_cast:
@@ -101,7 +101,7 @@ namespace llvm {
   struct MemCpyInst : public MemIntrinsic {
     /// get* - Return the arguments to the instruction.
     ///
-    Value *getRawSource() const { return const_cast<Value*>(getOperand(1)); }
+    Value *getRawSource() const { return const_cast<Value*>(getOperand(2)); }
 
     /// getSource - This is just like getRawSource, but it strips off any cast
     /// instructions that feed it, giving the original input.  The returned
@@ -112,7 +112,7 @@ namespace llvm {
     void setSource(Value *Ptr) {
       assert(getRawSource()->getType() == Ptr->getType() &&
              "setSource called with pointer of wrong type!");
-      setOperand(1, Ptr);
+      setOperand(2, Ptr);
     }
 
     // Methods for support type inquiry through isa, cast, and dyn_cast:
@@ -136,7 +136,7 @@ namespace llvm {
   struct MemMoveInst : public MemIntrinsic {
     /// get* - Return the arguments to the instruction.
     ///
-    Value *getRawSource() const { return const_cast<Value*>(getOperand(1)); }
+    Value *getRawSource() const { return const_cast<Value*>(getOperand(2)); }
 
     /// getSource - This is just like getRawSource, but it strips off any cast
     /// instructions that feed it, giving the original input.  The returned
@@ -146,7 +146,7 @@ namespace llvm {
     void setSource(Value *Ptr) {
       assert(getRawSource()->getType() == Ptr->getType() &&
              "setSource called with pointer of wrong type!");
-      setOperand(1, Ptr);
+      setOperand(2, Ptr);
     }
 
     // Methods for support type inquiry through isa, cast, and dyn_cast:
@@ -170,12 +170,12 @@ namespace llvm {
   struct MemSetInst : public MemIntrinsic {
     /// get* - Return the arguments to the instruction.
     ///
-    Value *getValue() const { return const_cast<Value*>(getOperand(1)); }
+    Value *getValue() const { return const_cast<Value*>(getOperand(2)); }
 
     void setValue(Value *Val) {
       assert(getValue()->getType() == Val->getType() &&
              "setSource called with pointer of wrong type!");
-      setOperand(1, Val);
+      setOperand(2, Val);
     }
 
     // Methods for support type inquiry through isa, cast, and dyn_cast:
