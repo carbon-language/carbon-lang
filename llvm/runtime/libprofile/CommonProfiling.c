@@ -78,5 +78,6 @@ void write_profiling_data(enum ProfilingType PT, unsigned *Start,
   /* Write out this record! */
   PTy = PT;
   write(OutFile, &PTy, sizeof(int));
+  write(OutFile, &NumElements, sizeof(unsigned));
   write(OutFile, Start, NumElements*sizeof(unsigned));
 }
