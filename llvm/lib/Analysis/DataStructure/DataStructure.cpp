@@ -780,7 +780,6 @@ DSNodeHandle ReachabilityCloner::getClonedNH(const DSNodeHandle &SrcNH) {
   DSNode *DN = new DSNode(*SN, &Dest, true /* Null out all links */);
   DN->maskNodeTypes(BitsToKeep);
   NH.setNode(DN);
-  NH.setOffset(SrcNH.getOffset());
   
   // Next, recursively clone all outgoing links as necessary.  Note that
   // adding these links can cause the node to collapse itself at any time, and
