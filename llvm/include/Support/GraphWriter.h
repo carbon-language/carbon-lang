@@ -141,17 +141,28 @@ public:
   }
 
   /// emitSimpleNode - Outputs a simple (non-record) node
-  void emitSimpleNode(void *ID, const std::string &Attr,
-                      const std::string &Label) {
+  void emitSimpleNode(const void *ID, const std::string &Attr,
+                      const std::string &Label, unsigned NumEdgeSources = 0) {
     O << "\tNode" << ID << "[ ";
     if (!Attr.empty())
       O << Attr << ",";
-    O << " label =\"" << DOT::EscapeString(Label) << "\"];\n";
+    O << " label =\"{" << DOT::EscapeString(Label);
+    if (NumEdgeSources) {
+      O << "|{";
+      
+      for (unsigned i = 0; i != NumEdgeSources; ++i) {
+        if (i) O << "|";
+        O << "<g" << i << ">";
+      }
+      O << "}";
+    }
+    O << "}\"];\n";
   }
 
   /// emitEdge - Output an edge from a simple node into the graph...
-  void emitEdge(void *SrcNodeID, int SrcNodePort,
-                void *DestNodeID, int DestNodePort, const std::string &Attrs) {
+  void emitEdge(const void *SrcNodeID, int SrcNodePort,
+                const void *DestNodeID, int DestNodePort,
+                const std::string &Attrs) {
     O << "\tNode" << SrcNodeID;
     if (SrcNodePort >= 0)
       O << ":g" << SrcNodePort;
