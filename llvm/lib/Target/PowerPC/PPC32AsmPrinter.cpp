@@ -1,4 +1,4 @@
-//===-- Printer.cpp - Convert LLVM code to PowerPC assembly ---------------===//
+//===-- PowerPCAsmPrinter.cpp - Print machine instrs to PowerPC assembly --===//
 // 
 //                     The LLVM Compiler Infrastructure
 //
@@ -9,7 +9,7 @@
 //
 // This file contains a printer that converts from our internal representation
 // of machine-dependent LLVM code to PowerPC assembly language. This printer is
-// the output mechanism used by `llc' and `lli -print-machineinstrs'.
+// the output mechanism used by `llc'.
 //
 // Documentation at http://developer.apple.com/documentation/DeveloperTools/
 // Reference/Assembler/ASMIntroduction/chapter_1_section_1.html
