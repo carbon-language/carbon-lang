@@ -78,6 +78,48 @@ void LiveRangeInfo::unionAndUpdateLRs(LiveRange *L1, LiveRange *L2) {
 }
 
 
+//---------------------------------------------------------------------------
+// Method for creating a single live range for a definition.
+// The definition must be represented by a virtual register (a Value).
+// Note: this function does *not* check that no live range exists for def.
+//---------------------------------------------------------------------------
+
+LiveRange*
+LiveRangeInfo::createNewLiveRange(const Value* Def, bool isCC /* = false*/)
+{  
+  LiveRange* DefRange = new LiveRange();  // Create a new live range,
+  DefRange->insert(Def);                  // add Def to it,
+  LiveRangeMap[Def] = DefRange;           // and update the map.
+
+  // set the register class of the new live range
+  DefRange->setRegClass(RegClassList[MRI.getRegClassIDOfValue(Def, isCC)]);
+
+  if (DEBUG_RA >= RA_DEBUG_LiveRanges) {
+    cerr << "  Creating a LR for def ";
+    if (isCC) cerr << " (CC Register!)";
+    cerr << " : " << RAV(Def) << "\n";
+  }
+  return DefRange;
+}
+
+
+LiveRange*
+LiveRangeInfo::createOrAddToLiveRange(const Value* Def, bool isCC /* = false*/)
+{  
+  LiveRange *DefRange = LiveRangeMap[Def];
+
+  // check if the LR is already there (because of multiple defs)
+  if (!DefRange) { 
+    DefRange = this->createNewLiveRange(Def, isCC);
+  } else {                          // live range already exists
+    DefRange->insert(Def);          // add the operand to the range
+    LiveRangeMap[Def] = DefRange;   // make operand point to merged set
+    if (DEBUG_RA >= RA_DEBUG_LiveRanges)
+      cerr << "   Added to existing LR for def: " << RAV(Def) << "\n";
+  }
+  return DefRange;
+}
+
 
 //---------------------------------------------------------------------------
 // Method for constructing all live ranges in a function. It creates live 
@@ -91,128 +133,66 @@ void LiveRangeInfo::constructLiveRanges() {
 
   // first find the live ranges for all incoming args of the function since
   // those LRs start from the start of the function
-  for (Function::const_aiterator AI = Meth->abegin(); AI != Meth->aend(); ++AI){
-    LiveRange *ArgRange = new LiveRange();      // creates a new LR and 
-    ArgRange->insert(AI);     // add the arg (def) to it
-    LiveRangeMap[AI] = ArgRange;
-
-    // create a temp machine op to find the register class of value
-    //const MachineOperand Op(MachineOperand::MO_VirtualRegister);
-
-    unsigned rcid = MRI.getRegClassIDOfValue(AI);
-    ArgRange->setRegClass(RegClassList[rcid]);
-
-    			   
-    if( DEBUG_RA >= RA_DEBUG_LiveRanges)
-      cerr << " Adding LiveRange for argument " << RAV(AI) << "\n";
-  }
+  for (Function::const_aiterator AI = Meth->abegin(); AI != Meth->aend(); ++AI)
+    this->createNewLiveRange(AI, /*isCC*/ false);
 
   // Now suggest hardware registers for these function args 
   MRI.suggestRegs4MethodArgs(Meth, *this);
 
-
-  // Now find speical LLVM instructions (CALL, RET) and LRs in machine
-  // instructions.
+  // Now create LRs for machine instructions.  A new LR will be created 
+  // only for defs in the machine instr since, we assume that all Values are
+  // defined before they are used. However, there can be multiple defs for
+  // the same Value in machine instructions.
+  // 
+  // Also, find CALL and RETURN instructions, which need extra work.
   //
   for (Function::const_iterator BBI=Meth->begin(); BBI != Meth->end(); ++BBI){
-    // Now find all LRs for machine the instructions. A new LR will be created 
-    // only for defs in the machine instr since, we assume that all Values are
-    // defined before they are used. However, there can be multiple defs for
-    // the same Value in machine instructions.
-
-    // get the iterator for machine instructions
+    // get the vector of machine instructions for this basic block.
     MachineCodeForBasicBlock& MIVec = MachineCodeForBasicBlock::get(BBI);
-    
+
     // iterate over all the machine instructions in BB
     for(MachineCodeForBasicBlock::iterator MInstIterator = MIVec.begin();
         MInstIterator != MIVec.end(); ++MInstIterator) {  
       MachineInstr *MInst = *MInstIterator; 
 
-      // Now if the machine instruction is a  call/return instruction,
-      // add it to CallRetInstrList for processing its implicit operands
-
+      // If the machine instruction is a  call/return instruction, add it to
+      // CallRetInstrList for processing its args, ret value, and ret addr.
+      // 
       if(TM.getInstrInfo().isReturn(MInst->getOpCode()) ||
 	 TM.getInstrInfo().isCall(MInst->getOpCode()))
 	CallRetInstrList.push_back( MInst ); 
  
-             
-      // iterate over  MI operands to find defs
+      // iterate over explicit MI operands and create a new LR
+      // for each operand that is defined by the instruction
       for (MachineInstr::val_op_iterator OpI = MInst->begin(),
-             OpE = MInst->end(); OpI != OpE; ++OpI) {
-	if(DEBUG_RA >= RA_DEBUG_LiveRanges) {
-	  MachineOperand::MachineOperandType OpTyp = 
-	    OpI.getMachineOperand().getOperandType();
-
-	  if (OpTyp == MachineOperand::MO_CCRegister)
-	    cerr << "\n**CC reg found. Is Def=" << OpI.isDef() << " Val:"
-                 << RAV(OpI.getMachineOperand().getVRegValue()) << "\n";
-	}
-
-	// create a new LR iff this operand is a def
+             OpE = MInst->end(); OpI != OpE; ++OpI)
 	if (OpI.isDef()) {     
 	  const Value *Def = *OpI;
+          bool isCC = (OpI.getMachineOperand().getOperandType()
+                       == MachineOperand::MO_CCRegister);
+          this->createOrAddToLiveRange(Def, isCC);
+	}
 
-	  // Only instruction values are accepted for live ranges here
-	  if (Def->getValueType() != Value::InstructionVal ) {
-	    cerr << "\n**%%Error: Def is not an instruction val. Def="
-                 << RAV(Def) << "\n";
-	    continue;
-	  }
-
-	  LiveRange *DefRange = LiveRangeMap[Def]; 
-
-	  // see LR already there (because of multiple defs)
-	  if( !DefRange) {                  // if it is not in LiveRangeMap
-	    DefRange = new LiveRange();     // creates a new live range and 
-	    DefRange->insert(Def);          // add the instruction (def) to it
-	    LiveRangeMap[ Def ] = DefRange; // update the map
-
-	    if (DEBUG_RA >= RA_DEBUG_LiveRanges)
-	      cerr << "  creating a LR for def: " << RAV(Def) << "\n";
-
-	    // set the register class of the new live range
-	    //assert( RegClassList.size() );
-	    MachineOperand::MachineOperandType OpTy = 
-	      OpI.getMachineOperand().getOperandType();
-
-	    bool isCC = ( OpTy == MachineOperand::MO_CCRegister);
-	    unsigned rcid = MRI.getRegClassIDOfValue( 
-			    OpI.getMachineOperand().getVRegValue(), isCC );
-
-
-	    if (isCC && DEBUG_RA >= RA_DEBUG_LiveRanges)
-	      cerr  << "\a**created a LR for a CC reg:"
-                    << RAV(OpI.getMachineOperand().getVRegValue());
-
-	    DefRange->setRegClass(RegClassList[rcid]);
-	  } else {
-	    DefRange->insert(Def);          // add the opearand to def range
-                                            // update the map - Operand points 
-	                                    // to the merged set
-	    LiveRangeMap[Def] = DefRange; 
-
-	    if (DEBUG_RA >= RA_DEBUG_LiveRanges)
-	      cerr << "   Added to existing LR for def: " << RAV(Def) << "\n";
-	  }
-
-	} // if isDef()
-	
-      } // for all opereands in machine instructions
+      // iterate over implicit MI operands and create a new LR
+      // for each operand that is defined by the instruction
+      for (unsigned i = 0; i < MInst->getNumImplicitRefs(); ++i) 
+	if (MInst->implicitRefIsDefined(i)) {     
+	  const Value *Def = MInst->getImplicitRef(i);
+          this->createOrAddToLiveRange(Def, /*isCC*/ false);
+	}
 
     } // for all machine instructions in the BB
 
   } // for all BBs in function
-  
 
   // Now we have to suggest clors for call and return arg live ranges.
   // Also, if there are implicit defs (e.g., retun value of a call inst)
   // they must be added to the live range list
-
+  // 
   suggestRegs4CallRets();
 
   if( DEBUG_RA >= RA_DEBUG_LiveRanges) 
     cerr << "Initial Live Ranges constructed!\n";
-
 }
 
 
@@ -236,7 +216,7 @@ void LiveRangeInfo::suggestRegs4CallRets()
       MRI.suggestReg4RetValue( MInst, *this);
 
     else if( (TM.getInstrInfo()).isCall( OpCode ) )
-      MRI.suggestRegs4CallArgs( MInst, *this, RegClassList );
+      MRI.suggestRegs4CallArgs( MInst, *this);
     
     else 
       assert( 0 && "Non call/ret instr in  CallRetInstrList" );
