@@ -197,8 +197,8 @@ void TDDataStructures::calculateGraph(Function &F) {
 
       // Recompute the Incomplete markers and eliminate unreachable nodes.
       CG.maskIncompleteMarkers();
-      CG.markIncompleteNodes(F.hasInternalLinkage() ? DSGraph::IgnoreFormalArgs:
-                             DSGraph::MarkFormalArgs
+      CG.markIncompleteNodes(Callee->hasInternalLinkage() ?
+                             DSGraph::IgnoreFormalArgs : DSGraph::MarkFormalArgs
                              /*&& FIXME: NEED TO CHECK IF ALL CALLERS FOUND!*/);
       CG.removeDeadNodes(DSGraph::RemoveUnreachableGlobals);
     }
