@@ -135,9 +135,9 @@ namespace {
 void RA::releaseMemory()
 {
     unhandled_.clear();
+    fixed_.clear();
     active_.clear();
     inactive_.clear();
-    fixed_.clear();
     handled_.clear();
 }
 
@@ -171,25 +171,10 @@ void RA::linearScan()
     DEBUG(printIntervals("active", active_.begin(), active_.end()));
     DEBUG(printIntervals("inactive", inactive_.begin(), inactive_.end()));
 
-    while (!unhandled_.empty() || !fixed_.empty()) {
+    while (!unhandled_.empty()) {
         // pick the interval with the earliest start point
-        IntervalPtrs::value_type cur;
-        if (fixed_.empty()) {
-            cur = unhandled_.front();
-            unhandled_.pop_front();
-        }
-        else if (unhandled_.empty()) {
-            cur = fixed_.front();
-            fixed_.pop_front();
-        }
-        else if (unhandled_.front()->start() < fixed_.front()->start()) {
-            cur = unhandled_.front();
-            unhandled_.pop_front();
-        }
-        else {
-            cur = fixed_.front();
-            fixed_.pop_front();
-        }
+        IntervalPtrs::value_type cur = unhandled_.front();
+        unhandled_.pop_front();
 
         DEBUG(std::cerr << "\n*** CURRENT ***: " << *cur << '\n');
 
@@ -234,10 +219,9 @@ void RA::initIntervalSets(LiveIntervals::Intervals& li)
 
     for (LiveIntervals::Intervals::iterator i = li.begin(), e = li.end();
          i != e; ++i) {
+        unhandled_.push_back(&*i);
         if (MRegisterInfo::isPhysicalRegister(i->reg))
             fixed_.push_back(&*i);
-        else
-            unhandled_.push_back(&*i);
     }
 }
 
@@ -444,7 +428,7 @@ void RA::assignRegOrStackSlotAtInterval(IntervalPtrs::value_type cur)
 
     DEBUG(std::cerr << "\t\trolling back to: " << earliestStart << '\n');
     // scan handled in reverse order and undo each one, restoring the
-    // state of unhandled and fixed
+    // state of unhandled
     while (!handled_.empty()) {
         IntervalPtrs::value_type i = handled_.back();
         // if this interval starts before t we are done
@@ -456,8 +440,8 @@ void RA::assignRegOrStackSlotAtInterval(IntervalPtrs::value_type cur)
         if ((it = find(active_.begin(), active_.end(), i)) != active_.end()) {
             active_.erase(it);
             if (MRegisterInfo::isPhysicalRegister(i->reg)) {
-                fixed_.push_front(i);
                 prt_->delRegUse(i->reg);
+                unhandled_.push_front(i);
             }
             else {
                 prt_->delRegUse(vrm_->getPhys(i->reg));
@@ -479,7 +463,7 @@ void RA::assignRegOrStackSlotAtInterval(IntervalPtrs::value_type cur)
         else if ((it = find(inactive_.begin(), inactive_.end(), i)) != inactive_.end()) {
             inactive_.erase(it);
             if (MRegisterInfo::isPhysicalRegister(i->reg))
-                fixed_.push_front(i);
+                unhandled_.push_front(i);
             else {
                 vrm_->clearVirt(i->reg);
                 if (i->spilled()) {
@@ -496,12 +480,9 @@ void RA::assignRegOrStackSlotAtInterval(IntervalPtrs::value_type cur)
             }
         }
         else {
-            if (MRegisterInfo::isPhysicalRegister(i->reg))
-                fixed_.push_front(i);
-            else {
+            if (MRegisterInfo::isVirtualRegister(i->reg))
                 vrm_->clearVirt(i->reg);
-                unhandled_.push_front(i);
-            }
+            unhandled_.push_front(i);
         }
     }
 
