@@ -119,3 +119,20 @@ bool %test18(int %A) {
 	ret bool %C
 }
 
+int %test19(int %A) {
+	%B = shl int %A, ubyte 3
+	%C = and int %B, -2    ;; Clearing a zero bit
+	ret int %C
+}
+
+ubyte %test20(ubyte %A) {
+	%C = shr ubyte %A, ubyte 7 
+	%D = and ubyte %C, 1            ;; Unneeded
+	ret ubyte %D
+}
+
+sbyte %test21(sbyte %A) {
+	%C = shr sbyte %A, ubyte 7   ;; sign extend
+	%D = and sbyte %C, 1         ;; chop off sign
+	ret sbyte %D
+}
