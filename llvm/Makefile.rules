@@ -312,7 +312,7 @@ ObjectsBC := $(BaseNameSources:%=$(ObjDir)/%.bc)
 
 $(bindir):
 	$(Verb) $(MKDIR) $(bindir)
-	
+
 $(libdir):
 	$(Verb) $(MKDIR) $(libdir)
 
@@ -661,6 +661,11 @@ endif
 # Object Build Rules: Build object files based on sources 
 ###############################################################################
 
+# BUILDMODE - This variable can be used in a rule that generates a file in the
+# ObjDir to indicate whether the compiled file is a Debug, Release, or Profile
+# object.
+BUILDMODE = $(notdir $(patsubst %/,%, $(dir $@)))
+
 # Provide rule sets for when dependency generation is enabled
 ifndef DISABLE_AUTO_DEPENDENCIES
 
@@ -670,13 +675,13 @@ ifndef DISABLE_AUTO_DEPENDENCIES
 ifdef SHARED_LIBRARY
 
 $(ObjDir)/%.lo $(ObjDir)/%.o: %.cpp $(ObjDir)/.dir
-	$(Echo) "Compiling $*.cpp (PIC)"
+	$(Echo) "Compiling $*.cpp for $(BUILDMODE) build (PIC)"
 	$(Verb) if $(LTCompile.CXX) -MD -MT $@ -MP -MF $(ObjDir)/$*.LACXXd $< -o $@ ; \
 	then $(MV) -f "$(ObjDir)/$*.LACXXd" "$(ObjDir)/$*.d"; \
 	else $(RM) -f "$(ObjDir)/$*.LACXXd"; exit 1; fi
 
 $(ObjDir)/%.lo $(ObjDir)/%.o: %.c $(ObjDir)/.dir 
-	$(Echo) "Compiling $*.c (PIC)"
+	$(Echo) "Compiling $*.c for $(BUILDMODE) build (PIC)"
 	$(Verb) if $(LTCompile.C) -MD -MT $@ -MP -MF $(ObjDir)/$*.LACd $< -o $@ ; \
 	then $(MV) -f "$(ObjDir)/$*.LACd" "$(ObjDir)/$*.d"; \
 	else $(RM) -f "$(ObjDir)/$*.LACd"; exit 1; fi
@@ -687,13 +692,13 @@ $(ObjDir)/%.lo $(ObjDir)/%.o: %.c $(ObjDir)/.dir
 else
 
 $(ObjDir)/%.o: %.cpp $(ObjDir)/.dir
-	$(Echo) "Compiling $*.cpp"
+	$(Echo) "Compiling $*.cpp for $(BUILDMODE) build"
 	$(Verb) if $(Compile.CXX) -MD -MT $@ -MP -MF $(ObjDir)/$*.CXXd $< -o $@ ; \
 	then $(MV) -f "$(ObjDir)/$*.CXXd" "$(ObjDir)/$*.d"; \
 	else $(RM) -f "$(ObjDir)/$*.CXXd"; exit 1; fi
 
 $(ObjDir)/%.o: %.c $(ObjDir)/.dir
-	$(Echo) "Compiling $*.c"
+	$(Echo) "Compiling $*.c for $(BUILDMODE) build"
 	$(Verb) if $(Compile.C) -MD -MT $@ -MP -MF $(ObjDir)/$*.Cd $< -o $@ ; \
 	then $(MV) -f "$(ObjDir)/$*.Cd" "$(ObjDir)/$*.d"; \
 	else $(RM) -f "$(ObjDir)/$*.Cd"; exit 1; fi
@@ -704,13 +709,13 @@ endif
 # Create .bc files in the ObjDir directory from .cpp and .c files...
 #---------------------------------------------------------
 $(ObjDir)/%.bc: %.cpp $(ObjDir)/.dir
-	$(Echo) "Compiling $*.cpp (bytecode)"
+	$(Echo) "Compiling $*.cpp for $(BUILDMODE) build (bytecode)"
 	$(Verb) if $(BCCompile.CXX) -MD -MT $@ -MP -MF "$(ObjDir)/$*.BCCXXd" $< -o $@ ; \
 	then $(MV) -f "$(ObjDir)/$*.BCCXXd" "$(ObjDir)/$*.d"; \
 	else $(RM) -f "$(ObjDir)/$*.BCCXXd"; exit 1; fi
 
 $(ObjDir)/%.bc: %.c $(ObjDir)/.dir
-	$(Echo) "Compiling $*.c (bytecode)"
+	$(Echo) "Compiling $*.c for $(BUILDMODE) build (bytecode)"
 	$(Verb) if $(BCCompile.C) -MD -MT $@ -MP -MF "$(ObjDir)/$*.BCCd" $< -o $@ ; \
 	then $(MV) -f "$(ObjDir)/$*.BCCd" "$(ObjDir)/$*.d"; \
 	else $(RM) -f "$(ObjDir)/$*.BCCd"; exit 1; fi
@@ -721,30 +726,30 @@ else
 ifdef SHARED_LIBRARY
 
 $(ObjDir)/%.lo $(ObjDir)/%.o: %.cpp $(ObjDir)/.dir 
-	$(Echo) "Compiling $*.cpp (PIC)"
+	$(Echo) "Compiling $*.cpp for $(BUILDMODE) build (PIC)"
 	$(LTCompile.CXX) $< -o $@ 
 
 $(ObjDir)/%.lo $(ObjDir)/%.o: %.c $(ObjDir)/.dir 
-	$(Echo) "Compiling $*.cpp (PIC)"
+	$(Echo) "Compiling $*.cpp for $(BUILDMODE) build (PIC)"
 	$(LTCompile.C) $< -o $@ 
 
 else
 
 $(ObjDir)/%.o: %.cpp $(ObjDir)/.dir
-	$(Echo) "Compiling $*.cpp"
+	$(Echo) "Compiling $*.cpp for $(BUILDMODE) build"
 	$(Compile.CXX) $< -o $@ 
 
 $(ObjDir)/%.o: %.c $(ObjDir)/.dir
-	$(Echo) "Compiling $*.cpp"
+	$(Echo) "Compiling $*.cpp for $(BUILDMODE) build"
 	$(Compile.C) $< -o $@ 
 endif
 
 $(ObjDir)/%.bc: %.cpp $(ObjDir)/.dir
-	$(Echo) "Compiling $*.cpp (bytecode)"
+	$(Echo) "Compiling $*.cpp for $(BUILDMODE) build (bytecode)"
 	$(BCCompile.CXX) $< -o $@ 
 
 $(ObjDir)/%.bc: %.c $(ObjDir)/.dir
-	$(Echo) "Compiling $*.c (bytecode)"
+	$(Echo) "Compiling $*.c for $(BUILDMODE) build (bytecode)"
 	$(BCCompile.C) $< -o $@
 
 endif
@@ -754,7 +759,7 @@ endif
 # regardless of dependencies
 #---------------------------------------------------------
 $(ObjDir)/%.bc: %.ll $(ObjDir)/.dir $(LLVMAS)
-	$(Echo) "Compiling $*.ll"
+	$(Echo) "Compiling $*.ll for $(BUILDMODE) build"
 	$(Verb) $(LLVMAS) $< -f -o $@
 
 ###############################################################################
