@@ -1,12 +1,22 @@
 LLC  := ../tools/Debug/llc
-AS   := ../tools/Debug/as
-LLCOPTS := -dsched y
-ARCHFLAGS =
+LAS  := ../tools/Debug/as
+LDIS := ../tools/Debug/dis 
+LINK := ../tools/Debug/link
+LLCLIBS := runtime.o
+LLCOPTS := 
 
-CC = /opt/SUNWspro/bin/cc
-CCFLAGS = -g -xarch=v9
-## CC = gcc
-## CCFLAGS = -g -xarch=v9 ## -mcpu=v9
+ifeq ($(TRACE), yes)
+    LLCOPTS := -trace
+endif
+
+CC      = /opt/SUNWspro/bin/cc
+AS	= /opt/SUNWspro/bin/cc
+DIS     = /usr/ccs/bin/dis
+CFLAGS  = -g -xarch=v9
+CCFLAGS = $(CFLAGS)
+LDFLAGS = $(CFLAGS)
+ASFLAGS = -c $(CFLAGS)
+
 
 TESTS := $(wildcard *.ll)
 
@@ -30,7 +40,7 @@ testcodegen : $(LLCTESTS:%.ll=%.mc)
 testsparc   : $(LLCTESTS:%.ll=%.s)
 
 clean :
-	rm -f *.[123] *.bc *.mc *.s core
+	rm -f *.[123] *.bc *.mc *.s *.o a.out core 
 
 %.asmdis: %
 	@echo "Running assembler/disassembler test on $<"
@@ -40,24 +50,30 @@ clean :
 	@echo "Running optimizier test on $<"
 	@./TestOptimizer.sh $<
 
-%.bc: %.ll
-	$(AS) $< -f
+%.bc: %.ll $(LAS)
+	$(LAS) -f $<
 
-%.mc: %.ll $(LLC) $(AS)
+%.mc: %.bc $(LLC) $(AS)
 	@echo "Generating machine instructions for $<"
-	$(AS) < $< | $(LLC) $(LLCOPTS) > $@
+	$(LLC) -dsched y $(LLCOPTS) $< > $@
 
-%.s: %.ll $(LLC) $(AS)
-	$(AS) < $<  | $(LLC) > $@
+%.trace.bc: %.bc $(LLC)
+	$(LLC) -f -trace $(LLCOPTS) $<
 
-## %.o: %.s %.ll
-## 	/usr/ccs/bin/as $(ARCHFLAGS) $<
+%.s: %.bc $(LLC)
+	$(LLC) -f $(LLCOPTS) $<
+
+%: %.o $(LLCLIBS)
+	$(CC) -o $@ $(LDFLAGS) $< $(LLCLIBS)
 
 
-%.o: %.s
-	$(CC) -c $(CCFLAGS) $<
+## Cancel built-in implicit rule that overrides the above rule
+%: %.s
 
-%: %.o
-	$(CC) -o $@ $(CCFLAGS) $<
+## The next two rules are for disassembling an executable or an object file
+%.dis: %
+	$(DIS) $< > $@
 
+%.dis: %.o
+	$(DIS) $< > $@
 
