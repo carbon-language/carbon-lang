@@ -36,6 +36,12 @@
       <td></td>
       <td></td>
     </tr>
+    <tr><td colspan="8"><b>- <a href="#C">C</a> -</b></td></tr>
+    <tr>
+      <td><a href="#CSE">CSE</a></td>
+      <td></td>
+      <td></td>
+    </tr>
     <tr><td colspan="8"><b>- <a href="#D">D</a> -</b></td></tr>
     <tr>
       <td><a href="#DSA">DSA</a></td>
@@ -43,10 +49,18 @@
       <td></td>
       <td></td>
     </tr>
+    <tr><td colspan="8"><b>- <a href="#I">L</a> -</b></td></tr>
+    <tr>
+      <td><a href="#IPA">IPA</a></td>
+      <td><a href="#IPO">IPO</a></td>
+      <td></td>
+      <td></td>
+    </tr>
     <tr><td colspan="8"><b>- <a href="#L">L</a> -</b></td></tr>
     <tr>
       <td><a href="#LICM">LICM</a></td>
       <td><a href="#Load-VN">Load-VN</a></td>
+      <td></td>
       <td></td>
     </tr>
     <tr><td colspan="8"><b>- <a href="#P">P</a> -</b></td></tr>
@@ -86,6 +100,18 @@ href="http://www.program-transformation.org/Transform/BURG">BURG</a> tool.</dd>
   </dl>
 </div>
 <!-- _______________________________________________________________________ -->
+<div class="doc_subsection"><a name="C">- C -</a></div>
+<div class="doc_text">
+  <dl>
+    <dt><a name="CSE"><b>CSE</b></a></dt>
+    <dd>Common Subexpression Elimination. An optimization that removes common
+    subexpression compuation. For example <tt>(a+b)*(a+b)</tt> has two
+    subexpressions that are the same: <tt>(a+b)</tt>. This optimization would
+    perform the addition only once and then perform the multiply (but only if
+    its compulationally correct/safe).
+  </dl>
+</div>
+<!-- _______________________________________________________________________ -->
 <div class="doc_subsection"><a name="D">- D -</a></div>
 <div class="doc_text">
   <dl>
@@ -93,6 +119,19 @@ href="http://www.program-transformation.org/Transform/BURG">BURG</a> tool.</dd>
     <dd>Data Structure Analysis</dd>
     <dt><a name="DSE"><b>DSE</b></a></dt>
     <dd>Dead Store Elimination</dd>
+  </dl>
+</div>
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsection"><a name="I">- I -</a></div>
+<div class="doc_text">
+  <dl>
+    <dt><a name="IPA"><b>IPA</b></a></dt>
+    <dd>Inter-Procedural Analysis. Refers to any variety of code analysis that
+    occurs between procedures, functions or compilation units (modules).</dd>
+    <dt><a name="IPO"><b>IPO</b></a></dt>
+    <dd>Inter-Procedural Optimization. Refers to any variety of code
+    optimization that occurs between procedures, functions or compilation units
+    (modules).</dd>
   </dl>
 </div>
 <!-- _______________________________________________________________________ -->
