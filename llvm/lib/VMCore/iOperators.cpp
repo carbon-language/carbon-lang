@@ -87,18 +87,17 @@ const Value *BinaryOperator::getNotArgument(const BinaryOperator *Bop) {
 // order dependant (SetLT f.e.) the opcode is changed.
 //
 bool BinaryOperator::swapOperands() {
+  if (SetCondInst *SCI = dyn_cast<SetCondInst>(this)) {
+    iType = SCI->getSwappedCondition();
+    std::swap(Operands[0], Operands[1]);
+    return false;
+  }
+
   switch (getOpcode()) {
     // Instructions that don't need opcode modification
   case Add: case Mul:
   case And: case Xor:
   case Or:
-  case SetEQ: case SetNE:
-    break;
-    // Instructions that need opcode modification
-  case SetGT: iType = SetLT; break;
-  case SetLT: iType = SetGT; break;
-  case SetGE: iType = SetLE; break;
-  case SetLE: iType = SetGE; break;
     // Error on the side of caution
   default:
     return true;
@@ -126,8 +125,8 @@ SetCondInst::SetCondInst(BinaryOps opType, Value *S1, Value *S2,
 // getInverseCondition - Return the inverse of the current condition opcode.
 // For example seteq -> setne, setgt -> setle, setlt -> setge, etc...
 //
-Instruction::BinaryOps SetCondInst::getInverseCondition() const {
-  switch (getOpcode()) {
+Instruction::BinaryOps SetCondInst::getInverseCondition(BinaryOps Opcode) {
+  switch (Opcode) {
   default:
     assert(0 && "Unknown setcc opcode!");
   case SetEQ: return SetNE;
@@ -136,5 +135,20 @@ Instruction::BinaryOps SetCondInst::getInverseCondition() const {
   case SetLT: return SetGE;
   case SetGE: return SetLT;
   case SetLE: return SetGT;
+  }
+}
+
+// getSwappedCondition - Return the condition opcode that would be the result
+// of exchanging the two operands of the setcc instruction without changing
+// the result produced.  Thus, seteq->seteq, setle->setge, setlt->setgt, etc.
+//
+Instruction::BinaryOps SetCondInst::getSwappedCondition(BinaryOps Opcode) {
+  switch (Opcode) {
+  default: assert(0 && "Unknown setcc instruction!");
+  case SetEQ: case SetNE: return Opcode;
+  case SetGT: return SetLT;
+  case SetLT: return SetGT;
+  case SetGE: return SetLE;
+  case SetLE: return SetGE;
   }
 }
