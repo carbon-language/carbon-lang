@@ -97,6 +97,20 @@ namespace {
       return I.getParent() == cast<Instruction>(I.use_back())->getParent();
     }
 
+    // isDirectAlloca - Define fixed sized allocas in the entry block as direct
+    // variables which are accessed with the & operator.  This causes GCC to
+    // generate significantly better code than to emit alloca calls directly.
+    //
+    static const AllocaInst *isDirectAlloca(const Value *V) {
+      const AllocaInst *AI = dyn_cast<AllocaInst>(V);
+      if (!AI) return false;
+      if (AI->isArrayAllocation())
+        return 0;   // FIXME: we can also inline fixed size array allocas!
+      if (AI->getParent() != &AI->getParent()->getParent()->getEntryNode())
+        return 0;
+      return AI;
+    }
+
     // Instruction visitation functions
     friend class InstVisitor<CWriter>;
 
@@ -463,7 +477,7 @@ void CWriter::printConstant(Constant *CPV) {
 
 void CWriter::writeOperandInternal(Value *Operand) {
   if (Instruction *I = dyn_cast<Instruction>(Operand))
-    if (isInlinableInst(*I)) {
+    if (isInlinableInst(*I) && !isDirectAlloca(I)) {
       // Should we inline this instruction to build a tree?
       Out << "(";
       visit(*I);
@@ -483,12 +497,12 @@ void CWriter::writeOperandInternal(Value *Operand) {
 }
 
 void CWriter::writeOperand(Value *Operand) {
-  if (isa<GlobalVariable>(Operand))
+  if (isa<GlobalVariable>(Operand) || isDirectAlloca(Operand))
     Out << "(&";  // Global variables are references as their addresses by llvm
 
   writeOperandInternal(Operand);
 
-  if (isa<GlobalVariable>(Operand))
+  if (isa<GlobalVariable>(Operand) || isDirectAlloca(Operand))
     Out << ")";
 }
 
@@ -792,11 +806,15 @@ void CWriter::printFunction(Function *F) {
 
   // print local variable information for the function
   for (inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I)
-    if ((*I)->getType() != Type::VoidTy && !isInlinableInst(**I)) {
+    if (const AllocaInst *AI = isDirectAlloca(*I)) {
+      Out << "  ";
+      printType(Out, AI->getAllocatedType(), getValueName(AI));
+      Out << ";    /* Address exposed local */\n";
+    } else if ((*I)->getType() != Type::VoidTy && !isInlinableInst(**I)) {
       Out << "  ";
       printType(Out, (*I)->getType(), getValueName(*I));
       Out << ";\n";
-
+      
       if (isa<PHINode>(*I)) {  // Print out PHI node temporaries as well...
         Out << "  ";
         printType(Out, (*I)->getType(), getValueName(*I)+"__PHI_TEMPORARY");
@@ -856,7 +874,7 @@ void CWriter::printFunction(Function *F) {
 
     // Output all of the instructions in the basic block...
     for (BasicBlock::iterator II = BB->begin(), E = --BB->end(); II != E; ++II){
-      if (!isInlinableInst(*II)) {
+      if (!isInlinableInst(*II) && !isDirectAlloca(II)) {
         if (II->getType() != Type::VoidTy)
           outputLValue(II);
         else
@@ -1132,6 +1150,8 @@ void CWriter::printIndexingExpression(Value *Ptr, User::op_iterator I,
   } else if (ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(Ptr)) {
     HasImplicitAddress = true;
     Ptr = CPR->getValue();         // Get to the global...
+  } else if (isDirectAlloca(Ptr)) {
+    HasImplicitAddress = true;
   }
 
   if (I == E) {
