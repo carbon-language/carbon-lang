@@ -15,7 +15,7 @@
 #include <map>
 
 // Enable to trace to figure out what the heck is going on when parsing fails
-#define TRACE_LEVEL 0
+//#define TRACE_LEVEL 10
 
 #if TRACE_LEVEL    // ByteCodeReading_TRACEer
 #define BCR_TRACE(n, X) \
