@@ -1,8 +1,0 @@
-; RUN: llvm-as < %s | opt -globalopt | llvm-dis | not grep internal
-
-%G = internal global int 123
-
-void %foo() {
-	store int 1, int* %G
-	ret void
-}
