@@ -151,6 +151,15 @@ Pass *createPromoteMemoryToRegister();
 //
 Pass *createReassociatePass();
 
+//===----------------------------------------------------------------------===//
+//
+// This pass eliminates correlated conditions, such as these:
+//  if (X == 0)
+//    if (X > 2)     // Known false
+//    else
+//      Y = X * Z;   // = 0
+//
+Pass *createCorrelatedExpressionEliminationPass();
 
 //===----------------------------------------------------------------------===//
 //
