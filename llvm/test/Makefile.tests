@@ -43,7 +43,7 @@ DIS     = /usr/ccs/bin/dis
 CP	= /bin/cp -f
 CFLAGS  += -g -xarch=v9
 
-LLCLIB   = $(LEVEL)/test/runtime.o
+LLCLIB   = $(LEVEL)/test/Libraries/runtime.o
 LIBS    += $(LLCLIB)
 
 
@@ -83,7 +83,7 @@ Output/%.llc.s: Output/%.linked.bc
 # Assemble (and link) an LLVM-linked program using the system assembler...
 #
 Output/%.llc: Output/%.llc.s
-	$(CC) $(CFLAGS) $< -o $@
+	$(CC) $(CFLAGS) $< $(LIBS) -o $@
 
 #
 # Testing versions of provided utilities...
