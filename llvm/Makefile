@@ -7,7 +7,7 @@
 # 
 #===------------------------------------------------------------------------===#
 LEVEL = .
-DIRS = lib/Support utils lib tools 
+DIRS = lib/System lib/Support utils lib tools 
 
 ifneq ($(MAKECMDGOALS),tools-only)
 DIRS += runtime
