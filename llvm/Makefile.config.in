@@ -233,3 +233,10 @@ ifndef LLVM_SRC_ROOT
 LLVM_SRC_ROOT := $(BUILD_SRC_ROOT)
 endif
 
+#
+# Set SourceDir for backwards compatbility.
+#
+ifndef SourceDir
+SourceDir=$(BUILD_SRC_DIR)
+endif
+

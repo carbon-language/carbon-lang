@@ -49,10 +49,8 @@
 
 #
 # Set the VPATH so that we can find source files.
-# Also set $SouceDir for backwards compatibility
 #
-VPATH=$(BUILD_SRC_DIR)
-SourceDir=$(BUILD_SRC_DIR)
+VPATH=$(SourceDir)
 
 ###########################################################################
 # Default Targets:
