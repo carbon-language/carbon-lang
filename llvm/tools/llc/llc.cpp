@@ -12,15 +12,17 @@
 #include "llvm/Module.h"
 #include "llvm/Method.h"
 #include <memory>
+#include <fstream>
 
 cl::String InputFilename ("", "Input filename", cl::NoFlags, "-");
 cl::String OutputFilename("o", "Output filename", cl::NoFlags, "");
+cl::Flag   Force         ("f", "Overwrite output files", cl::NoFlags, false);
 
 
 //-------------------------- Internal Functions -----------------------------//
 
-static void NormalizeMethod(Method* method) {
-  NormalizePhiConstantArgs(method);
+static void NormalizeMethod(Method *M) {
+  NormalizePhiConstantArgs(M);
 }
 
 
@@ -57,7 +59,38 @@ int main(int argc, char **argv) {
     }
   }
   
-  Target->emitAssembly(M.get(), cout);
+  // Figure out where we are going to send the output...
+  ostream *Out = 0;
+  if (OutputFilename != "") {   // Specified an output filename?
+    Out = new ofstream(OutputFilename.c_str(), 
+                       (Force ? 0 : ios::noreplace)|ios::out);
+  } else {
+    if (InputFilename == "-") {
+      OutputFilename = "-";
+      Out = &cout;
+    } else {
+      string IFN = InputFilename;
+      int Len = IFN.length();
+      if (IFN[Len-3] == '.' && IFN[Len-2] == 'b' && IFN[Len-1] == 'c') {
+        OutputFilename = string(IFN.begin(), IFN.end()-3); // s/.bc/.s/
+      } else {
+        OutputFilename = IFN;   // Append a .s to it
+      }
+      OutputFilename += ".s";
+      Out = new ofstream(OutputFilename.c_str(), 
+                         (Force ? 0 : ios::noreplace)|ios::out);
+      if (!Out->good()) {
+        cerr << "Error opening " << OutputFilename << "!\n";
+        delete Out;
+        return 1;
+      }
+    }
+  }
+
+  // Emit the output...
+  Target->emitAssembly(M.get(), *Out);
+
+  if (Out != &cout) delete Out;
   return 0;
 }
 
