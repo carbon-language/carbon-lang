@@ -32,7 +32,7 @@ class Function;
 class Instruction;
 
 typedef std::hash_map<const Value*, LiveRange*> LiveRangeMapType;
-typedef std::vector<const MachineInstr*> CallRetInstrListType;
+typedef std::vector<MachineInstr*> CallRetInstrListType;
 
 //----------------------------------------------------------------------------
 // Class LiveRangeInfo
