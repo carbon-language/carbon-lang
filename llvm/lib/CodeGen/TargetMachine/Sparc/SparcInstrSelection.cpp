@@ -1347,8 +1347,7 @@ SetMemOperands_Internal(MachineInstr* minstr,
 	  isConstantOffset = true;
 	  
 	  // Compute the offset value using the index vector
-	  offset = MemAccessInst::getIndexedOfsetForTarget(ptrType,
-						       idxVec, target);
+	  offset = target.DataLayout.getIndexedOffset(ptrType, idxVec);
 	}
       else
 	{
@@ -1359,13 +1358,12 @@ SetMemOperands_Internal(MachineInstr* minstr,
 	  assert(arrayOffsetVal != NULL
 		 && "Expect to be given Value* for array offsets");
 	  
-	  if (arrayOffsetVal->getValueType() == Value::ConstantVal)
-	    {
+	  if (ConstPoolVal *CPV = arrayOffsetVal->castConstant()) {
 	      isConstantOffset = true;	// always constant for structs
 	      assert(arrayOffsetVal->getType()->isIntegral());
-	      offset = (arrayOffsetVal->getType()->isSigned())
-			? ((ConstPoolSInt*) arrayOffsetVal)->getValue()
-			: (int64_t) ((ConstPoolUInt*) arrayOffsetVal)->getValue();
+	      offset = (CPV->getType()->isSigned())
+			? ((ConstPoolSInt*)CPV)->getValue()
+			: (int64_t) ((ConstPoolUInt*)CPV)->getValue();
 	    }
 	  else
 	    {

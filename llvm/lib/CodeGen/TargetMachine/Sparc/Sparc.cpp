@@ -27,23 +27,14 @@
 //---------------------------------------------------------------------------
 
 UltraSparc::UltraSparc()
-  : TargetMachine(new UltraSparcInstrInfo)
-{
+  : TargetMachine("UltraSparc-Native", new UltraSparcInstrInfo()) {
   optSizeForSubWordData = 4;
-  intSize = 4; 
-  floatSize = 4; 
-  longSize = 8; 
-  doubleSize = 8; 
-  longDoubleSize = 16; 
-  pointerSize = 8;
   minMemOpWordSize = 8; 
   maxAtomicMemOpWordSize = 8;
   zeroRegNum = 0;			// %g0 always gives 0 on Sparc
 }
 
-UltraSparc::~UltraSparc()
-{
-  delete (UltraSparcInstrInfo*) machineInstrInfo;
+UltraSparc::~UltraSparc() {
 }
 
 //**************************************************************************/
