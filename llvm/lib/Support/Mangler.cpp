@@ -9,21 +9,33 @@
 #include "llvm/Type.h"
 #include "Support/StringExtras.h"
 
-/// makeNameProper - We don't want identifier names with ., space, or
-/// - in them, so we mangle these characters into the strings "d_",
-/// "s_", and "D_", respectively.
+static char HexDigit(int V) {
+  return V < 10 ? V+'0' : V+'A'-10;
+}
+
+static std::string MangleLetter(unsigned char C) {
+  return std::string("_")+HexDigit(C >> 4) + HexDigit(C & 15) + "_";
+}
+
+/// makeNameProper - We don't want identifier names non-C-identifier characters
+/// in them, so mangle them as appropriate.
 /// 
-std::string Mangler::makeNameProper(const std::string &x) {
-  std::string tmp;
-  for (std::string::const_iterator sI = x.begin(), sEnd = x.end();
-       sI != sEnd; sI++)
-    switch (*sI) {
-    case '.': tmp += "d_"; break;
-    case ' ': tmp += "s_"; break;
-    case '-': tmp += "D_"; break;
-    default:  tmp += *sI;
-    }
-  return tmp;
+std::string Mangler::makeNameProper(const std::string &X) {
+  std::string Result;
+  
+  // Mangle the first letter specially, don't allow numbers...
+  if ((X[0] < 'a' || X[0] > 'z') && (X[0] < 'A' || X[0] > 'Z') && X[0] != '_')
+    Result += MangleLetter(X[0]);
+  else
+    Result += X[0];
+
+  for (std::string::const_iterator I = X.begin()+1, E = X.end(); I != E; ++I)
+    if ((*I < 'a' || *I > 'z') && (*I < 'A' || *I > 'Z') &&
+        (*I < '0' || *I > '9') && *I != '_')
+      Result += MangleLetter(*I);
+    else
+      Result += *I;
+  return Result;
 }
 
 std::string Mangler::getValueName(const Value *V) {
