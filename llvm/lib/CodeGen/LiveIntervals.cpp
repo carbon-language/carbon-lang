@@ -210,49 +210,36 @@ void LiveIntervals::handlePhysicalRegisterDef(MachineBasicBlock* mbb,
                                               MachineBasicBlock::iterator mi,
                                               unsigned reg)
 {
+    typedef LiveVariables::killed_iterator KillIter;
+
     DEBUG(std::cerr << "\t\tregister: "; printRegName(reg));
 
+    MachineBasicBlock::iterator e = mbb->end();
     unsigned start = getInstructionIndex(*mi);
-    unsigned end = start;
+    unsigned end = start + 1;
 
-    // register can be dead by the instruction defining it but it can
-    // only be killed by subsequent instructions
-
-    for (LiveVariables::killed_iterator
-             ki = lv_->dead_begin(*mi),
-             ke = lv_->dead_end(*mi);
+    // a variable can be dead by the instruction defining it
+    for (KillIter ki = lv_->dead_begin(*mi), ke = lv_->dead_end(*mi);
          ki != ke; ++ki) {
         if (reg == ki->second) {
-            end = getInstructionIndex(ki->first) + 1;
             DEBUG(std::cerr << " dead\n");
             goto exit;
         }
     }
-    ++mi;
 
-    for (MachineBasicBlock::iterator e = mbb->end(); mi != e; ++mi) {
-        for (LiveVariables::killed_iterator
-                 ki = lv_->dead_begin(*mi),
-                 ke = lv_->dead_end(*mi);
+    // a variable can only be killed by subsequent instructions
+    do {
+        ++mi;
+        ++end;
+        for (KillIter ki = lv_->killed_begin(*mi), ke = lv_->killed_end(*mi);
              ki != ke; ++ki) {
             if (reg == ki->second) {
-                end = getInstructionIndex(ki->first) + 1;
-                DEBUG(std::cerr << " dead\n");
-                goto exit;
-            }
-        }
-
-        for (LiveVariables::killed_iterator
-                 ki = lv_->killed_begin(*mi),
-                 ke = lv_->killed_end(*mi);
-             ki != ke; ++ki) {
-            if (reg == ki->second) {
-                end = getInstructionIndex(ki->first) + 1;
                 DEBUG(std::cerr << " killed\n");
                 goto exit;
             }
         }
-    }
+    } while (mi != e);
+
 exit:
     assert(start < end && "did not find end of interval?");
 
