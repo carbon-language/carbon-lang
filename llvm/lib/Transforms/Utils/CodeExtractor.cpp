@@ -99,9 +99,93 @@ namespace {
 /// region, we need to split the entry block of the region so that the PHI node
 /// is easier to deal with.
 void CodeExtractor::severSplitPHINodes(BasicBlock *&Header) {
-  
+  bool HasPredsFromRegion = false;
+  unsigned NumPredsOutsideRegion = 0;
 
+  if (Header != &Header->getParent()->front()) {
+    PHINode *PN = dyn_cast<PHINode>(Header->begin());
+    if (!PN) return;  // No PHI nodes.
 
+    // If the header node contains any PHI nodes, check to see if there is more
+    // than one entry from outside the region.  If so, we need to sever the
+    // header block into two.
+    for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
+      if (BlocksToExtract.count(PN->getIncomingBlock(i)))
+        HasPredsFromRegion = true;
+      else
+        ++NumPredsOutsideRegion;
+
+    // If there is one (or fewer) predecessor from outside the region, we don't
+    // need to do anything special.
+    if (NumPredsOutsideRegion <= 1) return;
+  }
+
+  // Otherwise, we need to split the header block into two pieces: one
+  // containing PHI nodes merging values from outside of the region, and a
+  // second that contains all of the code for the block and merges back any
+  // incoming values from inside of the region.
+  BasicBlock::iterator AfterPHIs = Header->begin();
+  while (isa<PHINode>(AfterPHIs)) ++AfterPHIs;
+  BasicBlock *NewBB = Header->splitBasicBlock(AfterPHIs,
+                                              Header->getName()+".ce");
+
+  // We only want to code extract the second block now, and it becomes the new
+  // header of the region.
+  BasicBlock *OldPred = Header;
+  BlocksToExtract.erase(OldPred);
+  BlocksToExtract.insert(NewBB);
+  Header = NewBB;
+
+  // Okay, update dominator sets. The blocks that dominate the new one are the
+  // blocks that dominate TIBB plus the new block itself.
+  if (DS) {
+    DominatorSet::DomSetType DomSet = DS->getDominators(OldPred);
+    DomSet.insert(NewBB);  // A block always dominates itself.
+    DS->addBasicBlock(NewBB, DomSet);
+
+    // Additionally, NewBB dominates all blocks in the function that are
+    // dominated by OldPred.
+    Function *F = Header->getParent();
+    for (Function::iterator I = F->begin(), E = F->end(); I != E; ++I)
+      if (DS->properlyDominates(OldPred, I))
+        DS->addDominator(I, NewBB);
+  }
+
+  // Okay, now we need to adjust the PHI nodes and any branches from within the
+  // region to go to the new header block instead of the old header block.
+  if (HasPredsFromRegion) {
+    PHINode *PN = cast<PHINode>(OldPred->begin());
+    // Loop over all of the predecessors of OldPred that are in the region,
+    // changing them to branch to NewBB instead.
+    for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
+      if (BlocksToExtract.count(PN->getIncomingBlock(i))) {
+        TerminatorInst *TI = PN->getIncomingBlock(i)->getTerminator();
+        TI->replaceUsesOfWith(OldPred, NewBB);
+      }
+
+    // Okay, everthing within the region is now branching to the right block, we
+    // just have to update the PHI nodes now, inserting PHI nodes into NewBB.
+    for (AfterPHIs = OldPred->begin();
+         PHINode *PN = dyn_cast<PHINode>(AfterPHIs); ++AfterPHIs) {
+      // Create a new PHI node in the new region, which has an incoming value
+      // from OldPred of PN.
+      PHINode *NewPN = new PHINode(PN->getType(), PN->getName()+".ce",
+                                   NewBB->begin());
+      NewPN->addIncoming(PN, OldPred);
+
+      // Loop over all of the incoming value in PN, moving them to NewPN if they
+      // are from the extracted region.
+      for (unsigned i = 0; i != PN->getNumIncomingValues(); ++i) {
+        if (BlocksToExtract.count(PN->getIncomingBlock(i))) {
+          NewPN->addIncoming(PN->getIncomingValue(i), PN->getIncomingBlock(i));
+          PN->removeIncomingValue(i);
+          --i;
+        }
+      }
+    }
+  }
+
+  verifyFunction(*NewBB->getParent());
 }
 
 // findInputsOutputs - Find inputs to, outputs from the code region.
@@ -505,9 +589,6 @@ Function *CodeExtractor::ExtractCodeRegion(const std::vector<BasicBlock*> &code)
   // block in the region.
   BasicBlock *header = code[0];
 
-  // If we have to split PHI nodes, do so now.
-  severSplitPHINodes(header);
-
   for (unsigned i = 1, e = code.size(); i != e; ++i)
     for (pred_iterator PI = pred_begin(code[i]), E = pred_end(code[i]);
          PI != E; ++PI)
@@ -515,6 +596,9 @@ Function *CodeExtractor::ExtractCodeRegion(const std::vector<BasicBlock*> &code)
              "No blocks in this region may have entries from outside the region"
              " except for the first block!");
   
+  // If we have to split PHI nodes, do so now.
+  severSplitPHINodes(header);
+
   Function *oldFunction = header->getParent();
 
   // This takes place of the original loop
@@ -529,7 +613,7 @@ Function *CodeExtractor::ExtractCodeRegion(const std::vector<BasicBlock*> &code)
   findInputsOutputs(inputs, outputs);
 
   // Construct new function based on inputs/outputs & add allocas for all defs.
-  Function *newFunction = constructFunction(inputs, outputs, code[0],
+  Function *newFunction = constructFunction(inputs, outputs, header,
                                             newFuncRoot, 
                                             codeReplacer, oldFunction,
                                             oldFunction->getParent());
@@ -538,9 +622,9 @@ Function *CodeExtractor::ExtractCodeRegion(const std::vector<BasicBlock*> &code)
 
   moveCodeToFunction(newFunction);
 
-  // Loop over all of the PHI nodes in the entry block (code[0]), and change any
+  // Loop over all of the PHI nodes in the header block, and change any
   // references to the old incoming edge to be the new incoming edge.
-  for (BasicBlock::iterator I = code[0]->begin();
+  for (BasicBlock::iterator I = header->begin();
        PHINode *PN = dyn_cast<PHINode>(I); ++I)
     for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
       if (!BlocksToExtract.count(PN->getIncomingBlock(i)))
@@ -558,6 +642,11 @@ Function *CodeExtractor::ExtractCodeRegion(const std::vector<BasicBlock*> &code)
         if (BlocksToExtract.count(PN->getIncomingBlock(i)))
           PN->setIncomingBlock(i, codeReplacer);
   
+  //std::cerr << "NEW FUNCTION: " << *newFunction;
+  //  verifyFunction(*newFunction);
+
+  //  std::cerr << "OLD FUNCTION: " << *oldFunction;
+  //  verifyFunction(*oldFunction);
 
   DEBUG(if (verifyFunction(*newFunction)) abort());
   return newFunction;
