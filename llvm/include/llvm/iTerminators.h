@@ -14,8 +14,8 @@
 #include "llvm/InstrTypes.h"
 
 //===---------------------------------------------------------------------------
-// ReturnInst - Return a value (possibly void), from a method.  Execution does
-//              not continue in this method any longer.
+// ReturnInst - Return a value (possibly void), from a function.  Execution does
+//              not continue in this function any longer.
 //
 class ReturnInst : public TerminatorInst {
   ReturnInst(const ReturnInst &RI) : TerminatorInst(Instruction::Ret) {
@@ -194,7 +194,7 @@ public:
 class InvokeInst : public TerminatorInst {
   InvokeInst(const InvokeInst &BI);
 public:
-  InvokeInst(Value *Meth, BasicBlock *IfNormal, BasicBlock *IfException,
+  InvokeInst(Value *Fn, BasicBlock *IfNormal, BasicBlock *IfException,
 	     const std::vector<Value*> &Params, const std::string &Name = "",
              Instruction *InsertBefore = 0);
 
@@ -212,7 +212,7 @@ public:
     return dyn_cast<Function>(Operands[0].get());
   }
 
-  // getCalledValue - Get a pointer to a method that is invoked by this inst.
+  // getCalledValue - Get a pointer to a function that is invoked by this inst.
   inline const Value *getCalledValue() const { return Operands[0]; }
   inline       Value *getCalledValue()       { return Operands[0]; }
 
