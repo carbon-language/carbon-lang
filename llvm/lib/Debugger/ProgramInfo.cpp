@@ -20,7 +20,6 @@
 #include "llvm/Module.h"
 #include "llvm/Debugger/SourceFile.h"
 #include "llvm/Debugger/SourceLanguage.h"
-#include "llvm/Support/FileUtilities.h"
 #include "llvm/Support/SlowOperationInformer.h"
 #include "llvm/ADT/STLExtras.h"
 #include <iostream>

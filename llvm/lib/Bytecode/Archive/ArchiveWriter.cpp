@@ -13,7 +13,6 @@
 
 #include "ArchiveInternals.h"
 #include "llvm/Bytecode/Reader.h"
-#include "llvm/Support/FileUtilities.h"
 #include "llvm/Support/Compressor.h"
 #include "llvm/System/Signals.h"
 #include <fstream>

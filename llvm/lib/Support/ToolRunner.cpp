@@ -30,7 +30,8 @@ static void ProcessFailure(std::string ProgPath, const char** Args) {
   OS << "\n";
 
   // Rerun the compiler, capturing any error messages to print them.
-  std::string ErrorFilename = getUniqueFilename("error_messages");
+  sys::Path ErrorFilename("error_messages");
+  ErrorFilename.makeUnique();
   RunProgramWithTimeout(ProgPath, Args, "/dev/null", ErrorFilename.c_str(),
                         ErrorFilename.c_str());
 
@@ -43,7 +44,7 @@ static void ProcessFailure(std::string ProgPath, const char** Args) {
     ErrorFile.close();
   }
 
-  removeFile(ErrorFilename);
+  removeFile(ErrorFilename.toString());
   throw ToolExecutionError(OS.str());
 }
 
@@ -123,7 +124,9 @@ AbstractInterpreter *AbstractInterpreter::createLLI(const std::string &ProgPath,
 // LLC Implementation of AbstractIntepreter interface
 //
 void LLC::OutputAsm(const std::string &Bytecode, std::string &OutputAsmFile) {
-  OutputAsmFile = getUniqueFilename(Bytecode+".llc.s");
+  sys::Path uniqueFile(Bytecode+".llc.s");
+  uniqueFile.makeUnique();
+  OutputAsmFile = uniqueFile.toString();
   std::vector<const char *> LLCArgs;
   LLCArgs.push_back (LLCPath.c_str());
 
@@ -265,7 +268,9 @@ AbstractInterpreter *AbstractInterpreter::createJIT(const std::string &ProgPath,
 
 void CBE::OutputC(const std::string &Bytecode,
                  std::string &OutputCFile) {
-  OutputCFile = getUniqueFilename(Bytecode+".cbe.c");
+  sys::Path uniqueFile(Bytecode+".cbe.c");
+  uniqueFile.makeUnique();
+  OutputCFile = uniqueFile.toString();
   std::vector<const char *> LLCArgs;
   LLCArgs.push_back (LLCPath.c_str());
 
@@ -361,7 +366,8 @@ int GCC::ExecuteProgram(const std::string &ProgramFile,
   }
   GCCArgs.push_back(ProgramFile.c_str());  // Specify the input filename...
   GCCArgs.push_back("-o");
-  std::string OutputBinary = getUniqueFilename(ProgramFile+".gcc.exe");
+  sys::Path OutputBinary (ProgramFile+".gcc.exe");
+  OutputBinary.makeUnique();
   GCCArgs.push_back(OutputBinary.c_str()); // Output to the right file...
   GCCArgs.push_back("-lm");                // Hard-code the math library...
   GCCArgs.push_back("-O2");                // Optimize the program a bit...
@@ -392,14 +398,17 @@ int GCC::ExecuteProgram(const std::string &ProgramFile,
         std::cerr << "\n";
         );
 
-  FileRemover OutputBinaryRemover(OutputBinary);
-  return RunProgramWithTimeout(OutputBinary, &ProgramArgs[0],
+  FileRemover OutputBinaryRemover(OutputBinary.toString());
+  return RunProgramWithTimeout(OutputBinary.toString(), &ProgramArgs[0],
                                InputFile, OutputFile, OutputFile, Timeout);
 }
 
 int GCC::MakeSharedObject(const std::string &InputFile, FileType fileType,
                           std::string &OutputFile) {
-  OutputFile = getUniqueFilename(InputFile+LTDL_SHLIB_EXT);
+  sys::Path uniqueFilename(InputFile+LTDL_SHLIB_EXT);
+  uniqueFilename.makeUnique();
+  OutputFile = uniqueFilename.toString();
+
   // Compile the C/asm file into a shared object
   const char* GCCArgs[] = {
     GCCPath.c_str(),

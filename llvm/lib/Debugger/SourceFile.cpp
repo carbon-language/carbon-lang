@@ -13,7 +13,6 @@
 
 #include "llvm/Debugger/SourceFile.h"
 #include "llvm/Support/SlowOperationInformer.h"
-#include "llvm/Support/FileUtilities.h"
 #include <iostream>
 #include <cerrno>
 #include <fcntl.h>
