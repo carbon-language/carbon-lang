@@ -101,6 +101,19 @@ protected:
     return *(AnalysisType*)Resolver->getAnalysis(AID);
   }
 
+  // getAnalysisToUpdate<AnalysisType>() - This function is used by subclasses
+  // to get to the analysis information that might be around that needs to be
+  // updated.  This is different than getAnalysis in that it can fail (ie the
+  // analysis results haven't been computed), so should only be used if you
+  // provide the capability to update an analysis that exists.
+  //
+  template<typename AnalysisType>
+  AnalysisType *getAnalysisToUpdate(AnalysisID AID = AnalysisType::ID) {
+    assert(Resolver && "Pass not resident in a PassManager object!");
+    return (AnalysisType*)Resolver->getAnalysisToUpdate(AID);
+  }
+
+
 private:
   friend class PassManagerT<Module>;
   friend class PassManagerT<Function>;
@@ -249,6 +262,13 @@ struct AnalysisResolver {
     assert(Result && "Pass has an incorrect analysis uses set!");
     return Result;
   }
+
+  // getAnalysisToUpdate - Return an analysis result or null if it doesn't exist
+  Pass *getAnalysisToUpdate(AnalysisID ID) {
+    Pass *Result = getAnalysisOrNullUp(ID);
+    return Result;
+  }
+
   virtual unsigned getDepth() const = 0;
 
   virtual void markPassUsed(AnalysisID P, Pass *User) = 0;
