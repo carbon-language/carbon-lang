@@ -1,3 +1,4 @@
+* Finish xvcg output
 * pred/succ iterators on basic blocks don't handle switch statements correctly
 * Enhance BB to make predecessor handling easier (to update PHI nodes)
 * Provide a pass that eliminates critical edges from the CFG
