@@ -1309,7 +1309,7 @@ void ISel::visitCallInst(CallInst &CI) {
 static Value *dyncastIsNan(Value *V) {
   if (CallInst *CI = dyn_cast<CallInst>(V))
     if (Function *F = CI->getCalledFunction())
-      if (F->getIntrinsicID() == Intrinsic::isnan)
+      if (F->getIntrinsicID() == Intrinsic::isunordered)
         return CI->getOperand(1);
   return 0;
 }
@@ -1346,7 +1346,8 @@ void ISel::LowerUnknownIntrinsicFunctionCalls(Function &F) {
           case Intrinsic::vaend:
           case Intrinsic::returnaddress:
           case Intrinsic::frameaddress:
-          case Intrinsic::isnan:
+            // FIXME: should lower this ourselves
+            // case Intrinsic::isunordered:
             // We directly implement these intrinsics
             break;
           case Intrinsic::readio: {
@@ -1414,6 +1415,8 @@ void ISel::visitIntrinsicCall(Intrinsic::ID ID, CallInst &CI) {
     }
     return;
 
+#if 0
+    // This may be useful for supporting isunordered
   case Intrinsic::isnan:
     // If this is only used by 'isunordered' style comparisons, don't emit it.
     if (isOnlyUsedByUnorderedComparisons(&CI)) return;
@@ -1424,7 +1427,8 @@ void ISel::visitIntrinsicCall(Intrinsic::ID ID, CallInst &CI) {
     TmpReg3 = getReg(CI);
     BuildMI(BB, PPC32::RLWINM, 4, TmpReg3).addReg(TmpReg2).addImm(4).addImm(31).addImm(31);
     return;
-
+#endif
+    
   default: assert(0 && "Error: unknown intrinsics should have been lowered!");
   }
 }
