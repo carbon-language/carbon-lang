@@ -94,25 +94,6 @@ const Type *BytecodeParser::parseTypeConstant(const unsigned char *&Buf,
   }
 }
 
-// refineAbstractType - The callback method is invoked when one of the
-// elements of TypeValues becomes more concrete...
-//
-void BytecodeParser::refineAbstractType(const DerivedType *OldType, 
-					const Type *NewType) {
-  TypeValuesListTy::iterator I = find(FunctionTypeValues.begin(), 
-				      FunctionTypeValues.end(), OldType);
-  if (I == FunctionTypeValues.end()) {
-    I = find(ModuleTypeValues.begin(), ModuleTypeValues.end(), OldType);
-    assert(I != ModuleTypeValues.end() && 
-	   "Can't refine a type I don't know about!");
-  }
-
-  I->removeUserFromConcrete();
-  *I = NewType;  // Update to point to new, more refined type.
-}
-
-
-
 // parseTypeConstants - We have to use this weird code to handle recursive
 // types.  We know that recursive types will only reference the current slab of
 // values in the type plane, but they can forward reference types before they
@@ -132,7 +113,7 @@ void BytecodeParser::parseTypeConstants(const unsigned char *&Buf,
 
   // Insert a bunch of opaque types to be resolved later...
   for (unsigned i = 0; i < NumEntries; ++i)
-    Tab.push_back(PATypeHandle(OpaqueType::get(), this));
+    Tab.push_back(OpaqueType::get());
 
   // Loop through reading all of the types.  Forward types will make use of the
   // opaque types just inserted.

@@ -43,7 +43,7 @@ struct LazyFunctionInfo {
   unsigned FunctionSlot;
 };
 
-class BytecodeParser : public AbstractTypeUser, public AbstractModuleProvider {
+class BytecodeParser : public AbstractModuleProvider {
   BytecodeParser(const BytecodeParser &);  // DO NOT IMPLEMENT
   void operator=(const BytecodeParser &);  // DO NOT IMPLEMENT
 public:
@@ -116,7 +116,7 @@ private:          // All of this data is transient across calls to ParseBytecode
   // TypesLoaded - This vector mirrors the Values[TypeTyID] plane.  It is used
   // to deal with forward references to types.
   //
-  typedef std::vector<PATypeHandle> TypeValuesListTy;
+  typedef std::vector<PATypeHolder> TypeValuesListTy;
   TypeValuesListTy ModuleTypeValues;
   TypeValuesListTy FunctionTypeValues;
 
@@ -189,12 +189,6 @@ private:
 
   // resolve all references to the placeholder (if any) for the given value
   void ResolveReferencesToValue(Value *Val, unsigned Slot);
-
-  
-  // refineAbstractType - The callback method is invoked when one of the
-  // elements of TypeValues becomes more concrete...
-  //
-  virtual void refineAbstractType(const DerivedType *OldTy, const Type *NewTy);
 };
 
 template<class SuperType>
