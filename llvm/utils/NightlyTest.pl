@@ -25,7 +25,8 @@
 #  -release         Build an LLVM Release version
 #  -pedantic        Enable additional GCC warnings to detect possible errors.
 #  -enable-linscan  Enable linearscan tests
-#  -disable-codegen Disable LLC and JIT tests in the nightly tester.
+#  -disable-llc     Disable LLC tests in the nightly tester.
+#  -disable-jit     Disable JIT tests in the nightly tester.
 #  -verbose         Turn on some debug output
 #  -debug           Print information useful only to maintainers of this script.
 #  -nice            Checkout/Configure/Build with "nice" to reduce impact 
@@ -78,7 +79,7 @@ my $MAKEOPTS   = "";
 my $PROGTESTOPTS = "";
 my $VERBOSE  = 0;
 my $DEBUG = 0;
-my $CONFIGUREARGS = "--enable-jit";
+my $CONFIGUREARGS = "";
 my $NICE = "";
 
 sub ReadFile {
@@ -262,9 +263,10 @@ while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
       next; 
   }
   if (/^-enable-linscan$/) { $PROGTESTOPTS .= " ENABLE_LINEARSCAN=1"; next; }
-  if (/^-disable-codegen$/){ $PROGTESTOPTS .= " DISABLE_JIT=1 DISABLE_LLC=1";
-                             $CONFIGUREARGS="--disable-jit --disable-llc_diffs";
-                             next; }
+  if (/^-disable-llc$/)    { $PROGTESTOPTS .= " DISABLE_LLC=1";
+                             $CONFIGUREARGS .= " --disable-llc_diffs"; next; }
+  if (/^-disable-jit$/)    { $PROGTESTOPTS .= " DISABLE_JIT=1";
+                             $CONFIGUREARGS .= " --disable-jit"; next; }
   if (/^-verbose$/)        { $VERBOSE  = 1; next; }
   if (/^-debug$/)          { $DEBUG  = 1; next; }
   if (/^-nice$/)           { $NICE  = "nice "; next; }
@@ -278,6 +280,9 @@ while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
 
 if ($ENV{'LLVMGCCDIR'}) {
   $CONFIGUREARGS .= " --with-llvmgccdir=" . $ENV{'LLVMGCCDIR'};
+}
+if ($CONFIGUREARGS !~ /--disable-jit/) {
+  $CONFIGUREARGS .= " --enable-jit";
 }
 
 die "Must specify 0 or 3 options!" if (@ARGV != 0 and @ARGV != 3);
