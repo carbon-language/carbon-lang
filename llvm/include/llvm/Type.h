@@ -151,13 +151,33 @@ public:
   //
   bool isLosslesslyConvertableTo(const Type *Ty) const;
 
+
+  // Here are some useful little methods to query what type derived types are
+  // Note that all other types can just compare to see if this == Type::xxxTy;
+  //
+  inline bool isPrimitiveType() const { return ID < FirstDerivedTyID;  }
+  inline bool isDerivedType()   const { return ID >= FirstDerivedTyID; }
+
+  // isFirstClassType - Return true if the value is holdable in a register.
+  inline bool isFirstClassType() const {
+    return isPrimitiveType() || ID == PointerTyID;
+  }
+
   // isSized - Return true if it makes sense to take the size of this type.  To
   // get the actual size for a particular target, it is reasonable to use the
   // TargetData subsystem to do this.
   //
   bool isSized() const {
-    return ID != TypeTyID && ID != FunctionTyID && ID != OpaqueTyID;
+    return ID != VoidTyID && ID != TypeTyID &&
+           ID != FunctionTyID && ID != LabelTyID && ID != OpaqueTyID;
   }
+
+  // getPrimitiveSize - Return the basic size of this type if it is a primative
+  // type.  These are fixed by LLVM and are not target dependant.  This will
+  // return zero if the type does not have a size or is not a primitive type.
+  //
+  unsigned getPrimitiveSize() const;
+
 
   //===--------------------------------------------------------------------===//
   // Type Iteration support
@@ -199,28 +219,11 @@ public:
 
   static Type *TypeTy , *LabelTy;
 
-  // Here are some useful little methods to query what type derived types are
-  // Note that all other types can just compare to see if this == Type::xxxTy;
-  //
-  inline bool isPrimitiveType() const { return ID < FirstDerivedTyID;  }
-  inline bool isDerivedType()   const { return ID >= FirstDerivedTyID; }
-
-  // isFirstClassType - Return true if the value is holdable in a register.
-  inline bool isFirstClassType() const {
-    return isPrimitiveType() || ID == PointerTyID;
-  }
-
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const Type *T) { return true; }
   static inline bool classof(const Value *V) {
     return V->getValueType() == Value::TypeVal;
   }
-
-  // Methods for determining the subtype of this Type. This section defines a
-  // family of isArrayType(), isLabelType(),  etc functions...
-  //
-#define HANDLE_DERV_TYPE(NAME, CLASS)                                     \
-  inline bool is##NAME##Type() const { return ID == NAME##TyID; }
 
 #include "llvm/Type.def"
 
@@ -290,5 +293,12 @@ template <> struct GraphTraits<const Type*> {
     return N->subtype_end();
   }
 };
+
+template <> inline bool isa<PointerType, const Type*>(const Type *Ty) { 
+  return Ty->getPrimitiveID() == Type::PointerTyID;
+}
+template <> inline bool isa<PointerType, Type*>(Type *Ty) { 
+  return Ty->getPrimitiveID() == Type::PointerTyID;
+}
 
 #endif
