@@ -12,6 +12,8 @@
 #include "Support/Statistic.h"
 
 namespace {
+  Statistic<> NumBytes("jello", "Number of bytes of machine code compiled");
+
   class Emitter : public MachineCodeEmitter {
     VM &TheVM;
 
@@ -62,9 +64,11 @@ void Emitter::finishFunction(MachineFunction &F) {
   BBRefs.clear();
   BBLocations.clear();
 
-  DEBUG(std::cerr << "Finished Code Generation of Function: "
-                  << F.getFunction()->getName() << ": " << CurByte-CurBlock
-                  << " bytes of text\n");
+  NumBytes += CurByte-CurBlock;
+
+  DEBUG(std::cerr << "Finished CodeGen of [" << std::hex << (unsigned)CurBlock
+                  << std::dec << "] Function: " << F.getFunction()->getName()
+                  << ": " << CurByte-CurBlock << " bytes of text\n");
 }
 
 void Emitter::startBasicBlock(MachineBasicBlock &BB) {
