@@ -130,6 +130,16 @@ public:
                     unsigned ImmOffset, unsigned dataSize) const = 0;
 
   virtual MachineBasicBlock::iterator
+  moveReg2Reg(MachineBasicBlock *MBB,
+              MachineBasicBlock::iterator MBBI,
+              unsigned DestReg, unsigned SrcReg, unsigned dataSize) const = 0;
+
+  virtual MachineBasicBlock::iterator
+  moveImm2Reg(MachineBasicBlock *MBB,
+              MachineBasicBlock::iterator MBBI,
+              unsigned DestReg, unsigned Imm, unsigned dataSize) const = 0;
+
+  virtual MachineBasicBlock::iterator
   emitPrologue(MachineBasicBlock *MBB,
                MachineBasicBlock::iterator MBBI,
                unsigned numBytes) const = 0;

@@ -63,6 +63,42 @@ X86RegisterInfo::loadRegOffset2Reg(MachineBasicBlock *MBB,
   return ++(MBB->insert(MBBI, MI));
 }
 
+MachineBasicBlock::iterator
+X86RegisterInfo::moveReg2Reg(MachineBasicBlock *MBB,
+                             MachineBasicBlock::iterator MBBI,
+                             unsigned DestReg, unsigned SrcReg,
+                             unsigned dataSize) const
+{
+  unsigned opcode;
+  switch (dataSize) {
+  case 1: opcode = X86::MOVrr8; break;
+  case 2: opcode = X86::MOVrr16; break;
+  case 4: opcode = X86::MOVrr32; break;
+  default: assert(0 && "Invalid data size!");
+  }
+  
+  MachineInstr *MI = BuildMI(opcode, 2).addReg(DestReg).addReg(SrcReg);
+  return ++(MBB->insert(MBBI, MI));
+}
+
+MachineBasicBlock::iterator
+X86RegisterInfo::moveImm2Reg(MachineBasicBlock *MBB,
+                             MachineBasicBlock::iterator MBBI,
+                             unsigned DestReg, unsigned Imm, unsigned dataSize)
+  const
+{
+  unsigned opcode;
+  switch (dataSize) {
+  case 1: opcode = X86::MOVir8; break;
+  case 2: opcode = X86::MOVir16; break;
+  case 4: opcode = X86::MOVir32; break;
+  default: assert(0 && "Invalid data size!");
+  }
+  
+  MachineInstr *MI = BuildMI(opcode, 2).addReg(DestReg).addReg(Imm);
+  return ++(MBB->insert(MBBI, MI));
+}
+
 
 unsigned X86RegisterInfo::getFramePointer() const {
   return X86::EBP;

@@ -29,6 +29,16 @@ struct X86RegisterInfo : public MRegisterInfo {
                     unsigned DestReg, unsigned SrcReg,
                     unsigned ImmOffset, unsigned dataSize) const;
 
+  MachineBasicBlock::iterator
+  moveReg2Reg(MachineBasicBlock *MBB,
+              MachineBasicBlock::iterator MBBI,
+              unsigned DestReg, unsigned SrcReg, unsigned dataSize) const;
+
+  MachineBasicBlock::iterator
+  moveImm2Reg(MachineBasicBlock *MBB,
+              MachineBasicBlock::iterator MBBI,
+              unsigned DestReg, unsigned Imm, unsigned dataSize) const;
+
   unsigned getFramePointer() const;
   unsigned getStackPointer() const;
 
