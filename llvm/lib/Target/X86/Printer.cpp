@@ -464,7 +464,6 @@ void Printer::printOp(const MachineOperand &MO,
   case MachineOperand::MO_MachineRegister:
     if (MO.getReg() < MRegisterInfo::FirstVirtualRegister) {
       // Bug Workaround: See note in Printer::doInitialization about %.
-      if (!EmitCygwin) O << "%";
       O << RI.get(MO.getReg()).Name;
     } else
       O << "%reg" << MO.getReg();
@@ -567,7 +566,7 @@ void Printer::checkImplUses (const TargetInstrDescriptor &Desc) {
   if (Desc.TSFlags & X86II::PrintImplUses) {
     for (const unsigned *p = Desc.ImplicitUses; *p; ++p) {
       // Bug Workaround: See note in Printer::doInitialization about %.
-      O << ", " << (EmitCygwin ? "" : "%") << RI.get(*p).Name;
+      O << ", %" << RI.get(*p).Name;
     }
   }
 }
@@ -923,9 +922,7 @@ bool Printer::doInitialization(Module &M) {
   //
   // Cygwin presumably doesn't have this problem, so drop the %'s.
   //
-  O << "\t.intel_syntax";
-  if (EmitCygwin) O << " noprefix";
-  O << "\n";
+  O << "\t.intel_syntax\n";
   Mang = new Mangler(M, EmitCygwin);
   return false; // success
 }
