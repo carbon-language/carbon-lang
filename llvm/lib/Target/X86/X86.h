@@ -35,6 +35,11 @@ extern X86VectorEnum X86Vector;
 ///
 FunctionPass *createX86SimpleInstructionSelector(TargetMachine &TM);
 
+/// createX86PatternInstructionSelector - This pass converts an LLVM function
+/// into a machine code representation in a more aggressive way.
+///
+FunctionPass *createX86PatternInstructionSelector(TargetMachine &TM);
+
 /// createX86SSAPeepholeOptimizerPass - Create a pass to perform SSA-based X86
 /// specific peephole optimizations.
 ///
@@ -70,11 +75,11 @@ FunctionPass *createX86CodePrinterPass(std::ostream &o,TargetMachine &tm);
 ///
 FunctionPass *createEmitX86CodeToMemory();
 
+} // End llvm namespace
+
 // Defines symbolic names for X86 registers.  This defines a mapping from
 // register name to register number.
 //
-} // End llvm namespace
-
 #include "X86GenRegisterNames.inc"
 
 // Defines symbolic names for the X86 instructions.
