@@ -26,6 +26,8 @@ namespace {
   class Steens : public ModulePass, public AliasAnalysis {
     DSGraph *ResultGraph;
     DSGraph *GlobalsGraph;  // FIXME: Eliminate globals graph stuff from DNE
+
+    EquivalenceClasses<GlobalValue*> GlobalECs;  // Always empty
   public:
     Steens() : ResultGraph(0), GlobalsGraph(0) {}
     ~Steens() {
@@ -112,8 +114,8 @@ bool Steens::runOnModule(Module &M) {
   LocalDataStructures &LDS = getAnalysis<LocalDataStructures>();
 
   // Create a new, empty, graph...
-  ResultGraph = new DSGraph(getTargetData());
-  GlobalsGraph = new DSGraph(getTargetData());
+  ResultGraph = new DSGraph(GlobalECs, getTargetData());
+  GlobalsGraph = new DSGraph(GlobalECs, getTargetData());
   ResultGraph->setGlobalsGraph(GlobalsGraph);
   ResultGraph->setPrintAuxCalls();
 
@@ -128,7 +130,7 @@ bool Steens::runOnModule(Module &M) {
   unsigned Count = 0;
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
     if (!I->isExternal()) {
-      DSGraph::ScalarMapTy ValMap;
+      DSGraph::ScalarMapTy ValMap(GlobalECs);
       {  // Scope to free NodeMap memory ASAP
         DSGraph::NodeMapTy NodeMap;
         const DSGraph &FDSG = LDS.getDSGraph(*I);

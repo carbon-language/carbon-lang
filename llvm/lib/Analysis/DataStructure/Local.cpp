@@ -164,8 +164,9 @@ using namespace DS;
 //===----------------------------------------------------------------------===//
 // DSGraph constructor - Simply use the GraphBuilder to construct the local
 // graph.
-DSGraph::DSGraph(const TargetData &td, Function &F, DSGraph *GG)
-  : GlobalsGraph(GG), TD(td) {
+DSGraph::DSGraph(EquivalenceClasses<GlobalValue*> &ECs, const TargetData &td,
+                 Function &F, DSGraph *GG)
+  : GlobalsGraph(GG), ScalarMap(ECs), TD(td) {
   PrintAuxCalls = false;
 
   DEBUG(std::cerr << "  [Loc] Calculating graph for: " << F.getName() << "\n");
@@ -1071,21 +1072,49 @@ void GraphBuilder::mergeInGlobalInitializer(GlobalVariable *GV) {
 bool LocalDataStructures::runOnModule(Module &M) {
   const TargetData &TD = getAnalysis<TargetData>();
 
-  GlobalsGraph = new DSGraph(TD);
-
+  // First step, build the globals graph.
+  GlobalsGraph = new DSGraph(GlobalECs, TD);
   {
     GraphBuilder GGB(*GlobalsGraph);
     
-    // Add initializers for all of the globals to the globals graph...
-    for (Module::global_iterator I = M.global_begin(), E = M.global_end(); I != E; ++I)
+    // Add initializers for all of the globals to the globals graph.
+    for (Module::global_iterator I = M.global_begin(), E = M.global_end();
+         I != E; ++I)
       if (!I->isExternal())
         GGB.mergeInGlobalInitializer(I);
   }
 
+  // Next step, iterate through the nodes in the globals graph, unioning
+  // together the globals into equivalence classes.
+  for (DSGraph::node_iterator I = GlobalsGraph->node_begin(),
+         E = GlobalsGraph->node_end(); I != E; ++I)
+    if (I->getGlobals().size() > 1) {
+      // First, build up the equivalence set for this block of globals.
+      const std::vector<GlobalValue*> &GVs = I->getGlobals();
+      GlobalValue *First = GVs[0];
+      for (unsigned i = 1, e = GVs.size(); i != e; ++i)
+        GlobalECs.unionSets(First, GVs[i]);
+
+      // Next, get the leader element.
+      First = GlobalECs.getLeaderValue(First);
+
+      // Next, remove all globals from the scalar map that are not the leader.
+      DSScalarMap &SM = GlobalsGraph->getScalarMap();
+      for (unsigned i = 0, e = GVs.size(); i != e; ++i)
+        if (GVs[i] != First)
+          SM.erase(SM.find(GVs[i]));
+
+      // Finally, change the global node to only contain the leader.
+      I->clearGlobals();
+      I->addGlobal(First);
+    }
+  DEBUG(GlobalsGraph->AssertGraphOK());
+
   // Calculate all of the graphs...
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
     if (!I->isExternal())
-      DSInfo.insert(std::make_pair(I, new DSGraph(TD, *I, GlobalsGraph)));
+      DSInfo.insert(std::make_pair(I, new DSGraph(GlobalECs, TD, *I,
+                                                  GlobalsGraph)));
 
   GlobalsGraph->removeTriviallyDeadNodes();
   GlobalsGraph->markIncompleteNodes(DSGraph::MarkFormalArgs);

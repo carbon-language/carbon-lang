@@ -34,7 +34,7 @@ namespace {
 //
 bool CompleteBUDataStructures::runOnModule(Module &M) {
   BUDataStructures &BU = getAnalysis<BUDataStructures>();
-  GlobalsGraph = new DSGraph(BU.getGlobalsGraph());
+  GlobalsGraph = new DSGraph(BU.getGlobalsGraph(), GlobalECs);
   GlobalsGraph->setPrintAuxCalls();
 
 #if 1   // REMOVE ME EVENTUALLY
@@ -121,7 +121,7 @@ DSGraph &CompleteBUDataStructures::getOrCreateGraph(Function &F) {
   if (Graph) return *Graph;
 
   // Copy the BU graph...
-  Graph = new DSGraph(getAnalysis<BUDataStructures>().getDSGraph(F));
+  Graph = new DSGraph(getAnalysis<BUDataStructures>().getDSGraph(F), GlobalECs);
   Graph->setGlobalsGraph(GlobalsGraph);
   Graph->setPrintAuxCalls();
 

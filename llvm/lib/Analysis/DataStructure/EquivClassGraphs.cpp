@@ -72,9 +72,10 @@ Function *EquivClassGraphs::getSomeCalleeForCallSite(const CallSite &CS) const{
 //
 bool EquivClassGraphs::runOnModule(Module &M) {
   CBU = &getAnalysis<CompleteBUDataStructures>();
+  GlobalECs = CBU->getGlobalECs();
   DEBUG(CheckAllGraphs(&M, *CBU));
 
-  GlobalsGraph = new DSGraph(CBU->getGlobalsGraph());
+  GlobalsGraph = new DSGraph(CBU->getGlobalsGraph(), GlobalECs);
   GlobalsGraph->setPrintAuxCalls();
 
   ActualCallees = CBU->getActualCallees();
@@ -305,7 +306,7 @@ DSGraph &EquivClassGraphs::getOrCreateGraph(Function &F) {
   DSGraph &CBUGraph = CBU->getDSGraph(F);
 
   // Copy the CBU graph...
-  Graph = new DSGraph(CBUGraph);           // updates the map via reference
+  Graph = new DSGraph(CBUGraph, GlobalECs);   // updates the map via reference
   Graph->setGlobalsGraph(&getGlobalsGraph());
   Graph->setPrintAuxCalls();
 

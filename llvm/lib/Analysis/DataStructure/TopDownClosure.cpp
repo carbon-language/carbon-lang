@@ -53,7 +53,8 @@ void TDDataStructures::markReachableFunctionsExternallyAccessible(DSNode *N,
 //
 bool TDDataStructures::runOnModule(Module &M) {
   BUDataStructures &BU = getAnalysis<BUDataStructures>();
-  GlobalsGraph = new DSGraph(BU.getGlobalsGraph());
+  GlobalECs = BU.getGlobalECs();
+  GlobalsGraph = new DSGraph(BU.getGlobalsGraph(), GlobalECs);
   GlobalsGraph->setPrintAuxCalls();
 
   // Figure out which functions must not mark their arguments complete because
@@ -115,7 +116,7 @@ bool TDDataStructures::runOnModule(Module &M) {
 DSGraph &TDDataStructures::getOrCreateDSGraph(Function &F) {
   DSGraph *&G = DSInfo[&F];
   if (G == 0) { // Not created yet?  Clone BU graph...
-    G = new DSGraph(getAnalysis<BUDataStructures>().getDSGraph(F));
+    G = new DSGraph(getAnalysis<BUDataStructures>().getDSGraph(F), GlobalECs);
     G->getAuxFunctionCalls().clear();
     G->setPrintAuxCalls();
     G->setGlobalsGraph(GlobalsGraph);
@@ -324,7 +325,7 @@ void TDDataStructures::copyValue(Value *From, Value *To) {
   if (Function *FromF = dyn_cast<Function>(From)) {
     Function *ToF = cast<Function>(To);
     assert(!DSInfo.count(ToF) && "New Function already exists!");
-    DSGraph *NG = new DSGraph(getDSGraph(*FromF));
+    DSGraph *NG = new DSGraph(getDSGraph(*FromF), GlobalECs);
     DSInfo[ToF] = NG;
     assert(NG->getReturnNodes().size() == 1 && "Cannot copy SCC's yet!");
 

@@ -115,7 +115,7 @@ void DSNode::assertOK() const {
   assert(ParentGraph && "Node has no parent?");
   const DSScalarMap &SM = ParentGraph->getScalarMap();
   for (unsigned i = 0, e = Globals.size(); i != e; ++i) {
-    assert(SM.count(Globals[i]));
+    assert(SM.global_count(Globals[i]));
     assert(SM.find(Globals[i])->second.getNode() == this);
   }
 }
@@ -143,6 +143,10 @@ void DSNode::forwardNode(DSNode *To, unsigned Offset) {
 // marks the node with the 'G' flag if it does not already have it.
 //
 void DSNode::addGlobal(GlobalValue *GV) {
+  // First, check to make sure this is the leader if the global is in an
+  // equivalence class.
+  GV = getParentGraph()->getScalarMap().getLeaderForGlobal(GV);
+
   // Keep the list sorted.
   std::vector<GlobalValue*>::iterator I =
     std::lower_bound(Globals.begin(), Globals.end(), GV);
@@ -1091,14 +1095,16 @@ std::string DSGraph::getFunctionNames() const {
 }
 
 
-DSGraph::DSGraph(const DSGraph &G) : GlobalsGraph(0), TD(G.TD) {
+DSGraph::DSGraph(const DSGraph &G, EquivalenceClasses<GlobalValue*> &ECs)
+  : GlobalsGraph(0), ScalarMap(ECs), TD(G.TD) {
   PrintAuxCalls = false;
   NodeMapTy NodeMap;
   cloneInto(G, ScalarMap, ReturnNodes, NodeMap);
 }
 
-DSGraph::DSGraph(const DSGraph &G, NodeMapTy &NodeMap)
-  : GlobalsGraph(0), TD(G.TD) {
+DSGraph::DSGraph(const DSGraph &G, NodeMapTy &NodeMap,
+                 EquivalenceClasses<GlobalValue*> &ECs)
+  : GlobalsGraph(0), ScalarMap(ECs), TD(G.TD) {
   PrintAuxCalls = false;
   cloneInto(G, ScalarMap, ReturnNodes, NodeMap);
 }
@@ -1865,8 +1871,9 @@ void DSGraph::removeDeadNodes(unsigned Flags) {
                               DSGraph::StripIncompleteBit);
 
   // Mark all nodes reachable by (non-global) scalar nodes as alive...
-  { TIME_REGION(Y, "removeDeadNodes:scalarscan");
-  for (DSScalarMap::iterator I = ScalarMap.begin(), E = ScalarMap.end(); I !=E;)
+{ TIME_REGION(Y, "removeDeadNodes:scalarscan");
+  for (DSScalarMap::iterator I = ScalarMap.begin(), E = ScalarMap.end();
+       I != E; ++I)
     if (isa<GlobalValue>(I->first)) {             // Keep track of global nodes
       assert(!I->second.isNull() && "Null global node?");
       assert(I->second.getNode()->isGlobalNode() && "Should be a global node!");
@@ -1881,29 +1888,10 @@ void DSGraph::removeDeadNodes(unsigned Flags) {
         else
           GGCloner.getClonedNH(I->second);
       }
-      ++I;
     } else {
-      DSNode *N = I->second.getNode();
-#if 0
-      // Check to see if this is a worthless node generated for non-pointer
-      // values, such as integers.  Consider an addition of long types: A+B.
-      // Assuming we can track all uses of the value in this context, and it is
-      // NOT used as a pointer, we can delete the node.  We will be able to
-      // detect this situation if the node pointed to ONLY has Unknown bit set
-      // in the node.  In this case, the node is not incomplete, does not point
-      // to any other nodes (no mod/ref bits set), and is therefore
-      // uninteresting for data structure analysis.  If we run across one of
-      // these, prune the scalar pointing to it.
-      //
-      if (N->getNodeFlags() == DSNode::UnknownNode && !isa<Argument>(I->first))
-        ScalarMap.erase(I++);
-      else {
-#endif
-        N->markReachableNodes(Alive);
-        ++I;
-      //}
+      I->second.getNode()->markReachableNodes(Alive);
     }
-  }
+}
 
   // The return values are alive as well.
   for (ReturnNodesTy::iterator I = ReturnNodes.begin(), E = ReturnNodes.end();

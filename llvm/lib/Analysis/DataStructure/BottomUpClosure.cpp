@@ -37,7 +37,9 @@ using namespace DS;
 //
 bool BUDataStructures::runOnModule(Module &M) {
   LocalDataStructures &LocalDSA = getAnalysis<LocalDataStructures>();
-  GlobalsGraph = new DSGraph(LocalDSA.getGlobalsGraph());
+  GlobalECs = LocalDSA.getGlobalECs();
+
+  GlobalsGraph = new DSGraph(LocalDSA.getGlobalsGraph(), GlobalECs);
   GlobalsGraph->setPrintAuxCalls();
 
   IndCallGraphMap = new std::map<std::vector<Function*>,
@@ -112,7 +114,8 @@ DSGraph &BUDataStructures::getOrCreateGraph(Function *F) {
   if (Graph) return *Graph;
 
   // Copy the local version into DSInfo...
-  Graph = new DSGraph(getAnalysis<LocalDataStructures>().getDSGraph(*F));
+  Graph = new DSGraph(getAnalysis<LocalDataStructures>().getDSGraph(*F),
+                      GlobalECs);
 
   Graph->setGlobalsGraph(GlobalsGraph);
   Graph->setPrintAuxCalls();
@@ -379,7 +382,7 @@ void BUDataStructures::calculateGraph(DSGraph &Graph) {
             E = CalledFuncs.end();
           
           // Start with a copy of the first graph.
-          GI = IndCallGraph.first = new DSGraph(getDSGraph(**I));
+          GI = IndCallGraph.first = new DSGraph(getDSGraph(**I), GlobalECs);
           GI->setGlobalsGraph(Graph.getGlobalsGraph());
           std::vector<DSNodeHandle> &Args = IndCallGraph.second;
 
@@ -498,7 +501,7 @@ void BUDataStructures::copyValue(Value *From, Value *To) {
   if (Function *FromF = dyn_cast<Function>(From)) {
     Function *ToF = cast<Function>(To);
     assert(!DSInfo.count(ToF) && "New Function already exists!");
-    DSGraph *NG = new DSGraph(getDSGraph(*FromF));
+    DSGraph *NG = new DSGraph(getDSGraph(*FromF), GlobalECs);
     DSInfo[ToF] = NG;
     assert(NG->getReturnNodes().size() == 1 && "Cannot copy SCC's yet!");
 
