@@ -58,6 +58,12 @@ namespace {
                           Value *Src, User::op_iterator IdxBegin,
                           User::op_iterator IdxEnd, unsigned TargetReg);
 
+    /// emitCastOperation - Common code shared between visitCastInst and
+    /// constant expression cast support.
+    ///
+    void emitCastOperation(MachineBasicBlock *BB,MachineBasicBlock::iterator IP,
+                           Value *Src, const Type *DestTy, unsigned TargetReg);
+
     /// visitBasicBlock - This method is called when we are visiting a new basic
     /// block.  This simply creates a new MachineBasicBlock to emit code into
     /// and adds it to the current MachineFunction.  Subsequent visit* for
@@ -208,6 +214,9 @@ void V8ISel::copyConstantToRegister(MachineBasicBlock *MBB,
     case Instruction::GetElementPtr:
       emitGEPOperation(MBB, IP, CE->getOperand(0),
                        CE->op_begin()+1, CE->op_end(), R);
+      return;
+    case Instruction::Cast:
+      emitCastOperation(MBB, IP, CE->getOperand(0), CE->getType(), R);
       return;
     default:
       std::cerr << "Copying this constant expr not yet handled: " << *CE;
@@ -451,12 +460,28 @@ bool V8ISel::runOnFunction(Function &Fn) {
 }
 
 void V8ISel::visitCastInst(CastInst &I) {
-  unsigned SrcReg = getReg (I.getOperand (0));
-  unsigned DestReg = getReg (I);
-  const Type *oldTy = I.getOperand (0)->getType ();
-  const Type *newTy = I.getType ();
-  unsigned oldTyClass = getClassB (oldTy);
-  unsigned newTyClass = getClassB (newTy);
+  Value *Op = I.getOperand(0);
+  unsigned DestReg = getReg(I);
+  MachineBasicBlock::iterator MI = BB->end();
+  emitCastOperation(BB, MI, Op, I.getType(), DestReg);
+}
+
+/// emitCastOperation - Common code shared between visitCastInst and constant
+/// expression cast support.
+///
+void V8ISel::emitCastOperation(MachineBasicBlock *BB,
+                             MachineBasicBlock::iterator IP,
+                             Value *Src, const Type *DestTy,
+                             unsigned DestReg) {
+  const Type *SrcTy = Src->getType();
+  unsigned SrcClass = getClassB(SrcTy);
+  unsigned DestClass = getClassB(DestTy);
+  unsigned SrcReg = getReg(Src, BB, IP);
+
+  const Type *oldTy = SrcTy;
+  const Type *newTy = DestTy;
+  unsigned oldTyClass = SrcClass;
+  unsigned newTyClass = DestClass;
 
   if (oldTyClass < cLong && newTyClass < cLong) {
     if (oldTyClass >= newTyClass) {
@@ -464,13 +489,13 @@ void V8ISel::visitCastInst(CastInst &I) {
       // and do sign/zero extension (necessary if we change signedness).
       unsigned TmpReg1 = makeAnotherReg (newTy);
       unsigned TmpReg2 = makeAnotherReg (newTy);
-      BuildMI (BB, V8::ORrr, 2, TmpReg1).addReg (V8::G0).addReg (SrcReg);
+      BuildMI (*BB, IP, V8::ORrr, 2, TmpReg1).addReg (V8::G0).addReg (SrcReg);
       unsigned shiftWidth = 32 - (8 * TM.getTargetData ().getTypeSize (newTy));
-      BuildMI (BB, V8::SLLri, 2, TmpReg2).addZImm (shiftWidth).addReg(TmpReg1);
+      BuildMI (*BB, IP, V8::SLLri, 2, TmpReg2).addZImm (shiftWidth).addReg(TmpReg1);
       if (newTy->isSigned ()) { // sign-extend with SRA
-        BuildMI(BB, V8::SRAri, 2, DestReg).addZImm (shiftWidth).addReg(TmpReg2);
+        BuildMI(*BB, IP, V8::SRAri, 2, DestReg).addZImm (shiftWidth).addReg(TmpReg2);
       } else { // zero-extend with SRL
-        BuildMI(BB, V8::SRLri, 2, DestReg).addZImm (shiftWidth).addReg(TmpReg2);
+        BuildMI(*BB, IP, V8::SRLri, 2, DestReg).addZImm (shiftWidth).addReg(TmpReg2);
       }
     } else {
       unsigned TmpReg1 = makeAnotherReg (oldTy);
@@ -480,22 +505,23 @@ void V8ISel::visitCastInst(CastInst &I) {
       // wrt the input type, then make sure it's fully sign/zero-extended wrt
       // the output type. Kind of stupid, but simple...
       unsigned shiftWidth = 32 - (8 * TM.getTargetData ().getTypeSize (oldTy));
-      BuildMI (BB, V8::SLLri, 2, TmpReg1).addZImm (shiftWidth).addReg(SrcReg);
+      BuildMI (*BB, IP, V8::SLLri, 2, TmpReg1).addZImm (shiftWidth).addReg(SrcReg);
       if (oldTy->isSigned ()) { // sign-extend with SRA
-        BuildMI(BB, V8::SRAri, 2, TmpReg2).addZImm (shiftWidth).addReg(TmpReg1);
+        BuildMI(*BB, IP, V8::SRAri, 2, TmpReg2).addZImm (shiftWidth).addReg(TmpReg1);
       } else { // zero-extend with SRL
-        BuildMI(BB, V8::SRLri, 2, TmpReg2).addZImm (shiftWidth).addReg(TmpReg1);
+        BuildMI(*BB, IP, V8::SRLri, 2, TmpReg2).addZImm (shiftWidth).addReg(TmpReg1);
       }
       shiftWidth = 32 - (8 * TM.getTargetData ().getTypeSize (newTy));
-      BuildMI (BB, V8::SLLri, 2, TmpReg3).addZImm (shiftWidth).addReg(TmpReg2);
+      BuildMI (*BB, IP, V8::SLLri, 2, TmpReg3).addZImm (shiftWidth).addReg(TmpReg2);
       if (newTy->isSigned ()) { // sign-extend with SRA
-        BuildMI(BB, V8::SRAri, 2, DestReg).addZImm (shiftWidth).addReg(TmpReg3);
+        BuildMI(*BB, IP, V8::SRAri, 2, DestReg).addZImm (shiftWidth).addReg(TmpReg3);
       } else { // zero-extend with SRL
-        BuildMI(BB, V8::SRLri, 2, DestReg).addZImm (shiftWidth).addReg(TmpReg3);
+        BuildMI(*BB, IP, V8::SRLri, 2, DestReg).addZImm (shiftWidth).addReg(TmpReg3);
       }
     }
   } else {
-    std::cerr << "Casts w/ long, fp, double still unsupported: " << I;
+    std::cerr << "Casts w/ long, fp, double still unsupported: SrcTy = "
+              << *SrcTy << ", DestTy = " << *DestTy << "\n";
     abort ();
   }
 }
