@@ -156,24 +156,79 @@ inline void BytecodeReader::read_data(void *Ptr, void *End) {
 
 /// Read a float value in little-endian order
 inline void BytecodeReader::read_float(float& FloatVal) {
-  /// FIXME: This is a broken implementation! It reads
-  /// it in a platform-specific endianess. Need to make
-  /// it little endian always.
-  read_data(&FloatVal, &FloatVal+1);
+  if (hasPlatformSpecificFloatingPoint) {
+    read_data(&FloatVal, &FloatVal+1);
+  } else {
+    /// FIXME: This isn't optimal, it has size problems on some platforms
+    /// where FP is not IEEE.
+    union {
+      float f;
+      uint32_t i;
+    } FloatUnion;
+    FloatUnion.i = At[0] | (At[1] << 8) | (At[2] << 16) | (At[3] << 24);
+    At+=sizeof(uint32_t);
+    FloatVal = FloatUnion.f;
+  }
 }
 
 /// Read a double value in little-endian order
 inline void BytecodeReader::read_double(double& DoubleVal) {
-  /// FIXME: This is a broken implementation! It reads
-  /// it in a platform-specific endianess. Need to make
-  /// it little endian always.
-  read_data(&DoubleVal, &DoubleVal+1);
+  if (hasPlatformSpecificFloatingPoint) {
+    read_data(&DoubleVal, &DoubleVal+1);
+  } else {
+    /// FIXME: This isn't optimal, it has size problems on some platforms
+    /// where FP is not IEEE.
+    union {
+      double d;
+      uint64_t i;
+    } DoubleUnion;
+    DoubleUnion.i = At[0] | (At[1] << 8) | (At[2] << 16) | (At[3] << 24) |
+                    (uint64_t(At[4]) << 32) | (uint64_t(At[5]) << 40) | 
+                    (uint64_t(At[6]) << 48) | (uint64_t(At[7]) << 56);
+    At+=sizeof(uint64_t);
+    DoubleVal = DoubleUnion.d;
+  }
 }
 
 /// Read a block header and obtain its type and size
 inline void BytecodeReader::read_block(unsigned &Type, unsigned &Size) {
-  Type = read_uint();
-  Size = read_uint();
+  if ( hasLongBlockHeaders ) {
+    Type = read_uint();
+    Size = read_uint();
+    switch (Type) {
+    case BytecodeFormat::Reserved_DoNotUse : 
+      error("Reserved_DoNotUse used as Module Type?");
+      Type = BytecodeFormat::Module; break;
+    case BytecodeFormat::Module: 
+      Type = BytecodeFormat::ModuleBlockID; break;
+    case BytecodeFormat::Function:
+      Type = BytecodeFormat::FunctionBlockID; break;
+    case BytecodeFormat::ConstantPool:
+      Type = BytecodeFormat::ConstantPoolBlockID; break;
+    case BytecodeFormat::SymbolTable:
+      Type = BytecodeFormat::SymbolTableBlockID; break;
+    case BytecodeFormat::ModuleGlobalInfo:
+      Type = BytecodeFormat::ModuleGlobalInfoBlockID; break;
+    case BytecodeFormat::GlobalTypePlane:
+      Type = BytecodeFormat::GlobalTypePlaneBlockID; break;
+    case BytecodeFormat::InstructionList:
+      Type = BytecodeFormat::InstructionListBlockID; break;
+    case BytecodeFormat::CompactionTable:
+      Type = BytecodeFormat::CompactionTableBlockID; break;
+    case BytecodeFormat::BasicBlock:
+      /// This block type isn't used after version 1.1. However, we have to
+      /// still allow the value in case this is an old bc format file.
+      /// We just let its value creep thru.
+      break;
+    default:
+      error("Invalid module type found: " + utostr(Type));
+      break;
+    }
+  } else {
+    Size = read_uint();
+    Type = Size & 0x1F; // mask low order five bits
+    Size >>= 5; // get rid of five low order bits, leaving high 27
+  }
   BlockStart = At;
   if (At + Size > BlockEnd)
     error("Attempt to size a block past end of memory");
@@ -216,6 +271,9 @@ inline bool BytecodeReader::sanitizeTypeId(unsigned &TypeId) {
 /// @see sanitizeTypeId
 inline bool BytecodeReader::read_typeid(unsigned &TypeId) {
   TypeId = read_vbr_uint();
+  if ( !has32BitTypes )
+    if ( TypeId == 0x00FFFFFF )
+      TypeId = read_vbr_uint();
   return sanitizeTypeId(TypeId);
 }
 
@@ -1504,7 +1562,7 @@ void BytecodeReader::ParseFunctionBody(Function* F) {
     read_block(Type, Size);
 
     switch (Type) {
-    case BytecodeFormat::ConstantPool:
+    case BytecodeFormat::ConstantPoolBlockID:
       if (!InsertedArguments) {
         // Insert arguments into the value table before we parse the first basic
         // block in the function, but after we potentially read in the
@@ -1516,7 +1574,7 @@ void BytecodeReader::ParseFunctionBody(Function* F) {
       ParseConstantPool(FunctionValues, FunctionTypes, true);
       break;
 
-    case BytecodeFormat::CompactionTable:
+    case BytecodeFormat::CompactionTableBlockID:
       ParseCompactionTable();
       break;
 
@@ -1534,7 +1592,7 @@ void BytecodeReader::ParseFunctionBody(Function* F) {
       break;
     }
 
-    case BytecodeFormat::InstructionList: {
+    case BytecodeFormat::InstructionListBlockID: {
       // Insert arguments into the value table before we parse the instruction
       // list for the function, but after we potentially read in the compaction
       // table.
@@ -1549,7 +1607,7 @@ void BytecodeReader::ParseFunctionBody(Function* F) {
       break;
     }
 
-    case BytecodeFormat::SymbolTable:
+    case BytecodeFormat::SymbolTableBlockID:
       ParseSymbolTable(F, &F->getSymbolTable());
       break;
 
@@ -1784,12 +1842,27 @@ void BytecodeReader::ParseModuleGlobalInfo() {
       error("Invalid function type (type type) found");
   }
 
-  if (hasInconsistentModuleGlobalInfo)
-    align32();
-
   // Now that the function signature list is set up, reverse it so that we can 
   // remove elements efficiently from the back of the vector.
   std::reverse(FunctionSignatureList.begin(), FunctionSignatureList.end());
+
+  // If this bytecode format has dependent library information in it ..
+  if (!hasNoDependentLibraries) {
+    // Read in the number of dependent library items that follow
+    unsigned num_dep_libs = read_vbr_uint();
+    std::string dep_lib;
+    while( num_dep_libs-- ) {
+      dep_lib = read_str();
+      TheModule->linsert(dep_lib);
+    }
+
+    // Read target triple and place into the module
+    std::string triple = read_str();
+    TheModule->setTargetTriple(triple);
+  }
+
+  if (hasInconsistentModuleGlobalInfo)
+    align32();
 
   // This is for future proofing... in the future extra fields may be added that
   // we don't understand, so we transparently ignore them.
@@ -1820,12 +1893,17 @@ void BytecodeReader::ParseVersionInfo() {
   hasExplicitPrimitiveZeros = false;
   hasRestrictedGEPTypes = false;
   hasTypeDerivedFromValue = false;
+  hasLongBlockHeaders = false;
+  hasPlatformSpecificFloatingPoint = false;
+  has32BitTypes = false;
+  hasNoDependentLibraries = false;
 
   switch (RevisionNum) {
   case 0:               //  LLVM 1.0, 1.1 release version
     // Base LLVM 1.0 bytecode format.
     hasInconsistentModuleGlobalInfo = true;
     hasExplicitPrimitiveZeros = true;
+
 
     // FALL THROUGH
   case 1:               // LLVM 1.2 release version
@@ -1846,7 +1924,35 @@ void BytecodeReader::ParseVersionInfo() {
     hasTypeDerivedFromValue = true;
 
     // FALL THROUGH
-  case 2:               // LLVM 1.3 release version
+    
+  case 2:  /// 1.2.5 (mid-release) version
+
+    /// LLVM 1.2 and earlier had two-word block headers. This is a bit wasteful,
+    /// especially for small files where the 8 bytes per block is a large fraction
+    /// of the total block size. In LLVM 1.3, the block type and length are 
+    /// compressed into a single 32-bit unsigned integer. 27 bits for length, 5
+    /// bits for block type.
+    hasLongBlockHeaders = true;
+
+    /// LLVM 1.2 and earlier wrote floating point values in a platform specific
+    /// bit ordering. This was fixed in LLVM 1.3, but we still need to be backwards
+    /// compatible.
+    hasPlatformSpecificFloatingPoint = true;
+
+    /// LLVM 1.2 and earlier wrote type slot numbers as vbr_uint32. In LLVM 1.3
+    /// this has been reduced to vbr_uint24. It shouldn't make much difference 
+    /// since we haven't run into a module with > 24 million types, but for safety
+    /// the 24-bit restriction has been enforced in 1.3 to free some bits in
+    /// various places and to ensure consistency.
+    has32BitTypes = true;
+
+    /// LLVM 1.2 and earlier did not provide a target triple nor a list of 
+    /// libraries on which the bytecode is dependent. LLVM 1.3 provides these
+    /// features, for use in future versions of LLVM.
+    hasNoDependentLibraries = true;
+
+    // FALL THROUGH
+  case 3:               // LLVM 1.3 release version
     break;
 
   default:
@@ -1870,7 +1976,7 @@ void BytecodeReader::ParseModule() {
 
   // Read into instance variables...
   ParseVersionInfo();
-  align32(); /// FIXME: Is this redundant? VI is first and 4 bytes!
+  align32();
 
   bool SeenModuleGlobalInfo = false;
   bool SeenGlobalTypePlane = false;
@@ -1881,7 +1987,7 @@ void BytecodeReader::ParseModule() {
 
     switch (Type) {
 
-    case BytecodeFormat::GlobalTypePlane:
+    case BytecodeFormat::GlobalTypePlaneBlockID:
       if (SeenGlobalTypePlane)
         error("Two GlobalTypePlane Blocks Encountered!");
 
@@ -1889,22 +1995,22 @@ void BytecodeReader::ParseModule() {
       SeenGlobalTypePlane = true;
       break;
 
-    case BytecodeFormat::ModuleGlobalInfo: 
+    case BytecodeFormat::ModuleGlobalInfoBlockID: 
       if (SeenModuleGlobalInfo)
         error("Two ModuleGlobalInfo Blocks Encountered!");
       ParseModuleGlobalInfo();
       SeenModuleGlobalInfo = true;
       break;
 
-    case BytecodeFormat::ConstantPool:
+    case BytecodeFormat::ConstantPoolBlockID:
       ParseConstantPool(ModuleValues, ModuleTypes,false);
       break;
 
-    case BytecodeFormat::Function:
+    case BytecodeFormat::FunctionBlockID:
       ParseFunctionLazily();
       break;
 
-    case BytecodeFormat::SymbolTable:
+    case BytecodeFormat::SymbolTableBlockID:
       ParseSymbolTable(0, &TheModule->getSymbolTable());
       break;
 
@@ -1967,14 +2073,16 @@ void BytecodeReader::ParseBytecode(BufPtr Buf, unsigned Length,
       error("Invalid bytecode signature: " + utostr(Sig));
     }
 
-
     // Tell the handler we're starting a module
     if (Handler) Handler->handleModuleBegin(ModuleID);
 
-    // Get the module block and size and verify
+    // Get the module block and size and verify. This is handled specially
+    // because the module block/size is always written in long format. Other
+    // blocks are written in short format so the read_block method is used.
     unsigned Type, Size;
-    read_block(Type, Size);
-    if (Type != BytecodeFormat::Module) {
+    Type = read_uint();
+    Size = read_uint();
+    if (Type != BytecodeFormat::ModuleBlockID) {
       error("Expected Module Block! Type:" + utostr(Type) + ", Size:" 
             + utostr(Size));
     }

@@ -56,6 +56,7 @@ public:
 /// @name Types
 /// @{
 public:
+
   /// @brief A convenience type for the buffer pointer
   typedef const unsigned char* BufPtr;
 
@@ -268,6 +269,36 @@ private:
   /// from Value style of bytecode file is being read.
   bool hasTypeDerivedFromValue;
 
+  /// LLVM 1.2 and earlier encoded block headers as two uint (8 bytes), one for
+  /// the size and one for the type. This is a bit wasteful, especially for small 
+  /// files where the 8 bytes per block is a large fraction of the total block 
+  /// size. In LLVM 1.3, the block type and length are encoded into a single 
+  /// uint32 by restricting the number of block types (limit 31) and the maximum
+  /// size of a block (limit 2^27-1=134,217,727). Note that the module block
+  /// still uses the 8-byte format so the maximum size of a file can be
+  /// 2^32-1 bytes long.
+  bool hasLongBlockHeaders;
+
+  /// LLVM 1.2 and earlier wrote floating point values in a platform specific
+  /// bit ordering. This was fixed in LLVM 1.3
+  bool hasPlatformSpecificFloatingPoint;
+
+  /// LLVM 1.2 and earlier wrote type slot numbers as vbr_uint32. In LLVM 1.3
+  /// this has been reduced to vbr_uint24. It shouldn't make much difference 
+  /// since we haven't run into a module with > 24 million types, but for safety
+  /// the 24-bit restriction has been enforced in 1.3 to free some bits in
+  /// various places and to ensure consistency. In particular, global vars are
+  /// restricted to 24-bits.
+  bool has32BitTypes;
+
+  /// LLVM 1.2 and earlier did not provide a target triple nor a list of 
+  /// libraries on which the bytecode is dependent. LLVM 1.3 provides these
+  /// features, for use in future versions of LLVM.
+  bool hasNoDependentLibraries;
+
+  /// LLVM 1.2 and earlier encoded the file version as part of the module block
+  /// but this information may be needed to
+
   /// CompactionTable - If a compaction table is active in the current function,
   /// this is the mapping that it contains.
   std::vector<const Type*> CompactionTypes;
@@ -429,6 +460,10 @@ private:
 
   /// @brief Read an unsigned integer with variable bit rate encoding
   inline unsigned read_vbr_uint();
+
+  /// @brief Read an unsigned integer of no more than 24-bits with variable
+  /// bit rate encoding.
+  inline unsigned read_vbr_uint24();
 
   /// @brief Read an unsigned 64-bit integer with variable bit rate encoding.
   inline uint64_t read_vbr_uint64();

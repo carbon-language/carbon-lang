@@ -19,19 +19,21 @@
 #ifndef LLVM_LIB_BYTECODE_WRITER_WRITERINTERNALS_H
 #define LLVM_LIB_BYTECODE_WRITER_WRITERINTERNALS_H
 
-#include "WriterPrimitives.h"
 #include "SlotCalculator.h"
 #include "llvm/Bytecode/Writer.h"
 #include "llvm/Bytecode/Format.h"
 #include "llvm/Instruction.h"
+#include "Support/DataTypes.h"
+#include <string>
+#include <vector>
 
 namespace llvm {
 
 class BytecodeWriter {
-  std::deque<unsigned char> &Out;
+  std::vector<unsigned char> &Out;
   SlotCalculator Table;
 public:
-  BytecodeWriter(std::deque<unsigned char> &o, const Module *M);
+  BytecodeWriter(std::vector<unsigned char> &o, const Module *M);
 
 private:
   void outputConstants(bool isFunction);
@@ -44,6 +46,25 @@ private:
                                   unsigned StartNo);
   void outputInstructions(const Function *F);
   void outputInstruction(const Instruction &I);
+  void outputInstructionFormat0(const Instruction *I, unsigned Opcode,
+				const SlotCalculator &Table,
+				unsigned Type);
+  void outputInstrVarArgsCall(const Instruction *I, 
+			      unsigned Opcode,
+			      const SlotCalculator &Table,
+			      unsigned Type) ;
+  inline void outputInstructionFormat1(const Instruction *I, 
+				       unsigned Opcode,
+				       unsigned *Slots, 
+				       unsigned Type) ;
+  inline void outputInstructionFormat2(const Instruction *I, 
+				       unsigned Opcode,
+			               unsigned *Slots, 
+				       unsigned Type) ;
+  inline void outputInstructionFormat3(const Instruction *I, 
+				       unsigned Opcode,
+				       unsigned *Slots, 
+				       unsigned Type) ;
 
   void outputModuleInfoBlock(const Module *C);
   void outputSymbolTable(const SymbolTable &ST);
@@ -52,48 +73,70 @@ private:
                               unsigned StartNo);
   void outputConstant(const Constant *CPV);
   void outputType(const Type *T);
+
+  /// @brief Unsigned integer output primitive
+  inline void output(unsigned i, int pos = -1);
+
+  /// @brief Signed integer output primitive
+  inline void output(int i);
+
+  /// @brief 64-bit variable bit rate output primitive.
+  inline void output_vbr(uint64_t i);
+
+  /// @brief 32-bit variable bit rate output primitive.
+  inline void output_vbr(unsigned i);
+
+  /// @brief Signed 64-bit variable bit rate output primitive.
+  inline void output_vbr(int64_t i);
+
+  /// @brief Signed 32-bit variable bit rate output primitive.
+  inline void output_vbr(int i);
+
+  /// Emit the minimal number of bytes that will bring us to 32 bit alignment.
+  /// @brief 32-bit alignment output primitive
+  inline void align32();
+
+  inline void output(const std::string &s, bool Aligned = true);
+
+  inline void output_data(const void *Ptr, const void *End);
+
+  inline void output_float(float& FloatVal);
+  inline void output_double(double& DoubleVal);
+
+  inline void output_typeid(unsigned i);
+
+  inline size_t size() const { return Out.size(); }
+  inline void resize(size_t S) { Out.resize(S); }
+  friend class BytecodeBlock;
 };
-
-
-
 
 /// BytecodeBlock - Little helper class is used by the bytecode writer to help
 /// do backpatching of bytecode block sizes really easily.  It backpatches when
 /// it goes out of scope.
 ///
 class BytecodeBlock {
+  unsigned Id;
   unsigned Loc;
-  std::deque<unsigned char> &Out;
+  BytecodeWriter& Writer;
 
   /// ElideIfEmpty - If this is true and the bytecode block ends up being empty,
   /// the block can remove itself from the output stream entirely.
   bool ElideIfEmpty;
 
+  /// If this is true then the block is written with a long format header using
+  /// a uint (32-bits) for both the block id and size. Otherwise, it uses the
+  /// short format which is a single uint with 27 bits for size and 5 bits for
+  /// the block id. Both formats are used in a bc file with version 1.3.
+  /// Previously only the long format was used.
+  bool HasLongFormat;
+
   BytecodeBlock(const BytecodeBlock &);   // do not implement
   void operator=(const BytecodeBlock &);  // do not implement
 public:
-  inline BytecodeBlock(unsigned ID, std::deque<unsigned char> &o,
-                       bool elideIfEmpty = false)
-    : Out(o), ElideIfEmpty(elideIfEmpty) {
-    output(ID, Out);
-    output(0U, Out);         // Reserve the space for the block size...
-    Loc = Out.size();
-  }
+  inline BytecodeBlock(unsigned ID, BytecodeWriter& w,
+                       bool elideIfEmpty = false, bool hasLongFormat = false);
 
-  inline ~BytecodeBlock() {           // Do backpatch when block goes out
-                                      // of scope...
-    if (Loc == Out.size() && ElideIfEmpty) {
-      // If the block is empty, and we are allowed to, do not emit the block at
-      // all!
-      Out.resize(Out.size()-8);
-      return;
-    }
-
-    //cerr << "OldLoc = " << Loc << " NewLoc = " << NewLoc << " diff = "
-    //     << (NewLoc-Loc) << endl;
-    output(unsigned(Out.size()-Loc), Out, int(Loc-4));
-    align32(Out);  // Blocks must ALWAYS be aligned
-  }
+  inline ~BytecodeBlock();
 };
 
 } // End llvm namespace
