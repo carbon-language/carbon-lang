@@ -34,7 +34,6 @@ public:
     GlobalTypePlane,
 
     // Function subtypes:
-    MethodInfo = 0x21,
     // Can also have ConstantPool block
     // Can also have SymbolTable block
     BasicBlock = 0x31,        // May contain many basic blocks
