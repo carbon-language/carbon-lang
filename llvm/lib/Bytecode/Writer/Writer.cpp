@@ -1099,7 +1099,7 @@ void llvm::WriteBytecodeToFile(const Module *M, std::ostream &Out) {
   // chunks, until we're done.
   //
   for (std::vector<unsigned char>::const_iterator I = Buffer.begin(),
-         E = Buffer.end(); I != E; ++I) {
+         E = Buffer.end(); I != E; ) {
     // Scan to see how big this chunk is...
     const unsigned char *ChunkPtr = &*I;
     const unsigned char *LastPtr = ChunkPtr;
