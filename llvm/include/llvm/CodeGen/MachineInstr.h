@@ -18,7 +18,6 @@ class Function;
 
 typedef int MachineOpCode;
 typedef int OpCodeMask;
-typedef int InstrSchedClass;
 
 //---------------------------------------------------------------------------
 // class MachineOperand 
