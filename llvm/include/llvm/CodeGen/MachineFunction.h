@@ -49,6 +49,12 @@ class MachineFunction : private Annotation {
 public:
   MachineFunction(const Function *Fn, const TargetMachine& target);
 
+
+  /// CalculateArgSize - Call this method to fill in the maxOptionalArgsSize &
+  /// staticStackSize fields...
+  ///
+  void CalculateArgSize();
+
   /// getFunction - Return the LLVM function that this machine code represents
   ///
   const Function *getFunction() const { return Fn; }
