@@ -378,9 +378,9 @@ you actually implement it. Typically it looks something like this
         public std::iterator<std::forward_iterator_tag, value_type> {
           friend class container;
           public:
-            const value_type& operator*() const;
+            const value_type&amp; operator*() const;
             const value_type* operator->() const;
-            const_iterator& operator++();
+            const_iterator&amp; operator++();
             const_iterator operator++(int);
             friend bool operator==(const_iterator lhs,
                                    const_iterator rhs);
@@ -408,14 +408,14 @@ two constructors with different signatures.]</i>
 There are normally only three member functions that need nontrivial
 implementations; the rest are just boilerplate.
 
-  const container::value_type&
+  const container::value_type&amp;
     container::const_iterator::operator*() const {
       // find the element and return a reference to it
     }
 
   const container::value_type*
     container::const_iterator::operator->() const {
-      return &**this;
+      return &amp;**this;
     }
 
 If there's an underlying real container, operator*() can just return a
@@ -431,7 +431,7 @@ when one of the dereferencing operators is called.
 The operator->() function is just boilerplate around a call to
 operator*().
 
-  container::const_iterator&
+  container::const_iterator&amp;
     container::const_iterator::operator++() {
       // the incrementing logic goes here
       return *this;
@@ -491,9 +491,9 @@ the simple addition of a second class.
           friend class container;
           friend class container::const_iterator;
           public:
-            value_type& operator*() const;
+            value_type&amp; operator*() const;
             value_type* operator->() const;
-            iterator& operator++();
+            iterator&amp; operator++();
             iterator operator++(int);
             friend bool operator==(iterator lhs, iterator rhs);
             friend bool operator!=(iterator lhs, iterator rhs);
@@ -505,10 +505,10 @@ the simple addition of a second class.
           friend class container;
           public:
             const_iterator();
-            const_iterator(const iterator& i);
-            const value_type& operator*() const;
+            const_iterator(const iterator&amp; i);
+            const value_type&amp; operator*() const;
             const value_type* operator->() const;
-            const_iterator& operator++();
+            const_iterator&amp; operator++();
             const_iterator operator++(int);
             friend bool operator==(const_iterator lhs,
                                    const_iterator rhs);
@@ -537,7 +537,7 @@ iterators:
     public std::iterator<std::bidirectional_iterator_tag, value_type> {
       public:
         //...
-        iterator& operator--();
+        iterator&amp; operator--();
         iterator operator--(int);
         //...
     };
@@ -551,8 +551,8 @@ Random access iterators add several more member and friend functions:
     public std::iterator<std::random_access_iterator_tag, value_type> {
       public:
         //...
-        iterator& operator+=(difference_type rhs);
-        iterator& operator-=(difference_type rhs);
+        iterator&amp; operator+=(difference_type rhs);
+        iterator&amp; operator-=(difference_type rhs);
         friend iterator operator+(iterator lhs, difference_type rhs);
         friend iterator operator+(difference_type lhs, iterator rhs);
         friend iterator operator-(iterator lhs, difference_type rhs);
@@ -564,13 +564,13 @@ Random access iterators add several more member and friend functions:
         //...
     };
 
-  container::iterator&
+  container::iterator&amp;
     container::iterator::operator+=(container::difference_type rhs) {
       // add rhs to iterator position
       return *this;
     }
 
-  container::iterator&
+  container::iterator&amp;
     container::iterator::operator-=(container::difference_type rhs) {
       // subtract rhs from iterator position
       return *this;
@@ -660,7 +660,7 @@ If you get some free time, and you haven't read them: do so, you might learn som
 <address><a href="mailto:sabre@nondot.org">Chris Lattner</a></address>
 <!-- Created: Tue Jan 23 15:19:28 CST 2001 -->
 <!-- hhmts start -->
-Last modified: Sun Jan 20 13:01:02 CST 2002
+Last modified: Wed Apr 23 11:20:49 CDT 2003
 <!-- hhmts end -->
 </font>
 </body></html>
