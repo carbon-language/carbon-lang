@@ -22,11 +22,52 @@ namespace llvm {
 class GlobalValue;
 
 //===----------------------------------------------------------------------===//
+/// DSScalarMap - An instance of this class is used to keep track of all of 
+/// which DSNode each scalar in a function points to.  This is specialized to
+/// keep track of globals with nodes in the function, and to keep track of the 
+/// unique DSNodeHandle being used by the scalar map.
+///
+/// This class is crucial to the efficiency of DSA with some large SCC's.  In 
+/// these cases, the cost of iterating over the scalar map dominates the cost
+/// of DSA.  In all of these cases, the DSA phase is really trying to identify 
+/// globals or unique node handles active in the function.
+///
+
+class DSScalarMap {
+  typedef hash_map<Value*, DSNodeHandle> ValueMapTy;
+  ValueMapTy ValueMap;
+public:
+
+  // Compatibility methods: provide an interface compatible with a map of 
+  // Value* to DSNodeHandle's.
+  typedef ValueMapTy::const_iterator const_iterator;
+  typedef ValueMapTy::iterator iterator;
+  iterator begin() { return ValueMap.begin(); }
+  iterator end()   { return ValueMap.end(); }
+  const_iterator begin() const { return ValueMap.begin(); }
+  const_iterator end() const { return ValueMap.end(); }
+  iterator find(Value *V) { return ValueMap.find(V); }
+  const_iterator find(Value *V) const { return ValueMap.find(V); }
+  unsigned count(Value *V) const { return ValueMap.count(V); }
+
+  void erase(iterator I) { ValueMap.erase(I); }
+  void erase(Value *V) { ValueMap.erase(V); }
+
+  DSNodeHandle &operator[](Value *V) { return ValueMap[V]; }
+
+  void clear() {
+    ValueMap.clear();
+  }
+
+};
+
+
+//===----------------------------------------------------------------------===//
 /// DSGraph - The graph that represents a function.
 ///
 struct DSGraph {
   // Public data-type declarations...
-  typedef hash_map<Value*, DSNodeHandle> ScalarMapTy;
+  typedef DSScalarMap ScalarMapTy;
   typedef hash_map<Function*, DSNodeHandle> ReturnNodesTy;
   typedef hash_set<GlobalValue*> GlobalSetTy;
 
