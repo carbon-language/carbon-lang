@@ -1,4 +1,4 @@
-//===-- Module.cpp - Implement the Module class ------------------*- C++ -*--=//
+//===-- Module.cpp - Implement the Module class ---------------------------===//
 //
 // This file implements the Module class for the VMCore library.
 //

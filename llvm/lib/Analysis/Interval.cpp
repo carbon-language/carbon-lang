@@ -1,4 +1,4 @@
-//===- Interval.cpp - Interval class code ------------------------*- C++ -*--=//
+//===- Interval.cpp - Interval class code ---------------------------------===//
 //
 // This file contains the definition of the Interval class, which represents a
 // partition of a control flow graph of some kind.

@@ -1,4 +1,4 @@
-//===- FindUnsafePointerTypes.cpp - Check pointer usage safety --------------=//
+//===- FindUnsafePointerTypes.cpp - Check pointer usage safety ------------===//
 //
 // This file defines a pass that can be used to determine, interprocedurally, 
 // which pointer types are accessed unsafely in a program.  If there is an

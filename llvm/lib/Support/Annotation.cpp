@@ -1,4 +1,4 @@
-//===-- Annotation.cpp - Implement the Annotation Classes --------*- C++ -*--=//
+//===-- Annotation.cpp - Implement the Annotation Classes -----------------===//
 //
 // This file implements the AnnotationManager class.
 //

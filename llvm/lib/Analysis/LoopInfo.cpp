@@ -1,4 +1,4 @@
-//===- LoopInfo.cpp - Natural Loop Calculator -------------------------------=//
+//===- LoopInfo.cpp - Natural Loop Calculator -----------------------------===//
 //
 // This file defines the LoopInfo class that is used to identify natural loops
 // and determine the loop depth of various nodes of the CFG.  Note that the

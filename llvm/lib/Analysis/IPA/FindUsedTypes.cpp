@@ -1,4 +1,4 @@
-//===- FindUsedTypes.cpp - Find all Types used by a module ------------------=//
+//===- FindUsedTypes.cpp - Find all Types used by a module ----------------===//
 //
 // This pass is used to seek out all of the types in use by the program.
 //

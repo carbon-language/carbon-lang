@@ -1,4 +1,4 @@
-//===- Expressions.cpp - Expression Analysis Utilities ----------------------=//
+//===- Expressions.cpp - Expression Analysis Utilities --------------------===//
 //
 // This file defines a package of expression analysis utilties:
 //

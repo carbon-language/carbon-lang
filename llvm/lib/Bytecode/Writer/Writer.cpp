@@ -1,4 +1,4 @@
-//===-- Writer.cpp - Library for writing VM bytecode files -------*- C++ -*--=//
+//===-- Writer.cpp - Library for writing VM bytecode files ----------------===//
 //
 // This library implements the functionality defined in llvm/Bytecode/Writer.h
 //

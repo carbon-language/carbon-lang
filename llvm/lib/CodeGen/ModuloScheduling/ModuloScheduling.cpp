@@ -1,4 +1,4 @@
-//===-- ModuloScheduling.cpp - Software Pipeling Approach - SMS --*- C++ -*--=//
+//===-- ModuloScheduling.cpp - Software Pipeling Approach - SMS -----------===//
 //
 // The is a software pipelining pass based on the Swing Modulo Scheduling
 // algorithm (SMS).

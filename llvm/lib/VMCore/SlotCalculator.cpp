@@ -1,4 +1,4 @@
-//===-- SlotCalculator.cpp - Calculate what slots values land in ------------=//
+//===-- SlotCalculator.cpp - Calculate what slots values land in ----------===//
 //
 // This file implements a useful analysis step to figure out what numbered 
 // slots values in a program will land in (keeping track of per plane

@@ -1,4 +1,4 @@
-//===-- iBranch.cpp - Implement the Branch instruction -----------*- C++ -*--=//
+//===-- iBranch.cpp - Implement the Branch instruction --------------------===//
 //
 // This file implements the 'br' instruction, which can represent either a 
 // conditional or unconditional branch.

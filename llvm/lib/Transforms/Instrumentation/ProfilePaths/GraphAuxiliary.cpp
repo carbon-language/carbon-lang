@@ -1,8 +1,7 @@
-//===-- GrapAuxiliary.cpp- Auxiliary functions on graph ----------*- C++ -*--=//
+//===- GraphAuxiliary.cpp - Auxiliary functions on graph ------------------===//
 //
-//auxiliary function associated with graph: they
-//all operate on graph, and help in inserting
-//instrumentation for trace generation
+// auxiliary function associated with graph: they all operate on graph, and help
+// in inserting instrumentation for trace generation
 //
 //===----------------------------------------------------------------------===//
 

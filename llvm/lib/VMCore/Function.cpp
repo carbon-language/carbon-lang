@@ -1,4 +1,4 @@
-//===-- Function.cpp - Implement the Global object classes -------*- C++ -*--=//
+//===-- Function.cpp - Implement the Global object classes ----------------===//
 //
 // This file implements the Function & GlobalVariable classes for the VMCore
 // library.

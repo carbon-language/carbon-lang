@@ -1,4 +1,4 @@
-//===-- BBLiveVar.h - Live Variable Analysis for a BasicBlock ----*- C++ -*--=//
+//===-- BBLiveVar.h - Live Variable Analysis for a BasicBlock ---*- C++ -*-===//
 //
 // This is a BasicBlock annotation class that is used by live var analysis to
 // hold data flow information for a basic block.

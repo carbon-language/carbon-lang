@@ -1,4 +1,4 @@
-//===- MutateStructTypes.cpp - Change struct defns --------------------------=//
+//===- MutateStructTypes.cpp - Change struct defns ------------------------===//
 //
 // This pass is used to change structure accesses and type definitions in some
 // way.  It can be used to arbitrarily permute structure fields, safely, without

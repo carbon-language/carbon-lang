@@ -1,4 +1,4 @@
-//===- TraceValues.cpp - Value Tracing for debugging -------------*- C++ -*--=//
+//===- TraceValues.cpp - Value Tracing for debugging ----------------------===//
 //
 // Support for inserting LLVM code to print values at basic block and function
 // exits.

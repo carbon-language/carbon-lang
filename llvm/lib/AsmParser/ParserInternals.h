@@ -1,4 +1,4 @@
-//===-- ParserInternals.h - Definitions internal to the parser ---*- C++ -*--=//
+//===-- ParserInternals.h - Definitions internal to the parser --*- C++ -*-===//
 //
 //  This header file defines the various variables that are shared among the 
 //  different components of the parser...

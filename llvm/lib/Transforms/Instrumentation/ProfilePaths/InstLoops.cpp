@@ -1,7 +1,9 @@
-//===-- InstLoops.cpp ---------------------------------------- ---*- C++ -*--=//
+//===-- InstLoops.cpp -----------------------------------------------------===//
+//
 // Pass to instrument loops
 //
 // At every backedge, insert a counter for that backedge and a call function
+//
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Analysis/Dominators.h"
@@ -27,7 +29,7 @@ enum Color{
   BLACK
 };
 
-namespace{
+namespace {
   typedef std::map<BasicBlock *, BasicBlock *> BBMap;
   struct InstLoops : public FunctionPass {
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {

@@ -1,4 +1,4 @@
-//===- IntervalPartition.cpp - Interval Partition module code ----*- C++ -*--=//
+//===- IntervalPartition.cpp - Interval Partition module code -------------===//
 //
 // This file contains the definition of the IntervalPartition class, which
 // calculates and represent the interval partition of a function.
@@ -7,8 +7,6 @@
 
 #include "llvm/Analysis/IntervalIterator.h"
 #include "Support/STLExtras.h"
-
-using std::make_pair;
 
 static RegisterAnalysis<IntervalPartition>
 X("intervals", "Interval Partition Construction", true);
@@ -39,7 +37,7 @@ void IntervalPartition::addIntervalToPartition(Interval *I) {
   // Add mappings for all of the basic blocks in I to the IntervalPartition
   for (Interval::node_iterator It = I->Nodes.begin(), End = I->Nodes.end();
        It != End; ++It)
-    IntervalMap.insert(make_pair(*It, I));
+    IntervalMap.insert(std::make_pair(*It, I));
 }
 
 // updatePredecessors - Interval generation only sets the successor fields of

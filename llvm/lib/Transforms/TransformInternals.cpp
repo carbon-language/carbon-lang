@@ -1,4 +1,4 @@
-//===-- TransformInternals.cpp - Implement shared functions for transforms --=//
+//===- TransformInternals.cpp - Implement shared functions for transforms -===//
 //
 //  This file defines shared functions used by the different components of the
 //  Transforms library.

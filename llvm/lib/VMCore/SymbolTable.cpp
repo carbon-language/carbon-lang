@@ -1,4 +1,4 @@
-//===-- SymbolTable.cpp - Implement the SymbolTable class -------------------=//
+//===-- SymbolTable.cpp - Implement the SymbolTable class -----------------===//
 //
 // This file implements the SymbolTable class for the VMCore library.
 //

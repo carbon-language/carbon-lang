@@ -1,4 +1,4 @@
-//===- LevelRaise.cpp - Code to change LLVM to higher level -----------------=//
+//===- LevelRaise.cpp - Code to change LLVM to higher level ---------------===//
 //
 // This file implements the 'raising' part of the LevelChange API.  This is
 // useful because, in general, it makes the LLVM code terser and easier to

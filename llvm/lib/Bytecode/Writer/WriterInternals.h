@@ -1,4 +1,4 @@
-//===-- WriterInternals.h - Data structures shared by the Writer -*- C++ -*--=//
+//===- WriterInternals.h - Data structures shared by the Writer -*- C++ -*-===//
 //
 // This header defines the interface used between components of the bytecode
 // writer.

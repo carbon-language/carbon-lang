@@ -1,11 +1,7 @@
-//===-- WriteConst.cpp - Functions for writing constants ---------*- C++ -*--=//
+//===-- ConstantWriter.cpp - Functions for writing constants --------------===//
 //
 // This file implements the routines for encoding constants to a bytecode 
 // stream.
-//
-// Note that the performance of this library is not terribly important, because
-// it shouldn't be used by JIT type applications... so it is not a huge focus
-// at least.  :)
 //
 //===----------------------------------------------------------------------===//
 

@@ -1,8 +1,8 @@
-//===-- llvmAsmParser.y - Parser for llvm assembly files ---------*- C++ -*--=//
+//===-- llvmAsmParser.y - Parser for llvm assembly files --------*- C++ -*-===//
 //
 //  This file implements the bison parser for LLVM assembly languages files.
 //
-//===------------------------------------------------------------------------=//
+//===----------------------------------------------------------------------===//
 
 %{
 #include "ParserInternals.h"

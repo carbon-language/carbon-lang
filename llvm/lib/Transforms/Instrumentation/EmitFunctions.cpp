@@ -1,4 +1,4 @@
-//===-- EmitFunctions.cpp - interface to insert instrumentation --*- C++ -*--=//
+//===-- EmitFunctions.cpp - interface to insert instrumentation -----------===//
 //
 // This inserts a global constant table with function pointers all along
 //

@@ -1,11 +1,7 @@
-//===-- WriteInst.cpp - Functions for writing instructions -------*- C++ -*--=//
+//===-- InstructionWriter.cpp - Functions for writing instructions --------===//
 //
 // This file implements the routines for encoding instruction opcodes to a 
 // bytecode stream.
-//
-// Note that the performance of this library is not terribly important, because
-// it shouldn't be used by JIT type applications... so it is not a huge focus
-// at least.  :)
 //
 //===----------------------------------------------------------------------===//
 

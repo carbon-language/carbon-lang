@@ -1,8 +1,7 @@
-//===-- ------------------------llvm/graph.h ---------------------*- C++ -*--=//
+//===-- Graph.h -------------------------------------------------*- C++ -*-===//
 //
-//Header file for Graph: This Graph is used by 
-//PathProfiles class, and is used
-//for detecting proper points in cfg for code insertion 
+// Header file for Graph: This Graph is used by PathProfiles class, and is used
+// for detecting proper points in cfg for code insertion
 //
 //===----------------------------------------------------------------------===//
 

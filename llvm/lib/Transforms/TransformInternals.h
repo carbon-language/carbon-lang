@@ -1,4 +1,4 @@
-//===-- TransformInternals.h - Shared functions for Transforms ---*- C++ -*--=//
+//===-- TransformInternals.h - Shared functions for Transforms --*- C++ -*-===//
 //
 //  This header file declares shared functions used by the different components
 //  of the Transforms library.

@@ -1,4 +1,4 @@
-//===-- iSwitch.cpp - Implement the Switch instruction -----------*- C++ -*--=//
+//===-- iSwitch.cpp - Implement the Switch instruction --------------------===//
 //
 // This file implements the Switch instruction...
 //

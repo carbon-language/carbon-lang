@@ -1,6 +1,6 @@
-//===-- SparcRegClassInfo.h - Register class def'ns for Sparc ----*- C++ -*--=//
+//===-- SparcRegClassInfo.h - Register class def'ns for Sparc ---*- C++ -*-===//
 //
-//  This file defines the register classes used by the Sparc target description.
+// This file defines the register classes used by the Sparc target description.
 //
 //===----------------------------------------------------------------------===//
 
@@ -12,7 +12,6 @@
 //-----------------------------------------------------------------------------
 // Integer Register Class
 //-----------------------------------------------------------------------------
-
 
 struct SparcIntRegClass : public TargetRegClassInfo {
   SparcIntRegClass(unsigned ID) 

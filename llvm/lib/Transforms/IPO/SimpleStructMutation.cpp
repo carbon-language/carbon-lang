@@ -1,4 +1,4 @@
-//===- SimpleStructMutation.cpp - Swap structure elements around -*- C++ -*--=//
+//===- SimpleStructMutation.cpp - Swap structure elements around ----------===//
 //
 // This pass does a simple transformation that swaps all of the elements of the
 // struct types in the program around.

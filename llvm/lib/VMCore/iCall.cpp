@@ -1,4 +1,4 @@
-//===-- iCall.cpp - Implement the call & invoke instructions -----*- C++ -*--=//
+//===-- iCall.cpp - Implement the call & invoke instructions --------------===//
 //
 // This file implements the call and invoke instructions.
 //

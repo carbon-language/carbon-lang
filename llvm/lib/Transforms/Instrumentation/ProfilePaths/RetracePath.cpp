@@ -1,4 +1,4 @@
-//===----Instrumentation/ProfilePaths/RetracePath.cppTrigger.cpp--*- C++ -*--=//
+//===- RetracePath.cpp ----------------------------------------------------===//
 //
 // Retraces a path of BasicBlock, given a path number and a graph!
 //

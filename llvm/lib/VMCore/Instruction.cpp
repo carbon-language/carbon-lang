@@ -1,4 +1,4 @@
-//===-- Instruction.cpp - Implement the Instruction class --------*- C++ -*--=//
+//===-- Instruction.cpp - Implement the Instruction class -----------------===//
 //
 // This file implements the Instruction class for the VMCore library.
 //

@@ -1,27 +1,27 @@
-//===-- ProfilePaths.cpp - interface to insert instrumentation ---*- C++ -*--=//
+//===-- ProfilePaths.cpp - interface to insert instrumentation --*- C++ -*-===//
 //
-// This inserts instrumentation for counting
-// execution of paths though a given function
-// Its implemented as a "Function" Pass, and called using opt
+// This inserts instrumentation for counting execution of paths though a given
+// function Its implemented as a "Function" Pass, and called using opt
 //
 // This pass is implemented by using algorithms similar to 
 // 1."Efficient Path Profiling": Ball, T. and Larus, J. R., 
-// Proceedings of Micro-29, Dec 1996, Paris, France.
+//    Proceedings of Micro-29, Dec 1996, Paris, France.
 // 2."Efficiently Counting Program events with support for on-line
 //   "queries": Ball T., ACM Transactions on Programming Languages
-//   and systems, Sep 1994.
+//    and systems, Sep 1994.
 //
-// The algorithms work on a Graph constructed over the nodes
-// made from Basic Blocks: The transformations then take place on
-// the constructed graph (implementation in Graph.cpp and GraphAuxiliary.cpp)
-// and finally, appropriate instrumentation is placed over suitable edges.
-// (code inserted through EdgeCode.cpp).
+// The algorithms work on a Graph constructed over the nodes made from Basic
+// Blocks: The transformations then take place on the constructed graph
+// (implementation in Graph.cpp and GraphAuxiliary.cpp) and finally, appropriate
+// instrumentation is placed over suitable edges.  (code inserted through
+// EdgeCode.cpp).
 // 
-// The algorithm inserts code such that every acyclic path in the CFG
-// of a function is identified through a unique number. the code insertion
-// is optimal in the sense that its inserted over a minimal set of edges. Also,
-// the algorithm makes sure than initialization, path increment and counter
-// update can be collapsed into minimum number of edges.
+// The algorithm inserts code such that every acyclic path in the CFG of a
+// function is identified through a unique number. the code insertion is optimal
+// in the sense that its inserted over a minimal set of edges. Also, the
+// algorithm makes sure than initialization, path increment and counter update
+// can be collapsed into minimum number of edges.
+//
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/Utils/UnifyFunctionExitNodes.h"
