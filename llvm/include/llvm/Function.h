@@ -111,22 +111,12 @@ public:
   //===--------------------------------------------------------------------===//
   // Symbol Table Accessing functions...
 
-  /// hasSymbolTable() - Returns true if there is a symbol table allocated to
-  /// this object AND if there is at least one name in it!
-  ///
-  bool hasSymbolTable() const;
-
-  /// getSymbolTable() - CAUTION: The current symbol table may be null if there
-  /// are no names (ie, the symbol table is empty)
+  /// getSymbolTable() - Return the symbol table...
   ///
   inline       SymbolTable *getSymbolTable()       { return SymTab; }
   inline const SymbolTable *getSymbolTable() const { return SymTab; }
-
-  /// getSymbolTableSure is guaranteed to not return a null pointer, because if
-  /// the function does not already have a symtab, one is created.  Use this if
-  /// you intend to put something into the symbol table for the function.
-  ///
-  SymbolTable *getSymbolTableSure();  // Implemented in Value.cpp
+  SymbolTable *getSymbolTableSure() { return SymTab; }
+  bool hasSymbolTable() const { return true; }
 
   
   //===--------------------------------------------------------------------===//

@@ -84,7 +84,7 @@ Function::Function(const FunctionType *Ty, bool isInternal,
   BasicBlocks.setParent(this);
   ArgumentList.setItemParent(this);
   ArgumentList.setParent(this);
-  SymTab = 0;
+  SymTab = new SymbolTable();
 
   // Create the arguments vector, all arguments start out unnamed.
   for (unsigned i = 0, e = Ty->getNumParams(); i != e; ++i) {
@@ -136,27 +136,6 @@ const FunctionType *Function::getFunctionType() const {
 const Type *Function::getReturnType() const { 
   return getFunctionType()->getReturnType();
 }
-
-SymbolTable *Function::getSymbolTableSure() {
-  if (!SymTab) SymTab = new SymbolTable();
-  return SymTab;
-}
-
-// hasSymbolTable() - Returns true if there is a symbol table allocated to
-// this object AND if there is at least one name in it!
-//
-bool Function::hasSymbolTable() const {
-  if (!SymTab) return false;
-
-  for (SymbolTable::const_iterator I = SymTab->begin(); 
-       I != SymTab->end(); ++I) {
-    if (I->second.begin() != I->second.end())
-      return true;                                // Found nonempty type plane!
-  }
-  
-  return false;
-}
-
 
 // dropAllReferences() - This function causes all the subinstructions to "let
 // go" of all references that they are maintaining.  This allows one to
