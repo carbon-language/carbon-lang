@@ -1069,8 +1069,6 @@ void ISel::emitSimpleBinaryOperation(MachineBasicBlock *BB,
 /// registers op0Reg and op1Reg, and put the result in DestReg.  The type of the
 /// result should be given as DestTy.
 ///
-/// FIXME: doMultiply should use one of the two address IMUL instructions!
-///
 void ISel::doMultiply(MachineBasicBlock *MBB, MachineBasicBlock::iterator &MBBI,
                       unsigned DestReg, const Type *DestTy,
                       unsigned op0Reg, unsigned op1Reg) {
@@ -1079,28 +1077,20 @@ void ISel::doMultiply(MachineBasicBlock *MBB, MachineBasicBlock::iterator &MBBI,
   case cFP:              // Floating point multiply
     BMI(BB, MBBI, X86::FpMUL, 2, DestReg).addReg(op0Reg).addReg(op1Reg);
     return;
+  case cInt:
+  case cShort:
+    BMI(BB, MBBI, Class == cInt ? X86::IMULr32 : X86::IMULr16, 2, DestReg)
+      .addReg(op0Reg).addReg(op1Reg);
+    return;
+  case cByte:
+    // Must use the MUL instruction, which forces use of AL...
+    BMI(MBB, MBBI, X86::MOVrr8, 1, X86::AL).addReg(op0Reg);
+    BMI(MBB, MBBI, X86::MULr8, 1).addReg(op1Reg);
+    BMI(MBB, MBBI, X86::MOVrr8, 1, DestReg).addReg(X86::AL);
+    return;
   default:
   case cLong: assert(0 && "doMultiply cannot operate on LONG values!");
-  case cByte:
-  case cShort:
-  case cInt:          // Small integerals, handled below...
-    break;
   }
- 
-  static const unsigned Regs[]     ={ X86::AL    , X86::AX     , X86::EAX     };
-  static const unsigned MulOpcode[]={ X86::MULr8 , X86::MULr16 , X86::MULr32  };
-  static const unsigned MovOpcode[]={ X86::MOVrr8, X86::MOVrr16, X86::MOVrr32 };
-  unsigned Reg     = Regs[Class];
-
-  // Emit a MOV to put the first operand into the appropriately-sized
-  // subreg of EAX.
-  BMI(MBB, MBBI, MovOpcode[Class], 1, Reg).addReg(op0Reg);
-  
-  // Emit the appropriate multiply instruction.
-  BMI(MBB, MBBI, MulOpcode[Class], 1).addReg(op1Reg);
-
-  // Emit another MOV to put the result into the destination register.
-  BMI(MBB, MBBI, MovOpcode[Class], 1, DestReg).addReg(Reg);
 }
 
 /// visitMul - Multiplies are not simple binary operators because they must deal
