@@ -24,8 +24,8 @@ endif
 
 include $(LEVEL)/Makefile.common
 
-# Install target for libraries: Copy into the gcc install directory in chris's
-# tree...
+# Install target for libraries: Copy into the 'bytecode-libs' subdirectory
+# of LLVMGCCDIR.  (On the UIUC machines, this is in Chris's home directory.)
 #
 install::
 
