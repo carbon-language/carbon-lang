@@ -42,7 +42,8 @@ def Imm6 : Format<23>;
 //
 // PowerPC instruction formats
 
-class I<string name, bits<6> opcode, bit ppc64, bit vmx> : Instruction {
+class I<bits<6> opcode, bit ppc64, bit vmx, dag OL, string asmstr> 
+  : Instruction {
   field bits<32> Inst;
 
   bits<3> ArgCount;
@@ -54,14 +55,16 @@ class I<string name, bits<6> opcode, bit ppc64, bit vmx> : Instruction {
   bit PPC64 = ppc64;
   bit VMX = vmx;
 
-  let Name = name;
+  let Name = "";
   let Namespace = "PPC";
   let Inst{0-5} = opcode;
+  let OperandList = OL;
+  let AsmString = asmstr;
 }
 
 // 1.7.1 I-Form
 class IForm<bits<6> opcode, bit aa, bit lk, bit ppc64, bit vmx,
-            dag OL, string asmstr> : I<"", opcode, ppc64, vmx> {
+            dag OL, string asmstr> : I<opcode, ppc64, vmx, OL, asmstr> {
   field bits<24> LI;
 
   let ArgCount = 1;
@@ -74,13 +77,11 @@ class IForm<bits<6> opcode, bit aa, bit lk, bit ppc64, bit vmx,
   let Inst{6-29}  = LI;
   let Inst{30}    = aa;
   let Inst{31}    = lk;
-  let OperandList = OL;
-  let AsmString = asmstr;
 }
 
 // 1.7.2 B-Form
-class BForm<string name, bits<6> opcode, bit aa, bit lk, bit ppc64, bit vmx>
-  : I<name, opcode, ppc64, vmx> {
+class BForm<bits<6> opcode, bit aa, bit lk, bit ppc64, bit vmx,
+            dag OL, string asmstr> : I<opcode, ppc64, vmx, OL, asmstr> {
   field bits<5>  BO;
   field bits<5>  BI;
   field bits<14> BD;
@@ -99,9 +100,9 @@ class BForm<string name, bits<6> opcode, bit aa, bit lk, bit ppc64, bit vmx>
   let Inst{31}    = lk;
 }
 
-class BForm_ext<string name, bits<6> opcode, bit aa, bit lk, bits<5> bo, 
-                bits<5> bi, bit ppc64, bit vmx>
-  : BForm<name, opcode, aa, lk, ppc64, vmx> {
+class BForm_ext<bits<6> opcode, bit aa, bit lk, bits<5> bo, bits<5> bi, 
+                bit ppc64, bit vmx, dag OL, string asmstr>
+  : BForm<opcode, aa, lk, ppc64, vmx, OL, asmstr> {
   let ArgCount = 2;
   let Arg2Type = Imm5.Value;
   let Arg1Type = PCRelimm14.Value;
@@ -111,8 +112,8 @@ class BForm_ext<string name, bits<6> opcode, bit aa, bit lk, bits<5> bo,
 }
 
 // 1.7.4 D-Form
-class DForm_base<string name, bits<6> opcode, bit ppc64, bit vmx> 
-  : I<name, opcode, ppc64, vmx> {
+class DForm_base<bits<6> opcode, bit ppc64, bit vmx, dag OL, string asmstr>
+  : I<opcode, ppc64, vmx, OL, asmstr> {
   field bits<5>  A;
   field bits<5>  B;
   field bits<16> C;
@@ -129,32 +130,41 @@ class DForm_base<string name, bits<6> opcode, bit ppc64, bit vmx>
   let Inst{16-31} = C;
 }
 
-class DForm_1<string name, bits<6> opcode, bit ppc64, bit vmx> 
-  : DForm_base<name, opcode, ppc64, vmx> {
+class DForm_1<bits<6> opcode, bit ppc64, bit vmx, dag OL, string asmstr>
+  : DForm_base<opcode, ppc64, vmx, OL, asmstr> {
   let Arg1Type = Disimm16.Value;
-  let Arg2Type = Gpr0.Value;
+  let Arg2Type = Gpr.Value;
 }
 
-class DForm_2<string name, bits<6> opcode, bit ppc64, bit vmx> 
-  : DForm_base<name, opcode, ppc64, vmx>;
+class DForm_2<bits<6> opcode, bit ppc64, bit vmx, dag OL, string asmstr>
+  : DForm_base<opcode, ppc64, vmx, OL, asmstr>;
 
-class DForm_2_r0<string name, bits<6> opcode, bit ppc64, bit vmx> 
-  : DForm_base<name, opcode, ppc64, vmx> {
-  let Arg1Type = Gpr0.Value;
+class DForm_2_r0<bits<6> opcode, bit ppc64, bit vmx, dag OL, string asmstr>
+  : I<opcode, ppc64, vmx, OL, asmstr> {
+  field bits<5>  A;
+  field bits<16> B;
+  
+  let ArgCount = 2;
+  let Arg0Type = Gpr.Value;
+  let Arg1Type = Simm16.Value;
+  let Arg2Type = 0;
+  let Arg3Type = 0;
+  let Arg4Type = 0;
+ 
+  let Inst{6-10}  = A;
+  let Inst{11-15} = 0;
+  let Inst{16-31} = B;
 }
 
 // Currently we make the use/def reg distinction in ISel, not tablegen
-class DForm_3<string name, bits<6> opcode, bit ppc64, bit vmx> 
-  : DForm_1<name, opcode, ppc64, vmx>;
+class DForm_3<bits<6> opcode, bit ppc64, bit vmx, dag OL, string asmstr>
+  : DForm_1<opcode, ppc64, vmx, OL, asmstr>;
 
-class DForm_4<bits<6> opcode, bit ppc64, bit vmx,
-              dag OL, string asmstr> : DForm_base<"", opcode, ppc64, vmx> {
-  let OperandList = OL;
-  let AsmString = asmstr;
-}
-
-class DForm_4_zero<string name, bits<6> opcode, bit ppc64, bit vmx,
-                   dag OL, string asmstr> : DForm_1<"", opcode, ppc64, vmx> {
+class DForm_4<bits<6> opcode, bit ppc64, bit vmx, dag OL, string asmstr> 
+  : DForm_base<opcode, ppc64, vmx, OL, asmstr>;
+              
+class DForm_4_zero<bits<6> opcode, bit ppc64, bit vmx, dag OL, string asmstr>
+  : DForm_1<opcode, ppc64, vmx, OL, asmstr> {
   let ArgCount = 0;
   let Arg0Type = 0;
   let Arg1Type = 0;
@@ -162,12 +172,10 @@ class DForm_4_zero<string name, bits<6> opcode, bit ppc64, bit vmx,
   let A = 0;
   let B = 0;
   let C = 0;
-  let OperandList = OL;
-  let AsmString = asmstr;
 }
 
-class DForm_5<string name, bits<6> opcode, bit ppc64, bit vmx> 
-  : I<name, opcode, ppc64, vmx> {
+class DForm_5<bits<6> opcode, bit ppc64, bit vmx, dag OL, string asmstr>
+  : I<opcode, ppc64, vmx, OL, asmstr> {
   field bits<3>  BF;
   field bits<1>  L;
   field bits<5>  RA;
@@ -187,8 +195,8 @@ class DForm_5<string name, bits<6> opcode, bit ppc64, bit vmx>
   let Inst{16-31} = I;
 }
 
-class DForm_5_ext<string name, bits<6> opcode, bit ppc64, bit vmx> 
-  : DForm_5<name, opcode, ppc64, vmx> {
+class DForm_5_ext<bits<6> opcode, bit ppc64, bit vmx, dag OL, string asmstr>
+  : DForm_5<opcode, ppc64, vmx, OL, asmstr> {
   let L = ppc64;
   let ArgCount = 3;
   let Arg0Type = Imm3.Value;
@@ -197,15 +205,10 @@ class DForm_5_ext<string name, bits<6> opcode, bit ppc64, bit vmx>
   let Arg3Type = 0;
 }
 
-class DForm_6<bits<6> opcode, bit ppc64, bit vmx,
-              dag OL, string asmstr> 
-  : DForm_5<"", opcode, ppc64, vmx> {
-  let OperandList = OL;
-  let AsmString = asmstr;
-}
+class DForm_6<bits<6> opcode, bit ppc64, bit vmx, dag OL, string asmstr> 
+  : DForm_5<opcode, ppc64, vmx, OL, asmstr>;
 
-class DForm_6_ext<bits<6> opcode, bit ppc64, bit vmx,
-                  dag OL, string asmstr> 
+class DForm_6_ext<bits<6> opcode, bit ppc64, bit vmx, dag OL, string asmstr>
   : DForm_6<opcode, ppc64, vmx, OL, asmstr> {
   let L = ppc64;
   let ArgCount = 3;
@@ -215,24 +218,19 @@ class DForm_6_ext<bits<6> opcode, bit ppc64, bit vmx,
   let Arg3Type = 0;
 }
 
-class DForm_7<string name, bits<6> opcode, bit ppc64, bit vmx> 
-  : DForm_base<name, opcode, ppc64, vmx> {
-  let Arg1Type = Imm5.Value;
-}
-
-class DForm_8<string name, bits<6> opcode, bit ppc64, bit vmx>
-  : DForm_1<name, opcode, ppc64, vmx> {
+class DForm_8<bits<6> opcode, bit ppc64, bit vmx, dag OL, string asmstr>
+  : DForm_1<opcode, ppc64, vmx, OL, asmstr> {
   let Arg0Type = Fpr.Value;
 }
 
-class DForm_9<string name, bits<6> opcode, bit ppc64, bit vmx>
-  : DForm_1<name, opcode, ppc64, vmx> {
+class DForm_9<bits<6> opcode, bit ppc64, bit vmx, dag OL, string asmstr>
+  : DForm_1<opcode, ppc64, vmx, OL, asmstr> {
   let Arg0Type = Fpr.Value;
 }
 
 // 1.7.5 DS-Form
-class DSForm_1<string name, bits<6> opcode, bits<2> xo, bit ppc64, bit vmx> 
-  : I<name, opcode, ppc64, vmx> {
+class DSForm_1<bits<6> opcode, bits<2> xo, bit ppc64, bit vmx,
+               dag OL, string asmstr> : I<opcode, ppc64, vmx, OL, asmstr> {
   field bits<5>  RST;
   field bits<14> DS;
   field bits<5>  RA;
@@ -250,12 +248,14 @@ class DSForm_1<string name, bits<6> opcode, bits<2> xo, bit ppc64, bit vmx>
   let Inst{30-31} = xo;
 }
 
-class DSForm_2<string name, bits<6> opcode, bits<2> xo, bit ppc64, bit vmx>
-  : DSForm_1<name, opcode, xo, ppc64, vmx>;
+class DSForm_2<bits<6> opcode, bits<2> xo, bit ppc64, bit vmx, 
+               dag OL, string asmstr>
+  : DSForm_1<opcode, xo, ppc64, vmx, OL, asmstr>;
 
 // 1.7.6 X-Form
 class XForm_base_r3xo<bits<6> opcode, bits<10> xo, bit rc, bit ppc64, bit vmx,
-                      dag OL, string asmstr> : I<"", opcode, ppc64, vmx> {
+                      dag OL, string asmstr> 
+  : I<opcode, ppc64, vmx, OL, asmstr> {
   field bits<5> RST;
   field bits<5> A;
   field bits<5> B;
@@ -272,8 +272,6 @@ class XForm_base_r3xo<bits<6> opcode, bits<10> xo, bit rc, bit ppc64, bit vmx,
   let Inst{16-20} = B;
   let Inst{21-30} = xo;
   let Inst{31}    = rc;
-  let OperandList = OL;
-  let AsmString = asmstr;
 }
 
 
@@ -314,7 +312,7 @@ class XForm_11<bits<6> opcode, bits<10> xo, bit rc, bit ppc64, bit vmx,
 }
 
 class XForm_16<bits<6> opcode, bits<10> xo, bit ppc64, bit vmx,
-               dag OL, string asmstr> : I<"", opcode, ppc64, vmx> {
+               dag OL, string asmstr> : I<opcode, ppc64, vmx, OL, asmstr> {
   field bits<3>  BF;
   field bits<1>  L; 
   field bits<5>  RA;
@@ -334,8 +332,6 @@ class XForm_16<bits<6> opcode, bits<10> xo, bit ppc64, bit vmx,
   let Inst{16-20} = RB;
   let Inst{21-30} = xo;
   let Inst{31}    = 0;
-  let OperandList = OL;
-  let AsmString = asmstr;
 }
 
 class XForm_16_ext<bits<6> opcode, bits<10> xo, bit ppc64, bit vmx,
@@ -349,7 +345,7 @@ class XForm_16_ext<bits<6> opcode, bits<10> xo, bit ppc64, bit vmx,
 }
 
 class XForm_17<bits<6> opcode, bits<10> xo, bit ppc64, bit vmx,
-               dag OL, string asmstr> : I<"", opcode, ppc64, vmx> {
+               dag OL, string asmstr> : I<opcode, ppc64, vmx, OL, asmstr> {
   field bits<3> BF;
   field bits<5> FRA;
   field bits<5> FRB;
@@ -367,8 +363,6 @@ class XForm_17<bits<6> opcode, bits<10> xo, bit ppc64, bit vmx,
   let Inst{16-20} = FRB;
   let Inst{21-30} = xo;
   let Inst{31}    = 0;
-  let OperandList = OL;
-  let AsmString = asmstr;
 }
 
 class XForm_25<bits<6> opcode, bits<10> xo, bit ppc64, bit vmx,
@@ -405,7 +399,7 @@ class XLForm_1<bits<6> opcode, bits<10> xo, bit ppc64, bit vmx,
 }
 
 class XLForm_2<bits<6> opcode, bits<10> xo, bit lk, bit ppc64, bit vmx, 
-               dag OL, string asmstr> : I<"", opcode, ppc64, vmx> {
+               dag OL, string asmstr> : I<opcode, ppc64, vmx, OL, asmstr> {
   field bits<5>  BO;
   field bits<5>  BI;
   field bits<2>  BH;
@@ -423,8 +417,6 @@ class XLForm_2<bits<6> opcode, bits<10> xo, bit lk, bit ppc64, bit vmx,
   let Inst{19-20} = BH;
   let Inst{21-30} = xo;
   let Inst{31}    = lk;
-  let OperandList = OL;
-  let AsmString = asmstr;
 }
 
 class XLForm_2_ext<bits<6> opcode, bits<10> xo, bits<5> bo, 
@@ -442,7 +434,7 @@ class XLForm_2_ext<bits<6> opcode, bits<10> xo, bits<5> bo,
 
 // 1.7.8 XFX-Form
 class XFXForm_1<bits<6> opcode, bits<10> xo, bit ppc64, bit vmx, 
-                dag OL, string asmstr> : I<"", opcode, ppc64, vmx> {
+                dag OL, string asmstr> : I<opcode, ppc64, vmx, OL, asmstr> {
   field bits<5>  ST;
   field bits<10> SPR;
 
@@ -457,8 +449,6 @@ class XFXForm_1<bits<6> opcode, bits<10> xo, bit ppc64, bit vmx,
   let Inst{11-20} = SPR;
   let Inst{21-30} = xo;
   let Inst{31}    = 0;
-  let OperandList = OL;
-  let AsmString = asmstr;
 }
 
 class XFXForm_1_ext<bits<6> opcode, bits<10> xo, bits<10> spr, bit ppc64, 
@@ -485,7 +475,7 @@ class XFXForm_7_ext<bits<6> opcode, bits<10> xo, bits<10> spr,
 
 // 1.7.10 XS-Form
 class XSForm_1<bits<6> opcode, bits<9> xo, bit rc, bit ppc64, bit vmx,
-               dag OL, string asmstr> : I<"", opcode, ppc64, vmx> {
+               dag OL, string asmstr> : I<opcode, ppc64, vmx, OL, asmstr> {
   field bits<5> RS;
   field bits<5> A;
   field bits<6> SH;
@@ -503,13 +493,11 @@ class XSForm_1<bits<6> opcode, bits<9> xo, bit rc, bit ppc64, bit vmx,
   let Inst{21-29} = xo;
   let Inst{30}    = SH{0};
   let Inst{31}    = rc;
-  let OperandList = OL;
-  let AsmString = asmstr;
 }
 
 // 1.7.11 XO-Form
 class XOForm_1<bits<6> opcode, bits<9> xo, bit oe, bit rc, bit ppc64, bit vmx,
-               dag OL, string asmstr> : I<"", opcode, ppc64, vmx> {
+               dag OL, string asmstr> : I<opcode, ppc64, vmx, OL, asmstr> {
   field bits<5>  RT;
   field bits<5>  RA;
   field bits<5>  RB;
@@ -527,8 +515,6 @@ class XOForm_1<bits<6> opcode, bits<9> xo, bit oe, bit rc, bit ppc64, bit vmx,
   let Inst{21}    = oe;
   let Inst{22-30} = xo;
   let Inst{31}    = rc;  
-  let OperandList = OL;
-  let AsmString = asmstr;
 }
 
 class XOForm_1r<bits<6> opcode, bits<9> xo, bit oe, bit rc, bit ppc64, bit vmx,
@@ -547,7 +533,7 @@ class XOForm_3<bits<6> opcode, bits<9> xo, bit oe, bit rc, bit ppc64, bit vmx,
 
 // 1.7.12 A-Form
 class AForm_1<bits<6> opcode, bits<5> xo, bit rc, bit ppc64, bit vmx, 
-              dag OL, string asmstr> : I<"", opcode, ppc64, vmx> {
+              dag OL, string asmstr> : I<opcode, ppc64, vmx, OL, asmstr> {
   let ArgCount = 4;
   field bits<5>  FRT;
   field bits<5>  FRA;
@@ -566,8 +552,6 @@ class AForm_1<bits<6> opcode, bits<5> xo, bit rc, bit ppc64, bit vmx,
   let Inst{21-25} = FRC;
   let Inst{26-30} = xo;
   let Inst{31}    = rc;
-  let OperandList = OL;
-  let AsmString = asmstr;
 }
 
 class AForm_2<bits<6> opcode, bits<5> xo, bit rc, bit ppc64, bit vmx, dag OL,
@@ -588,7 +572,7 @@ class AForm_3<bits<6> opcode, bits<5> xo, bit rc, bit ppc64, bit vmx, dag OL,
 
 // 1.7.13 M-Form
 class MForm_1<bits<6> opcode, bit rc, bit ppc64, bit vmx,
-              dag OL, string asmstr> : I<"", opcode, ppc64, vmx> {
+              dag OL, string asmstr> : I<opcode, ppc64, vmx, OL, asmstr> {
   let ArgCount = 5;
   field bits<5>  RS;
   field bits<5>  RA;
@@ -608,8 +592,6 @@ class MForm_1<bits<6> opcode, bit rc, bit ppc64, bit vmx,
   let Inst{21-25} = MB;
   let Inst{26-30} = ME;
   let Inst{31}    = rc;
-  let OperandList = OL;
-  let AsmString = asmstr;
 }
 
 class MForm_2<bits<6> opcode, bit rc, bit ppc64, bit vmx, 
@@ -620,7 +602,7 @@ class MForm_2<bits<6> opcode, bit rc, bit ppc64, bit vmx,
 
 // 1.7.14 MD-Form
 class MDForm_1<bits<6> opcode, bits<3> xo, bit rc, bit ppc64, bit vmx,
-               dag OL, string asmstr> : I<"", opcode, ppc64, vmx> {
+               dag OL, string asmstr> : I<opcode, ppc64, vmx, OL, asmstr> {
   let ArgCount = 4;
   field bits<5>  RS;
   field bits<5>  RA;
@@ -640,13 +622,11 @@ class MDForm_1<bits<6> opcode, bits<3> xo, bit rc, bit ppc64, bit vmx,
   let Inst{27-29} = xo;
   let Inst{30}    = SH{0};
   let Inst{31}    = rc;
-  let OperandList = OL;
-  let AsmString = asmstr;
 }
 
 //===----------------------------------------------------------------------===//
 
-class Pseudo<dag OL, string asmstr> : I<"", 0, 0, 0> {
+class Pseudo<dag OL, string asmstr> : I<0, 0, 0, OL, asmstr> {
   let ArgCount = 0;
   let PPC64 = 0;
   let VMX = 0;
@@ -658,6 +638,4 @@ class Pseudo<dag OL, string asmstr> : I<"", 0, 0, 0> {
   let Arg4Type = 0;
 
   let Inst{31-0} = 0;
-  let OperandList = OL;
-  let AsmString = asmstr;
 }

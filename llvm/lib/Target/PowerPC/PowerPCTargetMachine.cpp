@@ -105,9 +105,9 @@ bool PowerPCTargetMachine::addPassesToEmitAssembly(PassManager &PM,
   PM.add(createPPCBranchSelectionPass());
   
   if (AIX)
-    PM.add(createPPC64AsmPrinter(Out, *this));
+    PM.add(createAIXAsmPrinter(Out, *this));
   else
-    PM.add(createPPC32AsmPrinter(Out, *this));
+    PM.add(createDarwinAsmPrinter(Out, *this));
     
   PM.add(createMachineCodeDeleter());
   return false;

@@ -1,5 +1,5 @@
 TODO:
-* switch to auto-generated asm writer
+* implement not-R0 register GPR class
 * fix rlwimi generation to be use-and-def
 * implement scheduling info
 * implement powerpc-64 for darwin

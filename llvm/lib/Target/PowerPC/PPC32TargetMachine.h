@@ -17,11 +17,9 @@
 #include "PowerPCTargetMachine.h"
 #include "PPC32InstrInfo.h"
 #include "llvm/PassManager.h"
-#include <set>
 
 namespace llvm {
 
-class GlobalValue;
 class IntrinsicLowering;
 
 class PPC32TargetMachine : public PowerPCTargetMachine {
@@ -38,11 +36,6 @@ public:
 
   bool addPassesToEmitMachineCode(FunctionPassManager &PM,
                                   MachineCodeEmitter &MCE);
-
-  // Two shared sets between the instruction selector and the printer allow for
-  // correct linkage on Darwin
-  std::set<GlobalValue*> CalledFunctions;
-  std::set<GlobalValue*> AddressTaken;
 };
 
 } // end namespace llvm

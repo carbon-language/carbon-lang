@@ -624,12 +624,13 @@ void ISel::copyConstantToRegister(MachineBasicBlock *MBB,
     copyGlobalBaseToRegister(MBB, IP, GlobalBase);
     BuildMI(*MBB, IP, PPC::LOADHiAddr, 2, Reg1).addReg(GlobalBase)
       .addConstantPoolIndex(CPI);
-    BuildMI(*MBB, IP, Opcode, 2, R).addReg(Reg1).addConstantPoolIndex(CPI);
+    BuildMI(*MBB, IP, Opcode, 2, R).addConstantPoolIndex(CPI).addReg(Reg1);
   } else if (isa<ConstantPointerNull>(C)) {
     // Copy zero (null pointer) to the register.
     BuildMI(*MBB, IP, PPC::LI, 1, R).addSImm(0);
   } else if (GlobalValue *GV = dyn_cast<GlobalValue>(C)) {
     // GV is located at base + distance
+    
     unsigned GlobalBase = makeAnotherReg(Type::IntTy);
     unsigned TmpReg = makeAnotherReg(GV->getType());
     unsigned Opcode = (GV->hasWeakLinkage() 
@@ -640,7 +641,7 @@ void ISel::copyConstantToRegister(MachineBasicBlock *MBB,
     copyGlobalBaseToRegister(MBB, IP, GlobalBase);
     BuildMI(*MBB, IP, PPC::LOADHiAddr, 2, TmpReg).addReg(GlobalBase)
       .addGlobalAddress(GV);
-    BuildMI(*MBB, IP, Opcode, 2, R).addReg(TmpReg).addGlobalAddress(GV);
+    BuildMI(*MBB, IP, Opcode, 2, R).addGlobalAddress(GV).addReg(TmpReg);
   
     // Add the GV to the list of things whose addresses have been taken.
     TM.AddressTaken.insert(GV);
@@ -1179,7 +1180,7 @@ void ISel::emitSelectOperation(MachineBasicBlock *MBB,
     Opcode = getPPCOpcodeForSetCCNumber(SCI->getOpcode());
   } else {
     unsigned CondReg = getReg(Cond, MBB, IP);
-    BuildMI(*MBB, IP, PPC::CMPI, 2, PPC::CR0).addReg(CondReg).addSImm(0);
+    BuildMI(*MBB, IP, PPC::CMPWI, 2, PPC::CR0).addReg(CondReg).addSImm(0);
     Opcode = getPPCOpcodeForSetCCNumber(Instruction::SetNE);
   }
   unsigned TrueValue = getReg(TrueVal, BB, BB->end());

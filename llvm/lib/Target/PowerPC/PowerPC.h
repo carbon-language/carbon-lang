@@ -24,9 +24,9 @@ class TargetMachine;
 
 FunctionPass *createPPCBranchSelectionPass();
 FunctionPass *createPPC32ISelSimple(TargetMachine &TM);
-FunctionPass *createPPC32AsmPrinter(std::ostream &OS, TargetMachine &TM);
 FunctionPass *createPPC64ISelSimple(TargetMachine &TM);
-FunctionPass *createPPC64AsmPrinter(std::ostream &OS, TargetMachine &TM);
+FunctionPass *createDarwinAsmPrinter(std::ostream &OS, TargetMachine &TM);
+FunctionPass *createAIXAsmPrinter(std::ostream &OS, TargetMachine &TM);
 
 } // end namespace llvm;
 

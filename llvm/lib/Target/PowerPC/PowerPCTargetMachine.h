@@ -18,6 +18,7 @@
 #include "PowerPCJITInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/PassManager.h"
+#include <set>
 
 namespace llvm {
 
@@ -41,6 +42,11 @@ public:
   static unsigned getJITMatchQuality();
 
   virtual bool addPassesToEmitAssembly(PassManager &PM, std::ostream &Out);
+
+  // Two shared sets between the instruction selector and the printer allow for
+  // correct linkage on Darwin
+  std::set<GlobalValue*> CalledFunctions;
+  std::set<GlobalValue*> AddressTaken;
 };
 
 } // end namespace llvm
