@@ -11,10 +11,10 @@ void %test(sbyte* %P, short* %P, int* %P) {
 	ret void
 }
 
-void %main() {
+int %main() {
 	%A = alloca sbyte
 	%B = alloca short
 	%C = alloca int
 	call void %test(sbyte* %A, short* %B, int* %C)
-	ret void
+	ret int 0
 }

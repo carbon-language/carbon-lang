@@ -9,6 +9,9 @@
 // up behind an easier to use interface makes sense.  Descriptions of the
 // functions are included below.
 //
+// For reference, the order of operands for memory references is:
+// (Operand), Base, Scale, Index, Displacement.
+//
 //===----------------------------------------------------------------------===//
 
 #ifndef X86INSTRBUILDER_H
@@ -17,18 +20,19 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 
 /// addDirectMem - This function is used to add a direct memory reference to the
-/// current instruction.  Because memory references are always represented with
-/// four values, this adds: Reg, [1, NoReg, 0] to the instruction
-///
+/// current instruction -- that is, a dereference of an address in a register, with
+/// no scale, index or displacement. An example is: DWORD PTR [EAX].
 inline const MachineInstrBuilder &addDirectMem(const MachineInstrBuilder &MIB,
                                                unsigned Reg) {
+  // Because memory references are always represented with four
+  // values, this adds: Reg, [1, NoReg, 0] to the instruction.
   return MIB.addReg(Reg).addZImm(1).addMReg(0).addSImm(0);
 }
 
 
-/// addRegOffset -
-/// 
-///
+/// addRegOffset - This function is used to add a memory reference of
+/// the form [Reg + Offset], i.e., one with no scale or index, but
+/// with a displacement. An example is: DWORD PTR [EAX + 4].
 inline const MachineInstrBuilder &addRegOffset(const MachineInstrBuilder &MIB,
                                                unsigned Reg, unsigned Offset) {
   return MIB.addReg(Reg).addZImm(1).addMReg(0).addSImm(Offset);

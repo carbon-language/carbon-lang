@@ -159,23 +159,24 @@ namespace {
       } else if (Argument *A = dyn_cast<Argument>(V)) {
 	// Find the position of the argument in the argument list.
 	const Function *f = F->getFunction ();
-	int counter = 0, argPosition = -1;
+	// The function's arguments look like this:
+	// [EBP]     -- copy of old EBP
+	// [EBP + 4] -- return address
+	// [EBP + 8] -- first argument (leftmost lexically)
+	// So we want to start with counter = 2.
+	int counter = 2, argPosition = -1;
 	for (Function::const_aiterator ai = f->abegin (), ae = f->aend ();
 	     ai != ae; ++ai) {
-	  ++counter;
 	  if (&(*ai) == A) {
 	    argPosition = counter;
+	    break; // Only need to find it once. ;-)
 	  }
+	  ++counter;
 	}
 	assert (argPosition != -1
 		&& "Argument not found in current function's argument list");
 	// Load it out of the stack frame at EBP + 4*argPosition.
-	// (First, load Reg with argPosition, then load Reg with DWORD
-	// PTR [EBP + 4*Reg].)
-	BuildMI (BB, X86::MOVir32, 1, Reg).addZImm (argPosition);
-	BuildMI (BB, X86::MOVmr32, 4,
-		 Reg).addReg (X86::EBP).addZImm (4).addReg (Reg).addSImm (0);
-        // std::cerr << "ERROR: Arguments not implemented in SimpleInstSel\n";
+	addRegOffset (BuildMI (BB, X86::MOVmr32, 4, Reg), X86::EBP, 4*argPosition);
       }
 
       return Reg;
