@@ -341,7 +341,7 @@ public:
     if (os)
       *os << "    } END BLOCK: Function\n";
     currFunc->density = double(currFunc->byteSize) /
-      double(currFunc->numInstructions+currFunc->numBasicBlocks);
+      double(currFunc->numInstructions);
 
     if ( bca.progressiveVerify ) {
       try {
@@ -671,14 +671,14 @@ void PrintBytecodeAnalysis(BytecodeAnalysis& bca, std::ostream& Out )
 
   print(Out, "Maximum Type Slot Number",        bca.maxTypeSlot);
   print(Out, "Maximum Value Slot Number",       bca.maxValueSlot);
-  print(Out, "File Density (bytes/def)",        bca.fileDensity);
-  print(Out, "Globals Density (bytes/def)",     bca.globalsDensity);
-  print(Out, "Function Density (bytes/func)",   bca.functionDensity);
-  print(Out, "Number of VBR 32-bit Integers",   bca.vbrCount32);
-  print(Out, "Number of VBR 64-bit Integers",   bca.vbrCount64);
-  print(Out, "Number of VBR Compressed Bytes",  bca.vbrCompBytes);
-  print(Out, "Number of VBR Expanded Bytes",    bca.vbrExpdBytes);
-  print(Out, "VBR Savings", 
+  print(Out, "Bytes Per Value ",                bca.fileDensity);
+  print(Out, "Bytes Per Global",                bca.globalsDensity);
+  print(Out, "Bytes Per Function",              bca.functionDensity);
+  print(Out, "# of VBR 32-bit Integers",   bca.vbrCount32);
+  print(Out, "# of VBR 64-bit Integers",   bca.vbrCount64);
+  print(Out, "# of VBR Compressed Bytes",  bca.vbrCompBytes);
+  print(Out, "# of VBR Expanded Bytes",    bca.vbrExpdBytes);
+  print(Out, "Bytes Saved With VBR", 
         double(bca.vbrExpdBytes)-double(bca.vbrCompBytes),
         double(bca.vbrExpdBytes));
 
@@ -695,19 +695,19 @@ void PrintBytecodeAnalysis(BytecodeAnalysis& bca, std::ostream& Out )
       Out << "\nFunction: " << I->second.name << "\n";
       print(Out, "Type:", I->second.description);
       print(Out, "Byte Size", I->second.byteSize);
+      print(Out, "Basic Blocks", I->second.numBasicBlocks);
       print(Out, "Instructions", I->second.numInstructions);
       print(Out, "Long Instructions", I->second.longInstructions);
+      print(Out, "Operands", I->second.numOperands);
       print(Out, "Instruction Size", I->second.instructionSize);
       print(Out, "Average Instruction Size", 
             double(I->second.instructionSize)/double(I->second.numInstructions));
-      print(Out, "Basic Blocks", I->second.numBasicBlocks);
-      print(Out, "Operand", I->second.numOperands);
-      print(Out, "Function Density", I->second.density);
-      print(Out, "Number of VBR 32-bit Integers",   I->second.vbrCount32);
-      print(Out, "Number of VBR 64-bit Integers",   I->second.vbrCount64);
-      print(Out, "Number of VBR Compressed Bytes",  I->second.vbrCompBytes);
-      print(Out, "Number of VBR Expanded Bytes",    I->second.vbrExpdBytes);
-      print(Out, "VBR Savings", 
+      print(Out, "Bytes Per Instruction", I->second.density);
+      print(Out, "# of VBR 32-bit Integers",   I->second.vbrCount32);
+      print(Out, "# of VBR 64-bit Integers",   I->second.vbrCount64);
+      print(Out, "# of VBR Compressed Bytes",  I->second.vbrCompBytes);
+      print(Out, "# of VBR Expanded Bytes",    I->second.vbrExpdBytes);
+      print(Out, "Bytes Saved With VBR", 
             double(I->second.vbrExpdBytes)-double(I->second.vbrCompBytes),
             double(I->second.vbrExpdBytes));
       ++I;
