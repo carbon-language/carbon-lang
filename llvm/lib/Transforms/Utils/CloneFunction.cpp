@@ -6,6 +6,7 @@
 #include "llvm/BasicBlock.h"
 #include "llvm/Instruction.h"
 #include <map>
+#include <iostream>
 
 // FIXME: This should be merged with FunctionInlining
 
@@ -22,8 +23,8 @@ static inline void RemapInstruction(Instruction *I,
 
 #ifndef NDEBUG
     if (!V) {
-      cerr << "Val = \n" << Op << "Addr = " << (void*)Op;
-      cerr << "\nInst = " << I;
+      std::cerr << "Val = \n" << Op << "Addr = " << (void*)Op;
+      std::cerr << "\nInst = " << I;
     }
 #endif
     assert(V && "Referenced value not in value map!");

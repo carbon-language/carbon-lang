@@ -12,6 +12,7 @@
 #include "llvm/iOther.h"
 #include "Support/STLExtras.h"
 #include <algorithm>
+#include <iostream>
 
 // Make all of the pointers that point to Val also point to N.
 //
@@ -19,7 +20,7 @@ static void copyEdgesFromTo(PointerVal Val, DSNode *N) {
   unsigned ValIdx = Val.Index;
   unsigned NLinks = N->getNumLinks();
 
-  const vector<PointerValSet*> &PVSsToUpdate(Val.Node->getReferrers());
+  const std::vector<PointerValSet*> &PVSsToUpdate(Val.Node->getReferrers());
   for (unsigned i = 0, e = PVSsToUpdate.size(); i != e; ++i) {
     // Loop over all of the pointers pointing to Val...
     PointerValSet &PVS = *PVSsToUpdate[i];
@@ -54,7 +55,7 @@ static void ResolveNodesTo(const PointerValSet &FromVals,
 
   // Make everything that pointed to the shadow node now also point to the
   // values it is equivalent to...
-  const vector<PointerValSet*> &PVSToUpdate(N->getReferrers());
+  const std::vector<PointerValSet*> &PVSToUpdate(N->getReferrers());
   for (unsigned i = 0, e = PVSToUpdate.size(); i != e; ++i)
     PVSToUpdate[i]->add(ToVals);
 }
@@ -96,13 +97,13 @@ void FunctionDSGraph::computeClosure(const DataStructure &DS) {
   // Note that this cannot be a real vector because the keys will be changing
   // as nodes are eliminated!
   //
-  typedef pair<vector<PointerValSet>, CallInst *> CallDescriptor;
-  vector<pair<CallDescriptor, PointerValSet> > CallMap;
+  typedef std::pair<std::vector<PointerValSet>, CallInst *> CallDescriptor;
+  std::vector<std::pair<CallDescriptor, PointerValSet> > CallMap;
 
   unsigned NumInlines = 0;
 
   // Loop over the resolvable call nodes...
-  vector<CallDSNode*>::iterator NI;
+  std::vector<CallDSNode*>::iterator NI;
   NI = std::find_if(CallNodes.begin(), CallNodes.end(), isResolvableCallNode);
   while (NI != CallNodes.end()) {
     CallDSNode *CN = *NI;
@@ -110,10 +111,9 @@ void FunctionDSGraph::computeClosure(const DataStructure &DS) {
     Function *F = cast<Function>(FGDN->getGlobal());
 
     if ((int)NumInlines++ == InlineLimit) {      // CUTE hack huh?
-      cerr << "Infinite (?) recursion halted\n";
-      cerr << "Not inlining: " << F->getName() << "\n";
+      std::cerr << "Infinite (?) recursion halted\n";
+      std::cerr << "Not inlining: " << F->getName() << "\n";
       CN->dump();
-      
       return;
     }
 
@@ -126,20 +126,20 @@ void FunctionDSGraph::computeClosure(const DataStructure &DS) {
     //
     
 #if 0
-    cerr << "\nSearching for: " << (void*)CN->getCall() << ": ";
+    std::cerr << "\nSearching for: " << (void*)CN->getCall() << ": ";
     for (unsigned X = 0; X != CN->getArgs().size(); ++X) {
-      cerr << " " << X << " is\n";
-      CN->getArgs().first[X].print(cerr);
+      std::cerr << " " << X << " is\n";
+      CN->getArgs().first[X].print(std::cerr);
     }
 #endif
 
-    const vector<PointerValSet> &Args = CN->getArgs();
+    const std::vector<PointerValSet> &Args = CN->getArgs();
     PointerValSet *CMI = 0;
     for (unsigned i = 0, e = CallMap.size(); i != e; ++i) {
 #if 0
-      cerr << "Found: " << (void*)CallMap[i].first.second << ": ";
+      std::cerr << "Found: " << (void*)CallMap[i].first.second << ": ";
       for (unsigned X = 0; X != CallMap[i].first.first.size(); ++X) {
-        cerr << " " << X << " is\n"; CallMap[i].first.first[X].print(cerr);
+        std::cerr << " " << X << " is\n"; CallMap[i].first.first[X].print(std::cerr);
       }
 #endif
 
@@ -185,7 +185,7 @@ void FunctionDSGraph::computeClosure(const DataStructure &DS) {
       // allowing us to do local transformations to local graph to link
       // arguments to call values, and call node to return value...
       //
-      vector<PointerValSet> Args;
+      std::vector<PointerValSet> Args;
       RetVals = cloneFunctionIntoSelf(NewFunction, false, Args);
       CallMap.push_back(make_pair(CallDescriptor(CN->getArgs(), CN->getCall()),
                                   RetVals));
