@@ -23,8 +23,9 @@ char *strdup(const char *str) {
 }
 
 char *strcpy(char *s1, const char *s2) {
+  char *dest = s1;
   while ((*s1++ = *s2++));
-  return s1;
+  return dest;
 }
 
 char *strcat(char *s1, const char *s2) {
