@@ -209,8 +209,6 @@ static std::string getTypeDescription(const Type *Ty,
 
   TypeStack.pop_back();       // Remove self from stack...
 
-  // In order to reduce the amount of repeated computation, we cache the
-  // computed value for later.
   return Result;
 }
 
@@ -384,12 +382,6 @@ OpaqueType::OpaqueType() : DerivedType(OpaqueTyID) {
 }
 
 
-
-
-//===----------------------------------------------------------------------===//
-//               Derived Type setDerivedTypeProperties Function
-//===----------------------------------------------------------------------===//
-
 // isTypeAbstract - This is a recursive function that walks a type hierarchy
 // calculating whether or not a type is abstract.  Worst case it will have to do
 // a lot of traversing if you have some whacko opaque types, but in most cases,
@@ -422,17 +414,6 @@ bool Type::isTypeAbstract() {
 
   // Nothing looks abstract here...
   return false;
-}
-
-
-// setDerivedTypeProperties - This function is used to calculate the isAbstract
-// setting for a type.  The getTypeProps function does all the dirty work.
-//
-void DerivedType::setDerivedTypeProperties() {
-  // If the type is currently thought to be abstract, rescan all of our subtypes
-  // to see if the type has just become concrete!
-  if (isAbstract())
-    setAbstract(isTypeAbstract());
 }
 
 
@@ -1089,7 +1070,9 @@ void FunctionType::refineAbstractType(const DerivedType *OldType,
   if (MT && MT != this) {
     refineAbstractTypeTo(MT);            // Different type altogether...
   } else {
-    setDerivedTypeProperties();          // Update the name and isAbstract
+    // If the type is currently thought to be abstract, rescan all of our
+    // subtypes to see if the type has just become concrete!
+    if (isAbstract()) setAbstract(isTypeAbstract());
     typeIsRefined();                     // Same type, different contents...
   }
 }
@@ -1115,7 +1098,9 @@ void ArrayType::refineAbstractType(const DerivedType *OldType,
   if (AT && AT != this) {
     refineAbstractTypeTo(AT);          // Different type altogether...
   } else {
-    setDerivedTypeProperties();        // Update the name and isAbstract
+    // If the type is currently thought to be abstract, rescan all of our
+    // subtypes to see if the type has just become concrete!
+    if (isAbstract()) setAbstract(isTypeAbstract());
     typeIsRefined();                   // Same type, different contents...
   }
 }
@@ -1144,7 +1129,9 @@ void StructType::refineAbstractType(const DerivedType *OldType,
   if (ST && ST != this) {
     refineAbstractTypeTo(ST);          // Different type altogether...
   } else {
-    setDerivedTypeProperties();        // Update the name and isAbstract
+    // If the type is currently thought to be abstract, rescan all of our
+    // subtypes to see if the type has just become concrete!
+    if (isAbstract()) setAbstract(isTypeAbstract());
     typeIsRefined();                   // Same type, different contents...
   }
 }
@@ -1169,7 +1156,9 @@ void PointerType::refineAbstractType(const DerivedType *OldType,
   if (PT && PT != this) {
     refineAbstractTypeTo(PT);          // Different type altogether...
   } else {
-    setDerivedTypeProperties();        // Update the name and isAbstract
+    // If the type is currently thought to be abstract, rescan all of our
+    // subtypes to see if the type has just become concrete!
+    if (isAbstract()) setAbstract(isTypeAbstract());
     typeIsRefined();                   // Same type, different contents...
   }
 }
