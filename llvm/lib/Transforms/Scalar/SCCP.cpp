@@ -16,7 +16,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/Scalar/ConstantProp.h"
-#include "llvm/Transforms/Scalar/ConstantHandling.h"
+#include "llvm/ConstantHandling.h"
 #include "llvm/Function.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/ConstantVals.h"

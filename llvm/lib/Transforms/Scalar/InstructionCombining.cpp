@@ -15,7 +15,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/Scalar/InstructionCombining.h"
-#include "llvm/Transforms/Scalar/ConstantHandling.h"
+#include "llvm/ConstantHandling.h"
 #include "llvm/Function.h"
 #include "llvm/iMemory.h"
 #include "llvm/InstrTypes.h"

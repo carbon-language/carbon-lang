@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Analysis/Expressions.h"
-#include "llvm/Transforms/Scalar/ConstantHandling.h"
+#include "llvm/ConstantHandling.h"
 #include "llvm/Function.h"
 #include "llvm/BasicBlock.h"
 #include <iostream>
