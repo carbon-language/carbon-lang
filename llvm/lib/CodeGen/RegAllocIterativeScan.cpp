@@ -7,7 +7,13 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implements a linear scan register allocator.
+// This file implements an iterative scan register
+// allocator. Iterative scan is a linear scan variant with the
+// following difference:
+//
+// It performs linear scan and keeps a list of the registers it cannot
+// allocate. It then spills all those registers and repeats the
+// process until allocation succeeds.
 //
 //===----------------------------------------------------------------------===//
 
