@@ -742,7 +742,7 @@ endif
 # which they can be "generated."  This allows make to ignore them and
 # reproduce the dependency lists.
 #
-%.h::
+%.h:: ;
 
 # 'make clean' nukes the tree
 clean::
