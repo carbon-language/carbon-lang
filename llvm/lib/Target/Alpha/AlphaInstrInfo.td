@@ -43,7 +43,10 @@ let Defs = [R29] in
 
 let isCall = 1,
     Defs = [R0, R1, R2, R3, R4, R5, R6, R7, R8, R16, R17, R18, R19,
-            R20, R21, R22, R23, R24, R25, R26, R27, R29],
+            R20, R21, R22, R23, R24, R25, R26, R27, R29,
+            F0, F1,
+            F10, F11, F12, F13, F14, F15, F16, F17, F18, F19,
+            F20, F21, F22, F23, F24, F25, F26, F27, F28, F29, F30],
     Uses = [R27, R29] in
       def CALL : PseudoInstAlpha< (ops s64imm:$TARGET), "jsr $TARGET">; //Jump to subroutine
 
@@ -250,19 +253,32 @@ let isCall = 1 in
   let Defs = [R0, R1, R2, R3, R4, R5, R6, R7, R8, R16, R17, R18, R19, R20, R21, R22, R23, R24, R25, R27, R29] in 
     def BSR : BForm<0x34, (ops GPRC:$RD, s21imm:$DISP), "bsr $RD,$DISP">; //Branch to subroutine
 
+//Stores, int
 def STB : MForm<0x0E, (ops GPRC:$RA, s16imm:$DISP, GPRC:$RB), "stb $RA,$DISP($RB)">; // Store byte
 def STW : MForm<0x0D, (ops GPRC:$RA, s16imm:$DISP, GPRC:$RB), "stw $RA,$DISP($RB)">; // Store word
 def STL : MForm<0x2C, (ops GPRC:$RA, s16imm:$DISP, GPRC:$RB), "stl $RA,$DISP($RB)">; // Store longword
 def STQ : MForm<0x2D, (ops GPRC:$RA, s16imm:$DISP, GPRC:$RB), "stq $RA,$DISP($RB)">; //Store quadword
 
+//Load address
 def LDA : MForm<0x08, (ops GPRC:$RA, s16imm:$DISP, GPRC:$RB), "lda $RA,$DISP($RB)">;  //Load address
+def LDAH : MForm<0x08, (ops GPRC:$RA, s16imm:$DISP, GPRC:$RB), "ldah $RA,$DISP($RB)">;  //Load address high
 
+//Loads, int
 def LDL : MForm<0x28, (ops GPRC:$RA, s16imm:$DISP, GPRC:$RB), "ldq $RA,$DISP($RB)">; // Load sign-extended longword
 def LDQ : MForm<0x29, (ops GPRC:$RA, s16imm:$DISP, GPRC:$RB), "ldq $RA,$DISP($RB)">; //Load quadword
 def LDBU : MForm<0x0A, (ops GPRC:$RA, s16imm:$DISP, GPRC:$RB), "ldbu $RA,$DISP($RB)">; //Load zero-extended byte
 def LDWU : MForm<0x0C, (ops GPRC:$RA, s16imm:$DISP, GPRC:$RB), "ldwu $RA,$DISP($RB)">; //Load zero-extended word
 
+//Stores, float
+def STS : MForm<0x26, (ops FPRC:$RA, s16imm:$DISP, GPRC:$RB), "sts $RA,$DISP($RB)">; //Store S_floating
+def STT : MForm<0x27, (ops FPRC:$RA, s16imm:$DISP, GPRC:$RB), "stt $RA,$DISP($RB)">; //Store T_floating
 
+//Loads, float
+def LDS : MForm<0x22, (ops FPRC:$RA, s16imm:$DISP, GPRC:$RB), "lds $RA,$DISP($RB)">; //Load S_floating
+def LDT : MForm<0x23, (ops FPRC:$RA, s16imm:$DISP, GPRC:$RB), "ldt $RA,$DISP($RB)">; //Load T_floating
+
+
+//Branches, int
 def BEQ : BForm<0x39, (ops GPRC:$RA, s21imm:$DISP), "beq $RA,$DISP">; //Branch if = zero
 def BGE : BForm<0x3E, (ops GPRC:$RA, s21imm:$DISP), "bge $RA,$DISP">; //Branch if >= zero
 def BGT : BForm<0x3F, (ops GPRC:$RA, s21imm:$DISP), "bgt $RA,$DISP">; //Branch if > zero
@@ -272,19 +288,42 @@ def BLE : BForm<0x3B, (ops GPRC:$RA, s21imm:$DISP), "ble $RA,$DISP">; //Branch i
 def BLT : BForm<0x3A, (ops GPRC:$RA, s21imm:$DISP), "blt $RA,$DISP">; //Branch if < zero
 def BNE : BForm<0x3D, (ops GPRC:$RA, s21imm:$DISP), "bne $RA,$DISP">; //Branch if != zero
 
+//Branches, float
+def FBEQ : BForm<0x31, (ops FPRC:$RA, s21imm:$DISP), "beq $RA,$DISP">; //Floating branch if =  zero
+def FBGE : BForm<0x36, (ops FPRC:$RA, s21imm:$DISP), "beq $RA,$DISP">; //Floating branch if >= zero
+def FBGT : BForm<0x37, (ops FPRC:$RA, s21imm:$DISP), "beq $RA,$DISP">; //Floating branch if > zero
+def FBLE : BForm<0x33, (ops FPRC:$RA, s21imm:$DISP), "beq $RA,$DISP">; //Floating branch if <= zero
+def FBLT : BForm<0x32, (ops FPRC:$RA, s21imm:$DISP), "beq $RA,$DISP">; //Floating branch if < zero
+def FBNE : BForm<0x35, (ops FPRC:$RA, s21imm:$DISP), "beq $RA,$DISP">; //Floating branch if != zero
+
+//Funky Floating point ops
+def CPYS  : FPForm<0x17, 0x020, (ops FPRC:$RC, FPRC:$RA, FPRC:$RB), "cpys $RA,$RB,$RC">;  //Copy sign
+def CPYSE : FPForm<0x17, 0x022, (ops FPRC:$RC, FPRC:$RA, FPRC:$RB), "cpyse $RA,$RB,$RC">; //Copy sign and exponent
+def CPYSN : FPForm<0x17, 0x021, (ops FPRC:$RC, FPRC:$RA, FPRC:$RB), "cpysn $RA,$RB,$RC">; //Copy sign negate
+
+//Basic Floating point ops
+def ADDS  : FPForm<0x16, 0x080, (ops FPRC:$RC, FPRC:$RA, FPRC:$RB), "adds $RA,$RB,$RC">;  //Add S_floating
+def ADDT  : FPForm<0x16, 0x0A0, (ops FPRC:$RC, FPRC:$RA, FPRC:$RB), "addt $RA,$RB,$RC">;  //Add T_floating
+def SUBS  : FPForm<0x16, 0x081, (ops FPRC:$RC, FPRC:$RA, FPRC:$RB), "subs $RA,$RB,$RC">;  //Subtract S_floating
+def SUBT  : FPForm<0x16, 0x0A1, (ops FPRC:$RC, FPRC:$RA, FPRC:$RB), "subt $RA,$RB,$RC">;  //Subtract T_floating
+def DIVS  : FPForm<0x16, 0x083, (ops FPRC:$RC, FPRC:$RA, FPRC:$RB), "divs $RA,$RB,$RC">;  //Divide S_floating
+def DIVT  : FPForm<0x16, 0x0A3, (ops FPRC:$RC, FPRC:$RA, FPRC:$RB), "divt $RA,$RB,$RC">;  //Divide T_floating
+def MULS  : FPForm<0x16, 0x082, (ops FPRC:$RC, FPRC:$RA, FPRC:$RB), "muls $RA,$RB,$RC">;  //Multiply S_floating
+def MULT  : FPForm<0x16, 0x0A2, (ops FPRC:$RC, FPRC:$RA, FPRC:$RB), "mult $RA,$RB,$RC">;  //Multiply T_floating
+def SQRTS : FPForm<0x14, 0x08B, (ops FPRC:$RC, FPRC:$RA, FPRC:$RB), "sqrts $RA,$RB,$RC">;  //Square root S_floating
+def SQRTT : FPForm<0x14, 0x0AB, (ops FPRC:$RC, FPRC:$RA, FPRC:$RB), "sqrtt $RA,$RB,$RC">;  //Square root T_floating
+
+//S_floating : IEEE Single
+//T_floating : IEEE Double
+
 //Mnemonic Format Opcode Description
-//ADDF F-P 15.080 Add F_floating
-//ADDG F-P 15.0A0 Add G_floating
-//ADDS F-P 16.080 Add S_floating
-//ADDT F-P 16.0A0 Add T_floating
+
 //CALL_PAL Pcd 00 Trap to PALcode
 //ECB Mfc 18.E800 Evict cache block
 //EXCB Mfc 18.0400 Exception barrier
 //FETCH Mfc 18.8000 Prefetch data
 //FETCH_M Mfc 18.A000 Prefetch data, modify intent
-//LDAH Mem 09 Load address high
-//LDBU Mem 0A Load zero-extended byte
-//LDWU Mem 0C Load zero-extended word
+
 //LDL_L Mem 2A Load sign-extended longword locked
 //LDQ_L Mem 2B Load quadword locked
 //LDQ_U Mem 0B Load unaligned quadword
@@ -292,77 +331,39 @@ def BNE : BForm<0x3D, (ops GPRC:$RA, s21imm:$DISP), "bne $RA,$DISP">; //Branch i
 //RC Mfc 18.E000 Read and clear
 //RPCC Mfc 18.C000 Read process cycle counter
 //RS Mfc 18.F000 Read and set
+
 //STL_C Mem 2E Store longword conditional
 //STQ_C Mem 2F Store quadword conditional
 //STQ_U Mem 0F Store unaligned quadword
+
 //TRAPB Mfc 18.0000 Trap barrier
 //WH64 Mfc 18.F800 Write hint  64 bytes
 //WMB Mfc 18.4400 Write memory barrier
 
-
-//CMPGEQ F-P 15.0A5 Compare G_floating equal
-//CMPGLE F-P 15.0A7 Compare G_floating less than or equal
-//CMPGLT F-P 15.0A6 Compare G_floating less than
 //CMPTEQ F-P 16.0A5 Compare T_floating equal
 //CMPTLE F-P 16.0A7 Compare T_floating less than or equal
 //CMPTLT F-P 16.0A6 Compare T_floating less than
 //CMPTUN F-P 16.0A4 Compare T_floating unordered
-//CPYS F-P 17.020 Copy sign
-//CPYSE F-P 17.022 Copy sign and exponent
-//CPYSN F-P 17.021 Copy sign negate
-//CVTDG F-P 15.09E Convert D_floating to G_floating
-//CVTGD F-P 15.0AD Convert G_floating to D_floating
-//CVTGF F-P 15.0AC Convert G_floating to F_floating
-//CVTGQ F-P 15.0AF Convert G_floating to quadword
+
 //CVTLQ F-P 17.010 Convert longword to quadword
-//CVTQF F-P 15.0BC Convert quadword to F_floating
-//CVTQG F-P 15.0BE Convert quadword to G_floating
 //CVTQL F-P 17.030 Convert quadword to longword
 //CVTQS F-P 16.0BC Convert quadword to S_floating
 //CVTQT F-P 16.0BE Convert quadword to T_floating
 //CVTST F-P 16.2AC Convert S_floating to T_floating
 //CVTTQ F-P 16.0AF Convert T_floating to quadword
 //CVTTS F-P 16.0AC Convert T_floating to S_floating
-//DIVF F-P 15.083 Divide F_floating
-//DIVG F-P 15.0A3 Divide G_floating
-//DIVS F-P 16.083 Divide S_floating
-//DIVT F-P 16.0A3 Divide T_floating
-//FBEQ Bra 31 Floating branch if =  zero
-//FBGE Bra 36 Floating branch if ³ zero
-//FBGT Bra 37 Floating branch if > zero
-//FBLE Bra 33 Floating branch if £ zero
-//FBLT Bra 32 Floating branch if < zero
-//FBNE Bra 35 Floating branch if ¹ zero
+
 //FCMOVEQ F-P 17.02A FCMOVE if = zero
-//FCMOVGE F-P 17.02D FCMOVE if ³ zero
+//FCMOVGE F-P 17.02D FCMOVE if >= zero
 //FCMOVGT F-P 17.02F FCMOVE if > zero
-//FCMOVLE F-P 17.02E FCMOVE if £ zero
+//FCMOVLE F-P 17.02E FCMOVE if <= zero
 //FCMOVLT F-P 17.02C FCMOVE if < zero
-//FCMOVNE F-P 17.02B FCMOVE if ¹ zero
+//FCMOVNE F-P 17.02B FCMOVE if != zero
+
 //FTOIS F-P 1C.78 Floating to integer move, S_floating
 //FTOIT F-P 1C.70 Floating to integer move, T_floating
-//ITOFF F-P 14.014 Integer to floating move, F_floating
 //ITOFS F-P 14.004 Integer to floating move, S_floating
 //ITOFT F-P 14.024 Integer to floating move, T_floating
-//LDF Mem 20 Load F_floating
-//LDG Mem 21 Load G_floating
-//LDS Mem 22 Load S_floating
-//LDT Mem 23 Load T_floating
+
 //MF_FPCR F-P 17.025 Move from FPCR
 //MT_FPCR F-P 17.024 Move to FPCR
-//MULF F-P 15.082 Multiply F_floating
-//MULG F-P 15.0A2 Multiply G_floating
-//MULS F-P 16.082 Multiply S_floating
-//MULT F-P 16.0A2 Multiply T_floating
-//SQRTF F-P 14.08A Square root F_floating
-//SQRTG F-P 14.0AA Square root G_floating
-//SQRTS F-P 14.08B Square root S_floating
-//SQRTT F-P 14.0AB Square root T_floating
-//STF Mem 24 Store F_floating
-//STG Mem 25 Store G_floating
-//STS Mem 26 Store S_floating
-//STT Mem 27 Store T_floating
-//SUBF F-P 15.081 Subtract F_floating
-//SUBG F-P 15.0A1 Subtract G_floating
-//SUBS F-P 16.081 Subtract S_floating
-//SUBT F-P 16.0A1 Subtract T_floating

@@ -48,7 +48,7 @@ void
 AlphaRegisterInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
                                        MachineBasicBlock::iterator MI,
                                        unsigned SrcReg, int FrameIdx) const {
-  std::cerr << "Trying to store " << getPrettyName(SrcReg) << " to " << FrameIdx << "\n";
+  //std::cerr << "Trying to store " << getPrettyName(SrcReg) << " to " << FrameIdx << "\n";
   //BuildMI(MBB, MI, Alpha::WTF, 0).addReg(SrcReg);
   BuildMI(MBB, MI, Alpha::STQ, 3).addReg(SrcReg).addImm(FrameIdx * 8).addReg(Alpha::R30);
   //  assert(0 && "TODO");
@@ -58,7 +58,7 @@ void
 AlphaRegisterInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
                                         MachineBasicBlock::iterator MI,
                                         unsigned DestReg, int FrameIdx) const{
-  std::cerr << "Trying to load " << getPrettyName(DestReg) << " to " << FrameIdx << "\n";
+  //std::cerr << "Trying to load " << getPrettyName(DestReg) << " to " << FrameIdx << "\n";
   //BuildMI(MBB, MI, Alpha::WTF, 0, DestReg);
   BuildMI(MBB, MI, Alpha::LDQ, 2, DestReg).addImm(FrameIdx * 8).addReg(Alpha::R30);
   //  assert(0 && "TODO");
@@ -71,8 +71,8 @@ void AlphaRegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
   //  std::cerr << "copyRegToReg " << DestReg << " <- " << SrcReg << "\n";
   if (RC == Alpha::GPRCRegisterClass) {
     BuildMI(MBB, MI, Alpha::BIS, 2, DestReg).addReg(SrcReg).addReg(SrcReg);
-//   } else if (RC == Alpha::FPRCRegisterClass) {
-//     BuildMI(MBB, MI, PPC::FMR, 1, DestReg).addReg(SrcReg);
+  } else if (RC == Alpha::FPRCRegisterClass) {
+    BuildMI(MBB, MI, Alpha::CPYS, 2, DestReg).addReg(SrcReg).addReg(SrcReg);
   } else { 
     std::cerr << "Attempt to copy register that is not GPR or FPR";
      abort();
@@ -205,14 +205,21 @@ void AlphaRegisterInfo::emitPrologue(MachineFunction &MF) const {
   
   // adjust stack pointer: r30 -= numbytes
   
-  if (NumBytes <= 32000) //FIXME: do this better 
-    {
-      MI=BuildMI(Alpha::LDA, 2, Alpha::R30).addImm(-NumBytes).addReg(Alpha::R30);
-      MBB.insert(MBBI, MI);
-    } else {
-      std::cerr << "Too big a stack frame\n";
-      abort();
-    }
+  if (NumBytes <= 32767) {
+    MI=BuildMI(Alpha::LDA, 2, Alpha::R30).addImm(-NumBytes).addReg(Alpha::R30);
+    MBB.insert(MBBI, MI);
+  } else if (NumBytes <= 32767 * 65536) {
+    long y = NumBytes / 65536;
+    if (NumBytes % 65536 > 32767)
+      ++y;
+    MI=BuildMI(Alpha::LDAH, 2, Alpha::R30).addImm(-y).addReg(Alpha::R30);
+    MBB.insert(MBBI, MI);
+    MI=BuildMI(Alpha::LDA, 2, Alpha::R30).addImm(-(NumBytes - y * 65536)).addReg(Alpha::R30);
+    MBB.insert(MBBI, MI);
+  } else {
+    std::cerr << "Too big a stack frame\n";
+    abort();
+  }
 }
 
 void AlphaRegisterInfo::emitEpilogue(MachineFunction &MF,

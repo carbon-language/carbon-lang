@@ -83,10 +83,10 @@ class OFormL<bits<6> opcode, bits<7> fun, dag OL, string asmstr> : InstAlpha<opc
 }
 
 //3.3.4
-class FPForm<bits<6> opcode, dag OL, string asmstr> : InstAlpha<opcode, OL, asmstr> {
+class FPForm<bits<6> opcode, bits<11> fun, dag OL, string asmstr> : InstAlpha<opcode, OL, asmstr> {
   bits<5> Fa;
   bits<5> Fb;
-  bits<11> Function;
+  bits<11> Function = fun;
   bits<5> Fc;
 
   let Inst{25-21} = Fa;

@@ -53,6 +53,14 @@ namespace {
       setOperationAction(ISD::ZERO_EXTEND_INREG, MVT::i1, Expand);
       setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i1, Expand);
 
+      //      setOperationAction(ISD::UINT_TO_FP       , MVT::i64  , Expand);
+      //      setOperationAction(ISD::UINT_TO_FP       , MVT::i64  , Expand);
+      setOperationAction(ISD::SINT_TO_FP       , MVT::i1   , Promote);
+      setOperationAction(ISD::SINT_TO_FP       , MVT::i8   , Promote);
+      setOperationAction(ISD::SINT_TO_FP       , MVT::i16  , Promote);
+      setOperationAction(ISD::SINT_TO_FP       , MVT::i32  , Promote);
+
+      setOperationAction(ISD::FP_TO_SINT       , MVT::f32  , Promote);
 
       computeRegisterProperties();
       
@@ -124,18 +132,35 @@ AlphaTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG)
   //Handle the return address
   //BuildMI(&BB, Alpha::IDEF, 0, Alpha::R26);
 
-  unsigned args[] = {Alpha::R16, Alpha::R17, Alpha::R18, 
-		     Alpha::R19, Alpha::R20, Alpha::R21};
+  unsigned args_int[] = {Alpha::R16, Alpha::R17, Alpha::R18, 
+			 Alpha::R19, Alpha::R20, Alpha::R21};
+  unsigned args_float[] = {Alpha::F16, Alpha::F17, Alpha::F18, 
+			   Alpha::F19, Alpha::F20, Alpha::F21};
   std::vector<unsigned> argVreg;
-
+  std::vector<unsigned> argPreg;
   int count = 0;
   for (Function::aiterator I = F.abegin(), E = F.aend(); I != E; ++I)
     {
       ++count;
       assert(count <= 6 && "More than 6 args not supported");
-      assert(getValueType(I->getType()) != MVT::f64 && "No floats yet");
-      BuildMI(&BB, Alpha::IDEF, 0, args[count - 1]);
-      argVreg.push_back(MF.getSSARegMap()->createVirtualRegister(getRegClassFor(MVT::i64)));
+      switch (getValueType(I->getType())) {
+      default: std::cerr << "Unknown Type " << getValueType(I->getType()) << "\n"; abort();
+      case MVT::f64:
+      case MVT::f32:
+	BuildMI(&BB, Alpha::IDEF, 0, args_float[count - 1]);
+	argVreg.push_back(MF.getSSARegMap()->createVirtualRegister(getRegClassFor(getValueType(I->getType()))));
+	argPreg.push_back(args_float[count - 1]);
+	break;
+      case MVT::i1:
+      case MVT::i8:
+      case MVT::i16:
+      case MVT::i32:
+      case MVT::i64:
+	BuildMI(&BB, Alpha::IDEF, 0, args_int[count - 1]);
+	argVreg.push_back(MF.getSSARegMap()->createVirtualRegister(getRegClassFor(getValueType(I->getType()))));
+	argPreg.push_back(args_int[count - 1]);
+	break;
+	}
     }
 
   BuildMI(&BB, Alpha::IDEF, 0, Alpha::R29);
@@ -143,25 +168,30 @@ AlphaTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG)
   count = 0;
   for (Function::aiterator I = F.abegin(), E = F.aend(); I != E; ++I)
     {
-      BuildMI(&BB, Alpha::BIS, 2, argVreg[count]).addReg(args[count]).addReg(args[count]);
-      
-      SDOperand argt, newroot;
+      SDOperand newroot;
+      unsigned Opc;
       switch (getValueType(I->getType()))
 	{
+	default: assert(0 && "Unhandled type");
 	case MVT::i64:
-	  argt = newroot = DAG.getCopyFromReg(argVreg[count], MVT::i64, DAG.getRoot());
-	  break;
 	case MVT::i32:
-	  argt = newroot = DAG.getCopyFromReg(argVreg[count], MVT::i32, DAG.getRoot());
+	case MVT::i16:
+	case MVT::i8:
+	case MVT::i1:
+	  Opc = Alpha::BIS;
 	  break;
-	default:
-	  newroot = DAG.getCopyFromReg(argVreg[count], MVT::i64, DAG.getRoot());
-	  argt =  DAG.getNode(ISD::TRUNCATE, getValueType(I->getType()), newroot);
+	case MVT::f32:
+	case MVT::f64:
+	  Opc = Alpha::CPYS;
+	  break;
 	}
+      BuildMI(&BB, Opc, 2, argVreg[count]).addReg(argPreg[count]).addReg(argPreg[count]);
+      newroot = DAG.getCopyFromReg(argVreg[count], getValueType(I->getType()), DAG.getRoot());
       DAG.setRoot(newroot.getValue(1));
-      ArgValues.push_back(argt);
+      ArgValues.push_back(newroot);
       ++count;
     }
+
   return ArgValues;
 }
 
@@ -184,9 +214,9 @@ AlphaTargetLowering::LowerCallTo(SDOperand Chain,
 	// Promote the integer to 64 bits.  If the input type is signed use a
 	// sign extend, otherwise use a zero extend.
 	if (Args[i].second->isSigned())
-	  Args[i].first = DAG.getNode(ISD::SIGN_EXTEND, MVT::i64, Args[i].first);
+	  Args[i].first = DAG.getNode(ISD::SIGN_EXTEND_INREG, MVT::i64, Args[i].first);
 	else
-	  Args[i].first = DAG.getNode(ISD::ZERO_EXTEND, MVT::i64, Args[i].first);
+	  Args[i].first = DAG.getNode(ISD::ZERO_EXTEND_INREG, MVT::i64, Args[i].first);
 	break;
       case MVT::i64:
 	break;
@@ -317,18 +347,12 @@ unsigned ISel::SelectExpr(SDOperand N) {
     Tmp1 = SelectExpr(Node->getOperand(1));
     
     switch(Node->getValueType(0)) {
-    default: assert(0 && "Unknown type to sign extend to.");
+    default: Node->dump(); assert(0 && "Unknown type to sign extend to.");
     case MVT::i64:
       switch (cast<MVTSDNode>(Node)->getExtraValueType()) {
       default:
-	std::cerr << cast<MVTSDNode>(Node)->getExtraValueType() 
-		  << "(i1 is " << MVT::i1 
-		  << " i8 is " << MVT::i8
-		  << " i16 is " << MVT::i16
-		  << " i32 is " << MVT::i32
-		  << " i64 is " << MVT::i64
-		  << ")\n";
-        assert(0 && "Bad extend load!");
+	Node->dump();
+	assert(0 && "Bad extend load!");
       case MVT::i64:
 	BuildMI(BB, Alpha::LDQ, 2, Result).addImm(0).addReg(Tmp1);
 	break;
@@ -357,11 +381,12 @@ unsigned ISel::SelectExpr(SDOperand N) {
     Select(Node->getOperand(0)); // chain
     Tmp1 = SelectExpr(Node->getOperand(1));
     switch(Node->getValueType(0)) {
-    default: assert(0 && "Unknown type to sign extend to.");
+    default: Node->dump(); assert(0 && "Unknown type to sign extend to.");
     case MVT::i64:
       switch (cast<MVTSDNode>(Node)->getExtraValueType()) {
       default:
-        assert(0 && "Bad sign extend!");
+	Node->dump();
+	assert(0 && "Bad sign extend!");
       case MVT::i32:
 	BuildMI(BB, Alpha::LDL, 2, Result).addImm(0).addReg(Tmp1);
         break;
@@ -386,11 +411,12 @@ unsigned ISel::SelectExpr(SDOperand N) {
     Select(Node->getOperand(0)); // chain
     Tmp1 = SelectExpr(Node->getOperand(1));
     switch(Node->getValueType(0)) {
-    default: assert(0 && "Unknown type to zero extend to.");
+    default: Node->dump(); assert(0 && "Unknown type to zero extend to.");
     case MVT::i64:
       switch (cast<MVTSDNode>(Node)->getExtraValueType()) {
       default:
-        assert(0 && "Bad sign extend!");
+	Node->dump();
+	assert(0 && "Bad sign extend!");
       case MVT::i16:
 	BuildMI(BB, Alpha::LDWU, 2, Result).addImm(0).addReg(Tmp1);
         break;
@@ -412,7 +438,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
   case ISD::CALL:
     {
       Select(N.getOperand(0));
-
+      
       // The chain for this call is now lowered.
       ExprMap.insert(std::make_pair(N.getValue(Node->getNumValues()-1), 1));
       
@@ -420,67 +446,86 @@ unsigned ISel::SelectExpr(SDOperand N) {
       std::vector<unsigned> argvregs;
       assert(Node->getNumOperands() < 8 && "Only 6 args supported");
       for(int i = 2, e = Node->getNumOperands(); i < e; ++i)
-      {
-	argvregs.push_back(SelectExpr(N.getOperand(i)));
-      }
+	  argvregs.push_back(SelectExpr(N.getOperand(i)));
+      
       for(int i = 0, e = argvregs.size(); i < e; ++i)
-      {
-	unsigned args[] = {Alpha::R16, Alpha::R17, Alpha::R18, 
-			   Alpha::R19, Alpha::R20, Alpha::R21};
-	
-	BuildMI(BB, Alpha::BIS, 2, args[i]).addReg(argvregs[i]).addReg(argvregs[i]);
+	{
+	  unsigned args_int[] = {Alpha::R16, Alpha::R17, Alpha::R18, 
+				 Alpha::R19, Alpha::R20, Alpha::R21};
+	  unsigned args_float[] = {Alpha::F16, Alpha::F17, Alpha::F18, 
+				   Alpha::F19, Alpha::F20, Alpha::F21};
+	  switch(N.getOperand(i).getValueType()) {
+	  default: Node->dump(); assert(0 && "Unknown value type for call");
+	  case MVT::i1:
+	  case MVT::i8:
+	  case MVT::i16:
+	  case MVT::i32:
+	  case MVT::i64:
+	    BuildMI(BB, Alpha::BIS, 2, args_int[i]).addReg(argvregs[i]).addReg(argvregs[i]);
+	    break;
+	  case MVT::f32:
+	  case MVT::f64:
+	    BuildMI(BB, Alpha::CPYS, 2, args_float[i]).addReg(argvregs[i]).addReg(argvregs[i]);
+	    break;
+	  }
+	  
+	}
+      //build the right kind of call
+      if (GlobalAddressSDNode *GASD =
+	  dyn_cast<GlobalAddressSDNode>(N.getOperand(1))) 
+	{
+	  Select(N.getOperand(0));
+	  AlphaLowering.restoreGP(BB);
+	  BuildMI(BB, Alpha::CALL, 1).addGlobalAddress(GASD->getGlobal(),true);
+	} 
+      else if (ExternalSymbolSDNode *ESSDN =
+	       dyn_cast<ExternalSymbolSDNode>(N.getOperand(1))) 
+	{
+	  Select(N.getOperand(0));
+	  AlphaLowering.restoreGP(BB);
+	  BuildMI(BB, Alpha::CALL, 0).addExternalSymbol(ESSDN->getSymbol(), true);
+	} 
+      else 
+	{
+	  Select(N.getOperand(0));
+	  Tmp1 = SelectExpr(N.getOperand(1));
+	  BuildMI(BB, Alpha::CALL, 1).addReg(Tmp1);
+	  AlphaLowering.restoreGP(BB);
+	}
+      
+      //push the result into a virtual register
+      //    if (Result != 1)
+      //      BuildMI(BB, Alpha::BIS, 2, Result).addReg(Alpha::R0).addReg(Alpha::R0);
+      
+      switch (Node->getValueType(0)) {
+      default: Node->dump(); assert(0 && "Unknown value type for call result!");
+      case MVT::Other: return 1;
+      case MVT::i1:
+      case MVT::i8:
+      case MVT::i16:
+      case MVT::i32:
+      case MVT::i64:
+	BuildMI(BB, Alpha::BIS, 2, Result).addReg(Alpha::R0).addReg(Alpha::R0);
+	break;
+      case MVT::f32:
+      case MVT::f64:
+	BuildMI(BB, Alpha::CPYS, 2, Result).addReg(Alpha::F0).addReg(Alpha::F0);
+	break;
       }
-
-    //build the right kind of call
-    if (GlobalAddressSDNode *GASD =
-               dyn_cast<GlobalAddressSDNode>(N.getOperand(1))) 
-      {
-	Select(N.getOperand(0));
-	AlphaLowering.restoreGP(BB);
-	BuildMI(BB, Alpha::CALL, 1).addGlobalAddress(GASD->getGlobal(),true);
-      }
-    else if (ExternalSymbolSDNode *ESSDN =
-	     dyn_cast<ExternalSymbolSDNode>(N.getOperand(1))) 
-      {
-	Select(N.getOperand(0));
-	AlphaLowering.restoreGP(BB);
-	BuildMI(BB, Alpha::CALL, 0).addExternalSymbol(ESSDN->getSymbol(), true);
-      } 
-    else {
-      Select(N.getOperand(0));
-      Tmp1 = SelectExpr(N.getOperand(1));
-      BuildMI(BB, Alpha::CALL, 1).addReg(Tmp1);
-      AlphaLowering.restoreGP(BB);
-    }
-
-    //push the result into a virtual register
-    //    if (Result != 1)
-    //      BuildMI(BB, Alpha::BIS, 2, Result).addReg(Alpha::R0).addReg(Alpha::R0);
-
-    switch (Node->getValueType(0)) {
-    default: assert(0 && "Unknown value type for call result!");
-    case MVT::Other: return 1;
-    case MVT::i1:
-    case MVT::i8:
-    case MVT::i16:
-    case MVT::i32:
-    case MVT::i64:
-      BuildMI(BB, Alpha::BIS, 2, Result).addReg(Alpha::R0).addReg(Alpha::R0);
-    break;
-    }
-    return Result+N.ResNo;
+      return Result+N.ResNo;
     }    
-  
+    
   case ISD::SIGN_EXTEND:
   case ISD::SIGN_EXTEND_INREG:
     {
       Tmp1 = SelectExpr(N.getOperand(0));
       MVTSDNode* MVN = dyn_cast<MVTSDNode>(Node);
-      std::cerr << "SrcT: " << MVN->getExtraValueType() << "\n";
+      //std::cerr << "SrcT: " << MVN->getExtraValueType() << "\n";
       switch(MVN->getExtraValueType())
 	{
 	default:
-	  assert(0 && "Sign Extend InReg not there yet");
+	  Node->dump();
+ 	  assert(0 && "Sign Extend InReg not there yet");
 	  break;
 	case MVT::i32:
 	  {
@@ -500,11 +545,12 @@ unsigned ISel::SelectExpr(SDOperand N) {
     {
       Tmp1 = SelectExpr(N.getOperand(0));
       MVTSDNode* MVN = dyn_cast<MVTSDNode>(Node);
-      std::cerr << "SrcT: " << MVN->getExtraValueType() << "\n";
+      //std::cerr << "SrcT: " << MVN->getExtraValueType() << "\n";
       switch(MVN->getExtraValueType())
 	{
 	default:
-	  assert(0 && "Zero Extend InReg not there yet");
+	  Node->dump();
+ 	  assert(0 && "Zero Extend InReg not there yet");
 	  break;
 	case MVT::i32: Tmp2 = 0xf0; break;
 	case MVT::i16: Tmp2 = 0xfc; break;
@@ -520,7 +566,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
     if (SetCCSDNode *SetCC = dyn_cast<SetCCSDNode>(Node)) {
       if (MVT::isInteger(SetCC->getOperand(0).getValueType())) {
 	switch (SetCC->getCondition()) {
-	default: assert(0 && "Unknown integer comparison!");
+	default: Node->dump(); assert(0 && "Unknown integer comparison!");
 	case ISD::SETEQ:
 	  BuildMI(BB, Alpha::CMPEQ, 2, Result).addReg(Tmp1).addReg(Tmp2);
 	  break;
@@ -558,11 +604,16 @@ unsigned ISel::SelectExpr(SDOperand N) {
 	}
       }
       else
-	assert(0 && "only integer");
+	{
+	  Node->dump();
+	  assert(0 && "only integer");
+	}
     }
     else
-      assert(0 && "Not a setcc in setcc");
-
+      {
+	Node->dump();
+ 	assert(0 && "Not a setcc in setcc");
+      }
     return Result;
 
   case ISD::CopyFromReg:
@@ -587,94 +638,159 @@ unsigned ISel::SelectExpr(SDOperand N) {
   case ISD::SHL:
   case ISD::SRL:
   case ISD::MUL:
-    if(N.getOperand(1).getOpcode() == ISD::Constant &&
-       cast<ConstantSDNode>(N.getOperand(1))->getValue() >= 0 &&
-       cast<ConstantSDNode>(N.getOperand(1))->getValue() <= 255)
-      {
-	switch(N.getOpcode()) {
-	case ISD::AND: Opc = Alpha::ANDi; break;
-	case ISD::OR:  Opc = Alpha::BISi; break;
-	case ISD::XOR: Opc = Alpha::XORi; break;
-	case ISD::SHL: Opc = Alpha::SLi; break;
-	case ISD::SRL: Opc = Alpha::SRLi; break;
-	case ISD::SRA: Opc = Alpha::SRAi; break;
-	case ISD::MUL: Opc = Alpha::MULQi; break;
-	};
-	Tmp1 = SelectExpr(N.getOperand(0));
-	Tmp2 = cast<ConstantSDNode>(N.getOperand(1))->getValue();
-	BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addImm(Tmp2);
-      }
-    else
-      {
-	switch(N.getOpcode()) {
-	case ISD::AND: Opc = Alpha::AND; break;
-	case ISD::OR:  Opc = Alpha::BIS; break;
-	case ISD::XOR: Opc = Alpha::XOR; break;
-	case ISD::SHL: Opc = Alpha::SL; break;
-	case ISD::SRL: Opc = Alpha::SRL; break;
-	case ISD::SRA: Opc = Alpha::SRA; break;
-	case ISD::MUL: Opc = Alpha::MULQ; break;
-	};
-	Tmp1 = SelectExpr(N.getOperand(0));
-	Tmp2 = SelectExpr(N.getOperand(1));
-	BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(Tmp2);
-      }
+    switch (N.getValueType()) {
+    default: Node->dump(); assert (0 && "unhandled type");
+    case MVT::f64:
+      assert(N.getOpcode() == ISD::MUL && "only mul here please");
+      Tmp1 = SelectExpr(N.getOperand(0));
+      Tmp2 = SelectExpr(N.getOperand(1));
+      BuildMI(BB, Alpha::MULT, 2, Result).addReg(Tmp1).addReg(Tmp2);
+      break;
+    case MVT::f32:
+      assert(N.getOpcode() == ISD::MUL && "only mul here please");
+      Tmp1 = SelectExpr(N.getOperand(0));
+      Tmp2 = SelectExpr(N.getOperand(1));
+      BuildMI(BB, Alpha::MULS, 2, Result).addReg(Tmp1).addReg(Tmp2);
+      break;
+    case MVT::i64:
+      if(N.getOperand(1).getOpcode() == ISD::Constant &&
+	 cast<ConstantSDNode>(N.getOperand(1))->getValue() >= 0 &&
+	 cast<ConstantSDNode>(N.getOperand(1))->getValue() <= 255)
+	{
+	  switch(N.getOpcode()) {
+	  case ISD::AND: Opc = Alpha::ANDi; break;
+	  case ISD::OR:  Opc = Alpha::BISi; break;
+	  case ISD::XOR: Opc = Alpha::XORi; break;
+	  case ISD::SHL: Opc = Alpha::SLi; break;
+	  case ISD::SRL: Opc = Alpha::SRLi; break;
+	  case ISD::SRA: Opc = Alpha::SRAi; break;
+	  case ISD::MUL: Opc = Alpha::MULQi; break;
+	  };
+	  Tmp1 = SelectExpr(N.getOperand(0));
+	  Tmp2 = cast<ConstantSDNode>(N.getOperand(1))->getValue();
+	  BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addImm(Tmp2);
+	}
+      else
+	{
+	  switch(N.getOpcode()) {
+	  case ISD::AND: Opc = Alpha::AND; break;
+	  case ISD::OR:  Opc = Alpha::BIS; break;
+	  case ISD::XOR: Opc = Alpha::XOR; break;
+	  case ISD::SHL: Opc = Alpha::SL; break;
+	  case ISD::SRL: Opc = Alpha::SRL; break;
+	  case ISD::SRA: Opc = Alpha::SRA; break;
+	  case ISD::MUL: Opc = Alpha::MULQ; break;
+	  };
+	  Tmp1 = SelectExpr(N.getOperand(0));
+	  Tmp2 = SelectExpr(N.getOperand(1));
+	  BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(Tmp2);
+	}
+      break;
+    }
     return Result;
 
   case ISD::ADD:
   case ISD::SUB:
     {
       bool isAdd = N.getOpcode() == ISD::ADD;
-
-      //FIXME: first check for Scaled Adds and Subs!
-      if(N.getOperand(1).getOpcode() == ISD::Constant &&
-	 cast<ConstantSDNode>(N.getOperand(1))->getValue() >= 0 &&
-	 cast<ConstantSDNode>(N.getOperand(1))->getValue() <= 255)
-	{ //Normal imm add/sub
-	  Opc = isAdd ? Alpha::ADDQi : Alpha::SUBQi;
-	  Tmp1 = SelectExpr(N.getOperand(0));
-	  Tmp2 = cast<ConstantSDNode>(N.getOperand(1))->getValue();
-	  BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addImm(Tmp2);
-	}
-      else if(N.getOperand(1).getOpcode() == ISD::Constant &&
-	      cast<ConstantSDNode>(N.getOperand(1))->getValue() >= 0 &&
-	 cast<ConstantSDNode>(N.getOperand(1))->getValue() <= 32767)
-	{ //LDA  //FIXME: expand the above condition a bit
-	  Tmp1 = SelectExpr(N.getOperand(0));
-	  Tmp2 = cast<ConstantSDNode>(N.getOperand(1))->getValue();
-	  if (!isAdd)
-	    Tmp2 = -Tmp2;
-	  BuildMI(BB, Alpha::LDA, 2, Result).addImm(Tmp2).addReg(Tmp1);
-	}
-      else
-	{ //Normal add/sub
-	  Opc = isAdd ? Alpha::ADDQ : Alpha::SUBQ;
-	  Tmp1 = SelectExpr(N.getOperand(0));
-	  Tmp2 = SelectExpr(N.getOperand(1));
-	  BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(Tmp2);
-
-	}
-	  return Result;
+      
+      switch (N.getValueType()) {
+      default: Node->dump(); assert(0 && "Unhandled type");
+      case MVT::i64: {
+	//FIXME: first check for Scaled Adds and Subs!
+	if(N.getOperand(1).getOpcode() == ISD::Constant &&
+	   cast<ConstantSDNode>(N.getOperand(1))->getValue() >= 0 &&
+	   cast<ConstantSDNode>(N.getOperand(1))->getValue() <= 255)
+	  { //Normal imm add/sub
+	    Opc = isAdd ? Alpha::ADDQi : Alpha::SUBQi;
+	    Tmp1 = SelectExpr(N.getOperand(0));
+	    Tmp2 = cast<ConstantSDNode>(N.getOperand(1))->getValue();
+	    BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addImm(Tmp2);
+	  }
+	else if(N.getOperand(1).getOpcode() == ISD::Constant &&
+		cast<ConstantSDNode>(N.getOperand(1))->getValue() >= 0 &&
+		cast<ConstantSDNode>(N.getOperand(1))->getValue() <= 32767)
+	  { //LDA  //FIXME: expand the above condition a bit
+	    Tmp1 = SelectExpr(N.getOperand(0));
+	    Tmp2 = cast<ConstantSDNode>(N.getOperand(1))->getValue();
+	    if (!isAdd)
+	      Tmp2 = -Tmp2;
+	    BuildMI(BB, Alpha::LDA, 2, Result).addImm(Tmp2).addReg(Tmp1);
+	  }
+	else
+	  { //Normal add/sub
+	    Opc = isAdd ? Alpha::ADDQ : Alpha::SUBQ;
+	    Tmp1 = SelectExpr(N.getOperand(0));
+	    Tmp2 = SelectExpr(N.getOperand(1));
+	    BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(Tmp2);
+	  }
+      } break;
+      case MVT::f64:
+      case MVT::f32:
+	if (N.getValueType() == MVT::f64)
+	  Opc = isAdd ? Alpha::ADDT : Alpha::SUBT;
+	else
+	  Opc = isAdd ? Alpha::ADDS : Alpha::SUBS;
+	//
+        Tmp1 = SelectExpr(N.getOperand(0));
+	Tmp2 = SelectExpr(N.getOperand(1));
+	BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(Tmp2);
+	break;
       }
+      return Result;
+    }
 
   case ISD::UREM:
   case ISD::SREM:
   case ISD::SDIV:
   case ISD::UDIV:
-    //FIXME: alpha really doesn't support any of these operations, 
-    // the ops are expanded into special library calls with
-    // special calling conventions
-    switch(N.getOpcode()) {
-    case ISD::UREM: Opc = Alpha::REMQU; break;
-    case ISD::SREM: Opc = Alpha::REMQ; break;
-    case ISD::UDIV: Opc = Alpha::DIVQU; break;
-    case ISD::SDIV: Opc = Alpha::DIVQ; break;
-    };
+    switch (N.getValueType()) {
+    default: Node->dump(); assert (0 && "unhandled type");
+    case MVT::f64:
+      assert(N.getOpcode() == ISD::SDIV && "only div here please");
+      Opc = Alpha::DIVT;
+      break;
+    case MVT::f32:
+      assert(N.getOpcode() == ISD::SDIV && "only div here please");
+      Opc = Alpha::DIVS;
+      break;
+    case MVT::i64:
+      //FIXME: alpha really doesn't support any of these operations, 
+      // the ops are expanded into special library calls with
+      // special calling conventions
+      switch(N.getOpcode()) {
+      case ISD::UREM: Opc = Alpha::REMQU; break;
+      case ISD::SREM: Opc = Alpha::REMQ; break;
+      case ISD::UDIV: Opc = Alpha::DIVQU; break;
+      case ISD::SDIV: Opc = Alpha::DIVQ; break;
+      }
+      break;
+    }
     Tmp1 = SelectExpr(N.getOperand(0));
     Tmp2 = SelectExpr(N.getOperand(1));
     BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(Tmp2);
     return Result;
 
+//   case ISD::SINT_TO_FP:
+//     MVT::ValueType DestTy = N.getValueType();
+//     Tmp1 = SelectExpr(N.getOperand(0));  // Get the operand register
+//     Tmp2 = MakeReg(DestTy);
+//     Opc = DestTy == MVT::f64 ? ITOFT : ITOFS;
+//     BuildMI(BB,  Opc, 1, Tmp2).addReg(Tmp1);
+//     Opc = DestTy == MVT::f64 ? CVTQT : CVTQS;
+//     BuildMI(BB, Opc, 1, Result).addReg(Tmp1);
+//     //  case ISD::UINT_TO_FP:
+
+//   case ISD::FP_TO_SINT:
+//     assert (N.getValueType() == MVT::f64 && "Only can convert for doubles");
+//     Tmp1 = SelectExpr(N.getOperand(0));  // Get the operand register
+//     Tmp2 = MakeReg(SrcTy);
+//     BuildMI(BB, CVTTQ, 1, Tmp2).addReg(Tmp1);
+//     BuildMI(BB, FTOIT, 1, Result).addReg(Tmp2);
+//     return result;
+
+//     //  case ISD::FP_TO_UINT: 
+ 
   case ISD::SELECT:
     {
       Tmp2 = SelectExpr(N.getOperand(1)); //Use if TRUE
@@ -790,12 +906,17 @@ void ISel::Select(SDOperand N) {
        std::cerr << N.getNumOperands() << "\n";
        for (unsigned i = 0; i < N.getNumOperands(); ++i)
 	 std::cerr << N.getOperand(i).getValueType() << "\n";
+       Node->dump();
        assert(0 && "Unknown return instruction!");
      case 2:
        Select(N.getOperand(0));
        Tmp1 = SelectExpr(N.getOperand(1));
        switch (N.getOperand(1).getValueType()) {
-       default: assert(0 && "All other types should have been promoted!!");
+       default: Node->dump(); assert(0 && "All other types should have been promoted!!");
+       case MVT::f64:
+       case MVT::f32:
+	 BuildMI(BB, Alpha::CPYS, 2, Alpha::F0).addReg(Tmp1).addReg(Tmp1);
+	 break;
        case MVT::i32:
        case MVT::i64:
 	 BuildMI(BB, Alpha::BIS, 2, Alpha::R0).addReg(Tmp1).addReg(Tmp1);
@@ -839,14 +960,17 @@ void ISel::Select(SDOperand N) {
 
   case ISD::TRUNCSTORE: {  // truncstore chain, val, ptr :storety
     MVT::ValueType StoredTy = cast<MVTSDNode>(Node)->getExtraValueType();
-    assert(StoredTy != MVT::i64 && "Unsupported TRUNCSTORE for this target!");
+    if (StoredTy == MVT::i64) {
+      Node->dump();
+      assert(StoredTy != MVT::i64 && "Unsupported TRUNCSTORE for this target!");
+    }
 
     Select(N.getOperand(0));
     Tmp1 = SelectExpr(N.getOperand(1));
     Tmp2 = SelectExpr(N.getOperand(2));
 
     switch (StoredTy) {
-    default: assert(0 && "Unhandled Type"); break;
+    default: Node->dump(); assert(0 && "Unhandled Type"); break;
     case MVT::i1: //FIXME: DAG does not promote this load
     case MVT::i8: Opc = Alpha::STB; break;
     case MVT::i16: Opc = Alpha::STW; break;
