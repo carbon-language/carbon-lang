@@ -10,6 +10,7 @@
 
 #include "VM.h"
 #include <dlfcn.h>    // dlsym access
+#include <iostream>
 
 //===----------------------------------------------------------------------===//
 // Function stubs that are invoked instead of raw system calls
@@ -25,7 +26,7 @@ static void jit_exit(int Status) {
 
 // jit_atexit - Used to intercept the "at_exit" system call.
 static int jit_atexit(void (*Fn)(void)) {
-  atexit(Fn);    // Do nothing for now.
+  return atexit(Fn);    // Do nothing for now.
 }
 
 //===----------------------------------------------------------------------===//
@@ -36,8 +37,8 @@ static int jit_atexit(void (*Fn)(void)) {
 ///
 void *VM::getPointerToNamedFunction(const std::string &Name) {
   // Check to see if this is one of the functions we want to intercept...
-  if (Name == "exit") return jit_exit;
-  if (Name == "at_exit") return jit_atexit;
+  if (Name == "exit") return (void*)&jit_exit;
+  if (Name == "at_exit") return (void*)&jit_atexit;
 
   // If it's an external function, look it up in the process image...
   void *Ptr = dlsym(0, Name.c_str());
