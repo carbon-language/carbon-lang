@@ -15,7 +15,6 @@
 #include "llvm/Target/TargetData.h"
 #include "Support/FileUtilities.h"
 #include <fstream>
-#include <stdlib.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/wait.h>
