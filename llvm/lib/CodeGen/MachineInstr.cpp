@@ -98,12 +98,13 @@ MachineInstr::SetMachineOperandVal(unsigned i,
   operands[i].opType = opType;
   operands[i].value = V;
   operands[i].regNum = -1;
-  operands[i].flags = 0;
 
-  if (isdef || TargetInstrDescriptors[opCode].resultPos == (int) i)
-    operands[i].markDef();
   if (isDefAndUse)
-    operands[i].markDefAndUse();
+    operands[i].flags = MachineOperand::DEFUSEFLAG;
+  else if (isdef || TargetInstrDescriptors[opCode].resultPos == (int) i)
+    operands[i].flags = MachineOperand::DEFFLAG;
+  else
+    operands[i].flags = 0;
 }
 
 void
@@ -131,10 +132,12 @@ MachineInstr::SetMachineOperandReg(unsigned i,
   operands[i].opType = MachineOperand::MO_MachineRegister;
   operands[i].value = NULL;
   operands[i].regNum = regNum;
-  operands[i].flags = 0;
 
   if (isdef || TargetInstrDescriptors[opCode].resultPos == (int) i)
-    operands[i].markDef();
+    operands[i].flags = MachineOperand::DEFFLAG;
+  else
+    operands[i].flags = 0;
+
   insertUsedReg(regNum);
 }
 
