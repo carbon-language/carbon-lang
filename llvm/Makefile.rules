@@ -329,7 +329,7 @@ endif
 
 CompileCommonOpts := -Wall -W -Wwrite-strings -Wno-unused
 
-LD.Flags  += -L$(LibDir) -L$(LLVMLibDir)
+LD.Flags  += -L$(LibDir) -L$(LLVMLibDir) $(LIBS)
 CPP.Flags += -I$(PROJ_OBJ_DIR) -I$(PROJ_SRC_DIR) \
 	     -I$(PROJ_OBJ_ROOT)/include \
 	     -I$(PROJ_SRC_ROOT)/include \
@@ -550,7 +550,7 @@ Module     := $(LibDir)/$(MODULE_NAME).bc
 LinkModule := $(LLVMGCCWITHPATH) -shared -nostdlib
 
 ifdef EXPORTED_SYMBOL_FILE
-LinkMOdule += -Xlinker -internalize-public-api-file=$(EXPORTED_SYMBOL_FILE)
+LinkModule += -Xlinker -internalize-public-api-file=$(EXPORTED_SYMBOL_FILE)
 endif
 
 $(Module): $(BUILT_SOURCES) $(ObjectsBC) $(LibDir)/.dir $(GCCLD)
@@ -1280,7 +1280,7 @@ $(DistZip) : $(TopDistDir)/.makedistdir
 dist :: $(DistTarGZip) $(DistTarBZ2) $(DistZip) 
 	$(Echo) ===== DISTRIBUTION PACKAGING SUCESSFUL =====
 
-DistCheckDir := $(LLVM_OBJ_ROOT)/_distcheckdir
+DistCheckDir := $(PROJ_OBJ_ROOT)/_distcheckdir
 
 dist-check:: $(DistTarGZip)
 	$(Echo) Checking distribution tar file.
