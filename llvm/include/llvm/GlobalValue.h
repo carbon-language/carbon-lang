@@ -20,6 +20,7 @@ public:
   enum LinkageTypes {
     ExternalLinkage,   // Externally visible function
     LinkOnceLinkage,   // Keep one copy of named function when linking (inline)
+    WeakLinkage,       // Keep one copy of named function when linking (weak)
     AppendingLinkage,  // Special purpose, only applies to global arrays
     InternalLinkage    // Rename collisions when linking (static functions)
   };
@@ -40,6 +41,7 @@ public:
 
   bool hasExternalLinkage()  const { return Linkage == ExternalLinkage; }
   bool hasLinkOnceLinkage()  const { return Linkage == LinkOnceLinkage; }
+  bool hasWeakLinkage()      const { return Linkage == WeakLinkage; }
   bool hasAppendingLinkage() const { return Linkage == AppendingLinkage; }
   bool hasInternalLinkage()  const { return Linkage == InternalLinkage; }
   void setLinkage(LinkageTypes LT) { Linkage = LT; }
