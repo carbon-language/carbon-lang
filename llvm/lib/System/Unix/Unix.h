@@ -28,11 +28,6 @@
 #include <string>
 
 inline void ThrowErrno(const std::string& prefix) {
-#if defined __USE_XOPEN2K || defined __USE_MISC
     char buffer[MAXPATHLEN];
-    strerror_r(errno,buffer, MAXPATHLEN);
-    throw prefix + ": " + buffer;
-#else
     throw prefix + ": " + strerror(errno);
-#endif
 }
