@@ -8,7 +8,7 @@
 #include "llvm/InstrTypes.h"
 #include "llvm/SymbolTable.h"
 #include "llvm/SymTabValue.h"
-#include "llvm/Type.h"
+#include "llvm/DerivedTypes.h"
 #ifndef NDEBUG      // Only in -g mode...
 #include "llvm/Assembly/Writer.h"
 #include <iostream>
@@ -71,7 +71,9 @@ void Value::replaceAllUsesWith(Value *D) {
 // change Ty to point to the right type.  :)
 //
 void Value::refineAbstractType(const DerivedType *OldTy, const Type *NewTy) {
-  assert(Ty.get() == (const Type*)OldTy &&"Can't refine anything but my type!");
+  assert(Ty.get() == OldTy &&"Can't refine anything but my type!");
+  if (OldTy == NewTy && !OldTy->isAbstract())
+    Ty.removeUserFromConcrete();
   Ty = NewTy;
 }
 
