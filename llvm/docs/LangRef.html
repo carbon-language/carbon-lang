@@ -2563,6 +2563,41 @@ If the argument is a SNAN or QNAN, it returns true, otherwise false.
 </div>
 
 
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="i_isunordered">'<tt>llvm.isunordered</tt>' Intrinsic</a>
+</div>
+
+<div class="doc_text">
+
+<h5>Syntax:</h5>
+<pre>
+  call bool (&lt;float or double&gt;, &lt;float or double&gt;)* %llvm.isunordered(&lt;float or double&gt; Val1,
+                                                                      &lt;float or double&gt; Val2)
+</pre>
+
+<h5>Overview:</h5>
+
+<p>
+The '<tt>llvm.isunordered</tt>' intrinsic returns true if either or both of the
+specified floating point values is a NAN.
+</p>
+
+<h5>Arguments:</h5>
+
+<p>
+The arguments are floating point numbers of the same type.
+</p>
+
+<h5>Semantics:</h5>
+
+<p>
+If either or both of the arguments is a SNAN or QNAN, it returns true, otherwise
+false.
+</p>
+</div>
+
+
 
 
 <!-- ======================================================================= -->
