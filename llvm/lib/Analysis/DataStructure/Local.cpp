@@ -493,6 +493,33 @@ void GraphBuilder::visitCallSite(CallSite CS) {
           if (DSNode *N = H.getNode())
             N->setModifiedMarker();
           return;
+        } else if (F->getName() == "fopen" && CS.arg_end()-CS.arg_begin() == 2){
+          // fopen reads the mode argument strings.
+          CallSite::arg_iterator AI = CS.arg_begin();
+          DSNodeHandle Path = getValueDest(**AI);
+          DSNodeHandle Mode = getValueDest(**++AI);
+          if (DSNode *N = Path.getNode()) N->setReadMarker();
+          if (DSNode *N = Mode.getNode()) N->setReadMarker();
+          
+          // fopen allocates in an unknown way and writes to the file
+          // descriptor.  Also, merge the allocated type into the node.
+          DSNodeHandle Result = getValueDest(*CS.getInstruction());
+          Result.getNode()->setModifiedMarker()->setUnknownNodeMarker();
+          const Type *RetTy = F->getFunctionType()->getReturnType();
+          if (const PointerType *PTy = dyn_cast<PointerType>(RetTy))
+            Result.getNode()->mergeTypeInfo(PTy->getElementType(),
+                                            Result.getOffset());
+          return;
+        } else if (F->getName() == "fclose" && CS.arg_end()-CS.arg_begin() ==1){
+          // fclose reads and deallocates the memory in an unknown way for the
+          // file descriptor.  It merges the FILE type into the descriptor.
+          DSNodeHandle H = getValueDest(**CS.arg_begin());
+          H.getNode()->setReadMarker()->setUnknownNodeMarker();
+          
+          const Type *ArgTy = *F->getFunctionType()->param_begin();
+          if (const PointerType *PTy = dyn_cast<PointerType>(ArgTy))
+            H.getNode()->mergeTypeInfo(PTy->getElementType(), H.getOffset());
+          return;
         }
       }
 
