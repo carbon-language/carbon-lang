@@ -79,12 +79,6 @@ I(ADJCALLSTACKDOWN, "adjcallstackdown", 0, 0, X86II::Pseudo,               NoIR,
 // instruction after the call.
 I(ADJCALLSTACKUP  , "adjcallstackup"  , 0, 0, X86II::Pseudo,               NoIR, NoIR)
 
-// This pseudo-instruction is used to record implicit definitions of physical
-// registers: registers that are live on input to the function (currently just
-// the stack pointer, eventually could include arguments passed in registers).
-//
-I(IMPLICIT_DEF, "implicit_def", 0, 0, X86II::Pseudo, NoIR, NoIR)
-
 // This pseudo-instruction is used to record implicit uses of physical registers
 // at the end of the function.  This ensures that bad things aren't done to
 // registes that are live on exit from the function (for example, EAX).
