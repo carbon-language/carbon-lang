@@ -12,6 +12,7 @@
 #ifndef LLVM_CODEGEN_TARGETMACHINE_H
 #define LLVM_CODEGEN_TARGETMACHINE_H
 
+#include "llvm/CodeGen/TargetData.h"
 #include "llvm/Support/NonCopyable.h"
 #include "llvm/Support/DataTypes.h"
 #include <string>
@@ -147,23 +148,29 @@ public:
 
 class TargetMachine : public NonCopyableV {
 public:
-  int		optSizeForSubWordData;
-  int		intSize;
-  int		longSize;
-  int		floatSize;
-  int		doubleSize;
-  int		longDoubleSize;
-  int		pointerSize;
-  int		minMemOpWordSize;
-  int		maxAtomicMemOpWordSize;
+  const string     TargetName;
+  const TargetData DataLayout;               // Calculates type size & alignment
+  int              optSizeForSubWordData;
+  int	           minMemOpWordSize;
+  int	           maxAtomicMemOpWordSize;
   
   // Register information.  This needs to be reorganized into a single class.
   int		zeroRegNum;	// register that gives 0 if any (-1 if none)
   
 public:
-  /*ctor*/		TargetMachine	(MachineInstrInfo* mii)
-						: machineInstrInfo(mii) {}
-  /*dtor*/ virtual	~TargetMachine	() {}
+  TargetMachine(const string &targetname, MachineInstrInfo* mii,
+		unsigned char PtrSize = 8, unsigned char PtrAl = 8,
+		unsigned char DoubleAl = 8, unsigned char FloatAl = 4,
+		unsigned char LongAl = 8, unsigned char IntAl = 4,
+		unsigned char ShortAl = 2, unsigned char ByteAl = 1)
+    : TargetName(targetname), DataLayout(targetname, PtrSize, PtrAl,
+					 DoubleAl, FloatAl, LongAl, IntAl,
+					 ShortAl, ByteAl),
+      machineInstrInfo(mii) {
+  }
+  virtual ~TargetMachine() {
+    delete machineInstrInfo;
+  }
   
   const MachineInstrInfo& getInstrInfo	() const { return *machineInstrInfo; }
   
@@ -171,17 +178,11 @@ public:
   
   virtual unsigned int	findOptimalStorageSize	(const Type* ty) const;
   
-  virtual unsigned int*	findOptimalMemberOffsets(const StructType* stype)const;
-  
-  
 protected:
   // Description of machine instructions
   // Protect so that subclass can control alloc/dealloc
   MachineInstrInfo* machineInstrInfo;
   // MachineSchedInfo* machineSchedInfo;
-  
-private:
-  /*ctor*/		TargetMachine	();	// disable
 };
 
 
