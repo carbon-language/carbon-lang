@@ -490,10 +490,18 @@ Instruction *InstCombiner::visitShiftInst(Instruction &I) {
   // a signed value.
   //
   if (ConstantUInt *CUI = dyn_cast<ConstantUInt>(Op1)) {
-    unsigned TypeBits = Op0->getType()->getPrimitiveSize()*8;
-    if (CUI->getValue() >= TypeBits &&
-        !(Op0->getType()->isSigned() && I.getOpcode() == Instruction::Shr))
-      return ReplaceInstUsesWith(I, Constant::getNullValue(Op0->getType()));
+    if (I.getOpcode() == Instruction::Shr) {
+      unsigned TypeBits = Op0->getType()->getPrimitiveSize()*8;
+      if (CUI->getValue() >= TypeBits && !(Op0->getType()->isSigned()))
+        return ReplaceInstUsesWith(I, Constant::getNullValue(Op0->getType()));
+    }
+
+    // Check to see if we are shifting left by 1.  If so, turn it into an add
+    // instruction.
+    if (I.getOpcode() == Instruction::Shl && CUI->equalsInt(1))
+      // Convert 'shl int %X, 2' to 'add int %X, %X'
+      return BinaryOperator::create(Instruction::Add, Op0, Op0, I.getName());
+
   }
   return 0;
 }
