@@ -16,7 +16,7 @@ all:: llc
 clean::	
 	rm -f llc
 
-llc : $(ObjectsG) $(LibsG)
+llc : $(ObjectsG)
 	$(LinkG) -o $@ -static \
 		-lllc -lselect -lsparc -ltarget \
 		-lopt -lbcreader -lbcwriter \
