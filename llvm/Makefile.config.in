@@ -29,7 +29,11 @@ CC := @CC@
 CPPFLAGS=@DEFS@
 CCFLAGS=@DEFS@
 LDFLAGS=@LDFLAGS@
-LIBS=@LIBS@
+
+#
+# Removed since it prevents the tests from working properly.
+#
+#LIBS=@LIBS@
 
 #
 # Libraries needed by tools
