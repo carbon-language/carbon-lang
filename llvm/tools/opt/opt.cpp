@@ -12,116 +12,86 @@
 #include "llvm/Bytecode/WriteBytecodePass.h"
 #include "llvm/Assembly/PrintModulePass.h"
 #include "llvm/Analysis/Verifier.h"
-#include "llvm/Transforms/ConstantMerge.h"
-#include "llvm/Transforms/CleanupGCCOutput.h"
-#include "llvm/Transforms/LevelChange.h"
-#include "llvm/Transforms/FunctionInlining.h"
-#include "llvm/Transforms/ChangeAllocations.h"
-#include "llvm/Transforms/Scalar.h"
-#include "llvm/Transforms/IPO/SimpleStructMutation.h"
-#include "llvm/Transforms/IPO/Internalize.h"
-#include "llvm/Transforms/IPO/GlobalDCE.h"
-#include "llvm/Transforms/IPO/PoolAllocate.h"
-#include "llvm/Transforms/Utils/UnifyFunctionExitNodes.h"
-#include "llvm/Transforms/Instrumentation/TraceValues.h"
-#include "llvm/Transforms/Instrumentation/ProfilePaths.h"
-#include "llvm/Transforms/Instrumentation/EmitFunctions.h"
 #include "llvm/Target/TargetData.h"
 #include "Support/CommandLine.h"
 #include "Support/Signals.h"
 #include <fstream>
 #include <memory>
+#include <algorithm>
 
 using std::cerr;
 
-// FIXME: This should be parameterizable eventually for different target
-// types...
-static TargetData TD("opt target");
 
-// Opts enum - All of the transformations we can do...
-enum Opts {
-  // Basic optimizations
-  dce, die, constprop, gcse, licm, inlining, constmerge,
-  strip, mstrip, mergereturn, simplifycfg,
-
-  // Miscellaneous Transformations
-  raiseallocs, lowerallocs, funcresolve, cleangcc, lowerrefs,
-
-  // Printing and verifying...
-  print, printm, verify,
-
-  // More powerful optimizations
-  indvars, instcombine, sccp, adce, raise, reassociate, mem2reg, pinodes,
-
-  // Instrumentation
-  trace, tracem, paths, emitfuncs,
-
-  // Interprocedural optimizations...
-  internalize, globaldce, swapstructs, sortstructs, poolalloc,
-};
-
-static Pass *createPrintFunctionPass() {
-  return new PrintFunctionPass("Current Function: \n", &cerr);
-}
-
-static Pass *createPrintModulePass() {
-  return new PrintModulePass(&cerr);
-}
-
-static Pass *createLowerAllocationsPassNT() {
-  return createLowerAllocationsPass(TD);
-}
-
-// OptTable - Correlate enum Opts to Pass constructors...
+//===----------------------------------------------------------------------===//
+// PassNameParser class - Make use of the pass registration mechanism to
+// automatically add a command line argument to opt for each pass.
 //
-struct {
-  enum Opts OptID;
-  Pass * (*PassCtor)();
-} OptTable[] = {
-  { dce        , createDeadCodeEliminationPass    },
-  { die        , createDeadInstEliminationPass    },
-  { constprop  , createConstantPropogationPass    }, 
-  { gcse       , createGCSEPass                   },
-  { licm       , createLICMPass                   },
-  { inlining   , createFunctionInliningPass       },
-  { constmerge , createConstantMergePass          },
-  { strip      , createSymbolStrippingPass        },
-  { mstrip     , createFullSymbolStrippingPass    },
-  { mergereturn, createUnifyFunctionExitNodesPass },
-  { simplifycfg, createCFGSimplificationPass      },
+namespace {  // anonymous namespace for local class...
+class PassNameParser : public PassRegistrationListener, 
+                       public cl::parser<const PassInfo*> {
+  cl::Option *Opt;
+public:
+  PassNameParser() : Opt(0) {}
+  
+  void initialize(cl::Option &O) {
+    Opt = &O;
+    cl::parser<const PassInfo*>::initialize(O);
 
-  { indvars    , createIndVarSimplifyPass         },
-  { instcombine, createInstructionCombiningPass   },
-  { sccp       , createSCCPPass                   },
-  { adce       , createAggressiveDCEPass          },
-  { raise      , createRaisePointerReferencesPass },
-  /* { reassociate, createReassociatePass            },*/
-  { mem2reg    , createPromoteMemoryToRegister    },
-  { pinodes    , createPiNodeInsertionPass        },
-  { lowerrefs  , createDecomposeMultiDimRefsPass  },
+    // Add all of the passes to the map that got initialized before 'this' did.
+    enumeratePasses();
+  }
 
-  { trace      , createTraceValuesPassForBasicBlocks },
-  { tracem     , createTraceValuesPassForFunction    },
-  { paths      , createProfilePathsPass              },
-  { emitfuncs  , createEmitFunctionTablePass },
-  { print      , createPrintFunctionPass },
-  { printm     , createPrintModulePass   },
-  { verify     , createVerifierPass      },
+  static inline bool ignorablePass(const PassInfo *P) {
+    // Ignore non-selectable and non-constructible passes!
+    return P->getPassArgument() == 0 ||
+          (P->getNormalCtor() == 0 && P->getDataCtor() == 0);
+  }
 
-  { raiseallocs, createRaiseAllocationsPass   },
-  { lowerallocs, createLowerAllocationsPassNT },
-  { cleangcc   , createCleanupGCCOutputPass   },
-  { funcresolve, createFunctionResolvingPass  },
+  // Implement the PassRegistrationListener callbacks used to populate our map
+  //
+  virtual void passRegistered(const PassInfo *P) {
+    if (ignorablePass(P) || !Opt) return;
+    assert(findOption(P->getPassArgument()) == getNumOptions() &&
+           "Two passes with the same argument attempted to be registered!");
+    addLiteralOption(P->getPassArgument(), P, P->getPassName());
+    Opt->addArgument(P->getPassArgument());
+  }
+  virtual void passEnumerate(const PassInfo *P) { passRegistered(P); }
 
-  { internalize, createInternalizePass  },
-  { globaldce  , createGlobalDCEPass    },
-  { swapstructs, createSwapElementsPass },
-  { sortstructs, createSortElementsPass },
-  { poolalloc  , createPoolAllocatePass },
+  virtual void passUnregistered(const PassInfo *P) {
+    if (ignorablePass(P) || !Opt) return;
+    assert(findOption(P->getPassArgument()) != getNumOptions() &&
+           "Registered Pass not in the pass map!");
+    removeLiteralOption(P->getPassArgument());
+    Opt->removeArgument(P->getPassArgument());
+  }
+
+  // ValLessThan - Provide a sorting comparator for Values elements...
+  typedef std::pair<const char*,
+                    std::pair<const PassInfo*, const char*> > ValType;
+  static bool ValLessThan(const ValType &VT1, const ValType &VT2) {
+    return std::string(VT1.first) < std::string(VT2.first);
+  }
+
+  // printOptionInfo - Print out information about this option.  Override the
+  // default implementation to sort the table before we print...
+  virtual void printOptionInfo(const cl::Option &O, unsigned GlobalWidth) const{
+    PassNameParser *PNP = const_cast<PassNameParser*>(this);
+    std::sort(PNP->Values.begin(), PNP->Values.end(), ValLessThan);
+    cl::parser<const PassInfo*>::printOptionInfo(O, GlobalWidth);
+  }
 };
+} // end anonymous namespace
 
 
-// Command line option handling code...
+// The OptimizationList is automatically populated with registered Passes by the
+// PassNameParser.
+//
+static cl::list<const PassInfo*, bool, PassNameParser>
+OptimizationList(cl::desc("Optimizations available:"));
+
+
+// Other command line options...
 //
 static cl::opt<string>
 InputFilename(cl::Positional, cl::desc("<input bytecode>"), cl::init("-"));
@@ -142,54 +112,17 @@ Quiet("q", cl::desc("Don't print modifying pass names"));
 static cl::alias
 QuietA("quiet", cl::desc("Alias for -q"), cl::aliasopt(Quiet));
 
-static cl::list<enum Opts>
-OptimizationList(cl::desc("Optimizations available:"), cl::values(
-  clEnumVal(dce        , "Dead Code Elimination"),
-  clEnumVal(die        , "Dead Instruction Elimination"),
-  clEnumVal(constprop  , "Simple constant propogation"),
-  clEnumVal(gcse       , "Global Common Subexpression Elimination"),
-  clEnumVal(licm       , "Loop Invariant Code Motion"),
- clEnumValN(inlining   , "inline", "Function integration"),
-  clEnumVal(constmerge , "Merge identical global constants"),
-  clEnumVal(strip      , "Strip symbols"),
-  clEnumVal(mstrip     , "Strip module symbols"),
-  clEnumVal(mergereturn, "Unify function exit nodes"),
-  clEnumVal(simplifycfg, "CFG Simplification"),
 
-  clEnumVal(indvars    , "Simplify Induction Variables"),
-  clEnumVal(instcombine, "Combine redundant instructions"),
-  clEnumVal(sccp       , "Sparse Conditional Constant Propogation"),
-  clEnumVal(adce       , "Aggressive DCE"),
-  clEnumVal(reassociate, "Reassociate expressions"),
-  clEnumVal(mem2reg    , "Promote alloca locations to registers"),
-  clEnumVal(pinodes    , "Insert Pi nodes after definitions"),
-
-  clEnumVal(internalize, "Mark all fn's internal except for main"),
-  clEnumVal(globaldce  , "Remove unreachable globals"),
-  clEnumVal(swapstructs, "Swap structure types around"),
-  clEnumVal(sortstructs, "Sort structure elements"),
-  clEnumVal(poolalloc  , "Pool allocate disjoint datastructures"),
-
-  clEnumVal(raiseallocs, "Raise allocations from calls to instructions"),
-  clEnumVal(lowerallocs, "Lower allocations from instructions to calls (TD)"),
-  clEnumVal(cleangcc   , "Cleanup GCC Output"),
-  clEnumVal(funcresolve, "Resolve calls to foo(...) to foo(<concrete types>)"),
-  clEnumVal(raise      , "Raise to Higher Level"),
-  clEnumVal(trace      , "Insert BB and Function trace code"),
-  clEnumVal(tracem     , "Insert Function trace code only"),
-  clEnumVal(paths      , "Insert path profiling instrumentation"),
-  clEnumVal(emitfuncs  , "Insert function pointer table"),
-  clEnumVal(print      , "Print working function to stderr"),
-  clEnumVal(printm     , "Print working module to stderr"),
-  clEnumVal(verify     , "Verify module is well formed"),
-  clEnumVal(lowerrefs  , "Decompose multi-dimensional structure/array refs to use one index per instruction"),
-0));
-
-
-
+//===----------------------------------------------------------------------===//
+// main for opt
+//
 int main(int argc, char **argv) {
   cl::ParseCommandLineOptions(argc, argv,
 			      " llvm .bc -> .bc modular optimizer\n");
+
+  // FIXME: This should be parameterizable eventually for different target
+  // types...
+  TargetData TD("opt target");
 
   // Load the input module...
   std::auto_ptr<Module> M(ParseBytecodeFile(InputFilename));
@@ -226,15 +159,17 @@ int main(int argc, char **argv) {
 
   // Create a new optimization pass for each one specified on the command line
   for (unsigned i = 0; i < OptimizationList.size(); ++i) {
-    enum Opts Opt = OptimizationList[i];
-    for (unsigned j = 0; j < sizeof(OptTable)/sizeof(OptTable[0]); ++j)
-      if (Opt == OptTable[j].OptID) {
-        Passes.add(OptTable[j].PassCtor());
-        break;
-      }
+    const PassInfo *Opt = OptimizationList[i];
+    
+    if (Opt->getNormalCtor())
+      Passes.add(Opt->getNormalCtor()());
+    else if (Opt->getDataCtor())
+      Passes.add(Opt->getDataCtor()(TD));  // Pass dummy target data...
+    else
+      cerr << "Cannot create pass: " << Opt->getPassName() << "\n";
 
     if (PrintEachXForm)
-      Passes.add(new PrintModulePass(&std::cerr));
+      Passes.add(new PrintModulePass(&cerr));
   }
 
   // Check that the module is well formed on completion of optimization
