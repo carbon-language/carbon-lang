@@ -149,36 +149,36 @@ DSGraph &TDDataStructures::calculateGraph(Function &F) {
     DEBUG(std::cerr << "\t [TD] Inlining caller #" << c << " '"
           << Caller.getName() << "' into callee: " << F.getName() << "\n");
     
-    if (&Caller == &F) {
-      // Self-recursive call: this can happen after a cycle of calls is inlined.
-      ResolveCallSite(*Graph, CallSite);
-    } else {
+    // Self recursion is not tracked in BU pass...
+    assert(&Caller != &F && "This cannot happen!\n");
 
-      // Recursively compute the graph for the Caller.  It should be fully
-      // resolved except if there is mutual recursion...
-      //
-      DSGraph &CG = calculateGraph(Caller);  // Graph to inline
-      
-      DEBUG(std::cerr << "\t\t[TD] Got graph for " << Caller.getName()
-                      << " in: " << F.getName() << "\n");
+    // Recursively compute the graph for the Caller.  It should be fully
+    // resolved except if there is mutual recursion...
+    //
+    DSGraph &CG = calculateGraph(Caller);  // Graph to inline
+    
+    DEBUG(std::cerr << "\t\t[TD] Got graph for " << Caller.getName()
+          << " in: " << F.getName() << "\n");
+    
+    // Translate call site from having links into the BU graph
+    DSCallSite CallSiteInCG(CallSite, BUMaps[&Caller]);
 
-      // These two maps keep track of where scalars in the old graph _used_
-      // to point to, and of new nodes matching nodes of the old graph.
-      std::map<Value*, DSNodeHandle> OldValMap;
-      std::map<const DSNode*, DSNode*> OldNodeMap;
+    // These two maps keep track of where scalars in the old graph _used_
+    // to point to, and of new nodes matching nodes of the old graph.
+    std::map<Value*, DSNodeHandle> OldValMap;
+    std::map<const DSNode*, DSNode*> OldNodeMap;
 
-      // Translate call site from having links into the BU graph
-      DSCallSite CallSiteInCG(CallSite, BUMaps[&Caller]);
-
-      // Clone the Caller's graph into the current graph, keeping
-      // track of where scalars in the old graph _used_ to point...
-      // Do this here because it only needs to happens once for each Caller!
-      // Strip scalars but not allocas since they are alive in callee.
-      // 
-      DSNodeHandle RetVal = Graph->cloneInto(CG, OldValMap, OldNodeMap,
-                                             /*StripAllocas*/ false);
-      ResolveCallSite(*Graph, DSCallSite(CallSiteInCG, OldNodeMap));
-    }
+    // FIXME: Eventually use DSGraph::mergeInGraph here...
+    // Graph->mergeInGraph(CallSiteInCG, CG, false);
+    
+    // Clone the Caller's graph into the current graph, keeping
+    // track of where scalars in the old graph _used_ to point...
+    // Do this here because it only needs to happens once for each Caller!
+    // Strip scalars but not allocas since they are alive in callee.
+    // 
+    DSNodeHandle RetVal = Graph->cloneInto(CG, OldValMap, OldNodeMap,
+                                           /*StripAllocas*/ false);
+    ResolveCallSite(*Graph, DSCallSite(CallSiteInCG, OldNodeMap));
   }
 
   // Recompute the Incomplete markers and eliminate unreachable nodes.

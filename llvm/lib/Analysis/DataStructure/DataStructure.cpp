@@ -90,6 +90,7 @@ void DSNode::foldNodeCompletely() {
     Links[0].mergeWith(Links[i]);
   Links.resize(1);
 }
+
 /// isNodeCompletelyFolded - Return true if this node has been completely
 /// folded down to something that can never be expanded, effectively losing
 /// all of the field sensitivity that may be present in the node.
@@ -571,6 +572,57 @@ DSNodeHandle DSGraph::cloneInto(const DSGraph &G,
 
   // Return the returned node pointer...
   return DSNodeHandle(OldNodeMap[G.RetNode.getNode()], G.RetNode.getOffset());
+}
+
+/// mergeInGraph - The method is used for merging graphs together.  If the
+/// argument graph is not *this, it makes a clone of the specified graph, then
+/// merges the nodes specified in the call site with the formal arguments in the
+/// graph.
+///
+void DSGraph::mergeInGraph(DSCallSite &CS, const DSGraph &Graph,
+                           bool StripAllocas) {
+  std::map<Value*, DSNodeHandle> OldValMap;
+  DSNodeHandle RetVal;
+  std::map<Value*, DSNodeHandle> *ScalarMap = &OldValMap;
+
+  // If this is not a recursive call, clone the graph into this graph...
+  if (&Graph != this) {
+    // Clone the callee's graph into the current graph, keeping
+    // track of where scalars in the old graph _used_ to point,
+    // and of the new nodes matching nodes of the old graph.
+    std::map<const DSNode*, DSNode*> OldNodeMap;
+    
+    // The clone call may invalidate any of the vectors in the data
+    // structure graph.  Strip locals and don't copy the list of callers
+    RetVal = cloneInto(Graph, OldValMap, OldNodeMap, StripAllocas);
+    ScalarMap = &OldValMap;
+  } else {
+    RetVal = getRetNode();
+    ScalarMap = &getScalarMap();
+  }
+
+  // Merge the return value with the return value of the context...
+  RetVal.mergeWith(CS.getRetVal());
+
+  // Resolve all of the function arguments...
+  Function &F = Graph.getFunction();
+  Function::aiterator AI = F.abegin();
+  for (unsigned i = 0, e = CS.getNumPtrArgs(); i != e; ++i, ++AI) {
+    // Advance the argument iterator to the first pointer argument...
+    while (!isPointerType(AI->getType())) {
+      ++AI;
+#ifndef NDEBUG
+      if (AI == F.aend())
+        std::cerr << "Bad call to Function: " << F.getName() << "\n";
+#endif
+      assert(AI != F.aend() && "# Args provided is not # Args required!");
+    }
+    
+    // Add the link from the argument scalar to the provided value
+    DSNodeHandle &NH = (*ScalarMap)[AI];
+    assert(NH.getNode() && "Pointer argument without scalarmap entry?");
+    NH.mergeWith(CS.getPtrArg(i));
+  }
 }
 
 #if 0

@@ -46,29 +46,6 @@ bool BUDataStructures::run(Module &M) {
   return false;
 }
 
-// ResolveArguments - Resolve the formal and actual arguments for a function
-// call.
-//
-static void ResolveArguments(DSCallSite &Call, Function &F,
-                             map<Value*, DSNodeHandle> &ScalarMap) {
-  // Resolve all of the function arguments...
-  Function::aiterator AI = F.abegin();
-  for (unsigned i = 0, e = Call.getNumPtrArgs(); i != e; ++i, ++AI) {
-    // Advance the argument iterator to the first pointer argument...
-    while (!isPointerType(AI->getType())) {
-      ++AI;
-#ifndef NDEBUG
-      if (AI == F.aend())
-        std::cerr << "Bad call to Function: " << F.getName() << "\n";
-#endif
-      assert(AI != F.aend() && "# Args provided is not # Args required!");
-    }
-    
-    // Add the link from the argument scalar to the provided value
-    ScalarMap[AI].mergeWith(Call.getPtrArg(i));
-  }
-}
-
 DSGraph &BUDataStructures::calculateGraph(Function &F) {
   // Make sure this graph has not already been calculated, or that we don't get
   // into an infinite loop with mutually recursive functions.
@@ -115,11 +92,8 @@ DSGraph &BUDataStructures::calculateGraph(Function &F) {
             // actual arguments...
             DEBUG(std::cerr << "\t[BU] Self Inlining: " << F.getName() << "\n");
 
-            // Handle the return value if present...
-            Graph->getRetNode().mergeWith(Call.getRetVal());
-
-            // Resolve the arguments in the call to the actual values...
-            ResolveArguments(Call, F, Graph->getScalarMap());
+            // Handle self recursion by resolving the arguments and return value
+            Graph->mergeInGraph(Call, *Graph, true);
 
             // Erase the entry in the callees vector
             Callees.erase(Callees.begin()+c--);
@@ -145,22 +119,8 @@ DSGraph &BUDataStructures::calculateGraph(Function &F) {
             CallSitesForFunc.back().setResolvingCaller(&F);
             CallSitesForFunc.back().setCallee(0);
 
-            // Clone the callee's graph into the current graph, keeping
-            // track of where scalars in the old graph _used_ to point,
-            // and of the new nodes matching nodes of the old graph.
-            map<Value*, DSNodeHandle> OldValMap;
-            map<const DSNode*, DSNode*> OldNodeMap;
-
-            // The clone call may invalidate any of the vectors in the data
-            // structure graph.  Strip locals and don't copy the list of callers
-            DSNodeHandle RetVal = Graph->cloneInto(GI, OldValMap, OldNodeMap,
-                                                   /*StripAllocas*/   true);
-
-            // Resolve the arguments in the call to the actual values...
-            ResolveArguments(Call, FI, OldValMap);
-
-            // Handle the return value if present...
-            RetVal.mergeWith(Call.getRetVal());
+            // Handle self recursion by resolving the arguments and return value
+            Graph->mergeInGraph(Call, GI, true);
 
             // Erase the entry in the Callees vector
             Callees.erase(Callees.begin()+c--);
