@@ -24,6 +24,7 @@
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/AliasSetTracker.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/StableBasicBlockNumbering.h"
 #include <algorithm>
@@ -93,6 +94,12 @@ namespace {
       : Allocas(A), DT(dt), DF(df), TD(td), AST(ast) {}
 
     void run();
+
+    /// dominates - Return true if BB1 dominates BB2 using the DT.
+    ///
+    bool dominates(BasicBlock *BB1, BasicBlock *BB2) const {
+      return DT[BB1]->dominates(DT[BB2]);
+    }
 
   private:
     void MarkDominatingPHILive(BasicBlock *BB, unsigned AllocaNum,
@@ -316,7 +323,7 @@ void PromoteMem2Reg::run() {
   // code.  Unfortunately, there may be blocks which are not reachable, which
   // the renamer hasn't traversed.  If this is the case, the PHI nodes may not
   // have incoming values for all predecessors.  Loop over all PHI nodes we have
-  // created, inserting null constants if they are missing any incoming values.
+  // created, inserting undef values if they are missing any incoming values.
   //
   for (std::map<BasicBlock*, std::vector<PHINode *> >::iterator I = 
          NewPhiNodes.begin(), E = NewPhiNodes.end(); I != E; ++I) {
@@ -325,27 +332,41 @@ void PromoteMem2Reg::run() {
     std::vector<PHINode*> &PNs = I->second;
     assert(!PNs.empty() && "Empty PHI node list??");
 
+    // Loop over all of the PHI nodes and see if there are any that we can get
+    // rid of because they merge all of the same incoming values.  This can
+    // happen due to undef values coming into the PHI nodes.
+    PHINode *SomePHI = 0;
+    for (unsigned i = 0, e = PNs.size(); i != e; ++i)
+      if (PNs[i]) {
+        if (Value *V = hasConstantValue(PNs[i])) {
+          if (!isa<Instruction>(V) ||
+              dominates(cast<Instruction>(V)->getParent(), I->first)) {
+            PNs[i]->replaceAllUsesWith(V);
+            PNs[i]->eraseFromParent();
+            PNs[i] = 0;
+          }
+        }
+        if (PNs[i])
+          SomePHI = PNs[i];
+      }
+
     // Only do work here if there the PHI nodes are missing incoming values.  We
     // know that all PHI nodes that were inserted in a block will have the same
     // number of incoming values, so we can just check any PHI node.
-    PHINode *FirstPHI;
-    for (unsigned i = 0; (FirstPHI = PNs[i]) == 0; ++i)
-      /*empty*/;
-
-    if (Preds.size() != FirstPHI->getNumIncomingValues()) {
+    if (SomePHI && Preds.size() != SomePHI->getNumIncomingValues()) {
       // Ok, now we know that all of the PHI nodes are missing entries for some
       // basic blocks.  Start by sorting the incoming predecessors for efficient
       // access.
       std::sort(Preds.begin(), Preds.end());
 
-      // Now we loop through all BB's which have entries in FirstPHI and remove
+      // Now we loop through all BB's which have entries in SomePHI and remove
       // them from the Preds list.
-      for (unsigned i = 0, e = FirstPHI->getNumIncomingValues(); i != e; ++i) {
+      for (unsigned i = 0, e = SomePHI->getNumIncomingValues(); i != e; ++i) {
         // Do a log(n) search of the Preds list for the entry we want.
         std::vector<BasicBlock*>::iterator EntIt =
           std::lower_bound(Preds.begin(), Preds.end(),
-                           FirstPHI->getIncomingBlock(i));
-        assert(EntIt != Preds.end() && *EntIt == FirstPHI->getIncomingBlock(i)&&
+                           SomePHI->getIncomingBlock(i));
+        assert(EntIt != Preds.end() && *EntIt == SomePHI->getIncomingBlock(i)&&
                "PHI node has entry for a block which is not a predecessor!");
 
         // Remove the entry
