@@ -7,7 +7,9 @@
 // 
 //===----------------------------------------------------------------------===//
 //
-// This pass is used to seek out all of the types in use by the program.
+// This pass is used to seek out all of the types in use by the program.  Note
+// that this analysis explicitly does not include types only used by the symbol
+// table.
 //
 //===----------------------------------------------------------------------===//
 
@@ -42,15 +44,6 @@ void FindUsedTypes::IncorporateType(const Type *Ty) {
     IncorporateType(*I);
 }
 
-void FindUsedTypes::IncorporateSymbolTable(const SymbolTable &ST) {
-  SymbolTable::const_iterator TI = ST.find(Type::TypeTy);
-  if (TI == ST.end()) return;  // No named types
-
-  for (SymbolTable::type_const_iterator I = TI->second.begin(),
-         E = TI->second.end(); I != E; ++I)
-    IncorporateType(cast<Type>(I->second));
-}
-
 void FindUsedTypes::IncorporateValue(const Value *V) {
   IncorporateType(V->getType());
   
@@ -68,8 +61,6 @@ void FindUsedTypes::IncorporateValue(const Value *V) {
 bool FindUsedTypes::run(Module &m) {
   UsedTypes.clear();  // reset if run multiple times...
 
-  IncorporateSymbolTable(m.getSymbolTable());
-
   // Loop over global variables, incorporating their types
   for (Module::const_giterator I = m.gbegin(), E = m.gend(); I != E; ++I) {
     IncorporateType(I->getType());
@@ -80,7 +71,6 @@ bool FindUsedTypes::run(Module &m) {
   for (Module::iterator MI = m.begin(), ME = m.end(); MI != ME; ++MI) {
     IncorporateType(MI->getType());
     const Function &F = *MI;
-    IncorporateSymbolTable(F.getSymbolTable());
   
     // Loop over all of the instructions in the function, adding their return
     // type as well as the types of their operands.

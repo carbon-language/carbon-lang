@@ -16,7 +16,6 @@
 
 #include "llvm/Pass.h"
 #include <set>
-class SymbolTable;
 class Type;
 
 class FindUsedTypes : public Pass {
@@ -42,10 +41,6 @@ private:
   /// IncorporateValue - Incorporate all of the types used by this value.
   ///
   void IncorporateValue(const Value *V);
-
-  /// IncorporateSymbolTable - Include any named types.
-  ///
-  void IncorporateSymbolTable(const SymbolTable &ST);
 
 public:
   /// run - This incorporates all types used by the specified module
