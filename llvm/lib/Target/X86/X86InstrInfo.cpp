@@ -61,8 +61,8 @@ bool X86InstrInfo::isMoveInstr(const MachineInstr& MI,
              MI.getOperand(0).isRegister() &&
              MI.getOperand(1).isRegister() &&
              "invalid register-register move instruction");
-      sourceReg = MI.getOperand(1).getAllocatedRegNum();
-      destReg = MI.getOperand(0).getAllocatedRegNum();
+      sourceReg = MI.getOperand(1).getReg();
+      destReg = MI.getOperand(0).getReg();
       return true;
   }
   return false;

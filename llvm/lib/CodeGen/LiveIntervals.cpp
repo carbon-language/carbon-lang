@@ -115,7 +115,7 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
                 const MachineOperand& mop = mi->getOperand(i);
                 if (mop.isRegister() &&
                     MRegisterInfo::isVirtualRegister(mop.getReg())) {
-                    unsigned reg = mop.getAllocatedRegNum();
+                    unsigned reg = mop.getReg();
                     Reg2IntervalMap::iterator r2iit = r2iMap_.find(reg);
                     assert(r2iit != r2iMap_.end());
                     r2iit->second->weight += pow(10.0F, loopDepth);
@@ -313,7 +313,7 @@ void LiveIntervals::computeIntervals()
                 MachineOperand& mop = mi->getOperand(i);
                 // handle register defs - build intervals
                 if (mop.isRegister() && mop.isDef())
-                    handleRegisterDef(mbb, mi, mop.getAllocatedRegNum());
+                    handleRegisterDef(mbb, mi, mop.getReg());
             }
         }
     }

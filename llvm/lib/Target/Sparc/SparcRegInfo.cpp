@@ -52,7 +52,7 @@ SparcRegInfo::SparcRegInfo(const SparcTargetMachine &tgt)
 // getZeroRegNum - returns the register that contains always zero.
 // this is the unified register number
 //
-int SparcRegInfo::getZeroRegNum() const {
+unsigned SparcRegInfo::getZeroRegNum() const {
   return getUnifiedRegNum(SparcRegInfo::IntRegClassID,
                           SparcIntRegClass::g0);
 }

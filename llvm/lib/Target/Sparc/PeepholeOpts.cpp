@@ -63,16 +63,15 @@ DeleteInstruction(MachineBasicBlock& mvec,
 static bool IsUselessCopy(const TargetMachine &target, const MachineInstr* MI) {
   if (MI->getOpcode() == V9::FMOVS || MI->getOpcode() == V9::FMOVD) {
     return (// both operands are allocated to the same register
-            MI->getOperand(0).getAllocatedRegNum() == 
-            MI->getOperand(1).getAllocatedRegNum());
+            MI->getOperand(0).getReg() ==  MI->getOperand(1).getReg());
   } else if (MI->getOpcode() == V9::ADDr || MI->getOpcode() == V9::ORr ||
              MI->getOpcode() == V9::ADDi || MI->getOpcode() == V9::ORi) {
     unsigned srcWithDestReg;
     
     for (srcWithDestReg = 0; srcWithDestReg < 2; ++srcWithDestReg)
       if (MI->getOperand(srcWithDestReg).hasAllocatedReg() &&
-          MI->getOperand(srcWithDestReg).getAllocatedRegNum()
-          == MI->getOperand(2).getAllocatedRegNum())
+          MI->getOperand(srcWithDestReg).getReg()
+          == MI->getOperand(2).getReg())
         break;
     
     if (srcWithDestReg == 2)
@@ -82,7 +81,7 @@ static bool IsUselessCopy(const TargetMachine &target, const MachineInstr* MI) {
       unsigned otherOp = 1 - srcWithDestReg;
       return (// either operand otherOp is register %g0
               (MI->getOperand(otherOp).hasAllocatedReg() &&
-               MI->getOperand(otherOp).getAllocatedRegNum() ==
+               MI->getOperand(otherOp).getReg() ==
                target.getRegInfo().getZeroRegNum()) ||
               
               // or operand otherOp == 0

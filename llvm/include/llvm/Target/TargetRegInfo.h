@@ -149,7 +149,7 @@ public:
 
   // returns the register that is hardwired to zero if any (-1 if none)
   //
-  virtual int getZeroRegNum() const = 0;
+  virtual unsigned getZeroRegNum() const = 0;
 
   // Number of registers used for passing int args (usually 6: %o0 - %o5)
   // and float args (usually 32: %f0 - %f31)

@@ -443,7 +443,7 @@ bool RA::runOnMachineFunction(MachineFunction &fn) {
                 MachineOperand& op = currentInstr_->getOperand(i);
                 if (op.isRegister() && op.isUse() &&
                     MRegisterInfo::isVirtualRegister(op.getReg())) {
-                    unsigned virtReg = op.getAllocatedRegNum();
+                    unsigned virtReg = op.getReg();
                     unsigned physReg = 0;
                     Virt2PhysMap::iterator it = v2pMap_.find(virtReg);
                     if (it != v2pMap_.end()) {

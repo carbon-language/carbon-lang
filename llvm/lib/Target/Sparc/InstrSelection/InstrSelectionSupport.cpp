@@ -71,7 +71,8 @@ ChooseRegOrImmed(int64_t intValue,
       opType = isSigned? MachineOperand::MO_SignExtendedImmed
                        : MachineOperand::MO_UnextendedImmed;
       getImmedValue = intValue;
-  } else if (intValue == 0 && target.getRegInfo().getZeroRegNum() >= 0) {
+  } else if (intValue == 0 &&
+             target.getRegInfo().getZeroRegNum() != (unsigned)-1) {
     opType = MachineOperand::MO_MachineRegister;
     getMachineRegNum = target.getRegInfo().getZeroRegNum();
   }

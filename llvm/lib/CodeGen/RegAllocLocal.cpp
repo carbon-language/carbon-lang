@@ -517,7 +517,7 @@ void RA::AllocateBasicBlock(MachineBasicBlock &MBB) {
       if (MI->getOperand(i).isUse() &&
           !MI->getOperand(i).isDef() && MI->getOperand(i).isRegister() &&
           MRegisterInfo::isVirtualRegister(MI->getOperand(i).getReg())) {
-        unsigned VirtSrcReg = MI->getOperand(i).getAllocatedRegNum();
+        unsigned VirtSrcReg = MI->getOperand(i).getReg();
         unsigned PhysSrcReg = reloadVirtReg(MBB, MI, VirtSrcReg);
         MI->SetMachineOperandReg(i, PhysSrcReg);  // Assign the input register
       }
@@ -551,7 +551,7 @@ void RA::AllocateBasicBlock(MachineBasicBlock &MBB) {
     for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i)
       if (MI->getOperand(i).isDef() && MI->getOperand(i).isRegister() &&
           MRegisterInfo::isPhysicalRegister(MI->getOperand(i).getReg())) {
-        unsigned Reg = MI->getOperand(i).getAllocatedRegNum();
+        unsigned Reg = MI->getOperand(i).getReg();
         spillPhysReg(MBB, MI, Reg, true); // Spill any existing value in the reg
         PhysRegsUsed[Reg] = 0;            // It is free and reserved now
         PhysRegsUseOrder.push_back(Reg);
@@ -584,7 +584,7 @@ void RA::AllocateBasicBlock(MachineBasicBlock &MBB) {
     for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i)
       if (MI->getOperand(i).isDef() && MI->getOperand(i).isRegister() &&
           MRegisterInfo::isVirtualRegister(MI->getOperand(i).getReg())) {
-        unsigned DestVirtReg = MI->getOperand(i).getAllocatedRegNum();
+        unsigned DestVirtReg = MI->getOperand(i).getReg();
         unsigned DestPhysReg;
 
         // If DestVirtReg already has a value, use it.

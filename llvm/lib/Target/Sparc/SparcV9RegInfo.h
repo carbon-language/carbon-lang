@@ -86,7 +86,7 @@ public:
   // getZeroRegNum - returns the register that contains always zero this is the
   // unified register number
   //
-  virtual int getZeroRegNum() const;
+  virtual unsigned getZeroRegNum() const;
 
   // getCallAddressReg - returns the reg used for pushing the address when a
   // function is called. This can be used for other purposes between calls

@@ -187,7 +187,7 @@ static inline std::ostream& OutputValue(std::ostream &os, const Value* val) {
 static inline void OutputReg(std::ostream &os, unsigned RegNo,
                              const MRegisterInfo *MRI = 0) {
   if (MRI) {
-    if (RegNo < MRegisterInfo::FirstVirtualRegister)
+    if (MRegisterInfo::isPhysicalRegister(RegNo))
       os << "%" << MRI->get(RegNo).Name;
     else
       os << "%reg" << RegNo;
@@ -219,14 +219,14 @@ static void print(const MachineOperand &MO, std::ostream &OS,
         OS << "==";
     }
     if (MO.hasAllocatedReg())
-      OutputReg(OS, MO.getAllocatedRegNum(), MRI);
+      OutputReg(OS, MO.getReg(), MRI);
     break;
   case MachineOperand::MO_CCRegister:
     OS << "%ccreg";
     OutputValue(OS, MO.getVRegValue());
     if (MO.hasAllocatedReg()) {
       OS << "==";
-      OutputReg(OS, MO.getAllocatedRegNum(), MRI);
+      OutputReg(OS, MO.getReg(), MRI);
     }
     break;
   case MachineOperand::MO_MachineRegister:
@@ -360,7 +360,7 @@ std::ostream &operator<<(std::ostream &OS, const MachineOperand &MO) {
     {
     case MachineOperand::MO_VirtualRegister:
       if (MO.hasAllocatedReg())
-        OutputReg(OS, MO.getAllocatedRegNum());
+        OutputReg(OS, MO.getReg());
 
       if (MO.getVRegValue()) {
 	if (MO.hasAllocatedReg()) OS << "==";
@@ -373,7 +373,7 @@ std::ostream &operator<<(std::ostream &OS, const MachineOperand &MO) {
       OutputValue(OS, MO.getVRegValue());
       if (MO.hasAllocatedReg()) {
         OS << "==";
-        OutputReg(OS, MO.getAllocatedRegNum());
+        OutputReg(OS, MO.getReg());
       }
       break;
     case MachineOperand::MO_MachineRegister:

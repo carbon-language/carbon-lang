@@ -1019,12 +1019,11 @@ void PhyRegAlloc::setRelRegsUsedByThisInst(RegClass *RC, int RegType,
   // explicit and implicit operands are set.
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i)
     if (MI->getOperand(i).hasAllocatedReg())
-      markRegisterUsed(MI->getOperand(i).getAllocatedRegNum(), RC, RegType,MRI);
+      markRegisterUsed(MI->getOperand(i).getReg(), RC, RegType,MRI);
 
   for (unsigned i = 0, e = MI->getNumImplicitRefs(); i != e; ++i)
     if (MI->getImplicitOp(i).hasAllocatedReg())
-      markRegisterUsed(MI->getImplicitOp(i).getAllocatedRegNum(), RC,
-                       RegType,MRI);
+      markRegisterUsed(MI->getImplicitOp(i).getReg(), RC, RegType,MRI);
 
   // Add all of the scratch registers that are used to save values across the
   // instruction (e.g., for saving state register values).

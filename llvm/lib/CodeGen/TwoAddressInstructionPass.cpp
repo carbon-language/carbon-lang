@@ -97,14 +97,14 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
             DEBUG(std::cerr << "\tinstruction: "; mi->print(std::cerr, TM));
 
             assert(mi->getOperand(1).isRegister() &&
-                   mi->getOperand(1).getAllocatedRegNum() &&
+                   mi->getOperand(1).getReg() &&
                    mi->getOperand(1).isUse() &&
                    "two address instruction invalid");
 
             // if the two operands are the same we just remove the use
             // and mark the def as def&use
-            if (mi->getOperand(0).getAllocatedRegNum() ==
-                mi->getOperand(1).getAllocatedRegNum()) {
+            if (mi->getOperand(0).getReg() ==
+                mi->getOperand(1).getReg()) {
             }
             else {
                 MadeChange = true;
@@ -114,8 +114,8 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
                 // to:
                 //     a = b
                 //     a = a op c
-                unsigned regA = mi->getOperand(0).getAllocatedRegNum();
-                unsigned regB = mi->getOperand(1).getAllocatedRegNum();
+                unsigned regA = mi->getOperand(0).getReg();
+                unsigned regB = mi->getOperand(1).getReg();
 
                 assert(MRegisterInfo::isVirtualRegister(regA) &&
                        MRegisterInfo::isVirtualRegister(regB) &&
@@ -127,7 +127,7 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
                 // because we are in SSA form.
                 for (unsigned i = 1; i != mi->getNumOperands(); ++i)
                     assert(!mi->getOperand(i).isRegister() ||
-                           mi->getOperand(i).getAllocatedRegNum() != (int)regA);
+                           mi->getOperand(i).getReg() != regA);
 
                 const TargetRegisterClass* rc =
                     MF.getSSARegMap()->getRegClass(regA);

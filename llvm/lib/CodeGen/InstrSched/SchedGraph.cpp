@@ -487,11 +487,11 @@ void SchedGraph::findDefUseInfoAtInstr(const TargetMachine& target,
     // if this references a register other than the hardwired
     // "zero" register, record the reference.
     if (mop.hasAllocatedReg()) {
-      int regNum = mop.getAllocatedRegNum();
+      unsigned regNum = mop.getReg();
       
       // If this is not a dummy zero register, record the reference in order
       if (regNum != target.getRegInfo().getZeroRegNum())
-        regToRefVecMap[mop.getAllocatedRegNum()]
+        regToRefVecMap[mop.getReg()]
           .push_back(std::make_pair(node, i));
 
       // If this is a volatile register, add the instruction to callDepVec
@@ -528,9 +528,9 @@ void SchedGraph::findDefUseInfoAtInstr(const TargetMachine& target,
   for (unsigned i=0, N = MI.getNumImplicitRefs(); i != N; ++i) {
     const MachineOperand& mop = MI.getImplicitOp(i);
     if (mop.hasAllocatedReg()) {
-      int regNum = mop.getAllocatedRegNum();
+      unsigned regNum = mop.getReg();
       if (regNum != target.getRegInfo().getZeroRegNum())
-        regToRefVecMap[mop.getAllocatedRegNum()]
+        regToRefVecMap[mop.getReg()]
           .push_back(std::make_pair(node, i + MI.getNumOperands()));
       continue;                     // nothing more to do
     }

@@ -194,9 +194,8 @@ void LiveRangeInfo::constructLiveRanges() {
           // set it directly in the LiveRange
           if (OpI.getMachineOperand().hasAllocatedReg()) {
             unsigned getClassId;
-            LR->setColor(MRI.getClassRegNum(
-                                OpI.getMachineOperand().getAllocatedRegNum(),
-                                getClassId));
+            LR->setColor(MRI.getClassRegNum(OpI.getMachineOperand().getReg(),
+                                            getClassId));
           }
 	}
 
@@ -212,7 +211,7 @@ void LiveRangeInfo::constructLiveRanges() {
           if (MInst->getImplicitOp(i).hasAllocatedReg()) {
             unsigned getClassId;
             LR->setColor(MRI.getClassRegNum(
-                                MInst->getImplicitOp(i).getAllocatedRegNum(),
+                                MInst->getImplicitOp(i).getReg(),
                                 getClassId));
           }
 	}

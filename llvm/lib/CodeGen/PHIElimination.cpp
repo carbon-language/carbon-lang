@@ -76,7 +76,7 @@ bool PNE::EliminatePHINodes(MachineFunction &MF, MachineBasicBlock &MBB) {
     assert(MRegisterInfo::isVirtualRegister(MI->getOperand(0).getReg()) &&
            "PHI node doesn't write virt reg?");
 
-    unsigned DestReg = MI->getOperand(0).getAllocatedRegNum();
+    unsigned DestReg = MI->getOperand(0).getReg();
     
     // Create a new register for the incoming PHI arguments
     const TargetRegisterClass *RC = MF.getSSARegMap()->getRegClass(DestReg);

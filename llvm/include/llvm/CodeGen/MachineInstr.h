@@ -277,15 +277,12 @@ public:
   }
 
   // used to get the reg number if when one is allocated
-  int getAllocatedRegNum() const {
+  unsigned getReg() const {
     assert(hasAllocatedReg());
     return regNum;
   }
 
   // ********** TODO: get rid of this duplicate code! ***********
-  unsigned getReg() const {
-    return getAllocatedRegNum();
-  }    
   void setReg(unsigned Reg) {
     assert(hasAllocatedReg() && "This operand cannot have a register number!");
     regNum = Reg;

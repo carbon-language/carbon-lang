@@ -173,7 +173,7 @@ void RegAllocSimple::AllocateBasicBlock(MachineBasicBlock &MBB) {
       MachineOperand &op = MI->getOperand(i);
       
       if (op.isRegister() && MRegisterInfo::isVirtualRegister(op.getReg())) {
-        unsigned virtualReg = (unsigned) op.getAllocatedRegNum();
+        unsigned virtualReg = (unsigned) op.getReg();
         DEBUG(std::cerr << "op: " << op << "\n");
         DEBUG(std::cerr << "\t inst[" << i << "]: ";
               MI->print(std::cerr, *TM));
@@ -187,11 +187,11 @@ void RegAllocSimple::AllocateBasicBlock(MachineBasicBlock &MBB) {
               // must be same register number as the first operand
               // This maps a = b + c into b += c, and saves b into a's spot
               assert(MI->getOperand(1).isRegister()  &&
-                     MI->getOperand(1).getAllocatedRegNum() &&
+                     MI->getOperand(1).getReg() &&
                      MI->getOperand(1).isUse() &&
                      "Two address instruction invalid!");
 
-              physReg = MI->getOperand(1).getAllocatedRegNum();
+              physReg = MI->getOperand(1).getReg();
             } else {
               physReg = getFreeReg(virtualReg);
             }
@@ -205,7 +205,7 @@ void RegAllocSimple::AllocateBasicBlock(MachineBasicBlock &MBB) {
         }
         MI->SetMachineOperandReg(i, physReg);
         DEBUG(std::cerr << "virt: " << virtualReg << 
-              ", phys: " << op.getAllocatedRegNum() << "\n");
+              ", phys: " << op.getReg() << "\n");
       }
     }
     RegClassIdx.clear();

@@ -637,7 +637,7 @@ SparcAsmPrinter::printOneOperand(const MachineOperand &mop,
     case MachineOperand::MO_CCRegister:
     case MachineOperand::MO_MachineRegister:
       {
-        int regNum = (int)mop.getAllocatedRegNum();
+        int regNum = (int)mop.getReg();
         
         if (regNum == Target.getRegInfo().getInvalidRegNum()) {
           // better to print code with NULL registers than to die

@@ -661,7 +661,7 @@ int64_t SparcV9CodeEmitter::getMachineOpValue(MachineInstr &MI,
     // This is necessary because the Sparc backend doesn't actually lay out
     // registers in the real fashion -- it skips those that it chooses not to
     // allocate, i.e. those that are the FP, SP, etc.
-    unsigned fakeReg = MO.getAllocatedRegNum();
+    unsigned fakeReg = MO.getReg();
     unsigned realRegByClass = getRealRegNum(fakeReg, MI);
     DEBUG(std::cerr << MO << ": Reg[" << std::dec << fakeReg << "] => "
                     << realRegByClass << " (LLC: " 
