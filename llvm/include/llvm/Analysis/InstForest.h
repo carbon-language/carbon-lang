@@ -182,13 +182,13 @@ public:
   // the parent pointer can be used to find the root of the tree.
   //
   inline InstTreeNode<Payload> *getInstNode(Instruction *Inst) {
-    std::map<Instruction*, InstTreeNode<Payload> *>::iterator I =
+    typename std::map<Instruction*, InstTreeNode<Payload> *>::iterator I =
       InstMap.find(Inst);
     if (I != InstMap.end()) return I->second;
     return 0;
   }
   inline const InstTreeNode<Payload> *getInstNode(const Instruction *Inst)const{
-    std::map<Instruction*, InstTreeNode<Payload>*>::const_iterator I = 
+    typename std::map<Instruction*, InstTreeNode<Payload>*>::const_iterator I = 
       InstMap.find(Inst);
     if (I != InstMap.end()) return I->second;
     return 0;
@@ -196,7 +196,7 @@ public:
 
   // print - Called by operator<< below...
   void print(std::ostream &out) const {
-    for (const_iterator I = begin(), E = end(); I != E; ++I)
+    for (typename const_iterator I = begin(), E = end(); I != E; ++I)
       out << *I;
   }
 };
