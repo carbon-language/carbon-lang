@@ -12,7 +12,7 @@
 // or not a node is collapsed, etc.  These are the command line arguments that
 // it supports:
 //
-//   --dsgc-dsapass={local,bu,td}     - Specify what flavor of graph to check
+//   --dsgc-dspass={local,bu,td}      - Specify what flavor of graph to check
 //   --dsgc-abort-if-any-collapsed    - Abort if any collapsed nodes are found
 //   --dsgc-abort-if-collapsed=<list> - Abort if a node pointed to by an SSA
 //                                      value with name in <list> is collapsed

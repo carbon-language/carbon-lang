@@ -38,7 +38,6 @@ X("datastructure", "Local Data Structure Analysis");
 static cl::opt<bool>
 TrackIntegersAsPointers("dsa-track-integers",
          cl::desc("If this is set, track integers as potential pointers"));
-                        
 
 namespace llvm {
 namespace DS {
@@ -581,6 +580,7 @@ void GraphBuilder::visitCallSite(CallSite CS) {
               if (DSNode *N = getValueDest(**AI).getNode())
                 N->setReadMarker();   
           }
+          return;
         } else if (F->getName() == "scanf" || F->getName() == "fscanf" ||
                    F->getName() == "sscanf") {
           CallSite::arg_iterator AI = CS.arg_begin(), E = CS.arg_end();
@@ -612,6 +612,7 @@ void GraphBuilder::visitCallSite(CallSite CS) {
               if (DSNode *N = getValueDest(**AI).getNode())
                 N->setModifiedMarker();   
           }
+          return;
         } else if (F->getName() == "strtok") {
           // strtok reads and writes the first argument, returning it.  It reads
           // its second arg.  FIXME: strtok also modifies some hidden static
