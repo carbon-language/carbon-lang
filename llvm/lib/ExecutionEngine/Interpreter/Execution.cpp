@@ -1001,6 +1001,9 @@ void Interpreter::finish() {
 //
 void Interpreter::printCurrentInstruction() {
   if (!ECStack.empty()) {
+    if (ECStack.back().CurBB->begin() == ECStack.back().CurInst)  // print label
+      WriteAsOperand(cout, ECStack.back().CurBB) << ":\n";
+
     Instruction *I = *ECStack.back().CurInst;
     InstNumber *IN = (InstNumber*)I->getAnnotation(SlotNumberAID);
     assert(IN && "Instruction has no numbering annotation!");
