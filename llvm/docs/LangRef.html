@@ -80,6 +80,7 @@
         <ol>
           <li><a href="#i_phi">'<tt>phi</tt>'   Instruction</a></li>
           <li><a href="#i_cast">'<tt>cast .. to</tt>' Instruction</a></li>
+          <li><a href="#i_select">'<tt>select</tt>' Instruction</a></li>
           <li><a href="#i_call">'<tt>call</tt>'  Instruction</a></li>
           <li><a href="#i_vanext">'<tt>vanext</tt>' Instruction</a></li>
           <li><a href="#i_vaarg">'<tt>vaarg</tt>'  Instruction</a></li>
@@ -1506,38 +1507,111 @@ came from in the last <a href="#terminators">terminator</a> instruction.</p>
 <h5>Example:</h5>
 <pre>Loop:       ; Infinite loop that counts from 0 on up...<br>  %indvar = phi uint [ 0, %LoopHeader ], [ %nextindvar, %Loop ]<br>  %nextindvar = add uint %indvar, 1<br>  br label %Loop<br></pre>
 </div>
+
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection"> <a name="i_cast">'<tt>cast .. to</tt>'
-Instruction</a> </div>
+<div class="doc_subsubsection">
+   <a name="i_cast">'<tt>cast .. to</tt>' Instruction</a>
+</div>
+
 <div class="doc_text">
+
 <h5>Syntax:</h5>
-<pre>  &lt;result&gt; = cast &lt;ty&gt; &lt;value&gt; to &lt;ty2&gt;             <i>; yields ty2</i>
+
+<pre>
+  &lt;result&gt; = cast &lt;ty&gt; &lt;value&gt; to &lt;ty2&gt;             <i>; yields ty2</i>
 </pre>
+
 <h5>Overview:</h5>
-<p>The '<tt>cast</tt>' instruction is used as the primitive means to
-convert integers to floating point, change data type sizes, and break
-type safety (by casting pointers).</p>
+
+<p>
+The '<tt>cast</tt>' instruction is used as the primitive means to convert
+integers to floating point, change data type sizes, and break type safety (by
+casting pointers).
+</p>
+
+
 <h5>Arguments:</h5>
-<p>The '<tt>cast</tt>' instruction takes a value to cast, which must be
-a first class value, and a type to cast it to, which must also be a <a
- href="#t_firstclass">first class</a> type.</p>
+
+<p>
+The '<tt>cast</tt>' instruction takes a value to cast, which must be a first
+class value, and a type to cast it to, which must also be a <a
+href="#t_firstclass">first class</a> type.
+</p>
+
 <h5>Semantics:</h5>
-<p>This instruction follows the C rules for explicit casts when
-determining how the data being cast must change to fit in its new
-container.</p>
-<p>When casting to bool, any value that would be considered true in the
-context of a C '<tt>if</tt>' condition is converted to the boolean '<tt>true</tt>'
-values, all else are '<tt>false</tt>'.</p>
-<p>When extending an integral value from a type of one signness to
-another (for example '<tt>sbyte</tt>' to '<tt>ulong</tt>'), the value
-is sign-extended if the <b>source</b> value is signed, and
-zero-extended if the source value is unsigned. <tt>bool</tt> values
-are always zero extended into either zero or one.</p>
+
+<p>
+This instruction follows the C rules for explicit casts when determining how the
+data being cast must change to fit in its new container.
+</p>
+
+<p>
+When casting to bool, any value that would be considered true in the context of
+a C '<tt>if</tt>' condition is converted to the boolean '<tt>true</tt>' values,
+all else are '<tt>false</tt>'.
+</p>
+
+<p>
+When extending an integral value from a type of one signness to another (for
+example '<tt>sbyte</tt>' to '<tt>ulong</tt>'), the value is sign-extended if the
+<b>source</b> value is signed, and zero-extended if the source value is
+unsigned. <tt>bool</tt> values are always zero extended into either zero or
+one.
+</p>
+
 <h5>Example:</h5>
-<pre>  %X = cast int 257 to ubyte              <i>; yields ubyte:1</i>
+
+<pre>
+  %X = cast int 257 to ubyte              <i>; yields ubyte:1</i>
   %Y = cast int 123 to bool               <i>; yields bool:true</i>
 </pre>
 </div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+   <a name="i_select">'<tt>select</tt>' Instruction</a>
+</div>
+
+<div class="doc_text">
+
+<h5>Syntax:</h5>
+
+<pre>
+  &lt;result&gt; = select bool &lt;cond&gt;, &lt;ty&gt; &lt;val1&gt;, &lt;ty&gt; &lt;val2&gt;             <i>; yields ty</i>
+</pre>
+
+<h5>Overview:</h5>
+
+<p>
+The '<tt>select</tt>' instruction is used to choose one value based on a
+condition, without branching.
+</p>
+
+
+<h5>Arguments:</h5>
+
+<p>
+The '<tt>select</tt>' instruction requires a boolean value indicating the condition, and two values of the same <a href="#t_firstclass">first class</a> type.
+</p>
+
+<h5>Semantics:</h5>
+
+<p>
+If the boolean condition evaluates to true, the instruction returns the first
+value argument, otherwise it returns the second value argument.
+</p>
+
+<h5>Example:</h5>
+
+<pre>
+  %X = select bool true, ubyte 17, ubyte 42          <i>; yields ubyte:17</i>
+</pre>
+</div>
+
+
+
+
+
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection"> <a name="i_call">'<tt>call</tt>'
 Instruction</a> </div>
