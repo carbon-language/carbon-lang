@@ -1,0 +1,383 @@
+=pod
+
+=head1 NAME
+
+llvmc - The LLVM Compiler Driver
+
+=head1 SYNOPSIS
+
+B<llvmc> [I<options>] [I<filenames>...]
+
+=head1 DESCRIPTION
+
+The B<llvmc> command is a configurable driver for invoking other 
+LLVM (and non-LLVM) tools in order to compile, optimize and link software
+for multiple languages. For those familiar with the GNU Compiler 
+Collection's B<gcc> tool, it is very similar. This tool has the
+following main goals or purposes:
+
+=over
+
+=item * A Single point of access to the LLVM tool set.
+
+=item * Hide the complexities of the LLVM tools through a single interface.
+
+=item * Make integration of existing non-LLVM tools simple.
+
+=item * Extend the capabilities of minimal front ends.
+
+=item * Make the interface for compiling consistent for all languages.
+
+=back
+
+The tool itself does nothing with a user's program. It merely invokes other
+tools to get the compilation tasks done.
+
+=head2 Basic Operation
+
+B<llvmc> always takes the following basic actions:
+
+=over
+
+=item * Command line options and filenames are collected.
+
+This provides the basic instruction to B<llvmc> on what actions it should
+take. This is the I<request> the user is making of B<llvmc>.
+
+=item * Configuration files are read.
+
+Based on the options and the suffixes of the filenames presented, a set
+of configuration files are read to configure the actions B<llvmc>
+will take (more on this later).
+
+=item * Determine actions to take.
+
+The tool chain needed to complete the task is determined. This is the
+primary work of B<llvmc>. It breaks the request specified by the
+command line options into a set of basic actions to be done: 
+pre-processing, compilation, assembly, optimization, and linking.
+For each applicable action, it selects the command to be run from 
+the specifications in the configuration files.
+
+=item * Execute actions.
+
+The actions determined previously are executed sequentially and then
+B<llvmc> terminates.
+
+=back
+
+=head2 Configuration Files
+
+B<llvmc> is highly configurable both on the command line and in configuration
+files. Configuration files specify the details of what commands to run
+for a given action. Each front end compiler must provide its own 
+configuration file to tell B<llvmc> how to invoke that compiler. The LLVM
+toolset does not need to be configured as B<llvmc> just "knows" how to 
+invoke those tools. 
+
+Rest TBD.
+
+=head1 OPTIONS
+
+=head2 Control Options
+
+Control options tell B<llvmc> what to do at a high level. The 
+following control options are defined:
+
+=over
+
+=item B<-c> or B<--compile>
+
+This option specifies that the linking phase is not to be run. All
+previous phases, if applicable will run. This is generally how a given
+bytecode file is compiled and optimized for a source language module.
+
+=item B<-k> or B<--link> or default
+
+This option (or the lack of any control option) specifies that all stages
+of compilation, optimization, and linking should be attempted.  Source files
+specified on the command line will be compiled and linked with objects and
+libraries also specified. 
+
+=item B<-S> or B<--assemble>
+
+This option specifies that compilation should end in the creation of
+an LLVM assembly file that can be later converted to an LLVM object
+file.
+
+=item B<-E> or B<--preprocess>
+
+This option specifies that no compilation or linking should be 
+performed. Only pre-processing, if applicabe to the language being
+compiled, is performed. For languages that support it, this will
+result in the output containing the raw input to the compiler.
+
+=back
+
+=head2 Optimization Options
+
+Optimization with B<llvmc> is based on goals and specified with
+the following -O options. The specific details of which
+optimizations run is controlled by the configuration files because
+each source language will have different needs. 
+
+=over
+
+=item B<-O1> or B<-O0> (default, fast compilation)
+
+Only those optimizations that will hasten the compilation (mostly by reducing 
+the output) are applied. In general these are extremely fast and simple 
+optimizations that reduce emitted code size. The goal here is not to make the 
+resulting program fast but to make the compilation fast.  If not specified, 
+this is the default level of optimization.
+
+=item B<-O2> (basic optimization)
+
+This level of optimization specifies a balance between generating good code 
+that will execute reasonably quickly and not spending too much time optimizing 
+the code to get there. For example, this level of optimization may include 
+things like global common subexpression elimintation, aggressive dead code 
+elimination, and scalar replication.
+
+=item B<-O3> (aggressive optimization)
+
+This level of optimization aggressively optimizes each set of files compiled 
+together. However, no link-time inter-procedural optimization is performed.
+This level implies all the optimizations of the B<-O1> and B<-O2> optimization
+levels, and should also provide loop optimizatiosn and compile time 
+inter-procedural optimizations. Essentially, this level tries to do as much
+as it can with the input it is given but doesn't do any link time IPO.
+
+=item B<-O4> (linktime optimization)
+
+In addition to the previous three levels of optimization, this level of 
+optimization aggressively optimizes each program at link time. It employs
+basic analysis and basic link-time inter-procedural optimizations, 
+considering the program as a whole.
+
+=item B<-O5> (aggressive linktime optimization)
+
+This is the same as B<-O4> except it employs aggressive analyses and
+aggressive inter-procedural optimization. 
+
+=item B<-O6> (profile guided optimization - not implemented)
+
+This is the same as B<-O5> except that it employes profile-guided
+reoptimization of the program after it has executed. Note that this implies
+a single level of reoptimization based on runtime profile analysis. Once
+the re-optimization has completed, the profiling instrumentation is
+removed and final optimizations are employed.
+
+=item B<-O7> (lifelong optimization - not implemented)
+
+This is the same as B<-O5> and similar to B<-O6> except that reoptimization
+is performed through the life of the program. That is, each run will update
+the profile by which future reoptimizations are directed.
+
+=back
+
+=head2 Input Options
+
+=over
+
+=item B<-l> I<LIBRARY>
+
+This option instructs B<llvmc> to locate a library named I<LIBRARY> and search
+it for unresolved symbols when linking the program.
+
+=item B<-L> F<path>
+
+This option instructs B<llvmc> to add F<path> to the list of places in which
+the linker will
+
+=item B<-x> I<LANGUAGE>
+
+This option instructs B<llvmc> to regard the following input files as 
+containing programs in the language I<LANGUAGE>. Normally, input file languages
+are identified by their suffix but this option will override that default
+behavior. The B<-x> option stays in effect until the end of the options or
+a new B<-x> option is encountered.
+
+=back
+
+=head2 Output Options
+
+=over
+
+=item B<-m>I<arch>
+
+This option selects the back end code generator to use. The I<arch> portion
+of the option names the back end to use.
+
+=item B<--native>
+
+Normally, B<llvmc> produces bytecode files at most stages of compilation.
+With this option, B<llvmc> will arrange for native object files to be
+generated with the B<-c> option, native assembly files to be generated
+with the B<-S> option, and native executables to be generated with the
+B<--link> option. In the case of the B<-E> option, the output will not
+differ as there is no I<native> version of pre-processed output.
+
+=item B<-o> F<filename>
+
+Specify the output file name.  The contents of the file  depend on other 
+options. 
+
+=back
+
+=head2 Configuration Options
+
+=over
+
+=item B<--show-config> I<[suffixes...]>
+
+When this option is given, the only action taken by B<llvmc> is to show its
+final configuration state in the form of a configuration file. No compilation
+tasks will be conducted when this option is given; processing will stop once
+the configuration has been printed. The optional (comma separated) list of 
+suffixes controls what is printed. Without any suffixes, the configuration
+for all languages is printed. With suffixes, only the languages pertaining
+to those file suffixes will be printed. The configuration information is
+printed after all command line options and configuration files have been
+read and processed. This allows the user to verify that the correct
+configuration data has been read by B<llvmc>.
+
+=item B<--config> :I<section>:I<name>=I<value>
+
+This option instructs B<llvmc> to accept I<value> as the value for configuration
+item I<name> in the section named I<section>. This is a quick way to override
+a configuration item on the command line without resorting to changing the
+configuration files. 
+
+=item B<--config-file> F<dirname>
+
+This option tells B<llvmc> to read configuration data from the I<directory>
+named F<dirname>. Data from such directories will be read in the order
+specified on the command line after all other standard config files have
+been read. This allows users or groups of users to conveniently create 
+their own configuration directories in addition to the standard ones to which 
+they may not have write access.
+
+=item B<--config-only-from> F<dirname>
+
+This option tells B<llvmc> to skip the normal processing of configuration
+files and only configure from the contents of the F<dirname> directory. Multiple
+B<--config-only-from> options may be given in which case the directories are
+read in the order given on the command line.
+
+=back
+
+=head2 Information Options
+
+=over
+
+=item B<-n> or B<--noop>
+
+This option tells B<llvmc> to do everything but actually execute the
+resulting tools. In combination with the B<-v> option, this causes B<llvmc>
+to merely print out what it would have done.
+
+=item B<-v> or B<--verbose>
+
+This option will cause B<llvmc> to print out (on standard output) each of the 
+actions it takes to accomplish the objective. The output will immediately
+precede the invocation of other tools.
+
+=item B<--stats>
+
+Print all statistics gathered during the compilation to the standard error. 
+Note that this option is merely passed through to the sub-tools to do with 
+as they please.
+
+=item B<--time-passes>
+
+Record the amount of time needed for each optimization pass and print it 
+to standard error. Like B<--stats> this option is just passed through to
+the sub-tools to do with as they please.
+
+=item B<--time-programs>
+
+Record the amount of time each program (compilation tool) takes and print
+it to the standard error. 
+
+=back
+
+=head2 Language Specific Options
+
+=over
+
+
+=item B<-Tool,opt>=I<options>
+
+Pass an arbitrary option to the optimizer.
+
+=item B<-Tool,link>=I<options>
+
+Pass an arbitrary option to the linker.
+
+=item B<-Tool,asm>=I<options>
+
+Pass an arbitrary optionsto the code generator.
+
+=back
+
+=head3 C/C++ Specific Options
+
+=over
+
+=item B<-I>F<path> (C/C++ Only)
+
+This option is just passed through to a C or C++ front end compiler to tell it
+where include files can be found.
+
+=back
+
+=head2 Advanced Options
+
+=over 
+
+=item B<--emit-raw-code>
+
+No optimization is done whatsoever. The compilers invoked by B<llvmc> with 
+this option given will be instructed to produce raw, unoptimized code.  This 
+option is useful only to front end language developers and therefore does not 
+participate in the list of B<-O> options. This is distinctly different from
+the B<-O0> option (a synonym for B<-O1>) because those optimizations will
+reduce code size to make compilation faster. With B<--emit-raw-code>, only
+the full raw code produced by the compiler will be generated.
+
+=back
+
+=head2 Miscellaneous Options
+
+=over
+
+=item B<--help>
+
+Print a summary of command line options.
+
+=item B<-V> or B<--version>
+
+This option will cause B<llvmc> to print out its version number
+and terminate.
+
+=back
+
+=head1 EXIT STATUS
+
+If B<llvmc> succeeds, it will exit with 0.  Otherwise, if an error
+occurs, it will exit with a non-zero value and no compilation actions
+will be taken. If one of the compilation tools returns a non-zero 
+status, pending actions will be discarded and B<llvmc> will return the
+same result code as the failing compilation tool.
+
+=head1 SEE ALSO
+
+L<gccas|gccas>, L<gccld|gccld>, L<llvm-as|llvm-as>, L<llvm-dis|llvm-dis>, 
+L<llc|llc>, L<llvm-link|llvm-link>
+
+=head1 AUTHORS
+
+Reid Spencer
+
+=cut
