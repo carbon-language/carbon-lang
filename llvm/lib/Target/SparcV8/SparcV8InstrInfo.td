@@ -126,10 +126,18 @@ def RESTORErr : F3_1<2, 0b111101, "restore">;        // restore r, r, r
 def RESTOREri : F3_2<2, 0b111101, "restore">;        // restore r, i, r
 
 // Section B.21 - Branch on Integer Condition Codes Instructions, p. 119
-def BA  : F2_2<0b1000, 0b010, "ba">;
-def BN  : F2_2<0b0000, 0b010, "bn">;
-def BNE : F2_2<0b1001, 0b010, "bne">;
-def BE  : F2_2<0b0001, 0b010, "be">;
+def BA   : F2_2<0b1000, 0b010, "ba">;
+def BN   : F2_2<0b0000, 0b010, "bn">;
+def BNE  : F2_2<0b1001, 0b010, "bne">;
+def BE   : F2_2<0b0001, 0b010, "be">;
+def BG   : F2_2<0b1010, 0b010, "bg">;
+def BLE  : F2_2<0b0010, 0b010, "ble">;
+def BGE  : F2_2<0b1011, 0b010, "bge">;
+def BL   : F2_2<0b0011, 0b010, "bl">;
+def BGU  : F2_2<0b1100, 0b010, "bgu">;
+def BLEU : F2_2<0b0100, 0b010, "bleu">;
+def BCC  : F2_2<0b1101, 0b010, "bcc">;
+def BCS  : F2_2<0b0101, 0b010, "bcs">;
 
 // Section B.24 - Call and Link Instruction, p. 125
 // This is the only Format 1 instruction
