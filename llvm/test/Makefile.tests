@@ -20,14 +20,14 @@ include ${LEVEL}/Makefile.common
 
 # LLVM Tool Definitions...
 #
-LCC      = /home/vadve/lattner/cvs/gcc_install/bin/gcc
-LCC1     = /home/vadve/lattner/cvs/gcc_install/lib/gcc-lib/llvm/3.1/cc1
+LCC      = $(LLVMGCCDIR)/bin/gcc
+LCC1     = $(LLVMGCCDIR)/lib/gcc-lib/llvm/3.1/cc1
 TOOLS    = $(BUILD_ROOT_TOP)/tools/Debug
 LLI      = $(TOOLS)/lli
 LLC      = $(TOOLS)/llc
 LAS      = $(TOOLS)/as
 LGCCAS   = $(TOOLS)/gccas
-LGCCLD   = $(TOOLS)/gccld -L/home/vadve/lattner/cvs/gcc_install/lib/gcc-lib/llvm/3.1/
+LGCCLD   = $(TOOLS)/gccld -L$(LLVMGCCDIR)/lib/gcc-lib/llvm/3.1/
 LDIS     = $(TOOLS)/dis 
 LOPT     = $(TOOLS)/opt
 LLINK    = $(TOOLS)/link
@@ -59,7 +59,7 @@ endif
 
 LLCLIBS := $(LLCLIBS) -lm
 
-clean ::
+clean::
 	$(RM) a.out core
 	$(RM) -rf Output/
 
