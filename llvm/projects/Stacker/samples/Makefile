@@ -16,12 +16,17 @@ DIRS =
 
 SAMPLES = fibonacci hello prime
 
+LLC_EXEC = $(BUILD_OBJ_ROOT)/tools/$(CONFIGURATION)/llc
+OPT_EXEC = $(BUILD_OBJ_ROOT)/tools/$(CONFIGURATION)/opt
+STKRC_EXEC = $(BUILD_OBJ_ROOT)/tools/$(CONFIGURATION)/stkrc
+LLVMDIS_EXEC = $(BUILD_OBJ_ROOT)/tools/$(CONFIGURATION)/llvm-dis
+
 all :: $(SAMPLES)
 
 ifdef OPTIMIZE
 %.bc : %.st 
 	@$(ECHO) "Compiling and Optimizing $< to $*.bc"
-	$(VERB)stkrc -e -o - $< | opt -stats -q -f -o $*.bc \
+	$(VERB)$(STKRC_EXEC) -e -o - $< | opt -stats -q -f -o $*.bc \
 	    -aa-eval -adce -branch-combine -cee -constmerge -constprop -dce -die -ds-aa \
 	    -ds-opt -gcse -globaldce -indvars -inline -instcombine \
 	    -ipconstprop -licm -loopsimplify -mem2reg -pre -sccp -simplifycfg \
@@ -29,22 +34,22 @@ ifdef OPTIMIZE
 else
 %.bc : %.st
 	@$(ECHO) "Compiling $< to $*.bc"
-	$(VERB)stkrc -e -f -o $*.bc $< 
+	$(VERB)$(STKRC_EXEC) -e -f -o $*.bc $< 
 endif
 
 %.s : %.bc
 	@$(ECHO) "Compiling $< to $*.s"
-	$(VERB)llc -f -o $*.s $<
+	$(VERB)$(LLC_EXEC) -f -o $*.s $<
 
 % : %.s
 	@$(ECHO) "Compiling and Linking $< to $*"
-	$(VERB)gcc -g -L$(BUILD_OBJ_ROOT)/lib/Debug -lstkr_runtime -o $* $*.s
+	$(VERB)gcc -g -L$(BUILD_OBJ_ROOT)/lib/$(CONFIGURATION) -lstkr_runtime -o $* $*.s
 
 %.ll : %.bc
 	@$(ECHO) "Disassembling $< to $*.ll"
-	$(VERB)llvm-dis -f -o $*.ll $<
+	$(VERB)$(LLVMDIS_EXEC) -f -o $*.ll $<
 
-%.bc :  $(BUILD_OBJ_ROOT)/tools/Debug/stkrc
+%.bc :  $(STKRC_EXEC)
 
 .PRECIOUS: %.bc %.s %.ll %.st
 
