@@ -26,6 +26,7 @@
 #include "Support/StringExtras.h"
 #include "Support/STLExtras.h"
 #include <algorithm>
+#include <set>
 using std::string;
 using std::map;
 using std::ostream;
@@ -209,6 +210,7 @@ namespace {
     SlotCalculator &Table;
     const Module *TheModule;
     map<const Type *, string> TypeNames;
+    std::set<const Value*> MangledGlobals;
   public:
     inline CWriter(ostream &o, SlotCalculator &Tab, const Module *M)
       : Out(o), Table(Tab), TheModule(M) {
@@ -294,7 +296,6 @@ static string makeNameProper(string x) {
     case '.': tmp += "d_"; break;
     case ' ': tmp += "s_"; break;
     case '-': tmp += "D_"; break;
-    case '_': tmp += "__"; break;
     default:  tmp += *sI;
     }
 
@@ -303,7 +304,8 @@ static string makeNameProper(string x) {
 
 string CWriter::getValueName(const Value *V) {
   if (V->hasName()) {             // Print out the label if it exists...
-    if (isa<GlobalValue>(V))  // Do not mangle globals...
+    if (isa<GlobalValue>(V) &&    // Do not mangle globals...
+        !MangledGlobals.count(V)) // Unless the name would collide unless we do.
       return makeNameProper(V->getName());
 
     return "l" + utostr(V->getType()->getUniqueID()) + "_" +
@@ -352,6 +354,26 @@ void CWriter::writeOperand(const Value *Operand) {
 }
 
 void CWriter::printModule(Module *M) {
+  // Calculate which global values have names that will collide when we throw
+  // away type information.
+  {  // Scope to declare the FoundNames set when we are done with it...
+    std::set<string> FoundNames;
+    for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I)
+      if ((*I)->hasName())                      // If the global has a name...
+        if (FoundNames.count((*I)->getName()))  // And the name is already used
+          MangledGlobals.insert(*I);            // Mangle the name
+        else
+          FoundNames.insert((*I)->getName());   // Otherwise, keep track of name
+
+    for (Module::giterator I = M->gbegin(), E = M->gend(); I != E; ++I)
+      if ((*I)->hasName())                      // If the global has a name...
+        if (FoundNames.count((*I)->getName()))  // And the name is already used
+          MangledGlobals.insert(*I);            // Mangle the name
+        else
+          FoundNames.insert((*I)->getName());   // Otherwise, keep track of name
+  }
+
+
   // printing stdlib inclusion
   // Out << "#include <stdlib.h>\n";
 
