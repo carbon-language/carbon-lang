@@ -138,8 +138,39 @@ LLVM: Frequently Asked Questions
 	cases, this takes care of the problem.  To do this, just type <tt>make
 	clean</tt> and then <tt>make</tt> in the directory that fails to build.
 	<p>
+
+	<dt><b>I've built LLVM and am testing it, but the tests freeze.</b>
+	<dd>
+	This is most likely occurring because you built a profile or release
+	(optimized) build of LLVM and have not specified the same information on
+	the <tt>gmake</tt> command line.
+	<p>
+	For example, if you built LLVM with the command:
+	<p>
+	<tt>gmake ENABLE_PROFILING=1</tt>
+	<p>
+	...then you must run the tests with the following commands:
+	<p>
+	<tt>cd llvm/test<br>gmake  ENABLE_PROFILING=1</tt>
+	<p>
+
+	<dt><b>Why do test results differ when I perform different types of
+	builds?</b>
+	<dd>
+	The LLVM test suite is dependent upon several features of the LLVM tools
+	and libraries.
+	<p>
+	First, the debugging assertions in code are not enabled in optimized or
+	profiling builds.  Hence, tests that used to fail may pass.
+	<p>
+	Second, some tests may rely upon debugging options or behavior that is
+	only available in the debug build.  These tests will fail in an optimized
+	or profile build.
 </dl>
 <hr>
+
+<a href="http://llvm.cs.uiuc.edu">The LLVM Compiler Infrastructure</a>
+<br>
 
 </body>
 </html>
