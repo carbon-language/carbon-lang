@@ -411,6 +411,8 @@ static bool LinkGlobals(Module *Dest, const Module *Src,
         GlobalsByName.find(SGV->getName());
       if (EGV != GlobalsByName.end())
         DGV = dyn_cast<GlobalVariable>(EGV->second);
+      if (DGV && RecursiveResolveTypes(SGV->getType(), DGV->getType(), ST, ""))
+        DGV = 0;  // FIXME: gross.
     }
 
     assert(SGV->hasInitializer() || SGV->hasExternalLinkage() &&
@@ -589,6 +591,8 @@ static bool LinkFunctionProtos(Module *Dest, const Module *Src,
         GlobalsByName.find(SF->getName());
       if (EF != GlobalsByName.end())
         DF = dyn_cast<Function>(EF->second);
+      if (DF && RecursiveResolveTypes(SF->getType(), DF->getType(), ST, ""))
+        DF = 0;  // FIXME: gross.
     }
 
     if (!DF || SF->hasInternalLinkage() || DF->hasInternalLinkage()) {
