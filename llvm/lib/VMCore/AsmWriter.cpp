@@ -421,7 +421,8 @@ static void WriteConstantInt(std::ostream &Out, const Constant *CV,
     if (isString) {
       Out << "c\"";
       for (unsigned i = 0; i < CA->getNumOperands(); ++i) {
-        unsigned char C = cast<ConstantInt>(CA->getOperand(i))->getRawValue();
+        unsigned char C = 
+          (unsigned char)cast<ConstantInt>(CA->getOperand(i))->getRawValue();
         
         if (isprint(C) && C != '"' && C != '\\') {
           Out << C;
