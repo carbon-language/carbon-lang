@@ -605,7 +605,7 @@ static bool LinkFunctionProtos(Module *Dest, const Module *Src,
       // visible symbol, DF must be an existing function with internal linkage.
       // Rename it.
       if (NewDF->getName() != SF->getName() && !NewDF->hasInternalLinkage())
-        ForceRenaming(DF, SF->getName());
+        ForceRenaming(NewDF, SF->getName());
 
       // ... and remember this mapping...
       ValueMap.insert(std::make_pair(SF, NewDF));
