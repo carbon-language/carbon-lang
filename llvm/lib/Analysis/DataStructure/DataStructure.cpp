@@ -131,6 +131,16 @@ bool DSNode::mergeTypeInfo(const Type *NewTy, unsigned Offset) {
   // Return true immediately if the node is completely folded.
   if (isNodeCompletelyFolded()) return true;
 
+  // If this is an array type, eliminate the outside arrays because they won't
+  // be used anyway.  This greatly reduces the size of large static arrays used
+  // as global variables, for example.
+  //
+  while (const ArrayType *AT = dyn_cast<ArrayType>(NewTy)) {
+    // FIXME: we might want to keep small arrays, but must be careful about
+    // things like: [2 x [10000 x int*]]
+    NewTy = AT->getElementType();
+  }
+
   // Figure out how big the new type we're merging in is...
   unsigned NewTySize = NewTy->isSized() ? TD.getTypeSize(NewTy) : 0;
 
