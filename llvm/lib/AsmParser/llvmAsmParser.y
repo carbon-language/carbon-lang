@@ -1210,6 +1210,12 @@ MethodHeaderH : OptInternal TypesV STRINGCONSTANT '(' ArgList ')' {
       ArgList.push_back(I->first);
     }
     delete $5;                     // We're now done with the argument list
+  } else if ($5) {
+    // If we are a declaration, we should free the memory for the argument list!
+    for (list<pair<MethodArgument*, char*> >::iterator I = $5->begin();
+         I != $5->end(); ++I)
+      if (I->second) free(I->second);   // Free the memory for the name...
+    delete $5;                          // Free the memory for the list itself
   }
 }
 
