@@ -15,13 +15,14 @@
     <ol>
       <li><a href="#projects">Projects</a></li>
       <li><a href="#varvals">Variable Values</a></li>
-      <li><a href="#including">Including Makefiles</a></li>
-      <ol>
-        <li><a href="#Makefile">Makefile</a></li>
-        <li><a href="#Makefile.common">Makefile.common</a></li>
-        <li><a href="#Makefile.config">Makefile.config</a></li>
-        <li><a href="#Makefile.rules">Makefile.rules</a></li>
-      </ol>
+      <li><a href="#including">Including Makefiles</a>
+        <ol>
+          <li><a href="#Makefile">Makefile</a></li>
+          <li><a href="#Makefile.common">Makefile.common</a></li>
+          <li><a href="#Makefile.config">Makefile.config</a></li>
+          <li><a href="#Makefile.rules">Makefile.rules</a></li>
+        </ol>
+      </li>
       <li><a href="#Comments">Comments</a></li>
     </ol>
   </li>
@@ -462,7 +463,7 @@
     <dt><a name="BUILT_SOURCES"><tt>BUILT_SOURCES</tt></a></dt>
     <dd>Specifies a set of source files that are generated from other source
     files. These sources will be built before any other target processing to 
-    ensure they are present.</td>
+    ensure they are present.</dd>
     <dt><a name="BYTECODE_LIBRARY"><tt>BYTECODE_LIBRARY</tt></a></dt>
     <dd>If set to any value, causes a bytecode library (.bc) to be built.</dd>
     <dt><a name="CONFIG_FILES"><tt>CONFIG_FILES</tt></a></dt>
@@ -514,8 +515,8 @@
     set in each makefile as it is used to find the top level and thus the other
     makefiles.</dd>
     <dt><a name="LIBRARYNAME"><tt>LIBRARYNAME</tt></a></dt>
-    <dd>Specify the name of the library to be built. (Required For Libraries)</dd>
-    <a href="#BUILD_OBJ_DIR"><tt>BUILD_OBJ_DIR<tt></a> directory.</dd>
+    <dd>Specify the name of the library to be built. (Required For
+    Libraries)</dd>
     <dt><a name="LLVMLIBS"><tt>LLVMLIBS</tt></a></dt>
     <dd>Specifies the set of libraries from the LLVM $(ObjDir) that will be
     linked into the tool or library.</dd>
@@ -531,7 +532,7 @@
     all source files to be built twice: once with options for position
     independent code and once without. Use it only where you really need a
     shared library.</dd>
-    <dt><a name="SOURCES"><tt>SOURCES</tt><small>(optional)</small></a></td>
+    <dt><a name="SOURCES"><tt>SOURCES</tt><small>(optional)</small></a></dt>
     <dd>Specifies the list of source files in the current directory to be
     built. Source files of any type may be specified (programs, documentation, 
     config files, etc.). If not specified, the makefile system will infer the
@@ -547,10 +548,10 @@
     <dt><a name="TOOLNAME"><tt>TOOLNAME</tt></a></dt>
     <dd>Specifies the name of the tool that the current directory should
     build.</dd>
-    <dt><a name="USEDLIBS"><tt>USEDLIBS</tt></a></td>
+    <dt><a name="USEDLIBS"><tt>USEDLIBS</tt></a></dt>
     <dd>Specifies the list of project libraries that will be linked into the
     tool or library.</dd>
-    <dt><a name="VERBOSE"><tt>VERBOSE</tt></a></td>
+    <dt><a name="VERBOSE"><tt>VERBOSE</tt></a></dt>
     <dd>Tells the Makefile system to produce detailed output of what it is doing
     instead of just summary comments. This will generate a LOT of output.</dd>
   </dl>
