@@ -31,6 +31,7 @@
 #  -debug           Print information useful only to maintainers of this script.
 #  -nice            Checkout/Configure/Build with "nice" to reduce impact 
 #                   on busy servers.
+#  -f2c             Next argument specifies path to F2C utility
 #  -gnuplotscript   Next argument specifies gnuplot script to use
 #  -templatefile    Next argument specifies template file to use
 #  -gccpath         Path to gcc/g++ used to build LLVM
@@ -69,15 +70,15 @@ my $TestStartTime = gmtime;
 
 # Command line argument settings...
 my $NOCHECKOUT = 0;
-my $NOREMOVE   = 0;
+my $NOREMOVE = 0;
 my $NOFEATURES = 0;
 my $NOREGRESSIONS = 0;
-my $NOTEST     = 0;
+my $NOTEST = 0;
 my $NORUNNINGTESTS = 0;
 my $NOEXTERNALS = 0;
-my $MAKEOPTS   = "";
+my $MAKEOPTS = "";
 my $PROGTESTOPTS = "";
-my $VERBOSE  = 0;
+my $VERBOSE = 0;
 my $DEBUG = 0;
 my $CONFIGUREARGS = "";
 my $NICE = "";
@@ -262,13 +263,13 @@ while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
 
   # List command line options here...
   if (/^-nocheckout$/)     { $NOCHECKOUT = 1; next; }
-  if (/^-noremove$/)       { $NOREMOVE   = 1; next; }
+  if (/^-noremove$/)       { $NOREMOVE = 1; next; }
   if (/^-nofeaturetests$/) { $NOFEATURES = 1; next; }
   if (/^-noregressiontests$/){ $NOREGRESSIONS = 1; next; }
-  if (/^-notest$/)         { $NOTEST     = 1; $NORUNNINGTESTS = 1; next; }
+  if (/^-notest$/)         { $NOTEST = 1; $NORUNNINGTESTS = 1; next; }
   if (/^-norunningtests$/) { $NORUNNINGTESTS = 1; next; }
-  if (/^-parallel$/)       { $MAKEOPTS   = "$MAKEOPTS -j2 -l3.0"; next; }
-  if (/^-release$/)        { $MAKEOPTS   = "$MAKEOPTS ENABLE_OPTIMIZED=1"; next; }
+  if (/^-parallel$/)       { $MAKEOPTS = "$MAKEOPTS -j2 -l3.0"; next; }
+  if (/^-release$/)        { $MAKEOPTS = "$MAKEOPTS ENABLE_OPTIMIZED=1"; next; }
   if (/^-pedantic$/)       { 
       $MAKEOPTS   = "$MAKEOPTS CompileOptimizeOpts='-O3 -DNDEBUG -finline-functions -Wpointer-arith -Wcast-align -Wno-deprecated -Wold-style-cast -Wabi -Woverloaded-virtual -ffor-scope'"; 
       next; 
@@ -278,12 +279,17 @@ while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
                              $CONFIGUREARGS .= " --disable-llc_diffs"; next; }
   if (/^-disable-jit$/)    { $PROGTESTOPTS .= " DISABLE_JIT=1";
                              $CONFIGUREARGS .= " --disable-jit"; next; }
-  if (/^-verbose$/)        { $VERBOSE  = 1; next; }
-  if (/^-debug$/)          { $DEBUG  = 1; next; }
-  if (/^-nice$/)           { $NICE  = "nice "; next; }
+  if (/^-verbose$/)        { $VERBOSE = 1; next; }
+  if (/^-debug$/)          { $DEBUG = 1; next; }
+  if (/^-nice$/)           { $NICE = "nice "; next; }
+  if (/^-f2c$/)            {
+    $CONFIGUREARGS .= " --with-f2c=$ARGV[0]"; shift; next;
+  }
   if (/^-gnuplotscript$/)  { $PlotScriptFilename = $ARGV[0]; shift; next; }
   if (/^-templatefile$/)   { $Template = $ARGV[0]; shift; next; }
-  if (/^-gccpath/)         { $CONFIGUREARGS=" CC=$ARGV[0]/gcc CXX=$ARGV[0]/g++"; shift; next; }
+  if (/^-gccpath/)         { 
+    $CONFIGUREARGS .= " CC=$ARGV[0]/gcc CXX=$ARGV[0]/g++"; shift; next; 
+  }
   if (/^-noexternals$/)    { $NOEXTERNALS = 1; next; }
 
   print "Unknown option: $_ : ignoring!\n";
