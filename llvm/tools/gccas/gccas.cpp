@@ -70,12 +70,6 @@ void AddConfiguredTransformationPasses(PassManager &PM) {
     addPass(PM, createFunctionInliningPass());   // Inline small functions
 
   addPass(PM, createInstructionCombiningPass()); // Cleanup code for raise
-
-  // HACK HACK HACK.  This pass should be extended to support calls like 'call
-  // (const expr cast (free))(Ty *).  Until it does so, we have to run it after
-  // instruction combining.  This should be removed after PLDI!
-  addPass(PM, createRaiseAllocationsPass());     // call %malloc -> malloc inst
-
   addPass(PM, createRaisePointerReferencesPass());// Recover type information
   addPass(PM, createTailDuplicationPass());      // Simplify cfg by copying code
   addPass(PM, createCFGSimplificationPass());    // Merge & remove BBs
