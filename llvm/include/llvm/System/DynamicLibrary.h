@@ -57,6 +57,31 @@ namespace sys {
       ~DynamicLibrary();
 
     /// @}
+    /// @name Functions
+    /// @{
+    public:
+      /// This function allows a library to be loaded without instantiating a
+      /// DynamicLibrary object. Consequently, it is marked as being permanent
+      /// and will only be unloaded when the program terminates.
+      /// @throws std::string on error.
+      /// @brief Open a dynamic library permanently.
+      static void LoadLibraryPermanently(const char* filename);
+
+      /// This function will search through all previously loaded dynamic
+      /// libraries for the symbol \p symbolName. If it is found, the addressof
+      /// that symbol is returned. If not, null is returned. Note that this will
+      /// search permanently loaded libraries (LoadLibraryPermanently) as well
+      /// as ephemerally loaded libraries (constructors).
+      /// @throws std::string on error.
+      /// @brief Search through libraries for address of a symbol
+      static void* SearchForAddressOfSymbol(const char* symbolName);
+
+      /// @brief Convenience function for C++ophiles.
+      static void* SearchForAddressOfSymbol(const std::string& symbolName) {
+        return SearchForAddressOfSymbol(symbolName.c_str());
+      }
+
+    /// @}
     /// @name Accessors
     /// @{
     public:
