@@ -371,6 +371,13 @@ void WriteToAssembly(const Module *M, ostream &o) {
   W.write(M);
 }
 
+void WriteToAssembly(const GlobalVariable *G, ostream &o) {
+  if (G == 0) { o << "<null> global variable\n"; return; }
+  SlotCalculator SlotTable(G->getParent(), true);
+  AssemblyWriter W(o, SlotTable);
+  W.write(G);
+}
+
 void WriteToAssembly(const Method *M, ostream &o) {
   if (M == 0) { o << "<null> method\n"; return; }
   SlotCalculator SlotTable(M->getParent(), true);
