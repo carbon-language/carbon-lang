@@ -161,10 +161,10 @@ void Printer::emitConstantValueOnly(const Constant *CV) {
     O << CI->getValue();
   else if (const ConstantUInt *CI = dyn_cast<ConstantUInt>(CV))
     O << CI->getValue();
-  else if (const ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(CV))
+  else if (const GlobalValue *GV = dyn_cast<GlobalValue>(CV))
     // This is a constant address for a global variable or function.  Use the
     // name of the variable or function as the address value.
-    O << Mang->getValueName(CPR->getValue());
+    O << Mang->getValueName(GV);
   else if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(CV)) {
     const TargetData &TD = TM.getTargetData();
     switch(CE->getOpcode()) {

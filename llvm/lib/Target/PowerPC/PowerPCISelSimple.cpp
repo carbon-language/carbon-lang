@@ -520,8 +520,8 @@ void ISel::copyConstantToRegister(MachineBasicBlock *MBB,
   } else if (isa<ConstantPointerNull>(C)) {
     // Copy zero (null pointer) to the register.
     BuildMI(*MBB, IP, PPC32::LI, 1, R).addImm(0);
-  } else if (ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(C)) {
-    unsigned AddrReg = getReg(CPR->getValue(), MBB, IP);
+  } else if (GlobalValue *GV = dyn_cast<GlobalValue>(C)) {
+    unsigned AddrReg = getReg(GV, MBB, IP);
     BuildMI(*MBB, IP, PPC32::OR, 2, R).addReg(AddrReg).addReg(AddrReg);
   } else {
     std::cerr << "Offending constant: " << *C << "\n";
@@ -2771,8 +2771,6 @@ void ISel::emitGEPOperation(MachineBasicBlock *MBB,
                             Value *Src, User::op_iterator IdxBegin,
                             User::op_iterator IdxEnd, unsigned TargetReg) {
   const TargetData &TD = TM.getTargetData();
-  if (ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(Src))
-    Src = CPR->getValue();
 
   std::vector<Value*> GEPOps;
   GEPOps.resize(IdxEnd-IdxBegin+1);
