@@ -993,11 +993,14 @@ Constant *llvm::ConstantFoldGetElementPtr(const Constant *C,
         // Add the last index of the source with the first index of the new GEP.
         // Make sure to handle the case when they are actually different types.
         Constant *Combined = CE->getOperand(CE->getNumOperands()-1);
-        if (!IdxList[0]->isNullValue())   // Otherwise it must be an array
+        if (!IdxList[0]->isNullValue()) {  // Otherwise it must be an array
+          const Type *IdxTy = Combined->getType();
+          if (IdxTy != IdxList[0]->getType()) IdxTy = Type::LongTy;
           Combined = 
             ConstantExpr::get(Instruction::Add,
-                              ConstantExpr::getCast(IdxList[0], Type::LongTy),
-                              ConstantExpr::getCast(Combined, Type::LongTy));
+                              ConstantExpr::getCast(IdxList[0], IdxTy),
+                              ConstantExpr::getCast(Combined, IdxTy));
+        }
         
         NewIndices.push_back(Combined);
         NewIndices.insert(NewIndices.end(), IdxList.begin()+1, IdxList.end());
