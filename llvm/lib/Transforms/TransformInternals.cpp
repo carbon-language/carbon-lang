@@ -11,6 +11,7 @@
 #include "llvm/ConstantVals.h"
 #include "llvm/Analysis/Expressions.h"
 #include "llvm/iOther.h"
+#include <algorithm>
 
 // TargetData Hack: Eventually we will have annotations given to us by the
 // backend so that we know stuff about type size and alignments.  For now
@@ -59,6 +60,15 @@ void ReplaceInstWithInst(BasicBlock::InstListType &BIL,
   --BI;
 }
 
+void ReplaceInstWithInst(Instruction *From, Instruction *To) {
+  BasicBlock *BB = From->getParent();
+  BasicBlock::InstListType &BIL = BB->getInstList();
+  BasicBlock::iterator BI = find(BIL.begin(), BIL.end(), From);
+  assert(BI != BIL.end() && "Inst not in it's parents BB!");
+  ReplaceInstWithInst(BIL, BI, To);
+}
+
+
 
 // getStructOffsetType - Return a vector of offsets that are to be used to index
 // into the specified struct type to get as close as possible to index as we
@@ -74,16 +84,13 @@ void ReplaceInstWithInst(BasicBlock::InstListType &BIL,
 const Type *getStructOffsetType(const Type *Ty, unsigned &Offset,
                                 vector<Value*> &Offsets,
                                 bool StopEarly = true) {
-  if (!isa<CompositeType>(Ty) ||
-      (Offset == 0 && StopEarly && !Offsets.empty())) {
-    Offset = 0;   // Return the offset that we were able to acheive
+  if (Offset == 0 && StopEarly && !Offsets.empty())
     return Ty;    // Return the leaf type
-  }
 
   unsigned ThisOffset;
   const Type *NextType;
   if (const StructType *STy = dyn_cast<StructType>(Ty)) {
-    assert(Offset < TD.getTypeSize(Ty) && "Offset not in composite!");
+    assert(Offset < TD.getTypeSize(STy) && "Offset not in composite!");
     const StructLayout *SL = TD.getStructLayout(STy);
 
     // This loop terminates always on a 0 <= i < MemberOffsets.size()
@@ -99,15 +106,16 @@ const Type *getStructOffsetType(const Type *Ty, unsigned &Offset,
     Offsets.push_back(ConstantUInt::get(Type::UByteTy, i));
     ThisOffset = SL->MemberOffsets[i];
     NextType = STy->getElementTypes()[i];
-  } else {
-    const ArrayType *ATy = cast<ArrayType>(Ty);
-    assert(ATy->isUnsized() || Offset < TD.getTypeSize(Ty) &&
-           "Offset not in composite!");
+  } else if (const ArrayType *ATy = dyn_cast<ArrayType>(Ty)) {
+    assert(Offset < TD.getTypeSize(ATy) && "Offset not in composite!");
 
     NextType = ATy->getElementType();
     unsigned ChildSize = TD.getTypeSize(NextType);
     Offsets.push_back(ConstantUInt::get(Type::UIntTy, Offset/ChildSize));
     ThisOffset = (Offset/ChildSize)*ChildSize;
+  } else {
+    Offset = 0;   // Return the offset that we were able to acheive
+    return Ty;    // Return the leaf type
   }
 
   unsigned SubOffs = Offset - ThisOffset;
@@ -124,17 +132,13 @@ const Type *getStructOffsetType(const Type *Ty, unsigned &Offset,
 const Type *ConvertableToGEP(const Type *Ty, Value *OffsetVal,
                              vector<Value*> &Indices,
                              BasicBlock::iterator *BI = 0) {
-  const CompositeType *CompTy = getPointedToComposite(Ty);
+  const CompositeType *CompTy = dyn_cast<CompositeType>(Ty);
   if (CompTy == 0) return 0;
 
   // See if the cast is of an integer expression that is either a constant,
   // or a value scaled by some amount with a possible offset.
   //
   analysis::ExprType Expr = analysis::ClassifyExpression(OffsetVal);
-
-  // The expression must either be a constant, or a scaled index to be useful
-  if (!Expr.Offset && !Expr.Scale)
-    return 0;
 
   // Get the offset and scale now...
   unsigned Offset = 0, Scale = Expr.Var != 0;
@@ -153,13 +157,6 @@ const Type *ConvertableToGEP(const Type *Ty, Value *OffsetVal,
     Scale = (unsigned)Val;
   }
   
-  // Check to make sure the offset is not negative or really large, outside the
-  // scope of this structure...
-  //
-  if (!isa<ArrayType>(CompTy) || cast<ArrayType>(CompTy)->isSized())
-    if (Offset >= TD.getTypeSize(CompTy))
-      return 0;
-
   // Loop over the Scale and Offset values, filling in the Indices vector for
   // our final getelementptr instruction.
   //
@@ -173,10 +170,11 @@ const Type *ConvertableToGEP(const Type *Ty, Value *OffsetVal,
       const StructLayout *SL = TD.getStructLayout(StructTy);
       unsigned ActualOffset = Offset;
       NextTy = getStructOffsetType(StructTy, ActualOffset, Indices);
+      if (StructTy == NextTy && ActualOffset == 0) return 0; // No progress.  :(
       Offset -= ActualOffset;
     } else {
-      const ArrayType *AT = cast<ArrayType>(CompTy);
-      const Type *ElTy = AT->getElementType();
+      const Type *ElTy = cast<SequentialType>(CompTy)->getElementType();
+      if (!ElTy->isSized()) return 0; // Type is unreasonable... escape!
       unsigned ElSize = TD.getTypeSize(ElTy);
 
       // See if the user is indexing into a different cell of this array...
@@ -188,7 +186,7 @@ const Type *ConvertableToGEP(const Type *Ty, Value *OffsetVal,
         unsigned ScaleAmt = Scale/ElSize;
         if (Scale-ScaleAmt*ElSize)
           return 0;  // Didn't scale by a multiple of element size, bail out
-        Scale = ElSize;        
+        Scale = 0;   // Scale is consumed
 
         unsigned Index = Offset/ElSize;       // is zero unless Offset > ElSize
         Offset -= Index*ElSize;               // Consume part of the offset
@@ -227,18 +225,19 @@ const Type *ConvertableToGEP(const Type *Ty, Value *OffsetVal,
         }
 
         Indices.push_back(Expr.Var);
-        Scale = 0;  // Consume scale factor!
       } else if (Offset >= ElSize) {
         // Calculate the index that we are entering into the array cell with
         unsigned Index = Offset/ElSize;
         Indices.push_back(ConstantUInt::get(Type::UIntTy, Index));
         Offset -= Index*ElSize;               // Consume part of the offset
 
-      } else {
+      } else if (!isa<PointerType>(CompTy) || CompTy == Ty) {
         // Must be indexing a small amount into the first cell of the array
         // Just index into element zero of the array here.
         //
         Indices.push_back(ConstantUInt::get(Type::UIntTy, 0));
+      } else {
+        return 0;  // Hrm. wierd, can't handle this case.  Bail
       }
       NextTy = ElTy;
     }
