@@ -71,8 +71,8 @@ href="http://llvm.cs.uiuc.edu/releases/">releases page</a>.</p>
 
 <p>This is the fourth public release of the LLVM compiler infrastructure.  This
 release primarily improves the <a href="#codequality">performance of the
-code</a> produced by all aspects of the LLVM compiler and adds some <a
-href="#newfeatures">new features</a>, though it does <a href="#bugfix">fix a few
+code</a> produced by all aspects of the LLVM compiler and adds many <a
+href="#newfeatures">new features</a>, and <a href="#bugfix">fixes a few
 bugs</a> as well.</p>
 
 <p> At this time, LLVM is known to correctly compile and run all C &amp; C++
@@ -128,6 +128,8 @@ details of the bytecode format.</li>
     being documented.</li>
 <li>LLVM now provides an <a href="LangRef.html#i_isunordered">llvm.isunordered</a> intrinsic
 for efficient implementation of unordered floating point comparisons.</li>
+<li>The llvmgcc front-end now supports the GCC builtins for ISO C99 floating
+point comparison macros (e.g., <tt>__builtin_islessequal</tt>).</li>
 </ol>
 
 </div>
@@ -526,8 +528,9 @@ work:
       We support all builtins which have a C language equivalent (e.g., 
          <tt>__builtin_cos</tt>),  <tt>__builtin_alloca</tt>, 
          <tt>__builtin_types_compatible_p</tt>, <tt>__builtin_choose_expr</tt>,
-         <tt>__builtin_constant_p</tt>, and <tt>__builtin_expect</tt> (ignored).</li>
-
+         <tt>__builtin_constant_p</tt>, and <tt>__builtin_expect</tt>
+         (currently ignored).  We also support builtins for ISO C99 floating
+         point comparison macros (e.g., <tt>__builtin_islessequal</tt>).</li>
   </ol>
 
   <p>The following extensions <b>are</b> known to be supported:</p>
