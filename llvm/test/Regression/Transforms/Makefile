@@ -8,7 +8,7 @@ DIRS  = ADCE \
 	FunctionResolve \
 	GCSE \
 	GlobalDCE \
-	IndVarSimplify \
+	IndVarsSimplify \
 	Inline \
 	InstCombine \
 	LevelRaise \
