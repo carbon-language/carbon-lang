@@ -10,7 +10,6 @@
 #ifndef LLVM_ANALYSIS_EXPRESSIONS_H
 #define LLVM_ANALYSIS_EXPRESSIONS_H
 
-#include <assert.h>
 class Type;
 class Value;
 class ConstantInt;
