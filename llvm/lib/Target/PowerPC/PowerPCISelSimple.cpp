@@ -542,61 +542,63 @@ void ISel::copyConstantToRegister(MachineBasicBlock *MBB,
     unsigned Class = getClassB(C->getType());
 
     if (Class == cLong) {
-      // Copy the value into the register pair.
-      uint64_t Val = cast<ConstantInt>(C)->getRawValue();
-      
-      if (Val < (1ULL << 16)) {
-        BuildMI(*MBB, IP, PPC32::LI, 1, R).addSImm(0);
-        BuildMI(*MBB, IP, PPC32::LI, 1, R+1).addSImm(Val & 0xFFFF);
-      } else if (Val < (1ULL << 32)) {
-        unsigned Temp = makeAnotherReg(Type::IntTy);
-        BuildMI(*MBB, IP, PPC32::LI, 1, R).addSImm(0);
-        BuildMI(*MBB, IP, PPC32::LIS, 1, Temp).addSImm((Val >> 16) & 0xFFFF);
-        BuildMI(*MBB, IP, PPC32::ORI, 2, R+1).addReg(Temp).addImm(Val & 0xFFFF);
-      } else if (Val < (1ULL << 48)) {
-        unsigned Temp = makeAnotherReg(Type::IntTy);
-        int HiBits = (Val >> 32) & 0xFFFF;
-        if (HiBits > 32767) {
-          BuildMI(*MBB, IP, PPC32::LI, 1, PPC32::R0).addImm(0);
-          BuildMI(*MBB, IP, PPC32::ORI, 2, R).addReg(PPC32::R0).addSImm(HiBits);
-        } else {
-          BuildMI(*MBB, IP, PPC32::LI, 1, R).addSImm(HiBits);
-        }
-        BuildMI(*MBB, IP, PPC32::LIS, 1, Temp).addSImm((Val >> 16) & 0xFFFF);
-        BuildMI(*MBB, IP, PPC32::ORI, 2, R+1).addReg(Temp).addImm(Val & 0xFFFF);
+      if (ConstantUInt *CUI = dyn_cast<ConstantUInt>(C)) {
+        uint64_t uval = CUI->getValue();
+        unsigned hiUVal = uval >> 32;
+        unsigned loUVal = uval;
+        ConstantUInt *CUHi = ConstantUInt::get(Type::UIntTy, hiUVal);
+        ConstantUInt *CULo = ConstantUInt::get(Type::UIntTy, loUVal);
+        copyConstantToRegister(MBB, IP, CUHi, R);
+        copyConstantToRegister(MBB, IP, CULo, R+1);
+        return;
+      } else if (ConstantSInt *CSI = dyn_cast<ConstantSInt>(C)) {
+        int64_t sval = CSI->getValue();
+        int hiSVal = sval >> 32;
+        int loSVal = sval;
+        ConstantSInt *CSHi = ConstantSInt::get(Type::IntTy, hiSVal);
+        ConstantSInt *CSLo = ConstantSInt::get(Type::IntTy, loSVal);
+        copyConstantToRegister(MBB, IP, CSHi, R);
+        copyConstantToRegister(MBB, IP, CSLo, R+1);
+        return;
       } else {
-        unsigned TempLo = makeAnotherReg(Type::IntTy);
-        unsigned TempHi = makeAnotherReg(Type::IntTy);
-        BuildMI(*MBB, IP, PPC32::LIS, 1, TempHi).addSImm((Val >> 48) & 0xFFFF);
-        BuildMI(*MBB, IP, PPC32::ORI, 2, R).addReg(TempHi)
-          .addImm((Val >> 32) & 0xFFFF);
-        BuildMI(*MBB, IP, PPC32::LIS, 1, TempLo).addSImm((Val >> 16) & 0xFFFF);
-        BuildMI(*MBB, IP, PPC32::ORI, 2, R+1).addReg(TempLo)
-          .addImm(Val & 0xFFFF);
+        std::cerr << "Unhandled long constant type!\n";
+        abort();
+      }
+    }
+    
+    assert(Class <= cInt && "Type not handled yet!");
+
+    // Handle bool
+    if (C->getType() == Type::BoolTy) {
+      BuildMI(*MBB, IP, PPC32::LI, 1, R).addSImm(C == ConstantBool::True);
+      return;
+    }
+    
+    // Handle int
+    if (ConstantUInt *CUI = dyn_cast<ConstantUInt>(C)) {
+      unsigned uval = CUI->getValue();
+      if (uval < 32768) {
+        BuildMI(*MBB, IP, PPC32::LI, 1, R).addSImm(uval);
+      } else {
+        unsigned Temp = makeAnotherReg(Type::IntTy);
+        BuildMI(*MBB, IP, PPC32::LIS, 1, Temp).addSImm(uval >> 16);
+        BuildMI(*MBB, IP, PPC32::ORI, 2, R).addReg(Temp).addImm(uval);
+      }
+      return;
+    } else if (ConstantSInt *CSI = dyn_cast<ConstantSInt>(C)) {
+      int sval = CSI->getValue();
+      if (sval < 32768 && sval >= -32768) {
+        BuildMI(*MBB, IP, PPC32::LI, 1, R).addSImm(sval);
+      } else {
+        unsigned Temp = makeAnotherReg(Type::IntTy);
+        BuildMI(*MBB, IP, PPC32::LIS, 1, Temp).addSImm(sval >> 16);
+        BuildMI(*MBB, IP, PPC32::ORI, 2, R).addReg(Temp).addImm(sval);
       }
       return;
     }
-
-    assert(Class <= cInt && "Type not handled yet!");
-
-    if (C->getType() == Type::BoolTy) {
-      BuildMI(*MBB, IP, PPC32::LI, 1, R).addSImm(C == ConstantBool::True);
-    } else if (Class == cByte || Class == cShort) {
-      ConstantInt *CI = cast<ConstantInt>(C);
-      BuildMI(*MBB, IP, PPC32::LI, 1, R).addSImm(CI->getRawValue());
-    } else {
-      ConstantInt *CI = cast<ConstantInt>(C);
-      int TheVal = CI->getRawValue() & 0xFFFFFFFF;
-      if (TheVal < 32768 && TheVal >= -32768) {
-        BuildMI(*MBB, IP, PPC32::LI, 1, R).addSImm(CI->getRawValue());
-      } else {
-        unsigned TmpReg = makeAnotherReg(Type::IntTy);
-        BuildMI(*MBB, IP, PPC32::LIS, 1, TmpReg)
-          .addSImm(CI->getRawValue() >> 16);
-        BuildMI(*MBB, IP, PPC32::ORI, 2, R).addReg(TmpReg)
-          .addImm(CI->getRawValue() & 0xFFFF);
-      }
-    }
+    
+    std::cerr << "Unhandled integer constant!\n";
+    abort();
   } else if (ConstantFP *CFP = dyn_cast<ConstantFP>(C)) {
     // We need to spill the constant to memory...
     MachineConstantPool *CP = F->getConstantPool();
