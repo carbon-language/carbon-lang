@@ -14,6 +14,7 @@
 #ifndef LLVM_TOOLS_LLVMC_COMPILERDRIVER_H
 #define LLVM_TOOLS_LLVMC_COMPILERDRIVER_H
 
+#include "llvm/System/Path.h"
 #include <string>
 #include <vector>
 
@@ -29,6 +30,10 @@ namespace llvm {
     /// @name Types
     /// @{
     public:
+      /// @brief A vector of strings, commonly used
+      typedef std::vector<std::string> StringVector;
+
+      /// @brief The phases of processing that llvmc understands
       enum Phases {
         PREPROCESSING, ///< Source language combining, filtering, substitution
         TRANSLATION,   ///< Translate source -> LLVM bytecode/assembly
@@ -37,20 +42,31 @@ namespace llvm {
         ASSEMBLY,      ///< Convert program to executable
       };
 
+      /// @brief The levels of optimization llvmc understands
       enum OptimizationLevels {
-        OPT_NONE,                 ///< Zippo optimizations, nada, nil, none.
         OPT_FAST_COMPILE,         ///< Optimize to make >compile< go faster
         OPT_SIMPLE,               ///< Standard/simple optimizations
         OPT_AGGRESSIVE,           ///< Aggressive optimizations
         OPT_LINK_TIME,            ///< Aggressive + LinkTime optimizations
-        OPT_AGGRESSIVE_LINK_TIME  ///< Make it go way fast!
+        OPT_AGGRESSIVE_LINK_TIME, ///< Make it go way fast!
+        OPT_NONE                  ///< No optimizations. Keep this at the end!
+      };
+
+      /// @brief Action specific flags
+      enum ConfigurationFlags {
+        REQUIRED_FLAG        = 0x0001, ///< Should the action always be run?
+        GROKS_DASH_O_FLAG    = 0x0002, ///< Understands the -On options?
+        PREPROCESSES_FLAG    = 0x0004, ///< Does this action preprocess?
+        OPTIMIZES_FLAG       = 0x0008, ///< Does this action optimize?
+        GROKS_O10N_FLAG      = 0x0010, ///< Understands optimization options?
+        FLAGS_MASK           = 0x001F, ///< Union of all flags
       };
 
       /// This type is the input list to the CompilerDriver. It provides
       /// a vector of filename/filetype pairs. The filetype is used to look up
       /// the configuration of the actions to be taken by the driver.
       /// @brief The Input Data to the execute method
-      typedef std::vector<std::pair<std::string,std::string> > InputList;
+      typedef std::vector<std::pair<sys::Path,std::string> > InputList;
 
       /// This type is read from configuration files or otherwise provided to
       /// the CompilerDriver through a "ConfigDataProvider". It serves as both
@@ -58,28 +74,25 @@ namespace llvm {
       /// @brief A structure to hold the action data for a given source
       /// language.
       struct Action {
-        Action() : inputAt(0) , outputAt(0) {}
-        std::string program;            ///< The program to execve
-        std::vector<std::string> args;  ///< Arguments to the program
-        size_t inputAt;                 ///< Argument index to insert input file
-        size_t outputAt;                ///< Argument index to insert output file
+        Action() : inputAt(0) , outputAt(0), flags(0) {}
+        sys::Path program;     ///< The program to execve
+        StringVector args;     ///< Arguments to the program
+        size_t inputAt;        ///< Argument index to insert input file
+        size_t outputAt;       ///< Argument index to insert output file
+        unsigned flags;        ///< Action specific flags
+        void set(unsigned fl ) { flags |= fl; }
+        void clear(unsigned fl) { flags &= (FLAGS_MASK ^ fl); }
+        bool isSet(unsigned fl) { return flags&fl != 0; }
       };
 
       struct ConfigData {
-        ConfigData() : TranslatorPreprocesses(false),
-          TranslatorOptimizes(false),
-          TranslatorGroksDashO(false),
-          PreprocessorNeeded(false) {}
-        std::string langName;       ///< The name of the source language 
-        bool TranslatorPreprocesses;///< Translator program will pre-process
-        bool TranslatorOptimizes;   ///< Translator program will optimize too
-        bool TranslatorGroksDashO;  ///< Translator understands -O arguments
-        bool PreprocessorNeeded;    ///< Preprocessor is needed for translation
-        Action PreProcessor;        ///< PreProcessor command line
-        Action Translator;          ///< Translator command line
-        Action Optimizer;           ///< Optimizer command line
-        Action Assembler;           ///< Assembler command line
-        Action Linker;              ///< Linker command line
+        std::string langName;           ///< The name of the source language 
+        std::vector<StringVector> opts; ///< The o10n options for each level
+        Action PreProcessor;            ///< PreProcessor command line
+        Action Translator;              ///< Translator command line
+        Action Optimizer;               ///< Optimizer command line
+        Action Assembler;               ///< Assembler command line
+        Action Linker;                  ///< Linker command line
       };
 
       /// This pure virtual interface class defines the interface between the
@@ -109,7 +122,7 @@ namespace llvm {
       virtual void error(const std::string& errmsg);
 
       /// @brief Execute the actions requested for the given input list.
-      virtual int execute(const InputList& list, const std::string& output);
+      virtual int execute(const InputList& list, const sys::Path& output);
 
     /// @}
     /// @name Mutators
@@ -148,10 +161,40 @@ namespace llvm {
         machine = machineName;
       }
 
+      /// @brief Set Preprocessor specific options
+      void setPreprocessorOptions(const std::vector<std::string>& opts) {
+        PreprocessorOptions = opts;
+      }
+
+      /// @brief Set Translator specific options
+      void setTranslatorOptions(const std::vector<std::string>& opts) {
+        TranslatorOptions = opts;
+      }
+
+      /// @brief Set Optimizer specific options
+      void setOptimizerOptions(const std::vector<std::string>& opts) {
+        OptimizerOptions = opts;
+      }
+
+      /// @brief Set Assembler specific options
+      void setAssemblerOptions(const std::vector<std::string>& opts) {
+        AssemblerOptions = opts;
+      }
+
+      /// @brief Set Linker specific options
+      void setLinkerOptions(const std::vector<std::string>& opts) {
+        LinkerOptions = opts;
+      }
+
+      /// @brief Set Library Paths
+      void setLibraryPaths(const std::vector<std::string>& paths) {
+        LibraryPaths = paths;
+      }
+
       /// @brief Set the list of library paths to be searched for
       /// libraries.
       void addLibraryPath( const std::string& libPath ) {
-        libPaths.push_back(libPath);
+        LibraryPaths.push_back(libPath);
       }
 
     /// @}
@@ -176,7 +219,12 @@ namespace llvm {
       bool emitRawCode;             ///< Emit Raw (unoptimized) code?
       bool emitNativeCode;          ///< Emit native code instead of bytecode?
       std::string machine;          ///< Target machine name
-      std::vector<std::string> libPaths; ///< list of dirs to find libraries
+      std::vector<std::string> LibraryPaths;
+      std::vector<std::string> PreprocessorOptions; 
+      std::vector<std::string> TranslatorOptions;
+      std::vector<std::string> OptimizerOptions;
+      std::vector<std::string> AssemblerOptions;
+      std::vector<std::string> LinkerOptions;
 
     /// @}
 

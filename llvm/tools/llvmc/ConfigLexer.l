@@ -38,6 +38,10 @@
     if (result == 0 ) result = YY_NULL; \
   }
 
+#define YY_DECL ConfigLexerTokens llvm::Configlex()
+
+#define yyterminate() { return EOFTOK; }
+
 using namespace llvm;
 
 /* Conversion of text ints to binary */
@@ -62,11 +66,17 @@ OPTIMIZER       optimizer|Optimizer|OPTIMIZER
 ASSEMBLER       assembler|Assembler|ASSEMBLER
 LINKER          linker|Linker|LINKER
 NAME            name|Name|NAME
-NEEDED          needed|Needed|NEEDED
+REQUIRED        required|Required|REQUIRED
 COMMAND         command|Command|COMMAND
 PREPROCESSES    preprocesses|PreProcesses|PREPROCESSES
 GROKS_DASH_O    groks_dash_O|Groks_Dash_O|GROKS_DASH_O
+GROKS_O10N      groks_optimization|Groks_Optimization|GROKS_OPTIMIZATION
 OPTIMIZES       optimizes|Optimizes|OPTIMIZES
+OPT1            opt1|Opt1|OPT1
+OPT2            opt2|Opt2|OPT2
+OPT3            opt3|Opt3|OPT3
+OPT4            opt4|Opt4|OPT4
+OPT5            opt5|Opt5|OPT5
 Comment         \#[^\n]*
 NewLine         \n
 White           [ \t]*
@@ -84,7 +94,8 @@ No              no|No|NO
 
 %%
 
-{NewLine}       { in_value = false; ConfigLexerLine++; return EOLTOK; }
+{NewLine}       { in_value = false; return EOLTOK; }
+{Eq}            { in_value = true; return EQUALS; }
 {Comment}       { /* Ignore comments */ }
 {White}         { /* Ignore whitespace */ }
 
@@ -102,19 +113,29 @@ No              no|No|NO
                     return OPTION; } else return LINKER; }
 {NAME}          { if (in_value) { ConfigLexerData.StringVal = "name";
                     return OPTION; } else return NAME; }
-{NEEDED}        { if (in_value) { ConfigLexerData.StringVal = "needed";
-                    return OPTION; } else return NEEDED; }
+{REQUIRED}      { if (in_value) { ConfigLexerData.StringVal = "required";
+                    return OPTION; } else return REQUIRED; }
 {COMMAND}       { if (in_value) { ConfigLexerData.StringVal = "command";
                     return OPTION; } else return COMMAND; }
 {PREPROCESSES}  { if (in_value) { ConfigLexerData.StringVal = "preprocesses";
                     return OPTION; } else return PREPROCESSES; }
 {GROKS_DASH_O}  { if (in_value) { ConfigLexerData.StringVal = "groks_dash_O";
                     return OPTION; } else return GROKS_DASH_O; }
+{GROKS_O10N}    { if (in_value) { ConfigLexerData.StringVal = 
+                    "groks_optimization"; return OPTION; } 
+                    else return GROKS_O10N; }
 {OPTIMIZES}     { if (in_value) { ConfigLexerData.StringVal = "optimizes";
                     return OPTION; } else return OPTIMIZES; }
-{Sep}           { if (in_value) { ConfigLexerData.StringVal = yytext;
-                    return OPTION; } }
-
+{OPT1}          { if (in_value) { ConfigLexerData.StringVal = "opt1";
+                    return OPTION; } else return OPT1; }
+{OPT2}          { if (in_value) { ConfigLexerData.StringVal = "opt2";
+                    return OPTION; } else return OPT2; }
+{OPT3}          { if (in_value) { ConfigLexerData.StringVal = "opt3";
+                    return OPTION; } else return OPT3; }
+{OPT4}          { if (in_value) { ConfigLexerData.StringVal = "opt4";
+                    return OPTION; } else return OPT4; }
+{OPT5}          { if (in_value) { ConfigLexerData.StringVal = "opt5";
+                    return OPTION; } else return OPT5; }
 @in@            { if (in_value) return IN_SUBST; else return ERRORTOK;  }
 @out@           { if (in_value) return OUT_SUBST; else return ERRORTOK; }
 {True}          { if (in_value) return TRUETOK; else return ERRORTOK; }
@@ -124,12 +145,14 @@ No              no|No|NO
 {Off}           { if (in_value) return FALSETOK; else return ERRORTOK; }
 {No}            { if (in_value) return FALSETOK; else return ERRORTOK; }
 
-{Eq}            { in_value = true; return EQUALS; }
 {Option}        { ConfigLexerData.StringVal = yytext; return OPTION; }
 {Integer}       { ConfigLexerData.IntegerVal = IntToVal(yytext); return INTEGER; }
 {String}        { yytext[yyleng-1] = 0;          // nuke end quote
                   ConfigLexerData.StringVal = yytext+1;  // Nuke start quote
                   return STRING;
                 }
+{Sep}           { if (in_value) { ConfigLexerData.StringVal = yytext;
+                    return OPTION; } }
+
 
 %%

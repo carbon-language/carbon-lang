@@ -25,7 +25,6 @@ struct ConfigLexerInfo
 };
 
 extern ConfigLexerInfo ConfigLexerData;
-extern unsigned ConfigLexerLine;
 
 class InputProvider {
   public:
@@ -65,12 +64,20 @@ enum ConfigLexerTokens {
   ASSEMBLER,    ///< The item "assembler" (and case variants)
   LINKER,       ///< The item "linker" (and case variants)
   NAME,         ///< The item "name" (and case variants)
-  NEEDED,       ///< The item "needed" (and case variants)
+  REQUIRED,     ///< The item "required" (and case variants)
   COMMAND,      ///< The item "command" (and case variants)
   PREPROCESSES, ///< The item "preprocesses" (and case variants)
   GROKS_DASH_O, ///< The item "groks_dash_O" (and case variants)
+  GROKS_O10N,   ///< The item "groks_optimization" (and case variants)
   OPTIMIZES,    ///< The item "optimizes" (and case variants)
+  OPT1,         ///< The item "opt1" (and case variants)
+  OPT2,         ///< The item "opt2" (and case variants)
+  OPT3,         ///< The item "opt3" (and case variants)
+  OPT4,         ///< The item "opt4" (and case variants)
+  OPT5,         ///< The item "opt5" (and case variants)
 };
+
+extern ConfigLexerTokens Configlex();
 
 }
 

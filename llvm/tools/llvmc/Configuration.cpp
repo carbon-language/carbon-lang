@@ -21,16 +21,15 @@
 
 using namespace llvm;
 
-extern int ::Configlex();
+extern int ::Configlineno;
 
 namespace llvm {
   ConfigLexerInfo ConfigLexerData;
   InputProvider* ConfigLexerInput = 0;
-  unsigned ConfigLexerLine = 1;
 
   InputProvider::~InputProvider() {}
   void InputProvider::error(const std::string& msg) {
-    std::cerr << name << ":" << ConfigLexerLine << ": Error: " << msg << "\n";
+    std::cerr << name << ":" << Configlineno << ": Error: " << msg << "\n";
     errCount++;
   }
 
@@ -66,9 +65,9 @@ namespace {
       std::ifstream F;
   };
 
-  struct ParseContext
+  struct Parser
   {
-    int token;
+    ConfigLexerTokens token;
     InputProvider* provider;
     CompilerDriver::ConfigData* confDat;
     CompilerDriver::Action* action;
@@ -131,38 +130,47 @@ namespace {
       return result;
     }
 
-    void parseLang() {
-      if ( next() == NAME ) {
-        confDat->langName = parseName();
-      } else if (token == TRANSLATOR) {
-        switch (next()) {
-          case PREPROCESSES:
-            confDat->TranslatorPreprocesses = parseBoolean();
-            break;
-          case OPTIMIZES:
-            confDat->TranslatorOptimizes = parseBoolean();
-            break;
-          case GROKS_DASH_O:
-            confDat->TranslatorGroksDashO = parseBoolean();
-            break;
-          default:
-            error("Invalid lang.translator identifier");
-            break;
+    void parseOptionList(CompilerDriver::StringVector& optList ) {
+      while (next_is_real()) {
+        if (token == STRING || token == OPTION)
+          optList.push_back(ConfigLexerData.StringVal);
+        else {
+          error("Expecting a program option", false);
+          break;
         }
       }
-      else if (token == PREPROCESSOR) {
-        if (next() == NEEDED)
-          confDat->PreprocessorNeeded = parseBoolean();
-      }
-      else {
-        error("Expecting valid identifier after 'lang.'");
+    }
+
+    void parseLang() {
+      switch (next() ) {
+        case NAME: 
+          confDat->langName = parseName(); 
+          break;
+        case OPT1: 
+          parseOptionList(confDat->opts[CompilerDriver::OPT_FAST_COMPILE]); 
+          break;
+        case OPT2: 
+          parseOptionList(confDat->opts[CompilerDriver::OPT_SIMPLE]); 
+          break;
+        case OPT3: 
+          parseOptionList(confDat->opts[CompilerDriver::OPT_AGGRESSIVE]); 
+          break;
+        case OPT4: 
+          parseOptionList(confDat->opts[CompilerDriver::OPT_LINK_TIME]); 
+          break;
+        case OPT5: 
+          parseOptionList(
+            confDat->opts[CompilerDriver::OPT_AGGRESSIVE_LINK_TIME]);
+          break;
+        default:   
+          error("Expecting 'name' or 'optN' after 'lang.'"); 
+          break;
       }
     }
 
     void parseCommand(CompilerDriver::Action& action) {
       if (next() == EQUALS) {
-        next();
-        if (token == EOLTOK) {
+        if (next() == EOLTOK) {
           // no value (valid)
           action.program.clear();
           action.args.clear();
@@ -175,79 +183,161 @@ namespace {
             error("Expecting a program name");
           }
           while (next_is_real()) {
-            if (token == STRING || token == OPTION)
+            if (token == STRING || token == OPTION) {
               action.args.push_back(ConfigLexerData.StringVal);
-            else if (token == IN_SUBST) {
+            } else if (token == IN_SUBST) {
               action.inputAt = action.args.size();
-              action.args.push_back("in");
+              action.args.push_back("@in@");
             } else if (token == OUT_SUBST) {
               action.outputAt = action.args.size();
-              action.args.push_back("out");
-            } else
+              action.args.push_back("@out@");
+            } else {
               error("Expecting a program argument", false);
+              break;
+            }
           }
         }
       }
     }
 
-    void parsePreProcessor() {
-      if (next() != COMMAND) {
-        error("Expecting 'command'");
-        return;
+    void parsePreprocessor() {
+      switch (next()) {
+        case COMMAND:
+          parseCommand(confDat->PreProcessor);
+          break;
+        case REQUIRED:
+          if (parseBoolean())
+            confDat->PreProcessor.set(CompilerDriver::REQUIRED_FLAG);
+          else
+            confDat->PreProcessor.clear(CompilerDriver::REQUIRED_FLAG);
+          break;
+        default:
+          error("Expecting 'command' or 'required'");
+          break;
       }
-      parseCommand(confDat->PreProcessor);
     }
 
     void parseTranslator() {
-      if (next() != COMMAND) {
-        error("Expecting 'command'");
-        return;
+      switch (next()) {
+        case COMMAND: 
+          parseCommand(confDat->Translator);
+          break;
+        case REQUIRED:
+          if (parseBoolean())
+            confDat->Translator.set(CompilerDriver::REQUIRED_FLAG);
+          else
+            confDat->Translator.clear(CompilerDriver::REQUIRED_FLAG);
+          break;
+        case PREPROCESSES:
+          if (parseBoolean())
+            confDat->Translator.set(CompilerDriver::PREPROCESSES_FLAG);
+          else 
+            confDat->Translator.clear(CompilerDriver::PREPROCESSES_FLAG);
+          break;
+        case OPTIMIZES:
+          if (parseBoolean())
+            confDat->Translator.set(CompilerDriver::OPTIMIZES_FLAG);
+          else
+            confDat->Translator.clear(CompilerDriver::OPTIMIZES_FLAG);
+          break;
+        case GROKS_DASH_O:
+          if (parseBoolean())
+            confDat->Translator.set(CompilerDriver::GROKS_DASH_O_FLAG);
+          else
+            confDat->Translator.clear(CompilerDriver::GROKS_DASH_O_FLAG);
+          break;
+        case GROKS_O10N:
+          if (parseBoolean())
+            confDat->Translator.set(CompilerDriver::GROKS_O10N_FLAG);
+          else
+            confDat->Translator.clear(CompilerDriver::GROKS_O10N_FLAG);
+          break;
+        default:
+          error("Expecting 'command', 'required', 'preprocesses', "
+                "'groks_dash_O' or 'optimizes'");
+          break;
       }
-      parseCommand(confDat->Translator);
     }
 
     void parseOptimizer() {
-      if (next() != COMMAND) {
-        error("Expecting 'command'");
-        return;
+      switch (next()) {
+        case COMMAND:
+          parseCommand(confDat->Optimizer);
+          break;
+        case GROKS_DASH_O:
+          if (parseBoolean())
+            confDat->Optimizer.set(CompilerDriver::GROKS_DASH_O_FLAG);
+          else
+            confDat->Optimizer.clear(CompilerDriver::GROKS_DASH_O_FLAG);
+          break;
+        case GROKS_O10N:
+          if (parseBoolean())
+            confDat->Optimizer.set(CompilerDriver::GROKS_O10N_FLAG);
+          else
+            confDat->Optimizer.clear(CompilerDriver::GROKS_O10N_FLAG);
+          break;
+        default:
+          error("Expecting 'command' or 'groks_dash_O'");
+          break;
       }
-      parseCommand(confDat->Optimizer);
     }
 
     void parseAssembler() {
-      if (next() != COMMAND) {
-        error("Expecting 'command'");
-        return;
+      switch(next()) {
+        case COMMAND:
+          parseCommand(confDat->Assembler);
+          break;
+        default:
+          error("Expecting 'command'");
+          break;
       }
-      parseCommand(confDat->Assembler);
     }
 
     void parseLinker() {
-      if (next() != COMMAND) {
-        error("Expecting 'command'");
-        return;
+      switch(next()) {
+        case COMMAND:
+          parseCommand(confDat->Linker);
+          break;
+        case GROKS_DASH_O:
+          if (parseBoolean())
+            confDat->Linker.set(CompilerDriver::GROKS_DASH_O_FLAG);
+          else
+            confDat->Linker.clear(CompilerDriver::GROKS_DASH_O_FLAG);
+          break;
+        case GROKS_O10N:
+          if (parseBoolean())
+            confDat->Linker.set(CompilerDriver::GROKS_O10N_FLAG);
+          else
+            confDat->Linker.clear(CompilerDriver::GROKS_O10N_FLAG);
+          break;
+        default:
+          error("Expecting 'command'");
+          break;
       }
-      parseCommand(confDat->Linker);
     }
 
     void parseAssignment() {
       switch (token) {
-        case LANG:          return parseLang();
-        case PREPROCESSOR:  return parsePreProcessor();
-        case TRANSLATOR:    return parseTranslator();
-        case OPTIMIZER:     return parseOptimizer();
-        case ASSEMBLER:     return parseAssembler();
-        case LINKER:        return parseLinker();
+        case LANG:          parseLang(); break;
+        case PREPROCESSOR:  parsePreprocessor(); break;
+        case TRANSLATOR:    parseTranslator(); break;
+        case OPTIMIZER:     parseOptimizer(); break;
+        case ASSEMBLER:     parseAssembler(); break;
+        case LINKER:        parseLinker(); break;
         case EOLTOK:        break; // just ignore
         case ERRORTOK:
         default:          
-          error("Invalid top level configuration item identifier");
+          error("Invalid top level configuration item");
+          break;
       }
     }
 
     void parseFile() {
-      while ( next() != 0 ) {
-        parseAssignment();
+      while ( next() != EOFTOK ) {
+        if (token == ERRORTOK)
+          error("Invalid token");
+        else if (token != EOLTOK)
+          parseAssignment();
       }
       provider->checkErrors();
     }
@@ -255,12 +345,12 @@ namespace {
 
   void
   ParseConfigData(InputProvider& provider, CompilerDriver::ConfigData& confDat) {
-    ParseContext ctxt;
-    ctxt.token = 0;
-    ctxt.provider = &provider;
-    ctxt.confDat = &confDat;
-    ctxt.action = 0;
-    ctxt.parseFile();
+    Parser p;
+    p.token = EOFTOK;
+    p.provider = &provider;
+    p.confDat = &confDat;
+    p.action = 0;
+    p.parseFile();
   }
 }
 

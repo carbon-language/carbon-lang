@@ -69,19 +69,23 @@ static cl::opt<CompilerDriver::OptimizationLevels> OptLevel(
 //===          TOOL OPTIONS
 //===------------------------------------------------------------------------===
 
-static cl::opt<std::string> PPToolOpts("Tpp", cl::ZeroOrMore,
+static cl::list<std::string> PreprocessorToolOpts("Tpre", cl::ZeroOrMore,
   cl::desc("Pass specific options to the pre-processor"), 
   cl::value_desc("option"));
 
-static cl::opt<std::string> AsmToolOpts("Tasm", cl::ZeroOrMore,
+static cl::list<std::string> TranslatorToolOpts("Ttrn", cl::ZeroOrMore,
   cl::desc("Pass specific options to the assembler"),
   cl::value_desc("option"));
 
-static cl::opt<std::string> OptToolOpts("Topt", cl::ZeroOrMore,
+static cl::list<std::string> AssemblerToolOpts("Tasm", cl::ZeroOrMore,
+  cl::desc("Pass specific options to the assembler"),
+  cl::value_desc("option"));
+
+static cl::list<std::string> OptimizerToolOpts("Topt", cl::ZeroOrMore,
   cl::desc("Pass specific options to the optimizer"),
   cl::value_desc("option"));
 
-static cl::opt<std::string> LinkToolOpts("Tlink", cl::ZeroOrMore,
+static cl::list<std::string> LinkerToolOpts("Tlnk", cl::ZeroOrMore,
   cl::desc("Pass specific options to the linker"),
   cl::value_desc("option"));
 
@@ -142,8 +146,11 @@ static cl::opt<std::string> ConfigDir("config-dir", cl::Optional,
   cl::desc("Specify a configuration directory to override defaults"),
   cl::value_desc("directory"));
 
-static cl::opt<bool> EmitRawCode("emit-raw-code", cl::Hidden,
+static cl::opt<bool> EmitRawCode("emit-raw-code", cl::Hidden, cl::Optional,
   cl::desc("Emit raw, unoptimized code"));
+
+static cl::opt<bool> PipeCommands("pipe", cl::Optional,
+  cl::desc("Invoke sub-commands by linking input/output with pipes"));
 
 //===------------------------------------------------------------------------===
 //===          POSITIONAL OPTIONS
@@ -200,6 +207,8 @@ int main(int argc, char **argv) {
     std::cerr << argv[0] << ": Not implemented yet: -native";
   if (EmitRawCode)
     std::cerr << argv[0] << ": Not implemented yet: -emit-raw-code";
+  if (PipeCommands)
+    std::cerr << argv[0] << ": Not implemented yet: -pipe";
 
   // Default the output file, only if we're going to try to link
   if (OutputFilename.empty() && OptLevel == CompilerDriver::LINKING)
@@ -221,10 +230,12 @@ int main(int argc, char **argv) {
   CD.setOutputMachine(OutputMachine);
   CD.setEmitNativeCode(Native);
   CD.setEmitRawCode(EmitRawCode);
-  std::vector<std::string>::iterator pathIt = LibPaths.begin();
-  while ( pathIt != LibPaths.end() ) {
-      CD.addLibraryPath( *pathIt++ );
-  }
+  CD.setLibraryPaths(LibPaths);
+  CD.setPreprocessorOptions(PreprocessorToolOpts);
+  CD.setTranslatorOptions(TranslatorToolOpts);
+  CD.setOptimizerOptions(OptimizerToolOpts);
+  CD.setAssemblerOptions(AssemblerToolOpts);
+  CD.setLinkerOptions(LinkerToolOpts);
 
   // Prepare the list of files to be compiled by the CompilerDriver.
   CompilerDriver::InputList InpList;
