@@ -50,12 +50,12 @@ struct ValueToDefVecMap:public hash_map<const Instruction*,RefVec> {
 
 // class Modulo SchedGraphNode
 
-ModuloSchedGraphNode::ModuloSchedGraphNode(unsigned int _nodeId,
-                                           const BasicBlock * _bb,
-                                           const Instruction * _inst,
+ModuloSchedGraphNode::ModuloSchedGraphNode(unsigned int in_nodeId,
+                                           const BasicBlock * in_bb,
+                                           const Instruction * in_inst,
                                            int indexInBB,
                                            const TargetMachine & target)
-:SchedGraphNodeCommon(_nodeId, _bb, indexInBB), inst(_inst)
+:SchedGraphNodeCommon(in_nodeId, indexInBB), inst(in_inst)
 {
   if (inst) {
     //FIXME: find the latency 
@@ -298,8 +298,7 @@ bool ModuloSchedGraph::isLoop() {
   //only if the last instruction in the basicblock is branch instruction and 
   //there is at least an option to branch itself
 
-  assert(bbVec.size() == 1 && "only 1 basicblock in a graph");
-  const BasicBlock *bb = bbVec[0];
+  assert(this->bb&& "the basicblock is not empty");
   const Instruction *inst = &(bb->back());
   if (BranchInst::classof(inst))
     for (unsigned i = 0; i < ((BranchInst *) inst)->getNumSuccessors();
@@ -308,7 +307,7 @@ bool ModuloSchedGraph::isLoop() {
       if (sb == bb)
         return true;
     }
-
+  
   return false;
 
 }
@@ -674,7 +673,6 @@ void ModuloSchedGraph::orderNodes() {
   oNodes.clear();
 
   std::vector < ModuloSchedGraphNode * >set;
-  const BasicBlock *bb = bbVec[0];
   unsigned numNodes = bb->size();
 
   // first order all the sets
@@ -873,9 +871,8 @@ void ModuloSchedGraph::orderNodes() {
 
 void ModuloSchedGraph::buildGraph(const TargetMachine & target)
 {
-  const BasicBlock *bb = bbVec[0];
 
-  assert(bbVec.size() == 1 && "only handling a single basic block here");
+  assert(this->bb && "The basicBlock is NULL?");
 
   // Use this data structure to note all machine operands that compute
   // ordinary LLVM values.  These must be computed defs (i.e., instructions). 
@@ -1277,10 +1274,9 @@ void ModuloSchedGraph::dump(const BasicBlock * bb, std::ostream & os)
 void ModuloSchedGraph::dump() const
 {
   DEBUG(std::cerr << " ModuloSchedGraph for basic Blocks:");
-  for (unsigned i = 0, N = bbVec.size(); i < N; i++) {
-    DEBUG(std::cerr << (bbVec[i]->hasName()? bbVec[i]->getName() : "block")
-          << " (" << bbVec[i] << ")" << ((i == N - 1) ? "" : ", "));
-  }
+
+  DEBUG(std::cerr << (bb->hasName()? bb->getName() : "block")
+	<< " (" << bb << ")" <<  "");
 
   DEBUG(std::cerr << "\n\n    Actual Root nodes : ");
   for (unsigned i = 0, N = graphRoot->outEdges.size(); i < N; i++)
@@ -1290,7 +1286,7 @@ void ModuloSchedGraph::dump() const
   DEBUG(std::cerr << "\n    Graph Nodes:\n");
   //for (const_iterator I=begin(); I != end(); ++I)
   //DEBUG(std::cerr << "\n" << *I->second;
-  unsigned numNodes = bbVec[0]->size();
+  unsigned numNodes = bb->size();
   for (unsigned i = 2; i < numNodes + 2; i++) {
     ModuloSchedGraphNode *node = getNode(i);
     DEBUG(std::cerr << "\n" << *node);
@@ -1301,7 +1297,7 @@ void ModuloSchedGraph::dump() const
 
 void ModuloSchedGraph::dumpNodeProperty() const
 {
-  const BasicBlock *bb = bbVec[0];
+
   unsigned numNodes = bb->size();
   for (unsigned i = 2; i < numNodes + 2; i++) {
     ModuloSchedGraphNode *node = getNode(i);
@@ -1317,8 +1313,11 @@ void ModuloSchedGraph::dumpNodeProperty() const
 void ModuloSchedGraphSet::buildGraphsForMethod(const Function *F,
                                                const TargetMachine &target)
 {
-  for (Function::const_iterator BI = F->begin(); BI != F->end(); ++BI)
-    addGraph(new ModuloSchedGraph(BI, target));
+  for (Function::const_iterator BI = F->begin(); BI != F->end(); ++BI){
+    const BasicBlock* local_bb;
+    local_bb=BI;
+    addGraph(new ModuloSchedGraph((BasicBlock*)local_bb, target));
+  }
 }
 
 std::ostream& operator<<(std::ostream &os,

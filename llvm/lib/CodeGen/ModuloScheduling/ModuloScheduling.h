@@ -65,7 +65,7 @@ public:
     graph(_graph), target(graph.getTarget()), oNodes(graph.getONodes())
   {
     II = graph.getMII();
-    bb = (BasicBlock *) graph.getBasicBlocks()[0];
+    bb = graph.getBasicBlock();
     instrScheduling();
   };
 

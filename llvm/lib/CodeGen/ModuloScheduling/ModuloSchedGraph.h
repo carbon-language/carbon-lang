@@ -56,6 +56,7 @@ public:
   const unsigned getInstOpcode() const {
     return inst->getOpcode();
   }
+
   //return whether the node is NULL
   bool isNullNode() const {
     return (inst == NULL);
@@ -138,6 +139,9 @@ class ModuloSchedGraph :
   protected hash_map<const Instruction*,ModuloSchedGraphNode*> {
 
 private:
+
+  BasicBlock* bb;
+  
   //iteration Interval
   int MII;
 
@@ -153,14 +157,14 @@ private:
   typedef std::vector<ModuloSchedGraphNode*> NodeVec;
 
   //the function to compute properties
-  void computeNodeASAP(const BasicBlock *bb);
-  void computeNodeALAP(const BasicBlock *bb);
-  void computeNodeMov(const BasicBlock *bb);
-  void computeNodeDepth(const BasicBlock *bb);
-  void computeNodeHeight(const BasicBlock *bb);
+  void computeNodeASAP(const BasicBlock * in_bb);
+  void computeNodeALAP(const BasicBlock * in_bb);
+  void computeNodeMov(const BasicBlock *  in_bb);
+  void computeNodeDepth(const BasicBlock * in_bb);
+  void computeNodeHeight(const BasicBlock * in_bb);
 
   //the function to compute node property
-  void computeNodeProperty(const BasicBlock *bb);
+  void computeNodeProperty(const BasicBlock * in_bb);
 
   //the function to sort nodes
   void orderNodes();
@@ -220,6 +224,13 @@ public:
   const TargetMachine & getTarget() {
     return target;
   }
+
+  //get the basic block
+  BasicBlock* getBasicBlock() const {
+    return bb;
+  }
+
+
   //get the iteration interval
   const int getMII() {
     return MII;
@@ -265,8 +276,9 @@ private:
   friend class ModuloSchedGraphSet;     //give access to ctor
 
 public:
-  ModuloSchedGraph(const BasicBlock *bb, const TargetMachine &_target)
-    :SchedGraphCommon(bb), target(_target)
+  ModuloSchedGraph(BasicBlock * in_bb, 
+		   const TargetMachine & in_target)
+    :SchedGraphCommon(), bb(in_bb),target(in_target)
   {
     buildGraph(target);
   }
