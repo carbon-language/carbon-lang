@@ -284,15 +284,15 @@ void V8Printer::emitGlobalConstant(const Constant *CV) {
     O << ".byte";
     break;
   case Type::UShortTyID: case Type::ShortTyID:
-    O << ".word";
+    O << ".half";
     break;
   case Type::FloatTyID: case Type::PointerTyID:
   case Type::UIntTyID: case Type::IntTyID:
-    O << ".long";
+    O << ".word";
     break;
   case Type::DoubleTyID:
   case Type::ULongTyID: case Type::LongTyID:
-    O << ".quad";
+    O << ".xword";
     break;
   default:
     assert (0 && "Can't handle printing this type of thing");
