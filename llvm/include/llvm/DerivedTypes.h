@@ -156,8 +156,7 @@ public:
 
 
   virtual const Type *getContainedType(unsigned i) const {
-    return i == 0 ? ResultType : 
-                    (i <= ParamTys.size() ? ParamTys[i-1].get() : 0);
+    return i == 0 ? ResultType.get() : ParamTys[i-1].get();
   }
   virtual unsigned getNumContainedTypes() const { return ParamTys.size()+1; }
 
@@ -239,7 +238,7 @@ public:
   inline const ElementTypes &getElementTypes() const { return ETypes; }
 
   virtual const Type *getContainedType(unsigned i) const { 
-    return i < ETypes.size() ? ETypes[i].get() : 0;
+    return ETypes[i].get();
   }
   virtual unsigned getNumContainedTypes() const { return ETypes.size(); }
 
@@ -289,7 +288,7 @@ public:
   inline const Type *getElementType() const { return ElementType; }
 
   virtual const Type *getContainedType(unsigned i) const { 
-    return i == 0 ? ElementType.get() : 0;
+    return ElementType.get();
   }
   virtual unsigned getNumContainedTypes() const { return 1; }
 

@@ -202,11 +202,11 @@ public:
 
   /// getContainedType - This method is used to implement the type iterator
   /// (defined a the end of the file).  For derived types, this returns the
-  /// types 'contained' in the derived type, returning 0 when 'i' becomes
-  /// invalid. This allows the user to iterate over the types in a struct, for
-  /// example, really easily.
+  /// types 'contained' in the derived type.
   ///
-  virtual const Type *getContainedType(unsigned i) const { return 0; }
+  virtual const Type *getContainedType(unsigned i) const {
+    assert(0 && "No contained types!");
+  }
 
   /// getNumContainedTypes - Return the number of types in the derived type
   virtual unsigned getNumContainedTypes() const { return 0; }
