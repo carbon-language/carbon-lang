@@ -41,9 +41,27 @@ public:
     }
   }
 
+  // isArrayAllocation - Return true if there is an allocation size parameter
+  // to the allocation instruction.
+  //
+  inline bool isArrayAllocation() const { return Operands.size() == 1; }
+
+  inline const Value *getArraySize() const {
+    assert(isArrayAllocation()); return Operands[0];
+  }
+  inline Value *getArraySize() {
+    assert(isArrayAllocation()); return Operands[0];
+  }
+
   // getType - Overload to return most specific pointer type...
   inline const PointerType *getType() const {
     return (const PointerType*)Instruction::getType(); 
+  }
+
+  // getAllocatedType - Return the type that is being allocated by the
+  // instruction.
+  inline const Type *getAllocatedType() const {
+    return getType()->getValueType();
   }
 
   virtual Instruction *clone() const = 0;

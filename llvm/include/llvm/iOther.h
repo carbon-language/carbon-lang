@@ -188,6 +188,8 @@ public:
     Operands.push_back(Use(SA, this));
   }
 
+  OtherOps getOpcode() const { return (OtherOps)Instruction::getOpcode(); }
+
   virtual Instruction *clone() const { return new ShiftInst(*this); }
   virtual const char *getOpcodeName() const {
     return getOpcode() == Shl ? "shl" : "shr"; 
