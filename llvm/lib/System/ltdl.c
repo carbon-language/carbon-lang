@@ -25,9 +25,12 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
 
 */
 
-#if HAVE_CONFIG_H
-#  include <config.h>
-#endif
+#include "llvm/Config/config.h"
+/*
+ #if HAVE_CONFIG_H
+ #  include <config.h>
+ #endif
+*/
 
 #if HAVE_UNISTD_H
 #  include <unistd.h>
@@ -2681,7 +2684,7 @@ foreach_dirinpath (search_path, base_name, func, data1, data2)
       {
 	size_t lendir = LT_STRLEN (dir_name);
 
-	if (lendir +1 +lenbase >= filenamesize)
+	if (lendir +1 +lenbase >= (size_t)filenamesize)
 	{
 	  LT_DLFREE (filename);
 	  filenamesize	= lendir +1 +lenbase +1; /* "/d" + '/' + "f" + '\0' */
@@ -2690,7 +2693,7 @@ foreach_dirinpath (search_path, base_name, func, data1, data2)
 	    goto cleanup;
 	}
 
-	assert (filenamesize > lendir);
+	assert ((size_t)filenamesize > lendir);
 	strcpy (filename, dir_name);
 
 	if (base_name && *base_name)
@@ -3134,7 +3137,7 @@ try_dlopen (phandle, filename)
       /* canonicalize the module name */
       {
         size_t i;
-        for (i = 0; i < ext - base_name; ++i)
+        for (i = 0; i < (size_t)(ext - base_name); ++i)
 	  {
 	    if (isalnum ((int)(base_name[i])))
 	      {
@@ -3986,7 +3989,7 @@ lt_dlpath_insertdir (ppath, before, dir)
   if (before)
     {
       assert (*ppath <= before);
-      assert (before - *ppath <= strlen (*ppath));
+      assert (before - *ppath <= (int)strlen (*ppath));
 
       before = before - *ppath + argz;
     }
