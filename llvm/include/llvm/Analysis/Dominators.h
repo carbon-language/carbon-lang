@@ -55,8 +55,8 @@ public:
 private:
   DomSetMapType Doms;
 
-  void calcForwardDominatorSet(Method *M);
-  void calcPostDominatorSet(Method *M);
+  void calcForwardDominatorSet(Function *F);
+  void calcPostDominatorSet(Function *F);
 public:
   // DominatorSet ctor - Build either the dominator set or the post-dominator
   // set for a method... 
@@ -66,7 +66,7 @@ public:
 
   DominatorSet(AnalysisID id) : DominatorBase(id == PostDomID) {}
 
-  virtual bool runOnMethod(Method *M);
+  virtual bool runOnMethod(Function *F);
 
   // Accessor interface:
   typedef DomSetMapType::const_iterator const_iterator;
@@ -120,7 +120,7 @@ public:
 
   ImmediateDominators(AnalysisID id) : DominatorBase(id == PostDomID) {}
 
-  virtual bool runOnMethod(Method *M) {
+  virtual bool runOnMethod(Function *F) {
     IDoms.clear();     // Reset from the last time we were run...
     DominatorSet *DS;
     if (isPostDominator())
@@ -213,7 +213,7 @@ public:
   DominatorTree(AnalysisID id) : DominatorBase(id == PostDomID) {}
   ~DominatorTree() { reset(); }
 
-  virtual bool runOnMethod(Method *M) {
+  virtual bool runOnMethod(Function *F) {
     reset();
     DominatorSet *DS;
     if (isPostDominator())
@@ -270,7 +270,7 @@ public:
 
   DominanceFrontier(AnalysisID id) : DominatorBase(id == PostDomID) {}
 
-  virtual bool runOnMethod(Method *M) {
+  virtual bool runOnMethod(Function *) {
     Frontiers.clear();
     DominatorTree *DT;
     if (isPostDominator())

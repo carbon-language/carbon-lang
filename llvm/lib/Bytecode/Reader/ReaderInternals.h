@@ -27,12 +27,6 @@
 #define BCR_TRACE(n, X)
 #endif
 
-class BasicBlock;
-class Method;
-class Module;
-class Type;
-class PointerType;
-
 typedef unsigned char uchar;
 
 struct RawInst {       // The raw fields out of the bytecode stream...

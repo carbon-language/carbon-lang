@@ -25,13 +25,14 @@
 template class ValueHolder<MethodArgument, Method, Method>;
 template class ValueHolder<BasicBlock    , Method, Method>;
 
-Method::Method(const MethodType *Ty, bool isInternal, const std::string &name) 
+Function::Function(const MethodType *Ty, bool isInternal,
+                   const std::string &name)
   : GlobalValue(PointerType::get(Ty), Value::MethodVal, isInternal, name),
     SymTabValue(this), BasicBlocks(this), ArgumentList(this, this) {
   assert(::isa<MethodType>(Ty) && "Method signature must be of method type!");
 }
 
-Method::~Method() {
+Function::~Function() {
   dropAllReferences();    // After this it is safe to delete instructions.
 
   // TODO: Should remove from the end, not the beginning of vector!
@@ -45,7 +46,7 @@ Method::~Method() {
 }
 
 // Specialize setName to take care of symbol table majik
-void Method::setName(const std::string &name, SymbolTable *ST) {
+void Function::setName(const std::string &name, SymbolTable *ST) {
   Module *P;
   assert((ST == 0 || (!getParent() || ST == getParent()->getSymbolTable())) &&
 	 "Invalid symtab argument!");
@@ -54,18 +55,18 @@ void Method::setName(const std::string &name, SymbolTable *ST) {
   if (P && getName() != "") P->getSymbolTableSure()->insert(this);
 }
 
-void Method::setParent(Module *parent) {
+void Function::setParent(Module *parent) {
   Parent = parent;
 
   // Relink symbol tables together...
   setParentSymTab(Parent ? Parent->getSymbolTableSure() : 0);
 }
 
-const MethodType *Method::getMethodType() const {
+const MethodType *Function::getMethodType() const {
   return cast<MethodType>(cast<PointerType>(getType())->getElementType());
 }
 
-const Type *Method::getReturnType() const { 
+const Type *Function::getReturnType() const { 
   return getMethodType()->getReturnType();
 }
 
@@ -77,7 +78,7 @@ const Type *Method::getReturnType() const {
 // valid on an object that has "dropped all references", except operator 
 // delete.
 //
-void Method::dropAllReferences() {
+void Function::dropAllReferences() {
   for_each(begin(), end(), std::mem_fun(&BasicBlock::dropAllReferences));
 }
 

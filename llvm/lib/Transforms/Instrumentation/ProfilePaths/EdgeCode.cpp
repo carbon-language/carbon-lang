@@ -16,7 +16,6 @@
 #include "llvm/iOperators.h"
 #include "llvm/iPHINode.h"
 
-class Method;
 using std::vector;
 
 //get the code to be inserted on the edge

@@ -21,7 +21,7 @@
 
 class Module;
 class GlobalVariable;
-class Method;
+class Function;
 class BasicBlock;
 class Instruction;
 class SlotCalculator;
@@ -32,7 +32,7 @@ class SlotCalculator;
 //
 void WriteToAssembly(const Module  *Module, std::ostream &o);
 void WriteToAssembly(const GlobalVariable *G, std::ostream &o);
-void WriteToAssembly(const Method  *Method, std::ostream &o);
+void WriteToAssembly(const Function    *F , std::ostream &o);
 void WriteToAssembly(const BasicBlock  *BB, std::ostream &o);
 void WriteToAssembly(const Instruction *In, std::ostream &o);
 void WriteToAssembly(const Constant     *V, std::ostream &o);
@@ -58,7 +58,7 @@ std::ostream &WriteAsOperand(std::ostream &, const Value *, bool PrintTy = true,
 // suffix.
 //
 void WriteToVCG(const Module *Module, const std::string &Filename);
-void WriteToVCG(const Method *Method, const std::string &Filename);
+void WriteToVCG(const Function *Func, const std::string &Filename);
 
 
 
@@ -74,8 +74,8 @@ inline std::ostream &operator<<(std::ostream &o, const GlobalVariable *G) {
   WriteToAssembly(G, o); return o;
 }
 
-inline std::ostream &operator<<(std::ostream &o, const Method *M) {
-  WriteToAssembly(M, o); return o;
+inline std::ostream &operator<<(std::ostream &o, const Function *F) {
+  WriteToAssembly(F, o); return o;
 }
 
 inline std::ostream &operator<<(std::ostream &o, const BasicBlock *B) {
@@ -103,7 +103,7 @@ inline std::ostream &operator<<(std::ostream &o, const Value *I) {
   case Value::MethodArgumentVal: return o << I->getType() << " "<< I->getName();
   case Value::InstructionVal:WriteToAssembly(cast<Instruction>(I)   , o); break;
   case Value::BasicBlockVal: WriteToAssembly(cast<BasicBlock>(I)    , o); break;
-  case Value::MethodVal:     WriteToAssembly(cast<Method>(I)        , o); break;
+  case Value::MethodVal:     WriteToAssembly(cast<Function>(I)      , o); break;
   case Value::GlobalVariableVal:
                              WriteToAssembly(cast<GlobalVariable>(I), o); break;
   case Value::ModuleVal:     WriteToAssembly(cast<Module>(I)        , o); break;

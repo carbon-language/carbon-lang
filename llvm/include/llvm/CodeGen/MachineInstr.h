@@ -452,7 +452,7 @@ std::ostream& operator<<    (std::ostream& os, const MachineInstr& minstr);
 std::ostream& operator<<    (std::ostream& os, const MachineOperand& mop);
 					 
 
-void	PrintMachineInstructions(const Method *method);
+void	PrintMachineInstructions(const Function *F);
 
 
 //**************************************************************************/

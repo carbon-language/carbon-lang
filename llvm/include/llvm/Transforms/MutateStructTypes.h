@@ -88,7 +88,7 @@ private:
   // transformMethod - This transforms the instructions of the method to use the
   // new types.
   //
-  void transformMethod(Method *M);
+  void transformMethod(Function *F);
 
   // removeDeadGlobals - This removes the old versions of methods that are no
   // longer needed.

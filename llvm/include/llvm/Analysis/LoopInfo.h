@@ -101,7 +101,7 @@ public:
 #endif
 
   // runOnMethod - Pass framework implementation
-  virtual bool runOnMethod(Method *M);
+  virtual bool runOnMethod(Function *F);
 
   // getAnalysisUsageInfo - Provide loop info, require dominator set
   //

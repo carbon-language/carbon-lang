@@ -1,4 +1,4 @@
-//===-- LiveRangeInfo.h - Track all LiveRanges for a Method ------*- C++ -*-==//
+//===-- LiveRangeInfo.h - Track all LiveRanges for a Function ----*- C++ -*-==//
 //
 // This file contains the class LiveRangeInfo which constructs and keeps 
 // the LiveRangMap which contains all the live ranges used in a method.
@@ -28,7 +28,7 @@ class RegClass;
 class MachineRegInfo;
 class TargetMachine;
 class Value;
-class Method;
+class Function;
 class Instruction;
 
 typedef std::hash_map<const Value*, LiveRange*> LiveRangeMapType;
@@ -42,7 +42,7 @@ typedef std::vector<const MachineInstr*> CallRetInstrListType;
 //----------------------------------------------------------------------------
 
 class LiveRangeInfo {
-  const Method *const Meth;         // Method for which live range info is held
+  const Function *const Meth;       // Func for which live range info is held
   LiveRangeMapType  LiveRangeMap;   // A map from Value * to LiveRange * to 
                                     // record all live ranges in a method
                                     // created by constructLiveRanges
@@ -64,11 +64,11 @@ class LiveRangeInfo {
   
   void suggestRegs4CallRets();
 
-  const Method* getMethod() { return Meth; }
+  const Function *getMethod() { return Meth; }
 
 public:
   
-  LiveRangeInfo(const Method *M, 
+  LiveRangeInfo(const Function *F, 
 		const TargetMachine& tm,
 		std::vector<RegClass *> & RCList);
 

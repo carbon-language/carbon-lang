@@ -28,15 +28,15 @@ class constant_iterator
   }
 
 public:
-  inline constant_iterator(const Method *M) : InstI(inst_begin(M)), OpIdx(0) {
+  inline constant_iterator(const Function *F) : InstI(inst_begin(F)), OpIdx(0) {
     // Advance to first constant... if we are not already at constant or end
-    if (InstI != inst_end(M) &&                            // InstI is valid?
+    if (InstI != inst_end(F) &&                            // InstI is valid?
 	(InstI->getNumOperands() == 0 || !isAtConstant())) // Not at constant?
       operator++();
   }
 
-  inline constant_iterator(const Method *M, bool)   // end ctor
-    : InstI(inst_end(M)), OpIdx(0) {
+  inline constant_iterator(const Function *F, bool)   // end ctor
+    : InstI(inst_end(F)), OpIdx(0) {
   }
 
   inline bool operator==(const _Self& x) const { return OpIdx == x.OpIdx && 
@@ -72,12 +72,12 @@ public:
   inline bool atEnd() const { return InstI.atEnd(); }
 };
 
-inline constant_iterator constant_begin(const Method *M) {
-  return constant_iterator(M);
+inline constant_iterator constant_begin(const Function *F) {
+  return constant_iterator(F);
 }
 
-inline constant_iterator constant_end(const Method *M) {
-  return constant_iterator(M, true);
+inline constant_iterator constant_end(const Function *F) {
+  return constant_iterator(F, true);
 }
 
 #endif

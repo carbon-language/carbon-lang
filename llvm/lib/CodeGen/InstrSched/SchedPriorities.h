@@ -28,7 +28,7 @@
 #include <list>
 #include <ext/hash_set>
 #include <iostream>
-class Method;
+class Function;
 class MachineInstr;
 class SchedulingManager;
 class MethodLiveVarInfo;
@@ -125,7 +125,8 @@ private:
 
 class SchedPriorities: public NonCopyable {
 public:
-  SchedPriorities(const Method *M, const SchedGraph *G, MethodLiveVarInfo &LVI);
+  SchedPriorities(const Function *F, const SchedGraph *G,
+                  MethodLiveVarInfo &LVI);
                   
   
   // This must be called before scheduling begins.

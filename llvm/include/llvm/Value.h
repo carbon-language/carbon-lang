@@ -23,7 +23,8 @@ class MethodArgument;
 class Instruction;
 class BasicBlock;
 class GlobalValue;
-class Method;
+class Function;
+typedef Function Method;
 class GlobalVariable;
 class Module;
 class SymbolTable;
@@ -274,10 +275,10 @@ template <> inline bool isa<BasicBlock, const Value*>(const Value *Val) {
 template <> inline bool isa<BasicBlock, Value*>(Value *Val) { 
   return Val->getValueType() == Value::BasicBlockVal;
 }
-template <> inline bool isa<Method, const Value*>(const Value *Val) { 
+template <> inline bool isa<Function, const Value*>(const Value *Val) { 
   return Val->getValueType() == Value::MethodVal;
 }
-template <> inline bool isa<Method, Value*>(Value *Val) { 
+template <> inline bool isa<Function, Value*>(Value *Val) { 
   return Val->getValueType() == Value::MethodVal;
 }
 template <> inline bool isa<GlobalVariable, const Value*>(const Value *Val) { 
@@ -287,10 +288,10 @@ template <> inline bool isa<GlobalVariable, Value*>(Value *Val) {
   return Val->getValueType() == Value::GlobalVariableVal;
 }
 template <> inline bool isa<GlobalValue, const Value*>(const Value *Val) { 
-  return isa<GlobalVariable>(Val) || isa<Method>(Val);
+  return isa<GlobalVariable>(Val) || isa<Function>(Val);
 }
 template <> inline bool isa<GlobalValue, Value*>(Value *Val) { 
-  return isa<GlobalVariable>(Val) || isa<Method>(Val);
+  return isa<GlobalVariable>(Val) || isa<Function>(Val);
 }
 template <> inline bool isa<Module, const Value*>(const Value *Val) { 
   return Val->getValueType() == Value::ModuleVal;

@@ -17,7 +17,7 @@ class IGNode;
 class Type;
 class Value;
 class LiveRangeInfo;
-class Method;
+class Function;
 class Instruction;
 class LiveRange;
 class AddedInstrns;
@@ -108,7 +108,7 @@ public:
   // method args and return values etc.) with specific hardware registers
   // as required. See SparcRegInfo.cpp for the implementation for Sparc.
   //
-  virtual void suggestRegs4MethodArgs(const Method *Meth, 
+  virtual void suggestRegs4MethodArgs(const Function *Func, 
 			 LiveRangeInfo &LRI) const = 0;
 
   virtual void suggestRegs4CallArgs(const MachineInstr *CallI, 
@@ -117,7 +117,7 @@ public:
   virtual void suggestReg4RetValue(const MachineInstr *RetI, 
 				   LiveRangeInfo &LRI) const = 0;
 
-  virtual void colorMethodArgs(const Method *Meth,  LiveRangeInfo &LRI,
+  virtual void colorMethodArgs(const Function *Func,  LiveRangeInfo &LRI,
                                AddedInstrns *FirstAI) const = 0;
 
   virtual void colorCallArgs(const MachineInstr *CalI, 

@@ -14,7 +14,7 @@
 #define LLVM_CODEGEN_INSTR_SELECTION_H
 
 #include "llvm/Instruction.h"
-class Method;
+class Function;
 class InstrForest;
 class MachineInstr;
 class InstructionNode;
@@ -55,7 +55,7 @@ extern bool	ThisIsAChainRule	(int eruleno);
 //   Implemented in machine-specific instruction selection file.
 //---------------------------------------------------------------------------
 
-bool		SelectInstructionsForMethod	(Method* method,
+bool		SelectInstructionsForMethod	(Function* function,
 						 TargetMachine &Target);
 
 

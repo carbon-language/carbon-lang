@@ -14,14 +14,14 @@
 #include "Support/HashExtras.h"
 #include <ext/hash_set>
 class Value;
-class Method;
+class Function;
 class Constant;
 class Type;
 class TargetMachine;
 
 
 class MachineCodeForMethod : private Annotation {
-  const Method* method;
+  const Function* method;
   bool          compiledAsLeaf;
   unsigned	staticStackSize;
   unsigned	automaticVarsSize;
@@ -33,7 +33,7 @@ class MachineCodeForMethod : private Annotation {
   std::hash_map<const Value*, int> offsets;
   
 public:
-  /*ctor*/      MachineCodeForMethod(const Method* method,
+  /*ctor*/      MachineCodeForMethod(const Function* function,
                                      const TargetMachine& target);
   
   // The next two methods are used to construct and to retrieve
@@ -43,10 +43,10 @@ public:
   //                This should not be called before "construct()"
   //                for a given Method.
   // 
-  static MachineCodeForMethod& construct(const Method *method,
+  static MachineCodeForMethod& construct(const Function *method,
                                          const TargetMachine &target);
-  static void destruct(const Method *M);
-  static MachineCodeForMethod& get(const Method* method);
+  static void destruct(const Function *F);
+  static MachineCodeForMethod& get(const Function* function);
   
   //
   // Accessors for global information about generated code for a method.

@@ -15,7 +15,7 @@
 
 class Pass;
 class Module;
-class Method;
+class Function;
 
 // createVerifierPass - Check a module or method for validity.  If errors are
 // detected, error messages corresponding to the problem are printed to stderr.
@@ -29,6 +29,6 @@ bool verifyModule(const Module *M);
 
 // verifyMethod - Check a method for errors, useful for use when debugging a
 // pass.
-bool verifyMethod(const Method *M);
+bool verifyMethod(const Function *M);
 
 #endif

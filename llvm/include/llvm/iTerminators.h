@@ -205,8 +205,8 @@ public:
   // getCalledMethod - Return the method called, or null if this is an indirect
   // method invocation...
   //
-  inline const Method *getCalledMethod() const {
-    return dyn_cast<Method>(Operands[0].get());
+  inline const Function *getCalledMethod() const {
+    return dyn_cast<Function>(Operands[0].get());
   }
   inline Method *getCalledMethod() {
     return dyn_cast<Method>(Operands[0].get());

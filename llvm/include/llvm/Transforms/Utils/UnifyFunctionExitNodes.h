@@ -23,11 +23,11 @@ public:
   //
   // If there are no return stmts in the Method, a null pointer is returned.
   //
-  static bool doit(Method *M, BasicBlock *&ExitNode);
+  static bool doit(Function *F, BasicBlock *&ExitNode);
 
 
-  virtual bool runOnMethod(Method *M) {
-    return doit(M, ExitNode);
+  virtual bool runOnMethod(Function *F) {
+    return doit(F, ExitNode);
   }
 
   BasicBlock *getExitNode() const { return ExitNode; }

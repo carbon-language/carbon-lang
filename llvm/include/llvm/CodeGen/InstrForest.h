@@ -31,7 +31,7 @@
 
 class Constant;
 class BasicBlock;
-class Method;
+class Function;
 class InstrTreeNode;
 class InstrForest;
 
@@ -243,7 +243,7 @@ private:
   std::hash_set<InstructionNode*> treeRoots;
   
 public:
-  /*ctor*/	InstrForest	(Method *M);
+  /*ctor*/	InstrForest	(Function *F);
   /*dtor*/	~InstrForest	();
   
   inline InstructionNode *getTreeNodeForInstr(Instruction* instr) {

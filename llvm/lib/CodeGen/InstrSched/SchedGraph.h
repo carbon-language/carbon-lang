@@ -28,7 +28,7 @@ class Value;
 class Instruction;
 class TerminatorInst;
 class BasicBlock;
-class Method;
+class Function;
 class TargetMachine;
 class SchedGraphEdge; 
 class SchedGraphNode; 
@@ -339,7 +339,7 @@ class SchedGraphSet :
   private std::hash_map<const BasicBlock*, SchedGraph*>
 {
 private:
-  const Method* method;
+  const Function* method;
   
 public:
   typedef std::hash_map<const BasicBlock*, SchedGraph*> map_base;
@@ -347,7 +347,7 @@ public:
   using map_base::const_iterator;
   
 public:
-  /*ctor*/	SchedGraphSet		(const Method* _method,
+  /*ctor*/	SchedGraphSet		(const Function * function,
 					 const TargetMachine& target);
   /*dtor*/	~SchedGraphSet		();
   
@@ -379,7 +379,7 @@ private:
   //
   // Graph builder
   //
-  void		buildGraphsForMethod	(const Method *method,
+  void		buildGraphsForMethod	(const Function *F,
 					 const TargetMachine& target);
 };
 

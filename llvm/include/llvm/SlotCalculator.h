@@ -14,7 +14,7 @@
 #include <map>
 class Value;
 class Module;
-class Method;
+class Function;
 class MethodArgument;
 class BasicBlock;
 class Instruction;
@@ -34,7 +34,8 @@ class SlotCalculator {
 
 public:
   SlotCalculator(const Module *M, bool IgnoreNamed);
-  SlotCalculator(const Method *M, bool IgnoreNamed);// Start out in incorp state
+  // Start out in incorp state
+  SlotCalculator(const Function *M, bool IgnoreNamed);
   inline ~SlotCalculator() {}
   
   // getValSlot returns < 0 on error!
@@ -52,7 +53,7 @@ public:
   // If you'd like to deal with a method, use these two methods to get its data
   // into the SlotCalculator!
   //
-  void incorporateMethod(const Method *M);
+  void incorporateMethod(const Function *F);
   void purgeMethod();
 
 protected:

@@ -11,7 +11,6 @@
 #include "llvm/Analysis/LiveVar/ValueSet.h"
 #include "llvm/Annotation.h"
 #include <map>
-class Method;
 class BasicBlock;
 class Value;
 

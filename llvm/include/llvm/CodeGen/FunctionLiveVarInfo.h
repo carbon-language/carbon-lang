@@ -8,7 +8,7 @@
 
    It must be called like:
 
-       MethodLiveVarInfo MLVI( Mehtod *);  // initializes data structures
+       MethodLiveVarInfo MLVI(Function *);  // initializes data structures
        MLVI.analyze();                     // do the actural live variable anal
 
  After the analysis, getInSetOfBB or getOutSetofBB can be called to get 
@@ -86,16 +86,16 @@ class MethodLiveVarInfo : public MethodPass {
   // Machine Instr to LiveVarSet Map for providing LVset AFTER each inst
   std::map<const MachineInstr *, const ValueSet *> MInst2LVSetAI; 
 
-  // Stored Method that the data is computed with respect to
-  const Method *M;
+  // Stored Function that the data is computed with respect to
+  const Function *M;
 
   // --------- private methods -----------------------------------------
 
   // constructs BBLiveVars and init Def and In sets
-  void constructBBs(const Method *M);      
+  void constructBBs(const Function *F);
     
   // do one backward pass over the CFG
-  bool doSingleBackwardPass(const Method *M, unsigned int iter); 
+  bool doSingleBackwardPass(const Function *F, unsigned int iter); 
 
   // calculates live var sets for instructions in a BB
   void calcLiveVarSetsForBB(const BasicBlock *BB);
@@ -108,7 +108,7 @@ public:
   // --------- Implement the MethodPass interface ----------------------
 
   // runOnMethod - Perform analysis, update internal data structures.
-  virtual bool runOnMethod(Method *M);
+  virtual bool runOnMethod(Function *F);
 
   // releaseMemory - After LiveVariable analysis has been used, forget!
   virtual void releaseMemory();

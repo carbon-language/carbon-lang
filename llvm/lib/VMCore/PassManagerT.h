@@ -347,7 +347,7 @@ template<> struct PassManagerTraits<BasicBlock> : public BasicBlockPass {
   typedef PassClass BatcherClass;
 
   // ParentClass - The type of the parent PassManager...
-  typedef PassManagerT<Method> ParentClass;
+  typedef PassManagerT<Function> ParentClass;
 
   // PMType - The type of the passmanager that subclasses this class
   typedef PassManagerT<BasicBlock> PMType;
@@ -371,12 +371,12 @@ template<> struct PassManagerTraits<BasicBlock> : public BasicBlockPass {
 
 
 //===----------------------------------------------------------------------===//
-// PassManagerTraits<Method> Specialization
+// PassManagerTraits<Function> Specialization
 //
 // This pass manager is used to group together all of the MethodPass's
 // into a single unit.
 //
-template<> struct PassManagerTraits<Method> : public MethodPass {
+template<> struct PassManagerTraits<Function> : public MethodPass {
   // PassClass - The type of passes tracked by this PassManager
   typedef MethodPass PassClass;
 
@@ -390,20 +390,20 @@ template<> struct PassManagerTraits<Method> : public MethodPass {
   typedef PassManagerT<Module> ParentClass;
 
   // PMType - The type of the passmanager that subclasses this class
-  typedef PassManagerT<Method> PMType;
+  typedef PassManagerT<Function> PMType;
 
   // runPass - Specify how the pass should be run on the UnitType
-  static bool runPass(PassClass *P, Method *M) {
+  static bool runPass(PassClass *P, Function *M) {
     return P->runOnMethod(M);
   }
 
   // getPMName() - Return the name of the unit the PassManager operates on for
   // debugging.
-  const char *getPMName() const { return "Method"; }
+  const char *getPMName() const { return "Function"; }
 
   // Implement the MethodPass interface...
   virtual bool doInitialization(Module *M);
-  virtual bool runOnMethod(Method *M);
+  virtual bool runOnMethod(Function *M);
   virtual bool doFinalization(Module *M);
 };
 
@@ -422,7 +422,7 @@ template<> struct PassManagerTraits<Module> : public Pass {
   typedef MethodPass SubPassClass;
 
   // BatcherClass - The type to use for collation of subtypes...
-  typedef PassManagerT<Method> BatcherClass;
+  typedef PassManagerT<Function> BatcherClass;
 
   // ParentClass - The type of the parent PassManager...
   typedef AnalysisResolver ParentClass;
@@ -467,20 +467,20 @@ inline bool PassManagerTraits<BasicBlock>::doFinalization(Module *M) {
 }
 
 
-// PassManagerTraits<Method> Implementations
+// PassManagerTraits<Function> Implementations
 //
-inline bool PassManagerTraits<Method>::doInitialization(Module *M) {
+inline bool PassManagerTraits<Function>::doInitialization(Module *M) {
   bool Changed = false;
   for (unsigned i = 0, e = ((PMType*)this)->Passes.size(); i != e; ++i)
     ((PMType*)this)->Passes[i]->doInitialization(M);
   return Changed;
 }
 
-inline bool PassManagerTraits<Method>::runOnMethod(Method *M) {
+inline bool PassManagerTraits<Function>::runOnMethod(Function *M) {
   return ((PMType*)this)->runOnUnit(M);
 }
 
-inline bool PassManagerTraits<Method>::doFinalization(Module *M) {
+inline bool PassManagerTraits<Function>::doFinalization(Module *M) {
   bool Changed = false;
   for (unsigned i = 0, e = ((PMType*)this)->Passes.size(); i != e; ++i)
     ((PMType*)this)->Passes[i]->doFinalization(M);

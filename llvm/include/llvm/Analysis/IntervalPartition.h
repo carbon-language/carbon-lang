@@ -42,7 +42,7 @@ public:
   IntervalPartition(AnalysisID AID) : RootInterval(0) { assert(AID == ID); }
 
   // run - Calculate the interval partition for this method
-  virtual bool runOnMethod(Method *M);
+  virtual bool runOnMethod(Function *F);
 
   // IntervalPartition ctor - Build a reduced interval partition from an
   // existing interval graph.  This takes an additional boolean parameter to

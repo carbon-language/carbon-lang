@@ -14,9 +14,9 @@ namespace cfg { class IntervalPartition; }
 struct InductionVariableCannonicalize : public MethodPass {
   // doInductionVariableCannonicalize - Simplify induction variables in loops
   //
-  static bool doIt(Method *M, cfg::IntervalPartition &IP);
+  static bool doIt(Function *M, cfg::IntervalPartition &IP);
 
-  virtual bool runOnMethod(Method *M);
+  virtual bool runOnMethod(Function *M);
 
   // getAnalysisUsageInfo - Declare that we need IntervalPartitions
   void getAnalysisUsageInfo(Pass::AnalysisSet &Required,

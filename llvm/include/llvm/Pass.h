@@ -22,7 +22,7 @@
 #include <map>
 class Value;
 class BasicBlock;
-class Method;
+class Function;
 class Module;
 class AnalysisID;
 class Pass;
@@ -105,7 +105,7 @@ protected:
 
 private:
   friend class PassManagerT<Module>;
-  friend class PassManagerT<Method>;
+  friend class PassManagerT<Function>;
   friend class PassManagerT<BasicBlock>;
   virtual void addToPassManager(PassManagerT<Module> *PM, AnalysisSet &Req,
                                 AnalysisSet &Destroyed, AnalysisSet &Provided);
@@ -129,7 +129,7 @@ struct MethodPass : public Pass {
   // runOnMethod - Virtual method overriden by subclasses to do the per-method
   // processing of the pass.
   //
-  virtual bool runOnMethod(Method *M) = 0;
+  virtual bool runOnMethod(Function *M) = 0;
 
   // doFinalization - Virtual method overriden by subclasses to do any post
   // processing needed after all passes have run.
@@ -143,15 +143,15 @@ struct MethodPass : public Pass {
 
   // run - On a method, we simply initialize, run the method, then finalize.
   //
-  bool run(Method *M);
+  bool run(Function *M);
 
 private:
   friend class PassManagerT<Module>;
-  friend class PassManagerT<Method>;
+  friend class PassManagerT<Function>;
   friend class PassManagerT<BasicBlock>;
   virtual void addToPassManager(PassManagerT<Module> *PM, AnalysisSet &Req,
                                 AnalysisSet &Dest, AnalysisSet &Prov);
-  virtual void addToPassManager(PassManagerT<Method> *PM,AnalysisSet &Req,
+  virtual void addToPassManager(PassManagerT<Function> *PM,AnalysisSet &Req,
                                 AnalysisSet &Dest, AnalysisSet &Prov);
 };
 
@@ -176,7 +176,7 @@ struct BasicBlockPass : public MethodPass {
   // To run this pass on a method, we simply call runOnBasicBlock once for each
   // method.
   //
-  virtual bool runOnMethod(Method *BB);
+  virtual bool runOnMethod(Function *F);
 
   // To run directly on the basic block, we initialize, runOnBasicBlock, then
   // finalize.
@@ -184,9 +184,9 @@ struct BasicBlockPass : public MethodPass {
   bool run(BasicBlock *BB);
 
 private:
-  friend class PassManagerT<Method>;
+  friend class PassManagerT<Function>;
   friend class PassManagerT<BasicBlock>;
-  virtual void addToPassManager(PassManagerT<Method> *PM, AnalysisSet &,
+  virtual void addToPassManager(PassManagerT<Function> *PM, AnalysisSet &,
                                 AnalysisSet &, AnalysisSet &);
   virtual void addToPassManager(PassManagerT<BasicBlock> *PM, AnalysisSet &,
                                 AnalysisSet &, AnalysisSet &);

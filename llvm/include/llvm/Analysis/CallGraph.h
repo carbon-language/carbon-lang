@@ -43,7 +43,7 @@
 
 #include "Support/GraphTraits.h"
 #include "llvm/Pass.h"
-class Method;
+class Function;
 class Module;
 class CallGraphNode;
 
@@ -53,7 +53,7 @@ class CallGraphNode;
 class CallGraph : public Pass {
   Module *Mod;              // The module this call graph represents
 
-  typedef std::map<const Method *, CallGraphNode *> MethodMapTy;
+  typedef std::map<const Function *, CallGraphNode *> MethodMapTy;
   MethodMapTy MethodMap;    // Map from a method to its node
 
   // Root is root of the call graph, or the external node if a 'main' function
@@ -77,13 +77,13 @@ public:
 
 
   // Subscripting operators, return the call graph node for the provided method
-  inline const CallGraphNode *operator[](const Method *M) const {
-    const_iterator I = MethodMap.find(M);
+  inline const CallGraphNode *operator[](const Function *F) const {
+    const_iterator I = MethodMap.find(F);
     assert(I != MethodMap.end() && "Method not in callgraph!");
     return I->second;
   }
-  inline CallGraphNode *operator[](const Method *M) {
-    const_iterator I = MethodMap.find(M);
+  inline CallGraphNode *operator[](const Function *F) {
+    const_iterator I = MethodMap.find(F);
     assert(I != MethodMap.end() && "Method not in callgraph!");
     return I->second;
   }
@@ -92,7 +92,7 @@ public:
   // Methods to keep a call graph up to date with a method that has been
   // modified
   //
-  void addMethodToModule(Method *Meth);
+  void addMethodToModule(Function *Meth);
 
 
   // removeMethodFromModule - Unlink the method from this module, returning it.
@@ -101,8 +101,8 @@ public:
   // methods (ie, there are no edges in it's CGN).  The easiest way to do this
   // is to dropAllReferences before calling this.
   //
-  Method *removeMethodFromModule(CallGraphNode *CGN);
-  Method *removeMethodFromModule(Method *Meth) {
+  Function *removeMethodFromModule(CallGraphNode *CGN);
+  Function *removeMethodFromModule(Function *Meth) {
     return removeMethodFromModule((*this)[Meth]);
   }
 
@@ -135,15 +135,15 @@ private:
   // Implementation of CallGraph construction
   //
 
-  // getNodeFor - Return the node for the specified method or create one if it
+  // getNodeFor - Return the node for the specified function or create one if it
   // does not already exist.
   //
-  CallGraphNode *getNodeFor(Method *M);
+  CallGraphNode *getNodeFor(Function *F);
 
-  // addToCallGraph - Add a method to the call graph, and link the node to all
+  // addToCallGraph - Add a function to the call graph, and link the node to all
   // of the methods that it calls.
   //
-  void addToCallGraph(Method *M);
+  void addToCallGraph(Function *F);
 
   // destroy - Release memory for the call graph
   void destroy();
@@ -154,7 +154,7 @@ private:
 // CallGraphNode class definition
 //
 class CallGraphNode {
-  Method *Meth;
+  Function *Meth;
   std::vector<CallGraphNode*> CalledMethods;
 
   CallGraphNode(const CallGraphNode &);           // Do not implement
@@ -167,7 +167,7 @@ public:
   typedef std::vector<CallGraphNode*>::const_iterator const_iterator;
 
   // getMethod - Return the method that this call graph node represents...
-  Method *getMethod() const { return Meth; }
+  Function *getMethod() const { return Meth; }
 
   inline iterator begin() { return CalledMethods.begin(); }
   inline iterator end()   { return CalledMethods.end();   }
@@ -193,7 +193,7 @@ private:                    // Stuff to construct the node, used by CallGraph
   friend class CallGraph;
 
   // CallGraphNode ctor - Create a node for the specified method...
-  inline CallGraphNode(Method *M) : Meth(M) {}
+  inline CallGraphNode(Function *F) : Meth(F) {}
   
   // addCalledMethod add a method to the list of methods called by this one
   void addCalledMethod(CallGraphNode *M) {
