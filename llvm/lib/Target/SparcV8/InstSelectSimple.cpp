@@ -58,7 +58,8 @@ namespace {
     }
 
 	void visitBinaryOperator(BinaryOperator &I);
-    void visitReturnInst(ReturnInst &RI);
+	void visitCallInst(CallInst &I);
+	void visitReturnInst(ReturnInst &RI);
 
     void visitInstruction(Instruction &I) {
       std::cerr << "Unhandled instruction: " << I;
@@ -226,6 +227,11 @@ bool V8ISel::runOnFunction(Function &Fn) {
   return true;
 }
 
+void V8ISel::visitCallInst(CallInst &I) {
+  assert (I.getNumOperands () == 1 && "Can't handle call args yet");
+  BuildMI (BB, V8::CALL, 1).addPCDisp (I.getOperand (0));
+  BuildMI (BB, V8::NOP, 0); // NOP in delay slot
+}
 
 void V8ISel::visitReturnInst(ReturnInst &I) {
   if (I.getNumOperands () == 1) {
