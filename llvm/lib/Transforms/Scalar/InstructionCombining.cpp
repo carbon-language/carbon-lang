@@ -1072,7 +1072,7 @@ Instruction *InstCombiner::visitAllocationInst(AllocationInst &AI) {
 
 Instruction *InstCombiner::visitBranchInst(BranchInst &BI) {
   // Change br (not X), label True, label False to: br X, label False, True
-  if (BI.isConditional())
+  if (BI.isConditional() && !isa<Constant>(BI.getCondition()))
     if (Value *V = dyn_castNotVal(BI.getCondition())) {
       BasicBlock *TrueDest = BI.getSuccessor(0);
       BasicBlock *FalseDest = BI.getSuccessor(1);
