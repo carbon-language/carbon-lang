@@ -125,6 +125,7 @@ bool TailDup::shouldEliminateUnconditionalBranch(TerminatorInst *TI) {
 bool TailDup::canEliminateUnconditionalBranch(TerminatorInst *TI) {
   // Basically, we refuse to make the transformation if any of the values
   // computed in the 'tail' are used in any other basic blocks.
+  BasicBlock *BB = TI->getParent();
   BasicBlock *Tail = TI->getSuccessor(0);
   assert(isa<BranchInst>(TI) && cast<BranchInst>(TI)->isUnconditional());
   
@@ -132,7 +133,7 @@ bool TailDup::canEliminateUnconditionalBranch(TerminatorInst *TI) {
     for (Value::use_iterator UI = I->use_begin(), E = I->use_end(); UI != E;
          ++UI) {
       Instruction *User = cast<Instruction>(*UI);
-      if (User->getParent() != Tail || isa<PHINode>(User))
+      if (User->getParent() != Tail && User->getParent() != BB)
         return false;
     }
   return true;
