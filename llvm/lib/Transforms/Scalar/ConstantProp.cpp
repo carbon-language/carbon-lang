@@ -67,6 +67,10 @@ bool ConstantPropagation::runOnFunction(Function &F) {
         // Replace all of the uses of a variable with uses of the constant.
         I->replaceAllUsesWith(C);
 
+        // Remove the dead instruction.
+        WorkList.erase(I);
+        I->getParent()->getInstList().erase(I);
+
         // We made a change to the function...
         Changed = true;
         ++NumInstKilled;
