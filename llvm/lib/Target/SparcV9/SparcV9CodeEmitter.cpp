@@ -142,7 +142,7 @@ int64_t SparcV9CodeEmitter::getMachineOpValue(MachineInstr &MI,
       // So undo that: give the instruction (CI - PC) / 4
       rv = (CI->getRawValue() - MCE.getCurrentPCValue()) / 4;
     } else if (GlobalValue *GV = dyn_cast<GlobalValue>(V)) {
-      unsigned Reloc;
+      unsigned Reloc = 0;
       if (MI.getOpcode() == V9::CALL) {
         Reloc = V9::reloc_pcrel_call;
       } else if (MI.getOpcode() == V9::SETHI) {
