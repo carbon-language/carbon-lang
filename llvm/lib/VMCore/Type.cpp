@@ -503,7 +503,7 @@ public:
   inline const TypeClass *containsEquivalent(const TypeClass *Ty) {
     for (typename MapTy::iterator I = Map.begin(), E = Map.end(); I != E; ++I)
       if (I->second.get() != Ty && TypesEqual(Ty, I->second.get()))
-	return (TypeClass*)I->second.get();  // FIXME TODO when types not const
+	return (TypeClass*)I->second.get();
     return 0;
   }
 
@@ -1065,8 +1065,7 @@ void FunctionType::refineAbstractType(const DerivedType *OldType,
       ParamTys[i] = NewType;
     }
 
-  const FunctionType *MT = FunctionTypes.containsEquivalent(this);
-  if (MT && MT != this) {
+  if (const FunctionType *MT = FunctionTypes.containsEquivalent(this)) {
     refineAbstractTypeTo(MT);            // Different type altogether...
   } else {
     // If the type is currently thought to be abstract, rescan all of our
@@ -1093,8 +1092,7 @@ void ArrayType::refineAbstractType(const DerivedType *OldType,
   ElementType.removeUserFromConcrete();
   ElementType = NewType;
 
-  const ArrayType *AT = ArrayTypes.containsEquivalent(this);
-  if (AT && AT != this) {
+  if (const ArrayType *AT = ArrayTypes.containsEquivalent(this)) {
     refineAbstractTypeTo(AT);          // Different type altogether...
   } else {
     // If the type is currently thought to be abstract, rescan all of our
@@ -1124,8 +1122,7 @@ void StructType::refineAbstractType(const DerivedType *OldType,
       ETypes[i] = NewType;
     }
 
-  const StructType *ST = StructTypes.containsEquivalent(this);
-  if (ST && ST != this) {
+  if (const StructType *ST = StructTypes.containsEquivalent(this)) {
     refineAbstractTypeTo(ST);          // Different type altogether...
   } else {
     // If the type is currently thought to be abstract, rescan all of our
@@ -1151,8 +1148,7 @@ void PointerType::refineAbstractType(const DerivedType *OldType,
   ElementType.removeUserFromConcrete();
   ElementType = NewType;
 
-  const PointerType *PT = PointerTypes.containsEquivalent(this);
-  if (PT && PT != this) {
+  if (const PointerType *PT = PointerTypes.containsEquivalent(this)) {
     refineAbstractTypeTo(PT);          // Different type altogether...
   } else {
     // If the type is currently thought to be abstract, rescan all of our
