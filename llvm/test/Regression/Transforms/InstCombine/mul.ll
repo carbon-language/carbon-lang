@@ -33,8 +33,18 @@ int %test5(int %A) {
 	ret int %B
 }
 
-int %test6(ubyte %A) {
+ubyte %test6(ubyte %A) {
 	%B = mul ubyte %A, 8
 	%C = mul ubyte %B, 13
 	ret ubyte %C
+}
+
+int %test7(int %i) {
+        %tmp = mul int %i, -1   ; %tmp = sub 0, %i
+        ret int %tmp
+}
+
+ulong %test8(ulong %i) {
+	%j = mul ulong %i, 18446744073709551615 ; tmp = sub 0, %i
+	ret ulong %j
 }
