@@ -948,7 +948,7 @@ SwitchInst::~SwitchInst() {
 
 /// addCase - Add an entry to the switch instruction...
 ///
-void SwitchInst::addCase(Constant *OnVal, BasicBlock *Dest) {
+void SwitchInst::addCase(ConstantInt *OnVal, BasicBlock *Dest) {
   unsigned OpNo = NumOperands;
   if (OpNo+2 > ReservedSpace)
     resizeOperands(0);  // Get more space!

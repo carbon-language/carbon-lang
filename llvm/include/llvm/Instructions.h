@@ -22,6 +22,7 @@
 namespace llvm {
 
 class BasicBlock;
+class ConstantInt;
 class PointerType;
 
 //===----------------------------------------------------------------------===//
@@ -1084,14 +1085,14 @@ public:
 
   /// getCaseValue - Return the specified case value.  Note that case #0, the
   /// default destination, does not have a case value.
-  Constant *getCaseValue(unsigned i) {
+  ConstantInt *getCaseValue(unsigned i) {
     assert(i && i < getNumCases() && "Illegal case value to get!");
     return getSuccessorValue(i);
   }
 
   /// getCaseValue - Return the specified case value.  Note that case #0, the
   /// default destination, does not have a case value.
-  const Constant *getCaseValue(unsigned i) const {
+  const ConstantInt *getCaseValue(unsigned i) const {
     assert(i && i < getNumCases() && "Illegal case value to get!");
     return getSuccessorValue(i);
   }
@@ -1099,7 +1100,7 @@ public:
   /// findCaseValue - Search all of the case values for the specified constant.
   /// If it is explicitly handled, return the case number of it, otherwise
   /// return 0 to indicate that it is handled by the default handler.
-  unsigned findCaseValue(const Constant *C) const {
+  unsigned findCaseValue(const ConstantInt *C) const {
     for (unsigned i = 1, e = getNumCases(); i != e; ++i)
       if (getCaseValue(i) == C)
         return i;
@@ -1108,7 +1109,7 @@ public:
 
   /// addCase - Add an entry to the switch instruction...
   ///
-  void addCase(Constant *OnVal, BasicBlock *Dest);
+  void addCase(ConstantInt *OnVal, BasicBlock *Dest);
 
   /// removeCase - This method removes the specified successor from the switch
   /// instruction.  Note that this cannot be used to remove the default
@@ -1130,15 +1131,15 @@ public:
 
   // getSuccessorValue - Return the value associated with the specified
   // successor.
-  inline Constant *getSuccessorValue(unsigned idx) const {
+  inline ConstantInt *getSuccessorValue(unsigned idx) const {
     assert(idx < getNumSuccessors() && "Successor # out of range!");
-    return cast<Constant>(getOperand(idx*2));
+    return (ConstantInt*)getOperand(idx*2);
   }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const SwitchInst *) { return true; }
   static inline bool classof(const Instruction *I) {
-    return (I->getOpcode() == Instruction::Switch);
+    return I->getOpcode() == Instruction::Switch;
   }
   static inline bool classof(const Value *V) {
     return isa<Instruction>(V) && classof(cast<Instruction>(V));
