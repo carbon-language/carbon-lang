@@ -5,6 +5,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Constants.h"
+#include "llvm/ConstantHandling.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/iMemory.h"
 #include "llvm/SymbolTable.h"
@@ -636,6 +637,9 @@ typedef pair<unsigned, vector<Constant*> > ExprMapKeyType;
 static ValueMap<const ExprMapKeyType, ConstantExpr> ExprConstants;
 
 Constant *ConstantExpr::getCast(Constant *C, const Type *Ty) {
+  if (Constant *FC = ConstantFoldCastInstruction(C, Ty))
+    return FC;          // Fold a few common cases...
+
   // Look up the constant in the table first to ensure uniqueness
   vector<Constant*> argVec(1, C);
   const ExprMapKeyType &Key = make_pair(Instruction::Cast, argVec);
@@ -649,6 +653,10 @@ Constant *ConstantExpr::getCast(Constant *C, const Type *Ty) {
 }
 
 Constant *ConstantExpr::get(unsigned Opcode, Constant *C1, Constant *C2) {
+  
+  if (Constant *FC = ConstantFoldBinaryInstruction(Opcode, C1, C2))
+    return FC;          // Fold a few common cases...
+
   // Look up the constant in the table first to ensure uniqueness
   vector<Constant*> argVec(1, C1); argVec.push_back(C2);
   const ExprMapKeyType &Key = make_pair(Opcode, argVec);
@@ -671,6 +679,8 @@ Constant *ConstantExpr::get(unsigned Opcode, Constant *C1, Constant *C2) {
 
 Constant *ConstantExpr::getGetElementPtr(Constant *C,
                                          const std::vector<Constant*> &IdxList){
+  if (Constant *FC = ConstantFoldGetElementPtr(C, IdxList))
+    return FC;          // Fold a few common cases...
   const Type *Ty = C->getType();
 
   // Look up the constant in the table first to ensure uniqueness
