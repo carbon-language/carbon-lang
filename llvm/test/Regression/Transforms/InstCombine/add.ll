@@ -1,9 +1,6 @@
 ; This test makes sure that add instructions are properly eliminated.
-;
-; This also tests that a subtract with a constant is properly converted
-; to a add w/negative constant
 
-; RUN: as < %s | opt -instcombine -die | dis | not grep add
+; RUN: as < %s | opt -instcombine -die | dis | grep -v OK | not grep add
 
 implementation
 
@@ -72,3 +69,27 @@ bool %test11(ubyte %A) {
         %c = setne ubyte %B, 0    ; === A != 1
         ret bool %c
 }
+
+int %test12(int %A, int %B) {
+	%C_OK = add int %B, %A       ; Should be transformed into shl A, 1
+	br label %X
+X:
+	%D = add int %C_OK, %A 
+	ret int %D
+}
+
+int %test13(int %A, int %B, int %C) {
+	%D_OK = add int %A, %B
+	%E_OK = add int %D_OK, %C
+	%F = add int %E_OK, %A        ;; shl A, 1
+	ret int %F
+}
+
+uint %test14(uint %offset, uint %difference) {
+        %tmp.2 = and uint %difference, 3
+        %tmp.3_OK = add uint %tmp.2, %offset
+        %tmp.5.mask = and uint %difference, 4294967292
+        %tmp.8 = add uint %tmp.3_OK, %tmp.5.mask ; == add %offset, %difference
+        ret uint %tmp.8
+}
+
