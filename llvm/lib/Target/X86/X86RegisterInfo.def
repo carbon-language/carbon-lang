@@ -47,7 +47,7 @@ R(EDI, "EDI", MRF::INT32, 0)
 // 16 bit registers, aliased with the corresponding 32 bit registers above
 R(AX, "AX", MRF::INT16, 0)
 R(CX, "CX", MRF::INT16, 0)
-R(DX, "Dx", MRF::INT16, 0)
+R(DX, "DX", MRF::INT16, 0)
 R(BX, "BX", MRF::INT16, 0)
 R(SP, "SP", MRF::INT16, 0)
 R(BP, "BP", MRF::INT16, 0)
