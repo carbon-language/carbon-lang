@@ -107,37 +107,12 @@ static GenericValue getOperandValue(Value *V, ExecutionContext &SF) {
   }
 }
 
-static void printOperandInfo(Value *V, ExecutionContext &SF) {
-  if (isa<Constant>(V)) {
-    std::cout << "Constant Pool Value\n";
-  } else if (isa<GlobalValue>(V)) {
-    std::cout << "Global Value\n";
-  } else {
-    unsigned TyP  = V->getType()->getUniqueID();   // TypePlane for value
-    unsigned Slot = getOperandSlot(V);
-    std::cout << "Value=" << (void*)V << " TypeID=" << TyP << " Slot=" << Slot
-              << " Addr=" << &SF.Values[TyP][Slot] << " SF=" << &SF
-              << " Contents=0x";
-
-    const unsigned char *Buf = (const unsigned char*)&SF.Values[TyP][Slot];
-    for (unsigned i = 0; i < sizeof(GenericValue); ++i) {
-      unsigned char Cur = Buf[i];
-      std::cout << ( Cur     >= 160?char((Cur>>4)+'A'-10):char((Cur>>4) + '0'))
-                << ((Cur&15) >=  10?char((Cur&15)+'A'-10):char((Cur&15) + '0'));
-    }
-    std::cout << "\n";
-  }
-}
-
-
-
 static void SetValue(Value *V, GenericValue Val, ExecutionContext &SF) {
   unsigned TyP = V->getType()->getUniqueID();   // TypePlane for value
 
   //std::cout << "Setting value: " << &SF.Values[TyP][getOperandSlot(V)]<< "\n";
   SF.Values[TyP][getOperandSlot(V)] = Val;
 }
-
 
 //===----------------------------------------------------------------------===//
 //                    Annotation Wrangling code
@@ -1049,11 +1024,6 @@ void Interpreter::executeInstruction() {
 }
 
 void Interpreter::run() {
-  if (ECStack.empty()) {
-    std::cout << "Error: no program running, cannot run!\n";
-    return;
-  }
-
   while (!ECStack.empty()) {
     // Run an instruction...
     executeInstruction();
