@@ -240,6 +240,16 @@
   Note that you normally do not need to specify the sources involved. The LLVM
   Makefile system will infer the source files from the contents of the source
   directory.</p>
+  <p>The <tt>LOADABLE_MODULE=1</tt> directive can be used in conjunction with
+  <tt>SHARED_LIBRARY=1</tt> to indicate that the resulting shared library should
+  be openable with the <tt>dlopen</tt> function and searchable with the
+  <tt>dlsym</tt> function (or your operating system's equivalents). While this
+  isn't strictly necessary on Linux and a few other platforms, it is required
+  on systems like HP-UX and Darwin. You should use <tt>LOADABLE_MODULE</tt> for
+  any shared library that you intend to be loaded into an tool via the
+  <tt>-load</tt> option. See the 
+  <a href="WritingAnLLVMPass.html#makefile">WritingAnLLVMPass.html</a> document
+  for an example of why you might want to do this.
 </div>
 
 <!-- ======================================================================= -->
@@ -539,8 +549,8 @@
   <tt>$(BUILD_OBJ_ROOT)</tt> directoy by removing its content entirely and 
   reconfiguring the directory. This returns the <tt>$(BUILD_OBJ_ROOT)</tt> 
   directory to a completely fresh state. All content in the directory except 
-  configured files and top-level makefiles will be lost.
-  <font color="red">Use with caution.</font></p>
+  configured files and top-level makefiles will be lost.</p>
+  <div class="doc_warning"><p>Use with caution.</p></div>
 </div>
 
 <!-- ======================================================================= -->
@@ -652,6 +662,12 @@
     <dt><a name="LLVMLIBS"><tt>LLVMLIBS</tt></a></dt>
     <dd>Specifies the set of libraries from the LLVM $(ObjDir) that will be
     linked into the tool or library.</dd>
+    <dt><a name="LOADABLE_MODULE"><tt>LOADABLE_MODULE</tt></a></dt>
+    <dd>If set to any value, causes the shared library being built to also be
+    a loadable module. Loadable modules can be opened with the dlopen() function
+    and searched with dlsym (or the operating system's equivalent). Note that
+    setting this variable without also setting <tt>SHARED_LIBRARY</tt> will have
+    no effect.</dd>
     <dt><a name="MODULE_NAME"><tt>MODULE_NAME</tt></a></dt>
     <dd>Specifies the name of a bytecode module to be created. A bytecode 
     module can be specified in conjunction with other kinds of library builds 
