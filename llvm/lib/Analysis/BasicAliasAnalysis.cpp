@@ -294,11 +294,11 @@ BasicAliasAnalysis::CheckGEPInstructions(GetElementPtrInst *GEP1, unsigned G1S,
     }
   }
   
-  int Offset1 = getTargetData().getIndexedOffset(GEPPointerTy, Indices1);
-  int Offset2 = getTargetData().getIndexedOffset(GEPPointerTy, Indices2);
+  int64_t Offset1 = getTargetData().getIndexedOffset(GEPPointerTy, Indices1);
+  int64_t Offset2 = getTargetData().getIndexedOffset(GEPPointerTy, Indices2);
   assert(Offset1 < Offset2 &&"There is at least one different constant here!");
 
-  if ((unsigned)(Offset2-Offset1) >= SizeMax) {
+  if ((uint64_t)(Offset2-Offset1) >= SizeMax) {
     //std::cerr << "Determined that these two GEP's don't alias [" 
     //          << SizeMax << " bytes]: \n" << *GEP1 << *GEP2;
     return NoAlias;
