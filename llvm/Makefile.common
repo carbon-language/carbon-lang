@@ -161,13 +161,13 @@ bytecode::
 
 # Print out the directories used for building
 prdirs::
-	echo "Home Offset      : " $(HOME_OBJ_ROOT);
-	echo "Build Source Root: " $(BUILD_SRC_ROOT);
-	echo "Build Source Dir : " $(BUILD_SRC_DIR);
-	echo "Build Object Root: " $(BUILD_OBJ_ROOT);
-	echo "Build Object Dir : " $(BUILD_OBJ_DIR);
-	echo "LLVM  Source Root: " $(LLVM_SRC_ROOT);
-	echo "LLVM  Object Root: " $(LLVM_OBJ_ROOT);
+	echo "Home Offset      : " $(HOME_OBJ_ROOT)
+	echo "Build Source Root: " $(BUILD_SRC_ROOT)
+	echo "Build Source Dir : " $(BUILD_SRC_DIR)
+	echo "Build Object Root: " $(BUILD_OBJ_ROOT)
+	echo "Build Object Dir : " $(BUILD_OBJ_DIR)
+	echo "LLVM  Source Root: " $(LLVM_SRC_ROOT)
+	echo "LLVM  Object Root: " $(LLVM_OBJ_ROOT)
 
 #
 # Mark all of these targets as phony.  This will hopefully speed up builds
@@ -546,18 +546,18 @@ $(LIBNAME_BC): $(ObjectsBC) $(LibSubDirs) $(DESTLIBBYTECODE)/.dir
 #
 $(LIBNAME_O): $(ObjectsO) $(LibSubDirs) $(DESTLIBRELEASE)/.dir
 	@echo ======= Linking $(LIBRARYNAME) dynamic release library =======
-	$(VERB) $(Link) -o $*.la $(ObjectsO) $(LibSubDirs) $(LibLinkOpts);
-	$(VERB) $(LIBTOOL) --mode=install $(INSTALL) $*.la $(DESTLIBCURRENT);
+	$(VERB) $(Link) -o $*.la $(ObjectsO) $(LibSubDirs) $(LibLinkOpts)
+	$(VERB) $(LIBTOOL) --mode=install $(INSTALL) $*.la $(DESTLIBCURRENT)
 
 $(LIBNAME_P): $(ObjectsP) $(LibSubDirs) $(DESTLIBPROFILE)/.dir
 	@echo ======= Linking $(LIBRARYNAME) dynamic profile library =======
-	$(VERB) $(Link) -o $*.la $(ObjectsP) $(LibSubDirs) $(LibLinkOpts);
-	$(VERB) $(LIBTOOL) --mode=install $(INSTALL) $*.la $(DESTLIBCURRENT);
+	$(VERB) $(Link) -o $*.la $(ObjectsP) $(LibSubDirs) $(LibLinkOpts)
+	$(VERB) $(LIBTOOL) --mode=install $(INSTALL) $*.la $(DESTLIBCURRENT)
 
 $(LIBNAME_G): $(ObjectsG) $(LibSubDirs) $(DESTLIBDEBUG)/.dir
 	@echo ======= Linking $(LIBRARYNAME) dynamic debug library =======
-	$(VERB) $(Link) -o $*.la $(ObjectsG) $(LibSubDirs) $(LibLinkOpts);
-	$(VERB) $(LIBTOOL) --mode=install $(INSTALL) $*.la $(DESTLIBCURRENT);
+	$(VERB) $(Link) -o $*.la $(ObjectsG) $(LibSubDirs) $(LibLinkOpts)
+	$(VERB) $(LIBTOOL) --mode=install $(INSTALL) $*.la $(DESTLIBCURRENT)
 
 #
 # Rules for building static archive libraries.
@@ -756,7 +756,7 @@ YACC_OUTPUT = $(addprefix $(YACC_FILES:%.y=%), .h .cpp .output)
 # The last line is a gross hack to work around flex aparently not being able to
 # resize the buffer on a large token input.  Currently, for uninitialized string
 # buffers in LLVM we can generate very long tokens, so this is a hack around it.
-# FIXME.  (f.e. char Buffer[10000]; )
+# FIXME.  (f.e. char Buffer[10000] )
 #
 %.cpp: %.l
 	@echo Flex\'ing $<...
