@@ -100,12 +100,30 @@ let rd = 0, imm22 = 0 in
   def NOP : F2_1<0b100, "nop">;
 
 // Section B.11 - Logical Instructions, p. 106
-def ANDrr : F3_1<2, 0b000001, "and">;
-def ANDri : F3_2<2, 0b000001, "and">;
-def ORrr  : F3_1<2, 0b000010, "or">;
-def ORri  : F3_2<2, 0b000010, "or">;
-def XORrr : F3_1<2, 0b000011, "xor">;
-def XORri : F3_2<2, 0b000011, "xor">;
+def ANDrr   : F3_1<2, 0b000001, "and">;
+def ANDri   : F3_2<2, 0b000001, "and">;
+def ANDCCrr : F3_1<2, 0b010001, "andcc">;
+def ANDCCri : F3_2<2, 0b010001, "andcc">;
+def ANDNrr  : F3_1<2, 0b000101, "andn">;
+def ANDNri  : F3_2<2, 0b000101, "andn">;
+def ANDNCCrr: F3_1<2, 0b010101, "andncc">;
+def ANDNCCri: F3_2<2, 0b010101, "andncc">;
+def ORrr    : F3_1<2, 0b000010, "or">;
+def ORri    : F3_2<2, 0b000010, "or">;
+def ORCCrr  : F3_1<2, 0b010010, "orcc">;
+def ORCCri  : F3_2<2, 0b010010, "orcc">;
+def ORNrr   : F3_1<2, 0b000110, "orn">;
+def ORNri   : F3_2<2, 0b000110, "orn">;
+def ORNCCrr : F3_1<2, 0b010110, "orncc">;
+def ORNCCri : F3_2<2, 0b010110, "orncc">;
+def XORrr   : F3_1<2, 0b000011, "xor">;
+def XORri   : F3_2<2, 0b000011, "xor">;
+def XORCCrr : F3_1<2, 0b010011, "xorcc">;
+def XORCCri : F3_2<2, 0b010011, "xorcc">;
+def XNORrr  : F3_1<2, 0b000111, "xnor">;
+def XNORri  : F3_2<2, 0b000111, "xnor">;
+def XNORCCrr: F3_1<2, 0b010111, "xnorcc">;
+def XNORCCri: F3_2<2, 0b010111, "xnorcc">;
 
 // Section B.12 - Shift Instructions, p. 107
 def SLLrr : F3_1<2, 0b100101, "sll">;
