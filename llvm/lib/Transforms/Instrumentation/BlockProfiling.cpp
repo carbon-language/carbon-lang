@@ -38,9 +38,8 @@ namespace {
                                "Insert instrumentation for function profiling");
 }
 
-ModulePass *llvm::createFunctionProfilerPass()
-{
-	return new FunctionProfiler();
+ModulePass *llvm::createFunctionProfilerPass() {
+  return new FunctionProfiler();
 }
 
 bool FunctionProfiler::runOnModule(Module &M) {
