@@ -71,20 +71,20 @@ namespace {
         OS << *I;
       
         if ((*I)->getType() == Type::VoidTy) continue;
-        analysis::ExprType R = analysis::ClassifyExpression(*I);
+        ExprType R = ClassifyExpression(*I);
         if (R.Var == *I) continue;  // Doesn't tell us anything
       
         OS << "\t\tExpr =";
         switch (R.ExprTy) {
-        case analysis::ExprType::ScaledLinear:
+        case ExprType::ScaledLinear:
           WriteAsOperand(OS << "(", (Value*)R.Scale) << " ) *";
           // fall through
-        case analysis::ExprType::Linear:
+        case ExprType::Linear:
           WriteAsOperand(OS << "(", R.Var) << " )";
           if (R.Offset == 0) break;
           else OS << " +";
           // fall through
-        case analysis::ExprType::Constant:
+        case ExprType::Constant:
           if (R.Offset) WriteAsOperand(OS, (Value*)R.Offset);
           else OS << " 0";
           break;

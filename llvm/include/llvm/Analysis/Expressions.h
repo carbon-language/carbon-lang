@@ -15,8 +15,6 @@ class Type;
 class Value;
 class ConstantInt;
 
-namespace analysis {
-
 struct ExprType;
 
 // ClassifyExpression: Analyze an expression to determine the complexity of the
@@ -51,7 +49,5 @@ struct ExprType {
   //
   const Type *getExprType(const Type *Default) const;
 };
-
-} // End namespace analysis
 
 #endif

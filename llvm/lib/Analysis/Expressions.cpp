@@ -10,11 +10,6 @@
 #include "llvm/Analysis/Expressions.h"
 #include "llvm/ConstantHandling.h"
 #include "llvm/Function.h"
-#include "llvm/BasicBlock.h"
-#include "llvm/Instruction.h"
-#include <iostream>
-
-using namespace analysis;
 
 ExprType::ExprType(Value *Val) {
   if (Val) 
@@ -233,7 +228,7 @@ static inline ExprType negate(const ExprType &E, Value *V) {
 // Note that this analysis cannot get into infinite loops because it treats PHI
 // nodes as being an unknown linear expression.
 //
-ExprType analysis::ClassifyExpression(Value *Expr) {
+ExprType ClassifyExpression(Value *Expr) {
   assert(Expr != 0 && "Can't classify a null expression!");
   if (Expr->getType() == Type::FloatTy || Expr->getType() == Type::DoubleTy)
     return Expr;   // FIXME: Can't handle FP expressions

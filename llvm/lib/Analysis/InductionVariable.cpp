@@ -25,9 +25,6 @@
 #include "llvm/Constants.h"
 #include "llvm/Assembly/Writer.h"
 
-using analysis::ExprType;
-
-
 static bool isLoopInvariant(const Value *V, const Loop *L) {
   if (isa<Constant>(V) || isa<Argument>(V) || isa<GlobalValue>(V))
     return true;
@@ -85,8 +82,8 @@ InductionVariable::InductionVariable(PHINode *P, LoopInfo *LoopInfo) {
   Value *V2 = Phi->getIncomingValue(1);
 
   if (L == 0) {  // No loop information?  Base everything on expression analysis
-    ExprType E1 = analysis::ClassifyExpression(V1);
-    ExprType E2 = analysis::ClassifyExpression(V2);
+    ExprType E1 = ClassifyExpression(V1);
+    ExprType E2 = ClassifyExpression(V2);
 
     if (E1.ExprTy > E2.ExprTy)        // Make E1 be the simpler expression
       std::swap(E1, E2);
@@ -128,7 +125,7 @@ InductionVariable::InductionVariable(PHINode *P, LoopInfo *LoopInfo) {
     }
 
     if (Step == 0) {                  // Unrecognized step value...
-      ExprType StepE = analysis::ClassifyExpression(V2);
+      ExprType StepE = ClassifyExpression(V2);
       if (StepE.ExprTy != ExprType::Linear ||
 	  StepE.Var != Phi) return;
 
@@ -136,7 +133,7 @@ InductionVariable::InductionVariable(PHINode *P, LoopInfo *LoopInfo) {
       if (isa<PointerType>(ETy)) ETy = Type::ULongTy;
       Step  = (Value*)(StepE.Offset ? StepE.Offset : ConstantInt::get(ETy, 0));
     } else {   // We were able to get a step value, simplify with expr analysis
-      ExprType StepE = analysis::ClassifyExpression(Step);
+      ExprType StepE = ClassifyExpression(Step);
       if (StepE.ExprTy == ExprType::Linear && StepE.Offset == 0) {
         // No offset from variable?  Grab the variable
         Step = StepE.Var;

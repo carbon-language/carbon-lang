@@ -15,7 +15,6 @@
 #include "Support/STLExtras.h"
 #include "Support/StatisticReporter.h"
 #include <algorithm>
-#include <iostream>
 using std::cerr;
 
 static bool OperandConvertableToType(User *U, Value *V, const Type *Ty,
@@ -44,7 +43,7 @@ static bool MallocConvertableToType(MallocInst *MI, const Type *Ty,
   if (!Ty->isSized()) return false;      // Can only alloc something with a size
 
   // Analyze the number of bytes allocated...
-  analysis::ExprType Expr = analysis::ClassifyExpression(MI->getArraySize());
+  ExprType Expr = ClassifyExpression(MI->getArraySize());
 
   // Get information about the base datatype being allocated, before & after
   int ReqTypeSize = TD.getTypeSize(Ty);
@@ -79,7 +78,7 @@ static Instruction *ConvertMallocToType(MallocInst *MI, const Type *Ty,
   BasicBlock::iterator It = BB->end();
 
   // Analyze the number of bytes allocated...
-  analysis::ExprType Expr = analysis::ClassifyExpression(MI->getArraySize());
+  ExprType Expr = ClassifyExpression(MI->getArraySize());
 
   const PointerType *AllocTy = cast<PointerType>(Ty);
   const Type *ElType = AllocTy->getElementType();
