@@ -37,12 +37,13 @@ OutputFilename("o", cl::desc("Output filename"), cl::value_desc("filename"));
 
 static cl::opt<bool> Force("f", cl::desc("Overwrite output files"));
 
-enum ArchName { noarch, x86, Sparc };
+enum ArchName { noarch, x86, Sparc, PowerPC };
 
 static cl::opt<ArchName>
 Arch("march", cl::desc("Architecture to generate assembly for:"), cl::Prefix,
      cl::values(clEnumVal(x86, "  IA-32 (Pentium and above)"),
                 clEnumValN(Sparc, "sparc", "  SPARC V9"),
+                clEnumValN(PowerPC, "powerpc", "  PowerPC"),
 		0),
      cl::init(noarch));
 
@@ -87,6 +88,9 @@ int main(int argc, char **argv) {
   case Sparc:
     TargetMachineAllocator = allocateSparcTargetMachine;
     break;
+  case PowerPC:
+    TargetMachineAllocator = allocatePowerPCTargetMachine;
+    break;
   default:
     // Decide what the default target machine should be, by looking at
     // the module. This heuristic (ILP32, LE -> IA32; LP64, BE ->
@@ -95,6 +99,9 @@ int main(int argc, char **argv) {
     if (mod.getEndianness()  == Module::LittleEndian &&
         mod.getPointerSize() == Module::Pointer32) { 
       TargetMachineAllocator = allocateX86TargetMachine;
+    } else if (mod.getEndianness() == Module::BigEndian &&
+        mod.getPointerSize() == Module::Pointer32) { 
+      TargetMachineAllocator = allocatePowerPCTargetMachine;
     } else if (mod.getEndianness()  == Module::BigEndian &&
                mod.getPointerSize() == Module::Pointer64) { 
       TargetMachineAllocator = allocateSparcTargetMachine;
@@ -105,6 +112,8 @@ int main(int argc, char **argv) {
       TargetMachineAllocator = allocateX86TargetMachine;
 #elif defined(sparc) || defined(__sparc__) || defined(__sparcv9)
       TargetMachineAllocator = allocateSparcTargetMachine;
+#elif defined(__POWERPC__) || defined(__ppc__) || defined(__APPLE__)
+      TargetMachineAllocator = allocatePowerPCTargetMachine;
 #else
       std::cerr << argv[0] << ": module does not specify a target to use.  "
                 << "You must use the -march option.\n";
