@@ -190,6 +190,8 @@ public:
 
   virtual Instruction *clone() const { return new InvokeInst(*this); }
 
+  bool hasSideEffects() const { return true; }
+
   // getCalledFunction - Return the function called, or null if this is an
   // indirect function invocation...
   //
