@@ -19,7 +19,6 @@
 #include "llvm/Module.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/Debug.h"
-#include "llvm/Support/Timer.h"
 using namespace llvm;
 
 namespace {
@@ -245,8 +244,6 @@ unsigned BUDataStructures::calculateGraphs(Function *F,
     ValMap[NF] = ~0U;
     DSGraph &SCCGraph = getDSGraph(*NF);
 
-    { NamedRegionTimer XX("asldkfjasdf");
-
     // First thing first, collapse all of the DSGraphs into a single graph for
     // the entire SCC.  Splice all of the graphs into one and discard all of the
     // old graphs.
@@ -269,7 +266,7 @@ unsigned BUDataStructures::calculateGraphs(Function *F,
       ++SCCSize;
     }
     Stack.pop_back();
-    }
+
     std::cerr << "Calculating graph for SCC #: " << MyID << " of size: "
               << SCCSize << "\n";
 
