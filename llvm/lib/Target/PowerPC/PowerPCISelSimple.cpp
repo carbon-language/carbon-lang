@@ -397,23 +397,7 @@ static AllocaInst *dyn_castFixedAlloca(Value *V) {
 ///
 unsigned ISel::getReg(Value *V, MachineBasicBlock *MBB,
                       MachineBasicBlock::iterator IPt) {
-  // If this operand is a constant, emit the code to copy the constant into
-  // the register here...
-  //
-  if (GlobalValue *GV = dyn_cast<GlobalValue>(V)) {
-    // GV is located at PC + distance
-    unsigned CurPC = makeAnotherReg(Type::IntTy);
-    unsigned Reg1 = makeAnotherReg(V->getType());
-    unsigned Reg2 = makeAnotherReg(V->getType());
-    // Move PC to destination reg
-    BuildMI(*MBB, IPt, PPC32::MovePCtoLR, 0, CurPC);
-    // Move value at PC + distance into return reg
-    BuildMI(*MBB, IPt, PPC32::LOADHiAddr, 2, Reg1).addReg(CurPC)
-      .addGlobalAddress(GV);
-    BuildMI(*MBB, IPt, PPC32::LOADLoAddr, 2, Reg2).addReg(Reg1)
-      .addGlobalAddress(GV);
-    return Reg2;
-  } else if (Constant *C = dyn_cast<Constant>(V)) {
+  if (Constant *C = dyn_cast<Constant>(V)) {
     unsigned Reg = makeAnotherReg(V->getType());
     copyConstantToRegister(MBB, IPt, C, Reg);
     return Reg;
@@ -542,8 +526,16 @@ void ISel::copyConstantToRegister(MachineBasicBlock *MBB,
     // Copy zero (null pointer) to the register.
     BuildMI(*MBB, IP, PPC32::LI, 1, R).addImm(0);
   } else if (GlobalValue *GV = dyn_cast<GlobalValue>(C)) {
-    unsigned AddrReg = getReg(GV, MBB, IP);
-    BuildMI(*MBB, IP, PPC32::OR, 2, R).addReg(AddrReg).addReg(AddrReg);
+    // GV is located at PC + distance
+    unsigned CurPC = makeAnotherReg(Type::IntTy);
+    unsigned TmpReg = makeAnotherReg(GV->getType());
+    // Move PC to destination reg
+    BuildMI(*MBB, IP, PPC32::MovePCtoLR, 0, CurPC);
+    // Move value at PC + distance into return reg
+    BuildMI(*MBB, IP, PPC32::LOADHiAddr, 2, TmpReg).addReg(CurPC)
+      .addGlobalAddress(GV);
+    BuildMI(*MBB, IP, PPC32::LOADLoAddr, 2, R).addReg(TmpReg)
+      .addGlobalAddress(GV);
   } else {
     std::cerr << "Offending constant: " << *C << "\n";
     assert(0 && "Type not handled yet!");
