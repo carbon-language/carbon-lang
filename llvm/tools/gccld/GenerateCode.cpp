@@ -38,9 +38,6 @@ namespace {
   cl::opt<bool>
   DisableOptimizations("disable-opt",
                        cl::desc("Do not run any optimization passes"));
-  cl::opt<bool>
-  DisableGlobalsModRef("disable-globalsmodref", cl::Hidden,
-                      cl::desc("Turn on the more aggressive alias analysis"));
 }
 
 /// CopyEnv - This function takes an array of environment variables and makes a
@@ -200,8 +197,7 @@ int llvm::GenerateBytecode(Module *M, bool Strip, bool Internalize,
     addPass(Passes, createScalarReplAggregatesPass()); // Break up allocas
 
     // Run a few AA driven optimizations here and now, to cleanup the code.
-    if (!DisableGlobalsModRef)
-      addPass(Passes, createGlobalsModRefPass());    // IP alias analysis
+    addPass(Passes, createGlobalsModRefPass());      // IP alias analysis
 
     addPass(Passes, createLICMPass());               // Hoist loop invariants
     addPass(Passes, createLoadValueNumberingPass()); // GVN for load instrs
