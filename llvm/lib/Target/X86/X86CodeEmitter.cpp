@@ -635,7 +635,8 @@ void Emitter::emitInstruction(const MachineInstr &MI) {
                      (Desc.TSFlags & X86II::FormMask)-X86II::MRM0r);
 
     if (MI.getOperand(MI.getNumOperands()-1).isImmediate()) {
-      emitConstant(MI.getOperand(MI.getNumOperands()-1).getImmedValue(), sizeOfImm(Desc));
+      emitConstant(MI.getOperand(MI.getNumOperands()-1).getImmedValue(),
+                   sizeOfImm(Desc));
     }
     break;
 

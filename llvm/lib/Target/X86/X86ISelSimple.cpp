@@ -2984,7 +2984,7 @@ void X86ISel::emitShiftOperation(MachineBasicBlock *MBB,
           BuildMI(*MBB, IP, X86::MOV32rr, 1, DestReg+1).addReg(SrcReg);
           BuildMI(*MBB, IP, X86::MOV32ri, 1, DestReg).addImm(0);
         } else {
-          BuildMI(*MBB, IP, X86::MOV32rr, 1, DestReg).addReg(SrcReg);
+          BuildMI(*MBB, IP, X86::MOV32rr, 1, DestReg).addReg(SrcReg+1);
           if (!isSigned) {
             BuildMI(*MBB, IP, X86::MOV32ri, 1, DestReg+1).addImm(0);
           } else {
