@@ -156,6 +156,25 @@ static struct PerFunctionInfo {
     // resolve the branches now...
     ResolveDefinitions(LateResolveValues, &CurModule.LateResolveValues);
 
+    // Make sure to resolve any constant expr references that might exist within
+    // the function we just declared itself.
+    ValID FID;
+    if (CurrentFunction->hasName()) {
+      FID = ValID::create((char*)CurrentFunction->getName().c_str());
+    } else {
+      unsigned Slot = CurrentFunction->getType()->getUniqueID();
+      assert(CurModule.Values.size() > Slot && "Function not inserted?");
+      // Figure out which slot number if is...
+      for (unsigned i = 0; ; ++i) {
+        assert(i < CurModule.Values[Slot].size() && "Function not found!");
+        if (CurModule.Values[Slot][i] == CurrentFunction) {
+          FID = ValID::create((int)i);
+          break;
+        }
+      }
+    }
+    CurModule.DeclareNewGlobalValue(CurrentFunction, FID);
+
     Values.clear();         // Clear out function local definitions
     Types.clear();
     CurrentFunction = 0;
@@ -964,7 +983,6 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
     Value *V = getValNonImprovising(Ty, $2);
 
     CurMeth.CurrentFunction = SavedCurFn;
-
 
     // If this is an initializer for a constant pointer, which is referencing a
     // (currently) undefined variable, create a stub now that shall be replaced
