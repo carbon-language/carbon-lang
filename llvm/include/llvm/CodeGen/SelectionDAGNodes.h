@@ -138,8 +138,32 @@ namespace ISD {
     // FP_EXTEND - Extend a smaller FP type into a larger FP type.
     FP_EXTEND,
 
-    // Other operators.  LOAD and STORE have token chains.
+    // Other operators.  LOAD and STORE have token chains as their first
+    // operand, then the same operands as an LLVM load/store instruction.
     LOAD, STORE,
+
+    // EXTLOAD, SEXTLOAD, ZEXTLOAD - These three operators are instances of the
+    // MVTSDNode.  All of these load a value from memory and extend them to a
+    // larger value (e.g. load a byte into a word register).  All three of these
+    // have two operands, a chain and a pointer to load from.  The extra value
+    // type is the source type being loaded.
+    //
+    // SEXTLOAD loads the integer operand and sign extends it to a larger
+    //          integer result type.
+    // ZEXTLOAD loads the integer operand and zero extends it to a larger
+    //          integer result type.
+    // EXTLOAD  is used for two things: floating point extending loads, and 
+    //          integer extending loads where it doesn't matter what the high
+    //          bits are set to.  The code generator is allowed to codegen this
+    //          into whichever operation is more efficient.
+    EXTLOAD, SEXTLOAD, ZEXTLOAD,
+
+    // TRUNCSTORE - This operators truncates (for integer) or rounds (for FP) a
+    // value and stores it to memory in one operation.  This can be used for
+    // either integer or floating point operands, and the stored type
+    // represented as the 'extra' value type in the MVTSDNode representing the
+    // operator.  This node has the same three operands as a standard store.
+    TRUNCSTORE,
 
     // DYNAMIC_STACKALLOC - Allocate some number of bytes on the stack aligned
     // to a specified boundary.  The first operand is the token chain, the
@@ -624,11 +648,17 @@ class RegSDNode : public SDNode {
   unsigned Reg;
 protected:
   friend class SelectionDAG;
-  RegSDNode(SDOperand Chain, SDOperand Src, unsigned reg)
-    : SDNode(ISD::CopyToReg, Chain, Src), Reg(reg) {
-    setValueTypes(MVT::Other);  // Just a token chain.
+  RegSDNode(unsigned Opc, MVT::ValueType VT, SDOperand Chain,
+            SDOperand Src, unsigned reg)
+    : SDNode(Opc, Chain, Src), Reg(reg) {
+    setValueTypes(VT);
   }
-  RegSDNode(unsigned Opc, unsigned reg, MVT::ValueType VT)
+  RegSDNode(unsigned Opc, MVT::ValueType VT, SDOperand Chain,
+            unsigned reg)
+    : SDNode(Opc, Chain), Reg(reg) {
+    setValueTypes(VT);
+  }
+  RegSDNode(unsigned Opc, MVT::ValueType VT, unsigned reg)
     : SDNode(Opc, VT), Reg(reg) {
   }
 public:
@@ -678,6 +708,35 @@ public:
   }
 };
 
+/// MVTSDNode - This class is used for operators that require an extra
+/// value-type to be kept with the node.
+class MVTSDNode : public SDNode {
+  MVT::ValueType ExtraValueType;
+protected:
+  friend class SelectionDAG;
+  MVTSDNode(unsigned Opc, MVT::ValueType VT,
+            SDOperand Op0, SDOperand Op1, MVT::ValueType EVT)
+    : SDNode(Opc, Op0, Op1), ExtraValueType(EVT) {
+    setValueTypes(VT);
+  }
+  MVTSDNode(unsigned Opc, MVT::ValueType VT,
+            SDOperand Op0, SDOperand Op1, SDOperand Op2, MVT::ValueType EVT)
+    : SDNode(Opc, Op0, Op1, Op2), ExtraValueType(EVT) {
+    setValueTypes(VT);
+  }
+public:
+
+  MVT::ValueType getExtraValueType() const { return ExtraValueType; }
+
+  static bool classof(const MVTSDNode *) { return true; }
+  static bool classof(const SDNode *N) {
+    return 
+      N->getOpcode() == ISD::EXTLOAD  ||
+      N->getOpcode() == ISD::SEXTLOAD || 
+      N->getOpcode() == ISD::ZEXTLOAD ||
+      N->getOpcode() == ISD::TRUNCSTORE;
+  }
+};
 
 class SDNodeIterator : public forward_iterator<SDNode, ptrdiff_t> {
   SDNode *Node;

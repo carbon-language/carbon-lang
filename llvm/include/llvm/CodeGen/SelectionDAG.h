@@ -44,26 +44,6 @@ class SelectionDAG {
 
   // AllNodes - All of the nodes in the DAG
   std::vector<SDNode*> AllNodes;
-
-  // Maps to auto-CSE operations.
-  std::map<std::pair<unsigned, std::pair<SDOperand, MVT::ValueType> >,
-           SDNode *> UnaryOps;
-  std::map<std::pair<unsigned, std::pair<SDOperand, SDOperand> >,
-           SDNode *> BinaryOps;
-
-  std::map<std::pair<std::pair<SDOperand, SDOperand>, ISD::CondCode>,
-           SetCCSDNode*> SetCCs;
-
-  std::map<std::pair<SDOperand, std::pair<SDOperand, MVT::ValueType> >,
-           SDNode *> Loads;
-
-  std::map<const GlobalValue*, SDNode*> GlobalValues;
-  std::map<std::pair<uint64_t, MVT::ValueType>, SDNode*> Constants;
-  std::map<std::pair<double, MVT::ValueType>, SDNode*> ConstantFPs;
-  std::map<int, SDNode*> FrameIndices;
-  std::map<unsigned, SDNode*> ConstantPoolIndices;
-  std::map<MachineBasicBlock *, SDNode*> BBNodes;
-  std::map<std::string, SDNode*> ExternalSymbols;
 public:
   SelectionDAG(const TargetMachine &tm, MachineFunction &mf) : TM(tm), MF(mf) {
     EntryNode = Root = getNode(ISD::EntryToken, MVT::Other);
@@ -119,21 +99,21 @@ public:
   SDOperand getCopyToReg(SDOperand Chain, SDOperand N, unsigned Reg) {
     // Note: these are auto-CSE'd because the caller doesn't make requests that
     // could cause duplicates to occur.
-    SDNode *NN = new RegSDNode(Chain, N, Reg);
+    SDNode *NN = new RegSDNode(ISD::CopyToReg, MVT::Other, Chain, N, Reg);
     AllNodes.push_back(NN);
     return SDOperand(NN, 0);
   }
 
   SDOperand getCopyFromReg(unsigned Reg, MVT::ValueType VT) {
     // Note: These nodes are auto-CSE'd by the caller of this method.
-    SDNode *NN = new RegSDNode(ISD::CopyFromReg, Reg, VT);
+    SDNode *NN = new RegSDNode(ISD::CopyFromReg, VT, Reg);
     AllNodes.push_back(NN);
     return SDOperand(NN, 0);
   }
 
-  SDOperand getImplicitDef(unsigned Reg) {
+  SDOperand getImplicitDef(SDOperand Chain, unsigned Reg) {
     // Note: These nodes are auto-CSE'd by the caller of this method.
-    SDNode *NN = new RegSDNode(ISD::ImplicitDef, Reg, MVT::Other);
+    SDNode *NN = new RegSDNode(ISD::ImplicitDef, MVT::Other, Chain, Reg);
     AllNodes.push_back(NN);
     return SDOperand(NN, 0);
   }
@@ -161,6 +141,13 @@ public:
   SDOperand getNode(unsigned Opcode, MVT::ValueType VT,
                     std::vector<SDOperand> &Children);
 
+  // getNode - These versions take an extra value type for extending and
+  // truncating loads and stores.
+  SDOperand getNode(unsigned Opcode, MVT::ValueType VT, SDOperand N1,
+                    SDOperand N2, MVT::ValueType EVT);
+  SDOperand getNode(unsigned Opcode, MVT::ValueType VT, SDOperand N1,
+                    SDOperand N2, SDOperand N3, MVT::ValueType EVT);
+
   /// getLoad - Loads are not normal binary operators: their result type is not
   /// determined by their operands, and they produce a value AND a token chain.
   ///
@@ -175,6 +162,41 @@ public:
 
 private:
   void DeleteNodeIfDead(SDNode *N, void *NodeSet);
+
+  // Maps to auto-CSE operations.
+  std::map<std::pair<unsigned, std::pair<SDOperand, MVT::ValueType> >,
+           SDNode *> UnaryOps;
+  std::map<std::pair<unsigned, std::pair<SDOperand, SDOperand> >,
+           SDNode *> BinaryOps;
+
+  std::map<std::pair<std::pair<SDOperand, SDOperand>, ISD::CondCode>,
+           SetCCSDNode*> SetCCs;
+
+  std::map<std::pair<SDOperand, std::pair<SDOperand, MVT::ValueType> >,
+           SDNode *> Loads;
+
+  std::map<const GlobalValue*, SDNode*> GlobalValues;
+  std::map<std::pair<uint64_t, MVT::ValueType>, SDNode*> Constants;
+  std::map<std::pair<double, MVT::ValueType>, SDNode*> ConstantFPs;
+  std::map<int, SDNode*> FrameIndices;
+  std::map<unsigned, SDNode*> ConstantPoolIndices;
+  std::map<MachineBasicBlock *, SDNode*> BBNodes;
+  std::map<std::string, SDNode*> ExternalSymbols;
+  struct EVTStruct {
+    unsigned Opcode;
+    MVT::ValueType VT, EVT;
+    std::vector<SDOperand> Ops;
+    bool operator<(const EVTStruct &RHS) const {
+      if (Opcode < RHS.Opcode) return true;
+      if (Opcode > RHS.Opcode) return false;
+      if (VT < RHS.VT) return true;
+      if (VT > RHS.VT) return false;
+      if (EVT < RHS.EVT) return true;
+      if (EVT > RHS.EVT) return false;
+      return Ops < RHS.Ops;
+    }
+  };
+  std::map<EVTStruct, SDNode*> MVTSDNodes;
 };
 
 template <> struct GraphTraits<SelectionDAG*> : public GraphTraits<SDNode*> {
