@@ -89,7 +89,7 @@ namespace {
     void printU5ImmOperand(const MachineInstr *MI, unsigned OpNo,
                             MVT::ValueType VT) {
       unsigned char value = MI->getOperand(OpNo).getImmedValue();
-      assert(0 <= value && 31 >= value && "Invalid u5imm argument!");
+      assert(value <= 31 && "Invalid u5imm argument!");
       O << (unsigned int)value;
     }
     void printU16ImmOperand(const MachineInstr *MI, unsigned OpNo,
