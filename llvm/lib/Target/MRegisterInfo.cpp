@@ -20,10 +20,10 @@ MRegisterInfo::MRegisterInfo(const MRegisterDesc *D, unsigned NR,
   // Fill in the PhysRegClasses map
   for (MRegisterInfo::regclass_iterator I = regclass_begin(),
          E = regclass_end(); I != E; ++I)
-    for (unsigned i=0; i < (*I)->getNumRegs(); ++i) {
-      assert(PhysRegClasses[(*I)->getRegister(i)] == 0 &&
-             "Register in more than one class?");
-      PhysRegClasses[(*I)->getRegister(i)] = *I;
+    for (unsigned i = 0, e = (*I)->getNumRegs(); i != e; ++i) {
+      unsigned Reg = (*I)->getRegister(i);
+      assert(PhysRegClasses[Reg] == 0 && "Register in more than one class?");
+      PhysRegClasses[Reg] = *I;
     }
 
   CallFrameSetupOpcode   = CFSO;
