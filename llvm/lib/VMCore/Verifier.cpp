@@ -55,6 +55,7 @@
 #include "llvm/Support/InstVisitor.h"
 #include "Support/STLExtras.h"
 #include <algorithm>
+#include <sstream>
 using namespace llvm;
 
 namespace {  // Anonymous namespace for class
@@ -62,14 +63,25 @@ namespace {  // Anonymous namespace for class
   struct Verifier : public FunctionPass, InstVisitor<Verifier> {
     bool Broken;          // Is this module found to be broken?
     bool RealPass;        // Are we not being run by a PassManager?
-    bool AbortBroken;     // If broken, should it or should it not abort?
+    VerifierFailureAction action;
+    			  // What to do if verification fails.
     Module *Mod;          // Module we are verifying right now
     DominatorSet *DS;     // Dominator set, caution can be null!
+    std::stringstream msgs;  // A stringstream to collect messages
 
-    Verifier() : Broken(false), RealPass(true), AbortBroken(true), DS(0) {}
-    Verifier(bool AB) : Broken(false), RealPass(true), AbortBroken(AB), DS(0) {}
+    Verifier() 
+	: Broken(false), RealPass(true), action(AbortProcessAction),
+          DS(0), msgs( std::ios_base::app | std::ios_base::out ) {}
+    Verifier( VerifierFailureAction ctn )
+	: Broken(false), RealPass(true), action(ctn), DS(0), 
+          msgs( std::ios_base::app | std::ios_base::out ) {}
+    Verifier(bool AB ) 
+	: Broken(false), RealPass(true), 
+          action( AB ? AbortProcessAction : PrintMessageAction), DS(0), 
+	  msgs( std::ios_base::app | std::ios_base::out ) {}
     Verifier(DominatorSet &ds) 
-      : Broken(false), RealPass(false), AbortBroken(false), DS(&ds) {}
+      : Broken(false), RealPass(false), action(PrintMessageAction),
+        DS(&ds), msgs( std::ios_base::app | std::ios_base::out ) {}
 
 
     bool doInitialization(Module &M) {
@@ -120,10 +132,26 @@ namespace {  // Anonymous namespace for class
     /// abortIfBroken - If the module is broken and we are supposed to abort on
     /// this condition, do so.
     ///
-    void abortIfBroken() const {
-      if (Broken && AbortBroken) {
-        std::cerr << "Broken module found, compilation aborted!\n";
-        abort();
+    void abortIfBroken() {
+      if (Broken)
+      {
+        msgs << "Broken module found, ";
+	switch (action)
+	{
+	  case AbortProcessAction:
+	    msgs << "compilation aborted!\n";
+	    std::cerr << msgs.str();
+	    abort();
+	  case ThrowExceptionAction:
+	    msgs << "verification terminated.\n";
+	    throw msgs.str();
+	  case PrintMessageAction:
+	    msgs << "verification continues.\n";
+	    std::cerr << msgs.str();
+	    break;
+	  case ReturnStatusAction:
+	    break;
+	}
       }
     }
 
@@ -154,12 +182,12 @@ namespace {  // Anonymous namespace for class
     void WriteValue(const Value *V) {
       if (!V) return;
       if (isa<Instruction>(V)) {
-        std::cerr << *V;
+        msgs << *V;
       } else if (const Type *Ty = dyn_cast<Type>(V)) {
-        WriteTypeSymbolic(std::cerr, Ty, Mod);
+        WriteTypeSymbolic(msgs, Ty, Mod);
       } else {
-        WriteAsOperand (std::cerr, V, true, true, Mod);
-        std::cerr << "\n";
+        WriteAsOperand (msgs, V, true, true, Mod);
+        msgs << "\n";
       }
     }
 
@@ -170,7 +198,7 @@ namespace {  // Anonymous namespace for class
     void CheckFailed(const std::string &Message,
                      const Value *V1 = 0, const Value *V2 = 0,
                      const Value *V3 = 0, const Value *V4 = 0) {
-      std::cerr << Message << "\n";
+      msgs << Message << "\n";
       WriteValue(V1);
       WriteValue(V2);
       WriteValue(V3);
@@ -623,18 +651,18 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
 //  Implement the public interfaces to this file...
 //===----------------------------------------------------------------------===//
 
-FunctionPass *llvm::createVerifierPass() {
-  return new Verifier();
+FunctionPass *llvm::createVerifierPass(VerifierFailureAction action) {
+  return new Verifier(action);
 }
 
 
 // verifyFunction - Create 
-bool llvm::verifyFunction(const Function &f) {
+bool llvm::verifyFunction(const Function &f, VerifierFailureAction action) {
   Function &F = const_cast<Function&>(f);
   assert(!F.isExternal() && "Cannot verify external functions");
   
   FunctionPassManager FPM(new ExistingModuleProvider(F.getParent()));
-  Verifier *V = new Verifier();
+  Verifier *V = new Verifier(action);
   FPM.add(V);
   FPM.run(F);
   return V->Broken;
@@ -643,9 +671,9 @@ bool llvm::verifyFunction(const Function &f) {
 /// verifyModule - Check a module for errors, printing messages on stderr.
 /// Return true if the module is corrupt.
 ///
-bool llvm::verifyModule(const Module &M) {
+bool llvm::verifyModule(const Module &M, VerifierFailureAction action) {
   PassManager PM;
-  Verifier *V = new Verifier();
+  Verifier *V = new Verifier(action);
   PM.add(V);
   PM.run((Module&)M);
   return V->Broken;
