@@ -16,8 +16,7 @@
 #include "llvm/Support/CFG.h"
 #include "Support/DepthFirstIterator.h"
 #include "Support/SetOperations.h"
-
-namespace llvm {
+using namespace llvm;
 
 //===----------------------------------------------------------------------===//
 //  PostDominatorSet Implementation
@@ -109,6 +108,43 @@ bool PostDominatorSet::runOnFunction(Function &F) {
 
 static RegisterAnalysis<ImmediatePostDominators>
 D("postidom", "Immediate Post-Dominators Construction", true);
+
+
+// calcIDoms - Calculate the immediate dominator mapping, given a set of
+// dominators for every basic block.
+void ImmediatePostDominators::calcIDoms(const DominatorSetBase &DS) {
+  // Loop over all of the nodes that have dominators... figuring out the IDOM
+  // for each node...
+  //
+  for (DominatorSet::const_iterator DI = DS.begin(), DEnd = DS.end(); 
+       DI != DEnd; ++DI) {
+    BasicBlock *BB = DI->first;
+    const DominatorSet::DomSetType &Dominators = DI->second;
+    unsigned DomSetSize = Dominators.size();
+    if (DomSetSize == 1) continue;  // Root node... IDom = null
+
+    // Loop over all dominators of this node.  This corresponds to looping over
+    // nodes in the dominator chain, looking for a node whose dominator set is
+    // equal to the current nodes, except that the current node does not exist
+    // in it.  This means that it is one level higher in the dom chain than the
+    // current node, and it is our idom!
+    //
+    DominatorSet::DomSetType::const_iterator I = Dominators.begin();
+    DominatorSet::DomSetType::const_iterator End = Dominators.end();
+    for (; I != End; ++I) {   // Iterate over dominators...
+      // All of our dominators should form a chain, where the number of elements
+      // in the dominator set indicates what level the node is at in the chain.
+      // We want the node immediately above us, so it will have an identical 
+      // dominator set, except that BB will not dominate it... therefore it's
+      // dominator set size will be one less than BB's...
+      //
+      if (DS.getDominators(*I).size() == DomSetSize - 1) {
+	IDoms[BB] = *I;
+	break;
+      }
+    }
+  }
+}
 
 //===----------------------------------------------------------------------===//
 //  PostDominatorTree Implementation
@@ -217,4 +253,3 @@ PostDominanceFrontier::calculate(const PostDominatorTree &DT,
 void PostDominanceFrontier::stub() {
 }
 
-} // End llvm namespace
