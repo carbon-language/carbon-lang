@@ -199,12 +199,12 @@ void SelectionDAGLegalize::LegalizeDAG() {
 }
 
 SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
+  assert(getTypeAction(Op.getValueType()) == Legal &&
+         "Caller should expand or promote operands that are not legal!");
+
   // If this operation defines any values that cannot be represented in a
-  // register on this target, make sure to expand it.
-  if (Op.Val->getNumValues() == 1) {// Fast path == assertion only
-    assert(getTypeAction(Op.Val->getValueType(0)) == Legal &&
-           "For a single use value, caller should check for legality!");
-  } else {
+  // register on this target, make sure to expand or promote them.
+  if (Op.Val->getNumValues() > 1) {
     for (unsigned i = 0, e = Op.Val->getNumValues(); i != e; ++i)
       switch (getTypeAction(Op.Val->getValueType(i))) {
       case Legal: break;  // Nothing to do.
@@ -719,9 +719,7 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     Hi = SDOperand(NC, 1);
 
     // Insert the new chain mapping.
-    bool isNew = LegalizedNodes.insert(std::make_pair(Op.getValue(1),
-                                                      Hi.getValue(2))).second;
-    assert(isNew && "This node was already legalized!");
+    AddLegalizedOperand(Op.getValue(1), Hi.getValue(2));
     break;
   }
   case ISD::AND:
