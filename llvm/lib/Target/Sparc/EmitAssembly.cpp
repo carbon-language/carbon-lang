@@ -22,6 +22,7 @@
 #include "llvm/Function.h"
 #include "llvm/Module.h"
 #include "llvm/SlotCalculator.h"
+#include "llvm/Assembly/Writer.h"
 #include "Support/StringExtras.h"
 #include "Support/HashExtras.h"
 #include <iostream>
@@ -472,41 +473,39 @@ static inline char toOctal(int X) {
 // the predicate isStringCompatible is true.
 //
 static string getAsCString(ConstantArray *CPA) {
-  if (isStringCompatible(CPA)) {
-    string Result;
-    const Type *ETy = cast<ArrayType>(CPA->getType())->getElementType();
-    Result = "\"";
-    for (unsigned i = 0; i < CPA->getNumOperands(); ++i) {
-      unsigned char C = (ETy == Type::SByteTy) ?
-        (unsigned char)cast<ConstantSInt>(CPA->getOperand(i))->getValue() :
-        (unsigned char)cast<ConstantUInt>(CPA->getOperand(i))->getValue();
+  assert(isStringCompatible(CPA) && "Array is not string compatible!");
 
-      if (isprint(C)) {
-        Result += C;
-      } else {
-        switch(C) {
-        case '\a': Result += "\\a"; break;
-        case '\b': Result += "\\b"; break;
-        case '\f': Result += "\\f"; break;
-        case '\n': Result += "\\n"; break;
-        case '\r': Result += "\\r"; break;
-        case '\t': Result += "\\t"; break;
-        case '\v': Result += "\\v"; break;
-        default:
-          Result += '\\';
-          Result += toOctal(C >> 6);
-          Result += toOctal(C >> 3);
-          Result += toOctal(C >> 0);
-          break;
-        }
+  string Result;
+  const Type *ETy = cast<ArrayType>(CPA->getType())->getElementType();
+  Result = "\"";
+  for (unsigned i = 0; i < CPA->getNumOperands(); ++i) {
+    unsigned char C = (ETy == Type::SByteTy) ?
+      (unsigned char)cast<ConstantSInt>(CPA->getOperand(i))->getValue() :
+      (unsigned char)cast<ConstantUInt>(CPA->getOperand(i))->getValue();
+
+    if (isprint(C)) {
+      Result += C;
+    } else {
+      switch(C) {
+      case '\a': Result += "\\a"; break;
+      case '\b': Result += "\\b"; break;
+      case '\f': Result += "\\f"; break;
+      case '\n': Result += "\\n"; break;
+      case '\r': Result += "\\r"; break;
+      case '\t': Result += "\\t"; break;
+      case '\v': Result += "\\v"; break;
+      default:
+        Result += '\\';
+        Result += toOctal(C >> 6);
+        Result += toOctal(C >> 3);
+        Result += toOctal(C >> 0);
+        break;
       }
     }
-    Result += "\"";
-
-    return Result;
-  } else {
-    return CPA->getStrValue();
   }
+  Result += "\"";
+
+  return Result;
 }
 
 inline bool
@@ -631,7 +630,7 @@ SparcModuleAsmPrinter::printSingleConstant(const Constant* CV)
         toAsm << "\t! " << CV->getType()->getDescription()
               << " value: " << Val << "\n";
       } else {
-        toAsm << CV->getStrValue() << "\n";
+        WriteAsOperand(toAsm, CV, false, false) << "\n";
       }
     }
   else if (ConstantPointer* CPP = dyn_cast<ConstantPointer>(CV))
