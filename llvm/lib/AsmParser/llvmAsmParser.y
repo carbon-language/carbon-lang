@@ -1110,8 +1110,8 @@ Module : MethodList {
 //
 MethodList : MethodList Method {
     $$ = $1;
-    if (!$2->getParent())
-      $1->getMethodList().push_back($2);
+    assert($2->getParent() == 0 && "Method already in module!");
+    $1->getMethodList().push_back($2);
     CurMeth.MethodDone();
   } 
   | MethodList MethodProto {
@@ -1184,6 +1184,11 @@ MethodHeaderH : OptInternal TypesV STRINGCONSTANT '(' ArgList ')' {
       // or it needs to be.
       if (!CurMeth.isDeclare && !M->isExternal())
 	ThrowException("Redefinition of method '" + MethodName + "'!");      
+
+      // If we found a preexisting method prototype, remove it from the module,
+      // so that we don't get spurious conflicts with global & local variables.
+      //
+      CurModule.CurrentModule->getMethodList().remove(M);
     }
   }
 
@@ -1232,8 +1237,8 @@ Method : BasicBlockList END {
 
 MethodProto : DECLARE { CurMeth.isDeclare = true; } MethodHeaderH {
   $$ = CurMeth.CurrentMethod;
-  if (!$$->getParent())
-    CurModule.CurrentModule->getMethodList().push_back($$);
+  assert($$->getParent() == 0 && "Method already in module!");
+  CurModule.CurrentModule->getMethodList().push_back($$);
   CurMeth.MethodDone();
 }
 
