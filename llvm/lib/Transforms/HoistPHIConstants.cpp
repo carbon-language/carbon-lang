@@ -30,12 +30,12 @@ static Value *NormalizePhiOperand(PHINode *PN, Value *CPV,
   // Check if we've already inserted a copy for this constant in Pred
   // Note that `copyCache[Pred]' will create an empty vector the first time
   //
-  //CachedCopyMap::iterator CCI = CopyCache.find(BBConstTy(Pred, CPV));
-  //if (CCI != CopyCache.end()) return CCI->second;
+  CachedCopyMap::iterator CCI = CopyCache.find(BBConstTy(Pred, CPV));
+  if (CCI != CopyCache.end()) return CCI->second;
   
   // Create a copy instruction and add it to the cache...
   CastInst *Inst = new CastInst(CPV, CPV->getType());
-  //CopyCache.insert(make_pair(BBConstTy(Pred, CPV), Inst));
+  CopyCache.insert(make_pair(BBConstTy(Pred, CPV), Inst));
     
   // Insert the copy just before the terminator inst of the predecessor BB
   assert(Pred->getTerminator() && "Degenerate BB encountered!");
@@ -68,13 +68,15 @@ bool HoistPHIConstants::doHoistPHIConstants(Method *M) {
       for (vector<PHINode*>::iterator PI=phis.begin(); PI != phis.end(); ++PI)
         for (unsigned i = 0; i < (*PI)->getNumIncomingValues(); ++i)
           {
-            //if (isa<ConstPoolVal>(Op)) {--- Do for all phi args -- Ruchira
+	    Value *Op = (*PI)->getIncomingValue(i);
+
+            if (isa<ConstPoolVal>(Op)) {
             (*PI)->setIncomingValue(i,
                     NormalizePhiOperand((*PI),
                                         (*PI)->getIncomingValue(i),
                                         (*PI)->getIncomingBlock(i), Cache));
             Changed = true;
-            //}
+            }
           }
     }
   
