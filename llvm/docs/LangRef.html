@@ -101,10 +101,13 @@
         <ol>
           <li><a href="#i_returnaddress">'<tt>llvm.returnaddress</tt>' Intrinsic</a></li>
           <li><a href="#i_frameaddress">'<tt>llvm.frameaddress</tt>'   Intrinsic</a></li>
+        </ol>
+      </li>
+      <li><a href="#int_os">Operating System Intrinsics</a>
+        <ol>
           <li><a href="#i_readport">'<tt>llvm.readport</tt>'   Intrinsic</a></li>
           <li><a href="#i_writeport">'<tt>llvm.writeport</tt>'   Intrinsic</a></li>
         </ol>
-      </li>
       <li><a href="#int_libc">Standard C Library Intrinsics</a>
         <ol>
           <li><a href="#i_memcpy">'<tt>llvm.memcpy</tt>' Intrinsic</a></li>
@@ -1998,6 +2001,18 @@ source-language caller.
 </p>
 </div>
 
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="int_os">Operating System Intrinsics</a>
+</div>
+
+<div class="doc_text">
+<p>
+These intrinsics are provided by LLVM to support the implementation of
+operating system level code.
+</p>
+
+</div>
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection">
   <a name="i_readport">'<tt>llvm.readport</tt>' Intrinsic</a>
@@ -2007,36 +2022,32 @@ source-language caller.
 
 <h5>Syntax:</h5>
 <pre>
-  call sbyte  (ushort address)* %llvm.readport(ushort &lt;address&gt;)
-  call ubyte  (ushort address)* %llvm.readport(ushort &lt;address&gt;)
-  call short  (ushort address)* %llvm.readport(ushort &lt;address&gt;)
-  call ushort (ushort address)* %llvm.readport(ushort &lt;address&gt;)
-  call int    (ushort address)* %llvm.readport(ushort &lt;address&gt;)
-  call uint   (ushort address)* %llvm.readport(ushort &lt;address&gt;)
+  call &lt;integer type&gt; (&lt;integer type&gt;)* %llvm.readport (&lt;integer type&gt; &lt;address&gt;)
 </pre>
 
 <h5>Overview:</h5>
 
 <p>
-The '<tt>llvm.readport</tt>' intrinsic reads data from the specified I/O port.
+The '<tt>llvm.readport</tt>' intrinsic reads data from the specified hardware
+I/O port.
 </p>
 
 <h5>Arguments:</h5>
 
 <p>
-The argument to this intrinsic indicates the I/O address from which to read
-the data.  The address is in the I/O address namespace; it is not a memory
-location.
+The argument to this intrinsic indicates the hardware I/O address from which
+to read the data.  The address is in the hardware I/O address namespace (as
+opposed to being a memory location for memory mapped I/O).
 </p>
 
 <h5>Semantics:</h5>
 
 <p>
-The '<tt>llvm.readport</tt>' intrinsic reads data from the I/O port specified
-by <i>address</i> and returns the value.  The address and return value must
-be integers, but the size is dependent upon the platform upon which the
-program is code generated.  For example, on x86, the address must be a
-ushort, and the return value must be 8, 16, or 32 bits.
+The '<tt>llvm.readport</tt>' intrinsic reads data from the hardware I/O port
+specified by <i>address</i> and returns the value.  The address and return
+value must be integers, but the size is dependent upon the platform upon which
+the program is code generated.  For example, on x86, the address must be an
+unsigned 16 bit value, and the return value must be 8, 16, or 32 bits.
 </p>
 
 </div>
@@ -2050,26 +2061,22 @@ ushort, and the return value must be 8, 16, or 32 bits.
 
 <h5>Syntax:</h5>
 <pre>
-  call void (ushort address, sbyte value)* %llvm.writeport(ushort &lt;address&gt;, sbyte &lt;value&gt;)
-  call void (ushort address, ubyte value)* %llvm.writeport(ushort &lt;address&gt;, ubyte &lt;value&gt;)
-  call void (ushort address, short value)* %llvm.writeport(ushort &lt;address&gt;, short &lt;value&gt;)
-  call void (ushort address, ushort value)* %llvm.writeport(ushort &lt;address&gt;, ushort &lt;value&gt;)
-  call void (ushort address, int value)* %llvm.writeport(ushort &lt;address&gt;, int &lt;value&gt;)
-  call void (ushort address, uint value)* %llvm.writeport(ushort &lt;address&gt;, uint &lt;value&gt;)
+  call void (&lt;integer type&gt;, &lt;integer type&gt;)* %llvm.writeport (&lt;integer type&gt; &lt;value&gt;, &lt;integer type&gt; &lt;address&gt;)
 </pre>
 
 <h5>Overview:</h5>
 
 <p>
-The '<tt>llvm.writeport</tt>' intrinsic writes data to the specified I/O port.
+The '<tt>llvm.writeport</tt>' intrinsic writes data to the specified hardware
+I/O port.
 </p>
 
 <h5>Arguments:</h5>
 
 <p>
-The first argument to this intrinsic indicates the I/O address to which data
-should be written.  The address is in the I/O address namespace; it is not a
-memory location.
+The first argument to this intrinsic indicates the hardware I/O address to
+which data should be written.  The address is in the hardware I/O address
+namespace (as opposed to being a memory location for memory mapped I/O).
 </p>
 
 <p>
@@ -2082,8 +2089,8 @@ The second argument is the value to write to the I/O port.
 The '<tt>llvm.writeport</tt>' intrinsic writes <i>value</i> to the I/O port
 specified by <i>address</i>.  The address and value must be integers, but the
 size is dependent upon the platform upon which the program is code generated.
-For example, on x86, the address must be a ushort, and the value written must
-be 8, 16, or 32 bits in length.
+For example, on x86, the address must be an unsigned 16 bit value, and the
+value written must be 8, 16, or 32 bits in length.
 </p>
 
 </div>
