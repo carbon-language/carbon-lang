@@ -619,7 +619,7 @@ public:
     // efficient lookup in the map, instead of an inefficient nasty linear
     // lookup.
     if (!HasTypeCycle) {
-      iterator I = Map.find(ValType::get(Ty));
+      iterator I = Map.find(Key);
       if (I != Map.end()) {
         // We already have this type in the table.  Get rid of the newly refined
         // type.
