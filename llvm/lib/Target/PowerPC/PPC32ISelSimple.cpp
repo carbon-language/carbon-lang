@@ -32,6 +32,8 @@
 using namespace llvm;
 
 namespace {
+  Statistic<> NumFSEL("ppc-codegen", "Number of fsel emitted");
+
   /// TypeClass - Used by the PowerPC backend to group LLVM types by their basic
   /// PPC Representation.
   ///
@@ -1289,6 +1291,85 @@ void PPC32ISel::emitSelectOperation(MachineBasicBlock *MBB,
   if (SetCondInst *SCI = canFoldSetCCIntoBranchOrSelect(Cond)) {
     // We successfully folded the setcc into the select instruction.
     unsigned OpNum = getSetCCNumber(SCI->getOpcode());
+    /*
+    if (OpNum >= 2 && OpNum <= 5) {
+      unsigned SetCondClass = getClassB(SCI->getOperand(0)->getType());
+      if ((SetCondClass == cFP32 || SetCondClass == cFP64) &&
+          (SelectClass == cFP32 || SelectClass == cFP64)) {
+        unsigned CondReg = getReg(SCI->getOperand(0), MBB, IP);
+        unsigned TrueReg = getReg(TrueVal, MBB, IP);
+        unsigned FalseReg = getReg(FalseVal, MBB, IP);
+        // if the comparison of the floating point value used to for the select
+        // is against 0, then we can emit an fsel without subtraction.
+        ConstantFP *Op1C = dyn_cast<ConstantFP>(SCI->getOperand(1));
+        if (Op1C && (Op1C->isExactlyValue(-0.0) || Op1C->isExactlyValue(0.0))) {
+          switch(OpNum) {
+          case 2:   // LT
+            BuildMI(*MBB, IP, PPC::FSEL, 3, DestReg).addReg(CondReg)
+              .addReg(FalseReg).addReg(TrueReg);
+            break;
+          case 3:   // GE == !LT
+            BuildMI(*MBB, IP, PPC::FSEL, 3, DestReg).addReg(CondReg)
+              .addReg(TrueReg).addReg(FalseReg);
+            break;
+          case 4: {  // GT
+            unsigned NegatedReg = makeAnotherReg(SCI->getOperand(0)->getType());
+            BuildMI(*MBB, IP, PPC::FNEG, 1, NegatedReg).addReg(CondReg);
+            BuildMI(*MBB, IP, PPC::FSEL, 3, DestReg).addReg(NegatedReg)
+              .addReg(FalseReg).addReg(TrueReg);
+            }
+            break;
+          case 5: {  // LE == !GT
+            unsigned NegatedReg = makeAnotherReg(SCI->getOperand(0)->getType());
+            BuildMI(*MBB, IP, PPC::FNEG, 1, NegatedReg).addReg(CondReg);
+            BuildMI(*MBB, IP, PPC::FSEL, 3, DestReg).addReg(NegatedReg)
+              .addReg(TrueReg).addReg(FalseReg);
+            }
+            break;
+          default:
+            assert(0 && "Invalid SetCC opcode to fsel");
+            abort();
+            break;
+          }
+        } else {
+          unsigned OtherCondReg = getReg(SCI->getOperand(1), MBB, IP);
+          unsigned SelectReg = makeAnotherReg(SCI->getOperand(0)->getType());
+          switch(OpNum) {
+          case 2:   // LT
+            BuildMI(*MBB, IP, PPC::FSUB, 2, SelectReg).addReg(CondReg)
+              .addReg(OtherCondReg);
+            BuildMI(*MBB, IP, PPC::FSEL, 3, DestReg).addReg(SelectReg)
+              .addReg(FalseReg).addReg(TrueReg);
+            break;
+          case 3:   // GE == !LT
+            BuildMI(*MBB, IP, PPC::FSUB, 2, SelectReg).addReg(CondReg)
+              .addReg(OtherCondReg);
+            BuildMI(*MBB, IP, PPC::FSEL, 3, DestReg).addReg(SelectReg)
+              .addReg(TrueReg).addReg(FalseReg);
+            break;
+          case 4:   // GT
+            BuildMI(*MBB, IP, PPC::FSUB, 2, SelectReg).addReg(OtherCondReg)
+              .addReg(CondReg);
+            BuildMI(*MBB, IP, PPC::FSEL, 3, DestReg).addReg(SelectReg)
+              .addReg(FalseReg).addReg(TrueReg);
+            break;
+          case 5:   // LE == !GT
+            BuildMI(*MBB, IP, PPC::FSUB, 2, SelectReg).addReg(OtherCondReg)
+              .addReg(CondReg);
+            BuildMI(*MBB, IP, PPC::FSEL, 3, DestReg).addReg(SelectReg)
+              .addReg(TrueReg).addReg(FalseReg);
+            break;
+          default:
+            assert(0 && "Invalid SetCC opcode to fsel");
+            abort();
+            break;
+          }
+        }
+        ++NumFSEL;
+        return;
+      }
+    }
+    */
     OpNum = EmitComparison(OpNum, SCI->getOperand(0),SCI->getOperand(1),MBB,IP);
     Opcode = getPPCOpcodeForSetCCNumber(SCI->getOpcode());
   } else {
@@ -2242,7 +2323,7 @@ void PPC32ISel::visitDivRem(BinaryOperator &I) {
                       ResultReg);
 }
 
-void PPC32ISel::emitDivRemOperation(MachineBasicBlock *BB,
+void PPC32ISel::emitDivRemOperation(MachineBasicBlock *MBB,
                                     MachineBasicBlock::iterator IP,
                                     Value *Op0, Value *Op1, bool isDiv,
                                     unsigned ResultReg) {
@@ -2252,12 +2333,12 @@ void PPC32ISel::emitDivRemOperation(MachineBasicBlock *BB,
   case cFP32:
     if (isDiv) {
       // Floating point divide...
-      emitBinaryFPOperation(BB, IP, Op0, Op1, 3, ResultReg);
+      emitBinaryFPOperation(MBB, IP, Op0, Op1, 3, ResultReg);
       return;
     } else {
       // Floating point remainder via fmodf(float x, float y);
-      unsigned Op0Reg = getReg(Op0, BB, IP);
-      unsigned Op1Reg = getReg(Op1, BB, IP);
+      unsigned Op0Reg = getReg(Op0, MBB, IP);
+      unsigned Op1Reg = getReg(Op1, MBB, IP);
       MachineInstr *TheCall =
         BuildMI(PPC::CALLpcrel, 1).addGlobalAddress(fmodfFn, true);
       std::vector<ValueRecord> Args;
@@ -2270,12 +2351,12 @@ void PPC32ISel::emitDivRemOperation(MachineBasicBlock *BB,
   case cFP64:
     if (isDiv) {
       // Floating point divide...
-      emitBinaryFPOperation(BB, IP, Op0, Op1, 3, ResultReg);
+      emitBinaryFPOperation(MBB, IP, Op0, Op1, 3, ResultReg);
       return;
     } else {               
       // Floating point remainder via fmod(double x, double y);
-      unsigned Op0Reg = getReg(Op0, BB, IP);
-      unsigned Op1Reg = getReg(Op1, BB, IP);
+      unsigned Op0Reg = getReg(Op0, MBB, IP);
+      unsigned Op1Reg = getReg(Op1, MBB, IP);
       MachineInstr *TheCall =
         BuildMI(PPC::CALLpcrel, 1).addGlobalAddress(fmodFn, true);
       std::vector<ValueRecord> Args;
@@ -2288,8 +2369,8 @@ void PPC32ISel::emitDivRemOperation(MachineBasicBlock *BB,
   case cLong: {
     static Function* const Funcs[] =
       { __moddi3Fn, __divdi3Fn, __umoddi3Fn, __udivdi3Fn };
-    unsigned Op0Reg = getReg(Op0, BB, IP);
-    unsigned Op1Reg = getReg(Op1, BB, IP);
+    unsigned Op0Reg = getReg(Op0, MBB, IP);
+    unsigned Op1Reg = getReg(Op1, MBB, IP);
     unsigned NameIdx = Ty->isUnsigned()*2 + isDiv;
     MachineInstr *TheCall =
       BuildMI(PPC::CALLpcrel, 1).addGlobalAddress(Funcs[NameIdx], true);
@@ -2313,41 +2394,48 @@ void PPC32ISel::emitDivRemOperation(MachineBasicBlock *BB,
       int V = CI->getValue();
 
       if (V == 1) {       // X /s 1 => X
-        unsigned Op0Reg = getReg(Op0, BB, IP);
-        BuildMI(*BB, IP, PPC::OR, 2, ResultReg).addReg(Op0Reg).addReg(Op0Reg);
+        unsigned Op0Reg = getReg(Op0, MBB, IP);
+        BuildMI(*MBB, IP, PPC::OR, 2, ResultReg).addReg(Op0Reg).addReg(Op0Reg);
         return;
       }
 
       if (V == -1) {      // X /s -1 => -X
-        unsigned Op0Reg = getReg(Op0, BB, IP);
-        BuildMI(*BB, IP, PPC::NEG, 1, ResultReg).addReg(Op0Reg);
+        unsigned Op0Reg = getReg(Op0, MBB, IP);
+        BuildMI(*MBB, IP, PPC::NEG, 1, ResultReg).addReg(Op0Reg);
         return;
       }
 
       unsigned log2V = ExactLog2(V);
       if (log2V != 0 && Ty->isSigned()) {
-        unsigned Op0Reg = getReg(Op0, BB, IP);
+        unsigned Op0Reg = getReg(Op0, MBB, IP);
         unsigned TmpReg = makeAnotherReg(Op0->getType());
         
-        BuildMI(*BB, IP, PPC::SRAWI, 2, TmpReg).addReg(Op0Reg).addImm(log2V);
-        BuildMI(*BB, IP, PPC::ADDZE, 1, ResultReg).addReg(TmpReg);
+        BuildMI(*MBB, IP, PPC::SRAWI, 2, TmpReg).addReg(Op0Reg).addImm(log2V);
+        BuildMI(*MBB, IP, PPC::ADDZE, 1, ResultReg).addReg(TmpReg);
         return;
       }
     }
 
-  unsigned Op0Reg = getReg(Op0, BB, IP);
-  unsigned Op1Reg = getReg(Op1, BB, IP);
-  unsigned Opcode = Ty->isSigned() ? PPC::DIVW : PPC::DIVWU;
-  
+  unsigned Op0Reg = getReg(Op0, MBB, IP);
+
   if (isDiv) {
-    BuildMI(*BB, IP, Opcode, 2, ResultReg).addReg(Op0Reg).addReg(Op1Reg);
+    unsigned Op1Reg = getReg(Op1, MBB, IP);
+    unsigned Opcode = Ty->isSigned() ? PPC::DIVW : PPC::DIVWU;
+    BuildMI(*MBB, IP, Opcode, 2, ResultReg).addReg(Op0Reg).addReg(Op1Reg);
   } else { // Remainder
+    // FIXME: don't load the CI part of a CI divide twice
+    ConstantInt *CI = dyn_cast<ConstantInt>(Op1);
     unsigned TmpReg1 = makeAnotherReg(Op0->getType());
     unsigned TmpReg2 = makeAnotherReg(Op0->getType());
-    
-    BuildMI(*BB, IP, Opcode, 2, TmpReg1).addReg(Op0Reg).addReg(Op1Reg);
-    BuildMI(*BB, IP, PPC::MULLW, 2, TmpReg2).addReg(TmpReg1).addReg(Op1Reg);
-    BuildMI(*BB, IP, PPC::SUBF, 2, ResultReg).addReg(TmpReg2).addReg(Op0Reg);
+    emitDivRemOperation(MBB, IP, Op0, Op1, true, TmpReg1);
+    if (CI && canUseAsImmediateForOpcode(CI, 0)) {
+      BuildMI(*MBB, IP, PPC::MULLI, 2, TmpReg2).addReg(TmpReg1)
+        .addSImm(CI->getRawValue());
+    } else {
+      unsigned Op1Reg = getReg(Op1, MBB, IP);
+      BuildMI(*MBB, IP, PPC::MULLW, 2, TmpReg2).addReg(TmpReg1).addReg(Op1Reg);
+    }
+    BuildMI(*MBB, IP, PPC::SUBF, 2, ResultReg).addReg(TmpReg2).addReg(Op0Reg);
   }
 }
 
