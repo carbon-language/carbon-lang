@@ -42,26 +42,30 @@ public:
   static const MachineBasicBlock*
   getNext(const MachineBasicBlock* N) { return N->Next; }
   
-  static void setPrev(MachineBasicBlock* N, MachineBasicBlock* prev) { N->Prev = prev; }
-  static void setNext(MachineBasicBlock* N, MachineBasicBlock* next) { N->Next = next; }
-  
+  static void setPrev(MachineBasicBlock* N, MachineBasicBlock* prev) {
+    N->Prev = prev;
+  }
+  static void setNext(MachineBasicBlock* N, MachineBasicBlock* next) {
+    N->Next = next;
+  }
   static MachineBasicBlock* createNode();
   void addNodeToList(MachineBasicBlock* N);
   void removeNodeFromList(MachineBasicBlock* N);
-  void transferNodesFromList(
-			     iplist<MachineBasicBlock, ilist_traits<MachineBasicBlock> >& toList,
+  void transferNodesFromList(iplist<MachineBasicBlock,
+                                    ilist_traits<MachineBasicBlock> > &toList,
 			     ilist_iterator<MachineBasicBlock> first,
 			     ilist_iterator<MachineBasicBlock> last);
 };
-  
 
 
 class Function;
 class TargetMachine;
 class SSARegMap;
-class MachineFunctionInfo;
 class MachineFrameInfo;
 class MachineConstantPool;
+// MachineFunctionInfoBase - This is a gross SparcV9 hack
+struct MachineFunctionInfoBase { virtual ~MachineFunctionInfoBase() {}; };
+class MachineFunctionInfo;
 
 class MachineFunction : private Annotation {
   const Function *Fn;
@@ -73,8 +77,8 @@ class MachineFunction : private Annotation {
   // Keeping track of mapping from SSA values to registers
   SSARegMap *SSARegMapping;
 
-  // Used to keep track of frame and constant area information for sparc be
-  MachineFunctionInfo *MFInfo;
+  // Used to keep track of frame and constant area information for SparcV9 BE.
+  mutable MachineFunctionInfoBase *MFInfo;
 
   // Keep track of objects allocated on the stack.
   MachineFrameInfo *FrameInfo;
@@ -118,7 +122,7 @@ public:
   /// MachineFunctionInfo - Keep track of various per-function pieces of
   /// information for the sparc backend.
   ///
-  MachineFunctionInfo *getInfo() const { return MFInfo; }
+  MachineFunctionInfo *getInfo() const;
 
   /// getBlockNumbered - MachineBasicBlocks are automatically numbered when they
   /// are inserted into the machine function.  The block number for a machine
