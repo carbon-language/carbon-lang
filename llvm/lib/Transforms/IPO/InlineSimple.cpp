@@ -158,7 +158,7 @@ bool InlineMethod(BasicBlock::InstListType::iterator CIIt) {
 	assert(RI->getReturnValue() && "Ret should have value!");
 	assert(RI->getReturnValue()->getType() == PHI->getType() && 
 	       "Ret value not consistent in method!");
-	PHI->addIncoming((Value*)RI->getReturnValue());
+	PHI->addIncoming((Value*)RI->getReturnValue(), (BasicBlock*)BB);
       }
 
       // Add a branch to the code that was after the original Call.

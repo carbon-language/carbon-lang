@@ -77,14 +77,14 @@ static bool RemoveSingularPHIs(BasicBlock *BB) {
   Instruction *I = BB->getInstList().front();
   if (I->getInstType() != Instruction::PHINode) return false;  // No PHI nodes
 
-  cerr << "Killing PHIs from " << BB;
-  cerr << "Pred #0 = " << *pred_begin(BB);
+  //cerr << "Killing PHIs from " << BB;
+  //cerr << "Pred #0 = " << *pred_begin(BB);
 
-  cerr << "Method == " << BB->getParent();
+  //cerr << "Method == " << BB->getParent();
 
   do {
     PHINode *PN = (PHINode*)I;
-    assert(PN->getOperand(1) == 0 && "PHI node should only have one value!");
+    assert(PN->getOperand(2) == 0 && "PHI node should only have one value!");
     Value *V = PN->getOperand(0);
 
     PN->replaceAllUsesWith(V);      // Replace PHI node with its single value.
@@ -134,29 +134,25 @@ static void ReplaceUsesWithConstant(Instruction *I) {
 //
 static void RemovePredecessorFromBlock(BasicBlock *BB, BasicBlock *Pred) {
   pred_iterator PI(pred_begin(BB)), EI(pred_end(BB));
-  unsigned pred_idx = 0, max_idx;
+  unsigned max_idx;
 
-  cerr << "RPFB: " << Pred << "From Block: " << BB;
+  //cerr << "RPFB: " << Pred << "From Block: " << BB;
   
-  // Find out what index the predecessor is...
-  for (; *PI != BB; ++PI, ++pred_idx) {
-    assert(PI != EI && "Pred is not a predecessor of BB!");
-  }
-
   // Loop over the rest of the predecssors until we run out, or until we find
   // out that there are more than 2 predecessors.
-  for (max_idx = pred_idx; PI != EI && max_idx < 2; ++PI, ++max_idx) /*empty*/;
+  for (max_idx = 0; PI != EI && max_idx < 3; ++PI, ++max_idx) /*empty*/;
 
   // If there are exactly two predecessors, then we want to nuke the PHI nodes
   // altogether.
-  bool NukePHIs = max_idx == 1;
+  bool NukePHIs = max_idx == 2;
+  assert(max_idx != 0 && "PHI Node in block with 0 predecessors!?!?!");
   
   // Okay, now we know that we need to remove predecessor #pred_idx from all
   // PHI nodes.  Iterate over each PHI node fixing them up
   BasicBlock::InstListType::iterator II(BB->getInstList().begin());
   for (; (*II)->getInstType() == Instruction::PHINode; ++II) {
     PHINode *PN = (PHINode*)*II;
-    PN->removeIncomingValue(pred_idx);
+    PN->removeIncomingValue(BB);
 
     if (NukePHIs) {  // Destroy the PHI altogether??
       assert(PN->getOperand(1) == 0 && "PHI node should only have one value!");
@@ -282,7 +278,7 @@ static bool DoDCEPass(Method *M) {
 	BasicBlock::InstListType::iterator DI = Pred->getInstList().end();
 	assert(Pred->getTerminator() && 
 	       "Degenerate basic block encountered!");  // Empty bb???      
-	delete Pred->getInstList().remove(--DI);
+	delete Pred->getInstList().remove(--DI);        // Destroy uncond branch
 	
 	// Move all definitions in the succecessor to the predecessor...
 	while (!BB->getInstList().empty()) {
@@ -290,12 +286,16 @@ static bool DoDCEPass(Method *M) {
 	  Instruction *Def = BB->getInstList().remove(DI); // Remove from front
 	  Pred->getInstList().push_back(Def);              // Add to end...
 	}
-	
+
 	// Remove basic block from the method... and advance iterator to the
 	// next valid block...
 	BB = BBs.remove(BBIt);
 	--BBIt;  // remove puts us on the NEXT bb.  We want the prev BB
 	Changed = true;
+
+	// Make all PHI nodes that refered to BB now refer to Pred as their
+	// source...
+	BB->replaceAllUsesWith(Pred);
 	
 	// Inherit predecessors name if it exists...
 	if (BB->hasName() && !Pred->hasName()) Pred->setName(BB->getName());

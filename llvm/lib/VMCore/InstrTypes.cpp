@@ -45,7 +45,9 @@ PHINode::PHINode(const PHINode &PN)
   : Instruction(PN.getType(), Instruction::PHINode) {
   
   for (unsigned i = 0; i < PN.IncomingValues.size(); i++)
-    IncomingValues.push_back(Use(PN.IncomingValues[i], this));
+    IncomingValues.push_back(
+	make_pair(Use(PN.IncomingValues[i].first, this),
+		  BasicBlockUse(PN.IncomingValues[i].second, this)));
 }
 
 void PHINode::dropAllReferences() {
@@ -54,20 +56,37 @@ void PHINode::dropAllReferences() {
 
 bool PHINode::setOperand(unsigned i, Value *Val) {
   assert(Val && "PHI node must only reference nonnull definitions!");
-  if (i >= IncomingValues.size()) return false;
+  if (i >= IncomingValues.size()*2) return false;
 
-  IncomingValues[i] = Val;
+  if (i & 1) {
+    assert(Val->getValueType() == BasicBlockVal && "Not a BB!");
+    IncomingValues[i/2].second = (BasicBlock*)Val;
+  } else {
+    IncomingValues[i/2].first  = Val;
+  }
   return true;
 }
 
-void PHINode::addIncoming(Value *D) {
-  IncomingValues.push_back(Use(D, this));
+void PHINode::addIncoming(Value *D, BasicBlock *BB) {
+  IncomingValues.push_back(make_pair(Use(D, this), BasicBlockUse(BB, this)));
 }
+
+struct FindBBEntry {
+  const BasicBlock *BB;
+  inline FindBBEntry(const BasicBlock *bb) : BB(bb) {}
+  inline bool operator()(const pair<Use,BasicBlockUse> &Entry) {
+    return Entry.second == BB;
+  }
+};
+
 
 // removeIncomingValue - Remove an incoming value.  This is useful if a
 // predecessor basic block is deleted.
-Value *PHINode::removeIncomingValue(unsigned idx) {
-  Value *Removed = IncomingValues[idx];
-  IncomingValues.erase(IncomingValues.begin()+idx);
+Value *PHINode::removeIncomingValue(const BasicBlock *BB) {
+  vector<PairTy>::iterator Idx = find_if(IncomingValues.begin(), 
+					 IncomingValues.end(), FindBBEntry(BB));
+  assert(Idx != IncomingValues.end() && "BB not in PHI node!");
+  Value *Removed = Idx->first;
+  IncomingValues.erase(Idx);
   return Removed;
 }

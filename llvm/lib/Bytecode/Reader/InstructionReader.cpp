@@ -104,24 +104,29 @@ bool BytecodeParser::ParseInstruction(const uchar *&Buf, const uchar *EndBuf,
   } else if (Raw.Opcode == Instruction::PHINode) {
     PHINode *PN = new PHINode(Raw.Ty);
     switch (Raw.NumOperands) {
-    case 0: cerr << "Invalid phi node encountered!\n"; 
+    case 0: 
+    case 1: 
+    case 3: cerr << "Invalid phi node encountered!\n"; 
             delete PN; 
 	    return true;
-    case 1: PN->addIncoming(getValue(Raw.Ty, Raw.Arg1)); break;
-    case 2: PN->addIncoming(getValue(Raw.Ty, Raw.Arg1)); 
-            PN->addIncoming(getValue(Raw.Ty, Raw.Arg2)); break;
-    case 3: PN->addIncoming(getValue(Raw.Ty, Raw.Arg1)); 
-            PN->addIncoming(getValue(Raw.Ty, Raw.Arg2)); 
-            PN->addIncoming(getValue(Raw.Ty, Raw.Arg3)); break;
+    case 2: PN->addIncoming(getValue(Raw.Ty, Raw.Arg1),
+			    (BasicBlock*)getValue(Type::LabelTy, Raw.Arg2)); 
+      break;
     default:
-      PN->addIncoming(getValue(Raw.Ty, Raw.Arg1)); 
-      PN->addIncoming(getValue(Raw.Ty, Raw.Arg2));
-      {
+      PN->addIncoming(getValue(Raw.Ty, Raw.Arg1), 
+		      (BasicBlock*)getValue(Type::LabelTy, Raw.Arg2));
+      if (Raw.VarArgs->size() & 1) {
+	cerr << "PHI Node with ODD number of arguments!\n";
+	delete PN;
+	return true;
+      } else {
         vector<unsigned> &args = *Raw.VarArgs;
-        for (unsigned i = 0; i < args.size(); i++)
-          PN->addIncoming(getValue(Raw.Ty, args[i]));
+        for (unsigned i = 0; i < args.size(); i+=2)
+          PN->addIncoming(getValue(Raw.Ty, args[i]),
+			  (BasicBlock*)getValue(Type::LabelTy, args[i+1]));
       }
-      delete Raw.VarArgs;
+      delete Raw.VarArgs; 
+      break;
     }
     Res = PN;
     return false;

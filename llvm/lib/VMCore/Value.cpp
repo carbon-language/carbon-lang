@@ -27,6 +27,12 @@ Value::Value(const Type *ty, ValueTy vty, const string &name = "") : Name(name){
 
 Value::~Value() {
 #ifndef NDEBUG      // Only in -g mode...
+  // Check to make sure that there are no uses of this value that are still
+  // around when the value is destroyed.  If there are, then we have a dangling
+  // reference and something is wrong.  This code is here to print out what is
+  // still being referenced.  The value in question should be printed as 
+  // a <badref>
+  //
   if (Uses.begin() != Uses.end()) {
     for (use_const_iterator I = Uses.begin(); I != Uses.end(); I++)
       cerr << "Use still stuck around after Def is destroyed:" << *I << endl;
