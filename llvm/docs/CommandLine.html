@@ -94,8 +94,9 @@ CommandLine library to have the following features:<p>
 <li>Speed: The CommandLine library is very quick and uses little resources.  The
 parsing time of the library is directly proportional to the number of arguments
 parsed, not the the number of options recognized.  Additionally, command line
-argument values are captured transparently into user defined variables, which
-can be accessed like any other variable (and with the same performance).<p>
+argument values are captured transparently into user defined global variables,
+which can be accessed like any other variable (and with the same
+performance).<p>
 
 <li>Type Safe: As a user of CommandLine, you don't have to worry about
 remembering the type of arguments that you want (is it an int?  a string? a
@@ -183,24 +184,24 @@ declarations.<p>
 
 Now that you are ready to support command line arguments, we need to tell the
 system which ones we want, and what type of argument they are.  The CommandLine
-library uses a declarative syntax to model cammand line arguments with the
-variable declarations that capture the parsed values.  This means that for every
-command line option that you would like to support, there should be a variable
-declaration to capture the result.  For example, in a compiler, we would like to
-support the unix standard '<tt>-o &lt;filename&gt;</tt>' option to specify where
-to put the output.  With the CommandLine library, this is represented like
-this:<p>
+library uses a declarative syntax to model command line arguments with the
+global variable declarations that capture the parsed values.  This means that
+for every command line option that you would like to support, there should be a
+global variable declaration to capture the result.  For example, in a compiler,
+we would like to support the unix standard '<tt>-o &lt;filename&gt;</tt>' option
+to specify where to put the output.  With the CommandLine library, this is
+represented like this:<p>
 
 <pre><a name="value_desc_example">
 <a href="#cl::opt">cl::opt</a>&lt;string&gt; OutputFilename("<i>o</i>", <a href="#cl::desc">cl::desc</a>("<i>Specify output filename</i>"), <a href="#cl::value_desc">cl::value_desc</a>("<i>filename</i>"));
 </pre><p>
 
-This declares a variable "<tt>OutputFilename</tt>" that is used to capture the
-result of the "<tt>o</tt>" argument (first parameter).  We specify that this is
-a simple scalar option by using the "<tt><a href="#cl::opt">cl::opt</a></tt>"
-template (as opposed to the <a href="#list">"<tt>cl::list</tt>
-template</a>), and tell the CommandLine library that the data type that we are
-parsing is a string.<p>
+This declares a global variable "<tt>OutputFilename</tt>" that is used to
+capture the result of the "<tt>o</tt>" argument (first parameter).  We specify
+that this is a simple scalar option by using the "<tt><a
+href="#cl::opt">cl::opt</a></tt>" template (as opposed to the <a
+href="#list">"<tt>cl::list</tt> template</a>), and tell the CommandLine library
+that the data type that we are parsing is a string.<p>
 
 The second and third parameters (which are optional) are used to specify what to
 output for the "<tt>--help</tt>" option.  In this case, we get a line that looks
@@ -1495,7 +1496,7 @@ line options </b></font></td></tr></table><ul>
 <address><a href="mailto:sabre@nondot.org">Chris Lattner</a></address>
 <!-- Created: Tue Jan 23 15:19:28 CST 2001 -->
 <!-- hhmts start -->
-Last modified: Mon Jun  2 23:39:44 CDT 2003
+Last modified: Sat Jun 21 16:45:29 CDT 2003
 <!-- hhmts end -->
 </font>
 </body></html>
