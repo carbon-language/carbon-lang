@@ -231,6 +231,8 @@ def FABS : AForm<0x03, 0x0b, (ops FP:$dst, FP:$src),
   "fabs $dst = $src;;">;
 def FNEG : AForm<0x03, 0x0b, (ops FP:$dst, FP:$src),
   "fneg $dst = $src;;">;
+def FNEGABS : AForm<0x03, 0x0b, (ops FP:$dst, FP:$src),
+  "fnegabs $dst = $src;;">;
 
 def CFMAS1 : AForm<0x03, 0x0b,
   (ops FP:$dst, FP:$src1, FP:$src2, FP:$src3, PR:$qp),
