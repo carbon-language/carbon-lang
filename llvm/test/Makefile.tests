@@ -49,7 +49,7 @@ LGCCLD   = $(TOOLS)/gccld -L$(LLVMGCCDIR)/lib/gcc/$(LLVMGCCARCH) -L$(LLVMGCCDIR)
 LGCCLDPROG = $(TOOLS)/gccld
 LDIS     = $(TOOLS)/llvm-dis 
 LOPT     = $(TOOLS)/opt
-LLINK    = $(TOOLS)/link
+LLINK    = $(TOOLS)/llvm-link
 LANALYZE = $(TOOLS)/analyze
 LBUGPOINT= $(TOOLS)/bugpoint
 
