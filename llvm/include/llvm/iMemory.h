@@ -26,20 +26,11 @@ public:
     assert(Ty->isPointerType() && "Can't allocate a non pointer type!");
 
     if (ArraySize) {
-      // Make sure they didn't try to specify a size for !(unsized array) type
-      assert(getType()->getElementType()->isArrayType() && 
-             cast<ArrayType>(getType()->getElementType())->isUnsized() && 
-           "Trying to allocate something other than unsized array, with size!");
       assert(ArraySize->getType() == Type::UIntTy &&
              "Malloc/Allocation array size != UIntTy!");
 
       Operands.reserve(1);
       Operands.push_back(Use(ArraySize, this));
-    } else {
-      // Make sure that the pointer is not to an unsized array!
-      assert(!getType()->getElementType()->isArrayType() ||
-	     cast<const ArrayType>(getType()->getElementType())->isSized() && 
-	     "Trying to allocate unsized array without size!");
     }
   }
 
@@ -130,8 +121,7 @@ public:
 
 class FreeInst : public Instruction {
 public:
-  FreeInst(Value *Ptr, const string &Name = "") 
-    : Instruction(Type::VoidTy, Free, Name) {
+  FreeInst(Value *Ptr) : Instruction(Type::VoidTy, Free, "") {
     assert(Ptr->getType()->isPointerType() && "Can't free nonpointer!");
     Operands.reserve(1);
     Operands.push_back(Use(Ptr, this));
@@ -205,6 +195,16 @@ public:
 
   inline bool hasIndices() const {
     return getNumOperands() > getFirstIndexOperandNumber();
+  }
+
+  // Methods for support type inquiry through isa, cast, and dyn_cast:
+  static inline bool classof(const MemAccessInst *) { return true; }
+  static inline bool classof(const Instruction *I) {
+    return I->getOpcode() == Load || I->getOpcode() == Store ||
+           I->getOpcode() == GetElementPtr;
+  }
+  static inline bool classof(const Value *V) {
+    return isa<Instruction>(V) && classof(cast<Instruction>(V));
   }
 };
 
