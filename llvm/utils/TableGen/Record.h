@@ -732,7 +732,7 @@ inline std::ostream &operator<<(std::ostream &OS, const RecordVal &RV) {
   return OS;
 }
 
-struct Record {
+class Record {
   const std::string Name;
   std::vector<std::string> TemplateArgs;
   std::vector<RecordVal> Values;
