@@ -121,7 +121,7 @@ namespace X86II {
     Mem128   = 6 << MemShift,
 
     //===------------------------------------------------------------------===//
-    // This tow-bit field describes the size of an immediate operand.  Zero is
+    // This two-bit field describes the size of an immediate operand.  Zero is
     // unused so that we can tell if we forgot to set a value.
     ImmShift = 13,
     ImmMask  = 7 << ImmShift,
@@ -169,9 +169,13 @@ namespace X86II {
     // before the normal operands.
     PrintImplUsesBefore = 1 << 19,
 
-    OpcodeShift   = 20,
+    // PrintImplDefsAfter - Print out implicit defs in the assembly output
+    // after the normal operands.
+    PrintImplDefsAfter = 1 << 20,
+
+    OpcodeShift   = 21,
     OpcodeMask    = 0xFF << OpcodeShift,
-    // Bits 25 -> 31 are unused
+    // Bits 26 -> 31 are unused
   };
 }
 

@@ -105,7 +105,8 @@ namespace {
     }
 
     void printImplUsesBefore(const TargetInstrDescriptor &Desc);
-    void printImplUsesAfter(const TargetInstrDescriptor &Desc);
+    bool printImplUsesAfter(const TargetInstrDescriptor &Desc, const bool LC);
+    bool printImplDefsAfter(const TargetInstrDescriptor &Desc, const bool LC);
     void printMachineInstruction(const MachineInstr *MI);
     void printOp(const MachineOperand &MO,
 		 bool elideOffsetKeyword = false);
@@ -546,14 +547,65 @@ void Printer::printImplUsesBefore(const TargetInstrDescriptor &Desc) {
 /// printImplUsesAfter - Emit the implicit-use registers for the instruction
 /// described by DESC, if its PrintImplUsesAfter flag is set.
 ///
-void Printer::printImplUsesAfter(const TargetInstrDescriptor &Desc) {
+/// Inputs:
+///   Comma - List of registers will need a leading comma.
+///   Desc  - Description of the Instruction.
+///
+/// Return value:
+///   true  - Emitted one or more registers.
+///   false - Emitted no registers.
+///
+bool Printer::printImplUsesAfter(const TargetInstrDescriptor &Desc,
+                                 const bool Comma = true) {
   const MRegisterInfo &RI = *TM.getRegisterInfo();
   if (Desc.TSFlags & X86II::PrintImplUsesAfter) {
-    for (const unsigned *p = Desc.ImplicitUses; *p; ++p) {
+    bool emitted = false;
+    const unsigned *p = Desc.ImplicitUses;
+    if (*p) {
+      O << (Comma ? ", %" : "%") << RI.get (*p).Name;
+      emitted = true;
+      ++p;
+    }
+    while (*p) {
       // Bug Workaround: See note in Printer::doInitialization about %.
       O << ", %" << RI.get(*p).Name;
+      ++p;
     }
+    return emitted;
   }
+  return false;
+}
+
+/// printImplDefsAfter - Emit the implicit-definition registers for the
+/// instruction described by DESC, if its PrintImplDefsAfter flag is set.
+///
+/// Inputs:
+///   Comma - List of registers will need a leading comma.
+///   Desc  - Description of the Instruction
+///
+/// Return value:
+///   true  - Emitted one or more registers.
+///   false - Emitted no registers.
+///
+bool Printer::printImplDefsAfter(const TargetInstrDescriptor &Desc,
+                                 const bool Comma = true) {
+  const MRegisterInfo &RI = *TM.getRegisterInfo();
+  if (Desc.TSFlags & X86II::PrintImplDefsAfter) {
+    bool emitted = false;
+    const unsigned *p = Desc.ImplicitDefs;
+    if (*p) {
+      O << (Comma ? ", %" : "%") << RI.get (*p).Name;
+      emitted = true;
+      ++p;
+    }
+    while (*p) {
+      // Bug Workaround: See note in Printer::doInitialization about %.
+      O << ", %" << RI.get(*p).Name;
+      ++p;
+    }
+    return emitted;
+  }
+  return false;
 }
 
 /// printMachineInstruction -- Print out a single X86 LLVM instruction
@@ -575,33 +627,36 @@ void Printer::printMachineInstruction(const MachineInstr *MI) {
       printOp(MI->getOperand(0));
       O << " = phi ";
       for (unsigned i = 1, e = MI->getNumOperands(); i != e; i+=2) {
-	if (i != 1) O << ", ";
-	O << "[";
-	printOp(MI->getOperand(i));
-	O << ", ";
-	printOp(MI->getOperand(i+1));
-	O << "]";
+        if (i != 1) O << ", ";
+        O << "[";
+        printOp(MI->getOperand(i));
+        O << ", ";
+        printOp(MI->getOperand(i+1));
+        O << "]";
       }
     } else {
       unsigned i = 0;
       if (MI->getNumOperands() && MI->getOperand(0).isDef()) {
-	printOp(MI->getOperand(0));
-	O << " = ";
-	++i;
+        printOp(MI->getOperand(0));
+        O << " = ";
+        ++i;
       }
       O << TII.getName(MI->getOpcode());
 
       for (unsigned e = MI->getNumOperands(); i != e; ++i) {
-	O << " ";
-	if (MI->getOperand(i).isDef()) O << "*";
-	printOp(MI->getOperand(i));
-	if (MI->getOperand(i).isDef()) O << "*";
+        O << " ";
+        if (MI->getOperand(i).isDef()) O << "*";
+        printOp(MI->getOperand(i));
+        if (MI->getOperand(i).isDef()) O << "*";
       }
     }
     O << "\n";
     return;
 
   case X86II::RawFrm:
+  {
+    bool LeadingComma = false;
+
     // The accepted forms of Raw instructions are:
     //   1. nop     - No operand required
     //   2. jmp foo - PC relative displacement operand
@@ -617,9 +672,13 @@ void Printer::printMachineInstruction(const MachineInstr *MI) {
 
     if (MI->getNumOperands() == 1) {
       printOp(MI->getOperand(0), true); // Don't print "OFFSET"...
+      LeadingComma = true;
     }
+    LeadingComma = printImplDefsAfter(Desc, LeadingComma) || LeadingComma;
+    printImplUsesAfter(Desc, LeadingComma);
     O << "\n";
     return;
+  }
 
   case X86II::AddRegFrm: {
     // There are currently two forms of acceptable AddRegFrm instructions.

@@ -82,10 +82,20 @@ class X86Inst<string nam, bits<8> opcod, Format f, MemType m, ImmType i> : Instr
   ImmType ImmT = i;
   bits<2> ImmTypeBits = ImmT.Value;
 
+  //
   // Attributes specific to X86 instructions...
+  //
   bit hasOpSizePrefix = 0; // Does this inst have a 0x66 prefix?
-  bit printImplicitUsesBefore = 0; // Should we print implicit uses before this inst?
-  bit printImplicitUsesAfter = 0; // Should we print implicit uses after this inst?
+
+  // Flag whether implicit register usage is printed before/after the
+  // instruction
+  bit printImplicitUsesBefore = 0;
+  bit printImplicitUsesAfter  = 0;
+
+  // Flag whether implicit register definitions are printed before/after the
+  // instruction
+  bit printImplicitDefsBefore = 0;
+  bit printImplicitDefsAfter  = 0;
 
   bits<4> Prefix = 0;       // Which prefix byte does this inst have?
   FPFormat FPForm;          // What flavor of FP instruction is this?
@@ -141,6 +151,8 @@ class Im32i8<string n, bits<8> o, Format f> : X86Inst<n, o, f, Mem32, Imm8>;
 
 // Helper for shift instructions
 class UsesCL { list<Register> Uses = [CL]; bit printImplicitUsesAfter = 1; }
+class PrintImpUsesAfter {bit printImplicitUsesAfter = 1;}
+class PrintImpDefsAfter {bit printImplicitDefsAfter = 1;}
 
 //===----------------------------------------------------------------------===//
 // Instruction list...
@@ -232,6 +244,17 @@ def REP_STOSW : I<"rep stosw", 0xAB, RawFrm>, REP, OpSize,
                 Imp<[AX,ECX,EDI], [ECX,EDI]>;
 def REP_STOSD : I<"rep stosd", 0xAB, RawFrm>, REP,
                 Imp<[EAX,ECX,EDI], [ECX,EDI]>;
+
+//===----------------------------------------------------------------------===//
+//  Input/Output Instructions...
+//
+def IN8  : I<"in", 0xEC, RawFrm>, Imp<[DX],[AL]>,  PrintImpUsesAfter, PrintImpDefsAfter;    // in AL  = I/O address DX
+def IN16 : I<"in", 0xED, RawFrm>, Imp<[DX],[AX]>,  PrintImpUsesAfter, PrintImpDefsAfter;    // in AX  = I/O address DX
+def IN32 : I<"in", 0xED, RawFrm>, Imp<[DX],[EAX]>, PrintImpUsesAfter, PrintImpDefsAfter;   // in EAX = I/O address DX
+
+def OUT8  : I<"out", 0xEE, RawFrm>, Imp<[DX, AL],  []>, PrintImpUsesAfter;
+def OUT16 : I<"out", 0xEF, RawFrm>, Imp<[DX, AX],  []>, PrintImpUsesAfter;
+def OUT32 : I<"out", 0xEF, RawFrm>, Imp<[DX, EAX], []>, PrintImpUsesAfter;
 
 //===----------------------------------------------------------------------===//
 //  Move Instructions...

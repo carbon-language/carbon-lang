@@ -33,12 +33,26 @@ def X86InstrInfo : InstrInfo {
 
   // Define how we want to layout our TargetSpecific information field... This
   // should be kept up-to-date with the fields in the X86InstrInfo.h file.
-  let TSFlagsFields = ["FormBits"  , "hasOpSizePrefix" ,  "Prefix", "MemTypeBits",
-                       "ImmTypeBits", "FPFormBits", "printImplicitUsesAfter", 
-                       "printImplicitUsesBefore", "Opcode"];
-  let TSFlagsShifts = [0,         5,                  6,        10,            13,
-                                  15,           18,                       19,
-                                             20];
+  let TSFlagsFields = ["FormBits",
+                       "hasOpSizePrefix",
+                       "Prefix",
+                       "MemTypeBits",
+                       "ImmTypeBits",
+                       "FPFormBits",
+                       "printImplicitUsesAfter", 
+                       "printImplicitUsesBefore",
+                       "printImplicitDefsAfter",
+                       "Opcode"];
+  let TSFlagsShifts = [0,
+                       5,
+                       6,
+                       10,
+                       13,
+                       15,
+                       18,
+                       19,
+                       20,
+                       21];
 }
 
 def X86 : Target {
