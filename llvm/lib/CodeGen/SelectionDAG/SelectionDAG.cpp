@@ -889,7 +889,12 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
   default:
     // FIXME: MEMOIZE!!
     SDNode *N = new SDNode(Opcode, Children);
-    N->setValueTypes(VT);
+    if (Opcode != ISD::ADD_PARTS && Opcode != ISD::SUB_PARTS) {
+      N->setValueTypes(VT);
+    } else {
+      std::vector<MVT::ValueType> V(N->getNumOperands()/2, VT);
+      N->setValueTypes(V);
+    }
     AllNodes.push_back(N);
     return SDOperand(N, 0);
   }
@@ -1075,8 +1080,8 @@ const char *SDNode::getOperationName() const {
   case ISD::SRL:    return "srl";
 
   case ISD::SELECT: return "select";
-  case ISD::ADDC:   return "addc";
-  case ISD::SUBB:   return "subb";
+  case ISD::ADD_PARTS:   return "add_parts";
+  case ISD::SUB_PARTS:   return "sub_parts";
 
     // Conversion operators.
   case ISD::SIGN_EXTEND: return "sign_extend";
