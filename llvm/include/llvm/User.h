@@ -34,6 +34,10 @@ public:
     assert(i < Operands.size() && "setOperand() out of range!");
     Operands[i] = Val;
   }
+  inline void eraseOperand(unsigned i) {
+    assert(i < Operands.size() && "setOperand() out of range!");
+    Operands.erase(Operands.begin() + i);
+  }
   inline unsigned getNumOperands() const { return Operands.size(); }
 
   // ---------------------------------------------------------------------------

@@ -150,6 +150,7 @@ public:
 
   Value *getPointerOperand() { return getOperand(0); }
   const Value *getPointerOperand() const { return getOperand(0); }
+  static unsigned getPointerOperandIndex() { return 0U; }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const LoadInst *) { return true; }
@@ -180,6 +181,7 @@ public:
 
   Value *getPointerOperand() { return getOperand(1); }
   const Value *getPointerOperand() const { return getOperand(1); }
+  static unsigned getPointerOperandIndex() { return 1U; }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const StoreInst *) { return true; }
@@ -238,7 +240,10 @@ public:
   const Value *getPointerOperand() const {
     return getOperand(0);
   }
-  
+  static unsigned getPointerOperandIndex() {
+    return 0U;                      // get index for modifying correct operand
+  }
+
   inline unsigned getNumIndices() const {  // Note: always non-negative
     return getNumOperands() - 1;
   }

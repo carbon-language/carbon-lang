@@ -42,6 +42,9 @@ public:
   void setIncomingValue(unsigned i, Value *V) {
     Operands[i*2] = V;
   }
+  inline unsigned getOperandNumForIncomingValue(unsigned i) {
+    return i*2;
+  }
 
   /// getIncomingBlock - Return incoming basic block #x
   const BasicBlock *getIncomingBlock(unsigned i) const { 
@@ -52,6 +55,9 @@ public:
   }
   inline void setIncomingBlock(unsigned i, BasicBlock *BB) {
     Operands[i*2+1] = (Value*)BB;
+  }
+  inline unsigned getOperandNumForIncomingBlock(unsigned i) {
+    return i*2+1;
   }
 
   /// addIncoming - Add an incoming value to the end of the PHI list
