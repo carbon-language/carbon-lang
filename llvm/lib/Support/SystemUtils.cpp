@@ -13,16 +13,16 @@
 //===----------------------------------------------------------------------===//
 
 #include "Support/SystemUtils.h"
-#include <algorithm>
-#include <fstream>
-#include <iostream>
-#include <cstdlib>
 #include "Config/sys/types.h"
 #include "Config/sys/stat.h"
 #include "Config/fcntl.h"
 #include "Config/sys/wait.h"
 #include "Config/unistd.h"
-#include "Config/errno.h"
+#include <algorithm>
+#include <fstream>
+#include <iostream>
+#include <cstdlib>
+#include <cerrno>
 using namespace llvm;
 
 /// isExecutableFile - This function returns true if the filename specified
