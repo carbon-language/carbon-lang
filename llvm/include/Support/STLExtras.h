@@ -18,7 +18,7 @@
 #define SUPPORT_STLEXTRAS_H
 
 #include <functional>
-#include <map>  // G++-3.0.x will find std::pair here.
+#include <utility> // for std::pair
 #include "Support/iterator"
 
 namespace llvm {
