@@ -41,6 +41,7 @@ class BitSetVector {
   class iterator;
 
   std::vector<bitword> bitsetVec;
+  unsigned maxSize;
 
   static unsigned NumWords(unsigned Size) { return (Size+WORDSIZE-1)/WORDSIZE;} 
 
@@ -53,14 +54,15 @@ class BitSetVector {
   BitSetVector();                       // do not implement!
 
 public:
-  unsigned maxSize;
-
   /// 
   /// Constructor: create a set of the maximum size maxSetSize.
   /// The set is initialized to empty.
   ///
   BitSetVector(unsigned maxSetSize)
-    : bitsetVec(BitSetVector::NumWords(maxSetSize)), maxSize(maxSetSize) { }
+    : bitsetVec(NumWords(maxSetSize)), maxSize(maxSetSize) { }
+
+  /// size - Return the number of bits tracked by this bit vector...
+  unsigned size() const { return maxSize; }
 
   /// 
   ///  Modifier methods: reset, set for entire set, operator[] for one element.
@@ -229,7 +231,7 @@ inline std::ostream& operator<< (std::ostream& O, const BitSetVector& bset)
 inline bool Disjoint(const BitSetVector& set1,
                      const BitSetVector& set2)
 {
-  assert(set1.maxSize == set2.maxSize && "Illegal intersection");
+  assert(set1.size() == set2.size() && "Illegal intersection");
   for (unsigned i = 0; i < set1.bitsetVec.size(); ++i)
     if ((set1.getWord(i) & set2.getWord(i)).any())
       return false;
