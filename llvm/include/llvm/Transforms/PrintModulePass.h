@@ -17,19 +17,14 @@ class PrintModulePass : public Pass {
   ostream *Out;           // ostream to print on
   bool DeleteStream;      // Delete the ostream in our dtor?
   bool PrintPerMethod;    // Print one method at a time rather than the whole?
-  bool PrintAsBytecode;   // Print as bytecode rather than assembly?
 public:
   inline PrintModulePass(const string &B, ostream *o = &cout,
                          bool DS = false,
-                         bool printPerMethod = true,
-                         bool printAsBytecode = false)
-    : Banner(B), Out(o), DeleteStream(DS),
-      PrintPerMethod(printPerMethod), PrintAsBytecode(printAsBytecode) {
-    if (PrintAsBytecode)
-      PrintPerMethod = false;
+                         bool printPerMethod = true)
+    : Banner(B), Out(o), DeleteStream(DS), PrintPerMethod(printPerMethod) {
   }
   
-  ~PrintModulePass() {
+  inline ~PrintModulePass() {
     if (DeleteStream) delete Out;
   }
   
@@ -45,12 +40,27 @@ public:
   // doPassFinalization - Virtual method overriden by subclasses to do any post
   // processing needed after all passes have run.
   //
-  bool doPassFinalization(Module *module) {
-    if (PrintAsBytecode)
-      WriteBytecodeToFile(module, *Out);
-    else if (! PrintPerMethod)
-      (*Out) << Banner << module;
+  bool doPassFinalization(Module *M) {
+    if (! PrintPerMethod)
+      (*Out) << Banner << M;
     return false;
+  }
+};
+
+class WriteModuleBytecode : public Pass {
+  ostream *Out;           // ostream to print on
+  bool DeleteStream;
+public:
+  inline WriteModuleBytecode(ostream *o = &cout, bool DS = false)
+    : Out(o), DeleteStream(DS) {
+  }
+
+  inline ~WriteModuleBytecode() {
+    if (DeleteStream) delete Out;
+  }
+  
+  bool doPassFinalization(Module *M) {
+    WriteBytecodeToFile(M, *Out);    
   }
 };
 
