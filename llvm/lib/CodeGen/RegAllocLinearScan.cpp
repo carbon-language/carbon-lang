@@ -123,23 +123,6 @@ namespace {
                 std::cerr << mri_->getName(reg) << '\n';
             }
         }
-
-//         void verifyAssignment() const {
-//             for (Virt2PhysMap::const_iterator i = v2pMap_.begin(),
-//                      e = v2pMap_.end(); i != e; ++i)
-//                 for (Virt2PhysMap::const_iterator i2 = next(i); i2 != e; ++i2)
-//                     if (MRegisterInfo::isVirtualRegister(i->second) &&
-//                         (i->second == i2->second ||
-//                          mri_->areAliases(i->second, i2->second))) {
-//                         const Interval
-//                             &in = li_->getInterval(i->second),
-//                             &in2 = li_->getInterval(i2->second);
-//                         if (in.overlaps(in2)) {
-//                             std::cerr << in << " overlaps " << in2 << '\n';
-//                             assert(0);
-//                         }
-//                     }
-//         }
     };
 }
 
