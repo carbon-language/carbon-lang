@@ -30,6 +30,7 @@ const char *MVT::getValueTypeString(MVT::ValueType VT) {
   case MVT::f64:   return "f64";
   case MVT::f80:   return "f80";
   case MVT::f128:  return "f128";
+  case MVT::isVoid:return "isVoid";
   case MVT::Other: return "ch";
   }
 }
