@@ -157,13 +157,13 @@ CompileCommonOpts := -Wall -W  -Wwrite-strings -Wno-unused -I$(LEVEL)/include
 # Compile a cpp file, don't link...
 Compile  := $(CXX) -c $(CPPFLAGS) $(CXXFLAGS) $(CompileCommonOpts)
 CompileG := $(Compile) -g  -D_DEBUG
-CompileO := $(Compile) -O3 -DNDEBUG -finline-functions -felide-constructors -fshort-enums ## DISABLE -freg-struct-return because of gcc3.2 bug
+CompileO := $(Compile) -O3 -DNDEBUG -finline-functions -felide-constructors -fshort-enums -fomit-frame-pointer
 CompileP := $(CompileO) $(PROFILE)
 
 # Compile a c file, don't link...
 CompileC  := $(CC) -c $(CPPFLAGS) $(CCFLAGS) $(CompileCommonOpts)
 CompileCG := $(CompileC) -g  -D_DEBUG
-CompileCO := $(CompileC) -O3 -DNDEBUG -finline-functions -fshort-enums ## DISABLE -freg-struct-return because of gcc3.2 bug
+CompileCO := $(CompileC) -O3 -DNDEBUG -finline-functions -fshort-enums -fomit-frame-pointer
 CompileCP := $(CompileCO) $(PROFILE)
 
 
