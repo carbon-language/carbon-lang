@@ -79,8 +79,13 @@ static inline bool isSafeAlloca(const AllocaInst *AI) {
   // Only allow direct loads and stores...
   for (Value::use_const_iterator UI = AI->use_begin(), UE = AI->use_end();
        UI != UE; ++UI)     // Loop over all of the uses of the alloca
-    if (!isa<LoadInst>(*UI) && !isa<StoreInst>(*UI))
-      return false;   // Not a load or store?
+    if (!isa<LoadInst>(*UI))
+      if (const StoreInst *SI = dyn_cast<StoreInst>(*UI)) {
+        if (SI->getOperand(0) == AI)
+          return false;   // Don't allow a store of the AI, only INTO the AI.
+      } else {
+        return false;   // Not a load or store?
+      }
   
   return true;
 }
