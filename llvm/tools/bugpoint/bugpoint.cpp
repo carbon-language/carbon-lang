@@ -16,9 +16,9 @@
 #include "BugDriver.h"
 #include "llvm/Support/PassNameParser.h"
 #include "llvm/Support/ToolRunner.h"
-#include "llvm/System/SysConfig.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/PluginLoader.h"
+#include "llvm/System/Process.h"
 #include "llvm/System/Signals.h"
 using namespace llvm;
 
@@ -45,7 +45,7 @@ int main(int argc, char **argv) {
 
   // Bugpoint has the ability of generating a plethora of core files, so to
   // avoid filling up the disk, we prevent it
-  sys::PreventCoreFiles();
+  sys::Process::PreventCoreFiles();
 
   try {
     return D.run();
