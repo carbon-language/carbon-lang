@@ -498,9 +498,15 @@ bool BytecodeParser::ParseVersionInfo(const unsigned char *&Buf,
   if (read_vbr(Buf, EndBuf, Version)) return true;
 
   // Unpack version number: low four bits are for flags, top bits = version
-  isBigEndian     = Version & 1;
-  hasLongPointers = Version & 2;
-  RevisionNum     = Version >> 4;
+  Module::Endianness  Endianness;
+  Module::PointerSize PointerSize;
+  Endianness  = (Version & 1) ? Module::BigEndian : Module::LittleEndian;
+  PointerSize = (Version & 2) ? Module::Pointer64 : Module::Pointer32;
+
+  bool hasNoEndianness = Version & 4;
+  bool hasNoPointerSize = Version & 8;
+  
+  RevisionNum = Version >> 4;
 
   // Default values for the current bytecode version
   HasImplicitZeroInitializer = true;
@@ -515,11 +521,14 @@ bool BytecodeParser::ParseVersionInfo(const unsigned char *&Buf,
     //
     if (Version != 14) return true;  // Unknown revision 0 flags?
     HasImplicitZeroInitializer = false;
-    isBigEndian = hasLongPointers = true;
+    Endianness  = Module::BigEndian;
+    PointerSize = Module::Pointer64;
     hasInternalMarkerOnly = true;
+    hasNoEndianness = hasNoPointerSize = false;
     break;
   case 1:
-    // Version #1 has two bit fields: isBigEndian and hasLongPointers
+    // Version #1 has four bit fields: isBigEndian, hasLongPointers,
+    // hasNoEndianness, and hasNoPointerSize.
     hasInternalMarkerOnly = true;
     break;
   case 2:
@@ -531,14 +540,14 @@ bool BytecodeParser::ParseVersionInfo(const unsigned char *&Buf,
     return true;
   }
 
-  TheModule->setEndianness(isBigEndian ? Module::BigEndian :
-                                         Module::LittleEndian);
-  TheModule->setPointerSize(hasLongPointers ? Module::Pointer64 : 
-                                              Module::Pointer32);
+  if (hasNoEndianness) Endianness  = Module::AnyEndianness;
+  if (hasNoPointerSize) PointerSize = Module::AnyPointerSize;
 
+  TheModule->setEndianness(Endianness);
+  TheModule->setPointerSize(PointerSize);
   BCR_TRACE(1, "Bytecode Rev = " << (unsigned)RevisionNum << "\n");
-  BCR_TRACE(1, "BigEndian/LongPointers = " << isBigEndian << ","
-               << hasLongPointers << "\n");
+  BCR_TRACE(1, "Endianness/PointerSize = " << Endianness << ","
+               << PointerSize << "\n");
   BCR_TRACE(1, "HasImplicitZeroInit = " << HasImplicitZeroInitializer << "\n");
   return false;
 }
