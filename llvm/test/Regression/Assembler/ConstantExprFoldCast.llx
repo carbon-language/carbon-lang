@@ -1,0 +1,17 @@
+; This test checks to make sure that constant exprs fold in some simple situations
+
+; RUN: if as < %s | dis | grep cast
+; RUN: then exit 1
+; RUN: else exit 0
+; RUN: fi
+
+%A = global int* cast (sbyte* null to int*)  ; Cast null -> fold
+%B = global int** cast (int** %A to int**)   ; Cast to same type -> fold
+%C = global int cast (long 42 to int)        ; Integral casts
+%D = global int* cast(float* cast (int* %C to float*) to int*)  ; cast of cast ptr->ptr
+%E = global int cast(float* cast (sbyte 5 to float*) to int)  ; int -> ptr -> int
+
+; Test folding of binary instrs
+%F = global int* cast(int add (int 5, int -5) to int*)
+%G = global int* cast(int sub (int 5, int 5) to int*)
+
