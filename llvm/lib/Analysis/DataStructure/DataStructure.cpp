@@ -212,6 +212,44 @@ bool DSNode::isNodeCompletelyFolded() const {
   return getSize() == 1 && Ty == Type::VoidTy && isArray();
 }
 
+/// addFullGlobalsList - Compute the full set of global values that are
+/// represented by this node.  Unlike getGlobalsList(), this requires fair
+/// amount of work to compute, so don't treat this method call as free.
+void DSNode::addFullGlobalsList(std::vector<GlobalValue*> &List) const {
+  if (globals_begin() == globals_end()) return;
+
+  EquivalenceClasses<GlobalValue*> &EC = getParentGraph()->getGlobalECs();
+
+  for (globals_iterator I = globals_begin(), E = globals_end(); I != E; ++I) {
+    EquivalenceClasses<GlobalValue*>::iterator ECI = EC.findValue(*I);
+    if (ECI == EC.end())
+      List.push_back(*I);
+    else
+      List.insert(List.end(), EC.member_begin(ECI), EC.member_end());
+  }
+}
+
+/// addFullFunctionList - Identical to addFullGlobalsList, but only return the
+/// functions in the full list.
+void DSNode::addFullFunctionList(std::vector<Function*> &List) const {
+  if (globals_begin() == globals_end()) return;
+
+  EquivalenceClasses<GlobalValue*> &EC = getParentGraph()->getGlobalECs();
+
+  for (globals_iterator I = globals_begin(), E = globals_end(); I != E; ++I) {
+    EquivalenceClasses<GlobalValue*>::iterator ECI = EC.findValue(*I);
+    if (ECI == EC.end()) {
+      if (Function *F = dyn_cast<Function>(*I))
+        List.push_back(F);
+    } else {
+      for (EquivalenceClasses<GlobalValue*>::member_iterator MI =
+             EC.member_begin(ECI), E = EC.member_end(); MI != E; ++MI)
+        if (Function *F = dyn_cast<Function>(*MI))
+          List.push_back(F);
+    }
+  }
+}
+
 namespace {
   /// TypeElementWalker Class - Used for implementation of physical subtyping...
   ///
@@ -822,9 +860,9 @@ DSNodeHandle ReachabilityCloner::getClonedNH(const DSNodeHandle &SrcNH) {
 
   // If SrcNH has globals and the destination graph has one of the same globals,
   // merge this node with the destination node, which is much more efficient.
-  if (SN->global_begin() != SN->global_end()) {
+  if (SN->globals_begin() != SN->globals_end()) {
     DSScalarMap &DestSM = Dest.getScalarMap();
-    for (DSNode::global_iterator I = SN->global_begin(), E = SN->global_end();
+    for (DSNode::globals_iterator I = SN->globals_begin(),E = SN->globals_end();
          I != E; ++I) {
       GlobalValue *GV = *I;
       DSScalarMap::iterator GI = DestSM.find(GV);
@@ -867,7 +905,7 @@ DSNodeHandle ReachabilityCloner::getClonedNH(const DSNodeHandle &SrcNH) {
   
   // If this node contains any globals, make sure they end up in the scalar
   // map with the correct offset.
-  for (DSNode::global_iterator I = SN->global_begin(), E = SN->global_end();
+  for (DSNode::globals_iterator I = SN->globals_begin(), E = SN->globals_end();
        I != E; ++I) {
     GlobalValue *GV = *I;
     const DSNodeHandle &SrcGNH = Src.getNodeForValue(GV);
@@ -879,7 +917,7 @@ DSNodeHandle ReachabilityCloner::getClonedNH(const DSNodeHandle &SrcNH) {
     if (CloneFlags & DSGraph::UpdateInlinedGlobals)
       Dest.getInlinedGlobals().insert(GV);
   }
-  NH.getNode()->mergeGlobals(SN->getGlobals());
+  NH.getNode()->mergeGlobals(SN->getGlobalsList());
 
   return DSNodeHandle(NH.getNode(), NH.getOffset()+SrcNH.getOffset());
 }
@@ -953,14 +991,14 @@ void ReachabilityCloner::merge(const DSNodeHandle &NH,
 
     // If the source node contains any globals, make sure they end up in the
     // scalar map with the correct offset.
-    if (SN->global_begin() != SN->global_end()) {
+    if (SN->globals_begin() != SN->globals_end()) {
       // Update the globals in the destination node itself.
-      DN->mergeGlobals(SN->getGlobals());
+      DN->mergeGlobals(SN->getGlobalsList());
 
       // Update the scalar map for the graph we are merging the source node
       // into.
-      for (DSNode::global_iterator I = SN->global_begin(), E = SN->global_end();
-           I != E; ++I) {
+      for (DSNode::globals_iterator I = SN->globals_begin(),
+             E = SN->globals_end(); I != E; ++I) {
         GlobalValue *GV = *I;
         const DSNodeHandle &SrcGNH = Src.getNodeForValue(GV);
         DSNodeHandle &DestGNH = NodeMap[SrcGNH.getNode()];
@@ -971,7 +1009,7 @@ void ReachabilityCloner::merge(const DSNodeHandle &NH,
         if (CloneFlags & DSGraph::UpdateInlinedGlobals)
           Dest.getInlinedGlobals().insert(GV);
       }
-      NH.getNode()->mergeGlobals(SN->getGlobals());
+      NH.getNode()->mergeGlobals(SN->getGlobalsList());
     }
   } else {
     // We cannot handle this case without allocating a temporary node.  Fall
@@ -993,8 +1031,8 @@ void ReachabilityCloner::merge(const DSNodeHandle &NH,
 
     // If the source node contained any globals, make sure to create entries 
     // in the scalar map for them!
-    for (DSNode::global_iterator I = SN->global_begin(), E = SN->global_end();
-         I != E; ++I) {
+    for (DSNode::globals_iterator I = SN->globals_begin(),
+           E = SN->globals_end(); I != E; ++I) {
       GlobalValue *GV = *I;
       const DSNodeHandle &SrcGNH = Src.getNodeForValue(GV);
       DSNodeHandle &DestGNH = NodeMap[SrcGNH.getNode()];
@@ -1542,6 +1580,7 @@ static inline void killIfUselessEdge(DSNodeHandle &Edge) {
         Edge.setTo(0, 0);  // Kill the edge!
 }
 
+#if 0
 static inline bool nodeContainsExternalFunction(const DSNode *N) {
   const std::vector<GlobalValue*> &Globals = N->getGlobals();
   for (unsigned i = 0, e = Globals.size(); i != e; ++i)
@@ -1549,6 +1588,7 @@ static inline bool nodeContainsExternalFunction(const DSNode *N) {
       return true;
   return false;
 }
+#endif
 
 static void removeIdenticalCalls(std::list<DSCallSite> &Calls) {
   // Remove trivially identical function calls
@@ -1570,7 +1610,7 @@ static void removeIdenticalCalls(std::list<DSCallSite> &Calls) {
     // eliminate it.
     if (CS.isIndirectCall() && CS.getCalleeNode()->getNumReferrers() == 1 &&
         CS.getCalleeNode()->isComplete() &&
-        CS.getCalleeNode()->getGlobals().empty()) {  // No useful info?
+        CS.getCalleeNode()->getGlobalsList().empty()) {  // No useful info?
 #ifndef NDEBUG
       std::cerr << "WARNING: Useless call site found.\n";
 #endif
@@ -1733,8 +1773,8 @@ void DSGraph::removeTriviallyDeadNodes() {
       // have all of these properties and still have incoming edges, due to the
       // scalar map, so we check those now.
       //
-      if (Node.getNumReferrers() == Node.getGlobals().size()) {
-        const std::vector<GlobalValue*> &Globals = Node.getGlobals();
+      if (Node.getNumReferrers() == Node.getGlobalsList().size()) {
+        const std::vector<GlobalValue*> &Globals = Node.getGlobalsList();
 
         // Loop through and make sure all of the globals are referring directly
         // to the node...
@@ -1996,8 +2036,8 @@ void DSGraph::removeDeadNodes(unsigned Flags) {
 }
 
 void DSGraph::AssertNodeContainsGlobal(const DSNode *N, GlobalValue *GV) const {
-  assert(std::find(N->getGlobals().begin(), N->getGlobals().end(), GV) !=
-         N->getGlobals().end() && "Global value not in node!");
+  assert(std::find(N->globals_begin(),N->globals_end(), GV) !=
+         N->globals_end() && "Global value not in node!");
 }
 
 void DSGraph::AssertCallSiteInGraph(const DSCallSite &CS) const {
