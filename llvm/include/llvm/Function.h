@@ -40,7 +40,7 @@ private:
 
   Module *Parent;                  // The module that contains this method
 
-  friend class ValueHolder<Method,Module, Module>;
+  friend class ValueHolder<Method, Module, Module>;
   void setParent(Module *parent);
 
 public:

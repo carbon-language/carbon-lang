@@ -1,6 +1,7 @@
 //===-- Method.cpp - Implement the Method class ------------------*- C++ -*--=//
 //
-// This file implements the Method class for the VMCore library.
+// This file implements the Method & GlobalVariable classes for the VMCore
+// library.
 //
 //===----------------------------------------------------------------------===//
 
@@ -9,8 +10,14 @@
 #include "llvm/SymbolTable.h"
 #include "llvm/Module.h"
 #include "llvm/Method.h"
+#include "llvm/GlobalVariable.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/iOther.h"
+
+//===----------------------------------------------------------------------===//
+// Method Implementation
+//===----------------------------------------------------------------------===//
+
 
 // Instantiate Templates - This ugliness is the price we have to pay
 // for having a ValueHolderImpl.h file seperate from ValueHolder.h!  :(
@@ -73,4 +80,26 @@ const MethodType *Method::getMethodType() const {
 //
 void Method::dropAllReferences() {
   for_each(begin(), end(), std::mem_fun(&BasicBlock::dropAllReferences));
+}
+
+//===----------------------------------------------------------------------===//
+// GlobalVariable Implementation
+//===----------------------------------------------------------------------===//
+
+GlobalVariable::GlobalVariable(const Type *Ty, const string &Name = "")
+  : Value(Ty, Value::GlobalVal, Name), Parent(0) {
+  assert(Ty->isPointerType() && 
+	 (!Ty->isPointerType()->isArrayType() || // No unsized array pointers
+	  Ty->isPointerType()->isArrayType()->isSized()) &&
+	 "Global Variables must be pointers to a sized type!");
+}
+
+// Specialize setName to take care of symbol table majik
+void GlobalVariable::setName(const string &name, SymbolTable *ST) {
+  Module *P;
+  assert((ST == 0 || (!getParent() || ST == getParent()->getSymbolTable())) &&
+	 "Invalid symtab argument!");
+  if ((P = getParent()) && hasName()) P->getSymbolTable()->remove(this);
+  Value::setName(name);
+  if (P && getName() != "") P->getSymbolTableSure()->insert(this);
 }

@@ -12,6 +12,7 @@
 #include "llvm/Analysis/SlotCalculator.h"
 #include "llvm/Analysis/ConstantsScanner.h"
 #include "llvm/Method.h"
+#include "llvm/GlobalVariable.h"
 #include "llvm/Module.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/ConstPoolVals.h"
@@ -68,13 +69,21 @@ SlotCalculator::SlotCalculator(const Method *M, bool IgnoreNamed) {
 //
 void SlotCalculator::processModule() {
   SC_DEBUG("begin processModule!\n");
-  // Currently, the only module level declarations are methods and method
-  // prototypes.  We simply scavenge the types out of the methods, then add the
-  // methods themselves to the value table...
+
+  // Add all of the global variables to the value table...
+  //
+  for_each(TheModule->gbegin(), TheModule->gend(),
+	   bind_obj(this, &SlotCalculator::insertValue));
+
+  // Scavenge the types out of the methods, then add the methods themselves to
+  // the value table...
   //
   for_each(TheModule->begin(), TheModule->end(),  // Insert methods...
 	   bind_obj(this, &SlotCalculator::insertValue));
 
+  // Insert constants that are named at module level into the slot pool so that
+  // the module symbol table can refer to them...
+  //
   if (TheModule->hasSymbolTable() && !IgnoreNamedNodes) {
     SC_DEBUG("Inserting SymbolTable values:\n");
     processSymbolTable(TheModule->getSymbolTable());

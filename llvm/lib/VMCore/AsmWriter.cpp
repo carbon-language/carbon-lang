@@ -14,6 +14,7 @@
 #include "llvm/Analysis/SlotCalculator.h"
 #include "llvm/Module.h"
 #include "llvm/Method.h"
+#include "llvm/GlobalVariable.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/ConstPoolVals.h"
 #include "llvm/iOther.h"
@@ -81,6 +82,7 @@ public:
   }
 
   inline void write(const Module *M)         { processModule(M);      }
+  inline void write(const GlobalVariable *G) { processGlobal(G);      }
   inline void write(const Method *M)         { processMethod(M);      }
   inline void write(const BasicBlock *BB)    { processBasicBlock(BB); }
   inline void write(const Instruction *I)    { processInstruction(I); }
@@ -90,11 +92,12 @@ private :
   void processModule(const Module *M);
   void processSymbolTable(const SymbolTable &ST);
   void processConstant(const ConstPoolVal *CPV);
+  void processGlobal(const GlobalVariable *GV);
   void processMethod(const Method *M);
   void processMethodArgument(const MethodArgument *MA);
   void processBasicBlock(const BasicBlock *BB);
   void processInstruction(const Instruction *I);
-
+  
   void writeOperand(const Value *Op, bool PrintType, bool PrintName = true);
 };
 
@@ -109,11 +112,20 @@ void AssemblyWriter::processModule(const Module *M) {
   // Loop over the symbol table, emitting all named constants...
   if (M->hasSymbolTable())
     processSymbolTable(*M->getSymbolTable());
-
+  
+  for_each(M->gbegin(), M->gend(), 
+	   bind_obj(this, &AssemblyWriter::processGlobal));
+	   
   Out << "implementation\n";
 
   // Output all of the methods...
   for_each(M->begin(), M->end(), bind_obj(this,&AssemblyWriter::processMethod));
+}
+
+void AssemblyWriter::processGlobal(const GlobalVariable *GV) {
+  Out << "global ";
+  if (GV->hasName()) Out << "%" << GV->getName() << " = ";
+  Out << GV->getType()->getDescription() << endl;
 }
 
 

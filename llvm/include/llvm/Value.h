@@ -19,6 +19,7 @@ class MethodArgument;
 class Instruction;
 class BasicBlock;
 class Method;
+class GlobalVariable;
 class Module;
 class SymbolTable;
 template<class ValueSubclass, class ItemParentType, class SymTabType> 
@@ -36,9 +37,9 @@ public:
     ConstantVal,            // This is an instance of ConstPoolVal
     MethodArgumentVal,      // This is an instance of MethodArgument
     InstructionVal,         // This is an instance of Instruction
-
     BasicBlockVal,          // This is an instance of BasicBlock
     MethodVal,              // This is an instance of Method
+    GlobalVal,              // This is an instance of GlobalVariable
     ModuleVal,              // This is an instance of Module
   };
 
@@ -102,6 +103,7 @@ public:
   CAST_FN(Instruction   ,       Instruction   )
   CAST_FN(BasicBlock    ,       BasicBlock    )
   CAST_FN(Method        ,       Method        )
+  CAST_FN(Global        ,       GlobalVariable)
   CAST_FN(Module        ,       Module        )
 #undef CAST_FN
 

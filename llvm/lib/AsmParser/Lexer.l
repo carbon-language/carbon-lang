@@ -122,6 +122,7 @@ end             { return END; }
 true            { return TRUE;  }
 false           { return FALSE; }
 declare         { return DECLARE; }
+global          { return GLOBAL; }
 implementation  { return IMPLEMENTATION; }
 \.\.\.          { return DOTDOTDOT; }
 string          { return STRING; }

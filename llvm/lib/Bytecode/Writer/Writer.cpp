@@ -24,6 +24,7 @@
 
 #include "WriterInternals.h"
 #include "llvm/Module.h"
+#include "llvm/GlobalVariable.h"
 #include "llvm/Method.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/ConstPoolVals.h"
@@ -117,7 +118,15 @@ void BytecodeWriter::outputConstants(bool isMethod) {
 void BytecodeWriter::outputModuleInfoBlock(const Module *M) {
   BytecodeBlock ModuleInfoBlock(BytecodeFormat::ModuleGlobalInfo, Out);
   
-  // Output the types of the methods in this class
+  // Output the types for the global variables in the module...
+  for (Module::const_giterator I = M->gbegin(), End = M->gend(); I != End;++I) {
+    int Slot = Table.getValSlot((*I)->getType());
+    assert(Slot != -1 && "Module global vars is broken!");
+    output_vbr((unsigned)Slot, Out);
+  }
+  output_vbr((unsigned)Table.getValSlot(Type::VoidTy), Out);
+
+  // Output the types of the methods in this module...
   for (Module::const_iterator I = M->begin(), End = M->end(); I != End; ++I) {
     int Slot = Table.getValSlot((*I)->getType());
     assert(Slot != -1 && "Module const pool is broken!");
@@ -125,6 +134,8 @@ void BytecodeWriter::outputModuleInfoBlock(const Module *M) {
     output_vbr((unsigned)Slot, Out);
   }
   output_vbr((unsigned)Table.getValSlot(Type::VoidTy), Out);
+
+
   align32(Out);
 }
 

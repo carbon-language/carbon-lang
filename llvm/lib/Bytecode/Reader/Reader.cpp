@@ -12,6 +12,7 @@
 
 #include "llvm/Bytecode/Reader.h"
 #include "llvm/Bytecode/Format.h"
+#include "llvm/GlobalVariable.h"
 #include "llvm/Module.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/DerivedTypes.h"
@@ -312,9 +313,27 @@ bool BytecodeParser::ParseMethod(const uchar *&Buf, const uchar *EndBuf,
 
 bool BytecodeParser::ParseModuleGlobalInfo(const uchar *&Buf, const uchar *End,
 					  Module *C) {
-
   if (!MethodSignatureList.empty()) 
     return failure(true);  // Two ModuleGlobal blocks?
+
+  // Read global variables...
+  unsigned VarType;
+  if (read_vbr(Buf, End, VarType)) return failure(true);
+  while (VarType != Type::VoidTyID) { // List is terminated by Void
+    const Type *Ty = getType(VarType);
+    if (!Ty || !Ty->isPointerType()) { 
+      cerr << "Global not pointer type!  Ty = " << Ty << endl;
+      return failure(true); 
+    }
+
+    // Create the global variable...
+    GlobalVariable *GV = new GlobalVariable(Ty);
+    insertValue(GV, ModuleValues);
+    C->getGlobalList().push_back(GV);
+
+    if (read_vbr(Buf, End, VarType)) return failure(true);
+    BCR_TRACE(2, "Global Variable of type: " << Ty->getDescription() << endl);
+  }
 
   // Read the method signatures for all of the methods that are coming, and 
   // create fillers in the Value tables.
@@ -324,7 +343,6 @@ bool BytecodeParser::ParseModuleGlobalInfo(const uchar *&Buf, const uchar *End,
     const Type *Ty = getType(MethSignature);
     if (!Ty || !Ty->isMethodType()) { 
       cerr << "Method not meth type!  Ty = " << Ty << endl;
-      if (Ty) cerr << Ty->getName(); else cerr << MethSignature; cerr << endl; 
       return failure(true); 
     }
 

@@ -12,17 +12,27 @@
 #include "llvm/SymTabValue.h"
 #include "llvm/ValueHolder.h"
 class Method;
+class GlobalVariable;
 
 class Module : public Value, public SymTabValue {
 public:
+  typedef ValueHolder<GlobalVariable, Module, Module> GlobalListType;
   typedef ValueHolder<Method, Module, Module> MethodListType;
 
+  // Global Variable iterators...
+  typedef GlobalListType::iterator                        giterator;
+  typedef GlobalListType::const_iterator            const_giterator;
+  typedef reverse_iterator<giterator>             reverse_giterator;
+  typedef reverse_iterator<const_giterator> const_reverse_giterator;
+
   // Method iterators...
-  typedef MethodListType::iterator iterator;
-  typedef MethodListType::const_iterator const_iterator;
+  typedef MethodListType::iterator                       iterator;
+  typedef MethodListType::const_iterator           const_iterator;
   typedef reverse_iterator<const_iterator> const_reverse_iterator;
   typedef reverse_iterator<iterator>             reverse_iterator;
+
 private:
+  GlobalListType GlobalList;     // The Global Variables
   MethodListType MethodList;     // The Methods
 
 public:
@@ -32,17 +42,40 @@ public:
   // reduceApply - Apply the specified function to all of the methods in this 
   // module.  The result values are or'd together and the result is returned.
   //
+  bool reduceApply(bool (*Func)(GlobalVariable*));
+  bool reduceApply(bool (*Func)(const GlobalVariable*)) const;
   bool reduceApply(bool (*Func)(Method*));
   bool reduceApply(bool (*Func)(const Method*)) const;
 
 
   // Get the underlying elements of the Module...
+  inline const GlobalListType &getGlobalList() const  { return GlobalList; }
+  inline       GlobalListType &getGlobalList()        { return GlobalList; }
   inline const MethodListType &getMethodList() const  { return MethodList; }
   inline       MethodListType &getMethodList()        { return MethodList; }
 
   //===--------------------------------------------------------------------===//
   // Module iterator forwarding functions
   //
+  inline giterator                gbegin()       { return GlobalList.begin(); }
+  inline const_giterator          gbegin() const { return GlobalList.begin(); }
+  inline giterator                gend  ()       { return GlobalList.end();   }
+  inline const_giterator          gend  () const { return GlobalList.end();   }
+
+  inline reverse_giterator       grbegin()       { return GlobalList.rbegin(); }
+  inline const_reverse_giterator grbegin() const { return GlobalList.rbegin(); }
+  inline reverse_giterator       grend  ()       { return GlobalList.rend();   }
+  inline const_reverse_giterator grend  () const { return GlobalList.rend();   }
+
+  inline unsigned                  gsize() const { return GlobalList.size(); }
+  inline bool                     gempty() const { return GlobalList.empty(); }
+  inline const GlobalVariable    *gfront() const { return GlobalList.front(); }
+  inline       GlobalVariable    *gfront()       { return GlobalList.front(); }
+  inline const GlobalVariable     *gback() const { return GlobalList.back(); }
+  inline       GlobalVariable     *gback()       { return GlobalList.back(); }
+
+
+
   inline iterator                begin()       { return MethodList.begin(); }
   inline const_iterator          begin() const { return MethodList.begin(); }
   inline iterator                end  ()       { return MethodList.end();   }

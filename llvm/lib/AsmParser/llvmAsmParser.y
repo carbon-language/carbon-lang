@@ -12,13 +12,13 @@
 
 %{
 #include "ParserInternals.h"
-#include "llvm/BasicBlock.h"
-#include "llvm/Method.h"
+#include "llvm/Assembly/Parser.h"
 #include "llvm/SymbolTable.h"
 #include "llvm/Module.h"
-#include "llvm/Type.h"
+#include "llvm/GlobalVariable.h"
+#include "llvm/Method.h"
+#include "llvm/BasicBlock.h"
 #include "llvm/DerivedTypes.h"
-#include "llvm/Assembly/Parser.h"
 #include "llvm/iTerminators.h"
 #include "llvm/iMemory.h"
 #include "llvm/CFG.h"         // TODO: Change this when we have a DF.h
@@ -568,7 +568,7 @@ Module *RunVMAsmParser(const string &Filename, FILE *F) {
 %type  <StrVal>  OptVAR_ID OptAssign
 
 
-%token IMPLEMENTATION TRUE FALSE BEGINTOK END DECLARE TO DOTDOTDOT STRING
+%token IMPLEMENTATION TRUE FALSE BEGINTOK END DECLARE GLOBAL TO DOTDOTDOT STRING
 
 // Basic Block Terminating Operators 
 %token <TermOpVal> RET BR SWITCH
@@ -871,15 +871,23 @@ ConstPool : ConstPool OptAssign ConstVal {
   }
   | ConstPool MethodProto {            // Method prototypes can be in const pool
   }
-/*
-  | ConstPool OptAssign GlobalDecl {     // Global declarations appear in CP
-    if ($2) {
-      setValueName($3, $2);
-      free($2);
+  | ConstPool GLOBAL OptAssign Types { // Global declarations appear in CP
+    if (!$4->get()->isPointerType() || 
+	(((PointerType*)$4->get())->isArrayType() && 
+	 ((PointerType*)$4->get())->isArrayType()->isUnsized())) {
+      ThrowException("Type '" + $4->get()->getDescription() +
+		     "' is not a pointer to a sized type!");
     }
-    //CurModule.CurrentModule->
+
+    GlobalVariable *GV = new GlobalVariable(*$4);
+    delete $4;
+    if ($3) {
+      setValueName(GV, $3);
+      free($3);
+    }
+    CurModule.CurrentModule->getGlobalList().push_back(GV);
+    InsertValue(GV, CurModule.Values);
   }
-*/
   | /* empty: end of list */ { 
   }
 
