@@ -33,7 +33,7 @@ namespace {
 
   cl::opt<OutputType>
   InterpreterSel(cl::desc("Specify how LLVM code should be executed:"),
-                 cl::values(clEnumValN(RunLLI, "run-lli", "Execute with LLI"),
+                 cl::values(clEnumValN(RunLLI, "run-int", "Execute with the interpreter"),
                             clEnumValN(RunJIT, "run-jit", "Execute with JIT"),
                             clEnumValN(RunLLC, "run-llc", "Compile with LLC"),
                             clEnumValN(RunCBE, "run-cbe", "Compile with CBE"),
