@@ -100,16 +100,11 @@ bool ReduceMisCodegenFunctions::TestFuncs(const std::vector<Function*> &Funcs,
           !TestModule->getNamedFunction(F->getName())->isExternal()) {
         // If it has a non-zero use list,
         // 1. Add a string constant with its name to the global file
-        // The correct type is `const [ NUM x sbyte ]' where NUM is length of
-        // function name + 1
-        const std::string &Name = F->getName();
+        Constant *InitArray = ConstantArray::get(F->getName());
         GlobalVariable *funcName =
-          new GlobalVariable(ArrayType::get(Type::SByteTy, Name.length()+1),
-                             true /* isConstant */,
-                             GlobalValue::InternalLinkage,
-                             ConstantArray::get(Name),
-                             Name + "_name",
-                             SafeModule);
+          new GlobalVariable(InitArray->getType(), true /* isConstant */,
+                             GlobalValue::InternalLinkage, InitArray,    
+                             F->getName() + "_name", SafeModule);
 
         // 2. Use `GetElementPtr *funcName, 0, 0' to convert the string to an
         // sbyte* so it matches the signature of the resolver function.
@@ -156,30 +151,6 @@ bool ReduceMisCodegenFunctions::TestFuncs(const std::vector<Function*> &Funcs,
     abort();
   }
 
-  DEBUG(std::cerr << "Safe module:\n";
-        typedef Module::iterator MI;
-        typedef Module::giterator MGI;
-
-        for (MI I = SafeModule->begin(), E = SafeModule->end(); I != E; ++I)
-          if (!I->isExternal()) std::cerr << "\t" << I->getName() << "\n";
-        for (MGI I = SafeModule->gbegin(), E = SafeModule->gend(); I!=E; ++I)
-          if (!I->isExternal()) std::cerr << "\t" << I->getName() << "\n";
-
-        std::cerr << "Test module:\n";
-        for (MI I = TestModule->begin(), E = TestModule->end(); I != E; ++I)
-          if (!I->isExternal()) std::cerr << "\t" << I->getName() << "\n";
-        for (MGI I=TestModule->gbegin(),E = TestModule->gend(); I!= E; ++I)
-          if (!I->isExternal()) std::cerr << "\t" << I->getName() << "\n";
-        );
-
-  // Write out the bytecode to be sent to CBE
-  std::string SafeModuleBC = getUniqueFilename("bugpoint.safe.bc");
-
-  if (BD.writeProgramToFile(SafeModuleBC, SafeModule)) {
-    std::cerr << "Error writing bytecode to `" << SafeModuleBC << "'\nExiting.";
-    exit(1);
-  }
-
   // Remove all functions from the Test module EXCEPT for the ones specified in
   // Funcs.  We know which ones these are because they are non-external in
   // ToOptimize, but external in ToNotOptimize.
@@ -193,26 +164,25 @@ bool ReduceMisCodegenFunctions::TestFuncs(const std::vector<Function*> &Funcs,
         DeleteFunctionBody(I);
     }
 
-  std::string TestModuleBC = getUniqueFilename("bugpoint.test.bc");
-  if (verifyModule(*TestModule)) {
-    std::cerr << "Bytecode file corrupted!\n";
-    exit(1);
-  }
-
   // Clean up the modules, removing extra cruft that we don't need anymore...
-  SafeModule = BD.performFinalCleanups(SafeModule);
   TestModule = BD.performFinalCleanups(TestModule);
 
+  std::string TestModuleBC = getUniqueFilename("bugpoint.test.bc");
   if (BD.writeProgramToFile(TestModuleBC, TestModule)) {
+    std::cerr << "Error writing bytecode to `" << TestModuleBC << "'\nExiting.";
+    exit(1);
+  }
+  delete TestModule;
+
+  // Make the shared library
+  std::string SafeModuleBC = getUniqueFilename("bugpoint.safe.bc");
+
+  if (BD.writeProgramToFile(SafeModuleBC, SafeModule)) {
     std::cerr << "Error writing bytecode to `" << SafeModuleBC << "'\nExiting.";
     exit(1);
   }
-
-  // Make a shared library
   std::string SharedObject = BD.compileSharedObject(SafeModuleBC);
-
   delete SafeModule;
-  delete TestModule;
 
   // Run the code generator on the `Test' code, loading the shared library.
   // The function returns whether or not the new output differs from reference.
