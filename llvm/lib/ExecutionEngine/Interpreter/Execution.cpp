@@ -544,7 +544,7 @@ static void executeLoadInst(LoadInst *I, ExecutionContext &SF) {
   case Type::LongTyID:    Result.LongVal = Ptr->LongVal; break;
   case Type::FloatTyID:   Result.FloatVal = Ptr->FloatVal; break;
   case Type::DoubleTyID:  Result.DoubleVal = Ptr->DoubleVal; break;
-  case Type::PointerTyID: Result.PointerVal = Ptr->PointerVal; break;
+  case Type::PointerTyID: Result.PointerVal =(GenericValue*)Ptr->LongVal; break;
   default:
     cout << "Cannot load value of type " << I->getType() << "!\n";
   }

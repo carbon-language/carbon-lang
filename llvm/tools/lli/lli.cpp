@@ -10,7 +10,7 @@
 #include "Interpreter.h"
 #include "llvm/Support/CommandLine.h"
 
-cl::String InputFilename(""       , "Input filename", cl::NoFlags, "-");
+cl::StringList InputArgv(""   , "Input command line", cl::ConsumeAfter);
 cl::String MainFunction ("f"      , "Function to execute", cl::NoFlags, "main");
 cl::Flag   DebugMode    ("debug"  , "Start program in debugger");
 cl::Alias  DebugModeA   ("d"      , "Alias for -debug", cl::NoFlags, DebugMode);
@@ -21,7 +21,7 @@ cl::Flag   ProfileMode  ("profile", "Enable Profiling [unimp]");
 //
 Interpreter::Interpreter() : ExitCode(0), Profile(ProfileMode), CurFrame(-1) {
   CurMod = 0;
-  loadModule(InputFilename);
+  loadModule(InputArgv.size() ? InputArgv[0] : "");
 
   // Initialize the "backend"
   initializeExecutionEngine();
@@ -49,7 +49,7 @@ int main(int argc, char** argv) {
 
   // Start interpreter into the main function...
   //
-  if (!I.callMainMethod(MainFunction, InputFilename) && !DebugMode) {
+  if (!I.callMainMethod(MainFunction, InputArgv) && !DebugMode) {
     // If not in debug mode and if the call succeeded, run the code now...
     I.run();
   }

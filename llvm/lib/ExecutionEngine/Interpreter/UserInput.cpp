@@ -212,12 +212,28 @@ bool Interpreter::callMethod(const string &Name) {
   return false;
 }
 
+static void *CreateArgv(const vector<string> &InputArgv) {
+  // Pointers are 64 bits...
+  uint64_t *Result = new uint64_t[InputArgv.size()+1];
+
+  for (unsigned i = 0; i < InputArgv.size(); ++i) {
+    unsigned Size = InputArgv[i].size()+1;
+    char *Dest = new char[Size];
+    copy(InputArgv[i].begin(), InputArgv[i].end(), Dest);
+    Dest[Size-1] = 0;
+    Result[i] = (uint64_t)Dest;
+  }
+
+  Result[InputArgv.size()] = 0;
+  return Result;
+}
+
 
 // callMainMethod - This is a nasty gross hack that will dissapear when
 // callMethod can parse command line options and stuff for us.
 //
 bool Interpreter::callMainMethod(const string &Name,
-                                 const string &InputFilename) {
+                                 const vector<string> &InputArgv) {
   vector<Value*> Options = LookupMatchingNames(Name);
 
   for (unsigned i = 0; i < Options.size(); ++i) { // Remove nonmethod matches...
@@ -246,8 +262,8 @@ bool Interpreter::callMainMethod(const string &Name,
            << SPP->getDescription() << "'!\n";
       return true;
     }
-    // TODO:
-    GenericValue GV; GV.PointerVal = 0;
+
+    GenericValue GV; GV.PointerVal = (GenericValue*)CreateArgv(InputArgv);
     Args.push_back(GV);
   }
     // fallthrough
@@ -256,7 +272,7 @@ bool Interpreter::callMainMethod(const string &Name,
       cout << "First argument of '" << Name << "' should be integral!\n";
       return true;
     } else {
-      GenericValue GV; GV.IntVal = 1;
+      GenericValue GV; GV.UIntVal = InputArgv.size();
       Args.insert(Args.begin(), GV);
     }
     // fallthrough

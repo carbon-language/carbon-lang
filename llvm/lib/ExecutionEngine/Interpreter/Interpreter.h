@@ -88,7 +88,7 @@ public:
 
   // Hack until we can parse command line args...
   bool callMainMethod(const string &MainName,
-                      const string &InputFilename);
+                      const vector<string> &InputFilename);
 
   void list();             // Do the 'list' command
   void printStackTrace();  // Do the 'backtrace' command
