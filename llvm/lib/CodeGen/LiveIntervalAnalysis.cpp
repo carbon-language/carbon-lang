@@ -186,6 +186,10 @@ std::vector<LiveInterval*> LiveIntervals::addIntervalsForSpills(
   VirtRegMap& vrm,
   int slot)
 {
+  // since this is called after the analysis is done we don't know if
+  // LiveVariables is available
+  lv_ = getAnalysisToUpdate<LiveVariables>();
+
   std::vector<LiveInterval*> added;
 
   assert(li.weight != HUGE_VAL &&
@@ -212,9 +216,9 @@ std::vector<LiveInterval*> LiveIntervals::addIntervalsForSpills(
       for (unsigned i = 0; i != mi->getNumOperands(); ++i) {
         MachineOperand& mop = mi->getOperand(i);
         if (mop.isRegister() && mop.getReg() == li.reg) {
-          if (MachineInstr* fmi =
-              mri_->foldMemoryOperand(mi, i, slot)) {
-            lv_->instructionChanged(mi, fmi);
+          if (MachineInstr* fmi = mri_->foldMemoryOperand(mi, i, slot)) {
+            if (lv_)
+              lv_->instructionChanged(mi, fmi);
             vrm.virtFolded(li.reg, mi, fmi);
             mi2iMap_.erase(mi);
             i2miMap_[index/InstrSlots::NUM] = fmi;
@@ -244,8 +248,7 @@ std::vector<LiveInterval*> LiveIntervals::addIntervalsForSpills(
                                 getUseIndex(index));
 
             // create a new register for this spill
-            unsigned nReg =
-              mf_->getSSARegMap()->createVirtualRegister(rc);
+            unsigned nReg = mf_->getSSARegMap()->createVirtualRegister(rc);
             mi->SetMachineOperandReg(i, nReg);
             vrm.grow();
             vrm.assignVirt2StackSlot(nReg, slot);
@@ -258,10 +261,10 @@ std::vector<LiveInterval*> LiveIntervals::addIntervalsForSpills(
             DEBUG(std::cerr << " +" << LR);
             nI.addRange(LR);
             added.push_back(&nI);
-            // update live variables
-            lv_->addVirtualRegisterKilled(nReg, mi);
-            DEBUG(std::cerr << "\t\t\t\tadded new interval: "
-                  << nI << '\n');
+            // update live variables if it is available
+            if (lv_)
+              lv_->addVirtualRegisterKilled(nReg, mi);
+            DEBUG(std::cerr << "\t\t\t\tadded new interval: " << nI << '\n');
           }
         }
       }
