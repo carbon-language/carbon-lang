@@ -490,7 +490,7 @@ unsigned ISel::SelectExprFP(SDOperand N, unsigned Result)
       else
         Result = ExprMap[N.getValue(0)] = MakeReg(N.getValue(0).getValueType());
       
-      Tmp2 = MakeReg(MVT::f32);
+      Tmp1 = MakeReg(MVT::f32);
       
       assert(cast<MVTSDNode>(Node)->getExtraValueType() == MVT::f32 && "EXTLOAD not from f32");
       assert(Node->getValueType(0) == MVT::f64 && "EXTLOAD not to f64");
@@ -502,25 +502,27 @@ unsigned ISel::SelectExprFP(SDOperand N, unsigned Result)
       if (Address.getOpcode() == ISD::GlobalAddress)
         {
           AlphaLowering.restoreGP(BB);
-          BuildMI(BB, Alpha::LDS_SYM, 1, Result).addGlobalAddress(cast<GlobalAddressSDNode>(Address)->getGlobal());
-        }
+          BuildMI(BB, Alpha::LDS_SYM, 1, Tmp1).addGlobalAddress(cast<GlobalAddressSDNode>(Address)->getGlobal());
+          BuildMI(BB, Alpha::CVTST, 1, Result).addReg(Tmp1);
+         }
       else if (ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(N.getOperand(1))) 
         {
           AlphaLowering.restoreGP(BB);
-          BuildMI(BB, Alpha::LDS_SYM, 1, Tmp2).addConstantPoolIndex(CP->getIndex());
-          BuildMI(BB, Alpha::CVTST, 1, Result).addReg(Tmp2);
+          BuildMI(BB, Alpha::LDS_SYM, 1, Tmp1).addConstantPoolIndex(CP->getIndex());
+          BuildMI(BB, Alpha::CVTST, 1, Result).addReg(Tmp1);
         }
       else if(Address.getOpcode() == ISD::FrameIndex)
         {
-          Tmp1 = cast<FrameIndexSDNode>(Address)->getIndex();
-          BuildMI(BB, Opc, 2, Result).addFrameIndex(Tmp1).addReg(Alpha::F31);
+          Tmp2 = cast<FrameIndexSDNode>(Address)->getIndex();
+          BuildMI(BB, Alpha::LDS, 2, Tmp1).addFrameIndex(Tmp2).addReg(Alpha::F31);
+          BuildMI(BB, Alpha::CVTST, 1, Result).addReg(Tmp1);
         }
       else
         {
           long offset;
-          SelectAddr(Address, Tmp1, offset);
-          BuildMI(BB, Alpha::LDS, 1, Tmp2).addImm(offset).addReg(Tmp1);
-          BuildMI(BB, Alpha::CVTST, 1, Result).addReg(Tmp2);
+          SelectAddr(Address, Tmp2, offset);
+          BuildMI(BB, Alpha::LDS, 1, Tmp1).addImm(offset).addReg(Tmp2);
+          BuildMI(BB, Alpha::CVTST, 1, Result).addReg(Tmp1);
         }
       return Result;
     }
@@ -610,6 +612,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
   case ISD::EXTLOAD:
   case ISD::ZEXTLOAD:
   case ISD::SEXTLOAD:
+  case ISD::LOAD: 
     {
       // Make sure we generate both values.
       if (Result != notIn)
@@ -626,6 +629,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
       case MVT::i64:
         switch (cast<MVTSDNode>(Node)->getExtraValueType()) {
         default: Node->dump(); assert(0 && "Bad sign extend!");
+        case MVT::i64: Opc = Alpha::LDQ; assert(opcode == ISD::LOAD && "Not Load"); break;
         case MVT::i32: Opc = Alpha::LDL; assert(opcode != ISD::ZEXTLOAD && "Not sext"); break;
         case MVT::i16: Opc = Alpha::LDWU; assert(opcode != ISD::SEXTLOAD && "Not zext"); break;
         case MVT::i1: //FIXME: Treat i1 as i8 since there are problems otherwise
@@ -1151,43 +1155,6 @@ unsigned ISel::SelectExpr(SDOperand N) {
          AlphaLowering.restoreGP(BB);
          BuildMI(BB, Alpha::LDQ_SYM, 1, Result).addConstantPoolIndex(CPI);
        }
-     return Result;
-    }
-    
-  case ISD::LOAD: 
-    {
-      // Make sure we generate both values.
-      if (Result != notIn)
-	ExprMap[N.getValue(1)] = notIn;   // Generate the token
-      else
-	Result = ExprMap[N.getValue(0)] = MakeReg(N.getValue(0).getValueType());
-      
-      SDOperand Chain   = N.getOperand(0);
-      SDOperand Address = N.getOperand(1);
-      Select(Chain);
-      
-      assert(N.getValue(0).getValueType() == MVT::i64 && "unknown Load dest type");
-      
-      if (Address.getOpcode() == ISD::GlobalAddress)
-        {
-          AlphaLowering.restoreGP(BB);
-          BuildMI(BB, Alpha::LDQ_SYM, 1, Result).addGlobalAddress(cast<GlobalAddressSDNode>(Address)->getGlobal());
-        }
-      else if (ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(Address)) {
-        AlphaLowering.restoreGP(BB);
-        BuildMI(BB, Alpha::LDQ_SYM, 1, Result).addConstantPoolIndex(CP->getIndex());
-      }
-      else if(Address.getOpcode() == ISD::FrameIndex)
-        {
-          Tmp1 = cast<FrameIndexSDNode>(Address)->getIndex();
-          BuildMI(BB, Alpha::LDQ, 2, Result).addFrameIndex(Tmp1).addReg(Alpha::F31);
-        }
-      else
-        {
-          long offset;
-          SelectAddr(Address, Tmp1, offset);
-          BuildMI(BB, Alpha::LDQ, 2, Result).addImm(offset).addReg(Tmp1);
-        }
      return Result;
     }
   }
