@@ -223,19 +223,19 @@ bool BytecodeParser::ParseInstruction(const unsigned char *&Buf,
   }
 
   case Instruction::Call: {
-    Value *M = getValue(Raw.Ty, Raw.Arg1);
-    if (M == 0) return true;
+    Value *F = getValue(Raw.Ty, Raw.Arg1);
+    if (F == 0) return true;
 
     // Check to make sure we have a pointer to method type
-    const PointerType *PTy = dyn_cast<PointerType>(M->getType());
+    const PointerType *PTy = dyn_cast<PointerType>(F->getType());
     if (PTy == 0) return true;
-    const FunctionType *MTy = dyn_cast<FunctionType>(PTy->getElementType());
-    if (MTy == 0) return true;
+    const FunctionType *FTy = dyn_cast<FunctionType>(PTy->getElementType());
+    if (FTy == 0) return true;
 
     std::vector<Value *> Params;
-    const FunctionType::ParamTypes &PL = MTy->getParamTypes();
+    const FunctionType::ParamTypes &PL = FTy->getParamTypes();
 
-    if (!MTy->isVarArg()) {
+    if (!FTy->isVarArg()) {
       FunctionType::ParamTypes::const_iterator It = PL.begin();
 
       switch (Raw.NumOperands) {
@@ -252,8 +252,8 @@ bool BytecodeParser::ParseInstruction(const unsigned char *&Buf,
 	  std::vector<unsigned> &args = *Raw.VarArgs;
 	  for (unsigned i = 0; i < args.size(); i++) {
 	    if (It == PL.end()) return true;
-	    // TODO: Check getValue for null!
 	    Params.push_back(getValue(*It++, args[i]));
+            if (Params.back() == 0) return true;
 	  }
 	}
 	delete Raw.VarArgs;
@@ -279,26 +279,26 @@ bool BytecodeParser::ParseInstruction(const unsigned char *&Buf,
       }
     }
 
-    Res = new CallInst(M, Params);
+    Res = new CallInst(F, Params);
     return false;
   }
   case Instruction::Invoke: {
-    Value *M = getValue(Raw.Ty, Raw.Arg1);
-    if (M == 0) return true;
+    Value *F = getValue(Raw.Ty, Raw.Arg1);
+    if (F == 0) return true;
 
     // Check to make sure we have a pointer to method type
-    const PointerType *PTy = dyn_cast<PointerType>(M->getType());
+    const PointerType *PTy = dyn_cast<PointerType>(F->getType());
     if (PTy == 0) return true;
-    const FunctionType *MTy = dyn_cast<FunctionType>(PTy->getElementType());
-    if (MTy == 0) return true;
+    const FunctionType *FTy = dyn_cast<FunctionType>(PTy->getElementType());
+    if (FTy == 0) return true;
 
     std::vector<Value *> Params;
-    const FunctionType::ParamTypes &PL = MTy->getParamTypes();
+    const FunctionType::ParamTypes &PL = FTy->getParamTypes();
     std::vector<unsigned> &args = *Raw.VarArgs;
 
     BasicBlock *Normal, *Except;
 
-    if (!MTy->isVarArg()) {
+    if (!FTy->isVarArg()) {
       if (Raw.NumOperands < 3) return true;
 
       Normal = cast<BasicBlock>(getValue(Type::LabelTy, Raw.Arg2));
@@ -310,28 +310,29 @@ bool BytecodeParser::ParseInstruction(const unsigned char *&Buf,
         FunctionType::ParamTypes::const_iterator It = PL.begin();
         for (unsigned i = 1; i < args.size(); i++) {
           if (It == PL.end()) return true;
-          // TODO: Check getValue for null!
           Params.push_back(getValue(*It++, args[i]));
+          if (Params.back() == 0) return true;
         }
         if (It != PL.end()) return true;
       }
     } else {
       if (args.size() < 4) return true;
-
+      if (getType(args[0]) != Type::LabelTy || 
+          getType(args[2]) != Type::LabelTy) return true;
       Normal = cast<BasicBlock>(getValue(Type::LabelTy, args[1]));
-      Except = cast<BasicBlock>(getValue(Type::LabelTy, args[2]));
+      Except = cast<BasicBlock>(getValue(Type::LabelTy, args[3]));
 
       if ((args.size() & 1) != 0)
 	return true;  // Must be pairs of type/value
       for (unsigned i = 4; i < args.size(); i+=2) {
-	// TODO: Check getValue for null!
-	Params.push_back(getValue(getType(args[i]), args[i+1]));
+        Params.push_back(getValue(getType(args[i]), args[i+1]));
+        if (Params.back() == 0) return true;
       }
     }
 
     if (Raw.NumOperands > 3)
       delete Raw.VarArgs;
-    Res = new InvokeInst(M, Normal, Except, Params);
+    Res = new InvokeInst(F, Normal, Except, Params);
     return false;
   }
   case Instruction::Malloc:
