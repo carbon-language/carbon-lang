@@ -118,7 +118,6 @@ public:
       ValueMap.insert(std::make_pair(New, I->second));
   }
 
-
   /// operator[] - Return the DSNodeHandle for the specified value, creating a
   /// new null handle if there is no entry yet.
   DSNodeHandle &operator[](Value *V) {
@@ -126,20 +125,8 @@ public:
     if (I != ValueMap.end())
       return I->second;   // Return value if already exists.
 
-    if (GlobalValue *GV = dyn_cast<GlobalValue>(V)) {
-      // If the node doesn't exist, check to see if it's a global that is
-      // equated to another global in the program.
-      EquivalenceClasses<GlobalValue*>::iterator ECI = GlobalECs.findValue(GV);
-      if (ECI != GlobalECs.end()) {
-        GlobalValue *Leader = *GlobalECs.findLeader(ECI);
-        if (Leader != GV)
-          return operator[]((Value*)Leader);
-      }
-
-      // Okay, this is either not an equivalenced global or it is the leader, it
-      // will be inserted into the scalar map now.
-      GlobalSet.insert(GV);
-    }
+    if (GlobalValue *GV = dyn_cast<GlobalValue>(V))
+      return AddGlobal(GV);
 
     return ValueMap.insert(std::make_pair(V, DSNodeHandle())).first->second;
   }
@@ -163,6 +150,8 @@ public:
   global_iterator global_end() const { return GlobalSet.end(); }
   unsigned global_size() const { return GlobalSet.size(); }
   unsigned global_count(GlobalValue *GV) const { return GlobalSet.count(GV); }
+private:
+  DSNodeHandle &AddGlobal(GlobalValue *GV);
 };
 
 
