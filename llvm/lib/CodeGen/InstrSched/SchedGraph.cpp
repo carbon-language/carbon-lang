@@ -20,7 +20,7 @@
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/Target/TargetRegInfo.h"
+#include "../../Target/SparcV9/SparcV9RegInfo.h"
 #include "Support/STLExtras.h"
 
 namespace llvm {
