@@ -211,8 +211,7 @@ Program::ExecuteAndWait(const Path& path,
   if (WIFEXITED (status))
     return WEXITSTATUS(status);
   else if (WIFSIGNALED(status))
-    throw std::string("Program '") + path.toString() + 
-          "' received terminating signal.";
+    return 1;
     
 #else
   throw std::string(
