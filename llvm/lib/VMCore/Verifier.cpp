@@ -138,7 +138,7 @@ static bool verifyBasicBlock(const BasicBlock *BB) {
 
 // verifyMethod - Verify that a method is ok.
 //
-static bool verifyMethod(const Method *M) {
+bool verifyMethod(const Method *M) {
   if (M->isExternal()) return false;  // Can happen if called by verifyModule
 
   bool Broken = false;
@@ -164,6 +164,6 @@ Pass *createVerifierPass() {
 // verifyModule - Check a module for errors, printing messages on stderr.
 // Return true if the module is corrupt.
 //
-bool verifyModule(Module *M) {
+bool verifyModule(const Module *M) {
   return reduce_apply_bool(M->begin(), M->end(), verifyMethod);
 }
