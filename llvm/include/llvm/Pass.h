@@ -305,6 +305,9 @@ struct AnalysisResolver {
   virtual unsigned getDepth() const = 0;
 
   virtual void markPassUsed(AnalysisID P, Pass *User) = 0;
+
+  void startPass(Pass *P) {}
+  void endPass(Pass *P) {}
 protected:
   void setAnalysisResolver(Pass *P, AnalysisResolver *AR);
 };
