@@ -104,6 +104,8 @@ TargetData::TargetData(const std::string &TargetName,
   PointerSize      = PtrSize;
   PointerAlignment = PtrAl;
   DoubleAlignment  = DoubleAl;
+  assert(DoubleAlignment == PtrAl &&
+         "Double alignment and pointer alignment agree for now!");
   FloatAlignment   = FloatAl;
   LongAlignment    = LongAl;
   IntAlignment     = IntAl;
@@ -118,9 +120,9 @@ TargetData::TargetData(const std::string &ToolName, const Module *M)
   LittleEndian     = M->isLittleEndian();
   SubWordDataSize  = 1;
   IntegerRegSize   = 8;
-  PointerSize      = M->has32BitPointers() ? 32 : 64;
+  PointerSize      = M->has32BitPointers() ? 4 : 8;
   PointerAlignment = PointerSize;
-  DoubleAlignment  = 8;
+  DoubleAlignment  = PointerSize;
   FloatAlignment   = 4;
   LongAlignment    = 8;
   IntAlignment     = 4;
