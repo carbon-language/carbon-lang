@@ -119,7 +119,8 @@ void CLIDebugger::printProgramLocation(bool PrintLocation) {
     CurrentFile = &FileDesc->getSourceText();
     
     std::cout << " at " << CurrentFile->getFilename() << ":" << LineNo;
-    if (ColNo) std::cout << ":" << ColNo << "\n";
+    if (ColNo) std::cout << ":" << ColNo;
+    std::cout << "\n";
   }
 
   if (printSourceLine(LineNo))
