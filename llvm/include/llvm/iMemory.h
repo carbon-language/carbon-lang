@@ -9,7 +9,7 @@
 #define LLVM_IMEMORY_H
 
 #include "llvm/Instruction.h"
-#include "llvm/DerivedTypes.h"
+class PointerType;
 
 //===----------------------------------------------------------------------===//
 //                             AllocationInst Class
@@ -42,9 +42,8 @@ public:
 
   // getAllocatedType - Return the type that is being allocated by the
   // instruction.
-  inline const Type *getAllocatedType() const {
-    return getType()->getElementType();
-  }
+  //
+  const Type *getAllocatedType() const;
 
   virtual Instruction *clone() const = 0;
 
@@ -64,13 +63,12 @@ public:
 //                                MallocInst Class
 //===----------------------------------------------------------------------===//
 
-class MallocInst : public AllocationInst {
-public:
+struct MallocInst : public AllocationInst {
   MallocInst(const Type *Ty, Value *ArraySize = 0, const std::string &Name = "")
     : AllocationInst(Ty, ArraySize, Malloc, Name) {}
 
   virtual Instruction *clone() const { 
-    return new MallocInst(getType(), (Value*)Operands[0].get());
+    return new MallocInst((Type*)getType(), (Value*)Operands[0].get());
   }
 
   virtual const char *getOpcodeName() const { return "malloc"; }
@@ -90,13 +88,12 @@ public:
 //                                AllocaInst Class
 //===----------------------------------------------------------------------===//
 
-class AllocaInst : public AllocationInst {
-public:
+struct AllocaInst : public AllocationInst {
   AllocaInst(const Type *Ty, Value *ArraySize = 0, const std::string &Name = "")
     : AllocationInst(Ty, ArraySize, Alloca, Name) {}
 
   virtual Instruction *clone() const { 
-    return new AllocaInst(getType(), (Value*)Operands[0].get());
+    return new AllocaInst((Type*)getType(), (Value*)Operands[0].get());
   }
 
   virtual const char *getOpcodeName() const { return "alloca"; }
@@ -116,13 +113,8 @@ public:
 //                                 FreeInst Class
 //===----------------------------------------------------------------------===//
 
-class FreeInst : public Instruction {
-public:
-  FreeInst(Value *Ptr) : Instruction(Type::VoidTy, Free, "") {
-    assert(Ptr->getType()->isPointerType() && "Can't free nonpointer!");
-    Operands.reserve(1);
-    Operands.push_back(Use(Ptr, this));
-  }
+struct FreeInst : public Instruction {
+  FreeInst(Value *Ptr);
 
   virtual Instruction *clone() const { return new FreeInst(Operands[0]); }
 
@@ -270,7 +262,7 @@ public:
 
 class GetElementPtrInst : public MemAccessInst {
   GetElementPtrInst(const GetElementPtrInst &EPI)
-    : MemAccessInst(EPI.getType(), GetElementPtr) {
+    : MemAccessInst((Type*)EPI.getType(), GetElementPtr) {
     Operands.reserve(EPI.Operands.size());
     for (unsigned i = 0, E = EPI.Operands.size(); i != E; ++i)
       Operands.push_back(Use(EPI.Operands[i], this));
@@ -284,7 +276,7 @@ public:
   
   // getType - Overload to return most specific pointer type...
   inline const PointerType *getType() const {
-    return cast<const PointerType>(Instruction::getType());
+    return (PointerType*)Instruction::getType();
   }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
