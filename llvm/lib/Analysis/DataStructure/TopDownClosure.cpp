@@ -290,3 +290,56 @@ void TDDataStructures::inlineGraphIntoCallees(DSGraph &Graph) {
         << Graph.getFunctionNames() << " [" << Graph.getGraphSize() << "+"
         << Graph.getFunctionCalls().size() << "]\n");
 }
+
+static const Function *getFnForValue(const Value *V) {
+  if (const Instruction *I = dyn_cast<Instruction>(V))
+    return I->getParent()->getParent();
+  else if (const Argument *A = dyn_cast<Argument>(V))
+    return A->getParent();
+  else if (const BasicBlock *BB = dyn_cast<BasicBlock>(V))
+    return BB->getParent();
+  return 0;
+}
+
+void TDDataStructures::deleteValue(Value *V) {
+  if (const Function *F = getFnForValue(V)) {  // Function local value?
+    // If this is a function local value, just delete it from the scalar map!
+    getDSGraph(*F).getScalarMap().eraseIfExists(V);
+    return;
+  }
+
+  if (Function *F = dyn_cast<Function>(F)) {
+    assert(getDSGraph(*F).getReturnNodes().size() == 1 &&
+           "cannot handle scc's");
+    delete DSInfo[F];
+    DSInfo.erase(F);
+    return;
+  }
+
+  assert(!isa<GlobalVariable>(V) && "Do not know how to delete GV's yet!");
+}
+
+void TDDataStructures::copyValue(Value *From, Value *To) {
+  if (From == To) return;
+  if (const Function *F = getFnForValue(From)) {  // Function local value?
+    // If this is a function local value, just delete it from the scalar map!
+    getDSGraph(*F).getScalarMap().copyScalarIfExists(From, To);
+    return;
+  }
+
+  if (Function *FromF = dyn_cast<Function>(From)) {
+    Function *ToF = cast<Function>(To);
+    assert(!DSInfo.count(ToF) && "New Function already exists!");
+    DSGraph *NG = new DSGraph(getDSGraph(*FromF));
+    DSInfo[ToF] = NG;
+    assert(NG->getReturnNodes().size() == 1 && "Cannot copy SCC's yet!");
+
+    // Change the Function* is the returnnodes map to the ToF.
+    DSNodeHandle Ret = NG->getReturnNodes().begin()->second;
+    NG->getReturnNodes().clear();
+    NG->getReturnNodes()[ToF] = Ret;
+    return;
+  }
+
+  assert(!isa<GlobalVariable>(From) && "Do not know how to copy GV's yet!");
+}

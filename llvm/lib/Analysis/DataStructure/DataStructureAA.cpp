@@ -61,6 +61,17 @@ namespace {
       return AliasAnalysis::getModRefInfo(CS1,CS2);
     }
 
+    virtual void deleteValue(Value *V) {
+      BU->deleteValue(V);
+      TD->deleteValue(V);
+    }
+
+    virtual void copyValue(Value *From, Value *To) {
+      if (From == To) return;
+      BU->copyValue(From, To);
+      TD->copyValue(From, To);
+    }
+
   private:
     DSGraph *getGraphForValue(const Value *V);
   };
