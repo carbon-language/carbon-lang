@@ -49,6 +49,17 @@
 #include <stdint.h>
 #endif
 
+#if defined(_POWER) && defined(_AIX)
+// GCC is strict about defining large constants: they must have LL modifier.
+// We will catch INT64_MAX in the default case below.
+#undef INT64_MAX
+// AIX #defines INT64_MIN as (-INT64_MAX-1), or -9223372036854775808 which GCC
+// complains about as `integer constant is so large that it is unsigned', so
+// set INT64_MIN to be one above that:
+#undef INT64_MIN
+#define INT64_MIN -9223372036854775807LL
+#endif
+
 // Handle incorrect definition of uint64_t as u_int64_t
 #ifndef HAVE_UINT64_T
 #ifdef HAVE_U_INT64_T
@@ -58,7 +69,7 @@ typedef u_int64_t uint64_t;
 #endif
 #endif
 
-#else
+#else /* _MSC_VER */
 // Visual C++ doesn't provide standard integer headers, but it does provide
 // built-in data types.
 typedef __int64 int64_t;
@@ -75,10 +86,10 @@ typedef signed   int ssize_t;
 #define INT32_MAX 2147483647
 #define INT32_MIN -2147483648
 #define UINT32_MAX 4294967295U
-#endif
+#endif /* _MSC_VER */
 
+/* Set defaults for constants which we cannot find. */
 #if !defined(INT64_MAX)
-/* We couldn't determine INT64_MAX; default it. */
 # define INT64_MAX 9223372036854775807LL
 #endif
 #if !defined(UINT64_MAX)
