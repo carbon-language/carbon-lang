@@ -36,7 +36,7 @@ static inline std::string utohexstr(uint64_t X) {
   return std::string(BufPtr);
 }
 
-static inline std::string utostr(uint64_t X, bool isNeg = false) {
+static inline std::string utostr(unsigned long long X, bool isNeg = false) {
   char Buffer[40];
   char *BufPtr = Buffer+39;
 
