@@ -48,5 +48,5 @@ echo "Regenerating configure with autoconf 2.59"
 autoconf --force --warnings=all -o ../$outfile $configfile || die "autoconf failed"
 cd ..
 echo "Regenerating config.h.in with autoheader 2.59"
-autoheader -I autoconf -I autoconf/m4 autoconf/$configfile || die "autoheader failed"
+autoheader --warnings=all -I autoconf -I autoconf/m4 autoconf/$configfile || die "autoheader failed"
 exit 0

@@ -3,22 +3,34 @@
 # platform.
 #
 AC_DEFUN([AC_FUNC_ISINF],[
-AC_SINGLE_CXX_CHECK([HAVE_ISINF_IN_MATH_H],    [ac_cv_func_isinf_in_math_h],   
+AC_SINGLE_CXX_CHECK([ac_cv_func_isinf_in_math_h],   
                     [isinf], [<math.h>],
-                    [#include <math.h>
-                     int foo(float f) {return isinf(f);}])
-AC_SINGLE_CXX_CHECK([HAVE_ISINF_IN_CMATH],     [ac_cv_func_isinf_in_cmath],    
+                    [float f; isinf(f);])
+if test "$ac_cv_func_isinf_in_math_h" = "yes" ; then 
+  AC_DEFINE([HAVE_ISINF_IN_MATH_H],1,[Set to 1 if the isinf function is found in <math.h>])
+fi
+
+AC_SINGLE_CXX_CHECK([ac_cv_func_isinf_in_cmath],    
                     [isinf], [<cmath>],
-                    [#include <cmath>
-                     int foo(float f) {return isinf(f);}])
-AC_SINGLE_CXX_CHECK([HAVE_STD_ISINF_IN_CMATH], [ac_cv_func_std_isinf_in_cmath],
+                    [float f; isinf(f);])
+if test "$ac_cv_func_isinf_in_cmath" = "yes" ; then
+  AC_DEFINE([HAVE_ISINF_IN_CMATH],1,[Set to 1 if the isinf function is found in <cmath>])
+fi
+
+AC_SINGLE_CXX_CHECK([ac_cv_func_std_isinf_in_cmath],
                     [std::isinf], [<cmath>],
-                    [#include <cmath>
-                     using std::isinf; int foo(float f) {return isinf(f);}])
-AC_SINGLE_CXX_CHECK([HAVE_FINITE_IN_IEEEFP_H], [ac_cv_func_finite_in_ieeefp_h],
+                    [float f; std::isinf(f)}])
+if test "$ac_cv_func_std_isinf_in_cmath" = "yes" ; then 
+  AC_DEFINE([HAVE_STD_ISINF_IN_CMATH],1,[Set to 1 if the std::isinf function is found in <cmath>])
+fi
+
+AC_SINGLE_CXX_CHECK([ac_cv_func_finite_in_ieeefp_h],
                     [finite], [<ieeefp.h>],
-                    [#include <ieeefp.h>
-                     int foo(float f) {return finite(f);}])
+                    [float f; finite(f);])
+if test "$ac_cv_func_finite_in_ieefp_h" = "yes" ; then
+  AC_DEFINE([HAVE_FINITE_IN_IEEFP_H],1,[Set to 1 if the finite function is found in <ieeefp.h>])
+fi
+
 ])
 
 

@@ -213,6 +213,8 @@ GenericValue lle_X_floor(FunctionType *M, const vector<GenericValue> &Args) {
   return GV;
 }
 
+#ifdef HAVE_RAND48
+
 // double drand48()
 GenericValue lle_X_drand48(FunctionType *M, const vector<GenericValue> &Args) {
   assert(Args.size() == 0);
@@ -234,6 +236,16 @@ GenericValue lle_X_srand48(FunctionType *M, const vector<GenericValue> &Args) {
   assert(Args.size() == 1);
   srand48(Args[0].IntVal);
   return GenericValue();
+}
+
+#endif
+
+// int rand()
+GenericValue lle_X_rand(FunctionType *M, const vector<GenericValue> &Args) {
+  assert(Args.size() == 0);
+  GenericValue GV;
+  GV.IntVal = rand();
+  return GV;
 }
 
 // void srand(uint)
@@ -676,9 +688,12 @@ void Interpreter::initializeExternalFunctions() {
   FuncNames["lle_X_log"]          = lle_X_log;
   FuncNames["lle_X_floor"]        = lle_X_floor;
   FuncNames["lle_X_srand"]        = lle_X_srand;
+  FuncNames["lle_X_rand"]         = lle_X_rand;
+#ifdef HAVE_RAND48
   FuncNames["lle_X_drand48"]      = lle_X_drand48;
   FuncNames["lle_X_srand48"]      = lle_X_srand48;
   FuncNames["lle_X_lrand48"]      = lle_X_lrand48;
+#endif
   FuncNames["lle_X_sqrt"]         = lle_X_sqrt;
   FuncNames["lle_X_puts"]         = lle_X_puts;
   FuncNames["lle_X_printf"]       = lle_X_printf;

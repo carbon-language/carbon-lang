@@ -1,5 +1,5 @@
 dnl Initialize autoconf
-AC_INIT([[LLVM]],[[1.4]],[llvmbugs@cs.uiuc.edu])
+AC_INIT([[llvm]],[[1.4]],[llvmbugs@cs.uiuc.edu])
 
 dnl Place all of the extra autoconf files into the config subdirectory
 dnl Tell various tools where the m4 autoconf macros are
@@ -318,6 +318,7 @@ AC_CXX_HAVE_FWD_ITERATOR
 
 AC_FUNC_ISNAN
 AC_FUNC_ISINF
+AC_FUNC_RAND48
 
 dnl Checks for library functions.
 AC_FUNC_ALLOCA
