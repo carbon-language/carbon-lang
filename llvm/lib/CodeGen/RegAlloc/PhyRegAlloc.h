@@ -85,11 +85,11 @@ class PhyRegAlloc : public FunctionPass {
   AddedInstrns AddedInstrAtEntry;       // to store instrns added at entry
   const LoopInfo *LoopDepthCalc;        // to calculate loop depths 
 
-  std::map<const Function *, std::vector<AllocInfo> > FnAllocState;
-
   PhyRegAlloc(const PhyRegAlloc&);     // DO NOT IMPLEMENT
   void operator=(const PhyRegAlloc&);  // DO NOT IMPLEMENT
 public:
+  typedef std::map<const Function *, std::vector<AllocInfo> > SavedStateMapTy;
+
   inline PhyRegAlloc (const TargetMachine &TM_) :
     TM (TM_), MRI (TM.getRegInfo ()),
     NumOfRegClasses (MRI.getNumOfRegClasses ()) { }
@@ -113,6 +113,8 @@ public:
   inline RegClass *getRegClassByID(unsigned id) { return RegClassList[id]; }
 
 private:
+  SavedStateMapTy FnAllocState;
+
   void addInterference(const Value *Def, const ValueSet *LVSet, 
 		       bool isCallInst);
   bool markAllocatedRegs(MachineInstr* MInst);

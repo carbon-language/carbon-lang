@@ -48,6 +48,12 @@
 
 RegAllocDebugLevel_t DEBUG_RA;
 
+/// The reoptimizer wants to be able to grovel through the register
+/// allocator's state after it has done its job. This is a hack.
+///
+PhyRegAlloc::SavedStateMapTy ExportedFnAllocState;
+const bool SaveStateToModule = false;
+
 static cl::opt<RegAllocDebugLevel_t, true>
 DRA_opt("dregalloc", cl::Hidden, cl::location(DEBUG_RA),
         cl::desc("enable register allocation debugging information"),
@@ -1183,6 +1189,11 @@ void PhyRegAlloc::verifySavedState () {
 bool PhyRegAlloc::doFinalization (Module &M) { 
   if (!SaveRegAllocState)
     return false; // Nothing to do here, unless we're saving state.
+
+  if (!SaveStateToModule) {
+    ExportedFnAllocState = FnAllocState;
+    return false;
+  }
 
   // Convert FnAllocState to a single Constant array and add it
   // to the Module.
