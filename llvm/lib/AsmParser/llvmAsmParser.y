@@ -456,6 +456,12 @@ static bool setValueName(Value *V, char *NameStr) {
       // cerr << "Type: " << Ty->getDescription() << " != "
       //      << cast<const Type>(V)->getDescription() << "!\n";
     } else if (GlobalVariable *EGV = dyn_cast<GlobalVariable>(Existing)) {
+      // We are allowed to redefine a global variable in two circumstances:
+      // 1. If at least one of the globals is uninitialized or 
+      // 2. If both initializers have the same value.
+      //
+      // This can only be done if the const'ness of the vars is the same.
+      //
       if (GlobalVariable *GV = dyn_cast<GlobalVariable>(V)) {
         if (EGV->isConstant() == GV->isConstant() &&
             (!EGV->hasInitializer() || !GV->hasInitializer() ||
