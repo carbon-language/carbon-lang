@@ -12,7 +12,7 @@
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Pass.h"
 
-struct BasicAliasAnalysis : public FunctionPass, public AliasAnalysis {
+struct BasicAliasAnalysis : public ImmutablePass, public AliasAnalysis {
   
   // Pass Implementation stuff.  This isn't much of a pass.
   //
