@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -mem2reg | llvm-dis | not grep alloca
+; RUN: llvm-as < %s | opt -instcombine -mem2reg | llvm-dis | not grep alloca
 ;
 ; This tests to see if mem2reg can promote alloca instructions whose addresses
 ; are used by PHI nodes that are immediately loaded.  The LLVM C++ front-end
@@ -6,12 +6,14 @@
 ; lvalues), so handling this simple extension is quite useful.
 ;
 ; This testcase is what the following program looks like when it reaches
-; mem2reg:
+; instcombine:
 ;
 ; template<typename T>
 ; const T& max(const T& a1, const T& a2) { return a1 < a2 ? a1 : a2; }
 ; int main() { return max(0, 1); }
 ;
+; This test checks to make sure the combination of instcombine and mem2reg
+; perform the transformation.
 
 int %main() {
 entry:
