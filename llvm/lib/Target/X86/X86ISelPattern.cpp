@@ -1320,23 +1320,6 @@ unsigned ISel::SelectExpr(SDOperand N) {
     BuildMI(BB, Opc, 1, Result).addReg(Tmp2);
     return Result;
 
-  case ISD::FP_ROUND:
-    // Truncate from double to float by storing to memory as float,
-    // then reading it back into a register.
-
-    // Create as stack slot to use.
-    // FIXME: This should automatically be made by the Legalizer!
-    Tmp1 = TLI.getTargetData().getFloatAlignment();
-    Tmp2 = BB->getParent()->getFrameInfo()->CreateStackObject(4, Tmp1);
-
-    // Codegen the input.
-    Tmp1 = SelectExpr(N.getOperand(0));
-
-    // Emit the store, then the reload.
-    addFrameReference(BuildMI(BB, X86::FST32m, 5), Tmp2).addReg(Tmp1);
-    addFrameReference(BuildMI(BB, X86::FLD32m, 5, Result), Tmp2);
-    return Result;
-
   case ISD::SINT_TO_FP:
   case ISD::UINT_TO_FP: {
     // FIXME: Most of this grunt work should be done by legalize!
