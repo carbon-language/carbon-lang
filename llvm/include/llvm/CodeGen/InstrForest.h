@@ -27,7 +27,6 @@
 #include "llvm/Instruction.h"
 #include "Support/NonCopyable.h"
 #include "Support/HashExtras.h"
-#include <ext/hash_set>
 
 class Constant;
 class BasicBlock;
@@ -170,6 +169,9 @@ protected:
 
 
 class InstructionNode : public InstrTreeNode {
+private:
+  bool codeIsFoldedIntoParent;
+  
 public:
   InstructionNode(Instruction *_instr);
 
@@ -177,6 +179,10 @@ public:
     assert(treeNodeType == NTInstructionNode);
     return cast<Instruction>(val);
   }
+
+  void markFoldedIntoParent() { codeIsFoldedIntoParent = true; }
+  bool isFoldedIntoParent()   { return codeIsFoldedIntoParent; }
+  
 protected:
   virtual void dumpNode(int indent) const;
 };
@@ -239,8 +245,17 @@ protected:
 //------------------------------------------------------------------------ 
 
 class InstrForest : private std::hash_map<const Instruction *, InstructionNode*> {
+public:
+  // Use a vector for the root set to get a deterministic iterator
+  // for stable code generation.  Even though we need to erase nodes
+  // during forest construction, a vector should still be efficient
+  // because the elements to erase are nearly always near the end.
+  typedef std::vector<InstructionNode*> RootSet;
+  typedef RootSet::      iterator       root_iterator;
+  typedef RootSet::const_iterator const_root_iterator;
+  
 private:
-  std::hash_set<InstructionNode*> treeRoots;
+  RootSet treeRoots;
   
 public:
   /*ctor*/	InstrForest	(Function *F);
@@ -250,9 +265,10 @@ public:
     return (*this)[instr];
   }
   
-  inline const std::hash_set<InstructionNode*> &getRootSet() const {
-    return treeRoots;
-  }
+  const_root_iterator roots_begin() const     { return treeRoots.begin(); }
+        root_iterator roots_begin()           { return treeRoots.begin(); }
+  const_root_iterator roots_end  () const     { return treeRoots.end();   }
+        root_iterator roots_end  ()           { return treeRoots.end();   }
   
   void dump() const;
   
@@ -260,6 +276,7 @@ private:
   //
   // Private methods for buidling the instruction forest
   //
+  void eraseRoot    (InstructionNode* node);
   void setLeftChild (InstrTreeNode* parent, InstrTreeNode* child);
   void setRightChild(InstrTreeNode* parent, InstrTreeNode* child);
   void setParent    (InstrTreeNode* child,  InstrTreeNode* parent);
