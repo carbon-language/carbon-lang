@@ -347,18 +347,25 @@ private:
 // DominatorTree GraphTraits specialization so the DominatorTree can be
 // iterable by generic graph iterators.
 
-template <> struct GraphTraits<DominatorTree*> {
+template <> struct GraphTraits<DominatorTree::Node*> {
   typedef DominatorTree::Node NodeType;
   typedef NodeType::iterator  ChildIteratorType;
 
-  static NodeType *getEntryNode(DominatorTree *DT) {
-    return DT->getNode(DT->getRoot());
+  static NodeType *getEntryNode(NodeType *N) {
+    return N;
   }
   static inline ChildIteratorType child_begin(NodeType* N) {
     return N->begin();
   }
   static inline ChildIteratorType child_end(NodeType* N) {
     return N->end();
+  }
+};
+
+template <> struct GraphTraits<DominatorTree*>
+  : public GraphTraits<DominatorTree::Node*> {
+  static NodeType *getEntryNode(DominatorTree *DT) {
+    return DT->getNode(DT->getRoot());
   }
 };
 
