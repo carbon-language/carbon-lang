@@ -16,7 +16,6 @@
 #include "llvm/Support/CFG.h"
 #include "Support/STLExtras.h"
 #include "Support/StatisticReporter.h"
-#include <iostream>
 
 static Statistic<> NumRemoved ("indvars\t\t- Number of aux indvars removed");
 static Statistic<> NumInserted("indvars\t\t- Number of cannonical indvars added");

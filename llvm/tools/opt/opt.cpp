@@ -30,7 +30,6 @@
 #include "Support/Signals.h"
 #include <fstream>
 #include <memory>
-#include <iostream>
 
 using std::cerr;
 

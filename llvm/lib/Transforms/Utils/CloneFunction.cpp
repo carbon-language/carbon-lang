@@ -6,7 +6,6 @@
 #include "llvm/BasicBlock.h"
 #include "llvm/Instruction.h"
 #include <map>
-#include <iostream>
 
 // FIXME: This should be merged with FunctionInlining
 

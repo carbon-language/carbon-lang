@@ -24,7 +24,6 @@
 #include "Support/DepthFirstIterator.h"
 #include "Support/STLExtras.h"
 #include <algorithm>
-#include <iostream>
 using std::vector;
 using std::cerr;
 using std::map;
