@@ -759,6 +759,12 @@ public:
   /// the value is not the right type.
   ///
   int getValueAsInt(const std::string &FieldName) const;
+
+  /// getValueAsDag - This method looks up the specified field and returns its
+  /// value as an Dag, throwing an exception if the field does not exist or if
+  /// the value is not the right type.
+  ///
+  DagInit *getValueAsDag(const std::string &FieldName) const;
 };
 
 std::ostream &operator<<(std::ostream &OS, const Record &R);

@@ -613,10 +613,26 @@ bool Record::getValueAsBit(const std::string &FieldName) const {
     throw "Record '" + getName() + "' does not have a field named '" +
       FieldName + "!\n";
 
-  if (BitInit *DI = dynamic_cast<BitInit*>(R->getValue()))
-    return DI->getValue();
+  if (BitInit *BI = dynamic_cast<BitInit*>(R->getValue()))
+    return BI->getValue();
   throw "Record '" + getName() + "', field '" + FieldName +
-        "' does not have a list initializer!";
+        "' does not have a bit initializer!";
+}
+
+/// getValueAsDag - This method looks up the specified field and returns its
+/// value as an Dag, throwing an exception if the field does not exist or if
+/// the value is not the right type.
+///
+DagInit *Record::getValueAsDag(const std::string &FieldName) const {
+  const RecordVal *R = getValue(FieldName);
+  if (R == 0 || R->getValue() == 0)
+    throw "Record '" + getName() + "' does not have a field named '" +
+      FieldName + "!\n";
+
+  if (DagInit *DI = dynamic_cast<DagInit*>(R->getValue()))
+    return DI;
+  throw "Record '" + getName() + "', field '" + FieldName +
+        "' does not have a dag initializer!";
 }
 
 
