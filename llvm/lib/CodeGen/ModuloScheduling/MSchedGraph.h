@@ -58,13 +58,14 @@ namespace llvm {
     const MachineInstr* Inst; //Machine Instruction
     MSchedGraph* Parent; //Graph this node belongs to
     unsigned latency; //Latency of Instruction
-    
+    bool isBranchInstr; //Is this node the branch instr or not
+
     std::vector<MSchedGraphNode*> Predecessors; //Predecessor Nodes
     std::vector<MSchedGraphEdge> Successors;
 
   public:
     MSchedGraphNode(const MachineInstr *inst, MSchedGraph *graph, 
-		    unsigned late=0);
+		    unsigned late=0, bool isBranch=false);
 
     //Iterators
     typedef std::vector<MSchedGraphNode*>::iterator pred_iterator;
@@ -85,6 +86,7 @@ namespace llvm {
 				    MSchedGraphNode> succ_iterator;
     succ_iterator succ_begin();
     succ_iterator succ_end();
+
     
 
     void addOutEdge(MSchedGraphNode *destination, 
@@ -103,7 +105,7 @@ namespace llvm {
 
     bool isSuccessor(MSchedGraphNode *);
     bool isPredecessor(MSchedGraphNode *);
-
+    bool isBranch() { return isBranchInstr; }
     //Debug support
     void print(std::ostream &os) const;
 
@@ -200,7 +202,7 @@ namespace llvm {
     iterator begin() { return GraphMap.begin(); }
     reverse_iterator rbegin() { return GraphMap.rbegin(); }
     reverse_iterator rend() { return GraphMap.rend(); }
-    
+    const TargetMachine* getTarget() { return &Target; }
   };
 
   

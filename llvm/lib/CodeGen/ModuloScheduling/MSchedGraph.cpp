@@ -1,4 +1,4 @@
-//===-- MSchedGraph.h - Scheduling Graph ------------------------*- C++ -*-===//
+//===-- MSchedGraph.cpp - Scheduling Graph ------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -13,6 +13,7 @@
 #define DEBUG_TYPE "ModuloSched"
 
 #include "MSchedGraph.h"
+#include "../../Target/SparcV9/SparcV9RegisterInfo.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "Support/Debug.h"
@@ -21,8 +22,8 @@ using namespace llvm;
 
 MSchedGraphNode::MSchedGraphNode(const MachineInstr* inst, 
 				 MSchedGraph *graph, 
-				 unsigned late) 
-  : Inst(inst), Parent(graph), latency(late) {
+				 unsigned late, bool isBranch) 
+  : Inst(inst), Parent(graph), latency(late), isBranchInstr(isBranch) {
 
   //Add to the graph
   graph->addNode(inst, this);
@@ -118,7 +119,7 @@ void MSchedGraph::buildNodesAndEdges() {
     //using the op code, create a new node for it, and add to the
     //graph.
     
-    MachineOpCode MIopCode = MI->getOpcode();
+    MachineOpCode opCode = MI->getOpcode();
     int delay;
 
 #if 0  // FIXME: LOOK INTO THIS
@@ -128,26 +129,30 @@ void MSchedGraph::buildNodesAndEdges() {
       delay = MTI.minLatency(MIopCode);
     else
 #endif
-      /// FIxME: get this from the sched class.
-      delay = 7; //MTI.maxLatency(MIopCode);
+      //Get delay
+      delay = MTI.maxLatency(opCode);
     
     //Create new node for this machine instruction and add to the graph.
     //Create only if not a nop
-    if(MTI.isNop(MIopCode))
+    if(MTI.isNop(opCode))
       continue;
     
     //Add PHI to phi instruction list to be processed later
-    if (MIopCode == TargetInstrInfo::PHI)
+    if (opCode == TargetInstrInfo::PHI)
       phiInstrs.push_back(MI);
 
+    bool isBranch = false;
+
+    //We want to flag the branch node to treat it special
+    if(MTI.isBranch(opCode))
+      isBranch = true;
+
     //Node is created and added to the graph automatically
-    MSchedGraphNode *node =  new MSchedGraphNode(MI, this, delay);
+    MSchedGraphNode *node =  new MSchedGraphNode(MI, this, delay, isBranch);
 
     DEBUG(std::cerr << "Created Node: " << *node << "\n"); 
-    
-    //Check OpCode to keep track of memory operations to add memory dependencies later.
-    MachineOpCode opCode = MI->getOpcode();
 
+    //Check OpCode to keep track of memory operations to add memory dependencies later.    
     if(MTI.isLoad(opCode) || MTI.isStore(opCode))
       memInstructions.push_back(node);
 
@@ -158,14 +163,14 @@ void MSchedGraph::buildNodesAndEdges() {
       //Get Operand
       const MachineOperand &mOp = MI->getOperand(i);
       
-      //Check if it has an allocated register (Note: this means it
-      //is greater then zero because zero is a special register for
-      //Sparc that holds the constant zero
+      //Check if it has an allocated register 
       if(mOp.hasAllocatedReg()) {
 	int regNum = mOp.getReg();
-	
+
+	if(regNum != SparcV9::g0) {
 	//Put into our map
 	regNumtoNodeMap[regNum].push_back(std::make_pair(i, node));
+	}
 	continue;
       }
       
@@ -179,7 +184,7 @@ void MSchedGraph::buildNodesAndEdges() {
 	assert((mOp.getVRegValue() != NULL) && "Null value is defined");
 
 	//Check if this is a read operation in a phi node, if so DO NOT PROCESS
-	if(mOp.isUse() && (MIopCode == TargetInstrInfo::PHI))
+	if(mOp.isUse() && (opCode == TargetInstrInfo::PHI))
 	  continue;
 
       
@@ -334,24 +339,24 @@ void MSchedGraph::addMachRegEdges(std::map<int, std::vector<OpIndexNodePair> >& 
 	              //Src only uses the register (read)
             if(srcIsUse)
 	      srcNode->addOutEdge(Nodes[j].second, MSchedGraphEdge::MachineRegister,
-				  MSchedGraphEdge::AntiDep, 1);
+	      		  MSchedGraphEdge::AntiDep, 1);
 	    
             else if(srcIsUseandDef) {
 	      srcNode->addOutEdge(Nodes[j].second, MSchedGraphEdge::MachineRegister,
-				  MSchedGraphEdge::AntiDep, 1);
+	      		  MSchedGraphEdge::AntiDep, 1);
 	      
 	      srcNode->addOutEdge(Nodes[j].second, MSchedGraphEdge::MachineRegister,
-				  MSchedGraphEdge::OutputDep, 1);
+	      		  MSchedGraphEdge::OutputDep, 1);
 	    }
             else
 	      srcNode->addOutEdge(Nodes[j].second, MSchedGraphEdge::MachineRegister,
-				  MSchedGraphEdge::OutputDep, 1);
+	      		  MSchedGraphEdge::OutputDep, 1);
 	}
 	//Dest node is a read
 	else {
 	  if(!srcIsUse || srcIsUseandDef)
 	    srcNode->addOutEdge(Nodes[j].second, MSchedGraphEdge::MachineRegister,
-				MSchedGraphEdge::TrueDep,1 );
+	    		MSchedGraphEdge::TrueDep,1 );
 	}
 	
 

@@ -135,7 +135,8 @@ bool ModuloSchedulingPass::runOnFunction(Function &F) {
 
       II = std::max(RecMII, ResMII);
 
-      DEBUG(std::cerr << "II starts out as " << II << "\n");
+      
+      DEBUG(std::cerr << "II starts out as " << II << " ( RecMII=" << RecMII << "and ResMII=" << ResMII << "\n");
 
       //Calculate Node Properties
       calculateNodeAttributes(MSG, ResMII);
@@ -165,20 +166,9 @@ bool ModuloSchedulingPass::runOnFunction(Function &F) {
       //Finally schedule nodes
       computeSchedule();
 
-
-      //Dump out final schedule
-      //std::cerr << "FINALSCHEDULE\n";
-  //Dump out current schedule
-  /*for(std::map<unsigned, std::vector<std::pair<unsigned, MSchedGraphNode*> > >::iterator J = schedule.begin(), 
-	JE = schedule.end(); J != JE; ++J) {
-    std::cerr << "Cycle " << J->first << ":\n";
-    for(std::vector<std::pair<unsigned, MSchedGraphNode*> >::iterator VI = J->second.begin(), VE = J->second.end(); VI != VE; ++VI)
-      std::cerr << "Resource ID: " << VI->first << " by node " << *(VI->second) << "\n";
-  }
-  std::cerr << "END FINAL SCHEDULE\n";
-
-      DEBUG(std::cerr << "II ends up as " << II << "\n");
-  */  
+      DEBUG(schedule.print(std::cerr));
+   
+      reconstructLoop(BI);
 
 
       nodeToAttributesMap.clear();
@@ -265,11 +255,12 @@ int ModuloSchedulingPass::calculateResMII(const MachineBasicBlock *BI) {
   //Find maximum usage count
   
   //Get max number of instructions that can be issued at once. (FIXME)
-  int issueSlots = 1; // msi.maxNumIssueTotal;
+  int issueSlots = msi.maxNumIssueTotal;
 
   for(std::map<unsigned,unsigned>::iterator RB = resourceUsageCount.begin(), RE = resourceUsageCount.end(); RB != RE; ++RB) {
+    
     //Get the total number of the resources in our cpu
-    //int resourceNum = msi.getCPUResourceNum(RB->first);
+    int resourceNum = CPUResource::getCPUResource(RB->first)->maxNumUsers;
     
     //Get total usage count for this resources
     unsigned usageCount = RB->second;
@@ -277,9 +268,9 @@ int ModuloSchedulingPass::calculateResMII(const MachineBasicBlock *BI) {
     //Divide the usage count by either the max number we can issue or the number of
     //resources (whichever is its upper bound)
     double finalUsageCount;
-    //if( resourceNum <= issueSlots)
-    //finalUsageCount = ceil(1.0 * usageCount / resourceNum);
-    //else
+    if( resourceNum <= issueSlots)
+      finalUsageCount = ceil(1.0 * usageCount / resourceNum);
+    else
       finalUsageCount = ceil(1.0 * usageCount / issueSlots);
     
     
@@ -363,7 +354,7 @@ bool ModuloSchedulingPass::ignoreEdge(MSchedGraphNode *srcNode, MSchedGraphNode 
     return false;
 
   bool findEdge = edgesToIgnore.count(std::make_pair(srcNode, destNode->getInEdgeNum(srcNode)));
-  DEBUG(std::cerr << "Ignore Edge from " << *srcNode << " to " << *destNode << "? " << findEdge << "\n");
+  
   return findEdge;
 }
 
@@ -561,10 +552,23 @@ void ModuloSchedulingPass::addReccurrence(std::vector<MSchedGraphNode*> &recurre
   }
   
   if(!same) {
-    //if(srcBENode == 0 || destBENode == 0) {
-      srcBENode = recurrence.back();
-      destBENode = recurrence.front();
-      //}
+    srcBENode = recurrence.back();
+    destBENode = recurrence.front();
+    
+    //FIXME
+    if(destBENode->getInEdge(srcBENode).getIteDiff() == 0) {
+      //DEBUG(std::cerr << "NOT A BACKEDGE\n");
+      //find actual backedge HACK HACK 
+      for(unsigned i=0; i< recurrence.size()-1; ++i) {
+	if(recurrence[i+1]->getInEdge(recurrence[i]).getIteDiff() == 1) {
+	  srcBENode = recurrence[i];
+	  destBENode = recurrence[i+1];
+	  break;
+	}
+	  
+      }
+      
+    }
     DEBUG(std::cerr << "Back Edge to Remove: " << *srcBENode << " to " << *destBENode << "\n");
     edgesToIgnore.insert(std::make_pair(srcBENode, destBENode->getInEdgeNum(srcBENode)));
     recurrenceList.insert(std::make_pair(II, recurrence));
@@ -996,42 +1000,47 @@ void ModuloSchedulingPass::computeSchedule() {
       int LateStart = 99999; //Set to something higher then we would ever expect (FIXME)
       bool hasSucc = false;
       bool hasPred = false;
-      std::set<MSchedGraphNode*> seenNodes;
-
-      for(std::map<unsigned, std::vector<std::pair<unsigned, std::vector<MSchedGraphNode*> > > >::iterator J = schedule.begin(), 
-	    JE = schedule.end(); J != JE; ++J) {
-	
-	//For each resource with nodes scheduled, loop over the nodes and see if they
-	//are a predecessor or successor of this current node we are trying
-	//to schedule.
-	for(std::vector<std::pair<unsigned, std::vector<MSchedGraphNode*> > >::iterator schedNodeVec = J->second.begin(), SNE = J->second.end(); schedNodeVec != SNE; ++schedNodeVec) {
+      
+      if(!(*I)->isBranch()) {
+	//Loop over nodes in the schedule and determine if they are predecessors
+	//or successors of the node we are trying to schedule
+	for(MSSchedule::schedule_iterator nodesByCycle = schedule.begin(), nodesByCycleEnd = schedule.end(); 
+	    nodesByCycle != nodesByCycleEnd; ++nodesByCycle) {
 	  
-	  for(std::vector<MSchedGraphNode*>::iterator schedNode = schedNodeVec->second.begin(), schedNodeEnd = schedNodeVec->second.end(); schedNode != schedNodeEnd; ++schedNode) {
-	    if((*I)->isPredecessor(*schedNode) && !seenNodes.count(*schedNode)) {
+	  //For this cycle, get the vector of nodes schedule and loop over it
+	  for(std::vector<MSchedGraphNode*>::iterator schedNode = nodesByCycle->second.begin(), SNE = nodesByCycle->second.end(); schedNode != SNE; ++schedNode) {
+	    
+	    if((*I)->isPredecessor(*schedNode)) {
 	      if(!ignoreEdge(*schedNode, *I)) {
 		int diff = (*I)->getInEdge(*schedNode).getIteDiff();
-		int ES_Temp = J->first + (*schedNode)->getLatency() - diff * II;
-		DEBUG(std::cerr << "Diff: " << diff << " Cycle: " << J->first << "\n");
+		int ES_Temp = nodesByCycle->first + (*schedNode)->getLatency() - diff * II;
+		DEBUG(std::cerr << "Diff: " << diff << " Cycle: " << nodesByCycle->first << "\n");
 		DEBUG(std::cerr << "Temp EarlyStart: " << ES_Temp << " Prev EarlyStart: " << EarlyStart << "\n");
 		EarlyStart = std::max(EarlyStart, ES_Temp);
 		hasPred = true;
 	      }
 	    }
-	    if((*I)->isSuccessor(*schedNode) && !seenNodes.count(*schedNode)) {
+	    if((*I)->isSuccessor(*schedNode)) {
 	      if(!ignoreEdge(*I,*schedNode)) {
 		int diff = (*schedNode)->getInEdge(*I).getIteDiff();
-		int LS_Temp = J->first - (*I)->getLatency() + diff * II;
-		DEBUG(std::cerr << "Diff: " << diff << " Cycle: " << J->first << "\n");
+		int LS_Temp = nodesByCycle->first - (*I)->getLatency() + diff * II;
+		DEBUG(std::cerr << "Diff: " << diff << " Cycle: " << nodesByCycle->first << "\n");
 		DEBUG(std::cerr << "Temp LateStart: " << LS_Temp << " Prev LateStart: " << LateStart << "\n");
 		LateStart = std::min(LateStart, LS_Temp);
 		hasSucc = true;
 	      }
 	    }
-	    seenNodes.insert(*schedNode);
 	  }
 	}
       }
-      seenNodes.clear();
+      else {
+	//WARNING: HACK! FIXME!!!!
+	EarlyStart = II-1;
+	LateStart = II-1;
+	hasPred = 1;
+	hasSucc = 1;
+      }
+ 
       
       DEBUG(std::cerr << "Has Successors: " << hasSucc << ", Has Pred: " << hasPred << "\n");
       DEBUG(std::cerr << "EarlyStart: " << EarlyStart << ", LateStart: " << LateStart << "\n");
@@ -1058,6 +1067,13 @@ void ModuloSchedulingPass::computeSchedule() {
       }
      
     }
+
+    DEBUG(std::cerr << "Constructing Kernel\n");
+    success = schedule.constructKernel(II);
+    if(!success) {
+      ++II;
+      schedule.clear();
+    }
   } 
 }
 
@@ -1067,17 +1083,6 @@ bool ModuloSchedulingPass::scheduleNode(MSchedGraphNode *node,
   bool success = false;
 
   DEBUG(std::cerr << *node << " (Start Cycle: " << start << ", End Cycle: " << end << ")\n");
-
-  /*std::cerr << "CURRENT SCHEDULE\n";
-  //Dump out current schedule
-  for(std::map<unsigned, std::vector<std::pair<unsigned, MSchedGraphNode*> > >::iterator J = schedule.begin(), 
-	JE = schedule.end(); J != JE; ++J) {
-    std::cerr << "Cycle " << J->first << ":\n";
-    for(std::vector<std::pair<unsigned, MSchedGraphNode*> >::iterator VI = J->second.begin(), VE = J->second.end(); VI != VE; ++VI)
-      std::cerr << "Resource ID: " << VI->first << " by node " << *(VI->second) << "\n";
-  }
-  std::cerr << "END CURRENT SCHEDULE\n";
-  */
 
   //Make sure start and end are not negative
   if(start < 0)
@@ -1089,10 +1094,7 @@ bool ModuloSchedulingPass::scheduleNode(MSchedGraphNode *node,
   if(start > end)
     forward = false;
 
-  const TargetSchedInfo & msi = target.getSchedInfo();
-
   bool increaseSC = true;
- 
   int cycle = start ;
 
 
@@ -1100,79 +1102,8 @@ bool ModuloSchedulingPass::scheduleNode(MSchedGraphNode *node,
     
     increaseSC = false;
 
-    //Get the resource used by this instruction
-    //Get resource usage for this instruction
-    InstrRUsage rUsage = msi.getInstrRUsage(node->getInst()->getOpcode());
-    std::vector<std::vector<resourceId_t> > resources = rUsage.resourcesByCycle;
-
-    //Loop over each resource and see if we can put it into the schedule
-    for(unsigned r=0; r < resources.size(); ++r) {
-      unsigned intermediateCycle = cycle + r;
-      
-      for(unsigned j=0; j < resources[r].size(); ++j) {
-	//Put it into the schedule
-	DEBUG(std::cerr << "Attempting to put resource " << resources[r][j] << " in schedule at cycle: " << intermediateCycle << "\n");
-	
-	//Check if resource is free at this cycle
-	std::vector<std::pair<unsigned, std::vector<MSchedGraphNode*> > > resourceForCycle = schedule[intermediateCycle]; 
-      
-	//Vector of nodes using this resource
-	std::vector<MSchedGraphNode*> *nodesUsingResource;
-
-	for(std::vector<std::pair<unsigned, std::vector<MSchedGraphNode*> > >::iterator I = resourceForCycle.begin(), E= resourceForCycle.end(); I != E; ++I) {
-	
-	  if(I->first == resources[r][j]) {
-	    //Get the number of available for this resource
-	    unsigned numResource = CPUResource::getCPUResource(resources[r][j])->maxNumUsers;
-	    nodesUsingResource = &(I->second);
-
-	    //Check that there are enough of this resource, otherwise
-	    //we need to increase/decrease the cycle
-	    if(I->second.size() >= numResource) {
-	      DEBUG(std::cerr << "No open spot for this resource in this cycle\n");
-	      increaseSC = true;
-	    }
-	    break;
-		
-	  }
-	  //safe to put into schedule
-	}
-
-	if(increaseSC)
-	  break;
-
-	else {
-	  DEBUG(std::cerr << "Found spot in schedule\n");
-	  //Add node to resource vector
-	  if(nodesUsingResource == 0) {
-	    nodesUsingResource = new std::vector<MSchedGraphNode*>;
-	    resourceForCycle.push_back(std::make_pair(resources[r][j], *nodesUsingResource));
-	  }
-	  
-	  nodesUsingResource->push_back(node);
-	  
-	  schedule[intermediateCycle] = resourceForCycle;
-	}
-      }
-      if(increaseSC) {
-	/*for(unsigned x = 0; x < r; ++x) {
-	  unsigned removeCycle = x + start;
-	  for(unsigned j=0; j < resources[x].size(); ++j) {
-	    std::vector<std::pair<unsigned, MSchedGraphNode*> > resourceForCycle = schedule[removeCycle]; 
-	    for(std::vector<std::pair<unsigned,MSchedGraphNode*> >::iterator I = resourceForCycle.begin(), E= resourceForCycle.end(); I != E; ++I) {
-	      if(I->first == resources[x][j]) {
-		//remove it
-		resourceForCycle.erase(I);
-	      }
-	    }
-	    //Put vector back
-	    schedule[removeCycle] = resourceForCycle;
-	  }
-	  }*/
-	
-	break;
-      }
-    }
+    increaseSC = schedule.insert(node, cycle);
+    
     if(!increaseSC) 
       return true;
 
@@ -1190,5 +1121,202 @@ bool ModuloSchedulingPass::scheduleNode(MSchedGraphNode *node,
 	return false;
     }
   }
+
   return success;
 }
+
+/*void ModuloSchedulingPass::saveValue(const MachineInstr *inst, std::set<const Value*> &valuestoSave, std::vector<Value*> *valuesForNode) {
+  int numFound = 0;
+  Instruction *tmp;
+
+  //For each value* in this inst that is a def, we want to save a copy
+  //Target info
+  const TargetInstrInfo & mii = target.getInstrInfo();
+  for(unsigned i=0; i < inst->getNumOperands(); ++i) {
+    //get machine operand
+    const MachineOperand &mOp = inst->getOperand(i);
+    if(mOp.getType() == MachineOperand::MO_VirtualRegister && mOp.isDef()) {
+      //Save copy in tmpInstruction
+      numFound++;
+      tmp = TmpInstruction(mii.getMachineCodeFor(mOp.getVRegValue()),
+                 mOp.getVRegValue());
+      valuesForNode->push_back(tmp);
+    }
+  }
+
+  assert(numFound == 1 && "We should have only found one def to this virtual register!"); 
+}*/
+
+void ModuloSchedulingPass::writePrologue(std::vector<MachineBasicBlock *> &prologues, MachineBasicBlock *origBB, std::vector<BasicBlock*> &llvm_prologues) {
+  std::map<int, std::set<const MachineInstr*> > inKernel;
+  int maxStageCount = 0;
+
+  for(MSSchedule::kernel_iterator I = schedule.kernel_begin(), E = schedule.kernel_end(); I != E; ++I) {
+    maxStageCount = std::max(maxStageCount, I->second);
+    
+    //Ignore the branch, we will handle this separately
+    if(I->first->isBranch())
+      continue;
+
+    //Put int the map so we know what instructions in each stage are in the kernel
+    if(I->second > 0)
+      inKernel[I->second].insert(I->first->getInst());
+  }
+
+  //Now write the prologues
+  for(std::map<int, std::set<const MachineInstr*> >::iterator I = inKernel.begin(), E = inKernel.end();
+      I != E; ++I) {
+    BasicBlock *llvmBB = new BasicBlock();
+    MachineBasicBlock *machineBB = new MachineBasicBlock(llvmBB);
+  
+    //Loop over original machine basic block. If we see an instruction from this
+    //stage that is NOT in the kernel, then it needs to be added into the prologue
+    //We go in order to preserve dependencies
+    for(MachineBasicBlock::const_iterator MI = origBB->begin(), ME = origBB->end(); ME != MI; ++MI) {
+      if(I->second.count(&*MI))
+	continue;
+      else
+	machineBB->push_back(MI->clone());
+    }
+
+    prologues.push_back(machineBB);
+    llvm_prologues.push_back(llvmBB);
+  }
+}
+
+
+void ModuloSchedulingPass::reconstructLoop(const MachineBasicBlock *BB) {
+
+  //The new loop will consist of an prologue, the kernel, and one or more epilogues.
+
+  std::vector<MachineBasicBlock*> prologues;
+  std::vector<BasicBlock*> llvm_prologues;
+
+
+
+  //create a vector of epilogues corresponding to each stage
+  /*std::vector<MachineBasicBlock*> epilogues;
+
+    //Create kernel
+  MachineBasicBlock *kernel = new MachineBasicBlock();
+
+  //keep track of stage count
+  int stageCount = 0;
+  
+  //Target info
+  const TargetInstrInfo & mii = target.getInstrInfo();
+
+  //Map for creating MachinePhis
+  std::map<MSchedGraphNode *, std::vector<Value*> > nodeAndValueMap; 
+  
+
+  //Loop through the kernel and clone instructions that need to be put into the prologue
+  for(MSSchedule::kernel_iterator I = schedule.kernel_begin(), E = schedule.kernel_end(); I != E; ++I) {
+    //For each pair see if the stage is greater then 0
+    //if so, then ALL instructions before this in the original loop, need to be
+    //copied into the prologue
+    MachineBasicBlock::const_iterator actualInst;
+
+
+    //ignore branch
+    if(I->first->isBranch())
+      continue;
+
+    if(I->second > 0) {
+
+      assert(I->second >= stageCount && "Visiting instruction from previous stage count.\n");
+
+      
+      //Make a set that has all the Value*'s that we read
+      std::set<const Value*> valuesToSave;
+
+      //For this instruction, get the Value*'s that it reads and put them into the set.
+      //Assert if there is an operand of another type that we need to save
+      const MachineInstr *inst = I->first->getInst();
+      for(unsigned i=0; i < inst->getNumOperands(); ++i) {
+	//get machine operand
+	const MachineOperand &mOp = inst->getOperand(i);
+      
+	if(mOp.getType() == MachineOperand::MO_VirtualRegister && mOp.isUse()) {
+	  //find the value in the map
+	  if (const Value* srcI = mOp.getVRegValue())
+	    valuesToSave.insert(srcI);
+	}
+	
+	if(mOp.getType() != MachineOperand::MO_VirtualRegister && mOp.isUse()) {
+	  assert("Our assumption is wrong. We have another type of register that needs to be saved\n");
+	}
+      }
+
+      //Check if we skipped a stage count, we need to add that stuff here
+      if(I->second - stageCount > 1) {
+	int temp = stageCount;
+	while(I->second - temp > 1) {
+	  for(MachineBasicBlock::const_iterator MI = BB->begin(), ME = BB->end(); ME != MI; ++MI) {
+	    //Check that MI is not a branch before adding, we add branches separately
+	    if(!mii.isBranch(MI->getOpcode()) && !mii.isNop(MI->getOpcode())) {
+	      prologue->push_back(MI->clone());
+	      saveValue(&*MI, valuesToSave);
+	    }
+	  }
+	  ++temp;
+	}
+      }
+
+      if(I->second == stageCount)
+	continue;
+
+      stageCount = I->second;
+      DEBUG(std::cerr << "Found Instruction from Stage > 0\n");
+      //Loop over instructions in original basic block and clone them. Add to the prologue
+      for (MachineBasicBlock::const_iterator MI = BB->begin(), e = BB->end(); MI != e; ++MI) {
+	if(&*MI == I->first->getInst()) {
+	  actualInst = MI;
+	  break;
+	}
+	else {
+	  //Check that MI is not a branch before adding, we add branches separately
+	  if(!mii.isBranch(MI->getOpcode()) && !mii.isNop(MI->getOpcode()))
+	    prologue->push_back(MI->clone());
+	}
+      }
+      
+      //Now add in all instructions from this one on to its corresponding epilogue
+      MachineBasicBlock *epi = new MachineBasicBlock();
+      epilogues.push_back(epi);
+
+      for(MachineBasicBlock::const_iterator MI = actualInst, ME = BB->end(); ME != MI; ++MI) {
+	//Check that MI is not a branch before adding, we add branches separately
+	if(!mii.isBranch(MI->getOpcode()) && !mii.isNop(MI->getOpcode()))
+	  epi->push_back(MI->clone());
+      }
+    }
+  }
+
+  //Create kernel
+   for(MSSchedule::kernel_iterator I = schedule.kernel_begin(), 
+	 E = schedule.kernel_end(); I != E; ++I) {
+     kernel->push_back(I->first->getInst()->clone());
+     
+     }
+
+  //Debug stuff
+  ((MachineBasicBlock*)BB)->getParent()->getBasicBlockList().push_back(prologue);
+  std::cerr << "PROLOGUE:\n";
+  prologue->print(std::cerr);
+
+  ((MachineBasicBlock*)BB)->getParent()->getBasicBlockList().push_back(kernel);
+  std::cerr << "KERNEL: \n";
+  kernel->print(std::cerr);
+
+  for(std::vector<MachineBasicBlock*>::iterator MBB = epilogues.begin(), ME = epilogues.end();
+      MBB != ME; ++MBB) {
+    std::cerr << "EPILOGUE:\n";
+    ((MachineBasicBlock*)BB)->getParent()->getBasicBlockList().push_back(*MBB);
+    (*MBB)->print(std::cerr);
+    }*/
+
+
+
+}
+

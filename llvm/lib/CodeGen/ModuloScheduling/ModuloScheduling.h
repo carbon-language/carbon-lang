@@ -14,6 +14,7 @@
 #define LLVM_MODULOSCHEDULING_H
 
 #include "MSchedGraph.h"
+#include "MSSchedule.h"
 #include "llvm/Function.h"
 #include "llvm/Pass.h"
 #include <set>
@@ -54,7 +55,7 @@ namespace llvm {
     std::vector<MSchedGraphNode*> FinalNodeOrder;
 
     //Schedule table, key is the cycle number and the vector is resource, node pairs
-    std::map<unsigned, std::vector<std::pair<unsigned, std::vector<MSchedGraphNode*> > > > schedule;
+    MSSchedule schedule;
 
     //Current initiation interval
     int II;
@@ -87,6 +88,12 @@ namespace llvm {
 
     void predIntersect(std::vector<MSchedGraphNode*> &CurrentSet, std::vector<MSchedGraphNode*> &IntersectResult);
     void succIntersect(std::vector<MSchedGraphNode*> &CurrentSet, std::vector<MSchedGraphNode*> &IntersectResult);
+    
+    void reconstructLoop(const MachineBasicBlock*);
+    
+    //void saveValue(const MachineInstr*, const std::set<Value*>&, std::vector<Value*>*);
+
+    void writePrologue(std::vector<MachineBasicBlock *> &prologues, MachineBasicBlock *origBB, std::vector<BasicBlock*> &llvm_prologues);
 
   public:
     ModuloSchedulingPass(TargetMachine &targ) : target(targ) {}
