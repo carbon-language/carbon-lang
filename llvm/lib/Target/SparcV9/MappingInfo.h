@@ -24,6 +24,7 @@ namespace llvm {
 class Pass;
 
 Pass *getMappingInfoAsmPrinterPass(std::ostream &out);
+Pass *createInternalGlobalMapperPass();
 
 class MappingInfo {
   struct byteVector : public std::vector <unsigned char> {
