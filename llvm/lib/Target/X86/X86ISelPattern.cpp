@@ -303,6 +303,9 @@ namespace {
     /// X86-specific SelectionDAG.
     X86TargetLowering X86Lowering;
 
+    /// RegPressureMap - This keeps an approximate count of the number of
+    /// registers required to evaluate each node in the graph.
+    std::map<SDNode*, unsigned> RegPressureMap;
 
     /// ExprMap - As shared expressions are codegen'd, we keep track of which
     /// vreg the value is produced in, so we only emit one copy of each compiled
@@ -314,12 +317,23 @@ namespace {
     ISel(TargetMachine &TM) : SelectionDAGISel(X86Lowering), X86Lowering(TM) {
     }
 
+    unsigned getRegPressure(SDOperand O) {
+      return RegPressureMap[O.Val];
+    }
+    unsigned ComputeRegPressure(SDOperand O);
+
     /// InstructionSelectBasicBlock - This callback is invoked by
     /// SelectionDAGISel when it has created a SelectionDAG for us to codegen.
     virtual void InstructionSelectBasicBlock(SelectionDAG &DAG) {
       // While we're doing this, keep track of whether we see any FP code for
       // FP_REG_KILL insertion.
       ContainsFPCode = false;
+
+      // Compute the RegPressureMap, which is an approximation for the number of
+      // registers required to compute each node.
+      ComputeRegPressure(DAG.getRoot());
+
+      //DAG.viewGraph();
 
       // Codegen the basic block.
       Select(DAG.getRoot());
@@ -344,6 +358,7 @@ namespace {
       // Clear state used for selection.
       ExprMap.clear();
       LoweredTokens.clear();
+      RegPressureMap.clear();
     }
 
     void EmitCMP(SDOperand LHS, SDOperand RHS);
@@ -354,6 +369,32 @@ namespace {
     bool SelectAddress(SDOperand N, X86AddressMode &AM);
     void Select(SDOperand N);
   };
+}
+
+// ComputeRegPressure - Compute the RegPressureMap, which is an approximation
+// for the number of registers required to compute each node.  This is basically
+// computing a generalized form of the Sethi-Ullman number for each node.
+unsigned ISel::ComputeRegPressure(SDOperand O) {
+  SDNode *N = O.Val;
+  unsigned &Result = RegPressureMap[N];
+  if (Result) return Result;
+
+  if (N->getNumOperands() == 0)
+    return Result = 1;
+
+  unsigned MaxRegUse = 0;
+  unsigned NumExtraMaxRegUsers = 0;
+  for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i) {
+    unsigned Regs = ComputeRegPressure(N->getOperand(i));
+    if (Regs > MaxRegUse) {
+      MaxRegUse = Regs;
+      NumExtraMaxRegUsers = 0;
+    } else if (Regs == MaxRegUse) {
+      ++NumExtraMaxRegUsers;
+    }
+  }
+  
+  return Result = MaxRegUse+NumExtraMaxRegUsers;
 }
 
 /// SelectAddress - Add the specified node to the specified addressing mode,
@@ -735,7 +776,7 @@ void ISel::EmitSelectCC(SDOperand Cond, MVT::ValueType SVT,
 }
 
 void ISel::EmitCMP(SDOperand LHS, SDOperand RHS) {
-  unsigned Tmp1 = SelectExpr(LHS), Opc;
+  unsigned Opc;
   if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(RHS)) {
     Opc = 0;
     switch (RHS.getValueType()) {
@@ -746,6 +787,7 @@ void ISel::EmitCMP(SDOperand LHS, SDOperand RHS) {
     case MVT::i32: Opc = X86::CMP32ri; break;
     }
     if (Opc) {
+      unsigned Tmp1 = SelectExpr(LHS);
       BuildMI(BB, Opc, 2).addReg(Tmp1).addImm(CN->getValue());
       return;
     }
@@ -760,7 +802,14 @@ void ISel::EmitCMP(SDOperand LHS, SDOperand RHS) {
   case MVT::f32:
   case MVT::f64: Opc = X86::FUCOMIr; ContainsFPCode = true; break;
   }
-  unsigned Tmp2 = SelectExpr(RHS);
+  unsigned Tmp1, Tmp2;
+  if (getRegPressure(LHS) > getRegPressure(RHS)) {
+    Tmp1 = SelectExpr(LHS);
+    Tmp2 = SelectExpr(RHS);
+  } else {
+    Tmp2 = SelectExpr(RHS);
+    Tmp1 = SelectExpr(LHS);
+  }
   BuildMI(BB, Opc, 2).addReg(Tmp1).addReg(Tmp2);
 }
 
@@ -1149,7 +1198,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
         }
       }
     }
-    Tmp1 = SelectExpr(N.getOperand(0));
+
     if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
       Opc = 0;
       if (CN->getValue() == 1) {   // add X, 1 -> inc X
@@ -1169,6 +1218,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
       }
 
       if (Opc) {
+        Tmp1 = SelectExpr(N.getOperand(0));
         BuildMI(BB, Opc, 1, Result).addReg(Tmp1);
         return Result;
       }
@@ -1180,12 +1230,12 @@ unsigned ISel::SelectExpr(SDOperand N) {
       case MVT::i32: Opc = X86::ADD32ri; break;
       }
       if (Opc) {
+        Tmp1 = SelectExpr(N.getOperand(0));
         BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addImm(CN->getValue());
         return Result;
       }
     }
 
-    Tmp2 = SelectExpr(N.getOperand(1));
     switch (N.getValueType()) {
     default: assert(0 && "Cannot add this type!");
     case MVT::i8:  Opc = X86::ADD8rr; break;
@@ -1194,6 +1244,15 @@ unsigned ISel::SelectExpr(SDOperand N) {
     case MVT::f32: 
     case MVT::f64: Opc = X86::FpADD; ContainsFPCode = true; break;
     }
+
+    if (getRegPressure(N.getOperand(0)) > getRegPressure(N.getOperand(1))) {
+      Tmp1 = SelectExpr(N.getOperand(0));
+      Tmp2 = SelectExpr(N.getOperand(1));
+    } else {
+      Tmp2 = SelectExpr(N.getOperand(1));
+      Tmp1 = SelectExpr(N.getOperand(0));
+    }
+
     BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(Tmp2);
     return Result;
   case ISD::SUB:
@@ -1212,7 +1271,6 @@ unsigned ISel::SelectExpr(SDOperand N) {
           return Result;
         }
 
-    Tmp1 = SelectExpr(N.getOperand(0));
     if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
       switch (N.getValueType()) {
       default: assert(0 && "Cannot sub this type!");
@@ -1221,10 +1279,19 @@ unsigned ISel::SelectExpr(SDOperand N) {
       case MVT::i16: Opc = X86::SUB16ri; break;
       case MVT::i32: Opc = X86::SUB32ri; break;
       }
+      Tmp1 = SelectExpr(N.getOperand(0));
       BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addImm(CN->getValue());
       return Result;
     }
-    Tmp2 = SelectExpr(N.getOperand(1));
+
+    if (getRegPressure(N.getOperand(0)) > getRegPressure(N.getOperand(1))) {
+      Tmp1 = SelectExpr(N.getOperand(0));
+      Tmp2 = SelectExpr(N.getOperand(1));
+    } else {
+      Tmp2 = SelectExpr(N.getOperand(1));
+      Tmp1 = SelectExpr(N.getOperand(0));
+    }
+
     switch (N.getValueType()) {
     default: assert(0 && "Cannot add this type!");
     case MVT::i1:
@@ -1238,7 +1305,6 @@ unsigned ISel::SelectExpr(SDOperand N) {
     return Result;
 
   case ISD::AND:
-    Tmp1 = SelectExpr(N.getOperand(0));
     if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
       switch (N.getValueType()) {
       default: assert(0 && "Cannot add this type!");
@@ -1247,10 +1313,19 @@ unsigned ISel::SelectExpr(SDOperand N) {
       case MVT::i16: Opc = X86::AND16ri; break;
       case MVT::i32: Opc = X86::AND32ri; break;
       }
+      Tmp1 = SelectExpr(N.getOperand(0));
       BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addImm(CN->getValue());
       return Result;
     }
-    Tmp2 = SelectExpr(N.getOperand(1));
+
+    if (getRegPressure(N.getOperand(0)) > getRegPressure(N.getOperand(1))) {
+      Tmp1 = SelectExpr(N.getOperand(0));
+      Tmp2 = SelectExpr(N.getOperand(1));
+    } else {
+      Tmp2 = SelectExpr(N.getOperand(1));
+      Tmp1 = SelectExpr(N.getOperand(0));
+    }
+
     switch (N.getValueType()) {
     default: assert(0 && "Cannot add this type!");
     case MVT::i1:
@@ -1261,8 +1336,8 @@ unsigned ISel::SelectExpr(SDOperand N) {
     BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(Tmp2);
     return Result;
   case ISD::OR:
-    Tmp1 = SelectExpr(N.getOperand(0));
     if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
+      Tmp1 = SelectExpr(N.getOperand(0));
       switch (N.getValueType()) {
       default: assert(0 && "Cannot add this type!");
       case MVT::i1:
@@ -1273,7 +1348,15 @@ unsigned ISel::SelectExpr(SDOperand N) {
       BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addImm(CN->getValue());
       return Result;
     }
-    Tmp2 = SelectExpr(N.getOperand(1));
+
+    if (getRegPressure(N.getOperand(0)) > getRegPressure(N.getOperand(1))) {
+      Tmp1 = SelectExpr(N.getOperand(0));
+      Tmp2 = SelectExpr(N.getOperand(1));
+    } else {
+      Tmp2 = SelectExpr(N.getOperand(1));
+      Tmp1 = SelectExpr(N.getOperand(0));
+    }
+
     switch (N.getValueType()) {
     default: assert(0 && "Cannot add this type!");
     case MVT::i1:
@@ -1284,8 +1367,8 @@ unsigned ISel::SelectExpr(SDOperand N) {
     BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(Tmp2);
     return Result;
   case ISD::XOR:
-    Tmp1 = SelectExpr(N.getOperand(0));
     if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
+      Tmp1 = SelectExpr(N.getOperand(0));
       switch (N.getValueType()) {
       default: assert(0 && "Cannot add this type!");
       case MVT::i1:
@@ -1296,7 +1379,15 @@ unsigned ISel::SelectExpr(SDOperand N) {
       BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addImm(CN->getValue());
       return Result;
     }
-    Tmp2 = SelectExpr(N.getOperand(1));
+
+    if (getRegPressure(N.getOperand(0)) > getRegPressure(N.getOperand(1))) {
+      Tmp1 = SelectExpr(N.getOperand(0));
+      Tmp2 = SelectExpr(N.getOperand(1));
+    } else {
+      Tmp2 = SelectExpr(N.getOperand(1));
+      Tmp1 = SelectExpr(N.getOperand(0));
+    }
+
     switch (N.getValueType()) {
     default: assert(0 && "Cannot add this type!");
     case MVT::i1:
@@ -1308,7 +1399,6 @@ unsigned ISel::SelectExpr(SDOperand N) {
     return Result;
 
   case ISD::MUL:
-    Tmp1 = SelectExpr(N.getOperand(0));
     if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
       Opc = 0;
       switch (N.getValueType()) {
@@ -1318,11 +1408,19 @@ unsigned ISel::SelectExpr(SDOperand N) {
       case MVT::i32: Opc = X86::IMUL32rri; break;
       }
       if (Opc) {
+        Tmp1 = SelectExpr(N.getOperand(0));
         BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addImm(CN->getValue());
         return Result;
       }
     }
-    Tmp2 = SelectExpr(N.getOperand(1));
+
+    if (getRegPressure(N.getOperand(0)) > getRegPressure(N.getOperand(1))) {
+      Tmp1 = SelectExpr(N.getOperand(0));
+      Tmp2 = SelectExpr(N.getOperand(1));
+    } else {
+      Tmp2 = SelectExpr(N.getOperand(1));
+      Tmp1 = SelectExpr(N.getOperand(0));
+    }
     switch (N.getValueType()) {
     default: assert(0 && "Cannot add this type!");
     case MVT::i8:
@@ -1342,8 +1440,13 @@ unsigned ISel::SelectExpr(SDOperand N) {
   case ISD::SELECT:
     // FIXME: implement folding of setcc into select.
     if (N.getValueType() != MVT::i1 && N.getValueType() != MVT::i8) {
-      Tmp2 = SelectExpr(N.getOperand(1));
-      Tmp3 = SelectExpr(N.getOperand(2));
+      if (getRegPressure(N.getOperand(1)) > getRegPressure(N.getOperand(2))) {
+        Tmp2 = SelectExpr(N.getOperand(1));
+        Tmp3 = SelectExpr(N.getOperand(2));
+      } else {
+        Tmp3 = SelectExpr(N.getOperand(2));
+        Tmp2 = SelectExpr(N.getOperand(1));
+      }
       EmitSelectCC(N.getOperand(0), N.getValueType(), Tmp2, Tmp3, Result);
       return Result;
     } else {
@@ -1365,8 +1468,6 @@ unsigned ISel::SelectExpr(SDOperand N) {
   case ISD::UDIV:
   case ISD::SREM:
   case ISD::UREM: {
-    Tmp1 = SelectExpr(N.getOperand(0));
-
     if (N.getOpcode() == ISD::SDIV)
       if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
         // FIXME: These special cases should be handled by the lowering impl!
@@ -1401,6 +1502,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
             NEGOpc = X86::NEG32r;
             break;
           }
+          Tmp1 = SelectExpr(N.getOperand(0));
           BuildMI(BB, SAROpc, 2, TmpReg).addReg(Tmp1).addImm(Log-1);
           unsigned TmpReg2 = MakeReg(N.getValueType());
           BuildMI(BB, SHROpc, 2, TmpReg2).addReg(TmpReg).addImm(32-Log);
@@ -1415,7 +1517,13 @@ unsigned ISel::SelectExpr(SDOperand N) {
         }
       }
 
-    Tmp2 = SelectExpr(N.getOperand(1));
+    if (getRegPressure(N.getOperand(0)) > getRegPressure(N.getOperand(1))) {
+      Tmp1 = SelectExpr(N.getOperand(0));
+      Tmp2 = SelectExpr(N.getOperand(1));
+    } else {
+      Tmp2 = SelectExpr(N.getOperand(1));
+      Tmp1 = SelectExpr(N.getOperand(0));
+    }
 
     bool isSigned = N.getOpcode() == ISD::SDIV || N.getOpcode() == ISD::SREM;
     bool isDiv    = N.getOpcode() == ISD::SDIV || N.getOpcode() == ISD::UDIV;
@@ -1477,7 +1585,6 @@ unsigned ISel::SelectExpr(SDOperand N) {
   }
 
   case ISD::SHL:
-    Tmp1 = SelectExpr(N.getOperand(0));
     if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
       switch (N.getValueType()) {
       default: assert(0 && "Cannot shift this type!");
@@ -1485,10 +1592,19 @@ unsigned ISel::SelectExpr(SDOperand N) {
       case MVT::i16: Opc = X86::SHL16ri; break;
       case MVT::i32: Opc = X86::SHL32ri; break;
       }
+      Tmp1 = SelectExpr(N.getOperand(0));
       BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addImm(CN->getValue());
       return Result;
     }
-    Tmp2 = SelectExpr(N.getOperand(1));
+
+    if (getRegPressure(N.getOperand(0)) > getRegPressure(N.getOperand(1))) {
+      Tmp1 = SelectExpr(N.getOperand(0));
+      Tmp2 = SelectExpr(N.getOperand(1));
+    } else {
+      Tmp2 = SelectExpr(N.getOperand(1));
+      Tmp1 = SelectExpr(N.getOperand(0));
+    }
+
     switch (N.getValueType()) {
     default: assert(0 && "Cannot shift this type!");
     case MVT::i8 : Opc = X86::SHL8rCL; break;
@@ -1499,7 +1615,6 @@ unsigned ISel::SelectExpr(SDOperand N) {
     BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(Tmp2);
     return Result;
   case ISD::SRL:
-    Tmp1 = SelectExpr(N.getOperand(0));
     if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
       switch (N.getValueType()) {
       default: assert(0 && "Cannot shift this type!");
@@ -1507,10 +1622,19 @@ unsigned ISel::SelectExpr(SDOperand N) {
       case MVT::i16: Opc = X86::SHR16ri; break;
       case MVT::i32: Opc = X86::SHR32ri; break;
       }
+      Tmp1 = SelectExpr(N.getOperand(0));
       BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addImm(CN->getValue());
       return Result;
     }
-    Tmp2 = SelectExpr(N.getOperand(1));
+
+    if (getRegPressure(N.getOperand(0)) > getRegPressure(N.getOperand(1))) {
+      Tmp1 = SelectExpr(N.getOperand(0));
+      Tmp2 = SelectExpr(N.getOperand(1));
+    } else {
+      Tmp2 = SelectExpr(N.getOperand(1));
+      Tmp1 = SelectExpr(N.getOperand(0));
+    }
+
     switch (N.getValueType()) {
     default: assert(0 && "Cannot shift this type!");
     case MVT::i8 : Opc = X86::SHR8rCL; break;
@@ -1521,7 +1645,6 @@ unsigned ISel::SelectExpr(SDOperand N) {
     BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(Tmp2);
     return Result;
   case ISD::SRA:
-    Tmp1 = SelectExpr(N.getOperand(0));
     if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
       switch (N.getValueType()) {
       default: assert(0 && "Cannot shift this type!");
@@ -1529,10 +1652,19 @@ unsigned ISel::SelectExpr(SDOperand N) {
       case MVT::i16: Opc = X86::SAR16ri; break;
       case MVT::i32: Opc = X86::SAR32ri; break;
       }
+      Tmp1 = SelectExpr(N.getOperand(0));
       BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addImm(CN->getValue());
       return Result;
     }
-    Tmp2 = SelectExpr(N.getOperand(1));
+
+    if (getRegPressure(N.getOperand(0)) > getRegPressure(N.getOperand(1))) {
+      Tmp1 = SelectExpr(N.getOperand(0));
+      Tmp2 = SelectExpr(N.getOperand(1));
+    } else {
+      Tmp2 = SelectExpr(N.getOperand(1));
+      Tmp1 = SelectExpr(N.getOperand(0));
+    }
+
     switch (N.getValueType()) {
     default: assert(0 && "Cannot shift this type!");
     case MVT::i8 : Opc = X86::SAR8rCL; break;
@@ -1553,7 +1685,6 @@ unsigned ISel::SelectExpr(SDOperand N) {
   case ISD::LOAD: {
     // The chain for this load is now lowered.
     LoweredTokens.insert(SDOperand(Node, 1));
-    Select(N.getOperand(0));
 
     // Make sure we generate both values.
     if (Result != 1)
@@ -1570,18 +1701,24 @@ unsigned ISel::SelectExpr(SDOperand N) {
     case MVT::f32: Opc = X86::FLD32m; ContainsFPCode = true; break;
     case MVT::f64: Opc = X86::FLD64m; ContainsFPCode = true; break;
     }
+
     if (ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(N.getOperand(1))){
+      Select(N.getOperand(0));
       addConstantPoolReference(BuildMI(BB, Opc, 4, Result), CP->getIndex());
     } else {
       X86AddressMode AM;
-      SelectAddress(N.getOperand(1), AM);
+      if (getRegPressure(N.getOperand(0)) > getRegPressure(N.getOperand(1))) {
+        Select(N.getOperand(0));
+        SelectAddress(N.getOperand(1), AM);
+      } else {
+        SelectAddress(N.getOperand(1), AM);
+        Select(N.getOperand(0));
+      }
       addFullAddress(BuildMI(BB, Opc, 4, Result), AM);
     }
     return Result;
   }
   case ISD::DYNAMIC_STACKALLOC:
-    Select(N.getOperand(0));
-
     // Generate both result values.
     if (Result != 1)
       ExprMap[N.getValue(1)] = 1;   // Generate the token
@@ -1600,10 +1737,17 @@ unsigned ISel::SelectExpr(SDOperand N) {
     }
   
     if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
+      Select(N.getOperand(0));
       BuildMI(BB, X86::SUB32ri, 2, X86::ESP).addReg(X86::ESP)
         .addImm(CN->getValue());
     } else {
-      Tmp1 = SelectExpr(N.getOperand(1));
+      if (getRegPressure(N.getOperand(0)) > getRegPressure(N.getOperand(1))) {
+        Select(N.getOperand(0));
+        Tmp1 = SelectExpr(N.getOperand(1));
+      } else {
+        Tmp1 = SelectExpr(N.getOperand(1));
+        Select(N.getOperand(0));
+      }
 
       // Subtract size from stack pointer, thereby allocating some space.
       BuildMI(BB, X86::SUB32rr, 2, X86::ESP).addReg(X86::ESP).addReg(Tmp1);
@@ -1618,16 +1762,24 @@ unsigned ISel::SelectExpr(SDOperand N) {
     // The chain for this call is now lowered.
     LoweredTokens.insert(N.getValue(Node->getNumValues()-1));
 
-    Select(N.getOperand(0));
     if (GlobalAddressSDNode *GASD =
                dyn_cast<GlobalAddressSDNode>(N.getOperand(1))) {
+      Select(N.getOperand(0));
       BuildMI(BB, X86::CALLpcrel32, 1).addGlobalAddress(GASD->getGlobal(),true);
     } else if (ExternalSymbolSDNode *ESSDN =
                dyn_cast<ExternalSymbolSDNode>(N.getOperand(1))) {
+      Select(N.getOperand(0));
       BuildMI(BB, X86::CALLpcrel32,
               1).addExternalSymbol(ESSDN->getSymbol(), true);
     } else {
-      Tmp1 = SelectExpr(N.getOperand(1));
+      if (getRegPressure(N.getOperand(0)) > getRegPressure(N.getOperand(1))) {
+        Select(N.getOperand(0));
+        Tmp1 = SelectExpr(N.getOperand(1));
+      } else {
+        Tmp1 = SelectExpr(N.getOperand(1));
+        Select(N.getOperand(0));
+      }
+
       BuildMI(BB, X86::CALL32r, 1).addReg(Tmp1);
     }
     switch (Node->getValueType(0)) {
@@ -1688,7 +1840,6 @@ void ISel::Select(SDOperand N) {
     }
     return;
   case ISD::RET:
-    Select(N.getOperand(0));
     switch (N.getNumOperands()) {
     default:
       assert(0 && "Unknown return instruction!");
@@ -1696,8 +1847,15 @@ void ISel::Select(SDOperand N) {
       assert(N.getOperand(1).getValueType() == MVT::i32 &&
 	     N.getOperand(2).getValueType() == MVT::i32 &&
 	     "Unknown two-register value!");
-      Tmp1 = SelectExpr(N.getOperand(1));
-      Tmp2 = SelectExpr(N.getOperand(2));
+      if (getRegPressure(N.getOperand(1)) > getRegPressure(N.getOperand(2))) {
+        Tmp1 = SelectExpr(N.getOperand(1));
+        Tmp2 = SelectExpr(N.getOperand(2));
+      } else {
+        Tmp2 = SelectExpr(N.getOperand(2));
+        Tmp1 = SelectExpr(N.getOperand(1));
+      }
+      Select(N.getOperand(0));
+
       BuildMI(BB, X86::MOV32rr, 1, X86::EAX).addReg(Tmp1);
       BuildMI(BB, X86::MOV32rr, 1, X86::EDX).addReg(Tmp2);
       // Declare that EAX & EDX are live on exit.
@@ -1705,7 +1863,13 @@ void ISel::Select(SDOperand N) {
 	.addReg(X86::ESP);
       break;
     case 2:
-      Tmp1 = SelectExpr(N.getOperand(1));
+      if (getRegPressure(N.getOperand(0)) > getRegPressure(N.getOperand(1))) {
+        Select(N.getOperand(0));
+        Tmp1 = SelectExpr(N.getOperand(1));
+      } else {
+        Tmp1 = SelectExpr(N.getOperand(1));
+        Select(N.getOperand(0));
+      }
       switch (N.getOperand(1).getValueType()) {
       default: assert(0 && "All other types should have been promoted!!");
       case MVT::f64:
@@ -1720,6 +1884,7 @@ void ISel::Select(SDOperand N) {
       }
       break;
     case 1:
+      Select(N.getOperand(0));
       break;
     }
     BuildMI(BB, X86::RET, 0); // Just emit a 'ret' instruction
@@ -1733,9 +1898,14 @@ void ISel::Select(SDOperand N) {
   }
 
   case ISD::BRCOND: {
-    Select(N.getOperand(0));
     MachineBasicBlock *Dest =
       cast<BasicBlockSDNode>(N.getOperand(2))->getBasicBlock();
+
+    bool ChainFirst =
+      getRegPressure(N.getOperand(0)) > getRegPressure(N.getOperand(1));
+
+    if (ChainFirst) Select(N.getOperand(0));
+
     // Try to fold a setcc into the branch.  If this fails, emit a test/jne
     // pair.
     if (EmitBranchCC(Dest, N.getOperand(1))) {
@@ -1743,6 +1913,9 @@ void ISel::Select(SDOperand N) {
       BuildMI(BB, X86::TEST8rr, 2).addReg(Tmp1).addReg(Tmp1);
       BuildMI(BB, X86::JNE, 1).addMBB(Dest);
     }
+
+    if (!ChainFirst) Select(N.getOperand(0));
+
     return;
   }
   case ISD::LOAD:
@@ -1751,10 +1924,8 @@ void ISel::Select(SDOperand N) {
     SelectExpr(N);
     return;
   case ISD::STORE: {
-    Select(N.getOperand(0));
     // Select the address.
     X86AddressMode AM;
-    SelectAddress(N.getOperand(2), AM);
 
     if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
       Opc = 0;
@@ -1768,12 +1939,17 @@ void ISel::Select(SDOperand N) {
       case MVT::f64: break;
       }
       if (Opc) {
+        if (getRegPressure(N.getOperand(0)) > getRegPressure(N.getOperand(2))) {
+          Select(N.getOperand(0));
+          SelectAddress(N.getOperand(2), AM);
+        } else {
+          SelectAddress(N.getOperand(2), AM);
+          Select(N.getOperand(0));
+        }
         addFullAddress(BuildMI(BB, Opc, 4+1), AM).addImm(CN->getValue());
         return;
       }
     }
-    Tmp1 = SelectExpr(N.getOperand(1));
-
     switch (N.getOperand(1).getValueType()) {
     default: assert(0 && "Cannot store this type!");
     case MVT::i1:
@@ -1783,6 +1959,21 @@ void ISel::Select(SDOperand N) {
     case MVT::f32: Opc = X86::FST32m; ContainsFPCode = true; break;
     case MVT::f64: Opc = X86::FST64m; ContainsFPCode = true; break;
     }
+    
+    std::vector<std::pair<unsigned, unsigned> > RP;
+    RP.push_back(std::make_pair(getRegPressure(N.getOperand(0)), 0));
+    RP.push_back(std::make_pair(getRegPressure(N.getOperand(1)), 1));
+    RP.push_back(std::make_pair(getRegPressure(N.getOperand(2)), 2));
+    std::sort(RP.begin(), RP.end());
+
+    for (unsigned i = 0; i != 3; ++i)
+      switch (RP[2-i].second) {
+      default: assert(0 && "Unknown operand number!");
+      case 0: Select(N.getOperand(0)); break;
+      case 1: Tmp1 = SelectExpr(N.getOperand(1)); break;
+      case 2: SelectAddress(N.getOperand(2), AM);
+      }
+
     addFullAddress(BuildMI(BB, Opc, 4+1), AM).addReg(Tmp1);
     return;
   }
