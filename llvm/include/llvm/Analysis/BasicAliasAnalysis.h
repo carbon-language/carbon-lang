@@ -32,14 +32,14 @@ struct BasicAliasAnalysis : public FunctionPass, public AliasAnalysis {
   //
   Result alias(const Value *V1, const Value *V2) const;
     
-  // canCallModify - We are not interprocedural, so we do nothing exciting.
-  //
+  /// canCallModify - We are not interprocedural, so we do nothing exciting.
+  ///
   Result canCallModify(const CallInst &CI, const Value *Ptr) const {
     return MayAlias;
   }
     
-  // canInvokeModify - We are not interprocedural, so we do nothing exciting.
-  //
+  /// canInvokeModify - We are not interprocedural, so we do nothing exciting.
+  ///
   Result canInvokeModify(const InvokeInst &I, const Value *Ptr) const {
     return MayAlias;  // We are not interprocedural
   }
