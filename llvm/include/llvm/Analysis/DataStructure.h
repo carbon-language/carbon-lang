@@ -40,6 +40,11 @@ public:
   inline bool operator==(DSNode *N) const { return Node == N; }
   inline bool operator!=(DSNode *N) const { return Node != N; }
 
+  // operator< - Allow insertion into a map...
+  bool operator<(const PointerVal &PV) const {
+    return Node < PV.Node || (Node == PV.Node && Index < PV.Index);
+  }
+
   inline bool operator==(const PointerVal &PV) const {
     return Node == PV.Node && Index == PV.Index;
   }
@@ -62,6 +67,10 @@ public:
   PointerValSet(const PointerValSet &PVS) : Vals(PVS.Vals) { addRefs(); }
   ~PointerValSet() { dropRefs(); }
   const PointerValSet &operator=(const PointerValSet &PVS);
+
+  // operator< - Allow insertion into a map...
+  bool operator<(const PointerValSet &PVS) const;
+  bool operator==(const PointerValSet &PVS) const;
 
   const PointerVal &operator[](unsigned i) const { return Vals[i]; }
 
@@ -144,6 +153,9 @@ public:
     return 0;  // Default to nothing...
   }
 
+  // isEquivalentTo - Return true if the nodes should be merged...
+  virtual bool isEquivalentTo(DSNode *Node) const = 0;
+
   DSNode *clone() const {
     DSNode *New = cloneImpl();
     // Add all of the pointers to the new node...
@@ -165,23 +177,26 @@ protected:
 };
 
 
-// NewDSNode - Represent all allocation (malloc or alloca) in the program.
+// AllocDSNode - Represent all allocation (malloc or alloca) in the program.
 //
-class NewDSNode : public DSNode {
+class AllocDSNode : public DSNode {
   AllocationInst *Allocation;
 public:
-  NewDSNode(AllocationInst *V);
+  AllocDSNode(AllocationInst *V);
 
   virtual std::string getCaption() const;
 
   bool isAllocaNode() const;
   bool isMallocNode() const { return !isAllocaNode(); }
 
+  // isEquivalentTo - Return true if the nodes should be merged...
+  virtual bool isEquivalentTo(DSNode *Node) const;
+
   // Support type inquiry through isa, cast, and dyn_cast...
-  static bool classof(const NewDSNode *) { return true; }
+  static bool classof(const AllocDSNode *) { return true; }
   static bool classof(const DSNode *N) { return N->NodeType == NewNode; }
 protected:
-  virtual NewDSNode *cloneImpl() const { return new NewDSNode(Allocation); }
+  virtual AllocDSNode *cloneImpl() const { return new AllocDSNode(Allocation); }
 };
 
 
@@ -192,7 +207,12 @@ class GlobalDSNode : public DSNode {
 public:
   GlobalDSNode(GlobalValue *V);
 
+  GlobalValue *getGlobal() const { return Val; }
+  
   virtual std::string getCaption() const;
+
+  // isEquivalentTo - Return true if the nodes should be merged...
+  virtual bool isEquivalentTo(DSNode *Node) const;
 
   // Support type inquiry through isa, cast, and dyn_cast...
   static bool classof(const GlobalDSNode *) { return true; }
@@ -205,6 +225,7 @@ private:
 // CallDSNode - Represent a call instruction in the program...
 //
 class CallDSNode : public DSNode {
+  friend class FunctionDSGraph;
   CallInst *CI;
   std::vector<PointerValSet> ArgLinks;
 public:
@@ -224,12 +245,15 @@ public:
     assert(ArgNo < ArgLinks.size() && "Arg # out of range!");
     return ArgLinks[ArgNo];
   }
+  const std::vector<PointerValSet> &getArgs() const { return ArgLinks; }
 
   virtual void dropAllReferences() {
     DSNode::dropAllReferences();
     ArgLinks.clear();
   }
 
+  // isEquivalentTo - Return true if the nodes should be merged...
+  virtual bool isEquivalentTo(DSNode *Node) const;
 
   // Support type inquiry through isa, cast, and dyn_cast...
   static bool classof(const CallDSNode *) { return true; }
@@ -248,6 +272,9 @@ class ArgDSNode : public DSNode {
 public:
   ArgDSNode(FunctionArgument *MA);
   virtual std::string getCaption() const;
+
+  // isEquivalentTo - Return true if the nodes should be merged...
+  virtual bool isEquivalentTo(DSNode *Node) const;
 
   // Support type inquiry through isa, cast, and dyn_cast...
   static bool classof(const ArgDSNode *) { return true; }
@@ -289,6 +316,9 @@ public:
   bool isCriticalNode() const { return CriticalNode; }
   void resetCriticalMark() { CriticalNode = false; }
 
+  // isEquivalentTo - Return true if the nodes should be merged...
+  virtual bool isEquivalentTo(DSNode *Node) const;
+
   // Support type inquiry through isa, cast, and dyn_cast...
   static bool classof(const ShadowDSNode *) { return true; }
   static bool classof(const DSNode *N) { return N->NodeType == ShadowNode; }
@@ -311,8 +341,11 @@ protected:
 //
 class FunctionDSGraph {
   Function *Func;
-  std::vector<DSNode*> Nodes;
+  std::vector<ArgDSNode*>    ArgNodes;
+  std::vector<AllocDSNode*>  AllocNodes;
   std::vector<ShadowDSNode*> ShadowNodes;
+  std::vector<GlobalDSNode*> GlobalNodes;
+  std::vector<CallDSNode*>   CallNodes;
   PointerValSet RetNode;             // Node that gets returned...
   std::map<Value*, PointerValSet> ValueMap;
 
