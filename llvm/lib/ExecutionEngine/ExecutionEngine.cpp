@@ -92,6 +92,7 @@ void ExecutionEngine::StoreValueToMemory(GenericValue Val, GenericValue *Ptr,
     case Type::ShortTyID:   Ptr->Untyped[0] = Val.UShortVal & 255;
                             Ptr->Untyped[1] = (Val.UShortVal >> 8) & 255;
                             break;
+    Store4BytesLittleEndian:
     case Type::FloatTyID:
     case Type::UIntTyID:
     case Type::IntTyID:     Ptr->Untyped[0] =  Val.UIntVal        & 255;
@@ -99,10 +100,11 @@ void ExecutionEngine::StoreValueToMemory(GenericValue Val, GenericValue *Ptr,
                             Ptr->Untyped[2] = (Val.UIntVal >> 16) & 255;
                             Ptr->Untyped[3] = (Val.UIntVal >> 24) & 255;
                             break;
+    case Type::PointerTyID: if (CurMod.has32BitPointers())
+                              goto Store4BytesLittleEndian;
     case Type::DoubleTyID:
     case Type::ULongTyID:
-    case Type::LongTyID:    
-    case Type::PointerTyID: Ptr->Untyped[0] =  Val.ULongVal        & 255;
+    case Type::LongTyID:    Ptr->Untyped[0] =  Val.ULongVal        & 255;
                             Ptr->Untyped[1] = (Val.ULongVal >>  8) & 255;
                             Ptr->Untyped[2] = (Val.ULongVal >> 16) & 255;
                             Ptr->Untyped[3] = (Val.ULongVal >> 24) & 255;
@@ -123,6 +125,7 @@ void ExecutionEngine::StoreValueToMemory(GenericValue Val, GenericValue *Ptr,
     case Type::ShortTyID:   Ptr->Untyped[1] = Val.UShortVal & 255;
                             Ptr->Untyped[0] = (Val.UShortVal >> 8) & 255;
                             break;
+    Store4BytesBigEndian:
     case Type::FloatTyID:
     case Type::UIntTyID:
     case Type::IntTyID:     Ptr->Untyped[3] =  Val.UIntVal        & 255;
@@ -130,10 +133,11 @@ void ExecutionEngine::StoreValueToMemory(GenericValue Val, GenericValue *Ptr,
                             Ptr->Untyped[1] = (Val.UIntVal >> 16) & 255;
                             Ptr->Untyped[0] = (Val.UIntVal >> 24) & 255;
                             break;
+    case Type::PointerTyID: if (CurMod.has32BitPointers())
+                              goto Store4BytesBigEndian;
     case Type::DoubleTyID:
     case Type::ULongTyID:
-    case Type::LongTyID:    
-    case Type::PointerTyID: Ptr->Untyped[7] =  Val.ULongVal        & 255;
+    case Type::LongTyID:    Ptr->Untyped[7] =  Val.ULongVal        & 255;
                             Ptr->Untyped[6] = (Val.ULongVal >>  8) & 255;
                             Ptr->Untyped[5] = (Val.ULongVal >> 16) & 255;
                             Ptr->Untyped[4] = (Val.ULongVal >> 24) & 255;
