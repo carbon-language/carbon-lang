@@ -197,19 +197,28 @@ Archive::writeMember(
   if (CreateSymbolTable && 
       (member.isBytecode() || member.isCompressedBytecode())) {
     std::vector<std::string> symbols;
-    GetBytecodeSymbols((const unsigned char*)data,fSize,member.getPath().get(), 
-                       symbols);
-    for (std::vector<std::string>::iterator SI = symbols.begin(), 
-         SE = symbols.end(); SI != SE; ++SI) {
+    ModuleProvider* MP = GetBytecodeSymbols(
+      (const unsigned char*)data,fSize,member.getPath().get(), symbols);
 
-      std::pair<SymTabType::iterator,bool> Res = 
-        symTab.insert(std::make_pair(*SI,filepos));
+    // If the bytecode parsed successfully
+    if ( MP ) {
+      for (std::vector<std::string>::iterator SI = symbols.begin(), 
+           SE = symbols.end(); SI != SE; ++SI) {
 
-      if (Res.second) {
-        symTabSize += SI->length() + 
-                      numVbrBytes(SI->length()) + 
-                      numVbrBytes(filepos);
+        std::pair<SymTabType::iterator,bool> Res = 
+          symTab.insert(std::make_pair(*SI,filepos));
+
+        if (Res.second) {
+          symTabSize += SI->length() + 
+                        numVbrBytes(SI->length()) + 
+                        numVbrBytes(filepos);
+        }
       }
+      // We don't need this module any more.
+      delete MP;
+    } else {
+      throw std::string("Can't parse bytecode member: ") + 
+             member.getPath().get();
     }
   }
 

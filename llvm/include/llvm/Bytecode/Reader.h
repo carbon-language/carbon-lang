@@ -77,11 +77,14 @@ bool GetBytecodeSymbols(const sys::Path& fileName,
 /// bytecode module defines. This is used for archiving and linking when only 
 /// the list of symbols the module defines is needed and the bytecode is
 /// already in memory.
-/// @returns true on success, false if the bytecode can't be parsed
+/// @returns the ModuleProvider on success, 0 if the bytecode can't be parsed
 /// @brief Get a bytecode file's externally visibile defined global symbols.
-bool llvm::GetBytecodeSymbols(const unsigned char*Buffer, unsigned Length,
-                              const std::string& ModuleID,
-                              std::vector<std::string>& symbols);
+ModuleProvider* llvm::GetBytecodeSymbols(
+  const unsigned char*Buffer,        ///< The buffer to be parsed
+  unsigned Length,                   ///< The length of \p Buffer
+  const std::string& ModuleID,       ///< An identifier for the module
+  std::vector<std::string>& symbols  ///< The symbols defined in the module
+);
 
 } // End llvm namespace
 

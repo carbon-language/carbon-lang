@@ -391,26 +391,27 @@ bool llvm::GetBytecodeSymbols(const sys::Path& fName,
   }
 }
 
-bool llvm::GetBytecodeSymbols(const unsigned char*Buffer, unsigned Length,
+ModuleProvider* 
+llvm::GetBytecodeSymbols(const unsigned char*Buffer, unsigned Length,
                               const std::string& ModuleID,
                               std::vector<std::string>& symbols) {
 
   try {
-    std::auto_ptr<ModuleProvider>
-      AMP(getBytecodeBufferModuleProvider(Buffer, Length, ModuleID));
+    ModuleProvider* MP = 
+      getBytecodeBufferModuleProvider(Buffer, Length, ModuleID);
 
     // Get the module from the provider
-    Module* M = AMP->releaseModule();
+    Module* M = MP->materializeModule();
 
     // Get the symbols
     getSymbols(M, symbols);
 
     // Done with the module
-    delete M;
-    return true;
+    return MP;
 
   } catch (...) {
-    return false;
+    // Fall through
   }
+  return 0;
 }
 // vim: sw=2 ai

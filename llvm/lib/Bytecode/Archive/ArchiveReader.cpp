@@ -391,13 +391,58 @@ Archive::findModuleDefiningSymbol(const std::string& symbol) {
 // ModuleProviders that define those symbols.
 void
 Archive::findModulesDefiningSymbols(const std::set<std::string>& symbols,
-                                    std::set<ModuleProvider*>& modules)
+                                    std::set<ModuleProvider*>& result)
 {
+  assert(mapfile && base && "Can't findModulesDefiningSymbols on new archive");
+  if (symTab.empty()) {
+    // We don't have a symbol table, so we must build it now but lets also
+    // make sure that we populate the modules table as we do this to ensure
+    // that we don't load them twice when findModuleDefiningSymbol is called
+    // below.
+
+    // Get a pointer to the first file
+    const char* At  = ((const char*)base) + firstFileOffset;
+    const char* End = ((const char*)base) + mapfile->size();
+
+    while ( At < End) {
+      // Compute the offset to be put in the symbol table
+      unsigned offset = At - base - firstFileOffset;
+
+      // Parse the file's header
+      ArchiveMember* mbr = parseMemberHeader(At, End);
+
+      // If it contains symbols
+      if (mbr->isBytecode() || mbr->isCompressedBytecode()) {
+        // Get the symbols 
+        std::vector<std::string> symbols;
+        ModuleProvider* MP = GetBytecodeSymbols((const unsigned char*)At,
+            mbr->getSize(), mbr->getPath().get(),symbols);
+
+        if (MP) {
+          // Insert the module's symbols into the symbol table
+          for (std::vector<std::string>::iterator I = symbols.begin(), 
+               E=symbols.end(); I != E; ++I ) {
+            symTab.insert(std::make_pair(*I,offset));
+          }
+          // Insert the ModuleProvider and the ArchiveMember into the table of
+          // modules.
+          modules.insert(std::make_pair(offset,std::make_pair(MP,mbr)));
+        } else {
+          throw std::string("Can't parse bytecode member: ") +
+            mbr->getPath().get();
+        }
+      }
+    }
+  }
+
+  // At this point we have a valid symbol table (one way or another) so we 
+  // just use it to quickly find the symbols requested.
+
   for (std::set<std::string>::const_iterator I=symbols.begin(), 
        E=symbols.end(); I != E; ++I) {
     ModuleProvider* mp = findModuleDefiningSymbol(*I);
     if (mp) {
-      modules.insert(mp);
+      result.insert(mp);
     }
   }
 }
