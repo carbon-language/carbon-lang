@@ -153,8 +153,8 @@ public:
   //
   unsigned              getNodeId       (const DSNode* node) const {
     std::map<const DSNode*, unsigned>::const_iterator iter = NodeIds.find(node);
-    assert(iter == NodeIds.end() || iter->second < funcModRefInfo.getSize());
-    return (iter == NodeIds.end())? funcModRefInfo.getSize() : iter->second;
+    assert(iter != NodeIds.end() && iter->second < funcModRefInfo.getSize());
+    return iter->second;
   }
 
   unsigned              getNodeId       (const Value* value) const;
