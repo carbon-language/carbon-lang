@@ -1297,6 +1297,7 @@ def ANDC : PPC32InstPattern5 <"andc", Gpr, Gpr, Gpr, 31, 120, 0, 0>;
 def ANDCo : PPC32InstPattern5 <"andc.", Gpr, Gpr, Gpr, 31, 121, 0, 0>;
 
 let isBranch = 1, isTerminator = 1 in {
+  def COND_BRANCH : PPC32InstPatternPseudo<"COND_BRANCH", Pseudo>;
   def B : PPC32InstPattern6 <"b", PCRelimm24, 18, 0, 0, 0>;
   def BA : PPC32InstPattern6 <"ba", Imm24, 18, 0, 0, 0>;
   def BC : PPC32InstPattern7 <"bc", Imm5, Imm5, PCRelimm14, 16, 0, 0, 0>;
