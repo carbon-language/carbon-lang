@@ -652,6 +652,7 @@ void Andersens::visitInstruction(Instruction &I) {
   case Instruction::Br:
   case Instruction::Switch:
   case Instruction::Unwind:
+  case Instruction::Unreachable:
   case Instruction::Free:
   case Instruction::Shl:
   case Instruction::Shr:
