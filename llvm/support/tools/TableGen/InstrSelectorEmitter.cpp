@@ -17,6 +17,7 @@ NodeType::ArgResultTypes NodeType::Translate(Record *R) {
   if (Name == "DNVT_void") return Void;
   if (Name == "DNVT_val" ) return Val;
   if (Name == "DNVT_arg0") return Arg0;
+  if (Name == "DNVT_arg1") return Arg1;
   if (Name == "DNVT_ptr" ) return Ptr;
   throw "Unknown DagNodeValType '" + Name + "'!";
 }
@@ -277,6 +278,10 @@ bool Pattern::InferTypes(TreePatternNode *N, bool &MadeChange) {
       MadeChange |= Child->updateNodeType(N->getChild(0)->getType(),
                                           TheRecord->getName());
       break;
+    case NodeType::Arg1:
+      MadeChange |= Child->updateNodeType(N->getChild(1)->getType(),
+                                          TheRecord->getName());
+      break;
     case NodeType::Val:
       if (Child->getType() == MVT::isVoid)
         error("Inferred a void node in an illegal place!");
@@ -298,7 +303,10 @@ bool Pattern::InferTypes(TreePatternNode *N, bool &MadeChange) {
     MadeChange |= N->updateNodeType(N->getChild(0)->getType(),
                                     TheRecord->getName());
     break;
-
+  case NodeType::Arg1:
+    MadeChange |= N->updateNodeType(N->getChild(1)->getType(),
+                                    TheRecord->getName());
+    break;
   case NodeType::Ptr:
     MadeChange |= N->updateNodeType(ISE.getTarget().getPointerType(),
                                     TheRecord->getName());
@@ -426,12 +434,15 @@ void InstrSelectorEmitter::ReadNodeTypes() {
 
       if (a == 0 && ArgTypes.back() == NodeType::Arg0)
         throw "In node " + Node->getName() + ", arg 0 cannot have type 'arg0'!";
+      if (a == 1 && ArgTypes.back() == NodeType::Arg1)
+        throw "In node " + Node->getName() + ", arg 1 cannot have type 'arg1'!";
       if (ArgTypes.back() == NodeType::Void)
         throw "In node " + Node->getName() + ", args cannot be void type!";
     }
-    if (RetTy == NodeType::Arg0 && Args->getSize() == 0)
+    if ((RetTy == NodeType::Arg0 && Args->getSize() == 0) ||
+        (RetTy == NodeType::Arg1 && Args->getSize() < 2))
       throw "In node " + Node->getName() +
-            ", invalid return type for nullary node!";
+            ", invalid return type for node with this many operands!";
 
     // Add the node type mapping now...
     NodeTypes[Node] = NodeType(RetTy, ArgTypes);

@@ -23,6 +23,7 @@ struct NodeType {
     // Both argument and return types...
     Val,            // A non-void type
     Arg0,           // Value matches the type of Arg0
+    Arg1,           // Value matches the type of Arg1
     Ptr,            // Tree node is the type of the target pointer
 
     // Return types
