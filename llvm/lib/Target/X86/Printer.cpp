@@ -12,6 +12,7 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstr.h"
+#include "Support/Statistic.h"
 
 namespace {
   struct Printer : public FunctionPass {
@@ -103,22 +104,57 @@ static bool isReg(const MachineOperand &MO) {
 }
 
 
+// getX86RegNum - This function maps LLVM register identifiers to their X86
+// specific numbering, which is used in various places encoding instructions.
+//
+static unsigned getX86RegNum(unsigned RegNo) {
+  switch(RegNo) {
+  case X86::EAX: case X86::AX: case X86::AL: return 0;
+  case X86::ECX: case X86::CX: case X86::CL: return 1;
+  case X86::EDX: case X86::DX: case X86::DL: return 2;
+  case X86::EBX: case X86::BX: case X86::BL: return 3;
+  case X86::ESP: case X86::SP: case X86::AH: return 4;
+  case X86::EBP: case X86::BP: case X86::CH: return 5;
+  case X86::ESI: case X86::SI: case X86::DH: return 6;
+  case X86::EDI: case X86::DI: case X86::BH: return 7;
+  default:
+    assert(RegNo >= MRegisterInfo::FirstVirtualRegister &&
+           "Unknown physical register!");
+    DEBUG(std::cerr << "Register allocator hasn't allocated " << RegNo
+                    << " correctly yet!\n");
+    return 0;
+  }
+}
+
+inline static unsigned char ModRMByte(unsigned Mod, unsigned RegOpcode,
+                                      unsigned RM) {
+  assert(Mod < 4 && RegOpcode < 8 && RM < 8 && "ModRM Fields out of range!");
+  return RM | (RegOpcode << 3) | (Mod << 6);
+}
+
+static unsigned char regModRMByte(unsigned ModRMReg, unsigned RegOpcodeField) {
+  return ModRMByte(3, RegOpcodeField, getX86RegNum(ModRMReg));
+}
+
+
 // print - Print out an x86 instruction in intel syntax
 void X86InstrInfo::print(const MachineInstr *MI, std::ostream &O,
                          const TargetMachine &TM) const {
   unsigned Opcode = MI->getOpcode();
   const MachineInstrDescriptor &Desc = get(Opcode);
 
-  if (Desc.TSFlags & X86II::TB)
-    O << "0F ";
+  // Print instruction prefixes if neccesary
+  
+  if (Desc.TSFlags & X86II::OpSize) O << "66 "; // Operand size...
+  if (Desc.TSFlags & X86II::TB) O << "0F ";     // Two-byte opcode prefix
 
   switch (Desc.TSFlags & X86II::FormMask) {
   case X86II::OtherFrm:
-    O << "\t";
+    O << "\t\t";
     O << "-"; MI->print(O, TM);
     break;
   case X86II::RawFrm:
-    toHex(O, getBaseOpcodeFor(Opcode)) << "\t";
+    toHex(O, getBaseOpcodeFor(Opcode)) << "\t\t";
     O << getName(MI->getOpCode()) << " ";
 
     for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
@@ -130,9 +166,9 @@ void X86InstrInfo::print(const MachineInstr *MI, std::ostream &O,
 
 
   case X86II::AddRegFrm:
-    O << "\t-"; MI->print(O, TM); break;
+    O << "\t\t-"; MI->print(O, TM); break;
 
-  case X86II::MRMDestReg:
+  case X86II::MRMDestReg: {
     // There are two acceptable forms of MRMDestReg instructions, those with 3
     // and 2 operands:
     //
@@ -152,14 +188,20 @@ void X86InstrInfo::print(const MachineInstr *MI, std::ostream &O,
         MI->getOperand(0).getReg() != MI->getOperand(1).getReg())
       O << "**";
 
-    O << "\t";
+    toHex(O, getBaseOpcodeFor(Opcode)) << " ";
+    unsigned ModRMReg = MI->getOperand(0).getReg();
+    unsigned ExtraReg = MI->getOperand(MI->getNumOperands()-1).getReg();
+    toHex(O, regModRMByte(ModRMReg, getX86RegNum(ExtraReg)));
+
+    O << "\t\t";
     O << getName(MI->getOpCode()) << " ";
     printOp(O, MI->getOperand(0), RI);
     O << ", ";
     printOp(O, MI->getOperand(MI->getNumOperands()-1), RI);
     O << "\n";
     return;
-  case X86II::MRMSrcReg:
+  }
+  case X86II::MRMSrcReg: {
     // There is a two forms that are acceptable for MRMSrcReg instructions,
     // those with 3 and 2 operands:
     //
@@ -178,6 +220,11 @@ void X86InstrInfo::print(const MachineInstr *MI, std::ostream &O,
         MI->getOperand(0).getReg() != MI->getOperand(1).getReg())
       O << "**";
 
+    toHex(O, getBaseOpcodeFor(Opcode)) << " ";
+    unsigned ModRMReg = MI->getOperand(MI->getNumOperands()-1).getReg();
+    unsigned ExtraReg = MI->getOperand(0).getReg();
+    toHex(O, regModRMByte(ModRMReg, getX86RegNum(ExtraReg)));
+
     O << "\t";
     O << getName(MI->getOpCode()) << " ";
     printOp(O, MI->getOperand(0), RI);
@@ -185,10 +232,10 @@ void X86InstrInfo::print(const MachineInstr *MI, std::ostream &O,
     printOp(O, MI->getOperand(MI->getNumOperands()-1), RI);
     O << "\n";
     return;
-
+  }
   case X86II::MRMDestMem:
   case X86II::MRMSrcMem:
   default:
-    O << "\t-"; MI->print(O, TM); break;
+    O << "\t\t-"; MI->print(O, TM); break;
   }
 }
