@@ -461,9 +461,21 @@ struct DirectIntRules
   : public DirectRules<ConstantClass, BuiltinType, Ty,
                        DirectIntRules<ConstantClass, BuiltinType, Ty> > {
 
+  static Constant *Div(const ConstantClass *V1, const ConstantClass *V2) {
+    if (V2->isNullValue()) return 0;
+    if (V2->isAllOnesValue() &&              // MIN_INT / -1
+        (BuiltinType)V1->getValue() == -(BuiltinType)V1->getValue())
+      return 0;
+    BuiltinType R = (BuiltinType)V1->getValue() / (BuiltinType)V2->getValue();
+    return ConstantClass::get(*Ty, R);
+  }
+
   static Constant *Rem(const ConstantClass *V1,
                        const ConstantClass *V2) {
-    if (V2->isNullValue()) return 0;
+    if (V2->isNullValue()) return 0;         // X / 0
+    if (V2->isAllOnesValue() &&              // MIN_INT / -1
+        (BuiltinType)V1->getValue() == -(BuiltinType)V1->getValue())
+      return 0;
     BuiltinType R = (BuiltinType)V1->getValue() % (BuiltinType)V2->getValue();
     return ConstantClass::get(*Ty, R);
   }
