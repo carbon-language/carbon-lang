@@ -117,7 +117,7 @@ Pass *createIndVarSimplifyPass();
 //===----------------------------------------------------------------------===//
 //
 // InstructionCombining - Combine instructions to form fewer, simple
-//   instructions.  This pass does not modify the CFG, and has a tendancy to
+//   instructions.  This pass does not modify the CFG, and has a tendency to
 //   make instructions dead, so a subsequent DCE pass is useful.
 //
 // This pass combines things like:
