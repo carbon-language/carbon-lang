@@ -21,17 +21,19 @@ class TargetMachine;
 
 
 class MachineCodeForMethod : private Annotation {
-  const Function* method;
-  bool          compiledAsLeaf;
+  std::hash_set<const Constant*> constantsForConstPool;
+  std::hash_map<const Value*, int> offsets;
+  const         Function* method;
   unsigned	staticStackSize;
   unsigned	automaticVarsSize;
   unsigned	regSpillsSize;
-  unsigned	currentOptionalArgsSize;
   unsigned	maxOptionalArgsSize;
+  unsigned	maxOptionalNumArgs;
   unsigned	currentTmpValuesSize;
   unsigned	maxTmpValuesSize;
-  std::hash_set<const Constant*> constantsForConstPool;
-  std::hash_map<const Value*, int> offsets;
+  bool          compiledAsLeaf;
+  bool          spillsAreaFrozen;
+  bool          automaticVarsAreaFrozen;
   
 public:
   /*ctor*/      MachineCodeForMethod(const Function* function,
@@ -57,8 +59,7 @@ public:
   inline unsigned getAutomaticVarsSize()   const { return automaticVarsSize; }
   inline unsigned getRegSpillsSize()       const { return regSpillsSize; }
   inline unsigned getMaxOptionalArgsSize() const { return maxOptionalArgsSize;}
-  inline unsigned getCurrentOptionalArgsSize() const
-                                             { return currentOptionalArgsSize;}
+  inline unsigned getMaxOptionalNumArgs()  const { return maxOptionalNumArgs;}
   inline const std::hash_set<const Constant*>&
                   getConstantPoolValues() const {return constantsForConstPool;}
   
@@ -73,10 +74,9 @@ public:
   inline void     markAsLeafMethod()              { compiledAsLeaf = true; }
   
   int             computeOffsetforLocalVar (const TargetMachine& target,
-                                            const Value* local,
+                                            const Value*  local,
                                             unsigned int& getPaddedSize,
                                             unsigned int  sizeToUse = 0);
-  
   int             allocateLocalVar         (const TargetMachine& target,
                                             const Value* local,
                                             unsigned int sizeToUse = 0);
@@ -84,15 +84,13 @@ public:
   int             allocateSpilledValue     (const TargetMachine& target,
                                             const Type* type);
   
-  int             allocateOptionalArg      (const TargetMachine& target,
-                                            const Type* type);
-  
-  void            resetOptionalArgs        (const TargetMachine& target);
-  
   int             pushTempValue            (const TargetMachine& target,
                                             unsigned int size);
   
   void            popAllTempValues         (const TargetMachine& target);
+  
+  void            freezeSpillsArea         () { spillsAreaFrozen = true; } 
+  void            freezeAutomaticVarsArea  () { automaticVarsAreaFrozen=true; }
   
   int             getOffset                (const Value* val) const;
   
@@ -120,9 +118,8 @@ private:
   inline void     resetTmpAreaSize() {
     currentTmpValuesSize = 0;
   }
-  inline void     incrementCurrentOptionalArgsSize(int incr) {
-    currentOptionalArgsSize+= incr;     // stack size already includes this!
-  }
+  int             allocateOptionalArg      (const TargetMachine& target,
+                                            const Type* type);
 };
 
 #endif
