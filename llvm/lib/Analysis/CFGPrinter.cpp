@@ -22,6 +22,7 @@
 #include "llvm/Function.h"
 #include "llvm/iTerminators.h"
 #include "llvm/Assembly/Writer.h"
+#include "llvm/Analysis/CFGPrinter.h"
 #include "llvm/Support/CFG.h"
 #include <sstream>
 #include <fstream>
@@ -173,3 +174,12 @@ void Function::viewCFGOnly() const {
   viewCFG();
   CFGOnly = false;
 }
+
+FunctionPass *llvm::createCFGPrinterPass () {
+  return new CFGPrinter();
+}
+
+FunctionPass *llvm::createCFGOnlyPrinterPass () {
+  return new CFGOnlyPrinter();
+}
+
