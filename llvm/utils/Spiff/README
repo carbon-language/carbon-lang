@@ -1,0 +1,264 @@
+INSTALLATION
+	1) Change makefile settings to reflect
+		ATT vs. BSD software
+		termio vs. termcap
+		MGR vs. no MGR		(MGR is a BELLCORE produced
+					 window manager that is also available
+					 free to the public.)
+	2) Then, just say "make".
+		If you want to "make install", you should first
+		change definition of INSDIR in the makefile
+
+	3) to test the software say
+
+			spiff Sample.1 Sample.2
+
+		spiff should find 4 differences and
+		you should see the words "added", "deleted", "changed",
+		and "altered" as well as four number in stand-out mode.
+
+			spiff Sample.1 Sample.2 | cat
+
+		should produce the same output, only the differences
+		should be underlined However, on many terminals the underlining
+		does not appear. So try the command
+
+			spiff Sample.1 Sample.2 | cat -v
+
+		or whatever the equivalent to cat -v is on your system.
+
+		A more complicated test set is found in Sample.3 and Sample.4
+		These files show how to use embedded commands to do things
+		like change the commenting convention and tolerances on the
+		fly.  Be sure to run the command with the -s option to spiff:
+
+			spiff -s 'command spiffword' Sample.3 Sample.4
+
+		These files by no means provide an exhaustive test of
+		spiff's features. But they should give you some idea if things
+		are working right.
+
+	This code (or it's closely related cousins) has been run on
+	Vaxen running 4.3BSD, a CCI Power 6, some XENIX machines, and some
+	other machines running System V derivatives as well as
+	(thanks to eugene@ames.arpa) Cray, Amdahl and Convex machines.
+
+	4) Share and enjoy.
+
+AUTHOR'S ADDRESS
+	Please send complaints, comments, praise, bug reports, etc to
+		Dan Nachbar
+		Bell Communications Research  (also known as BELLCORE)
+		445 South St. Room 2B-389
+		Morristown, NJ 07960
+
+			nachbar@bellcore.com
+		or
+			bellcore!nachbar
+		or
+			(201) 829-4392  (praise only, please)
+
+OVERVIEW OF OPERATION
+
+Each of two input files is read and stored in core.
+Then it is parsed into a series of tokens (literal strings and
+floating point numbers, white space is ignored).
+The token sequences are stored in core as well.
+After both files have been parsed, a differencing algorithm is applied to
+the token sequences.  The differencing algorithm
+produces an edit script, which is then passed to an output routine.
+
+SIZE LIMITS AND OTHER DEFAULTS
+		file implementing limit		name		default value
+maximum number of lines		lines.h		_L_MAXLINES	10000
+	per file
+maximum number of tokens	token.h		K_MAXTOKENS	50000
+	per file
+maximum line length		misc.h		Z_LINELEN	 1024
+maximum word length		misc.h		Z_WORDLEN	   20
+ (length of misc buffers for
+ things like literal
+ delimiters.
+ NOT length of tokens which
+ can be virtually any length)
+default absolute tolerance	tol.h		_T_ADEF		   "1e-10"   
+default relative tolerance	tol.h		_T_RDEF		   "1e-10"  
+maximum number of commands	command.h	_C_CMDMAX	  100
+ in effect at one time
+maximum number of commenting	comment.h	W_COMMAX	   20
+ conventions that can be
+ in effect at one time
+ (not including commenting
+  conventions that are
+  restricted to beginning
+  of line)
+maximum number of commenting	comment.h	W_BOLMAX	   20
+ conventions that are
+ restricted to beginning of
+ line that are in effect at
+ one time
+maximum number of literal	comment.h	W_LITMAX	   20
+ string conventions that
+ can be in effect at one time
+maximum number of tolerances	tol.h		_T_TOLMAX	   10
+ that can be in effect at one
+ time
+
+
+DIFFERENCES BETWEEN THE CURRENT VERSION AND THE ENCLOSED PAPER
+
+The files paper.ms and paper.out contain the nroff -ms input and
+output respectively of a paper on spiff that was given the Summer '88
+USENIX conference in San Francisco.  Since that time many changes
+have been made to the code.  Many flags have changed and some have
+had their meanings reversed, see the enclosed man page for the current
+usage.  Also, there is no longer control over the
+granularity of object used when applying the differencing algorithm.
+The current version of spiff always applies the differencing
+in terms of individual tokens.  The -t flag controls how the edit script
+is printed.  This arrangement more closely reflects the original intent
+of having multiple differencing granularities. 
+
+PERFORMANCE
+
+Spiff is big and slow.  It is big because all the storage is
+in core.  It is a straightforward but boring task to move the temporary
+storage into a file.  Someone who cares is invited to take on the job.
+Spiff is slow because whenever a choice had to be made between
+speed of operation and ease of coding, speed of operation almost always lost.
+As the program matures it will almost certainly get smaller and faster.
+Obvious performance enhancements have been avoided in order to make the
+program available as soon as possible.
+
+COPYRIGHT
+
+Our lawyers advise the following:
+
+                   Copyright (c) 1988 Bellcore
+                       All Rights Reserved
+  Permission is granted to copy or use this program, EXCEPT that it
+  may not be sold for profit, the copyright notice must be reproduced
+  on copies, and credit should be given to Bellcore where it is due.
+  BELLCORE MAKES NO WARRANTY AND ACCEPTS NO LIABILITY FOR THIS PROGRAM.
+
+Given that all of the above seems to be very reasonable, there should be no
+reason for anyone to not play by the rules.
+
+
+NAMING CONVENTIONS USED IN THE CODE
+
+All symbols (functions, data declarations, macros) are named as follows:
+
+	L_foo	-- for names exported to other modules
+			and possibly used inside the module as well.
+	_L_foo	-- for names used by more than one routine
+			within a module
+	foo	-- for names used inside a single routine.
+
+Each module uses a different value for "L" -- 
+	module files	   letter used     implements
+	spiff.c			Y	top level routines
+	misc.[ch]		Z	various routines used throughout
+	strings.[ch]		S	routines for handling strings
+	edit.h			E	list of changes found and printed
+	tol.[ch]		T	tolerances for real numbers
+	token.[ch]		K	storage for objects
+	float.[ch]		F	manipulation of floats
+	floatrep.[ch]		R	representation of floats
+	line.[ch]		L	storage for input lines
+	parse.[ch]		P	parse for input files
+	command.[ch]		C	storage and recognition of commands
+	comment.[ch]		W	comment list maintenance
+	compare.[ch]		X	comparisons of a single token
+	exact.[ch]		Q	exact match differencing algorithm
+	miller.[ch]		G	miller/myers differencing algorithm
+	output.[ch]		O	print listing of differences
+	flagdefs.h		U	define flag bits that are used in
+					several of the other modules.
+					These #defines could have been
+					included in misc.c, but were separated
+					out because of their explicit
+					communication function.
+	visual.[ch]		V	screen oriented display for MGR
+					window manager, also contains
+					dummy routines for people who don't
+					have MGR 
+
+I haven't cleaned up visual.c yet.  It probably doesn't even compile
+in this version anyway. But since most people don't have mgr, this
+isn't urgent.
+
+NON-OBVIOUS DATA STRUCTURES
+
+The Floating Point Representation
+
+Floating point numbers are stored in a struct R_flstr
+The fractional part is often called the mantissa.
+
+The structure consists of
+	a flag for the sign of the factional part
+	the exponent in binary 
+	a character string containing the fractional part
+
+The structure could be converted to a float via
+	atof(strcat(".",mantissa)) * (10^exponent)
+
+To be properly formed, the mantissa string must:
+	start with a digit between 1 and 9 (i.e. no leading zeros)
+		except for the zero, in which case the mantissa is exactly "0"
+	for the special case of zero, the exponent is always 0, and the
+		sign is always positive. (i.e. no negative 0)
+
+In other words, (except for the value 0)
+the mantissa is a fractional number ranging
+between 0.1 (inclusive) and 1.0 (exclusive).
+The exponent is interpreted as a power of 10.
+
+Lines 
+there are three sets of lines:
+implemented in line.c and line.h
+	real_lines --
+	  the lines as they come from the file
+	content_lines --
+	  a subset of reallines that excluding embedded commands
+implemented in token.c and token.h 
+	token_lines --
+	  a subset of content_lines consisting of those lines that
+		have tokens that begin on them (literals can go on for
+		more than one line)
+		i.e. content_lines excluding comments and blank lines.
+
+
+THE STATE OF THE CODE
+Things that should be added
+	visual mode should handle tabs and wrapped lines
+	handling huge files in chunks when in using the ordinal match
+	algorithm. right now you have to parse and then diff the
+	whole thing before you get any output.  often, you run out of memory.
+
+Things that would be nice to add
+	output should optionally be expressed in real line numbers
+		(i.e. including command lines)
+	at present, all storage is in core. there should
+		be a compile time decision to allow temporary storage
+		in files rather than core. 
+		that way the user could decide how to handle the
+			speed/space tradeoff
+	a front end that looked like diff should be added so that
+		one could drop spiff into existing shell scripts
+	the parser converts floats into their internal form even when
+		it isn't necessary.
+	in the miller/myer code, the code should check for matching
+		end sequences.  it currently looks matching beginning
+		sequences.
+
+Minor programming improvements (programming botches)
+	some of the #defines should really be enumerated types
+	all the routines in strings.c that alter the data at the end of
+		a pointer but return void should just return the correct
+		data. the current arrangement is a historical artifact
+		of the days when these routines returned a status code.
+		but then the code was never examined,
+		so i made them void . . .
+	comments should be added to the miller/myer code
+	in visual mode, ask for font by name rather than number
