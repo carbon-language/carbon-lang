@@ -92,7 +92,7 @@ class SCCP : public FunctionPass, public InstVisitor<SCCP> {
   std::set<BasicBlock*>     BBExecutable;// The basic blocks that are executable
   std::map<Value*, InstVal> ValueState;  // The state each value is in...
 
-  std::set<Instruction*>    InstWorkList;// The instruction work list
+  std::vector<Instruction*> InstWorkList;// The instruction work list
   std::vector<BasicBlock*>  BBWorkList;  // The BasicBlock work list
 public:
 
@@ -124,7 +124,7 @@ private:
     DEBUG_SCCP(cerr << "markConstant: " << V << " = " << I);
 
     if (ValueState[I].markConstant(V)) {
-      InstWorkList.insert(I);
+      InstWorkList.push_back(I);
       return true;
     }
     return false;
@@ -138,7 +138,7 @@ private:
     if (ValueState[V].markOverdefined()) {
       if (Instruction *I = dyn_cast<Instruction>(V)) {
 	DEBUG_SCCP(cerr << "markOverdefined: " << V);
-	InstWorkList.insert(I);  // Only instructions go on the work list
+	InstWorkList.push_back(I);  // Only instructions go on the work list
       }
       return true;
     }
@@ -251,8 +251,8 @@ bool SCCP::runOnFunction(Function *F) {
   while (!BBWorkList.empty() || !InstWorkList.empty()) {
     // Process the instruction work list...
     while (!InstWorkList.empty()) {
-      Instruction *I = *InstWorkList.begin();
-      InstWorkList.erase(InstWorkList.begin());
+      Instruction *I = InstWorkList.back();
+      InstWorkList.pop_back();
 
       DEBUG_SCCP(cerr << "\nPopped off I-WL: " << I);
 
