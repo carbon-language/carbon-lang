@@ -9,7 +9,7 @@
 LEVEL = ../..
 TOOLNAME = llvmc
 USEDLIBS = LLVMBCReader LLVMCore LLVMSupport.a LLVMSystem.a
-CONFIG_FILES = st ll
-EXTRA_DIST = st ll
+CONFIG_FILES = c cpp ll st 
+EXTRA_DIST = c cpp ll st
 
 include $(LEVEL)/Makefile.common
