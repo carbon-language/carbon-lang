@@ -309,7 +309,10 @@ int main(int argc, char **argv, char **envp) {
       if (!Out2.good())
         return PrintAndReturn(argv[0], "error opening '" + OutputFilename +
                                        "' for writing!");
-      Out2 << "#!/bin/sh\nlli \\\n";
+      Out2 << "#!/bin/sh\n";
+      // Allow user to setenv LLVMINTERP if lli is not in their PATH.
+      Out2 << "lli=${LLVMINTERP-lli}\n";
+      Out2 << "exec $lli \\\n";
       // gcc accepts -l<lib> and implicitly searches /lib and /usr/lib.
       LibPaths.push_back("/lib");
       LibPaths.push_back("/usr/lib");
@@ -327,7 +330,7 @@ int main(int argc, char **argv, char **envp) {
         if (!FullLibraryPath.empty() && IsSharedObject(FullLibraryPath))
           Out2 << "    -load=" << FullLibraryPath << " \\\n";
       }
-      Out2 << "    $0.bc $*\n";
+      Out2 << "    $0.bc ${1+\"$@\"}\n";
       Out2.close();
     }
   
