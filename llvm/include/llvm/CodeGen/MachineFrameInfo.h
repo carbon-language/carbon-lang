@@ -33,6 +33,7 @@
 
 class TargetData;
 class TargetRegisterClass;
+class MachineFunction;
 #include <vector>
 
 class MachineFrameInfo {
@@ -205,10 +206,10 @@ public:
   /// print - Used by the MachineFunction printer to print information about
   /// stack objects.  Implemented in MachineFunction.cpp
   ///
-  void print(std::ostream &OS) const;
+  void print(const MachineFunction &MF, std::ostream &OS) const;
 
-  /// dump - Call print(std::cerr) to be called from the debugger.
-  void dump() const;
+  /// dump - Call print(MF, std::cerr) to be called from the debugger.
+  void dump(const MachineFunction &MF) const;
 };
 
 #endif

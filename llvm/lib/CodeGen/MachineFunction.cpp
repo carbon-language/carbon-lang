@@ -120,7 +120,7 @@ void MachineFunction::print(std::ostream &OS) const {
      << "\"\n";
 
   // Print Frame Information
-  getFrameInfo()->print(OS);
+  getFrameInfo()->print(*this, OS);
 
   // Print Constant Pool
   getConstantPool()->print(OS);
@@ -188,7 +188,9 @@ int MachineFrameInfo::CreateStackObject(const TargetRegisterClass *RC) {
 }
 
 
-void MachineFrameInfo::print(std::ostream &OS) const {
+void MachineFrameInfo::print(const MachineFunction &MF, std::ostream &OS) const{
+  int ValOffset = MF.getTarget().getFrameInfo().getOffsetOfLocalArea();
+
   for (unsigned i = 0, e = Objects.size(); i != e; ++i) {
     const StackObject &SO = Objects[i];
     OS << "  <fi #" << (int)(i-NumFixedObjects) << "> is ";
@@ -200,11 +202,12 @@ void MachineFrameInfo::print(std::ostream &OS) const {
     if (i < NumFixedObjects)
       OS << " fixed";
     if (i < NumFixedObjects || SO.SPOffset != -1) {
+      int Off = SO.SPOffset + ValOffset;
       OS << " at location [SP";
-      if (SO.SPOffset > 0)
-	OS << "+" << SO.SPOffset;
-      else if (SO.SPOffset < 0)
-	OS << SO.SPOffset;
+      if (Off > 0)
+	OS << "+" << Off;
+      else if (Off < 0)
+	OS << Off;
       OS << "]";
     }
     OS << "\n";
@@ -214,7 +217,9 @@ void MachineFrameInfo::print(std::ostream &OS) const {
     OS << "  Stack frame contains variable sized objects\n";
 }
 
-void MachineFrameInfo::dump() const { print(std::cerr); }
+void MachineFrameInfo::dump(const MachineFunction &MF) const {
+  print(MF, std::cerr);
+}
 
 
 //===----------------------------------------------------------------------===//
