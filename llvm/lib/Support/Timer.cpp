@@ -105,12 +105,19 @@ static TimeRecord getTimeRecord(bool Start) {
   sys::TimeValue user(0,0);
   sys::TimeValue sys(0,0);
 
-  sys::Process::GetTimeUsage(now,user,sys);
+  long MemUsed = 0;
+  if (Start) {
+    sys::Process::GetTimeUsage(now,user,sys);
+    MemUsed = sys::Process::GetMallocUsage();
+  } else {
+    MemUsed = sys::Process::GetMallocUsage();
+    sys::Process::GetTimeUsage(now,user,sys);
+  }
 
-  Result.Elapsed    = now.seconds()  + now.microseconds()  / 1000000.0;
-  Result.UserTime   = user.seconds() + user.microseconds() / 1000000.0;
-  Result.UserTime   = sys.seconds()  + sys.microseconds()  / 1000000.0;
-  Result.MemUsed = sys::Process::GetMallocUsage();
+  Result.Elapsed  = now.seconds()  + now.microseconds()  / 1000000.0;
+  Result.UserTime = user.seconds() + user.microseconds() / 1000000.0;
+  Result.SystemTime  = sys.seconds()  + sys.microseconds()  / 1000000.0;
+  Result.MemUsed  = MemUsed;
 
   return Result;
 }
