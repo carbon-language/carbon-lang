@@ -50,13 +50,17 @@ namespace {
     unsigned resolveFunctionReference(unsigned RetAddr);
   };
 
-  JITResolver *TheJITResolver;
+  static JITResolver &getResolver(MachineCodeEmitter &MCE) {
+    static JITResolver *TheJITResolver = 0;
+    if (TheJITResolver == 0)
+      TheJITResolver = new JITResolver(MCE);
+    return *TheJITResolver;
+  }
 }
 
+
 void *X86JITInfo::getJITStubForFunction(Function *F, MachineCodeEmitter &MCE) {
-  if (TheJITResolver == 0)
-    TheJITResolver = new JITResolver(MCE);
-  return (void*)((unsigned long)TheJITResolver->getLazyResolver(F));
+  return (void*)((unsigned long)getResolver(MCE).getLazyResolver(F));
 }
 
 void X86JITInfo::replaceMachineCodeForFunction (void *Old, void *New) {
@@ -126,7 +130,8 @@ void JITResolver::CompilationCallback() {
   // Sanity check to make sure this really is a call instruction...
   assert(((unsigned char*)(intptr_t)RetAddr)[-1] == 0xE8 &&"Not a call instr!");
   
-  unsigned NewVal = TheJITResolver->resolveFunctionReference(RetAddr);
+  JITResolver &JR = getResolver(*(MachineCodeEmitter*)0);
+  unsigned NewVal = JR.resolveFunctionReference(RetAddr);
 
   // Rewrite the call target... so that we don't fault every time we execute
   // the call.
@@ -267,10 +272,8 @@ void Emitter::emitGlobalAddressForCall(GlobalValue *GV) {
   
   if (Address == 0) {
     // FIXME: this is JIT specific!
-    if (TheJITResolver == 0)
-      TheJITResolver = new JITResolver(MCE);
-    Address = TheJITResolver->addFunctionReference(MCE.getCurrentPCValue(),
-                                                   cast<Function>(GV));
+    Address = getResolver(MCE).addFunctionReference(MCE.getCurrentPCValue(),
+                                                    cast<Function>(GV));
   }
   emitMaybePCRelativeValue(Address, true);
 }
@@ -288,9 +291,7 @@ void Emitter::emitGlobalAddressForPtr(GlobalValue *GV) {
   //
   if (Address == 0) {
     // FIXME: this is JIT specific!
-    if (TheJITResolver == 0)
-      TheJITResolver = new JITResolver(MCE);
-    Address = TheJITResolver->getLazyResolver((Function*)GV);
+    Address = getResolver(MCE).getLazyResolver((Function*)GV);
   }
 
   emitMaybePCRelativeValue(Address, false);
