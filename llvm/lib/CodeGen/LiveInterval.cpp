@@ -260,6 +260,15 @@ void LiveInterval::join(LiveInterval &Other, unsigned CopyIdx) {
   unsigned MergedSrcValIdx = SourceLR->ValId;
   unsigned MergedDstValIdx = DestLR->ValId;
 
+  // Try to do the least amount of work possible.  In particular, if there are
+  // more liverange chunks in the other set than there are in the 'this' set,
+  // swap sets to merge the fewest chunks in possible.
+  if (Other.ranges.size() > ranges.size()) {
+    std::swap(MergedSrcValIdx, MergedDstValIdx);
+    std::swap(ranges, Other.ranges);
+    std::swap(NumValues, Other.NumValues);
+  }
+
   // Join the ranges of other into the ranges of this interval.
   Ranges::iterator InsertPos = ranges.begin();
   std::map<unsigned, unsigned> Dst2SrcIdxMap;
