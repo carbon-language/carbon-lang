@@ -510,11 +510,11 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
     if (Op0I->getOpcode() == Instruction::Or && Op0I->use_size() == 1) {
       if (Op0I->getOperand(0) == Op1)                // (B|A)^B == (A|B)^B
         cast<BinaryOperator>(Op0I)->swapOperands();
-      if (Op0I->getOperand(1) == Op1) {              // (A|B)^B == A & ~B
+      if (Op0I->getOperand(1) == Op1) {              // (A|B)^B == ~B & A
         Value *NotB = BinaryOperator::createNot(Op1, Op1->getName()+".not", &I);
         WorkList.push_back(cast<Instruction>(NotB));
-        return BinaryOperator::create(Instruction::And, Op0I->getOperand(0),
-                                      NotB);
+        return BinaryOperator::create(Instruction::And, NotB,
+                                      Op0I->getOperand(0));
       }
     }
 
