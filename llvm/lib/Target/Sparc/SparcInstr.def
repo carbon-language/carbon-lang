@@ -45,6 +45,7 @@ I(NOP, "nop",		0,  -1,  0, false, 0,  1,  SPARC_NONE,  M_NOP_FLAG)
 // Use a latency > 1 since this may generate as many as 3 instructions.
 I(SETSW, "setsw",	2,   1,  0, true , 0,  2,  SPARC_IEUN,  M_INT_FLAG | M_ARITH_FLAG)
 I(SETUW, "setuw",	2,   1,  0, false, 0,  2,  SPARC_IEUN,  M_INT_FLAG | M_LOGICAL_FLAG | M_ARITH_FLAG)
+I(SETX,  "setx",	3,   2,  0, true,  0,  5,  SPARC_IEUN,  M_INT_FLAG | M_LOGICAL_FLAG | M_ARITH_FLAG)
 
 // Set high-order bits of register and clear low-order bits
 I(SETHI, "sethi",	2,  1, B22, false, 0,  1,  SPARC_IEUN,  M_INT_FLAG | M_LOGICAL_FLAG | M_ARITH_FLAG)
@@ -52,16 +53,16 @@ I(SETHI, "sethi",	2,  1, B22, false, 0,  1,  SPARC_IEUN,  M_INT_FLAG | M_LOGICAL
 // Add or add with carry.
 // Immed bit specifies if second operand is immediate(1) or register(0)
 I(ADD   , "add",	3,  2, B12, true , 0, 1, SPARC_IEUN,  M_INT_FLAG | M_ARITH_FLAG)
-I(ADDcc , "addcc",	4,  2, B12, true , 0, 1, SPARC_IEU1,  M_INT_FLAG | M_ARITH_FLAG)
+I(ADDcc , "addcc",	4,  2, B12, true , 0, 1, SPARC_IEU1,  M_INT_FLAG | M_ARITH_FLAG | M_CC_FLAG )
 I(ADDC  , "addc",	3,  2, B12, true , 0, 1, SPARC_IEUN,  M_INT_FLAG | M_ARITH_FLAG)
-I(ADDCcc, "addccc",	4,  2, B12, true , 0, 1, SPARC_IEU1,  M_INT_FLAG | M_ARITH_FLAG)
+I(ADDCcc, "addccc",	4,  2, B12, true , 0, 1, SPARC_IEU1,  M_INT_FLAG | M_ARITH_FLAG | M_CC_FLAG )
 
 // Subtract or subtract with carry.
 // Immed bit specifies if second operand is immediate(1) or register(0)
 I(SUB   , "sub",	3,  2, B12, true , 0, 1, SPARC_IEUN,  M_INT_FLAG | M_ARITH_FLAG)
-I(SUBcc , "subcc",	4,  2, B12, true , 0, 1, SPARC_IEU1,  M_INT_FLAG | M_ARITH_FLAG)
+I(SUBcc , "subcc",	4,  2, B12, true , 0, 1, SPARC_IEU1,  M_INT_FLAG | M_ARITH_FLAG | M_CC_FLAG )
 I(SUBC  , "subc",	3,  2, B12, true , 0, 1, SPARC_IEUN,  M_INT_FLAG | M_ARITH_FLAG)
-I(SUBCcc, "subccc",	4,  2, B12, true , 0, 1, SPARC_IEU1,  M_INT_FLAG | M_ARITH_FLAG)
+I(SUBCcc, "subccc",	4,  2, B12, true , 0, 1, SPARC_IEU1,  M_INT_FLAG | M_ARITH_FLAG | M_CC_FLAG )
 
 // Integer multiply, signed divide, unsigned divide.
 // Note that the deprecated 32-bit multiply and multiply-step are not used.
@@ -77,11 +78,11 @@ I(FADDQ, "faddq",	3,  2,   0, false, 0, 3,  SPARC_FPA,  M_FLOAT_FLAG | M_ARITH_F
 I(FSUBS, "fsubs",	3,  2,   0, false, 0, 3,  SPARC_FPA,  M_FLOAT_FLAG | M_ARITH_FLAG)
 I(FSUBD, "fsubd",	3,  2,   0, false, 0, 3,  SPARC_FPA,  M_FLOAT_FLAG | M_ARITH_FLAG)
 I(FSUBQ, "fsubq",	3,  2,   0, false, 0, 3,  SPARC_FPA,  M_FLOAT_FLAG | M_ARITH_FLAG)
-I(FCMPS, "fcmps",	3,  0,   0, false, 0, 3,  SPARC_FPA,  M_FLOAT_FLAG | M_ARITH_FLAG)
-I(FCMPD, "fcmpd",	3,  0,   0, false, 0, 3,  SPARC_FPA,  M_FLOAT_FLAG | M_ARITH_FLAG)
-I(FCMPQ, "fcmpq",	3,  0,   0, false, 0, 3,  SPARC_FPA,  M_FLOAT_FLAG | M_ARITH_FLAG)
+I(FCMPS, "fcmps",	3,  0,   0, false, 0, 3,  SPARC_FPA,  M_FLOAT_FLAG | M_ARITH_FLAG | M_CC_FLAG )
+I(FCMPD, "fcmpd",	3,  0,   0, false, 0, 3,  SPARC_FPA,  M_FLOAT_FLAG | M_ARITH_FLAG | M_CC_FLAG )
+I(FCMPQ, "fcmpq",	3,  0,   0, false, 0, 3,  SPARC_FPA,  M_FLOAT_FLAG | M_ARITH_FLAG | M_CC_FLAG )
 // NOTE: FCMPE{S,D,Q}: FP Compare With Exception are currently unused!
-  
+
 // Floating point multiply or divide.
 I(FMULS , "fmuls",	3,  2,   0, false, 0, 3,  SPARC_FPM,  M_FLOAT_FLAG | M_ARITH_FLAG)
 I(FMULD , "fmuld",	3,  2,   0, false, 0, 3,  SPARC_FPM,  M_FLOAT_FLAG | M_ARITH_FLAG)
