@@ -71,6 +71,22 @@ bool RaiseAllocations::doInitialization(Module *M) {
   MallocFunc = M->getFunction("malloc", MallocType);
   FreeFunc   = M->getFunction("free"  , FreeType);
 
+  // Check to see if the prototype is missing, giving us sbyte*(...) * malloc
+  // This handles the common declaration of: 'char *malloc();'
+  if (MallocFunc == 0) {
+    MallocType = FunctionType::get(PointerType::get(Type::SByteTy),
+                                   std::vector<const Type*>(), true);
+    MallocFunc = M->getFunction("malloc", MallocType);
+  }
+
+  // Check to see if the prototype was forgotten, giving us void (...) * free
+  // This handles the common forward declaration of: 'void free();'
+  if (FreeFunc == 0) {
+    FreeType = FunctionType::get(Type::VoidTy, std::vector<const Type*>(),true);
+    FreeFunc = M->getFunction("free", FreeType);
+  }
+
+
   // Don't mess with locally defined versions of these functions...
   if (MallocFunc && !MallocFunc->isExternal()) MallocFunc = 0;
   if (FreeFunc && !FreeFunc->isExternal())     FreeFunc = 0;
@@ -89,15 +105,38 @@ bool RaiseAllocations::runOnBasicBlock(BasicBlock *BB) {
     if (CallInst *CI = dyn_cast<CallInst>(I)) {
       if (CI->getCalledValue() == MallocFunc) {      // Replace call to malloc?
         const Type *PtrSByte = PointerType::get(Type::SByteTy);
-        MallocInst *MallocI = new MallocInst(PtrSByte, CI->getOperand(1),
-                                             CI->getName());
+        Value *Source = CI->getOperand(1);
+        
+        // If no prototype was provided for malloc, we may need to cast the
+        // source size.
+        if (Source->getType() != Type::UIntTy) {
+          CastInst *New = new CastInst(Source, Type::UIntTy, "MallocAmtCast");
+          BI = BIL.insert(BI, New)+1;
+          Source = New;
+        }
+
+        MallocInst *MallocI = new MallocInst(PtrSByte, Source, CI->getName());
+                                             
         CI->setName("");
         ReplaceInstWithInst(BIL, BI, MallocI);
         Changed = true;
         ++NumRaised;
         continue;  // Skip the ++BI
       } else if (CI->getCalledValue() == FreeFunc) { // Replace call to free?
-        ReplaceInstWithInst(BIL, BI, new FreeInst(CI->getOperand(1)));
+        // If no prototype was provided for free, we may need to cast the
+        // source pointer.  This should be really uncommon, but it's neccesary
+        // just in case we are dealing with wierd code like this:
+        //   free((long)ptr);
+        //
+        Value *Source = CI->getOperand(1);
+        if (!isa<PointerType>(Source->getType())) {
+          CastInst *New = new CastInst(Source, PointerType::get(Type::SByteTy),
+                                       "FreePtrCast");
+          BI = BIL.insert(BI, New)+1;
+          Source = New;
+        }
+
+        ReplaceInstWithInst(BIL, BI, new FreeInst(Source));
         Changed = true;
         continue;  // Skip the ++BI
         ++NumRaised;
