@@ -54,6 +54,7 @@ inline const MachineInstrBuilder &addFullAddress(const MachineInstrBuilder &MIB,
                                                  unsigned Scale,
                                                  unsigned IndexReg,
                                                  unsigned Disp) {
+  assert (Scale == 1 || Scale == 2 || Scale == 4 || Scale == 8);
   return MIB.addReg(BaseReg).addZImm(Scale).addReg(IndexReg).addSImm(Disp);
 }
 
