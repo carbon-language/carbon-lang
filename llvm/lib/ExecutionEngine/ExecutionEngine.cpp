@@ -263,19 +263,14 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
     GET_CONST_VAL(Double , ConstantFP);
 #undef GET_CONST_VAL
   case Type::PointerTyID:
-    if (isa<ConstantPointerNull>(C)) {
+    if (isa<ConstantPointerNull>(C))
       Result.PointerVal = 0;
-    } else if (const ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(C)){
-      if (Function *F =
-          const_cast<Function*>(dyn_cast<Function>(CPR->getValue())))
-        Result = PTOGV(getPointerToFunctionOrStub(F));
-      else 
-        Result = PTOGV(getOrEmitGlobalVariable(
-                           cast<GlobalVariable>(CPR->getValue())));
-
-    } else {
+    else if (const Function *F = dyn_cast<Function>(C))
+      Result = PTOGV(getPointerToFunctionOrStub(const_cast<Function*>(F)));
+    else if (const GlobalVariable* GV = dyn_cast<GlobalVariable>(C))
+      Result = PTOGV(getOrEmitGlobalVariable(const_cast<GlobalVariable*>(GV)));
+    else
       assert(0 && "Unknown constant pointer type!");
-    }
     break;
   default:
     std::cout << "ERROR: Constant unimp for type: " << *C->getType() << "\n";
