@@ -239,8 +239,10 @@ GenerateNative(const std::string &OutputFilename,
   // Add in the libraries to link.
   std::vector<std::string> Libs(Libraries);
   for (unsigned index = 0; index < Libs.size(); index++) {
-    Libs[index] = "-l" + Libs[index];
-    cmd.push_back(Libs[index].c_str());
+    if (Libs[index] != "crtend") {
+      Libs[index] = "-l" + Libs[index];
+      cmd.push_back(Libs[index].c_str());
+    }
   }
   cmd.push_back(NULL);
 
