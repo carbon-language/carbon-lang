@@ -85,6 +85,12 @@ public:
   MachineInstrInfo(const MachineInstrDescriptor *desc, unsigned descSize,
 		   unsigned numRealOpCodes);
   virtual ~MachineInstrInfo();
+
+  // Invariant: All instruction sets use opcode #0 as the PHI instruction and
+  // opcode #1 as the noop instruction.
+  enum {
+    PHI = 0, NOOP = 1
+  };
   
   unsigned getNumRealOpCodes()  const { return numRealOpCodes; }
   unsigned getNumTotalOpCodes() const { return descSize; }
