@@ -1,0 +1,12 @@
+; RUN: llvm-as < %s | opt -inline -prune-eh -disable-output
+
+implementation
+
+linkonce void %caller() {
+	call void %callee()
+	ret void
+}
+
+linkonce void %callee() {
+	ret void
+}
