@@ -64,9 +64,12 @@ bool Inliner::runOnSCC(const std::vector<CallGraphNode*> &SCC) {
         if (isa<CallInst>(I) || isa<InvokeInst>(I)) {
           CallSite CS = CallSite::get(I);
           if (Function *Callee = CS.getCalledFunction())
-            if (!Callee->isExternal()) {
+            if (!Callee->isExternal() && !IsRecursiveFunction.count(Callee)) {
               // Determine whether this is a function IN the SCC...
               bool inSCC = SCCFunctions.count(Callee);
+
+              // Keep track of whether this is a directly recursive function.
+              if (Callee == F) IsRecursiveFunction.insert(F);
 
               // If the policy determines that we should inline this function,
               // try to do so...
