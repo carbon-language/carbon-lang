@@ -77,6 +77,9 @@ namespace X86II {
     // starts with a 0x0F byte before the real opcode.
     TB          = 1 << 6,
 
+    // FIXME: There are several more two byte opcode escapes: D8-DF
+    // Handle this.
+
     // OpSize - Set if this instruction requires an operand size prefix (0x66),
     // which most often indicates that the instruction operates on 16 bit data
     // instead of 32 bit data.
