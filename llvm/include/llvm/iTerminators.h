@@ -261,10 +261,10 @@ public:
   inline       BasicBlock *getNormalDest() {
     return cast<BasicBlock>(Operands[1].get());
   }
-  inline const BasicBlock *getExceptionalDest() const {
+  inline const BasicBlock *getUnwindDest() const {
     return cast<BasicBlock>(Operands[2].get());
   }
-  inline       BasicBlock *getExceptionalDest() {
+  inline       BasicBlock *getUnwindDest() {
     return cast<BasicBlock>(Operands[2].get());
   }
 
@@ -272,17 +272,17 @@ public:
     Operands[1] = reinterpret_cast<Value*>(B);
   }
 
-  inline void setExceptionalDest(BasicBlock *B){
+  inline void setUnwindDest(BasicBlock *B){
     Operands[2] = reinterpret_cast<Value*>(B);
   }
 
   virtual const BasicBlock *getSuccessor(unsigned i) const {
     assert(i < 2 && "Successor # out of range for invoke!");
-    return i == 0 ? getNormalDest() : getExceptionalDest();
+    return i == 0 ? getNormalDest() : getUnwindDest();
   }
   inline BasicBlock *getSuccessor(unsigned i) {
     assert(i < 2 && "Successor # out of range for invoke!");
-    return i == 0 ? getNormalDest() : getExceptionalDest();
+    return i == 0 ? getNormalDest() : getUnwindDest();
   }
 
   virtual void setSuccessor(unsigned idx, BasicBlock *NewSucc) {

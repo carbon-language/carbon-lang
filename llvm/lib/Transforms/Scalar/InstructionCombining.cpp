@@ -1839,7 +1839,7 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
              UI != E; ++UI)
           if (PHINode *PN = dyn_cast<PHINode>(*UI))
             if (PN->getParent() == II->getNormalDest() ||
-                PN->getParent() == II->getExceptionalDest())
+                PN->getParent() == II->getUnwindDest())
               return false;
   }
 
@@ -1904,7 +1904,7 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
 
   Instruction *NC;
   if (InvokeInst *II = dyn_cast<InvokeInst>(Caller)) {
-    NC = new InvokeInst(Callee, II->getNormalDest(), II->getExceptionalDest(),
+    NC = new InvokeInst(Callee, II->getNormalDest(), II->getUnwindDest(),
                         Args, Caller->getName(), Caller);
   } else {
     NC = new CallInst(Callee, Args, Caller->getName(), Caller);

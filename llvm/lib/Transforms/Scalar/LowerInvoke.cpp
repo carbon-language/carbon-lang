@@ -169,7 +169,7 @@ bool LowerInvoke::insertCheapEHSupport(Function &F) {
       new BranchInst(II->getNormalDest(), II);
 
       // Remove any PHI node entries from the exception destination.
-      II->getExceptionalDest()->removePredecessor(BB);
+      II->getUnwindDest()->removePredecessor(BB);
 
       // Remove the invoke instruction now.
       BB->getInstList().erase(II);
@@ -256,7 +256,7 @@ bool LowerInvoke::insertExpensiveEHSupport(Function &F) {
       new StoreInst(OldEntry, JBListHead, InsertLoc);
 
       // Now we change the invoke into a branch instruction.
-      new BranchInst(II->getNormalDest(), II->getExceptionalDest(), IsNormal, II);
+      new BranchInst(II->getNormalDest(), II->getUnwindDest(), IsNormal, II);
 
       // Remove the InvokeInst now.
       BB->getInstList().erase(II);

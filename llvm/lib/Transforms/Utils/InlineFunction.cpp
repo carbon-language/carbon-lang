@@ -106,7 +106,7 @@ bool llvm::InlineFunction(CallSite CS) {
   // any inlined 'unwind' instructions into branches to the invoke exception
   // destination, and call instructions into invoke instructions.
   if (InvokeInst *II = dyn_cast<InvokeInst>(TheCall)) {
-    BasicBlock *InvokeDest = II->getExceptionalDest();
+    BasicBlock *InvokeDest = II->getUnwindDest();
     std::vector<Value*> InvokeDestPHIValues;
 
     // If there are PHI nodes in the exceptional destination block, we need to

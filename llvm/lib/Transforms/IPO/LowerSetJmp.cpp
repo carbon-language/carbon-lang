@@ -489,7 +489,7 @@ void LowerSetJmp::visitInvokeInst(InvokeInst& II)
   if (!DFSBlocks.count(BB)) return;
 
   BasicBlock* NormalBB = II.getNormalDest();
-  BasicBlock* ExceptBB = II.getExceptionalDest();
+  BasicBlock* ExceptBB = II.getUnwindDest();
 
   Function* Func = BB->getParent();
   BasicBlock* NewExceptBB = new BasicBlock("InvokeExcept", Func);
@@ -503,7 +503,7 @@ void LowerSetJmp::visitInvokeInst(InvokeInst& II)
 
   new BranchInst(PrelimBBMap[Func], ExceptBB, IsLJExcept, NewExceptBB);
 
-  II.setExceptionalDest(NewExceptBB);
+  II.setUnwindDest(NewExceptBB);
   ++InvokesTransformed;
 }
 

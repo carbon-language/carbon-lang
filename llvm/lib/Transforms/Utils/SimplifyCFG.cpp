@@ -115,7 +115,7 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
       while (!Preds.empty()) {
         BasicBlock *Pred = Preds.back();
         if (InvokeInst *II = dyn_cast<InvokeInst>(Pred->getTerminator()))
-          if (II->getExceptionalDest() == BB) {
+          if (II->getUnwindDest() == BB) {
             // Insert a new branch instruction before the invoke, because this
             // is now a fall through...
             BranchInst *BI = new BranchInst(II->getNormalDest(), II);

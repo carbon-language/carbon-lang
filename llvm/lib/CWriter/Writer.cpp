@@ -1092,7 +1092,7 @@ void CWriter::visitInvokeInst(InvokeInst &II) {
       << "    Entry.next = __llvm_jmpbuf_list;\n"
       << "    if (setjmp(Entry.buf)) {\n"
       << "      __llvm_jmpbuf_list = Entry.next;\n";
-  printBranchToBlock(II.getParent(), II.getExceptionalDest(), 4);
+  printBranchToBlock(II.getParent(), II.getUnwindDest(), 4);
   Out << "    }\n"
       << "    __llvm_jmpbuf_list = &Entry;\n"
       << "    ";

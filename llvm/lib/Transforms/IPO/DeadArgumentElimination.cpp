@@ -424,7 +424,7 @@ void DAE::RemoveDeadArgumentsFromFunction(Function *F) {
 
     Instruction *New;
     if (InvokeInst *II = dyn_cast<InvokeInst>(Call)) {
-      New = new InvokeInst(NF, II->getNormalDest(), II->getExceptionalDest(),
+      New = new InvokeInst(NF, II->getNormalDest(), II->getUnwindDest(),
                            Args, "", Call);
     } else {
       New = new CallInst(NF, Args, "", Call);

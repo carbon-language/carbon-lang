@@ -589,8 +589,7 @@ void Interpreter::visitUnwindInst(UnwindInst &I) {
   InvokingSF.Caller = CallSite ();
 
   // Go to exceptional destination BB of invoke instruction
-  SwitchToNewBasicBlock (cast<InvokeInst> (Inst)->getExceptionalDest (),
-                         InvokingSF);
+  SwitchToNewBasicBlock(cast<InvokeInst>(Inst)->getUnwindDest(), InvokingSF);
 }
 
 void Interpreter::visitBranchInst(BranchInst &I) {
