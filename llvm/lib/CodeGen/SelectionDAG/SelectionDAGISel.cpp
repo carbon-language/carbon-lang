@@ -836,8 +836,7 @@ void SelectionDAGISel::BuildSelectionDAG(SelectionDAG &DAG, BasicBlock *LLVMBB,
   // blocks are available as virtual registers.
   for (BasicBlock::iterator I = LLVMBB->begin(), E = LLVMBB->end(); I != E;++I)
     if (!I->use_empty()) {
-      std::map<const Value*, unsigned>::iterator VMI =
-        FuncInfo.ValueMap.find(I);
+      std::map<const Value*, unsigned>::iterator VMI =FuncInfo.ValueMap.find(I);
       if (VMI != FuncInfo.ValueMap.end())
         CopyValueToVirtualRegister(SDL, I, VMI->second);
     }
@@ -878,7 +877,13 @@ void SelectionDAGISel::BuildSelectionDAG(SelectionDAG &DAG, BasicBlock *LLVMBB,
           Reg = RegOut;
         } else {
           Reg = FuncInfo.ValueMap[PHIOp];
-          assert(Reg && "Didn't codegen value into a register!??");
+          if (Reg == 0) {
+            assert(isa<AllocaInst>(PHIOp) && 
+                   FuncInfo.StaticAllocaMap.count(cast<AllocaInst>(PHIOp)) &&
+                   "Didn't codegen value into a register!??");
+            Reg = FuncInfo.CreateRegForValue(PHIOp);
+            CopyValueToVirtualRegister(SDL, PHIOp, Reg);
+          }
         }
         
         // Remember that this register needs to added to the machine PHI node as
