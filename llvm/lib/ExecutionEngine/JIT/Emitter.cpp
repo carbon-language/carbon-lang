@@ -21,7 +21,7 @@
 #include "Config/sys/mman.h"
 
 namespace {
-  Statistic<> NumBytes("jello", "Number of bytes of machine code compiled");
+  Statistic<> NumBytes("jit", "Number of bytes of machine code compiled");
   VM *TheVM = 0;
 
   /// JITMemoryManager - Manage memory for the JIT code generation in a logical,
