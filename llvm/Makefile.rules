@@ -591,14 +591,16 @@ ifdef EXPORTED_SYMBOL_FILE
 BCLinkLib = $(LLVMGCC) -shared -nostdlib -Xlinker \
 	    -internalize-public-api-file=$(EXPORTED_SYMBOL_FILE)
 
-$(LibName.BCA): $(BUILT_SOURCES) $(ObjectsBC) $(LibDir)/.dir $(GCCLD)
+$(LibName.BCA): $(BUILT_SOURCES) $(ObjectsBC) $(LibDir)/.dir $(GCCLD) \
+                $(LLVMToolDir)/llvm-ar
 	$(Echo) Building $(BuildMode) Bytecode Archive $(notdir $@) \
 	  "(internalize)"
 	$(Verb) $(BCLinkLib) -o $(ObjDir)/$(LIBRARYNAME).o $(ObjectsBC)
 	$(Verb) $(RM) -f $@
 	$(Verb) $(LArchive) $@ $(ObjDir)/$(LIBRARYNAME).o
 else
-$(LibName.BCA): $(BUILT_SOURCES) $(ObjectsBC) $(LibDir)/.dir
+$(LibName.BCA): $(BUILT_SOURCES) $(ObjectsBC) $(LibDir)/.dir \
+                $(LLVMToolDir)/llvm-ar
 	$(Echo) Building $(BuildMode) Bytecode Archive $(notdir $@)
 	$(Verb) $(RM) -f $@
 	$(Verb) $(LArchive) $@ $(ObjectsBC)
