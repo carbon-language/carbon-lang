@@ -131,6 +131,10 @@ public:
     assert(i < getNumLinks() && "Field links access out of range...");
     return FieldLinks[i];
   }
+  const PointerValSet &getLink(unsigned i) const {
+    assert(i < getNumLinks() && "Field links access out of range...");
+    return FieldLinks[i];
+  }
 
   // addReferrer - Keep the referrer set up to date...
   void addReferrer(PointerValSet *PVS) { Referrers.push_back(PVS); }
@@ -145,6 +149,18 @@ public:
   const std::vector<Value*> &getPointers() const { return Pointers; }
 
   const Type *getType() const { return Ty; }
+
+  // getNumOutgoingLinks - Return the number of outgoing links, which is usually
+  // the number of normal links, but for call nodes it also includes their
+  // arguments.
+  //
+  virtual unsigned getNumOutgoingLinks() const { return getNumLinks(); }
+  virtual PointerValSet &getOutgoingLink(unsigned Link) {
+    return getLink(Link);
+  }
+  virtual const PointerValSet &getOutgoingLink(unsigned Link) const {
+    return getLink(Link);
+  }
 
   void print(std::ostream &O) const;
 
@@ -256,6 +272,22 @@ public:
   virtual void dropAllReferences() {
     DSNode::dropAllReferences();
     ArgLinks.clear();
+  }
+
+  // getNumOutgoingLinks - Return the number of outgoing links, which is usually
+  // the number of normal links, but for call nodes it also includes their
+  // arguments.
+  //
+  virtual unsigned getNumOutgoingLinks() const {
+    return getNumLinks() + getNumArgs();
+  }
+  virtual PointerValSet &getOutgoingLink(unsigned Link) {
+    if (Link < getNumLinks()) return getLink(Link);
+    return getArgValues(Link-getNumLinks());
+  }
+  virtual const PointerValSet &getOutgoingLink(unsigned Link) const {
+    if (Link < getNumLinks()) return getLink(Link);
+    return getArgValues(Link-getNumLinks());
   }
 
   // isEquivalentTo - Return true if the nodes should be merged...
@@ -393,6 +425,7 @@ public:
   //
   std::map<Value*, PointerValSet> &getValueMap() { return ValueMap; }
 
+  const PointerValSet &getRetNodes() const { return RetNode; }
 
 
   void printFunction(std::ostream &O, const char *Label) const;
