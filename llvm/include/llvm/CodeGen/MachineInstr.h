@@ -171,6 +171,7 @@ MachineOperand::MachineOperand(MachineOperandType operandType,
 			       Value* _val)
   : opType(operandType),
     immedVal(0),
+    regNum(-1),
     value(_val),
     isDef(false)
 {}
