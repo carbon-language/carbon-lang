@@ -44,10 +44,10 @@ namespace {
       setOperationAction(ISD::EXTLOAD          , MVT::i1   , Expand);
       setOperationAction(ISD::EXTLOAD          , MVT::i8   , Expand);
       setOperationAction(ISD::EXTLOAD          , MVT::i16  , Expand);
+
       setOperationAction(ISD::ZEXTLOAD         , MVT::i1   , Expand);
-      setOperationAction(ISD::ZEXTLOAD         , MVT::i8   , Expand);
-      setOperationAction(ISD::ZEXTLOAD         , MVT::i16  , Expand);
       setOperationAction(ISD::ZEXTLOAD         , MVT::i32  , Expand);
+
       setOperationAction(ISD::SEXTLOAD         , MVT::i1   , Expand);
       setOperationAction(ISD::SEXTLOAD         , MVT::i8   , Expand);
       setOperationAction(ISD::SEXTLOAD         , MVT::i16  , Expand);
@@ -305,6 +305,35 @@ unsigned ISel::SelectExpr(SDOperand N) {
     return Result;
   
   case ISD::EXTLOAD:
+    // Make sure we generate both values.
+    if (Result != 1)
+      ExprMap[N.getValue(1)] = 1;   // Generate the token
+    else
+      Result = ExprMap[N.getValue(0)] = MakeReg(N.getValue(0).getValueType());
+    
+    Select(Node->getOperand(0)); // chain
+    Tmp1 = SelectExpr(Node->getOperand(1));
+    
+    switch(Node->getValueType(0)) {
+    default: assert(0 && "Unknown type to sign extend to.");
+    case MVT::i64:
+      switch (cast<MVTSDNode>(Node)->getExtraValueType()) {
+      default:
+        assert(0 && "Bad sign extend!");
+      case MVT::i32:
+	BuildMI(BB, Alpha::LDL, 2, Result).addImm(0).addReg(Tmp1);
+        break;
+      case MVT::i16:
+	BuildMI(BB, Alpha::LDWU, 2, Result).addImm(0).addReg(Tmp1);
+        break;
+      case MVT::i8:
+	BuildMI(BB, Alpha::LDBU, 2, Result).addImm(0).addReg(Tmp1);
+        break;
+      }
+      break;
+    }
+    return Result;
+
   case ISD::SEXTLOAD:
     // Make sure we generate both values.
     if (Result != 1)
@@ -323,16 +352,43 @@ unsigned ISel::SelectExpr(SDOperand N) {
       case MVT::i32:
 	BuildMI(BB, Alpha::LDL, 2, Result).addImm(0).addReg(Tmp1);
         break;
+//       case MVT::i16:
+// 	BuildMI(BB, Alpha::LDW, 2, Result).addImm(0).addReg(Tmp1);
+//         break;
+//       case MVT::i8:
+// 	BuildMI(BB, Alpha::LDB, 2, Result).addImm(0).addReg(Tmp1);
+//         break;
+      }
+      break;
+    }
+    return Result;
+
+  case ISD::ZEXTLOAD:
+    // Make sure we generate both values.
+    if (Result != 1)
+      ExprMap[N.getValue(1)] = 1;   // Generate the token
+    else
+      Result = ExprMap[N.getValue(0)] = MakeReg(N.getValue(0).getValueType());
+    
+    Select(Node->getOperand(0)); // chain
+    Tmp1 = SelectExpr(Node->getOperand(1));
+    switch(Node->getValueType(0)) {
+    default: assert(0 && "Unknown type to zero extend to.");
+    case MVT::i64:
+      switch (cast<MVTSDNode>(Node)->getExtraValueType()) {
+      default:
+        assert(0 && "Bad sign extend!");
       case MVT::i16:
-	BuildMI(BB, Alpha::LDW, 2, Result).addImm(0).addReg(Tmp1);
+	BuildMI(BB, Alpha::LDWU, 2, Result).addImm(0).addReg(Tmp1);
         break;
       case MVT::i8:
-	BuildMI(BB, Alpha::LDB, 2, Result).addImm(0).addReg(Tmp1);
+	BuildMI(BB, Alpha::LDBU, 2, Result).addImm(0).addReg(Tmp1);
         break;
       }
       break;
     }
     return Result;
+
 
   case ISD::GlobalAddress:
     AlphaLowering.restoreGP(BB);
@@ -403,12 +459,6 @@ unsigned ISel::SelectExpr(SDOperand N) {
     }    
   
   case ISD::SIGN_EXTEND:
-    {
-      std::cerr << "DestT: " << N.getValueType() << "\n";
-      std::cerr << "SrcT: " << N.getOperand(0).getValueType() << "\n";
-      assert(0 && "Sign Extend not there yet");
-      return Result;
-    }
   case ISD::SIGN_EXTEND_INREG:
     {
       Tmp1 = SelectExpr(N.getOperand(0));
@@ -421,11 +471,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
 	  break;
 	case MVT::i32:
 	  {
-	    Tmp2 = MakeReg(MVT::i64);
-	    unsigned Tmp3 = MakeReg(MVT::i64);
-	    BuildMI(BB, Alpha::LOAD_IMM, 1, Tmp2).addImm(16);
-	    BuildMI(BB, Alpha::SL, 2, Tmp3).addReg(Tmp1).addReg(Tmp2);
-	    BuildMI(BB, Alpha::SRA, 2, Result).addReg(Tmp3).addReg(Tmp2);
+	    BuildMI(BB, Alpha::ADDLi, 2, Result).addReg(Tmp1).addImm(0);
 	    break;
 	  }
 	case MVT::i16:
@@ -447,25 +493,12 @@ unsigned ISel::SelectExpr(SDOperand N) {
 	default:
 	  assert(0 && "Zero Extend InReg not there yet");
 	  break;
-	case MVT::i32:
-	  {
-	    Tmp2 = MakeReg(MVT::i64);
-	    BuildMI(BB, Alpha::LOAD_IMM, 1, Tmp2).addImm(0xf0);
-	    BuildMI(BB, Alpha::ZAP, 2, Result).addReg(Tmp1).addReg(Tmp2);
-	    break;
-	  }
-	case MVT::i16:
-	    Tmp2 = MakeReg(MVT::i64);
-	    BuildMI(BB, Alpha::LOAD_IMM, 1, Tmp2).addImm(0xfc);
-	    BuildMI(BB, Alpha::ZAP, 2, Result).addReg(Tmp1).addReg(Tmp2);
-	    break;
-	case MVT::i8:
-	    Tmp2 = MakeReg(MVT::i64);
-	    BuildMI(BB, Alpha::LOAD_IMM, 1, Tmp2).addImm(0xfe);
-	    BuildMI(BB, Alpha::ZAP, 2, Result).addReg(Tmp1).addReg(Tmp2);
-	    break;
+	case MVT::i32: Tmp2 = 0xf0; break;
+	case MVT::i16: Tmp2 = 0xfc; break;
+	case MVT::i8: Tmp2 = 0xfe; break;
 	}
-      return Result;
+      BuildMI(BB, Alpha::ZAPi, 2, Result).addReg(Tmp1).addImm(Tmp2);
+     return Result;
     }
     
   case ISD::SETCC:
@@ -576,15 +609,40 @@ unsigned ISel::SelectExpr(SDOperand N) {
     return Result;
 
   case ISD::ADD:
-    Tmp1 = SelectExpr(N.getOperand(0));
-    Tmp2 = SelectExpr(N.getOperand(1));
-    BuildMI(BB, Alpha::ADDQ, 2, Result).addReg(Tmp1).addReg(Tmp2);
-    return Result;
   case ISD::SUB:
-    Tmp1 = SelectExpr(N.getOperand(0));
-    Tmp2 = SelectExpr(N.getOperand(1));
-    BuildMI(BB, Alpha::SUBQ, 2, Result).addReg(Tmp1).addReg(Tmp2);
-    return Result;
+    {
+      bool isAdd = N.getOpcode() == ISD::ADD;
+
+      //FIXME: first check for Scaled Adds and Subs!
+      if(N.getOperand(1).getOpcode() == ISD::Constant &&
+	 cast<ConstantSDNode>(N.getOperand(1))->getValue() >= 0 &&
+	 cast<ConstantSDNode>(N.getOperand(1))->getValue() <= 255)
+	{ //Normal imm add/sub
+	  Opc = isAdd ? Alpha::ADDQi : Alpha::SUBQi;
+	  Tmp1 = SelectExpr(N.getOperand(0));
+	  Tmp2 = cast<ConstantSDNode>(N.getOperand(1))->getValue();
+	  BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addImm(Tmp2);
+	}
+      else if(N.getOperand(1).getOpcode() == ISD::Constant &&
+	      cast<ConstantSDNode>(N.getOperand(1))->getValue() >= 0 &&
+	 cast<ConstantSDNode>(N.getOperand(1))->getValue() <= 32767)
+	{ //LDA  //FIXME: expand the above condition a bit
+	  Tmp1 = SelectExpr(N.getOperand(0));
+	  Tmp2 = cast<ConstantSDNode>(N.getOperand(1))->getValue();
+	  if (!isAdd)
+	    Tmp2 = -Tmp2;
+	  BuildMI(BB, Alpha::LDA, 2, Result).addImm(Tmp2).addReg(Tmp1);
+	}
+      else
+	{ //Normal add/sub
+	  Opc = isAdd ? Alpha::ADDQ : Alpha::SUBQ;
+	  Tmp1 = SelectExpr(N.getOperand(0));
+	  Tmp2 = SelectExpr(N.getOperand(1));
+	  BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(Tmp2);
+
+	}
+	  return Result;
+      }
 
   case ISD::UREM:
     Tmp1 = SelectExpr(N.getOperand(0));
@@ -713,6 +771,7 @@ void ISel::Select(SDOperand N) {
        Tmp1 = SelectExpr(N.getOperand(1));
        switch (N.getOperand(1).getValueType()) {
        default: assert(0 && "All other types should have been promoted!!");
+       case MVT::i32:
        case MVT::i64:
 	 BuildMI(BB, Alpha::BIS, 2, Alpha::R0).addReg(Tmp1).addReg(Tmp1);
 	 break;
