@@ -60,10 +60,6 @@ TESTRUNR = @echo Running test: $<; \
              PATH=$(LLVMTOOLCURRENT):$(LLVM_SRC_ROOT)/test/Scripts:$(PATH) \
                   $(LLVM_SRC_ROOT)/test/TestRunner.sh
 
-# Native Tool Definitions
-NATGCC  = $(CC)
-CP	= /bin/cp -f
-
 ## If TRACE or TRACEM is "yes", set the appropriate llc flag (-trace or -tracem)
 ## mark that tracing on, and set the TRACELIBS variable.
 TRACEFLAGS = 
@@ -85,46 +81,27 @@ clean::
 
 # Compile from X.c to Output/X.ll
 Output/%.ll: %.c $(LCC1) Output/.dir $(INCLUDES)
-	$(LCC) $(CPPFLAGS) $(LCCFLAGS) -S $< -o $@
+	-$(LLVMGCC) $(CPPFLAGS) $(LCCFLAGS) -S $< -o $@
 
 # Compile from X.cpp to Output/X.ll
 Output/%.ll: %.cpp $(LCC1XX) Output/.dir $(INCLUDES)
-	$(LCXX) $(CPPFLAGS) $(LCXXFLAGS) -S $< -o $@
+	-$(LLVMGXX) $(CPPFLAGS) $(LCXXFLAGS) -S $< -o $@
 
 # Compile from X.cc to Output/X.ll
 Output/%.ll: %.cc $(LCC1XX) Output/.dir $(INCLUDES)
-	$(LCXX) $(CPPFLAGS) $(LCXXFLAGS) -S $< -o $@
+	-$(LLVMGXX) $(CPPFLAGS) $(LCXXFLAGS) -S $< -o $@
 
 # LLVM Assemble from Output/X.ll to Output/X.bc.  Output/X.ll must have come
 # from GCC output, so use GCCAS.
 #
 Output/%.bc: Output/%.ll $(LGCCAS)
-	$(LGCCAS) $(STATS) $< -o $@
+	-$(LLVMAS) $(STATS) $< -o $@
 
 # LLVM Assemble from X.ll to Output/X.bc.  Because we are coming directly from
 # LLVM source, use the non-transforming assembler.
 #
-Output/%.bc: %.ll $(LAS) Output/.dir
-	$(LAS) -f $< -o $@
-
-#
-# Testing versions of provided utilities...
-#
-Output/%.tll: %.c $(LCC1) Output/.dir $(INCLUDES)
-	@echo "======== Compiling $<"
-	$(LCC) $(CPPFLAGS) $(LCCFLAGS) -S $< -o $@ || \
-	    ( rm -f $@; $(FAILURE) $@ )
-
-Output/%.tll: %.cpp $(LCC1XX) Output/.dir $(INCLUDES)
-	@echo "======== Compiling $<"
-	$(LCXX) $(CPPFLAGS) $(LCXXFLAGS) -S $< -o $@ || \
-	    ( rm -f $@; $(FAILURE) $@ )
-
-Output/%.tbc: Output/%.tll $(LAS)
-	@echo "======== Assembling $<"
-	$(LAS) -f $< -o $@ || \
-            ( rm -f $@; $(FAILURE) $@ )
-
+Output/%.bc: %.ll $(LLVMAS) Output/.dir
+	-$(LLVMAS) -f $< -o $@
 
 ## Cancel built-in implicit rules that override above rules
 %: %.s
