@@ -4,12 +4,15 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "inline"
 #include "llvm/Transforms/IPO.h"
-#include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
 #include "llvm/iOther.h"
 #include "llvm/iMemory.h"
+#include "llvm/iTerminators.h"
+#include "llvm/Support/CallSite.h"
+#include "llvm/Transforms/Utils/Cloning.h"
 #include "Support/CommandLine.h"
 #include "Support/Debug.h"
 #include "Support/Statistic.h"
@@ -44,16 +47,17 @@ Pass *createFunctionInliningPass() { return new FunctionInlining(); }
 // ShouldInlineFunction - The heuristic used to determine if we should inline
 // the function call or not.
 //
-static inline bool ShouldInlineFunction(const CallInst *CI) {
-  assert(CI->getParent() && CI->getParent()->getParent() && 
+static inline bool ShouldInlineFunction(CallSite CS) {
+  Instruction *TheCall = CS.getInstruction();
+  assert(TheCall->getParent() && TheCall->getParent()->getParent() && 
 	 "Call not embedded into a function!");
 
-  const Function *Callee = CI->getCalledFunction();
+  const Function *Callee = CS.getCalledFunction();
   if (Callee == 0 || Callee->isExternal())
     return false;  // Cannot inline an indirect call... or external function.
 
   // Don't inline a recursive call.
-  const Function *Caller = CI->getParent()->getParent();
+  const Function *Caller = TheCall->getParent()->getParent();
   if (Caller == Callee) return false;
 
   // InlineQuality - This value measures how good of an inline candidate this
@@ -74,8 +78,8 @@ static inline bool ShouldInlineFunction(const CallInst *CI) {
   // the function will be optimizable.  Currently this just looks at arguments
   // passed into the function.
   //
-  for (User::const_op_iterator I = CI->op_begin()+1, E = CI->op_end();
-       I != E; ++I){
+  for (CallSite::arg_iterator I = CS.arg_begin(), E = CS.arg_end();
+       I != E; ++I) {
     // Each argument passed in has a cost at both the caller and the callee
     // sides.  This favors functions that take many arguments over functions
     // that take few arguments.
@@ -117,7 +121,7 @@ static inline bool ShouldInlineFunction(const CallInst *CI) {
 
   // If we get here, this call site is high enough "quality" to inline.
   DEBUG(std::cerr << "Inlining in '" << Caller->getName()
-                  << "', quality = " << InlineQuality << ": " << *CI);
+                  << "', quality = " << InlineQuality << ": " << *TheCall);
   return true;
 }
 
@@ -138,13 +142,14 @@ bool FunctionInlining::doInlining(Function *F) {
   for (Function::iterator BB = F->begin(); BB != F->end(); ++BB)
     for (BasicBlock::iterator I = BB->begin(); I != BB->end(); ) {
       bool ShouldInc = true;
-      // Found a call instruction? FIXME: This should also handle INVOKEs
-      if (CallInst *CI = dyn_cast<CallInst>(I)) {
-        if (Function *Callee = CI->getCalledFunction()) {
+      // Found a call or invoke instruction?
+      if (isa<CallInst>(I) || isa<InvokeInst>(I)) {
+        CallSite CS = CallSite::get(I);
+        if (Function *Callee = CS.getCalledFunction()) {
           doInlining(Callee);  // Inline in callees before callers!
 
           // Decide whether we should inline this function...
-          if (ShouldInlineFunction(CI)) {
+          if (ShouldInlineFunction(CS)) {
             // Save an iterator to the instruction before the call if it exists,
             // otherwise get an iterator at the end of the block... because the
             // call will be destroyed.
@@ -157,7 +162,7 @@ bool FunctionInlining::doInlining(Function *F) {
             }
             
             // Attempt to inline the function...
-            if (InlineFunction(CI)) {
+            if (InlineFunction(CS)) {
               ++NumInlined;
               Changed = true;
               // Move to instruction before the call...
