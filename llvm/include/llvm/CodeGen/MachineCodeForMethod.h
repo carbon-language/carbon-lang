@@ -19,10 +19,6 @@ class Constant;
 class Type;
 class TargetMachine;
 
-// FIXME: this should go away soon
-class MachineFunction;
-typedef MachineFunction MachineCodeForMethod;
-
 class MachineFunction : private Annotation {
   hash_set<const Constant*> constantsForConstPool;
   hash_map<const Value*, int> offsets;
