@@ -17,16 +17,16 @@
 #include "llvm/Instruction.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/InstIterator.h"
+#include "Support/StatisticReporter.h"
 #include <set>
 
-#include "Support/StatisticReporter.h"
 static Statistic<> NumInstKilled("constprop - Number of instructions killed");
 
 namespace {
   struct ConstantPropogation : public FunctionPass {
     const char *getPassName() const { return "Simple Constant Propogation"; }
 
-    inline bool runOnFunction(Function *F);
+    bool runOnFunction(Function *F);
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.preservesCFG();
