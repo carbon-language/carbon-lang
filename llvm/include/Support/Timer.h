@@ -29,6 +29,8 @@
 #include <vector>
 #include <iosfwd>
 
+#include <assert.h>
+
 class TimerGroup;
 
 class Timer {

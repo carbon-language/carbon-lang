@@ -31,6 +31,7 @@
 #include <functional>
 #include <iostream>
 
+#include <assert.h>
 
 #define WORDSIZE (32U)
 

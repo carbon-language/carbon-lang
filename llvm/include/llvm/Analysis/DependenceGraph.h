@@ -23,6 +23,8 @@
 #include <vector>
 #include <utility>
 
+#include <assert.h>
+
 class Instruction;
 class Function;
 class Dependence;

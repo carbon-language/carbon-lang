@@ -12,6 +12,8 @@
 
 #include "llvm/Target/MRegisterInfo.h"
 
+#include <assert.h>
+
 class TargetRegisterClass;
 
 class SSARegMap {

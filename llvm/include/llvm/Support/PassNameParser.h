@@ -20,6 +20,7 @@
 #include "llvm/Pass.h"
 #include <algorithm>
 #include <iostream>
+#include <assert.h>
 
 //===----------------------------------------------------------------------===//
 // PassNameParser class - Make use of the pass registration mechanism to

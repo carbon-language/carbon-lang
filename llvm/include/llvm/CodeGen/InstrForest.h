@@ -21,6 +21,7 @@
 
 #include "llvm/Instruction.h"
 #include "Support/HashExtras.h"
+#include <assert.h>
 
 class Constant;
 class BasicBlock;

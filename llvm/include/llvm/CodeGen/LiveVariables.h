@@ -24,6 +24,7 @@
 
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include <map>
+#include <assert.h>
 
 class MRegisterInfo;
 

@@ -33,6 +33,7 @@
 #include <stack>
 #include <set>
 #include <algorithm>
+#include <assert.h>
 
 // getNodeHeader - Given a source graph node and the source graph, return the 
 // BasicBlock that is the header node.  This is the opposite of

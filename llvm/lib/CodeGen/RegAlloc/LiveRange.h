@@ -14,6 +14,8 @@
 #include "llvm/CodeGen/ValueSet.h"
 #include "llvm/Value.h"
 
+#include <assert.h>
+
 class RegClass;
 class IGNode;
 class Type;

@@ -9,6 +9,8 @@
 #ifndef LLVM_ANALYSIS_DSGRAPHTRAITS_H
 #define LLVM_ANALYSIS_DSGRAPHTRAITS_H
 
+#include <assert.h>
+
 #include "llvm/Analysis/DSGraph.h"
 #include "Support/GraphTraits.h"
 #include "Support/iterator"

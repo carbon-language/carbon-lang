@@ -11,6 +11,8 @@
 #ifndef LLVM_DERIVED_TYPES_H
 #define LLVM_DERIVED_TYPES_H
 
+#include <assert.h>
+
 #include "llvm/Type.h"
 
 class DerivedType : public Type {

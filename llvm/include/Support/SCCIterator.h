@@ -21,6 +21,7 @@
 #include <stack>
 #include <map>
 
+#include <assert.h>
 
 //--------------------------------------------------------------------------
 // class SCC : A simple representation of an SCC in a generic Graph.

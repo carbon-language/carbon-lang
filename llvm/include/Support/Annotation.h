@@ -16,6 +16,7 @@
 #define SUPPORT_ANNOTATION_H
 
 #include <string>
+#include <assert.h>
 class AnnotationID;
 class Annotation;
 class Annotable;

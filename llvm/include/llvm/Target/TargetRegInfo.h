@@ -10,6 +10,7 @@
 
 #include "Support/hash_map"
 #include <string>
+#include <assert.h>
 
 class TargetMachine;
 class IGNode;

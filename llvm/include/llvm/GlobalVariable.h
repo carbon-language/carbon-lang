@@ -13,6 +13,8 @@
 #ifndef LLVM_GLOBAL_VARIABLE_H
 #define LLVM_GLOBAL_VARIABLE_H
 
+#include <assert.h>
+
 #include "llvm/GlobalValue.h"
 class Module;
 class Constant;

@@ -39,6 +39,8 @@
 #ifndef LLVM_ANALYSIS_IPMODREF_H
 #define LLVM_ANALYSIS_IPMODREF_H
 
+#include <assert.h>
+
 #include "llvm/Pass.h"
 #include "Support/BitSetVector.h"
 #include "Support/hash_map"

@@ -9,6 +9,8 @@
 #ifndef LLVM_ANALYSIS_CONSTANTSSCANNER_H
 #define LLVM_ANALYSIS_CONSTANTSSCANNER_H
 
+#include <assert.h>
+
 #include "llvm/Support/InstIterator.h"
 #include "llvm/Instruction.h"
 #include "Support/iterator"

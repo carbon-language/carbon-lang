@@ -10,6 +10,7 @@
 #include "llvm/Target/TargetInstrInfo.h"
 #include "Support/hash_map"
 #include <string>
+#include <assert.h>
 
 typedef long long cycles_t; 
 static const cycles_t HUGE_LATENCY = ~((long long) 1 << (sizeof(cycles_t)-2));

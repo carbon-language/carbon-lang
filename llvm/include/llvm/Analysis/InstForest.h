@@ -19,6 +19,7 @@
 #include "llvm/Function.h"
 #include "Support/Tree.h"
 #include <map>
+#include <assert.h>
 
 template<class Payload> class InstTreeNode;
 template<class Payload> class InstForest;

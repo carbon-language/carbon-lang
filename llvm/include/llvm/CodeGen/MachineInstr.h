@@ -13,6 +13,8 @@
 #include "Support/Annotation.h"
 #include "Support/iterator"
 #include <set>
+#include <assert.h>
+
 class Value;
 class Function;
 class MachineBasicBlock;

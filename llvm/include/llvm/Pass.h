@@ -22,6 +22,8 @@
 #ifndef LLVM_PASS_H
 #define LLVM_PASS_H
 
+#include <assert.h>
+
 #include <vector>
 #include <map>
 #include <iosfwd>

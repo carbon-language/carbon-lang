@@ -8,6 +8,8 @@
 #define LLVM_TARGET_TARGETCACHEINFO_H
 
 #include "Support/DataTypes.h"
+#include <assert.h>
+
 class TargetMachine;
 
 struct TargetCacheInfo {

@@ -20,6 +20,7 @@
 
 #include "llvm/Pass.h"
 #include <set>
+#include <assert.h>
 class Instruction;
 
 template <typename GraphType> struct GraphTraits;

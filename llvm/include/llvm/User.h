@@ -12,6 +12,8 @@
 #ifndef LLVM_USER_H
 #define LLVM_USER_H
 
+#include <assert.h>
+
 #include "llvm/Value.h"
 
 class User : public Value {

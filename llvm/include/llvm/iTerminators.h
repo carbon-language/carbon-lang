@@ -9,6 +9,8 @@
 #ifndef LLVM_ITERMINATORS_H
 #define LLVM_ITERMINATORS_H
 
+#include <assert.h>
+
 #include "llvm/InstrTypes.h"
 
 //===---------------------------------------------------------------------------

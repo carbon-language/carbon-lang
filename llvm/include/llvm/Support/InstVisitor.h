@@ -44,6 +44,8 @@
 #define LLVM_SUPPORT_INSTVISITOR_H
 
 #include "llvm/Instruction.h"
+#include <assert.h>
+
 class Module;
 
 // We operate on opaque instruction classes, so forward declare all instruction

@@ -14,7 +14,7 @@
 
 // No need to include Pass.h, we are being included by it!
 
-
+#include <assert.h>
 
 //===----------------------------------------------------------------------===//
 // AnalysisUsage - Represent the analysis usage information of a pass.  This

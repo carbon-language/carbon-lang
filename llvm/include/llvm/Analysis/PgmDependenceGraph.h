@@ -40,6 +40,7 @@
 #include "Support/NonCopyable.h"
 #include <iterator>
 
+#include <assert.h>
 
 class Instruction;
 class Function;

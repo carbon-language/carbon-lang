@@ -10,6 +10,8 @@
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/Target/TargetRegInfo.h"
 
+#include <assert.h>
+
 class Value;
 class TmpInstruction;
 class CallInst;

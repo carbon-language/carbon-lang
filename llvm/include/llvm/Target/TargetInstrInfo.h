@@ -9,6 +9,7 @@
 
 #include "Support/DataTypes.h"
 #include <vector>
+#include <assert.h>
 
 class MachineInstr;
 class TargetMachine;

@@ -20,6 +20,7 @@
 #include "Support/NonCopyable.h"
 #include "Support/hash_map"
 
+#include <assert.h>
 
 class Instruction;
 class Function;

@@ -10,6 +10,8 @@
 
 #include <vector>
 
+#include <assert.h>
+
 template<class ConcreteTreeNode, class Payload>
 class Tree {
   std::vector<ConcreteTreeNode*> Children;        // This nodes children, if any
