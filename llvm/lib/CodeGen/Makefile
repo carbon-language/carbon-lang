@@ -8,7 +8,7 @@
 ##===----------------------------------------------------------------------===##
 
 LEVEL = ../..
-PARALLEL_DIRS = InstrSched SelectionDAG ModuloScheduling
+PARALLEL_DIRS = SelectionDAG ModuloScheduling
 LIBRARYNAME = codegen
 
 include $(LEVEL)/Makefile.common
