@@ -53,9 +53,9 @@ static cl::opt<bool> DisablePeephole("nopeephole",
 // that implements the Sparc backend. (the llvm/CodeGen/Sparc.h interface)
 //----------------------------------------------------------------------------
 
-TargetMachine *allocateSparcTargetMachine() { return new UltraSparc(); }
-
-
+TargetMachine *allocateSparcTargetMachine(unsigned Configuration) {
+  return new UltraSparc();
+}
 
 //---------------------------------------------------------------------------
 // class UltraSparcFrameInfo 
@@ -155,13 +155,12 @@ bool UltraSparc::addPassesToEmitAssembly(PassManager &PM, std::ostream &Out)
 
   // Specialize LLVM code for this target machine and then
   // run basic dataflow optimizations on LLVM code.
-  if (!DisablePreSelect)
-    {
-      PM.add(createPreSelectionPass(*this));
-      PM.add(createReassociatePass());
-      PM.add(createLICMPass());
-      PM.add(createGCSEPass());
-    }
+  if (!DisablePreSelect) {
+    PM.add(createPreSelectionPass(*this));
+    PM.add(createReassociatePass());
+    PM.add(createLICMPass());
+    PM.add(createGCSEPass());
+  }
 
   PM.add(createInstructionSelectionPass(*this));
 
@@ -193,4 +192,30 @@ bool UltraSparc::addPassesToEmitAssembly(PassManager &PM, std::ostream &Out)
   PM.add(getEmitBytecodeToAsmPass(Out));
   PM.add(getFunctionInfo(Out)); 
   return false;
+}
+
+// addPassesToJITCompile - This method controls the JIT method of code
+// generation for the UltraSparc.
+//
+bool UltraSparc::addPassesToJITCompile(PassManager &PM) {
+  // FIXME: implement the switch instruction in the instruction selector.
+  PM.add(createLowerSwitchPass());
+
+  // Construct and initialize the MachineFunction object for this fn.
+  PM.add(createMachineCodeConstructionPass(*this));
+
+  //Insert empty stackslots in the stack frame of each function
+  //so %fp+offset-8 and %fp+offset-16 are empty slots now!
+  PM.add(createStackSlotsPass(*this));
+
+  PM.add(createInstructionSelectionPass(*this));
+
+  // new pass: convert Value* in MachineOperand to an unsigned register
+  // this brings it in line with what the X86 JIT's RegisterAllocator expects
+  //PM.add(createAddRegNumToValuesPass());
+
+  PM.add(getRegisterAllocator(*this));
+  PM.add(getPrologEpilogInsertionPass());
+
+  return false; // success!
 }
