@@ -14,6 +14,8 @@
 #include <map>
 #include <set>
 #include <iostream>
+#include <cstdlib>
+#include <cerrno>
 
 using namespace cl;
 
@@ -682,9 +684,12 @@ bool parser<int>::parse(Option &O, const char *ArgName,
 bool parser<unsigned>::parse(Option &O, const char *ArgName,
                              const std::string &Arg, unsigned &Value) {
   char *End;
-  long long int V = strtoll(Arg.c_str(), &End, 0);
+  errno = 0;
+  unsigned long V = strtoul(Arg.c_str(), &End, 0);
   Value = (unsigned)V;
-  if (*End != 0 || V < 0 || Value != V) 
+  if (((V == ULONG_MAX) && (errno == ERANGE))
+      || (*End != 0)
+      || (Value != V))
     return O.error(": '" + Arg + "' value invalid for uint argument!");
   return false;
 }
