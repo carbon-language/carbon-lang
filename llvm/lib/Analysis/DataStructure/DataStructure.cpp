@@ -245,7 +245,7 @@ bool DSNode::mergeTypeInfo(const Type *NewTy, unsigned Offset) {
   unsigned SubTypeSize = SubType->isSized() ? TD.getTypeSize(SubType) : 0;
   while (SubType != NewTy) {
     const Type *NextSubType = 0;
-    unsigned NextSubTypeSize;
+    unsigned NextSubTypeSize = 0;
     switch (SubType->getPrimitiveID()) {
     case Type::StructTyID:
       NextSubType = cast<StructType>(SubType)->getElementTypes()[0];
@@ -514,11 +514,9 @@ DSGraph::~DSGraph() {
   ScalarMap.clear();
   RetNode.setNode(0);
 
-#ifndef NDEBUG
   // Drop all intra-node references, so that assertions don't fail...
   std::for_each(Nodes.begin(), Nodes.end(),
                 std::mem_fun(&DSNode::dropAllReferences));
-#endif
 
   // Delete all of the nodes themselves...
   std::for_each(Nodes.begin(), Nodes.end(), deleter<DSNode>);
