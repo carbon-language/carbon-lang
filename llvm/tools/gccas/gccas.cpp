@@ -64,6 +64,7 @@ int main(int argc, char **argv) {
   //
   vector<Pass*> Passes;
   Passes.push_back(new CleanupGCCOutput());        // Fix gccisms
+  Passes.push_back(new opt::ConstantPropogation());// Trivial const prop
   Passes.push_back(new RaisePointerReferences());  // Fix general low level code
   Passes.push_back(new opt::ConstantPropogation());// Trivial const prop
   Passes.push_back(new opt::DeadCodeElimination());// Trivial DCE
