@@ -40,6 +40,18 @@ public:
 
   virtual void print(std::ostream &O) const;
 
+  // Specialize get/setOperand for Constant's as their operands are always
+  // constants as well.
+  Constant *getOperand(unsigned i) { 
+    return static_cast<Constant*>(User::getOperand(i));
+  }
+  const Constant *getOperand(unsigned i) const {
+    return static_cast<const Constant*>(User::getOperand(i));
+  }
+  void setOperand(unsigned i, Constant *C) {
+    User::setOperand(i, C);
+  }
+
   /// destroyConstant - Called if some element of this constant is no longer
   /// valid.  At this point only other constants may be on the use_list for this
   /// constant.  Any constants on our Use list must also be destroy'd.  The
