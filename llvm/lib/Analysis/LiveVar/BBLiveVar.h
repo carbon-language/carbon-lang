@@ -1,20 +1,21 @@
-/* Title:   BBLiveVar.h                  -*- C++ -*-
-   Author:  Ruchira Sasanka
-   Date:    Jun 30, 01
-   Purpose: This is a wrapper class for BasicBlock which is used by live 
-            variable anaysis.
-*/
+//===-- BBLiveVar.h - Live Variable Analysis for a BasicBlock ----*- C++ -*--=//
+//
+// This is a wrapper class for BasicBlock which is used by live var analysis.
+//
+//===----------------------------------------------------------------------===//
 
 #ifndef LIVE_VAR_BB_H
 #define LIVE_VAR_BB_H
 
 #include "LiveVarSet.h"
-#include "LiveVarMap.h"
+#include <map>
 class Method;
+class BasicBlock;
+class Value;
 
 class BBLiveVar {
-  const BasicBlock* BaseBB;     // pointer to BasicBlock
-  unsigned POId;                // Post-Order ID
+  const BasicBlock *BB;         // pointer to BasicBlock
+  unsigned POID;                // Post-Order ID
 
   LiveVarSet DefSet;            // Def set for LV analysis
   LiveVarSet InSet, OutSet;     // In & Out for LV analysis
@@ -22,12 +23,12 @@ class BBLiveVar {
 
                                 // map that contains phi args->BB they came
                                 // set by calcDefUseSets & used by setPropagate
-  std::hash_map<const Value *, const BasicBlock *> PhiArgMap;  
+  std::map<const Value *, const BasicBlock *> PhiArgMap;  
 
   // method to propogate an InSet to OutSet of a predecessor
-  bool setPropagate( LiveVarSet *OutSetOfPred, 
-		     const LiveVarSet *InSetOfThisBB,
-		     const BasicBlock *PredBB);
+  bool setPropagate(LiveVarSet *OutSetOfPred, 
+                    const LiveVarSet *InSetOfThisBB,
+                    const BasicBlock *PredBB);
 
   // To add an operand which is a def
   void  addDef(const Value *Op); 
@@ -36,21 +37,21 @@ class BBLiveVar {
   void  addUse(const Value *Op);
 
  public:
-  BBLiveVar(const BasicBlock* baseBB, unsigned POId);
+  BBLiveVar(const BasicBlock *BB, unsigned POID);
 
-  inline bool isInSetChanged() const { return InSetChanged; }    
+  inline bool isInSetChanged() const  { return InSetChanged; }    
   inline bool isOutSetChanged() const { return OutSetChanged; }
 
-  inline unsigned getPOId() const { return POId; }
+  inline unsigned getPOId() const { return POID; }
 
-  void calcDefUseSets() ;         // calculates the Def & Use sets for this BB
-  bool  applyTransferFunc();      // calcultes the In in terms of Out 
+  void calcDefUseSets();         // calculates the Def & Use sets for this BB
+  bool applyTransferFunc();      // calcultes the In in terms of Out 
 
   // calculates Out set using In sets of the predecessors
-  bool applyFlowFunc(BBToBBLiveVarMapType LVMap);    
+  bool applyFlowFunc(std::map<const BasicBlock *, BBLiveVar *> &LVMap);    
 
-  inline const LiveVarSet* getOutSet()  const { return &OutSet; }
-  inline const LiveVarSet*  getInSet() const { return &InSet; }
+  inline const LiveVarSet *getOutSet() const { return &OutSet; }
+  inline const LiveVarSet  *getInSet() const { return &InSet; }
 
   void printAllSets() const;      // for printing Def/In/Out sets
   void printInOutSets() const;    // for printing In/Out sets
