@@ -29,6 +29,25 @@
 #include "llvm/Tools/CommandLine.h"
 #include "llvm/Opt/AllOpts.h"
 
+#if 1  // Testcase, TODO: REMOVE
+#include "llvm/CFG.h"
+#include "llvm/Assembly/Writer.h"
+#include "llvm/Method.h"
+static bool DoPrintM(Method *M) {
+  df_iterator I = df_begin(M->getBasicBlocks().front(), false);
+  df_iterator E = df_end(M->getBasicBlocks().front());
+  unsigned i = 0;
+  for (; I != E; ++I, ++i) {
+    cerr << "Basic Block Visited #" << i << *I;
+  }
+  return false;
+}
+
+static bool DoPrint(Module *C) {
+  return ApplyOptToAllMethods(C, DoPrintM);
+}
+#endif
+
 struct {
   const string ArgName, Name;
   bool (*OptPtr)(Module *C);
@@ -38,6 +57,7 @@ struct {
   { "-inline"   ,"Method Inlining",       DoMethodInlining      },
   { "-strip"    ,"Strip Symbols",         DoSymbolStripping     },
   { "-mstrip"   ,"Strip Module Symbols",  DoFullSymbolStripping },
+  { "-print"    ,"Test printing stuff",   DoPrint               },
 };
 
 int main(int argc, char **argv) {
