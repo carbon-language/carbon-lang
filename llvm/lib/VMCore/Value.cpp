@@ -91,13 +91,6 @@ void Value::killUse(User *U) {
   Uses.erase(Uses.begin()+i);
 }
 
-User *Value::use_remove(use_iterator &I) {
-  assert(I != Uses.end() && "Trying to remove the end of the use list!!!");
-  User *i = *I;
-  I = Uses.erase(I);
-  return i;
-}
-
 //===----------------------------------------------------------------------===//
 //                                 User Class
 //===----------------------------------------------------------------------===//
