@@ -54,53 +54,75 @@ BytecodeWriter::BytecodeWriter(std::deque<unsigned char> &o, const Module *M)
     outputSymbolTable(*M->getSymbolTable());
 }
 
+// Helper function for outputConstants().
+// Writes out all the constants in the plane Plane starting at entry StartNo.
+// 
+void BytecodeWriter::outputConstantsInPlane(const std::vector<const Value*>
+                                            &Plane, unsigned StartNo) {
+  unsigned ValNo = StartNo;
+  
+  // Scan through and ignore function arguments...
+  for (; ValNo < Plane.size() && isa<Argument>(Plane[ValNo]); ValNo++)
+    /*empty*/;
+
+  unsigned NC = ValNo;              // Number of constants
+  for (; NC < Plane.size() && 
+         (isa<Constant>(Plane[NC]) || isa<Type>(Plane[NC])); NC++)
+    /*empty*/;
+  NC -= ValNo;                      // Convert from index into count
+  if (NC == 0) return;              // Skip empty type planes...
+
+  // Output type header: [num entries][type id number]
+  //
+  output_vbr(NC, Out);
+
+  // Output the Type ID Number...
+  int Slot = Table.getValSlot(Plane.front()->getType());
+  assert (Slot != -1 && "Type in constant pool but not in function!!");
+  output_vbr((unsigned)Slot, Out);
+
+  //cerr << "Emitting " << NC << " constants of type '" 
+  //	 << Plane.front()->getType()->getName() << "' = Slot #" << Slot << "\n";
+
+  for (unsigned i = ValNo; i < ValNo+NC; ++i) {
+    const Value *V = Plane[i];
+    if (const Constant *CPV = dyn_cast<Constant>(V)) {
+      //cerr << "Serializing value: <" << V->getType() << ">: " << V << ":" 
+      //     << Out.size() << "\n";
+      outputConstant(CPV);
+    } else {
+      outputType(cast<const Type>(V));
+    }
+  }
+}
+
 void BytecodeWriter::outputConstants(bool isFunction) {
   BytecodeBlock CPool(BytecodeFormat::ConstantPool, Out);
 
   unsigned NumPlanes = Table.getNumPlanes();
+  
+  // Write the type plane for types first because earlier planes
+  // (e.g. for a primitive type like float) may have constants constructed
+  // using types coming later (e.g., via getelementptr from a pointer type).
+  // The type plane is needed before types can be fwd or bkwd referenced.
+  if (!isFunction) {
+    const std::vector<const Value*> &Plane = Table.getPlane(Type::TypeTyID);
+    assert(!Plane.empty() && "No types at all?");
+    unsigned ValNo = Type::FirstDerivedTyID; // Start at the derived types...
+    outputConstantsInPlane(Plane, ValNo);      // Write out the types
+  }
+  
   for (unsigned pno = 0; pno < NumPlanes; pno++) {
     const std::vector<const Value*> &Plane = Table.getPlane(pno);
     if (Plane.empty()) continue;      // Skip empty type planes...
-
+    
     unsigned ValNo = 0;
     if (isFunction)                   // Don't reemit module constants
       ValNo = Table.getModuleLevel(pno);
     else if (pno == Type::TypeTyID)
-      ValNo = Type::FirstDerivedTyID; // Start emitting at the derived types...
+      continue;                       // Type plane was written out above
     
-    // Scan through and ignore function arguments...
-    for (; ValNo < Plane.size() && isa<Argument>(Plane[ValNo]); ValNo++)
-      /*empty*/;
-
-    unsigned NC = ValNo;              // Number of constants
-    for (; NC < Plane.size() && 
-	   (isa<Constant>(Plane[NC]) || isa<Type>(Plane[NC])); NC++)
-      /*empty*/;
-    NC -= ValNo;                      // Convert from index into count
-    if (NC == 0) continue;            // Skip empty type planes...
-
-    // Output type header: [num entries][type id number]
-    //
-    output_vbr(NC, Out);
-
-    // Output the Type ID Number...
-    int Slot = Table.getValSlot(Plane.front()->getType());
-    assert (Slot != -1 && "Type in constant pool but not in function!!");
-    output_vbr((unsigned)Slot, Out);
-
-    //cerr << "Emitting " << NC << " constants of type '" 
-    //	 << Plane.front()->getType()->getName() << "' = Slot #" << Slot << "\n";
-
-    for (unsigned i = ValNo; i < ValNo+NC; ++i) {
-      const Value *V = Plane[i];
-      if (const Constant *CPV = dyn_cast<Constant>(V)) {
-	//cerr << "Serializing value: <" << V->getType() << ">: " << V << ":" 
-	//     << Out.size() << "\n";
-	outputConstant(CPV);
-      } else {
-	outputType(cast<const Type>(V));
-      }
-    }
+    outputConstantsInPlane(Plane, ValNo); // Write out constants in the plane
   }
 }
 
