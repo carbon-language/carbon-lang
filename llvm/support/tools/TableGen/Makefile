@@ -8,9 +8,14 @@ clean::
 	-rm -f FileParser.cpp FileParser.h FileLexer.cpp CommandLine.cpp
 	-rm -f FileParser.output
 
-test::
+
+dump::
 	$(TOOLEXENAME_G) < X86.td
-	# -parse
+
+parse:
+	$(TOOLEXENAME_G) < X86.td -parse
+
+test::
 
 	@echo "enum {"
 	@$(TOOLEXENAME_G) < X86.td -class=Register
