@@ -109,3 +109,9 @@ int %test15a(bool %C) {
         ret int %V
 }
 
+bool %test16(int %X) {
+        %tmp.3 = shr int %X, ubyte 4
+        %tmp.6 = and int %tmp.3, 1
+        %tmp.7 = setne int %tmp.6, 0  ;; X & 16 != 0
+        ret bool %tmp.7
+}
