@@ -11,17 +11,16 @@ class Function;
 class Module;
 
 class AbstractModuleProvider {
-  Module *M;
-
 protected:
+  Module *TheModule;
   AbstractModuleProvider();
 
 public:
   virtual ~AbstractModuleProvider();
 
-  /// getModule - returns the module this provider is encapsulating
+  /// getModule - returns the module this provider is encapsulating.
   ///
-  Module* getModule() { return M; }
+  Module* getModule() { return TheModule; }
 
   /// materializeFunction - make sure the given function is fully read.
   ///
@@ -33,7 +32,13 @@ public:
 
   /// releaseModule - no longer delete the Module* when provider is destroyed.
   ///
-  Module* releaseModule() { Module *tempM = M; M = 0; return tempM; }
+  virtual Module* releaseModule() { 
+    // Since we're losing control of this Module, we must hand it back complete
+    materializeModule();
+    Module *tempM = TheModule; 
+    TheModule = 0; 
+    return tempM; 
+  }
 
 };
 
