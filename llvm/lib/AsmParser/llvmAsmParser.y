@@ -16,6 +16,7 @@
 #include "llvm/iTerminators.h"
 #include "llvm/iMemory.h"
 #include "llvm/iPHINode.h"
+#include "llvm/Argument.h"
 #include "Support/STLExtras.h"
 #include "Support/DepthFirstIterator.h"
 #include <list>
@@ -612,7 +613,7 @@ Module *RunVMAsmParser(const string &Filename, FILE *F) {
 %union {
   Module                           *ModuleVal;
   Function                         *FunctionVal;
-  std::pair<FunctionArgument*,char*> *MethArgVal;
+  std::pair<Argument*, char*>      *ArgVal;
   BasicBlock                       *BasicBlockVal;
   TerminatorInst                   *TermInstVal;
   Instruction                      *InstVal;
@@ -622,12 +623,12 @@ Module *RunVMAsmParser(const string &Filename, FILE *F) {
   PATypeHolder                     *TypeVal;
   Value                            *ValueVal;
 
-  std::list<std::pair<FunctionArgument*,char*> > *FunctionArgList;
+  std::list<std::pair<Argument*,char*> > *ArgList;
   std::vector<Value*>              *ValueList;
   std::list<PATypeHolder>          *TypeList;
   std::list<std::pair<Value*,
                       BasicBlock*> > *PHIList; // Represent the RHS of PHI node
-  std::list<std::pair<Constant*, BasicBlock*> > *JumpTable;
+  std::vector<std::pair<Constant*, BasicBlock*> > *JumpTable;
   std::vector<Constant*>           *ConstVector;
 
   int64_t                           SInt64Val;
@@ -654,8 +655,8 @@ Module *RunVMAsmParser(const string &Filename, FILE *F) {
 %type <InstVal>       Inst InstVal MemoryInst
 %type <ConstVal>      ConstVal
 %type <ConstVector>   ConstVector
-%type <FunctionArgList> ArgList ArgListH
-%type <MethArgVal>    ArgVal
+%type <ArgList>       ArgList ArgListH
+%type <ArgVal>        ArgVal
 %type <PHIList>       PHIList
 %type <ValueList>     ValueRefList ValueRefListE  // For call param lists
 %type <ValueList>     IndexList                   // For GEP derived indices
@@ -1127,7 +1128,7 @@ FunctionList : FunctionList Function {
 OptVAR_ID : VAR_ID | /*empty*/ { $$ = 0; }
 
 ArgVal : Types OptVAR_ID {
-  $$ = new pair<FunctionArgument*,char*>(new FunctionArgument(*$1), $2);
+  $$ = new pair<Argument*, char*>(new Argument(*$1), $2);
   delete $1;  // Delete the type handle..
 }
 
@@ -1137,14 +1138,13 @@ ArgListH : ArgVal ',' ArgListH {
     delete $1;
   }
   | ArgVal {
-    $$ = new list<pair<FunctionArgument*,char*> >();
+    $$ = new list<pair<Argument*,char*> >();
     $$->push_front(*$1);
     delete $1;
   }
   | DOTDOTDOT {
-    $$ = new list<pair<FunctionArgument*, char*> >();
-    $$->push_front(pair<FunctionArgument*,char*>(
-                            new FunctionArgument(Type::VoidTy), 0));
+    $$ = new list<pair<Argument*, char*> >();
+    $$->push_front(pair<Argument*,char*>(new Argument(Type::VoidTy), 0));
   }
 
 ArgList : ArgListH {
@@ -1160,7 +1160,7 @@ FunctionHeaderH : OptInternal TypesV STRINGCONSTANT '(' ArgList ')' {
   
   vector<const Type*> ParamTypeList;
   if ($5)
-    for (list<pair<FunctionArgument*,char*> >::iterator I = $5->begin();
+    for (list<pair<Argument*,char*> >::iterator I = $5->begin();
          I != $5->end(); ++I)
       ParamTypeList.push_back(I->first->getType());
 
@@ -1202,7 +1202,7 @@ FunctionHeaderH : OptInternal TypesV STRINGCONSTANT '(' ArgList ')' {
   if ($5 && !CurMeth.isDeclare) {        // Is null if empty...
     Function::ArgumentListType &ArgList = M->getArgumentList();
 
-    for (list<pair<FunctionArgument*, char*> >::iterator I = $5->begin();
+    for (list<pair<Argument*, char*> >::iterator I = $5->begin();
          I != $5->end(); ++I) {
       if (setValueName(I->first, I->second)) {  // Insert into symtab...
         assert(0 && "No arg redef allowed!");
@@ -1214,8 +1214,8 @@ FunctionHeaderH : OptInternal TypesV STRINGCONSTANT '(' ArgList ')' {
     delete $5;                     // We're now done with the argument list
   } else if ($5) {
     // If we are a declaration, we should free the memory for the argument list!
-    for (list<pair<FunctionArgument*, char*> >::iterator I = $5->begin();
-         I != $5->end(); ++I) {
+    for (list<pair<Argument*, char*> >::iterator I = $5->begin(), E = $5->end();
+         I != E; ++I) {
       if (I->second) free(I->second);   // Free the memory for the name...
       delete I->first;                  // Free the unused function argument
     }
@@ -1349,9 +1349,9 @@ BBTerminatorInst : RET ResolvedVal {              // Return with a result...
                                    cast<BasicBlock>(getVal(Type::LabelTy, $6)));
     $$ = S;
 
-    list<pair<Constant*, BasicBlock*> >::iterator I = $8->begin(), 
-                                                      end = $8->end();
-    for (; I != end; ++I)
+    vector<pair<Constant*,BasicBlock*> >::iterator I = $8->begin(),
+      E = $8->end();
+    for (; I != E; ++I)
       S->dest_push_back(I->first, I->second);
   }
   | INVOKE TypesV ValueRef '(' ValueRefListE ')' TO ResolvedVal 
@@ -1419,7 +1419,7 @@ JumpTable : JumpTable IntType ConstValueRef ',' LABEL ValueRef {
     $$->push_back(make_pair(V, cast<BasicBlock>(getVal($5, $6))));
   }
   | IntType ConstValueRef ',' LABEL ValueRef {
-    $$ = new list<pair<Constant*, BasicBlock*> >();
+    $$ = new vector<pair<Constant*, BasicBlock*> >();
     Constant *V = cast<Constant>(getValNonImprovising($1, $2));
 
     if (V == 0)
