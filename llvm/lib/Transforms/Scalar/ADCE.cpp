@@ -8,6 +8,7 @@
 
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/Utils/Local.h"
+#include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Type.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/iTerminators.h"
@@ -209,41 +210,72 @@ bool ADCE::doADCE() {
         BasicBlock *BB = I;
         TerminatorInst *TI = BB->getTerminator();
       
-        // Loop over all of the successors, looking for ones that are not alive
-        for (unsigned i = 0, e = TI->getNumSuccessors(); i != e; ++i)
+        // Loop over all of the successors, looking for ones that are not alive.
+        // We cannot save the number of successors in the terminator instruction
+        // here because we may remove them if we don't have a postdominator...
+        //
+        for (unsigned i = 0; i != TI->getNumSuccessors(); ++i)
           if (!AliveBlocks.count(TI->getSuccessor(i))) {
             // Scan up the postdominator tree, looking for the first
             // postdominator that is alive, and the last postdominator that is
             // dead...
             //
             PostDominatorTree::Node *LastNode = DT[TI->getSuccessor(i)];
-            PostDominatorTree::Node *NextNode = LastNode->getIDom();
-            while (!AliveBlocks.count(NextNode->getNode())) {
-              LastNode = NextNode;
-              NextNode = NextNode->getIDom();
-            }
-            
-            // Get the basic blocks that we need...
-            BasicBlock *LastDead = LastNode->getNode();
-            BasicBlock *NextAlive = NextNode->getNode();
-            
-            // Make the conditional branch now go to the next alive block...
-            TI->getSuccessor(i)->removePredecessor(BB);
-            TI->setSuccessor(i, NextAlive);
-            
-            // If there are PHI nodes in NextAlive, we need to add entries to
-            // the PHI nodes for the new incoming edge.  The incoming values
-            // should be identical to the incoming values for LastDead.
+
+            // There is a special case here... if there IS no post-dominator for
+            // the block we have no owhere to point our branch to.  Instead,
+            // convert it to a return.  This can only happen if the code
+            // branched into an infinite loop.  Note that this may not be
+            // desirable, because we _are_ altering the behavior of the code.
+            // This is a well known drawback of ADCE, so in the future if we
+            // choose to revisit the decision, this is where it should be.
             //
-            for (BasicBlock::iterator II = NextAlive->begin();
-                 PHINode *PN = dyn_cast<PHINode>(&*II); ++II) {
-              // Get the incoming value for LastDead...
-              int OldIdx = PN->getBasicBlockIndex(LastDead);
-              assert(OldIdx != -1 && "LastDead is not a pred of NextAlive!");
-              Value *InVal = PN->getIncomingValue(OldIdx);
-              
-              // Add an incoming value for BB now...
-              PN->addIncoming(InVal, BB);
+            if (LastNode == 0) {        // No postdominator!
+              // Call RemoveSuccessor to transmogrify the terminator instruction
+              // to not contain the outgoing branch, or to create a new
+              // terminator if the form fundementally changes (ie unconditional
+              // branch to return).  Note that this will change a branch into an
+              // infinite loop into a return instruction!
+              //
+              RemoveSuccessor(TI, i);
+
+              // RemoveSuccessor may replace TI... make sure we have a fresh
+              // pointer... and e variable.
+              //
+              TI = BB->getTerminator();
+
+              // Rescan this successor...
+              --i;
+            } else {
+              PostDominatorTree::Node *NextNode = LastNode->getIDom();
+
+              while (!AliveBlocks.count(NextNode->getNode())) {
+                LastNode = NextNode;
+                NextNode = NextNode->getIDom();
+              }
+            
+              // Get the basic blocks that we need...
+              BasicBlock *LastDead = LastNode->getNode();
+              BasicBlock *NextAlive = NextNode->getNode();
+
+              // Make the conditional branch now go to the next alive block...
+              TI->getSuccessor(i)->removePredecessor(BB);
+              TI->setSuccessor(i, NextAlive);
+
+              // If there are PHI nodes in NextAlive, we need to add entries to
+              // the PHI nodes for the new incoming edge.  The incoming values
+              // should be identical to the incoming values for LastDead.
+              //
+              for (BasicBlock::iterator II = NextAlive->begin();
+                   PHINode *PN = dyn_cast<PHINode>(&*II); ++II) {
+                // Get the incoming value for LastDead...
+                int OldIdx = PN->getBasicBlockIndex(LastDead);
+                assert(OldIdx != -1 && "LastDead is not a pred of NextAlive!");
+                Value *InVal = PN->getIncomingValue(OldIdx);
+                
+                // Add an incoming value for BB now...
+                PN->addIncoming(InVal, BB);
+              }
             }
           }
 
