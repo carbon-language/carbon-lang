@@ -136,19 +136,17 @@ I(XNORcci, "xnorcc",	4,  2, B12, true , 0, 1, SPARC_IEU1,  M_INT_FLAG | M_LOGICA
 
 // Shift operations
 I(SLLr6 , "sll",  	3,  2,  B5, true , 0, 1, SPARC_IEU0,  M_INT_FLAG | M_LOGICAL_FLAG)
-I(SRLr6 , "srl",  	3,  2,  B5, true , 0, 1, SPARC_IEU0,  M_INT_FLAG | M_LOGICAL_FLAG)
-I(SRAr6 , "sra",  	3,  2,  B5, true , 0, 1, SPARC_IEU0,  M_INT_FLAG | M_ARITH_FLAG)
-I(SLLXr6, "sllx", 	3,  2,  B6, true , 0, 1, SPARC_IEU0,  M_INT_FLAG | M_LOGICAL_FLAG)
-I(SRLXr6, "srlx", 	3,  2,  B6, true , 0, 1, SPARC_IEU0,  M_INT_FLAG | M_LOGICAL_FLAG)
-I(SRAXr6, "srax", 	3,  2,  B6, true , 0, 1, SPARC_IEU0,  M_INT_FLAG | M_ARITH_FLAG)
-
 I(SLLi6 , "sll",  	3,  2,  B5, true , 0, 1, SPARC_IEU0,  M_INT_FLAG | M_LOGICAL_FLAG)
+I(SRLr6 , "srl",  	3,  2,  B5, true , 0, 1, SPARC_IEU0,  M_INT_FLAG | M_LOGICAL_FLAG)
 I(SRLi6 , "srl",  	3,  2,  B5, true , 0, 1, SPARC_IEU0,  M_INT_FLAG | M_LOGICAL_FLAG)
+I(SRAr6 , "sra",  	3,  2,  B5, true , 0, 1, SPARC_IEU0,  M_INT_FLAG | M_ARITH_FLAG)
 I(SRAi6 , "sra",  	3,  2,  B5, true , 0, 1, SPARC_IEU0,  M_INT_FLAG | M_ARITH_FLAG)
+I(SLLXr6, "sllx", 	3,  2,  B6, true , 0, 1, SPARC_IEU0,  M_INT_FLAG | M_LOGICAL_FLAG)
 I(SLLXi6, "sllx", 	3,  2,  B6, true , 0, 1, SPARC_IEU0,  M_INT_FLAG | M_LOGICAL_FLAG)
+I(SRLXr6, "srlx", 	3,  2,  B6, true , 0, 1, SPARC_IEU0,  M_INT_FLAG | M_LOGICAL_FLAG)
 I(SRLXi6, "srlx", 	3,  2,  B6, true , 0, 1, SPARC_IEU0,  M_INT_FLAG | M_LOGICAL_FLAG)
+I(SRAXr6, "srax", 	3,  2,  B6, true , 0, 1, SPARC_IEU0,  M_INT_FLAG | M_ARITH_FLAG)
 I(SRAXi6, "srax", 	3,  2,  B6, true , 0, 1, SPARC_IEU0,  M_INT_FLAG | M_ARITH_FLAG)
-
 
 // Floating point move, negate, and abs instructions
 I(FMOVS, "fmovs",	2,  1,   0, false, 0, 1,  SPARC_FPA,  M_FLOAT_FLAG)
