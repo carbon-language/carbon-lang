@@ -63,14 +63,18 @@ static bool hasDelaySlot (unsigned Opcode) {
 }
 
 /// runOnMachineBasicBlock - Fill in delay slots for the given basic block.
+/// Currently, we fill delay slots with NOPs. We assume there is only one
+/// delay slot per delayed instruction.
 ///
 bool Filler::runOnMachineBasicBlock (MachineBasicBlock &MBB) {
+  bool Changed = false;
   for (MachineBasicBlock::iterator I = MBB.begin (); I != MBB.end (); ++I)
     if (hasDelaySlot (I->getOpcode ())) {
       MachineBasicBlock::iterator J = I;
       ++J;
-      MBB.insert (J, BuildMI (V8::NOP, 0));
+      BuildMI (MBB, J, V8::NOP, 0);
       ++FilledSlots;
+      Changed = true;
     }
-  return false;
+  return Changed;
 }
