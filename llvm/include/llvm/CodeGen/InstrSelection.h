@@ -88,10 +88,6 @@ public:
     Operands.push_back(Use(s1, this));  // s1 must be nonnull
     if (s2) {
       Operands.push_back(Use(s2, this));
-#if 0
-      assert(s2->getType() == getType() &&
-             "TmpInstruction operand types do not match!");
-#endif
     }
   }
   
@@ -100,13 +96,22 @@ public:
   TmpInstruction(const Type *Ty, Value *s1 = 0, Value* s2 = 0,
                  const std::string &name = "")
     : Instruction(Ty, Instruction::UserOp1, name) {
-    if (s1) { Operands.push_back(Use(s1, this)); /*assert(s1->getType() == Ty);*/ }
-    if (s2) { Operands.push_back(Use(s2, this)); /*assert(s2->getType() == Ty);*/ }
+    if (s1) { Operands.push_back(Use(s1, this)); }
+    if (s2) { Operands.push_back(Use(s2, this)); }
   }
   
   virtual Instruction *clone() const { return new TmpInstruction(*this); }
   virtual const char *getOpcodeName() const {
-    return "TemporaryInstruction";
+    return "TempValueForMachineInstr";
+  }
+  
+  // Methods for support type inquiry through isa, cast, and dyn_cast:
+  static inline bool classof(const TmpInstruction *) { return true; }
+  static inline bool classof(const Instruction *I) {
+    return (I->getOpcode() == Instruction::UserOp1);
+  }
+  static inline bool classof(const Value *V) {
+    return isa<Instruction>(V) && classof(cast<Instruction>(V));
   }
 };
 
