@@ -1,34 +1,6 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html><head><title>Writing an LLVM Pass</title></head>
 
-<!--
-I. General Structure of an LLVM Program
-
-I.1 "What is a 'Value'?": Value & User class
-I.2 Type & Derived Types
-I.3 GlobalVariable, Function
-I.4 BasicBlock
-I.5 Instruction & Subclasses
-1.6 Argument
-1.7 Constants
-
-III. Useful things to know about the LLVM source base:
-
-III.1 Useful links that introduce the STL
-III.2 isa<>, cast<>, dyn_cast<>
-III.3 Makefiles, useful options
-III.4 How to use opt & analyze to debug stuff
-III.5 How to write a regression test
-III.6 DEBUG() and Statistics (-debug & -stats)
-III.7 The -time-passes option
-III.8 ... more as needed ...
-
-I think that writing Section #1 would be very helpful and that's the most
-stable portion of the sourcebase.  #3 can be started on, but will probably
-just grow as time goes on.
-
--->
-
 <body bgcolor=white>
 
 <table width="100%" bgcolor="#330077" border=0 cellpadding=4 cellspacing=0>
@@ -79,6 +51,11 @@ just grow as time goes on.
   <li><a href="#passmanager">What PassManager does</a>
     <ul>
     <li><a href="#releaseMemory">The <tt>releaseMemory</tt> method</a>
+    </ul>
+  <li><a href="#debughints">Using GDB with dynamically loaded passes</a>
+    <ul>
+    <li><a href="#breakpoint">Setting a breakpoint in your pass
+    <li><a href="#debugmisc">Miscellaneous Problems
     </ul>
   <li><a href="#future">Future extensions planned</a>
     <ul>
@@ -1028,6 +1005,92 @@ class, before the next call of <tt>run*</tt> in your pass.<p>
 <!-- *********************************************************************** -->
 </ul><table width="100%" bgcolor="#330077" border=0 cellpadding=4 cellspacing=0>
 <tr><td align=center><font color="#EEEEFF" size=+2 face="Georgia,Palatino"><b>
+<a name="debughints">Using GDB with dynamically loaded passes
+</b></font></td></tr></table><ul>
+<!-- *********************************************************************** -->
+
+Unfortunately, using GDB with dynamically loaded passes is not as easy as it
+should be.  First of all, you can't set a breakpoint in a shared object that has
+not been loaded yet, and second of all there are problems with inlined functions
+in shared objects.  Here are some suggestions to debugging your pass with
+GDB.<p>
+
+For sake of discussion, I'm going to assume that you are debugging a
+transformation invoked by <tt>opt</tt>, although nothing described here depends
+on that.<p>
+
+<!-- _______________________________________________________________________ -->
+</ul><h4><a name="breakpoint"><hr size=0>Setting a breakpoint in your pass</h4><ul>
+
+First thing you do is start <tt>gdb</tt> on the <tt>opt</tt> process:<p>
+
+<pre>
+$ <b>gdb opt</b>
+GNU gdb 5.0
+Copyright 2000 Free Software Foundation, Inc.
+GDB is free software, covered by the GNU General Public License, and you are
+welcome to change it and/or distribute copies of it under certain conditions.
+Type "show copying" to see the conditions.
+There is absolutely no warranty for GDB.  Type "show warranty" for details.
+This GDB was configured as "sparc-sun-solaris2.6"...
+(gdb)
+</pre><p>
+
+Note that <tt>opt</tt> has a lot of debugging information in it, so it takes
+time to load.  Be patient.  Since we cannot set a breakpoint in our pass yet
+(the shared object isn't loaded until runtime), we must execute the process, and
+have it stop before it invokes our pass, but after it has loaded the shared
+object.  The most foolproof way of doing this is to set a breakpoint in
+<tt>PassManager::run</tt> and then run the process with the arguments you
+want:<p>
+
+<pre>
+(gdb) <b>break PassManager::run</b>
+Breakpoint 1 at 0x2413bc: file Pass.cpp, line 70.
+(gdb) <b>run test.bc -load /shared/lattner/cvs/llvm/lib/Debug/[libname].so -[passoption]</b>
+Starting program: /shared/lattner/cvs/llvm/tools/Debug/opt test.bc 
+    -load /shared/lattner/cvs/llvm/lib/Debug/[libname].so -[passoption]
+Breakpoint 1, PassManager::run (this=0xffbef174, M=@0x70b298) at Pass.cpp:70
+70      bool PassManager::run(Module &amp;M) { return PM-&gt;run(M); }
+(gdb)
+</pre></p>
+
+Once the <tt>opt</tt> stops in the <tt>PassManager::run</tt> method you are now
+free to set breakpoints in your pass so that you can trace through execution or
+do other standard debugging stuff.<p>
+
+
+<!-- _______________________________________________________________________ -->
+</ul><h4><a name="debugmisc"><hr size=0>Miscellaneous Problems</h4><ul>
+
+Once you have the basics down, there are a couple of problems that GDB has, some
+with solutions, some without.<p>
+
+<ul>
+<li>Inline functions have bogus stack information.  In general, GDB does a
+pretty good job getting stack traces and stepping through inline functions.
+When a pass is dynamically loaded however, it somehow completely loses this
+capability.  The only solution I know of is to de-inline a function (move it
+from the body of a class to a .cpp file).<p>
+
+<li>Restarting the program breaks breakpoints.  After following the information
+above, you have succeeded in getting some breakpoints planted in your pass.  Nex
+thing you know, you restart the program (i.e., you type '<tt>run</tt>' again),
+and you start getting errors about breakpoints being unsettable.  The only way I
+have found to "fix" this problem is to <tt>delete</tt> the breakpoints that are
+already set in your pass, run the program, and re-set the breakpoints once
+execution stops in <tt>PassManager::run</tt>.<p>
+
+</ul>
+
+Hopefully these tips will help with common case debugging situations.  If you'd
+like to contribute some tips of your own, just contact <a
+href="mailto:sabre@nondot.org">Chris</a>.<p>
+
+
+<!-- *********************************************************************** -->
+</ul><table width="100%" bgcolor="#330077" border=0 cellpadding=4 cellspacing=0>
+<tr><td align=center><font color="#EEEEFF" size=+2 face="Georgia,Palatino"><b>
 <a name="future">Future extensions planned
 </b></font></td></tr></table><ul>
 <!-- *********************************************************************** -->
@@ -1098,9 +1161,9 @@ href="#Pass"><tt>Pass</tt></a>, only the other way around.<p>
 <!-- *********************************************************************** -->
 
 <hr><font size-1>
-<address><a href="mailto:sabre@nondot.org">Christopher Lattner</a></address>
+<address><a href="mailto:sabre@nondot.org">Chris Lattner</a></address>
 <!-- Created: Tue Aug  6 15:00:33 CDT 2002 -->
 <!-- hhmts start -->
-Last modified: Thu Aug 22 14:19:43 CDT 2002
+Last modified: Thu Sep  5 15:06:01 CDT 2002
 <!-- hhmts end -->
 </font></body></html>
