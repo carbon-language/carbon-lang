@@ -8,6 +8,7 @@
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Module.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/SymbolTable.h"
 #include "llvm/Constant.h"
 #include "ValueMapper.h"
 
@@ -21,6 +22,14 @@ Module *CloneModule(const Module *M) {
   Module *New = new Module(M->getModuleIdentifier());
   New->setEndianness(M->getEndianness());
   New->setPointerSize(M->getPointerSize());
+
+  // Copy all of the type symbol table entries over...
+  const SymbolTable &SymTab = M->getSymbolTable();
+  SymbolTable::const_iterator TypeI = SymTab.find(Type::TypeTy);
+  if (TypeI != SymTab.end())
+    for (SymbolTable::VarMap::const_iterator I = TypeI->second.begin(),
+           E = TypeI->second.end(); I != E; ++I)
+      New->addTypeName(I->first, cast<Type>(I->second));
 
   // Create the value map that maps things from the old module over to the new
   // module.
