@@ -176,7 +176,45 @@ operator<<(ostream &os, const MachineOperand &mop)
 
 
 void
-PrintMachineInstructions(const Method *const method)
+MachineCodeForMethod::putLocalVarAtOffsetFromFP(const Value* local,
+                                                int offset,
+                                                unsigned int size)
+{
+  offsetsFromFP[local] = offset;
+  incrementAutomaticVarsSize(size);
+}
+
+
+void
+MachineCodeForMethod::putLocalVarAtOffsetFromSP(const Value* local,
+                                                int offset,
+                                                unsigned int size)
+{
+  offsetsFromSP[local] = offset;
+  incrementAutomaticVarsSize(size);
+}
+
+
+int
+MachineCodeForMethod::getOffsetFromFP(const Value* local) const
+{
+  hash_map<const Value*, int>::const_iterator pair = offsetsFromFP.find(local);
+  assert(pair != offsetsFromFP.end() && "Offset from FP unknown for Value");
+  return (*pair).second;
+}
+
+
+int
+MachineCodeForMethod::getOffsetFromSP(const Value* local) const
+{
+  hash_map<const Value*, int>::const_iterator pair = offsetsFromSP.find(local);
+  assert(pair != offsetsFromSP.end() && "Offset from SP unknown for Value");
+  return (*pair).second;
+}
+
+
+void
+MachineCodeForMethod::dump() const
 {
   cout << "\n" << method->getReturnType()
        << " \"" << method->getName() << "\"" << endl;
