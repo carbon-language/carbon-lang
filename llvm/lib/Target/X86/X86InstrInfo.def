@@ -152,8 +152,8 @@ I(SARir16     , "sarw",  0xC1,             0, X86II::MRMS7r | X86II::OpSize, NoI
 I(SARir32     , "sarl",  0xC1,             0, X86II::MRMS7r, NoIR, NoIR)                     // R32  >>= imm8
 
 // Floating point loads
-I(FLDr4       , "flds",  0xD9,             0, X86II::MRMS0m, NoIR, NoIR)                     // push float
-I(FLDr8       , "fldl ", 0xDD,             0, X86II::MRMS0m, NoIR, NoIR)                     // push double
+I(FLDr32      , "flds", 0xD9,              0, X86II::MRMS0m, NoIR, NoIR)                     // push float
+I(FLDr64      , "fldl", 0xDD,              0, X86II::MRMS0m, NoIR, NoIR)                     // push double
 
 // Floating point compares
 I(FUCOMPP     , "fucompp", 0xDA,           0, X86II::Void, NoIR, NoIR)                       // compare+pop2x

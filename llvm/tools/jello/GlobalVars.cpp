@@ -9,6 +9,7 @@
 #include "llvm/Constants.h"
 #include "llvm/Target/TargetMachine.h"
 #include "VM.h"
+#include <iostream>
 
 /// EmitGlobals - Emit all of the global variables to memory, storing their
 /// addresses into GlobalAddress.  This must make sure to copy the contents of
@@ -77,6 +78,20 @@ void VM::emitConstantToMemory(Constant *Init, void *Addr) {
       return;
     default: break;
     }
+  } else if (ConstantFP *CF = dyn_cast <ConstantFP> (Init)) {
+    switch (CF->getType ()->getPrimitiveID ()) {
+    case Type::FloatTyID:
+      *(float*)Addr = CF->getValue ();
+      return;
+    case Type::DoubleTyID:
+      *(double*)Addr = CF->getValue ();
+      return;
+    default: break;
+    }
+  } else if (ConstantPointerNull *CP = dyn_cast <ConstantPointerNull> (Init)) {
+	// Fill the space with a NULL pointer.
+	*(void **)Addr = NULL;
+	return;
   } else if (ConstantArray *CA = dyn_cast<ConstantArray>(Init)) {
     unsigned ElementSize = TD.getTypeSize(CA->getType()->getElementType());
     for (unsigned i = 0, e = CA->getType()->getNumElements(); i != e; ++i) {
@@ -86,5 +101,6 @@ void VM::emitConstantToMemory(Constant *Init, void *Addr) {
     return;
   }
 
+  std::cerr << "Offending constant: " << Init << "\n";
   assert(0 && "Don't know how to emit this constant to memory!");
 }

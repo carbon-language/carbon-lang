@@ -14,6 +14,7 @@
 #include "llvm/iPHINode.h"
 #include "llvm/iMemory.h"
 #include "llvm/Type.h"
+#include "llvm/DerivedTypes.h"
 #include "llvm/Constants.h"
 #include "llvm/Pass.h"
 #include "llvm/CodeGen/MachineFunction.h"
@@ -22,6 +23,7 @@
 #include "llvm/Support/InstVisitor.h"
 #include "llvm/Target/MRegisterInfo.h"
 #include <map>
+#include <iostream>
 
 using namespace MOTy;  // Get Use, Def, UseAndDef
 
@@ -73,6 +75,8 @@ namespace {
     void visitSimpleBinary(BinaryOperator &B, unsigned OpcodeClass);
     void visitAdd(BinaryOperator &B) { visitSimpleBinary(B, 0); }
     void visitSub(BinaryOperator &B) { visitSimpleBinary(B, 1); }
+    void doMultiply(unsigned destReg, const Type *resultType,
+		    unsigned op0Reg, unsigned op1Reg);
     void visitMul(BinaryOperator &B);
 
     void visitDiv(BinaryOperator &B) { visitDivRem(B); }
@@ -96,7 +100,10 @@ namespace {
     // Memory Instructions
     void visitLoadInst(LoadInst &I);
     void visitStoreInst(StoreInst &I);
-
+    void visitGetElementPtrInst(GetElementPtrInst &I);
+    void visitMallocInst(MallocInst &I);
+    void visitAllocaInst(AllocaInst &I);
+    
     // Other operators
     void visitShiftInst(ShiftInst &I);
     void visitPHINode(PHINode &I);
@@ -114,6 +121,13 @@ namespace {
     ///
     void copyConstantToRegister(Constant *C, unsigned Reg);
 
+    /// makeAnotherReg - This method returns the next register number
+    /// we haven't yet used.
+    unsigned makeAnotherReg (void) {
+      unsigned Reg = CurReg++;
+      return Reg;
+    }
+
     /// getReg - This method turns an LLVM value into a register number.  This
     /// is guaranteed to produce the same register number for a particular value
     /// every time it is queried.
@@ -122,7 +136,7 @@ namespace {
     unsigned getReg(Value *V) {
       unsigned &Reg = RegMap[V];
       if (Reg == 0) {
-        Reg = CurReg++;
+        Reg = makeAnotherReg ();
         RegMap[V] = Reg;
 
         // Add the mapping of regnumber => reg class to MachineFunction
@@ -182,6 +196,11 @@ static inline TypeClass getClass(const Type *Ty) {
 /// specified constant into the specified register.
 ///
 void ISel::copyConstantToRegister(Constant *C, unsigned R) {
+  if (isa<ConstantExpr> (C)) {
+    // FIXME: We really need to handle getelementptr exprs, among
+    // other things.
+    std::cerr << "Offending expr: " << C << "\n";
+  }
   assert (!isa<ConstantExpr>(C) && "Constant expressions not yet handled!\n");
 
   if (C->getType()->isIntegral()) {
@@ -199,7 +218,11 @@ void ISel::copyConstantToRegister(Constant *C, unsigned R) {
       ConstantUInt *CUI = cast<ConstantUInt>(C);
       BuildMI(BB, IntegralOpcodeTab[Class], 1, R).addZImm(CUI->getValue());
     }
+  } else if (isa <ConstantPointerNull> (C)) {
+    // Copy zero (null pointer) to the register.
+    BuildMI (BB, X86::MOVir32, 1, R).addZImm(0);
   } else {
+    std::cerr << "Offending constant: " << C << "\n";
     assert(0 && "Type not handled yet!");
   }
 }
@@ -236,12 +259,12 @@ void ISel::visitSetCCInst(SetCondInst &I, unsigned OpNum) {
     // FIXME: assuming var1, var2 are in memory, if not, spill to
     // stack first
   case cFloat:  // Floats
-    BuildMI (BB, X86::FLDr4, 1).addReg (reg1);
-    BuildMI (BB, X86::FLDr4, 1).addReg (reg2);
+    BuildMI (BB, X86::FLDr32, 1).addReg (reg1);
+    BuildMI (BB, X86::FLDr32, 1).addReg (reg2);
     break;
   case cDouble:  // Doubles
-    BuildMI (BB, X86::FLDr8, 1).addReg (reg1);
-    BuildMI (BB, X86::FLDr8, 1).addReg (reg2);
+    BuildMI (BB, X86::FLDr64, 1).addReg (reg1);
+    BuildMI (BB, X86::FLDr64, 1).addReg (reg2);
     break;
   case cLong:
   default:
@@ -345,10 +368,10 @@ ISel::visitReturnInst (ReturnInst &I)
       // ret float/double: top of FP stack
       // FLD <val>
     case cFloat:		// Floats
-      BuildMI (BB, X86::FLDr4, 1).addReg (getReg (rv));
+      BuildMI (BB, X86::FLDr32, 1).addReg (getReg (rv));
       break;
     case cDouble:		// Doubles
-      BuildMI (BB, X86::FLDr8, 1).addReg (getReg (rv));
+      BuildMI (BB, X86::FLDr64, 1).addReg (getReg (rv));
       break;
     case cLong:
       // ret long: use EAX(least significant 32 bits)/EDX (most
@@ -435,11 +458,31 @@ ISel::visitCallInst (CallInst & CI)
   // leaves it in...
   //
   if (CI.getType() != Type::VoidTy) {
-    switch (getClass(CI.getType())) {
-    case cInt:
-      BuildMI(BB, X86::MOVrr32, 1, getReg(CI)).addReg(X86::EAX);
+    unsigned resultTypeClass = getClass (CI.getType ());
+    switch (resultTypeClass) {
+    case cByte:
+    case cShort:
+    case cInt: {
+      // Integral results are in %eax, or the appropriate portion
+      // thereof.
+      static const unsigned regRegMove[] = {
+	X86::MOVrr8, X86::MOVrr16, X86::MOVrr32
+      };
+      static const unsigned AReg[] = { X86::AL, X86::AX, X86::EAX };
+      BuildMI (BB, regRegMove[resultTypeClass], 1,
+	       getReg (CI)).addReg (AReg[resultTypeClass]);
       break;
-      
+    }
+    case cFloat:
+      // Floating-point return values live in %st(0) (i.e., the top of
+      // the FP stack.) The general way to approach this is to do a
+      // FSTP to save the top of the FP stack on the real stack, then
+      // do a MOV to load the top of the real stack into the target
+      // register.
+      visitInstruction (CI); // FIXME: add the right args for the calls below
+      // BuildMI (BB, X86::FSTPm32, 0);
+      // BuildMI (BB, X86::MOVmr32, 0);
+      break;
     default:
       std::cerr << "Cannot get return value for call of type '"
                 << *CI.getType() << "'\n";
@@ -477,30 +520,41 @@ void ISel::visitSimpleBinary(BinaryOperator &B, unsigned OperatorClass) {
   BuildMI(BB, Opcode, 2, getReg(B)).addReg(Op0r).addReg(Op1r);
 }
 
+/// doMultiply - Emit appropriate instructions to multiply together
+/// the registers op0Reg and op1Reg, and put the result in destReg.
+/// The type of the result should be given as resultType.
+void
+ISel::doMultiply(unsigned destReg, const Type *resultType,
+		 unsigned op0Reg, unsigned op1Reg)
+{
+  unsigned Class = getClass (resultType);
+
+  // FIXME:
+  assert (Class <= 2 && "Someday, we will learn how to multiply"
+	  "longs and floating-point numbers. This is not that day.");
+ 
+  static const unsigned Regs[]     ={ X86::AL    , X86::AX     , X86::EAX     };
+  static const unsigned MulOpcode[]={ X86::MULrr8, X86::MULrr16, X86::MULrr32 };
+  static const unsigned MovOpcode[]={ X86::MOVrr8, X86::MOVrr16, X86::MOVrr32 };
+  unsigned Reg     = Regs[Class];
+
+  // Emit a MOV to put the first operand into the appropriately-sized
+  // subreg of EAX.
+  BuildMI (BB, MovOpcode[Class], 1, Reg).addReg (op0Reg);
+  
+  // Emit the appropriate multiply instruction.
+  BuildMI (BB, MulOpcode[Class], 1).addReg (op1Reg);
+
+  // Emit another MOV to put the result into the destination register.
+  BuildMI (BB, MovOpcode[Class], 1, destReg).addReg (Reg);
+}
+
 /// visitMul - Multiplies are not simple binary operators because they must deal
 /// with the EAX register explicitly.
 ///
 void ISel::visitMul(BinaryOperator &I) {
-  unsigned Class = getClass(I.getType());
-  if (Class > 2)  // FIXME: Handle longs
-    visitInstruction(I);
-
-  static const unsigned Regs[]     ={ X86::AL    , X86::AX     , X86::EAX     };
-  static const unsigned MulOpcode[]={ X86::MULrr8, X86::MULrr16, X86::MULrr32 };
-  static const unsigned MovOpcode[]={ X86::MOVrr8, X86::MOVrr16, X86::MOVrr32 };
-
-  unsigned Reg     = Regs[Class];
-  unsigned Op0Reg  = getReg(I.getOperand(0));
-  unsigned Op1Reg  = getReg(I.getOperand(1));
-
-  // Put the first operand into one of the A registers...
-  BuildMI(BB, MovOpcode[Class], 1, Reg).addReg(Op0Reg);
-  
-  // Emit the appropriate multiply instruction...
-  BuildMI(BB, MulOpcode[Class], 1).addReg(Op1Reg);
-
-  // Put the result into the destination register...
-  BuildMI(BB, MovOpcode[Class], 1, getReg(I)).addReg(Reg);
+  doMultiply (getReg (I), I.getType (),
+	      getReg (I.getOperand (0)), getReg (I.getOperand (1)));
 }
 
 
@@ -732,8 +786,118 @@ ISel::visitCastInst (CastInst &CI)
       return;
     }
   // Anything we haven't handled already, we can't (yet) handle at all.
+  //
+  // FP to integral casts can be handled with FISTP to store onto the
+  // stack while converting to integer, followed by a MOV to load from
+  // the stack into the result register. Integral to FP casts can be
+  // handled with MOV to store onto the stack, followed by a FILD to
+  // load from the stack while converting to FP. For the moment, I
+  // can't quite get straight in my head how to borrow myself some
+  // stack space and write on it. Otherwise, this would be trivial.
   visitInstruction (CI);
 }
+
+/// visitGetElementPtrInst - I don't know, most programs don't have
+/// getelementptr instructions, right? That means we can put off
+/// implementing this, right? Right. This method emits machine
+/// instructions to perform type-safe pointer arithmetic. I am
+/// guessing this could be cleaned up somewhat to use fewer temporary
+/// registers.
+void
+ISel::visitGetElementPtrInst (GetElementPtrInst &I)
+{
+  Value *basePtr = I.getPointerOperand ();
+  const TargetData &TD = TM.DataLayout;
+  unsigned basePtrReg = getReg (basePtr);
+  unsigned resultReg = getReg (I);
+  const Type *Ty = basePtr->getType();
+  // GEPs have zero or more indices; we must perform a struct access
+  // or array access for each one.
+  for (GetElementPtrInst::op_iterator oi = I.idx_begin (),
+	 oe = I.idx_end (); oi != oe; ++oi) {
+    Value *idx = *oi;
+    unsigned nextBasePtrReg = makeAnotherReg ();
+    if (const StructType *StTy = dyn_cast <StructType> (Ty)) {
+      // It's a struct access.  idx is the index into the structure,
+      // which names the field. This index must have ubyte type.
+      const ConstantUInt *CUI = cast <ConstantUInt> (idx);
+      assert (CUI->getType () == Type::UByteTy
+	      && "Funny-looking structure index in GEP");
+      // Use the TargetData structure to pick out what the layout of
+      // the structure is in memory.  Since the structure index must
+      // be constant, we can get its value and use it to find the
+      // right byte offset from the StructLayout class's list of
+      // structure member offsets.
+      unsigned idxValue = CUI->getValue ();
+      unsigned memberOffset =
+	TD.getStructLayout (StTy)->MemberOffsets[idxValue];
+      // Emit an ADD to add memberOffset to the basePtr.
+      BuildMI (BB, X86::ADDri32, 2,
+	       nextBasePtrReg).addReg (basePtrReg).addZImm (memberOffset);
+      // The next type is the member of the structure selected by the
+      // index.
+      Ty = StTy->getElementTypes ()[idxValue];
+    } else if (const SequentialType *SqTy = cast <SequentialType> (Ty)) {
+      // It's an array or pointer access: [ArraySize x ElementType].
+      // The documentation does not seem to match the code on the type
+      // of array indices. The code seems to use long, and the docs
+      // (and the comments) say uint. If it is long, I don't know what
+      // we are going to do, because the X86 loves 64-bit types.
+      const Type *typeOfSequentialTypeIndex = SqTy->getIndexType ();
+      // idx is the index into the array.  Unlike with structure
+      // indices, we may not know its actual value at code-generation
+      // time.
+      assert (idx->getType () == typeOfSequentialTypeIndex
+	      && "Funny-looking array index in GEP");
+      // We want to add basePtrReg to (idxReg * sizeof
+      // ElementType). First, we must find the size of the pointed-to
+      // type.  (Not coincidentally, the next type is the type of the
+      // elements in the array.)
+      Ty = SqTy->getElementType ();
+      unsigned elementSize = TD.getTypeSize (Ty);
+      unsigned elementSizeReg = makeAnotherReg ();
+      copyConstantToRegister (ConstantInt::get (typeOfSequentialTypeIndex,
+						elementSize),
+			      elementSizeReg);
+      unsigned idxReg = getReg (idx);
+      // Emit a MUL to multiply the register holding the index by
+      // elementSize, putting the result in memberOffsetReg.
+      unsigned memberOffsetReg = makeAnotherReg ();
+      doMultiply (memberOffsetReg, typeOfSequentialTypeIndex,
+		  elementSizeReg, idxReg);
+      // Emit an ADD to add memberOffsetReg to the basePtr.
+      BuildMI (BB, X86::ADDrr32, 2,
+	       nextBasePtrReg).addReg (basePtrReg).addReg (memberOffsetReg);
+    }
+    // Now that we are here, further indices refer to subtypes of this
+    // one, so we don't need to worry about basePtrReg itself, anymore.
+    basePtrReg = nextBasePtrReg;
+  }
+  // After we have processed all the indices, the result is left in
+  // basePtrReg.  Move it to the register where we were expected to
+  // put the answer.  A 32-bit move should do it, because we are in
+  // ILP32 land.
+  BuildMI (BB, X86::MOVrr32, 1, getReg (I)).addReg (basePtrReg);
+}
+
+
+/// visitMallocInst - I know that personally, whenever I want to remember
+/// something, I have to clear off some space in my brain.
+void
+ISel::visitMallocInst (MallocInst &I)
+{
+  visitInstruction (I);
+}
+
+
+/// visitAllocaInst - I want some stack space. Come on, man, I said I
+/// want some freakin' stack space.
+void
+ISel::visitAllocaInst (AllocaInst &I)
+{
+  visitInstruction (I);
+}
+    
 
 /// createSimpleX86InstructionSelector - This pass converts an LLVM function
 /// into a machine code representation is a very simple peep-hole fashion.  The
