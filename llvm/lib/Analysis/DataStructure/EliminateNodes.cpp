@@ -152,7 +152,7 @@ static inline void MarkReferredNodeSetReachable(const PointerValSet &PVS,
                                             vector<AllocDSNode*>  &AllocNodes,
                                             vector<bool> &ReachableAllocNodes) {
   for (unsigned i = 0, e = PVS.size(); i != e; ++i)
-    if (isa<ShadowDSNode>(PVS[i].Node) || isa<ShadowDSNode>(PVS[i].Node))
+    if (isa<ShadowDSNode>(PVS[i].Node) || isa<AllocDSNode>(PVS[i].Node))
       MarkReferredNodesReachable(PVS[i].Node, ShadowNodes, ReachableShadowNodes,
                                  AllocNodes, ReachableAllocNodes);
 }
@@ -194,6 +194,7 @@ static void MarkReferredNodesReachable(DSNode *N,
 
 bool FunctionDSGraph::RemoveUnreachableShadowNodes() {
   bool Changed = false;
+
   while (1) {
     // Reachable*Nodes - Contains true if there is an edge from a reachable
     // node to the numbered node...
