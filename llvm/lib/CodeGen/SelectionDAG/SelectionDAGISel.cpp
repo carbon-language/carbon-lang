@@ -450,6 +450,10 @@ void SelectionDAGLowering::visitBr(BranchInst &I) {
 void SelectionDAGLowering::visitBinary(User &I, unsigned Opcode) {
   SDOperand Op1 = getValue(I.getOperand(0));
   SDOperand Op2 = getValue(I.getOperand(1));
+
+  if (isa<ShiftInst>(I))
+    Op2 = DAG.getNode(ISD::ZERO_EXTEND, TLI.getShiftAmountTy(), Op2);
+
   setValue(&I, DAG.getNode(Opcode, Op1.getValueType(), Op1, Op2));
 }
 
