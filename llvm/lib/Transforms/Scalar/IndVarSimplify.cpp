@@ -127,7 +127,8 @@ static bool TransformLoop(cfg::LoopInfo *Loops, cfg::Loop *Loop) {
 #ifdef DEBUG
     cerr << IndVars[i];
 #endif
-    if (IV != Cannonical) {  // Don't modify the cannonical indvar
+    // Don't modify the cannonical indvar or unrecognized indvars...
+    if (IV != Cannonical && IV->InductionType != InductionVariable::Unknown) {
       Instruction *Val = IterCount;
       if (!isa<ConstantInt>(IV->Step) ||   // If the step != 1
           !cast<ConstantInt>(IV->Step)->equalsInt(1)) {
@@ -183,6 +184,8 @@ static bool TransformLoop(cfg::LoopInfo *Loops, cfg::Loop *Loop) {
 }
 
 bool InductionVariableSimplify::doit(Method *M) {
+  if (M->isExternal()) return false;
+
   // Figure out the loop structure of the method...
   cfg::LoopInfo Loops(M);
 
