@@ -42,8 +42,6 @@ namespace {
       addRegisterClass(MVT::f64, Alpha::FPRCRegisterClass);
 
       setOperationAction(ISD::EXTLOAD          , MVT::i1   , Expand);
-      setOperationAction(ISD::EXTLOAD          , MVT::i8   , Expand);
-      setOperationAction(ISD::EXTLOAD          , MVT::i16  , Expand);
 
       setOperationAction(ISD::ZEXTLOAD         , MVT::i1   , Expand);
       setOperationAction(ISD::ZEXTLOAD         , MVT::i32  , Expand);
@@ -319,7 +317,17 @@ unsigned ISel::SelectExpr(SDOperand N) {
     case MVT::i64:
       switch (cast<MVTSDNode>(Node)->getExtraValueType()) {
       default:
-        assert(0 && "Bad sign extend!");
+	std::cerr << cast<MVTSDNode>(Node)->getExtraValueType() 
+		  << "(i1 is " << MVT::i1 
+		  << " i8 is " << MVT::i8
+		  << " i16 is " << MVT::i16
+		  << " i32 is " << MVT::i32
+		  << " i64 is " << MVT::i64
+		  << ")\n";
+        assert(0 && "Bad extend load!");
+      case MVT::i64:
+	BuildMI(BB, Alpha::LDQ, 2, Result).addImm(0).addReg(Tmp1);
+	break;
       case MVT::i32:
 	BuildMI(BB, Alpha::LDL, 2, Result).addImm(0).addReg(Tmp1);
         break;
@@ -327,6 +335,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
 	BuildMI(BB, Alpha::LDWU, 2, Result).addImm(0).addReg(Tmp1);
         break;
       case MVT::i8:
+      case MVT::i1: //FIXME: DAG does not expand i8??
 	BuildMI(BB, Alpha::LDBU, 2, Result).addImm(0).addReg(Tmp1);
         break;
       }
@@ -822,6 +831,7 @@ void ISel::Select(SDOperand N) {
 
     switch (StoredTy) {
     default: assert(0 && "Unhandled Type"); break;
+    case MVT::i1: //FIXME: DAG does not promote this load
     case MVT::i8: Opc = Alpha::STB; break;
     case MVT::i16: Opc = Alpha::STW; break;
     case MVT::i32: Opc = Alpha::STL; break;

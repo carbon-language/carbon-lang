@@ -164,7 +164,7 @@ bool AlphaAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
   if (CurrentFnName.compare("main") == 0)
     {
-      O << "\n\n#HACK\n\t.text\n\t.ent __main\n__main:\n\tret $31,($26),1\n\t.end __main\n#ENDHACK\n\n";
+      //      O << "\n\n#HACK\n\t.text\n\t.ent __main\n__main:\n\tret $31,($26),1\n\t.end __main\n#ENDHACK\n\n";
     }
 
   // Print out constants referenced by the function
