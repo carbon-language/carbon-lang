@@ -246,6 +246,9 @@ DSNodeHandle GraphBuilder::getValueDest(Value &Val) {
     } else if (ConstantIntegral *CI = dyn_cast<ConstantIntegral>(C)) {
       // Random constants are unknown mem
       return NH = createNode()->setUnknownNodeMarker();
+    } else if (isa<UndefValue>(C)) {
+      ScalarMap.erase(V);
+      return 0;
     } else {
       assert(0 && "Unknown constant type!");
     }

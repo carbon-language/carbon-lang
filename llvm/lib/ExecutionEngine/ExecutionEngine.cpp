@@ -440,7 +440,9 @@ GenericValue ExecutionEngine::LoadValueFromMemory(GenericValue *Ptr,
 // specified memory location...
 //
 void ExecutionEngine::InitializeMemory(const Constant *Init, void *Addr) {
-  if (Init->getType()->isFirstClassType()) {
+  if (isa<UndefValue>(Init)) {
+    return;
+  } else if (Init->getType()->isFirstClassType()) {
     GenericValue Val = getConstantValue(Init);
     StoreValueToMemory(Val, (GenericValue*)Addr, Init->getType());
     return;
