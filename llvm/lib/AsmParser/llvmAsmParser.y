@@ -43,6 +43,14 @@ string CurFilename;
 
 #define YYERROR_VERBOSE 1
 
+// HACK ALERT: This variable is used to implement the automatic conversion of
+// load/store instructions with indexes into a load/store + getelementptr pair
+// of instructions.  When this compatiblity "Feature" is removed, this should be
+// too.
+//
+static BasicBlock *CurBB;
+
+
 // This contains info used when building the body of a function.  It is
 // destroyed when the function is completed.
 //
@@ -1366,7 +1374,7 @@ InstructionList : InstructionList Inst {
     $$ = $1;
   }
   | /* empty */ {
-    $$ = new BasicBlock();
+    $$ = CurBB = new BasicBlock();
   };
 
 BBTerminatorInst : RET ResolvedVal {              // Return with a result...
@@ -1633,7 +1641,19 @@ MemoryInst : MALLOC Types {
     if (LoadInst::getIndexedType(*$2, *$4) == 0)
       ThrowException("Invalid indices for load instruction!");
 
-    $$ = new LoadInst(getVal(*$2, $3), *$4);
+    Value *Src = getVal(*$2, $3);
+    if (!$4->empty()) {
+      std::cerr << "WARNING: Use of index load instruction:"
+                << " replacing with getelementptr/load pair.\n";
+      // Create a getelementptr hack instruction to do the right thing for
+      // compatibility.
+      //
+      Instruction *I = new GetElementPtrInst(Src, *$4);
+      CurBB->getInstList().push_back(I);
+      Src = I;
+    }
+
+    $$ = new LoadInst(Src);
     delete $4;   // Free the vector...
     delete $2;
   }
@@ -1647,7 +1667,20 @@ MemoryInst : MALLOC Types {
     if (ElTy != $2->getType())
       ThrowException("Can't store '" + $2->getType()->getDescription() +
                      "' into space of type '" + ElTy->getDescription() + "'!");
-    $$ = new StoreInst($2, getVal(*$4, $5), *$6);
+
+    Value *Ptr = getVal(*$4, $5);
+    if (!$6->empty()) {
+      std::cerr << "WARNING: Use of index store instruction:"
+                << " replacing with getelementptr/store pair.\n";
+      // Create a getelementptr hack instruction to do the right thing for
+      // compatibility.
+      //
+      Instruction *I = new GetElementPtrInst(Ptr, *$6);
+      CurBB->getInstList().push_back(I);
+      Ptr = I;
+    }
+
+    $$ = new StoreInst($2, Ptr);
     delete $4; delete $6;
   }
   | GETELEMENTPTR Types ValueRef IndexList {
