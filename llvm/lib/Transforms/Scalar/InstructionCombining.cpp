@@ -4051,6 +4051,22 @@ Instruction *InstCombiner::FoldPHIArgOpIntoPHI(PHINode &PN) {
                          PhiVal, ConstantOp);
 }
 
+/// DeadPHICycle - Return true if this PHI node is only used by a PHI node cycle
+/// that is dead.
+static bool DeadPHICycle(PHINode *PN, std::set<PHINode*> &PotentiallyDeadPHIs) {
+  if (PN->use_empty()) return true;
+  if (!PN->hasOneUse()) return false;
+
+  // Remember this node, and if we find the cycle, return.
+  if (!PotentiallyDeadPHIs.insert(PN).second)
+    return true;
+
+  if (PHINode *PU = dyn_cast<PHINode>(PN->use_back()))
+    return DeadPHICycle(PU, PotentiallyDeadPHIs);
+  
+  return false;
+}
+
 // PHINode simplification
 //
 Instruction *InstCombiner::visitPHINode(PHINode &PN) {
@@ -4109,6 +4125,16 @@ Instruction *InstCombiner::visitPHINode(PHINode &PN) {
     if (Instruction *Result = FoldPHIArgOpIntoPHI(PN))
       return Result;
 
+  // If this is a trivial cycle in the PHI node graph, remove it.  Basically, if
+  // this PHI only has a single use (a PHI), and if that PHI only has one use (a
+  // PHI)... break the cycle.
+  if (PN.hasOneUse())
+    if (PHINode *PU = dyn_cast<PHINode>(PN.use_back())) {
+      std::set<PHINode*> PotentiallyDeadPHIs;
+      PotentiallyDeadPHIs.insert(&PN);
+      if (DeadPHICycle(PU, PotentiallyDeadPHIs))
+        return ReplaceInstUsesWith(PN, UndefValue::get(PN.getType()));
+    }
   
   return 0;
 }
