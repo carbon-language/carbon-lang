@@ -17,10 +17,11 @@ LLVM: llvm-nm tool
 <h3>DESCRIPTION</h3>
 
 <p>The <tt>llvm-nm</tt> utility lists the names of symbols from the
-LLVM bytecode files named on the command line, along with some
-ancillary information about each symbol. If no filename is specified,
-or - is used as a filename, <tt>llvm-nm</tt> reads its input from standard
-input.</p>
+LLVM bytecode files, or <tt>ar(1)</tt> archives containing LLVM
+bytecode files, named on the command line. Each symbol is listed along
+with some simple information about its provenance. If no filename is specified,
+or - is used as a filename, <tt>llvm-nm</tt> will process a bytecode file
+on its standard input stream.</p>
 
 <p><tt>llvm-nm</tt>'s default output format is the traditional BSD
 <tt>nm(1)</tt> output format. Each such output record consists of an
@@ -97,8 +98,7 @@ the bytecode file.</p>
 
 <h3>BUGS</h3>
 
-<tt>llvm-nm</tt> cannot currently see inside <tt>ar(1)</tt> library
-archive files, like <tt>nm(1)</tt> can. It cannot demangle C++ mangled
+<tt>llvm-nm</tt> cannot demangle C++ mangled
 names, like GNU <tt>nm(1)</tt> can.
 
 <h3>EXIT STATUS</h3>
