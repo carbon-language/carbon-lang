@@ -167,6 +167,12 @@ FixConstantOperandsForInstr(Instruction* vmInstr,
             constantThatMustBeLoaded = true;
         }
       } else {
+        //
+        // If the operand is from the constant pool, don't try to change it.
+        //
+        if (mop.getType() == MachineOperand::MO_ConstantPoolIndex) {
+          continue;
+        }
         assert(mop.isImmediate());
         bool isSigned = mop.getType() == MachineOperand::MO_SignExtendedImmed;
 
