@@ -420,6 +420,175 @@ GetValueEqualityComparisonCases(TerminatorInst *TI,
 }
 
 
+// EliminateBlockCases - Given an vector of bb/value pairs, remove any entries
+// in the list that match the specified block.
+static void EliminateBlockCases(BasicBlock *BB, 
+               std::vector<std::pair<ConstantInt*, BasicBlock*> > &Cases) {
+  for (unsigned i = 0, e = Cases.size(); i != e; ++i)
+    if (Cases[i].second == BB) {
+      Cases.erase(Cases.begin()+i);
+      --i; --e;
+    }
+}
+
+// ValuesOverlap - Return true if there are any keys in C1 that exist in C2 as
+// well.
+static bool
+ValuesOverlap(std::vector<std::pair<ConstantInt*, BasicBlock*> > &C1,
+              std::vector<std::pair<ConstantInt*, BasicBlock*> > &C2) {
+  std::vector<std::pair<ConstantInt*, BasicBlock*> > *V1 = &C1, *V2 = &C2;
+
+  // Make V1 be smaller than V2.
+  if (V1->size() > V2->size())
+    std::swap(V1, V2);
+
+  if (V1->size() == 0) return false;
+  if (V1->size() == 1) {
+    // Just scan V2.
+    ConstantInt *TheVal = (*V1)[0].first;
+    for (unsigned i = 0, e = V2->size(); i != e; ++i)
+      if (TheVal == (*V2)[i].first)
+        return true;
+  }
+
+  // Otherwise, just sort both lists and compare element by element.
+  std::sort(V1->begin(), V1->end());
+  std::sort(V2->begin(), V2->end());
+  unsigned i1 = 0, i2 = 0, e1 = V1->size(), e2 = V2->size();
+  while (i1 != e1 && i2 != e2) {
+    if ((*V1)[i1].first == (*V2)[i2].first)
+      return true;
+    if ((*V1)[i1].first < (*V2)[i2].first)
+      ++i1;
+    else
+      ++i2;
+  }
+  return false;
+}
+
+// SimplifyEqualityComparisonWithOnlyPredecessor - If TI is known to be a
+// terminator instruction and its block is known to only have a single
+// predecessor block, check to see if that predecessor is also a value
+// comparison with the same value, and if that comparison determines the outcome
+// of this comparison.  If so, simplify TI.  This does a very limited form of
+// jump threading.
+static bool SimplifyEqualityComparisonWithOnlyPredecessor(TerminatorInst *TI,
+                                                          BasicBlock *Pred) {
+  Value *PredVal = isValueEqualityComparison(Pred->getTerminator());
+  if (!PredVal) return false;  // Not a value comparison in predecessor.
+
+  Value *ThisVal = isValueEqualityComparison(TI);
+  assert(ThisVal && "This isn't a value comparison!!");
+  if (ThisVal != PredVal) return false;  // Different predicates.
+
+  // Find out information about when control will move from Pred to TI's block.
+  std::vector<std::pair<ConstantInt*, BasicBlock*> > PredCases;
+  BasicBlock *PredDef = GetValueEqualityComparisonCases(Pred->getTerminator(),
+                                                        PredCases);
+  EliminateBlockCases(PredDef, PredCases);  // Remove default from cases.
+  
+  // Find information about how control leaves this block.
+  std::vector<std::pair<ConstantInt*, BasicBlock*> > ThisCases;
+  BasicBlock *ThisDef = GetValueEqualityComparisonCases(TI, ThisCases);
+  EliminateBlockCases(ThisDef, ThisCases);  // Remove default from cases.
+
+  // If TI's block is the default block from Pred's comparison, potentially
+  // simplify TI based on this knowledge.
+  if (PredDef == TI->getParent()) {
+    // If we are here, we know that the value is none of those cases listed in
+    // PredCases.  If there are any cases in ThisCases that are in PredCases, we
+    // can simplify TI.
+    if (ValuesOverlap(PredCases, ThisCases)) {
+      if (BranchInst *BTI = dyn_cast<BranchInst>(TI)) {
+        // Okay, one of the successors of this condbr is dead.  Convert it to a
+        // uncond br.
+        assert(ThisCases.size() == 1 && "Branch can only have one case!");
+        Value *Cond = BTI->getCondition();
+        // Insert the new branch.
+        Instruction *NI = new BranchInst(ThisDef, TI);
+
+        // Remove PHI node entries for the dead edge.
+        ThisCases[0].second->removePredecessor(TI->getParent());
+
+        DEBUG(std::cerr << "Threading pred instr: " << *Pred->getTerminator()
+              << "Through successor TI: " << *TI << "Leaving: " << *NI << "\n");
+
+        TI->eraseFromParent();   // Nuke the old one.
+        // If condition is now dead, nuke it.
+        if (Instruction *CondI = dyn_cast<Instruction>(Cond))
+          ErasePossiblyDeadInstructionTree(CondI);
+        return true;
+
+      } else {
+        SwitchInst *SI = cast<SwitchInst>(TI);
+        // Okay, TI has cases that are statically dead, prune them away.
+        std::set<Constant*> DeadCases;
+        for (unsigned i = 0, e = PredCases.size(); i != e; ++i)
+          DeadCases.insert(PredCases[i].first);
+
+        DEBUG(std::cerr << "Threading pred instr: " << *Pred->getTerminator()
+                  << "Through successor TI: " << *TI);
+
+        for (unsigned i = SI->getNumCases()-1; i != 0; --i)
+          if (DeadCases.count(SI->getCaseValue(i))) {
+            SI->getSuccessor(i)->removePredecessor(TI->getParent());
+            SI->removeCase(i);
+          }
+
+        DEBUG(std::cerr << "Leaving: " << *TI << "\n");
+        return true;
+      }
+    }
+
+  } else {
+    // Otherwise, TI's block must correspond to some matched value.  Find out
+    // which value (or set of values) this is.
+    ConstantInt *TIV = 0;
+    BasicBlock *TIBB = TI->getParent();
+    for (unsigned i = 0, e = PredCases.size(); i != e; ++i)
+      if (PredCases[i].second == TIBB)
+        if (TIV == 0)
+          TIV = PredCases[i].first;
+        else
+          return false;  // Cannot handle multiple values coming to this block.
+    assert(TIV && "No edge from pred to succ?");
+
+    // Okay, we found the one constant that our value can be if we get into TI's
+    // BB.  Find out which successor will unconditionally be branched to.
+    BasicBlock *TheRealDest = 0;
+    for (unsigned i = 0, e = ThisCases.size(); i != e; ++i)
+      if (ThisCases[i].first == TIV) {
+        TheRealDest = ThisCases[i].second;
+        break;
+      }
+
+    // If not handled by any explicit cases, it is handled by the default case.
+    if (TheRealDest == 0) TheRealDest = ThisDef;
+
+    // Remove PHI node entries for dead edges.
+    BasicBlock *CheckEdge = TheRealDest;
+    for (succ_iterator SI = succ_begin(TIBB), e = succ_end(TIBB); SI != e; ++SI)
+      if (*SI != CheckEdge)
+        (*SI)->removePredecessor(TIBB);
+      else
+        CheckEdge = 0;
+
+    // Insert the new branch.
+    Instruction *NI = new BranchInst(TheRealDest, TI);
+
+    DEBUG(std::cerr << "Threading pred instr: " << *Pred->getTerminator()
+          << "Through successor TI: " << *TI << "Leaving: " << *NI << "\n");
+    Instruction *Cond = 0;
+    if (BranchInst *BI = dyn_cast<BranchInst>(TI))
+      Cond = dyn_cast<Instruction>(BI->getCondition());
+    TI->eraseFromParent();   // Nuke the old one.
+
+    if (Cond) ErasePossiblyDeadInstructionTree(Cond);
+    return true;
+  }
+  return false;
+}
+
 // FoldValueComparisonIntoPredecessors - The specified terminator is a value
 // equality comparison instruction (either a switch or a branch on "X == c").
 // See if any of the predecessors of the terminator block are value comparisons
@@ -908,13 +1077,30 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
       return true;
     }
 
-  } else if (SwitchInst *SI = dyn_cast<SwitchInst>(BB->begin())) {
-    if (isValueEqualityComparison(SI))
-      if (FoldValueComparisonIntoPredecessors(SI))
-        return SimplifyCFG(BB) || 1;
+  } else if (SwitchInst *SI = dyn_cast<SwitchInst>(BB->getTerminator())) {
+    if (isValueEqualityComparison(SI)) {
+      // If we only have one predecessor, and if it is a branch on this value,
+      // see if that predecessor totally determines the outcome of this switch.
+      if (BasicBlock *OnlyPred = BB->getSinglePredecessor())
+        if (SimplifyEqualityComparisonWithOnlyPredecessor(SI, OnlyPred))
+          return SimplifyCFG(BB) || 1;
+
+      // If the block only contains the switch, see if we can fold the block
+      // away into any preds.
+      if (SI == &BB->front())
+        if (FoldValueComparisonIntoPredecessors(SI))
+          return SimplifyCFG(BB) || 1;
+    }
   } else if (BranchInst *BI = dyn_cast<BranchInst>(BB->getTerminator())) {
     if (BI->isConditional()) {
       if (Value *CompVal = isValueEqualityComparison(BI)) {
+        // If we only have one predecessor, and if it is a branch on this value,
+        // see if that predecessor totally determines the outcome of this
+        // switch.
+        if (BasicBlock *OnlyPred = BB->getSinglePredecessor())
+          if (SimplifyEqualityComparisonWithOnlyPredecessor(BI, OnlyPred))
+            return SimplifyCFG(BB) || 1;
+
         // This block must be empty, except for the setcond inst, if it exists.
         BasicBlock::iterator I = BB->begin();
         if (&*I == BI ||
