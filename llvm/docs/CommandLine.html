@@ -16,6 +16,7 @@
                                     set of possibilities</a>
       <li><a href="#namedalternatives">Named alternatives</a>
       <li><a href="#list">Parsing a list of options</a>
+      <li><a href="#description">Adding freeform text to help output</a>
     </ol>
   <li><a href="#referenceguide">Reference Guide</a>
     <ol>
@@ -36,8 +37,10 @@
                                    specified</a>
         <li><a href="#formatting">Controlling other formatting options</a>
         </ul>
-      <li><a href="#optionclasses">Option Classes</a>
+      <li><a href="#toplevel">Top-Level Classes and Functions</a>
         <ul>
+      <li><a href="#cl::ParseCommandLineOptions">The 
+            <tt>cl::ParseCommandLineOptions</tt> function</a>
         <li><a href="#cl::opt">The <tt>cl::opt</tt> class</a>
         <li><a href="#cl::list">The <tt>cl::list</tt> class</a>
         <li><a href="#cl::alias">The <tt>cl::alias</tt> class</a>
@@ -68,7 +71,7 @@
 
 
 <!-- *********************************************************************** -->
-</ul><table width="100%" bgcolor="#330077" border=0 cellpadding=4 cellspacing=0>
+<table width="100%" bgcolor="#330077" border=0 cellpadding=4 cellspacing=0>
 <tr><td align=center><font color="#EEEEFF" size=+2 face="Georgia,Palatino"><b>
 <a name="introduction">Introduction
 </b></font></td></tr></table><ul>
@@ -108,7 +111,7 @@ because the application doesn't have to keep a "list" of arguments to pass to
 the parser.  This also makes supporting <a href="#dynamicopts">dynamically
 loaded options</a> trivial.<p>
 
-<li>More Clean: CommandLine supports enum and other types directly, meaning that
+<li>Cleaner: CommandLine supports enum and other types directly, meaning that
 there is less error and more security built into the library.  You don't have to
 worry about whether your integral command line argument accidentally got
 assigned a value that is not valid for your enum type.<p>
@@ -169,7 +172,7 @@ Additionally, you need to add this as the first line of your main program:<p>
 
 <pre>
 int main(int argc, char **argv) {
-  cl::ParseCommandLineOptions(argc, argv);
+  <a href="#cl::ParseCommandLineOptions">cl::ParseCommandLineOptions</a>(argc, argv);
   ...
 }
 </pre><p>
@@ -207,7 +210,7 @@ USAGE: compiler [options]
 
 OPTIONS:
   -help             - display available options (--help-hidden for more)
-  -o &lt;filename&gt;     - Specify output filename
+  <b>-o &lt;filename&gt;     - Specify output filename</b>
 </pre>
 
 Because we specified that the command line option should parse using the
@@ -226,8 +229,8 @@ There are many different options that you can use to customize the command line
 option handling library, but the above example shows the general interface to
 these options.  The options can be specified in any order, and are specified
 with helper functions like <a href="#cl::desc"><tt>cl::desc(...)</tt></a>, so
-there are no positional dependencies to have to remember.  The available options
-are discussed in detail in the <a href="#referenceguide">Reference Guide</a>.<p>
+there are no positional dependencies to remember.  The available options are
+discussed in detail in the <a href="#referenceguide">Reference Guide</a>.<p>
 
 
 Continuing the example, we would like to have our compiler take an input
@@ -273,7 +276,7 @@ adding one of the declarations above, the <tt>--help</tt> option synopsis is now
 extended to:<p>
 
 <pre>
-USAGE: compiler [options] &lt;input file&gt;
+USAGE: compiler [options] <b>&lt;input file&gt;</b>
 
 OPTIONS:
   -help             - display available options (--help-hidden for more)
@@ -281,6 +284,7 @@ OPTIONS:
 </pre>
 
 ... indicating that an input filename is expected.<p>
+
 
 
 <!-- ======================================================================= -->
@@ -307,13 +311,14 @@ href="#cl::Hidden"><tt>cl::Hidden</tt></a>" flag.  This modifier prevents it
 from being shown by the standard "<tt>--help</tt>" output (note that it is still
 shown in the "<tt>--help-hidden</tt>" output).<p>
 
-The CommandLine library uses a different parser for different data types.  For
-example, in the string case, the argument passed to the option is copied
-literally into the content of the string variable... we obviously cannot do that
-in the boolean case, however, so we must use a smarter parser.  In the case of
-the boolean parser, it allows no options (in which case it assigns the value of
-true to the variable), or it allows the values "<tt>true</tt>" or
-"<tt>false</tt>" to be specified, allowing any of the following inputs:<p>
+The CommandLine library uses a <a href="#builtinparsers">different parser</a>
+for different data types.  For example, in the string case, the argument passed
+to the option is copied literally into the content of the string variable... we
+obviously cannot do that in the boolean case, however, so we must use a smarter
+parser.  In the case of the boolean parser, it allows no options (in which case
+it assigns the value of true to the variable), or it allows the values
+"<tt>true</tt>" or "<tt>false</tt>" to be specified, allowing any of the
+following inputs:<p>
 
 <pre>
  compiler -f          # No value, 'Force' == true
@@ -322,11 +327,12 @@ true to the variable), or it allows the values "<tt>true</tt>" or
  compiler -f=FALSE    # Value specified, 'Force' == false
 </pre>
 
-... you get the idea.  The bool parser just turns the string values into boolean
-values, and rejects things like '<tt>compiler -f=foo</tt>'.  Similarly, the
-float, double, and int parsers work like you would expect, using the
-'<tt>strtol</tt>' and '<tt>strtod</tt>' C library calls to parse the string
-value into the specified data type.<p>
+... you get the idea.  The <a href="#boolparser">bool parser</a> just turns the
+string values into boolean values, and rejects things like '<tt>compiler
+-f=foo</tt>'.  Similarly, the <a href="#doubleparser">float</a>, <a
+href="#doubleparser">double</a>, and <a href="#intparser">int</a> parsers work
+like you would expect, using the '<tt>strtol</tt>' and '<tt>strtod</tt>' C
+library calls to parse the string value into the specified data type.<p>
 
 With the declarations above, "<tt>compiler --help</tt>" emits this:<p>
 
@@ -334,21 +340,21 @@ With the declarations above, "<tt>compiler --help</tt>" emits this:<p>
 USAGE: compiler [options] &lt;input file&gt;
 
 OPTIONS:
-  -f     - Overwrite output files
+  <b>-f     - Overwrite output files</b>
   -o     - Override output filename
-  -quiet - Don't print informational messages
+  <b>-quiet - Don't print informational messages</b>
   -help  - display available options (--help-hidden for more)
 </pre><p>
 
 and "<tt>opt --help-hidden</tt>" prints this:<p>
 
 <pre>
-USAGE: opt [options] &lt;input file&gt;
+USAGE: compiler [options] &lt;input file&gt;
 
 OPTIONS:
   -f     - Overwrite output files
   -o     - Override output filename
-  -q     - Don't print informational messages
+  <b>-q     - Don't print informational messages</b>
   -quiet - Don't print informational messages
   -help  - display available options (--help-hidden for more)
 </pre><p>
@@ -473,11 +479,11 @@ help output now is:<p>
 USAGE: compiler [options] &lt;input file&gt;
 
 OPTIONS:
-  Choose optimization level:
+  <b>Choose optimization level:
     -g          - No optimizations, enable debugging
     -O1         - Enable trivial optimizations
     -O2         - Enable default optimizations
-    -O3         - Enable expensive optimizations
+    -O3         - Enable expensive optimizations</b>
   -f            - Overwrite output files
   -help         - display available options (--help-hidden for more)
   -o &lt;filename&gt; - Specify output filename
@@ -556,10 +562,10 @@ OPTIONS:
     -O1         - Enable trivial optimizations
     -O2         - Enable default optimizations
     -O3         - Enable expensive optimizations
-  -debug_level  - Set the debugging level:
+  <b>-debug_level  - Set the debugging level:
     =none       - disable debug information
     =quick      - enable quick debug information
-    =detailed   - enable detailed debug information
+    =detailed   - enable detailed debug information</b>
   -f            - Overwrite output files
   -help         - display available options (--help-hidden for more)
   -o &lt;filename&gt; - Specify output filename
@@ -642,6 +648,48 @@ checking we have to do.<p>
 
 
 
+<!-- ======================================================================= -->
+</ul><table width="100%" bgcolor="#441188" border=0 cellpadding=4 cellspacing=0><tr><td>&nbsp;</td><td width="100%">&nbsp; <font color="#EEEEFF" face="Georgia,Palatino"><b>
+<a name="description">Adding freeform text to help output
+</b></font></td></tr></table><ul>
+
+As our program grows and becomes more mature, we may decide to put summary
+information about what it does into the help output.  The help output is styled
+to look similar to a Unix <tt>man</tt> page, providing concise information about
+a program.  Unix <tt>man</tt> pages, however often have a description about what
+the program does.  To add this to your CommandLine program, simply pass a third
+argument to the <a
+href="#cl::ParseCommandLineOptions"><tt>cl::ParseCommandLineOptions</tt></a>
+call in main.  This additional argument is then printed as the overview
+information for your program, allowing you to include any additional information
+that you want.  For example:<p>
+
+<pre>
+int main(int argc, char **argv) {
+  <a href="#cl::ParseCommandLineOptions">cl::ParseCommandLineOptions</a>(argc, argv, " CommandLine compiler example\n\n"
+                              "  This program blah blah blah...\n");
+  ...
+}
+</pre><p>
+
+Would yield the help output:
+
+<pre>
+<b>OVERVIEW: CommandLine compiler example
+
+  This program blah blah blah...</b>
+
+USAGE: compiler [options] &lt;input file&gt;
+
+OPTIONS:
+  ...
+  -help             - display available options (--help-hidden for more)
+  -o &lt;filename&gt;     - Specify output filename
+</pre><p>
+
+
+
+
 <!-- *********************************************************************** -->
 </ul><table width="100%" bgcolor="#330077" border=0 cellpadding=4 cellspacing=0><tr><td align=center><font color="#EEEEFF" size=+2 face="Georgia,Palatino"><b>
 <a name="referenceguide">Reference Guide
@@ -675,7 +723,7 @@ Given these two option declarations, the <tt>--help</tt> output for our grep
 replacement would look like this:<p>
 
 <pre>
-USAGE: spiffygrep [options] &lt;regular expression&gt; &lt;input file&gt;
+USAGE: spiffygrep [options] <b>&lt;regular expression&gt; &lt;input file&gt;</b>
 
 OPTIONS:
   -help - display available options (--help-hidden for more)
@@ -751,11 +799,11 @@ shell itself.  Using the CommandLine library, we would specify this as:<p>
 which automatically provides the help output:<p>
 
 <pre>
-USAGE: spiffysh [options] &lt;input script&gt; &lt;program arguments&gt;...
+USAGE: spiffysh [options] <b>&lt;input script&gt; &lt;program arguments&gt;...</b>
 
 OPTIONS:
   -help - display available options (--help-hidden for more)
-  -x    - Enable trace output
+  <b>-x    - Enable trace output</b>
 </pre><p>
 
 At runtime, if we run our new shell replacement as '<tt>spiffysh -x test.sh -a
@@ -853,7 +901,9 @@ This section describes the basic attributes that you can specify on options.<p>
 href="#positional">positional options</a>) specifies what the option name is.
 This option is specified in simple double quotes:<p>
 
-<a href="#cl::opt">cl::opt</a>&lt;bool&gt; Quiet("<i>quiet</i>");<p>
+<pre>
+<a href="#cl::opt">cl::opt</a>&lt;<b>bool</b>&gt; Quiet("<i>quiet</i>");
+</pre><p>
 
 <li><a name="cl::desc">The <b><tt>cl::desc</tt></b> attribute specifies a
 description for the option to be shown in the <tt>--help</tt> output for the
@@ -1105,13 +1155,31 @@ basically looks like this:<p>
 
 <!-- ======================================================================= -->
 </ul><table width="100%" bgcolor="#441188" border=0 cellpadding=4 cellspacing=0><tr><td>&nbsp;</td><td width="100%">&nbsp; <font color="#EEEEFF" face="Georgia,Palatino"><b>
-<a name="optionclasses">Option Classes
+<a name="toplevel">Top-Level Classes and Functions
 </b></font></td></tr></table><ul>
 
 Despite all of the builtin flexibility, the CommandLine option library really
-only consists of three main classes: <a href="#cl::opt">cl::opt</a>, <a
-href="#cl::list">cl::list</a>, and <a href="#cl::alias">cl::alias</a>.  This
-section describes these three classes in detail.<p>
+only consists of one function (<a
+href="#cl::ParseCommandLineOptions"><tt>cl::ParseCommandLineOptions</tt></a>)
+and three main classes: <a href="#cl::opt"><tt>cl::opt</tt></a>, <a
+href="#cl::list"><tt>cl::list</tt></a>, and <a
+href="#cl::alias"><tt>cl::alias</tt></a>.  This section describes these three
+classes in detail.<p>
+
+<!-- _______________________________________________________________________ -->
+</ul><a name="cl::ParseCommandLineOptions"><h4><hr size=0>The
+<tt>cl::ParseCommandLineOptions</tt> function</h4><ul>
+
+The <tt>cl::ParseCommandLineOptions</tt> function is designed to be called
+directly from <tt>main</tt>, and is used to fill in the values of all of the
+command line option variables once <tt>argc</tt> and <tt>argv</tt> are
+available.<p>
+
+The <tt>cl::ParseCommandLineOptions</tt> function requires two parameters
+(<tt>argc</tt> and <tt>argv</tt>), but may also take an optional third parameter
+which holds <a href="#description">additional extra text</a> to emit when the
+<tt>--help</tt> option is invoked.<p>
+
 
 <!-- _______________________________________________________________________ -->
 </ul><a name="cl::opt"><h4><hr size=0>The <tt>cl::opt</tt> class</h4><ul>
@@ -1122,10 +1190,10 @@ can take up to three arguments (all except for the first have default values
 though):<p>
 
 <pre>
-namespace cl {
-  template &lt;class DataType, bool ExternalStorage = false,
-            class ParserClass = parser&lt;DataType&gt; &gt;
-  class opt;
+<b>namespace</b> cl {
+  <b>template</b> &lt;<b>class</b> DataType, <b>bool</b> ExternalStorage = <b>false</b>,
+            <b>class</b> ParserClass = parser&lt;DataType&gt; &gt;
+  <b>class</b> opt;
 }
 </pre><p>
 
@@ -1151,10 +1219,10 @@ line options.  It too is a templated class which can take up to three
 arguments:<p>
 
 <pre>
-namespace cl {
-  template &lt;class DataType, class Storage = bool,
-            class ParserClass = parser&lt;DataType&gt; &gt;
-  class list;
+<b>namespace</b> cl {
+  <b>template</b> &lt;<b>class</b> DataType, <b>class</b> Storage = <b>bool</b>,
+            <b>class</b> ParserClass = parser&lt;DataType&gt; &gt;
+  <b>class</b> list;
 }
 </pre><p>
 
@@ -1171,8 +1239,8 @@ The <tt>cl::alias</tt> class is a nontemplated class that is used to form
 aliases for other arguments.<p>
 
 <pre>
-namespace cl {
-  class alias;
+<b>namespace</b> cl {
+  <b>class</b> alias;
 }
 </pre></p>
 
@@ -1238,26 +1306,155 @@ exponential notation (ex: <tt>1.7e15</tt>) and properly supports locales.
 </b></font></td></tr></table><ul>
 <!-- *********************************************************************** -->
 
-TODO
-
-<!-- ======================================================================= -->
-</ul><table width="100%" bgcolor="#441188" border=0 cellpadding=4 cellspacing=0><tr><td>&nbsp;</td><td width="100%">&nbsp; <font color="#EEEEFF" face="Georgia,Palatino"><b>
-<a name="customparser">Writing a custom parser
-</b></font></td></tr></table><ul>
-
+Although the CommandLine library has a lot of functionality built into it
+already (as discussed previously), one of its true strengths lie in its
+extensibility.  This section discusses how the CommandLine library works under
+the covers and illustrates how to do some simple, common, extensions.<p>
 
 
 <!-- ======================================================================= -->
-</ul><table width="100%" bgcolor="#441188" border=0 cellpadding=4 cellspacing=0><tr><td>&nbsp;</td><td width="100%">&nbsp; <font color="#EEEEFF" face="Georgia,Palatino"><b>
-<a name="explotingexternal">Exploiting external storage
+</ul><table width="100%" bgcolor="#441188" border=0 cellpadding=4 cellspacing=0>
+<tr><td>&nbsp;</td><td width="100%">&nbsp; <font color="#EEEEFF"
+face="Georgia,Palatino"><b> <a name="customparser">Writing a custom parser
 </b></font></td></tr></table><ul>
+
+One of the simplest and most common extensions is the use of a custom parser.
+As <a href="#builtinparsers">discussed previously</a>, parsers are the portion
+of the CommandLine library that turns string input from the user into a
+particular parsed data type, validating the input in the process.<p>
+
+There are two ways to use a new parser:<p>
+
+<ol>
+<li>Specialize the <a href="#genericparser"><tt>cl::parser</tt></a> template for
+    your custom data type.<p>
+
+    This approach has the advantage that users of your custom data type will
+    automatically use your custom parser whenever they define an option with a
+    value type of your data type.  The disadvantage of this approach is that it
+    doesn't work if your fundemental data type is something that is already
+    supported.<p>
+
+<li>Write an independant class, using it explicitly from options that need
+    it.<p>
+
+    This approach works well in situations where you would line to parse an
+    option using special syntax for a not-very-special data-type.  The drawback
+    of this approach is that users of your parser have to be aware that they are
+    using your parser, instead of the builtin ones.<p>
+
+</ol><p>
+
+To guide the discussion, we will discuss a custom parser that accepts file
+sizes, specified with an optional unit after the numeric size.  For example, we
+would like to parse "102kb", "41M", "1G" into the appropriate integer value.  In
+this case, the underlying data type we want to parse into is
+'<tt>unsigned</tt>'.  We choose approach #2 above because we don't want to make
+this the default for all <tt>unsigned</tt> options.<p>
+
+To start out, we declare our new <tt>FileSizeParser</tt> class:<p>
+
+<pre>
+<b>struct</b> FileSizeParser : <b>public</b> cl::basic_parser&lt;<b>unsigned</b>&gt; {
+  <i>// parse - Return true on error.</i>
+  <b>bool</b> parse(cl::Option &amp;O, <b>const char</b> *ArgName, <b>const</b> std::string &amp;ArgValue,
+             <b>unsigned</b> &amp;Val);
+};
+</pre><p>
+
+Our new class inherits from the <tt>cl::basic_parser</tt> template class to fill
+in the default, boiler plate, code for us.  We give it the data type that we
+parse into (the last argument to the <tt>parse</tt> method so that clients of
+our custom parser know what object type to pass in to the parse method (here we
+declare that we parse into '<tt>unsigned</tt>' variables.<p>
+
+For most purposes, the only method that must be implemented in a custom parser
+is the <tt>parse</tt> method.  The <tt>parse</tt> method is called whenever the
+option is invoked, passing in the option itself, the option name, the string to
+parse, and a reference to a return value.  If the string to parse is not well formed, the parser should output an error message and return true.  Otherwise it should return false and set '<tt>Val</tt>' to the parsed value.  In our example, we implement <tt>parse</tt> as:<p>
+
+<pre>
+<b>bool</b> FileSizeParser::parse(cl::Option &amp;O, <b>const char</b> *ArgName,
+                           <b>const</b> std::string &amp;Arg, <b>unsigned</b> &amp;Val) {
+  <b>const char</b> *ArgStart = Arg.c_str();
+  <b>char</b> *End;
+ 
+  <i>// Parse integer part, leaving 'End' pointing to the first non-integer char</i>
+  Val = (unsigned)strtol(ArgStart, &amp;End, 0);
+
+  <b>while</b> (1) {
+    <b>switch</b> (*End++) {
+    <b>case</b> 0: <b>return</b> false;   <i>// No error</i>
+    <b>case</b> 'i':               <i>// Ignore the 'i' in KiB if people use that</i>
+    <b>case</b> 'b': <b>case</b> 'B':     <i>// Ignore B suffix</i>
+      <b>break</b>;
+
+    <b>case</b> 'g': <b>case</b> 'G': Val *= 1024*1024*1024; <b>break</b>;
+    <b>case</b> 'm': <b>case</b> 'M': Val *= 1024*1024;      <b>break</b>;
+    <b>case</b> 'k': <b>case</b> 'K': Val *= 1024;           <b>break</b>;
+
+    default:
+      <i>// Print an error message if unrecognized character!</i>
+      <b>return</b> O.error(": '" + Arg + "' value invalid for file size argument!");
+    }
+  }
+}
+</pre><p>
+
+This function implements a very simple parser for the kinds of strings we are
+interested in.  Although it has some holes (it allows "<tt>123KKK</tt>" for
+example), it is good enough for this example.  Note that we use the option
+itself to print out the error message (the <tt>error</tt> method always returns
+true) in order to get a nice error message (shown below).  Now that we have our
+parser class, we can use it like this:<p>
+
+<pre>
+<b>static</b> <a href="#cl::opt">cl::opt</a>&lt;<b>unsigned</b>, <b>false</b>, FileSizeParser&gt;
+MFS(<i>"max-file-size"</i>, <a href="#cl::desc">cl::desc</a>(<i>"Maximum file size to accept"</i>),
+    <a href="#cl::value_desc">cl::value_desc</a>("<i>size</i>"));
+</pre><p>
+
+Which adds this to the output of our program:<p>
+
+<pre>
+OPTIONS:
+  -help                 - display available options (--help-hidden for more)
+  ...
+  <b>-max-file-size=&lt;size&gt; - Maximum file size to accept</b>
+</pre><p>
+
+And we can test that our parse works correctly now (the test program just prints
+out the max-file-size argument value):<p>
+
+<pre>
+$ ./test
+MFS: 0
+$ ./test -max-file-size=123MB
+MFS: 128974848
+$ ./test -max-file-size=3G
+MFS: 3221225472
+$ ./test -max-file-size=dog
+-max-file-size option: 'dog' value invalid for file size argument!
+</pre><p>
+
+It looks like it works.  The error message that we get is nice and helpful, and
+we seem to accept reasonable file sizes.  This wraps up the "custom parser"
+tutorial.<p>
+
+
+<!-- ======================================================================= -->
+</ul><table width="100%" bgcolor="#441188" border=0 cellpadding=4 cellspacing=0>
+<tr><td>&nbsp;</td><td width="100%">&nbsp; <font color="#EEEEFF"
+face="Georgia,Palatino"><b> <a name="explotingexternal">Exploiting external
+storage </b></font></td></tr></table><ul>
 
 
 
 <!-- ======================================================================= -->
-</ul><table width="100%" bgcolor="#441188" border=0 cellpadding=4 cellspacing=0><tr><td>&nbsp;</td><td width="100%">&nbsp; <font color="#EEEEFF" face="Georgia,Palatino"><b>
-<a name="dynamicopts">Dynamically adding command line options
-</b></font></td></tr></table><ul>
+</ul><table width="100%" bgcolor="#441188" border=0 cellpadding=4 cellspacing=0>
+<tr><td>&nbsp;</td><td width="100%">&nbsp; <font color="#EEEEFF"
+face="Georgia,Palatino"><b> <a name="dynamicopts">Dynamically adding command
+line options </b></font></td></tr></table><ul>
 
 
 
@@ -1272,7 +1469,7 @@ TODO
 <address><a href="mailto:sabre@nondot.org">Chris Lattner</a></address>
 <!-- Created: Tue Jan 23 15:19:28 CST 2001 -->
 <!-- hhmts start -->
-Last modified: Tue Aug  6 14:34:47 CDT 2002
+Last modified: Wed Aug  7 13:22:40 CDT 2002
 <!-- hhmts end -->
 </font>
 </body></html>
