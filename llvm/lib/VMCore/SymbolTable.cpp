@@ -93,6 +93,7 @@ Type* SymbolTable::lookupType( const std::string& Name ) const {
 // Remove a value
 void SymbolTable::remove(Value *N) {
   assert(N->hasName() && "Value doesn't have name!");
+  assert(!isa<Type>(N) && "Can't remove types through this interface.");
   if (InternallyInconsistent) return;
 
   plane_iterator PI = pmap.find(N->getType());
@@ -109,6 +110,7 @@ Value *SymbolTable::removeEntry(plane_iterator Plane, value_iterator Entry) {
          Entry != Plane->second.end() && "Invalid entry to remove!");
 
   Value *Result = Entry->second;
+  assert(!isa<Type>(Result) && "Can't remove types through this interface.");
   const Type *Ty = Result->getType();
 #if DEBUG_SYMBOL_TABLE
   dump();
@@ -181,6 +183,7 @@ Type* SymbolTable::removeEntry(type_iterator Entry) {
 // insertEntry - Insert a value into the symbol table with the specified name.
 void SymbolTable::insertEntry(const std::string &Name, const Type *VTy,
                               Value *V) {
+  assert(!isa<Type>(V) && "Can't insert types through this interface.");
   // Check to see if there is a naming conflict.  If so, rename this value!
   if (lookup(VTy, Name)) {
     std::string UniqueName = getUniqueName(VTy, Name);
@@ -259,6 +262,7 @@ unsigned SymbolTable::type_size(const Type *Ty) const {
 
 // Get the name of a value
 std::string SymbolTable::get_name( const Value* V ) const {
+  assert(!isa<Type>(V) && "Can't get name of types through this interface.");
   value_const_iterator VI = this->value_begin( V->getType() );
   value_const_iterator VE = this->value_end( V->getType() );
 
