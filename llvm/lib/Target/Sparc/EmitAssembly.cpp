@@ -777,32 +777,27 @@ void SparcModuleAsmPrinter::emitGlobalsAndConstants(const Module &M) {
   hash_set<const Constant*> moduleConstants;
   FoldConstants(M, moduleConstants);
     
-  // Now, emit the three data sections separately; the cost of I/O should
-  // make up for the cost of extra passes over the globals list!
-  
-  // Section 1 : Read-only data section (implies initialized)
+  // Output constants spilled to memory
   enterSection(AsmPrinter::ReadOnlyData);
-  for (Module::const_giterator GI = M.gbegin(), GE = M.gend(); GI != GE; ++GI)
-    if (GI->hasInitializer() && GI->isConstant())
-      printGlobalVariable(GI);
-  
-  for (hash_set<const Constant*>::const_iterator
-         I = moduleConstants.begin(),
+  for (hash_set<const Constant*>::const_iterator I = moduleConstants.begin(),
          E = moduleConstants.end();  I != E; ++I)
     printConstant(*I);
-  
-  // Section 2 : Initialized read-write data section
-  enterSection(AsmPrinter::InitRWData);
-  for (Module::const_giterator GI = M.gbegin(), GE = M.gend(); GI != GE; ++GI)
-    if (GI->hasInitializer() && !GI->isConstant())
-      printGlobalVariable(GI);
-  
-  // Section 3 : Uninitialized read-write data section
-  enterSection(AsmPrinter::UninitRWData);
-  for (Module::const_giterator GI = M.gbegin(), GE = M.gend(); GI != GE; ++GI)
-    if (!GI->hasInitializer())
-      printGlobalVariable(GI);
-  
+
+  // Output global variables...
+  for (Module::const_giterator GI = M.gbegin(), GE = M.gend(); GI != GE; ++GI) {
+    if (GI->hasInitializer() && GI->isConstant()) {
+      enterSection(AsmPrinter::ReadOnlyData);  // read-only, initialized data
+    } else if (GI->hasInitializer() && !GI->isConstant()) { // read-write data
+      enterSection(AsmPrinter::ReadOnlyData);  // read-only, initialized data
+    } else if (GI->hasInitializer() && !GI->isConstant()) { // read-write data
+      enterSection(AsmPrinter::InitRWData);
+    } else {
+      assert (!GI->hasInitializer() && "Unexpected global variable type found");
+      enterSection(AsmPrinter::UninitRWData);       // Uninitialized data
+    }
+    printGlobalVariable(GI);
+  }
+
   toAsm << "\n";
 }
 
