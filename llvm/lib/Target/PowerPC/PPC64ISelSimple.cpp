@@ -377,10 +377,10 @@ namespace {
     /// yet used.
     ///
     unsigned makeAnotherReg(const Type *Ty) {
-      assert(dynamic_cast<const PowerPCRegisterInfo*>(TM.getRegisterInfo()) &&
+      assert(dynamic_cast<const PPC64RegisterInfo*>(TM.getRegisterInfo()) &&
              "Current target doesn't have PPC reg info??");
-      const PowerPCRegisterInfo *PPCRI =
-        static_cast<const PowerPCRegisterInfo*>(TM.getRegisterInfo());
+      const PPC64RegisterInfo *PPCRI =
+        static_cast<const PPC64RegisterInfo*>(TM.getRegisterInfo());
       // Add the mapping of regnumber => reg class to MachineFunction
       const TargetRegisterClass *RC = PPCRI->getRegClassForType(Ty);
       return F->getSSARegMap()->createVirtualRegister(RC);
@@ -1288,7 +1288,7 @@ void ISel::visitBranchInst(BranchInst &BI) {
   } else {
     // Change to the inverse condition...
     if (BI.getSuccessor(1) != NextBB) {
-      Opcode = PowerPCInstrInfo::invertPPCBranchOpcode(Opcode);
+      Opcode = PPC64InstrInfo::invertPPCBranchOpcode(Opcode);
       BuildMI(BB, PPC::COND_BRANCH, 3).addReg(PPC::CR0).addImm(Opcode)
         .addMBB(MBBMap[BI.getSuccessor(1)])
         .addMBB(MBBMap[BI.getSuccessor(0)]);
@@ -1497,8 +1497,6 @@ void ISel::visitCallInst(CallInst &CI) {
     }
     // Emit a CALL instruction with PC-relative displacement.
     TheCall = BuildMI(PPC::CALLpcrel, 1).addGlobalAddress(F, true);
-    // Add it to the set of functions called to be used by the Printer
-    TM.CalledFunctions.insert(F);
   } else {  // Emit an indirect call through the CTR
     unsigned Reg = getReg(CI.getCalledValue());
     BuildMI(BB, PPC::MTCTR, 1).addReg(Reg);
@@ -1997,7 +1995,6 @@ void ISel::emitDivRemOperation(MachineBasicBlock *BB,
       Args.push_back(ValueRecord(Op0Reg, Type::FloatTy));
       Args.push_back(ValueRecord(Op1Reg, Type::FloatTy));
       doCall(ValueRecord(ResultReg, Type::FloatTy), TheCall, Args, false);
-      TM.CalledFunctions.insert(fmodfFn);
     }
     return;
   case cFP64:
@@ -2015,7 +2012,6 @@ void ISel::emitDivRemOperation(MachineBasicBlock *BB,
       Args.push_back(ValueRecord(Op0Reg, Type::DoubleTy));
       Args.push_back(ValueRecord(Op1Reg, Type::DoubleTy));
       doCall(ValueRecord(ResultReg, Type::DoubleTy), TheCall, Args, false);
-      TM.CalledFunctions.insert(fmodFn);
     }
     return;
   case cLong: {
@@ -2031,7 +2027,6 @@ void ISel::emitDivRemOperation(MachineBasicBlock *BB,
     Args.push_back(ValueRecord(Op0Reg, Type::LongTy));
     Args.push_back(ValueRecord(Op1Reg, Type::LongTy));
     doCall(ValueRecord(ResultReg, Type::LongTy), TheCall, Args, false);
-    TM.CalledFunctions.insert(Funcs[NameIdx]);
     return;
   }
   case cByte: case cShort: case cInt:
@@ -2401,7 +2396,6 @@ void ISel::emitCastOperation(MachineBasicBlock *MBB,
       MachineInstr *TheCall =
         BuildMI(PPC::CALLpcrel, 1).addGlobalAddress(floatFn, true);
       doCall(ValueRecord(DestReg, DestTy), TheCall, Args, false);
-      TM.CalledFunctions.insert(floatFn);
       return;
     }
     
@@ -2473,7 +2467,6 @@ void ISel::emitCastOperation(MachineBasicBlock *MBB,
       MachineInstr *TheCall =
         BuildMI(PPC::CALLpcrel, 1).addGlobalAddress(floatFn, true);
       doCall(ValueRecord(DestReg, DestTy), TheCall, Args, false);
-      TM.CalledFunctions.insert(floatFn);
       return;
     }
 
@@ -3041,7 +3034,6 @@ void ISel::visitMallocInst(MallocInst &I) {
   MachineInstr *TheCall = 
     BuildMI(PPC::CALLpcrel, 1).addGlobalAddress(mallocFn, true);
   doCall(ValueRecord(getReg(I), I.getType()), TheCall, Args, false);
-  TM.CalledFunctions.insert(mallocFn);
 }
 
 
@@ -3054,7 +3046,6 @@ void ISel::visitFreeInst(FreeInst &I) {
   MachineInstr *TheCall = 
     BuildMI(PPC::CALLpcrel, 1).addGlobalAddress(freeFn, true);
   doCall(ValueRecord(0, Type::VoidTy), TheCall, Args, false);
-  TM.CalledFunctions.insert(freeFn);
 }
    
 /// createPPC64ISelSimple - This pass converts an LLVM function into a machine

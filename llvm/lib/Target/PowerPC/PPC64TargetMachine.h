@@ -1,4 +1,4 @@
-//===-- PPC64TargetMachine.h - Define AIX/PowerPC TargetMachine --*- C++ -*-=//
+//===-- PPC64TargetMachine.h - Define TargetMachine for PowerPC64 -*- C++ -*-=//
 // 
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,31 +7,35 @@
 // 
 //===----------------------------------------------------------------------===//
 // 
-// This file declares the PowerPC/AIX specific subclass of TargetMachine.
+// This file declares the PowerPC specific subclass of TargetMachine.
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef POWERPC_AIX_TARGETMACHINE_H
-#define POWERPC_AIX_TARGETMACHINE_H
+#ifndef POWERPC64_TARGETMACHINE_H
+#define POWERPC64_TARGETMACHINE_H
 
 #include "PowerPCTargetMachine.h"
+#include "PPC64InstrInfo.h"
+#include "llvm/PassManager.h"
 
 namespace llvm {
 
+class IntrinsicLowering;
+
 class PPC64TargetMachine : public PowerPCTargetMachine {
+  PPC64InstrInfo InstrInfo;
+
 public:
   PPC64TargetMachine(const Module &M, IntrinsicLowering *IL);
+  virtual const PPC64InstrInfo   *getInstrInfo() const { return &InstrInfo; }
+  virtual const MRegisterInfo *getRegisterInfo() const {
+    return &InstrInfo.getRegisterInfo();
+  }
 
-  /// addPassesToEmitMachineCode - Add passes to the specified pass manager to
-  /// get machine code emitted.  This uses a MachineCodeEmitter object to handle
-  /// actually outputting the machine code and resolving things like the address
-  /// of functions.  This method should returns true if machine code emission is
-  /// not supported.
-  ///
-  virtual bool addPassesToEmitMachineCode(FunctionPassManager &PM,
-                                          MachineCodeEmitter &MCE);
-  
   static unsigned getModuleMatchQuality(const Module &M);
+
+  bool addPassesToEmitMachineCode(FunctionPassManager &PM,
+                                  MachineCodeEmitter &MCE);
 };
 
 } // end namespace llvm

@@ -24,7 +24,6 @@
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstr.h"
-#include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/Mangler.h"
 #include "Support/CommandLine.h"
 #include "Support/Debug.h"
