@@ -916,7 +916,6 @@ Module *llvm::RunVMAsmParser(const std::string &Filename, FILE *F) {
 %token <TermOpVal> RET BR SWITCH INVOKE UNWIND
 
 // Binary Operators 
-%type  <BinaryOpVal> BinaryOps  // all the binary operators
 %type  <BinaryOpVal> ArithmeticOps LogicalOps SetCondOps // Binops Subcatagories
 %token <BinaryOpVal> ADD SUB MUL DIV REM AND OR XOR
 %token <BinaryOpVal> SETLE SETGE SETLT SETGT SETEQ SETNE  // Binary Comarators
@@ -955,7 +954,6 @@ EINT64VAL : EUINT64VAL {
 ArithmeticOps: ADD | SUB | MUL | DIV | REM;
 LogicalOps   : AND | OR | XOR;
 SetCondOps   : SETLE | SETGE | SETLT | SETGT | SETEQ | SETNE;
-BinaryOps : ArithmeticOps | LogicalOps | SetCondOps;
 
 ShiftOps  : SHL | SHR;
 
@@ -1326,9 +1324,37 @@ ConstExpr: CAST '(' ConstVal TO Types ')' {
       ThrowException("Select operand types must match!");
     $$ = ConstantExpr::getSelect($3, $5, $7);
   }
-  | BinaryOps '(' ConstVal ',' ConstVal ')' {
+  | ArithmeticOps '(' ConstVal ',' ConstVal ')' {
     if ($3->getType() != $5->getType())
       ThrowException("Binary operator types must match!");
+    // HACK: llvm 1.3 and earlier used to emit invalid pointer constant exprs.
+    // To retain backward compatibility with these early compilers, we emit a
+    // cast to the appropriate integer type automatically if we are in the
+    // broken case.  See PR424 for more information.
+    if (!isa<PointerType>($3->getType())) {
+      $$ = ConstantExpr::get($1, $3, $5);
+    } else {
+      const Type *IntPtrTy;
+      switch (CurModule.CurrentModule->getPointerSize()) {
+      case Module::Pointer32: IntPtrTy = Type::IntTy; break;
+      case Module::Pointer64: IntPtrTy = Type::LongTy; break;
+      default: ThrowException("invalid pointer binary constant expr!");
+      }
+      $$ = ConstantExpr::get($1, ConstantExpr::getCast($3, IntPtrTy),
+                             ConstantExpr::getCast($5, IntPtrTy));
+      $$ = ConstantExpr::getCast($$, $3->getType());
+    }
+  }
+  | LogicalOps '(' ConstVal ',' ConstVal ')' {
+    if ($3->getType() != $5->getType())
+      ThrowException("Logical operator types must match!");
+    if (!$3->getType()->isIntegral())
+      ThrowException("Logical operands must have integral types!");
+    $$ = ConstantExpr::get($1, $3, $5);
+  }
+  | SetCondOps '(' ConstVal ',' ConstVal ')' {
+    if ($3->getType() != $5->getType())
+      ThrowException("setcc operand types must match!");
     $$ = ConstantExpr::get($1, $3, $5);
   }
   | ShiftOps '(' ConstVal ',' ConstVal ')' {
