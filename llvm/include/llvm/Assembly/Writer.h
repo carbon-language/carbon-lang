@@ -47,17 +47,6 @@ std::ostream &WriteAsOperand(std::ostream &, const Value *, bool PrintTy = true,
                              bool PrintName = true, SlotCalculator *Table = 0);
 
 
-// WriteToVCG - Dump the specified structure to a VCG file.  If method is
-// dumped, then the file named is created.  If a module is to be written, a
-// family of files with a common base name is created, with a method name
-// suffix.
-//
-void WriteToVCG(const Module *Module, const std::string &Filename);
-void WriteToVCG(const Function *Func, const std::string &Filename);
-
-
-
-
 // Define operator<< to work on the various classes that we can send to an 
 // ostream...
 //
