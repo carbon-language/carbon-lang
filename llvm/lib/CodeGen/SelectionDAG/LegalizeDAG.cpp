@@ -224,6 +224,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
   case ISD::EntryToken:
   case ISD::FrameIndex:
   case ISD::GlobalAddress:
+  case ISD::ExternalSymbol:
   case ISD::ConstantPool:
   case ISD::CopyFromReg:            // Nothing to do.
     assert(getTypeAction(Node->getValueType(0)) == Legal &&
@@ -517,6 +518,9 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
   case ISD::AND:
   case ISD::OR:
   case ISD::XOR:
+  case ISD::SHL:
+  case ISD::SRL:
+  case ISD::SRA:
     Tmp1 = LegalizeOp(Node->getOperand(0));   // LHS
     Tmp2 = LegalizeOp(Node->getOperand(1));   // RHS
     if (Tmp1 != Node->getOperand(0) ||
@@ -525,6 +529,8 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     break;
   case ISD::ZERO_EXTEND:
   case ISD::SIGN_EXTEND:
+  case ISD::FP_EXTEND:
+  case ISD::FP_ROUND:
     switch (getTypeAction(Node->getOperand(0).getValueType())) {
     case Legal:
       Tmp1 = LegalizeOp(Node->getOperand(0));
