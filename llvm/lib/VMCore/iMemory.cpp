@@ -24,8 +24,7 @@ AllocationInst::AllocationInst(const Type *Ty, Value *ArraySize, unsigned iTy,
 }
 
 bool AllocationInst::isArrayAllocation() const {
-  return getNumOperands() == 1 &&
-         getOperand(0) != ConstantUInt::get(Type::UIntTy, 1);
+  return getOperand(0) != ConstantUInt::get(Type::UIntTy, 1);
 }
 
 const Type *AllocationInst::getAllocatedType() const {
