@@ -830,7 +830,9 @@ Constant *llvm::ConstantFoldBinaryInstruction(unsigned Opcode,
   // If we successfully folded the expression, return it now.
   if (C) return C;
 
-  if (SetCondInst::isRelational(Opcode))
+  if (SetCondInst::isRelational(Opcode)) {
+    if (isa<UndefValue>(V1) || isa<UndefValue>(V2))
+      return UndefValue::get(Type::BoolTy);
     switch (evaluateRelation(V1, V2)) {
     default: assert(0 && "Unknown relational!");
     case Instruction::BinaryOpsEnd:
@@ -871,17 +873,12 @@ Constant *llvm::ConstantFoldBinaryInstruction(unsigned Opcode,
       if (Opcode == Instruction::SetNE) return ConstantBool::True;
       break;
     }
+  }
 
   if (isa<UndefValue>(V1) || isa<UndefValue>(V2)) {
     switch (Opcode) {
     case Instruction::Add:
     case Instruction::Sub:
-    case Instruction::SetEQ:
-    case Instruction::SetNE:
-    case Instruction::SetLT:
-    case Instruction::SetLE:
-    case Instruction::SetGT:
-    case Instruction::SetGE:
     case Instruction::Xor:
       return UndefValue::get(V1->getType());
 
