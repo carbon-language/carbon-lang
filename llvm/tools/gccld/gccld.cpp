@@ -215,10 +215,8 @@ void RemoveEnv(const char * name, char ** const envp) {
 int main(int argc, char **argv, char **envp) {
   cl::ParseCommandLineOptions(argc, argv, " llvm linker for GCC\n");
 
-  std::string ErrorMessage;
-  std::auto_ptr<Module> Composite(LoadObject(InputFilenames[0], ErrorMessage));
-  if (Composite.get() == 0)
-    return PrintAndReturn(argv[0], ErrorMessage);
+  std::string ModuleID ("gccld-output");
+  std::auto_ptr<Module> Composite(new Module(ModuleID));
 
   // We always look first in the current directory when searching for libraries.
   LibPaths.insert(LibPaths.begin(), ".");
@@ -257,7 +255,7 @@ int main(int argc, char **argv, char **envp) {
   // Generate the bytecode file.
   if (GenerateBytecode(Composite.get(), Strip, !NoInternalize, &Out)) {
     Out.close();
-    return PrintAndReturn(argv[0], "error generating bytcode");
+    return PrintAndReturn(argv[0], "error generating bytecode");
   }
 
   // Close the bytecode file.
