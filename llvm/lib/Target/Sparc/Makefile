@@ -14,13 +14,13 @@ endif
 Debug/Sparc.burm.cpp: Debug/Sparc.burm Debug/.dir
 	$(RunBurg) $< -o $@
 
-$(BUILD_ROOT)/Debug/Sparc.burm.o: Debug/Sparc.burm.cpp
+$(BUILD_OBJ_DIR)/Debug/Sparc.burm.o: Debug/Sparc.burm.cpp
 	$(CompileG) $< -o $@
 
-$(BUILD_ROOT)/Release/Sparc.burm.o: Debug/Sparc.burm.cpp
+$(BUILD_OBJ_DIR)/Release/Sparc.burm.o: Debug/Sparc.burm.cpp
 	$(CompileO) $< -o $@
 
-$(BUILD_ROOT)/Profile/Sparc.burm.o: Debug/Sparc.burm.cpp
+$(BUILD_OBJ_DIR)/Profile/Sparc.burm.o: Debug/Sparc.burm.cpp
 	$(CompileP) $< -o $@
 
 Debug/Sparc.burg.in1 : Sparc.burg.in Debug/.dir
@@ -29,7 +29,7 @@ Debug/Sparc.burg.in1 : Sparc.burg.in Debug/.dir
 Debug/Sparc.burm : Debug/Sparc.burg.in1
 	$(CXX) -E -I$(LEVEL)/include $(DEBUG_FLAG) -x c++ $< | sed '/^# /d' | sed 's/Xinclude/#include/g' | sed 's/Xdefine/#define/g' > $@
 
-$(BUILD_ROOT)/Depend/Sparc.burm.d: $(BUILD_ROOT)/Depend/.dir
+$(BUILD_OBJ_DIR)/Depend/Sparc.burm.d: $(BUILD_OBJ_DIR)/Depend/.dir
 	touch $@
 
 SparcV9CodeEmitter.cpp: SparcV9CodeEmitter.inc
