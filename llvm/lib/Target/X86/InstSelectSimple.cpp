@@ -30,9 +30,13 @@
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Support/InstVisitor.h"
 #include "llvm/Support/CFG.h"
+#include "Support/Statistic.h"
 using namespace llvm;
 
-//#define SMART_FP 1
+namespace {
+  Statistic<>
+  NumFPKill("x86-codegen", "Number of FP_REG_KILL instructions added");
+}
 
 /// BMI - A special BuildMI variant that takes an iterator to insert the
 /// instruction at as well as a basic block.  This is the version for when you
@@ -101,6 +105,9 @@ namespace {
       // Select the PHI nodes
       SelectPHINodes();
 
+      // Insert the FP_REG_KILL instructions into blocks that need them.
+      InsertFPRegKills();
+
       RegMap.clear();
       MBBMap.clear();
       F = 0;
@@ -136,6 +143,12 @@ namespace {
     /// not the current one.
     ///
     void SelectPHINodes();
+
+    /// InsertFPRegKills - Insert FP_REG_KILL instructions into basic blocks
+    /// that need them.  This only occurs due to the floating point stackifier
+    /// not being aggressive enough to handle arbitrary global stackification.
+    ///
+    void InsertFPRegKills();
 
     // Visitation methods for various instructions.  These methods simply emit
     // fixed X86 code for each instruction.
@@ -544,7 +557,7 @@ void ISel::SelectPHINodes() {
     MachineBasicBlock *MBB = MBBMap[I];
 
     // Loop over all of the PHI nodes in the LLVM basic block...
-    MachineInstr* instr = MBB->begin();
+    MachineBasicBlock::iterator instr = MBB->begin();
     for (BasicBlock::const_iterator I = BB->begin();
          PHINode *PN = const_cast<PHINode*>(dyn_cast<PHINode>(I)); ++I) {
 
@@ -613,6 +626,89 @@ void ISel::SelectPHINodes() {
     }
   }
 }
+
+/// RequiresFPRegKill - The floating point stackifier pass cannot insert
+/// compensation code on critical edges.  As such, it requires that we kill all
+/// FP registers on the exit from any blocks that either ARE critical edges, or
+/// branch to a block that has incoming critical edges.
+///
+/// Note that this kill instruction will eventually be eliminated when
+/// restrictions in the stackifier are relaxed.
+///
+static bool RequiresFPRegKill(const BasicBlock *BB) {
+#if 0
+  for (succ_const_iterator SI = succ_begin(BB), E = succ_end(BB); SI!=E; ++SI) {
+    const BasicBlock *Succ = *SI;
+    pred_const_iterator PI = pred_begin(Succ), PE = pred_end(Succ);
+    ++PI;  // Block have at least one predecessory
+    if (PI != PE) {             // If it has exactly one, this isn't crit edge
+      // If this block has more than one predecessor, check all of the
+      // predecessors to see if they have multiple successors.  If so, then the
+      // block we are analyzing needs an FPRegKill.
+      for (PI = pred_begin(Succ); PI != PE; ++PI) {
+        const BasicBlock *Pred = *PI;
+        succ_const_iterator SI2 = succ_begin(Pred);
+        ++SI2;  // There must be at least one successor of this block.
+        if (SI2 != succ_end(Pred))
+          return true;   // Yes, we must insert the kill on this edge.
+      }
+    }
+  }
+  // If we got this far, there is no need to insert the kill instruction.
+  return false;
+#else
+  return true;
+#endif
+}
+
+// InsertFPRegKills - Insert FP_REG_KILL instructions into basic blocks that
+// need them.  This only occurs due to the floating point stackifier not being
+// aggressive enough to handle arbitrary global stackification.
+//
+// Currently we insert an FP_REG_KILL instruction into each block that uses or
+// defines a floating point virtual register.
+//
+// When the global register allocators (like linear scan) finally update live
+// variable analysis, we can keep floating point values in registers across
+// portions of the CFG that do not involve critical edges.  This will be a big
+// win, but we are waiting on the global allocators before we can do this.
+//
+// With a bit of work, the floating point stackifier pass can be enhanced to
+// break critical edges as needed (to make a place to put compensation code),
+// but this will require some infrastructure improvements as well.
+//
+void ISel::InsertFPRegKills() {
+  SSARegMap &RegMap = *F->getSSARegMap();
+  const TargetInstrInfo &TII = TM.getInstrInfo();
+
+  for (MachineFunction::iterator BB = F->begin(), E = F->end(); BB != E; ++BB) {
+    bool UsesFPReg = false;
+    for (MachineBasicBlock::iterator I = BB->begin(), E = BB->end(); I!=E; ++I)
+      for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i)
+        if (I->getOperand(i).isRegister()) {
+          unsigned Reg = I->getOperand(i).getReg();
+          if (MRegisterInfo::isVirtualRegister(Reg))
+            if (RegMap.getRegClass(Reg)->getSize() == 10) {
+              UsesFPReg = true;
+              break;
+            }
+        }
+    if (UsesFPReg) {
+      // Okay, this block uses an FP register.  If the block has successors (ie,
+      // it's not an unwind/return), insert the FP_REG_KILL instruction.
+      if (BB->getBasicBlock()->getTerminator()->getNumSuccessors() &&
+          RequiresFPRegKill(BB->getBasicBlock())) {
+        // Rewind past any terminator instructions that might exist.
+        MachineBasicBlock::iterator I = BB->end();
+        while (I != BB->begin() && TII.isTerminatorInstr((--I)->getOpcode()));
+        ++I;
+        BMI(BB, I, X86::FP_REG_KILL, 0);
+        ++NumFPKill;
+      }
+    }
+  }
+}
+
 
 // canFoldSetCCIntoBranch - Return the setcc instruction if we can fold it into
 // the conditional branch instruction which is the only user of the cc
@@ -857,9 +953,6 @@ void ISel::promote32(unsigned targetReg, const ValueRecord &VR) {
 ///
 void ISel::visitReturnInst(ReturnInst &I) {
   if (I.getNumOperands() == 0) {
-#ifndef SMART_FP
-    BuildMI(BB, X86::FP_REG_KILL, 0);
-#endif
     BuildMI(BB, X86::RET, 0); // Just emit a 'ret' instruction
     return;
   }
@@ -890,9 +983,6 @@ void ISel::visitReturnInst(ReturnInst &I) {
     visitInstruction(I);
   }
   // Emit a 'ret' instruction
-#ifndef SMART_FP
-  BuildMI(BB, X86::FP_REG_KILL, 0);
-#endif
   BuildMI(BB, X86::RET, 0);
 }
 
@@ -901,40 +991,6 @@ void ISel::visitReturnInst(ReturnInst &I) {
 static inline BasicBlock *getBlockAfter(BasicBlock *BB) {
   Function::iterator I = BB; ++I;  // Get iterator to next block
   return I != BB->getParent()->end() ? &*I : 0;
-}
-
-/// RequiresFPRegKill - The floating point stackifier pass cannot insert
-/// compensation code on critical edges.  As such, it requires that we kill all
-/// FP registers on the exit from any blocks that either ARE critical edges, or
-/// branch to a block that has incoming critical edges.
-///
-/// Note that this kill instruction will eventually be eliminated when
-/// restrictions in the stackifier are relaxed.
-///
-static bool RequiresFPRegKill(const BasicBlock *BB) {
-#ifdef SMART_FP
-  for (succ_const_iterator SI = succ_begin(BB), E = succ_end(BB); SI!=E; ++SI) {
-    const BasicBlock *Succ = *SI;
-    pred_const_iterator PI = pred_begin(Succ), PE = pred_end(Succ);
-    ++PI;  // Block have at least one predecessory
-    if (PI != PE) {             // If it has exactly one, this isn't crit edge
-      // If this block has more than one predecessor, check all of the
-      // predecessors to see if they have multiple successors.  If so, then the
-      // block we are analyzing needs an FPRegKill.
-      for (PI = pred_begin(Succ); PI != PE; ++PI) {
-        const BasicBlock *Pred = *PI;
-        succ_const_iterator SI2 = succ_begin(Pred);
-        ++SI2;  // There must be at least one successor of this block.
-        if (SI2 != succ_end(Pred))
-          return true;   // Yes, we must insert the kill on this edge.
-      }
-    }
-  }
-  // If we got this far, there is no need to insert the kill instruction.
-  return false;
-#else
-  return true;
-#endif
 }
 
 /// visitBranchInst - Handle conditional and unconditional branches here.  Note
@@ -946,8 +1002,6 @@ void ISel::visitBranchInst(BranchInst &BI) {
   BasicBlock *NextBB = getBlockAfter(BI.getParent());  // BB after current one
 
   if (!BI.isConditional()) {  // Unconditional branch?
-    if (RequiresFPRegKill(BI.getParent()))
-      BuildMI(BB, X86::FP_REG_KILL, 0);
     if (BI.getSuccessor(0) != NextBB)
       BuildMI(BB, X86::JMP, 1).addPCDisp(BI.getSuccessor(0));
     return;
@@ -960,8 +1014,6 @@ void ISel::visitBranchInst(BranchInst &BI) {
     // computed some other way...
     unsigned condReg = getReg(BI.getCondition());
     BuildMI(BB, X86::CMPri8, 2).addReg(condReg).addZImm(0);
-    if (RequiresFPRegKill(BI.getParent()))
-      BuildMI(BB, X86::FP_REG_KILL, 0);
     if (BI.getSuccessor(1) == NextBB) {
       if (BI.getSuccessor(0) != NextBB)
         BuildMI(BB, X86::JNE, 1).addPCDisp(BI.getSuccessor(0));
@@ -1000,8 +1052,6 @@ void ISel::visitBranchInst(BranchInst &BI) {
       X86::JS, X86::JNS },
   };
   
-  if (RequiresFPRegKill(BI.getParent()))
-    BuildMI(BB, X86::FP_REG_KILL, 0);
   if (BI.getSuccessor(0) != NextBB) {
     BuildMI(BB, OpcodeTab[isSigned][OpNum], 1).addPCDisp(BI.getSuccessor(0));
     if (BI.getSuccessor(1) != NextBB)
