@@ -17,6 +17,7 @@
 
 #include "llvm/Pass.h"
 #include "Support/CommandLine.h"
+#include "Support/LeakDetector.h"
 #include <algorithm>
 #include <iostream>
 class Annotable;
@@ -216,6 +217,10 @@ public:
       bool Changed = runPass(P, M);
       endPass(P);
       MadeChanges |= Changed;
+
+      // Check for memory leaks by the pass...
+      LeakDetector::checkForGarbage(std::string("after running pass '") +
+                                    P->getPassName() + "'");
 
       if (Changed)
         PMDebug::PrintPassInformation(getDepth()+1, "Made Modification", P,
