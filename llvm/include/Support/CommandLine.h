@@ -372,6 +372,11 @@ struct generic_parser_base {
       return ValueDisallowed;
   }
 
+  // findOption - Return the option number corresponding to the specified
+  // argument string.  If the option is not found, getNumOptions() is returned.
+  //
+  unsigned findOption(const char *Name);
+
 protected:
   bool hasArgStr;
 };
@@ -384,8 +389,10 @@ protected:
 //
 template <class DataType>
 class parser : public generic_parser_base {
+protected:
   std::vector<std::pair<const char *,
                         std::pair<DataType, const char *> > > Values;
+public:
 
   // Implement virtual functions needed by generic_parser_base
   unsigned getNumOptions() const { return Values.size(); }
@@ -394,7 +401,6 @@ class parser : public generic_parser_base {
     return Values[N].second.second;
   }
 
-public:
   // Default implementation, requires user to populate it with values somehow.
   template<class Opt>   // parse - Return true on error.
   bool parse(Opt &O, const char *ArgName, const string &Arg) {
@@ -416,7 +422,16 @@ public:
   // addLiteralOption - Add an entry to the mapping table...
   template <class DT>
   void addLiteralOption(const char *Name, const DT &V, const char *HelpStr) {
+    assert(findOption(Name) == Values.size() && "Option already exists!");
     Values.push_back(std::make_pair(Name, std::make_pair((DataType)V,HelpStr)));
+  }
+
+  // removeLiteralOption - Remove the specified option.
+  //
+  void removeLiteralOption(const char *Name) {
+    unsigned N = findOption(Name);
+    assert(N != Values.size() && "Option not found!");
+    Values.erase(Values.begin()+N);
   }
 };
 
