@@ -10,6 +10,7 @@
 
 #include <list>
 #include "llvm/Annotation.h"
+#include "llvm/AbstractTypeUser.h"
 
 class User;
 class Type;
@@ -19,6 +20,7 @@ class Instruction;
 class BasicBlock;
 class Method;
 class Module;
+class SymbolTable;
 template<class ValueSubclass, class ItemParentType, class SymTabType> 
   class ValueHolder;
 
@@ -26,7 +28,8 @@ template<class ValueSubclass, class ItemParentType, class SymTabType>
 //                                 Value Class
 //===----------------------------------------------------------------------===//
 
-class Value : public Annotable {   // Value's are annotable
+class Value : public Annotable,         // Values are annotable
+	      public AbstractTypeUser { // Values use potentially abstract types
 public:
   enum ValueTy {
     TypeVal,                // This is an instance of Type
@@ -42,7 +45,7 @@ public:
 private:
   list<User *> Uses;
   string Name;
-  const Type *Ty;
+  PATypeHandle<Type> Ty;
   ValueTy VTy;
 
   Value(const Value &);              // Do not implement
@@ -57,7 +60,7 @@ public:
   // All values can potentially be named...
   inline bool hasName() const { return Name != ""; }
   inline const string &getName() const { return Name; }
-  virtual void setName(const string &name) { Name = name; }
+  virtual void setName(const string &name, SymbolTable * = 0) { Name = name; }
 
   // Methods for determining the subtype of this Value.  The getValueType()
   // method returns the type of the value directly.  The cast*() methods are
@@ -117,6 +120,12 @@ public:
   // use list should be empty.
   //
   void replaceAllUsesWith(Value *D);
+
+  // refineAbstractType - This function is implemented because we use
+  // potentially abstract types, and these types may be resolved to more
+  // concrete types after we are constructed.
+  //
+  virtual void refineAbstractType(const DerivedType *OldTy, const Type *NewTy);
 
   //----------------------------------------------------------------------
   // Methods for handling the list of uses of this DEF.
