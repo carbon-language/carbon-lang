@@ -291,6 +291,13 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
   return Changed ? &I : 0;
 }
 
+// isSignBit - Return true if the value represented by the constant only has the
+// highest order bit set.
+static bool isSignBit(ConstantInt *CI) {
+  unsigned NumBits = CI->getType()->getPrimitiveSize()*8;
+  return (CI->getRawValue() & ~(-1LL << NumBits)) == (1ULL << (NumBits-1));
+}
+
 Instruction *InstCombiner::visitSub(BinaryOperator &I) {
   Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
 
@@ -959,13 +966,15 @@ Instruction *InstCombiner::visitCastInst(CastInst &CI) {
     if (BinaryOperator *BO = dyn_cast<BinaryOperator>(Src)) {
       Value *Op0 = BO->getOperand(0), *Op1 = BO->getOperand(1);
 
-      // Replace (cast (sub A, B) to bool) with (setne A, B)
-      if (BO->getOpcode() == Instruction::Sub)
+      switch (BO->getOpcode()) {
+      case Instruction::Sub:
+      case Instruction::Xor:
+        // Replace (cast ([sub|xor] A, B) to bool) with (setne A, B)
         return new SetCondInst(Instruction::SetNE, Op0, Op1);
 
       // Replace (cast (add A, B) to bool) with (setne A, -B) if B is
       // efficiently invertible, or if the add has just this one use.
-      if (BO->getOpcode() == Instruction::Add)
+      case Instruction::Add:
         if (Value *NegVal = dyn_castNegVal(Op1))
           return new SetCondInst(Instruction::SetNE, Op0, NegVal);
         else if (Value *NegVal = dyn_castNegVal(Op0))
@@ -976,6 +985,36 @@ Instruction *InstCombiner::visitCastInst(CastInst &CI) {
           InsertNewInstBefore(Neg, CI);
           return new SetCondInst(Instruction::SetNE, Op0, Neg);
         }
+        break;
+
+      case Instruction::And:
+        // Replace (cast (and X, (1 << size(X)-1)) to bool) with x < 0,
+        // converting X to be a signed value as appropriate.  Don't worry about
+        // bool values, as they will be optimized other ways if they occur in
+        // this configuration.
+        if (ConstantInt *CInt = dyn_cast<ConstantInt>(Op1))
+          if (isSignBit(CInt)) {
+            // If 'X' is not signed, insert a cast now...
+            if (!CInt->getType()->isSigned()) {
+              const Type *DestTy;
+              switch (CInt->getType()->getPrimitiveID()) {
+              case Type::UByteTyID:  DestTy = Type::SByteTy; break;
+              case Type::UShortTyID: DestTy = Type::ShortTy; break;
+              case Type::UIntTyID:   DestTy = Type::IntTy;   break;
+              case Type::ULongTyID:  DestTy = Type::LongTy;  break;
+              default: assert(0 && "Invalid unsigned integer type!"); abort();
+              }
+              CastInst *NewCI = new CastInst(Op0, DestTy,
+                                             Op0->getName()+".signed");
+              InsertNewInstBefore(NewCI, CI);
+              Op0 = NewCI;
+            }
+            return new SetCondInst(Instruction::SetLT, Op0,
+                                   Constant::getNullValue(Op0->getType()));
+          }
+        break;
+      default: break;
+      }
     }
   }
 
@@ -1294,7 +1333,7 @@ Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
 
   // Instcombine load (constant global) into the value loaded...
   if (GlobalVariable *GV = dyn_cast<GlobalVariable>(Op))
-    if ((GV->isConstant()) && (!(GV->isExternal())))
+    if (GV->isConstant() && !GV->isExternal())
       return ReplaceInstUsesWith(LI, GV->getInitializer());
 
   // Instcombine load (constantexpr_GEP global, 0, ...) into the value loaded...
@@ -1302,7 +1341,7 @@ Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
     if (CE->getOpcode() == Instruction::GetElementPtr)
       if (ConstantPointerRef *G=dyn_cast<ConstantPointerRef>(CE->getOperand(0)))
         if (GlobalVariable *GV = dyn_cast<GlobalVariable>(G->getValue()))
-          if ((GV->isConstant()) && (!(GV->isExternal())))
+          if (GV->isConstant() && !GV->isExternal())
             if (Constant *V = GetGEPGlobalInitializer(GV->getInitializer(), CE))
               return ReplaceInstUsesWith(LI, V);
   return 0;
