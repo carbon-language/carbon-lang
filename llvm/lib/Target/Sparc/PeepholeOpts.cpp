@@ -16,11 +16,10 @@
 
 //************************* Internal Functions *****************************/
 
-inline void
+static inline void
 DeleteInstruction(MachineBasicBlock& mvec,
                   MachineBasicBlock::iterator& BBI,
-                  const TargetMachine& target)
-{
+                  const TargetMachine& target) {
   // Check if this instruction is in a delay slot of its predecessor.
   if (BBI != mvec.begin()) {
       const TargetInstrInfo& mii = target.getInstrInfo();
@@ -43,12 +42,10 @@ DeleteInstruction(MachineBasicBlock& mvec,
 
 //******************* Individual Peephole Optimizations ********************/
 
-
 inline bool
 RemoveUselessCopies(MachineBasicBlock& mvec,
                     MachineBasicBlock::iterator& BBI,
-                    const TargetMachine& target)
-{
+                    const TargetMachine& target) {
   if (target.getOptInfo().IsUselessCopy(*BBI)) {
     DeleteInstruction(mvec, BBI, target);
     return true;
@@ -69,37 +66,27 @@ public:
   virtual const char *getPassName() const { return "Peephole Optimization"; }
 };
 
-/* Apply a list of peephole optimizations to this machine instruction
- * within its local context.  They are allowed to delete MI or any
- * instruction before MI, but not 
- */
-bool
-PeepholeOpts::visit(MachineBasicBlock& mvec,
-                    MachineBasicBlock::iterator BBI) const
-{
-  bool changed = false;
-
+// Apply a list of peephole optimizations to this machine instruction
+// within its local context.  They are allowed to delete MI or any
+// instruction before MI, but not 
+//
+bool PeepholeOpts::visit(MachineBasicBlock& mvec,
+                         MachineBasicBlock::iterator BBI) const {
   /* Remove redundant copy instructions */
-  changed |= RemoveUselessCopies(mvec, BBI, target);
-  if (BBI == mvec.end())                // nothing more to do!
-    return changed;
-
-  return changed;
+  return RemoveUselessCopies(mvec, BBI, target);
 }
 
 
-bool
-PeepholeOpts::runOnBasicBlock(BasicBlock &BB)
-{
+bool PeepholeOpts::runOnBasicBlock(BasicBlock &BB) {
   // Get the machine instructions for this BB
   // FIXME: MachineBasicBlock::get() is deprecated, hence inlining the function
   const Function *F = BB.getParent();
   MachineFunction &MF = MachineFunction::get(F);
   MachineBasicBlock *MBB = NULL;
-  for (MachineFunction::iterator I = MF.begin(), E = MF.end(); I != E; ++I) {
+  for (MachineFunction::iterator I = MF.begin(), E = MF.end(); I != E; ++I)
     if (I->getBasicBlock() == &BB)
       MBB = I;
-  }
+
   assert(MBB && "MachineBasicBlock object not found for specified block!");
   MachineBasicBlock &mvec = *MBB;
 
@@ -108,8 +95,7 @@ PeepholeOpts::runOnBasicBlock(BasicBlock &BB)
   // Insertions or deletions *before* MI are not safe.
   // 
   for (MachineBasicBlock::reverse_iterator RI=mvec.rbegin(),
-         RE=mvec.rend(); RI != RE; )
-  {
+         RE=mvec.rend(); RI != RE; ) {
     MachineBasicBlock::iterator BBI = RI.base()-1; // save before incr
     ++RI;             // pre-increment to delete MI or after it
     visit(mvec, BBI);
@@ -123,8 +109,6 @@ PeepholeOpts::runOnBasicBlock(BasicBlock &BB)
 // createPeepholeOptsPass - Public entrypoint for peephole optimization
 // and this file as a whole...
 //
-FunctionPass*
-createPeepholeOptsPass(TargetMachine &T)
-{
+FunctionPass* createPeepholeOptsPass(TargetMachine &T) {
   return new PeepholeOpts(T);
 }
