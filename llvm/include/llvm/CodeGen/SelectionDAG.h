@@ -22,6 +22,7 @@
 class Value;
 class Type;
 class Instruction;
+class CallInst;
 class BasicBlock;
 class MachineBasicBlock;
 class MachineFunction;
@@ -45,8 +46,8 @@ namespace ISD {
     // ProtoNodes are nodes that are only half way constructed.
     ProtoNode,
 
-    // Leaf nodes.
-    Constant, FrameIndex,
+    // Leaf nodes
+    Constant, FrameIndex, BasicBlock,
 
     // Simple binary arithmetic operators
     Plus, Minus, Times, SDiv, UDiv, SRem, URem,
@@ -54,11 +55,17 @@ namespace ISD {
     // Bitwise operators
     And, Or, Xor,
 
+    // Comparisons
+    SetEQ, SetNE, SetLT, SetLE, SetGT, SetGE,
+
     // Control flow instructions
-    Br, Switch, Ret, RetVoid,
+    Br, BrCond, Switch, Ret, RetVoid,
 
     // Other operators
     Load, Store, PHI, Call,
+
+    // Unknown operators, of a specified arity
+    Unspec1, Unspec2
   };
 }
 
@@ -189,6 +196,13 @@ public:
     assert(NT != ISD::ProtoNode && "Cannot specify uses for a protonode!");
     Uses.reserve(2); Uses.push_back(N1); Uses.push_back(N2);
   }
+  SelectionDAGNode(ISD::NodeType NT, MVT::ValueType VT, MachineBasicBlock *bb,
+                   SelectionDAGNode *N1, SelectionDAGNode *N2,
+                   SelectionDAGNode *N3)
+    : NodeType(NT), ValueType(VT), BB(bb), ValList(0), Costs(0) {
+    assert(NT != ISD::ProtoNode && "Cannot specify uses for a protonode!");
+    Uses.reserve(3); Uses.push_back(N1); Uses.push_back(N2); Uses.push_back(N3);
+  }
 
   ~SelectionDAGNode() { delete [] Costs; delete ValList; }
 
@@ -295,7 +309,12 @@ struct SelectionDAGTargetBuilder {
   /// current function.  If any of the incoming arguments lives on the stack,
   /// this method should also create the stack slots for the arguments as
   /// necessary.
-  virtual void expandArguments(SelectionDAG &SD, MachineFunction &MF) = 0;
+  virtual void expandArguments(SelectionDAG &SD) = 0;
+
+  /// expandCall - This method is called once per function call by the
+  /// SelectionDAG construction algorithm.  It must add DAG nodes to the
+  /// SelectionDAG specified to perform that call.
+  virtual void expandCall(SelectionDAG &SD, CallInst &CI) = 0;
 };
 
 namespace ISD {
@@ -310,6 +329,8 @@ namespace ISD {
 
     FrameIndex_i32_Slot,
     FrameIndex_i64_Slot,
+    BasicBlock_i32_Slot,
+    BasicBlock_i64_Slot,
     NumBuiltinSlots
   };
 }
@@ -322,6 +343,8 @@ struct ReducedValue : public SelectionDAGReducedValue {
 
 typedef ReducedValue<int, ISD::FrameIndex_i32_Slot > ReducedValue_FrameIndex_i32;
 typedef ReducedValue<int, ISD::FrameIndex_i64_Slot > ReducedValue_FrameIndex_i64;
+typedef ReducedValue<MachineBasicBlock*, ISD::BasicBlock_i32_Slot > ReducedValue_BasicBlock_i32;
+typedef ReducedValue<MachineBasicBlock*, ISD::BasicBlock_i64_Slot > ReducedValue_BasicBlock_i64;
 
 typedef ReducedValue<bool          , ISD::Constant_i1_Slot > ReducedValue_Constant_i1;
 typedef ReducedValue<unsigned char , ISD::Constant_i8_Slot > ReducedValue_Constant_i8;
