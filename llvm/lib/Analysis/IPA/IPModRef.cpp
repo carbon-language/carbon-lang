@@ -167,11 +167,11 @@ DSGraph* FunctionModRefInfo::ResolveCallSiteModRefInfo(CallSite CS,
           Args.push_back(Result->getNodeForValue(*I));
 
       // Build the call site...
-      DSCallSite CS(CS, RetVal, F, Args);
+      DSCallSite NCS(CS, RetVal, F, Args);
 
       // Perform the merging now of the graph for the callee, which will
       // come with mod/ref bits set...
-      Result->mergeInGraph(CS, *F, IPModRefObj.getBUDSGraph(*F),
+      Result->mergeInGraph(NCS, *F, IPModRefObj.getBUDSGraph(*F),
                            DSGraph::StripAllocaBit
                            | DSGraph::DontCloneCallNodes
                            | DSGraph::DontCloneAuxCallNodes);
