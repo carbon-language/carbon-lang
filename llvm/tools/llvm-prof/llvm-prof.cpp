@@ -19,6 +19,7 @@
 #include "Support/CommandLine.h"
 #include <iostream>
 #include <cstdio>
+#include <map>
 
 namespace {
   cl::opt<std::string> 
@@ -77,5 +78,16 @@ int main(int argc, char **argv) {
   for (unsigned i = 0, e = FunctionCounts.size(); i != e; ++i)
     printf("%3d. %5d/%d %s\n", i, FunctionCounts[i].second, TotalExecutions,
            FunctionCounts[i].first->getName().c_str());
+
+
+  // If we have block count information, print out the LLVM module with
+  // frequency annotations.
+  if (PI.hasAccurateBlockCounts()) {
+    std::vector<std::pair<BasicBlock*, unsigned> > Counts;
+    PI.getBlockCounts(Counts);
+    std::map<BasicBlock*, unsigned> BlockFreqs(Counts.begin(), Counts.end());
+                   
+  }
+
   return 0;
 }

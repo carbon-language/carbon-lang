@@ -148,7 +148,28 @@ void ProfileInfo::getFunctionCounts(std::vector<std::pair<Function*,
   
   unsigned Counter = 0;
   for (Module::iterator I = M.begin(), E = M.end();
-       I != E && Counter != FunctionCounts.size(); ++I, ++Counter)
+       I != E && Counter != FunctionCounts.size(); ++I)
     if (!I->isExternal())
-      Counts.push_back(std::make_pair(I, FunctionCounts[Counter]));
+      Counts.push_back(std::make_pair(I, FunctionCounts[Counter++]));
+}
+
+// getBlockCounts - This method is used by consumers of block counting
+// information.  If we do not directly have block count information, we
+// compute it from other, more refined, types of profile information.
+//
+void ProfileInfo::getBlockCounts(std::vector<std::pair<BasicBlock*,
+                                                       unsigned> > &Counts) {
+  if (BlockCounts.empty()) {
+    std::cerr << "Block counts not available, and no synthesis "
+              << "is implemented yet!\n";
+    return;
+  }
+
+  unsigned Counter = 0;
+  for (Module::iterator F = M.begin(), E = M.end(); F != E; ++F)
+    for (Function::iterator BB = F->begin(), E = F->end(); BB != E; ++BB) {
+      Counts.push_back(std::make_pair(BB, BlockCounts[Counter++]));
+      if (Counter == BlockCounts.size())
+        return;
+    }
 }

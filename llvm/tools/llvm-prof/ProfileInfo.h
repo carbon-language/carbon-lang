@@ -20,6 +20,7 @@
 #include <utility>
 class Module;
 class Function;
+class BasicBlock;
 
 class ProfileInfo {
   Module &M;
@@ -37,6 +38,18 @@ public:
   //
   void getFunctionCounts(std::vector<std::pair<Function*, unsigned> > &Counts);
 
+  // hasAccurateBlockCounts - Return true if we can synthesize accurate block
+  // frequency information from whatever we have.
+  //
+  bool hasAccurateBlockCounts() const {
+    return !BlockCounts.empty();
+  }
+
+  // getBlockCounts - This method is used by consumers of block counting
+  // information.  If we do not directly have block count information, we
+  // compute it from other, more refined, types of profile information.
+  //
+  void getBlockCounts(std::vector<std::pair<BasicBlock*, unsigned> > &Counts);
 };
 
 #endif
