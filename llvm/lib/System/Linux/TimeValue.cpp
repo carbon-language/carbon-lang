@@ -30,7 +30,8 @@ void TimeValue::now() {
       ThrowErrno("Couldn't obtain time of day");
 
   this->set( static_cast<TimeValue::SecondsType>( the_time.tv_sec ), 
-                 static_cast<TimeValue::NanoSecondsType>( the_time.tv_usec * NANOSECONDS_PER_MICROSECOND ) );
+             static_cast<TimeValue::NanoSecondsType>( the_time.tv_usec * 
+               NANOSECONDS_PER_MICROSECOND ) );
 }
 // vim: sw=2 smartindent smarttab tw=80 autoindent expandtab
 
