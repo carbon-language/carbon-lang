@@ -427,7 +427,7 @@ bool LinkLibraries(const char *progname,
   // String in which to receive error messages.
   std::string ErrorMessage;
 
-  for (unsigned i = 1; i < Libraries.size(); ++i) {
+  for (unsigned i = 0; i < Libraries.size(); ++i) {
     // Determine where this library lives.
     std::string Pathname = FindLib(Libraries[i], LibPaths);
     if (Pathname.empty()) {
