@@ -41,26 +41,17 @@ class SymbolTable;
 /// as operands to other values.
 ///
 struct Value {
-  enum ValueTy {
-    TypeVal,                // This is an instance of Type
-    ConstantVal,            // This is an instance of Constant
-    ArgumentVal,            // This is an instance of Argument
-    InstructionVal,         // This is an instance of Instruction
-    BasicBlockVal,          // This is an instance of BasicBlock
-    FunctionVal,            // This is an instance of Function
-    GlobalVariableVal,      // This is an instance of GlobalVariable
-  };
-
 private:
+  unsigned SubclassID;               // Subclass identifier (for isa/dyn_cast)
+  PATypeHolder Ty;
   iplist<Use> Uses;
   std::string Name;
-  PATypeHolder Ty;
-  ValueTy VTy;
 
   void operator=(const Value &);     // Do not implement
   Value(const Value &);              // Do not implement
+
 public:
-  Value(const Type *Ty, ValueTy vty, const std::string &name = "");
+  Value(const Type *Ty, unsigned scid, const std::string &name = "");
   virtual ~Value();
   
   /// dump - Support for debugging, callable in GDB: V->dump()
@@ -82,10 +73,6 @@ public:
   virtual void setName(const std::string &name, SymbolTable * = 0) {
     Name = name;
   }
-  
-  /// getValueType - Return the immediate subclass of this Value.
-  ///
-  inline ValueTy getValueType() const { return VTy; }
   
   /// replaceAllUsesWith - Go through the uses list for this definition and make
   /// each use point to "V" instead of "this".  After this completes, 'this's 
@@ -126,6 +113,26 @@ public:
   ///
   void addUse(Use &U)  { Uses.push_back(&U); }
   void killUse(Use &U) { Uses.remove(&U); }
+
+  /// getValueType - Return an ID for the concrete type of this object.  This is
+  /// used to implement the classof checks.  This should not be used for any
+  /// other purpose, as the values may change as LLVM evolves.  Also, note that
+  /// starting with the InstructionVal value, the value stored is actually the
+  /// Instruction opcode, so there are more than just these values possible here
+  /// (and Instruction must be last).
+  ///
+  enum ValueTy {
+    TypeVal,                // This is an instance of Type
+    ArgumentVal,            // This is an instance of Argument
+    BasicBlockVal,          // This is an instance of BasicBlock
+    FunctionVal,            // This is an instance of Function
+    GlobalVariableVal,      // This is an instance of GlobalVariable
+    ConstantVal,            // This is an instance of Constant
+    InstructionVal,         // This is an instance of Instruction
+  };
+  unsigned getValueType() const {
+    return SubclassID;
+  }
 };
 
 inline std::ostream &operator<<(std::ostream &OS, const Value *V) {
