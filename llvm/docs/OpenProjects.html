@@ -229,11 +229,11 @@ themselves.  It seems natural to want to take advantage of this...</p>
 
 <div class="doc_text">
 
-<p>We are getting to the point where we really need a unified infrastructure for
-profile guided optimizations.  It would be wonderful to be able to write profile
-guided transformations which can be performed either at static compile time
-(compile time or offline optimization time) or at runtime in a JIT type setup.
-The LLVM transformation itself shouldn't need to know how it is being used.</p>
+<p>We now have a unified infrastructure for writing profile-guided
+transformations, which will work either at offline-compile-time or in the JIT,
+but we don't have many transformations.  We would welcome new profile-guided
+transformations as well as improvements to the current profiling system.
+</p>
 
 <p>Ideas for profile guided transformations:</p>
 
@@ -243,6 +243,23 @@ The LLVM transformation itself shouldn't need to know how it is being used.</p>
 <li>Profile directed inlining</li>
 <li>Code layout</li>
 <li>...</li>
+</ol>
+
+<p>Improvements to the existing support:</p>
+
+<ol>
+<li>The current block and edge profiling code that gets inserted is very simple
+and inefficient.  Through the use of control-dependence information, many fewer
+counters could be inserted into the code.  Also, if the execution count of a
+loop is known to be a compile-time or runtime constant, all of the counters in
+the loop could be avoided.</li>
+
+<li>You could implement one of the "static profiling" algorithms which analyze a
+piece of code an make educated guesses about the relative execution frequencies
+of various parts of the code.</li>
+
+<li>You could add path profiling support, or adapt the existing LLVM path
+profiling code to work with the generic profiling interfaces.</li>
 </ol>
 
 </div>
