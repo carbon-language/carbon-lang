@@ -1,4 +1,4 @@
-//===-- EmitAssembly.cpp - Emit SparcV9 Specific .s File -------------------==//
+//===-- SparcV9AsmPrinter.cpp - Emit SparcV9 Specific .s File --------------==//
 // 
 //                     The LLVM Compiler Infrastructure
 //
