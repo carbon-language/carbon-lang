@@ -25,7 +25,8 @@ begin
 	%v1 = load int* %MyVar
 	call void %print(int %v1)    ;; Should start out 4
 
-	%v2 = load { \2 *, int }* %MyIntList, uint 0, ubyte 1
+	%idx = getelementptr { \2 *, int }* %MyIntList, uint 0, ubyte 1
+	%v2 = load int* %idx
 	call void %print(int %v2)    ;; Should start out 17
 
 	call int %foo(int 5)         ;; Modify global variablesx
@@ -33,7 +34,7 @@ begin
 	%v3 = load int* %MyVar
 	call void %print(int %v3)    ;; Should now be 5
 
-	%v4 = load { \2 *, int }* %MyIntList, uint 0, ubyte 1
+	%v4 = load int* %idx
 	call void %print(int %v4)    ;; Should start out 12
 
 	ret void
