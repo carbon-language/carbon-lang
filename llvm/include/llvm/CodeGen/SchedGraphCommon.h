@@ -139,7 +139,7 @@ public:
   SchedGraphEdge(SchedGraphNodeCommon* _src, SchedGraphNodeCommon* _sink,
 		 ResourceId _resourceId, int _minDelay = -1);
   
-  ~SchedGraphEdge();
+  ~SchedGraphEdge() {}
   
   SchedGraphNodeCommon*	getSrc() const { return src; }
   SchedGraphNodeCommon*	getSink() const { return sink; }
@@ -203,7 +203,7 @@ public:
   void eraseOutgoingEdges(SchedGraphNodeCommon* node, bool addDummyEdges = true);
   void eraseIncidentEdges(SchedGraphNodeCommon* node, bool addDummyEdges = true);
   
-  SchedGraphCommon();
+  SchedGraphCommon() {}
   ~SchedGraphCommon();
 };
 
