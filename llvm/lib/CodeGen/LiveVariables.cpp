@@ -82,6 +82,8 @@ void LiveVariables::MarkVirtRegAliveInBlock(VarInfo &VRInfo,
 
 void LiveVariables::HandleVirtRegUse(VarInfo &VRInfo, MachineBasicBlock *MBB,
                                      MachineInstr *MI) {
+  assert(VRInfo.DefInst && "Register use before def!");
+
   // Check to see if this basic block is already a kill block...
   if (!VRInfo.Kills.empty() && VRInfo.Kills.back()->getParent() == MBB) {
     // Yes, this register is killed in this basic block already.  Increase the
