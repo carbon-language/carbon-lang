@@ -137,6 +137,8 @@ public:
   void visitGetElementPtrInst(GetElementPtrInst &I);
   void visitPHINode(PHINode &PN) { assert(0 && "PHI nodes already handled!"); }
   void visitCastInst(CastInst &I);
+  void visitSelectInst(SelectInst &I);
+
 
   void visitCallSite(CallSite CS);
   void visitCallInst(CallInst &I) { visitCallSite (CallSite (&I)); }

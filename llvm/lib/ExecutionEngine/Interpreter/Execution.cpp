@@ -66,7 +66,9 @@ static GenericValue executeShlInst(GenericValue Src1, GenericValue Src2,
 				   const Type *Ty);
 static GenericValue executeShrInst(GenericValue Src1, GenericValue Src2, 
 				   const Type *Ty);
-                                   
+static GenericValue executeSelectInst(GenericValue Src1, GenericValue Src2, 
+                                      GenericValue Src3);
+
 GenericValue Interpreter::getConstantExprValue (ConstantExpr *CE,
                                                 ExecutionContext &SF) {
   switch (CE->getOpcode()) {
@@ -139,7 +141,10 @@ GenericValue Interpreter::getConstantExprValue (ConstantExpr *CE,
     return executeShrInst(getOperandValue(CE->getOperand(0), SF),
                           getOperandValue(CE->getOperand(1), SF),
                           CE->getOperand(0)->getType());
-  
+  case Instruction::Select:
+    return executeSelectInst(getOperandValue(CE->getOperand(0), SF),
+                             getOperandValue(CE->getOperand(1), SF),
+                             getOperandValue(CE->getOperand(2), SF));
   default:
     std::cerr << "Unhandled ConstantExpr: " << CE << "\n";
     abort();
@@ -517,6 +522,21 @@ void Interpreter::visitBinaryOperator(BinaryOperator &I) {
 
   SetValue(&I, R, SF);
 }
+
+static GenericValue executeSelectInst(GenericValue Src1, GenericValue Src2, 
+                                      GenericValue Src3) {
+  return Src1.BoolVal ? Src2 : Src3;
+}
+
+void Interpreter::visitSelectInst(SelectInst &I) {
+  ExecutionContext &SF = ECStack.back();
+  GenericValue Src1 = getOperandValue(I.getOperand(0), SF);
+  GenericValue Src2 = getOperandValue(I.getOperand(1), SF);
+  GenericValue Src3 = getOperandValue(I.getOperand(2), SF);
+  GenericValue R = executeSelectInst(Src1, Src2, Src3);
+  SetValue(&I, R, SF);
+}
+
 
 //===----------------------------------------------------------------------===//
 //                     Terminator Instruction Implementations
