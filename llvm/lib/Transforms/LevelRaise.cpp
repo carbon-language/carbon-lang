@@ -470,7 +470,7 @@ static bool DoRaisePass(Function &F) {
       if (dceInstruction(BI) || doConstantPropogation(BI)) {
         Changed = true; 
         ++NumDCEorCP;
-        DEBUG(cerr << "***\t\t^^-- DeadCode Elinated!\n");
+        DEBUG(cerr << "***\t\t^^-- Dead code eliminated!\n");
       } else if (PeepholeOptimize(BB, BI)) {
         Changed = true;
       } else {
