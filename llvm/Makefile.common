@@ -57,7 +57,11 @@
 #
 # Configuration file to set paths specific to local installation of LLVM
 # 
+ifndef LLVM_OBJ_ROOT
 include $(LEVEL)/Makefile.config
+else
+include $(LLVM_OBJ_ROOT)/Makefile.config
+endif
 
 #
 # Include all of the build rules used for making LLVM
