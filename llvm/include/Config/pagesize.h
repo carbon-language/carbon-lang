@@ -19,7 +19,7 @@ namespace llvm {
 
 /* Compatibility chart:
  *
- * x86/Linux:        _SC_PAGESIZE, _SC_PAGE_SIZE
+ * Linux/x86:        _SC_PAGESIZE, _SC_PAGE_SIZE
  * MacOS X/PowerPC:  v. 10.2: NBPG, 
  *                   v. 10.3: _SC_PAGESIZE
  * Solaris/Sparc:    _SC_PAGESIZE, _SC_PAGE_SIZE
