@@ -70,7 +70,7 @@ unsigned JITResolver::getLazyResolver(Function *F) {
 
 void JITResolver::CompilationCallback() {
   unsigned *StackPtr = (unsigned*)__builtin_frame_address(0);
-  unsigned RetAddr = (unsigned)__builtin_return_address(0);
+  unsigned RetAddr = (unsigned)(intptr_t)__builtin_return_address(0);
 
   assert(StackPtr[1] == RetAddr &&
          "Could not find return address on the stack!");
