@@ -12,6 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/Analysis/Passes.h"
 #include "llvm/Analysis/ProfileInfo.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/CFG.h"
@@ -90,3 +91,5 @@ namespace {
   // Declare that we implement the ProfileInfo interface
   RegisterAnalysisGroup<ProfileInfo, NoProfileInfo, true> Y;
 }  // End of anonymous namespace
+
+ImmutablePass *llvm::createNoProfileInfoPass() { return new NoProfileInfo(); }

@@ -14,6 +14,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Analysis/AliasAnalysis.h"
+#include "llvm/Analysis/Passes.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
@@ -80,6 +81,7 @@ namespace {
   RegisterAnalysisGroup<AliasAnalysis, NoAA> V;
 }  // End of anonymous namespace
 
+ImmutablePass *llvm::createNoAAPass() { return new NoAA(); }
 
 namespace {
   /// BasicAliasAnalysis - This is the default alias analysis implementation.
@@ -123,6 +125,10 @@ namespace {
   // Declare that we implement the AliasAnalysis interface
   RegisterAnalysisGroup<AliasAnalysis, BasicAliasAnalysis, true> Y;
 }  // End of anonymous namespace
+
+ImmutablePass *llvm::createBasicAliasAnalysisPass() {
+  return new BasicAliasAnalysis();
+}
 
 // hasUniqueAddress - Return true if the specified value points to something
 // with a unique, discernable, address.

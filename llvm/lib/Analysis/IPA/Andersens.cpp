@@ -58,6 +58,7 @@
 #include "llvm/Support/InstIterator.h"
 #include "llvm/Support/InstVisitor.h"
 #include "llvm/Analysis/AliasAnalysis.h"
+#include "llvm/Analysis/Passes.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/ADT/Statistic.h"
 #include <set>
@@ -333,6 +334,8 @@ namespace {
                            "Andersen's Interprocedural Alias Analysis");
   RegisterAnalysisGroup<AliasAnalysis, Andersens> Y;
 }
+
+ModulePass *llvm::createAndersensPass() { return new Andersens(); }
 
 //===----------------------------------------------------------------------===//
 //                  AliasAnalysis Interface Implementation

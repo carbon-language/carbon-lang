@@ -31,8 +31,8 @@
 extern "C" __declspec(dllimport) void* __stdcall GetCurrentProcess();
 
 namespace {
-  struct ForceLinking {
-    ForceLinking() {
+  struct ForcePassLinking {
+    ForcePassLinking() {
       // We must reference the passes in such a way that VC++ will not
       // delete it all as dead code, even with whole program optimization,
       // yet is effectively a NO-OP. As the compiler isn't smart enough
@@ -41,10 +41,13 @@ namespace {
       if (GetCurrentProcess() != (void *) -1)
         return;
 
-      std::vector<llvm::BasicBlock*> bbv;
-
+      (void) llvm::createAAEvalPass();
       (void) llvm::createAggressiveDCEPass();
+      (void) llvm::createAliasAnalysisCounterPass();
+      (void) llvm::createAndersensPass();
       (void) llvm::createArgumentPromotionPass();
+      (void) llvm::createBasicAliasAnalysisPass();
+      (void) llvm::createBasicVNPass();
       (void) llvm::createBlockPlacementPass();
       (void) llvm::createBlockProfilerPass();
       (void) llvm::createBreakCriticalEdgesPass();
@@ -74,6 +77,7 @@ namespace {
       (void) llvm::createInternalizePass();
       (void) llvm::createLICMPass();
       (void) llvm::createLoadValueNumberingPass();
+      (void) llvm::createLoaderPass();
       (void) llvm::createLoopExtractorPass();
       (void) llvm::createLoopInstrumentationPass();
       (void) llvm::createLoopSimplifyPass();
@@ -88,6 +92,8 @@ namespace {
       (void) llvm::createLowerSelectPass();
       (void) llvm::createLowerSetJmpPass();
       (void) llvm::createLowerSwitchPass();
+      (void) llvm::createNoAAPass();
+      (void) llvm::createNoProfileInfoPass();
       (void) llvm::createPREPass();
       (void) llvm::createProfilePathsPass();
       (void) llvm::createPromoteMemoryToRegister();
@@ -107,7 +113,7 @@ namespace {
       (void) llvm::createUnifyFunctionExitNodesPass();
       (void) llvm::createUnreachableBlockEliminationPass();
     }
-  } X;
+  } _ForcePassLinking;
 };
 
 #endif // _MSC_VER

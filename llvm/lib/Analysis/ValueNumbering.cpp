@@ -12,6 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/Analysis/Passes.h"
 #include "llvm/Analysis/ValueNumbering.h"
 #include "llvm/Support/InstVisitor.h"
 #include "llvm/BasicBlock.h"
@@ -84,6 +85,8 @@ namespace {
     }
   };
 }
+
+ImmutablePass *llvm::createBasicVNPass() { return new BasicVN(); }
 
 // getEqualNumberNodes - Return nodes with the same value number as the
 // specified Value.  This fills in the argument vector with any equal values.

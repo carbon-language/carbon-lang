@@ -21,6 +21,7 @@
 #include "llvm/Instructions.h"
 #include "llvm/Pass.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/Analysis/Passes.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Target/TargetData.h"
@@ -71,6 +72,8 @@ namespace {
   RegisterOpt<AAEval>
   X("aa-eval", "Exhaustive Alias Analysis Precision Evaluator");
 }
+
+FunctionPass *llvm::createAAEvalPass() { return new AAEval(); }
 
 static inline void PrintResults(const char *Msg, bool P, Value *V1, Value *V2,
                                 Module *M) {

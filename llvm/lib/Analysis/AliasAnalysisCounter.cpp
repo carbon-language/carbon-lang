@@ -12,6 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/Analysis/Passes.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Pass.h"
 #include <iostream>
@@ -123,4 +124,8 @@ namespace {
   RegisterOpt<AliasAnalysisCounter>
   X("count-aa", "Count Alias Analysis Query Responses");
   RegisterAnalysisGroup<AliasAnalysis, AliasAnalysisCounter> Y;
+}
+
+ModulePass *llvm::createAliasAnalysisCounterPass() {
+  return new AliasAnalysisCounter();
 }

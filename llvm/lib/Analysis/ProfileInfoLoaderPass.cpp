@@ -15,6 +15,7 @@
 #include "llvm/BasicBlock.h"
 #include "llvm/InstrTypes.h"
 #include "llvm/Pass.h"
+#include "llvm/Analysis/Passes.h"
 #include "llvm/Analysis/ProfileInfo.h"
 #include "llvm/Analysis/ProfileInfoLoader.h"
 #include "llvm/Support/CommandLine.h"
@@ -54,6 +55,7 @@ namespace {
   RegisterAnalysisGroup<ProfileInfo, LoaderPass> Y;
 }  // End of anonymous namespace
 
+ModulePass *llvm::createLoaderPass() { return new LoaderPass(); }
 
 /// createProfileLoaderPass - This function returns a Pass that loads the
 /// profiling information for the module from the specified filename, making it
