@@ -1428,7 +1428,8 @@ static void FindEarliestAdjCallStackUp(SDNode *Node, SDNode *&Found) {
 static SDNode *FindAdjCallStackUp(SDNode *Node) {
   if (Node->getOpcode() == ISD::ADJCALLSTACKUP)
     return Node;
-  assert(!Node->use_empty() && "Could not find ADJCALLSTACKUP!");
+  if (Node->use_empty())
+    return 0;   // No adjcallstackup
 
   if (Node->hasOneUse())  // Simple case, only has one user to check.
     return FindAdjCallStackUp(*Node->use_begin());
@@ -1484,7 +1485,8 @@ SDOperand SelectionDAGLegalize::ExpandLibCall(const char *Name, SDNode *Node,
   SDNode *OutChain;
   SDOperand InChain = FindInputOutputChains(Node, OutChain,
                                             DAG.getEntryNode());
-  // TODO.  Link in chains.
+  if (InChain.Val == 0)
+    InChain = DAG.getEntryNode();
 
   TargetLowering::ArgListTy Args;
   for (unsigned i = 0, e = Node->getNumOperands(); i != e; ++i) {
