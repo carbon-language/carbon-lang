@@ -140,6 +140,7 @@ namespace {
     void visitBinaryOperator(Instruction &I);
 
     void visitCastInst (CastInst &I);
+    void visitSelectInst(SelectInst &I);
     void visitCallInst (CallInst &I);
     void visitCallSite (CallSite CS);
     void visitShiftInst(ShiftInst &I) { visitBinaryOperator(I); }
@@ -1184,6 +1185,17 @@ void CWriter::visitCastInst(CastInst &I) {
   
   writeOperand(I.getOperand(0));
 }
+
+void CWriter::visitSelectInst(SelectInst &I) {
+  Out << "((";
+  writeOperand(I.getCondition());
+  Out << ") ? (";
+  writeOperand(I.getTrueValue());
+  Out << ") : (";
+  writeOperand(I.getFalseValue());
+  Out << "))";    
+}
+
 
 void CWriter::lowerIntrinsics(Module &M) {
   for (Module::iterator F = M.begin(), E = M.end(); F != E; ++F)
