@@ -9,7 +9,6 @@
 #define LLVM_TRANSFORMS_UTILS_LOCAL_H
 
 #include "llvm/Function.h"
-#include "llvm/BasicBlock.h"
 
 //===----------------------------------------------------------------------===//
 //  Local constant propogation...
