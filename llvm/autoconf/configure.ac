@@ -102,30 +102,46 @@ dnl We will use the build machine information to set some variables.
 case $build in
 	*-*-linux*)
              AC_SUBST(OS,[Linux])
-			 if test -d /home/vadve/lattner/local/x86/llvm-gcc
-			 then
-			   AC_SUBST(LLVMGCCDIR,[/home/vadve/lattner/local/x86/llvm-gcc/])
-			 fi
-	         ;;
+             platform_type="Linux"
+             if test -d /home/vadve/lattner/local/x86/llvm-gcc
+	     then
+	       AC_SUBST(LLVMGCCDIR,[/home/vadve/lattner/local/x86/llvm-gcc/])
+             fi
+             ;;
 	*-*-solaris*)
              AC_SUBST(OS,[SunOS])
-			 if test -d /home/vadve/lattner/local/sparc/llvm-gcc
-			 then
-	           AC_SUBST(LLVMGCCDIR,[/home/vadve/lattner/local/sparc/llvm-gcc/])
-			 fi
-	         ;;
+             platform_type="SunOS"
+             if test -d /home/vadve/lattner/local/sparc/llvm-gcc
+             then
+               AC_SUBST(LLVMGCCDIR,[/home/vadve/lattner/local/sparc/llvm-gcc/])
+             fi
+             ;;
 	*-*-cygwin*)
              AC_SUBST(OS,[Cygwin])
-	         ;;
+             platform_type="Cygwin"
+             ;;
 	*-*-darwin*)
              AC_SUBST(OS,[Darwin])
-	         ;;
+             platform_type="Darwin"
+             ;;
 	*-*-aix*)
              AC_SUBST(OS,[AIX])
-	         ;;
-	*)       AC_SUBST(OS,[Unknown])
-	         ;;
+             platform_type="AIX"
+             ;;
+        *-*-win32*)
+             AC_SUBST(OS,[Win32])
+             platform_type="Win32"
+	     ;;
+	*)   
+             AC_SUBST(OS,[Unknown])
+             platform_type="Unknown"
+	     ;;
 esac
+
+dnl Make a link from lib/System/platform to lib/System/$platform_type
+dnl This helps the #inclusion of the system specific include files
+dnl for the operating system abstraction library
+AC_CONFIG_LINKS(lib/System/platform:lib/System/$platform_type)
 
 dnl If we are targetting a Sparc machine running Solaris, pretend that it is
 dnl V9, since that is all that we support at the moment, and autoconf will only
