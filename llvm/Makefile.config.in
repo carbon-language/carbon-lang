@@ -146,7 +146,6 @@ PAPIDIR := @PAPIDIR@
 # information to allow gprof to be used to get execution frequencies.
 #
 #ENABLE_PROFILING = 1
-@ENABLE_PROFILING@
 
 #
 # This open tells the Makefiles to produce verbose output.
