@@ -149,10 +149,10 @@ Loop *LoopInfo::ConsiderForLoop(BasicBlock *BB, const DominatorSet &DS) {
         if (BBMI == BBMap.end() || BBMI->first != *I) {  // Not in map yet...
           BBMap.insert(BBMI, std::make_pair(*I, L));
         } else {
-          // If this is already in the BBMap then this means that we already added
-          // a loop for it, but incorrectly added the loop to a higher level loop
-          // instead of the current loop we are creating.  Fix this now by moving
-          // the loop into the correct subloop.
+          // If this is already in the BBMap then this means that we already
+          // added a loop for it, but incorrectly added the loop to a higher
+          // level loop instead of the current loop we are creating.  Fix this
+          // now by moving the loop into the correct subloop.
           //
           Loop *SubLoop = BBMI->second;
           Loop *OldSubLoopParent = SubLoop->getParentLoop();
