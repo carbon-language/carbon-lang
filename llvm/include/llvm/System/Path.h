@@ -15,6 +15,7 @@
 #define LLVM_SYSTEM_PATH_H
 
 #include <string>
+#include <vector>
 
 namespace llvm {
 namespace sys {
@@ -61,6 +62,16 @@ namespace sys {
       /// directory.
       static Path GetTemporaryDirectory();
 
+      /// Determine the platform-specific location of a library by first
+      /// searching a list of library paths, then searching a list of "well
+      /// known" paths for the platform. T
+      /// @returns a valid Path object if the library was found, an invalid
+      /// one otherwise.
+      /// @throws nothing
+      /// @brief Locate a library in a platform specific manner.
+      static Path GetLibraryPath(const std::string& basename, 
+                                 const std::vector<std::string>& LibPaths);
+      /// 
       /// Construct a path to the first system library directory. The
       /// implementation of Path on a given platform must ensure that this
       /// directory both exists and also contains standard system libraries
