@@ -122,6 +122,7 @@ namespace {
     Instruction *visitFreeInst(FreeInst &FI);
     Instruction *visitLoadInst(LoadInst &LI);
     Instruction *visitBranchInst(BranchInst &BI);
+    Instruction *visitSwitchInst(SwitchInst &SI);
 
     // visitInstruction - Specify what to return for unhandled instructions...
     Instruction *visitInstruction(Instruction &I) { return 0; }
@@ -3000,6 +3001,23 @@ Instruction *InstCombiner::visitBranchInst(BranchInst &BI) {
         return &BI;
       }
     }
+  }
+  return 0;
+}
+
+Instruction *InstCombiner::visitSwitchInst(SwitchInst &SI) {
+  Value *Cond = SI.getCondition();
+  if (Instruction *I = dyn_cast<Instruction>(Cond)) {
+    if (I->getOpcode() == Instruction::Add)
+      if (ConstantInt *AddRHS = dyn_cast<ConstantInt>(I->getOperand(1))) {
+        // change 'switch (X+4) case 1:' into 'switch (X) case -3'
+        for (unsigned i = 2, e = SI.getNumOperands(); i != e; i += 2)
+          SI.setOperand(i, ConstantExpr::getSub(cast<Constant>(SI.getOperand(i)),
+                                                AddRHS));
+        SI.setOperand(0, I->getOperand(0));
+        WorkList.push_back(I);
+        return &SI;
+      }
   }
   return 0;
 }
