@@ -1,9 +1,9 @@
 ;This isn't really an assembly file, its just here to run the test.
 ;This test just makes sure that llvm-ar can generate a symbol table for
 ;SVR4 style archives
-;RUN: cp %p/SVR4.a SVR4_copy.a
-;RUN: llvm-ranlib SVR4_copy.a
-;RUN: llvm-ar t SVR4_copy.a > %t1
+;RUN: cp %p/SVR4.a %t.SVR4.a
+;RUN: llvm-ranlib %t.SVR4.a
+;RUN: llvm-ar t %t.SVR4.a > %t1
 ;RUN: sed -e '/^;.*/d' %s >%t2
 ;RUN: diff %t2 %t1
 evenlen
