@@ -146,24 +146,21 @@ install-bytecode:: install-bytecode-local
 # Variables derived from configuration we are building
 #--------------------------------------------------------------------
 
-CommonCXXOpts := -Woverloaded-virtual
-
 ifdef ENABLE_PROFILING
   BuildMode := Profile
-  CXX.Flags := -O3 -DNDEBUG $(CommonCXXOpts) -felide-constructors \
-               -finline-functions -pg
+  CXX.Flags := -O3 -DNDEBUG -felide-constructors -finline-functions -pg
   C.Flags   := -O3 -DNDEBUG -pg
   LD.Flags  := -O3 -DNDEBUG -pg 
 else
   ifdef ENABLE_OPTIMIZED
     BuildMode := Release
-    CXX.Flags  := -O3 -DNDEBUG $(CommonCXXOpts) -finline-functions \
+    CXX.Flags  := -O3 -DNDEBUG -finline-functions \
                   -felide-constructors -fomit-frame-pointer
     C.Flags    := -O3 -DNDEBUG -fomit-frame-pointer
     LD.Flags   := -O3 -DNDEBUG 
   else
     BuildMode := Debug
-    CXX.Flags := -g -D_DEBUG $(CommonCXXOpts)
+    CXX.Flags := -g -D_DEBUG
     C.Flags   := -g -D_DEBUG
     LD.Flags  := -g -D_DEBUG 
     KEEP_SYMBOLS := 1
