@@ -209,9 +209,9 @@ unsigned sizeOfPtr (const MachineInstrDescriptor &Desc) {
   case X86II::Arg8:   return 1;
   case X86II::Arg16:  return 2;
   case X86II::Arg32:  return 4;
-  case X86II::Arg64:  return 8;
-  case X86II::Arg80:  return 10;
-  case X86II::Arg128: return 16;
+  case X86II::ArgF32: return 4;
+  case X86II::ArgF64: return 8;
+  case X86II::ArgF80: return 10;
   default: assert(0 && "Memory size not set!");
     return 0;
   }
@@ -224,10 +224,25 @@ void Emitter::emitInstruction(MachineInstr &MI) {
 
   // Emit instruction prefixes if neccesary
   if (Desc.TSFlags & X86II::OpSize) MCE.emitByte(0x66);// Operand size...
-  if (Desc.TSFlags & X86II::TB)     MCE.emitByte(0x0F);// Two-byte opcode prefix
+
+  switch (Desc.TSFlags & X86II::Op0Mask) {
+  case X86II::TB:
+    MCE.emitByte(0x0F);   // Two-byte opcode prefix
+    break;
+  case X86II::D8: case X86II::D9: case X86II::DA: case X86II::DB:
+  case X86II::DC: case X86II::DD: case X86II::DE: case X86II::DF:
+    MCE.emitByte(0xD8 + (Desc.TSFlags & X86II::Op0Mask)-X86II::D8);
+    break; // Two-byte opcode prefix
+
+  default: break;  // No prefix!
+  }
 
   unsigned char BaseOpcode = II.getBaseOpcodeFor(Opcode);
   switch (Desc.TSFlags & X86II::FormMask) {
+  default: assert(0 && "Unknown FormMask value!");
+  case X86II::Pseudo:
+    std::cerr << "X86 Machine Code Emitter: Not emitting: " << MI;
+    break;
   case X86II::RawFrm:
     MCE.emitByte(BaseOpcode);
 
