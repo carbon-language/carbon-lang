@@ -228,6 +228,12 @@ LD.Flags  += $(LDFLAGS)
 AR.Flags  := cru
 LibTool.Flags := --tag=CXX
 
+#Make Floating point ieee complient on alpha
+ifeq ($(ARCH),Alpha)
+  CXX.Flags += -mieee
+  CPP.Flags += -mieee
+endif
+
 #--------------------------------------------------------------------
 # Directory locations
 #--------------------------------------------------------------------
