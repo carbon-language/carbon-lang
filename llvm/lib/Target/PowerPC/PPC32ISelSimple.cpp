@@ -1260,7 +1260,10 @@ void ISel::promote32(unsigned targetReg, const ValueRecord &VR) {
   if (Val) {
     if (Constant *C = dyn_cast<Constant>(Val)) {
       Val = ConstantExpr::getCast(C, Type::IntTy);
-      Ty = Type::IntTy;
+      if (isa<ConstantExpr>(Val))   // Could not fold
+        Val = C;
+      else
+        Ty = Type::IntTy;           // Folded!
     }
 
     // If this is a simple constant, just emit a load directly to avoid the copy
