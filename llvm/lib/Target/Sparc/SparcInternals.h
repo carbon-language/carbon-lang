@@ -1278,7 +1278,7 @@ private:
   static const int MinStackFrameSize                       = 176;
   static const int NumFixedOutgoingArgs                    =   6;
   static const int SizeOfEachArgOnStack                    =   8;
-  static const int StaticAreaOffsetFromFP                  =  -1 + OFFSET;
+  static const int StaticAreaOffsetFromFP                  =   0 + OFFSET;
   static const int FirstIncomingArgOffsetFromFP            = 128 + OFFSET;
   static const int FirstOptionalIncomingArgOffsetFromFP    = 176 + OFFSET;
   static const int FirstOutgoingArgOffsetFromSP            = 128 + OFFSET;
