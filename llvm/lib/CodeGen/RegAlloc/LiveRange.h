@@ -140,10 +140,6 @@ public:
   inline void setSuggestedColor(int Col) {
     if (SuggestedColor == -1)
       SuggestedColor = Col;
-#if 0
-    else if (DEBUG_RA) 
-      std::cerr << "Already has a suggested color " << Col << "\n";
-#endif
   }
 
   inline unsigned getSuggestedColor() const {
