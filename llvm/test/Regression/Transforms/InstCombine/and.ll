@@ -28,4 +28,13 @@ bool "test4"(bool %A) {
 	ret bool %B
 }
 
+int "test5"(int %A) {
+	%B = and int %A, %A
+	ret int %B
+}
+
+bool "test6"(bool %A) {
+	%B = and bool %A, %A
+	ret bool %B
+}
 

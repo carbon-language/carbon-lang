@@ -33,9 +33,30 @@ bool "test5"(bool %A) {
 	ret bool %B
 }
 
-int "test5"(int %A) {
+int "test6"(int %A) {
 	%B = xor int %A, 0
 	ret int %B
 }
+
+bool "test7"(bool %A) {
+	%B = xor bool %A, %A
+	ret bool %B
+}
+
+int "test8"(int %A) {
+	%B = xor int %A, %A
+	ret int %B
+}
+
+bool "test9"(bool %A) {
+	%B = or bool %A, %A
+	ret bool %B
+}
+
+int "test10"(int %A) {
+	%B = or int %A, %A
+	ret int %B
+}
+
 
 
