@@ -85,7 +85,8 @@ private:
     int64_t immedVal;		// constant value for an explicit constant
   };
 
-
+  bool isDef;                   // is this a defition for the value
+                                // made public for faster access
   
 public:
   /*ctor*/		MachineOperand	();
@@ -97,27 +98,28 @@ public:
   // Accessor methods.  Caller is responsible for checking the
   // operand type before invoking the corresponding accessor.
   // 
-  MachineOperandType	getOperandType	() const {
+  inline MachineOperandType getOperandType	() const {
     return opType;
   }
-  Value*		getVRegValue	() const {
+  inline Value*		getVRegValue	() const {
     assert(opType == MO_VirtualRegister || opType == MO_CCRegister);
     return value;
   }
-  unsigned int		getMachineRegNum() const {
+  inline unsigned int		getMachineRegNum() const {
     assert(opType == MO_MachineRegister);
     return regNum;
   }
-  int64_t		getImmedValue	() const {
+  inline int64_t	getImmedValue	() const {
     assert(opType >= MO_SignExtendedImmed || opType <= MO_PCRelativeDisp);
     return immedVal;
   }
+  inline bool		opIsDef		() const {
+    return isDef;
+  }
   
-  bool isDef;                   // is this a defition for the value
-                                // made public for faster access
-
 public:
   friend ostream& operator<<(ostream& os, const MachineOperand& mop);
+
   
 private:
   // These functions are provided so that a vector of operands can be
@@ -131,6 +133,8 @@ private:
   void			InitializeReg	(unsigned int regNum);
 
   friend class MachineInstr;
+  friend class MachineInstr::val_op_const_iterator;
+  friend class MachineInstr::val_op_iterator;
 };
 
 
@@ -290,10 +294,12 @@ private:
   unsigned int i;
   int resultPos;
   _MI*& minstr;
-
+  
   inline void	skipToNextVal() {
-    while (i < minstr->getNumOperands()
-	   && minstr->getOperand(i).getVRegValue() == NULL)
+    while (i < minstr->getNumOperands() &&
+	   ! ((minstr->operands[i].opType == MachineOperand::MO_VirtualRegister
+	       || minstr->operands[i].opType == MachineOperand::MO_CCRegister)
+	      && minstr->operands[i].value != NULL))
       ++i;
   }
   
@@ -308,7 +314,7 @@ public:
   inline _V*	operator*()  const { return minstr->getOperand(i).getVRegValue();}
   inline _V*	operator->() const { return operator*(); }
   //  inline bool	isDef	()   const { return (((int) i) == resultPos); }
-
+  
   inline bool	isDef	()   const { return minstr->getOperand(i).isDef; } 
   inline bool	done	()   const { return (i == minstr->getNumOperands()); }
   
