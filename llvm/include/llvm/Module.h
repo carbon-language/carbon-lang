@@ -59,7 +59,8 @@ private:
   SymbolTable *SymTab;
 
   // Accessor for the underlying GlobalValRefMap... only through the
-  // ConstantPointerRef class...
+  // Constant class...
+  friend class Constant;
   friend class ConstantPointerRef;
   void mutateConstantPointerRef(GlobalValue *OldGV, GlobalValue *NewGV);
   ConstantPointerRef *getConstantPointerRef(GlobalValue *GV);

@@ -439,12 +439,6 @@ public:
   static inline bool classof(const Value *V) {
     return isa<ConstantPointer>(V) && classof(cast<ConstantPointer>(V));
   }
-
-  // WARNING: Only to be used by Bytecode & Assembly Parsers!  USER CODE SHOULD
-  // NOT USE THIS!!
-  // Returns the number of uses of OldV that were replaced.
-  virtual unsigned mutateReferences(Value* OldV, Value *NewV);
-  // END WARNING!!
 };
 
 
@@ -502,14 +496,6 @@ public:
   static inline bool classof(const Value *V) {
     return isa<Constant>(V) && classof(cast<Constant>(V));
   }
-
-public:
-  // WARNING: Only to be used by Bytecode & Assembly Parsers!  USER CODE SHOULD
-  // NOT USE THIS!!
-  // Returns the number of uses of OldV that were replaced.
-  virtual unsigned mutateReferences(Value* OldV, Value *NewV);
-  // END WARNING!!
 };
-
 
 #endif

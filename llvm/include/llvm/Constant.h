@@ -79,7 +79,7 @@ public:
   // WARNING: Only to be used by Bytecode & Assembly Parsers!  USER CODE SHOULD
   // NOT USE THIS!!
   // Returns the number of uses of OldV that were replaced.
-  virtual unsigned mutateReferences(Value* OldV, Value *NewV) { return 0; }
+  unsigned mutateReferences(Value* OldV, Value *NewV);
   // END WARNING!!
 };
 

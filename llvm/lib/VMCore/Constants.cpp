@@ -685,27 +685,25 @@ const char *ConstantExpr::getOpcodeName() const {
   return Instruction::getOpcodeName(getOpcode());
 }
 
+unsigned Constant::mutateReferences(Value *OldV, Value *NewV) {
+  // Uses of constant pointer refs are global values, not constants!
+  if (ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(this)) {
+    GlobalValue *NewGV = cast<GlobalValue>(NewV);
+    GlobalValue *OldGV = CPR->getValue();
 
-//---- ConstantPointerRef::mutateReferences() implementation...
-//
-unsigned ConstantPointerRef::mutateReferences(Value *OldV, Value *NewV) {
-  assert(getValue() == OldV && "Cannot mutate old value if I'm not using it!");
-  GlobalValue *NewGV = cast<GlobalValue>(NewV);
-  getValue()->getParent()->mutateConstantPointerRef(getValue(), NewGV);
-  Operands[0] = NewGV;
-  return 1;
-}
+    assert(OldGV == OldV && "Cannot mutate old value if I'm not using it!");
 
-
-//---- ConstantPointerExpr::mutateReferences() implementation...
-//
-unsigned ConstantExpr::mutateReferences(Value* OldV, Value *NewV) {
-  unsigned NumReplaced = 0;
-  Constant *NewC = cast<Constant>(NewV);
-  for (unsigned i = 0, N = getNumOperands(); i != N; ++i)
-    if (Operands[i] == OldV) {
-      ++NumReplaced;
-      Operands[i] = NewC;
-    }
-  return NumReplaced;
+    OldGV->getParent()->mutateConstantPointerRef(OldGV, NewGV);
+    Operands[0] = NewGV;
+    return 1;
+  } else {
+    Constant *NewC = cast<Constant>(NewV);
+    unsigned NumReplaced = 0;
+    for (unsigned i = 0, N = getNumOperands(); i != N; ++i)
+      if (Operands[i] == OldV) {
+        ++NumReplaced;
+        Operands[i] = NewC;
+      }
+    return NumReplaced;
+  }
 }
