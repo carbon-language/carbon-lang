@@ -597,8 +597,9 @@ int64_t SparcV9CodeEmitter::getMachineOpValue(MachineInstr &MI,
       unsigned* CurrPC = (unsigned*)(intptr_t)MCE.getCurrentPCValue();
       BBRefs.push_back(std::make_pair(BB, std::make_pair(CurrPC, &MI)));
     } else if (const ConstantInt *CI = dyn_cast<ConstantInt>(V)) {
-      // Make constant PC-relative by subtracting the PC from it.
-      rv = CI->getRawValue() - MCE.getCurrentPCValue();
+      // The real target of the branch is CI = PC + (rv * 4)
+      // So undo that: give the instruction (CI - PC) / 4
+      rv = (CI->getRawValue() - MCE.getCurrentPCValue()) / 4;
     } else if (GlobalValue *GV = dyn_cast<GlobalValue>(V)) {
       // same as MO.isGlobalAddress()
       DEBUG(std::cerr << "GlobalValue: ");
