@@ -1,8 +1,6 @@
 //===-- Writer.cpp - Library for converting LLVM code to C ----------------===//
 //
-// This library implements the functionality defined in llvm/Assembly/CWriter.h
-//
-// TODO : Recursive types.
+// This library converts LLVM code to C code, compilable by GCC.
 //
 //===-----------------------------------------------------------------------==//
 
@@ -19,6 +17,7 @@
 #include "llvm/SymbolTable.h"
 #include "llvm/SlotCalculator.h"
 #include "llvm/Analysis/FindUsedTypes.h"
+#include "llvm/Analysis/ConstantsScanner.h"
 #include "llvm/Support/InstVisitor.h"
 #include "llvm/Support/InstIterator.h"
 #include "Support/StringExtras.h"
@@ -37,6 +36,7 @@ namespace {
     map<const Type *, string> TypeNames;
     std::set<const Value*> MangledGlobals;
 
+    map<const ConstantFP *, unsigned> FPConstantMap;
   public:
     CWriter(ostream &o) : Out(o) {}
 
@@ -377,8 +377,19 @@ void CWriter::printConstant(Constant *CPV) {
     Out << cast<ConstantUInt>(CPV)->getValue() << "ull"; break;
 
   case Type::FloatTyID:
-  case Type::DoubleTyID:
-    Out << cast<ConstantFP>(CPV)->getValue(); break;
+  case Type::DoubleTyID: {
+    ConstantFP *FPC = cast<ConstantFP>(CPV);
+    map<const ConstantFP *, unsigned>::iterator I = FPConstantMap.find(FPC);
+    if (I != FPConstantMap.end()) {
+      // Because of FP precision problems we must load from a stack allocated
+      // value that holds the value in hex.
+      Out << "(*(" << (FPC->getType() == Type::FloatTy ? "float" : "double")
+          << "*)&FloatConstant" << I->second << ")";
+    } else {
+      Out << FPC->getValue();
+    }
+    break;
+  }
 
   case Type::ArrayTyID:
     printConstantArray(cast<ConstantArray>(CPV));
@@ -508,6 +519,9 @@ void CWriter::printModule(Module *M) {
     // and for `bool' if not compiling with a C++ compiler.
       << "#ifndef NULL\n#define NULL 0\n#endif\n\n"
       << "#ifndef __cplusplus\ntypedef unsigned char bool;\n#endif\n"
+
+      << "\n\n/* Support for floating point constants */\n"
+      << "typedef unsigned long long ConstantDoubleTy;\n"
 
       << "\n\n/* Global Declarations */\n";
 
@@ -709,6 +723,26 @@ void CWriter::printFunction(Function *F) {
       printType((*I)->getType(), getValueName(*I));
       Out << ";\n";
     }
+
+  Out << "\n";
+
+  // Scan the function for floating point constants.  If any FP constant is used
+  // in the function, we want to redirect it here so that we do not depend on
+  // the precision of the printed form.
+  //
+  unsigned FPCounter = 0;
+  for (constant_iterator I = constant_begin(F), E = constant_end(F); I != E;++I)
+    if (const ConstantFP *FPC = dyn_cast<ConstantFP>(*I))
+      if (FPConstantMap.find(FPC) == FPConstantMap.end()) {
+        double Val = FPC->getValue();
+        
+        FPConstantMap[FPC] = FPCounter;  // Number the FP constants
+        Out << "  const ConstantDoubleTy FloatConstant" << FPCounter++
+            << " = 0x" << std::hex << *(unsigned long long*)&Val << std::dec
+            << ";    /* " << Val << " */\n";
+      }
+
+  Out << "\n";
  
   // print the basic blocks
   for (Function::iterator BB = F->begin(), E = F->end(); BB != E; ++BB) {
@@ -748,6 +782,7 @@ void CWriter::printFunction(Function *F) {
   
   Out << "}\n\n";
   Table->purgeFunction();
+  FPConstantMap.clear();
 }
 
 // Specific Instruction type classes... note that all of the casts are
