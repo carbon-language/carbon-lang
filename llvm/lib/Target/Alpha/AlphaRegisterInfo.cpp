@@ -30,20 +30,23 @@
 #include <iostream>
 using namespace llvm;
 
-static long getLower16(long l)
-{
-  long y = l / 65536;
-  if (l % 65536 > 32767)
-    ++y;
-  return l - y * 65536;
-}
+//These describe LDAx
+static const long IMM_LOW  = 0xffffffffffff8000;
+static const long IMM_HIGH = 0x0000000000007fff;
+static const long IMM_MULT = 65536;
 
 static long getUpper16(long l)
 {
-  long y = l / 65536;
-  if (l % 65536 > 32767)
+  long y = l / IMM_MULT;
+  if (l % IMM_MULT > IMM_HIGH)
     ++y;
   return y;
+}
+
+static long getLower16(long l)
+{
+  long h = getUpper16(l);
+  return l - h * IMM_MULT;
 }
 
 AlphaRegisterInfo::AlphaRegisterInfo()
@@ -183,7 +186,7 @@ AlphaRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const {
   DEBUG(std::cerr << "Corrected Offset " << Offset << 
         " for stack size: " << MF.getFrameInfo()->getStackSize() << "\n");
 
-  if (Offset > 32767 || Offset < -32768) {
+  if (Offset > IMM_HIGH || Offset < IMM_LOW) {
     //so in this case, we need to use a temporary register, and move the original
     //inst off the SP/FP
     //fix up the old:
@@ -212,7 +215,7 @@ void AlphaRegisterInfo::emitPrologue(MachineFunction &MF) const {
   MBB.insert(MBBI, MI);
 
   // Get the number of bytes to allocate from the FrameInfo
-  unsigned NumBytes = MFI->getStackSize();
+  long NumBytes = MFI->getStackSize();
 
   if (MFI->hasCalls() && !FP) {
     // We reserve argument space for call sites in the function immediately on 
@@ -234,13 +237,14 @@ void AlphaRegisterInfo::emitPrologue(MachineFunction &MF) const {
   MFI->setStackSize(NumBytes);
 
   // adjust stack pointer: r30 -= numbytes
-  if (NumBytes <= 32767) {
-    MI=BuildMI(Alpha::LDA, 2, Alpha::R30).addImm(-NumBytes).addReg(Alpha::R30);
+  NumBytes = -NumBytes;
+  if (NumBytes >= IMM_LOW) {
+    MI=BuildMI(Alpha::LDA, 2, Alpha::R30).addImm(NumBytes).addReg(Alpha::R30);
     MBB.insert(MBBI, MI);
-  } else if ((unsigned long)NumBytes <= (unsigned long)32767 * (unsigned long)65536) {
-    MI=BuildMI(Alpha::LDAH, 2, Alpha::R30).addImm(getUpper16(-NumBytes)).addReg(Alpha::R30);
+  } else if (getUpper16(NumBytes) >= IMM_LOW) {
+    MI=BuildMI(Alpha::LDAH, 2, Alpha::R30).addImm(getUpper16(NumBytes)).addReg(Alpha::R30);
     MBB.insert(MBBI, MI);
-    MI=BuildMI(Alpha::LDA, 2, Alpha::R30).addImm(getLower16(-NumBytes)).addReg(Alpha::R30);
+    MI=BuildMI(Alpha::LDA, 2, Alpha::R30).addImm(getLower16(NumBytes)).addReg(Alpha::R30);
     MBB.insert(MBBI, MI);
   } else {
     std::cerr << "Too big a stack frame at " << NumBytes << "\n";
@@ -285,10 +289,10 @@ void AlphaRegisterInfo::emitEpilogue(MachineFunction &MF,
 
    if (NumBytes != 0) 
      {
-       if (NumBytes <= 32767) {
+       if (NumBytes <= IMM_HIGH) {
          MI=BuildMI(Alpha::LDA, 2, Alpha::R30).addImm(NumBytes).addReg(Alpha::R30);
          MBB.insert(MBBI, MI);
-       } else if ((unsigned long)NumBytes <= (unsigned long)32767 * (unsigned long)65536) {
+       } else if (getUpper16(NumBytes) <= IMM_HIGH) {
          MI=BuildMI(Alpha::LDAH, 2, Alpha::R30).addImm(getUpper16(NumBytes)).addReg(Alpha::R30);
          MBB.insert(MBBI, MI);
          MI=BuildMI(Alpha::LDA, 2, Alpha::R30).addImm(getLower16(NumBytes)).addReg(Alpha::R30);
