@@ -27,39 +27,10 @@
 #include "llvm/Pass.h"
 using namespace llvm;
 
-static bool StripSymbolTable(SymbolTable &SymTab) {
-  bool RemovedSymbol = false;
-
-  for (SymbolTable::iterator I = SymTab.begin(); I != SymTab.end();) {
-    // Removing items from the plane can cause the plane itself to get deleted.
-    // If this happens, make sure we incremented our plane iterator already!
-    std::map<const std::string, Value *> &Plane = (I++)->second;
-    
-    SymbolTable::type_iterator B = Plane.begin(), Bend = Plane.end();
-    while (B != Bend) {   // Found nonempty type plane!
-      Value *V = B->second;
-
-      if (isa<Constant>(V) || isa<Type>(V)) {
-	SymTab.type_remove(B++);
-        RemovedSymbol = true;
-      } else {
-        ++B;
-        if (!isa<GlobalValue>(V) || cast<GlobalValue>(V)->hasInternalLinkage()){
-          // Set name to "", removing from symbol table!
-          V->setName("", &SymTab);
-          RemovedSymbol = true;
-        }
-      }
-    }
-  }
- 
-  return RemovedSymbol;
-}
-
 namespace {
   struct SymbolStripping : public FunctionPass {
     virtual bool runOnFunction(Function &F) {
-      return StripSymbolTable(F.getSymbolTable());
+      return F.getSymbolTable().strip();
     }
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesAll();
@@ -69,7 +40,7 @@ namespace {
 
   struct FullSymbolStripping : public SymbolStripping {
     virtual bool doInitialization(Module &M) {
-      return StripSymbolTable(M.getSymbolTable());
+      return M.getSymbolTable().strip();
     }
   };
   RegisterOpt<FullSymbolStripping> Y("mstrip",
