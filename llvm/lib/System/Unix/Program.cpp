@@ -18,13 +18,16 @@
 
 #include <llvm/Config/config.h>
 #include "Unix.h"
-#include <sys/stat.h>
-#include <signal.h>
-#include <fcntl.h>
-#ifdef HAVE_SYS_WAIT_H
-#include <sys/wait.h>
-#endif
 #include <iostream>
+#if HAVE_SYS_STAT_H
+#include <sys/stat.h>
+#endif
+#if HAVE_SIGNAL_H
+#include <signal.h>
+#endif
+#if HAVE_FCNTL_H
+#include <fcntl.h>
+#endif
 
 extern char** environ;
 

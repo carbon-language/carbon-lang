@@ -15,11 +15,12 @@
 #include "Unix.h"
 #include <vector>
 #include <algorithm>
-#ifdef HAVE_EXECINFO_H
+#if HAVE_EXECINFO_H
 # include <execinfo.h>         // For backtrace().
 #endif
-#include <sys/wait.h>
+#if HAVE_SIGNAL_H
 #include <signal.h>
+#endif
 
 namespace {
 
