@@ -115,39 +115,67 @@ static inline char toOctal(int X) {
   return (X&7)+'0';
 }
 
+// Possible states while outputting ASCII strings
+namespace {
+  enum StringSection {
+    None,
+    Alpha,
+    Numeric
+  };
+}
+
+/// SwitchStringSection - manage the changes required to output bytes as
+/// characters in a string vs. numeric decimal values
+/// 
+static inline void SwitchStringSection(std::ostream &O, StringSection NewSect,
+                                       StringSection &Current) {
+  if (Current == None) {
+    if (NewSect == Alpha)
+      O << "\t.byte \"";
+    else if (NewSect == Numeric)
+      O << "\t.byte ";
+  } else if (Current == Alpha) {
+    if (NewSect == None)
+      O << "\"";
+    else if (NewSect == Numeric) 
+      O << "\"\n"
+        << "\t.byte ";
+  } else if (Current == Numeric) {
+    if (NewSect == Alpha)
+      O << '\n'
+        << "\t.byte \"";
+    else if (NewSect == Numeric)
+      O << ", ";
+  }
+
+  Current = NewSect;
+}
+
 /// getAsCString - Return the specified array as a C compatible
 /// string, only if the predicate isStringCompatible is true.
 ///
 static void printAsCString(std::ostream &O, const ConstantArray *CVA) {
   assert(isStringCompatible(CVA) && "Array is not string compatible!");
 
-  O << "\"";
-  for (unsigned i = 0; i < CVA->getNumOperands(); ++i) {
-    unsigned char C = cast<ConstantInt>(CVA->getOperand(i))->getRawValue();
+  if (CVA->getNumOperands() == 0)
+    return;
 
+  StringSection Current = None;
+  for (unsigned i = 0, e = CVA->getNumOperands(); i != e; ++i) {
+    unsigned char C = cast<ConstantInt>(CVA->getOperand(i))->getRawValue();
     if (C == '"') {
-      O << "\\\"";
-    } else if (C == '\\') {
-      O << "\\\\";
+      SwitchStringSection(O, Alpha, Current);
+      O << "\"\"";
     } else if (isprint(C)) {
+      SwitchStringSection(O, Alpha, Current);
       O << C;
     } else {
-      switch (C) {
-      case '\b': O << "\\b"; break;
-      case '\f': O << "\\f"; break;
-      case '\n': O << "\\n"; break;
-      case '\r': O << "\\r"; break;
-      case '\t': O << "\\t"; break;
-      default:
-        O << '\\';
-        O << toOctal(C >> 6);
-        O << toOctal(C >> 3);
-        O << toOctal(C >> 0);
-        break;
-      }
+      SwitchStringSection(O, Numeric, Current);
+      O << utostr((unsigned)C);
     }
   }
-  O << "\"";
+  SwitchStringSection(O, None, Current);
+  O << '\n';
 }
 
 // Print out the specified constant, without a storage class.  Only the
@@ -227,9 +255,7 @@ void Printer::emitGlobalConstant(const Constant *CV) {
 
   if (const ConstantArray *CVA = dyn_cast<ConstantArray>(CV)) {
     if (isStringCompatible(CVA)) {
-      O << "\t.byte ";
       printAsCString(O, CVA);
-      O << "\n";
     } else { // Not a string.  Print the values in successive locations
       for (unsigned i=0, e = CVA->getNumOperands(); i != e; i++)
         emitGlobalConstant(CVA->getOperand(i));
