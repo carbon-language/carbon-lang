@@ -55,13 +55,6 @@ namespace {
 
     Printer(std::ostream &o, TargetMachine &tm) : O(o), TM(tm) { }
 
-    /// We name each basic block in a Function with a unique number, so
-    /// that we can consistently refer to them later. This is cleared
-    /// at the beginning of each call to runOnMachineFunction().
-    ///
-    typedef std::map<const Value *, unsigned> ValueMapTy;
-    ValueMapTy NumberForBB;
-
     /// Cache of mangled name for current function. This is
     /// recalculated at the beginning of each call to
     /// runOnMachineFunction().
@@ -297,9 +290,8 @@ void Printer::emitGlobalConstant(const Constant *CV) {
     }
     }
   } else if (CV->getType()->getPrimitiveSize() == 64) {
-    const ConstantInt *CI = dyn_cast<ConstantInt>(CV);
-    if(CI) {
-    union DU {                            // Abide by C TBAA rules
+    if (const ConstantInt *CI = dyn_cast<ConstantInt>(CV)) {
+      union DU {                            // Abide by C TBAA rules
         int64_t UVal;
         struct {
           uint32_t MSWord;
@@ -385,19 +377,11 @@ bool Printer::runOnMachineFunction(MachineFunction &MF) {
   O << "\t.align 5\n";
   O << CurrentFnName << ":\n";
 
-  // Number each basic block so that we can consistently refer to them
-  // in PC-relative references.
-  NumberForBB.clear();
-  for (MachineFunction::const_iterator I = MF.begin(), E = MF.end();
-       I != E; ++I) {
-    NumberForBB[I->getBasicBlock()] = BBNumber++;
-  }
-
   // Print out code for the function.
   for (MachineFunction::const_iterator I = MF.begin(), E = MF.end();
        I != E; ++I) {
     // Print a label for the basic block.
-    O << "L" << NumberForBB[I->getBasicBlock()] << ":\t# "
+    O << ".LBB" << CurrentFnName << "_" << I->getNumber() << ":\t# "
       << I->getBasicBlock()->getName() << "\n";
     for (MachineBasicBlock::const_iterator II = I->begin(), E = I->end();
       II != E; ++II) {
@@ -434,8 +418,8 @@ void Printer::printOp(const MachineOperand &MO,
   case MachineOperand::MO_MachineBasicBlock: {
     MachineBasicBlock *MBBOp = MO.getMachineBasicBlock();
     O << ".LBB" << Mang->getValueName(MBBOp->getParent()->getFunction())
-      << "_" << MBBOp->getNumber () << "\t# "
-      << MBBOp->getBasicBlock ()->getName ();
+      << "_" << MBBOp->getNumber() << "\t# "
+      << MBBOp->getBasicBlock()->getName();
     return;
   }
   case MachineOperand::MO_PCRelativeDisp:
@@ -525,7 +509,7 @@ void Printer::printMachineInstruction(const MachineInstr *MI) {
   if (Opcode == PPC32::MovePCtoLR) {
     O << "mflr r0\n";
     O << "bcl 20,31,L" << CurrentFnName << "$pb\n";
-    O  << "L" << CurrentFnName << "$pb:\n";
+    O << "L" << CurrentFnName << "$pb:\n";
     return;
   }
 
