@@ -34,7 +34,7 @@
 #include <algorithm>
 using namespace llvm;
 
-namespace {
+namespace llvm {
 
 /// This class provides computation of slot numbers for LLVM Assembly writing.
 /// @brief LLVM Assembly Writing Slot Computation.
@@ -154,7 +154,7 @@ public:
 
 };
 
-}
+}  // end namespace llvm
 
 static RegisterPass<PrintModulePass>
 X("printm", "Print module to stderr",PassInfo::Analysis|PassInfo::Optimization);
@@ -1213,27 +1213,27 @@ CachedWriter::~CachedWriter() {
   delete SC;
 }
 
-CachedWriter &CachedWriter::operator<<(const Value *V) {
+CachedWriter &CachedWriter::operator<<(const Value &V) {
   assert(AW && SC && "CachedWriter does not have a current module!");
-  if (const Instruction *I = dyn_cast<Instruction>(V))
+  if (const Instruction *I = dyn_cast<Instruction>(&V))
     AW->write(I);
-  else if (const BasicBlock *BB = dyn_cast<BasicBlock>(V))
+  else if (const BasicBlock *BB = dyn_cast<BasicBlock>(&V))
     AW->write(BB);
-  else if (const Function *F = dyn_cast<Function>(V))
+  else if (const Function *F = dyn_cast<Function>(&V))
     AW->write(F);
-  else if (const GlobalVariable *GV = dyn_cast<GlobalVariable>(V))
+  else if (const GlobalVariable *GV = dyn_cast<GlobalVariable>(&V))
     AW->write(GV);
   else 
-    AW->writeOperand(V, true, true);
+    AW->writeOperand(&V, true, true);
   return *this;
 }
 
-CachedWriter& CachedWriter::operator<<(const Type *Ty) {
+CachedWriter& CachedWriter::operator<<(const Type &Ty) {
   if (SymbolicTypes) {
     const Module *M = AW->getModule();
-    if (M) WriteTypeSymbolic(Out, Ty, M);
+    if (M) WriteTypeSymbolic(Out, &Ty, M);
   } else {
-    AW->write(Ty);
+    AW->write(&Ty);
   }
   return *this;
 }

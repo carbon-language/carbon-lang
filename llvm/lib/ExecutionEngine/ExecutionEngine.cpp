@@ -278,7 +278,7 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
     }
     break;
   default:
-    std::cout << "ERROR: Constant unimp for type: " << C->getType() << "\n";
+    std::cout << "ERROR: Constant unimp for type: " << *C->getType() << "\n";
     abort();
   }
   return Result;
@@ -319,7 +319,7 @@ void ExecutionEngine::StoreValueToMemory(GenericValue Val, GenericValue *Ptr,
                             Ptr->Untyped[7] = (Val.ULongVal >> 56) & 255;
                             break;
     default:
-      std::cout << "Cannot store value of type " << Ty << "!\n";
+      std::cout << "Cannot store value of type " << *Ty << "!\n";
     }
   } else {
     switch (Ty->getTypeID()) {
@@ -352,7 +352,7 @@ void ExecutionEngine::StoreValueToMemory(GenericValue Val, GenericValue *Ptr,
                             Ptr->Untyped[0] = (Val.ULongVal >> 56) & 255;
                             break;
     default:
-      std::cout << "Cannot store value of type " << Ty << "!\n";
+      std::cout << "Cannot store value of type " << *Ty << "!\n";
     }
   }
 }
@@ -471,7 +471,7 @@ void ExecutionEngine::InitializeMemory(const Constant *Init, void *Addr) {
   }
 
   default:
-    std::cerr << "Bad Type: " << Init->getType() << "\n";
+    std::cerr << "Bad Type: " << *Init->getType() << "\n";
     assert(0 && "Unknown constant type to initialize memory with!");
   }
 }

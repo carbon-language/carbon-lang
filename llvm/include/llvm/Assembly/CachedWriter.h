@@ -20,15 +20,12 @@
 #include "llvm/Value.h"
 #include <iostream>
 
-namespace {
-class SlotMachine;     // Internal private class
-}
-
 namespace llvm {
 
 class Module;
 class PointerType;
 class AssemblyWriter;  // Internal private class
+class SlotMachine;
 
 class CachedWriter {
   AssemblyWriter *AW;
@@ -53,14 +50,9 @@ public:
   // setModule - Invalidate internal state, use the new module instead.
   void setModule(const Module *M);
 
-  CachedWriter &operator<<(const Value *V);
+  CachedWriter &operator<<(const Value &V);
 
-  inline CachedWriter &operator<<(const Value &X) {
-    return *this << &X;
-  }
-
-  CachedWriter &operator<<(const Type *X);
-  inline CachedWriter &operator<<(const PointerType *X);
+  CachedWriter &operator<<(const Type &X);
 
   inline CachedWriter &operator<<(std::ostream &(&Manip)(std::ostream &)) {
     Out << Manip; return *this;

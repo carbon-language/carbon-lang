@@ -146,7 +146,7 @@ GenericValue Interpreter::getConstantExprValue (ConstantExpr *CE,
                              getOperandValue(CE->getOperand(1), SF),
                              getOperandValue(CE->getOperand(2), SF));
   default:
-    std::cerr << "Unhandled ConstantExpr: " << CE << "\n";
+    std::cerr << "Unhandled ConstantExpr: " << *CE << "\n";
     abort();
     return GenericValue();
   }
@@ -236,7 +236,7 @@ static GenericValue executeMulInst(GenericValue Src1, GenericValue Src2,
     IMPLEMENT_BINARY_OPERATOR(*, Float);
     IMPLEMENT_BINARY_OPERATOR(*, Double);
   default:
-    std::cout << "Unhandled type for Mul instruction: " << Ty << "\n";
+    std::cout << "Unhandled type for Mul instruction: " << *Ty << "\n";
     abort();
   }
   return Dest;
