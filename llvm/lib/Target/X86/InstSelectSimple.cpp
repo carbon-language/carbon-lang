@@ -1433,7 +1433,7 @@ void ISel::visitLoadInst(LoadInst &I) {
   unsigned SrcAddrReg = getReg(I.getOperand(0));
   unsigned DestReg = getReg(I);
 
-  unsigned Class = getClass(I.getType());
+  unsigned Class = getClassB(I.getType());
   switch (Class) {
   case cFP: {
     MachineBasicBlock::iterator MBBI = BB->end();
@@ -1533,7 +1533,7 @@ void ISel::visitStoreInst(StoreInst &I) {
   unsigned ValReg      = getReg(I.getOperand(0));
   unsigned AddressReg  = getReg(I.getOperand(1));
 
-  unsigned Class = getClass(I.getOperand(0)->getType());
+  unsigned Class = getClassB(I.getOperand(0)->getType());
   switch (Class) {
   case cLong:
     if (isLittleEndian) {
