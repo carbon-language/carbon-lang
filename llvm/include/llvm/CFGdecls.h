@@ -73,6 +73,7 @@ struct      BasicBlockGraph;
 struct ConstBasicBlockGraph;
 struct      InverseBasicBlockGraph;
 struct ConstInverseBasicBlockGraph;
+struct TypeGraph;
 
 // Forward declare iterator class template...
 template<class GraphInfo> class DFIterator;
@@ -102,6 +103,15 @@ inline idf_iterator       idf_begin(      BasicBlock *BB, bool Reverse = false);
 inline idf_const_iterator idf_begin(const BasicBlock *BB, bool Reverse = false);
 inline idf_iterator       idf_end  (      BasicBlock *BB);
 inline idf_const_iterator idf_end  (const BasicBlock *BB);
+
+
+// Depth First Iterator Definitions for Types.  This lets you iterator over 
+// (possibly cyclic) type graphs in dfo
+//
+typedef DFIterator<TypeGraph> tdf_iterator;
+
+inline tdf_iterator tdf_begin(const Type *T, bool Reverse = false);
+inline tdf_iterator tdf_end  (const Type *T);
 
 
 //===--------------------------------------------------------------------===//
