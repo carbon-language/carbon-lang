@@ -9,42 +9,14 @@
 #include "llvm/Method.h"
 #include "llvm/Type.h"
 #include "llvm/ConstPoolVals.h"
+#include "llvm/Analysis/Expressions.h"
+#include "llvm/iOther.h"
 
 // TargetData Hack: Eventually we will have annotations given to us by the
 // backend so that we know stuff about type size and alignments.  For now
 // though, just use this, because it happens to match the model that GCC uses.
 //
 const TargetData TD("LevelRaise: Should be GCC though!");
-
-// losslessCastableTypes - Return true if the types are bitwise equivalent.
-// This predicate returns true if it is possible to cast from one type to
-// another without gaining or losing precision, or altering the bits in any way.
-//
-bool losslessCastableTypes(const Type *T1, const Type *T2) {
-  if (!T1->isPrimitiveType() && !T1->isPointerType()) return false;
-  if (!T2->isPrimitiveType() && !T2->isPointerType()) return false;
-
-  if (T1->getPrimitiveID() == T2->getPrimitiveID())
-    return true;  // Handles identity cast, and cast of differing pointer types
-
-  // Now we know that they are two differing primitive or pointer types
-  switch (T1->getPrimitiveID()) {
-  case Type::UByteTyID:   return T2 == Type::SByteTy;
-  case Type::SByteTyID:   return T2 == Type::UByteTy;
-  case Type::UShortTyID:  return T2 == Type::ShortTy;
-  case Type::ShortTyID:   return T2 == Type::UShortTy;
-  case Type::UIntTyID:    return T2 == Type::IntTy;
-  case Type::IntTyID:     return T2 == Type::UIntTy;
-  case Type::ULongTyID:
-  case Type::LongTyID:
-  case Type::PointerTyID:
-    return T2 == Type::ULongTy || T2 == Type::LongTy ||
-           T2->getPrimitiveID() == Type::PointerTyID;
-  default:
-    return false;  // Other types have no identity values
-  }
-}
-
 
 // ReplaceInstWithValue - Replace all uses of an instruction (specified by BI)
 // with a value, then remove and delete the original instruction.
@@ -100,32 +72,143 @@ void ReplaceInstWithInst(BasicBlock::InstListType &BIL,
 // false if you want a leaf
 //
 const Type *getStructOffsetType(const Type *Ty, unsigned &Offset,
-                                vector<ConstPoolVal*> &Offsets,
+                                vector<Value*> &Offsets,
                                 bool StopEarly = true) {
-  if (!isa<StructType>(Ty) || (Offset == 0 && StopEarly && !Offsets.empty())) {
+  if (!isa<CompositeType>(Ty) ||
+      (Offset == 0 && StopEarly && !Offsets.empty())) {
     Offset = 0;   // Return the offset that we were able to acheive
     return Ty;    // Return the leaf type
   }
 
-  assert(Offset < TD.getTypeSize(Ty) && "Offset not in struct!");
-  const StructType *STy = cast<StructType>(Ty);
-  const StructLayout *SL = TD.getStructLayout(STy);
+  unsigned ThisOffset;
+  const Type *NextType;
+  if (const StructType *STy = dyn_cast<StructType>(Ty)) {
+    assert(Offset < TD.getTypeSize(Ty) && "Offset not in composite!");
+    const StructLayout *SL = TD.getStructLayout(STy);
 
-  // This loop terminates always on a 0 <= i < MemberOffsets.size()
-  unsigned i;
-  for (i = 0; i < SL->MemberOffsets.size()-1; ++i)
-    if (Offset >= SL->MemberOffsets[i] && Offset <  SL->MemberOffsets[i+1])
-      break;
+    // This loop terminates always on a 0 <= i < MemberOffsets.size()
+    unsigned i;
+    for (i = 0; i < SL->MemberOffsets.size()-1; ++i)
+      if (Offset >= SL->MemberOffsets[i] && Offset <  SL->MemberOffsets[i+1])
+        break;
   
-  assert(Offset >= SL->MemberOffsets[i] &&
-         (i == SL->MemberOffsets.size()-1 || Offset <  SL->MemberOffsets[i+1]));
+    assert(Offset >= SL->MemberOffsets[i] &&
+           (i == SL->MemberOffsets.size()-1 || Offset <SL->MemberOffsets[i+1]));
+    
+    // Make sure to save the current index...
+    Offsets.push_back(ConstPoolUInt::get(Type::UByteTy, i));
+    ThisOffset = SL->MemberOffsets[i];
+    NextType = STy->getElementTypes()[i];
+  } else {
+    const ArrayType *ATy = cast<ArrayType>(Ty);
+    assert(ATy->isUnsized() || Offset < TD.getTypeSize(Ty) &&
+           "Offset not in composite!");
 
-  // Make sure to save the current index...
-  Offsets.push_back(ConstPoolUInt::get(Type::UByteTy, i));
+    NextType = ATy->getElementType();
+    unsigned ChildSize = TD.getTypeSize(NextType);
+    Offsets.push_back(ConstPoolUInt::get(Type::UIntTy, Offset/ChildSize));
+    ThisOffset = (Offset/ChildSize)*ChildSize;
+  }
 
-  unsigned SubOffs = Offset - SL->MemberOffsets[i];
-  const Type *LeafTy = getStructOffsetType(STy->getElementTypes()[i], SubOffs,
-                                           Offsets);
-  Offset = SL->MemberOffsets[i] + SubOffs;
+  unsigned SubOffs = Offset - ThisOffset;
+  const Type *LeafTy = getStructOffsetType(NextType, SubOffs, Offsets);
+  Offset = ThisOffset + SubOffs;
   return LeafTy;
+}
+
+// ConvertableToGEP - This function returns true if the specified value V is
+// a valid index into a pointer of type Ty.  If it is valid, Idx is filled in
+// with the values that would be appropriate to make this a getelementptr
+// instruction.  The type returned is the root type that the GEP would point to
+//
+const Type *ConvertableToGEP(const Type *Ty, Value *OffsetVal,
+                             vector<Value*> &Indices,
+                             BasicBlock::iterator *BI = 0) {
+  const CompositeType *CompTy = getPointedToComposite(Ty);
+  if (CompTy == 0) return 0;
+
+  // See if the cast is of an integer expression that is either a constant,
+  // or a value scaled by some amount with a possible offset.
+  //
+  analysis::ExprType Expr = analysis::ClassifyExpression(OffsetVal);
+
+  // The expression must either be a constant, or a scaled index to be useful
+  if (!Expr.Offset && !Expr.Scale)
+    return 0;
+
+  // Get the offset and scale now...
+  unsigned Offset = 0, Scale = Expr.Var != 0;
+
+  // Get the offset value if it exists...
+  if (Expr.Offset) {
+    int Val = getConstantValue(Expr.Offset);
+    if (Val < 0) return false;  // Don't mess with negative offsets
+    Offset = (unsigned)Val;
+  }
+
+  // Get the scale value if it exists...
+  if (Expr.Scale) {
+    int Val = getConstantValue(Expr.Scale);
+    if (Val < 0) return false;  // Don't mess with negative scales
+    Scale = (unsigned)Val;
+  }
+  
+  // Check to make sure the offset is not negative or really large, outside the
+  // scope of this structure...
+  //
+  if (!isa<ArrayType>(CompTy) || cast<ArrayType>(CompTy)->isSized())
+    if (Offset >= TD.getTypeSize(CompTy))
+      return 0;
+
+  // Loop over the Scale and Offset values, filling in the Indices vector for
+  // our final getelementptr instruction.
+  //
+  const Type *NextTy = CompTy;
+  do {
+    if (!isa<CompositeType>(NextTy))
+      return 0;  // Type must not be ready for processing...
+    CompTy = cast<CompositeType>(NextTy);
+
+    if (const StructType *StructTy = dyn_cast<StructType>(CompTy)) {
+      const StructLayout *SL = TD.getStructLayout(StructTy);
+      unsigned ActualOffset = Offset;
+      NextTy = getStructOffsetType(StructTy, ActualOffset, Indices);
+      Offset -= ActualOffset;
+    } else {
+      const ArrayType *AT = cast<ArrayType>(CompTy);
+      const Type *ElTy = AT->getElementType();
+      unsigned ElSize = TD.getTypeSize(ElTy);
+
+      // See if the user is indexing into a different cell of this array...
+      if (Offset >= ElSize) {
+        // Calculate the index that we are entering into the array cell with
+        unsigned Index = Offset/ElSize;
+        Indices.push_back(ConstPoolUInt::get(Type::UIntTy, Index));
+        Offset -= Index*ElSize;               // Consume part of the offset
+
+      } else if (Scale && Scale != 1) {
+        // Must be indexing into this element with a variable...
+        if (Scale != ElSize)
+          return 0;  // Type must not be finished yet...
+
+        if (Expr.Var->getType() != Type::UIntTy && BI) {
+          BasicBlock *BB = (**BI)->getParent();
+          CastInst *IdxCast = new CastInst(Expr.Var, Type::UIntTy);
+          *BI = BB->getInstList().insert(*BI, IdxCast)+1;
+          Expr.Var = IdxCast;
+        }        
+
+        Indices.push_back(Expr.Var);
+        Scale = 0;  // Consume scale factor!
+      } else {
+        // Must be indexing a small amount into the first cell of the array
+        // Just index into element zero of the array here.
+        //
+        Indices.push_back(ConstPoolUInt::get(Type::UIntTy, 0));
+      }
+      NextTy = ElTy;
+    }
+  } while (Offset || Scale);    // Go until we're done!
+
+  return NextTy;
 }
