@@ -81,7 +81,6 @@ struct MachineInstrDescriptor {
 
 
 class MachineInstrInfo {
-private:
   const MachineInstrDescriptor* desc;	// raw array to allow static init'n
   unsigned descSize;		// number of entries in the desc array
   unsigned numRealOpCodes;		// number of non-dummy op codes
@@ -96,25 +95,28 @@ public:
   unsigned getNumRealOpCodes()  const { return numRealOpCodes; }
   unsigned getNumTotalOpCodes() const { return descSize; }
   
-  const MachineInstrDescriptor& getDescriptor(MachineOpCode opCode) const {
+  /// get - Return the machine instruction descriptor that corresponds to the
+  /// specified instruction opcode.
+  ///
+  const MachineInstrDescriptor& get(MachineOpCode opCode) const {
     assert(opCode >= 0 && opCode < (int)descSize);
     return desc[opCode];
   }
   
   int getNumOperands(MachineOpCode opCode) const {
-    return getDescriptor(opCode).numOperands;
+    return get(opCode).numOperands;
   }
   
   int getResultPos(MachineOpCode opCode) const {
-    return getDescriptor(opCode).resultPos;
+    return get(opCode).resultPos;
   }
   
   unsigned getNumDelaySlots(MachineOpCode opCode) const {
-    return getDescriptor(opCode).numDelaySlots;
+    return get(opCode).numDelaySlots;
   }
   
   InstrSchedClass getSchedClass(MachineOpCode opCode) const {
-    return getDescriptor(opCode).schedClass;
+    return get(opCode).schedClass;
   }
   
   //
@@ -122,66 +124,66 @@ public:
   // flags listed above.
   // 
   unsigned getIClass(MachineOpCode opCode) const {
-    return getDescriptor(opCode).iclass;
+    return get(opCode).iclass;
   }
   bool isNop(MachineOpCode opCode) const {
-    return getDescriptor(opCode).iclass & M_NOP_FLAG;
+    return get(opCode).iclass & M_NOP_FLAG;
   }
   bool isBranch(MachineOpCode opCode) const {
-    return getDescriptor(opCode).iclass & M_BRANCH_FLAG;
+    return get(opCode).iclass & M_BRANCH_FLAG;
   }
   bool isCall(MachineOpCode opCode) const {
-    return getDescriptor(opCode).iclass & M_CALL_FLAG;
+    return get(opCode).iclass & M_CALL_FLAG;
   }
   bool isReturn(MachineOpCode opCode) const {
-    return getDescriptor(opCode).iclass & M_RET_FLAG;
+    return get(opCode).iclass & M_RET_FLAG;
   }
   bool isControlFlow(MachineOpCode opCode) const {
-    return getDescriptor(opCode).iclass & M_BRANCH_FLAG
-        || getDescriptor(opCode).iclass & M_CALL_FLAG
-        || getDescriptor(opCode).iclass & M_RET_FLAG;
+    return get(opCode).iclass & M_BRANCH_FLAG
+        || get(opCode).iclass & M_CALL_FLAG
+        || get(opCode).iclass & M_RET_FLAG;
   }
   bool isArith(MachineOpCode opCode) const {
-    return getDescriptor(opCode).iclass & M_ARITH_FLAG;
+    return get(opCode).iclass & M_ARITH_FLAG;
   }
   bool isCCInstr(MachineOpCode opCode) const {
-    return getDescriptor(opCode).iclass & M_CC_FLAG;
+    return get(opCode).iclass & M_CC_FLAG;
   }
   bool isLogical(MachineOpCode opCode) const {
-    return getDescriptor(opCode).iclass & M_LOGICAL_FLAG;
+    return get(opCode).iclass & M_LOGICAL_FLAG;
   }
   bool isIntInstr(MachineOpCode opCode) const {
-    return getDescriptor(opCode).iclass & M_INT_FLAG;
+    return get(opCode).iclass & M_INT_FLAG;
   }
   bool isFloatInstr(MachineOpCode opCode) const {
-    return getDescriptor(opCode).iclass & M_FLOAT_FLAG;
+    return get(opCode).iclass & M_FLOAT_FLAG;
   }
   bool isConditional(MachineOpCode opCode) const { 
-    return getDescriptor(opCode).iclass & M_CONDL_FLAG;
+    return get(opCode).iclass & M_CONDL_FLAG;
   }
   bool isLoad(MachineOpCode opCode) const {
-    return getDescriptor(opCode).iclass & M_LOAD_FLAG;
+    return get(opCode).iclass & M_LOAD_FLAG;
   }
   bool isPrefetch(MachineOpCode opCode) const {
-    return getDescriptor(opCode).iclass & M_PREFETCH_FLAG;
+    return get(opCode).iclass & M_PREFETCH_FLAG;
   }
   bool isLoadOrPrefetch(MachineOpCode opCode) const {
-    return getDescriptor(opCode).iclass & M_LOAD_FLAG
-        || getDescriptor(opCode).iclass & M_PREFETCH_FLAG;
+    return get(opCode).iclass & M_LOAD_FLAG
+        || get(opCode).iclass & M_PREFETCH_FLAG;
   }
   bool isStore(MachineOpCode opCode) const {
-    return getDescriptor(opCode).iclass & M_STORE_FLAG;
+    return get(opCode).iclass & M_STORE_FLAG;
   }
   bool isMemoryAccess(MachineOpCode opCode) const {
-    return getDescriptor(opCode).iclass & M_LOAD_FLAG
-        || getDescriptor(opCode).iclass & M_PREFETCH_FLAG
-        || getDescriptor(opCode).iclass & M_STORE_FLAG;
+    return get(opCode).iclass & M_LOAD_FLAG
+        || get(opCode).iclass & M_PREFETCH_FLAG
+        || get(opCode).iclass & M_STORE_FLAG;
   }
   bool isDummyPhiInstr(const MachineOpCode opCode) const {
-    return getDescriptor(opCode).iclass & M_DUMMY_PHI_FLAG;
+    return get(opCode).iclass & M_DUMMY_PHI_FLAG;
   }
   bool isPseudoInstr(const MachineOpCode opCode) const {
-    return getDescriptor(opCode).iclass & M_PSEUDO_FLAG;
+    return get(opCode).iclass & M_PSEUDO_FLAG;
   }
 
   // Check if an instruction can be issued before its operands are ready,
@@ -201,11 +203,11 @@ public:
   // Latencies for individual instructions and instruction pairs
   // 
   virtual int minLatency(MachineOpCode opCode) const {
-    return getDescriptor(opCode).latency;
+    return get(opCode).latency;
   }
   
   virtual int maxLatency(MachineOpCode opCode) const {
-    return getDescriptor(opCode).latency;
+    return get(opCode).latency;
   }
 
   //
@@ -229,8 +231,8 @@ public:
   // 
   virtual uint64_t maxImmedConstant(MachineOpCode opCode,
 				    bool &isSignExtended) const {
-    isSignExtended = getDescriptor(opCode).immedIsSignExtended;
-    return getDescriptor(opCode).maxImmedConst;
+    isSignExtended = get(opCode).immedIsSignExtended;
+    return get(opCode).maxImmedConst;
   }
 
   //-------------------------------------------------------------------------
