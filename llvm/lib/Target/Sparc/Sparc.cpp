@@ -38,8 +38,8 @@ const TargetInstrDescriptor SparcMachineInstrDesc[] = {
 // Command line options to control choice of code generation passes.
 //---------------------------------------------------------------------------
 
-static cl::opt<bool> DisablePreSelect("nopreselect",
-                                      cl::desc("Disable preselection pass"));
+static cl::opt<bool> DisablePreOpt("nopreopt",
+              cl::desc("Disable optimizations prior to instruction selection"));
 
 static cl::opt<bool> DisableSched("nosched",
                                   cl::desc("Disable local scheduling pass"));
@@ -171,10 +171,10 @@ bool UltraSparc::addPassesToEmitAssembly(PassManager &PM, std::ostream &Out)
   //so %fp+offset-8 and %fp+offset-16 are empty slots now!
   PM.add(createStackSlotsPass(*this));
 
-  // Specialize LLVM code for this target machine and then
-  // run basic dataflow optimizations on LLVM code.
-  if (!DisablePreSelect) {
+  if (!DisablePreOpt) {
+    // Specialize LLVM code for this target machine
     PM.add(createPreSelectionPass(*this));
+    // Run basic dataflow optimizations on LLVM code
     PM.add(createReassociatePass());
     PM.add(createLICMPass());
     PM.add(createGCSEPass());
@@ -182,7 +182,8 @@ bool UltraSparc::addPassesToEmitAssembly(PassManager &PM, std::ostream &Out)
   
   // If LLVM dumping after transformations is requested, add it to the pipeline
   if (DumpInput)
-    PM.add(new PrintFunctionPass("Input code to instr. selection: \n", &std::cerr));
+    PM.add(new PrintFunctionPass("Input code to instsr. selection:\n",
+                                 &std::cerr));
 
   PM.add(createInstructionSelectionPass(*this));
 
@@ -233,6 +234,9 @@ bool UltraSparc::addPassesToJITCompile(PassManager &PM) {
   // FIXME: implement the switch instruction in the instruction selector.
   PM.add(createLowerSwitchPass());
 
+  // decompose multi-dimensional array references into single-dim refs
+  PM.add(createDecomposeMultiDimRefsPass());
+  
   // Construct and initialize the MachineFunction object for this fn.
   PM.add(createMachineCodeConstructionPass(*this));
 
