@@ -7,6 +7,10 @@
 #ifndef LLI_INTERPRETER_H
 #define LLI_INTERPRETER_H
 
+// Uncomment this line to enable profiling of structure field accesses.
+#define PROFILE_STRUCTURE_FIELDS 1
+
+
 #include "llvm/Module.h"
 #include "llvm/Method.h"
 #include "llvm/Support/DataTypes.h"
@@ -53,7 +57,6 @@ struct ExecutionContext {
   CallInst             *Caller;     // Holds the call that called subframes.
                                     // NULL if main func or debugger invoked fn
 };
-
 
 // Interpreter - This class represents the entirety of the interpreter.
 //

@@ -26,6 +26,14 @@ static TargetData TD("lli Interpreter");
 CachedWriter CW;     // Object to accelerate printing of LLVM
 
 
+#ifdef PROFILE_STRUCTURE_FIELDS
+#include "llvm/Support/CommandLine.h"
+static cl::Flag ProfileStructureFields("profilestructfields", 
+                                       "Profile Structure Field Accesses");
+#include <map>
+static map<const StructType *, vector<unsigned> > FieldAccessCounts;
+#endif
+
 sigjmp_buf SignalRecoverBuffer;
 static bool InInstruction = false;
 
@@ -628,6 +636,33 @@ void Interpreter::executeRetInst(ReturnInst *I, ExecutionContext &SF) {
     } else {
       ExitCode = 0;
     }
+
+#ifdef PROFILE_STRUCTURE_FIELDS
+    // Print out structure field accounting information...
+    if (!FieldAccessCounts.empty()) {
+      CW << "Field Access Profile Information:\n";
+      map<const StructType *, vector<unsigned> >::iterator 
+        I = FieldAccessCounts.begin(), E = FieldAccessCounts.end();
+      for (; I != E; ++I) {
+        vector<unsigned> &OfC = I->second;
+        CW << "  '" << (Value*)I->first << "'\t- Sum=";
+
+        unsigned Sum = 0;
+        for (unsigned i = 0; i < OfC.size(); ++i)
+          Sum += OfC[i];
+        CW << Sum << " - ";
+
+        for (unsigned i = 0; i < OfC.size(); ++i) {
+          if (i) CW << ", ";
+          CW << OfC[i];
+        }
+        CW << endl;
+      }
+      CW << endl;
+      FieldAccessCounts.clear();
+    }
+#endif
+
     return;
   }
 
@@ -723,6 +758,16 @@ static PointerTy getElementOffset(Instruction *I, unsigned ArgOff) {
     const ConstPoolUInt *CPU = cast<ConstPoolUInt>(I->getOperand(ArgOff++));
     assert(CPU->getType() == Type::UByteTy);
     unsigned Index = CPU->getValue();
+
+#ifdef PROFILE_STRUCTURE_FIELDS
+    if (ProfileStructureFields) {
+      // Do accounting for this field...
+      vector<unsigned> &OfC = FieldAccessCounts[STy];
+      if (OfC.size() == 0) OfC.resize(STy->getElementTypes().size());
+      OfC[Index]++;
+    }
+#endif
+
     Total += SLO->MemberOffsets[Index];
     Ty = STy->getElementTypes()[Index];
   }
