@@ -104,6 +104,11 @@ namespace {
       I.replaceAllUsesWith(V);
       return &I;
     }
+
+    // SimplifyCommutative - This performs a few simplifications for commutative
+    // operators...
+    bool SimplifyCommutative(BinaryOperator &I);
+
   };
 
   RegisterOpt<InstCombiner> X("instcombine", "Combine redundant instructions");
@@ -121,6 +126,12 @@ static unsigned getComplexity(Value *V) {
   return isa<Constant>(V) ? 0 : 1;
 }
 
+// isOnlyUse - Return true if this instruction will be deleted if we stop using
+// it.
+static bool isOnlyUse(Value *V) {
+  return V->use_size() == 1 || isa<Constant>(V);
+}
+
 // SimplifyCommutative - This performs a few simplifications for commutative
 // operators:
 //
@@ -128,29 +139,43 @@ static unsigned getComplexity(Value *V) {
 //     left (most complex).  This puts constants before unary operators before
 //     binary operators.
 //
-//  2. Handle the case of (op (op V, C1), C2), changing it to:
-//     (op V, (op C1, C2))
+//  2. Transform: (op (op V, C1), C2) ==> (op V, (op C1, C2))
+//  3. Transform: (op (op V1, C1), (op V2, C2)) ==> (op (op V1, V2), (op C1,C2))
 //
-static bool SimplifyCommutative(BinaryOperator &I) {
+bool InstCombiner::SimplifyCommutative(BinaryOperator &I) {
   bool Changed = false;
   if (getComplexity(I.getOperand(0)) < getComplexity(I.getOperand(1)))
     Changed = !I.swapOperands();
   
   if (!I.isAssociative()) return Changed;
   Instruction::BinaryOps Opcode = I.getOpcode();
-  if (BinaryOperator *Op = dyn_cast<BinaryOperator>(I.getOperand(0))) {
-    if (Op->getOpcode() == Opcode && isa<Constant>(I.getOperand(1)) &&
-        isa<Constant>(Op->getOperand(1))) {
-      Instruction *New = BinaryOperator::create(I.getOpcode(), I.getOperand(1),
-                                                Op->getOperand(1));
-      Constant *Folded = ConstantFoldInstruction(New);
-      delete New;
-      assert(Folded && "Couldn't constant fold commutative operand?");
-      I.setOperand(0, Op->getOperand(0));
-      I.setOperand(1, Folded);
-      return true;
+  if (BinaryOperator *Op = dyn_cast<BinaryOperator>(I.getOperand(0)))
+    if (Op->getOpcode() == Opcode && isa<Constant>(Op->getOperand(1))) {
+      if (isa<Constant>(I.getOperand(1))) {
+        Constant *Folded = ConstantFoldBinaryInstruction(I.getOpcode(),
+            cast<Constant>(I.getOperand(1)), cast<Constant>(Op->getOperand(1)));
+        assert(Folded && "Couldn't constant fold commutative operand?");
+        I.setOperand(0, Op->getOperand(0));
+        I.setOperand(1, Folded);
+        return true;
+      } else if (BinaryOperator *Op1=dyn_cast<BinaryOperator>(I.getOperand(1)))
+        if (Op1->getOpcode() == Opcode && isa<Constant>(Op1->getOperand(1)) &&
+            isOnlyUse(Op) && isOnlyUse(Op1)) {
+          Constant *C1 = cast<Constant>(Op->getOperand(1));
+          Constant *C2 = cast<Constant>(Op1->getOperand(1));
+
+          // Fold (op (op V1, C1), (op V2, C2)) ==> (op (op V1, V2), (op C1,C2))
+          Constant *Folded = ConstantFoldBinaryInstruction(I.getOpcode(),C1,C2);
+          assert(Folded && "Couldn't constant fold commutative operand?");
+          Instruction *New = BinaryOperator::create(Opcode, Op->getOperand(0),
+                                                    Op1->getOperand(0),
+                                                    Op1->getName(), &I);
+          WorkList.push_back(New);
+          I.setOperand(0, New);
+          I.setOperand(1, Folded);
+          return true;
+        }      
     }
-  }
   return Changed;
 }
 
@@ -183,10 +208,30 @@ static inline Value *dyn_castNotVal(Value *V) {
   return 0;
 }
 
-static bool isOnlyUse(Value *V) {
-  return V->use_size() == 1 || isa<Constant>(V);
+// dyn_castFoldableMul - If this value is a multiply that can be folded into
+// other computations (because it has a constant operand), return the
+// non-constant operand of the multiply.
+//
+static inline Value *dyn_castFoldableMul(Value *V) {
+  if (V->use_size() == 1 && V->getType()->isInteger())
+    if (Instruction *I = dyn_cast<Instruction>(V))
+      if (I->getOpcode() == Instruction::Mul)
+        if (isa<Constant>(I->getOperand(1)))
+          return I->getOperand(0);
+  return 0;
 }
 
+// dyn_castMaskingAnd - If this value is an And instruction masking a value with
+// a constant, return the constant being anded with.
+//
+static inline Constant *dyn_castMaskingAnd(Value *V) {
+  if (Instruction *I = dyn_cast<Instruction>(V))
+    if (I->getOpcode() == Instruction::And)
+      return dyn_cast<Constant>(I->getOperand(1));
+
+  // If this is a constant, it acts just like we were masking with it.
+  return dyn_cast<Constant>(V);
+}
 
 // Log2 - Calculate the log base 2 for the specified value if it is exactly a
 // power of 2.
@@ -200,16 +245,6 @@ static unsigned Log2(uint64_t Val) {
   }
   return Count;
 }
-
-static inline Value *dyn_castFoldableMul(Value *V) {
-  if (V->use_size() == 1 && V->getType()->isInteger())
-    if (Instruction *I = dyn_cast<Instruction>(V))
-      if (I->getOpcode() == Instruction::Mul)
-        if (isa<Constant>(I->getOperand(1)))
-          return I->getOperand(0);
-  return 0;
-}
-
 
 Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
   bool Changed = SimplifyCommutative(I);
@@ -243,6 +278,12 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
     assert(CP1 && "Couldn't constant fold C + 1?");
     return BinaryOperator::create(Instruction::Mul, LHS, CP1);
   }
+
+  // (A & C1)+(B & C2) -> (A & C1)|(B & C2) iff C1&C2 == 0
+  if (Constant *C1 = dyn_castMaskingAnd(LHS))
+    if (Constant *C2 = dyn_castMaskingAnd(RHS))
+      if ((*C1 & *C2)->isNullValue())
+        return BinaryOperator::create(Instruction::Or, LHS, RHS);
 
   return Changed ? &I : 0;
 }
@@ -537,8 +578,6 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
       return ReplaceInstUsesWith(I,
                                 ConstantIntegral::getAllOnesValue(I.getType()));
 
-
-
   if (Instruction *Op1I = dyn_cast<Instruction>(Op1))
     if (Op1I->getOpcode() == Instruction::Or)
       if (Op1I->getOperand(0) == Op0) {              // B^(B|A) == (A|B)^B
@@ -561,6 +600,12 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
                                       NotB);
       }
     }
+
+  // (A & C1)^(B & C2) -> (A & C1)|(B & C2) iff C1^C2 == 0
+  if (Constant *C1 = dyn_castMaskingAnd(Op0))
+    if (Constant *C2 = dyn_castMaskingAnd(Op1))
+      if ((*C1 & *C2)->isNullValue())
+        return BinaryOperator::create(Instruction::Or, Op0, Op1);
 
   return Changed ? &I : 0;
 }
