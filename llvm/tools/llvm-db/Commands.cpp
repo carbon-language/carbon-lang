@@ -49,8 +49,8 @@ void CLIDebugger::startProgramRunning() {
   eliminateRunInfo();
 
   // If the program has been modified, reload it!
-  std::string Program = Dbg.getProgramPath();
-  if (TheProgramInfo->getProgramTimeStamp() != getFileTimestamp(Program)) {
+  sys::Path Program (Dbg.getProgramPath());
+  if (TheProgramInfo->getProgramTimeStamp() != Program.getTimestamp()) {
     std::cout << "'" << Program << "' has changed; re-reading program.\n";
 
     // Unload an existing program.  This kills the program if necessary.
@@ -59,7 +59,7 @@ void CLIDebugger::startProgramRunning() {
     TheProgramInfo = 0;
     CurrentFile = 0;
 
-    Dbg.loadProgram(Program);
+    Dbg.loadProgram(Program.toString());
     TheProgramInfo = new ProgramInfo(Dbg.getProgram());
   }
 

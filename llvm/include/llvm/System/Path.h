@@ -376,6 +376,21 @@ namespace sys {
       /// @brief Get file status.
       void getStatusInfo(StatusInfo& info) const;
 
+      /// This function returns the last modified time stamp for the file 
+      /// referenced by this path. The Path may reference a file or a directory.
+      /// If the file does not exist, a ZeroTime timestamp is returned.
+      /// @returns last modified timestamp of the file/directory or ZeroTime
+      /// @brief Get file timestamp.
+      inline TimeValue getTimestamp() const {
+        StatusInfo info; getStatusInfo(info); return info.modTime;
+      }
+
+      /// This function returns the size of the file referenced by this path. 
+      /// @brief Get file size.
+      inline size_t getSize() const {
+        StatusInfo info; getStatusInfo(info); return info.fileSize;
+      }
+
       /// This method attempts to set the Path object to \p unverified_path
       /// and interpret the name as a directory name.  The \p unverified_path 
       /// is verified. If verification succeeds then \p unverified_path 

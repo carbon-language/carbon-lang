@@ -21,6 +21,7 @@
 #ifndef LLVM_DEBUGGER_PROGRAMINFO_H
 #define LLVM_DEBUGGER_PROGRAMINFO_H
 
+#include "llvm/System/TimeValue.h"
 #include <string>
 #include <map>
 #include <vector>
@@ -133,7 +134,7 @@ namespace llvm {
 
     /// ProgramTimeStamp - This is the timestamp of the executable file that we
     /// currently have loaded into the debugger.
-    unsigned long long ProgramTimeStamp;
+    sys::TimeValue ProgramTimeStamp;
 
     /// SourceFiles - This map is used to transform source file descriptors into
     /// their corresponding SourceFileInfo objects.  This mapping owns the
@@ -170,7 +171,7 @@ namespace llvm {
 
     /// getProgramTimeStamp - Return the time-stamp of the program when it was
     /// loaded.
-    unsigned long long getProgramTimeStamp() const { return ProgramTimeStamp; }
+    sys::TimeValue getProgramTimeStamp() const { return ProgramTimeStamp; }
     
     //===------------------------------------------------------------------===//
     // Interfaces to the source code files that make up the program.

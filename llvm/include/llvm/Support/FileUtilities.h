@@ -61,17 +61,6 @@ bool MakeFileExecutable(const std::string &Filename);
 ///
 bool MakeFileReadable(const std::string &Filename);
 
-/// getFileSize - Return the size of the specified file in bytes, or -1 if the
-/// file cannot be read or does not exist.
-long long getFileSize(const std::string &Filename);
-
-
-/// getFileTimestamp - Get the last modified time for the specified file in an
-/// unspecified format.  This is useful to allow checking to see if a file was
-/// updated since that last time the timestampt was aquired.  If the file does
-/// not exist or there is an error getting the time-stamp, zero is returned.
-unsigned long long getFileTimestamp(const std::string &Filename);
-
 /// ReadFileIntoAddressSpace - Attempt to map the specific file into the 
 /// address space of the current process for reading.  If this succeeds, 
 /// return the address of the buffer and the length of the file mapped.  On 

@@ -14,6 +14,7 @@
 
 #include "llvm/Support/FileUtilities.h"
 #include "llvm/Support/DataTypes.h"
+#include "llvm/System/Path.h"
 #include "llvm/Config/unistd.h"
 #include "llvm/Config/fcntl.h"
 #include "llvm/Config/sys/types.h"
@@ -195,26 +196,6 @@ bool llvm::MakeFileReadable(const std::string &Filename) {
   return AddPermissionsBits(Filename, 0444);
 }
 
-/// getFileSize - Return the size of the specified file in bytes, or -1 if the
-/// file cannot be read or does not exist.
-long long llvm::getFileSize(const std::string &Filename) {
-  struct stat StatBuf;
-  if (stat(Filename.c_str(), &StatBuf) == -1)
-    return -1;
-  return StatBuf.st_size;  
-}
-
-/// getFileTimestamp - Get the last modified time for the specified file in an
-/// unspecified format.  This is useful to allow checking to see if a file was
-/// updated since that last time the timestampt was aquired.  If the file does
-/// not exist or there is an error getting the time-stamp, zero is returned.
-unsigned long long llvm::getFileTimestamp(const std::string &Filename) {
-  struct stat StatBuf;
-  if (stat(Filename.c_str(), &StatBuf) == -1)
-    return 0;
-  return StatBuf.st_mtime;  
-}
-
 /// ReadFileIntoAddressSpace - Attempt to map the specific file into the
 /// address space of the current process for reading.  If this succeeds,
 /// return the address of the buffer and the length of the file mapped.  On
@@ -222,7 +203,8 @@ unsigned long long llvm::getFileTimestamp(const std::string &Filename) {
 void *llvm::ReadFileIntoAddressSpace(const std::string &Filename, 
                                      unsigned &Length) {
 #if defined(HAVE_MMAP_FILE) && !defined(_MSC_VER)
-  Length = (unsigned)getFileSize(Filename);
+  sys::Path File(Filename);
+  Length = (unsigned)File.getSize();
   if ((int)Length == -1) return 0;
 
   FDHandle FD(open(Filename.c_str(), O_RDONLY));
