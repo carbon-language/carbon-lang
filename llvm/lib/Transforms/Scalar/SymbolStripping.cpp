@@ -25,8 +25,7 @@
 #include "llvm/Module.h"
 #include "llvm/SymbolTable.h"
 #include "llvm/Pass.h"
-
-namespace llvm {
+using namespace llvm;
 
 static bool StripSymbolTable(SymbolTable &SymTab) {
   bool RemovedSymbol = false;
@@ -34,15 +33,20 @@ static bool StripSymbolTable(SymbolTable &SymTab) {
   for (SymbolTable::iterator I = SymTab.begin(); I != SymTab.end(); ++I) {
     std::map<const std::string, Value *> &Plane = I->second;
     
-    SymbolTable::type_iterator B;
-    while ((B = Plane.begin()) != Plane.end()) {   // Found nonempty type plane!
+    SymbolTable::type_iterator B = Plane.begin();
+    while (B != Plane.end()) {   // Found nonempty type plane!
       Value *V = B->second;
-      if (isa<Constant>(V) || isa<Type>(V))
-	SymTab.type_remove(B);
-      else 
-	V->setName("", &SymTab);  // Set name to "", removing from symbol table!
-      RemovedSymbol = true;
-      assert(Plane.begin() != B && "Symbol not removed from table!");
+      if (isa<Constant>(V) || isa<Type>(V)) {
+	SymTab.type_remove(B++);
+        RemovedSymbol = true;
+      } else {
+        ++B;
+        if (!isa<GlobalValue>(V) || cast<GlobalValue>(V)->hasInternalLinkage()){
+          // Set name to "", removing from symbol table!
+          V->setName("", &SymTab);
+          RemovedSymbol = true;
+        }
+      }
     }
   }
  
@@ -69,12 +73,10 @@ namespace {
                                      "Strip symbols from module and functions");
 }
 
-Pass *createSymbolStrippingPass() {
+Pass *llvm::createSymbolStrippingPass() {
   return new SymbolStripping();
 }
 
-Pass *createFullSymbolStrippingPass() {
+Pass *llvm::createFullSymbolStrippingPass() {
   return new FullSymbolStripping();
 }
-
-} // End llvm namespace
