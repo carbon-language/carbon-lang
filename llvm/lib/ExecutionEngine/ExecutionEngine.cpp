@@ -213,6 +213,7 @@ void ExecutionEngine::emitGlobals() {
       DEBUG(std::cerr << "Global '" << I->getName() << "' -> "
 	              << (void*)GlobalAddress[I] << "\n");
     } else {
+      std::cerr << "Global: " << I->getName() << "\n";
       assert(0 && "References to external globals not handled yet!");
     }
   
