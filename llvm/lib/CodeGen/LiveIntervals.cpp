@@ -148,7 +148,9 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock* mbb,
         // add new interval
         intervals_.push_back(Interval(reg));
         // update interval index for this register
-        r2iMap_.insert(std::make_pair(reg, --intervals_.end()));
+        bool inserted =
+            r2iMap_.insert(std::make_pair(reg, --intervals_.end())).second;
+        assert(inserted);
         interval = &intervals_.back();
     }
     else {
@@ -248,7 +250,9 @@ exit:
         intervals_.push_back(Interval(reg));
         Interval& interval = intervals_.back();
         // update interval index for this register
-        r2iMap_.insert(std::make_pair(reg, --intervals_.end()));
+        bool inserted =
+            r2iMap_.insert(std::make_pair(reg, --intervals_.end())).second;
+        assert(inserted);
         interval.addRange(start, end);
     }
 }
