@@ -455,6 +455,19 @@ static bool isStoreInstruction (const MachineInstr *MI) {
   }
 }
 
+static bool isPseudoInstruction (const MachineInstr *MI) {
+  switch (MI->getOpcode ()) {
+  case V8::PHI:
+  case V8::ADJCALLSTACKUP:
+  case V8::ADJCALLSTACKDOWN:
+  case V8::IMPLICIT_USE:
+  case V8::IMPLICIT_DEF:
+    return true;
+  default:
+    return false;
+  }
+}
+
 /// printBaseOffsetPair - Print two consecutive operands of MI, starting at #i,
 /// which form a base + offset pair (which may have brackets around it, if
 /// brackets is true, or may be in the form base - constant, if offset is a
@@ -484,6 +497,11 @@ void V8Printer::printMachineInstruction(const MachineInstr *MI) {
   unsigned Opcode = MI->getOpcode();
   const TargetInstrInfo &TII = *TM.getInstrInfo();
   const TargetInstrDescriptor &Desc = TII.get(Opcode);
+
+  // If it's a pseudo-instruction, comment it out.
+  if (isPseudoInstruction (MI))
+    O << "! ";
+
   O << Desc.Name << " ";
   
   // Printing memory instructions is a special case.
