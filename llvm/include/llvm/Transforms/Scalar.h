@@ -232,7 +232,7 @@ FunctionPass *createTailCallEliminationPass();
 // This pass convert malloc and free instructions to %malloc & %free function
 // calls.
 //
-FunctionPass *createLowerAllocationsPass();
+FunctionPass *createLowerAllocationsPass(bool LowerMallocArgToInteger = false);
 
 //===----------------------------------------------------------------------===//
 // This pass converts SwitchInst instructions into a sequence of chained binary
