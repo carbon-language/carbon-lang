@@ -8,14 +8,9 @@
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 
-static inline const Type *checkType(const Type *Ty) {
-  assert(Ty && "Invalid indices for type!");
-  return Ty;
-}
-
 AllocationInst::AllocationInst(const Type *Ty, Value *ArraySize, unsigned iTy, 
-                               const std::string &Name)
-  : Instruction(Ty, iTy, Name) {
+                               const std::string &Name, Instruction *InsertBef)
+  : Instruction(Ty, iTy, Name, InsertBef) {
   assert(isa<PointerType>(Ty) && "Can't allocate a non pointer type!");
 
   // ArraySize defaults to 1.
@@ -37,14 +32,25 @@ const Type *AllocationInst::getAllocatedType() const {
   return getType()->getElementType();
 }
 
+//===----------------------------------------------------------------------===//
+//                             FreeInst Implementation
+//===----------------------------------------------------------------------===//
+
+FreeInst::FreeInst(Value *Ptr, Instruction *InsertBefore)
+  : Instruction(Type::VoidTy, Free, "", InsertBefore) {
+  assert(isa<PointerType>(Ptr->getType()) && "Can't free nonpointer!");
+  Operands.reserve(1);
+  Operands.push_back(Use(Ptr, this));
+}
+
 
 //===----------------------------------------------------------------------===//
 //                           LoadInst Implementation
 //===----------------------------------------------------------------------===//
 
-LoadInst::LoadInst(Value *Ptr, const std::string &Name)
+LoadInst::LoadInst(Value *Ptr, const std::string &Name, Instruction *InsertBef)
   : Instruction(cast<PointerType>(Ptr->getType())->getElementType(),
-                Load, Name) {
+                Load, Name, InsertBef) {
   Operands.reserve(1);
   Operands.push_back(Use(Ptr, this));
 }
@@ -54,8 +60,8 @@ LoadInst::LoadInst(Value *Ptr, const std::string &Name)
 //                           StoreInst Implementation
 //===----------------------------------------------------------------------===//
 
-StoreInst::StoreInst(Value *Val, Value *Ptr)
-  : Instruction(Type::VoidTy, Store, "") {
+StoreInst::StoreInst(Value *Val, Value *Ptr, Instruction *InsertBefore)
+  : Instruction(Type::VoidTy, Store, "", InsertBefore) {
   
   Operands.reserve(2);
   Operands.push_back(Use(Val, this));
@@ -67,11 +73,19 @@ StoreInst::StoreInst(Value *Val, Value *Ptr)
 //                       GetElementPtrInst Implementation
 //===----------------------------------------------------------------------===//
 
+// checkType - Simple wrapper function to give a better assertion failure
+// message on bad indexes for a gep instruction.
+//
+static inline const Type *checkType(const Type *Ty) {
+  assert(Ty && "Invalid indices for type!");
+  return Ty;
+}
+
 GetElementPtrInst::GetElementPtrInst(Value *Ptr, const std::vector<Value*> &Idx,
-				     const std::string &Name)
+				     const std::string &Name, Instruction *InBe)
   : Instruction(PointerType::get(checkType(getIndexedType(Ptr->getType(),
                                                             Idx, true))),
-		  GetElementPtr, Name) {
+		  GetElementPtr, Name, InBe) {
   assert(getIndexedType(Ptr->getType(), Idx, true) && "gep operands invalid!");
   Operands.reserve(1+Idx.size());
   Operands.push_back(Use(Ptr, this));
@@ -107,15 +121,3 @@ const Type* GetElementPtrInst::getIndexedType(const Type *Ptr,
   }
   return CurIDX == Idx.size() ? Ptr : 0;
 }
-
-
-//===----------------------------------------------------------------------===//
-//                             FreeInst Implementation
-//===----------------------------------------------------------------------===//
-
-FreeInst::FreeInst(Value *Ptr) : Instruction(Type::VoidTy, Free, "") {
-  assert(isa<PointerType>(Ptr->getType()) && "Can't free nonpointer!");
-  Operands.reserve(1);
-  Operands.push_back(Use(Ptr, this));
-}
-

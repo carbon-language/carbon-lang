@@ -1,4 +1,4 @@
-//===-- InstrTypes.cpp - Implement Instruction subclasses --------*- C++ -*--=//
+//===-- InstrTypes.cpp - Implement Instruction subclasses -------*- C++ -*-===//
 //
 // This file implements 
 //
@@ -15,25 +15,15 @@
 //                            TerminatorInst Class
 //===----------------------------------------------------------------------===//
 
-TerminatorInst::TerminatorInst(Instruction::TermOps iType) 
-  : Instruction(Type::VoidTy, iType, "") {
+TerminatorInst::TerminatorInst(Instruction::TermOps iType, Instruction *IB) 
+  : Instruction(Type::VoidTy, iType, "", IB) {
 }
-
-TerminatorInst::TerminatorInst(const Type *Ty, Instruction::TermOps iType,
-			       const std::string &Name)
-  : Instruction(Ty, iType, Name) {
-}
-
 
 //===----------------------------------------------------------------------===//
 //                               PHINode Class
 //===----------------------------------------------------------------------===//
 
-PHINode::PHINode(const Type *Ty, const std::string &name) 
-  : Instruction(Ty, Instruction::PHINode, name) {
-}
-
-PHINode::PHINode(const PHINode &PN) 
+PHINode::PHINode(const PHINode &PN)
   : Instruction(PN.getType(), Instruction::PHINode) {
   Operands.reserve(PN.Operands.size());
   for (unsigned i = 0; i < PN.Operands.size(); i+=2) {

@@ -7,11 +7,12 @@
 #include "llvm/iTerminators.h"
 #include "llvm/BasicBlock.h"
 
-SwitchInst::SwitchInst(Value *V, BasicBlock *DefDest) 
-  : TerminatorInst(Instruction::Switch) {
-  assert(V && DefDest);
+SwitchInst::SwitchInst(Value *V, BasicBlock *DefaultDest,
+                       Instruction *InsertBefore) 
+  : TerminatorInst(Instruction::Switch, InsertBefore) {
+  assert(V && DefaultDest);
   Operands.push_back(Use(V, this));
-  Operands.push_back(Use(DefDest, this));
+  Operands.push_back(Use(DefaultDest, this));
 }
 
 SwitchInst::SwitchInst(const SwitchInst &SI) 

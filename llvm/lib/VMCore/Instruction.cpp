@@ -9,13 +9,21 @@
 #include "llvm/Type.h"
 #include "Support/LeakDetector.h"
 
-Instruction::Instruction(const Type *ty, unsigned it, const std::string &Name) 
+Instruction::Instruction(const Type *ty, unsigned it, const std::string &Name,
+                         Instruction *InsertBefore)
   : User(ty, Value::InstructionVal, Name) {
   Parent = 0;
   iType = it;
 
   // Make sure that we get added to a basicblock
   LeakDetector::addGarbageObject(this);
+
+  // If requested, insert this instruction into a basic block...
+  if (InsertBefore) {
+    assert(InsertBefore->getParent() &&
+           "Instruction to insert before is not in a basic block!");
+    InsertBefore->getParent()->getInstList().insert(InsertBefore, this);
+  }
 }
 
 void Instruction::setParent(BasicBlock *P) {

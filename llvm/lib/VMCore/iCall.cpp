@@ -14,10 +14,10 @@
 //===----------------------------------------------------------------------===//
 
 CallInst::CallInst(Value *Func, const std::vector<Value*> &params, 
-                   const std::string &Name) 
+                   const std::string &Name, Instruction *InsertBefore) 
   : Instruction(cast<FunctionType>(cast<PointerType>(Func->getType())
 				 ->getElementType())->getReturnType(),
-		Instruction::Call, Name) {
+		Instruction::Call, Name, InsertBefore) {
   Operands.reserve(1+params.size());
   Operands.push_back(Use(Func, this));
 
@@ -46,10 +46,10 @@ CallInst::CallInst(const CallInst &CI)
 InvokeInst::InvokeInst(Value *Func, BasicBlock *IfNormal,
 		       BasicBlock *IfException,
                        const std::vector<Value*> &params,
-		       const std::string &Name)
+		       const std::string &Name, Instruction *InsertBefore)
   : TerminatorInst(cast<FunctionType>(cast<PointerType>(Func->getType())
 				    ->getElementType())->getReturnType(),
-		   Instruction::Invoke, Name) {
+		   Instruction::Invoke, Name, InsertBefore) {
   Operands.reserve(3+params.size());
   Operands.push_back(Use(Func, this));
   Operands.push_back(Use((Value*)IfNormal, this));

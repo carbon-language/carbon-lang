@@ -7,33 +7,54 @@
 #include "llvm/iOperators.h"
 #include "llvm/Type.h"
 #include "llvm/Constants.h"
+#include "llvm/BasicBlock.h"
 
 //===----------------------------------------------------------------------===//
 //                             BinaryOperator Class
 //===----------------------------------------------------------------------===//
 
+BinaryOperator::BinaryOperator(BinaryOps iType, Value *S1, Value *S2, 
+                               const Type *Ty, const std::string &Name,
+                               Instruction *InsertBefore)
+  : Instruction(Ty, iType, Name, InsertBefore) {
+  Operands.reserve(2);
+  Operands.push_back(Use(S1, this));
+  Operands.push_back(Use(S2, this));
+  assert(Operands[0] && Operands[1] && 
+         Operands[0]->getType() == Operands[1]->getType());
+}
+
+
+
+
 BinaryOperator *BinaryOperator::create(BinaryOps Op, Value *S1, Value *S2,
-				       const std::string &Name) {
+				       const std::string &Name,
+                                       Instruction *InsertBefore) {
+  assert(S1->getType() == S2->getType() &&
+         "Cannot create binary operator with two operands of differing type!");
   switch (Op) {
   // Binary comparison operators...
   case SetLT: case SetGT: case SetLE:
   case SetGE: case SetEQ: case SetNE:
-    return new SetCondInst(Op, S1, S2, Name);
+    return new SetCondInst(Op, S1, S2, Name, InsertBefore);
 
   default:
-    return new GenericBinaryInst(Op, S1, S2, Name);
+    return new BinaryOperator(Op, S1, S2, S1->getType(), Name, InsertBefore);
   }
 }
 
-BinaryOperator *BinaryOperator::createNeg(Value *Op, const std::string &Name) {
-  return new GenericBinaryInst(Instruction::Sub,
-                               Constant::getNullValue(Op->getType()), Op, Name);
+BinaryOperator *BinaryOperator::createNeg(Value *Op, const std::string &Name,
+                                          Instruction *InsertBefore) {
+  return new BinaryOperator(Instruction::Sub,
+                            Constant::getNullValue(Op->getType()), Op,
+                            Op->getType(), Name, InsertBefore);
 }
 
-BinaryOperator *BinaryOperator::createNot(Value *Op, const std::string &Name) {
-  return new GenericBinaryInst(Instruction::Xor, Op,
-                               ConstantIntegral::getAllOnesValue(Op->getType()),
-                               Name);
+BinaryOperator *BinaryOperator::createNot(Value *Op, const std::string &Name,
+                                          Instruction *InsertBefore) {
+  return new BinaryOperator(Instruction::Xor, Op,
+                            ConstantIntegral::getAllOnesValue(Op->getType()),
+                            Op->getType(), Name, InsertBefore);
 }
 
 
@@ -111,15 +132,12 @@ bool BinaryOperator::swapOperands() {
 //                             SetCondInst Class
 //===----------------------------------------------------------------------===//
 
-SetCondInst::SetCondInst(BinaryOps opType, Value *S1, Value *S2, 
-                         const std::string &Name) 
-  : BinaryOperator(opType, S1, S2, Name) {
+SetCondInst::SetCondInst(BinaryOps Opcode, Value *S1, Value *S2, 
+                         const std::string &Name, Instruction *InsertBefore)
+  : BinaryOperator(Opcode, S1, S2, Type::BoolTy, Name, InsertBefore) {
 
-  OpType = opType;
-  setType(Type::BoolTy);   // setcc instructions always return bool type.
-
-  // Make sure it's a valid type...
-  assert(getOpcodeName() != 0);
+  // Make sure it's a valid type... getInverseCondition will assert out if not.
+  assert(getInverseCondition(Opcode));
 }
 
 // getInverseCondition - Return the inverse of the current condition opcode.

@@ -9,8 +9,9 @@
 #include "llvm/BasicBlock.h"
 #include "llvm/Type.h"
 
-BranchInst::BranchInst(BasicBlock *True, BasicBlock *False, Value *Cond) 
-  : TerminatorInst(Instruction::Br) {
+BranchInst::BranchInst(BasicBlock *True, BasicBlock *False, Value *Cond,
+                       Instruction *InsertBefore) 
+  : TerminatorInst(Instruction::Br, InsertBefore) {
   assert(True != 0 && "True branch destination may not be null!!!");
   Operands.reserve(False ? 3 : 1);
   Operands.push_back(Use(True, this));
