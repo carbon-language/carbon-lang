@@ -12,7 +12,7 @@
 /// MVT namespace - This namespace defines the ValueType enum, which contains
 /// the various low-level value types.
 ///
-namespace MVT {  // MRF = Machine Register Flags
+namespace MVT {  // MVT = Machine Value Types
   enum ValueType {
     Other          =   0 << 0,   // This is a non-standard value
     i1             =   1 << 0,   // This is a 1 bit integer value
