@@ -52,6 +52,9 @@ public:
     assert(0 && "ReturnInst has no successors!");
     abort();
   }
+  virtual void setSuccessor(unsigned idx, BasicBlock *NewSucc) {
+    assert(0 && "ReturnInst has no successors!");
+  }
   virtual unsigned getNumSuccessors() const { return 0; }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
@@ -105,6 +108,11 @@ public:
     return (BasicBlock*)((const BranchInst *)this)->getSuccessor(idx);
   }
 
+  virtual void setSuccessor(unsigned idx, BasicBlock *NewSucc) {
+    assert(idx < getNumSuccessors() && "Successor # out of range for Branch!");
+    Operands[idx] = (Value*)NewSucc;
+  }
+
   virtual unsigned getNumSuccessors() const { return 1+isConditional(); }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
@@ -154,6 +162,11 @@ public:
   inline BasicBlock *getSuccessor(unsigned idx) {
     assert(idx < getNumSuccessors() &&"Successor idx out of range for switch!");
     return cast<BasicBlock>(Operands[idx*2+1].get());
+  }
+
+  virtual void setSuccessor(unsigned idx, BasicBlock *NewSucc) {
+    assert(idx < getNumSuccessors() && "Successor # out of range for switch!");
+    Operands[idx*2+1] = (Value*)NewSucc;
   }
 
   // getSuccessorValue - Return the value associated with the specified
@@ -229,6 +242,11 @@ public:
   inline BasicBlock *getSuccessor(unsigned i) {
     assert(i < 2 && "Successor # out of range for invoke!");
     return i == 0 ? getNormalDest() : getExceptionalDest();
+  }
+
+  virtual void setSuccessor(unsigned idx, BasicBlock *NewSucc) {
+    assert(idx < 2 && "Successor # out of range for invoke!");
+    Operands[idx+1] = (Value*)NewSucc;
   }
 
   virtual unsigned getNumSuccessors() const { return 2; }
