@@ -125,7 +125,7 @@ AlphaTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG)
   
   //  assert(0 && "TODO");
   MachineFunction &MF = DAG.getMachineFunction();
-  MachineFrameInfo *MFI = MF.getFrameInfo();
+  MachineFrameInfo*MFI = MF.getFrameInfo();
 
   GP = MF.getSSARegMap()->createVirtualRegister(getRegClassFor(MVT::i64));
   MachineBasicBlock& BB = MF.front();
@@ -442,6 +442,11 @@ unsigned ISel::SelectExprFP(SDOperand N, unsigned Result)
         Opc = GetSymVersion(Opc);
         BuildMI(BB, Opc, 1, Result).addConstantPoolIndex(CP->getIndex());
       }
+      else if(Address.getOpcode() == ISD::FrameIndex)
+        {
+          Tmp1 = cast<FrameIndexSDNode>(Address)->getIndex();
+          BuildMI(BB, Opc, 2, Result).addFrameIndex(Tmp1).addReg(Alpha::F31);
+        }
       else
         {
           long offset;
@@ -504,6 +509,11 @@ unsigned ISel::SelectExprFP(SDOperand N, unsigned Result)
           AlphaLowering.restoreGP(BB);
           BuildMI(BB, Alpha::LDS_SYM, 1, Tmp2).addConstantPoolIndex(CP->getIndex());
           BuildMI(BB, Alpha::CVTST, 1, Result).addReg(Tmp2);
+        }
+      else if(Address.getOpcode() == ISD::FrameIndex)
+        {
+          Tmp1 = cast<FrameIndexSDNode>(Address)->getIndex();
+          BuildMI(BB, Opc, 2, Result).addFrameIndex(Tmp1).addReg(Alpha::F31);
         }
       else
         {
@@ -636,6 +646,11 @@ unsigned ISel::SelectExpr(SDOperand N) {
           Opc = GetSymVersion(Opc);
           BuildMI(BB, Opc, 1, Result).addConstantPoolIndex(CP->getIndex());
         }
+      else if(Address.getOpcode() == ISD::FrameIndex)
+        {
+          Tmp1 = cast<FrameIndexSDNode>(Address)->getIndex();
+          BuildMI(BB, Opc, 2, Result).addFrameIndex(Tmp1).addReg(Alpha::F31);
+        }
       else
         {
           long offset;
@@ -677,6 +692,11 @@ unsigned ISel::SelectExpr(SDOperand N) {
         Opc = GetSymVersion(Opc);
          BuildMI(BB, Opc, 1, Result).addConstantPoolIndex(CP->getIndex());
       }
+      else if(Address.getOpcode() == ISD::FrameIndex)
+        {
+          Tmp1 = cast<FrameIndexSDNode>(Address)->getIndex();
+          BuildMI(BB, Opc, 2, Result).addFrameIndex(Tmp1).addReg(Alpha::F31);
+        }
       else
         {
           long offset;
@@ -719,6 +739,11 @@ unsigned ISel::SelectExpr(SDOperand N) {
         Opc = GetSymVersion(Opc);
         BuildMI(BB, Opc, 1, Result).addConstantPoolIndex(CP->getIndex());
       }
+      else if(Address.getOpcode() == ISD::FrameIndex)
+        {
+          Tmp1 = cast<FrameIndexSDNode>(Address)->getIndex();
+          BuildMI(BB, Opc, 2, Result).addFrameIndex(Tmp1).addReg(Alpha::F31);
+        }
       else
         {
           long offset;
@@ -1247,6 +1272,11 @@ unsigned ISel::SelectExpr(SDOperand N) {
         AlphaLowering.restoreGP(BB);
         BuildMI(BB, Alpha::LDQ_SYM, 1, Result).addConstantPoolIndex(CP->getIndex());
       }
+      else if(Address.getOpcode() == ISD::FrameIndex)
+        {
+          Tmp1 = cast<FrameIndexSDNode>(Address)->getIndex();
+          BuildMI(BB, Alpha::LDQ, 2, Result).addFrameIndex(Tmp1).addReg(Alpha::F31);
+        }
       else
         {
           long offset;
@@ -1374,6 +1404,11 @@ void ISel::Select(SDOperand N) {
           Opc = GetSymVersion(Opc);
           BuildMI(BB, Opc, 2).addReg(Tmp1).addGlobalAddress(cast<GlobalAddressSDNode>(Address)->getGlobal());
         }
+      else if(Address.getOpcode() == ISD::FrameIndex)
+        {
+          Tmp1 = cast<FrameIndexSDNode>(Address)->getIndex();
+          BuildMI(BB, Opc, 3).addReg(Tmp1).addFrameIndex(Tmp1).addReg(Alpha::F31);
+        }
       else
         {
           long offset;
@@ -1418,6 +1453,11 @@ void ISel::Select(SDOperand N) {
           AlphaLowering.restoreGP(BB);
           Opc = GetSymVersion(Opc);
           BuildMI(BB, Opc, 2).addReg(Tmp1).addGlobalAddress(cast<GlobalAddressSDNode>(Address)->getGlobal());
+        }
+      else if(Address.getOpcode() == ISD::FrameIndex)
+        {
+          Tmp1 = cast<FrameIndexSDNode>(Address)->getIndex();
+          BuildMI(BB, Opc, 3).addReg(Tmp1).addFrameIndex(Tmp1).addReg(Alpha::F31);
         }
       else
         {
