@@ -635,8 +635,7 @@ SCEVHandle SCEVAddExpr::get(std::vector<SCEVHandle> &Ops) {
     for (unsigned MulOp = 0, e = Mul->getNumOperands(); MulOp != e; ++MulOp) {
       SCEV *MulOpSCEV = Mul->getOperand(MulOp);
       for (unsigned AddOp = 0, e = Ops.size(); AddOp != e; ++AddOp)
-        if (MulOpSCEV == Ops[AddOp] &&
-            (Mul->getNumOperands() != 2 || !isa<SCEVConstant>(MulOpSCEV))) {
+        if (MulOpSCEV == Ops[AddOp] && !isa<SCEVConstant>(MulOpSCEV)) {
           // Fold W + X + (X * Y * Z)  -->  W + (X * ((Y*Z)+1))
           SCEVHandle InnerMul = Mul->getOperand(MulOp == 0);
           if (Mul->getNumOperands() != 2) {
@@ -937,7 +936,8 @@ SCEVHandle SCEVMulExpr::get(std::vector<SCEVHandle> &Ops) {
   std::vector<SCEV*> SCEVOps(Ops.begin(), Ops.end());
   SCEVCommutativeExpr *&Result = SCEVCommExprs[std::make_pair(scMulExpr,
                                                               SCEVOps)];
-  if (Result == 0) Result = new SCEVMulExpr(Ops);
+  if (Result == 0)
+    Result = new SCEVMulExpr(Ops);
   return Result;
 }
 
