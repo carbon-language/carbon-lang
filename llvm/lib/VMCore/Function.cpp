@@ -203,9 +203,6 @@ unsigned Function::getIntrinsicID() const {
     if (getName() == "llvm.sigsetjmp")  return LLVMIntrinsic::sigsetjmp;
     if (getName() == "llvm.siglongjmp") return LLVMIntrinsic::siglongjmp;
     break;
-  case 'u':
-    if (getName() == "llvm.unwind")     return LLVMIntrinsic::unwind;
-    break;
   case 'v':
     if (getName() == "llvm.va_copy")  return LLVMIntrinsic::va_copy;
     if (getName() == "llvm.va_end")   return LLVMIntrinsic::va_end;

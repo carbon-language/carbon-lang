@@ -177,38 +177,13 @@ bool InlineFunction(CallSite CS) {
 
   // If we just inlined a call due to an invoke instruction, scan the inlined
   // function checking for function calls that should now be made into invoke
-  // instructions, and for llvm.exc.rethrow()'s which should be turned into
-  // branches.
+  // instructions, and for unwind's which should be turned into branches.
   if (InvokeDest)
-    for (Function::iterator BB = LastBlock, E = Caller->end(); BB != E; ++BB)
+    for (Function::iterator BB = LastBlock, E = Caller->end(); BB != E; ++BB) {
       for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ) {
         // We only need to check for function calls: inlined invoke instructions
         // require no special handling...
         if (CallInst *CI = dyn_cast<CallInst>(I)) {
-          if (Function *F = CI->getCalledFunction())
-            if (unsigned ID = F->getIntrinsicID())
-              if (ID == LLVMIntrinsic::unwind) {
-                // llvm.unwind requires special handling when it gets inlined
-                // into an invoke site.  Once this happens, we know that the
-                // unwind would cause a control transfer to the invoke exception
-                // destination, so we can transform it into a direct branch to
-                // the exception destination.
-                BranchInst *BI = new BranchInst(InvokeDest, CI);
-
-                // Note that since any instructions after the rethrow/branch are
-                // dead, we must delete them now (otherwise the terminator we
-                // just inserted wouldn't be at the end of the basic block!)
-                BasicBlock *CurBB = BB;
-                while (&CurBB->back() != BI) {
-                  Instruction *I = &CurBB->back();
-                  if (!I->use_empty())
-                    I->replaceAllUsesWith(Constant::getNullValue(I->getType()));
-                  CurBB->getInstList().pop_back();
-                }
-
-                break;  // Done with this basic block!
-              }
-          
           // Convert this function call into an invoke instruction...
 
           // First, split the basic block...
@@ -230,6 +205,18 @@ bool InlineFunction(CallSite CS) {
           ++I;
         }
       }
+
+      if (UnwindInst *UI = dyn_cast<UnwindInst>(BB->getTerminator())) {
+        // An UnwindInst requires special handling when it gets inlined into an
+        // invoke site.  Once this happens, we know that the unwind would cause
+        // a control transfer to the invoke exception destination, so we can
+        // transform it into a direct branch to the exception destination.
+        BranchInst *BI = new BranchInst(InvokeDest, UI);
+
+        // Delete the unwind instruction!
+        UI->getParent()->getInstList().pop_back();
+      }
+    }
 
   // Now that the function is correct, make it a little bit nicer.  In
   // particular, move the basic blocks inserted from the end of the function

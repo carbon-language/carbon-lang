@@ -38,7 +38,7 @@ bool PruneEH::runOnSCC(const std::vector<CallGraphNode *> &SCC) {
 
   // First, check to see if any callees might throw or if there are any external
   // functions in this SCC: if so, we cannot prune any functions in this SCC.
-  // If this SCC includes the llvm.unwind intrinsic, we KNOW it throws, so
+  // If this SCC includes the unwind instruction, we KNOW it throws, so
   // obviously the SCC might throw.
   //
   bool SCCMightThrow = false;
@@ -48,10 +48,11 @@ bool PruneEH::runOnSCC(const std::vector<CallGraphNode *> &SCC) {
         std::find(SCC.begin(), SCC.end(), SCC[i]) == SCC.end()) {
       SCCMightThrow = true; break;
     } else if (Function *F = SCC[i]->getFunction())
-      if (F->isExternal() ||                             // Is external function
-          F->getIntrinsicID() == LLVMIntrinsic::unwind) {// Is unwind function!
-        SCCMightThrow = true; break;
-      }
+      if (!F->isExternal())
+        for (Function::iterator I = F->begin(), E = F->end(); I != E; ++I)
+          if (isa<UnwindInst>(I->getTerminator())) {  // Uses unwind!
+            SCCMightThrow = true; break;
+          }
 
   bool MadeChange = false;
 

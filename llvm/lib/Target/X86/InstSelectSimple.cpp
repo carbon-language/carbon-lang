@@ -1044,7 +1044,6 @@ void ISel::visitIntrinsicCall(LLVMIntrinsic::ID ID, CallInst &CI) {
     addDirectMem(BuildMI(BB, X86::MOVrm32, 5), TmpReg2).addReg(TmpReg1);
     return;
 
-  case LLVMIntrinsic::unwind:     // llvm.unwind is not supported yet!
   case LLVMIntrinsic::longjmp:
   case LLVMIntrinsic::siglongjmp:
     BuildMI(BB, X86::CALLpcrel32, 1).addExternalSymbol("abort", true); 

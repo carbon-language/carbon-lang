@@ -1153,19 +1153,6 @@ void CWriter::visitCallInst(CallInst &I) {
         Out << ")";
         return;
 
-      case LLVMIntrinsic::unwind:
-        // The unwind intrinsic calls a control flow transfer out of the current
-        // function, unwinding the stack until a caller who used the invoke
-        // instruction is found.  In this context, we code generated the invoke
-        // instruction to add an entry to the top of the jmpbuf_list.  Thus,
-        // here we just have to longjmp to the specified handler.
-        Out << "if (__llvm_jmpbuf_list == 0) {  /* llvm.unwind */\n"
-            << "    printf(\"throw found with no handler!\\n\"); abort();\n"
-            << "  }\n"
-            << "  longjmp(__llvm_jmpbuf_list->buf, 1)";
-        return;
-
-        
       case LLVMIntrinsic::setjmp:
       case LLVMIntrinsic::sigsetjmp:
         // This instrinsic should never exist in the program, but until we get
