@@ -40,7 +40,7 @@ enum Opts {
   dce, die, constprop, inlining, constmerge, strip, mstrip, mergereturn,
 
   // Miscellaneous Transformations
-  raiseallocs, cleangcc, lowerrefs,
+  raiseallocs, funcresolve, cleangcc, lowerrefs,
 
   // Printing and verifying...
   print, verify,
@@ -91,11 +91,13 @@ struct {
 
   { raiseallocs, createRaiseAllocationsPass },
   { cleangcc   , createCleanupGCCOutputPass },
+  { funcresolve, createFunctionResolvingPass },
   { globaldce  , createGlobalDCEPass },
   { swapstructs, createSwapElementsPass },
   { sortstructs, createSortElementsPass },
   { poolalloc  , createPoolAllocatePass },
 };
+
 
 // Command line option handling code...
 //
@@ -128,6 +130,7 @@ cl::EnumList<enum Opts> OptimizationList(cl::NoFlags,
 
   clEnumVal(raiseallocs, "Raise allocations from calls to instructions"),
   clEnumVal(cleangcc   , "Cleanup GCC Output"),
+  clEnumVal(funcresolve, "Resolve calls to foo(...) to foo(<concrete types>)"),
   clEnumVal(raise      , "Raise to Higher Level"),
   clEnumVal(trace      , "Insert BB & Method trace code"),
   clEnumVal(tracem     , "Insert Method trace code only"),
