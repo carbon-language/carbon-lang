@@ -340,8 +340,8 @@ $CVSOPT = "";
 $CVSOPT = "-z3" if $CVSRootDir =~ /^:ext:/; # Use compression if going over ssh.
 if (!$NOCHECKOUT) {
   if ( $VERBOSE ) { print "CHECKOUT STAGE\n"; }
-  system "(time -p ($NICE cvs $CVSOPT -d $CVSRootDir co -APR llvm; cd llvm/projects ; " .
-     "$NICE cvs $CVSOPT -d $CVSRootDir co -APR llvm-test ) ) > $CVSLog 2>&1";
+  system "( time -p $NICE cvs $CVSOPT -d $CVSRootDir co -APR llvm; cd llvm/projects ; " .
+     "$NICE cvs $CVSOPT -d $CVSRootDir co -APR llvm-test ) > $CVSLog 2>&1";
   ChangeDir( $BuildDir , "CVS Checkout directory") ;
 }
 
