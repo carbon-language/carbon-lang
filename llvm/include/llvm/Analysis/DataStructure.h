@@ -274,11 +274,20 @@ public:
   //
   void markIncompleteNodes();
 
-  // removeDeadNodes - After the graph has been constructed, this method removes
-  // all unreachable nodes that are created because they got merged with other
-  // nodes in the graph.
+  // removeTriviallyDeadNodes - After the graph has been constructed, this
+  // method removes all unreachable nodes that are created because they got
+  // merged with other nodes in the graph.
+  //
+  void removeTriviallyDeadNodes();
+
+  // removeDeadNodes - Use a more powerful reachability analysis to eliminate
+  // subgraphs that are unreachable.  This often occurs because the data
+  // structure doesn't "escape" into it's caller, and thus should be eliminated
+  // from the caller's graph entirely.  This is only appropriate to use when
+  // inlining graphs.
   //
   void removeDeadNodes();
+
 
   // AddCaller - add a known caller node into the graph and mark it pending.
   // getCallers - get a vector of the functions that call this one
