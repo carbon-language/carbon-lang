@@ -54,7 +54,7 @@ void MethodLiveVarInfo::constructBBs()
 
     const BasicBlock *BB = *BBI;        // get the current BB 
 
-    if(DEBUG_LV) { cerr << " For BB "; printValue(BB); cerr << ":" << endl; }
+    if(DEBUG_LV) { cout << " For BB "; printValue(BB); cout << ":" << endl; }
 
                                         // create a new BBLiveVar
     BBLiveVar * LVBB = new BBLiveVar( BB, POId );  
@@ -92,7 +92,7 @@ bool MethodLiveVarInfo::doSingleBackwardPass()
   bool ResultFlow, NeedAnotherIteration = false;
 
   if(DEBUG_LV) 
-    cerr << endl <<  " After Backward Pass ..." << endl;
+    cout << endl <<  " After Backward Pass ..." << endl;
 
   po_iterator<const Method*> BBI = po_begin(Meth);
 
@@ -102,8 +102,8 @@ bool MethodLiveVarInfo::doSingleBackwardPass()
     BBLiveVar* LVBB = BB2BBLVMap[*BBI];
     assert( LVBB );
 
-    if(DEBUG_LV) cerr << " For BB " << (*BBI)->getName() << ":"  << endl;
-    // cerr << " (POId=" << LVBB->getPOId() << ")" << endl ;
+    if(DEBUG_LV) cout << " For BB " << (*BBI)->getName() << ":"  << endl;
+    // cout << " (POId=" << LVBB->getPOId() << ")" << endl ;
 
     ResultFlow = false;
 
@@ -133,10 +133,13 @@ void MethodLiveVarInfo::analyze()
 {
   // Don't analyze the same method twice!
   // Later, we need to add change notification here.
+
+  
   if (HasAnalyzed)
     return;
-  
-  if( DEBUG_LV) cerr << "Analysing live variables ..." << endl;
+    
+
+  if( DEBUG_LV) cout << "Analysing live variables ..." << endl;
 
   // create and initialize all the BBLiveVars of the CFG
   constructBBs();        
@@ -149,7 +152,7 @@ void MethodLiveVarInfo::analyze()
   
   HasAnalyzed  = true;                // finished analysing
 
-  if( DEBUG_LV) cerr << "Live Variable Analysis complete!" << endl;
+  if( DEBUG_LV) cout << "Live Variable Analysis complete!" << endl;
 }
 
 
