@@ -166,23 +166,8 @@ Value *SymbolTable::removeEntry(plane_iterator Plane, value_iterator Entry) {
   return Result;
 }
 
-
-// remove - Remove a type
-void SymbolTable::remove(const Type* Ty ) {
-  type_iterator TI = this->type_begin();
-  type_iterator TE = this->type_end();
-
-  // Search for the entry
-  while ( TI != TE && TI->second != Ty )
-    ++TI;
-
-  if ( TI != TE )
-    this->removeEntry( TI );
-}
-
-
 // removeEntry - Remove a type from the symbol table...
-Type* SymbolTable::removeEntry(type_iterator Entry) {
+Type* SymbolTable::remove(type_iterator Entry) {
   assert( Entry != tmap.end() && "Invalid entry to remove!");
 
   const Type* Result = Entry->second;
@@ -300,8 +285,7 @@ bool SymbolTable::strip() {
   }
 
   for (type_iterator TI = tmap.begin(); TI != tmap.end(); ) {
-    const Type* T = (TI++)->second;
-    remove(T);
+    remove(TI++);
     RemovedSymbol = true;
   }
  
