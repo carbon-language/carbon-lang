@@ -691,6 +691,9 @@ int SlotCalculator::getOrCreateSlot(const Value *V) {
   int SlotNo = getSlot(V);        // Check to see if it's already in!
   if (SlotNo != -1) return SlotNo;
 
+  if (const GlobalValue *GV = dyn_cast<GlobalValue>(V))
+    assert(GV->getParent() != 0 && "Global not embedded into a module!");
+
   if (!isa<GlobalValue>(V))  // Initializers for globals are handled explicitly
     if (const Constant *C = dyn_cast<Constant>(V)) {
       assert(CompactionNodeMap.empty() &&

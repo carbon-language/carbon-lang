@@ -295,6 +295,7 @@ void BytecodeWriter::outputConstant(const Constant *CPV) {
   if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(CPV)) {
     // FIXME: Encoding of constant exprs could be much more compact!
     assert(CE->getNumOperands() > 0 && "ConstantExpr with 0 operands");
+    assert(CE->getNumOperands() != 1 || CE->getOpcode() == Instruction::Cast);
     output_vbr(1+CE->getNumOperands());   // flags as an expr
     output_vbr(CE->getOpcode());        // flags as an expr
     
