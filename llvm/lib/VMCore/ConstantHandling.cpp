@@ -47,7 +47,7 @@ Constant *ConstantFoldInstruction(Instruction *I) {
 
   switch (I->getOpcode()) {
   case Instruction::Cast:
-    return ConstRules::get(*Op0)->castTo(Op0, I->getType());
+    return ConstRules::get(*Op0, *Op0)->castTo(Op0, I->getType());
   case Instruction::Add:     return *Op0 + *Op1;
   case Instruction::Sub:     return *Op0 - *Op1;
   case Instruction::Mul:     return *Op0 * *Op1;
@@ -107,7 +107,7 @@ Constant *ConstantFoldCastInstruction(const Constant *V, const Type *DestTy) {
       }
     }
 
-  return ConstRules::get(*V)->castTo(V, DestTy);
+  return ConstRules::get(*V, *V)->castTo(V, DestTy);
 }
 
 Constant *ConstantFoldBinaryInstruction(unsigned Opcode, const Constant *V1,
@@ -554,4 +554,9 @@ Annotation *ConstRules::find(AnnotationID AID, const Annotable *TyA, void *) {
   default:
     return new EmptyRules();
   }
+}
+
+ConstRules *ConstRules::getConstantExprRules() {
+  static EmptyRules CERules;
+  return &CERules;
 }
