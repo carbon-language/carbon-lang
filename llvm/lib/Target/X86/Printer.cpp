@@ -722,7 +722,7 @@ void Printer::printMachineInstruction(const MachineInstr *MI) {
   }
 
   case X86II::MRMSrcReg: {
-    // There is are three forms that are acceptable for MRMSrcReg instructions,
+    // There are three forms that are acceptable for MRMSrcReg instructions,
     // those with 3 and 2 operands:
     //
     // 3 Operands: in this form, the last register (the second input) is the
