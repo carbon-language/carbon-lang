@@ -191,17 +191,16 @@ def FBO  : FPBranchV8<0b1111, "fbo">;
 
 // Section B.24 - Call and Link Instruction, p. 125
 // This is the only Format 1 instruction
-def CALL : InstV8 {
-  bits<30> disp;
-  let op = 1;
-  let Inst{29-0} = disp;
-  let Name = "call";
-  let isCall = 1;
-}
-
-// Section B.25 - Jump and Link, p. 126
-let isCall = 1 in
+let Defs = [O0, O1, O2, O3, O4, O5] in
+let isCall = 1 in { 
+  def CALL : InstV8 {
+    bits<30> disp;
+    let op = 1;
+    let Inst{29-0} = disp;
+    let Name = "call";
+  }
   def JMPLrr : F3_1<2, 0b111000, "jmpl">;              // jmpl [rs1+rs2], rd
+}
 
 // Section B.29 - Write State Register Instructions
 def WRrr : F3_1<2, 0b110000, "wr">;                    // wr rs1, rs2, rd
