@@ -193,7 +193,10 @@ public: // accessor functions to query chosen schedule
 					 unsigned int slotNum,
 					 cycles_t cycle) {
     InstrGroup* igroup = this->getIGroup(cycle);
-    assert((*igroup)[slotNum] == NULL &&  "Slot already filled?");
+    if (!((*igroup)[slotNum] == NULL)) {
+      std::cerr << "Slot already filled?\n";
+      abort();
+    }
     igroup->addInstr(node, slotNum);
     assert(node->getNodeId() < startTime.size());
     startTime[node->getNodeId()] = cycle;
@@ -626,7 +629,6 @@ RecordSchedule(MachineBasicBlock &MBB, const SchedulingManager& S)
 {
   const TargetInstrInfo& mii = S.schedInfo.getInstrInfo();
   
-#ifndef NDEBUG
   // Lets make sure we didn't lose any instructions, except possibly
   // some NOPs from delay slots.  Also, PHIs are not included in the schedule.
   unsigned numInstr = 0;
@@ -636,7 +638,6 @@ RecordSchedule(MachineBasicBlock &MBB, const SchedulingManager& S)
       ++numInstr;
   assert(S.isched.getNumInstructions() >= numInstr &&
 	 "Lost some non-NOP instructions during scheduling!");
-#endif
   
   if (S.isched.getNumInstructions() == 0)
     return;				// empty basic block!
@@ -1174,8 +1175,10 @@ static void ReplaceNopsWithUsefulInstr(SchedulingManager& S,
   MachineBasicBlock& MBB = node->getMachineBasicBlock();
   MachineBasicBlock::iterator MBBI = MBB.begin();
   std::advance(MBBI, firstDelaySlotIdx - 1);
-  assert(&*MBBI++ == brInstr &&
-         "Incorrect instr. index in basic block for brInstr");
+  if (!(&*MBBI++ == brInstr)) {
+    std::cerr << "Incorrect instr. index in basic block for brInstr";
+    abort();
+  }
   
   // First find all useful instructions already in the delay slots
   // and USE THEM.  We'll throw away the unused alternatives below
