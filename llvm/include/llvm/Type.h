@@ -54,13 +54,12 @@ public:
 
     TypeTyID,                           // 12   : Type definitions
     LabelTyID     ,                     // 13   : Labels... 
-    /*LockTyID , */                     // 14   : mutex - TODO
 
     // Derived types... see DerivedTypes.h file...
     // Make sure FirstDerivedTyID stays up to date!!!
-    MethodTyID    , ModuleTyID,         // Methods... Modules...
+    MethodTyID    , StructTyID,         // Methods... Structs...
     ArrayTyID     , PointerTyID,        // Array... pointer...
-    StructTyID    , OpaqueTyID,         // Structure... Opaque type instances...
+    OpaqueTyID,                         // Opaque type instances...
     //PackedTyID  ,                     // SIMD 'packed' format... TODO
     //...
 
@@ -172,23 +171,21 @@ public:
   //===--------------------------------------------------------------------===//
   // These are the builtin types that are always available...
   //
-  static const Type *VoidTy , *BoolTy;
-  static const Type *SByteTy, *UByteTy,
-                    *ShortTy, *UShortTy,
-                    *IntTy  , *UIntTy, 
-                    *LongTy , *ULongTy;
-  static const Type *FloatTy, *DoubleTy;
+  static Type *VoidTy , *BoolTy;
+  static Type *SByteTy, *UByteTy,
+              *ShortTy, *UShortTy,
+              *IntTy  , *UIntTy, 
+              *LongTy , *ULongTy;
+  static Type *FloatTy, *DoubleTy;
 
-  static const Type *TypeTy , *LabelTy; //, *LockTy;
+  static Type *TypeTy , *LabelTy;
 
   // Here are some useful little methods to query what type derived types are
   // Note that all other types can just compare to see if this == Type::xxxTy;
   //
-  inline bool isDerivedType()   const { return ID >= FirstDerivedTyID; }
   inline bool isPrimitiveType() const { return ID < FirstDerivedTyID;  }
 
-  inline bool isLabelType()     const { return this == LabelTy; }
-
+  inline bool isDerivedType()   const { return ID >= FirstDerivedTyID; }
   inline const DerivedType *castDerivedType() const {
     return isDerivedType() ? (const DerivedType*)this : 0;
   }
@@ -197,22 +194,38 @@ public:
     return (const DerivedType*)this;
   }
 
-  inline const MethodType *isMethodType() const {
-    return ID == MethodTyID ? (const MethodType*)this : 0;
+  // Methods for determining the subtype of this Type.  The cast*() methods are
+  // equilivent to using dynamic_cast<>... if the cast is successful, this is
+  // returned, otherwise you get a null pointer, allowing expressions like this:
+  //
+  // if (MethodType *MTy = Ty->dyncastMethodType()) { ... }
+  //
+  // This section also defines a family of isArrayType(), isLabelType(), 
+  // etc functions...
+  //
+  // The family of functions Ty->cast<type>() is used in the same way as the
+  // Ty->dyncast<type>() instructions, but they assert the expected type instead
+  // of checking it at runtime.
+  //
+#define HANDLE_PRIM_TYPE(NAME, SIZE)                                      \
+  inline bool is##NAME##Type() const { return ID == NAME##TyID; }
+#define HANDLE_DERV_TYPE(NAME, CLASS)                                     \
+  inline bool is##NAME##Type() const { return ID == NAME##TyID; }         \
+  inline const CLASS *dyncast##NAME##Type() const { /*const version */    \
+    return is##NAME##Type() ? (const CLASS*)this : 0;                     \
+  }                                                                       \
+  inline CLASS *dyncast##NAME##Type() {         /* nonconst version */    \
+    return is##NAME##Type() ? (CLASS*)this : 0;                           \
+  }                                                                       \
+  inline const CLASS *cast##NAME##Type() const {    /*const version */    \
+    assert(is##NAME##Type() && "Expected TypeTy: " #NAME);                \
+    return (const CLASS*)this;                                            \
+  }                                                                       \
+  inline CLASS *cast##NAME##Type() {            /* nonconst version */    \
+    assert(is##NAME##Type() && "Expected TypeTy: " #NAME);                \
+    return (CLASS*)this;                                                  \
   }
-  inline bool isModuleType()    const { return ID == ModuleTyID;     }
-  inline const ArrayType *isArrayType() const { 
-    return ID == ArrayTyID ? (const ArrayType*)this : 0;
-  }
-  inline const PointerType *isPointerType() const { 
-    return ID == PointerTyID ? (const PointerType*)this : 0;
-  }
-  inline const StructType *isStructType() const {
-    return ID == StructTyID ? (const StructType*)this : 0;
-  }
-  inline const OpaqueType *isOpaqueType() const {
-    return ID == OpaqueTyID ? (const OpaqueType*)this : 0;
-  }
+#include "llvm/Type.def"
 
 private:
   class TypeIterator : public std::bidirectional_iterator<const Type,

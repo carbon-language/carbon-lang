@@ -51,7 +51,9 @@ public:
   virtual void setName(const string &name, SymbolTable *ST = 0);
 
   const Type *getReturnType() const;
-  const MethodType *getMethodType() const;
+  const MethodType *getType() const {
+    return (const MethodType*)Value::getType(); 
+  }
 
   // Is the body of this method unknown? (the basic block list is empty if so)
   // this is true for external methods, defined as forward "declare"ations
