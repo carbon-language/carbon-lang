@@ -33,6 +33,7 @@
 
 class TargetData;
 class TargetRegisterClass;
+class Type;
 class MachineFunction;
 #include <vector>
 
