@@ -41,34 +41,34 @@ namespace {
          cl::desc("Emit X86 assembly code suitable for consumption by cygwin"));
 
   struct GasBugWorkaroundEmitter : public MachineCodeEmitter {
-      GasBugWorkaroundEmitter(std::ostream& o) 
-          : O(o), OldFlags(O.flags()), firstByte(true) {
-          O << std::hex;
-      }
+    GasBugWorkaroundEmitter(std::ostream& o) 
+      : O(o), OldFlags(O.flags()), firstByte(true) {
+      O << std::hex;
+    }
 
-      ~GasBugWorkaroundEmitter() {
-          O.flags(OldFlags);
-          O << "\t# ";
-      }
+    ~GasBugWorkaroundEmitter() {
+      O.flags(OldFlags);
+      O << "\t# ";
+    }
 
-      virtual void emitByte(unsigned char B) {
-          if (!firstByte) O << "\n\t";
-          firstByte = false;
-          O << ".byte 0x" << (unsigned) B;
-      }
+    virtual void emitByte(unsigned char B) {
+      if (!firstByte) O << "\n\t";
+      firstByte = false;
+      O << ".byte 0x" << (unsigned) B;
+    }
 
-      // These should never be called
-      virtual void emitWord(unsigned W) { assert(0); }
-      virtual uint64_t getGlobalValueAddress(GlobalValue *V) { abort(); }
-      virtual uint64_t getGlobalValueAddress(const std::string &Name) { abort(); }
-      virtual uint64_t getConstantPoolEntryAddress(unsigned Index) { abort(); }
-      virtual uint64_t getCurrentPCValue() { abort(); }
-      virtual uint64_t forceCompilationOf(Function *F) { abort(); }
+    // These should never be called
+    virtual void emitWord(unsigned W) { assert(0); }
+    virtual uint64_t getGlobalValueAddress(GlobalValue *V) { abort(); }
+    virtual uint64_t getGlobalValueAddress(const std::string &Name) { abort(); }
+    virtual uint64_t getConstantPoolEntryAddress(unsigned Index) { abort(); }
+    virtual uint64_t getCurrentPCValue() { abort(); }
+    virtual uint64_t forceCompilationOf(Function *F) { abort(); }
 
   private:
-      std::ostream& O;
-      std::ios::fmtflags OldFlags;
-      bool firstByte;
+    std::ostream& O;
+    std::ios::fmtflags OldFlags;
+    bool firstByte;
   };
 
   struct Printer : public MachineFunctionPass {
@@ -920,8 +920,8 @@ void Printer::printMachineInstruction(const MachineInstr *MI) {
         MI->getOpcode() == X86::FLD80m ||
         MI->getOpcode() == X86::FILD64m ||
         MI->getOpcode() == X86::FISTP64m) {
-        GasBugWorkaroundEmitter gwe(O);
-        X86::emitInstruction(gwe, (X86InstrInfo&)*TM.getInstrInfo(), *MI);
+      GasBugWorkaroundEmitter gwe(O);
+      X86::emitInstruction(gwe, (X86InstrInfo&)*TM.getInstrInfo(), *MI);
     }
 
     O << TII.getName(MI->getOpcode()) << " ";
