@@ -70,8 +70,10 @@ void StatisticBase::destroy() const {
     // Figure out how long the biggest Value and Name fields are...
     unsigned MaxNameLen = 0, MaxValLen = 0;
     for (unsigned i = 0, e = AccumStats->size(); i != e; ++i) {
-      MaxValLen = std::max(MaxValLen, (*AccumStats)[i].Value.length());
-      MaxNameLen = std::max(MaxNameLen, std::strlen((*AccumStats)[i].Name));
+      MaxValLen = std::max(MaxValLen, 
+                           (unsigned)(*AccumStats)[i].Value.length());
+      MaxNameLen = std::max(MaxNameLen, 
+                            (unsigned)std::strlen((*AccumStats)[i].Name));
     }
 
     // Sort the fields...
