@@ -1,0 +1,26 @@
+; RUN: llvm-as < %s | opt -lowerconstantexprs -disable-output
+
+%.str_1 = internal constant [16 x sbyte] c"%d %d %d %d %d\0A\00"
+
+%XA = external global int
+%XB = external global int
+
+implementation   ; Functions:
+
+declare int %printf(sbyte*, ...)
+
+void %test(int %A, int %B, int %C, int %D) {
+entry:
+        %t1 = setlt int %A, 0
+	br bool %t1, label %less, label %not_less
+less:    
+        br label %not_less
+not_less:	
+	%t2 = phi int [ sub ( int cast (int* %XA to int), 
+			       int cast (int* %XB to int) ), %less], 
+                      [ sub ( int cast (int* %XA to int), 
+			       int cast (int* %XB to int) ), %entry]
+	%tmp.39 = call int (sbyte*, ...)* %printf( sbyte* getelementptr ([16 x sbyte]*  %.str_1, long 0, long 0) )		; <int> [#uses=0]
+	ret void
+}
+
