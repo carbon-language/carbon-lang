@@ -34,9 +34,9 @@ namespace {
   /// getFunctionArg - Return a pointer to F's ARGNOth argument.
   ///
   Argument *getFunctionArg(Function *F, unsigned argno) {
-    Function::aiterator ai = F->abegin();
-    while (argno) { ++ai; --argno; }
-    return &*ai;
+    Function::aiterator I = F->abegin();
+    std::advance(I, argno);
+    return I;
   }
 
   struct CodeExtractor {
@@ -359,30 +359,26 @@ CodeExtractor::emitCallAndSwitchStatement(Function *newFunction,
 {
   // Emit a call to the new function, passing allocated memory for outputs and
   // just plain inputs for non-scalars
-  std::vector<Value*> params;
-  BasicBlock *codeReplacerTail = new BasicBlock("codeReplTail",
-                                                codeReplacer->getParent());
-  for (Values::const_iterator i = inputs.begin(),
-         e = inputs.end(); i != e; ++i)
-    params.push_back(*i);
-  for (Values::const_iterator i = outputs.begin(), 
-         e = outputs.end(); i != e; ++i) {
+  std::vector<Value*> params(inputs);
+
+  for (Values::const_iterator i = outputs.begin(), e = outputs.end(); i != e;
+       ++i) {
+    Value *Output = *i;
     // Create allocas for scalar outputs
-    if ((*i)->getType()->isPrimitiveType()) {
-      Constant *one = ConstantUInt::get(Type::UIntTy, 1);
-      AllocaInst *alloca = new AllocaInst((*i)->getType(), one);
-      codeReplacer->getInstList().push_back(alloca);
+    if (Output->getType()->isPrimitiveType()) {
+      AllocaInst *alloca =
+        new AllocaInst((*i)->getType(), 0, Output->getName()+".loc",
+                       codeReplacer->getParent()->begin()->begin());
       params.push_back(alloca);
 
-      LoadInst *load = new LoadInst(alloca, "alloca");
-      codeReplacerTail->getInstList().push_back(load);
+      LoadInst *load = new LoadInst(alloca, Output->getName()+".reload");
+      codeReplacer->getInstList().push_back(load);
       std::vector<User*> Users((*i)->use_begin(), (*i)->use_end());
       for (std::vector<User*>::iterator use = Users.begin(), useE =Users.end();
            use != useE; ++use) {
         if (Instruction* inst = dyn_cast<Instruction>(*use)) {
-          if (!BlocksToExtract.count(inst->getParent())) {
+          if (!BlocksToExtract.count(inst->getParent()))
             inst->replaceUsesOfWith(*i, load);
-          }
         }
       }
     } else {
@@ -391,18 +387,10 @@ CodeExtractor::emitCallAndSwitchStatement(Function *newFunction,
   }
 
   CallInst *call = new CallInst(newFunction, params, "targetBlock");
-  codeReplacer->getInstList().push_back(call);
-  codeReplacer->getInstList().push_back(new BranchInst(codeReplacerTail));
+  codeReplacer->getInstList().push_front(call);
 
   // Now we can emit a switch statement using the call as a value.
-  // FIXME: perhaps instead of default being self BB, it should be a second
-  // dummy block which asserts that the value is not within the range...?
-  //BasicBlock *defaultBlock = new BasicBlock("defaultBlock", oldF);
-  //insert abort() ?
-  //defaultBlock->getInstList().push_back(new BranchInst(codeReplacer));
-
-  SwitchInst *switchInst = new SwitchInst(call, codeReplacerTail,
-                                          codeReplacerTail);
+  SwitchInst *TheSwitch = new SwitchInst(call, codeReplacer, codeReplacer);
 
   // Since there may be multiple exits from the original region, make the new
   // function return an unsigned, switch on that number.  This loop iterates
@@ -430,7 +418,7 @@ CodeExtractor::emitCallAndSwitchStatement(Function *newFunction,
           ReturnInst *NTRet = new ReturnInst(brVal, NewTarget);
 
           // Update the switch instruction.
-          switchInst->addCase(brVal, OldTarget);
+          TheSwitch->addCase(brVal, OldTarget);
 
           // Restore values just before we exit
           // FIXME: Use a GetElementPtr to bunch the outputs in a struct
@@ -441,6 +429,14 @@ CodeExtractor::emitCallAndSwitchStatement(Function *newFunction,
         // rewrite the original branch instruction with this new target
         TI->setSuccessor(i, NewTarget);
       }
+  }
+
+  // Now that we've done the deed, make the default destination of the switch
+  // instruction be one of the exit blocks of the region.
+  if (TheSwitch->getNumSuccessors() > 1) {
+    // FIXME: this is broken w.r.t. PHI nodes, but the old code was more broken.
+    // This edge is not traversable.
+    TheSwitch->setSuccessor(0, TheSwitch->getSuccessor(1));
   }
 }
 
