@@ -202,28 +202,8 @@ bool BytecodeParser::parseConstantValue(const uchar *&Buf, const uchar *EndBuf,
                 << ArgValSlot << "\n");
       
       // Get the arg value from its slot if it exists, otherwise a placeholder
-      Value *Val = getValue(ArgTy, ArgValSlot, false);
-      Constant *C;
-      if (Val) {
-        if (!(C = dyn_cast<Constant>(Val))) return true;
-        BCR_TRACE(5, "Constant Found in ValueTable!\n");
-      } else {         // Nope... find or create a forward ref. for it
-        GlobalRefsType::iterator I =
-          GlobalRefs.find(make_pair(ArgTy, ArgValSlot));
-  
-        if (I != GlobalRefs.end()) {
-          BCR_TRACE(5, "Previous forward ref found!\n");
-          C = cast<Constant>(I->second);
-        } else {
-          // Create a placeholder for the constant reference and
-          // keep track of the fact that we have a forward ref to recycle it
-          BCR_TRACE(5, "Creating new forward ref to a constant!\n");
-          C = new ConstPHolder(ArgTy, ArgValSlot);
-
-          // Keep track of the fact that we have a forward ref to recycle it
-          GlobalRefs.insert(make_pair(make_pair(ArgTy, ArgValSlot), C));
-        }
-      }
+      Constant *C = getConstantValue(ArgTy, ArgValSlot);
+      if (C == 0) return true;
       ArgVec.push_back(C);
     }
     
@@ -310,9 +290,9 @@ bool BytecodeParser::parseConstantValue(const uchar *&Buf, const uchar *EndBuf,
     while (NumElements--) {   // Read all of the elements of the constant.
       unsigned Slot;
       if (read_vbr(Buf, EndBuf, Slot)) return true;
-      Value *V = getValue(AT->getElementType(), Slot, false);
-      if (!V || !isa<Constant>(V)) return true;
-      Elements.push_back(cast<Constant>(V));
+      Constant *C = getConstantValue(AT->getElementType(), Slot);
+      if (!C) return true;
+      Elements.push_back(C);
     }
     V = ConstantArray::get(AT, Elements);
     break;
@@ -326,10 +306,9 @@ bool BytecodeParser::parseConstantValue(const uchar *&Buf, const uchar *EndBuf,
     for (unsigned i = 0; i < ET.size(); ++i) {
       unsigned Slot;
       if (read_vbr(Buf, EndBuf, Slot)) return true;
-      Value *V = getValue(ET[i], Slot, false);
-      if (!V || !isa<Constant>(V))
-	return true;
-      Elements.push_back(cast<Constant>(V));      
+      Constant *C = getConstantValue(ET[i], Slot);
+      if (!C) return true;
+      Elements.push_back(C);
     }
 
     V = ConstantStruct::get(ST, Elements);

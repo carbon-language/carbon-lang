@@ -132,6 +132,34 @@ Value *BytecodeParser::getValue(const Type *Ty, unsigned oNum, bool Create) {
   return d;
 }
 
+/// getConstantValue - Just like getValue, except that it returns a null pointer
+/// only on error.  It always returns a constant (meaning that if the value is
+/// defined, but is not a constant, that is an error).  If the specified
+/// constant hasn't been parsed yet, a placeholder is defined and used.  Later,
+/// after the real value is parsed, the placeholder is eliminated.
+///
+Constant *BytecodeParser::getConstantValue(const Type *Ty, unsigned Slot) {
+  if (Value *V = getValue(Ty, Slot, false))
+    return dyn_cast<Constant>(V);      // If we already have the value parsed...
+
+  GlobalRefsType::iterator I = GlobalRefs.find(make_pair(Ty, Slot));
+  if (I != GlobalRefs.end()) {
+    BCR_TRACE(5, "Previous forward ref found!\n");
+    return cast<Constant>(I->second);
+  } else {
+    // Create a placeholder for the constant reference and
+    // keep track of the fact that we have a forward ref to recycle it
+    BCR_TRACE(5, "Creating new forward ref to a constant!\n");
+    Constant *C = new ConstPHolder(Ty, Slot);
+    
+    // Keep track of the fact that we have a forward ref to recycle it
+    GlobalRefs.insert(make_pair(make_pair(Ty, Slot), C));
+    return C;
+  }
+}
+
+
+
 bool BytecodeParser::postResolveValues(ValueTable &ValTab) {
   bool Error = false;
   for (unsigned ty = 0; ty < ValTab.size(); ++ty) {

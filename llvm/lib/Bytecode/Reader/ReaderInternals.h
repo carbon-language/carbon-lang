@@ -108,6 +108,7 @@ private:
 
   Value      *getValue(const Type *Ty, unsigned num, bool Create = true);
   const Type *getType(unsigned ID);
+  Constant   *getConstantValue(const Type *Ty, unsigned num);
 
   int insertValue(Value *D, std::vector<ValueList> &D);  // -1 = Failure
   bool postResolveValues(ValueTable &ValTab);
