@@ -71,7 +71,7 @@ Comment1	[#].*$
 /* You can also embed them in ( ... ) */
 Comment2	\(.*\)
 /* We ignore white space */
-White		[ \t\n]
+White		[ \t\r\n]
 
 /* jdentifiers start with a % sign */
 Identifier  	[A-Za-z][-A-Za-z0-9_]*
