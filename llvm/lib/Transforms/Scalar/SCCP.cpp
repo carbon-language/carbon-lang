@@ -25,7 +25,7 @@
 #include "llvm/iOther.h"
 #include "llvm/iTerminators.h"
 #include "llvm/Tools/STLExtras.h"
-//#include "llvm/Assembly/Writer.h"
+#include "llvm/Assembly/Writer.h"
 #include <algorithm>
 #include <map>
 #include <set>
@@ -430,7 +430,7 @@ void SCCP::UpdateInstruction(Instruction *I) {
   //===-------------------------------------------------------------------===//
   // Handle Unary instructions...
   //
-  if (I->isUnaryOp()) {
+  if (I->isUnaryOp() || I->getOpcode() == Instruction::Cast) {
     Value *V = I->getOperand(0);
     InstVal &VState = getValueState(V);
     if (VState.isOverdefined()) {        // Inherit overdefinedness of operand
@@ -456,7 +456,8 @@ void SCCP::UpdateInstruction(Instruction *I) {
   //===-----------------------------------------------------------------===//
   // Handle Binary instructions...
   //
-  if (I->isBinaryOp()) {
+  if (I->isBinaryOp() || I->getOpcode() == Instruction::Shl || 
+      I->getOpcode() == Instruction::Shr) {
     Value *V1 = I->getOperand(0);
     Value *V2 = I->getOperand(1);
 
