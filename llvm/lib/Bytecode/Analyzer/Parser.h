@@ -41,7 +41,18 @@ class AbstractBytecodeParser {
 /// @name Constructors
 /// @{
 public:
-  AbstractBytecodeParser( BytecodeHandler* h ) { handler = h; }
+  AbstractBytecodeParser( 
+    BytecodeHandler* h,
+    bool repAlignment = false,
+    bool repBlocks = false,
+    bool repVBR = false
+  ) { 
+    handler = h; 
+    reportAlignment = repAlignment;
+    reportBlocks = repBlocks;
+    reportVBR = repVBR;
+  }
+
   ~AbstractBytecodeParser() { }
 
 /// @}
@@ -86,64 +97,72 @@ public:
 /// @{
 protected:
   /// @brief Parse whole module scope
-  void ParseModule             (BufPtr &Buf, BufPtr End);
+  void ParseModule             ();
 
   /// @brief Parse the version information block
-  void ParseVersionInfo        (BufPtr &Buf, BufPtr End);
+  void ParseVersionInfo        ();
 
   /// @brief Parse the ModuleGlobalInfo block
-  void ParseModuleGlobalInfo   (BufPtr &Buf, BufPtr End);
+  void ParseModuleGlobalInfo   ();
 
   /// @brief Parse a symbol table
-  void ParseSymbolTable        (BufPtr &Buf, BufPtr End);
+  void ParseSymbolTable        ();
 
   /// This function parses LLVM functions lazily. It obtains the type of the
   /// function and records where the body of the function is in the bytecode
   /// buffer. The caller can then use the ParseNextFunction and 
   /// ParseAllFunctionBodies to get handler events for the functions.
   /// @brief Parse functions lazily.
-  void ParseFunctionLazily     (BufPtr &Buf, BufPtr End);
+  void ParseFunctionLazily     ();
 
   ///  @brief Parse a function body
-  void ParseFunctionBody       (const Type* FType, BufPtr &Buf, BufPtr EndBuf);
+  void ParseFunctionBody       (const Type* FType);
 
   /// @brief Parse a compaction table
-  void ParseCompactionTable    (BufPtr &Buf, BufPtr End);
+  void ParseCompactionTable    ();
 
   /// @brief Parse global types
-  void ParseGlobalTypes        (BufPtr &Buf, BufPtr End);
+  void ParseGlobalTypes        ();
 
   /// @brief Parse a basic block (for LLVM 1.0 basic block blocks)
-  void ParseBasicBlock         (BufPtr &Buf, BufPtr End, unsigned BlockNo);
+  void ParseBasicBlock         (unsigned BlockNo);
 
   /// @brief parse an instruction list (for post LLVM 1.0 instruction lists
   /// with blocks differentiated by terminating instructions.
-  unsigned ParseInstructionList(BufPtr &Buf, BufPtr End);
+  unsigned ParseInstructionList();
   
   /// @brief Parse an instruction.
-  bool ParseInstruction        (BufPtr &Buf, BufPtr End, 
-	                        std::vector<unsigned>& Args);
+  bool ParseInstruction        (std::vector<unsigned>& Args);
 
   /// @brief Parse a constant pool
-  void ParseConstantPool       (BufPtr &Buf, BufPtr End, TypeListTy& List);
+  void ParseConstantPool       (TypeListTy& List);
 
   /// @brief Parse a constant value
-  void ParseConstantValue      (BufPtr &Buf, BufPtr End, unsigned TypeID);
+  void ParseConstantValue      (unsigned TypeID);
 
   /// @brief Parse a block of types.
-  void ParseTypeConstants      (BufPtr &Buf, BufPtr End, TypeListTy &Tab,
-					unsigned NumEntries);
+  void ParseTypeConstants      (TypeListTy &Tab, unsigned NumEntries);
 
   /// @brief Parse a single type.
-  const Type *ParseTypeConstant(BufPtr &Buf, BufPtr End);
+  const Type *ParseTypeConstant();
 
   /// @brief Parse a string constants block
-  void ParseStringConstants    (BufPtr &Buf, BufPtr End, unsigned NumEntries);
+  void ParseStringConstants    (unsigned NumEntries);
 
 /// @}
 /// @name Data
 /// @{
 private:
+  BufPtr MemStart;     ///< Start of the memory buffer
+  BufPtr MemEnd;       ///< End of the memory buffer
+  BufPtr BlockStart;   ///< Start of current block being parsed
+  BufPtr BlockEnd;     ///< End of current block being parsed
+  BufPtr At;           ///< Where we're currently parsing at
+
+  bool reportAlignment; ///< Parser should report alignment?
+  bool reportBlocks;    ///< Parser should report blocks?
+  bool reportVBR;       ///< Report VBR compression events
+
   // Information about the module, extracted from the bytecode revision number.
   unsigned char RevisionNum;        // The rev # itself
 
@@ -219,9 +238,25 @@ private:
 
 private:
 
-  static inline void readBlock(const unsigned char *&Buf,
-			       const unsigned char *EndBuf, 
-			       unsigned &Type, unsigned &Size) ;
+  /// Is there more to parse in the current block?
+  inline bool moreInBlock();
+
+  /// Have we read past the end of the block
+  inline void checkPastBlockEnd(const char * block_name);
+
+  /// Align to 32 bits
+  inline void align32();
+
+  /// Reader interface
+  inline unsigned read_uint();
+  inline unsigned read_vbr_uint();
+  inline uint64_t read_vbr_uint64();
+  inline int64_t read_vbr_int64();
+  inline std::string read_str();
+  inline void read_data(void *Ptr, void *End);
+
+  /// Read a block header
+  inline void readBlock(unsigned &Type, unsigned &Size);
 
   const Type *AbstractBytecodeParser::getType(unsigned ID);
   /// getGlobalTableType - This is just like getType, but when a compaction
@@ -443,7 +478,8 @@ public:
   virtual bool handleInstruction(
     unsigned Opcode, 
     const Type* iType, 
-    std::vector<unsigned>& Operands
+    std::vector<unsigned>& Operands,
+    unsigned Length
   );
 
   /// @brief Handle the end of a basic block
@@ -488,6 +524,16 @@ public:
   /// @brief Handle the end of the global constants
   virtual void handleGlobalConstantsEnd();
 
+  /// @brief Handle an alignment event
+  virtual void handleAlignment(unsigned numBytes);
+
+  virtual void handleBlock(
+    unsigned BType, ///< The type of block
+    const unsigned char* StartPtr, ///< The start of the block
+    unsigned Size  ///< The size of the block
+  );
+  virtual void handleVBR32(unsigned Size );
+  virtual void handleVBR64(unsigned Size );
 /// @}
 
 };

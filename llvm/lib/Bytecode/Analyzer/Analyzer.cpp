@@ -30,13 +30,13 @@ public:
 
   bool handleError(const std::string& str )
   {
-    std::cerr << "Analysis Error: " << str;
     return false;
   }
 
   void handleStart()
   {
     bca.ModuleId.clear();
+    bca.numBlocks = 0;
     bca.numTypes = 0;
     bca.numValues = 0;
     bca.numFunctions = 0;
@@ -49,16 +49,38 @@ public:
     bca.numSymTab = 0;
     bca.maxTypeSlot = 0;
     bca.maxValueSlot = 0;
-    bca.density = 0.0;
+    bca.numAlignment = 0;
+    bca.fileDensity = 0.0;
+    bca.globalsDensity = 0.0;
+    bca.functionDensity = 0.0;
+    bca.vbrCount32 = 0;
+    bca.vbrCount64 = 0;
+    bca.vbrCompBytes = 0;
+    bca.vbrExpdBytes = 0;
     bca.FunctionInfo.clear();
     bca.BytecodeDump.clear();
+    bca.BlockSizes[BytecodeFormat::Module] = 0;
+    bca.BlockSizes[BytecodeFormat::Function] = 0;
+    bca.BlockSizes[BytecodeFormat::ConstantPool] = 0;
+    bca.BlockSizes[BytecodeFormat::SymbolTable] = 0;
+    bca.BlockSizes[BytecodeFormat::ModuleGlobalInfo] = 0;
+    bca.BlockSizes[BytecodeFormat::GlobalTypePlane] = 0;
+    bca.BlockSizes[BytecodeFormat::BasicBlock] = 0;
+    bca.BlockSizes[BytecodeFormat::InstructionList] = 0;
+    bca.BlockSizes[BytecodeFormat::CompactionTable] = 0;
   }
 
   void handleFinish()
   {
-    bca.density = bca.numTypes + bca.numFunctions + bca.numConstants +
-      bca.numGlobalVars + bca.numInstructions;
-    bca.density /= bca.byteSize;
+    bca.fileDensity = double(bca.byteSize) / double( bca.numTypes + bca.numValues );
+    double globalSize = 0.0;
+    globalSize += double(bca.BlockSizes[BytecodeFormat::ConstantPool]);
+    globalSize += double(bca.BlockSizes[BytecodeFormat::ModuleGlobalInfo]);
+    globalSize += double(bca.BlockSizes[BytecodeFormat::GlobalTypePlane]);
+    bca.globalsDensity = globalSize / double( bca.numTypes + bca.numConstants + 
+      bca.numGlobalVars );
+    bca.functionDensity = double(bca.BlockSizes[BytecodeFormat::Function]) / 
+      double(bca.numFunctions);
   }
 
   void handleModuleBegin(const std::string& id)
@@ -78,8 +100,9 @@ public:
   {
   }
 
-  void handleModuleGlobalsBegin()
+  void handleModuleGlobalsBegin(unsigned size)
   {
+    // bca.globalBytesize += size;
   }
 
   void handleGlobalVariable( 
@@ -89,6 +112,7 @@ public:
   )
   {
     bca.numGlobalVars++;
+    bca.numValues++;
   }
 
   void handleInitializedGV( 
@@ -99,6 +123,7 @@ public:
   )
   {
     bca.numGlobalVars++;
+    bca.numValues++;
   }
 
   virtual void handleType( const Type* Ty ) 
@@ -111,6 +136,7 @@ public:
   )
   {
     bca.numFunctions++;
+    bca.numValues++;
   }
 
   void handleModuleGlobalsEnd()
@@ -200,15 +226,19 @@ public:
   )
   {
     bca.numBasicBlocks++;
+    bca.numValues++;
   }
 
   bool handleInstruction(
     unsigned Opcode, 
     const Type* iType, 
-    std::vector<unsigned>& Operands
+    std::vector<unsigned>& Operands,
+    unsigned Size
   )
   {
     bca.numInstructions++;
+    bca.numValues++;
+    bca.numOperands += Operands.size();
     return Instruction::isTerminator(Opcode); 
   }
 
@@ -227,43 +257,67 @@ public:
     )
   {
     bca.numConstants++;
+    bca.numValues++;
   }
 
   void handleConstantValue( Constant * c )
   {
     bca.numConstants++;
+    bca.numValues++;
   }
 
   void handleConstantArray( 
-	  const ArrayType* AT, 
-	  std::vector<unsigned>& Elements )
+          const ArrayType* AT, 
+          std::vector<unsigned>& Elements )
   {
     bca.numConstants++;
+    bca.numValues++;
   }
 
   void handleConstantStruct(
-	const StructType* ST,
-	std::vector<unsigned>& ElementSlots)
+        const StructType* ST,
+        std::vector<unsigned>& ElementSlots)
   {
     bca.numConstants++;
+    bca.numValues++;
   }
 
   void handleConstantPointer(
-	const PointerType* PT, unsigned Slot)
+        const PointerType* PT, unsigned Slot)
   {
     bca.numConstants++;
+    bca.numValues++;
   }
 
   void handleConstantString( const ConstantArray* CA ) 
   {
     bca.numConstants++;
+    bca.numValues++;
   }
 
 
-  void handleGlobalConstantsEnd()
-  {
+  void handleGlobalConstantsEnd() { }
+
+  void handleAlignment(unsigned numBytes) {
+    bca.numAlignment += numBytes;
   }
 
+  void handleBlock(
+    unsigned BType, const unsigned char* StartPtr, unsigned Size) {
+    bca.numBlocks++;
+    bca.BlockSizes[llvm::BytecodeFormat::FileBlockIDs(BType)] += Size;
+  }
+
+  virtual void handleVBR32(unsigned Size ) {
+    bca.vbrCount32++;
+    bca.vbrCompBytes += Size;
+    bca.vbrExpdBytes += sizeof(uint32_t);
+  }
+  virtual void handleVBR64(unsigned Size ) {
+    bca.vbrCount64++;
+    bca.vbrCompBytes += Size;
+    bca.vbrExpdBytes += sizeof(uint64_t);
+  }
 };
 
 }
@@ -277,10 +331,9 @@ void llvm::BytecodeAnalyzer::AnalyzeBytecode(
 {
   bca.byteSize = Length;
   AnalyzerHandler TheHandler(bca);
-  AbstractBytecodeParser TheParser(&TheHandler);
+  AbstractBytecodeParser TheParser(&TheHandler, true, true, true);
   TheParser.ParseBytecode( Buf, Length, ModuleID );
-  if ( bca.detailedResults )
-    TheParser.ParseAllFunctionBodies();
+  TheParser.ParseAllFunctionBodies();
 }
 
 // vim: sw=2

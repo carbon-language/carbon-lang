@@ -19,6 +19,7 @@
 #ifndef LLVM_BYTECODE_ANALYZER_H
 #define LLVM_BYTECODE_ANALYZER_H
 
+#include "llvm/Bytecode/Format.h"
 #include <string>
 #include <map>
 
@@ -33,6 +34,7 @@ struct BytecodeAnalysis {
   unsigned byteSize;        ///< The size of the bytecode file in bytes
   unsigned numTypes;        ///< The number of types
   unsigned numValues;       ///< The number of values
+  unsigned numBlocks;       ///< The number of *bytecode* blocks
   unsigned numFunctions;    ///< The number of functions defined
   unsigned numConstants;    ///< The number of constants
   unsigned numGlobalVars;   ///< The number of global variables
@@ -41,29 +43,40 @@ struct BytecodeAnalysis {
   unsigned numOperands;     ///< The number of BBs in all functions
   unsigned numCmpctnTables; ///< The number of compaction tables
   unsigned numSymTab;       ///< The number of symbol tables
+  unsigned numAlignment;    ///< The number of alignment bytes
   unsigned maxTypeSlot;     ///< The maximum slot number for types
   unsigned maxValueSlot;    ///< The maximum slot number for values
-  double   density;         ///< Density of file (bytes/defs) 
+  double   fileDensity;     ///< Density of file (bytes/definition)
+    ///< This is the density of the bytecode file. It is the ratio of
+    ///< the number of bytes to the number of definitions in the file. Smaller
+    ///< numbers mean the file is more compact (denser). Larger numbers mean
+    ///< the file is more sparse.
+  double   globalsDensity;  ///< density of global defs (bytes/definition)
+  double   functionDensity; ///< Average density of functions (bytes/function)
+  unsigned vbrCount32;      ///< Number of 32-bit vbr values
+  unsigned vbrCount64;      ///< Number of 64-bit vbr values
+  unsigned vbrCompBytes;    ///< Number of vbr bytes (compressed)
+  unsigned vbrExpdBytes;    ///< Number of vbr bytes (expanded)
+
+  typedef std::map<BytecodeFormat::FileBlockIDs,unsigned> BlockSizeMap;
+  BlockSizeMap BlockSizes;
 
   /// A structure that contains various pieces of information related to
   /// an analysis of a single function.
   struct BytecodeFunctionInfo {
+    std::string description;  ///< Function type description
+    std::string name;	      ///< Name of function if it has one
     unsigned byteSize;        ///< The size of the function in bytecode bytes
     unsigned numInstructions; ///< The number of instructions in the function
     unsigned numBasicBlocks;  ///< The number of basic blocks in the function
     unsigned numOperands;     ///< The number of operands in the function
     double density;           ///< Density of function
     double vbrEffectiveness;  ///< Effectiveness of variable bit rate encoding.
-    ///< This is the average number of bytes per unsigned value written in the
-    ///< vbr encoding. A "perfect" score of 1.0 means all vbr values were 
-    ///< encoded in one byte. A score between 1.0 and 4.0 means that some
-    ///< savings were achieved. A score of 4.0 means vbr didn't help. A score
-    ///< greater than 4.0 means vbr negatively impacted size of the file.
   };
 
-  /// A mapping of function names to the collected information about the 
-  /// function.
-  std::map<std::string,BytecodeFunctionInfo> FunctionInfo; 
+  /// A mapping of function slot numbers to the collected information about 
+  /// the function.
+  std::map<unsigned,BytecodeFunctionInfo> FunctionInfo; 
 
   /// The content of the bytecode dump
   std::string BytecodeDump;

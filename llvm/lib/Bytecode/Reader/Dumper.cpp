@@ -212,7 +212,8 @@ public:
   virtual bool handleInstruction(
     unsigned Opcode, 
     const Type* iType, 
-    std::vector<unsigned>& Operands
+    std::vector<unsigned>& Operands,
+    unsigned Size
   )
   {
     std::cout << "    INST: OpCode=" 
