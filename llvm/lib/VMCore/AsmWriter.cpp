@@ -12,6 +12,7 @@
 #include "llvm/Assembly/Writer.h"
 #include "llvm/SlotCalculator.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/Instruction.h"
 #include "llvm/Module.h"
 #include "llvm/Constants.h"
 #include "llvm/iMemory.h"
@@ -150,8 +151,7 @@ static string calcTypeName(const Type *Ty, vector<const Type *> &TypeStack,
     break;
   }
   default:
-    assert(0 && "Unhandled case in getTypeProps!");
-    Result = "<error>";
+    Result = "<unrecognized-type>";
   }
 
   TypeStack.pop_back();       // Remove self from stack...
@@ -326,8 +326,24 @@ static void WriteConstantInt(ostream &Out, const Constant *CV, bool PrintName,
     } else {
       Out << "<pointer reference without context info>";
     }
+
+  } else if (const ConstantExpr *CE=dyn_cast<ConstantExpr>(CV)) {
+    Out << CE->getOpcodeName();
+
+    bool isGEP = CE->getOpcode() == Instruction::GetElementPtr;
+    Out << (isGEP? " (" : " ");
+    
+    for (User::const_op_iterator OI=CE->op_begin(); OI != CE->op_end(); ++OI) {
+      printTypeInt(Out, (*OI)->getType(), TypeTable);
+      WriteAsOperandInternal(Out, *OI, PrintName, TypeTable, Table);
+      if (OI+1 != CE->op_end())
+        Out << ", ";    // ((isGEP && OI == CE->op_begin())? " " : ", ");
+    }
+    
+    if (isGEP)
+      Out << ")";
   } else {
-    assert(0 && "Unrecognized constant value!!!");
+    Out << "<placeholder or erroneous Constant>";
   }
 }
 
@@ -480,7 +496,8 @@ ostream &AssemblyWriter::printTypeAtLeastOneLevel(const Type *Ty) {
   } else if (const OpaqueType *OTy = dyn_cast<OpaqueType>(Ty)) {
     Out << OTy->getDescription();
   } else {
-    assert(Ty->isPrimitiveType() && "Unknown derived type!");
+    if (!Ty->isPrimitiveType())
+      Out << "<unknown derived type>";
     printType(Ty);
   }
   return Out;
