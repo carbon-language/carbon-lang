@@ -23,6 +23,52 @@ void DebugValue(const Value *V) {
   cerr << V << endl;
 }
 
+// WriteAsOperand - Write the name of the specified value out to the specified
+// ostream.  This can be useful when you just want to print int %reg126, not the
+// whole instruction that generated it.
+//
+ostream &WriteAsOperand(ostream &Out, const Value *V, bool PrintType, 
+			bool PrintName, SlotCalculator *Table) {
+  if (PrintType)
+    Out << " " << V->getType();
+  
+  if (V->hasName() && PrintName) {
+    Out << " %" << V->getName();
+  } else {
+    if (const ConstPoolVal *CPV = V->castConstant()) {
+      Out << " " << CPV->getStrValue();
+    } else {
+      int Slot;
+      if (Table) {
+	Slot = Table->getValSlot(V);
+      } else {
+	if (const Type *Ty = V->castType()) {
+	  return Out << " " << Ty;
+	} else if (const MethodArgument *MA = V->castMethodArgument()) {
+	  Table = new SlotCalculator(MA->getParent(), true);
+	} else if (const Instruction *I = V->castInstruction()) {
+	  Table = new SlotCalculator(I->getParent()->getParent(), true);
+	} else if (const BasicBlock *BB = V->castBasicBlock()) {
+	  Table = new SlotCalculator(BB->getParent(), true);
+	} else if (const Method *Meth = V->castMethod()) {
+	  Table = new SlotCalculator(Meth, true);
+	} else if (const Module *Mod  = V->castModule()) {
+	  Table = new SlotCalculator(Mod, true);
+	} else {
+	  return Out << "BAD VALUE TYPE!";
+	}
+	Slot = Table->getValSlot(V);
+	delete Table;
+      }
+      if (Slot >= 0)  Out << " %" << Slot;
+      else if (PrintName)
+        Out << "<badref>";     // Not embeded into a location?
+    }
+  }
+  return Out;
+}
+
+
 
 class AssemblyWriter : public ModuleAnalyzer {
   ostream &Out;
@@ -265,22 +311,7 @@ bool AssemblyWriter::processInstruction(const Instruction *I) {
 
 void AssemblyWriter::writeOperand(const Value *Operand, bool PrintType, 
 				  bool PrintName) {
-  if (PrintType)
-    Out << " " << Operand->getType();
-  
-  if (Operand->hasName() && PrintName) {
-    Out << " %" << Operand->getName();
-  } else {
-    int Slot = Table.getValSlot(Operand);
-    
-    if (const ConstPoolVal *CPV = Operand->castConstant()) {
-      Out << " " << CPV->getStrValue();
-    } else {
-      if (Slot >= 0)  Out << " %" << Slot;
-      else if (PrintName)
-        Out << "<badref>";     // Not embeded into a location?
-    }
-  }
+  WriteAsOperand(Out, Operand, PrintType, PrintName, &Table);
 }
 
 
