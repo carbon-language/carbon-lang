@@ -973,9 +973,6 @@ static bool CanReachAliveNodes(DSNode *N, hash_set<DSNode*> &Alive,
   if (Visited.count(N)) return false;  // Found a cycle
   Visited.insert(N);   // No recursion, insert into Visited...
 
-  if (N->NodeType & DSNode::GlobalNode)
-    return false; // Global nodes will be marked on their own
-
   for (unsigned i = 0, e = N->getSize(); i < e; i += DS::PointerSize)
     if (CanReachAliveNodes(N->getLink(i).getNode(), Alive, Visited)) {
       N->markReachableNodes(Alive);
