@@ -819,7 +819,7 @@ $(LLVM_OBJ_ROOT)/config.status:: $(LLVM_SRC_ROOT)/configure
 # If the Makefile in the source tree has been updated, copy it over into the
 # build tree.
 Makefile :: $(BUILD_SRC_DIR)/Makefile
-	@${ECHO} "===== Makefile out of date, updating from source dir: `dirname $<` ====="
+	@${ECHO} "===== Updating Makefile from source dir: `dirname $<` ====="
 	cp -f $< $@
 
 #
