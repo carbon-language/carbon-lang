@@ -15,13 +15,13 @@
 
 struct ValueHolder : public User {
   ValueHolder(Value *V = 0);
-  ValueHolder(const ValueHolder &VH) : User(VH.getType(), Value::TypeVal) {}
+  ValueHolder(const ValueHolder &VH) : User(VH.getType(), Value::TypeVal) {
+    Operands.push_back(Use(VH.get(), this));
+  }
 
   // Getters...
-  const Value *get() const { return getOperand(0); }
-  operator const Value*() const { return getOperand(0); }
-  Value *get() { return getOperand(0); }
-  operator Value*() { return getOperand(0); }
+  Value *get() const { return (Value*)getOperand(0); }
+  operator Value*() const { return (Value*)getOperand(0); }
 
   // Setters...
   const ValueHolder &operator=(Value *V) {
