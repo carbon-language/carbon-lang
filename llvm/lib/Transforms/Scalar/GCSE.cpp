@@ -16,6 +16,7 @@
 
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/iMemory.h"
+#include "llvm/iOther.h"
 #include "llvm/Type.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/ValueNumbering.h"
@@ -28,6 +29,7 @@ using namespace llvm;
 namespace {
   Statistic<> NumInstRemoved("gcse", "Number of instructions removed");
   Statistic<> NumLoadRemoved("gcse", "Number of loads removed");
+  Statistic<> NumCallRemoved("gcse", "Number of calls removed");
   Statistic<> NumNonInsts   ("gcse", "Number of instructions removed due "
                              "to non-instruction values");
 
@@ -123,6 +125,8 @@ bool GCSE::EliminateRedundancies(Instruction *I,
 
           if (isa<LoadInst>(I))
             ++NumLoadRemoved; // Keep track of loads eliminated
+          if (isa<CallInst>(I))
+            ++NumCallRemoved; // Keep track of calls eliminated
           ++NumInstRemoved;   // Keep track of number of instructions eliminated
           ++NumNonInsts;      // Keep track of number of insts repl with values
 
@@ -264,6 +268,8 @@ Instruction *GCSE::EliminateCSE(Instruction *I, Instruction *Other) {
 
   if (isa<LoadInst>(Ret))
     ++NumLoadRemoved;  // Keep track of loads eliminated
+  if (isa<CallInst>(Ret))
+    ++NumCallRemoved;  // Keep track of calls eliminated
   ++NumInstRemoved;   // Keep track of number of instructions eliminated
 
   // Add all users of Ret to the worklist...
