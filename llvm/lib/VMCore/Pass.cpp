@@ -8,6 +8,34 @@
 
 #include "llvm/Pass.h"
 #include "Support/STLExtras.h"
+#include <algorithm>
+
+// Pass debugging information.  Often it is useful to find out what pass is
+// running when a crash occurs in a utility.  When this library is compiled with
+// debugging on, a command line option (--debug-pass) is enabled that causes the
+// pass name to be printed before it executes.
+//
+#ifdef NDEBUG
+// If not debugging, remove the option
+inline static void PrintPassInformation(const char *, Pass *, Value *) { }
+#else
+
+#include "Support/CommandLine.h"
+#include <typeinfo>
+#include <iostream>
+
+// The option is hidden from --help by default
+static cl::Flag PassDebugEnabled("debug-pass",
+  "Print pass names as they are executed by the PassManager", cl::Hidden);
+
+static void PrintPassInformation(const char *Action, Pass *P, Value *V) {
+  if (PassDebugEnabled)
+    std::cerr << Action << " Pass '" << typeid(*P).name() << "' on "
+              << typeid(*V).name() << " '" << V->getName() << "'...\n";
+}
+#endif
+
+
 
 PassManager::~PassManager() {
   for_each(Passes.begin(), Passes.end(), deleter<Pass>);
@@ -26,8 +54,10 @@ public:
   virtual bool doInitialization(Module *M) {
     bool Changed = false;
     for (SubPassesType::iterator I = SubPasses.begin(), E = SubPasses.end();
-         I != E; ++I)
+         I != E; ++I) {
+      PrintPassInformation("Initializing", *I, M);
       Changed |= (*I)->doInitialization(M);
+    }
     return Changed;
   }
 
@@ -36,17 +66,20 @@ public:
 
     for (Method::iterator MI = M->begin(), ME = M->end(); MI != ME; ++MI)
       for (SubPassesType::iterator I = SubPasses.begin(), E = SubPasses.end();
-           I != E; ++I)
+           I != E; ++I) {
+        PrintPassInformation("Executing", *I, *MI);
         Changed |= (*I)->runOnBasicBlock(*MI);
+      }
     return Changed;
   }
 
   virtual bool doFinalization(Module *M) {
     bool Changed = false;
     for (SubPassesType::iterator I = SubPasses.begin(), E = SubPasses.end();
-         I != E; ++I)
+         I != E; ++I) {
+      PrintPassInformation("Finalizing", *I, M);
       Changed |= (*I)->doFinalization(M);
-
+    }
     return Changed;
   }
 };
@@ -56,7 +89,9 @@ class MethodPassBatcher : public Pass {
   SubPassesType SubPasses;
   BasicBlockPassBatcher *BBPBatcher;
 public:
-  ~MethodPassBatcher() {
+  inline MethodPassBatcher() : BBPBatcher(0) {}
+
+  inline ~MethodPassBatcher() {
     for_each(SubPasses.begin(), SubPasses.end(), deleter<MethodPass>);
   }
 
@@ -80,18 +115,23 @@ public:
   virtual bool run(Module *M) {
     bool Changed = false;
     for (SubPassesType::iterator I = SubPasses.begin(), E = SubPasses.end();
-         I != E; ++I)
+         I != E; ++I) {
+      PrintPassInformation("Initializing", *I, M);
       Changed |= (*I)->doInitialization(M);
+    }
 
     for (Module::iterator MI = M->begin(), ME = M->end(); MI != ME; ++MI)
       for (SubPassesType::iterator I = SubPasses.begin(), E = SubPasses.end();
-           I != E; ++I)
+           I != E; ++I) {
+        PrintPassInformation("Executing", *I, M);
         Changed |= (*I)->runOnMethod(*MI);
+      }
 
     for (SubPassesType::iterator I = SubPasses.begin(), E = SubPasses.end();
-         I != E; ++I)
+         I != E; ++I) {
+      PrintPassInformation("Finalizing", *I, M);
       Changed |= (*I)->doFinalization(M);
-
+    }
     return Changed;
   }
 };
@@ -126,4 +166,15 @@ void PassManager::add(Pass *P) {
     Batcher = 0;  // Ensure that passes don't get accidentally reordered
     Passes.push_back(P);
   }
+}
+
+
+bool PassManager::run(Module *M) {
+  bool MadeChanges = false;
+  // Run all of the pass initializers
+  for (unsigned i = 0, e = Passes.size(); i < e; ++i) {
+    PrintPassInformation("Executing", Passes[i], M);
+    MadeChanges |= Passes[i]->run(M);
+  }
+  return MadeChanges;
 }
