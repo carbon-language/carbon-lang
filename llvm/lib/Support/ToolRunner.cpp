@@ -13,6 +13,7 @@
 
 #define DEBUG_TYPE "toolrunner"
 #include "llvm/Support/ToolRunner.h"
+#include "Config/config.h"   // for HAVE_LINK_R
 #include "Support/Debug.h"
 #include "Support/FileUtilities.h"
 #include <iostream>
@@ -299,7 +300,9 @@ int GCC::ExecuteProgram(const std::string &ProgramFile,
   GCCArgs.push_back(OutputBinary.c_str()); // Output to the right file...
   GCCArgs.push_back("-lm");                // Hard-code the math library...
   GCCArgs.push_back("-O2");                // Optimize the program a bit...
+#if defined (HAVE_LINK_R)
   GCCArgs.push_back("-Wl,-R.");            // Search this dir for .so files
+#endif
   GCCArgs.push_back(0);                    // NULL terminator
 
   std::cout << "<gcc>" << std::flush;
