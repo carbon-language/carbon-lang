@@ -32,7 +32,7 @@ namespace {
     /// the entire function.
     ///
     bool runOnFunction(Function &Fn) {
-      F = new MachineFunction(&Fn, TM);
+      F = &MachineFunction::construct(&Fn, TM);
       visit(Fn);
       RegMap.clear();
       F = 0;
