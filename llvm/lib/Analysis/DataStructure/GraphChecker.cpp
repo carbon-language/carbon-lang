@@ -39,7 +39,8 @@ namespace {
        cl::desc("Specify which DSA pass the -datastructure-gc pass should use"),
          cl::values(clEnumVal(local, "Local pass"),
                     clEnumVal(bu,    "Bottom-up pass"),
-                    clEnumVal(td,    "Top-down pass"), 0), cl::init(local));
+                    clEnumVal(td,    "Top-down pass"), 
+                    clEnumValEnd), cl::init(local));
 
   cl::opt<bool>
   AbortIfAnyCollapsed("dsgc-abort-if-any-collapsed", cl::Hidden,
