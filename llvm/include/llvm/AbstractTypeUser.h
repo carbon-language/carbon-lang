@@ -61,10 +61,8 @@ public:
 };
 
 
-// PATypeHandle - Handle to a Type subclass.  This class is parameterized so
-// that users can have handles to FunctionType's that are still specialized, for
-// example.  This class is a simple class used to keep the use list of abstract
-// types up-to-date.
+// PATypeHandle - Handle to a Type subclass.  This class is used to keep the use
+// list of abstract types up-to-date.
 //
 class PATypeHandle {
   const Type *Ty;
