@@ -136,6 +136,10 @@ void DumpSymbolNamesFromFile (std::string &Filename) {
     }
     MultipleFiles = true;
     std::for_each (Modules.begin (), Modules.end (), DumpSymbolNamesFromModule);
+  } else {
+    std::cerr << ToolName << ": " << Filename << ": "
+              << "unrecognizable file type\n";
+    return;
   }
 }
 
