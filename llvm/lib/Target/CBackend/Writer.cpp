@@ -475,22 +475,50 @@ void CWriter::printConstant(Constant *CPV) {
   }
 
   case Type::ArrayTyID:
-    printConstantArray(cast<ConstantArray>(CPV));
+    if (isa<ConstantAggregateZero>(CPV)) {
+      const ArrayType *AT = cast<ArrayType>(CPV->getType());
+      Out << "{";
+      if (AT->getNumElements()) {
+        Out << " ";
+        Constant *CZ = Constant::getNullValue(AT->getElementType());
+        printConstant(CZ);
+        for (unsigned i = 1, e = AT->getNumElements(); i != e; ++i) {
+          Out << ", ";
+          printConstant(CZ);
+        }
+      }
+      Out << " }";
+    } else {
+      printConstantArray(cast<ConstantArray>(CPV));
+    }
     break;
 
-  case Type::StructTyID: {
-    Out << "{";
-    if (CPV->getNumOperands()) {
-      Out << " ";
-      printConstant(cast<Constant>(CPV->getOperand(0)));
-      for (unsigned i = 1, e = CPV->getNumOperands(); i != e; ++i) {
-        Out << ", ";
-        printConstant(cast<Constant>(CPV->getOperand(i)));
+  case Type::StructTyID:
+    if (isa<ConstantAggregateZero>(CPV)) {
+      const StructType *ST = cast<StructType>(CPV->getType());
+      Out << "{";
+      if (ST->getNumElements()) {
+        Out << " ";
+        printConstant(Constant::getNullValue(ST->getElementType(0)));
+        for (unsigned i = 1, e = ST->getNumElements(); i != e; ++i) {
+          Out << ", ";
+          printConstant(Constant::getNullValue(ST->getElementType(i)));
+        }
       }
+      Out << " }";
+    } else {
+      Out << "{";
+      if (CPV->getNumOperands()) {
+        Out << " ";
+        printConstant(cast<Constant>(CPV->getOperand(0)));
+        for (unsigned i = 1, e = CPV->getNumOperands(); i != e; ++i) {
+          Out << ", ";
+          printConstant(cast<Constant>(CPV->getOperand(i)));
+        }
+      }
+      Out << " }";
     }
-    Out << " }";
     break;
-  }
 
   case Type::PointerTyID:
     if (isa<ConstantPointerNull>(CPV)) {
