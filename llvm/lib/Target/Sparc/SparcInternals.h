@@ -127,6 +127,8 @@ FunctionPass* createPrologEpilogInsertionPass();
 ///
 Pass* createBytecodeAsmPrinterPass(std::ostream &Out);
 
+FunctionPass *createSparcMachineCodeDestructionPass();
+
 } // End llvm namespace
 
 #endif

@@ -31,11 +31,9 @@
 
 using namespace llvm;
 
-namespace llvm {
-
 static const unsigned ImplicitRegUseList[] = { 0 }; /* not used yet */
 // Build the MachineInstruction Description Array...
-const TargetInstrDescriptor SparcMachineInstrDesc[] = {
+const TargetInstrDescriptor llvm::SparcMachineInstrDesc[] = {
 #define I(ENUM, OPCODESTRING, NUMOPERANDS, RESULTPOS, MAXIMM, IMMSE, \
           NUMDELAYSLOTS, LATENCY, SCHEDCLASS, INSTFLAGS)             \
   { OPCODESTRING, NUMOPERANDS, RESULTPOS, MAXIMM, IMMSE,             \
@@ -66,7 +64,54 @@ namespace {
                           cl::Hidden);
 }
 
-} // End llvm namespace
+//===---------------------------------------------------------------------===//
+// Code generation/destruction passes
+//===---------------------------------------------------------------------===//
+
+namespace {
+  class ConstructMachineFunction : public FunctionPass {
+    TargetMachine &Target;
+  public:
+    ConstructMachineFunction(TargetMachine &T) : Target(T) {}
+    
+    const char *getPassName() const {
+      return "ConstructMachineFunction";
+    }
+    
+    bool runOnFunction(Function &F) {
+      MachineFunction::construct(&F, Target).getInfo()->CalculateArgSize();
+      return false;
+    }
+  };
+
+  struct DestroyMachineFunction : public FunctionPass {
+    const char *getPassName() const { return "FreeMachineFunction"; }
+    
+    static void freeMachineCode(Instruction &I) {
+      MachineCodeForInstruction::destroy(&I);
+    }
+    
+    bool runOnFunction(Function &F) {
+      for (Function::iterator FI = F.begin(), FE = F.end(); FI != FE; ++FI)
+        for (BasicBlock::iterator I = FI->begin(), E = FI->end(); I != E; ++I)
+          MachineCodeForInstruction::get(I).dropAllReferences();
+      
+      for (Function::iterator FI = F.begin(), FE = F.end(); FI != FE; ++FI)
+        for_each(FI->begin(), FI->end(), freeMachineCode);
+      
+      return false;
+    }
+  };
+  
+  FunctionPass *createMachineCodeConstructionPass(TargetMachine &Target) {
+    return new ConstructMachineFunction(Target);
+  }
+}
+
+FunctionPass *llvm::createSparcMachineCodeDestructionPass() {
+  return new DestroyMachineFunction();
+}
+
 
 SparcTargetMachine::SparcTargetMachine()
   : TargetMachine("UltraSparc-Native", false),
@@ -141,7 +186,7 @@ SparcTargetMachine::addPassesToEmitAssembly(PassManager &PM, std::ostream &Out)
   // function has been emitted.
   //
   PM.add(createAsmPrinterPass(Out, *this));
-  PM.add(createMachineCodeDestructionPass()); // Free stuff no longer needed
+  PM.add(createSparcMachineCodeDestructionPass()); // Free stuff no longer needed
 
   // Emit bytecode to the assembly file into its special section next
   if (EmitMappingInfo)

@@ -53,7 +53,7 @@ bool SparcTargetMachine::addPassesToEmitMachineCode(FunctionPassManager &PM,
   MachineCodeEmitter *M = &MCE;
   DEBUG(M = MachineCodeEmitter::createFilePrinterEmitter(MCE));
   PM.add(new SparcV9CodeEmitter(*this, *M));
-  PM.add(createMachineCodeDestructionPass()); // Free stuff no longer needed
+  PM.add(createSparcMachineCodeDestructionPass()); //Free stuff no longer needed
   return false;
 }
 
