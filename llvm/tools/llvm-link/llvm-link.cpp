@@ -12,7 +12,6 @@
 #include "llvm/Transforms/Linker.h"
 #include "llvm/Bytecode/Reader.h"
 #include "llvm/Bytecode/Writer.h"
-#include "llvm/Assembly/Writer.h"
 #include "llvm/Module.h"
 #include "Support/CommandLine.h"
 #include <fstream>
@@ -56,7 +55,7 @@ static inline std::auto_ptr<Module> LoadFile(const std::string &FN) {
     if (Verbose) {
       cerr << "Error opening bytecode file: '" << Filename << "'";
       if (ErrorMessage.size()) cerr << ": " << ErrorMessage;
-      cerr << endl;
+      cerr << "\n";
     }
     
     if (NextLibPathIdx == LibPaths.size()) break;
@@ -104,13 +103,15 @@ int main(int argc, char **argv) {
 
     if (LinkModules(Composite.get(), M.get(), &ErrorMessage)) {
       cerr << "Error linking in '" << InputFilenames[i] << "': "
-	   << ErrorMessage << endl;
+	   << ErrorMessage << "\n";
       return 1;
     }
   }
 
-  if (DumpAsm)
-    cerr << "Here's the assembly:\n" << Composite.get();
+  if (DumpAsm) {
+    cerr << "Here's the assembly:\n";
+    Composite.get()->dump();
+  }
 
   ostream *Out = &cout;  // Default to printing to stdout...
   if (OutputFilename != "-") {
