@@ -8,9 +8,10 @@
 
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineCodeForInstruction.h"
-#include "llvm/CodeGen/MachineCodeForBasicBlock.h"
-#include "llvm/CodeGen/MachineCodeForMethod.h"
-#include "llvm/Analysis/LiveVar/FunctionLiveVarInfo.h" // FIXME: Remove when modularized better
+//#include "llvm/CodeGen/MachineCodeForBasicBlock.h"
+//#include "llvm/CodeGen/MachineCodeForMethod.h"
+#include "llvm/CodeGen/MachineFunction.h"
+//#include "llvm/Analysis/LiveVar/FunctionLiveVarInfo.h" // FIXME: Remove when modularized better
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/Instruction.h"
@@ -18,13 +19,13 @@
 #include <algorithm>
 #include "ModuloSchedGraph.h"
 #include "ModuloScheduling.h"
-#include "llvm/Target/MachineSchedInfo.h"
+#include "llvm/Target/TargetSchedInfo.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/iTerminators.h"
 #include "llvm/iPHINode.h"
 #include "llvm/Constants.h"
 #include <iostream>
-#include <swig.h>
+//#include <swig.h>
 #include <fstream>
 #include "llvm/CodeGen/InstrSelection.h"
 
@@ -67,7 +68,7 @@ void ModuloScheduling::instrScheduling(){
     modSched_os<<"*************************computing modulo schedule ************************\n";
   
   
-  const MachineSchedInfo& msi=target.getSchedInfo();
+  const TargetSchedInfo& msi=target.getSchedInfo();
 
   //number of issue slots in the in each cycle
   int numIssueSlots=msi.maxNumIssueTotal;
@@ -137,13 +138,13 @@ void ModuloScheduling::instrScheduling(){
 }    
 
 //clear memory from the last round and initialize if necessary
-void ModuloScheduling::clearInitMem(const MachineSchedInfo& msi){
+void ModuloScheduling::clearInitMem(const TargetSchedInfo& msi){
   
 
   unsigned numIssueSlots = msi.maxNumIssueTotal;
   //clear nodeScheduled from the last round
   if( ModuloSchedDebugLevel >= ModuloSched_PrintScheduleProcess){
-    modSched_os<< "***** new round  with II= "<<II<<" *******************"<<endl;
+    modSched_os<< "***** new round  with II= "<<II<<" *******************"<<"\n";
     modSched_os<< " **************clear the vector nodeScheduled**************** \n";
   }
   nodeScheduled.clear();
@@ -602,7 +603,7 @@ Instruction*  ModuloScheduling::cloneInstSetMemory(Instruction* orn) {
 bool ModuloScheduling::ScheduleNode(ModuloSchedGraphNode* node,unsigned start, unsigned end, NodeVec& nodeScheduled)
 {
   
-  const MachineSchedInfo& msi=target.getSchedInfo();
+  const TargetSchedInfo& msi=target.getSchedInfo();
   unsigned int numIssueSlots=msi.maxNumIssueTotal;
 
   if( ModuloSchedDebugLevel >= ModuloSched_PrintScheduleProcess)
@@ -620,7 +621,7 @@ bool ModuloScheduling::ScheduleNode(ModuloSchedGraphNode* node,unsigned start, u
       const Instruction* instr=node->getInst();
       MachineCodeForInstruction& tempMvec=  MachineCodeForInstruction::get(instr);
       bool resourceConflict=false;
-      const MachineInstrInfo &mii=msi.getInstrInfo();
+      const TargetInstrInfo &mii=msi.getInstrInfo();
       
       if(coreSchedule.size() < core_i+1 || !coreSchedule[core_i][core_j]){
 	//this->dumpResourceUsageTable();
@@ -784,10 +785,10 @@ void ModuloScheduling::dumpResourceUsageTable(){
 //-----------------------------------------------------------------------
 void ModuloScheduling::dumpSchedule(std::vector< std::vector<ModuloSchedGraphNode*> > thisSchedule){
   
-  const MachineSchedInfo& msi=target.getSchedInfo();
+  const TargetSchedInfo& msi=target.getSchedInfo();
   unsigned numIssueSlots=msi.maxNumIssueTotal;
   for(unsigned i=0;i< numIssueSlots;i++)
-      modSched_os <<"\t#";
+    modSched_os <<"\t#";
   modSched_os<<"\n";
   for(unsigned i=0;i < thisSchedule.size();i++)
     {
@@ -799,7 +800,7 @@ void ModuloScheduling::dumpSchedule(std::vector< std::vector<ModuloSchedGraphNod
 	  modSched_os<<"\t";
       modSched_os<<"\n";
     }
-
+  
 }
 
 
@@ -812,7 +813,7 @@ void ModuloScheduling::dumpSchedule(std::vector< std::vector<ModuloSchedGraphNod
 
 void ModuloScheduling::dumpScheduling(){
   modSched_os<<"dump schedule:"<<"\n";
-  const MachineSchedInfo& msi=target.getSchedInfo();
+  const TargetSchedInfo& msi=target.getSchedInfo();
   unsigned numIssueSlots=msi.maxNumIssueTotal;
   for(unsigned i=0;i< numIssueSlots;i++)
     modSched_os <<"\t#";
@@ -880,7 +881,7 @@ bool ModuloSchedulingPass::runOnFunction(Function &F)
   
   if(ModuloSchedDebugLevel>= ModuloSched_PrintSchedule){
     modSched_fb.open("moduloSchedDebugInfo.output", ios::out);
-    modSched_os<<"******************Modula Scheduling debug information*************************"<<endl;
+    modSched_os<<"******************Modula Scheduling debug information*************************"<<"\n ";
   }
   
   ModuloSchedGraphSet* graphSet = new ModuloSchedGraphSet(&F,target);

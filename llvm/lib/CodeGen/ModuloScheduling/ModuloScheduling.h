@@ -11,6 +11,9 @@
 
 #include "ModuloSchedGraph.h"
 #include <iostream>
+#include <vector>
+
+using std::vector;
 
 class ModuloScheduling:NonCopyable {
  private:
@@ -82,7 +85,7 @@ public:
   //*******************internel functions*******************************
 private:
   //clear memory from the last round and initialize if necessary
-  void clearInitMem(const MachineSchedInfo& );
+  void clearInitMem(const TargetSchedInfo& );
 
   //compute schedule and coreSchedule with the current II
   bool computeSchedule();

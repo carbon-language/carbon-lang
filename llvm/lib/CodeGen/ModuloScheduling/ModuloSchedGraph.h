@@ -13,6 +13,7 @@
 #include "../InstrSched/SchedGraphCommon.h"
 #include "llvm/Instruction.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/TargetInstrInfo.h"
 #include <iostream>
 using std::pair;
 

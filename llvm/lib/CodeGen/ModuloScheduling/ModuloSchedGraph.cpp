@@ -7,7 +7,7 @@
 #include "Support/StringExtras.h"
 #include "Support/STLExtras.h"
 #include <iostream>
-#include <swig.h>
+//#include <swig.h>
 #include "llvm/iOperators.h"
 #include "llvm/iOther.h"
 #include "llvm/iPHINode.h"
@@ -16,7 +16,7 @@
 #include "llvm/Type.h"
 #include "llvm/CodeGen/MachineCodeForInstruction.h"
 #include "llvm/CodeGen/MachineInstr.h"
-#include "llvm/Target/MachineSchedInfo.h"
+#include "llvm/Target/TargetSchedInfo.h"
 
 #define UNIDELAY 1
 #define min(a, b)       ((a) < (b) ? (a) : (b))
@@ -104,7 +104,8 @@ bool isDefinition(const Instruction* I)
 void ModuloSchedGraph::addDefUseEdges(const BasicBlock* bb)
 {
   //collect def instructions, store them in vector
-  const MachineInstrInfo& mii = target.getInstrInfo();
+  //  const TargetInstrInfo& mii = target.getInstrInfo();
+  const TargetInstrInfo& mii = target.getInstrInfo();
   
   typedef std::vector<ModuloSchedGraphNode*> DefVec;
   DefVec defVec;
@@ -274,7 +275,7 @@ void ModuloSchedGraph::buildNodesforBB  (const TargetMachine& target,
 				      RegToRefVecMap& regToRefVecMap,
 				      ValueToDefVecMap& valueToDefVecMap)
 {
-  //const MachineInstrInfo& mii=target.getInstrInfo();
+  //const TargetInstrInfo& mii=target.getInstrInfo();
   
   //Build graph nodes for each LLVM instruction and gather def/use info.
   //Do both together in a single pass over all machine instructions.
@@ -889,7 +890,7 @@ void ModuloSchedGraph::buildGraph (const TargetMachine& target)
     this->dump(bb);
 
   if(!isLoop(bb)){
-    modSched_os <<" dumping non-loop BB:"<<endl;
+    modSched_os <<" dumping non-loop BB:\n";
     dump(bb);
   }
   if( isLoop(bb))
@@ -1109,7 +1110,7 @@ void  ModuloSchedGraph::addResourceUsage(std::vector<pair<int,int> >& ruVec, int
 }
 void ModuloSchedGraph::dumpResourceUsage(std::vector< pair<int,int> > &ru)
 {
-  MachineSchedInfo& msi = (MachineSchedInfo&)target.getSchedInfo();
+  TargetSchedInfo& msi = (TargetSchedInfo&)target.getSchedInfo();
   
   std::vector<pair<int,int> > resourceNumVector = msi.resourceNumVector;
   modSched_os <<"resourceID\t"<<"resourceNum"<<"\n";
@@ -1128,8 +1129,8 @@ void ModuloSchedGraph::dumpResourceUsage(std::vector< pair<int,int> > &ru)
 int ModuloSchedGraph::computeResII(const BasicBlock* bb)
 {
   
-  const MachineInstrInfo& mii = target.getInstrInfo();
-  const MachineSchedInfo& msi = target.getSchedInfo();
+  const TargetInstrInfo& mii = target.getInstrInfo();
+  const TargetSchedInfo& msi = target.getSchedInfo();
   
   int ResII;
   std::vector<pair<int,int> > resourceUsage; //pair<int resourceid, int resourceUsageTimes_in_the_whole_block>
