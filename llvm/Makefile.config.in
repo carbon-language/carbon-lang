@@ -45,7 +45,7 @@ ifeq ($(PROJECT_NAME),LLVM)
 LLVM_SRC_ROOT   := @abs_top_srcdir@
 LLVM_OBJ_ROOT   := @abs_top_builddir@
 PROJ_SRC_ROOT   := $(LLVM_SRC_ROOT)
-PROJ_SRC_DIR    := $(subst //,/,$(LLVM_SRC_ROOT)/$(patsubst $(LLVM_OBJ_ROOT)%,%,$(PROJ_OBJ_DIR)))
+PROJ_SRC_DIR    := $(subst //,/,$(LLVM_SRC_ROOT)/$(patsubst $(PROJ_OBJ_ROOT)%,%,$(PROJ_OBJ_DIR)))
 PROJ_prefix     := @prefix@
 PROJ_bindir     := @prefix@/bin
 PROJ_libdir     := @prefix@/lib
