@@ -4,8 +4,8 @@ implementation
 
 declare int %puts(sbyte*)
 
-void %main() {
+int %main() {
         %reg210 = call int %puts( sbyte* getelementptr ([12 x sbyte]* %.LC0, long 0, long 0) )
-        ret void
+        ret int 0
 }
 
