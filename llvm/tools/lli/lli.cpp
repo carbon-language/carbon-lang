@@ -88,6 +88,13 @@ int main(int argc, char** argv) {
     EE = ExecutionEngine::createInterpreter(M, Config, DebugMode, TraceMode);
 
   // Add the module name to the start of the argv vector...
+  // But delete .bc first, since programs (and users) might not expect to
+  // see it.
+  const std::string ByteCodeFileSuffix (".bc");
+  if (InputFile.rfind (ByteCodeFileSuffix) ==
+      InputFile.length () - ByteCodeFileSuffix.length ()) {
+    InputFile.erase (InputFile.length () - ByteCodeFileSuffix.length ());
+  }
   InputArgv.insert(InputArgv.begin(), InputFile);
 
   // Run the main function!
