@@ -163,3 +163,9 @@ endif:
         ret int %tmp.4
 }
 
+int %test24(int %A) {
+	%B = add int %A, 1
+	%C = shl int %B, ubyte 1
+	%D = sub int %C, 2
+	ret int %D             ;; A << 1
+}
