@@ -8,9 +8,10 @@
 ##===----------------------------------------------------------------------===##
 LEVEL = ../..
 TOOLNAME = analyze
-USEDLIBS = asmparser bcreader analysis ipa datastructure scalaropts.a transforms.a \
-           target.a scalaropts.a transformutils.a vmcore support LLVMsystem.a
+USEDLIBS = asmparser bcreader analysis ipa datastructure scalaropts.a \
+           transforms.a target.a scalaropts.a transformutils.a vmcore support \
+           LLVMsystem.a
+
 TOOLLINKOPTS = $(PLATFORMLIBDL)
 
 include $(LEVEL)/Makefile.common
-
