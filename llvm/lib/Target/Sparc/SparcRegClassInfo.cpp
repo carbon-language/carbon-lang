@@ -8,7 +8,7 @@
 #include "SparcInternals.h"
 #include "llvm/Type.h"
 #include "../../CodeGen/RegAlloc/RegAllocCommon.h"   // FIXME!
-#include "llvm/CodeGen/IGNode.h"
+#include "../../CodeGen/RegAlloc/IGNode.h"           // FIXME!
 
 //-----------------------------------------------------------------------------
 // Int Register Class - method for coloring a node in the interference graph.
