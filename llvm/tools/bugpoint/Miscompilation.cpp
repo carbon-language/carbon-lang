@@ -42,6 +42,9 @@ namespace {
   };
 }
 
+/// TestResult - After passes have been split into a test group and a control
+/// group, see if they still break the program.
+///
 ReduceMiscompilingPasses::TestResult
 ReduceMiscompilingPasses::doTest(std::vector<const PassInfo*> &Prefix,
                                  std::vector<const PassInfo*> &Suffix) {
@@ -159,6 +162,7 @@ namespace {
 /// matches, return false, otherwise return true.  If the DeleteInputs argument
 /// is set to true then this function deletes both input modules before it
 /// returns.
+///
 static bool TestMergedProgram(BugDriver &BD, Module *M1, Module *M2,
                               bool DeleteInputs) {
   // Link the two portions of the program back to together.
@@ -183,6 +187,10 @@ static bool TestMergedProgram(BugDriver &BD, Module *M1, Module *M2,
   return Broken;
 }
 
+/// TestFuncs - split functions in a Module into two groups: those that are
+/// under consideration for miscompilation vs. those that are not, and test
+/// accordingly. Each group of functions becomes a separate Module.
+///
 bool ReduceMiscompilingFunctions::TestFuncs(const std::vector<Function*>&Funcs){
   // Test to see if the function is misoptimized if we ONLY run it on the
   // functions listed in Funcs.
@@ -201,6 +209,9 @@ bool ReduceMiscompilingFunctions::TestFuncs(const std::vector<Function*>&Funcs){
   return TestFn(BD, ToOptimize, ToNotOptimize);
 }
 
+/// DisambiguateGlobalSymbols - Mangle symbols to guarantee uniqueness by
+/// modifying predominantly internal symbols rather than external ones.
+///
 static void DisambiguateGlobalSymbols(Module *M) {
   // Try not to cause collisions by minimizing chances of renaming an
   // already-external symbol, so take in external globals and functions as-is.
@@ -217,6 +228,7 @@ static void DisambiguateGlobalSymbols(Module *M) {
 /// ExtractLoops - Given a reduced list of functions that still exposed the bug,
 /// check to see if we can extract the loops in the region without obscuring the
 /// bug.  If so, it reduces the amount of code identified.
+///
 static bool ExtractLoops(BugDriver &BD,
                          bool (*TestFn)(BugDriver &, Module *, Module *),
                          std::vector<Function*> &MiscompiledFunctions) {
@@ -306,6 +318,7 @@ static bool ExtractLoops(BugDriver &BD,
 
 /// DebugAMiscompilation - This is a generic driver to narrow down
 /// miscompilations, either in an optimization or a code generator.
+///
 static std::vector<Function*>
 DebugAMiscompilation(BugDriver &BD,
                      bool (*TestFn)(BugDriver &, Module *, Module *)) {
@@ -355,6 +368,7 @@ DebugAMiscompilation(BugDriver &BD,
 /// TestOptimizer - This is the predicate function used to check to see if the
 /// "Test" portion of the program is misoptimized.  If so, return true.  In any
 /// case, both module arguments are deleted.
+///
 static bool TestOptimizer(BugDriver &BD, Module *Test, Module *Safe) {
   // Run the optimization passes on ToOptimize, producing a transformed version
   // of the functions being tested.
@@ -412,6 +426,7 @@ bool BugDriver::debugMiscompilation() {
 
 /// CleanupAndPrepareModules - Get the specified modules ready for code
 /// generator testing.
+///
 static void CleanupAndPrepareModules(BugDriver &BD, Module *&Test,
                                      Module *Safe) {
   // Clean up the modules, removing extra cruft that we don't need anymore...
@@ -551,6 +566,7 @@ static void CleanupAndPrepareModules(BugDriver &BD, Module *&Test,
 /// TestCodeGenerator - This is the predicate function used to check to see if
 /// the "Test" portion of the program is miscompiled by the code generator under
 /// test.  If so, return true.  In any case, both module arguments are deleted.
+///
 static bool TestCodeGenerator(BugDriver &BD, Module *Test, Module *Safe) {
   CleanupAndPrepareModules(BD, Test, Safe);
 
@@ -587,6 +603,8 @@ static bool TestCodeGenerator(BugDriver &BD, Module *Test, Module *Safe) {
 }
 
 
+/// debugCodeGenerator - debug errors in LLC, LLI, or CBE.
+///
 bool BugDriver::debugCodeGenerator() {
   if ((void*)cbe == (void*)Interpreter) {
     std::string Result = executeProgramWithCBE("bugpoint.cbe.out");
