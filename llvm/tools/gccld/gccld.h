@@ -12,18 +12,13 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Module.h"
+#include "llvm/Linker.h"
 
 #include <string>
 #include <set>
 #include <ostream>
 
 namespace llvm {
-
-void
-GetAllDefinedSymbols (Module *M, std::set<std::string> &DefinedSymbols);
-
-void
-GetAllUndefinedSymbols(Module *M, std::set<std::string> &UndefinedSymbols);
 
 int
 GenerateBytecode (Module * M,
@@ -46,22 +41,5 @@ GenerateNative (const std::string & OutputFilename,
                 const std::vector<std::string> & LibPaths,
                 const std::string & gcc,
                 char ** const envp);
-
-std::auto_ptr<Module>
-LoadObject (const std::string & FN, std::string &OutErrorMessage);
-
-std::string FindLib(const std::string &Filename,
-                    const std::vector<std::string> &Paths,
-                    bool SharedObjectOnly = false);
-  
-void LinkLibraries (const char * progname, Module* HeadModule,
-                    const std::vector<std::string> & Libraries,
-                    const std::vector<std::string> & LibPaths,
-                    bool Verbose, bool Native);
-bool
-LinkFiles (const char * progname,
-           Module * HeadModule,
-           const std::vector<std::string> & Files,
-           bool Verbose);
 
 } // End llvm namespace
