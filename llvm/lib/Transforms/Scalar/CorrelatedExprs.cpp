@@ -204,9 +204,9 @@ namespace {
 
     // We don't modify the program, so we preserve all analyses
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-      //AU.preservesCFG();
       AU.addRequired<DominatorSet>();
       AU.addRequired<DominatorTree>();
+      AU.addRequiredID(BreakCriticalEdgesID);
     };
 
     // print - Implement the standard print form to print out analysis
@@ -306,25 +306,6 @@ bool CEE::TransformRegion(BasicBlock *BB, std::set<BasicBlock*> &VisitedBlocks){
 
   // Get the terminator of this basic block...
   TerminatorInst *TI = BB->getTerminator();
-
-  // If this is a conditional branch, make sure that there is a branch target
-  // for each successor that can hold any information gleaned from the branch,
-  // by breaking any critical edges that may be laying about.
-  //
-  if (TI->getNumSuccessors() > 1) {
-    // If any of the successors has multiple incoming branches, add a new dummy
-    // destination branch that only contains an unconditional branch to the real
-    // target.
-    for (unsigned i = 0, e = TI->getNumSuccessors(); i != e; ++i) {
-      BasicBlock *Succ = TI->getSuccessor(i);
-      // If there is more than one predecessor of the destination block, break
-      // this critical edge by inserting a new block.  This updates dominatorset
-      // and dominatortree information.
-      //
-      if (isCriticalEdge(TI, i))
-        SplitCriticalEdge(TI, i, this);
-    }
-  }
 
   // Loop over all of the blocks that this block is the immediate dominator for.
   // Because all information known in this region is also known in all of the
