@@ -23,6 +23,8 @@ namespace LLVMIntrinsic {
 
     setjmp,         // Used to represent a setjmp call in C
     longjmp,        // Used to represent a longjmp call in C
+    sigsetjmp,      // Used to represent a sigsetjmp call in C
+    siglongjmp,     // Used to represent a siglongjmp call in C
 
     //===------------------------------------------------------------------===//
     // This section defines intrinsic functions used to represent Alpha

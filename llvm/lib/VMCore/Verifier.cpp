@@ -517,10 +517,12 @@ void Verifier::visitIntrinsicFunctionCall(LLVMIntrinsic::ID ID, CallInst &CI) {
             " args!", &CI);
     NumArgs = 1;
     break;
-  case LLVMIntrinsic::va_end:  NumArgs = 1; break;
-  case LLVMIntrinsic::va_copy: NumArgs = 2; break;
-  case LLVMIntrinsic::setjmp:  NumArgs = 1; break;
-  case LLVMIntrinsic::longjmp: NumArgs = 2; break;
+  case LLVMIntrinsic::va_end:          NumArgs = 1; break;
+  case LLVMIntrinsic::va_copy:         NumArgs = 2; break;
+  case LLVMIntrinsic::setjmp:          NumArgs = 1; break;
+  case LLVMIntrinsic::longjmp:         NumArgs = 2; break;
+  case LLVMIntrinsic::sigsetjmp:       NumArgs = 2; break;
+  case LLVMIntrinsic::siglongjmp:      NumArgs = 2; break;
  
   case LLVMIntrinsic::alpha_ctlz:      NumArgs = 1; break;
   case LLVMIntrinsic::alpha_cttz:      NumArgs = 1; break;
