@@ -305,31 +305,44 @@ ChooseRegOrImmed(Value* val,
   
   // Check for the common case first: argument is not constant
   // 
-  if (val->getValueType() != Value::ConstantVal)
-    return opType;
+  ConstPoolVal *CPV = val->castConstant();
+  if (!CPV) return opType;
+
+  if (CPV->getType() == Type::BoolTy) {
+    ConstPoolBool *CPB = (ConstPoolBool*)CPV;
+    if (!CPB->getValue() && target.zeroRegNum >= 0) {
+      getMachineRegNum = target.zeroRegNum;
+      return MachineOperand::MO_MachineRegister;
+    }
+
+    getImmedValue = 1;
+    return MachineOperand::MO_SignExtendedImmed;
+  }
   
+  if (!CPV->getType()->isIntegral()) return opType;
+
   // Now get the constant value and check if it fits in the IMMED field.
   // Take advantage of the fact that the max unsigned value will rarely
   // fit into any IMMED field and ignore that case (i.e., cast smaller
   // unsigned constants to signed).
   // 
-  bool isValidConstant;
-  int64_t intValue = GetConstantValueAsSignedInt(val, isValidConstant);
-  
-  if (isValidConstant)
-    {
-      if (intValue == 0 && target.zeroRegNum >= 0)
-	{
-	  opType = MachineOperand::MO_MachineRegister;
-	  getMachineRegNum = target.zeroRegNum;
-	}
-      else if (canUseImmed &&
-	       target.getInstrInfo().constantFitsInImmedField(opCode,intValue))
-	{
-	  opType = MachineOperand::MO_SignExtendedImmed;
-	  getImmedValue = intValue;
-	}
-    }
+  int64_t intValue;
+  if (CPV->getType()->isSigned()) {
+    intValue = ((ConstPoolSInt*)CPV)->getValue();
+  } else {
+    uint64_t V = ((ConstPoolUInt*)CPV)->getValue();
+    if (V >= INT64_MAX) return opType;
+    intValue = (int64_t)V;
+  }
+
+  if (intValue == 0 && target.zeroRegNum >= 0){
+    opType = MachineOperand::MO_MachineRegister;
+    getMachineRegNum = target.zeroRegNum;
+  } else if (canUseImmed &&
+	     target.getInstrInfo().constantFitsInImmedField(opCode, intValue)) {
+    opType = MachineOperand::MO_SignExtendedImmed;
+    getImmedValue = intValue;
+  }
   
   return opType;
 }
