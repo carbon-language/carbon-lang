@@ -352,7 +352,6 @@ namespace {
     /// vreg the value is produced in, so we only emit one copy of each compiled
     /// tree.
     std::map<SDOperand, unsigned> ExprMap;
-    std::set<SDOperand> LoweredTokens;
 
   public:
     ISel(TargetMachine &TM) : SelectionDAGISel(X86Lowering), X86Lowering(TM) {
@@ -445,7 +444,6 @@ void ISel::InstructionSelectBasicBlock(SelectionDAG &DAG) {
   
   // Clear state used for selection.
   ExprMap.clear();
-  LoweredTokens.clear();
   RegPressureMap.clear();
 }
 
@@ -1107,8 +1105,7 @@ bool ISel::isFoldableLoad(SDOperand Op, SDOperand OtherOp) {
   assert(Op.ResNo == 0 && "Not a use of the value of the load?");
   if (ExprMap.count(Op.getValue(1))) return false;
   assert(!ExprMap.count(Op.getValue(0)) && "Value in map but not token chain?");
-  assert(!LoweredTokens.count(Op.getValue(1)) &&
-         "Token lowered but value not in map?");
+  assert(!ExprMap.count(Op.getValue(1))&&"Token lowered but value not in map?");
 
   // If there is not just one use of its value, we cannot fold.
   if (!Op.Val->hasNUsesOfValue(1, 0)) return false;
@@ -1143,8 +1140,7 @@ void ISel::EmitFoldedLoad(SDOperand Op, X86AddressMode &AM) {
   // The chain for this load is now lowered.
   assert(ExprMap.count(SDOperand(Op.Val, 1)) == 0 &&
          "Load emitted more than once?");
-  ExprMap[SDOperand(Op.Val, 1)] = 1;
-  if (!LoweredTokens.insert(Op.getValue(1)).second)
+  if (!ExprMap.insert(std::make_pair(Op.getValue(1), 1)).second)
     assert(0 && "Load emitted more than once!");
 }
 
@@ -2091,9 +2087,10 @@ unsigned ISel::SelectExpr(SDOperand N) {
     return Result;
   case ISD::LOAD:
     // Make sure we generate both values.
-    if (Result != 1)
-      ExprMap[N.getValue(1)] = 1;   // Generate the token
-    else
+    if (Result != 1) {  // Generate the token
+      if (!ExprMap.insert(std::make_pair(N.getValue(1), 1)).second)
+        assert(0 && "Load already emitted!?");
+    } else
       Result = ExprMap[N.getValue(0)] = MakeReg(N.getValue(0).getValueType());
 
     switch (Node->getValueType(0)) {
@@ -2269,7 +2266,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
 
   case ISD::CALL:
     // The chain for this call is now lowered.
-    LoweredTokens.insert(N.getValue(Node->getNumValues()-1));
+    ExprMap.insert(std::make_pair(N.getValue(Node->getNumValues()-1), 1));
 
     if (GlobalAddressSDNode *GASD =
                dyn_cast<GlobalAddressSDNode>(N.getOperand(1))) {
@@ -2448,7 +2445,8 @@ bool ISel::TryToFoldLoadOpStore(SDNode *Node) {
     }
     
     if (Opc) {
-      LoweredTokens.insert(TheLoad.getValue(1));
+      if (!ExprMap.insert(std::make_pair(TheLoad.getValue(1), 1)).second)
+        assert(0 && "Already emitted?");
       Select(Chain);
 
       X86AddressMode AM;
@@ -2513,7 +2511,8 @@ bool ISel::TryToFoldLoadOpStore(SDNode *Node) {
   case MVT::i32: Opc = TabPtr[5]; break;
   }
 
-  LoweredTokens.insert(TheLoad.getValue(1));
+  if (!ExprMap.insert(std::make_pair(TheLoad.getValue(1), 1)).second)
+    assert(0 && "Already emitted?");
   Select(Chain);
   Select(TheLoad.getOperand(0));
 
@@ -2529,7 +2528,7 @@ void ISel::Select(SDOperand N) {
   unsigned Tmp1, Tmp2, Opc;
 
   // FIXME: Disable for our current expansion model!
-  if (/*!N->hasOneUse() &&*/ !LoweredTokens.insert(N).second)
+  if (/*!N->hasOneUse() &&*/ !ExprMap.insert(std::make_pair(N, 1)).second)
     return;  // Already selected.
 
   SDNode *Node = N.Val;
@@ -2675,7 +2674,7 @@ void ISel::Select(SDOperand N) {
     FoundIt:
       // Only handle unary operators right now.
       if (User->getNumOperands() == 1) {
-        LoweredTokens.erase(N);
+        ExprMap.erase(N);
         SelectExpr(SDOperand(User, 0));
         return;
       }
