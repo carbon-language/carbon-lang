@@ -171,7 +171,7 @@ public:
   /// cause a degenerate basic block to be formed, having a terminator inside of
   /// the basic block).
   ///
-  BasicBlock *splitBasicBlock(iterator I);
+  BasicBlock *splitBasicBlock(iterator I, const std::string &BBName = "");
 };
 
 #endif

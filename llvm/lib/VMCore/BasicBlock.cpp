@@ -217,12 +217,12 @@ void BasicBlock::removePredecessor(BasicBlock *Pred) {
 // cause a degenerate basic block to be formed, having a terminator inside of
 // the basic block). 
 //
-BasicBlock *BasicBlock::splitBasicBlock(iterator I) {
+BasicBlock *BasicBlock::splitBasicBlock(iterator I, const std::string &BBName) {
   assert(getTerminator() && "Can't use splitBasicBlock on degenerate BB!");
   assert(I != InstList.end() && 
 	 "Trying to get me to create degenerate basic block!");
 
-  BasicBlock *New = new BasicBlock("", getParent());
+  BasicBlock *New = new BasicBlock(BBName, getParent());
 
   // Go from the end of the basic block through to the iterator pointer, moving
   // to the new basic block...
