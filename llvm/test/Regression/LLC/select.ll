@@ -30,7 +30,7 @@ void "unusedBool"(int * %x, int * %y)
 begin
 ; <label>:0				;		[#uses=0]
 	seteq int * %x, %y		; <bool>:0	[#uses=1]
-	not bool %0			; <bool>:1	[#uses=0]
+	xor bool %0, true		; <bool>:1	[#uses=0]
 	setne int * %x, %y		; <bool>:2	[#uses=0]
 	ret void
 end
@@ -100,7 +100,7 @@ loop:
 	%F = add int %A, %B
 	%G = sub int %D, -4
 	%D = setle int %G, 0
-	%E = not bool %D
+	%E = xor bool %D, true
 	br bool %E, label %loop, label %Top
 
 retlbl:
@@ -118,7 +118,7 @@ Top:
 	%p = add float %x, %y    ; Def 2 - float
 	%z = sub float %x, %y    ; Def 3 - float
 	%b = setle float %p, %z	 ; Def 0 - bool
-	%c = not bool %b	 ; Def 1 - bool
+	%c = xor bool %b, true	 ; Def 1 - bool
 	br bool %b, label %Top, label %goon
 goon:
 	ret void
