@@ -10,7 +10,12 @@
 LEVEL := ..
 PARALLEL_DIRS := llvmc llvm-as llvm-dis opt gccas llc llvm-link lli gccld \
                  llvm-stub analyze extract bugpoint llvm-nm llvm-prof llvm-db \
-		 llvm-ar llvm-bcanalyzer
+                 llvm-ar llvm-bcanalyzer llee
+
+include $(LEVEL)/Makefile.config
+
+ifeq ($(ARCH), Sparc)
+PARALLEL_DIRS := $(filter-out llee, $(PARALLEL_DIRS))
+endif
 
 include $(LEVEL)/Makefile.common
-
