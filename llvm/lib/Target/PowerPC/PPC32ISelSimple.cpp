@@ -3835,18 +3835,19 @@ void PPC32ISel::emitGEPOperation(MachineBasicBlock *MBB,
   unsigned TargetReg = getReg(GEPI, MBB, IP);
   unsigned basePtrReg = getReg(Src, MBB, IP);
 
-  if ((indexReg == 0) && remainder->isNullValue())
-    RegMap[GEPI] = basePtrReg;
-
+  if ((indexReg == 0) && remainder->isNullValue()) {
+    BuildMI(*MBB, IP, PPC::OR, 2, TargetReg).addReg(basePtrReg)
+      .addReg(basePtrReg);
+    return;
+  }
   if (!remainder->isNullValue()) {
     unsigned TmpReg = (indexReg == 0) ? TargetReg : makeAnotherReg(Type::IntTy);
     emitBinaryConstOperation(MBB, IP, basePtrReg, remainder, 0, TmpReg);
     basePtrReg = TmpReg;
   }
-  if (indexReg != 0) { 
+  if (indexReg != 0)
     BuildMI(*MBB, IP, PPC::ADD, 2, TargetReg).addReg(indexReg)
       .addReg(basePtrReg);
-  }
 }
 
 /// visitAllocaInst - If this is a fixed size alloca, allocate space from the
