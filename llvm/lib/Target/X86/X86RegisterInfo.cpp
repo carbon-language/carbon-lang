@@ -31,8 +31,8 @@ X86RegisterInfo::storeReg2RegOffset(MachineBasicBlock *MBB,
                                     unsigned ImmOffset, unsigned dataSize)
   const
 {
-  MachineInstr *MI = addRegOffset(BuildMI(X86::MOVrm32, 5).addReg(SrcReg),
-                                  DestReg, ImmOffset);
+  MachineInstr *MI = addRegOffset(BuildMI(X86::MOVrm32, 5),
+                                  DestReg, ImmOffset).addReg(SrcReg);
   return ++(MBB->insert(MBBI, MI));
 }
 
