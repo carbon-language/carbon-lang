@@ -515,7 +515,13 @@ static bool setValueName(Value *V, char *NameStr) {
     CurFun.CurrentFunction->getSymbolTable() : 
     CurModule.CurrentModule->getSymbolTable();
 
-  Value *Existing = ST.lookup(V->getType(), Name);
+  Value *Existing;
+  // FIXME: this is really gross
+  if (V->getType() != Type::TypeTy)
+    Existing = ST.lookup(V->getType(), Name);
+  else
+    Existing = ST.lookupType(Name);
+
   if (Existing) {    // Inserting a name that is already defined???
     // There is only one case where this is allowed: when we are refining an
     // opaque type.  In this case, Existing will be an opaque type.
