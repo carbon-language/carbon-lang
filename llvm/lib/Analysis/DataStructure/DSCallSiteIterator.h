@@ -39,9 +39,11 @@ struct DSCallSiteIterator {
         DSNode *CalleeNode = (*FCs)[CallSite].getCalleeNode();
         if (CallSiteEntry || isCompleteNode(CalleeNode)) {
           const std::vector<GlobalValue*> &Callees = CalleeNode->getGlobals();
-          
-          if (CallSiteEntry < Callees.size())
-            return;
+          while (CallSiteEntry < Callees.size()) {
+            if (isa<Function>(Callees[CallSiteEntry]))
+              return;
+            ++CallSiteEntry;
+          }
         }
       }
       CallSiteEntry = 0;
