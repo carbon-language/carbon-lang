@@ -137,7 +137,9 @@ bool LowerSetJmp::run(Module& M)
     for (Value::use_iterator B = SetJmp->use_begin(), E = SetJmp->use_end();
          B != E; ++B) {
       BasicBlock* BB = cast<Instruction>(*B)->getParent();
-      DFSBlocks.insert(df_begin(BB), df_end(BB));
+      for (df_ext_iterator<BasicBlock*> I = df_ext_begin(BB, BBSet),
+             E = df_ext_end(BB, BBSet); I != E; ++I)
+        /* empty */;
     }
 
     while (!SetJmp->use_empty()) {
