@@ -149,7 +149,9 @@ class BranchV8<bits<4> cc, string nm> : F2_2<cc, 0b010, nm> {
   let isBranch = 1;
   let isTerminator = 1;
 }
-def BA   : BranchV8<0b1000, "ba">;
+
+let isBarrier = 1 in
+  def BA   : BranchV8<0b1000, "ba">;
 def BN   : BranchV8<0b0000, "bn">;
 def BNE  : BranchV8<0b1001, "bne">;
 def BE   : BranchV8<0b0001, "be">;
