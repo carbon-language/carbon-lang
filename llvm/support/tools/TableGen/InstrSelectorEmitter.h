@@ -194,21 +194,24 @@ public:
   std::map<Record*, NodeType> &getNodeTypes() { return NodeTypes; }
 
 private:
-  // ProcessNodeTypes - Process all of the node types in the current
-  // RecordKeeper, turning them into the more accessible NodeTypes data
-  // structure.
-  void ProcessNodeTypes();
+  // ReadNodeTypes - Read in all of the node types in the current RecordKeeper,
+  // turning them into the more accessible NodeTypes data structure.
+  void ReadNodeTypes();
 
-  // ProcessNonTerminals - Read in all nonterminals and incorporate them into
-  // our pattern database.
-  void ProcessNonterminals();
+  // ReadNonTerminals - Read in all nonterminals and incorporate them into our
+  // pattern database.
+  void ReadNonterminals();
 
-  // ProcessInstructionPatterns - Read in all subclasses of Instruction, and
+  // ReadInstructionPatterns - Read in all subclasses of Instruction, and
   // process those with a useful Pattern field.
-  void ProcessInstructionPatterns();
+  void ReadInstructionPatterns();
 
-  // ProcessExpanderPatterns - Read in all of the expanded patterns.
-  void ProcessExpanderPatterns();
+  // ReadExpanderPatterns - Read in all of the expanded patterns.
+  void ReadExpanderPatterns();
+
+  // InstantiateNonterminals - Instantiate any unresolved nonterminals with
+  // information from the context that they are used in.
+  void InstantiateNonterminals();
 };
 
 #endif

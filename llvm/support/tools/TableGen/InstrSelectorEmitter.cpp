@@ -261,11 +261,10 @@ std::ostream &operator<<(std::ostream &OS, const Pattern &P) {
 // InstrSelectorEmitter implementation
 //
 
-/// ProcessNodeTypes - Process all of the node types in the current
-/// RecordKeeper, turning them into the more accessible NodeTypes data
-/// structure.
+/// ReadNodeTypes - Read in all of the node types in the current RecordKeeper,
+/// turning them into the more accessible NodeTypes data structure.
 ///
-void InstrSelectorEmitter::ProcessNodeTypes() {
+void InstrSelectorEmitter::ReadNodeTypes() {
   std::vector<Record*> Nodes = Records.getAllDerivedDefinitions("DagNode");
   DEBUG(std::cerr << "Getting node types: ");
   for (unsigned i = 0, e = Nodes.size(); i != e; ++i) {
@@ -301,61 +300,66 @@ void InstrSelectorEmitter::ProcessNodeTypes() {
   DEBUG(std::cerr << "DONE!\n");
 }
 
-// ProcessNonTerminals - Read in all nonterminals and incorporate them into
-// our pattern database.
-void InstrSelectorEmitter::ProcessNonterminals() {
+// ReadNonTerminals - Read in all nonterminals and incorporate them into our
+// pattern database.
+void InstrSelectorEmitter::ReadNonterminals() {
   std::vector<Record*> NTs = Records.getAllDerivedDefinitions("Nonterminal");
   for (unsigned i = 0, e = NTs.size(); i != e; ++i) {
     DagInit *DI = NTs[i]->getValueAsDag("Pattern");
 
-    Pattern *P = new Pattern(Pattern::Nonterminal, DI, NTs[i], *this);
-
-
-    DEBUG(std::cerr << "Parsed " << *P << "\n");
+    Patterns[NTs[i]] = new Pattern(Pattern::Nonterminal, DI, NTs[i], *this);
+    DEBUG(std::cerr << "Parsed " << *Patterns[NTs[i]] << "\n");
   }
 }
 
 
-/// ProcessInstructionPatterns - Read in all subclasses of Instruction, and
-/// process those with a useful Pattern field.
+/// ReadInstructionPatterns - Read in all subclasses of Instruction, and process
+/// those with a useful Pattern field.
 ///
-void InstrSelectorEmitter::ProcessInstructionPatterns() {
+void InstrSelectorEmitter::ReadInstructionPatterns() {
   std::vector<Record*> Insts = Records.getAllDerivedDefinitions("Instruction");
   for (unsigned i = 0, e = Insts.size(); i != e; ++i) {
     Record *Inst = Insts[i];
     if (DagInit *DI = dynamic_cast<DagInit*>(Inst->getValueInit("Pattern"))) {
-      Pattern *P = new Pattern(Pattern::Instruction, DI, Inst, *this);
-
-      DEBUG(std::cerr << "Parsed " << *P << "\n");
+      Patterns[Inst] = new Pattern(Pattern::Instruction, DI, Inst, *this);
+      DEBUG(std::cerr << "Parsed " << *Patterns[Inst] << "\n");
     }
   }
 }
 
-/// ProcessExpanderPatterns - Read in all expander patterns...
+/// ReadExpanderPatterns - Read in all expander patterns...
 ///
-void InstrSelectorEmitter::ProcessExpanderPatterns() {
+void InstrSelectorEmitter::ReadExpanderPatterns() {
   std::vector<Record*> Expanders = Records.getAllDerivedDefinitions("Expander");
   for (unsigned i = 0, e = Expanders.size(); i != e; ++i) {
     Record *Expander = Expanders[i];
-    DagInit *DI = Expanders[i]->getValueAsDag("Pattern");
+    DagInit *DI = Expander->getValueAsDag("Pattern");
+    Patterns[Expander] = new Pattern(Pattern::Expander, DI, Expander, *this);
+    DEBUG(std::cerr << "Parsed " << *Patterns[Expander] << "\n");
+  }
+}
 
-    Pattern *P = new Pattern(Pattern::Expander, DI, Expanders[i], *this);
 
-    DEBUG(std::cerr << "Parsed " << *P << "\n");
+// InstantiateNonterminals - Instantiate any unresolved nonterminals with
+// information from the context that they are used in.
+void InstrSelectorEmitter::InstantiateNonterminals() {
+  for (std::map<Record*, Pattern*>::iterator I = Patterns.begin(),
+         E = Patterns.end(); I != E; ++I) {
+
   }
 }
 
 
 void InstrSelectorEmitter::run(std::ostream &OS) {
   // Type-check all of the node types to ensure we "understand" them.
-  ProcessNodeTypes();
+  ReadNodeTypes();
   
-  // Read in all of the nonterminals...
-  ProcessNonterminals();
+  // Read in all of the nonterminals, instructions, and expanders...
+  ReadNonterminals();
+  ReadInstructionPatterns();
+  ReadExpanderPatterns();
 
-  // Read all of the instruction patterns in...
-  ProcessInstructionPatterns();
-
-  // Read all of the Expander patterns in...
-  ProcessExpanderPatterns();
+  // Instantiate any unresolved nonterminals with information from the context
+  // that they are used in.
+  InstantiateNonterminals();
 }
