@@ -12,9 +12,12 @@
 
 #include "llvm/Pass.h"
 #include "Support/hash_set"
+#include "Support/EquivalenceClasses.h"
 class BUDataStructures;
+class TDDataStructures;
 class DSNode;
 class DSGraph;
+class CallInst;
 
 namespace PA {
   /// FuncInfo - Represent the pool allocation information for one function in
@@ -33,9 +36,15 @@ namespace PA {
     Function *Clone;
 
     /// ArgNodes - The list of DSNodes which have pools passed in as arguments.
-    ///
+    /// 
     std::vector<DSNode*> ArgNodes;
 
+    /// In order to handle indirect functions, the start and end of the 
+    /// arguments that are useful to this function. 
+    /// The pool arguments useful to this function are PoolArgFirst to 
+    /// PoolArgLast not inclusive.
+    int PoolArgFirst, PoolArgLast;
+    
     /// PoolDescriptors - The Value* (either an argument or an alloca) which
     /// defines the pool descriptor for this DSNode.  Pools are mapped one to
     /// one with nodes in the DSGraph, so this contains a pointer to the node it
@@ -44,7 +53,8 @@ namespace PA {
     /// alloca instruction.  This entry contains a pointer to that alloca if the
     /// pool is locally allocated or the argument it is passed in through if
     /// not.
-    ///
+    /// Note: Does not include pool arguments that are passed in because of
+    /// indirect function calls that are not used in the function.
     std::map<DSNode*, Value*> PoolDescriptors;
 
     /// NewToOldValueMap - When and if a function needs to be cloned, this map
@@ -60,10 +70,35 @@ namespace PA {
 class PoolAllocate : public Pass {
   Module *CurModule;
   BUDataStructures *BU;
+
+  TDDataStructures *TDDS;
   
   std::map<Function*, PA::FuncInfo> FunctionInfo;
+
+  void buildIndirectFunctionSets(Module &M);   
+
+  void FindFunctionPoolArgs(Function &F);   
+  
+  // Debug function to print the FuncECs
+  void printFuncECs();
+  
  public:
-  Function *PoolInit, *PoolDestroy, *PoolAlloc, *PoolFree;
+  Function *PoolInit, *PoolDestroy, *PoolAlloc, *PoolAllocArray, *PoolFree;
+
+  // Equivalence class where functions that can potentially be called via
+  // the same function pointer are in the same class.
+  EquivalenceClasses<Function *> FuncECs;
+
+  // Map from an Indirect CallInst to the set of Functions that it can point to
+  map<CallInst *, vector<Function *> > CallInstTargets;
+
+  // This maps an equivalence class to the last pool argument number for that 
+  // class. This is used because the pool arguments for all functions within
+  // an equivalence class is passed to all the functions in that class.
+  // If an equivalence class does not require pool arguments, it is not
+  // on this map.
+  map<Function *, int> EqClass2LastPoolArg;
+
  public:
   bool run(Module &M);
   
@@ -75,7 +110,9 @@ class PoolAllocate : public Pass {
     std::map<Function*, PA::FuncInfo>::iterator I = FunctionInfo.find(&F);
     return I != FunctionInfo.end() ? &I->second : 0;
   }
-  
+
+  Module *getCurModule() { return CurModule; }
+
  private:
   
   /// AddPoolPrototypes - Add prototypes for the pool functions to the
