@@ -32,7 +32,7 @@ static string getCaption(const DSNode *N, const DSGraph *G) {
     if (N->getTypeEntries()[i].Offset)
       OS << "@" << N->getTypeEntries()[i].Offset;
     if (N->getTypeEntries()[i].isArray)
-      Os << " array";
+      OS << " array";
     OS << "\n";
   }
 
