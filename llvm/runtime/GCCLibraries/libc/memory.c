@@ -6,9 +6,10 @@
 
 #include <stdlib.h>
 
-void *malloc(size_t);
-void free(void *);
-void *memset(void *, int, size_t);
+void *malloc(size_t) __attribute__((weak));
+void free(void *) __attribute__((weak));
+void *memset(void *, int, size_t) __attribute__((weak));
+void *calloc(size_t nelem, size_t elsize) __attribute__((weak));
 
 void *calloc(size_t nelem, size_t elsize) {
   void *Result = malloc(nelem*elsize);
