@@ -231,43 +231,56 @@ bool SimplifyCFG(Function::iterator &BBIt) {
     }
   }
 
-  // Merge basic blocks into their predecessor if there is only one pred, 
-  // and if there is only one successor of the predecessor. 
-  pred_iterator PI(pred_begin(BB));
-  if (PI != pred_end(BB) && *PI != BB &&    // Not empty?  Not same BB?
-      ++PI == pred_end(BB) && !BB->hasConstantReferences()) {
-    BasicBlock *Pred = *pred_begin(BB);
-    TerminatorInst *Term = Pred->getTerminator();
-    assert(Term != 0 && "malformed basic block without terminator!");
-    
-    // Does the predecessor block only have a single successor?
-    succ_iterator SI(succ_begin(Pred));
-    if (++SI == succ_end(Pred)) {
+  // Merge basic blocks into their predecessor if there is only one distinct
+  // pred, and if there is only one distinct successor of the predecessor, and
+  // if there are no PHI nodes.
+  //
+  if (!isa<PHINode>(BB->front()) && !BB->hasConstantReferences()) {
+    pred_iterator PI(pred_begin(BB)), PE(pred_end(BB));
+    BasicBlock *OnlyPred = *PI++;
+    for (; PI != PE; ++PI)  // Search all predecessors, see if they are all same
+      if (*PI != OnlyPred) {
+        OnlyPred = 0;       // There are multiple different predecessors...
+        break;
+      }
+  
+    BasicBlock *OnlySucc = 0;
+    if (OnlyPred && OnlyPred != BB) {   // Don't break self loops
+      // Check to see if there is only one distinct successor...
+      succ_iterator SI(succ_begin(OnlyPred)), SE(succ_end(OnlyPred));
+      OnlySucc = BB;
+      for (; SI != SE; ++SI)
+        if (*SI != OnlySucc) {
+          OnlySucc = 0;     // There are multiple distinct successors!
+          break;
+        }
+    }
+
+    if (OnlySucc) {
       //cerr << "Merging: " << BB << "into: " << Pred;
-      
-      // Delete the unconditianal branch from the predecessor...
-      BasicBlock::iterator DI = Pred->end();
-      assert(Pred->getTerminator() && 
-	     "Degenerate basic block encountered!");  // Empty bb???      
-      delete Pred->getInstList().remove(--DI);        // Destroy uncond branch
+      TerminatorInst *Term = OnlyPred->getTerminator();
+
+      // Delete the unconditional branch from the predecessor...
+      BasicBlock::iterator DI = OnlyPred->end();
+      delete OnlyPred->getInstList().remove(--DI);       // Destroy branch
       
       // Move all definitions in the succecessor to the predecessor...
-      while (!BB->empty()) {
-	DI = BB->begin();
-	Instruction *Def = BB->getInstList().remove(DI); // Remove from front
-	Pred->getInstList().push_back(Def);              // Add to end...
-      }
+      std::vector<Instruction*> Insts(BB->begin(), BB->end());
+      BB->getInstList().remove(BB->begin(), BB->end());
+      OnlyPred->getInstList().insert(OnlyPred->end(),
+                                     Insts.begin(), Insts.end());
       
       // Remove basic block from the function... and advance iterator to the
       // next valid block...
-      BB = M->getBasicBlocks().remove(BBIt);
+      M->getBasicBlocks().remove(BBIt);
 
       // Make all PHI nodes that refered to BB now refer to Pred as their
       // source...
-      BB->replaceAllUsesWith(Pred);
+      BB->replaceAllUsesWith(OnlyPred);
       
       // Inherit predecessors name if it exists...
-      if (BB->hasName() && !Pred->hasName()) Pred->setName(BB->getName());
+      if (BB->hasName() && !OnlyPred->hasName())
+        OnlyPred->setName(BB->getName());
       
       delete BB; // You ARE the weakest link... goodbye
       return true;
