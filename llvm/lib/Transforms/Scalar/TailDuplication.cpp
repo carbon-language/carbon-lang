@@ -41,6 +41,7 @@ namespace {
     bool runOnFunction(Function &F);
   private:
     inline bool shouldEliminateUnconditionalBranch(TerminatorInst *TI);
+    inline bool canEliminateUnconditionalBranch(TerminatorInst *TI);
     inline void eliminateUnconditionalBranch(BranchInst *BI);
     inline void InsertPHINodesIfNecessary(Instruction *OrigInst, Value *NewInst,
                                           BasicBlock *NewBlock);
@@ -63,7 +64,8 @@ Pass *llvm::createTailDuplicationPass() { return new TailDup(); }
 bool TailDup::runOnFunction(Function &F) {
   bool Changed = false;
   for (Function::iterator I = F.begin(), E = F.end(); I != E; )
-    if (shouldEliminateUnconditionalBranch(I->getTerminator())) {
+    if (shouldEliminateUnconditionalBranch(I->getTerminator()) &&
+        canEliminateUnconditionalBranch(I->getTerminator())) {
       eliminateUnconditionalBranch(cast<BranchInst>(I->getTerminator()));
       Changed = true;
     } else {
@@ -109,6 +111,30 @@ bool TailDup::shouldEliminateUnconditionalBranch(TerminatorInst *TI) {
   for (unsigned Size = 0; I != Dest->end(); ++Size, ++I)
     if (Size == 6) return false;  // The block is too large...
   return true;  
+}
+
+/// canEliminateUnconditionalBranch - Unfortunately, the general form of tail
+/// duplication can do very bad things to SSA form, by destroying arbitrary
+/// relationships between dominators and dominator frontiers as it processes the
+/// program.  The right solution for this is to have an incrementally updating
+/// dominator data structure, which can gracefully react to arbitrary
+/// "addEdge/removeEdge" changes to the CFG.  Implementing this is nontrivial,
+/// however, so we just disable the transformation in cases where it is not
+/// currently safe.
+///
+bool TailDup::canEliminateUnconditionalBranch(TerminatorInst *TI) {
+  // Basically, we refuse to make the transformation if any of the values
+  // computed in the 'tail' are used in any other basic blocks.
+  BasicBlock *Tail = TI->getSuccessor(0);
+
+  for (BasicBlock::iterator I = Tail->begin(), E = Tail->end(); I != E; ++I)
+    for (Value::use_iterator UI = I->use_begin(), E = I->use_end(); UI != E;
+         ++UI) {
+      Instruction *User = cast<Instruction>(*UI);
+      if (User->getParent() != Tail || isa<PHINode>(User))
+        return false;
+    }
+  return true;
 }
 
 
