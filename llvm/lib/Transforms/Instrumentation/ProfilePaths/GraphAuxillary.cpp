@@ -17,212 +17,6 @@ using std::vector;
 using std::cerr;
 
 //check if 2 edges are equal (same endpoints and same weight)
-static bool edgesEqual(Edge  ed1, Edge ed2);
-
-//Get the vector of edges that are to be instrumented in the graph
-static void getChords(vector<Edge > &chords, Graph g, Graph st);
-
-//Given a tree t, and a "directed graph" g
-//replace the edges in the tree t with edges that exist in graph
-//The tree is formed from "undirectional" copy of graph
-//So whatever edges the tree has, the undirectional graph 
-//would have too. This function corrects some of the directions in 
-//the tree so that now, all edge directions in the tree match
-//the edge directions of corresponding edges in the directed graph
-static void removeTreeEdges(Graph g, Graph& t);
-
-//Now we select a subset of all edges
-//and assign them some values such that 
-//if we consider just this subset, it still represents
-//the path sum along any path in the graph
-static map<Edge, int> getEdgeIncrements(Graph& g, Graph& t);
-
-//Based on edgeIncrements (above), now obtain
-//the kind of code to be inserted along an edge
-//The idea here is to minimize the computation
-//by inserting only the needed code
-static void getCodeInsertions(Graph &g, map<Edge, getEdgeCode *> &Insertions,
-                              vector<Edge > &chords, 
-                              map<Edge,int> &edIncrements);
-
-//Move the incoming dummy edge code and outgoing dummy
-//edge code over to the corresponding back edge
-static void moveDummyCode(const vector<Edge> &stDummy, 
-                          const vector<Edge> &exDummy, 
-                          const vector<Edge> &be,  
-                          map<Edge, getEdgeCode *> &insertions);
-
-
-
-//Do graph processing: to determine minimal edge increments, 
-//appropriate code insertions etc and insert the code at
-//appropriate locations
-void processGraph(Graph &g, 
-		  Instruction *rInst, 
-		  Instruction *countInst, 
-		  vector<Edge >& be, 
-		  vector<Edge >& stDummy, 
-		  vector<Edge >& exDummy){
-  //Given a graph: with exit->root edge, do the following in seq:
-  //1. get back edges
-  //2. insert dummy edges and remove back edges
-  //3. get edge assignments
-  //4. Get Max spanning tree of graph:
-  //   -Make graph g2=g undirectional
-  //   -Get Max spanning tree t
-  //   -Make t undirectional
-  //   -remove edges from t not in graph g
-  //5. Get edge increments
-  //6. Get code insertions
-  //7. move code on dummy edges over to the back edges
-  
-
-  //This is used as maximum "weight" for 
-  //priority queue
-  //This would hold all 
-  //right as long as number of paths in the graph
-  //is less than this
-  const int INFINITY=99999999;
-
-
-  //step 1-3 are already done on the graph when this function is called
-#ifdef DEBUG_PATH_PROFILES 
-  printGraph(g);
-#endif
-  //step 4: Get Max spanning tree of graph
-
-  //now insert exit to root edge
-  //if its there earlier, remove it!
-  //assign it weight INFINITY
-  //so that this edge IS ALWAYS IN spanning tree
-  //Note than edges in spanning tree do not get 
-  //instrumented: and we do not want the
-  //edge exit->root to get instrumented
-  //as it MAY BE a dummy edge
-  Edge ed(g.getExit(),g.getRoot(),INFINITY);
-  g.addEdge(ed,INFINITY);
-  Graph g2=g;
-
-  //make g2 undirectional: this gives a better
-  //maximal spanning tree
-  g2.makeUnDirectional();
-#ifdef DEBUG_PATH_PROFILES
-  printGraph(g2);
-#endif
-  Graph *t=g2.getMaxSpanningTree();
-#ifdef DEBUG_PATH_PROFILES
-  printGraph(*t);
-#endif
-  //now edges of tree t have weights reversed
-  //(negative) because the algorithm used
-  //to find max spanning tree is 
-  //actually for finding min spanning tree
-  //so get back the original weights
-  t->reverseWts();
-
-  //Ordinarily, the graph is directional
-  //lets converts the graph into an 
-  //undirectional graph
-  //This is done by adding an edge
-  //v->u for all existing edges u->v
-  t->makeUnDirectional();
-
-  //Given a tree t, and a "directed graph" g
-  //replace the edges in the tree t with edges that exist in graph
-  //The tree is formed from "undirectional" copy of graph
-  //So whatever edges the tree has, the undirectional graph 
-  //would have too. This function corrects some of the directions in 
-  //the tree so that now, all edge directions in the tree match
-  //the edge directions of corresponding edges in the directed graph
-  removeTreeEdges(g, *t);
-#ifdef DEBUG_PATH_PROFILES
-  cerr<<"Spanning tree---------\n";
-  printGraph(*t);
-  cerr<<"-------end spanning tree\n";
-#endif
-  //now remove the exit->root node
-  //and re-add it with weight 0
-  //since infinite weight is kinda confusing
-  g.removeEdge(ed);
-  Edge edNew(g.getExit(), g.getRoot(),0);
-  g.addEdge(edNew,0);
-  if(t->hasEdge(ed)){
-    t->removeEdge(ed);
-    t->addEdge(edNew,0);
-  }
-
-#ifdef DEBUG_PATH_PROFILES
-  printGraph(g);
-  printGraph(*t);
-#endif
-  //step 5: Get edge increments
-
-  //Now we select a subset of all edges
-  //and assign them some values such that 
-  //if we consider just this subset, it still represents
-  //the path sum along any path in the graph
-  map<Edge, int> increment=getEdgeIncrements(g,*t);
-#ifdef DEBUG_PATH_PROFILES
-  //print edge increments for debugging
-  for(map<Edge, int>::iterator M_I=increment.begin(), M_E=increment.end(); 
-      M_I!=M_E; ++M_I){
-    printEdge(M_I->first);
-    cerr<<"Increment for above:"<<M_I->second<<"\n";
-  }
-#endif
- 
-  //step 6: Get code insertions
-  
-  //Based on edgeIncrements (above), now obtain
-  //the kind of code to be inserted along an edge
-  //The idea here is to minimize the computation
-  //by inserting only the needed code
-  vector<Edge> chords;
-  getChords(chords, g, *t);
-
-  map<Edge, getEdgeCode *> codeInsertions;
-  getCodeInsertions(g, codeInsertions, chords,increment);
-  
-#ifdef DEBUG_PATH_PROFILES
-  //print edges with code for debugging
-  cerr<<"Code inserted in following---------------\n";
-  for(map<Edge, getEdgeCode *>::iterator cd_i=codeInsertions->begin(), 
-	cd_e=codeInsertions->end(); cd_i!=cd_e; ++cd_i){
-    printEdge(cd_i->first);
-    cerr<<cd_i->second->getCond()<<":"<<cd_i->second->getInc()<<"\n";
-  }
-  cerr<<"-----end insertions\n";
-#endif
-  //step 7: move code on dummy edges over to the back edges
-
-  //Move the incoming dummy edge code and outgoing dummy
-  //edge code over to the corresponding back edge
-  moveDummyCode(stDummy, exDummy, be, codeInsertions);
-  
-#ifdef DEBUG_PATH_PROFILES
-  //debugging info
-  cerr<<"After moving dummy code\n";
-  for(map<Edge, getEdgeCode *>::iterator cd_i=codeInsertions.begin(), 
-	cd_e=codeInsertions.end(); cd_i != cd_e; ++cd_i){
-    printEdge(cd_i->first);
-    cerr<<cd_i->second->getCond()<<":"
-	<<cd_i->second->getInc()<<"\n";
-  }
-  cerr<<"Dummy end------------\n";
-#endif
-
-  //see what it looks like...
-  //now insert code along edges which have codes on them
-  for(map<Edge, getEdgeCode *>::iterator MI=codeInsertions.begin(), 
-	ME=codeInsertions.end(); MI!=ME; ++MI){
-    Edge ed=MI->first;
-    insertBB(ed, MI->second, rInst, countInst);
-  } 
-}
-
-
-
-//check if 2 edges are equal (same endpoints and same weight)
 static bool edgesEqual(Edge  ed1, Edge ed2){
   return ((ed1==ed2) && ed1.getWeight()==ed2.getWeight());
 }
@@ -663,6 +457,173 @@ static void moveDummyCode(const vector<Edge> &stDummy,
   cerr<<"SIZE OF INSERTIONS AFTER DEL "<<insertions.size()<<"\n";
 #endif
 }
+
+//Do graph processing: to determine minimal edge increments, 
+//appropriate code insertions etc and insert the code at
+//appropriate locations
+void processGraph(Graph &g, 
+		  Instruction *rInst, 
+		  Instruction *countInst, 
+		  vector<Edge >& be, 
+		  vector<Edge >& stDummy, 
+		  vector<Edge >& exDummy){
+  //Given a graph: with exit->root edge, do the following in seq:
+  //1. get back edges
+  //2. insert dummy edges and remove back edges
+  //3. get edge assignments
+  //4. Get Max spanning tree of graph:
+  //   -Make graph g2=g undirectional
+  //   -Get Max spanning tree t
+  //   -Make t undirectional
+  //   -remove edges from t not in graph g
+  //5. Get edge increments
+  //6. Get code insertions
+  //7. move code on dummy edges over to the back edges
+  
+
+  //This is used as maximum "weight" for 
+  //priority queue
+  //This would hold all 
+  //right as long as number of paths in the graph
+  //is less than this
+  const int INFINITY=99999999;
+
+
+  //step 1-3 are already done on the graph when this function is called
+#ifdef DEBUG_PATH_PROFILES 
+  printGraph(g);
+#endif
+  //step 4: Get Max spanning tree of graph
+
+  //now insert exit to root edge
+  //if its there earlier, remove it!
+  //assign it weight INFINITY
+  //so that this edge IS ALWAYS IN spanning tree
+  //Note than edges in spanning tree do not get 
+  //instrumented: and we do not want the
+  //edge exit->root to get instrumented
+  //as it MAY BE a dummy edge
+  Edge ed(g.getExit(),g.getRoot(),INFINITY);
+  g.addEdge(ed,INFINITY);
+  Graph g2=g;
+
+  //make g2 undirectional: this gives a better
+  //maximal spanning tree
+  g2.makeUnDirectional();
+#ifdef DEBUG_PATH_PROFILES
+  printGraph(g2);
+#endif
+  Graph *t=g2.getMaxSpanningTree();
+#ifdef DEBUG_PATH_PROFILES
+  printGraph(*t);
+#endif
+  //now edges of tree t have weights reversed
+  //(negative) because the algorithm used
+  //to find max spanning tree is 
+  //actually for finding min spanning tree
+  //so get back the original weights
+  t->reverseWts();
+
+  //Ordinarily, the graph is directional
+  //lets converts the graph into an 
+  //undirectional graph
+  //This is done by adding an edge
+  //v->u for all existing edges u->v
+  t->makeUnDirectional();
+
+  //Given a tree t, and a "directed graph" g
+  //replace the edges in the tree t with edges that exist in graph
+  //The tree is formed from "undirectional" copy of graph
+  //So whatever edges the tree has, the undirectional graph 
+  //would have too. This function corrects some of the directions in 
+  //the tree so that now, all edge directions in the tree match
+  //the edge directions of corresponding edges in the directed graph
+  removeTreeEdges(g, *t);
+#ifdef DEBUG_PATH_PROFILES
+  cerr<<"Spanning tree---------\n";
+  printGraph(*t);
+  cerr<<"-------end spanning tree\n";
+#endif
+  //now remove the exit->root node
+  //and re-add it with weight 0
+  //since infinite weight is kinda confusing
+  g.removeEdge(ed);
+  Edge edNew(g.getExit(), g.getRoot(),0);
+  g.addEdge(edNew,0);
+  if(t->hasEdge(ed)){
+    t->removeEdge(ed);
+    t->addEdge(edNew,0);
+  }
+
+#ifdef DEBUG_PATH_PROFILES
+  printGraph(g);
+  printGraph(*t);
+#endif
+  //step 5: Get edge increments
+
+  //Now we select a subset of all edges
+  //and assign them some values such that 
+  //if we consider just this subset, it still represents
+  //the path sum along any path in the graph
+  map<Edge, int> increment=getEdgeIncrements(g,*t);
+#ifdef DEBUG_PATH_PROFILES
+  //print edge increments for debugging
+  for(map<Edge, int>::iterator M_I=increment.begin(), M_E=increment.end(); 
+      M_I!=M_E; ++M_I){
+    printEdge(M_I->first);
+    cerr<<"Increment for above:"<<M_I->second<<"\n";
+  }
+#endif
+ 
+  //step 6: Get code insertions
+  
+  //Based on edgeIncrements (above), now obtain
+  //the kind of code to be inserted along an edge
+  //The idea here is to minimize the computation
+  //by inserting only the needed code
+  vector<Edge> chords;
+  getChords(chords, g, *t);
+
+  map<Edge, getEdgeCode *> codeInsertions;
+  getCodeInsertions(g, codeInsertions, chords,increment);
+  
+#ifdef DEBUG_PATH_PROFILES
+  //print edges with code for debugging
+  cerr<<"Code inserted in following---------------\n";
+  for(map<Edge, getEdgeCode *>::iterator cd_i=codeInsertions->begin(), 
+	cd_e=codeInsertions->end(); cd_i!=cd_e; ++cd_i){
+    printEdge(cd_i->first);
+    cerr<<cd_i->second->getCond()<<":"<<cd_i->second->getInc()<<"\n";
+  }
+  cerr<<"-----end insertions\n";
+#endif
+  //step 7: move code on dummy edges over to the back edges
+
+  //Move the incoming dummy edge code and outgoing dummy
+  //edge code over to the corresponding back edge
+  moveDummyCode(stDummy, exDummy, be, codeInsertions);
+  
+#ifdef DEBUG_PATH_PROFILES
+  //debugging info
+  cerr<<"After moving dummy code\n";
+  for(map<Edge, getEdgeCode *>::iterator cd_i=codeInsertions.begin(), 
+	cd_e=codeInsertions.end(); cd_i != cd_e; ++cd_i){
+    printEdge(cd_i->first);
+    cerr<<cd_i->second->getCond()<<":"
+	<<cd_i->second->getInc()<<"\n";
+  }
+  cerr<<"Dummy end------------\n";
+#endif
+
+  //see what it looks like...
+  //now insert code along edges which have codes on them
+  for(map<Edge, getEdgeCode *>::iterator MI=codeInsertions.begin(), 
+	ME=codeInsertions.end(); MI!=ME; ++MI){
+    Edge ed=MI->first;
+    insertBB(ed, MI->second, rInst, countInst);
+  } 
+}
+
 
 
 //print the graph (for debugging)
