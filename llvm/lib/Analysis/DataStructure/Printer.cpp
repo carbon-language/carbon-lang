@@ -204,7 +204,7 @@ void DSGraph::writeGraphToFile(std::ostream &O, const string &GraphName) {
   std::ofstream F(Filename.c_str());
   
   if (F.good()) {
-    WriteGraph(F, this);
+    WriteGraph(F, this, "DataStructures");
     //print(F);
     O << " [" << getGraphSize() << "+" << getFunctionCalls().size() << "]\n";
   } else {
