@@ -120,25 +120,47 @@ ConstantFoldBinaryInst(Method *M, Method::inst_iterator &DI,
   return true;
 }
 
-inline static bool ConstantFoldTerminator(TerminatorInst *T) {
+// ConstantFoldTerminator - If a terminator instruction is predicated on a
+// constant value, convert it into an unconditional branch to the constant
+// destination.
+//
+bool ConstantFoldTerminator(TerminatorInst *T) {
   // Branch - See if we are conditional jumping on constant
   if (T->getInstType() == Instruction::Br) {
     BranchInst *BI = (BranchInst*)T;
-    if (!BI->isUnconditional() &&              // Are we branching on constant?
-        BI->getOperand(2)->isConstant()) {
+    if (BI->isUnconditional()) return false;  // Can't optimize uncond branch
+    BasicBlock *Dest1 = BI->getOperand(0)->castBasicBlockAsserting();
+    BasicBlock *Dest2 = BI->getOperand(1)->castBasicBlockAsserting();
+
+    if (BI->getOperand(2)->isConstant()) {    // Are we branching on constant?
       // YES.  Change to unconditional branch...
       ConstPoolBool *Cond = (ConstPoolBool*)BI->getOperand(2);
-      Value *Destination = BI->getOperand(Cond->getValue() ? 0 : 1);
-      Value *OldDest     = BI->getOperand(Cond->getValue() ? 1 : 0);
+      BasicBlock *Destination = Cond->getValue() ? Dest1 : Dest2;
+      BasicBlock *OldDest     = Cond->getValue() ? Dest2 : Dest1;
 
-      //cerr << "Method: " << T->getParent()->getParent() << "\nRemoving branch from " << T->getParent() << "\n\nTo: " << OldDest << endl;
+      //cerr << "Method: " << T->getParent()->getParent() 
+      //     << "\nRemoving branch from " << T->getParent() 
+      //     << "\n\nTo: " << OldDest << endl;
 
       // Let the basic block know that we are letting go of it.  Based on this,
       // it will adjust it's PHI nodes.
-      assert(T->getParent() && "Terminator not inserted in block!");
-      OldDest->castBasicBlockAsserting()->removePredecessor(T->getParent());
+      assert(BI->getParent() && "Terminator not inserted in block!");
+      OldDest->removePredecessor(BI->getParent());
 
       BI->setOperand(0, Destination);  // Set the unconditional destination
+      BI->setOperand(1, 0);            // Clear the conditional destination
+      BI->setOperand(2, 0);            // Clear the condition...
+      return true;
+    } else if (Dest2 == Dest1) {       // Conditional branch to same location?
+      // This branch matches something like this:  
+      //     br bool %cond, label %Dest, label %Dest
+      // and changes it into:  br label %Dest
+
+      // Let the basic block know that we are letting go of one copy of it.
+      assert(BI->getParent() && "Terminator not inserted in block!");
+      Dest1->removePredecessor(BI->getParent());
+
+      // Nuke the second destination, and the use of the condition variable
       BI->setOperand(1, 0);            // Clear the conditional destination
       BI->setOperand(2, 0);            // Clear the condition...
       return true;
