@@ -81,6 +81,7 @@ BasicBlock::BasicBlock(const std::string &Name, Function *Parent,
 
 
 BasicBlock::~BasicBlock() {
+  assert(Parent == 0 && "BasicBlock still linked into the program!");
   dropAllReferences();
   InstList.clear();
 }
