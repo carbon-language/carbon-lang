@@ -214,6 +214,7 @@ void SparcAsmPrinter::emitMethod(const Method *M) {
   enterSection(Text);
   Out << "\t.align 4\n\t.global\t" << MethName << "\n";
   //Out << "\t.type\t" << MethName << ",#function\n";
+  Out << "\t.type\t" << MethName << ", 2\n";
   Out << MethName << ":\n";
 
   // Output code for all of the basic blocks in the method...
