@@ -38,6 +38,9 @@ public:
   inline Value *getIncomingValue(unsigned i) {
     return Operands[i*2];
   }
+  inline void setIncomingValue(unsigned i, Value *V) {
+    Operands[i*2] = V;
+  }
 
   // getIncomingBlock - Return incoming basic block #x
   inline const BasicBlock *getIncomingBlock(unsigned i) const { 
