@@ -562,6 +562,10 @@ template<unsigned n> struct applicator<char[n]> {
   template<class Opt>
   static void opt(const char *Str, Opt &O) { O.setArgStr(Str); }
 };
+template<unsigned n> struct applicator<const char[n]> {
+  template<class Opt>
+  static void opt(const char *Str, Opt &O) { O.setArgStr(Str); }
+};
 template<> struct applicator<const char*> {
   template<class Opt>
   static void opt(const char *Str, Opt &O) { O.setArgStr(Str); }
