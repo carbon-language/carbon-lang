@@ -24,6 +24,7 @@
 #include "llvm/Function.h"
 #include "llvm/Constant.h"
 #include "llvm/Type.h"
+#include "Support/StringExtras.h"
 
 /// isAllocaPromotable - Return true if this alloca is legal for promotion.
 /// This is true if there are only loads and stores to the alloca...
@@ -50,6 +51,7 @@ bool isAllocaPromotable(const AllocaInst *AI, const TargetData &TD) {
 namespace {
   struct PromoteMem2Reg {
     const std::vector<AllocaInst*>   &Allocas;      // the alloca instructions..
+    std::vector<unsigned> VersionNumbers;           // Current version counters
     DominanceFrontier &DF;
     const TargetData &TD;
 
@@ -84,6 +86,7 @@ void PromoteMem2Reg::run() {
   if (Allocas.empty()) return;
 
   Function &F = *DF.getRoot()->getParent();
+  VersionNumbers.resize(Allocas.size());
 
   for (unsigned i = 0, e = Allocas.size(); i != e; ++i) {
     assert(isAllocaPromotable(Allocas[i], TD) &&
@@ -118,19 +121,23 @@ void PromoteMem2Reg::run() {
     for (unsigned j = 0; j != WriteSets[i].size(); j++) {
       // Look up the DF for this write, add it to PhiNodes
       DominanceFrontier::const_iterator it = DF.find(WriteSets[i][j]);
-      DominanceFrontier::DomSetType     S = it->second;
-      for (DominanceFrontier::DomSetType::iterator P = S.begin(), PE = S.end();
-           P != PE; ++P)
-        QueuePhiNode(*P, i);
+      if (it != DF.end()) {
+        const DominanceFrontier::DomSetType &S = it->second;
+        for (DominanceFrontier::DomSetType::iterator P = S.begin(),PE = S.end();
+             P != PE; ++P)
+          QueuePhiNode(*P, i);
+      }
     }
     
     // Perform iterative step
     for (unsigned k = 0; k != PhiNodes[i].size(); k++) {
       DominanceFrontier::const_iterator it = DF.find(PhiNodes[i][k]);
-      DominanceFrontier::DomSetType     S = it->second;
-      for (DominanceFrontier::DomSetType::iterator P = S.begin(), PE = S.end();
-           P != PE; ++P)
-        QueuePhiNode(*P, i);
+      if (it != DF.end()) {
+        const DominanceFrontier::DomSetType     &S = it->second;
+        for (DominanceFrontier::DomSetType::iterator P = S.begin(),PE = S.end();
+             P != PE; ++P)
+          QueuePhiNode(*P, i);
+      }
     }
   }
 
@@ -154,6 +161,15 @@ void PromoteMem2Reg::run() {
     Instruction *I = KillList.back();
     KillList.pop_back();
 
+    // If there are any uses of these instructions left, they must be in
+    // sections of dead code that were not processed on the dominance frontier.
+    // Just delete the users now.
+    //
+    while (!I->use_empty()) {
+      Instruction *U = cast<Instruction>(I->use_back());
+      U->getParent()->getInstList().erase(U);
+    }
+
     I->getParent()->getInstList().erase(I);
   }
 }
@@ -173,7 +189,8 @@ bool PromoteMem2Reg::QueuePhiNode(BasicBlock *BB, unsigned AllocaNo) {
   // Create a PhiNode using the dereferenced type... and add the phi-node to the
   // BasicBlock
   PHINode *PN = new PHINode(Allocas[AllocaNo]->getAllocatedType(),
-                            Allocas[AllocaNo]->getName()+".mem2reg",
+                            Allocas[AllocaNo]->getName() + "." +
+                                      utostr(VersionNumbers[AllocaNo]++),
                             BB->begin());
   BBPNs[AllocaNo] = PN;
   PhiNodes[AllocaNo].push_back(BB);
