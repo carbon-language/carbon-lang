@@ -73,7 +73,6 @@ private:
   PrimitiveID ID;        // The current base type of this type...
   unsigned    UID;       // The unique ID number for this class
   bool        Abstract;  // True if type contains an OpaqueType
-  bool        Recursive; // True if the type is recursive
 
 protected:
   /// ctor is protected, so only subclasses can create Type objects...
@@ -88,10 +87,6 @@ protected:
   /// Types can become nonabstract later, if they are refined.
   ///
   inline void setAbstract(bool Val) { Abstract = Val; }
-
-  /// Types can become recursive later, if they are refined.
-  ///
-  inline void setRecursive(bool Val) { Recursive = Val; }
 
 public:
   virtual void print(std::ostream &O) const;
@@ -147,10 +142,6 @@ public:
   /// type that includes an opaque type somewhere in it.  
   ///
   inline bool isAbstract() const { return Abstract; }
-
-  /// isRecursive - True if the type graph contains a cycle.
-  ///
-  inline bool isRecursive() const { return Recursive; }
 
   /// isLosslesslyConvertibleTo - Return true if this type can be converted to
   /// 'Ty' without any reinterpretation of bits.  For example, uint to int.
