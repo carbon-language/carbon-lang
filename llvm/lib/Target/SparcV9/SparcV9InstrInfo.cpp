@@ -62,8 +62,7 @@ SparcV9InstrInfo::ConvertConstantToIntType(const TargetMachine &target,
   // GlobalValue: no conversions needed: get value and return it
   if (const GlobalValue* GV = dyn_cast<GlobalValue>(V)) {
     isValidConstant = true;             // may be overwritten by recursive call
-    return GV->isNullValue() ? 0 :
-	   ConvertConstantToIntType(target, GV, destType, isValidConstant);
+    return ConvertConstantToIntType(target, GV, destType, isValidConstant);
   }
 
   // ConstantBool: no conversions needed: get value and return it
