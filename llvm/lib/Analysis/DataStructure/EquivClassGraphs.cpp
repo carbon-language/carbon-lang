@@ -29,7 +29,7 @@
 using namespace llvm;
 
 namespace {
-  RegisterAnalysis<EquivClassGraphs> X("equivdatastructure",
+  RegisterAnalysis<EquivClassGraphs> X("eqdatastructure",
                     "Equivalence-class Bottom-up Data Structure Analysis");
   Statistic<> NumEquivBUInlines("equivdatastructures",
                                 "Number of graphs inlined");
@@ -58,7 +58,7 @@ static void CheckAllGraphs(Module *M, GT &ECGraphs) {
 
 // getSomeCalleeForCallSite - Return any one callee function at a call site.
 // 
-Function *EquivClassGraphs:: getSomeCalleeForCallSite(const CallSite &CS) const{
+Function *EquivClassGraphs::getSomeCalleeForCallSite(const CallSite &CS) const{
   Function *thisFunc = CS.getCaller();
   assert(thisFunc && "getSomeCalleeForCallSite(): Not a valid call site?");
   DSGraph &DSG = getDSGraph(*thisFunc);

@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Analysis/DataStructure/DataStructure.h"
+#include "llvm/Analysis/DataStructure/EquivClassGraphs.h"
 #include "llvm/Analysis/DataStructure/DSGraph.h"
 #include "llvm/Analysis/DataStructure/DSGraphTraits.h"
 #include "llvm/Module.h"
@@ -332,4 +333,9 @@ void CompleteBUDataStructures::print(std::ostream &O, const Module *M) const {
   printCollection(*this, O, M, "cbu.");
 }
 
+
+void EquivClassGraphs::print(std::ostream &O, const Module *M) const {
+  if (DontPrintAnything) return;
+  printCollection(*this, O, M, "eq.");
+}
 
