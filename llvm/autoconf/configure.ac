@@ -249,14 +249,20 @@ AC_CHECK_LIB(elf, elf_begin)
 
 dnl Check for bzip2 and zlib compression libraries needed for archive reading/writing
 AC_CHECK_LIB(bz2,BZ2_bzCompressInit,[bzip2_found=1],[bzip2_found=0])
+AC_CHECK_HEADERS([bzlib.h],[bzlib_h_found=1],[bzlib_h_found=0],[])
 AC_CHECK_LIB(z,gzopen,[zlib_found=1],[zlib_found=0])
-AC_SUBST([HAVE_ZLIB],$zlib_found)
-AC_SUBST([HAVE_BZIP2],$bzip2_found)
-if test $zlib_found -eq 1 ; then
+AC_CHECK_HEADERS([zlib.h],[zlib_h_found=1],[zlib_h_found=0],[])
+if test $zlib_found -eq 1 -a $zlib_h_found -eq 1; then
   AC_DEFINE([HAVE_ZLIB],[1],[Define if zlib library is available on this platform.])
+  AC_SUBST([HAVE_ZLIB],[1])
+else
+  AC_SUBST([HAVE_ZLIB],[0])
 fi
-if test $bzip2_found -eq 1 ; then
+if test $bzip2_found -eq 1 -a $bzlib_h_found -eq 1 ; then
   AC_DEFINE([HAVE_BZIP2],[1],[Define if bzip2 library is available on this platform.])
+  AC_SUBST([HAVE_BZIP2],[1])
+else
+  AC_SUBST([HAVE_BZIP2],[0])
 fi
 dnl dlopen() is required for plugin support.
 AC_SEARCH_LIBS(dlopen,dl,AC_DEFINE([HAVE_DLOPEN],[1],[Define if dlopen() is available on this platform.]),AC_MSG_WARN([dlopen() not found - disabling plugin support]))
