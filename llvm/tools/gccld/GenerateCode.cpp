@@ -111,6 +111,10 @@ GenerateBytecode (Module *M, bool Strip, bool Internalize, std::ostream *Out) {
     if (!DisableInline)
       addPass(Passes, createFunctionInliningPass()); // Inline small functions
 
+    // If we didn't decide to inline a function, check to see if we can
+    // transform it to pass arguments by value instead of by reference.
+    addPass(Passes, createArgumentPromotionPass());
+
     // The IPO passes may leave cruft around.  Clean up after them.
     addPass(Passes, createInstructionCombiningPass());
 
