@@ -295,8 +295,9 @@ static bool ExtractLoops(BugDriver &BD,
     std::vector<std::pair<std::string, const FunctionType*> > MisCompFunctions;
     for (Module::iterator I = ToOptimizeLoopExtracted->begin(),
            E = ToOptimizeLoopExtracted->end(); I != E; ++I)
-      MisCompFunctions.push_back(std::make_pair(I->getName(),
-                                                I->getFunctionType()));
+      if (!I->isExternal())
+        MisCompFunctions.push_back(std::make_pair(I->getName(),
+                                                  I->getFunctionType()));
 
     // Okay, great!  Now we know that we extracted a loop and that loop
     // extraction both didn't break the program, and didn't mask the problem.
@@ -432,8 +433,9 @@ static bool ExtractBlocks(BugDriver &BD,
   std::vector<std::pair<std::string, const FunctionType*> > MisCompFunctions;
   for (Module::iterator I = Extracted->begin(), E = Extracted->end();
        I != E; ++I)
-    MisCompFunctions.push_back(std::make_pair(I->getName(),
-                                              I->getFunctionType()));
+    if (!I->isExternal())
+      MisCompFunctions.push_back(std::make_pair(I->getName(),
+                                                I->getFunctionType()));
 
   std::string ErrorMsg;
   if (LinkModules(ProgClone, Extracted, &ErrorMsg)) {
@@ -624,11 +626,10 @@ static void CleanupAndPrepareModules(BugDriver &BD, Module *&Test,
 
       // Call the old main function and return its result
       BasicBlock *BB = new BasicBlock("entry", newMain);
-      CallInst *call = new CallInst(oldMainProto, args);
-      BB->getInstList().push_back(call);
+      CallInst *call = new CallInst(oldMainProto, args, "", BB);
     
       // If the type of old function wasn't void, return value of call
-      new ReturnInst(oldMain->getReturnType() != Type::VoidTy ? call : 0, BB);
+      new ReturnInst(call, BB);
     }
 
   // The second nasty issue we must deal with in the JIT is that the Safe
