@@ -122,8 +122,17 @@ static bool ReadArchiveBuffer(const std::string &ArchiveName,
       while (endp[-1] == ' ')
         --endp;
     }
+
+    //
+    // We now have the beginning and the end of the object name.
+    // Convert this into a dynamically allocated std::string to pass
+    // to the routines that create the Module object.  We do this
+    // (I think) because the created Module object will outlive this function,
+    // but statically declared std::string's won't.
+    //
     std::string MemberName (startp, endp);
-    std::string FullMemberName = ArchiveName + "(" + MemberName + ")";
+    std::string * FullMemberName;
+    FullMemberName = new std::string (ArchiveName + "(" + MemberName + ")");
 
     switch (getObjectType(Hdr, MemberData, MemberSize)) {
     case SVR4LongFilename:
@@ -133,7 +142,7 @@ static bool ReadArchiveBuffer(const std::string &ArchiveName,
       break;
     case UserObject: {
       Module *M = ParseBytecodeBuffer(MemberData, MemberSize,
-                                      FullMemberName, ErrorStr);
+                                      *(FullMemberName), ErrorStr);
       if (!M) return true;
       Objects.push_back(M);
       break;
@@ -144,7 +153,7 @@ static bool ReadArchiveBuffer(const std::string &ArchiveName,
       break;
     default:
       std::cerr << "ReadArchiveBuffer: WARNING: Skipping unknown file: "
-                << FullMemberName << "\n";
+                << *(FullMemberName) << "\n";
       break;   // Just ignore unknown files.
     }
 
