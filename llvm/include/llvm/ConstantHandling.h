@@ -7,33 +7,8 @@
 // 
 //===----------------------------------------------------------------------===//
 //
-// This file contains the declarations of some cool operators that allow you
-// to do natural things with constant pool values.
-//
-// Unfortunately we can't overload operators on pointer types (like this:)
-//
-//      inline bool operator==(const Constant *V1, const Constant *V2)
-//
-// so we must make due with references, even though it leads to some butt ugly
-// looking code downstream.  *sigh*  (ex:  Constant *Result = *V1 + *v2; )
-//
-//===----------------------------------------------------------------------===//
-//
 // WARNING: These operators may return a null object if I don't know how to 
 //          perform the specified operation on the specified constant types.
-//
-//===----------------------------------------------------------------------===//
-//
-// Implementation notes:
-//   This library is implemented this way for a reason: In most cases, we do
-//   not want to have to link the constant mucking code into an executable.
-//   We do, however want to tie some of this into the main type system, as an
-//   optional component.  By using a mutable cache member in the Type class, we
-//   get exactly the kind of behavior we want.
-//
-// In the end, we get performance almost exactly the same as having a virtual
-// function dispatch, but we don't have to put our virtual functions into the
-// "Type" class, and we can implement functionality with templates. Good deal.
 //
 //===----------------------------------------------------------------------===//
 
@@ -46,10 +21,6 @@
 namespace llvm {
 
 class PointerType;
-
-//===----------------------------------------------------------------------===//
-//  Implement all other operators indirectly through TypeRules system
-//===----------------------------------------------------------------------===//
 
 struct ConstRules {
   ConstRules() {}
@@ -108,115 +79,11 @@ struct ConstRules {
   // ConstRules::get - Return an instance of ConstRules for the specified
   // constant operands.
   //
-  static ConstRules &get(const Constant &V1, const Constant &V2);
+  static ConstRules &get(const Constant *V1, const Constant *V2);
 private:
   ConstRules(const ConstRules &);             // Do not implement
   ConstRules &operator=(const ConstRules &);  // Do not implement
 };
-
-// Unary operators...
-inline Constant *operator~(const Constant &V) {
-  assert(V.getType()->isIntegral() && "Cannot invert non-integral constant!");
-  return ConstRules::get(V, V).op_xor(&V,
-                                    ConstantInt::getAllOnesValue(V.getType()));
-}
-
-inline Constant *operator-(const Constant &V) {
-  return ConstRules::get(V, V).sub(Constant::getNullValue(V.getType()), &V);
-}
-
-// Standard binary operators...
-inline Constant *operator+(const Constant &V1, const Constant &V2) {
-  assert(V1.getType() == V2.getType() && "Constant types must be identical!");
-  return ConstRules::get(V1, V2).add(&V1, &V2);
-}
-
-inline Constant *operator-(const Constant &V1, const Constant &V2) {
-  assert(V1.getType() == V2.getType() && "Constant types must be identical!");
-  return ConstRules::get(V1, V2).sub(&V1, &V2);
-}
-
-inline Constant *operator*(const Constant &V1, const Constant &V2) {
-  assert(V1.getType() == V2.getType() && "Constant types must be identical!");
-  return ConstRules::get(V1, V2).mul(&V1, &V2);
-}
-
-inline Constant *operator/(const Constant &V1, const Constant &V2) {
-  assert(V1.getType() == V2.getType() && "Constant types must be identical!");
-  return ConstRules::get(V1, V2).div(&V1, &V2);
-}
-
-inline Constant *operator%(const Constant &V1, const Constant &V2) {
-  assert(V1.getType() == V2.getType() && "Constant types must be identical!");
-  return ConstRules::get(V1, V2).rem(&V1, &V2);
-}
-
-// Logical Operators...
-inline Constant *operator&(const Constant &V1, const Constant &V2) {
-  assert(V1.getType() == V2.getType() && "Constant types must be identical!");
-  return ConstRules::get(V1, V2).op_and(&V1, &V2);
-}
-
-inline Constant *operator|(const Constant &V1, const Constant &V2) {
-  assert(V1.getType() == V2.getType() && "Constant types must be identical!");
-  return ConstRules::get(V1, V2).op_or(&V1, &V2);
-}
-
-inline Constant *operator^(const Constant &V1, const Constant &V2) {
-  assert(V1.getType() == V2.getType() && "Constant types must be identical!");
-  return ConstRules::get(V1, V2).op_xor(&V1, &V2);
-}
-
-// Shift Instructions...
-inline Constant *operator<<(const Constant &V1, const Constant &V2) {
-  assert(V1.getType()->isInteger() && V2.getType() == Type::UByteTy);
-  return ConstRules::get(V1, V2).shl(&V1, &V2);
-}
-
-inline Constant *operator>>(const Constant &V1, const Constant &V2) {
-  assert(V1.getType()->isInteger() && V2.getType() == Type::UByteTy);
-  return ConstRules::get(V1, V2).shr(&V1, &V2);
-}
-
-inline ConstantBool *operator<(const Constant &V1, 
-                               const Constant &V2) {
-  assert(V1.getType() == V2.getType() && "Constant types must be identical!");
-  return ConstRules::get(V1, V2).lessthan(&V1, &V2);
-}
-
-inline ConstantBool *operator==(const Constant &V1, const Constant &V2) {
-  assert(V1.getType() == V2.getType() && "Constant types must be identical!");
-  return ConstRules::get(V1, V2).equalto(&V1, &V2);
-}
-
-//===----------------------------------------------------------------------===//
-//  Implement 'derived' operators based on what we already have...
-//===----------------------------------------------------------------------===//
-
-inline ConstantBool *operator!=(const Constant &V1, const Constant &V2) {
-  if (ConstantBool *V = (V1 == V2))
-    return V->inverted();                // !(V1 == V2)
-  return 0;
-}
-
-inline ConstantBool *operator>(const Constant &V1, 
-                               const Constant &V2) {
-  return V2 < V1;
-}
-
-inline ConstantBool *operator>=(const Constant &V1, 
-                                const Constant &V2) {
-  if (ConstantBool *V = (V1 < V2))
-    return V->inverted();                // !(V1 < V2)
-  return 0;
-}
-
-inline ConstantBool *operator<=(const Constant &V1, 
-                                const Constant &V2) {
-  if (ConstantBool *V = (V1 > V2))
-    return V->inverted();                // !(V1 > V2)
-  return 0;
-}
 
 
 //===----------------------------------------------------------------------===//
@@ -227,8 +94,6 @@ inline ConstantBool *operator<=(const Constant &V1,
 Constant *ConstantFoldCastInstruction(const Constant *V, const Type *DestTy);
 Constant *ConstantFoldBinaryInstruction(unsigned Opcode, const Constant *V1,
                                         const Constant *V2);
-Constant *ConstantFoldShiftInstruction(unsigned Opcode, const Constant *V1,
-                                       const Constant *V2);
 Constant *ConstantFoldGetElementPtr(const Constant *C,
                                     const std::vector<Constant*> &IdxList);
 
