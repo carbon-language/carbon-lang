@@ -442,9 +442,10 @@ void SCCP::UpdateInstruction(Instruction *I) {
     if (VState.isOverdefined()) {        // Inherit overdefinedness of operand
       markOverdefined(I);
     } else if (VState.isConstant()) {    // Propogate constant value
-      ConstPoolVal *Result = 
-	opt::ConstantFoldUnaryInstruction(I->getOpcode(), 
-					  VState.getConstant());
+      ConstPoolVal *Result = isa<CastInst>(I)
+        ? opt::ConstantFoldCastInstruction(VState.getConstant(), I->getType())
+        : opt::ConstantFoldUnaryInstruction(I->getOpcode(), 
+                                            VState.getConstant());
 
       if (Result) {
 	// This instruction constant folds!

@@ -54,6 +54,29 @@ ConstantFoldUnaryInst(Method *M, Method::inst_iterator &DI,
 }
 
 inline static bool 
+ConstantFoldCast(Method *M, Method::inst_iterator &DI,
+                 CastInst *CI, ConstPoolVal *D) {
+  ConstPoolVal *ReplaceWith = 
+    opt::ConstantFoldCastInstruction(D, CI->getType());
+
+  if (!ReplaceWith) return false;   // Nothing new to change...
+
+  // Replaces all of the uses of a variable with uses of the constant.
+  CI->replaceAllUsesWith(ReplaceWith);
+  
+  // Remove the cast from the list of definitions...
+  CI->getParent()->getInstList().remove(DI.getInstructionIterator());
+  
+  // The new constant inherits the old name of the cast...
+  if (CI->hasName())
+    ReplaceWith->setName(CI->getName(), M->getSymbolTableSure());
+  
+  // Delete the cast now...
+  delete CI;
+  return true;
+}
+
+inline static bool 
 ConstantFoldBinaryInst(Method *M, Method::inst_iterator &DI,
 		       BinaryOperator *Op,
 		       ConstPoolVal *D1, ConstPoolVal *D2) {
@@ -142,6 +165,10 @@ ConstantFoldInstruction(Method *M, Method::inst_iterator &II) {
     if (D1 && D2)
       return ConstantFoldBinaryInst(M, II, cast<BinaryOperator>(Inst), D1, D2);
 
+  } else if (CastInst *CI = dyn_cast<CastInst>(Inst)) {
+    ConstPoolVal *D = dyn_cast<ConstPoolVal>(CI->getOperand(0));
+    if (D) return ConstantFoldCast(M, II, CI, D);
+                                         
   } else if (UnaryOperator *UInst = dyn_cast<UnaryOperator>(Inst)) {
     ConstPoolVal *D = dyn_cast<ConstPoolVal>(UInst->getOperand(0));
     if (D) return ConstantFoldUnaryInst(M, II, UInst, D);
