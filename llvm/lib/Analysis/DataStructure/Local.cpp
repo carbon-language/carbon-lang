@@ -484,7 +484,7 @@ void GraphBuilder::visitCallSite(CallSite CS) {
           if (DSNode *N = RetNH.getNode())
             N->setHeapNodeMarker()->setModifiedMarker()->setReadMarker();
           return;
-        } else if (F->getName() == "atoi") {
+        } else if (F->getName() == "atoi" || F->getName() == "atof") {
           // atoi reads its argument.
           if (DSNode *N = getValueDest(**CS.arg_begin()).getNode())
             N->setReadMarker();
@@ -549,7 +549,8 @@ void GraphBuilder::visitCallSite(CallSite CS) {
           if (const PointerType *PTy = dyn_cast<PointerType>(ArgTy))
             H.getNode()->mergeTypeInfo(PTy->getElementType(), H.getOffset());
           return;
-        } else if (F->getName() == "printf" || F->getName() == "fprintf") {
+        } else if (F->getName() == "printf" || F->getName() == "fprintf" ||
+                   F->getName() == "sprintf") {
           CallSite::arg_iterator AI = CS.arg_begin(), E = CS.arg_end();
 
           if (F->getName() == "fprintf") {
@@ -562,6 +563,16 @@ void GraphBuilder::visitCallSite(CallSite CS) {
               if (const PointerType *PTy = dyn_cast<PointerType>(ArgTy))
                 N->mergeTypeInfo(PTy->getElementType(), H.getOffset());
             }
+          } else if (F->getName() == "sprintf") {
+            // sprintf writes the first string argument.
+            DSNodeHandle H = getValueDest(**AI++);
+            if (DSNode *N = H.getNode()) {
+              N->setModifiedMarker();
+              const Type *ArgTy = (*AI)->getType();
+              if (const PointerType *PTy = dyn_cast<PointerType>(ArgTy))
+                N->mergeTypeInfo(PTy->getElementType(), H.getOffset());
+            }
+
           }
 
           for (; AI != E; ++AI) {
@@ -570,9 +581,60 @@ void GraphBuilder::visitCallSite(CallSite CS) {
               if (DSNode *N = getValueDest(**AI).getNode())
                 N->setReadMarker();   
           }
+        } else if (F->getName() == "scanf" || F->getName() == "fscanf" ||
+                   F->getName() == "sscanf") {
+          CallSite::arg_iterator AI = CS.arg_begin(), E = CS.arg_end();
 
-        } else if (F->getName() == "exit") {
-          // Nothing to do!
+          if (F->getName() == "fscanf") {
+            // fscanf reads and writes the FILE argument, and applies the type
+            // to it.
+            DSNodeHandle H = getValueDest(**AI);
+            if (DSNode *N = H.getNode()) {
+              N->setReadMarker();
+              const Type *ArgTy = (*AI)->getType();
+              if (const PointerType *PTy = dyn_cast<PointerType>(ArgTy))
+                N->mergeTypeInfo(PTy->getElementType(), H.getOffset());
+            }
+          } else if (F->getName() == "sscanf") {
+            // sscanf reads the first string argument.
+            DSNodeHandle H = getValueDest(**AI++);
+            if (DSNode *N = H.getNode()) {
+              N->setReadMarker();
+              const Type *ArgTy = (*AI)->getType();
+              if (const PointerType *PTy = dyn_cast<PointerType>(ArgTy))
+                N->mergeTypeInfo(PTy->getElementType(), H.getOffset());
+            }
+          }
+
+          for (; AI != E; ++AI) {
+            // scanf writes all pointer arguments.
+            if (isPointerType((*AI)->getType()))
+              if (DSNode *N = getValueDest(**AI).getNode())
+                N->setModifiedMarker();   
+          }
+        } else if (F->getName() == "strtok") {
+          // strtok reads and writes the first argument, returning it.  It reads
+          // its second arg.  FIXME: strtok also modifies some hidden static
+          // data.  Someday this might matter.
+          CallSite::arg_iterator AI = CS.arg_begin();
+          DSNodeHandle H = getValueDest(**AI++);
+          if (DSNode *N = H.getNode()) {
+            N->setReadMarker()->setModifiedMarker();      // Reads/Writes buffer
+            const Type *ArgTy = F->getFunctionType()->getParamType(0);
+            if (const PointerType *PTy = dyn_cast<PointerType>(ArgTy))
+              N->mergeTypeInfo(PTy->getElementType(), H.getOffset());
+          }
+          H.mergeWith(getValueDest(*CS.getInstruction())); // Returns buffer
+
+          H = getValueDest(**AI);       // Reads delimiter
+          if (DSNode *N = H.getNode()) {
+            N->setReadMarker();
+            const Type *ArgTy = F->getFunctionType()->getParamType(1);
+            if (const PointerType *PTy = dyn_cast<PointerType>(ArgTy))
+              N->mergeTypeInfo(PTy->getElementType(), H.getOffset());
+          }
+          return;
+
         } else {
           // Unknown function, warn if it returns a pointer type or takes a
           // pointer argument.
