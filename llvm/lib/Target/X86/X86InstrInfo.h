@@ -52,24 +52,35 @@ namespace X86II {
     ///
     MRMSrcMem      = 6,
   
-    /// TODO: Mod/RM that uses a fixed opcode extension, like /0
+    /// MRMS[0-7][rm] - These forms are used to represent instructions that use
+    /// a Mod/RM byte, and use the middle field to hold extended opcode
+    /// information.  In the intel manual these are represented as /0, /1, ...
+    ///
 
-    FormMask       = 7,
+    // First, instructions that operate on a register r/m operand...
+    MRMS0r = 16,  MRMS1r = 17,  MRMS2r = 18,  MRMS3r = 19, // Format /0 /1 /2 /3
+    MRMS4r = 20,  MRMS5r = 21,  MRMS6r = 22,  MRMS7r = 23, // Format /4 /5 /6 /7
+
+    // Next, instructions that operate on a memory r/m operand...
+    MRMS0m = 24,  MRMS1m = 25,  MRMS2m = 26,  MRMS3m = 27, // Format /0 /1 /2 /3
+    MRMS4m = 28,  MRMS5m = 29,  MRMS6m = 30,  MRMS7m = 31, // Format /4 /5 /6 /7
+
+    FormMask       = 31,
 
     //===------------------------------------------------------------------===//
     // Actual flags...
 
     /// Void - Set if this instruction produces no value
-    Void        = 1 << 3,
+    Void        = 1 << 5,
 
     // TB - TwoByte - Set if this instruction has a two byte opcode, which
     // starts with a 0x0F byte before the real opcode.
-    TB          = 1 << 4,
+    TB          = 1 << 6,
 
     // OpSize - Set if this instruction requires an operand size prefix (0x66),
     // which most often indicates that the instruction operates on 16 bit data
     // instead of 32 bit data.
-    OpSize      = 1 << 5,
+    OpSize      = 1 << 7,
   };
 }
 
