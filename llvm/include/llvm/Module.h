@@ -66,7 +66,6 @@ public:
 private:
   GlobalListType GlobalList;     // The Global Variables in the module
   FunctionListType FunctionList; // The Functions in the module
-  GlobalValueRefMap *GVRefMap;   // Keep track of GlobalValueRef's
   SymbolTable *SymTab;           // Symbol Table for the module
   std::string ModuleID;    // Human readable identifier for the module
 
