@@ -38,9 +38,14 @@ void VM::setupPassManager() {
 }
 
 int VM::run(Function *F) {
-  int(*PF)() = (int(*)())getPointerToFunction(F);
+  int(*PF)(int, char**) = (int(*)(int, char**))getPointerToFunction(F);
   assert(PF != 0 && "Null pointer to function?");
-  return PF();
+
+  unsigned NumArgs = 0;
+  for (; Argv[NumArgs]; ++NumArgs)
+    ;
+    
+  return PF(NumArgs, Argv);
 }
 
 void *VM::resolveFunctionReference(void *RefAddr) {

@@ -24,6 +24,7 @@ class VM {
   TargetMachine &TM;       // The current target we are compiling to
   PassManager PM;          // Passes to compile a function
   MachineCodeEmitter *MCE; // MCE object
+  char **Argv;
 
   // GlobalAddress - A mapping between LLVM values and their native code
   // generated versions...
@@ -35,8 +36,8 @@ class VM {
   //
   std::map<void*, Function*> FunctionRefs;
 public:
-  VM(const std::string &name, Module &m, TargetMachine &tm)
-    : ExeName(name), M(m), TM(tm) {
+  VM(const std::string &name, char **AV, Module &m, TargetMachine &tm)
+    : ExeName(name), M(m), TM(tm), Argv(AV) {
     MCE = createEmitter(*this);  // Initialize MCE
     setupPassManager();
     registerCallback();

@@ -16,6 +16,9 @@ namespace {
   cl::opt<std::string>
   InputFile(cl::desc("<input bytecode>"), cl::Positional, cl::init("-"));
 
+   cl::list<std::string>
+   InputArgv(cl::ConsumeAfter, cl::desc("<program arguments>..."));
+
   cl::opt<std::string>
   MainFunction("f", cl::desc("Function to execute"), cl::init("main"),
                cl::value_desc("function name"));
@@ -41,8 +44,18 @@ int main(int argc, char **argv) {
     return 1;
   }
 
+  // Build an argv vector...
+  InputArgv.insert(InputArgv.begin(), InputFile);
+  char **Argv = new char*[InputArgv.size()+1];
+  for (unsigned i = 0, e = InputArgv.size(); i != e; ++i) {
+    Argv[i] = new char[InputArgv[i].size()+1];
+    std::copy(InputArgv[i].begin(), InputArgv[i].end(), Argv[i]);
+    Argv[i][InputArgv[i].size()] = 0;
+  }
+  Argv[InputArgv.size()] = 0;
+
   // Create the virtual machine object...
-  VM TheVM(argv[0], *M.get(), *Target.get());
+  VM TheVM(argv[0], Argv, *M.get(), *Target.get());
 
   Function *F = M.get()->getNamedFunction(MainFunction);
   if (F == 0) {
