@@ -571,7 +571,7 @@ int64_t SparcV9CodeEmitter::getMachineOpValue(MachineInstr &MI,
     // Duplicate code of the above case for VirtualRegister, BasicBlock... 
     // It should really hit this case, but Sparc backend uses VRegs instead
     DEBUG(std::cerr << "Saving reference to MBB\n");
-    BasicBlock *BB = MO.getMachineBasicBlock()->getBasicBlock();
+    const BasicBlock *BB = MO.getMachineBasicBlock()->getBasicBlock();
     unsigned* CurrPC = (unsigned*)(intptr_t)MCE.getCurrentPCValue();
     BBRefs.push_back(std::make_pair(BB, std::make_pair(CurrPC, &MI)));
   } else if (MO.isExternalSymbol()) {

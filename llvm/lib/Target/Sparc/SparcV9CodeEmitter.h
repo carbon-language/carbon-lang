@@ -18,13 +18,13 @@ class MachineOperand;
 class SparcV9CodeEmitter : public MachineFunctionPass {
   TargetMachine &TM;
   MachineCodeEmitter &MCE;
-  BasicBlock *currBB;
+  const BasicBlock *currBB;
 
   // Tracks which instruction references which BasicBlock
-  std::vector<std::pair<BasicBlock*,
+  std::vector<std::pair<const BasicBlock*,
                         std::pair<unsigned*,MachineInstr*> > > BBRefs;
   // Tracks where each BasicBlock starts
-  std::map<BasicBlock*, long> BBLocations;
+  std::map<const BasicBlock*, long> BBLocations;
 
   // Tracks locations of Constants which are laid out in memory (e.g. FP)
   // But we also need to map Constants to ConstantPool indices

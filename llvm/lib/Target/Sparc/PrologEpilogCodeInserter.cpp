@@ -133,8 +133,8 @@ void InsertPrologEpilogCode::InsertEpilogCode(MachineFunction &MF)
 
   for (MachineFunction::iterator I = MF.begin(), E = MF.end(); I != E; ++I) {
     MachineBasicBlock &MBB = *I;
-    BasicBlock &BB = *I->getBasicBlock();
-    Instruction *TermInst = (Instruction*)BB.getTerminator();
+    const BasicBlock &BB = *I->getBasicBlock();
+    const Instruction *TermInst = (Instruction*)BB.getTerminator();
     if (TermInst->getOpcode() == Instruction::Ret)
     {
       int ZR = TM.getRegInfo().getZeroRegNum();
