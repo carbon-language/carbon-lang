@@ -8,7 +8,7 @@ Loop:
 	store int 5, int* %P
 	%P2 = cast int* %P to sbyte*
 	store sbyte 4, sbyte* %P2
-	br bool true, label %loop, label %Out
+	br bool true, label %Loop, label %Out
 Out:
 	ret void
 }
