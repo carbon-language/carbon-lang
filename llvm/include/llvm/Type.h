@@ -17,7 +17,9 @@
 
 #include "llvm/Value.h"
 
-class ConstRules;
+namespace opt {
+  class ConstRules;
+}
 class ConstPoolVal;
 
 class Type : public Value {
@@ -59,7 +61,7 @@ private:
   unsigned    UID;   // The unique ID number for this class
 
   // ConstRulesImpl - See Opt/ConstantHandling.h for more info
-  mutable const ConstRules *ConstRulesImpl;
+  mutable const opt::ConstRules *ConstRulesImpl;
 
 protected:
   // ctor is protected, so only subclasses can create Type objects...
@@ -86,8 +88,8 @@ public:
   // Methods for dealing with constants uniformly.  See Opt/ConstantHandling.h
   // for more info on this...
   //
-  inline const ConstRules *getConstRules() const { return ConstRulesImpl; }
-  inline void setConstRules(const ConstRules *R) const { ConstRulesImpl = R; }
+  inline const opt::ConstRules *getConstRules() const { return ConstRulesImpl; }
+  inline void setConstRules(const opt::ConstRules *R) const { ConstRulesImpl = R; }
 
 public:   // These are the builtin types that are always available...
   static const Type *VoidTy , *BoolTy;
