@@ -231,18 +231,10 @@ void V8ISel::copyConstantToRegister(MachineBasicBlock *MBB,
       // Copy the value into the register pair.
       // R = top(more-significant) half, R+1 = bottom(less-significant) half
       uint64_t Val = cast<ConstantInt>(C)->getRawValue();
-      unsigned bottomHalf = Val & 0xffffffffU;
-      unsigned topHalf = Val >> 32;
-      unsigned HH = topHalf >> 10;
-      unsigned HM = topHalf & 0x03ff;
-      unsigned LM = bottomHalf >> 10;
-      unsigned LO = bottomHalf & 0x03ff;
-      BuildMI (*MBB, IP, V8::SETHIi, 1, TmpReg).addZImm(HH);
-      BuildMI (*MBB, IP, V8::ORri, 2, R).addReg (TmpReg)
-        .addSImm (HM);
-      BuildMI (*MBB, IP, V8::SETHIi, 1, TmpReg2).addZImm(LM);
-      BuildMI (*MBB, IP, V8::ORri, 2, R+1).addReg (TmpReg2)
-        .addSImm (LO);
+      copyConstantToRegister(MBB, IP, ConstantUInt::get(Type::UIntTy,
+                             Val >> 32), R);
+      copyConstantToRegister(MBB, IP, ConstantUInt::get(Type::UIntTy,
+                             Val & 0xffffffffU), R+1);
       return;
     }
 
@@ -280,10 +272,14 @@ void V8ISel::copyConstantToRegister(MachineBasicBlock *MBB,
     MachineConstantPool *CP = F->getConstantPool();
     unsigned CPI = CP->getConstantPoolIndex(CFP);
     const Type *Ty = CFP->getType();
+    unsigned TmpReg = makeAnotherReg (Type::UIntTy);
+    unsigned AddrReg = makeAnotherReg (Type::UIntTy);
 
     assert(Ty == Type::FloatTy || Ty == Type::DoubleTy && "Unknown FP type!");
     unsigned LoadOpcode = Ty == Type::FloatTy ? V8::LDFri : V8::LDDFri;
-    BuildMI (*MBB, IP, LoadOpcode, 2, R).addConstantPoolIndex (CPI).addSImm (0);
+    BuildMI (*MBB, IP, V8::SETHIi, 1, TmpReg).addConstantPoolIndex (CPI);
+    BuildMI (*MBB, IP, V8::ORri, 2, AddrReg).addReg (TmpReg).addConstantPoolIndex (CPI);
+    BuildMI (*MBB, IP, LoadOpcode, 2, R).addReg (AddrReg).addSImm (0);
   } else if (isa<ConstantPointerNull>(C)) {
     // Copy zero (null pointer) to the register.
     BuildMI (*MBB, IP, V8::ORri, 2, R).addReg (V8::G0).addSImm (0);
@@ -304,12 +300,10 @@ void V8ISel::LoadArgumentsToVirtualRegs (Function *LF) {
   unsigned ArgOffset;
   static const unsigned IncomingArgRegs[] = { V8::I0, V8::I1, V8::I2,
     V8::I3, V8::I4, V8::I5 };
-  assert (LF->asize () < 7
-          && "Can't handle loading excess call args off the stack yet");
-
   // Add IMPLICIT_DEFs of input regs.
   ArgOffset = 0;
-  for (Function::aiterator I = LF->abegin(), E = LF->aend(); I != E; ++I) {
+  for (Function::aiterator I = LF->abegin(), E = LF->aend();
+       I != E && ArgOffset < 6; ++I, ++ArgOffset) {
     unsigned Reg = getReg(*I);
     switch (getClassB(I->getType())) {
     case cByte:
@@ -318,40 +312,75 @@ void V8ISel::LoadArgumentsToVirtualRegs (Function *LF) {
     case cFloat:
       BuildMI(BB, V8::IMPLICIT_DEF, 0, IncomingArgRegs[ArgOffset]);
       break;
+    case cDouble:
+    case cLong:
+      // Double and Long use register pairs.
+      BuildMI(BB, V8::IMPLICIT_DEF, 0, IncomingArgRegs[ArgOffset]);
+      ++ArgOffset;
+      if (ArgOffset < 6)
+        BuildMI(BB, V8::IMPLICIT_DEF, 0, IncomingArgRegs[ArgOffset]);
+      break;
     default:
-      // FIXME: handle cDouble, cLong
-      assert (0 && "64-bit (double, long, etc.) function args not handled");
+      assert (0 && "type not handled");
       return;
     }
-    ++ArgOffset;
   }
 
   ArgOffset = 0;
-  for (Function::aiterator I = LF->abegin(), E = LF->aend(); I != E; ++I) {
+  for (Function::aiterator I = LF->abegin(), E = LF->aend(); I != E;
+       ++I, ++ArgOffset) {
     unsigned Reg = getReg(*I);
-    switch (getClassB(I->getType())) {
-    case cByte:
-    case cShort:
-    case cInt:
-      BuildMI(BB, V8::ORrr, 2, Reg).addReg (V8::G0)
-        .addReg (IncomingArgRegs[ArgOffset]);
-      break;
-    case cFloat: {
-      // Single-fp args are passed in integer registers; go through
-      // memory to get them into FP registers. (Bleh!)
-      unsigned FltAlign = TM.getTargetData().getFloatAlignment();
-      int FI = F->getFrameInfo()->CreateStackObject(4, FltAlign);
-      BuildMI (BB, V8::ST, 3).addFrameIndex (FI).addSImm (0)
-        .addReg (IncomingArgRegs[ArgOffset]);
-      BuildMI (BB, V8::LDFri, 2, Reg).addFrameIndex (FI).addSImm (0);
-      break;
+    if (ArgOffset < 6) {
+
+      switch (getClassB(I->getType())) {
+      case cByte:
+      case cShort:
+      case cInt:
+        BuildMI(BB, V8::ORrr, 2, Reg).addReg (V8::G0)
+          .addReg (IncomingArgRegs[ArgOffset]);
+        break;
+      case cFloat: {
+        // Single-fp args are passed in integer registers; go through
+        // memory to get them into FP registers. (Bleh!)
+        unsigned FltAlign = TM.getTargetData().getFloatAlignment();
+        int FI = F->getFrameInfo()->CreateStackObject(4, FltAlign);
+        BuildMI (BB, V8::ST, 3).addFrameIndex (FI).addSImm (0)
+          .addReg (IncomingArgRegs[ArgOffset]);
+        BuildMI (BB, V8::LDFri, 2, Reg).addFrameIndex (FI).addSImm (0);
+        break;
+      }
+      default:
+        // FIXME: handle cDouble, cLong
+        assert (0 && "64-bit (double, long, etc.) function args not handled");
+        return;
+      }
+
+    } else {
+
+      switch (getClassB(I->getType())) {
+      case cByte:
+      case cShort:
+      case cInt: {
+        int FI = F->getFrameInfo()->CreateFixedObject(4, 68 + (4 * ArgOffset));
+        BuildMI (BB, V8::LD, 2, Reg).addFrameIndex (FI).addSImm(0);
+        break;
+      }
+      case cFloat: {
+        int FI = F->getFrameInfo()->CreateFixedObject(4, 68 + (4 * ArgOffset));
+        BuildMI (BB, V8::LDFri, 2, Reg).addFrameIndex (FI).addSImm(0);
+        break;
+      }
+      case cDouble: {
+        int FI = F->getFrameInfo()->CreateFixedObject(8, 68 + (4 * ArgOffset));
+        BuildMI (BB, V8::LDDFri, 2, Reg).addFrameIndex (FI).addSImm(0);
+        break;
+      }
+      default:
+        // FIXME: handle cLong
+        assert (0 && "64-bit integer (long/ulong) function args not handled");
+        return;
+      }
     }
-    default:
-      // FIXME: handle cDouble, cLong
-      assert (0 && "64-bit (double, long, etc.) function args not handled");
-      return;
-    }
-    ++ArgOffset;
   }
 
 }
@@ -574,16 +603,9 @@ void V8ISel::emitCastOperation(MachineBasicBlock *BB,
       case cFloat:
         BuildMI (*BB, IP, V8::FSTOD, 1, DestReg).addReg (SrcReg);
         break;
-      case cDouble: {
-        // go through memory, for now
-        unsigned DoubleAlignment = TM.getTargetData().getDoubleAlignment();
-        int FI = F->getFrameInfo()->CreateStackObject(8, DoubleAlignment);
-        BuildMI (*BB, IP, V8::STDFri, 3).addFrameIndex (FI).addSImm (0)
-          .addReg (SrcReg);
-        BuildMI (*BB, IP, V8::LDDFri, 2, DestReg).addFrameIndex (FI)
-          .addSImm (0);
+      case cDouble: // use double move pseudo-instr
+        BuildMI (*BB, IP, V8::FpMOVD, 1, DestReg).addReg (SrcReg);
         break;
-      }
       default: {
         unsigned DoubleAlignment = TM.getTargetData().getDoubleAlignment();
         unsigned TmpReg = makeAnotherReg (newTy);
@@ -712,6 +734,18 @@ void V8ISel::visitCallInst(CallInst &I) {
           .addReg (ArgReg);
         BuildMI (BB, V8::LD, 2, OutgoingArgRegs[i - 1]).addFrameIndex (FI)
           .addSImm (0);
+      } else if (getClassB (I.getOperand (i)->getType ()) == cDouble) {
+        // Double-fp args are passed in pairs of integer registers; go through
+        // memory to get them out of FP registers. (Bleh!)
+        assert (i <= 5 && "Can't deal with double-fp args past #5 yet");
+        unsigned DblAlign = TM.getTargetData().getDoubleAlignment();
+        int FI = F->getFrameInfo()->CreateStackObject(8, DblAlign);
+        BuildMI (BB, V8::STDFri, 3).addFrameIndex (FI).addSImm (0)
+          .addReg (ArgReg);
+        BuildMI (BB, V8::LD, 2, OutgoingArgRegs[i - 1]).addFrameIndex (FI)
+          .addSImm (0);
+        BuildMI (BB, V8::LD, 2, OutgoingArgRegs[i]).addFrameIndex (FI)
+          .addSImm (4);
       } else {
         assert (0 && "64-bit (double, long, etc.) 'call' opnds not handled");
       }
@@ -738,6 +772,13 @@ void V8ISel::visitCallInst(CallInst &I) {
     case cFloat:
       BuildMI (BB, V8::FMOVS, 2, DestReg).addReg(V8::F0);
       break;
+    case cDouble:
+      BuildMI (BB, V8::FpMOVD, 2, DestReg).addReg(V8::D0);
+      break;
+    case cLong:
+      BuildMI (BB, V8::ORrr, 2, DestReg).addReg(V8::G0).addReg(V8::O0);
+      BuildMI (BB, V8::ORrr, 2, DestReg+1).addReg(V8::G0).addReg(V8::O1);
+      break;
     default:
       std::cerr << "Return type of call instruction not handled: " << I;
       abort ();
@@ -755,16 +796,11 @@ void V8ISel::visitReturnInst(ReturnInst &I) {
         BuildMI (BB, V8::ORrr, 2, V8::I0).addReg(V8::G0).addReg(RetValReg);
         break;
       case cFloat:
-        BuildMI (BB, V8::FMOVS, 2, V8::F0).addReg(RetValReg);
+        BuildMI (BB, V8::FMOVS, 1, V8::F0).addReg(RetValReg);
         break;
-      case cDouble: {
-        unsigned DoubleAlignment = TM.getTargetData().getDoubleAlignment();
-        int FI = F->getFrameInfo()->CreateStackObject(8, DoubleAlignment);
-        BuildMI (BB, V8::STDFri, 3).addFrameIndex (FI).addSImm (0)
-          .addReg (RetValReg);
-        BuildMI (BB, V8::LDDFri, 2, V8::F0).addFrameIndex (FI).addSImm (0);
+      case cDouble:
+        BuildMI (BB, V8::FpMOVD, 1, V8::D0).addReg(RetValReg);
         break;
-      }
       case cLong:
         BuildMI (BB, V8::ORrr, 2, V8::I0).addReg(V8::G0).addReg(RetValReg);
         BuildMI (BB, V8::ORrr, 2, V8::I1).addReg(V8::G0).addReg(RetValReg+1);
@@ -900,10 +936,18 @@ void V8ISel::visitBinaryOperator (Instruction &I) {
   }
 
   unsigned ResultReg = DestReg;
-  if (Class != cInt)
+  if (Class != cInt && Class != cLong)
     ResultReg = makeAnotherReg (I.getType ());
 
-  // FIXME: support long, ulong, fp.
+  if (Class == cLong) {
+    DEBUG (std::cerr << "Class = cLong\n");
+    DEBUG (std::cerr << "Op0Reg = " << Op0Reg << ", " << Op0Reg+1 << "\n");
+    DEBUG (std::cerr << "Op1Reg = " << Op1Reg << ", " << Op1Reg+1 << "\n");
+    DEBUG (std::cerr << "ResultReg = " << ResultReg << ", " << ResultReg+1 << "\n");
+    DEBUG (std::cerr << "DestReg = " << DestReg << ", " << DestReg+1 <<  "\n");
+  }
+
+  // FIXME: support long, ulong.
   switch (I.getOpcode ()) {
   case Instruction::Add: OpCase = 0; break;
   case Instruction::Sub: OpCase = 1; break;
