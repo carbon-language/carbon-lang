@@ -1,20 +1,33 @@
 LEVEL = ../../..
 LIBRARYNAME = sparc
+
 ExtraSource = Debug/Sparc.burm.cpp 
 
 include $(LEVEL)/Makefile.common
 
-Debug/Sparc.burm.cpp: $(BUILD_ROOT)/Debug/Sparc.burm Debug/.dir
+ifdef ENABLE_OPTIMIZED
+  DEBUG_FLAG = 
+else
+  DEBUG_FLAG = -D_DEBUG
+endif
+
+Debug/Sparc.burm.cpp: Debug/Sparc.burm Debug/.dir
 	$(RunBurg) $< -o $@
 
 $(BUILD_ROOT)/Debug/Sparc.burm.o: Debug/Sparc.burm.cpp
 	$(CompileG) $< -o $@
 
-$(BUILD_ROOT)/Debug/Sparc.burg.in1 : Sparc.burg.in $(BUILD_ROOT)/Debug/.dir
-	g++ -E -I$(LEVEL)/include -D_DEBUG -x c++ $< | sed '/^# /d' | sed 's/Ydefine/#define/' > $@
+$(BUILD_ROOT)/Release/Sparc.burm.o: Debug/Sparc.burm.cpp
+	$(CompileO) $< -o $@
 
-$(BUILD_ROOT)/Debug/Sparc.burm : $(BUILD_ROOT)/Debug/Sparc.burg.in1 $(BUILD_ROOT)/Debug/.dir
-	g++ -E -I$(LEVEL)/include -D_DEBUG -x c++ $< | sed '/^# /d' | sed 's/Xinclude/#include/g' | sed 's/Xdefine/#define/g' > $@
+$(BUILD_ROOT)/Profile/Sparc.burm.o: Debug/Sparc.burm.cpp
+	$(CompileP) $< -o $@
+
+Debug/Sparc.burg.in1 : Sparc.burg.in Debug/.dir
+	$(CXX) -E -I$(LEVEL)/include $(DEBUG_FLAG) -x c++ $< | sed '/^# /d' | sed 's/Ydefine/#define/' > $@
+
+Debug/Sparc.burm : Debug/Sparc.burg.in1
+	$(CXX) -E -I$(LEVEL)/include $(DEBUG_FLAG) -x c++ $< | sed '/^# /d' | sed 's/Xinclude/#include/g' | sed 's/Xdefine/#define/g' > $@
 
 $(BUILD_ROOT)/Depend/Sparc.burm.d: $(BUILD_ROOT)/Depend/.dir
 	touch $@
