@@ -954,7 +954,8 @@ bool GlobalOpt::ProcessInternalGlobal(GlobalVariable *GV,
       // Otherwise, if the global was not a boolean, we can shrink it to be a
       // boolean.
       if (Constant *SOVConstant = dyn_cast<Constant>(GS.StoredOnceValue))
-        if (GV->getType()->getElementType() != Type::BoolTy) {
+        if (GV->getType()->getElementType() != Type::BoolTy &&
+            !GV->getType()->getElementType()->isFloatingPoint()) {
           DEBUG(std::cerr << "   *** SHRINKING TO BOOL: " << *GV);
           ShrinkGlobalToBoolean(GV, SOVConstant);
           ++NumShrunkToBool;
