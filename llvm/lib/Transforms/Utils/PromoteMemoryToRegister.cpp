@@ -102,7 +102,7 @@ void PromotePass::findSafeAllocas(Method *M,
 // register references.
 //
 void PromotePass::promoteAlloca(AllocaInst *AI, DominanceFrontier &DFInfo) {
-  cerr << "TODO: Should process: " << AI;
+  std::cerr << "TODO: Should process: " << AI;
 }
 
 
