@@ -274,6 +274,16 @@ Backend, and then link in the shared object it generates.</p>
 --args -- [program arguments]</tt></p>
 </div>
 
+<p><b>Special note:</b> if you are debugging MultiSource or SPEC tests that
+already exist in the <tt>llvm/test</tt> hierarchy, there is an easier way to
+debug the JIT, LLC, and CBE, using the pre-written Makefile targets, which
+will pass the program options specified in the Makefiles:</p>
+
+<div class="doc_code">
+<p><tt>cd llvm/test/../../program<br>
+       make bugpoint-jit</tt></p>
+</div>
+
 <p>At the end of a successful <tt>bugpoint</tt> run, you will be presented
 with two bytecode files: a <em>safe</em> file which can be compiled with the C
 backend and the <em>test</em> file which either LLC or the JIT
