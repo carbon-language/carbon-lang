@@ -21,6 +21,7 @@
 #include "llvm/Pass.h"
 #include "llvm/Function.h"
 #include "llvm/iTerminators.h"
+#include "llvm/Assembly/Writer.h"
 #include "llvm/Support/CFG.h"
 #include <sstream>
 #include <fstream>
@@ -39,9 +40,14 @@ struct DOTGraphTraits<const Function*> : public DefaultDOTGraphTraits {
 
   static std::string getNodeLabel(const BasicBlock *Node,
                                   const Function *Graph) {
-    if (CFGOnly) return Node->getName() + ":";
+    if (CFGOnly && !Node->getName().empty()) return Node->getName() + ":";
 
     std::ostringstream Out;
+    if (CFGOnly) {
+      WriteAsOperand(Out, Node, false, true);
+      return Out.str();
+    }
+
     Out << *Node;
     std::string OutStr = Out.str();
     if (OutStr[0] == '\n') OutStr.erase(OutStr.begin());
