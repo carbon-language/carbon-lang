@@ -138,10 +138,16 @@ bool BytecodeWriter::outputConstant(const ConstPoolVal *CPV) {
     break;
   }
 
-  case Type::FloatTyID:    // Floating point types...
-  case Type::DoubleTyID:
-    // TODO: Floating point type serialization
-
+  case Type::FloatTyID: {   // Floating point types...
+    float Tmp = (float)((const ConstPoolFP*)CPV)->getValue();
+    output_data(&Tmp, &Tmp+1, Out);
+    break;
+  }
+  case Type::DoubleTyID: {
+    double Tmp = ((const ConstPoolFP*)CPV)->getValue();
+    output_data(&Tmp, &Tmp+1, Out);
+    break;
+  }
 
   case Type::VoidTyID: 
   case Type::LabelTyID:
