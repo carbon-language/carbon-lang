@@ -1815,8 +1815,12 @@ BBTerminatorInst : RET ResolvedVal {              // Return with a result...
 
     std::vector<std::pair<Constant*,BasicBlock*> >::iterator I = $8->begin(),
       E = $8->end();
-    for (; I != E; ++I)
-      S->addCase(I->first, I->second);
+    for (; I != E; ++I) {
+      if (ConstantInt *CI = dyn_cast<ConstantInt>(I->first))
+          S->addCase(CI, I->second);
+      else
+        ThrowException("Switch case is constant, but not a simple integer!");
+    }
     delete $8;
   }
   | SWITCH IntType ValueRef ',' LABEL ValueRef '[' ']' {
