@@ -98,6 +98,14 @@ public:
                                           MachineCodeEmitter &MCE) {
     return true;
   }
+
+  /// replaceMachineCodeForFunction - Make it so that calling the
+  /// function whose machine code is at OLD turns into a call to NEW. Returns
+  /// true iff an error occurred. FIXME: this is JIT-specific.
+  ///
+  virtual bool replaceMachineCodeForFunction (void *Old, void *New) {
+    return true;
+  }
 };
 
 #endif
