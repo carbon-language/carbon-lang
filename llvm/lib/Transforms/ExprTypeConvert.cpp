@@ -15,7 +15,6 @@
 #include "Support/STLExtras.h"
 #include "Support/Debug.h"
 #include <algorithm>
-using std::cerr;
 
 static bool OperandConvertibleToType(User *U, Value *V, const Type *Ty,
                                      ValueTypeCache &ConvertedTypes,
@@ -340,7 +339,7 @@ Value *ConvertExpressionToType(Value *V, const Type *Ty, ValueMapCache &VMC,
     return VMCI->second;
   }
 
-  DEBUG(cerr << "CETT: " << (void*)V << " " << V);
+  DEBUG(std::cerr << "CETT: " << (void*)V << " " << V);
 
   Instruction *I = dyn_cast<Instruction>(V);
   if (I == 0) {
@@ -539,20 +538,19 @@ Value *ConvertExpressionToType(Value *V, const Type *Ty, ValueMapCache &VMC,
   // Add the instruction to the expression map
   VMC.ExprMap[I] = Res;
 
-  // Expressions are only convertible if all of the users of the expression can
-  // have this value converted.  This makes use of the map to avoid infinite
-  // recursion.
-  //
+
   unsigned NumUses = I->use_size();
   for (unsigned It = 0; It < NumUses; ) {
     unsigned OldSize = NumUses;
-    ConvertOperandToType(*(I->use_begin()+It), I, Res, VMC, TD);
+    Value::use_iterator UI = I->use_begin();
+    std::advance(UI, It);
+    ConvertOperandToType(*UI, I, Res, VMC, TD);
     NumUses = I->use_size();
     if (NumUses == OldSize) ++It;
   }
 
-  DEBUG(cerr << "ExpIn: " << (void*)I << " " << I
-             << "ExpOut: " << (void*)Res << " " << Res);
+  DEBUG(std::cerr << "ExpIn: " << (void*)I << " " << I
+                  << "ExpOut: " << (void*)Res << " " << Res);
 
   return Res;
 }
@@ -893,7 +891,9 @@ void ConvertValueToNewType(Value *V, Value *NewVal, ValueMapCache &VMC,
   unsigned NumUses = V->use_size();
   for (unsigned It = 0; It < NumUses; ) {
     unsigned OldSize = NumUses;
-    ConvertOperandToType(*(V->use_begin()+It), V, NewVal, VMC, TD);
+    Value::use_iterator UI = V->use_begin();
+    std::advance(UI, It);
+    ConvertOperandToType(*UI, V, NewVal, VMC, TD);
     NumUses = V->use_size();
     if (NumUses == OldSize) ++It;
   }
@@ -921,7 +921,8 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
   I->setName("");
   Instruction *Res;     // Result of conversion
 
-  //cerr << endl << endl << "Type:\t" << Ty << "\nInst: " << I << "BB Before: " << BB << endl;
+  //std::cerr << endl << endl << "Type:\t" << Ty << "\nInst: " << I
+  //          << "BB Before: " << BB << endl;
 
   // Prevent I from being removed...
   ValueHandle IHandle(VMC, I);
@@ -1212,9 +1213,9 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
   assert(It != BB->end() && "Instruction not in own basic block??");
   BB->getInstList().insert(It, Res);   // Keep It pointing to old instruction
 
-  DEBUG(cerr << "COT CREATED: "  << (void*)Res << " " << Res
-             << "In: " << (void*)I << " " << I << "Out: " << (void*)Res
-             << " " << Res);
+  DEBUG(std::cerr << "COT CREATED: "  << (void*)Res << " " << Res
+                  << "In: " << (void*)I << " " << I << "Out: " << (void*)Res
+                  << " " << Res);
 
   // Add the instruction to the expression map
   VMC.ExprMap[I] = Res;
@@ -1222,30 +1223,35 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
   if (I->getType() != Res->getType())
     ConvertValueToNewType(I, Res, VMC, TD);
   else {
-    for (unsigned It = 0; It < I->use_size(); ) {
-      User *Use = *(I->use_begin()+It);
-      if (isa<ValueHandle>(Use))            // Don't remove ValueHandles!
-        ++It;
-      else
-        Use->replaceUsesOfWith(I, Res);
+    bool FromStart = true;
+    Value::use_iterator UI;
+    while (1) {
+      if (FromStart) UI = I->use_begin();
+      if (UI == I->use_end()) break;
+      
+      if (isa<ValueHandle>(*UI)) {
+        ++UI;
+        FromStart = false;
+      } else {
+        User *U = *UI;
+        if (!FromStart) --UI;
+        U->replaceUsesOfWith(I, Res);
+        if (!FromStart) ++UI;
+      }
     }
-
-    for (Value::use_iterator UI = I->use_begin(), UE = I->use_end();
-         UI != UE; ++UI)
-      assert(isa<ValueHandle>((Value*)*UI) &&"Uses of Instruction remain!!!");
   }
 }
 
 
 ValueHandle::ValueHandle(ValueMapCache &VMC, Value *V)
   : Instruction(Type::VoidTy, UserOp1, ""), Cache(VMC) {
-  //DEBUG(cerr << "VH AQUIRING: " << (void*)V << " " << V);
+  //DEBUG(std::cerr << "VH AQUIRING: " << (void*)V << " " << V);
   Operands.push_back(Use(V, this));
 }
 
 ValueHandle::ValueHandle(const ValueHandle &VH)
   : Instruction(Type::VoidTy, UserOp1, ""), Cache(VH.Cache) {
-  //DEBUG(cerr << "VH AQUIRING: " << (void*)V << " " << V);
+  //DEBUG(std::cerr << "VH AQUIRING: " << (void*)V << " " << V);
   Operands.push_back(Use((Value*)VH.getOperand(0), this));
 }
 
@@ -1254,7 +1260,7 @@ static void RecursiveDelete(ValueMapCache &Cache, Instruction *I) {
 
   assert(I->getParent() && "Inst not in basic block!");
 
-  //DEBUG(cerr << "VH DELETING: " << (void*)I << " " << I);
+  //DEBUG(std::cerr << "VH DELETING: " << (void*)I << " " << I);
 
   for (User::op_iterator OI = I->op_begin(), OE = I->op_end(); 
        OI != OE; ++OI)
@@ -1281,7 +1287,7 @@ ValueHandle::~ValueHandle() {
     //
     RecursiveDelete(Cache, dyn_cast<Instruction>(V));
   } else {
-    //DEBUG(cerr << "VH RELEASING: " << (void*)Operands[0].get() << " "
-    //           << Operands[0]->use_size() << " " << Operands[0]);
+    //DEBUG(std::cerr << "VH RELEASING: " << (void*)Operands[0].get() << " "
+    //                << Operands[0]->use_size() << " " << Operands[0]);
   }
 }
