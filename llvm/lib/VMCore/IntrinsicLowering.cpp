@@ -107,8 +107,6 @@ void DefaultIntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
   Function *Callee = CI->getCalledFunction();
   assert(Callee && "Cannot lower an indirect call!");
   
-  Module *M = Callee->getParent();
-
   switch (Callee->getIntrinsicID()) {
   case Intrinsic::not_intrinsic:
     std::cerr << "Cannot lower a call to a non-intrinsic function '"
@@ -136,18 +134,20 @@ void DefaultIntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
        CI->replaceAllUsesWith(Constant::getNullValue(CI->getType()));
      break;
 
-  case Intrinsic::longjmp:
+  case Intrinsic::longjmp: {
     static Function *LongjmpFCache = 0;
     ReplaceCallWith("longjmp", CI, CI->op_begin()+1, CI->op_end(),
                     Type::VoidTy, LongjmpFCache);
     break;
+  }
 
-  case Intrinsic::siglongjmp:
+  case Intrinsic::siglongjmp: {
     // Insert the call to abort
     static Function *AbortFCache = 0;
     ReplaceCallWith("abort", CI, CI->op_end(), CI->op_end(), Type::VoidTy,
                     AbortFCache);
     break;
+  }
 
   case Intrinsic::returnaddress:
   case Intrinsic::frameaddress:
@@ -167,27 +167,30 @@ void DefaultIntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
       CI->replaceAllUsesWith(Constant::getNullValue(CI->getType()));
     break;    // Simply strip out debugging intrinsics
 
-  case Intrinsic::memcpy:
+  case Intrinsic::memcpy: {
     // The memcpy intrinsic take an extra alignment argument that the memcpy
     // libc function does not.
     static Function *MemcpyFCache = 0;
     ReplaceCallWith("memcpy", CI, CI->op_begin()+1, CI->op_end()-1,
                     (*(CI->op_begin()+1))->getType(), MemcpyFCache);
     break;
-  case Intrinsic::memmove:
+  }
+  case Intrinsic::memmove: {
     // The memmove intrinsic take an extra alignment argument that the memmove
     // libc function does not.
     static Function *MemmoveFCache = 0;
     ReplaceCallWith("memmove", CI, CI->op_begin()+1, CI->op_end()-1,
                     (*(CI->op_begin()+1))->getType(), MemmoveFCache);
     break;
-  case Intrinsic::memset:
+  }
+  case Intrinsic::memset: {
     // The memset intrinsic take an extra alignment argument that the memset
     // libc function does not.
     static Function *MemsetFCache = 0;
     ReplaceCallWith("memset", CI, CI->op_begin()+1, CI->op_end()-1,
                     (*(CI->op_begin()+1))->getType(), MemsetFCache);
     break;
+  }
   }
   
   assert(CI->use_empty() &&
