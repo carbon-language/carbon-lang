@@ -221,7 +221,7 @@ GenericValue lle_X_log(FunctionType *M, const vector<GenericValue> &Args) {
 GenericValue lle_X_isnan(FunctionType *F, const vector<GenericValue> &Args) {
   assert(Args.size() == 1);
   GenericValue GV;
-  GV.IntVal = isnan(Args[0].DoubleVal);
+  GV.IntVal = std::isnan(Args[0].DoubleVal);
   return GV;
 }
 
