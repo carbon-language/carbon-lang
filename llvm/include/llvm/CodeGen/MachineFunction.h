@@ -24,6 +24,7 @@ class Pass;
 
 Pass *createMachineCodeConstructionPass(TargetMachine &Target);
 Pass *createMachineCodeDestructionPass();
+Pass *createMachineFunctionPrinterPass();
 
 class MachineFunction : private Annotation {
   const Function *Fn;
@@ -49,12 +50,6 @@ class MachineFunction : private Annotation {
 public:
   MachineFunction(const Function *Fn, const TargetMachine& target);
 
-
-  /// CalculateArgSize - Call this method to fill in the maxOptionalArgsSize &
-  /// staticStackSize fields...
-  ///
-  void CalculateArgSize();
-
   /// getFunction - Return the LLVM function that this machine code represents
   ///
   const Function *getFunction() const { return Fn; }
@@ -62,13 +57,29 @@ public:
   /// getTarget - Return the target machine this machine code is compiled with
   ///
   const TargetMachine &getTarget() const { return Target; }
-  
-  // The next two methods are used to construct and to retrieve
-  // the MachineFunction object for the given method.
+
+  /// print - Print out the MachineFunction in a format suitable for debugging
+  /// to the specified stream.
+  ///
+  void print(std::ostream &OS) const;
+
+  /// dump - Print the current MachineFunction to cerr, useful for debugger use.
+  ///
+  void dump() const;
+
+  /// CalculateArgSize - Call this method to fill in the maxOptionalArgsSize &
+  /// staticStackSize fields...
+  ///
+  void CalculateArgSize();
+
+  // The next three methods are used to construct, destruct, and retrieve the
+  // MachineFunction object for the given method.
+  //
   // construct() -- Allocates and initializes for a given method and target
   // get()       -- Returns a handle to the object.
   //                This should not be called before "construct()"
   //                for a given Method.
+  // destruct()  -- Destroy the MachineFunction object
   // 
   static MachineFunction& construct(const Function *Fn,
                                     const TargetMachine &target);
@@ -157,8 +168,6 @@ public:
   
   // int          getOffsetFromFP       (const Value* val) const;
   
-  void            dump                     () const;
-
 private:
   inline void     incrementAutomaticVarsSize(int incr) {
     automaticVarsSize+= incr;
