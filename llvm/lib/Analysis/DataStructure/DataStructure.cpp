@@ -2141,3 +2141,39 @@ void DSGraph::computeGGToGMapping(InvNodeMapTy &InvNodeMap) {
   }
 }
                                 
+
+/// computeCalleeCallerMapping - Given a call from a function in the current
+/// graph to the 'Callee' function (which lives in 'CalleeGraph'), compute the
+/// mapping of nodes from the callee to nodes in the caller.
+void DSGraph::computeCalleeCallerMapping(DSCallSite CS, const Function &Callee,
+                                         DSGraph &CalleeGraph,
+                                         NodeMapTy &NodeMap) {
+
+  DSCallSite CalleeArgs =
+    CalleeGraph.getCallSiteForArguments(const_cast<Function&>(Callee));
+  
+  computeNodeMapping(CalleeArgs.getRetVal(), CS.getRetVal(), NodeMap);
+
+  unsigned NumArgs = CS.getNumPtrArgs();
+  if (NumArgs > CalleeArgs.getNumPtrArgs())
+    NumArgs = CalleeArgs.getNumPtrArgs();
+
+  for (unsigned i = 0; i != NumArgs; ++i)
+    computeNodeMapping(CalleeArgs.getPtrArg(i), CS.getPtrArg(i), NodeMap);
+    
+  // Map the nodes that are pointed to by globals.
+  DSScalarMap &CalleeSM = CalleeGraph.getScalarMap();
+  DSScalarMap &CallerSM = getScalarMap();
+
+  if (CalleeSM.global_size() >= CallerSM.global_size()) {
+    for (DSScalarMap::global_iterator GI = CallerSM.global_begin(), 
+           E = CallerSM.global_end(); GI != E; ++GI)
+      if (CalleeSM.global_count(*GI))
+        computeNodeMapping(CalleeSM[*GI], CallerSM[*GI], NodeMap);
+  } else {
+    for (DSScalarMap::global_iterator GI = CalleeSM.global_begin(), 
+           E = CalleeSM.global_end(); GI != E; ++GI)
+      if (CallerSM.global_count(*GI))
+        computeNodeMapping(CalleeSM[*GI], CallerSM[*GI], NodeMap);
+  }
+}
