@@ -1191,6 +1191,10 @@ void DSGraph::mergeInGraph(const DSCallSite &CS, Function &F,
                            const DSGraph &Graph, unsigned CloneFlags) {
   TIME_REGION(X, "mergeInGraph");
 
+  // Fastpath for a noop inline.
+  if (CS.getNumPtrArgs() == 0 && CS.getRetVal().isNull())
+    return;
+
   // If this is not a recursive call, clone the graph into this graph...
   if (&Graph != this) {
     // Clone the callee's graph into the current graph, keeping track of where
@@ -1797,6 +1801,29 @@ void DSGraph::removeDeadNodes(unsigned Flags) {
     delete DeadNodes[i];
 
   DEBUG(AssertGraphOK(); GlobalsGraph->AssertGraphOK());
+}
+
+void DSGraph::AssertCallSiteInGraph(const DSCallSite &CS) const {
+  if (CS.isIndirectCall()) {
+    AssertNodeInGraph(CS.getCalleeNode());
+#if 0
+    if (CS.getNumPtrArgs() && CS.getCalleeNode() == CS.getPtrArg(0).getNode() &&
+        CS.getCalleeNode() && CS.getCalleeNode()->getGlobals().empty())
+      std::cerr << "WARNING: WIERD CALL SITE FOUND!\n";      
+#endif
+  }
+  AssertNodeInGraph(CS.getRetVal().getNode());
+  for (unsigned j = 0, e = CS.getNumPtrArgs(); j != e; ++j)
+    AssertNodeInGraph(CS.getPtrArg(j).getNode());
+}
+
+void DSGraph::AssertCallNodesInGraph() const {
+  for (unsigned i = 0, e = FunctionCalls.size(); i != e; ++i)
+    AssertCallSiteInGraph(FunctionCalls[i]);
+}
+void DSGraph::AssertAuxCallNodesInGraph() const {
+  for (unsigned i = 0, e = AuxFunctionCalls.size(); i != e; ++i)
+    AssertCallSiteInGraph(AuxFunctionCalls[i]);
 }
 
 void DSGraph::AssertGraphOK() const {
