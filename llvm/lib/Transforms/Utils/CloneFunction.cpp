@@ -1,7 +1,7 @@
 
 // FIXME: document
 
-#include "llvm/Transforms/CloneFunction.h"
+#include "llvm/Transforms/Utils/CloneFunction.h"
 #include "llvm/Function.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/Instruction.h"

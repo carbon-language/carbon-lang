@@ -14,14 +14,14 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Transforms/Linker.h"
+#include "llvm/Transforms/Utils/Linker.h"
 #include "llvm/Module.h"
 #include "llvm/PassManager.h"
 #include "llvm/Bytecode/Reader.h"
 #include "llvm/Bytecode/WriteBytecodePass.h"
-#include "llvm/Transforms/SymbolStripping.h"
 #include "llvm/Transforms/CleanupGCCOutput.h"
 #include "llvm/Transforms/ConstantMerge.h"
+#include "llvm/Transforms/ScalarSymbolStripping.h"
 #include "llvm/Transforms/IPO/GlobalDCE.h"
 #include "llvm/Transforms/IPO/Internalize.h"
 #include "Support/CommandLine.h"

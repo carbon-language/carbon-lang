@@ -25,7 +25,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/Instrumentation/ProfilePaths.h"
-#include "llvm/Transforms/UnifyFunctionExitNodes.h"
+#include "llvm/Transforms/Scalar/UnifyFunctionExitNodes.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"

@@ -5,7 +5,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Transforms/UnifyFunctionExitNodes.h"
+#include "llvm/Transforms/Scalar/UnifyFunctionExitNodes.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/Function.h"
 #include "llvm/iTerminators.h"

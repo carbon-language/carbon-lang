@@ -5,11 +5,11 @@
 // Specifically, this:
 //  * Merges global variables between the two modules
 //    * Uninit + Uninit = Init, Init + Uninit = Init, Init + Init = Error if !=
-//  * Merges methods between two modules
+//  * Merges functions between two modules
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Transforms/Linker.h"
+#include "llvm/Transforms/Utils/Linker.h"
 #include "llvm/Module.h"
 #include "llvm/Function.h"
 #include "llvm/BasicBlock.h"
@@ -235,8 +235,8 @@ static bool LinkGlobalInits(Module *Dest, const Module *Src,
 }
 
 // LinkFunctionProtos - Link the functions together between the two modules,
-// without doing method bodies... this just adds external method prototypes to
-// the Dest function...
+// without doing function bodies... this just adds external function prototypes
+// to the Dest function...
 //
 static bool LinkFunctionProtos(Module *Dest, const Module *Src,
                                map<const Value*, Value*> &ValueMap,
@@ -245,14 +245,15 @@ static bool LinkFunctionProtos(Module *Dest, const Module *Src,
   // level symbol table...
   SymbolTable *ST = Src->getSymbolTable() ? Dest->getSymbolTableSure() : 0;
   
-  // Loop over all of the methods in the src module, mapping them over as we go
+  // Loop over all of the functions in the src module, mapping them over as we
+  // go
   //
   for (Module::const_iterator I = Src->begin(), E = Src->end(); I != E; ++I) {
     const Function *SM = *I;   // SrcFunction
     Value *V;
 
-    // If the method has a name, and that name is already in use in the
-    // Dest module, make sure that the name is a compatible method...
+    // If the function has a name, and that name is already in use in the Dest
+    // module, make sure that the name is a compatible function...
     //
     if (SM->hasExternalLinkage() && SM->hasName() &&
 	(V = ST->lookup(SM->getType(), SM->getName())) &&
@@ -263,7 +264,7 @@ static bool LinkFunctionProtos(Module *Dest, const Module *Src,
       // 
       Function *DM = cast<Function>(V);   // DestFunction
 
-      // Check to make sure the method is not defined in both modules...
+      // Check to make sure the function is not defined in both modules...
       if (!SM->isExternal() && !DM->isExternal())
         return Error(Err, "Function '" + 
                      SM->getFunctionType()->getDescription() + "':\"" + 
@@ -272,13 +273,13 @@ static bool LinkFunctionProtos(Module *Dest, const Module *Src,
       // Otherwise, just remember this mapping...
       ValueMap.insert(std::make_pair(SM, DM));
     } else {
-      // Function does not already exist, simply insert an external method
+      // Function does not already exist, simply insert an external function
       // signature identical to SM into the dest module...
       Function *DM = new Function(SM->getFunctionType(),
                                   SM->hasInternalLinkage(),
                                   SM->getName());
 
-      // Add the method signature to the dest module...
+      // Add the function signature to the dest module...
       Dest->getFunctionList().push_back(DM);
 
       // ... and remember this mapping...
@@ -288,23 +289,23 @@ static bool LinkFunctionProtos(Module *Dest, const Module *Src,
   return false;
 }
 
-// LinkFunctionBody - Copy the source method over into the dest method
-// and fix up references to values.  At this point we know that Dest
-// is an external method, and that Src is not.
+// LinkFunctionBody - Copy the source function over into the dest function and
+// fix up references to values.  At this point we know that Dest is an external
+// function, and that Src is not.
 //
 static bool LinkFunctionBody(Function *Dest, const Function *Src,
                              const map<const Value*, Value*> &GlobalMap,
                              string *Err = 0) {
   assert(Src && Dest && Dest->isExternal() && !Src->isExternal());
-  map<const Value*, Value*> LocalMap;   // Map for method local values
+  map<const Value*, Value*> LocalMap;   // Map for function local values
 
-  // Go through and convert method arguments over...
+  // Go through and convert function arguments over...
   for (Function::ArgumentListType::const_iterator 
          I = Src->getArgumentList().begin(),
          E = Src->getArgumentList().end(); I != E; ++I) {
     const Argument *SMA = *I;
 
-    // Create the new method argument and add to the dest method...
+    // Create the new function argument and add to the dest function...
     Argument *DMA = new Argument(SMA->getType(), SMA->getName());
     Dest->getArgumentList().push_back(DMA);
 
@@ -317,7 +318,7 @@ static bool LinkFunctionBody(Function *Dest, const Function *Src,
   for (Function::const_iterator I = Src->begin(), E = Src->end(); I != E; ++I) {
     const BasicBlock *SBB = *I;
 
-    // Create new basic block and add to mapping and the Dest method...
+    // Create new basic block and add to mapping and the Dest function...
     BasicBlock *DBB = new BasicBlock(SBB->getName(), Dest);
     LocalMap.insert(std::make_pair(SBB, DBB));
 
@@ -337,10 +338,10 @@ static bool LinkFunctionBody(Function *Dest, const Function *Src,
     }
   }
 
-  // At this point, all of the instructions and values of the method are now
-  // copied over.  The only problem is that they are still referencing values
-  // in the Source method as operands.  Loop through all of the operands of the
-  // methods and patch them up to point to the local versions...
+  // At this point, all of the instructions and values of the function are now
+  // copied over.  The only problem is that they are still referencing values in
+  // the Source function as operands.  Loop through all of the operands of the
+  // functions and patch them up to point to the local versions...
   //
   for (Function::iterator BI = Dest->begin(), BE = Dest->end();
        BI != BE; ++BI) {
@@ -358,20 +359,21 @@ static bool LinkFunctionBody(Function *Dest, const Function *Src,
 }
 
 
-// LinkFunctionBodies - Link in the method bodies that are defined in the source
-// module into the DestModule.  This consists basically of copying the method
-// over and fixing up references to values.
+// LinkFunctionBodies - Link in the function bodies that are defined in the
+// source module into the DestModule.  This consists basically of copying the
+// function over and fixing up references to values.
 //
 static bool LinkFunctionBodies(Module *Dest, const Module *Src,
                                map<const Value*, Value*> &ValueMap,
                                string *Err = 0) {
 
-  // Loop over all of the methods in the src module, mapping them over as we go
+  // Loop over all of the functions in the src module, mapping them over as we
+  // go
   //
   for (Module::const_iterator I = Src->begin(), E = Src->end(); I != E; ++I) {
-    const Function *SM = *I;                   // Source Function
-    if (!SM->isExternal()) {                   // No body if method is external
-      Function *DM = cast<Function>(ValueMap[SM]); // Destination method
+    const Function *SM = *I;                  // Source Function
+    if (!SM->isExternal()) {                  // No body if function is external
+      Function *DM = cast<Function>(ValueMap[SM]); // Destination function
 
       // DM not external SM external?
       if (!DM->isExternal()) {
@@ -417,16 +419,17 @@ bool LinkModules(Module *Dest, const Module *Src, string *ErrorMsg = 0) {
   //
   if (LinkGlobalInits(Dest, Src, ValueMap, ErrorMsg)) return true;
 
-  // Link the methods together between the two modules, without doing method
-  // bodies... this just adds external method prototypes to the Dest method...
-  // We do this so that when we begin processing method bodies, all of the
-  // global values that may be referenced are available in our ValueMap.
+  // Link the functions together between the two modules, without doing function
+  // bodies... this just adds external function prototypes to the Dest
+  // function...  We do this so that when we begin processing function bodies,
+  // all of the global values that may be referenced are available in our
+  // ValueMap.
   //
   if (LinkFunctionProtos(Dest, Src, ValueMap, ErrorMsg)) return true;
 
-  // Link in the method bodies that are defined in the source module into the
-  // DestModule.  This consists basically of copying the method over and fixing
-  // up references to values.
+  // Link in the function bodies that are defined in the source module into the
+  // DestModule.  This consists basically of copying the function over and
+  // fixing up references to values.
   //
   if (LinkFunctionBodies(Dest, Src, ValueMap, ErrorMsg)) return true;
 

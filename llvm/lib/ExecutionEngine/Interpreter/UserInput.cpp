@@ -7,7 +7,7 @@
 #include "Interpreter.h"
 #include "llvm/Bytecode/Reader.h"
 #include "llvm/DerivedTypes.h"
-#include "llvm/Transforms/Linker.h"
+#include "llvm/Transforms/Utils/Linker.h"
 #include <algorithm>
 using std::string;
 using std::cout;

@@ -6,7 +6,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Analysis/Dominators.h"
-#include "llvm/Transforms/UnifyFunctionExitNodes.h"
+#include "llvm/Transforms/Scalar/UnifyFunctionExitNodes.h"
 #include "llvm/Support/CFG.h"
 #include "Support/DepthFirstIterator.h"
 #include "Support/STLExtras.h"

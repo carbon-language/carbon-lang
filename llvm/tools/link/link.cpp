@@ -9,7 +9,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Transforms/Linker.h"
+#include "llvm/Transforms/Utils/Linker.h"
 #include "llvm/Bytecode/Reader.h"
 #include "llvm/Bytecode/Writer.h"
 #include "llvm/Module.h"
