@@ -394,7 +394,7 @@ emitCallAndSwitchStatement(Function *newFunction, BasicBlock *codeReplacer,
       Indices.push_back(ConstantUInt::get(Type::UIntTy, i));
       GetElementPtrInst *GEP =
         new GetElementPtrInst(Struct, Indices,
-                              "gep_" + StructValues[i]->getName(), 0);
+                              "gep_" + StructValues[i]->getName());
       codeReplacer->getInstList().push_back(GEP);
       StoreInst *SI = new StoreInst(StructValues[i], GEP);
       codeReplacer->getInstList().push_back(SI);
@@ -420,7 +420,7 @@ emitCallAndSwitchStatement(Function *newFunction, BasicBlock *codeReplacer,
       Indices.push_back(ConstantUInt::get(Type::UIntTy, FirstOut + i));
       GetElementPtrInst *GEP 
         = new GetElementPtrInst(Struct, Indices,
-                                "gep_reload_" + outputs[i]->getName(), 0);
+                                "gep_reload_" + outputs[i]->getName());
       codeReplacer->getInstList().push_back(GEP);
       Output = GEP;
     } else {
