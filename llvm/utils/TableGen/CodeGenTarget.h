@@ -96,6 +96,10 @@ public:
   /// getPHIInstruction - Return the designated PHI instruction.
   ///
   const CodeGenInstruction &getPHIInstruction() const;
+
+  /// isLittleEndianEncoding - are instruction bit patterns defined as  [0..n]?
+  ///
+  bool isLittleEndianEncoding() const;
 };
 
 } // End llvm namespace

@@ -188,6 +188,7 @@ void CodeGenTarget::ReadInstructions() const {
 }
 
 /// getPHIInstruction - Return the designated PHI instruction.
+///
 const CodeGenInstruction &CodeGenTarget::getPHIInstruction() const {
   Record *PHI = getInstructionSet()->getValueAsDef("PHIInst");
   std::map<std::string, CodeGenInstruction>::const_iterator I =
@@ -195,6 +196,13 @@ const CodeGenInstruction &CodeGenTarget::getPHIInstruction() const {
   if (I == Instructions.end())
     throw "Could not find PHI instruction named '" + PHI->getName() + "'!";
   return I->second;
+}
+
+/// isLittleEndianEncoding - Return whether this target encodes its instruction
+/// in little-endian format, i.e. bits laid out in the order [0..n]
+///
+bool CodeGenTarget::isLittleEndianEncoding() const {
+  return getInstructionSet()->getValueAsBit("isLittleEndianEncoding");
 }
 
 CodeGenInstruction::CodeGenInstruction(Record *R, const std::string &AsmStr)
@@ -250,6 +258,7 @@ CodeGenInstruction::CodeGenInstruction(Record *R, const std::string &AsmStr)
 /// getOperandNamed - Return the index of the operand with the specified
 /// non-empty name.  If the instruction does not have an operand with the
 /// specified name, throw an exception.
+///
 unsigned CodeGenInstruction::getOperandNamed(const std::string &Name) const {
   assert(!Name.empty() && "Cannot search for operand with no name!");
   for (unsigned i = 0, e = OperandList.size(); i != e; ++i)
