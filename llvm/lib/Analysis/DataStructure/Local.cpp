@@ -17,6 +17,7 @@
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Instructions.h"
+#include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Support/InstVisitor.h"
 #include "llvm/Target/TargetData.h"
 #include "Support/CommandLine.h"
@@ -366,12 +367,17 @@ void GraphBuilder::visitGetElementPtrInst(User &GEP) {
 
   // All of these subscripts are indexing INTO the elements we have...
   unsigned Offset = 0;
-  for (unsigned i = 2, e = GEP.getNumOperands(); i < e; ++i)
-    if (GEP.getOperand(i)->getType() == Type::LongTy) {
-      // Get the type indexing into...
-      const SequentialType *STy = cast<SequentialType>(CurTy);
-      CurTy = STy->getElementType();
+  for (gep_type_iterator I = gep_type_begin(GEP), E = gep_type_end(GEP);
+       I != E; ++I)
+    if (const StructType *STy = dyn_cast<StructType>(*I)) {
+      unsigned FieldNo = cast<ConstantUInt>(I.getOperand())->getValue();
+      Offset += TD.getStructLayout(STy)->MemberOffsets[FieldNo];
+    }
+
+
 #if 0
+    if (const SequentialType *STy = cast<SequentialType>(*I)) {
+      CurTy = STy->getElementType();
       if (ConstantSInt *CS = dyn_cast<ConstantSInt>(GEP.getOperand(i))) {
         Offset += CS->getValue()*TD.getTypeSize(CurTy);
       } else {
@@ -394,13 +400,8 @@ void GraphBuilder::visitGetElementPtrInst(User &GEP) {
               N->mergeIndexes(RawOffset+j, RawOffset+i*ElSize+j);
         }
       }
-#endif
-    } else if (GEP.getOperand(i)->getType() == Type::UByteTy) {
-      unsigned FieldNo = cast<ConstantUInt>(GEP.getOperand(i))->getValue();
-      const StructType *STy = cast<StructType>(CurTy);
-      Offset += TD.getStructLayout(STy)->MemberOffsets[FieldNo];
-      CurTy = STy->getContainedType(FieldNo);
     }
+#endif
 
   // Add in the offset calculated...
   Value.setOffset(Value.getOffset()+Offset);
