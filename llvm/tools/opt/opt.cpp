@@ -27,6 +27,7 @@
 #include "llvm/Transforms/Scalar/InstructionCombining.h"
 #include "llvm/Transforms/Scalar/PromoteMemoryToRegister.h"
 #include "llvm/Transforms/Instrumentation/TraceValues.h"
+#include "llvm/Transforms/Instrumentation/ProfilePaths.h"
 #include "Support/CommandLine.h"
 #include <fstream>
 #include <memory>
@@ -37,13 +38,16 @@ enum Opts {
   dce, constprop, inlining, constmerge, strip, mstrip, mergereturn,
 
   // Miscellaneous Transformations
-  trace, tracem, raiseallocs, cleangcc,
+  raiseallocs, cleangcc,
 
   // Printing and verifying...
   print, verify,
 
   // More powerful optimizations
   indvars, instcombine, sccp, adce, raise, mem2reg,
+
+  // Instrumentation
+  trace, tracem, paths,
 
   // Interprocedural optimizations...
   globaldce, swapstructs, sortstructs,
@@ -96,6 +100,7 @@ struct {
 
   { trace      , New<InsertTraceCode, bool, true, bool, true> },
   { tracem     , New<InsertTraceCode, bool, false, bool, true> },
+  { paths      , New<ProfilePaths> },
   { print      , NewPrintMethodPass },
   { verify     , createVerifierPass },
   { raiseallocs, New<RaiseAllocations> },
@@ -139,7 +144,7 @@ cl::EnumList<enum Opts> OptimizationList(cl::NoFlags,
   clEnumVal(raise      , "Raise to Higher Level"),
   clEnumVal(trace      , "Insert BB & Method trace code"),
   clEnumVal(tracem     , "Insert Method trace code only"),
-
+  clEnumVal(paths      , "Insert path profiling instrumentation"),
   clEnumVal(print      , "Print working method to stderr"),
   clEnumVal(verify     , "Verify module is well formed"),
 0);
