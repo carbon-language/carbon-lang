@@ -104,6 +104,16 @@ namespace ISD {
     // TRUNCATE - Completely drop the high bits.
     TRUNCATE,
 
+    // [SU]INT_TO_FP - These operators convert integers (whose interpreted sign
+    // depends on the first letter) to floating point.
+    SINT_TO_FP,
+    UINT_TO_FP,
+
+    // FP_TO_[US]INT - Convert a floating point value to a signed or unsigned
+    // integer.
+    FP_TO_SINT,
+    FP_TO_UINT,
+
     // FP_ROUND - Perform a rounding operation from the current
     // precision down to the specified precision.
     FP_ROUND,
