@@ -94,6 +94,10 @@ def SUBrr : F3_1<2, 0b000100, "sub">;
 def UMULrr : F3_1<2, 0b001010, "umul">;
 def SMULrr : F3_1<2, 0b001011, "smul">;
 
+// Section B.19 - Divide Instructions, p. 115
+def UDIVrr: F3_1<2, 0b001110, "udiv">;
+def SDIVrr: F3_1<2, 0b001111, "sdiv">;
+
 // Section B.20 - SAVE and RESTORE, p. 117
 def SAVErr    : F3_1<2, 0b111100, "save">;           // save    r, r, r
 def SAVEri    : F3_2<2, 0b111100, "save">;           // save    r, i, r
@@ -114,3 +118,7 @@ def CALL : InstV8 {
 def JMPLrr : F3_1<2, 0b111000, "jmpl">;              // jmpl [rs1+rs2], rd
 def JMPLri : F3_2<2, 0b111000, "jmpl">;              // jmpl [rs1+imm], rd
 
+// Section B.29 - Write State Register Instructions, p. 133
+let rd = 0 in
+  def WRYrr : F3_1<2, 0b110000, "wr">; // Special case of WRASR
+def WRASRrr : F3_1<2, 0b110000, "wr">; // Special reg = reg ^ reg
