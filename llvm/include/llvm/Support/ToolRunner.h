@@ -1,4 +1,11 @@
 //===-- Support/ToolRunner.h ------------------------------------*- C++ -*-===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This file exposes an abstraction around a platform C compiler, used to
 // compile C and assembly code.  It also exposes an "AbstractIntepreter"

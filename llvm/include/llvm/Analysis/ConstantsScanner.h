@@ -1,4 +1,11 @@
 //==- llvm/Analysis/ConstantsScanner.h - Iterate over constants -*- C++ -*-===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This class implements an iterator to walk through the constants referenced by
 // a method.  This is used by the Bytecode & Assembly writers to build constant

@@ -1,4 +1,11 @@
 //===-- llvm/Module.h - C++ class to represent a VM module ------*- C++ -*-===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This file contains the declarations for the Module class that is used to 
 // maintain all the information related to a VM module.

@@ -1,4 +1,11 @@
 //===-- SchedGraphCommon.h - Scheduling Base Graph --------------*- C++ -*-===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // A common graph class that is based on the SSA graph. It includes
 // extra dependencies that are caused by machine resources.

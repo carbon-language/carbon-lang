@@ -1,4 +1,11 @@
 //===-- llvm/CodeGen/InstrSelectionSupport.h --------------------*- C++ -*-===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 //  Target-independent instruction selection code.  See SparcInstrSelection.cpp
 //  for usage.

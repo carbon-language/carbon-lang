@@ -1,4 +1,11 @@
 //===-- llvm/Bytecode/Format.h - VM bytecode file format info ---*- C++ -*-===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This header defines intrinsic constants that are useful to libraries that 
 // need to hack on bytecode files directly, like the reader and writer.

@@ -1,4 +1,11 @@
 //===- DSGraph.h - Represent a collection of data structures ----*- C++ -*-===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This header defines the data structure graph.
 //

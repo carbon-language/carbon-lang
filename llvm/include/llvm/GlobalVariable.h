@@ -1,4 +1,11 @@
 //===-- llvm/Global.h - Class to represent a global variable ----*- C++ -*-===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This file contains the declaration of the GlobalVariable class, which
 // represents a single global variable (or constant) in the VM.

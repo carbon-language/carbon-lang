@@ -1,4 +1,11 @@
 //===-- llvm/Value.h - Definition of the Value class ------------*- C++ -*-===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This file defines the very important Value class.  This is subclassed by a
 // bunch of other important classes, like Instruction, Function, Type, etc...

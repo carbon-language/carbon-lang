@@ -1,4 +1,11 @@
 //===-- llvm/CodeGen/MachineCodeEmitter.h - Code emission -------*- C++ -*-===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This file defines an abstract interface that is used by the machine code
 // emission framework to output the code.  This allows machine code emission to

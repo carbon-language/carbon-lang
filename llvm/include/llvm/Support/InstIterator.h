@@ -1,4 +1,11 @@
 //===- llvm/Support/InstIterator.h - Classes for inst iteration -*- C++ -*-===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This file contains definitions of two iterators for iterating over the
 // instructions in a function.  This is effectively a wrapper around a two level

@@ -1,4 +1,11 @@
 //===- IntervalIterator.h - Interval Iterator Declaration -------*- C++ -*-===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This file defines an iterator that enumerates the intervals in a control flow
 // graph of some sort.  This iterator is parametric, allowing iterator over the

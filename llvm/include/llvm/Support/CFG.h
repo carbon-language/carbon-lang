@@ -1,4 +1,11 @@
 //===-- llvm/Support/CFG.h - Process LLVM structures as graphs --*- C++ -*-===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This file defines specializations of GraphTraits that allow Function and
 // BasicBlock graphs to be treated as proper graphs for generic algorithms.

@@ -1,5 +1,12 @@
 //===-- llvm/CodeGen/SelectionDAG.h - InstSelection DAG Rep. ----*- C++ -*-===//
 // 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
+// 
 // This file declares the SelectionDAG class, which is used to represent an LLVM
 // function in a low-level representation suitable for instruction selection.
 // This DAG is constructed as the first step of instruction selection in order

@@ -1,4 +1,11 @@
 //===-- llvm/Instructions.h - Instruction subclass definitions --*- C++ -*-===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This file exposes the class definitions of all of the subclasses of the
 // Instruction class.  This is meant to be an easy way to get access to all

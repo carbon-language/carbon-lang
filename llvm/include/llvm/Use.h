@@ -1,4 +1,11 @@
 //===-- llvm/Use.h - Definition of the Use class ----------------*- C++ -*-===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This defines the Use class.  The Use class represents the operand of an
 // instruction or some other User instance which refers to a Value.  The Use

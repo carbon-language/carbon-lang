@@ -1,4 +1,11 @@
 //===- llvm/Analysis/InstForest.h - Partition Func into forest --*- C++ -*-===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This interface is used to partition a method into a forest of instruction
 // trees, where the following invariants hold:

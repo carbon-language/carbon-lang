@@ -1,4 +1,11 @@
 //===-- CodeGen/FunctionLiveVarInfo.h - LiveVar Analysis --------*- C++ -*-===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This is the interface for live variable info of a function that is required 
 // by any other part of the compiler

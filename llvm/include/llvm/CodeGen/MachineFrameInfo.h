@@ -1,5 +1,12 @@
 //===-- CodeGen/MachineFrameInfo.h - Abstract Stack Frame Rep. --*- C++ -*-===//
 // 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
+// 
 // The MachineFrameInfo class represents an abstract stack frame until
 // prolog/epilog code is inserted.  This class is key to allowing stack frame
 // representation optimizations, such as frame pointer elimination.  It also

@@ -1,4 +1,11 @@
 //===-- llvm/GlobalValue.h - Class to represent a global value --*- C++ -*-===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This file is a common base class of all globally definable objects.  As such,
 // it is subclassed by GlobalVariable and by Function.  This is used because you

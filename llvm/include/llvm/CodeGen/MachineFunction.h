@@ -1,5 +1,12 @@
 //===-- llvm/CodeGen/MachineFunction.h --------------------------*- C++ -*-===//
 // 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
+// 
 // Collect native machine code for a function.  This class contains a list of
 // MachineBasicBlock instances that make up the current compiled function.
 //

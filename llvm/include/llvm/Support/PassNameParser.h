@@ -1,4 +1,11 @@
 //===- llvm/Support/PassNameParser.h ----------------------------*- C++ -*-===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This file the PassNameParser and FilteredPassNameParser<> classes, which are
 // used to add command line arguments to a utility for all of the passes that

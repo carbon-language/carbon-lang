@@ -1,4 +1,11 @@
 //===- IntervalPartition.h - Interval partition Calculation -----*- C++ -*-===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This file contains the declaration of the IntervalPartition class, which
 // calculates and represents the interval partition of a function, or a

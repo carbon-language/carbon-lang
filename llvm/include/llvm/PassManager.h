@@ -1,4 +1,11 @@
 //===- llvm/PassManager.h - Container for Passes ----------------*- C++ -*-===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This file defines the PassManager class.  This class is used to hold,
 // maintain, and optimize execution of Passes.  The PassManager class ensures

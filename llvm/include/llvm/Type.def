@@ -1,4 +1,11 @@
 //===-- llvm/Type.def - File that describes various LLVM types --*- C++ -*-===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This file contains descriptions of the various LLVM types and derived types.
 // This file serves as a source of in source documentation and a can be

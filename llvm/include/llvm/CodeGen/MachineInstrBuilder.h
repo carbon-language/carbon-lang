@@ -1,4 +1,11 @@
 //===-- CodeGen/MachineInstBuilder.h - Simplify creation of MIs -*- C++ -*-===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This file exposes a function named BuildMI, which is useful for dramatically
 // simplifying how MachineInstr's are created.  Instead of using code like this:

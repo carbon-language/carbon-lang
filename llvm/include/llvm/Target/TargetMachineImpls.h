@@ -1,4 +1,11 @@
 //===-- llvm/Target/TargetMachineImpls.h - Target Descriptions --*- C++ -*-===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This file defines the entry point to getting access to the various target
 // machine implementations available to LLVM.

@@ -1,4 +1,11 @@
 //===-- llvm/DerivedTypes.h - Classes for handling data types ---*- C++ -*-===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This file contains the declarations of classes that represent "derived 
 // types".  These are things like "arrays of x" or "structure of x, y, z" or

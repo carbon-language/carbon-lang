@@ -1,4 +1,11 @@
 //===-- llvm/Transforms/MutateStructTypes.h - Rearrange structs -*- C++ -*-===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This pass is used to change structure accesses and type definitions in some
 // way.  It can be used to arbitrarily permute structure fields, safely, without

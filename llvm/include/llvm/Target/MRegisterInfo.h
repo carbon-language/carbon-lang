@@ -1,4 +1,11 @@
 //===- Target/MRegisterInfo.h - Target Register Information -----*- C++ -*-===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This file describes an abstract interface used to get information about a
 // target machines register file.  This information is used for a variety of

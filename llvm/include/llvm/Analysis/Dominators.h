@@ -1,4 +1,11 @@
 //===- llvm/Analysis/Dominators.h - Dominator Info Calculation --*- C++ -*-===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This file defines the following classes:
 //  1. DominatorSet: Calculates the [reverse] dominator set for a function

@@ -1,4 +1,11 @@
 //===-- llvm/User.h - User class definition ---------------------*- C++ -*-===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This class defines the interface that one who 'use's a Value must implement.
 // Each instance of the Value class keeps track of what User's have handles

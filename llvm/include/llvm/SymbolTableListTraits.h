@@ -1,4 +1,11 @@
 //===-- llvm/SymbolTableListTraits.h - Traits for iplist --------*- C++ -*-===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This file defines a generic class that is used to implement the automatic
 // symbol table manipulation that occurs when you put (for example) a named

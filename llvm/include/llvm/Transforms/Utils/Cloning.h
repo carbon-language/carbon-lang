@@ -1,4 +1,11 @@
 //===- Cloning.h - Clone various parts of LLVM programs ---------*- C++ -*-===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This file defines various functions that are used to clone chunks of LLVM
 // code for various purposes.  This varies from copying whole modules into new

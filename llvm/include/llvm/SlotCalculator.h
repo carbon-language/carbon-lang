@@ -1,4 +1,11 @@
 //===-- llvm/SlotCalculator.h - Calculate value slots -----------*- C++ -*-===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This class calculates the slots that values will land in.  This is useful for
 // when writing bytecode or assembly out, because you have to know these things.

@@ -1,5 +1,12 @@
 //===-- llvm/CodeGen/SSARegMap.h --------------------------------*- C++ -*-===//
 // 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
+// 
 // Map register numbers to register classes that are correctly sized (typed) to
 // hold the information. Assists register allocation. Contained by
 // MachineFunction, should be deleted by register allocator when it is no

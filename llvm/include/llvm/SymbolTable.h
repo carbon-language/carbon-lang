@@ -1,4 +1,11 @@
 //===-- llvm/SymbolTable.h - Implement a type plane'd symtab ----*- C++ -*-===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This file implements a symbol table that has planed broken up by type.  
 // Identical types may have overlapping symbol names as long as they are 

@@ -1,4 +1,11 @@
 //===-- Mangler.h - Self-contained c/asm llvm name mangler ------*- C++ -*-===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // Unified name mangler for CWriter and assembly backends.
 //

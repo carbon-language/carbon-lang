@@ -1,4 +1,11 @@
 //===-- llvm/Function.h - Class to represent a single function --*- C++ -*-===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This file contains the declaration of the Function class, which represents a 
 // single function/procedure in LLVM.

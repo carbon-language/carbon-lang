@@ -1,4 +1,11 @@
 //===-- llvm/Bytecode/Writer.h - Writer for VM bytecode files ---*- C++ -*-===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This functionality is implemented by the lib/BytecodeWriter library.
 // This library is used to write VM bytecode files to an iostream.  First, you

@@ -1,4 +1,11 @@
 //===-- llvm/Assembly/Writer.h - Printer for VM assembly files --*- C++ -*-===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This functionality is implemented by the lib/Assembly/Writer library.
 // This library is used to print VM assembly language files to an iostream. It

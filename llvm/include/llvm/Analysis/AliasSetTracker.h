@@ -1,4 +1,11 @@
 //===- llvm/Analysis/AliasSetTracker.h - Build Alias Sets -------*- C++ -*-===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This file defines two classes: AliasSetTracker and AliasSet.  These interface
 // are used to classify a collection of pointer references into a maximal number

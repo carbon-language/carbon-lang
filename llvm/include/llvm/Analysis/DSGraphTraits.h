@@ -1,4 +1,11 @@
 //===- DSGraphTraits.h - Provide generic graph interface --------*- C++ -*-===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This file provides GraphTraits specializations for the DataStructure graph
 // nodes, allowing datastructure graphs to be processed by generic graph

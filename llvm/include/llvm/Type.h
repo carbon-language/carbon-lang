@@ -1,4 +1,11 @@
 //===-- llvm/Type.h - Classes for handling data types -----------*- C++ -*-===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This file contains the declaration of the Type class.  For more "Type" type
 // stuff, look in DerivedTypes.h.

@@ -1,4 +1,11 @@
 //===-- llvm/CodeGen/MachineCodeForInstruction.h ----------------*- C++ -*-===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // Representation of the sequence of machine instructions created for a single
 // VM instruction.  Additionally records information about hidden and implicit

@@ -1,4 +1,11 @@
 //===-- llvm/AbstractTypeUser.h - AbstractTypeUser Interface ----*- C++ -*-===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // The AbstractTypeUser class is an interface to be implemented by classes who
 // could possible use an abstract type.  Abstract types are denoted by the

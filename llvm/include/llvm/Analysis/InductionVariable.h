@@ -1,4 +1,11 @@
 //===- llvm/Analysis/InductionVariable.h - Induction variables --*- C++ -*-===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This interface is used to identify and classify induction variables that
 // exist in the program.  Induction variables must contain a PHI node that

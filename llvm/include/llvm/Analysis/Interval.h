@@ -1,4 +1,11 @@
 //===- llvm/Analysis/Interval.h - Interval Class Declaration ----*- C++ -*-===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This file contains the declaration of the Interval class, which
 // represents a set of CFG nodes and is a portion of an interval partition.

@@ -1,4 +1,11 @@
 //===- llvm/Transforms/Utils/Linker.h - Module Linker Interface -*- C++ -*-===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This file defines the interface to the module linker.
 //

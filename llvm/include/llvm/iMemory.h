@@ -1,4 +1,11 @@
 //===-- llvm/iMemory.h - Memory Operator node definitions -------*- C++ -*-===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This file contains the declarations of all of the memory related operators.
 // This includes: malloc, free, alloca, load, store, and getelementptr

@@ -1,4 +1,11 @@
 //===- Target/TargetSchedInfo.h - Target Instruction Sched Info -*- C++ -*-===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This file describes the target machine to the instruction scheduler.
 //

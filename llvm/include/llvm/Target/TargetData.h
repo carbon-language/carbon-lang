@@ -1,4 +1,11 @@
 //===-- llvm/Target/TargetData.h - Data size & alignment info ---*- C++ -*-===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This file defines target properties related to datatype size/offset/alignment
 // information.  It uses lazy annotations to cache information about how 

@@ -1,4 +1,11 @@
 //===- llvm/Assembly/PrintModulePass.h - Printing Pass ----------*- C++ -*-===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This file defines two passes to print out a module.  The PrintModulePass pass
 // simply prints out the entire module when it is executed.  The

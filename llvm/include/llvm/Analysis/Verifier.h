@@ -1,4 +1,11 @@
 //===-- llvm/Analysis/Verifier.h - Module Verifier --------------*- C++ -*-===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This file defines the function verifier interface, that can be used for some
 // sanity checking of input to the system, and for checking that transformations

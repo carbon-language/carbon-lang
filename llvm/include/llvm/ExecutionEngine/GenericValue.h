@@ -1,5 +1,12 @@
 //===-- GenericValue.h - Represent any type of LLVM value -------*- C++ -*-===//
 // 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
+// 
 // The GenericValue class is used to represent an LLVM value of arbitrary type.
 //
 //===----------------------------------------------------------------------===//

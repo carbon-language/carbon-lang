@@ -1,5 +1,12 @@
 //===-- CodeGen/MachineConstantPool.h - Abstract Constant Pool --*- C++ -*-===//
 // 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
+// 
 // The MachineConstantPool class keeps track of constants referenced by a
 // function which must be spilled to memory.  This is used for constants which
 // are unable to be used directly as operands to instructions, which typically

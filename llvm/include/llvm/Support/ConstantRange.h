@@ -1,4 +1,11 @@
 //===-- llvm/Support/ConstantRange.h - Represent a range --------*- C++ -*-===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // Represent a range of possible values that may occur when the program is run
 // for an integral value.  This keeps track of a lower and upper bound for the

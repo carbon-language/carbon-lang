@@ -1,4 +1,11 @@
 //===-- llvm/Bytecode/Primitives.h - Bytecode file format prims -*- C++ -*-===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This header defines some basic functions for reading and writing basic 
 // primitive types to a bytecode stream.

@@ -1,4 +1,11 @@
 //===-- llvm/ModuleProvider.h - Interface for module providers --*- C++ -*-===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This file provides an abstract interface for loading a module from some
 // place.  This interface allows incremental or random access loading of
