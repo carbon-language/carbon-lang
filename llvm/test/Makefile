@@ -23,6 +23,18 @@ QMDB= -D $(LLVM_SRC_ROOT)/test
 QMCLASSES=$(LLVM_OBJ_ROOT)/test/QMTest
 
 #
+# Determine which expectations file we will use
+#
+QMEXPECT:=$(LLVM_SRC_ROOT)/test/QMTest/expectations.unknown.qmr
+ifeq ($(OS),Linux)
+QMEXPECT:=$(LLVM_SRC_ROOT)/test/QMTest/expectations.linux.qmr
+endif
+
+ifeq ($(OS),SunOS)
+QMEXPECT:=$(LLVM_SRC_ROOT)/test/QMTest/expectations.sunos.qmr
+endif
+
+#
 # This is configuration information used by the test suite.  In QM Test, it's
 # called a 'context.'
 #
@@ -47,10 +59,10 @@ QMTEST= QMTEST_CLASS_PATH=$(QMCLASSES) qmtest $(QMDB)
 # Execute the tests
 #
 qmtest:: $(LLVM_OBJ_ROOT)/test/tmp register
-	-$(QMTEST) run -O $(LLVM_SRC_ROOT)/test/QMTest/expectations.qmr $(CONTEXT)
+	-$(QMTEST) run -O $(QMEXPECT) $(CONTEXT)
 
 %.t:: $(LLVM_OBJ_ROOT)/test/tmp register
-	-$(QMTEST) run -O $(LLVM_SRC_ROOT)/test/QMTest/expectations.qmr $(CONTEXT) $*
+	-$(QMTEST) run -O $(QMEXPECT) $(CONTEXT) $*
 
 #
 # Create the temporary directory used by the test suite.
