@@ -15,10 +15,10 @@ endif
 
 include ${LEVEL}/Makefile.common
 
-# Specify ENABLE_STATS on the command line to enable -stats output from gccas
-# and gccld.
+# Specify ENABLE_STATS on the command line to enable -stats and -time-passes
+# output from gccas and gccld.
 ifdef ENABLE_STATS
-STATS = -stats
+STATS = -stats -time-passes
 endif
 
 
