@@ -90,6 +90,18 @@ cl::list<std::string> LinkerToolOpts("Tlnk", cl::ZeroOrMore,
   cl::desc("Pass specific options to the linker"),
   cl::value_desc("option"));
 
+cl::list<std::string> fOpts("f", cl::ZeroOrMore, cl::Prefix,
+  cl::desc("Pass through -f options to compiler tools"),
+  cl::value_desc("optimization option"));
+
+cl::list<std::string> MOpts("M", cl::ZeroOrMore, cl::Prefix,
+  cl::desc("Pass through -M options to compiler tools"),
+  cl::value_desc("dependency option"));
+
+cl::list<std::string> WOpts("W", cl::ZeroOrMore, cl::Prefix,
+  cl::desc("Pass through -W options to compiler tools"),
+  cl::value_desc("warnings category"));
+
 //===------------------------------------------------------------------------===
 //===          INPUT OPTIONS
 //===------------------------------------------------------------------------===
@@ -116,7 +128,7 @@ cl::list<std::string> Defines("D", cl::Prefix,
 cl::opt<std::string> OutputFilename("o", 
   cl::desc("Override output filename"), cl::value_desc("filename"));
 
-cl::opt<bool> ForceOutput("f", cl::Optional, cl::init(false),
+cl::opt<bool> ForceOutput("F", cl::Optional, cl::init(false),
   cl::desc("Force output files to be overridden"));
 
 cl::opt<std::string> OutputMachine("m", cl::Prefix,
@@ -127,6 +139,9 @@ cl::opt<bool> Native("native", cl::init(false),
 
 cl::opt<bool> DebugOutput("g", cl::init(false),
   cl::desc("Generate objects that include debug symbols"));
+
+cl::opt<bool> StripOutput("strip", cl::init(false),
+  cl::desc("Strip all symbols from linked output file"));
 
 //===------------------------------------------------------------------------===
 //===          INFORMATION OPTIONS
@@ -155,10 +170,6 @@ cl::opt<bool> TimeActions("time-actions", cl::Optional, cl::init(false),
 
 cl::opt<bool> ShowStats("stats", cl::Optional, cl::init(false),
   cl::desc("Print statistics accumulated during optimization"));
-
-cl::list<std::string> Warnings("W", cl::Prefix,
-  cl::desc("Provide warnings for additional classes of errors"),
-  cl::value_desc("warning category"));
 
 //===------------------------------------------------------------------------===
 //===          ADVANCED OPTIONS
@@ -264,6 +275,7 @@ int main(int argc, char **argv) {
     if (ShowStats)      flags |= CompilerDriver::SHOW_STATS_FLAG;
     if (TimeActions)    flags |= CompilerDriver::TIME_ACTIONS_FLAG;
     if (TimePassesIsEnabled) flags |= CompilerDriver::TIME_PASSES_FLAG;
+    if (StripOutput)    flags |= CompilerDriver::STRIP_OUTPUT_FLAG;
     CD->setDriverFlags(flags);
 
     // Specify requred parameters
@@ -273,6 +285,9 @@ int main(int argc, char **argv) {
     CD->setIncludePaths(Includes);
     CD->setSymbolDefines(Defines);
     CD->setLibraryPaths(LibPaths);
+    CD->setfPassThrough(fOpts);
+    CD->setMPassThrough(MOpts);
+    CD->setWPassThrough(WOpts);
 
     // Provide additional tool arguments
     if (!PreprocessorToolOpts.empty())

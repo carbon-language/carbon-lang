@@ -68,21 +68,6 @@ namespace llvm {
         FLAGS_MASK           = 0x000F, ///< Union of all flags
       };
 
-      /// @brief Driver specific flags
-      enum DriverFlags {
-        DRY_RUN_FLAG         = 0x0001, ///< Do everything but execute actions
-        FORCE_FLAG           = 0x0002, ///< Force overwrite of output files
-        VERBOSE_FLAG         = 0x0004, ///< Print each action
-        DEBUG_FLAG           = 0x0008, ///< Print debug information
-        TIME_PASSES_FLAG     = 0x0010, ///< Time the passes as they execute
-        TIME_ACTIONS_FLAG    = 0x0020, ///< Time the actions as they execute
-        SHOW_STATS_FLAG      = 0x0040, ///< Show pass statistics
-        EMIT_NATIVE_FLAG     = 0x0080, ///< Emit native code instead of bc
-        EMIT_RAW_FLAG        = 0x0100, ///< Emit raw, unoptimized bytecode
-        KEEP_TEMPS_FLAG      = 0x0200, ///< Don't delete temporary files
-        DRIVER_FLAGS_MASK    = 0x02FF, ///< Union of the above flags
-      };
-
       /// This type is the input list to the CompilerDriver. It provides
       /// a vector of pathname/filetype pairs. The filetype is used to look up
       /// the configuration of the actions to be taken by the driver.
@@ -96,7 +81,7 @@ namespace llvm {
       /// language.
       struct Action {
         Action() : flags(0) {}
-        sys::Program program;  ///< The program to execve
+        sys::Path program;     ///< The program to execve
         StringVector args;     ///< Arguments to the program
         unsigned flags;        ///< Action specific flags
         void set(unsigned fl ) { flags |= fl; }
@@ -126,6 +111,26 @@ namespace llvm {
       public:
         virtual ConfigData* ProvideConfigData(const std::string& filetype) = 0;
         virtual void setConfigDir(const sys::Path& dirName) = 0;
+      };
+
+      /// These flags control various actions of the compiler driver. They are
+      /// used by adding the needed flag values together and passing them to the
+      /// compiler driver's setDriverFlags method. 
+      /// @see setDriverFlags
+      /// @brief Driver specific flags
+      enum DriverFlags {
+        DRY_RUN_FLAG         = 0x0001, ///< Do everything but execute actions
+        FORCE_FLAG           = 0x0002, ///< Force overwrite of output files
+        VERBOSE_FLAG         = 0x0004, ///< Print each action
+        DEBUG_FLAG           = 0x0008, ///< Print debug information
+        TIME_PASSES_FLAG     = 0x0010, ///< Time the passes as they execute
+        TIME_ACTIONS_FLAG    = 0x0020, ///< Time the actions as they execute
+        SHOW_STATS_FLAG      = 0x0040, ///< Show pass statistics
+        EMIT_NATIVE_FLAG     = 0x0080, ///< Emit native code instead of bc
+        EMIT_RAW_FLAG        = 0x0100, ///< Emit raw, unoptimized bytecode
+        KEEP_TEMPS_FLAG      = 0x0200, ///< Don't delete temporary files
+        STRIP_OUTPUT_FLAG    = 0x0400, ///< Strip symbols from linked output
+        DRIVER_FLAGS_MASK    = 0x07FF, ///< Union of the above flags
       };
 
     /// @}
@@ -172,6 +177,15 @@ namespace llvm {
       /// @brief Set the list of library paths to be searched for
       /// libraries.
       virtual void addLibraryPath( const sys::Path& libPath )  = 0;
+
+      /// @brief Set the list of -f options to be passed through
+      virtual void setfPassThrough(const StringVector& fOpts) = 0;
+
+      /// @brief Set the list of -M options to be passed through
+      virtual void setMPassThrough(const StringVector& fOpts) = 0;
+
+      /// @brief Set the list of -W options to be passed through
+      virtual void setWPassThrough(const StringVector& fOpts) = 0;
 
     /// @}
   };

@@ -16,8 +16,8 @@
 #include "ConfigLexer.h"
 #include "llvm/Module.h"
 #include "llvm/Bytecode/Reader.h"
+#include "llvm/Support/Timer.h"
 #include "llvm/System/Signals.h"
-#include "llvm/Support/FileUtilities.h"
 #include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/StringExtras.h"
 #include <iostream>
@@ -153,6 +153,19 @@ namespace {
         LibraryPaths.push_back(libPath);
       }
 
+      virtual void setfPassThrough(const StringVector& fOpts) {
+        fOptions = fOpts;
+      }
+
+      /// @brief Set the list of -M options to be passed through
+      virtual void setMPassThrough(const StringVector& MOpts) {
+        MOptions = MOpts;
+      }
+
+      /// @brief Set the list of -W options to be passed through
+      virtual void setWPassThrough(const StringVector& WOpts) {
+        WOptions = WOpts;
+      }
     /// @}
     /// @name Functions
     /// @{
@@ -238,6 +251,9 @@ namespace {
                 if (*PI == "%force%") {
                   if (isSet(FORCE_FLAG))
                     action->args.push_back("-f");
+                } else if (*PI == "%fOpts%") {
+                    action->args.insert(action->args.end(), fOptions.begin(), 
+                                        fOptions.end());
                 } else
                   found = false;
                 break;
@@ -304,6 +320,20 @@ namespace {
                 } else
                   found  = false;
                 break;
+              case 'M':
+                if (*PI == "%Mopts") {
+                  action->args.insert(action->args.end(), MOptions.begin(), 
+                                      MOptions.end());
+                } else
+                  found = false;
+                break;
+              case 'W':
+                if (*PI == "%Wopts") {
+                  action->args.insert(action->args.end(), WOptions.begin(), 
+                                      WOptions.end());
+                } else
+                  found = false;
+                break;
               default:
                 found = false;
                 break;
@@ -340,7 +370,16 @@ namespace {
             throw std::string("Can't find program '") + action->program.get() + "'";
 
           // Invoke the program
-          return 0 == action->program.ExecuteAndWait(action->args);
+          if (isSet(TIME_ACTIONS_FLAG)) {
+            Timer timer(action->program.get());
+            timer.startTimer();
+            int resultCode = sys::Program::ExecuteAndWait(action->program,action->args);
+            timer.stopTimer();
+            timer.print(timer,std::cerr);
+            return resultCode == 0;
+          }
+          else
+            return 0 == sys::Program::ExecuteAndWait(action->program, action->args);
         }
         return true;
       }
@@ -349,25 +388,30 @@ namespace {
       /// name to see if it can find an appropriate file to link with
       /// in the directory specified.
       llvm::sys::Path GetPathForLinkageItem(const std::string& link_item,
-                                            const sys::Path& dir) {
+                                            const sys::Path& dir,
+                                            bool native = false) {
         sys::Path fullpath(dir);
         fullpath.append_file(link_item);
-        fullpath.append_suffix("bc");
-        if (fullpath.readable()) 
-          return fullpath;
-        fullpath.elide_suffix();
-        fullpath.append_suffix("o");
-        if (fullpath.readable()) 
-          return fullpath;
-        fullpath = dir;
-        fullpath.append_file(std::string("lib") + link_item);
-        fullpath.append_suffix("a");
-        if (fullpath.readable())
-          return fullpath;
-        fullpath.elide_suffix();
-        fullpath.append_suffix("so");
-        if (fullpath.readable())
-          return fullpath;
+        if (native) {
+          fullpath.append_suffix("a");
+        } else {
+          fullpath.append_suffix("bc");
+          if (fullpath.readable()) 
+            return fullpath;
+          fullpath.elide_suffix();
+          fullpath.append_suffix("o");
+          if (fullpath.readable()) 
+            return fullpath;
+          fullpath = dir;
+          fullpath.append_file(std::string("lib") + link_item);
+          fullpath.append_suffix("a");
+          if (fullpath.readable())
+            return fullpath;
+          fullpath.elide_suffix();
+          fullpath.append_suffix("so");
+          if (fullpath.readable())
+            return fullpath;
+        }
 
         // Didn't find one.
         fullpath.clear();
@@ -408,7 +452,7 @@ namespace {
         set.insert(fullpath);
 
         // If its an LLVM bytecode file ...
-        if (CheckMagic(fullpath.get(), "llvm")) {
+        if (fullpath.is_bytecode_file()) {
           // Process the dependent libraries recursively
           Module::LibraryListType modlibs;
           if (GetBytecodeDependentLibraries(fullpath.get(),modlibs)) {
@@ -475,12 +519,20 @@ namespace {
             throw std::string(
               "An output file name must be specified for linker output");
 
+          // If they are not asking for linking, provided an output file and
+          // there is more than one input file, its an error
+          if (finalPhase != LINKING && !Output.is_empty() && 
+              InpList.size() > 1) 
+            throw std::string("An output file name cannot be specified ") +
+              "with more than one input file name when not linking";
+
           // This vector holds all the resulting actions of the following loop.
           std::vector<Action*> actions;
 
           /// PRE-PROCESSING / TRANSLATION / OPTIMIZATION / ASSEMBLY phases
           // for each input item
           SetVector<sys::Path> LinkageItems;
+          std::vector<std::string> LibFiles;
           sys::Path OutFile(Output);
           InputList::const_iterator I = InpList.begin();
           while ( I != InpList.end() ) {
@@ -490,14 +542,17 @@ namespace {
             // If its a library, bytecode file, or object file, save 
             // it for linking below and short circuit the 
             // pre-processing/translation/assembly phases
-            if (ftype.empty() ||  ftype == "o" || ftype == "bc") {
+            if (ftype.empty() ||  ftype == "o" || ftype == "bc" || ftype=="a") {
               // We shouldn't get any of these types of files unless we're 
               // later going to link. Enforce this limit now.
               if (finalPhase != LINKING) {
                 throw std::string(
                   "Pre-compiled objects found but linking not requested");
               }
-              LinkageItems.insert(I->first);
+              if (ftype.empty())
+                LibFiles.push_back(I->first.get());
+              else
+                LinkageItems.insert(I->first);
               ++I; continue; // short circuit remainder of loop
             }
 
@@ -520,9 +575,13 @@ namespace {
             // Get the preprocessing action, if needed, or error if appropriate
             if (!action.program.is_empty()) {
               if (action.isSet(REQUIRED_FLAG) || finalPhase == PREPROCESSING) {
-                if (finalPhase == PREPROCESSING)
+                if (finalPhase == PREPROCESSING) {
+                  if (OutFile.is_empty()) {
+                    OutFile = I->first;
+                    OutFile.append_suffix("E");
+                  }
                   actions.push_back(GetAction(cd,InFile,OutFile,PREPROCESSING));
-                else {
+                } else {
                   sys::Path TempFile(MakeTempFile(I->first.get(),"E"));
                   actions.push_back(GetAction(cd,InFile,TempFile,PREPROCESSING));
                   InFile = TempFile;
@@ -544,9 +603,13 @@ namespace {
             // Get the translation action, if needed, or error if appropriate
             if (!action.program.is_empty()) {
               if (action.isSet(REQUIRED_FLAG) || finalPhase == TRANSLATION) {
-                if (finalPhase == TRANSLATION) 
+                if (finalPhase == TRANSLATION) {
+                  if (OutFile.is_empty()) {
+                    OutFile = I->first;
+                    OutFile.append_suffix("o");
+                  }
                   actions.push_back(GetAction(cd,InFile,OutFile,TRANSLATION));
-                else {
+                } else {
                   sys::Path TempFile(MakeTempFile(I->first.get(),"trans")); 
                   actions.push_back(GetAction(cd,InFile,TempFile,TRANSLATION));
                   InFile = TempFile;
@@ -582,17 +645,21 @@ namespace {
             if (!isSet(EMIT_RAW_FLAG)) {
               if (!action.program.is_empty()) {
                 if (action.isSet(REQUIRED_FLAG) || finalPhase == OPTIMIZATION) {
-                  if (finalPhase == OPTIMIZATION)
+                  if (finalPhase == OPTIMIZATION) {
+                    if (OutFile.is_empty()) {
+                      OutFile = I->first;
+                      OutFile.append_suffix("o");
+                    }
                     actions.push_back(GetAction(cd,InFile,OutFile,OPTIMIZATION));
-                  else {
+                  } else {
                     sys::Path TempFile(MakeTempFile(I->first.get(),"opt"));
                     actions.push_back(GetAction(cd,InFile,TempFile,OPTIMIZATION));
                     InFile = TempFile;
                   }
                   // ll -> bc Helper
                   if (action.isSet(OUTPUT_IS_ASM_FLAG)) {
-                    /// The output of the translator is an LLVM Assembly program
-                    /// We need to translate it to bytecode
+                    /// The output of the optimizer is an LLVM Assembly program
+                    /// We need to translate it to bytecode with llvm-as
                     Action* action = new Action();
                     action->program.set_file("llvm-as");
                     action->args.push_back(InFile.get());
@@ -617,18 +684,19 @@ namespace {
             /// ASSEMBLY PHASE
             action = cd->Assembler;
 
-            if (finalPhase == ASSEMBLY || isSet(EMIT_NATIVE_FLAG)) {
+            if (finalPhase == ASSEMBLY) {
               if (isSet(EMIT_NATIVE_FLAG)) {
-                if (action.program.is_empty()) {
-                  throw std::string("Native Assembler not specified for ") +
-                        cd->langName + " files";
-                } else if (finalPhase == ASSEMBLY) {
-                  actions.push_back(GetAction(cd,InFile,OutFile,ASSEMBLY));
-                } else {
-                  sys::Path TempFile(MakeTempFile(I->first.get(),"S"));
-                  actions.push_back(GetAction(cd,InFile,TempFile,ASSEMBLY));
-                  InFile = TempFile;
+                // Use llc to get the native assembly file
+                Action* action = new Action();
+                action->program.set_file("llc");
+                action->args.push_back(InFile.get());
+                action->args.push_back("-f");
+                action->args.push_back("-o");
+                if (OutFile.is_empty()) {
+                  OutFile = I->first;
+                  OutFile.append_suffix("s");
                 }
+                action->args.push_back(OutFile.get());
               } else {
                 // Just convert back to llvm assembly with llvm-dis
                 Action* action = new Action();
@@ -639,17 +707,18 @@ namespace {
                 action->args.push_back(OutFile.get());
                 actions.push_back(action);
               }
+
+              // Short circuit the rest of the loop, we don't want to link 
+              ++I; 
+              continue;
             }
 
-            // Short-circuit remaining actions if all they want is assembly output
-            if (finalPhase == ASSEMBLY) { ++I; continue; }
-              
-            // Register the OutFile as a link candidate
+            // Register the result of the actions as a link candidate
             LinkageItems.insert(InFile);
 
             // Go to next file to be processed
             ++I;
-          }
+          } // end while loop over each input file
 
           /// RUN THE COMPILATION ACTIONS
           std::vector<Action*>::iterator AI = actions.begin();
@@ -661,55 +730,76 @@ namespace {
           }
 
           /// LINKING PHASE
-          actions.clear();
           if (finalPhase == LINKING) {
-            if (isSet(EMIT_NATIVE_FLAG)) {
-              throw std::string(
-                "llvmc doesn't know how to link native code yet");
-            } else {
-              // First, we need to examine the files to ensure that they all contain
-              // bytecode files. Since the final output is bytecode, we can only
-              // link bytecode.
-              SetVector<sys::Path>::const_iterator I = LinkageItems.begin();
-              SetVector<sys::Path>::const_iterator E = LinkageItems.end();
-              std::string errmsg;
+            // Insert the platform-specific system libraries to the path list
+            LibraryPaths.push_back(sys::Path::GetSystemLibraryPath1());
+            LibraryPaths.push_back(sys::Path::GetSystemLibraryPath2());
 
-              while (I != E && ProcessLinkageItem(*I,LinkageItems,errmsg))
-                ++I;
+            // We're emitting native code so let's build an gccld Action
+            Action* link = new Action();
+            link->program.set_file("llvm-ld");
 
-              if (!errmsg.empty())
-                throw errmsg;
-
-              // Insert the system libraries.
-              LibraryPaths.push_back(sys::Path::GetSystemLibraryPath1());
-              LibraryPaths.push_back(sys::Path::GetSystemLibraryPath2());
-
-              // We're emitting bytecode so let's build an llvm-link Action
-              Action* link = new Action();
-              link->program.set_file("llvm-link");
-              for (PathVector::const_iterator I=LinkageItems.begin(), 
-                   E=LinkageItems.end(); I != E; ++I )
-                link->args.push_back(I->get());
-              if (isSet(VERBOSE_FLAG))
-                link->args.push_back("-v");
-              link->args.push_back("-f");
-              link->args.push_back("-o");
-              link->args.push_back(OutFile.get());
-              if (isSet(TIME_PASSES_FLAG))
-                link->args.push_back("-time-passes");
-              if (isSet(SHOW_STATS_FLAG))
-                link->args.push_back("-stats");
-              actions.push_back(link);
+            // Add in the optimization level requested
+            switch (optLevel) {
+              case OPT_FAST_COMPILE:
+                link->args.push_back("-O1");
+                break;
+              case OPT_SIMPLE:
+                link->args.push_back("-O2");
+                break;
+              case OPT_AGGRESSIVE:
+                link->args.push_back("-O3");
+                break;
+              case OPT_LINK_TIME:
+                link->args.push_back("-O4");
+                break;
+              case OPT_AGGRESSIVE_LINK_TIME:
+                link->args.push_back("-O5");
+                break;
+              case OPT_NONE:
+                break;
             }
-          }
 
-          /// RUN THE LINKING ACTIONS
-          AI = actions.begin();
-          AE = actions.end();
-          while (AI != AE) {
-            if (!DoAction(*AI))
-              throw std::string("Action failed");
-            AI++;
+            // Add in all the linkage items we generated. This includes the
+            // output from the translation/optimization phases as well as any
+            // -l arguments specified.
+            for (PathVector::const_iterator I=LinkageItems.begin(), 
+                 E=LinkageItems.end(); I != E; ++I )
+              link->args.push_back(I->get());
+
+            // Add in all the libraries we found.
+            for (std::vector<std::string>::const_iterator I=LibFiles.begin(),
+                 E=LibFiles.end(); I != E; ++I )
+              link->args.push_back(std::string("-l")+*I);
+
+            // Add in all the library paths to the command line
+            for (PathVector::const_iterator I=LibraryPaths.begin(),
+                 E=LibraryPaths.end(); I != E; ++I)
+              link->args.push_back( std::string("-L") + I->get());
+
+            // Add in other optional flags
+            if (isSet(EMIT_NATIVE_FLAG))
+              link->args.push_back("-native");
+            if (isSet(VERBOSE_FLAG))
+              link->args.push_back("-v");
+            if (isSet(TIME_PASSES_FLAG))
+              link->args.push_back("-time-passes");
+            if (isSet(SHOW_STATS_FLAG))
+              link->args.push_back("-stats");
+            if (isSet(STRIP_OUTPUT_FLAG))
+              link->args.push_back("-s");
+            if (isSet(DEBUG_FLAG)) {
+              link->args.push_back("-debug");
+              link->args.push_back("-debug-pass=Details");
+            }
+
+            // Add in mandatory flags
+            link->args.push_back("-o");
+            link->args.push_back(OutFile.get());
+
+            // Execute the link
+            if (!DoAction(link))
+                throw std::string("Action failed");
           }
         } catch (std::string& msg) {
           cleanup();
@@ -736,6 +826,9 @@ namespace {
       StringVector Defines;         ///< -D options
       sys::Path TempDir;            ///< Name of the temporary directory.
       StringTable AdditionalArgs;   ///< The -Txyz options
+      StringVector fOptions;        ///< -f options
+      StringVector MOptions;        ///< -M options
+      StringVector WOptions;        ///< -W options
 
     /// @}
   };
