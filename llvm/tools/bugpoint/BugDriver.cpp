@@ -14,11 +14,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "BugDriver.h"
+#include "llvm/Linker.h"
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
 #include "llvm/Assembly/Parser.h"
 #include "llvm/Bytecode/Reader.h"
-#include "llvm/Support/Linker.h"
 #include "llvm/Support/ToolRunner.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FileUtilities.h"

@@ -21,6 +21,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm-ld.h"
+#include "llvm/Linker.h"
 #include "llvm/Module.h"
 #include "llvm/PassManager.h"
 #include "llvm/Bytecode/Reader.h"
@@ -30,7 +31,6 @@
 #include "llvm/Target/TargetMachineRegistry.h"
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Transforms/Scalar.h"
-#include "llvm/Support/Linker.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FileUtilities.h"
 #include "llvm/System/Signals.h"

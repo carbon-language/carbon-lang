@@ -14,6 +14,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm-ld.h"
+#include "llvm/Linker.h"
 #include "llvm/Module.h"
 #include "llvm/PassManager.h"
 #include "llvm/Analysis/LoadValueNumbering.h"
@@ -23,7 +24,6 @@
 #include "llvm/Target/TargetData.h"
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Transforms/Scalar.h"
-#include "llvm/Support/Linker.h"
 #include "llvm/Support/SystemUtils.h"
 #include "llvm/Support/CommandLine.h"
 using namespace llvm;
