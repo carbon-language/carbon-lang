@@ -118,17 +118,9 @@ static struct PerModuleInfo {
     if (I != GlobalRefs.end()) {
       GlobalValue *OldGV = I->second;   // Get the placeholder...
       I->first.second.destroy();  // Free string memory if necessary
-      
-      // Loop over all of the uses of the GlobalValue.  The only thing they are
-      // allowed to be is ConstantPointerRef's.
-      assert(OldGV->hasOneUse() && "Only one reference should exist!");
-      User *U = OldGV->use_back();  // Must be a ConstantPointerRef...
-      ConstantPointerRef *CPR = cast<ConstantPointerRef>(U);
-        
-      // Change the const pool reference to point to the real global variable
-      // now.  This should drop a use from the OldGV.
-      CPR->replaceUsesOfWithOnConstant(OldGV, GV);
-      assert(OldGV->use_empty() && "All uses should be gone now!");
+
+      // Replace all uses of the placeholder with the new GV
+      OldGV->replaceAllUsesWith(GV); 
       
       // Remove OldGV from the module...
       if (GlobalVariable *GVar = dyn_cast<GlobalVariable>(OldGV))
