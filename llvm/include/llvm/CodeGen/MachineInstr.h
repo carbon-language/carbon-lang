@@ -186,7 +186,6 @@ MachineOperand::MachineOperand(MachineOperandType operandType,
   : opType(operandType),
     immedVal(0),
     regNum(-1),
-    value(_val),
     isDef(false)
 {}
 
