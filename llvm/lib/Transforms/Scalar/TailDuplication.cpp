@@ -22,6 +22,7 @@
 #include "llvm/Constant.h"
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
+#include "llvm/IntrinsicInst.h"
 #include "llvm/Pass.h"
 #include "llvm/Type.h"
 #include "llvm/Support/CFG.h"
@@ -107,8 +108,11 @@ bool TailDup::shouldEliminateUnconditionalBranch(TerminatorInst *TI) {
   BasicBlock::iterator I = Dest->begin();
   while (isa<PHINode>(*I)) ++I;
 
-  for (unsigned Size = 0; I != Dest->end(); ++Size, ++I)
-    if (Size == Threshold) return false;  // The block is too large...
+  for (unsigned Size = 0; I != Dest->end(); ++I) {
+    if (Size == Threshold) return false;  // The block is too large.
+    // Only count instructions that are not debugger intrinsics.
+    if (!isa<DbgInfoIntrinsic>(I)) ++Size;
+  }
 
   // Do not tail duplicate a block that has thousands of successors into a block
   // with a single successor if the block has many other predecessors.  This can
