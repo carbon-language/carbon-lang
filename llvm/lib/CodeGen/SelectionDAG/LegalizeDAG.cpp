@@ -119,6 +119,10 @@ private:
   void ExpandOp(SDOperand O, SDOperand &Lo, SDOperand &Hi);
   SDOperand PromoteOp(SDOperand O);
 
+  SDOperand ExpandLibCall(const char *Name, SDNode *Node,
+                          SDOperand &Hi);
+  SDOperand ExpandIntToFP(bool isSigned, MVT::ValueType DestTy,
+                          SDOperand Source);
   bool ExpandShift(unsigned Opc, SDOperand Op, SDOperand Amt,
                    SDOperand &Lo, SDOperand &Hi);
   void ExpandAddSub(bool isAdd, SDOperand Op, SDOperand Amt,
@@ -802,10 +806,13 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         Result = DAG.getNode(Node->getOpcode(), Node->getValueType(0), Tmp1);
       break;
     case Expand:
-      assert(Node->getOpcode() != ISD::SINT_TO_FP &&
-             Node->getOpcode() != ISD::UINT_TO_FP &&
-             "Cannot lower Xint_to_fp to a call yet!");
-
+      if (Node->getOpcode() == ISD::SINT_TO_FP ||
+          Node->getOpcode() == ISD::UINT_TO_FP) {
+        Result = ExpandIntToFP(Node->getOpcode() == ISD::SINT_TO_FP,
+                               Node->getValueType(0), Node->getOperand(0));
+        Result = LegalizeOp(Result);
+        break;
+      }
       // In the expand case, we must be dealing with a truncate, because
       // otherwise the result would be larger than the source.
       assert(Node->getOpcode() == ISD::TRUNCATE &&
@@ -1043,6 +1050,8 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
     switch (getTypeAction(Node->getOperand(0).getValueType())) {
     case Legal:
       Result = LegalizeOp(Node->getOperand(0));
+      // No extra round required here.
+      Result = DAG.getNode(Node->getOpcode(), NVT, Result);
       break;
 
     case Promote:
@@ -1053,12 +1062,19 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
       else
         Result = DAG.getNode(ISD::ZERO_EXTEND_INREG, Result.getValueType(),
                              Result, Node->getOperand(0).getValueType());
+      // No extra round required here.
+      Result = DAG.getNode(Node->getOpcode(), NVT, Result);
       break;
     case Expand:
-      assert(0 && "Unimplemented");
+      Result = ExpandIntToFP(Node->getOpcode() == ISD::SINT_TO_FP, NVT,
+                             Node->getOperand(0));
+      Result = LegalizeOp(Result);
+
+      // Round if we cannot tolerate excess precision.
+      if (NoExcessFPPrecision)
+        Result = DAG.getNode(ISD::FP_ROUND_INREG, NVT, Result, VT);
+      break;
     }
-    // No extra round required here.
-    Result = DAG.getNode(Node->getOpcode(), NVT, Result);
     break;
 
   case ISD::FP_TO_SINT:
@@ -1263,15 +1279,21 @@ bool SelectionDAGLegalize::ExpandShift(unsigned Opc, SDOperand Op,SDOperand Amt,
     Hi = DAG.getNode(ISD::SELECT, NVT, Cond, T2, T1);
     Lo = DAG.getNode(ISD::SELECT, NVT, Cond, DAG.getConstant(0, NVT), T2);
   } else {
+    SDOperand HiLoPart = DAG.getNode(ISD::SELECT, NVT,
+                                     DAG.getSetCC(ISD::SETEQ,
+                                                  TLI.getSetCCResultTy(), NAmt,
+                                                  DAG.getConstant(32, ShTy)),
+                                     DAG.getConstant(0, NVT),
+                                     DAG.getNode(ISD::SHL, NVT, InH, NAmt));
     SDOperand T1 = DAG.getNode(ISD::OR, NVT,// T1 = (Hi << NAmt) | (Lo >> Amt)
-                               DAG.getNode(ISD::SHL, NVT, InH, NAmt),
+                               HiLoPart,
                                DAG.getNode(ISD::SRL, NVT, InL, ShAmt));
-    bool isSign = Opc == ISD::SRA;
     SDOperand T2 = DAG.getNode(Opc, NVT, InH, ShAmt);  // T2 = InH >> ShAmt&31
 
     SDOperand HiPart;
-    if (isSign)
-      HiPart = DAG.getNode(Opc, NVT, InH, DAG.getConstant(NVTBits-1, ShTy));
+    if (Opc == ISD::SRA)
+      HiPart = DAG.getNode(ISD::SRA, NVT, InH,
+                           DAG.getConstant(NVTBits-1, ShTy));
     else
       HiPart = DAG.getConstant(0, NVT);
     Lo = DAG.getNode(ISD::SELECT, NVT, Cond, T2, T1);
@@ -1279,7 +1301,79 @@ bool SelectionDAGLegalize::ExpandShift(unsigned Opc, SDOperand Op,SDOperand Amt,
   }
   return true;
 }
-                                       
+
+
+// ExpandLibCall - Expand a node into a call to a libcall.  If the result value
+// does not fit into a register, return the lo part and set the hi part to the
+// by-reg argument.  If it does fit into a single register, return the result
+// and leave the Hi part unset.
+SDOperand SelectionDAGLegalize::ExpandLibCall(const char *Name, SDNode *Node,
+                                              SDOperand &Hi) {
+  TargetLowering::ArgListTy Args;
+  for (unsigned i = 0, e = Node->getNumOperands(); i != e; ++i) {
+    MVT::ValueType ArgVT = Node->getOperand(i).getValueType();
+    const Type *ArgTy = MVT::getTypeForValueType(ArgVT);
+    Args.push_back(std::make_pair(Node->getOperand(i), ArgTy));
+  }
+  SDOperand Callee = DAG.getExternalSymbol(Name, TLI.getPointerTy());
+  
+  // We don't care about token chains for libcalls.  We just use the entry
+  // node as our input and ignore the output chain.  This allows us to place
+  // calls wherever we need them to satisfy data dependences.
+  const Type *RetTy = MVT::getTypeForValueType(Node->getValueType(0));
+  SDOperand Result = TLI.LowerCallTo(DAG.getEntryNode(), RetTy, Callee,
+                                     Args, DAG).first;
+  switch (getTypeAction(Result.getValueType())) {
+  default: assert(0 && "Unknown thing");
+  case Legal:
+    return Result;
+  case Promote:
+    assert(0 && "Cannot promote this yet!");
+  case Expand:
+    SDOperand Lo;
+    ExpandOp(Result, Lo, Hi);
+    return Lo;
+  }
+}
+
+/// ExpandIntToFP - Expand a [US]INT_TO_FP operation, assuming that the
+/// destination type is legal.
+SDOperand SelectionDAGLegalize::
+ExpandIntToFP(bool isSigned, MVT::ValueType DestTy, SDOperand Source) {
+  assert(getTypeAction(DestTy) == Legal && "Destination type is not legal!");
+  assert(getTypeAction(Source.getValueType()) == Expand &&
+         "This is not an expansion!");
+  assert(Source.getValueType() == MVT::i64 && "Only handle expand from i64!");
+
+  const char *FnName;
+  if (isSigned) {
+    if (DestTy == MVT::f32)
+      FnName = "__floatdisf";
+    else {
+      assert(DestTy == MVT::f64 && "Unknown fp value type!");
+      FnName = "__floatdidf";
+    }
+  } else {
+    // If this is unsigned, and not supported, first perform the conversion to
+    // signed, then adjust the result if the sign bit is set.
+    SDOperand SignedConv = ExpandIntToFP(false, DestTy, Source);
+
+    assert(0 && "Unsigned casts not supported yet!");
+  }
+  SDOperand Callee = DAG.getExternalSymbol(FnName, TLI.getPointerTy());
+
+  TargetLowering::ArgListTy Args;
+  const Type *ArgTy = MVT::getTypeForValueType(Source.getValueType());
+  Args.push_back(std::make_pair(Source, ArgTy));
+
+  // We don't care about token chains for libcalls.  We just use the entry
+  // node as our input and ignore the output chain.  This allows us to place
+  // calls wherever we need them to satisfy data dependences.
+  const Type *RetTy = MVT::getTypeForValueType(DestTy);
+  return TLI.LowerCallTo(DAG.getEntryNode(), RetTy, Callee,
+                                    Args, DAG).first;
+}
+                   
 
 
 /// ExpandOp - Expand the specified SDOperand into its two component pieces
@@ -1313,7 +1407,6 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
   // is not careful to avoid operations the target does not support.  Make sure
   // that all generated operations are legalized in the next iteration.
   NeedsAnotherIteration = true;
-  const char *LibCallName = 0;
 
   switch (Node->getOpcode()) {
   default:
@@ -1441,41 +1534,38 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     // library functions.
   case ISD::FP_TO_SINT:
     if (Node->getOperand(0).getValueType() == MVT::f32)
-      LibCallName = "__fixsfdi";
+      Lo = ExpandLibCall("__fixsfdi", Node, Hi);
     else
-      LibCallName = "__fixdfdi";
+      Lo = ExpandLibCall("__fixdfdi", Node, Hi);
     break;
   case ISD::FP_TO_UINT:
     if (Node->getOperand(0).getValueType() == MVT::f32)
-      LibCallName = "__fixunssfdi";
+      Lo = ExpandLibCall("__fixunssfdi", Node, Hi);
     else
-      LibCallName = "__fixunsdfdi";
+      Lo = ExpandLibCall("__fixunsdfdi", Node, Hi);
     break;
 
   case ISD::SHL:
     // If we can emit an efficient shift operation, do so now.
-    if (ExpandShift(ISD::SHL, Node->getOperand(0), Node->getOperand(1),
-                    Lo, Hi))
+    if (ExpandShift(ISD::SHL, Node->getOperand(0), Node->getOperand(1), Lo, Hi))
       break;
     // Otherwise, emit a libcall.
-    LibCallName = "__ashldi3";
+    Lo = ExpandLibCall("__ashldi3", Node, Hi);
     break;
 
   case ISD::SRA:
     // If we can emit an efficient shift operation, do so now.
-    if (ExpandShift(ISD::SRA, Node->getOperand(0), Node->getOperand(1),
-                    Lo, Hi))
+    if (ExpandShift(ISD::SRA, Node->getOperand(0), Node->getOperand(1), Lo, Hi))
       break;
     // Otherwise, emit a libcall.
-    LibCallName = "__ashrdi3";
+    Lo = ExpandLibCall("__ashrdi3", Node, Hi);
     break;
   case ISD::SRL:
     // If we can emit an efficient shift operation, do so now.
-    if (ExpandShift(ISD::SRL, Node->getOperand(0), Node->getOperand(1),
-                    Lo, Hi))
+    if (ExpandShift(ISD::SRL, Node->getOperand(0), Node->getOperand(1), Lo, Hi))
       break;
     // Otherwise, emit a libcall.
-    LibCallName = "__lshrdi3";
+    Lo = ExpandLibCall("__lshrdi3", Node, Hi);
     break;
 
   case ISD::ADD:
@@ -1484,30 +1574,11 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
   case ISD::SUB:
     ExpandAddSub(false, Node->getOperand(0), Node->getOperand(1), Lo, Hi);
     break;
-  case ISD::MUL:  LibCallName = "__muldi3"; break;
-  case ISD::SDIV: LibCallName = "__divdi3"; break;
-  case ISD::UDIV: LibCallName = "__udivdi3"; break;
-  case ISD::SREM: LibCallName = "__moddi3"; break;
-  case ISD::UREM: LibCallName = "__umoddi3"; break;
-  }
-
-  // Int2FP -> __floatdisf/__floatdidf
-
-  // If this is to be expanded into a libcall... do so now.
-  if (LibCallName) {
-    TargetLowering::ArgListTy Args;
-    for (unsigned i = 0, e = Node->getNumOperands(); i != e; ++i)
-      Args.push_back(std::make_pair(Node->getOperand(i),
-                 MVT::getTypeForValueType(Node->getOperand(i).getValueType())));
-    SDOperand Callee = DAG.getExternalSymbol(LibCallName, TLI.getPointerTy());
-
-    // We don't care about token chains for libcalls.  We just use the entry
-    // node as our input and ignore the output chain.  This allows us to place
-    // calls wherever we need them to satisfy data dependences.
-    SDOperand Result = TLI.LowerCallTo(DAG.getEntryNode(),
-                           MVT::getTypeForValueType(Op.getValueType()), Callee,
-                                       Args, DAG).first;
-    ExpandOp(Result, Lo, Hi);
+  case ISD::MUL:  Lo = ExpandLibCall("__muldi3" , Node, Hi); break;
+  case ISD::SDIV: Lo = ExpandLibCall("__divdi3" , Node, Hi); break;
+  case ISD::UDIV: Lo = ExpandLibCall("__udivdi3", Node, Hi); break;
+  case ISD::SREM: Lo = ExpandLibCall("__moddi3" , Node, Hi); break;
+  case ISD::UREM: Lo = ExpandLibCall("__umoddi3", Node, Hi); break;
   }
 
   // Remember in a map if the values will be reused later.
