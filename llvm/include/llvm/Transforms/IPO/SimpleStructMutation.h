@@ -8,7 +8,7 @@
 #ifndef LLVM_TRANSFORMS_SIMPLESTRUCTMUTATION_H
 #define LLVM_TRANSFORMS_SIMPLESTRUCTMUTATION_H
 
-#include "llvm/Transforms/MutateStructTypes.h"
+#include "llvm/Transforms/IPO/MutateStructTypes.h"
 
 class SimpleStructMutation : public MutateStructTypes {
 public:
