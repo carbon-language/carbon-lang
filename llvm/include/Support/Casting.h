@@ -184,7 +184,7 @@ template<class To, class FromTy> struct cast_convert_val<To,FromTy,FromTy> {
 //
 template <class X, class Y>
 inline typename cast_retty<X, Y>::ret_type cast(const Y &Val) {
-  assert(isa<X>(Val) && "cast<Ty>() argument of uncompatible type!");
+  assert(isa<X>(Val) && "cast<Ty>() argument of incompatible type!");
   return cast_convert_val<X, Y,
                           typename simplify_type<Y>::SimpleType>::doit(Val);
 }
@@ -195,7 +195,7 @@ inline typename cast_retty<X, Y>::ret_type cast(const Y &Val) {
 template <class X, class Y>
 inline typename cast_retty<X, Y*>::ret_type cast_or_null(Y *Val) {
   if (Val == 0) return 0;
-  assert(isa<X>(Val) && "cast_or_null<Ty>() argument of uncompatible type!");
+  assert(isa<X>(Val) && "cast_or_null<Ty>() argument of incompatible type!");
   return cast<X>(Val);
 }
 
