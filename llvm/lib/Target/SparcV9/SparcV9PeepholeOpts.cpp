@@ -39,7 +39,7 @@ DeleteInstruction(MachineBasicBlock& mvec,
         // to update the I-I maps.
         // 
         assert(ndelay == 1 && "Not yet handling multiple-delay-slot targets");
-        BBI->replace(mii.getNOPOpCode(), 0);
+        BBI->replace(V9::NOP, 0);
         return;
       }
   }

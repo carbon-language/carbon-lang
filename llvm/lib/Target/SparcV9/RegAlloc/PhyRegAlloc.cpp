@@ -26,6 +26,7 @@
 #include "RegAllocCommon.h"
 #include "RegClass.h"
 #include "../LiveVar/FunctionLiveVarInfo.h"
+#include "../SparcV9InstrInfo.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/iPHINode.h"
@@ -550,7 +551,7 @@ void PhyRegAlloc::updateMachineCode()
               // instruction out of the delay slot). On cond2 we need
               // to insert a nop in place of the moved instruction
               if (cond2) {
-                MBB.insert(MII, BuildMI(TM.getInstrInfo()->getNOPOpCode(),1));
+                MBB.insert(MII, BuildMI(V9::NOP, 1));
               }
             }
           else {
