@@ -113,3 +113,18 @@ int %test17(int %A) {
 	%D = or int %B, %C        ; %D = and int %B, 5
 	ret int %D
 }
+
+bool %test18(int %A) {
+        %B = setge int %A, 100
+        %C = setlt int %A, 50
+        %D = or bool %B, %C   ;; (A-50) >u 50
+        ret bool %D
+}
+
+bool %test19(int %A) {
+        %B = seteq int %A, 50
+        %C = seteq int %A, 51
+        %D = or bool %B, %C   ;; (A-50) < 2
+        ret bool %D
+}
+
