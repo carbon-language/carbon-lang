@@ -404,6 +404,8 @@ if (`grep '^gmake[^:]*: .*Error' $BuildLog | wc -l` + 0 ||
   if ($VERBOSE) { print "BUILD ERROR\n"; }
 }
 
+if ($BuildError) { $NOFEATURES = 1; $NOREGRESSIONS = 1; }
+
 # Get results of feature tests.
 my $FeatureTestResults; # String containing the results of the feature tests
 my $FeatureTime;        # System+CPU Time for feature tests
