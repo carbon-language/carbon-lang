@@ -12,7 +12,7 @@
 // The useful interface defined by this file... Parse an ascii file, and return
 // the internal representation in a nice slice'n'dice'able representation.
 //
-Module *ParseAssemblyFile(const string &Filename) throw (ParseException) {
+Module *ParseAssemblyFile(const string &Filename) { // throw (ParseException)
   FILE *F = stdin;
 
   if (Filename != "-") 
