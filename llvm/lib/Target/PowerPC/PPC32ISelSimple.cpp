@@ -3048,6 +3048,23 @@ void PPC32ISel::emitCastOperation(MachineBasicBlock *MBB,
   unsigned DestClass = getClassB(DestTy);
   unsigned SrcReg = getReg(Src, MBB, IP);
 
+  // Implement casts from bool to integer types as a move operation
+  if (SrcTy == Type::BoolTy) {
+    switch (DestClass) {
+    case cByte:
+    case cShort:
+    case cInt:
+      BuildMI(*MBB, IP, PPC::OR, 2, DestReg).addReg(SrcReg).addReg(SrcReg);
+      return;
+    case cLong:
+      BuildMI(*MBB, IP, PPC::LI, 1, DestReg).addImm(0);
+      BuildMI(*MBB, IP, PPC::OR, 2, DestReg+1).addReg(SrcReg).addReg(SrcReg);
+      return;
+    default:
+      break;
+    }
+  }
+
   // Implement casts to bool by using compare on the operand followed by set if
   // not zero on the result.
   if (DestTy == Type::BoolTy) {
