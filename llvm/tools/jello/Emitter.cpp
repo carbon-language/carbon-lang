@@ -9,6 +9,7 @@
 #include "llvm/CodeGen/MachineCodeEmitter.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/Function.h"
+#include "Support/Statistic.h"
 
 namespace {
   class Emitter : public MachineCodeEmitter {
@@ -61,9 +62,9 @@ void Emitter::finishFunction(MachineFunction &F) {
   BBRefs.clear();
   BBLocations.clear();
 
-  std::cerr << "Finished Code Generation of Function: "
-            << F.getFunction()->getName() << ": " << CurByte-CurBlock
-            << " bytes of text\n";
+  DEBUG(std::cerr << "Finished Code Generation of Function: "
+                  << F.getFunction()->getName() << ": " << CurByte-CurBlock
+                  << " bytes of text\n");
 }
 
 void Emitter::startBasicBlock(MachineBasicBlock &BB) {

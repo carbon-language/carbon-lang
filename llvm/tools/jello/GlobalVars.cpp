@@ -8,6 +8,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Constants.h"
 #include "llvm/Target/TargetMachine.h"
+#include "Support/Statistic.h"
 #include "VM.h"
 #include <iostream>
 
@@ -28,9 +29,9 @@ void VM::emitGlobals() {
       // Allocate some memory for it!
       GlobalAddress[I] = new char[TD.getTypeSize(Ty)];
       
-      std::cerr << "Allocated global '" << I->getName()
-                << "' to addr 0x" << std::hex << GlobalAddress[I] << std::dec
-                << "\n";
+      DEBUG(std::cerr << "Allocated global '" << I->getName()
+                      << "' to addr 0x" << std::hex << GlobalAddress[I] << std::dec
+                      << "\n");
     } else {
       assert(0 && "References to external globals not handled yet!");
     }

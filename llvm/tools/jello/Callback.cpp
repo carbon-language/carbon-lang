@@ -6,6 +6,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "VM.h"
+#include "Support/Statistic.h"
 #include <signal.h>
 #include <ucontext.h>
 #include <iostream>
@@ -26,10 +27,10 @@ static void TrapHandler(int TN, siginfo_t *SI, ucontext_t *ucp) {
   unsigned RefAddr = *(unsigned*)ucp->uc_mcontext.gregs[REG_ESP];
   RefAddr -= 4;  // Backtrack to the reference itself...
 
-  std::cerr << "In SEGV handler! Addr=0x" << std::hex << RefAddr
-            << " ESP=0x" << ucp->uc_mcontext.gregs[REG_ESP] << std::dec
-            << ": Resolving call to function: "
-            << TheVM->getFunctionReferencedName((void*)RefAddr) << "\n";
+  DEBUG(std::cerr << "In SEGV handler! Addr=0x" << std::hex << RefAddr
+                  << " ESP=0x" << ucp->uc_mcontext.gregs[REG_ESP] << std::dec
+                  << ": Resolving call to function: "
+                  << TheVM->getFunctionReferencedName((void*)RefAddr) << "\n");
 
   // Sanity check to make sure this really is a call instruction...
   assert(((unsigned char*)RefAddr)[-1] == 0xE8 && "Not a call instr!");
