@@ -20,11 +20,202 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/iOther.h"
 #include "llvm/iMemory.h"
+#include <map>
+#include <algorithm>
 
 static const Type *PtrArrSByte = 0; // '[sbyte]*' type
 static const Type *PtrSByte = 0;    // 'sbyte*' type
 
 
+// ReplaceInstWithValue - Replace all uses of an instruction (specified by BI)
+// with a value, then remove and delete the original instruction.
+//
+static void ReplaceInstWithValue(BasicBlock::InstListType &BIL,
+                                 BasicBlock::iterator &BI, Value *V) {
+  Instruction *I = *BI;
+  // Replaces all of the uses of the instruction with uses of the value
+  I->replaceAllUsesWith(V);
+
+  // Remove the unneccesary instruction now...
+  BIL.remove(BI);
+
+  // Make sure to propogate a name if there is one already...
+  if (I->hasName() && !V->hasName())
+    V->setName(I->getName(), BIL.getParent()->getSymbolTable());
+
+  // Remove the dead instruction now...
+  delete I;
+}
+
+
+// ReplaceInstWithInst - Replace the instruction specified by BI with the
+// instruction specified by I.  The original instruction is deleted and BI is
+// updated to point to the new instruction.
+//
+static void ReplaceInstWithInst(BasicBlock::InstListType &BIL,
+                                BasicBlock::iterator &BI, Instruction *I) {
+  assert(I->getParent() == 0 &&
+         "ReplaceInstWithInst: Instruction already inserted into basic block!");
+
+  // Insert the new instruction into the basic block...
+  BI = BIL.insert(BI, I)+1;
+
+  // Replace all uses of the old instruction, and delete it.
+  ReplaceInstWithValue(BIL, BI, I);
+
+  // Reexamine the instruction just inserted next time around the cleanup pass
+  // loop.
+  --BI;
+}
+
+
+
+// ConvertCallTo - Convert a call to a varargs function with no arg types
+// specified to a concrete nonvarargs method.
+//
+static void ConvertCallTo(CallInst *CI, Method *Dest) {
+  const MethodType::ParamTypes &ParamTys =
+    Dest->getMethodType()->getParamTypes();
+  BasicBlock *BB = CI->getParent();
+
+  // Get an iterator to where we want to insert cast instructions if the
+  // argument types don't agree.
+  //
+  BasicBlock::iterator BBI = find(BB->begin(), BB->end(), CI);
+  assert(BBI != BB->end() && "CallInst not in parent block?");
+
+  assert(CI->getNumOperands()-1 == ParamTys.size()&&
+         "Method calls resolved funny somehow, incompatible number of args");
+
+  vector<Value*> Params;
+
+  // Convert all of the call arguments over... inserting cast instructions if
+  // the types are not compatible.
+  for (unsigned i = 1; i < CI->getNumOperands(); ++i) {
+    Value *V = CI->getOperand(i);
+
+    if (V->getType() != ParamTys[i-1]) { // Must insert a cast...
+      Instruction *Cast = new CastInst(V, ParamTys[i-1]);
+      BBI = BB->getInstList().insert(BBI, Cast)+1;
+      V = Cast;
+    }
+
+    Params.push_back(V);
+  }
+
+  // Replace the old call instruction with a new call instruction that calls
+  // the real method.
+  //
+  ReplaceInstWithInst(BB->getInstList(), BBI, new CallInst(Dest, Params));
+}
+
+
+// PatchUpMethodReferences - Go over the methods that are in the module and
+// look for methods that have the same name.  More often than not, there will
+// be things like:
+//    void "foo"(...)
+//    void "foo"(int, int)
+// because of the way things are declared in C.  If this is the case, patch
+// things up.
+//
+static bool PatchUpMethodReferences(SymbolTable *ST) {
+  map<string, vector<Method*> > Methods;
+
+  // Loop over the entries in the symbol table. If an entry is a method pointer,
+  // then add it to the Methods map.  We do a two pass algorithm here to avoid
+  // problems with iterators getting invalidated if we did a one pass scheme.
+  //
+  for (SymbolTable::iterator I = ST->begin(), E = ST->end(); I != E; ++I)
+    if (const PointerType *PT = dyn_cast<PointerType>(I->first))
+      if (const MethodType *MT = dyn_cast<MethodType>(PT->getValueType())) {
+        SymbolTable::VarMap &Plane = I->second;
+        for (SymbolTable::type_iterator PI = Plane.begin(), PE = Plane.end();
+             PI != PE; ++PI) {
+          const string &Name = PI->first;
+          Method *M = cast<Method>(PI->second);
+          Methods[Name].push_back(M);          
+        }
+      }
+
+  bool Changed = false;
+
+  // Now we have a list of all methods with a particular name.  If there is more
+  // than one entry in a list, merge the methods together.
+  //
+  for (map<string, vector<Method*> >::iterator I = Methods.begin(), 
+         E = Methods.end(); I != E; ++I) {
+    vector<Method*> &Methods = I->second;
+    if (Methods.size() > 1) {         // Found a multiply defined method.
+      Method *Implementation = 0;     // Find the implementation
+      Method *Concrete = 0;
+      for (unsigned i = 0; i < Methods.size(); ++i) {
+        if (!Methods[i]->isExternal()) {  // Found an implementation
+          assert(Concrete == 0 && "Multiple definitions of the same method. "
+                 "Case not handled yet!");
+          Implementation = Methods[i];
+        }
+
+        if (!Methods[i]->getMethodType()->isVarArg()) {
+          assert(Concrete == 0 && "Multiple concrete method types!");
+          Concrete = Methods[i];
+        }
+      }
+
+      // We should find exactly one non-vararg method definition, which is
+      // probably the implementation.  Change all of the method definitions
+      // and uses to use it instead.
+      //
+      assert(Concrete && "Multiple varargs defns found?");
+      for (unsigned i = 0; i < Methods.size(); ++i)
+        if (Methods[i] != Concrete) {
+          Method *Old = Methods[i];
+          assert(Old->getReturnType() == Concrete->getReturnType() &&
+                 "Differing return types not handled yet!");
+          assert(Old->getMethodType()->getParamTypes().size() == 0 &&
+                 "Cannot handle varargs fn's with specified element types!");
+          
+          // Attempt to convert all of the uses of the old method to the
+          // concrete form of the method.  If there is a use of the method that
+          // we don't understand here we punt to avoid making a bad
+          // transformation.
+          //
+          // At this point, we know that the return values are the same for our
+          // two functions and that the Old method has no varargs methods
+          // specified.  In otherwords it's just <retty> (...)
+          //
+          for (unsigned i = 0; i < Old->use_size(); ) {
+            User *U = *(Old->use_begin()+i);
+            if (CastInst *CI = dyn_cast<CastInst>(U)) {
+              // Convert casts directly
+              assert(CI->getOperand(0) == Old);
+              CI->setOperand(0, Concrete);
+              Changed = true;
+            } else if (CallInst *CI = dyn_cast<CallInst>(U)) {
+              // Can only fix up calls TO the argument, not args passed in.
+              if (CI->getCalledValue() == Old) {
+                ConvertCallTo(CI, Concrete);
+                Changed = true;
+              } else {
+                cerr << "Couldn't cleanup this function call, must be an"
+                     << " argument or something!" << CI;
+                ++i;
+              }
+            } else {
+              cerr << "Cannot convert use of method: " << U << endl;
+              ++i;
+            }
+          }
+        }
+    }
+  }
+
+  return Changed;
+}
+
+
+// ShouldNukSymtabEntry - Return true if this module level symbol table entry
+// should be eliminated.
+//
 static inline bool ShouldNukeSymtabEntry(const pair<string, Value*> &E) {
   // Nuke all names for primitive types!
   if (cast<Type>(E.second)->isPrimitiveType()) return true;
@@ -35,7 +226,6 @@ static inline bool ShouldNukeSymtabEntry(const pair<string, Value*> &E) {
 
   return false;
 }
-
 
 // doPassInitialization - For this pass, it removes global symbol table
 // entries for primitive types.  These are never used for linking in GCC and
@@ -52,6 +242,18 @@ bool CleanupGCCOutput::doPassInitialization(Module *M) {
   if (M->hasSymbolTable()) {
     SymbolTable *ST = M->getSymbolTable();
 
+    // Go over the methods that are in the module and look for methods that have
+    // the same name.  More often than not, there will be things like:
+    // void "foo"(...)  and void "foo"(int, int) because of the way things are
+    // declared in C.  If this is the case, patch things up.
+    //
+    Changed |= PatchUpMethodReferences(ST);
+
+
+    // If the module has a symbol table, they might be referring to the malloc
+    // and free functions.  If this is the case, grab the method pointers that 
+    // the module is using.
+    //
     // Lookup %malloc and %free in the symbol table, for later use.  If they
     // don't exist, or are not external, we do not worry about converting calls
     // to that function into the appropriate instruction.
@@ -94,47 +296,6 @@ bool CleanupGCCOutput::doPassInitialization(Module *M) {
   }
 
   return Changed;
-}
-
-// ReplaceInstWithValue - Replace all uses of an instruction (specified by BI)
-// with a value, then remove and delete the original instruction.
-//
-static void ReplaceInstWithValue(BasicBlock::InstListType &BIL,
-                                 BasicBlock::iterator &BI, Value *V) {
-  Instruction *I = *BI;
-  // Replaces all of the uses of the instruction with uses of the value
-  I->replaceAllUsesWith(V);
-
-  // Remove the unneccesary instruction now...
-  BIL.remove(BI);
-
-  // Make sure to propogate a name if there is one already...
-  if (I->hasName() && !V->hasName())
-    V->setName(I->getName(), BIL.getParent()->getSymbolTable());
-
-  // Remove the dead instruction now...
-  delete I;
-}
-
-
-// ReplaceInstWithInst - Replace the instruction specified by BI with the
-// instruction specified by I.  The original instruction is deleted and BI is
-// updated to point to the new instruction.
-//
-static void ReplaceInstWithInst(BasicBlock::InstListType &BIL,
-                                BasicBlock::iterator &BI, Instruction *I) {
-  assert(I->getParent() == 0 &&
-         "ReplaceInstWithInst: Instruction already inserted into basic block!");
-
-  // Insert the new instruction into the basic block...
-  BI = BIL.insert(BI, I)+1;
-
-  // Replace all uses of the old instruction, and delete it.
-  ReplaceInstWithValue(BIL, BI, I);
-
-  // Reexamine the instruction just inserted next time around the cleanup pass
-  // loop.
-  --BI;
 }
 
 
