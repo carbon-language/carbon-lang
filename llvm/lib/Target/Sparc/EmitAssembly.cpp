@@ -107,7 +107,7 @@ public:
       case Text:         toAsm << "\".text\""; break;
       case ReadOnlyData: toAsm << "\".rodata\",#alloc"; break;
       case InitRWData:   toAsm << "\".data\",#alloc,#write"; break;
-      case UninitRWData: toAsm << "\".bss\",#alloc,#write\nBbss.bss:"; break;
+      case UninitRWData: toAsm << "\".bss\",#alloc,#write"; break;
       }
     toAsm << "\n";
   }
@@ -186,29 +186,35 @@ public:
     return "";
   }
 
-  // ConstantExprToString() - Convert a ConstantExpr to a C expression, and
-  // return this as a string.
-  //
+  // ConstantExprToString() - Convert a ConstantExpr to an asm expression
+  // and return this as a string.
   std::string ConstantExprToString(const ConstantExpr* CE,
                                    const TargetMachine& target) {
     std::string S;
 
     switch(CE->getOpcode()) {
     case Instruction::GetElementPtr:
-      {
+      { // generate a symbolic expression for the byte address
         const Value* ptrVal = CE->getOperand(0);
-        valToExprString(ptrVal, target, S);
         std::vector<Value*> idxVec(CE->op_begin()+1, CE->op_end());
-        uint64_t byteOffset =
-          target.DataLayout.getIndexedOffset(ptrVal->getType(), idxVec);
-
-        const Type *PtrElTy =
-          cast<PointerType>(ptrVal->getType())->getElementType();
-        uint64_t eltSize = target.DataLayout.getTypeSize(PtrElTy);
-
-        S += " + " + utostr(byteOffset / eltSize);
+        S += "(" + valToExprString(ptrVal, target) + ") + ("
+          + utostr(target.DataLayout.getIndexedOffset(ptrVal->getType(),idxVec))
+          + ")";
         break;
       }
+
+    case Instruction::Cast:
+      // Support only non-converting casts for now, i.e., a no-op.
+      // This assertion is not a complete check.
+      assert(target.DataLayout.getTypeSize(CE->getType()) ==
+             target.DataLayout.getTypeSize(CE->getOperand(0)->getType()));
+      S += "(" + valToExprString(CE->getOperand(0), target) + ")";
+      break;
+
+    case Instruction::Add:
+      S += "(" + valToExprString(CE->getOperand(0), target) + ") + ("
+               + valToExprString(CE->getOperand(1), target) + ")";
+      break;
 
     default:
       assert(0 && "Unsupported operator in ConstantExprToString()");
@@ -221,8 +227,8 @@ public:
   // valToExprString - Helper function for ConstantExprToString().
   // Appends result to argument string S.
   // 
-  void valToExprString(const Value* V, const TargetMachine& target,
-                       std::string& S) {
+  std::string valToExprString(const Value* V, const TargetMachine& target) {
+    std::string S;
     bool failed = false;
     if (const Constant* CV = dyn_cast<Constant>(V)) { // symbolic or known
 
@@ -237,7 +243,7 @@ public:
       else if (isa<ConstantPointerNull>(CV))
         S += "0";
       else if (const ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(CV))
-        valToExprString(CPR->getValue(), target, S);
+        S += valToExprString(CPR->getValue(), target);
       else if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(CV))
         S += ConstantExprToString(CE, target);
       else
@@ -253,6 +259,7 @@ public:
       assert(0 && "Cannot convert value to string");
       S += "<illegal-value>";
     }
+    return S;
   }
 
 };
@@ -859,8 +866,6 @@ void SparcModuleAsmPrinter::emitGlobalsAndConstants(const Module &M) {
   // Output global variables...
   for (Module::const_giterator GI = M.gbegin(), GE = M.gend(); GI != GE; ++GI) {
     if (GI->hasInitializer() && GI->isConstant()) {
-      enterSection(AsmPrinter::ReadOnlyData);  // read-only, initialized data
-    } else if (GI->hasInitializer() && !GI->isConstant()) { // read-write data
       enterSection(AsmPrinter::ReadOnlyData);  // read-only, initialized data
     } else if (GI->hasInitializer() && !GI->isConstant()) { // read-write data
       enterSection(AsmPrinter::InitRWData);
