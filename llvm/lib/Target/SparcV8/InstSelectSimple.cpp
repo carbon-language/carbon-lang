@@ -59,6 +59,7 @@ namespace {
 
     void visitBinaryOperator(Instruction &I);
     void visitShiftInstruction(Instruction &I) { visitBinaryOperator(I); }
+    void visitSetCondInst(Instruction &I);
     void visitCallInst(CallInst &I);
     void visitReturnInst(ReturnInst &RI);
 
@@ -382,6 +383,40 @@ void V8ISel::visitBinaryOperator (Instruction &I) {
       return;
   }
 }
+
+void V8ISel::visitSetCondInst(Instruction &I) {
+  unsigned Op0Reg = getReg (I.getOperand (0));
+  unsigned Op1Reg = getReg (I.getOperand (1));
+  unsigned DestReg = getReg (I);
+  
+  // Compare the two values.
+  BuildMI(BB, V8::SUBCCrr, 2, V8::G0).addReg(Op0Reg).addReg(Op1Reg);
+
+  // Put 0 into a register.
+  //unsigned ZeroReg = makeAnotheRReg(Type::IntTy);
+  //BuildMI(BB, V8::ORri, 2, ZeroReg).addReg(V8::G0).addReg(V8::G0);
+
+  unsigned Opcode;
+  switch (I.getOpcode()) {
+  default: assert(0 && "Unknown setcc instruction!");
+  case Instruction::SetEQ:
+  case Instruction::SetNE:
+  case Instruction::SetLT:
+  case Instruction::SetGT:
+  case Instruction::SetLE:
+  case Instruction::SetGE:
+  }
+
+  // FIXME: We need either conditional moves like the V9 has (e.g. movge), or we
+  // need to be able to turn a single LLVM basic block into multiple machine
+  // code basic blocks.  For now, it probably makes sense to emit Sparc V9
+  // instructions until the code generator is upgraded.  Note that this should
+  // only happen when the setcc cannot be folded into the branch, but this needs
+  // to be handled correctly!
+
+  visitInstruction(I);
+}
+
 
 
 /// LowerUnknownIntrinsicFunctionCalls - This performs a prepass over the
