@@ -147,7 +147,7 @@ This directory contains the machine description for X86 that is required to the
 rest of the compiler working.  It contains any code that is truly specific to
 the X86 backend, for example the instruction selector and machine code emitter.
 
-tools/jello
+tools/lli/JIT
 -----------
 This directory contains the top-level code for the JIT compiler.  This code
 basically boils down to a call to TargetMachine::addPassesToJITCompile.  As we
