@@ -1,11 +1,11 @@
-//===------------------------------------------------------------------------===
+//===----------------------------------------------------------------------===//
 // LLVM 'GCCAS' UTILITY 
 //
 //  This utility is designed to be used by the GCC frontend for creating
 // bytecode files from it's intermediate llvm assembly.  The requirements for
 // this utility are thus slightly different than that of the standard as util.
 //
-//===------------------------------------------------------------------------===
+//===----------------------------------------------------------------------===//
 
 #include "llvm/Module.h"
 #include "llvm/Assembly/Parser.h"
@@ -16,7 +16,7 @@
 #include "llvm/Transforms/Scalar/DCE.h"
 #include "llvm/Transforms/Scalar/IndVarSimplify.h"
 #include "llvm/Transforms/Scalar/InstructionCombining.h"
-#include "llvm/Bytecode/Writer.h"
+#include "llvm/Bytecode/WriteBytecodePass.h"
 #include "Support/CommandLine.h"
 #include <memory>
 #include <fstream>
@@ -29,7 +29,6 @@ cl::String OutputFilename("o", "Override output filename", cl::NoFlags, "");
 int main(int argc, char **argv) {
   cl::ParseCommandLineOptions(argc, argv, " llvm .s -> .o assembler for GCC\n");
 
-  ostream *Out = 0;
   std::auto_ptr<Module> M;
   try {
     // Parse the file now...
@@ -55,8 +54,8 @@ int main(int argc, char **argv) {
     OutputFilename += ".o";
   }
 
-  Out = new std::ofstream(OutputFilename.c_str(), ios::out);
-  if (!Out->good()) {
+  std::ofstream Out(OutputFilename.c_str(), ios::out);
+  if (!Out.good()) {
     cerr << "Error opening " << OutputFilename << "!\n";
     return 1;
   }
@@ -73,13 +72,10 @@ int main(int argc, char **argv) {
   Passes.add(new ConstantMerge());             // Merge dup global consts
   Passes.add(new InstructionCombining());      // Combine silly seq's
   Passes.add(new DeadCodeElimination());       // Remove Dead code/vars
+  Passes.add(new WriteBytecodePass(&Out));     // Write bytecode to file...
 
-  // Run our queue of passes all at once now, efficiently.  This form of
-  // runAllPasses frees the Pass objects after runAllPasses completes.
-  //
+  // Run our queue of passes all at once now, efficiently.
   Passes.run(M.get());
-
-  WriteBytecodeToFile(M.get(), *Out);
   return 0;
 }
 
