@@ -1,0 +1,11 @@
+; RUN: llvm-as < %s | opt -globalopt | llvm-dis | not grep internal
+
+; This is a harder case to delete as the GEP has a variable index.
+
+%G = internal global [4 x int] zeroinitializer
+
+void %foo(int %X) {
+	%Ptr = getelementptr [4 x int]* %G, int 0, int %X
+	store int 1, int* %Ptr
+	ret void
+}
