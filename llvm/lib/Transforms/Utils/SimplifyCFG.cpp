@@ -406,8 +406,7 @@ GetValueEqualityComparisonCases(TerminatorInst *TI,
   if (SwitchInst *SI = dyn_cast<SwitchInst>(TI)) {
     Cases.reserve(SI->getNumCases());
     for (unsigned i = 1, e = SI->getNumCases(); i != e; ++i)
-      Cases.push_back(std::make_pair(cast<ConstantInt>(SI->getCaseValue(i)),
-                                     SI->getSuccessor(i)));
+      Cases.push_back(std::make_pair(SI->getCaseValue(i), SI->getSuccessor(i)));
     return SI->getDefaultDest();
   }
 
