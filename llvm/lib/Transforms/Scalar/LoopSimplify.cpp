@@ -312,31 +312,28 @@ void LoopSimplify::InsertPreheaderForLoop(Loop *L) {
   
   DominatorSet &DS = getAnalysis<DominatorSet>();  // Update dominator info
   DominatorTree &DT = getAnalysis<DominatorTree>();
-  DominatorTree::Node *HeaderDTNode = DT.getNode(Header);
+    
+
+  // Update the dominator tree information.
+  // The immediate dominator of the preheader is the immediate dominator of
+  // the old header.
+  DominatorTree::Node *PHDomTreeNode =
+    DT.createNewNode(NewBB, DT.getNode(Header)->getIDom());
+
+  // Change the header node so that PNHode is the new immediate dominator
+  DT.changeImmediateDominator(DT.getNode(Header), PHDomTreeNode);
 
   {
     // The blocks that dominate NewBB are the blocks that dominate Header,
     // minus Header, plus NewBB.
     DominatorSet::DomSetType DomSet = DS.getDominators(Header);
-    DomSet.insert(NewBB);  // We dominate ourself
     DomSet.erase(Header);  // Header does not dominate us...
     DS.addBasicBlock(NewBB, DomSet);
 
     // The newly created basic block dominates all nodes dominated by Header.
-    for (DominatorTree::Node::iterator I = HeaderDTNode->begin(),
-           E = HeaderDTNode->end(); I != E; ++I)
-      DS.addDominator((*I)->getBlock(), NewBB);
-  }
-
-  { // Update the dominator tree information.
-    // The immediate dominator of the preheader is the immediate dominator of
-    // the old header.
-    //
-    DominatorTree::Node *PHNode =
-      DT.createNewNode(NewBB, HeaderDTNode->getIDom());
-    
-    // Change the header node so that PNHode is the new immediate dominator
-    DT.changeImmediateDominator(HeaderDTNode, PHNode);
+    for (df_iterator<DominatorTree::Node*> DFI = df_begin(PHDomTreeNode),
+           E = df_end(PHDomTreeNode); DFI != E; ++DFI)
+      DS.addDominator((*DFI)->getBlock(), NewBB);
   }
   
   // Update immediate dominator information if we have it...
