@@ -118,19 +118,23 @@ main(int argc, char **argv)
   // Figure out where we are going to send the output...
   std::ostream *Out = 0;
   if (OutputFilename != "") {
-    // Specified an output filename?
-    if (!Force && std::ifstream(OutputFilename.c_str())) {
-      // If force is not specified, make sure not to overwrite a file!
-      std::cerr << argv[0] << ": error opening '" << OutputFilename
-                << "': file exists!\n"
-                << "Use -f command line argument to force output\n";
-      return 1;
-    }
-    Out = new std::ofstream(OutputFilename.c_str());
+    if (OutputFilename != "-") {
+      // Specified an output filename?
+      if (!Force && std::ifstream(OutputFilename.c_str())) {
+	// If force is not specified, make sure not to overwrite a file!
+	std::cerr << argv[0] << ": error opening '" << OutputFilename
+		  << "': file exists!\n"
+		  << "Use -f command line argument to force output\n";
+	return 1;
+      }
+      Out = new std::ofstream(OutputFilename.c_str());
 
-    // Make sure that the Out file gets unlink'd from the disk if we get a
-    // SIGINT
-    RemoveFileOnSignal(OutputFilename);
+      // Make sure that the Out file gets unlink'd from the disk if we get a
+      // SIGINT
+      RemoveFileOnSignal(OutputFilename);
+    } else {
+      Out = &std::cout;
+    }
   } else {
     if (InputFilename == "-") {
       OutputFilename = "-";
