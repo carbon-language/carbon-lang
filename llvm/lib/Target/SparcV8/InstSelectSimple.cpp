@@ -167,11 +167,27 @@ void V8ISel::copyConstantToRegister(MachineBasicBlock *MBB,
                                     Constant *C, unsigned R) {
   if (C->getType()->isIntegral()) {
     unsigned Class = getClass(C->getType());
-
     ConstantInt *CI = cast<ConstantInt>(C);
-    // cByte: or %g0, <imm>, <dest>
-    // cShort or cInt: sethi, then or
-    // BuildMI(*MBB, IP, <opcode>, <#regs>, R).addImm(CI->getRawValue());
+    switch (Class) {
+      case cByte:
+        BuildMI (*MBB, IP, V8::ORri, 2, R).addReg (V8::G0).addImm ((uint8_t) CI->getRawValue ());
+        return;
+      case cShort: {
+        unsigned TmpReg = makeAnotherReg (C->getType ());
+        BuildMI (*MBB, IP, V8::SETHIi, 1, TmpReg).addImm (((uint16_t) CI->getRawValue ()) >> 10);
+        BuildMI (*MBB, IP, V8::ORri, 2, R).addReg (TmpReg).addImm (((uint16_t) CI->getRawValue ()) & 0x03ff);
+        return;
+      }
+      case cInt: {
+        unsigned TmpReg = makeAnotherReg (C->getType ());
+        BuildMI (*MBB, IP, V8::SETHIi, 1, TmpReg).addImm (((uint32_t) CI->getRawValue ()) >> 10);
+        BuildMI (*MBB, IP, V8::ORri, 2, R).addReg (TmpReg).addImm (((uint32_t) CI->getRawValue ()) & 0x03ff);
+        return;
+      }
+      default:
+        assert (0 && "Can't move this kind of constant");
+        return;
+    }
   }
 
   assert (0 && "Can't copy constants into registers yet");

@@ -62,9 +62,13 @@ def CALL : InstV8 {
   let Name = "call";
 }
 
+// Section B.9 - SETHI Instruction, p. 102
+def SETHIi: F2_1<0b100, "sethi">;
+
 // Section B.11 - Logical Instructions, p. 106
 def ANDri : F3_2<2, 0b000001, "and">;
 def ORrr  : F3_1<2, 0b000010, "or">;
+def ORri  : F3_2<2, 0b000010, "or">;
 
 // Section B.12 - Shift Instructions, p. 107
 def SLLri : F3_1<2, 0b100101, "sll">;
