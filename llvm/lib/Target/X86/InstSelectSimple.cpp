@@ -78,6 +78,11 @@ namespace {
         F->getBasicBlockList().push_back(MBBMap[I] = new MachineBasicBlock(I));
 
       BB = &F->front();
+
+      // Declare that the stack pointer is live on entrance to the function
+      BuildMI(BB, X86::IMPLICIT_DEF, 0, X86::ESP);
+
+      // Copy incoming arguments off of the stack...
       LoadArgumentsToVirtualRegs(Fn);
 
       // Instruction select everything except PHI nodes
@@ -671,13 +676,19 @@ void ISel::visitReturnInst(ReturnInst &I) {
   case cShort:
   case cInt:
     promote32(X86::EAX, ValueRecord(RetReg, RetVal->getType()));
+    // Declare that EAX is live on exit
+    BuildMI(BB, X86::IMPLICIT_USE, 1).addReg(X86::EAX);
     break;
   case cFP:                   // Floats & Doubles: Return in ST(0)
     BuildMI(BB, X86::FpSETRESULT, 1).addReg(RetReg);
+    // Declare that top-of-stack is live on exit
+    BuildMI(BB, X86::IMPLICIT_USE, 1).addReg(X86::ST0);
     break;
   case cLong:
     BuildMI(BB, X86::MOVrr32, 1, X86::EAX).addReg(RetReg);
     BuildMI(BB, X86::MOVrr32, 1, X86::EDX).addReg(RetReg+1);
+    // Declare that EAX & EDX are live on exit
+    BuildMI(BB, X86::IMPLICIT_USE, 2).addReg(X86::EAX).addReg(X86::EDX);
     break;
   default:
     visitInstruction(I);
