@@ -794,23 +794,21 @@ void SCCPSolver::Solve() {
 
 
 namespace {
-//===----------------------------------------------------------------------===//
-//
-/// SCCP Class - This class does all of the work of Sparse Conditional Constant
-/// Propagation.
-///
-class SCCP : public FunctionPass, public InstVisitor<SCCP> {
-public:
-
-  // runOnFunction - Run the Sparse Conditional Constant Propagation algorithm,
-  // and return true if the function was modified.
+  //===--------------------------------------------------------------------===//
   //
-  bool runOnFunction(Function &F);
-
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-    AU.setPreservesCFG();
-  }
-};
+  /// SCCP Class - This class uses the SCCPSolver to implement a per-function
+  /// Sparse Conditional COnstant Propagator.
+  ///
+  struct SCCP : public FunctionPass {
+    // runOnFunction - Run the Sparse Conditional Constant Propagation
+    // algorithm, and return true if the function was modified.
+    //
+    bool runOnFunction(Function &F);
+    
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.setPreservesCFG();
+    }
+  };
 
   RegisterOpt<SCCP> X("sccp", "Sparse Conditional Constant Propagation");
 } // end anonymous namespace
@@ -820,10 +818,6 @@ public:
 FunctionPass *llvm::createSCCPPass() {
   return new SCCP();
 }
-
-
-//===----------------------------------------------------------------------===//
-// SCCP Class Implementation
 
 
 // runOnFunction() - Run the Sparse Conditional Constant Propagation algorithm,
@@ -906,5 +900,4 @@ bool SCCP::runOnFunction(Function &F) {
 
   return MadeChanges;
 }
-
 
