@@ -17,14 +17,14 @@
 #ifndef LLVM_CODEGEN_MACHINECODEEMITTER_H
 #define LLVM_CODEGEN_MACHINECODEEMITTER_H
 
-#include <string>
 #include "llvm/Support/DataTypes.h"
 
 namespace llvm {
 
-class MachineFunction;
 class MachineBasicBlock;
 class MachineConstantPool;
+class MachineFunction;
+class MachineRelocation;
 class Value;
 class GlobalValue;
 class Function;
