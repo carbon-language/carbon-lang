@@ -3404,17 +3404,8 @@ void X86ISel::emitCastOperation(MachineBasicBlock *BB,
       PromoteType = Type::IntTy;
       PromoteOpcode = X86::MOVZX32rr16;
       break;
-    case Type::UIntTyID: {
-      // Make a 64 bit temporary... and zero out the top of it...
-      unsigned TmpReg = makeAnotherReg(Type::LongTy);
-      BuildMI(*BB, IP, X86::MOV32rr, 1, TmpReg).addReg(SrcReg);
-      BuildMI(*BB, IP, X86::MOV32ri, 1, TmpReg+1).addImm(0);
-      SrcTy = Type::LongTy;
-      SrcClass = cLong;
-      SrcReg = TmpReg;
-      break;
-    }
     case Type::ULongTyID:
+    case Type::UIntTyID:
       // Don't fild into the read destination.
       DestReg = makeAnotherReg(Type::DoubleTy);
       break;
@@ -3449,10 +3440,28 @@ void X86ISel::emitCastOperation(MachineBasicBlock *BB,
       { 0/*byte*/, X86::FILD16m, X86::FILD32m, 0/*FP*/, X86::FILD64m };
     addFrameReference(BuildMI(*BB, IP, Op2[SrcClass], 5, DestReg), FrameIdx);
 
-    // We need special handling for unsigned 64-bit integer sources.  If the
-    // input number has the "sign bit" set, then we loaded it incorrectly as a
-    // negative 64-bit number.  In this case, add an offset value.
-    if (SrcTy == Type::ULongTy) {
+    if (SrcTy == Type::UIntTy) {
+      // If this is a cast from uint -> double, we need to be careful about if
+      // the "sign" bit is set.  If so, we don't want to make a negative number,
+      // we want to make a positive number.  Emit code to add an offset if the
+      // sign bit is set.
+
+      // Compute whether the sign bit is set by shifting the reg right 31 bits.
+      unsigned IsNeg = makeAnotherReg(Type::IntTy);
+      BuildMI(BB, X86::SHR32ri, 2, IsNeg).addReg(SrcReg).addImm(31);
+
+      // Create a CP value that has the offset in one word and 0 in the other.
+      static ConstantInt *TheOffset = ConstantUInt::get(Type::ULongTy,
+                                                        0x4f80000000000000ULL);
+      unsigned CPI = F->getConstantPool()->getConstantPoolIndex(TheOffset);
+      BuildMI(BB, X86::FADD32m, 5, RealDestReg).addReg(DestReg)
+        .addConstantPoolIndex(CPI).addZImm(4).addReg(IsNeg).addSImm(0);
+
+    } else if (SrcTy == Type::ULongTy) {
+      // We need special handling for unsigned 64-bit integer sources.  If the
+      // input number has the "sign bit" set, then we loaded it incorrectly as a
+      // negative 64-bit number.  In this case, add an offset value.
+
       // Emit a test instruction to see if the dynamic input value was signed.
       BuildMI(*BB, IP, X86::TEST32rr, 2).addReg(SrcReg+1).addReg(SrcReg+1);
 
