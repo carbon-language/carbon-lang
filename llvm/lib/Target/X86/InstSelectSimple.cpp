@@ -1552,10 +1552,28 @@ void ISel::emitCastOperation(MachineBasicBlock *BB,
   // Implement casts to bool by using compare on the operand followed by set if
   // not zero on the result.
   if (DestTy == Type::BoolTy) {
-    if (SrcClass == cFP || SrcClass == cLong)
-      abort();  // FIXME: implement cast (long & FP) to bool
-    
-    BMI(BB, IP, X86::CMPri8, 2).addReg(SrcReg).addZImm(0);
+    switch (SrcClass) {
+    case cByte:
+      BMI(BB, IP, X86::TESTrr8, 2).addReg(SrcReg).addReg(SrcReg);
+      break;
+    case cShort:
+      BMI(BB, IP, X86::TESTrr16, 2).addReg(SrcReg).addReg(SrcReg);
+      break;
+    case cInt:
+      BMI(BB, IP, X86::TESTrr32, 2).addReg(SrcReg).addReg(SrcReg);
+      break;
+    case cLong: {
+      unsigned TmpReg = makeAnotherReg(Type::IntTy);
+      BMI(BB, IP, X86::ORrr32, 2, TmpReg).addReg(SrcReg).addReg(SrcReg+1);
+      break;
+    }
+    case cFP:
+      assert(0 && "FIXME: implement cast FP to bool");
+      abort();
+    }
+
+    // If the zero flag is not set, then the value is true, set the byte to
+    // true.
     BMI(BB, IP, X86::SETNEr, 1, DestReg);
     return;
   }
