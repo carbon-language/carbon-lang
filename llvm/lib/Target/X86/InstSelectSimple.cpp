@@ -174,6 +174,8 @@ namespace {
     unsigned EmitComparison(unsigned OpNum, Value *Op0, Value *Op1,
                             MachineBasicBlock *MBB,
                             MachineBasicBlock::iterator MBBI);
+    void visitSelectInst(SelectInst &SI);
+    
     
     // Memory Instructions
     void visitLoadInst(LoadInst &I);
@@ -261,6 +263,12 @@ namespace {
                             Value *Op, Value *ShiftAmount, bool isLeftShift,
                             const Type *ResultTy, unsigned DestReg);
       
+    /// emitSelectOperation - Common code shared between visitSelectInst and the
+    /// constant expression support.
+    void emitSelectOperation(MachineBasicBlock *MBB,
+                             MachineBasicBlock::iterator IP,
+                             Value *Cond, Value *TrueVal, Value *FalseVal,
+                             unsigned DestReg);
 
     /// copyConstantToRegister - Output the instructions required to put the
     /// specified constant into the specified register.
@@ -424,6 +432,11 @@ void ISel::copyConstantToRegister(MachineBasicBlock *MBB,
     case Instruction::Shr:
       emitShiftOperation(MBB, IP, CE->getOperand(0), CE->getOperand(1),
                          CE->getOpcode() == Instruction::Shl, CE->getType(), R);
+      return;
+
+    case Instruction::Select:
+      emitSelectOperation(MBB, IP, CE->getOperand(0), CE->getOperand(1),
+                          CE->getOperand(2), R);
       return;
 
     default:
@@ -890,7 +903,6 @@ unsigned ISel::EmitComparison(unsigned OpNum, Value *Op0, Value *Op1,
   return OpNum;
 }
 
-
 /// SetCC instructions - Here we just emit boilerplate code to set a byte-sized
 /// register, then move it to wherever the result should be. 
 ///
@@ -927,6 +939,89 @@ void ISel::emitSetCCOperation(MachineBasicBlock *MBB,
   }
 }
 
+void ISel::visitSelectInst(SelectInst &SI) {
+  unsigned DestReg = getReg(SI);
+  MachineBasicBlock::iterator MII = BB->end();
+  emitSelectOperation(BB, MII, SI.getCondition(), SI.getTrueValue(),
+                      SI.getFalseValue(), DestReg);
+}
+ 
+/// emitSelect - Common code shared between visitSelectInst and the constant
+/// expression support.
+void ISel::emitSelectOperation(MachineBasicBlock *MBB,
+                               MachineBasicBlock::iterator IP,
+                               Value *Cond, Value *TrueVal, Value *FalseVal,
+                               unsigned DestReg) {
+  unsigned SelectClass = getClassB(TrueVal->getType());
+  
+  // We don't support 8-bit conditional moves.  If we have incoming constants,
+  // transform them into 16-bit constants to avoid having a run-time conversion.
+  if (SelectClass == cByte) {
+    if (Constant *T = dyn_cast<Constant>(TrueVal))
+      TrueVal = ConstantExpr::getCast(T, Type::ShortTy);
+    if (Constant *F = dyn_cast<Constant>(FalseVal))
+      FalseVal = ConstantExpr::getCast(F, Type::ShortTy);
+  }
+
+  // Get the value being branched on, and use it to set the condition codes.
+  unsigned CondReg = getReg(Cond, MBB, IP);
+  BuildMI(*MBB, IP, X86::CMP8ri, 2).addReg(CondReg).addImm(0);
+
+  unsigned TrueReg  = getReg(TrueVal, MBB, IP);
+  unsigned FalseReg = getReg(FalseVal, MBB, IP);
+  unsigned RealDestReg = DestReg;
+  unsigned Opcode;
+
+  switch (SelectClass) {
+  case cFP:
+    assert(0 && "We don't support floating point selects yet, they should "
+           "have been lowered!");
+  case cByte:
+  case cShort:
+    Opcode = X86::CMOVE16rr;
+    break;
+  case cInt:
+  case cLong:
+    Opcode = X86::CMOVE32rr;
+    break;
+  }
+
+  // Annoyingly enough, X86 doesn't HAVE 8-bit conditional moves.  Because of
+  // this, we have to promote the incoming values to 16 bits, perform a 16-bit
+  // cmove, then truncate the result.
+  if (SelectClass == cByte) {
+    DestReg = makeAnotherReg(Type::ShortTy);
+    if (getClassB(TrueVal->getType()) == cByte) {
+      // Promote the true value, by storing it into AL, and reading from AX.
+      BuildMI(*MBB, IP, X86::MOV8rr, 1, X86::AL).addReg(TrueReg);
+      BuildMI(*MBB, IP, X86::MOV8ri, 1, X86::AH).addImm(0);
+      TrueReg = makeAnotherReg(Type::ShortTy);
+      BuildMI(*MBB, IP, X86::MOV16rr, 1, TrueReg).addReg(X86::AX);
+    }
+    if (getClassB(FalseVal->getType()) == cByte) {
+      // Promote the true value, by storing it into CL, and reading from CX.
+      BuildMI(*MBB, IP, X86::MOV8rr, 1, X86::CL).addReg(FalseReg);
+      BuildMI(*MBB, IP, X86::MOV8ri, 1, X86::CH).addImm(0);
+      FalseReg = makeAnotherReg(Type::ShortTy);
+      BuildMI(*MBB, IP, X86::MOV16rr, 1, FalseReg).addReg(X86::CX);
+    }
+  }
+
+  BuildMI(*MBB, IP, Opcode, 2, DestReg).addReg(TrueReg).addReg(FalseReg);
+
+  switch (SelectClass) {
+  case cByte:
+    // We did the computation with 16-bit registers.  Truncate back to our
+    // result by copying into AX then copying out AL.
+    BuildMI(*MBB, IP, X86::MOV16rr, 1, X86::AX).addReg(DestReg);
+    BuildMI(*MBB, IP, X86::MOV8rr, 1, RealDestReg).addReg(X86::AL);
+    break;
+  case cLong:
+    // Move the upper half of the value as well.
+    BuildMI(*MBB, IP, Opcode, 2,DestReg+1).addReg(TrueReg+1).addReg(FalseReg+1);
+    break;
+  }
+}
 
 
 

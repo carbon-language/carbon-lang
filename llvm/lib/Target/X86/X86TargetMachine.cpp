@@ -68,7 +68,7 @@ bool X86TargetMachine::addPassesToEmitAssembly(PassManager &PM,
   PM.add(createLowerSwitchPass());
 
   // FIXME: Add support for the select instruction natively.
-  PM.add(createLowerSelectPass());
+  PM.add(createLowerSelectPass(true));
 
   if (NoPatternISel)
     PM.add(createX86SimpleInstructionSelector(*this));
@@ -128,7 +128,7 @@ void X86JITInfo::addPassesToJITCompile(FunctionPassManager &PM) {
   PM.add(createLowerSwitchPass());
 
   // FIXME: Add support for the select instruction natively.
-  PM.add(createLowerSelectPass());
+  PM.add(createLowerSelectPass(true));
 
   if (NoPatternISel)
     PM.add(createX86SimpleInstructionSelector(TM));
