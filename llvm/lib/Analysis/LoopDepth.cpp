@@ -6,39 +6,40 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Analysis/LoopDepth.h"
-#include "llvm/Analysis/IntervalPartition.h"
-#include "Support/STLExtras.h"
+#include "llvm/Analysis/LoopInfo.h"
+#include "llvm/Method.h"
 #include <algorithm>
 
-inline void LoopDepthCalculator::AddBB(const BasicBlock *BB) {
-  ++LoopDepth[BB];   // Increment the loop depth count for the specified BB
+AnalysisID cfg::LoopDepthCalculator::ID(AnalysisID::create<cfg::LoopDepthCalculator>());
+
+bool cfg::LoopDepthCalculator::runOnMethod(Method *M) {
+  calculate(M, getAnalysis<LoopInfo>());
+  return false;
 }
 
-inline void LoopDepthCalculator::ProcessInterval(cfg::Interval *I) {
-  if (!I->isLoop()) return;  // Ignore nonlooping intervals...
-
-  for_each(I->Nodes.begin(), I->Nodes.end(), 
-	   bind_obj(this, &LoopDepthCalculator::AddBB));
+void cfg::LoopDepthCalculator::calculate(Method *M, LoopInfo &Loops) {
+  for (Method::iterator I = M->begin(), E = M->end(); I != E; ++I)
+    LoopDepth[*I] = Loops.getLoopDepth(*I);
 }
 
-LoopDepthCalculator::LoopDepthCalculator(Method *M) {
-  cfg::IntervalPartition *IP = new cfg::IntervalPartition(M);
-  while (!IP->isDegeneratePartition()) {
-    for_each(IP->begin(), IP->end(), 
-	     bind_obj(this, &LoopDepthCalculator::ProcessInterval));
-
-    // Calculate the reduced version of this graph until we get to an 
-    // irreducible graph or a degenerate graph...
-    //
-    cfg::IntervalPartition *NewIP = new cfg::IntervalPartition(*IP, true);
-    if (NewIP->size() == IP->size()) {
-      assert(0 && "IRREDUCIBLE GRAPH FOUND!!!\n");
-      // TODO: fix irreducible graph
-      return;
-    }
-    delete IP;
-    IP = NewIP;
-  }
-
-  delete IP;
+// getAnalysisUsageInfo - Provide loop depth, require loop info
+//
+void cfg::LoopDepthCalculator::getAnalysisUsageInfo(Pass::AnalysisSet &Requires,
+                                                  Pass::AnalysisSet &Destroyed,
+                                                  Pass::AnalysisSet &Provided) {
+  Provided.push_back(ID);
+  Requires.push_back(LoopInfo::ID);
 }
+
+#if 1  /// FIXME, REMOVE EVENTUALLY
+#include "llvm/PassManager.h"
+
+cfg::LoopDepthCalculator::LoopDepthCalculator(Method *M) {
+  PassManagerT<Method> PassMgr;
+  LoopInfo *LI = new LoopInfo(LoopInfo::ID);
+  PassMgr.add(LI);
+  PassMgr.run(M);
+  calculate(M, *LI);
+}
+#endif
+
