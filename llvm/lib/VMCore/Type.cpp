@@ -208,6 +208,7 @@ const MethodType *MethodType::getMethodType(const Type *ReturnType,
 
 const ArrayType *ArrayType::getArrayType(const Type *ElementType, 
 					 int NumElements = -1) {
+  assert(ElementType && "Can't get array of null types!");
   static vector<const ArrayType*> ExistingTypesCache;
 
   // Search cache for value...
@@ -287,6 +288,7 @@ const StructType *StructType::getStructType(const ElementTypes &ETypes) {
 
 
 const PointerType *PointerType::getPointerType(const Type *ValueType) {
+  assert(ValueType && "Can't get a pointer to <null> type!");
   static vector<const PointerType*> ExistingTypesCache;
 
   // Search cache for value...

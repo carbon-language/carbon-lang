@@ -102,8 +102,7 @@ public:
     Alloca,                          // Stack management instruction
 
     Load, Store,                     // Memory manipulation instructions.
-
-    GetField, PutField,              // Structure manipulation instructions
+    GetElementPtr,                   // Get addr of Structure or Array element
 
     NumMemoryOps
   };

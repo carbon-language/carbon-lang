@@ -143,8 +143,7 @@ alloca          { RET_TOK(MemOpVal, Alloca, ALLOCA); }
 free            { RET_TOK(MemOpVal, Free, FREE); }
 load            { RET_TOK(MemOpVal, Load, LOAD); }
 store           { RET_TOK(MemOpVal, Store, STORE); }
-getfield        { RET_TOK(MemOpVal, GetField, GETFIELD); }
-putfield        { RET_TOK(MemOpVal, PutField, PUTFIELD); }
+getelementptr   { RET_TOK(MemOpVal, GetElementPtr, GETELEMENTPTR); }
 
 
 {VarID}         { llvmAsmlval.StrVal = strdup(yytext+1); return VAR_ID; }

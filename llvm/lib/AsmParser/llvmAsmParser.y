@@ -376,7 +376,7 @@ Module *RunVMAsmParser(const ToolCommandLine &Opts, FILE *F) {
 %type <MethodArgList> ArgList ArgListH
 %type <MethArgVal>    ArgVal
 %type <PHIList>       PHIList
-%type <ValueList>     ValueRefList ValueRefListE
+%type <ValueList>     ValueRefList ValueRefListE  // For call param lists
 %type <TypeList>      TypeList
 %type <JumpTable>     JumpTable
 
@@ -419,7 +419,7 @@ Module *RunVMAsmParser(const ToolCommandLine &Opts, FILE *F) {
 %token <BinaryOpVal> SETLE SETGE SETLT SETGT SETEQ SETNE  // Binary Comarators
 
 // Memory Instructions
-%token <MemoryOpVal> MALLOC ALLOCA FREE LOAD STORE GETFIELD PUTFIELD
+%token <MemoryOpVal> MALLOC ALLOCA FREE LOAD STORE GETELEMENTPTR
 
 // Other Operators
 %type  <OtherOpVal> ShiftOps
@@ -857,9 +857,9 @@ ValueRefList : Types ValueRef {    // Used for call statements...
     $$ = new list<Value*>();
     $$->push_back(getVal($1, $2));
   }
-  | ValueRefList ',' ValueRef {
+  | ValueRefList ',' Types ValueRef {
     $$ = $1;
-    $1->push_back(getVal($1->front()->getType(), $3));
+    $1->push_back(getVal($3, $4));
   }
 
 // ValueRefListE - Just like ValueRefList, except that it may also be empty!
@@ -983,6 +983,27 @@ MemoryInst : MALLOC Types {
 
     $$ = new LoadInst(getVal($2, $3), *$4);
     delete $4;   // Free the vector...
+  }
+  | STORE Types ValueRef ',' Types ValueRef UByteList {
+    if (!$5->isPointerType())
+      ThrowException("Can't store to a nonpointer type: " + $5->getName());
+    const Type *ElTy = StoreInst::getIndexedType($5, *$7);
+    if (ElTy == 0)
+      ThrowException("Can't store into that field list!");
+    if (ElTy != $2)
+      ThrowException("Can't store '" + $2->getName() + "' into space of type '"+
+		     ElTy->getName() + "'!");
+    $$ = new StoreInst(getVal($2, $3), getVal($5, $6), *$7);
+    delete $7;
+  }
+  | GETELEMENTPTR Types ValueRef UByteList {
+    if (!$2->isPointerType())
+      ThrowException("getelementptr insn requires pointer operand!");
+    if (!GetElementPtrInst::getIndexedType($2, *$4, true))
+      ThrowException("Can't get element ptr '" + $2->getName() + "'!");
+    $$ = new GetElementPtrInst(getVal($2, $3), *$4);
+    delete $4;
+    addConstValToConstantPool(new ConstPoolType($$->getType()));
   }
 
 %%

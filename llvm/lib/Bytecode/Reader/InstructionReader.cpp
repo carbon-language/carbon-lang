@@ -242,7 +242,8 @@ bool BytecodeParser::ParseInstruction(const uchar *&Buf, const uchar *EndBuf,
     Res = new FreeInst(V);
     return false;
 
-  case Instruction::Load: {
+  case Instruction::Load:
+  case Instruction::GetElementPtr: {
     vector<ConstPoolVal*> Idx;
     switch (Raw.NumOperands) {
     case 0: cerr << "Invalid load encountered!\n"; return true;
@@ -271,7 +272,39 @@ bool BytecodeParser::ParseInstruction(const uchar *&Buf, const uchar *EndBuf,
       delete Raw.VarArgs; 
       break;
     }
-    Res = new LoadInst(getValue(Raw.Ty, Raw.Arg1), Idx);
+    if (Raw.Opcode == Instruction::Load)
+      Res = new LoadInst(getValue(Raw.Ty, Raw.Arg1), Idx);
+    else if (Raw.Opcode == Instruction::GetElementPtr)
+      Res = new GetElementPtrInst(getValue(Raw.Ty, Raw.Arg1), Idx);
+    else
+      abort();
+    return false;
+  }
+  case Instruction::Store: {
+    vector<ConstPoolVal*> Idx;
+    switch (Raw.NumOperands) {
+    case 0: 
+    case 1: cerr << "Invalid store encountered!\n"; return true;
+    case 2: break;
+    case 3: V = getValue(Type::UByteTy, Raw.Arg3);
+            if (!V->isConstant()) return true;
+            Idx.push_back(V->castConstant());
+            break;
+    default:
+      vector<unsigned> &args = *Raw.VarArgs;
+      for (unsigned i = 0, E = args.size(); i != E; ++i) {
+	V = getValue(Type::UByteTy, args[i]);
+	if (!V->isConstant()) return true;
+	Idx.push_back(V->castConstant());
+      }
+      delete Raw.VarArgs; 
+      break;
+    }
+
+    const Type *ElType = StoreInst::getIndexedType(Raw.Ty, Idx);
+    if (ElType == 0) return true;
+    Res = new StoreInst(getValue(ElType, Raw.Arg1), getValue(Raw.Ty, Raw.Arg2),
+			Idx);
     return false;
   }
   }  // end switch(Raw.Opcode) 

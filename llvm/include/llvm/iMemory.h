@@ -11,6 +11,13 @@
 #include "llvm/Instruction.h"
 #include "llvm/DerivedTypes.h"
 
+//===----------------------------------------------------------------------===//
+//                             AllocationInst Class
+//===----------------------------------------------------------------------===//
+//
+// AllocationInst - This class is the common base class of MallocInst and
+// AllocaInst.
+//
 class AllocationInst : public Instruction {
 public:
   AllocationInst(const Type *Ty, Value *ArraySize, unsigned iTy, 
@@ -38,6 +45,10 @@ public:
 };
 
 
+//===----------------------------------------------------------------------===//
+//                                MallocInst Class
+//===----------------------------------------------------------------------===//
+
 class MallocInst : public AllocationInst {
 public:
   MallocInst(const Type *Ty, Value *ArraySize = 0, const string &Name = "") 
@@ -51,6 +62,10 @@ public:
 };
 
 
+//===----------------------------------------------------------------------===//
+//                                AllocaInst Class
+//===----------------------------------------------------------------------===//
+
 class AllocaInst : public AllocationInst {
 public:
   AllocaInst(const Type *Ty, Value *ArraySize = 0, const string &Name = "") 
@@ -63,6 +78,10 @@ public:
   virtual const char *getOpcodeName() const { return "alloca"; }
 };
 
+
+//===----------------------------------------------------------------------===//
+//                                 FreeInst Class
+//===----------------------------------------------------------------------===//
 
 class FreeInst : public Instruction {
 public:
@@ -79,8 +98,36 @@ public:
 };
 
 
-class LoadInst : public Instruction {
-  LoadInst(const LoadInst &LI) : Instruction(LI.getType(), Load) {
+//===----------------------------------------------------------------------===//
+//                              MemAccessInst Class
+//===----------------------------------------------------------------------===//
+//
+// MemAccessInst - Common base class of LoadInst, StoreInst, and
+// GetElementPtrInst...
+//
+class MemAccessInst : public Instruction {
+protected:
+  inline MemAccessInst(const Type *Ty, unsigned Opcode, const string &Nam = "") 
+    : Instruction(Ty, Opcode, Nam) {}
+public:
+  // getIndexedType - Returns the type of the element that would be loaded with
+  // a load instruction with the specified parameters.
+  //
+  // A null type is returned if the indices are invalid for the specified 
+  // pointer type.
+  //
+  static const Type *getIndexedType(const Type *Ptr, 
+				    const vector<ConstPoolVal*> &Indices,
+				    bool AllowStructLeaf = false);
+};
+
+
+//===----------------------------------------------------------------------===//
+//                                LoadInst Class
+//===----------------------------------------------------------------------===//
+
+class LoadInst : public MemAccessInst {
+  LoadInst(const LoadInst &LI) : MemAccessInst(LI.getType(), Load) {
     Operands.reserve(LI.Operands.size());
     for (unsigned i = 0, E = LI.Operands.size(); i != E; ++i)
       Operands.push_back(Use(LI.Operands[i], this));
@@ -90,15 +137,43 @@ public:
 	   const string &Name = "");
   virtual Instruction *clone() const { return new LoadInst(*this); }
   virtual const char *getOpcodeName() const { return "load"; }  
+};
 
-  // getIndexedType - Returns the type of the element that would be loaded with
-  // a load instruction with the specified parameters.
-  //
-  // A null type is returned if the indices are invalid for the specified 
-  // pointer type.
-  //
-  static const Type *getIndexedType(const Type *Ptr, 
-				    const vector<ConstPoolVal*> &);
+
+//===----------------------------------------------------------------------===//
+//                                StoreInst Class
+//===----------------------------------------------------------------------===//
+
+class StoreInst : public MemAccessInst {
+  StoreInst(const StoreInst &SI) : MemAccessInst(SI.getType(), Store) {
+    Operands.reserve(SI.Operands.size());
+    for (unsigned i = 0, E = SI.Operands.size(); i != E; ++i)
+      Operands.push_back(Use(SI.Operands[i], this));
+  }
+public:
+  StoreInst(Value *Val, Value *Ptr, const vector<ConstPoolVal*> &Idx,
+	    const string &Name = "");
+  virtual Instruction *clone() const { return new StoreInst(*this); }
+  virtual const char *getOpcodeName() const { return "store"; }  
+};
+
+
+//===----------------------------------------------------------------------===//
+//                             GetElementPtrInst Class
+//===----------------------------------------------------------------------===//
+
+class GetElementPtrInst : public MemAccessInst {
+  GetElementPtrInst(const GetElementPtrInst &EPI)
+    : MemAccessInst(EPI.getType(), GetElementPtr) {
+    Operands.reserve(EPI.Operands.size());
+    for (unsigned i = 0, E = EPI.Operands.size(); i != E; ++i)
+      Operands.push_back(Use(EPI.Operands[i], this));
+  }
+public:
+  GetElementPtrInst(Value *Ptr, const vector<ConstPoolVal*> &Idx,
+		    const string &Name = "");
+  virtual Instruction *clone() const { return new GetElementPtrInst(*this); }
+  virtual const char *getOpcodeName() const { return "getelementptr"; }  
 };
 
 #endif // LLVM_IMEMORY_H

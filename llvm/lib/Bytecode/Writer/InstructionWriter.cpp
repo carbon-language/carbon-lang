@@ -135,10 +135,19 @@ bool BytecodeWriter::processInstruction(const Instruction *I) {
   // the first param is actually interesting).  But if we have no arguments
   // we take the type of the instruction itself.  
   //
-  const Type *Ty = NumOperands ? I->getOperand(0)->getType() : I->getType();
-  if (I->getOpcode() == Instruction::Malloc || 
-      I->getOpcode() == Instruction::Alloca)
+  const Type *Ty;
+  switch (I->getOpcode()) {
+  case Instruction::Malloc:
+  case Instruction::Alloca:
     Ty = I->getType();  // Malloc & Alloca ALWAYS want to encode the return type
+    break;
+  case Instruction::Store:
+    Ty = I->getOperand(1)->getType();  // Encode the pointer type...
+    break;
+  default:              // Otherwise use the default behavior...
+    Ty = NumOperands ? I->getOperand(0)->getType() : I->getType();
+    break;
+  }
 
   unsigned Type;
   int Slot = Table.getValSlot(Ty);
@@ -184,8 +193,8 @@ bool BytecodeWriter::processInstruction(const Instruction *I) {
     break;
   }
 
-  // If we weren't handled before here, we either have a large number of operands
-  // or a large operand index that we are refering to.
+  // If we weren't handled before here, we either have a large number of
+  // operands or a large operand index that we are refering to.
   outputInstructionFormat0(I, Table, Type, Out);
   return false;
 }

@@ -78,13 +78,12 @@ typedef union {
 #define	FREE	303
 #define	LOAD	304
 #define	STORE	305
-#define	GETFIELD	306
-#define	PUTFIELD	307
-#define	PHI	308
-#define	CALL	309
-#define	CAST	310
-#define	SHL	311
-#define	SHR	312
+#define	GETELEMENTPTR	306
+#define	PHI	307
+#define	CALL	308
+#define	CAST	309
+#define	SHL	310
+#define	SHR	311
 
 
 extern YYSTYPE llvmAsmlval;
