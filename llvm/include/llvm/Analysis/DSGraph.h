@@ -142,6 +142,7 @@ public:
   //
   enum MarkIncompleteFlags {
     MarkFormalArgs = 1, IgnoreFormalArgs = 0,
+    IgnoreGlobals = 2, MarkGlobalsIncomplete = 0,
   };
   void markIncompleteNodes(unsigned Flags);
 
