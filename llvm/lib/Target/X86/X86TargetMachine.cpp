@@ -142,3 +142,10 @@ bool X86TargetMachine::addPassesToJITCompile(FunctionPassManager &PM) {
   return false; // success!
 }
 
+bool X86TargetMachine::replaceMachineCodeForFunction (void *Old, void *New) {
+  char *OldByte = (char *) Old;
+  *OldByte++ = 0xE9; // JMP
+  unsigned *OldWord = (unsigned *) OldByte;
+  *OldWord = (unsigned) New;
+  return false;
+}
