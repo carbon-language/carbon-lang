@@ -6,12 +6,8 @@
 
 #include "Interpreter.h"
 #include "ExecutionAnnotations.h"
-#include "llvm/GlobalVariable.h"
-#include "llvm/Function.h"
-#include "llvm/iPHINode.h"
-#include "llvm/iOther.h"
-#include "llvm/iTerminators.h"
-#include "llvm/iMemory.h"
+#include "llvm/Module.h"
+#include "llvm/Instructions.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Constants.h"
 #include "llvm/Assembly/Writer.h"
@@ -776,6 +772,7 @@ void Interpreter::executeLoadInst(LoadInst &I, ExecutionContext &SF) {
     case Type::ShortTyID:   Result.UShortVal = (unsigned)Ptr->Untyped[0] |
                                               ((unsigned)Ptr->Untyped[1] << 8);
                             break;
+    Load4BytesLittleEndian:                            
     case Type::FloatTyID:
     case Type::UIntTyID:
     case Type::IntTyID:     Result.UIntVal = (unsigned)Ptr->Untyped[0] |
@@ -783,10 +780,11 @@ void Interpreter::executeLoadInst(LoadInst &I, ExecutionContext &SF) {
                                             ((unsigned)Ptr->Untyped[2] << 16) |
                                             ((unsigned)Ptr->Untyped[3] << 24);
                             break;
+    case Type::PointerTyID: if (getModule().has32BitPointers())
+                              goto Load4BytesLittleEndian;
     case Type::DoubleTyID:
     case Type::ULongTyID:
-    case Type::LongTyID:    
-    case Type::PointerTyID: Result.ULongVal = (uint64_t)Ptr->Untyped[0] |
+    case Type::LongTyID:    Result.ULongVal = (uint64_t)Ptr->Untyped[0] |
                                              ((uint64_t)Ptr->Untyped[1] <<  8) |
                                              ((uint64_t)Ptr->Untyped[2] << 16) |
                                              ((uint64_t)Ptr->Untyped[3] << 24) |
@@ -808,6 +806,7 @@ void Interpreter::executeLoadInst(LoadInst &I, ExecutionContext &SF) {
     case Type::ShortTyID:   Result.UShortVal = (unsigned)Ptr->Untyped[1] |
                                               ((unsigned)Ptr->Untyped[0] << 8);
                             break;
+    Load4BytesBigEndian:
     case Type::FloatTyID:
     case Type::UIntTyID:
     case Type::IntTyID:     Result.UIntVal = (unsigned)Ptr->Untyped[3] |
@@ -815,10 +814,11 @@ void Interpreter::executeLoadInst(LoadInst &I, ExecutionContext &SF) {
                                             ((unsigned)Ptr->Untyped[1] << 16) |
                                             ((unsigned)Ptr->Untyped[0] << 24);
                             break;
+    case Type::PointerTyID: if (getModule().has32BitPointers())
+                              goto Load4BytesBigEndian;
     case Type::DoubleTyID:
     case Type::ULongTyID:
-    case Type::LongTyID:    
-    case Type::PointerTyID: Result.ULongVal = (uint64_t)Ptr->Untyped[7] |
+    case Type::LongTyID:    Result.ULongVal = (uint64_t)Ptr->Untyped[7] |
                                              ((uint64_t)Ptr->Untyped[6] <<  8) |
                                              ((uint64_t)Ptr->Untyped[5] << 16) |
                                              ((uint64_t)Ptr->Untyped[4] << 24) |
