@@ -75,6 +75,7 @@ Module::~Module() {
   GlobalList.setParent(0);
   FunctionList.clear();
   FunctionList.setParent(0);
+  LibraryList.clear();
   delete SymTab;
 }
 
