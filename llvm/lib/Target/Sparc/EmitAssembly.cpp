@@ -213,6 +213,46 @@ public:
                + valToExprString(CE->getOperand(1), target) + ")";
       break;
 
+    case Instruction::Sub:
+      S += "(" + valToExprString(CE->getOperand(0), target) + ") - ("
+               + valToExprString(CE->getOperand(1), target) + ")";
+      break;
+
+    case Instruction::Mul:
+      S += "(" + valToExprString(CE->getOperand(0), target) + ") * ("
+               + valToExprString(CE->getOperand(1), target) + ")";
+      break;
+
+    case Instruction::Div:
+      S += "(" + valToExprString(CE->getOperand(0), target) + ") / ("
+               + valToExprString(CE->getOperand(1), target) + ")";
+      break;
+
+    case Instruction::Rem:
+      S += "(" + valToExprString(CE->getOperand(0), target) + ") % ("
+               + valToExprString(CE->getOperand(1), target) + ")";
+      break;
+
+    case Instruction::And:
+      // Logical && for booleans; bitwise & otherwise
+      S += "(" + valToExprString(CE->getOperand(0), target)
+               + ((CE->getType() == Type::BoolTy)? ") && (" : ") & (")
+               + valToExprString(CE->getOperand(1), target) + ")";
+      break;
+
+    case Instruction::Or:
+      // Logical || for booleans; bitwise | otherwise
+      S += "(" + valToExprString(CE->getOperand(0), target)
+               + ((CE->getType() == Type::BoolTy)? ") || (" : ") | (")
+               + valToExprString(CE->getOperand(1), target) + ")";
+      break;
+
+    case Instruction::Xor:
+      // Bitwise ^ for all types
+      S += "(" + valToExprString(CE->getOperand(0), target) + ") ^ ("
+               + valToExprString(CE->getOperand(1), target) + ")";
+      break;
+
     default:
       assert(0 && "Unsupported operator in ConstantExprToString()");
       break;
