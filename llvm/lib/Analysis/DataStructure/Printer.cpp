@@ -36,7 +36,7 @@ static std::string getCaption(const DSNode *N, const DSGraph *G) {
     M = G->getReturnNodes().begin()->first->getParent();
 
   if (N->isNodeCompletelyFolded())
-    OS << "FOLDED";
+    OS << "COLLAPSED";
   else {
     WriteTypeSymbolic(OS, N->getType(), M);
     if (N->isArray())
