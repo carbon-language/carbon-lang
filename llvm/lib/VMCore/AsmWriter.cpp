@@ -636,16 +636,19 @@ void AssemblyWriter::printArgument(const Argument *Arg) {
 //
 void AssemblyWriter::printBasicBlock(const BasicBlock *BB) {
   if (BB->hasName()) {              // Print out the label if it exists...
-    Out << "\n" << BB->getName() << ":";
-  } else {
+    Out << "\n" << BB->getName() << ":\t\t\t\t\t;[#uses="
+        << BB->use_size() << "]";  // Output # uses
+  } else if (!BB->use_empty()) {      // Don't print block # of no uses...
     int Slot = Table.getValSlot(BB);
     Out << "\n; <label>:";
     if (Slot >= 0) 
       Out << Slot;         // Extra newline seperates out label's
     else 
       Out << "<badref>"; 
+    Out << "\t\t\t\t\t;[#uses=" << BB->use_size() << "]";  // Output # uses
   }
-  Out << "\t\t\t\t\t;[#uses=" << BB->use_size() << "]\n";  // Output # uses
+  
+  Out << "\n";
 
   // Output all of the instructions in the basic block...
   for_each(BB->begin(), BB->end(),
