@@ -52,6 +52,7 @@ ifdef PROG
   $(PROG).linked.bc: $(BCOBJS)
 	$(LLINK) -f $(BCOBJS) -o $(PROG).tmp.bc
 	$(LOPT) -cleangcc -raise -constprop -dce $(PROG).tmp.bc -o $@
+	$(RM) $(PROG).tmp.bc
 
   $(PROG).native: $(OBJS:.o=.c)
 	gcc $(OBJS:.o=.c) -O2 $(LOCAL_CFLAGS) -Wall -o $@
@@ -81,9 +82,7 @@ clean :
 ## 	$(LCC) $(LCFLAGS) -S $< -o $*.ll
 
 %.bc: %.c
-	$(LCC) $(LCFLAGS) -c $< -o $*.tmp.bc
-	$(LOPT) -cleangcc -raise -constprop -dce $*.tmp.bc -o $@
-	$(RM) $*.tmp.bc
+	$(LCC) $(LCFLAGS) -c $< -o $@
 
 %.bc: %.ll
 	$(LAS) -f $<
