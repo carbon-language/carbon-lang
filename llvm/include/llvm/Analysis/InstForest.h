@@ -218,7 +218,7 @@ inline std::ostream &operator<<(std::ostream &o, const InstForest<Payload> &IF){
 //
 template <class Payload>
 bool InstTreeNode<Payload>::CanMergeInstIntoTree(Instruction *I) {
-  if (I->use_size() > 1) return false;
+  if (!I->use_empty() && !I->hasOneUse()) return false;
   return I->getParent() == cast<Instruction>(getValue())->getParent();
 }
 
