@@ -127,7 +127,7 @@ MachineInstr::SetRegForImplicitRef(unsigned i, int regNum)
 }
 
 
-// Subsitute all occurrences of Value* oldVal with newVal in all operands
+// Substitute all occurrences of Value* oldVal with newVal in all operands
 // and all implicit refs.
 // If defsOnly == true, substitute defs only.
 unsigned
@@ -140,7 +140,7 @@ MachineInstr::substituteValue(const Value* oldVal, Value* newVal,
   
   unsigned numSubst = 0;
 
-  // Subsitute operands
+  // Substitute operands
   for (MachineInstr::val_op_iterator O = begin(), E = end(); O != E; ++O)
     if (*O == oldVal)
       if (!defsOnly ||
@@ -153,7 +153,7 @@ MachineInstr::substituteValue(const Value* oldVal, Value* newVal,
       else
         someArgsWereIgnored = true;
 
-  // Subsitute implicit refs
+  // Substitute implicit refs
   for (unsigned i=0, N=getNumImplicitRefs(); i < N; ++i)
     if (getImplicitRef(i) == oldVal)
       if (!defsOnly ||
@@ -301,7 +301,7 @@ void MachineInstr::print(std::ostream &OS, const TargetMachine &TM) const {
       OS << "<def>";
   }
     
-  // code for printing implict references
+  // code for printing implicit references
   if (getNumImplicitRefs()) {
     OS << "\tImplicitRefs: ";
     for(unsigned i = 0, e = getNumImplicitRefs(); i != e; ++i) {
@@ -330,7 +330,7 @@ std::ostream &operator<<(std::ostream& os, const MachineInstr& MI)
       os << "<d&u>";
   }
   
-  // code for printing implict references
+  // code for printing implicit references
   unsigned NumOfImpRefs = MI.getNumImplicitRefs();
   if (NumOfImpRefs > 0) {
     os << "\tImplicit: ";

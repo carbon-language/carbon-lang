@@ -81,7 +81,7 @@ TmpInstruction::TmpInstruction(MachineCodeForInstruction& mcfi,
 {
   mcfi.addTemp(this);
 
-  Operands.push_back(Use(s1, this));  // s1 must be nonnull
+  Operands.push_back(Use(s1, this));  // s1 must be non-null
   if (s2) {
     Operands.push_back(Use(s2, this));
   }
@@ -239,7 +239,7 @@ InstructionSelection::InsertPhiElimInstructions(BasicBlock *BB,
   MachineFunction &MF = MachineFunction::get(BB->getParent());
 
   // FIXME: if PHI instructions existed in the machine code, this would be
-  // unnecesary.
+  // unnecessary.
   MachineBasicBlock *MBB = 0;
   for (MachineFunction::iterator I = MF.begin(), E = MF.end(); I != E; ++I)
     if (I->getBasicBlock() == BB) {
@@ -342,7 +342,7 @@ InstructionSelection::SelectInstructionsForTree(InstrTreeNode* treeRoot,
 	}
     }
   
-  // Finally, do any postprocessing on this node after its children
+  // Finally, do any post-processing on this node after its children
   // have been translated
   // 
   if (treeRoot->opLabel != VRegListOp)

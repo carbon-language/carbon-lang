@@ -4,7 +4,7 @@
 //  tree if one or more of them might be potentially combined into a single
 //  complex instruction in the target machine.
 //  Since this grouping is completely machine-independent, we do it as
-//  aggressive as possible to exploit any possible taret instructions.
+//  aggressive as possible to exploit any possible target instructions.
 //  In particular, we group two instructions O and I if:
 //      (1) Instruction O computes an operand used by instruction I,
 //  and (2) O and I are part of the same basic block,

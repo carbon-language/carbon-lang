@@ -1060,7 +1060,7 @@ NodeCanFillDelaySlot(const SchedulingManager& S,
   if (! S.getInstrInfo().hasOperandInterlock(node->getOpCode()))
     return false;
   
-  // Finally, if the instruction preceeds the branch, we make sure the
+  // Finally, if the instruction precedes the branch, we make sure the
   // instruction can be reordered relative to the branch.  We simply check
   // if the instr. has only 1 outgoing edge, viz., a CD edge to the branch.
   // 
@@ -1092,7 +1092,7 @@ MarkNodeForDelaySlot(SchedulingManager& S,
 		     bool nodeIsPredecessor)
 {
   if (nodeIsPredecessor) {
-    // If node is in the same basic block (i.e., preceeds brNode),
+    // If node is in the same basic block (i.e., precedes brNode),
     // remove it and all its incident edges from the graph.  Make sure we
     // add dummy edges for pred/succ nodes that become entry/exit nodes.
     graph->eraseIncidentEdges(node, /*addDummyEdges*/ true);
