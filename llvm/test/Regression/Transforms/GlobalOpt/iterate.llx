@@ -1,0 +1,10 @@
+; RUN: llvm-as < %s | opt -globalopt | llvm-dis | not grep %G
+
+%G = internal global int 0
+%H = internal global { int* } { int* %G }
+
+int %loadg() {
+	%G = load int** getelementptr ({int*}* %H, int 0, uint 0)
+	%GV = load int* %G
+	ret int %GV
+}
