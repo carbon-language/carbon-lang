@@ -33,9 +33,10 @@
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
-#include "llvm/Pass.h"
+#include "llvm/CallGraphSCCPass.h"
 #include "llvm/Instructions.h"
 #include "llvm/Analysis/AliasAnalysis.h"
+#include "llvm/Analysis/CallGraph.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/CFG.h"
@@ -56,23 +57,18 @@ namespace {
 
   /// ArgPromotion - The 'by reference' to 'by value' argument promotion pass.
   ///
-  class ArgPromotion : public Pass {
-    // WorkList - The set of internal functions that we have yet to process.  As
-    // we eliminate arguments from a function, we push all callers into this set
-    // so that the by-reference argument can be bubbled out as far as possible.
-    // This set contains only internal functions.
-    std::set<Function*> WorkList;
-  public:
+  struct ArgPromotion : public CallGraphSCCPass {
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addRequired<AliasAnalysis>();
       AU.addRequired<TargetData>();
+      CallGraphSCCPass::getAnalysisUsage(AU);
     }
 
-    virtual bool run(Module &M);
+    virtual bool runOnSCC(const std::vector<CallGraphNode *> &SCC);
   private:
-    bool PromoteArguments(Function *F);
+    bool PromoteArguments(CallGraphNode *CGN);
     bool isSafeToPromoteArgument(Argument *Arg) const;  
-    void DoPromotion(Function *F, std::vector<Argument*> &ArgsToPromote);
+    Function *DoPromotion(Function *F, std::vector<Argument*> &ArgsToPromote);
   };
 
   RegisterOpt<ArgPromotion> X("argpromotion",
@@ -83,19 +79,16 @@ Pass *llvm::createArgumentPromotionPass() {
   return new ArgPromotion();
 }
 
-bool ArgPromotion::run(Module &M) {
-  bool Changed = false;
-  for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
-    if (I->hasInternalLinkage())
-      WorkList.insert(I);
-  
-  while (!WorkList.empty()) {
-    Function *F = *WorkList.begin();
-    WorkList.erase(WorkList.begin());
+bool ArgPromotion::runOnSCC(const std::vector<CallGraphNode *> &SCC) {
+  bool Changed = false, LocalChange;
 
-    if (PromoteArguments(F))    // Attempt to promote an argument.
-      Changed = true;           // Remember that we changed something.
-  }
+  do {
+    LocalChange = false;
+    // Attempt to promote arguments from all functions in this SCC.
+    for (unsigned i = 0, e = SCC.size(); i != e; ++i)
+      LocalChange |= PromoteArguments(SCC[i]);
+    Changed |= LocalChange;               // Remember that we changed something.
+  } while (LocalChange);
   
   return Changed;
 }
@@ -105,8 +98,11 @@ bool ArgPromotion::run(Module &M) {
 /// example, all callers are direct).  If safe to promote some arguments, it
 /// calls the DoPromotion method.
 ///
-bool ArgPromotion::PromoteArguments(Function *F) {
-  assert(F->hasInternalLinkage() && "We can only process internal functions!");
+bool ArgPromotion::PromoteArguments(CallGraphNode *CGN) {
+  Function *F = CGN->getFunction();
+
+  // Make sure that it is local to this module.
+  if (!F || !F->hasInternalLinkage()) return false;
 
   // First check: see if there are any pointer arguments!  If not, quick exit.
   std::vector<Argument*> PointerArgs;
@@ -142,7 +138,10 @@ bool ArgPromotion::PromoteArguments(Function *F) {
   if (PointerArgs.empty()) return false;
 
   // Okay, promote all of the arguments are rewrite the callees!
-  DoPromotion(F, PointerArgs);
+  Function *NewF = DoPromotion(F, PointerArgs);
+
+  // Update the call graph to know that the old function is gone.
+  getAnalysis<CallGraph>().changeFunction(F, NewF);
   return true;
 }
 
@@ -274,8 +273,10 @@ namespace {
 
 
 /// DoPromotion - This method actually performs the promotion of the specified
-/// arguments.  At this point, we know that it's safe to do so.
-void ArgPromotion::DoPromotion(Function *F, std::vector<Argument*> &Args2Prom) {
+/// arguments, and returns the new function.  At this point, we know that it's
+/// safe to do so.
+Function *ArgPromotion::DoPromotion(Function *F,
+                                    std::vector<Argument*> &Args2Prom) {
   std::set<Argument*> ArgsToPromote(Args2Prom.begin(), Args2Prom.end());
   
   // Start by computing a new prototype for the function, which is the same as
@@ -360,11 +361,6 @@ void ArgPromotion::DoPromotion(Function *F, std::vector<Argument*> &Args2Prom) {
     CallSite CS = CallSite::get(F->use_back());
     Instruction *Call = CS.getInstruction();
 
-    // Make sure the caller of this function is revisited now that we promoted
-    // arguments in a callee of it.
-    if (Call->getParent()->getParent()->hasInternalLinkage())
-      WorkList.insert(Call->getParent()->getParent());
-    
     // Loop over the operands, inserting GEP and loads in the caller as
     // appropriate.
     CallSite::arg_iterator AI = CS.arg_begin();
@@ -489,12 +485,9 @@ void ArgPromotion::DoPromotion(Function *F, std::vector<Argument*> &Args2Prom) {
         }
       }
 
-      // If we inserted a new pointer type, it's possible that IT could be
-      // promoted too.  Also, increment I2 past all of the arguments added for
-      // this promoted pointer.
-      for (unsigned i = 0, e = ArgIndices.size(); i != e; ++i, ++I2)
-        if (isa<PointerType>(I2->getType()))
-          WorkList.insert(NF);
+      // Increment I2 past all of the arguments added for this promoted pointer.
+      for (unsigned i = 0, e = ArgIndices.size(); i != e; ++i)
+        ++I2;
     }
 
   // Notify the alias analysis implementation that we inserted a new argument.
@@ -507,4 +500,5 @@ void ArgPromotion::DoPromotion(Function *F, std::vector<Argument*> &Args2Prom) {
 
   // Now that the old function is dead, delete it.
   F->getParent()->getFunctionList().erase(F);
+  return NF;
 }
