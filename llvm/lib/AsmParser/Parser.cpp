@@ -16,16 +16,20 @@ using std::string;
 Module *ParseAssemblyFile(const string &Filename) { // throw (ParseException)
   FILE *F = stdin;
 
-  if (Filename != "-") 
+  if (Filename != "-") {
     F = fopen(Filename.c_str(), "r");
 
-  if (F == 0) {
-    throw ParseException(Filename, string("Could not open file '") + 
-			 Filename + "'");
+    if (F == 0)
+      throw ParseException(Filename, "Could not open file '" + Filename + "'");
   }
 
-  // TODO: If this throws an exception, F is not closed.
-  Module *Result = RunVMAsmParser(Filename, F);
+  Module *Result;
+  try {
+    Result = RunVMAsmParser(Filename, F);
+  } catch (...) {
+    if (F != stdin) fclose(F);      // Make sure to close file descriptor if an
+    throw;                          // exception is thrown
+  }
 
   if (F != stdin)
     fclose(F);
