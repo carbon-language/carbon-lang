@@ -19,7 +19,6 @@
 #include "llvm/iOther.h"
 #include "llvm/Constants.h"
 #include "llvm/Pass.h"
-#include "llvm/Target/TargetData.h"
 #include "Support/Statistic.h"
 using namespace llvm;
 
@@ -34,10 +33,6 @@ namespace {
     Function *FreeFunc;     // Initialized by doInitialization
   public:
     LowerAllocations() : MallocFunc(0), FreeFunc(0) {}
-
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-      AU.addRequired<TargetData>();
-    }
 
     /// doPassInitialization - For the lower allocations pass, this ensures that
     /// a module contains a declaration for a malloc and a free function.
@@ -78,6 +73,14 @@ bool LowerAllocations::doInitialization(Module &M) {
   return true;
 }
 
+static Constant *getSizeof(const Type *Ty) {
+  Constant *Ret = ConstantPointerNull::get(PointerType::get(Ty));
+  std::vector<Constant*> Idx;
+  Idx.push_back(ConstantUInt::get(Type::UIntTy, 1));
+  Ret = ConstantExpr::getGetElementPtr(Ret, Idx);
+  return ConstantExpr::getCast(Ret, Type::UIntTy);
+}
+
 // runOnBasicBlock - This method does the actual work of converting
 // instructions over, assuming that the pass has already been initialized.
 //
@@ -86,25 +89,26 @@ bool LowerAllocations::runOnBasicBlock(BasicBlock &BB) {
   assert(MallocFunc && FreeFunc && "Pass not initialized!");
 
   BasicBlock::InstListType &BBIL = BB.getInstList();
-  TargetData &DataLayout = getAnalysis<TargetData>();
 
   // Loop over all of the instructions, looking for malloc or free instructions
   for (BasicBlock::iterator I = BB.begin(), E = BB.end(); I != E; ++I) {
     if (MallocInst *MI = dyn_cast<MallocInst>(I)) {
       const Type *AllocTy = MI->getType()->getElementType();
       
-      // Get the number of bytes to be allocated for one element of the
-      // requested type...
-      unsigned Size = DataLayout.getTypeSize(AllocTy);
-      
-      // malloc(type) becomes sbyte *malloc(constint)
-      Value *MallocArg = ConstantUInt::get(Type::UIntTy, Size);
-      if (MI->getNumOperands() && Size == 1) {
-        MallocArg = MI->getOperand(0);         // Operand * 1 = Operand
-      } else if (MI->isArrayAllocation()) {
-        // Multiply it by the array size if necessary...
-        MallocArg = BinaryOperator::create(Instruction::Mul, MI->getOperand(0),
-                                           MallocArg, "", I);
+      // malloc(type) becomes sbyte *malloc(size)
+      Value *MallocArg = getSizeof(AllocTy);
+      if (MI->isArrayAllocation()) {
+        if (isa<ConstantUInt>(MallocArg) &&
+            cast<ConstantUInt>(MallocArg)->getValue() == 1) {
+          MallocArg = MI->getOperand(0);         // Operand * 1 = Operand
+        } else if (Constant *CO = dyn_cast<Constant>(MI->getOperand(0))) {
+          MallocArg = ConstantExpr::getMul(CO, cast<Constant>(MallocArg));
+        } else {
+          // Multiply it by the array size if necessary...
+          MallocArg = BinaryOperator::create(Instruction::Mul,
+                                             MI->getOperand(0),
+                                             MallocArg, "", I);
+        }
       }
 
       const FunctionType *MallocFTy = MallocFunc->getFunctionType();
