@@ -69,7 +69,8 @@ bool opt::InlineMethod(BasicBlock::iterator CIIt) {
 
   CallInst *CI = cast<CallInst>(*CIIt);
   const Method *CalledMeth = CI->getCalledMethod();
-  if (CalledMeth->isExternal()) return false;  // Can't inline external method!
+  if (CalledMeth == 0 ||   // Can't inline external method or indirect call!
+      CalledMeth->isExternal()) return false;
   Method *CurrentMeth = CI->getParent()->getParent();
 
   //cerr << "Inlining " << CalledMeth->getName() << " into " 
@@ -238,7 +239,7 @@ static inline bool DoMethodInlining(BasicBlock *BB) {
     if (CallInst *CI = dyn_cast<CallInst>(*I)) {
       // Check to see if we should inline this method
       Method *M = CI->getCalledMethod();
-      if (ShouldInlineMethod(CI, M))
+      if (M && ShouldInlineMethod(CI, M))
 	return InlineMethod(I);
     }
   }
