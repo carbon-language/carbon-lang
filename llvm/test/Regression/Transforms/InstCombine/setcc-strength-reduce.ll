@@ -22,3 +22,13 @@ bool "test3"(sbyte %A) {
 	%B = setge sbyte %A, -127   ; setne %A, -128
 	ret bool %B
 }
+
+bool %test4(sbyte %A) {
+	%B = setle sbyte %A, 126  ; setne %A, 127
+	ret bool %B
+}
+
+bool %test5(sbyte %A) {
+	%B = setlt sbyte %A, 127 ; setne %A, 127
+	ret bool %B
+}
