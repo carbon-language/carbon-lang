@@ -34,6 +34,17 @@ public:
   // For example seteq -> setne, setgt -> setle, setlt -> setge, etc...
   //
   BinaryOps getInverseCondition() const;
+
+  // Methods for support type inquiry through isa, cast, and dyn_cast:
+  static inline bool classof(const SetCondInst *) { return true; }
+  static inline bool classof(const Instruction *I) {
+    return I->getOpcode() == SetEQ || I->getOpcode() == SetNE ||
+           I->getOpcode() == SetLE || I->getOpcode() == SetGE ||
+           I->getOpcode() == SetLT || I->getOpcode() == SetGT;
+  }
+  static inline bool classof(const Value *V) {
+    return isa<Instruction>(V) && classof(cast<Instruction>(V));
+  }
 };
 
 #endif
