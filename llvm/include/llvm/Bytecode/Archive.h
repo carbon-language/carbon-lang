@@ -396,11 +396,14 @@ class Archive {
     /// more than one symbol at a time. If \p symbols contains a list of 
     /// undefined symbols in some module, then calling this method is like 
     /// making one complete pass through the archive to resolve symbols but is
-    /// more efficient than looking at the individual members.
+    /// more efficient than looking at the individual members. Note that on 
+    /// exit, the symbols resolved by this method will be removed from \p
+    /// symbols to ensure they are not re-searched on a subsequent call. If
+    /// you need to retain the list of symbols, make a copy.
     /// @brief Look up multiple symbols in the archive.
     void findModulesDefiningSymbols(
-      const std::set<std::string>& symbols, ///< Symbols to be sought
-      std::set<ModuleProvider*>& modules    ///< The modules matching \p symbols
+      std::set<std::string>& symbols,     ///< Symbols to be sought
+      std::set<ModuleProvider*>& modules  ///< The modules matching \p symbols
     );
 
   /// @}

@@ -407,7 +407,7 @@ Archive::findModuleDefiningSymbol(const std::string& symbol) {
 // Look up multiple symbols in the symbol table and return a set of 
 // ModuleProviders that define those symbols.
 void
-Archive::findModulesDefiningSymbols(const std::set<std::string>& symbols,
+Archive::findModulesDefiningSymbols(std::set<std::string>& symbols,
                                     std::set<ModuleProvider*>& result)
 {
   assert(mapfile && base && "Can't findModulesDefiningSymbols on new archive");
@@ -462,11 +462,22 @@ Archive::findModulesDefiningSymbols(const std::set<std::string>& symbols,
   // At this point we have a valid symbol table (one way or another) so we 
   // just use it to quickly find the symbols requested.
 
-  for (std::set<std::string>::const_iterator I=symbols.begin(), 
-       E=symbols.end(); I != E; ++I) {
+  for (std::set<std::string>::iterator I=symbols.begin(), 
+       E=symbols.end(); I != E;) {
+    // See if this symbol exists
     ModuleProvider* mp = findModuleDefiningSymbol(*I);
     if (mp) {
+      // The symbol exists, insert the ModuleProvider into our result,
+      // duplicates wil be ignored
       result.insert(mp);
+
+      // Remove the symbol now that its been resolved, being careful to 
+      // not invalidate our iterator.
+      std::set<std::string>::iterator save = I;
+      ++I;
+      symbols.erase(save);
+    } else {
+      ++I;
     }
   }
 }
