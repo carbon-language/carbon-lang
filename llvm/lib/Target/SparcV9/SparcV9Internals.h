@@ -103,7 +103,7 @@ FunctionPass *createPeepholeOptsPass(const TargetMachine &TM);
 
 /// Writes out assembly code for the module, one function at a time
 ///
-FunctionPass *createAsmPrinterPass(std::ostream &Out, const TargetMachine &TM);
+FunctionPass *createAsmPrinterPass(std::ostream &Out, TargetMachine &TM);
 
 /// getPrologEpilogInsertionPass - Inserts prolog/epilog code.
 ///
