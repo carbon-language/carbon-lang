@@ -87,6 +87,9 @@ class PhyRegAlloc
   void setCallInterferences(const MachineInstr *MInst, 
 			    const LiveVarSet *const LVSetAft );
 
+  void move2DelayedInstr(const MachineInstr *OrigMI, 
+			 const MachineInstr *DelayedMI );
+
   void markUnusableSugColors();
 
   inline void constructLiveRanges() 
