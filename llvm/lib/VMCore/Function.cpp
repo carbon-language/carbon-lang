@@ -195,10 +195,6 @@ unsigned Function::getIntrinsicID() const {
         if (getName() == alpha_intrinsics[i].name)
           return alpha_intrinsics[i].id;
     break;
-  case 'e':
-    if (getName() == "llvm.exc.getcurrent")return LLVMIntrinsic::exc_getcurrent;
-    if (getName() == "llvm.exc.setcurrent")return LLVMIntrinsic::exc_setcurrent;
-    break;
   case 'l':
     if (getName() == "llvm.longjmp")  return LLVMIntrinsic::longjmp;
     break;

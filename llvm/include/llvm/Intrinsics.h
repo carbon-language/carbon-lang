@@ -24,10 +24,6 @@ namespace LLVMIntrinsic {
 
     unwind,         // Unwind stack until containing invoke is found
 
-    // Exception handling intrinsics...
-    exc_setcurrent, // Set the current pending exception
-    exc_getcurrent, // Get the current pending exception
-
     // Setjmp/Longjmp intrinsics...
     setjmp,         // Used to represent a setjmp call in C
     longjmp,        // Used to represent a longjmp call in C
