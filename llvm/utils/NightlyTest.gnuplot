@@ -6,7 +6,7 @@ set xlabel "Date" "TimesRoman,24"
 set ylabel "Lines of Code" "TimesRoman,24"
 set xdata time
 set timefmt "%Y-%m-%d:"
-set format x "%b %m, %Y"
+set format x "%b %d, %Y"
 
 ## Various labels for the graph
 set label "Removed\ndummy\nfunction" at "2003-07-30:", 150000
