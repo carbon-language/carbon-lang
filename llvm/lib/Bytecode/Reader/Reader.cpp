@@ -2240,8 +2240,10 @@ void BytecodeReader::ParseBytecode(BufPtr Buf, unsigned Length,
     freeState();
     delete TheModule;
     TheModule = 0;
-    if (decompressedBlock != 0 )
+    if (decompressedBlock != 0 ) {
       ::free(decompressedBlock);
+      decompressedBlock = 0;
+    }
     throw;
   } catch (...) {
     std::string msg("Unknown Exception Occurred");
@@ -2249,8 +2251,10 @@ void BytecodeReader::ParseBytecode(BufPtr Buf, unsigned Length,
     freeState();
     delete TheModule;
     TheModule = 0;
-    if (decompressedBlock != 0 )
+    if (decompressedBlock != 0) {
       ::free(decompressedBlock);
+      decompressedBlock = 0;
+    }
     throw msg;
   }
 }
