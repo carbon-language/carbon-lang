@@ -116,18 +116,22 @@ endif
 endif
 
 #
+# Set the LLVM object directory.
+#
+ifndef LLVM_OBJ_ROOT
+ifdef LLVM_SRC_ROOT
+LLVM_OBJ_ROOT := $(shell cd $(BUILD_OBJ_DIR); cd $(LLVM_SRC_ROOT); pwd)
+else
+LLVM_OBJ_ROOT := $(shell cd $(BUILD_OBJ_DIR); cd $(LEVEL); pwd)
+endif
+endif
+
+#
 # Set the LLVM source directory.
 # It is typically the root directory of what we're compiling now.
 #
 ifndef LLVM_SRC_ROOT
 LLVM_SRC_ROOT := $(BUILD_SRC_ROOT)
-endif
-
-#
-# Set the LLVM object directory.
-#
-ifndef LLVM_OBJ_ROOT
-LLVM_OBJ_ROOT := $(shell cd $(BUILD_OBJ_DIR); cd $(LLVM_SRC_ROOT); pwd)
 endif
 
 ###########################################################################
