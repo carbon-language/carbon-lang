@@ -36,7 +36,7 @@ public:
 
   inline Tree(const std::vector<ConcreteTreeNode*> &children,
               ConcreteTreeNode *par, const Payload &data) 
-    : Children(children), Parent(parent), Data(data) {}
+    : Children(children), Parent(par), Data(data) {}
 
   // Tree dtor - Free all children
   inline ~Tree() {
