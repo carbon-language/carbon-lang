@@ -69,6 +69,10 @@ InductionVariable::InductionVariable(PHINode *P, cfg::LoopInfo *LoopInfo) {
   //
   if (Phi->getNumIncomingValues() != 2) return;
 
+  // FIXME: Handle FP induction variables.
+  if (Phi->getType() == Type::FloatTy || Phi->getType() == Type::DoubleTy)
+    return;
+
   // If we have loop information, make sure that this PHI node is in the header
   // of a loop...
   //
@@ -140,11 +144,10 @@ InductionVariable::InductionVariable(PHINode *P, cfg::LoopInfo *LoopInfo) {
           Step = (Value*)StepE.Offset;
         else
           Step = Constant::getNullConstant(Step->getType());
+        const Type *ETy = Phi->getType();
+        if (ETy->isPointerType()) ETy = Type::ULongTy;
+        Step  = (Value*)(StepE.Offset ? StepE.Offset : ConstantInt::get(ETy,0));
       }
-
-      const Type *ETy = Phi->getType();
-      if (ETy->isPointerType()) ETy = Type::ULongTy;
-      Step  = (Value*)(StepE.Offset ? StepE.Offset : ConstantInt::get(ETy, 0));
     }
   }
 
