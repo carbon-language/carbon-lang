@@ -135,16 +135,15 @@ class Archive {
     /// returns the associated module that defines that symbol. This method can
     /// be called as many times as necessary. This is handy for linking the 
     /// archive into another module based on unresolved symbols. Note that the
-    /// ModuleProvider returned by this accessor is constant and it may refer
-    /// to the same ModuleProvider object returned by this accessor in a 
-    /// previous call (because the associated module defines both symbols). To
-    /// use the returned ModuleProvider* you must make a copy and call the
-    /// materializeModule method on the copy.
+    /// ModuleProvider returned by this accessor should not be deleted by the
+    /// caller. It is managed internally by the Archive class. It is possible 
+    /// that multiple calls to this accessor will return the same ModuleProvider
+    /// instance because the associated module defines multiple symbols. 
     /// @throws std::string if an error occurs
     /// @returns The ModuleProvider* found or null if the archive does not 
     /// contain a module that defines the \p symbol.
     /// @brief Look up a module by symbol name.
-    const ModuleProvider* findModuleContainingSymbol(
+    ModuleProvider* findModuleContainingSymbol(
       const std::string& symbol        ///< Symbol to be sought
     ) const;
 
@@ -244,6 +243,12 @@ class Archive {
       const std::string& StripName=""  ///< Prefix path to strip from names
     );
 
+  /// @}
+  /// @name Data
+  /// @{
+  private:
+    class ArchiveInternals;
+    ArchiveInternals* impl;   ///< Implementation class
   /// @}
 };
 
