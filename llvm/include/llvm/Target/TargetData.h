@@ -87,12 +87,16 @@ public:
   unsigned char getPointerSize()      const { return      PointerSize; }
 
   /// getTypeSize - Return the number of bytes necessary to hold the specified
-  /// type
+  /// type.
   uint64_t getTypeSize(const Type *Ty) const;
 
   /// getTypeAlignment - Return the minimum required alignment for the specified
-  /// type
+  /// type.
   unsigned char getTypeAlignment(const Type *Ty) const;
+
+  /// getTypeAlignmentShift - Return the minimum required alignment for the
+  /// specified type, returned as log2 of the value (a shift amount).
+  unsigned char getTypeAlignmentShift(const Type *Ty) const;
 
   /// getIntPtrType - Return an unsigned integer type that is the same size or
   /// greater to the host pointer size.
