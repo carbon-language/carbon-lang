@@ -12,7 +12,6 @@ Current expected test failures
 The SparcV8 backend works on many simple C++ SingleSource codes. Here
 are the known SingleSource failures:
 
-	UnitTests/SetjmpLongjmp/C++/SimpleC++Test
 	Regression/C++/EH/exception_spec_test
 	Regression/C++/EH/throw_rethrow_test
 	Benchmarks/Shootout-C++/moments
@@ -21,7 +20,6 @@ are the known SingleSource failures:
 Here are the known MultiSource test failures, neglecting FreeBench,
 MallocBench, and Prolangs-C++:
 
-  Applications/siod
   Applications/lambda
   Applications/d/make_dparser
   Applications/hbd
@@ -42,6 +40,7 @@ To-do
 * support shifts on longs
 * support casting 64-bit integers to FP types
 * support FP rem
+* directly support select instructions
 
 $Date$
 
