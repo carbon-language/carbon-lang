@@ -134,6 +134,21 @@ bool X86RegisterInfo::foldMemoryOperand(MachineBasicBlock::iterator &MI,
     case X86::MOVri8:  NI = MakeMIInst(X86::MOVmi8 , FrameIndex, MI); break;
     case X86::MOVri16: NI = MakeMIInst(X86::MOVmi16, FrameIndex, MI); break;
     case X86::MOVri32: NI = MakeMIInst(X86::MOVmi32, FrameIndex, MI); break;
+    case X86::MULr8:   NI = MakeMInst(X86::MULm8 , FrameIndex, MI); break;
+    case X86::MULr16:  NI = MakeMInst(X86::MULm16, FrameIndex, MI); break;
+    case X86::MULr32:  NI = MakeMInst(X86::MULm32, FrameIndex, MI); break;
+    case X86::DIVr8:   NI = MakeMInst(X86::DIVm8 , FrameIndex, MI); break;
+    case X86::DIVr16:  NI = MakeMInst(X86::DIVm16, FrameIndex, MI); break;
+    case X86::DIVr32:  NI = MakeMInst(X86::DIVm32, FrameIndex, MI); break;
+    case X86::IDIVr8:  NI = MakeMInst(X86::IDIVm8 , FrameIndex, MI); break;
+    case X86::IDIVr16: NI = MakeMInst(X86::IDIVm16, FrameIndex, MI); break;
+    case X86::IDIVr32: NI = MakeMInst(X86::IDIVm32, FrameIndex, MI); break;
+    case X86::NEGr8:   NI = MakeMInst(X86::NEGm8 , FrameIndex, MI); break;
+    case X86::NEGr16:  NI = MakeMInst(X86::NEGm16, FrameIndex, MI); break;
+    case X86::NEGr32:  NI = MakeMInst(X86::NEGm32, FrameIndex, MI); break;
+    case X86::NOTr8:   NI = MakeMInst(X86::NOTm8 , FrameIndex, MI); break;
+    case X86::NOTr16:  NI = MakeMInst(X86::NOTm16, FrameIndex, MI); break;
+    case X86::NOTr32:  NI = MakeMInst(X86::NOTm32, FrameIndex, MI); break;
     case X86::INCr8:   NI = MakeMInst(X86::INCm8 , FrameIndex, MI); break;
     case X86::INCr16:  NI = MakeMInst(X86::INCm16, FrameIndex, MI); break;
     case X86::INCr32:  NI = MakeMInst(X86::INCm32, FrameIndex, MI); break;
@@ -191,6 +206,13 @@ bool X86RegisterInfo::foldMemoryOperand(MachineBasicBlock::iterator &MI,
     case X86::CMPrr8:  NI = MakeRMInst(X86::CMPrm8 , FrameIndex, MI); break;
     case X86::CMPrr16: NI = MakeRMInst(X86::CMPrm16, FrameIndex, MI); break;
     case X86::CMPrr32: NI = MakeRMInst(X86::CMPrm32, FrameIndex, MI); break;
+
+    case X86::MOVSXr16r8: NI = MakeRMInst(X86::MOVSXr16m8 , FrameIndex, MI); break;
+    case X86::MOVSXr32r8: NI = MakeRMInst(X86::MOVSXr32m8, FrameIndex, MI); break;
+    case X86::MOVSXr32r16:NI = MakeRMInst(X86::MOVSXr32m16, FrameIndex, MI); break;
+    case X86::MOVZXr16r8: NI = MakeRMInst(X86::MOVZXr16m8 , FrameIndex, MI); break;
+    case X86::MOVZXr32r8: NI = MakeRMInst(X86::MOVZXr32m8, FrameIndex, MI); break;
+    case X86::MOVZXr32r16:NI = MakeRMInst(X86::MOVZXr32m16, FrameIndex, MI); break;
     default: break;
     }
   }

@@ -220,16 +220,25 @@ def MOVmr32 : X86Inst<"mov", 0x89, MRMDestMem, Arg32>;            // [mem] = R32
 def MULr8  : X86Inst<"mul", 0xF6, MRMS4r, Arg8 >, Imp<[AL],[AX]>;               // AL,AH = AL*R8
 def MULr16 : X86Inst<"mul", 0xF7, MRMS4r, Arg16>, Imp<[AX],[AX,DX]>, OpSize;    // AX,DX = AX*R16
 def MULr32 : X86Inst<"mul", 0xF7, MRMS4r, Arg32>, Imp<[EAX],[EAX,EDX]>;         // EAX,EDX = EAX*R32
+def MULm8  : X86Inst<"mul", 0xF6, MRMS4m, Arg8 >, Imp<[AL],[AX]>;               // AL,AH = AL*[mem8]
+def MULm16 : X86Inst<"mul", 0xF7, MRMS4m, Arg16>, Imp<[AX],[AX,DX]>, OpSize;    // AX,DX = AX*[mem16]
+def MULm32 : X86Inst<"mul", 0xF7, MRMS4m, Arg32>, Imp<[EAX],[EAX,EDX]>;         // EAX,EDX = EAX*[mem32]
 
 // unsigned division/remainder
 def DIVr8  : X86Inst<"div", 0xF6, MRMS6r, Arg8 >, Imp<[AX],[AX]>;               // AX/r8 = AL,AH
 def DIVr16 : X86Inst<"div", 0xF7, MRMS6r, Arg16>, Imp<[AX,DX],[AX,DX]>, OpSize; // DX:AX/r16 = AX,DX
 def DIVr32 : X86Inst<"div", 0xF7, MRMS6r, Arg32>, Imp<[EAX,EDX],[EAX,EDX]>;     // EDX:EAX/r32 = EAX,EDX
+def DIVm8  : X86Inst<"div", 0xF6, MRMS6m, Arg8 >, Imp<[AX],[AX]>;               // AX/[mem8] = AL,AH
+def DIVm16 : X86Inst<"div", 0xF7, MRMS6m, Arg16>, Imp<[AX,DX],[AX,DX]>, OpSize; // DX:AX/[mem16] = AX,DX
+def DIVm32 : X86Inst<"div", 0xF7, MRMS6m, Arg32>, Imp<[EAX,EDX],[EAX,EDX]>;     // EDX:EAX/[mem32] = EAX,EDX
 
 // signed division/remainder
 def IDIVr8 : X86Inst<"idiv",0xF6, MRMS7r, Arg8 >, Imp<[AX],[AX]>;               // AX/r8 = AL,AH
 def IDIVr16: X86Inst<"idiv",0xF7, MRMS7r, Arg16>, Imp<[AX,DX],[AX,DX]>, OpSize; // DX:AX/r16 = AX,DX
 def IDIVr32: X86Inst<"idiv",0xF7, MRMS7r, Arg32>, Imp<[EAX,EDX],[EAX,EDX]>;     // EDX:EAX/r32 = EAX,EDX
+def IDIVm8 : X86Inst<"idiv",0xF6, MRMS7m, Arg8 >, Imp<[AX],[AX]>;               // AX/[mem8] = AL,AH
+def IDIVm16: X86Inst<"idiv",0xF7, MRMS7m, Arg16>, Imp<[AX,DX],[AX,DX]>, OpSize; // DX:AX/[mem16] = AX,DX
+def IDIVm32: X86Inst<"idiv",0xF7, MRMS7m, Arg32>, Imp<[EAX,EDX],[EAX,EDX]>;     // EDX:EAX/[mem32] = EAX,EDX
 
 // Sign-extenders for division
 def CBW    : X86Inst<"cbw", 0x98, RawFrm, Arg8 >, Imp<[AL],[AH]>;               // AX = signext(AL)
@@ -249,9 +258,16 @@ let isTwoAddress = 1 in {  // Define some helper classes to make defs shorter.
 def NEGr8  : I2A8 <"neg", 0xF6, MRMS3r>;         // R8  = -R8  = 0-R8
 def NEGr16 : I2A16<"neg", 0xF7, MRMS3r>, OpSize; // R16 = -R16 = 0-R16
 def NEGr32 : I2A32<"neg", 0xF7, MRMS3r>;         // R32 = -R32 = 0-R32
+def NEGm8  : I2A8 <"neg", 0xF6, MRMS3m>;         // [mem8]  = -[mem8]  = 0-[mem8]
+def NEGm16 : I2A16<"neg", 0xF7, MRMS3m>, OpSize; // [mem16] = -[mem16] = 0-[mem16]
+def NEGm32 : I2A32<"neg", 0xF7, MRMS3m>;         // [mem32] = -[mem32] = 0-[mem32]
+
 def NOTr8  : I2A8 <"not", 0xF6, MRMS2r>;         // R8  = ~R8  = R8^-1
 def NOTr16 : I2A16<"not", 0xF7, MRMS2r>, OpSize; // R16 = ~R16 = R16^-1
 def NOTr32 : I2A32<"not", 0xF7, MRMS2r>;         // R32 = ~R32 = R32^-1
+def NOTm8  : I2A8 <"not", 0xF6, MRMS2m>;         // [mem8]  = ~[mem8]  = [mem8^-1]
+def NOTm16 : I2A16<"not", 0xF7, MRMS2m>, OpSize; // [mem16] = ~[mem16] = [mem16^-1]
+def NOTm32 : I2A32<"not", 0xF7, MRMS2m>;         // [mem32] = ~[mem32] = [mem32^-1]
 
 def INCr8  : I2A8 <"inc", 0xFE, MRMS0r>;         // ++R8
 def INCr16 : I2A16<"inc", 0xFF, MRMS0r>, OpSize; // ++R16
@@ -459,9 +475,16 @@ def CMPmi32 : X86Inst<"cmp", 0x81, MRMS7m    , Arg32>;              // compare [
 def MOVSXr16r8 : X86Inst<"movsx", 0xBE, MRMSrcReg, Arg8>, TB, OpSize; // R16 = signext(R8)
 def MOVSXr32r8 : X86Inst<"movsx", 0xBE, MRMSrcReg, Arg8>, TB;         // R32 = signext(R8)
 def MOVSXr32r16: X86Inst<"movsx", 0xBF, MRMSrcReg, Arg8>, TB;         // R32 = signext(R16)
+def MOVSXr16m8 : X86Inst<"movsx", 0xBE, MRMSrcMem, Arg8>, TB, OpSize; // R16 = signext([mem8])
+def MOVSXr32m8 : X86Inst<"movsx", 0xBE, MRMSrcMem, Arg8>, TB;         // R32 = signext([mem8])
+def MOVSXr32m16: X86Inst<"movsx", 0xBF, MRMSrcMem, Arg8>, TB;         // R32 = signext([mem16])
+
 def MOVZXr16r8 : X86Inst<"movzx", 0xB6, MRMSrcReg, Arg8>, TB, OpSize; // R16 = zeroext(R8)
 def MOVZXr32r8 : X86Inst<"movzx", 0xB6, MRMSrcReg, Arg8>, TB;         // R32 = zeroext(R8)
 def MOVZXr32r16: X86Inst<"movzx", 0xB7, MRMSrcReg, Arg8>, TB;         // R32 = zeroext(R16)
+def MOVZXr16m8 : X86Inst<"movzx", 0xB6, MRMSrcMem, Arg8>, TB, OpSize; // R16 = zeroext([mem8])
+def MOVZXr32m8 : X86Inst<"movzx", 0xB6, MRMSrcMem, Arg8>, TB;         // R32 = zeroext([mem8])
+def MOVZXr32m16: X86Inst<"movzx", 0xB7, MRMSrcMem, Arg8>, TB;         // R32 = zeroext([mem16])
 
 
 //===----------------------------------------------------------------------===//
