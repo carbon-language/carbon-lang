@@ -1,7 +1,7 @@
 ; This test makes sure that these instructions are properly eliminated.
 ;
 
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep sub | not grep -v 'sub int %Cok, %Bok'
+; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep -v 'sub int %Cok, %Bok' | not grep sub
 
 implementation
 
@@ -73,4 +73,16 @@ bool %test11(ubyte %A, ubyte %B) {
         %C = sub ubyte %A, %B
         %cD = setne ubyte %C, 0    ; == setne A, B
         ret bool %cD
+}
+
+int %test12(int %A) {
+	%B = shr int %A, ubyte 31
+	%C = sub int 0, %B         ; == ushr A, 31
+	ret int %C 
+}
+
+uint %test13(uint %A) {
+	%B = shr uint %A, ubyte 31
+	%C = sub uint 0, %B        ; == sar A, 31
+	ret uint %C
 }
