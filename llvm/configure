@@ -476,7 +476,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS LLVM_COPYRIGHT subdirs build build_cpu build_vendor build_os host host_cpu host_vendor host_os target target_cpu target_vendor target_os OS ARCH ENDIAN CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT ENABLE_OPTIMIZED JIT ENABLE_DOXYGEN LLVMGCCDIR CPP CXX CXXFLAGS ac_ct_CXX LEX LEXLIB LEX_OUTPUT_ROOT FLEX YACC BISON ifGNUmake LN_S DATE FIND GREP MKDIR MV PAX RANLIB ac_ct_RANLIB RM SED TAR INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA BZIP2 DOT DOXYGEN ETAGS GROFF GZIP POD2HTML POD2MAN PYTHON QMTEST RUNTEST TCLSH ZIP EGREP INSTALL_LTDL_TRUE INSTALL_LTDL_FALSE CONVENIENCE_LTDL_TRUE CONVENIENCE_LTDL_FALSE LIBADD_DL ECHO AR ac_ct_AR STRIP ac_ct_STRIP CXXCPP F77 FFLAGS ac_ct_F77 LIBTOOL ETAGSFLAGS ALLOCA MMAP_FILE LLVMGCC LLVMCC1 LLVMCC1PLUS SHLIBEXT LLVM_PREFIX LLVM_BINDIR LLVM_LIBDIR LLVM_DATADIR LLVM_DOCSDIR LLVM_ETCDIR LLVM_INCLUDEDIR LLVM_INFODIR LLVM_MANDIR LLVM_CONFIGTIME LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS LLVM_COPYRIGHT subdirs build build_cpu build_vendor build_os host host_cpu host_vendor host_os target target_cpu target_vendor target_os OS ARCH ENDIAN CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT ENABLE_OPTIMIZED JIT ENABLE_DOXYGEN LLVMGCCDIR CPP CXX CXXFLAGS ac_ct_CXX LEX LEXLIB LEX_OUTPUT_ROOT FLEX YACC BISON ifGNUmake LN_S DATE FIND GREP MKDIR MV PAX RANLIB ac_ct_RANLIB RM SED TAR INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA BZIP2 DOT DOXYGEN ETAGS GROFF GZIP POD2HTML POD2MAN RUNTEST TCLSH ZIP EGREP INSTALL_LTDL_TRUE INSTALL_LTDL_FALSE CONVENIENCE_LTDL_TRUE CONVENIENCE_LTDL_FALSE LIBADD_DL ECHO AR ac_ct_AR STRIP ac_ct_STRIP CXXCPP F77 FFLAGS ac_ct_F77 LIBTOOL ETAGSFLAGS ALLOCA MMAP_FILE LLVMGCC LLVMCC1 LLVMCC1PLUS SHLIBEXT LLVM_PREFIX LLVM_BINDIR LLVM_LIBDIR LLVM_DATADIR LLVM_DOCSDIR LLVM_ETCDIR LLVM_INCLUDEDIR LLVM_INFODIR LLVM_MANDIR LLVM_CONFIGTIME LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -5336,86 +5336,6 @@ else
 echo "${ECHO_T}no" >&6
 fi
 
-# Extract the first word of "python", so it can be a program name with args.
-set dummy python; ac_word=$2
-echo "$as_me:$LINENO: checking for $ac_word" >&5
-echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
-if test "${ac_cv_path_PYTHON+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  case $PYTHON in
-  [\\/]* | ?:[\\/]*)
-  ac_cv_path_PYTHON="$PYTHON" # Let the user override the test with a path.
-  ;;
-  *)
-  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-  for ac_exec_ext in '' $ac_executable_extensions; do
-  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_path_PYTHON="$as_dir/$ac_word$ac_exec_ext"
-    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-done
-
-  test -z "$ac_cv_path_PYTHON" && ac_cv_path_PYTHON="true python"
-  ;;
-esac
-fi
-PYTHON=$ac_cv_path_PYTHON
-
-if test -n "$PYTHON"; then
-  echo "$as_me:$LINENO: result: $PYTHON" >&5
-echo "${ECHO_T}$PYTHON" >&6
-else
-  echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6
-fi
-
-# Extract the first word of "qmtest", so it can be a program name with args.
-set dummy qmtest; ac_word=$2
-echo "$as_me:$LINENO: checking for $ac_word" >&5
-echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
-if test "${ac_cv_path_QMTEST+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  case $QMTEST in
-  [\\/]* | ?:[\\/]*)
-  ac_cv_path_QMTEST="$QMTEST" # Let the user override the test with a path.
-  ;;
-  *)
-  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-  for ac_exec_ext in '' $ac_executable_extensions; do
-  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_path_QMTEST="$as_dir/$ac_word$ac_exec_ext"
-    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-done
-
-  test -z "$ac_cv_path_QMTEST" && ac_cv_path_QMTEST="true qmtest"
-  ;;
-esac
-fi
-QMTEST=$ac_cv_path_QMTEST
-
-if test -n "$QMTEST"; then
-  echo "$as_me:$LINENO: result: $QMTEST" >&5
-echo "${ECHO_T}$QMTEST" >&6
-else
-  echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6
-fi
-
 # Extract the first word of "runtest", so it can be a program name with args.
 set dummy runtest; ac_word=$2
 echo "$as_me:$LINENO: checking for $ac_word" >&5
@@ -8190,7 +8110,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 8193 "configure"
+#line 8113 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -10181,7 +10101,7 @@ ia64-*-hpux*)
   ;;
 *-*-irix6*)
   # Find out which ABI we are using.
-  echo '#line 10184 "configure"' > conftest.$ac_ext
+  echo '#line 10104 "configure"' > conftest.$ac_ext
   if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
@@ -10666,7 +10586,7 @@ fi
 
 
 # Provide some information about the compiler.
-echo "$as_me:10669:" \
+echo "$as_me:10589:" \
      "checking for Fortran 77 compiler version" >&5
 ac_compiler=`set X $ac_compile; echo $2`
 { (eval echo "$as_me:$LINENO: \"$ac_compiler --version </dev/null >&5\"") >&5
@@ -11723,11 +11643,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:11726: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:11646: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:11730: \$? = $ac_status" >&5
+   echo "$as_me:11650: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -11966,11 +11886,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:11969: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:11889: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:11973: \$? = $ac_status" >&5
+   echo "$as_me:11893: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -12026,11 +11946,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:12029: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:11949: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:12033: \$? = $ac_status" >&5
+   echo "$as_me:11953: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -14211,7 +14131,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 14214 "configure"
+#line 14134 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -14309,7 +14229,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 14312 "configure"
+#line 14232 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -16502,11 +16422,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:16505: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:16425: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:16509: \$? = $ac_status" >&5
+   echo "$as_me:16429: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -16562,11 +16482,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:16565: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:16485: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:16569: \$? = $ac_status" >&5
+   echo "$as_me:16489: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -17923,7 +17843,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 17926 "configure"
+#line 17846 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -18021,7 +17941,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 18024 "configure"
+#line 17944 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -18858,11 +18778,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:18861: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:18781: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:18865: \$? = $ac_status" >&5
+   echo "$as_me:18785: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -18918,11 +18838,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:18921: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:18841: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:18925: \$? = $ac_status" >&5
+   echo "$as_me:18845: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -20957,11 +20877,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:20960: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:20880: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:20964: \$? = $ac_status" >&5
+   echo "$as_me:20884: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -21200,11 +21120,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:21203: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:21123: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:21207: \$? = $ac_status" >&5
+   echo "$as_me:21127: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -21260,11 +21180,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:21263: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:21183: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:21267: \$? = $ac_status" >&5
+   echo "$as_me:21187: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -23445,7 +23365,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 23448 "configure"
+#line 23368 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -23543,7 +23463,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 23546 "configure"
+#line 23466 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -24574,25 +24494,40 @@ ETAGSFLAGS=$ETAGSFLAGS
 echo "$as_me:$LINENO: checking tool compatibility" >&5
 echo $ECHO_N "checking tool compatibility... $ECHO_C" >&6
 
-if test "$GCC" != "yes"
+ICC=no
+IXX=no
+case $CC in
+  icc*|icpc*)
+    ICC=yes
+    IXX=yes
+    ;;
+   *)
+    ;;
+esac
+
+if test "$GCC" != "yes" && test "$ICC" != "yes"
 then
-  { { echo "$as_me:$LINENO: error: gcc required but not found" >&5
-echo "$as_me: error: gcc required but not found" >&2;}
-   { (exit 1); exit 1; }; }
-fi
-if test "$GXX" != "yes"
-then
-  { { echo "$as_me:$LINENO: error: g++ required but not found" >&5
-echo "$as_me: error: g++ required but not found" >&2;}
+  { { echo "$as_me:$LINENO: error: gcc|icc required but not found" >&5
+echo "$as_me: error: gcc|icc required but not found" >&2;}
    { (exit 1); exit 1; }; }
 fi
 
-gccmajor=`$CC --version | head -n 1 | awk '{print $NF;}' | cut -d. -f1`
-if test "$gccmajor" -lt "3"
+if test "$GXX" != "yes" && test "$IXX" != "yes"
 then
-  { { echo "$as_me:$LINENO: error: gcc 3.x required, but you have a lower version" >&5
+  { { echo "$as_me:$LINENO: error: g++|icc required but not found" >&5
+echo "$as_me: error: g++|icc required but not found" >&2;}
+   { (exit 1); exit 1; }; }
+fi
+
+if test "$GCC" = "yes"
+then
+  gccmajor=`$CC --version | head -n 1 | awk '{print $NF;}' | cut -d. -f1`
+  if test "$gccmajor" -lt "3"
+  then
+    { { echo "$as_me:$LINENO: error: gcc 3.x required, but you have a lower version" >&5
 echo "$as_me: error: gcc 3.x required, but you have a lower version" >&2;}
    { (exit 1); exit 1; }; }
+  fi
 fi
 
 if test -z "$llvm_cv_gnu_make_command"
@@ -24604,36 +24539,6 @@ fi
 
 echo "$as_me:$LINENO: result: ok" >&5
 echo "${ECHO_T}ok" >&6
-
-if test "$PYTHON" = "false" ; then
-  { echo "$as_me:$LINENO: WARNING: Python is required for the test suite, but it was not found" >&5
-echo "$as_me: WARNING: Python is required for the test suite, but it was not found" >&2;}
-fi
-if test "$QMTEST" = "false" ; then
-  { echo "$as_me:$LINENO: WARNING: QMTest is required for the test suite, but it was not found" >&5
-echo "$as_me: WARNING: QMTest is required for the test suite, but it was not found" >&2;}
-fi
-if test "$RUNTEST" = "false" ; then
-  { echo "$as_me:$LINENO: WARNING: runtest (Deja-Gnu) is required for the test sute, but it was not found" >&5
-echo "$as_me: WARNING: runtest (Deja-Gnu) is required for the test sute, but it was not found" >&2;}
-fi
-pyversion=`$PYTHON -V 2>&1 | cut -d\  -f2`
-pymajor=`echo $pyversion | cut -d. -f1`
-pyminor=`echo $pyversion | cut -d. -f2`
-if test "$pymajor" -ge "2" ; then
-  if test "$pymajor" -eq "2" ; then
-    if test "$pyminor" -lt "2" ; then
-      { echo "$as_me:$LINENO: WARNING: QMTest requires Python 2.2 or later" >&5
-echo "$as_me: WARNING: QMTest requires Python 2.2 or later" >&2;}
-    fi
-  fi
-else
-  { echo "$as_me:$LINENO: WARNING: QMTest requires Python 2.2 or later" >&5
-echo "$as_me: WARNING: QMTest requires Python 2.2 or later" >&2;}
-fi
-
-echo "$as_me:$LINENO: result: " >&5
-echo "${ECHO_T}" >&6
 
 
 
@@ -30327,8 +30232,6 @@ s,@GROFF@,$GROFF,;t t
 s,@GZIP@,$GZIP,;t t
 s,@POD2HTML@,$POD2HTML,;t t
 s,@POD2MAN@,$POD2MAN,;t t
-s,@PYTHON@,$PYTHON,;t t
-s,@QMTEST@,$QMTEST,;t t
 s,@RUNTEST@,$RUNTEST,;t t
 s,@TCLSH@,$TCLSH,;t t
 s,@ZIP@,$ZIP,;t t

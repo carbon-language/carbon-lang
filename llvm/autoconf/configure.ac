@@ -262,8 +262,6 @@ AC_PATH_PROG(GROFF,[groff],[true groff])
 AC_PATH_PROG(GZIP,[gzip],[true gzip])
 AC_PATH_PROG(POD2HTML,[pod2html],[true pod2html])
 AC_PATH_PROG(POD2MAN,[pod2man],[true pod2man])
-AC_PATH_PROG(PYTHON,[python],[true python])
-AC_PATH_PROG(QMTEST,[qmtest],[true qmtest])
 AC_PATH_PROG(RUNTEST,[runtest],[true runtest])
 DJ_AC_PATH_TCLSH
 AC_PATH_PROG(ZIP,[zip],[true zip])
@@ -289,22 +287,41 @@ AC_SUBST(ETAGSFLAGS,$ETAGSFLAGS)
 
 AC_MSG_CHECKING([tool compatibility])
 
-dnl Ensure that compilation tools are GCC; we use GCC specific extensions
-if test "$GCC" != "yes"
+dnl Ensure that compilation tools are GCC or a GNU compatible compiler such as
+dnl ICC; we use GCC specific options in the makefiles so the compiler needs
+dnl to support those options.
+dnl "icc" emits gcc signatures
+dnl "icc -no-gcc" emits no gcc signature BUT is still compatible
+ICC=no
+IXX=no
+case $CC in
+  icc*|icpc*) 
+    ICC=yes
+    IXX=yes
+    ;;
+   *)
+    ;;
+esac
+
+if test "$GCC" != "yes" && test "$ICC" != "yes"
 then
-  AC_MSG_ERROR([gcc required but not found])
+  AC_MSG_ERROR([gcc|icc required but not found])
 fi
+
 dnl Ensure that compilation tools are GCC; we use GCC specific extensions
-if test "$GXX" != "yes"
+if test "$GXX" != "yes" && test "$IXX" != "yes"
 then
-  AC_MSG_ERROR([g++ required but not found])
+  AC_MSG_ERROR([g++|icc required but not found])
 fi
 
 dnl Verify that GCC is version 3.0 or higher
-gccmajor=`$CC --version | head -n 1 | awk '{print $NF;}' | cut -d. -f1`
-if test "$gccmajor" -lt "3"
+if test "$GCC" = "yes"
 then
-  AC_MSG_ERROR([gcc 3.x required, but you have a lower version])
+  gccmajor=`$CC --version | head -n 1 | awk '{print $NF;}' | cut -d. -f1`
+  if test "$gccmajor" -lt "3"
+  then
+    AC_MSG_ERROR([gcc 3.x required, but you have a lower version])
+  fi
 fi
 
 dnl Check for GNU Make.  We use its extensions, so don't build without it
@@ -315,31 +332,6 @@ fi
 
 dnl Tool compatibility is okay if we make it here.
 AC_MSG_RESULT([ok])
-
-dnl Generate warnings for things not found but not strictly needed
-if test "$PYTHON" = "false" ; then
-  AC_MSG_WARN([Python is required for the test suite, but it was not found])
-fi
-if test "$QMTEST" = "false" ; then
-  AC_MSG_WARN([QMTest is required for the test suite, but it was not found])
-fi
-if test "$RUNTEST" = "false" ; then
-  AC_MSG_WARN([runtest (Deja-Gnu) is required for the test sute, but it was not found])
-fi
-pyversion=`$PYTHON -V 2>&1 | cut -d\  -f2`
-pymajor=`echo $pyversion | cut -d. -f1`
-pyminor=`echo $pyversion | cut -d. -f2`
-if test "$pymajor" -ge "2" ; then
-  if test "$pymajor" -eq "2" ; then
-    if test "$pyminor" -lt "2" ; then
-      AC_MSG_WARN([QMTest requires Python 2.2 or later])
-    fi
-  fi
-else
-  AC_MSG_WARN([QMTest requires Python 2.2 or later])
-fi
-
-AC_MSG_RESULT([])
 
 dnl===-----------------------------------------------------------------------===
 dnl===
