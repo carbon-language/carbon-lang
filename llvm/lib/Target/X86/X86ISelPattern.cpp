@@ -2933,6 +2933,7 @@ void ISel::Select(SDOperand N) {
     RP.push_back(std::make_pair(getRegPressure(N.getOperand(2)), 2));
     std::sort(RP.begin(), RP.end());
 
+    Tmp1 = 0;   // Silence a warning.
     for (unsigned i = 0; i != 3; ++i)
       switch (RP[2-i].second) {
       default: assert(0 && "Unknown operand number!");
@@ -2989,6 +2990,7 @@ void ISel::Select(SDOperand N) {
     RP.push_back(std::make_pair(getRegPressure(N.getOperand(2)), 2));
     std::sort(RP.begin(), RP.end());
 
+    Tmp1 = 0; // Silence a warning.
     for (unsigned i = 0; i != 3; ++i)
       switch (RP[2-i].second) {
       default: assert(0 && "Unknown operand number!");
