@@ -348,7 +348,7 @@ static GlobalValue *FindGlobalNamed(const std::string &Name, const Type *Ty,
   // table, checking each of them for a type-compatible version.
   //
   for (SymbolTable::iterator I = ST->begin(), E = ST->end(); I != E; ++I)
-    if (I->first->getType() != Type::TypeTy) {
+    if (I->first != Type::TypeTy) {
       SymbolTable::VarMap &VM = I->second;
       // Does this type plane contain an entry with the specified name?
       SymbolTable::type_iterator TI = VM.find(Name);
