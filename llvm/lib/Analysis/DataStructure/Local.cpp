@@ -116,7 +116,7 @@ namespace {
     DSNodeHandle &getValueNode(Value &V);
 
     /// getValueDest - Return the DSNode that the actual value points to.  This
-    /// is basically the same thing as: getLink(getValueNode(V), 0)
+    /// is the same thing as: getLink(getValueNode(V))
     ///
     DSNodeHandle &getValueDest(Value &V);
 
@@ -127,12 +127,9 @@ namespace {
 
     /// getLink - This method is used to return the specified link in the
     /// specified node if one exists.  If a link does not already exist (it's
-    /// null), then we create a new node, link it, then return it.  We must
-    /// specify the type of the Node field we are accessing so that we know what
-    /// type should be linked to if we need to create a new node.
+    /// null), then we create a new node, link it, then return it.
     ///
-    DSNodeHandle &getLink(const DSNodeHandle &Node, unsigned Link,
-                          const Type *FieldTy);
+    DSNodeHandle &getLink(const DSNodeHandle &Node, unsigned Link = 0);
   };
 }
 
@@ -218,11 +215,11 @@ DSNodeHandle &GraphBuilder::getValueNode(Value &V) {
   }
 }
 
-/// getValueDest - Return the DSNode that the actual value points to.  This
-/// is basically the same thing as: getLink(getValueNode(V), 0)
+/// getValueDest - Return the DSNode that the actual value points to.  This is
+/// the same thing as: getLink(getValueNode(V), 0)
 ///
 DSNodeHandle &GraphBuilder::getValueDest(Value &V) {
-  return getLink(getValueNode(V), 0, V.getType());
+  return getLink(getValueNode(V));
 }
 
 
@@ -232,24 +229,11 @@ DSNodeHandle &GraphBuilder::getValueDest(Value &V) {
 /// specify the type of the Node field we are accessing so that we know what
 /// type should be linked to if we need to create a new node.
 ///
-DSNodeHandle &GraphBuilder::getLink(const DSNodeHandle &node,
-                                    unsigned LinkNo,
-                                    const Type *FieldTy  // FIXME: eliminate
-                                    ) {
+DSNodeHandle &GraphBuilder::getLink(const DSNodeHandle &node, unsigned LinkNo) {
   DSNodeHandle &Node = const_cast<DSNodeHandle&>(node);
   DSNodeHandle *Link = Node.getLink(LinkNo);
   if (Link) return *Link;
 
-#if 0    // FIXME: delete
-  // If we are indexing with a typed pointer, then the thing we are pointing
-  // to is of the pointed type.  If we are pointing to it with an integer
-  // (because of cast to an integer), we represent it with a void type.
-  //
-  const Type *ReqTy = 0;
-  if (const PointerType *Ptr = dyn_cast<PointerType>(FieldTy))
-    ReqTy = Ptr->getElementType();
-#endif
-  
   // If the link hasn't been created yet, make and return a new shadow node
   DSNode *N = createNode(DSNode::ShadowNode, 0);
   Node.setLink(LinkNo, N);
@@ -373,7 +357,7 @@ void GraphBuilder::visitLoadInst(LoadInst &LI) {
   Ptr.getNode()->getTypeRec(LI.getType(), Ptr.getOffset());
   
   if (isPointerType(LI.getType()))
-    getValueNode(LI).addEdgeTo(getLink(Ptr, 0, LI.getType()));
+    getValueNode(LI).addEdgeTo(getLink(Ptr));
 }
 
 void GraphBuilder::visitStoreInst(StoreInst &SI) {
@@ -404,15 +388,14 @@ void GraphBuilder::visitCallInst(CallInst &CI) {
   // Set up the return value...
   DSNodeHandle RetVal;
   if (isPointerType(CI.getType()))
-    RetVal = getLink(getValueNode(CI), 0, CI.getType());
+    RetVal = getLink(getValueNode(CI));
 
   DSNodeHandle Callee;
   // Special case for a direct call, avoid creating spurious scalar node...
   if (GlobalValue *GV = dyn_cast<GlobalValue>(CI.getOperand(0)))
     Callee = getGlobalNode(*GV);
   else
-    Callee = getLink(getValueNode(*CI.getOperand(0)), 0,
-                     CI.getOperand(0)->getType());
+    Callee = getLink(getValueNode(*CI.getOperand(0)));
 
   std::vector<DSNodeHandle> Args;
   Args.reserve(CI.getNumOperands()-1);
@@ -420,8 +403,7 @@ void GraphBuilder::visitCallInst(CallInst &CI) {
   // Calculate the arguments vector...
   for (unsigned i = 1, e = CI.getNumOperands(); i != e; ++i)
     if (isPointerType(CI.getOperand(i)->getType()))
-      Args.push_back(getLink(getValueNode(*CI.getOperand(i)), 0,
-                             CI.getOperand(i)->getType()));
+      Args.push_back(getLink(getValueNode(*CI.getOperand(i))));
 
   // Add a new function call entry...
   FunctionCalls.push_back(DSCallSite(CI, RetVal, Callee, Args));
@@ -430,8 +412,7 @@ void GraphBuilder::visitCallInst(CallInst &CI) {
 /// Handle casts...
 void GraphBuilder::visitCastInst(CastInst &CI) {
   if (isPointerType(CI.getType()) && isPointerType(CI.getOperand(0)->getType()))
-    getValueNode(CI).addEdgeTo(getLink(getValueNode(*CI.getOperand(0)), 0,
-                                       CI.getOperand(0)->getType()));
+    getValueNode(CI).addEdgeTo(getLink(getValueNode(*CI.getOperand(0))));
 }
 
 
