@@ -50,14 +50,14 @@ namespace ISD {
 
     // CopyToReg - This node has chain and child nodes, and an associated
     // register number.  The instruction selector must guarantee that the value
-    // of the value node is available in the virtual register stored in the
+    // of the value node is available in the register stored in the
     // CopyRegSDNode object.
     CopyToReg,
 
     // CopyFromReg - This node indicates that the input value is a virtual or
     // physical register that is defined outside of the scope of this
-    // SelectionDAG.  The virtual register is available from the
-    // CopyRegSDNode object.
+    // SelectionDAG.  The register number is available from the CopyRegSDNode
+    // object.
     CopyFromReg,
 
     // EXTRACT_ELEMENT - This is used to get the first or second (determined by

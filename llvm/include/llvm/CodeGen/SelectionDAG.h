@@ -116,17 +116,17 @@ public:
   SDOperand getBasicBlock(MachineBasicBlock *MBB);
   SDOperand getExternalSymbol(const char *Sym, MVT::ValueType VT);
 
-  SDOperand getCopyToReg(SDOperand Chain, SDOperand N, unsigned VReg) {
+  SDOperand getCopyToReg(SDOperand Chain, SDOperand N, unsigned Reg) {
     // Note: these are auto-CSE'd because the caller doesn't make requests that
     // could cause duplicates to occur.
-    SDNode *NN = new CopyRegSDNode(Chain, N, VReg);
+    SDNode *NN = new CopyRegSDNode(Chain, N, Reg);
     AllNodes.push_back(NN);
     return SDOperand(NN, 0);
   }
 
-  SDOperand getCopyFromReg(unsigned VReg, MVT::ValueType VT) {
+  SDOperand getCopyFromReg(unsigned Reg, MVT::ValueType VT) {
     // Note: These nodes are auto-CSE'd by the caller of this method.
-    SDNode *NN = new CopyRegSDNode(VReg, VT);
+    SDNode *NN = new CopyRegSDNode(Reg, VT);
     AllNodes.push_back(NN);
     return SDOperand(NN, 0);
   }
