@@ -1,7 +1,7 @@
 ; This is the test case taken from appel's book that illustrates a hard case
 ; that SCCP gets right. BB3 should be completely eliminated.
 ;
-; RUN: if as < %s | opt -sccp -constprop -dce | dis | grep BB3
+; RUN: if as < %s | opt -sccp -constprop -dce -cfgsimplify | dis | grep BB3
 ; RUN: then exit 1
 ; RUN: else exit 0
 ; RUN: fi
