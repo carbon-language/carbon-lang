@@ -241,8 +241,7 @@ BasicBlock *BasicBlock::splitBasicBlock(iterator I, const std::string &BBName) {
   // successors.  If there were PHI nodes in the successors, then they need to
   // know that incoming branches will be from New, not from Old.
   //
-  for (BasicBlock::succ_iterator I = succ_begin(New), E = succ_end(New);
-       I != E; ++I) {
+  for (succ_iterator I = succ_begin(New), E = succ_end(New); I != E; ++I) {
     // Loop over any phi nodes in the basic block, updating the BB field of
     // incoming values...
     BasicBlock *Successor = *I;
