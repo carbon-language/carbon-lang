@@ -139,10 +139,10 @@ void PEI::saveCallerSavedRegisters(MachineFunction &Fn) {
     } else {
       for (const unsigned *AliasSet = RegInfo->getAliasSet(Reg);
            *AliasSet; ++AliasSet) {  // Check alias registers too...
-	if (ModifiedRegs[*AliasSet]) {
+        if (ModifiedRegs[*AliasSet]) {
           RegsToSave.push_back(Reg);
           break;
-	}
+        }
       }
     }
   }
@@ -178,9 +178,9 @@ void PEI::saveCallerSavedRegisters(MachineFunction &Fn) {
       I = MBB->end(); --I;
 
       for (unsigned i = 0, e = RegsToSave.size(); i != e; ++i) {
-	const TargetRegisterClass *RC = RegInfo->getRegClass(RegsToSave[i]);
-	RegInfo->loadRegFromStackSlot(*MBB, I, RegsToSave[i],StackSlots[i], RC);
-	--I;  // Insert in reverse order
+        const TargetRegisterClass *RC = RegInfo->getRegClass(RegsToSave[i]);
+        RegInfo->loadRegFromStackSlot(*MBB, I, RegsToSave[i],StackSlots[i], RC);
+        --I;  // Insert in reverse order
       }
     }
   }
@@ -291,10 +291,10 @@ void PEI::replaceFrameIndices(MachineFunction &Fn) {
   for (MachineFunction::iterator BB = Fn.begin(), E = Fn.end(); BB != E; ++BB)
     for (MachineBasicBlock::iterator I = BB->begin(); I != BB->end(); ++I)
       for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i)
-	if (I->getOperand(i).isFrameIndex()) {
-	  // If this instruction has a FrameIndex operand, we need to use that
-	  // target machine register info object to eliminate it.
-	  MRI.eliminateFrameIndex(Fn, I);
-	  break;
-	}
+        if (I->getOperand(i).isFrameIndex()) {
+          // If this instruction has a FrameIndex operand, we need to use that
+          // target machine register info object to eliminate it.
+          MRI.eliminateFrameIndex(Fn, I);
+          break;
+        }
 }
