@@ -98,8 +98,7 @@ void BytecodeWriter::outputConstants(bool isFunction) {
     for (unsigned i = ValNo; i < ValNo+NC; ++i) {
       const Value *V = Plane[i];
       if (const Constant *CPV = dyn_cast<Constant>(V)) {
-	//cerr << "Serializing value: <" << V->getType() << ">: " 
-	//     << ((const Constant*)V)->getStrValue() << ":" 
+	//cerr << "Serializing value: <" << V->getType() << ">: " << V << ":" 
 	//     << Out.size() << "\n";
 	outputConstant(CPV);
       } else {
