@@ -404,6 +404,11 @@ int main(int argc, char **argv) {
   //
   Passes.add(createGlobalDCEPass());
 
+  // The FuncResolve pass may leave cruft around if functions were prototyped
+  // differently than they were defined.  Remove this cruft.
+  //
+  Passes.add(createInstructionCombiningPass());
+
   // Add the pass that writes bytecode to the output file...
   std::string RealBytecodeOutput = OutputFilename;
   if (!LinkAsLibrary) RealBytecodeOutput += ".bc";
