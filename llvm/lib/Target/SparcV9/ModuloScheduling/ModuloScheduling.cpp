@@ -1542,11 +1542,21 @@ void ModuloSchedulingPass::writeKernel(BasicBlock *llvmBB, MachineBasicBlock *ma
   std::map<Value*, Value*> finalPHIValue;
   std::map<Value*, Value*> kernelValue;
 
+  //Branches are a special case
+  std::vector<MachineInstr*> branches;
+
     //Create TmpInstructions for the final phis
  for(MSSchedule::kernel_iterator I = schedule.kernel_begin(), E = schedule.kernel_end(); I != E; ++I) {
 
    DEBUG(std::cerr << "Stage: " << I->second << " Inst: " << *(I->first->getInst()) << "\n";);
 
+   if(I->first->isBranch()) {
+     //Clone instruction
+     const MachineInstr *inst = I->first->getInst();
+     MachineInstr *instClone = inst->clone();
+     branches.push_back(instClone);
+   }
+   
    //Clone instruction
    const MachineInstr *inst = I->first->getInst();
    MachineInstr *instClone = inst->clone();
@@ -1556,11 +1566,6 @@ void ModuloSchedulingPass::writeKernel(BasicBlock *llvmBB, MachineBasicBlock *ma
 
    DEBUG(std::cerr <<  "Cloned Inst: " << *instClone << "\n");
 
-   if(I->first->isBranch()) {
-     //Add kernel noop
-     BuildMI(machineBB, V9::NOP, 0);
-   }
-   
    //Loop over Machine Operands
    for(unsigned i=0; i < inst->getNumOperands(); ++i) {
      //get machine operand
@@ -1622,6 +1627,13 @@ void ModuloSchedulingPass::writeKernel(BasicBlock *llvmBB, MachineBasicBlock *ma
    }
    
  }
+
+ //Add branches
+ for(std::vector<MachineInstr*>::iterator I = branches.begin(), E = branches.end(); I != E; ++I) {
+   machineBB->push_back(*I);
+   BuildMI(machineBB, V9::NOP, 0);
+ }
+
 
   DEBUG(std::cerr << "KERNEL before PHIs\n");
   DEBUG(machineBB->print(std::cerr));
