@@ -8,7 +8,8 @@
     <center><h1>Getting Started with the LLVM System<br><font size=3>By: <a
     href="mailto:gshi1@uiuc.edu">Guochun Shi</a>,
     <a href="mailto:sabre@nondot.org">Chris Lattner</a>,
-    <a href="mailto:criswell@uiuc.edu">John Criswell</a>, and
+    <a href="mailto:criswell@uiuc.edu">John Criswell</a>, 
+    <a href="http://misha.brukman.net">Misha Brukman</a>, and
     <a href="http://www.cs.uiuc.edu/~vadve">Vikram Adve</a>
     </font></h1></center>
 
@@ -38,13 +39,14 @@
           <li><a href="#objfiles">The Location of LLVM Object Files</tt></a>
         </ol>
       <li><a href="#layout">Program layout</a>
-	<ol>
-      <li><a href="#cvsdir"><tt>CVS</tt> directories</a>
-	  <li><a href="#include"><tt>llvm/include</tt></a>
-	  <li><a href="#lib"><tt>llvm/lib</tt></a>
-	  <li><a href="#test"><tt>llvm/test</tt></a>
-	  <li><a href="#tools"><tt>llvm/tools</tt></a>  
-	</ol>
+      <ol>
+        <li><a href="#cvsdir"><tt>CVS</tt> directories</a>
+        <li><a href="#include"><tt>llvm/include</tt></a>
+        <li><a href="#lib"><tt>llvm/lib</tt></a>
+        <li><a href="#test"><tt>llvm/test</tt></a>
+        <li><a href="#tools"><tt>llvm/tools</tt></a>  
+        <li><a href="#utils"><tt>llvm/utils</tt></a>
+    	</ol>
       <li><a href="#cfront">Compiling the LLVM C Front End</a>
       <li><a href="#tutorial">An Example Using the LLVM Tool Chain</a>
       <li><a href="#problems">Common Problems</a>
@@ -247,7 +249,8 @@
             <ol>
                 <li><tt>cd <i>where-you-want-llvm-to-live</i></tt>
                 <li><tt>gunzip --stdout llvm.tar.gz | tar -xvf -</tt>
-                <li><tt>gunzip --stdout cfrontend.<i>platform</i>.tar.gz | tar -xvf -</tt>
+                <li><tt>gunzip --stdout cfrontend.<i>platform</i>.tar.gz | tar
+                -xvf -</tt>
                 <li><tt>cd llvm</tt>
             </ol>
 
@@ -255,7 +258,8 @@
 
             <li>With anonymous CVS access:
             <ol>
-                <li>Find the path to the CVS repository containing LLVM (we'll call this <i>CVSROOTDIR</i>).
+                <li>Find the path to the CVS repository containing LLVM (we'll
+                call this <i>CVSROOTDIR</i>).
                 <li><tt>cd <i>where-you-want-llvm-to-live</i></tt>
                 <li><tt>cvs -d <i>CVSROOTDIR</i> checkout llvm</tt>
                 <li><tt>cd llvm</tt>
@@ -273,7 +277,8 @@
                 <ul>
                     <li><tt>--with-objroot=<i>directory</i></tt>
                     <br>
-                    Specify where object files should be placed during the build.
+                    Specify where object files should be placed during the
+                    build.
 
                     <li><tt>--with-llvmgccdir=<i>directory</i></tt>
                     <br>
@@ -870,6 +875,72 @@
       primarily useful for debugging analyses, or familiarizing yourself with
       what an analysis does.<p>
 
+    </dl>
+
+    <!------------------------------------------------------------------------->
+    <h3><a name="utils"><tt>llvm/utils</tt></a></h3>
+    <!------------------------------------------------------------------------->
+
+    This directory contains utilities for working with LLVM sourcecode, and some
+    of the utilities are actually required as part of the build process because
+    they are code generators for parts of LLVM infrastructure.
+
+    <dl compact>
+      <td><tt><b>Burg</b></tt><dd> <tt>Burg</tt> is an instruction selector
+      generator -- it builds trees on which it then performs pattern-matching to
+      select instructions according to the patterns the user has specified. Burg
+      is currently used in the Sparc V9 backend.<p>
+
+      <dt><tt><b>codegen-diff</b></tt><dd> <tt>codegen-diff</tt> is a script
+      that finds differences between code that LLC generates and code that LLI
+      generates. This is a useful tool if you are debugging one of them,
+      assuming that the other generates correct output. For the full user
+      manual, run <tt>`perldoc codegen-diff'</tt>.<p>
+
+      <dt><tt><b>cvsupdate</b></tt><dd> <tt>cvsupdate</tt> is a script that will
+      update your CVS tree, but produce a much cleaner and more organized output
+      than simply running <tt>`cvs up -dP'</tt> will. For example, it will group
+      together all the new and updated files and modified files in separate
+      sections, so you can see at a glance what has changed. If you are at the
+      top of your LLVM CVS tree, running <tt>utils/cvsupdate</tt> is the
+      preferred way of updating the tree.<p>
+
+      <dt><tt><b>emacs</b></tt><dd> The <tt>emacs</tt> directory contains
+      syntax-highlighting files which will work with Emacs and XEmacs editors,
+      providing syntax highlighting support for LLVM assembly files and TableGen
+      description files.<p>
+
+      <dt><tt><b>getsrcs.sh</b></tt><dd> The <tt>getsrcs.sh</tt> script finds
+      and outputs all non-generated source files, which is useful if one wishes
+      to do a lot of development across directories and does not want to
+      individually find each file. One way to use it is to run, for example:
+      <tt>xemacs `utils/getsources.sh`</tt> from the top of your LLVM source
+      tree.<p>
+      
+      <dt><tt><b>makellvm</b></tt><dd> The <tt>makellvm</tt> script compiles all
+      files in the current directory and then compiles and links the tool that
+      is the first argument. For example, assuming you are in the directory
+      <tt>llvm/lib/Target/Sparc</tt>, if <tt>makellvm</tt> is in your path,
+      simply running <tt>makellvm llc</tt> will make a build of the current
+      directory, switch to directory <tt>llvm/tools/llc</tt> and build it,
+      causing a re-linking of LLC.<p>
+
+      <dt><tt><b>NightlyTest.pl</b></tt> and
+      <tt><b>NightlyTestTemplate.html</b></tt><dd> These files are used in a
+      cron script to generate nightly status reports of the functionality of
+      tools, and the results can be seen by following the appropriate link on
+      the <a href="http://llvm.cs.uiuc.edu/">LLVM homepage</a>.<p>
+
+      <dt><tt><b>TableGen</b></tt><dd> The <tt>TableGen</tt> directory contains
+      the tool used to generate register descriptions, instruction set
+      descriptins, and even assemblers from common TableGen description
+      files.<p>
+
+      <dt><tt><b>vim</b></tt><dd> The <tt>vim</tt> directory contains
+      syntax-highlighting files which will work with the VIM editor, providing
+      syntax highlighting support for LLVM assembly files and TableGen
+      description files.<p>
+ 
     </dl>
 
     <!--=====================================================================-->
