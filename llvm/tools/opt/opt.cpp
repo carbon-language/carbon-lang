@@ -42,7 +42,7 @@ enum Opts {
   print, printm, verify,
 
   // More powerful optimizations
-  indvars, instcombine, sccp, adce, raise, reassociate, mem2reg,
+  indvars, instcombine, sccp, adce, raise, reassociate, mem2reg, pinodes,
 
   // Instrumentation
   trace, tracem, paths,
@@ -82,7 +82,8 @@ struct {
   { raise      , createRaisePointerReferencesPass },
   { reassociate, createReassociatePass            },
   { mem2reg    , createPromoteMemoryToRegister    },
-  { lowerrefs,   createDecomposeMultiDimRefsPass  },
+  { pinodes    , createPiNodeInsertionPass        },
+  { lowerrefs  , createDecomposeMultiDimRefsPass  },
 
   { trace      , createTraceValuesPassForBasicBlocks },
   { tracem     , createTraceValuesPassForFunction    },
@@ -129,6 +130,7 @@ cl::EnumList<enum Opts> OptimizationList(cl::NoFlags,
   clEnumVal(adce       , "Aggressive DCE"),
   clEnumVal(reassociate, "Reassociate expressions"),
   clEnumVal(mem2reg    , "Promote alloca locations to registers"),
+  clEnumVal(pinodes    , "Insert Pi nodes after definitions"),
 
   clEnumVal(internalize, "Mark all fn's internal except for main"),
   clEnumVal(globaldce  , "Remove unreachable globals"),
