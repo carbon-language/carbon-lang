@@ -14,9 +14,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/Scalar.h"
-#include "llvm/Constant.h"
+#include "llvm/Constants.h"
 #include "llvm/Instructions.h"
-#include "llvm/Type.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/PostDominators.h"
 #include "llvm/Support/CFG.h"
@@ -83,10 +82,10 @@ private:
   void markBlockAlive(BasicBlock *BB);
 
 
-  // dropReferencesOfDeadInstructionsInLiveBlock - Loop over all of the
-  // instructions in the specified basic block, dropping references on
-  // instructions that are dead according to LiveSet.
-  bool dropReferencesOfDeadInstructionsInLiveBlock(BasicBlock *BB);
+  // deleteDeadInstructionsInLiveBlock - Loop over all of the instructions in
+  // the specified basic block, deleting ones that are dead according to
+  // LiveSet.
+  bool deleteDeadInstructionsInLiveBlock(BasicBlock *BB);
 
   TerminatorInst *convertToUnconditionalBranch(TerminatorInst *TI);
 
@@ -128,31 +127,25 @@ void ADCE::markBlockAlive(BasicBlock *BB) {
       markTerminatorLive(BB);
 }
 
-// dropReferencesOfDeadInstructionsInLiveBlock - Loop over all of the
-// instructions in the specified basic block, dropping references on
-// instructions that are dead according to LiveSet.
-bool ADCE::dropReferencesOfDeadInstructionsInLiveBlock(BasicBlock *BB) {
+// deleteDeadInstructionsInLiveBlock - Loop over all of the instructions in the
+// specified basic block, deleting ones that are dead according to LiveSet.
+bool ADCE::deleteDeadInstructionsInLiveBlock(BasicBlock *BB) {
   bool Changed = false;
-  for (BasicBlock::iterator I = BB->begin(), E = --BB->end(); I != E; )
+  for (BasicBlock::iterator II = BB->begin(), E = --BB->end(); II != E; ) {
+    Instruction *I = II++;
     if (!LiveSet.count(I)) {              // Is this instruction alive?
-      I->dropAllReferences();             // Nope, drop references... 
-      if (PHINode *PN = dyn_cast<PHINode>(I)) {
-        // We don't want to leave PHI nodes in the program that have
-        // #arguments != #predecessors, so we remove them now.
-        //
-        PN->replaceAllUsesWith(Constant::getNullValue(PN->getType()));
+      if (!I->use_empty())
+        I->replaceAllUsesWith(UndefValue::get(I->getType()));
 
-        // Delete the instruction...
-        ++I;
-        BB->getInstList().erase(PN);
-        Changed = true;
+      // Nope... remove the instruction from it's basic block...
+      if (isa<CallInst>(I))
+        ++NumCallRemoved;
+      else
         ++NumInstRemoved;
-      } else {
-        ++I;
-      }
-    } else {
-      ++I;
+      BB->getInstList().erase(I);
+      Changed = true;
     }
+  }
   return Changed;
 }
 
@@ -317,12 +310,9 @@ bool ADCE::doADCE() {
   //
   if (AliveBlocks.size() == Func->size()) {  // No dead blocks?
     for (Function::iterator I = Func->begin(), E = Func->end(); I != E; ++I) {
-      // Loop over all of the instructions in the function, telling dead
-      // instructions to drop their references.  This is so that the next sweep
-      // over the program can safely delete dead instructions without other dead
-      // instructions still referring to them.
-      //
-      dropReferencesOfDeadInstructionsInLiveBlock(I);
+      // Loop over all of the instructions in the function deleting instructions
+      // to drop their references.
+      deleteDeadInstructionsInLiveBlock(I);
 
       // Check to make sure the terminator instruction is live.  If it isn't,
       // this means that the condition that it branches on (we know it is not an
@@ -438,84 +428,40 @@ bool ADCE::doADCE() {
             }
           }
 
-        // Now loop over all of the instructions in the basic block, telling
-        // dead instructions to drop their references.  This is so that the next
-        // sweep over the program can safely delete dead instructions without
-        // other dead instructions still referring to them.
+        // Now loop over all of the instructions in the basic block, deleting
+        // dead instructions.  This is so that the next sweep over the program
+        // can safely delete dead instructions without other dead instructions
+        // still referring to them.
         //
-        dropReferencesOfDeadInstructionsInLiveBlock(BB);
+        deleteDeadInstructionsInLiveBlock(BB);
       }
   }
-
-  // We make changes if there are any dead blocks in the function...
-  if (unsigned NumDeadBlocks = Func->size() - AliveBlocks.size()) {
-    MadeChanges = true;
-    NumBlockRemoved += NumDeadBlocks;
-  }
-
-  // Loop over all of the basic blocks in the function, removing control flow
-  // edges to live blocks (also eliminating any entries in PHI functions in
-  // referenced blocks).
-  //
-  for (Function::iterator BB = Func->begin(), E = Func->end(); BB != E; ++BB)
-    if (!AliveBlocks.count(BB)) {
-      // Remove all outgoing edges from this basic block and convert the
-      // terminator into a return instruction.
-      std::vector<BasicBlock*> Succs(succ_begin(BB), succ_end(BB));
-      
-      if (!Succs.empty()) {
-        // Loop over all of the successors, removing this block from PHI node
-        // entries that might be in the block...
-        while (!Succs.empty()) {
-          Succs.back()->removePredecessor(BB);
-          Succs.pop_back();
-        }
-        
-        // Delete the old terminator instruction...
-        const Type *TermTy = BB->getTerminator()->getType();
-        if (TermTy != Type::VoidTy)
-          BB->getTerminator()->replaceAllUsesWith(
-                               Constant::getNullValue(TermTy));
-        BB->getInstList().pop_back();
-        const Type *RetTy = Func->getReturnType();
-        new ReturnInst(RetTy != Type::VoidTy ?
-                       Constant::getNullValue(RetTy) : 0, BB);
-      }
-    }
-
 
   // Loop over all of the basic blocks in the function, dropping references of
   // the dead basic blocks.  We must do this after the previous step to avoid
   // dropping references to PHIs which still have entries...
   //
+  std::vector<BasicBlock*> DeadBlocks;
   for (Function::iterator BB = Func->begin(), E = Func->end(); BB != E; ++BB)
-    if (!AliveBlocks.count(BB))
+    if (!AliveBlocks.count(BB)) {
+      // Remove PHI node entries for this block in live successor blocks.
+      for (succ_iterator SI = succ_begin(BB), E = succ_end(BB); SI != E; ++SI)
+        if (!SI->empty() && isa<PHINode>(SI->front()) && AliveBlocks.count(*SI))
+          (*SI)->removePredecessor(BB);
+
       BB->dropAllReferences();
+      MadeChanges = true;
+      DeadBlocks.push_back(BB);
+    }
+
+  NumBlockRemoved += DeadBlocks.size();
 
   // Now loop through all of the blocks and delete the dead ones.  We can safely
   // do this now because we know that there are no references to dead blocks
-  // (because they have dropped all of their references...  we also remove dead
-  // instructions from alive blocks.
-  //
-  for (Function::iterator BI = Func->begin(); BI != Func->end(); )
-    if (!AliveBlocks.count(BI)) {                // Delete dead blocks...
-      BI = Func->getBasicBlockList().erase(BI);
-    } else {                                     // Scan alive blocks...
-      for (BasicBlock::iterator II = BI->begin(); II != --BI->end(); )
-        if (!LiveSet.count(II)) {             // Is this instruction alive?
-          // Nope... remove the instruction from it's basic block...
-          if (isa<CallInst>(II))
-            ++NumCallRemoved;
-          else
-            ++NumInstRemoved;
-          II = BI->getInstList().erase(II);
-          MadeChanges = true;
-        } else {
-          ++II;
-        }
-
-      ++BI;                                           // Increment iterator...
-    }
+  // (because they have dropped all of their references).
+  for (std::vector<BasicBlock*>::iterator I = DeadBlocks.begin(),
+         E = DeadBlocks.end(); I != E; ++I)
+    Func->getBasicBlockList().erase(*I);
 
   return MadeChanges;
 }
