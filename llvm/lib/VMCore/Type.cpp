@@ -364,6 +364,9 @@ FunctionType::FunctionType(const Type *Result,
   ContainedTys.push_back(PATypeHandle(Result, this));
 
   for (unsigned i = 0; i != Params.size(); ++i) {
+    assert((Params[i]->isFirstClassType() || isa<OpaqueType>(Params[i])) &&
+           "Function arguments must be value types!");
+
     ContainedTys.push_back(PATypeHandle(Params[i], this));
     isAbstract |= Params[i]->isAbstract();
   }
