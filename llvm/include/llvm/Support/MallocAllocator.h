@@ -72,6 +72,7 @@ inline bool operator!=(const MallocAllocator<T>&, const MallocAllocator<T>&) {
 }
 } // End llvm namespace
 
+#if defined(__linux__) && !(defined (sparc) || defined (_sparc))
 namespace std {
   template<typename Type, typename Type2>
   struct _Alloc_traits<Type, ::llvm::MallocAllocator<Type2> > {
@@ -81,5 +82,6 @@ namespace std {
     typedef ::llvm::MallocAllocator<Type> allocator_type;
   };
 }
+#endif
 
 #endif
