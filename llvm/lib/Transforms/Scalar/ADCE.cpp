@@ -284,9 +284,23 @@ bool ADCE::doADCE() {
         // sweep over the program can safely delete dead instructions without
         // other dead instructions still refering to them.
         //
-        for (BasicBlock::iterator I = BB->begin(), E = --BB->end(); I != E; ++I)
-          if (!LiveSet.count(I))                // Is this instruction alive?
+        for (BasicBlock::iterator I = BB->begin(), E = --BB->end(); I != E; )
+          if (!LiveSet.count(I)) {              // Is this instruction alive?
             I->dropAllReferences();             // Nope, drop references... 
+            if (PHINode *PN = dyn_cast<PHINode>(&*I)) {
+              // We don't want to leave PHI nodes in the program that have
+              // #arguments != #predecessors, so we remove them now.
+              //
+              PN->replaceAllUsesWith(Constant::getNullValue(PN->getType()));
+
+              // Delete the instruction...
+              I = BB->getInstList().erase(I);
+            } else {
+              ++I;
+            }
+          } else {
+            ++I;
+          }
       }
   }
 
