@@ -23,7 +23,7 @@ TargetLowering::TargetLowering(TargetMachine &tm)
 
   IsLittleEndian = TD.isLittleEndian();
   PointerTy = getValueType(TD.getIntPtrType());
-  memset(UnsupportedOps, 0, ISD::BUILTIN_OP_END*sizeof(short));
+  memset(UnsupportedOps, 0, 128*sizeof(short));
   memset(RegClassForVT, 0,MVT::LAST_VALUETYPE*sizeof(TargetRegisterClass*));
 }
 
