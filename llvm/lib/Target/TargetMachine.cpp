@@ -52,6 +52,13 @@ TargetMachine::TargetMachine(const std::string &name, IntrinsicLowering *il,
                            IntAl, ShortAl, ByteAl, BoolAl) {
   IL = il ? il : new DefaultIntrinsicLowering();
 }
+
+TargetMachine::TargetMachine(const std::string &name, IntrinsicLowering *il,
+                             const TargetData &TD)
+  : Name(name), DataLayout(TD) {
+  IL = il ? il : new DefaultIntrinsicLowering();
+}
+
 TargetMachine::TargetMachine(const std::string &name, IntrinsicLowering *il,
                              const Module &M)
   : Name(name), DataLayout(name, &M) {
