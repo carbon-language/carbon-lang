@@ -59,7 +59,7 @@ namespace llvm {
 bool ReduceMisCodegenFunctions::TestFuncs(const std::vector<Function*> &Funcs,
                                           bool KeepFiles) {
   std::cout << "Testing functions: ";
-  BD.PrintFunctionList(Funcs);
+  PrintFunctionList(Funcs);
   std::cout << "\t";
 
   // Clone the module for the two halves of the program we want.

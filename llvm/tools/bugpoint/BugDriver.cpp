@@ -68,16 +68,16 @@ BugDriver::BugDriver(const char *toolname)
 /// ParseInputFile - Given a bytecode or assembly input filename, parse and
 /// return it, or return null if not possible.
 ///
-Module *BugDriver::ParseInputFile(const std::string &InputFilename) const {
+Module *llvm::ParseInputFile(const std::string &InputFilename) {
   Module *Result = 0;
   try {
     Result = ParseBytecodeFile(InputFilename);
     if (!Result && !(Result = ParseAssemblyFile(InputFilename))){
-      std::cerr << ToolName << ": could not read input file '"
+      std::cerr << "bugpoint: could not read input file '"
                 << InputFilename << "'!\n";
     }
   } catch (const ParseException &E) {
-    std::cerr << ToolName << ": " << E.getMessage() << "\n";
+    std::cerr << "bugpoint: " << E.getMessage() << "\n";
     Result = 0;
   }
   return Result;
@@ -199,11 +199,12 @@ bool BugDriver::run() {
   }
 }
 
-void BugDriver::PrintFunctionList(const std::vector<Function*> &Funcs) {
-  for (unsigned i = 0, e = Funcs.size(); i != e; ++i) {
-    if (i) std::cout << ", ";
-    std::cout << Funcs[i]->getName();
-  }
+void llvm::PrintFunctionList(const std::vector<Function*> &Funcs) {
+  unsigned NumPrint = Funcs.size();
+  if (NumPrint > 10) NumPrint = 10;
+  for (unsigned i = 0; i != NumPrint; ++i)
+    std::cout << " " << Funcs[i]->getName();
+  if (NumPrint < Funcs.size())
+    std::cout << "... <" << Funcs.size() << " total>";
   std::cout << std::flush;
 }
-

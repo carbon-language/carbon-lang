@@ -28,8 +28,6 @@ class AbstractInterpreter;
 class Instruction;
 
 class DebugCrashes;
-class ReduceMiscompilingPasses;
-class ReduceMiscompilingFunctions;
 
 class CBE;
 class GCC;
@@ -47,8 +45,6 @@ class BugDriver {
 
   // FIXME: sort out public/private distinctions...
   friend class ReducePassList;
-  friend class ReduceMiscompilingPasses;
-  friend class ReduceMiscompilingFunctions;
   friend class ReduceMisCodegenFunctions;
 
 public:
@@ -64,6 +60,9 @@ public:
   void addPasses(It I, It E) { PassesToRun.insert(PassesToRun.end(), I, E); }
   void setPassesToRun(const std::vector<const PassInfo*> &PTR) {
     PassesToRun = PTR;
+  }
+  const std::vector<const PassInfo*> &getPassesToRun() const {
+    return PassesToRun;
   }
 
   /// run - The top level method that is invoked after all of the instance
@@ -120,7 +119,15 @@ public:
     return Result;
   }
 
-  const Module *getProgram() const { return Program; }
+  Module *getProgram() const { return Program; }
+
+  /// swapProgramIn - Set the current module to the specified module, returning
+  /// the old one.
+  Module *swapProgramIn(Module *M) {
+    Module *OldProgram = Program;
+    Program = M;
+    return OldProgram;
+  }
 
   /// setNewProgram - If we reduce or update the program somehow, call this
   /// method to update bugdriver with it.  This deletes the old module and sets
@@ -183,17 +190,6 @@ public:
   /// program or if the loop extractor crashes.
   Module *ExtractLoop(Module *M);
 
-private:
-  /// ParseInputFile - Given a bytecode or assembly input filename, parse and
-  /// return it, or return null if not possible.
-  ///
-  Module *ParseInputFile(const std::string &InputFilename) const;
-
-  /// writeProgramToFile - This writes the current "Program" to the named
-  /// bytecode file.  If an error occurs, true is returned.
-  ///
-  bool writeProgramToFile(const std::string &Filename, Module *M = 0) const;
-
   /// runPasses - Run the specified passes on Program, outputting a bytecode
   /// file and writting the filename into OutputFile if successful.  If the
   /// optimizations fail for some reason (optimizer crashes), return true,
@@ -205,6 +201,11 @@ private:
   bool runPasses(const std::vector<const PassInfo*> &PassesToRun,
                  std::string &OutputFilename, bool DeleteOutput = false,
 		 bool Quiet = false) const;
+private:
+  /// writeProgramToFile - This writes the current "Program" to the named
+  /// bytecode file.  If an error occurs, true is returned.
+  ///
+  bool writeProgramToFile(const std::string &Filename, Module *M = 0) const;
 
   /// runPasses - Just like the method above, but this just returns true or
   /// false indicating whether or not the optimizer crashed on the specified
@@ -216,20 +217,26 @@ private:
     return runPasses(PassesToRun, Filename, DeleteOutput);
   }
 
-  /// PrintFunctionList - prints out list of problematic functions
-  ///
-  static void PrintFunctionList(const std::vector<Function*> &Funcs);
-
   /// initializeExecutionEnvironment - This method is used to set up the
   /// environment for executing LLVM programs.
   ///
   bool initializeExecutionEnvironment();
 };
 
+/// ParseInputFile - Given a bytecode or assembly input filename, parse and
+/// return it, or return null if not possible.
+///
+Module *ParseInputFile(const std::string &InputFilename);
+
+
 /// getPassesString - Turn a list of passes into a string which indicates the
 /// command line options that must be passed to add the passes.
 ///
 std::string getPassesString(const std::vector<const PassInfo*> &Passes);
+
+/// PrintFunctionList - prints out list of problematic functions
+///
+void PrintFunctionList(const std::vector<Function*> &Funcs);
 
 // DeleteFunctionBody - "Remove" the function by deleting all of it's basic
 // blocks, making it external.

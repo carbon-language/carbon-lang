@@ -20,8 +20,7 @@
 #include "Support/FileUtilities.h"
 using namespace llvm;
 
-namespace llvm {
-
+namespace {
   class ReduceMiscompilingPasses : public ListReducer<const PassInfo*> {
     BugDriver &BD;
   public:
@@ -88,7 +87,7 @@ ReduceMiscompilingPasses::doTest(std::vector<const PassInfo*> &Prefix,
   // Ok, so now we know that the prefix passes work, try running the suffix
   // passes on the result of the prefix passes.
   //
-  Module *PrefixOutput = BD.ParseInputFile(BytecodeResult);
+  Module *PrefixOutput = ParseInputFile(BytecodeResult);
   if (PrefixOutput == 0) {
     std::cerr << BD.getToolName() << ": Error reading bytecode file '"
               << BytecodeResult << "'!\n";
@@ -100,8 +99,7 @@ ReduceMiscompilingPasses::doTest(std::vector<const PassInfo*> &Prefix,
             << "' passes compile correctly after the '"
             << getPassesString(Prefix) << "' passes: ";
 
-  Module *OriginalInput = BD.Program;
-  BD.Program = PrefixOutput;
+  Module *OriginalInput = BD.swapProgramIn(PrefixOutput);
   if (BD.runPasses(Suffix, BytecodeResult, false/*delete*/, true/*quiet*/)) {
     std::cerr << " Error running this sequence of passes" 
               << " on the input program!\n";
@@ -119,12 +117,11 @@ ReduceMiscompilingPasses::doTest(std::vector<const PassInfo*> &Prefix,
 
   // Otherwise, we must not be running the bad pass anymore.
   std::cout << "yup.\n";      // No miscompilation!
-  BD.Program = OriginalInput; // Restore original program
-  delete PrefixOutput;        // Free experiment
+  delete BD.swapProgramIn(OriginalInput); // Restore orig program & free test
   return NoFailure;
 }
 
-namespace llvm {
+namespace {
   class ReduceMiscompilingFunctions : public ListReducer<Function*> {
     BugDriver &BD;
   public:
@@ -143,28 +140,52 @@ namespace llvm {
   };
 }
 
+/// TestMergedProgram - Given two modules, link them together and run the
+/// program, checking to see if the program matches the diff.  If the diff
+/// matches, return false, otherwise return true.  In either case, we delete
+/// both input modules before we return.
+static bool TestMergedProgram(BugDriver &BD, Module *M1, Module *M2) {
+  // Link the two portions of the program back to together.
+  std::string ErrorMsg;
+  if (LinkModules(M1, M2, &ErrorMsg)) {
+    std::cerr << BD.getToolName() << ": Error linking modules together:"
+              << ErrorMsg << "\n";
+    exit(1);
+  }
+  delete M2;  // We are done with this module...
+
+  Module *OldProgram = BD.swapProgramIn(M1);
+
+  // Execute the program.  If it does not match the expected output, we must
+  // return true.
+  bool Broken = BD.diffProgram();
+
+  // Delete the linked module & restore the original
+  delete BD.swapProgramIn(OldProgram);
+  return Broken;
+}
+
 bool ReduceMiscompilingFunctions::TestFuncs(const std::vector<Function*>&Funcs){
   // Test to see if the function is misoptimized if we ONLY run it on the
   // functions listed in Funcs.
   std::cout << "Checking to see if the program is misoptimized when "
             << (Funcs.size()==1 ? "this function is" : "these functions are")
             << " run through the pass"
-            << (BD.PassesToRun.size() == 1 ? "" : "es") << ": ";
-  BD.PrintFunctionList(Funcs);
+            << (BD.getPassesToRun().size() == 1 ? "" : "es") << ": ";
+  PrintFunctionList(Funcs);
   std::cout << "\n";
 
   // Split the module into the two halves of the program we want.
-  Module *ToOptimize = CloneModule(BD.getProgram());
-  Module *ToNotOptimize = SplitFunctionsOutOfModule(ToOptimize, Funcs);
+  Module *ToNotOptimize = CloneModule(BD.getProgram());
+  Module *ToOptimize = SplitFunctionsOutOfModule(ToNotOptimize, Funcs);
 
   // Run the optimization passes on ToOptimize, producing a transformed version
   // of the functions being tested.
-  Module *OldProgram = BD.Program;
-  BD.Program = ToOptimize;
+  Module *OldProgram = BD.swapProgramIn(ToOptimize);
 
   std::cout << "  Optimizing functions being tested: ";
   std::string BytecodeResult;
-  if (BD.runPasses(BD.PassesToRun, BytecodeResult, false/*delete*/,
+  if (BD.runPasses(BD.getPassesToRun(), BytecodeResult, false/*delete*/,
                    true/*quiet*/)) {
     std::cerr << " Error running this sequence of passes" 
               << " on the input program!\n";
@@ -174,35 +195,18 @@ bool ReduceMiscompilingFunctions::TestFuncs(const std::vector<Function*>&Funcs){
 
   std::cout << "done.\n";
 
-  delete BD.getProgram();   // Delete the old "ToOptimize" module
-  BD.Program = BD.ParseInputFile(BytecodeResult);
-
-  if (BD.Program == 0) {
+  // Delete the old "ToOptimize" module
+  delete BD.swapProgramIn(OldProgram);
+  Module *Optimized = ParseInputFile(BytecodeResult);
+  if (Optimized == 0) {
     std::cerr << BD.getToolName() << ": Error reading bytecode file '"
               << BytecodeResult << "'!\n";
     exit(1);
   }
   removeFile(BytecodeResult);  // No longer need the file on disk
 
-  // Seventh step: Link the optimized part of the program back to the
-  // unoptimized part of the program.
-  //
-  if (LinkModules(BD.Program, ToNotOptimize, &BytecodeResult)) {
-    std::cerr << BD.getToolName() << ": Error linking modules together:"
-              << BytecodeResult << "\n";
-    exit(1);
-  }
-  delete ToNotOptimize;  // We are done with this module...
-
   std::cout << "  Checking to see if the merged program executes correctly: ";
-
-  // Eighth step: Execute the program.  If it does not match the expected
-  // output, then 'Funcs' are being misoptimized!
-  bool Broken = BD.diffProgram();
-
-  delete BD.Program;         // Delete the hacked up program
-  BD.Program = OldProgram;   // Restore the original
-
+  bool Broken = TestMergedProgram(BD, Optimized, ToNotOptimize);
   std::cout << (Broken ? " nope.\n" : " yup.\n");
   return Broken;
 }
@@ -220,8 +224,8 @@ bool BugDriver::debugMiscompilation() {
   }
 
   std::cout << "\n*** Found miscompiling pass"
-            << (PassesToRun.size() == 1 ? "" : "es") << ": "
-            << getPassesString(PassesToRun) << "\n";
+            << (getPassesToRun().size() == 1 ? "" : "es") << ": "
+            << getPassesString(getPassesToRun()) << "\n";
   EmitProgressBytecode("passinput");
 
   // Okay, now that we have reduced the list of passes which are causing the
@@ -244,9 +248,9 @@ bool BugDriver::debugMiscompilation() {
 
   // Output a bunch of bytecode files for the user...
   std::cout << "Outputting reduced bytecode files which expose the problem:\n";
-  Module *ToOptimize = CloneModule(getProgram());
-  Module *ToNotOptimize = SplitFunctionsOutOfModule(ToOptimize,
-                                                    MiscompiledFunctions);
+  Module *ToNotOptimize = CloneModule(getProgram());
+  Module *ToOptimize = SplitFunctionsOutOfModule(ToNotOptimize,
+                                                 MiscompiledFunctions);
 
   std::cout << "  Non-optimized portion: ";
   std::swap(Program, ToNotOptimize);

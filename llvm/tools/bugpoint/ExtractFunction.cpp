@@ -7,8 +7,8 @@
 // 
 //===----------------------------------------------------------------------===//
 //
-// This file implements a method that extracts a function from program, cleans
-// it up, and returns it as a new module.
+// This file implements several methods that are used to extract functions,
+// loops, or portions of a module from the rest of the module.
 //
 //===----------------------------------------------------------------------===//
 
@@ -76,6 +76,8 @@ Module *BugDriver::deleteInstructionFromProgram(const Instruction *I,
   // Make sure that the appropriate target data is always used...
   Passes.add(new TargetData("bugpoint", Result));
 
+  /// FIXME: If this used runPasses() like the methods below, we could get rid
+  /// of the -disable-* options!
   if (Simplification > 1 && !NoDCE)
     Passes.add(createDeadCodeEliminationPass());
   if (Simplification && !DisableSimplifyCFG)

@@ -59,7 +59,7 @@ ReducePassList::doTest(std::vector<const PassInfo*> &Prefix,
 
     OrigProgram = BD.Program;
 
-    BD.Program = BD.ParseInputFile(PrefixOutput);
+    BD.Program = ParseInputFile(PrefixOutput);
     if (BD.Program == 0) {
       std::cerr << BD.getToolName() << ": Error reading bytecode file '"
                 << PrefixOutput << "'!\n";
@@ -85,7 +85,7 @@ ReducePassList::doTest(std::vector<const PassInfo*> &Prefix,
 }
 
 namespace llvm {
-  class ReduceCrashingFunctions : public ListReducer<const Function*> {
+  class ReduceCrashingFunctions : public ListReducer<Function*> {
     BugDriver &BD;
     bool (*TestFn)(BugDriver &, Module *);
   public:
@@ -93,8 +93,8 @@ namespace llvm {
                             bool (*testFn)(BugDriver &, Module *))
       : BD(bd), TestFn(testFn) {}
     
-    virtual TestResult doTest(std::vector<const Function*> &Prefix,
-                              std::vector<const Function*> &Kept) {
+    virtual TestResult doTest(std::vector<Function*> &Prefix,
+                              std::vector<Function*> &Kept) {
       if (!Kept.empty() && TestFuncs(Kept))
         return KeepSuffix;
       if (!Prefix.empty() && TestFuncs(Prefix))
@@ -102,11 +102,11 @@ namespace llvm {
       return NoFailure;
     }
     
-    bool TestFuncs(std::vector<const Function*> &Prefix);
+    bool TestFuncs(std::vector<Function*> &Prefix);
   };
 }
 
-bool ReduceCrashingFunctions::TestFuncs(std::vector<const Function*> &Funcs) {
+bool ReduceCrashingFunctions::TestFuncs(std::vector<Function*> &Funcs) {
   // Clone the program to try hacking it apart...
   Module *M = CloneModule(BD.getProgram());
   
@@ -119,13 +119,8 @@ bool ReduceCrashingFunctions::TestFuncs(std::vector<const Function*> &Funcs) {
     Functions.insert(CMF);
   }
 
-  std::cout << "Checking for crash with only these functions:";
-  unsigned NumPrint = Funcs.size();
-  if (NumPrint > 10) NumPrint = 10;
-  for (unsigned i = 0; i != NumPrint; ++i)
-    std::cout << " " << Funcs[i]->getName();
-  if (NumPrint < Funcs.size())
-    std::cout << "... <" << Funcs.size() << " total>";
+  std::cout << "Checking for crash with only these functions: ";
+  PrintFunctionList(Funcs);
   std::cout << ": ";
 
   // Loop over and delete any functions which we aren't supposed to be playing
@@ -295,8 +290,8 @@ static bool DebugACrash(BugDriver &BD,  bool (*TestFn)(BugDriver &, Module *)) {
   }
   
   // Now try to reduce the number of functions in the module to something small.
-  std::vector<const Function*> Functions;
-  for (Module::const_iterator I = BD.getProgram()->begin(),
+  std::vector<Function*> Functions;
+  for (Module::iterator I = BD.getProgram()->begin(),
          E = BD.getProgram()->end(); I != E; ++I)
     if (!I->isExternal())
       Functions.push_back(I);
