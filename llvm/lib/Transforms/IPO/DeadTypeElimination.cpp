@@ -24,7 +24,6 @@
 #include "llvm/iOther.h"
 #include <algorithm>
 
-static const Type *PtrArrSByte = 0; // '[sbyte]*' type
 static const Type *PtrSByte = 0;    // 'sbyte*' type
 
 // ConvertCallTo - Convert a call to a varargs function with no arg types
@@ -226,10 +225,8 @@ bool CleanupGCCOutput::doPassInitialization(Module *M) {
 
   FUT.doPassInitialization(M);
 
-  if (PtrArrSByte == 0) {
-    PtrArrSByte = PointerType::get(ArrayType::get(Type::SByteTy));
-    PtrSByte    = PointerType::get(Type::SByteTy);
-  }
+  if (PtrSByte == 0)
+    PtrSByte = PointerType::get(Type::SByteTy);
 
   if (M->hasSymbolTable()) {
     SymbolTable *ST = M->getSymbolTable();
@@ -304,7 +301,7 @@ bool CleanupGCCOutput::doOneCleanupPass(Method *M) {
 
       if (CallInst *CI = dyn_cast<CallInst>(I)) {
         if (CI->getCalledValue() == Malloc) {      // Replace call to malloc?
-          MallocInst *MallocI = new MallocInst(PtrArrSByte, CI->getOperand(1),
+          MallocInst *MallocI = new MallocInst(PtrSByte, CI->getOperand(1),
                                                CI->getName());
           CI->setName("");
           BI = BIL.insert(BI, MallocI)+1;
