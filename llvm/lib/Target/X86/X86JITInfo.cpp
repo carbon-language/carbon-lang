@@ -137,4 +137,3 @@ void X86JITInfo::relocate(void *Function, MachineRelocation *MR,
     }
   }
 }
-

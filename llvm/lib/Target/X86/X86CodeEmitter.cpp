@@ -141,7 +141,7 @@ void Emitter::emitPCRelativeBlockAddress(const MachineBasicBlock *MBB) {
 ///
 void Emitter::emitGlobalAddressForCall(GlobalValue *GV) {
   MCE.addRelocation(MachineRelocation(MCE.getCurrentPCOffset(),
-                                      X86::reloc_pcrel_word, GV));
+                                      X86::reloc_pcrel_word, GV, 0, true));
   MCE.emitWord(0);
 }
 
