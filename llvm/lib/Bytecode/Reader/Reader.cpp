@@ -742,8 +742,8 @@ void BytecodeReader::ParseInstruction(std::vector<unsigned> &Oprnds,
       
       FirstVariableOperand = FTy->getNumParams();
 
-      if ((Oprnds.size()-FirstVariableOperand) & 1) // Must be pairs of type/value
-        error("Invalid call instruction!");
+      if ((Oprnds.size()-FirstVariableOperand) & 1) 
+        error("Invalid call instruction!");   // Must be pairs of type/value
         
       for (unsigned i = FirstVariableOperand, e = Oprnds.size(); 
            i != e; i += 2)
@@ -913,8 +913,8 @@ void BytecodeReader::ParseInstruction(std::vector<unsigned> &Oprnds,
 
 /// Get a particular numbered basic block, which might be a forward reference.
 /// This works together with ParseBasicBlock to handle these forward references
-/// in a clean manner.  This function is used when constructing phi, br, switch, 
-/// and other instructions that reference basic blocks. Blocks are numbered 
+/// in a clean manner.  This function is used when constructing phi, br, switch,
+/// and other instructions that reference basic blocks. Blocks are numbered
 /// sequentially as they appear in the function.
 BasicBlock *BytecodeReader::getBasicBlock(unsigned ID) {
   // Make sure there is room in the table...
@@ -1826,7 +1826,8 @@ void BytecodeReader::ParseModuleGlobalInfo() {
     }
 
     // Notify handler about the global value.
-    if (Handler) Handler->handleGlobalVariable(ElTy, isConstant, Linkage, SlotNo, initSlot);
+    if (Handler)
+      Handler->handleGlobalVariable(ElTy, isConstant, Linkage, SlotNo,initSlot);
 
     // Get next item
     VarType = read_vbr_uint();
@@ -1959,17 +1960,17 @@ void BytecodeReader::ParseVersionInfo() {
   case 2:                // 1.2.5 (Not Released)
 
     // LLVM 1.2 and earlier had two-word block headers. This is a bit wasteful,
-    // especially for small files where the 8 bytes per block is a large fraction
-    // of the total block size. In LLVM 1.3, the block type and length are 
-    // compressed into a single 32-bit unsigned integer. 27 bits for length, 5
-    // bits for block type.
+    // especially for small files where the 8 bytes per block is a large
+    // fraction of the total block size. In LLVM 1.3, the block type and length
+    // are compressed into a single 32-bit unsigned integer. 27 bits for length,
+    // 5 bits for block type.
     hasLongBlockHeaders = true;
 
     // LLVM 1.2 and earlier wrote type slot numbers as vbr_uint32. In LLVM 1.3
-    // this has been reduced to vbr_uint24. It shouldn't make much difference 
-    // since we haven't run into a module with > 24 million types, but for safety
-    // the 24-bit restriction has been enforced in 1.3 to free some bits in
-    // various places and to ensure consistency.
+    // this has been reduced to vbr_uint24. It shouldn't make much difference
+    // since we haven't run into a module with > 24 million types, but for
+    // safety the 24-bit restriction has been enforced in 1.3 to free some bits
+    // in various places and to ensure consistency.
     has32BitTypes = true;
 
     // LLVM 1.2 and earlier did not provide a target triple nor a list of 
