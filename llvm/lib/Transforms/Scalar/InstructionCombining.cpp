@@ -197,11 +197,8 @@ static inline Value *dyn_castNotVal(Value *V) {
     return BinaryOperator::getNotArgument(cast<BinaryOperator>(V));
 
   // Constants can be considered to be not'ed values...
-  if (ConstantIntegral *C = dyn_cast<ConstantIntegral>(V)) {
-    Constant *NC = *ConstantIntegral::getAllOnesValue(C->getType()) ^ *C;
-    assert(NC && "Couldn't constant fold an exclusive or!");
-    return NC;
-  }
+  if (ConstantIntegral *C = dyn_cast<ConstantIntegral>(V))
+    return *ConstantIntegral::getAllOnesValue(C->getType()) ^ *C;
   return 0;
 }
 
