@@ -19,24 +19,31 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <stdlib.h>
 
-static int SavedArgc = 0;
-static const char **SavedArgv = 0;
+static char *SavedArgs = 0;
+static unsigned SavedArgsLength = 0;
 
 /* save_arguments - Save argc and argv as passed into the program for the file
  * we output.
  */
 void save_arguments(int argc, const char **argv) {
-  if (SavedArgv) return;  /* This can be called multiple times */
+  unsigned Length, i;
+  if (SavedArgs || !argv) return;  /* This can be called multiple times */
 
-  /* FIXME: this should copy the arguments out of argv into a string of our own,
-   * because the program might modify the arguments!
-   */
-  SavedArgc = argc;
-  SavedArgv = argv;
+  for (Length = 0, i = 0; i != (unsigned)argc; ++i)
+    Length += strlen(argv[i])+1;
+
+  SavedArgs = (char*)malloc(Length);
+  for (Length = 0, i = 0; i != (unsigned)argc; ++i) {
+    unsigned Len = strlen(argv[i]);
+    memcpy(SavedArgs+Length, argv[i], Len);
+    Length += Len;
+    SavedArgs[Length++] = ' ';
+  }
+
+  SavedArgsLength = Length;
 }
-
-
 
 
 /* write_profiling_data - Write a raw block of profiling counters out to the
@@ -62,16 +69,14 @@ void write_profiling_data(enum ProfilingType PT, unsigned *Start,
 
     /* Output the command line arguments to the file. */
     {
-      const char *Args = "";
       int PTy = Arguments;
-      int ArgLength = strlen(Args);
       int Zeros = 0;
       write(OutFile, &PTy, sizeof(int));
-      write(OutFile, &ArgLength, sizeof(int));
-      write(OutFile, Args, ArgLength);
+      write(OutFile, &SavedArgsLength, sizeof(unsigned));
+      write(OutFile, SavedArgs, SavedArgsLength);
       /* Pad out to a multiple of four bytes */
-      if (ArgLength & 3)
-        write(OutFile, &Zeros, 4-(ArgLength&3));
+      if (SavedArgsLength & 3)
+        write(OutFile, &Zeros, 4-(SavedArgsLength&3));
     }
   }
  
