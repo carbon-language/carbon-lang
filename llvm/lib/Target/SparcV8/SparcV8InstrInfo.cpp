@@ -17,7 +17,6 @@
 using namespace llvm;
 
 SparcV8InstrInfo::SparcV8InstrInfo()
-  : TargetInstrInfo(SparcV8Insts,
-                    sizeof(SparcV8Insts)/sizeof(SparcV8Insts[0]), 0) {
+  : TargetInstrInfo(SparcV8Insts, sizeof(SparcV8Insts)/sizeof(SparcV8Insts[0])){
 }
 

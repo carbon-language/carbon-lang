@@ -416,12 +416,8 @@ InitializeMaxConstantsTable()
 //   default to member functions in base class TargetInstrInfo. 
 //---------------------------------------------------------------------------
 
-/*ctor*/
 SparcV9InstrInfo::SparcV9InstrInfo()
-  : TargetInstrInfo(SparcV9MachineInstrDesc,
-                    /*descSize = */ V9::NUM_TOTAL_OPCODES,
-                    /*numRealOpCodes = */ V9::NUM_REAL_OPCODES)
-{
+  : TargetInstrInfo(SparcV9MachineInstrDesc, V9::NUM_TOTAL_OPCODES) {
   InitializeMaxConstantsTable();
 }
 
