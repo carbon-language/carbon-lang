@@ -15,8 +15,7 @@
 #include "llvm/Type.h"
 #include "llvm/Constants.h"
 #include "llvm/BasicBlock.h"
-
-namespace llvm {
+using namespace llvm;
 
 //===----------------------------------------------------------------------===//
 //                             BinaryOperator Class
@@ -196,5 +195,3 @@ Instruction::BinaryOps SetCondInst::getSwappedCondition(BinaryOps Opcode) {
   case SetLE: return SetGE;
   }
 }
-
-} // End llvm namespace

@@ -18,8 +18,7 @@
 #include "llvm/Constant.h"
 #include "llvm/Type.h"
 #include <algorithm>  // find
-
-namespace llvm {
+using namespace llvm;
 
 //===----------------------------------------------------------------------===//
 //                            TerminatorInst Class
@@ -28,6 +27,13 @@ namespace llvm {
 TerminatorInst::TerminatorInst(Instruction::TermOps iType, Instruction *IB) 
   : Instruction(Type::VoidTy, iType, "", IB) {
 }
+
+TerminatorInst::TerminatorInst(Instruction::TermOps iType, BasicBlock *IAE)
+  : Instruction(Type::VoidTy, iType) {
+  if (IAE) IAE->getInstList().push_back(this);
+}
+
+
 
 //===----------------------------------------------------------------------===//
 //                               PHINode Class
@@ -58,5 +64,3 @@ Value *PHINode::removeIncomingValue(unsigned Idx, bool DeletePHIIfEmpty) {
   }
   return Removed;
 }
-
-} // End llvm namespace

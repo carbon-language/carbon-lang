@@ -16,8 +16,8 @@
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
-
-namespace llvm {
+#include "llvm/Support/CallSite.h"
+using namespace llvm;
 
 //===----------------------------------------------------------------------===//
 //                        CallInst Implementation
@@ -124,6 +124,32 @@ InvokeInst::InvokeInst(Value *Func, BasicBlock *IfNormal,
     Operands.push_back(Use(params[i], this));
 }
 
+InvokeInst::InvokeInst(Value *Func, BasicBlock *IfNormal,
+		       BasicBlock *IfException,
+                       const std::vector<Value*> &params,
+		       const std::string &Name, BasicBlock *InsertAtEnd)
+  : TerminatorInst(cast<FunctionType>(cast<PointerType>(Func->getType())
+				    ->getElementType())->getReturnType(),
+		   Instruction::Invoke, Name) {
+  Operands.reserve(3+params.size());
+  Operands.push_back(Use(Func, this));
+  Operands.push_back(Use((Value*)IfNormal, this));
+  Operands.push_back(Use((Value*)IfException, this));
+  const FunctionType *MTy = 
+    cast<FunctionType>(cast<PointerType>(Func->getType())->getElementType());
+  
+  const FunctionType::ParamTypes &PL = MTy->getParamTypes();
+  assert((params.size() == PL.size()) || 
+	 (MTy->isVarArg() && params.size() > PL.size()) &&
+	 "Calling a function with bad signature");
+  
+  for (unsigned i = 0; i < params.size(); i++)
+    Operands.push_back(Use(params[i], this));
+
+  if (InsertAtEnd)
+    InsertAtEnd->getInstList().push_back(this);
+}
+
 InvokeInst::InvokeInst(const InvokeInst &CI) 
   : TerminatorInst(CI.getType(), Instruction::Invoke) {
   Operands.reserve(CI.Operands.size());
@@ -146,12 +172,6 @@ Function *InvokeInst::getCalledFunction() {
   return 0;
 }
 
-} // End llvm namespace
-
-#include "llvm/Support/CallSite.h"
-
-namespace llvm {
-
 Function *CallSite::getCalledFunction() const {
   Value *Callee = getCalledValue();
   if (Function *F = dyn_cast<Function>(Callee))
@@ -160,5 +180,3 @@ Function *CallSite::getCalledFunction() const {
     return cast<Function>(CPR->getValue());
   return 0;
 }
-
-} // End llvm namespace

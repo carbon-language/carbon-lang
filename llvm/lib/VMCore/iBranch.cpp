@@ -15,12 +15,36 @@
 #include "llvm/iTerminators.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/Type.h"
+using namespace llvm;
 
-namespace llvm {
+// Out-of-line ReturnInst method, put here so the C++ compiler can choose to
+// emit the vtable for the class in this translation unit.
+void ReturnInst::setSuccessor(unsigned idx, BasicBlock *NewSucc) {
+  assert(0 && "ReturnInst has no successors!");
+}
+
+
 
 BranchInst::BranchInst(BasicBlock *True, BasicBlock *False, Value *Cond,
                        Instruction *InsertBefore) 
   : TerminatorInst(Instruction::Br, InsertBefore) {
+  assert(True != 0 && "True branch destination may not be null!!!");
+  Operands.reserve(False ? 3 : 1);
+  Operands.push_back(Use(True, this));
+  if (False) {
+    Operands.push_back(Use(False, this));
+    Operands.push_back(Use(Cond, this));
+  }
+
+  assert(!!False == !!Cond &&
+	 "Either both cond and false or neither can be specified!");
+  assert((Cond == 0 || Cond->getType() == Type::BoolTy) && 
+         "May only branch on boolean predicates!!!!");
+}
+
+BranchInst::BranchInst(BasicBlock *True, BasicBlock *False, Value *Cond,
+                       BasicBlock *InsertAtEnd) 
+  : TerminatorInst(Instruction::Br, InsertAtEnd) {
   assert(True != 0 && "True branch destination may not be null!!!");
   Operands.reserve(False ? 3 : 1);
   Operands.push_back(Use(True, this));
@@ -42,6 +66,13 @@ BranchInst::BranchInst(BasicBlock *True, Instruction *InsertBefore)
   Operands.push_back(Use(True, this));
 }
 
+BranchInst::BranchInst(BasicBlock *True, BasicBlock *InsertAtEnd) 
+  : TerminatorInst(Instruction::Br, InsertAtEnd) {
+  assert(True != 0 && "True branch destination may not be null!!!");
+  Operands.reserve(1);
+  Operands.push_back(Use(True, this));
+}
+
 BranchInst::BranchInst(const BranchInst &BI) : TerminatorInst(Instruction::Br) {
   Operands.reserve(BI.Operands.size());
   Operands.push_back(Use(BI.Operands[0], this));
@@ -51,5 +82,3 @@ BranchInst::BranchInst(const BranchInst &BI) : TerminatorInst(Instruction::Br) {
     Operands.push_back(Use(BI.Operands[2], this));
   }
 }
-
-} // End llvm namespace

@@ -15,8 +15,7 @@
 #include "llvm/SymbolTable.h"
 #include "llvm/Type.h"
 #include "Support/LeakDetector.h"
-
-namespace llvm {
+using namespace llvm;
 
 Instruction::Instruction(const Type *ty, unsigned it, const std::string &Name,
                          Instruction *InsertBefore)
@@ -165,5 +164,3 @@ bool Instruction::isTrapping(unsigned op) {
     return false;
   }
 }
-
-} // End llvm namespace
