@@ -374,19 +374,12 @@ Andersens::getModRefInfo(CallSite CS, Value *P, unsigned Size) {
       Node *N1 = getNode(P);
       bool PointsToUniversalSet = false;
 
-      for (Node::iterator NI = N1->begin(), E = N1->end(); NI != E; ++NI) {
-        Node *PN = *NI;
-        if (PN->begin() == PN->end())
-          continue;  // P doesn't point to anything.
-        // Get the first pointee.
-        Node *FirstPointee = *PN->begin();
-        if (FirstPointee == &GraphNodes[UniversalSet]) {
-          PointsToUniversalSet = true;
-          break;
-        }
-      }
+      if (N1->begin() == N1->end())
+        return NoModRef;  // P doesn't point to anything.
 
-      if (!PointsToUniversalSet)
+      // Get the first pointee.
+      Node *FirstPointee = *N1->begin();
+      if (FirstPointee != &GraphNodes[UniversalSet])
         return NoModRef;  // P doesn't point to the universal set.
     }
 
