@@ -7,9 +7,9 @@
 #include "llvm/Analysis/DSGraph.h"
 #include "llvm/Function.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/Target/TargetData.h"
 #include "Support/STLExtras.h"
 #include "Support/Statistic.h"
-#include "llvm/Target/TargetData.h"
 #include <algorithm>
 #include <set>
 
@@ -31,15 +31,42 @@ using namespace DataStructureAnalysis;
 
 DSNode::DSNode(enum NodeTy NT, const Type *T) : NodeType(NT) {
   // If this node is big enough to have pointer fields, add space for them now.
-  if (T != Type::VoidTy && !isa<FunctionType>(T))  // Avoid TargetData assert's
-    LinkIndex.resize(TD.getTypeSize(T), -1);
+  if (T != Type::VoidTy && !isa<FunctionType>(T)) { // Avoid TargetData assert's
+    MergeMap.resize(TD.getTypeSize(T));
+
+    // Assign unique values to all of the elements of MergeMap
+    if (MergeMap.size() < 128) {
+      // Handle the common case of reasonable size structures...
+      for (unsigned i = 0, e = MergeMap.size(); i != e; ++i)
+        MergeMap[i] = -1-i;   // Assign -1, -2, -3, ...
+    } else {
+      // It's possible that we have something really big here.  In this case,
+      // divide the object into chunks until it will fit into 128 elements.
+      unsigned Multiple = MergeMap.size()/128;
+
+      // It's probably an array, and probably some power of two in size.
+      // Because of this, find the biggest power of two that is bigger than
+      // multiple to use as our real Multiple.
+      unsigned RealMultiple = 2;
+      while (RealMultiple < Multiple) RealMultiple <<= 1;
+
+      unsigned RealBound = MergeMap.size()/RealMultiple;
+      assert(RealBound <= 128 && "Math didn't work out right");
+
+      // Now go through and assign indexes that are between -1 and -128
+      // inclusive
+      //
+      for (unsigned i = 0, e = MergeMap.size(); i != e; ++i)
+        MergeMap[i] = -1-(i % RealBound);   // Assign -1, -2, -3...
+    }
+  }
 
   TypeEntries.push_back(std::make_pair(T, 0));
 }
 
 // DSNode copy constructor... do not copy over the referrers list!
 DSNode::DSNode(const DSNode &N)
-  : Links(N.Links), LinkIndex(N.LinkIndex),
+  : Links(N.Links), MergeMap(N.MergeMap),
     TypeEntries(N.TypeEntries), Globals(N.Globals), NodeType(N.NodeType) {
 }
 
@@ -68,27 +95,89 @@ void DSNode::addGlobal(GlobalValue *GV) {
 }
 
 
+/// setLink - Set the link at the specified offset to the specified
+/// NodeHandle, replacing what was there.  It is uncommon to use this method,
+/// instead one of the higher level methods should be used, below.
+///
+void DSNode::setLink(unsigned i, const DSNodeHandle &NH) {
+  // Create a new entry in the Links vector to hold a new element for offset.
+  if (!hasLink(i)) {
+    signed char NewIdx = Links.size();
+    // Check to see if we allocate more than 128 distinct links for this node.
+    // If so, just merge with the last one.  This really shouldn't ever happen,
+    // but it should work regardless of whether it does or not.
+    //
+    if (NewIdx >= 0) {
+      Links.push_back(NH);             // Allocate space: common case
+    } else {                           // Wrap around?  Too many links?
+      NewIdx--;                        // Merge with whatever happened last
+      assert(NewIdx > 0 && "Should wrap back around");
+      std::cerr << "\n*** DSNode found that requires more than 128 "
+                << "active links at once!\n\n";
+    } 
+
+    signed char OldIdx = MergeMap[i];
+    assert (OldIdx < 0 && "Shouldn't contain link!");
+
+    // Make sure that anything aliasing this field gets updated to point to the
+    // new link field.
+    rewriteMergeMap(OldIdx, NewIdx);
+    assert(MergeMap[i] == NewIdx && "Field not replaced!");
+  } else {
+    Links[MergeMap[i]] = NH;
+  }
+}
+
 // addEdgeTo - Add an edge from the current node to the specified node.  This
 // can cause merging of nodes in the graph.
 //
 void DSNode::addEdgeTo(unsigned Offset, const DSNodeHandle &NH) {
-  assert(Offset < LinkIndex.size() && "Offset out of range!");
+  assert(Offset < getSize() && "Offset out of range!");
   if (NH.getNode() == 0) return;       // Nothing to do
 
-  if (LinkIndex[Offset] == -1) {       // No merging to perform...
-    LinkIndex[Offset] = Links.size();  // Allocate a new link...
-    Links.push_back(NH);
-    return;
+  if (DSNodeHandle *ExistingNH = getLink(Offset)) {
+    // Merge the two nodes...
+    ExistingNH->mergeWith(NH);
+  } else {                             // No merging to perform...
+    setLink(Offset, NH);               // Just force a link in there...
   }
+}
 
-  unsigned Idx = (unsigned)LinkIndex[Offset];
-  if (!Links[Idx].getNode()) {         // No merging to perform
-    Links[Idx] = NH;
-    return;
+/// mergeMappedValues - This is the higher level form of rewriteMergeMap.  It is
+/// fully capable of merging links together if neccesary as well as simply
+/// rewriting the map entries.
+///
+void DSNode::mergeMappedValues(signed char V1, signed char V2) {
+  assert(V1 != V2 && "Cannot merge two identical mapped values!");
+  
+  if (V1 < 0) {  // If there is no outgoing link from V1, merge it with V2
+    if (V2 < 0 && V1 > V2)
+       // If both are not linked, merge to the field closer to 0
+      rewriteMergeMap(V2, V1);
+    else
+      rewriteMergeMap(V1, V2);
+  } else if (V2 < 0) {           // Is V2 < 0 && V1 >= 0?
+    rewriteMergeMap(V2, V1);     // Merge into the one with the link...
+  } else {                       // Otherwise, links exist at both locations
+    // Merge Links[V1] with Links[V2] so they point to the same place now...
+    Links[V1].mergeWith(Links[V2]);
+
+    // Merge the V2 link into V1 so that we reduce the overall value of the
+    // links are reduced...
+    //
+    if (V2 < V1) std::swap(V1, V2);     // Ensure V1 < V2
+    rewriteMergeMap(V2, V1);            // After this, V2 is "dead"
+
+    // Change the user of the last link to use V2 instead
+    if ((unsigned)V2 != Links.size()-1) {
+      rewriteMergeMap(Links.size()-1, V2);  // Point to V2 instead of last el...
+      // Make sure V2 points the right DSNode
+      Links[V2] = Links.back();
+    }
+
+    // Reduce the number of distinct outgoing links...
+    Links.pop_back();
   }
-
-  // Merge the two nodes...
-  Links[Idx].mergeWith(NH);
 }
 
 
@@ -171,6 +260,10 @@ void DSNode::mergeWith(const DSNodeHandle &NH, unsigned Offset) {
   //
   unsigned NOffset = NH.getOffset()-Offset;
 
+  unsigned NSize = N->getSize();
+  assert(NSize+NOffset <= getSize() &&
+         "Don't know how to merge extend a merged nodes size yet!");
+
   // Remove all edges pointing at N, causing them to point to 'this' instead.
   // Make sure to adjust their offset, not just the node pointer.
   //
@@ -179,13 +272,46 @@ void DSNode::mergeWith(const DSNodeHandle &NH, unsigned Offset) {
     Ref = DSNodeHandle(this, NOffset+Ref.getOffset());
   }
 
+  // We must merge fields in this node due to nodes merged in the source node.
+  // In order to handle this we build a map that converts from the source node's
+  // MergeMap values to our MergeMap values.  This map is indexed by the
+  // expression: MergeMap[SMM+SourceNodeSize] so we need to allocate at least
+  // 2*SourceNodeSize elements of space for the mapping.  We can do this because
+  // we know that there are at most SourceNodeSize outgoing links in the node
+  // (thus that many positive values) and at most SourceNodeSize distinct fields
+  // (thus that many negative values).
+  //
+  std::vector<signed char> MergeMapMap(NSize*2, 127);
+
+  // Loop through the structures, merging them together...
+  for (unsigned i = 0, e = NSize; i != e; ++i) {
+    // Get what this byte of N maps to...
+    signed char NElement = N->MergeMap[i];
+
+    // Get what we map this byte to...
+    signed char Element = MergeMap[i+NOffset];
+    // We use 127 as a sentinal and don't check for it's existence yet...
+    assert(Element != 127 && "MergeMapMap doesn't permit 127 values yet!");
+
+    signed char CurMappedVal = MergeMapMap[NElement+NSize];
+    if (CurMappedVal == 127) {               // Haven't seen this NElement yet?
+      MergeMapMap[NElement+NSize] = Element; // Map the two together...
+    } else if (CurMappedVal != Element) {
+      // If we are mapping two different fields together this means that we need
+      // to merge fields in the current node due to merging in the source node.
+      //
+      mergeMappedValues(CurMappedVal, Element);
+      MergeMapMap[NElement+NSize] = MergeMap[i+NOffset];
+    }
+  }
+
   // Make all of the outgoing links of N now be outgoing links of this.  This
   // can cause recursive merging!
   //
-  for (unsigned i = 0, e = N->LinkIndex.size(); i != e; ++i)
-    if (N->LinkIndex[i] != -1) {
-      addEdgeTo(i+NOffset, N->Links[N->LinkIndex[i]]);
-      N->LinkIndex[i] = -1;  // Reduce unneccesary edges in graph. N is dead
+  for (unsigned i = 0, e = NSize; i != e; ++i)
+    if (DSNodeHandle *Link = N->getLink(i)) {
+      addEdgeTo(i+NOffset, *Link);
+      N->MergeMap[i] = -1;  // Kill outgoing edge
     }
 
   // Now that there are no outgoing edges, all of the Links are dead.
