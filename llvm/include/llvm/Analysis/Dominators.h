@@ -296,9 +296,8 @@ public:
   ///
   Node *createNewNode(BasicBlock *BB, Node *IDomNode) {
     assert(getNode(BB) == 0 && "Block already in dominator tree!");
-    Node *New = Nodes[BB] = new Node(BB, IDomNode);
-    if (IDomNode) IDomNode->addChild(New);
-    return New;
+    assert(IDomNode && "Not immediate dominator specified for block!");
+    return Nodes[BB] = IDomNode->addChild(new Node(BB, IDomNode));
   }
 
   /// changeImmediateDominator - This method is used to update the dominator
