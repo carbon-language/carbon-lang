@@ -26,27 +26,27 @@ namespace Intrinsic {
   enum ID {
     not_intrinsic = 0,   // Must be zero
 
-    // Varargs handling intrinsics...
+    // Varargs handling intrinsics.
     vastart,        // Used to implement the va_start macro in C
     vaend,          // Used to implement the va_end macro in C
     vacopy,         // Used to implement the va_copy macro in C
 
-    // Code generator intrinsics...
+    // Code generator intrinsics.
     returnaddress,  // Yields the return address of a dynamic call frame
     frameaddress,   // Yields the frame address of a dynamic call frame
 
-    // Standard libc functions...
-    memcpy,         // Copy non-overlapping memory blocks
-    memmove,        // Copy potentially overlapping memory blocks
-    memset,         // Fill memory with a byte value
-
-    // Setjmp/Longjmp intrinsics...
+    // setjmp/longjmp intrinsics.
     setjmp,         // Used to represent a setjmp call in C
     longjmp,        // Used to represent a longjmp call in C
     sigsetjmp,      // Used to represent a sigsetjmp call in C
     siglongjmp,     // Used to represent a siglongjmp call in C
 
-    // Debugging intrinsics...
+    // Garbage Collection intrinsics.
+    gcroot,         // Defines a new GC root on the stack
+    gcread,         // Defines a read of a heap object  (for read barriers)
+    gcwrite,        // Defines a write to a heap object (for write barriers)
+
+    // Debugging intrinsics.
     dbg_stoppoint,    // Represents source lines and breakpointable places
     dbg_region_start, // Start of a region
     dbg_region_end,   // End of a region
@@ -54,10 +54,15 @@ namespace Intrinsic {
     dbg_declare,      // Declare a local object
 
 
-    // Standard libm functions...
+    // Standard libc functions.
+    memcpy,         // Copy non-overlapping memory blocks
+    memmove,        // Copy potentially overlapping memory blocks
+    memset,         // Fill memory with a byte value
+
+    // Standard libm functions.
     
 
-    // Input/Output intrinsics
+    // Input/Output intrinsics.
     readport,
     writeport,
     readio,
@@ -65,7 +70,7 @@ namespace Intrinsic {
 
     //===------------------------------------------------------------------===//
     // This section defines intrinsic functions used to represent Alpha
-    // instructions...
+    // instructions.
     //
     alpha_ctlz,     // CTLZ (count leading zero): counts the number of leading
                     // zeros in the given ulong value
