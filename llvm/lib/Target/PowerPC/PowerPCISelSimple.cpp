@@ -722,7 +722,7 @@ static SetCondInst *canFoldSetCCIntoBranchOrSelect(Value *V) {
 // order of the opcodes.
 //
 static unsigned getSetCCNumber(unsigned Opcode) {
-  switch(Opcode) {
+  switch (Opcode) {
   default: assert(0 && "Unknown setcc instruction!");
   case Instruction::SetEQ: return 0;
   case Instruction::SetNE: return 1;
@@ -730,6 +730,30 @@ static unsigned getSetCCNumber(unsigned Opcode) {
   case Instruction::SetGE: return 3;
   case Instruction::SetGT: return 4;
   case Instruction::SetLE: return 5;
+  }
+}
+
+static unsigned getPPCOpcodeForSetCCNumber(unsigned Opcode) {
+  switch (Opcode) {
+  default: assert(0 && "Unknown setcc instruction!");
+  case Instruction::SetEQ: return PPC32::BEQ;
+  case Instruction::SetNE: return PPC32::BNE;
+  case Instruction::SetLT: return PPC32::BLT;
+  case Instruction::SetGE: return PPC32::BGE;
+  case Instruction::SetGT: return PPC32::BGT;
+  case Instruction::SetLE: return PPC32::BLE;
+  }
+}
+
+static unsigned invertPPCBranchOpcode(unsigned Opcode) {
+  switch (Opcode) {
+  default: assert(0 && "Unknown PPC32 branch opcode!");
+  case PPC32::BEQ: return PPC32::BNE;
+  case PPC32::BNE: return PPC32::BEQ;
+  case PPC32::BLT: return PPC32::BGE;
+  case PPC32::BGE: return PPC32::BLT;
+  case PPC32::BGT: return PPC32::BLE;
+  case PPC32::BLE: return PPC32::BGT;
   }
 }
 
@@ -751,7 +775,7 @@ unsigned ISel::EmitComparison(unsigned OpNum, Value *Op0, Value *Op1,
 
   // Special case handling of: cmp R, i
   if (isa<ConstantPointerNull>(Op1)) {
-      BuildMI(*MBB, IP, PPC32::CMPI, 2, PPC32::CR0).addReg(Op0r).addImm(0);
+    BuildMI(*MBB, IP, PPC32::CMPI, 2, PPC32::CR0).addReg(Op0r).addImm(0);
   } else if (ConstantInt *CI = dyn_cast<ConstantInt>(Op1)) {
     if (Class == cByte || Class == cShort || Class == cInt) {
       unsigned Op1v = CI->getRawValue();
@@ -839,6 +863,17 @@ unsigned ISel::EmitComparison(unsigned OpNum, Value *Op0, Value *Op1,
 /// visitSetCondInst - 
 ///
 void ISel::visitSetCondInst(SetCondInst &I) {
+  // If the only user of this SetCC is a branch or a select, we don't have to
+  // code-gen this instruction, it will be done more compactly for us later.
+  // FIXME: perhaps there could be several branches/selects using this SetCC and
+  // this SetCC could still be a valid candidate for folding?  Then the problem
+  // becomes with live range, whether or not the uses span function calls, other
+  // branches with can overwrite the condition register, etc.
+  User *user = I.hasOneUse() ? I.use_back() : 0;
+  if (canFoldSetCCIntoBranchOrSelect(&I) && 
+      (isa<BranchInst>(user) || isa<SelectInst>(user)))
+    return;
+  
   unsigned Op0Reg = getReg(I.getOperand(0));
   unsigned Op1Reg = getReg(I.getOperand(1));
   unsigned DestReg = getReg(I);
@@ -848,21 +883,7 @@ void ISel::visitSetCondInst(SetCondInst &I) {
   // Compare the two values.
   BuildMI(BB, PPC32::CMPW, 2, PPC32::CR0).addReg(Op0Reg).addReg(Op1Reg);
   
-  unsigned BranchIdx;
-  switch (I.getOpcode()) {
-  default: assert(0 && "Unknown setcc instruction!");
-  case Instruction::SetEQ: BranchIdx = 0; break;
-  case Instruction::SetNE: BranchIdx = 1; break;
-  case Instruction::SetLT: BranchIdx = 2; break;
-  case Instruction::SetGT: BranchIdx = 3; break;
-  case Instruction::SetLE: BranchIdx = 4; break;
-  case Instruction::SetGE: BranchIdx = 5; break;
-  }
-  static unsigned OpcodeTab[] = {
-    PPC32::BEQ, PPC32::BNE, PPC32::BLT, PPC32::BGT, PPC32::BLE, PPC32::BGE
-  };
-  unsigned Opcode = OpcodeTab[BranchIdx];
-
+  unsigned Opcode = getPPCOpcodeForSetCCNumber(I.getOpcode());
   MachineBasicBlock *thisMBB = BB;
   const BasicBlock *LLVM_BB = BB->getBasicBlock();
   //  thisMBB:
@@ -886,7 +907,7 @@ void ISel::visitSetCondInst(SetCondInst &I) {
 
   //  copy0MBB:
   //   %FalseValue = li 0
-  //   ba sinkMBB
+  //   b sinkMBB
   BB = copy0MBB;
   unsigned FalseValue = makeAnotherReg(I.getType());
   BuildMI(BB, PPC32::LI, 1, FalseValue).addZImm(0);
@@ -903,7 +924,7 @@ void ISel::visitSetCondInst(SetCondInst &I) {
 
   //  copy1MBB:
   //   %TrueValue = li 1
-  //   ba sinkMBB
+  //   b sinkMBB
   BB = copy1MBB;
   unsigned TrueValue = makeAnotherReg (I.getType ());
   BuildMI(BB, PPC32::LI, 1, TrueValue).addZImm(1);
@@ -1091,9 +1112,9 @@ void ISel::visitBranchInst(BranchInst &BI) {
     BB->addSuccessor (MBBMap[BI.getSuccessor(1)]);
   
   BasicBlock *NextBB = getBlockAfter(BI.getParent());  // BB after current one
-  
+
   if (!BI.isConditional()) {  // Unconditional branch?
-    if (BI.getSuccessor(0) != NextBB)
+    if (BI.getSuccessor(0) != NextBB) 
       BuildMI(BB, PPC32::B, 1).addMBB(MBBMap[BI.getSuccessor(0)]);
     return;
   }
@@ -1104,14 +1125,14 @@ void ISel::visitBranchInst(BranchInst &BI) {
     // Nope, cannot fold setcc into this branch.  Emit a branch on a condition
     // computed some other way...
     unsigned condReg = getReg(BI.getCondition());
-    BuildMI(BB, PPC32::CMPLI, 3, PPC32::CR0).addImm(0).addReg(condReg)
+    BuildMI(BB, PPC32::CMPLI, 3, PPC32::CR1).addImm(0).addReg(condReg)
       .addImm(0);
     if (BI.getSuccessor(1) == NextBB) {
       if (BI.getSuccessor(0) != NextBB)
-        BuildMI(BB, PPC32::BC, 3).addImm(4).addImm(2)
+        BuildMI(BB, PPC32::BNE, 2).addReg(PPC32::CR1)
           .addMBB(MBBMap[BI.getSuccessor(0)]);
     } else {
-      BuildMI(BB, PPC32::BC, 3).addImm(12).addImm(2)
+      BuildMI(BB, PPC32::BNE, 2).addReg(PPC32::CR1)
         .addMBB(MBBMap[BI.getSuccessor(1)]);
       
       if (BI.getSuccessor(0) != NextBB)
@@ -1121,26 +1142,20 @@ void ISel::visitBranchInst(BranchInst &BI) {
   }
 
   unsigned OpNum = getSetCCNumber(SCI->getOpcode());
+  unsigned Opcode = getPPCOpcodeForSetCCNumber(SCI->getOpcode());
   MachineBasicBlock::iterator MII = BB->end();
   OpNum = EmitComparison(OpNum, SCI->getOperand(0), SCI->getOperand(1), BB,MII);
-
-  const Type *CompTy = SCI->getOperand(0)->getType();
-  bool isSigned = CompTy->isSigned() && getClassB(CompTy) != cFP;
   
-  static const unsigned BITab[6] = { 2, 2, 0, 0, 1, 1 };
-  unsigned BO_true = (OpNum % 2 == 0) ? 12 : 4;
-  unsigned BO_false = (OpNum % 2 == 0) ? 4 : 12;
-  unsigned BIval = BITab[0];
-
   if (BI.getSuccessor(0) != NextBB) {
-    BuildMI(BB, PPC32::BC, 3).addImm(BO_true).addImm(BIval)
+    BuildMI(BB, Opcode, 2).addReg(PPC32::CR0)
       .addMBB(MBBMap[BI.getSuccessor(0)]);
     if (BI.getSuccessor(1) != NextBB)
       BuildMI(BB, PPC32::B, 1).addMBB(MBBMap[BI.getSuccessor(1)]);
   } else {
     // Change to the inverse condition...
     if (BI.getSuccessor(1) != NextBB) {
-      BuildMI(BB, PPC32::BC, 3).addImm(BO_false).addImm(BIval)
+      Opcode = invertPPCBranchOpcode(Opcode);
+      BuildMI(BB, Opcode, 2).addReg(PPC32::CR0)
         .addMBB(MBBMap[BI.getSuccessor(1)]);
     }
   }
