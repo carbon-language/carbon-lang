@@ -134,11 +134,11 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
       MachineInstr *New;
       if (Old->getOpcode() == IA64::ADJUSTCALLSTACKDOWN) {
 	New=BuildMI(IA64::ADDIMM22, 2, IA64::r12).addReg(IA64::r12)
-	  .addImm(-Amount);
+	  .addSImm(-Amount);
       } else {
 	assert(Old->getOpcode() == IA64::ADJUSTCALLSTACKUP);
 	New=BuildMI(IA64::ADDIMM22, 2, IA64::r12).addReg(IA64::r12)
-	  .addImm(Amount);
+	  .addSImm(Amount);
       }
 
       // Replace the pseudo instruction with a new instruction...
