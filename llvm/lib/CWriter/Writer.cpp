@@ -27,96 +27,7 @@ using std::string;
 using std::map;
 using std::ostream;
 
-static std::string getConstStrValue(const Constant* CPV);
 
-
-static std::string getConstArrayStrValue(const Constant* CPV) {
-  std::string Result;
-  
-  // As a special case, print the array as a string if it is an array of
-  // ubytes or an array of sbytes with positive values.
-  // 
-  const Type *ETy = cast<ArrayType>(CPV->getType())->getElementType();
-  bool isString = (ETy == Type::SByteTy || ETy == Type::UByteTy);
-
-  // Make sure the last character is a null char, as automatically added by C
-  if (CPV->getNumOperands() == 0 ||
-      !cast<Constant>(*(CPV->op_end()-1))->isNullValue())
-    isString = false;
-  
-  if (isString) {
-    Result = "\"";
-    // Do not include the last character, which we know is null
-    for (unsigned i = 0, e = CPV->getNumOperands()-1; i != e; ++i) {
-      unsigned char C = (ETy == Type::SByteTy) ?
-        (unsigned char)cast<ConstantSInt>(CPV->getOperand(i))->getValue() :
-        (unsigned char)cast<ConstantUInt>(CPV->getOperand(i))->getValue();
-      
-      if (isprint(C)) {
-        Result += C;
-      } else {
-        switch (C) {
-        case '\n': Result += "\\n"; break;
-        case '\t': Result += "\\t"; break;
-        case '\r': Result += "\\r"; break;
-        case '\v': Result += "\\v"; break;
-        case '\a': Result += "\\a"; break;
-        default:
-          Result += "\\x";
-          Result += ( C/16  < 10) ? ( C/16 +'0') : ( C/16 -10+'A');
-          Result += ((C&15) < 10) ? ((C&15)+'0') : ((C&15)-10+'A');
-          break;
-        }
-      }
-    }
-    Result += "\"";
-  } else {
-    Result = "{";
-    if (CPV->getNumOperands()) {
-      Result += " " +  getConstStrValue(cast<Constant>(CPV->getOperand(0)));
-      for (unsigned i = 1; i < CPV->getNumOperands(); i++)
-        Result += ", " + getConstStrValue(cast<Constant>(CPV->getOperand(i)));
-    }
-    Result += " }";
-  }
-  
-  return Result;
-}
-
-static std::string getConstStrValue(const Constant* CPV) {
-  switch (CPV->getType()->getPrimitiveID()) {
-  case Type::BoolTyID:  return CPV == ConstantBool::False ? "0" : "1";
-  case Type::SByteTyID:
-  case Type::ShortTyID:
-  case Type::IntTyID:   return itostr(cast<ConstantSInt>(CPV)->getValue());
-  case Type::LongTyID:  return itostr(cast<ConstantSInt>(CPV)->getValue())+"ll";
-
-  case Type::UByteTyID:
-  case Type::UShortTyID:return utostr(cast<ConstantUInt>(CPV)->getValue());
-  case Type::UIntTyID:  return utostr(cast<ConstantUInt>(CPV)->getValue())+"u";
-  case Type::ULongTyID:return utostr(cast<ConstantUInt>(CPV)->getValue())+"ull";
-
-  case Type::FloatTyID:
-  case Type::DoubleTyID: return ftostr(cast<ConstantFP>(CPV)->getValue());
-
-  case Type::ArrayTyID:  return getConstArrayStrValue(CPV);
-
-  case Type::StructTyID: {
-    std::string Result = "{";
-    if (CPV->getNumOperands()) {
-      Result += " " + getConstStrValue(cast<Constant>(CPV->getOperand(0)));
-      for (unsigned i = 1; i < CPV->getNumOperands(); i++)
-        Result += ", " + getConstStrValue(cast<Constant>(CPV->getOperand(i)));
-    }
-    return Result + " }";
-  }
-
-  default:
-    std::cerr << "Unknown constant type: " << CPV << "\n";
-    abort();
-    return "";
-  }
-}
 
 // Pass the Type* variable and and the variable name and this prints out the 
 // variable declaration.
@@ -233,6 +144,9 @@ namespace {
     
     void printFunction(Function *);
 
+    void printConstant(Constant *CPV);
+    void printConstantArray(ConstantArray *CPA);
+
     // isInlinableInst - Attempt to inline instructions into their uses to build
     // trees as much as possible.  To do this, we have to consistently decide
     // what is acceptable to inline, so that variable declarations don't get
@@ -314,16 +228,133 @@ string CWriter::getValueName(const Value *V) {
   return "ltmp_" + itostr(Slot) + "_" + utostr(V->getType()->getUniqueID());
 }
 
-void CWriter::writeOperandInternal(Value *Operand) {
-  if (Operand->hasName()) {   
-    Out << getValueName(Operand);
-  } else if (Constant *CPV = dyn_cast<Constant>(Operand)) {
+void CWriter::printConstantArray(ConstantArray *CPA) {
+
+  // As a special case, print the array as a string if it is an array of
+  // ubytes or an array of sbytes with positive values.
+  // 
+  const Type *ETy = CPA->getType()->getElementType();
+  bool isString = (ETy == Type::SByteTy || ETy == Type::UByteTy);
+
+  // Make sure the last character is a null char, as automatically added by C
+  if (CPA->getNumOperands() == 0 ||
+      !cast<Constant>(*(CPA->op_end()-1))->isNullValue())
+    isString = false;
+  
+  if (isString) {
+    Out << "\"";
+    // Do not include the last character, which we know is null
+    for (unsigned i = 0, e = CPA->getNumOperands()-1; i != e; ++i) {
+      unsigned char C = (ETy == Type::SByteTy) ?
+        (unsigned char)cast<ConstantSInt>(CPA->getOperand(i))->getValue() :
+        (unsigned char)cast<ConstantUInt>(CPA->getOperand(i))->getValue();
+      
+      if (isprint(C)) {
+        Out << C;
+      } else {
+        switch (C) {
+        case '\n': Out << "\\n"; break;
+        case '\t': Out << "\\t"; break;
+        case '\r': Out << "\\r"; break;
+        case '\v': Out << "\\v"; break;
+        case '\a': Out << "\\a"; break;
+        default:
+          Out << "\\x";
+          Out << ( C/16  < 10) ? ( C/16 +'0') : ( C/16 -10+'A');
+          Out << ((C&15) < 10) ? ((C&15)+'0') : ((C&15)-10+'A');
+          break;
+        }
+      }
+    }
+    Out << "\"";
+  } else {
+    Out << "{";
+    if (CPA->getNumOperands()) {
+      Out << " ";
+      printConstant(cast<Constant>(CPA->getOperand(0)));
+      for (unsigned i = 1, e = CPA->getNumOperands(); i != e; ++i) {
+        Out << ", ";
+        printConstant(cast<Constant>(CPA->getOperand(i)));
+      }
+    }
+    Out << " }";
+  }
+}
+
+
+// printConstant - The LLVM Constant to C Constant converter.
+void CWriter::printConstant(Constant *CPV) {
+  if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(CPV)) {
+    switch (CE->getOpcode()) {
+    default:
+      std::cerr << "CWriter Error: Unhandled constant expression: "
+                << CE << "\n";
+      abort();
+    }
+  }
+
+  switch (CPV->getType()->getPrimitiveID()) {
+  case Type::BoolTyID:
+    Out << (CPV == ConstantBool::False ? "0" : "1"); break;
+  case Type::SByteTyID:
+  case Type::ShortTyID:
+  case Type::IntTyID:
+    Out << cast<ConstantSInt>(CPV)->getValue(); break;
+  case Type::LongTyID:
+    Out << cast<ConstantSInt>(CPV)->getValue() << "ll"; break;
+
+  case Type::UByteTyID:
+  case Type::UShortTyID:
+    Out << cast<ConstantUInt>(CPV)->getValue(); break;
+  case Type::UIntTyID:
+    Out << cast<ConstantUInt>(CPV)->getValue() << "u"; break;
+  case Type::ULongTyID:
+    Out << cast<ConstantUInt>(CPV)->getValue() << "ull"; break;
+
+  case Type::FloatTyID:
+  case Type::DoubleTyID:
+    Out << cast<ConstantFP>(CPV)->getValue(); break;
+
+  case Type::ArrayTyID:
+    printConstantArray(cast<ConstantArray>(CPV));
+    break;
+
+  case Type::StructTyID: {
+    Out << "{";
+    if (CPV->getNumOperands()) {
+      Out << " ";
+      printConstant(cast<Constant>(CPV->getOperand(0)));
+      for (unsigned i = 1, e = CPV->getNumOperands(); i != e; ++i) {
+        Out << ", ";
+        printConstant(cast<Constant>(CPV->getOperand(i)));
+      }
+    }
+    Out << " }";
+    break;
+  }
+
+  case Type::PointerTyID:
     if (isa<ConstantPointerNull>(CPV)) {
       Out << "((";
       printType(CPV->getType(), "");
       Out << ")NULL)";
-    } else
-      Out << getConstStrValue(CPV); 
+      break;
+    } else if (ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(CPV)) {
+      writeOperand(CPR->getValue());
+      break;
+    }
+    // FALL THROUGH
+  default:
+    std::cerr << "Unknown constant type: " << CPV << "\n";
+    abort();
+  }
+}
+
+void CWriter::writeOperandInternal(Value *Operand) {
+  if (Operand->hasName()) {   
+    Out << getValueName(Operand);
+  } else if (Constant *CPV = dyn_cast<Constant>(Operand)) {
+    printConstant(CPV); 
   } else {
     int Slot = Table.getValSlot(Operand);
     assert(Slot >= 0 && "Malformed LLVM!");
