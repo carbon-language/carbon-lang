@@ -19,6 +19,7 @@
 #define LLVM_ANALYSIS_DOMINATORS_H
 
 #include "llvm/Pass.h"
+#include "Support/GraphTraits.h"
 #include <set>
 class Instruction;
 
@@ -341,6 +342,24 @@ private:
   void calculate(const DominatorSet &DS);
 };
 
+//===-------------------------------------
+// DominatorTree GraphTraits specialization so the DominatorTree can be
+// iterable by generic graph iterators.
+
+template <> struct GraphTraits<DominatorTree*> {
+  typedef DominatorTree::Node NodeType;
+  typedef NodeType::iterator  ChildIteratorType;
+
+  static NodeType *getEntryNode(DominatorTree *DT) {
+    return DT->getNode(DT->getRoot());
+  }
+  static inline ChildIteratorType child_begin(NodeType* N) {
+    return N->begin();
+  }
+  static inline ChildIteratorType child_end(NodeType* N) {
+    return N->end();
+  }
+};
 
 //===----------------------------------------------------------------------===//
 //
