@@ -85,9 +85,7 @@ struct TimeRecord {      // TimeRecord - Data we collect and print for each pass
   void passStart(const TimeRecord &T);
   void passEnd(const TimeRecord &T);
   void sum(const TimeRecord &TR);
-  bool operator<(const TimeRecord &TR) const {
-    return UserTime+SystemTime < TR.UserTime+TR.SystemTime;
-  }
+  bool operator<(const TimeRecord &TR) const;
 
   void print(const char *PassName, const TimeRecord &TotalTime) const;
 };

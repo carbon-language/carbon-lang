@@ -107,6 +107,17 @@ static TimeRecord getTimeRecord() {
   return Result;
 }
 
+bool TimeRecord::operator<(const TimeRecord &TR) const {
+  // Primary sort key is User+System time
+  if (UserTime+SystemTime < TR.UserTime+TR.SystemTime)
+    return true;
+  if (UserTime+SystemTime > TR.UserTime+TR.SystemTime)
+    return false;
+
+  // Secondary sort key is Wall Time
+  return Elapsed < TR.Elapsed;
+}
+
 void TimeRecord::passStart(const TimeRecord &T) {
   Elapsed    -= T.Elapsed;
   UserTime   -= T.UserTime;
