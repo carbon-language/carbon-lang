@@ -60,6 +60,21 @@ ValueSubclass *ValueHolder<ValueSubclass,ItemParentType>::remove(iterator &DI) {
 }
 
 template<class ValueSubclass, class ItemParentType>
+ValueSubclass *ValueHolder<ValueSubclass,ItemParentType>::pop_back() {
+  assert(!ValueList.empty() && "Can't pop_back an empty valuelist!");
+  ValueSubclass *i = ValueList.back();
+  ValueList.pop_back();
+  i->setParent(0);  // I don't own you anymore... byebye...
+  
+  // You don't get to be in the symbol table anymore... byebye
+  if (i->hasName() && Parent)
+    Parent->getSymbolTable()->remove(i);
+  
+  return i;
+}
+
+
+template<class ValueSubclass, class ItemParentType>
 ValueSubclass *ValueHolder<ValueSubclass,ItemParentType>
 ::remove(const iterator &DI) {
   assert(DI != ValueList.end() && 

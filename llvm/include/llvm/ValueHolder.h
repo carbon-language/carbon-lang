@@ -85,6 +85,7 @@ public:
   ValueSubclass *remove(iterator &DI);         // Defined in ValueHolderImpl.h
   ValueSubclass *remove(const iterator &DI);   // Defined in ValueHolderImpl.h
   void           remove(ValueSubclass *D);     // Defined in ValueHolderImpl.h
+  ValueSubclass *pop_back();                   // Defined in ValueHolderImpl.h
 
   void push_front(ValueSubclass *Inst);        // Defined in ValueHolderImpl.h
   void push_back(ValueSubclass *Inst);         // Defined in ValueHolderImpl.h
