@@ -11,20 +11,20 @@
 
 #include "SparcInternals.h"
 #include "SparcInstrSelectionSupport.h"
+#include "llvm/Constants.h"
+#include "llvm/DerivedTypes.h"
+#include "llvm/Function.h"
+#include "llvm/iTerminators.h"
 #include "llvm/CodeGen/InstrSelection.h"
 #include "llvm/CodeGen/InstrSelectionSupport.h"
+#include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFunctionInfo.h"
 #include "llvm/CodeGen/MachineCodeForInstruction.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
-#include "llvm/Function.h"
-#include "llvm/Constants.h"
-#include "llvm/iTerminators.h"
-#include "llvm/DerivedTypes.h"
 
 static const uint32_t MAXLO   = (1 << 10) - 1; // set bits set by %lo(*)
 static const uint32_t MAXSIMM = (1 << 12) - 1; // set bits in simm13 field of OR
-
 
 //---------------------------------------------------------------------------
 // Function ConvertConstantToIntType
@@ -496,24 +496,48 @@ UltraSparcInstrInfo::CreateCodeToLoadConst(const TargetMachine& target,
       
     // First, create a tmp register to be used by the SETX sequence.
     TmpInstruction* tmpReg =
-      new TmpInstruction(mcfi, PointerType::get(val->getType()), val);
+      new TmpInstruction(mcfi, PointerType::get(val->getType()));
       
     // Create another TmpInstruction for the address register
     TmpInstruction* addrReg =
-      new TmpInstruction(mcfi, PointerType::get(val->getType()), val);
+      new TmpInstruction(mcfi, PointerType::get(val->getType()));
     
-    // Put the address (a symbolic name) into a register
-    CreateSETXLabel(target, val, tmpReg, addrReg, mvec);
-    
-    // Generate the load instruction
-    int64_t zeroOffset = 0;           // to avoid ambiguity with (Value*) 0
+    // Get the constant pool index for this constant
+    MachineConstantPool *CP = MachineFunction::get(F).getConstantPool();
+    Constant *C = cast<Constant>(val);
+    unsigned CPI = CP->getConstantPoolIndex(C);
+
+    // Put the address of the constant into a register
+    MachineInstr* MI;
+  
+    MI = BuildMI(V9::SETHI, 2).addConstantPoolIndex(CPI).addRegDef(tmpReg);
+    MI->setOperandHi64(0);
+    mvec.push_back(MI);
+  
+    MI = BuildMI(V9::ORi, 3).addReg(tmpReg).addConstantPoolIndex(CPI)
+      .addRegDef(tmpReg);
+    MI->setOperandLo64(1);
+    mvec.push_back(MI);
+  
+    mvec.push_back(BuildMI(V9::SLLXi6, 3).addReg(tmpReg).addZImm(32)
+                   .addRegDef(tmpReg));
+    MI = BuildMI(V9::SETHI, 2).addConstantPoolIndex(CPI).addRegDef(addrReg);
+    MI->setOperandHi32(0);
+    mvec.push_back(MI);
+  
+    MI = BuildMI(V9::ORr, 3).addReg(addrReg).addReg(tmpReg).addRegDef(addrReg);
+    mvec.push_back(MI);
+  
+    MI = BuildMI(V9::ORi, 3).addReg(addrReg).addConstantPoolIndex(CPI)
+      .addRegDef(addrReg);
+    MI->setOperandLo32(1);
+    mvec.push_back(MI);
+
+    // Now load the constant from out ConstantPool label
     unsigned Opcode = ChooseLoadInstruction(val->getType());
     Opcode = convertOpcodeFromRegToImm(Opcode);
-    mvec.push_back(BuildMI(Opcode, 3).addReg(addrReg).
-                   addSImm(zeroOffset).addRegDef(dest));
-      
-    // Make sure constant is emitted to constant pool in assembly code.
-    MachineFunction::get(F).getInfo()->addToConstantPool(cast<Constant>(val));
+    mvec.push_back(BuildMI(Opcode, 3)
+                   .addReg(addrReg).addSImm((int64_t)0).addRegDef(dest));
   }
 }
 
