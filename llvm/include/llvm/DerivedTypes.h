@@ -145,7 +145,40 @@ public:
 };
 
 
-class ArrayType : public DerivedType {
+// CompositeType - Common super class of ArrayType and StructType...
+//
+class CompositeType : public DerivedType {
+protected:
+  inline CompositeType(const string &Name, PrimitiveID id)
+    : DerivedType(Name, id) { }
+
+public:
+
+  // getTypeAtIndex - Given an index value into the type, return the type of the
+  // element.
+  //
+  virtual const Type *getTypeAtIndex(const Value *V) const = 0;
+  virtual bool indexValid(const Value *V) const = 0;
+
+  // getIndexType - Return the type required of indices for this composite.
+  // For structures, this is ubyte, for arrays, this is uint
+  //
+  virtual const Type *getIndexType() const = 0;
+
+
+  // Methods for support type inquiry through isa, cast, and dyn_cast:
+  static inline bool classof(const CompositeType *T) { return true; }
+  static inline bool classof(const Type *T) {
+    return T->getPrimitiveID() == ArrayTyID || 
+           T->getPrimitiveID() == StructTyID;
+  }
+  static inline bool classof(const Value *V) {
+    return isa<Type>(V) && classof(cast<const Type>(V));
+  }
+};
+
+
+class ArrayType : public CompositeType {
 private:
   PATypeHandle<Type> ElementType;
   int NumElements;       // >= 0 for sized array, -1 for unbounded/unknown array
@@ -173,6 +206,21 @@ public:
   }
   virtual unsigned getNumContainedTypes() const { return 1; }
 
+  // getTypeAtIndex - Given an index value into the type, return the type of the
+  // element.  For an arraytype, there is only one subtype...
+  //
+  virtual const Type *getTypeAtIndex(const Value *V) const {
+    return ElementType.get();
+  }
+  virtual bool indexValid(const Value *V) const {
+    return V->getType() == Type::UIntTy;   // Must be an unsigned int index
+  }
+
+  // getIndexType - Return the type required of indices for this composite.
+  // For structures, this is ubyte, for arrays, this is uint
+  //
+  virtual const Type *getIndexType() const { return Type::UIntTy; }
+
   // refineAbstractType - Called when a contained type is found to be more
   // concrete - this could potentially change us from an abstract type to a
   // concrete type.
@@ -192,7 +240,7 @@ public:
 };
 
 
-class StructType : public DerivedType {
+class StructType : public CompositeType {
 public:
   typedef vector<PATypeHandle<Type> > ElementTypes;
 
@@ -217,6 +265,17 @@ public:
     return i < ETypes.size() ? ETypes[i].get() : 0;
   }
   virtual unsigned getNumContainedTypes() const { return ETypes.size(); }
+
+  // getTypeAtIndex - Given an index value into the type, return the type of the
+  // element.  For a structure type, this must be a constant value...
+  //
+  virtual const Type *getTypeAtIndex(const Value *V) const ;
+  virtual bool indexValid(const Value *V) const;
+
+  // getIndexType - Return the type required of indices for this composite.
+  // For structures, this is ubyte, for arrays, this is uint
+  //
+  virtual const Type *getIndexType() const { return Type::UByteTy; }
 
   // refineAbstractType - Called when a contained type is found to be more
   // concrete - this could potentially change us from an abstract type to a
