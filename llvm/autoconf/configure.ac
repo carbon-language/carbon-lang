@@ -31,7 +31,9 @@ do
       "Java")         AC_CONFIG_SUBDIRS([projects/Java])      ;;
       "llvm-tv")      AC_CONFIG_SUBDIRS([projects/llvm-tv])   ;;
       "llvm-fefw")    AC_CONFIG_SUBDIRS([projects/llvm-fefw]) ;;
-      *)              AC_CONFIG_SUBDIRS(${i}) ;;
+      *)              
+        AC_MSG_WARN([Unknown projects (${i})won't be configured automatically])
+        ;;
     esac
   fi
 done
