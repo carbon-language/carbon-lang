@@ -144,6 +144,9 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
           else
             SwitchSection(O, CurSection, ".data");
           break;
+        case GlobalValue::GhostLinkage:
+          std::cerr << "GhostLinkage cannot appear in X86AsmPrinter!\n";
+          abort();
         }
 
         emitAlignment(Align);
