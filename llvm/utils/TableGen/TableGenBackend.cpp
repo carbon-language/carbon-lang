@@ -14,8 +14,7 @@
 #include "TableGenBackend.h"
 #include "Record.h"
 #include <iostream>
-
-namespace llvm {
+using namespace llvm;
 
 void TableGenBackend::EmitSourceFileHeader(const std::string &Desc,
                                            std::ostream &OS) const {
@@ -38,4 +37,3 @@ std::string TableGenBackend::getQualifiedName(Record *R) const {
   return Namespace + "::" + R->getName();
 }
 
-} // End llvm namespace

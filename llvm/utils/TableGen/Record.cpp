@@ -11,12 +11,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "Record.h"
+using namespace llvm;
 
 //===----------------------------------------------------------------------===//
 //    Type implementations
 //===----------------------------------------------------------------------===//
-
-namespace llvm {
 
 void RecTy::dump() const { print(std::cerr); }
 
@@ -568,7 +567,7 @@ void Record::resolveReferences() {
 
 void Record::dump() const { std::cerr << *this; }
 
-std::ostream &operator<<(std::ostream &OS, const Record &R) {
+std::ostream &llvm::operator<<(std::ostream &OS, const Record &R) {
   OS << R.getName();
 
   const std::vector<std::string> &TArgs = R.getTemplateArgs();
@@ -730,7 +729,7 @@ DagInit *Record::getValueAsDag(const std::string &FieldName) const {
 
 void RecordKeeper::dump() const { std::cerr << *this; }
 
-std::ostream &operator<<(std::ostream &OS, const RecordKeeper &RK) {
+std::ostream &llvm::operator<<(std::ostream &OS, const RecordKeeper &RK) {
   OS << "------------- Classes -----------------\n";
   const std::map<std::string, Record*> &Classes = RK.getClasses();
   for (std::map<std::string, Record*>::const_iterator I = Classes.begin(),
@@ -764,4 +763,3 @@ RecordKeeper::getAllDerivedDefinitions(const std::string &ClassName) const {
   return Defs;
 }
 
-} // End llvm namespace

@@ -15,8 +15,7 @@
 #include "InstrInfoEmitter.h"
 #include "CodeGenWrappers.h"
 #include "Record.h"
-
-namespace llvm {
+using namespace llvm;
 
 // runEnums - Print out enum values for all of the instructions.
 void InstrInfoEmitter::runEnums(std::ostream &OS) {
@@ -175,4 +174,3 @@ void InstrInfoEmitter::emitShiftedValue(Record *R, StringInit *Val,
   throw "In record '" + R->getName() + "' for TSFlag emission.";
 }
 
-} // End llvm namespace

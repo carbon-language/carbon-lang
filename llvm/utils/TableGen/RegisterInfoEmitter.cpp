@@ -18,8 +18,7 @@
 #include "Record.h"
 #include "Support/StringExtras.h"
 #include <set>
-
-namespace llvm {
+using namespace llvm;
 
 // runEnums - Print out enum values for all of the registers.
 void RegisterInfoEmitter::runEnums(std::ostream &OS) {
@@ -246,5 +245,3 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
   OS << " 0\n  };\n  return CalleeSaveRegs;\n}\n\n";
   EmitSourceFileTail(OS);
 }
-
-} // End llvm namespace

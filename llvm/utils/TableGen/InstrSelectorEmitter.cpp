@@ -18,8 +18,7 @@
 #include "Support/Debug.h"
 #include "Support/StringExtras.h"
 #include <set>
-
-namespace llvm {
+using namespace llvm;
 
 NodeType::ArgResultTypes NodeType::Translate(Record *R) {
   const std::string &Name = R->getName();
@@ -104,7 +103,7 @@ TreePatternNode *TreePatternNode::clone() const {
   return New;
 }
 
-std::ostream &operator<<(std::ostream &OS, const TreePatternNode &N) {
+std::ostream &llvm::operator<<(std::ostream &OS, const TreePatternNode &N) {
   if (N.isLeaf())
     return OS << N.getType() << ":" << *N.getValue();
   OS << "(" << N.getType() << ":";
@@ -359,7 +358,7 @@ Pattern *Pattern::clone(Record *R) const {
 
 
 
-std::ostream &operator<<(std::ostream &OS, const Pattern &P) {
+std::ostream &llvm::operator<<(std::ostream &OS, const Pattern &P) {
   switch (P.getPatternType()) {
   case Pattern::Nonterminal: OS << "Nonterminal pattern "; break;
   case Pattern::Instruction: OS << "Instruction pattern "; break;
@@ -1296,4 +1295,3 @@ void InstrSelectorEmitter::run(std::ostream &OS) {
   EmitSourceFileTail(OS);
 }
 
-} // End llvm namespace

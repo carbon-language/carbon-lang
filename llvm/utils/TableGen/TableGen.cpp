@@ -26,8 +26,7 @@
 #include <algorithm>
 #include <cstdio>
 #include <fstream>
-
-namespace llvm {
+using namespace llvm;
 
 enum ActionType {
   PrintRecords,
@@ -79,10 +78,12 @@ namespace {
                   cl::value_desc("directory"), cl::init(""));
 }
 
+namespace llvm {
+  void ParseFile(const std::string &Filename,
+                 const std::string &IncludeDir);
+}
 
-void ParseFile(const std::string &Filename, const std::string & IncludeDir);
-
-RecordKeeper Records;
+RecordKeeper llvm::Records;
 
 static Init *getBit(Record *R, unsigned BitNo) {
   const std::vector<RecordVal> &V = R->getValues();
@@ -407,10 +408,6 @@ static void ParseMachineCode() {
     BuffPtr += Bits/8;
   }
 }
-
-} // End llvm namespace
-
-using namespace llvm;
 
 int main(int argc, char **argv) {
   cl::ParseCommandLineOptions(argc, argv);

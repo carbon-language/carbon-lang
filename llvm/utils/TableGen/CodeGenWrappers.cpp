@@ -16,16 +16,15 @@
 
 #include "CodeGenWrappers.h"
 #include "Record.h"
-
-namespace llvm {
+using namespace llvm;
 
 /// getValueType - Return the MCV::ValueType that the specified TableGen record
 /// corresponds to.
-MVT::ValueType getValueType(Record *Rec) {
+MVT::ValueType llvm::getValueType(Record *Rec) {
   return (MVT::ValueType)Rec->getValueAsInt("Value");
 }
 
-std::string getName(MVT::ValueType T) {
+std::string llvm::getName(MVT::ValueType T) {
   switch (T) {
   case MVT::Other: return "UNKNOWN";
   case MVT::i1:    return "i1";
@@ -43,7 +42,7 @@ std::string getName(MVT::ValueType T) {
   }
 }
 
-std::string getEnumName(MVT::ValueType T) {
+std::string llvm::getEnumName(MVT::ValueType T) {
   switch (T) {
   case MVT::Other: return "Other";
   case MVT::i1:    return "i1";
@@ -62,10 +61,9 @@ std::string getEnumName(MVT::ValueType T) {
 }
 
 
-std::ostream &operator<<(std::ostream &OS, MVT::ValueType T) {
+std::ostream &llvm::operator<<(std::ostream &OS, MVT::ValueType T) {
   return OS << getName(T);
 }
-
 
 
 /// getTarget - Return the current instance of the Target class.
@@ -99,4 +97,3 @@ Record *CodeGenTarget::getInstructionSet() const {
   return TargetRec->getValueAsDef("InstructionSet");
 }
 
-} // End llvm namespace
