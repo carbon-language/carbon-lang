@@ -176,6 +176,7 @@ public:
   virtual void setWPassThrough(const StringVector& WOpts) {
     WOptions = WOpts;
   }
+
 /// @}
 /// @name Functions
 /// @{
@@ -261,8 +262,9 @@ private:
             break;
           case 'f':
             if (*PI == "%fOpts%") {
-              action->args.insert(action->args.end(), fOptions.begin(), 
-                                  fOptions.end());
+              if (!fOptions.empty())
+                action->args.insert(action->args.end(), fOptions.begin(), 
+                                    fOptions.end());
             } else
               found = false;
             break;
@@ -331,16 +333,19 @@ private:
               found  = false;
             break;
           case 'M':
-            if (*PI == "%Mopts") {
-              action->args.insert(action->args.end(), MOptions.begin(), 
-                                  MOptions.end());
+            if (*PI == "%Mopts%") {
+              if (!MOptions.empty())
+                action->args.insert(action->args.end(), MOptions.begin(), 
+                                    MOptions.end());
             } else
               found = false;
             break;
           case 'W':
-            if (*PI == "%Wopts") {
-              action->args.insert(action->args.end(), WOptions.begin(), 
-                                  WOptions.end());
+            if (*PI == "%Wopts%") {
+              for (StringVector::iterator I = WOptions.begin(),
+                   E = WOptions.end(); I != E ; ++I ) {
+                action->args.push_back( std::string("-W") + *I );
+              }
             } else
               found = false;
             break;
@@ -354,12 +359,12 @@ private:
               (*PI)[PI->length()-1] == '%') {
             throw std::string("Invalid substitution token: '") + *PI +
                   "' for command '" + pat->program.get() + "'";
-          } else {
+          } else if (!PI->empty()) {
             // It's not a legal substitution, just pass it through
             action->args.push_back(*PI);
           }
         }
-      } else {
+      } else if (!PI->empty()) {
         // Its not a substitution, just put it in the action
         action->args.push_back(*PI);
       }
@@ -378,11 +383,12 @@ private:
       sys::Path progpath = sys::Program::FindProgramByName(
         action->program.get());
       if (progpath.isEmpty())
-        throw std::string("Can't find program '"+progpath.get()+"'");
+        throw std::string("Can't find program '"+action->program.get()+"'");
       else if (progpath.executable())
         action->program = progpath;
       else
-        throw std::string("Program '"+progpath.get()+"' is not executable.");
+        throw std::string("Program '"+action->program.get()+
+                          "' is not executable.");
 
       // Invoke the program
       if (isSet(TIME_ACTIONS_FLAG)) {
@@ -403,31 +409,39 @@ private:
 
   /// This method tries various variants of a linkage item's file
   /// name to see if it can find an appropriate file to link with
-  /// in the directory specified.
+  /// in the directories of the LibraryPaths.
   llvm::sys::Path GetPathForLinkageItem(const std::string& link_item,
-                                        const sys::Path& dir,
                                         bool native = false) {
-    sys::Path fullpath(dir);
-    fullpath.appendFile(link_item);
-    if (native) {
-      fullpath.appendSuffix("a");
-    } else {
-      fullpath.appendSuffix("bc");
-      if (fullpath.readable()) 
-        return fullpath;
-      fullpath.elideSuffix();
-      fullpath.appendSuffix("o");
-      if (fullpath.readable()) 
-        return fullpath;
-      fullpath = dir;
-      fullpath.appendFile(std::string("lib") + link_item);
-      fullpath.appendSuffix("a");
+    sys::Path fullpath;
+    fullpath.setFile(link_item);
+    if (fullpath.readable())
+      return fullpath;
+    for (PathVector::iterator PI = LibraryPaths.begin(), 
+         PE = LibraryPaths.end(); PI != PE; ++PI) {
+      fullpath.setDirectory(PI->get());
+      fullpath.appendFile(link_item);
       if (fullpath.readable())
         return fullpath;
-      fullpath.elideSuffix();
-      fullpath.appendSuffix("so");
-      if (fullpath.readable())
-        return fullpath;
+      if (native) {
+        fullpath.appendSuffix("a");
+      } else {
+        fullpath.appendSuffix("bc");
+        if (fullpath.readable()) 
+          return fullpath;
+        fullpath.elideSuffix();
+        fullpath.appendSuffix("o");
+        if (fullpath.readable()) 
+          return fullpath;
+        fullpath = *PI;
+        fullpath.appendFile(std::string("lib") + link_item);
+        fullpath.appendSuffix("a");
+        if (fullpath.readable())
+          return fullpath;
+        fullpath.elideSuffix();
+        fullpath.appendSuffix("so");
+        if (fullpath.readable())
+          return fullpath;
+      }
     }
 
     // Didn't find one.
@@ -446,17 +460,12 @@ private:
     // we must track down the file in the lib search path.
     sys::Path fullpath;
     if (!link_item.readable()) {
-      // First, look for the library using the -L arguments specified
+      // look for the library using the -L arguments specified
       // on the command line.
-      PathVector::iterator PI = LibraryPaths.begin();
-      PathVector::iterator PE = LibraryPaths.end();
-      while (PI != PE && fullpath.isEmpty()) {
-        fullpath = GetPathForLinkageItem(link_item.get(),*PI);
-        ++PI;
-      }
+      fullpath = GetPathForLinkageItem(link_item.get());
 
       // If we didn't find the file in any of the library search paths
-      // so we have to bail. No where else to look.
+      // we have to bail. No where else to look.
       if (fullpath.isEmpty()) {
         err = 
           std::string("Can't find linkage item '") + link_item.get() + "'";
@@ -583,6 +592,12 @@ public:
                 "' are not recognized."; 
         if (isSet(DEBUG_FLAG))
           DumpConfigData(cd,I->second);
+
+        // Add the config data's library paths to the end of the list
+        for (StringVector::iterator LPI = cd->libpaths.begin(),
+             LPE = cd->libpaths.end(); LPI != LPE; ++LPI){
+          LibraryPaths.push_back(sys::Path(*LPI));
+        }
 
         // Initialize the input and output files
         sys::Path InFile(I->first);
