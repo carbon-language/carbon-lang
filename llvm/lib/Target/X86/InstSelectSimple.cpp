@@ -44,6 +44,7 @@ namespace {
       F = &MachineFunction::construct(&Fn, TM);
       visit(Fn);
       RegMap.clear();
+      CurReg = MRegisterInfo::FirstVirtualRegister;
       F = 0;
       return false;  // We never modify the LLVM itself.
     }
