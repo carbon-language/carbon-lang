@@ -190,9 +190,10 @@ static Value *ConvertExpressionToType(Value *V, const Type *Ty,
 
   case Instruction::Shl:
   case Instruction::Shr:
-    Res = new ShiftInst(cast<ShiftInst>(I)->getOpcode(),
-                        ConvertExpressionToType(I->getOperand(0), Ty, VMC),
+    Res = new ShiftInst(cast<ShiftInst>(I)->getOpcode(), Dummy,
                         I->getOperand(1), Name);
+    VMC.ExprMap[I] = Res;
+    Res->setOperand(0, ConvertExpressionToType(I->getOperand(0), Ty, VMC));
     break;
 
   case Instruction::Load: {
