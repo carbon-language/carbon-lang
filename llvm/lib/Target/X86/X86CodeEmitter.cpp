@@ -470,6 +470,9 @@ void Emitter::emitInstruction(MachineInstr &MI) {
   unsigned Opcode = MI.getOpcode();
   const TargetInstrDescriptor &Desc = II->get(Opcode);
 
+  // Emit the repeat opcode prefix as needed.
+  if ((Desc.TSFlags & X86II::Op0Mask) == X86II::REP) MCE.emitByte(0xF3);
+
   // Emit instruction prefixes if necessary
   if (Desc.TSFlags & X86II::OpSize) MCE.emitByte(0x66);// Operand size...
 
@@ -477,6 +480,7 @@ void Emitter::emitInstruction(MachineInstr &MI) {
   case X86II::TB:
     MCE.emitByte(0x0F);   // Two-byte opcode prefix
     break;
+  case X86II::REP: break; // already handled.
   case X86II::D8: case X86II::D9: case X86II::DA: case X86II::DB:
   case X86II::DC: case X86II::DD: case X86II::DE: case X86II::DF:
     MCE.emitByte(0xD8+

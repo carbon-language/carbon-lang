@@ -92,14 +92,15 @@ class Pattern<dag P> {
 // emitter that various prefix bytes are required.
 class OpSize { bit hasOpSizePrefix = 1; }
 class TB     { bits<4> Prefix = 1; }
-class D8     { bits<4> Prefix = 2; }
-class D9     { bits<4> Prefix = 3; }
-class DA     { bits<4> Prefix = 4; }
-class DB     { bits<4> Prefix = 5; }
-class DC     { bits<4> Prefix = 6; }
-class DD     { bits<4> Prefix = 7; }
-class DE     { bits<4> Prefix = 8; }
-class DF     { bits<4> Prefix = 9; }
+class REP    { bits<4> Prefix = 2; }
+class D8     { bits<4> Prefix = 3; }
+class D9     { bits<4> Prefix = 4; }
+class DA     { bits<4> Prefix = 5; }
+class DB     { bits<4> Prefix = 6; }
+class DC     { bits<4> Prefix = 7; }
+class DD     { bits<4> Prefix = 8; }
+class DE     { bits<4> Prefix = 9; }
+class DF     { bits<4> Prefix = 10; }
 
 
 
@@ -171,6 +172,14 @@ def XCHGrr32 : X86Inst<"xchg", 0x87, MRMDestReg, Arg32>;        // xchg R32, R32
 
 def LEAr16 : X86Inst<"lea", 0x8D, MRMSrcMem, Arg16>, OpSize; // R16 = lea [mem]
 def LEAr32 : X86Inst<"lea", 0x8D, MRMSrcMem, Arg32>;         // R32 = lea [mem]
+
+
+def REP_MOVSB : X86Inst<"rep movsb", 0xA4, RawFrm, NoArg>, REP,
+                Imp<[ECX,EDI,ESI], [ECX,EDI,ESI]>;
+def REP_MOVSW : X86Inst<"rep movsw", 0xA5, RawFrm, NoArg>, REP, OpSize,
+                Imp<[ECX,EDI,ESI], [ECX,EDI,ESI]>;
+def REP_MOVSD : X86Inst<"rep movsd", 0xA5, RawFrm, NoArg>, REP,
+                Imp<[ECX,EDI,ESI], [ECX,EDI,ESI]>;
 
 //===----------------------------------------------------------------------===//
 //  Move Instructions...

@@ -86,9 +86,9 @@ namespace X86II {
     OpSize      = 1 << 5,
 
     // Op0Mask - There are several prefix bytes that are used to form two byte
-    // opcodes.  These are currently 0x0F, and 0xD8-0xDF.  This mask is used to
-    // obtain the setting of this field.  If no bits in this field is set, there
-    // is no prefix byte for obtaining a multibyte opcode.
+    // opcodes.  These are currently 0x0F, 0xF3, and 0xD8-0xDF.  This mask is
+    // used to obtain the setting of this field.  If no bits in this field is
+    // set, there is no prefix byte for obtaining a multibyte opcode.
     //
     Op0Shift    = 6,
     Op0Mask     = 0xF << Op0Shift,
@@ -97,12 +97,16 @@ namespace X86II {
     // starts with a 0x0F byte before the real opcode.
     TB          = 1 << Op0Shift,
 
+    // REP - The 0xF3 prefix byte indicating repetition of the following
+    // instruction.
+    REP         = 2 << Op0Shift,
+
     // D8-DF - These escape opcodes are used by the floating point unit.  These
     // values must remain sequential.
-    D8 = 2 << Op0Shift,   D9 = 3 << Op0Shift,
-    DA = 4 << Op0Shift,   DB = 5 << Op0Shift,
-    DC = 6 << Op0Shift,   DD = 7 << Op0Shift,
-    DE = 8 << Op0Shift,   DF = 9 << Op0Shift,
+    D8 = 3 << Op0Shift,   D9 = 4 << Op0Shift,
+    DA = 5 << Op0Shift,   DB = 6 << Op0Shift,
+    DC = 7 << Op0Shift,   DD = 8 << Op0Shift,
+    DE = 9 << Op0Shift,   DF = 10 << Op0Shift,
 
     //===------------------------------------------------------------------===//
     // This three-bit field describes the size of a memory operand.  Zero is

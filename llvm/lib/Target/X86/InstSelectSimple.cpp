@@ -1157,6 +1157,7 @@ void ISel::LowerUnknownIntrinsicFunctionCalls(Function &F) {
           case Intrinsic::va_start:
           case Intrinsic::va_copy:
           case Intrinsic::va_end:
+          case Intrinsic::memcpy:
             // We directly implement these intrinsics
             break;
           default:
@@ -1187,6 +1188,58 @@ void ISel::visitIntrinsicCall(Intrinsic::ID ID, CallInst &CI) {
     BuildMI(BB, X86::MOVrr32, 1, TmpReg1).addReg(TmpReg2);
     return;
   case Intrinsic::va_end: return;   // Noop on X86
+
+  case Intrinsic::memcpy: {
+    assert(CI.getNumOperands() == 5 && "Illegal llvm.memcpy call!");
+    unsigned Align = 1;
+    if (ConstantInt *AlignC = dyn_cast<ConstantInt>(CI.getOperand(4))) {
+      Align = AlignC->getRawValue();
+      if (Align == 0) Align = 1;
+    }
+
+    // Turn the byte code into # iterations
+    unsigned ByteReg = getReg(CI.getOperand(3));
+    unsigned CountReg;
+    
+    switch (Align & 3) {
+    case 2:   // WORD aligned
+      CountReg = makeAnotherReg(Type::IntTy);
+      BuildMI(BB, X86::SHRir32, 2, CountReg).addReg(ByteReg).addZImm(1);
+      break;
+    case 0:   // DWORD aligned
+      CountReg = makeAnotherReg(Type::IntTy);
+      BuildMI(BB, X86::SHRir32, 2, CountReg).addReg(ByteReg).addZImm(2);
+      break;
+    case 1:   // BYTE aligned
+    case 3:   // BYTE aligned
+      CountReg = ByteReg;
+      break;
+    }
+
+    // No matter what the alignment is, we put the source in ESI, the
+    // destination in EDI, and the count in ECX.
+    TmpReg1 = getReg(CI.getOperand(1));
+    TmpReg2 = getReg(CI.getOperand(2));
+    BuildMI(BB, X86::MOVrr32, 1, X86::ECX).addReg(CountReg);
+    BuildMI(BB, X86::MOVrr32, 1, X86::EDI).addReg(TmpReg1);
+    BuildMI(BB, X86::MOVrr32, 1, X86::ESI).addReg(TmpReg2);
+
+    unsigned Bytes = getReg(CI.getOperand(3));
+    switch (Align & 3) {
+    case 1:   // BYTE aligned
+    case 3:   // BYTE aligned
+      BuildMI(BB, X86::REP_MOVSB, 0);
+      break;
+    case 2:   // WORD aligned
+      BuildMI(BB, X86::REP_MOVSW, 0);
+      break;
+    case 0:   // DWORD aligned
+      BuildMI(BB, X86::REP_MOVSD, 0);
+      break;
+    }
+
+    return;
+  }
 
   default: assert(0 && "Error: unknown intrinsics should have been lowered!");
   }
