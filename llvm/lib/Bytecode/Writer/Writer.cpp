@@ -225,23 +225,19 @@ void BytecodeWriter::outputFunction(const Function *F) {
     // Output information about the constants in the function...
     outputConstants(true);
 
-    // Output basic block nodes...
-    for (Function::const_iterator I = F->begin(), E = F->end(); I != E; ++I)
-      processBasicBlock(*I);
+    {  // Output all of the instructions in the body of the function
+      BytecodeBlock ILBlock(BytecodeFormat::InstructionList, Out);
+
+      for (Function::const_iterator BB = F->begin(), E = F->end(); BB != E;++BB)
+        for(BasicBlock::const_iterator I = BB->begin(), E = BB->end(); I!=E;++I)
+          processInstruction(*I);
+    }
     
     // If needed, output the symbol table for the function...
     outputSymbolTable(F->getSymbolTable());
     
     Table.purgeFunction();
   }
-}
-
-
-void BytecodeWriter::processBasicBlock(const BasicBlock &BB) {
-  BytecodeBlock FunctionBlock(BytecodeFormat::BasicBlock, Out);
-  // Process all the instructions in the bb...
-  for(BasicBlock::const_iterator I = BB.begin(), E = BB.end(); I != E; ++I)
-    processInstruction(*I);
 }
 
 void BytecodeWriter::outputSymbolTable(const SymbolTable &MST) {

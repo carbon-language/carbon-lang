@@ -162,7 +162,9 @@ private:
   BasicBlock *ParseBasicBlock(const unsigned char *&Buf,
                               const unsigned char *End,
                               unsigned BlockNo);
-
+  unsigned ParseInstructionList(Function *F, const unsigned char *&Buf,
+                                const unsigned char *EndBuf);
+  
   void ParseInstruction(const unsigned char *&Buf, const unsigned char *End,
                         std::vector<unsigned> &Args, BasicBlock *BB);
 

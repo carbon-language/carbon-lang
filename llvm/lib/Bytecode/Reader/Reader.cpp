@@ -188,7 +188,8 @@ Constant *BytecodeParser::getConstantValue(unsigned TypeSlot, unsigned Slot) {
   }
 }
 
-
+/// ParseBasicBlock - In LLVM 1.0 bytecode files, we used to output one
+/// basicblock at a time.  This method reads in one of the basicblock packets.
 BasicBlock *BytecodeParser::ParseBasicBlock(const unsigned char *&Buf,
                                             const unsigned char *EndBuf,
                                             unsigned BlockNo) {
@@ -205,6 +206,38 @@ BasicBlock *BytecodeParser::ParseBasicBlock(const unsigned char *&Buf,
     ParseInstruction(Buf, EndBuf, Args, BB);
 
   return BB;
+}
+
+
+/// ParseInstructionList - Parse all of the BasicBlock's & Instruction's in the
+/// body of a function.  In post 1.0 bytecode files, we no longer emit basic
+/// block individually, in order to avoid per-basic-block overhead.
+unsigned BytecodeParser::ParseInstructionList(Function *F,
+                                              const unsigned char *&Buf,
+                                              const unsigned char *EndBuf) {
+  unsigned BlockNo = 0;
+  std::vector<unsigned> Args;
+
+  while (Buf < EndBuf) {
+    BasicBlock *BB;
+    if (ParsedBasicBlocks.size() == BlockNo)
+      ParsedBasicBlocks.push_back(BB = new BasicBlock());
+    else if (ParsedBasicBlocks[BlockNo] == 0)
+      BB = ParsedBasicBlocks[BlockNo] = new BasicBlock();
+    else
+      BB = ParsedBasicBlocks[BlockNo];
+    ++BlockNo;
+    F->getBasicBlockList().push_back(BB);
+
+    // Read instructions into this basic block until we get to a terminator
+    while (Buf < EndBuf && !BB->getTerminator())
+      ParseInstruction(Buf, EndBuf, Args, BB);
+
+    if (!BB->getTerminator())
+      throw std::string("Non-terminated basic block found!");
+  }
+
+  return BlockNo;
 }
 
 void BytecodeParser::ParseSymbolTable(const unsigned char *&Buf,
@@ -342,6 +375,13 @@ void BytecodeParser::materializeFunction(Function* F) {
       BCR_TRACE(2, "BLOCK BytecodeFormat::BasicBlock: {\n");
       BasicBlock *BB = ParseBasicBlock(Buf, Buf+Size, BlockNum++);
       F->getBasicBlockList().push_back(BB);
+      break;
+    }
+
+    case BytecodeFormat::InstructionList: {
+      BCR_TRACE(2, "BLOCK BytecodeFormat::InstructionList: {\n");
+      if (BlockNum) throw std::string("Already parsed basic blocks!");
+      BlockNum = ParseInstructionList(F, Buf, Buf+Size);
       break;
     }
 

@@ -36,7 +36,6 @@ public:
 protected:
   void outputConstants(bool isFunction);
   void outputFunction(const Function *F);
-  void processBasicBlock(const BasicBlock &BB);
   void processInstruction(const Instruction &I);
 
 private :
