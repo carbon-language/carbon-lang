@@ -1445,20 +1445,19 @@ TargetDefinition : ENDIAN '=' BigOrLittle {
       ThrowException("Invalid pointer size: '" + utostr($3) + "'!");
   }
   | TRIPLE '=' STRINGCONSTANT {
-    std::string triple($3);
-    CurModule.CurrentModule->setTargetTriple(triple);
+    CurModule.CurrentModule->setTargetTriple($3);
+    free($3);
   };
 
-LibrariesDefinition : '[' LibList ']'
-                    ;
+LibrariesDefinition : '[' LibList ']';
 
 LibList : LibList ',' STRINGCONSTANT {
-          std::string lib($3);
-          CurModule.CurrentModule->linsert(lib);
+          CurModule.CurrentModule->addLibrary($3);
+          free($3);
         }
         | STRINGCONSTANT {
-          std::string lib($1);
-          CurModule.CurrentModule->linsert(lib);
+          CurModule.CurrentModule->addLibrary($1);
+          free($1);
         }
         | /* empty: end of list */ {
         }
