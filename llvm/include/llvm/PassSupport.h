@@ -29,17 +29,26 @@ class PassInfo {
   const char           *PassName;      // Nice name for Pass
   const char           *PassArgument;  // Command Line argument to run this pass
   const std::type_info &TypeInfo;      // type_info object for this Pass class
+  unsigned char PassType;              // Set of enums values below...
 
   Pass *(*NormalCtor)();               // No argument ctor
   Pass *(*DataCtor)(const TargetData&);// Ctor taking TargetData object...
 
 public:
+  // PassType - Define symbolic constants that can be used to test to see if
+  // this pass should be listed by analyze or opt.  Passes can use none, one or
+  // many of these flags or'd together.
+  //
+  enum {
+    Analysis = 1, Optimization = 2
+  };
+
   // PassInfo ctor - Do not call this directly, this should only be invoked
   // through RegisterPass.
   PassInfo(const char *name, const char *arg, const std::type_info &ti, 
-           Pass *(*normal)(), Pass *(*data)(const TargetData &))
-    : PassName(name), PassArgument(arg), TypeInfo(ti), NormalCtor(normal), 
-      DataCtor(data) {
+           unsigned pt, Pass *(*normal)(), Pass *(*data)(const TargetData &))
+    : PassName(name), PassArgument(arg), TypeInfo(ti), PassType(pt),
+      NormalCtor(normal), DataCtor(data) {
   }
 
   // getPassName - Return the friendly name for the pass, never returns null
@@ -53,6 +62,12 @@ public:
 
   // getTypeInfo - Return the type_info object for the pass...
   const std::type_info &getTypeInfo() const { return TypeInfo; }
+
+  // getPassType - Return the PassType of a pass.  Note that this can be several
+  // different types or'd together.  This is _strictly_ for use by opt, analyze
+  // and llc for deciding which passes to use as command line options.
+  //
+  unsigned getPassType() const { return PassType; }
 
   // getNormalCtor - Return a pointer to a function, that when called, creates
   // an instance of the pass and returns it.  This pointer may be null if there
@@ -108,27 +123,79 @@ template<typename PassName>
 struct RegisterPass : public RegisterPassBase {
   
   // Register Pass using default constructor...
-  RegisterPass(const char *PassArg, const char *Name) {
-    registerPass(new PassInfo(Name, PassArg, typeid(PassName),
+  RegisterPass(const char *PassArg, const char *Name, unsigned PassTy = 0) {
+    registerPass(new PassInfo(Name, PassArg, typeid(PassName), PassTy,
                               callDefaultCtor<PassName>, 0));
   }
 
   // Register Pass using default constructor explicitly...
-  RegisterPass(const char *PassArg, const char *Name,
+  RegisterPass(const char *PassArg, const char *Name, unsigned PassTy,
                Pass *(*ctor)()) {
-    registerPass(new PassInfo(Name, PassArg, typeid(PassName), ctor, 0));
+    registerPass(new PassInfo(Name, PassArg, typeid(PassName), PassTy, ctor,0));
   }
 
   // Register Pass using TargetData constructor...
-  RegisterPass(const char *PassArg, const char *Name,
+  RegisterPass(const char *PassArg, const char *Name, unsigned PassTy,
                Pass *(*datactor)(const TargetData &)) {
-    registerPass(new PassInfo(Name, PassArg, typeid(PassName), 0, datactor));
+    registerPass(new PassInfo(Name, PassArg, typeid(PassName), PassTy,
+                              0, datactor));
   }
 
   // Generic constructor version that has an unknown ctor type...
   template<typename CtorType>
-  RegisterPass(const char *PassArg, const char *Name, CtorType *Fn) {
+  RegisterPass(const char *PassArg, const char *Name, unsigned PassTy,
+               CtorType *Fn) {
     registerPass(new PassInfo(Name, PassArg, typeid(PassName), 0, 0));
+  }
+};
+
+// RegisterOpt - Register something that is to show up in Opt, this is just a
+// shortcut for specifying RegisterPass...
+//
+template<typename PassName>
+struct RegisterOpt : public RegisterPassBase {
+  RegisterOpt(const char *PassArg, const char *Name) {
+    registerPass(new PassInfo(Name, PassArg, typeid(PassName),
+                              PassInfo::Optimization,
+                              callDefaultCtor<PassName>, 0));
+  }
+
+  // Register Pass using default constructor explicitly...
+  RegisterOpt(const char *PassArg, const char *Name, Pass *(*ctor)()) {
+    registerPass(new PassInfo(Name, PassArg, typeid(PassName),
+                              PassInfo::Optimization, ctor, 0));
+  }
+
+  // Register Pass using TargetData constructor...
+  RegisterOpt(const char *PassArg, const char *Name,
+               Pass *(*datactor)(const TargetData &)) {
+    registerPass(new PassInfo(Name, PassArg, typeid(PassName),
+                              PassInfo::Optimization, 0, datactor));
+  }
+};
+
+// RegisterAnalysis - Register something that is to show up in Analysis, this is
+// just a shortcut for specifying RegisterPass...
+//
+template<typename PassName>
+struct RegisterAnalysis : public RegisterPassBase {
+  RegisterAnalysis(const char *PassArg, const char *Name) {
+    registerPass(new PassInfo(Name, PassArg, typeid(PassName),
+                              PassInfo::Analysis,
+                              callDefaultCtor<PassName>, 0));
+  }
+
+  // Register Pass using default constructor explicitly...
+  RegisterAnalysis(const char *PassArg, const char *Name, Pass *(*ctor)()) {
+    registerPass(new PassInfo(Name, PassArg, typeid(PassName),
+                              PassInfo::Analys, ctor, 0));
+  }
+
+  // Register Pass using TargetData constructor...
+  RegisterAnalysis(const char *PassArg, const char *Name,
+               Pass *(*datactor)(const TargetData &)) {
+    registerPass(new PassInfo(Name, PassArg, typeid(PassName),
+                              PassInfo::Analysis, 0, datactor));
   }
 };
 
