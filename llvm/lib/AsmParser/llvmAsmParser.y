@@ -1071,11 +1071,6 @@ ConstPool : ConstPool OptAssign CONST ConstVal {
   | ConstPool OptAssign UNINIT GlobalType Types {
     const Type *Ty = *$5;
     // Global declarations appear in Constant Pool
-    if (isa<ArrayType>(Ty) && cast<ArrayType>(Ty)->isUnsized()) {
-      ThrowException("Type '" + Ty->getDescription() +
-		     "' is not a sized type!");
-    }
-
     GlobalVariable *GV = new GlobalVariable(Ty, $4);
     if (!setValueName(GV, $2)) {   // If not redefining...
       CurModule.CurrentModule->getGlobalList().push_back(GV);

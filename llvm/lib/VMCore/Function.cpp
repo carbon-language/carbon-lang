@@ -91,9 +91,6 @@ GlobalVariable::GlobalVariable(const Type *Ty, bool isConstant,
   : GlobalValue(PointerType::get(Ty), Value::GlobalVariableVal, Name),
     Constant(isConstant) {
   if (Initializer) Operands.push_back(Use((Value*)Initializer, this));
-
-  assert(!isConstant || hasInitializer() &&
-	 "Globals Constants must have an initializer!"); 
 }
 
 // Specialize setName to take care of symbol table majik
