@@ -113,9 +113,9 @@ bool IPCP::processFunction(Function &F) {
   bool MadeChange = false;
   for (unsigned i = 0, e = ArgumentConstants.size(); i != e; ++i, ++AI)
     // Do we have a constant argument!?
-    if (!ArgumentConstants[i].second && !AI->use_empty()) {
-      assert(ArgumentConstants[i].first && "Unknown constant value!");
+    if (!ArgumentConstants[i].second) {
       Value *V = ArgumentConstants[i].first;
+      if (V == 0) V = UndefValue::get(AI->getType());
       AI->replaceAllUsesWith(V);
       ++NumArgumentsProped;
       MadeChange = true;
