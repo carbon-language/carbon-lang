@@ -2,6 +2,8 @@
 
 ; RUN: llvm-as < %s | opt -instcombine -die | llvm-dis | grep '%c' | not grep cast
 
+%inbuf = external global [32832 x ubyte]
+
 implementation
 
 int %test1(int %A) {
@@ -78,4 +80,10 @@ int* %test12() {
 	%p = malloc [4 x sbyte]
 	%c = cast [4 x sbyte]* %p to int*
 	ret int* %c
+}
+
+
+ubyte *%test13(long %A) {
+	%c = getelementptr [0 x ubyte]* cast ([32832 x ubyte]*  %inbuf to [0 x ubyte]*), long 0, long %A
+	ret ubyte* %c
 }
