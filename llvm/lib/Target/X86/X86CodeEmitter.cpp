@@ -211,12 +211,7 @@ unsigned sizeOfPtr (const MachineInstrDescriptor &Desc) {
   case X86II::MemArg64:  return 8;
   case X86II::MemArg80:  return 10;
   case X86II::MemArg128: return 16;
-  default: {
-    // FIXME: This should be an assert, but it is returning 4 because that was
-    // the former behavior and it's what was expected. Once the assumptions
-    // below are fixed, this can become an assert.
-    return 4;
-  }
+  default: assert(0 && "Memory size not set!");
   }
 }
 
