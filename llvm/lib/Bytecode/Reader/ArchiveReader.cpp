@@ -44,10 +44,12 @@ namespace {
   };
 }
 
-// getObjectType - Determine the type of object that this header represents.
-// This is capable of parsing the variety of special sections used for various
-// purposes.
-static enum ObjectType getObjectType(ar_hdr *H, unsigned Size) {
+/// getObjectType - Determine the type of object that this header represents.
+/// This is capable of parsing the variety of special sections used for various
+/// purposes.
+///
+static enum ObjectType getObjectType(ar_hdr *H, unsigned char *MemberData,
+                                     unsigned Size) {
   // Check for sections with special names...
   if (!memcmp(H->name, "__.SYMDEF       ", 16))
     return ArchiveSymbolTable;
@@ -55,42 +57,15 @@ static enum ObjectType getObjectType(ar_hdr *H, unsigned Size) {
     return SVR4LongFilename;
 
   // Check to see if it looks like an llvm object file...
-  if (Size >= 4 && !memcmp(H+1, "llvm", 4))
+  if (Size >= 4 && !memcmp(MemberData, "llvm", 4))
     return UserObject;
 
   return Unknown;
 }
 
-
 static inline bool Error(std::string *ErrorStr, const char *Message) {
   if (ErrorStr) *ErrorStr = Message;
   return true;
-}
-
-static bool ParseLongFilenameSection(unsigned char *Buffer, unsigned Size,
-                                     std::vector<std::string> &LongFilenames,
-                                     std::string *S) {
-  if (!LongFilenames.empty())
-    return Error(S, "archive file contains multiple long filename entries");
-                 
-  while (Size) {
-    // Long filename entries are newline delimited to keep the archive readable.
-    unsigned char *Ptr = (unsigned char*)memchr(Buffer, '\n', Size);
-    if (Ptr == 0)
-      return Error(S, "archive long filename entry doesn't end with newline!");
-    assert(*Ptr == '\n');
-
-    if (Ptr == Buffer) break;  // Last entry contains just a newline.
-
-    unsigned char *End = Ptr;
-    if (End[-1] == '/') --End; // Remove trailing / from name
-    
-    LongFilenames.push_back(std::string(Buffer, End));
-    Size -= Ptr-Buffer+1;
-    Buffer = Ptr+1;
-  }
-  
-  return false;
 }
 
 static bool ParseSymbolTableSection(unsigned char *Buffer, unsigned Size,
@@ -111,40 +86,58 @@ static bool ReadArchiveBuffer(const std::string &ArchiveName,
 
   while (Length >= sizeof(ar_hdr)) {
     ar_hdr *Hdr = (ar_hdr*)Buffer;
-    unsigned Size = atoi(Hdr->size);
-    if (Size+sizeof(ar_hdr) > Length)
+    unsigned SizeFromHeader = atoi(Hdr->size);
+    if (SizeFromHeader + sizeof(ar_hdr) > Length)
       return Error(ErrorStr, "invalid record length in archive file!");
 
+    unsigned char *MemberData = Buffer + sizeof(ar_hdr);
+    unsigned MemberSize = SizeFromHeader;
     // Get name of archive member.
     char *startp = Hdr->name;
-    char *endp = strchr (startp, '/');
-    if (startp == endp && isdigit (Hdr->name[1])) {
-      // Long filenames are abbreviated as "/I", where I is a decimal
-      // index into the LongFilenames vector.
-      unsigned Index = atoi (&Hdr->name[1]);
-      assert (LongFilenames.size () > Index
-              && "Long filename for archive member not found");
-      startp = &LongFilenames[Index];
+    char *endp = (char *) memchr (startp, '/', sizeof(ar_hdr));
+    if (memcmp (Hdr->name, "#1/", 3) == 0) {
+      // 4.4BSD/MacOSX long filenames are abbreviated as "#1/L", where L is an
+      // ASCII-coded decimal number representing the length of the name buffer,
+      // which is prepended to the archive member's contents.
+      unsigned NameLength = atoi (&Hdr->name[3]);
+      startp = (char *) MemberData;
+      endp = startp + NameLength;
+      MemberData += NameLength;
+      MemberSize -= NameLength;
+    } else if (startp == endp && isdigit (Hdr->name[1])) {
+      // SVR4 long filenames are abbreviated as "/I", where I is
+      // an ASCII-coded decimal index into the LongFilenames vector.
+      unsigned NameIndex = atoi (&Hdr->name[1]);
+      assert (LongFilenames.size () > NameIndex
+              && "SVR4-style long filename for archive member not found");
+      startp = &LongFilenames[NameIndex];
       endp = strchr (startp, '/');
+    }
+    if (!endp) {
+      // 4.4BSD/MacOSX *short* filenames are not guaranteed to have a
+      // terminator. Start at the end of the field and backtrack over spaces.
+      endp = startp + sizeof(Hdr->name);
+      while (endp[-1] == ' ')
+        --endp;
     }
     std::string MemberName (startp, endp);
     std::string FullMemberName = ArchiveName + "(" + MemberName + ")";
 
-    switch (getObjectType(Hdr, Size)) {
+    switch (getObjectType(Hdr, MemberData, MemberSize)) {
     case SVR4LongFilename:
       // If this is a long filename section, read all of the file names into the
       // LongFilenames vector.
-      LongFilenames.assign (Buffer+sizeof(ar_hdr), Buffer+sizeof(ar_hdr)+Size);
+      LongFilenames.assign (MemberData, MemberData + MemberSize);
       break;
     case UserObject: {
-      Module *M = ParseBytecodeBuffer(Buffer+sizeof(ar_hdr), Size,
+      Module *M = ParseBytecodeBuffer(MemberData, MemberSize,
                                       FullMemberName, ErrorStr);
       if (!M) return true;
       Objects.push_back(M);
       break;
     }
     case ArchiveSymbolTable:
-      if (ParseSymbolTableSection(Buffer+sizeof(ar_hdr), Size, ErrorStr))
+      if (ParseSymbolTableSection(MemberData, MemberSize, ErrorStr))
         return true;
       break;
     default:
@@ -153,10 +146,10 @@ static bool ReadArchiveBuffer(const std::string &ArchiveName,
       break;   // Just ignore unknown files.
     }
 
-    // Round Size up to an even number...
-    Size = (Size+1)/2*2;
-    Buffer += sizeof(ar_hdr)+Size;   // Move to the next entry
-    Length -= sizeof(ar_hdr)+Size;
+    // Round SizeFromHeader up to an even number...
+    SizeFromHeader = (SizeFromHeader+1)/2*2;
+    Buffer += sizeof(ar_hdr)+SizeFromHeader;   // Move to the next entry
+    Length -= sizeof(ar_hdr)+SizeFromHeader;
   }
 
   return Length != 0;
