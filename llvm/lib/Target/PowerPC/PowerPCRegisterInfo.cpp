@@ -210,9 +210,11 @@ void PowerPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
   // Do we need to allocate space on the stack?
   if (NumBytes == 0) return;
 
-  // Round the size to a multiple of the alignment
+  // Add the size of R1 to  NumBytes size for the store of R1 to the bottom 
+  // of the stack and round the size to a multiple of the alignment.
   unsigned Align = MF.getTarget().getFrameInfo()->getStackAlignment();
-  NumBytes = (NumBytes+Align-1)/Align*Align;
+  unsigned Size = getRegClass(PPC32::R1)->getSize();
+  NumBytes = (NumBytes+Size+Align-1)/Align*Align;
 
   // Update frame info to pretend that this is part of the stack...
   MFI->setStackSize(NumBytes);
