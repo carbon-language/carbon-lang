@@ -357,7 +357,7 @@ void FPS::popStackAfter(MachineBasicBlock::iterator &I) {
 }
 
 static unsigned getFPReg(const MachineOperand &MO) {
-  assert(MO.isPhysicalRegister() && "Expected an FP register!");
+  assert(MO.isRegister() && "Expected an FP register!");
   unsigned Reg = MO.getReg();
   assert(Reg >= X86::FP0 && Reg <= X86::FP6 && "Expected FP register!");
   return Reg - X86::FP0;
