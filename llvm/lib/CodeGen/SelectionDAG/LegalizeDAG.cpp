@@ -388,7 +388,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       break;
     }
     case Promote:
-      assert(0 && "Don't know what it means to promote this!");
+      assert(0 && "CopyToReg should not require promotion!");
       abort();
     }
     break;
