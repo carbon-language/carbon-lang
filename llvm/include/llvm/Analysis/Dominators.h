@@ -53,8 +53,7 @@ public:
 // is unreachable in this function, the set will be empty.  This cannot happen
 // for reachable code, because every block dominates at least itself.
 //
-class DominatorSetBase : public DominatorBase {
-public:
+struct DominatorSetBase : public DominatorBase {
   typedef std::set<BasicBlock*> DomSetType;    // Dom set for a bb
   // Map of dom sets
   typedef std::map<BasicBlock*, DomSetType> DomSetMapType;
@@ -251,11 +250,8 @@ struct ImmediateDominators : public ImmediateDominatorsBase {
 //
 // DominatorTree - Calculate the immediate dominator tree for a function.
 //
-class DominatorTreeBase : public DominatorBase {
-protected:
-  class Node2;
-public:
-  typedef Node2 Node;
+struct DominatorTreeBase : public DominatorBase {
+  class Node;
 protected:
   std::map<BasicBlock*, Node*> Nodes;
   void reset();
@@ -263,12 +259,12 @@ protected:
 
   Node *RootNode;
 public:
-  class Node2 {
+  class Node {
     friend class DominatorTree;
     friend class PostDominatorTree;
     friend class DominatorTreeBase;
-    BasicBlock *TheNode;
-    Node2 *IDom;
+    BasicBlock *TheBB;
+    Node *IDom;
     std::vector<Node*> Children;
   public:
     typedef std::vector<Node*>::iterator iterator;
@@ -279,25 +275,25 @@ public:
     const_iterator begin() const { return Children.begin(); }
     const_iterator end()   const { return Children.end(); }
 
-    inline BasicBlock *getNode() const { return TheNode; }
-    inline Node2 *getIDom() const { return IDom; }
+    inline BasicBlock *getBlock() const { return TheBB; }
+    inline Node *getIDom() const { return IDom; }
     inline const std::vector<Node*> &getChildren() const { return Children; }
 
     // dominates - Returns true iff this dominates N.  Note that this is not a 
     // constant time operation!
-    inline bool dominates(const Node2 *N) const {
-      const Node2 *IDom;
+    inline bool dominates(const Node *N) const {
+      const Node *IDom;
       while ((IDom = N->getIDom()) != 0 && IDom != this)
 	N = IDom;   // Walk up the tree
       return IDom != 0;
     }
 
   private:
-    inline Node2(BasicBlock *node, Node *iDom) 
-      : TheNode(node), IDom(iDom) {}
-    inline Node2 *addChild(Node *C) { Children.push_back(C); return C; }
+    inline Node(BasicBlock *BB, Node *iDom) 
+      : TheBB(BB), IDom(iDom) {}
+    inline Node *addChild(Node *C) { Children.push_back(C); return C; }
 
-    void setIDom(Node2 *NewIDom);
+    void setIDom(Node *NewIDom);
   };
 
 public:
@@ -413,8 +409,7 @@ template <> struct GraphTraits<DominatorTree*>
 //
 // DominanceFrontier - Calculate the dominance frontiers for a function.
 //
-class DominanceFrontierBase : public DominatorBase {
-public:
+struct DominanceFrontierBase : public DominatorBase {
   typedef std::set<BasicBlock*>             DomSetType;    // Dom set for a bb
   typedef std::map<BasicBlock*, DomSetType> DomSetMapType; // Dom set map
 protected:
