@@ -19,9 +19,9 @@
 #include "Support/CommandLine.h"
 
 namespace {
-  cl::opt<bool> PrintNo  ("print-no-alias-results", cl::ReallyHidden);
-  cl::opt<bool> PrintMay ("print-may-alias-results", cl::ReallyHidden);
-  cl::opt<bool> PrintMust("print-must-alias-results", cl::ReallyHidden);
+  cl::opt<bool> PrintNo  ("print-no-aliases", cl::ReallyHidden);
+  cl::opt<bool> PrintMay ("print-may-aliases", cl::ReallyHidden);
+  cl::opt<bool> PrintMust("print-must-aliases", cl::ReallyHidden);
 
   class AAEval : public FunctionPass {
     unsigned No, May, Must;
