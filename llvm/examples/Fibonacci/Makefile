@@ -12,6 +12,6 @@ TOOLNAME = Fibonacci
 EXAMPLE_TOOL = 1
 
 # Enable JIT support
-include $(LEVEL)/tools/Makefile.JIT
+LLVMLIBS := JIT
 
 include $(LEVEL)/Makefile.common

@@ -12,12 +12,6 @@ TOOLNAME = llvm-db
 USEDLIBS = LLVMDebugger
 
 # Enable JIT support
-include ../Makefile.JIT
-
-# Have gcc tell the linker to export symbols from the program so that
-# dynamically loaded modules can be linked against them.
-#
-TOOLLINKOPTS = $(PLATFORMLIBDL)
+LLVMLIBS = JIT
 
 include $(LEVEL)/Makefile.common
-
