@@ -20,12 +20,17 @@
 //===----------------------------------------------------------------------===//
 
 #include "WriterInternals.h"
+#include "llvm/Bytecode/WriteBytecodePass.h"
 #include "llvm/Module.h"
 #include "llvm/SymbolTable.h"
 #include "llvm/DerivedTypes.h"
 #include "Support/STLExtras.h"
 #include <string.h>
 #include <algorithm>
+
+static RegisterPass<WriteBytecodePass> X("emitbytecode", "Bytecode Writer");
+
+
 
 BytecodeWriter::BytecodeWriter(std::deque<unsigned char> &o, const Module *M) 
   : Out(o), Table(M, false) {
