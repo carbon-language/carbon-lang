@@ -12,6 +12,7 @@
 #include "llvm/Target/TargetData.h"
 #include "llvm/Function.h"
 #include "Support/Statistic.h"
+#include <stdio.h>
 
 static VM *TheVM = 0;
 
