@@ -29,7 +29,6 @@ Type::Type(const string &name, PrimitiveID id)
   setDescription(name);
   ID = id;
   Abstract = false;
-  ConstRulesImpl = 0;
   UID = CurUID++;       // Assign types UID's as they are created
   UIDMappings.push_back(this);
 }

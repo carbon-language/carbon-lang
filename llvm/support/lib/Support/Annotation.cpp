@@ -28,6 +28,16 @@ AnnotationID AnnotationManager::getID(const string &Name) {  // Name -> ID
   return I->second;
 }
 
+// getID - Name -> ID + registration of a factory function for demand driven
+// annotation support.
+AnnotationID AnnotationManager::getID(const string &Name, Factory Fact,
+				      void *Data=0) {
+  AnnotationID Result(getID(Name));
+  registerAnnotationFactory(Result, Fact, Data);
+  return Result;		      
+}
+
+
 // getName - This function is especially slow, but that's okay because it should
 // only be used for debugging.
 //
