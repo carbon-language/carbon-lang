@@ -11,14 +11,13 @@
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/Target/TargetData.h"
-#include "llvm/Function.h"
+#include "llvm/Module.h"
 #include "Support/Statistic.h"
 #include <stdio.h>
 
-static VM *TheVM = 0;
-
 namespace {
   Statistic<> NumBytes("jello", "Number of bytes of machine code compiled");
+  VM *TheVM = 0;
 
   class Emitter : public MachineCodeEmitter {
     // CurBlock - The start of the current block of memory.  CurByte - The
@@ -186,3 +185,16 @@ uint64_t Emitter::forceCompilationOf(Function *F) {
   return (intptr_t)TheVM->getPointerToFunction(F);
 }
 
+// getPointerToNamedFunction - This function is used as a global wrapper to
+// VM::getPointerToNamedFunction for the purpose of resolving symbols when
+// bugpoint is debugging the JIT. In that scenario, we are loading an .so and
+// need to resolve function(s) that are being mis-codegenerated, so we need to
+// resolve their addresses at runtime, and this is the way to do it.
+extern "C" {
+  void *getPointerToNamedFunction(const char *Name) {
+    Module &M = TheVM->getModule();
+    if (Function *F = M.getNamedFunction(Name))
+      return TheVM->getPointerToFunction(F);
+    return TheVM->getPointerToNamedFunction(Name);
+  }
+}
