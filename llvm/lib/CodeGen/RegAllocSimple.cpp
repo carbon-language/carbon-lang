@@ -154,7 +154,7 @@ void RegAllocSimple::AllocateBasicBlock(MachineBasicBlock &MBB) {
     // Made to combat the incorrect allocation of r2 = add r1, r1
     std::map<unsigned, unsigned> Virt2PhysRegMap;
 
-    RegsUsed.resize(MRegisterInfo::FirstVirtualRegister);
+    RegsUsed.resize(RegInfo->getNumRegs());
     
     // a preliminary pass that will invalidate any registers that
     // are used by the instruction (including implicit uses)

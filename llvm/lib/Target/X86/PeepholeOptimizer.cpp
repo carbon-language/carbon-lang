@@ -164,7 +164,7 @@ namespace {
     // getDefinition - Return the machine instruction that defines the specified
     // SSA virtual register.
     MachineInstr *getDefinition(unsigned Reg) {
-      assert(Reg >= MRegisterInfo::FirstVirtualRegister &&
+      assert(MRegisterInfo::isVirtualRegister(Reg) &&
              "use-def chains only exist for SSA registers!");
       assert(Reg - MRegisterInfo::FirstVirtualRegister < DefiningInst.size() &&
              "Unknown register number!");

@@ -329,7 +329,7 @@ static unsigned getX86RegNum(unsigned RegNo) {
   case X86::ST4: case X86::ST5: case X86::ST6: case X86::ST7:
     return RegNo-X86::ST0;
   default:
-    assert(RegNo >= MRegisterInfo::FirstVirtualRegister &&
+    assert(MRegisterInfo::isVirtualRegister(RegNo) &&
            "Unknown physical register!");
     assert(0 && "Register allocator hasn't allocated reg correctly yet!");
     return 0;

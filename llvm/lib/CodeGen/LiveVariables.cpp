@@ -187,10 +187,9 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &MF) {
   // physical register.  This is a purely local property, because all physical
   // register references as presumed dead across basic blocks.
   //
-  MachineInstr *PhysRegInfoA[MRegisterInfo::FirstVirtualRegister];
-  bool          PhysRegUsedA[MRegisterInfo::FirstVirtualRegister];
-  std::fill(PhysRegInfoA, PhysRegInfoA+MRegisterInfo::FirstVirtualRegister,
-	    (MachineInstr*)0);
+  MachineInstr *PhysRegInfoA[RegInfo->getNumRegs()];
+  bool          PhysRegUsedA[RegInfo->getNumRegs()];
+  std::fill(PhysRegInfoA, PhysRegInfoA+RegInfo->getNumRegs(), (MachineInstr*)0);
   PhysRegInfo = PhysRegInfoA;
   PhysRegUsed = PhysRegUsedA;
 

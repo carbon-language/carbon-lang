@@ -53,7 +53,7 @@ namespace {
     std::vector<unsigned> Virt2PhysRegMap;
 
     unsigned &getVirt2PhysRegMapSlot(unsigned VirtReg) {
-      assert(VirtReg >= MRegisterInfo::FirstVirtualRegister &&"Illegal VREG #");
+      assert(MRegisterInfo::isVirtualRegister(VirtReg) &&"Illegal VREG #");
       assert(VirtReg-MRegisterInfo::FirstVirtualRegister <Virt2PhysRegMap.size()
              && "VirtReg not in map!");
       return Virt2PhysRegMap[VirtReg-MRegisterInfo::FirstVirtualRegister];

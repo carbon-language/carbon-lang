@@ -399,7 +399,7 @@ void Printer::printOp(const MachineOperand &MO,
     }
     // FALLTHROUGH
   case MachineOperand::MO_MachineRegister:
-    if (MO.getReg() < MRegisterInfo::FirstVirtualRegister)
+    if (MRegisterInfo::isPhysicalRegister(MO.getReg()))
       // Bug Workaround: See note in Printer::doInitialization about %.
       O << "%" << RI.get(MO.getReg()).Name;
     else

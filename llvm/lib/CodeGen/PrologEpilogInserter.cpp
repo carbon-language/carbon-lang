@@ -98,7 +98,7 @@ void PEI::saveCallerSavedRegisters(MachineFunction &Fn) {
     return;
 
   // This bitset contains an entry for each physical register for the target...
-  std::vector<bool> ModifiedRegs(MRegisterInfo::FirstVirtualRegister);
+  std::vector<bool> ModifiedRegs(RegInfo->getNumRegs());
   unsigned MaxCallFrameSize = 0;
   bool HasCalls = false;
 
