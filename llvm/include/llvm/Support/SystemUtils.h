@@ -34,7 +34,7 @@ sys::Path FindExecutable(const std::string &ExeName,
 /// RunProgramWithTimeout - This function provides an alternate interface to the
 /// sys::Program::ExecuteAndWait interface.
 /// @see sys:Program::ExecuteAndWait
-inline int llvm::RunProgramWithTimeout(const sys::Path &ProgramPath,
+inline int RunProgramWithTimeout(const sys::Path &ProgramPath,
                                 const char **Args,
                                 const sys::Path &StdInFile,
                                 const sys::Path &StdOutFile,
