@@ -32,6 +32,9 @@ public:
   // program if the file is invalid or broken.
   ProfileInfo(const char *ToolName, const std::string &Filename, Module &M);
 
+  unsigned getNumExecutions() const { return CommandLines.size(); }
+  const std::string &getExecution(unsigned i) const { return CommandLines[i]; }
+
   // getFunctionCounts - This method is used by consumers of function counting
   // information.  If we do not directly have function count information, we
   // compute it from other, more refined, types of profile information.

@@ -73,11 +73,30 @@ int main(int argc, char **argv) {
   for (unsigned i = 0, e = FunctionCounts.size(); i != e; ++i)
     TotalExecutions += FunctionCounts[i].second;
   
+  std::cout << "===" << std::string(73, '-') << "===\n"
+            << "LLVM profiling output for:\n";
+  
+  for (unsigned i = 0, e = PI.getNumExecutions(); i != e; ++i) {
+    std::cout << "  ";
+    if (e != 1) std::cout << i << ". ";
+    std::cout << PI.getExecution(i) << "\n";
+  }
+  
+  std::cout << "\n===" << std::string(73, '-') << "===\n";
+  std::cout << "Function execution frequencies:\n\n";
+
   // Print out the function frequencies...
   printf(" ##   Frequency\n");
-  for (unsigned i = 0, e = FunctionCounts.size(); i != e; ++i)
+  for (unsigned i = 0, e = FunctionCounts.size(); i != e; ++i) {
+    if (FunctionCounts[i].second == 0) {
+      printf("\n  NOTE: %d function%s never executed!\n",
+             e-i, e-i-1 ? "s were" : " was");
+      break;
+    }
+
     printf("%3d. %5d/%d %s\n", i, FunctionCounts[i].second, TotalExecutions,
            FunctionCounts[i].first->getName().c_str());
+  }
 
 
   // If we have block count information, print out the LLVM module with
