@@ -443,10 +443,7 @@ bool DSNode::mergeTypeInfo(const Type *NewTy, unsigned Offset,
     case Type::StructTyID: {
       const StructType *STy = cast<StructType>(SubType);
       const StructLayout &SL = *TD.getStructLayout(STy);
-
-      unsigned i = 0, e = SL.MemberOffsets.size();
-      for (; i+1 < e && SL.MemberOffsets[i+1] <= Offset-O; ++i)
-        /* empty */;
+      unsigned i = SL.getElementContainingOffset(Offset-O);
 
       // The offset we are looking for must be in the i'th element...
       SubType = STy->getElementType(i);
