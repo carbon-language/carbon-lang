@@ -149,8 +149,8 @@ class StackerCompiler
     /// @name Utility functions
     /// @{
     public:
-        /// @brief Throws an exception to indicate an error
-        /// @param message The message to be output
+	/// @brief Throws an exception to indicate an error
+	/// @param message The message to be output
 	/// @param line Override for the current line no
 	static inline void ThrowException( const std::string &message, 
 		int line = -1) 	    
