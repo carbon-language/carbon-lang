@@ -19,9 +19,7 @@
 #include "llvm/Bytecode/Reader.h"
 #include "llvm/Bytecode/Archive.h"
 #include "llvm/Config/config.h"
-//#include "llvm/Support/SystemUtils.h"
-//#include <algorithm>
-//#include <memory>
+#include <memory>
 #include <set>
 #include <iostream>
 
