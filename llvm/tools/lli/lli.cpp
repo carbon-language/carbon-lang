@@ -14,12 +14,15 @@ cl::StringList InputArgv(""   , "Input command line", cl::ConsumeAfter);
 cl::String MainFunction ("f"      , "Function to execute", cl::NoFlags, "main");
 cl::Flag   DebugMode    ("debug"  , "Start program in debugger");
 cl::Alias  DebugModeA   ("d"      , "Alias for -debug", cl::NoFlags, DebugMode);
+cl::Flag   TraceMode    ("trace"  , "Enable Tracing");
 cl::Flag   ProfileMode  ("profile", "Enable Profiling [unimp]");
+
 
 //===----------------------------------------------------------------------===//
 // Interpreter ctor - Initialize stuff
 //
-Interpreter::Interpreter() : ExitCode(0), Profile(ProfileMode), CurFrame(-1) {
+Interpreter::Interpreter() : ExitCode(0), Profile(ProfileMode), 
+                             Trace(TraceMode), CurFrame(-1) {
   CurMod = 0;
   loadModule(InputArgv.size() ? InputArgv[0] : "");
 
@@ -46,6 +49,7 @@ int main(int argc, char** argv) {
 
   // If running with the profiler, enable it now...
   if (ProfileMode) I.enableProfiling();
+  if (TraceMode) I.enableTracing();
 
   // Start interpreter into the main function...
   //

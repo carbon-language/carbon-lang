@@ -16,7 +16,8 @@ enum CommandID {
   Print, Info, List, StackTrace, Up, Down,    // Inspection
   Next, Step, Run, Finish, Call,              // Control flow changes
   Break, Watch,                               // Debugging
-  Load, Flush
+  Load, Flush,
+  TraceOpt, ProfileOpt                              // Toggle features
 };
 
 // CommandTable - Build a lookup table for the commands available to the user...
@@ -52,6 +53,9 @@ static struct CommandTableElement {
 
   { "load"     , Load       },
   { "flush"    , Flush      },
+
+  { "trace"    , TraceOpt   },
+  { "profile"  , ProfileOpt },
 };
 static CommandTableElement *CommandTableEnd = 
    CommandTable+sizeof(CommandTable)/sizeof(CommandTable[0]);
@@ -116,6 +120,16 @@ void Interpreter::handleUserInput() {
       cin >> Command;
       callMethod(Command);    // Enter the specified method
       finish();               // Run until it's complete
+      break;
+
+    case TraceOpt:
+      Trace = !Trace;
+      cout << "Tracing " << (Trace ? "enabled\n" : "disabled\n");
+      break;
+
+    case ProfileOpt:
+      Profile = !Profile;
+      cout << "Profiling " << (Trace ? "enabled\n" : "disabled\n");
       break;
 
     default:

@@ -834,6 +834,9 @@ bool Interpreter::executeInstruction() {
   ExecutionContext &SF = ECStack.back();  // Current stack frame
   Instruction *I = *SF.CurInst++;         // Increment before execute
 
+  if (Trace)
+    cout << "Run:" << I;
+
   if (I->isBinaryOp()) {
     executeBinaryInst((BinaryOperator*)I, SF);
   } else {

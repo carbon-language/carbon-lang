@@ -56,6 +56,7 @@ class Interpreter {
   Module *CurMod;              // The current Module being executed (0 if none)
   int ExitCode;                // The exit code to be returned by the lli util
   bool Profile;                // Profiling enabled?
+  bool Trace;                  // Tracing enabled?
   int CurFrame;                // The current stack frame being inspected
 
   // The runtime stack of executing code.  The top of the stack is the current
@@ -72,6 +73,7 @@ public:
 
   // enableProfiling() - Turn profiling on, clear stats?
   void enableProfiling() { Profile = true; }
+  void enableTracing() { Trace = true; }
 
   void initializeExecutionEngine();
   void handleUserInput();
