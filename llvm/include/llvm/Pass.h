@@ -47,6 +47,12 @@ class Pass {
   friend class AnalysisResolver;
   AnalysisResolver *Resolver;  // AnalysisResolver this pass is owned by...
   const PassInfo *PassInfoCache;
+
+  // AnalysisImpls - This keeps track of which passes implement the interfaces
+  // that are required by the current pass (to implement getAnalysis()).
+  //
+  std::vector<std::pair<const PassInfo*, Pass*> > AnalysisImpls;
+
   void operator=(const Pass&);  // DO NOT IMPLEMENT
   Pass(const Pass &);           // DO NOT IMPLEMENT
 public:
@@ -129,24 +135,36 @@ protected:
   AnalysisType &getAnalysis() const {
     assert(Resolver && "Pass has not been inserted into a PassManager object!");
     const PassInfo *PI = getClassPassInfo<AnalysisType>();
-    assert(PI && "getAnalysis for unregistered pass!");
-
-    // Because the AnalysisType may not be a subclass of pass (for
-    // AnalysisGroups), we must use dynamic_cast here to potentially adjust the
-    // return pointer (because the class may multiply inherit, once from pass,
-    // once from AnalysisType).
-    //
-    AnalysisType *Result =
-      dynamic_cast<AnalysisType*>(Resolver->getAnalysis(PI));
-    assert(Result && "Pass does not implement interface required!");
-    return *Result;
+    return getAnalysisID<AnalysisType>(PI);
   }
 
   template<typename AnalysisType>
   AnalysisType &getAnalysisID(const PassInfo *PI) const {
     assert(Resolver && "Pass has not been inserted into a PassManager object!");
     assert(PI && "getAnalysis for unregistered pass!");
-    return *dynamic_cast<AnalysisType*>(Resolver->getAnalysis(PI));
+
+    // PI *must* appear in AnalysisImpls.  Because the number of passes used
+    // should be a small number, we just do a linear search over a (dense)
+    // vector.
+    Pass *ResultPass = 0;
+    for (unsigned i = 0; ; ++i) {
+      assert(i != AnalysisImpls.size() &&
+             "getAnalysis*() called on an analysis that we not "
+             "'required' by pass!");
+      if (AnalysisImpls[i].first == PI) {
+        ResultPass = AnalysisImpls[i].second;
+        break;
+      }
+    }
+
+    // Because the AnalysisType may not be a subclass of pass (for
+    // AnalysisGroups), we must use dynamic_cast here to potentially adjust the
+    // return pointer (because the class may multiply inherit, once from pass,
+    // once from AnalysisType).
+    //
+    AnalysisType *Result = dynamic_cast<AnalysisType*>(ResultPass);
+    assert(Result && "Pass does not implement interface required!");
+    return *Result;
   }
 
   /// getAnalysisToUpdate<AnalysisType>() - This function is used by subclasses
