@@ -93,7 +93,7 @@ DSGraph &TDDataStructures::calculateGraph(Function &F) {
   DSGraph &BUGraph = BU.getDSGraph(F);
   
   // Copy the BU graph, keeping a mapping from the BUGraph to the current Graph
-  std::map<const DSNode*, DSNode*> BUNodeMap;
+  std::map<const DSNode*, DSNodeHandle> BUNodeMap;
   Graph = new DSGraph(BUGraph, BUNodeMap);
 
   // We only need the BUMap entries for the nodes that are used in call sites.
@@ -113,12 +113,12 @@ DSGraph &TDDataStructures::calculateGraph(Function &F) {
   }
 
   // Loop through te BUNodeMap, keeping only the nodes that are "Needed"
-  for (std::map<const DSNode*, DSNode*>::iterator I = BUNodeMap.begin();
+  for (std::map<const DSNode*, DSNodeHandle>::iterator I = BUNodeMap.begin();
        I != BUNodeMap.end(); )
     if (NeededNodes.count(I->first) && I->first)  // Keep needed nodes...
       ++I;
     else {
-      std::map<const DSNode*, DSNode*>::iterator J = I++;
+      std::map<const DSNode*, DSNodeHandle>::iterator J = I++;
       BUNodeMap.erase(J);
     }
 
@@ -167,7 +167,7 @@ DSGraph &TDDataStructures::calculateGraph(Function &F) {
     // These two maps keep track of where scalars in the old graph _used_
     // to point to, and of new nodes matching nodes of the old graph.
     std::map<Value*, DSNodeHandle> OldValMap;
-    std::map<const DSNode*, DSNode*> OldNodeMap;
+    std::map<const DSNode*, DSNodeHandle> OldNodeMap;
 
     // FIXME: Eventually use DSGraph::mergeInGraph here...
     // Graph->mergeInGraph(CallSiteInCG, CG, false);

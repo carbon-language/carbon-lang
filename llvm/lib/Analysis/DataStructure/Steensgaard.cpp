@@ -124,7 +124,7 @@ bool Steens::run(Module &M) {
     if (!I->isExternal()) {
       std::map<Value*, DSNodeHandle> ValMap;
       {  // Scope to free NodeMap memory ASAP
-        std::map<const DSNode*, DSNode*> NodeMap;
+        std::map<const DSNode*, DSNodeHandle> NodeMap;
         const DSGraph &FDSG = LDS.getDSGraph(*I);
         DSNodeHandle RetNode = ResultGraph->cloneInto(FDSG, ValMap, NodeMap);
 

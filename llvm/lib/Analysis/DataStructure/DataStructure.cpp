@@ -470,11 +470,12 @@ Function &DSCallSite::getCaller() const {
 //===----------------------------------------------------------------------===//
 
 DSGraph::DSGraph(const DSGraph &G) : Func(G.Func) {
-  std::map<const DSNode*, DSNode*> NodeMap;
+  std::map<const DSNode*, DSNodeHandle> NodeMap;
   RetNode = cloneInto(G, ScalarMap, NodeMap);
 }
 
-DSGraph::DSGraph(const DSGraph &G, std::map<const DSNode*, DSNode*> &NodeMap)
+DSGraph::DSGraph(const DSGraph &G,
+                 std::map<const DSNode*, DSNodeHandle> &NodeMap)
   : Func(G.Func) {
   RetNode = cloneInto(G, ScalarMap, NodeMap);
 }
@@ -501,9 +502,12 @@ void DSGraph::dump() const { print(std::cerr); }
 /// remapLinks - Change all of the Links in the current node according to the
 /// specified mapping.
 ///
-void DSNode::remapLinks(std::map<const DSNode*, DSNode*> &OldNodeMap) {
-  for (unsigned i = 0, e = Links.size(); i != e; ++i) 
-    Links[i].setNode(OldNodeMap[Links[i].getNode()]);
+void DSNode::remapLinks(std::map<const DSNode*, DSNodeHandle> &OldNodeMap) {
+  for (unsigned i = 0, e = Links.size(); i != e; ++i) {
+    DSNodeHandle &H = OldNodeMap[Links[i].getNode()];
+    Links[i].setNode(H.getNode());
+    Links[i].setOffset(Links[i].getOffset()+H.getOffset());
+  }
 }
 
 
@@ -515,7 +519,7 @@ void DSNode::remapLinks(std::map<const DSNode*, DSNode*> &OldNodeMap) {
 //
 DSNodeHandle DSGraph::cloneInto(const DSGraph &G, 
                                 std::map<Value*, DSNodeHandle> &OldValMap,
-                                std::map<const DSNode*, DSNode*> &OldNodeMap,
+                              std::map<const DSNode*, DSNodeHandle> &OldNodeMap,
                                 AllocaBit StripAllocas) {
   assert(OldNodeMap.empty() && "Returned OldNodeMap should be empty!");
   assert(&G != this && "Cannot clone graph into itself!");
@@ -544,14 +548,14 @@ DSNodeHandle DSGraph::cloneInto(const DSGraph &G,
   for (std::map<Value*, DSNodeHandle>::const_iterator I = G.ScalarMap.begin(),
          E = G.ScalarMap.end(); I != E; ++I) {
     DSNodeHandle &H = OldValMap[I->first];
-    H.setNode(OldNodeMap[I->second.getNode()]);
-    H.setOffset(I->second.getOffset());
+    DSNodeHandle &MappedNode = OldNodeMap[I->second.getNode()];
+    H.setNode(MappedNode.getNode());
+    H.setOffset(I->second.getOffset()+MappedNode.getOffset());
 
     if (isa<GlobalValue>(I->first)) {  // Is this a global?
       std::map<Value*, DSNodeHandle>::iterator GVI = ScalarMap.find(I->first);
       if (GVI != ScalarMap.end()) {   // Is the global value in this fn already?
         GVI->second.mergeWith(H);
-        OldNodeMap[I->second.getNode()] = H.getNode();
       } else {
         ScalarMap[I->first] = H;      // Add global pointer to this graph
       }
@@ -565,7 +569,9 @@ DSNodeHandle DSGraph::cloneInto(const DSGraph &G,
     FunctionCalls.push_back(DSCallSite(G.FunctionCalls[i], OldNodeMap));
 
   // Return the returned node pointer...
-  return DSNodeHandle(OldNodeMap[G.RetNode.getNode()], G.RetNode.getOffset());
+  DSNodeHandle &MappedRet = OldNodeMap[G.RetNode.getNode()];
+  return DSNodeHandle(MappedRet.getNode(),
+                      MappedRet.getOffset()+G.RetNode.getOffset());
 }
 
 /// mergeInGraph - The method is used for merging graphs together.  If the
@@ -584,7 +590,7 @@ void DSGraph::mergeInGraph(DSCallSite &CS, const DSGraph &Graph,
     // Clone the callee's graph into the current graph, keeping
     // track of where scalars in the old graph _used_ to point,
     // and of the new nodes matching nodes of the old graph.
-    std::map<const DSNode*, DSNode*> OldNodeMap;
+    std::map<const DSNode*, DSNodeHandle> OldNodeMap;
     
     // The clone call may invalidate any of the vectors in the data
     // structure graph.  Strip locals and don't copy the list of callers
