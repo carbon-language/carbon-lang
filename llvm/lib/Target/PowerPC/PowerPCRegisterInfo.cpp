@@ -218,8 +218,19 @@ void PowerPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
   MFI->setStackSize(NumBytes);
   
   // adjust stack pointer: r1 -= numbytes
-  if (NumBytes) {
-    MI = BuildMI(PPC32::STWU, 2, PPC32::R1).addSImm(-NumBytes).addReg(PPC32::R1);
+  if (NumBytes <= 32768) {
+    MI = BuildMI(PPC32::STWU, 3).addReg(PPC32::R1).addSImm(-NumBytes)
+      .addReg(PPC32::R1);
+    MBB.insert(MBBI, MI);
+  } else {
+    int NegNumbytes = -NumBytes;
+    MI = BuildMI(PPC32::LIS, 1, PPC32::R0).addSImm(NegNumbytes >> 16);
+    MBB.insert(MBBI, MI);
+    MI = BuildMI(PPC32::ORI, 2, PPC32::R0).addReg(PPC32::R0)
+      .addImm(NegNumbytes & 0xFFFF);
+    MBB.insert(MBBI, MI);
+    MI = BuildMI(PPC32::STWUX, 3).addReg(PPC32::R1).addReg(PPC32::R1)
+      .addReg(PPC32::R0);
     MBB.insert(MBBI, MI);
   }
 }
@@ -247,8 +258,13 @@ void PowerPCRegisterInfo::emitEpilogue(MachineFunction &MF,
     MBB.insert(MBBI, MI);
   }
   // Adjust stack pointer back
-  MI = BuildMI(PPC32::ADDI, 2, PPC32::R1).addReg(PPC32::R1).addSImm(NumBytes);
-  MBB.insert(MBBI, MI);
+  if (NumBytes <= 32767) {
+    MI = BuildMI(PPC32::ADDI, 2, PPC32::R1).addReg(PPC32::R1).addSImm(NumBytes);
+    MBB.insert(MBBI, MI);
+  } else {
+    MI = BuildMI(PPC32::LWZ, 2, PPC32::R1).addSImm(0).addReg(PPC32::R1);
+    MBB.insert(MBBI, MI);
+  }
 }
 
 #include "PowerPCGenRegisterInfo.inc"
