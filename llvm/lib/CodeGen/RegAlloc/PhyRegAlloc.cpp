@@ -42,7 +42,7 @@ PhyRegAlloc::PhyRegAlloc(Method *M,
 			  MRI( tm.getRegInfo() ),
                           NumOfRegClasses(MRI.getNumOfRegClasses()),
 			  AddedInstrMap()
-                          /*, PhiInstList()*/
+                    
 {
   // **TODO: use an actual reserved color list 
   ReservedColorListType *RCL = new ReservedColorListType();
@@ -365,35 +365,15 @@ void PhyRegAlloc::updateMachineCode()
       if( (TM.getInstrInfo()).isCall( MInst->getOpCode()) )
 	MRI.insertCallerSavingCode(MInst,  *BBI, *this );
 
-      // If there are instructions to be added, *before* this machine
-      // instruction, add them now.
-      
-      if( AddedInstrMap[ MInst ] ) {
-
-	deque<MachineInstr *> &IBef = (AddedInstrMap[MInst])->InstrnsBefore;
-
-	if( ! IBef.empty() ) {
-
-	  deque<MachineInstr *>::iterator AdIt; 
-
-	  for( AdIt = IBef.begin(); AdIt != IBef.end() ; ++AdIt ) {
-
-	    if( DEBUG_RA )
-	      cerr << " PREPENDed instr: " << **AdIt << endl;
-	  	    
-	    MInstIterator = MIVec.insert( MInstIterator, *AdIt );
-	    ++MInstIterator;
-	  }
-
-	}
-
-      }
 
       // reset the stack offset for temporary variables since we may
       // need that to spill
       mcInfo.popAllTempValues(TM);
       
       //for(MachineInstr::val_op_const_iterator OpI(MInst);!OpI.done();++OpI) {
+
+
+      // Now replace set the registers for operands in the machine instruction
 
       for(unsigned OpNum=0; OpNum < MInst->getNumOperands(); ++OpNum) {
 
@@ -451,6 +431,32 @@ void PhyRegAlloc::updateMachineCode()
       } // for each operand
 
 
+      // If there are instructions to be added, *before* this machine
+      // instruction, add them now.
+      
+      if( AddedInstrMap[ MInst ] ) {
+
+	deque<MachineInstr *> &IBef = (AddedInstrMap[MInst])->InstrnsBefore;
+
+	if( ! IBef.empty() ) {
+
+	  deque<MachineInstr *>::iterator AdIt; 
+
+	  for( AdIt = IBef.begin(); AdIt != IBef.end() ; ++AdIt ) {
+
+	    if( DEBUG_RA) {
+	      cerr << "For inst " << *MInst;
+	      cerr << " PREPENDed instr: " << **AdIt << endl;
+	    }
+	  	    
+	    MInstIterator = MIVec.insert( MInstIterator, *AdIt );
+	    ++MInstIterator;
+	  }
+
+	}
+
+      }
+
       // If there are instructions to be added *after* this machine
       // instruction, add them now
       
@@ -485,9 +491,11 @@ void PhyRegAlloc::updateMachineCode()
 	    
 	    for( AdIt = IAft.begin(); AdIt != IAft.end() ; ++AdIt ) {
 	      
-	      if(DEBUG_RA) 
+	      if(DEBUG_RA) {
+		cerr << "For inst " << *MInst;
 		cerr << " APPENDed instr: "  << **AdIt << endl;
-	      
+	      }	      
+
 	      MInstIterator = MIVec.insert( MInstIterator, *AdIt );
 	      ++MInstIterator;
 	    }
@@ -578,7 +586,7 @@ void PhyRegAlloc::insertCode4SpilledLR(const LiveRange *LR,
     if( MIBef )
       (AI->InstrnsBefore).push_back(MIBef);
 
-    (AI->InstrnsBefore).push_back(AdIMid);
+    (AI->InstrnsAfter).push_front(AdIMid);
 
     if( MIAft)
       (AI->InstrnsAfter).push_front(MIAft);
@@ -1055,6 +1063,10 @@ void PhyRegAlloc::allocateRegisters()
   // before we call constructLiveRanges (now done in the constructor of 
   // PhyRegAlloc class).
 
+  cout << "\n\n ******** AFTER SCHEDULING **********";
+  MachineCodeForMethod::get(Meth).dump();
+
+
   constructLiveRanges();                // create LR info
 
   if( DEBUG_RA )
@@ -1115,6 +1127,10 @@ void PhyRegAlloc::allocateRegisters()
     MachineCodeForMethod::get(Meth).dump();
     printMachineCode();                   // only for DEBUGGING
   }
+
+  // char ch;
+  //cin >> ch;
+
 }
 
 
