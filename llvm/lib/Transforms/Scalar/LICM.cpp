@@ -571,9 +571,7 @@ void LICM::PromoteValuesInLoop() {
   }
   
   // Scan the basic blocks in the loop, replacing uses of our pointers with
-  // uses of the allocas in question.  If we find a branch that exits the
-  // loop, make sure to put reload code into all of the successors of the
-  // loop.
+  // uses of the allocas in question.
   //
   const std::vector<BasicBlock*> &LoopBBs = CurLoop->getBlocks();
   for (std::vector<BasicBlock*>::const_iterator I = LoopBBs.begin(),
@@ -593,26 +591,33 @@ void LICM::PromoteValuesInLoop() {
           S->setOperand(1, I->second);    // Rewrite store instruction...
       }
     }
-
-    // Check to see if any successors of this block are outside of the loop.
-    // If so, we need to copy the value from the alloca back into the memory
-    // location...
-    //
-    for (succ_iterator SI = succ_begin(*I), SE = succ_end(*I); SI != SE; ++SI)
-      if (!CurLoop->contains(*SI)) {
-        // Copy all of the allocas into their memory locations...
-        BasicBlock::iterator BI = (*SI)->begin();
-        while (isa<PHINode>(*BI))
-          ++BI;             // Skip over all of the phi nodes in the block...
-        Instruction *InsertPos = BI;
-        for (unsigned i = 0, e = PromotedValues.size(); i != e; ++i) {
-          // Load from the alloca...
-          LoadInst *LI = new LoadInst(PromotedValues[i].first, "", InsertPos);
-          // Store into the memory we promoted...
-          new StoreInst(LI, PromotedValues[i].second, InsertPos);
-        }
-      }
   }
+
+  // Now that the body of the loop uses the allocas instead of the original
+  // memory locations, insert code to copy the alloca value back into the
+  // original memory location on all exits from the loop.  Note that we only
+  // want to insert one copy of the code in each exit block, though the loop may
+  // exit to the same block more than once.
+  //
+  std::set<BasicBlock*> ProcessedBlocks;
+
+  const std::vector<BasicBlock*> &ExitBlocks = CurLoop->getExitBlocks();
+  for (unsigned i = 0, e = ExitBlocks.size(); i != e; ++i)
+    if (!ProcessedBlocks.count(ExitBlocks[i])) {
+      ProcessedBlocks.insert(ExitBlocks[i]);
+    
+      // Copy all of the allocas into their memory locations...
+      BasicBlock::iterator BI = ExitBlocks[i]->begin();
+      while (isa<PHINode>(*BI))
+        ++BI;             // Skip over all of the phi nodes in the block...
+      Instruction *InsertPos = BI;
+      for (unsigned i = 0, e = PromotedValues.size(); i != e; ++i) {
+        // Load from the alloca...
+        LoadInst *LI = new LoadInst(PromotedValues[i].first, "", InsertPos);
+        // Store into the memory we promoted...
+        new StoreInst(LI, PromotedValues[i].second, InsertPos);
+      }
+    }
 
   // Now that we have done the deed, use the mem2reg functionality to promote
   // all of the new allocas we just created into real SSA registers...
