@@ -29,7 +29,7 @@ static inline std::string utohexstr(uint64_t X) {
   if (X == 0) *--BufPtr = '0';  // Handle special case...
 
   while (X) {
-    unsigned char Mod = (unsigned char)X & 15;
+    unsigned char Mod = static_cast<unsigned char>(X) & 15;
     if (Mod < 10)
       *--BufPtr = '0' + Mod;
     else
@@ -109,7 +109,7 @@ static inline std::string LowercaseString(const std::string &S) {
   std::string result(S);
   for (unsigned i = 0; i < S.length(); ++i)
     if (isupper(result[i]))
-      result[i] = (char)tolower(result[i]);
+      result[i] = char(tolower(result[i]));
   return result;
 }
 
