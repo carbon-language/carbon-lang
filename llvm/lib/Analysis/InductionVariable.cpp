@@ -160,7 +160,7 @@ void InductionVariable::print(std::ostream &o) const {
   case InductionVariable::Linear:       o << "Linear ";       break;
   case InductionVariable::Unknown:      o << "Unrecognized "; break;
   }
-  o << "Induction Variable";
+  o << "Induction Variable: ";
   if (Phi) {
     WriteAsOperand(o, Phi);
     o << ":\n" << Phi;
@@ -169,7 +169,7 @@ void InductionVariable::print(std::ostream &o) const {
   }
   if (InductionType == InductionVariable::Unknown) return;
 
-  o << "  Start ="; WriteAsOperand(o, Start);
-  o << "  Step =" ; WriteAsOperand(o, Step);
+  o << "  Start = "; WriteAsOperand(o, Start);
+  o << "  Step = " ; WriteAsOperand(o, Step);
   o << "\n";
 }
