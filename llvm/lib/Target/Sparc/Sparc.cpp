@@ -44,21 +44,23 @@ const TargetInstrDescriptor SparcMachineInstrDesc[] = {
 // Command line options to control choice of code generation passes.
 //---------------------------------------------------------------------------
 
-static cl::opt<bool> DisableSched("disable-sched",
-                                  cl::desc("Disable local scheduling pass"));
+namespace {
+  cl::opt<bool> DisableSched("disable-sched",
+                             cl::desc("Disable local scheduling pass"));
 
-static cl::opt<bool> DisablePeephole("disable-peephole",
+  cl::opt<bool> DisablePeephole("disable-peephole",
                                 cl::desc("Disable peephole optimization pass"));
 
-static cl::opt<bool> EmitMappingInfo("enable-maps",
-             cl::desc("Emit LLVM-to-MachineCode mapping info to assembly"));
+  cl::opt<bool> EmitMappingInfo("enable-maps",
+                 cl::desc("Emit LLVM-to-MachineCode mapping info to assembly"));
 
-static cl::opt<bool> DisableStrip("disable-strip",
-	     cl::desc("Do not strip the LLVM bytecode included in executable"));
+  cl::opt<bool> DisableStrip("disable-strip",
+                      cl::desc("Do not strip the LLVM bytecode in executable"));
 
-static cl::opt<bool> DumpInput("dump-input",
-                      cl::desc("Print bytecode before native code generation"),
-                      cl::Hidden);
+  cl::opt<bool> DumpInput("dump-input",
+                          cl::desc("Print bytecode before code generation"),
+                          cl::Hidden);
+}
 
 //----------------------------------------------------------------------------
 // allocateSparcTargetMachine - Allocate and return a subclass of TargetMachine
@@ -196,7 +198,7 @@ bool UltraSparc::addPassesToEmitAssembly(PassManager &PM, std::ostream &Out)
 
   PM.add(getRegisterAllocator(*this));
 
-  PM.add(getPrologEpilogInsertionPass());
+  PM.add(createPrologEpilogInsertionPass());
 
   if (!DisablePeephole)
     PM.add(createPeepholeOptsPass(*this));
@@ -210,15 +212,12 @@ bool UltraSparc::addPassesToEmitAssembly(PassManager &PM, std::ostream &Out)
   // allowing machine code representations for functions to be free'd after the
   // function has been emitted.
   //
-  PM.add(getFunctionAsmPrinterPass(Out));
+  PM.add(createAsmPrinterPass(Out, *this));
   PM.add(createMachineCodeDestructionPass()); // Free stuff no longer needed
-
-  // Emit Module level assembly after all of the functions have been processed.
-  PM.add(getModuleAsmPrinterPass(Out));
 
   // Emit bytecode to the assembly file into its special section next
   if (EmitMappingInfo)
-    PM.add(getBytecodeAsmPrinterPass(Out));
+    PM.add(createBytecodeAsmPrinterPass(Out));
 
   return false;
 }
@@ -262,7 +261,7 @@ bool UltraSparc::addPassesToJITCompile(FunctionPassManager &PM) {
   PM.add(createInstructionSelectionPass(*this));
 
   PM.add(getRegisterAllocator(*this));
-  PM.add(getPrologEpilogInsertionPass());
+  PM.add(createPrologEpilogInsertionPass());
 
   if (!DisablePeephole)
     PM.add(createPeepholeOptsPass(*this));
