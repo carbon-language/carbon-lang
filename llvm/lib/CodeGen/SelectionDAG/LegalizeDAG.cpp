@@ -1,0 +1,703 @@
+//===-- LegalizeDAG.cpp - Implement SelectionDAG::Legalize ----------------===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
+//
+// This file implements the SelectionDAG::Legalize method.
+//
+//===----------------------------------------------------------------------===//
+
+#include "llvm/CodeGen/SelectionDAG.h"
+#include "llvm/CodeGen/MachineConstantPool.h"
+#include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/Target/TargetLowering.h"
+#include "llvm/Constants.h"
+#include <iostream>
+using namespace llvm;
+
+//===----------------------------------------------------------------------===//
+/// SelectionDAGLegalize - This takes an arbitrary SelectionDAG as input and
+/// hacks on it until the target machine can handle it.  This involves
+/// eliminating value sizes the machine cannot handle (promoting small sizes to
+/// large sizes or splitting up large values into small values) as well as
+/// eliminating operations the machine cannot handle.
+///
+/// This code also does a small amount of optimization and recognition of idioms
+/// as part of its processing.  For example, if a target does not support a
+/// 'setcc' instruction efficiently, but does support 'brcc' instruction, this
+/// will attempt merge setcc and brc instructions into brcc's.
+///
+namespace {
+class SelectionDAGLegalize {
+  TargetLowering &TLI;
+  SelectionDAG &DAG;
+
+  /// LegalizeAction - This enum indicates what action we should take for each
+  /// value type the can occur in the program.
+  enum LegalizeAction {
+    Legal,            // The target natively supports this value type.
+    Promote,          // This should be promoted to the next larger type.
+    Expand,           // This integer type should be broken into smaller pieces.
+  };
+
+  /// TransformToType - For any value types we are promoting or expanding, this
+  /// contains the value type that we are changing to.  For Expanded types, this
+  /// contains one step of the expand (e.g. i64 -> i32), even if there are
+  /// multiple steps required (e.g. i64 -> i16)
+  MVT::ValueType TransformToType[MVT::LAST_VALUETYPE];
+
+  /// ValueTypeActions - This is a bitvector that contains two bits for each
+  /// value type, where the two bits correspond to the LegalizeAction enum.
+  /// This can be queried with "getTypeAction(VT)".
+  unsigned ValueTypeActions;
+
+  /// NeedsAnotherIteration - This is set when we expand a large integer
+  /// operation into smaller integer operations, but the smaller operations are
+  /// not set.  This occurs only rarely in practice, for targets that don't have
+  /// 32-bit or larger integer registers.
+  bool NeedsAnotherIteration;
+
+  /// LegalizedNodes - For nodes that are of legal width, and that have more
+  /// than one use, this map indicates what regularized operand to use.  This
+  /// allows us to avoid legalizing the same thing more than once.
+  std::map<SDOperand, SDOperand> LegalizedNodes;
+
+  /// ExpandedNodes - For nodes that need to be expanded, and which have more
+  /// than one use, this map indicates which which operands are the expanded
+  /// version of the input.  This allows us to avoid expanding the same node
+  /// more than once.
+  std::map<SDOperand, std::pair<SDOperand, SDOperand> > ExpandedNodes;
+
+  /// setValueTypeAction - Set the action for a particular value type.  This
+  /// assumes an action has not already been set for this value type.
+  void setValueTypeAction(MVT::ValueType VT, LegalizeAction A) {
+    ValueTypeActions |= A << (VT*2);
+    if (A == Promote) {
+      MVT::ValueType PromoteTo;
+      if (VT == MVT::f32)
+        PromoteTo = MVT::f64;
+      else {
+        unsigned LargerReg = VT+1;
+        while (!TLI.hasNativeSupportFor((MVT::ValueType)LargerReg)) {
+          ++LargerReg;
+          assert(MVT::isInteger((MVT::ValueType)LargerReg) &&
+                 "Nothing to promote to??");
+        }
+        PromoteTo = (MVT::ValueType)LargerReg;
+      }
+
+      assert(MVT::isInteger(VT) == MVT::isInteger(PromoteTo) &&
+             MVT::isFloatingPoint(VT) == MVT::isFloatingPoint(PromoteTo) &&
+             "Can only promote from int->int or fp->fp!");
+      assert(VT < PromoteTo && "Must promote to a larger type!");
+      TransformToType[VT] = PromoteTo;
+    } else if (A == Expand) {
+      assert(MVT::isInteger(VT) && VT > MVT::i8 &&
+             "Cannot expand this type: target must support SOME integer reg!");
+      // Expand to the next smaller integer type!
+      TransformToType[VT] = (MVT::ValueType)(VT-1);
+    }
+  }
+
+public:
+
+  SelectionDAGLegalize(TargetLowering &TLI, SelectionDAG &DAG);
+
+  /// Run - While there is still lowering to do, perform a pass over the DAG.
+  /// Most regularization can be done in a single pass, but targets that require
+  /// large values to be split into registers multiple times (e.g. i64 -> 4x
+  /// i16) require iteration for these values (the first iteration will demote
+  /// to i32, the second will demote to i16).
+  void Run() {
+    do {
+      NeedsAnotherIteration = false;
+      LegalizeDAG();
+    } while (NeedsAnotherIteration);
+  }
+
+  /// getTypeAction - Return how we should legalize values of this type, either
+  /// it is already legal or we need to expand it into multiple registers of
+  /// smaller integer type, or we need to promote it to a larger type.
+  LegalizeAction getTypeAction(MVT::ValueType VT) const {
+    return (LegalizeAction)((ValueTypeActions >> (2*VT)) & 3);
+  }
+
+  /// isTypeLegal - Return true if this type is legal on this target.
+  ///
+  bool isTypeLegal(MVT::ValueType VT) const {
+    return getTypeAction(VT) == Legal;
+  }
+
+private:
+  void LegalizeDAG();
+
+  SDOperand LegalizeOp(SDOperand O);
+  void ExpandOp(SDOperand O, SDOperand &Lo, SDOperand &Hi);
+
+  SDOperand getIntPtrConstant(uint64_t Val) {
+    return DAG.getConstant(Val, TLI.getPointerTy());
+  }
+};
+}
+
+
+SelectionDAGLegalize::SelectionDAGLegalize(TargetLowering &tli,
+                                           SelectionDAG &dag)
+  : TLI(tli), DAG(dag), ValueTypeActions(0) {
+
+  assert(MVT::LAST_VALUETYPE <= 16 &&
+         "Too many value types for ValueTypeActions to hold!");
+  
+  // Inspect all of the ValueType's possible, deciding how to process them.
+  for (unsigned IntReg = MVT::i1; IntReg <= MVT::i128; ++IntReg)
+    // If TLI says we are expanding this type, expand it!
+    if (TLI.getNumElements((MVT::ValueType)IntReg) != 1)
+      setValueTypeAction((MVT::ValueType)IntReg, Expand);
+    else if (!TLI.hasNativeSupportFor((MVT::ValueType)IntReg))
+      // Otherwise, if we don't have native support, we must promote to a
+      // larger type.
+      setValueTypeAction((MVT::ValueType)IntReg, Promote);
+  
+  // If the target does not have native support for F32, promote it to F64.
+  if (!TLI.hasNativeSupportFor(MVT::f32))
+    setValueTypeAction(MVT::f32, Promote);
+}
+
+
+void SelectionDAGLegalize::LegalizeDAG() {
+  SDOperand OldRoot = DAG.getRoot();
+  SDOperand NewRoot = LegalizeOp(OldRoot);
+  DAG.setRoot(NewRoot);
+
+  ExpandedNodes.clear();
+  LegalizedNodes.clear();
+
+  // Remove dead nodes now.
+  if (OldRoot != NewRoot)
+    // Delete all of these efficiently first.
+    ;
+  
+  // Then scan AllNodes.
+}
+
+SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
+  // If this operation defines any values that cannot be represented in a
+  // register on this target, make sure to expand it.
+  if (Op.Val->getNumValues() == 1) {// Fast path == assertion only
+    assert(getTypeAction(Op.Val->getValueType(0)) == Legal &&
+           "For a single use value, caller should check for legality!");
+  } else {
+    for (unsigned i = 0, e = Op.Val->getNumValues(); i != e; ++i)
+      switch (getTypeAction(Op.Val->getValueType(i))) {
+      case Legal: break;  // Nothing to do.
+      case Expand: {
+        SDOperand T1, T2;
+        ExpandOp(Op.getValue(i), T1, T2);
+        assert(LegalizedNodes.count(Op) &&
+               "Expansion didn't add legal operands!");
+        return LegalizedNodes[Op];
+      }
+      case Promote:
+        // FIXME: Implement promotion!
+        assert(0 && "Promotion not implemented at all yet!");
+      }
+  }
+
+  // If there is more than one use of this, see if we already legalized it.
+  // There is no use remembering values that only have a single use, as the map
+  // entries will never be reused.
+  if (!Op.Val->hasOneUse()) {
+    std::map<SDOperand, SDOperand>::iterator I = LegalizedNodes.find(Op);
+    if (I != LegalizedNodes.end()) return I->second;
+  }
+
+  SDOperand Tmp1, Tmp2;
+
+  SDOperand Result = Op;
+  SDNode *Node = Op.Val;
+  LegalizeAction Action;
+
+  switch (Node->getOpcode()) {
+  default:
+    std::cerr << "NODE: "; Node->dump(); std::cerr << "\n";
+    assert(0 && "Do not know how to legalize this operator!");
+    abort();
+  case ISD::EntryToken:
+  case ISD::FrameIndex:
+  case ISD::GlobalAddress:
+  case ISD::ConstantPool:
+  case ISD::CopyFromReg:            // Nothing to do.
+    assert(getTypeAction(Node->getValueType(0)) == Legal &&
+           "This must be legal!");
+    break;
+  case ISD::Constant:
+    // We know we don't need to expand constants here, constants only have one
+    // value and we check that it is fine above.
+
+    // FIXME: Maybe we should handle things like targets that don't support full
+    // 32-bit immediates?
+    break;
+  case ISD::ConstantFP: {
+    // Spill FP immediates to the constant pool if the target cannot directly
+    // codegen them.  Targets often have some immediate values that can be
+    // efficiently generated into an FP register without a load.  We explicitly
+    // leave these constants as ConstantFP nodes for the target to deal with.
+
+    ConstantFPSDNode *CFP = cast<ConstantFPSDNode>(Node);
+
+    // Check to see if this FP immediate is already legal.
+    bool isLegal = false;
+    for (TargetLowering::legal_fpimm_iterator I = TLI.legal_fpimm_begin(),
+           E = TLI.legal_fpimm_end(); I != E; ++I)
+      if (CFP->isExactlyValue(*I)) {
+        isLegal = true;
+        break;
+      }
+
+    if (!isLegal) {
+      // Otherwise we need to spill the constant to memory.
+      MachineConstantPool *CP = DAG.getMachineFunction().getConstantPool();
+
+      bool Extend = false;
+
+      // If a FP immediate is precise when represented as a float, we put it
+      // into the constant pool as a float, even if it's is statically typed
+      // as a double.
+      MVT::ValueType VT = CFP->getValueType(0);
+      bool isDouble = VT == MVT::f64;
+      ConstantFP *LLVMC = ConstantFP::get(isDouble ? Type::DoubleTy :
+                                             Type::FloatTy, CFP->getValue());
+      if (isDouble && CFP->isExactlyValue((float)CFP->getValue())) {
+        LLVMC = cast<ConstantFP>(ConstantExpr::getCast(LLVMC, Type::FloatTy));
+        VT = MVT::f32;
+        Extend = true;
+      }
+      
+      SDOperand CPIdx = DAG.getConstantPool(CP->getConstantPoolIndex(LLVMC),
+                                            TLI.getPointerTy());
+      Result = DAG.getLoad(VT, DAG.getEntryNode(), CPIdx);
+      
+      if (Extend) Result = DAG.getNode(ISD::FP_EXTEND, MVT::f64, Result);
+    }
+    break;
+  }
+  case ISD::ADJCALLSTACKDOWN:
+  case ISD::ADJCALLSTACKUP:
+    Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
+    // There is no need to legalize the size argument (Operand #1)
+    if (Tmp1 != Node->getOperand(0))
+      Result = DAG.getNode(Node->getOpcode(), MVT::Other, Tmp1,
+                           Node->getOperand(1));
+    break;
+  case ISD::CALL:
+    Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
+    Tmp2 = LegalizeOp(Node->getOperand(1));  // Legalize the callee.
+    if (Tmp2 != Node->getOperand(0) || Tmp2 != Node->getOperand(1)) {
+      std::vector<MVT::ValueType> RetTyVTs;
+      RetTyVTs.reserve(Node->getNumValues());
+      for (unsigned i = 0, e = Node->getNumValues(); i != e; ++i)
+        RetTyVTs.push_back(Node->getValueType(0));
+      Result = SDOperand(DAG.getCall(RetTyVTs, Tmp1, Tmp2), Op.ResNo);
+    }
+    break;
+
+  case ISD::LOAD:
+    Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
+    Tmp2 = LegalizeOp(Node->getOperand(1));  // Legalize the pointer.
+    if (Tmp1 != Node->getOperand(0) ||
+        Tmp2 != Node->getOperand(1))
+      Result = DAG.getLoad(Node->getValueType(0), Tmp1, Tmp2);
+    break;
+
+  case ISD::EXTRACT_ELEMENT:
+    // Get both the low and high parts.
+    ExpandOp(Node->getOperand(0), Tmp1, Tmp2);
+    if (cast<ConstantSDNode>(Node->getOperand(1))->getValue())
+      Result = Tmp2;  // 1 -> Hi
+    else
+      Result = Tmp1;  // 0 -> Lo
+    break;
+
+  case ISD::CopyToReg:
+    Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
+    
+    switch (getTypeAction(Node->getOperand(1).getValueType())) {
+    case Legal:
+      // Legalize the incoming value (must be legal).
+      Tmp2 = LegalizeOp(Node->getOperand(1));
+      if (Tmp1 != Node->getOperand(0) || Tmp2 != Node->getOperand(1))
+        Result = DAG.getCopyToReg(Tmp1, Tmp2,
+                                  cast<CopyRegSDNode>(Node)->getReg());
+      break;
+    case Expand: {
+      SDOperand Lo, Hi;
+      ExpandOp(Node->getOperand(1), Lo, Hi);      
+      unsigned Reg = cast<CopyRegSDNode>(Node)->getReg();
+      Result = DAG.getCopyToReg(Tmp1, Lo, Reg);
+      Result = DAG.getCopyToReg(Result, Hi, Reg+1);
+      assert(isTypeLegal(Result.getValueType()) &&
+             "Cannot expand multiple times yet (i64 -> i16)");
+      break;
+    }
+    case Promote:
+      assert(0 && "Don't know what it means to promote this!");
+      abort();
+    }
+    break;
+
+  case ISD::RET:
+    Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
+    switch (Node->getNumOperands()) {
+    case 2:  // ret val
+      switch (getTypeAction(Node->getOperand(1).getValueType())) {
+      case Legal:
+        Tmp2 = LegalizeOp(Node->getOperand(1));
+        if (Tmp2 != Node->getOperand(1))
+          Result = DAG.getNode(ISD::RET, MVT::Other, Tmp1, Tmp2);
+        break;
+      case Expand: {
+        SDOperand Lo, Hi;
+        ExpandOp(Node->getOperand(1), Lo, Hi);
+        Result = DAG.getNode(ISD::RET, MVT::Other, Tmp1, Lo, Hi);
+        break;                             
+      }
+      case Promote:
+        assert(0 && "Can't promote return value!");
+      }
+      break;
+    case 1:  // ret void
+      if (Tmp1 != Node->getOperand(0))
+        Result = DAG.getNode(ISD::RET, MVT::Other, Tmp1);
+      break;
+    default: { // ret <values>
+      std::vector<SDOperand> NewValues;
+      NewValues.push_back(Tmp1);
+      for (unsigned i = 1, e = Node->getNumOperands(); i != e; ++i)
+        switch (getTypeAction(Node->getOperand(i).getValueType())) {
+        case Legal:
+          NewValues.push_back(LegalizeOp(Node->getOperand(1)));
+          break;
+        case Expand: {
+          SDOperand Lo, Hi;
+          ExpandOp(Node->getOperand(i), Lo, Hi);
+          NewValues.push_back(Lo);
+          NewValues.push_back(Hi);
+          break;                             
+        }
+        case Promote:
+          assert(0 && "Can't promote return value!");
+        }
+      Result = DAG.getNode(ISD::RET, MVT::Other, NewValues);
+      break;
+    }
+    }
+    break;
+  case ISD::STORE:
+    Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
+    Tmp2 = LegalizeOp(Node->getOperand(2));  // Legalize the pointer.
+
+    switch (getTypeAction(Node->getOperand(1).getValueType())) {
+    case Legal: {
+      SDOperand Val = LegalizeOp(Node->getOperand(1));
+      if (Val != Node->getOperand(1) || Tmp1 != Node->getOperand(0) ||
+          Tmp2 != Node->getOperand(2))
+        Result = DAG.getNode(ISD::STORE, MVT::Other, Tmp1, Val, Tmp2);
+      break;
+    }
+    case Promote:
+      assert(0 && "FIXME: promote for stores not implemented!");
+    case Expand:
+      SDOperand Lo, Hi;
+      ExpandOp(Node->getOperand(1), Lo, Hi);
+
+      if (!TLI.isLittleEndian())
+        std::swap(Lo, Hi);
+
+      // FIXME: These two stores are independent of each other!
+      Result = DAG.getNode(ISD::STORE, MVT::Other, Tmp1, Lo, Tmp2);
+
+      unsigned IncrementSize;
+      switch (Lo.getValueType()) {
+      default: assert(0 && "Unknown ValueType to expand to!");
+      case MVT::i32: IncrementSize = 4; break;
+      case MVT::i16: IncrementSize = 2; break;
+      case MVT::i8:  IncrementSize = 1; break;
+      }
+      Tmp2 = DAG.getNode(ISD::ADD, Tmp2.getValueType(), Tmp2,
+                         getIntPtrConstant(IncrementSize));
+      assert(isTypeLegal(Tmp2.getValueType()) &&
+             "Pointers must be legal!");
+      Result = DAG.getNode(ISD::STORE, MVT::Other, Result, Hi, Tmp2);
+    }
+    break;
+  case ISD::SELECT: {
+    // FIXME: BOOLS MAY REQUIRE PROMOTION!
+    Tmp1 = LegalizeOp(Node->getOperand(0));   // Cond
+    Tmp2 = LegalizeOp(Node->getOperand(1));   // TrueVal
+    SDOperand Tmp3 = LegalizeOp(Node->getOperand(2));   // FalseVal
+
+    if (Tmp1 != Node->getOperand(0) ||
+        Tmp2 != Node->getOperand(1) ||
+        Tmp3 != Node->getOperand(2))
+      Result = DAG.getNode(ISD::SELECT, Node->getValueType(0), Tmp1, Tmp2,Tmp3);
+    break;
+  }
+  case ISD::SETCC:
+    switch (getTypeAction(Node->getOperand(0).getValueType())) {
+    case Legal:
+      Tmp1 = LegalizeOp(Node->getOperand(0));   // LHS
+      Tmp2 = LegalizeOp(Node->getOperand(1));   // RHS
+      if (Tmp1 != Node->getOperand(0) || Tmp2 != Node->getOperand(1))
+        Result = DAG.getSetCC(cast<SetCCSDNode>(Node)->getCondition(),
+                              Tmp1, Tmp2);
+      break;
+    case Promote:
+      assert(0 && "Can't promote setcc operands yet!");
+      break;
+    case Expand: 
+      SDOperand LHSLo, LHSHi, RHSLo, RHSHi;
+      ExpandOp(Node->getOperand(0), LHSLo, LHSHi);
+      ExpandOp(Node->getOperand(1), RHSLo, RHSHi);
+      switch (cast<SetCCSDNode>(Node)->getCondition()) {
+      case ISD::SETEQ:
+      case ISD::SETNE:
+        Tmp1 = DAG.getNode(ISD::XOR, LHSLo.getValueType(), LHSLo, RHSLo);
+        Tmp2 = DAG.getNode(ISD::XOR, LHSLo.getValueType(), LHSHi, RHSHi);
+        Tmp1 = DAG.getNode(ISD::OR, Tmp1.getValueType(), Tmp1, Tmp2);
+        Result = DAG.getSetCC(cast<SetCCSDNode>(Node)->getCondition(), Tmp1,
+                              DAG.getConstant(0, Tmp1.getValueType()));
+        break;
+      default:
+        // FIXME: This generated code sucks.
+        ISD::CondCode LowCC;
+        switch (cast<SetCCSDNode>(Node)->getCondition()) {
+        default: assert(0 && "Unknown integer setcc!");
+        case ISD::SETLT:
+        case ISD::SETULT: LowCC = ISD::SETULT; break;
+        case ISD::SETGT:
+        case ISD::SETUGT: LowCC = ISD::SETUGT; break;
+        case ISD::SETLE:
+        case ISD::SETULE: LowCC = ISD::SETULE; break;
+        case ISD::SETGE:
+        case ISD::SETUGE: LowCC = ISD::SETUGE; break;
+        }
+        
+        // Tmp1 = lo(op1) < lo(op2)   // Always unsigned comparison
+        // Tmp2 = hi(op1) < hi(op2)   // Signedness depends on operands
+        // dest = hi(op1) == hi(op2) ? Tmp1 : Tmp2;
+
+        // NOTE: on targets without efficient SELECT of bools, we can always use
+        // this identity: (B1 ? B2 : B3) --> (B1 & B2)|(!B1&B3)
+        Tmp1 = DAG.getSetCC(LowCC, LHSLo, RHSLo);
+        Tmp2 = DAG.getSetCC(cast<SetCCSDNode>(Node)->getCondition(),
+                            LHSHi, RHSHi);
+        Result = DAG.getSetCC(ISD::SETEQ, LHSHi, RHSHi);
+        Result = DAG.getNode(ISD::SELECT, MVT::i1, Result, Tmp1, Tmp2);
+        break;
+      }
+    }
+    break;
+
+  case ISD::ADD:
+  case ISD::SUB:
+  case ISD::MUL:
+  case ISD::UDIV:
+  case ISD::SDIV:
+  case ISD::UREM:
+  case ISD::SREM:
+  case ISD::AND:
+  case ISD::OR:
+  case ISD::XOR:
+    Tmp1 = LegalizeOp(Node->getOperand(0));   // LHS
+    Tmp2 = LegalizeOp(Node->getOperand(1));   // RHS
+    if (Tmp1 != Node->getOperand(0) ||
+        Tmp2 != Node->getOperand(1))
+      Result = DAG.getNode(Node->getOpcode(), Node->getValueType(0), Tmp1,Tmp2);
+    break;
+  case ISD::ZERO_EXTEND:
+  case ISD::SIGN_EXTEND:
+    switch (getTypeAction(Node->getOperand(0).getValueType())) {
+    case Legal:
+      Tmp1 = LegalizeOp(Node->getOperand(0));
+      if (Tmp1 != Node->getOperand(0))
+        Result = DAG.getNode(Node->getOpcode(), Node->getValueType(0), Tmp1);
+      break;
+    default:
+      assert(0 && "Do not know how to expand or promote this yet!");
+    }
+    break;
+  }
+
+  if (!Op.Val->hasOneUse()) {
+    bool isNew = LegalizedNodes.insert(std::make_pair(Op, Result)).second;
+    assert(isNew && "Got into the map somehow?");
+  }
+
+  return Result;
+}
+
+
+/// ExpandOp - Expand the specified SDOperand into its two component pieces
+/// Lo&Hi.  Note that the Op MUST be an expanded type.  As a result of this, the
+/// LegalizeNodes map is filled in for any results that are not expanded, the
+/// ExpandedNodes map is filled in for any results that are expanded, and the
+/// Lo/Hi values are returned.
+void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
+  MVT::ValueType VT = Op.getValueType();
+  MVT::ValueType NVT = TransformToType[VT];
+  SDNode *Node = Op.Val;
+  assert(getTypeAction(VT) == Expand && "Not an expanded type!");
+  assert(MVT::isInteger(VT) && "Cannot expand FP values!");
+  assert(MVT::isInteger(NVT) && NVT < VT &&
+         "Cannot expand to FP value or to larger int value!");
+
+  // If there is more than one use of this, see if we already expanded it.
+  // There is no use remembering values that only have a single use, as the map
+  // entries will never be reused.
+  if (!Node->hasOneUse()) {
+    std::map<SDOperand, std::pair<SDOperand, SDOperand> >::iterator I
+      = ExpandedNodes.find(Op);
+    if (I != ExpandedNodes.end()) {
+      Lo = I->second.first;
+      Hi = I->second.second;
+      return;
+    }
+  }
+
+  // If we are lowering to a type that the target doesn't support, we will have
+  // to iterate lowering.
+  if (!isTypeLegal(NVT))
+    NeedsAnotherIteration = true;
+
+  LegalizeAction Action;
+  switch (Node->getOpcode()) {
+  default:
+    std::cerr << "NODE: "; Node->dump(); std::cerr << "\n";
+    assert(0 && "Do not know how to expand this operator!");
+    abort();
+  case ISD::Constant: {
+    uint64_t Cst = cast<ConstantSDNode>(Node)->getValue();
+    Lo = DAG.getConstant(Cst, NVT);
+    Hi = DAG.getConstant(Cst >> MVT::getSizeInBits(NVT), NVT);
+    break;
+  }
+
+  case ISD::CopyFromReg: {
+    unsigned Reg = cast<CopyRegSDNode>(Node)->getReg();
+    // Aggregate register values are always in consequtive pairs.
+    Lo = DAG.getCopyFromReg(Reg, NVT);
+    Hi = DAG.getCopyFromReg(Reg+1, NVT);
+    assert(isTypeLegal(NVT) && "Cannot expand this multiple times yet!");
+    break;
+  }
+
+  case ISD::LOAD: {
+    SDOperand Ch = LegalizeOp(Node->getOperand(0));   // Legalize the chain.
+    SDOperand Ptr = LegalizeOp(Node->getOperand(1));  // Legalize the pointer.
+    Lo = DAG.getLoad(NVT, Ch, Ptr);
+
+    // Increment the pointer to the other half.
+    unsigned IncrementSize;
+    switch (Lo.getValueType()) {
+    default: assert(0 && "Unknown ValueType to expand to!");
+    case MVT::i32: IncrementSize = 4; break;
+    case MVT::i16: IncrementSize = 2; break;
+    case MVT::i8:  IncrementSize = 1; break;
+    }
+    Ptr = DAG.getNode(ISD::ADD, Ptr.getValueType(), Ptr,
+                      getIntPtrConstant(IncrementSize));
+    // FIXME: This load is independent of the first one.
+    Hi = DAG.getLoad(NVT, Lo.getValue(1), Ptr);
+    
+    // Remember that we legalized the chain.
+    bool isNew = LegalizedNodes.insert(std::make_pair(Op.getValue(1),
+                                                      Hi.getValue(1))).second;
+    assert(isNew && "This node was already legalized!");
+    if (!TLI.isLittleEndian())
+      std::swap(Lo, Hi);
+    break;
+  }
+  case ISD::CALL: {
+    SDOperand Chain  = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
+    SDOperand Callee = LegalizeOp(Node->getOperand(1));  // Legalize the callee.
+
+    assert(Node->getNumValues() == 2 && Op.ResNo == 0 &&
+           "Can only expand a call once so far, not i64 -> i16!");
+
+    std::vector<MVT::ValueType> RetTyVTs;
+    RetTyVTs.reserve(3);
+    RetTyVTs.push_back(NVT);
+    RetTyVTs.push_back(NVT);
+    RetTyVTs.push_back(MVT::Other);
+    SDNode *NC = DAG.getCall(RetTyVTs, Chain, Callee);
+    Lo = SDOperand(NC, 0);
+    Hi = SDOperand(NC, 1);
+
+    // Insert the new chain mapping.
+    bool isNew = LegalizedNodes.insert(std::make_pair(Op.getValue(1),
+                                                      Hi.getValue(2))).second;
+    assert(isNew && "This node was already legalized!");
+    break;
+  }
+  case ISD::AND:
+  case ISD::OR:
+  case ISD::XOR: {   // Simple logical operators -> two trivial pieces.
+    SDOperand LL, LH, RL, RH;
+    ExpandOp(Node->getOperand(0), LL, LH);
+    ExpandOp(Node->getOperand(1), RL, RH);
+    Lo = DAG.getNode(Node->getOpcode(), NVT, LL, RL);
+    Hi = DAG.getNode(Node->getOpcode(), NVT, LH, RH);
+    break;
+  }
+  case ISD::SELECT: {
+    SDOperand C, LL, LH, RL, RH;
+    // FIXME: BOOLS MAY REQUIRE PROMOTION!
+    C = LegalizeOp(Node->getOperand(0));
+    ExpandOp(Node->getOperand(1), LL, LH);
+    ExpandOp(Node->getOperand(2), RL, RH);
+    Lo = DAG.getNode(ISD::SELECT, NVT, C, LL, RL);
+    Hi = DAG.getNode(ISD::SELECT, NVT, C, LH, RH);
+    break;
+  }
+  case ISD::SIGN_EXTEND: {
+    // The low part is just a sign extension of the input (which degenerates to
+    // a copy).
+    Lo = DAG.getNode(ISD::SIGN_EXTEND, NVT, LegalizeOp(Node->getOperand(0)));
+    
+    // The high part is obtained by SRA'ing all but one of the bits of the lo
+    // part.
+    unsigned SrcSize = MVT::getSizeInBits(Node->getOperand(0).getValueType());
+    Hi = DAG.getNode(ISD::SRA, NVT, Lo, DAG.getConstant(SrcSize-1, MVT::i8));
+    break;
+  }
+  case ISD::ZERO_EXTEND:
+    // The low part is just a zero extension of the input (which degenerates to
+    // a copy).
+    Lo = DAG.getNode(ISD::ZERO_EXTEND, NVT, LegalizeOp(Node->getOperand(0)));
+    
+    // The high part is just a zero.
+    Hi = DAG.getConstant(0, NVT);
+    break;
+  }
+
+  // Remember in a map if the values will be reused later.
+  if (!Node->hasOneUse()) {
+    bool isNew = ExpandedNodes.insert(std::make_pair(Op,
+                                            std::make_pair(Lo, Hi))).second;
+    assert(isNew && "Value already expanded?!?");
+  }
+}
+
+
+// SelectionDAG::Legalize - This is the entry point for the file.
+//
+void SelectionDAG::Legalize(TargetLowering &TLI) {
+  /// run - This is the main entry point to this class.
+  ///
+  SelectionDAGLegalize(TLI, *this).Run();
+}
+
