@@ -93,7 +93,7 @@ private:
   const Type *getForwardedTypeInternal() const;
 protected:
   /// ctor is protected, so only subclasses can create Type objects...
-  Type(PrimitiveID id);
+  Type(const std::string &Name, PrimitiveID id);
   virtual ~Type() {}
 
   /// setName - Associate the name with this type in the symbol table, but don't
@@ -108,6 +108,8 @@ protected:
   /// isTypeAbstract - This method is used to calculate the Abstract bit.
   ///
   bool isTypeAbstract();
+
+  unsigned getRefCount() const { return RefCount; }
 
   /// ForwardType - This field is used to implement the union find scheme for
   /// abstract types.  When types are refined to other types, this field is set
