@@ -48,7 +48,8 @@ static cl::opt<enum OutputMode>
 WriteMode(cl::desc("Specify the output format:"),
           cl::values(clEnumValN(LLVM, "llvm", "Output LLVM assembly"),
                      clEnumVal(c, "Output C code for program"),
-                    0));
+                    0),
+          cl::ReallyHidden);
 
 int main(int argc, char **argv) {
   cl::ParseCommandLineOptions(argc, argv, " llvm .bc -> .ll disassembler\n");
