@@ -66,7 +66,10 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
   // If this block ends in a return, unwind, and eventually tailcall/barrier,
   // then all allocas are dead at its end.
   if (BB.getTerminator()->getNumSuccessors() == 0) {
-
+    BasicBlock *Entry = BB.getParent()->begin();
+    for (BasicBlock::iterator I = Entry->begin(), E = Entry->end(); I != E; ++I)
+      if (AllocaInst *AI = dyn_cast<AllocaInst>(I))
+        KillLocs.add(AI, ~0);
   }
 
   // PotentiallyDeadInsts - Deleting dead stores from the program can make other
