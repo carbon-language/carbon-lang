@@ -51,11 +51,7 @@ DSNode *DSNodeHandle::HandleForwarding() const {
 //===----------------------------------------------------------------------===//
 
 DSNode::DSNode(const Type *T, DSGraph *G)
-  : NumReferrers(0), Size(0),
-#ifdef INCLUDE_PARENT_GRAPH
-    ParentGraph(G), 
-#endif
-    Ty(Type::VoidTy), NodeType(0) {
+  : NumReferrers(0), Size(0), ParentGraph(G), Ty(Type::VoidTy), NodeType(0) {
   // Add the type entry if it is specified...
   if (T) mergeTypeInfo(T, 0);
   G->getNodes().push_back(this);
@@ -63,10 +59,7 @@ DSNode::DSNode(const Type *T, DSGraph *G)
 
 // DSNode copy constructor... do not copy over the referrers list!
 DSNode::DSNode(const DSNode &N, DSGraph *G)
-  : NumReferrers(0), Size(N.Size),
-#ifdef INCLUDE_PARENT_GRAPH
-    ParentGraph(G),
-#endif
+  : NumReferrers(0), Size(N.Size), ParentGraph(G),
     Ty(N.Ty), Links(N.Links), Globals(N.Globals), NodeType(N.NodeType) {
   G->getNodes().push_back(this);
 }
@@ -120,13 +113,7 @@ void DSNode::foldNodeCompletely() {
   ++NumFolds;
 
   // Create the node we are going to forward to...
-  DSNode *DestNode = new DSNode(0,
-#ifdef INCLUDE_PARENT_GRAPH
-                                ParentGraph
-#else
-                                0
-#endif
-                                );
+  DSNode *DestNode = new DSNode(0, ParentGraph);
   DestNode->NodeType = NodeType|DSNode::Array;
   DestNode->Ty = Type::VoidTy;
   DestNode->Size = 1;
@@ -489,10 +476,8 @@ bool DSNode::mergeTypeInfo(const Type *NewTy, unsigned Offset,
   }
 
   Module *M = 0;
-#ifdef INCLUDE_PARENT_GRAPH
   if (getParentGraph()->getReturnNodes().size())
     M = getParentGraph()->getReturnNodes().begin()->first->getParent();
-#endif
   DEBUG(std::cerr << "MergeTypeInfo Folding OrigTy: ";
         WriteTypeSymbolic(std::cerr, Ty, M) << "\n due to:";
         WriteTypeSymbolic(std::cerr, NewTy, M) << " @ " << Offset << "!\n"
@@ -1268,7 +1253,7 @@ void DSGraph::removeDeadNodes(unsigned Flags) {
   std::vector<unsigned char> AuxFCallsAlive(AuxFunctionCalls.size());
   do {
     Visited.clear();
-    // If any global nodes points to a non-global that is "alive", the global is
+    // If any global node points to a non-global that is "alive", the global is
     // "alive" as well...  Remove it from the GlobalNodes list so we only have
     // unreachable globals in the list.
     //
@@ -1319,9 +1304,7 @@ void DSGraph::removeDeadNodes(unsigned Flags) {
       if (!(Flags & DSGraph::RemoveUnreachableGlobals) &&  // Not in TD pass
           Visited.count(N)) {                    // Visited but not alive?
         GlobalsGraph->Nodes.push_back(N);        // Move node to globals graph
-#ifdef INCLUDE_PARENT_GRAPH
         N->setParentGraph(GlobalsGraph);
-#endif
       } else {                                 // Otherwise, delete the node
         assert((!N->isGlobalNode() ||
                 (Flags & DSGraph::RemoveUnreachableGlobals))
