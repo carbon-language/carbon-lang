@@ -24,8 +24,6 @@
 #include "llvm/Module.h"
 #include "llvm/Target/TargetData.h"
 #include "Support/DynamicLinker.h"
-#include "Config/dlfcn.h"
-#include "Config/link.h"
 #include <cmath>
 #include <csignal>
 #include <map>
