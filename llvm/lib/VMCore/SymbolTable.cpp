@@ -291,48 +291,6 @@ void SymbolTable::insertEntry(const std::string& Name, const Type* T) {
   }
 }
 
-
-// Determine how many entries for a given type.
-unsigned SymbolTable::type_size(const Type *Ty) const {
-  plane_const_iterator PI = pmap.find(Ty);
-  if ( PI == pmap.end() ) return 0;
-  return PI->second.size();
-}
-
-
-// Get the name of a value
-std::string SymbolTable::get_name( const Value* V ) const {
-  value_const_iterator VI = this->value_begin( V->getType() );
-  value_const_iterator VE = this->value_end( V->getType() );
-
-  // Search for the entry
-  while ( VI != VE && VI->second != V )
-    ++VI;
-
-  if ( VI != VE )
-    return VI->first;
-
-  return "";
-}
-
-
-// Get the name of a type
-std::string SymbolTable::get_name(const Type* T) const {
-  if (tmap.empty()) return ""; // No types at all.
-
-  type_const_iterator TI = tmap.begin();
-  type_const_iterator TE = tmap.end();
-
-  // Search for the entry
-  while (TI != TE && TI->second != T )
-    ++TI;
-
-  if (TI != TE)  // Must have found an entry!
-    return TI->first;
-  return "";     // Must not have found anything...
-}
-
-
 // Strip the symbol table of its names.
 bool SymbolTable::strip() {
   bool RemovedSymbol = false;
