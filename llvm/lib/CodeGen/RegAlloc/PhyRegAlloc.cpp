@@ -996,7 +996,7 @@ void PhyRegAlloc::printMachineCode()
 	  }
 
 	  // if a label or a constant
-	  if(isa<BasicBlock>(Val) {
+	  if(isa<BasicBlock>(Val)) {
 	    cerr << "\t"; printLabel(	Op.getVRegValue	() );
 	  } else {
 	    // else it must be a register value
