@@ -45,6 +45,10 @@ E: sabre@nondot.org
 W: http://nondot.org/~sabre/
 D: Primary architect of LLVM
 
+N: Vladimir Merzliakov
+E: wanderer@rsu.ru
+D: Test suite fixes for FreeBSD.
+
 N: Vladimir Prus
 E: ghost@cs.msu.su
 D: Made inst_iterator behave like a proper iterator, LowerConstantExprs pass
