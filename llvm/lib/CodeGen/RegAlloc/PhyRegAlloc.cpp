@@ -15,7 +15,7 @@
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineCodeForMethod.h"
 #include "llvm/Analysis/LiveVar/MethodLiveVarInfo.h"
-#include "llvm/Analysis/LiveVar/LiveVarSet.h"
+#include "llvm/Analysis/LiveVar/ValueSet.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/MachineFrameInfo.h"
@@ -151,11 +151,11 @@ void PhyRegAlloc::createIGNodeListsAndIGs() {
 // class as that of live var. The live var passed to this function is the 
 // LVset AFTER the instruction
 //----------------------------------------------------------------------------
-void PhyRegAlloc::addInterference(const Value *const Def, 
-				  const LiveVarSet *const LVSet,
-				  const bool isCallInst) {
+void PhyRegAlloc::addInterference(const Value *Def, 
+				  const ValueSet *LVSet,
+				  bool isCallInst) {
 
-  LiveVarSet::const_iterator LIt = LVSet->begin();
+  ValueSet::const_iterator LIt = LVSet->begin();
 
   // get the live range of instruction
   //
@@ -207,7 +207,7 @@ void PhyRegAlloc::addInterference(const Value *const Def,
 //----------------------------------------------------------------------------
 
 void PhyRegAlloc::setCallInterferences(const MachineInstr *MInst, 
-				       const LiveVarSet *const LVSetAft ) {
+				       const ValueSet *LVSetAft) {
 
   // Now find the LR of the return value of the call
   // We do this because, we look at the LV set *after* the instruction
@@ -226,7 +226,7 @@ void PhyRegAlloc::setCallInterferences(const MachineInstr *MInst,
   if( DEBUG_RA)
     cerr << "\n For call inst: " << *MInst;
 
-  LiveVarSet::const_iterator LIt = LVSetAft->begin();
+  ValueSet::const_iterator LIt = LVSetAft->begin();
 
   // for each live var in live variable set after machine inst
   //
@@ -238,7 +238,7 @@ void PhyRegAlloc::setCallInterferences(const MachineInstr *MInst,
 
     if( LR && DEBUG_RA) {
       cerr << "\n\tLR Aft Call: ";
-      LR->printSet();
+      printSet(*LR);
     }
    
 
@@ -249,7 +249,7 @@ void PhyRegAlloc::setCallInterferences(const MachineInstr *MInst,
       LR->setCallInterference();
       if( DEBUG_RA) {
 	cerr << "\n  ++Added call interf for LR: " ;
-	LR->printSet();
+	printSet(*LR);
       }
     }
 
@@ -293,8 +293,7 @@ void PhyRegAlloc::buildInterferenceGraphs()
 
       // get the LV set after the instruction
       //
-      const LiveVarSet *const LVSetAI = 
-	LVI->getLiveVarSetAfterMInst(MInst, *BBI);
+      const ValueSet *LVSetAI = LVI->getLiveVarSetAfterMInst(MInst, *BBI);
     
       const bool isCallInst = TM.getInstrInfo().isCall(MInst->getOpCode());
 
@@ -416,15 +415,14 @@ void PhyRegAlloc::addInterf4PseudoInstr(const MachineInstr *MInst) {
 //----------------------------------------------------------------------------
 // This method will add interferences for incoming arguments to a method.
 //----------------------------------------------------------------------------
-void PhyRegAlloc::addInterferencesForArgs()
-{
-                                              // get the InSet of root BB
-  const LiveVarSet *const InSet = LVI->getInSetOfBB( Meth->front() );  
+void PhyRegAlloc::addInterferencesForArgs() {
+  // get the InSet of root BB
+  const ValueSet *InSet = LVI->getInSetOfBB(Meth->front());  
 
-                                              // get the argument list
+  // get the argument list
   const Method::ArgumentListType& ArgList = Meth->getArgumentList();  
 
-                                              // get an iterator to arg list
+  // get an iterator to arg list
   Method::ArgumentListType::const_iterator ArgIt = ArgList.begin();          
 
 
@@ -683,7 +681,7 @@ void PhyRegAlloc::insertCode4SpilledLR(const LiveRange *LR,
   unsigned RegType = MRI.getRegType( LR );
   int SpillOff = LR->getSpillOffFromFP();
   RegClass *RC = LR->getRegClass();
-  const LiveVarSet *LVSetBef =  LVI->getLiveVarSetBeforeMInst(MInst, BB);
+  const ValueSet *LVSetBef =  LVI->getLiveVarSetBeforeMInst(MInst, BB);
 
   mcInfo.pushTempValue(TM, MRI.getSpilledRegSize(RegType) );
   
@@ -715,10 +713,7 @@ void PhyRegAlloc::insertCode4SpilledLR(const LiveRange *LR,
     if(MIAft)
       AI->InstrnsAfter.push_front(MIAft);
     
-    
-  } 
-  else {   // if this is a Def
-
+  } else {   // if this is a Def
     // for a DEF, we have to store the value produced by this instruction
     // on the stack position allocated for this LR
 
@@ -736,19 +731,14 @@ void PhyRegAlloc::insertCode4SpilledLR(const LiveRange *LR,
   }  // if !DEF
 
   cerr << "\nFor Inst " << *MInst;
-  cerr << " - SPILLED LR: "; LR->printSet();
+  cerr << " - SPILLED LR: "; printSet(*LR);
   cerr << "\n - Added Instructions:";
-  if( MIBef ) cerr <<  *MIBef;
+  if (MIBef) cerr <<  *MIBef;
   cerr <<  *AdIMid;
-  if( MIAft ) cerr <<  *MIAft;
+  if (MIAft) cerr <<  *MIAft;
 
-  Op.setRegForValue( TmpRegU );    // set the opearnd
-
-
+  Op.setRegForValue(TmpRegU);    // set the opearnd
 }
-
-
-
 
 
 
@@ -764,7 +754,7 @@ void PhyRegAlloc::insertCode4SpilledLR(const LiveRange *LR,
 int PhyRegAlloc::getUsableUniRegAtMI(RegClass *RC, 
 				  const int RegType,
 				  const MachineInstr *MInst, 
-				  const LiveVarSet *LVSetBef,
+				  const ValueSet *LVSetBef,
 				  MachineInstr *MIBef,
 				  MachineInstr *MIAft) {
 
@@ -801,7 +791,7 @@ int PhyRegAlloc::getUsableUniRegAtMI(RegClass *RC,
 //----------------------------------------------------------------------------
 int PhyRegAlloc::getUnusedUniRegAtMI(RegClass *RC, 
 				  const MachineInstr *MInst, 
-				  const LiveVarSet *LVSetBef) {
+				  const ValueSet *LVSetBef) {
 
   unsigned NumAvailRegs =  RC->getNumOfAvailRegs();
   
@@ -810,7 +800,7 @@ int PhyRegAlloc::getUnusedUniRegAtMI(RegClass *RC,
   for(unsigned i=0; i <  NumAvailRegs; i++)     // Reset array
       IsColorUsedArr[i] = false;
       
-  LiveVarSet::const_iterator LIt = LVSetBef->begin();
+  ValueSet::const_iterator LIt = LVSetBef->begin();
 
   // for each live var in live variable set after machine inst
   for( ; LIt != LVSetBef->end(); ++LIt) {

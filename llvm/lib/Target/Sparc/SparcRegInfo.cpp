@@ -11,7 +11,7 @@
 #include "llvm/CodeGen/MachineCodeForMethod.h"
 #include "llvm/CodeGen/PhyRegAlloc.h"
 #include "llvm/CodeGen/MachineInstr.h"
-#include "llvm/Analysis/LiveVar/LiveVarSet.h"
+#include "llvm/Analysis/LiveVar/ValueSet.h"
 #include "llvm/Analysis/LiveVar/MethodLiveVarInfo.h"
 #include "llvm/iTerminators.h"
 #include "llvm/iOther.h"
@@ -1252,8 +1252,8 @@ void UltraSparcRegInfo::insertCallerSavingCode(const MachineInstr *MInst,
   }
 
 
-  const LiveVarSet *LVSetAft =  PRA.LVI->getLiveVarSetAfterMInst(MInst, BB);
-  LiveVarSet::const_iterator LIt = LVSetAft->begin();
+  const ValueSet *LVSetAft =  PRA.LVI->getLiveVarSetAfterMInst(MInst, BB);
+  ValueSet::const_iterator LIt = LVSetAft->begin();
 
   // for each live var in live variable set after machine inst
   for( ; LIt != LVSetAft->end(); ++LIt) {
@@ -1303,7 +1303,7 @@ void UltraSparcRegInfo::insertCallerSavingCode(const MachineInstr *MInst,
 	      // Handle IntCCRegType specially since we cannot directly 
 	      // push %ccr on to the stack
 
-	      const LiveVarSet *LVSetBef = 
+	      const ValueSet *LVSetBef = 
 		PRA.LVI->getLiveVarSetBeforeMInst(MInst, BB);
 
 	      // get a free INTEGER register

@@ -133,8 +133,8 @@ unsigned InterferenceGraph::getInterference(const LiveRange *const LR1,
 //            LiveRangeInfo::unionAndUpdateLRs for that purpose.
 //----------------------------------------------------------------------------
 
-void InterferenceGraph::mergeIGNodesOfLRs(const LiveRange *const LR1, 
-					  LiveRange *const LR2 ) {
+void InterferenceGraph::mergeIGNodesOfLRs(const LiveRange *LR1, 
+					  LiveRange *LR2) {
 
   assert( LR1 != LR2);                  // cannot merge the same live range
 
@@ -145,8 +145,8 @@ void InterferenceGraph::mergeIGNodesOfLRs(const LiveRange *const LR1,
   assertIGNode( SrcNode );
 
   if( DEBUG_RA > 1) {
-    cerr << "Merging LRs: \""; LR1->printSet(); 
-    cerr << "\" and \""; LR2->printSet();
+    cerr << "Merging LRs: \""; printSet(*LR1); 
+    cerr << "\" and \""; printSet(*LR2);
     cerr << "\"\n";
   }
 
@@ -236,7 +236,7 @@ void InterferenceGraph::printIGNodeList() const
 
     if (Node) {
       cerr << " [" << Node->getIndex() << "] ";
-      Node->getParentLR()->printSet(); 
+      printSet(*Node->getParentLR());
       //int Deg = Node->getCurDegree();
       cerr << "\t <# of Neighs: " << Node->getNumOfNeighbors() << ">\n";
     }

@@ -38,7 +38,7 @@ void SparcIntRegClass::colorIGNode(IGNode * Node, bool IsColorUsedArr[]) const {
 
   if( DEBUG_RA ) {
     cerr << "\nColoring LR [CallInt=" << LR->isCallInterference() <<"]:"; 
-    LR->printSet();
+    printSet(*LR);
   }
 
   if( LR->hasSuggestedColor() ) {
@@ -64,7 +64,7 @@ void SparcIntRegClass::colorIGNode(IGNode * Node, bool IsColorUsedArr[]) const {
     }
     else if ( DEBUG_RA ) {                // can't allocate the suggested col
       cerr << "  \n  Could NOT allocate the suggested color (already used) ";
-      LR->printSet(); cerr << "\n";
+      printSet(*LR); cerr << "\n";
     }
   }
 
@@ -185,10 +185,9 @@ void SparcFloatRegClass::colorIGNode(IGNode * Node,bool IsColorUsedArr[]) const
     if( ! IsColorUsedArr[ LR->getSuggestedColor() ] ) {
       LR->setColor(  LR->getSuggestedColor() );
       return;
-    }
-    else if (DEBUG_RA)  {                 // can't allocate the suggested col
+    } else if (DEBUG_RA)  {                 // can't allocate the suggested col
       cerr << " Could NOT allocate the suggested color for LR ";
-      LR->printSet(); cerr << "\n";
+      printSet(*LR); cerr << "\n";
     }
   }
 

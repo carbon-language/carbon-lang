@@ -12,7 +12,7 @@ using std::cerr;
 LiveRangeInfo::LiveRangeInfo(const Method *const M, 
 			     const TargetMachine& tm,
 			     std::vector<RegClass *> &RCL)
-                             : Meth(M), LiveRangeMap(), TM(tm),
+                             : Meth(M), TM(tm),
                                RegClassList(RCL), MRI(tm.getRegInfo())
 { }
 
@@ -48,18 +48,16 @@ LiveRangeInfo::~LiveRangeInfo() {
 // Note: the caller must make sure that L1 and L2 are distinct and both
 // LRs don't have suggested colors
 //---------------------------------------------------------------------------
-void LiveRangeInfo::unionAndUpdateLRs(LiveRange *const L1, LiveRange *L2)
-{
-  assert( L1 != L2);
-  L1->setUnion( L2 );                   // add elements of L2 to L1
-  ValueSet::iterator L2It;
 
-  for( L2It = L2->begin() ; L2It != L2->end(); ++L2It) {
+void LiveRangeInfo::unionAndUpdateLRs(LiveRange *L1, LiveRange *L2) {
+  assert(L1 != L2 && (!L1->hasSuggestedColor() || !L2->hasSuggestedColor()));
+  set_union(*L1, *L2);                   // add elements of L2 to L1
 
+  for(ValueSet::iterator L2It = L2->begin(); L2It != L2->end(); ++L2It) {
     //assert(( L1->getTypeID() == L2->getTypeID()) && "Merge:Different types");
 
     L1->insert(*L2It);                  // add the var in L2 to L1
-    LiveRangeMap[ *L2It ] = L1;         // now the elements in L2 should map 
+    LiveRangeMap[*L2It] = L1;         // now the elements in L2 should map 
                                         //to L1    
   }
 
@@ -69,15 +67,15 @@ void LiveRangeInfo::unionAndUpdateLRs(LiveRange *const L1, LiveRange *L2)
   // must have the same color.
 
   if(L2->hasSuggestedColor())
-    L1->setSuggestedColor( L2->getSuggestedColor() );
+    L1->setSuggestedColor(L2->getSuggestedColor());
 
 
-  if( L2->isCallInterference() )
+  if (L2->isCallInterference())
     L1->setCallInterference();
   
- 
-  L1->addSpillCost( L2->getSpillCost() ); // add the spill costs
-
+  // add the spill costs
+  L1->addSpillCost(L2->getSpillCost());
+  
   delete L2;                        // delete L2 as it is no longer needed
 }
 
@@ -394,7 +392,7 @@ void LiveRangeInfo::printLiveRanges() {
   for( ; HMI != LiveRangeMap.end(); ++HMI) {
     if (HMI->first && HMI->second) {
       cerr << " " << RAV(HMI->first) << "\t: "; 
-      HMI->second->printSet(); cerr << "\n";
+      printSet(*HMI->second); cerr << "\n";
     }
   }
 }
