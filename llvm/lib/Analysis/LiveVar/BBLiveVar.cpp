@@ -1,11 +1,12 @@
 #include "llvm/Analysis/LiveVar/BBLiveVar.h"
 #include "llvm/Analysis/LiveVar/MethodLiveVarInfo.h"
 #include "llvm/CodeGen/MachineInstr.h"
-#include "../../Target/Sparc/SparcInternals.h"  // TODO: FIXME!! Only for PHI defn
+#include "../../Target/Sparc/SparcInternals.h"  //  Only for PHI defn
 
 
-/********************* Implementation **************************************/
-
+//-----------------------------------------------------------------------------
+// Constructor
+//-----------------------------------------------------------------------------
 BBLiveVar::BBLiveVar( const BasicBlock *const  baseBB, unsigned int RdfoId) 
                       : BaseBB(baseBB), DefSet(),  InSet(), 
 			OutSet(), PhiArgMap() {  
@@ -14,10 +15,13 @@ BBLiveVar::BBLiveVar( const BasicBlock *const  baseBB, unsigned int RdfoId)
     POId = RdfoId;
 }
 
+
+//-----------------------------------------------------------------------------
 // caluculates def and use sets for each BB
 // There are two passes over operands of a machine instruction. This is
 // because, we can have instructions like V = V + 1, since we no longer
 // assume single definition.
+//-----------------------------------------------------------------------------
 
 void BBLiveVar::calcDefUseSets()  
 {
@@ -56,7 +60,7 @@ void BBLiveVar::calcDefUseSets()
 
  
     // iterate over  MI operands to find uses
-    for (MachineInstr::val_const_op_iterator OpI(MInst); !OpI.done() ;  ++OpI) {
+    for (MachineInstr::val_const_op_iterator OpI(MInst); !OpI.done() ; ++OpI) {
       const Value *Op = *OpI;
 
       if ( ((Op)->getType())->isLabelType() )    
@@ -106,10 +110,12 @@ void BBLiveVar::calcDefUseSets()
 
   } // for all machine instructions
 } 
+
+
 	
-
-// To add an operand wichi is a def
-
+//-----------------------------------------------------------------------------
+// To add an operand which is a def
+//-----------------------------------------------------------------------------
 void  BBLiveVar::addDef(const Value *Op) 
 {
   DefSet.add( Op );     // operand is a def - so add to def set
@@ -121,8 +127,10 @@ void  BBLiveVar::addDef(const Value *Op)
   }
 }
 
-// To add an operand which is a use
 
+//-----------------------------------------------------------------------------
+// To add an operand which is a use
+//-----------------------------------------------------------------------------
 void  BBLiveVar::addUse(const Value *Op) 
 {
   InSet.add( Op );      // An operand is a use - so add to use set
@@ -136,6 +144,10 @@ void  BBLiveVar::addUse(const Value *Op)
 }
 
 
+//-----------------------------------------------------------------------------
+// Applies the transfer function to a basic block to produce the InSet using
+// the outset. 
+//-----------------------------------------------------------------------------
 
 bool BBLiveVar::applyTransferFunc() // calculates the InSet in terms of OutSet 
 {
@@ -153,8 +165,9 @@ bool BBLiveVar::applyTransferFunc() // calculates the InSet in terms of OutSet
 }
 
 
-
+//-----------------------------------------------------------------------------
 // calculates Out set using In sets of the predecessors
+//-----------------------------------------------------------------------------
 bool BBLiveVar::setPropagate( LiveVarSet *const OutSet, 
 			      const LiveVarSet *const InSet, 
 			      const BasicBlock *const PredBB) {
@@ -180,9 +193,9 @@ bool BBLiveVar::setPropagate( LiveVarSet *const OutSet,
 } 
 
 
-
+//-----------------------------------------------------------------------------
 // propogates in set to OutSets of PREDECESSORs
-
+//-----------------------------------------------------------------------------
 bool BBLiveVar::applyFlowFunc(BBToBBLiveVarMapType LVMap) 
 {
 
