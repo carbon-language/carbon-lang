@@ -141,7 +141,7 @@ bool Instruction::isCommutative(unsigned op) {
 
 /// isTrappingInstruction - Return true if the instruction may trap.
 ///
-bool Instruction::isTrappingInstruction(unsigned op) {
+bool Instruction::isTrapping(unsigned op) {
   switch(op) {
   case Div:
   case Rem:
