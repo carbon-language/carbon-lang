@@ -34,33 +34,38 @@ void RegisterInfoEmitter::runEnums(std::ostream &OS) {
   OS << "  enum {\n    NoRegister,\n";
 
   for (unsigned i = 0, e = Registers.size(); i != e; ++i)
-    OS << "    " << Registers[i]->getName() << ",\n";
+    OS << "    " << Registers[i]->getName() << ",\t// " << i+1 << "\n";
   
   OS << "  };\n";
   if (!Namespace.empty())
     OS << "}\n";
 }
 
-void RegisterInfoEmitter::runHeader(std::ostream &OS) {
+static Record *getRegisterInfo(RecordKeeper &RC) {
   std::vector<Record*> RegisterInfos =
     Records.getAllDerivedDefinitions("RegisterInfo");
 
   if (RegisterInfos.size() != 1)
     throw std::string("ERROR: Multiple subclasses of RegisterInfo defined!");
+  return RegisterInfos[0];
+}
 
+void RegisterInfoEmitter::runHeader(std::ostream &OS) {
   EmitSourceHeader("Register Information Header Fragment", OS);
-
-  std::string ClassName = RegisterInfos[0]->getValueAsString("ClassName");
+  
+  std::string ClassName =
+    getRegisterInfo(Records)->getValueAsString("ClassName");
 
   OS << "#include \"llvm/Target/MRegisterInfo.h\"\n\n";
 
   OS << "struct " << ClassName << " : public MRegisterInfo {\n"
-     << "  " << ClassName << "();\n"
+     << "  " << ClassName
+     << "(int CallFrameSetupOpcode = -1, int CallFrameDestroyOpcode = -1);\n"
      << "  const unsigned* getCalleeSaveRegs() const;\n"
      << "};\n\n";
 }
 
-static std::string getQualifiedRecordName(Record *R) {
+static std::string getQualifiedName(Record *R) {
   std::string Namespace = R->getValueAsString("Namespace");
   if (Namespace.empty()) return R->getName();
   return Namespace + "::" + R->getName();
@@ -82,10 +87,11 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
   Record *RegisterClass = Records.getClass("Register");
 
   std::set<Record*> RegistersFound;
+  std::vector<std::string> RegClassNames;
 
   // Loop over all of the register classes... emitting each one.
   OS << "namespace {     // Register classes...\n";
-  std::vector<std::string> RegisterClassNames;
+
   for (unsigned rc = 0, e = RegisterClasses.size(); rc != e; ++rc) {
     Record *RC = RegisterClasses[rc];
     std::string Name = RC->getName();
@@ -93,6 +99,8 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
       static unsigned AnonCounter = 0;
       Name = "AnonRegClass_"+utostr(AnonCounter++);
     }
+
+    RegClassNames.push_back(Name);
 
     // Emit the register list now...
     OS << "  // " << Name << " Register Class...\n  const unsigned " << Name
@@ -106,7 +114,8 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
       if (RegistersFound.count(Reg))
         throw "Register '" + Reg->getName() +
               "' included in multiple register classes!";
-      OS << getQualifiedRecordName(Reg) << ", ";
+      RegistersFound.insert(Reg);
+      OS << getQualifiedName(Reg) << ", ";
     }
     OS << "\n  };\n\n";
 
@@ -123,8 +132,86 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
             RC->getName() + "'!";
 
     OS << "  } " << Name << "Instance;\n\n";
-
   }
 
-  OS << "}\n";         // End of anonymous namespace...
+  OS << "  const TargetRegisterClass* const RegisterClasses[] = {\n";
+  for (unsigned i = 0, e = RegClassNames.size(); i != e; ++i)
+    OS << "    &" << RegClassNames[i] << "Instance,\n";
+  OS << "  };\n";
+
+  // Emit register class aliases...
+  std::vector<Record*> RegisterAliasesRecs =
+    Records.getAllDerivedDefinitions("RegisterAliases");
+  std::map<Record*, std::set<Record*> > RegisterAliases;
+  
+  for (unsigned i = 0, e = RegisterAliasesRecs.size(); i != e; ++i) {
+    Record *AS = RegisterAliasesRecs[i];
+    Record *R = AS->getValueAsDef("Reg");
+    ListInit *LI = AS->getValueAsListInit("Aliases");
+
+    // Add information that R aliases all of the elements in the list... and
+    // that everything in the list aliases R.
+    for (unsigned j = 0, e = LI->getSize(); j != e; ++j) {
+      if (RegisterAliases[R].count(LI->getElement(j)))
+        std::cerr << "Warning: register alias between " << getQualifiedName(R)
+                  << " and " << getQualifiedName(LI->getElement(j))
+                  << " specified multiple times!\n";
+      RegisterAliases[R].insert(LI->getElement(j));
+
+      if (RegisterAliases[LI->getElement(j)].count(R))
+        std::cerr << "Warning: register alias between " << getQualifiedName(R)
+                  << " and " << getQualifiedName(LI->getElement(j))
+                  << " specified multiple times!\n";
+      RegisterAliases[LI->getElement(j)].insert(R);
+    }
+  }
+
+  if (!RegisterAliases.empty())
+    OS << "\n\n  // Register Alias Sets...\n";
+  
+  // Loop over all of the registers which have aliases, emitting the alias list
+  // to memory.
+  for (std::map<Record*, std::set<Record*> >::iterator
+         I = RegisterAliases.begin(), E = RegisterAliases.end(); I != E; ++I) {
+    OS << "  const unsigned " << I->first->getName() << "_AliasSet[] = { ";
+    for (std::set<Record*>::iterator ASI = I->second.begin(),
+           E = I->second.end(); ASI != E; ++ASI)
+      OS << getQualifiedName(*ASI) << ", ";
+    OS << "0 };\n";
+  }
+
+  OS << "\n  const MRegisterDesc RegisterDescriptors[] = { // Descriptors\n";
+  OS << "    { \"NOREG\",\t0,\t\t0,\t0 },\n";
+  // Now that register alias sets have been emitted, emit the register
+  // descriptors now.
+  for (unsigned i = 0, e = Registers.size(); i != e; ++i) {
+    Record *Reg = Registers[i];
+    OS << "    { \"" << Reg->getName() << "\",\t";
+    if (RegisterAliases.count(Reg))
+      OS << Reg->getName() << "_AliasSet,\t";
+    else
+      OS << "0,\t\t";
+    OS << "0, 0 },\n";    
+  }
+  OS << "  };\n";      // End of register descriptors...
+  OS << "}\n\n";       // End of anonymous namespace...
+
+  Record *RegisterInfo = getRegisterInfo(Records);
+  std::string ClassName = RegisterInfo->getValueAsString("ClassName");
+  
+  // Emit the constructor of the class...
+  OS << ClassName << "::" << ClassName
+     << "(int CallFrameSetupOpcode, int CallFrameDestroyOpcode)\n"
+     << "  : MRegisterInfo(RegisterDescriptors, " << Registers.size()+1
+     << ", RegisterClasses, RegisterClasses+" << RegClassNames.size() << ",\n "
+     << "                 CallFrameSetupOpcode, CallFrameDestroyOpcode) {}\n\n";
+  
+  // Emit the getCalleeSaveRegs method...
+  OS << "const unsigned* " << ClassName << "::getCalleeSaveRegs() const {\n"
+     << "  static const unsigned CalleeSaveRegs[] = {\n    ";
+
+  ListInit *LI = RegisterInfo->getValueAsListInit("CalleeSavedRegisters");
+  for (unsigned i = 0, e = LI->getSize(); i != e; ++i)
+    OS << getQualifiedName(LI->getElement(i)) << ", ";  
+  OS << " 0\n  };\n  return CalleeSaveRegs;\n}\n\n";
 }
