@@ -11,12 +11,6 @@
 #include "llvm/Analysis/DSGraph.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Module.h"
-#include "Support/Statistic.h"
-
-namespace {
-  Statistic<> NumNoAlias  ("steens", "Number of 'no alias' replies");
-  Statistic<> NumMayAlias ("steens", "Number of 'may alias' replies");
-};
 
 namespace {
   class Steens : public Pass, public AliasAnalysis {
@@ -75,7 +69,7 @@ namespace {
 
   // Register the pass...
   RegisterOpt<Steens> X("steens-aa",
-                        "Steensgaard's FlowInsensitive/ConIns alias analysis");
+                        "Steensgaard's alias analysis (DSGraph based)");
 
   // Register as an implementation of AliasAnalysis
   RegisterAnalysisGroup<AliasAnalysis, Steens> Y;
@@ -198,7 +192,7 @@ bool Steens::run(Module &M) {
   // FIXME: We should be able to disable the globals graph for steens!
   ResultGraph->removeDeadNodes(DSGraph::KeepUnreachableGlobals);
 
-  DEBUG(print(std::cerr, &M));
+  //print(std::cerr, &M);
   return false;
 }
 
@@ -216,10 +210,9 @@ AliasAnalysis::Result Steens::alias(const Value *V1, const Value *V2) {
       DSNodeHandle &V2H = J->second;
       // If the two pointers point to different data structure graph nodes, they
       // cannot alias!
-      if (V1H.getNode() != V2H.getNode()) {  // FIXME: Handle incompleteness!
-        ++NumNoAlias;
+      if (V1H.getNode() != V2H.getNode())    // FIXME: Handle incompleteness!
         return NoAlias;
-      }
+
       // FIXME: If the two pointers point to the same node, and the offsets are
       // different, and the LinkIndex vector doesn't alias the section, then the
       // two pointers do not alias.  We need access size information for the two
@@ -227,9 +220,6 @@ AliasAnalysis::Result Steens::alias(const Value *V1, const Value *V2) {
       //
     }
   }
-
-  // Since Steensgaard cannot do any better, count it as a 'may alias'
-  ++NumMayAlias;
 
   // If we cannot determine alias properties based on our graph, fall back on
   // some other AA implementation.
