@@ -14,6 +14,7 @@
 
 class TargetMachine;
 class IGNode;
+class Type;
 class Value;
 class LiveRangeInfo;
 class Method;
@@ -84,9 +85,11 @@ public:
   // condition code register. If isCCReg is true below, the ID of the condition
   // code regiter class will be returned. Otherwise, the normal register
   // class (eg. int, float) must be returned.
+  virtual unsigned getRegClassIDOfType  (const Type *type,
+					 bool isCCReg = false) const =0;
   virtual unsigned getRegClassIDOfValue (const Value *Val,
 					 bool isCCReg = false) const =0;
-
+  
 
   inline unsigned int getNumOfRegClasses() const { 
     return MachineRegClassArr.size(); 
