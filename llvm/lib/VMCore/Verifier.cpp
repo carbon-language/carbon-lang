@@ -26,6 +26,7 @@
 //  . Method's cannot take a void typed parameter
 //  . Verify that a method's argument list agrees with it's declared type.
 //  . Verify that arrays and structures have fixed elements: No unsized arrays.
+//  * It is illegal to specify a name for a void value.
 //  . All other things that are tested by asserts spread about the code...
 //
 //===----------------------------------------------------------------------===//
@@ -38,6 +39,7 @@
 #include "llvm/BasicBlock.h"
 #include "llvm/Type.h"
 #include "llvm/iPHINode.h"
+#include "llvm/SymbolTable.h"
 #include "llvm/Support/CFG.h"
 #include "Support/STLExtras.h"
 #include <algorithm>
@@ -142,13 +144,37 @@ static bool verifyBasicBlock(const BasicBlock *BB) {
   return Broken;
 }
 
+// verifySymbolTable - Verify that a method or module symbol table is ok
+//
+static bool verifySymbolTable(const SymbolTable *ST) {
+  if (ST == 0) return false;
+  bool Broken = false;
 
-// verifyMethod - Verify that a method is ok.
+  // Loop over all of the types in the symbol table...
+  for (SymbolTable::const_iterator TI = ST->begin(), TE = ST->end();
+       TI != TE; ++TI)
+    for (SymbolTable::type_const_iterator I = TI->second.begin(),
+           E = TI->second.end(); I != E; ++I) {
+      Value *V = I->second;
+
+      // Check that there are no void typed values in the symbol table.  Values
+      // with a void type cannot be put into symbol tables because they cannot
+      // have names!
+      Assert1(V->getType() != Type::VoidTy,
+              "Values with void type are not allowed to have names!\n", V);
+    }
+
+  return Broken;
+}
+
+// verifyMethod - Verify that a method is ok.  Return true if not so that
+// verifyModule and direct clients of the verifyMethod function are correctly
+// informed.
 //
 bool verifyMethod(const Method *M) {
   if (M->isExternal()) return false;  // Can happen if called by verifyModule
 
-  bool Broken = false;
+  bool Broken = verifySymbolTable(M->getSymbolTable());
   const BasicBlock *Entry = M->front();
   Assert1(pred_begin(Entry) == pred_end(Entry),
           "Entry block to method must not have predecessors!", Entry);
@@ -160,6 +186,11 @@ bool verifyMethod(const Method *M) {
 
 namespace {  // Anonymous namespace for class
   struct VerifierPass : public MethodPass {
+
+    bool doInitialization(Module *M) {
+      verifySymbolTable(M->getSymbolTable());
+      return false;
+    }
     bool runOnMethod(Method *M) { verifyMethod(M); return false; }
   };
 }
@@ -172,5 +203,6 @@ Pass *createVerifierPass() {
 // Return true if the module is corrupt.
 //
 bool verifyModule(const Module *M) {
-  return reduce_apply_bool(M->begin(), M->end(), verifyMethod);
+  return verifySymbolTable(M->getSymbolTable()) |
+         reduce_apply_bool(M->begin(), M->end(), verifyMethod);
 }
