@@ -18,22 +18,16 @@
 
 #include "Config/config.h"
 
-#ifdef HAVE_SYS_RESOURCE_H
+#if defined(HAVE_SYS_RESOURCE_H) && !defined(_MSC_VER)
 
 /*
  * In LLVM, we use sys/resource.h to use getrusage() and maybe some other
  * stuff.  Some man pages say that you also need sys/time.h and unistd.h.
  * So, to be paranoid, we will try to include all three if possible.
  */
-#ifdef HAVE_SYS_TIME_H
-#include <sys/time.h>
-#endif
-
+#include "Config/sys/time.h"
 #include <sys/resource.h>
-
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif
+#include "Config/unistd.h"
 
 #endif
 
