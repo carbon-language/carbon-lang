@@ -60,7 +60,7 @@ bool DominatorSet::runOnFunction(Function &F) {
 	// in at least once.  We are guaranteed to have this because we are
 	// traversing the graph in DFO and have handled start nodes specially.
 	//
-	while (Doms[*PI].size() == 0) ++PI;
+	while (Doms[*PI].empty()) ++PI;
 	WorkingSet = Doms[*PI];
 
 	for (++PI; PI != PEnd; ++PI) { // Intersect all of the predecessor sets
@@ -79,6 +79,17 @@ bool DominatorSet::runOnFunction(Function &F) {
       WorkingSet.clear();              // Clear out the set for next iteration
     }
   } while (Changed);
+
+  // Every basic block in the function should at least dominate themselves, and
+  // thus every basic block should have an entry in Doms.  The one case where we
+  // miss this is when a basic block is unreachable.  To get these we now do an
+  // extra pass adding self dominance info to the DomSet if the block doesn't
+  // already have an entry.
+  //
+  for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I)
+    if (!Doms.count(I))
+      Doms[I].insert(I);
+
   return false;
 }
 
