@@ -19,6 +19,7 @@
 #include "PowerPC.h"
 #include "PowerPCInstrBuilder.h"
 #include "PowerPCInstrInfo.h"
+#include "PPC32InstrInfo.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "Support/Debug.h"
@@ -104,7 +105,7 @@ namespace {
             
             int Displacement = OffsetMap[trueMBB] - ByteCount;
             unsigned Opcode = MBBI->getOperand(1).getImmedValue();
-            unsigned Inverted = PowerPCInstrInfo::invertPPCBranchOpcode(Opcode);
+            unsigned Inverted = PPC32InstrInfo::invertPPCBranchOpcode(Opcode);
 
             MachineInstr *MI = MBBI;
             if (Displacement >= -32768 && Displacement <= 32767) {
