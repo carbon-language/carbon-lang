@@ -13,10 +13,13 @@ submit a bug, supply a patch, or just keep current with what's going on with
 LLVM.
 
 Introductory Literature:
+	LLVM Home Page:
+		http://llvm.cs.uiuc.edu
+
 	License Information:
 		llvm/LICENSE.txt
 
-	Installation Instructions:
+	Downloading and Installation Instructions:
 		llvm/docs/GettingStarted.html
 
 	Release Notes:
@@ -40,34 +43,38 @@ Technical Reference:
 
 LLVM Community:
 	Submitting a Bug:
-		llvm/docs/HowToSubmitABug.html
+	http://llvm.cs.uiuc.edu/docs/HowToSubmitABug.html
 
 	Mailing Lists:
-		There are several mailing lists providing LLVM users with information:
+		There are several mailing lists providing LLVM users with
+		information:
 
 			o LLVM Announcements List:
 			http://mail.cs.uiuc.edu/mailman/listinfo/llvm-announce
 
-				This is a low volume list that provides important announcements
-				regarding LLVM.  It is primarily intended to announce new
-				releases, major updates to the software, etc.  This list is
-				highly recommended for anyone that uses LLVM.
+				This is a low volume list that provides
+				important announcements regarding LLVM.  It is
+				primarily intended to announce new releases,
+				major updates to the software, etc.  This list
+				is highly recommended for anyone that uses LLVM.
 
 
 			o LLVM Developers List:
 			http://mail.cs.uiuc.edu/mailman/listinfo/llvmdev
 
-				This list is for people who want to be included in technical
-				discussions of LLVM.  People post to this list when they have
-				questions about writing code for or using the LLVM tools.  It
+				This list is for people who want to be included
+				in technical discussions of LLVM.  People post
+				to this list when they have questions about
+				writing code for or using the LLVM tools.  It
 				is low volume.
 
 			o LLVM Commits List
 			http://mail.cs.uiuc.edu/mailman/listinfo/llvm-commits
 
-				This list contains all commit messages that are made when LLVM
-				developers commit code changes to the CVS archive.  It is
-				useful for those who want to stay on the bleeding edge of LLVM
+				This list contains all commit messages that are
+				made when LLVM developers commit code changes
+				to the CVS archive.  It is useful for those who
+				want to stay on the bleeding edge of LLVM
 				development.
 
 				This list is very high volume.
