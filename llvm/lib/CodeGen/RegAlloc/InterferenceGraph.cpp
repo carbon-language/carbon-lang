@@ -11,12 +11,11 @@
 // 
 //===----------------------------------------------------------------------===//
 
-#include "RegAllocCommon.h"
-#include "InterferenceGraph.h"
 #include "IGNode.h"
+#include "InterferenceGraph.h"
+#include "RegAllocCommon.h"
 #include "Support/STLExtras.h"
 #include <algorithm>
-using std::cerr;
 
 // for asserting this IG node is infact in the IGNodeList of this class
 inline static void assertIGNode(const InterferenceGraph *IG,
