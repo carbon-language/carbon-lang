@@ -7,7 +7,7 @@
 #ifndef LLVM_TARGET_TARGETSCHEDINFO_H
 #define LLVM_TARGET_TARGETSCHEDINFO_H
 
-#include "llvm/Target/MachineInstrInfo.h"
+#include "llvm/Target/TargetInstrInfo.h"
 #include "Support/hash_map"
 #include <string>
 
@@ -211,7 +211,7 @@ public:
 					 unsigned _numIssueDeltas);
   /*dtor*/ virtual ~TargetSchedInfo() {}
   
-  inline const MachineInstrInfo& getInstrInfo() const {
+  inline const TargetInstrInfo& getInstrInfo() const {
     return *mii;
   }
   
@@ -283,7 +283,7 @@ private:
   
 protected:
   unsigned	           numSchedClasses;
-  const MachineInstrInfo*  mii;
+  const TargetInstrInfo*   mii;
   const	InstrClassRUsage*  classRUsages;        // raw array by sclass
   const	InstrRUsageDelta*  usageDeltas;	        // raw array [1:numUsageDeltas]
   const InstrIssueDelta*   issueDeltas;	        // raw array [1:numIssueDeltas]

@@ -3,7 +3,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Target/MachineInstrInfo.h"
+#include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/Constant.h"
 #include "llvm/DerivedTypes.h"

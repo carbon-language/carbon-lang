@@ -41,7 +41,7 @@ enum SparcInstrSchedClass {
 
 //---------------------------------------------------------------------------
 // enum SparcMachineOpCode. 
-// const MachineInstrDescriptor SparcMachineInstrDesc[]
+// const TargetInstrDescriptor SparcMachineInstrDesc[]
 // 
 // Purpose:
 //   Description of UltraSparc machine instructions.
@@ -62,7 +62,7 @@ enum SparcMachineOpCode {
 
 
 // Array of machine instruction descriptions...
-extern const MachineInstrDescriptor SparcMachineInstrDesc[];
+extern const TargetInstrDescriptor SparcMachineInstrDesc[];
 
 
 //---------------------------------------------------------------------------
@@ -72,10 +72,10 @@ extern const MachineInstrDescriptor SparcMachineInstrDesc[];
 //   Information about individual instructions.
 //   Most information is stored in the SparcMachineInstrDesc array above.
 //   Other information is computed on demand, and most such functions
-//   default to member functions in base class MachineInstrInfo. 
+//   default to member functions in base class TargetInstrInfo. 
 //---------------------------------------------------------------------------
 
-struct UltraSparcInstrInfo : public MachineInstrInfo {
+struct UltraSparcInstrInfo : public TargetInstrInfo {
   UltraSparcInstrInfo();
 
   //
@@ -733,7 +733,7 @@ class UltraSparc : public TargetMachine {
 public:
   UltraSparc();
 
-  virtual const MachineInstrInfo &getInstrInfo() const { return instrInfo; }
+  virtual const TargetInstrInfo  &getInstrInfo() const { return instrInfo; }
   virtual const TargetSchedInfo  &getSchedInfo() const { return schedInfo; }
   virtual const TargetRegInfo    &getRegInfo()   const { return regInfo; }
   virtual const TargetFrameInfo  &getFrameInfo() const { return frameInfo; }

@@ -12,7 +12,7 @@
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/Target/TargetRegInfo.h"
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/Target/MachineInstrInfo.h"
+#include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Function.h"
 #include "llvm/iOther.h"
 #include "Support/StringExtras.h"
@@ -325,7 +325,7 @@ void
 SchedGraph::addCDEdges(const TerminatorInst* term,
 		       const TargetMachine& target)
 {
-  const MachineInstrInfo& mii = target.getInstrInfo();
+  const TargetInstrInfo& mii = target.getInstrInfo();
   MachineCodeForInstruction &termMvec = MachineCodeForInstruction::get(term);
   
   // Find the first branch instr in the sequence of machine instrs for term
@@ -434,7 +434,7 @@ void
 SchedGraph::addMemEdges(const vector<SchedGraphNode*>& memNodeVec,
 			const TargetMachine& target)
 {
-  const MachineInstrInfo& mii = target.getInstrInfo();
+  const TargetInstrInfo& mii = target.getInstrInfo();
   
   // Instructions in memNodeVec are in execution order within the basic block,
   // so simply look at all pairs <memNodeVec[i], memNodeVec[j: j > i]>.
@@ -471,7 +471,7 @@ SchedGraph::addCallCCEdges(const vector<SchedGraphNode*>& memNodeVec,
                            MachineBasicBlock& bbMvec,
                            const TargetMachine& target)
 {
-  const MachineInstrInfo& mii = target.getInstrInfo();
+  const TargetInstrInfo& mii = target.getInstrInfo();
   vector<SchedGraphNode*> callNodeVec;
   
   // Find the call instruction nodes and put them in a vector.
@@ -675,7 +675,7 @@ SchedGraph::findDefUseInfoAtInstr(const TargetMachine& target,
                                   RegToRefVecMap& regToRefVecMap,
                                   ValueToDefVecMap& valueToDefVecMap)
 {
-  const MachineInstrInfo& mii = target.getInstrInfo();
+  const TargetInstrInfo& mii = target.getInstrInfo();
   
   
   MachineOpCode opCode = node->getOpCode();
@@ -732,7 +732,7 @@ SchedGraph::buildNodesForBB(const TargetMachine& target,
                             RegToRefVecMap& regToRefVecMap,
                             ValueToDefVecMap& valueToDefVecMap)
 {
-  const MachineInstrInfo& mii = target.getInstrInfo();
+  const TargetInstrInfo& mii = target.getInstrInfo();
   
   // Build graph nodes for each VM instruction and gather def/use info.
   // Do both those together in a single pass over all machine instructions.

@@ -35,7 +35,7 @@
 //                                numDelaySlots (in cycles)
 //					latency (in cycles)
 //					    instr sched class (defined above)
-//						instr class flags (defined in MachineInstrInfo.h)
+//						instr class flags (defined in TargetInstrInfo.h)
 
 
 

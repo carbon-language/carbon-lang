@@ -12,7 +12,7 @@
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/SSARegMap.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
-#include "llvm/Target/MachineInstrInfo.h"
+#include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "Support/Statistic.h"
 #include <iostream>
@@ -150,7 +150,7 @@ void RegAllocSimple::AllocateBasicBlock(MachineBasicBlock &MBB) {
     // a preliminary pass that will invalidate any registers that
     // are used by the instruction (including implicit uses)
     unsigned Opcode = MI->getOpcode();
-    const MachineInstrDescriptor &Desc = TM->getInstrInfo().get(Opcode);
+    const TargetInstrDescriptor &Desc = TM->getInstrInfo().get(Opcode);
     if (const unsigned *Regs = Desc.ImplicitUses)
       while (*Regs)
 	RegsUsed[*Regs++] = true;

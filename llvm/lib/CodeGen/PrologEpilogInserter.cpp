@@ -16,7 +16,7 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/MRegisterInfo.h"
 #include "llvm/Target/TargetFrameInfo.h"
-#include "llvm/Target/MachineInstrInfo.h"
+#include "llvm/Target/TargetInstrInfo.h"
 
 namespace {
   struct PEI : public MachineFunctionPass {
@@ -157,10 +157,10 @@ void PEI::saveCallerSavedRegisters(MachineFunction &Fn) {
   }
 
   // Add code to restore the callee-save registers in each exiting block.
-  const MachineInstrInfo &MII = Fn.getTarget().getInstrInfo();
+  const TargetInstrInfo &TII = Fn.getTarget().getInstrInfo();
   for (MachineFunction::iterator FI = Fn.begin(), E = Fn.end(); FI != E; ++FI) {
     // If last instruction is a return instruction, add an epilogue
-    if (MII.isReturn(FI->back()->getOpcode())) {
+    if (TII.isReturn(FI->back()->getOpcode())) {
       MBB = FI; I = MBB->end()-1;
 
       for (unsigned i = 0, e = RegsToSave.size(); i != e; ++i) {
@@ -237,10 +237,10 @@ void PEI::insertPrologEpilogCode(MachineFunction &Fn) {
   Fn.getTarget().getRegisterInfo()->emitPrologue(Fn);
 
   // Add epilogue to restore the callee-save registers in each exiting block
-  const MachineInstrInfo &MII = Fn.getTarget().getInstrInfo();
+  const TargetInstrInfo &TII = Fn.getTarget().getInstrInfo();
   for (MachineFunction::iterator I = Fn.begin(), E = Fn.end(); I != E; ++I) {
     // If last instruction is a return instruction, add an epilogue
-    if (MII.isReturn(I->back()->getOpcode()))
+    if (TII.isReturn(I->back()->getOpcode()))
       Fn.getTarget().getRegisterInfo()->emitEpilogue(Fn, *I);
   }
 }

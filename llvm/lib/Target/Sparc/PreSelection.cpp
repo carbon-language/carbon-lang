@@ -10,7 +10,7 @@
 
 #include "llvm/CodeGen/PreSelection.h"
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/Target/MachineInstrInfo.h"
+#include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Support/InstVisitor.h"
 #include "llvm/Module.h"

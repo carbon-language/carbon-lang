@@ -126,7 +126,7 @@ public:
 
   // The following methods are used to generate "copy" machine instructions
   // for an architecture. Currently they are used in TargetRegClass 
-  // interface. However, they can be moved to MachineInstrInfo interface if
+  // interface. However, they can be moved to TargetInstrInfo interface if
   // necessary.
   //
   // The function regTypeNeedsScratchReg() can be used to check whether a

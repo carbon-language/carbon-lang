@@ -220,7 +220,7 @@ void Emitter::emitMemModRMByte(const MachineInstr &MI,
   }
 }
 
-unsigned sizeOfPtr (const MachineInstrDescriptor &Desc) {
+unsigned sizeOfPtr(const TargetInstrDescriptor &Desc) {
   switch (Desc.TSFlags & X86II::ArgMask) {
   case X86II::Arg8:   return 1;
   case X86II::Arg16:  return 2;
@@ -236,7 +236,7 @@ unsigned sizeOfPtr (const MachineInstrDescriptor &Desc) {
 
 void Emitter::emitInstruction(MachineInstr &MI) {
   unsigned Opcode = MI.getOpcode();
-  const MachineInstrDescriptor &Desc = II->get(Opcode);
+  const TargetInstrDescriptor &Desc = II->get(Opcode);
 
   // Emit instruction prefixes if neccesary
   if (Desc.TSFlags & X86II::OpSize) MCE.emitByte(0x66);// Operand size...

@@ -59,7 +59,7 @@ void Printer::printConstantPool(MachineConstantPool *MCP, const TargetData &TD){
 bool Printer::runOnMachineFunction(MachineFunction &MF) {
   static unsigned BBNumber = 0;
   const TargetMachine &TM = MF.getTarget();
-  const MachineInstrInfo &MII = TM.getInstrInfo();
+  const TargetInstrInfo &TII = TM.getInstrInfo();
 
   // Print out constants referenced by the function
   printConstantPool(MF.getConstantPool(), TM.getTargetData());
@@ -80,7 +80,7 @@ bool Printer::runOnMachineFunction(MachineFunction &MF) {
 	 II != E; ++II) {
       // Print the assembly for the instruction.
       O << "\t";
-      MII.print(*II, O, TM);
+      TII.print(*II, O, TM);
     }
   }
 
@@ -136,7 +136,7 @@ static void printOp(std::ostream &O, const MachineOperand &MO,
   }
 }
 
-static const std::string sizePtr(const MachineInstrDescriptor &Desc) {
+static const std::string sizePtr(const TargetInstrDescriptor &Desc) {
   switch (Desc.TSFlags & X86II::ArgMask) {
     default: assert(0 && "Unknown arg size!");
     case X86II::Arg8:   return "BYTE PTR"; 
@@ -204,7 +204,7 @@ static void printMemReference(std::ostream &O, const MachineInstr *MI,
 void X86InstrInfo::print(const MachineInstr *MI, std::ostream &O,
                          const TargetMachine &TM) const {
   unsigned Opcode = MI->getOpcode();
-  const MachineInstrDescriptor &Desc = get(Opcode);
+  const TargetInstrDescriptor &Desc = get(Opcode);
 
   switch (Desc.TSFlags & X86II::FormMask) {
   case X86II::Pseudo:

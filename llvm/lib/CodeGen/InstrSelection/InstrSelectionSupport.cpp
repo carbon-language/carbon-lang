@@ -14,7 +14,7 @@
 #include "llvm/CodeGen/InstrForest.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetRegInfo.h"
-#include "llvm/Target/MachineInstrInfo.h"
+#include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Constants.h"
 #include "llvm/Function.h"
 #include "llvm/DerivedTypes.h"
@@ -470,7 +470,7 @@ FixConstantOperandsForInstr(Instruction* vmInstr,
   vector<MachineInstr*> loadConstVec;
   
   MachineOpCode opCode = minstr->getOpCode();
-  const MachineInstrInfo& instrInfo = target.getInstrInfo();
+  const TargetInstrInfo& instrInfo = target.getInstrInfo();
   int resultPos = instrInfo.getResultPos(opCode);
   int immedPos = instrInfo.getImmedConstantPos(opCode);
 

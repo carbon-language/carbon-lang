@@ -51,7 +51,7 @@ IMPREGSLIST(O_ST0, X86::ST0, 0)
 //  #2: Opcode name, as used by the gnu assembler
 //  #3: The base opcode for the instruction
 //  #4: Instruction Flags - This should be a field or'd together that contains
-//      constants from the MachineInstrInfo.h file.
+//      constants from the TargetInstrInfo.h file.
 //  #5: Target Specific Flags - Another bitfield containing X86 specific flags
 //      that we are interested in for each instruction.  These should be flags
 //      defined in X86InstrInfo.h in the X86II namespace.

@@ -26,7 +26,7 @@ using std::cerr;
 
 static const unsigned ImplicitRegUseList[] = { 0 }; /* not used yet */
 // Build the MachineInstruction Description Array...
-const MachineInstrDescriptor SparcMachineInstrDesc[] = {
+const TargetInstrDescriptor SparcMachineInstrDesc[] = {
 #define I(ENUM, OPCODESTRING, NUMOPERANDS, RESULTPOS, MAXIMM, IMMSE, \
           NUMDELAYSLOTS, LATENCY, SCHEDCLASS, INSTFLAGS)             \
   { OPCODESTRING, NUMOPERANDS, RESULTPOS, MAXIMM, IMMSE,             \
@@ -124,7 +124,7 @@ UltraSparcFrameInfo::getDynamicAreaOffset(MachineFunction& mcInfo,
 //   Primary interface to machine description for the UltraSPARC.
 //   Primarily just initializes machine-dependent parameters in
 //   class TargetMachine, and creates machine-dependent subclasses
-//   for classes such as MachineInstrInfo. 
+//   for classes such as TargetInstrInfo. 
 // 
 //---------------------------------------------------------------------------
 

@@ -4,8 +4,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TARGET_MACHINEINSTRINFO_H
-#define LLVM_TARGET_MACHINEINSTRINFO_H
+#ifndef LLVM_TARGET_TARGETINSTRINFO_H
+#define LLVM_TARGET_TARGETINSTRINFO_H
 
 #include "Support/DataTypes.h"
 #include <vector>
@@ -29,14 +29,10 @@ const MachineOpCode INVALID_MACHINE_OPCODE = -1;
 
 
 //---------------------------------------------------------------------------
-// struct MachineInstrDescriptor:
+// struct TargetInstrDescriptor:
 //	Predefined information about each machine instruction.
 //	Designed to initialized statically.
-// 
-// class MachineInstructionInfo
-//	Interface to description of machine instructions
-// 
-//---------------------------------------------------------------------------
+//
 
 const unsigned M_NOP_FLAG		= 1 << 0;
 const unsigned M_BRANCH_FLAG		= 1 << 1;
@@ -78,8 +74,11 @@ struct TargetInstrDescriptor {
   const unsigned *ImplicitDefs;  // Registers implicitly defined by this instr
 };
 
-typedef TargetInstrDescriptor MachineInstrDescriptor;
 
+//---------------------------------------------------------------------------
+/// 
+/// TargetInstrInfo - Interface to description of machine instructions
+/// 
 class TargetInstrInfo {
   const TargetInstrDescriptor* desc;    // raw array to allow static init'n
   unsigned descSize;                    // number of entries in the desc array
@@ -380,7 +379,5 @@ public:
     abort();
   }
 };
-
-typedef TargetInstrInfo MachineInstrInfo;
 
 #endif

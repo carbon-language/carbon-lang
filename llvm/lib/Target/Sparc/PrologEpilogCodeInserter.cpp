@@ -96,7 +96,7 @@ void InsertPrologEpilogCode::InsertPrologCode(MachineFunction &MF)
 void InsertPrologEpilogCode::InsertEpilogCode(MachineFunction &MF)
 {
   const TargetMachine &TM = MF.getTarget();
-  const MachineInstrInfo &MII = TM.getInstrInfo();
+  const TargetInstrInfo &MII = TM.getInstrInfo();
 
   for (MachineFunction::iterator I = MF.begin(), E = MF.end(); I != E; ++I) {
     MachineBasicBlock &MBB = *I;

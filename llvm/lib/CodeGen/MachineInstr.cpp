@@ -6,19 +6,19 @@
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/Value.h"
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/Target/MachineInstrInfo.h"
+#include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/MRegisterInfo.h"
 using std::cerr;
 
 
 // Global variable holding an array of descriptors for machine instructions.
 // The actual object needs to be created separately for each target machine.
-// This variable is initialized and reset by class MachineInstrInfo.
+// This variable is initialized and reset by class TargetInstrInfo.
 // 
 // FIXME: This should be a property of the target so that more than one target
 // at a time can be active...
 //
-extern const MachineInstrDescriptor *TargetInstrDescriptors;
+extern const TargetInstrDescriptor *TargetInstrDescriptors;
 
 // Constructor for instructions with fixed #operands (nearly all)
 MachineInstr::MachineInstr(MachineOpCode _opCode)

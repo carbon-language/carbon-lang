@@ -1,6 +1,6 @@
 //===- X86InstrInfo.cpp - X86 Instruction Information -----------*- C++ -*-===//
 //
-// This file contains the X86 implementation of the MachineInstrInfo class.
+// This file contains the X86 implementation of the TargetInstrInfo class.
 //
 //===----------------------------------------------------------------------===//
 
@@ -17,7 +17,7 @@
 // X86Insts - Turn the InstrInfo.def file into a bunch of instruction
 // descriptors
 //
-static const MachineInstrDescriptor X86Insts[] = {
+static const TargetInstrDescriptor X86Insts[] = {
 #define I(ENUM, NAME, BASEOPCODE, FLAGS, TSFLAGS, IMPUSES, IMPDEFS)   \
              { NAME,                    \
                -1, /* Always vararg */  \
@@ -35,7 +35,7 @@ static const MachineInstrDescriptor X86Insts[] = {
 };
 
 X86InstrInfo::X86InstrInfo()
-  : MachineInstrInfo(X86Insts, sizeof(X86Insts)/sizeof(X86Insts[0]), 0) {
+  : TargetInstrInfo(X86Insts, sizeof(X86Insts)/sizeof(X86Insts[0]), 0) {
 }
 
 

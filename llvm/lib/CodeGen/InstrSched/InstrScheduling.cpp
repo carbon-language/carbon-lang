@@ -370,7 +370,7 @@ public:
   // Simplify access to the machine instruction info
   //----------------------------------------------------------------------
   
-  inline const MachineInstrInfo& getInstrInfo	() const {
+  inline const TargetInstrInfo& getInstrInfo	() const {
     return schedInfo.getInstrInfo();
   }
   
@@ -630,7 +630,7 @@ AssignInstructionsToSlots(class SchedulingManager& S, unsigned maxIssue)
 static void
 RecordSchedule(MachineBasicBlock &MBB, const SchedulingManager& S)
 {
-  const MachineInstrInfo& mii = S.schedInfo.getInstrInfo();
+  const TargetInstrInfo& mii = S.schedInfo.getInstrInfo();
   
 #ifndef NDEBUG
   // Lets make sure we didn't lose any instructions, except possibly
@@ -1075,7 +1075,7 @@ NodeCanFillDelaySlot(const SchedulingManager& S,
     return false;
   
   // don't put a load-use dependence in the delay slot of a branch
-  const MachineInstrInfo& mii = S.getInstrInfo();
+  const TargetInstrInfo& mii = S.getInstrInfo();
   
   for (SchedGraphNode::const_iterator EI = node->beginInEdges();
        EI != node->endInEdges(); ++EI)
@@ -1143,7 +1143,7 @@ FindUsefulInstructionsForDelaySlots(SchedulingManager& S,
                                     SchedGraphNode* brNode,
                                     vector<SchedGraphNode*>& sdelayNodeVec)
 {
-  const MachineInstrInfo& mii = S.getInstrInfo();
+  const TargetInstrInfo& mii = S.getInstrInfo();
   unsigned ndelays =
     mii.getNumDelaySlots(brNode->getOpCode());
   
@@ -1207,7 +1207,7 @@ static void ReplaceNopsWithUsefulInstr(SchedulingManager& S,
                                        SchedGraph* graph)
 {
   vector<SchedGraphNode*> nopNodeVec;   // this will hold unused NOPs
-  const MachineInstrInfo& mii = S.getInstrInfo();
+  const TargetInstrInfo& mii = S.getInstrInfo();
   const MachineInstr* brInstr = node->getMachineInstr();
   unsigned ndelays= mii.getNumDelaySlots(brInstr->getOpCode());
   assert(ndelays > 0 && "Unnecessary call to replace NOPs");
@@ -1283,7 +1283,7 @@ static void
 ChooseInstructionsForDelaySlots(SchedulingManager& S, MachineBasicBlock &MBB,
 				SchedGraph *graph)
 {
-  const MachineInstrInfo& mii = S.getInstrInfo();
+  const TargetInstrInfo& mii = S.getInstrInfo();
 
   Instruction *termInstr = (Instruction*)MBB.getBasicBlock()->getTerminator();
   MachineCodeForInstruction &termMvec=MachineCodeForInstruction::get(termInstr);

@@ -9,7 +9,7 @@
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/Target/MachineInstrInfo.h"
+#include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetOptInfo.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/Pass.h"
@@ -24,7 +24,7 @@ DeleteInstruction(MachineBasicBlock& mvec,
   // Check if this instruction is in a delay slot of its predecessor.
   if (BBI != mvec.begin())
     {
-      const MachineInstrInfo& mii = target.getInstrInfo();
+      const TargetInstrInfo& mii = target.getInstrInfo();
       MachineInstr* predMI = *(BBI-1);
       if (unsigned ndelay = mii.getNumDelaySlots(predMI->getOpCode()))
         {

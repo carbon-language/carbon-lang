@@ -11,7 +11,7 @@
 #include "llvm/CodeGen/SSARegMap.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/LiveVariables.h"
-#include "llvm/Target/MachineInstrInfo.h"
+#include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "Support/Statistic.h"
 #include "Support/CommandLine.h"
@@ -442,11 +442,11 @@ void RA::AllocateBasicBlock(MachineBasicBlock &MBB) {
   MachineBasicBlock::iterator I = MBB.begin();
   for (; I != MBB.end(); ++I) {
     MachineInstr *MI = *I;
-    const MachineInstrDescriptor &MID = TM->getInstrInfo().get(MI->getOpcode());
+    const TargetInstrDescriptor &TID = TM->getInstrInfo().get(MI->getOpcode());
 
     // Loop over the implicit uses, making sure that they are at the head of the
     // use order list, so they don't get reallocated.
-    if (const unsigned *ImplicitUses = MID.ImplicitUses)
+    if (const unsigned *ImplicitUses = TID.ImplicitUses)
       for (unsigned i = 0; ImplicitUses[i]; ++i)
         MarkPhysRegRecentlyUsed(ImplicitUses[i]);
 
@@ -498,7 +498,7 @@ void RA::AllocateBasicBlock(MachineBasicBlock &MBB) {
       }
 
     // Loop over the implicit defs, spilling them as well.
-    if (const unsigned *ImplicitDefs = MID.ImplicitDefs)
+    if (const unsigned *ImplicitDefs = TID.ImplicitDefs)
       for (unsigned i = 0; ImplicitDefs[i]; ++i) {
         unsigned Reg = ImplicitDefs[i];
 	spillPhysReg(MBB, I, Reg);
@@ -571,9 +571,9 @@ void RA::AllocateBasicBlock(MachineBasicBlock &MBB) {
   }
 
   // Rewind the iterator to point to the first flow control instruction...
-  const MachineInstrInfo &MII = TM->getInstrInfo();
+  const TargetInstrInfo &TII = TM->getInstrInfo();
   I = MBB.end()-1;
-  while (I != MBB.begin() && MII.isTerminatorInstr((*(I-1))->getOpcode()))
+  while (I != MBB.begin() && TII.isTerminatorInstr((*(I-1))->getOpcode()))
     --I;
 
   // Spill all physical registers holding virtual registers now.

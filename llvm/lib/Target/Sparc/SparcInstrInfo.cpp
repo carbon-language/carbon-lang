@@ -321,14 +321,14 @@ InitializeMaxConstantsTable()
 //   Information about individual instructions.
 //   Most information is stored in the SparcMachineInstrDesc array above.
 //   Other information is computed on demand, and most such functions
-//   default to member functions in base class MachineInstrInfo. 
+//   default to member functions in base class TargetInstrInfo. 
 //---------------------------------------------------------------------------
 
 /*ctor*/
 UltraSparcInstrInfo::UltraSparcInstrInfo()
-  : MachineInstrInfo(SparcMachineInstrDesc,
-		     /*descSize = */ NUM_TOTAL_OPCODES,
-		     /*numRealOpCodes = */ NUM_REAL_OPCODES)
+  : TargetInstrInfo(SparcMachineInstrDesc,
+                    /*descSize = */ NUM_TOTAL_OPCODES,
+                    /*numRealOpCodes = */ NUM_REAL_OPCODES)
 {
   InitializeMaxConstantsTable();
 }

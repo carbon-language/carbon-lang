@@ -1,13 +1,13 @@
 //===- X86InstructionInfo.h - X86 Instruction Information ---------*-C++-*-===//
 //
-// This file contains the X86 implementation of the MachineInstrInfo class.
+// This file contains the X86 implementation of the TargetInstrInfo class.
 //
 //===----------------------------------------------------------------------===//
 
 #ifndef X86INSTRUCTIONINFO_H
 #define X86INSTRUCTIONINFO_H
 
-#include "llvm/Target/MachineInstrInfo.h"
+#include "llvm/Target/TargetInstrInfo.h"
 #include "X86RegisterInfo.h"
 
 /// X86II - This namespace holds all of the target specific flags that
@@ -137,12 +137,12 @@ namespace X86II {
   };
 }
 
-class X86InstrInfo : public MachineInstrInfo {
+class X86InstrInfo : public TargetInstrInfo {
   const X86RegisterInfo RI;
 public:
   X86InstrInfo();
 
-  /// getRegisterInfo - MachineInstrInfo is a superset of MRegister info.  As
+  /// getRegisterInfo - TargetInstrInfo is a superset of MRegister info.  As
   /// such, whenever a client has an instance of instruction info, it should
   /// always be able to get register info as well (through this method).
   ///

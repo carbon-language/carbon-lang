@@ -8,16 +8,14 @@
 
 #include "llvm/CodeGen/StackSlots.h"
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/Target/MachineInstrInfo.h"
 #include "llvm/Constant.h"
 #include "llvm/Function.h"
 #include "llvm/DerivedTypes.h"
-#include "llvm/Pass.h"
-#include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineFunctionInfo.h"
 
 namespace {
-  class StackSlots : public FunctionPass {
+  class StackSlots : public MachineFunctionPass {
     const TargetMachine &Target;
   public:
     StackSlots(const TargetMachine &T) : Target(T) {}
@@ -30,12 +28,12 @@ namespace {
       AU.setPreservesCFG();
     }
     
-    bool runOnFunction(Function &F) {
+    bool runOnMachineFunction(MachineFunction &MF) {
       const Type *PtrInt = PointerType::get(Type::IntTy);
       unsigned Size = Target.getTargetData().getTypeSize(PtrInt);
       
       Value *V = Constant::getNullValue(Type::IntTy);
-      MachineFunction::get(&F).getInfo()->allocateLocalVar(V, 2*Size);
+      MF.getInfo()->allocateLocalVar(V, 2*Size);
       return true;
     }
   };

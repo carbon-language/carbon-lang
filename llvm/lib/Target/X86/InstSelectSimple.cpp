@@ -437,7 +437,7 @@ void ISel::LoadArgumentsToVirtualRegs(Function &Fn) {
 /// the current one.
 ///
 void ISel::SelectPHINodes() {
-  const MachineInstrInfo &MII = TM.getInstrInfo();
+  const TargetInstrInfo &TII = TM.getInstrInfo();
   const Function &LF = *F->getFunction();  // The LLVM function...
   for (Function::const_iterator I = LF.begin(), E = LF.end(); I != E; ++I) {
     const BasicBlock *BB = I;
@@ -468,7 +468,7 @@ void ISel::SelectPHINodes() {
         //
 	MachineBasicBlock::iterator PI = PredMBB->end();
 	while (PI != PredMBB->begin() &&
-	       MII.isTerminatorInstr((*(PI-1))->getOpcode()))
+	       TII.isTerminatorInstr((*(PI-1))->getOpcode()))
 	  --PI;
 	unsigned ValReg = getReg(PN->getIncomingValue(i), PredMBB, PI);
 	PhiMI->addRegOperand(ValReg);
