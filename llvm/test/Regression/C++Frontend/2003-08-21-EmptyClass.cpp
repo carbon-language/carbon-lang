@@ -1,3 +1,4 @@
+// This tests compilation of EMPTY_CLASS_EXPR's
 
 struct empty {};
 
