@@ -76,6 +76,15 @@ public:
     return MayAlias;
   }
 
+  /// getMustAliases - If there are any pointers known that must alias this
+  /// pointer, return them now.  This allows alias-set based alias analyses to
+  /// perform a form a value numbering (which is exposed by load-vn).  If an
+  /// alias analysis supports this, it should ADD any must aliased pointers to
+  /// the specified vector.
+  ///
+  virtual void getMustAliases(Value *P, std::vector<Value*> &RetVals) {}
+
+
   //===--------------------------------------------------------------------===//
   /// Simple mod/ref information...
   ///
