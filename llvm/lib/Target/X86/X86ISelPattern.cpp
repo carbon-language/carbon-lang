@@ -609,7 +609,6 @@ bool ISel::EmitBranchCC(MachineBasicBlock *Dest, SDOperand Cond) {
     return false;
   }
 
-  ContainsFPCode = true;
   unsigned Opc2 = 0;  // Second branch if needed.
 
   // On a floating point condition, the flags are set as follows:
@@ -753,7 +752,7 @@ void ISel::EmitSelectCC(SDOperand Cond, MVT::ValueType SVT,
     case MVT::i16: Opc = CMOVTAB16[CondCode]; break;
     case MVT::i32: Opc = CMOVTAB32[CondCode]; break;
     case MVT::f32:
-    case MVT::f64: Opc = CMOVTABFP[CondCode]; ContainsFPCode = true; break;
+    case MVT::f64: Opc = CMOVTABFP[CondCode]; break;
     }
   }
 
@@ -769,7 +768,7 @@ void ISel::EmitSelectCC(SDOperand Cond, MVT::ValueType SVT,
     case MVT::i16: Opc = X86::CMOVE16rr; break;
     case MVT::i32: Opc = X86::CMOVE32rr; break;
     case MVT::f32:
-    case MVT::f64: Opc = X86::FCMOVE; ContainsFPCode = true; break;
+    case MVT::f64: Opc = X86::FCMOVE; break;
     }
   } else {
     // FIXME: CMP R, 0 -> TEST R, R
@@ -804,7 +803,7 @@ void ISel::EmitCMP(SDOperand LHS, SDOperand RHS) {
   case MVT::i16: Opc = X86::CMP16rr; break;
   case MVT::i32: Opc = X86::CMP32rr; break;
   case MVT::f32:
-  case MVT::f64: Opc = X86::FUCOMIr; ContainsFPCode = true; break;
+  case MVT::f64: Opc = X86::FUCOMIr; break;
   }
   unsigned Tmp1, Tmp2;
   if (getRegPressure(LHS) > getRegPressure(RHS)) {
@@ -909,7 +908,6 @@ unsigned ISel::SelectExpr(SDOperand N) {
   case ISD::FP_EXTEND:
     Tmp1 = SelectExpr(N.getOperand(0));
     BuildMI(BB, X86::FpMOV, 1, Result).addReg(Tmp1);
-    ContainsFPCode = true;
     return Result;
   case ISD::ZERO_EXTEND: {
     int DestIs16 = N.getValueType() == MVT::i16;
@@ -980,12 +978,12 @@ unsigned ISel::SelectExpr(SDOperand N) {
     // Emit the store, then the reload.
     addFrameReference(BuildMI(BB, X86::FST32m, 5), Tmp2).addReg(Tmp1);
     addFrameReference(BuildMI(BB, X86::FLD32m, 5, Result), Tmp2);
-    ContainsFPCode = true;
     return Result;
 
   case ISD::SINT_TO_FP:
   case ISD::UINT_TO_FP: {
     // FIXME: Most of this grunt work should be done by legalize!
+    ContainsFPCode = true;
 
     // Promote the integer to a type supported by FLD.  We do this because there
     // are no unsigned FLD instructions, so we must promote an unsigned value to
@@ -1246,7 +1244,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
     case MVT::i16: Opc = X86::ADD16rr; break;
     case MVT::i32: Opc = X86::ADD32rr; break;
     case MVT::f32: 
-    case MVT::f64: Opc = X86::FpADD; ContainsFPCode = true; break;
+    case MVT::f64: Opc = X86::FpADD; break;
     }
 
     if (getRegPressure(N.getOperand(0)) > getRegPressure(N.getOperand(1))) {
@@ -1303,7 +1301,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
     case MVT::i16: Opc = X86::SUB16rr; break;
     case MVT::i32: Opc = X86::SUB32rr; break;
     case MVT::f32:
-    case MVT::f64: Opc = X86::FpSUB; ContainsFPCode = true; break;
+    case MVT::f64: Opc = X86::FpSUB; break;
     }
     BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(Tmp2);
     return Result;
@@ -1436,7 +1434,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
     case MVT::i16: Opc = X86::IMUL16rr; break;
     case MVT::i32: Opc = X86::IMUL32rr; break;
     case MVT::f32: 
-    case MVT::f64: Opc = X86::FpMUL; ContainsFPCode = true; break;
+    case MVT::f64: Opc = X86::FpMUL; break;
     }
     BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(Tmp2);
     return Result;
@@ -1567,7 +1565,6 @@ unsigned ISel::SelectExpr(SDOperand N) {
     case MVT::i64: assert(0 && "FIXME: implement i64 DIV/REM libcalls!");
     case MVT::f32: 
     case MVT::f64:
-      ContainsFPCode = true;
       if (N.getOpcode() == ISD::SDIV)
         BuildMI(BB, X86::FpDIV, 2, Result).addReg(Tmp1).addReg(Tmp2);
       else
@@ -1686,8 +1683,6 @@ unsigned ISel::SelectExpr(SDOperand N) {
     return Result;
 
   case ISD::SETCC:
-    if (MVT::isFloatingPoint(N.getOperand(0).getValueType()))
-      ContainsFPCode = true;
     EmitCMP(N.getOperand(0), N.getOperand(1));
     EmitSetCC(BB, Result, cast<SetCCSDNode>(N)->getCondition(),
               MVT::isFloatingPoint(N.getOperand(1).getValueType()));
@@ -1844,7 +1839,7 @@ void ISel::Select(SDOperand N) {
       case MVT::i16: Opc = X86::MOV16rr; break;
       case MVT::i32: Opc = X86::MOV32rr; break;
       case MVT::f32:
-      case MVT::f64: Opc = X86::FpMOV; break;
+      case MVT::f64: Opc = X86::FpMOV; ContainsFPCode = true; break;
       }
       BuildMI(BB, Opc, 1, Tmp2).addReg(Tmp1);
     }
@@ -1966,8 +1961,8 @@ void ISel::Select(SDOperand N) {
     case MVT::i8:  Opc = X86::MOV8mr; break;
     case MVT::i16: Opc = X86::MOV16mr; break;
     case MVT::i32: Opc = X86::MOV32mr; break;
-    case MVT::f32: Opc = X86::FST32m; ContainsFPCode = true; break;
-    case MVT::f64: Opc = X86::FST64m; ContainsFPCode = true; break;
+    case MVT::f32: Opc = X86::FST32m; break;
+    case MVT::f64: Opc = X86::FST64m; break;
     }
     
     std::vector<std::pair<unsigned, unsigned> > RP;
