@@ -31,7 +31,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "Cilkifier.h"
 #include "llvm/Transforms/Utils/DemoteRegToStack.h"
 #include "llvm/Analysis/PgmDependenceGraph.h"
 #include "llvm/Analysis/Dominators.h"
@@ -84,6 +83,37 @@ bool CheckDominance(Function& func,
 }
 
 #endif
+
+
+//---------------------------------------------------------------------------- 
+// Global constants used in marking Cilk functions and function calls.
+//---------------------------------------------------------------------------- 
+
+static const char * const CilkSuffix = ".llvm2cilk";
+static const char * const DummySyncFuncName = "__sync.llvm2cilk";
+
+//---------------------------------------------------------------------------- 
+// Routines to identify Cilk functions, calls to Cilk functions, and syncs.
+//---------------------------------------------------------------------------- 
+
+static bool isCilk(const Function& F) {
+  return (F.getName().rfind(CilkSuffix) ==
+          F.getName().size() - std::strlen(CilkSuffix));
+}
+
+static bool isCilkMain(const Function& F) {
+  return F.getName() == "main" + std::string(CilkSuffix);
+}
+
+
+static bool isCilk(const CallInst& CI) {
+  return CI.getCalledFunction() && isCilk(*CI.getCalledFunction());
+}
+
+static bool isSync(const CallInst& CI) { 
+  return CI.getCalledFunction() &&
+         CI.getCalledFunction()->getName() == DummySyncFuncName;
+}
 
 
 //---------------------------------------------------------------------------- 
