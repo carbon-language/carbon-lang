@@ -328,6 +328,16 @@ LinkG    := $(Link) -g -L$(PROJLIBDEBUGSOURCE)  -L$(LLVMLIBDEBUGSOURCE) $(STRIP)
 LinkO    := $(Link) -O3 -L$(PROJLIBRELEASESOURCE) -L$(LLVMLIBRELEASESOURCE)
 LinkP    := $(Link) -O3 -L$(PROJLIBPROFILESOURCE) -L$(LLVMLIBPROFILESOURCE) $(PROFILE)
 
+# TOOLLINKOPTSB to pass options to the linker like library search path etc
+# Note that this is different from TOOLLINKOPTS, these options
+# are passed to the linker *before* the USEDLIBS options are passed.
+# e.g. usage TOOLLINKOPTSB =  -L/home/xxx/lib
+ifdef TOOLLINKOPTSB
+LinkG    := $(LinkG) $(TOOLLINKOPTSB) 
+LinkO    := $(LinkG) $(TOOLLINKOPTSB) 
+LinkP    := $(LinkG) $(TOOLLINKOPTSB) 
+endif
+
 # Create one .o file from a bunch of .o files...
 Relink := ${LIBTOOL} --mode=link $(CXX)
 
