@@ -25,8 +25,25 @@ namespace {
   class DSAA : public ModulePass, public AliasAnalysis {
     TDDataStructures *TD;
     BUDataStructures *BU;
+
+    // These members are used to cache mod/ref information to make us return
+    // results faster, particularly for aa-eval.  On the first request of
+    // mod/ref information for a particular call site, we compute and store the
+    // calculated nodemap for the call site.  Any time DSA info is updated we
+    // free this information, and when we move onto a new call site, this
+    // information is also freed.
+    CallSite MapCS;
+    std::multimap<DSNode*, const DSNode*> CallerCalleeMap;
   public:
     DSAA() : TD(0) {}
+    ~DSAA() {
+      InvalidateCache();
+    }
+
+    void InvalidateCache() {
+      MapCS = CallSite();
+      CallerCalleeMap.clear();
+    }
 
     //------------------------------------------------
     // Implement the Pass API
@@ -62,12 +79,14 @@ namespace {
     }
 
     virtual void deleteValue(Value *V) {
+      InvalidateCache();
       BU->deleteValue(V);
       TD->deleteValue(V);
     }
 
     virtual void copyValue(Value *From, Value *To) {
       if (From == To) return;
+      InvalidateCache();
       BU->copyValue(From, To);
       TD->copyValue(From, To);
     }
@@ -149,11 +168,56 @@ AliasAnalysis::AliasResult DSAA::alias(const Value *V1, unsigned V1Size,
 ///
 AliasAnalysis::ModRefResult
 DSAA::getModRefInfo(CallSite CS, Value *P, unsigned Size) {
-  AliasAnalysis::ModRefResult Result =AliasAnalysis::getModRefInfo(CS, P, Size);
+  DSNode *N = 0;
+  // First step, check our cache.
+  if (CS.getInstruction() == MapCS.getInstruction()) {
+    {
+      const Function *Caller = CS.getInstruction()->getParent()->getParent();
+      DSGraph &CallerTDGraph = TD->getDSGraph(*Caller);
+
+      // Figure out which node in the TD graph this pointer corresponds to.
+      DSScalarMap &CallerSM = CallerTDGraph.getScalarMap();
+      DSScalarMap::iterator NI = CallerSM.find(P);
+      if (NI == CallerSM.end()) {
+        InvalidateCache();
+        return DSAA::getModRefInfo(CS, P, Size);
+      }
+      N = NI->second.getNode();
+    }
+
+  HaveMappingInfo:
+    assert(N && "Null pointer in scalar map??");
+   
+    typedef std::multimap<DSNode*, const DSNode*>::iterator NodeMapIt;
+    std::pair<NodeMapIt, NodeMapIt> Range = CallerCalleeMap.equal_range(N);
+    
+    // Loop over all of the nodes in the callee that correspond to "N", keeping
+    // track of aggregate mod/ref info.
+    bool NeverReads = true, NeverWrites = true;
+    for (; Range.first != Range.second; ++Range.first) {
+      if (Range.first->second->isModified())
+        NeverWrites = false;
+      if (Range.first->second->isRead())
+        NeverReads = false;
+      if (NeverReads == false && NeverWrites == false)
+        return AliasAnalysis::getModRefInfo(CS, P, Size);
+    }
+    
+    ModRefResult Result = ModRef;
+    if (NeverWrites)      // We proved it was not modified.
+      Result = ModRefResult(Result & ~Mod);
+    if (NeverReads)       // We proved it was not read.
+      Result = ModRefResult(Result & ~Ref);
+    
+    return ModRefResult(Result & AliasAnalysis::getModRefInfo(CS, P, Size));
+  }
+
+  // Any cached info we have is for the wrong function.
+  InvalidateCache();
+
   Function *F = CS.getCalledFunction();
 
-  if (!F || Result == NoModRef)
-    return Result;
+  if (!F) return AliasAnalysis::getModRefInfo(CS, P, Size);
 
   if (F->isExternal()) {
     // If we are calling an external function, and if this global doesn't escape
@@ -169,14 +233,14 @@ DSAA::getModRefInfo(CallSite CS, Value *P, unsigned Size) {
       G = G->getGlobalsGraph();
       NI = G->getScalarMap().find(P);
       if (NI == G->getScalarMap().end())
-        return Result;
+        return AliasAnalysis::getModRefInfo(CS, P, Size);
     }
 
     // If we found a node and it's complete, it cannot be passed out to the
     // called function.
     if (NI->second.getNode()->isComplete())
       return NoModRef;
-    return Result;
+    return AliasAnalysis::getModRefInfo(CS, P, Size);
   }
 
   // Get the graphs for the callee and caller.  Note that we want the BU graph
@@ -189,8 +253,9 @@ DSAA::getModRefInfo(CallSite CS, Value *P, unsigned Size) {
   DSScalarMap &CallerSM = CallerTDGraph.getScalarMap();
   DSScalarMap::iterator NI = CallerSM.find(P);
   if (NI == CallerSM.end()) {
+    ModRefResult Result = ModRef;
     if (isa<ConstantPointerNull>(P) || isa<UndefValue>(P))
-      Result = NoModRef;                 // null is never modified :)
+      return NoModRef;                 // null is never modified :)
     else {
       assert(isa<GlobalVariable>(P) &&
     cast<GlobalVariable>(P)->getType()->getElementType()->isFirstClassType() &&
@@ -209,11 +274,10 @@ DSAA::getModRefInfo(CallSite CS, Value *P, unsigned Size) {
           Result = (ModRefResult)(Result & ~Ref);
       }
     }
-    return Result;
-  }
 
-  const DSNode *N = NI->second.getNode();
-  assert(N && "Null pointer in scalar map??");
+    if (Result == NoModRef) return Result;
+    return ModRefResult(Result & AliasAnalysis::getModRefInfo(CS, P, Size));
+  }
 
   // Compute the mapping from nodes in the callee graph to the nodes in the
   // caller graph for this call site.
@@ -222,24 +286,14 @@ DSAA::getModRefInfo(CallSite CS, Value *P, unsigned Size) {
   CallerTDGraph.computeCalleeCallerMapping(DSCS, *F, CalleeBUGraph,
                                            CalleeCallerMap);
 
-  // Loop over all of the nodes in the callee that correspond to "N", keeping
-  // track of aggregate mod/ref info.
-  bool NeverReads = true, NeverWrites = true;
+  // Remember the mapping and the call site for future queries.
+  MapCS = CS;
+
+  // Invert the mapping into CalleeCallerInvMap.
   for (DSGraph::NodeMapTy::iterator I = CalleeCallerMap.begin(),
          E = CalleeCallerMap.end(); I != E; ++I)
-    if (I->second.getNode() == N) {
-      if (I->first->isModified())
-        NeverWrites = false;
-      if (I->first->isRead())
-        NeverReads = false;
-      if (NeverReads == false && NeverWrites == false)
-        return Result;
-    }
+    CallerCalleeMap.insert(std::make_pair(I->second.getNode(), I->first));
 
-  if (NeverWrites)      // We proved it was not modified.
-    Result = ModRefResult(Result & ~Mod);
-  if (NeverReads)       // We proved it was not read.
-    Result = ModRefResult(Result & ~Ref);
-
-  return Result;
+  N = NI->second.getNode();
+  goto HaveMappingInfo;
 }
