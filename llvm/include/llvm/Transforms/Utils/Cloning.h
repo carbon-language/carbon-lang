@@ -18,7 +18,9 @@ class Function;
 class BasicBlock;
 class Value;
 class CallInst;
+class InvokeInst;
 class ReturnInst;
+class CallSite;
 
 /// CloneModule - Return an exact copy of the specified module
 ///
@@ -90,7 +92,8 @@ void CloneFunctionInto(Function *NewFunc, const Function *OldFunc,
 /// function by one level.
 ///
 bool InlineFunction(CallInst *C);
-
+bool InlineFunction(InvokeInst *II);
+bool InlineFunction(CallSite CS);
 
 /// CloneTrace - Returns a copy of the specified trace. 
 /// It takes a vector of basic blocks clones the basic blocks, removes internal 
