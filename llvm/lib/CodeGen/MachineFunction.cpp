@@ -124,7 +124,7 @@ MachineCodeForMethod::MachineCodeForMethod(const Method* _M,
     method(_M), compiledAsLeaf(false), staticStackSize(0),
     automaticVarsSize(0), regSpillsSize(0),
     currentOptionalArgsSize(0), maxOptionalArgsSize(0),
-    currentTmpValuesSize(0)
+    currentTmpValuesSize(0), maxTmpValuesSize(0)
 {
   maxOptionalArgsSize = ComputeMaxOptionalArgsSize(target, method);
   staticStackSize = maxOptionalArgsSize
@@ -284,14 +284,14 @@ MachineCodeForMethod::pushTempValue(const TargetMachine& target,
   
   offset = growUp ? firstTmpOffset + offset : firstTmpOffset - offset;
   
-  currentTmpValuesSize += size;
+  incrementTmpAreaSize(size);
   return offset;
 }
 
 void
 MachineCodeForMethod::popAllTempValues(const TargetMachine& target)
 {
-  currentTmpValuesSize = 0;
+  resetTmpAreaSize();
 }
 
 int

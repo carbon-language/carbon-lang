@@ -29,6 +29,7 @@ class MachineCodeForMethod : private Annotation {
   unsigned	currentOptionalArgsSize;
   unsigned	maxOptionalArgsSize;
   unsigned	currentTmpValuesSize;
+  unsigned	maxTmpValuesSize;
   std::hash_set<const Constant*> constantsForConstPool;
   std::hash_map<const Value*, int> offsets;
   
@@ -107,6 +108,17 @@ private:
   inline void     incrementRegSpillsSize(int incr) {
     regSpillsSize+= incr;
     staticStackSize += incr;
+  }
+  inline void     incrementTmpAreaSize(int incr) {
+    currentTmpValuesSize += incr;
+    if (maxTmpValuesSize < currentTmpValuesSize)
+      {
+        staticStackSize += currentTmpValuesSize - maxTmpValuesSize;
+        maxTmpValuesSize = currentTmpValuesSize;
+      }
+  }
+  inline void     resetTmpAreaSize() {
+    currentTmpValuesSize = 0;
   }
   inline void     incrementCurrentOptionalArgsSize(int incr) {
     currentOptionalArgsSize+= incr;     // stack size already includes this!
