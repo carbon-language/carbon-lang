@@ -5,3 +5,6 @@ float %func () {
   ret float 0xFFF0000000000000  ; -inf
 }
 
+double %func2() {
+  ret double 0xFF20000000000000  ; -inf
+}
