@@ -15,8 +15,8 @@
 #include "VM.h"
 #include "llvm/Function.h"
 #include "llvm/ModuleProvider.h"
-#include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineCodeEmitter.h"
+#include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/Target/TargetMachine.h"
 
 namespace llvm {
@@ -39,7 +39,6 @@ void VM::setupPassManager() {
 
   // Turn the machine code intermediate representation into bytes in memory that
   // may be executed.
-  //
   if (TM.addPassesToEmitMachineCode(PM, *MCE)) {
     std::cerr << "lli: target '" << TM.getName()
               << "' doesn't support machine code emission!\n";
@@ -51,9 +50,9 @@ void VM::setupPassManager() {
 /// just-in-time compilation passes on F, hopefully filling in
 /// GlobalAddress[F] with the address of F's machine code.
 ///
-void VM::runJITOnFunction (Function *F) {
+void VM::runJITOnFunction(Function *F) {
   static bool isAlreadyCodeGenerating = false;
-  assert(!isAlreadyCodeGenerating && "ERROR: RECURSIVE COMPILATION DETECTED!");
+  assert(!isAlreadyCodeGenerating && "Error: Recursive compilation detected!");
 
   // JIT the function
   isAlreadyCodeGenerating = true;
@@ -74,7 +73,7 @@ void *VM::getPointerToFunction(Function *F) {
   if (F->isExternal())
     return Addr = getPointerToNamedFunction(F->getName());
 
-  runJITOnFunction (F);
+  runJITOnFunction(F);
   assert(Addr && "Code generation didn't add function to GlobalAddress table!");
   return Addr;
 }
@@ -94,10 +93,10 @@ void *VM::recompileAndRelinkFunction(Function *F) {
 
   void *OldAddr = Addr;
   Addr = 0;
-  MachineFunction::destruct (F);
-  runJITOnFunction (F);
+  MachineFunction::destruct(F);
+  runJITOnFunction(F);
   assert(Addr && "Code generation didn't add function to GlobalAddress table!");
-  TM.replaceMachineCodeForFunction (OldAddr, Addr);
+  TM.replaceMachineCodeForFunction(OldAddr, Addr);
   return Addr;
 }
 
