@@ -1582,14 +1582,10 @@ Instruction *InstCombiner::visitSetCondInst(BinaryOperator &I) {
               return ReplaceInstUsesWith(I, ConstantBool::get(isSetNE));
 
             // If we have ((X & C) == C), turn it into ((X & C) != 0).
-            if (CI == BOC) {
-              // Don't infinite loop if C is null and the & isn't folded yet.
-              if (CI->isNullValue())
-                return ReplaceInstUsesWith(I, ConstantBool::get(!isSetNE));
+            if (CI == BOC && isOneBitSet(CI))
               return new SetCondInst(isSetNE ? Instruction::SetEQ :
                                      Instruction::SetNE, Op0,
                                      Constant::getNullValue(CI->getType()));
-            }
 
             // Replace (and X, (1 << size(X)-1) != 0) with x < 0, converting X
             // to be a signed value as appropriate.
