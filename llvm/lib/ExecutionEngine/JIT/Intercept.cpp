@@ -28,7 +28,7 @@ static std::vector<void (*)()> AtExitHandlers;
 /// calls to atexit(3), which we intercept and store in
 /// AtExitHandlers.
 ///
-void JIT::runAtExitHandlers() {
+static void runAtExitHandlers() {
   while (!AtExitHandlers.empty()) {
     void (*Fn)() = AtExitHandlers.back();
     AtExitHandlers.pop_back();
@@ -45,7 +45,7 @@ static void NoopFn() {}
 
 // jit_exit - Used to intercept the "exit" library call.
 static void jit_exit(int Status) {
-  JIT::runAtExitHandlers();   // Run atexit handlers...
+  runAtExitHandlers();   // Run atexit handlers...
   exit(Status);
 }
 

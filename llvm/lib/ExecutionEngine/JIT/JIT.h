@@ -50,8 +50,8 @@ public:
 
   /// run - Start execution with the specified function and arguments.
   ///
-  virtual GenericValue run(Function *F,
-			   const std::vector<GenericValue> &ArgValues);
+  virtual GenericValue runFunction(Function *F,
+                                   const std::vector<GenericValue> &ArgValues);
 
   /// getPointerToNamedFunction - This method returns the address of the
   /// specified function by using the dlsym function call.  As such it is only
@@ -63,11 +63,6 @@ public:
   // which causes lazy compilation of the target function.
   // 
   static void CompilationCallback();
-
-  /// runAtExitHandlers - Before exiting the program, at_exit functions must be
-  /// called.  This method calls them.
-  ///
-  static void runAtExitHandlers();
 
   /// getPointerToFunction - This returns the address of the specified function,
   /// compiling it if necessary.
