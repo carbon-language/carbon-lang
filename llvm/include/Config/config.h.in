@@ -117,6 +117,10 @@
 /* Define to have the %a format string */
 #undef HAVE_PRINTF_A
 
+/* Define if PThread mutexes (e.g., pthread_mutex_lock) are available in the
+   system's thread library. */
+#undef HAVE_PTHREAD_MUTEX_LOCK
+
 /* Define to 1 if you have the <signal.h> header file. */
 #undef HAVE_SIGNAL_H
 
