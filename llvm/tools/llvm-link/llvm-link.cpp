@@ -128,7 +128,7 @@ int main(int argc, char **argv) {
 
     // Make sure that the Out file gets unlinked from the disk if we get a
     // SIGINT
-    sys::RemoveFileOnSignal(OutputFilename);
+    sys::RemoveFileOnSignal(sys::Path(OutputFilename));
   }
 
   if (verifyModule(*Composite.get())) {

@@ -111,7 +111,7 @@ int main(int argc, char **argv) {
 
     // Make sure that the Output file gets unlinked from the disk if we get a
     // SIGINT
-    sys::RemoveFileOnSignal(OutputFilename);
+    sys::RemoveFileOnSignal(sys::Path(OutputFilename));
   }
 
   // If the output is set to be emitted to standard out, and standard out is a

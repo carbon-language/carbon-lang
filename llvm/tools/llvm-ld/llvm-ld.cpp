@@ -223,7 +223,7 @@ int main(int argc, char **argv, char **envp) {
 
   // Ensure that the bytecode file gets removed from the disk if we get a
   // terminating signal.
-  sys::RemoveFileOnSignal(RealBytecodeOutput);
+  sys::RemoveFileOnSignal(sys::Path(RealBytecodeOutput));
 
   // Generate the bytecode file.
   if (GenerateBytecode(Composite.get(), Strip, !NoInternalize, &Out)) {
@@ -246,8 +246,8 @@ int main(int argc, char **argv, char **envp) {
       std::string AssemblyFile = OutputFilename + ".s";
 
       // Mark the output files for removal if we get an interrupt.
-      sys::RemoveFileOnSignal(AssemblyFile);
-      sys::RemoveFileOnSignal(OutputFilename);
+      sys::RemoveFileOnSignal(sys::Path(AssemblyFile));
+      sys::RemoveFileOnSignal(sys::Path(OutputFilename));
 
       // Determine the locations of the llc and gcc programs.
       std::string llc = FindExecutable("llc", argv[0]);
@@ -271,8 +271,8 @@ int main(int argc, char **argv, char **envp) {
       std::string CFile = OutputFilename + ".cbe.c";
 
       // Mark the output files for removal if we get an interrupt.
-      sys::RemoveFileOnSignal(CFile);
-      sys::RemoveFileOnSignal(OutputFilename);
+      sys::RemoveFileOnSignal(sys::Path(CFile));
+      sys::RemoveFileOnSignal(sys::Path(OutputFilename));
 
       // Determine the locations of the llc and gcc programs.
       std::string llc = FindExecutable("llc", argv[0]);

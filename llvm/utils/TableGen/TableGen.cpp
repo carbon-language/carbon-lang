@@ -426,7 +426,7 @@ int main(int argc, char **argv) {
     }
 
     // Make sure the file gets removed if *gasp* tablegen crashes...
-    sys::RemoveFileOnSignal(OutputFilename);
+    sys::RemoveFileOnSignal(sys::Path(OutputFilename));
   }
 
   try {
