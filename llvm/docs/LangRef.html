@@ -17,6 +17,13 @@
   <li><a href="#abstract">Abstract</a></li>
   <li><a href="#introduction">Introduction</a></li>
   <li><a href="#identifiers">Identifiers</a></li>
+  <li><a href="#highlevel">High Level Structure</a>
+    <ol>
+      <li><a href="#modulestructure">Module Structure</a></li>
+      <li><a href="#globalvars">Global Variables</a></li>
+      <li><a href="#functionstructure">Function Structure</a></li>
+    </ol>
+  </li>
   <li><a href="#typesystem">Type System</a>
     <ol>
       <li><a href="#t_primitive">Primitive Types</a> 	
@@ -35,12 +42,7 @@
       </li>
     </ol>
   </li>
-  <li><a href="#highlevel">High Level Structure</a>
-    <ol>
-      <li><a href="#modulestructure">Module Structure</a></li>
-      <li><a href="#globalvars">Global Variables</a></li>
-      <li><a href="#functionstructure">Function Structure</a></li>
-    </ol>
+  <li><a href="#constants">Constants</a>
   </li>
   <li><a href="#instref">Instruction Reference</a>
     <ol>
@@ -279,10 +281,172 @@ exactly.  For example, NaN's, infinities, and other special cases are
 represented in their IEEE hexadecimal format so that assembly and
 disassembly do not cause any bits to change in the constants.</p>
 </div>
+
+<!-- *********************************************************************** -->
+<div class="doc_section"> <a name="highlevel">High Level Structure</a> </div>
+<!-- *********************************************************************** -->
+
+<!-- ======================================================================= -->
+<div class="doc_subsection"> <a name="modulestructure">Module Structure</a>
+</div>
+
+<div class="doc_text">
+
+<p>LLVM programs are composed of "Module"s, each of which is a
+translation unit of the input programs.  Each module consists of
+functions, global variables, and symbol table entries.  Modules may be
+combined together with the LLVM linker, which merges function (and
+global variable) definitions, resolves forward declarations, and merges
+symbol table entries. Here is an example of the "hello world" module:</p>
+
+<pre><i>; Declare the string constant as a global constant...</i>
+<a href="#identifiers">%.LC0</a> = <a href="#linkage_internal">internal</a> <a
+ href="#globalvars">constant</a> <a href="#t_array">[13 x sbyte]</a> c"hello world\0A\00"          <i>; [13 x sbyte]*</i>
+
+<i>; External declaration of the puts function</i>
+<a href="#functionstructure">declare</a> int %puts(sbyte*)                                            <i>; int(sbyte*)* </i>
+
+<i>; Definition of main function</i>
+int %main() {                                                        <i>; int()* </i>
+        <i>; Convert [13x sbyte]* to sbyte *...</i>
+        %cast210 = <a
+ href="#i_getelementptr">getelementptr</a> [13 x sbyte]* %.LC0, long 0, long 0 <i>; sbyte*</i>
+
+        <i>; Call puts function to write out the string to stdout...</i>
+        <a
+ href="#i_call">call</a> int %puts(sbyte* %cast210)                              <i>; int</i>
+        <a
+ href="#i_ret">ret</a> int 0<br>}<br></pre>
+
+<p>This example is made up of a <a href="#globalvars">global variable</a>
+named "<tt>.LC0</tt>", an external declaration of the "<tt>puts</tt>"
+function, and a <a href="#functionstructure">function definition</a>
+for "<tt>main</tt>".</p>
+
+<a name="linkage"> In general, a module is made up of a list of global
+values, where both functions and global variables are global values. 
+Global values are represented by a pointer to a memory location (in
+this case, a pointer to an array of char, and a pointer to a function),
+and have one of the following linkage types:</a>
+
+<p> </p>
+
+<dl>
+  <dt><tt><b><a name="linkage_internal">internal</a></b></tt> </dt>
+  <dd>Global values with internal linkage are only directly accessible
+by objects in the current module.  In particular, linking code into a
+module with an internal global value may cause the internal to be
+renamed as necessary to avoid collisions.  Because the symbol is
+internal to the module, all references can be updated.  This
+corresponds to the notion of the '<tt>static</tt>' keyword in C, or the
+idea of "anonymous namespaces" in C++.
+    <p> </p>
+  </dd>
+  <dt><tt><b><a name="linkage_linkonce">linkonce</a></b></tt>: </dt>
+  <dd>"<tt>linkonce</tt>" linkage is similar to <tt>internal</tt>
+linkage, with the twist that linking together two modules defining the
+same <tt>linkonce</tt> globals will cause one of the globals to be
+discarded.  This is typically used to implement inline functions. 
+Unreferenced <tt>linkonce</tt> globals are allowed to be discarded.
+    <p> </p>
+  </dd>
+  <dt><tt><b><a name="linkage_weak">weak</a></b></tt>: </dt>
+  <dd>"<tt>weak</tt>" linkage is exactly the same as <tt>linkonce</tt>
+linkage, except that unreferenced <tt>weak</tt> globals may not be
+discarded.  This is used to implement constructs in C such as "<tt>int
+X;</tt>" at global scope.
+    <p> </p>
+  </dd>
+  <dt><tt><b><a name="linkage_appending">appending</a></b></tt>: </dt>
+  <dd>"<tt>appending</tt>" linkage may only be applied to global
+variables of pointer to array type.  When two global variables with
+appending linkage are linked together, the two global arrays are
+appended together.  This is the LLVM, typesafe, equivalent of having
+the system linker append together "sections" with identical names when
+.o files are linked.
+    <p> </p>
+  </dd>
+  <dt><tt><b><a name="linkage_external">externally visible</a></b></tt>:</dt>
+  <dd>If none of the above identifiers are used, the global is
+externally visible, meaning that it participates in linkage and can be
+used to resolve external symbol references.
+    <p> </p>
+  </dd>
+</dl>
+
+<p> </p>
+
+<p><a name="linkage_external">For example, since the "<tt>.LC0</tt>"
+variable is defined to be internal, if another module defined a "<tt>.LC0</tt>"
+variable and was linked with this one, one of the two would be renamed,
+preventing a collision.  Since "<tt>main</tt>" and "<tt>puts</tt>" are
+external (i.e., lacking any linkage declarations), they are accessible
+outside of the current module.  It is illegal for a function <i>declaration</i>
+to have any linkage type other than "externally visible".</a></p>
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="globalvars">Global Variables</a>
+</div>
+
+<div class="doc_text">
+
+<p>Global variables define regions of memory allocated at compilation
+time instead of run-time.  Global variables may optionally be
+initialized.  A variable may be defined as a global "constant", which
+indicates that the contents of the variable will never be modified
+(enabling better optimization, allowing the global data to be placed in the
+read-only section of an executable, etc).</p>
+
+<p>As SSA values, global variables define pointer values that are in
+scope (i.e. they dominate) all basic blocks in the program.  Global
+variables always define a pointer to their "content" type because they
+describe a region of memory, and all memory objects in LLVM are
+accessed through pointers.</p>
+
+</div>
+
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="functionstructure">Functions</a>
+</div>
+
+<div class="doc_text">
+
+<p>LLVM function definitions are composed of a (possibly empty) argument list,
+an opening curly brace, a list of basic blocks, and a closing curly brace.  LLVM
+function declarations are defined with the "<tt>declare</tt>" keyword, a
+function name, and a function signature.</p>
+
+<p>A function definition contains a list of basic blocks, forming the CFG for
+the function.  Each basic block may optionally start with a label (giving the
+basic block a symbol table entry), contains a list of instructions, and ends
+with a <a href="#terminators">terminator</a> instruction (such as a branch or
+function return).</p>
+
+<p>The first basic block in program is special in two ways: it is immediately
+executed on entrance to the function, and it is not allowed to have predecessor
+basic blocks (i.e. there can not be any branches to the entry block of a
+function).  Because the block can have no predecessors, it also cannot have any
+<a href="#i_phi">PHI nodes</a>.</p>
+
+<p>LLVM functions are identified by their name and type signature.  Hence, two
+functions with the same name but different parameter lists or return values are
+considered different functions, and LLVM will resolves references to each
+appropriately.</p>
+
+</div>
+
+
+
 <!-- *********************************************************************** -->
 <div class="doc_section"> <a name="typesystem">Type System</a> </div>
 <!-- *********************************************************************** -->
+
 <div class="doc_text">
+
 <p>The LLVM type system is one of the most important features of the
 intermediate representation.  Being typed enables a number of
 optimizations to be performed on the IR directly, without having to do
@@ -290,9 +454,9 @@ extra analyses on the side before the transformation.  A strong type
 system makes it easier to read the generated code and enables novel
 analyses and transformations that are not feasible to perform on normal
 three address code representations.</p>
-<!-- The written form for the type system was heavily influenced by the
-syntactic problems with types in the C language<sup><a
-href="#rw_stroustrup">1</a></sup>.<p> --> </div>
+
+</div>
+
 <!-- ======================================================================= -->
 <div class="doc_subsection"> <a name="t_primitive">Primitive Types</a> </div>
 <div class="doc_text">
@@ -555,152 +719,6 @@ be any integral or floating point type.</p>
     </td>
   </tr>
 </table>
-</div>
-
-<!-- *********************************************************************** -->
-<div class="doc_section"> <a name="highlevel">High Level Structure</a> </div>
-<!-- *********************************************************************** -->
-<!-- ======================================================================= -->
-<div class="doc_subsection"> <a name="modulestructure">Module Structure</a>
-</div>
-<div class="doc_text">
-<p>LLVM programs are composed of "Module"s, each of which is a
-translation unit of the input programs.  Each module consists of
-functions, global variables, and symbol table entries.  Modules may be
-combined together with the LLVM linker, which merges function (and
-global variable) definitions, resolves forward declarations, and merges
-symbol table entries. Here is an example of the "hello world" module:</p>
-<pre><i>; Declare the string constant as a global constant...</i>
-<a href="#identifiers">%.LC0</a> = <a href="#linkage_internal">internal</a> <a
- href="#globalvars">constant</a> <a href="#t_array">[13 x sbyte]</a> c"hello world\0A\00"          <i>; [13 x sbyte]*</i>
-
-<i>; External declaration of the puts function</i>
-<a href="#functionstructure">declare</a> int %puts(sbyte*)                                            <i>; int(sbyte*)* </i>
-
-<i>; Definition of main function</i>
-int %main() {                                                        <i>; int()* </i>
-        <i>; Convert [13x sbyte]* to sbyte *...</i>
-        %cast210 = <a
- href="#i_getelementptr">getelementptr</a> [13 x sbyte]* %.LC0, long 0, long 0 <i>; sbyte*</i>
-
-        <i>; Call puts function to write out the string to stdout...</i>
-        <a
- href="#i_call">call</a> int %puts(sbyte* %cast210)                              <i>; int</i>
-        <a
- href="#i_ret">ret</a> int 0<br>}<br></pre>
-<p>This example is made up of a <a href="#globalvars">global variable</a>
-named "<tt>.LC0</tt>", an external declaration of the "<tt>puts</tt>"
-function, and a <a href="#functionstructure">function definition</a>
-for "<tt>main</tt>".</p>
-<a name="linkage"> In general, a module is made up of a list of global
-values, where both functions and global variables are global values. 
-Global values are represented by a pointer to a memory location (in
-this case, a pointer to an array of char, and a pointer to a function),
-and have one of the following linkage types:</a>
-<p> </p>
-<dl>
-  <dt><tt><b><a name="linkage_internal">internal</a></b></tt> </dt>
-  <dd>Global values with internal linkage are only directly accessible
-by objects in the current module.  In particular, linking code into a
-module with an internal global value may cause the internal to be
-renamed as necessary to avoid collisions.  Because the symbol is
-internal to the module, all references can be updated.  This
-corresponds to the notion of the '<tt>static</tt>' keyword in C, or the
-idea of "anonymous namespaces" in C++.
-    <p> </p>
-  </dd>
-  <dt><tt><b><a name="linkage_linkonce">linkonce</a></b></tt>: </dt>
-  <dd>"<tt>linkonce</tt>" linkage is similar to <tt>internal</tt>
-linkage, with the twist that linking together two modules defining the
-same <tt>linkonce</tt> globals will cause one of the globals to be
-discarded.  This is typically used to implement inline functions. 
-Unreferenced <tt>linkonce</tt> globals are allowed to be discarded.
-    <p> </p>
-  </dd>
-  <dt><tt><b><a name="linkage_weak">weak</a></b></tt>: </dt>
-  <dd>"<tt>weak</tt>" linkage is exactly the same as <tt>linkonce</tt>
-linkage, except that unreferenced <tt>weak</tt> globals may not be
-discarded.  This is used to implement constructs in C such as "<tt>int
-X;</tt>" at global scope.
-    <p> </p>
-  </dd>
-  <dt><tt><b><a name="linkage_appending">appending</a></b></tt>: </dt>
-  <dd>"<tt>appending</tt>" linkage may only be applied to global
-variables of pointer to array type.  When two global variables with
-appending linkage are linked together, the two global arrays are
-appended together.  This is the LLVM, typesafe, equivalent of having
-the system linker append together "sections" with identical names when
-.o files are linked.
-    <p> </p>
-  </dd>
-  <dt><tt><b><a name="linkage_external">externally visible</a></b></tt>:</dt>
-  <dd>If none of the above identifiers are used, the global is
-externally visible, meaning that it participates in linkage and can be
-used to resolve external symbol references.
-    <p> </p>
-  </dd>
-</dl>
-<p> </p>
-<p><a name="linkage_external">For example, since the "<tt>.LC0</tt>"
-variable is defined to be internal, if another module defined a "<tt>.LC0</tt>"
-variable and was linked with this one, one of the two would be renamed,
-preventing a collision.  Since "<tt>main</tt>" and "<tt>puts</tt>" are
-external (i.e., lacking any linkage declarations), they are accessible
-outside of the current module.  It is illegal for a function <i>declaration</i>
-to have any linkage type other than "externally visible".</a></p>
-</div>
-
-<!-- ======================================================================= -->
-<div class="doc_subsection">
-  <a name="globalvars">Global Variables</a>
-</div>
-
-<div class="doc_text">
-
-<p>Global variables define regions of memory allocated at compilation
-time instead of run-time.  Global variables may optionally be
-initialized.  A variable may be defined as a global "constant", which
-indicates that the contents of the variable will never be modified
-(opening options for optimization).</p>
-
-<p>As SSA values, global variables define pointer values that are in
-scope (i.e. they dominate) for all basic blocks in the program.  Global
-variables always define a pointer to their "content" type because they
-describe a region of memory, and all memory objects in LLVM are
-accessed through pointers.</p>
-
-</div>
-
-
-<!-- ======================================================================= -->
-<div class="doc_subsection">
-  <a name="functionstructure">Functions</a>
-</div>
-
-<div class="doc_text">
-
-<p>LLVM function definitions are composed of a (possibly empty) argument list,
-an opening curly brace, a list of basic blocks, and a closing curly brace.  LLVM
-function declarations are defined with the "<tt>declare</tt>" keyword, a
-function name, and a function signature.</p>
-
-<p>A function definition contains a list of basic blocks, forming the CFG for
-the function.  Each basic block may optionally start with a label (giving the
-basic block a symbol table entry), contains a list of instructions, and ends
-with a <a href="#terminators">terminator</a> instruction (such as a branch or
-function return).</p>
-
-<p>The first basic block in program is special in two ways: it is immediately
-executed on entrance to the function, and it is not allowed to have predecessor
-basic blocks (i.e. there can not be any branches to the entry block of a
-function).  Because the block can have no predecessors, it also cannot have any
-<a href="#i_phi">PHI nodes</a>.</p>
-
-<p>LLVM functions are identified by their name and type signature.  Hence, two
-functions with the same name but different parameter lists or return values are
-considered different functions, and LLVM will resolves references to each
-appropriately.</p>
-
 </div>
 
 
