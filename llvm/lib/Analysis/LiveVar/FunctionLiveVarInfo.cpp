@@ -94,11 +94,12 @@ void MethodLiveVarInfo::constructBBs(const Function *M) {
 // do one backward pass over the CFG (for iterative analysis)
 //-----------------------------------------------------------------------------
 
-bool MethodLiveVarInfo::doSingleBackwardPass(const Function *M, unsigned int iter) {
+bool MethodLiveVarInfo::doSingleBackwardPass(const Function *M, unsigned iter) {
   if (DEBUG_LV) std::cerr << "\n After Backward Pass " << iter << "...\n";
 
   bool NeedAnotherIteration = false;
-  for (po_iterator<const Function*> BBI = po_begin(M); BBI != po_end(M) ; ++BBI) {
+  for (po_iterator<const Function*> BBI = po_begin(M), BBE = po_end(M);
+       BBI != BBE; ++BBI) {
     BBLiveVar *LVBB = BBLiveVar::GetFromBB(*BBI);
     assert(LVBB && "BasicBlock information not set for block!");
 
@@ -108,9 +109,10 @@ bool MethodLiveVarInfo::doSingleBackwardPass(const Function *M, unsigned int ite
     if(LVBB->isOutSetChanged()) 
       LVBB->applyTransferFunc();        // apply the Tran Func to calc InSet
     
-    // OutSets are initialized to EMPTY.  Recompute on first iter or if InSet changed.
+    // OutSets are initialized to EMPTY.  Recompute on first iter or if InSet
+    // changed.
     if (iter == 0 || LVBB->isInSetChanged())        // to calc Outsets of preds
-      NeedAnotherIteration = LVBB->applyFlowFunc() || NeedAnotherIteration; 
+      NeedAnotherIteration |= LVBB->applyFlowFunc();
     
     if (DEBUG_LV) LVBB->printInOutSets();
   }
@@ -208,17 +210,15 @@ static void applyTranferFuncForMInst(ValueSet &LVS, const MachineInstr *MInst) {
 
   for (MachineInstr::const_val_op_iterator OpI = MInst->begin(),
          OpE = MInst->end(); OpI != OpE; ++OpI) {
-    if (isa<BasicBlock>(*OpI)) continue; // don't process labels
-    
-    if (!OpI.isDef())      // add only if this operand is a use
-      LVS.insert(*OpI);            // An operand is a use - so add to use set
+    if (!isa<BasicBlock>(*OpI))      // don't process labels
+      if (!OpI.isDef())              // add only if this operand is a use
+        LVS.insert(*OpI);            // An operand is a use - so add to use set
   }
 
   // do for implicit operands as well
-  for (unsigned i = 0; i < MInst->getNumImplicitRefs(); ++i) {
+  for (unsigned i = 0, e = MInst->getNumImplicitRefs(); i != e; ++i)
     if (!MInst->implicitRefIsDefined(i))
       LVS.insert(MInst->getImplicitRef(i));
-  }
 }
 
 //-----------------------------------------------------------------------------
@@ -230,13 +230,13 @@ static void applyTranferFuncForMInst(ValueSet &LVS, const MachineInstr *MInst) {
 void MethodLiveVarInfo::calcLiveVarSetsForBB(const BasicBlock *BB) {
   const MachineCodeForBasicBlock &MIVec = BB->getMachineInstrVec();
 
-  if (DEBUG_LV >= LV_DEBUG_Instr) {
-    std::cerr << endl << "======For BB " << BB->getName() << ": Live var sets for instructions======" << endl;
-  }
+  if (DEBUG_LV >= LV_DEBUG_Instr)
+    std::cerr << "\n======For BB " << BB->getName()
+              << ": Live var sets for instructions======\n";
   
-  ValueSet *CurSet = new ValueSet();
+  ValueSet CurSet;
   const ValueSet *SetAI = &getOutSetOfBB(BB);  // init SetAI with OutSet
-  set_union(*CurSet, *SetAI);                  // CurSet now contains OutSet
+  set_union(CurSet, *SetAI);                   // CurSet now contains OutSet
 
   // iterate over all the machine instructions in BB
   for (MachineCodeForBasicBlock::const_reverse_iterator MII = MIVec.rbegin(),
@@ -246,16 +246,16 @@ void MethodLiveVarInfo::calcLiveVarSetsForBB(const BasicBlock *BB) {
 
     MInst2LVSetAI[MI] = SetAI;                 // record in After Inst map
 
-    applyTranferFuncForMInst(*CurSet, MI);     // apply the transfer Func
-    ValueSet *NewSet = new ValueSet();     // create a new set and
-    set_union(*NewSet, *CurSet);               // copy the set after T/F to it
+    applyTranferFuncForMInst(CurSet, MI);      // apply the transfer Func
+    ValueSet *NewSet = new ValueSet();         // create a new set and
+    set_union(*NewSet, CurSet);                // copy the set after T/F to it
  
     MInst2LVSetBI[MI] = NewSet;                // record in Before Inst map
 
     if (DEBUG_LV >= LV_DEBUG_Instr) {
-      std::cerr << endl << "Live var sets before/after instruction " << *MI;
-      cerr << "  Before: ";   printSet(*NewSet);  cerr << endl;
-      cerr << "  After : ";   printSet(*SetAI);   cerr << endl;
+      std::cerr << "\nLive var sets before/after instruction " << *MI;
+      cerr << "  Before: ";   printSet(*NewSet);  cerr << "\n";
+      cerr << "  After : ";   printSet(*SetAI);   cerr << "\n";
     }
 
     // SetAI will be used in the next iteration
