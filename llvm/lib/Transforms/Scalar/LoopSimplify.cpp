@@ -13,6 +13,8 @@
 // loop) are dominated by the loop header.  This simplifies transformations such
 // as store-sinking that are built into LICM.
 //
+// This pass also guarantees that loops will have exactly one backedge.
+//
 // Note that the simplifycfg pass will clean up blocks which are split out but
 // end up being unnecessary, so usage of this pass should not pessimize
 // generated code.
@@ -59,6 +61,10 @@ namespace {
                                        const std::vector<BasicBlock*> &Preds);
     void RewriteLoopExitBlock(Loop *L, BasicBlock *Exit);
     void InsertPreheaderForLoop(Loop *L);
+    void InsertUniqueBackedgeBlock(Loop *L);
+
+    void UpdateDomInfoForRevectoredPreds(BasicBlock *NewBB,
+                                         std::vector<BasicBlock*> &PredBlocks);
   };
 
   RegisterOpt<LoopSimplify>
@@ -110,6 +116,15 @@ bool LoopSimplify::ProcessLoop(Loop *L) {
       NumInserted++;
       Changed = true;
     }
+
+  // The preheader may have more than two predecessors at this point (from the
+  // preheader and from the backedges).  To simplify the loop more, insert an
+  // extra back-edge block in the loop so that there is exactly one backedge.
+  if (L->getNumBackEdges() != 1) {
+    InsertUniqueBackedgeBlock(L);
+    NumInserted++;
+    Changed = true;
+  }
 
   const std::vector<Loop*> &SubLoops = L->getSubLoops();
   for (unsigned i = 0, e = SubLoops.size(); i != e; ++i)
@@ -333,13 +348,136 @@ void LoopSimplify::RewriteLoopExitBlock(Loop *L, BasicBlock *Exit) {
     if (I->hasExitBlock(Exit))
       I->changeExitBlock(Exit, NewBB);   // Update exit block information
 
+  // Update dominator information (set, immdom, domtree, and domfrontier)
+  UpdateDomInfoForRevectoredPreds(NewBB, LoopBlocks);
+}
+
+/// InsertUniqueBackedgeBlock - This method is called when the specified loop
+/// has more than one backedge in it.  If this occurs, revector all of these
+/// backedges to target a new basic block and have that block branch to the loop
+/// header.  This ensures that loops have exactly one backedge.
+///
+void LoopSimplify::InsertUniqueBackedgeBlock(Loop *L) {
+  assert(L->getNumBackEdges() > 1 && "Must have > 1 backedge!");
+
+  // Get information about the loop
+  BasicBlock *Preheader = L->getLoopPreheader();
+  BasicBlock *Header = L->getHeader();
+  Function *F = Header->getParent();
+
+  // Figure out which basic blocks contain back-edges to the loop header.
+  std::vector<BasicBlock*> BackedgeBlocks;
+  for (pred_iterator I = pred_begin(Header), E = pred_end(Header); I != E; ++I)
+    if (*I != Preheader) BackedgeBlocks.push_back(*I);
+
+  // Create and insert the new backedge block...
+  BasicBlock *BEBlock = new BasicBlock(Header->getName()+".backedge", F);
+  Instruction *BETerminator = new BranchInst(Header);
+  BEBlock->getInstList().push_back(BETerminator);
+
+  // Move the new backedge block to right after the last backedge block.
+  Function::iterator InsertPos = BackedgeBlocks.back(); ++InsertPos;
+  F->getBasicBlockList().splice(InsertPos, F->getBasicBlockList(), BEBlock);
+  
+  // Now that the block has been inserted into the function, create PHI nodes in
+  // the backedge block which correspond to any PHI nodes in the header block.
+  for (BasicBlock::iterator I = Header->begin();
+       PHINode *PN = dyn_cast<PHINode>(I); ++I) {
+    PHINode *NewPN = new PHINode(PN->getType(), PN->getName()+".be",
+                                 BETerminator);
+    NewPN->op_reserve(2*BackedgeBlocks.size());
+
+    // Loop over the PHI node, moving all entries except the one for the
+    // preheader over to the new PHI node.
+    unsigned PreheaderIdx = ~0U;
+    bool HasUniqueIncomingValue = true;
+    Value *UniqueValue = 0;
+    for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i) {
+      BasicBlock *IBB = PN->getIncomingBlock(i);
+      Value *IV = PN->getIncomingValue(i);
+      if (IBB == Preheader) {
+        PreheaderIdx = i;
+      } else {
+        NewPN->addIncoming(IV, IBB);
+        if (HasUniqueIncomingValue) {
+          if (UniqueValue == 0)
+            UniqueValue = IV;
+          else if (UniqueValue != IV)
+            HasUniqueIncomingValue = false;
+        }
+      }
+    }
+      
+    // Delete all of the incoming values from the old PN except the preheader's
+    assert(PreheaderIdx != ~0U && "PHI has no preheader entry??");
+    if (PreheaderIdx != 0) {
+      PN->setIncomingValue(0, PN->getIncomingValue(PreheaderIdx));
+      PN->setIncomingBlock(0, PN->getIncomingBlock(PreheaderIdx));
+    }
+    PN->op_erase(PN->op_begin()+2, PN->op_end());
+
+    // Finally, add the newly constructed PHI node as the entry for the BEBlock.
+    PN->addIncoming(NewPN, BEBlock);
+
+    // As an optimization, if all incoming values in the new PhiNode (which is a
+    // subset of the incoming values of the old PHI node) have the same value,
+    // eliminate the PHI Node.
+    if (HasUniqueIncomingValue) {
+      NewPN->replaceAllUsesWith(UniqueValue);
+      BEBlock->getInstList().erase(NewPN);
+    }
+  }
+
+  // Now that all of the PHI nodes have been inserted and adjusted, modify the
+  // backedge blocks to just to the BEBlock instead of the header.
+  for (unsigned i = 0, e = BackedgeBlocks.size(); i != e; ++i) {
+    TerminatorInst *TI = BackedgeBlocks[i]->getTerminator();
+    for (unsigned Op = 0, e = TI->getNumSuccessors(); Op != e; ++Op)
+      if (TI->getSuccessor(Op) == Header)
+        TI->setSuccessor(Op, BEBlock);
+  }
+
+  //===--- Update all analyses which we must preserve now -----------------===//
+
+  // Update Loop Information - we know that this block is now in the current
+  // loop and all parent loops.
+  L->addBasicBlockToLoop(BEBlock, getAnalysis<LoopInfo>());
+
+  // Replace any instances of Exit with NewBB in this and any nested loops...
+  for (df_iterator<Loop*> I = df_begin(L), E = df_end(L); I != E; ++I)
+    if (I->hasExitBlock(Header))
+      I->changeExitBlock(Header, BEBlock);   // Update exit block information
+
+  // Update dominator information (set, immdom, domtree, and domfrontier)
+  UpdateDomInfoForRevectoredPreds(BEBlock, BackedgeBlocks);
+}
+
+/// UpdateDomInfoForRevectoredPreds - This method is used to update the four
+/// different kinds of dominator information (dominator sets, immediate
+/// dominators, dominator trees, and dominance frontiers) after a new block has
+/// been added to the CFG.
+///
+/// This only supports the case when an existing block (known as "Exit"), had
+/// some of its predecessors factored into a new basic block.  This
+/// transformation inserts a new basic block ("NewBB"), with a single
+/// unconditional branch to Exit, and moves some predecessors of "Exit" to now
+/// branch to NewBB.  These predecessors are listed in PredBlocks, even though
+/// they are the same as pred_begin(NewBB)/pred_end(NewBB).
+///
+void LoopSimplify::UpdateDomInfoForRevectoredPreds(BasicBlock *NewBB,
+                                         std::vector<BasicBlock*> &PredBlocks) {
+  assert(succ_begin(NewBB) != succ_end(NewBB) &&
+         ++succ_begin(NewBB) == succ_end(NewBB) &&
+         "NewBB should have a single successor!");
+  DominatorSet &DS = getAnalysis<DominatorSet>();
+
   // Update dominator information...  The blocks that dominate NewBB are the
   // intersection of the dominators of predecessors, plus the block itself.
   // The newly created basic block does not dominate anything except itself.
   //
-  DominatorSet::DomSetType NewBBDomSet = DS.getDominators(LoopBlocks[0]);
-  for (unsigned i = 1, e = LoopBlocks.size(); i != e; ++i)
-    set_intersect(NewBBDomSet, DS.getDominators(LoopBlocks[i]));
+  DominatorSet::DomSetType NewBBDomSet = DS.getDominators(PredBlocks[0]);
+  for (unsigned i = 1, e = PredBlocks.size(); i != e; ++i)
+    set_intersect(NewBBDomSet, DS.getDominators(PredBlocks[i]));
   NewBBDomSet.insert(NewBB);  // All blocks dominate themselves...
   DS.addBasicBlock(NewBB, NewBBDomSet);
 
@@ -351,7 +489,7 @@ void LoopSimplify::RewriteLoopExitBlock(Loop *L, BasicBlock *Exit) {
     // trace up the immediate dominators of a predecessor until we find a basic
     // block that dominates the exit block.
     //
-    BasicBlock *Dom = LoopBlocks[0];  // Some random predecessor...
+    BasicBlock *Dom = PredBlocks[0];  // Some random predecessor...
     while (!NewBBDomSet.count(Dom)) {  // Loop until we find a dominator...
       assert(Dom != 0 && "No shared dominator found???");
       Dom = ID->get(Dom);
@@ -371,7 +509,7 @@ void LoopSimplify::RewriteLoopExitBlock(Loop *L, BasicBlock *Exit) {
     if (NewBBIDom) {
       NewBBIDomNode = DT->getNode(NewBBIDom);
     } else {
-      NewBBIDomNode = DT->getNode(LoopBlocks[0]); // Random pred
+      NewBBIDomNode = DT->getNode(PredBlocks[0]); // Random pred
       while (!NewBBDomSet.count(NewBBIDomNode->getBlock())) {
         NewBBIDomNode = NewBBIDomNode->getIDom();
         assert(NewBBIDomNode && "No shared dominator found??");
@@ -385,27 +523,31 @@ void LoopSimplify::RewriteLoopExitBlock(Loop *L, BasicBlock *Exit) {
   // Update dominance frontier information...
   if (DominanceFrontier *DF = getAnalysisToUpdate<DominanceFrontier>()) {
     // DF(NewBB) is {Exit} because NewBB does not strictly dominate Exit, but it
-    // does dominate itself (and there is an edge (NewBB -> Exit)).
+    // does dominate itself (and there is an edge (NewBB -> Exit)).  Exit is the
+    // single successor of NewBB.
     DominanceFrontier::DomSetType NewDFSet;
+    BasicBlock *Exit = *succ_begin(NewBB);
     NewDFSet.insert(Exit);
     DF->addBasicBlock(NewBB, NewDFSet);
 
     // Now we must loop over all of the dominance frontiers in the function,
-    // replacing occurrences of Exit with NewBB in some cases.  If a block
-    // dominates a (now) predecessor of NewBB, but did not strictly dominate
-    // Exit, it will have Exit in it's DF set, but should now have NewBB in its
-    // set.
-    for (unsigned i = 0, e = LoopBlocks.size(); i != e; ++i) {
-      // Get all of the dominators of the predecessor...
-      const DominatorSet::DomSetType &PredDoms =DS.getDominators(LoopBlocks[i]);
-      for (DominatorSet::DomSetType::const_iterator PDI = PredDoms.begin(),
-             PDE = PredDoms.end(); PDI != PDE; ++PDI) {
-        BasicBlock *PredDom = *PDI;
-        // Make sure to only rewrite blocks that are part of the loop...
-        if (L->contains(PredDom)) {
-          // If the exit node is in DF(PredDom), then PredDom didn't dominate
-          // Exit but did dominate a predecessor inside of the loop.  Now we
-          // change this entry to include NewBB in the DF instead of Exit.
+    // replacing occurrences of Exit with NewBB in some cases.  All blocks that
+    // dominate a block in PredBlocks and contained Exit in their dominance
+    // frontier must be updated to contain NewBB instead.  This only occurs if
+    // there is more than one block in PredBlocks.
+    //
+    if (PredBlocks.size() > 1) {
+      for (unsigned i = 0, e = PredBlocks.size(); i != e; ++i) {
+        BasicBlock *Pred = PredBlocks[i];
+        // Get all of the dominators of the predecessor...
+        const DominatorSet::DomSetType &PredDoms = DS.getDominators(Pred);
+        for (DominatorSet::DomSetType::const_iterator PDI = PredDoms.begin(),
+               PDE = PredDoms.end(); PDI != PDE; ++PDI) {
+          BasicBlock *PredDom = *PDI;
+
+          // If the Exit node is in DF(PredDom), then PredDom didn't dominate
+          // Exit but did dominate a predecessor of it.  Now we change this
+          // entry to include NewBB in the DF instead of Exit.
           DominanceFrontier::iterator DFI = DF->find(PredDom);
           assert(DFI != DF->end() && "No dominance frontier for node?");
           if (DFI->second.count(Exit)) {
