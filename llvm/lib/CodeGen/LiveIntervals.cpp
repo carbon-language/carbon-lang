@@ -139,7 +139,7 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
 
 void LiveIntervals::printRegName(unsigned reg) const
 {
-    if (reg < MRegisterInfo::FirstVirtualRegister)
+    if (MRegisterInfo::isPhysicalRegister(reg))
         std::cerr << mri_->getName(reg);
     else
         std::cerr << '%' << reg;
@@ -257,7 +257,7 @@ void LiveIntervals::handleRegisterDef(MachineBasicBlock* mbb,
                                       MachineBasicBlock::iterator mi,
                                       unsigned reg)
 {
-    if (reg < MRegisterInfo::FirstVirtualRegister) {
+    if (MRegisterInfo::isPhysicalRegister(reg)) {
         if (lv_->getAllocatablePhysicalRegisters()[reg]) {
             handlePhysicalRegisterDef(mbb, mi, reg);
             for (const unsigned* as = mri_->getAliasSet(reg); *as; ++as)
@@ -349,9 +349,9 @@ void LiveIntervals::joinIntervals()
 
             unsigned srcReg, dstReg;
             if (tii.isMoveInstr(*mi, srcReg, dstReg) &&
-                (srcReg >= MRegisterInfo::FirstVirtualRegister ||
+                (MRegisterInfo::isVirtualRegister(srcReg) ||
                  lv_->getAllocatablePhysicalRegisters()[srcReg]) &&
-                (dstReg >= MRegisterInfo::FirstVirtualRegister ||
+                (MRegisterInfo::isVirtualRegister(dstReg) ||
                  lv_->getAllocatablePhysicalRegisters()[dstReg])) {
 
                 // get representative registers
@@ -371,9 +371,9 @@ void LiveIntervals::joinIntervals()
                 Intervals::iterator dstInt = r2iDst->second;
 
                 // src is a physical register
-                if (srcInt->reg < MRegisterInfo::FirstVirtualRegister) {
+                if (MRegisterInfo::isPhysicalRegister(srcInt->reg)) {
                     if (dstInt->reg == srcInt->reg ||
-                        (dstInt->reg >= MRegisterInfo::FirstVirtualRegister &&
+                        (MRegisterInfo::isVirtualRegister(dstInt->reg) &&
                          !srcInt->overlaps(*dstInt) &&
                          !overlapsAliases(*srcInt, *dstInt))) {
                         srcInt->join(*dstInt);
@@ -383,9 +383,9 @@ void LiveIntervals::joinIntervals()
                     }
                 }
                 // dst is a physical register
-                else if (dstInt->reg < MRegisterInfo::FirstVirtualRegister) {
+                else if (MRegisterInfo::isPhysicalRegister(dstInt->reg)) {
                     if (srcInt->reg == dstInt->reg ||
-                        (srcInt->reg >= MRegisterInfo::FirstVirtualRegister &&
+                        (MRegisterInfo::isVirtualRegister(srcInt->reg) &&
                          !dstInt->overlaps(*srcInt) &&
                          !overlapsAliases(*dstInt, *srcInt))) {
                         dstInt->join(*srcInt);
@@ -424,7 +424,7 @@ void LiveIntervals::joinIntervals()
 bool LiveIntervals::overlapsAliases(const Interval& lhs,
                                     const Interval& rhs) const
 {
-    assert(lhs.reg < MRegisterInfo::FirstVirtualRegister &&
+    assert(MRegisterInfo::isPhysicalRegister(lhs.reg) &&
            "first interval must describe a physical register");
 
     for (const unsigned* as = mri_->getAliasSet(lhs.reg); *as; ++as) {
@@ -439,7 +439,7 @@ bool LiveIntervals::overlapsAliases(const Interval& lhs,
 
 LiveIntervals::Interval::Interval(unsigned r)
     : reg(r),
-      weight((r < MRegisterInfo::FirstVirtualRegister ?
+      weight((MRegisterInfo::isPhysicalRegister(r) ?
               std::numeric_limits<float>::max() : 0.0F))
 {
 
@@ -546,7 +546,7 @@ void LiveIntervals::Interval::join(const LiveIntervals::Interval& other)
         cur = mergeRangesForward(cur);
         cur = mergeRangesBackward(cur);
     }
-    if (reg >= MRegisterInfo::FirstVirtualRegister)
+    if (MRegisterInfo::isVirtualRegister(reg))
         weight += other.weight;
 
     DEBUG(std::cerr << "\t\t\t\tafter merging: " << *this << '\n');

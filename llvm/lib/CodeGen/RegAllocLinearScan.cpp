@@ -177,7 +177,7 @@ namespace {
             for (; i != e; ++i) {
                 std::cerr << "\t\t" << **i << " -> ";
                 unsigned reg = (*i)->reg;
-                if (reg >= MRegisterInfo::FirstVirtualRegister) {
+                if (MRegisterInfo::isVirtualRegister(reg)) {
                     Virt2PhysMap::const_iterator it = v2pMap_.find(reg);
                     reg = (it == v2pMap_.end() ? 0 : it->second);
                 }
@@ -267,7 +267,7 @@ bool RA::runOnMachineFunction(MachineFunction &fn) {
         processInactiveIntervals(cur);
 
         // if this register is fixed we are done
-        if (cur->reg < MRegisterInfo::FirstVirtualRegister) {
+        if (MRegisterInfo::isPhysicalRegister(cur->reg)) {
             markPhysRegNotFree(cur->reg);
             active_.push_back(cur);
         }
@@ -282,7 +282,7 @@ bool RA::runOnMachineFunction(MachineFunction &fn) {
             for (IntervalPtrs::const_iterator i = inactive_.begin(),
                      e = inactive_.end(); i != e; ++i) {
                 unsigned reg = (*i)->reg;
-                if (reg >= MRegisterInfo::FirstVirtualRegister)
+                if (MRegisterInfo::isVirtualRegister(reg))
                     reg = v2pMap_[reg];
 
                 if (cur->overlaps(**i)) {
@@ -294,7 +294,7 @@ bool RA::runOnMachineFunction(MachineFunction &fn) {
             // mark the register as not free
             for (IntervalPtrs::const_iterator i = fixed_.begin(),
                      e = fixed_.end(); i != e; ++i) {
-                assert((*i)->reg < MRegisterInfo::FirstVirtualRegister &&
+                assert(MRegisterInfo::isPhysicalRegister((*i)->reg) &&
                        "virtual register interval in fixed set?");
                 if (cur->overlaps(**i))
                     markPhysRegNotFree((*i)->reg);
@@ -320,7 +320,7 @@ bool RA::runOnMachineFunction(MachineFunction &fn) {
     for (IntervalPtrs::iterator i = active_.begin(); i != active_.end(); ++i) {
         unsigned reg = (*i)->reg;
         DEBUG(std::cerr << "\t\tinterval " << **i << " expired\n");
-        if (reg >= MRegisterInfo::FirstVirtualRegister) {
+        if (MRegisterInfo::isVirtualRegister(reg)) {
             reg = v2pMap_[reg];
         }
         markPhysRegFree(reg);
@@ -339,17 +339,17 @@ bool RA::runOnMachineFunction(MachineFunction &fn) {
         unsigned reg = i->first;
         unsigned rep = li_->rep(reg);
 
-        assert((rep < MRegisterInfo::FirstVirtualRegister ||
+        assert((MRegisterInfo::isPhysicalRegister(rep) ||
                 v2pMap_.find(rep) != v2pMap_.end() ||
                 v2ssMap_.find(rep) != v2ssMap_.end()) &&
                "representative register is not allocated!");
 
-        assert(reg >= MRegisterInfo::FirstVirtualRegister &&
+        assert(MRegisterInfo::isVirtualRegister(reg) &&
                v2pMap_.find(reg) == v2pMap_.end() &&
                v2ssMap_.find(reg) == v2ssMap_.end() &&
                "coalesced register is already allocated!");
 
-        if (rep < MRegisterInfo::FirstVirtualRegister) {
+        if (MRegisterInfo::isPhysicalRegister(rep)) {
             v2pMap_.insert(std::make_pair(reg, rep));
         }
         else {
@@ -400,11 +400,11 @@ bool RA::runOnMachineFunction(MachineFunction &fn) {
 
             unsigned srcReg, dstReg;
             if (tii.isMoveInstr(**currentInstr_, srcReg, dstReg) &&
-                ((srcReg < MRegisterInfo::FirstVirtualRegister &&
-                  dstReg < MRegisterInfo::FirstVirtualRegister &&
+                ((MRegisterInfo::isPhysicalRegister(srcReg) &&
+                  MRegisterInfo::isPhysicalRegister(dstReg) &&
                   srcReg == dstReg) ||
-                 (srcReg >= MRegisterInfo::FirstVirtualRegister &&
-                  dstReg >= MRegisterInfo::FirstVirtualRegister &&
+                 (MRegisterInfo::isVirtualRegister(srcReg) &&
+                  MRegisterInfo::isVirtualRegister(dstReg) &&
                   v2ssMap_[srcReg] == v2ssMap_[dstReg]))) {
                 delete *currentInstr_;
                 currentInstr_ = currentMbb_->erase(currentInstr_);
@@ -412,7 +412,7 @@ bool RA::runOnMachineFunction(MachineFunction &fn) {
                 DEBUG(std::cerr << "\t\tdeleting instruction\n");
                 continue;
             }
-                        
+
             DEBUG(std::cerr << "\t\tloading temporarily used operands to "
                   "registers:\n");
             for (unsigned i = 0, e = (*currentInstr_)->getNumOperands();
@@ -489,7 +489,7 @@ void RA::initIntervalSets(const LiveIntervals::Intervals& li)
 
     for (LiveIntervals::Intervals::const_iterator i = li.begin(), e = li.end();
          i != e; ++i) {
-        if (i->reg < MRegisterInfo::FirstVirtualRegister)
+        if (MRegisterInfo::isPhysicalRegister(i->reg))
             fixed_.push_back(&*i);
         else
             unhandled_.push_back(&*i);
@@ -504,7 +504,7 @@ void RA::processActiveIntervals(IntervalPtrs::value_type cur)
         // remove expired intervals
         if ((*i)->expiredAt(cur->start())) {
             DEBUG(std::cerr << "\t\tinterval " << **i << " expired\n");
-            if (reg >= MRegisterInfo::FirstVirtualRegister) {
+            if (MRegisterInfo::isVirtualRegister(reg)) {
                 reg = v2pMap_[reg];
             }
             markPhysRegFree(reg);
@@ -514,7 +514,7 @@ void RA::processActiveIntervals(IntervalPtrs::value_type cur)
         // move inactive intervals to inactive list
         else if (!(*i)->liveAt(cur->start())) {
             DEBUG(std::cerr << "\t\t\tinterval " << **i << " inactive\n");
-            if (reg >= MRegisterInfo::FirstVirtualRegister) {
+            if (MRegisterInfo::isVirtualRegister(reg)) {
                 reg = v2pMap_[reg];
             }
             markPhysRegFree(reg);
@@ -544,7 +544,7 @@ void RA::processInactiveIntervals(IntervalPtrs::value_type cur)
         // move re-activated intervals in active list
         else if ((*i)->liveAt(cur->start())) {
             DEBUG(std::cerr << "\t\t\tinterval " << **i << " active\n");
-            if (reg >= MRegisterInfo::FirstVirtualRegister) {
+            if (MRegisterInfo::isVirtualRegister(reg)) {
                 reg = v2pMap_[reg];
             }
             markPhysRegNotFree(reg);
@@ -585,7 +585,7 @@ void RA::assignStackSlotAtInterval(IntervalPtrs::value_type cur)
     for (IntervalPtrs::const_iterator i = active_.begin(), e = active_.end();
          i != e; ++i) {
         unsigned reg = (*i)->reg;
-        if (reg >= MRegisterInfo::FirstVirtualRegister) {
+        if (MRegisterInfo::isVirtualRegister(reg)) {
             reg = v2pMap_[reg];
         }
         updateWeight(regWeight, reg, (*i)->weight);
@@ -600,7 +600,7 @@ void RA::assignStackSlotAtInterval(IntervalPtrs::value_type cur)
             continue;
 
         unsigned reg = (*i)->reg;
-        if (reg >= MRegisterInfo::FirstVirtualRegister) {
+        if (MRegisterInfo::isVirtualRegister(reg)) {
             reg = v2pMap_[reg];
         }
         updateWeight(regWeight, reg, (*i)->weight);
@@ -614,7 +614,7 @@ void RA::assignStackSlotAtInterval(IntervalPtrs::value_type cur)
         if (!cur->overlaps(**i))
             continue;
 
-        assert((*i)->reg < MRegisterInfo::FirstVirtualRegister &&
+        assert(MRegisterInfo::isPhysicalRegister((*i)->reg) &&
                "virtual register interval in fixed set?");
         updateWeight(regWeight, (*i)->reg, (*i)->weight);
         for (const unsigned* as = mri_->getAliasSet((*i)->reg); *as; ++as)
@@ -650,7 +650,7 @@ void RA::assignStackSlotAtInterval(IntervalPtrs::value_type cur)
         for (IntervalPtrs::iterator i = active_.begin();
              i != active_.end(); ) {
             unsigned reg = (*i)->reg;
-            if (reg >= MRegisterInfo::FirstVirtualRegister &&
+            if (MRegisterInfo::isVirtualRegister(reg) &&
                 toSpill.find(v2pMap_[reg]) != toSpill.end() &&
                 cur->overlaps(**i)) {
                 spilled.push_back(v2pMap_[reg]);
@@ -665,7 +665,7 @@ void RA::assignStackSlotAtInterval(IntervalPtrs::value_type cur)
         for (IntervalPtrs::iterator i = inactive_.begin();
              i != inactive_.end(); ) {
             unsigned reg = (*i)->reg;
-            if (reg >= MRegisterInfo::FirstVirtualRegister &&
+            if (MRegisterInfo::isVirtualRegister(reg) &&
                 toSpill.find(v2pMap_[reg]) != toSpill.end() &&
                 cur->overlaps(**i)) {
                 DEBUG(std::cerr << "\t\t\t\tspilling : " << **i << '\n');
