@@ -767,7 +767,10 @@ void Interpreter::visitCallSite(CallSite CS) {
 
   // Check to see if this is an intrinsic function call...
   if (Function *F = CS.getCalledFunction())
+   if (F->isExternal ())
     switch (F->getIntrinsicID()) {
+    case Intrinsic::not_intrinsic:
+      break;
     case Intrinsic::va_start:  // va_start: implemented by getFirstVarArg()
       SetValue(CS.getInstruction(), getFirstVarArg(), SF);
       return;
@@ -777,7 +780,7 @@ void Interpreter::visitCallSite(CallSite CS) {
       SetValue(CS.getInstruction(), getOperandValue(*CS.arg_begin(), SF), SF);
       return;
     default:
-      // If it is an unknown intrinsic function, using the intrinsic lowering
+      // If it is an unknown intrinsic function, use the intrinsic lowering
       // class to transform it into hopefully tasty LLVM code.
       //
       Instruction *Prev = CS.getInstruction()->getPrev();
