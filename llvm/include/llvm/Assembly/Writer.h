@@ -88,4 +88,15 @@ inline ostream &operator<<(ostream &o, const Value *I) {
   return o;
 }
 
+
+// This library also provides support for printing out Interval's.
+namespace cfg {
+  class Interval;
+  void WriteToOutput(const Interval *I, ostream &o);
+  inline ostream &operator <<(ostream &o, const Interval *I) {
+    WriteToOutput(I, o);
+    return o;
+  }
+}
+
 #endif
