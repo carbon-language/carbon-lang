@@ -30,20 +30,19 @@ then
 	fi
 fi
 
-if test -d ${srcdir}/projects/sample
-then
-  AC_CONFIG_SUBDIRS(projects/sample)
-fi
-
-if test -d ${srcdir}/projects/reopt
-then
-  AC_CONFIG_SUBDIRS(projects/reopt)
-fi
-
-if test -d ${srcdir}/projects/poolalloc
-then
-  AC_CONFIG_SUBDIRS(projects/poolalloc)
-fi
+dnl
+dnl Configure all of the projects present in our source tree.
+dnl
+for i in `ls ${srcdir}/projects`
+do
+  if test ${i} != "CVS"
+  then
+    if test -d ${srcdir}/projects/${i}
+    then
+      AC_CONFIG_SUBDIRS(projects/${i})
+    fi
+  fi
+done
 
 dnl Configure a header file
 AC_CONFIG_HEADERS(include/Config/config.h)
@@ -94,18 +93,6 @@ AC_CONFIG_MAKEFILE(test/Programs/SingleSource/Makefile.singlesrc)
 AC_CONFIG_MAKEFILE(tools/Makefile)
 AC_CONFIG_MAKEFILE(utils/Makefile)
 AC_CONFIG_MAKEFILE(projects/Makefile)
-AC_CONFIG_MAKEFILE(projects/ModuleMaker/Makefile)
-AC_CONFIG_MAKEFILE(projects/ModuleMaker/Makefile.common)
-AC_CONFIG_MAKEFILE(projects/ModuleMaker/tools/Makefile)
-AC_CONFIG_MAKEFILE(projects/ModuleMaker/tools/ModuleMaker/Makefile)
-AC_CONFIG_MAKEFILE(projects/Stacker/Makefile)
-AC_CONFIG_MAKEFILE(projects/Stacker/lib/Makefile)
-AC_CONFIG_MAKEFILE(projects/Stacker/lib/compiler/Makefile)
-AC_CONFIG_MAKEFILE(projects/Stacker/lib/runtime/Makefile)
-AC_CONFIG_MAKEFILE(projects/Stacker/tools/Makefile)
-AC_CONFIG_MAKEFILE(projects/Stacker/tools/stkrc/Makefile)
-AC_CONFIG_MAKEFILE(projects/Stacker/test/Makefile)
-AC_CONFIG_MAKEFILE(projects/Stacker/samples/Makefile)
 
 dnl **************************************************************************
 dnl * Determine which system we are building on
