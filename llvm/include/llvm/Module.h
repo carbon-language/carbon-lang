@@ -142,7 +142,7 @@ public:
   /// getGlobalVariable - Look up the specified global variable in the module
   /// symbol table.  If it does not exist, return null.  Note that this only
   /// returns a global variable if it does not have internal linkage.  The type
-  /// argument should be the underlying type of the global, ie, it should not
+  /// argument should be the underlying type of the global, i.e., it should not
   /// have the top-level PointerType, which represents the address of the
   /// global.
   ///
