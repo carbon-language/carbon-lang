@@ -1,41 +1,44 @@
 //===- StackSlots.cpp  - Specialize LLVM code for target machine ---------===//
 //
-// This pass adds 2 empty slots at the top of function stack.
-// These two slots are later used during code reoptimization
-// for spilling the resgiter values when rewriting branches. 
+// This pass adds 2 empty slots at the top of function stack.  These two slots
+// are later used during code reoptimization for spilling the register values
+// when rewriting branches.
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/CodeGen/StackSlots.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/MachineInstrInfo.h"
-#include "llvm/Constants.h"
+#include "llvm/Constant.h"
 #include "llvm/Function.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Pass.h"
 #include "llvm/CodeGen/MachineCodeForMethod.h"
 
-using std::map;
-using std::cerr;
-
-
-class StackSlots : public FunctionPass{
-private:
-  const TargetMachine &target;
+class StackSlots : public FunctionPass {
+  const TargetMachine &Target;
 public:
-  StackSlots (const TargetMachine &T): target(T) {}
+  StackSlots (const TargetMachine &T) : Target(T) {}
+
+  const char *getPassName() const {
+    return "Stack Slot Insertion for profiling code";
+  }
+
+  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    AU.setPreservesCFG();
+  }
 
   bool runOnFunction(Function &F) {
-    Value *v = ConstantSInt::get(Type::IntTy,0);
+    const Type *PtrInt = PointerType::get(Type::IntTy);
+    unsigned Size = Target.DataLayout.getTypeSize(PtrInt);
+
     MachineCodeForMethod &mcInfo = MachineCodeForMethod::get(&F);
-    mcInfo.allocateLocalVar
-      (target, v, 2*target.DataLayout.getTypeSize(PointerType::get(Type::IntTy)));
-    
+    Value *V = Constant::getNullValue(Type::IntTy);
+    mcInfo.allocateLocalVar(Target, V, 2*Size);
     return true;
   }
 };
 
-
-Pass* createStackSlotsPass(TargetMachine &T){
-  return new StackSlots(T);
+Pass *createStackSlotsPass(const TargetMachine &Target) {
+  return new StackSlots(Target);
 }
-
