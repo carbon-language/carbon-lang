@@ -28,7 +28,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Analysis/Verifier.h"
-#include "llvm/ConstantPool.h"
 #include "llvm/Method.h"
 #include "llvm/Module.h"
 #include "llvm/BasicBlock.h"
