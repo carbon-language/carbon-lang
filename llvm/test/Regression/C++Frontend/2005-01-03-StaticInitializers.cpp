@@ -1,4 +1,4 @@
-// RUN: %llvmgxx %s -S -o - | grep '%XX = global int 4'
+// RUN: %llvmgxx %s -S -o - | not grep 'llvm.global_ctor'
 
 struct S {
   int  A[2];
