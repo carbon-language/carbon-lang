@@ -59,6 +59,18 @@ bool PostDominatorSet::runOnFunction(Function &F) {
 	  if (PredSet.size())
 	    set_intersect(WorkingSet, PredSet);
 	}
+      } else if (BB != Root) {
+        // If this isn't the root basic block and it has no successors, it must
+        // be an non-returning block.  Fib a bit by saying that the root node
+        // postdominates this unreachable node.  This isn't exactly true,
+        // because there is no path from this node to the root node, but it is
+        // sorta true because any paths to the exit node would have to go
+        // through this node.
+        //
+        // This allows for postdominator properties to be built for code that
+        // doesn't return in a reasonable manner.
+        //
+        WorkingSet = Doms[Root];
       }
 	
       WorkingSet.insert(BB);           // A block always dominates itself
