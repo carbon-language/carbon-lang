@@ -123,8 +123,7 @@ public:
 class FunctionType : public DerivedType {
   friend class TypeMap<FunctionValType, FunctionType>;
   PATypeHandle ResultType;
-  typedef std::vector<PATypeHandle> ParamTypes;
-  ParamTypes ParamTys;
+  std::vector<PATypeHandle> ParamTys;
   bool isVarArgs;
 
   FunctionType(const FunctionType &);                   // Do not implement
@@ -153,7 +152,7 @@ public:
   inline bool isVarArg() const { return isVarArgs; }
   inline const Type *getReturnType() const { return ResultType; }
 
-  typedef ParamTypes::const_iterator param_iterator;
+  typedef std::vector<PATypeHandle>::const_iterator param_iterator;
   param_iterator param_begin() const { return ParamTys.begin(); }
   param_iterator param_end() const { return ParamTys.end(); }
 
@@ -212,12 +211,9 @@ public:
 };
 
 
-struct StructType : public CompositeType {
+class StructType : public CompositeType {
   friend class TypeMap<StructValType, StructType>;
-  typedef std::vector<PATypeHandle> ElementTypes;
-
-private:
-  ElementTypes ETypes;                              // Element types of struct
+  std::vector<PATypeHandle> ETypes;                 // Element types of struct
 
   StructType(const StructType &);                   // Do not implement
   const StructType &operator=(const StructType &);  // Do not implement
@@ -240,7 +236,17 @@ public:
   /// StructType.
   static StructType *get(const std::vector<const Type*> &Params);
 
-  inline const ElementTypes &getElementTypes() const { return ETypes; }
+  // Iterator access to the elements
+  typedef std::vector<PATypeHandle>::const_iterator element_iterator;
+  element_iterator element_begin() const { return ETypes.begin(); }
+  element_iterator element_end() const { return ETypes.end(); }
+
+  // Random access to the elements
+  unsigned getNumElements() const { return ETypes.size(); }
+  const Type *getElementType(unsigned N) const {
+    assert(N < ETypes.size() && "Element number out of range!");
+    return ETypes[N];
+  }
 
   virtual const Type *getContainedType(unsigned i) const { 
     return ETypes[i].get();
