@@ -25,10 +25,15 @@
 #include "llvm/Transforms/Utils/UnifyFunctionExitNodes.h"
 #include "llvm/Transforms/Instrumentation/TraceValues.h"
 #include "llvm/Transforms/Instrumentation/ProfilePaths.h"
+#include "llvm/Target/TargetData.h"
 #include "Support/CommandLine.h"
 #include "Support/Signals.h"
 #include <fstream>
 #include <memory>
+
+// FIXME: This should be parameterizable eventually for different target
+// types...
+static TargetData TD("opt target");
 
 // Opts enum - All of the transformations we can do...
 enum Opts {
@@ -36,7 +41,7 @@ enum Opts {
   dce, die, constprop, gcse, inlining, constmerge, strip, mstrip, mergereturn,
 
   // Miscellaneous Transformations
-  raiseallocs, funcresolve, cleangcc, lowerrefs,
+  raiseallocs, lowerallocs, funcresolve, cleangcc, lowerrefs,
 
   // Printing and verifying...
   print, printm, verify,
@@ -57,6 +62,10 @@ static Pass *createPrintFunctionPass() {
 
 static Pass *createPrintModulePass() {
   return new PrintModulePass(&cerr);
+}
+
+static Pass *createLowerAllocationsPassNT() {
+  return createLowerAllocationsPass(TD);
 }
 
 // OptTable - Correlate enum Opts to Pass constructors...
@@ -93,9 +102,10 @@ struct {
   { printm     , createPrintModulePass   },
   { verify     , createVerifierPass      },
 
-  { raiseallocs, createRaiseAllocationsPass  },
-  { cleangcc   , createCleanupGCCOutputPass  },
-  { funcresolve, createFunctionResolvingPass },
+  { raiseallocs, createRaiseAllocationsPass   },
+  { lowerallocs, createLowerAllocationsPassNT },
+  { cleangcc   , createCleanupGCCOutputPass   },
+  { funcresolve, createFunctionResolvingPass  },
 
   { internalize, createInternalizePass  },
   { globaldce  , createGlobalDCEPass    },
@@ -139,6 +149,7 @@ cl::EnumList<enum Opts> OptimizationList(cl::NoFlags,
   clEnumVal(poolalloc  , "Pool allocate disjoint datastructures"),
 
   clEnumVal(raiseallocs, "Raise allocations from calls to instructions"),
+  clEnumVal(lowerallocs, "Lower allocations from instructions to calls (TD)"),
   clEnumVal(cleangcc   , "Cleanup GCC Output"),
   clEnumVal(funcresolve, "Resolve calls to foo(...) to foo(<concrete types>)"),
   clEnumVal(raise      , "Raise to Higher Level"),
