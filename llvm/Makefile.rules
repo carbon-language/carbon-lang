@@ -468,7 +468,7 @@ $(DestArchiveLib): $(LIBNAME_A)
 	$(VERB) $(MKDIR) $(libdir)
 	$(VERB) $(LIBTOOL) --mode=install $(INSTALL) $(LIBNAME_A) $(DestArchiveLib)
 
-uninstall-local:: install-archive-library
+uninstall-local:: uninstall-archive-library
 
 uninstall-archive-library: 
 	@$(ECHO) Uninstalling archive library $(DestArchiveLib)
@@ -479,46 +479,39 @@ endif
 # endif LIBRARYNAME
 endif 
 
-#------------------------------------------------------------------------
-# Handle the TOOLNAME option - used when building tool executables...
-#------------------------------------------------------------------------
-#
-# The TOOLNAME option should be used with a USEDLIBS variable that tells the
-# libraries (and the order of the libs) that should be linked to the
-# tool. USEDLIBS should contain a list of library names (some with .a extension)
-# that are automatically linked in as .o files unless the .a suffix is added.
-#
+###############################################################################
+# Tool Build Rules: Build executable tool based on TOOLNAME option
+###############################################################################
+
 ifdef TOOLNAME
 
+#---------------------------------------------------------
 # TOOLLINKOPTSB to pass options to the linker like library search path etc
 # Note that this is different from TOOLLINKOPTS, these options
 # are passed to the linker *before* the USEDLIBS options are passed.
 # e.g. usage TOOLLINKOPTSB =  -L/home/xxx/lib
+#---------------------------------------------------------
 ifdef TOOLLINKOPTSB
 Link    += $(TOOLLINKOPTSB) 
 endif
 
-# TOOLEXENAME* - These compute the output filenames to generate...
+# TOOLEXENAME - This is the output filenames to generate
 TOOLEXENAME := $(TOOLDIR)/$(TOOLNAME)
 
-# USED_LIBS_OPTIONS - Compute the options line that add -llib1 -llib2, etc.
+# LIBS_OPTIONS - Compute the options lines that add -llib1 -llib2, etc.
 PROJ_LIBS_OPTIONS := $(patsubst %.a.o, -l%, $(addsuffix .o, $(USEDLIBS)))
 PROJ_LIBS_OPTIONS := $(patsubst %.o, $(LIBDIR)/%.o,  $(PROJ_LIBS_OPTIONS))
 LLVM_LIBS_OPTIONS := $(patsubst %.a.o, -l%, $(addsuffix .o, $(LLVMLIBS)))
 LLVM_LIBS_OPTIONS := $(patsubst %.o, $(LLVMLIBDIR)/%.o, $(LLVM_LIBS_OPTIONS))
 
+# USED_LIBS/LIBS_PATHS - Compute dependent library file paths
 PROJ_USED_LIBS    := $(patsubst %.a.o, lib%.a, $(addsuffix .o, $(USEDLIBS)))
 LLVM_USED_LIBS    := $(patsubst %.a.o, lib%.a, $(addsuffix .o, $(LLVMLIBS)))
 PROJ_LIBS_PATHS   := $(addprefix $(LIBDIR)/,$(PROJ_USED_LIBS))
 LLVM_LIBS_PATHS   := $(addprefix $(LLVMLIBDIR)/,$(LLVM_USED_LIBS))
 
+# Concatenate all the optoins
 LINK_OPTS := $(TOOLLINKOPTS) $(PROJ_LIBS_OPTIONS) $(LLVM_LIBS_OPTIONS)
-
-#
-# Libtool link options:
-#	Ensure that all binaries have their symbols exported so that they can
-#	by dlsym'ed.
-#
 
 # Handle compression libraries automatically
 ifeq ($(HAVE_BZIP2),1)
@@ -530,9 +523,9 @@ endif
 
 # Tell make that we need to rebuild subdirectories before we can link the tool.
 # This affects things like LLI which has library subdirectories.
-$(LIBS): $(addsuffix /.makeall, $(PARALLEL_DIRS))
+$(TOOLEXENAME): $(addsuffix /.makeall, $(PARALLEL_DIRS))
 
-all-local::   $(TOOLEXENAME)
+all-local:: $(TOOLEXENAME)
 
 clean-local::
 ifneq ($(strip $(TOOLEXENAME)),)
