@@ -213,7 +213,10 @@ const MethodType *MethodType::getMethodType(const Type *ReturnType,
       Name += ", ";
     Name += (*I)->getName();
   }
-  if (IsVarArg) Name += ", ...";
+  if (IsVarArg) {
+    if (Params.size() > 1) Name += ", ";
+    Name += "...";
+  }
   Name += ")";
 
 #if TEST_MERGE_TYPES
