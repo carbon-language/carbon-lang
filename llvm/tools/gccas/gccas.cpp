@@ -15,6 +15,7 @@
 #include "llvm/Transforms/ConstantMerge.h"
 #include "llvm/Transforms/ChangeAllocations.h"
 #include "llvm/Transforms/Scalar/DCE.h"
+#include "llvm/Transforms/Scalar/GCSE.h"
 #include "llvm/Transforms/Scalar/IndVarSimplify.h"
 #include "llvm/Transforms/Scalar/InstructionCombining.h"
 #include "llvm/Transforms/Scalar/PromoteMemoryToRegister.h"
@@ -83,6 +84,7 @@ int main(int argc, char **argv) {
     Passes.add(createConstantMergePass());          // Merge dup global consts
     Passes.add(createInstructionCombiningPass());   // Combine silly seq's
     Passes.add(createDeadCodeEliminationPass());    // Remove Dead code/vars
+    Passes.add(createGCSEPass());                   // Remove common subexprs
   }
   Passes.add(new WriteBytecodePass(&Out));        // Write bytecode to file...
 
