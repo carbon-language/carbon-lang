@@ -6,12 +6,13 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "jit"
-#include "llvm/ExecutionEngine/ExecutionEngine.h"
-#include "JIT/VM.h"
 #include "Interpreter/Interpreter.h"
-#include "llvm/DerivedTypes.h"
+#include "JIT/VM.h"
 #include "llvm/Constants.h"
+#include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
+#include "llvm/ModuleProvider.h"
+#include "llvm/ExecutionEngine/ExecutionEngine.h"
 #include "llvm/ExecutionEngine/GenericValue.h"
 #include "llvm/Target/TargetData.h"
 #include "Support/Debug.h"
@@ -21,11 +22,22 @@
 
 Statistic<> NumInitBytes("lli", "Number of bytes of global vars initialized");
 
+ExecutionEngine::ExecutionEngine(ModuleProvider *P) : 
+  CurMod(*P->getModule()), MP(P) {
+  assert(P && "ModuleProvider is null?");
+}
+
+ExecutionEngine::ExecutionEngine(Module *M) : CurMod(*M), MP(0) {
+   assert(M && "Module is null?");
+}
+
 ExecutionEngine::~ExecutionEngine() {
   delete MP;
 }
 
-/// FIXME: document
+/// If possible, create a JIT, unless the caller specifically requests an
+/// Interpreter or there's an error. If even an Interpreter cannot be created,
+/// NULL is returned. 
 ///
 ExecutionEngine *ExecutionEngine::create(ModuleProvider *MP, 
                                          bool ForceInterpreter,
@@ -37,8 +49,12 @@ ExecutionEngine *ExecutionEngine::create(ModuleProvider *MP,
     EE = VM::create(MP);
 
   // If we can't make a JIT, make an interpreter instead.
-  if (EE == 0)
-    EE = Interpreter::create(MP->releaseModule(), TraceMode);
+  try {
+    if (EE == 0)
+      EE = Interpreter::create(MP->releaseModule(), TraceMode);
+  } catch (...) {
+    EE = 0;
+  }
   return EE;
 }
 
