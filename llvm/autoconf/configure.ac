@@ -405,8 +405,8 @@ dnl **************************************************************************
 dnl libelf is for sparc only; we can ignore it if we don't have it
 AC_CHECK_LIB(elf, elf_begin)
 
-dnl dlopen() is required.  If we don't find it, quit.
-AC_SEARCH_LIBS(dlopen,dl,,AC_MSG_ERROR([dlopen() required but not found]))
+dnl dlopen() is required for plugin support.
+AC_SEARCH_LIBS(dlopen,dl,AC_DEFINE([HAVE_DLOPEN],[1]),AC_MSG_WARN([dlopen() not found - disabling plugin support]))
 
 dnl mallinfo is optional; the code can compile (minus features) without it
 AC_SEARCH_LIBS(mallinfo,malloc,AC_DEFINE([HAVE_MALLINFO],[1]))
