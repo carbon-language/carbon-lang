@@ -60,8 +60,10 @@ AlphaTargetMachine::AlphaTargetMachine( const Module &M, IntrinsicLowering *IL)
 bool AlphaTargetMachine::addPassesToEmitAssembly(PassManager &PM,
                                                    std::ostream &Out) {
   
-  if (EnableAlphaLSR)
+  if (EnableAlphaLSR) {
     PM.add(createLoopStrengthReducePass());
+    PM.add(createCFGSimplificationPass());
+  }
 
   // FIXME: Implement efficient support for garbage collection intrinsics.
   PM.add(createLowerGCPass());
