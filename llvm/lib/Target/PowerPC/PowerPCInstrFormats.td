@@ -131,9 +131,21 @@ class DForm_base<bits<6> opcode, bit ppc64, bit vmx, dag OL, string asmstr>
 }
 
 class DForm_1<bits<6> opcode, bit ppc64, bit vmx, dag OL, string asmstr>
-  : DForm_base<opcode, ppc64, vmx, OL, asmstr> {
+  : I<opcode, ppc64, vmx, OL, asmstr> {
+  bits<5>  A;
+  bits<16> C;
+  bits<5>  B;
+  
+  let ArgCount = 3;
+  let Arg0Type = Gpr.Value;
   let Arg1Type = Disimm16.Value;
   let Arg2Type = Gpr.Value;
+  let Arg3Type = 0;
+  let Arg4Type = 0;
+ 
+  let Inst{6-10}  = A;
+  let Inst{11-15} = B;
+  let Inst{16-31} = C;
 }
 
 class DForm_2<bits<6> opcode, bit ppc64, bit vmx, dag OL, string asmstr>
