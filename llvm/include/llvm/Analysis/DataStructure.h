@@ -343,13 +343,12 @@ private:
 //
 class ShadowDSNode : public DSNode {
   friend class FunctionDSGraph;
-  DSNode *Parent;
   Module *Mod;
   ShadowDSNode *ShadowParent;   // Nonnull if this is a synthesized node...
   std::vector<std::pair<const Type *, ShadowDSNode *> > SynthNodes;
   bool CriticalNode;
 public:
-  ShadowDSNode(DSNode *Parent, Module *M, bool Critical = false);
+  ShadowDSNode(const Type *Ty, Module *M, bool Critical = false);
   virtual std::string getCaption() const;
 
   // synthesizeNode - Create a new shadow node that is to be linked into this
@@ -376,7 +375,7 @@ protected:
     if (ShadowParent)
       return new ShadowDSNode(getType(), Mod, ShadowParent);
     else
-      return new ShadowDSNode(Parent, Mod, CriticalNode);
+      return new ShadowDSNode(getType(), Mod, CriticalNode);
   }
 };
 
