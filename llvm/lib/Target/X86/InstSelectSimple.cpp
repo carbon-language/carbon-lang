@@ -20,6 +20,7 @@
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/SSARegMap.h"
+#include "llvm/CodeGen/FunctionFrameInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/InstVisitor.h"
 #include "llvm/Target/MRegisterInfo.h"
@@ -73,29 +74,12 @@ namespace {
     bool runOnFunction(Function &Fn) {
       F = &MachineFunction::construct(&Fn, TM);
 
+      // Create all of the machine basic blocks for the function...
       for (Function::iterator I = Fn.begin(), E = Fn.end(); I != E; ++I)
         F->getBasicBlockList().push_back(MBBMap[I] = new MachineBasicBlock(I));
 
-      // Emit instructions to load the arguments...  The function's arguments
-      // look like this:
-      //
-      // [EBP]     -- copy of old EBP
-      // [EBP + 4] -- return address
-      // [EBP + 8] -- first argument (leftmost lexically)
-      //
-      // So we want to start with counter = 2.
-      //
       BB = &F->front();
-      unsigned ArgOffset = 8;
-      for (Function::aiterator I = Fn.abegin(), E = Fn.aend(); I != E;
-           ++I, ArgOffset += 4) {
-        unsigned Reg = getReg(*I);
-
-	// Load it out of the stack frame at EBP + 4*argPos.
-
-        // FIXME: This should load the argument of the appropriate size!!
-	addRegOffset(BuildMI(BB, X86::MOVmr32, 4, Reg), X86::EBP, ArgOffset);
-      }
+      LoadArgumentsToVirtualRegs(Fn);
 
       // Instruction select everything except PHI nodes
       visit(Fn);
@@ -123,6 +107,10 @@ namespace {
       BB = MBBMap[&LLVM_BB];
     }
 
+    /// LoadArgumentsToVirtualRegs - Load all of the arguments to this function
+    /// from the stack into virtual registers.
+    ///
+    void LoadArgumentsToVirtualRegs(Function &F);
 
     /// SelectPHINodes - Insert machine code to generate phis.  This is tricky
     /// because we have to generate our sources into the source basic blocks,
@@ -170,9 +158,12 @@ namespace {
     void visitLoadInst(LoadInst &I);
     void visitStoreInst(StoreInst &I);
     void visitGetElementPtrInst(GetElementPtrInst &I);
-    void visitMallocInst(MallocInst &I);
-    void visitFreeInst(FreeInst &I);
     void visitAllocaInst(AllocaInst &I);
+
+    // We assume that by this point, malloc instructions have been
+    // lowered to calls, and dlsym will magically find malloc for us.
+    void visitMallocInst(MallocInst &I) { visitInstruction (I); }
+    void visitFreeInst(FreeInst &I) { visitInstruction(I); }
     
     // Other operators
     void visitShiftInst(ShiftInst &I);
@@ -341,6 +332,59 @@ void ISel::copyConstantToRegister(MachineBasicBlock *MBB,
   }
 }
 
+/// LoadArgumentsToVirtualRegs - Load all of the arguments to this function from
+/// the stack into virtual registers.
+///
+void ISel::LoadArgumentsToVirtualRegs(Function &Fn) {
+  // Emit instructions to load the arguments...  On entry to a function on the
+  // X86, the stack frame looks like this:
+  //
+  // [ESP] -- return address
+  // [ESP + 4] -- first argument (leftmost lexically) if four bytes in size
+  // [ESP + 8] -- second argument, if four bytes in size
+  //    ... 
+  //
+  unsigned ArgOffset = 0;
+  FunctionFrameInfo *FFI = F->getFrameInfo();
+
+  for (Function::aiterator I = Fn.abegin(), E = Fn.aend(); I != E; ++I) {
+    unsigned Reg = getReg(*I);
+    
+    ArgOffset += 4;  // Each argument takes at least 4 bytes on the stack...
+    int FI;          // Frame object index
+
+    switch (getClassB(I->getType())) {
+    case cByte:
+      FI = FFI->CreateFixedObject(1, ArgOffset);
+      addFrameReference(BuildMI(BB, X86::MOVmr8, 4, Reg), FI);
+      break;
+    case cShort:
+      FI = FFI->CreateFixedObject(2, ArgOffset);
+      addFrameReference(BuildMI(BB, X86::MOVmr16, 4, Reg), FI);
+      break;
+    case cInt:
+      FI = FFI->CreateFixedObject(4, ArgOffset);
+      addFrameReference(BuildMI(BB, X86::MOVmr32, 4, Reg), FI);
+      break;
+    case cFP:
+      unsigned Opcode;
+      if (I->getType() == Type::FloatTy) {
+	Opcode = X86::FLDr32;
+	FI = FFI->CreateFixedObject(4, ArgOffset);
+      } else {
+	Opcode = X86::FLDr64;
+	ArgOffset += 4;   // doubles require 4 additional bytes
+	FI = FFI->CreateFixedObject(8, ArgOffset);
+      }
+      addFrameReference(BuildMI(BB, Opcode, 4, Reg), FI);
+      break;
+    default:
+      assert(0 && "Unhandled argument type!");
+    }
+  }
+}
+
+
 /// SelectPHINodes - Insert machine code to generate phis.  This is tricky
 /// because we have to generate our sources into the source basic blocks, not
 /// the current one.
@@ -366,7 +410,8 @@ void ISel::SelectPHINodes() {
         // available in a virtual register, insert the computation code into
         // PredMBB
         //
-
+	// FIXME: This should insert the code into the BOTTOM of the block, not
+	// the top of the block.  This just makes for huge live ranges...
         MachineBasicBlock::iterator PI = PredMBB->begin();
         while ((*PI)->getOpcode() == X86::PHI) ++PI;
         
@@ -532,7 +577,7 @@ void ISel::visitBranchInst(BranchInst &BI) {
 
     // Compare condition with zero, followed by jump-if-equal to ifFalse, and
     // jump-if-nonequal to ifTrue
-    unsigned int condReg = getReg(BI.getCondition());
+    unsigned condReg = getReg(BI.getCondition());
     BuildMI(BB, X86::CMPri8, 2).addReg(condReg).addZImm(0);
     BuildMI(BB, X86::JNE, 1).addPCDisp(BI.getSuccessor(0));
     BuildMI(BB, X86::JE, 1).addPCDisp(BI.getSuccessor(1));
@@ -543,32 +588,64 @@ void ISel::visitBranchInst(BranchInst &BI) {
 
 /// visitCallInst - Push args on stack and do a procedure call instruction.
 void ISel::visitCallInst(CallInst &CI) {
-  // keep a counter of how many bytes we pushed on the stack
-  unsigned bytesPushed = 0;
+  // Count how many bytes are to be pushed on the stack...
+  unsigned NumBytes = 0;
 
-  // Push the arguments on the stack in reverse order, as specified by
-  // the ABI.
-  for (unsigned i = CI.getNumOperands()-1; i >= 1; --i) {
-    Value *v = CI.getOperand(i);
-    switch (getClass(v->getType())) {
-    case cByte:
-    case cShort:
-      // Promote V to 32 bits wide, and move the result into EAX,
-      // then push EAX.
-      promote32 (X86::EAX, v);
-      BuildMI(BB, X86::PUSHr32, 1).addReg(X86::EAX);
-      bytesPushed += 4;
-      break;
-    case cInt: {
-      unsigned Reg = getReg(v);
-      BuildMI(BB, X86::PUSHr32, 1).addReg(Reg);
-      bytesPushed += 4;
-      break;
-    }
-    default:
-      // FIXME: long/ulong/float/double args not handled.
-      visitInstruction(CI);
-      break;
+  if (CI.getNumOperands() > 1) {
+    for (unsigned i = 1, e = CI.getNumOperands(); i != e; ++i)
+      switch (getClass(CI.getOperand(i)->getType())) {
+      case cByte: case cShort: case cInt:
+	NumBytes += 4;
+	break;
+      case cLong:
+	NumBytes += 8;
+	break;
+      case cFP:
+	NumBytes += CI.getOperand(i)->getType() == Type::FloatTy ? 4 : 8;
+	break;
+      default: assert(0 && "Unknown class!");
+      }
+
+    // Adjust the stack pointer for the new arguments...
+    BuildMI(BB, X86::ADJCALLSTACKDOWN, 1).addZImm(NumBytes);
+
+    // Arguments go on the stack in reverse order, as specified by the ABI.
+    unsigned ArgOffset = 0;
+    for (unsigned i = 1, e = CI.getNumOperands(); i != e; ++i) {
+      Value *Arg = CI.getOperand(i);
+      switch (getClass(Arg->getType())) {
+      case cByte:
+      case cShort: {
+	// Promote arg to 32 bits wide into a temporary register...
+	unsigned R = makeAnotherReg(Type::UIntTy);
+	promote32(R, Arg);
+	addRegOffset(BuildMI(BB, X86::MOVrm32, 5),
+		     X86::ESP, ArgOffset).addReg(R);
+	break;
+      }
+      case cInt:
+	addRegOffset(BuildMI(BB, X86::MOVrm32, 5),
+		     X86::ESP, ArgOffset).addReg(getReg(Arg));
+	break;
+
+      case cFP:
+	if (Arg->getType() == Type::FloatTy) {
+	  addRegOffset(BuildMI(BB, X86::FSTr32, 5),
+		       X86::ESP, ArgOffset).addReg(getReg(Arg));
+	} else {
+	  assert(Arg->getType() == Type::DoubleTy && "Unknown FP type!");
+	  ArgOffset += 4;
+	  addRegOffset(BuildMI(BB, X86::FSTr32, 5),
+		       X86::ESP, ArgOffset).addReg(getReg(Arg));
+	}
+	break;
+
+      default:
+	// FIXME: long/ulong/float/double args not handled.
+	visitInstruction(CI);
+	break;
+      }
+      ArgOffset += 4;
     }
   }
 
@@ -580,9 +657,7 @@ void ISel::visitCallInst(CallInst &CI) {
     BuildMI(BB, X86::CALLr32, 1).addReg(Reg);
   }
 
-  // Adjust the stack by `bytesPushed' amount if non-zero
-  if (bytesPushed > 0)
-    BuildMI(BB, X86::ADDri32,2, X86::ESP).addReg(X86::ESP).addZImm(bytesPushed);
+  BuildMI(BB, X86::ADJCALLSTACKUP, 1).addZImm(NumBytes);
 
   // If there is a return value, scavenge the result from the location the call
   // leaves it in...
@@ -771,7 +846,7 @@ void ISel::visitShiftInst (ShiftInst &I) {
   if (OperandClass > cInt)
     visitInstruction(I); // Can't handle longs yet!
 
-  if (ConstantUInt *CUI = dyn_cast <ConstantUInt> (I.getOperand (1)))
+  if (ConstantUInt *CUI = dyn_cast<ConstantUInt> (I.getOperand (1)))
     {
       // The shift amount is constant, guaranteed to be a ubyte. Get its value.
       assert(CUI->getType() == Type::UByteTy && "Shift amount not a ubyte?");
@@ -956,9 +1031,9 @@ ISel::visitCastInst (CastInst &CI)
 {
   const Type *targetType = CI.getType ();
   Value *operand = CI.getOperand (0);
-  unsigned int operandReg = getReg (operand);
+  unsigned operandReg = getReg (operand);
   const Type *sourceType = operand->getType ();
-  unsigned int destReg = getReg (CI);
+  unsigned destReg = getReg (CI);
   //
   // Currently we handle:
   //
@@ -1075,11 +1150,11 @@ void ISel::emitGEPOperation(MachineBasicBlock *MBB,
          oe = IdxEnd; oi != oe; ++oi) {
     Value *idx = *oi;
     unsigned nextBasePtrReg = makeAnotherReg(Type::UIntTy);
-    if (const StructType *StTy = dyn_cast <StructType> (Ty)) {
+    if (const StructType *StTy = dyn_cast<StructType>(Ty)) {
       // It's a struct access.  idx is the index into the structure,
       // which names the field. This index must have ubyte type.
-      const ConstantUInt *CUI = cast <ConstantUInt> (idx);
-      assert (CUI->getType () == Type::UByteTy
+      const ConstantUInt *CUI = cast<ConstantUInt>(idx);
+      assert(CUI->getType() == Type::UByteTy
 	      && "Funny-looking structure index in GEP");
       // Use the TargetData structure to pick out what the layout of
       // the structure is in memory.  Since the structure index must
@@ -1088,14 +1163,14 @@ void ISel::emitGEPOperation(MachineBasicBlock *MBB,
       // structure member offsets.
       unsigned idxValue = CUI->getValue();
       unsigned memberOffset =
-	TD.getStructLayout (StTy)->MemberOffsets[idxValue];
+	TD.getStructLayout(StTy)->MemberOffsets[idxValue];
       // Emit an ADD to add memberOffset to the basePtr.
       BMI(MBB, IP, X86::ADDri32, 2,
-          nextBasePtrReg).addReg (basePtrReg).addZImm (memberOffset);
+          nextBasePtrReg).addReg(basePtrReg).addZImm(memberOffset);
       // The next type is the member of the structure selected by the
       // index.
-      Ty = StTy->getElementTypes ()[idxValue];
-    } else if (const SequentialType *SqTy = cast <SequentialType>(Ty)) {
+      Ty = StTy->getElementTypes()[idxValue];
+    } else if (const SequentialType *SqTy = cast<SequentialType>(Ty)) {
       // It's an array or pointer access: [ArraySize x ElementType].
 
       // idx is the index into the array.  Unlike with structure
@@ -1103,7 +1178,7 @@ void ISel::emitGEPOperation(MachineBasicBlock *MBB,
       // time.
       assert(idx->getType() == Type::LongTy && "Bad GEP array index!");
 
-      // We want to add basePtrReg to (idxReg * sizeof ElementType). First, we
+      // We want to add basePtrReg to(idxReg * sizeof ElementType). First, we
       // must find the size of the pointed-to type (Not coincidentally, the next
       // type is the type of the elements in the array).
       Ty = SqTy->getElementType();
@@ -1143,7 +1218,7 @@ void ISel::emitGEPOperation(MachineBasicBlock *MBB,
         }
         // Emit an ADD to add OffsetReg to the basePtr.
         BMI(MBB, IP, X86::ADDrr32, 2,
-            nextBasePtrReg).addReg (basePtrReg).addReg (OffsetReg);
+            nextBasePtrReg).addReg(basePtrReg).addReg(OffsetReg);
       }
     }
     // Now that we are here, further indices refer to subtypes of this
@@ -1154,51 +1229,62 @@ void ISel::emitGEPOperation(MachineBasicBlock *MBB,
   // basePtrReg.  Move it to the register where we were expected to
   // put the answer.  A 32-bit move should do it, because we are in
   // ILP32 land.
-  BMI(MBB, IP, X86::MOVrr32, 1, TargetReg).addReg (basePtrReg);
+  BMI(MBB, IP, X86::MOVrr32, 1, TargetReg).addReg(basePtrReg);
 }
 
 
-/// visitMallocInst - I know that personally, whenever I want to remember
-/// something, I have to clear off some space in my brain.
-void
-ISel::visitMallocInst (MallocInst &I)
-{
-  // We assume that by this point, malloc instructions have been
-  // lowered to calls, and dlsym will magically find malloc for us.
-  // So we do not want to see malloc instructions here.
-  visitInstruction (I);
-}
-
-
-/// visitFreeInst - same story as MallocInst
-void
-ISel::visitFreeInst (FreeInst &I)
-{
-  // We assume that by this point, free instructions have been
-  // lowered to calls, and dlsym will magically find free for us.
-  // So we do not want to see free instructions here.
-  visitInstruction (I);
-}
-
-
-/// visitAllocaInst - I want some stack space. Come on, man, I said I
-/// want some freakin' stack space.
-void
-ISel::visitAllocaInst (AllocaInst &I)
-{
+/// visitAllocaInst - If this is a fixed size alloca, allocate space from the
+/// frame manager, otherwise do it the hard way.
+///
+void ISel::visitAllocaInst(AllocaInst &I) {
   // Find the data size of the alloca inst's getAllocatedType.
-  const Type *allocatedType = I.getAllocatedType ();
-  const TargetData &TD = TM.DataLayout;
-  unsigned allocatedTypeSize = TD.getTypeSize (allocatedType);
-  // Keep stack 32-bit aligned.
-  unsigned int allocatedTypeWords = allocatedTypeSize / 4;
-  if (allocatedTypeSize % 4 != 0) { allocatedTypeWords++; }
+  const Type *Ty = I.getAllocatedType();
+  unsigned TySize = TM.getTargetData().getTypeSize(Ty);
+
+  // If this is a fixed size alloca in the entry block for the function,
+  // statically stack allocate the space.
+  //
+  if (ConstantUInt *CUI = dyn_cast<ConstantUInt>(I.getArraySize())) {
+    if (I.getParent() == I.getParent()->getParent()->begin()) {
+      TySize *= CUI->getValue();   // Get total allocated size...
+      unsigned Alignment = TM.getTargetData().getTypeAlignment(Ty);
+      
+      // Create a new stack object using the frame manager...
+      int FrameIdx = F->getFrameInfo()->CreateStackObject(TySize, Alignment);
+      addFrameReference(BuildMI(BB, X86::LEAr32, 5, getReg(I)), FrameIdx);
+      return;
+    }
+  }
+  
+  // Create a register to hold the temporary result of multiplying the type size
+  // constant by the variable amount.
+  unsigned TotalSizeReg = makeAnotherReg(Type::UIntTy);
+  unsigned SrcReg1 = getReg(I.getArraySize());
+  unsigned SizeReg = makeAnotherReg(Type::UIntTy);
+  BuildMI(BB, X86::MOVir32, 1, SizeReg).addZImm(TySize);
+  
+  // TotalSizeReg = mul <numelements>, <TypeSize>
+  MachineBasicBlock::iterator MBBI = BB->end();
+  doMultiply(BB, MBBI, TotalSizeReg, Type::UIntTy, SrcReg1, SizeReg);
+
+  // AddedSize = add <TotalSizeReg>, 15
+  unsigned AddedSizeReg = makeAnotherReg(Type::UIntTy);
+  BuildMI(BB, X86::ADDri32, 2, AddedSizeReg).addReg(TotalSizeReg).addZImm(15);
+
+  // AlignedSize = and <AddedSize>, ~15
+  unsigned AlignedSize = makeAnotherReg(Type::UIntTy);
+  BuildMI(BB, X86::ANDri32, 2, AlignedSize).addReg(AddedSizeReg).addZImm(~15);
+  
   // Subtract size from stack pointer, thereby allocating some space.
-  BuildMI(BB, X86::SUBri32, 2,
-          X86::ESP).addReg(X86::ESP).addZImm(allocatedTypeWords * 4);
+  BuildMI(BB, X86::SUBri32, 2, X86::ESP).addReg(X86::ESP).addZImm(AlignedSize);
+
   // Put a pointer to the space into the result register, by copying
   // the stack pointer.
-  BuildMI (BB, X86::MOVrr32, 1, getReg (I)).addReg (X86::ESP);
+  BuildMI(BB, X86::MOVrr32, 1, getReg(I)).addReg(X86::ESP);
+
+  // Inform the Frame Information that we have just allocated a variable sized
+  // object.
+  F->getFrameInfo()->CreateVariableSizedObject();
 }
     
 
