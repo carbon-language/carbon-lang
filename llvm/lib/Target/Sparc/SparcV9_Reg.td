@@ -32,7 +32,7 @@ let Namespace = "SparcV9" in {
 
 // For fun, specify a register class.
 //
-// FIXME: the register order should be defined in terms of the prefered
+// FIXME: the register order should be defined in terms of the preferred
 // allocation order...
 //
 def IntRegs : RegisterClass<i64, 8, [G0, G1, G2, G3, G4, G5, G6, G7,

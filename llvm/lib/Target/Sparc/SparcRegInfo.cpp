@@ -760,7 +760,7 @@ UltraSparcRegInfo::cpReg2MemMI(std::vector<MachineInstr*>& mvec,
       RegClass* RC = PRA.getRegClassByID(this->getRegClassIDOfRegType(RegType));
       OffReg = PRA.getUnusedUniRegAtMI(RC, RegType, MInst, LVSetBef);
 #else
-      // Default to using register g2 for holding large offsets
+      // Default to using register g4 for holding large offsets
       OffReg = getUnifiedRegNum(UltraSparcRegInfo::IntRegClassID,
                                 SparcIntRegClass::g4);
 #endif
@@ -845,7 +845,7 @@ UltraSparcRegInfo::cpMem2RegMI(std::vector<MachineInstr*>& mvec,
       RegClass* RC = PRA.getRegClassByID(this->getRegClassIDOfRegType(RegType));
       OffReg = PRA.getUnusedUniRegAtMI(RC, RegType, MInst, LVSetBef);
 #else
-      // Default to using register g2 for holding large offsets
+      // Default to using register g4 for holding large offsets
       OffReg = getUnifiedRegNum(UltraSparcRegInfo::IntRegClassID,
                                 SparcIntRegClass::g4);
 #endif
