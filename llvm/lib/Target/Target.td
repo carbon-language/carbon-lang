@@ -212,7 +212,7 @@ class Target {
 //
 // NOTE: all of this is a work-in-progress and should be ignored for now.
 //
-
+/*
 class Expander<dag pattern, list<dag> result> {
   dag Pattern      = pattern;
   list<dag> Result = result;
@@ -296,3 +296,4 @@ class Nonterminal<dag pattern> {
   bit BuiltIn = 0;
 }
 
+*/
