@@ -1,5 +1,7 @@
-//===- llvm/Transforms/IPO.h - Interprocedural Optimiations -----*- C++ -*-===//
+//===- llvm/Transforms/IPO.h - Interprocedural Transformations --*- C++ -*-===//
 //
+// This header file defines prototypes for accessor functions that expose passes
+// in the IPO transformations library.
 //
 //===----------------------------------------------------------------------===//
 
@@ -7,6 +9,16 @@
 #define LLVM_TRANSFORMS_IPO_H
 
 class Pass;
+
+//===----------------------------------------------------------------------===//
+// createConstantMergePass - This function returns a new pass that merges
+// duplicate global constants together into a single constant that is shared.
+// This is useful because some passes (ie TraceValues) insert a lot of string
+// constants into the program, regardless of whether or not they duplicate an
+// existing string.
+//
+Pass *createConstantMergePass();
+
 
 //===----------------------------------------------------------------------===//
 // createDeadTypeEliminationPass - Return a new pass that eliminates symbol
