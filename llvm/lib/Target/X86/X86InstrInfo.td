@@ -248,7 +248,7 @@ def REP_STOSB : I<0xAA, RawFrm, (ops), "{rep;stosb|rep stosb}">,
                 Imp<[AL,ECX,EDI], [ECX,EDI]>, REP;
 def REP_STOSW : I<0xAB, RawFrm, (ops), "{rep;stosw|rep stosw}">,
                 Imp<[AX,ECX,EDI], [ECX,EDI]>, REP, OpSize;
-def REP_STOSD : I<0xAB, RawFrm, (ops), "{rep;stosd|rep stosd}">,
+def REP_STOSD : I<0xAB, RawFrm, (ops), "{rep;stosl|rep stosd}">,
                 Imp<[EAX,ECX,EDI], [ECX,EDI]>, REP;
 
 
