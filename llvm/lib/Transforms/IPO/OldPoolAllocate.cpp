@@ -12,7 +12,15 @@
 #include "llvm/Module.h"
 #include "llvm/Function.h"
 #include "llvm/iMemory.h"
+#include "llvm/iTerminators.h"
+#include "llvm/iOther.h"
+#include "llvm/ConstantVals.h"
+#include "llvm/Target/TargetData.h"
+#include "Support/STLExtras.h"
 #include <algorithm>
+
+// FIXME: This is dependant on the sparc backend layout conventions!!
+static TargetData TargetData("test");
 
 // Define the pass class that we implement...
 namespace {
@@ -71,13 +79,13 @@ namespace {
 // allocation node in a data structure graph is eligable for pool allocation.
 //
 static bool isNotPoolableAlloc(const AllocDSNode *DS) {
-  if (DS->isAllocaNode()) return false;  // Do not pool allocate alloca's.
+  if (DS->isAllocaNode()) return true;  // Do not pool allocate alloca's.
 
   MallocInst *MI = cast<MallocInst>(DS->getAllocation());
   if (MI->isArrayAllocation() && !isa<Constant>(MI->getArraySize()))
-    return false;   // Do not allow variable size allocations...
+    return true;   // Do not allow variable size allocations...
 
-  return true;
+  return false;
 }
 
 
@@ -134,19 +142,85 @@ bool PoolAllocate::processFunction(Function *F) {
 
   for (unsigned i = 0, e = Scalars.size(); i != e; ++i)
     Scalars[i].first->dump();
+
+  // FIXME: This should use an IP version of the UnifyAllExits pass!
+  vector<BasicBlock*> ReturnNodes;
+  for (Function::iterator I = F->begin(), E = F->end(); I != E; ++I)
+    if (isa<ReturnInst>((*I)->getTerminator()))
+      ReturnNodes.push_back(*I);
+  
+
+  // Create the code that goes in the entry and exit nodes for the method...
+  vector<Instruction*> EntryNodeInsts;
+  for (unsigned i = 0, e = Allocs.size(); i != e; ++i) {
+    // Add an allocation and a free for each pool...
+    AllocaInst *PoolAlloc = new AllocaInst(PoolTy, 0, "pool");
+    EntryNodeInsts.push_back(PoolAlloc);
+
+    AllocationInst *AI = Allocs[i]->getAllocation();
+
+    // Initialize the pool.  We need to know how big each allocation is.  For
+    // our purposes here, we assume we are allocating a scalar, or array of
+    // constant size.
+    //
+    unsigned ElSize = TargetData.getTypeSize(AI->getAllocatedType());
+    ElSize *= cast<ConstantUInt>(AI->getArraySize())->getValue();
+
+    vector<Value*> Args;
+    Args.push_back(PoolAlloc);    // Pool to initialize
+    Args.push_back(ConstantUInt::get(Type::UIntTy, ElSize));
+    EntryNodeInsts.push_back(new CallInst(PoolInit, Args));
+
+    // Destroy the pool...
+    Args.pop_back();
+
+    for (unsigned EN = 0, ENE = ReturnNodes.size(); EN != ENE; ++EN) {
+      Instruction *Destroy = new CallInst(PoolDestroy, Args);
+
+      // Insert it before the return instruction...
+      BasicBlock *RetNode = ReturnNodes[EN];
+      RetNode->getInstList().insert(RetNode->end()-1, Destroy);
+    }
+  }
+
+  // Insert the entry node code into the entry block...
+  F->getEntryNode()->getInstList().insert(F->getEntryNode()->begin()+1,
+                                          EntryNodeInsts.begin(),
+                                          EntryNodeInsts.end());
+
   return false;
 }
 
-
-// Prototypes that we add to support pool allocation...
-Function *PoolInit, *PoolDestroy, *PoolAlloc, *PoolFree;
 
 // addPoolPrototypes - Add prototypes for the pool methods to the specified
 // module and update the Pool* instance variables to point to them.
 //
 void PoolAllocate::addPoolPrototypes(Module *M) {
-  //M->getOrCreate...
+  // Get PoolInit function...
+  vector<const Type*> Args;
+  Args.push_back(PoolTy);           // Pool to initialize
+  Args.push_back(Type::UIntTy);     // Num bytes per element
+  FunctionType *PoolInitTy = FunctionType::get(Type::VoidTy, Args, false);
+  PoolInit = M->getOrInsertFunction("poolinit", PoolInitTy);
 
+  // Get pooldestroy function...
+  Args.pop_back();  // Only takes a pool...
+  FunctionType *PoolDestroyTy = FunctionType::get(Type::VoidTy, Args, false);
+  PoolDestroy = M->getOrInsertFunction("pooldestroy", PoolDestroyTy);
+
+  const Type *PtrVoid = PointerType::get(Type::SByteTy);
+
+  // Get the poolalloc function...
+  FunctionType *PoolAllocTy = FunctionType::get(PtrVoid, Args, false);
+  PoolAlloc = M->getOrInsertFunction("poolalloc", PoolAllocTy);
+
+  // Get the poolfree function...
+  Args.push_back(PtrVoid);
+  FunctionType *PoolFreeTy = FunctionType::get(Type::VoidTy, Args, false);
+  PoolFree = M->getOrInsertFunction("poolfree", PoolFreeTy);
+
+  // Add the %PoolTy type to the symbol table of the module...
+  M->addTypeName("PoolTy", PoolTy->getElementType());
 }
 
 
