@@ -1254,7 +1254,8 @@ let isTerminator = 1, isReturn = 1 in
 def PHI : PPC32InstPatternPseudo<"PHI", Pseudo>;          // PHI node...
 def ADJCALLSTACKDOWN : PPC32InstPatternPseudo<"ADJCALLSTACKDOWN", Pseudo>;
 def ADJCALLSTACKUP : PPC32InstPatternPseudo<"ADJCALLSTACKUP", Pseudo>;
-def MovePCtoLR : PPC32InstPatternPseudo<"MovePCtoLR", Pseudo>;
+let Defs = [LR] in
+  def MovePCtoLR : PPC32InstPatternPseudo<"MovePCtoLR", Pseudo>;
 def IMPLICIT_DEF : PPC32InstPatternPseudo<"IMPLICIT_DEF", Pseudo>;
 
 def LOADLoIndirect : PPC32InstPattern0 <"lwz", Gpr, Gpr0, Simm16, 14, 0, 0>;
