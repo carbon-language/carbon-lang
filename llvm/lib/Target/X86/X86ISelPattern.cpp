@@ -991,10 +991,10 @@ unsigned ISel::SelectExpr(SDOperand N) {
       addFrameReference(BuildMI(BB, X86::FIST16m, 5), FrameIdx).addReg(Tmp1);
       break;
     case MVT::i32:
-      addFrameReference(BuildMI(BB, X86::FIST16m, 5), FrameIdx).addReg(Tmp1);
+      addFrameReference(BuildMI(BB, X86::FIST32m, 5), FrameIdx).addReg(Tmp1);
       break;
     case MVT::i64:
-      addFrameReference(BuildMI(BB, X86::FIST16m, 5), FrameIdx).addReg(Tmp1);
+      addFrameReference(BuildMI(BB, X86::FISTP64m, 5), FrameIdx).addReg(Tmp1);
       break;
     }
 
