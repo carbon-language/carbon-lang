@@ -52,7 +52,7 @@ proc llvm-runtest { programs objdir srcdir subdir target_triplet llvmgcc llvmgxx
 		regsub -all {%prcontext} $new_runline $prcontext new_runline
 
 		#replace %p with path to source, 
-		regsub -all {%p} $new_runline $srcdir new_runline
+		regsub -all {%p} $new_runline [file join $srcdir $subdir] new_runline
 
 		#replace %llvmgcc with actual path to llvmgcc
 		regsub -all {%llvmgcc} $new_runline $llvmgcc new_runline
