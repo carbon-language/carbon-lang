@@ -19,7 +19,6 @@
 #include <functional>
 #include <iostream>
 #include <map>
-
 using namespace llvm;
 
 // GetLibSupportInfoOutputFile - Return a file stream to print our output on.
@@ -101,7 +100,7 @@ static inline size_t getMemUsage() {
 
 struct TimeRecord {
   double Elapsed, UserTime, SystemTime;
-  size_t MemUsed;
+  ssize_t MemUsed;
 };
 
 static TimeRecord getTimeRecord(bool Start) {
@@ -111,7 +110,7 @@ static TimeRecord getTimeRecord(bool Start) {
   sys::TimeValue user(0,0);
   sys::TimeValue sys(0,0);
 
-  size_t MemUsed = 0;
+  ssize_t MemUsed = 0;
   if (Start) {
     sys::Process::GetTimeUsage(now,user,sys);
     MemUsed = getMemUsage();

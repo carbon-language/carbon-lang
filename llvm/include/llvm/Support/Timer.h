@@ -36,7 +36,7 @@ class Timer {
   double Elapsed;        // Wall clock time elapsed in seconds
   double UserTime;       // User time elapsed
   double SystemTime;     // System time elapsed
-  size_t MemUsed;        // Memory allocated (in bytes)
+  ssize_t MemUsed;       // Memory allocated (in bytes)
   size_t PeakMem;        // Peak memory used
   size_t PeakMemBase;    // Temporary for peak calculation...
   std::string Name;      // The name of this time variable
@@ -50,7 +50,7 @@ public:
 
   double getProcessTime() const { return UserTime+SystemTime; }
   double getWallTime() const { return Elapsed; }
-  size_t getMemUsed() const { return MemUsed; }
+  ssize_t getMemUsed() const { return MemUsed; }
   size_t getPeakMem() const { return PeakMem; }
   std::string getName() const { return Name; }
 
