@@ -563,7 +563,7 @@ void X86ATTAsmPrinter::printMemReference(const MachineInstr *MI, unsigned Op){
     printOp(DispSpec, true);
   } else {
     int DispVal = DispSpec.getImmedValue();
-    if (DispVal)
+    if (DispVal || (!IndexReg.getReg() && !BaseReg.getReg()))
       O << DispVal;
   }
 
