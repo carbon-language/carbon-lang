@@ -10,7 +10,6 @@
 #define LLVM_CODEGEN_MACHINEFUNCTION_H
 
 #include "llvm/CodeGen/MachineBasicBlock.h"
-#include "llvm/CodeGen/SSARegMap.h"
 #include "llvm/Annotation.h"
 #include "Support/HashExtras.h"
 #include "Support/hash_set"
@@ -22,6 +21,7 @@ class Constant;
 class Type;
 class TargetMachine;
 class Pass;
+class SSARegMap;
 
 Pass *createMachineCodeConstructionPass(TargetMachine &Target);
 Pass *createMachineCodeDestructionPass();
@@ -33,6 +33,9 @@ class MachineFunction : private Annotation {
 
   // List of machine basic blocks in function
   iplist<MachineBasicBlock> BasicBlocks;
+
+  // Keeping track of mapping from SSA values to registers
+  SSARegMap *SSARegMapping;
 
   // FIXME: State should be held elsewhere...
   hash_set<const Constant*> constantsForConstPool;
@@ -48,11 +51,9 @@ class MachineFunction : private Annotation {
   bool          spillsAreaFrozen;
   bool          automaticVarsAreaFrozen;
 
-  // Keeping track of mapping from SSA values to registers
-  SSARegMap *SSARegMapping;
-  
 public:
   MachineFunction(const Function *Fn, const TargetMachine& target);
+  ~MachineFunction();
 
   /// getFunction - Return the LLVM function that this machine code represents
   ///
@@ -71,11 +72,6 @@ public:
   ///
   void dump() const;
 
-  /// CalculateArgSize - Call this method to fill in the maxOptionalArgsSize &
-  /// staticStackSize fields...
-  ///
-  void CalculateArgSize();
-
   // The next three methods are used to construct, destruct, and retrieve the
   // MachineFunction object for the given method.
   //
@@ -89,18 +85,6 @@ public:
                                     const TargetMachine &target);
   static void destruct(const Function *F);
   static MachineFunction& get(const Function *F);
-
-  // Getting and storing SSARegMap information
-  const TargetRegisterClass* getRegClass(unsigned Reg) { 
-    return SSARegMapping->getRegClass(Reg);
-  }
-  void addRegMap(unsigned Reg, const TargetRegisterClass *RegClass) {
-    SSARegMapping->addRegMap(Reg, RegClass);
-  }
-  void clearSSARegMap() { 
-    delete SSARegMapping;
-    SSARegMapping = NULL;
-  }
 
   // Provide accessors for the MachineBasicBlock list...
   typedef iplist<MachineBasicBlock> BasicBlockListType;
@@ -134,10 +118,23 @@ public:
         MachineBasicBlock & back()       { return BasicBlocks.back(); }
 
   //===--------------------------------------------------------------------===//
+  // SSARegMap Interface... Keep track of information about each SSA virtual
+  // register, such as which register class it belongs to.
   //
-  // FIXME: Most of the following state should be moved out to passes that use
-  // it, instead of being put here.
+
+  SSARegMap *getSSARegMap() const { return SSARegMapping; }
+  void clearSSARegMap();
+
+
+  //===--------------------------------------------------------------------===//
   //
+  // FIXME: Most of the following state should be moved into another class!
+  //
+
+  /// CalculateArgSize - Call this method to fill in the maxOptionalArgsSize &
+  /// staticStackSize fields...
+  ///
+  void CalculateArgSize();
 
   //
   // Accessors for global information about generated code for a method.
@@ -181,8 +178,6 @@ public:
   void            freezeAutomaticVarsArea  () { automaticVarsAreaFrozen=true; }
   
   int             getOffset                (const Value* val) const;
-  
-  // int          getOffsetFromFP       (const Value* val) const;
   
 private:
   inline void     incrementAutomaticVarsSize(int incr) {
