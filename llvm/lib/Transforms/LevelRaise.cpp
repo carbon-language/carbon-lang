@@ -227,7 +227,7 @@ static bool PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
       // source type of the cast...
       //
       ConvertedTypes.clear();
-      ConvertedTypes[CI] = Src->getType();  // Make sure the cast _does_ change
+      ConvertedTypes[Src] = Src->getType();  // Make sure the source doesn't change type
       if (ValueConvertableToType(CI, Src->getType(), ConvertedTypes)) {
         PRINT_PEEPHOLE3("CAST-DEST-EXPR-CONV:in ", Src, CI, BB->getParent());
 
