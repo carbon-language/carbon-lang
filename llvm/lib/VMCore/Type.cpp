@@ -782,26 +782,27 @@ void DerivedType::removeAbstractTypeUser(AbstractTypeUser *U) const {
   // front.  Also, it is likely that there will be a stack like behavior to
   // users that register and unregister users.
   //
-  for (unsigned i = AbstractTypeUsers.size(); i > 0; --i) {
-    if (AbstractTypeUsers[i-1] == U) {
-      AbstractTypeUsers.erase(AbstractTypeUsers.begin()+i-1);
+  unsigned i;
+  for (i = AbstractTypeUsers.size(); AbstractTypeUsers[i-1] != U; --i)
+    assert(i != 0 && "AbstractTypeUser not in user list!");
+
+  --i;  // Convert to be in range 0 <= i < size()
+  assert(i < AbstractTypeUsers.size() && "Index out of range!");  // Wraparound?
+
+  AbstractTypeUsers.erase(AbstractTypeUsers.begin()+i);
       
 #ifdef DEBUG_MERGE_TYPES
-      cerr << "  removeAbstractTypeUser<" << (void*)this << ", "
-	   << getDescription() << ">[" << i << "] User = " << U << endl;
+  cerr << "  remAbstractTypeUser[" << (void*)this << ", "
+       << getDescription() << "][" << i << "] User = " << U << endl;
 #endif
-
-      if (AbstractTypeUsers.empty() && isAbstract()) {
+    
+  if (AbstractTypeUsers.empty() && isAbstract()) {
 #ifdef DEBUG_MERGE_TYPES
-	cerr << "DELETEing unused abstract type: <" << getDescription()
-	     << ">[" << (void*)this << "]" << endl;
+    cerr << "DELETEing unused abstract type: <" << getDescription()
+         << ">[" << (void*)this << "]" << endl;
 #endif
-	delete this;                  // No users of this abstract type!
-      }
-      return;
-    }
+    delete this;                  // No users of this abstract type!
   }
-  assert(0 && "AbstractTypeUser not in user list!");
 }
 
 
@@ -839,9 +840,12 @@ void DerivedType::refineAbstractTypeTo(const Type *NewType) {
   unsigned NumSelfUses = 0;
 
   // Iterate over all of the uses of this type, invoking callback.  Each user
-  // should remove itself from our use list automatically.
+  // should remove itself from our use list automatically.  We have to check to
+  // make sure that NewTy doesn't _become_ 'this'.  If it does, resolving types
+  // will not cause users to drop off of the use list.  If we resolve to ourself
+  // we succeed!
   //
-  while (AbstractTypeUsers.size() > NumSelfUses) {
+  while (AbstractTypeUsers.size() > NumSelfUses && NewTy != this) {
     AbstractTypeUser *User = AbstractTypeUsers.back();
 
     if (User == this) {
@@ -850,7 +854,8 @@ void DerivedType::refineAbstractTypeTo(const Type *NewType) {
     } else {
       unsigned OldSize = AbstractTypeUsers.size();
 #ifdef DEBUG_MERGE_TYPES
-      cerr << " REFINING user " << OldSize-1 << " of abstract type ["
+      cerr << " REFINING user " << OldSize-1 << "[" << (void*)User
+           << "] of abstract type ["
 	   << (void*)this << " " << getDescription() << "] to [" 
 	   << (void*)NewTy.get() << " " << NewTy->getDescription() << "]!\n";
 #endif
@@ -858,6 +863,16 @@ void DerivedType::refineAbstractTypeTo(const Type *NewType) {
 
       if (AbstractTypeUsers.size() == OldSize)
         User->refineAbstractType(this, NewTy);
+
+      if (AbstractTypeUsers.size() == OldSize) {
+        if (AbstractTypeUsers.back() != User)
+          cerr << "User changed!\n";
+        cerr << "Top of user list is:\n";
+        AbstractTypeUsers.back()->dump();
+        
+        cerr <<"\nOld User=\n";
+        User->dump();
+      }
 
       assert(AbstractTypeUsers.size() != OldSize &&
 	     "AbsTyUser did not remove self from user list!");
@@ -867,7 +882,9 @@ void DerivedType::refineAbstractTypeTo(const Type *NewType) {
   // Remove a single self use, even though there may be several here. This will
   // probably 'delete this', so no instance variables may be used after this
   // occurs...
-  assert(AbstractTypeUsers.back() == this && "Only self uses should be left!");
+  //
+  assert((NewTy == this || AbstractTypeUsers.back() == this) &&
+         "Only self uses should be left!");
   removeAbstractTypeUser(this);
 }
 
