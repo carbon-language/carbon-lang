@@ -2209,6 +2209,28 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
         return new CastInst(NotCond, SI.getType());
       }
     }
+
+  // See if we are selecting two values based on a comparison of the two values.
+  if (SetCondInst *SCI = dyn_cast<SetCondInst>(CondVal)) {
+    if (SCI->getOperand(0) == TrueVal && SCI->getOperand(1) == FalseVal) {
+      // Transform (X == Y) ? X : Y  -> Y
+      if (SCI->getOpcode() == Instruction::SetEQ)
+        return ReplaceInstUsesWith(SI, FalseVal);
+      // Transform (X != Y) ? X : Y  -> X
+      if (SCI->getOpcode() == Instruction::SetNE)
+        return ReplaceInstUsesWith(SI, TrueVal);
+      // NOTE: if we wanted to, this is where to detect MIN/MAX/ABS/etc.
+
+    } else if (SCI->getOperand(0) == FalseVal && SCI->getOperand(1) == TrueVal){
+      // Transform (X == Y) ? Y : X  -> X
+      if (SCI->getOpcode() == Instruction::SetEQ)
+        return ReplaceInstUsesWith(SI, TrueVal);
+      // Transform (X != Y) ? Y : X  -> Y
+      if (SCI->getOpcode() == Instruction::SetNE)
+        return ReplaceInstUsesWith(SI, FalseVal);
+      // NOTE: if we wanted to, this is where to detect MIN/MAX/ABS/etc.
+    }
+  }
   
   // See if we can fold the select into one of our operands.
   if (SI.getType()->isInteger()) {
