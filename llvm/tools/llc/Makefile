@@ -8,7 +8,6 @@ USEDLIBS = sparc \
            select \
            codegen \
            preopts \
-           postopts.a \
            target.a \
            livevar \
            transforms.a \
