@@ -541,7 +541,7 @@ void AssemblyWriter::printGlobal(const GlobalVariable *GV) {
   if (GV->hasName()) Out << "%" << GV->getName() << " = ";
 
   if (GV->hasInternalLinkage()) Out << "internal ";
-  if (!GV->hasInitializer()) Out << "uninitialized ";
+  if (!GV->hasInitializer()) Out << "external ";
 
   Out << (GV->isConstant() ? "constant " : "global ");
   printType(GV->getType()->getElementType());
