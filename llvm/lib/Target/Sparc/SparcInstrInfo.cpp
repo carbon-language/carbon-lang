@@ -25,44 +25,186 @@ using std::vector;
 
 //************************ Internal Functions ******************************/
 
+static const uint32_t MAXLO   = (1 << 10) - 1; // set bits set by %lo(*)
+static const uint32_t MAXSIMM = (1 << 12) - 1; // set bits in simm13 field of OR
+
+
+// Set a 32-bit unsigned constant in the register `dest'.
+// 
+static inline void
+CreateSETUWConst(const TargetMachine& target, uint32_t C,
+                 Instruction* dest, std::vector<MachineInstr*>& mvec)
+{
+  MachineInstr *miSETHI = NULL, *miOR = NULL;
+  
+  // In order to get efficient code, we should not generate the SETHI if
+  // all high bits are 1 (i.e., this is a small signed value that fits in
+  // the simm13 field of OR).  So we check for and handle that case specially.
+  // NOTE: The value C = 0x80000000 is bad: sC < 0 *and* -sC < 0.
+  //       In fact, sC == -sC, so we have to check for this explicitly.
+  int32_t sC = (int32_t) C;
+  bool smallSignedValue = sC < 0 && sC != -sC && -sC < (int32_t) MAXSIMM;
+  
+  // Set the high 22 bits in dest if non-zero and simm13 field of OR not enough
+  if (!smallSignedValue && (C & ~MAXLO) && C > MAXSIMM)
+    {
+      miSETHI = Create2OperandInstr_UImmed(SETHI, C, dest);
+      miSETHI->setOperandHi32(0);
+      mvec.push_back(miSETHI);
+    }
+  
+  // Set the low 10 or 12 bits in dest.  This is necessary if no SETHI
+  // was generated, or if the low 10 bits are non-zero.
+  if (miSETHI==NULL || C & MAXLO)
+    {
+      if (miSETHI)
+        { // unsigned value with high-order bits set using SETHI
+          miOR = Create3OperandInstr_UImmed(OR, dest, C, dest);
+          miOR->setOperandLo32(1);
+        }
+      else
+        { // unsigned or small signed value that fits in simm13 field of OR
+          assert(smallSignedValue || (C & ~MAXSIMM) == 0);
+          miOR = new MachineInstr(OR);
+          miOR->SetMachineOperandReg(0, target.getRegInfo().getZeroRegNum());
+          miOR->SetMachineOperandConst(1, MachineOperand::MO_SignExtendedImmed,
+                                       sC);
+          miOR->SetMachineOperandVal(2,MachineOperand::MO_VirtualRegister,dest);
+        }
+      mvec.push_back(miOR);
+    }
+  
+  assert((miSETHI || miOR) && "Oops, no code was generated!");
+}
+
+// Set a 32-bit constant (given by a symbolic label) in the register `dest'.
+// Not needed for SPARC v9 but useful to make the two SETX functions similar
+static inline void
+CreateSETUWLabel(const TargetMachine& target, Value* val,
+                 Instruction* dest, std::vector<MachineInstr*>& mvec)
+{
+  MachineInstr* MI;
+  
+  // Set the high 22 bits in dest
+  MI = Create2OperandInstr(SETHI, val, dest);
+  MI->setOperandHi32(0);
+  mvec.push_back(MI);
+  
+  // Set the low 10 bits in dest
+  MI = Create3OperandInstr(OR, dest, val, dest);
+  MI->setOperandLo32(1);
+  mvec.push_back(MI);
+}
+
+
+// Set a 32-bit signed constant in the register `dest', 
+// with sign-extension to 64 bits.
+static inline void
+CreateSETSWConst(const TargetMachine& target, int32_t C,
+                 Instruction* dest, std::vector<MachineInstr*>& mvec)
+{
+  MachineInstr* MI;
+  
+  // Set the low 32 bits of dest
+  CreateSETUWConst(target, (uint32_t) C,  dest, mvec);
+  
+  // Sign-extend to the high 32 bits if needed
+  if (C < 0 && (-C) > (int32_t) MAXSIMM)
+    {
+      MI = Create3OperandInstr_UImmed(SRA, dest, 0, dest);
+      mvec.push_back(MI);
+    }
+}
+
+
+// Set a 64-bit signed or unsigned constant in the register `dest'.
+static inline void
+CreateSETXConst(const TargetMachine& target, uint64_t C,
+                Instruction* tmpReg, Instruction* dest,
+                std::vector<MachineInstr*>& mvec)
+{
+  assert(C > (unsigned int) ~0 && "Use SETUW/SETSW for 32-bit values!");
+  
+  MachineInstr* MI;
+  
+  // Code to set the upper 32 bits of the value in register `tmpReg'
+  CreateSETUWConst(target, (C >> 32), tmpReg, mvec);
+  
+  // Shift tmpReg left by 32 bits
+  MI = Create3OperandInstr_UImmed(SLLX, tmpReg, 32, tmpReg);
+  mvec.push_back(MI);
+  
+  // Code to set the low 32 bits of the value in register `dest'
+  CreateSETUWConst(target, C, dest, mvec);
+  
+  // dest = OR(tmpReg, dest)
+  MI = Create3OperandInstr(OR, dest, tmpReg, dest);
+  mvec.push_back(MI);
+}
+
+
+// Set a 64-bit constant (given by a symbolic label) in the register `dest'.
+static inline void
+CreateSETXLabel(const TargetMachine& target,
+                Value* val, Instruction* tmpReg, Instruction* dest,
+                std::vector<MachineInstr*>& mvec)
+{
+  assert(isa<Constant>(val) || isa<GlobalValue>(val) &&
+         "I only know about constant values and global addresses");
+  
+  MachineInstr* MI;
+  
+  MI = Create2OperandInstr_Addr(SETHI, val, tmpReg);
+  MI->setOperandHi64(0);
+  mvec.push_back(MI);
+  
+  MI = Create3OperandInstr_Addr(OR, tmpReg, val, tmpReg);
+  MI->setOperandLo64(1);
+  mvec.push_back(MI);
+  
+  MI = Create3OperandInstr_UImmed(SLLX, tmpReg, 32, tmpReg);
+  mvec.push_back(MI);
+  
+  MI = Create2OperandInstr_Addr(SETHI, val, dest);
+  MI->setOperandHi32(0);
+  mvec.push_back(MI);
+  
+  MI = Create3OperandInstr(OR, dest, tmpReg, dest);
+  mvec.push_back(MI);
+  
+  MI = Create3OperandInstr_Addr(OR, dest, val, dest);
+  MI->setOperandLo32(1);
+  mvec.push_back(MI);
+}
+
 
 static inline void
-CreateIntSetInstruction(const TargetMachine& target, Function* F,
+CreateIntSetInstruction(const TargetMachine& target,
                         int64_t C, Instruction* dest,
                         std::vector<MachineInstr*>& mvec,
                         MachineCodeForInstruction& mcfi)
 {
   assert(dest->getType()->isSigned() && "Use CreateUIntSetInstruction()");
   
-  MachineInstr* M;
   uint64_t absC = (C >= 0)? C : -C;
   if (absC > (unsigned int) ~0)
     { // C does not fit in 32 bits
       TmpInstruction* tmpReg = new TmpInstruction(Type::IntTy);
       mcfi.addTemp(tmpReg);
-      
-      M = new MachineInstr(SETX);
-      M->SetMachineOperandConst(0,MachineOperand::MO_SignExtendedImmed,C);
-      M->SetMachineOperandVal(1, MachineOperand::MO_VirtualRegister, tmpReg,
-                                 /*isdef*/ true);
-      M->SetMachineOperandVal(2, MachineOperand::MO_VirtualRegister,dest);
-      mvec.push_back(M);
+      CreateSETXConst(target, (uint64_t) C, tmpReg, dest, mvec);
     }
   else
-    {
-      M = Create2OperandInstr_SImmed(SETSW, C, dest);
-      mvec.push_back(M);
-    }
+    CreateSETSWConst(target, (int32_t) C, dest, mvec);
 }
 
+
 static inline void
-CreateUIntSetInstruction(const TargetMachine& target, Function* F,
+CreateUIntSetInstruction(const TargetMachine& target,
                          uint64_t C, Instruction* dest,
                          std::vector<MachineInstr*>& mvec,
                          MachineCodeForInstruction& mcfi)
 {
   assert(! dest->getType()->isSigned() && "Use CreateIntSetInstruction()");
-  unsigned destSize = target.DataLayout.getTypeSize(dest->getType());
   MachineInstr* M;
   
   if (C > (unsigned int) ~0)
@@ -70,74 +212,36 @@ CreateUIntSetInstruction(const TargetMachine& target, Function* F,
       assert(dest->getType() == Type::ULongTy && "Sign extension problems");
       TmpInstruction *tmpReg = new TmpInstruction(Type::IntTy);
       mcfi.addTemp(tmpReg);
-      
-      M = new MachineInstr(SETX);
-      M->SetMachineOperandConst(0, MachineOperand::MO_UnextendedImmed, C);
-      M->SetMachineOperandVal(1, MachineOperand::MO_VirtualRegister, tmpReg,
-                              /*isdef*/ true);
-      M->SetMachineOperandVal(2, MachineOperand::MO_VirtualRegister, dest);
-      mvec.push_back(M);
+      CreateSETXConst(target, C, tmpReg, dest, mvec);
     }
   else
     {
-      // If the destination is smaller than the standard integer reg. size,
-      // we have to extend the sign-bit into upper bits of dest, so we
-      // need to put the result of the SETUW into a temporary.
+#undef SIGN_EXTEND_FOR_UNSIGNED_DEST
+#ifdef SIGN_EXTEND_FOR_UNSIGNED_DEST
+      // If dest is smaller than the standard integer reg. size
+      // and the high-order bit of dest will be 1, then we have to
+      // extend the sign-bit into upper bits of the dest register.
       // 
-      Value* setuwDest = dest;
+      unsigned destSize = target.DataLayout.getTypeSize(dest->getType());
       if (destSize < target.DataLayout.getIntegerRegize())
         {
-          setuwDest = new TmpInstruction(dest, NULL, "setTmp");
-          mcfi.addTemp(setuwDest);
+          assert(destSize <= 4 && "Unexpected type size of 5-7 bytes");
+          uint32_t signBit = C & (1 << (8*destSize-1));
+          if (signBit)
+            { // Sign-bit is 1 so convert C to a sign-extended 64-bit value
+              // and use CreateSETSWConst.  CreateSETSWConst will correctly
+              // generate efficient code for small signed values.
+              int32_t simmC = C | ~(signBit-1);
+              CreateSETSWConst(target, simmC, dest, mvec);
+              return;
+            }
         }
+#endif SIGN_EXTEND_FOR_UNSIGNED_DEST
       
-      M = Create2OperandInstr_UImmed(SETUW, C, setuwDest);
-      mvec.push_back(M);
-      
-      if (setuwDest != dest)
-        { // extend the sign-bit of the result into all upper bits of dest
-          assert(8*destSize <= 32 &&
-                 "Unexpected type size > 4 and < IntRegSize?");
-          target.getInstrInfo().
-            CreateSignExtensionInstructions(target, F,
-                                            setuwDest, 8*destSize, dest,
-                                            mvec, mcfi);
-        }
+      CreateSETUWConst(target, C, dest, mvec);
     }
-  
-#define USE_DIRECT_SIGN_EXTENSION_INSTRS
-#ifndef USE_DIRECT_SIGN_EXTENSION_INSTRS
-  else
-    { // cast to signed type of the right length and use signed op (SETSW)
-      // to get correct sign extension
-      // 
-      minstr = new MachineInstr(SETSW);
-      minstr->SetMachineOperandVal(1, MachineOperand::MO_VirtualRegister,dest);
-      
-      switch (dest->getType()->getPrimitiveID())
-        {
-        case Type::UIntTyID:
-          minstr->SetMachineOperandConst(0,
-                                         MachineOperand::MO_SignExtendedImmed,
-                                         (int) C);
-          break;
-        case Type::UShortTyID:
-          minstr->SetMachineOperandConst(0,
-                                         MachineOperand::MO_SignExtendedImmed,
-                                         (short) C);
-          break;
-        case Type::UByteTyID:
-          minstr->SetMachineOperandConst(0,
-                                         MachineOperand::MO_SignExtendedImmed,
-                                         (char) C);
-          break;
-        default:
-          assert(0 && "Unexpected unsigned type");
-          break;
-        }
-    }
-#endif USE_DIRECT_SIGN_EXTENSION_INSTRS
 }
+
 
 //************************* External Classes *******************************/
 
@@ -178,25 +282,33 @@ UltraSparcInstrInfo::CreateCodeToLoadConst(const TargetMachine& target,
   assert(isa<Constant>(val) || isa<GlobalValue>(val) &&
          "I only know about constant values and global addresses");
   
-  // Use a "set" instruction for known constants that can go in an integer reg.
-  // Use a "load" instruction for all other constants, in particular,
-  // floating point constants and addresses of globals.
+  // Use a "set" instruction for known constants or symbolic constants (labels)
+  // that can go in an integer reg.
+  // We have to use a "load" instruction for all other constants,
+  // in particular, floating point constants.
   // 
   const Type* valType = val->getType();
   
-  if (valType->isIntegral() || valType == Type::BoolTy)
+  if (isa<GlobalValue>(val) || valType->isIntegral() || valType == Type::BoolTy)
     {
-      if (! val->getType()->isSigned())
+      if (isa<GlobalValue>(val))
+        {
+          TmpInstruction* tmpReg =
+            new TmpInstruction(PointerType::get(val->getType()), val);
+          mcfi.addTemp(tmpReg);
+          CreateSETXLabel(target, val, tmpReg, dest, mvec);
+        }
+      else if (! val->getType()->isSigned())
         {
           uint64_t C = cast<ConstantUInt>(val)->getValue();
-          CreateUIntSetInstruction(target, F, C, dest, mvec, mcfi);
+          CreateUIntSetInstruction(target, C, dest, mvec, mcfi);
         }
       else
         {
           bool isValidConstant;
           int64_t C = GetConstantValueAsSignedInt(val, isValidConstant);
           assert(isValidConstant && "Unrecognized constant");
-          CreateIntSetInstruction(target, F, C, dest, mvec, mcfi);
+          CreateIntSetInstruction(target, C, dest, mvec, mcfi);
         }
     }
   else
@@ -204,44 +316,29 @@ UltraSparcInstrInfo::CreateCodeToLoadConst(const TargetMachine& target,
       // Make an instruction sequence to load the constant, viz:
       //            SETX <addr-of-constant>, tmpReg, addrReg
       //            LOAD  /*addr*/ addrReg, /*offset*/ 0, dest
-      // Only the SETX is needed if `val' is a GlobalValue, i.e,. it is
-      // itself a constant address.  Otherwise, both are needed.
       
-      Value* addrVal;
-      int64_t zeroOffset = 0; // to avoid ambiguity with (Value*) 0
-      
+      // First, create a tmp register to be used by the SETX sequence.
       TmpInstruction* tmpReg =
         new TmpInstruction(PointerType::get(val->getType()), val);
       mcfi.addTemp(tmpReg);
       
-      if (isa<Constant>(val))
-        {
-          // Create another TmpInstruction for the hidden integer register
-          TmpInstruction* addrReg =
+      // Create another TmpInstruction for the address register
+      TmpInstruction* addrReg =
             new TmpInstruction(PointerType::get(val->getType()), val);
-          mcfi.addTemp(addrReg);
-          addrVal = addrReg;
-        }
-      else
-        addrVal = dest;
+      mcfi.addTemp(addrReg);
       
-      MachineInstr* M = new MachineInstr(SETX);
-      M->SetMachineOperandVal(0, MachineOperand::MO_PCRelativeDisp, val);
-      M->SetMachineOperandVal(1, MachineOperand::MO_VirtualRegister, tmpReg,
-                              /*isdef*/ true);
-      M->SetMachineOperandVal(2, MachineOperand::MO_VirtualRegister, addrVal);
-      mvec.push_back(M);
+      // Put the address (a symbolic name) into a register
+      CreateSETXLabel(target, val, tmpReg, addrReg, mvec);
       
-      if (isa<Constant>(val))
-        {
-          // Make sure constant is emitted to constant pool in assembly code.
-          MachineCodeForMethod::get(F).addToConstantPool(cast<Constant>(val));
-          
-          // Generate the load instruction
-          M = Create3OperandInstr_SImmed(ChooseLoadInstruction(val->getType()),
-                                         addrVal, zeroOffset, dest);
-          mvec.push_back(M);
-        }
+      // Generate the load instruction
+      int64_t zeroOffset = 0;           // to avoid ambiguity with (Value*) 0
+      MachineInstr* MI =
+        Create3OperandInstr_SImmed(ChooseLoadInstruction(val->getType()),
+                                   addrReg, zeroOffset, dest);
+      mvec.push_back(MI);
+      
+      // Make sure constant is emitted to constant pool in assembly code.
+      MachineCodeForMethod::get(F).addToConstantPool(cast<Constant>(val));
     }
 }
 
