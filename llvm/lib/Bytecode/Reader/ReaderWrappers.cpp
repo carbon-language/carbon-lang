@@ -88,7 +88,7 @@ namespace {
   public:
     BytecodeBufferReader(const unsigned char *Buf, unsigned Length,
                          const std::string &ModuleID,
-			 llvm::BytecodeHandler* Handler = 0);
+                         llvm::BytecodeHandler* Handler = 0);
     ~BytecodeBufferReader();
 
   };
@@ -97,7 +97,7 @@ namespace {
 BytecodeBufferReader::BytecodeBufferReader(const unsigned char *Buf,
                                            unsigned Length,
                                            const std::string &ModuleID,
-					   llvm::BytecodeHandler* H )
+                                           llvm::BytecodeHandler* H )
   : BytecodeReader(H)
 {
   // If not aligned, allocate a new buffer to hold the bytecode...
@@ -248,7 +248,7 @@ ModuleProvider*
 llvm::getBytecodeBufferModuleProvider(const unsigned char *Buffer,
                                       unsigned Length,
                                       const std::string &ModuleID,
-				      BytecodeHandler* H ) {
+                                      BytecodeHandler* H ) {
   return CheckVarargs(
       new BytecodeBufferReader(Buffer, Length, ModuleID, H));
 }
@@ -271,7 +271,7 @@ Module *llvm::ParseBytecodeBuffer(const unsigned char *Buffer, unsigned Length,
 /// getBytecodeModuleProvider - lazy function-at-a-time loading from a file
 ///
 ModuleProvider *llvm::getBytecodeModuleProvider(const std::string &Filename,
-					        BytecodeHandler* H) {
+                                                BytecodeHandler* H) {
   if (Filename != std::string("-"))        // Read from a file...
     return CheckVarargs(new BytecodeFileReader(Filename,H));
   else                                     // Read from stdin
@@ -289,10 +289,6 @@ Module *llvm::ParseBytecodeFile(const std::string &Filename,
     if (ErrorStr) *ErrorStr = err;
     return 0;
   }
-}
-
-namespace llvm {
-extern BytecodeHandler* createBytecodeAnalyzerHandler(BytecodeAnalysis& bca );
 }
 
 // AnalyzeBytecodeFile - analyze one file
