@@ -24,6 +24,7 @@
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/ConstantHandling.h"
 #include "llvm/Function.h"
+#include "llvm/GlobalVariable.h"
 #include "llvm/Instructions.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/InstVisitor.h"
@@ -215,7 +216,7 @@ private:
 
   // Instructions that cannot be folded away...
   void visitStoreInst     (Instruction &I) { /*returns void*/ }
-  void visitLoadInst      (Instruction &I) { markOverdefined(&I); }
+  void visitLoadInst      (LoadInst &I);
   void visitGetElementPtrInst(GetElementPtrInst &I);
   void visitCallInst      (Instruction &I) { markOverdefined(&I); }
   void visitInvokeInst    (TerminatorInst &I) {
@@ -666,6 +667,9 @@ void SCCP::visitBinaryOperator(Instruction &I) {
 // can turn this into a getelementptr ConstantExpr.
 //
 void SCCP::visitGetElementPtrInst(GetElementPtrInst &I) {
+  InstVal &IV = ValueState[&I];
+  if (IV.isOverdefined()) return;
+
   std::vector<Constant*> Operands;
   Operands.reserve(I.getNumOperands());
 
@@ -674,7 +678,7 @@ void SCCP::visitGetElementPtrInst(GetElementPtrInst &I) {
     if (State.isUndefined())
       return;  // Operands are not resolved yet...
     else if (State.isOverdefined()) {
-      markOverdefined(&I);
+      markOverdefined(IV, &I);
       return;
     }
     assert(State.isConstant() && "Unknown state!");
@@ -684,6 +688,68 @@ void SCCP::visitGetElementPtrInst(GetElementPtrInst &I) {
   Constant *Ptr = Operands[0];
   Operands.erase(Operands.begin());  // Erase the pointer from idx list...
 
-  markConstant(&I, ConstantExpr::getGetElementPtr(Ptr, Operands));  
+  markConstant(IV, &I, ConstantExpr::getGetElementPtr(Ptr, Operands));  
 }
 
+/// GetGEPGlobalInitializer - Given a constant and a getelementptr constantexpr,
+/// return the constant value being addressed by the constant expression, or
+/// null if something is funny.
+///
+static Constant *GetGEPGlobalInitializer(Constant *C, ConstantExpr *CE) {
+  if (CE->getOperand(1) != Constant::getNullValue(Type::LongTy))
+    return 0;  // Do not allow stepping over the value!
+
+  // Loop over all of the operands, tracking down which value we are
+  // addressing...
+  for (unsigned i = 2, e = CE->getNumOperands(); i != e; ++i)
+    if (ConstantUInt *CU = dyn_cast<ConstantUInt>(CE->getOperand(i))) {
+      ConstantStruct *CS = cast<ConstantStruct>(C);
+      if (CU->getValue() >= CS->getValues().size()) return 0;
+      C = cast<Constant>(CS->getValues()[CU->getValue()]);
+    } else if (ConstantSInt *CS = dyn_cast<ConstantSInt>(CE->getOperand(i))) {
+      ConstantArray *CA = cast<ConstantArray>(C);
+      if ((uint64_t)CS->getValue() >= CA->getValues().size()) return 0;
+      C = cast<Constant>(CA->getValues()[CS->getValue()]);
+    } else 
+      return 0;
+  return C;
+}
+
+// Handle load instructions.  If the operand is a constant pointer to a constant
+// global, we can replace the load with the loaded constant value!
+void SCCP::visitLoadInst(LoadInst &I) {
+  InstVal &IV = ValueState[&I];
+  if (IV.isOverdefined()) return;
+
+  InstVal &PtrVal = getValueState(I.getOperand(0));
+  if (PtrVal.isUndefined()) return;   // The pointer is not resolved yet!
+  if (PtrVal.isConstant() && !I.isVolatile()) {
+    Value *Ptr = PtrVal.getConstant();
+    if (ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(Ptr))
+      Ptr = CPR->getValue();
+
+    // Transform load (constant global) into the value loaded.
+    if (GlobalVariable *GV = dyn_cast<GlobalVariable>(Ptr))
+      if (GV->isConstant() && !GV->isExternal()) {
+        markConstant(IV, &I, GV->getInitializer());
+        return;
+      }
+
+    // Transform load (constantexpr_GEP global, 0, ...) into the value loaded.
+    if (ConstantExpr *CE = dyn_cast<ConstantExpr>(Ptr))
+      if (CE->getOpcode() == Instruction::GetElementPtr)
+        if (ConstantPointerRef *G
+            = dyn_cast<ConstantPointerRef>(CE->getOperand(0)))
+          if (GlobalVariable *GV = dyn_cast<GlobalVariable>(G->getValue()))
+            if (GV->isConstant() && !GV->isExternal())
+              if (Constant *V =
+                  GetGEPGlobalInitializer(GV->getInitializer(), CE)) {
+                markConstant(IV, &I, V);
+                return;
+              }
+  }
+
+  // Otherwise we cannot say for certain what value this load will produce.
+  // Bail out.
+  markOverdefined(IV, &I);
+}
