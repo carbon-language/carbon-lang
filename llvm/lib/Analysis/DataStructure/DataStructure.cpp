@@ -784,18 +784,14 @@ void DSGraph::cloneInto(const DSGraph &G, ScalarMapTy &OldValMap,
   // Copy the scalar map... merging all of the global nodes...
   for (ScalarMapTy::const_iterator I = G.ScalarMap.begin(),
          E = G.ScalarMap.end(); I != E; ++I) {
-    DSNodeHandle &H = OldValMap[I->first];
     DSNodeHandle &MappedNode = OldNodeMap[I->second.getNode()];
-    H.setOffset(I->second.getOffset()+MappedNode.getOffset());
-    H.setNode(MappedNode.getNode());
+    DSNodeHandle &H = OldValMap[I->first];
+    H.mergeWith(DSNodeHandle(MappedNode.getNode(),
+                             I->second.getOffset()+MappedNode.getOffset()));
 
-    if (isa<GlobalValue>(I->first)) {  // Is this a global?
-      ScalarMapTy::iterator GVI = ScalarMap.find(I->first);
-      if (GVI != ScalarMap.end())     // Is the global value in this fn already?
-        GVI->second.mergeWith(H);
-      else
-        ScalarMap[I->first] = H;      // Add global pointer to this graph
-    }
+    // If this is a global, add the global to this fn or merge if already exists
+    if (isa<GlobalValue>(I->first) && &OldNodeMap != &ScalarMap)
+      ScalarMap[I->first].mergeWith(H);
   }
 
   if (!(CloneFlags & DontCloneCallNodes)) {
@@ -832,8 +828,7 @@ void DSGraph::cloneInto(const DSGraph &G, ScalarMapTy &OldValMap,
 ///
 void DSGraph::mergeInGraph(DSCallSite &CS, Function &F, const DSGraph &Graph,
                            unsigned CloneFlags) {
-  ScalarMapTy OldValMap;
-  ScalarMapTy *ScalarMap = &OldValMap;
+  ScalarMapTy OldValMap, *ScalarMap;
   DSNodeHandle RetVal;
 
   // If this is not a recursive call, clone the graph into this graph...
