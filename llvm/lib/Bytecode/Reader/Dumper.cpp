@@ -190,23 +190,23 @@ public:
     GlobalValue::LinkageTypes linkage 
   )
   {
-    std::cout << "    BLOCK: Function {\n";
-    std::cout << "      Linkage: " << linkage << "\n";
-    std::cout << "      Type: " << FType->getDescription() << "\n";
+    std::cout << "BLOCK: Function {\n";
+    std::cout << "  Linkage: " << linkage << "\n";
+    std::cout << "  Type: " << FType->getDescription() << "\n";
   }
 
   virtual void handleFunctionEnd(
     const Type* FType
   )
   {
-    std::cout << "    } END BLOCK: Function\n";
+    std::cout << "} END BLOCK: Function\n";
   }
 
   virtual void handleBasicBlockBegin(
     unsigned blocknum
   )
   {
-    std::cout << "      BLOCK: BasicBlock #" << blocknum << "{\n";
+    std::cout << "  BLOCK: BasicBlock #" << blocknum << "{\n";
   }
 
   virtual bool handleInstruction(
@@ -215,18 +215,18 @@ public:
     std::vector<unsigned>& Operands
   )
   {
-    std::cout << "        INST: OpCode=" 
+    std::cout << "    INST: OpCode=" 
 	      << Instruction::getOpcodeName(Opcode) << " Type=" 
 	      << iType->getDescription() << "\n";
     for ( unsigned i = 0; i < Operands.size(); ++i ) 
-      std::cout << "          Op#" << i << " Slot=" << Operands[i] << "\n";
+      std::cout << "      Op#" << i << " Slot=" << Operands[i] << "\n";
     
     return Instruction::isTerminator(Opcode); 
   }
 
   virtual void handleBasicBlockEnd(unsigned blocknum)
   {
-    std::cout << "      } END BLOCK: BasicBlock #" << blocknum << "{\n";
+    std::cout << "  } END BLOCK: BasicBlock #" << blocknum << "{\n";
   }
 
   virtual void handleGlobalConstantsBegin()
@@ -305,7 +305,8 @@ void BytecodeAnalyzer::DumpBytecode(
   BytecodeDumper TheHandler;
   AbstractBytecodeParser TheParser(&TheHandler);
   TheParser.ParseBytecode( Buf, Length, ModuleID );
-  TheParser.ParseAllFunctionBodies();
+  if ( bca.detailedResults )
+    TheParser.ParseAllFunctionBodies();
 }
 
 // vim: sw=2
