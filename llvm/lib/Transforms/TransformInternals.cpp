@@ -50,13 +50,12 @@ void ReplaceInstWithInst(BasicBlock::InstListType &BIL,
          "ReplaceInstWithInst: Instruction already inserted into basic block!");
 
   // Insert the new instruction into the basic block...
-  BI = BIL.insert(BI, I)+1;
+  BI = BIL.insert(BI, I)+1;  // Increment BI to point to instruction to delete
 
   // Replace all uses of the old instruction, and delete it.
   ReplaceInstWithValue(BIL, BI, I);
 
-  // Reexamine the instruction just inserted next time around the cleanup pass
-  // loop.
+  // Move BI back to point to the newly inserted instruction
   --BI;
 }
 
