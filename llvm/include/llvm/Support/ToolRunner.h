@@ -18,6 +18,7 @@
 #define TOOLRUNNER_H
 
 #include "Support/SystemUtils.h"
+#include <exception>
 #include <vector>
 
 namespace llvm {
@@ -30,11 +31,12 @@ class LLC;
 /// AbstractInterpreter instances if there is an error running a tool (e.g., LLC
 /// crashes) which prevents execution of the program.
 ///
-class ToolExecutionError {
+class ToolExecutionError : std::exception {
   std::string Message;
 public:
-  ToolExecutionError(const std::string &M) : Message(M) {}
-  const std::string getMessage() const { return Message; }
+  explicit ToolExecutionError(const std::string &M) : Message(M) {}
+  virtual ~ToolExecutionError() throw();
+  virtual const char* what() const throw() { return Message.c_str(); }
 };
 
 

@@ -54,7 +54,7 @@ int main(int argc, char **argv) {
   try {
     return D.run();
   } catch (ToolExecutionError &TEE) {
-    std::cerr << "Tool execution error: " << TEE.getMessage() << "\n";
+    std::cerr << "Tool execution error: " << TEE.what() << "\n";
     return 1;
   } catch (...) {
     std::cerr << "Whoops, an exception leaked out of bugpoint.  "

@@ -159,7 +159,7 @@ bool BugDriver::run() {
       CreatedOutput = true;
       std::cout << "Reference output is: " << ReferenceOutputFile << "\n";
     } catch (ToolExecutionError &TEE) {
-      std::cerr << TEE.getMessage();
+      std::cerr << TEE.what();
       if (Interpreter != cbe) {
         std::cerr << "*** There is a bug running the C backend.  Either debug"
                   << " it (use the -run-cbe bugpoint option), or fix the error"
@@ -183,7 +183,7 @@ bool BugDriver::run() {
       return debugMiscompilation();
     }
   } catch (ToolExecutionError &TEE) {
-    std::cerr << TEE.getMessage();
+    std::cerr << TEE.what();
     return debugCodeGeneratorCrash();
   }
 

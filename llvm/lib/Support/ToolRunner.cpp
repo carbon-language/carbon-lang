@@ -21,6 +21,8 @@
 #include <sstream>
 using namespace llvm;
 
+ToolExecutionError::~ToolExecutionError() throw() { }
+
 static void ProcessFailure(std::string ProgPath, const char** Args) {
   std::ostringstream OS;
   OS << "\nError running tool:\n ";
