@@ -2117,8 +2117,6 @@ Instruction *InstCombiner::visitSetCondInst(BinaryOperator &I) {
 
           if (LoBound) {
             Value *X = LHSI->getOperand(0);
-            std::cerr << "DIV FOLD: " << *LHSI;
-            std::cerr << "DIV FOLD: " << I << "\n";
             switch (I.getOpcode()) {
             default: assert(0 && "Unhandled setcc opcode!");
             case Instruction::SetEQ:
