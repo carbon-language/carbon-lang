@@ -21,6 +21,7 @@
 #include "llvm/Target/MRegisterInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "Support/Debug.h"
+#include "Support/STLExtras.h"
 #include "LiveIntervals.h"
 #include "PhysRegTracker.h"
 #include "VirtRegMap.h"
@@ -38,7 +39,7 @@ namespace {
         const TargetMachine* tm_;
         const MRegisterInfo* mri_;
         LiveIntervals* li_;
-        typedef std::list<LiveIntervals::Interval*> IntervalPtrs;
+        typedef std::list<Interval*> IntervalPtrs;
         IntervalPtrs unhandled_, fixed_, active_, inactive_, handled_;
 
         std::auto_ptr<PhysRegTracker> prt_;
@@ -122,7 +123,7 @@ namespace {
 //                     if (MRegisterInfo::isVirtualRegister(i->second) &&
 //                         (i->second == i2->second ||
 //                          mri_->areAliases(i->second, i2->second))) {
-//                         const LiveIntervals::Interval
+//                         const Interval
 //                             &in = li_->getInterval(i->second),
 //                             &in2 = li_->getInterval(i2->second);
 //                         if (in.overlaps(in2)) {
@@ -373,12 +374,12 @@ void RA::assignRegOrStackSlotAtInterval(IntervalPtrs::value_type cur)
     if (cur->weight <= minWeight) {
         DEBUG(std::cerr << "\t\t\tspilling(c): " << *cur << '\n';);
         int slot = vrm_->assignVirt2StackSlot(cur->reg);
-        std::vector<LiveIntervals::Interval*> added =
+        std::vector<Interval*> added =
             li_->addIntervalsForSpills(*cur, *vrm_, slot);
 
         // merge added with unhandled
-        std::vector<LiveIntervals::Interval*>::iterator addedIt = added.begin();
-        std::vector<LiveIntervals::Interval*>::iterator addedItEnd = added.end();
+        std::vector<Interval*>::iterator addedIt = added.begin();
+        std::vector<Interval*>::iterator addedItEnd = added.end();
         for (IntervalPtrs::iterator i = unhandled_.begin(), e = unhandled_.end();
              i != e && addedIt != addedItEnd; ++i) {
             if ((*i)->start() > (*addedIt)->start())
@@ -398,7 +399,7 @@ void RA::assignRegOrStackSlotAtInterval(IntervalPtrs::value_type cur)
     // otherwise we spill all intervals aliasing the register with
     // minimum weight, rollback to the interval with the earliest
     // start point and let the linear scan algorithm run again
-    std::vector<LiveIntervals::Interval*> added;
+    std::vector<Interval*> added;
     assert(MRegisterInfo::isPhysicalRegister(minReg) &&
            "did not choose a register to spill?");
     std::vector<bool> toSpill(mri_->getNumRegs(), false);
@@ -417,7 +418,7 @@ void RA::assignRegOrStackSlotAtInterval(IntervalPtrs::value_type cur)
             DEBUG(std::cerr << "\t\t\tspilling(a): " << **i << '\n');
             earliestStart = std::min(earliestStart, (*i)->start());
             int slot = vrm_->assignVirt2StackSlot((*i)->reg);
-            std::vector<LiveIntervals::Interval*> newIs =
+            std::vector<Interval*> newIs =
                 li_->addIntervalsForSpills(**i, *vrm_, slot);
             std::copy(newIs.begin(), newIs.end(), std::back_inserter(added));
             spilled.insert(reg);
@@ -432,7 +433,7 @@ void RA::assignRegOrStackSlotAtInterval(IntervalPtrs::value_type cur)
             DEBUG(std::cerr << "\t\t\tspilling(i): " << **i << '\n');
             earliestStart = std::min(earliestStart, (*i)->start());
             int slot = vrm_->assignVirt2StackSlot((*i)->reg);
-            std::vector<LiveIntervals::Interval*> newIs =
+            std::vector<Interval*> newIs =
                 li_->addIntervalsForSpills(**i, *vrm_, slot);
             std::copy(newIs.begin(), newIs.end(), std::back_inserter(added));
             spilled.insert(reg);
@@ -495,10 +496,10 @@ void RA::assignRegOrStackSlotAtInterval(IntervalPtrs::value_type cur)
         }
     }
 
-    std::sort(added.begin(), added.end(), LiveIntervals::StartPointPtrComp());
+    std::sort(added.begin(), added.end(), less_ptr<Interval>());
     // merge added with unhandled
-    std::vector<LiveIntervals::Interval*>::iterator addedIt = added.begin();
-    std::vector<LiveIntervals::Interval*>::iterator addedItEnd = added.end();
+    std::vector<Interval*>::iterator addedIt = added.begin();
+    std::vector<Interval*>::iterator addedItEnd = added.end();
     for (IntervalPtrs::iterator i = unhandled_.begin(), e = unhandled_.end();
          i != e && addedIt != addedItEnd; ++i) {
         if ((*i)->start() > (*addedIt)->start())

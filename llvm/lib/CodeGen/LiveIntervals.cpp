@@ -167,7 +167,7 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
         }
     }
 
-    intervals_.sort(StartPointComp());
+    intervals_.sort();
     DEBUG(std::cerr << "********** INTERVALS **********\n");
     DEBUG(std::copy(intervals_.begin(), intervals_.end(),
                     std::ostream_iterator<Interval>(std::cerr, "\n")));
@@ -186,10 +186,9 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
     return true;
 }
 
-std::vector<LiveIntervals::Interval*>
-LiveIntervals::addIntervalsForSpills(const Interval& li,
-                                     VirtRegMap& vrm,
-                                     int slot)
+std::vector<Interval*> LiveIntervals::addIntervalsForSpills(const Interval& li,
+                                                            VirtRegMap& vrm,
+                                                            int slot)
 {
     std::vector<Interval*> added;
 
@@ -554,7 +553,7 @@ bool LiveIntervals::overlapsAliases(const Interval& lhs,
     return false;
 }
 
-LiveIntervals::Interval& LiveIntervals::getOrCreateInterval(unsigned reg)
+Interval& LiveIntervals::getOrCreateInterval(unsigned reg)
 {
     Reg2IntervalMap::iterator r2iit = r2iMap_.lower_bound(reg);
     if (r2iit == r2iMap_.end() || r2iit->first != reg) {
@@ -565,13 +564,13 @@ LiveIntervals::Interval& LiveIntervals::getOrCreateInterval(unsigned reg)
     return *r2iit->second;
 }
 
-LiveIntervals::Interval::Interval(unsigned r)
+Interval::Interval(unsigned r)
     : reg(r),
       weight((MRegisterInfo::isPhysicalRegister(r) ?  HUGE_VAL : 0.0F))
 {
 }
 
-bool LiveIntervals::Interval::spilled() const
+bool Interval::spilled() const
 {
     return (weight == HUGE_VAL &&
             MRegisterInfo::isVirtualRegister(reg));
@@ -584,7 +583,7 @@ bool LiveIntervals::Interval::spilled() const
 // definition of the variable it represents. This is because slot 1 is
 // used (def slot) and spans up to slot 3 (store slot).
 //
-bool LiveIntervals::Interval::liveAt(unsigned index) const
+bool Interval::liveAt(unsigned index) const
 {
     Range dummy(index, index+1);
     Ranges::const_iterator r = std::upper_bound(ranges.begin(),
@@ -611,7 +610,7 @@ bool LiveIntervals::Interval::liveAt(unsigned index) const
 //
 // A->overlaps(C) should return false since we want to be able to join
 // A and C.
-bool LiveIntervals::Interval::overlaps(const Interval& other) const
+bool Interval::overlaps(const Interval& other) const
 {
     Ranges::const_iterator i = ranges.begin();
     Ranges::const_iterator ie = ranges.end();
@@ -649,7 +648,7 @@ bool LiveIntervals::Interval::overlaps(const Interval& other) const
     return false;
 }
 
-void LiveIntervals::Interval::addRange(unsigned start, unsigned end)
+void Interval::addRange(unsigned start, unsigned end)
 {
     assert(start < end && "Invalid range to add!");
     DEBUG(std::cerr << " +[" << start << ',' << end << ")");
@@ -663,7 +662,7 @@ void LiveIntervals::Interval::addRange(unsigned start, unsigned end)
     it = mergeRangesBackward(it);
 }
 
-void LiveIntervals::Interval::join(const LiveIntervals::Interval& other)
+void Interval::join(const Interval& other)
 {
     DEBUG(std::cerr << "\t\tjoining " << *this << " with " << other << '\n');
     Ranges::iterator cur = ranges.begin();
@@ -678,8 +677,7 @@ void LiveIntervals::Interval::join(const LiveIntervals::Interval& other)
     ++numJoins;
 }
 
-LiveIntervals::Interval::Ranges::iterator
-LiveIntervals::Interval::mergeRangesForward(Ranges::iterator it)
+Interval::Ranges::iterator Interval::mergeRangesForward(Ranges::iterator it)
 {
     Ranges::iterator n;
     while ((n = next(it)) != ranges.end()) {
@@ -691,8 +689,7 @@ LiveIntervals::Interval::mergeRangesForward(Ranges::iterator it)
     return it;
 }
 
-LiveIntervals::Interval::Ranges::iterator
-LiveIntervals::Interval::mergeRangesBackward(Ranges::iterator it)
+Interval::Ranges::iterator Interval::mergeRangesBackward(Ranges::iterator it)
 {
     while (it != ranges.begin()) {
         Ranges::iterator p = prior(it);
@@ -707,15 +704,14 @@ LiveIntervals::Interval::mergeRangesBackward(Ranges::iterator it)
     return it;
 }
 
-std::ostream& llvm::operator<<(std::ostream& os,
-                               const LiveIntervals::Interval& li)
+std::ostream& llvm::operator<<(std::ostream& os, const Interval& li)
 {
     os << "%reg" << li.reg << ',' << li.weight;
     if (li.empty())
         return os << "EMPTY";
 
     os << " = ";
-    for (LiveIntervals::Interval::Ranges::const_iterator
+    for (Interval::Ranges::const_iterator
              i = li.ranges.begin(), e = li.ranges.end(); i != e; ++i) {
         os << "[" << i->first << "," << i->second << ")";
     }

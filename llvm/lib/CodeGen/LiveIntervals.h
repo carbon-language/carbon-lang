@@ -30,62 +30,60 @@ namespace llvm {
     class MRegisterInfo;
     class VirtRegMap;
 
+    struct Interval {
+        typedef std::pair<unsigned, unsigned> Range;
+        typedef std::vector<Range> Ranges;
+        unsigned reg;   // the register of this interval
+        float weight;   // weight of this interval:
+                        //     (number of uses *10^loopDepth)
+        Ranges ranges;  // the ranges in which this register is live
+
+        explicit Interval(unsigned r);
+
+        bool empty() const { return ranges.empty(); }
+
+        bool spilled() const;
+
+        unsigned start() const {
+            assert(!empty() && "empty interval for register");
+            return ranges.front().first;
+        }
+
+        unsigned end() const {
+            assert(!empty() && "empty interval for register");
+            return ranges.back().second;
+        }
+
+        bool expiredAt(unsigned index) const {
+            return end() <= (index + 1);
+        }
+
+        bool liveAt(unsigned index) const;
+
+        bool overlaps(const Interval& other) const;
+
+        void addRange(unsigned start, unsigned end);
+
+        void join(const Interval& other);
+
+        bool operator<(const Interval& other) const {
+            return start() < other.start();
+        }
+
+        bool operator==(const Interval& other) const {
+            return reg == other.reg;
+        }
+
+    private:
+        Ranges::iterator mergeRangesForward(Ranges::iterator it);
+        Ranges::iterator mergeRangesBackward(Ranges::iterator it);
+    };
+
+    std::ostream& operator<<(std::ostream& os, const Interval& li);
+
     class LiveIntervals : public MachineFunctionPass
     {
     public:
-        struct Interval {
-            typedef std::pair<unsigned, unsigned> Range;
-            typedef std::vector<Range> Ranges;
-            unsigned reg;   // the register of this interval
-            float weight;   // weight of this interval (number of uses
-                            // * 10^loopDepth)
-            Ranges ranges;  // the ranges in which this register is live
-            Interval(unsigned r);
-
-            bool empty() const { return ranges.empty(); }
-
-            bool spilled() const;
-
-            unsigned start() const {
-                assert(!empty() && "empty interval for register");
-                return ranges.front().first;
-            }
-
-            unsigned end() const {
-                assert(!empty() && "empty interval for register");
-                return ranges.back().second;
-            }
-
-            bool expiredAt(unsigned index) const {
-                return end() <= (index + 1);
-            }
-
-            bool liveAt(unsigned index) const;
-
-            bool overlaps(const Interval& other) const;
-
-            void addRange(unsigned start, unsigned end);
-
-            void join(const Interval& other);
-
-        private:
-            Ranges::iterator mergeRangesForward(Ranges::iterator it);
-
-            Ranges::iterator mergeRangesBackward(Ranges::iterator it);
-        };
-
-        struct StartPointComp {
-            bool operator()(const Interval& lhs, const Interval& rhs) {
-                return lhs.ranges.front().first < rhs.ranges.front().first;
-            }
-        };
-
-        struct StartPointPtrComp {
-            bool operator()(const Interval* lhs, const Interval* rhs) {
-                return lhs->ranges.front().first < rhs->ranges.front().first;
-            }
-        };
-
         typedef std::list<Interval> Intervals;
 
     private:
@@ -204,14 +202,6 @@ namespace llvm {
 
         void printRegName(unsigned reg) const;
     };
-
-    inline bool operator==(const LiveIntervals::Interval& lhs,
-                           const LiveIntervals::Interval& rhs) {
-        return lhs.reg == rhs.reg;
-    }
-
-    std::ostream& operator<<(std::ostream& os,
-                             const LiveIntervals::Interval& li);
 
 } // End llvm namespace
 
