@@ -97,7 +97,7 @@ GetConstantValueAsSignedInt(const Value *V,
       if (Val < INT64_MAX)     // then safe to cast to signed
         return (int64_t)Val;
     }
-
+  
   isValidConstant = false;
   return 0;
 }
@@ -120,9 +120,14 @@ FoldGetElemChain(const InstructionNode* getElemInstrNode,
   MemAccessInst* getElemInst = (MemAccessInst*)
     getElemInstrNode->getInstruction();
   
-  // Initialize return values from the incoming instruction
+  // Return NULL if we don't fold any instructions in.
   Value* ptrVal = NULL;
-  assert(chainIdxVec.size() == 0);
+
+  // The incoming index vector must be for the user of the chain.
+  // Its leading index must be [0] and we insert indices after that.
+  assert(chainIdxVec.size() > 0 &&
+         isa<ConstantUInt>(chainIdxVec.front()) &&
+         cast<ConstantUInt>(chainIdxVec.front())->getValue() == 0);
   
   // Now chase the chain of getElementInstr instructions, if any.
   // Check for any array indices and stop there.
@@ -152,12 +157,15 @@ FoldGetElemChain(const InstructionNode* getElemInstrNode,
             }
       
       if (allStructureOffsets)
-        { // Get pointer value out of ptrChild and *prepend* its index vector
+        { // Get pointer value out of ptrChild.
           ptrVal = getElemInst->getPointerOperand();
-          chainIdxVec.insert(chainIdxVec.begin(),
+
+          // Insert its index vector at the start, but after the leading [0]
+          chainIdxVec.insert(chainIdxVec.begin()+1,
                              idxVec.begin()+1, idxVec.end());
+          
+          // Mark the folded node so no code is generated for it.
           ((InstructionNode*) ptrChild)->markFoldedIntoParent();
-                                        // mark so no code is generated
         }
       else // cannot fold this getElementPtr instr. or any further ones
         break;
