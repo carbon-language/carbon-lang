@@ -153,7 +153,9 @@ namespace {
 
     // Comparison operators...
     void visitSetCondInst(SetCondInst &I);
-    bool EmitComparisonGetSignedness(unsigned OpNum, Value *Op0, Value *Op1);
+    bool EmitComparisonGetSignedness(unsigned OpNum, Value *Op0, Value *Op1,
+                                     MachineBasicBlock *MBB,
+                                     MachineBasicBlock::iterator &MBBI);
 
     // Memory Instructions
     MachineInstr *doFPLoad(MachineBasicBlock *MBB,
@@ -204,6 +206,14 @@ namespace {
                                    MachineBasicBlock::iterator &IP,
                                    Value *Op0, Value *Op1,
                                    unsigned OperatorClass, unsigned TargetReg);
+
+    /// emitSetCCOperation - Common code shared between visitSetCondInst and
+    /// constant expression support.
+    void emitSetCCOperation(MachineBasicBlock *BB,
+                            MachineBasicBlock::iterator &IP,
+                            Value *Op0, Value *Op1, unsigned Opcode,
+                            unsigned TargetReg);
+ 
 
     /// copyConstantToRegister - Output the instructions required to put the
     /// specified constant into the specified register.
@@ -335,6 +345,16 @@ void ISel::copyConstantToRegister(MachineBasicBlock *MBB,
     case Instruction::Add:
       emitSimpleBinaryOperation(MBB, IP, CE->getOperand(0), CE->getOperand(1),
                                 Class, R);
+      return;
+
+    case Instruction::SetNE:
+    case Instruction::SetEQ:
+    case Instruction::SetLT:
+    case Instruction::SetGT:
+    case Instruction::SetLE:
+    case Instruction::SetGE:
+      emitSetCCOperation(MBB, IP, CE->getOperand(0), CE->getOperand(1),
+                         CE->getOpcode(), R);
       return;
 
     default:
@@ -571,13 +591,14 @@ static const unsigned SetCCOpcodeTab[2][6] = {
   {X86::SETEr, X86::SETNEr, X86::SETLr, X86::SETGEr, X86::SETGr, X86::SETLEr},
 };
 
-bool ISel::EmitComparisonGetSignedness(unsigned OpNum, Value *Op0, Value *Op1) {
-
+bool ISel::EmitComparisonGetSignedness(unsigned OpNum, Value *Op0, Value *Op1,
+                                       MachineBasicBlock *MBB,
+                                       MachineBasicBlock::iterator &IP) {
   // The arguments are already supposed to be of the same type.
   const Type *CompTy = Op0->getType();
   bool isSigned = CompTy->isSigned();
   unsigned Class = getClassB(CompTy);
-  unsigned Op0r = getReg(Op0);
+  unsigned Op0r = getReg(Op0, MBB, IP);
 
   // Special case handling of: cmp R, i
   if (Class == cByte || Class == cShort || Class == cInt)
@@ -588,34 +609,34 @@ bool ISel::EmitComparisonGetSignedness(unsigned OpNum, Value *Op0, Value *Op1) {
       Op1v &= (1ULL << (8 << Class)) - 1;
 
       switch (Class) {
-      case cByte:  BuildMI(BB, X86::CMPri8, 2).addReg(Op0r).addZImm(Op1v);break;
-      case cShort: BuildMI(BB, X86::CMPri16,2).addReg(Op0r).addZImm(Op1v);break;
-      case cInt:   BuildMI(BB, X86::CMPri32,2).addReg(Op0r).addZImm(Op1v);break;
+      case cByte:  BMI(MBB,IP, X86::CMPri8, 2).addReg(Op0r).addZImm(Op1v);break;
+      case cShort: BMI(MBB,IP, X86::CMPri16,2).addReg(Op0r).addZImm(Op1v);break;
+      case cInt:   BMI(MBB,IP, X86::CMPri32,2).addReg(Op0r).addZImm(Op1v);break;
       default:
         assert(0 && "Invalid class!");
       }
       return isSigned;
     }
 
-  unsigned Op1r = getReg(Op1);
+  unsigned Op1r = getReg(Op1, MBB, IP);
   switch (Class) {
   default: assert(0 && "Unknown type class!");
     // Emit: cmp <var1>, <var2> (do the comparison).  We can
     // compare 8-bit with 8-bit, 16-bit with 16-bit, 32-bit with
     // 32-bit.
   case cByte:
-    BuildMI(BB, X86::CMPrr8, 2).addReg(Op0r).addReg(Op1r);
+    BMI(MBB, IP, X86::CMPrr8, 2).addReg(Op0r).addReg(Op1r);
     break;
   case cShort:
-    BuildMI(BB, X86::CMPrr16, 2).addReg(Op0r).addReg(Op1r);
+    BMI(MBB, IP, X86::CMPrr16, 2).addReg(Op0r).addReg(Op1r);
     break;
   case cInt:
-    BuildMI(BB, X86::CMPrr32, 2).addReg(Op0r).addReg(Op1r);
+    BMI(MBB, IP, X86::CMPrr32, 2).addReg(Op0r).addReg(Op1r);
     break;
   case cFP:
-    BuildMI(BB, X86::FpUCOM, 2).addReg(Op0r).addReg(Op1r);
-    BuildMI(BB, X86::FNSTSWr8, 0);
-    BuildMI(BB, X86::SAHF, 1);
+    BMI(MBB, IP, X86::FpUCOM, 2).addReg(Op0r).addReg(Op1r);
+    BMI(MBB, IP, X86::FNSTSWr8, 0);
+    BMI(MBB, IP, X86::SAHF, 1);
     isSigned = false;   // Compare with unsigned operators
     break;
 
@@ -624,9 +645,9 @@ bool ISel::EmitComparisonGetSignedness(unsigned OpNum, Value *Op0, Value *Op1) {
       unsigned LoTmp = makeAnotherReg(Type::IntTy);
       unsigned HiTmp = makeAnotherReg(Type::IntTy);
       unsigned FinalTmp = makeAnotherReg(Type::IntTy);
-      BuildMI(BB, X86::XORrr32, 2, LoTmp).addReg(Op0r).addReg(Op1r);
-      BuildMI(BB, X86::XORrr32, 2, HiTmp).addReg(Op0r+1).addReg(Op1r+1);
-      BuildMI(BB, X86::ORrr32,  2, FinalTmp).addReg(LoTmp).addReg(HiTmp);
+      BMI(MBB, IP, X86::XORrr32, 2, LoTmp).addReg(Op0r).addReg(Op1r);
+      BMI(MBB, IP, X86::XORrr32, 2, HiTmp).addReg(Op0r+1).addReg(Op1r+1);
+      BMI(MBB, IP, X86::ORrr32,  2, FinalTmp).addReg(LoTmp).addReg(HiTmp);
       break;  // Allow the sete or setne to be generated from flags set by OR
     } else {
       // Emit a sequence of code which compares the high and low parts once
@@ -642,13 +663,13 @@ bool ISel::EmitComparisonGetSignedness(unsigned OpNum, Value *Op0, Value *Op1) {
       // classes!  Until then, hardcode registers so that we can deal with their
       // aliases (because we don't have conditional byte moves).
       //
-      BuildMI(BB, X86::CMPrr32, 2).addReg(Op0r).addReg(Op1r);
-      BuildMI(BB, SetCCOpcodeTab[0][OpNum], 0, X86::AL);
-      BuildMI(BB, X86::CMPrr32, 2).addReg(Op0r+1).addReg(Op1r+1);
-      BuildMI(BB, SetCCOpcodeTab[isSigned][OpNum], 0, X86::BL);
-      BuildMI(BB, X86::IMPLICIT_DEF, 0, X86::BH);
-      BuildMI(BB, X86::IMPLICIT_DEF, 0, X86::AH);
-      BuildMI(BB, X86::CMOVErr16, 2, X86::BX).addReg(X86::BX).addReg(X86::AX);
+      BMI(MBB, IP, X86::CMPrr32, 2).addReg(Op0r).addReg(Op1r);
+      BMI(MBB, IP, SetCCOpcodeTab[0][OpNum], 0, X86::AL);
+      BMI(MBB, IP, X86::CMPrr32, 2).addReg(Op0r+1).addReg(Op1r+1);
+      BMI(MBB, IP, SetCCOpcodeTab[isSigned][OpNum], 0, X86::BL);
+      BMI(MBB, IP, X86::IMPLICIT_DEF, 0, X86::BH);
+      BMI(MBB, IP, X86::IMPLICIT_DEF, 0, X86::AH);
+      BMI(MBB, IP, X86::CMOVErr16, 2, X86::BX).addReg(X86::BX).addReg(X86::AX);
       // NOTE: visitSetCondInst knows that the value is dumped into the BL
       // register at this point for long values...
       return isSigned;
@@ -664,20 +685,33 @@ bool ISel::EmitComparisonGetSignedness(unsigned OpNum, Value *Op0, Value *Op1) {
 void ISel::visitSetCondInst(SetCondInst &I) {
   if (canFoldSetCCIntoBranch(&I)) return;  // Fold this into a branch...
 
-  unsigned OpNum = getSetCCNumber(I.getOpcode());
   unsigned DestReg = getReg(I);
-  bool isSigned = EmitComparisonGetSignedness(OpNum, I.getOperand(0),
-                                              I.getOperand(1));
+  MachineBasicBlock::iterator MII = BB->end();
+  emitSetCCOperation(BB, MII, I.getOperand(0), I.getOperand(1), I.getOpcode(),
+                     DestReg);
+}
 
-  if (getClassB(I.getOperand(0)->getType()) != cLong || OpNum < 2) {
+/// emitSetCCOperation - Common code shared between visitSetCondInst and
+/// constant expression support.
+void ISel::emitSetCCOperation(MachineBasicBlock *MBB,
+                              MachineBasicBlock::iterator &IP,
+                              Value *Op0, Value *Op1, unsigned Opcode,
+                              unsigned TargetReg) {
+  unsigned OpNum = getSetCCNumber(Opcode);
+  bool isSigned = EmitComparisonGetSignedness(OpNum, Op0, Op1, MBB, IP);
+
+  if (getClassB(Op0->getType()) != cLong || OpNum < 2) {
     // Handle normal comparisons with a setcc instruction...
-    BuildMI(BB, SetCCOpcodeTab[isSigned][OpNum], 0, DestReg);
+    BMI(MBB, IP, SetCCOpcodeTab[isSigned][OpNum], 0, TargetReg);
   } else {
     // Handle long comparisons by copying the value which is already in BL into
     // the register we want...
-    BuildMI(BB, X86::MOVrr8, 1, DestReg).addReg(X86::BL);
+    BMI(MBB, IP, X86::MOVrr8, 1, TargetReg).addReg(X86::BL);
   }
 }
+
+
+
 
 /// promote32 - Emit instructions to turn a narrow operand into a 32-bit-wide
 /// operand, in the specified target register.
@@ -797,8 +831,9 @@ void ISel::visitBranchInst(BranchInst &BI) {
   }
 
   unsigned OpNum = getSetCCNumber(SCI->getOpcode());
+  MachineBasicBlock::iterator MII = BB->end();
   bool isSigned = EmitComparisonGetSignedness(OpNum, SCI->getOperand(0),
-                                              SCI->getOperand(1));
+                                              SCI->getOperand(1), BB, MII);
   
   // LLVM  -> X86 signed  X86 unsigned
   // -----    ----------  ------------
