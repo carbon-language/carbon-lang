@@ -105,6 +105,8 @@ bool GCSE::runOnFunction(Function *F) {
 //
 void GCSE::ReplaceInstWithInst(Instruction *First, BasicBlock::iterator SI) {
   Instruction *Second = *SI;
+  
+  //cerr << "DEL " << (void*)Second << Second;
 
   // Add the first instruction back to the worklist
   WorkList.insert(First);
@@ -127,9 +129,9 @@ void GCSE::ReplaceInstWithInst(Instruction *First, BasicBlock::iterator SI) {
 //
 void GCSE::CommonSubExpressionFound(Instruction *I, Instruction *Other) {
   // I has already been removed from the worklist, Other needs to be.
-  assert(WorkList.count(I) == 0 && WorkList.count(Other) &&
-         "I in worklist or Other not!");
-  WorkList.erase(Other);
+  assert(I != Other && WorkList.count(I) == 0 && "I shouldn't be on worklist!");
+
+  WorkList.erase(Other); // Other may not actually be on the worklist anymore...
 
   // Handle the easy case, where both instructions are in the same basic block
   BasicBlock *BB1 = I->getParent(), *BB2 = Other->getParent();
