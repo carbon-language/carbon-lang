@@ -65,7 +65,14 @@ public:
   
   /// removeIncomingValue - Remove an incoming value.  This is useful if a
   /// predecessor basic block is deleted.  The value removed is returned.
-  Value *removeIncomingValue(const BasicBlock *BB);
+  ///
+  /// If the last incoming value for a PHI node is removed (and DeletePHIIfEmpty
+  /// is true), the PHI node is destroyed and any uses of it are replaced with
+  /// dummy values.  The only time there should be zero incoming values to a PHI
+  /// node is when the block is dead, so this strategy is sound.
+  ///
+  Value *removeIncomingValue(const BasicBlock *BB,
+                             bool DeletePHIIfEmpty = true);
 
   /// getBasicBlockIndex - Return the first index of the specified basic 
   /// block in the value list for this PHI.  Returns -1 if no instance.
