@@ -22,22 +22,23 @@
 Statistic<> NumInitBytes("lli", "Number of bytes of global vars initialized");
 
 ExecutionEngine::~ExecutionEngine() {
-  delete &CurMod;
+  delete MP;
 }
 
 /// FIXME: document
 ///
-ExecutionEngine *ExecutionEngine::create(Module *M, bool ForceInterpreter,
+ExecutionEngine *ExecutionEngine::create(ModuleProvider *MP, 
+                                         bool ForceInterpreter,
                                          bool TraceMode) {
   ExecutionEngine *EE = 0;
 
   // If there is nothing that is forcing us to use the interpreter, make a JIT.
   if (!ForceInterpreter && !TraceMode)
-    EE = VM::create(M);
+    EE = VM::create(MP);
 
   // If we can't make a JIT, make an interpreter instead.
   if (EE == 0)
-    EE = Interpreter::create(M, TraceMode);
+    EE = Interpreter::create(MP->releaseModule(), TraceMode);
   return EE;
 }
 
