@@ -21,7 +21,7 @@ namespace {
 class SparcAsmPrinter {
   ostream &Out;
   SlotCalculator Table;
-  UltraSparc &Target;
+  const UltraSparc &Target;
 
   enum Sections {
     Unknown,
@@ -30,7 +30,7 @@ class SparcAsmPrinter {
     ReadOnly,
   } CurSection;
 public:
-  inline SparcAsmPrinter(ostream &o, const Module *M, UltraSparc &t)
+  inline SparcAsmPrinter(ostream &o, const Module *M, const UltraSparc &t)
     : Out(o), Table(SlotCalculator(M, true)), Target(t), CurSection(Unknown) {
     emitModule(M);
   }
@@ -230,6 +230,6 @@ void SparcAsmPrinter::emitModule(const Module *M) {
 // method. The specified method must have been compiled before this may be
 // used.
 //
-void UltraSparc::emitAssembly(const Module *M, ostream &Out) {
+void UltraSparc::emitAssembly(const Module *M, ostream &Out) const {
   SparcAsmPrinter Print(Out, M, *this);
 }

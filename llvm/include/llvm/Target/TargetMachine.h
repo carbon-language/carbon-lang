@@ -82,7 +82,7 @@ public:
   // method. The specified method must have been compiled before this may be
   // used.
   //
-  virtual void emitAssembly(const Module *M, ostream &OutStr) = 0;
+  virtual void emitAssembly(const Module *M, ostream &OutStr) const = 0;
 };
 
 #endif

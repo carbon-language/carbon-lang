@@ -1082,7 +1082,7 @@ public:
   // module. The specified module must have been compiled before this may be
   // used.
   //
-  virtual void emitAssembly(const Module *M, ostream &OutStr);
+  virtual void emitAssembly(const Module *M, ostream &OutStr) const;
 };
 
 
