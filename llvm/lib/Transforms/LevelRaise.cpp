@@ -62,6 +62,28 @@ NumVarargCallChanges("raise", "Number of vararg call peepholes");
   do { PRINT_PEEPHOLE(ID, 0, I1); PRINT_PEEPHOLE(ID, 1, I2); \
        PRINT_PEEPHOLE(ID, 2, I3); PRINT_PEEPHOLE(ID, 3, I4); } while (0)
 
+namespace {
+  struct RPR : public FunctionPass {
+    virtual bool runOnFunction(Function &F);
+
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.setPreservesCFG();
+      AU.addRequired<TargetData>();
+    }
+
+  private:
+    bool DoRaisePass(Function &F);
+    bool PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI);
+  };
+
+  RegisterOpt<RPR> X("raise", "Raise Pointer References");
+}
+
+Pass *createRaisePointerReferencesPass() {
+  return new RPR();
+}
+
+
 
 // isReinterpretingCast - Return true if the cast instruction specified will
 // cause the operand to be "reinterpreted".  A value is reinterpreted if the
@@ -80,7 +102,8 @@ static inline bool isReinterpretingCast(const CastInst *CI) {
 //       %t2 = cast <eltype> * %t3 to {<...>}*
 //
 static bool HandleCastToPointer(BasicBlock::iterator BI,
-                                const PointerType *DestPTy) {
+                                const PointerType *DestPTy,
+                                const TargetData &TD) {
   CastInst &CI = cast<CastInst>(*BI);
   if (CI.use_empty()) return false;
 
@@ -101,7 +124,7 @@ static bool HandleCastToPointer(BasicBlock::iterator BI,
 
   std::vector<Value*> Indices;
   Value *Src = CI.getOperand(0);
-  const Type *Result = ConvertableToGEP(DestPTy, Src, Indices, &BI);
+  const Type *Result = ConvertableToGEP(DestPTy, Src, Indices, TD, &BI);
   if (Result == 0) return false;  // Not convertable...
 
   PRINT_PEEPHOLE2("cast-add-to-gep:in", Src, CI);
@@ -155,7 +178,8 @@ static bool HandleCastToPointer(BasicBlock::iterator BI,
 //       %t2 = cast <eltype> * %t3 to {<...>}*
 //
 static bool PeepholeOptimizeAddCast(BasicBlock *BB, BasicBlock::iterator &BI,
-                                    Value *AddOp1, CastInst *AddOp2) {
+                                    Value *AddOp1, CastInst *AddOp2,
+                                    const TargetData &TD) {
   const CompositeType *CompTy;
   Value *OffsetVal = AddOp2->getOperand(0);
   Value *SrcPtr = 0;  // Of type pointer to struct...
@@ -172,7 +196,7 @@ static bool PeepholeOptimizeAddCast(BasicBlock *BB, BasicBlock::iterator &BI,
     return false;
 
   std::vector<Value*> Indices;
-  if (!ConvertableToGEP(SrcPtr->getType(), OffsetVal, Indices, &BI))
+  if (!ConvertableToGEP(SrcPtr->getType(), OffsetVal, Indices, TD, &BI))
     return false;  // Not convertable... perhaps next time
 
   if (getPointedToComposite(AddOp1->getType())) {  // case 1
@@ -190,8 +214,9 @@ static bool PeepholeOptimizeAddCast(BasicBlock *BB, BasicBlock::iterator &BI,
   return true;
 }
 
-static bool PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
+bool RPR::PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
   Instruction *I = BI;
+  const TargetData &TD = getAnalysis<TargetData>();
 
   if (CastInst *CI = dyn_cast<CastInst>(I)) {
     Value       *Src    = CI->getOperand(0);
@@ -230,13 +255,13 @@ static bool PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
       // destination type of the cast...
       //
       ConvertedTypes[CI] = CI->getType();  // Make sure the cast doesn't change
-      if (ExpressionConvertableToType(Src, DestTy, ConvertedTypes)) {
+      if (ExpressionConvertableToType(Src, DestTy, ConvertedTypes, TD)) {
         PRINT_PEEPHOLE3("CAST-SRC-EXPR-CONV:in ", Src, CI, BB->getParent());
           
         DEBUG(cerr << "\nCONVERTING SRC EXPR TYPE:\n");
         { // ValueMap must be destroyed before function verified!
           ValueMapCache ValueMap;
-          Value *E = ConvertExpressionToType(Src, DestTy, ValueMap);
+          Value *E = ConvertExpressionToType(Src, DestTy, ValueMap, TD);
 
           if (Constant *CPV = dyn_cast<Constant>(E))
             CI->replaceAllUsesWith(CPV);
@@ -258,13 +283,13 @@ static bool PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
       ConvertedTypes.clear();
       // Make sure the source doesn't change type
       ConvertedTypes[Src] = Src->getType();
-      if (ValueConvertableToType(CI, Src->getType(), ConvertedTypes)) {
+      if (ValueConvertableToType(CI, Src->getType(), ConvertedTypes, TD)) {
         PRINT_PEEPHOLE3("CAST-DEST-EXPR-CONV:in ", Src, CI, BB->getParent());
 
         DEBUG(cerr << "\nCONVERTING EXPR TYPE:\n");
         { // ValueMap must be destroyed before function verified!
           ValueMapCache ValueMap;
-          ConvertValueToNewType(CI, Src, ValueMap);  // This will delete CI!
+          ConvertValueToNewType(CI, Src, ValueMap, TD);  // This will delete CI!
         }
 
         PRINT_PEEPHOLE1("CAST-DEST-EXPR-CONV:out", Src);
@@ -283,7 +308,7 @@ static bool PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
     // so, convert the add into a getelementptr instruction...
     //
     if (const PointerType *DestPTy = dyn_cast<PointerType>(DestTy)) {
-      if (HandleCastToPointer(BI, DestPTy)) {
+      if (HandleCastToPointer(BI, DestPTy, TD)) {
         BI = BB->begin();  // Rescan basic block.  BI might be invalidated.
         ++NumGEPInstFormed;
         return true;
@@ -454,7 +479,7 @@ static bool PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
              isa<CastInst>(I->getOperand(1))) {
 
     if (PeepholeOptimizeAddCast(BB, BI, I->getOperand(0),
-                                cast<CastInst>(I->getOperand(1)))) {
+                                cast<CastInst>(I->getOperand(1)), TD)) {
       ++NumGEPInstFormed;
       return true;
     }
@@ -500,7 +525,7 @@ static bool PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
 
 
 
-static bool DoRaisePass(Function &F) {
+bool RPR::DoRaisePass(Function &F) {
   bool Changed = false;
   for (Function::iterator BB = F.begin(), BBE = F.end(); BB != BBE; ++BB)
     for (BasicBlock::iterator BI = BB->begin(); BI != BB->end();) {
@@ -520,17 +545,14 @@ static bool DoRaisePass(Function &F) {
 }
 
 
-// RaisePointerReferences::doit - Raise a function representation to a higher
-// level.
-//
-static bool doRPR(Function &F) {
+// runOnFunction - Raise a function representation to a higher level.
+bool RPR::runOnFunction(Function &F) {
   DEBUG(cerr << "\n\n\nStarting to work on Function '" << F.getName() << "'\n");
 
   // Insert casts for all incoming pointer pointer values that are treated as
   // arrays...
   //
   bool Changed = false, LocalChange;
-  
 
   // If the StartInst option was specified, then Peephole optimize that
   // instruction first if it occurs in this function.
@@ -559,24 +581,3 @@ static bool doRPR(Function &F) {
 
   return Changed;
 }
-
-namespace {
-  struct RaisePointerReferences : public FunctionPass {
-
-    // FIXME: constructor should save and use target data here!!
-    RaisePointerReferences(const TargetData &TD) {}
-
-    virtual bool runOnFunction(Function &F) { return doRPR(F); }
-
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-      AU.setPreservesCFG();
-    }
-  };
-}
-
-Pass *createRaisePointerReferencesPass(const TargetData &TD) {
-  return new RaisePointerReferences(TD);
-}
-
-static RegisterOpt<RaisePointerReferences>
-X("raise", "Raise Pointer References", createRaisePointerReferencesPass);

@@ -11,15 +11,9 @@
 #include "llvm/Function.h"
 #include "llvm/iOther.h"
 
-// TargetData Hack: Eventually we will have annotations given to us by the
-// backend so that we know stuff about type size and alignments.  For now
-// though, just use this, because it happens to match the model that GCC uses.
-//
-const TargetData TD("LevelRaise: Should be GCC though!");
-
-
 static const Type *getStructOffsetStep(const StructType *STy, uint64_t &Offset,
-                                       std::vector<Value*> &Indices) {
+                                       std::vector<Value*> &Indices,
+                                       const TargetData &TD) {
   assert(Offset < TD.getTypeSize(STy) && "Offset not in composite!");
   const StructLayout *SL = TD.getStructLayout(STy);
 
@@ -52,7 +46,7 @@ static const Type *getStructOffsetStep(const StructType *STy, uint64_t &Offset,
 //
 const Type *getStructOffsetType(const Type *Ty, unsigned &Offset,
                                 std::vector<Value*> &Indices,
-                                bool StopEarly) {
+                                const TargetData &TD, bool StopEarly) {
   if (Offset == 0 && StopEarly && !Indices.empty())
     return Ty;    // Return the leaf type
 
@@ -60,7 +54,7 @@ const Type *getStructOffsetType(const Type *Ty, unsigned &Offset,
   const Type *NextType;
   if (const StructType *STy = dyn_cast<StructType>(Ty)) {
     ThisOffset = Offset;
-    NextType = getStructOffsetStep(STy, ThisOffset, Indices);
+    NextType = getStructOffsetStep(STy, ThisOffset, Indices, TD);
   } else if (const ArrayType *ATy = dyn_cast<ArrayType>(Ty)) {
     assert(Offset < TD.getTypeSize(ATy) && "Offset not in composite!");
 
@@ -75,7 +69,7 @@ const Type *getStructOffsetType(const Type *Ty, unsigned &Offset,
 
   unsigned SubOffs = Offset - ThisOffset;
   const Type *LeafTy = getStructOffsetType(NextType, SubOffs,
-                                           Indices, StopEarly);
+                                           Indices, TD, StopEarly);
   Offset = ThisOffset + SubOffs;
   return LeafTy;
 }
@@ -87,6 +81,7 @@ const Type *getStructOffsetType(const Type *Ty, unsigned &Offset,
 //
 const Type *ConvertableToGEP(const Type *Ty, Value *OffsetVal,
                              std::vector<Value*> &Indices,
+                             const TargetData &TD,
                              BasicBlock::iterator *BI) {
   const CompositeType *CompTy = dyn_cast<CompositeType>(Ty);
   if (CompTy == 0) return 0;
@@ -116,7 +111,7 @@ const Type *ConvertableToGEP(const Type *Ty, Value *OffsetVal,
     if (const StructType *StructTy = dyn_cast<StructType>(CompTy)) {
       // Step into the appropriate element of the structure...
       uint64_t ActualOffset = (Offset < 0) ? 0 : (uint64_t)Offset;
-      NextTy = getStructOffsetStep(StructTy, ActualOffset, Indices);
+      NextTy = getStructOffsetStep(StructTy, ActualOffset, Indices, TD);
       Offset -= ActualOffset;
     } else {
       const Type *ElTy = cast<SequentialType>(CompTy)->getElementType();

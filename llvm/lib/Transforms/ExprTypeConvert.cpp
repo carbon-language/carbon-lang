@@ -18,10 +18,11 @@
 using std::cerr;
 
 static bool OperandConvertableToType(User *U, Value *V, const Type *Ty,
-                                     ValueTypeCache &ConvertedTypes);
+                                     ValueTypeCache &ConvertedTypes,
+                                     const TargetData &TD);
 
 static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
-                                 ValueMapCache &VMC);
+                                 ValueMapCache &VMC, const TargetData &TD);
 
 // Peephole Malloc instructions: we take a look at the use chain of the
 // malloc instruction, and try to find out if the following conditions hold:
@@ -35,7 +36,8 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
 // element.  TODO: This comment is out of date WRT arrays
 //
 static bool MallocConvertableToType(MallocInst *MI, const Type *Ty,
-                                    ValueTypeCache &CTMap) {
+                                    ValueTypeCache &CTMap,
+                                    const TargetData &TD) {
   if (!isa<PointerType>(Ty)) return false;   // Malloc always returns pointers
 
   // Deal with the type to allocate, not the pointer type...
@@ -73,7 +75,8 @@ static bool MallocConvertableToType(MallocInst *MI, const Type *Ty,
 
 static Instruction *ConvertMallocToType(MallocInst *MI, const Type *Ty,
                                         const std::string &Name,
-                                        ValueMapCache &VMC){
+                                        ValueMapCache &VMC,
+                                        const TargetData &TD){
   BasicBlock *BB = MI->getParent();
   BasicBlock::iterator It = BB->end();
 
@@ -131,7 +134,7 @@ static Instruction *ConvertMallocToType(MallocInst *MI, const Type *Ty,
 
 // ExpressionConvertableToType - Return true if it is possible
 bool ExpressionConvertableToType(Value *V, const Type *Ty,
-                                 ValueTypeCache &CTMap) {
+                                 ValueTypeCache &CTMap, const TargetData &TD) {
   // Expression type must be holdable in a register.
   if (!Ty->isFirstClassType())
     return false;
@@ -172,8 +175,8 @@ bool ExpressionConvertableToType(Value *V, const Type *Ty,
   case Instruction::Add:
   case Instruction::Sub:
     if (!Ty->isInteger() && !Ty->isFloatingPoint()) return false;
-    if (!ExpressionConvertableToType(I->getOperand(0), Ty, CTMap) ||
-        !ExpressionConvertableToType(I->getOperand(1), Ty, CTMap))
+    if (!ExpressionConvertableToType(I->getOperand(0), Ty, CTMap, TD) ||
+        !ExpressionConvertableToType(I->getOperand(1), Ty, CTMap, TD))
       return false;
     break;
   case Instruction::Shr:
@@ -182,27 +185,27 @@ bool ExpressionConvertableToType(Value *V, const Type *Ty,
     // FALL THROUGH
   case Instruction::Shl:
     if (!Ty->isInteger()) return false;
-    if (!ExpressionConvertableToType(I->getOperand(0), Ty, CTMap))
+    if (!ExpressionConvertableToType(I->getOperand(0), Ty, CTMap, TD))
       return false;
     break;
 
   case Instruction::Load: {
     LoadInst *LI = cast<LoadInst>(I);
     if (!ExpressionConvertableToType(LI->getPointerOperand(),
-                                     PointerType::get(Ty), CTMap))
+                                     PointerType::get(Ty), CTMap, TD))
       return false;
     break;                                     
   }
   case Instruction::PHINode: {
     PHINode *PN = cast<PHINode>(I);
     for (unsigned i = 0; i < PN->getNumIncomingValues(); ++i)
-      if (!ExpressionConvertableToType(PN->getIncomingValue(i), Ty, CTMap))
+      if (!ExpressionConvertableToType(PN->getIncomingValue(i), Ty, CTMap, TD))
         return false;
     break;
   }
 
   case Instruction::Malloc:
-    if (!MallocConvertableToType(cast<MallocInst>(I), Ty, CTMap))
+    if (!MallocConvertableToType(cast<MallocInst>(I), Ty, CTMap, TD))
       return false;
     break;
 
@@ -258,10 +261,10 @@ bool ExpressionConvertableToType(Value *V, const Type *Ty,
       // the appropriate size... if so, allow it.
       //
       std::vector<Value*> Indices;
-      const Type *ElTy = ConvertableToGEP(PTy, I->getOperand(1), Indices);
+      const Type *ElTy = ConvertableToGEP(PTy, I->getOperand(1), Indices, TD);
       if (ElTy == PVTy) {
         if (!ExpressionConvertableToType(I->getOperand(0),
-                                         PointerType::get(ElTy), CTMap))
+                                         PointerType::get(ElTy), CTMap, TD))
           return false;  // Can't continue, ExConToTy might have polluted set!
         break;
       }
@@ -278,7 +281,7 @@ bool ExpressionConvertableToType(Value *V, const Type *Ty,
         TD.getTypeSize(PTy->getElementType()) == 
         TD.getTypeSize(GEP->getType()->getElementType())) {
       const PointerType *NewSrcTy = PointerType::get(PVTy);
-      if (!ExpressionConvertableToType(I->getOperand(0), NewSrcTy, CTMap))
+      if (!ExpressionConvertableToType(I->getOperand(0), NewSrcTy, CTMap, TD))
         return false;
       break;
     }
@@ -300,7 +303,7 @@ bool ExpressionConvertableToType(Value *V, const Type *Ty,
     const FunctionType *NewTy =
       FunctionType::get(Ty, ArgTys, FT->isVarArg());
     if (!ExpressionConvertableToType(I->getOperand(0),
-                                     PointerType::get(NewTy), CTMap))
+                                     PointerType::get(NewTy), CTMap, TD))
       return false;
     break;
   }
@@ -313,14 +316,15 @@ bool ExpressionConvertableToType(Value *V, const Type *Ty,
   // recursion.
   //
   for (Value::use_iterator It = I->use_begin(), E = I->use_end(); It != E; ++It)
-    if (!OperandConvertableToType(*It, I, Ty, CTMap))
+    if (!OperandConvertableToType(*It, I, Ty, CTMap, TD))
       return false;
 
   return true;
 }
 
 
-Value *ConvertExpressionToType(Value *V, const Type *Ty, ValueMapCache &VMC) {
+Value *ConvertExpressionToType(Value *V, const Type *Ty, ValueMapCache &VMC,
+                               const TargetData &TD) {
   if (V->getType() == Ty) return V;  // Already where we need to be?
 
   ValueMapCache::ExprMapTy::iterator VMCI = VMC.ExprMap.find(V);
@@ -373,8 +377,8 @@ Value *ConvertExpressionToType(Value *V, const Type *Ty, ValueMapCache &VMC) {
                                  Dummy, Dummy, Name);
     VMC.ExprMap[I] = Res;   // Add node to expression eagerly
 
-    Res->setOperand(0, ConvertExpressionToType(I->getOperand(0), Ty, VMC));
-    Res->setOperand(1, ConvertExpressionToType(I->getOperand(1), Ty, VMC));
+    Res->setOperand(0, ConvertExpressionToType(I->getOperand(0), Ty, VMC, TD));
+    Res->setOperand(1, ConvertExpressionToType(I->getOperand(1), Ty, VMC, TD));
     break;
 
   case Instruction::Shl:
@@ -382,7 +386,7 @@ Value *ConvertExpressionToType(Value *V, const Type *Ty, ValueMapCache &VMC) {
     Res = new ShiftInst(cast<ShiftInst>(I)->getOpcode(), Dummy,
                         I->getOperand(1), Name);
     VMC.ExprMap[I] = Res;
-    Res->setOperand(0, ConvertExpressionToType(I->getOperand(0), Ty, VMC));
+    Res->setOperand(0, ConvertExpressionToType(I->getOperand(0), Ty, VMC, TD));
     break;
 
   case Instruction::Load: {
@@ -391,7 +395,7 @@ Value *ConvertExpressionToType(Value *V, const Type *Ty, ValueMapCache &VMC) {
     Res = new LoadInst(Constant::getNullValue(PointerType::get(Ty)), Name);
     VMC.ExprMap[I] = Res;
     Res->setOperand(0, ConvertExpressionToType(LI->getPointerOperand(),
-                                               PointerType::get(Ty), VMC));
+                                               PointerType::get(Ty), VMC, TD));
     assert(Res->getOperand(0)->getType() == PointerType::get(Ty));
     assert(Ty == Res->getType());
     assert(Res->getType()->isFirstClassType() && "Load of structure or array!");
@@ -408,7 +412,7 @@ Value *ConvertExpressionToType(Value *V, const Type *Ty, ValueMapCache &VMC) {
       Value *OldVal = OldPN->getIncomingValue(0);
       ValueHandle OldValHandle(VMC, OldVal);
       OldPN->removeIncomingValue(BB, false);
-      Value *V = ConvertExpressionToType(OldVal, Ty, VMC);
+      Value *V = ConvertExpressionToType(OldVal, Ty, VMC, TD);
       NewPN->addIncoming(V, BB);
     }
     Res = NewPN;
@@ -416,7 +420,7 @@ Value *ConvertExpressionToType(Value *V, const Type *Ty, ValueMapCache &VMC) {
   }
 
   case Instruction::Malloc: {
-    Res = ConvertMallocToType(cast<MallocInst>(I), Ty, Name, VMC);
+    Res = ConvertMallocToType(cast<MallocInst>(I), Ty, Name, VMC, TD);
     break;
   }
 
@@ -468,14 +472,14 @@ Value *ConvertExpressionToType(Value *V, const Type *Ty, ValueMapCache &VMC) {
       //
       std::vector<Value*> Indices;
       const Type *ElTy = ConvertableToGEP(NewSrcTy, I->getOperand(1),
-                                          Indices, &It);
+                                          Indices, TD, &It);
       if (ElTy) {        
         assert(ElTy == PVTy && "Internal error, setup wrong!");
         Res = new GetElementPtrInst(Constant::getNullValue(NewSrcTy),
                                     Indices, Name);
         VMC.ExprMap[I] = Res;
         Res->setOperand(0, ConvertExpressionToType(I->getOperand(0),
-                                                   NewSrcTy, VMC));
+                                                   NewSrcTy, VMC, TD));
       }
     }
 
@@ -491,7 +495,7 @@ Value *ConvertExpressionToType(Value *V, const Type *Ty, ValueMapCache &VMC) {
                                   Indices, Name);
       VMC.ExprMap[I] = Res;
       Res->setOperand(0, ConvertExpressionToType(I->getOperand(0),
-                                                 NewSrcTy, VMC));
+                                                 NewSrcTy, VMC, TD));
     }
 
 
@@ -519,7 +523,7 @@ Value *ConvertExpressionToType(Value *V, const Type *Ty, ValueMapCache &VMC) {
                        std::vector<Value*>(I->op_begin()+1, I->op_end()),
                        Name);
     VMC.ExprMap[I] = Res;
-    Res->setOperand(0, ConvertExpressionToType(I->getOperand(0), NewPTy, VMC));
+    Res->setOperand(0, ConvertExpressionToType(I->getOperand(0),NewPTy,VMC,TD));
     break;
   }
   default:
@@ -541,7 +545,7 @@ Value *ConvertExpressionToType(Value *V, const Type *Ty, ValueMapCache &VMC) {
   unsigned NumUses = I->use_size();
   for (unsigned It = 0; It < NumUses; ) {
     unsigned OldSize = NumUses;
-    ConvertOperandToType(*(I->use_begin()+It), I, Res, VMC);
+    ConvertOperandToType(*(I->use_begin()+It), I, Res, VMC, TD);
     NumUses = I->use_size();
     if (NumUses == OldSize) ++It;
   }
@@ -556,7 +560,8 @@ Value *ConvertExpressionToType(Value *V, const Type *Ty, ValueMapCache &VMC) {
 
 // ValueConvertableToType - Return true if it is possible
 bool ValueConvertableToType(Value *V, const Type *Ty,
-                             ValueTypeCache &ConvertedTypes) {
+                             ValueTypeCache &ConvertedTypes,
+                            const TargetData &TD) {
   ValueTypeCache::iterator I = ConvertedTypes.find(V);
   if (I != ConvertedTypes.end()) return I->second == Ty;
   ConvertedTypes[V] = Ty;
@@ -566,7 +571,7 @@ bool ValueConvertableToType(Value *V, const Type *Ty,
   //
   if (V->getType() != Ty) {
     for (Value::use_iterator I = V->use_begin(), E = V->use_end(); I != E; ++I)
-      if (!OperandConvertableToType(*I, V, Ty, ConvertedTypes))
+      if (!OperandConvertableToType(*I, V, Ty, ConvertedTypes, TD))
         return false;
   }
 
@@ -584,7 +589,8 @@ bool ValueConvertableToType(Value *V, const Type *Ty,
 // the expression, not the static current type.
 //
 static bool OperandConvertableToType(User *U, Value *V, const Type *Ty,
-                                     ValueTypeCache &CTMap) {
+                                     ValueTypeCache &CTMap,
+                                     const TargetData &TD) {
   //  if (V->getType() == Ty) return true;   // Operand already the right type?
 
   // Expression type must be holdable in a register.
@@ -630,11 +636,11 @@ static bool OperandConvertableToType(User *U, Value *V, const Type *Ty,
     if (isa<PointerType>(Ty)) {
       Value *IndexVal = I->getOperand(V == I->getOperand(0) ? 1 : 0);
       std::vector<Value*> Indices;
-      if (const Type *ETy = ConvertableToGEP(Ty, IndexVal, Indices)) {
+      if (const Type *ETy = ConvertableToGEP(Ty, IndexVal, Indices, TD)) {
         const Type *RetTy = PointerType::get(ETy);
 
         // Only successful if we can convert this type to the required type
-        if (ValueConvertableToType(I, RetTy, CTMap)) {
+        if (ValueConvertableToType(I, RetTy, CTMap, TD)) {
           CTMap[I] = RetTy;
           return true;
         }
@@ -648,13 +654,13 @@ static bool OperandConvertableToType(User *U, Value *V, const Type *Ty,
     if (!Ty->isInteger() && !Ty->isFloatingPoint()) return false;
 
     Value *OtherOp = I->getOperand((V == I->getOperand(0)) ? 1 : 0);
-    return ValueConvertableToType(I, Ty, CTMap) &&
-           ExpressionConvertableToType(OtherOp, Ty, CTMap);
+    return ValueConvertableToType(I, Ty, CTMap, TD) &&
+           ExpressionConvertableToType(OtherOp, Ty, CTMap, TD);
   }
   case Instruction::SetEQ:
   case Instruction::SetNE: {
     Value *OtherOp = I->getOperand((V == I->getOperand(0)) ? 1 : 0);
-    return ExpressionConvertableToType(OtherOp, Ty, CTMap);
+    return ExpressionConvertableToType(OtherOp, Ty, CTMap, TD);
   }
   case Instruction::Shr:
     if (Ty->isSigned() != V->getType()->isSigned()) return false;
@@ -662,7 +668,7 @@ static bool OperandConvertableToType(User *U, Value *V, const Type *Ty,
   case Instruction::Shl:
     if (I->getOperand(1) == V) return false;  // Cannot change shift amount type
     if (!Ty->isInteger()) return false;
-    return ValueConvertableToType(I, Ty, CTMap);
+    return ValueConvertableToType(I, Ty, CTMap, TD);
 
   case Instruction::Free:
     assert(I->getOperand(0) == V);
@@ -681,7 +687,7 @@ static bool OperandConvertableToType(User *U, Value *V, const Type *Ty,
       if (const CompositeType *CT = dyn_cast<CompositeType>(LoadedTy)) {
         unsigned Offset = 0;     // No offset, get first leaf.
         std::vector<Value*> Indices;  // Discarded...
-        LoadedTy = getStructOffsetType(CT, Offset, Indices, false);
+        LoadedTy = getStructOffsetType(CT, Offset, Indices, TD, false);
         assert(Offset == 0 && "Offset changed from zero???");
       }
 
@@ -691,7 +697,7 @@ static bool OperandConvertableToType(User *U, Value *V, const Type *Ty,
       if (TD.getTypeSize(LoadedTy) != TD.getTypeSize(LI->getType()))
         return false;
 
-      return ValueConvertableToType(LI, LoadedTy, CTMap);
+      return ValueConvertableToType(LI, LoadedTy, CTMap, TD);
     }
     return false;
 
@@ -722,7 +728,7 @@ static bool OperandConvertableToType(User *U, Value *V, const Type *Ty,
         if (const StructType *SElTy = dyn_cast<StructType>(ElTy)) {
           unsigned Offset = 0;
           std::vector<Value*> Indices;
-          ElTy = getStructOffsetType(ElTy, Offset, Indices, false);
+          ElTy = getStructOffsetType(ElTy, Offset, Indices, TD, false);
           assert(Offset == 0 && "Offset changed!");
           if (ElTy == 0)    // Element at offset zero in struct doesn't exist!
             return false;   // Can only happen for {}*
@@ -738,7 +744,7 @@ static bool OperandConvertableToType(User *U, Value *V, const Type *Ty,
       // Can convert the store if we can convert the pointer operand to match
       // the new  value type...
       return ExpressionConvertableToType(I->getOperand(1), PointerType::get(Ty),
-                                         CTMap);
+                                         CTMap, TD);
     } else if (const PointerType *PT = dyn_cast<PointerType>(Ty)) {
       const Type *ElTy = PT->getElementType();
       assert(V == I->getOperand(1));
@@ -749,7 +755,7 @@ static bool OperandConvertableToType(User *U, Value *V, const Type *Ty,
         //
         unsigned Offset = 0;
         std::vector<Value*> Indices;
-        ElTy = getStructOffsetType(ElTy, Offset, Indices, false);
+        ElTy = getStructOffsetType(ElTy, Offset, Indices, TD, false);
         assert(Offset == 0 && "Offset changed!");
         if (ElTy == 0)    // Element at offset zero in struct doesn't exist!
           return false;   // Can only happen for {}*
@@ -761,7 +767,7 @@ static bool OperandConvertableToType(User *U, Value *V, const Type *Ty,
         return false;
 
       // Can convert store if the incoming value is convertable...
-      return ExpressionConvertableToType(I->getOperand(0), ElTy, CTMap);
+      return ExpressionConvertableToType(I->getOperand(0), ElTy, CTMap, TD);
     }
     return false;
   }
@@ -795,20 +801,20 @@ static bool OperandConvertableToType(User *U, Value *V, const Type *Ty,
       // be converted to the appropriate size... if so, allow it.
       //
       std::vector<Value*> Indices;
-      const Type *ElTy = ConvertableToGEP(Ty, Index, Indices);
+      const Type *ElTy = ConvertableToGEP(Ty, Index, Indices, TD);
       delete TempScale;   // Free our temporary multiply if we made it
 
       if (ElTy == 0) return false;  // Cannot make conversion...
-      return ValueConvertableToType(I, PointerType::get(ElTy), CTMap);
+      return ValueConvertableToType(I, PointerType::get(ElTy), CTMap, TD);
     }
     return false;
 
   case Instruction::PHINode: {
     PHINode *PN = cast<PHINode>(I);
     for (unsigned i = 0; i < PN->getNumIncomingValues(); ++i)
-      if (!ExpressionConvertableToType(PN->getIncomingValue(i), Ty, CTMap))
+      if (!ExpressionConvertableToType(PN->getIncomingValue(i), Ty, CTMap, TD))
         return false;
-    return ValueConvertableToType(PN, Ty, CTMap);
+    return ValueConvertableToType(PN, Ty, CTMap, TD);
   }
 
   case Instruction::Call: {
@@ -859,7 +865,7 @@ static bool OperandConvertableToType(User *U, Value *V, const Type *Ty,
       // converted.  We succeed if we can change the return type if
       // neccesary...
       //
-      return ValueConvertableToType(I, FTy->getReturnType(), CTMap);
+      return ValueConvertableToType(I, FTy->getReturnType(), CTMap, TD);
     }
     
     const PointerType *MPtr = cast<PointerType>(I->getOperand(0)->getType());
@@ -879,13 +885,14 @@ static bool OperandConvertableToType(User *U, Value *V, const Type *Ty,
 }
 
 
-void ConvertValueToNewType(Value *V, Value *NewVal, ValueMapCache &VMC) {
+void ConvertValueToNewType(Value *V, Value *NewVal, ValueMapCache &VMC,
+                           const TargetData &TD) {
   ValueHandle VH(VMC, V);
 
   unsigned NumUses = V->use_size();
   for (unsigned It = 0; It < NumUses; ) {
     unsigned OldSize = NumUses;
-    ConvertOperandToType(*(V->use_begin()+It), V, NewVal, VMC);
+    ConvertOperandToType(*(V->use_begin()+It), V, NewVal, VMC, TD);
     NumUses = V->use_size();
     if (NumUses == OldSize) ++It;
   }
@@ -894,7 +901,7 @@ void ConvertValueToNewType(Value *V, Value *NewVal, ValueMapCache &VMC) {
 
 
 static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
-                                 ValueMapCache &VMC) {
+                                 ValueMapCache &VMC, const TargetData &TD) {
   if (isa<ValueHandle>(U)) return;  // Valuehandles don't let go of operands...
 
   if (VMC.OperandsMapped.count(U)) return;
@@ -944,7 +951,7 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
       std::vector<Value*> Indices;
       BasicBlock::iterator It = I;
 
-      if (const Type *ETy = ConvertableToGEP(NewTy, IndexVal, Indices, &It)) {
+      if (const Type *ETy = ConvertableToGEP(NewTy, IndexVal, Indices, TD,&It)){
         // If successful, convert the add to a GEP
         //const Type *RetTy = PointerType::get(ETy);
         // First operand is actually the given pointer...
@@ -965,7 +972,7 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
 
     unsigned OtherIdx = (OldVal == I->getOperand(0)) ? 1 : 0;
     Value *OtherOp    = I->getOperand(OtherIdx);
-    Value *NewOther   = ConvertExpressionToType(OtherOp, NewTy, VMC);
+    Value *NewOther   = ConvertExpressionToType(OtherOp, NewTy, VMC, TD);
 
     Res->setOperand(OtherIdx, NewOther);
     Res->setOperand(!OtherIdx, NewVal);
@@ -996,7 +1003,7 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
       Indices.push_back(ConstantSInt::get(Type::LongTy, 0));
 
       unsigned Offset = 0;   // No offset, get first leaf.
-      LoadedTy = getStructOffsetType(CT, Offset, Indices, false);
+      LoadedTy = getStructOffsetType(CT, Offset, Indices, TD, false);
       assert(LoadedTy->isFirstClassType());
 
       if (Indices.size() != 1) {     // Do not generate load X, 0
@@ -1032,7 +1039,7 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
           Indices.push_back(Constant::getNullValue(Type::LongTy));
 
           unsigned Offset = 0;
-          const Type *Ty = getStructOffsetType(ElTy, Offset, Indices, false);
+          const Type *Ty = getStructOffsetType(ElTy, Offset, Indices, TD,false);
           assert(Offset == 0 && "Offset changed!");
           assert(NewTy == Ty && "Did not convert to correct type!");
 
@@ -1049,7 +1056,7 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
         Res = new StoreInst(NewVal, Constant::getNullValue(NewPT));
         VMC.ExprMap[I] = Res;
         Res->setOperand(1, ConvertExpressionToType(I->getOperand(1),
-                                                   NewPT, VMC));
+                                                   NewPT, VMC, TD));
       }
     } else {                           // Replace the source pointer
       const Type *ValTy = cast<PointerType>(NewTy)->getElementType();
@@ -1061,7 +1068,7 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
         Indices.push_back(Constant::getNullValue(Type::LongTy));
 
         unsigned Offset = 0;
-        ValTy = getStructOffsetType(ValTy, Offset, Indices, false);
+        ValTy = getStructOffsetType(ValTy, Offset, Indices, TD, false);
 
         assert(Offset == 0 && ValTy);
 
@@ -1072,7 +1079,8 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
 
       Res = new StoreInst(Constant::getNullValue(ValTy), SrcPtr);
       VMC.ExprMap[I] = Res;
-      Res->setOperand(0, ConvertExpressionToType(I->getOperand(0), ValTy, VMC));
+      Res->setOperand(0, ConvertExpressionToType(I->getOperand(0),
+                                                 ValTy, VMC, TD));
     }
     break;
   }
@@ -1097,7 +1105,7 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
     // Perform the conversion now...
     //
     std::vector<Value*> Indices;
-    const Type *ElTy = ConvertableToGEP(NewVal->getType(), Index, Indices, &It);
+    const Type *ElTy = ConvertableToGEP(NewVal->getType(),Index,Indices,TD,&It);
     assert(ElTy != 0 && "GEP Conversion Failure!");
     Res = new GetElementPtrInst(NewVal, Indices, Name);
     assert(Res->getType() == PointerType::get(ElTy) &&
@@ -1115,7 +1123,7 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
       //
       std::vector<Value*> Indices;
       const Type *ElTy = ConvertableToGEP(NewVal->getType(), I->getOperand(1),
-                                          Indices, &It);
+                                          Indices, TD, &It);
       assert(ElTy != 0 && "GEP Conversion Failure!");
       
       Res = new GetElementPtrInst(NewVal, Indices, Name);
@@ -1140,7 +1148,7 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
       BasicBlock *BB = OldPN->getIncomingBlock(0);
       Value *OldVal = OldPN->getIncomingValue(0);
       OldPN->removeIncomingValue(BB, false);
-      Value *V = ConvertExpressionToType(OldVal, NewTy, VMC);
+      Value *V = ConvertExpressionToType(OldVal, NewTy, VMC, TD);
       NewPN->addIncoming(V, BB);
     }
     Res = NewPN;
@@ -1211,7 +1219,7 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
   VMC.ExprMap[I] = Res;
 
   if (I->getType() != Res->getType())
-    ConvertValueToNewType(I, Res, VMC);
+    ConvertValueToNewType(I, Res, VMC, TD);
   else {
     for (unsigned It = 0; It < I->use_size(); ) {
       User *Use = *(I->use_begin()+It);

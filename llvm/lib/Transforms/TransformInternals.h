@@ -15,14 +15,6 @@
 #include <map>
 #include <set>
 
-// TargetData Hack: Eventually we will have annotations given to us by the
-// backend so that we know stuff about type size and alignments.  For now
-// though, just use this, because it happens to match the model that GCC uses.
-//
-// FIXME: This should use annotations
-//
-extern const TargetData TD;
-
 static inline int64_t getConstantValue(const ConstantInt *CPI) {
   if (const ConstantSInt *CSI = dyn_cast<ConstantSInt>(CPI))
     return CSI->getValue();
@@ -49,6 +41,7 @@ static inline const CompositeType *getPointedToComposite(const Type *Ty) {
 //
 const Type *ConvertableToGEP(const Type *Ty, Value *V,
                              std::vector<Value*> &Indices,
+                             const TargetData &TD,
                              BasicBlock::iterator *BI = 0);
 
 
@@ -112,14 +105,18 @@ struct ValueMapCache {
 };
 
 
-bool ExpressionConvertableToType(Value *V, const Type *Ty, ValueTypeCache &Map);
-Value *ConvertExpressionToType(Value *V, const Type *Ty, ValueMapCache &VMC);
+bool ExpressionConvertableToType(Value *V, const Type *Ty, ValueTypeCache &Map,
+                                 const TargetData &TD);
+Value *ConvertExpressionToType(Value *V, const Type *Ty, ValueMapCache &VMC,
+                               const TargetData &TD);
 
 // ValueConvertableToType - Return true if it is possible
 bool ValueConvertableToType(Value *V, const Type *Ty,
-                            ValueTypeCache &ConvertedTypes);
+                            ValueTypeCache &ConvertedTypes,
+                            const TargetData &TD);
 
-void ConvertValueToNewType(Value *V, Value *NewVal, ValueMapCache &VMC);
+void ConvertValueToNewType(Value *V, Value *NewVal, ValueMapCache &VMC,
+                           const TargetData &TD);
 
 
 // getStructOffsetType - Return a vector of offsets that are to be used to index
@@ -135,6 +132,6 @@ void ConvertValueToNewType(Value *V, Value *NewVal, ValueMapCache &VMC);
 //
 const Type *getStructOffsetType(const Type *Ty, unsigned &Offset,
                                 std::vector<Value*> &Offsets,
-                                bool StopEarly = true);
+                                const TargetData &TD, bool StopEarly = true);
 
 #endif
