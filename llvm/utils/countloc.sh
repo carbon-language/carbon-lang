@@ -15,22 +15,10 @@
 # The script takes no arguments but does expect to be run from the top llvm
 # source directory.
 #
-TOPDIR=`pwd | sed -e 's#(.*/llvm).*#$1#'`
+TOPDIR=`pwd | sed -e 's#\(.*/llvm\).*#\1#'`
 if test -d "$TOPDIR" ; then
   cd $TOPDIR
-  find include lib tools utils examples -type f -name '*.[cdhyltp]*' \
-      \! -name '*~' \
-      \! -name '#*' \
-      \! -name '*.ll' \
-      \! -name '*.lo' \
-      \! -name '*.d' \
-      \! -name '*.dir' \
-      \! -name 'Sparc.burm.c' \
-      \! -name 'llvmAsmParser.cpp' \
-      \! -name 'llvmAsmParser.h' \
-      \! -name 'FileParser.cpp' \
-      \! -name 'FileParser.h' \
-      -exec wc -l {} \; | awk '\
+  ./utils/llvmdo -dirs "include lib tools test utils examples" wc -l | awk '\
       BEGIN { loc=0; } \
       { loc += $1; } \
       END { print loc; }'
