@@ -107,22 +107,6 @@ namespace {
 //===----------------------------------------------------------------------===//
 // Implementation of the SCEV class.
 //
-namespace {
-  /// SCEVComplexityCompare - Return true if the complexity of the LHS is less
-  /// than the complexity of the RHS.  If the SCEVs have identical complexity,
-  /// order them by their addresses.  This comparator is used to canonicalize
-  /// expressions.
-  struct SCEVComplexityCompare {
-    bool operator()(SCEV *LHS, SCEV *RHS) {
-      if (LHS->getSCEVType() < RHS->getSCEVType())
-        return true;
-      if (LHS->getSCEVType() == RHS->getSCEVType())
-        return LHS < RHS;
-      return false;
-    }
-  };
-}
-
 SCEV::~SCEV() {}
 void SCEV::dump() const {
   print(std::cerr);
@@ -339,6 +323,64 @@ void SCEVUnknown::print(std::ostream &OS) const {
   WriteAsOperand(OS, V, false);
 }
 
+//===----------------------------------------------------------------------===//
+//                               SCEV Utilities
+//===----------------------------------------------------------------------===//
+
+namespace {
+  /// SCEVComplexityCompare - Return true if the complexity of the LHS is less
+  /// than the complexity of the RHS.  This comparator is used to canonicalize
+  /// expressions.
+  struct SCEVComplexityCompare {
+    bool operator()(SCEV *LHS, SCEV *RHS) {
+      return LHS->getSCEVType() < RHS->getSCEVType();
+    }
+  };
+}
+
+/// GroupByComplexity - Given a list of SCEV objects, order them by their
+/// complexity, and group objects of the same complexity together by value.
+/// When this routine is finished, we know that any duplicates in the vector are
+/// consecutive and that complexity is monotonically increasing.
+///
+/// Note that we go take special precautions to ensure that we get determinstic
+/// results from this routine.  In other words, we don't want the results of
+/// this to depend on where the addresses of various SCEV objects happened to
+/// land in memory.
+///
+static void GroupByComplexity(std::vector<SCEVHandle> &Ops) {
+  if (Ops.size() < 2) return;  // Noop
+  if (Ops.size() == 2) {
+    // This is the common case, which also happens to be trivially simple.
+    // Special case it.
+    if (Ops[0]->getSCEVType() > Ops[1]->getSCEVType())
+      std::swap(Ops[0], Ops[1]);
+    return;
+  }
+
+  // Do the rough sort by complexity.
+  std::sort(Ops.begin(), Ops.end(), SCEVComplexityCompare());
+
+  // Now that we are sorted by complexity, group elements of the same
+  // complexity.  Note that this is, at worst, N^2, but the vector is likely to
+  // be extremely short in practice.  Note that we take this approach because we
+  // do not want to depend on the addresses of the objects we are grouping.
+  for (unsigned i = 0, e = Ops.size(); i != e-1; ++i) {
+    SCEV *S = Ops[i];
+    unsigned Complexity = S->getSCEVType();
+
+    // If there are any objects of the same complexity and same value as this
+    // one, group them.
+    for (unsigned j = i+1; j != e && Ops[j]->getSCEVType() == Complexity; ++j) {
+      if (Ops[j] == S) { // Found a duplicate.
+        // Move it to immediately after i'th element.
+        std::swap(Ops[i+1], Ops[j]);
+        ++i;   // no need to rescan it.
+      }
+    }
+  }
+}
+
 
 
 //===----------------------------------------------------------------------===//
@@ -509,7 +551,7 @@ SCEVHandle SCEVAddExpr::get(std::vector<SCEVHandle> &Ops) {
   if (Ops.size() == 1) return Ops[0];
 
   // Sort by complexity, this groups all similar expression types together.
-  std::sort(Ops.begin(), Ops.end(), SCEVComplexityCompare());
+  GroupByComplexity(Ops);
 
   // If there are any constants, fold them together.
   unsigned Idx = 0;
@@ -737,7 +779,7 @@ SCEVHandle SCEVMulExpr::get(std::vector<SCEVHandle> &Ops) {
   assert(!Ops.empty() && "Cannot get empty mul!");
 
   // Sort by complexity, this groups all similar expression types together.
-  std::sort(Ops.begin(), Ops.end(), SCEVComplexityCompare());
+  GroupByComplexity(Ops);
 
   // If there are any constants, fold them together.
   unsigned Idx = 0;
