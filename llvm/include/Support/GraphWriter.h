@@ -17,7 +17,7 @@
 #define SUPPORT_GRAPHWRITER_H
 
 #include "Support/DOTGraphTraits.h"
-#include "Support/DepthFirstIterator.h"
+#include "Support/GraphTraits.h"
 #include <ostream>
 
 namespace DOT {  // Private functions...
@@ -53,19 +53,19 @@ std::ostream &WriteGraph(std::ostream &O, const GraphType &G) {
   typedef DOTGraphTraits<GraphType>  DOTTraits;
   typedef GraphTraits<GraphType>     GTraits;
   typedef typename GTraits::NodeType NodeType;
+  typedef typename GTraits::nodes_iterator node_iterator;
 
-  O << "digraph foo {\n"         // Graph name doesn't matter
-    << "\tsize=\"7.5,10\";\n";   // Size to fit on a page
-
+  O << "digraph foo {\n";        // Graph name doesn't matter
   std::string GraphName = DOTTraits::getGraphName(G);
   if (!GraphName.empty())
     O << "\tlabel=\"" << DOT::EscapeString(GraphName) << "\";\n";
+  O << DOTTraits::getGraphProperties(G);
   O << "\n";
 
   // Loop over the graph in DFO, printing it out...
-  NodeType *Root = GTraits::getEntryNode(G);
-  for (df_iterator<GraphType> I = df_begin(G), E = df_end(G); I != E; ++I) {
-    NodeType *Node = *I;
+  for (node_iterator I = GTraits::nodes_begin(G), E = GTraits::nodes_end(G);
+       I != E; ++I) {
+    NodeType *Node = &*I;
 
     std::string NodeAttributes = DOTTraits::getNodeAttributes(Node);
 
