@@ -31,6 +31,10 @@ Force("f", cl::desc("Overwrite output files"));
 static cl::opt<bool>
 DumpAsm("d", cl::desc("Print assembly as parsed"), cl::Hidden);
 
+static cl::opt<bool>
+DisableVerify("disable-verify", cl::Hidden,
+              cl::desc("Do not run verifier on input LLVM (dangerous!"));
+
 int main(int argc, char **argv) {
   cl::ParseCommandLineOptions(argc, argv, " llvm .ll -> .bc assembler\n");
 
@@ -43,12 +47,11 @@ int main(int argc, char **argv) {
       return 1;
     }
 
-    if (verifyModule(*M.get())) {
+    if (!DisableVerify && verifyModule(*M.get())) {
       std::cerr << argv[0]
                 << ": assembly parsed, but does not verify as correct!\n";
       return 1;
     }
-
   
     if (DumpAsm) std::cerr << "Here's the assembly:\n" << M.get();
 
