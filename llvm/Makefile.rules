@@ -48,6 +48,7 @@
 # For building,
 # 	LLVM, LLVM_SRC_ROOT = BUILD_SRC_ROOT, and
 # 	LLVM_OBJ_ROOT = BUILD_OBJ_ROOT.
+#
 #===-----------------------------------------------------------------------====
 
 #
@@ -537,7 +538,7 @@ endif
 
 
 # Rule for building bytecode libraries.
-$(LIBNAME_BC): $(ObjectsBC) $(LibSubDirs)
+$(LIBNAME_BC): $(ObjectsBC) $(LibSubDirs) $(DESTLIBBYTECODE)/.dir
 	@echo ======= Linking $(LIBRARYNAME) bytecode library =======
 	$(VERB) $(LinkBCLib) -o $@ $(ObjectsBC) $(LibSubDirs) $(LibLinkOpts)
 #
@@ -660,7 +661,6 @@ STATICUSEDLIBS   := $(patsubst %.a.o, lib%.a, $(addsuffix .o, $(USEDLIBS)))
 USED_LIB_PATHS_G := $(addprefix $(DESTLIBDEBUG)/, $(STATICUSEDLIBS))
 USED_LIB_PATHS_O := $(addprefix $(DESTLIBRELEASE)/, $(STATICUSEDLIBS))
 USED_LIB_PATHS_P := $(addprefix $(DESTLIBPROFILE)/, $(STATICUSEDLIBS))
-#LINK_OPTS        := $(TOOLLINKOPTS) $(PLATFORMLINKOPTS)
 
 #
 # Libtool link options:
