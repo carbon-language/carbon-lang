@@ -435,7 +435,7 @@ def FLD1 : FPInst<"fld1", 0xE8, RawFrm, ArgF80, ZeroArgFP>, D9;
 
 
 // Unary read-modify-write operations...
-def FCHS : FPInst<"fchs", 0xE0, RawFrm, ArgF80, OneArgFPRW>, D9, Imp<[ST0],[ST0]>;  // f1 = fchs f2
+def FCHS : FPInst<"fchs", 0xE0, RawFrm, ArgF80, OneArgFPRW>, D9;           // f1 = fchs f2
 
 // Binary arithmetic operations...
 class FPST0rInst<string n, bits<8> o>
