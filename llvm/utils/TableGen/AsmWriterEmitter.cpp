@@ -103,6 +103,7 @@ void AsmWriterEmitter::run(std::ostream &O) {
         } else if (DollarPos+1 != AsmString.size() &&
                    AsmString[DollarPos+1] == '$') {
           O << " << '$'";         // "$$" -> $
+	  LastEmitted = DollarPos+2;
         } else {
           // Get the name of the variable.
           // TODO: should eventually handle ${foo}bar as $foo
