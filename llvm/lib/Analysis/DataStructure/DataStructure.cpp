@@ -386,7 +386,7 @@ DSGraph::DSGraph(const DSGraph &G) : Func(G.Func) {
 DSGraph::~DSGraph() {
   FunctionCalls.clear();
   ValueMap.clear();
-  RetNode = 0;
+  RetNode.setNode(0);
 
 #ifndef NDEBUG
   // Drop all intra-node references, so that assertions don't fail...

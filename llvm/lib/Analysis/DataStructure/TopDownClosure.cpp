@@ -12,8 +12,6 @@
 #include "llvm/Module.h"
 #include "llvm/DerivedTypes.h"
 #include "Support/Statistic.h"
-using std::map;
-using std::vector;
 
 static RegisterAnalysis<TDDataStructures>
 Y("tddatastructure", "Top-down Data Structure Analysis Closure");
@@ -22,7 +20,7 @@ Y("tddatastructure", "Top-down Data Structure Analysis Closure");
 // our memory... here...
 //
 void TDDataStructures::releaseMemory() {
-  for (map<const Function*, DSGraph*>::iterator I = DSInfo.begin(),
+  for (std::map<const Function*, DSGraph*>::iterator I = DSInfo.begin(),
          E = DSInfo.end(); I != E; ++I)
     delete I->second;
 
@@ -86,7 +84,7 @@ DSGraph &TDDataStructures::calculateGraph(Function &F) {
   DSGraph &BUGraph = BU.getDSGraph(F);
   Graph = new DSGraph(BUGraph);
 
-  const vector<DSCallSite> *CallSitesP = BU.getCallSites(F);
+  const std::vector<DSCallSite> *CallSitesP = BU.getCallSites(F);
   if (CallSitesP == 0) {
     DEBUG(std::cerr << "  [TD] No callers for: " << F.getName() << "\n");
     return *Graph;  // If no call sites, the graph is the same as the BU graph!
@@ -96,7 +94,7 @@ DSGraph &TDDataStructures::calculateGraph(Function &F) {
   // graph.
   //
   DEBUG(std::cerr << "  [TD] Inlining callers for: " << F.getName() << "\n");
-  const vector<DSCallSite> &CallSites = *CallSitesP;
+  const std::vector<DSCallSite> &CallSites = *CallSitesP;
   for (unsigned c = 0, ce = CallSites.size(); c != ce; ++c) {
     const DSCallSite &CallSite = CallSites[c];  // Copy
     Function &Caller = CallSite.getCaller();
