@@ -133,8 +133,9 @@ my $MAKEOPTS   = "";
 my $PROGTESTOPTS = "";
 my $VERBOSE  = 0;
 my $DEBUG = 0;
+my $CONFIGUREARGS = "--enable-jit";
 
-# Parse arguments...
+# Parse arguments... 
 while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
   shift;
   last if /^--$/;  # Stop processing arguments on --
@@ -148,11 +149,17 @@ while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
   if (/^-norunningtests$/) { $NORUNNINGTESTS = 1; next; }
   if (/^-parallel$/)       { $MAKEOPTS   = "-j2 -l3.0"; next; }
   if (/^-enable-linscan$/) { $PROGTESTOPTS .= " ENABLE_LINEARSCAN=1"; next; }
-  if (/^-disable-codegen$/){ $PROGTESTOPTS .= " DISABLE_JIT=1 DISABLE_LLC=1"; next; }
+  if (/^-disable-codegen$/){ $PROGTESTOPTS .= " DISABLE_JIT=1 DISABLE_LLC=1";
+                             $CONFIGUREARGS="--disable-jit --disable-llc_diffs";
+                             next; }
   if (/^-verbose$/)        { $VERBOSE  = 1; next; }
   if (/^-debug$/)          { $DEBUG  = 1; next; }
 
   print "Unknown option: $_ : ignoring!\n";
+}
+
+if ($ENV{'LLVMGCCDIR'}) {
+  $CONFIGUREARGS .= " --with-llvmgccdir=" . $ENV{'LLVMGCCDIR'};
 }
 
 die "Must specify 0 or 3 options!" if (@ARGV != 0 and @ARGV != 3);
@@ -226,7 +233,7 @@ $LOC = GetRegex "([0-9]+) +total", `wc -l \`utils/getsrcs.sh\` | grep total`;
 #
 if (!$NOCHECKOUT) {
   if ( $VERBOSE ) { print "CONFIGURE STAGE\n"; }
-  system "(time -p ./configure --enable-jit --enable-spec --with-objroot=.) > $Prefix-Build-Log.txt 2>&1";
+  system "(time -p ./configure $CONFIGUREARGS --enable-spec --with-objroot=.) > $Prefix-Build-Log.txt 2>&1";
 
   if ( $VERBOSE ) { print "BUILD STAGE\n"; }
   # Build the entire tree, capturing the output into $Prefix-Build-Log.txt
