@@ -907,9 +907,6 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
     std::cerr << "NODE: "; Node->dump(); std::cerr << "\n";
     assert(0 && "Do not know how to promote this operator!");
     abort();
-  case ISD::CALL:
-    assert(0 && "Target's LowerCallTo implementation is buggy, returning value"
-           " types that are not supported by the target!");
   case ISD::Constant:
     Result = DAG.getNode(ISD::ZERO_EXTEND, NVT, Op);
     assert(isa<ConstantSDNode>(Result) && "Didn't constant fold zext?");
@@ -1092,6 +1089,23 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
     Tmp3 = PromoteOp(Node->getOperand(2));   // Legalize the op1
     Result = DAG.getNode(ISD::SELECT, NVT, Tmp1, Tmp2, Tmp3);
     break;
+  case ISD::CALL: {
+    Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
+    Tmp2 = LegalizeOp(Node->getOperand(1));  // Legalize the callee.
+
+    assert(Node->getNumValues() == 2 && Op.ResNo == 0 &&
+           "Can only promote single result calls");
+    std::vector<MVT::ValueType> RetTyVTs;
+    RetTyVTs.reserve(2);
+    RetTyVTs.push_back(NVT);
+    RetTyVTs.push_back(MVT::Other);
+    SDNode *NC = DAG.getCall(RetTyVTs, Tmp1, Tmp2);
+    Result = SDOperand(NC, 0);
+
+    // Insert the new chain mapping.
+    AddLegalizedOperand(Op.getValue(1), Result.getValue(1));
+    break;
+  } 
   }
 
   assert(Result.Val && "Didn't set a result!");
