@@ -203,7 +203,7 @@ struct ConstInverseBasicBlockGraph {
 // Depth First Iterator
 //
 
-// BasicBlock Depth First Iterator
+// Generic Depth First Iterator
 template<class GI>
 class DFIterator : public std::forward_iterator<typename GI::NodeType,
 						ptrdiff_t> {
@@ -212,15 +212,15 @@ class DFIterator : public std::forward_iterator<typename GI::NodeType,
 
   set<NodeType *>   Visited;    // All of the blocks visited so far...
   // VisitStack - Used to maintain the ordering.  Top = current block
-  // First element is basic block pointer, second is the 'next child' to visit
+  // First element is node pointer, second is the 'next child' to visit
   stack<pair<NodeType *, ChildItTy> > VisitStack;
   const bool Reverse;         // Iterate over children before self?
 private:
   void reverseEnterNode() {
     pair<NodeType *, ChildItTy> &Top = VisitStack.top();
-    NodeType *BB    = Top.first;
+    NodeType *Node = Top.first;
     ChildItTy &It  = Top.second;
-    for (; It != GI::child_end(BB); ++It) {
+    for (; It != GI::child_end(Node); ++It) {
       NodeType *Child = *It;
       if (!Visited.count(Child)) {
 	Visited.insert(Child);
@@ -233,9 +233,9 @@ private:
 public:
   typedef DFIterator<GI> _Self;
 
-  inline DFIterator(NodeType *BB, bool reverse) : Reverse(reverse) {
-    Visited.insert(BB);
-    VisitStack.push(make_pair(BB, GI::child_begin(BB)));
+  inline DFIterator(NodeType *Node, bool reverse) : Reverse(reverse) {
+    Visited.insert(Node);
+    VisitStack.push(make_pair(Node, GI::child_begin(Node)));
     if (Reverse) reverseEnterNode();
   }
   inline DFIterator() { /* End is when stack is empty */ }
@@ -250,7 +250,7 @@ public:
   }
 
   // This is a nonstandard operator-> that dereferences the pointer an extra
-  // time... so that you can actually call methods ON the BasicBlock, because
+  // time... so that you can actually call methods ON the Node, because
   // the contained type is a pointer.  This allows BBIt->getTerminator() f.e.
   //
   inline NodeType *operator->() const { return operator*(); }
@@ -264,10 +264,10 @@ public:
     } else {                     // Normal Depth First Iterator
       do {
 	pair<NodeType *, ChildItTy> &Top = VisitStack.top();
-	NodeType *BB    = Top.first;
+	NodeType *Node = Top.first;
 	ChildItTy &It  = Top.second;
 
-	while (It != GI::child_end(BB)) {
+	while (It != GI::child_end(Node)) {
 	  NodeType *Next = *It++;
 	  if (!Visited.count(Next)) {  // Has our next sibling been visited?
 	    // No, do it now.
