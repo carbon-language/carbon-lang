@@ -112,6 +112,7 @@ void TailDup::eliminateUnconditionalBranch(BranchInst *Branch) {
   // copy of the block B'.  If there are PHI nodes in the DestBlock, these PHI
   // nodes also define part of this mapping.  Loop over these PHI nodes, adding
   // them to our mapping.
+  //
   std::map<Value*, Value*> ValueMapping;
 
   BasicBlock::iterator BI = DestBlock->begin();
