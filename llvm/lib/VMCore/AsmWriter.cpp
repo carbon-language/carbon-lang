@@ -153,6 +153,9 @@ static std::string calcTypeName(const Type *Ty,
     Result += calcTypeName(ATy->getElementType(), TypeStack, TypeNames) + "]";
     break;
   }
+  case Type::OpaqueTyID:
+    Result = "opaque";
+    break;
   default:
     Result = "<unrecognized-type>";
   }
