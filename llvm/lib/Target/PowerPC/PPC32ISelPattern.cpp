@@ -1601,11 +1601,11 @@ unsigned ISel::SelectExpr(SDOperand N) {
       return Result;
     // If this is a divide by constant, we can emit code using some magic
     // constants to implement it as a multiply instead.
-    case 4:
-      if (opcode == ISD::SDIV)
-        return SelectExpr(BuildSDIVSequence(N));
-      else
-        return SelectExpr(BuildUDIVSequence(N));
+    //case 4:
+    //  if (opcode == ISD::SDIV)
+    //    return SelectExpr(BuildSDIVSequence(N));
+    //  else
+    //    return SelectExpr(BuildUDIVSequence(N));
     }
     Tmp1 = SelectExpr(N.getOperand(0));
     Tmp2 = SelectExpr(N.getOperand(1));
