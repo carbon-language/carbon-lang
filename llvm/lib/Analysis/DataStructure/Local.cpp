@@ -484,6 +484,12 @@ void GraphBuilder::visitCallSite(CallSite CS) {
           if (DSNode *N = RetNH.getNode())
             N->setHeapNodeMarker()->setModifiedMarker()->setReadMarker();
           return;
+        } else if (F->getName() == "atoi") {
+          // atoi reads its argument.
+          if (DSNode *N = getValueDest(**CS.arg_begin()).getNode())
+            N->setReadMarker();
+          return;
+
         } else if (F->getName() == "fopen" && CS.arg_end()-CS.arg_begin() == 2){
           // fopen reads the mode argument strings.
           CallSite::arg_iterator AI = CS.arg_begin();
@@ -511,8 +517,11 @@ void GraphBuilder::visitCallSite(CallSite CS) {
           if (const PointerType *PTy = dyn_cast<PointerType>(ArgTy))
             H.getNode()->mergeTypeInfo(PTy->getElementType(), H.getOffset());
           return;
-        } else if (F->getName() == "fflush" && CS.arg_end()-CS.arg_begin() ==1){
-          // fclose reads and writes the memory for the file descriptor.  It
+        } else if (CS.arg_end()-CS.arg_begin() == 1 && 
+                   (F->getName() == "fflush" || F->getName() == "feof" ||
+                    F->getName() == "fileno" || F->getName() == "clearerr" ||
+                    F->getName() == "rewind" || F->getName() == "ftell")) {
+          // fflush reads and writes the memory for the file descriptor.  It
           // merges the FILE type into the descriptor.
           DSNodeHandle H = getValueDest(**CS.arg_begin());
           H.getNode()->setReadMarker()->setModifiedMarker();
@@ -522,7 +531,7 @@ void GraphBuilder::visitCallSite(CallSite CS) {
             H.getNode()->mergeTypeInfo(PTy->getElementType(), H.getOffset());
           return;
         } else if (F->getName() == "fgets" && CS.arg_end()-CS.arg_begin() == 3){
-          // fclose reads and writes the memory for the file descriptor.  It
+          // fgets reads and writes the memory for the file descriptor.  It
           // merges the FILE type into the descriptor, and writes to the
           // argument.  It returns the argument as well.
           CallSite::arg_iterator AI = CS.arg_begin();
@@ -565,8 +574,19 @@ void GraphBuilder::visitCallSite(CallSite CS) {
         } else if (F->getName() == "exit") {
           // Nothing to do!
         } else {
-          std::cerr << "WARNING: Call to unknown external function '"
-                    << F->getName() << "' will cause pessimistic results!\n";
+          // Unknown function, warn if it returns a pointer type or takes a
+          // pointer argument.
+          bool Warn = isPointerType(CS.getInstruction()->getType());
+          if (!Warn)
+            for (CallSite::arg_iterator I = CS.arg_begin(), E = CS.arg_end();
+                 I != E; ++I)
+              if (isPointerType((*I)->getType())) {
+                Warn = true;
+                break;
+              }
+          if (Warn)
+            std::cerr << "WARNING: Call to unknown external function '"
+                      << F->getName() << "' will cause pessimistic results!\n";
         }
       }
 
