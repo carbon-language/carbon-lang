@@ -114,6 +114,32 @@ Create1OperandInstr(MachineOpCode opCode, Value* argVal1)
 }
 
 inline MachineInstr*
+Create1OperandInstr_UImmed(MachineOpCode opCode, unsigned int unextendedImmed)
+{
+  MachineInstr* M = new MachineInstr(opCode);
+  M->SetMachineOperandConst(0, MachineOperand::MO_UnextendedImmed,
+                               unextendedImmed);
+  return M;
+}
+
+inline MachineInstr*
+Create1OperandInstr_SImmed(MachineOpCode opCode, int signExtendedImmed)
+{
+  MachineInstr* M = new MachineInstr(opCode);
+  M->SetMachineOperandConst(0, MachineOperand::MO_SignExtendedImmed,
+                               signExtendedImmed);
+  return M;
+}
+
+inline MachineInstr*
+Create1OperandInstr_Addr(MachineOpCode opCode, Value* label)
+{
+  MachineInstr* M = new MachineInstr(opCode);
+  M->SetMachineOperandVal(0, MachineOperand::MO_PCRelativeDisp, label);
+  return M;
+}
+
+inline MachineInstr*
 Create2OperandInstr(MachineOpCode opCode, Value* argVal1, Value* argVal2)
 {
   MachineInstr* M = new MachineInstr(opCode);
