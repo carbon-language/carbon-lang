@@ -1034,15 +1034,19 @@ void BytecodeWriter::outputCompactionTypes(unsigned StartNo) {
 }
 
 void BytecodeWriter::outputCompactionTable() {
-  BytecodeBlock CTB(BytecodeFormat::CompactionTableBlockID, *this, 
-                    true/*ElideIfEmpty*/);
-  const std::vector<std::vector<const Value*> > &CT =Table.getCompactionTable();
-  
-  // First thing is first, emit the type compaction table if there is one.
-  outputCompactionTypes(Type::FirstDerivedTyID);
+  // Avoid writing the compaction table at all if there is no content.
+  if (Table.getCompactionTypes().size() >= Type::FirstDerivedTyID ||
+      (!Table.CompactionTableIsEmpty())) {
+    BytecodeBlock CTB(BytecodeFormat::CompactionTableBlockID, *this, 
+                      true/*ElideIfEmpty*/);
+    const std::vector<std::vector<const Value*> > &CT =Table.getCompactionTable();
+    
+    // First things first, emit the type compaction table if there is one.
+    outputCompactionTypes(Type::FirstDerivedTyID);
 
-  for (unsigned i = 0, e = CT.size(); i != e; ++i)
-    outputCompactionTablePlane(i, CT[i], 0);
+    for (unsigned i = 0, e = CT.size(); i != e; ++i)
+      outputCompactionTablePlane(i, CT[i], 0);
+  }
 }
 
 void BytecodeWriter::outputSymbolTable(const SymbolTable &MST) {
