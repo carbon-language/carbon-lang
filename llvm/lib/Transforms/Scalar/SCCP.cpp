@@ -288,18 +288,15 @@ bool SCCP::runOnFunction(Function *F) {
         // Replaces all of the uses of a variable with uses of the constant.
         Inst->replaceAllUsesWith(Const);
 
-        // Remove the operator from the list of definitions...
-        BB->getInstList().remove(BI);
-
-        // The new constant inherits the old name of the operator...
-        if (Inst->hasName() && !Const->hasName())
-          Const->setName(Inst->getName(), F->getSymbolTableSure());
-
-        // Delete the operator now...
-        delete Inst;
+        // Remove the operator from the list of definitions... and delete it.
+        delete BB->getInstList().remove(BI);
 
         // Hey, we just changed something!
         MadeChanges = true;
+
+        // Do NOT advance the iterator, skipping the next instruction...
+        continue;
+
       } else if (TerminatorInst *TI = dyn_cast<TerminatorInst>(Inst)) {
         MadeChanges |= ConstantFoldTerminator(BB, BI, TI);
       }
@@ -457,7 +454,7 @@ void SCCP::visitBinaryOperator(Instruction *I) {
                                                      V1State.getConstant(),
                                                      V2State.getConstant());
     if (Result)
-      markConstant(I, Result);      // This instruction constant fold!s
+      markConstant(I, Result);      // This instruction constant folds!
     else
       markOverdefined(I);   // Don't know how to fold this instruction.  :(
   }
