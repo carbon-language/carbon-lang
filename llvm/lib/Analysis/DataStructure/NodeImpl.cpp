@@ -311,9 +311,11 @@ PointerValSet FunctionDSGraph::cloneFunctionIntoSelf(const FunctionDSGraph &DSG,
     Nodes.push_back(NodeMap[DSG.Nodes[i]] = DSG.Nodes[i]->clone());
 
   // Clone all of the shadow nodes similarly...
-  for (unsigned i = 0, e = DSG.ShadowNodes.size(); i != e; ++i)
-    ShadowNodes.push_back(cast<ShadowDSNode>(NodeMap[DSG.ShadowNodes[i]] = DSG.ShadowNodes[i]->clone()));
-
+  for (unsigned i = 0, e = DSG.ShadowNodes.size(); i != e; ++i) {
+    ShadowDSNode *New = cast<ShadowDSNode>(DSG.ShadowNodes[i]->clone());
+    NodeMap[DSG.ShadowNodes[i]] = New;
+    ShadowNodes.push_back(New);
+  }
 
   // Convert all of the links over in the nodes now that the map has been filled
   // in all the way...
