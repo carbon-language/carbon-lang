@@ -49,6 +49,9 @@ I(MOVir32     , "movl",               0, 0)           // R32 = imm32  B8+ rd
 I(ADDrr8      , "addb",               0, 0)           // R8  += R8    00/r
 I(ADDrr16     , "addw",               0, 0)           // R16 += R16   01/r
 I(ADDrr32     , "addl",               0, 0)           // R32 += R32   01/r
+I(SUBrr8      , "subb",               0, 0)           // R8  -= R8    2A/r
+I(SUBrr16     , "subw",               0, 0)           // R16 -= R16   2B/r
+I(SUBrr32     , "subl",               0, 0)           // R32 -= R32   2B/r
 
 // Logical operators
 I(ANDrr8      , "andb",               0, 0)           // R8  &= R8    20/r

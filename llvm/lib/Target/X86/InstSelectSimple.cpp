@@ -59,13 +59,14 @@ namespace {
     void visitBranchInst(BranchInst &BI);
 
     // Arithmetic operators
-    void visitAdd(BinaryOperator &B);
+    void visitAdd(BinaryOperator &B) { visitSimpleBinary(B, 0); }
+    void visitSub(BinaryOperator &B) { visitSimpleBinary(B, 1); }
 
     // Bitwise operators
-    void visitAnd(BinaryOperator &B) { visitBitwise(B, 0); }
-    void visitOr (BinaryOperator &B) { visitBitwise(B, 1); }
-    void visitXor(BinaryOperator &B) { visitBitwise(B, 2); }
-    void visitBitwise(BinaryOperator &B, unsigned OpcodeClass);
+    void visitAnd(BinaryOperator &B) { visitSimpleBinary(B, 2); }
+    void visitOr (BinaryOperator &B) { visitSimpleBinary(B, 3); }
+    void visitXor(BinaryOperator &B) { visitSimpleBinary(B, 4); }
+    void visitSimpleBinary(BinaryOperator &B, unsigned OpcodeClass);
 
     // Binary comparison operators
 
@@ -191,30 +192,12 @@ void ISel::visitBranchInst(BranchInst &BI) {
 }
 
 
-
-/// 'add' instruction - Simply turn this into an x86 reg,reg add instruction.
-void ISel::visitAdd(BinaryOperator &B) {
-  unsigned Op0r = getReg(B.getOperand(0)), Op1r = getReg(B.getOperand(1));
-  unsigned DestReg = getReg(B);
-  unsigned Class = getClass(B.getType());
-
-  static const unsigned Opcodes[] = { X86::ADDrr8, X86::ADDrr16, X86::ADDrr32 };
-
-  if (Class >= sizeof(Opcodes)/sizeof(Opcodes[0]))
-    visitInstruction(B);  // Not handled class yet...
-
-  BuildMI(BB, Opcodes[Class], 2, DestReg).addReg(Op0r).addReg(Op1r);
-
-  // For Longs: Here we have a pair of operands each occupying a pair of
-  // registers.  We need to do an ADDrr32 of the least-significant pair
-  // immediately followed by an ADCrr32 (Add with Carry) of the most-significant
-  // pair.  I don't know how we are representing these multi-register arguments.
-}
-
-/// visitBitwise - Implement the three bitwise operators for integral types...
-/// OperatorClass is one of: 0 for And, 1 for Or, 2 for Xor.
-void ISel::visitBitwise(BinaryOperator &B, unsigned OperatorClass) {
-  if (B.getType() == Type::BoolTy)  // FIXME: Handle bools
+/// visitSimpleBinary - Implement simple binary operators for integral types...
+/// OperatorClass is one of: 0 for Add, 1 for Sub, 2 for And, 3 for Or,
+/// 4 for Xor.
+///
+void ISel::visitSimpleBinary(BinaryOperator &B, unsigned OperatorClass) {
+  if (B.getType() == Type::BoolTy)  // FIXME: Handle bools for logicals
     visitInstruction(B);
 
   unsigned Class = getClass(B.getType());
@@ -222,6 +205,11 @@ void ISel::visitBitwise(BinaryOperator &B, unsigned OperatorClass) {
     visitInstruction(B);
 
   static const unsigned OpcodeTab[][4] = {
+    // Arithmetic operators
+    { X86::ADDrr8, X86::ADDrr16, X86::ADDrr32, 0 },  // ADD
+    { X86::SUBrr8, X86::SUBrr16, X86::SUBrr32, 0 },  // SUB
+
+    // Bitwise operators
     { X86::ANDrr8, X86::ANDrr16, X86::ANDrr32, 0 },  // AND
     { X86:: ORrr8, X86:: ORrr16, X86:: ORrr32, 0 },  // OR
     { X86::XORrr8, X86::XORrr16, X86::XORrr32, 0 },  // XOR
