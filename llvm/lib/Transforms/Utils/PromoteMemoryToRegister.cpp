@@ -17,7 +17,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/Utils/PromoteMemToReg.h"
-#include "llvm/Constant.h"
+#include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
@@ -288,7 +288,7 @@ void PromoteMem2Reg::run() {
   //
   std::vector<Value *> Values(Allocas.size());
   for (unsigned i = 0, e = Allocas.size(); i != e; ++i)
-    Values[i] = Constant::getNullValue(Allocas[i]->getAllocatedType());
+    Values[i] = UndefValue::get(Allocas[i]->getAllocatedType());
 
   // Walks all basic blocks in the function performing the SSA rename algorithm
   // and inserting the phi nodes we marked as necessary
@@ -307,7 +307,7 @@ void PromoteMem2Reg::run() {
     // Just delete the users now.
     //
     if (!A->use_empty())
-      A->replaceAllUsesWith(Constant::getNullValue(A->getType()));
+      A->replaceAllUsesWith(UndefValue::get(A->getType()));
     if (AST) AST->deleteValue(A);
     A->getParent()->getInstList().erase(A);
   }
@@ -356,9 +356,9 @@ void PromoteMem2Reg::run() {
       // entries inserted into every PHI nodes for the block.
       for (unsigned i = 0, e = PNs.size(); i != e; ++i)
         if (PHINode *PN = PNs[i]) {
-          Value *NullVal = Constant::getNullValue(PN->getType());
+          Value *UndefVal = UndefValue::get(PN->getType());
           for (unsigned pred = 0, e = Preds.size(); pred != e; ++pred)
-            PN->addIncoming(NullVal, Preds[pred]);
+            PN->addIncoming(UndefVal, Preds[pred]);
         }
     }
   }
@@ -414,7 +414,7 @@ void PromoteMem2Reg::PromoteLocallyUsedAlloca(BasicBlock *BB, AllocaInst *AI) {
     Instruction *U = cast<Instruction>(AI->use_back());
     if (LoadInst *LI = dyn_cast<LoadInst>(U)) {
       // Must be a load of uninitialized value.
-      LI->replaceAllUsesWith(Constant::getNullValue(AI->getAllocatedType()));
+      LI->replaceAllUsesWith(UndefValue::get(AI->getAllocatedType()));
       if (AST && isa<PointerType>(LI->getType()))
         AST->deleteValue(LI);
     } else {
@@ -423,8 +423,8 @@ void PromoteMem2Reg::PromoteLocallyUsedAlloca(BasicBlock *BB, AllocaInst *AI) {
     }
     BB->getInstList().erase(U);
   } else {
-    // Uses of the uninitialized memory location shall get zero...
-    Value *CurVal = Constant::getNullValue(AI->getAllocatedType());
+    // Uses of the uninitialized memory location shall get undef.
+    Value *CurVal = UndefValue::get(AI->getAllocatedType());
   
     for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ) {
       Instruction *Inst = I++;
@@ -473,7 +473,7 @@ PromoteLocallyUsedAllocas(BasicBlock *BB, const std::vector<AllocaInst*> &AIs) {
         if (AIt != CurValues.end()) {
           // Loads just returns the "current value"...
           if (AIt->second == 0)   // Uninitialized value??
-            AIt->second =Constant::getNullValue(AIt->first->getAllocatedType());
+            AIt->second = UndefValue::get(AIt->first->getAllocatedType());
           LI->replaceAllUsesWith(AIt->second);
           if (AST && isa<PointerType>(LI->getType()))
             AST->deleteValue(LI);
