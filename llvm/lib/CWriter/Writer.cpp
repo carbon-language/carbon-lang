@@ -1,14 +1,12 @@
-//===-- Writer.cpp - Library for writing C files --------------------------===//
+//===-- Writer.cpp - Library for converting LLVM code to C ----------------===//
 //
 // This library implements the functionality defined in llvm/Assembly/CWriter.h
-// and CLocalVars.h
 //
 // TODO : Recursive types.
 //
 //===-----------------------------------------------------------------------==//
 
 #include "llvm/Assembly/CWriter.h"
-#include "llvm/SlotCalculator.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
@@ -22,13 +20,12 @@
 #include "llvm/iOther.h"
 #include "llvm/iOperators.h"
 #include "llvm/SymbolTable.h"
+#include "llvm/SlotCalculator.h"
 #include "llvm/Support/InstVisitor.h"
 #include "llvm/Support/InstIterator.h"
 #include "Support/StringExtras.h"
 #include "Support/STLExtras.h"
-
 #include <algorithm>
-#include <strstream>
 using std::string;
 using std::map;
 using std::ostream;
@@ -188,10 +185,9 @@ static string calcTypeNameVar(const Type *Ty,
     return Result + "}";
   }  
 
-  case Type::PointerTyID: {
+  case Type::PointerTyID:
     return calcTypeNameVar(cast<const PointerType>(Ty)->getElementType(), 
                            TypeNames, "*" + NameSoFar);
-  }
   
   case Type::ArrayTyID: {
     const ArrayType *ATy = cast<const ArrayType>(Ty);
@@ -220,12 +216,8 @@ namespace {
     
     inline void write(Module *M) { printModule(M); }
 
-    ostream& printTypeVar(const Type *Ty, const string &VariableName) {
+    ostream& printType(const Type *Ty, const string &VariableName = "") {
       return Out << calcTypeNameVar(Ty, TypeNames, VariableName);
-    }
-
-    ostream& printType(const Type *Ty) {
-      return Out << calcTypeNameVar(Ty, TypeNames, "");
     }
 
     void writeOperand(const Value *Operand);
@@ -329,7 +321,7 @@ void CWriter::writeOperandInternal(const Value *Operand) {
   } else if (const Constant *CPV = dyn_cast<const Constant>(Operand)) {
     if (isa<ConstantPointerNull>(CPV)) {
       Out << "((";
-      printTypeVar(CPV->getType(), "");
+      printType(CPV->getType(), "");
       Out << ")NULL)";
     } else
       Out << getConstStrValue(CPV); 
@@ -381,7 +373,7 @@ void CWriter::printModule(Module *M) {
   for (Module::const_giterator I = M->gbegin(), E = M->gend(); I != E; ++I) {
     GlobalVariable *GV = *I;
     if (GV->hasInternalLinkage()) Out << "static ";
-    printTypeVar(GV->getType()->getElementType(), getValueName(GV));
+    printType(GV->getType()->getElementType(), getValueName(GV));
 
     if (GV->hasInitializer()) {
       Out << " = " ;
@@ -460,14 +452,14 @@ void CWriter::printFunctionSignature(const Function *F) {
     
   if (!F->isExternal()) {
     if (!F->getArgumentList().empty()) {
-      printTypeVar(F->getArgumentList().front()->getType(),
-                   getValueName(F->getArgumentList().front()));
+      printType(F->getArgumentList().front()->getType(),
+                getValueName(F->getArgumentList().front()));
 
       for (Function::ArgumentListType::const_iterator
              I = F->getArgumentList().begin()+1,
              E = F->getArgumentList().end(); I != E; ++I) {
         Out << ", ";
-        printTypeVar((*I)->getType(), getValueName(*I));
+        printType((*I)->getType(), getValueName(*I));
       }
     }
   } else {
@@ -501,7 +493,7 @@ void CWriter::printFunction(Function *F) {
   for (inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I)
     if ((*I)->getType() != Type::VoidTy && !isInlinableInst(*I)) {
       Out << "  ";
-      printTypeVar((*I)->getType(), getValueName(*I));
+      printType((*I)->getType(), getValueName(*I));
       Out << ";\n";
     }
  
