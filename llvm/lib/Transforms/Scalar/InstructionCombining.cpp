@@ -499,6 +499,8 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
 // instruction
 //
 Instruction *InstCombiner::visitMemAccessInst(MemAccessInst &MAI) {
+  return 0;   // DISABLE FOLDING.  GEP is now the only MAI!
+
   GetElementPtrInst *Src =
     dyn_cast<GetElementPtrInst>(MAI.getPointerOperand());
   if (!Src) return 0;
