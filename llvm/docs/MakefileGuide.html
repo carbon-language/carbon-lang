@@ -17,7 +17,7 @@
       <li><a href="#Makefile">Makefile</a></li>
       <li><a href="#Makefile.common">Makefile.common</a></li>
       <li><a href="#Makefile.config">Makefile.config</a></li>
-      <li><a href="#Makefile.rules">Makefil.rules</a></li>
+      <li><a href="#Makefile.rules">Makefile.rules</a></li>
       <li><a href="#Comments">Comments</a></li>
     </ol>
   </li>
@@ -60,10 +60,10 @@
 <div class="doc_text">
   <p>This document provides <em>usage</em> information about the LLVM makefile 
   system. While loosely patterned after the BSD makefile system, LLVM has taken 
-  a deparature from BSD in order to implement additional features needed by LLVM.
+  a departure from BSD in order to implement additional features needed by LLVM.
   </p>
   <p>Although makefile systems such as automake were attempted at one point, it
-  has become clear that the variations requried by LLVM from any Makefle norm
+  has become clear that the variations required by LLVM from any Makefile norm
   are too many to strictly use a more limited tool. Consequently, LLVM requires 
   simply GNU Make 3.79, a widely portably makefile processor. LLVM unabashedly 
   makes heavy use of the features of GNU Make so the dependency on GNU Make is 
@@ -172,7 +172,7 @@
 <div class="doc_text">
   <p>This section describes each of the targets that can be built using the LLVM
   Makefile system. Any target can be invoked from any directory but not all are
-  applicabe to a given directory (e.g. "dist" and "install" will always operate
+  applicable to a given directory (e.g. "dist" and "install" will always operate
   as if invoked from the top level directory).</p>
 
   <table style="text-align:left">
@@ -262,7 +262,7 @@
 <div class="doc_text">
   <p>This target cleans the build directory, recursively removing all things
   that the Makefile builds. Despite once or twice attempting to remove /*, the
-  cleaning rules have been made gaurded so they shouldn't go awry.</p>
+  cleaning rules have been made guarded so they shouldn't go awry.</p>
 </div>
 
 <!-- ======================================================================= -->
@@ -334,7 +334,7 @@
 <div class="doc_text">
   <p>This target is the opposite of the <tt>install</tt> target. It removes the
   header, library and executable files from the installation directories. Note
-  that the directories themselves are not removed because it is not gauranteed
+  that the directories themselves are not removed because it is not guaranteed
   that LLVM is the only thing installing there (e.g. --prefix=/usr).</p>
 </div>
 
@@ -365,7 +365,7 @@
     </tr><tr><td><a href="#BYTECODE_LIBRARY"><tt>BUILT_SOURCES</tt></a></td>
       <td>If set to any value, causes a bytecode library (.bc) to be built.</td>
     </tr><tr><td><a href="#CONFIG_FILES"><tt>BUILT_SOURCES</tt></a></td>
-      <td>Specivies a set of configuration files to be installed.</td>
+      <td>Specifies a set of configuration files to be installed.</td>
     </tr><tr><td><a href="#DIRS"><tt>DIRS</tt></a></td>
       <td>Specifies a set of directories that should also be made using the 
         same goal. These directories will be built serially.</td>
@@ -458,7 +458,7 @@
     <tr><th>Variable Name</th><th>Variable Description</th></tr>
     <tr>
       <td><a href="#BUILD_SRC_DIR"><tt>BUILD_SRC_DIR</tt></a></td>
-      <td>The project directory contaning the directories source files.</td>
+      <td>The project directory containing the directories source files.</td>
     </tr>
     <tr>
       <td><a href="#BUILD_OBJ_DIR"><tt>BUILD_OBJ_DIR</tt></a></td>
