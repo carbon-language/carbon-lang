@@ -1,0 +1,10 @@
+// RUN: llvmg++ -xc++ 2003-08-24-Cleanup.cpp.tr -c -o - | dis | grep 'call void %llvm.unwind'
+
+struct S { ~S(); };
+
+int mightthrow();
+
+int test() {
+  S s;
+  mightthrow();
+}
