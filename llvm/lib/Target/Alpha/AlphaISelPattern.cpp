@@ -724,8 +724,8 @@ unsigned ISel::SelectExpr(SDOperand N) {
  
   case ISD::DYNAMIC_STACKALLOC:
     // Generate both result values.
-    if (Result != 1)
-      ExprMap[N.getValue(1)] = 1;   // Generate the token
+    if (Result != notIn)
+      ExprMap[N.getValue(1)] = notIn;   // Generate the token
     else
       Result = ExprMap[N.getValue(0)] = MakeReg(N.getValue(0).getValueType());
 
