@@ -133,6 +133,8 @@ class Instruction {
   bit isLoad       = 0;     // Is this instruction a load instruction?
   bit isStore      = 0;     // Is this instruction a store instruction?
   bit isTwoAddress = 0;     // Is this a two address instruction?
+  bit isConvertibleToThreeAddress = 0;  // Can this 2-addr instruction promote?
+  bit isCommutable = 0;     // Is this 3 operand instruction commutable?
   bit isTerminator = 0;     // Is this part of the terminator for a basic block?
   bit hasDelaySlot = 0;     // Does this instruction have an delay slot?
 }
