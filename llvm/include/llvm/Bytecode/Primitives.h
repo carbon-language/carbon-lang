@@ -130,6 +130,24 @@ static inline bool read(const unsigned char *&Buf, const unsigned char *EndBuf,
   return false;
 }
 
+static inline bool input_data(const unsigned char *&Buf,
+			      const unsigned char *EndBuf, 
+			      void *Ptr, void *End, bool Align = false) {
+  unsigned char *Start = (unsigned char *)Ptr;
+  unsigned Amount = (unsigned char *)End - Start;
+  if (Buf+Amount > EndBuf) return true;
+#ifdef LITTLE_ENDIAN
+  copy(Buf, Buf+Amount, Start);
+  Buf += Amount;
+#else
+  unsigned char *E = (unsigned char *)End;
+  while (Ptr != E)
+    *--E = *Buf++;
+#endif
+
+  if (Align) return align32(Buf, EndBuf);
+  return false;
+}
 
 //===----------------------------------------------------------------------===//
 //                             Writing Primitives
@@ -232,6 +250,19 @@ static inline void output(const string &s, vector<unsigned char> &Out,
 
   if (Aligned)
     align32(Out);                   // Make sure we are now aligned...
+}
+
+static inline void output_data(void *Ptr, void *End,
+			       vector<unsigned char> &Out, bool Align = false) {
+#ifdef LITTLE_ENDIAN
+  Out.insert(Out.end(), (unsigned char*)Ptr, (unsigned char*)End);
+#else
+  unsigned char *E = (unsigned char *)End;
+  while (Ptr != E)
+    Out.push_back(*--E);
+#endif
+
+  if (Align) align32(Out);
 }
 
 #endif
