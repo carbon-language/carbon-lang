@@ -47,7 +47,7 @@ D: Primary architect of LLVM
 
 N: Vladimir Prus
 E: ghost@cs.msu.su
-D: Made inst_iterator behave like a proper iterator
+D: Made inst_iterator behave like a proper iterator, LowerConstantExprs pass
 
 N: Ruchira Sasanka
 E: sasanka@uiuc.edu
