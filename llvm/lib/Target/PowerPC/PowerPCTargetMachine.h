@@ -34,7 +34,7 @@ class PowerPCTargetMachine : public TargetMachine {
 protected:
   PowerPCTargetMachine(const std::string &name, IntrinsicLowering *IL,
                        const TargetData &TD, const TargetFrameInfo &TFI,
-                       const PowerPCJITInfo &TJI);
+                       const PowerPCJITInfo &TJI, bool is64b);
 public:
   virtual const PowerPCInstrInfo *getInstrInfo() const { return &InstrInfo; }
   virtual const TargetFrameInfo  *getFrameInfo() const { return &FrameInfo; }
