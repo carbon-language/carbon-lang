@@ -383,6 +383,12 @@ static BasicBlock *getBBVal(const ValID &ID, bool isDefinition = false) {
       ThrowException("Redefinition of label " + ID.getName());
 
     ID.destroy();                       // Free strdup'd memory.
+
+    // Make sure to move the basic block to the correct location in the
+    // function, instead of leaving it inserted wherever it was first
+    // referenced.
+    CurFun.CurrentFunction->getBasicBlockList().remove(BB);
+    CurFun.CurrentFunction->getBasicBlockList().push_back(BB);
     return BB;
   }
 
