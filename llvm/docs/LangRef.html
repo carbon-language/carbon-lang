@@ -623,45 +623,61 @@ external (i.e., lacking any linkage declarations), they are accessible
 outside of the current module.  It is illegal for a function <i>declaration</i>
 to have any linkage type other than "externally visible".</a></p>
 </div>
+
 <!-- ======================================================================= -->
-<div class="doc_subsection"> <a name="globalvars">Global Variables</a> </div>
+<div class="doc_subsection">
+  <a name="globalvars">Global Variables</a>
+</div>
+
 <div class="doc_text">
+
 <p>Global variables define regions of memory allocated at compilation
 time instead of run-time.  Global variables may optionally be
 initialized.  A variable may be defined as a global "constant", which
 indicates that the contents of the variable will never be modified
-(opening options for optimization).  Constants must always have an
-initial value.</p>
+(opening options for optimization).</p>
+
 <p>As SSA values, global variables define pointer values that are in
 scope (i.e. they dominate) for all basic blocks in the program.  Global
 variables always define a pointer to their "content" type because they
 describe a region of memory, and all memory objects in LLVM are
 accessed through pointers.</p>
+
 </div>
+
+
 <!-- ======================================================================= -->
-<div class="doc_subsection"> <a name="functionstructure">Functions</a> </div>
-<div class="doc_text">
-<p>LLVM function definitions are composed of a (possibly empty)
-argument list, an opening curly brace, a list of basic blocks, and a
-closing curly brace.  LLVM function declarations are defined with the "<tt>declare</tt>"
-keyword, a function name, and a function signature.</p>
-<p>A function definition contains a list of basic blocks, forming the
-CFG for the function.  Each basic block may optionally start with a
-label (giving the basic block a symbol table entry), contains a list of
-instructions, and ends with a <a href="#terminators">terminator</a>
-instruction (such as a branch or function return).</p>
-<p>The first basic block in program is special in two ways: it is
-immediately executed on entrance to the function, and it is not allowed
-to have predecessor basic blocks (i.e. there can not be any branches to
-the entry block of a function).  Because the block can have no
-predecessors, it also cannot have any <a href="#i_phi">PHI nodes</a>.</p>
-<p>
-LLVM functions are identified by their name and type signature.  Hence, two
-functions with the same name but different parameter lists or return values
-are considered different functions, and LLVM will resolves references to each
-appropriately.
-</p>
+<div class="doc_subsection">
+  <a name="functionstructure">Functions</a>
 </div>
+
+<div class="doc_text">
+
+<p>LLVM function definitions are composed of a (possibly empty) argument list,
+an opening curly brace, a list of basic blocks, and a closing curly brace.  LLVM
+function declarations are defined with the "<tt>declare</tt>" keyword, a
+function name, and a function signature.</p>
+
+<p>A function definition contains a list of basic blocks, forming the CFG for
+the function.  Each basic block may optionally start with a label (giving the
+basic block a symbol table entry), contains a list of instructions, and ends
+with a <a href="#terminators">terminator</a> instruction (such as a branch or
+function return).</p>
+
+<p>The first basic block in program is special in two ways: it is immediately
+executed on entrance to the function, and it is not allowed to have predecessor
+basic blocks (i.e. there can not be any branches to the entry block of a
+function).  Because the block can have no predecessors, it also cannot have any
+<a href="#i_phi">PHI nodes</a>.</p>
+
+<p>LLVM functions are identified by their name and type signature.  Hence, two
+functions with the same name but different parameter lists or return values are
+considered different functions, and LLVM will resolves references to each
+appropriately.</p>
+
+</div>
+
+
 <!-- *********************************************************************** -->
 <div class="doc_section"> <a name="instref">Instruction Reference</a> </div>
 <!-- *********************************************************************** -->
