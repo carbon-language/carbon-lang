@@ -82,7 +82,8 @@ I(MOVrm16     , "movw",  0x89,             0, X86II::MRMDestMem | X86II::Void | 
                                               X86II::OpSize, NoImpRegs, NoImpRegs)
 I(MOVrm32     , "movl",  0x89,             0, X86II::MRMDestMem | X86II::Void, NoImpRegs, NoImpRegs)   // [mem] = R32
 
-I(PUSHr32     , "pushl", 0x50,             0, X86II::AddRegFrm | X86II::Void, NoImpRegs, NoImpRegs)
+I(PUSHr32     , "pushl", 0x50,             0, X86II::AddRegFrm | X86II::Void, NoImpRegs, NoImpRegs)    
+I(POPr32      , "popl",  0x58,             0, X86II::AddRegFrm, NoImpRegs, NoImpRegs)
 
 // Arithmetic instructions
 I(ADDrr8      , "addb",  0x00,             0, X86II::MRMDestReg, NoImpRegs, NoImpRegs)                 // R8  += R8
