@@ -22,8 +22,8 @@
 #include "llvm/Module.h"
 #include <list>
 #include "llvmAsmParser.h"
-#include <ctype.h>
-#include "Config/stdlib.h"
+#include <cctype>
+#include <cstdlib>
 
 #define RET_TOK(type, Enum, sym) \
   llvmAsmlval.type = Instruction::Enum; return sym
