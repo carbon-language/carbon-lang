@@ -14,11 +14,20 @@
 #include "Inliner.h"
 #include "llvm/Instructions.h"
 #include "llvm/Function.h"
+#include "llvm/Type.h"
 #include "llvm/Support/CallSite.h"
 #include "llvm/Transforms/IPO.h"
 using namespace llvm;
 
 namespace {
+  struct ArgInfo {
+    unsigned ConstantWeight;
+    unsigned AllocaWeight;
+
+    ArgInfo(unsigned CWeight, unsigned AWeight)
+      : ConstantWeight(CWeight), AllocaWeight(AWeight) {}
+  };
+
   // FunctionInfo - For each function, calculate the size of it in blocks and
   // instructions.
   struct FunctionInfo {
@@ -26,11 +35,11 @@ namespace {
     // used to estimate the code size cost of inlining it.
     unsigned NumInsts, NumBlocks;
 
-    // ConstantArgumentWeights - Each formal argument of the function is
-    // inspected to see if it is used in any contexts where making it a constant
+    // ArgumentWeights - Each formal argument of the function is inspected to
+    // see if it is used in any contexts where making it a constant or alloca
     // would reduce the code size.  If so, we add some value to the argument
     // entry here.
-    std::vector<unsigned> ConstantArgumentWeights;
+    std::vector<ArgInfo> ArgumentWeights;
 
     FunctionInfo() : NumInsts(0), NumBlocks(0) {}
   };
@@ -88,6 +97,33 @@ static unsigned CountCodeReductionForConstant(Value *V) {
   return Reduction;
 }
 
+// CountCodeReductionForAlloca - Figure out an approximation of how much smaller
+// the function will be if it is inlined into a context where an argument
+// becomes an alloca.
+//
+static unsigned CountCodeReductionForAlloca(Value *V) {
+  if (!isa<PointerType>(V->getType())) return 0;  // Not a pointer
+  unsigned Reduction = 0;
+  for (Value::use_iterator UI = V->use_begin(), E = V->use_end(); UI != E;++UI){
+    Instruction *I = cast<Instruction>(*UI);
+    if (isa<LoadInst>(I) || isa<StoreInst>(I))
+      Reduction += 10;
+    else if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(I)) {
+      // If the GEP has variable indices, we won't be able to do much with it.
+      for (Instruction::op_iterator I = GEP->op_begin()+1, E = GEP->op_end();
+           I != E; ++I)
+        if (!isa<Constant>(*I)) return 0;
+      Reduction += CountCodeReductionForAlloca(GEP)+15;
+    } else {
+      // If there is some other strange instruction, we're not going to be able
+      // to do much if we inline this.
+      return 0;
+    }
+  }
+
+  return Reduction;
+}
+
 // getInlineCost - The heuristic used to determine if we should inline the
 // function call or not.
 //
@@ -131,11 +167,12 @@ int SimpleInliner::getInlineCost(CallSite CS) {
 
     // Check out all of the arguments to the function, figuring out how much
     // code can be eliminated if one of the arguments is a constant.
-    std::vector<unsigned> &ArgWeights = CalleeFI.ConstantArgumentWeights;
+    std::vector<ArgInfo> &ArgWeights = CalleeFI.ArgumentWeights;
 
     for (Function::aiterator I = Callee->abegin(), E = Callee->aend();
          I != E; ++I)
-      ArgWeights.push_back(CountCodeReductionForConstant(I));
+      ArgWeights.push_back(ArgInfo(CountCodeReductionForConstant(I),
+                                   CountCodeReductionForAlloca(I)));
   }
 
 
@@ -161,15 +198,16 @@ int SimpleInliner::getInlineCost(CallSite CS) {
     // significant future optimization possibilities (like scalar promotion, and
     // scalarization), so encourage the inlining of the function.
     //
-    else if (isa<AllocaInst>(I))
-      InlineCost -= 60;
+    else if (AllocaInst *AI = dyn_cast<AllocaInst>(I)) {
+      if (ArgNo < CalleeFI.ArgumentWeights.size())
+        InlineCost -= CalleeFI.ArgumentWeights[ArgNo].AllocaWeight;
 
     // If this is a constant being passed into the function, use the argument
     // weights calculated for the callee to determine how much will be folded
     // away with this information.
-    else if (isa<Constant>(I) || isa<GlobalVariable>(I)) {
-      if (ArgNo < CalleeFI.ConstantArgumentWeights.size())
-        InlineCost -= CalleeFI.ConstantArgumentWeights[ArgNo];
+    } else if (isa<Constant>(I) || isa<GlobalVariable>(I)) {
+      if (ArgNo < CalleeFI.ArgumentWeights.size())
+        InlineCost -= CalleeFI.ArgumentWeights[ArgNo].ConstantWeight;
     }
   }
 
@@ -178,7 +216,7 @@ int SimpleInliner::getInlineCost(CallSite CS) {
 
   // Don't inline into something too big, which would make it bigger.  Here, we
   // count each basic block as a single unit.
-  InlineCost += Caller->size()*2;
+  InlineCost += Caller->size()/20;
 
 
   // Look at the size of the callee.  Each basic block counts as 20 units, and
