@@ -1,8 +1,7 @@
-//===----------------------------------------------------------------------===//
-// LLVM 'GCCLD' UTILITY 
+//===- gccld.cpp - LLVM 'ld' compatible linker ----------------------------===//
 //
 // This utility is intended to be compatible with GCC, and follows standard
-// system ld conventions.  As such, the default output file is ./a.out.
+// system 'ld' conventions.  As such, the default output file is ./a.out.
 // Additionally, this program outputs a shell script that is used to invoke LLI
 // to execute the program.  In this manner, the generated executable (a.out for
 // example), is directly executable, whereas the bytecode file actually lives in
@@ -25,6 +24,7 @@
 #include "Support/Signals.h"
 #include <fstream>
 #include <memory>
+#include <set>
 #include <algorithm>
 #include <sys/types.h>     // For FileExists
 #include <sys/stat.h>
@@ -56,6 +56,10 @@ namespace {
   NoInternalize("disable-internalize",
                 cl::desc("Do not mark all symbols as internal"));
 
+  cl::opt<bool>
+  LinkAsLibrary("link-as-library", cl::desc("Link the .bc files together as a"
+                                            " library, not an executable"));
+
   // Compatibility options that are ignored, but support by LD
   cl::opt<std::string>
   CO3("soname", cl::Hidden, cl::desc("Compatibility option: ignored"));
@@ -71,74 +75,241 @@ static inline bool FileExists(const std::string &FN) {
   return stat(FN.c_str(), &StatBuf) != -1;
 }
 
-// LoadFile - Read the specified bytecode file in and return it.  This routine
-// searches the link path for the specified file to try to find it...
-//
-static inline std::auto_ptr<Module> LoadFile(const std::string &FN) {
-  std::string Filename = FN;
-  std::string ErrorMessage;
 
-  unsigned NextLibPathIdx = 0;
-  bool FoundAFile = false;
-
-  while (1) {
-    if (Verbose) std::cerr << "Loading '" << Filename << "'\n";
-    if (FileExists(Filename)) FoundAFile = true;
-    Module *Result = ParseBytecodeFile(Filename, &ErrorMessage);
-    if (Result) return std::auto_ptr<Module>(Result);   // Load successful!
-
-    if (Verbose) {
-      std::cerr << "Error opening bytecode file: '" << Filename << "'";
-      if (ErrorMessage.size()) std::cerr << ": " << ErrorMessage;
-      std::cerr << "\n";
-    }
-    
-    if (NextLibPathIdx == LibPaths.size()) break;
-    Filename = LibPaths[NextLibPathIdx++] + "/" + FN;
+// LoadObject - Read the specified "object file", which should not search the
+// library path to find it.
+static inline std::auto_ptr<Module> LoadObject(const std::string &FN,
+                                               std::string &OutErrorMessage) {
+  if (Verbose) std::cerr << "Loading '" << FN << "'\n";
+  if (!FileExists(FN)) {
+    OutErrorMessage = "could not find input file '" + FN + "'!";
+    return std::auto_ptr<Module>();
   }
 
-  if (FoundAFile)
-    std::cerr << "Bytecode file '" << FN << "' corrupt!  "
-              << "Use 'gccld -v ...' for more info.\n";
-  else
-    std::cerr << "Could not locate bytecode file: '" << FN << "'\n";
+  std::string ErrorMessage;
+  Module *Result = ParseBytecodeFile(FN, &ErrorMessage);
+  if (Result) return std::auto_ptr<Module>(Result);
+
+  OutErrorMessage = "Bytecode file '" + FN + "' corrupt!";
+  if (ErrorMessage.size()) OutErrorMessage += ": " + ErrorMessage;
   return std::auto_ptr<Module>();
+}
+
+
+static Module *LoadSingleLibraryObject(const std::string &Filename) {
+  std::string ErrorMessage;
+  std::auto_ptr<Module> M = LoadObject(Filename, ErrorMessage);
+  if (M.get() == 0 && Verbose) {
+    std::cerr << "Error loading '" + Filename + "'";
+    if (!ErrorMessage.empty()) std::cerr << ": " << ErrorMessage;
+    std::cerr << "\n";
+  }
+  
+  return M.release();
+}
+
+
+// LoadLibraryFromDirectory - This looks for a .a, .so, or .bc file in a
+// particular directory.  It returns true if no library is found, otherwise it
+// puts the loaded modules into the Objects list, and sets isArchive to true if
+// a .a file was loaded.
+//
+static inline bool LoadLibraryFromDirectory(const std::string &LibName,
+                                            const std::string &Directory,
+                                            std::vector<Module*> &Objects,
+                                            bool &isArchive) {
+  if (FileExists(Directory + "lib" + LibName + ".a")) {
+    std::string ErrorMessage;
+    if (Verbose) std::cerr << "Loading '" << Directory << LibName << ".a'\n";
+    if (!ReadArchiveFile(Directory + "lib" + LibName + ".a", Objects,
+                         &ErrorMessage)) {   // Read the archive file
+      isArchive = true;
+      return false;           // Success!
+    }
+
+    if (Verbose) {
+      std::cerr << "Error loading archive '" + Directory + "lib"+LibName+".a'";
+      if (!ErrorMessage.empty()) std::cerr << ": " << ErrorMessage;
+      std::cerr << "\n";
+    }
+  }
+
+  if (FileExists(Directory + "lib" + LibName + ".so"))
+    if (Module *M = LoadSingleLibraryObject(Directory + "lib" + LibName+".so")){
+      isArchive = false;
+      Objects.push_back(M);
+      return false;
+    }
+
+  if (FileExists(Directory + "lib" + LibName + ".bc"))
+    if (Module *M = LoadSingleLibraryObject(Directory + "lib" + LibName+".bc")){
+      isArchive = false;
+      Objects.push_back(M);
+      return false;
+    }
+  return true;
+}
+
+// LoadLibrary - This searches for a .a, .so, or .bc file which provides the
+// LLVM bytecode for the library.  It returns true if no library is found,
+// otherwise it puts the loaded modules into the Objects list, and sets
+// isArchive to true if a .a file was loaded.
+//
+static inline bool LoadLibrary(const std::string &LibName,
+                               std::vector<Module*> &Objects, bool &isArchive,
+                               std::string &ErrorMessage) {
+  std::string Directory;
+  unsigned NextLibPathIdx = 0;
+
+  while (1) {
+    // Try loading from the current directory...
+    if (Verbose) std::cerr << "  Looking in directory '" << Directory << "'\n";
+    if (!LoadLibraryFromDirectory(LibName, Directory, Objects, isArchive))
+      return false;
+
+    if (NextLibPathIdx == LibPaths.size()) break;
+    Directory = LibPaths[NextLibPathIdx++]+"/";
+  }
+
+  ErrorMessage = "error linking library '-l" + LibName+ "': library not found!";
+  return true;
+}
+
+static void GetAllDefinedSymbols(Module *M, 
+                                 std::set<std::string> &DefinedSymbols) {
+  for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I)
+    if (I->hasName() && !I->isExternal() && !I->hasInternalLinkage())
+      DefinedSymbols.insert(I->getName());
+  for (Module::giterator I = M->gbegin(), E = M->gend(); I != E; ++I)
+    if (I->hasName() && !I->isExternal() && !I->hasInternalLinkage())
+      DefinedSymbols.insert(I->getName());
+}
+
+// GetAllUndefinedSymbols - This calculates the set of undefined symbols that
+// still exist in an LLVM module.  This is a bit tricky because there may be two
+// symbols with the same name, but different LLVM types that will be resolved to
+// each other, but aren't currently (thus we need to treat it as resolved).
+//
+static void GetAllUndefinedSymbols(Module *M, 
+                                   std::set<std::string> &UndefinedSymbols) {
+  std::set<std::string> DefinedSymbols;
+  UndefinedSymbols.clear();   // Start out empty
+  
+  for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I)
+    if (I->hasName()) {
+      if (I->isExternal())
+        UndefinedSymbols.insert(I->getName());
+      else if (!I->hasInternalLinkage())
+        DefinedSymbols.insert(I->getName());
+    }
+  for (Module::giterator I = M->gbegin(), E = M->gend(); I != E; ++I)
+    if (I->hasName()) {
+      if (I->isExternal())
+        UndefinedSymbols.insert(I->getName());
+      else if (!I->hasInternalLinkage())
+        DefinedSymbols.insert(I->getName());
+    }
+  
+  // Prune out any defined symbols from the undefined symbols set...
+  for (std::set<std::string>::iterator I = UndefinedSymbols.begin();
+       I != UndefinedSymbols.end(); )
+    if (DefinedSymbols.count(*I))
+      UndefinedSymbols.erase(I++);  // This symbol really is defined!
+    else
+      ++I; // Keep this symbol in the undefined symbols list
+}
+
+
+static bool LinkLibrary(Module *M, const std::string &LibName,
+                        std::string &ErrorMessage) {
+  std::vector<Module*> Objects;
+  bool isArchive;
+  if (LoadLibrary(LibName, Objects, isArchive, ErrorMessage)) return true;
+
+  // Figure out which symbols are defined by all of the modules in the .a file
+  std::vector<std::set<std::string> > DefinedSymbols;
+  DefinedSymbols.resize(Objects.size());
+  for (unsigned i = 0; i != Objects.size(); ++i)
+    GetAllDefinedSymbols(Objects[i], DefinedSymbols[i]);
+
+  std::set<std::string> UndefinedSymbols;
+  GetAllUndefinedSymbols(M, UndefinedSymbols);
+
+  bool Linked = true;
+  while (Linked) {     // While we are linking in object files, loop.
+    Linked = false;
+
+    for (unsigned i = 0; i != Objects.size(); ++i) {
+      // Consider whether we need to link in this module...  we only need to
+      // link it in if it defines some symbol which is so far undefined.
+      //
+      const std::set<std::string> &DefSymbols = DefinedSymbols[i];
+
+      bool ObjectRequired = false;
+      for (std::set<std::string>::iterator I = UndefinedSymbols.begin(),
+             E = UndefinedSymbols.end(); I != E; ++I)
+        if (DefSymbols.count(*I)) {
+          if (Verbose)
+            std::cerr << "  Found object providing symbol '" << *I << "'...\n";
+          ObjectRequired = true;
+          break;
+        }
+      
+      // We DO need to link this object into the program...
+      if (ObjectRequired) {
+        if (LinkModules(M, Objects[i], &ErrorMessage))
+          return true;   // Couldn't link in the right object file...        
+        
+        // Since we have linked in this object, delete it from the list of
+        // objects to consider in this archive file.
+        std::swap(Objects[i], Objects.back());
+        std::swap(DefinedSymbols[i], DefinedSymbols.back());
+        Objects.pop_back();
+        DefinedSymbols.pop_back();
+        --i;   // Do not skip an entry
+        
+        // The undefined symbols set should have shrunk.
+        GetAllUndefinedSymbols(M, UndefinedSymbols);
+        Linked = true;  // We have linked something in!
+      }
+    }
+  }
+  
+  return false;
+}
+
+static int PrintAndReturn(const char *progname, const std::string &Message,
+                          const std::string &Extra = "") {
+  std::cerr << progname << Extra << ": " << Message << "\n";
+  return 1;
 }
 
 
 int main(int argc, char **argv) {
   cl::ParseCommandLineOptions(argc, argv, " llvm linker for GCC\n");
 
-  unsigned BaseArg = 0;
   std::string ErrorMessage;
+  std::auto_ptr<Module> Composite(LoadObject(InputFilenames[0], ErrorMessage));
+  if (Composite.get() == 0)
+    return PrintAndReturn(argv[0], ErrorMessage);
 
-  if (!Libraries.empty()) {
-    // Sort libraries list...
-    std::sort(Libraries.begin(), Libraries.end());
-
-    // Remove duplicate libraries entries...
-    Libraries.erase(unique(Libraries.begin(), Libraries.end()),
-                    Libraries.end());
-
-    // Add all of the libraries to the end of the link line...
-    for (unsigned i = 0; i < Libraries.size(); ++i)
-      InputFilenames.push_back("lib" + Libraries[i] + ".bc");
-  }
-
-  std::auto_ptr<Module> Composite(LoadFile(InputFilenames[BaseArg]));
-  if (Composite.get() == 0) return 1;
-
-  for (unsigned i = BaseArg+1; i < InputFilenames.size(); ++i) {
-    std::auto_ptr<Module> M(LoadFile(InputFilenames[i]));
-    if (M.get() == 0) return 1;
+  for (unsigned i = 1; i < InputFilenames.size(); ++i) {
+    std::auto_ptr<Module> M(LoadObject(InputFilenames[i], ErrorMessage));
+    if (M.get() == 0)
+      return PrintAndReturn(argv[0], ErrorMessage);
 
     if (Verbose) std::cerr << "Linking in '" << InputFilenames[i] << "'\n";
 
-    if (LinkModules(Composite.get(), M.get(), &ErrorMessage)) {
-      std::cerr << argv[0] << ": error linking in '" << InputFilenames[i]
-                << "': " << ErrorMessage << "\n";
-      return 1;
-    }
+    if (LinkModules(Composite.get(), M.get(), &ErrorMessage))
+      return PrintAndReturn(argv[0], ErrorMessage,
+                            ": error linking in '" + InputFilenames[i] + "'");
+  }
+
+  // Link in all of the libraries next...
+  for (unsigned i = 0; i != Libraries.size(); ++i) {
+    if (Verbose) std::cerr << "Linking in library: -l" << Libraries[i] << "\n";
+    if (LinkLibrary(Composite.get(), Libraries[i], ErrorMessage))
+      return PrintAndReturn(argv[0], ErrorMessage);
   }
 
   // In addition to just linking the input from GCC, we also want to spiff it up
@@ -178,33 +349,33 @@ int main(int argc, char **argv) {
   Passes.add(createGlobalDCEPass());
 
   // Add the pass that writes bytecode to the output file...
-  std::ofstream Out((OutputFilename+".bc").c_str());
-  if (!Out.good()) {
-    std::cerr << argv[0] << ": error opening '" << OutputFilename
-              << ".bc' for writing!\n";
-    return 1;
-  }
+  std::string RealBytecodeOutput = OutputFilename;
+  if (!LinkAsLibrary) RealBytecodeOutput += ".bc";
+  std::ofstream Out(RealBytecodeOutput.c_str());
+  if (!Out.good())
+    return PrintAndReturn(argv[0], "error opening '" + RealBytecodeOutput +
+                                   "' for writing!");
   Passes.add(new WriteBytecodePass(&Out));        // Write bytecode to file...
 
   // Make sure that the Out file gets unlink'd from the disk if we get a SIGINT
-  RemoveFileOnSignal(OutputFilename+".bc");
+  RemoveFileOnSignal(RealBytecodeOutput);
 
   // Run our queue of passes all at once now, efficiently.
   Passes.run(*Composite.get());
   Out.close();
 
-  // Output the script to start the program...
-  std::ofstream Out2(OutputFilename.c_str());
-  if (!Out2.good()) {
-    std::cerr << argv[0] << ": error opening '" << OutputFilename
-              << "' for writing!\n";
-    return 1;
-  }
-  Out2 << "#!/bin/sh\nlli -q -abort-on-exception $0.bc $*\n";
-  Out2.close();
+  if (!LinkAsLibrary) {
+    // Output the script to start the program...
+    std::ofstream Out2(OutputFilename.c_str());
+    if (!Out2.good())
+      return PrintAndReturn(argv[0], "error opening '" + OutputFilename +
+                                     "' for writing!");
+    Out2 << "#!/bin/sh\nlli -q -abort-on-exception $0.bc $*\n";
+    Out2.close();
   
-  // Make the script executable...
-  chmod(OutputFilename.c_str(), 0755);
+    // Make the script executable...
+    chmod(OutputFilename.c_str(), 0755);
+  }
 
   return 0;
 }
