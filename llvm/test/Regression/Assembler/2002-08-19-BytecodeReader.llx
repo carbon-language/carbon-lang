@@ -1,0 +1,22 @@
+; Testcase that seems to break the bytecode reader.  This comes from the 
+; "crafty" spec benchmark.
+;
+; RUN: as < %s | opt -instcombine | dis | as
+
+%CHESS_POSITION = type { uint, int }
+
+%pawn_probes = uninitialized global int		; <int*> [#uses=1]
+%pawn_hash_mask = uninitialized global uint		; <uint*> [#uses=0]
+
+%search = uninitialized global %CHESS_POSITION		; <%CHESS_POSITION*> [#uses=6]
+
+implementation   ; Functions:
+
+void %Evaluate() {
+	%reg1321 = getelementptr %CHESS_POSITION* %search, uint 0, ubyte 1
+	%reg114 = load int* %reg1321		; <int> [#uses=0]
+
+	%reg1801 = getelementptr %CHESS_POSITION* %search, uint 0, ubyte 0
+	%reg182 = load uint* %reg1801		; <uint> [#uses=1]
+	ret void
+}
