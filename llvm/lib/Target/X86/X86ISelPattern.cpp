@@ -2242,18 +2242,51 @@ bool ISel::TryToFoldLoadOpStore(SDNode *Node) {
   assert(Node->getOpcode() == ISD::STORE && "Can only do this for stores!");
   SDOperand Chain  = Node->getOperand(0);
   SDOperand StVal  = Node->getOperand(1);
+  SDOperand StPtr  = Node->getOperand(2);
 
   // The chain has to be a load, the stored value must be an integer binary
   // operation with one use.
-  if (Chain.getOpcode() != ISD::LOAD || !StVal.Val->hasOneUse() ||
-      StVal.Val->getNumOperands() != 2 ||
+  if (!StVal.Val->hasOneUse() || StVal.Val->getNumOperands() != 2 ||
       MVT::isFloatingPoint(StVal.getValueType()))
     return false;
 
-  SDOperand TheLoad = Chain.getValue(0);
+  // Token chain must either be a factor node or the load to fold.
+  if (Chain.getOpcode() != ISD::LOAD && Chain.getOpcode() != ISD::TokenFactor)
+    return false;
 
-  // Check to see if we are loading the same pointer that we're storing to.
-  if (TheLoad.getOperand(1) != Node->getOperand(2))
+  SDOperand TheLoad;
+
+  // Check to see if there is a load from the same pointer that we're storing
+  // to in either operand of the binop.
+  if (StVal.getOperand(0).getOpcode() == ISD::LOAD &&
+      StVal.getOperand(0).getOperand(1) == StPtr)
+    TheLoad = StVal.getOperand(0);
+  else if (StVal.getOperand(1).getOpcode() == ISD::LOAD &&
+           StVal.getOperand(1).getOperand(1) == StPtr)
+    TheLoad = StVal.getOperand(1);
+  else
+    return false;  // No matching load operand.
+
+  // We can only fold the load if there are no intervening side-effecting
+  // operations.  This means that the store uses the load as its token chain, or
+  // there are only token factor nodes in between the store and load.
+  if (Chain != TheLoad.getValue(1)) {
+    // Okay, the other option is that we have a store referring to (possibly
+    // nested) token factor nodes.  For now, just try peeking through one level
+    // of token factors to see if this is the case.
+    bool ChainOk = false;
+    if (Chain.getOpcode() == ISD::TokenFactor) {
+      for (unsigned i = 0, e = Chain.getNumOperands(); i != e; ++i)
+        if (Chain.getOperand(i) == TheLoad.getValue(1)) {
+          ChainOk = true;
+          break;
+        }
+    }
+
+    if (!ChainOk) return false;
+  }
+
+  if (TheLoad.getOperand(1) != StPtr)
     return false;
 
   // Make sure that one of the operands of the binop is the load, and that the
@@ -2333,6 +2366,9 @@ bool ISel::TryToFoldLoadOpStore(SDNode *Node) {
     }
     
     if (Opc) {
+      LoweredTokens.insert(TheLoad.getValue(1));
+      Select(Chain);
+
       X86AddressMode AM;
       if (getRegPressure(TheLoad.getOperand(0)) >
           getRegPressure(TheLoad.getOperand(1))) {
@@ -2342,6 +2378,36 @@ bool ISel::TryToFoldLoadOpStore(SDNode *Node) {
         SelectAddress(TheLoad.getOperand(1), AM);
         Select(TheLoad.getOperand(0));
       }            
+
+      if (StVal.getOpcode() == ISD::ADD) {
+        if (CN->getValue() == 1) {
+          switch (Op0.getValueType()) {
+          default: break;
+          case MVT::i8:
+            addFullAddress(BuildMI(BB, X86::INC8m, 4), AM);
+            return true;
+          case MVT::i16: Opc = TabPtr[1];
+            addFullAddress(BuildMI(BB, X86::INC16m, 4), AM);
+            return true;
+          case MVT::i32: Opc = TabPtr[2];
+            addFullAddress(BuildMI(BB, X86::INC32m, 4), AM);
+            return true;
+          }
+        } else if (CN->getValue()+1 == 0) {   // [X] += -1 -> DEC [X]
+          switch (Op0.getValueType()) {
+          default: break;
+          case MVT::i8:
+            addFullAddress(BuildMI(BB, X86::DEC8m, 4), AM);
+            return true;
+          case MVT::i16: Opc = TabPtr[1];
+            addFullAddress(BuildMI(BB, X86::DEC16m, 4), AM);
+            return true;
+          case MVT::i32: Opc = TabPtr[2];
+            addFullAddress(BuildMI(BB, X86::DEC32m, 4), AM);
+            return true;
+          }
+        }
+      }
       
       addFullAddress(BuildMI(BB, Opc, 4+1),AM).addImm(CN->getValue());
       return true;
@@ -2364,6 +2430,9 @@ bool ISel::TryToFoldLoadOpStore(SDNode *Node) {
   case MVT::i16: Opc = TabPtr[4]; break;
   case MVT::i32: Opc = TabPtr[5]; break;
   }
+
+  LoweredTokens.insert(TheLoad.getValue(1));
+  Select(Chain);
     
   Select(TheLoad.getOperand(0));
   X86AddressMode AM;
