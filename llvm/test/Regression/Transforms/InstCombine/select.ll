@@ -54,3 +54,10 @@ bool %test10(bool %C, bool %X) {
         %R = select bool %C, bool %X, bool true   ; R = or !C, X
         ret bool %R
 }
+
+int %test11(int %a) {
+        %C = seteq int %a, 0
+        %R = select bool %C, int 0, int 1
+        ret int %R
+}
+
