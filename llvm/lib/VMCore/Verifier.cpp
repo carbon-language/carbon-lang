@@ -78,17 +78,17 @@ namespace {  // Anonymous namespace for class
 
     Verifier() 
         : Broken(false), RealPass(true), action(AbortProcessAction),
-          DS(0), msgs( std::ios_base::app | std::ios_base::out ) {}
+          DS(0), msgs( std::ios::app | std::ios::out ) {}
     Verifier( VerifierFailureAction ctn )
         : Broken(false), RealPass(true), action(ctn), DS(0), 
-          msgs( std::ios_base::app | std::ios_base::out ) {}
+          msgs( std::ios::app | std::ios::out ) {}
     Verifier(bool AB ) 
         : Broken(false), RealPass(true), 
           action( AB ? AbortProcessAction : PrintMessageAction), DS(0), 
-          msgs( std::ios_base::app | std::ios_base::out ) {}
+          msgs( std::ios::app | std::ios::out ) {}
     Verifier(DominatorSet &ds) 
       : Broken(false), RealPass(false), action(PrintMessageAction),
-        DS(&ds), msgs( std::ios_base::app | std::ios_base::out ) {}
+        DS(&ds), msgs( std::ios::app | std::ios::out ) {}
 
 
     bool doInitialization(Module &M) {

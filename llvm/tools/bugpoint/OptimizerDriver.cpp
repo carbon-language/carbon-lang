@@ -15,6 +15,12 @@
 //
 //===----------------------------------------------------------------------===//
 
+// Note: as a short term hack, the old Unix-specific code and platform-
+// independent code co-exist via conditional compilation until it is verified
+// that the new code works correctly on Unix.
+
+#define PLATFORMINDEPENDENT
+
 #include "BugDriver.h"
 #include "llvm/Module.h"
 #include "llvm/PassManager.h"
@@ -24,9 +30,11 @@
 #include "llvm/Support/FileUtilities.h"
 #include "llvm/System/Path.h"
 #include <fstream>
+#ifndef PLATFORMINDEPENDENT
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#endif
 using namespace llvm;
 
 /// writeProgramToFile - This writes the current "Program" to the named bytecode
@@ -34,7 +42,9 @@ using namespace llvm;
 ///
 bool BugDriver::writeProgramToFile(const std::string &Filename,
 				   Module *M) const {
-  std::ofstream Out(Filename.c_str());
+  std::ios::openmode io_mode = std::ios::out | std::ios::trunc |
+                               std::ios::binary;
+  std::ofstream Out(Filename.c_str(), io_mode);
   if (!Out.good()) return true;
   WriteBytecodeToFile(M ? M : Program, Out, /*compression=*/true);
   return false;
@@ -76,7 +86,9 @@ void BugDriver::EmitProgressBytecode(const std::string &ID, bool NoFlyer) {
 
 static void RunChild(Module *Program,const std::vector<const PassInfo*> &Passes,
                      const std::string &OutFilename) {
-  std::ofstream OutFile(OutFilename.c_str());
+  std::ios::openmode io_mode = std::ios::out | std::ios::trunc |
+                               std::ios::binary;
+  std::ofstream OutFile(OutFilename.c_str(), io_mode);
   if (!OutFile.good()) {
     std::cerr << "Error opening bytecode file: " << OutFilename << "\n";
     exit(1);
@@ -119,6 +131,7 @@ bool BugDriver::runPasses(const std::vector<const PassInfo*> &Passes,
   uniqueFilename.makeUnique();
   OutputFilename = uniqueFilename.toString();
 
+#ifndef PLATFORMINDEPENDENT
   pid_t child_pid;
   switch (child_pid = fork()) {
   case -1:    // Error occurred
@@ -139,12 +152,16 @@ bool BugDriver::runPasses(const std::vector<const PassInfo*> &Passes,
   }
 
   bool ExitedOK = WIFEXITED(Status) && WEXITSTATUS(Status) == 0;
+#else
+  bool ExitedOK = false;
+#endif
 
   // If we are supposed to delete the bytecode file or if the passes crashed,
   // remove it now.  This may fail if the file was never created, but that's ok.
   if (DeleteOutput || !ExitedOK)
     sys::Path(OutputFilename).destroyFile();
-  
+
+#ifndef PLATFORMINDEPENDENT
   if (!Quiet) {
     if (ExitedOK)
       std::cout << "Success!\n";
@@ -159,6 +176,7 @@ bool BugDriver::runPasses(const std::vector<const PassInfo*> &Passes,
     else
       std::cout << "Failed for unknown reason!\n";
   }
+#endif
 
   // Was the child successful?
   return !ExitedOK;

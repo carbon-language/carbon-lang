@@ -112,6 +112,7 @@ int main(int argc, char **argv) {
 
     if (DumpAsm) std::cerr << "Here's the assembly:\n" << Composite.get();
 
+    // FIXME: cout is not binary!
     std::ostream *Out = &std::cout;  // Default to printing to stdout...
     if (OutputFilename != "-") {
       if (!Force && std::ifstream(OutputFilename.c_str())) {
@@ -121,7 +122,9 @@ int main(int argc, char **argv) {
                   << "Use -f command line argument to force output\n";
         return 1;
       }
-      Out = new std::ofstream(OutputFilename.c_str());
+      std::ios::openmode io_mode = std::ios::out | std::ios::trunc |
+                                   std::ios::binary;
+      Out = new std::ofstream(OutputFilename.c_str(), io_mode);
       if (!Out->good()) {
         std::cerr << argv[0] << ": error opening '" << OutputFilename << "'!\n";
         return 1;

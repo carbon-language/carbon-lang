@@ -84,25 +84,26 @@ int main(int argc, char **argv) {
                     << "Use -f command line argument to force output\n";
           return 1;
         }
-        Out = new std::ofstream(OutputFilename.c_str(), std::ios_base::out | 
-                                std::ios_base::trunc | std::ios_base::binary);
+        Out = new std::ofstream(OutputFilename.c_str(), std::ios::out | 
+                                std::ios::trunc | std::ios::binary);
       } else {                      // Specified stdout
-	Out = &std::cout;       
+        // FIXME: cout is not binary!
+        Out = &std::cout;
       }
     } else {
       if (InputFilename == "-") {
-	OutputFilename = "-";
-	Out = &std::cout;
+        OutputFilename = "-";
+        Out = &std::cout;
       } else {
-	std::string IFN = InputFilename;
-	int Len = IFN.length();
-	if (IFN[Len-3] == '.' && IFN[Len-2] == 'l' && IFN[Len-1] == 'l') {
-	  // Source ends in .ll
-	  OutputFilename = std::string(IFN.begin(), IFN.end()-3);
+        std::string IFN = InputFilename;
+        int Len = IFN.length();
+        if (IFN[Len-3] == '.' && IFN[Len-2] == 'l' && IFN[Len-1] == 'l') {
+          // Source ends in .ll
+          OutputFilename = std::string(IFN.begin(), IFN.end()-3);
         } else {
-	  OutputFilename = IFN;   // Append a .bc to it
-	}
-	OutputFilename += ".bc";
+          OutputFilename = IFN;   // Append a .bc to it
+        }
+        OutputFilename += ".bc";
 
         if (!Force && std::ifstream(OutputFilename.c_str())) {
           // If force is not specified, make sure not to overwrite a file!
@@ -112,8 +113,8 @@ int main(int argc, char **argv) {
           return 1;
         }
 
-	Out = new std::ofstream(OutputFilename.c_str(), std::ios_base::out | 
-                                std::ios_base::trunc | std::ios_base::binary);
+        Out = new std::ofstream(OutputFilename.c_str(), std::ios::out | 
+                                std::ios::trunc | std::ios::binary);
         // Make sure that the Out file gets unlinked from the disk if we get a
         // SIGINT
         sys::RemoveFileOnSignal(sys::Path(OutputFilename));

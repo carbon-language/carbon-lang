@@ -164,9 +164,12 @@ int main(int argc, char **argv) {
     }
 
     if (OutputFilename == "-")
+      // FIXME: cout is not binary!
       Out = &std::cout;
     else {
-      Out = new std::ofstream(OutputFilename.c_str(), std::ios::out);
+      std::ios::openmode io_mode = std::ios::out | std::ios::trunc |
+                                   std::ios::binary;
+      Out = new std::ofstream(OutputFilename.c_str(), io_mode);
 
       // Make sure that the Out file gets unlinked from the disk if we get a
       // signal

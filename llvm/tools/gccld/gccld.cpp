@@ -238,7 +238,9 @@ int main(int argc, char **argv, char **envp ) {
     // Create the output file.
     std::string RealBytecodeOutput = OutputFilename;
     if (!LinkAsLibrary) RealBytecodeOutput += ".bc";
-    std::ofstream Out(RealBytecodeOutput.c_str());
+    std::ios::openmode io_mode = std::ios::out | std::ios::trunc |
+                                 std::ios::binary;
+    std::ofstream Out(RealBytecodeOutput.c_str(), io_mode);
     if (!Out.good())
       return PrintAndReturn(argv[0], "error opening '" + RealBytecodeOutput +
                                      "' for writing!");

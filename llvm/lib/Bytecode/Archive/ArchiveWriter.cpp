@@ -375,7 +375,9 @@ Archive::writeToDisk(bool CreateSymbolTable, bool TruncateNames, bool Compress){
   // Ensure we can remove the temporary even in the face of an exception
   try {
     // Create archive file for output.
-    std::ofstream ArchiveFile(TmpArchive.c_str());
+    std::ios::openmode io_mode = std::ios::out | std::ios::trunc |
+                                 std::ios::binary;
+    std::ofstream ArchiveFile(TmpArchive.c_str(), io_mode);
   
     // Check for errors opening or creating archive file.
     if ( !ArchiveFile.is_open() || ArchiveFile.bad() ) {
@@ -413,7 +415,7 @@ Archive::writeToDisk(bool CreateSymbolTable, bool TruncateNames, bool Compress){
       const char* base = (const char*) arch.map();
 
       // Open the final file to write and check it.
-      std::ofstream FinalFile(archPath.c_str());
+      std::ofstream FinalFile(archPath.c_str(), io_mode);
       if ( !FinalFile.is_open() || FinalFile.bad() ) {
         throw std::string("Error opening archive file: ") + archPath.toString();
       }

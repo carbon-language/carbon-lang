@@ -63,9 +63,8 @@ int main(int argc, char **argv) {
       return 1;
     }
 
-    // In addition to deleting all other functions, we also want to spiff it up a
-    // little bit.  Do this now.
-    //
+    // In addition to deleting all other functions, we also want to spiff it
+    // up a little bit.  Do this now.
     PassManager Passes;
     Passes.add(new TargetData("extract", M.get())); // Use correct TargetData
     // Either isolate the function or delete it from the Module
@@ -84,8 +83,11 @@ int main(int argc, char **argv) {
                   << "Use -f command line argument to force output\n";
         return 1;
       }
-      Out = new std::ofstream(OutputFilename.c_str());
+      std::ios::openmode io_mode = std::ios::out | std::ios::trunc |
+                                   std::ios::binary;
+      Out = new std::ofstream(OutputFilename.c_str(), io_mode);
     } else {                      // Specified stdout
+      // FIXME: cout is not binary!
       Out = &std::cout;       
     }
 

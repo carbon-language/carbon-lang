@@ -27,13 +27,14 @@ using namespace llvm;
 ///
 bool llvm::DiffFiles(const std::string &FileA, const std::string &FileB,
                      std::string *Error) {
-  std::ifstream FileAStream(FileA.c_str());
+  std::ios::openmode io_mode = std::ios::in | std::ios::binary;
+  std::ifstream FileAStream(FileA.c_str(), io_mode);
   if (!FileAStream) {
     if (Error) *Error = "Couldn't open file '" + FileA + "'";
     return true;
   }
 
-  std::ifstream FileBStream(FileB.c_str());
+  std::ifstream FileBStream(FileB.c_str(), io_mode);
   if (!FileBStream) {
     if (Error) *Error = "Couldn't open file '" + FileB + "'";
     return true;

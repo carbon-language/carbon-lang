@@ -186,7 +186,9 @@ static void RemoveEnv(const char * name, char ** const envp) {
 void GenerateBytecode(Module* M, const std::string& FileName) {
 
   // Create the output file.
-  std::ofstream Out(FileName.c_str());
+  std::ios::openmode io_mode = std::ios::out | std::ios::trunc |
+                               std::ios::binary;
+  std::ofstream Out(FileName.c_str(), io_mode);
   if (!Out.good()) {
     PrintAndReturn("error opening '" + FileName + "' for writing!");
     return;
