@@ -28,14 +28,14 @@ Current hacks:
 * visitLoadInst is getting awfully cluttered as well.
 
 Currently failing tests:
-* Regression
 * SingleSource
+  `- Regression
+  |  `- 2003-05-22-VarSizeArray
   `- Benchmarks
   |  `- Shootout-C++ : most programs fail, miscompilations
   `- UnitTests
-  |  `- 2003-05-22-VarSizeArray
-  `- C++Catch
-  `- SimpleC++Test
+  |   `- C++Catch
+  |   `- SimpleC++Test
   `- ConditionalExpr
   `- casts
   `- sumarray2d: large alloca miscompiled
