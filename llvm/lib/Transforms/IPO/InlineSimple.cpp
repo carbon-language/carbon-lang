@@ -190,7 +190,18 @@ bool InlineFunction(CallInst *CI) {
       RemapInstruction(II, ValueMap);
   }
 
-  if (PHI) RemapInstruction(PHI, ValueMap);  // Fix the PHI node also...
+  if (PHI) {
+    RemapInstruction(PHI, ValueMap);  // Fix the PHI node also...
+
+    // Check to see if the PHI node only has one argument.  This is a common
+    // case resulting from there only being a single return instruction in the
+    // function call.  Because this is so common, eliminate the PHI node.
+    //
+    if (PHI->getNumIncomingValues() == 1) {
+      PHI->replaceAllUsesWith(PHI->getIncomingValue(0));
+      PHI->getParent()->getInstList().erase(PHI);
+    }
+  }
 
   // Change the branch that used to go to NewBB to branch to the first basic 
   // block of the inlined function.
