@@ -41,8 +41,6 @@ static Statistic<>
 BytesWritten("bytecodewriter", "Number of bytecode bytes written");
 static Statistic<> 
 ConstantTotalBytes("bytecodewriter", "Bytes of constants total");
-static Statistic<> 
-FunctionConstantTotalBytes("bytecodewriter", "Bytes of function constants total");
 static Statistic<>
 ConstantPlaneHeaderBytes("bytecodewriter", "Constant plane header bytes");
 static Statistic<> 
@@ -51,6 +49,8 @@ static Statistic<>
 SymTabBytes("bytecodewriter", "Bytes of symbol table");
 static Statistic<> 
 ModuleInfoBytes("bytecodewriter", "Bytes of module info");
+static Statistic<> 
+CompactionTableBytes("bytecodewriter", "Bytes of compaction tables");
 
 BytecodeWriter::BytecodeWriter(std::deque<unsigned char> &o, const Module *M) 
   : Out(o), Table(M, true) {
@@ -168,7 +168,6 @@ static inline bool hasNullValue(unsigned TyID) {
 
 void BytecodeWriter::outputConstants(bool isFunction) {
   ConstantTotalBytes -= Out.size();
-  if (isFunction) FunctionConstantTotalBytes -= Out.size();
   BytecodeBlock CPool(BytecodeFormat::ConstantPool, Out,
                       true  /* Elide block if empty */);
 
@@ -206,7 +205,6 @@ void BytecodeWriter::outputConstants(bool isFunction) {
       }
     }
   ConstantTotalBytes += Out.size();
-  if (isFunction) FunctionConstantTotalBytes += Out.size();
 }
 
 static unsigned getEncodedLinkage(const GlobalValue *GV) {
@@ -257,32 +255,75 @@ void BytecodeWriter::outputModuleInfoBlock(const Module *M) {
   ModuleInfoBytes += Out.size();
 }
 
+void BytecodeWriter::outputInstructions(const Function *F) {
+  BytecodeBlock ILBlock(BytecodeFormat::InstructionList, Out);
+  InstructionBytes -= Out.size();
+  for (Function::const_iterator BB = F->begin(), E = F->end(); BB != E; ++BB)
+    for (BasicBlock::const_iterator I = BB->begin(), E = BB->end(); I!=E; ++I)
+      outputInstruction(*I);
+  InstructionBytes += Out.size();
+}
+
 void BytecodeWriter::outputFunction(const Function *F) {
   BytecodeBlock FunctionBlock(BytecodeFormat::Function, Out);
   output_vbr(getEncodedLinkage(F), Out);
-  // Only output the constant pool and other goodies if needed...
-  if (!F->isExternal()) {
 
-    // Get slot information about the function...
-    Table.incorporateFunction(F);
+  // If this is an external function, there is nothing else to emit!
+  if (F->isExternal()) return;
 
-    // Output information about the constants in the function...
+  // Get slot information about the function...
+  Table.incorporateFunction(F);
+
+  if (Table.getCompactionTable().empty()) {
+    // Output information about the constants in the function if the compaction
+    // table is not being used.
     outputConstants(true);
-
-    {  // Output all of the instructions in the body of the function
-      BytecodeBlock ILBlock(BytecodeFormat::InstructionList, Out);
-      InstructionBytes -= Out.size();
-      for (Function::const_iterator BB = F->begin(), E = F->end(); BB != E;++BB)
-        for(BasicBlock::const_iterator I = BB->begin(), E = BB->end(); I!=E;++I)
-          processInstruction(*I);
-      InstructionBytes += Out.size();
-    }
-    
-    // If needed, output the symbol table for the function...
-    outputSymbolTable(F->getSymbolTable());
-    
-    Table.purgeFunction();
+  } else {
+    // Otherwise, emit the compaction table.
+    outputCompactionTable();
   }
+  
+  // Output all of the instructions in the body of the function
+  outputInstructions(F);
+  
+  // If needed, output the symbol table for the function...
+  outputSymbolTable(F->getSymbolTable());
+  
+  Table.purgeFunction();
+}
+
+void BytecodeWriter::outputCompactionTablePlane(unsigned PlaneNo,
+                                         const std::vector<const Value*> &Plane,
+                                                unsigned StartNo) {
+  unsigned End = Table.getModuleLevel(PlaneNo);
+  if (StartNo == End || End == 0) return;   // Nothing to emit
+  assert(StartNo < End && "Cannot emit negative range!");
+  assert(StartNo < Plane.size() && End <= Plane.size());
+
+  output_vbr(unsigned(End-StartNo), Out);   // Output the number of things.
+  output_vbr(PlaneNo, Out);                 // Emit the type plane this is
+
+  // Do not emit the null initializer!
+  if (PlaneNo != Type::TypeTyID) ++StartNo;
+
+  for (unsigned i = StartNo; i != End; ++i)
+    output_vbr(Table.getGlobalSlot(Plane[i]), Out);
+}
+
+void BytecodeWriter::outputCompactionTable() {
+  CompactionTableBytes -= Out.size();
+  BytecodeBlock CTB(BytecodeFormat::CompactionTable, Out, true/*ElideIfEmpty*/);
+  const std::vector<std::vector<const Value*> > &CT =Table.getCompactionTable();
+  
+  // First thing is first, emit the type compaction table if there is one.
+  if (CT.size() > Type::TypeTyID)
+    outputCompactionTablePlane(Type::TypeTyID, CT[Type::TypeTyID],
+                               Type::FirstDerivedTyID);
+
+  for (unsigned i = 0, e = CT.size(); i != e; ++i)
+    if (i != Type::TypeTyID)
+      outputCompactionTablePlane(i, CT[i], 0);
+  CompactionTableBytes += Out.size();
 }
 
 void BytecodeWriter::outputSymbolTable(const SymbolTable &MST) {

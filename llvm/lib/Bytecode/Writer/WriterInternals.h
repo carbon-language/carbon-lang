@@ -37,7 +37,12 @@ private:
   void outputConstants(bool isFunction);
   void outputConstantStrings();
   void outputFunction(const Function *F);
-  void processInstruction(const Instruction &I);
+  void outputCompactionTable();
+  void outputCompactionTablePlane(unsigned PlaneNo,
+                                  const std::vector<const Value*> &TypePlane,
+                                  unsigned StartNo);
+  void outputInstructions(const Function *F);
+  void outputInstruction(const Instruction &I);
 
   void outputModuleInfoBlock(const Module *C);
   void outputSymbolTable(const SymbolTable &ST);

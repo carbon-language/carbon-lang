@@ -202,7 +202,7 @@ static void outputInstructionFormat3(const Instruction *I, unsigned Opcode,
   output(Bits, Out);
 }
 
-void BytecodeWriter::processInstruction(const Instruction &I) {
+void BytecodeWriter::outputInstruction(const Instruction &I) {
   assert(I.getOpcode() < 62 && "Opcode too big???");
   unsigned Opcode = I.getOpcode();
 
@@ -216,9 +216,8 @@ void BytecodeWriter::processInstruction(const Instruction &I) {
   int MaxOpSlot = 0;
   int Slots[3]; Slots[0] = (1 << 12)-1;   // Marker to signify 0 operands
 
-  for (unsigned i = 0; i < NumOperands; ++i) {
-    const Value *Def = I.getOperand(i);
-    int slot = Table.getSlot(Def);
+  for (unsigned i = 0; i != NumOperands; ++i) {
+    int slot = Table.getSlot(I.getOperand(i));
     assert(slot != -1 && "Broken bytecode!");
     if (slot > MaxOpSlot) MaxOpSlot = slot;
     if (i < 3) Slots[i] = slot;

@@ -26,11 +26,6 @@ ConstantBytes("bytecodewriter", "Bytes of constants");
 static Statistic<> 
 NumConstants("bytecodewriter", "Number of constants");
 
-static Statistic<>
-NumStrConstants("bytecodewriter", "Number of string constants");
-static Statistic<>
-NumStrBytes("bytecodewriter", "Number of string constant bytes");
-
 
 void BytecodeWriter::outputType(const Type *T) {
   TypeBytes -= Out.size();
@@ -231,7 +226,6 @@ void BytecodeWriter::outputConstantStrings() {
   output_vbr(Type::VoidTyID, Out);
     
   ConstantBytes -= Out.size();
-  NumStrBytes -= Out.size();;
   
   // Emit all of the strings.
   for (I = Table.string_begin(); I != E; ++I) {
@@ -246,8 +240,6 @@ void BytecodeWriter::outputConstantStrings() {
     output_data(Val.c_str(), Val.c_str()+Val.size(), Out);
 
     ++NumConstants;
-    ++NumStrConstants;
   }
   ConstantBytes += Out.size();
-  NumStrBytes += Out.size();;
 }
