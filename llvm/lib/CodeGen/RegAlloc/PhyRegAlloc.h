@@ -16,8 +16,8 @@
    except coloring of an individual node are machine independent.
 */ 
 
-#ifndef PHY_REG_ALLOC_H
-#define PHY_REG_ALLOC_H
+#ifndef PHYREGALLOC_H
+#define PHYREGALLOC_H
 
 #include "LiveRangeInfo.h"
 #include "llvm/Pass.h"
@@ -167,6 +167,4 @@ private:
   void addInterf4PseudoInstr(const MachineInstr *MI);
 };
 
-
 #endif
-
