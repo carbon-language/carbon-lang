@@ -818,6 +818,15 @@ Instruction *InstCombiner::visitDiv(BinaryOperator &I) {
     if (RHS->isAllOnesValue())
       return BinaryOperator::createNeg(I.getOperand(0));
 
+    if (Instruction *LHS = dyn_cast<Instruction>(I.getOperand(0)))
+      if (LHS->getOpcode() == Instruction::Div)
+        if (ConstantInt *LHSRHS = dyn_cast<ConstantInt>(LHS->getOperand(1))) {
+          std::cerr << "DIV: " << *LHS << "   : " << I;
+          // (X / C1) / C2  -> X / (C1*C2)
+          return BinaryOperator::createDiv(LHS->getOperand(0),
+                                           ConstantExpr::getMul(RHS, LHSRHS));
+        }
+
     // Check to see if this is an unsigned division with an exact power of 2,
     // if so, convert to a right shift.
     if (ConstantUInt *C = dyn_cast<ConstantUInt>(RHS))
@@ -1553,10 +1562,51 @@ Instruction *InstCombiner::visitSetCondInst(BinaryOperator &I) {
         }
         break;
 
+      case Instruction::Shl:         // (setcc (shl X, ShAmt), CI)
+        if (ConstantUInt *ShAmt = dyn_cast<ConstantUInt>(LHSI->getOperand(1))) {
+          switch (I.getOpcode()) {
+          default: break;
+          case Instruction::SetEQ:
+          case Instruction::SetNE: {
+            // If we are comparing against bits always shifted out, the
+            // comparison cannot succeed.
+            Constant *Comp = 
+              ConstantExpr::getShl(ConstantExpr::getShr(CI, ShAmt), ShAmt);
+            if (Comp != CI) {// Comparing against a bit that we know is zero.
+              bool IsSetNE = I.getOpcode() == Instruction::SetNE;
+              Constant *Cst = ConstantBool::get(IsSetNE);
+              return ReplaceInstUsesWith(I, Cst);
+            }
+
+            if (LHSI->hasOneUse()) {
+              // Otherwise strength reduce the shift into an and.
+              unsigned ShAmtVal = ShAmt->getValue();
+              unsigned TypeBits = CI->getType()->getPrimitiveSize()*8;
+              uint64_t Val = (1ULL << (TypeBits-ShAmtVal))-1;
+
+              Constant *Mask;
+              if (CI->getType()->isUnsigned()) {
+                Mask = ConstantUInt::get(CI->getType(), Val);
+              } else if (ShAmtVal != 0) {
+                Mask = ConstantSInt::get(CI->getType(), Val);
+              } else {
+                Mask = ConstantInt::getAllOnesValue(CI->getType());
+              }
+              
+              Instruction *AndI =
+                BinaryOperator::createAnd(LHSI->getOperand(0),
+                                          Mask, LHSI->getName()+".mask");
+              Value *And = InsertNewInstBefore(AndI, I);
+              return new SetCondInst(I.getOpcode(), And,
+                                     ConstantExpr::getUShr(CI, ShAmt));
+            }
+          }
+          }
+        }
+        break;
+
       case Instruction::Shr:         // (setcc (shr X, ShAmt), CI)
         if (ConstantUInt *ShAmt = dyn_cast<ConstantUInt>(LHSI->getOperand(1))) {
-          unsigned ShAmtVal = ShAmt->getValue();
-          
           switch (I.getOpcode()) {
           default: break;
           case Instruction::SetEQ:
@@ -1573,6 +1623,8 @@ Instruction *InstCombiner::visitSetCondInst(BinaryOperator &I) {
             }
               
             if (LHSI->hasOneUse() || CI->isNullValue()) {
+              unsigned ShAmtVal = ShAmt->getValue();
+
               // Otherwise strength reduce the shift into an and.
               uint64_t Val = ~0ULL;          // All ones.
               Val <<= ShAmtVal;              // Shift over to the right spot.
@@ -1599,12 +1651,6 @@ Instruction *InstCombiner::visitSetCondInst(BinaryOperator &I) {
         }
         break;
 
-      case Instruction::Div:
-        if (0 && isa<ConstantInt>(LHSI->getOperand(1))) {
-          std::cerr << "COULD FOLD: " << *LHSI;
-          std::cerr << "COULD FOLD: " << I << "\n";
-        }
-        break;
       case Instruction::Select:
         // If either operand of the select is a constant, we can fold the
         // comparison into the select arms, which will cause one to be
