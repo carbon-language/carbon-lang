@@ -15,6 +15,7 @@
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/GlobalVariable.h"
+#include <math.h>  // For fmod
 
 // Create a TargetData structure to handle memory addressing and size/alignment
 // computations
@@ -70,6 +71,9 @@ static GenericValue getOperandValue(Value *V, ExecutionContext &SF) {
     return Result;
   } else {
     unsigned TyP = V->getType()->getUniqueID();   // TypePlane for value
+    unsigned OpSlot = getOperandSlot(V);
+    assert(TyP < SF.Values.size() && 
+           OpSlot < SF.Values[TyP].size() && "Value out of range!");
     return SF.Values[TyP][getOperandSlot(V)];
   }
 }
@@ -298,7 +302,32 @@ static GenericValue executeDivInst(GenericValue Src1, GenericValue Src2,
     IMPLEMENT_BINARY_OPERATOR(/, Double);
     IMPLEMENT_BINARY_OPERATOR(/, Pointer);
   default:
-    cout << "Unhandled type for Mul instruction: " << Ty << endl;
+    cout << "Unhandled type for Div instruction: " << Ty << endl;
+  }
+  return Dest;
+}
+
+static GenericValue executeRemInst(GenericValue Src1, GenericValue Src2, 
+				   const Type *Ty, ExecutionContext &SF) {
+  GenericValue Dest;
+  switch (Ty->getPrimitiveID()) {
+    IMPLEMENT_BINARY_OPERATOR(%, UByte);
+    IMPLEMENT_BINARY_OPERATOR(%, SByte);
+    IMPLEMENT_BINARY_OPERATOR(%, UShort);
+    IMPLEMENT_BINARY_OPERATOR(%, Short);
+    IMPLEMENT_BINARY_OPERATOR(%, UInt);
+    IMPLEMENT_BINARY_OPERATOR(%, Int);
+    IMPLEMENT_BINARY_OPERATOR(%, ULong);
+    IMPLEMENT_BINARY_OPERATOR(%, Long);
+    IMPLEMENT_BINARY_OPERATOR(%, Pointer);
+  case Type::FloatTyID:
+    Dest.FloatVal = fmod(Src1.FloatVal, Src2.FloatVal);
+    break;
+  case Type::DoubleTyID:
+    Dest.DoubleVal = fmod(Src1.DoubleVal, Src2.DoubleVal);
+    break;
+  default:
+    cout << "Unhandled type for Rem instruction: " << Ty << endl;
   }
   return Dest;
 }
@@ -439,10 +468,11 @@ static void executeBinaryInst(BinaryOperator *I, ExecutionContext &SF) {
   GenericValue R;   // Result
 
   switch (I->getOpcode()) {
-  case Instruction::Add: R = executeAddInst(Src1, Src2, Ty, SF); break;
-  case Instruction::Sub: R = executeSubInst(Src1, Src2, Ty, SF); break;
-  case Instruction::Mul: R = executeMulInst(Src1, Src2, Ty, SF); break;
-  case Instruction::Div: R = executeDivInst(Src1, Src2, Ty, SF); break;
+  case Instruction::Add:   R = executeAddInst  (Src1, Src2, Ty, SF); break;
+  case Instruction::Sub:   R = executeSubInst  (Src1, Src2, Ty, SF); break;
+  case Instruction::Mul:   R = executeMulInst  (Src1, Src2, Ty, SF); break;
+  case Instruction::Div:   R = executeDivInst  (Src1, Src2, Ty, SF); break;
+  case Instruction::Rem:   R = executeRemInst  (Src1, Src2, Ty, SF); break;
   case Instruction::SetEQ: R = executeSetEQInst(Src1, Src2, Ty, SF); break;
   case Instruction::SetNE: R = executeSetNEInst(Src1, Src2, Ty, SF); break;
   case Instruction::SetLE: R = executeSetLEInst(Src1, Src2, Ty, SF); break;
@@ -525,7 +555,9 @@ void Interpreter::executeBrInst(BranchInst *I, ExecutionContext &SF) {
 
   Dest = I->getSuccessor(0);          // Uncond branches have a fixed dest...
   if (!I->isUnconditional()) {
-    if (getOperandValue(I->getCondition(), SF).BoolVal == 0) // If false cond...
+    Value *Cond = I->getCondition();
+    GenericValue CondVal = getOperandValue(Cond, SF);
+    if (CondVal.BoolVal == 0) // If false cond...
       Dest = I->getSuccessor(1);    
   }
   SF.CurBB   = Dest;                  // Update CurBB to branch destination
@@ -588,7 +620,9 @@ static uint64_t getElementOffset(Instruction *I, unsigned ArgOff) {
     // Indicies must be ubyte constants...
     const ConstPoolUInt *CPU = cast<ConstPoolUInt>(I->getOperand(ArgOff++));
     assert(CPU->getType() == Type::UByteTy);
-    Total += SLO->MemberOffsets[CPU->getValue()];
+    unsigned Index = CPU->getValue();
+    Total += SLO->MemberOffsets[Index];
+    Ty = STy->getElementTypes()[Index];
   }
 
   return Total;
@@ -604,7 +638,8 @@ static void executeGEPInst(GetElementPtrInst *I, ExecutionContext &SF) {
 
 static void executeLoadInst(LoadInst *I, ExecutionContext &SF) {
   uint64_t SrcPtr = getOperandValue(I->getPtrOperand(), SF).ULongVal;
-  SrcPtr += getElementOffset(I, 0);  // Handle any structure indices
+  uint64_t Offset = getElementOffset(I, 0);  // Handle any structure indices
+  SrcPtr += Offset;
 
   GenericValue *Ptr = (GenericValue*)SrcPtr;
   GenericValue Result;
@@ -619,7 +654,7 @@ static void executeLoadInst(LoadInst *I, ExecutionContext &SF) {
   case Type::IntTyID:     Result.IntVal = Ptr->IntVal; break;
   case Type::ULongTyID:
   case Type::LongTyID:
-  case Type::PointerTyID: Result.ULongVal = Ptr->ULongVal; break;
+  case Type::PointerTyID: Result.ULongVal = Ptr->PointerVal; break;
   case Type::FloatTyID:   Result.FloatVal = Ptr->FloatVal; break;
   case Type::DoubleTyID:  Result.DoubleVal = Ptr->DoubleVal; break;
   default:
@@ -769,17 +804,17 @@ static void executeCastInst(CastInst *I, ExecutionContext &SF) {
   GenericValue Dest;
 
   switch (Ty->getPrimitiveID()) {
-    IMPLEMENT_CAST_CASE(UByte , unsigned char);
-    IMPLEMENT_CAST_CASE(SByte ,   signed char);
-    IMPLEMENT_CAST_CASE(UShort, unsigned short);
-    IMPLEMENT_CAST_CASE(Short ,   signed char);
-    IMPLEMENT_CAST_CASE(UInt  , unsigned int );
-    IMPLEMENT_CAST_CASE(Int   ,   signed int );
-    IMPLEMENT_CAST_CASE(ULong , uint64_t );
-    IMPLEMENT_CAST_CASE(Long  ,  int64_t );
+    IMPLEMENT_CAST_CASE(UByte  , unsigned char);
+    IMPLEMENT_CAST_CASE(SByte  ,   signed char);
+    IMPLEMENT_CAST_CASE(UShort , unsigned short);
+    IMPLEMENT_CAST_CASE(Short  ,   signed char);
+    IMPLEMENT_CAST_CASE(UInt   , unsigned int );
+    IMPLEMENT_CAST_CASE(Int    ,   signed int );
+    IMPLEMENT_CAST_CASE(ULong  , uint64_t);
+    IMPLEMENT_CAST_CASE(Long   ,  int64_t);
     IMPLEMENT_CAST_CASE(Pointer, uint64_t);
-    IMPLEMENT_CAST_CASE(Float ,          float);
-    IMPLEMENT_CAST_CASE(Double,          double);
+    IMPLEMENT_CAST_CASE(Float  ,          float);
+    IMPLEMENT_CAST_CASE(Double ,          double);
   default:
     cout << "Unhandled dest type for cast instruction: " << Ty << endl;
   }
@@ -827,7 +862,30 @@ void Interpreter::callMethod(Method *M, const vector<GenericValue> &ArgVals) {
 	  ECStack.back().Caller->getNumOperands()-1 == ArgVals.size()) &&
 	 "Incorrect number of arguments passed into function call!");
   if (M->isExternal()) {
-    callExternalMethod(M, ArgVals);
+    GenericValue Result = callExternalMethod(M, ArgVals);
+    const Type *RetTy = M->getReturnType();
+
+    // Copy the result back into the result variable if we are not returning
+    // void.
+    if (RetTy != Type::VoidTy) {
+      if (!ECStack.empty() && ECStack.back().Caller) {
+        ExecutionContext &SF = ECStack.back();
+        CallInst *Caller = SF.Caller;
+        SetValue(SF.Caller, Result, SF);
+      
+        SF.Caller = 0;          // We returned from the call...
+      } else {
+        // print it.
+        cout << "Method " << M->getType() << " \"" << M->getName()
+             << "\" returned ";
+        print(RetTy, Result); 
+        cout << endl;
+        
+        if (RetTy->isIntegral())
+          ExitCode = Result.SByteVal;   // Capture the exit code of the program
+      }
+    }
+
     return;
   }
 
@@ -874,27 +932,27 @@ bool Interpreter::executeInstruction() {
     cout << "Run:" << I;
 
   if (I->isBinaryOp()) {
-    executeBinaryInst((BinaryOperator*)I, SF);
+    executeBinaryInst(cast<BinaryOperator>(I), SF);
   } else {
     switch (I->getOpcode()) {
       // Terminators
-    case Instruction::Ret:     executeRetInst   ((ReturnInst*)I, SF); break;
-    case Instruction::Br:      executeBrInst    ((BranchInst*)I, SF); break;
+    case Instruction::Ret:     executeRetInst  (cast<ReturnInst>(I), SF); break;
+    case Instruction::Br:      executeBrInst   (cast<BranchInst>(I), SF); break;
       // Memory Instructions
     case Instruction::Alloca:
-    case Instruction::Malloc:  executeAllocInst ((AllocationInst*)I, SF); break;
-    case Instruction::Free:    executeFreeInst  (cast<FreeInst> (I), SF); break;
-    case Instruction::Load:    executeLoadInst  (cast<LoadInst> (I), SF); break;
-    case Instruction::Store:   executeStoreInst (cast<StoreInst>(I), SF); break;
+    case Instruction::Malloc:  executeAllocInst((AllocationInst*)I, SF); break;
+    case Instruction::Free:    executeFreeInst (cast<FreeInst> (I), SF); break;
+    case Instruction::Load:    executeLoadInst (cast<LoadInst> (I), SF); break;
+    case Instruction::Store:   executeStoreInst(cast<StoreInst>(I), SF); break;
     case Instruction::GetElementPtr:
                           executeGEPInst(cast<GetElementPtrInst>(I), SF); break;
 
       // Miscellaneous Instructions
-    case Instruction::Call:    executeCallInst  (cast<CallInst> (I), SF); break;
-    case Instruction::PHINode: executePHINode   (cast<PHINode>  (I), SF); break;
-    case Instruction::Shl:     executeShlInst   (cast<ShiftInst>(I), SF); break;
-    case Instruction::Shr:     executeShrInst   (cast<ShiftInst>(I), SF); break;
-    case Instruction::Cast:    executeCastInst  (cast<CastInst> (I), SF); break;
+    case Instruction::Call:    executeCallInst (cast<CallInst> (I), SF); break;
+    case Instruction::PHINode: executePHINode  (cast<PHINode>  (I), SF); break;
+    case Instruction::Shl:     executeShlInst  (cast<ShiftInst>(I), SF); break;
+    case Instruction::Shr:     executeShrInst  (cast<ShiftInst>(I), SF); break;
+    case Instruction::Cast:    executeCastInst (cast<CastInst> (I), SF); break;
     default:
       cout << "Don't know how to execute this instruction!\n-->" << I;
     }
