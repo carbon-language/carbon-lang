@@ -778,7 +778,8 @@ void CWriter::visitCallInst(CallInst &I) {
   const FunctionType *FTy   = cast<FunctionType>(PTy->getElementType());
   const Type         *RetTy = FTy->getReturnType();
   
-  Out << getValueName(I.getOperand(0)) << "(";
+  writeOperand(I.getOperand(0));
+  Out << "(";
 
   if (I.getNumOperands() > 1) {
     writeOperand(I.getOperand(1));
