@@ -12,13 +12,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "Interpreter.h"
-#include "ExecutionAnnotations.h"
-#include "llvm/Module.h"
+#include "llvm/Function.h"
 #include "llvm/Instructions.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Constants.h"
-#include "llvm/Assembly/Writer.h"
-#include "Support/CommandLine.h"
 #include "Support/Statistic.h"
 #include <cmath>  // For fmod
 
@@ -26,40 +23,17 @@ Interpreter *TheEE = 0;
 
 namespace {
   Statistic<> NumDynamicInsts("lli", "Number of dynamic instructions executed");
-
-  cl::opt<bool>
-  QuietMode("quiet", cl::desc("Do not emit any non-program output"),
-	    cl::init(true));
-
-  cl::alias 
-  QuietModeA("q", cl::desc("Alias for -quiet"), cl::aliasopt(QuietMode));
-
-  cl::opt<bool>
-  ArrayChecksEnabled("array-checks", cl::desc("Enable array bound checks"));
 }
-
-// Create a TargetData structure to handle memory addressing and size/alignment
-// computations
-//
-CachedWriter CW;     // Object to accelerate printing of LLVM
-
 
 //===----------------------------------------------------------------------===//
 //                     Value Manipulation code
 //===----------------------------------------------------------------------===//
-
-static unsigned getOperandSlot(Value *V) {
-  SlotNumber *SN = (SlotNumber*)V->getAnnotation(SlotNumberAID);
-  assert(SN && "Operand does not have a slot number annotation!");
-  return SN->SlotNum;
-}
 
 // Operations used by constant expr implementations...
 static GenericValue executeCastOperation(Value *Src, const Type *DestTy,
                                          ExecutionContext &SF);
 static GenericValue executeAddInst(GenericValue Src1, GenericValue Src2, 
 				   const Type *Ty);
-
 
 GenericValue Interpreter::getOperandValue(Value *V, ExecutionContext &SF) {
   if (ConstantExpr *CE = dyn_cast<ConstantExpr>(V)) {
@@ -83,19 +57,12 @@ GenericValue Interpreter::getOperandValue(Value *V, ExecutionContext &SF) {
   } else if (GlobalValue *GV = dyn_cast<GlobalValue>(V)) {
     return PTOGV(TheEE->getPointerToGlobal(GV));
   } else {
-    unsigned TyP = V->getType()->getUniqueID();   // TypePlane for value
-    unsigned OpSlot = getOperandSlot(V);
-    assert(TyP < SF.Values.size() && 
-           OpSlot < SF.Values[TyP].size() && "Value out of range!");
-    return SF.Values[TyP][getOperandSlot(V)];
+    return SF.Values[V];
   }
 }
 
 static void SetValue(Value *V, GenericValue Val, ExecutionContext &SF) {
-  unsigned TyP = V->getType()->getUniqueID();   // TypePlane for value
-
-  //std::cout << "Setting value: " << &SF.Values[TyP][getOperandSlot(V)]<< "\n";
-  SF.Values[TyP][getOperandSlot(V)] = Val;
+  SF.Values[V] = Val;
 }
 
 //===----------------------------------------------------------------------===//
@@ -242,7 +209,6 @@ static GenericValue executeAndInst(GenericValue Src1, GenericValue Src2,
   return Dest;
 }
 
-
 static GenericValue executeOrInst(GenericValue Src1, GenericValue Src2, 
                                   const Type *Ty) {
   GenericValue Dest;
@@ -263,7 +229,6 @@ static GenericValue executeOrInst(GenericValue Src1, GenericValue Src2,
   return Dest;
 }
 
-
 static GenericValue executeXorInst(GenericValue Src1, GenericValue Src2, 
                                    const Type *Ty) {
   GenericValue Dest;
@@ -283,7 +248,6 @@ static GenericValue executeXorInst(GenericValue Src1, GenericValue Src2,
   }
   return Dest;
 }
-
 
 #define IMPLEMENT_SETCC(OP, TY) \
    case Type::TY##TyID: Dest.BoolVal = Src1.TY##Val OP Src2.TY##Val; break
@@ -465,12 +429,6 @@ void Interpreter::visitBinaryOperator(BinaryOperator &I) {
 //===----------------------------------------------------------------------===//
 
 void Interpreter::exitCalled(GenericValue GV) {
-  if (!QuietMode) {
-    std::cout << "Program returned ";
-    print(Type::IntTy, GV);
-    std::cout << " via 'void exit(int)'\n";
-  }
-
   ExitCode = GV.SByteVal;
   ECStack.clear();
 }
@@ -486,45 +444,24 @@ void Interpreter::visitReturnInst(ReturnInst &I) {
     Result = getOperandValue(I.getReturnValue(), SF);
   }
 
-  // Save previously executing meth
-  const Function *M = ECStack.back().CurFunction;
-
   // Pop the current stack frame... this invalidates SF
   ECStack.pop_back();
 
   if (ECStack.empty()) {  // Finished main.  Put result into exit code...
-    if (RetTy) {          // Nonvoid return type?
-      if (!QuietMode) {
-        CW << "Function " << M->getType() << " \"" << M->getName()
-           << "\" returned ";
-        print(RetTy, Result);
-        std::cout << "\n";
-      }
-
-      if (RetTy->isIntegral())
-	ExitCode = Result.IntVal;   // Capture the exit code of the program
+    if (RetTy && RetTy->isIntegral()) {          // Nonvoid return type?
+      ExitCode = Result.IntVal;   // Capture the exit code of the program
     } else {
       ExitCode = 0;
     }
-    return;
-  }
-
-  // If we have a previous stack frame, and we have a previous call, fill in
-  // the return value...
-  //
-  ExecutionContext &NewSF = ECStack.back();
-  if (NewSF.Caller) {
-    if (NewSF.Caller->getType() != Type::VoidTy)             // Save result...
-      SetValue(NewSF.Caller, Result, NewSF);
-
-    NewSF.Caller = 0;          // We returned from the call...
-  } else if (!QuietMode) {
-    // This must be a function that is executing because of a user 'call'
-    // instruction.
-    CW << "Function " << M->getType() << " \"" << M->getName()
-       << "\" returned ";
-    print(RetTy, Result);
-    std::cout << "\n";
+  } else {
+    // If we have a previous stack frame, and we have a previous call,
+    // fill in the return value...
+    ExecutionContext &NewSF = ECStack.back();
+    if (NewSF.Caller) {
+      if (NewSF.Caller->getType() != Type::VoidTy)      // Save result...
+        SetValue(NewSF.Caller, Result, NewSF);
+      NewSF.Caller = 0;          // We returned from the call...
+    }
   }
 }
 
@@ -580,8 +517,6 @@ void Interpreter::SwitchToNewBasicBlock(BasicBlock *Dest, ExecutionContext &SF){
   std::vector<GenericValue> ResultValues;
 
   for (; PHINode *PN = dyn_cast<PHINode>(SF.CurInst); ++SF.CurInst) {
-    if (Trace) CW << "Run:" << PN;
-
     // Search for the value corresponding to this previous bb...
     int i = PN->getBasicBlockIndex(PrevBB);
     assert(i != -1 && "PHINode doesn't contain entry for predecessor??");
@@ -597,7 +532,6 @@ void Interpreter::SwitchToNewBasicBlock(BasicBlock *Dest, ExecutionContext &SF){
        ++SF.CurInst, ++i)
     SetValue(PN, ResultValues[i], SF);
 }
-
 
 //===----------------------------------------------------------------------===//
 //                     Memory Instruction Implementations
@@ -631,7 +565,6 @@ void Interpreter::visitFreeInst(FreeInst &I) {
   free(GVTOP(Value));   // Free memory
 }
 
-
 // getElementOffset - The workhorse for getelementptr.
 //
 GenericValue Interpreter::executeGEPOperation(Value *Ptr, User::op_iterator I,
@@ -655,22 +588,13 @@ GenericValue Interpreter::executeGEPOperation(Value *Ptr, User::op_iterator I,
       Total += SLO->MemberOffsets[Index];
       Ty = STy->getElementTypes()[Index];
     } else if (const SequentialType *ST = cast<SequentialType>(Ty)) {
-
       // Get the index number for the array... which must be long type...
       assert((*I)->getType() == Type::LongTy);
       unsigned Idx = getOperandValue(*I, SF).LongVal;
-      if (const ArrayType *AT = dyn_cast<ArrayType>(ST))
-        if (Idx >= AT->getNumElements() && ArrayChecksEnabled) {
-          std::cerr << "Out of range memory access to element #" << Idx
-                    << " of a " << AT->getNumElements() << " element array."
-                    << " Subscript #" << *I << "\n";
-          abort();
-        }
-
       Ty = ST->getElementType();
       unsigned Size = TD.getTypeSize(Ty);
       Total += Size*Idx;
-    }  
+    }
   }
 
   GenericValue Result;
@@ -699,8 +623,6 @@ void Interpreter::visitStoreInst(StoreInst &I) {
   StoreValueToMemory(Val, (GenericValue *)GVTOP(SRC),
                      I.getOperand(0)->getType());
 }
-
-
 
 //===----------------------------------------------------------------------===//
 //                 Miscellaneous Instruction Implementations
@@ -846,7 +768,6 @@ GenericValue Interpreter::executeCastOperation(Value *SrcVal, const Type *Ty,
   return Dest;
 }
 
-
 void Interpreter::visitCastInst(CastInst &I) {
   ExecutionContext &SF = ECStack.back();
   SetValue(&I, executeCastOperation(I.getOperand(0), I.getType(), SF), SF);
@@ -869,27 +790,6 @@ void Interpreter::visitVANextInst(VANextInst &I) {
 //                        Dispatch and Execution Code
 //===----------------------------------------------------------------------===//
 
-FunctionInfo::FunctionInfo(Function *F) {
-  // Assign slot numbers to the function arguments...
-  for (Function::const_aiterator AI = F->abegin(), E = F->aend(); AI != E; ++AI)
-    AI->addAnnotation(new SlotNumber(getValueSlot(AI)));
-
-  // Iterate over all of the instructions...
-  unsigned InstNum = 0;
-  for (Function::iterator BB = F->begin(), BBE = F->end(); BB != BBE; ++BB)
-    for (BasicBlock::iterator II = BB->begin(), IE = BB->end(); II != IE; ++II)
-      // For each instruction... Add Annote
-      II->addAnnotation(new InstNumber(++InstNum, getValueSlot(II)));
-}
-
-unsigned FunctionInfo::getValueSlot(const Value *V) {
-  unsigned Plane = V->getType()->getUniqueID();
-  if (Plane >= NumPlaneElements.size())
-    NumPlaneElements.resize(Plane+1, 0);
-  return NumPlaneElements[Plane]++;
-}
-
-
 //===----------------------------------------------------------------------===//
 // callFunction - Execute the specified function...
 //
@@ -908,17 +808,7 @@ void Interpreter::callFunction(Function *F,
       if (!ECStack.empty() && ECStack.back().Caller) {
         ExecutionContext &SF = ECStack.back();
         SetValue(SF.Caller, Result, SF);
-      
         SF.Caller = 0;          // We returned from the call...
-      } else if (!QuietMode) {
-        // print it.
-        CW << "Function " << F->getType() << " \"" << F->getName()
-           << "\" returned ";
-        print(RetTy, Result); 
-        std::cout << "\n";
-        
-        if (RetTy->isIntegral())
-          ExitCode = Result.IntVal;   // Capture the exit code of the program
       }
     }
 
@@ -929,8 +819,6 @@ void Interpreter::callFunction(Function *F,
   // the function.  Also calculate the number of values for each type slot
   // active.
   //
-  FunctionInfo *&FuncInfo = FunctionInfoMap[F];
-  if (!FuncInfo) FuncInfo = new FunctionInfo(F);
 
   // Make a new stack frame... and fill it in.
   ECStack.push_back(ExecutionContext());
@@ -938,18 +826,6 @@ void Interpreter::callFunction(Function *F,
   StackFrame.CurFunction = F;
   StackFrame.CurBB     = F->begin();
   StackFrame.CurInst   = StackFrame.CurBB->begin();
-  StackFrame.FuncInfo  = FuncInfo;
-
-  // Initialize the values to nothing...
-  StackFrame.Values.resize(FuncInfo->NumPlaneElements.size());
-  for (unsigned i = 0; i < FuncInfo->NumPlaneElements.size(); ++i) {
-    StackFrame.Values[i].resize(FuncInfo->NumPlaneElements[i]);
-
-    // Taint the initial values of stuff
-    memset(&StackFrame.Values[i][0], 42,
-           FuncInfo->NumPlaneElements[i]*sizeof(GenericValue));
-  }
-
 
   // Run through the function arguments and initialize their values...
   assert((ArgVals.size() == F->asize() ||
@@ -965,55 +841,15 @@ void Interpreter::callFunction(Function *F,
   StackFrame.VarArgs.assign(ArgVals.begin()+i, ArgVals.end());
 }
 
-// executeInstruction - Interpret a single instruction & increment the "PC".
-//
-void Interpreter::executeInstruction() {
-  assert(!ECStack.empty() && "No program running, cannot execute inst!");
-
-  ExecutionContext &SF = ECStack.back();  // Current stack frame
-  Instruction &I = *SF.CurInst++;         // Increment before execute
-
-  if (Trace) CW << "Run:" << I;
-
-  // Track the number of dynamic instructions executed.
-  ++NumDynamicInsts;
-
-  visit(I);   // Dispatch to one of the visit* methods...
-  
-  // Reset the current frame location to the top of stack
-  CurFrame = ECStack.size()-1;
-}
-
 void Interpreter::run() {
   while (!ECStack.empty()) {
-    // Run an instruction...
-    executeInstruction();
-  }
-}
+    // Interpret a single instruction & increment the "PC".
+    ExecutionContext &SF = ECStack.back();  // Current stack frame
+    Instruction &I = *SF.CurInst++;         // Increment before execute
+    
+    // Track the number of dynamic instructions executed.
+    ++NumDynamicInsts;
 
-void Interpreter::printValue(const Type *Ty, GenericValue V) {
-  switch (Ty->getPrimitiveID()) {
-  case Type::BoolTyID:   std::cout << (V.BoolVal?"true":"false"); break;
-  case Type::SByteTyID:
-    std::cout << (int)V.SByteVal << " '" << V.SByteVal << "'";  break;
-  case Type::UByteTyID:
-    std::cout << (unsigned)V.UByteVal << " '" << V.UByteVal << "'";  break;
-  case Type::ShortTyID:  std::cout << V.ShortVal;  break;
-  case Type::UShortTyID: std::cout << V.UShortVal; break;
-  case Type::IntTyID:    std::cout << V.IntVal;    break;
-  case Type::UIntTyID:   std::cout << V.UIntVal;   break;
-  case Type::LongTyID:   std::cout << (long)V.LongVal;   break;
-  case Type::ULongTyID:  std::cout << (unsigned long)V.ULongVal;  break;
-  case Type::FloatTyID:  std::cout << V.FloatVal;  break;
-  case Type::DoubleTyID: std::cout << V.DoubleVal; break;
-  case Type::PointerTyID:std::cout << (void*)GVTOP(V); break;
-  default:
-    std::cout << "- Don't know how to print value of this type!";
-    break;
+    visit(I);   // Dispatch to one of the visit* methods...
   }
-}
-
-void Interpreter::print(const Type *Ty, GenericValue V) {
-  CW << Ty << " ";
-  printValue(Ty, V);
 }
