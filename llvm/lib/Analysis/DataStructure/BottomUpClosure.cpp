@@ -10,9 +10,7 @@
 #include "llvm/Analysis/DataStructure.h"
 #include "llvm/Analysis/DSGraph.h"
 #include "llvm/Module.h"
-//#include "llvm/DerivedTypes.h"
 #include "Support/Statistic.h"
-//#include <set>
 using std::map;
 
 static RegisterAnalysis<BUDataStructures>
@@ -32,6 +30,9 @@ using namespace DataStructureAnalysis;
 // our memory... here...
 //
 void BUDataStructures::releaseMemory() {
+  // Delete all call site information
+  CallSites.clear();
+
   for (map<const Function*, DSGraph*>::iterator I = DSInfo.begin(),
          E = DSInfo.end(); I != E; ++I)
     delete I->second;
@@ -151,6 +152,10 @@ DSGraph &BUDataStructures::calculateGraph(Function &F) {
         for (unsigned c = 0; c != Callees.size(); ++c) {
           // Must be a function type, so this cast MUST succeed.
           Function &FI = cast<Function>(*Callees[c]);
+
+          // Record that this is a call site of FI.
+          CallSites[&FI].push_back(CallSite(F, Call));
+
           if (&FI == &F) {
             // Self recursion... simply link up the formal arguments with the
             // actual arguments...
@@ -165,6 +170,7 @@ DSGraph &BUDataStructures::calculateGraph(Function &F) {
 
             // Erase the entry in the callees vector
             Callees.erase(Callees.begin()+c--);
+
           } else if (!FI.isExternal()) {
             DEBUG(std::cerr << "\t[BU] In " << F.getName() << " inlining: "
                   << FI.getName() << "\n");
