@@ -1450,8 +1450,13 @@ install-local::
 	$(Verb) if [ -d "$(PROJ_SRC_ROOT)/include" ] ; then \
 	  cd $(PROJ_SRC_ROOT)/include && \
 	    find . -path '*/Internal' -prune -o '(' -type f \
-	      '!' '(' -name '*~' -o -name '.cvsignore' -o -name '.#*' ')' \
+	      '!' '(' -name '*~' -o -name '.cvsignore' -o -name '.#*' -o -name '*.in' ')' \
 	      -print ')' | grep -v CVS | pax -rwdvpe $(PROJ_includedir) ; \
+	fi
+	$(Verb) if [ -d "$(PROJ_OBJ_ROOT)/include" ] ; then \
+	  cd $(PROJ_OBJ_ROOT)/include && ( cd $(PROJ_SRC_ROOT)/include && \
+	    find . -path '*/Internal' -prune -o '(' -type f -name '*.in' -print ')' ) \
+	    | sed 's#.in$$##' | pax -rwdvpe $(PROJ_includedir) ; \
 	fi
 
 uninstall-local::
@@ -1459,9 +1464,12 @@ uninstall-local::
 	$(Verb) if [ -d "$(PROJ_SRC_ROOT)/include" ] ; then \
 	  cd $(PROJ_SRC_ROOT)/include && \
 	    $(RM) -f `find . -path '*/Internal' -prune -o '(' -type f \
-	      '!' '(' -name '*~' -o -name '.cvsignore' -o -name '.#*' ')' \
+	      '!' '(' -name '*~' -o -name '.cvsignore' -o -name '.#*' -o -name '*.in' ')' \
 	      -print ')' | grep -v CVS | sed 's#^#$(PROJ_includedir)/#'` ; \
-	fi 
+	  cd $(PROJ_SRC_ROOT)/include && \
+	    $(RM) -f `find . -path '*/Internal' -prune -o '(' -type f -name '*.in' -print ')' \
+	    | sed 's#\.in$$##;s#^#$(PROJ_includedir)/#'` ; \
+	fi
 
 endif
 
