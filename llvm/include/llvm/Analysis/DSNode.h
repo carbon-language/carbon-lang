@@ -218,6 +218,12 @@ public:
   /// specified mapping.
   void remapLinks(std::map<const DSNode*, DSNodeHandle> &OldNodeMap);
 
+  /// markReachableNodes - This method recursively traverses the specified
+  /// DSNodes, marking any nodes which are reachable.  All reachable nodes it
+  /// adds to the set, which allows it to only traverse visited nodes once.
+  ///
+  void markReachableNodes(std::set<DSNode*> &ReachableNodes);
+
 private:
   friend class DSNodeHandle;
 

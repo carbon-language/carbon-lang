@@ -9,6 +9,7 @@
 
 #include <vector>
 #include <map>
+#include <set>
 #include <functional>
 #include <string>
 
@@ -213,6 +214,12 @@ public:
     for (unsigned a = 0; a != MinArgs; ++a)
       getPtrArg(a).mergeWith(CS.getPtrArg(a));
   }
+
+  /// markReachableNodes - This method recursively traverses the specified
+  /// DSNodes, marking any nodes which are reachable.  All reachable nodes it
+  /// adds to the set, which allows it to only traverse visited nodes once.
+  ///
+  void markReachableNodes(std::set<DSNode*> &Nodes);
 
   bool operator<(const DSCallSite &CS) const {
     if (Callee < CS.Callee) return true;   // This must sort by callee first!
