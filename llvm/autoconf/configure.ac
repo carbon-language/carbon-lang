@@ -237,6 +237,8 @@ AC_PROG_BISON
 dnl Check for the tools that the makefiles require
 AC_CHECK_GNU_MAKE
 AC_PROG_LN_S
+AC_PATH_PROG(CMP, [cmp], [cmp])
+AC_PATH_PROG(CP, [cp], [cp])
 AC_PATH_PROG(DATE, [date], [date])
 AC_PATH_PROG(FIND, [find], [find])
 AC_PATH_PROG(GREP, [grep], [grep])

@@ -57,6 +57,8 @@ AR_PATH = @AR@
 
 # The pathnames of the programs we require to build
 BISON      := @BISON@
+CMP        := @CMP@
+CP         := @CP@
 DATE       := @DATE@
 FIND       := @FIND@
 FLEX       := @LEX@
