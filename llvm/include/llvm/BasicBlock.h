@@ -148,7 +148,16 @@ public:
     typedef bidirectional_iterator_tag iterator_category;
     typedef _Ptr pointer;
 
-    inline PredIterator(_Ptr BB) : ThisBB(BB), It(BB->use_begin()) {}
+    inline void advancePastConstPool() {
+      // Loop to ignore constant pool references
+      while (It != ThisBB->use_end() && 
+	     ((*It)->getValueType() != Value::InstructionVal))
+	++It;
+    }
+
+    inline PredIterator(_Ptr BB) : ThisBB(BB), It(BB->use_begin()) {
+      advancePastConstPool();
+    }
     inline PredIterator(_Ptr BB, bool) : ThisBB(BB), It(BB->use_end()) {}
 
     inline bool operator==(const _Self& x) const { return It == x.It; }
@@ -161,13 +170,7 @@ public:
     inline pointer *operator->() const { return &(operator*()); }
 
     inline _Self& operator++() {   // Preincrement
-      do {       // Loop to ignore constant pool references
-	++It;
-      } while (It != ThisBB->use_end() && 
-	       ((*It)->getValueType() != Value::ConstantVal));
-
-	       // DOES THIS WORK???	       
-      //((*It)->getValueType() != Value::BasicBlockVal));
+      ++It; advancePastConstPool();
       return *this; 
     }
 

@@ -65,10 +65,9 @@ public:
   inline const_iterator end()   const { return ValueList.end();   }
 
   void delete_all() {            // Delete all removes and deletes all elements
-    // TODO: REMOVE FROM END OF VECTOR!!!
-    while (begin() != end()) {
-      iterator I = begin();
-      delete remove(I);          // Delete all instructions...
+    while (!empty()) {
+      iterator it = end();
+      delete remove(--it);          // Delete all instructions...
     }
   }
 
@@ -76,8 +75,9 @@ public:
   // specified by the iterator, and leaves the iterator pointing to the element 
   // that used to follow the element deleted.
   //
-  ValueSubclass *remove(iterator &DI);  // Defined in ValueHolderImpl.h
-  void     remove(ValueSubclass *D);    // Defined in ValueHolderImpl.h
+  ValueSubclass *remove(iterator &DI);        // Defined in ValueHolderImpl.h
+  ValueSubclass *remove(const iterator &DI);  // Defined in ValueHolderImpl.h
+  void     remove(ValueSubclass *D);          // Defined in ValueHolderImpl.h
 
   inline void push_front(ValueSubclass *Inst); // Defined in ValueHolderImpl.h
   inline void push_back(ValueSubclass *Inst);  // Defined in ValueHolderImpl.h

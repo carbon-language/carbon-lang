@@ -65,7 +65,7 @@ public:
   typedef list<User*>::iterator       use_iterator;
   typedef list<User*>::const_iterator use_const_iterator;
 
-  inline bool               use_size()  const { return Uses.size();  }
+  inline unsigned           use_size()  const { return Uses.size();  }
   inline bool               use_empty() const { return Uses.empty(); }
   inline use_iterator       use_begin()       { return Uses.begin(); }
   inline use_const_iterator use_begin() const { return Uses.begin(); }

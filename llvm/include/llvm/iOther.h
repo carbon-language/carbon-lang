@@ -50,7 +50,12 @@ public:
   virtual bool setOperand(unsigned i, Value *Val);
   virtual string getOpcode() const { return "phi"; }
 
+  // addIncoming - Add an incoming value to the end of the PHI list
   void addIncoming(Value *D);
+
+  // removeIncomingValue - Remove an incoming value.  This is useful if a
+  // predecessor basic block is deleted.  The value removed is returned.
+  Value *removeIncomingValue(unsigned idx);
 };
 
 

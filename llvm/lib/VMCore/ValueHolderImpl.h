@@ -38,9 +38,9 @@ void ValueHolder<ValueSubclass,ItemParentType>::remove(ValueSubclass *D) {
   remove(I);
 }
 
-// ValueHolder::remove(iterator &) this removes the element at the location specified
-// by the iterator, and leaves the iterator pointing to the element that used to follow
-// the element deleted.
+// ValueHolder::remove(iterator &) this removes the element at the location
+// specified by the iterator, and leaves the iterator pointing to the element
+// that used to follow the element deleted.
 //
 template<class ValueSubclass, class ItemParentType>
 ValueSubclass *ValueHolder<ValueSubclass,ItemParentType>::remove(iterator &DI) {
@@ -49,6 +49,24 @@ ValueSubclass *ValueHolder<ValueSubclass,ItemParentType>::remove(iterator &DI) {
   
   ValueSubclass *i = *DI;
   DI = ValueList.erase(DI);
+
+  i->setParent(0);  // I don't own you anymore... byebye...
+  
+  // You don't get to be in the symbol table anymore... byebye
+  if (i->hasName() && Parent)
+    Parent->getSymbolTable()->remove(i);
+  
+  return i;
+}
+
+template<class ValueSubclass, class ItemParentType>
+ValueSubclass *ValueHolder<ValueSubclass,ItemParentType>
+::remove(const iterator &DI) {
+  assert(DI != ValueList.end() && 
+         "Trying to remove the end of the def list!!!");
+  
+  ValueSubclass *i = *DI;
+  ValueList.erase(DI);
 
   i->setParent(0);  // I don't own you anymore... byebye...
   
