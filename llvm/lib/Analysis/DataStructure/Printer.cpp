@@ -29,6 +29,7 @@ using namespace llvm;
 //
 namespace {
   cl::opt<bool> OnlyPrintMain("only-print-main-ds", cl::ReallyHidden);
+  cl::opt<bool> DontPrintAnything("dont-print-ds", cl::ReallyHidden);
   Statistic<> MaxGraphSize   ("dsnode", "Maximum graph size");
   Statistic<> NumFoldedNodes ("dsnode", "Number of folded nodes (in final graph)");
 }
@@ -272,18 +273,22 @@ static void printCollection(const Collection &C, std::ostream &O,
 
 // print - Print out the analysis results...
 void LocalDataStructures::print(std::ostream &O, const Module *M) const {
+  if (DontPrintAnything) return;
   printCollection(*this, O, M, "ds.");
 }
 
 void BUDataStructures::print(std::ostream &O, const Module *M) const {
+  if (DontPrintAnything) return;
   printCollection(*this, O, M, "bu.");
 }
 
 void TDDataStructures::print(std::ostream &O, const Module *M) const {
+  if (DontPrintAnything) return;
   printCollection(*this, O, M, "td.");
 }
 
 void CompleteBUDataStructures::print(std::ostream &O, const Module *M) const {
+  if (DontPrintAnything) return;
   printCollection(*this, O, M, "cbu.");
 }
 
