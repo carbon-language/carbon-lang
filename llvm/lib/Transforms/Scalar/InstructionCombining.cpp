@@ -512,7 +512,8 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
       // Replace (x - (y - z)) with (x + (z - y)) if the (y - z) subexpression
       // is not used by anyone else...
       //
-      if (Op1I->getOpcode() == Instruction::Sub) {
+      if (Op1I->getOpcode() == Instruction::Sub &&
+          !Op1I->getType()->isFloatingPoint()) {
         // Swap the two operands of the subexpr...
         Value *IIOp0 = Op1I->getOperand(0), *IIOp1 = Op1I->getOperand(1);
         Op1I->setOperand(0, IIOp1);
