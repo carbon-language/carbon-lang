@@ -12,8 +12,7 @@
 #define LLVM_ASSEMBLY_PRINTMODULEPASS_H
 
 #include "llvm/Pass.h"
-#include "llvm/Value.h"
-#include <iostream>
+#include "llvm/Module.h"
 
 class PrintModulePass : public Pass {
   std::ostream *Out;      // ostream to print on
@@ -29,7 +28,7 @@ public:
   }
   
   bool run(Module &M) {
-    (*Out) << (Value&)M;
+    (*Out) << M;
     return false;
   }
 
