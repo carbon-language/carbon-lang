@@ -114,6 +114,7 @@ static std::string getConstStrValue(const Constant* CPV) {
   default:
     std::cerr << "Unknown constant type: " << CPV << "\n";
     abort();
+    return "";
   }
 }
 
