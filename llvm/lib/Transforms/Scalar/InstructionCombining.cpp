@@ -669,7 +669,8 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
                    *cast<Constant>(GEP.getOperand(1));
       assert(Indices[0] != 0 && "Constant folding of uint's failed!?");
 
-    } else if (*GEP.idx_begin() == ConstantUInt::getNullValue(Type::LongTy)) { 
+    } else if (*GEP.idx_begin() == ConstantUInt::getNullValue(Type::LongTy) &&
+               Src->getNumOperands() != 1) { 
       // Otherwise we can do the fold if the first index of the GEP is a zero
       Indices.insert(Indices.end(), Src->idx_begin(), Src->idx_end());
       Indices.insert(Indices.end(), GEP.idx_begin()+1, GEP.idx_end());
