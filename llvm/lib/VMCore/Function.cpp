@@ -15,7 +15,7 @@
 #include "llvm/Module.h"
 #include "llvm/Constant.h"
 #include "llvm/DerivedTypes.h"
-#include "llvm/iOther.h"
+#include "llvm/Instructions.h"
 #include "llvm/Intrinsics.h"
 #include "Support/LeakDetector.h"
 #include "SymbolTableListTraitsImpl.h"

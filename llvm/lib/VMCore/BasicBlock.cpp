@@ -12,11 +12,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/BasicBlock.h"
-#include "llvm/iTerminators.h"
+#include "llvm/Constant.h"
+#include "llvm/Instructions.h"
 #include "llvm/Type.h"
 #include "llvm/Support/CFG.h"
-#include "llvm/Constant.h"
-#include "llvm/iPHINode.h"
 #include "llvm/SymbolTable.h"
 #include "Support/LeakDetector.h"
 #include "SymbolTableListTraitsImpl.h"
