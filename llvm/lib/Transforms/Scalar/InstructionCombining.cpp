@@ -1285,7 +1285,7 @@ Instruction *InstCombiner::OptAndOp(Instruction *Op,
         Constant *AllOne = ConstantIntegral::getAllOnesValue(AndRHS->getType());
         Constant *ShrMask = ConstantExpr::getUShr(AllOne, OpRHS);
         Constant *CI = ConstantExpr::getAnd(AndRHS, ShrMask);
-        if (CI == ShrMask) {          // Masking out bits shifted in.
+        if (CI == AndRHS) {          // Masking out bits shifted in.
           // Make the argument unsigned.
           Value *ShVal = Op->getOperand(0);
           ShVal = InsertCastBefore(ShVal,
