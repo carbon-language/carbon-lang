@@ -144,12 +144,19 @@ namespace {
     void visitGetElementPtrInst(GetElementPtrInst &I);
     void visitLoadInst(LoadInst &I);
     void visitCastInst(CastInst &I);
+    void visitCallInst(CallInst &I);
     void visitStoreInst(StoreInst &I);
 
     // Helper functions for visiting operands of every instruction
-    void visitOperands(Instruction &I);    // work on all operands of instr.
-    void visitOneOperand(Instruction &I, Constant* CV, unsigned opNum,
-                         Instruction& insertBefore); // iworks on one operand
+    // 
+    // visitOperands() works on every operand in [firstOp, lastOp-1].
+    // If lastOp==0, lastOp defaults to #operands or #incoming Phi values.
+    // 
+    // visitOneOperand() does all the work for one operand.
+    // 
+    void visitOperands(Instruction &I, int firstOp=0, int lastOp=0);
+    void visitOneOperand(Instruction &I, Value* Op, unsigned opNum,
+                         Instruction& insertBefore);
   };
 
   // Register the pass...
@@ -314,6 +321,13 @@ PreSelection::visitCastInst(CastInst &I)
     visitInstruction(*castI);
 }
 
+void
+PreSelection::visitCallInst(CallInst &I)
+{
+  // Tell visitOperands to ignore the function name if this is a direct call.
+  visitOperands(I, (/*firstOp=*/ I.getCalledFunction()? 1 : 0));
+}
+
 
 // visitOperands() transforms individual operands of all instructions:
 // -- Load "large" int constants into a virtual register.  What is large
@@ -321,8 +335,11 @@ PreSelection::visitCastInst(CastInst &I)
 // -- For any constants that cannot be put in an immediate field,
 //    load address into virtual register first, and then load the constant.
 // 
+// firstOp and lastOp can be used to skip leading and trailing operands.
+// If lastOp is 0, it defaults to #operands or #incoming Phi values.
+//  
 void
-PreSelection::visitOperands(Instruction &I)
+PreSelection::visitOperands(Instruction &I, int firstOp, int lastOp)
 {
   // For any instruction other than PHI, copies go just before the instr.
   // For a PHI, operand copies must be before the terminator of the
@@ -331,21 +348,35 @@ PreSelection::visitOperands(Instruction &I)
   // 
   if (PHINode* phi = dyn_cast<PHINode>(&I))
     {
-      for (unsigned i=0, N=phi->getNumIncomingValues(); i < N; ++i)
-        if (Constant* CV = dyn_cast<Constant>(phi->getIncomingValue(i)))
-          this->visitOneOperand(I, CV, phi->getOperandNumForIncomingValue(i),
-                                * phi->getIncomingBlock(i)->getTerminator());
+      if (lastOp == 0)
+        lastOp = phi->getNumIncomingValues();
+      for (unsigned i=firstOp, N=lastOp; i < N; ++i)
+        this->visitOneOperand(I, phi->getIncomingValue(i),
+                              phi->getOperandNumForIncomingValue(i),
+                              * phi->getIncomingBlock(i)->getTerminator());
     }
   else
-    for (unsigned i=0, N=I.getNumOperands(); i < N; ++i)
-      if (Constant* CV = dyn_cast<Constant>(I.getOperand(i)))
-        this->visitOneOperand(I, CV, i, I);
+    {
+      if (lastOp == 0)
+        lastOp = I.getNumOperands();
+      for (unsigned i=firstOp, N=lastOp; i < N; ++i)
+        this->visitOneOperand(I, I.getOperand(i), i, I);
+    }
 }
 
 void
-PreSelection::visitOneOperand(Instruction &I, Constant* CV, unsigned opNum,
+PreSelection::visitOneOperand(Instruction &I, Value* Op, unsigned opNum,
                               Instruction& insertBefore)
 {
+  if (GetElementPtrInst* gep = getGlobalAddr(Op, insertBefore)) {
+    I.setOperand(opNum, gep);           // replace global operand
+    return;
+  }
+
+  Constant* CV  = dyn_cast<Constant>(Op);
+  if (CV == NULL)
+    return;
+
   if (ConstantExpr* CE = dyn_cast<ConstantExpr>(CV))
     { // load-time constant: factor it out so we optimize as best we can
       Instruction* computeConst = DecomposeConstantExpr(CE, insertBefore);
