@@ -58,11 +58,8 @@ void Instruction::setParent(BasicBlock *P) {
 }
 
 // Specialize setName to take care of symbol table majik
-void Instruction::setName(const std::string &name, SymbolTable *ST) {
+void Instruction::setName(const std::string &name) {
   BasicBlock *P = 0; Function *PP = 0;
-  assert((ST == 0 || !getParent() || !getParent()->getParent() || 
-	  ST == &getParent()->getParent()->getSymbolTable()) &&
-	 "Invalid symtab argument!");
   if ((P = getParent()) && (PP = P->getParent()) && hasName())
     PP->getSymbolTable().remove(this);
   Value::setName(name);

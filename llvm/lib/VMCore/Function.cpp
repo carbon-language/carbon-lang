@@ -64,10 +64,8 @@ Argument::Argument(const Type *Ty, const std::string &Name, Function *Par)
 
 
 // Specialize setName to take care of symbol table majik
-void Argument::setName(const std::string &name, SymbolTable *ST) {
+void Argument::setName(const std::string &name) {
   Function *P;
-  assert((ST == 0 || (!getParent() || ST == &getParent()->getSymbolTable())) &&
-         "Invalid symtab argument!");
   if ((P = getParent()) && hasName()) P->getSymbolTable().remove(this);
   Value::setName(name);
   if (P && hasName()) P->getSymbolTable().insert(this);
@@ -121,10 +119,8 @@ Function::~Function() {
 }
 
 // Specialize setName to take care of symbol table majik
-void Function::setName(const std::string &name, SymbolTable *ST) {
+void Function::setName(const std::string &name) {
   Module *P;
-  assert((ST == 0 || (!getParent() || ST == &getParent()->getSymbolTable())) &&
-         "Invalid symtab argument!");
   if ((P = getParent()) && hasName()) P->getSymbolTable().remove(this);
   Value::setName(name);
   if (P && hasName()) P->getSymbolTable().insert(this);
@@ -170,7 +166,7 @@ void Function::renameLocalSymbols() {
   for (SymbolTable::plane_iterator LPI = LST.plane_begin(), E = LST.plane_end();
        LPI != E; ++LPI)
     // All global symbols are of pointer type, ignore any non-pointer planes.
-    if (isa<PointerType>(LPI->first)) {
+    if (const PointerType *CurTy = dyn_cast<PointerType>(LPI->first)) {
       // Only check if the global plane has any symbols of this type.
       SymbolTable::plane_iterator GPI = GST.find(LPI->first);
       if (GPI != GST.plane_end()) {
