@@ -39,9 +39,3 @@
 
 .doc_red        { color: red }
 
-
-/* Publications */
-.pub_title  { font-family: "Georgia,Palatino,Times,Roman";
-              font-size: 24pt; 
-              text-align: center }
-.pub_author { font-size: 14pt; text-align: center }
