@@ -144,8 +144,8 @@ void SlotCalculator::incorporateFunction(const Function *M) {
     SC_DEBUG("Inserting function constants:\n";
 	     for (constant_iterator I = constant_begin(M), E = constant_end(M);
 		  I != E; ++I) {
-	       cerr << "  " << I->getType()->getDescription() 
-		    << " " << I->getStrValue() << endl;
+	       cerr << "  " << *I->getType()
+		    << " " << *I << "\n";
 	     });
 
     // Emit all of the constants that are being used by the instructions in the
