@@ -503,6 +503,12 @@ Instruction *InstCombiner::visitShiftInst(Instruction &I) {
       return BinaryOperator::create(Instruction::Add, Op0, Op0, I.getName());
 
   }
+
+  // shr int -1, X = -1   (for any arithmetic shift rights of ~0)
+  if (ConstantSInt *CSI = dyn_cast<ConstantSInt>(Op0))
+    if (I.getOpcode() == Instruction::Shr && CSI->isAllOnesValue())
+      return ReplaceInstUsesWith(I, CSI);
+  
   return 0;
 }
 
