@@ -204,14 +204,18 @@ void AsmPrinter::emitGlobalConstant(const Constant *CV) {
         O << Data64bitsDirective << U.UVal << "\n";
       else if (TD.isBigEndian()) {
         O << Data32bitsDirective << unsigned(U.UVal >> 32)
-          << "\t; double most significant word " << Val << "\n";
+          << "\t" << CommentChar << " double most significant word "
+          << Val << "\n";
         O << Data32bitsDirective << unsigned(U.UVal)
-          << "\t; double least significant word " << Val << "\n";
+          << "\t" << CommentChar << " double least significant word "
+          << Val << "\n";
       } else {
         O << Data32bitsDirective << unsigned(U.UVal)
-          << "\t; double least significant word " << Val << "\n";
+          << "\t" << CommentChar << " double least significant word " << Val
+          << "\n";
         O << Data32bitsDirective << unsigned(U.UVal >> 32)
-          << "\t; double most significant word " << Val << "\n";
+          << "\t" << CommentChar << " double most significant word " << Val
+          << "\n";
       }
       return;
     } else {
@@ -221,7 +225,8 @@ void AsmPrinter::emitGlobalConstant(const Constant *CV) {
       } U;
       U.FVal = Val;
       
-      O << Data32bitsDirective << U.UVal << "\t; float " << Val << "\n";
+      O << Data32bitsDirective << U.UVal << "\t" << CommentChar
+        << " float " << Val << "\n";
       return;
     }
   } else if (CV->getType() == Type::ULongTy || CV->getType() == Type::LongTy) {
@@ -232,14 +237,18 @@ void AsmPrinter::emitGlobalConstant(const Constant *CV) {
         O << Data64bitsDirective << Val << "\n";
       else if (TD.isBigEndian()) {
         O << Data32bitsDirective << unsigned(Val >> 32)
-          << "\t; Double-word most significant word " << Val << "\n";
+          << "\t" << CommentChar << " Double-word most significant word "
+          << Val << "\n";
         O << Data32bitsDirective << unsigned(Val)
-          << "\t; Double-word least significant word " << Val << "\n";
+          << "\t" << CommentChar << " Double-word least significant word "
+          << Val << "\n";
       } else {
         O << Data32bitsDirective << unsigned(Val)
-          << "\t; Double-word least significant word " << Val << "\n";
+          << "\t" << CommentChar << " Double-word least significant word "
+          << Val << "\n";
         O << Data32bitsDirective << unsigned(Val >> 32)
-          << "\t; Double-word most significant word " << Val << "\n";
+          << "\t" << CommentChar << " Double-word most significant word "
+          << Val << "\n";
       }
       return;
     }
