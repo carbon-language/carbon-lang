@@ -1,12 +1,12 @@
 //===-- MachineFunction.cpp -----------------------------------------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
-// 
+//
 // Collect native machine code information for a function.  This allows
 // target-specific information about the generated code to be stored with each
 // function.
@@ -32,7 +32,7 @@
 using namespace llvm;
 
 static AnnotationID MF_AID(
-                 AnnotationManager::getID("CodeGen::MachineCodeForFunction"));
+  AnnotationManager::getID("CodeGen::MachineCodeForFunction"));
 
 
 namespace {
@@ -91,19 +91,19 @@ FunctionPass *llvm::createMachineCodeDeleter() {
 //===---------------------------------------------------------------------===//
 MachineBasicBlock* ilist_traits<MachineBasicBlock>::createNode()
 {
-    MachineBasicBlock* dummy = new MachineBasicBlock();
-    LeakDetector::removeGarbageObject(dummy);
-    return dummy;
+  MachineBasicBlock* dummy = new MachineBasicBlock();
+  LeakDetector::removeGarbageObject(dummy);
+  return dummy;
 }
 
 void ilist_traits<MachineBasicBlock>::transferNodesFromList(
-    iplist<MachineBasicBlock, ilist_traits<MachineBasicBlock> >& toList,
-    ilist_iterator<MachineBasicBlock> first,
-    ilist_iterator<MachineBasicBlock> last)
+  iplist<MachineBasicBlock, ilist_traits<MachineBasicBlock> >& toList,
+  ilist_iterator<MachineBasicBlock> first,
+  ilist_iterator<MachineBasicBlock> last)
 {
-    if (Parent != toList.Parent)
-        for (; first != last; ++first)
-            first->Parent = toList.Parent;
+  if (Parent != toList.Parent)
+    for (; first != last; ++first)
+      first->Parent = toList.Parent;
 }
 
 MachineFunction::MachineFunction(const Function *F,
@@ -116,7 +116,7 @@ MachineFunction::MachineFunction(const Function *F,
   BasicBlocks.Parent = this;
 }
 
-MachineFunction::~MachineFunction() { 
+MachineFunction::~MachineFunction() {
   BasicBlocks.clear();
   delete SSARegMapping;
   delete MFInfo;
@@ -134,7 +134,7 @@ void MachineFunction::print(std::ostream &OS) const {
 
   // Print Constant Pool
   getConstantPool()->print(OS);
-  
+
   for (const_iterator BB = begin(); BB != end(); ++BB)
     BB->print(OS);
 
@@ -148,38 +148,38 @@ void MachineFunction::print(std::ostream &OS) const {
 static bool CFGOnly = false;
 
 namespace llvm {
-template<>
-struct DOTGraphTraits<const MachineFunction*> : public DefaultDOTGraphTraits {
-  static std::string getGraphName(const MachineFunction *F) {
-    return "CFG for '" + F->getFunction()->getName() + "' function";
-  }
-
-  static std::string getNodeLabel(const MachineBasicBlock *Node,
-                                  const MachineFunction *Graph) {
-    if (CFGOnly && Node->getBasicBlock() &&
-        !Node->getBasicBlock()->getName().empty())
-      return Node->getBasicBlock()->getName() + ":";
-
-    std::ostringstream Out;
-    if (CFGOnly) {
-      Out << Node->getNumber() << ':';
-      return Out.str();
+  template<>
+  struct DOTGraphTraits<const MachineFunction*> : public DefaultDOTGraphTraits {
+    static std::string getGraphName(const MachineFunction *F) {
+      return "CFG for '" + F->getFunction()->getName() + "' function";
     }
 
-    Node->print(Out);
+    static std::string getNodeLabel(const MachineBasicBlock *Node,
+                                    const MachineFunction *Graph) {
+      if (CFGOnly && Node->getBasicBlock() &&
+          !Node->getBasicBlock()->getName().empty())
+        return Node->getBasicBlock()->getName() + ":";
 
-    std::string OutStr = Out.str();
-    if (OutStr[0] == '\n') OutStr.erase(OutStr.begin());
-
-    // Process string output to make it nicer...
-    for (unsigned i = 0; i != OutStr.length(); ++i)
-      if (OutStr[i] == '\n') {                            // Left justify
-        OutStr[i] = '\\';
-        OutStr.insert(OutStr.begin()+i+1, 'l');
+      std::ostringstream Out;
+      if (CFGOnly) {
+        Out << Node->getNumber() << ':';
+        return Out.str();
       }
-    return OutStr;
-  }
-};
+
+      Node->print(Out);
+
+      std::string OutStr = Out.str();
+      if (OutStr[0] == '\n') OutStr.erase(OutStr.begin());
+
+      // Process string output to make it nicer...
+      for (unsigned i = 0; i != OutStr.length(); ++i)
+        if (OutStr[i] == '\n') {                            // Left justify
+          OutStr[i] = '\\';
+          OutStr.insert(OutStr.begin()+i+1, 'l');
+        }
+      return OutStr;
+    }
+  };
 }
 
 void MachineFunction::viewCFG() const
@@ -187,7 +187,7 @@ void MachineFunction::viewCFG() const
   std::string Filename = "/tmp/cfg." + getFunction()->getName() + ".dot";
   std::cerr << "Writing '" << Filename << "'... ";
   std::ofstream F(Filename.c_str());
-  
+
   if (!F) {
     std::cerr << "  error opening file for writing!\n";
     return;
@@ -221,7 +221,7 @@ void MachineFunction::viewCFGOnly() const
 // get()       -- Returns a handle to the object.
 //                This should not be called before "construct()"
 //                for a given Function.
-// 
+//
 MachineFunction&
 MachineFunction::construct(const Function *Fn, const TargetMachine &Tar)
 {
@@ -270,16 +270,16 @@ void MachineFrameInfo::print(const MachineFunction &MF, std::ostream &OS) const{
       OS << "variable sized";
     else
       OS << SO.Size << " byte" << (SO.Size != 1 ? "s" : " ");
-    
+
     if (i < NumFixedObjects)
       OS << " fixed";
     if (i < NumFixedObjects || SO.SPOffset != -1) {
       int Off = SO.SPOffset - ValOffset;
       OS << " at location [SP";
       if (Off > 0)
-	OS << "+" << Off;
+        OS << "+" << Off;
       else if (Off < 0)
-	OS << Off;
+        OS << Off;
       OS << "]";
     }
     OS << "\n";
@@ -304,4 +304,3 @@ void MachineConstantPool::print(std::ostream &OS) const {
 }
 
 void MachineConstantPool::dump() const { print(std::cerr); }
-
