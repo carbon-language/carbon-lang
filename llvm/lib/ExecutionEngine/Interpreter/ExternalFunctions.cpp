@@ -351,9 +351,17 @@ GenericValue lle_X_sprintf(FunctionType *M, const vector<GenericValue> &Args) {
       case 'd': case 'i':
       case 'u': case 'o':
       case 'x': case 'X':
-        if (HowLong == 2)
+        if (HowLong >= 1) {
+          if (HowLong == 1) {
+            // Make sure we use %lld with a 64 bit argument because we might be
+            // compiling LLI on a 32 bit compiler.
+            unsigned Size = strlen(FmtBuf);
+            FmtBuf[Size] = FmtBuf[Size-1];
+            FmtBuf[Size+1] = 0;
+            FmtBuf[Size-1] = 'l';
+          }
           sprintf(Buffer, FmtBuf, Args[ArgNo++].ULongVal);
-        else
+        } else
           sprintf(Buffer, FmtBuf, Args[ArgNo++].IntVal); break;
       case 'e': case 'E': case 'g': case 'G': case 'f':
         sprintf(Buffer, FmtBuf, Args[ArgNo++].DoubleVal); break;
