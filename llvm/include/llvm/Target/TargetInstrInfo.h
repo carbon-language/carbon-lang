@@ -73,7 +73,7 @@ struct TargetInstrDescriptor {
   const char *    Name;          // Assembly language mnemonic for the opcode.
   int             numOperands;   // Number of args; -1 if variable #args
   int             resultPos;     // Position of the result; -1 if no result
-  unsigned        maxImmedConst; // Largest +ve constant in IMMMED field or 0.
+  unsigned        maxImmedConst; // Largest +ve constant in IMMED field or 0.
   bool	          immedIsSignExtended; // Is IMMED field sign-extended? If so,
                                  //   smallest -ve value is -(maxImmedConst+1).
   unsigned        numDelaySlots; // Number of delay slots after instruction
@@ -261,7 +261,7 @@ public:
   virtual bool constantFitsInImmedField(MachineOpCode opCode,
 					int64_t intValue) const;
   
-  // Return the largest +ve constant that can be held in the IMMMED field
+  // Return the largest positive constant that can be held in the IMMED field
   // of this machine instruction.
   // isSignExtended is set to true if the value is sign-extended before use
   // (this is true for all immediate fields in SPARC instructions).
