@@ -182,8 +182,8 @@ my $TemplateContents = ReadFile $Template;
 # Get some static statistics about the current state of CVS
 #
 my $CVSCheckoutTime = GetRegex "([0-9.]+)", `grep '^real' $Prefix-CVS-Log.txt`;
-my $NumFilesInCVS = `grep '^U' $Prefix-CVS-Log.txt | wc -l` + 0;
-my $NumDirsInCVS  = `grep '^cvs checkout' $Prefix-CVS-Log.txt | wc -l` + 0;
+my $NumFilesInCVS = `egrep '^U' $Prefix-CVS-Log.txt | wc -l` + 0;
+my $NumDirsInCVS  = `egrep '^cvs (checkout|server|update):' $Prefix-CVS-Log.txt | wc -l` + 0;
 $LOC = GetRegex "([0-9]+) +total", `wc -l \`utils/getsrcs.sh\` | grep total`;
 
 #
