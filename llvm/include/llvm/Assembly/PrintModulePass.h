@@ -31,6 +31,10 @@ public:
     (*Out) << M;
     return false;
   }
+
+  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    AU.setPreservesAll();
+  }
 };
 
 class PrintFunctionPass : public FunctionPass {
@@ -53,6 +57,10 @@ public:
   bool runOnFunction(Function *F) {
     (*Out) << Banner << (Value*)F;
     return false;
+  }
+  
+  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    AU.setPreservesAll();
   }
 };
 
