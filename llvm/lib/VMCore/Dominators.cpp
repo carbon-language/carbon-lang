@@ -20,7 +20,6 @@ using std::set;
 
 static RegisterAnalysis<DominatorSet>
 A("domset", "Dominator Set Construction", true);
-AnalysisID DominatorSet::ID = A;
 
 // dominates - Return true if A dominates B.  This performs the special checks
 // neccesary if A and B are in the same basic block.
@@ -117,7 +116,6 @@ void DominatorSetBase::print(std::ostream &o) const {
 
 static RegisterAnalysis<ImmediateDominators>
 C("idom", "Immediate Dominators Construction", true);
-AnalysisID ImmediateDominators::ID = C;
 
 // calcIDoms - Calculate the immediate dominator mapping, given a set of
 // dominators for every basic block.
@@ -169,7 +167,6 @@ void ImmediateDominatorsBase::print(std::ostream &o) const {
 
 static RegisterAnalysis<DominatorTree>
 E("domtree", "Dominator Tree Construction", true);
-AnalysisID DominatorTree::ID = E;
 
 // DominatorTreeBase::reset - Free all of the tree node memory.
 //
@@ -254,7 +251,6 @@ void DominatorTreeBase::print(std::ostream &o) const {
 
 static RegisterAnalysis<DominanceFrontier>
 G("domfrontier", "Dominance Frontier Construction", true);
-AnalysisID DominanceFrontier::ID = G;
 
 const DominanceFrontier::DomSetType &
 DominanceFrontier::calculate(const DominatorTree &DT, 
