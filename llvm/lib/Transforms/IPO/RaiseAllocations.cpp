@@ -9,6 +9,7 @@
 #include "llvm/Module.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/iMemory.h"
+#include "llvm/iTerminators.h"
 #include "llvm/iOther.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/CallSite.h"
@@ -130,6 +131,13 @@ bool RaiseAllocations::run(Module &M) {
           std::string Name(I->getName()); I->setName("");
           MallocInst *MI = new MallocInst(Type::SByteTy, Source, Name, I);
           I->replaceAllUsesWith(MI);
+
+          // If the old instruction was an invoke, add an unconditional branch
+          // before the invoke, which will become the new terminator.
+          if (InvokeInst *II = dyn_cast<InvokeInst>(I))
+            new BranchInst(II->getNormalDest(), I);
+
+          // Delete the old call site
           MI->getParent()->getInstList().erase(I);
           Changed = true;
           ++NumRaised;
@@ -160,6 +168,13 @@ bool RaiseAllocations::run(Module &M) {
             Source = new CastInst(Source, PointerType::get(Type::SByteTy),
                                   "FreePtrCast", I);
           new FreeInst(Source, I);
+
+          // If the old instruction was an invoke, add an unconditional branch
+          // before the invoke, which will become the new terminator.
+          if (InvokeInst *II = dyn_cast<InvokeInst>(I))
+            new BranchInst(II->getNormalDest(), I);
+
+          // Delete the old call site
           I->getParent()->getInstList().erase(I);
           Changed = true;
           ++NumRaised;
