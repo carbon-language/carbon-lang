@@ -1408,6 +1408,9 @@ bool CodeGenIntrinsic(LLVMIntrinsic::ID iid, CallInst &callInstr,
 {
   switch (iid) {
   case LLVMIntrinsic::va_start: {
+    // FIXME: this needs to be updated!
+    abort();
+
     // Get the address of the first vararg value on stack and copy it to
     // the argument of va_start(va_list* ap).
     bool ignore;
@@ -1426,6 +1429,9 @@ bool CodeGenIntrinsic(LLVMIntrinsic::ID iid, CallInst &callInstr,
     return true;                        // no-op on Sparc
 
   case LLVMIntrinsic::va_copy:
+    // FIXME: this needs to be updated!
+    abort();
+
     // Simple copy of current va_list (arg2) to new va_list (arg1)
     mvec.push_back(BuildMI(V9::ORr, 3).
                    addMReg(target.getRegInfo().getZeroRegNum()).
@@ -2829,8 +2835,11 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
       case 64:	// reg:   Phi(reg,reg)
         break;                          // don't forward the value
 
-      case 65:	// reg:   VaArg(reg): the va_arg instruction
+      case 65:	// reg:   VANext(reg): the va_next instruction
+      case 66:	// reg:   VAArg (reg): the va_arg instruction
       {
+        abort();        // FIXME: This is incorrect!
+#if 0
         // Use value initialized by va_start as pointer to args on the stack.
         // Load argument via current pointer value, then increment pointer.
         int argSize = target.getFrameInfo().getSizeOfEachArgOnStack();
@@ -2842,6 +2851,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         mvec.push_back(BuildMI(V9::ADDi, 3).addReg(vaArgI->getOperand(0)).
                        addSImm(argSize).addRegDef(vaArgI->getOperand(0)));
         break;
+#endif
       }
       
       case 71:	// reg:     VReg
