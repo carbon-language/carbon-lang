@@ -13,7 +13,6 @@
 #include "llvm/Analysis/SlotCalculator.h"
 #include "Support/StringExtras.h"
 #include <algorithm>
-#include <assert.h>
 
 using std::map;
 using std::pair;
@@ -159,8 +158,27 @@ std::string ConstantUInt::getStrValue() const {
   return utostr(Val.Unsigned);
 }
 
+// ConstantFP::getStrValue - We would like to output the FP constant value in
+// exponential notation, but we cannot do this if doing so will lose precision.
+// Check here to make sure that we only output it in exponential format if we
+// can parse the value back and get the same value.
+//
 std::string ConstantFP::getStrValue() const {
-  return ftostr(Val);
+  std::string StrVal = ftostr(Val);
+  double TestVal = atof(StrVal.c_str());  // Reparse stringized version!
+  if (TestVal == Val)
+    return StrVal;
+
+  // Otherwise we could not reparse it to exactly the same value, so we must
+  // output the string in hexadecimal format!
+  //
+  // Behave nicely in the face of C TBAA rules... see:
+  // http://www.nullstone.com/htmls/category/aliastyp.htm
+  //
+  char *Ptr = (char*)&Val;
+  assert(sizeof(double) == sizeof(uint64_t) && sizeof(double) == 8 &&
+         "assuming that double is 64 bits!");
+  return "0x"+utohexstr(*(uint64_t*)Ptr);
 }
 
 std::string ConstantArray::getStrValue() const {
