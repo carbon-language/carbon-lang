@@ -1321,8 +1321,12 @@ void DSGraph::spliceFrom(DSGraph &RHS) {
   AuxFunctionCalls.splice(AuxFunctionCalls.end(), RHS.AuxFunctionCalls);
 
   // Take all of the return nodes.
-  ReturnNodes.insert(RHS.ReturnNodes.begin(), RHS.ReturnNodes.end());
-  RHS.ReturnNodes.clear();
+  if (ReturnNodes.empty()) {
+    ReturnNodes.swap(RHS.ReturnNodes);
+  } else {
+    ReturnNodes.insert(RHS.ReturnNodes.begin(), RHS.ReturnNodes.end());
+    RHS.ReturnNodes.clear();
+  }
 
   // Merge the scalar map in.
   ScalarMap.spliceFrom(RHS.ScalarMap);
