@@ -174,6 +174,7 @@ appending       { return APPENDING; }
 uninitialized   { return EXTERNAL; }    /* Deprecated, turn into external */
 external        { return EXTERNAL; }
 implementation  { return IMPLEMENTATION; }
+zeroinitializer { return ZEROINITIALIZER; }
 \.\.\.          { return DOTDOTDOT; }
 null            { return NULL_TOK; }
 to              { return TO; }

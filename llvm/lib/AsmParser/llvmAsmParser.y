@@ -702,7 +702,8 @@ Module *RunVMAsmParser(const std::string &Filename, FILE *F) {
 %type  <StrVal>  OptVAR_ID OptAssign FuncName
 
 
-%token IMPLEMENTATION TRUE FALSE BEGINTOK ENDTOK DECLARE GLOBAL CONSTANT
+%token IMPLEMENTATION ZEROINITIALIZER TRUE FALSE BEGINTOK ENDTOK
+%token  DECLARE GLOBAL CONSTANT
 %token TO EXCEPT DOTDOTDOT NULL_TOK CONST INTERNAL LINKONCE APPENDING
 %token OPAQUE NOT EXTERNAL TARGET ENDIAN POINTERSIZE LITTLE BIG
 
@@ -1038,6 +1039,10 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
     if ($1->get() != $2->getType())
       ThrowException("Mismatched types for constant expression!");
     $$ = $2;
+    delete $1;
+  }
+  | Types ZEROINITIALIZER {
+    $$ = Constant::getNullValue($1->get());
     delete $1;
   };
 
