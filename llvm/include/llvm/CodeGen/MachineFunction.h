@@ -97,6 +97,13 @@ class MachineFunction : private Annotation {
   // numbered and this vector keeps track of the mapping from ID's to MBB's.
   std::vector<MachineBasicBlock*> MBBNumbering;
 
+  /// UsedPhysRegs - This is a new[]'d array of bools that is computed and set
+  /// by the register allocator, and must be kept up to date by passes that run
+  /// after register allocation (though most don't modify this).  This is used
+  /// so that the code generator knows which callee save registers to save and
+  /// for other target specific uses.
+  bool *UsedPhysRegs;
+
 public:
   MachineFunction(const Function *Fn, const TargetMachine &TM);
   ~MachineFunction();
@@ -137,6 +144,25 @@ public:
            "Invalid concrete type or multiple inheritence for getInfo");
     return static_cast<Ty*>(MFInfo);
   }
+
+  /// setUsedPhysRegs - The register allocator should call this to initialized
+  /// the UsedPhysRegs set.  This should be passed a new[]'d array with entries
+  /// for all of the physical registers that the target supports.  Each array
+  /// entry should be set to true iff the physical register is used within the
+  /// function.
+  void setUsedPhysRegs(bool *UPR) { UsedPhysRegs = UPR; }
+
+  /// getUsedPhysregs - This returns the UsedPhysRegs array.  This returns null
+  /// before register allocation.
+  const bool *getUsedPhysregs() { return UsedPhysRegs; }
+
+  /// isPhysRegUsed - Return true if the specified register is used in this
+  /// function.  This only works after register allocation.
+  bool isPhysRegUsed(unsigned Reg) { return UsedPhysRegs[Reg]; }
+
+  /// changePhyRegUsed - This method allows code that runs after register
+  /// allocation to keep the PhysRegsUsed array up-to-date.
+  void changePhyRegUsed(unsigned Reg, bool State) { UsedPhysRegs[Reg] = State; }
 
   /// getBlockNumbered - MachineBasicBlocks are automatically numbered when they
   /// are inserted into the machine function.  The block number for a machine
