@@ -24,12 +24,38 @@
 static char *SavedArgs = 0;
 static unsigned SavedArgsLength = 0;
 
+static const char *OutputFilename = "llvmprof.out";
+
 /* save_arguments - Save argc and argv as passed into the program for the file
  * we output.
  */
 int save_arguments(int argc, const char **argv) {
   unsigned Length, i;
   if (SavedArgs || !argv) return argc;  /* This can be called multiple times */
+
+  /* Check to see if there are any arguments passed into the program for the
+   * profiler.  If there are, strip them off and remember their settings.
+   */
+  while (argc > 1 && !strncmp(argv[1], "-llvmprof-", 10)) {
+    /* Ok, we have an llvmprof argument.  Remove it from the arg list and decide
+     * what to do with it.
+     */
+    const char *Arg = argv[1];
+    memmove(&argv[1], &argv[2], (argc-2)*sizeof(char*));
+    --argc;
+
+    if (!strcmp(Arg, "-llvmprof-output")) {
+      if (argc == 1)
+        puts("-llvmprof-output requires a filename argument!");
+      else {
+        OutputFilename = strdup(argv[1]);
+        memmove(&argv[1], &argv[2], (argc-2)*sizeof(char*));
+        --argc;
+      }
+    } else {
+      printf("Unknown option to the profiler runtime: '%s' - ignored.\n", Arg);
+    }
+  }
 
   for (Length = 0, i = 0; i != (unsigned)argc; ++i)
     Length += strlen(argv[i])+1;
@@ -63,9 +89,11 @@ void write_profiling_data(enum ProfilingType PT, unsigned *Start,
    */
   if (OutFile == -1) {
     off_t Offset;
-    OutFile = open("llvmprof.out", O_CREAT | O_WRONLY | O_APPEND, 0666);
+    OutFile = open(OutputFilename, O_CREAT | O_WRONLY | O_APPEND, 0666);
     if (OutFile == -1) {
-      perror("LLVM profiling: while opening 'llvmprof.out'");
+      fprintf(stderr, "LLVM profiling runtime: while opening '%s': ",
+              OutputFilename);
+      perror("");
       return;
     }
 
