@@ -52,12 +52,15 @@ bool SROA::runOnFunction(Function &F) {
     WorkList.pop_back();
 
     // We cannot transform the allocation instruction if it is an array
-    // allocation, and an allocation of a scalar value cannot be decomposed
+    // allocation (allocations OF arrays are ok though), and an allocation of a
+    // scalar value cannot be decomposed at all.
+    //
     if (AI->isArrayAllocation() ||
-        (!isa<StructType>(AI->getAllocatedType()) /*&&
-                                                    !isa<ArrayType>(AI->getAllocatedType())*/
-         )) continue;
-    
+        (!isa<StructType>(AI->getAllocatedType()) &&
+         !isa<ArrayType>(AI->getAllocatedType()))) continue;
+
+    const ArrayType *AT = dyn_cast<ArrayType>(AI->getAllocatedType());
+
     // Loop over the use list of the alloca.  We can only transform it if there
     // are only getelementptr instructions (with a zero first index) and free
     // instructions.
@@ -77,6 +80,18 @@ bool SROA::runOnFunction(Function &F) {
           CannotTransform = true;
           break;
         }
+
+        // If this is an array access, check to make sure that index falls
+        // within the array.  If not, something funny is going on, so we won't
+        // do the optimization.
+        if (AT && cast<ConstantSInt>(GEPI->getOperand(2))->getValue() >=
+            AT->getNumElements()) {
+          DEBUG(std::cerr << "Cannot transform: " << *AI << "  due to user: "
+                          << User);
+          CannotTransform = true;
+          break;
+        }
+
       } else {
         DEBUG(std::cerr << "Cannot transform: " << *AI << "  due to user: "
                         << User);
@@ -100,7 +115,6 @@ bool SROA::runOnFunction(Function &F) {
         WorkList.push_back(NA);  // Add to worklist for recursive processing
       }
     } else {
-      const ArrayType *AT = cast<ArrayType>(AI->getAllocatedType());
       ElementAllocas.reserve(AT->getNumElements());
       const Type *ElTy = AT->getElementType();
       for (unsigned i = 0, e = AT->getNumElements(); i != e; ++i) {
@@ -158,6 +172,7 @@ bool SROA::runOnFunction(Function &F) {
 
     // Finally, delete the Alloca instruction
     AI->getParent()->getInstList().erase(AI);
+    NumReplaced++;
   }
 
   return Changed;
