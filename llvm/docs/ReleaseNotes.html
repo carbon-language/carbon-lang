@@ -55,9 +55,9 @@ web site</a>.  If you have questions or comments, the <a
 href="http://mail.cs.uiuc.edu/mailman/listinfo/llvmdev">LLVM developer's mailing
 list</a> is a good place to send them.</p>
 
-<p>Note that if you are reading this file from CVS, that this document applies
-to the <i>next</i> release, not the previous one.  To see the release notes for
-the previous release, see the <a
+<p>Note that if you are reading this file from CVS, this document applies
+to the <i>next</i> release, not the current one.  To see the release notes for
+the current or previous releases, see the <a
 href="http://llvm.cs.uiuc.edu/releases/">releases page</a>.</p>
 
 </div>
@@ -74,7 +74,8 @@ href="http://llvm.cs.uiuc.edu/releases/">releases page</a>.</p>
 release is primarily a bugfix release, dramatically improving the C/C++
 front-end, and improving support for C++ in the LLVM core.  This release also
 includes a few new features, such as a simple profiler, support for Mac OS/X,
-and better interoperability with external source bases.</p>
+better interoperability with external source bases, and improves a few
+optimizations.</p>
 
 <p>At this time, LLVM is known to correctly compile the C &amp; C++ SPEC CPU2000
 benchmarks (X86 only), the Olden benchmarks, and the Ptrdist benchmarks along
@@ -101,14 +102,14 @@ href="http://mail.cs.uiuc.edu/pipermail/llvmdev/2003-November/000528.html">A new
 LLVM profiler, similar to gprof</a> is available</li>
 
 <li>LLVM and the C/C++ front-end now compile on Mac OS/X!  Mac OS/X users can
-now explore the LLVM optimizer with the C backend (note that LLVM requires GCC
-3.3 on Mac OS/X).</li>
+now explore the LLVM optimizer with the C backend and interpreter.  Note that
+LLVM requires GCC 3.3 on Mac OS/X.</li>
 
 <li>LLVM has been <a
 href="http://mail.cs.uiuc.edu/pipermail/llvmdev/2003-November/000554.html">moved
 into an 'llvm' C++ namespace</a>, for easier integration with third-party
-code. Note that lack of namespace handling in GDB 5.x, you will probably want to
-upgrade to GDB 6 or better to debug LLVM code.</li>
+code. Note that due to lack of namespace support in GDB 5.x, you will probably
+want to upgrade to GDB 6 or better to debug LLVM code.</li>
 
 <li>
 The build system now copies Makefiles dynamically from the source tree to the
@@ -129,7 +130,13 @@ object tree as subdirectories are built.  This means that:
 <li>The <tt>configure</tt> script will now configure all projects placed in the
 <tt>llvm/projects</tt> directory.</li>
 
-<li>The <tt>-basicaa</tt> pass (the default alias analysis) has been upgraded to be <a href="http://llvm.cs.uiuc.edu/PR86">significantly more precise</a>.</li>
+<li>The <tt>-licm</tt> pass can now sink instructions out the bottom of loops
+in addition to being able to hoist them out the top.</li>
+
+
+<li>The <tt>-basicaa</tt> pass (the default alias analysis) has been upgraded
+to be <a href="http://llvm.cs.uiuc.edu/PR86">significantly more 
+precise</a>.</li>
 
 </ol>
 
@@ -166,8 +173,7 @@ fixed:
 <li><a href="http://llvm.cs.uiuc.edu/PR29">C++ front-end is not generating
 linkonce linkage type when it can</a></li>
 
-<li><a href="http://llvm.cs.uiuc.edu/PR84">C front-end doesn't emit
-getelementptr for address of array element</a></li>
+<li><a href="http://llvm.cs.uiuc.edu/PR84">C front-end generates non-type-safe code for expressions it could generate type-safe code</a></li>
 
 <li><a href="http://llvm.cs.uiuc.edu/PR96">Bad path to the C/C++ frontend causes
 build problems</a></li>
@@ -178,7 +184,7 @@ build problems</a></li>
 href="http://llvm.cs.uiuc.edu/PR127">sped up a lot</a> (up to 4x in some
 cases).</li>
 
-<li>Methods and functions in anonymous namespaces <a href="http://llvm.cs.uiuc.edu/PR85">now get internal linkage</a>.</li>
+<li>In C++, methods and functions in anonymous namespaces <a href="http://llvm.cs.uiuc.edu/PR85">now get internal linkage</a>.</li>
 
 <li>Constant initializers now generate loops instead of potentially <a href="http://llvm.cs.uiuc.edu/PR75">huge amounts of straight-line code</a>.</li>
 
@@ -273,8 +279,8 @@ many platforms, such as X86).</li>
 
 <p>LLVM has been extensively tested on Intel and AMD machines running Red
 Hat Linux, and Sun UltraSPARC workstations running Solaris 8.  Additionally, 
-LLVM works on Mac OS/X 10.3 and above, but only with the C back-end (no native
-backend for the PowerPC is available yet).
+LLVM works on Mac OS/X 10.3 and above, but only with the C backend or 
+interpreter (no native backend for the PowerPC is available yet).
 The core LLVM infrastructure uses "autoconf" for portability, so hopefully we
 work on more platforms than that.  However, it is likely that we
 missed something, and that minor porting is required to get LLVM to work on 
@@ -504,11 +510,10 @@ lists, please let us know (also including whether or not they work).</p>
 
 <div class="doc_text">
 
-<p>For this release, the C++ front-end is considered to be fully functional but
-of <b>beta</b> quality.  It has been tested and works for a number of simple
-programs that collectively exercise most of the language.  Nevertheless, it has
-not been in use as long as the C front-end.  Please report any bugs or
-problems.</p>
+<p>For this release, the C++ front-end is considered to be fully functional, but
+has not been tested as thoroughly as the C front-end.  It has been tested and 
+works for a number of non-trivial programs, but there may be lurking bugs.
+Please report any bugs or problems.</p>
 
 </div>
 
@@ -538,7 +543,7 @@ problems.</p>
 <li>The C++ front-end is based on a pre-release of the GCC 3.4 C++ parser.  This
 parser is significantly more standards compliant (and picky) than prior GCC
 versions.  For more information, see the C++ section of the <a
-href="http://gcc.gnu.org/gcc-3.4/changes.html">GCC 3.4 release notes</a>.<p>
+href="http://gcc.gnu.org/gcc-3.4/changes.html">GCC 3.4 release notes</a>.</li>
 
 <li>Destructors for local objects are not always run when a <tt>longjmp</tt> is
     performed. In particular, destructors for objects in the <tt>longjmp</tt>ing
