@@ -711,7 +711,7 @@ Instruction *InstCombiner::visitSetCondInst(BinaryOperator &I) {
         return BinaryOperator::createNot(Val, I.getName());
       }
 
-      // If the first operand is (and|or) with a constant, and the second
+      // If the first operand is (and|or|xor) with a constant, and the second
       // operand is a constant, simplify a bit.
       if (BinaryOperator *BO = dyn_cast<BinaryOperator>(Op0))
         if (ConstantInt *BOC = dyn_cast<ConstantInt>(BO->getOperand(1)))
@@ -725,6 +725,11 @@ Instruction *InstCombiner::visitSetCondInst(BinaryOperator &I) {
             // comparison can never succeed!
             if (!(*CI & *~*BOC)->isNullValue())
               return ReplaceInstUsesWith(I, ConstantBool::get(isSetNE));
+          } else if (BO->getOpcode() == Instruction::Xor) {
+            // For the xor case, we can always just xor the two constants
+            // together, potentially eliminating the explicit xor.
+            return BinaryOperator::create(I.getOpcode(), BO->getOperand(0),
+                                          *CI ^ *BOC);
           }
     }
 
