@@ -82,10 +82,14 @@ static struct PerModuleInfo {
     // resolved!
     //
     if (!GlobalRefs.empty()) {
-      // TODO: Make this more detailed! Loop over each undef value and print
-      // info
-      ThrowException("TODO: Make better error - Unresolved forward constant "
-                     "references exist!");
+      string UndefinedReferences = "Unresolved global references exist:\n";
+      
+      for (GlobalRefsType::iterator I = GlobalRefs.begin(), E =GlobalRefs.end();
+           I != E; ++I) {
+        UndefinedReferences += "  " + I->first.first->getDescription() + " " +
+                               I->first.second.getName() + "\n";
+      }
+      ThrowException(UndefinedReferences);
     }
 
     Values.clear();         // Clear out method local definitions
