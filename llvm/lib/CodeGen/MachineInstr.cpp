@@ -28,11 +28,8 @@ namespace llvm {
 extern const TargetInstrDescriptor *TargetInstrDescriptors;
 
 // Constructor for instructions with variable #operands
-MachineInstr::MachineInstr(MachineOpCode OpCode, unsigned  numOperands)
-  : opCode(OpCode),
-    operands(numOperands, MachineOperand()),
-    numImplicitRefs(0)
-{
+MachineInstr::MachineInstr(MachineOpCode opcode, unsigned  numOperands)
+  : Opcode(opcode), operands(numOperands, MachineOperand()), numImplicitRefs(0){
 }
 
 /// MachineInstr ctor - This constructor only does a _reserve_ of the operands,
@@ -40,22 +37,18 @@ MachineInstr::MachineInstr(MachineOpCode OpCode, unsigned  numOperands)
 /// add* methods below to fill up the operands, instead of the Set methods.
 /// Eventually, the "resizing" ctors will be phased out.
 ///
-MachineInstr::MachineInstr(MachineOpCode Opcode, unsigned numOperands,
+MachineInstr::MachineInstr(MachineOpCode opcode, unsigned numOperands,
                            bool XX, bool YY)
-  : opCode(Opcode),
-    numImplicitRefs(0)
-{
+  : Opcode(opcode), numImplicitRefs(0) {
   operands.reserve(numOperands);
 }
 
 /// MachineInstr ctor - Work exactly the same as the ctor above, except that the
 /// MachineInstr is created and added to the end of the specified basic block.
 ///
-MachineInstr::MachineInstr(MachineBasicBlock *MBB, MachineOpCode Opcode,
+MachineInstr::MachineInstr(MachineBasicBlock *MBB, MachineOpCode opcode,
                            unsigned numOperands)
-  : opCode(Opcode),
-    numImplicitRefs(0)
-{
+  : Opcode(opcode), numImplicitRefs(0) {
   assert(MBB && "Cannot use inserting ctor with null basic block!");
   operands.reserve(numOperands);
   MBB->push_back(this);  // Add instruction to end of basic block!
@@ -63,9 +56,8 @@ MachineInstr::MachineInstr(MachineBasicBlock *MBB, MachineOpCode Opcode,
 
 
 // OperandComplete - Return true if it's illegal to add a new operand
-bool MachineInstr::OperandsComplete() const
-{
-  int NumOperands = TargetInstrDescriptors[opCode].numOperands;
+bool MachineInstr::OperandsComplete() const {
+  int NumOperands = TargetInstrDescriptors[Opcode].numOperands;
   if (NumOperands >= 0 && getNumOperands() >= (unsigned)NumOperands)
     return true;  // Broken: we have all the operands of this instruction!
   return false;
@@ -77,11 +69,10 @@ bool MachineInstr::OperandsComplete() const
 // This only resets the size of the operand vector and initializes it.
 // The new operands must be set explicitly later.
 // 
-void MachineInstr::replace(MachineOpCode Opcode, unsigned numOperands)
-{
+void MachineInstr::replace(MachineOpCode opcode, unsigned numOperands) {
   assert(getNumImplicitRefs() == 0 &&
          "This is probably broken because implicit refs are going to be lost.");
-  opCode = Opcode;
+  Opcode = opcode;
   operands.clear();
   operands.resize(numOperands, MachineOperand());
 }
@@ -98,10 +89,9 @@ void MachineInstr::SetMachineOperandVal(unsigned i,
 void
 MachineInstr::SetMachineOperandConst(unsigned i,
 				MachineOperand::MachineOperandType operandType,
-                                     int64_t intValue)
-{
+                                     int64_t intValue) {
   assert(i < getNumOperands());          // must be explicit op
-  assert(TargetInstrDescriptors[opCode].resultPos != (int) i &&
+  assert(TargetInstrDescriptors[Opcode].resultPos != (int) i &&
          "immed. constant cannot be defined");
 
   operands[i].opType = operandType;
@@ -119,16 +109,12 @@ void MachineInstr::SetMachineOperandReg(unsigned i, int regNum) {
   operands[i].regNum = regNum;
 }
 
-void
-MachineInstr::SetRegForOperand(unsigned i, int regNum)
-{
+void MachineInstr::SetRegForOperand(unsigned i, int regNum) {
   assert(i < getNumOperands());          // must be explicit op
   operands[i].setRegForValue(regNum);
 }
 
-void
-MachineInstr::SetRegForImplicitRef(unsigned i, int regNum)
-{
+void MachineInstr::SetRegForImplicitRef(unsigned i, int regNum) {
   getImplicitOp(i).setRegForValue(regNum);
 }
 
@@ -327,7 +313,7 @@ void MachineInstr::print(std::ostream &OS, const TargetMachine &TM) const {
 
 std::ostream &operator<<(std::ostream& os, const MachineInstr& MI)
 {
-  os << TargetInstrDescriptors[MI.opCode].Name;
+  os << TargetInstrDescriptors[MI.getOpcode()].Name;
   
   for (unsigned i=0, N=MI.getNumOperands(); i < N; i++) {
     os << "\t" << MI.getOperand(i);

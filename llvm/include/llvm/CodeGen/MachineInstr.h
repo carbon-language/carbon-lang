@@ -332,7 +332,7 @@ private:
 //===----------------------------------------------------------------------===//
 
 class MachineInstr {
-  int              opCode;              // the opcode
+  int              Opcode;              // the opcode
   std::vector<MachineOperand> operands; // the operands
   unsigned numImplicitRefs;             // number of implicit operands
   MachineInstr* prev, *next;            // links for our intrusive list
@@ -371,7 +371,7 @@ public:
   
   /// Accessors for opcode.
   ///
-  const int getOpcode() const { return opCode; }
+  const int getOpcode() const { return Opcode; }
 
   /// Access to explicit operands of the instruction.
   ///
@@ -591,7 +591,7 @@ public:
 
   /// setOpcode - Replace the opcode of the current instruction with a new one.
   ///
-  void setOpcode(unsigned Op) { opCode = Op; }
+  void setOpcode(unsigned Op) { Opcode = Op; }
 
   /// RemoveOperand - Erase an operand  from an instruction, leaving it with one
   /// fewer operand than it started with.
