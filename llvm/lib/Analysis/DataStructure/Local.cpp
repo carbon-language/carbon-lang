@@ -101,7 +101,7 @@ namespace {
     // getSubscriptedNode - Perform the basic getelementptr functionality that
     // must be factored out of gep, load and store while they are all MAI's.
     //
-    DSNode *getSubscriptedNode(MemAccessInst &MAI, DSNode *Ptr);
+    DSNode *getSubscriptedNode(GetElementPtrInst &GEP, DSNode *Ptr);
   };
 }
 
@@ -218,16 +218,15 @@ DSNode *GraphBuilder::getLink(DSNode *Node, unsigned Link) {
 // getSubscriptedNode - Perform the basic getelementptr functionality that must
 // be factored out of gep, load and store while they are all MAI's.
 //
-DSNode *GraphBuilder::getSubscriptedNode(MemAccessInst &MAI, DSNode *Ptr) {
-  for (unsigned i = MAI.getFirstIndexOperandNumber(), e = MAI.getNumOperands();
-       i != e; ++i)
-    if (MAI.getOperand(i)->getType() == Type::UIntTy)
+DSNode *GraphBuilder::getSubscriptedNode(GetElementPtrInst &GEP, DSNode *Ptr) {
+  for (unsigned i = 1, e = GEP.getNumOperands(); i != e; ++i)
+    if (GEP.getOperand(i)->getType() == Type::UIntTy)
       Ptr = getLink(Ptr, 0);
-    else if (MAI.getOperand(i)->getType() == Type::UByteTy)
-      Ptr = getLink(Ptr, cast<ConstantUInt>(MAI.getOperand(i))->getValue());  
+    else if (GEP.getOperand(i)->getType() == Type::UByteTy)
+      Ptr = getLink(Ptr, cast<ConstantUInt>(GEP.getOperand(i))->getValue());  
 
-  if (MAI.getFirstIndexOperandNumber() == MAI.getNumOperands())
-    Ptr = getLink(Ptr, 0);  // All MAI's have an implicit 0 if nothing else.
+  if (GEP.getNumOperands() == 1)
+    Ptr = getLink(Ptr, 0);  // All GEP's have an implicit 0 if nothing else.
 
   return Ptr;
 }

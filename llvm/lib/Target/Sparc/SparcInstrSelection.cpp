@@ -963,7 +963,8 @@ SetOperandsForMemInstr(vector<MachineInstr*>& mvec,
                        const InstructionNode* vmInstrNode,
                        const TargetMachine& target)
 {
-  MemAccessInst* memInst = (MemAccessInst*) vmInstrNode->getInstruction();
+  GetElementPtrInst* memInst =
+    cast<GetElementPtrInst>(vmInstrNode->getInstruction());
   
   // Variables to hold the index vector and ptr value.
   // The major work here is to extract these for all 3 instruction types
@@ -982,7 +983,7 @@ SetOperandsForMemInstr(vector<MachineInstr*>& mvec,
                              : vmInstrNode->leftChild()); 
 
   // Check if all indices are constant for this instruction
-  for (MemAccessInst::op_iterator OI=memInst->idx_begin(),OE=memInst->idx_end();
+  for (User::op_iterator OI=memInst->idx_begin(),OE=memInst->idx_end();
        allConstantIndices && OI != OE; ++OI)
     if (! isa<Constant>(*OI))
       allConstantIndices = false; 
@@ -1024,7 +1025,8 @@ SetMemOperands_Internal(vector<MachineInstr*>& mvec,
                         bool allConstantIndices,
                         const TargetMachine& target)
 {
-  MemAccessInst* memInst = (MemAccessInst*) vmInstrNode->getInstruction();
+  GetElementPtrInst* memInst =
+    cast<GetElementPtrInst>(vmInstrNode->getInstruction());
   
   // Initialize so we default to storing the offset in a register.
   int64_t smallConstOffset = 0;
@@ -1035,7 +1037,7 @@ SetMemOperands_Internal(vector<MachineInstr*>& mvec,
   // Check if there is an index vector and if so, compute the
   // right offset for structures and for arrays 
   // 
-  if (idxVec.size() > 0)
+  if (!idxVec.empty())
     {
       const PointerType* ptrType = cast<PointerType>(ptrVal->getType());
       

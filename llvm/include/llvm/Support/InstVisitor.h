@@ -54,7 +54,7 @@ class Module;
 
 // Forward declare the intermediate types...
 class TerminatorInst; class BinaryOperator;
-class AllocationInst; class MemAccessInst;
+class AllocationInst;
 
 
 #define DELEGATE(CLASS_TO_VISIT) \
@@ -166,7 +166,7 @@ struct InstVisitor {
   RetTy visitFreeInst(FreeInst   &I)                { DELEGATE(Instruction); }
   RetTy visitLoadInst(LoadInst   &I)                { DELEGATE(Instruction); }
   RetTy visitStoreInst(StoreInst  &I)               { DELEGATE(Instruction); }
-  RetTy visitGetElementPtrInst(GetElementPtrInst &I){ DELEGATE(MemAccessInst); }
+  RetTy visitGetElementPtrInst(GetElementPtrInst &I){ DELEGATE(Instruction); }
   RetTy visitPHINode(PHINode    &I)                 { DELEGATE(Instruction); }
   RetTy visitCastInst(CastInst   &I)                { DELEGATE(Instruction); }
   RetTy visitCallInst(CallInst   &I)                { DELEGATE(Instruction); }
@@ -179,7 +179,6 @@ struct InstVisitor {
   RetTy visitTerminatorInst(TerminatorInst &I) { DELEGATE(Instruction); }
   RetTy visitBinaryOperator(BinaryOperator &I) { DELEGATE(Instruction); }
   RetTy visitAllocationInst(AllocationInst &I) { DELEGATE(Instruction); }
-  RetTy visitMemAccessInst (MemAccessInst  &I) { DELEGATE(Instruction); }
 
   // If the user wants a 'default' case, they can choose to override this
   // function.  If this function is not overloaded in the users subclass, then

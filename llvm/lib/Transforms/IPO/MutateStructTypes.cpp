@@ -413,15 +413,9 @@ void MutateStructTypes::transformFunction(Function *m) {
         break;
 
       case Instruction::Load:
-        assert(cast<MemAccessInst>(I).idx_begin() ==
-               cast<MemAccessInst>(I).idx_end() &&
-               "Indexing loads not supported!");
         NewI = new LoadInst(ConvertValue(I.getOperand(0)));
         break;
       case Instruction::Store:
-        assert(cast<MemAccessInst>(I).idx_begin() ==
-               cast<MemAccessInst>(I).idx_end() &&
-               "Indexing loads not supported!");
         NewI = new StoreInst(ConvertValue(I.getOperand(0)),
                              ConvertValue(I.getOperand(1)));
         break;
