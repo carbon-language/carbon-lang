@@ -24,21 +24,21 @@ namespace llvm {
     : public forward_iterator<const Type *, ptrdiff_t> {
     typedef forward_iterator<const Type*, ptrdiff_t> super;
 
-    GetElementPtrInst *TheGEP;
+    User *TheGEP;          // Either GetElemenPtrInst or ConstantExpr
     const Type *CurTy;
     unsigned Operand;
     
     gep_type_iterator() {}
   public:
 
-    static gep_type_iterator begin(GetElementPtrInst *gep) {
+    static gep_type_iterator begin(User *gep) {
       gep_type_iterator I;
       I.TheGEP = gep;
       I.CurTy = gep->getOperand(0)->getType();
       I.Operand = 1;
       return I;
     }
-    static gep_type_iterator end(GetElementPtrInst *gep) {
+    static gep_type_iterator end(User *gep) {
       gep_type_iterator I;
       I.TheGEP = gep;
       I.CurTy = 0;
@@ -80,12 +80,19 @@ namespace llvm {
     }
   };
 
-  inline gep_type_iterator gep_type_begin(GetElementPtrInst *GEP) {
+  inline gep_type_iterator gep_type_begin(User *GEP) {
     return gep_type_iterator::begin(GEP);
   }
 
-  inline gep_type_iterator gep_type_end(GetElementPtrInst *GEP) {
+  inline gep_type_iterator gep_type_end(User *GEP) {
     return gep_type_iterator::end(GEP);
+  }
+  inline gep_type_iterator gep_type_begin(User &GEP) {
+    return gep_type_iterator::begin(&GEP);
+  }
+
+  inline gep_type_iterator gep_type_end(User &GEP) {
+    return gep_type_iterator::end(&GEP);
   }
 } // end namespace llvm
 
