@@ -1257,18 +1257,15 @@ void DSGraph::getFunctionArgumentsForCall(Function *F,
     }
 }
 
-/// mergeInGraph - The method is used for merging graphs together.  If the
-/// argument graph is not *this, it makes a clone of the specified graph, then
-/// merges the nodes specified in the call site with the formal arguments in the
-/// graph.
+/// mergeInCallFromOtherGraph - This graph merges in the minimal number of
+/// nodes from G2 into 'this' graph, merging the bindings specified by the
+/// call site (in this graph) with the bindings specified by the vector in G2.
+/// The two DSGraphs must be different.
 ///
-void DSGraph::mergeInGraph(const DSCallSite &CS, Function &F,
+void DSGraph::mergeInGraph(const DSCallSite &CS, 
+                           std::vector<DSNodeHandle> &Args,
                            const DSGraph &Graph, unsigned CloneFlags) {
   TIME_REGION(X, "mergeInGraph");
-
-  // Fastpath for a noop inline.
-  if (CS.getNumPtrArgs() == 0 && CS.getRetVal().isNull())
-    return;
 
   // If this is not a recursive call, clone the graph into this graph...
   if (&Graph != this) {
@@ -1277,23 +1274,14 @@ void DSGraph::mergeInGraph(const DSCallSite &CS, Function &F,
     // nodes of the old graph.
     ReachabilityCloner RC(*this, Graph, CloneFlags);
     
-    // Set up argument bindings.
-    std::vector<DSNodeHandle> Args;
-    Graph.getFunctionArgumentsForCall(&F, Args);
-
     // Map the return node pointer over.
     if (!CS.getRetVal().isNull())
       RC.merge(CS.getRetVal(), Args[0]);
 
     // Map over all of the arguments.
     for (unsigned i = 0, e = CS.getNumPtrArgs(); i != e; ++i) {
-      if (i == Args.size()-1) {
-#ifndef NDEBUG  // FIXME: We should merge vararg arguments!
-        if (!F.getFunctionType()->isVarArg())
-          std::cerr << "Bad call to Function: " << F.getName() << "\n";
-#endif
+      if (i == Args.size()-1)
         break;
-      }
       
       // Add the link from the argument scalar to the provided value.
       RC.merge(CS.getPtrArg(i), Args[i+1]);
@@ -1357,27 +1345,38 @@ void DSGraph::mergeInGraph(const DSCallSite &CS, Function &F,
     }
     
   } else {
-    // Set up argument bindings.
-    std::vector<DSNodeHandle> Args;
-    Graph.getFunctionArgumentsForCall(&F, Args);
-
     // Merge the return value with the return value of the context.
     Args[0].mergeWith(CS.getRetVal());
     
     // Resolve all of the function arguments.
     for (unsigned i = 0, e = CS.getNumPtrArgs(); i != e; ++i) {
-      if (i == Args.size()-1) {
-#ifndef NDEBUG // FIXME: We should merge varargs arguments!!
-        if (!F.getFunctionType()->isVarArg())
-          std::cerr << "Bad call to Function: " << F.getName() << "\n";
-#endif
+      if (i == Args.size()-1)
         break;
-      }
       
       // Add the link from the argument scalar to the provided value.
       Args[i+1].mergeWith(CS.getPtrArg(i));
     }
   }
+}
+
+
+
+/// mergeInGraph - The method is used for merging graphs together.  If the
+/// argument graph is not *this, it makes a clone of the specified graph, then
+/// merges the nodes specified in the call site with the formal arguments in the
+/// graph.
+///
+void DSGraph::mergeInGraph(const DSCallSite &CS, Function &F,
+                           const DSGraph &Graph, unsigned CloneFlags) {
+  // Fastpath for a noop inline.
+  if (CS.getNumPtrArgs() == 0 && CS.getRetVal().isNull())
+    return;
+
+  // Set up argument bindings.
+  std::vector<DSNodeHandle> Args;
+  Graph.getFunctionArgumentsForCall(&F, Args);
+
+  mergeInGraph(CS, Args, Graph, CloneFlags);
 }
 
 /// getCallSiteForArguments - Get the arguments and return value bindings for
