@@ -655,7 +655,7 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
       // FIXME: This should only be done if the target supports shift
       // operations.
       if ((C2 & C2-1) == 0) {
-        if (N2.getValueType() != MVT::i64) {  // FIXME: HACK HACK HACK!
+        if (N1.getValueType() != MVT::i64) {  // FIXME: HACK HACK HACK!
           SDOperand ShAmt = getConstant(ExactLog2(C2), MVT::i8);
           return getNode(ISD::SHL, VT, N1, ShAmt);
         }
@@ -666,7 +666,7 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
       // FIXME: This should only be done if the target supports shift
       // operations.
       if ((C2 & C2-1) == 0 && C2) {
-        if (N2.getValueType() != MVT::i64) {   // FIXME: HACK HACK HACK!
+        if (N1.getValueType() != MVT::i64) {   // FIXME: HACK HACK HACK!
           SDOperand ShAmt = getConstant(ExactLog2(C2), MVT::i8);
           return getNode(ISD::SRL, VT, N1, ShAmt);
         }
