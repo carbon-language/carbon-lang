@@ -467,22 +467,22 @@ void RA::AllocateBasicBlock(MachineBasicBlock &MBB) {
       // spilled to memory.
       //
       for (LiveVariables::killed_iterator KI = LV->killed_begin(MI),
-	     KE = LV->killed_end(MI); KI != KE; ++KI) {
+             KE = LV->killed_end(MI); KI != KE; ++KI) {
         unsigned VirtReg = KI->second;
-	unsigned PhysReg = VirtReg;
-	if (VirtReg >= MRegisterInfo::FirstVirtualRegister) {
-	  std::map<unsigned, unsigned>::iterator I =
-	    Virt2PhysRegMap.find(VirtReg);
-	  assert(I != Virt2PhysRegMap.end());
-	  PhysReg = I->second;
-	  Virt2PhysRegMap.erase(I);
-	}
+        unsigned PhysReg = VirtReg;
+        if (VirtReg >= MRegisterInfo::FirstVirtualRegister) {
+          std::map<unsigned, unsigned>::iterator I =
+            Virt2PhysRegMap.find(VirtReg);
+          assert(I != Virt2PhysRegMap.end());
+          PhysReg = I->second;
+          Virt2PhysRegMap.erase(I);
+        }
 
-	if (PhysReg) {
-	  DEBUG(std::cerr << "V: " << VirtReg << " P: " << PhysReg
-		<< " Killed by: " << *MI);
-	  removePhysReg(PhysReg);
-	}
+        if (PhysReg) {
+          DEBUG(std::cerr << "V: " << VirtReg << " P: " << PhysReg
+                << " Killed by: " << *MI);
+          removePhysReg(PhysReg);
+        }
       }
     }
 
@@ -501,9 +501,9 @@ void RA::AllocateBasicBlock(MachineBasicBlock &MBB) {
     if (const unsigned *ImplicitDefs = TID.ImplicitDefs)
       for (unsigned i = 0; ImplicitDefs[i]; ++i) {
         unsigned Reg = ImplicitDefs[i];
-	spillPhysReg(MBB, I, Reg);
-	PhysRegsUseOrder.push_back(Reg);
-	PhysRegsUsed[Reg] = 0;            // It is free and reserved now
+        spillPhysReg(MBB, I, Reg);
+        PhysRegsUseOrder.push_back(Reg);
+        PhysRegsUsed[Reg] = 0;            // It is free and reserved now
       }
 
     // Okay, we have allocated all of the source operands and spilled any values
@@ -513,19 +513,19 @@ void RA::AllocateBasicBlock(MachineBasicBlock &MBB) {
     //
     for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i)
       if (MI->getOperand(i).opIsDef() &&
-	  MI->getOperand(i).isVirtualRegister()) {
+          MI->getOperand(i).isVirtualRegister()) {
         unsigned DestVirtReg = MI->getOperand(i).getAllocatedRegNum();
         unsigned DestPhysReg;
 
-	// If DestVirtReg already has a value, forget about it.  Why doesn't
-	// getReg do this right?
-	std::map<unsigned, unsigned>::iterator DestI =
-	  Virt2PhysRegMap.find(DestVirtReg);
-	if (DestI != Virt2PhysRegMap.end()) {
-	  unsigned PhysReg = DestI->second;
-	  Virt2PhysRegMap.erase(DestI);
-	  removePhysReg(PhysReg);
-	}
+        // If DestVirtReg already has a value, forget about it.  Why doesn't
+        // getReg do this right?
+        std::map<unsigned, unsigned>::iterator DestI =
+          Virt2PhysRegMap.find(DestVirtReg);
+        if (DestI != Virt2PhysRegMap.end()) {
+          unsigned PhysReg = DestI->second;
+          Virt2PhysRegMap.erase(DestI);
+          removePhysReg(PhysReg);
+        }
 
         if (TM->getInstrInfo().isTwoAddrInstr(MI->getOpcode()) && i == 0) {
           // must be same register number as the first operand
@@ -536,12 +536,12 @@ void RA::AllocateBasicBlock(MachineBasicBlock &MBB) {
                  "Two address instruction invalid!");
           DestPhysReg = MI->getOperand(1).getAllocatedRegNum();
 
-	  liberatePhysReg(MBB, I, DestPhysReg);
+          liberatePhysReg(MBB, I, DestPhysReg);
           assignVirtToPhysReg(DestVirtReg, DestPhysReg);
         } else {
           DestPhysReg = getReg(MBB, I, DestVirtReg);
         }
-	markVirtRegModified(DestVirtReg);
+        markVirtRegModified(DestVirtReg);
         MI->SetMachineOperandReg(i, DestPhysReg);  // Assign the output register
       }
 
@@ -550,22 +550,22 @@ void RA::AllocateBasicBlock(MachineBasicBlock &MBB) {
       // kill them now.
       //
       for (LiveVariables::killed_iterator KI = LV->dead_begin(MI),
-	     KE = LV->dead_end(MI); KI != KE; ++KI) {
+             KE = LV->dead_end(MI); KI != KE; ++KI) {
         unsigned VirtReg = KI->second;
-	unsigned PhysReg = VirtReg;
-	if (VirtReg >= MRegisterInfo::FirstVirtualRegister) {
-	  std::map<unsigned, unsigned>::iterator I =
-	    Virt2PhysRegMap.find(VirtReg);
-	  assert(I != Virt2PhysRegMap.end());
-	  PhysReg = I->second;
-	  Virt2PhysRegMap.erase(I);
-	}
+        unsigned PhysReg = VirtReg;
+        if (VirtReg >= MRegisterInfo::FirstVirtualRegister) {
+          std::map<unsigned, unsigned>::iterator I =
+            Virt2PhysRegMap.find(VirtReg);
+          assert(I != Virt2PhysRegMap.end());
+          PhysReg = I->second;
+          Virt2PhysRegMap.erase(I);
+        }
 
-	if (PhysReg) {
-	  DEBUG(std::cerr << "V: " << VirtReg << " P: " << PhysReg
-		<< " dead after: " << *MI);
-	  removePhysReg(PhysReg);
-	}
+        if (PhysReg) {
+          DEBUG(std::cerr << "V: " << VirtReg << " P: " << PhysReg
+        	<< " dead after: " << *MI);
+          removePhysReg(PhysReg);
+        }
       }
     }
   }
@@ -582,9 +582,9 @@ void RA::AllocateBasicBlock(MachineBasicBlock &MBB) {
                  PhysRegsUsed.begin()->first);
 
   for (std::map<unsigned, unsigned>::iterator I = Virt2PhysRegMap.begin(),
-	 E = Virt2PhysRegMap.end(); I != E; ++I)
+         E = Virt2PhysRegMap.end(); I != E; ++I)
     std::cerr << "Register still mapped: " << I->first << " -> "
-	      << I->second << "\n";
+              << I->second << "\n";
 
   assert(Virt2PhysRegMap.empty() && "Virtual registers still in phys regs?");
   assert(PhysRegsUseOrder.empty() && "Physical regs still allocated?");
