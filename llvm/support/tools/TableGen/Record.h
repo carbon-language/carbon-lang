@@ -145,6 +145,7 @@ public:
 struct IntRecTy : public RecTy {
   Init *convertValue(UnsetInit *UI) { return (Init*)UI; }
   Init *convertValue(IntInit *II) { return (Init*)II; }
+  Init *convertValue(BitInit *BI);
   Init *convertValue(BitsInit *BI);
   Init *convertValue(TypedInit *TI);
 

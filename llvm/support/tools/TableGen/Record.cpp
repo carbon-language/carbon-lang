@@ -93,6 +93,10 @@ Init *BitsRecTy::convertValue(TypedInit *VI) {
   return 0;
 }
 
+Init *IntRecTy::convertValue(BitInit *BI) {
+  return new IntInit(BI->getValue());
+}
+
 Init *IntRecTy::convertValue(BitsInit *BI) {
   int Result = 0;
   for (unsigned i = 0, e = BI->getNumBits(); i != e; ++i) 
@@ -105,7 +109,7 @@ Init *IntRecTy::convertValue(BitsInit *BI) {
 }
 
 Init *IntRecTy::convertValue(TypedInit *TI) {
-  if (dynamic_cast<IntRecTy*>(TI->getType()))
+  if (TI->getType()->typeIsConvertibleTo(this))
     return TI;  // Accept variable if already of the right type!
   return 0;
 }
