@@ -1,7 +1,6 @@
-# $Id$
 LEVEL = ../..
 TOOLNAME = burg
-EXTRASOURCES = gram.tab.c
+ExtraSource = gram.tab.c
 
 include $(LEVEL)/Makefile.common
 
