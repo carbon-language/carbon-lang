@@ -468,3 +468,23 @@ std::ostream &operator<<(std::ostream &OS, const RecordKeeper &RK) {
     OS << "def " << *I->second;
   return OS;
 }
+
+
+/// getAllDerivedDefinitions - This method returns all concrete definitions
+/// that derive from the specified class name.  If a class with the specified
+/// name does not exist, an error is printed and true is returned.
+bool RecordKeeper::getAllDerivedDefinitions(const std::string &ClassName,
+                                            std::vector<Record*> &Defs) const {
+  Record *Class = Records.getClass(ClassName);
+  if (!Class) {
+    std::cerr << "ERROR: Couldn't find the '" << ClassName << "' class!\n";
+    return true;
+  }
+
+  for (std::map<std::string, Record*>::const_iterator I = getDefs().begin(),
+         E = getDefs().end(); I != E; ++I)
+    if (I->second->isSubClassOf(Class))
+      Defs.push_back(I->second);
+
+  return false;
+}

@@ -628,6 +628,16 @@ public:
     Defs.insert(std::make_pair(R->getName(), R));
   }
 
+  //===--------------------------------------------------------------------===//
+  // High-level helper methods, useful for tablegen backends...
+
+  /// getAllDerivedDefinitions - This method returns all concrete definitions
+  /// that derive from the specified class name.  If a class with the specified
+  /// name does not exist, an error is printed and true is returned.
+  bool getAllDerivedDefinitions(const std::string &ClassName,
+                                std::vector<Record*> &ReturnDefs) const;
+
+
   void dump() const;
 };
 

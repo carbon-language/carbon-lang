@@ -12,13 +12,8 @@ bool CodeEmitterGen::run(std::ostream &o) {
   std::vector<Record*> Insts;
 
   const std::map<std::string, Record*> &Defs = Records.getDefs();
-  Record *Inst = Records.getClass("Instruction");
-  assert(Inst && "Couldn't find Instruction class!");
 
-  for (std::map<std::string, Record*>::const_iterator I = Defs.begin(),
-	 E = Defs.end(); I != E; ++I)
-    if (I->second->isSubClassOf(Inst))
-      Insts.push_back(I->second);
+  Records.getAllDerivedDefinitions("Instruction", Insts);
 
   std::string Namespace = "V9::";
   std::string ClassName = "SparcV9CodeEmitter::";
