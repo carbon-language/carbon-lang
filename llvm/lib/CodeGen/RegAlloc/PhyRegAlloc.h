@@ -43,8 +43,8 @@
 class AddedInstrns
 {
  public:
-  vector<const MachineInstr *> InstrnsBefore;
-  vector<const MachineInstr *> InstrnsAfter;
+  vector<MachineInstr *> InstrnsBefore;
+  vector<MachineInstr *> InstrnsAfter;
 
   AddedInstrns() : InstrnsBefore(), InstrnsAfter() { }
 };
@@ -65,8 +65,8 @@ class PhyRegAlloc
   const MachineRegInfo &MRI;            // Machine Register information
   const unsigned NumOfRegClasses;       // recorded here for efficiency
 
-  vector<const Instruction *> CallInstrList;  // a list of all call instrs
-  vector<const Instruction *> RetInstrList;   // a list of all return instrs
+  //vector<const Instruction *> CallInstrList;  // a list of all call instrs
+  //vector<const Instruction *> RetInstrList;   // a list of all return instrs
 
   AddedInstrMapType AddedInstrMap;      // to store instrns added in this phase
 
@@ -85,7 +85,9 @@ class PhyRegAlloc
     { LRI.constructLiveRanges(); }      
 
   void colorIncomingArgs();
+  void colorCallRetArgs();
   void updateMachineCode();
+
   void printLabel(const Value *const Val);
   void printMachineCode();
   

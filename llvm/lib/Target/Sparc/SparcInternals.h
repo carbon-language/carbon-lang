@@ -14,6 +14,7 @@
 #include "llvm/Target/MachineInstrInfo.h"
 
 #include "llvm/Target/MachineSchedInfo.h"
+#include "llvm/CodeGen/RegClass.h"
 #include "llvm/Type.h"
 
 #include <sys/types.h>
@@ -95,6 +96,10 @@ public:
     return (opCode == FCMPS || opCode == FCMPD || opCode == FCMPQ);
   }
 
+
+
+
+  
 };
 
 
@@ -109,12 +114,27 @@ class UltraSparcRegInfo : public MachineRegInfo
 
  private:
 
+  // The actual register classes in the Sparc
+
   enum RegClassIDs { 
     IntRegClassID, 
     FloatRegClassID, 
     IntCCRegClassID,
     FloatCCRegClassID 
   };
+
+
+  // Type of registers available in Sparc. There can be several reg types
+  // in the same class. For instace, the float reg class has Single/Double
+  // types
+  enum RegTypes {
+    IntRegType,
+    FPSingleRegType,
+    FPDoubleRegType,
+    IntCCRegType,
+    FloatCCRegType
+  };
+
 
   // WARNING: If the above enum order must be changed, also modify 
   // getRegisterClassOfValue method below since it assumes this particular 
@@ -124,12 +144,11 @@ class UltraSparcRegInfo : public MachineRegInfo
   // reverse pointer to get info about the ultra sparc machine
   const UltraSparc *const UltraSparcInfo;
 
-  // Int arguments can be passed in 6 int regs - %o0 to %o5 (cannot be changed)
+  // Both int and float rguments can be passed in 6 int regs - 
+  // %o0 to %o5 (cannot be changed)
   unsigned const NumOfIntArgRegs;
-
-  // Float arguments can be passed in this many regs - can be canged if needed
-  // %f0 - %f5 are used (can hold 6 floats or 3 doubles)
   unsigned const NumOfFloatArgRegs;
+  unsigned const InvalidRegNum;
 
   //void setCallArgColor(LiveRange *const LR, const unsigned RegNo) const;
 
@@ -139,20 +158,85 @@ class UltraSparcRegInfo : public MachineRegInfo
   MachineInstr * getCopy2RegMI(const Value *SrcVal, const unsigned Reg,
 			       unsigned RegClassID) const ;
 
+  Value *getValue4ReturnAddr( const MachineInstr * MInst ) const ;
+
+  int getRegType(const LiveRange *const LR) const {
+
+    unsigned Typ;
+
+    switch(  (LR->getRegClass())->getID() ) {
+
+    case IntRegClassID: return IntRegType; 
+
+    case FloatRegClassID: 
+                          Typ =  LR->getTypeID();
+			  if( Typ == Type::FloatTyID ) 
+			    return FPSingleRegType;
+                          else if( Typ == Type::DoubleTyID )
+			    return FPDoubleRegType;
+                          else assert(0 && "Unknown type in FloatRegClass");
+
+    case IntCCRegClassID: return IntCCRegType; 
+      
+    case FloatCCRegClassID: return FloatCCRegType ; 
+
+    default: assert( 0 && "Unknown reg class ID");
+
+    }
+
+  }
+
+  int getRegType(const Value *const Val) const {
+
+    unsigned Typ;
+
+    switch( getRegClassIDOfValue(Val)  ) {
+
+    case IntRegClassID: return IntRegType; 
+
+    case FloatRegClassID: 
+                          Typ =  (Val->getType())->getPrimitiveID();
+			  if( Typ == Type::FloatTyID ) 
+			    return FPSingleRegType;
+                          else if( Typ == Type::DoubleTyID )
+			    return FPDoubleRegType;
+                          else assert(0 && "Unknown type in FloatRegClass");
+
+    case IntCCRegClassID: return IntCCRegType; 
+      
+    case FloatCCRegClassID: return FloatCCRegType ; 
+
+    default: assert( 0 && "Unknown reg class ID");
+
+    }
+
+  }
+
+
+
+
+  MachineInstr * cpReg2RegMI(const unsigned SrcReg,  const unsigned DestReg,
+			     const int RegType) const;
+
+  MachineInstr * cpValue2RegMI(Value * Val,  const unsigned DestReg,
+			       const int RegType) const;
+
+
  public:
 
 
   UltraSparcRegInfo(const UltraSparc *const USI ) : UltraSparcInfo(USI), 
 						    NumOfIntArgRegs(6), 
-						    NumOfFloatArgRegs(6) 
+						    NumOfFloatArgRegs(32),
+						    InvalidRegNum(1000)
   {    
     MachineRegClassArr.push_back( new SparcIntRegClass(IntRegClassID) );
     MachineRegClassArr.push_back( new SparcFloatRegClass(FloatRegClassID) );
     MachineRegClassArr.push_back( new SparcIntCCRegClass(IntCCRegClassID) );
     MachineRegClassArr.push_back( new SparcFloatCCRegClass(FloatCCRegClassID));
 
-    assert( SparcFloatRegOrder::StartOfNonVolatileRegs == 6 && 
-	    "6 Float regs are used for float arg passing");
+    assert( SparcFloatRegOrder::StartOfNonVolatileRegs == 32 && 
+	    "32 Float regs are used for float arg passing");
   }
 
   // ***** TODO  Delete
@@ -172,7 +256,8 @@ class UltraSparcRegInfo : public MachineRegInfo
 
     unsigned res;
     
-    if( ty && ty <= Type::LongTyID || (ty == Type::PointerTyID) )  
+    if( (ty && ty <= Type::LongTyID) || (ty == Type::LabelTyID) ||
+	(ty == Type::MethodTyID) ||  (ty == Type::PointerTyID) )
       res =  IntRegClassID;             // sparc int reg (ty=0: void)
     else if( ty <= Type::DoubleTyID)
       res = FloatRegClassID;           // sparc float reg class
@@ -191,6 +276,7 @@ class UltraSparcRegInfo : public MachineRegInfo
   }
 
   // returns the register tha contains always zero
+  // this is the unified register number
   inline int getZeroRegNum() const { return SparcIntRegOrder::g0; }
 
   // returns the reg used for pushing the address when a method is called.
@@ -202,18 +288,31 @@ class UltraSparcRegInfo : public MachineRegInfo
   // register contains the return value when a return instruction is reached.
   unsigned getReturnAddressReg()  const { return SparcIntRegOrder::i7; }
 
-  void colorArgs(const Method *const Meth, LiveRangeInfo& LRI) const;
+  void suggestRegs4MethodArgs(const Method *const Meth, 
+			      LiveRangeInfo& LRI) const;
 
-  static void printReg(const LiveRange *const LR)  ;
+  void suggestRegs4CallArgs(const CallInst *const CallI, 
+			    LiveRangeInfo& LRI, vector<RegClass *> RCL) const; 
 
-  void colorCallArgs(vector<const Instruction *> & CallInstrList, 
-		     LiveRangeInfo& LRI, 
-		     AddedInstrMapType& AddedInstrMap ) const;
+  void suggestReg4RetValue(const ReturnInst *const RetI, 
+			    LiveRangeInfo& LRI) const;
 
-  void colorRetArg(vector<const Instruction *> & 
-		   RetInstrList, LiveRangeInfo& LRI,
-		   AddedInstrMapType &AddedInstrMap) const;
 
+  void colorMethodArgs(const Method *const Meth,  LiveRangeInfo& LRI,
+		       AddedInstrns *const FirstAI) const;
+
+  void colorCallArgs(const CallInst *const CallI, LiveRangeInfo& LRI,
+		     AddedInstrns *const CallAI) const;
+
+  void colorRetValue(const ReturnInst *const RetI,   LiveRangeInfo& LRI,
+		     AddedInstrns *const RetAI) const;
+
+
+  bool handleSpecialMInstr(const MachineInstr * MInst, 
+			   LiveRangeInfo& LRI, vector<RegClass *> RCL) const;
+
+
+    static void printReg(const LiveRange *const LR)  ;
 
   // this method provides a unique number for each register 
   inline int getUnifiedRegNum(int RegClassID, int reg) const {
@@ -226,6 +325,8 @@ class UltraSparcRegInfo : public MachineRegInfo
       return reg + 32 + 64;             // 32 int, 64 float
     else if( RegClassID == IntCCRegClassID ) 
       return 4+ 32 + 64;                // only int cc reg
+    else if (reg==1000)                 //****** TODO: Remove 
+      return 1000;
     else  
       assert(0 && "Invalid register class or reg number");
 
@@ -241,6 +342,9 @@ class UltraSparcRegInfo : public MachineRegInfo
       return SparcFloatCCRegOrder::getRegName( reg -32 - 64);
     else if ( reg == 64+32+4)
       return "xcc";                     // only integer cc reg
+
+    else if (reg==1000)                 //****** TODO: Remove
+      return "<*NoReg*>";
     else 
       assert(0 && "Invalid register number");
   }

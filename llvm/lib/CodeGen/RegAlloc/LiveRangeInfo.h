@@ -42,7 +42,7 @@
 
 
 typedef hash_map <const Value *,  LiveRange *, hashFuncValue> LiveRangeMapType;
-
+typedef vector <const Instruction *> CallRetInstrListType;
 
 class LiveRangeInfo 
 {
@@ -56,7 +56,9 @@ private:
 
   const TargetMachine& TM;          // target machine description
   vector<RegClass *> & RegClassList;// a vector containing register classess
+  const MachineRegInfo& MRI;        // machine reg info
 
+  CallRetInstrListType  CallRetInstrList;  // a list of all call/ret instrs
 
   void unionAndUpdateLRs(LiveRange *L1, LiveRange *L2);
 
@@ -72,12 +74,22 @@ public:
 
   void constructLiveRanges();
 
+  inline void addLRToMap(const Value *Val, LiveRange *LR) {
+    assert( Val && LR && "Val/LR is NULL!\n");
+    assert( (! LiveRangeMap[ Val ]) && "LR already set in map");
+    LiveRangeMap[ Val ] = LR;
+  }
+  
+
   inline const LiveRangeMapType *const getLiveRangeMap() const 
     { return &LiveRangeMap; }
 
   inline LiveRange *getLiveRangeForValue( const Value *const Val) 
     { return LiveRangeMap[ Val ]; }
 
+  inline  CallRetInstrListType &getCallRetInstrList() {
+    return CallRetInstrList;
+  }
 
 
 

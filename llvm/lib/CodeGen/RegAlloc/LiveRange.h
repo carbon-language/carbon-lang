@@ -39,6 +39,9 @@ class LiveRange : public ValueSet
 
   // bool mustLoadFromStack;     // must load from stack at start of method
 
+
+  int SuggestedColor;        // The suggested color for this LR
+
  public:
 
 
@@ -92,9 +95,27 @@ class LiveRange : public ValueSet
   }
 
 
+  inline void setSuggestedColor(int Col) {
+    //assert( (SuggestedColor == -1) && "Changing an already suggested color");
+
+    if(SuggestedColor == -1 )
+      SuggestedColor = Col;
+    else if (DEBUG_RA) 
+      cout << "Already has a suggested color " << Col << endl;
+  }
+
+  inline unsigned getSuggestedColor() const {
+    assert( SuggestedColor != -1);      // only a valid color is obtained
+    return (unsigned) SuggestedColor;
+  }
+
+  inline bool hasSuggestedColor() const {
+    return ( SuggestedColor > -1);
+  }
+
   inline LiveRange() : ValueSet() , CallInterferenceList() 
     {
-      Color = -1;                 // not yet colored 
+      Color = SuggestedColor = -1;      // not yet colored 
       mustSpill = mustSaveAcrossCalls = false;
       MyRegClass = NULL;
       UserIGNode = NULL;
