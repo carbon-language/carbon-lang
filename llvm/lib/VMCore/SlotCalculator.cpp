@@ -159,8 +159,8 @@ void SlotCalculator::insertVal(const Value *D) {
       // example, if you say 'malloc uint', this defines a type 'uint*' that
       // may be undefined at this point.
       //
-      cerr << "SHOULDNT HAPPEN Adding Type ba: " << Typ->getName() << endl;
-      assert(0 && "SHouldn't this be taken care of by processType!?!?!");
+      cerr << "SHOULDN'T HAPPEN Adding Type ba: " << Typ->getName() << endl;
+      assert(0 && "Shouldn't this be taken care of by processType!?!?!");
       // Nope... add this to the Type plane now!
       insertVal(Typ);
 
