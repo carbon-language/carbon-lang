@@ -1,4 +1,4 @@
-// RUN: llvmgcc -xc %s -c -o - | llvm-dis | grep getelementptr
+// RUN: %llvmgcc -xc %s -c -o - | llvm-dis | grep getelementptr
 
 // This should be turned into a tasty getelementptr instruction, not a nasty
 // series of casts and address arithmetic.

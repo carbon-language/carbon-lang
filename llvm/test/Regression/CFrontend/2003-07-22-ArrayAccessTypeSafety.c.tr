@@ -1,4 +1,4 @@
-/* RUN: llvmgcc -xc %s -c -o - | dis | not grep cast
+/* RUN: %llvmgcc -xc %s -c -o - | dis | not grep cast
  */
 
 void test(int* array, long long N) {
