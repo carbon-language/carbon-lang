@@ -147,7 +147,6 @@ void DSNode::addGlobal(GlobalValue *GV) {
     std::lower_bound(Globals.begin(), Globals.end(), GV);
 
   if (I == Globals.end() || *I != GV) {
-    //assert(GV->getType()->getElementType() == Ty);
     Globals.insert(I, GV);
     NodeType |= GlobalNode;
   }
@@ -1140,6 +1139,29 @@ void DSGraph::updateFromGlobalGraph() {
         RC.merge(getNodeForValue(*I), It->second);
     }
 }
+
+/// addObjectToGraph - This method can be used to add global, stack, and heap
+/// objects to the graph.  This can be used when updating DSGraphs due to the
+/// introduction of new temporary objects.  The new object is not pointed to
+/// and does not point to any other objects in the graph.
+DSNode *DSGraph::addObjectToGraph(Value *Ptr, bool UseDeclaredType) {
+  assert(isa<PointerType>(Ptr->getType()) && "Ptr is not a pointer!");
+  const Type *Ty = cast<PointerType>(Ptr->getType())->getElementType();
+  DSNode *N = new DSNode(UseDeclaredType ? Ty : 0, this);
+  ScalarMap[Ptr] = N;
+
+  if (GlobalValue *GV = dyn_cast<GlobalValue>(Ptr)) {
+    N->addGlobal(GV);
+  } else if (MallocInst *MI = dyn_cast<MallocInst>(Ptr)) {
+    N->setHeapNodeMarker();
+  } else if (AllocaInst *AI = dyn_cast<AllocaInst>(Ptr)) {
+    N->setAllocaNodeMarker();
+  } else {
+    assert(0 && "Illegal memory object input!");
+  }
+  return N;
+}
+
 
 /// cloneInto - Clone the specified DSGraph into the current graph.  The
 /// translated ScalarMap for the old function is filled into the OldValMap

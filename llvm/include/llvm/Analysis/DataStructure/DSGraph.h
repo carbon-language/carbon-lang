@@ -245,8 +245,6 @@ public:
   afc_iterator afc_begin() const { return AuxFunctionCalls.begin(); }
   afc_iterator afc_end() const { return AuxFunctionCalls.end(); }
 
-
-
   /// getInlinedGlobals - Get the set of globals that are have been inlined
   /// (from callees in BU or from callers in TD) into the current graph.
   ///
@@ -297,6 +295,16 @@ public:
   unsigned getGraphSize() const {
     return Nodes.size();
   }
+
+  /// addObjectToGraph - This method can be used to add global, stack, and heap
+  /// objects to the graph.  This can be used when updating DSGraphs due to the
+  /// introduction of new temporary objects.  The new object is not pointed to
+  /// and does not point to any other objects in the graph.  Note that this
+  /// method initializes the type of the DSNode to the declared type of the
+  /// object if UseDeclaredType is true, otherwise it leaves the node type as
+  /// void.
+  DSNode *addObjectToGraph(Value *Ptr, bool UseDeclaredType = true);
+
 
   /// print - Print a dot graph to the specified ostream...
   ///
