@@ -38,6 +38,13 @@ Pass *createConstantMergePass();
 
 
 //===----------------------------------------------------------------------===//
+// createGlobalConstifierPass - This function returns a new pass that marks
+// internal globals "constant" if they are provably never written to.
+//
+Pass *createGlobalConstifierPass();
+
+
+//===----------------------------------------------------------------------===//
 // createRaiseAllocationsPass - Return a new pass that transforms malloc and
 // free function calls into malloc and free instructions.
 //
