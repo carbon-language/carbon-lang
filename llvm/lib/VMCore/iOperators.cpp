@@ -6,26 +6,21 @@
 
 #include "llvm/iOperators.h"
 #include "llvm/Type.h"
-#include <iostream>
 using std::cerr;
 
 //===----------------------------------------------------------------------===//
 //                              UnaryOperator Class
 //===----------------------------------------------------------------------===//
 
-UnaryOperator *UnaryOperator::create(UnaryOps Op, Value *Source) {
+UnaryOperator *UnaryOperator::create(UnaryOps Op, Value *Source,
+                                     const std::string &Name) {
   switch (Op) {
-  case Not:  return new GenericUnaryInst(Op, Source);
+  case Not:  return new GenericUnaryInst(Op, Source, Name);
   default:
     cerr << "Don't know how to Create UnaryOperator " << Op << "\n";
     return 0;
   }
 }
-
-
-//===----------------------------------------------------------------------===//
-//                           GenericUnaryOperator Class
-//===----------------------------------------------------------------------===//
 
 
 //===----------------------------------------------------------------------===//
@@ -70,11 +65,6 @@ bool BinaryOperator::swapOperands() {
   std::swap(Operands[0], Operands[1]);
   return false;
 }
-
-
-//===----------------------------------------------------------------------===//
-//                            GenericBinaryInst Class
-//===----------------------------------------------------------------------===//
 
 
 //===----------------------------------------------------------------------===//

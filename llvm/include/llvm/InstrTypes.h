@@ -69,7 +69,8 @@ public:
   // create() - Construct a unary instruction, given the opcode
   // and its operand.
   //
-  static UnaryOperator *create(UnaryOps Op, Value *Source);
+  static UnaryOperator *create(UnaryOps Op, Value *Source,
+                               const std::string &Name = "");
 
   inline UnaryOps getOpcode() const { 
     return (UnaryOps)Instruction::getOpcode();
