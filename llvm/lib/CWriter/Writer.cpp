@@ -3,7 +3,6 @@
 // This library converts LLVM code to C code, compilable by GCC.
 //
 //===-----------------------------------------------------------------------==//
-
 #include "llvm/Assembly/CWriter.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
@@ -28,6 +27,7 @@ using std::string;
 using std::map;
 using std::ostream;
 
+
 namespace {
   class CWriter : public Pass, public InstVisitor<CWriter> {
     ostream &Out; 
@@ -35,6 +35,7 @@ namespace {
     const Module *TheModule;
     map<const Type *, string> TypeNames;
     std::set<const Value*> MangledGlobals;
+    bool needsMalloc;
 
     map<const ConstantFP *, unsigned> FPConstantMap;
   public:
@@ -549,8 +550,6 @@ void CWriter::printModule(Module *M) {
   // Global variable declarations...
   if (!M->gempty()) {
     Out << "\n/* External Global Variable Declarations */\n";
-    // Needed for malloc to work on sun.
-    Out << "extern void * malloc(size_t);\n";
     for (Module::giterator I = M->gbegin(), E = M->gend(); I != E; ++I) {
       if (I->hasExternalLinkage()) {
         Out << "extern ";
@@ -563,10 +562,17 @@ void CWriter::printModule(Module *M) {
   // Function declarations
   if (!M->empty()) {
     Out << "\n/* Function Declarations */\n";
+    needsMalloc = true;
     for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I) {
       printFunctionSignature(I, true);
       Out << ";\n";
     }
+  }
+
+  // Print Malloc prototype if needed
+  if (needsMalloc){
+    Out << "\n/* Malloc to make sun happy */\n";
+    Out << "extern void * malloc(size_t);\n\n";
   }
 
   // Output the global variable definitions and contents...
@@ -673,6 +679,10 @@ void CWriter::printContainedStructs(const Type *Ty,
 
 
 void CWriter::printFunctionSignature(const Function *F, bool Prototype) {
+  // If the program provides it's own malloc prototype we don't need
+  // to include the general one.  
+  if (getValueName(F) == "malloc")
+    needsMalloc = false;
   if (F->hasInternalLinkage()) Out << "static ";
   
   // Loop over the arguments, printing them...
