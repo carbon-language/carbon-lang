@@ -698,14 +698,16 @@ void PPC32ISel::copyConstantToRegister(MachineBasicBlock *MBB,
     
     unsigned GlobalBase = makeAnotherReg(Type::IntTy);
     unsigned TmpReg = makeAnotherReg(GV->getType());
-    unsigned Opcode = (GV->hasWeakLinkage() 
-                      || GV->isExternal() 
-                      || dyn_cast<Function>(GV)) ? PPC::LWZ : PPC::LA;
     
     // Move value at base + distance into return reg
     BuildMI(*MBB, IP, PPC::LOADHiAddr, 2, TmpReg)
       .addReg(getGlobalBaseReg(MBB, IP)).addGlobalAddress(GV);
-    BuildMI(*MBB, IP, Opcode, 2, R).addGlobalAddress(GV).addReg(TmpReg);
+
+    if (GV->hasWeakLinkage() || GV->isExternal() || dyn_cast<Function>(GV)) {
+      BuildMI(*MBB, IP, PPC::LWZ, 2, R).addGlobalAddress(GV).addReg(TmpReg);
+    } else {
+      BuildMI(*MBB, IP, PPC::LA, 2, R).addReg(TmpReg).addGlobalAddress(GV);
+    }
   
     // Add the GV to the list of things whose addresses have been taken.
     TM.AddressTaken.insert(GV);

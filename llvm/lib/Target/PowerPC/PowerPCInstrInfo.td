@@ -113,7 +113,7 @@ def ADDICo : DForm_2<13, 0, 0, (ops GPRC:$rD, GPRC:$rA, s16imm:$imm),
                      "addic. $rD, $rA, $imm">;
 def ADDIS  : DForm_2<15, 0, 0, (ops GPRC:$rD, GPRC:$rA, s16imm:$imm),
                      "addis $rD, $rA, $imm">;
-def LA     : DForm_2<14, 0, 0, (ops GPRC:$rD, symbolLo:$sym, GPRC:$rA),
+def LA     : DForm_2<14, 0, 0, (ops GPRC:$rD, GPRC:$rA, symbolLo:$sym),
                      "la $rD, $sym($rA)">;
 def LOADHiAddr : DForm_2<15, 0, 0, (ops GPRC:$rD, GPRC:$rA, symbolHi:$sym),
                          "addis $rD, $rA, $sym">;
