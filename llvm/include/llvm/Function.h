@@ -122,8 +122,8 @@ public:
   const BasicBlockListType &getBasicBlockList() const { return BasicBlocks; }
         BasicBlockListType &getBasicBlockList()       { return BasicBlocks; }
 
-  const BasicBlock       &getEntryNode() const   { return front(); }
-        BasicBlock       &getEntryNode()         { return front(); }
+  const BasicBlock       &getEntryBlock() const   { return front(); }
+        BasicBlock       &getEntryBlock()         { return front(); }
 
   //===--------------------------------------------------------------------===//
   // Symbol Table Accessing functions...
