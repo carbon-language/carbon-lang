@@ -624,11 +624,22 @@ revision), you can specify a label.  The following releases have the following
 label:</p>
 
 <ul>
+<li>Release 1.4: <b>RELEASE_14</b></li>
 <li>Release 1.3: <b>RELEASE_13</b></li>
 <li>Release 1.2: <b>RELEASE_12</b></li>
 <li>Release 1.1: <b>RELEASE_11</b></li>
 <li>Release 1.0: <b>RELEASE_1</b></li>
 </ul>
+
+<p>If you would like to get the LLVM test suite (a separate package as of 1.4),
+you get it from the CVS repository:</p>
+<pre>
+  cd llvm/projects
+  cvs -z3 -d :pserver:anon@llvm-cvs.cs.uiuc.edu:/var/cvs/llvm co llvm-test
+</pre>
+<p>By placing it in the <tt>llvm/projects</tt>, it will be automatically
+conifgured by the LLVM configure script as well as automatically updated when
+you run <tt>cvs update</tt>.</p>
 
 <p>If you would like to get the GCC front end source code, you can also get it
 from the CVS repository:</p>
@@ -703,10 +714,10 @@ not for the faint of heart, so be forewarned.</p>
 <div class="doc_text">
 
 <p>Once checked out from the CVS repository, the LLVM suite source code must be
-configured via the <tt>configure</tt> script.  This script sets variables in
-<tt>llvm/Makefile.config</tt> and <tt>llvm/include/Config/config.h</tt>.  It
-also populates <i>OBJ_ROOT</i> with the Makefiles needed to begin building
-LLVM.</p>
+configured via the <tt>configure</tt> script.  This script sets variables in the
+various <tt>*.in</tt> files, most notably <tt>llvm/Makefile.config</tt> and 
+<tt>llvm/include/Config/config.h</tt>.  It also populates <i>OBJ_ROOT</i> with 
+the Makefiles needed to begin building LLVM.</p>
 
 <p>The following environment variables are used by the <tt>configure</tt>
 script to configure the build system:</p>
@@ -732,47 +743,40 @@ script to configure the build system:</p>
 <p>The following options can be used to set or enable LLVM specific options:</p>
 
 <dl>
-  <dt><i>--with-llvmgccdir=LLVMGCCDIR</i>
+  <dt><i>--with-llvmgccdir=LLVMGCCDIR</i></dt>
   <dd>
     Path to the location where the LLVM GCC front end binaries and
     associated libraries were installed.  This must be specified as an
     absolute pathname.
     <p>
-  <dt><i>--enable-optimized</i>
+  </dd>
+  <dt><i>--with-tclinclude</i></dt>
+  <dd>Path to the tcl include directory under which the <tt>tclsh</tt> can be
+  found. Use this if you have multiple tcl installations on your machine and you
+  want to use a specific one (8.x) for LLVM. LLVM only uses tcl for running the
+  dejagnu based test suite in <tt>llvm/test</tt>. If you don't specify this
+  option, the LLVM configure script will search for tcl 8.4 and 8.3 releases.
+  </dd>
+  <dt><i>--enable-optimized</i></dt>
   <dd>
     Enables optimized compilation by default (debugging symbols are removed
     and GCC optimization flags are enabled).  The default is to use an
     unoptimized build (also known as a debug build).
     <p>
-  <dt><i>--enable-jit</i>
+  </dd>
+  <dt><i>--enable-jit</i></dt>
   <dd>
     Compile the Just In Time (JIT) compiler functionality.  This is not
     available
     on all platforms.  The default is dependent on platform, so it is best
     to explicitly enable it if you want it.
     <p>
-  <dt><i>--enable-spec2000</i>
-  <dt><i>--enable-spec2000=&lt;<tt>directory</tt>&gt;</i>
-  <dd>
-    Enable the use of SPEC2000 when testing LLVM.  This is disabled by default
-    (unless <tt>configure</tt> finds SPEC2000 installed).  By specifying
-    <tt>directory</tt>, you can tell configure where to find the SPEC2000
-    benchmarks.  If <tt>directory</tt> is left unspecified, <tt>configure</tt>
-    uses the default value
-    <tt>/home/vadve/shared/benchmarks/speccpu2000/benchspec</tt>.
-    <p>
-  <dt><i>--enable-spec95</i>
-  <dt><i>--enable-spec95=&lt;<tt>directory</tt>&gt;</i>
-  <dd>
-    Enable the use of SPEC95 when testing LLVM.  It is similar to the
-    <i>--enable-spec2000</i> option.
-    <p>
-  <dt><i>--enable-povray</i>
-  <dt><i>--enable-povray=&lt;<tt>directory</tt>&gt;</i>
-  <dd>
-    Enable the use of Povray as an external test.  Versions of Povray written
-    in C should work.  This option is similar to the <i>--enable-spec2000</i>
-    option.
+  </dd>
+  <dt><i>--enable-doxygen</i></dt>
+  <dd>Look for the doxygen program and enable construction of doxygen based
+  documentation from the source code. This is disabled by default because 
+  generating the documentation can take a long time and producess 100s of 
+  megabytes of output.</dd>
 </dl>
 
 <p>To configure LLVM, follow these steps:</p>
@@ -785,13 +789,13 @@ script to configure the build system:</p>
 
     <li>Run the <tt>configure</tt> script located in the LLVM source tree:
     <br>
-    <tt><i>SRC_ROOT</i>/configure</tt>
+    <tt><i>SRC_ROOT</i>/configure --prefix=/install/path [other options]</tt>
     <p>
 </ol>
 
 <p>In addition to running <tt>configure</tt>, you must set the
-<tt>LLVM_LIB_SEARCH_PATH</tt> environment variable in your startup scripts.
-This environment variable is used to locate "system" libraries like
+<tt>LLVM_LIB_SEARCH_PATH</tt> environment variable in your startup shell 
+scripts.  This environment variable is used to locate "system" libraries like
 "<tt>-lc</tt>" and "<tt>-lm</tt>" when linking.  This variable should be set to
 the absolute path of the <tt>bytecode-libs</tt> subdirectory of the GCC front
 end, or <i>LLVMGCCDIR</i>/<tt>bytecode-libs</tt>.  For example, one might set
@@ -862,7 +866,7 @@ source code:</p>
   generated C/C++ files, libraries, and executables.
   <p>
 
-  <dt><tt>gmake distclean</tt>
+  <dt><tt>gmake dist-clean</tt>
   <dd>
   Removes everything that <tt>gmake clean</tt> does, but also removes files
   generated by <tt>configure</tt>.  It attempts to return the source tree to the
@@ -871,11 +875,12 @@ source code:</p>
 
   <dt><tt>gmake install</tt>
   <dd>
-  Installs LLVM libraries and tools in a heirarchy under $PREFIX, specified with
-  <tt>./configure --prefix=[dir]</tt>, defaults to <tt>/usr/local</tt>.
+  Installs LLVM header files, libraries, tools and documentation in a heirarchy 
+  under $PREFIX, specified with <tt>./configure --prefix=[dir]</tt>, which 
+  defaults to <tt>/usr/local</tt>.
   <p>
   
-  <dt><tt>gmake -C runtime install</tt>
+  <dt><tt>gmake -C runtime install-bytecode</tt>
   <dd>
   Assuming you built LLVM into $OBJDIR, when this command is run, it will 
   install bytecode libraries into the GCC front end's bytecode library 
@@ -883,6 +888,10 @@ source code:</p>
   this is the target to use once you've built them.
   <p>
 </dl>
+
+<p>Please see the <a href="MakefileGuide.html">Makefile Guide</a> for further
+details on these <tt>make</tt> targets and descriptions of other targets
+available.</p>
 
 <p>It is also possible to override default values from <tt>configure</tt> by
 declaring variables on the command line.  The following are some examples:</p>
@@ -902,6 +911,11 @@ declaring variables on the command line.  The following are some examples:</p>
   <dd>
   Print what <tt>gmake</tt> is doing on standard output.
   <p>
+
+  <dt><tt>gmake TOOL_VERBOSE=1</tt></dt>
+  <dd>Ask each tool invoked by the makefiles to print out what it is doing on 
+  the standard output. This also implies <tt>VERBOSE=1</tt> so the makefile
+  <p></dd>
 </dl>
 
 <p>Every directory in the LLVM object tree includes a <tt>Makefile</tt> to build
@@ -943,9 +957,9 @@ named after the build type:</p>
   <dd>
   <dl>
     <dt>Tools
-    <dd><tt><i>OBJ_ROOT</i>/tools/Debug</tt>
+    <dd><tt><i>OBJ_ROOT</i>/Debug/bin</tt>
     <dt>Libraries
-    <dd><tt><i>OBJ_ROOT</i>/lib/Debug</tt>
+    <dd><tt><i>OBJ_ROOT</i>/Debug/lib</tt>
   </dl>
   <p>
 
@@ -953,9 +967,9 @@ named after the build type:</p>
   <dd>
   <dl>
     <dt>Tools
-    <dd><tt><i>OBJ_ROOT</i>/tools/Release</tt>
+    <dd><tt><i>OBJ_ROOT</i>/Release/bin</tt>
     <dt>Libraries
-    <dd><tt><i>OBJ_ROOT</i>/lib/Release</tt>
+    <dd><tt><i>OBJ_ROOT</i>/Release/lib</tt>
   </dl>
   <p>
 
@@ -963,9 +977,9 @@ named after the build type:</p>
   <dd>
   <dl>
     <dt>Tools
-    <dd><tt><i>OBJ_ROOT</i>/tools/Profile</tt>
+    <dd><tt><i>OBJ_ROOT</i>/Profile/bin</tt>
     <dt>Libraries
-    <dd><tt><i>OBJ_ROOT</i>/lib/Profile</tt>
+    <dd><tt><i>OBJ_ROOT</i>/Profile/lib</tt>
   </dl>
 </dl>
 
@@ -980,7 +994,8 @@ named after the build type:</p>
 
 <p>
 If you're running on a linux system that supports the "<a
-href="http://www.tat.physik.uni-tuebingen.de/~rguenth/linux/binfmt_misc.html">binfmt_misc</a>"
+  href="http://www.tat.physik.uni-tuebingen.de/~rguenth/linux/binfmt_misc.html">
+  binfmt_misc</a>"
 module, and you have root access on the system, you can set your system up to
 execute LLVM bytecode files directly.  To do this, use commands like this (the
 first command may not be required if you are already using the module):</p>
