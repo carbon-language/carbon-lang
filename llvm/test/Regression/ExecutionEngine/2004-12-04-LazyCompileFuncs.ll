@@ -1,9 +1,6 @@
 ; RUN: llvm-as -f %s -o %t.bc
 ; RUN: lli -debug-only=jit %t.bc 2>&1 | not grep 'Finished CodeGen of .* G'
 
-target endian = little
-target pointersize = 32
-deplibs = [ "c", "crtend" ]
 %.str_1 = internal constant [7 x sbyte] c"IN F!\0A\00"		; <[7 x sbyte]*> [#uses=1]
 %.str_2 = internal constant [7 x sbyte] c"IN G!\0A\00"		; <[7 x sbyte]*> [#uses=1]
 %Ptrs = internal constant [2 x void (...)*] [ void (...)* cast (void ()* %F to void (...)*), void (...)* cast (void ()* %G to void (...)*) ]            ; <[2 x void (...)*]*> [#uses=1]
