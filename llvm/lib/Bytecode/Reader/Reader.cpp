@@ -624,7 +624,7 @@ Module *ParseBytecodeFile(const std::string &Filename, std::string *ErrorStr) {
     size_t FileSize = 0;
     int BlockSize;
     uchar Buffer[4096], *FileData = 0;
-    while ((BlockSize = read(0, Buffer, 4))) {
+    while ((BlockSize = read(0, Buffer, 4096))) {
       if (BlockSize == -1) { free(FileData); return 0; }
 
       FileData = (uchar*)realloc(FileData, FileSize+BlockSize);
