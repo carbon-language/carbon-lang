@@ -147,8 +147,9 @@ BasicBlock *Loop::getLoopPreheader() const {
   BasicBlock *Header = getHeader();
   for (pred_iterator PI = pred_begin(Header), PE = pred_end(Header);
        PI != PE; ++PI)
-    if (!contains(*PI)) { // If the block is not in the loop...
-      if (Out) return 0;  // Multiple predecessors outside the loop
+    if (!contains(*PI)) {     // If the block is not in the loop...
+      if (Out && Out != *PI)
+        return 0;             // Multiple predecessors outside the loop
       Out = *PI;
     }
 
