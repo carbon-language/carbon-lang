@@ -40,6 +40,13 @@ namespace MVT {  // MVT = Machine Value Types
 
     isVoid          = 11,   // This has no value
   };
+
+  static inline bool isInteger(ValueType VT) {
+    return VT >= i1 && VT <= i128;
+  }
+  static inline bool isFloatingPoint(ValueType VT) {
+    return VT >= f32 && VT <= f128;
+  }
 };
 
 } // End llvm namespace
