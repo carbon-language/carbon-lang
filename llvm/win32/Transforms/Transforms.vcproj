@@ -169,10 +169,6 @@
 					<File
 						RelativePath="..\..\lib\Transforms\Instrumentation\ProfilePaths\RetracePath.cpp">
 					</File>
-					<Filter
-						Name="EmitFunctions"
-						Filter="">
-					</Filter>
 				</Filter>
 			</Filter>
 			<Filter
