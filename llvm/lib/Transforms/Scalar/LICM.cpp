@@ -123,17 +123,17 @@ void LoopBodyInfo::incorporate(BasicBlock &BB) {
 LoopBodyInfo::PointerClass LoopBodyInfo::calculatePointerInfo(Value *V,
                                                       AliasAnalysis &AA) const {
   for (unsigned i = 0, e = Calls.size(); i != e; ++i)
-    if (AA.canCallModify(*Calls[i], V))
+    if (AA.getModRefInfo(Calls[i], V, ~0))
       return PointerMayStore;
 
   for (unsigned i = 0, e = Invokes.size(); i != e; ++i)
-    if (AA.canInvokeModify(*Invokes[i], V))
+    if (AA.getModRefInfo(Invokes[i], V, ~0))
       return PointerMayStore;
 
   PointerClass Result = PointerNoStore;
   for (std::set<Value*>::const_iterator I = StoredPointers.begin(),
          E = StoredPointers.end(); I != E; ++I)
-    if (AA.alias(V, *I))
+    if (AA.alias(V, ~0, *I, ~0))
       if (V == *I)
         Result = PointerMustStore;   // If this is the only alias, return must
       else
@@ -485,7 +485,7 @@ void LICM::findPromotableValuesInLoop(
         bool PointerOk = true;
         for (std::set<Value*>::const_iterator I =CurLBI->LoadedPointers.begin(),
                E = CurLBI->LoadedPointers.end(); I != E; ++I)
-          if (AA->alias(V, *I) == AliasAnalysis::MayAlias) {
+          if (AA->alias(V, ~0, *I, ~0) == AliasAnalysis::MayAlias) {
             PointerOk = false;
             break;
           }
@@ -503,13 +503,13 @@ void LICM::findPromotableValuesInLoop(
           for (std::set<Value*>::const_iterator
                  I = CurLBI->LoadedPointers.begin(),
                  E = CurLBI->LoadedPointers.end(); I != E; ++I)
-            if (AA->alias(V, *I) == AliasAnalysis::MustAlias)
+            if (AA->alias(V, ~0, *I, ~0) == AliasAnalysis::MustAlias)
               ValueToAllocaMap[*I] = AI;
 
           for (std::set<Value*>::const_iterator
                  I = CurLBI->StoredPointers.begin(),
                  E = CurLBI->StoredPointers.end(); I != E; ++I)
-            if (AA->alias(V, *I) == AliasAnalysis::MustAlias)
+            if (AA->alias(V, ~0, *I, ~0) == AliasAnalysis::MustAlias)
               ValueToAllocaMap[*I] = AI;
         }
       }

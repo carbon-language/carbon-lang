@@ -13,6 +13,8 @@
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Support/InstIterator.h"
 
+// FIXME: This should keep sizes associated with pointers!
+
 /// mergeSetIn - Merge the specified alias set into this alias set...
 ///
 void AliasSet::mergeSetIn(AliasSet &AS) {
@@ -59,7 +61,7 @@ void AliasSet::addPointer(AliasSetTracker &AST, HashNodePair &Entry){
 
   if (isMustAlias())    // Check to see if we have to downgrade to _may_ alias
     if (Value *V = getSomePointer())
-      if (AA.alias(V, Entry.first) == AliasAnalysis::MayAlias)
+      if (AA.alias(V, ~0, Entry.first, ~0) == AliasAnalysis::MayAlias)
         AliasTy = MayAlias;
 
   Entry.second.setAliasSet(this);
@@ -89,13 +91,13 @@ bool AliasSet::aliasesPointer(const Value *Ptr, AliasAnalysis &AA) const {
     // SOME value in the set...
     Value *SomePtr = getSomePointer();
     assert(SomePtr && "Empty must-alias set??");
-    return AA.alias(SomePtr, Ptr);
+    return AA.alias(SomePtr, ~0, Ptr, ~0);
   }
 
   // If this is a may-alias set, we have to check all of the pointers in the set
   // to be sure it doesn't alias the set...
   for (iterator I = begin(), E = end(); I != E; ++I)
-    if (AA.alias(Ptr, *I))
+    if (AA.alias(Ptr, ~0, *I, ~0))
       return true;
 
   // Check the call sites list and invoke list...
@@ -119,7 +121,7 @@ bool AliasSet::aliasesCallSite(CallSite CS, AliasAnalysis &AA) const {
 AliasSet *AliasSetTracker::findAliasSetForPointer(const Value *Ptr) {
   AliasSet *FoundSet = 0;
   for (iterator I = begin(), E = end(); I != E; ++I)
-    if (I->aliasesPointer(Ptr, AA)) {
+    if (!I->Forward && I->aliasesPointer(Ptr, AA)) {
       if (FoundSet == 0) {  // If this is the first alias set ptr can go into...
         FoundSet = I;       // Remember it.
       } else {              // Otherwise, we must merge the sets...
@@ -133,10 +135,10 @@ AliasSet *AliasSetTracker::findAliasSetForPointer(const Value *Ptr) {
 AliasSet *AliasSetTracker::findAliasSetForCallSite(CallSite CS) {
   AliasSet *FoundSet = 0;
   for (iterator I = begin(), E = end(); I != E; ++I)
-    if (I->aliasesCallSite(CS, AA)) {
+    if (!I->Forward && I->aliasesCallSite(CS, AA)) {
       if (FoundSet == 0) {  // If this is the first alias set ptr can go into...
         FoundSet = I;       // Remember it.
-      } else {              // Otherwise, we must merge the sets...
+      } else if (!I->Forward) {     // Otherwise, we must merge the sets...
         FoundSet->mergeSetIn(*I);     // Merge in contents...
       }
     }
