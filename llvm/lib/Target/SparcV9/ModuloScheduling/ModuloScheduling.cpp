@@ -77,6 +77,8 @@ namespace llvm {
   Statistic<> MSLoops("modulosched-schedLoops", "Number of loops successfully modulo-scheduled");
   Statistic<> IncreasedII("modulosched-increasedII", "Number of times we had to increase II");
   Statistic<> SingleBBLoops("modulosched-singeBBLoops", "Number of single basic block loops");
+  Statistic<> NoSched("modulosched-noSched", "No schedule");
+  Statistic<> SameStage("modulosched-sameStage", "Max stage is 0");
 
   template<>
   struct DOTGraphTraits<MSchedGraph*> : public DefaultDOTGraphTraits {
@@ -252,9 +254,13 @@ bool ModuloSchedulingPass::runOnFunction(Function &F) {
       ++MSLoops;
       Changed = true;
     }
-    else
+    else {
+      if(!haveSched)
+	++NoSched;
+      else
+	++SameStage;
       DEBUG(std::cerr << "Max stage is 0, so no change in loop or reached cap\n");
-    
+    }
     //Clear out our maps for the next basic block that is processed
     nodeToAttributesMap.clear();
     partialOrder.clear();

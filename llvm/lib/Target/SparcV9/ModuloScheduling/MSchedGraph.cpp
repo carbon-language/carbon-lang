@@ -112,11 +112,12 @@ void MSchedGraph::addNode(const MachineInstr *MI,
 void MSchedGraph::deleteNode(MSchedGraphNode *node) {
   
   //Delete the edge to this node from all predecessors
-  for(MSchedGraphNode::pred_iterator P = node->pred_begin(), PE = node->pred_end();
-      P != PE; ++P) {
-    (*P)->deleteSuccessor(node);
+  while(node->pred_size() > 0) {
+    //DEBUG(std::cerr << "Delete edge from: " << **P << " to " << *node << "\n"); 
+    MSchedGraphNode *pred = *(node->pred_begin());
+    pred->deleteSuccessor(node);
   }
-
+ 
   //Remove this node from the graph
   GraphMap.erase(node->getInst());
 
