@@ -95,6 +95,8 @@ public:
   virtual Instruction *clone() const { return new FreeInst(Operands[0]); }
 
   virtual const char *getOpcodeName() const { return "free"; }
+
+  virtual bool hasSideEffects() const { return true; }
 };
 
 
@@ -155,6 +157,8 @@ public:
 	    const string &Name = "");
   virtual Instruction *clone() const { return new StoreInst(*this); }
   virtual const char *getOpcodeName() const { return "store"; }  
+
+  virtual bool hasSideEffects() const { return true; }
 };
 
 

@@ -39,7 +39,7 @@ public:
   //
   inline const BasicBlock *getParent() const { return Parent; }
   inline       BasicBlock *getParent()       { return Parent; }
-  bool hasSideEffects() const { return false; }  // Memory & Call insts = true
+  virtual bool hasSideEffects() const { return false; }  // Memory & Call insts
 
   // ---------------------------------------------------------------------------
   // Subclass classification... getInstType() returns a member of 
