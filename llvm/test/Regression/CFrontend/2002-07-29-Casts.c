@@ -12,9 +12,9 @@ main(int argc, char** argv)
   unsigned char ubc0, uc2;
   unsigned short us2, usf1, usd1;
   int ic3, is3, sif1, sid1;
-  uint     uic4, uis4, uif1, uid1;
+  unsigned int     uic4, uis4, uif1, uid1;
   long     slf1, sld1;
-  ulong    ulf1, uld1;
+  unsigned long    ulf1, uld1;
   float    f1;
   double   d1;
   
