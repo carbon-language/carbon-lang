@@ -146,17 +146,22 @@ AliasAnalysis::AliasResult DSAA::alias(const Value *V1, unsigned V1Size,
 /// specified vector.
 ///
 void DSAA::getMustAliases(Value *P, std::vector<Value*> &RetVals) {
-  DSGraph *G = getGraphForValue(P);
-  if (!G) G = &TD->getGlobalsGraph();
-  
-  // The only must alias information we can currently determine occurs when the
-  // node for P is a global node with only one entry.
-  const DSGraph::ScalarMapTy &GSM = G->getScalarMap();
-  DSGraph::ScalarMapTy::const_iterator I = GSM.find(P);
-  if (I != GSM.end()) {
-    DSNode *N = I->second.getNode();
-    if (isSinglePhysicalObject(N))
-      RetVals.push_back(N->getGlobals()[0]);
+  // Currently the only must alias information we can provide is to say that
+  // something is equal to a global value. If we already have a global value,
+  // don't get worked up about it.
+  if (!isa<GlobalValue>(P)) {
+    DSGraph *G = getGraphForValue(P);
+    if (!G) G = &TD->getGlobalsGraph();
+    
+    // The only must alias information we can currently determine occurs when
+    // the node for P is a global node with only one entry.
+    const DSGraph::ScalarMapTy &GSM = G->getScalarMap();
+    DSGraph::ScalarMapTy::const_iterator I = GSM.find(P);
+    if (I != GSM.end()) {
+      DSNode *N = I->second.getNode();
+      if (N->isComplete() && isSinglePhysicalObject(N))
+        RetVals.push_back(N->getGlobals()[0]);
+    }
   }
 
   return getAnalysis<AliasAnalysis>().getMustAliases(P, RetVals);
