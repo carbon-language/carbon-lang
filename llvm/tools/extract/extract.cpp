@@ -1,5 +1,4 @@
-//===----------------------------------------------------------------------===//
-// LLVM extract Utility
+//===- extract.cpp - LLVM function extraction utility ---------------------===//
 //
 // This utility changes the input module to only contain a single function,
 // which is primarily used for debugging transformations.
@@ -8,7 +7,6 @@
 
 #include "llvm/Module.h"
 #include "llvm/PassManager.h"
-#include "llvm/Pass.h"
 #include "llvm/Bytecode/Reader.h"
 #include "llvm/Bytecode/WriteBytecodePass.h"
 #include "llvm/Transforms/IPO.h"
