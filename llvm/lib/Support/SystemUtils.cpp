@@ -12,13 +12,14 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define _POSIX_MAPPED_FILES
 #include "Support/SystemUtils.h"
 #include "Config/sys/types.h"
 #include "Config/sys/stat.h"
 #include "Config/fcntl.h"
 #include "Config/sys/wait.h"
+#include "Config/sys/mman.h"
 #include "Config/unistd.h"
-#include "Config/config.h"
 #include <algorithm>
 #include <fstream>
 #include <iostream>
@@ -268,3 +269,54 @@ int llvm::ExecWait(const char * const old_argv[],
   // Otherwise, return failure.
   return 1;
 }
+
+/// AllocateRWXMemory - Allocate a slab of memory with read/write/execute
+/// permissions.  This is typically used for JIT applications where we want
+/// to emit code to the memory then jump to it.  Getting this type of memory
+/// is very OS specific.
+///
+void *llvm::AllocateRWXMemory(unsigned NumBytes) {
+  if (NumBytes == 0) return 0;
+  static const long pageSize = sysconf(_SC_PAGESIZE);
+  unsigned NumPages = (NumBytes+pageSize-1)/pageSize;
+
+/* FIXME: This should use the proper autoconf flags */
+#if defined(i386) || defined(__i386__) || defined(__x86__)
+  /* Linux and *BSD tend to have these flags named differently. */
+#if defined(MAP_ANON) && !defined(MAP_ANONYMOUS)
+# define MAP_ANONYMOUS MAP_ANON
+#endif /* defined(MAP_ANON) && !defined(MAP_ANONYMOUS) */
+#elif defined(sparc) || defined(__sparc__) || defined(__sparcv9)
+/* nothing */
+#else
+  std::cerr << "This architecture is not supported by the JIT!\n";
+  abort();
+  return 0;
+#endif
+
+#ifdef HAVE_MMAP
+  int fd = -1;
+#if defined(__linux__)
+  fd = 0;
+#endif
+
+  unsigned mmapFlags = MAP_PRIVATE|MAP_ANONYMOUS;
+#ifdef MAP_NORESERVE
+  mmapFlags |= MAP_NORESERVE;
+#endif
+
+  void *pa = mmap(0, pageSize*NumPages, PROT_READ|PROT_WRITE|PROT_EXEC,
+                  mmapFlags, fd, 0);
+  if (pa == MAP_FAILED) {
+    perror("mmap");
+    abort();
+  }
+  return pa;
+#else
+  std::cerr << "Do not know how to allocate mem for the JIT without mmap!\n";
+  abort();
+  return 0;
+#endif
+}
+
+
