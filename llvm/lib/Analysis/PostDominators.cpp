@@ -4,7 +4,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Analysis/Dominators.h"
+#include "llvm/Analysis/PostDominators.h"
 #include "llvm/Transforms/Utils/UnifyFunctionExitNodes.h"
 #include "llvm/Support/CFG.h"
 #include "Support/DepthFirstIterator.h"
@@ -182,4 +182,8 @@ PostDominanceFrontier::calculate(const PostDominatorTree &DT,
   }
 
   return S;
+}
+
+// stub - a dummy function to make linking work ok.
+void PostDominanceFrontier::stub() {
 }

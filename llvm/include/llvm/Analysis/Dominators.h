@@ -15,8 +15,8 @@
 // 
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_DOMINATORS_H
-#define LLVM_DOMINATORS_H
+#ifndef LLVM_ANALYSIS_DOMINATORS_H
+#define LLVM_ANALYSIS_DOMINATORS_H
 
 #include "llvm/Pass.h"
 #include <set>
@@ -108,25 +108,6 @@ struct DominatorSet : public DominatorSetBase {
 };
 
 
-//===-------------------------------------
-// DominatorSet Class - Concrete subclass of DominatorSetBase that is used to
-// compute the post-dominator set.
-//
-struct PostDominatorSet : public DominatorSetBase {
-  PostDominatorSet() : DominatorSetBase(true) {}
-
-  virtual bool runOnFunction(Function &F);
-
-  // getAnalysisUsage - This obviously provides a dominator set, but it also
-  // uses the UnifyFunctionExitNode pass if building post-dominators
-  //
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const;
-};
-
-
-
-
-
 //===----------------------------------------------------------------------===//
 //
 // ImmediateDominators - Calculate the immediate dominator for each node in a
@@ -180,29 +161,6 @@ struct ImmediateDominators : public ImmediateDominatorsBase {
     AU.addRequired<DominatorSet>();
   }
 };
-
-
-//===-------------------------------------
-// ImmediatePostDominators Class - Concrete subclass of ImmediateDominatorsBase
-// that is used to compute the immediate post-dominators.
-//
-struct ImmediatePostDominators : public ImmediateDominatorsBase {
-  ImmediatePostDominators() : ImmediateDominatorsBase(true) {}
-
-  virtual bool runOnFunction(Function &F) {
-    IDoms.clear();     // Reset from the last time we were run...
-    PostDominatorSet &DS = getAnalysis<PostDominatorSet>();
-    Root = DS.getRoot();
-    calcIDoms(DS);
-    return false;
-  }
-
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-    AU.setPreservesAll();
-    AU.addRequired<PostDominatorSet>();
-  }
-};
-
 
 
 //===----------------------------------------------------------------------===//
@@ -284,30 +242,6 @@ private:
 };
 
 
-//===-------------------------------------
-// PostDominatorTree Class - Concrete subclass of DominatorTree that is used to
-// compute the a post-dominator tree.
-//
-struct PostDominatorTree : public DominatorTreeBase {
-  PostDominatorTree() : DominatorTreeBase(true) {}
-
-  virtual bool runOnFunction(Function &F) {
-    reset();     // Reset from the last time we were run...
-    PostDominatorSet &DS = getAnalysis<PostDominatorSet>();
-    Root = DS.getRoot();
-    calculate(DS);
-    return false;
-  }
-
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-    AU.setPreservesAll();
-    AU.addRequired<PostDominatorSet>();
-  }
-private:
-  void calculate(const PostDominatorSet &DS);
-};
-
-
 //===----------------------------------------------------------------------===//
 //
 // DominanceFrontier - Calculate the dominance frontiers for a function.
@@ -355,32 +289,6 @@ struct DominanceFrontier : public DominanceFrontierBase {
   }
 private:
   const DomSetType &calculate(const DominatorTree &DT,
-                              const DominatorTree::Node *Node);
-};
-
-
-//===-------------------------------------
-
-// PostDominanceFrontier Class - Concrete subclass of DominanceFrontier that is
-// used to compute the a post-dominance frontier.
-//
-struct PostDominanceFrontier : public DominanceFrontierBase {
-  PostDominanceFrontier() : DominanceFrontierBase(true) {}
-
-  virtual bool runOnFunction(Function &) {
-    Frontiers.clear();
-    PostDominatorTree &DT = getAnalysis<PostDominatorTree>();
-    Root = DT.getRoot();
-    calculate(DT, DT[Root]);
-    return false;
-  }
-
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-    AU.setPreservesAll();
-    AU.addRequired<PostDominatorTree>();
-  }
-private:
-  const DomSetType &calculate(const PostDominatorTree &DT,
                               const DominatorTree::Node *Node);
 };
 

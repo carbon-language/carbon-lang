@@ -10,7 +10,7 @@
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Type.h"
-#include "llvm/Analysis/Dominators.h"
+#include "llvm/Analysis/PostDominators.h"
 #include "llvm/iTerminators.h"
 #include "llvm/iPHINode.h"
 #include "llvm/Constant.h"
