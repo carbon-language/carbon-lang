@@ -2,7 +2,7 @@ LEVEL = ../..
 TOOLNAME = analyze
 USEDLIBS = asmparser bcreader scalaropts.a transforms.a analysis ipa \
            datastructure target.a transformutils.a vmcore support
-TOOLLINKOPTS = -ldl $(ExportSymbols)
+TOOLLINKOPTS = -ldl
 
 include $(LEVEL)/Makefile.common
 

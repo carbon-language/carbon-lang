@@ -22,8 +22,7 @@ USEDLIBS = mapping \
            transformutils \
            vmcore \
            support
-TOOLLINKOPTS = -ldl $(ExportSymbols)
-
+TOOLLINKOPTS = -ldl
 KEEP_SYMBOLS = 1
 
 include $(LEVEL)/Makefile.common

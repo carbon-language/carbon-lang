@@ -5,6 +5,6 @@ USEDLIBS = bcreader vmcore codegen x86 support.a target.a
 # Have gcc tell the linker to export symbols from the program so that
 # dynamically loaded modules can be linked against them.
 #
-TOOLLINKOPTS = -ldl $(ExportSymbols)
+TOOLLINKOPTS = -ldl
 
 include $(LEVEL)/Makefile.common
