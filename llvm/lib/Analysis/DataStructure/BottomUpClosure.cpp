@@ -160,7 +160,6 @@ DSGraph &BUDataStructures::calculateGraph(Function &F) {
             // The clone call may invalidate any of the vectors in the data
             // structure graph.  Strip locals and don't copy the list of callers
             DSNodeHandle RetVal = Graph->cloneInto(GI, OldValMap, OldNodeMap,
-                                                   /*StripScalars*/   true,
                                                    /*StripAllocas*/   true);
 
             // Resolve the arguments in the call to the actual values...
