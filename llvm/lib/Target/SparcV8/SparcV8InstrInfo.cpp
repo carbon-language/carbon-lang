@@ -30,8 +30,8 @@ bool SparcV8InstrInfo::isMoveInstr(const MachineInstr &MI,
     if (MI.getOperand(1).getReg() == V8::G0) {  // X = or G0, Y -> X = Y
       DstReg = MI.getOperand(0).getReg();
       SrcReg = MI.getOperand(2).getReg();
+      return true;
     }
-    return true;
   } else if (MI.getOpcode() == V8::FMOVS) {
     SrcReg = MI.getOperand(1).getReg();
     DstReg = MI.getOperand(0).getReg();
