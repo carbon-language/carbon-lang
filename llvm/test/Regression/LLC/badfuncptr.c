@@ -69,6 +69,6 @@ void *HashLookup(unsigned int key, Hash hash)
 int
 main()
 {
-  printf("&HashLookup = 0x%p\n", HashLookup);
+  printf("&HashLookup = %d\n", !!HashLookup);
   return 0;
 }
