@@ -326,15 +326,70 @@ ISel::visitSetCondInst (SetCondInst & I)
 ///   ret long, ulong  : Move value into EAX/EDX (?) and return
 ///   ret float/double : ?  Top of FP stack?  XMM0?
 ///
-void ISel::visitReturnInst(ReturnInst &I) {
-  if (I.getNumOperands() != 0) {  // Not 'ret void'?
-    // Move result into a hard register... then emit a ret
-    visitInstruction(I);  // abort
-  }
-
-  // Emit a simple 'ret' instruction... appending it to the end of the basic
-  // block
-  BuildMI(BB, X86::RET, 0);
+void
+ISel::visitReturnInst (ReturnInst & I)
+{
+  if (I.getNumOperands () == 1)
+    {
+      unsigned val = getReg (I.getOperand (0));
+      unsigned operandSize =
+	I.getOperand (0)->getType ()->getPrimitiveSize ();
+      bool isFP = I.getOperand (0)->getType ()->isFloatingPoint ();
+      if (isFP)
+	{
+	  // ret float/double: top of FP stack
+	  // FLD <val>
+	  switch (operandSize)
+	    {
+	    case 4:
+	      BuildMI (BB, X86::FLDr4, 1, X86::NoReg).addReg (val);
+	      break;
+	    case 8:
+	      BuildMI (BB, X86::FLDr8, 1, X86::NoReg).addReg (val);
+	      break;
+	    default:
+	      visitInstruction (I);
+	      break;
+	    }
+	}
+      else
+	{
+	  switch (operandSize)
+	    {
+	    case 1:
+	      // ret sbyte, ubyte: Extend value into EAX and return
+	      // MOV AL, <val>
+	      // CBW
+	      BuildMI (BB, X86::MOVrr8, 1, X86::AL).addReg (val);
+	      BuildMI (BB, X86::CBW, 0);
+	      break;
+	    case 2:
+	      // ret short, ushort: Extend value into EAX and return
+	      // MOV AX, <val>
+	      // CWDE
+	      BuildMI (BB, X86::MOVrr16, 1, X86::AX).addReg (val);
+	      BuildMI (BB, X86::CWDE, 0);
+	      break;
+	    case 4:
+	      // ret int, uint, ptr: Move value into EAX and return
+	      // MOV EAX, <val>
+	      BuildMI (BB, X86::MOVrr32, 1, X86::EAX).addReg (val);
+	      break;
+	    case 8:
+	      // ret long: use EAX(least significant 32 bits)/EDX (most
+	      // significant 32)...uh, I think so Brain, but how do i call
+	      // up the two parts of the value from inside this mouse
+	      // cage? *zort*
+	    default:
+	      // abort
+	      visitInstruction (I);
+	      break;
+	    }
+	}
+    }
+  // Emit a 'leave' and a 'ret'
+  BuildMI (BB, X86::LEAVE, 0);
+  BuildMI (BB, X86::RET, 0);
 }
 
 /// visitBranchInst - Handle conditional and unconditional branches here.  Note
