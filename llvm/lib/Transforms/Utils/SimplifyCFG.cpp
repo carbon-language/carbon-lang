@@ -512,6 +512,14 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
       
       Preds.pop_back();
     }
+
+    // If this block is now dead, remove it.
+    if (pred_begin(BB) == pred_end(BB)) {
+      // We know there are no successors, so just nuke the block.
+      M->getBasicBlockList().erase(BB);
+      return true;
+    }
+
   } else if (SwitchInst *SI = dyn_cast<SwitchInst>(BB->begin())) {
     // If the only instruction in this block is a switch instruction, see if we
     // can fold the switch instruction into a switch in a predecessor block.
