@@ -4,11 +4,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/ValueHolderImpl.h"
-#include "llvm/InstrTypes.h"
-#include "llvm/BasicBlock.h"
-#include "llvm/Method.h"
 #include "llvm/Module.h"
+#include "llvm/Method.h"
+#include "llvm/BasicBlock.h"
+#include "llvm/InstrTypes.h"
+#include "llvm/ValueHolderImpl.h"
+#include "llvm/Tools/STLExtras.h"
 
 // Instantiate Templates - This ugliness is the price we have to pay
 // for having a DefHolderImpl.h file seperate from DefHolder.h!  :(
@@ -40,3 +41,14 @@ void Module::dropAllReferences() {
   for (; MI != MethodList.end(); ++MI)
     (*MI)->dropAllReferences();
 }
+
+// reduceApply - Apply the specified function to all of the methods in this 
+// module.  The result values are or'd together and the result is returned.
+//
+bool Module::reduceApply(bool (*Func)(Method*)) {
+  return reduce_apply_bool(begin(), end(), Func);
+}
+bool Module::reduceApply(bool (*Func)(const Method*)) const {
+  return reduce_apply_bool(begin(), end(), Func);
+}
+
