@@ -210,7 +210,7 @@ Debug/%.o: %.c Debug/.dir Depend/.dir
 	$(CompileG) $< -o $@
 
 # Create a .cpp source file from a burg input file
-%.burm.cpp: %.burg
+%.burm.cpp: Debug/%.burg
 	$(RunBurg) $< -o $@
 
 # Create a .cpp source file from a flex input file... this uses sed to cut down
