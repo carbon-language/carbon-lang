@@ -248,8 +248,11 @@ def FSQRTS : F3_14<2, 0b110100, 0b000101001, "fsqrts">;  // fsqrts r, r
 def FSQRTD : F3_14<2, 0b110100, 0b000101010, "fsqrts">;  // fsqrts r, r
 def FSQRTQ : F3_14<2, 0b110100, 0b000101011, "fsqrts">;  // fsqrts r, r
 
-// FIXME: A.20: Flush Instruction Memory - p167
-// FIXME: A.21: Flush Register Windows - p169
+// A.20: Flush Instruction Memory - p167
+// Not currently used
+
+// A.21: Flush Register Windows - p169
+// Not currently used
 
 // A.22: Illegal instruction Trap - p170
 // Not currently used
@@ -338,43 +341,116 @@ def XNORcci : F3_2<2, 0b010111, "xnorcc">;       // xnorcc r, r, i
 // Not currently used in the Sparc backend
 
 // Section A.33: Move Floating-Point Register on Condition (FMOVcc)
-#if 0
+// ======================= Single Floating Point ======================
 // For integer condition codes
-def FMOVA   : F4_7<2, 0b110101, 0b1000, "fmova">;        // fmova r, r
-def FMOVN   : F4_7<2, 0b110101, 0b0000, "fmovn">;        // fmovn r, r
-def FMOVNE  : F4_7<2, 0b110101, 0b1001, "fmovne">;       // fmovne r, r
-def FMOVE   : F4_7<2, 0b110101, 0b0000, "fmove">;        // fmove r, r
-def FMOVG   : F4_7<2, 0b110101, 0b1010, "fmovg">;        // fmovg r, r
-def FMOVLE  : F4_7<2, 0b110101, 0b0000, "fmovle">;       // fmovle r, r
-def FMOVGE  : F4_7<2, 0b110101, 0b1011, "fmovge">;       // fmovge r, r
-def FMOVL   : F4_7<2, 0b110101, 0b0011, "fmovl">;        // fmovl r, r
-def FMOVGU  : F4_7<2, 0b110101, 0b1100, "fmovgu">;       // fmovgu r, r
-def FMOVLEU : F4_7<2, 0b110101, 0b0100, "fmovleu">;      // fmovleu r, r
-def FMOVCC  : F4_7<2, 0b110101, 0b1101, "fmovcc">;       // fmovcc r, r
-def FMOVCS  : F4_7<2, 0b110101, 0b0101, "fmovcs">;       // fmovcs r, r
-def FMOVPOS : F4_7<2, 0b110101, 0b1110, "fmovpos">;      // fmovpos r, r
-def FMOVNEG : F4_7<2, 0b110101, 0b0110, "fmovneg">;      // fmovneg r, r
-def FMOVVC  : F4_7<2, 0b110101, 0b1111, "fmovvc">;       // fmovvc r, r
-def FMOVVS  : F4_7<2, 0b110101, 0b0111, "fmovvs">;       // fmovvs r, r
+def FMOVSA   : F4_7<2, 0b110101, 0b1000, 0b000001, "fmovsa">;   // fmovsa   cc, r, r
+def FMOVSN   : F4_7<2, 0b110101, 0b0000, 0b000001, "fmovsn">;   // fmovsn   cc, r, r
+def FMOVSNE  : F4_7<2, 0b110101, 0b1001, 0b000001, "fmovsne">;  // fmovsne  cc, r, r
+def FMOVSE   : F4_7<2, 0b110101, 0b0000, 0b000001, "fmovse">;   // fmovse   cc, r, r
+def FMOVSG   : F4_7<2, 0b110101, 0b1010, 0b000001, "fmovsg">;   // fmovsg   cc, r, r
+def FMOVSLE  : F4_7<2, 0b110101, 0b0000, 0b000001, "fmovsle">;  // fmovsle  cc, r, r
+def FMOVSGE  : F4_7<2, 0b110101, 0b1011, 0b000001, "fmovsge">;  // fmovsge  cc, r, r
+def FMOVSL   : F4_7<2, 0b110101, 0b0011, 0b000001, "fmovsl">;   // fmovsl   cc, r, r
+def FMOVSGU  : F4_7<2, 0b110101, 0b1100, 0b000001, "fmovsgu">;  // fmovsgu  cc, r, r
+def FMOVSLEU : F4_7<2, 0b110101, 0b0100, 0b000001, "fmovsleu">; // fmovsleu cc, r, r
+def FMOVSCC  : F4_7<2, 0b110101, 0b1101, 0b000001, "fmovscc">;  // fmovscc  cc, r, r
+def FMOVSCS  : F4_7<2, 0b110101, 0b0101, 0b000001, "fmovscs">;  // fmovscs  cc, r, r
+def FMOVSPOS : F4_7<2, 0b110101, 0b1110, 0b000001, "fmovspos">; // fmovspos cc, r, r
+def FMOVSNEG : F4_7<2, 0b110101, 0b0110, 0b000001, "fmovsneg">; // fmovsneg cc, r, r
+def FMOVSVC  : F4_7<2, 0b110101, 0b1111, 0b000001, "fmovsvc">;  // fmovsvc  cc, r, r
+def FMOVSVS  : F4_7<2, 0b110101, 0b0111, 0b000001, "fmovsvs">;  // fmovsvs  cc, r, r
 
 // For floating-point condition codes
-def FMOVFA   : F4_7<2, 0b110101, 0b0100, "fmovfa">;      // fmovfa r, r
-def FMOVFN   : F4_7<2, 0b110101, 0b0000, "fmovfn">;      // fmovfa r, r
-def FMOVFU   : F4_7<2, 0b110101, 0b0111, "fmovfu">;      // fmovfu r, r
-def FMOVFG   : F4_7<2, 0b110101, 0b0110, "fmovfg">;      // fmovfg r, r
-def FMOVFUG  : F4_7<2, 0b110101, 0b0101, "fmovfug">;     // fmovfug r, r
-def FMOVFL   : F4_7<2, 0b110101, 0b0100, "fmovfl">;      // fmovfl r, r
-def FMOVFUL  : F4_7<2, 0b110101, 0b0011, "fmovful">;     // fmovful r, r
-def FMOVFLG  : F4_7<2, 0b110101, 0b0010, "fmovflg">;     // fmovflg r, r
-def FMOVFNE  : F4_7<2, 0b110101, 0b0001, "fmovfne">;     // fmovfne r, r
-def FMOVFE   : F4_7<2, 0b110101, 0b1001, "fmovfe">;      // fmovfe r, r
-def FMOVFUE  : F4_7<2, 0b110101, 0b1010, "fmovfue">;     // fmovfue r, r
-def FMOVGE   : F4_7<2, 0b110101, 0b1011, "fmovge">;      // fmovge r, r
-def FMOVFUGE : F4_7<2, 0b110101, 0b1100, "fmovfuge">;    // fmovfuge r, r
-def FMOVFLE  : F4_7<2, 0b110101, 0b1101, "fmovfle">;     // fmovfle r, r
-def FMOVFULE : F4_7<2, 0b110101, 0b1110, "fmovfule">;    // fmovfule r, r
-def FMOVFO   : F4_7<2, 0b110101, 0b1111, "fmovfo">;      // fmovfo r, r
-#endif
+def FMOVSFA   : F4_7<2, 0b110101, 0b0100, 0b000001, "fmovsfa">;  // fmovsfa   cc,r,r
+def FMOVSFN   : F4_7<2, 0b110101, 0b0000, 0b000001, "fmovsfn">;  // fmovsfa   cc,r,r
+def FMOVSFU   : F4_7<2, 0b110101, 0b0111, 0b000001, "fmovsfu">;  // fmovsfu   cc,r,r
+def FMOVSFG   : F4_7<2, 0b110101, 0b0110, 0b000001, "fmovsfg">;  // fmovsfg   cc,r,r
+def FMOVSFUG  : F4_7<2, 0b110101, 0b0101, 0b000001, "fmovsfug">; // fmovsfug  cc,r,r
+def FMOVSFL   : F4_7<2, 0b110101, 0b0100, 0b000001, "fmovsfl">;  // fmovsfl   cc,r,r
+def FMOVSFUL  : F4_7<2, 0b110101, 0b0011, 0b000001, "fmovsful">; // fmovsful  cc,r,r
+def FMOVSFLG  : F4_7<2, 0b110101, 0b0010, 0b000001, "fmovsflg">; // fmovsflg  cc,r,r
+def FMOVSFNE  : F4_7<2, 0b110101, 0b0001, 0b000001, "fmovsfne">; // fmovsfne  cc,r,r
+def FMOVSFE   : F4_7<2, 0b110101, 0b1001, 0b000001, "fmovsfe">;  // fmovsfe   cc,r,r
+def FMOVSFUE  : F4_7<2, 0b110101, 0b1010, 0b000001, "fmovsfue">; // fmovsfue  cc,r,r
+def FMOVSFGE  : F4_7<2, 0b110101, 0b1011, 0b000001, "fmovsge">;  // fmovsge   cc,r,r
+def FMOVSFUGE : F4_7<2, 0b110101, 0b1100, 0b000001, "fmovsfuge">;// fmovsfuge cc,r,r
+def FMOVSFLE  : F4_7<2, 0b110101, 0b1101, 0b000001, "fmovsfle">; // fmovsfle  cc,r,r
+def FMOVSFULE : F4_7<2, 0b110101, 0b1110, 0b000001, "fmovsfule">;// fmovsfule cc,r,r
+def FMOVSFO   : F4_7<2, 0b110101, 0b1111, 0b000001, "fmovsfo">;  // fmovsfo   cc,r,r
+
+// ======================= Double Floating Point ======================
+// For integer condition codes
+def FMOVDA   : F4_7<2, 0b110101, 0b1000, 0b000010, "fmovda">;   // fmovda   cc, r, r
+def FMOVDN   : F4_7<2, 0b110101, 0b0000, 0b000010, "fmovdn">;   // fmovdn   cc, r, r
+def FMOVDNE  : F4_7<2, 0b110101, 0b1001, 0b000010, "fmovdne">;  // fmovdne  cc, r, r
+def FMOVDE   : F4_7<2, 0b110101, 0b0000, 0b000010, "fmovde">;   // fmovde   cc, r, r
+def FMOVDG   : F4_7<2, 0b110101, 0b1010, 0b000010, "fmovdg">;   // fmovdg   cc, r, r
+def FMOVDLE  : F4_7<2, 0b110101, 0b0000, 0b000010, "fmovdle">;  // fmovdle  cc, r, r
+def FMOVDGE  : F4_7<2, 0b110101, 0b1011, 0b000010, "fmovdge">;  // fmovdge  cc, r, r
+def FMOVDL   : F4_7<2, 0b110101, 0b0011, 0b000010, "fmovdl">;   // fmovdl   cc, r, r
+def FMOVDGU  : F4_7<2, 0b110101, 0b1100, 0b000010, "fmovdgu">;  // fmovdgu  cc, r, r
+def FMOVDLEU : F4_7<2, 0b110101, 0b0100, 0b000010, "fmovdleu">; // fmovdleu cc, r, r
+def FMOVDCC  : F4_7<2, 0b110101, 0b1101, 0b000010, "fmovdcc">;  // fmovdcc  cc, r, r
+def FMOVDCS  : F4_7<2, 0b110101, 0b0101, 0b000010, "fmovdcs">;  // fmovdcs  cc, r, r
+def FMOVDPOS : F4_7<2, 0b110101, 0b1110, 0b000010, "fmovdpos">; // fmovdpos cc, r, r
+def FMOVDNEG : F4_7<2, 0b110101, 0b0110, 0b000010, "fmovdneg">; // fmovdneg cc, r, r
+def FMOVDVC  : F4_7<2, 0b110101, 0b1111, 0b000010, "fmovdvc">;  // fmovdvc  cc, r, r
+def FMOVDVS  : F4_7<2, 0b110101, 0b0111, 0b000010, "fmovdvs">;  // fmovdvs  cc, r, r
+
+// For floating-point condition codes
+def FMOVDFA   : F4_7<2, 0b110101, 0b0100, 0b000010, "fmovdfa">;  // fmovdfa   cc,r,r
+def FMOVDFN   : F4_7<2, 0b110101, 0b0000, 0b000010, "fmovdfn">;  // fmovdfa   cc,r,r
+def FMOVDFU   : F4_7<2, 0b110101, 0b0111, 0b000010, "fmovdfu">;  // fmovdfu   cc,r,r
+def FMOVDFG   : F4_7<2, 0b110101, 0b0110, 0b000010, "fmovdfg">;  // fmovdfg   cc,r,r
+def FMOVDFUG  : F4_7<2, 0b110101, 0b0101, 0b000010, "fmovdfug">; // fmovdfug  cc,r,r
+def FMOVDFL   : F4_7<2, 0b110101, 0b0100, 0b000010, "fmovdfl">;  // fmovdfl   cc,r,r
+def FMOVDFUL  : F4_7<2, 0b110101, 0b0011, 0b000010, "fmovdful">; // fmovdful  cc,r,r
+def FMOVDFLG  : F4_7<2, 0b110101, 0b0010, 0b000010, "fmovdflg">; // fmovdflg  cc,r,r
+def FMOVDFNE  : F4_7<2, 0b110101, 0b0001, 0b000010, "fmovdfne">; // fmovdfne  cc,r,r
+def FMOVDFE   : F4_7<2, 0b110101, 0b1001, 0b000010, "fmovdfe">;  // fmovdfe   cc,r,r
+def FMOVDFUE  : F4_7<2, 0b110101, 0b1010, 0b000010, "fmovdfue">; // fmovdfue  cc,r,r
+def FMOVDFGE  : F4_7<2, 0b110101, 0b1011, 0b000010, "fmovdge">;  // fmovdge   cc,r,r
+def FMOVDFUGE : F4_7<2, 0b110101, 0b1100, 0b000010, "fmovdfuge">;// fmovdfuge cc,r,r
+def FMOVDFLE  : F4_7<2, 0b110101, 0b1101, 0b000010, "fmovdfle">; // fmovdfle  cc,r,r
+def FMOVDFULE : F4_7<2, 0b110101, 0b1110, 0b000010, "fmovdfule">;// fmovdfule cc,r,r
+def FMOVDFO   : F4_7<2, 0b110101, 0b1111, 0b000010, "fmovdfo">;  // fmovdfo   cc,r,r
+
+// ======================= Quad Floating Point ======================
+// For integer condition codes
+def FMOVQA   : F4_7<2, 0b110101, 0b1000, 0b000011, "fmovqa">;   // fmovqa   cc, r, r
+def FMOVQN   : F4_7<2, 0b110101, 0b0000, 0b000011, "fmovqn">;   // fmovqn   cc, r, r
+def FMOVQNE  : F4_7<2, 0b110101, 0b1001, 0b000011, "fmovqne">;  // fmovqne  cc, r, r
+def FMOVQE   : F4_7<2, 0b110101, 0b0000, 0b000011, "fmovqe">;   // fmovqe   cc, r, r
+def FMOVQG   : F4_7<2, 0b110101, 0b1010, 0b000011, "fmovqg">;   // fmovqg   cc, r, r
+def FMOVQLE  : F4_7<2, 0b110101, 0b0000, 0b000011, "fmovqle">;  // fmovqle  cc, r, r
+def FMOVQGE  : F4_7<2, 0b110101, 0b1011, 0b000011, "fmovqge">;  // fmovqge  cc, r, r
+def FMOVQL   : F4_7<2, 0b110101, 0b0011, 0b000011, "fmovql">;   // fmovql   cc, r, r
+def FMOVQGU  : F4_7<2, 0b110101, 0b1100, 0b000011, "fmovqgu">;  // fmovqgu  cc, r, r
+def FMOVQLEU : F4_7<2, 0b110101, 0b0100, 0b000011, "fmovqleu">; // fmovqleu cc, r, r
+def FMOVQCC  : F4_7<2, 0b110101, 0b1101, 0b000011, "fmovqcc">;  // fmovqcc  cc, r, r
+def FMOVQCS  : F4_7<2, 0b110101, 0b0101, 0b000011, "fmovqcs">;  // fmovqcs  cc, r, r
+def FMOVQPOS : F4_7<2, 0b110101, 0b1110, 0b000011, "fmovqpos">; // fmovqpos cc, r, r
+def FMOVQNEG : F4_7<2, 0b110101, 0b0110, 0b000011, "fmovqneg">; // fmovqneg cc, r, r
+def FMOVQVC  : F4_7<2, 0b110101, 0b1111, 0b000011, "fmovqvc">;  // fmovqvc  cc, r, r
+def FMOVQVS  : F4_7<2, 0b110101, 0b0111, 0b000011, "fmovqvs">;  // fmovqvs  cc, r, r
+
+// For floating-point condition codes
+def FMOVQFA   : F4_7<2, 0b110101, 0b0100, 0b000011, "fmovqfa">;  // fmovqfa   cc,r,r
+def FMOVQFN   : F4_7<2, 0b110101, 0b0000, 0b000011, "fmovqfn">;  // fmovqfa   cc,r,r
+def FMOVQFU   : F4_7<2, 0b110101, 0b0111, 0b000011, "fmovqfu">;  // fmovqfu   cc,r,r
+def FMOVQFG   : F4_7<2, 0b110101, 0b0110, 0b000011, "fmovqfg">;  // fmovqfg   cc,r,r
+def FMOVQFUG  : F4_7<2, 0b110101, 0b0101, 0b000011, "fmovqfug">; // fmovqfug  cc,r,r
+def FMOVQFL   : F4_7<2, 0b110101, 0b0100, 0b000011, "fmovqfl">;  // fmovqfl   cc,r,r
+def FMOVQFUL  : F4_7<2, 0b110101, 0b0011, 0b000011, "fmovqful">; // fmovqful  cc,r,r
+def FMOVQFLG  : F4_7<2, 0b110101, 0b0010, 0b000011, "fmovqflg">; // fmovqflg  cc,r,r
+def FMOVQFNE  : F4_7<2, 0b110101, 0b0001, 0b000011, "fmovqfne">; // fmovqfne  cc,r,r
+def FMOVQFE   : F4_7<2, 0b110101, 0b1001, 0b000011, "fmovqfe">;  // fmovqfe   cc,r,r
+def FMOVQFUE  : F4_7<2, 0b110101, 0b1010, 0b000011, "fmovqfue">; // fmovqfue  cc,r,r
+def FMOVQFGE  : F4_7<2, 0b110101, 0b1011, 0b000011, "fmovqge">;  // fmovqge   cc,r,r
+def FMOVQFUGE : F4_7<2, 0b110101, 0b1100, 0b000011, "fmovqfuge">;// fmovqfuge cc,r,r
+def FMOVQFLE  : F4_7<2, 0b110101, 0b1101, 0b000011, "fmovqfle">; // fmovqfle  cc,r,r
+def FMOVQFULE : F4_7<2, 0b110101, 0b1110, 0b000011, "fmovqfule">;// fmovqfule cc,r,r
+def FMOVQFO   : F4_7<2, 0b110101, 0b1111, 0b000011, "fmovqfo">;  // fmovqfo   cc,r,r
 
 // Section A.34: Move FP Register on Integer Register condition (FMOVr) - p192
 def FMOVRSZ   : F4_6<2, 0b110101, 0b001, 0b00101, "fmovrsz">;  //fmovsrz r,r,rd

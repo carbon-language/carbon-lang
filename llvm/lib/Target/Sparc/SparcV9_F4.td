@@ -115,4 +115,21 @@ class F4_6<bits<2> opVal, bits<6> op3Val, bits<3> rcondVal,
   set Inst{9-5} = opf_lowVal;
 }
 
-// FIXME: F4 classes 7-9
+class F4_7<bits<2> opVal, bits<6> op3Val, bits<4> condVal,
+           bits<6> opf_lowVal, string name> : F4_cond {
+  bits<3> cc;
+  bits<5> rs2;
+  bits<5> rd;
+
+  set op   = opVal;
+  set op3  = op3Val;
+  set cond = condVal;
+  set Name = name;
+  set Inst{29-25} = rd;
+  set Inst{18}    = 0;
+  set Inst{13-11} = cc;
+  set Inst{10-5}  = opf_lowVal;
+  set Inst{4-0}   = rs2;
+}
+
+// FIXME: F4 classes 8-9
