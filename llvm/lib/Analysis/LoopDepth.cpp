@@ -1,4 +1,4 @@
-//===- LoopDepth.cpp - Loop Dpeth Calculation --------------------*- C++ -*--=//
+//===- LoopDepth.cpp - Loop Depth Calculation --------------------*- C++ -*--=//
 //
 // This file provides a simple class to calculate the loop depth of a 
 // BasicBlock.
