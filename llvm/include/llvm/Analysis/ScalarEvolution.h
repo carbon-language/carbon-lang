@@ -254,7 +254,7 @@ namespace llvm {
     /// addInsertedValue - Remember the specified instruction as being the
     /// canonical form for the specified SCEV.
     void addInsertedValue(Instruction *I, SCEV *S) {
-      InsertedExpressions[S] = I;
+      InsertedExpressions[S] = (Value*)I;
       InsertedInstructions.insert(I);
     }
 
