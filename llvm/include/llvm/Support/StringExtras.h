@@ -9,7 +9,7 @@
 
 #include <string>
 #include <stdio.h>
-#include "llvm/Support/DataTypes.h"
+#include "Support/DataTypes.h"
 
 class ConstPoolArray;
 

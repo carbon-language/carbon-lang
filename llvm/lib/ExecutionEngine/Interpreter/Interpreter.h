@@ -13,7 +13,7 @@
 
 #include "llvm/Module.h"
 #include "llvm/Method.h"
-#include "llvm/Support/DataTypes.h"
+#include "Support/DataTypes.h"
 #include "llvm/Assembly/CachedWriter.h"
 
 extern CachedWriter CW;     // Object to accellerate printing of LLVM

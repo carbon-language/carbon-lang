@@ -12,7 +12,6 @@
 #include "llvm/Type.h"
 #include "llvm/ConstPoolVals.h"
 #include "llvm/Assembly/Writer.h"
-#include "llvm/Support/DataTypes.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/GlobalVariable.h"
 #include <math.h>  // For fmod

@@ -11,7 +11,7 @@
 #define LLVM_TARGET_MACHINECACHEINFO_H
 
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/Support/DataTypes.h"
+#include "Support/DataTypes.h"
 #include <vector>
 
 

@@ -17,7 +17,7 @@
 
 #include <iterator>
 #include "llvm/CodeGen/InstrForest.h"
-#include "llvm/Support/DataTypes.h"
+#include "Support/DataTypes.h"
 #include "llvm/Support/NonCopyable.h"
 #include "llvm/Target/MachineInstrInfo.h"
 #include "llvm/Annotation.h"

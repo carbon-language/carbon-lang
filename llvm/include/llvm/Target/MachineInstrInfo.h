@@ -8,7 +8,7 @@
 #define LLVM_TARGET_MACHINEINSTRINFO_H
 
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/Support/DataTypes.h"
+#include "Support/DataTypes.h"
 #include <vector>
 
 class MachineInstrDescriptor;

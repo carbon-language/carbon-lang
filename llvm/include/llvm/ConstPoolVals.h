@@ -9,7 +9,7 @@
 #define LLVM_CONSTPOOLVALS_H
 
 #include "llvm/User.h"
-#include "llvm/Support/DataTypes.h"
+#include "Support/DataTypes.h"
 
 class ArrayType;
 class StructType;
