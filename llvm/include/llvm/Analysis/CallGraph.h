@@ -14,17 +14,20 @@
 // callgraph node keeps track of which functions the are called by the function
 // corresponding to the node.
 //
-// A call graph will contain nodes where the function that they correspond to is
-// null.  This 'external' node is used to represent control flow that is not
-// represented (or analyzable) in the module.  As such, the external node will
-// have edges to functions with the following properties:
-//   1. All functions in the module without internal linkage, since they could
-//      be called by functions outside of the our analysis capability.
+// A call graph may contain nodes where the function that they correspond to is
+// null.  These 'external' nodes are used to represent control flow that is not
+// represented (or analyzable) in the module.  In particular, this analysis
+// builds one external node such that:
+//   1. All functions in the module without internal linkage will have edges
+//      from this external node, indicating that they could be called by
+//      functions outside of the module.
 //   2. All functions whose address is used for something more than a direct
-//      call, for example being stored into a memory location.  Since they may
-//      be called by an unknown caller later, they must be tracked as such.
+//      call, for example being stored into a memory location will also have an
+//      edge from this external node.  Since they may be called by an unknown
+//      caller later, they must be tracked as such.
 //
-// Similarly, functions have a call edge to the external node iff:
+// There is a second external node added for calls that leave this module.
+// Functions have a call edge to the external node iff:
 //   1. The function is external, reflecting the fact that they could call
 //      anything without internal linkage or that has its address taken.
 //   2. The function contains an indirect function call.
@@ -68,9 +71,18 @@ class CallGraph : public Pass {
   FunctionMapTy FunctionMap;    // Map from a function to its node
 
   // Root is root of the call graph, or the external node if a 'main' function
-  // couldn't be found.  ExternalNode is equivalent to (*this)[0].
+  // couldn't be found.
   //
-  CallGraphNode *Root, *ExternalNode;
+  CallGraphNode *Root;
+
+  // ExternalCallingNode - This node has edges to all external functions and
+  // those internal functions that have their address taken.
+  CallGraphNode *ExternalCallingNode;
+
+  // CallsExternalNode - This node has edges to it from all functions making
+  // indirect calls or calling an external function.
+  CallGraphNode *CallsExternalNode;
+
 public:
 
   //===---------------------------------------------------------------------
@@ -79,11 +91,8 @@ public:
   typedef FunctionMapTy::iterator iterator;
   typedef FunctionMapTy::const_iterator const_iterator;
 
-  // getExternalNode - Return the node that points to all functions that are
-  // accessable from outside of the current program.
-  //
-        CallGraphNode *getExternalNode()       { return ExternalNode; }
-  const CallGraphNode *getExternalNode() const { return ExternalNode; }
+  CallGraphNode *getExternalCallingNode() const { return ExternalCallingNode; }
+  CallGraphNode *getCallsExternalNode()   const { return CallsExternalNode; }
 
   // getRoot - Return the root of the call graph, which is either main, or if
   // main cannot be found, the external node.
@@ -215,17 +224,19 @@ public:
     CalledFunctions.clear();
   }
 
-private:                    // Stuff to construct the node, used by CallGraph
-  friend class CallGraph;
-
-  // CallGraphNode ctor - Create a node for the specified function...
-  inline CallGraphNode(Function *f) : F(f) {}
-  
   // addCalledFunction add a function to the list of functions called by this
   // one
   void addCalledFunction(CallGraphNode *M) {
     CalledFunctions.push_back(M);
   }
+
+  void removeCallEdgeTo(CallGraphNode *Callee);
+
+private:                    // Stuff to construct the node, used by CallGraph
+  friend class CallGraph;
+
+  // CallGraphNode ctor - Create a node for the specified function...
+  inline CallGraphNode(Function *f) : F(f) {}
 };
 
 
@@ -257,7 +268,7 @@ template <> struct GraphTraits<const CallGraphNode*> {
 
 template<> struct GraphTraits<CallGraph*> : public GraphTraits<CallGraphNode*> {
   static NodeType *getEntryNode(CallGraph *CGN) {
-    return CGN->getExternalNode();  // Start at the external node!
+    return CGN->getExternalCallingNode();  // Start at the external node!
   }
   typedef std::pair<const Function*, CallGraphNode*> PairTy;
   typedef std::pointer_to_unary_function<PairTy, CallGraphNode&> DerefFun;
@@ -279,7 +290,7 @@ template<> struct GraphTraits<CallGraph*> : public GraphTraits<CallGraphNode*> {
 template<> struct GraphTraits<const CallGraph*> :
   public GraphTraits<const CallGraphNode*> {
   static NodeType *getEntryNode(const CallGraph *CGN) {
-    return CGN->getExternalNode();
+    return CGN->getExternalCallingNode();
   }
   // nodes_iterator/begin/end - Allow iteration over all nodes in the graph
   typedef CallGraph::const_iterator nodes_iterator;

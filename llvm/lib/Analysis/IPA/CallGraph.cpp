@@ -7,41 +7,7 @@
 // 
 //===----------------------------------------------------------------------===//
 //
-// This interface is used to build and manipulate a call graph, which is a very 
-// useful tool for interprocedural optimization.
-//
-// Every function in a module is represented as a node in the call graph.  The
-// callgraph node keeps track of which functions the are called by the function
-// corresponding to the node.
-//
-// A call graph will contain nodes where the function that they correspond to is
-// null.  This 'external' node is used to represent control flow that is not
-// represented (or analyzable) in the module.  As such, the external node will
-// have edges to functions with the following properties:
-//   1. All functions in the module without internal linkage, since they could
-//      be called by functions outside of the our analysis capability.
-//   2. All functions whose address is used for something more than a direct
-//      call, for example being stored into a memory location.  Since they may
-//      be called by an unknown caller later, they must be tracked as such.
-//
-// Similarly, functions have a call edge to the external node iff:
-//   1. The function is external, reflecting the fact that they could call
-//      anything without internal linkage or that has its address taken.
-//   2. The function contains an indirect function call.
-//
-// As an extension in the future, there may be multiple nodes with a null
-// function.  These will be used when we can prove (through pointer analysis)
-// that an indirect call site can call only a specific set of functions.
-//
-// Because of these properties, the CallGraph captures a conservative superset
-// of all of the caller-callee relationships, which is useful for
-// transformations.
-//
-// The CallGraph class also attempts to figure out what the root of the
-// CallGraph is, which is currently does by looking for a function named 'main'.
-// If no function named 'main' is found, the external node is used as the entry
-// node, reflecting the fact that any function without internal linkage could
-// be called into (which is common for libraries).
+//  This file implements the CallGraph class.
 //
 //===----------------------------------------------------------------------===//
 
@@ -52,142 +18,9 @@
 #include "llvm/iTerminators.h"
 #include "llvm/Support/CallSite.h"
 #include "Support/STLExtras.h"
-
-namespace llvm {
+using namespace llvm;
 
 static RegisterAnalysis<CallGraph> X("callgraph", "Call Graph Construction");
-
-static const char * const KnownExternalFunctions[] = {
-  // Low-level system calls
-  "open",
-  "read",
-  "write",
-  "writev",
-  "lseek",
-  "poll",
-  "ioctl",
-
-  // Low-level stdc library functions
-  "abort", "exit",
-  "getenv", "putenv",
-  
-  // Standard IO functions
-  "printf",
-  "sprintf",
-  "fopen",
-  "freopen",
-  "fclose",
-  "fwrite",
-  "puts",
-  "fputs",
-  "getc",
-  "ungetc",
-  "putc",
-  "putchar",
-  "fread",
-  "fileno",
-  "ftell",
-  "fflush",
-  "fseek",
-  "fileno",
-  "ferror",
-  "feof",
-  "fdopen",
-  "__fxstat",
-  "setbuf",
-  "setbuffer",
-  "etlinebuf",
-  "setvbuf",
-
-  // Memory functions
-  "malloc",
-  "free",
-  "realloc",
-  "calloc",
-  "memalign",
-  
-  // String functions
-  "atoi",
-  "memmove",
-  "memset",
-  "memchr",
-  "memcmp",
-  "strchr",
-  "strncpy",
-  "strncmp",
-  "strcmp",
-  "strtok",
-  "__strcoll_l",
-  "__strxfrm_l",
-  "__strftime_l",
-  "__strtol_l",
-  "__strtoul_l",
-  "__strtoll_l",
-  "__strtoull_l",
-  "__strtof_l",
-  "__strtod_l",
-  "__strtold_l",
-  "isalpha",
-
-  // Math functions
-  "exp", "sqrt", "cbrt", "hypot",
-  "log", "log10", "pow",
-  "sin", "cos", "tan",
-  "asin", "acos", "atan", "atan2",
-
-  // Locale functions
-  "__uselocale",
-  "__newlocale",
-  "__freelocale",
-  "__duplocale",
-  "__nl_langinfo_l",
-
-  // gettext functions used by libstdc++
-  "gettext",
-  "dgettext",
-  "dcgettext",
-  "textdomain",
-  "bindtextdomain",
-  
-  // Random stuff
-  "__assert_fail",
-  "__errno_location",
-  "clock", "time",
-  "__main",
-};
-
-
-/// ExternalFunctionDoesntCallIntoProgram - This hack is used to indicate to the
-/// call graph that the specified external function is _KNOWN_ to not call back
-/// into the program.  This is important, because otherwise functions which call
-/// "printf" for example, end up in a great big SCC that goes from the function
-/// through main.
-///
-static bool ExternalFunctionDoesntCallIntoProgram(const std::string &Name) {
-  static std::vector<std::string> Funcs;
-
-  // First time this is called?
-  if (Funcs.empty()) {
-    // Add a whole bunch of functions which are often used...
-    Funcs.insert(Funcs.end(), KnownExternalFunctions,
-                 KnownExternalFunctions+
-              sizeof(KnownExternalFunctions)/sizeof(KnownExternalFunctions[0]));
-    // Sort the list for efficient access
-    std::sort(Funcs.begin(), Funcs.end());
-  }
-
-  if (Name.size() > 7 && !memcmp("__llvm_", Name.c_str(), 7))
-    return true;
-
-  // Binary search for the function name...
-  std::vector<std::string>::iterator I =
-    std::lower_bound(Funcs.begin(), Funcs.end(), Name);
-
-  // Found it?
-  return I != Funcs.end() && *I == Name;
-}
-
-
 
 // getNodeFor - Return the node for the specified function or create one if it
 // does not already exist.
@@ -215,12 +48,12 @@ void CallGraph::addToCallGraph(Function *F) {
 
   // If this function has external linkage, anything could call it...
   if (!F->hasInternalLinkage()) {
-    ExternalNode->addCalledFunction(Node);
+    ExternalCallingNode->addCalledFunction(Node);
 
     // Found the entry point?
     if (F->getName() == "main") {
-      if (Root)
-        Root = ExternalNode;  // Found multiple external mains?  Don't pick one.
+      if (Root)    // Found multiple external mains?  Don't pick one.
+        Root = ExternalCallingNode;
       else
         Root = Node;          // Found a main, keep track of it!
     }
@@ -228,9 +61,8 @@ void CallGraph::addToCallGraph(Function *F) {
   
   // If this function is not defined in this translation unit, it could call
   // anything.
-  if (F->isExternal() && !F->getIntrinsicID() && 
-      !ExternalFunctionDoesntCallIntoProgram(F->getName()))
-    Node->addCalledFunction(ExternalNode);
+  if (F->isExternal() && !F->getIntrinsicID())
+    Node->addCalledFunction(CallsExternalNode);
 
   // Loop over all of the users of the function... looking for callers...
   //
@@ -259,14 +91,14 @@ void CallGraph::addToCallGraph(Function *F) {
     }
   }
   if (isUsedExternally)
-    ExternalNode->addCalledFunction(Node);
+    ExternalCallingNode->addCalledFunction(Node);
 
   // Look for an indirect function call...
   for (Function::iterator BB = F->begin(), BBE = F->end(); BB != BBE; ++BB)
     for (BasicBlock::iterator II = BB->begin(), IE = BB->end(); II != IE; ++II){
       CallSite CS = CallSite::get(II);
       if (CS.getInstruction() && !CS.getCalledFunction())
-        Node->addCalledFunction(ExternalNode);
+        Node->addCalledFunction(CallsExternalNode);
     }
 }
 
@@ -274,7 +106,8 @@ bool CallGraph::run(Module &M) {
   destroy();
 
   Mod = &M;
-  ExternalNode = getNodeFor(0);
+  ExternalCallingNode = getNodeFor(0);
+  CallsExternalNode = new CallGraphNode(0);
   Root = 0;
 
   // Add every function to the call graph...
@@ -282,7 +115,7 @@ bool CallGraph::run(Module &M) {
     addToCallGraph(I);
 
   // If we didn't find a main function, use the external call graph node
-  if (Root == 0) Root = ExternalNode;
+  if (Root == 0) Root = ExternalCallingNode;
   
   return false;
 }
@@ -328,7 +161,7 @@ void CallGraph::print(std::ostream &o, const Module *M) const {
 // Functions to keep a call graph up to date with a function that has been
 // modified
 //
-void CallGraph::addFunctionToModule(Function *Meth) {
+void CallGraph::addFunctionToModule(Function *F) {
   assert(0 && "not implemented");
   abort();
 }
@@ -352,4 +185,12 @@ Function *CallGraph::removeFunctionFromModule(CallGraphNode *CGN) {
 
 void CallGraph::stub() {}
 
-} // End llvm namespace
+void CallGraphNode::removeCallEdgeTo(CallGraphNode *Callee) {
+  for (unsigned i = CalledFunctions.size(); ; --i) {
+    assert(i && "Cannot find callee to remove!");
+    if (CalledFunctions[i-1] == Callee) {
+      CalledFunctions.erase(CalledFunctions.begin()+i-1);
+      return;
+    }
+  }
+}
