@@ -81,13 +81,25 @@ void DefaultIntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
     // never optimized (ie, right out of the CFE), or if it has been hacked on
     // by the lowerinvoke pass.  In both cases, the right thing to do is to
     // convert the call to an explicit setjmp or longjmp call.
-  case Intrinsic::setjmp:
-  case Intrinsic::sigsetjmp:
+  case Intrinsic::setjmp: {
+    static Function *SetjmpFCache = 0;
+    Value *V = ReplaceCallWith("setjmp", CI, CI->op_begin()+1, CI->op_end(),
+                               Type::IntTy, SetjmpFCache);
     if (CI->getType() != Type::VoidTy)
-      CI->replaceAllUsesWith(Constant::getNullValue(CI->getType()));
+      CI->replaceAllUsesWith(V);
     break;
+  }
+  case Intrinsic::sigsetjmp: 
+     if (CI->getType() != Type::VoidTy)
+       CI->replaceAllUsesWith(Constant::getNullValue(CI->getType()));
+     break;
 
   case Intrinsic::longjmp:
+    static Function *LongjmpFCache = 0;
+    ReplaceCallWith("longjmp", CI, CI->op_begin()+1, CI->op_end(),
+                    Type::VoidTy, LongjmpFCache);
+    break;
+
   case Intrinsic::siglongjmp:
     // Insert the call to abort
     static Function *AbortFCache = 0;
