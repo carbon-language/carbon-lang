@@ -80,9 +80,9 @@ namespace llvm {
             }
         };
 
-        struct EndPointComp {
-            bool operator()(const Interval& lhs, const Interval& rhs) {
-                return lhs.ranges.back().second < rhs.ranges.back().second;
+        struct StartPointPtrComp {
+            bool operator()(const Interval* lhs, const Interval* rhs) {
+                return lhs->ranges.front().first < rhs->ranges.front().first;
             }
         };
 
@@ -164,7 +164,9 @@ namespace llvm {
 
         Intervals& getIntervals() { return intervals_; }
 
-        void updateSpilledInterval(Interval& i, VirtRegMap& vrm, int slot);
+        std::vector<Interval*> addIntervalsForSpills(const Interval& i,
+                                                     VirtRegMap& vrm,
+                                                     int slot);
 
     private:
         /// computeIntervals - compute live intervals

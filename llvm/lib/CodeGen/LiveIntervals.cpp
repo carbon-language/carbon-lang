@@ -186,19 +186,23 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
     return true;
 }
 
-void LiveIntervals::updateSpilledInterval(Interval& li,
-                                          VirtRegMap& vrm,
-                                          int slot)
+std::vector<LiveIntervals::Interval*>
+LiveIntervals::addIntervalsForSpills(const Interval& li,
+                                     VirtRegMap& vrm,
+                                     int slot)
 {
+    std::vector<Interval*> added;
+
     assert(li.weight != HUGE_VAL &&
            "attempt to spill already spilled interval!");
-    Interval::Ranges oldRanges;
-    swap(oldRanges, li.ranges);
 
-    DEBUG(std::cerr << "\t\t\t\tupdating interval: " << li);
+    DEBUG(std::cerr << "\t\t\t\tadding intervals for spills for interval: "
+          << li << '\n');
 
-    for (Interval::Ranges::iterator i = oldRanges.begin(), e = oldRanges.end();
-         i != e; ++i) {
+    const TargetRegisterClass* rc = mf_->getSSARegMap()->getRegClass(li.reg);
+
+    for (Interval::Ranges::const_iterator
+             i = li.ranges.begin(), e = li.ranges.end(); i != e; ++i) {
         unsigned index = getBaseIndex(i->first);
         unsigned end = getBaseIndex(i->second-1) + InstrSlots::NUM;
         for (; index < end; index += InstrSlots::NUM) {
@@ -240,16 +244,31 @@ void LiveIntervals::updateSpilledInterval(Interval& li,
                         unsigned end = 1 + (mop.isDef() ?
                                             getUseIndex(index+InstrSlots::NUM) :
                                             getUseIndex(index));
-                        li.addRange(start, end);
+
+                        // create a new register for this spill
+                        unsigned nReg =
+                            mf_->getSSARegMap()->createVirtualRegister(rc);
+                        mi->SetMachineOperandReg(i, nReg);
+                        vrm.grow();
+                        vrm.assignVirt2StackSlot(nReg, slot);
+                        Interval& nI = getOrCreateInterval(nReg);
+                        assert(nI.empty());
+                        // the spill weight is now infinity as it
+                        // cannot be spilled again
+                        nI.weight = HUGE_VAL;
+                        nI.addRange(start, end);
+                        added.push_back(&nI);
+                        // update live variables
+                        lv_->addVirtualRegisterKilled(nReg, mi->getParent(),mi);
+                        DEBUG(std::cerr << "\t\t\t\tadded new interval: "
+                              << nI << '\n');
                     }
                 }
             }
         }
     }
-    // the new spill weight is now infinity as it cannot be spilled again
-    li.weight = HUGE_VAL;
-    DEBUG(std::cerr << '\n');
-    DEBUG(std::cerr << "\t\t\t\tupdated interval: " << li << '\n');
+
+    return added;
 }
 
 void LiveIntervals::printRegName(unsigned reg) const

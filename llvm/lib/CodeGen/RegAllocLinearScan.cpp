@@ -27,6 +27,7 @@
 #include <algorithm>
 #include <cmath>
 #include <iostream>
+#include <set>
 
 using namespace llvm;
 
@@ -366,24 +367,26 @@ void RA::assignRegOrStackSlotAtInterval(IntervalPtrs::value_type cur)
     DEBUG(std::cerr << "\t\tregister with min weight: "
           << mri_->getName(minReg) << " (" << minWeight << ")\n");
 
-    // if the current has the minimum weight, we need to modify it,
-    // push it back in unhandled and let the linear scan algorithm run
-    // again
+    // if the current has the minimum weight, we need to spill it and
+    // add any added intervals back to unhandled, and restart
+    // linearscan.
     if (cur->weight <= minWeight) {
         DEBUG(std::cerr << "\t\t\tspilling(c): " << *cur << '\n';);
         int slot = vrm_->assignVirt2StackSlot(cur->reg);
-        li_->updateSpilledInterval(*cur, *vrm_, slot);
+        std::vector<LiveIntervals::Interval*> added =
+            li_->addIntervalsForSpills(*cur, *vrm_, slot);
 
-        // if we didn't eliminate the interval find where to add it
-        // back to unhandled. We need to scan since unhandled are
-        // sorted on earliest start point and we may have changed our
-        // start point.
-        if (!cur->empty()) {
-            IntervalPtrs::iterator it = unhandled_.begin();
-            while (it != unhandled_.end() && (*it)->start() < cur->start())
-                ++it;
-            unhandled_.insert(it, cur);
+        // merge added with unhandled
+        std::vector<LiveIntervals::Interval*>::iterator addedIt = added.begin();
+        std::vector<LiveIntervals::Interval*>::iterator addedItEnd = added.end();
+        for (IntervalPtrs::iterator i = unhandled_.begin(), e = unhandled_.end();
+             i != e && addedIt != addedItEnd; ++i) {
+            if ((*i)->start() > (*addedIt)->start())
+                i = unhandled_.insert(i, *(addedIt++));
         }
+        while (addedIt != addedItEnd)
+            unhandled_.push_back(*(addedIt++));
+
         return;
     }
 
@@ -395,6 +398,7 @@ void RA::assignRegOrStackSlotAtInterval(IntervalPtrs::value_type cur)
     // otherwise we spill all intervals aliasing the register with
     // minimum weight, rollback to the interval with the earliest
     // start point and let the linear scan algorithm run again
+    std::vector<LiveIntervals::Interval*> added;
     assert(MRegisterInfo::isPhysicalRegister(minReg) &&
            "did not choose a register to spill?");
     std::vector<bool> toSpill(mri_->getNumRegs(), false);
@@ -402,6 +406,8 @@ void RA::assignRegOrStackSlotAtInterval(IntervalPtrs::value_type cur)
     for (const unsigned* as = mri_->getAliasSet(minReg); *as; ++as)
         toSpill[*as] = true;
     unsigned earliestStart = cur->start();
+
+    std::set<unsigned> spilled;
 
     for (IntervalPtrs::iterator i = active_.begin(); i != active_.end(); ++i) {
         unsigned reg = (*i)->reg;
@@ -411,7 +417,10 @@ void RA::assignRegOrStackSlotAtInterval(IntervalPtrs::value_type cur)
             DEBUG(std::cerr << "\t\t\tspilling(a): " << **i << '\n');
             earliestStart = std::min(earliestStart, (*i)->start());
             int slot = vrm_->assignVirt2StackSlot((*i)->reg);
-            li_->updateSpilledInterval(**i, *vrm_, slot);
+            std::vector<LiveIntervals::Interval*> newIs =
+                li_->addIntervalsForSpills(**i, *vrm_, slot);
+            std::copy(newIs.begin(), newIs.end(), std::back_inserter(added));
+            spilled.insert(reg);
         }
     }
     for (IntervalPtrs::iterator i = inactive_.begin();
@@ -423,7 +432,10 @@ void RA::assignRegOrStackSlotAtInterval(IntervalPtrs::value_type cur)
             DEBUG(std::cerr << "\t\t\tspilling(i): " << **i << '\n');
             earliestStart = std::min(earliestStart, (*i)->start());
             int slot = vrm_->assignVirt2StackSlot((*i)->reg);
-            li_->updateSpilledInterval(**i, *vrm_, slot);
+            std::vector<LiveIntervals::Interval*> newIs =
+                li_->addIntervalsForSpills(**i, *vrm_, slot);
+            std::copy(newIs.begin(), newIs.end(), std::back_inserter(added));
+            spilled.insert(reg);
         }
     }
 
@@ -433,7 +445,7 @@ void RA::assignRegOrStackSlotAtInterval(IntervalPtrs::value_type cur)
     while (!handled_.empty()) {
         IntervalPtrs::value_type i = handled_.back();
         // if this interval starts before t we are done
-        if (!i->empty() && i->start() < earliestStart)
+        if (i->start() < earliestStart)
             break;
         DEBUG(std::cerr << "\t\t\tundo changes for: " << *i << '\n');
         handled_.pop_back();
@@ -445,20 +457,10 @@ void RA::assignRegOrStackSlotAtInterval(IntervalPtrs::value_type cur)
                 unhandled_.push_front(i);
             }
             else {
+                if (!spilled.count(i->reg))
+                    unhandled_.push_front(i);
                 prt_->delRegUse(vrm_->getPhys(i->reg));
                 vrm_->clearVirt(i->reg);
-                if (i->spilled()) {
-                    if (!i->empty()) {
-                        IntervalPtrs::iterator it = unhandled_.begin();
-                        while (it != unhandled_.end() &&
-                               (*it)->start() < i->start())
-                            ++it;
-                        unhandled_.insert(it, i);
-                    }
-                }
-                else
-                    unhandled_.push_front(i);
-
             }
         }
         else if ((it = find(inactive_.begin(), inactive_.end(), i)) != inactive_.end()) {
@@ -466,18 +468,9 @@ void RA::assignRegOrStackSlotAtInterval(IntervalPtrs::value_type cur)
             if (MRegisterInfo::isPhysicalRegister(i->reg))
                 unhandled_.push_front(i);
             else {
-                vrm_->clearVirt(i->reg);
-                if (i->spilled()) {
-                    if (!i->empty()) {
-                        IntervalPtrs::iterator it = unhandled_.begin();
-                        while (it != unhandled_.end() &&
-                               (*it)->start() < i->start())
-                            ++it;
-                        unhandled_.insert(it, i);
-                    }
-                }
-                else
+                if (!spilled.count(i->reg))
                     unhandled_.push_front(i);
+                vrm_->clearVirt(i->reg);
             }
         }
         else {
@@ -501,6 +494,19 @@ void RA::assignRegOrStackSlotAtInterval(IntervalPtrs::value_type cur)
                 prt_->addRegUse(vrm_->getPhys((*i)->reg));
         }
     }
+
+    std::sort(added.begin(), added.end(), LiveIntervals::StartPointPtrComp());
+    // merge added with unhandled
+    std::vector<LiveIntervals::Interval*>::iterator addedIt = added.begin();
+    std::vector<LiveIntervals::Interval*>::iterator addedItEnd = added.end();
+    for (IntervalPtrs::iterator i = unhandled_.begin(), e = unhandled_.end();
+         i != e && addedIt != addedItEnd; ++i) {
+        if ((*i)->start() > (*addedIt)->start())
+            i = unhandled_.insert(i, *(addedIt++));
+    }
+    while (addedIt != addedItEnd)
+        unhandled_.push_back(*(addedIt++));
+
 }
 
 unsigned RA::getFreePhysReg(IntervalPtrs::value_type cur)
