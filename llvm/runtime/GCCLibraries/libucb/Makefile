@@ -1,6 +1,6 @@
 LEVEL = ../../..
+BYTECODE_LIBRARY=1
+DONT_BUILD_RELINKED=1
+LIBRARYNAME=ucb
 
-LIBNAME = ucb
-
-include ../Makefile.libs
-
+include $(LEVEL)/Makefile.common

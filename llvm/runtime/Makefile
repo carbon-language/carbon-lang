@@ -1,7 +1,7 @@
 # Libraries Makefile:  Build all subdirectories automatically
 
 LEVEL = ../..
-DIRS  := $(sort $(filter-out Output/, $(filter-out CVS/, $(wildcard */))))
+PARALLEL_DIRS  := $(sort $(filter-out Output/, $(filter-out CVS/, $(wildcard */))))
 
 include ${LEVEL}/Makefile.common
 

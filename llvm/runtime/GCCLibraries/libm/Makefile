@@ -1,6 +1,7 @@
 LEVEL = ../../..
+BYTECODE_LIBRARY=1
+DONT_BUILD_RELINKED=1
+LIBRARYNAME=m
 
-LIBNAME = m
-
-include ../Makefile.libs
+include $(LEVEL)/Makefile.common
 
