@@ -32,8 +32,6 @@ debug-opt-prof:
 	$(Verb) $(MAKE) ENABLE_PROFILING=1
 
 dist-hook::
-	$(Echo) Eliminating CVS directories from distribution
-	$(Verb) $(RM) -rf `find $(TopDistDir) -type d -name CVS -print`
 	$(Echo) Eliminating files constructed by configure
 	$(Verb) $(RM) -f \
 	  $(TopDistDir)/include/llvm/ADT/hash_map  \
