@@ -15,6 +15,7 @@
   <li><a href="#what">What is this?</a></li>
   <li><a href="#improving">Improving the current system</a>
   <ol>
+    <li><a href="#code-cleanups">Implementing Code Cleanup bugs</a></li>
     <li><a href="#glibc">Port glibc to LLVM</a></li>
     <li><a href="#programs">Compile programs with the LLVM Compiler</a></li>
     <li><a href="#llvm_ir">Extend the LLVM intermediate representation</a></li>
@@ -23,6 +24,7 @@
 
   <li><a href="#new">Adding new capabilities to LLVM</a>
   <ol>
+    <li><a href="#newfeaturebugs">Implementing new feature PRs</a></li>
     <li><a href="#pointeranalysis">Pointer and Alias Analysis</a></li>
     <li><a href="#profileguided">Profile Guided Optimization</a></li>
     <li><a href="#xforms">New Transformations and Analyses</a></li>
@@ -76,6 +78,22 @@ LLVM bug tracker</a>. See the <a href="http://llvm.cs.uiuc.edu/bugs/buglist.cgi?
 <p>Improvements to the current infrastructure are always very welcome and tend
 to be fairly straight-forward to implement.  Here are some of the key areas that
 can use improvement...</p>
+
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="code-cleanups">Implementing Code Cleanup bugs</a>
+</div>
+
+<div class="doc_text">
+
+<p>
+The <a href="http://llvm.cs.uiuc.edu/bugs/">LLVM bug tracker</a> occasionally
+has <a href="http://llvm.cs.uiuc.edu/bugs/buglist.cgi?short_desc_type=allwordssubstr&short_desc=&long_desc_type=allwordssubstr&long_desc=&bug_file_loc_type=allwordssubstr&bug_file_loc=&status_whiteboard_type=allwordssubstr&status_whiteboard=&keywords_type=allwords&keywords=code-cleanup&bug_status=NEW&bug_status=ASSIGNED&bug_status=REOPENED&emailassigned_to1=1&emailtype1=substring&email1=&emailassigned_to2=1&emailreporter2=1&emailcc2=1&emailtype2=substring&email2=&bugidtype=include&bug_id=&votes=&changedin=&chfieldfrom=&chfieldto=Now&chfieldvalue=&cmdtype=doit&order=Bug+Number&field0-0-0=noop&type0-0-0=noop&value0-0-0=">"code-cleanup" bugs</a> filed in it.  Taking one of these and fixing it is a good
+way to get your feet wet in the LLVM code and discover how some of its components
+work.
+</p>
 
 </div>
 
@@ -173,6 +191,18 @@ Irreducible Loops</a>.</li>
 <p>Sometimes creating new things is more fun than improving existing things.
 These projects tend to be more involved and perhaps require more work, but can
 also be very rewarding.</p>
+
+</div>
+
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="newfeaturebugs">Implementing new feature PRs</a>
+</div>
+
+<div class="doc_text">
+
+<p>Many ideas for feature requests are stored in LLVM bugzilla.  Just <a href="http://llvm.org/bugs/buglist.cgi?short_desc_type=allwordssubstr&short_desc=&long_desc_type=allwordssubstr&long_desc=&bug_file_loc_type=allwordssubstr&bug_file_loc=&status_whiteboard_type=allwordssubstr&status_whiteboard=&keywords_type=allwords&keywords=new-feature&bug_status=UNCONFIRMED&bug_status=NEW&bug_status=ASSIGNED&bug_status=REOPENED&emailassigned_to1=1&emailtype1=substring&email1=&emailassigned_to2=1&emailreporter2=1&emailcc2=1&emailtype2=substring&email2=&bugidtype=include&bug_id=&votes=&changedin=&chfieldfrom=&chfieldto=Now&chfieldvalue=&cmdtype=doit&namedcmd=All+PRs&newqueryname=&order=Bug+Number&field0-0-0=noop&type0-0-0=noop&value0-0-0=">search for bugs with a "new-feature" keyword</a>.</p>
 
 </div>
 
