@@ -31,13 +31,6 @@ static int getConstantValue(const ConstantInt *CPI) {
 }
 
 
-// isFirstClassType - Return true if a value of the specified type can be held
-// in a register.
-//
-static inline bool isFirstClassType(const Type *Ty) {
-  return Ty->isPrimitiveType() || Ty->isPointerType();
-}
-
 // getPointedToComposite - If the argument is a pointer type, and the pointed to
 // value is a composite type, return the composite type, else return null.
 //
@@ -59,6 +52,8 @@ void ReplaceInstWithValue(BasicBlock::InstListType &BIL,
 //
 void ReplaceInstWithInst(BasicBlock::InstListType &BIL,
                          BasicBlock::iterator &BI, Instruction *I);
+
+void ReplaceInstWithInst(Instruction *From, Instruction *To);
 
 
 // ConvertableToGEP - This function returns true if the specified value V is
