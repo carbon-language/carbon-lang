@@ -24,7 +24,11 @@
 #include "llvm/Module.h"
 
 namespace {
+
+
+  std::set<const Value*> MangledGlobals;
   struct Printer : public MachineFunctionPass {
+
     std::ostream &O;
     unsigned ConstIdx;
     Printer(std::ostream &o) : O(o), ConstIdx(0) {}
@@ -55,6 +59,49 @@ Pass *createX86CodePrinterPass(std::ostream &O) {
   return new Printer(O);
 }
 
+// We dont want identifier names with ., space, -  in them. 
+// So we replace them with _
+static std::string makeNameProper(std::string x) {
+  std::string tmp;
+  for (std::string::iterator sI = x.begin(), sEnd = x.end(); sI != sEnd; sI++)
+    switch (*sI) {
+    case '.': tmp += "d_"; break;
+    case ' ': tmp += "s_"; break;
+    case '-': tmp += "D_"; break;
+    default:  tmp += *sI;
+    }
+
+  return tmp;
+}
+
+std::string getValueName(const Value *V) {
+  if (V->hasName()) { // Print out the label if it exists...
+    
+    // Name mangling occurs as follows:
+    // - If V is not a global, mangling always occurs.
+    // - Otherwise, mangling occurs when any of the following are true:
+    //   1) V has internal linkage
+    //   2) V's name would collide if it is not mangled.
+    //
+    
+    if(const GlobalValue* gv = dyn_cast<GlobalValue>(V)) {
+      if(!gv->hasInternalLinkage() && !MangledGlobals.count(gv)) {
+        // No internal linkage, name will not collide -> no mangling.
+        return makeNameProper(gv->getName());
+      }
+    }
+    
+    // Non-global, or global with internal linkage / colliding name -> mangle.
+    return "l" + utostr(V->getType()->getUniqueID()) + "_" +
+      makeNameProper(V->getName());      
+  }
+
+  static int Count = 0;
+  Count++;
+  return "ltmp_" + itostr(Count) + "_" + utostr(V->getType()->getUniqueID());
+}
+
+
 // valToExprString - Helper function for ConstantExprToString().
 // Appends result to argument string S.
 // 
@@ -79,8 +126,7 @@ std::string Printer::valToExprString(const Value* V) {
     else
       failed = true;
   } else if (const GlobalValue* GV = dyn_cast<GlobalValue>(V)) {
-    // S += getID(GV);
-    assert (0 && "getID not implemented");
+    S += getValueName(GV);
   }
   else
     failed = true;
@@ -200,9 +246,7 @@ Printer::printSingleConstantValue(const Constant* CV)
     {
       // This is a constant address for a global variable or method.
       // Use the name of the variable or method as the address value.
-      // O << getID(CPR->getValue()) << "\n";
-      assert (0 && "getID not implemented");
-
+      O << getValueName(CPR->getValue()) << "\n";
     }
   else if (isa<ConstantPointerNull>(CV))
     {
@@ -370,9 +414,9 @@ bool Printer::runOnMachineFunction(MachineFunction &MF) {
   // Print out labels for the function.
   O << "\t.text\n";
   O << "\t.align 16\n";
-  O << "\t.globl\t" << MF.getFunction()->getName() << "\n";
-  O << "\t.type\t" << MF.getFunction()->getName() << ", @function\n";
-  O << MF.getFunction()->getName() << ":\n";
+  O << "\t.globl\t" << getValueName(MF.getFunction()) << "\n";
+  O << "\t.type\t" << getValueName(MF.getFunction()) << ", @function\n";
+  O << getValueName(MF.getFunction()) << ":\n";
 
   NumberForBB.clear();
   for (MachineFunction::const_iterator I = MF.begin(), E = MF.end();
@@ -437,7 +481,7 @@ static void printOp(std::ostream &O, const MachineOperand &MO,
       << MO.getVRegValue()->getName();
     return;
   case MachineOperand::MO_GlobalAddress:
-    if (!elideOffsetKeyword) O << "OFFSET "; O << MO.getGlobal()->getName();
+    if (!elideOffsetKeyword) O << "OFFSET "; O << getValueName(MO.getGlobal());
     return;
   case MachineOperand::MO_ExternalSymbol:
     O << MO.getSymbolName();
@@ -778,6 +822,27 @@ bool Printer::doInitialization(Module &M)
   // Tell gas we are outputting Intel syntax (not AT&T syntax) assembly,
   // with no % decorations on register names.
   O << "\t.intel_syntax noprefix\n";
+
+  // Ripped from CWriter:
+  // Calculate which global values have names that will collide when we throw
+  // away type information.
+  {  // Scope to delete the FoundNames set when we are done with it...
+    std::set<std::string> FoundNames;
+    for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
+      if (I->hasName())                      // If the global has a name...
+        if (FoundNames.count(I->getName()))  // And the name is already used
+          MangledGlobals.insert(I);          // Mangle the name
+        else
+          FoundNames.insert(I->getName());   // Otherwise, keep track of name
+
+    for (Module::giterator I = M.gbegin(), E = M.gend(); I != E; ++I)
+      if (I->hasName())                      // If the global has a name...
+        if (FoundNames.count(I->getName()))  // And the name is already used
+          MangledGlobals.insert(I);          // Mangle the name
+        else
+          FoundNames.insert(I->getName());   // Otherwise, keep track of name
+  }
+
   return false; // success
 }
 
@@ -785,22 +850,24 @@ bool Printer::doFinalization(Module &M)
 {
   // Print out module-level global variables here.
   for (Module::const_giterator I = M.gbegin(), E = M.gend(); I != E; ++I) {
+    std::string name(getValueName(I));
     if (I->hasInitializer()) {
       Constant *C = I->getInitializer();
       O << "\t.data\n";
-      O << "\t.globl " << I->getName() << "\n";
-      O << "\t.type " << I->getName() << ",@object\n";
-      O << "\t.size " << I->getName() << ","
+      O << "\t.globl " << name << "\n";
+      O << "\t.type " << name << ",@object\n";
+      O << "\t.size " << name << ","
 	<< (unsigned)TD->getTypeSize(I->getType()) << "\n";
       O << "\t.align " << (unsigned)TD->getTypeAlignment(C->getType()) << "\n";
-      O << I->getName() << ":\t\t\t\t\t#" << *C << "\n";
+      O << name << ":\t\t\t\t\t#" << *C << "\n";
       printConstantValueOnly (C);
     } else {
-      O << "\t.globl " << I->getName() << "\n";
-      O << "\t.comm " << I->getName() << ", "
+      O << "\t.globl " << name << "\n";
+      O << "\t.comm " << name << ", "
         << (unsigned)TD->getTypeSize(I->getType()) << ", "
         << (unsigned)TD->getTypeAlignment(I->getType()) << "\n";
     }
   }
+  MangledGlobals.clear();
   return false; // success
 }
