@@ -18,6 +18,7 @@
 #include "llvm/PassManager.h"
 #include "llvm/Bytecode/Reader.h"
 #include "llvm/Bytecode/WriteBytecodePass.h"
+#include "llvm/Target/TargetData.h"
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Transforms/Scalar.h"
 #include "Support/CommandLine.h"
@@ -325,6 +326,9 @@ int main(int argc, char **argv) {
   // a little bit.  Do this now.
   //
   PassManager Passes;
+
+  // Add an appropriate TargetData instance for this module...
+  Passes.add(new TargetData("gccas", Composite.get()));
 
   // Linking modules together can lead to duplicated global constants, only keep
   // one copy of each constant...

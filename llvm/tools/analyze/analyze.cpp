@@ -15,6 +15,7 @@
 #include "llvm/Bytecode/Reader.h"
 #include "llvm/Assembly/Parser.h"
 #include "llvm/Analysis/Verifier.h"
+#include "llvm/Target/TargetData.h"
 #include "llvm/Support/PassNameParser.h"
 #include "Support/Timer.h"
 #include <algorithm>
@@ -125,6 +126,9 @@ int main(int argc, char **argv) {
   // about to build...
   //
   PassManager Passes;
+
+  // Add an appropriate TargetData instance for this module...
+  Passes.add(new TargetData("analyze", CurMod));
 
   // Make sure the input LLVM is well formed.
   Passes.add(createVerifierPass());
