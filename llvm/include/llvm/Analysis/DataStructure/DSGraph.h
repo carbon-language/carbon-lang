@@ -376,9 +376,15 @@ public:
                                  const DSNodeHandle &NH2, NodeMapTy &NodeMap,
                                  bool StrictChecking = true);
 
-  /// computeGlobalGraphMapping - Compute the mapping of nodes in the global
+  /// computeGGToGMapping - Compute the mapping of nodes in the global
   /// graph to nodes in this graph.
-  void computeGlobalGraphMapping(NodeMapTy &NodeMap);
+  void computeGGToGMapping(NodeMapTy &NodeMap);
+
+  /// computeGToGGMapping - Compute the mapping of nodes in the graph to nodes
+  /// in the globals graph.  Note that any uses of this method are probably
+  /// bugs, unless it is known that the globals graph has been merged into this
+  /// graph!
+  void computeGToGGMapping(NodeMapTy &NodeMap);
 
 
   /// cloneInto - Clone the specified DSGraph into the current graph.  The
