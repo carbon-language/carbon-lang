@@ -493,6 +493,11 @@ void Verifier::visitInstruction(Instruction &I) {
   Assert1(I.getType() != Type::VoidTy || !I.hasName(),
           "Instruction has a name, but provides a void value!", &I);
 
+  // Check that the return value of the instruction is either void or a legal
+  // value type.
+  Assert1(I.getType() == Type::VoidTy || I.getType()->isFirstClassType(),
+          "Instruction returns a non-scalar type!", &I);
+
   // Check that all uses of the instruction, if they are instructions
   // themselves, actually have parent basic blocks.  If the use is not an
   // instruction, it is an error!
