@@ -27,6 +27,33 @@ static inline const Type *getTy(const Value *V, ValueTypeCache &CT) {
   return I->second;
 }
 
+GetElementPtrInst *getAddToGEPResult(const Type *Ty, const Value *V) {
+  const StructType *StructTy = getPointedToStruct(Ty);
+  if (StructTy == 0) return 0;    // Must be a pointer to a struct...
+
+  // Must be a constant unsigned offset value... get it now...
+  if (!isa<ConstPoolUInt>(V)) return 0;
+  unsigned Offset = cast<ConstPoolUInt>(V)->getValue();
+ 
+  // Check to make sure the offset is somewhat legitiment w.r.t the struct
+  // type...
+  if (Offset >= TD.getTypeSize(StructTy)) return 0;
+  
+  // If we get this far, we have succeeded... TODO: We need to handle array
+  // indexing as well...
+  const StructLayout *SL = TD.getStructLayout(StructTy);
+  vector<ConstPoolVal*> Offsets;
+  unsigned ActualOffset = Offset;
+  const Type *ElTy = getStructOffsetType(StructTy, ActualOffset, Offsets);
+
+  if (ActualOffset != Offset) return 0;  // TODO: Handle Array indexing...
+ 
+  // Success!  Return the GEP instruction, with a dummy first argument.
+  ConstPoolVal *Dummy = ConstPoolVal::getNullConstant(Ty);
+  return new GetElementPtrInst(Dummy, Offsets);
+}
+
+
 
 static bool OperandConvertableToType(User *U, Value *V, const Type *Ty,
                                      ValueTypeCache &ConvertedTypes);
@@ -36,8 +63,8 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
 
 
 // ExpressionConvertableToType - Return true if it is possible
-static bool ExpressionConvertableToType(Value *V, const Type *Ty,
-                                        ValueTypeCache &CTMap) {
+bool ExpressionConvertableToType(Value *V, const Type *Ty,
+                                 ValueTypeCache &CTMap) {
   // Expression type must be holdable in a register.
   if (!isFirstClassType(Ty))
     return false;
@@ -58,12 +85,12 @@ static bool ExpressionConvertableToType(Value *V, const Type *Ty,
   if (I == 0) {
     // It's not an instruction, check to see if it's a constant... all constants
     // can be converted to an equivalent value (except pointers, they can't be
-    // const prop'd in general).
+    // const prop'd in general).  We just ask the constant propogator to see if
+    // it can convert the value...
     //
-    if (isa<ConstPoolVal>(V))
-      if (!isa<PointerType>(V->getType()) && !isa<PointerType>(Ty) &&
-          !isa<StructType>(Ty) && !isa<ArrayType>(Ty))
-        return true;
+    if (ConstPoolVal *CPV = dyn_cast<ConstPoolVal>(V))
+      if (opt::ConstantFoldCastInstruction(CPV, Ty))
+        return true;  // Don't worry about deallocating, it's a constant.
 
     return false;              // Otherwise, we can't convert!
   }
@@ -88,6 +115,7 @@ static bool ExpressionConvertableToType(Value *V, const Type *Ty,
   case Instruction::Load: {
     LoadInst *LI = cast<LoadInst>(I);
     if (LI->hasIndices()) return false;
+
     return ExpressionConvertableToType(LI->getPtrOperand(),
                                        PointerType::get(Ty), CTMap);
   }
@@ -137,8 +165,7 @@ static bool ExpressionConvertableToType(Value *V, const Type *Ty,
 
 
 
-static Value *ConvertExpressionToType(Value *V, const Type *Ty,
-                                      ValueMapCache &VMC) {
+Value *ConvertExpressionToType(Value *V, const Type *Ty, ValueMapCache &VMC) {
   ValueMapCache::ExprMapTy::iterator VMCI = VMC.ExprMap.find(V);
   if (VMCI != VMC.ExprMap.end())
     return VMCI->second;
@@ -153,7 +180,6 @@ static Value *ConvertExpressionToType(Value *V, const Type *Ty,
       // Constants are converted by constant folding the cast that is required.
       // We assume here that all casts are implemented for constant prop.
       Value *Result = opt::ConstantFoldCastInstruction(CPV, Ty);
-      if (!Result) cerr << "Couldn't fold " << CPV << " to " << Ty << endl;
       assert(Result && "ConstantFoldCastInstruction Failed!!!");
 
       // Add the instruction to the expression map
@@ -334,8 +360,12 @@ bool RetValConvertableToType(Value *V, const Type *Ty,
 //
 static bool OperandConvertableToType(User *U, Value *V, const Type *Ty,
                                      ValueTypeCache &CTMap) {
-  assert(V->getType() != Ty &&
-         "OperandConvertableToType: Operand is already right type!");
+  if (V->getType() == Ty) return true;   // Already the right type?
+
+  // Expression type must be holdable in a register.
+  if (!isFirstClassType(Ty))
+    return false;
+
   Instruction *I = dyn_cast<Instruction>(U);
   if (I == 0) return false;              // We can't convert!
 
@@ -347,6 +377,17 @@ static bool OperandConvertableToType(User *U, Value *V, const Type *Ty,
     return losslessCastableTypes(Ty, I->getOperand(0)->getType());
 
   case Instruction::Add:
+    if (V == I->getOperand(0) && isa<CastInst>(I->getOperand(1))) {
+      Instruction *GEP =
+        getAddToGEPResult(Ty, cast<CastInst>(I->getOperand(1))->getOperand(0));
+      if (GEP) {  // If successful, this Add can be converted to a GEP.
+        const Type *RetTy = GEP->getType();  // Get the new type...
+        delete GEP;  // We don't want the actual instruction yet...
+        // Only successful if we can convert this type to the required type
+        return RetValConvertableToType(I, RetTy, CTMap);
+      }
+    }
+    // FALLTHROUGH
   case Instruction::Sub: {
     Value *OtherOp = I->getOperand((V == I->getOperand(0)) ? 1 : 0);
     return RetValConvertableToType(I, Ty, CTMap) &&
@@ -369,11 +410,32 @@ static bool OperandConvertableToType(User *U, Value *V, const Type *Ty,
     if (const PointerType *PT = dyn_cast<PointerType>(Ty)) {
       LoadInst *LI = cast<LoadInst>(I);
       const Type *PVTy = PT->getValueType();
-      if (LI->hasIndices() || isa<ArrayType>(PVTy) || 
-          TD.getTypeSize(PVTy) != TD.getTypeSize(LI->getType()))
+
+      if (LI->hasIndices() || isa<ArrayType>(PVTy))
         return false;
 
-      return RetValConvertableToType(LI, PT->getValueType(), CTMap);
+      if (!isFirstClassType(PVTy)) {
+        // They could be loading the first element of a structure type...
+        if (const StructType *ST = dyn_cast<StructType>(PVTy)) {
+          unsigned Offset = 0;   // No offset, get first leaf.
+          vector<ConstPoolVal*> Offsets;  // Discarded...
+          const Type *Ty = getStructOffsetType(ST, Offset, Offsets, false);
+          assert(Offset == 0 && "Offset changed from zero???");
+          if (!isFirstClassType(Ty)) return false;
+
+          // See if the leaf type is compatible with the old return type...
+          if (TD.getTypeSize(Ty) != TD.getTypeSize(LI->getType()))
+            return false;
+
+          return RetValConvertableToType(LI, Ty, CTMap);
+        }
+        return false;
+      }
+
+      if (TD.getTypeSize(PVTy) != TD.getTypeSize(LI->getType()))
+        return false;
+
+      return RetValConvertableToType(LI, PVTy, CTMap);
     }
     return false;
 
@@ -407,7 +469,7 @@ static bool OperandConvertableToType(User *U, Value *V, const Type *Ty,
     for (unsigned i = 0; i < PN->getNumIncomingValues(); ++i)
       if (!ExpressionConvertableToType(PN->getIncomingValue(i), Ty, CTMap))
         return false;
-    return true;
+    return RetValConvertableToType(PN, Ty, CTMap);
   }
 
 #if 0
@@ -497,6 +559,17 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
     break;
 
   case Instruction::Add:
+    if (OldVal == I->getOperand(0) && isa<CastInst>(I->getOperand(1))) {
+      Res = getAddToGEPResult(NewVal->getType(),
+                              cast<CastInst>(I->getOperand(1))->getOperand(0));
+      if (Res) {  // If successful, this Add should be converted to a GEP.
+        // First operand is actually the given pointer...
+        Res->setOperand(0, NewVal);
+        break;
+      }
+    }
+    // FALLTHROUGH
+
   case Instruction::Sub:
   case Instruction::SetEQ:
   case Instruction::SetNE: {
@@ -519,11 +592,21 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
                         I->getOperand(1), Name);
     break;
 
-  case Instruction::Load:
-    assert(I->getOperand(0) == OldVal);
-    Res = new LoadInst(NewVal, Name);
+  case Instruction::Load: {
+    assert(I->getOperand(0) == OldVal && isa<PointerType>(NewVal->getType()));
+    const Type *PVTy = cast<PointerType>(NewVal->getType())->getValueType();
+    if (!isFirstClassType(PVTy)) {  // Must be an indirect load then...
+      assert(isa<StructType>(PVTy));
+      unsigned Offset = 0;   // No offset, get first leaf.
+      vector<ConstPoolVal*> Offsets;  // Discarded...
+      const Type *Ty = getStructOffsetType(PVTy, Offset, Offsets, false);
+      Res = new LoadInst(NewVal, Offsets, Name);
+    } else {
+      Res = new LoadInst(NewVal, Name);
+    }
+    assert(isFirstClassType(Res->getType()) && "Load of structure or array!");
     break;
-
+  }
   case Instruction::Store: {
     if (I->getOperand(0) == OldVal) {  // Replace the source value
       const PointerType *NewPT = PointerType::get(NewTy);
@@ -678,7 +761,7 @@ ValueHandle::~ValueHandle() {
     // loops.  Note that we cannot use DCE because DCE won't remove a store
     // instruction, for example.
     //
-    RecursiveDelete(cast<Instruction>(V));
+    RecursiveDelete(dyn_cast<Instruction>(V));
   } else {
 #ifdef DEBUG_EXPR_CONVERT
     cerr << "VH RELEASING: " << (void*)Operands[0].get() << " " << Operands[0]->use_size() << " " << Operands[0];

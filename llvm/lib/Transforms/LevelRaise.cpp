@@ -68,53 +68,6 @@ static inline bool isReinterpretingCast(const CastInst *CI) {
 }
 
 
-// getPointedToStruct - If the argument is a pointer type, and the pointed to
-// value is a struct type, return the struct type, else return null.
-//
-static const StructType *getPointedToStruct(const Type *Ty) {
-  const PointerType *PT = dyn_cast<PointerType>(Ty);
-  return PT ? dyn_cast<StructType>(PT->getValueType()) : 0;
-}
-
-
-// getStructOffsetType - Return a vector of offsets that are to be used to index
-// into the specified struct type to get as close as possible to index as we
-// can.  Note that it is possible that we cannot get exactly to Offset, in which
-// case we update offset to be the offset we actually obtained.  The resultant
-// leaf type is returned.
-//
-static const Type *getStructOffsetType(const Type *Ty, unsigned &Offset,
-                                       vector<ConstPoolVal*> &Offsets) {
-  if (!isa<StructType>(Ty)) {
-    Offset = 0;   // Return the offset that we were able to acheive
-    return Ty;    // Return the leaf type
-  }
-
-  assert(Offset < TD.getTypeSize(Ty) && "Offset not in struct!");
-  const StructType *STy = cast<StructType>(Ty);
-  const StructLayout *SL = TD.getStructLayout(STy);
-
-  // This loop terminates always on a 0 <= i < MemberOffsets.size()
-  unsigned i;
-  for (i = 0; i < SL->MemberOffsets.size()-1; ++i)
-    if (Offset >= SL->MemberOffsets[i] && Offset <  SL->MemberOffsets[i+1])
-      break;
-  
-  assert(Offset >= SL->MemberOffsets[i] &&
-         (i == SL->MemberOffsets.size()-1 || Offset <  SL->MemberOffsets[i+1]));
-
-  // Make sure to save the current index...
-  Offsets.push_back(ConstPoolUInt::get(Type::UByteTy, i));
-
-  unsigned SubOffs = Offset - SL->MemberOffsets[i];
-  const Type *LeafTy = getStructOffsetType(STy->getElementTypes()[i], SubOffs,
-                                           Offsets);
-  Offset = SL->MemberOffsets[i] + SubOffs;
-  return LeafTy;
-}
-
-
-
 
 
 // DoInsertArrayCast - If the argument value has a pointer type, and if the
@@ -375,15 +328,40 @@ static bool PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
       if (RetValConvertableToType(CI, Src->getType(), ConvertedTypes)) {
         PRINT_PEEPHOLE2("CAST-DEST-EXPR-CONV:in ", CI, Src);
 
-        //cerr << "\nCONVERTING EXPR TYPE:\n";
+#ifdef DEBUG_PEEPHOLE_INSTS
+        cerr << "\nCONVERTING EXPR TYPE:\n";
+#endif
         ValueMapCache ValueMap;
         ConvertUsersType(CI, Src, ValueMap);  // This will delete CI!
 
         BI = BB->begin();  // Rescan basic block.  BI might be invalidated.
         PRINT_PEEPHOLE1("CAST-DEST-EXPR-CONV:out", Src);
-        //cerr << "DONE CONVERTING EXPR TYPE: ";// << BB->getParent();
+#ifdef DEBUG_PEEPHOLE_INSTS
+        cerr << "DONE CONVERTING EXPR TYPE: \n\n";// << BB->getParent();
+#endif
         return true;
+      } else {
+        ConvertedTypes.clear();
+        if (ExpressionConvertableToType(Src, DestTy, ConvertedTypes)) {
+          PRINT_PEEPHOLE2("CAST-SRC-EXPR-CONV:in ", CI, Src);
+          
+#ifdef DEBUG_PEEPHOLE_INSTS
+          cerr << "\nCONVERTING SRC EXPR TYPE:\n";
+#endif
+          ValueMapCache ValueMap;
+          Value *E = ConvertExpressionToType(Src, DestTy, ValueMap);
+          if (ConstPoolVal *CPV = dyn_cast<ConstPoolVal>(E))
+            CI->replaceAllUsesWith(CPV);
+
+          BI = BB->begin();  // Rescan basic block.  BI might be invalidated.
+          PRINT_PEEPHOLE1("CAST-SRC-EXPR-CONV:out", E);
+#ifdef DEBUG_PEEPHOLE_INSTS
+          cerr << "DONE CONVERTING SRC EXPR TYPE: \n\n";// << BB->getParent();
+#endif
+          return true;
+        }
       }
+      
     }
 
     // Check to see if we are casting from a structure pointer to a pointer to
@@ -396,6 +374,7 @@ static bool PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
     // Into: %t2 = getelementptr {<...>} * %StructPtr, <0, 0, 0, ...>
     //       %t1 = cast <eltype> * %t1 to <ty> *
     //
+#if 1
     if (const StructType *STy = getPointedToStruct(Src->getType()))
       if (const PointerType *DestPTy = dyn_cast<PointerType>(DestTy)) {
 
@@ -463,7 +442,7 @@ static bool PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
           }
         }
       }
-
+#endif
 
   } else if (MallocInst *MI = dyn_cast<MallocInst>(I)) {
     if (PeepholeMallocInst(BB, BI)) return true;
@@ -482,10 +461,17 @@ static bool PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
     // Into: store <elementty> %v, {<...>} * %StructPtr, <element indices>
     //
     if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(Pointer)) {
+      // Append any indices that the store instruction has onto the end of the
+      // ones that the GEP is carrying...
+      //
+      vector<ConstPoolVal*> Indices(GEP->getIndices());
+      Indices.insert(Indices.end(), SI->getIndices().begin(),
+                     SI->getIndices().end());
+
       PRINT_PEEPHOLE2("gep-store:in", GEP, SI);
       ReplaceInstWithInst(BB->getInstList(), BI,
                           SI = new StoreInst(Val, GEP->getPtrOperand(),
-                                             GEP->getIndices()));
+                                             Indices));
       PRINT_PEEPHOLE1("gep-store:out", SI);
       return true;
     }
@@ -530,12 +516,58 @@ static bool PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
     // Into: load {<...>} * %StructPtr, <element indices>
     //
     if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(Pointer)) {
+      // Append any indices that the load instruction has onto the end of the
+      // ones that the GEP is carrying...
+      //
+      vector<ConstPoolVal*> Indices(GEP->getIndices());
+      Indices.insert(Indices.end(), LI->getIndices().begin(),
+                     LI->getIndices().end());
+
       PRINT_PEEPHOLE2("gep-load:in", GEP, LI);
       ReplaceInstWithInst(BB->getInstList(), BI,
                           LI = new LoadInst(GEP->getPtrOperand(),
-                                            GEP->getIndices()));
+                                            Indices));
       PRINT_PEEPHOLE1("gep-load:out", LI);
       return true;
+    }
+
+
+    // Peephole optimize the following instructions:
+    // %t1 = cast <ty> * %t0 to <ty2> *
+    // %V  = load <ty2> * %t1
+    //
+    // Into: %t1 = load <ty> * %t0
+    //       %V  = cast <ty> %t1 to <ty2>
+    //
+    // The idea behind this transformation is that if the expression type
+    // conversion engine could not convert the cast into some other nice form,
+    // that there is something fundementally wrong with the current shape of
+    // the program.  Move the cast through the load and try again.  This will
+    // leave the original cast instruction, to presumably become dead.
+    //
+    if (CastInst *CI = dyn_cast<CastInst>(Pointer)) {
+      Value *SrcVal = CI->getOperand(0);
+      const PointerType *SrcTy = dyn_cast<PointerType>(SrcVal->getType());
+      const Type *ElTy = SrcTy ? SrcTy->getValueType() : 0;
+
+      // Make sure that nothing will be lost in the new cast...
+      if (SrcTy && losslessCastableTypes(ElTy, LI->getType())) {
+        PRINT_PEEPHOLE2("CL-LoadCast:in ", CI, LI);
+
+        string CName = CI->getName(); CI->setName("");
+        LoadInst *NLI = new LoadInst(SrcVal, LI->getName());
+        LI->setName("");  // Take over the old load's name
+
+        // Insert the load before the old load
+        BI = BB->getInstList().insert(BI, NLI)+1;
+
+        // Replace the old load with a new cast...
+        ReplaceInstWithInst(BB->getInstList(), BI, 
+                            CI = new CastInst(NLI, LI->getType(), CName));
+        PRINT_PEEPHOLE2("CL-LoadCast:out", NLI, CI);
+
+        return true;
+      }
     }
   } else if (I->getOpcode() == Instruction::Add &&
              isa<CastInst>(I->getOperand(1))) {
@@ -580,6 +612,7 @@ static bool PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
       }
 
       GetElementPtrInst *GEP = new GetElementPtrInst(SrcPtr, Offsets);
+      //AddOp2->getName());
       BI = BB->getInstList().insert(BI, GEP)+1;
 
       assert(Offset-ActualOffset == 0  &&
@@ -605,8 +638,12 @@ static bool DoRaisePass(Method *M) {
     BasicBlock::InstListType &BIL = BB->getInstList();
 
     for (BasicBlock::iterator BI = BB->begin(); BI != BB->end();) {
-      if (opt::DeadCodeElimination::dceInstruction(BIL, BI) ||
-          PeepholeOptimize(BB, BI))
+      if (opt::DeadCodeElimination::dceInstruction(BIL, BI)) {
+        Changed = true; 
+#ifdef DEBUG_PEEPHOLE_INSTS
+        cerr << "DeadCode Elinated!\n";
+#endif
+      } else if (PeepholeOptimize(BB, BI))
         Changed = true;
       else
         ++BI;
@@ -629,6 +666,7 @@ bool RaisePointerReferences::doit(Method *M) {
 
   while (DoRaisePass(M)) Changed = true;
 
+#if 0
   // PtrCasts - Keep a mapping between the pointer values (the key of the 
   // map), and the cast to array pointer (the value) in this map.  This is
   // used when converting pointer math into array addressing.
@@ -645,6 +683,7 @@ bool RaisePointerReferences::doit(Method *M) {
   //
   Changed |= reduce_apply_bool(PtrCasts.begin(), PtrCasts.end(), 
                                ptr_fun(DoEliminatePointerArithmetic));
+#endif
 
   return Changed;
 }

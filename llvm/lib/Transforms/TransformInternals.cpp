@@ -8,6 +8,7 @@
 #include "TransformInternals.h"
 #include "llvm/Method.h"
 #include "llvm/Type.h"
+#include "llvm/ConstPoolVals.h"
 
 // TargetData Hack: Eventually we will have annotations given to us by the
 // backend so that we know stuff about type size and alignments.  For now
@@ -87,3 +88,44 @@ void ReplaceInstWithInst(BasicBlock::InstListType &BIL,
 }
 
 
+// getStructOffsetType - Return a vector of offsets that are to be used to index
+// into the specified struct type to get as close as possible to index as we
+// can.  Note that it is possible that we cannot get exactly to Offset, in which
+// case we update offset to be the offset we actually obtained.  The resultant
+// leaf type is returned.
+//
+// If StopEarly is set to true (the default), the first object with the
+// specified type is returned, even if it is a struct type itself.  In this
+// case, this routine will not drill down to the leaf type.  Set StopEarly to
+// false if you want a leaf
+//
+const Type *getStructOffsetType(const Type *Ty, unsigned &Offset,
+                                vector<ConstPoolVal*> &Offsets,
+                                bool StopEarly = true) {
+  if (!isa<StructType>(Ty) || (Offset == 0 && StopEarly)) {
+    Offset = 0;   // Return the offset that we were able to acheive
+    return Ty;    // Return the leaf type
+  }
+
+  assert(Offset < TD.getTypeSize(Ty) && "Offset not in struct!");
+  const StructType *STy = cast<StructType>(Ty);
+  const StructLayout *SL = TD.getStructLayout(STy);
+
+  // This loop terminates always on a 0 <= i < MemberOffsets.size()
+  unsigned i;
+  for (i = 0; i < SL->MemberOffsets.size()-1; ++i)
+    if (Offset >= SL->MemberOffsets[i] && Offset <  SL->MemberOffsets[i+1])
+      break;
+  
+  assert(Offset >= SL->MemberOffsets[i] &&
+         (i == SL->MemberOffsets.size()-1 || Offset <  SL->MemberOffsets[i+1]));
+
+  // Make sure to save the current index...
+  Offsets.push_back(ConstPoolUInt::get(Type::UByteTy, i));
+
+  unsigned SubOffs = Offset - SL->MemberOffsets[i];
+  const Type *LeafTy = getStructOffsetType(STy->getElementTypes()[i], SubOffs,
+                                           Offsets);
+  Offset = SL->MemberOffsets[i] + SubOffs;
+  return LeafTy;
+}

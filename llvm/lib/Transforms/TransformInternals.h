@@ -11,6 +11,7 @@
 #include "llvm/BasicBlock.h"
 #include "llvm/Instruction.h"
 #include "llvm/Target/TargetData.h"
+#include "llvm/DerivedTypes.h"
 #include <map>
 #include <set>
 
@@ -34,6 +35,14 @@ bool losslessCastableTypes(const Type *T1, const Type *T2);
 //
 static inline bool isFirstClassType(const Type *Ty) {
   return Ty->isPrimitiveType() || Ty->isPointerType();
+}
+
+// getPointedToStruct - If the argument is a pointer type, and the pointed to
+// value is a struct type, return the struct type, else return null.
+//
+static inline const StructType *getPointedToStruct(const Type *Ty) {
+  const PointerType *PT = dyn_cast<PointerType>(Ty);
+  return PT ? dyn_cast<StructType>(PT->getValueType()) : 0;
 }
 
 
@@ -68,6 +77,10 @@ struct ValueMapCache {
   typedef map<const Value *, Value *> ExprMapTy;
 };
 
+
+bool ExpressionConvertableToType(Value *V, const Type *Ty, ValueTypeCache &Map);
+Value *ConvertExpressionToType(Value *V, const Type *Ty, ValueMapCache &VMC);
+
 // RetValConvertableToType - Return true if it is possible
 bool RetValConvertableToType(Value *V, const Type *Ty,
                              ValueTypeCache &ConvertedTypes);
@@ -101,5 +114,20 @@ public:
     return isa<Instruction>(V) && classof(cast<Instruction>(V));
   }
 };
+
+// getStructOffsetType - Return a vector of offsets that are to be used to index
+// into the specified struct type to get as close as possible to index as we
+// can.  Note that it is possible that we cannot get exactly to Offset, in which
+// case we update offset to be the offset we actually obtained.  The resultant
+// leaf type is returned.
+//
+// If StopEarly is set to true (the default), the first object with the
+// specified type is returned, even if it is a struct type itself.  In this
+// case, this routine will not drill down to the leaf type.  Set StopEarly to
+// false if you want a leaf
+//
+const Type *getStructOffsetType(const Type *Ty, unsigned &Offset,
+                                vector<ConstPoolVal*> &Offsets,
+                                bool StopEarly = true);
 
 #endif
