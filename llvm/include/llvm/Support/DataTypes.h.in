@@ -21,11 +21,11 @@
 #ifndef SUPPORT_DATATYPES_H
 #define SUPPORT_DATATYPES_H
 
-#include "llvm/Config/config.h"
-
 #undef HAVE_SYS_TYPES_H
 #undef HAVE_INTTYPES_H
 #undef HAVE_STDINT_H
+#undef HAVE_UINT64_T
+#undef HAVE_U_INT64_T
 
 #ifndef _MSC_VER
 
