@@ -11,12 +11,15 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "interpreter"
+
 #include "Interpreter.h"
 #include "llvm/Instructions.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Constants.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "Support/Statistic.h"
+#include "Support/Debug.h"
 #include <cmath>  // For fmod
 using namespace llvm;
 
@@ -31,34 +34,126 @@ namespace llvm {
 //===----------------------------------------------------------------------===//
 //                     Value Manipulation code
 //===----------------------------------------------------------------------===//
-
-// Operations used by constant expr implementations...
-static GenericValue executeCastOperation(Value *Src, const Type *DestTy,
-                                         ExecutionContext &SF);
 static GenericValue executeAddInst(GenericValue Src1, GenericValue Src2, 
 				   const Type *Ty);
+static GenericValue executeSubInst(GenericValue Src1, GenericValue Src2, 
+				   const Type *Ty);
+static GenericValue executeMulInst(GenericValue Src1, GenericValue Src2, 
+				   const Type *Ty);
+static GenericValue executeRemInst(GenericValue Src1, GenericValue Src2, 
+				   const Type *Ty);
+static GenericValue executeDivInst(GenericValue Src1, GenericValue Src2, 
+				   const Type *Ty);
+static GenericValue executeAndInst(GenericValue Src1, GenericValue Src2, 
+				   const Type *Ty);
+static GenericValue executeOrInst(GenericValue Src1, GenericValue Src2, 
+				   const Type *Ty);
+static GenericValue executeXorInst(GenericValue Src1, GenericValue Src2, 
+				   const Type *Ty);
+static GenericValue executeSetEQInst(GenericValue Src1, GenericValue Src2, 
+				   const Type *Ty);
+static GenericValue executeSetNEInst(GenericValue Src1, GenericValue Src2, 
+				   const Type *Ty);
+static GenericValue executeSetLTInst(GenericValue Src1, GenericValue Src2, 
+				   const Type *Ty);
+static GenericValue executeSetGTInst(GenericValue Src1, GenericValue Src2, 
+				   const Type *Ty);
+static GenericValue executeSetLEInst(GenericValue Src1, GenericValue Src2, 
+				   const Type *Ty);
+static GenericValue executeSetGEInst(GenericValue Src1, GenericValue Src2, 
+				   const Type *Ty);
+static GenericValue executeShlInst(GenericValue Src1, GenericValue Src2, 
+				   const Type *Ty);
+static GenericValue executeShrInst(GenericValue Src1, GenericValue Src2, 
+				   const Type *Ty);
+                                   
+GenericValue Interpreter::getConstantExprValue (ConstantExpr *CE,
+                                                ExecutionContext &SF) {
+  switch (CE->getOpcode()) {
+  case Instruction::Cast:
+    return executeCastOperation(CE->getOperand(0), CE->getType(), SF);
+  case Instruction::GetElementPtr:
+    return executeGEPOperation(CE->getOperand(0), gep_type_begin(CE),
+                               gep_type_end(CE), SF);
+  case Instruction::Add:
+    return executeAddInst(getOperandValue(CE->getOperand(0), SF),
+                          getOperandValue(CE->getOperand(1), SF),
+                          CE->getOperand(0)->getType());
+  case Instruction::Sub:
+    return executeSubInst(getOperandValue(CE->getOperand(0), SF),
+                          getOperandValue(CE->getOperand(1), SF),
+                          CE->getOperand(0)->getType());
+  case Instruction::Mul:
+    return executeMulInst(getOperandValue(CE->getOperand(0), SF),
+                          getOperandValue(CE->getOperand(1), SF),
+                          CE->getOperand(0)->getType());
+  case Instruction::Div:
+    return executeDivInst(getOperandValue(CE->getOperand(0), SF),
+                          getOperandValue(CE->getOperand(1), SF),
+                          CE->getOperand(0)->getType());
+  case Instruction::Rem:
+    return executeRemInst(getOperandValue(CE->getOperand(0), SF),
+                          getOperandValue(CE->getOperand(1), SF),
+                          CE->getOperand(0)->getType());
+  case Instruction::And:
+    return executeAndInst(getOperandValue(CE->getOperand(0), SF),
+                          getOperandValue(CE->getOperand(1), SF),
+                          CE->getOperand(0)->getType());
+  case Instruction::Or:
+    return executeOrInst(getOperandValue(CE->getOperand(0), SF),
+                         getOperandValue(CE->getOperand(1), SF),
+                         CE->getOperand(0)->getType());
+  case Instruction::Xor:
+    return executeXorInst(getOperandValue(CE->getOperand(0), SF),
+                          getOperandValue(CE->getOperand(1), SF),
+                          CE->getOperand(0)->getType());
+  case Instruction::SetEQ:
+    return executeSetEQInst(getOperandValue(CE->getOperand(0), SF),
+                            getOperandValue(CE->getOperand(1), SF),
+                            CE->getOperand(0)->getType());
+  case Instruction::SetNE:
+    return executeSetNEInst(getOperandValue(CE->getOperand(0), SF),
+                            getOperandValue(CE->getOperand(1), SF),
+                            CE->getOperand(0)->getType());
+  case Instruction::SetLE:
+    return executeSetLEInst(getOperandValue(CE->getOperand(0), SF),
+                            getOperandValue(CE->getOperand(1), SF),
+                            CE->getOperand(0)->getType());
+  case Instruction::SetGE:
+    return executeSetGEInst(getOperandValue(CE->getOperand(0), SF),
+                            getOperandValue(CE->getOperand(1), SF),
+                            CE->getOperand(0)->getType());
+  case Instruction::SetLT:
+    return executeSetLTInst(getOperandValue(CE->getOperand(0), SF),
+                            getOperandValue(CE->getOperand(1), SF),
+                            CE->getOperand(0)->getType());
+  case Instruction::SetGT:
+    return executeSetGTInst(getOperandValue(CE->getOperand(0), SF),
+                            getOperandValue(CE->getOperand(1), SF),
+                            CE->getOperand(0)->getType());
+  case Instruction::Shl:
+    return executeShlInst(getOperandValue(CE->getOperand(0), SF),
+                          getOperandValue(CE->getOperand(1), SF),
+                          CE->getOperand(0)->getType());
+  case Instruction::Shr:
+    return executeShrInst(getOperandValue(CE->getOperand(0), SF),
+                          getOperandValue(CE->getOperand(1), SF),
+                          CE->getOperand(0)->getType());
+  
+  default:
+    std::cerr << "Unhandled ConstantExpr: " << CE << "\n";
+    abort();
+    return GenericValue();
+  }
+}
 
 GenericValue Interpreter::getOperandValue(Value *V, ExecutionContext &SF) {
   if (ConstantExpr *CE = dyn_cast<ConstantExpr>(V)) {
-    switch (CE->getOpcode()) {
-    case Instruction::Cast:
-      return executeCastOperation(CE->getOperand(0), CE->getType(), SF);
-    case Instruction::GetElementPtr:
-      return TheEE->executeGEPOperation(CE->getOperand(0), gep_type_begin(CE),
-					gep_type_end(CE), SF);
-    case Instruction::Add:
-      return executeAddInst(getOperandValue(CE->getOperand(0), SF),
-                            getOperandValue(CE->getOperand(1), SF),
-                            CE->getType());
-    default:
-      std::cerr << "Unhandled ConstantExpr: " << CE << "\n";
-      abort();
-      return GenericValue();
-    }
+    return getConstantExprValue(CE, SF);
   } else if (Constant *CPV = dyn_cast<Constant>(V)) {
-    return TheEE->getConstantValue(CPV);
+    return getConstantValue(CPV);
   } else if (GlobalValue *GV = dyn_cast<GlobalValue>(V)) {
-    return PTOGV(TheEE->getPointerToGlobal(GV));
+    return PTOGV(getPointerToGlobal(GV));
   } else {
     return SF.Values[V];
   }
@@ -67,10 +162,6 @@ GenericValue Interpreter::getOperandValue(Value *V, ExecutionContext &SF) {
 static void SetValue(Value *V, GenericValue Val, ExecutionContext &SF) {
   SF.Values[V] = Val;
 }
-
-//===----------------------------------------------------------------------===//
-//                    Annotation Wrangling code
-//===----------------------------------------------------------------------===//
 
 void Interpreter::initializeExecutionEngine() {
   TheEE = this;
@@ -432,8 +523,8 @@ void Interpreter::visitBinaryOperator(BinaryOperator &I) {
 //===----------------------------------------------------------------------===//
 
 void Interpreter::exitCalled(GenericValue GV) {
-  ExitCode = GV.SByteVal;
-  ECStack.clear();
+  runAtExitHandlers ();
+  exit (GV.IntVal);
 }
 
 /// Pop the last stack frame off of ECStack and then copy the result
@@ -711,13 +802,9 @@ void Interpreter::visitCallSite(CallSite CS) {
 #define IMPLEMENT_SHIFT(OP, TY) \
    case Type::TY##TyID: Dest.TY##Val = Src1.TY##Val OP Src2.UByteVal; break
 
-void Interpreter::visitShl(ShiftInst &I) {
-  ExecutionContext &SF = ECStack.back();
-  const Type *Ty    = I.getOperand(0)->getType();
-  GenericValue Src1 = getOperandValue(I.getOperand(0), SF);
-  GenericValue Src2 = getOperandValue(I.getOperand(1), SF);
+static GenericValue executeShlInst(GenericValue Src1, GenericValue Src2,
+                                   const Type *Ty) {
   GenericValue Dest;
-
   switch (Ty->getPrimitiveID()) {
     IMPLEMENT_SHIFT(<<, UByte);
     IMPLEMENT_SHIFT(<<, SByte);
@@ -730,16 +817,12 @@ void Interpreter::visitShl(ShiftInst &I) {
   default:
     std::cout << "Unhandled type for Shl instruction: " << *Ty << "\n";
   }
-  SetValue(&I, Dest, SF);
+  return Dest;
 }
 
-void Interpreter::visitShr(ShiftInst &I) {
-  ExecutionContext &SF = ECStack.back();
-  const Type *Ty    = I.getOperand(0)->getType();
-  GenericValue Src1 = getOperandValue(I.getOperand(0), SF);
-  GenericValue Src2 = getOperandValue(I.getOperand(1), SF);
+static GenericValue executeShrInst(GenericValue Src1, GenericValue Src2,
+                                   const Type *Ty) {
   GenericValue Dest;
-
   switch (Ty->getPrimitiveID()) {
     IMPLEMENT_SHIFT(>>, UByte);
     IMPLEMENT_SHIFT(>>, SByte);
@@ -753,6 +836,26 @@ void Interpreter::visitShr(ShiftInst &I) {
     std::cout << "Unhandled type for Shr instruction: " << *Ty << "\n";
     abort();
   }
+  return Dest;
+}
+
+void Interpreter::visitShl(ShiftInst &I) {
+  ExecutionContext &SF = ECStack.back();
+  const Type *Ty    = I.getOperand(0)->getType();
+  GenericValue Src1 = getOperandValue(I.getOperand(0), SF);
+  GenericValue Src2 = getOperandValue(I.getOperand(1), SF);
+  GenericValue Dest;
+  Dest = executeShlInst (Src1, Src2, Ty);
+  SetValue(&I, Dest, SF);
+}
+
+void Interpreter::visitShr(ShiftInst &I) {
+  ExecutionContext &SF = ECStack.back();
+  const Type *Ty    = I.getOperand(0)->getType();
+  GenericValue Src1 = getOperandValue(I.getOperand(0), SF);
+  GenericValue Src2 = getOperandValue(I.getOperand(1), SF);
+  GenericValue Dest;
+  Dest = executeShrInst (Src1, Src2, Ty);
   SetValue(&I, Dest, SF);
 }
 
@@ -919,6 +1022,7 @@ void Interpreter::run() {
     // Track the number of dynamic instructions executed.
     ++NumDynamicInsts;
 
+    DEBUG(std::cerr << "About to interpret: " << I);
     visit(I);   // Dispatch to one of the visit* methods...
   }
 }
