@@ -381,6 +381,7 @@ std::ostream &llvm::WriteTypeSymbolic(std::ostream &Out, const Type *Ty,
   }
 }
 
+/// @brief Internal constant writer. 
 static void WriteConstantInt(std::ostream &Out, const Constant *CV, 
                              bool PrintName,
                              std::map<const Type *, std::string> &TypeTable,
@@ -493,9 +494,6 @@ static void WriteConstantInt(std::ostream &Out, const Constant *CV,
   } else if (isa<ConstantPointerNull>(CV)) {
     Out << "null";
 
-  } else if (const ConstantPointerRef *PR = dyn_cast<ConstantPointerRef>(CV)) {
-    WriteAsOperandInternal(Out, PR->getValue(), true, TypeTable, Machine);
-
   } else if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(CV)) {
     Out << CE->getOpcodeName() << " (";
     
@@ -527,12 +525,13 @@ static void WriteAsOperandInternal(std::ostream &Out, const Value *V,
                                   std::map<const Type*, std::string> &TypeTable,
                                    SlotMachine *Machine) {
   Out << ' ';
-  if (PrintName && V->hasName()) {
+  if ((PrintName || isa<GlobalValue>(V)) && V->hasName())
     Out << getLLVMName(V->getName());
-  } else {
-    if (const Constant *CV = dyn_cast<Constant>(V)) {
+  else {
+    const Constant *CV = dyn_cast<Constant>(V);
+    if (CV && !isa<GlobalValue>(CV))
       WriteConstantInt(Out, CV, PrintName, TypeTable, Machine);
-    } else {
+    else {
       int Slot;
       if (Machine) {
         Slot = Machine->getSlot(V);
@@ -764,8 +763,14 @@ void AssemblyWriter::printGlobal(const GlobalVariable *GV) {
   Out << (GV->isConstant() ? "constant " : "global ");
   printType(GV->getType()->getElementType());
 
-  if (GV->hasInitializer())
-    writeOperand(GV->getInitializer(), false, false);
+  if (GV->hasInitializer()) {
+    Constant* C = cast<Constant>(GV->getInitializer());
+    assert(C &&  "GlobalVar initializer isn't constant?");
+    if (isa<GlobalValue>(C))
+      writeOperand(GV->getInitializer(), false, true);
+    else
+      writeOperand(GV->getInitializer(), false, false);
+  }
 
   printInfoComment(*GV);
   Out << "\n";
@@ -794,8 +799,9 @@ void AssemblyWriter::printSymbolTable(const SymbolTable &ST) {
     SymbolTable::value_const_iterator VE = ST.value_end(PI->first);
 
     for (; VI != VE; ++VI) {
-      const Value *V = VI->second;
-      if (const Constant *CPV = dyn_cast<Constant>(V)) {
+      const Value* V = VI->second;
+      const Constant *CPV = dyn_cast<Constant>(V) ;
+      if (CPV && !isa<GlobalValue>(V)) {
         printConstant(CPV);
       }
     }
@@ -1162,12 +1168,6 @@ void Instruction::print(std::ostream &o, AssemblyAnnotationWriter *AAW) const {
 void Constant::print(std::ostream &o) const {
   if (this == 0) { o << "<null> constant value\n"; return; }
 
-  // Handle CPR's special, because they have context information...
-  if (const ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(this)) {
-    CPR->getValue()->print(o);  // Print as a global value, with context info.
-    return;
-  }
-
   o << ' ' << getType()->getDescription() << ' ';
 
   std::map<const Type *, std::string> TypeTable;
@@ -1346,10 +1346,6 @@ int SlotMachine::getSlot(const Value *V) {
 
   // Check for uninitialized state and do lazy initialization
   this->initialize();
-
-  // Do not number CPR's at all. They are an abomination
-  if ( const ConstantPointerRef* CPR = dyn_cast<ConstantPointerRef>(V) )
-    V = CPR->getValue() ;
 
   // Get the type of the value
   const Type* VTy = V->getType();
@@ -1593,8 +1589,8 @@ unsigned SlotMachine::insertValue(const Value *V ) {
   SC_DEBUG("  Inserting value [" << VTy << "] = " << V << " slot=" << 
            DestSlot << " [");
   // G = Global, C = Constant, T = Type, F = Function, o = other
-  SC_DEBUG((isa<GlobalVariable>(V) ? 'G' : (isa<Constant>(V) ? 'C' : 
-           (isa<Function>(V) ? 'F' : 'o'))));
+  SC_DEBUG((isa<GlobalVariable>(V) ? 'G' : (isa<Function>(V) ? 'F' : 
+           (isa<Constant>(V) ? 'C' : 'o'))));
   SC_DEBUG("]\n");
   return DestSlot;
 }

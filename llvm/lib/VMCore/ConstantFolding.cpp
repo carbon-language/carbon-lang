@@ -486,7 +486,7 @@ ConstRules &ConstRules::get(const Constant *V1, const Constant *V2) {
   static DirectFPRules <ConstantFP  , double        , &Type::DoubleTy> DoubleR;
 
   if (isa<ConstantExpr>(V1) || isa<ConstantExpr>(V2) ||
-      isa<ConstantPointerRef>(V1) || isa<ConstantPointerRef>(V2))
+      isa<GlobalValue>(V1) || isa<GlobalValue>(V2))
     return EmptyR;
 
   switch (V1->getType()->getTypeID()) {
@@ -525,12 +525,12 @@ Constant *llvm::ConstantFoldCastInstruction(const Constant *V,
   if (V->getType() == DestTy) return (Constant*)V;
 
   // Cast of a global address to boolean is always true.
-  if (const ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(V))
+  if (const GlobalValue *GV = dyn_cast<GlobalValue>(V))
     if (DestTy == Type::BoolTy)
       // FIXME: When we support 'external weak' references, we have to prevent
       // this transformation from happening.  In the meantime we avoid folding
       // any cast of an external symbol.
-      if (!CPR->getValue()->isExternal())
+      if (!GV->isExternal())
         return ConstantBool::True;
 
   if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(V))
@@ -624,15 +624,15 @@ static int IdxCompare(Constant *C1, Constant *C2) {
 
 /// evaluateRelation - This function determines if there is anything we can
 /// decide about the two constants provided.  This doesn't need to handle simple
-/// things like integer comparisons, but should instead handle ConstantExpr's
-/// and ConstantPointerRef's.  If we can determine that the two constants have a
+/// things like integer comparisons, but should instead handle ConstantExprs
+/// and GlobalValuess.  If we can determine that the two constants have a
 /// particular relation to each other, we should return the corresponding SetCC
 /// code, otherwise return Instruction::BinaryOpsEnd.
 ///
 /// To simplify this code we canonicalize the relation so that the first
 /// operand is always the most "complex" of the two.  We consider simple
 /// constants (like ConstantInt) to be the simplest, followed by
-/// ConstantPointerRef's, followed by ConstantExpr's (the most complex).
+/// GlobalValues, followed by ConstantExpr's (the most complex).
 ///
 static Instruction::BinaryOps evaluateRelation(const Constant *V1,
                                                const Constant *V2) {
@@ -640,15 +640,15 @@ static Instruction::BinaryOps evaluateRelation(const Constant *V1,
          "Cannot compare different types of values!");
   if (V1 == V2) return Instruction::SetEQ;
 
-  if (!isa<ConstantExpr>(V1) && !isa<ConstantPointerRef>(V1)) {
+  if (!isa<ConstantExpr>(V1) && !isa<GlobalValue>(V1)) {
     // If the first operand is simple, swap operands.
-    assert((isa<ConstantPointerRef>(V2) || isa<ConstantExpr>(V2)) &&
+    assert((isa<GlobalValue>(V2) || isa<ConstantExpr>(V2)) &&
            "Simple cases should have been handled by caller!");
     Instruction::BinaryOps SwappedRelation = evaluateRelation(V2, V1);
     if (SwappedRelation != Instruction::BinaryOpsEnd)
       return SetCondInst::getSwappedCondition(SwappedRelation);
 
-  } else if (const ConstantPointerRef *CPR1 = dyn_cast<ConstantPointerRef>(V1)){
+  } else if (const GlobalValue *CPR1 = dyn_cast<GlobalValue>(V1)){
     if (isa<ConstantExpr>(V2)) {  // Swap as necessary.
     Instruction::BinaryOps SwappedRelation = evaluateRelation(V2, V1);
     if (SwappedRelation != Instruction::BinaryOpsEnd)
@@ -657,11 +657,11 @@ static Instruction::BinaryOps evaluateRelation(const Constant *V1,
       return Instruction::BinaryOpsEnd;
     }
 
-    // Now we know that the RHS is a ConstantPointerRef or simple constant,
+    // Now we know that the RHS is a GlobalValue or simple constant,
     // which (since the types must match) means that it's a ConstantPointerNull.
-    if (const ConstantPointerRef *CPR2 = dyn_cast<ConstantPointerRef>(V2)) {
-      assert(CPR1->getValue() != CPR2->getValue() &&
-             "CPRs for the same value exist at different addresses??");
+    if (const GlobalValue *CPR2 = dyn_cast<GlobalValue>(V2)) {
+      assert(CPR1 != CPR2 &&
+             "GVs for the same value exist at different addresses??");
       // FIXME: If both globals are external weak, they might both be null!
       return Instruction::SetNE;
     } else {
@@ -693,7 +693,7 @@ static Instruction::BinaryOps evaluateRelation(const Constant *V1,
       if (isa<ConstantPointerNull>(V2)) {
         // If we are comparing a GEP to a null pointer, check to see if the base
         // of the GEP equals the null pointer.
-        if (isa<ConstantPointerRef>(CE1Op0)) {
+        if (isa<GlobalValue>(CE1Op0)) {
           // FIXME: this is not true when we have external weak references!
           // No offset can go from a global to a null pointer.
           return Instruction::SetGT;
@@ -708,13 +708,11 @@ static Instruction::BinaryOps evaluateRelation(const Constant *V1,
           return Instruction::SetEQ;
         }
         // Otherwise, we can't really say if the first operand is null or not.
-      } else if (const ConstantPointerRef *CPR2 =
-                                             dyn_cast<ConstantPointerRef>(V2)) {
+      } else if (const GlobalValue *CPR2 = dyn_cast<GlobalValue>(V2)) {
         if (isa<ConstantPointerNull>(CE1Op0)) {
           // FIXME: This is not true with external weak references.
           return Instruction::SetLT;
-        } else if (const ConstantPointerRef *CPR1 =
-                   dyn_cast<ConstantPointerRef>(CE1Op0)) {
+        } else if (const GlobalValue *CPR1 = dyn_cast<GlobalValue>(CE1Op0)) {
           if (CPR1 == CPR2) {
             // If this is a getelementptr of the same global, then it must be
             // different.  Because the types must match, the getelementptr could
@@ -741,8 +739,7 @@ static Instruction::BinaryOps evaluateRelation(const Constant *V1,
         case Instruction::GetElementPtr:
           // By far the most common case to handle is when the base pointers are
           // obviously to the same or different globals.
-          if (isa<ConstantPointerRef>(CE1Op0) &&
-              isa<ConstantPointerRef>(CE2Op0)) {
+          if (isa<GlobalValue>(CE1Op0) && isa<GlobalValue>(CE2Op0)) {
             if (CE1Op0 != CE2Op0) // Don't know relative ordering, but not equal
               return Instruction::SetNE;
             // Ok, we know that both getelementptr instructions are based on the
@@ -896,13 +893,13 @@ Constant *llvm::ConstantFoldBinaryInstruction(unsigned Opcode,
           return const_cast<Constant*>(V1);                       // X & -1 == X
         if (V2->isNullValue()) return const_cast<Constant*>(V2);  // X & 0 == 0
         if (CE1->getOpcode() == Instruction::Cast &&
-            isa<ConstantPointerRef>(CE1->getOperand(0))) {
-          ConstantPointerRef *CPR =cast<ConstantPointerRef>(CE1->getOperand(0));
+            isa<GlobalValue>(CE1->getOperand(0))) {
+          GlobalValue *CPR =cast<GlobalValue>(CE1->getOperand(0));
 
           // Functions are at least 4-byte aligned.  If and'ing the address of a
           // function with a constant < 4, fold it to zero.
           if (const ConstantInt *CI = dyn_cast<ConstantInt>(V2))
-            if (CI->getRawValue() < 4 && isa<Function>(CPR->getValue()))
+            if (CI->getRawValue() < 4 && isa<Function>(CPR))
               return Constant::getNullValue(CI->getType());
         }
         break;
