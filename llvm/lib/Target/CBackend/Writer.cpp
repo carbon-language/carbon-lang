@@ -557,30 +557,40 @@ void CWriter::printConstant(Constant *CPV) {
       Out << "(*(" << (FPC->getType() == Type::FloatTy ? "float" : "double")
           << "*)&FPConstant" << I->second << ")";
     } else {
-      std::string Num;
-#if HAVE_PRINTF_A
-      // Print out the constant as a floating point number.
-      char Buffer[100];
-      sprintf(Buffer, "%a", FPC->getValue());
-      Num = Buffer;
-#else
-      Num = ftostr(FPC->getValue());
-#endif
-
       if (IsNAN(FPC->getValue())) {
         // The value is NaN
+ 
+        // The prefix for a quiet NaN is 0x7FF8. For a signalling NaN,
+        // it's 0x7ff4.
+        const unsigned long QuietNaN = 0x7ff8UL;
+        const unsigned long SignalNaN = 0x7ff4UL;
+
+        // We need to grab the first part of the FP #
+        union {
+          double   d;
+          uint64_t ll;
+        } DHex;
+        char Buffer[100];
+
+        DHex.d = FPC->getValue();
+        sprintf(Buffer, "0x%llx", DHex.ll);
+
+        std::string Num(&Buffer[0], &Buffer[6]);
+        unsigned long Val = strtoul(Num.c_str(), 0, 16);
+
         if (FPC->getType() == Type::FloatTy)
-          Out << "LLVM_NANF(\"0\") /*nan*/ ";
+          Out << "LLVM_NAN" << (Val == QuietNaN ? "" : "S") << "F(\""
+              << Buffer << "\") /*nan*/ ";
         else
-          Out << "LLVM_NAN(\"0\") /*nan*/ ";
+          Out << "LLVM_NAN" << (Val == QuietNaN ? "" : "S") << "(\""
+              << Buffer << "\") /*nan*/ ";
       } else if (IsInf(FPC->getValue())) {
         // The value is Inf
         if (FPC->getValue() < 0) Out << "-";
-        if (FPC->getType() == Type::FloatTy)
-          Out << "LLVM_INFF /*inf*/ ";
-        else
-          Out << "LLVM_INF /*inf*/ ";
+        Out << "LLVM_INF" << (FPC->getType() == Type::FloatTy ? "F" : "")
+            << " /*inf*/ ";
       } else {
+        std::string Num = ftostr(FPC->getValue());
         Out << Num;
       }
     }
@@ -752,15 +762,19 @@ static void generateCompilerSpecificCode(std::ostream& Out) {
   //
   // Similar to __builtin_inf, except the return type is float.
   Out << "#ifdef __GNUC__\n"
-      << "#define LLVM_NAN(NanStr)  __builtin_nan(NanStr)   /* Double */\n"
-      << "#define LLVM_NANF(NanStr) __builtin_nan(NanStr)   /* Float */\n"
-      << "#define LLVM_INF          __builtin_inf()         /* Double */\n"
-      << "#define LLVM_INFF         __builtin_inff()        /* Float */\n"
+      << "#define LLVM_NAN(NanStr)   __builtin_nan(NanStr)   /* Double */\n"
+      << "#define LLVM_NANF(NanStr)  __builtin_nanf(NanStr)  /* Float */\n"
+      << "#define LLVM_NANS(NanStr)  __builtin_nans(NanStr)  /* Double */\n"
+      << "#define LLVM_NANSF(NanStr) __builtin_nansf(NanStr) /* Float */\n"
+      << "#define LLVM_INF           __builtin_inf()         /* Double */\n"
+      << "#define LLVM_INFF          __builtin_inff()        /* Float */\n"
       << "#else\n"
-      << "#define LLVM_NAN(NanStr)  ((double)0.0)           /* Double */\n"
-      << "#define LLVM_NANF(NanStr) 0.0F                    /* Float */\n"
-      << "#define LLVM_INF          ((double)0.0)           /* Double */\n"
-      << "#define LLVM_INFF         0.0F                    /* Float */\n"
+      << "#define LLVM_NAN(NanStr)   ((double)0.0)           /* Double */\n"
+      << "#define LLVM_NANF(NanStr)  0.0F                    /* Float */\n"
+      << "#define LLVM_NANS(NanStr)  ((double)0.0)           /* Double */\n"
+      << "#define LLVM_NANSF(NanStr) 0.0F                    /* Float */\n"
+      << "#define LLVM_INF           ((double)0.0)           /* Double */\n"
+      << "#define LLVM_INFF          0.0F                    /* Float */\n"
       << "#endif\n";
 }
 
