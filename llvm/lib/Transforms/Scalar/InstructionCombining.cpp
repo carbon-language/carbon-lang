@@ -404,14 +404,29 @@ static inline bool isEliminableCastOfCast(const CastInst &CI,
   const Type *MidTy = CSrc->getType();
   const Type *DstTy = CI.getType();
 
-  // It is legal to eliminate the instruction if casting A->B->A
-  if (SrcTy == DstTy) return true;
+  // It is legal to eliminate the instruction if casting A->B->A if the sizes
+  // are identical and the bits don't get reinterpreted (for example 
+  // int->float->int)
+  if (SrcTy == DstTy && SrcTy->isLosslesslyConvertableTo(MidTy))
+    return true;
 
   // Allow free casting and conversion of sizes as long as the sign doesn't
   // change...
-  if (SrcTy->isSigned() == MidTy->isSigned() &&
-      MidTy->isSigned() == DstTy->isSigned())
-    return true;
+  if (SrcTy->isIntegral() && MidTy->isIntegral() && DstTy->isIntegral() &&
+      SrcTy->isSigned() == MidTy->isSigned() &&
+      MidTy->isSigned() == DstTy->isSigned()) {
+    // Only accept cases where we are either monotonically increasing the type
+    // size, or monotonically decreasing it.
+    //
+    unsigned SrcSize = SrcTy->getPrimitiveSize();
+    unsigned MidSize = MidTy->getPrimitiveSize();
+    unsigned DstSize = DstTy->getPrimitiveSize();
+    if (SrcSize < MidSize && MidSize < DstSize)
+      return true;
+
+    if (SrcSize > MidSize && MidSize > DstSize)
+      return true;
+  }
 
   // Otherwise, we cannot succeed.  Specifically we do not want to allow things
   // like:  short -> ushort -> uint, because this can create wrong results if
@@ -432,17 +447,32 @@ Instruction *InstCombiner::visitCastInst(CastInst &CI) {
     return &CI;
   }
 
-
   // If casting the result of another cast instruction, try to eliminate this
   // one!
   //
-  if (CastInst *CSrc = dyn_cast<CastInst>(CI.getOperand(0)))
+  if (CastInst *CSrc = dyn_cast<CastInst>(CI.getOperand(0))) {
     if (isEliminableCastOfCast(CI, CSrc)) {
       // This instruction now refers directly to the cast's src operand.  This
       // has a good chance of making CSrc dead.
       CI.setOperand(0, CSrc->getOperand(0));
       return &CI;
     }
+
+    // If this is an A->B->A cast, and we are dealing with integral types, try
+    // to convert this into a logical 'and' instruction.
+    //
+    if (CSrc->getOperand(0)->getType() == CI.getType() &&
+        CI.getType()->isIntegral() && CSrc->getType()->isIntegral() &&
+        CI.getType()->isUnsigned() && CSrc->getType()->isUnsigned() &&
+        CSrc->getType()->getPrimitiveSize() < CI.getType()->getPrimitiveSize()){
+      assert(CSrc->getType() != Type::ULongTy &&
+             "Cannot have type bigger than ulong!");
+      unsigned AndValue = (1U << CSrc->getType()->getPrimitiveSize()*8)-1;
+      Constant *AndOp = ConstantUInt::get(CI.getType(), AndValue);
+      return BinaryOperator::create(Instruction::And, CSrc->getOperand(0),
+                                    AndOp);
+    }
+  }
 
   return 0;
 }
