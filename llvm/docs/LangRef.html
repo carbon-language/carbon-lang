@@ -1559,7 +1559,8 @@ all else are '<tt>false</tt>'.<p>
 When extending an integral value from a type of one signness to another (for
 example '<tt>sbyte</tt>' to '<tt>ulong</tt>'), the value is sign-extended if the
 <b>source</b> value is signed, and zero-extended if the source value is
-unsigned.<p>
+unsigned.  <tt>bool</tt> values are always zero extended into either zero or
+one.<p>
 
 <h5>Example:</h5>
 <pre>
@@ -1694,7 +1695,7 @@ more...
 <address><a href="mailto:sabre@nondot.org">Chris Lattner</a></address>
 <!-- Created: Tue Jan 23 15:19:28 CST 2001 -->
 <!-- hhmts start -->
-Last modified: Wed Aug 14 12:54:55 CDT 2002
+Last modified: Thu Aug 15 11:18:37 CDT 2002
 <!-- hhmts end -->
 </font>
 </body></html>
