@@ -2,8 +2,8 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="7.10"
-	Name="Fibonacci"
-	ProjectGUID="{48FB551D-E37E-42EC-BC97-FF7219774867}"
+	Name="lli"
+	ProjectGUID="{FB6FFD68-C1E4-4DCF-AB02-36D205D5263E}"
 	Keyword="Win32Proj">
 	<Platforms>
 		<Platform
@@ -36,17 +36,11 @@
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="$(OutDir)/Fibonacci.exe"
+				OutputFile="$(OutDir)/lli.exe"
 				LinkIncremental="2"
-				ForceSymbolReferences="_X86TargetMachineModule"
 				GenerateDebugInformation="TRUE"
-				ProgramDatabaseFile="$(OutDir)/Fibonacci.pdb"
-				GenerateMapFile="TRUE"
-				MapFileName="$(OutDir)/Fibonacci.map"
-				MapExports="TRUE"
-				MapLines="TRUE"
+				ProgramDatabaseFile="$(OutDir)/lli.pdb"
 				SubSystem="1"
-				OptimizeReferences="0"
 				TargetMachine="1"/>
 			<Tool
 				Name="VCMIDLTool"/>
@@ -83,6 +77,7 @@
 				ForceConformanceInForLoopScope="TRUE"
 				RuntimeTypeInfo="TRUE"
 				UsePrecompiledHeader="0"
+				BrowseInformation="0"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="FALSE"
 				DebugInformationFormat="3"
@@ -91,9 +86,8 @@
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="$(OutDir)/Fibonacci.exe"
+				OutputFile="$(OutDir)/lli.exe"
 				LinkIncremental="1"
-				ForceSymbolReferences="_X86TargetMachineModule"
 				GenerateDebugInformation="TRUE"
 				SubSystem="1"
 				OptimizeReferences="2"
@@ -129,13 +123,18 @@
 			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx"
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}">
 			<File
-				RelativePath="..\..\examples\Fibonacci\fibonacci.cpp">
+				RelativePath="..\..\tools\lli\lli.cpp">
 			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}">
+		</Filter>
+		<Filter
+			Name="Resource Files"
+			Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx"
+			UniqueIdentifier="{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}">
 		</Filter>
 	</Files>
 	<Globals>
