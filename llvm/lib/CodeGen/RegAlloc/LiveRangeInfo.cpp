@@ -253,7 +253,7 @@ void LiveRangeInfo::coalesceLRs()
      for each machine instruction (inst)
        for each definition (def) in inst
          for each operand (op) of inst that is a use
-           if the def and op are of the same register class
+           if the def and op are of the same register type
 	     if the def and op do not interfere //i.e., not simultaneously live
 	       if (degree(LR of def) + degree(LR of op)) <= # avail regs
 	         if both LRs do not have suggested colors
@@ -312,9 +312,12 @@ void LiveRangeInfo::coalesceLRs()
 	    if( LROfUse == LROfDef)     // nothing to merge if they are same
 	      continue;
 
-	    RegClass *const RCOfUse = LROfUse->getRegClass();
+	    //RegClass *const RCOfUse = LROfUse->getRegClass();
+	    //if( RCOfDef == RCOfUse ) {  // if the reg classes are the same
 
-	    if( RCOfDef == RCOfUse ) {  // if the reg classes are the same
+	    if( MRI.getRegType(LROfDef) == MRI.getRegType(LROfUse) ) {
+
+	      // If the two RegTypes are the same
 
 	      if( ! RCOfDef->getInterference(LROfDef, LROfUse) ) {
 
