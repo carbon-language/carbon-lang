@@ -80,6 +80,8 @@ static void AddArgument(const char *ArgName, Option *Opt) {
 // options have already been processed and the map has been deleted!
 // 
 static void RemoveArgument(const char *ArgName, Option *Opt) {
+  if(getOpts().empty()) return;
+
 #ifndef NDEBUG
   // This disgusting HACK is brought to you courtesy of GCC 3.3.2, which ICE's
   // If we pass ArgName directly into getOption here.
