@@ -120,7 +120,7 @@ private:
 
 
   /// EmitProgressBytecode - This function is used to output the current Program
-  /// to a file named "bugpoing-ID.bc".
+  /// to a file named "bugpoint-ID.bc".
   ///
   void EmitProgressBytecode(const std::string &ID, bool NoFlyer = false);
   
@@ -162,7 +162,7 @@ private:
   /// the MayModifySemantics argument is true, then the cleanups is allowed to
   /// modify how the code behaves.
   ///
-  void performFinalCleanups(Module *M, bool MayModifySemantics = false) const;
+  Module *performFinalCleanups(Module *M, bool MayModifySemantics = false);
 
   /// initializeExecutionEnvironment - This method is used to set up the
   /// environment for executing LLVM programs.

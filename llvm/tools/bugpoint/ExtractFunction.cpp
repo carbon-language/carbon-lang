@@ -37,9 +37,6 @@ namespace {
   cl::opt<bool, true>
   NoSCFG("disable-simplifycfg", cl::location(DisableSimplifyCFG),
          cl::desc("Do not use the -simplifycfg pass to reduce testcases"));
-  cl::opt<bool>
-  NoFinalCleanup("disable-final-cleanup",
-                 cl::desc("Disable the final cleanup phase of narrowing"));
 }
 
 /// deleteInstructionFromProgram - This method clones the current Program and
@@ -89,29 +86,42 @@ Module *BugDriver::deleteInstructionFromProgram(Instruction *I,
   return Result;
 }
 
+static const PassInfo *getPI(Pass *P) {
+  const PassInfo *PI = P->getPassInfo();
+  delete P;
+  return PI;
+}
+
 /// performFinalCleanups - This method clones the current Program and performs
 /// a series of cleanups intended to get rid of extra cruft on the module
 /// before handing it to the user...
 ///
-void BugDriver::performFinalCleanups(Module *M, bool MayModifySemantics) const {
-  // Allow disabling these passes if they crash bugpoint.
-  //
-  // FIXME: This should eventually run these passes in a pass list to prevent
-  // them from being able to crash bugpoint at all!
-  //
-  if (NoFinalCleanup) return;
-
+Module *BugDriver::performFinalCleanups(Module *M, bool MayModifySemantics) {
   // Make all functions external, so GlobalDCE doesn't delete them...
   for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I)
     I->setLinkage(GlobalValue::ExternalLinkage);
   
-  PassManager CleanupPasses;
-  // Make sure that the appropriate target data is always used...
-  CleanupPasses.add(new TargetData("bugpoint", M));
-  CleanupPasses.add(createFunctionResolvingPass());
-  CleanupPasses.add(createGlobalDCEPass());
-  CleanupPasses.add(createDeadTypeEliminationPass());
-  CleanupPasses.add(createDeadArgEliminationPass(MayModifySemantics));
-  CleanupPasses.add(createVerifierPass());
-  CleanupPasses.run(*M);
+  std::vector<const PassInfo*> CleanupPasses;
+  CleanupPasses.push_back(getPI(createFunctionResolvingPass()));
+  CleanupPasses.push_back(getPI(createGlobalDCEPass()));
+  CleanupPasses.push_back(getPI(createDeadTypeEliminationPass()));
+  CleanupPasses.push_back(getPI(createDeadArgHackingPass()));
+
+  std::swap(Program, M);
+  std::string Filename;
+  bool Failed = runPasses(CleanupPasses, Filename);
+  std::swap(Program, M);
+
+  if (Failed) {
+    std::cerr << "Final cleanups failed.  Sorry.  :(\n";
+  } else {
+    delete M;
+    M = ParseInputFile(Filename);
+    if (M == 0) {
+      std::cerr << getToolName() << ": Error reading bytecode file '"
+                << Filename << "'!\n";
+      exit(1);
+    }
+  }
+  return M;
 }
