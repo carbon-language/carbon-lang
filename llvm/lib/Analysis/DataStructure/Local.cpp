@@ -435,8 +435,22 @@ void GraphBuilder::visitCallSite(CallSite CS) {
       } else if (F->getName() == "realloc") {
         DSNodeHandle RetNH = getValueDest(*CS.getInstruction());
         RetNH.mergeWith(getValueDest(**CS.arg_begin()));
-        DSNode *N = RetNH.getNode();
-        if (N) N->setHeapNodeMarker()->setModifiedMarker()->setReadMarker();
+        if (DSNode *N = RetNH.getNode())
+          N->setHeapNodeMarker()->setModifiedMarker()->setReadMarker();
+        return;
+      } else if (F->getName() == "memset") {
+        // Merge the first argument with the return value, and mark the memory
+        // modified.
+        DSNodeHandle RetNH = getValueDest(*CS.getInstruction());
+        RetNH.mergeWith(getValueDest(**CS.arg_begin()));
+        if (DSNode *N = RetNH.getNode())
+          N->setModifiedMarker();
+        return;
+      } else if (F->getName() == "bzero") {
+        // Mark the memory modified.
+        DSNodeHandle H = getValueDest(**CS.arg_begin());
+        if (DSNode *N = H.getNode())
+          N->setModifiedMarker();
         return;
       }
 

@@ -39,8 +39,7 @@ struct DSCallSiteIterator {
     return F->getName() == "printf"  || F->getName() == "sscanf" ||
       F->getName() == "fprintf" || F->getName() == "open" ||
       F->getName() == "sprintf" || F->getName() == "fputs" ||
-      F->getName() == "fscanf" || F->getName() == "bzero" ||
-      F->getName() == "memset";
+      F->getName() == "fscanf";
   }
 
   // isUnresolvableFunction - Return true if this is an unresolvable
