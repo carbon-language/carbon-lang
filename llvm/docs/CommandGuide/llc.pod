@@ -1,4 +1,3 @@
-
 =pod
 
 =head1 NAME
@@ -7,7 +6,7 @@ llc - LLVM static compiler
 
 =head1 SYNOPSIS
 
-llc [options] [filename]
+B<llc> [I<options>] [I<filename>]
 
 =head1 DESCRIPTION
 
@@ -194,11 +193,10 @@ it will exit with a non-zero value.
 
 =head1 SEE ALSO
 
-L<lli>
+L<lli|lli>
 
 =head1 AUTHORS
 
 Maintained by the LLVM Team (L<http://llvm.cs.uiuc.edu>).
 
 =cut
-

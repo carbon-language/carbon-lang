@@ -6,7 +6,7 @@ bugpoint - automatic test case reduction tool
 
 =head1 SYNOPSIS
 
-bugpoint [options] [input LLVM ll/bc files] [LLVM passes] B<--args>
+B<bugpoint> [I<options>] [I<input LLVM ll/bc files>] [I<LLVM passes>] B<--args>
 I<program arguments>
 
 =head1 DESCRIPTION
@@ -240,11 +240,10 @@ if an error occurs, it will exit with a non-zero value.
 
 =head1 SEE ALSO
 
-L<opt>, L<analyze>
+L<opt|opt>, L<analyze|analyze>
 
 =head1 AUTHOR
 
 Maintained by the LLVM Team (L<http://llvm.cs.uiuc.edu>).
 
 =cut
-

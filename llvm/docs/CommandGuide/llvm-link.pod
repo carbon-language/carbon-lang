@@ -6,7 +6,7 @@ llvm-link - LLVM linker
 
 =head1 SYNOPSIS
 
-llvm-link [options] filename [...]
+B<llvm-link> [I<options>] I<filename ...>
 
 =head1 DESCRIPTION
 

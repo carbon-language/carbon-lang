@@ -6,7 +6,7 @@ llvm-prof - print execution profile of LLVM program
 
 =head1 SYNOPSIS
 
-llvm-prof [options] [bytecode file] [llvmprof.out]
+B<llvm-prof> [I<options>] [I<bytecode file>] [I<llvmprof.out>]
 
 =head1 DESCRIPTION
 
@@ -47,12 +47,11 @@ error.
 
 =head1 EXIT STATUS
 
-B<llvm-prof> returns 1 if it cannot load the bytecode file or the profile
-information. Otherwise, it exits with zero.
+B<llvm-prof|llvm-prof> returns 1 if it cannot load the bytecode file or the
+profile information. Otherwise, it exits with zero.
 
 =head1 AUTHOR
 
 B<llvm-prof> is maintained by the LLVM Team (L<http://llvm.cs.uiuc.edu>).
 
 =cut
-

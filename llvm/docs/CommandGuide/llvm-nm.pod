@@ -6,7 +6,7 @@ llvm-nm - list LLVM bytecode file's symbol table
 
 =head1 SYNOPSIS
 
-llvm-nm [options] [filenames...]
+B<llvm-nm> [I<options>] [I<filenames...>]
 
 =head1 DESCRIPTION
 
@@ -113,11 +113,10 @@ B<llvm-nm> exits with an exit code of zero.
 
 =head1 SEE ALSO
 
-L<llvm-dis>, L<ar(1)>, L<nm(1)>
+L<llvm-dis|llvm-dis>, L<ar(1)>, L<nm(1)>
 
 =head1 AUTHOR
 
 Maintained by the LLVM Team (L<http://llvm.cs.uiuc.edu>).
 
 =cut
-

@@ -6,7 +6,7 @@ llvm-bcanalyzer - LLVM bytecode analyzer
 
 =head1 SYNOPSIS
 
-llvm-bcanalyzer [options] [filename]
+B<llvm-bcanalyzer> [I<options>] [I<filename>]
 
 =head1 DESCRIPTION
 
@@ -57,7 +57,7 @@ occurs, it will exit with a non-zero value, usually 1.
 
 =head1 SEE ALSO
 
-L<llvm-dis>, L<http://llvm.cs.uiuc.edu/docs/BytecodeFormat.html>
+L<llvm-dis|llvm-dis>, L<http://llvm.cs.uiuc.edu/docs/BytecodeFormat.html>
 
 =head1 AUTHORS
 

@@ -1,4 +1,3 @@
-
 =pod
 
 =head1 NAME
@@ -7,7 +6,7 @@ extract - extract a function from an LLVM module
 
 =head1 SYNOPSIS
 
-extract [options] --func function-name [filename]
+B<extract> [I<options>] B<--func> I<function-name> [I<filename>]
 
 =head1 DESCRIPTION
 
@@ -64,11 +63,10 @@ occurs, it will exit with a non-zero value.
 
 =head1 SEE ALSO
 
-L<bugpoint>
+L<bugpoint|bugpoint>
 
 =head1 AUTHORS
 
 Maintained by the LLVM Team (L<http://llvm.cs.uiuc.edu>).
 
 =cut
-

@@ -6,7 +6,7 @@ llvm-dis - LLVM disassembler
 
 =head1 SYNOPSIS
 
-llvm-dis [options] [filename]
+B<llvm-dis> [I<options>] [I<filename>]
 
 =head1 DESCRIPTION
 
@@ -56,11 +56,10 @@ occurs, it will exit with a non-zero value.
 
 =head1 SEE ALSO
 
-L<llvm-as>
+L<llvm-as|llvm-as>
 
 =head1 AUTHORS
 
 Maintained by the LLVM Team (L<http://llvm.cs.uiuc.edu>).
 
 =cut
-

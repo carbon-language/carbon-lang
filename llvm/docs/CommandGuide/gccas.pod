@@ -1,4 +1,3 @@
-
 =pod
 
 =head1 NAME
@@ -7,7 +6,7 @@ gccas - optimizing LLVM assembler
 
 =head1 SYNOPSIS
 
-gccas [options] filename
+B<gccas> [I<options>] I<filename>
 
 =head1 DESCRIPTION
 
@@ -68,11 +67,10 @@ status.
 
 =head1 SEE ALSO
 
-L<llvm-as>, L<gccld>
+L<llvm-as|llvm-as>, L<gccld|gccld>
 
 =head1 AUTHORS
 
 Maintained by the LLVM Team (L<http://llvm.cs.uiuc.edu>).
 
 =cut
-

@@ -6,7 +6,7 @@ llvm-as - LLVM assembler
 
 =head1 SYNOPSIS
 
-llvm-as [options] [filename]
+B<llvm-as> [I<options>] [I<filename>]
 
 =head1 DESCRIPTION
 
@@ -77,11 +77,10 @@ occurs, it will exit with a non-zero value.
 
 =head1 SEE ALSO
 
-L<llvm-dis>, L<gccas>
+L<llvm-dis|llvm-dis>, L<gccas|gccas>
 
 =head1 AUTHORS
 
 Maintained by the LLVM Team (L<http://llvm.cs.uiuc.edu>).
 
 =cut
-

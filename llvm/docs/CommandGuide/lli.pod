@@ -6,15 +6,15 @@ lli - directly execute programs from LLVM bytecode
 
 =head1 SYNOPSIS
 
-lli [options] [filename] [args ...]
+B<lli> [I<options>] [I<filename>] [I<program args>]
 
 =head1 DESCRIPTION
 
-B<lli> directly executes programs in LLVM bytecode format.  It takes a program in
-LLVM bytecode format and executes it using a just-in-time compiler, if one is
-available for the current architecture, or an interpreter.  B<lli> takes
-all of the same code generator options as L<llc|llc>, but they are only effective
-when B<lli> is using the just-in-time compiler.
+B<lli> directly executes programs in LLVM bytecode format.  It takes a program
+in LLVM bytecode format and executes it using a just-in-time compiler, if one is
+available for the current architecture, or an interpreter.  B<lli> takes all of
+the same code generator options as L<llc|llc>, but they are only effective when
+B<lli> is using the just-in-time compiler.
 
 If I<filename> is not specified, then B<lli> reads the LLVM bytecode for the
 program from standard input.
@@ -67,7 +67,7 @@ Otherwise, it will return the exit code of the program it executes.
 
 =head1 SEE ALSO
 
-L<llc>
+L<llc|llc>
 
 =head1 AUTHOR
 
