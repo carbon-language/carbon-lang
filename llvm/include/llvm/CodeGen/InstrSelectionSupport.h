@@ -53,7 +53,7 @@ int64_t         GetConstantValueAsSignedInt     (const Value *V,
 //   Returns true/false in allConstantIndices if all indices are/aren't const.
 //---------------------------------------------------------------------------
 
-Value*          GetMemInstArgs  (const InstructionNode* memInstrNode,
+Value*          GetMemInstArgs  (InstructionNode* memInstrNode,
                                  vector<Value*>& idxVec,
                                  bool& allConstantIndices);
 

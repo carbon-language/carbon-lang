@@ -938,7 +938,7 @@ CreateCodeForFixedSizeAlloca(const TargetMachine& target,
 
 static void
 SetOperandsForMemInstr(vector<MachineInstr*>& mvec,
-                       const InstructionNode* vmInstrNode,
+                       InstructionNode* vmInstrNode,
                        const TargetMachine& target)
 {
   Instruction* memInst = vmInstrNode->getInstruction();
