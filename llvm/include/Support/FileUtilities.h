@@ -26,4 +26,14 @@ bool DiffFiles(const std::string &FileA, const std::string &FileB,
 ///
 void MoveFileOverIfUpdated(const std::string &New, const std::string &Old);
  
+/// removeFile - Delete the specified file
+///
+void removeFile(const std::string &Filename);
+
+/// getUniqueFilename - Return a filename with the specified prefix.  If the
+/// file does not exist yet, return it, otherwise add a suffix to make it
+/// unique.
+///
+std::string getUniqueFilename(const std::string &FilenameBase);
+
 #endif

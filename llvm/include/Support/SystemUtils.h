@@ -22,16 +22,6 @@ bool isExecutableFile(const std::string &ExeFileName);
 std::string FindExecutable(const std::string &ExeName,
 			   const std::string &BugPointPath);
 
-/// removeFile - Delete the specified file
-///
-void removeFile(const std::string &Filename);
-
-/// getUniqueFilename - Return a filename with the specified prefix.  If the
-/// file does not exist yet, return it, otherwise add a suffix to make it
-/// unique.
-///
-std::string getUniqueFilename(const std::string &FilenameBase);
-
 /// RunProgramWithTimeout - This function executes the specified program, with
 /// the specified null-terminated argument array, with the stdin/out/err fd's
 /// redirected, with a timeout specified on the commandline.  This terminates

@@ -54,3 +54,38 @@ void MoveFileOverIfUpdated(const std::string &New, const std::string &Old) {
     std::remove(New.c_str());
   }  
 }
+
+/// removeFile - Delete the specified file
+///
+void removeFile(const std::string &Filename) {
+  std::remove(Filename.c_str());
+}
+
+/// getUniqueFilename - Return a filename with the specified prefix.  If the
+/// file does not exist yet, return it, otherwise add a suffix to make it
+/// unique.
+///
+std::string getUniqueFilename(const std::string &FilenameBase) {
+  if (!std::ifstream(FilenameBase.c_str()))
+    return FilenameBase;    // Couldn't open the file? Use it!
+
+  // Create a pattern for mkstemp...
+  char *FNBuffer = new char[FilenameBase.size()+8];
+  strcpy(FNBuffer, FilenameBase.c_str());
+  strcpy(FNBuffer+FilenameBase.size(), "-XXXXXX");
+
+  // Agree on a temporary file name to use....
+  int TempFD;
+  if ((TempFD = mkstemp(FNBuffer)) == -1) {
+    std::cerr << "bugpoint: ERROR: Cannot create temporary file in the current "
+	      << " directory!\n";
+    exit(1);
+  }
+
+  // We don't need to hold the temp file descriptor... we will trust that noone
+  // will overwrite/delete the file while we are working on it...
+  close(TempFD);
+  std::string Result(FNBuffer);
+  delete[] FNBuffer;
+  return Result;
+}
