@@ -31,11 +31,7 @@
 # 4. Source - If specified, this sets the source code filenames.  If this
 #    is not set, it defaults to be all of the .cpp, .c, .y, and .l files 
 #    in the current directory.  Also, if you want to build files in addition
-#    to the local files, you can use the ExtraSource variable
-#
-# 5. SourceDir - If specified, this specifies a directory that the source files
-#    are in, if they are not in the current directory.  This should include a
-#    trailing / character.
+#    to the local files, you can use the BUILT_SOURCES variable
 #
 # 6. LLVM_SRC_ROOT - If specified, points to the top of the LLVM source tree.
 #
@@ -57,7 +53,7 @@
 #
 # Set the VPATH so that we can find source files.
 #
-VPATH=$(SourceDir)
+VPATH=$(BUILD_SRC_DIR)
 
 ###########################################################################
 # Default Targets:
@@ -65,45 +61,20 @@ VPATH=$(SourceDir)
 #	building.
 ###########################################################################
 
-# Ensure people re-run configure when it gets updated
-all::$(LLVM_OBJ_ROOT)/config.status
 
-ifdef SHARED_LIBRARY
-# if SHARED_LIBRARY is specified, the default is to build the dynamic lib
-all:: dynamic
-install:: install-dynamic-library
-endif
+# Ensure all preconditions are met
+all:: preconditions
 
-ifdef BYTECODE_LIBRARY
-# if BYTECODE_LIBRARY is specified, the default is to build the bytecode lib
-all:: bytecodelib
-install:: install-bytecode-library
-install-bytecode:: install-bytecode-library
-endif
+# Make sure all the user-target rules are double colon rules
+all :: preconditions
+clean:: preconditions
+install :: preconditions
+uninstall :: preconditions
+check:: preconditions
+dist:: preconditions
+distcheck:: preconditions
+distclean:: preconditions
 
-# Default Rule:  Make sure it's also a :: rule
-all ::
-
-# Default for install is to at least build everything...
-install ::
-
-# Default rule for test.  It ensures everything has a test rule
-test::
-
-# Default rule for building only bytecode.
-bytecode::
-
-# Default rule for installing only bytecode.
-install-bytecode::
-
-# Print out the directories used for building
-prdirs::
-	@${ECHO} "Build Source Root: " $(BUILD_SRC_ROOT)
-	@${ECHO} "Build Source Dir : " $(BUILD_SRC_DIR)
-	@${ECHO} "Build Object Root: " $(BUILD_OBJ_ROOT)
-	@${ECHO} "Build Object Dir : " $(BUILD_OBJ_DIR)
-	@${ECHO} "LLVM  Source Root: " $(LLVM_SRC_ROOT)
-	@${ECHO} "LLVM  Object Root: " $(LLVM_OBJ_ROOT)
 
 ###########################################################################
 # Suffixes and implicit rules:
@@ -121,8 +92,8 @@ prdirs::
 # slightly since GNU Make will not try to find implicit rules for targets
 # which are marked as Phony.
 #
-.PHONY: all dynamic bytecodelib install-bytecode-library
-.PHONY: clean distclean install test bytecode prdirs
+ALL_TARGETS= all dynamic bytecodelib install-bytecode-library clean distclean install test bytecode prdirs
+.PHONY: $(ALL_TARGETS) preconditions
 
 ###########################################################################
 # Miscellaneous paths and commands:
@@ -134,287 +105,153 @@ prdirs::
 # Variables derived from configuration options... 
 #--------------------------------------------------------------------
 
-BURG_OPTS = -I
-
 ifdef ENABLE_PROFILING
-  ENABLE_OPTIMIZED = 1
   CONFIGURATION := Profile
+  CXXFLAGS += -O3 -DNDEBUG -felide-constructors -finline-functions -pg
+  CFLAGS   += -O3 -DNDEBUG -pg
+  LDFLAGS  += -O3 -DNDEBUG -pg 
 else
   ifdef ENABLE_OPTIMIZED
     CONFIGURATION := Release
+    CXXFLAGS  += -O3 -DNDEBUG -finline-functions -felide-constructors -fomit-frame-pointer
+    CFLAGS    += -O3 -DNDEBUG -fomit-frame-pointer
+    LDFLAGS   += -O3 -DNDEBUG 
   else
     CONFIGURATION := Debug
+    CXXFLAGS += -g -D_DEBUG 
+    CFLAGS   += -g -D_DEBUG
+    LDFLAGS  += -g -D_DEBUG 
+    KEEP_SYMBOLS := 1
   endif
 endif
 
-#
-# Enable this for profiling support with 'gprof'
-# This automatically enables optimized builds.
-#
-ifdef ENABLE_PROFILING
-  PROFILE = -pg
-endif
+ARFLAGS := cru
+#------------------------------------------------------------------------------
+# Directory locations
+OBJDIR      := $(BUILD_OBJ_DIR)/$(CONFIGURATION)
+LIBDIR      := $(BUILD_OBJ_ROOT)/lib/$(CONFIGURATION)
+TOOLDIR     := $(BUILD_OBJ_ROOT)/tools/$(CONFIGURATION)
+LLVMLIBDIR  := $(LLVM_OBJ_ROOT)/lib/$(CONFIGURATION)
+LLVMTOOLDIR := $(LLVM_OBJ_ROOT)/tools/$(CONFIGURATION)
 
-###########################################################################
-# Library Locations:
-#	These variables describe various library locations:
-#
-#	DEST* = Location of where libraries that are built will be placed.
-#	LLVM* = Location of LLVM libraries used for linking.
-#	PROJ* = Location of previously built libraries used for linking.
-###########################################################################
+#------------------------------------------------------------------------------
+# Full Paths To Compiled Tools and Utilities
+LIBTOOL  := $(LLVM_OBJ_ROOT)/mklib
+LLVMAS   := $(LLVMTOOLDIR)/llvm-as$(EXEEXT)
+BURG     := $(LLVMTOOLDIR)/burg$(EXEEXT)
+TBLGEN   := $(LLVMTOOLDIR)/tblgen$(EXEEXT)
+GCCLD    := $(LLVMTOOLDIR)/gccld$(EXEEXT)
+LLVMGCC  := PATH=$(LLVMTOOLDIR):$(PATH) $(LLVMGCCDIR)/bin/gcc
+LLVMGXX  := PATH=$(LLVMTOOLDIR):$(PATH) $(LLVMGCCDIR)/bin/g++
 
-# Libraries that are being built
-DESTLIBDEBUG    := $(BUILD_OBJ_ROOT)/lib/Debug
-DESTLIBRELEASE  := $(BUILD_OBJ_ROOT)/lib/Release
-DESTLIBPROFILE  := $(BUILD_OBJ_ROOT)/lib/Profile
-DESTLIBBYTECODE := $(BUILD_OBJ_ROOT)/lib/BytecodeLibs
-DESTLIBCURRENT  := $(BUILD_OBJ_ROOT)/lib/$(CONFIGURATION)
+# Need a better way to compute this.
+LLVMGCCLIBDIR := $(dir $(shell $(LLVMGCC) -print-file-name=libgcc.a))/
 
-# LLVM libraries used for linking
-LLVMLIBDEBUGSOURCE    := $(LLVM_OBJ_ROOT)/lib/Debug
-LLVMLIBRELEASESOURCE  := $(LLVM_OBJ_ROOT)/lib/Release
-LLVMLIBPROFILESOURCE  := $(LLVM_OBJ_ROOT)/lib/Profile
-LLVMLIBCURRENTSOURCE  := $(LLVM_OBJ_ROOT)/lib/$(CONFIGURATION)
+#------------------------------------------------------------------------------
+# Adjust to user's request
 
-# Libraries that were built that will now be used for linking
-PROJLIBDEBUGSOURCE    := $(BUILD_OBJ_ROOT)/lib/Debug
-PROJLIBRELEASESOURCE  := $(BUILD_OBJ_ROOT)/lib/Release
-PROJLIBPROFILESOURCE  := $(BUILD_OBJ_ROOT)/lib/Profile
-PROJLIBCURRENTSOURCE  := $(BUILD_OBJ_ROOT)/lib/$(CONFIGURATION)
-
-###########################################################################
-# Tool Locations
-#	These variables describe various tool locations:
-#
-#	DEST* = Location of where tools that are built will be placed.
-#	LLVM* = Location of LLVM tools used for building.
-#	PROJ* = Location of previously built tools used for linking.
-###########################################################################
-
-DESTTOOLDEBUG   := $(BUILD_OBJ_ROOT)/tools/Debug
-DESTTOOLRELEASE := $(BUILD_OBJ_ROOT)/tools/Release
-DESTTOOLPROFILE := $(BUILD_OBJ_ROOT)/tools/Profile
-DESTTOOLCURRENT := $(BUILD_OBJ_ROOT)/tools/$(CONFIGURATION)
-
-LLVMTOOLDEBUG   := $(LLVM_OBJ_ROOT)/tools/Debug
-LLVMTOOLRELEASE := $(LLVM_OBJ_ROOT)/tools/Release
-LLVMTOOLPROFILE := $(LLVM_OBJ_ROOT)/tools/Profile
-LLVMTOOLCURRENT := $(LLVM_OBJ_ROOT)/tools/$(CONFIGURATION)
-
-PROJTOOLDEBUG   := $(BUILD_OBJ_ROOT)/tools/Debug
-PROJTOOLRELEASE := $(BUILD_OBJ_ROOT)/tools/Release
-PROJTOOLPROFILE := $(BUILD_OBJ_ROOT)/tools/Profile
-PROJTOOLCURRENT := $(BUILD_OBJ_ROOT)/tools/$(CONFIGURATION)
-
-#
-# Libtool is found in the current directory.
-#
-LIBTOOL := $(LLVM_OBJ_ROOT)/mklib
-
-#
-# If we're not building a shared library, use the disable-shared tag with
-# libtool.  This will disable the building of objects for shared libraries and
-# only generate static library objects.
-#
-# For dynamic libraries, we'll take the performance hit for now, since we
-# almost never build them.
-#
-# This should speed up compilation and require no modifications to future
-# versions of libtool.
-#
 ifndef SHARED_LIBRARY
-LIBTOOL += --tag=disable-shared
+  LIBTOOL += --tag=disable-shared
+else
+  LDFLAGS += -rpath $(LIBDIR)
 endif
 
 #
 # Verbosity levels
 #
 ifndef VERBOSE
-VERB := @
-LIBTOOL += --silent
+  VERB := @
+  LIBTOOL += --silent
+  AR += >/dev/null 2>/dev/null
 endif
-
-###########################################################################
-# Miscellaneous paths and commands (part deux):
-#	This section defines various configuration macros, such as where
-#	to find burg, tblgen, and libtool.
-###########################################################################
-
-#--------------------------------------------------------------------------
-# Utilities used while building the LLVM tree, which live in the utils dir
-#
-BURG       := $(LLVMTOOLCURRENT)/burg$(EXEEXT)
-RunBurg    := $(BURG) $(BURG_OPTS)
-TBLGEN     := $(LLVMTOOLCURRENT)/tblgen$(EXEEXT)
-LGCCLDPROG := $(LLVMTOOLCURRENT)/gccld$(EXEEXT)
-
-#--------------------------------------------------------------------------
-# The LLVM GCC front-end in C and C++ flavors
-#
-LLVMGCC := PATH=$(LLVMTOOLCURRENT):$(PATH) $(LLVMGCCDIR)/bin/gcc
-LLVMGXX := PATH=$(LLVMTOOLCURRENT):$(PATH) $(LLVMGCCDIR)/bin/g++
-
-#--------------------------------------------------------------------------
-# The compiled LLVM tools
-#
-
-LLVMAS  := $(LLVMTOOLCURRENT)/llvm-as$(EXEEXT)
-# Find the location of the platform specific LLVM GCC libraries
-LLVMGCCLIBDIR=$(dir $(shell $(LLVMGCC) -print-file-name=libgcc.a))
-# LLVM Tool Definitions (LLVMGCC, LLVMGXX, LLVMAS are provided by
-# Makefile.rules) 
-LLI       = $(LLVMTOOLCURRENT)/lli$(EXEEXT)
-LLC       = $(LLVMTOOLCURRENT)/llc$(EXEEXT)
-LGCCAS    = $(LLVMTOOLCURRENT)/gccas$(EXEEXT)
-LGCCLD    = $(LGCCLDPROG) -L$(LLVMGCCLIBDIR) -L$(LLVMGCCDIR)/lib
-LDIS      = $(LLVMTOOLCURRENT)/llvm-dis$(EXEEXT)
-LOPT      = $(LLVMTOOLCURRENT)/opt$(EXEEXT)
-LLINK     = $(LLVMTOOLCURRENT)/llvm-link$(EXEEXT)
-LPROF     = $(LLVMTOOLCURRENT)/llvm-prof$(EXEEXT)
-LANALYZE  = $(LLVMTOOLCURRENT)/analyze$(EXEEXT)
-LBUGPOINT = $(LLVMTOOLCURRENT)/bugpoint$(EXEEXT)
-LLVMC     = $(LLVMTOOLCURRENT)/llvmc$(EXEEXT)
-
-
-###########################################################################
-# Compile Time Flags
-###########################################################################
-
-#
-# Include both the project headers and the LLVM headers for compilation and
-# dependency computation.
-#
-# BUILD_OBJ_DIR          : Files local to the particular object directory
-#                          (locallly generated header files).
-# BUILD_SRC_DIR          : Files local to the particular source directory.
-# BUILD_SRC_ROOT/include : Files global to the project.
-# LLVM_OBJ_ROOT/include  : config.h files generated by autoconf
-# LEVEL/include          : config.h files for the project
-# LLVM_SRC_ROOT/include  : Files global to LLVM.
-#
-CPPFLAGS += -I$(BUILD_OBJ_DIR) -I$(BUILD_SRC_DIR) -I$(LLVM_OBJ_ROOT)/include \
-            -I$(BUILD_SRC_ROOT)/include -I$(LEVEL)/include \
-            -I$(LLVM_SRC_ROOT)/include
 
 # By default, strip symbol information from executable
 ifndef KEEP_SYMBOLS
-STRIP = $(PLATFORMSTRIPOPTS)
-STRIP_WARN_MSG = "(without symbols)"
+  STRIP = $(PLATFORMSTRIPOPTS)
+  STRIP_WARN_MSG = "(without symbols)"
 endif
 
-# Allow GNU extensions:
-CPPFLAGS += -D_GNU_SOURCE
-# Pull in limit macros from stdint.h, even in C++:
-CPPFLAGS += -D__STDC_LIMIT_MACROS
-
-CompileCommonOpts := -Wall -W -Wwrite-strings -Wno-unused
-CompileOptimizeOpts := -O3 -DNDEBUG -finline-functions
-
-#
-# Compile commands with libtool.
-#
-Compile  := $(LIBTOOL) --tag=CXX --mode=compile $(CXX) -c $(CPPFLAGS) $(CXXFLAGS) $(CompileCommonOpts)
-CompileC  := $(LIBTOOL) --mode=compile $(CC) -c $(CPPFLAGS) $(CFLAGS) $(CompileCommonOpts)
-
-# Compile a cpp file, don't link...
-CompileG := $(Compile) -g  -D_DEBUG
-CompileO := $(Compile) $(CompileOptimizeOpts) -felide-constructors -fomit-frame-pointer
-CompileP := $(Compile) $(CompileOptimizeOpts) -felide-constructors $(PROFILE)
-
-# Compile a c file, don't link...
-CompileCG := $(CompileC) -g  -D_DEBUG
-CompileCO := $(CompileC) $(CompileOptimizeOpts) -fomit-frame-pointer
-CompileCP := $(CompileC) $(CompileOptimizeOpts) $(PROFILE)
-
-###########################################################################
-# Link Time Options
-###########################################################################
-
-#
-# Link final executable
-#	(Note that we always link with the C++ compiler).
-#
-Link     := $(LIBTOOL) --tag=CXX --mode=link $(CXX)
-
-# link both projlib and llvmlib libraries
-LinkG    := $(Link) -g -L$(PROJLIBDEBUGSOURCE)  -L$(LLVMLIBDEBUGSOURCE) $(STRIP)
-LinkO    := $(Link) -O3 -L$(PROJLIBRELEASESOURCE) -L$(LLVMLIBRELEASESOURCE)
-LinkP    := $(Link) -O3 -L$(PROJLIBPROFILESOURCE) -L$(LLVMLIBPROFILESOURCE) $(PROFILE)
+ifdef TOOLNAME
+  LDFLAGS += -rpath $(TOOLDIR) -export-dynamic $(TOOLLINKOPTS)
+endif
 
 # TOOLLINKOPTSB to pass options to the linker like library search path etc
 # Note that this is different from TOOLLINKOPTS, these options
 # are passed to the linker *before* the USEDLIBS options are passed.
 # e.g. usage TOOLLINKOPTSB =  -L/home/xxx/lib
 ifdef TOOLLINKOPTSB
-LinkG    := $(LinkG) $(TOOLLINKOPTSB) 
-LinkO    := $(LinkO) $(TOOLLINKOPTSB) 
-LinkP    := $(LinkP) $(TOOLLINKOPTSB) 
+LDFLAGS += $(TOOLLINKOPTSB)
 endif
 
-# Create one .o file from a bunch of .o files...
-Relink := ${LIBTOOL} --tag=CXX --mode=link $(CXX)
+LDFLAGS += -L$(LIBDIR) -L$(LLVMLIBDIR)
 
-#
-# Configure where the item being compiled should go.
-#
-ifdef SHARED_LIBRARY
-Link += -rpath $(DESTLIBCURRENT)
+#------------------------------------------------------------------------------
+# Options To Invoke Tools
+
+CompileCommonOpts := -Wall -W -Wwrite-strings -Wno-unused
+
+CPPFLAGS += -I$(BUILD_OBJ_DIR) \
+            -I$(BUILD_SRC_DIR) \
+            -I$(BUILD_SRC_ROOT)/include \
+            -I$(BUILD_OBJ_ROOT)/include \
+            -I$(LLVM_OBJ_ROOT)/include \
+            -I$(LLVM_SRC_ROOT)/include \
+            -D_GNU_SOURCE -D__STDC_LIMIT_MACROS
+
+CXXCompile   := $(CXX) $(CPPFLAGS) $(CompileCommonOpts) $(CXXFLAGS) -c
+LTCXXCompile := $(LIBTOOL) --tag=CXX --mode=compile $(CXXCompile)
+CCompile     := $(CC) $(CPPFLAGS) $(CompileCommonOpts) -c $(CFLAGS)
+LTCCompile   := $(LIBTOOL) --mode=compile $(CCompile)
+BCCXXCompile := $(LLVMGXX) $(CPPFLAGS) $(CompileCommonOpts) $(CXXFLAGS) -c
+BCCCompile   := $(LLVMGCC) $(CPPFLAGS) $(CompileCommonOpts) $(CFLAGS) -c
+Link         := $(LIBTOOL) --tag=CXX --mode=link $(CXX) $(CPPFLAGS) $(CompileCommonOpts) $(LDFLAGS) $(STRIP)
+Relink       := $(LIBTOOL) --tag=CXX --mode=link $(CXX)
+BCLinkLib    := $(LLVMGCC) -shared -nostdlib
+Burg         := $(BURG) -I $(BUILD_SRC_DIR)
+TableGen     := $(TBLGEN) -I $(BUILD_SRC_DIR)
+Archive      := $(AR) $(ARFLAGS)
+ifdef RANLIB
+Ranlib       := $(RANLIB)
+else
+Ranlib       := ranlib
 endif
-
-ifdef TOOLNAME
-Link += -rpath $(DESTTOOLCURRENT)
-endif
-
-# Create dependency file from CPP file, send to stdout.
-Depend   := $(CXX) -MM -I$(LEVEL)/include $(CPPFLAGS) 
-DependC  := $(CC)  -MM -I$(LEVEL)/include $(CPPFLAGS) 
-
-# Archive a bunch of .o files into a .a file...
-AR       = $(AR_PATH) cr
 
 #----------------------------------------------------------
-
 # Source includes all of the cpp files, and objects are derived from the
 # source files...
-# The local Makefile can list other Source files via ExtraSource = ...
+# The local Makefile can list other Source files via BUILT_SOURCES = ...
 # 
 ifndef Source
-Source  := $(notdir $(ExtraSource) $(wildcard $(SourceDir)/*.cpp \
-                    $(SourceDir)/*.cc $(SourceDir)/*.c $(SourceDir)/*.y \
-                    $(SourceDir)/*.l))
+
+Source  := $(notdir $(wildcard $(BUILD_SRC_DIR)/*.cpp \
+                    $(BUILD_SRC_DIR)/*.cc $(BUILD_SRC_DIR)/*.c $(BUILD_SRC_DIR)/*.y \
+                    $(BUILD_SRC_DIR)/*.l))
+endif
+
+ifdef BUILT_SOURCES
+Source += $(filter %.cpp %.c %.cc %.y %.l,$(BUILT_SOURCES))
 endif
 
 #
 # Libtool Objects
 #
 Srcs := $(sort $(basename $(Source)))
-ObjectsO  := $(Srcs:%=$(BUILD_OBJ_DIR)/Release/%.lo)
-ObjectsP  := $(Srcs:%=$(BUILD_OBJ_DIR)/Profile/%.lo)
-ObjectsG  := $(Srcs:%=$(BUILD_OBJ_DIR)/Debug/%.lo)
-ObjectsBC := $(Srcs:%=$(BUILD_OBJ_DIR)/BytecodeObj/%.bc)
-
-#
-# The real objects underlying the libtool objects
-#
-RObjs := $(sort $(patsubst Debug/%.o, %.o, $(addsuffix .o,$(basename $(Source)))))
-RObjectsO := $(addprefix $(BUILD_OBJ_DIR)/Release/,$(RObjs))
-RObjectsP := $(addprefix $(BUILD_OBJ_DIR)/Profile/,$(RObjs))
-RObjectsG := $(addprefix $(BUILD_OBJ_DIR)/Debug/,$(RObjs))
+ObjectsO  := $(Srcs:%=$(OBJDIR)/%.o)
+ObjectsLO := $(Srcs:%=$(OBJDIR)/%.lo)
+ObjectsBC := $(Srcs:%=$(OBJDIR)/%.bc)
 
 #---------------------------------------------------------
 # Handle the DIRS and PARALLEL_DIRS options
 #---------------------------------------------------------
 
 ifdef DIRS
-all install clean test bytecode stripped-bytecode install-bytecode::
-	$(VERB) for dir in ${DIRS}; do \
-		if [ ! -f $$dir/Makefile ]; \
-		then \
-			$(MKDIR) $$dir; \
-			cp $(SourceDir)/$$dir/Makefile $$dir/Makefile; \
-		fi; \
-		($(MAKE) -C $$dir $@ $(MFLAGS)) || exit 1; \
+$(ALL_TARGETS)::
+	$(VERB) for dir in $(DIRS); do \
+	  if [ ! -f $$dir/Makefile ]; then \
+	    $(MKDIR) $$dir; \
+	    cp $(BUILD_SRC_DIR)/$$dir/Makefile $$dir/Makefile; \
+	  fi; \
+	  ($(MAKE) -C $$dir $@ $(MFLAGS)) || exit 1; \
 	done
 endif
 
@@ -429,27 +266,24 @@ stripped-bytecode :: $(addsuffix /.makestripped-bytecode, $(PARALLEL_DIRS))
 install-bytecode :: $(addsuffix /.makeinstall-bytecode, $(PARALLEL_DIRS))
 
 %/.makeall %/.makeinstall %/.makeclean %/.maketest %/.makebytecode %/.makestripped-bytecode %/.makeinstall-bytecode:
-	$(VERB) if [ ! -f $(@D)/Makefile ]; \
-	then \
-		$(MKDIR) $(@D); \
-		cp $(SourceDir)/$(@D)/Makefile $(@D)/Makefile; \
+	$(VERB) if [ ! -f $(@D)/Makefile ]; then \
+	  $(MKDIR) $(@D); \
+	  cp $(BUILD_SRC_DIR)/$(@D)/Makefile $(@D)/Makefile; \
 	fi; \
 	$(MAKE) -C $(@D) $(subst $(@D)/.make,,$@) $(MFLAGS)
 endif
 
 # Handle directories that may or may not exist
 ifdef OPTIONAL_DIRS
-all install clean test bytecode stripped-bytecode install-bytecode::
-	$(VERB) for dir in ${OPTIONAL_DIRS}; do \
-		if [ -d $(SourceDir)/$$dir ]; \
-		then\
-			if [ ! -f $$dir/Makefile ]; \
-			then \
-				$(MKDIR) $$dir; \
-				cp $(SourceDir)/$$dir/Makefile $$dir/Makefile; \
-			fi; \
-			($(MAKE) -C$$dir $@ $(MFLAGS)) || exit 1; \
-		fi \
+$(ALL_TARGETS)::
+	$(VERB) for dir in $(OPTIONAL_DIRS); do \
+	  if [ -d $(BUILD_SRC_DIR)/$$dir ]; then\
+	    if [ ! -f $$dir/Makefile ]; then \
+	      $(MKDIR) $$dir; \
+	      cp $(BUILD_SRC_DIR)/$$dir/Makefile $$dir/Makefile; \
+	    fi; \
+	    ($(MAKE) -C$$dir $@ $(MFLAGS)) || exit 1; \
+	  fi \
 	done
 endif
 
@@ -465,7 +299,7 @@ $(sysconfdir):
 install-config-files: $(sysconfdir) $(CONFIG_FILES)
 	$(VERB)$(ECHO) Installing Configuration Files To $(sysconfdir)
 	$(VERB)for file in $(CONFIG_FILES); do \
-		$(INSTALL) $(SourceDir)/$${file} $(sysconfdir) ; \
+		$(INSTALL) $(BUILD_SRC_DIR)/$${file} $(sysconfdir) ; \
 	done
 endif
 
@@ -499,151 +333,110 @@ ifdef LIBRARYNAME
 
 # Make sure there isn't any extranous whitespace on the LIBRARYNAME option
 LIBRARYNAME := $(strip $(LIBRARYNAME))
+LIBNAME_LA := $(LIBDIR)/lib$(LIBRARYNAME).la
+LIBNAME_A  := $(LIBDIR)/lib$(LIBRARYNAME).a
+LIBNAME_O  := $(LIBDIR)/$(LIBRARYNAME).o
+LIBNAME_BC := $(LIBDIR)/lib$(LIBRARYNAME).bc
 
-LIBNAME_O    := $(DESTLIBRELEASE)/lib$(LIBRARYNAME).la
-LIBNAME_P    := $(DESTLIBPROFILE)/lib$(LIBRARYNAME).la
-LIBNAME_G    := $(DESTLIBDEBUG)/lib$(LIBRARYNAME).la
-LIBNAME_CUR  := $(DESTLIBCURRENT)/lib$(LIBRARYNAME).la
-LIBNAME_AO   := $(DESTLIBRELEASE)/lib$(LIBRARYNAME).a
-LIBNAME_AP   := $(DESTLIBPROFILE)/lib$(LIBRARYNAME).a
-LIBNAME_AG   := $(DESTLIBDEBUG)/lib$(LIBRARYNAME).a
-LIBNAME_ACUR := $(DESTLIBCURRENT)/lib$(LIBRARYNAME).a
-LIBNAME_OBJO := $(DESTLIBRELEASE)/$(LIBRARYNAME).o
-LIBNAME_OBJP := $(DESTLIBPROFILE)/$(LIBRARYNAME).o
-LIBNAME_OBJG := $(DESTLIBDEBUG)/$(LIBRARYNAME).o
-LIBNAME_OBJCUR := $(DESTLIBCURRENT)/$(LIBRARYNAME).o
-LIBNAME_BC   := $(DESTLIBBYTECODE)/lib$(LIBRARYNAME).bc
-
-
-#--------------------------------------------------------------------
-# Library Targets
+#-------------------------------------------------------------------------------
+# Shared Library Targets
 #	Modify the top level targets to build the desired libraries.
-#--------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 
-# dynamic target builds a shared object version of the library...
-dynamic:: $(LIBNAME_CUR)
-bytecodelib:: $(LIBNAME_BC)
-install-bytecode-library:: $(DESTDIR)$(bytecode_libdir)/lib$(LIBRARYNAME).bc
+# Does the library want a shared library version built?
+ifdef SHARED_LIBRARY
+
+all:: $(LIBNAME_LA)
+
+$(LIBNAME_LA): $(BUILT_SOURCES) $(ObjectsLO) $(LIBDIR)/.dir
+	@$(ECHO) Linking shared library $(notdir $@)
+	$(VERB) $(Link) -o $@ $(ObjectsLO)
+	$(VERB) $(LIBTOOL) --mode=install $(INSTALL) $@ $(LIBDIR)
+	@$(ECHO) Finished linking shared library $(LIBRARYNAME).la 
+clean::
+	$(VERB) $(RM) -f $(LIBNAME_LA)
+
+install:: $(DESTDIR)$(libdir)/lib$(LIBRARYNAME)$(SHLIBEXT)
+
+$(DESTDIR)/lib/lib$(LIBRARYNAME)$(SHLIBEXT): $(LIBNAME_LA)
+	@$(ECHO) Installing shared library $(notdir $@)
+	$(VERB) $(MKDIR) $(DESTDIR)
+	$(VERB) $(LIBTOOL) --mode=install $(INSTALL) $(LIBNAME_LA) $(DESTDIR)$(libdir)/lib$(LIBRARYNAME)$(SHLIBEXT)
+	$(VERB) $(LIBTOOL) --finish $(DESTDIR)$(libdir)
+endif
+
+# Does the library want a bytecode version built?
+ifdef BYTECODE_LIBRARY
+
+ifdef EXPORTED_SYMBOL_LIST
+  BCLinkLib += -Xlinker -internalize-public-api-list=$(EXPORTED_SYMBOL_LIST)
+else
+  ifdef EXPORTED_SYMBOL_FILE
+    BCLinkLib += -Xlinker -internalize-public-api-file=$(EXPORTED_SYMBOL_FILE)
+  else
+    BCLinkLib += -Xlinker -disable-internalize
+  endif
+endif
+
+all:: $(LIBNAME_BC)
+
+$(LIBNAME_BC): $(BUILT_SOURCES) $(ObjectsBC) $(LIBDIR)/.dir
+	@$(ECHO) Linking bytecode library $(notdir $@)
+	$(VERB) $(BCLinkLib) -o $@ $(ObjectsBC)
+
+clean::
+	$(VERB) $(RM) -f $(LIBNAME_BC)
+
+install:: $(DESTDIR)$(bytecode_libdir)/lib$(LIBRARYNAME).bc
 
 $(DESTDIR)$(bytecode_libdir)/lib$(LIBRARYNAME).bc: $(LIBNAME_BC) $(DESTDIR)$(bytecode_libdir)
-	@${ECHO} ======= Installing $(LIBRARYNAME) bytecode library =======
-	$(VERB)cp $< $@
+	@$(ECHO) Installing bytecode library $(notdir $@)
+	$(VERB)$(INSTALL) $< $@
+
+endif
 
 # Does the library want a .o version built?
 ifndef DONT_BUILD_RELINKED
-all:: $(LIBNAME_OBJCUR)
-install:: install-single-object-library
+all:: $(LIBNAME_O)
+
+$(LIBNAME_O): $(BUILT_SOURCES) $(ObjectsO) $(LIBDIR)/.dir
+	@$(ECHO) Linking object $(notdir $@)
+	$(VERB) $(Relink) -o $@ $(ObjectsO)
+
+install:: $(DESTDIR)$(libdir)/$(LIBRARYNAME).o
+
+$(DESTDIR)$(libdir)/$(LIBRARYNAME).o: $(LIBNAME_O)
+	@$(ECHO) Installing object library $(notdir $@)
+	$(VERB) $(MKDIR) $(DESTDIR)$(libdir)
+	$(VERB) $(LIBTOOL) --mode=install $(INSTALL) $(LIBNAME_O) $(DESTDIR)$(libdir)/$(LIBRARYNAME).o
+
+clean::
+	$(VERB) $(RM) -f $(LIBNAME_O)
+
 endif
 
 # Does the library want an archive version built?
 ifdef BUILD_ARCHIVE
-all:: $(LIBNAME_ACUR)
-install:: install-archive-library
-endif
+all:: $(LIBNAME_A)
 
-#--------------------------------------------------------------------
-# Rules for building libraries
-#--------------------------------------------------------------------
-
-LinkBCLib := $(LLVMGCC) -shared -nostdlib
-ifdef EXPORTED_SYMBOL_LIST
-LinkBCLib += -Xlinker -internalize-public-api-list=$(EXPORTED_SYMBOL_LIST)
-else
-  ifdef EXPORTED_SYMBOL_FILE
-LinkBCLib += -Xlinker -internalize-public-api-file=$(EXPORTED_SYMBOL_FILE)
-  else
-LinkBCLib += -Xlinker -disable-internalize
-  endif
-endif
-
-
-# Rule for building bytecode libraries.
-$(LIBNAME_BC): $(ObjectsBC) $(LibSubDirs) $(DESTLIBBYTECODE)/.dir
-	@${ECHO} Linking $(LIBRARYNAME) bytecode library
-	$(VERB) $(LinkBCLib) -o $@ $(ObjectsBC) $(LibSubDirs) $(LibLinkOpts)
-	@${ECHO} ======= Finished building $(LIBRARYNAME) bytecode library =======
-#
-# Rules for building dynamically linked libraries.
-#
-$(LIBNAME_O): $(ObjectsO) $(LibSubDirs) $(DESTLIBRELEASE)/.dir
-	@${ECHO} Linking $(LIBRARYNAME) dynamic release library
-	$(VERB) $(Link) -o $@ $(ObjectsO) $(LibSubDirs) $(LibLinkOpts)
-	$(VERB) $(LIBTOOL) --mode=install $(INSTALL) $@ $(DESTLIBCURRENT)
-	@${ECHO} ======= Finished building $(LIBRARYNAME) dynamic release library =======
-
-$(LIBNAME_P): $(ObjectsP) $(LibSubDirs) $(DESTLIBPROFILE)/.dir
-	@${ECHO} Linking $(LIBRARYNAME) dynamic profile library
-	$(VERB) $(Link) -o $@ $(ObjectsP) $(LibSubDirs) $(LibLinkOpts)
-	$(VERB) $(LIBTOOL) --mode=install $(INSTALL) $@ $(DESTLIBCURRENT)
-	@${ECHO} ======= Finished building $(LIBRARYNAME) dynamic profile library =======
-
-$(LIBNAME_G): $(ObjectsG) $(LibSubDirs) $(DESTLIBDEBUG)/.dir
-	@${ECHO} Linking $(LIBRARYNAME) dynamic debug library
-	$(VERB) $(Link) -o $@ $(ObjectsG) $(LibSubDirs) $(LibLinkOpts)
-	$(VERB) $(LIBTOOL) --mode=install $(INSTALL) $@ $(DESTLIBCURRENT)
-	@${ECHO} ======= Finished building $(LIBRARYNAME) dynamic debug library =======
-
-install-dynamic-library: $(LIBNAME_CUR)
-	$(MKDIR) $(DESTDIR)$(libdir)
-	$(VERB) $(LIBTOOL) --mode=install $(INSTALL) $(LIBNAME_CUR) $(DESTDIR)$(libdir)/lib$(LIBRARYNAME)$(SHLIBEXT)
-	$(VERB) $(LIBTOOL) --finish $(DESTDIR)$(libdir)
-
-#
-# Rules for building static archive libraries.
-#
-$(LIBNAME_AO): $(ObjectsO) $(LibSubDirs) $(DESTLIBRELEASE)/.dir
-	@${ECHO} Linking $(LIBRARYNAME) archive release library
+$(LIBNAME_A): $(BUILT_SOURCES) $(ObjectsO) $(LIBDIR)/.dir
+	@$(ECHO) Linking archive $(notdir $@) library
 	$(VERB)$(RM) -f $@
-	$(VERB) $(Link) -03 -o $@ $(ObjectsO) $(LibSubDirs) -static
-	@${ECHO} Finished building $(LIBRARYNAME) archive release library =======
+	$(VERB) $(Archive) $@ $(ObjectsO)
+	$(VERB) $(Ranlib) $@
 
-$(LIBNAME_AP): $(ObjectsP) $(LibSubDirs) $(DESTLIBPROFILE)/.dir
-	@${ECHO} Linking $(LIBRARYNAME) archive profile library
-	@$(RM) -f $@
-	$(VERB) $(Link) -03 $(PROFILE) -o $@ $(ObjectsP) $(LibSubDirs) -static
-	@${ECHO} ======= Finished building $(LIBRARYNAME) archive profile library =======
+clean::
+	$(VERB) $(RM) -f $(LIBNAME_A)
 
-$(LIBNAME_AG): $(ObjectsG) $(LibSubDirs) $(DESTLIBDEBUG)/.dir
-	@${ECHO} Linking $(LIBRARYNAME) archive debug library
-	@$(RM) -f $@
-	$(VERB) $(Link) -g $(STRIP) -o $@ $(ObjectsG) $(LibSubDirs) -static
-	@${ECHO} ======= Finished building $(LIBRARYNAME) archive debug library =======
+install:: $(DESTDIR)$(libdir)/lib$(LIBRARYNAME).a
 
-install-archive-library: $(LIBNAME_ACUR)
+$(DESTDIR)$(libdir)/lib$(LIBRARYNAME).a: $(LIBNAME_A)
 	$(MKDIR) $(DESTDIR)$(libdir)
-	$(VERB) $(LIBTOOL) --mode=install $(INSTALL) $(LIBNAME_ACUR) $(DESTDIR)$(libdir)/lib$(LIBRARYNAME).a
-
-#
-# Rules for building .o libraries.
-#
-#	JTC:
-#	Note that for this special case, we specify the actual object files
-#	instead of their libtool counterparts.  This is because libtool
-#	doesn't want to generate a reloadable object file unless it is given
-#	.o files explicitly.
-#
-#	Note that we're making an assumption here: If we build a .lo file,
-#	its corresponding .o file will be placed in the same directory.
-#
-#	I think that is safe.
-#
-$(LIBNAME_OBJO): $(ObjectsO) $(LibSubDirs) $(DESTLIBRELEASE)/.dir
-	@${ECHO} "Linking `basename $@`"
-	$(VERB) $(Relink) -o $@ $(RObjectsO) $(LibSubDirs)
-
-$(LIBNAME_OBJP): $(ObjectsP) $(LibSubDirs) $(DESTLIBPROFILE)/.dir
-	@${ECHO} "Linking `basename $@`"
-	$(VERB) $(Relink) -o $@ $(RObjectsP) $(LibSubDirs)
-
-$(LIBNAME_OBJG): $(ObjectsG) $(LibSubDirs) $(DESTLIBDEBUG)/.dir
-	@${ECHO} "Linking `basename $@`"
-	$(VERB) $(Relink) -o $@ $(RObjectsG) $(LibSubDirs)
-
-install-single-object-library: $(LIBNAME_OBJCUR)
-	$(MKDIR) $(DESTDIR)$(libdir)
-	$(VERB) $(LIBTOOL) --mode=install $(INSTALL) $(LIBNAME_OBJCUR) $(DESTDIR)$(libdir)/$(LIBRARYNAME).o
-
+	$(VERB) $(LIBTOOL) --mode=install $(INSTALL) $(LIBNAME_A) $(DESTDIR)$(libdir)/lib$(LIBRARYNAME).a
 endif
+
+# if LIBRARYNAME
+endif 
 
 #------------------------------------------------------------------------
 # Handle the TOOLNAME option - used when building tool executables...
@@ -656,135 +449,180 @@ endif
 #
 ifdef TOOLNAME
 
-# Handle compression libraries automatically
-ifeq ($(HAVE_BZIP2),1)
-TOOLLINKOPTS += -lbz2
+# TOOLLINKOPTSB to pass options to the linker like library search path etc
+# Note that this is different from TOOLLINKOPTS, these options
+# are passed to the linker *before* the USEDLIBS options are passed.
+# e.g. usage TOOLLINKOPTSB =  -L/home/xxx/lib
+ifdef TOOLLINKOPTSB
+Link    += $(TOOLLINKOPTSB) 
 endif
-ifeq ($(HAVE_ZLIB),1)
-TOOLLINKOPTS += -lz
-endif
+
 # TOOLEXENAME* - These compute the output filenames to generate...
-TOOLEXENAME_G := $(DESTTOOLDEBUG)/$(TOOLNAME)
-TOOLEXENAME_O := $(DESTTOOLRELEASE)/$(TOOLNAME)
-TOOLEXENAME_P := $(DESTTOOLPROFILE)/$(TOOLNAME)
-TOOLEXENAMES  := $(DESTTOOLCURRENT)/$(TOOLNAME)
+TOOLEXENAME := $(TOOLDIR)/$(TOOLNAME)
 
 # USED_LIBS_OPTIONS - Compute the options line that add -llib1 -llib2, etc.
-PROJ_LIBS_OPTIONS   := $(patsubst %.a.o, -l%, $(addsuffix .o, $(USEDLIBS)))
-PROJ_LIBS_OPTIONS_G := $(patsubst %.o, $(PROJLIBDEBUGSOURCE)/%.o,  $(PROJ_LIBS_OPTIONS))
-PROJ_LIBS_OPTIONS_O := $(patsubst %.o, $(PROJLIBRELEASESOURCE)/%.o,$(PROJ_LIBS_OPTIONS))
-PROJ_LIBS_OPTIONS_P := $(patsubst %.o, $(PROJLIBPROFILESOURCE)/%.o,$(PROJ_LIBS_OPTIONS))
+PROJ_LIBS_OPTIONS := $(patsubst %.a.o, -l%, $(addsuffix .o, $(USEDLIBS)))
+PROJ_LIBS_OPTIONS := $(patsubst %.o, $(LIBDIR)/%.o,  $(PROJ_LIBS_OPTIONS))
+LLVM_LIBS_OPTIONS := $(patsubst %.a.o, -l%, $(addsuffix .o, $(LLVMLIBS)))
+LLVM_LIBS_OPTIONS := $(patsubst %.o, $(LLVMLIBDIR)/%.o, $(LLVM_LIBS_OPTIONS))
 
-LLVM_LIBS_OPTIONS   := $(patsubst %.a.o, -l%, $(addsuffix .o, $(LLVMLIBS)))
-LLVM_LIBS_OPTIONS_G := $(patsubst %.o, $(LLVMLIBDEBUGSOURCE)/%.o,  $(LLVM_LIBS_OPTIONS))
-LLVM_LIBS_OPTIONS_O := $(patsubst %.o, $(LLVMLIBRELEASESOURCE)/%.o,$(LLVM_LIBS_OPTIONS))
-LLVM_LIBS_OPTIONS_P := $(patsubst %.o, $(LLVMLIBPROFILESOURCE)/%.o,$(LLVM_LIBS_OPTIONS))
+PROJ_USED_LIBS    := $(patsubst %.a.o, lib%.a, $(addsuffix .o, $(USEDLIBS)))
+LLVM_USED_LIBS    := $(patsubst %.a.o, lib%.a, $(addsuffix .o, $(LLVMLIBS)))
+PROJ_LIBS_PATHS   := $(addprefix $(LIBDIR)/,$(PROJ_USED_LIBS))
+LLVM_LIBS_PATHS   := $(addprefix $(LLVMLIBDIR)/,$(LLVM_USED_LIBS))
 
-LIB_OPTS_G :=  $(LLVM_LIBS_OPTIONS_G) $(PROJ_LIBS_OPTIONS_G)
-LIB_OPTS_O :=  $(LLVM_LIBS_OPTIONS_O) $(PROJ_LIBS_OPTIONS_O)
-LIB_OPTS_P :=  $(LLVM_LIBS_OPTIONS_P) $(PROJ_LIBS_OPTIONS_P)
-
-# USED_LIB_PATHS - Compute the path of the libraries used so that tools are
-# rebuilt if libraries change.  This has to make sure to handle .a/.so and .o
-# files separately.
-#
-STATICUSEDLIBS   := $(patsubst %.a.o, lib%.a, $(addsuffix .o, $(USEDLIBS)))
-USED_LIB_PATHS_G := $(addprefix $(DESTLIBDEBUG)/, $(STATICUSEDLIBS))
-USED_LIB_PATHS_O := $(addprefix $(DESTLIBRELEASE)/, $(STATICUSEDLIBS))
-USED_LIB_PATHS_P := $(addprefix $(DESTLIBPROFILE)/, $(STATICUSEDLIBS))
-
-LLVMSTATICUSEDLIBS   := $(patsubst %.a.o, lib%.a, $(addsuffix .o, $(LLVMLIBS)))
-LLVM_LIB_PATHS_G := $(addprefix $(LLVMLIBDEBUGSOURCE)/, $(LLVMSTATICUSEDLIBS))
-LLVM_LIB_PATHS_O := $(addprefix $(LLVMLIBRELEASESOURCE)/, $(LLVMSTATICUSEDLIBS))
-LLVM_LIB_PATHS_P := $(addprefix $(LLVMLIBPROFILESOURCE)/, $(LLVMSTATICUSEDLIBS))
+LINK_OPTS := $(TOOLLINKOPTS) $(PROJ_LIBS_OPTIONS) $(LLVM_LIBS_OPTIONS)
 
 #
 # Libtool link options:
 #	Ensure that all binaries have their symbols exported so that they can
 #	by dlsym'ed.
 #
-LINK_OPTS := -export-dynamic $(TOOLLINKOPTS)
 
-
-
-
+# Handle compression libraries automatically
+ifeq ($(HAVE_BZIP2),1)
+LIBS += -lbz2
+endif
+ifeq ($(HAVE_ZLIB),1)
+LIBS += -lz
+endif
 
 # Tell make that we need to rebuild subdirectories before we can link the tool.
 # This affects things like LLI which has library subdirectories.
-$(USED_LIB_PATHS_G) $(USED_LIB_PATHS_O) $(USED_LIB_PATHS_P): \
-        $(addsuffix /.makeall, $(PARALLEL_DIRS))
+$(LIBS): $(addsuffix /.makeall, $(PARALLEL_DIRS))
 
-all::   $(TOOLEXENAMES)
+all::   $(TOOLEXENAME)
 
 clean::
-	$(VERB) $(RM) -f $(TOOLEXENAMES)
+	$(VERB) $(RM) -f $(TOOLEXENAME)
 
-$(TOOLEXENAME_G): $(ObjectsG) $(USED_LIB_PATHS_G) $(LLVM_LIB_PATHS_G) $(DESTTOOLDEBUG)/.dir
-	@${ECHO} Linking $(TOOLNAME) debug executable $(STRIP_WARN_MSG)
-	$(VERB) $(LinkG) -o $@ $(ObjectsG) $(LIB_OPTS_G) $(LINK_OPTS) $(LIBS)
-	@${ECHO} ======= Finished building $(TOOLNAME) debug executable $(STRIP_WARN_MSG) =======
+$(TOOLEXENAME): $(BUILT_SOURCES) $(ObjectsO) $(PROJ_LIBS_PATHS) $(LLVM_LIBS_PATHS) $(TOOLDIR)/.dir
+	@$(ECHO) Linking $(CONFIGURATION) executable $(TOOLNAME) $(STRIP_WARN_MSG)
+	$(VERB) $(Link) -o $@ $(ObjectsO) $(PROJ_LIBS_OPTIONS) $(LLVM_LIBS_OPTIONS) $(LIBS)
+	@$(ECHO) ======= Finished linking $(CONFIGURATION) executable $(TOOLNAME) $(STRIP_WARN_MSG) 
 
-$(TOOLEXENAME_O): $(ObjectsO) $(USED_LIB_PATHS_O) $(LLVM_LIB_PATHS_O) $(DESTTOOLRELEASE)/.dir
-	@${ECHO} Linking $(TOOLNAME) release executable
-	$(VERB) $(LinkO) -o $@ $(ObjectsO) $(LIB_OPTS_O) $(LINK_OPTS) $(LIBS)
-	@${ECHO} ======= Finished building $(TOOLNAME) release executable =======
+install:: $(TOOLEXENAME)
+	@$(ECHO) Installing $(TOOLNAME)
+	$(VERB) $(INSTALL) $(TOOLEXENAME) $(DESTDIR)/bin
+endif
 
-$(TOOLEXENAME_P): $(ObjectsP) $(USED_LIB_PATHS_P) $(LLVM_LIB_PATHS_P) $(DESTTOOLPROFILE)/.dir
-	@${ECHO} Linking $(TOOLNAME) profile executable
-	$(VERB) $(LinkP) -o $@ $(ObjectsP) $(LIB_OPTS_P) $(LINK_OPTS) $(LIBS)
-	@${ECHO} ======= Finished building $(TOOLNAME) profile executable =======
+ifndef DISABLE_AUTO_DEPENDENCIES
 
-install:: $(TOOLEXENAMES)
-	@${ECHO} Installing $(TOOLEXENAMES) to $(DESTDIR)$(bindir)
-	$(VERB)$(MKDIR) $(DESTDIR)$(bindir)
-	$(VERB)$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) -c -m 0755 $(TOOLEXENAMES) $(DESTDIR)$(bindir)/$(TOOLNAME)
+# Create .lo files in the OBJDIR directory from the .cpp and .c files...
+$(OBJDIR)/%.lo: %.cpp $(OBJDIR)/.dir
+	@$(ECHO) "Compiling $(CONFIGURATION) $*.cpp For Shared Library"
+	$(VERB) if $(LTCXXCompile) -MD -MT $@ -MP -MF $(OBJDIR)/$*.Td $< -o $@ ; \
+	then mv -f "$(OBJDIR)/$*.Td" "$(OBJDIR)/$*.d"; else rm -f "$(OBJDIR)/$*.Td"; exit 1; fi
+
+$(OBJDIR)/%.o: %.cpp $(OBJDIR)/.dir
+	@$(ECHO) "Compiling $(CONFIGURATION) $*.cpp For Archive"
+	$(VERB) if $(CXXCompile) -MD -MT $@ -MP -MF $(OBJDIR)/$*.Td $< -o $@ ; \
+	then mv -f "$(OBJDIR)/$*.Td" "$(OBJDIR)/$*.d"; else rm -f "$(OBJDIR)/$*.Td"; exit 1; fi
+
+$(OBJDIR)/%.lo: %.c $(OBJDIR)/.dir 
+	@$(ECHO) "Compiling $(CONFIGURATION) $*.c For Shared Library"
+	$(VERB) if $(LTCCompile) -MD -MT $@ -MP -MF $(OBJDIR)/$*.Td $< -o $@ ; \
+	then mv -f "$(OBJDIR)/$*.Td" "$(OBJDIR)/$*.d"; else rm -f "$(OBJDIR)/$*.Td"; exit 1; fi
+
+$(OBJDIR)/%.o: %.c $(OBJDIR)/.dir
+	@$(ECHO) "Compiling $(CONFIGURATION) $*.c For Archive"
+	$(VERB) if $(CCompile) -MD -MT $@ -MP -MF $(OBJDIR)/$*.Td $< -o $@ ; \
+	then mv -f "$(OBJDIR)/$*.Td" "$(OBJDIR)/$*.d"; else rm -f "$(OBJDIR)/$*.Td"; exit 1; fi
+
+# Create .bc files in the OBJDIR directory from .cpp and .c files...
+$(OBJDIR)/%.bc: %.cpp $(OBJDIR)/.dir
+	@$(ECHO) "Compiling $(CONFIGURATION) $*.cpp to bytecode"
+	$(VERB) if $(BCCXXCompile) -MD -MT $@ -MP -MF "$(OBJDIR)/$*.Td" $< -o $@ ; \
+	then mv -f "$(OBJDIR)/$*.Td" "$(OBJDIR)/$*.d"; else rm -f "$(OBJDIR)/$*.Td"; exit 1; fi
+
+$(OBJDIR)/%.bc: %.c $(OBJDIR)/.dir
+	@$(ECHO) "Compiling $(CONFIGURATION) $*.c to bytecode"
+	$(VERB) if $(BCCCompile) -MD -MT $@ -MP -MF "$(OBJDIR)/$*.Td" $< -o $@ ; \
+	then mv -f "$(OBJDIR)/$*.Td" "$(OBJDIR)/$*.d"; else rm -f "$(OBJDIR)/$*.Tpo"; exit 1; fi
+
+else
+
+$(OBJDIR)/%.lo: %.cpp $(OBJDIR)/.dir 
+	@$(ECHO) "Compiling $(CONFIGURATION) $*.cpp For Shared Library"
+	$(LTCXXCompile) $< -o $@ 
+
+$(OBJDIR)/%.o: %.cpp $(OBJDIR)/.dir
+	@$(ECHO) "Compiling $(CONFIGURATION) $*.cpp For Archive"
+	$(CXXCompile) $< -o $@ 
+
+$(OBJDIR)/%.lo: %.c $(OBJDIR)/.dir 
+	@$(ECHO) "Compiling $(CONFIGURATION) $*.cpp For Shared Library"
+	$(LTCCompile) $< -o $@ 
+
+$(OBJDIR)/%.o: %.c $(OBJDIR)/.dir
+	@$(ECHO) "Compiling $(CONFIGURATION) $*.cpp For Archive"
+	$(CCompile) $< -o $@ 
+
+# Create .bc files in the OBJDIR directory from .cpp and .c files...
+$(OBJDIR)/%.bc: %.cpp $(OBJDIR)/.dir
+	@$(ECHO) "Compiling $(CONFIGURATION) $*.cpp To Bytecode"
+	$(BCCompileCPP) $< -o $@ 
+
+$(OBJDIR)/%.bc: %.c $(OBJDIR)/.dir
+	@$(ECHO) "Compiling $(CONFIGURATION) $*.c To Bytecode"
+	$(BCCompileC) $< -o $@
 
 endif
 
-
-
-#---------------------------------------------------------
-.PRECIOUS: $(BUILD_OBJ_DIR)/Depend/.dir $(BUILD_OBJ_DIR)/BytecodeObj/.dir
-.PRECIOUS: $(BUILD_OBJ_DIR)/Debug/.dir $(BUILD_OBJ_DIR)/Release/.dir
-.PRECIOUS: $(BUILD_OBJ_DIR)/Profile/.dir
-
-# Create .lo files in the ObjectFiles directory from the .cpp and .c files...
-$(BUILD_OBJ_DIR)/Release/%.lo: %.cpp $(BUILD_OBJ_DIR)/Release/.dir
-	@${ECHO} "Compiling `basename $<`"
-	$(VERB) $(CompileO) $< -o $@
-
-$(BUILD_OBJ_DIR)/Release/%.lo: %.c $(BUILD_OBJ_DIR)/Release/.dir
-	@${ECHO} "Compiling `basename $<`"
-	$(VERB) $(CompileCO) $< -o $@
-
-$(BUILD_OBJ_DIR)/Profile/%.lo: %.cpp $(BUILD_OBJ_DIR)/Profile/.dir
-	@${ECHO} "Compiling `basename $<`"
-	$(VERB) $(CompileP) $< -o $@
-
-$(BUILD_OBJ_DIR)/Profile/%.lo: %.c $(BUILD_OBJ_DIR)/Profile/.dir
-	@${ECHO} "Compiling `basename $<`"
-	$(VERB) $(CompileCP) $< -o $@
-
-$(BUILD_OBJ_DIR)/Debug/%.lo: %.cpp $(BUILD_OBJ_DIR)/Debug/.dir
-	@${ECHO} "Compiling `basename $<`"
-	$(VERB) $(CompileG) $< -o $@
-
-$(BUILD_OBJ_DIR)/Debug/%.lo: %.c $(BUILD_OBJ_DIR)/Debug/.dir 
-	@${ECHO} "Compiling `basename $<`"
-	$(VERB) $(CompileCG) $< -o $@
-
-$(BUILD_OBJ_DIR)/BytecodeObj/%.bc: %.cpp $(BUILD_OBJ_DIR)/BytecodeObj/.dir $(LCC1XX)
-	@${ECHO} "Compiling `basename $<` to bytecode"
-	$(VERB) $(LLVMGXX) $(CompileCommonOpts) $(CPPFLAGS) -c $< -o $@
-
-$(BUILD_OBJ_DIR)/BytecodeObj/%.bc: %.c $(BUILD_OBJ_DIR)/BytecodeObj/.dir $(LCC1)
-	@${ECHO} "Compiling `basename $<` to bytecode"
-	$(VERB) $(LLVMGCC) $(CompileCommonOpts) $(CPPFLAGS) -c $< -o $@
-
-$(BUILD_OBJ_DIR)/BytecodeObj/%.bc: %.ll $(BUILD_OBJ_DIR)/BytecodeObj/.dir $(LLVMAS)
-	@${ECHO} "Compiling `basename $<` to bytecode"
+$(OBJDIR)/%.bc: %.ll $(OBJDIR)/.dir $(LLVMAS)
+	@$(ECHO) "Compiling $*.ll To Bytecode"
 	$(VERB) $(LLVMAS) $< -f -o $@
 
+ifdef TARGET
+
+TDFILES := $(strip $(wildcard $(BUILD_SRC_DIR)/*.td) $(BUILD_SRC_DIR)/../Target.td)
+
+$(BUILT_SOURCES): $(TDFILES) 
+
+%GenRegisterNames.inc : %.td
+	@echo "Building $(<F) register names with tblgen"
+	$(VERB) $(TableGen) -gen-register-enums -o $@ $<
+
+%GenRegisterInfo.h.inc : %.td
+	@echo "Building $(<F) register information header with tblgen"
+	$(VERB) $(TableGen) -gen-register-desc-header -o $@ $<
+
+%GenRegisterInfo.inc : %.td
+	@echo "Building $(<F) register info implementation with tblgen"
+	$(VERB) $(TableGen) -gen-register-desc -o $@ $<
+
+%GenInstrNames.inc : %.td
+	@echo "Building $(<F) instruction names with tblgen"
+	$(VERB) $(TableGen) -gen-instr-enums -o $@ $<
+
+%GenInstrInfo.inc : %.td
+	@echo "Building $(<F) instruction information with tblgen"
+	$(VERB) $(TableGen) -gen-instr-desc -o $@ $<
+
+%GenAsmWriter.inc : %.td
+	@echo "Building $(<F) assembly writer with tblgen"
+	$(VERB) $(TableGen) -gen-asm-writer -o $@ $<
+
+%GenATTAsmWriter.inc : %.td
+	@echo "Building $(<F) AT&T assembly writer with tblgen"
+	$(VERB) $(TableGen) -gen-asm-writer -o $@ $< 
+
+%GenIntelAsmWriter.inc : %.td
+	@echo "Building $(<F) Intel assembly writer with tblgen"
+	$(VERB) $(TableGen) -gen-asm-writer -asmwriternum=1 -o $@ $< 
+
+%GenInstrSelector.inc: %.td
+	@echo "Building $(<F) instruction selector with tblgen"
+	$(VERB) $(TableGen) -gen-instr-selector -o $@ $< 
+
+%GenCodeEmitter.inc:: %.td
+	@echo "Building $(<F) code emitter with tblgen"
+	$(VERB) $(TableGen) -gen-emitter -o $@ $<
+
+clean::
+	$(VERB) rm -f *.inc
+
+endif
 
 #
 # Rules for building lex/yacc files
@@ -804,14 +642,14 @@ YACC_OUTPUT = $(addprefix $(YACC_FILES:%.y=%), .h .cpp .output)
 # FIXME.  (f.e. char Buffer[10000] )
 #
 %.cpp: %.l
-	@${ECHO} Flexing $<
+	@$(ECHO) Flexing $<
 	$(VERB) $(FLEX) -t $< | \
-          $(SED) '/^find_rule/d' | \
-          $(SED) 's/void yyunput/inline void yyunput/' | \
-          $(SED) 's/void \*yy_flex_realloc/inline void *yy_flex_realloc/' | \
-          $(SED) 's/#define YY_BUF_SIZE 16384/#define YY_BUF_SIZE (16384*64)/' \
-              > $@.tmp
-	$(VERB) cmp -s $@ $@.tmp > /dev/null || ${MV} -f $@.tmp $@
+	$(SED) '/^find_rule/d' | \
+	$(SED) 's/void yyunput/inline void yyunput/' | \
+	$(SED) 's/void \*yy_flex_realloc/inline void *yy_flex_realloc/' | \
+	$(SED) 's/#define YY_BUF_SIZE 16384/#define YY_BUF_SIZE (16384*64)/' \
+	  > $@.tmp
+	$(VERB) cmp -s $@ $@.tmp > /dev/null || $(MV) -f $@.tmp $@
 	@# remove the output of flex if it didn't get moved over...
 	@rm -f $@.tmp
 
@@ -819,25 +657,28 @@ YACC_OUTPUT = $(addprefix $(YACC_FILES:%.y=%), .h .cpp .output)
 %.c: %.y     # Cancel built-in rules for yacc
 %.h: %.y     # Cancel built-in rules for yacc
 %.cpp %.h : %.y
-	@${ECHO} "Bisoning `basename $<`"
+	@$(ECHO) "Bisoning $*.y"
 	$(VERB) $(BISON) -v -d -p $(<F:%Parser.y=%) -o $*.tab.c  $<
-	$(VERB) cmp -s $*.tab.c $*.cpp > /dev/null || ${MV} -f $*.tab.c $*.cpp
-	$(VERB) cmp -s $*.tab.h $*.h   > /dev/null || ${MV} -f $*.tab.h $*.h
+	$(VERB) cmp -s $*.tab.c $*.cpp > /dev/null || $(MV) -f $*.tab.c $*.cpp
+	$(VERB) cmp -s $*.tab.h $*.h   > /dev/null || $(MV) -f $*.tab.h $*.h
 	@# If the files were not updated, don't leave them lying around...
 	@rm -f $*.tab.c $*.tab.h
 
 # To create the directories...
 %/.dir:
-	$(VERB) ${MKDIR} $* > /dev/null
+	$(VERB) $(MKDIR) $* > /dev/null
 	@$(DATE) > $@
+
+.PRECIOUS: $(OBJDIR)/.dir $(LIBDIR)/.dir $(TOOLDIR)/.dir $(LLVMLIBDIR)/.dir
+.PRECIOUS: $(LLVMTOOLDIR)/.dir
 
 # To create postscript files from dot files...
 ifneq ($(DOT),false)
 %.ps: %.dot
-	${DOT} -Tps < $< > $@
+	$(DOT) -Tps < $< > $@
 else
 %.ps: %.dot
-	${ECHO} "Cannot build $@: The program dot is not installed"
+	$(ECHO) "Cannot build $@: The program dot is not installed"
 endif
 
 #
@@ -849,9 +690,7 @@ endif
 
 # 'make clean' nukes the tree
 clean::
-	$(VERB) $(RM) -rf $(BUILD_OBJ_DIR)/Debug $(BUILD_OBJ_DIR)/Release
-	$(VERB) $(RM) -rf $(BUILD_OBJ_DIR)/Profile $(BUILD_OBJ_DIR)/Depend
-	$(VERB) $(RM) -rf $(BUILD_OBJ_DIR)/BytecodeObj
+	$(VERB) $(RM) -rf $(OBJDIR)
 	$(VERB) $(RM) -f core core.[0-9][0-9]* *.o *.d *~ *.flc
 ifneq ($(strip $(SHLIBEXT)),) # Extra paranoia - make real sure SHLIBEXT is set
 	$(VERB)	$(RM) -f *$(SHLIBEXT)
@@ -869,33 +708,9 @@ ifndef DISABLE_AUTO_DEPENDENCIES
 # If dependencies were generated for the file that included this file,
 # include the dependencies now...
 #
+
 SourceBaseNames := $(basename $(Source))
-SourceDepend := $(SourceBaseNames:%=$(BUILD_OBJ_DIR)/Depend/%.d)
-
-# Create dependencies for the *.cpp files...
-$(BUILD_OBJ_DIR)/Depend/%.d: %.cpp $(BUILD_OBJ_DIR)/Depend/.dir
-	$(VERB) $(Depend) $< | $(SED) 's|\.o:|\.lo:|' | $(SED) 's|$*\.lo *|$(BUILD_OBJ_DIR)/Release/& $(BUILD_OBJ_DIR)/Profile/& $(BUILD_OBJ_DIR)/Debug/& $(BUILD_OBJ_DIR)/Depend/$(@F)|g' > $@
-
-# Create dependencies for the *.c files...
-$(BUILD_OBJ_DIR)/Depend/%.d: %.c $(BUILD_OBJ_DIR)/Depend/.dir
-	$(VERB) $(DependC) -o $@ $< | $(SED) 's|\.o:|\.lo:|' | $(SED) 's|$*\.lo *|$(BUILD_OBJ_DIR)/Release/& $(BUILD_OBJ_DIR)/Profile/& $(BUILD_OBJ_DIR)/Debug/& $(BUILD_OBJ_DIR)/Depend/$(@F)|g' > $@
-
-#
-# Autoconf Dependencies.
-#
-$(LLVM_OBJ_ROOT)/config.status:: $(LLVM_SRC_ROOT)/configure
-	@${ECHO} "****************************************************************"
-	@${ECHO} "   You need to re-run $(LLVM_SRC_ROOT)/configure"
-	@${ECHO} "   in directory $(LLVM_OBJ_ROOT)"
-	@${ECHO} "****************************************************************"
-	$(VERB) exit 1
-
-# If the Makefile in the source tree has been updated, copy it over into the
-# build tree.
-Makefile :: $(BUILD_SRC_DIR)/Makefile
-	@${ECHO} "===== Updating Makefile from source dir: `dirname $<` ====="
-	$(MKDIR) $(@D)
-	cp -f $< $@
+SourceDepend := $(SourceBaseNames:%=$(BUILD_OBJ_DIR)/$(CONFIGURATION)/%.d)
 
 #
 # Include dependencies generated from C/C++ source files, but not if we
@@ -908,3 +723,70 @@ endif
 endif
 
 endif  # ifndef DISABLE_AUTO_DEPENDENCIES
+
+###############################################################################
+# PRECONDITIONS - that which must be built/checked first
+###############################################################################
+
+OBJMKFILE := $(BUILD_OBJ_DIR)/Makefile
+SRCMKFILE := $(BUILD_SRC_DIR)/Makefile
+CONFIGURE := $(LLVM_SRC_ROOT)/configure
+CONFIG_STATUS := $(LLVM_OBJ_ROOT)/config.status
+MAKE_CONFIG_IN := $(LLVM_SRC_ROOT)/Makefile.config.in
+MAKE_CONFIG := $(LLVM_OBJ_ROOT)/Makefile.config
+
+#------------------------------------------------------------------------
+# List of the preconditions
+preconditions: $(CONFIG_STATUS) $(MAKE_CONFIG) $(OBJMKFILE) 
+
+all dist distcheck install:: $(BUILT_SOURCES)
+
+clean::
+	$(VERB) $(RM) -f $(BUILT_SOURCES)
+
+#------------------------------------------------------------------------
+# Make sure we're not using a stale configuration
+.PRECIOUS: $(CONFIG_STATUS)
+$(CONFIG_STATUS): $(CONFIGURE)
+	@$(ECHO) Reconfiguring with $@
+	$(VERB) $(CONFIG_STATUS) --recheck
+
+#------------------------------------------------------------------------
+# Make sure the configuration makefile is up to date
+$(MAKE_CONFIG): $(MAKE_CONFIG_IN)
+	@$(ECHO) Regenerating $@
+	$(VERB) cd $(LLVM_OBJ_ROOT) ; $(CONFIG_STATUS) Makefile.config
+	$(VERB) $(MAKE) $(MAKEFLAGS) $(MAKECMDGOALS)
+	@exit 0;
+
+#------------------------------------------------------------------------
+# If the Makefile in the source tree has been updated, copy it over into the
+# build tree.
+.PRECIOUS: $(OBJMKFILE)
+$(OBJMKFILE): $(SRCMKFILE)
+	@$(ECHO) "Updating Makefile from : $(dir $<)"
+	$(VERB) $(MKDIR) $(@D)
+	$(VERB) cp -f $< $@
+	$(VERB) $(MAKE) $(MAKEFLAGS) $(MAKECMDGOALS)
+	@exit 0;
+
+###############################################################################
+# MISCELLANEOUS - utility targets
+###############################################################################
+
+#------------------------------------------------------------------------
+# Print out the directories used for building
+printvars:
+	@$(ECHO) "BUILD_SRC_ROOT: " $(BUILD_SRC_ROOT)
+	@$(ECHO) "BUILD_SRC_DIR : " $(BUILD_SRC_DIR)
+	@$(ECHO) "BUILD_OBJ_ROOT: " $(BUILD_OBJ_ROOT)
+	@$(ECHO) "BUILD_OBJ_DIR : " $(BUILD_OBJ_DIR)
+	@$(ECHO) "LLVM_SRC_ROOT : " $(LLVM_SRC_ROOT)
+	@$(ECHO) "LLVM_OBJ_ROOT : " $(LLVM_OBJ_ROOT)
+	@$(ECHO) "CONFIGURATION : " $(CONFIGURATION)
+	@$(ECHO) "OBJDIR: " $(OBJDIR)
+	@$(ECHO) "LIBDIR: " $(LIBDIR)
+	@$(ECHO) "TOOLDIR: " $(TOOLDIR)
+	@$(ECHO) "TDFILES:" '$(TDFILES)'
+	@$(ECHO) "CXXCompile: " '$(CXXCompile)'
+	@$(ECHO) "CCompile: " '$(CCompile)'
