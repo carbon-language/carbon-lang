@@ -66,6 +66,11 @@ bool AAEval::runOnFunction(Function &F) {
 bool AAEval::doFinalization(Module &M) {
   unsigned Sum = No+May+Must;
   std::cerr << "===== Alias Analysis Evaluator Report =====\n";
+  if (Sum == 0) {
+    std::cerr << "  Alias Analysis Evaluator Summary: No pointers!\n";
+    return false;
+  }
+
   std::cerr << "  " << Sum << " Total Alias Queries Performed\n";
   std::cerr << "  " << No << " no alias responses (" << No*100/Sum << "%)\n";
   std::cerr << "  " << May << " may alias responses (" << May*100/Sum << "%)\n";
