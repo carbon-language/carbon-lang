@@ -1,9 +1,16 @@
-//===-- ExecveHandler.c - Replaces execve() to run LLVM files -------------===//
-//
-// This file implements a replacement execve() to spawn off LLVM programs to run
-// transparently, without needing to be (JIT-)compiled manually by the user.
-//
-//===----------------------------------------------------------------------===//
+/*===-- ExecveHandler.c - Replaces execve() to run LLVM files -------------===*\
+ *                                                                            
+ *                     The LLVM Compiler Infrastructure                       
+ *
+ * This file was developed by the LLVM research group and is distributed under
+ * the University of Illinois Open Source License. See LICENSE.TXT for details.
+ * 
+ *===----------------------------------------------------------------------===
+ *
+ * This file implements a replacement execve() to spawn off LLVM programs to run
+ * transparently, without needing to be (JIT-)compiled manually by the user.
+ *
+\*===----------------------------------------------------------------------===*/
 
 #include "SysUtils.h"
 #include "Config/unistd.h"
