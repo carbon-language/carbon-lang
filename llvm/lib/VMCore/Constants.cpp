@@ -19,6 +19,7 @@
 #include "llvm/Module.h"
 #include "Support/StringExtras.h"
 #include <algorithm>
+#include <iostream>
 using namespace llvm;
 
 ConstantBool *ConstantBool::True  = new ConstantBool(true);
@@ -120,8 +121,8 @@ Constant *Constant::getNullValue(const Type *Ty) {
   case Type::ArrayTyID:
     return ConstantAggregateZero::get(Ty);
   default:
-    // Function, Type, Label, or Opaque type?
-    assert(0 && "Cannot create a null constant of that type!");
+    // Function, Label, or Opaque type?
+    assert(!"Cannot create a null constant of that type!");
     return 0;
   }
 }
