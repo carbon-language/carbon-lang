@@ -20,7 +20,6 @@
 
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Module.h"
-#include "llvm/SymbolTable.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Pass.h"
 #include "llvm/iOther.h"
@@ -137,9 +136,6 @@ static bool ProcessGlobalsWithSameName(Module &M, TargetData &TD,
   bool isFunction = isa<Function>(Globals[0]);   // Is this group all functions?
   GlobalValue *Concrete = 0;  // The most concrete implementation to resolve to
 
-  assert((isFunction ^ isa<GlobalVariable>(Globals[0])) &&
-         "Should either be function or gvar!");
-
   for (unsigned i = 0; i != Globals.size(); ) {
     if (isa<Function>(Globals[i]) != isFunction) {
       std::cerr << "WARNING: Found function and global variable with the "
@@ -243,26 +239,27 @@ static bool ProcessGlobalsWithSameName(Module &M, TargetData &TD,
 }
 
 bool FunctionResolvingPass::run(Module &M) {
-  SymbolTable &ST = M.getSymbolTable();
-
   std::map<std::string, std::vector<GlobalValue*> > Globals;
 
-  // Loop over the entries in the symbol table. If an entry is a func pointer,
-  // then add it to the Functions map.  We do a two pass algorithm here to avoid
-  // problems with iterators getting invalidated if we did a one pass scheme.
+  // Loop over the globals, adding them to the Globals map.  We use a two pass
+  // algorithm here to avoid problems with iterators getting invalidated if we
+  // did a one pass scheme.
   //
-  for (SymbolTable::iterator I = ST.begin(), E = ST.end(); I != E; ++I)
-    if (const PointerType *PT = dyn_cast<PointerType>(I->first)) {
-      SymbolTable::VarMap &Plane = I->second;
-      for (SymbolTable::type_iterator PI = Plane.begin(), PE = Plane.end();
-           PI != PE; ++PI) {
-        GlobalValue *GV = cast<GlobalValue>(PI->second);
-        assert(PI->first == GV->getName() &&
-               "Global name and symbol table do not agree!");
-        if (!GV->hasInternalLinkage())
-          Globals[PI->first].push_back(GV);
-      }
-    }
+  for (Module::iterator I = M.begin(), E = M.end(); I != E; ) {
+    Function *F = I++;
+    if (F->use_empty() && F->isExternal())
+      M.getFunctionList().erase(F);
+    else if (!F->hasInternalLinkage() && !F->getName().empty())
+      Globals[F->getName()].push_back(F);
+  }
+
+  for (Module::giterator I = M.gbegin(), E = M.gend(); I != E; ) {
+    GlobalVariable *GV = I++;
+    if (GV->use_empty() && GV->isExternal())
+      M.getGlobalList().erase(GV);
+    else if (!GV->hasInternalLinkage() && !GV->getName().empty())
+      Globals[GV->getName()].push_back(GV);
+  }
 
   bool Changed = false;
 
