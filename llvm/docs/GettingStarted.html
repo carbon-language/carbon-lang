@@ -110,7 +110,7 @@
                 <li><tt>cd <i>where-you-want-llvm-to-live</i></tt>
                 <li><tt>cvs -d :pserver:anon@llvm-cvs.cs.uiuc.edu:/var/cvs/llvm login</tt>
 				<li>Hit the return key when prompted for the password.
-                <li><tt>cvs -d :pserver:anon@llvm-cvs.cs.uiuc.edu:/var/cvs/llvm co llvm</tt>
+                <li><tt>cvs -z3 -d :pserver:anon@llvm-cvs.cs.uiuc.edu:/var/cvs/llvm co llvm</tt>
                 <li><tt>cd llvm</tt>
             </ol>
         </ul>
@@ -359,7 +359,7 @@
     <li><tt>cd <i>where-you-want-llvm-to-live</i></tt>
 	<li><tt>cvs -d :pserver:anon@llvm-cvs.cs.uiuc.edu:/var/cvs/llvm login</tt>
 	<li>Hit the return key when prompted for the password.
-	<li><tt>cvs -d :pserver:anon@llvm-cvs.cs.uiuc.edu:/var/cvs/llvm co llvm</tt>
+	<li><tt>cvs -z3 -d :pserver:anon@llvm-cvs.cs.uiuc.edu:/var/cvs/llvm co llvm</tt>
     </ul>
 
     <p>This will create an '<tt>llvm</tt>' directory in the current
@@ -820,7 +820,7 @@
       that has been retargeted to emit LLVM code as the machine code output.  It
       works just like any other GCC compiler, taking the typical <tt>-c, -S, -E,
       -o</tt> options that are typically used.  The source code for the
-      <tt>llvmgcc</tt> tool is currently not included in the LLVM cvs tree
+      <tt>llvmgcc</tt> tool is currently not included in the LLVM CVS tree
       because it is quite large and not very interesting.<p>
 
       <ol>
@@ -874,7 +874,7 @@
 
       <dt><tt><b>cvsupdate</b></tt><dd> <tt>cvsupdate</tt> is a script that will
       update your CVS tree, but produce a much cleaner and more organized output
-      than simply running <tt>`cvs up -dP'</tt> will. For example, it will group
+      than simply running <tt>`cvs -z3 up -dP'</tt> will. For example, it will group
       together all the new and updated files and modified files in separate
       sections, so you can see at a glance what has changed. If you are at the
       top of your LLVM CVS tree, running <tt>utils/cvsupdate</tt> is the
