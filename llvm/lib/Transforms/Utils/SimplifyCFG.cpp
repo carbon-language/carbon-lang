@@ -121,6 +121,10 @@ bool SimplifyCFG(BasicBlock *BB) {
     return true;
   }
 
+  // Check to see if we can constant propagate this terminator instruction
+  // away...
+  bool Changed = ConstantFoldTerminator(BB);
+
   // Check to see if this block has no non-phi instructions and only a single
   // successor.  If so, replace references to this basic block with references
   // to the successor.
@@ -251,5 +255,5 @@ bool SimplifyCFG(BasicBlock *BB) {
     }
   }
   
-  return false;
+  return Changed;
 }

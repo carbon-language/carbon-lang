@@ -74,6 +74,12 @@ bool ConstantFoldTerminator(BasicBlock *BB) {
       BI->setUnconditionalDest(Dest1);
       return true;
     }
+  } else if (SwitchInst *SI = dyn_cast<SwitchInst>(TI)) {
+    if (ConstantInt *CI = dyn_cast<ConstantInt>(SI->getCondition())) {
+
+
+    }
+
   }
   return false;
 }
