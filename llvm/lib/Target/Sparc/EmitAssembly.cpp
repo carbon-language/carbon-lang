@@ -447,8 +447,6 @@ ConstantToSize(const Constant* CV, const TargetMachine& target)
       ArrayType *aty = cast<ArrayType>(CPA->getType());
       if (ArrayTypeIsString(aty))
         return 1 + CPA->getNumOperands();
-      else if (! aty->isSized())
-        return 0;
     }
   
   return target.findOptimalStorageSize(CV->getType());
@@ -477,16 +475,10 @@ SizeToAlignment(unsigned int size, const TargetMachine& target)
 }
 
 // Get the size of the type and then use SizeToAlignment.
-// If this is an unsized array, just return the L1 cache line size
-// (viz., the default behavior for large global objects).
 // 
 inline unsigned int
 TypeToAlignment(const Type* type, const TargetMachine& target)
 {
-  if (ArrayType* aty = dyn_cast<ArrayType>(type))
-    if (! aty->isSized())
-      return target.getCacheInfo().getCacheLineSize(1);
-  
   return SizeToAlignment(target.findOptimalStorageSize(type), target);
 }
 

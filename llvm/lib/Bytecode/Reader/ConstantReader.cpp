@@ -55,7 +55,7 @@ const Type *BytecodeParser::parseTypeConstant(const uchar *&Buf,
     const Type *ElementType = getType(ElTyp);
     if (ElementType == 0) return failure(Val);
 
-    int NumElements;
+    unsigned NumElements;
     if (read_vbr(Buf, EndBuf, NumElements)) return failure(Val);
 
     BCR_TRACE(5, "Array Type Constant #" << ElTyp << " size=" 
@@ -239,11 +239,7 @@ bool BytecodeParser::parseConstantValue(const uchar *&Buf, const uchar *EndBuf,
 
   case Type::ArrayTyID: {
     const ArrayType *AT = cast<const ArrayType>(Ty);
-    unsigned NumElements;
-    if (AT->isSized())          // Sized array, # elements stored in type!
-      NumElements = (unsigned)AT->getNumElements();
-    else                        // Unsized array, # elements stored in stream!
-      if (read_vbr(Buf, EndBuf, NumElements)) return failure(true);
+    unsigned NumElements = AT->getNumElements();
 
     vector<Constant*> Elements;
     while (NumElements--) {   // Read all of the elements of the constant.
@@ -320,6 +316,7 @@ bool BytecodeParser::parseConstantValue(const uchar *&Buf, const uchar *EndBuf,
       break;
     }
     default:
+      BCR_TRACE(5, "UNKNOWN Pointer Constant Type!\n");
       return failure(true);
     }
     break;

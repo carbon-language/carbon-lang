@@ -123,9 +123,7 @@ bool BytecodeWriter::outputConstant(const Constant *CPV) {
   case Type::ArrayTyID: {
     const ConstantArray *CPA = cast<const ConstantArray>(CPV);
     unsigned size = CPA->getValues().size();
-    if (!((const ArrayType *)CPA->getType())->isSized())
-      output_vbr(size, Out);            // Not for sized arrays!!!
-
+    assert(size == cast<ArrayType>(CPA->getType())->getNumElements() && "ConstantArray out of whack!");
     for (unsigned i = 0; i < size; i++) {
       int Slot = Table.getValSlot(CPA->getOperand(i));
       assert(Slot != -1 && "Constant used but not available!!");
