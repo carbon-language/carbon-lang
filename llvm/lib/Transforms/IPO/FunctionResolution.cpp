@@ -24,12 +24,12 @@
 #include "llvm/Pass.h"
 #include "llvm/iOther.h"
 #include "llvm/Constants.h"
+#include "llvm/Support/CallSite.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Assembly/Writer.h"
 #include "Support/Statistic.h"
 #include <algorithm>
-
-namespace llvm {
+using namespace llvm;
 
 namespace {
   Statistic<>NumResolved("funcresolve", "Number of varargs functions resolved");
@@ -45,7 +45,7 @@ namespace {
   RegisterOpt<FunctionResolvingPass> X("funcresolve", "Resolve Functions");
 }
 
-Pass *createFunctionResolvingPass() {
+Pass *llvm::createFunctionResolvingPass() {
   return new FunctionResolvingPass();
 }
 
@@ -134,6 +134,26 @@ static bool ResolveGlobalVariables(Module &M,
   return Changed;
 }
 
+// Check to see if all of the callers of F ignore the return value.
+static bool CallersAllIgnoreReturnValue(Function &F) {
+  if (F.getReturnType() == Type::VoidTy) return true;
+  for (Value::use_iterator I = F.use_begin(), E = F.use_end(); I != E; ++I) {
+    if (ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(*I)) {
+      for (Value::use_iterator I = CPR->use_begin(), E = CPR->use_end();
+           I != E; ++I) {
+        CallSite CS = CallSite::get(*I);
+        if (!CS.getInstruction() || !CS.getInstruction()->use_empty())
+          return false;
+      }
+    } else {
+      CallSite CS = CallSite::get(*I);
+      if (!CS.getInstruction() || !CS.getInstruction()->use_empty())
+        return false;
+    }
+  }
+  return true;
+}
+
 static bool ProcessGlobalsWithSameName(Module &M, TargetData &TD,
                                        std::vector<GlobalValue*> &Globals) {
   assert(!Globals.empty() && "Globals list shouldn't be empty here!");
@@ -159,7 +179,7 @@ static bool ProcessGlobalsWithSameName(Module &M, TargetData &TD,
         
         Concrete = Globals[i];
       } else if (Concrete) {
-        if (Concrete->isExternal()) // If we have multiple external symbols...x
+        if (Concrete->isExternal()) // If we have multiple external symbols...
           if (F->getFunctionType()->getNumParams() > 
               cast<Function>(Concrete)->getFunctionType()->getNumParams())
             Concrete = F;  // We are more concrete than "Concrete"!
@@ -205,10 +225,11 @@ static bool ProcessGlobalsWithSameName(Module &M, TargetData &TD,
     if (Concrete && Globals.size() == 2) {
       GlobalValue *Other = Globals[Globals[0] == Concrete];
       // If the non-concrete global is a function which takes (...) arguments,
-      // and the return values match, do not warn.
+      // and the return values match (or was never used), do not warn.
       if (Function *ConcreteF = dyn_cast<Function>(Concrete))
         if (Function *OtherF = dyn_cast<Function>(Other))
-          if (ConcreteF->getReturnType() == OtherF->getReturnType() &&
+          if ((ConcreteF->getReturnType() == OtherF->getReturnType() ||
+               CallersAllIgnoreReturnValue(*OtherF)) &&
               OtherF->getFunctionType()->isVarArg() &&
               OtherF->getFunctionType()->getParamTypes().empty())
             DontPrintWarning = true;
@@ -335,5 +356,3 @@ bool FunctionResolvingPass::run(Module &M) {
 
   return Changed;
 }
-
-} // End llvm namespace
