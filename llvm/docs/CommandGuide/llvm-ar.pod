@@ -381,7 +381,7 @@ symbol names.
 
 =head1 EXIT STATUS
 
-If B<llvm-as> succeeds, it will exit with 0.  A usage error, results
+If B<llvm-ar> succeeds, it will exit with 0.  A usage error, results
 in an exit code of 1. A hard (file system typically) error results in an
 exit code of 2. Miscellaneous or unknown errors result in an
 exit code of 3.
