@@ -17,9 +17,9 @@
 #include "Reader.h"
 #include "llvm/Module.h"
 #include "llvm/Instructions.h"
-#include "llvm/Support/FileUtilities.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Config/unistd.h"
+#include "llvm/System/MappedFile.h"
 #include <cerrno>
 using namespace llvm;
 
@@ -32,15 +32,13 @@ namespace {
   ///
   class BytecodeFileReader : public BytecodeReader {
   private:
-    unsigned char *Buffer;
-    unsigned Length;
+    sys::MappedFile mapFile;
 
     BytecodeFileReader(const BytecodeFileReader&); // Do not implement
     void operator=(const BytecodeFileReader &BFR); // Do not implement
 
   public:
     BytecodeFileReader(const std::string &Filename, llvm::BytecodeHandler* H=0);
-    ~BytecodeFileReader();
   };
 }
 
@@ -51,23 +49,11 @@ static std::string ErrnoMessage (int savedErrNum, std::string descr) {
 BytecodeFileReader::BytecodeFileReader(const std::string &Filename,
                                        llvm::BytecodeHandler* H ) 
   : BytecodeReader(H)
+  , mapFile( sys::Path(Filename))
 {
-  Buffer = (unsigned char*)ReadFileIntoAddressSpace(Filename, Length);
-  if (Buffer == 0)
-    throw "Error reading file '" + Filename + "'.";
-
-  try {
-    // Parse the bytecode we mmapped in
-    ParseBytecode(Buffer, Length, Filename);
-  } catch (...) {
-    UnmapFileFromAddressSpace(Buffer, Length);
-    throw;
-  }
-}
-
-BytecodeFileReader::~BytecodeFileReader() {
-  // Unmmap the bytecode...
-  UnmapFileFromAddressSpace(Buffer, Length);
+  mapFile.map();
+  unsigned char* buffer = reinterpret_cast<unsigned char*>(mapFile.base());
+  ParseBytecode(buffer, mapFile.size(), Filename);
 }
 
 //===----------------------------------------------------------------------===//
