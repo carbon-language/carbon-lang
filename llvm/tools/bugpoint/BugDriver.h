@@ -21,6 +21,7 @@ class DebugCrashes;
 class ReduceMiscompilingPasses;
 class ReduceMiscompilingFunctions;
 class ReduceCrashingFunctions;
+class ReduceCrashingBlocks;
 
 class BugDriver {
   const std::string ToolName;  // Name of bugpoint
@@ -33,6 +34,7 @@ class BugDriver {
   friend class ReduceMiscompilingPasses;
   friend class ReduceMiscompilingFunctions;
   friend class ReduceCrashingFunctions;
+  friend class ReduceCrashingBlocks;
 public:
   BugDriver(const char *toolname)
     : ToolName(toolname), Program(0), Interpreter(0) {}
