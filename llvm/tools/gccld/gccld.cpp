@@ -28,7 +28,7 @@
 #include "llvm/Target/TargetData.h"
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Transforms/Scalar.h"
-#include "llvm/Transforms/Utils/Linker.h"
+#include "llvm/Support/Linker.h"
 #include "Support/CommandLine.h"
 #include "Support/FileUtilities.h"
 #include "llvm/System/Signals.h"

@@ -22,7 +22,7 @@
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/Support/Mangler.h"
 #include "llvm/Transforms/Utils/Cloning.h"
-#include "llvm/Transforms/Utils/Linker.h"
+#include "llvm/Support/Linker.h"
 #include "Support/CommandLine.h"
 #include "Support/FileUtilities.h"
 using namespace llvm;

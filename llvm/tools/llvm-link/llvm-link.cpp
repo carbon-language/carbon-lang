@@ -16,7 +16,7 @@
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/Bytecode/Reader.h"
 #include "llvm/Bytecode/Writer.h"
-#include "llvm/Transforms/Utils/Linker.h"
+#include "llvm/Support/Linker.h"
 #include "Support/CommandLine.h"
 #include "Support/FileUtilities.h"
 #include "llvm/System/Signals.h"

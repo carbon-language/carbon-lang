@@ -18,7 +18,7 @@
 #include "llvm/Pass.h"
 #include "llvm/Assembly/Parser.h"
 #include "llvm/Bytecode/Reader.h"
-#include "llvm/Transforms/Utils/Linker.h"
+#include "llvm/Support/Linker.h"
 #include "llvm/Support/ToolRunner.h"
 #include "Support/CommandLine.h"
 #include "Support/FileUtilities.h"
