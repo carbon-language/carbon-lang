@@ -562,6 +562,17 @@ Constant *llvm::ConstantFoldCastInstruction(const Constant *V,
         return ConstantExpr::getCast(CE->getOperand(0), DestTy);
     }
 
+  // Check to see if we are casting an array of X to a pointer to X.  If so, use
+  // a GEP to get to the first element of the array instead of a cast!
+  if (const PointerType *PTy = dyn_cast<PointerType>(V->getType()))
+    if (const ArrayType *ATy = dyn_cast<ArrayType>(PTy->getElementType()))
+      if (const PointerType *DPTy = dyn_cast<PointerType>(DestTy))
+        if (DPTy->getElementType() == ATy->getElementType()) {
+          std::vector<Constant*> IdxList(2,Constant::getNullValue(Type::IntTy));
+          return ConstantExpr::getGetElementPtr(const_cast<Constant*>(V),
+                                                IdxList);
+        }
+
   ConstRules &Rules = ConstRules::get(V, V);
 
   switch (DestTy->getTypeID()) {
