@@ -70,11 +70,11 @@ int main(int argc, char **argv) {
   PassManager Passes;
   Passes.add(createDeadInstEliminationPass());    // Remove Dead code/vars
   Passes.add(createRaiseAllocationsPass());       // call %malloc -> malloc inst
-  Passes.add(createPromoteMemoryToRegister());    // memory->register promotion
   Passes.add(createCleanupGCCOutputPass());       // Fix gccisms
   Passes.add(createIndVarSimplifyPass());         // Simplify indvars
   if (!StopAtLevelRaise) {
     Passes.add(createRaisePointerReferencesPass()); // Eliminate casts
+    Passes.add(createPromoteMemoryToRegister());    // Promote alloca's to regs
     Passes.add(createConstantMergePass());          // Merge dup global consts
     Passes.add(createInstructionCombiningPass());   // Combine silly seq's
     Passes.add(createDeadCodeEliminationPass());    // Remove Dead code/vars
