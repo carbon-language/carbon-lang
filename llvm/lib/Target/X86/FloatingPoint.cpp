@@ -601,6 +601,7 @@ void FPS::handleSpecialFP(MachineBasicBlock::iterator &I) {
   }
 
   I = MBB->erase(I)-1;  // Remove the pseudo instruction
+  delete MI;
 }
 
 namespace {
