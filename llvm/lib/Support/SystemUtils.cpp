@@ -1,4 +1,4 @@
-//===- SystemUtils.h - Utilities to do low-level system stuff --*- C++ -*--===//
+//===- SystemUtils.cpp - Utilities for low-level system tasks -------------===//
 // 
 //                     The LLVM Compiler Infrastructure
 //
@@ -14,19 +14,19 @@
 
 #define _POSIX_MAPPED_FILES
 #include "Support/SystemUtils.h"
-#include "Config/sys/types.h"
-#include "Config/sys/stat.h"
 #include "Config/fcntl.h"
 #include "Config/pagesize.h"
-#include "Config/sys/wait.h"
-#include "Config/sys/mman.h"
 #include "Config/unistd.h"
+#include "Config/windows.h"
+#include "Config/sys/mman.h"
+#include "Config/sys/stat.h"
+#include "Config/sys/types.h"
+#include "Config/sys/wait.h"
 #include <algorithm>
+#include <cerrno>
+#include <cstdlib>
 #include <fstream>
 #include <iostream>
-#include <cstdlib>
-#include <cerrno>
-#include "Config/windows.h"
 using namespace llvm;
 
 /// isExecutableFile - This function returns true if the filename specified
