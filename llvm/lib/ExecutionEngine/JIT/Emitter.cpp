@@ -7,8 +7,8 @@
 // 
 //===----------------------------------------------------------------------===//
 //
-// This file defines a MachineCodeEmitter object that is used by Jello to write
-// machine code to memory and remember where relocatable values lie.
+// This file defines a MachineCodeEmitter object that is used by the JIT to
+// write machine code to memory and remember where relocatable values are.
 //
 //===----------------------------------------------------------------------===//
 
@@ -19,7 +19,9 @@
 #include "llvm/CodeGen/MachineCodeEmitter.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
+#include "llvm/CodeGen/MachineRelocation.h"
 #include "llvm/Target/TargetData.h"
+#include "llvm/Target/TargetJITInfo.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/System/Memory.h"
@@ -72,9 +74,9 @@ unsigned char *JITMemoryManager::allocateStub(unsigned StubSize) {
 }
 
 unsigned char *JITMemoryManager::startFunctionBody() {
-  // Round up to an even multiple of 4 bytes, this should eventually be target
+  // Round up to an even multiple of 8 bytes, this should eventually be target
   // specific.
-  return (unsigned char*)(((intptr_t)CurFunctionPtr + 3) & ~3);
+  return (unsigned char*)(((intptr_t)CurFunctionPtr + 7) & ~7);
 }
 
 void JITMemoryManager::endFunctionBody(unsigned char *FunctionEnd) {
@@ -101,6 +103,10 @@ namespace {
     // ConstantPoolAddresses - Contains the location for each entry in the
     // constant pool.
     std::vector<void*> ConstantPoolAddresses;
+
+    /// Relocations - These are the relocations that the function needs, as
+    /// emitted.
+    std::vector<MachineRelocation> Relocations;
   public:
     Emitter(JIT &jit) { TheJIT = &jit; }
 
@@ -113,10 +119,15 @@ namespace {
     virtual void emitWord(unsigned W);
     virtual void emitWordAt(unsigned W, unsigned *Ptr);
 
+    virtual void addRelocation(const MachineRelocation &MR) {
+      Relocations.push_back(MR);
+    }
+
+    virtual uint64_t getCurrentPCValue();
+    virtual uint64_t getCurrentPCOffset();
     virtual uint64_t getGlobalValueAddress(GlobalValue *V);
     virtual uint64_t getGlobalValueAddress(const char *Name);
     virtual uint64_t getConstantPoolEntryAddress(unsigned Entry);
-    virtual uint64_t getCurrentPCValue();
 
     // forceCompilationOf - Force the compilation of the specified function, and
     // return its address, because we REALLY need the address now.
@@ -141,9 +152,28 @@ void Emitter::finishFunction(MachineFunction &F) {
   ConstantPoolAddresses.clear();
   NumBytes += CurByte-CurBlock;
 
+  if (!Relocations.empty()) {
+    // Resolve the relocations to concrete pointers.
+    for (unsigned i = 0, e = Relocations.size(); i != e; ++i) {
+      MachineRelocation &MR = Relocations[i];
+      void *ResultPtr;
+      if (MR.isGlobalValue()) {
+        assert(0 && "Unimplemented!\n");
+      } else {
+        ResultPtr = TheJIT->getPointerToNamedFunction(MR.getString());
+      }
+      MR.setResultPointer(ResultPtr);
+    }
+
+    TheJIT->getJITInfo().relocate(CurBlock, &Relocations[0],
+                                  Relocations.size());
+  }
+
   DEBUG(std::cerr << "Finished CodeGen of [" << (void*)CurBlock
                   << "] Function: " << F.getFunction()->getName()
-                  << ": " << CurByte-CurBlock << " bytes of text\n");
+                  << ": " << CurByte-CurBlock << " bytes of text, "
+                  << Relocations.size() << " relocations\n");
+  Relocations.clear();
 }
 
 void Emitter::emitConstantPool(MachineConstantPool *MCP) {
@@ -243,6 +273,10 @@ uint64_t Emitter::getConstantPoolEntryAddress(unsigned ConstantNum) {
 //
 uint64_t Emitter::getCurrentPCValue() {
   return (intptr_t)CurByte;
+}
+
+uint64_t Emitter::getCurrentPCOffset() {
+  return (intptr_t)CurByte-(intptr_t)CurBlock;
 }
 
 uint64_t Emitter::forceCompilationOf(Function *F) {
