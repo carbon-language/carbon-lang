@@ -928,8 +928,10 @@ let isTwoAddress = 0 in {
                      "add{l} {$src2, $dst|$dst, $src2}">;
 }
 
+let isCommutable = 1 in {  // X = ADC Y, Z --> X = ADC Z, Y
 def ADC32rr  : I<0x11, MRMDestReg, (ops R32:$dst, R32:$src1, R32:$src2),
                  "adc{l} {$src2, $dst|$dst, $src2}">;
+}
 def ADC32rm  : I<0x13, MRMSrcMem , (ops R32:$dst, R32:$src1, i32mem:$src2),
                  "adc{l} {$src2, $dst|$dst, $src2}">;
 def ADC32ri  : Ii32<0x81, MRM2r, (ops R32:$dst, R32:$src1, i32imm:$src2),
@@ -1020,10 +1022,12 @@ def SBB16ri8 : Ii8<0x83, MRM3r, (ops R16:$dst, R16:$src1, i8imm:$src2),
 def SBB32ri8 : Ii8<0x83, MRM3r, (ops R32:$dst, R32:$src1, i8imm:$src2),
                    "sbb{l} {$src2, $dst|$dst, $src2}">;
 
+let isCommutable = 1 in {  // X = IMUL Y, Z --> X = IMUL Z, Y
 def IMUL16rr : I<0xAF, MRMSrcReg, (ops R16:$dst, R16:$src1, R16:$src2),
                  "imul{w} {$src2, $dst|$dst, $src2}">, TB, OpSize;
 def IMUL32rr : I<0xAF, MRMSrcReg, (ops R32:$dst, R32:$src1, R32:$src2),
                  "imul{l} {$src2, $dst|$dst, $src2}">, TB;
+}
 def IMUL16rm : I<0xAF, MRMSrcMem, (ops R16:$dst, R16:$src1, i16mem:$src2),
                  "imul{w} {$src2, $dst|$dst, $src2}">, TB, OpSize;
 def IMUL32rm : I<0xAF, MRMSrcMem, (ops R32:$dst, R32:$src1, i32mem:$src2),
