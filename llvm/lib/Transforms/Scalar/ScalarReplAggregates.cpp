@@ -3,29 +3,43 @@
 // This transformation implements the well known scalar replacement of
 // aggregates transformation.  This xform breaks up alloca instructions of
 // aggregate type (structure or array) into individual alloca instructions for
-// each member (if possible).
+// each member (if possible).  Then, if possible, it transforms the individual
+// alloca instructions into nice clean scalar SSA form.
+//
+// This combines a simple SRoA algorithm with the Mem2Reg algorithm because
+// often interact, especially for C++ programs.  As such, iterating between
+// SRoA, then Mem2Reg until we run out of things to promote works well.
 //
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/Scalar.h"
+#include "llvm/Constants.h"
+#include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
 #include "llvm/Pass.h"
 #include "llvm/iMemory.h"
-#include "llvm/DerivedTypes.h"
-#include "llvm/Constants.h"
+#include "llvm/Analysis/Dominators.h"
+#include "llvm/Target/TargetData.h"
+#include "llvm/Transforms/Utils/PromoteMemToReg.h"
 #include "Support/Debug.h"
 #include "Support/Statistic.h"
 #include "Support/StringExtras.h"
 
 namespace {
   Statistic<> NumReplaced("scalarrepl", "Number of alloca's broken up");
+  Statistic<> NumPromoted("scalarrepl", "Number of alloca's promoted");
 
   struct SROA : public FunctionPass {
     bool runOnFunction(Function &F);
 
+    bool performScalarRepl(Function &F);
+    bool performPromotion(Function &F);
+
     // getAnalysisUsage - This pass does not require any passes, but we know it
     // will not alter the CFG, so say so.
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.addRequired<DominanceFrontier>();
+      AU.addRequired<TargetData>();
       AU.setPreservesCFG();
     }
 
@@ -43,11 +57,52 @@ namespace {
 Pass *createScalarReplAggregatesPass() { return new SROA(); }
 
 
-// runOnFunction - This algorithm is a simple worklist driven algorithm, which
-// runs on all of the malloc/alloca instructions in the function, removing them
-// if they are only used by getelementptr instructions.
-//
 bool SROA::runOnFunction(Function &F) {
+  bool Changed = false, LocalChange;
+  do {
+    LocalChange = performScalarRepl(F);
+    LocalChange |= performPromotion(F);
+    Changed |= LocalChange;
+  } while (LocalChange);
+
+  return Changed;
+}
+
+
+bool SROA::performPromotion(Function &F) {
+  std::vector<AllocaInst*> Allocas;
+  const TargetData &TD = getAnalysis<TargetData>();
+
+  BasicBlock &BB = F.getEntryNode();  // Get the entry node for the function
+
+  bool Changed  = false;
+  
+  while (1) {
+    Allocas.clear();
+
+    // Find allocas that are safe to promote, by looking at all instructions in
+    // the entry node
+    for (BasicBlock::iterator I = BB.begin(), E = --BB.end(); I != E; ++I)
+      if (AllocaInst *AI = dyn_cast<AllocaInst>(I))       // Is it an alloca?
+        if (isAllocaPromotable(AI, TD))
+          Allocas.push_back(AI);
+
+    if (Allocas.empty()) break;
+
+    PromoteMemToReg(Allocas, getAnalysis<DominanceFrontier>(), TD);
+    NumPromoted += Allocas.size();
+    Changed = true;
+  }
+
+  return Changed;
+}
+
+
+// performScalarRepl - This algorithm is a simple worklist driven algorithm,
+// which runs on all of the malloc/alloca instructions in the function, removing
+// them if they are only used by getelementptr instructions.
+//
+bool SROA::performScalarRepl(Function &F) {
   std::vector<AllocationInst*> WorkList;
 
   // Scan the entry basic block, adding any alloca's and mallocs to the worklist
