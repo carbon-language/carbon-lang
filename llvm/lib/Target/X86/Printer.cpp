@@ -27,6 +27,10 @@ namespace {
 
     void printConstantPool(MachineConstantPool *MCP, const TargetData &TD);
     bool runOnMachineFunction(MachineFunction &F);
+    
+    bool doInitialization(Module &M);
+    bool doFinalization(Module &M);
+
   };
 }
 
@@ -123,13 +127,13 @@ static void printOp(std::ostream &O, const MachineOperand &MO,
     O << (int)MO.getImmedValue();
     return;
   case MachineOperand::MO_PCRelativeDisp:
-    O << "<" << MO.getVRegValue()->getName() << ">";
+    O << MO.getVRegValue()->getName();
     return;
   case MachineOperand::MO_GlobalAddress:
-    O << "<" << MO.getGlobal()->getName() << ">";
+    O << MO.getGlobal()->getName();
     return;
   case MachineOperand::MO_ExternalSymbol:
-    O << "<" << MO.getSymbolName() << ">";
+    O << MO.getSymbolName();
     return;
   default:
     O << "<unknown op ty>"; return;    
@@ -208,6 +212,10 @@ void X86InstrInfo::print(const MachineInstr *MI, std::ostream &O,
 
   switch (Desc.TSFlags & X86II::FormMask) {
   case X86II::Pseudo:
+    // Print pseudo-instructions as comments; either they should have been
+    // turned into real instructions by now, or they don't need to be
+    // seen by the assembler (e.g., IMPLICIT_USEs.)
+    O << "# ";
     if (Opcode == X86::PHI) {
       printOp(O, MI->getOperand(0), RI);
       O << " = phi ";
@@ -457,3 +465,18 @@ void X86InstrInfo::print(const MachineInstr *MI, std::ostream &O,
     O << "\tUNKNOWN FORM:\t\t-"; MI->print(O, TM); break;
   }
 }
+
+bool Printer::doInitialization(Module &M)
+{
+  // Tell gas we are outputting Intel syntax (not AT&T syntax) assembly,
+  // with no % decorations on register names.
+  O << "\t.intel_syntax noprefix\n";
+  return false; // success
+}
+
+bool Printer::doFinalization(Module &M)
+{
+  // FIXME: We may have to print out constants here.
+  return false; // success
+}
+
