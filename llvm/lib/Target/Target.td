@@ -184,11 +184,15 @@ def imm : BuiltinDagNode<DNVT_val, [], "Constant">;
 // Arithmetic...
 def plus    : BuiltinDagNode<DNVT_arg0, [DNVT_val, DNVT_arg0], "Plus">;
 def minus   : BuiltinDagNode<DNVT_arg0, [DNVT_val, DNVT_arg0], "Minus">;
-//def mult    : DagNode<2, DNVT_arg0>;
-//def div     : DagNode<2, DNVT_arg0>;
-//def udiv    : DagNode<2, DNVT_arg0>;
-//def mod     : DagNode<2, DNVT_arg0>;
-//def umod    : DagNode<2, DNVT_arg0>;
+def times   : BuiltinDagNode<DNVT_arg0, [DNVT_val, DNVT_arg0], "Times">;
+def sdiv    : BuiltinDagNode<DNVT_arg0, [DNVT_val, DNVT_arg0], "SDiv">;
+def udiv    : BuiltinDagNode<DNVT_arg0, [DNVT_val, DNVT_arg0], "UDiv">;
+def srem    : BuiltinDagNode<DNVT_arg0, [DNVT_val, DNVT_arg0], "SRem">;
+def urem    : BuiltinDagNode<DNVT_arg0, [DNVT_val, DNVT_arg0], "URem">;
+def and     : BuiltinDagNode<DNVT_arg0, [DNVT_val, DNVT_arg0], "And">;
+def or      : BuiltinDagNode<DNVT_arg0, [DNVT_val, DNVT_arg0], "Or">;
+def xor     : BuiltinDagNode<DNVT_arg0, [DNVT_val, DNVT_arg0], "Xor">;
+
 
 def load    : DagNode<DNVT_val, [DNVT_ptr]>;
 //def store   : DagNode<2, DNVT_Void>;
