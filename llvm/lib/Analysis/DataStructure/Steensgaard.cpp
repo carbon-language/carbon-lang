@@ -14,6 +14,11 @@
 #include "Support/Statistic.h"
 
 namespace {
+  Statistic<> NumNoAlias  ("steens", "Number of 'no alias' replies");
+  Statistic<> NumMayAlias ("steens", "Number of 'may alias' replies");
+};
+
+namespace {
   class Steens : public Pass, public AliasAnalysis {
     DSGraph *ResultGraph;
   public:
@@ -202,7 +207,7 @@ bool Steens::run(Module &M) {
 
 // alias - This is the only method here that does anything interesting...
 AliasAnalysis::Result Steens::alias(const Value *V1, const Value *V2) {
-  assert(ResultGraph && "Result grcaph has not yet been computed!");
+  assert(ResultGraph && "Result graph has not been computed yet!");
 
   std::map<Value*, DSNodeHandle> &GVM = ResultGraph->getScalarMap();
 
@@ -214,9 +219,10 @@ AliasAnalysis::Result Steens::alias(const Value *V1, const Value *V2) {
       DSNodeHandle &V2H = J->second;
       // If the two pointers point to different data structure graph nodes, they
       // cannot alias!
-      if (V1H.getNode() != V2H.getNode())
+      if (V1H.getNode() != V2H.getNode()) {
+        ++NumNoAlias;
         return NoAlias;
-
+      }
       // FIXME: If the two pointers point to the same node, and the offsets are
       // different, and the LinkIndex vector doesn't alias the section, then the
       // two pointers do not alias.  We need access size information for the two
@@ -224,6 +230,9 @@ AliasAnalysis::Result Steens::alias(const Value *V1, const Value *V2) {
       //
     }
   }
+
+  // Since Steensgaard cannot do any better, count it as a 'may alias'
+  ++NumMayAlias;
 
   // If we cannot determine alias properties based on our graph, fall back on
   // some other AA implementation.
