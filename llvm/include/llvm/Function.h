@@ -106,6 +106,13 @@ public:
   unsigned getIntrinsicID() const;
   bool isIntrinsic() const { return getIntrinsicID() != 0; }
 
+  /// renameLocalSymbols - This method goes through the Function's symbol table
+  /// and renames any symbols that conflict with symbols at global scope.  This
+  /// is required before printing out to a textual form, to ensure that there is
+  /// no ambiguity when parsing.
+  void renameLocalSymbols();
+
+
   /// deleteBody - This method deletes the body of the function, and converts
   /// the linkage to external.
   ///

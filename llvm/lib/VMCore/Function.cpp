@@ -17,6 +17,7 @@
 #include "llvm/IntrinsicInst.h"
 #include "llvm/Support/LeakDetector.h"
 #include "SymbolTableListTraitsImpl.h"
+#include "llvm/ADT/StringExtras.h"
 using namespace llvm;
 
 BasicBlock *ilist_traits<BasicBlock>::createNode() {
@@ -152,6 +153,46 @@ void Function::removeFromParent() {
 void Function::eraseFromParent() {
   getParent()->getFunctionList().erase(this);
 }
+
+
+/// renameLocalSymbols - This method goes through the Function's symbol table
+/// and renames any symbols that conflict with symbols at global scope.  This is
+/// required before printing out to a textual form, to ensure that there is no
+/// ambiguity when parsing.
+void Function::renameLocalSymbols() {
+  SymbolTable &LST = getSymbolTable();                 // Local Symtab
+  SymbolTable &GST = getParent()->getSymbolTable();    // Global Symtab
+
+  for (SymbolTable::plane_iterator LPI = LST.plane_begin(), E = LST.plane_end();
+       LPI != E; ++LPI)
+    // All global symbols are of pointer type, ignore any non-pointer planes.
+    if (isa<PointerType>(LPI->first)) {
+      // Only check if the global plane has any symbols of this type.
+      SymbolTable::plane_iterator GPI = GST.find(LPI->first);
+      if (GPI != GST.plane_end()) {
+        SymbolTable::ValueMap &LVM       = LPI->second;
+        const SymbolTable::ValueMap &GVM = GPI->second;
+
+        // Loop over all local symbols, renaming those that are in the global
+        // symbol table already.
+        for (SymbolTable::value_iterator VI = LVM.begin(), E = LVM.end();
+             VI != E;) {
+          Value *V                = VI->second;
+          const std::string &Name = VI->first;
+          ++VI;
+          if (GVM.count(Name)) {
+            static unsigned UniqueNum = 0;
+            // Find a name that does not conflict!
+            while (GVM.count(Name + "_" + utostr(++UniqueNum)) ||
+                   LVM.count(Name + "_" + utostr(UniqueNum)))
+              /* scan for UniqueNum that works */;
+            V->setName(Name + "_" + utostr(UniqueNum));
+          }
+        }
+      }
+    }
+}
+
 
 // dropAllReferences() - This function causes all the subinstructions to "let
 // go" of all references that they are maintaining.  This allows one to
