@@ -123,8 +123,8 @@ bool PH::PeepholeOptimize(MachineBasicBlock &MBB,
     return false;
 #endif
 
-  case X86::ADD16ri:  case X86::ADD32ri:
-  case X86::SUB16ri:  case X86::SUB32ri:
+  case X86::ADD16ri:  case X86::ADD32ri:  case X86::ADC32ri:
+  case X86::SUB16ri:  case X86::SUB32ri:  case X86::SBB32ri:
   case X86::AND16ri:  case X86::AND32ri:
   case X86::OR16ri:   case X86::OR32ri:
   case X86::XOR16ri:  case X86::XOR32ri:
@@ -138,8 +138,10 @@ bool PH::PeepholeOptimize(MachineBasicBlock &MBB,
         default: assert(0 && "Unknown opcode value!");
         case X86::ADD16ri:  Opcode = X86::ADD16ri8; break;
         case X86::ADD32ri:  Opcode = X86::ADD32ri8; break;
+        case X86::ADC32ri:  Opcode = X86::ADC32ri8; break;
         case X86::SUB16ri:  Opcode = X86::SUB16ri8; break;
         case X86::SUB32ri:  Opcode = X86::SUB32ri8; break;
+        case X86::SBB32ri:  Opcode = X86::SBB32ri8; break;
         case X86::AND16ri:  Opcode = X86::AND16ri8; break;
         case X86::AND32ri:  Opcode = X86::AND32ri8; break;
         case X86::OR16ri:   Opcode = X86::OR16ri8; break;
@@ -156,8 +158,8 @@ bool PH::PeepholeOptimize(MachineBasicBlock &MBB,
     }
     return false;
 
-  case X86::ADD16mi:  case X86::ADD32mi:
-  case X86::SUB16mi:  case X86::SUB32mi:
+  case X86::ADD16mi:  case X86::ADD32mi:  case X86::ADC32mi:
+  case X86::SUB16mi:  case X86::SUB32mi:  case X86::SBB32mi:
   case X86::AND16mi:  case X86::AND32mi:
   case X86::OR16mi:  case X86::OR32mi:
   case X86::XOR16mi:  case X86::XOR32mi:
@@ -171,8 +173,10 @@ bool PH::PeepholeOptimize(MachineBasicBlock &MBB,
         default: assert(0 && "Unknown opcode value!");
         case X86::ADD16mi:  Opcode = X86::ADD16mi8; break;
         case X86::ADD32mi:  Opcode = X86::ADD32mi8; break;
+        case X86::ADC32mi:  Opcode = X86::ADC32mi8; break;
         case X86::SUB16mi:  Opcode = X86::SUB16mi8; break;
         case X86::SUB32mi:  Opcode = X86::SUB32mi8; break;
+        case X86::SBB32mi:  Opcode = X86::SBB32mi8; break;
         case X86::AND16mi:  Opcode = X86::AND16mi8; break;
         case X86::AND32mi:  Opcode = X86::AND32mi8; break;
         case X86::OR16mi:   Opcode = X86::OR16mi8; break;
