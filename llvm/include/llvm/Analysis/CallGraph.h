@@ -137,6 +137,12 @@ public:
     destroy();
   }
 
+  /// Print the types found in the module.  If the optional Module parameter is
+  /// passed in, then the types are printed symbolically if possible, using the
+  /// symbol table from the module.
+  ///
+  void print(std::ostream &o, const Module *M) const;
+
 private:
   //===---------------------------------------------------------------------
   // Implementation of CallGraph construction
@@ -249,22 +255,5 @@ template<> struct GraphTraits<const CallGraph*> :
     return CGN->getExternalNode();
   }
 };
-
-
-//===----------------------------------------------------------------------===//
-// Printing support for Call Graphs
-//
-
-// Stuff for printing out a callgraph...
-
-void WriteToOutput(const CallGraph &, std::ostream &o);
-inline std::ostream &operator <<(std::ostream &o, const CallGraph &CG) {
-  WriteToOutput(CG, o); return o;
-}
-  
-void WriteToOutput(const CallGraphNode *, std::ostream &o);
-inline std::ostream &operator <<(std::ostream &o, const CallGraphNode *CGN) {
-  WriteToOutput(CGN, o); return o;
-}
 
 #endif

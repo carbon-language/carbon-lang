@@ -130,8 +130,7 @@ void CallGraph::destroy() {
   FunctionMap.clear();
 }
 
-
-void WriteToOutput(const CallGraphNode *CGN, std::ostream &o) {
+static void WriteToOutput(const CallGraphNode *CGN, std::ostream &o) {
   if (CGN->getFunction())
     o << "Call graph node for function: '"
       << CGN->getFunction()->getName() <<"'\n";
@@ -146,11 +145,11 @@ void WriteToOutput(const CallGraphNode *CGN, std::ostream &o) {
   o << "\n";
 }
 
-void WriteToOutput(const CallGraph &CG, std::ostream &o) {
-  o << "CallGraph Root is:\n" << CG.getRoot();
+void CallGraph::print(std::ostream &o, const Module *M) const {
+  o << "CallGraph Root is:\n" << getRoot();
 
-  for (CallGraph::const_iterator I = CG.begin(), E = CG.end(); I != E; ++I)
-    o << I->second;
+  for (CallGraph::const_iterator I = begin(), E = end(); I != E; ++I)
+    WriteToOutput(I->second, o);
 }
 
 
