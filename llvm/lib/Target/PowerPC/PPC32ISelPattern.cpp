@@ -25,6 +25,7 @@
 #include "llvm/CodeGen/SSARegMap.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetLowering.h"
+#include "llvm/Target/TargetOptions.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/ADT/Statistic.h"
@@ -432,6 +433,7 @@ LowerFrameReturnAddress(bool isFrameAddress, SDOperand Chain, unsigned Depth,
 
 namespace {
 Statistic<>NotLogic("ppc-codegen", "Number of inverted logical ops");
+Statistic<>FusedFP("ppc-codegen", "Number of fused fp operations");
 //===--------------------------------------------------------------------===//
 /// ISel - PPC32 specific code to select PPC32 machine instructions for
 /// SelectionDAG operations.
@@ -783,7 +785,27 @@ unsigned ISel::SelectExprFP(SDOperand N, unsigned Result)
   }
 
   case ISD::FNEG:
-    if (ISD::FABS == N.getOperand(0).getOpcode()) {
+    if (!NoExcessFPPrecision && 
+        ISD::ADD == N.getOperand(0).getOpcode() &&
+        N.getOperand(0).Val->hasOneUse() &&
+        ISD::MUL == N.getOperand(0).getOperand(0).getOpcode() &&
+        N.getOperand(0).getOperand(0).Val->hasOneUse()) {
+      Tmp1 = SelectExpr(N.getOperand(0).getOperand(0).getOperand(0));
+      Tmp2 = SelectExpr(N.getOperand(0).getOperand(0).getOperand(1));
+      Tmp3 = SelectExpr(N.getOperand(0).getOperand(1));
+      Opc = DestType == MVT::f64 ? PPC::FNMADD : PPC::FNMADDS;
+      BuildMI(BB, Opc, 3, Result).addReg(Tmp1).addReg(Tmp2).addReg(Tmp3);
+    } else if (!NoExcessFPPrecision && 
+        ISD::SUB == N.getOperand(0).getOpcode() &&
+        N.getOperand(0).Val->hasOneUse() &&
+        ISD::MUL == N.getOperand(0).getOperand(0).getOpcode() &&
+        N.getOperand(0).getOperand(0).Val->hasOneUse()) {
+      Tmp1 = SelectExpr(N.getOperand(0).getOperand(0).getOperand(0));
+      Tmp2 = SelectExpr(N.getOperand(0).getOperand(0).getOperand(1));
+      Tmp3 = SelectExpr(N.getOperand(0).getOperand(1));
+      Opc = DestType == MVT::f64 ? PPC::FNMSUB : PPC::FNMSUBS;
+      BuildMI(BB, Opc, 3, Result).addReg(Tmp1).addReg(Tmp2).addReg(Tmp3);
+    } else if (ISD::FABS == N.getOperand(0).getOpcode()) {
       Tmp1 = SelectExpr(N.getOperand(0).getOperand(0));
       BuildMI(BB, PPC::FNABS, 1, Result).addReg(Tmp1);
     } else {
@@ -826,14 +848,44 @@ unsigned ISel::SelectExprFP(SDOperand N, unsigned Result)
     return Result;
   }
     
-  case ISD::MUL:
   case ISD::ADD:
+    if (!NoExcessFPPrecision && N.getOperand(0).getOpcode() == ISD::MUL &&
+        N.getOperand(0).Val->hasOneUse()) {
+      ++FusedFP; // Statistic
+      Tmp1 = SelectExpr(N.getOperand(0).getOperand(0));
+      Tmp2 = SelectExpr(N.getOperand(0).getOperand(1));
+      Tmp3 = SelectExpr(N.getOperand(1));
+      Opc = DestType == MVT::f64 ? PPC::FMADD : PPC::FMADDS;
+      BuildMI(BB, Opc, 3, Result).addReg(Tmp1).addReg(Tmp2).addReg(Tmp3);
+      return Result;
+    }
+    Opc = DestType == MVT::f64 ? PPC::FADD : PPC::FADDS;
+    Tmp1 = SelectExpr(N.getOperand(0));
+    Tmp2 = SelectExpr(N.getOperand(1));
+    BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(Tmp2);
+    return Result;
+
   case ISD::SUB:
+    if (!NoExcessFPPrecision && N.getOperand(0).getOpcode() == ISD::MUL &&
+        N.getOperand(0).Val->hasOneUse()) {
+      ++FusedFP; // Statistic
+      Tmp1 = SelectExpr(N.getOperand(0).getOperand(0));
+      Tmp2 = SelectExpr(N.getOperand(0).getOperand(1));
+      Tmp3 = SelectExpr(N.getOperand(1));
+      Opc = DestType == MVT::f64 ? PPC::FMSUB : PPC::FMSUBS;
+      BuildMI(BB, Opc, 3, Result).addReg(Tmp1).addReg(Tmp2).addReg(Tmp3);
+      return Result;
+    }
+    Opc = DestType == MVT::f64 ? PPC::FSUB : PPC::FSUBS;
+    Tmp1 = SelectExpr(N.getOperand(0));
+    Tmp2 = SelectExpr(N.getOperand(1));
+    BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(Tmp2);
+    return Result;
+
+  case ISD::MUL:
   case ISD::SDIV:
     switch( opcode ) {
     case ISD::MUL:  Opc = DestType == MVT::f64 ? PPC::FMUL : PPC::FMULS; break;
-    case ISD::ADD:  Opc = DestType == MVT::f64 ? PPC::FADD : PPC::FADDS; break;
-    case ISD::SUB:  Opc = DestType == MVT::f64 ? PPC::FSUB : PPC::FSUBS; break;
     case ISD::SDIV: Opc = DestType == MVT::f64 ? PPC::FDIV : PPC::FDIVS; break;
     };
     Tmp1 = SelectExpr(N.getOperand(0));
