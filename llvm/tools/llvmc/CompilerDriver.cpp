@@ -552,7 +552,8 @@ public:
       SetVector<sys::Path> LinkageItems;
       std::vector<std::string> LibFiles;
       InputList::const_iterator I = InpList.begin();
-      while ( I != InpList.end() ) {
+      for (InputList::const_iterator I = InpList.begin(), E = InpList.end();
+           I != E; ++I ) {
         // Get the suffix of the file name
         const std::string& ftype = I->second;
 
@@ -570,7 +571,7 @@ public:
             LibFiles.push_back(I->first.get());
           else
             LinkageItems.insert(I->first);
-          ++I; continue; // short circuit remainder of loop
+          continue; // short circuit remainder of loop
         }
 
         // At this point, we know its something we need to translate
@@ -594,8 +595,12 @@ public:
         if (!action.program.isEmpty()) {
           if (action.isSet(REQUIRED_FLAG) || finalPhase == PREPROCESSING) {
             if (finalPhase == PREPROCESSING) {
-              OutFile.appendSuffix("E");
-              actions.push_back(GetAction(cd,InFile,OutFile,PREPROCESSING));
+              if (Output.isEmpty()) {
+                OutFile.appendSuffix("E");
+                actions.push_back(GetAction(cd,InFile,OutFile,PREPROCESSING));
+              } else {
+                actions.push_back(GetAction(cd,InFile,Output,PREPROCESSING));
+              }
             } else {
               sys::Path TempFile(MakeTempFile(I->first.getBasename(),"E"));
               actions.push_back(GetAction(cd,InFile,TempFile,
@@ -612,7 +617,7 @@ public:
 
         // Short-circuit remaining actions if all they want is 
         // pre-processing
-        if (finalPhase == PREPROCESSING) { ++I; continue; };
+        if (finalPhase == PREPROCESSING) { continue; };
 
         /// TRANSLATION PHASE
         action = cd->Translator;
@@ -621,8 +626,12 @@ public:
         if (!action.program.isEmpty()) {
           if (action.isSet(REQUIRED_FLAG) || finalPhase == TRANSLATION) {
             if (finalPhase == TRANSLATION) {
-              OutFile.appendSuffix("o");
-              actions.push_back(GetAction(cd,InFile,OutFile,TRANSLATION));
+              if (Output.isEmpty()) {
+                OutFile.appendSuffix("o");
+                actions.push_back(GetAction(cd,InFile,OutFile,TRANSLATION));
+              } else {
+                actions.push_back(GetAction(cd,InFile,Output,TRANSLATION));
+              }
             } else {
               sys::Path TempFile(MakeTempFile(I->first.getBasename(),"trans")); 
               actions.push_back(GetAction(cd,InFile,TempFile,TRANSLATION));
@@ -650,7 +659,7 @@ public:
         }
 
         // Short-circuit remaining actions if all they want is translation
-        if (finalPhase == TRANSLATION) { ++I; continue; }
+        if (finalPhase == TRANSLATION) { continue; }
 
         /// OPTIMIZATION PHASE
         action = cd->Optimizer;
@@ -660,8 +669,12 @@ public:
           if (!action.program.isEmpty()) {
             if (action.isSet(REQUIRED_FLAG) || finalPhase == OPTIMIZATION) {
               if (finalPhase == OPTIMIZATION) {
-                OutFile.appendSuffix("o");
-                actions.push_back(GetAction(cd,InFile,OutFile,OPTIMIZATION));
+                if (Output.isEmpty()) {
+                  OutFile.appendSuffix("o");
+                  actions.push_back(GetAction(cd,InFile,OutFile,OPTIMIZATION));
+                } else {
+                  actions.push_back(GetAction(cd,InFile,Output,OPTIMIZATION));
+                }
               } else {
                 sys::Path TempFile(MakeTempFile(I->first.getBasename(),"opt"));
                 actions.push_back(GetAction(cd,InFile,TempFile,OPTIMIZATION));
@@ -690,43 +703,52 @@ public:
         }
 
         // Short-circuit remaining actions if all they want is optimization
-        if (finalPhase == OPTIMIZATION) { ++I; continue; }
+        if (finalPhase == OPTIMIZATION) { continue; }
 
         /// ASSEMBLY PHASE
         action = cd->Assembler;
 
         if (finalPhase == ASSEMBLY) {
+
+          // Build either a native compilation action or a disassembly action
+          Action* action = new Action();
           if (isSet(EMIT_NATIVE_FLAG)) {
             // Use llc to get the native assembly file
-            Action* action = new Action();
             action->program.setFile("llc");
             action->args.push_back(InFile.get());
             action->args.push_back("-f");
             action->args.push_back("-o");
-            OutFile.appendSuffix("s");
-            action->args.push_back(OutFile.get());
+            if (Output.isEmpty()) {
+              OutFile.appendSuffix("o");
+              action->args.push_back(OutFile.get());
+            } else {
+              action->args.push_back(Output.get());
+            }
+            actions.push_back(action);
           } else {
             // Just convert back to llvm assembly with llvm-dis
-            Action* action = new Action();
             action->program.setFile("llvm-dis");
             action->args.push_back(InFile.get());
             action->args.push_back("-f");
             action->args.push_back("-o");
-            OutFile.appendSuffix("ll");
-            action->args.push_back(OutFile.get());
-            actions.push_back(action);
+            if (Output.isEmpty()) {
+              OutFile.appendSuffix("ll");
+              action->args.push_back(OutFile.get());
+            } else {
+              action->args.push_back(Output.get());
+            }
           }
 
+          // Put the action on the list
+          actions.push_back(action);
+
           // Short circuit the rest of the loop, we don't want to link 
-          ++I; 
           continue;
         }
 
         // Register the result of the actions as a link candidate
         LinkageItems.insert(InFile);
 
-        // Go to next file to be processed
-        ++I;
       } // end while loop over each input file
 
       /// RUN THE COMPILATION ACTIONS
