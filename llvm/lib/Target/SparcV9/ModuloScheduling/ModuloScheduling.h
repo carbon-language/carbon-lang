@@ -39,6 +39,12 @@ namespace llvm {
   class ModuloSchedulingPass : public FunctionPass {
     const TargetMachine &target;
 
+    //Map to hold Value* defs
+    std::map<const Value*, MachineInstr*> defMap;
+
+    //LLVM Instruction we know we can add TmpInstructions to its MCFI
+    Instruction *defaultInst;
+
     //Map that holds node to node attribute information
     std::map<MSchedGraphNode*, MSNodeAttributes> nodeToAttributesMap;
     

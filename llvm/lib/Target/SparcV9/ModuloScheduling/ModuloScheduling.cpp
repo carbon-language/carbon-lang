@@ -137,6 +137,33 @@ bool ModuloSchedulingPass::runOnFunction(Function &F) {
     if(MachineBBisValid(BI)) 
       Worklist.push_back(&*BI);
   
+  defaultInst = 0;
+
+  //If we have a basic block to schedule, create our def map
+  if(Worklist.size() > 0) {
+    for(MachineFunction::iterator BI = MF.begin(); BI != MF.end(); ++BI) {
+      for(MachineBasicBlock::iterator I = BI->begin(), E = BI->end(); I != E; ++I) {
+	for(unsigned opNum = 0; opNum < I->getNumOperands(); ++opNum) {
+	  const MachineOperand &mOp = I->getOperand(opNum);
+	  if(mOp.getType() == MachineOperand::MO_VirtualRegister && mOp.isDef()) {
+	    defMap[mOp.getVRegValue()] = &*I;
+	  }
+	  
+	    //See if we can use this Value* as our defaultInst
+	  if(!defaultInst && mOp.getType() == MachineOperand::MO_VirtualRegister) {
+	    Value *V = mOp.getVRegValue();
+	    if(!isa<TmpInstruction>(V) && !isa<Argument>(V) && !isa<Constant>(V))
+	      defaultInst = (Instruction*) V;
+	  }
+	}
+      }
+    }
+  }
+
+  assert(defaultInst && "We must have a default instruction to use as our main point to add to machine code for instruction\n");
+
+  DEBUG(std::cerr << "Default Instruction: " << *defaultInst << "\n");
+
   DEBUG(if(Worklist.size() == 0) std::cerr << "No single basic block loops in function to ModuloSchedule\n");
 
   //Iterate over the worklist and perform scheduling
@@ -265,7 +292,6 @@ bool ModuloSchedulingPass::MachineBBisValid(const MachineBasicBlock *BI) {
     MachineOpCode OC = I->getOpcode();
     if(TMI->isCall(OC))
       return false;
- 
   }
   return true;
 }
@@ -1286,8 +1312,8 @@ void ModuloSchedulingPass::writePrologues(std::vector<MachineBasicBlock *> &prol
 		//Save copy in tmpInstruction
 		tmp = new TmpInstruction(mOp.getVRegValue());
 		
-		//Get machine code for this instruction
-		MachineCodeForInstruction & tempMvec = MachineCodeForInstruction::get((Instruction*) mOp.getVRegValue());
+		//Add TmpInstruction to safe LLVM Instruction MCFI
+		MachineCodeForInstruction & tempMvec = MachineCodeForInstruction::get(defaultInst);
 		tempMvec.addTemp((Value*) tmp);
 
 		DEBUG(std::cerr << "Value: " << *(mOp.getVRegValue()) << " New Value: " << *tmp << " Stage: " << i << "\n");
@@ -1405,7 +1431,7 @@ void ModuloSchedulingPass::writeEpilogues(std::vector<MachineBasicBlock *> &epil
 		  Instruction *tmp = new TmpInstruction(newValues[mOp.getVRegValue()][i]);
 		 
 		  //Get machine code for this instruction
-		  MachineCodeForInstruction & tempMvec = MachineCodeForInstruction::get((Instruction*) mOp.getVRegValue());
+		  MachineCodeForInstruction & tempMvec = MachineCodeForInstruction::get(defaultInst);
 		  tempMvec.addTemp((Value*) tmp);
 
 		  MachineInstr *saveValue = BuildMI(machineBB, V9::PHI, 3).addReg(newValues[mOp.getVRegValue()][i]).addReg(kernelPHIs[mOp.getVRegValue()][i]).addRegDef(tmp);
@@ -1479,7 +1505,7 @@ void ModuloSchedulingPass::writeKernel(BasicBlock *llvmBB, MachineBasicBlock *ma
 	   TmpInstruction *tmp = new TmpInstruction(mOp.getVRegValue());
 	   	
 	   //Get machine code for this instruction
-	   MachineCodeForInstruction & tempMvec = MachineCodeForInstruction::get((Instruction*) mOp.getVRegValue());
+	   MachineCodeForInstruction & tempMvec = MachineCodeForInstruction::get(defaultInst);
 	   tempMvec.addTemp((Value*) tmp);
 	   
 	   //Update the operand in the cloned instruction
@@ -1498,7 +1524,7 @@ void ModuloSchedulingPass::writeKernel(BasicBlock *llvmBB, MachineBasicBlock *ma
 	   TmpInstruction *tmp = new TmpInstruction(mOp.getVRegValue());
 	   
 	   //Get machine code for this instruction
-	   MachineCodeForInstruction & tempVec = MachineCodeForInstruction::get((Instruction*) mOp.getVRegValue());
+	   MachineCodeForInstruction & tempVec = MachineCodeForInstruction::get(defaultInst);
 	   tempVec.addTemp((Value*) tmp);
 
 	   //Create new machine instr and put in MBB
@@ -1554,7 +1580,7 @@ void ModuloSchedulingPass::writeKernel(BasicBlock *llvmBB, MachineBasicBlock *ma
 	   lastPhi = new TmpInstruction(I->second);
 
 	   //Get machine code for this instruction
-	   MachineCodeForInstruction & tempMvec = MachineCodeForInstruction::get((Instruction*) V->first);
+	   MachineCodeForInstruction & tempMvec = MachineCodeForInstruction::get(defaultInst);
 	   tempMvec.addTemp((Value*) lastPhi);
 
 	   MachineInstr *saveValue = BuildMI(*machineBB, machineBB->begin(), V9::PHI, 3).addReg(kernelValue[V->first]).addReg(I->second).addRegDef(lastPhi);
@@ -1565,7 +1591,7 @@ void ModuloSchedulingPass::writeKernel(BasicBlock *llvmBB, MachineBasicBlock *ma
 	   Instruction *tmp = new TmpInstruction(I->second);
 
 	   //Get machine code for this instruction
-	   MachineCodeForInstruction & tempMvec = MachineCodeForInstruction::get((Instruction*) V->first);
+	   MachineCodeForInstruction & tempMvec = MachineCodeForInstruction::get(defaultInst);
 	   tempMvec.addTemp((Value*) tmp);
 	   
 
@@ -1612,6 +1638,7 @@ void ModuloSchedulingPass::removePHIs(const MachineBasicBlock *origBB, std::vect
   //Start with the kernel and for each phi insert a copy for the phi def and for each arg
   for(MachineBasicBlock::iterator I = kernelBB->begin(), E = kernelBB->end(); I != E; ++I) {
   
+    DEBUG(std::cerr << "Looking at Instr: " << *I << "\n");
     //Get op code and check if its a phi
     if(I->getOpcode() == V9::PHI) {
       
@@ -1659,34 +1686,24 @@ void ModuloSchedulingPass::removePHIs(const MachineBasicBlock *origBB, std::vect
       
     }
 
-    else {
-      //We found an instruction that we can add to its mcfi
-      if(addToMCFI.size() > 0) {
-	for(unsigned i = 0; i < I->getNumOperands(); ++i) {
-	  const MachineOperand &mOp = I->getOperand(i);
-	  if(mOp.getType() == MachineOperand::MO_VirtualRegister) {
-	    if(!isa<TmpInstruction>(mOp.getVRegValue()) && !isa<PHINode>(mOp.getVRegValue())) {
-	      //Get machine code for this instruction
-	      MachineCodeForInstruction & tempMvec = MachineCodeForInstruction::get((Instruction*) mOp.getVRegValue());
-	      for(unsigned x = 0; x < addToMCFI.size(); ++x) {
-		tempMvec.addTemp(addToMCFI[x]);
-	      }
-	      addToMCFI.clear();
-	      break;
-	    }
-	  }
-	}
-      }
-    }
     
   }
 
-  //for(std::vector<std::pair<Instruction*, Value*> >::reverse_iterator I = newORs.rbegin(), IE = newORs.rend(); I != IE; ++I)
-  //BuildMI(*kernelBB, kernelBB->begin(), V9::ORr, 3).addReg(I->first).addImm(0).addRegDef(I->second);
+  //Add TmpInstructions to some MCFI
+  if(addToMCFI.size() > 0) {
+    MachineCodeForInstruction & tempMvec = MachineCodeForInstruction::get(defaultInst);
+    for(unsigned x = 0; x < addToMCFI.size(); ++x) {
+      tempMvec.addTemp(addToMCFI[x]);
+    }
+    addToMCFI.clear();
+  }
+
 
   //Remove phis from epilogue
   for(std::vector<MachineBasicBlock*>::iterator MB = epilogues.begin(), ME = epilogues.end(); MB != ME; ++MB) {
     for(MachineBasicBlock::iterator I = (*MB)->begin(), E = (*MB)->end(); I != E; ++I) {
+      
+      DEBUG(std::cerr << "Looking at Instr: " << *I << "\n");
       //Get op code and check if its a phi
       if(I->getOpcode() == V9::PHI) {
 	Instruction *tmp = 0;
@@ -1730,27 +1747,17 @@ void ModuloSchedulingPass::removePHIs(const MachineBasicBlock *origBB, std::vect
 	}
       }
 
-      else {
-	//We found an instruction that we can add to its mcfi
-	if(addToMCFI.size() > 0) {
-	  for(unsigned i = 0; i < I->getNumOperands(); ++i) {
-	    const MachineOperand &mOp = I->getOperand(i);
-	    if(mOp.getType() == MachineOperand::MO_VirtualRegister) {
-
-	       if(!isa<TmpInstruction>(mOp.getVRegValue()) && !isa<PHINode>(mOp.getVRegValue())) {
-		 //Get machine code for this instruction
-		 MachineCodeForInstruction & tempMvec = MachineCodeForInstruction::get((Instruction*) mOp.getVRegValue());
-		 for(unsigned x = 0; x < addToMCFI.size(); ++x) {
-		   tempMvec.addTemp(addToMCFI[x]);
-		 }
-		 addToMCFI.clear();
-		 break;
-	       }
-	    }
-	  }
-	}
-      }
+  
     }
+  }
+
+
+  if(addToMCFI.size() > 0) {
+    MachineCodeForInstruction & tempMvec = MachineCodeForInstruction::get(defaultInst);
+    for(unsigned x = 0; x < addToMCFI.size(); ++x) {
+      tempMvec.addTemp(addToMCFI[x]);
+    }
+    addToMCFI.clear();
   }
 
     //Delete the phis
@@ -1795,6 +1802,9 @@ void ModuloSchedulingPass::reconstructLoop(MachineBasicBlock *BB) {
 	  //find the value in the map
 	  if (const Value* srcI = mOp.getVRegValue()) {
 
+	    if(isa<Constant>(srcI) || isa<Argument>(srcI))
+	      continue;
+
 	    //Before we declare this Value* one that we should save
 	    //make sure its def is not of the same stage as this instruction
 	    //because it will be consumed before its used
@@ -1803,28 +1813,15 @@ void ModuloSchedulingPass::reconstructLoop(MachineBasicBlock *BB) {
 	    //Should we save this value?
 	    bool save = true;
 
-	    //Get Machine code for this instruction, and loop backwards over the array
-	    //to find the def
-	    MachineCodeForInstruction & tempMvec = MachineCodeForInstruction::get(defInst);
-	    for (int j = tempMvec.size()-1; j >= 0; j--) {
-	       MachineInstr *temp = tempMvec[j];
-	       
-	       //Loop over instructions
-	       for(unsigned opNum = 0; opNum < temp->getNumOperands(); ++opNum) {
-		 MachineOperand &mDefOp = temp->getOperand(opNum);
-		 
-		 if (mDefOp.getType() == MachineOperand::MO_VirtualRegister && mDefOp.isDef()) {
-		   const Value* defVReg = mDefOp.getVRegValue();
-		   if(defVReg == srcI) {
-		     //Check if instruction has been seen already and is of same stage
-		     if(lastInstrs.count(temp)) {
-		       if(lastInstrs[temp] == I->second)
-			 save = false;
-		     }
-		   }
-		 }
-	       }
+	    //Assert if not in the def map
+	    assert(defMap.count(srcI) && "No entry for this Value* definition in our map"); 
+	    MachineInstr *defInstr = defMap[srcI];
+	    
+	    if(lastInstrs.count(defInstr)) {
+	      if(lastInstrs[defInstr] == I->second) 
+		save = false;
 	    }
+	    
 	    if(save)
 	      valuesToSave[srcI] = std::make_pair(I->first, i);
 	  }	  
