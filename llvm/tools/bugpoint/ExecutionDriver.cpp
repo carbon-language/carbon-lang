@@ -111,8 +111,8 @@ int LLI::ExecuteProgram(const std::string &Bytecode,
     LLIArgs.push_back(InputArgv[i].c_str());
   LLIArgs.push_back(0);
 
-  std::cout << "<lli>";
-  DEBUG(std::cerr << "About to run:\n\t";
+  std::cout << "<lli>" << std::flush;
+  DEBUG(std::cerr << "\nAbout to run:\n\t";
         for (unsigned i=0, e = LLIArgs.size(); i != e; ++i)
           std::cerr << " " << LLIArgs[i];
         std::cerr << "\n";
@@ -176,7 +176,7 @@ int GCC::ExecuteProgram(const std::string &ProgramFile,
   GCCArgs.push_back("-O2");                // Optimize the program a bit...
   GCCArgs.push_back(0);                    // NULL terminator
 
-  std::cout << "<gcc>";
+  std::cout << "<gcc>" << std::flush;
   if (RunProgramWithTimeout(GCCPath, &GCCArgs[0], "/dev/null", "/dev/null",
                             "/dev/null")) {
     ProcessFailure(&GCCArgs[0]);
@@ -191,15 +191,14 @@ int GCC::ExecuteProgram(const std::string &ProgramFile,
   ProgramArgs.push_back(0);                // NULL terminator
 
   // Now that we have a binary, run it!
-  std::cout << "<program>";
-  DEBUG(std::cerr << "About to run:\n\t";
+  std::cout << "<program>" << std::flush;
+  DEBUG(std::cerr << "\nAbout to run:\n\t";
         for (unsigned i=0, e = ProgramArgs.size(); i != e; ++i)
           std::cerr << " " << ProgramArgs[i];
         std::cerr << "\n";
         );
   int ProgramResult = RunProgramWithTimeout(OutputBinary, &ProgramArgs[0],
                                             InputFile, OutputFile, OutputFile);
-  std::cout << "\n";
   removeFile(OutputBinary);
   return ProgramResult;
 }
@@ -223,7 +222,7 @@ int GCC::MakeSharedObject(const std::string &InputFile,
     0
   };
   
-  std::cout << "<gcc>";
+  std::cout << "<gcc>" << std::flush;
   if(RunProgramWithTimeout(GCCPath, GCCArgs, "/dev/null", "/dev/null",
                            "/dev/null")) {
     ProcessFailure(GCCArgs);
@@ -303,7 +302,7 @@ int LLC::OutputAsm(const std::string &Bytecode,
     0
   };
 
-  std::cout << "<llc>";
+  std::cout << "<llc>" << std::flush;
   if (RunProgramWithTimeout(LLCPath, LLCArgs, "/dev/null", "/dev/null",
                             "/dev/null")) {                            
     // If LLC failed on the bytecode, print error...
@@ -374,8 +373,8 @@ int JIT::ExecuteProgram(const std::string &Bytecode,
     JITArgs.push_back(InputArgv[i].c_str());
   JITArgs.push_back(0);
 
-  std::cout << "<jit>\n";
-  DEBUG(std::cerr << "About to run:\n\t";
+  std::cout << "<jit>" << std::flush;
+  DEBUG(std::cerr << "\nAbout to run:\n\t";
         for (unsigned i=0, e = JITArgs.size(); i != e; ++i)
           std::cerr << " " << JITArgs[i];
         std::cerr << "\n";
@@ -436,7 +435,7 @@ int CBE::OutputC(const std::string &Bytecode,
     0
   };
 
-  std::cout << "<cbe>";
+  std::cout << "<cbe>" << std::flush;
   if (RunProgramWithTimeout(DISPath, DisArgs, "/dev/null", "/dev/null",
                             "/dev/null")) {                            
     // If dis failed on the bytecode, print error...
