@@ -40,7 +40,7 @@ class AsmPrinter {
   ValIdMap valToIdMap;     // used for values not handled by SlotCalculator 
 public:
   std::ostream &toAsm;
-  const UltraSparc &Target;
+  const TargetMachine &Target;
 
   enum Sections {
     Unknown,
@@ -50,7 +50,7 @@ public:
     UninitRWData,
   } CurSection;
 
-  AsmPrinter(std::ostream &os, const UltraSparc &T)
+  AsmPrinter(std::ostream &os, const TargetMachine &T)
     : Table(0), toAsm(os), Target(T), CurSection(Unknown) {}
 
 
@@ -164,7 +164,7 @@ public:
 //===----------------------------------------------------------------------===//
 
 struct SparcMethodAsmPrinter : public MethodPass, public AsmPrinter {
-  inline SparcMethodAsmPrinter(std::ostream &os, const UltraSparc &t)
+  inline SparcMethodAsmPrinter(std::ostream &os, const TargetMachine &t)
     : AsmPrinter(os, t) {}
 
   virtual bool doInitialization(Module *M) {
@@ -392,7 +392,7 @@ namespace {
 
 class SparcModuleAsmPrinter : public Pass, public AsmPrinter {
 public:
-  SparcModuleAsmPrinter(ostream &os, UltraSparc &t) : AsmPrinter(os, t) {}
+  SparcModuleAsmPrinter(ostream &os, TargetMachine &t) : AsmPrinter(os, t) {}
 
   virtual bool run(Module *M) {
     startModule(M);
