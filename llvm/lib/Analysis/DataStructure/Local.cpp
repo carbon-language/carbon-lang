@@ -484,10 +484,15 @@ void GraphBuilder::visitCallSite(CallSite CS) {
             N->setHeapNodeMarker()->setModifiedMarker()->setReadMarker();
           return;
         } else if (F->getName() == "atoi" || F->getName() == "atof" ||
-                   F->getName() == "remove") {
-          // atoi reads its argument.
-          if (DSNode *N = getValueDest(**CS.arg_begin()).getNode())
-            N->setReadMarker();
+                   F->getName() == "remove" || F->getName() == "unlink" ||
+                   F->getName() == "rename") {
+          // These functions read all of their pointer operands.
+          for (CallSite::arg_iterator AI = CS.arg_begin(), E = CS.arg_end();
+               AI != E; ++AI) {
+            if (isPointerType((*AI)->getType()))
+              if (DSNode *N = getValueDest(**AI).getNode())
+                N->setReadMarker();   
+          }
           return;
 
         } else if (F->getName() == "fopen" && CS.arg_end()-CS.arg_begin() == 2){
