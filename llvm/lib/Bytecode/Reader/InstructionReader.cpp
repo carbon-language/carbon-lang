@@ -354,7 +354,10 @@ void BytecodeParser::ParseInstruction(const unsigned char *&Buf,
     for (unsigned i = 1, e = Args.size(); i != e; ++i) {
       const CompositeType *TopTy = dyn_cast_or_null<CompositeType>(NextTy);
       if (!TopTy) throw std::string("Invalid getelementptr instruction!"); 
-      Idx.push_back(getValue(TopTy->getIndexType()->getPrimitiveID(), Args[i]));
+      // FIXME: when PR82 is resolved.
+      unsigned IdxTy = isa<StructType>(TopTy) ? Type::UByteTyID :Type::LongTyID;
+        
+      Idx.push_back(getValue(IdxTy, Args[i]));
       NextTy = GetElementPtrInst::getIndexedType(InstTy, Idx, true);
     }
 
