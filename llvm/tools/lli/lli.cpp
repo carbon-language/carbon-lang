@@ -27,25 +27,25 @@ namespace {
   InputArgv(cl::ConsumeAfter, cl::desc("<program arguments>..."));
 
   cl::opt<std::string>
-  MainFunction ("f", cl::desc("Function to execute"), cl::init("main"),
-		cl::value_desc("function name"));
+  MainFunction("f", cl::desc("Function to execute"), cl::init("main"),
+               cl::value_desc("function name"));
 
   cl::opt<bool> TraceMode("trace", cl::desc("Enable Tracing"));
 
   cl::opt<bool> ForceInterpreter("force-interpreter",
-				 cl::desc("Force interpretation: disable JIT"),
-				 cl::init(false));
+                                 cl::desc("Force interpretation: disable JIT"),
+                                 cl::init(false));
 }
 
-static std::vector<std::string> makeStringVector (const char **envp) {
+static std::vector<std::string> makeStringVector(const char **envp) {
   std::vector<std::string> rv;
   for (unsigned i = 0; envp[i]; ++i)
-    rv.push_back (envp[i]);
+    rv.push_back(envp[i]);
   return rv;
 }
 
 static void *CreateArgv(ExecutionEngine *EE,
-			const std::vector<std::string> &InputArgv) {
+                        const std::vector<std::string> &InputArgv) {
   if (EE->getTargetData().getPointerSize() == 8) {   // 64 bit target?
     PointerTy *Result = new PointerTy[InputArgv.size()+1];
     DEBUG(std::cerr << "ARGV = " << (void*)Result << "\n");
@@ -60,7 +60,7 @@ static void *CreateArgv(ExecutionEngine *EE,
       
       // Endian safe: Result[i] = (PointerTy)Dest;
       EE->StoreValueToMemory(PTOGV(Dest), (GenericValue*)(Result+i),
-			     Type::LongTy);
+                             Type::LongTy);
     }
     Result[InputArgv.size()] = 0;
     return Result;
@@ -78,7 +78,7 @@ static void *CreateArgv(ExecutionEngine *EE,
       
       // Endian safe: Result[i] = (PointerTy)Dest;
       EE->StoreValueToMemory(PTOGV(Dest), (GenericValue*)(Result+i),
-			     Type::IntTy);
+                             Type::IntTy);
     }
     Result[InputArgv.size()] = 0;  // null terminate it
     return Result;
@@ -92,21 +92,21 @@ static void *CreateArgv(ExecutionEngine *EE,
 /// from calling FnName, or -1 and prints an error msg. if the named
 /// function cannot be found.
 ///
-int callAsMain (ExecutionEngine *EE, Module *M, const std::string &FnName,
-                const std::vector<std::string> &Args,
-                const std::vector<std::string> &EnvVars) {
-  Function *Fn = M->getNamedFunction (FnName);
+int callAsMain(ExecutionEngine *EE, Module *M, const std::string &FnName,
+               const std::vector<std::string> &Args,
+               const std::vector<std::string> &EnvVars) {
+  Function *Fn = M->getNamedFunction(FnName);
   if (!Fn) {
     std::cerr << "Function '" << FnName << "' not found in module.\n";
     return -1;
   }
   std::vector<GenericValue> GVArgs;
   GenericValue GVArgc;
-  GVArgc.IntVal = Args.size ();
-  GVArgs.push_back (GVArgc); // Arg #0 = argc.
-  GVArgs.push_back (PTOGV (CreateArgv (EE, Args))); // Arg #1 = argv.
-  GVArgs.push_back (PTOGV (CreateArgv (EE, EnvVars))); // Arg #2 = envp.
-  return EE->run (Fn, GVArgs).IntVal;
+  GVArgc.IntVal = Args.size();
+  GVArgs.push_back(GVArgc); // Arg #0 = argc.
+  GVArgs.push_back(PTOGV(CreateArgv(EE, Args))); // Arg #1 = argv.
+  GVArgs.push_back(PTOGV(CreateArgv(EE, EnvVars))); // Arg #2 = envp.
+  return EE->run(Fn, GVArgs).IntVal;
 }
 
 //===----------------------------------------------------------------------===//
@@ -114,7 +114,7 @@ int callAsMain (ExecutionEngine *EE, Module *M, const std::string &FnName,
 //
 int main(int argc, char **argv, const char **envp) {
   cl::ParseCommandLineOptions(argc, argv,
-			      " llvm interpreter & dynamic compiler\n");
+                              " llvm interpreter & dynamic compiler\n");
 
   // Load the bytecode...
   std::string ErrorMsg;
@@ -126,22 +126,22 @@ int main(int argc, char **argv, const char **envp) {
   }
 
   ExecutionEngine *EE =
-    ExecutionEngine::create (M, ForceInterpreter, TraceMode);
-  assert (EE && "Couldn't create an ExecutionEngine, not even an interpreter?");
+    ExecutionEngine::create(M, ForceInterpreter, TraceMode);
+  assert(EE && "Couldn't create an ExecutionEngine, not even an interpreter?");
 
   // Add the module's name to the start of the vector of arguments to main().
   // But delete .bc first, since programs (and users) might not expect to
   // see it.
-  const std::string ByteCodeFileSuffix (".bc");
-  if (InputFile.rfind (ByteCodeFileSuffix) ==
-      InputFile.length () - ByteCodeFileSuffix.length ()) {
-    InputFile.erase (InputFile.length () - ByteCodeFileSuffix.length ());
+  const std::string ByteCodeFileSuffix(".bc");
+  if (InputFile.rfind(ByteCodeFileSuffix) ==
+      InputFile.length() - ByteCodeFileSuffix.length()) {
+    InputFile.erase(InputFile.length() - ByteCodeFileSuffix.length());
   }
   InputArgv.insert(InputArgv.begin(), InputFile);
 
   // Run the main function!
-  int ExitCode = callAsMain (EE, M, MainFunction, InputArgv,
-			     makeStringVector (envp)); 
+  int ExitCode = callAsMain(EE, M, MainFunction, InputArgv,
+                            makeStringVector(envp)); 
 
   // Now that we are done executing the program, shut down the execution engine
   delete EE;
