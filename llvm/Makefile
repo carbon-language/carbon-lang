@@ -11,7 +11,7 @@ DIRS = lib/Support utils lib tools
 
 ifneq ($(MAKECMDGOALS),tools-only)
 DIRS += runtime
-OPTIONAL_DIRS = projects
+OPTIONAL_DIRS = examples projects
 endif
 
 include $(LEVEL)/Makefile.common
