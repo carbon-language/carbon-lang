@@ -172,50 +172,40 @@ void CodeExtractor::processPhiNodeInputs(PHINode *Phi,
 }
 
 
-void CodeExtractor::findInputsOutputs(Values &inputs,
-                                      Values &outputs,
+void CodeExtractor::findInputsOutputs(Values &inputs, Values &outputs,
                                       BasicBlock *newHeader,
-                                      BasicBlock *newRootNode)
-{
+                                      BasicBlock *newRootNode) {
   for (std::set<BasicBlock*>::const_iterator ci = BlocksToExtract.begin(), 
        ce = BlocksToExtract.end(); ci != ce; ++ci) {
     BasicBlock *BB = *ci;
-    for (BasicBlock::iterator BBi = BB->begin(), BBe = BB->end();
-         BBi != BBe; ++BBi) {
-      // If a use is defined outside the region, it's an input.
-      // If a def is used outside the region, it's an output.
-      if (Instruction *I = dyn_cast<Instruction>(&*BBi)) {
-        // If it's a phi node
-        if (PHINode *Phi = dyn_cast<PHINode>(I)) {
-          processPhiNodeInputs(Phi, inputs, newHeader, newRootNode);
-        } else {
-          // All other instructions go through the generic input finder
-          // Loop over the operands of each instruction (inputs)
-          for (User::op_iterator op = I->op_begin(), opE = I->op_end();
-               op != opE; ++op) {
-            if (Instruction *opI = dyn_cast<Instruction>(op->get())) {
-              // Check if definition of this operand is within the loop
-              if (!BlocksToExtract.count(opI->getParent())) {
-                // add this operand to the inputs
-                inputs.push_back(opI);
-              }
+    for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I) {
+      // If a used value is defined outside the region, it's an input.  If an
+      // instruction is used outside the region, it's an output.
+      if (PHINode *Phi = dyn_cast<PHINode>(I)) {
+        processPhiNodeInputs(Phi, inputs, newHeader, newRootNode);
+      } else {
+        // All other instructions go through the generic input finder
+        // Loop over the operands of each instruction (inputs)
+        for (User::op_iterator op = I->op_begin(), opE = I->op_end();
+             op != opE; ++op)
+          if (Instruction *opI = dyn_cast<Instruction>(*op)) {
+            // Check if definition of this operand is within the loop
+            if (!BlocksToExtract.count(opI->getParent())) {
+              // add this operand to the inputs
+              inputs.push_back(opI);
             }
+          } else if (isa<Argument>(*op)) {
+            inputs.push_back(*op);
           }
-        }
-
-        // Consider uses of this instruction (outputs)
-        for (Value::use_iterator use = I->use_begin(), useE = I->use_end();
-             use != useE; ++use) {
-          if (Instruction* inst = dyn_cast<Instruction>(*use)) {
-            if (!BlocksToExtract.count(inst->getParent())) {
-              // add this op to the outputs
-              outputs.push_back(I);
-            }
-          }
-        }
-      } /* if */
-    } /* for: insts */
-  } /* for: basic blocks */
+      }
+      
+      // Consider uses of this instruction (outputs)
+      for (Value::use_iterator UI = I->use_begin(), E = I->use_end();
+           UI != E; ++UI)
+        if (!BlocksToExtract.count(cast<Instruction>(*UI)->getParent()))
+          outputs.push_back(*UI);
+    } // for: insts
+  } // for: basic blocks
 }
 
 void CodeExtractor::rewritePhiNodes(Function *F,
@@ -470,11 +460,16 @@ Function *CodeExtractor::ExtractCodeRegion(const std::vector<BasicBlock*> &code)
   Values inputs, outputs;
 
   // Assumption: this is a single-entry code region, and the header is the first
-  // block in the region. FIXME: is this true for a list of blocks from a
-  // natural function?
+  // block in the region.
   BasicBlock *header = code[0];
+  for (unsigned i = 1, e = code.size(); i != e; ++i)
+    for (pred_iterator PI = pred_begin(code[i]), E = pred_end(code[i]);
+         PI != E; ++PI)
+      assert(BlocksToExtract.count(*PI) &&
+             "No blocks in this region may have entries from outside the region"
+             " except for the first block!");
+  
   Function *oldFunction = header->getParent();
-  Module *module = oldFunction->getParent();
 
   // This takes place of the original loop
   BasicBlock *codeReplacer = new BasicBlock("codeRepl", oldFunction);
@@ -504,7 +499,8 @@ Function *CodeExtractor::ExtractCodeRegion(const std::vector<BasicBlock*> &code)
   // Step 2: Construct new function based on inputs/outputs,
   // Add allocas for all defs
   Function *newFunction = constructFunction(inputs, outputs, newFuncRoot, 
-                                            codeReplacer, oldFunction, module);
+                                            codeReplacer, oldFunction,
+                                            oldFunction->getParent());
 
   rewritePhiNodes(newFunction, newFuncRoot);
 
