@@ -257,6 +257,9 @@ enum SparcMachineOpCode {
   JMPL,
   RETURN,
 
+  // Synthetic phi operation for near-SSA form of machine code
+  PHI,
+  
   // End-of-array marker
   INVALID_OPCODE
 };
@@ -509,6 +512,10 @@ const MachineInstrDescriptor SparcMachineInstrDesc[] = {
   { "CALL",	1, -1, (1 << 29) - 1, true, 1, 2, M_BRANCH_FLAG | M_CALL_FLAG},
   { "JMPL",	3, -1, (1 << 12) - 1, true, 1, 2, M_BRANCH_FLAG | M_CALL_FLAG},
   { "RETURN",	2, -1,  0,           false, 1, 2, M_BRANCH_FLAG | M_RET_FLAG },
+  
+  // Synthetic phi operation for near-SSA form of machine code
+  // Number of operands is variable, indicated by -1.  Result is the first op.
+  { "PHI",	-1,  0,  0,  false, 0, 0,  0x0 },
   
   // End-of-array marker
   { "INVALID_SPARC_OPCODE",	0,  -1,  0,  false, 0, 0,  0x0 }
