@@ -146,6 +146,7 @@ public:
   /// it returns end()
   iterator getFirstTerminator();
 
+  void pop_front() { Insts.pop_front(); }
   void push_back(MachineInstr *MI) { Insts.push_back(MI); }
   template<typename IT>
   void insert(iterator I, IT S, IT E) { Insts.insert(I, S, E); }
