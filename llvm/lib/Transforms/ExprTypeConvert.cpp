@@ -1258,15 +1258,14 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
 
 
 ValueHandle::ValueHandle(ValueMapCache &VMC, Value *V)
-  : Instruction(Type::VoidTy, UserOp1, ""), Cache(VMC) {
+  : Instruction(Type::VoidTy, UserOp1, &Op, 1, ""), Op(V, this), Cache(VMC) {
   //DEBUG(std::cerr << "VH AQUIRING: " << (void*)V << " " << V);
-  Operands.push_back(Use(V, this));
 }
 
 ValueHandle::ValueHandle(const ValueHandle &VH)
-  : Instruction(Type::VoidTy, UserOp1, ""), Cache(VH.Cache) {
+  : Instruction(Type::VoidTy, UserOp1, &Op, 1, ""),
+    Op(VH.Op, this), Cache(VH.Cache) {
   //DEBUG(std::cerr << "VH AQUIRING: " << (void*)V << " " << V);
-  Operands.push_back(Use((Value*)VH.getOperand(0), this));
 }
 
 static void RecursiveDelete(ValueMapCache &Cache, Instruction *I) {
@@ -1291,9 +1290,9 @@ static void RecursiveDelete(ValueMapCache &Cache, Instruction *I) {
 }
 
 ValueHandle::~ValueHandle() {
-  if (Operands[0]->hasOneUse()) {
-    Value *V = Operands[0];
-    Operands[0] = 0;   // Drop use!
+  if (Op->hasOneUse()) {
+    Value *V = Op;
+    Op.set(0);   // Drop use!
 
     // Now we just need to remove the old instruction so we don't get infinite
     // loops.  Note that we cannot use DCE because DCE won't remove a store

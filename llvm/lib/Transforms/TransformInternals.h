@@ -59,6 +59,7 @@ const Type *ConvertibleToGEP(const Type *Ty, Value *V,
 // 
 class ValueMapCache;
 class ValueHandle : public Instruction {
+  Use Op;
   ValueMapCache &Cache;
 public:
   ValueHandle(ValueMapCache &VMC, Value *V);
