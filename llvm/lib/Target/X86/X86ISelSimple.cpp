@@ -802,9 +802,11 @@ void X86ISel::InsertFPRegKills() {
       MachineOperand& MO = I->getOperand(i);
         if (MO.isRegister() && MO.getReg()) {
           unsigned Reg = MO.getReg();
-          if (MRegisterInfo::isVirtualRegister(Reg))
-            if (RegMap.getRegClass(Reg)->getSize() == 10)
+          if (MRegisterInfo::isVirtualRegister(Reg)) {
+            unsigned RegSize = RegMap.getRegClass(Reg)->getSize();
+            if (RegSize == 10 || RegSize == 8)
               goto UsesFPReg;
+          }
         }
       }
     // If we haven't found an FP register use or def in this basic block, check
