@@ -802,3 +802,33 @@ void SwitchInst::removeCase(unsigned idx) {
   assert(idx*2 < Operands.size() && "Successor index out of range!!!");
   Operands.erase(Operands.begin()+idx*2, Operands.begin()+(idx+1)*2);  
 }
+
+
+// Define these methods here so vtables don't get emitted into every translation
+// unit that uses these classes.
+
+GetElementPtrInst *GetElementPtrInst::clone() const {
+  return new GetElementPtrInst(*this);
+}
+
+BinaryOperator *BinaryOperator::clone() const {
+  return create(getOpcode(), Operands[0], Operands[1]);
+}
+
+MallocInst *MallocInst::clone() const { return new MallocInst(*this); }
+AllocaInst *AllocaInst::clone() const { return new AllocaInst(*this); }
+FreeInst   *FreeInst::clone()   const { return new FreeInst(Operands[0]); }
+LoadInst   *LoadInst::clone()   const { return new LoadInst(*this); }
+StoreInst  *StoreInst::clone()  const { return new StoreInst(*this); }
+CastInst   *CastInst::clone()   const { return new CastInst(*this); }
+CallInst   *CallInst::clone()   const { return new CallInst(*this); }
+ShiftInst  *ShiftInst::clone()  const { return new ShiftInst(*this); }
+SelectInst *SelectInst::clone() const { return new SelectInst(*this); }
+VANextInst *VANextInst::clone() const { return new VANextInst(*this); }
+VAArgInst  *VAArgInst::clone()  const { return new VAArgInst(*this); }
+PHINode    *PHINode::clone()    const { return new PHINode(*this); }
+ReturnInst *ReturnInst::clone() const { return new ReturnInst(*this); }
+BranchInst *BranchInst::clone() const { return new BranchInst(*this); }
+SwitchInst *SwitchInst::clone() const { return new SwitchInst(*this); }
+InvokeInst *InvokeInst::clone() const { return new InvokeInst(*this); }
+UnwindInst *UnwindInst::clone() const { return new UnwindInst(); }
