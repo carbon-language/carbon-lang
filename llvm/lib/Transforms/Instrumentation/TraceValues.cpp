@@ -212,10 +212,15 @@ static void InsertPrintInst(Value *V, BasicBlock *BB, Instruction *InsertBefore,
                             string Message,
                             Function *Printf, Function* HashPtrToSeqNum) {
   // Escape Message by replacing all % characters with %% chars.
-  unsigned Offset = 0;
-  while ((Offset = Message.find('%', Offset)) != string::npos) {
-    Message.replace(Offset, 1, "%%");
-    Offset += 2;  // Skip over the new %'s
+  string Tmp;
+  std::swap(Tmp, Message);
+  string::iterator I = std::find(Tmp.begin(), Tmp.end(), '%');
+  while (I != Tmp.end()) {
+    Message.append(Tmp.begin(), I);
+    Message += "%%";
+    ++I; // Make sure to erase the % as well...
+    Tmp.erase(Tmp.begin(), I);
+    I = std::find(Tmp.begin(), Tmp.end(), '%');
   }
 
   Module *Mod = BB->getParent()->getParent();
