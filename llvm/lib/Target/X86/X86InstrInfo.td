@@ -284,7 +284,9 @@ def ADDmi32  : I2A32<"add", 0x81, MRMSrcMem >;         // [mem32] += I8
 def ADDmi16b : I2A8 <"add", 0x83, MRMSrcMem >, OpSize; // [mem16] += I8
 def ADDmi32b : I2A8 <"add", 0x83, MRMSrcMem >;         // [mem32] += I32
 
-def ADCrr32  : I2A32<"adc", 0x11, MRMDestReg>;                // R32 += imm32+Carry
+def ADCrr32  : I2A32<"adc", 0x11, MRMDestReg>;         // R32 += R32+Carry
+def ADCrm32  : I2A32<"adc", 0x11, MRMSrcMem >;         // R32 += [mem32]+Carry
+def ADCmr32  : I2A32<"adc", 0x13, MRMDestMem>;         // [mem32] += R32+Carry
 
 def SUBrr8   : I2A8 <"sub", 0x28, MRMDestReg>,         Pattern<(set R8 , (minus R8 , R8 ))>;
 def SUBrr16  : I2A16<"sub", 0x29, MRMDestReg>, OpSize, Pattern<(set R16, (minus R16, R16))>;
@@ -295,7 +297,9 @@ def SUBri32  : I2A32<"sub", 0x81, MRMS5r    >,         Pattern<(set R32, (minus 
 def SUBri16b : I2A8 <"sub", 0x83, MRMS5r    >, OpSize;
 def SUBri32b : I2A8 <"sub", 0x83, MRMS5r    >;
 
-def SBBrr32  : I2A32<"sbb", 0x19, MRMDestReg>;                // R32 -= R32+Carry
+def SBBrr32  : I2A32<"sbb", 0x19, MRMDestReg>;         // R32 -= R32+Borrow
+def SBBrm32  : I2A32<"sbb", 0x19, MRMSrcMem >;         // R32 -= [mem32]+Borrow
+def SBBmr32  : I2A32<"sbb", 0x1B, MRMDestMem>;         // [mem32] -= R32+Borrow
 
 def IMULrr16 : I2A16<"imul", 0xAF, MRMSrcReg>, TB, OpSize, Pattern<(set R16, (times R16, R16))>;
 def IMULrr32 : I2A32<"imul", 0xAF, MRMSrcReg>, TB        , Pattern<(set R32, (times R32, R32))>;
