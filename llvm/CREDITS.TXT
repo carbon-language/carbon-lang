@@ -19,11 +19,6 @@ N: Nate Begeman
 E: natebegeman@mac.com
 D: Portions of the PowerPC backend
 
-N: Tanya Brethour
-E: tonic@nondot.org
-W: http://nondot.org/~tonic/
-D: The llvm-ar tool
-
 N: Misha Brukman
 E: brukman+llvm@uiuc.edu
 W: http://misha.brukman.net
@@ -75,6 +70,12 @@ N: Chris Lattner
 E: sabre@nondot.org
 W: http://nondot.org/~sabre/
 D: Primary architect of LLVM
+
+N: Tanya Lattner (formerly Tanya Brethour)
+E: tonic@nondot.org
+W: http://nondot.org/~tonic/
+D: The initial llvm-ar tool, converted regression testsuite to dejagnu
+D: Modulo scheduling in the SparcV9 backend
 
 N: Andrew Lenharth
 E: alenhar2@cs.uiuc.edu
