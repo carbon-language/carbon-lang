@@ -153,7 +153,7 @@ static void addSubClass(Record *SC, const std::vector<Init*> &TemplateArgs) {
   std::vector<SubClassRefTy> *SubClassList;
 };
 
-%token INT BIT STRING BITS LIST CLASS DEF FIELD SET IN
+%token INT BIT STRING BITS LIST CODE CLASS DEF FIELD SET IN
 %token <IntVal>      INTVAL
 %token <StrVal>      ID STRVAL
 
@@ -202,6 +202,8 @@ Type : STRING {                       // string type
     $$ = new IntRecTy();
   } | LIST '<' ClassID '>' {          // list<x> type
     $$ = new ListRecTy($3);
+  } | CODE {                          // code type
+    $$ = new CodeRecTy();
   } | ClassID {                       // Record Type
     $$ = new RecordRecTy($1);
   };

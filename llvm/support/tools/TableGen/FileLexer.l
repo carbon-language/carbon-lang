@@ -151,6 +151,7 @@ bit            { return BIT; }
 bits           { return BITS; }
 string         { return STRING; }
 list           { return LIST; }
+code           { return CODE; }
 
 class          { return CLASS; }
 def            { return DEF; }

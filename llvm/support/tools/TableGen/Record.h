@@ -131,6 +131,15 @@ public:
   void print(std::ostream &OS) const;
 };
 
+/// CodeRecTy - 'code' - Represent an code fragment, function or method.
+///
+struct CodeRecTy : public RecTy {
+  Init *convertValue(UnsetInit *UI) { return (Init*)UI; }
+
+  void print(std::ostream &OS) const { OS << "code"; }
+};
+
+
 /// RecordRecTy - '<classname>' - Represent an instance of a class, such as:
 /// (R32 X = EAX).
 ///
