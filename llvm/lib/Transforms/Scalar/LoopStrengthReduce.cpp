@@ -50,6 +50,7 @@ namespace {
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesCFG();
+      AU.addRequiredID(LoopSimplifyID);
       AU.addRequired<LoopInfo>();
       AU.addRequired<DominatorSet>();
     }
@@ -99,50 +100,38 @@ void LoopStrengthReduce::strengthReduceGEP(GetElementPtrInst *GEPI, Loop *L,
   //
   // We currently only handle GEP instructions that consist of zero or more
   // constants and one instance of the canonical induction variable.
-  bool foundIndvar = false;
-  bool indvarLast = false;
+  unsigned indvar = 0;
   std::vector<Value *> pre_op_vector;
   std::vector<Value *> inc_op_vector;
   Value *CanonicalIndVar = L->getCanonicalInductionVariable();
+  BasicBlock *Header = L->getHeader();
+
   for (unsigned op = 1, e = GEPI->getNumOperands(); op != e; ++op) {
     Value *operand = GEPI->getOperand(op);
     if (operand == CanonicalIndVar) {
-      // FIXME: We currently only support strength reducing GEP instructions
-      // with one instance of the canonical induction variable.  This means that 
-      // we can't deal with statements of the form A[i][i].
-      if (foundIndvar == true)
-        return;
-        
       // FIXME: use getCanonicalInductionVariableIncrement to choose between
       // one and neg one maybe?  We need to support int *foo = GEP base, -1
       const Type *Ty = CanonicalIndVar->getType();
       pre_op_vector.push_back(Constant::getNullValue(Ty));
       inc_op_vector.push_back(ConstantInt::get(Ty, 1));
-      foundIndvar = true;
-      indvarLast = true;
+      indvar = op;
+      break;
     } else if (isa<Constant>(operand)) {
       pre_op_vector.push_back(operand);
-      if (indvarLast == true) indvarLast = false;
+    } else if (Instruction *inst = dyn_cast<Instruction>(operand)) {
+      if (!DS->dominates(inst, Header->begin()))
+        return;
+      pre_op_vector.push_back(operand);
     } else
       return;
   }
-  // FIXME: handle GEPs where the indvar is not the last element of the index
-  // array.
-  if (indvarLast == false)
-    return;
-  assert(true == foundIndvar && "Indvar used by GEP not found in operand list");
+  assert(indvar > 0 && "Indvar used by GEP not found in operand list");
   
-  // FIXME: Being able to hoist the definition of the initial pointer value
-  // would allow us to strength reduce more loops.  For example, %tmp.32 in the
-  // following loop:
-  // entry:
-  //   br label %no_exit.0
-  // no_exit.0:		; preds = %entry, %no_exit.0
-  //   %init.1.0 = phi uint [ 0, %entry ], [ %indvar.next, %no_exit.0 ]
-  //   %tmp.32 = load uint** %CROSSING
-  //   %tmp.35 = getelementptr uint* %tmp.32, uint %init.1.0
-  //   br label %no_exit.0
-  BasicBlock *Header = L->getHeader();
+  // Ensure the pointer base is loop invariant.  While strength reduction
+  // makes sense even if the pointer changed on every iteration, there is no
+  // realistic way of handling it unless GEPs were completely decomposed into
+  // their constituent operations so we have explicit multiplications to work
+  // with.
   if (Instruction *GepPtrOp = dyn_cast<Instruction>(GEPI->getOperand(0)))
     if (!DS->dominates(GepPtrOp, Header->begin()))
       return;
@@ -153,8 +142,6 @@ void LoopStrengthReduce::strengthReduceGEP(GetElementPtrInst *GEPI, Loop *L,
   // If there is only one operand after the initial non-constant one, we know
   // that it was the induction variable, and has been replaced by a constant
   // null value.  In this case, replace the GEP with a use of pointer directly.
-  //
-  // 
   BasicBlock *Preheader = L->getLoopPreheader();
   Value *PreGEP;
   if (isa<Constant>(GEPI->getOperand(0))) {
@@ -164,7 +151,7 @@ void LoopStrengthReduce::strengthReduceGEP(GetElementPtrInst *GEPI, Loop *L,
     PreGEP = GEPI->getOperand(0);
   } else {
     PreGEP = new GetElementPtrInst(GEPI->getOperand(0),
-                                   pre_op_vector, GEPI->getName(), 
+                                   pre_op_vector, GEPI->getName()+".pre", 
                                    Preheader->getTerminator());
   }
 
@@ -175,9 +162,10 @@ void LoopStrengthReduce::strengthReduceGEP(GetElementPtrInst *GEPI, Loop *L,
                                 GEPI->getName()+".str", InsertBefore);
   NewPHI->addIncoming(PreGEP, Preheader);
   
-  // Now, create the GEP instruction to increment the value selected by the PHI
-  // instruction we just created above by one, and add it as the second incoming
-  // Value and BasicBlock pair to the PHINode.
+  // Now, create the GEP instruction to increment by one the value selected by
+  // the PHI instruction we just created above, and add it as the second
+  // incoming Value/BasicBlock pair to the PHINode.  It is inserted before the
+  // increment of the canonical induction variable.
   Instruction *IncrInst = 
     const_cast<Instruction*>(L->getCanonicalInductionVariableIncrement());
   GetElementPtrInst *StrGEP = new GetElementPtrInst(NewPHI, inc_op_vector,
@@ -185,8 +173,24 @@ void LoopStrengthReduce::strengthReduceGEP(GetElementPtrInst *GEPI, Loop *L,
                                                     IncrInst);
   NewPHI->addIncoming(StrGEP, IncrInst->getParent());
   
-  // Replace all uses of the old GEP instructions with the new PHI
-  GEPI->replaceAllUsesWith(NewPHI);
+  if (GEPI->getNumOperands() - 1 == indvar) {
+    // If there were no operands following the induction variable, replace all
+    // uses of the old GEP instruction with the new PHI.
+    GEPI->replaceAllUsesWith(NewPHI);
+  } else {
+    // Create a new GEP instruction using the new PHI as the base.  The
+    // operands of the original GEP past the induction variable become
+    // operands of this new GEP.
+    std::vector<Value *> op_vector;
+    const Type *Ty = CanonicalIndVar->getType();
+    op_vector.push_back(Constant::getNullValue(Ty));
+    for (unsigned op = indvar + 1; op < GEPI->getNumOperands(); op++)
+      op_vector.push_back(GEPI->getOperand(op));
+    GetElementPtrInst *newGEP = new GetElementPtrInst(NewPHI, op_vector,
+                                                      GEPI->getName() + ".lsr",
+                                                      GEPI);
+    GEPI->replaceAllUsesWith(newGEP);
+}
   
   // The old GEP is now dead.
   DeadInsts.insert(GEPI);
