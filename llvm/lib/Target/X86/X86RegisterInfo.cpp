@@ -85,8 +85,13 @@ bool X86RegisterInfo::canFoldMemoryOperand(MachineInstr* MI,
   switch(MI->getOpcode()) {
   case X86::ADDrr8:  case X86::ADDrr16: case X86::ADDrr32:
   case X86::ADDri8:  case X86::ADDri16: case X86::ADDri32:
+  case X86::ANDrr8:  case X86::ANDrr16: case X86::ANDrr32:
+  case X86::ANDri8:  case X86::ANDri16: case X86::ANDri32:
   case X86::MOVrr8:  case X86::MOVrr16: case X86::MOVrr32:
     return true;
+  case X86::IMULrr16:  case X86::IMULrr32:
+  case X86::IMULrri16: case X86::IMULrri32:
+    return i == 1;
   default:
     return false;
   }
@@ -106,9 +111,17 @@ static MachineInstr *MakeMIInst(unsigned Opcode, unsigned FrameIndex,
 
 static MachineInstr *MakeRMInst(unsigned Opcode, unsigned FrameIndex,
                                 MachineInstr *MI) {
-  return addFrameReference(BuildMI(Opcode, 5)
-          .addReg(MI->getOperand(0).getReg()), FrameIndex);
+  return addFrameReference(BuildMI(Opcode, 5, MI->getOperand(0).getReg()),
+                           FrameIndex);
 }
+
+static MachineInstr *MakeRMIInst(unsigned Opcode, unsigned FrameIndex,
+                                 MachineInstr *MI) {
+  return addFrameReference(BuildMI(Opcode, 5, MI->getOperand(0).getReg()),
+                        FrameIndex).addZImm(MI->getOperand(2).getImmedValue());
+}
+
+
 
 int X86RegisterInfo::foldMemoryOperand(MachineInstr* MI,
                                        unsigned i,
@@ -129,6 +142,13 @@ int X86RegisterInfo::foldMemoryOperand(MachineInstr* MI,
     case X86::ADDri8:  NI = MakeMIInst(X86::ADDmi8 , FrameIndex, MI); break;
     case X86::ADDri16: NI = MakeMIInst(X86::ADDmi16, FrameIndex, MI); break;
     case X86::ADDri32: NI = MakeMIInst(X86::ADDmi32, FrameIndex, MI); break;
+    case X86::ANDrr8:  NI = MakeMRInst(X86::ANDmr8 , FrameIndex, MI); break;
+    case X86::ANDrr16: NI = MakeMRInst(X86::ANDmr16, FrameIndex, MI); break;
+    case X86::ANDrr32: NI = MakeMRInst(X86::ANDmr32, FrameIndex, MI); break;
+    case X86::ANDri8:  NI = MakeMIInst(X86::ANDmi8 , FrameIndex, MI); break;
+    case X86::ANDri16: NI = MakeMIInst(X86::ANDmi16, FrameIndex, MI); break;
+    case X86::ANDri32: NI = MakeMIInst(X86::ANDmi32, FrameIndex, MI); break;
+
     default: assert(0 && "Operand cannot be folded");
     }
   } else if (i == 1) {
@@ -139,6 +159,14 @@ int X86RegisterInfo::foldMemoryOperand(MachineInstr* MI,
     case X86::ADDrr8:  NI = MakeRMInst(X86::ADDrm8 , FrameIndex, MI); break;
     case X86::ADDrr16: NI = MakeRMInst(X86::ADDrm16, FrameIndex, MI); break;
     case X86::ADDrr32: NI = MakeRMInst(X86::ADDrm32, FrameIndex, MI); break;
+    case X86::ANDrr8:  NI = MakeRMInst(X86::ANDrm8 , FrameIndex, MI); break;
+    case X86::ANDrr16: NI = MakeRMInst(X86::ANDrm16, FrameIndex, MI); break;
+    case X86::ANDrr32: NI = MakeRMInst(X86::ANDrm32, FrameIndex, MI); break;
+    case X86::IMULrr16:NI = MakeRMInst(X86::IMULrm16, FrameIndex, MI); break;
+    case X86::IMULrr32:NI = MakeRMInst(X86::IMULrm32, FrameIndex, MI); break;
+    case X86::IMULrri16: NI = MakeRMIInst(X86::IMULrmi16, FrameIndex, MI); break;
+    case X86::IMULrri32: NI = MakeRMIInst(X86::IMULrmi32, FrameIndex, MI); break;
+
     default: assert(0 && "Operand cannot be folded");
     }
   } else {
