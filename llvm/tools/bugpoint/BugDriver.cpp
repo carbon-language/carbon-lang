@@ -161,7 +161,7 @@ bool BugDriver::run() {
   if (DebugMode == DebugCompile) {
     std::cout << "\n*** Debugging miscompilation!\n";
     Result = debugMiscompilation();
-  } else if (DebugMode == DebugCodegen) {
+  } else { // there is only one other possible value: DebugCodegen
     std::cout << "Debugging code generator problem!\n";
     Result = debugCodeGenerator();
   }
