@@ -997,6 +997,12 @@ void CWriter::visitBinaryOperator(Instruction &I) {
 }
 
 void CWriter::visitCastInst(CastInst &I) {
+  if (I.getType() == Type::BoolTy) {
+    Out << "(";
+    writeOperand(I.getOperand(0));
+    Out << " != 0)";
+    return;
+  }
   Out << "(";
   printType(Out, I.getType(), "", /*ignoreName*/false, /*namedContext*/false);
   Out << ")";
@@ -1005,7 +1011,7 @@ void CWriter::visitCastInst(CastInst &I) {
     // Avoid "cast to pointer from integer of different size" warnings
     Out << "(long)";  
   }
-
+  
   writeOperand(I.getOperand(0));
 }
 
