@@ -10,8 +10,8 @@
 #include "llvm/Target/TargetData.h"
 #include "Support/NonCopyable.h"
 
-class MachineInstrInfo;
-class MachineInstrDescriptor;
+class TargetInstrInfo;
+class TargetInstrDescriptor;
 class TargetSchedInfo;
 class TargetRegInfo;
 class TargetFrameInfo;
@@ -56,7 +56,7 @@ public:
   // -- Cache hierarchy information
   // -- Machine-level optimization information (peephole only)
   // 
-  virtual const MachineInstrInfo&       getInstrInfo() const = 0;
+  virtual const TargetInstrInfo&        getInstrInfo() const = 0;
   virtual const TargetSchedInfo&        getSchedInfo() const = 0;
   virtual const TargetRegInfo&          getRegInfo()   const = 0;
   virtual const TargetFrameInfo&        getFrameInfo() const = 0;
