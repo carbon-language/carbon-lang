@@ -203,6 +203,24 @@ static bool isImmediate(const MachineOperand &MO) {
          MO.getType() == MachineOperand::MO_UnextendedImmed;
 }
 
+unsigned sizeOfPtr (const MachineInstrDescriptor &Desc) {
+  switch (Desc.TSFlags & X86II::MemArgMask) {
+  case X86II::MemArg8:   return 1;
+  case X86II::MemArg16:  return 2;
+  case X86II::MemArg32:  return 4;
+  case X86II::MemArg64:  return 8;
+  case X86II::MemArg80:  return 10;
+  case X86II::MemArg128: return 16;
+  default: {
+    // FIXME: This should be an assert, but it is returning 4 because that was
+    // the former behavior and it's what was expected. Once the assumptions
+    // below are fixed, this can become an assert.
+    return 4;
+  }
+  }
+}
+
+
 void Emitter::emitInstruction(MachineInstr &MI) {
   unsigned Opcode = MI.getOpcode();
   const MachineInstrDescriptor &Desc = II.get(Opcode);
@@ -224,7 +242,7 @@ void Emitter::emitInstruction(MachineInstr &MI) {
   case X86II::AddRegFrm:
     MCE.emitByte(BaseOpcode + getX86RegNum(MI.getOperand(0).getReg()));
     if (MI.getNumOperands() == 2) {
-      unsigned Size = 4;
+      unsigned Size = sizeOfPtr(Desc);
       if (Value *V = MI.getOperand(1).getVRegValueOrNull()) {
         assert(Size == 4 && "Don't know how to emit non-pointer values!");
         MCE.emitGlobalAddress(cast<GlobalValue>(V));
@@ -262,7 +280,7 @@ void Emitter::emitInstruction(MachineInstr &MI) {
                      (Desc.TSFlags & X86II::FormMask)-X86II::MRMS0r);
 
     if (isImmediate(MI.getOperand(MI.getNumOperands()-1))) {
-      unsigned Size = 4;
+      unsigned Size = sizeOfPtr(Desc);
       emitConstant(MI.getOperand(MI.getNumOperands()-1).getImmedValue(), Size);
     }
     break;
