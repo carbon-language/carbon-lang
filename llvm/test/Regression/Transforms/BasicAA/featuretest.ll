@@ -10,14 +10,14 @@
 ; Array test:  Test that operations on one local array do not invalidate 
 ; operations on another array.  Important for scientific codes.
 ;
-int %different_array_test(uint %A, uint %B) {
+int %different_array_test(long %A, long %B) {
 	%Array1 = alloca int, uint 100
 	%Array2 = alloca int, uint 200
 
-	%pointer = getelementptr int* %Array1, uint %A
+	%pointer = getelementptr int* %Array1, long %A
 	%val = load int* %pointer
 
-	%pointer2 = getelementptr int* %Array2, uint %B
+	%pointer2 = getelementptr int* %Array2, long %B
 	store int 7, int* %pointer2
 
 	%REMOVE = load int* %pointer ; redundant with above load
@@ -30,8 +30,8 @@ int %different_array_test(uint %A, uint %B) {
 ;
 int %constant_array_index_test() {
 	%Array = alloca int, uint 100
-	%P1 = getelementptr int* %Array, uint 7
-	%P2 = getelementptr int* %Array, uint 6
+	%P1 = getelementptr int* %Array, long 7
+	%P2 = getelementptr int* %Array, long 6
 	
 	%A = load int* %P1
 	store int 1, int* %P2   ; Should not invalidate load
