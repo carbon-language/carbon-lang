@@ -388,22 +388,30 @@ unsigned ISel::ComputeRegPressure(SDOperand O) {
   // FIXME: Should operations like CALL (which clobber lots o regs) have a
   // higher fixed cost??
 
-  if (N->getNumOperands() == 0)
-    return Result = 1;
-
-  unsigned MaxRegUse = 0;
-  unsigned NumExtraMaxRegUsers = 0;
-  for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i) {
-    unsigned Regs = ComputeRegPressure(N->getOperand(i));
-    if (Regs > MaxRegUse) {
-      MaxRegUse = Regs;
-      NumExtraMaxRegUsers = 0;
-    } else if (Regs == MaxRegUse) {
-      ++NumExtraMaxRegUsers;
+  if (N->getNumOperands() == 0) {
+    Result = 1;
+  } else {
+    unsigned MaxRegUse = 0;
+    unsigned NumExtraMaxRegUsers = 0;
+    for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i) {
+      unsigned Regs;
+      if (N->getOperand(i).getOpcode() == ISD::Constant)
+        Regs = 0;
+      else
+        Regs = ComputeRegPressure(N->getOperand(i));
+      if (Regs > MaxRegUse) {
+        MaxRegUse = Regs;
+        NumExtraMaxRegUsers = 0;
+      } else if (Regs == MaxRegUse &&
+                 N->getOperand(i).getValueType() != MVT::Other) {
+        ++NumExtraMaxRegUsers;
+      }
     }
-  }
   
-  return Result = MaxRegUse+NumExtraMaxRegUsers;
+    Result = MaxRegUse+NumExtraMaxRegUsers;
+  }
+  std::cerr << " WEIGHT: " << Result << " ";  N->dump(); std::cerr << "\n";
+  return Result;
 }
 
 /// SelectAddress - Add the specified node to the specified addressing mode,
