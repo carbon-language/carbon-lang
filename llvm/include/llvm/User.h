@@ -41,6 +41,8 @@ public:
   typedef std::vector<Use>::iterator       op_iterator;
   typedef std::vector<Use>::const_iterator const_op_iterator;
 
+  void op_reserve(unsigned NumElements) { Operands.reserve(NumElements); }
+
   inline op_iterator       op_begin()       { return Operands.begin(); }
   inline const_op_iterator op_begin() const { return Operands.begin(); }
   inline op_iterator       op_end()         { return Operands.end(); }
