@@ -46,6 +46,9 @@ grep '^U' cvs.out
 echo ""; echo "	UPDATE CONFLICTS OCCURRED FOR THE FOLLOWING FILES:"
 grep '^C' cvs.out
 
+echo ""; echo " FILES REMOVED FROM YOUR DIRECTORY:"
+grep 'no longer in the repository' cvs.out
+
 echo ""; echo "	FILES SUCCESSFULLY MERGED (or locally modified):"
 grep '^M' cvs.out | grep -v Merging
 
