@@ -101,10 +101,6 @@ library and the <tt>stdio</tt> related functions... low-level system calls like
 daily report.  It could use the following improvements:</p>
 
 <ol>
-<li>Graphs - It would be great to have gnuplot graphs to keep track of how the
-    tree is changing over time.  We already gather a several statistics, it
-    just necessary to add the script-fu to gnuplotize it.</li>
-
 <li>Regression tests - We should run the regression tests in addition to the
     program tests...</li>
 </ol>
@@ -165,11 +161,6 @@ all the back-ends: CBE, llc, and lli.</p>
     bytecode files, so that linking in .a files is not hideously slow.  They
     would also then have to implement the reader for this index in
     <tt>gccld</tt>.</li>
-
-<li>Improve the efficiency of the bytecode loader/writer</li>
-
-<li>Extend the FunctionPassManager to use a ModuleProvider to stream functions
-    in on demand.  This would improve the efficiency of the JIT.</li>
 
 <li>Rework the PassManager to be more flexible</li>
 
@@ -266,8 +257,6 @@ The LLVM transformation itself shouldn't need to know how it is being used.</p>
 <ol>
 <li>Implement a Dependence Analysis Infrastructure<br>
      - Design some way to represent and query dep analysis</li>
-<li>Implement a faster Dominator Set Construction Algorithm<br>
-     - A linear time or nearly so algorithm</li>
 <li>Implement a strength reduction pass</li>
 <li>Value range propagation pass</li>
 <li>Implement an unswitching pass</li>
