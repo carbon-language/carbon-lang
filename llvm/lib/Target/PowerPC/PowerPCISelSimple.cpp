@@ -522,6 +522,7 @@ void ISel::copyGlobalBaseToRegister(MachineBasicBlock *MBB,
     MachineBasicBlock &FirstMBB = F->front();
     MachineBasicBlock::iterator MBBI = FirstMBB.begin();
     GlobalBaseReg = makeAnotherReg(Type::IntTy);
+    BuildMI(FirstMBB, MBBI, PPC32::IMPLICIT_DEF, 0, PPC32::LR);
     BuildMI(FirstMBB, MBBI, PPC32::MovePCtoLR, 0, GlobalBaseReg);
     GlobalBaseInitialized = true;
   }
@@ -1576,6 +1577,7 @@ void ISel::doCall(const ValueRecord &Ret, MachineInstr *CallMI,
     BuildMI(BB, PPC32::ADJCALLSTACKDOWN, 1).addSImm(0);
   }
 
+  BuildMI(BB, PPC32::IMPLICIT_DEF, 0, PPC32::LR);
   BB->push_back(CallMI);
   BuildMI(BB, PPC32::ADJCALLSTACKUP, 1).addSImm(NumBytes);
 
