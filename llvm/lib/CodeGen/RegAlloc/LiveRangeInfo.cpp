@@ -11,7 +11,6 @@
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Function.h"
-#include "llvm/BasicBlock.h"
 #include "Support/SetOperations.h"
 using std::cerr;
 
