@@ -814,35 +814,83 @@ Instruction *InstCombiner::visitSetCondInst(BinaryOperator &I) {
         I.getOpcode() == Instruction::SetNE) {
       bool isSetNE = I.getOpcode() == Instruction::SetNE;
 
-      if (CI->isNullValue()) {   // Simplify [seteq|setne] X, 0
-        CastInst *Val = new CastInst(Op0, Type::BoolTy, I.getName()+".not");
-        if (isSetNE) return Val;
-
-        // seteq X, 0 -> not (cast X to bool)
-        InsertNewInstBefore(Val, I);
-        return BinaryOperator::createNot(Val, I.getName());
-      }
-
       // If the first operand is (and|or|xor) with a constant, and the second
       // operand is a constant, simplify a bit.
-      if (BinaryOperator *BO = dyn_cast<BinaryOperator>(Op0))
-        if (ConstantInt *BOC = dyn_cast<ConstantInt>(BO->getOperand(1)))
-          if (BO->getOpcode() == Instruction::Or) {
-            // If bits are being or'd in that are not present in the constant we
-            // are comparing against, then the comparison could never succeed!
+      if (BinaryOperator *BO = dyn_cast<BinaryOperator>(Op0)) {
+        switch (BO->getOpcode()) {
+        case Instruction::Add:
+          if (CI->isNullValue()) {
+            // Replace ((add A, B) != 0) with (A != -B) if A or B is
+            // efficiently invertible, or if the add has just this one use.
+            Value *BOp0 = BO->getOperand(0), *BOp1 = BO->getOperand(1);
+            if (Value *NegVal = dyn_castNegVal(BOp1))
+              return new SetCondInst(I.getOpcode(), BOp0, NegVal);
+            else if (Value *NegVal = dyn_castNegVal(BOp0))
+              return new SetCondInst(I.getOpcode(), NegVal, BOp1);
+            else if (BO->use_size() == 1) {
+              Instruction *Neg = BinaryOperator::createNeg(BOp1, BO->getName());
+              BO->setName("");
+              InsertNewInstBefore(Neg, I);
+              return new SetCondInst(I.getOpcode(), BOp0, Neg);
+            }
+          }
+          break;
+        case Instruction::Xor:
+          // For the xor case, we can xor two constants together, eliminating
+          // the explicit xor.
+          if (Constant *BOC = dyn_cast<Constant>(BO->getOperand(1)))
+            return BinaryOperator::create(I.getOpcode(), BO->getOperand(0),
+                                          *CI ^ *BOC);
+
+          // FALLTHROUGH
+        case Instruction::Sub:
+          // Replace (([sub|xor] A, B) != 0) with (A != B)
+          if (CI->isNullValue())
+            return new SetCondInst(I.getOpcode(), BO->getOperand(0),
+                                   BO->getOperand(1));
+          break;
+
+        case Instruction::Or:
+          // If bits are being or'd in that are not present in the constant we
+          // are comparing against, then the comparison could never succeed!
+          if (Constant *BOC = dyn_cast<Constant>(BO->getOperand(1)))
             if (!(*BOC & *~*CI)->isNullValue())
               return ReplaceInstUsesWith(I, ConstantBool::get(isSetNE));
-          } else if (BO->getOpcode() == Instruction::And) {
+          break;
+
+        case Instruction::And:
+          if (ConstantInt *BOC = dyn_cast<ConstantInt>(BO->getOperand(1))) {
             // If bits are being compared against that are and'd out, then the
             // comparison can never succeed!
             if (!(*CI & *~*BOC)->isNullValue())
               return ReplaceInstUsesWith(I, ConstantBool::get(isSetNE));
-          } else if (BO->getOpcode() == Instruction::Xor) {
-            // For the xor case, we can always just xor the two constants
-            // together, potentially eliminating the explicit xor.
-            return BinaryOperator::create(I.getOpcode(), BO->getOperand(0),
-                                          *CI ^ *BOC);
+
+            // Replace (and X, (1 << size(X)-1) != 0) with x < 0, converting X
+            // to be a signed value as appropriate.
+            if (isSignBit(BOC)) {
+              Value *X = BO->getOperand(0);
+              // If 'X' is not signed, insert a cast now...
+              if (!BOC->getType()->isSigned()) {
+                const Type *DestTy;
+                switch (BOC->getType()->getPrimitiveID()) {
+                case Type::UByteTyID:  DestTy = Type::SByteTy; break;
+                case Type::UShortTyID: DestTy = Type::ShortTy; break;
+                case Type::UIntTyID:   DestTy = Type::IntTy;   break;
+                case Type::ULongTyID:  DestTy = Type::LongTy;  break;
+                default: assert(0 && "Invalid unsigned integer type!"); abort();
+                }
+                CastInst *NewCI = new CastInst(X,DestTy,X->getName()+".signed");
+                InsertNewInstBefore(NewCI, I);
+                X = NewCI;
+              }
+              return new SetCondInst(isSetNE ? Instruction::SetLT :
+                                         Instruction::SetGE, X,
+                                     Constant::getNullValue(X->getType()));
+            }
           }
+        default: break;
+        }
+      }
     }
 
     // Check to see if we are comparing against the minimum or maximum value...
@@ -1161,65 +1209,6 @@ Instruction *InstCombiner::visitCastInst(CastInst &CI) {
     if (AllZeroOperands) {
       CI.setOperand(0, GEP->getOperand(0));
       return &CI;
-    }
-  }
-
-  // If this is a cast to bool (which is effectively a "!=0" test), then we can
-  // perform a few optimizations...
-  //
-  if (CI.getType() == Type::BoolTy) {
-    if (BinaryOperator *BO = dyn_cast<BinaryOperator>(Src)) {
-      Value *Op0 = BO->getOperand(0), *Op1 = BO->getOperand(1);
-
-      switch (BO->getOpcode()) {
-      case Instruction::Sub:
-      case Instruction::Xor:
-        // Replace (cast ([sub|xor] A, B) to bool) with (setne A, B)
-        return new SetCondInst(Instruction::SetNE, Op0, Op1);
-
-      // Replace (cast (add A, B) to bool) with (setne A, -B) if B is
-      // efficiently invertible, or if the add has just this one use.
-      case Instruction::Add:
-        if (Value *NegVal = dyn_castNegVal(Op1))
-          return new SetCondInst(Instruction::SetNE, Op0, NegVal);
-        else if (Value *NegVal = dyn_castNegVal(Op0))
-          return new SetCondInst(Instruction::SetNE, NegVal, Op1);
-        else if (BO->use_size() == 1) {
-          Instruction *Neg = BinaryOperator::createNeg(Op1, BO->getName());
-          BO->setName("");
-          InsertNewInstBefore(Neg, CI);
-          return new SetCondInst(Instruction::SetNE, Op0, Neg);
-        }
-        break;
-
-      case Instruction::And:
-        // Replace (cast (and X, (1 << size(X)-1)) to bool) with x < 0,
-        // converting X to be a signed value as appropriate.  Don't worry about
-        // bool values, as they will be optimized other ways if they occur in
-        // this configuration.
-        if (ConstantInt *CInt = dyn_cast<ConstantInt>(Op1))
-          if (isSignBit(CInt)) {
-            // If 'X' is not signed, insert a cast now...
-            if (!CInt->getType()->isSigned()) {
-              const Type *DestTy;
-              switch (CInt->getType()->getPrimitiveID()) {
-              case Type::UByteTyID:  DestTy = Type::SByteTy; break;
-              case Type::UShortTyID: DestTy = Type::ShortTy; break;
-              case Type::UIntTyID:   DestTy = Type::IntTy;   break;
-              case Type::ULongTyID:  DestTy = Type::LongTy;  break;
-              default: assert(0 && "Invalid unsigned integer type!"); abort();
-              }
-              CastInst *NewCI = new CastInst(Op0, DestTy,
-                                             Op0->getName()+".signed");
-              InsertNewInstBefore(NewCI, CI);
-              Op0 = NewCI;
-            }
-            return new SetCondInst(Instruction::SetLT, Op0,
-                                   Constant::getNullValue(Op0->getType()));
-          }
-        break;
-      default: break;
-      }
     }
   }
 
