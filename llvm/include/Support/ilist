@@ -301,7 +301,7 @@ public:
   typedef std::reverse_iterator<const_iterator>  const_reverse_iterator;
   typedef std::reverse_iterator<iterator>  reverse_iterator;
 
-  iplist() : Head(this->createNode()), Tail(Head) {
+  iplist() : Head(Traits::createNode()), Tail(Head) {
     setNext(Head, 0);
     setPrev(Head, 0);
   }
