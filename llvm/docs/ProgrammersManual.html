@@ -86,31 +86,29 @@ with another <tt>Value</tt></a> </li>
         <ul>
           <li><a href="#Instruction">The <tt>Instruction</tt> class</a>
             <ul>
-            <li><a href="#GetElementPtrInst">The <tt>GetElementPtrInst</tt>
-                class</a></li>
+	      <li><a href="#GetElementPtrInst">The <tt>GetElementPtrInst</tt>
+		    class</a></li>
             </ul></li>
           <li><a href="#GlobalValue">The <tt>GlobalValue</tt> class</a>
             <ul>
-            <li><a href="#BasicBlock">The <tt>BasicBlock</tt>class</a></li>
-            <li><a href="#Function">The <tt>Function</tt> class</a></li>
-            <li><a href="#GlobalVariable">The <tt>GlobalVariable</tt> 
-                class</a></li>
+	      <li><a href="#BasicBlock">The <tt>BasicBlock</tt>class</a></li>
+	      <li><a href="#Function">The <tt>Function</tt> class</a></li>
+	      <li><a href="#GlobalVariable">The <tt>GlobalVariable</tt> class
+	        </a></li>
             </ul></li>
           <li><a href="#Module">The <tt>Module</tt> class</a></li>
-          <li><a href="#Constant">The <tt>Constant</tt> class</a>
-          </li>
+          <li><a href="#Constant">The <tt>Constant</tt> class</a></li>
           <li><a href="#Type">The <tt>Type</tt> class</a> </li>
-          <li><a href="#Argument">The <tt>Argument</tt> class</a> </li>
-        </ul>
-      </li>
-      <li>The <tt>SymbolTable</tt> class </li>
-      <li>The <tt>ilist</tt> and <tt>iplist</tt> classes
-        <ul>
-          <li>Creating, inserting, moving and deleting from LLVM lists </li>
-        </ul>
-      </li>
-      <li>Important iterator invalidation semantics to be aware of.</li>
-    </ul>
+          <li><a href="#Argument">The <tt>Argument</tt> class</a></li>
+        </ul></li>
+    </ul></li>
+    <li><a href="#SymbolTable">The <tt>SymbolTable</tt> class </a></li>
+    <li>The <tt>ilist</tt> and <tt>iplist</tt> classes
+      <ul>
+	<li>Creating, inserting, moving and deleting from LLVM lists </li>
+      </ul>
+    </li>
+    <li>Important iterator invalidation semantics to be aware of.</li>
   </li>
 </ol>
 
@@ -203,6 +201,10 @@ STL</a>.</li>
 
 <li><a href="http://www.research.att.com/%7Ebs/C++.html">Bjarne Stroustrup's C++
 Page</a></li>
+
+<li><a href="http://www.linux.com.cn/Bruce_Eckel/TICPPv2/Contents.htm">
+Bruce Eckel's Thinking in C++, 2nd ed. Volume 2 Revision 4.0 (even better, get
+the book).</a></li>
 
 </ol>
   
@@ -1790,6 +1792,230 @@ arguments. An argument has a pointer to the parent Function.</p>
 
 </div>
 
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="SymbolTable">The <tt>SymbolTable</tt> class</a>
+</div>
+<div class="doc_text">
+<p>This class provides a symbol table that the
+<a href="#Function"><tt>Function</tt></a> and <a href="#Module">
+<tt>Module</tt></a> classes use for naming definitions. The symbol table can 
+provide a name for any <a href="#Value"><tt>Value</tt></a> or 
+<a href="#Type"><tt>Type</tt></a>.  <tt>SymbolTable</tt> is an abstract data 
+type. It hides the data it contains and provides access to it through a 
+controlled interface.</p>
+
+<p>To use the <tt>SymbolTable</tt> well, you need to understand the 
+structure of the information it holds. The class contains two 
+<tt>std::map</tt> objects. The first, <tt>pmap</tt>, is a map of 
+<tt>Type*</tt> to maps of name (<tt>std::string</tt>) to <tt>Value*</tt>. 
+The second, <tt>tmap</tt>, is a map of names to <tt>Type*</tt>. Thus, Values
+are stored in two-dimensions and accessed by <tt>Type</tt> and name. Types,
+however, are stored in a single dimension and accessed only by name.</p>
+
+<p>The interface of this class provides three basic types of operations:
+<ol>
+  <li><em>Accessors</em>. Accessors provide read-only access to information
+  such as finding a value for a name with the 
+  <a href="#SymbolTable_lookup">lookup</a> method.</li> 
+  <li><em>Mutators</em>. Mutators allow the user to add information to the
+  <tt>SymbolTable</tt> with methods like 
+  <a href="#SymbolTable_insert"><tt>insert</tt></a>.</li>
+  <li><em>Iterators</em>. Iterators allow the user to traverse the content
+  of the symbol table in well defined ways, such as the method
+  <a href="#SymbolTable_type_begin"><tt>type_begin</tt></a>.</li>
+</ol>
+
+<h3>Accessors</h3>
+<dl>
+  <dt><tt>Value* lookup(const Type* Ty, const std::string&amp; name) const</tt>:
+  </dt>
+  <dd>The <tt>lookup</tt> method searches the type plane given by the
+  <tt>Ty</tt> parameter for a <tt>Value</tt> with the provided <tt>name</tt>.
+  If a suitable <tt>Value</tt> is not found, null is returned.</dd>
+
+  <dt><tt>Type* lookupType( const std::string&amp; name) const</tt>:</dt>
+  <dd>The <tt>lookupType</tt> method searches through the types for a
+  <tt>Type</tt> with the provided <tt>name</tt>. If a suitable <tt>Type</tt>
+  is not found, null is returned.</dd>
+
+  <dt><tt>bool hasTypes() const</tt>:</dt>
+  <dd>This function returns true if an entry has been made into the type
+  map.</dd>
+
+  <dt><tt>bool isEmpty() const</tt>:</dt>
+  <dd>This function returns true if both the value and types maps are
+  empty</dd>
+
+  <dt><tt>std::string get_name(const Value*) const</tt>:</dt>
+  <dd>This function returns the name of the Value provided or the empty
+  string if the Value is not in the symbol table.</dd> 
+
+  <dt><tt>std::string get_name(const Type*) const</tt>:</dt>
+  <dd>This function returns the name of the Type provided or the empty
+  string if the Type is not in the symbol table.</dd>
+</dl>
+
+<h3>Mutators</h3>
+<dl>
+  <dt><tt>void insert(Value *Val)</tt>:</dt>
+  <dd>This method adds the provided value to the symbol table.  The Value must
+  have both a name and a type which are extracted and used to place the value
+  in the correct type plane under the value's name.</dd>
+
+  <dt><tt>void insert(const std::string&amp; Name, Value *Val)</tt>:</dt>
+  <dd> Inserts a constant or type into the symbol table with the specified
+  name. There can be a many to one mapping between names and constants
+  or types.</dd>
+
+  <dt><tt>void insert(const std::string&amp; Name, Type *Typ)</tt>:</dt>
+  <dd> Inserts a type into the symbol table with the specified name. There
+  can be a many-to-one mapping between names and types. This method
+  allows a type with an existing entry in the symbol table to get
+  a new name.</dd>
+
+  <dt><tt>void remove(Value* Val)</tt>:</dt>
+ <dd> This method removes a named value from the symbol table. The
+  type and name of the Value are extracted from \p N and used to
+  lookup the Value in the correct type plane. If the Value is
+  not in the symbol table, this method silently ignores the
+  request.</dd>
+
+  <dt><tt>void remove(Type* Typ)</tt>:</dt>
+  <dd> This method removes a named type from the symbol table. The
+  name of the type is extracted from \P T and used to look up
+  the Type in the type map. If the Type is not in the symbol
+  table, this method silently ignores the request.</dd>
+
+  <dt><tt>Value* remove(const std::string&amp; Name, Value *Val)</tt>:</dt>
+  <dd> Remove a constant or type with the specified name from the 
+  symbol table.</dd>
+
+  <dt><tt>Type* remove(const std::string&amp; Name, Type* T)</tt>:</dt>
+  <dd> Remove a type with the specified name from the symbol table.
+  Returns the removed Type.</dd>
+
+  <dt><tt>Value *value_remove(const value_iterator&amp; It)</tt>:</dt>
+  <dd> Removes a specific value from the symbol table. 
+  Returns the removed value.</dd>
+
+  <dt><tt>bool strip()</tt>:</dt>
+  <dd> This method will strip the symbol table of its names leaving
+  the type and values. </dd>
+
+  <dt><tt>void clear()</tt>:</dt>
+  <dd>Empty the symbol table completely.</dd>
+</dl>
+
+<h3>Iteration</h3>
+<p>The following functions describe three types of iterators you can obtain
+the beginning or end of the sequence for both const and non-const. It is
+important to keep track of the different kinds of iterators. There are
+three idioms worth pointing out:</p>
+<table class="doc_table">
+  <tr><th>Units</th><th>Iterator</th><th>Idiom</th></tr>
+  <tr>
+    <td>Planes Of name/Value maps</td><td>PI</td>
+    <td><tt><pre>
+for (SymbolTable::plane_const_iterator PI = ST.plane_begin(),
+PE = ST.plane_end(); PI != PE; ++PI ) {
+  PI-&gt;first // This is the Type* of the plane
+  PI-&gt;second // This is the SymbolTable::ValueMap of name/Value pairs
+    </pre></tt></td>
+  </tr>
+  <tr>
+    <td>All name/Type Pairs</td><td>TI</td>
+    <td><tt><pre>
+for (SymbolTable::type_const_iterator TI = ST.type_begin(),
+     TE = ST.type_end(); TI != TE; ++TI )
+  TI-&gt;first  // This is the name of the type
+  TI-&gt;second // This is the Type* value associated with the name
+    </pre></tt></td>
+  </tr>
+  <tr>
+    <td>name/Value pairs in a plane</td><td>VI</td>
+    <td><tt><pre>
+for (SymbolTable::value_const_iterator VI = ST.value_begin(SomeType),
+     VE = ST.value_end(SomeType); VI != VE; ++VI )
+  VI-&gt;first  // This is the name of the Value
+  VI-&gt;second // This is the Value* value associated with the name
+    </pre></tt></td>
+  </tr>
+</table>
+<p>Using the recommended iterator names and idioms will help you avoid
+making mistakes. Of particular note, make sure that whenever you use
+value_begin(SomeType) that you always compare the resulting iterator
+with value_end(SomeType) not value_end(SomeOtherType) or else you 
+will loop infinitely.</p>
+
+<dl>
+
+  <dt><tt>plane_iterator plane_begin()</tt>:</dt>
+  <dd>Get an iterator that starts at the beginning of the type planes.
+  The iterator will iterate over the Type/ValueMap pairs in the
+  type planes. </dd>
+
+  <dt><tt>plane_const_iterator plane_begin() const</tt>:</dt>
+  <dd>Get a const_iterator that starts at the beginning of the type 
+  planes.  The iterator will iterate over the Type/ValueMap pairs 
+  in the type planes. </dd>
+
+  <dt><tt>plane_iterator plane_end()</tt>:</dt>
+  <dd>Get an iterator at the end of the type planes. This serves as
+  the marker for end of iteration over the type planes.</dd>
+
+  <dt><tt>plane_const_iterator plane_end() const</tt>:</dt>
+  <dd>Get a const_iterator at the end of the type planes. This serves as
+  the marker for end of iteration over the type planes.</dd>
+
+  <dt><tt>value_iterator value_begin(const Type *Typ)</tt>:</dt>
+  <dd>Get an iterator that starts at the beginning of a type plane.
+  The iterator will iterate over the name/value pairs in the type plane.
+  Note: The type plane must already exist before using this.</dd>
+
+  <dt><tt>value_const_iterator value_begin(const Type *Typ) const</tt>:</dt>
+  <dd>Get a const_iterator that starts at the beginning of a type plane.
+  The iterator will iterate over the name/value pairs in the type plane.
+  Note: The type plane must already exist before using this.</dd>
+
+  <dt><tt>value_iterator value_end(const Type *Typ)</tt>:</dt>
+  <dd>Get an iterator to the end of a type plane. This serves as the marker
+  for end of iteration of the type plane.
+  Note: The type plane must already exist before using this.</dd>
+
+  <dt><tt>value_const_iterator value_end(const Type *Typ) const</tt>:</dt>
+  <dd>Get a const_iterator to the end of a type plane. This serves as the
+  marker for end of iteration of the type plane.
+  Note: the type plane must already exist before using this.</dd>
+
+  <dt><tt>type_iterator type_begin()</tt>:</dt>
+  <dd>Get an iterator to the start of the name/Type map.</dd>
+
+  <dt><tt>type_const_iterator type_begin() cons</tt>:</dt>
+  <dd> Get a const_iterator to the start of the name/Type map.</dd>
+
+  <dt><tt>type_iterator type_end()</tt>:</dt>
+  <dd>Get an iterator to the end of the name/Type map. This serves as the
+  marker for end of iteration of the types.</dd>
+
+  <dt><tt>type_const_iterator type_end() const</tt>:</dt>
+  <dd>Get a const-iterator to the end of the name/Type map. This serves 
+  as the marker for end of iteration of the types.</dd>
+
+  <dt><tt>plane_const_iterator find(const Type* Typ ) const</tt>:</dt>
+  <dd>This method returns a plane_const_iterator for iteration over
+  the type planes starting at a specific plane, given by \p Ty.</dd>
+
+  <dt><tt>plane_iterator find( const Type* Typ </tt>:</dt>
+  <dd>This method returns a plane_iterator for iteration over the
+  type planes starting at a specific plane, given by \p Ty.</dd>
+
+  <dt><tt>const ValueMap* findPlane( const Type* Typ ) cons</tt>:</dt>
+  <dd>This method returns a ValueMap* for a specific type plane. This
+  interface is deprecated and may go away in the future.</dd>
+</dl>
+</div>
+
 <!-- *********************************************************************** -->
 <hr>
 <address>
@@ -1806,3 +2032,5 @@ arguments. An argument has a pointer to the parent Function.</p>
 
 </body>
 </html>
+<!-- vim: sw=2 noai
+-->
