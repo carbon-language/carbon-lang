@@ -105,8 +105,7 @@
     on other platforms, so it should be possible to generate and produce LLVM
     bytecode on unsupported platforms (although bytecode generated on one
     platform may not work on another platform).  However, the code generators
-    and Just In Time Compilers (JIT's) only generate SparcV9 or x86 machine
-    code.
+    and Just-In-Time (JIT) compilers only generate SparcV9 or x86 machine code.
 
     <!--=====================================================================-->
     <h4><a name="software"><b>Software</b></a></h4>
@@ -719,10 +718,13 @@
       can directly execute LLVM bytecode (although very slowly...). In addition
       to a simple interpreter, <tt>lli</tt> is also has debugger and tracing
       modes (entered by specifying <tt>-debug</tt> or <tt>-trace</tt> on the
-      command line, respectively).<p>
+      command line, respectively). Finally, for architectures that support it
+      (currently only x86 and Sparc), by default, <tt>lli</tt> will function as
+      a Just-In-Time compiler (if the functionality was compiled in), and will
+      execute the code <i>much</i> faster than the interpreter.<p>
 
       <dt><tt><b>llc</b></tt><dd> <tt>llc</tt> is the LLVM backend compiler,
-      which translates LLVM bytecode to a SPARC assembly file.<p>
+      which translates LLVM bytecode to a SPARC or x86 assembly file.<p>
 
       <dt><tt><b>llvmgcc</b></tt><dd> <tt>llvmgcc</tt> is a GCC based C frontend
       that has been retargeted to emit LLVM code as the machine code output.  It
@@ -806,7 +808,7 @@
       <tt>% dis < hello.bc | less</tt><p>
 
     <li>Compile the program to native Sparc assembly using the code
-    generator:<p>
+    generator (assuming you are currently on a Sparc system):<p>
 
       <tt>% llc hello.bc -o hello.s</tt><p>
 
