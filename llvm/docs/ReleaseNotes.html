@@ -9,10 +9,11 @@
 <ol>
   <li><a href="#intro">Introduction</a>
   <li><a href="#whatsnew">What's New?</a>
+  <li><a href="#portability">Portability and Supported Platforms</a>
   <li><a href="#install-instructions">Installation Instructions</a>
   <li><a href="#knownproblems">Known Problems</a>
   <ul>
-    <li><a href="#portability">Portability Problems</a>
+<!--    <li><a href="#portabilityprobs">Portability Problems</a> -->
     <li><a href="#core">Known problems with the LLVM Core</a>
     <li><a href="#c-fe">Known problems with the C Front-end</a>
     <li><a href="#c++-fe">Known problems with the C++ Front-end</a>
@@ -37,8 +38,10 @@
 This document contains the release notes for the LLVM compiler infrastructure,
 release 1.0.  The most up-to-date version of this document can be found on the
 <a href="http://llvm.cs.uiuc.edu/releases/1.0/ReleaseNotes.html">LLVM web
-site</a>.  Since this document may be updated after the release, it is best to
-read the copy hosted there.
+site</a>.  If you are not reading this on the LLVM web pages, you should
+probably go there, because this document may be updated after the release.<p>
+
+FIXME: What is this document?  Where do I find other documents?<p>
 
 
 <!-- *********************************************************************** -->
@@ -54,7 +57,26 @@ compiler, a C back-end, stable X86 and Sparc V9 static and JIT code generators,
 as well as a large suite of scalar and interprocedural optimizations.<p>
 
 TODO: Works on: SPEC CPU 2000<p>
-TODO: Works on: Olden/Ptrdist benchmarks
+TODO: Works on: Olden/Ptrdist benchmarks<p>
+
+The What's New section should give a bulletted list of what is
+included, perhaps a couple of lists (Stable, Beta).<p>
+ 
+It would be useful to give a pointer to a list of the available passes (at least
+for the standard compiler techniques).<p>
+
+
+<!-- *********************************************************************** -->
+</ul><table width="100%" bgcolor="#330077" border=0 cellpadding=4 cellspacing=0>
+<tr><td align=center><font color="#EEEEFF" size=+2 face="Georgia,Palatino"><b>
+<a name="portability">Portability and Supported Platforms
+</b></font></td></tr></table><ul>
+<!-- *********************************************************************** -->
+
+LLVM has only been extensively tested on ia32-linux and sparc-solaris machines.
+The core LLVM infrastructure uses "autoconf" for portability, so hopefully we
+work on more platforms than that.  However, it is extremely likely that we
+missed something.  We welcome portability patches and error messages.<p>
 
 
 <!-- *********************************************************************** -->
@@ -76,18 +98,13 @@ FIXME
 
 This section contains all known problems with the LLVM system, listed by
 component.  As new problems are discovered, they will be added to these
-sections, so it is important to check the <a
-href="http://llvm.cs.uiuc.edu/releases/1.0/ReleaseNotes.html">web version</a> of
-this document for up-to-date information.
+sections.
 
 
 <!-- _______________________________________________________________________ -->
+<!--
 </ul><h4><a name="portability"><hr size=0>Portability Problems</h4><ul>
-
-LLVM has only been extensively tested on ia32-linux and sparc-solaris machines.
-The core LLVM infrastructure uses "autoconf" for portability, so hopefully we
-work on more platforms than that.  However, it is extremely likely that we
-missed something.  We welcome portability patches and error messages.<p>
+-->
 
 
 <!-- _______________________________________________________________________ -->
@@ -109,8 +126,8 @@ missed something.  We welcome portability patches and error messages.<p>
 <li>Inline assembly is not yet supported.<p>
 
 <li>"long double" is transformed by the front-end into "double".  There is no
-     support for floating point data types of any size other than 32 and 64 bits.
-     <p>
+    support for floating point data types of any size other than 32 and 64 bits.
+    <p>
 <li>C99 Variable sized arrays do not release stack memory when they go out of 
     scope.  Thus, the following program may run out of stack space:
 <pre>
@@ -194,7 +211,7 @@ missed something.  We welcome portability patches and error messages.<p>
   <ol>
   <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Statement-Exprs.html#Statement%20Exprs">Statement Exprs</a>:   Putting statements and declarations inside expressions. 
   <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Typeof.html#Typeof">Typeof</a>: <code>typeof</code>: referring to the type of an expression. 
-  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Lvalues.html#Lvalues">Lvalues</a>:   Using <code>?:</code>, <code>,</code> and casts in lvalues. 
+  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Lvalues.html#Lvalues">Lvalues</a>:   Using <code>?:</code>, "<code>,</code>" and casts in lvalues. 
   <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Conditionals.html#Conditionals">Conditionals</a>: Omitting the middle operand of a <code>?:</code> expression. 
   <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Long-Long.html#Long%20Long">Long Long</a>: Double-word integers.
   <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Complex.html#Complex">Complex</a>:   Data types for complex numbers. 
@@ -246,16 +263,21 @@ versions.  For more information, see the C++ section of the <a
 href="http://gcc.gnu.org/gcc-3.4/changes.html">GCC 3.4 release notes</a>.<p>
 
 <li>Destructors for local objects are not always run when a <tt>longjmp</tt> is
-    performed.  In particular, destructors for objects in the <tt>longjmp</tt>ing
+    performed. In particular, destructors for objects in the <tt>longjmp</tt>ing
     function and in the <tt>setjmp</tt> receiver function may not be run.
     Objects in intervening stack frames will be destroyed however (which is
     better than most compilers).<p> 
 
-<li>The calling conventions and name mangling used by the LLVM C++ front-end do
-    follow the <a href="http://www.codesourcery.com/cxx-abi">Itanium C++
-    ABI</a>, and thus we should be binary compatible with native C++ code
-    compiled with a recent GCC compiler.  However, the exception handling
-    mechanisms are very different, so they will not interact correctly.
+<li>The LLVM C++ front-end follows the <a
+    href="http://www.codesourcery.com/cxx-abi">Itanium C++ ABI</a>.
+    This document, which is not Itanium specific, specifies a standard for name
+    mangling, class layout, v-table layout, RTTI formats, and other C++
+    representation issues.  Because we use this API, code generated by the LLVM
+    compilers should be binary compatible with machine code generated by other
+    Itanium ABI C++ compilers (such as G++, the Intel and HP compilers, etc).
+    <i>However</i>, the exception handling mechanism used by LLVM is very
+    different from the model used in the Itanium ABI, so <b>exceptions will not
+    interact correctly</b> .
 
 <!-- _______________________________________________________________________ -->
 </ul><h4><a name="x86-be"><hr size=0>Known problems with the X86 back-end</h4><ul>
@@ -323,6 +345,6 @@ via the mailing lists.<p>
 <address>By: <a href="mailto:sabre@nondot.org">Chris Lattner</a></address>
 <!-- Created: Wed Oct  1 17:38:54 CDT 2003 -->
 <!-- hhmts start -->
-Last modified: Thu Oct  2 00:06:58 CDT 2003
+Last modified: Thu Oct  2 11:37:25 CDT 2003
 <!-- hhmts end -->
 </body></html>
