@@ -1630,22 +1630,19 @@ IndexList : ',' ValueRefList {
 };
 
 MemoryInst : MALLOC Types {
-    $$ = new MallocInst(PointerType::get(*$2));
+    $$ = new MallocInst(*$2);
     delete $2;
   }
   | MALLOC Types ',' UINT ValueRef {
-    const Type *Ty = PointerType::get(*$2);
-    $$ = new MallocInst(Ty, getVal($4, $5));
+    $$ = new MallocInst(*$2, getVal($4, $5));
     delete $2;
   }
   | ALLOCA Types {
-    $$ = new AllocaInst(PointerType::get(*$2));
+    $$ = new AllocaInst(*$2);
     delete $2;
   }
   | ALLOCA Types ',' UINT ValueRef {
-    const Type *Ty = PointerType::get(*$2);
-    Value *ArrSize = getVal($4, $5);
-    $$ = new AllocaInst(Ty, ArrSize);
+    $$ = new AllocaInst(*$2, getVal($4, $5));
     delete $2;
   }
   | FREE ResolvedVal {

@@ -113,7 +113,6 @@ bool RaiseAllocations::runOnBasicBlock(BasicBlock &BB) {
 
     if (CallInst *CI = dyn_cast<CallInst>(I)) {
       if (CI->getCalledValue() == MallocFunc) {      // Replace call to malloc?
-        const Type *PtrSByte = PointerType::get(Type::SByteTy);
         Value *Source = CI->getOperand(1);
         
         // If no prototype was provided for malloc, we may need to cast the
@@ -122,7 +121,7 @@ bool RaiseAllocations::runOnBasicBlock(BasicBlock &BB) {
           Source = new CastInst(Source, Type::UIntTy, "MallocAmtCast", BI);
 
         std::string Name(CI->getName()); CI->setName("");
-        BI = new MallocInst(PtrSByte, Source, Name, BI);
+        BI = new MallocInst(Type::SByteTy, Source, Name, BI);
         CI->replaceAllUsesWith(BI);
         BIL.erase(I);
         Changed = true;
