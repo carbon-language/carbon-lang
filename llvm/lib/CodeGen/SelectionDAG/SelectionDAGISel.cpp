@@ -311,9 +311,7 @@ public:
   void visitVACopy(CallInst &I);
   void visitFrameReturnAddress(CallInst &I, bool isFrameAddress);
 
-  void visitMemSet(CallInst &I);
-  void visitMemCpy(CallInst &I);
-  void visitMemMove(CallInst &I);
+  void visitMemIntrinsic(CallInst &I, unsigned Op);
 
   void visitUserOp1(Instruction &I) {
     assert(0 && "UserOp1 should not exist at instruction selection time!");
@@ -583,9 +581,9 @@ void SelectionDAGLowering::visitCall(CallInst &I) {
       return;
     case Intrinsic::setjmp:  RenameFn = "setjmp"; break;
     case Intrinsic::longjmp: RenameFn = "longjmp"; break;
-    case Intrinsic::memcpy:  visitMemCpy(I); return;
-    case Intrinsic::memset:  visitMemSet(I); return;
-    case Intrinsic::memmove: visitMemMove(I); return;
+    case Intrinsic::memcpy:  visitMemIntrinsic(I, ISD::MEMCPY); return;
+    case Intrinsic::memset:  visitMemIntrinsic(I, ISD::MEMSET); return;
+    case Intrinsic::memmove: visitMemIntrinsic(I, ISD::MEMMOVE); return;
       
     case Intrinsic::isunordered:
       setValue(&I, DAG.getSetCC(ISD::SETUO, getValue(I.getOperand(1)),
@@ -727,54 +725,19 @@ void SelectionDAGLowering::visitFrameReturnAddress(CallInst &I, bool isFrame) {
   DAG.setRoot(Result.second);
 }
 
-void SelectionDAGLowering::visitMemSet(CallInst &I) {
-  MVT::ValueType IntPtr = TLI.getPointerTy();
-  const Type *IntPtrTy = TLI.getTargetData().getIntPtrType();
-
-  // Extend the ubyte argument to be an int value for the call.
-  SDOperand Val = getValue(I.getOperand(2));
-  Val = DAG.getNode(ISD::ZERO_EXTEND, MVT::i32, Val);
-  
-  std::vector<std::pair<SDOperand, const Type*> > Args;
-  Args.push_back(std::make_pair(getValue(I.getOperand(1)), IntPtrTy));
-  Args.push_back(std::make_pair(Val, Type::IntTy));
-  Args.push_back(std::make_pair(getValue(I.getOperand(3)), IntPtrTy));
-  
-  std::pair<SDOperand,SDOperand> Result =
-    TLI.LowerCallTo(DAG.getRoot(), Type::VoidTy,
-                    DAG.getExternalSymbol("memset", IntPtr), Args, DAG);
-  DAG.setRoot(Result.second);
+void SelectionDAGLowering::visitMemIntrinsic(CallInst &I, unsigned Op) {
+  std::vector<SDOperand> Ops;
+  Ops.push_back(DAG.getRoot());
+  Ops.push_back(getValue(I.getOperand(1)));
+  Ops.push_back(getValue(I.getOperand(2)));
+  Ops.push_back(getValue(I.getOperand(3)));
+  Ops.push_back(getValue(I.getOperand(4)));
+  DAG.setRoot(DAG.getNode(Op, MVT::Other, Ops));
 }
 
-void SelectionDAGLowering::visitMemCpy(CallInst &I) {
-  MVT::ValueType IntPtr = TLI.getPointerTy();
-  const Type *IntPtrTy = TLI.getTargetData().getIntPtrType();
-
-  std::vector<std::pair<SDOperand, const Type*> > Args;
-  Args.push_back(std::make_pair(getValue(I.getOperand(1)), IntPtrTy));
-  Args.push_back(std::make_pair(getValue(I.getOperand(2)), IntPtrTy));
-  Args.push_back(std::make_pair(getValue(I.getOperand(3)), IntPtrTy));
-  
-  std::pair<SDOperand,SDOperand> Result =
-    TLI.LowerCallTo(DAG.getRoot(), Type::VoidTy,
-                    DAG.getExternalSymbol("memcpy", IntPtr), Args, DAG);
-  DAG.setRoot(Result.second);
-}
-
-void SelectionDAGLowering::visitMemMove(CallInst &I) {
-  MVT::ValueType IntPtr = TLI.getPointerTy();
-  const Type *IntPtrTy = TLI.getTargetData().getIntPtrType();
-
-  std::vector<std::pair<SDOperand, const Type*> > Args;
-  Args.push_back(std::make_pair(getValue(I.getOperand(1)), IntPtrTy));
-  Args.push_back(std::make_pair(getValue(I.getOperand(2)), IntPtrTy));
-  Args.push_back(std::make_pair(getValue(I.getOperand(3)), IntPtrTy));
-  
-  std::pair<SDOperand,SDOperand> Result =
-    TLI.LowerCallTo(DAG.getRoot(), Type::VoidTy,
-                    DAG.getExternalSymbol("memmove", IntPtr), Args, DAG);
-  DAG.setRoot(Result.second);
-}
+//===----------------------------------------------------------------------===//
+// SelectionDAGISel code
+//===----------------------------------------------------------------------===//
 
 unsigned SelectionDAGISel::MakeReg(MVT::ValueType VT) {
   return RegMap->createVirtualRegister(TLI.getRegClassFor(VT));
