@@ -63,6 +63,7 @@ namespace {
                                       Pass::AnalysisSet &Provided) {
       Requires.push_back(cfg::LoopInfo::ID);
       Requires.push_back(MethodLiveVarInfo::ID);
+      Destroyed.push_back(MethodLiveVarInfo::ID);
     }
   };
 }
