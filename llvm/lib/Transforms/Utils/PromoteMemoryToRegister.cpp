@@ -25,6 +25,7 @@
 #include "llvm/Function.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/Constant.h"
+#include "llvm/Type.h"
 
 using std::vector;
 using std::map;
@@ -165,7 +166,7 @@ bool PromotePass::runOnFunction(Function *F) {
   //
   vector<Value *> Values(Allocas.size());
   for (unsigned i = 0, e = Allocas.size(); i != e; ++i)
-    Values[i] = Constant::getNullValue(Allocas[i]->getType()->getElementType());
+    Values[i] = Constant::getNullValue(Allocas[i]->getAllocatedType());
 
   // Walks all basic blocks in the function performing the SSA rename algorithm
   // and inserting the phi nodes we marked as necessary
@@ -204,7 +205,7 @@ bool PromotePass::QueuePhiNode(BasicBlock *BB, unsigned AllocaNo) {
   if (BBPNs[AllocaNo]) return false;
 
   // Create a PhiNode using the dereferenced type...
-  PHINode *PN = new PHINode(Allocas[AllocaNo]->getType()->getElementType(),
+  PHINode *PN = new PHINode(Allocas[AllocaNo]->getAllocatedType(),
                             Allocas[AllocaNo]->getName()+".mem2reg");
   BBPNs[AllocaNo] = PN;
 
