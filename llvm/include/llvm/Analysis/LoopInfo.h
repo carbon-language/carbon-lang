@@ -69,6 +69,15 @@ public:
   ///
   unsigned getNumBackEdges() const;
 
+  /// hasExitBlock - Return true if the current loop has the specified block as
+  /// an exit block...
+  bool hasExitBlock(BasicBlock *BB) const {
+    for (unsigned i = 0, e = ExitBlocks.size(); i != e; ++i)
+      if (ExitBlocks[i] == BB)
+        return true;
+    return false;
+  }
+
   /// getLoopPreheader - If there is a preheader for this loop, return it.  A
   /// loop has a preheader if there is only one edge to the header of the loop
   /// from outside of the loop.  If this is the case, the block branching to the
