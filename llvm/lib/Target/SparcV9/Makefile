@@ -8,7 +8,7 @@
 ##===----------------------------------------------------------------------===##
 LEVEL = ../../..
 LIBRARYNAME = sparcv9
-DIRS = InstrSelection RegAlloc LiveVar
+DIRS = RegAlloc LiveVar
 
 ExtraSource = SparcV9.burm.cpp 
 
