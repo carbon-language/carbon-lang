@@ -1,4 +1,4 @@
-##===- lib/CWriter/Makefile --------------------------------*- Makefile -*-===##
+##===- lib/Target/CBackend/Makefile ------------------------*- Makefile -*-===##
 # 
 #                     The LLVM Compiler Infrastructure
 #
@@ -7,9 +7,7 @@
 # 
 ##===----------------------------------------------------------------------===##
 
-LEVEL = ../..
-
+LEVEL = ../../..
 LIBRARYNAME = cwriter
-
 include $(LEVEL)/Makefile.common
 
