@@ -51,7 +51,7 @@ protected:
 					 ShortAl, ByteAl) { }
 public:
   virtual ~TargetMachine() {}
-  
+
   // 
   // Interfaces to the major aspects of target machine information:
   // -- Instruction opcode and operand information
@@ -74,9 +74,12 @@ public:
   
   /// addPassesToEmitAssembly - Add passes to the specified pass manager to get
   /// assembly langage code emited.  Typically this will involve several steps
-  /// of code generation.
+  /// of code generation.  This method should return true if code generation is
+  /// not supported.
   ///
-  virtual void addPassesToEmitAssembly(PassManager &PM, std::ostream &Out) = 0;
+  virtual bool addPassesToEmitAssembly(PassManager &PM, std::ostream &Out) {
+    return true;
+  }
 
   /// addPassesToJITCompile - Add passes to the specified pass manager to
   /// implement a fast dynamic compiler for this target.  Return true if this is

@@ -718,7 +718,7 @@ public:
   virtual const MachineCacheInfo &getCacheInfo() const { return cacheInfo; }
   virtual const MachineOptInfo   &getOptInfo()   const { return optInfo; }
 
-  virtual void addPassesToEmitAssembly(PassManager &PM, std::ostream &Out);
+  virtual bool addPassesToEmitAssembly(PassManager &PM, std::ostream &Out);
 
   // getPrologEpilogCodeInserter - Inserts prolog/epilog code.
   virtual Pass* getPrologEpilogInsertionPass();

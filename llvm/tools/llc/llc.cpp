@@ -281,10 +281,14 @@ main(int argc, char **argv)
         }
     }
 
-  Target.addPassesToEmitAssembly(Passes, *Out);
-
-  // Run our queue of passes all at once now, efficiently.
-  Passes.run(*M.get());
+  // Ask the target to add backend passes as neccesary
+  if (Target.addPassesToEmitAssembly(Passes, *Out)) {
+    cerr << argv[0] << ": target '" << Target.TargetName
+         << " does not support static compilation!\n";
+  } else {
+    // Run our queue of passes all at once now, efficiently.
+    Passes.run(*M.get());
+  }
 
   // Delete the ostream if it's not a stdout stream
   if (Out != &std::cout) delete Out;

@@ -141,7 +141,7 @@ UltraSparc::UltraSparc()
 // addPassesToEmitAssembly - This method controls the entire code generation
 // process for the ultra sparc.
 //
-void UltraSparc::addPassesToEmitAssembly(PassManager &PM, std::ostream &Out)
+bool UltraSparc::addPassesToEmitAssembly(PassManager &PM, std::ostream &Out)
 {
   // Construct and initialize the MachineFunction object for this fn.
   PM.add(createMachineCodeConstructionPass(*this));
@@ -189,4 +189,5 @@ void UltraSparc::addPassesToEmitAssembly(PassManager &PM, std::ostream &Out)
   // Emit bytecode to the assembly file into its special section next
   PM.add(getEmitBytecodeToAsmPass(Out));
   PM.add(getFunctionInfo(Out)); 
+  return false;
 }
