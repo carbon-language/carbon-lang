@@ -1302,7 +1302,7 @@ Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
     if (CE->getOpcode() == Instruction::GetElementPtr)
       if (ConstantPointerRef *G=dyn_cast<ConstantPointerRef>(CE->getOperand(0)))
         if (GlobalVariable *GV = dyn_cast<GlobalVariable>(G->getValue()))
-          if (GV->isConstant())
+          if ((GV->isConstant()) && (!(GV->isExternal())))
             if (Constant *V = GetGEPGlobalInitializer(GV->getInitializer(), CE))
               return ReplaceInstUsesWith(LI, V);
   return 0;
