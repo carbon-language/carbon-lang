@@ -66,6 +66,15 @@ namespace {
     //
     void addPoolPrototypes(Module *M);
 
+
+    // CreatePools - Insert instructions into the function we are processing to
+    // create all of the memory pool objects themselves.  This also inserts
+    // destruction code.  Add an alloca for each pool that is allocated to the
+    // PoolDescriptors vector.
+    //
+    void CreatePools(Function *F, const vector<AllocDSNode*> &Allocs,
+                     vector<AllocaInst*> &PoolDescriptors);
+
     // processFunction - Convert a function to use pool allocation where
     // available.
     //
@@ -143,6 +152,22 @@ bool PoolAllocate::processFunction(Function *F) {
   for (unsigned i = 0, e = Scalars.size(); i != e; ++i)
     Scalars[i].first->dump();
 
+  // Insert instructions into the function we are processing to create all of
+  // the memory pool objects themselves.  This also inserts destruction code.
+  vector<AllocaInst*> PoolDescriptors;
+  CreatePools(F, Allocs, PoolDescriptors);
+
+  return true;
+}
+
+
+// CreatePools - Insert instructions into the function we are processing to
+// create all of the memory pool objects themselves.  This also inserts
+// destruction code.  Add an alloca for each pool that is allocated to the
+// PoolDescriptors vector.
+//
+void PoolAllocate::CreatePools(Function *F, const vector<AllocDSNode*> &Allocs,
+                               vector<AllocaInst*> &PoolDescriptors) {
   // FIXME: This should use an IP version of the UnifyAllExits pass!
   vector<BasicBlock*> ReturnNodes;
   for (Function::iterator I = F->begin(), E = F->end(); I != E; ++I)
@@ -187,8 +212,6 @@ bool PoolAllocate::processFunction(Function *F) {
   F->getEntryNode()->getInstList().insert(F->getEntryNode()->begin()+1,
                                           EntryNodeInsts.begin(),
                                           EntryNodeInsts.end());
-
-  return false;
 }
 
 
