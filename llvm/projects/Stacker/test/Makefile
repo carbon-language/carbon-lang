@@ -42,7 +42,7 @@ test_each: $(TESTS)
 
 % : %.st Makefile testing.bc
 	$(Echo) "Building $*" 
-	$(Verb)$(LLVMC) -O4 -o $@ $< testing.bc -lstkr_runtime -lcrtend
+	$(Verb)$(LLVMC) -O4 -o $@ $< testing.bc $(LibDir)/stkr_runtime.bc -lcrtend
 
 testing.bc : testing.st Makefile
 	$(Echo) "Compiling $*"
