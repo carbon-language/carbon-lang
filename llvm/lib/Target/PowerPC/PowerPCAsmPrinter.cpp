@@ -397,6 +397,28 @@ void PowerPCAsmPrinter::printOp(const MachineOperand &MO, bool IsCallOp) {
 ///
 void PowerPCAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
   ++EmittedInsts;
+  // Check for slwi/srwi mnemonics.
+  if (MI->getOpcode() == PPC::RLWINM) {
+    bool FoundMnemonic = false;
+    unsigned char SH = MI->getOperand(2).getImmedValue();
+    unsigned char MB = MI->getOperand(3).getImmedValue();
+    unsigned char ME = MI->getOperand(4).getImmedValue();
+    if (SH <= 31 && MB == 0 && ME == (31-SH)) {
+      O << "slwi "; FoundMnemonic = true;
+    }
+    if (SH <= 31 && MB == (32-SH) && ME == 31) {
+      O << "srwi "; FoundMnemonic = true;
+      SH = 32-SH;
+    }
+    if (FoundMnemonic) {
+      printOperand(MI, 0, MVT::i64); 
+      O << ", "; 
+      printOperand(MI, 1, MVT::i64); 
+      O << ", " << (unsigned int)SH << "\n";
+      return;
+    }
+  }
+  
   if (printInstruction(MI))
     return; // Printer was automatically generated
   
