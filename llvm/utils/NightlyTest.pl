@@ -287,6 +287,7 @@ sub GetQMTestResults { # (filename)
     push(@lines,"<h3>TEST RESULTS</h3><ol><li>\n");
     my $first_list = 1;
     my $should_break = 1;
+    my $nocopy = 0;
     while ( <SRCHFILE> ) {
       if ( length($_) > 1 ) { 
 	chomp($_);
@@ -294,7 +295,10 @@ sub GetQMTestResults { # (filename)
 	     ! m/^    qmtest.target:/ && 
 	     ! m/^      local/ &&
 	     ! m/^gmake:/ ) {
-	  if ( m/: XFAIL/ || m/: XPASS/ || m/: FAIL/ ) {
+	  if ( m/: XFAIL/ ) {
+	    $nocopy = 1;
+	  } elsif ( m/: XPASS/ || m/: FAIL/ ) {
+	    $nocopy = 0;
 	    if ( $first_list ) {
 	      $first_list = 0;
 	      $should_break = 1;
@@ -306,13 +310,15 @@ sub GetQMTestResults { # (filename)
 	    if ( $first_list ) { push(@lines,"<b>PERFECT!</b>"); }
 	    push(@lines,"</li></ol><h3>STATISTICS</h3><pre>\n");
 	    $should_break = 0;
+	    $nocopy = 0;
 	  } elsif ( m/^--- TESTS WITH/ ) {
 	    $should_break = 1;
 	    $first_list = 1;
+	    $nocopy = 0;
 	    push(@lines,"</pre><h3>TESTS WITH UNEXPECTED RESULTS</h3><ol><li>\n");
 	  } elsif ( m/^real / ) {
 	    last;
-	  } else {
+	  } elsif (!$nocopy) {
 	    if ( $should_break ) {
 	      push(@lines,"$_<br/>\n");
 	    } else {
@@ -325,8 +331,8 @@ sub GetQMTestResults { # (filename)
     close SRCHFILE;
   }
   my $content = join("",@lines);
-  return "$content</pre>\n";
-}
+  return "$content</li></ol>\n";
+} 
 
 # Get results of feature tests.
 my $FeatureTestResults; # String containing the results of the feature tests
