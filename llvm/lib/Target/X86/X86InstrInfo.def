@@ -36,9 +36,9 @@ I(NOOP        , "nop",   0x90,             0, X86II::RawFrm | X86II::Void)      
 
 // Flow control instructions
 I(RET         , "ret",   0xCB,    M_RET_FLAG, X86II::RawFrm | X86II::Void)       // ret
-I(JMP         , "jmp",   0x00, M_BRANCH_FLAG, X86II::Void) // jmp foo      EB|E9 cb|w
-I(JNE         , "jne",   0x00, M_BRANCH_FLAG, X86II::Void) // 75 cb, or 0f 85 cw|cd
-I(JE          , "je",    0x00, M_BRANCH_FLAG, X86II::Void) // 74 cb, or 0f 84 cw|cd
+I(JMP         , "jmp",   0xE9, M_BRANCH_FLAG, X86II::Void)                       // jmp foo
+I(JNE         , "jne",   0x85, M_BRANCH_FLAG, X86II::TB | X86II::Void)
+I(JE          , "je",    0x84, M_BRANCH_FLAG, X86II::TB | X86II::Void)
 
 // Misc instructions
 I(LEAVE       , "leave", 0xC9,             0, X86II::RawFrm)                     // leave
@@ -65,19 +65,22 @@ I(ADDrr32     , "addl",  0x01,             0, X86II::MRMDestReg)                
 I(SUBrr8      , "subb",  0x2A,             0, X86II::MRMDestReg)                 // R8  -= R8
 I(SUBrr16     , "subw",  0x2B,             0, X86II::MRMDestReg | X86II::OpSize) // R16 -= R16
 I(SUBrr32     , "subl",  0x2B,             0, X86II::MRMDestReg)                 // R32 -= R32
-I(MULrr8      , "mulb",  0xF6,             0, X86II::Void)                       // AX   = AL*R8  F6/4
-I(MULrr16     , "mulw",  0xF7,             0, X86II::Void       | X86II::OpSize) // DX:AX= AX*R16 F7/4
-I(MULrr32     , "mull",  0xF7,             0, X86II::Void)                       // ED:EA= EA*R32 F7/4
+I(MULrr8      , "mulb",  0xF6,             0, X86II::MRMS4r     | X86II::Void)   // AX   = AL*R8
+I(MULrr16     , "mulw",  0xF7,             0, X86II::MRMS4r     | X86II::Void |  // DX:AX= AX*R16
+                                              X86II::OpSize)
+I(MULrr32     , "mull",  0xF7,             0, X86II::MRMS4r     | X86II::Void)   // ED:EA= EA*R32
 
 // unsigned division/remainder
-I(DIVrr8      , "divb",  0xF6,             0, X86II::Void)                       // AX/r8= AL&AH  F6/6
-I(DIVrr16     , "divw",  0xF7,             0, X86II::Void       | X86II::OpSize) // DA/r16=AX&DX  F7/6
-I(DIVrr32     , "divl",  0xF7,             0, X86II::Void)                       // DA/r32=EAX&DX F7/6
+I(DIVrr8      , "divb",  0xF6,             0, X86II::MRMS6r     | X86II::Void)   // AX/r8= AL&AH
+I(DIVrr16     , "divw",  0xF7,             0, X86II::MRMS6r     | X86II::Void |  // DA/r16=AX&DX
+                                              X86II::OpSize)
+I(DIVrr32     , "divl",  0xF7,             0, X86II::MRMS6r     | X86II::Void)   // DA/r32=EAX&DX
 
 // signed division/remainder
-I(IDIVrr8     , "idivb", 0xF6,             0, X86II::Void)                       // AX/r8= AL&AH  F6/6
-I(IDIVrr16    , "idivw", 0xF7,             0, X86II::Void       | X86II::OpSize) // DA/r16=AX&DX  F7/6
-I(IDIVrr32    , "idivl", 0xF7,             0, X86II::Void)                       // DA/r32=EAX&DX F7/6
+I(IDIVrr8     , "idivb", 0xF6,             0, X86II::MRMS7r     | X86II::Void)   // AX/r8= AL&AH
+I(IDIVrr16    , "idivw", 0xF7,             0, X86II::MRMS7r     | X86II::Void |  // DA/r16=AX&DX
+                                              X86II::OpSize)
+I(IDIVrr32    , "idivl", 0xF7,             0, X86II::MRMS7r     | X86II::Void)   // DA/r32=EAX&DX
 
 // Logical operators
 I(ANDrr8      , "andb",  0x20,             0, X86II::MRMDestReg)                 // R8  &= R8
