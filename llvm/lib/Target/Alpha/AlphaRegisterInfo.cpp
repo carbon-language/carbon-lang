@@ -196,7 +196,7 @@ AlphaRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const {
     //insert the new
     MachineInstr* nMI=BuildMI(Alpha::LDAH, 2, Alpha::R28)
       .addImm(getUpper16(Offset)).addReg(FP ? Alpha::R15 : Alpha::R30);
-    MBB.insert(--II, nMI);
+    MBB.insert(II, nMI);
   } else {
     MI.SetMachineOperandConst(i, MachineOperand::MO_SignExtendedImmed, Offset);
   }
