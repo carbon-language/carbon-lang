@@ -39,12 +39,11 @@ class DerivedType : public Type, public AbstractTypeUser {
   // AbstractTypeUsers - Implement a list of the users that need to be notified
   // if I am a type, and I get resolved into a more concrete type.
   //
-  ///// FIXME: kill mutable nonsense when Type's are not const
+  ///// FIXME: kill mutable nonsense when Types are not const
   mutable std::vector<AbstractTypeUser *> AbstractTypeUsers;
 
 protected:
-  DerivedType(PrimitiveID id) : Type("", id), RefCount(0) {
-  }
+  DerivedType(PrimitiveID id) : Type("", id), RefCount(0) {}
   ~DerivedType() {
     assert(AbstractTypeUsers.empty());
   }
