@@ -17,6 +17,7 @@
 #include "llvm/Analysis/ConstantsScanner.h"
 #include "llvm/Support/InstVisitor.h"
 #include "llvm/Support/InstIterator.h"
+#include "llvm/Support/CallSite.h"
 #include "Support/StringExtras.h"
 #include "Support/STLExtras.h"
 #include <algorithm>
@@ -30,7 +31,7 @@ namespace {
     const Module *TheModule;
     std::map<const Type *, std::string> TypeNames;
     std::set<const Value*> MangledGlobals;
-    bool needsMalloc;
+    bool needsMalloc, emittedInvoke;
 
     std::map<const ConstantFP *, unsigned> FPConstantMap;
   public:
@@ -117,12 +118,14 @@ namespace {
     void visitReturnInst(ReturnInst &I);
     void visitBranchInst(BranchInst &I);
     void visitSwitchInst(SwitchInst &I);
+    void visitInvokeInst(InvokeInst &I);
 
     void visitPHINode(PHINode &I);
     void visitBinaryOperator(Instruction &I);
 
     void visitCastInst (CastInst &I);
     void visitCallInst (CallInst &I);
+    void visitCallSite (CallSite CS);
     void visitShiftInst(ShiftInst &I) { visitBinaryOperator(I); }
 
     void visitMallocInst(MallocInst &I);
@@ -589,7 +592,7 @@ static void generateCompilerSpecificCode(std::ostream& Out) {
 
   // We output GCC specific attributes to preserve 'linkonce'ness on globals.
   // If we aren't being compiled with GCC, just drop these attributes.
-  Out << "#ifndef __GNUC__\n"
+  Out << "#ifndef __GNUC__  /* Can only support \"linkonce\" vars with GCC */\n"
       << "#define __attribute__(X)\n"
       << "#endif\n";
 }
@@ -628,6 +631,11 @@ void CWriter::printModule(Module *M) {
       << "typedef unsigned long long ConstantDoubleTy;\n"
       << "typedef unsigned int        ConstantFloatTy;\n"
     
+      << "\n\n/* Support for the invoke instruction */\n"
+      << "extern struct __llvm_jmpbuf_list_t {\n"
+      << "  jmp_buf buf; struct __llvm_jmpbuf_list_t *next;\n"
+      << "} *__llvm_jmpbuf_list;\n"
+
       << "\n\n/* Global Declarations */\n";
 
   // First output all the declarations for the program, because C requires
@@ -703,10 +711,19 @@ void CWriter::printModule(Module *M) {
   }
 
   // Output all of the functions...
+  emittedInvoke = false;
   if (!M->empty()) {
     Out << "\n\n/* Function Bodies */\n";
     for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I)
       printFunction(I);
+  }
+
+  // If the program included an invoke instruction, we need to output the
+  // support code for it here!
+  if (emittedInvoke) {
+    Out << "\n/* More support for the invoke instruction */\n"
+        << "struct __llvm_jmpbuf_list_t *__llvm_jmpbuf_list "
+        << "__attribute__((common)) = 0;\n";
   }
 }
 
@@ -982,6 +999,24 @@ void CWriter::visitSwitchInst(SwitchInst &SI) {
   Out << "  }\n";
 }
 
+void CWriter::visitInvokeInst(InvokeInst &II) {
+  Out << "  {\n"
+      << "    struct __llvm_jmpbuf_list_t Entry;\n"
+      << "    Entry.next = __llvm_jmpbuf_list;\n"
+      << "    if (setjmp(Entry.buf)) {\n"
+      << "      __llvm_jmpbuf_list = Entry.next;\n";
+  printBranchToBlock(II.getParent(), II.getExceptionalDest(), 4);
+  Out << "    }\n"
+      << "    __llvm_jmpbuf_list = &Entry;\n"
+      << "    ";
+  visitCallSite(&II);
+  Out << ";\n"
+      << "    __llvm_jmpbuf_list = Entry.next;\n"
+      << "  }\n";
+  printBranchToBlock(II.getParent(), II.getNormalDest(), 0);
+  emittedInvoke = true;
+}
+
 
 static bool isGotoCodeNeccessary(BasicBlock *From, BasicBlock *To) {
   // If PHI nodes need copies, we need the copy code...
@@ -994,7 +1029,7 @@ static bool isGotoCodeNeccessary(BasicBlock *From, BasicBlock *To) {
 }
 
 void CWriter::printBranchToBlock(BasicBlock *CurBB, BasicBlock *Succ,
-                                           unsigned Indent) {
+                                 unsigned Indent) {
   for (BasicBlock::iterator I = Succ->begin();
        PHINode *PN = dyn_cast<PHINode>(I); ++I) {
     //  now we have to do the printing
@@ -1156,20 +1191,24 @@ void CWriter::visitCallInst(CallInst &I) {
         return;
       }
     }
+  visitCallSite(&I);
+}
 
-  const PointerType  *PTy   = cast<PointerType>(I.getCalledValue()->getType());
+void CWriter::visitCallSite(CallSite CS) {
+  const PointerType  *PTy   = cast<PointerType>(CS.getCalledValue()->getType());
   const FunctionType *FTy   = cast<FunctionType>(PTy->getElementType());
   const Type         *RetTy = FTy->getReturnType();
   
-  writeOperand(I.getOperand(0));
+  writeOperand(CS.getCalledValue());
   Out << "(";
 
-  if (I.getNumOperands() > 1) {
-    writeOperand(I.getOperand(1));
+  if (CS.arg_begin() != CS.arg_end()) {
+    CallSite::arg_iterator AI = CS.arg_begin(), AE = CS.arg_end();
+    writeOperand(*AI);
 
-    for (unsigned op = 2, Eop = I.getNumOperands(); op != Eop; ++op) {
+    for (++AI; AI != AE; ++AI) {
       Out << ", ";
-      writeOperand(I.getOperand(op));
+      writeOperand(*AI);
     }
   }
   Out << ")";
