@@ -85,7 +85,7 @@ class UltraSparcInstrInfo : public MachineInstrInfo {
 public:
   /*ctor*/	UltraSparcInstrInfo();
   
-  virtual bool		hasResultInterlock	(MachineOpCode opCode)
+  virtual bool		hasResultInterlock	(MachineOpCode opCode) const
   {
     // All UltraSPARC instructions have interlocks (note that delay slots
     // are not considered here).
@@ -96,10 +96,19 @@ public:
     return (opCode == FCMPS || opCode == FCMPD || opCode == FCMPQ);
   }
 
-
-
-
+  //-------------------------------------------------------------------------
+  // Code generation support for creating individual machine instructions
+  //-------------------------------------------------------------------------
   
+  // Create an instruction sequence to put the constant `val' into
+  // the virtual register `dest'.  The generated instructions are
+  // returned in `minstrVec'.  Any temporary registers (TmpInstruction)
+  // created are returned in `tempVec'.
+  // 
+  virtual void  CreateCodeToLoadConst(Value* val,
+                                      Instruction* dest,
+                                      vector<MachineInstr*>& minstrVec,
+                                      vector<TmpInstruction*>& tempVec) const;
 };
 
 

@@ -9,8 +9,13 @@
 
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/DataTypes.h"
+#include <vector>
 
 class MachineInstrDescriptor;
+class TmpInstruction;
+class MachineInstr;
+class Value;
+class Instruction;
 
 
 typedef int InstrSchedClass;
@@ -211,6 +216,21 @@ public:
     isSignExtended = getDescriptor(opCode).immedIsSignExtended;
     return getDescriptor(opCode).maxImmedConst;
   }
+
+  //-------------------------------------------------------------------------
+  // Code generation support for creating individual machine instructions
+  //-------------------------------------------------------------------------
+  
+  // Create an instruction sequence to put the constant `val' into
+  // the virtual register `dest'.  `val' may be a ConstPoolVal or a
+  // GlobalValue, viz., the constant address of a global variable or function.
+  // The generated instructions are returned in `minstrVec'.
+  // Any temp. registers (TmpInstruction) created are returned in `tempVec'.
+  // 
+  virtual void  CreateCodeToLoadConst(Value* val,
+                                      Instruction* dest,
+                                      vector<MachineInstr*>& minstrVec,
+                                      vector<TmpInstruction*>& temps) const =0;
 };
 
 #endif
