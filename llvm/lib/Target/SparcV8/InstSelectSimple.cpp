@@ -702,6 +702,9 @@ void V8ISel::visitReturnInst(ReturnInst &I) {
         // Schlep it over into i0 (where it will become o0 after restore).
         BuildMI (BB, V8::ORrr, 2, V8::I0).addReg(V8::G0).addReg(RetValReg);
         break;
+      case cFloat:
+        BuildMI (BB, V8::FMOVS, 2, V8::F0).addReg(RetValReg);
+        break;
       default:
         std::cerr << "Return instruction of this type not handled: " << I;
         abort ();
