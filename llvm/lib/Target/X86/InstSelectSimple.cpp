@@ -1107,6 +1107,7 @@ void ISel::LowerUnknownIntrinsicFunctionCalls(Function &F) {
       if (CallInst *CI = dyn_cast<CallInst>(I++))
         if (Function *F = CI->getCalledFunction())
           switch (F->getIntrinsicID()) {
+          case Intrinsic::not_intrinsic:
           case Intrinsic::va_start:
           case Intrinsic::va_copy:
           case Intrinsic::va_end:

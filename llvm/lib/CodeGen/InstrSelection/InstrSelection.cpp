@@ -132,6 +132,7 @@ bool InstructionSelection::runOnFunction(Function &F) {
 #undef va_start
 #undef va_copy
 #undef va_end
+          case Intrinsic::not_intrinsic:
           case Intrinsic::va_start:
           case Intrinsic::va_copy:
           case Intrinsic::va_end:
