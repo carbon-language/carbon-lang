@@ -195,7 +195,7 @@ void SymbolTable::refineAbstractType(const DerivedType *OldType,
   // Search to see if we have any values of the type oldtype.  If so, we need to
   // move them into the newtype plane...
   iterator TPI = find(OldType);
-  if (OldType != NewType && TPI != end()) {
+  if (TPI != end()) {
     // Get a handle to the new type plane...
     iterator NewTypeIt = find(NewType);
     if (NewTypeIt == super::end()) {      // If no plane exists, add one
@@ -281,12 +281,6 @@ void SymbolTable::refineAbstractType(const DerivedType *OldType,
 
     // Remove the plane that is no longer used
     erase(TPI);
-  } else if (TPI != end()) {
-    assert(OldType == NewType);
-#if DEBUG_ABSTYPE
-    std::cerr << "Removing SELF type " << OldType->getDescription() << "\n";
-#endif
-    OldType->removeAbstractTypeUser(this);
   }
 
   TPI = find(Type::TypeTy);
@@ -312,6 +306,27 @@ void SymbolTable::refineAbstractType(const DerivedType *OldType,
           cast<DerivedType>(NewType)->addAbstractTypeUser(this);
         }
       }
+  }
+}
+
+void SymbolTable::typeBecameConcrete(const DerivedType *AbsTy) {
+  iterator TPI = find(AbsTy);
+
+  // If there are any values in the symbol table of this type, then the type
+  // plan is a use of the abstract type which must be dropped.
+  if (TPI != end())
+    AbsTy->removeAbstractTypeUser(this);
+
+  TPI = find(Type::TypeTy);
+  if (TPI != end()) {  
+    // Loop over all of the types in the symbol table, dropping any abstract
+    // type user entries for AbsTy which occur because there are names for the
+    // type.
+    //
+    VarMap &TyPlane = TPI->second;
+    for (VarMap::iterator I = TyPlane.begin(), E = TyPlane.end(); I != E; ++I)
+      if (I->second == (Value*)AbsTy)   // FIXME when Types aren't const.
+        AbsTy->removeAbstractTypeUser(this);
   }
 }
 

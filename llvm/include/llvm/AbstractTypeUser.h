@@ -38,24 +38,20 @@ protected:
   virtual ~AbstractTypeUser() {}                        // Derive from me
 public:
 
-  // refineAbstractType - The callback method invoked when an abstract type
-  // has been found to be more concrete.  A class must override this method to
-  // update its internal state to reference NewType instead of OldType.  Soon
-  // after this method is invoked, OldType shall be deleted, so referencing it
-  // is quite unwise.
-  //
-  // Another case that is important to consider is when a type is refined, but
-  // stays in the same place in memory.  In this case OldTy will equal NewTy.
-  // This callback just notifies ATU's that the underlying structure of the type
-  // has changed... but any previously used properties are still valid.
-  //
-  // Note that it is possible to refine a type with parameters OldTy==NewTy, and
-  // OldTy is no longer abstract.  In this case, abstract type users should
-  // release their hold on a type, because it went from being abstract to
-  // concrete.
-  //
+  /// refineAbstractType - The callback method invoked when an abstract type is
+  /// resolved to another type.  An object must override this method to update
+  /// its internal state to reference NewType instead of OldType.
+  ///
   virtual void refineAbstractType(const DerivedType *OldTy,
 				  const Type *NewTy) = 0;
+
+  /// The other case which AbstractTypeUsers must be aware of is when a type
+  /// makes the transition from being abstract (where it has clients on it's
+  /// AbstractTypeUsers list) to concrete (where it does not).  This method
+  /// notifies ATU's when this occurs for a type.
+  ///
+  virtual void typeBecameConcrete(const DerivedType *AbsTy) = 0;
+
   // for debugging...
   virtual void dump() const = 0;
 };

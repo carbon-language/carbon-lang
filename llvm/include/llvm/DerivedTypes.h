@@ -26,9 +26,6 @@ class DerivedType : public Type, public AbstractTypeUser {
   ///
   mutable unsigned RefCount;
   
-  // isRefining - Used for recursive types
-  char isRefining;
-
   // AbstractTypeUsers - Implement a list of the users that need to be notified
   // if I am a type, and I get resolved into a more concrete type.
   //
@@ -36,17 +33,17 @@ class DerivedType : public Type, public AbstractTypeUser {
   mutable std::vector<AbstractTypeUser *> AbstractTypeUsers;
 
 protected:
-  DerivedType(PrimitiveID id) : Type("", id), RefCount(0), isRefining(0) {
+  DerivedType(PrimitiveID id) : Type("", id), RefCount(0) {
   }
   ~DerivedType() {
     assert(AbstractTypeUsers.empty());
   }
 
-  // typeIsRefined - Notify AbstractTypeUsers of this type that the current type
-  // has been refined a bit.  The pointer is still valid and still should be
-  // used, but the subtypes have changed.
-  //
-  void typeIsRefined();
+  /// notifyUsesThatTypeBecameConcrete - Notify AbstractTypeUsers of this type
+  /// that the current type has transitioned from being abstract to being
+  /// concrete.
+  ///
+  void notifyUsesThatTypeBecameConcrete();
 
   // dropAllTypeUses - When this (abstract) type is resolved to be equal to
   // another (more concrete) type, we must eliminate all references to other
@@ -146,6 +143,11 @@ protected:
   virtual void dropAllTypeUses(bool inMap);
 
 public:
+  /// FunctionType::get - This static method is the primary way of constructing
+  /// a FunctionType
+  static FunctionType *get(const Type *Result,
+                           const std::vector<const Type*> &Params,
+                           bool isVarArg);
 
   inline bool isVarArg() const { return isVarArgs; }
   inline const Type *getReturnType() const { return ResultType; }
@@ -166,16 +168,10 @@ public:
   }
   virtual unsigned getNumContainedTypes() const { return ParamTys.size()+1; }
 
-  // refineAbstractType - Called when a contained type is found to be more
-  // concrete - this could potentially change us from an abstract type to a
-  // concrete type.
-  //
+  // Implement the AbstractTypeUser interface.
   virtual void refineAbstractType(const DerivedType *OldTy, const Type *NewTy);
-
-  static FunctionType *get(const Type *Result,
-                           const std::vector<const Type*> &Params,
-                           bool isVarArg);
-
+  virtual void typeBecameConcrete(const DerivedType *AbsTy);
+  
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const FunctionType *T) { return true; }
   static inline bool classof(const Type *T) {
@@ -244,6 +240,10 @@ protected:
   virtual void dropAllTypeUses(bool inMap);
   
 public:
+  /// StructType::get - This static method is the primary way to create a
+  /// StructType.
+  static StructType *get(const std::vector<const Type*> &Params);
+
   inline const ElementTypes &getElementTypes() const { return ETypes; }
 
   virtual const Type *getContainedType(unsigned i) const { 
@@ -262,13 +262,9 @@ public:
   //
   virtual const Type *getIndexType() const { return Type::UByteTy; }
 
-  // refineAbstractType - Called when a contained type is found to be more
-  // concrete - this could potentially change us from an abstract type to a
-  // concrete type.
-  //
+  // Implement the AbstractTypeUser interface.
   virtual void refineAbstractType(const DerivedType *OldTy, const Type *NewTy);
-
-  static StructType *get(const std::vector<const Type*> &Params);
+  virtual void typeBecameConcrete(const DerivedType *AbsTy);
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const StructType *T) { return true; }
@@ -353,15 +349,15 @@ protected:
   virtual void dropAllTypeUses(bool inMap);
 
 public:
+  /// ArrayType::get - This static method is the primary way to construct an
+  /// ArrayType
+  static ArrayType *get(const Type *ElementType, unsigned NumElements);
+
   inline unsigned    getNumElements() const { return NumElements; }
 
-  // refineAbstractType - Called when a contained type is found to be more
-  // concrete - this could potentially change us from an abstract type to a
-  // concrete type.
-  //
+  // Implement the AbstractTypeUser interface.
   virtual void refineAbstractType(const DerivedType *OldTy, const Type *NewTy);
-
-  static ArrayType *get(const Type *ElementType, unsigned NumElements);
+  virtual void typeBecameConcrete(const DerivedType *AbsTy);
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const ArrayType *T) { return true; }
@@ -393,16 +389,14 @@ protected:
   // type from the internal tables of available types.
   virtual void dropAllTypeUses(bool inMap);
 public:
-  // PointerType::get - Named constructor for pointer types...
+  /// PointerType::get - This is the only way to construct a new pointer type.
   static PointerType *get(const Type *ElementType);
 
-  // refineAbstractType - Called when a contained type is found to be more
-  // concrete - this could potentially change us from an abstract type to a
-  // concrete type.
-  //
+  // Implement the AbstractTypeUser interface.
   virtual void refineAbstractType(const DerivedType *OldTy, const Type *NewTy);
+  virtual void typeBecameConcrete(const DerivedType *AbsTy);
 
-  // Methods for support type inquiry through isa, cast, and dyn_cast:
+  // Implement support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const PointerType *T) { return true; }
   static inline bool classof(const Type *T) {
     return T->getPrimitiveID() == PointerTyID;
@@ -430,23 +424,20 @@ protected:
   virtual void dropAllTypeUses(bool inMap) {}  // No type uses
 
 public:
-
-  // get - Static factory method for the OpaqueType class...
+  // OpaqueType::get - Static factory method for the OpaqueType class...
   static OpaqueType *get() {
     return new OpaqueType();           // All opaque types are distinct
   }
 
-  // refineAbstractType - Called when a contained type is found to be more
-  // concrete - this could potentially change us from an abstract type to a
-  // concrete type.
-  //
+  // Implement the AbstractTypeUser interface.
   virtual void refineAbstractType(const DerivedType *OldTy, const Type *NewTy) {
-    // This class never uses other types!
-    abort();
+    abort();   // FIXME: this is not really an AbstractTypeUser!
+  }
+  virtual void typeBecameConcrete(const DerivedType *AbsTy) {
+    abort();   // FIXME: this is not really an AbstractTypeUser!
   }
 
-
-  // Methods for support type inquiry through isa, cast, and dyn_cast:
+  // Implement support for type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const OpaqueType *T) { return true; }
   static inline bool classof(const Type *T) {
     return T->getPrimitiveID() == OpaqueTyID;

@@ -118,6 +118,7 @@ private:
 
   // This function is called when one of the types in the type plane are refined
   virtual void refineAbstractType(const DerivedType *OldTy, const Type *NewTy);
+  virtual void typeBecameConcrete(const DerivedType *AbsTy);
 };
 
 #endif

@@ -498,8 +498,8 @@ static bool TypesEqual(const Type *Ty, const Type *Ty2) {
 // our map if an abstract type gets refined somehow...
 //
 template<class ValType, class TypeClass>
-class TypeMap : public AbstractTypeUser {
-  typedef std::map<ValType, PATypeHandle> MapTy;
+class TypeMap {
+  typedef std::map<ValType, TypeClass *> MapTy;
   MapTy Map;
 public:
   typedef typename MapTy::iterator iterator;
@@ -507,11 +507,11 @@ public:
 
   inline TypeClass *get(const ValType &V) {
     iterator I = Map.find(V);
-    return I != Map.end() ? (TypeClass*)I->second.get() : 0;
+    return I != Map.end() ? I->second : 0;
   }
 
   inline void add(const ValType &V, TypeClass *T) {
-    Map.insert(std::make_pair(V, PATypeHandle(T, this)));
+    Map.insert(std::make_pair(V, T));
     print("add");
   }
 
@@ -519,57 +519,48 @@ public:
     iterator I = Map.find(ValType::get(Ty));
     if (I == Map.end()) print("ERROR!");
     assert(I != Map.end() && "Didn't find type entry!");
-    assert(T->second == Ty && "Type entry wrong?");
+    assert(I->second == Ty && "Type entry wrong?");
     return I;
   }
 
 
-  void finishRefinement(TypeClass *Ty) {
-    //const TypeClass *Ty = (const TypeClass*)TyIt->second.get();
+  void finishRefinement(TypeClass *Ty, iterator TyIt) {
+    // FIXME: this could eventually just pass in the iterator!
+    assert(TyIt->second == Ty && "Did not specify entry for the correct type!");
+
+    // The old record is now out-of-date, because one of the children has been
+    // updated.  Remove the obsolete entry from the map.
+    Map.erase(TyIt);
+
+    // Now we check to see if there is an existing entry in the table which is
+    // structurally identical to the newly refined type.  If so, this type gets
+    // refined to the pre-existing type.
+    //
     for (iterator I = Map.begin(), E = Map.end(); I != E; ++I)
-      if (I->second.get() != Ty && TypesEqual(Ty, I->second.get())) {
+      if (TypesEqual(Ty, I->second)) {
         assert(Ty->isAbstract() && "Replacing a non-abstract type?");
-        TypeClass *NewTy = (TypeClass*)I->second.get();
-#if 0
-        //Map.erase(TyIt);                // The old entry is now dead!
-#endif
+        TypeClass *NewTy = I->second;
+
         // Refined to a different type altogether?
         Ty->refineAbstractTypeToInternal(NewTy, false);
         return;
       }
 
+    // If there is no existing type of the same structure, we reinsert an
+    // updated record into the map.
+    Map.insert(std::make_pair(ValType::get(Ty), Ty));
+
     // If the type is currently thought to be abstract, rescan all of our
     // subtypes to see if the type has just become concrete!
-    if (Ty->isAbstract())
+    if (Ty->isAbstract()) {
       Ty->setAbstract(Ty->isTypeAbstract());
 
-    // This method may be called with either an abstract or a concrete type.
-    // Concrete types might get refined if a subelement type got refined which
-    // was previously marked as abstract, but was realized to be concrete.  This
-    // can happen for recursive types.
-    Ty->typeIsRefined();                     // Same type, different contents...
+      // If the type just became concrete, notify all users!
+      if (!Ty->isAbstract())
+        Ty->notifyUsesThatTypeBecameConcrete();
+    }
   }
-
-  // refineAbstractType - This is called when one of the contained abstract
-  // types gets refined... this simply removes the abstract type from our table.
-  // We expect that whoever refined the type will add it back to the table,
-  // corrected.
-  //
-  virtual void refineAbstractType(const DerivedType *OldTy, const Type *NewTy) {
-#ifdef DEBUG_MERGE_TYPES
-    std::cerr << "Removing Old type from Tab: " << (void*)OldTy << ", "
-              << *OldTy << "  replacement == " << (void*)NewTy
-              << ", " << *NewTy << "\n";
-#endif
-    for (iterator I = Map.begin(), E = Map.end(); I != E; ++I)
-      if (I->second.get() == OldTy) {
-        // Check to see if the type just became concrete.  If so, remove self
-        // from user list.
-        I->second.removeUserFromConcrete();
-        I->second = cast<TypeClass>(NewTy);
-      }
-  }
-
+  
   void remove(const ValType &OldVal) {
     iterator I = Map.find(OldVal);
     assert(I != Map.end() && "TypeMap::remove, element not found!");
@@ -587,56 +578,12 @@ public:
     unsigned i = 0;
     for (typename MapTy::const_iterator I = Map.begin(), E = Map.end();
          I != E; ++I)
-      std::cerr << " " << (++i) << ". " << (void*)I->second.get() << " " 
-                << *I->second.get() << "\n";
+      std::cerr << " " << (++i) << ". " << (void*)I->second << " " 
+                << *I->second << "\n";
 #endif
   }
 
   void dump() const { print("dump output"); }
-};
-
-
-// ValTypeBase - This is the base class that is used by the various
-// instantiations of TypeMap.  This class is an AbstractType user that notifies
-// the underlying TypeMap when it gets modified.
-//
-template<class ValType, class TypeClass>
-class ValTypeBase : public AbstractTypeUser {
-  TypeMap<ValType, TypeClass> &MyTable;
-protected:
-  inline ValTypeBase(TypeMap<ValType, TypeClass> &tab) : MyTable(tab) {}
-
-  // Subclass should override this... to update self as usual
-  virtual void doRefinement(const DerivedType *OldTy, const Type *NewTy) = 0;
-
-  // typeBecameConcrete - This callback occurs when a contained type refines
-  // to itself, but becomes concrete in the process.  Our subclass should remove
-  // itself from the ATU list of the specified type.
-  //
-  virtual void typeBecameConcrete(const DerivedType *Ty) = 0;
-  
-  virtual void refineAbstractType(const DerivedType *OldTy, const Type *NewTy) {
-    assert(OldTy == NewTy || OldTy->isAbstract());
-
-    if (!OldTy->isAbstract())
-      typeBecameConcrete(OldTy);
-
-    TypeMap<ValType, TypeClass> &Table = MyTable;     // Copy MyTable reference
-    ValType Tmp(*(ValType*)this);                     // Copy this.
-    PATypeHandle OldType(Table.get(*(ValType*)this), this);
-    Table.remove(*(ValType*)this);                    // Destroy's this!
-
-    // Refine temporary to new state...
-    if (OldTy != NewTy)
-      Tmp.doRefinement(OldTy, NewTy); 
-
-    // FIXME: when types are not const!
-    Table.add((ValType&)Tmp, (TypeClass*)OldType.get());
-  }
-
-  void dump() const {
-    std::cerr << "ValTypeBase instance!\n";
-  }
 };
 
 
@@ -647,52 +594,42 @@ protected:
 
 // FunctionValType - Define a class to hold the key that goes into the TypeMap
 //
-class FunctionValType : public ValTypeBase<FunctionValType, FunctionType> {
-  PATypeHandle RetTy;
-  std::vector<PATypeHandle> ArgTypes;
+class FunctionValType {
+  const Type *RetTy;
+  std::vector<const Type*> ArgTypes;
   bool isVarArg;
 public:
   FunctionValType(const Type *ret, const std::vector<const Type*> &args,
-		bool IVA, TypeMap<FunctionValType, FunctionType> &Tab)
-    : ValTypeBase<FunctionValType, FunctionType>(Tab), RetTy(ret, this),
-      isVarArg(IVA) {
+                  bool IVA) : RetTy(ret), isVarArg(IVA) {
     for (unsigned i = 0; i < args.size(); ++i)
-      ArgTypes.push_back(PATypeHandle(args[i], this));
+      ArgTypes.push_back(args[i]);
   }
 
   // We *MUST* have an explicit copy ctor so that the TypeHandles think that
   // this FunctionValType owns them, not the old one!
   //
-  FunctionValType(const FunctionValType &MVT) 
-    : ValTypeBase<FunctionValType, FunctionType>(MVT), RetTy(MVT.RetTy, this),
-      isVarArg(MVT.isVarArg) {
+  FunctionValType(const FunctionValType &MVT)
+    : RetTy(MVT.RetTy), isVarArg(MVT.isVarArg) {
     ArgTypes.reserve(MVT.ArgTypes.size());
     for (unsigned i = 0; i < MVT.ArgTypes.size(); ++i)
-      ArgTypes.push_back(PATypeHandle(MVT.ArgTypes[i], this));
+      ArgTypes.push_back(MVT.ArgTypes[i]);
   }
 
   static FunctionValType get(const FunctionType *FT);
 
   // Subclass should override this... to update self as usual
-  virtual void doRefinement(const DerivedType *OldType, const Type *NewType) {
+  void doRefinement(const DerivedType *OldType, const Type *NewType) {
     if (RetTy == OldType) RetTy = NewType;
     for (unsigned i = 0, e = ArgTypes.size(); i != e; ++i)
       if (ArgTypes[i] == OldType) ArgTypes[i] = NewType;
   }
 
-  virtual void typeBecameConcrete(const DerivedType *Ty) {
-    if (RetTy == Ty) RetTy.removeUserFromConcrete();
-
-    for (unsigned i = 0; i < ArgTypes.size(); ++i)
-      if (ArgTypes[i] == Ty) ArgTypes[i].removeUserFromConcrete();
-  }
-
   inline bool operator<(const FunctionValType &MTV) const {
-    if (RetTy.get() < MTV.RetTy.get()) return true;
-    if (RetTy.get() > MTV.RetTy.get()) return false;
+    if (RetTy < MTV.RetTy) return true;
+    if (RetTy > MTV.RetTy) return false;
 
     if (ArgTypes < MTV.ArgTypes) return true;
-    return (ArgTypes == MTV.ArgTypes) && isVarArg < MTV.isVarArg;
+    return ArgTypes == MTV.ArgTypes && isVarArg < MTV.isVarArg;
   }
 };
 
@@ -705,8 +642,7 @@ FunctionValType FunctionValType::get(const FunctionType *FT) {
   ParamTypes.reserve(FT->getParamTypes().size());
   for (unsigned i = 0, e = FT->getParamTypes().size(); i != e; ++i)
     ParamTypes.push_back(FT->getParamType(i));
-  return FunctionValType(FT->getReturnType(), ParamTypes, FT->isVarArg(),
-                         FunctionTypes);
+  return FunctionValType(FT->getReturnType(), ParamTypes, FT->isVarArg());
 }
 
 
@@ -714,7 +650,7 @@ FunctionValType FunctionValType::get(const FunctionType *FT) {
 FunctionType *FunctionType::get(const Type *ReturnType, 
                                 const std::vector<const Type*> &Params,
                                 bool isVarArg) {
-  FunctionValType VT(ReturnType, Params, isVarArg, FunctionTypes);
+  FunctionValType VT(ReturnType, Params, isVarArg);
   FunctionType *MT = FunctionTypes.get(VT);
   if (MT) return MT;
 
@@ -739,52 +675,40 @@ void FunctionType::dropAllTypeUses(bool inMap) {
 //===----------------------------------------------------------------------===//
 // Array Type Factory...
 //
-class ArrayValType : public ValTypeBase<ArrayValType, ArrayType> {
-  PATypeHandle ValTy;
+class ArrayValType {
+  const Type *ValTy;
   unsigned Size;
 public:
-  ArrayValType(const Type *val, int sz, TypeMap<ArrayValType, ArrayType> &Tab)
-    : ValTypeBase<ArrayValType, ArrayType>(Tab), ValTy(val, this), Size(sz) {}
+  ArrayValType(const Type *val, int sz) : ValTy(val), Size(sz) {}
 
   // We *MUST* have an explicit copy ctor so that the ValTy thinks that this
   // ArrayValType owns it, not the old one!
   //
-  ArrayValType(const ArrayValType &AVT) 
-    : ValTypeBase<ArrayValType, ArrayType>(AVT), ValTy(AVT.ValTy, this),
-      Size(AVT.Size) {}
+  ArrayValType(const ArrayValType &AVT) : ValTy(AVT.ValTy), Size(AVT.Size) {}
 
-  static ArrayValType get(const ArrayType *AT);
-
+  static ArrayValType get(const ArrayType *AT) {
+    return ArrayValType(AT->getElementType(), AT->getNumElements());
+  }
 
   // Subclass should override this... to update self as usual
-  virtual void doRefinement(const DerivedType *OldType, const Type *NewType) {
+  void doRefinement(const DerivedType *OldType, const Type *NewType) {
     assert(ValTy == OldType);
     ValTy = NewType;
   }
 
-  virtual void typeBecameConcrete(const DerivedType *Ty) {
-    assert(ValTy == Ty &&
-           "Contained type became concrete but we're not using it!");
-    ValTy.removeUserFromConcrete();
-  }
-
   inline bool operator<(const ArrayValType &MTV) const {
     if (Size < MTV.Size) return true;
-    return Size == MTV.Size && ValTy.get() < MTV.ValTy.get();
+    return Size == MTV.Size && ValTy < MTV.ValTy;
   }
 };
 
 static TypeMap<ArrayValType, ArrayType> ArrayTypes;
 
-ArrayValType ArrayValType::get(const ArrayType *AT) {
-  return ArrayValType(AT->getElementType(), AT->getNumElements(), ArrayTypes);
-}
-
 
 ArrayType *ArrayType::get(const Type *ElementType, unsigned NumElements) {
   assert(ElementType && "Can't get array of null types!");
 
-  ArrayValType AVT(ElementType, NumElements, ArrayTypes);
+  ArrayValType AVT(ElementType, NumElements);
   ArrayType *AT = ArrayTypes.get(AVT);
   if (AT) return AT;           // Found a match, return it!
 
@@ -813,39 +737,27 @@ void ArrayType::dropAllTypeUses(bool inMap) {
 
 // StructValType - Define a class to hold the key that goes into the TypeMap
 //
-class StructValType : public ValTypeBase<StructValType, StructType> {
-  std::vector<PATypeHandle> ElTypes;
+class StructValType {
+  std::vector<const Type*> ElTypes;
 public:
-  StructValType(const std::vector<const Type*> &args,
-		TypeMap<StructValType, StructType> &Tab)
-    : ValTypeBase<StructValType, StructType>(Tab) {
-    ElTypes.reserve(args.size());
-    for (unsigned i = 0, e = args.size(); i != e; ++i)
-      ElTypes.push_back(PATypeHandle(args[i], this));
-  }
+  StructValType(const std::vector<const Type*> &args) : ElTypes(args) {}
 
-  // We *MUST* have an explicit copy ctor so that the TypeHandles think that
-  // this StructValType owns them, not the old one!
-  //
-  StructValType(const StructValType &SVT) 
-    : ValTypeBase<StructValType, StructType>(SVT){
-    ElTypes.reserve(SVT.ElTypes.size());
-    for (unsigned i = 0, e = SVT.ElTypes.size(); i != e; ++i)
-      ElTypes.push_back(PATypeHandle(SVT.ElTypes[i], this));
-  }
+  // Explicit copy ctor not needed
+  StructValType(const StructValType &SVT) : ElTypes(SVT.ElTypes) {}
 
-  static StructValType get(const StructType *ST);
+  static StructValType get(const StructType *ST) {
+    std::vector<const Type *> ElTypes;
+    ElTypes.reserve(ST->getElementTypes().size());
+    for (unsigned i = 0, e = ST->getElementTypes().size(); i != e; ++i)
+      ElTypes.push_back(ST->getElementTypes()[i]);
+    
+    return StructValType(ElTypes);
+  }
 
   // Subclass should override this... to update self as usual
-  virtual void doRefinement(const DerivedType *OldType, const Type *NewType) {
+  void doRefinement(const DerivedType *OldType, const Type *NewType) {
     for (unsigned i = 0; i < ElTypes.size(); ++i)
       if (ElTypes[i] == OldType) ElTypes[i] = NewType;
-  }
-
-  virtual void typeBecameConcrete(const DerivedType *Ty) {
-    for (unsigned i = 0, e = ElTypes.size(); i != e; ++i)
-      if (ElTypes[i] == Ty)
-        ElTypes[i].removeUserFromConcrete();
   }
 
   inline bool operator<(const StructValType &STV) const {
@@ -855,19 +767,8 @@ public:
 
 static TypeMap<StructValType, StructType> StructTypes;
 
-StructValType StructValType::get(const StructType *ST) {
-  std::vector<const Type *> ElTypes;
-  ElTypes.reserve(ST->getElementTypes().size());
-  for (unsigned i = 0, e = ST->getElementTypes().size(); i != e; ++i)
-    ElTypes.push_back(ST->getElementTypes()[i]);
-  
-  return StructValType(ElTypes, StructTypes);
-}
-
-
-
 StructType *StructType::get(const std::vector<const Type*> &ETypes) {
-  StructValType STV(ETypes, StructTypes);
+  StructValType STV(ETypes);
   StructType *ST = StructTypes.get(STV);
   if (ST) return ST;
 
@@ -896,47 +797,34 @@ void StructType::dropAllTypeUses(bool inMap) {
 
 // PointerValType - Define a class to hold the key that goes into the TypeMap
 //
-class PointerValType : public ValTypeBase<PointerValType, PointerType> {
-  PATypeHandle ValTy;
+class PointerValType {
+  const Type *ValTy;
 public:
-  PointerValType(const Type *val, TypeMap<PointerValType, PointerType> &Tab)
-    : ValTypeBase<PointerValType, PointerType>(Tab), ValTy(val, this) {}
+  PointerValType(const Type *val) : ValTy(val) {}
 
-  // We *MUST* have an explicit copy ctor so that the ValTy thinks that this
-  // PointerValType owns it, not the old one!
-  //
-  PointerValType(const PointerValType &PVT) 
-    : ValTypeBase<PointerValType, PointerType>(PVT), ValTy(PVT.ValTy, this) {}
+  // FIXME: delete explicit copy ctor
+  PointerValType(const PointerValType &PVT) : ValTy(PVT.ValTy) {}
 
-  static PointerValType get(const PointerType *PT);
+  static PointerValType get(const PointerType *PT) {
+    return PointerValType(PT->getElementType());
+  }
 
   // Subclass should override this... to update self as usual
-  virtual void doRefinement(const DerivedType *OldType, const Type *NewType) {
+  void doRefinement(const DerivedType *OldType, const Type *NewType) {
     assert(ValTy == OldType);
     ValTy = NewType;
   }
 
-  virtual void typeBecameConcrete(const DerivedType *Ty) {
-    assert(ValTy == Ty &&
-           "Contained type became concrete but we're not using it!");
-    ValTy.removeUserFromConcrete();
-  }
-
-  inline bool operator<(const PointerValType &MTV) const {
-    return ValTy.get() < MTV.ValTy.get();
+  bool operator<(const PointerValType &MTV) const {
+    return ValTy < MTV.ValTy;
   }
 };
 
 static TypeMap<PointerValType, PointerType> PointerTypes;
 
-PointerValType PointerValType::get(const PointerType *PT) {
-  return PointerValType(PT->getElementType(), PointerTypes);
-}
-
-
 PointerType *PointerType::get(const Type *ValueType) {
   assert(ValueType && "Can't get a pointer to <null> type!");
-  PointerValType PVT(ValueType, PointerTypes);
+  PointerValType PVT(ValueType);
 
   PointerType *PT = PointerTypes.get(PVT);
   if (PT) return PT;
@@ -1011,7 +899,8 @@ void DerivedType::removeAbstractTypeUser(AbstractTypeUser *U) const {
 void DerivedType::refineAbstractTypeToInternal(const Type *NewType, bool inMap){
   assert(isAbstract() && "refineAbstractTypeTo: Current type is not abstract!");
   assert(this != NewType && "Can't refine to myself!");
-  
+  assert(ForwardType == 0 && "This type has already been refined!");
+
   // The descriptions may be out of date.  Conservatively clear them all!
   AbstractTypeDescriptions.clear();
 
@@ -1021,12 +910,13 @@ void DerivedType::refineAbstractTypeToInternal(const Type *NewType, bool inMap){
             << *NewType << "]!\n";
 #endif
 
-
   // Make sure to put the type to be refined to into a holder so that if IT gets
   // refined, that we will not continue using a dead reference...
   //
   PATypeHolder NewTy(NewType);
 
+  // Any PATypeHolders referring to this type will now automatically forward to
+  // the type we are resolved to.
   ForwardType = NewType;
   if (NewType->isAbstract())
     cast<DerivedType>(NewType)->addRef();
@@ -1060,18 +950,6 @@ void DerivedType::refineAbstractTypeToInternal(const Type *NewType, bool inMap){
 #endif
     User->refineAbstractType(this, NewTy);
 
-#ifdef DEBUG_MERGE_TYPES
-    if (AbstractTypeUsers.size() == OldSize) {
-      User->refineAbstractType(this, NewTy);
-      if (AbstractTypeUsers.back() != User)
-        std::cerr << "User changed!\n";
-      std::cerr << "Top of user list is:\n";
-      AbstractTypeUsers.back()->dump();
-      
-      std::cerr <<"\nOld User=\n";
-      User->dump();
-    }
-#endif
     assert(AbstractTypeUsers.size() != OldSize &&
            "AbsTyUser did not remove self from user list!");
   }
@@ -1082,69 +960,22 @@ void DerivedType::refineAbstractTypeToInternal(const Type *NewType, bool inMap){
   // destroyed.
 }
 
-// typeIsRefined - Notify AbstractTypeUsers of this type that the current type
-// has been refined a bit.  The pointer is still valid and still should be
-// used, but the subtypes have changed.
+// notifyUsesThatTypeBecameConcrete - Notify AbstractTypeUsers of this type that
+// the current type has transitioned from being abstract to being concrete.
 //
-void DerivedType::typeIsRefined() {
-  assert(isRefining >= 0 && isRefining <= 2 && "isRefining out of bounds!");
-  if (isRefining == 1) return;  // Kill recursion here...
-  ++isRefining;
-
+void DerivedType::notifyUsesThatTypeBecameConcrete() {
 #ifdef DEBUG_MERGE_TYPES
   std::cerr << "typeIsREFINED type: " << (void*)this << " " << *this << "\n";
 #endif
 
-  // In this loop we have to be very careful not to get into infinite loops and
-  // other problem cases.  Specifically, we loop through all of the abstract
-  // type users in the user list, notifying them that the type has been refined.
-  // At their choice, they may or may not choose to remove themselves from the
-  // list of users.  Regardless of whether they do or not, we have to be sure
-  // that we only notify each user exactly once.  Because the refineAbstractType
-  // method can cause an arbitrary permutation to the user list, we cannot loop
-  // through it in any particular order and be guaranteed that we will be
-  // successful at this aim.  Because of this, we keep track of all the users we
-  // have visited and only visit users we have not seen.  Because this user list
-  // should be small, we use a vector instead of a full featured set to keep
-  // track of what users we have notified so far.
-  //
-  std::vector<AbstractTypeUser*> Refined;
-  while (1) {
-    unsigned i;
-    for (i = AbstractTypeUsers.size(); i != 0; --i)
-      if (find(Refined.begin(), Refined.end(), AbstractTypeUsers[i-1]) ==
-          Refined.end())
-        break;    // Found an unrefined user?
-    
-    if (i == 0) break;  // Noone to refine left, break out of here!
+  unsigned OldSize = AbstractTypeUsers.size();
+  while (!AbstractTypeUsers.empty()) {
+    AbstractTypeUser *ATU = AbstractTypeUsers.back();
+    ATU->typeBecameConcrete(this);
 
-    AbstractTypeUser *ATU = AbstractTypeUsers[--i];
-    Refined.push_back(ATU);  // Keep track of which users we have refined!
-
-#ifdef DEBUG_MERGE_TYPES
-    std::cerr << " typeIsREFINED user " << i << "[" << ATU
-              << "] of abstract type [" << (void*)this << " "
-              << *this << "]\n";
-#endif
-    ATU->refineAbstractType(this, this);
+    assert(AbstractTypeUsers.size() < OldSize-- &&
+           "AbstractTypeUser did not remove itself from the use list!");
   }
-
-  --isRefining;
-
-#ifndef _NDEBUG
-  if (!(isAbstract() || AbstractTypeUsers.empty()))
-    for (unsigned i = 0; i < AbstractTypeUsers.size(); ++i) {
-      if (AbstractTypeUsers[i] != this) {
-        // Debugging hook
-        std::cerr << "FOUND FAILURE\nUser: ";
-        AbstractTypeUsers[i]->dump();
-        std::cerr << "\nCatch:\n";
-        AbstractTypeUsers[i]->refineAbstractType(this, this);
-        assert(0 && "Type became concrete,"
-               " but it still has abstract type users hanging around!");
-      }
-  }
-#endif
 }
   
 
@@ -1165,10 +996,8 @@ void FunctionType::refineAbstractType(const DerivedType *OldType,
 #endif
 
   // Look up our current type map entry..
-#if 0
   TypeMap<FunctionValType, FunctionType>::iterator TMI =
     FunctionTypes.getEntryForType(this);
-#endif
 
   // Find the type element we are refining...
   if (ResultType == OldType) {
@@ -1181,7 +1010,11 @@ void FunctionType::refineAbstractType(const DerivedType *OldType,
       ParamTys[i] = NewType;
     }
 
-  FunctionTypes.finishRefinement(this);
+  FunctionTypes.finishRefinement(this, TMI);
+}
+
+void FunctionType::typeBecameConcrete(const DerivedType *AbsTy) {
+  refineAbstractType(AbsTy, AbsTy);
 }
 
 
@@ -1199,17 +1032,19 @@ void ArrayType::refineAbstractType(const DerivedType *OldType,
             << *NewType << "])\n";
 #endif
 
-#if 0
   // Look up our current type map entry..
   TypeMap<ArrayValType, ArrayType>::iterator TMI =
     ArrayTypes.getEntryForType(this);
-#endif
 
   assert(getElementType() == OldType);
   ElementType.removeUserFromConcrete();
   ElementType = NewType;
 
-  ArrayTypes.finishRefinement(this);
+  ArrayTypes.finishRefinement(this, TMI);
+}
+
+void ArrayType::typeBecameConcrete(const DerivedType *AbsTy) {
+  refineAbstractType(AbsTy, AbsTy);
 }
 
 
@@ -1227,11 +1062,9 @@ void StructType::refineAbstractType(const DerivedType *OldType,
             << *NewType << "])\n";
 #endif
 
-#if 0
   // Look up our current type map entry..
   TypeMap<StructValType, StructType>::iterator TMI =
     StructTypes.getEntryForType(this);
-#endif
 
   for (int i = ETypes.size()-1; i >= 0; --i)
     if (ETypes[i] == OldType) {
@@ -1241,7 +1074,11 @@ void StructType::refineAbstractType(const DerivedType *OldType,
       ETypes[i] = NewType;
     }
 
-  StructTypes.finishRefinement(this);
+  StructTypes.finishRefinement(this, TMI);
+}
+
+void StructType::typeBecameConcrete(const DerivedType *AbsTy) {
+  refineAbstractType(AbsTy, AbsTy);
 }
 
 // refineAbstractType - Called when a contained type is found to be more
@@ -1258,16 +1095,18 @@ void PointerType::refineAbstractType(const DerivedType *OldType,
             << *NewType << "])\n";
 #endif
 
-#if 0
   // Look up our current type map entry..
   TypeMap<PointerValType, PointerType>::iterator TMI =
     PointerTypes.getEntryForType(this);
-#endif
 
   assert(ElementType == OldType);
   ElementType.removeUserFromConcrete();
   ElementType = NewType;
 
-  PointerTypes.finishRefinement(this);
+  PointerTypes.finishRefinement(this, TMI);
+}
+
+void PointerType::typeBecameConcrete(const DerivedType *AbsTy) {
+  refineAbstractType(AbsTy, AbsTy);
 }
 
