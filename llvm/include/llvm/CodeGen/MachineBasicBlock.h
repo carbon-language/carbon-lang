@@ -159,6 +159,7 @@ public:
   iterator getFirstTerminator();
 
   void pop_front() { Insts.pop_front(); }
+  void pop_back() { Insts.pop_back(); }
   void push_back(MachineInstr *MI) { Insts.push_back(MI); }
   template<typename IT>
   void insert(iterator I, IT S, IT E) { Insts.insert(I, S, E); }
@@ -171,6 +172,13 @@ public:
   iterator erase(iterator I, iterator E) { return Insts.erase(I, E); }
   MachineInstr *remove(MachineInstr *I)  { return Insts.remove(I); }
   void clear()                           { Insts.clear(); }
+  
+  /// splice - Take a block of instructions from MBB 'Other' in the range [From,
+  /// To), and insert them into this MBB right before 'where'.
+  void splice(iterator where, MachineBasicBlock *Other, iterator From,
+              iterator To) {
+    Insts.splice(where, Other->Insts, From, To);
+  }
 
   // Debugging methods.
   void dump() const;
