@@ -45,10 +45,12 @@ bool TDDataStructures::run(Module &M) {
 // has no way to extend the lifetime of the pass, which screws up ds-aa.
 //
 void TDDataStructures::releaseMyMemory() {
-  return;
-  for (hash_map<const Function*, DSGraph*>::iterator I = DSInfo.begin(),
-         E = DSInfo.end(); I != E; ++I)
-    delete I->second;
+  for (hash_map<Function*, DSGraph*>::iterator I = DSInfo.begin(),
+         E = DSInfo.end(); I != E; ++I) {
+    I->second->getReturnNodes().erase(I->first);
+    if (I->second->getReturnNodes().empty())
+      delete I->second;
+  }
 
   // Empty map so next time memory is released, data structures are not
   // re-deleted.
