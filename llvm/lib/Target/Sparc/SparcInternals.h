@@ -14,7 +14,6 @@
 #include "llvm/Target/TargetFrameInfo.h"
 #include "llvm/Target/TargetCacheInfo.h"
 #include "llvm/Target/TargetRegInfo.h"
-#include "llvm/Target/TargetOptInfo.h"
 #include "llvm/Type.h"
 #include "SparcRegClassInfo.h"
 #include "Config/sys/types.h"
@@ -631,19 +630,6 @@ struct UltraSparcCacheInfo: public TargetCacheInfo {
 };
 
 
-//---------------------------------------------------------------------------
-// class UltraSparcOptInfo 
-// 
-// Purpose:
-//   Interface to machine-level optimization routines for the UltraSPARC.
-//---------------------------------------------------------------------------
-
-struct UltraSparcOptInfo: public TargetOptInfo {
-  UltraSparcOptInfo(const TargetMachine &T) : TargetOptInfo(T) {} 
-
-  virtual bool IsUselessCopy    (const MachineInstr* MI) const;
-};
-
 /// createAddRegNumToValuesPass - this pass adds unsigned register numbers to
 /// instructions, since that's not done by the Sparc InstSelector, but that's
 /// how the target-independent register allocator in the JIT likes to see
@@ -678,7 +664,6 @@ class UltraSparc : public TargetMachine {
   UltraSparcRegInfo   regInfo;
   UltraSparcFrameInfo frameInfo;
   UltraSparcCacheInfo cacheInfo;
-  UltraSparcOptInfo   optInfo;
 public:
   UltraSparc();
 
@@ -687,7 +672,6 @@ public:
   virtual const TargetRegInfo    &getRegInfo()   const { return regInfo; }
   virtual const TargetFrameInfo  &getFrameInfo() const { return frameInfo; }
   virtual const TargetCacheInfo  &getCacheInfo() const { return cacheInfo; }
-  virtual const TargetOptInfo    &getOptInfo()   const { return optInfo; }
 
   virtual bool addPassesToEmitAssembly(PassManager &PM, std::ostream &Out);
   virtual bool addPassesToJITCompile(FunctionPassManager &PM);

@@ -139,8 +139,7 @@ UltraSparc::UltraSparc()
     schedInfo(*this),
     regInfo(*this),
     frameInfo(*this),
-    cacheInfo(*this),
-    optInfo(*this) {
+    cacheInfo(*this) {
 }
 
 
