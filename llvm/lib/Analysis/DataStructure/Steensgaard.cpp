@@ -25,11 +25,10 @@ using namespace llvm;
 namespace {
   class Steens : public ModulePass, public AliasAnalysis {
     DSGraph *ResultGraph;
-    DSGraph *GlobalsGraph;  // FIXME: Eliminate globals graph stuff from DNE
 
     EquivalenceClasses<GlobalValue*> GlobalECs;  // Always empty
   public:
-    Steens() : ResultGraph(0), GlobalsGraph(0) {}
+    Steens() : ResultGraph(0) {}
     ~Steens() {
       releaseMyMemory();
       assert(ResultGraph == 0 && "releaseMemory not called?");
@@ -116,8 +115,7 @@ bool Steens::runOnModule(Module &M) {
 
   // Create a new, empty, graph...
   ResultGraph = new DSGraph(GlobalECs, getTargetData());
-  GlobalsGraph = new DSGraph(GlobalECs, getTargetData());
-  ResultGraph->setGlobalsGraph(GlobalsGraph);
+  ResultGraph->spliceFrom(LDS.getGlobalsGraph());
 
   // Loop over the rest of the module, merging graphs for non-external functions
   // into this graph.
@@ -186,7 +184,7 @@ bool Steens::runOnModule(Module &M) {
 
   // Remove any nodes that are dead after all of the merging we have done...
   // FIXME: We should be able to disable the globals graph for steens!
-  ResultGraph->removeDeadNodes(DSGraph::KeepUnreachableGlobals);
+  //ResultGraph->removeDeadNodes(DSGraph::KeepUnreachableGlobals);
 
   DEBUG(print(std::cerr, &M));
   return false;

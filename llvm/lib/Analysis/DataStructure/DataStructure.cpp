@@ -2055,7 +2055,7 @@ void DSGraph::removeDeadNodes(unsigned Flags) {
       GlobalNodes.push_back(std::make_pair(I->first, I->second.getNode()));
 
       // Make sure that all globals are cloned over as roots.
-      if (!(Flags & DSGraph::RemoveUnreachableGlobals)) {
+      if (!(Flags & DSGraph::RemoveUnreachableGlobals) && GlobalsGraph) {
         DSGraph::ScalarMapTy::iterator SMI = 
           GlobalsGraph->getScalarMap().find(I->first);
         if (SMI != GlobalsGraph->getScalarMap().end())

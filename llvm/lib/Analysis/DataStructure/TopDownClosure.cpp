@@ -58,9 +58,9 @@ void TDDataStructures::markReachableFunctionsExternallyAccessible(DSNode *N,
 // program.
 //
 bool TDDataStructures::runOnModule(Module &M) {
-  BUDataStructures &BU = getAnalysis<BUDataStructures>();
-  GlobalECs = BU.getGlobalECs();
-  GlobalsGraph = new DSGraph(BU.getGlobalsGraph(), GlobalECs);
+  BUInfo = &getAnalysis<BUDataStructures>();
+  GlobalECs = BUInfo->getGlobalECs();
+  GlobalsGraph = new DSGraph(BUInfo->getGlobalsGraph(), GlobalECs);
   GlobalsGraph->setPrintAuxCalls();
 
   // Figure out which functions must not mark their arguments complete because
@@ -95,8 +95,6 @@ bool TDDataStructures::runOnModule(Module &M) {
   // calculate a post-order traversal, then reverse it.
   hash_set<DSGraph*> VisitedGraph;
   std::vector<DSGraph*> PostOrder;
-  const BUDataStructures::ActualCalleesTy &ActualCallees = 
-    getAnalysis<BUDataStructures>().getActualCallees();
 
 #if 0
 {TIME_REGION(XXX, "td:Copy graphs");
@@ -114,11 +112,11 @@ bool TDDataStructures::runOnModule(Module &M) {
 
   // Calculate top-down from main...
   if (Function *F = M.getMainFunction())
-    ComputePostOrder(*F, VisitedGraph, PostOrder, ActualCallees);
+    ComputePostOrder(*F, VisitedGraph, PostOrder);
 
   // Next calculate the graphs for each unreachable function...
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
-    ComputePostOrder(*I, VisitedGraph, PostOrder, ActualCallees);
+    ComputePostOrder(*I, VisitedGraph, PostOrder);
 
   VisitedGraph.clear();   // Release memory!
 }
@@ -167,8 +165,7 @@ DSGraph &TDDataStructures::getOrCreateDSGraph(Function &F) {
 
 
 void TDDataStructures::ComputePostOrder(Function &F,hash_set<DSGraph*> &Visited,
-                                        std::vector<DSGraph*> &PostOrder,
-                      const BUDataStructures::ActualCalleesTy &ActualCallees) {
+                                        std::vector<DSGraph*> &PostOrder) {
   if (F.isExternal()) return;
   DSGraph &G = getOrCreateDSGraph(F);
   if (Visited.count(&G)) return;
@@ -177,13 +174,11 @@ void TDDataStructures::ComputePostOrder(Function &F,hash_set<DSGraph*> &Visited,
   // Recursively traverse all of the callee graphs.
   for (DSGraph::fc_iterator CI = G.fc_begin(), E = G.fc_end(); CI != E; ++CI) {
     Instruction *CallI = CI->getCallSite().getInstruction();
-    std::pair<BUDataStructures::ActualCalleesTy::const_iterator,
-      BUDataStructures::ActualCalleesTy::const_iterator>
-         IP = ActualCallees.equal_range(CallI);
+    BUDataStructures::ActualCalleesTy::const_iterator I = 
+      BUInfo->callee_begin(CallI), E = BUInfo->callee_end(CallI);
 
-    for (BUDataStructures::ActualCalleesTy::const_iterator I = IP.first;
-         I != IP.second; ++I)
-      ComputePostOrder(*I->second, Visited, PostOrder, ActualCallees);
+    for (; I != E; ++I)
+      ComputePostOrder(*I->second, Visited, PostOrder);
   }
 
   PostOrder.push_back(&G);
@@ -315,9 +310,6 @@ void TDDataStructures::InlineCallersIntoGraph(DSGraph &DSG) {
   // callee graphs.
   if (DSG.fc_begin() == DSG.fc_end()) return;
 
-  const BUDataStructures::ActualCalleesTy &ActualCallees =
-    getAnalysis<BUDataStructures>().getActualCallees();
-
   // Loop over all the call sites and all the callees at each call site, and add
   // edges to the CallerEdges structure for each callee.
   for (DSGraph::fc_iterator CI = DSG.fc_begin(), E = DSG.fc_end();
@@ -334,27 +326,26 @@ void TDDataStructures::InlineCallersIntoGraph(DSGraph &DSG) {
 
     Instruction *CallI = CI->getCallSite().getInstruction();
     // For each function in the invoked function list at this call site...
-    std::pair<BUDataStructures::ActualCalleesTy::const_iterator,
-              BUDataStructures::ActualCalleesTy::const_iterator> 
-      IP = ActualCallees.equal_range(CallI);
+    BUDataStructures::ActualCalleesTy::const_iterator IPI =
+      BUInfo->callee_begin(CallI), IPE = BUInfo->callee_end(CallI);
 
     // Skip over all calls to this graph (SCC calls).
-    while (IP.first != IP.second && &getDSGraph(*IP.first->second) == &DSG)
-      ++IP.first;
+    while (IPI != IPE && &getDSGraph(*IPI->second) == &DSG)
+      ++IPI;
 
     // All SCC calls?
-    if (IP.first == IP.second) continue;
+    if (IPI == IPE) continue;
 
-    Function *FirstCallee = IP.first->second;
-    ++IP.first;
+    Function *FirstCallee = IPI->second;
+    ++IPI;
 
     // Skip over more SCC calls.
-    while (IP.first != IP.second && &getDSGraph(*IP.first->second) == &DSG)
-      ++IP.first;
+    while (IPI != IPE && &getDSGraph(*IPI->second) == &DSG)
+      ++IPI;
 
     // If there is exactly one callee from this call site, remember the edge in
     // CallerEdges.
-    if (IP.first == IP.second) {
+    if (IPI == IPE) {
       if (!FirstCallee->isExternal())
         CallerEdges[&getDSGraph(*FirstCallee)]
           .push_back(CallerCallEdge(&DSG, &*CI, FirstCallee));
@@ -367,9 +358,9 @@ void TDDataStructures::InlineCallersIntoGraph(DSGraph &DSG) {
     // so we build up a new, private, graph that represents the calls of all
     // calls to this set of functions.
     std::vector<Function*> Callees;
-    IP = ActualCallees.equal_range(CallI);
-    for (BUDataStructures::ActualCalleesTy::const_iterator I = IP.first;
-         I != IP.second; ++I)
+    for (BUDataStructures::ActualCalleesTy::const_iterator I = 
+           BUInfo->callee_begin(CallI), E = BUInfo->callee_end(CallI);
+         I != E; ++I)
       if (!I->second->isExternal())
         Callees.push_back(I->second);
     std::sort(Callees.begin(), Callees.end());
