@@ -2149,12 +2149,53 @@ Instruction *InstCombiner::FoldGEPSetCC(User *GEPLHS, Value *RHS,
                                         Instruction::BinaryOps Cond,
                                         Instruction &I) {
   assert(dyn_castGetElementPtr(GEPLHS) && "LHS is not a getelementptr!");
-                                             
+
+  if (CastInst *CI = dyn_cast<CastInst>(RHS))
+    if (isa<PointerType>(CI->getOperand(0)->getType()))
+      RHS = CI->getOperand(0);
+
   Value *PtrBase = GEPLHS->getOperand(0);
   if (PtrBase == RHS) {
     // As an optimization, we don't actually have to compute the actual value of
     // OFFSET if this is a seteq or setne comparison, just return whether each
     // index is zero or not.
+    if (Cond == Instruction::SetEQ || Cond == Instruction::SetNE) {
+      Instruction *InVal = 0;
+      for (unsigned i = 1, e = GEPLHS->getNumOperands(); i != e; ++i) {
+        bool EmitIt = true;
+        if (Constant *C = dyn_cast<Constant>(GEPLHS->getOperand(i))) {
+          if (isa<UndefValue>(C))  // undef index -> undef.
+            return ReplaceInstUsesWith(I, UndefValue::get(I.getType()));
+          if (C->isNullValue())
+            EmitIt = false;
+          else if (isa<ConstantInt>(C))
+            return ReplaceInstUsesWith(I, // No comparison is needed here.
+                                 ConstantBool::get(Cond == Instruction::SetNE));
+        }
+
+        if (EmitIt) {
+          Instruction *Comp = 
+            new SetCondInst(Cond, GEPLHS->getOperand(i),
+                    Constant::getNullValue(GEPLHS->getOperand(i)->getType()));
+          if (InVal == 0)
+            InVal = Comp;
+          else {
+            InVal = InsertNewInstBefore(InVal, I);
+            InsertNewInstBefore(Comp, I);
+            if (Cond == Instruction::SetNE)   // True if any are unequal
+              InVal = BinaryOperator::createOr(InVal, Comp);
+            else                              // True if all are equal
+              InVal = BinaryOperator::createAnd(InVal, Comp);
+          }
+        }
+      }
+
+      if (InVal)
+        return InVal;
+      else
+        ReplaceInstUsesWith(I, // No comparison is needed here, all indexes = 0
+                            ConstantBool::get(Cond == Instruction::SetEQ));
+    }
 
     // Only lower this if the setcc is the only user of the GEP or if we expect
     // the result to fold to a constant!
@@ -2167,6 +2208,27 @@ Instruction *InstCombiner::FoldGEPSetCC(User *GEPLHS, Value *RHS,
   } else if (User *GEPRHS = dyn_castGetElementPtr(RHS)) {
     if (PtrBase != GEPRHS->getOperand(0))
       return 0;
+
+    // If one of the GEPs has all zero indices, recurse.
+    bool AllZeros = true;
+    for (unsigned i = 1, e = GEPLHS->getNumOperands(); i != e; ++i)
+      if (!isa<Constant>(GEPLHS->getOperand(i)) ||
+          !cast<Constant>(GEPLHS->getOperand(i))->isNullValue()) {
+        AllZeros = false;
+        break;
+      }
+    if (AllZeros)
+      return FoldGEPSetCC(GEPRHS, GEPLHS->getOperand(0),
+                          SetCondInst::getSwappedCondition(Cond), I);
+    AllZeros = true;
+    for (unsigned i = 1, e = GEPRHS->getNumOperands(); i != e; ++i)
+      if (!isa<Constant>(GEPRHS->getOperand(i)) ||
+          !cast<Constant>(GEPRHS->getOperand(i))->isNullValue()) {
+        AllZeros = false;
+        break;
+      }
+    if (AllZeros)
+      return FoldGEPSetCC(GEPLHS, GEPRHS->getOperand(0), Cond, I);
 
     // Only lower this if the setcc is the only user of the GEP or if we expect
     // the result to fold to a constant!
