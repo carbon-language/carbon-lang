@@ -15,12 +15,12 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/Scalar.h"
+#include "llvm/Constants.h"
+#include "llvm/DerivedTypes.h"
+#include "llvm/Module.h"
 #include "llvm/Pass.h"
 #include "llvm/iTerminators.h"
 #include "llvm/iOther.h"
-#include "llvm/Module.h"
-#include "llvm/Type.h"
-#include "llvm/Constant.h"
 #include "Support/Statistic.h"
 using namespace llvm;
 
@@ -28,6 +28,9 @@ namespace {
   Statistic<> NumLowered("lowerinvoke", "Number of invoke & unwinds replaced");
 
   class LowerInvoke : public FunctionPass {
+    Value *AbortMessage;
+    unsigned AbortMessageLength;
+    Function *WriteFn;
     Function *AbortFn;
   public:
     bool doInitialization(Module &M);
@@ -44,7 +47,21 @@ FunctionPass *llvm::createLowerInvokePass() { return new LowerInvoke(); }
 // doInitialization - Make sure that there is a prototype for abort in the
 // current module.
 bool LowerInvoke::doInitialization(Module &M) {
+  Constant *Msg =
+    ConstantArray::get("Exception handler needed, but not available.\n");
+  AbortMessageLength = Msg->getNumOperands()-1;  // don't include \0
+  
+  GlobalVariable *MsgGV =
+    new GlobalVariable(Msg->getType(), true, GlobalValue::InternalLinkage, Msg,
+                       "", &M);
+  std::vector<Constant*> GEPIdx(2, Constant::getNullValue(Type::LongTy));
+  AbortMessage =
+    ConstantExpr::getGetElementPtr(ConstantPointerRef::get(MsgGV), GEPIdx);
+
   AbortFn = M.getOrInsertFunction("abort", Type::VoidTy, 0);
+  WriteFn = M.getOrInsertFunction("write", Type::VoidTy, Type::IntTy,
+                                  PointerType::get(Type::SByteTy), Type::IntTy,
+                                  0);
   return true;
 }
 
@@ -70,6 +87,13 @@ bool LowerInvoke::runOnFunction(Function &F) {
 
       ++NumLowered; Changed = true;
     } else if (UnwindInst *UI = dyn_cast<UnwindInst>(BB->getTerminator())) {
+      // Insert a new call to write(2, AbortMessage, AbortMessageLength);
+      std::vector<Value*> Args;
+      Args.push_back(ConstantInt::get(Type::IntTy, 2));
+      Args.push_back(AbortMessage);
+      Args.push_back(ConstantInt::get(Type::IntTy, AbortMessageLength));
+      new CallInst(WriteFn, Args, "", UI);
+
       // Insert a call to abort()
       new CallInst(AbortFn, std::vector<Value*>(), "", UI);
 
