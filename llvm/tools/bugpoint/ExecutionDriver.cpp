@@ -168,7 +168,13 @@ int GCC::ExecuteProgram(const std::string &ProgramFile,
   if (!SharedLib.empty()) // Specify the shared library to link in...
     GCCArgs.push_back(SharedLib.c_str());
   GCCArgs.push_back("-x");
-  GCCArgs.push_back((fileType == AsmFile) ? "assembler" : "c");
+  if (fileType == CFile) {
+    GCCArgs.push_back("c");
+    GCCArgs.push_back("-fno-strict-aliasing");
+  } else {
+    GCCArgs.push_back("assembler");
+  }
+
   GCCArgs.push_back(ProgramFile.c_str());  // Specify the input filename...
   GCCArgs.push_back("-o");
   GCCArgs.push_back(OutputBinary.c_str()); // Output to the right file...
