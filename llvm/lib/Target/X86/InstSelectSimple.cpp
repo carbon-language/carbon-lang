@@ -8,12 +8,7 @@
 #include "X86InstrInfo.h"
 #include "X86InstrBuilder.h"
 #include "llvm/Function.h"
-#include "llvm/iTerminators.h"
-#include "llvm/iOperators.h"
-#include "llvm/iOther.h"
-#include "llvm/iPHINode.h"
-#include "llvm/iMemory.h"
-#include "llvm/Type.h"
+#include "llvm/Instructions.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Constants.h"
 #include "llvm/Pass.h"
@@ -24,9 +19,8 @@
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/Support/InstVisitor.h"
 #include "llvm/Target/MRegisterInfo.h"
-#include <map>
+#include "llvm/Support/InstVisitor.h"
 
 /// BMI - A special BuildMI variant that takes an iterator to insert the
 /// instruction at as well as a basic block.  This is the version for when you
