@@ -36,14 +36,14 @@ bool isExecutableFile(const std::string &ExeFileName) {
     return Buf.st_mode & S_IXOTH;
 }
 
-
 /// FindExecutable - Find a named executable, giving the argv[0] of program
-/// being executed. This allows us to find another LLVM tool if it is built into
-/// the same directory, but that directory is neither the current directory, nor
-/// in the PATH.  If the executable cannot be found, return an empty string.
+/// being executed. This allows us to find another LLVM tool if it is built
+/// into the same directory, but that directory is neither the current
+/// directory, nor in the PATH.  If the executable cannot be found, return an
+/// empty string.
 /// 
 std::string FindExecutable(const std::string &ExeName,
-			   const std::string &ProgramPath) {
+                           const std::string &ProgramPath) {
   // First check the directory that bugpoint is in.  We can do this if
   // BugPointPath contains at least one / character, indicating that it is a
   // relative path to bugpoint itself.
@@ -93,7 +93,7 @@ static void RedirectFD(const std::string &File, int FD) {
   int InFD = open(File.c_str(), FD == 0 ? O_RDONLY : O_WRONLY|O_CREAT, 0666);
   if (InFD == -1) {
     std::cerr << "Error opening file '" << File << "' for "
-	      << (FD == 0 ? "input" : "output") << "!\n";
+              << (FD == 0 ? "input" : "output") << "!\n";
     exit(1);
   }
 
@@ -108,9 +108,9 @@ static void RedirectFD(const std::string &File, int FD) {
 /// It returns the return value of the program, or -1 if a timeout is detected.
 ///
 int RunProgramWithTimeout(const std::string &ProgramPath, const char **Args,
-			  const std::string &StdInFile,
-			  const std::string &StdOutFile,
-			  const std::string &StdErrFile) {
+                          const std::string &StdInFile,
+                          const std::string &StdOutFile,
+                          const std::string &StdErrFile) {
 
   // FIXME: install sigalarm handler here for timeout...
 
@@ -141,12 +141,12 @@ int RunProgramWithTimeout(const std::string &ProgramPath, const char **Args,
     if (errno == EINTR) {
       static bool FirstTimeout = true;
       if (FirstTimeout) {
-	std::cout <<
+        std::cout <<
  "*** Program execution timed out!  This mechanism is designed to handle\n"
  "    programs stuck in infinite loops gracefully.  The -timeout option\n"
  "    can be used to change the timeout threshold or disable it completely\n"
  "    (with -timeout=0).  This message is only displayed once.\n";
-	FirstTimeout = false;
+        FirstTimeout = false;
       }
       return -1;   // Timeout detected
     }
