@@ -84,7 +84,6 @@ class CallGraph : public Pass {
   CallGraphNode *CallsExternalNode;
 
 public:
-
   //===---------------------------------------------------------------------
   // Accessors...
   //
@@ -145,7 +144,7 @@ public:
   //===---------------------------------------------------------------------
   // Pass infrastructure interface glue code...
   //
-  CallGraph() : Root(0) {}
+  CallGraph() : Root(0), CallsExternalNode(0) {}
   ~CallGraph() { destroy(); }
 
   // run - Compute the call graph for the specified module.
