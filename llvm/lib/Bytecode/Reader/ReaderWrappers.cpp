@@ -296,11 +296,10 @@ Module* llvm::AnalyzeBytecodeFile(
   const std::string &Filename,  ///< File to analyze
   BytecodeAnalysis& bca,        ///< Statistical output
   std::string *ErrorStr,        ///< Error output
-  std::ostream* output          ///< Dump output
-) 
+  std::ostream* output)         ///< Dump output
 {
   try {
-    BytecodeHandler* analyzerHandler = createBytecodeAnalyzerHandler(bca,output);
+    BytecodeHandler* analyzerHandler =createBytecodeAnalyzerHandler(bca,output);
     std::auto_ptr<ModuleProvider> AMP(
       getBytecodeModuleProvider(Filename,analyzerHandler));
     return AMP->releaseModule();
@@ -317,8 +316,7 @@ Module* llvm::AnalyzeBytecodeBuffer(
   const std::string& ModuleID, ///< Identifier for the module
   BytecodeAnalysis& bca,       ///< The results of the analysis
   std::string* ErrorStr,       ///< Errors, if any.
-  std::ostream* output         ///< Dump output, if any
-) 
+  std::ostream* output)        ///< Dump output, if any
 {
   try {
     BytecodeHandler* hdlr = createBytecodeAnalyzerHandler(bca, output);
@@ -332,7 +330,7 @@ Module* llvm::AnalyzeBytecodeBuffer(
 }
 
 bool llvm::GetBytecodeDependentLibraries(const std::string &fname, 
-    Module::LibraryListType& deplibs) {
+                                         Module::LibraryListType& deplibs) {
   try {
     std::auto_ptr<ModuleProvider> AMP( getBytecodeModuleProvider(fname));
     Module* M = AMP->releaseModule();
