@@ -149,6 +149,11 @@ public:
     return MBBNumbering[N];
   }
 
+  /// getLastBlock - Returns the MachineBasicBlock with the greatest number
+  MachineBasicBlock *getLastBlock() {
+    return MBBNumbering.back();
+  }
+
   /// print - Print out the MachineFunction in a format suitable for debugging
   /// to the specified stream.
   ///
