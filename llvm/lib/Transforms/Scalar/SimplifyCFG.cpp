@@ -20,6 +20,8 @@
 
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/Utils/Local.h"
+#include "llvm/Constants.h"
+#include "llvm/Instructions.h"
 #include "llvm/Module.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Pass.h"
@@ -44,6 +46,31 @@ FunctionPass *llvm::createCFGSimplificationPass() {
 static bool MarkAliveBlocks(BasicBlock *BB, std::set<BasicBlock*> &Reachable) {
   if (Reachable.count(BB)) return false;
   Reachable.insert(BB);
+
+  // Do a quick scan of the basic block, turning any obviously unreachable
+  // instructions into LLVM unreachable insts.  The instruction combining pass
+  // canonnicalizes unreachable insts into stores to null or undef.
+  for (BasicBlock::iterator BBI = BB->begin(), E = BB->end(); BBI != E; ++BBI)
+    if (StoreInst *SI = dyn_cast<StoreInst>(BBI))
+      if (isa<ConstantPointerNull>(SI->getOperand(1)) ||
+          isa<UndefValue>(SI->getOperand(1))) {
+        // Loop over all of the successors, removing BB's entry from any PHI
+        // nodes.
+        for (succ_iterator I = succ_begin(BB), SE = succ_end(BB); I != SE; ++I)
+          (*I)->removePredecessor(BB);
+
+        new UnreachableInst(SI);
+        std::cerr << "Inserted UNREACHABLE instruction!\n";
+
+        // All instructions after this are dead.
+        for (; BBI != E; ) {
+          if (!BBI->use_empty())
+            BBI->replaceAllUsesWith(UndefValue::get(BBI->getType()));
+          BB->getInstList().erase(BBI++);
+        }
+        break;
+      }
+
 
   bool Changed = ConstantFoldTerminator(BB);
   for (succ_iterator SI = succ_begin(BB), SE = succ_end(BB); SI != SE; ++SI)
