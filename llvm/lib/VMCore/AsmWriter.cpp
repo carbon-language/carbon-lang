@@ -658,7 +658,9 @@ void AssemblyWriter::printFunction(const Function *F) {
     case GlobalValue::ExternalLinkage: break;
     }
 
-  printType(F->getReturnType()) << " " << getLLVMName(F->getName()) << "(";
+  printType(F->getReturnType()) << " ";
+  if (!F->getName().empty()) Out << getLLVMName(F->getName());
+  Out << "(";
   Table.incorporateFunction(F);
 
   // Loop over the arguments, printing them...
