@@ -122,10 +122,10 @@ protected:
   std::vector<PATypeHandle> ContainedTys;
 
 public:
-  virtual void print(std::ostream &O) const;
+  void print(std::ostream &O) const;
 
   /// @brief Debugging support: print to stderr
-  virtual void dump() const;
+  void dump() const;
 
   //===--------------------------------------------------------------------===//
   // Property accessors for dealing with types... Some of these virtual methods
