@@ -382,7 +382,8 @@ copy_env (char ** const envp)
   entries = 0;
   while (envp[entries] != NULL)
   {
-    newenv[entries] = strdup (envp[entries]);
+    newenv[entries] = new char[strlen (envp[entries]) + 1];
+    strcpy (newenv[entries], envp[entries]);
     ++entries;
   }
   newenv[entries] = NULL;
