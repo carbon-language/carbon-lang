@@ -1,22 +1,20 @@
-//===- CloneTrace.cpp - Clone a trace ---------===//
+//===- CloneTrace.cpp - Clone a trace -------------------------------------===//
 //
 // This file implements the CloneTrace interface, which is used 
 // when writing runtime optimizations. It takes a vector of basic blocks
-// removes internal phi nodes, clones the basic blocks, and returns the new
-// vector of basic blocks.
+// clones the basic blocks, removes internal phi nodes, adds it to the
+// same function as the original (although there is no jump to it) and 
+// returns the new vector of basic blocks.
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Instruction.h"
-#include "llvm/BasicBlock.h"
+#include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/iPHINode.h"
 #include "llvm/Function.h"
-#include "llvm/Transforms/Utils/Cloning.h"
-#include <map>
 
 
 //Clones the trace (a vector of basic blocks)
-std::vector<BasicBlock *> CloneTrace(std::vector<BasicBlock*> &origTrace) {
+std::vector<BasicBlock *> CloneTrace(const std::vector<BasicBlock*> &origTrace) {
 
   std::vector<BasicBlock *> clonedTrace;
   std::map<const Value*, Value*> ValueMap;
