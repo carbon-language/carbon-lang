@@ -583,6 +583,9 @@ public:
   static Constant *getShl(Constant *C1, Constant *C2);
   static Constant *getShr(Constant *C1, Constant *C2);
 
+  static Constant *getUShr(Constant *C1, Constant *C2); // unsigned shr
+  static Constant *getSShr(Constant *C1, Constant *C2); // signed shr
+
   /// Getelementptr form...
   ///
   static Constant *getGetElementPtr(Constant *C,
