@@ -194,12 +194,22 @@ PPC32TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
   // the start of the first vararg value... for expansion of llvm.va_start.
   if (F.isVarArg()) {
     VarArgsFrameIndex = MFI->CreateFixedObject(4, ArgOffset);
-    // If this function is vararg, store r4-r10 to their spots on the stack so
-    // that they may be loaded by dereferencing va_next
     SDOperand FIN = DAG.getFrameIndex(VarArgsFrameIndex, MVT::i32);
-    SDOperand Val = DAG.getCopyFromReg(PPC::R4, MVT::i32, DAG.getRoot());
-    SDOperand Store = DAG.getNode(ISD::STORE, MVT::Other, Val.getValue(1), Val, FIN);
-    DAG.setRoot(Store);
+    // If this function is vararg, store any remaining integer argument regs
+    // to their spots on the stack so that they may be loaded by deferencing the
+    // result of va_next.
+    std::vector<SDOperand> MemOps;
+    for (; GPR_remaining > 0; --GPR_remaining, ++GPR_idx) {
+      BuildMI(&BB, PPC::IMPLICIT_DEF, 0, GPR[GPR_idx]);
+      SDOperand Val = DAG.getCopyFromReg(GPR[GPR_idx], MVT::i32, DAG.getRoot());
+      SDOperand Store = DAG.getNode(ISD::STORE, MVT::Other, Val.getValue(1), 
+                                    Val, FIN);
+      MemOps.push_back(Store);
+      // Increment the address by four for the next argument to store
+      SDOperand PtrOff = DAG.getConstant(4, getPointerTy());
+      FIN = DAG.getNode(ISD::ADD, MVT::i32, FIN, PtrOff);
+    }
+    DAG.setRoot(DAG.getNode(ISD::TokenFactor, MVT::Other, MemOps));
   }
 
   return ArgValues;
