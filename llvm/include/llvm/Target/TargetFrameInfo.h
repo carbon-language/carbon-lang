@@ -14,8 +14,6 @@
 #ifndef LLVM_TARGET_TARGETFRAMEINFO_H
 #define LLVM_TARGET_TARGETFRAMEINFO_H
 
-#include <cstdlib>
-
 namespace llvm {
 
 class MachineFunction;
@@ -56,15 +54,15 @@ public:
   // are Sparc specific.
   //===--------------------------------------------------------------------===//
 
-  virtual int  getStackFrameSizeAlignment       () const { abort(); }
-  virtual int  getMinStackFrameSize             () const { abort(); }
-  virtual int  getNumFixedOutgoingArgs          () const { abort(); }
-  virtual int  getSizeOfEachArgOnStack          () const { abort(); }
-  virtual bool argsOnStackHaveFixedSize         () const { abort(); }
+  virtual int  getStackFrameSizeAlignment       () const;
+  virtual int  getMinStackFrameSize             () const;
+  virtual int  getNumFixedOutgoingArgs          () const;
+  virtual int  getSizeOfEachArgOnStack          () const;
+  virtual bool argsOnStackHaveFixedSize         () const;
 
   // This method adjusts a stack offset to meet alignment rules of target.
   virtual int adjustAlignment(int unalignedOffset, bool growUp,
-			      unsigned align) const { abort(); }
+			      unsigned align) const;
 
   // These methods compute offsets using the frame contents for a particular
   // function.  The frame contents are obtained from the MachineFunction object
@@ -72,35 +70,35 @@ public:
   // machine-specific subclass.
   // 
   virtual int getIncomingArgOffset              (MachineFunction& mcInfo,
-						 unsigned argNum)const{abort();}
+						 unsigned argNum) const;
   virtual int getOutgoingArgOffset              (MachineFunction& mcInfo,
-						 unsigned argNum)const{abort();}
+						 unsigned argNum) const;
   
   virtual int getFirstIncomingArgOffset         (MachineFunction& mcInfo,
-						 bool& growUp) const { abort();}
+						 bool& growUp) const;
   virtual int getFirstOutgoingArgOffset         (MachineFunction& mcInfo,
-						 bool& growUp) const {abort();}
+						 bool& growUp) const;
   virtual int getFirstOptionalOutgoingArgOffset (MachineFunction&,
-                                                 bool& growUp) const {abort();}
+                                                 bool& growUp) const;
   virtual int getFirstAutomaticVarOffset        (MachineFunction& mcInfo,
-                                                 bool& growUp) const {abort();}
+                                                 bool& growUp) const;
   virtual int getRegSpillAreaOffset             (MachineFunction& mcInfo,
-                                                 bool& growUp) const {abort();}
+                                                 bool& growUp) const;
   virtual int getTmpAreaOffset                  (MachineFunction& mcInfo,
-                                                 bool& growUp) const {abort();}
+                                                 bool& growUp) const;
   virtual int getDynamicAreaOffset              (MachineFunction& mcInfo,
-                                                 bool& growUp) const {abort();}
+                                                 bool& growUp) const;
 
   //
   // These methods specify the base register used for each stack area
   // (generally FP or SP)
   // 
-  virtual int getIncomingArgBaseRegNum()               const { abort(); }
-  virtual int getOutgoingArgBaseRegNum()               const { abort(); }
-  virtual int getOptionalOutgoingArgBaseRegNum()       const { abort(); }
-  virtual int getAutomaticVarBaseRegNum()              const { abort(); }
-  virtual int getRegSpillAreaBaseRegNum()              const { abort(); }
-  virtual int getDynamicAreaBaseRegNum()               const { abort(); }
+  virtual int getIncomingArgBaseRegNum()               const;
+  virtual int getOutgoingArgBaseRegNum()               const;
+  virtual int getOptionalOutgoingArgBaseRegNum()       const;
+  virtual int getAutomaticVarBaseRegNum()              const;
+  virtual int getRegSpillAreaBaseRegNum()              const;
+  virtual int getDynamicAreaBaseRegNum()               const;
 };
 
 } // End llvm namespace
