@@ -1,7 +1,7 @@
 implementation
 
 declare sbyte* %llvm_gc_allocate(uint)
-declare void %llvm_gc_initialize()
+declare void %llvm_gc_initialize(uint)
 
 declare void %llvm.gcroot(sbyte**, sbyte*)
 declare void %llvm.gcwrite(sbyte*, sbyte**)
@@ -11,7 +11,7 @@ entry:
 	%A = alloca sbyte*
 	%B = alloca sbyte**
 
-	call void %llvm_gc_initialize()
+	call void %llvm_gc_initialize(uint 1048576)  ; Start with 1MB heap
 
         ;; void *A;
 	call void %llvm.gcroot(sbyte** %A, sbyte* null)
