@@ -72,7 +72,6 @@ public:
   virtual void print(std::ostream &os) const = 0;
   
 protected:
-  friend class SchedGraph;		
   friend class SchedGraphCommon;
   friend class SchedGraphEdge;		// give access for adding edges
   
