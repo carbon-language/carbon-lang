@@ -27,24 +27,6 @@ namespace llvm {
 //
 extern const TargetInstrDescriptor *TargetInstrDescriptors;
 
-bool MachineOperand::isEverUsed(const MachineInstr& mi) const
-{
-    for (int i = 0, e = mi.getNumOperands(); i != e; ++i) {
-        if (*this == mi.getOperand(i) && mi.getOperand(i).isUse())
-            return true;
-    }
-    return false;
-}
-
-bool MachineOperand::isEverDefined(const MachineInstr& mi) const
-{
-    for (int i = 0, e = mi.getNumOperands(); i != e; ++i) {
-        if (*this == mi.getOperand(i) && mi.getOperand(i).isDef())
-            return true;
-    }
-    return false;
-}
-
 // Constructor for instructions with variable #operands
 MachineInstr::MachineInstr(MachineOpCode OpCode, unsigned  numOperands)
   : opCode(OpCode),

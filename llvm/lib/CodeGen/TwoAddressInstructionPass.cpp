@@ -16,11 +16,14 @@
 // to:
 //
 //     A = B
-//     A = A op C
+//     A op= C
 //
-// Note that if a register allocator chooses to use this pass, that it has to
-// be capable of handling the non-SSA nature of these rewritten virtual 
-// registers.
+// Note that if a register allocator chooses to use this pass, that it
+// has to be capable of handling the non-SSA nature of these rewritten
+// virtual registers.
+//
+// It is also worth noting that the duplicate operand of the two
+// address instruction is removed.
 //
 //===----------------------------------------------------------------------===//
 
@@ -98,63 +101,70 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
                    mi->getOperand(1).isUse() &&
                    "two address instruction invalid");
 
-            // we have nothing to do if the two operands are the same
+            // if the two operands are the same we just remove the use
+            // and mark the def as def&use
             if (mi->getOperand(0).getAllocatedRegNum() ==
-                mi->getOperand(1).getAllocatedRegNum())
-                continue;
-
-            MadeChange = true;
-
-            // rewrite:
-            //     a = b op c
-            // to:
-            //     a = b
-            //     a = a op c
-            unsigned regA = mi->getOperand(0).getAllocatedRegNum();
-            unsigned regB = mi->getOperand(1).getAllocatedRegNum();
-
-            assert(MRegisterInfo::isVirtualRegister(regA) &&
-                   MRegisterInfo::isVirtualRegister(regB) &&
-                   "cannot update physical register live information");
-
-            // first make sure we do not have a use of a in the
-            // instruction (a = b + a for example) because our
-            // transformation will not work. This should never occur
-            // because we are in SSA form.
-            for (unsigned i = 1; i != mi->getNumOperands(); ++i)
-                assert(!mi->getOperand(i).isRegister() ||
-                       mi->getOperand(i).getAllocatedRegNum() != (int)regA);
-
-            const TargetRegisterClass* rc =MF.getSSARegMap()->getRegClass(regA);
-            unsigned Added = MRI.copyRegToReg(*mbbi, mii, regA, regB, rc);
-            numInstrsAdded += Added;
-
-            MachineInstr* prevMi = *(mii - 1);
-            DEBUG(std::cerr << "\t\tadded instruction: ";
-                  prevMi->print(std::cerr, TM));
-
-            // update live variables for regA
-            assert(Added == 1 && "Cannot handle multi-instruction copies yet!");
-            LiveVariables::VarInfo& varInfo = LV.getVarInfo(regA);
-            varInfo.DefInst = prevMi;
-
-            // update live variables for regB
-            if (LV.removeVirtualRegisterKilled(regB, &*mbbi, mi))
-                LV.addVirtualRegisterKilled(regB, &*mbbi, prevMi);
-
-            if (LV.removeVirtualRegisterDead(regB, &*mbbi, mi))
-                LV.addVirtualRegisterDead(regB, &*mbbi, prevMi);
-
-            // replace all occurences of regB with regA
-            for (unsigned i = 1; i < mi->getNumOperands(); ++i) {
-                if (mi->getOperand(i).isRegister() &&
-                    mi->getOperand(i).getReg() == regB)
-                    mi->SetMachineOperandReg(i, regA);
+                mi->getOperand(1).getAllocatedRegNum()) {
             }
+            else {
+                MadeChange = true;
+
+                // rewrite:
+                //     a = b op c
+                // to:
+                //     a = b
+                //     a = a op c
+                unsigned regA = mi->getOperand(0).getAllocatedRegNum();
+                unsigned regB = mi->getOperand(1).getAllocatedRegNum();
+
+                assert(MRegisterInfo::isVirtualRegister(regA) &&
+                       MRegisterInfo::isVirtualRegister(regB) &&
+                       "cannot update physical register live information");
+
+                // first make sure we do not have a use of a in the
+                // instruction (a = b + a for example) because our
+                // transformation will not work. This should never occur
+                // because we are in SSA form.
+                for (unsigned i = 1; i != mi->getNumOperands(); ++i)
+                    assert(!mi->getOperand(i).isRegister() ||
+                           mi->getOperand(i).getAllocatedRegNum() != (int)regA);
+
+                const TargetRegisterClass* rc =
+                    MF.getSSARegMap()->getRegClass(regA);
+                unsigned Added = MRI.copyRegToReg(*mbbi, mii, regA, regB, rc);
+                numInstrsAdded += Added;
+
+                MachineInstr* prevMi = *(mii - 1);
+                DEBUG(std::cerr << "\t\tadded instruction: ";
+                      prevMi->print(std::cerr, TM));
+
+                // update live variables for regA
+                assert(Added == 1 &&
+                       "Cannot handle multi-instruction copies yet!");
+                LiveVariables::VarInfo& varInfo = LV.getVarInfo(regA);
+                varInfo.DefInst = prevMi;
+
+                // update live variables for regB
+                if (LV.removeVirtualRegisterKilled(regB, &*mbbi, mi))
+                    LV.addVirtualRegisterKilled(regB, &*mbbi, prevMi);
+
+                if (LV.removeVirtualRegisterDead(regB, &*mbbi, mi))
+                    LV.addVirtualRegisterDead(regB, &*mbbi, prevMi);
+
+                // replace all occurences of regB with regA
+                for (unsigned i = 1, e = mi->getNumOperands(); i != e; ++i) {
+                    if (mi->getOperand(i).isRegister() &&
+                        mi->getOperand(i).getReg() == regB)
+                        mi->SetMachineOperandReg(i, regA);
+                }
+            }
+
+            assert(mi->getOperand(0).isDef());
+            mi->getOperand(0).setUse();
+            mi->RemoveOperand(1);
+
             DEBUG(std::cerr << "\t\tmodified original to: ";
                   mi->print(std::cerr, TM));
-            assert(mi->getOperand(0).getAllocatedRegNum() ==
-                   mi->getOperand(1).getAllocatedRegNum());
         }
     }
 

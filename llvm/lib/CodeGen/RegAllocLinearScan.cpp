@@ -109,10 +109,6 @@ namespace {
         typedef std::vector<const LiveIntervals::Interval*> IntervalPtrs;
         IntervalPtrs unhandled_, fixed_, active_, inactive_;
 
-        typedef std::vector<unsigned> Regs;
-        Regs tempUseOperands_;
-        Regs tempDefOperands_;
-
         PhysRegTracker prt_;
 
         typedef std::map<unsigned, unsigned> Virt2PhysMap;
@@ -428,7 +424,6 @@ bool RA::runOnMachineFunction(MachineFunction &fn) {
 
         for (currentInstr_ = currentMbb_->begin();
              currentInstr_ != currentMbb_->end(); ) {
-
             DEBUG(std::cerr << "\tinstruction: ";
                   (*currentInstr_)->print(std::cerr, *tm_););
 
@@ -465,13 +460,17 @@ bool RA::runOnMachineFunction(MachineFunction &fn) {
                 continue;
             }
 
+            typedef std::vector<unsigned> Regs;
+            Regs toClear;
+            Regs toSpill;
+
+            const unsigned numOperands = (*currentInstr_)->getNumOperands();
+
             DEBUG(std::cerr << "\t\tloading temporarily used operands to "
                   "registers:\n");
-            for (unsigned i = 0, e = (*currentInstr_)->getNumOperands();
-                 i != e; ++i) {
+            for (unsigned i = 0; i != numOperands; ++i) {
                 MachineOperand& op = (*currentInstr_)->getOperand(i);
-                if (op.isVirtualRegister() && op.isUse() &&
-                    !op.isEverDefined(**currentInstr_)) {
+                if (op.isVirtualRegister() && op.isUse()) {
                     unsigned virtReg = op.getAllocatedRegNum();
                     unsigned physReg = 0;
                     Virt2PhysMap::const_iterator it = v2pMap_.find(virtReg);
@@ -481,26 +480,28 @@ bool RA::runOnMachineFunction(MachineFunction &fn) {
                     else {
                         physReg = getFreeTempPhysReg(virtReg);
                         loadVirt2PhysReg(virtReg, physReg);
-                        tempUseOperands_.push_back(virtReg);
+                        // we will clear uses that are not also defs
+                        // before we allocate registers the defs
+                        if (op.isDef())
+                            toSpill.push_back(virtReg);
+                        else
+                            toClear.push_back(virtReg);
                     }
                     (*currentInstr_)->SetMachineOperandReg(i, physReg);
                 }
             }
 
-            DEBUG(std::cerr << "\t\tclearing temporarily used operands:\n");
-            for (unsigned i = 0, e = tempUseOperands_.size(); i != e; ++i) {
-                clearVirtReg(tempUseOperands_[i]);
-            }
-            tempUseOperands_.clear();
+            DEBUG(std::cerr << "\t\tclearing temporarily used but not defined "
+                  "operands:\n");
+            std::for_each(toClear.begin(), toClear.end(),
+                          std::bind1st(std::mem_fun(&RA::clearVirtReg), this));
 
             DEBUG(std::cerr << "\t\tassigning temporarily defined operands to "
                   "registers:\n");
-            for (unsigned i = 0, e = (*currentInstr_)->getNumOperands();
-                 i != e; ++i) {
+            for (unsigned i = 0; i != numOperands; ++i) {
                 MachineOperand& op = (*currentInstr_)->getOperand(i);
                 if (op.isVirtualRegister()) {
-                    assert(op.isEverDefined(**currentInstr_) &&
-                           "operand should be defined by this instruction");
+                    assert(!op.isUse() && "we should not have uses here!");
                     unsigned virtReg = op.getAllocatedRegNum();
                     unsigned physReg = 0;
                     Virt2PhysMap::const_iterator it = v2pMap_.find(virtReg);
@@ -510,21 +511,18 @@ bool RA::runOnMachineFunction(MachineFunction &fn) {
                     else {
                         physReg = getFreeTempPhysReg(virtReg);
                         assignVirt2PhysReg(virtReg, physReg);
-                        tempDefOperands_.push_back(virtReg);
+                        // need to spill this after we are done with
+                        // this instruction
+                        toSpill.push_back(virtReg);
                     }
                     (*currentInstr_)->SetMachineOperandReg(i, physReg);
                 }
             }
+            ++currentInstr_; // spills will go after this instruction
 
-            DEBUG(std::cerr << "\t\tspilling temporarily defined operands "
-                  "of this instruction:\n");
-            ++currentInstr_; // we want to insert after this instruction
-            for (unsigned i = 0, e = tempDefOperands_.size(); i != e; ++i) {
-                spillVirtReg(tempDefOperands_[i]);
-            }
-            --currentInstr_; // restore currentInstr_ iterator
-            tempDefOperands_.clear();
-            ++currentInstr_;
+            DEBUG(std::cerr << "\t\tspilling temporarily defined operands:\n");
+            std::for_each(toSpill.begin(), toSpill.end(),
+                          std::bind1st(std::mem_fun(&RA::spillVirtReg), this));
         }
     }
 

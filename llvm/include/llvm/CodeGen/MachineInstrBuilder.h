@@ -138,9 +138,10 @@ inline MachineInstrBuilder BuildMI(int Opcode, unsigned NumOperands) {
 /// calls that are expected, it does not include the destination register.
 ///
 inline MachineInstrBuilder BuildMI(int Opcode, unsigned NumOperands,
-                                   unsigned DestReg) {
+                                   unsigned DestReg,
+                                   MOTy::UseType useType = MOTy::Def) {
   return MachineInstrBuilder(new MachineInstr(Opcode, NumOperands+1,
-                                   true, true)).addReg(DestReg, MOTy::Def);
+                                   true, true)).addReg(DestReg, useType);
 }
 
 

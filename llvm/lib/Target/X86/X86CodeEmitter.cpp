@@ -548,10 +548,10 @@ void Emitter::emitInstruction(MachineInstr &MI) {
 
   case X86II::MRMDestReg: {
     MCE.emitByte(BaseOpcode);
-    MachineOperand &SrcOp = MI.getOperand(1+II->isTwoAddrInstr(Opcode));
-    emitRegModRMByte(MI.getOperand(0).getReg(), getX86RegNum(SrcOp.getReg()));
-    if (MI.getNumOperands() == 4)
-      emitConstant(MI.getOperand(3).getImmedValue(), sizeOfPtr(Desc));
+    emitRegModRMByte(MI.getOperand(0).getReg(),
+                     getX86RegNum(MI.getOperand(1).getReg()));
+    if (MI.getNumOperands() == 3)
+      emitConstant(MI.getOperand(2).getImmedValue(), sizeOfPtr(Desc));
     break;
   }
   case X86II::MRMDestMem:
@@ -562,18 +562,10 @@ void Emitter::emitInstruction(MachineInstr &MI) {
   case X86II::MRMSrcReg:
     MCE.emitByte(BaseOpcode);
 
-    if (MI.getNumOperands() == 2) {
-      emitRegModRMByte(MI.getOperand(MI.getNumOperands()-1).getReg(),
-                       getX86RegNum(MI.getOperand(0).getReg()));
-    } else if (MI.getOperand(2).isImmediate()) {
-      emitRegModRMByte(MI.getOperand(1).getReg(),
-                       getX86RegNum(MI.getOperand(0).getReg()));
-
+    emitRegModRMByte(MI.getOperand(1).getReg(),
+                     getX86RegNum(MI.getOperand(0).getReg()));
+    if (MI.getNumOperands() == 3)
       emitConstant(MI.getOperand(2).getImmedValue(), sizeOfPtr(Desc));
-    } else {
-      emitRegModRMByte(MI.getOperand(2).getReg(),
-                       getX86RegNum(MI.getOperand(0).getReg()));
-    }
     break;
 
   case X86II::MRMSrcMem:

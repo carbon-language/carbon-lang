@@ -110,10 +110,10 @@ int X86RegisterInfo::eliminateCallFramePseudoInstr(MachineFunction &MF,
       Amount = (Amount+Align-1)/Align*Align;
 
       if (Old->getOpcode() == X86::ADJCALLSTACKDOWN) {
-	New=BuildMI(X86::SUBri32, 2, X86::ESP).addReg(X86::ESP).addZImm(Amount);
+	New=BuildMI(X86::SUBri32, 1, X86::ESP, MOTy::UseAndDef).addZImm(Amount);
       } else {
 	assert(Old->getOpcode() == X86::ADJCALLSTACKUP);
-	New=BuildMI(X86::ADDri32, 2, X86::ESP).addReg(X86::ESP).addZImm(Amount);
+	New=BuildMI(X86::ADDri32, 1, X86::ESP, MOTy::UseAndDef).addZImm(Amount);
       }
     }
   }
@@ -181,7 +181,7 @@ int X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
     int EBPOffset = MFI->getObjectOffset(MFI->getObjectIndexEnd()-1)+4;
 
     if (NumBytes) {   // adjust stack pointer: ESP -= numbytes
-      MI= BuildMI(X86::SUBri32, 2, X86::ESP).addReg(X86::ESP).addZImm(NumBytes);
+      MI= BuildMI(X86::SUBri32, 1, X86::ESP, MOTy::UseAndDef).addZImm(NumBytes);
       MBBI = MBB.insert(MBBI, MI)+1;
     }
 
@@ -215,7 +215,7 @@ int X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
 
     if (NumBytes) {
       // adjust stack pointer: ESP -= numbytes
-      MI= BuildMI(X86::SUBri32, 2, X86::ESP).addReg(X86::ESP).addZImm(NumBytes);
+      MI= BuildMI(X86::SUBri32, 1, X86::ESP, MOTy::UseAndDef).addZImm(NumBytes);
       MBB.insert(MBBI, MI);
     }
   }
@@ -248,7 +248,7 @@ int X86RegisterInfo::emitEpilogue(MachineFunction &MF,
     unsigned NumBytes = MFI->getStackSize();
 
     if (NumBytes) {    // adjust stack pointer back: ESP += numbytes
-      MI =BuildMI(X86::ADDri32, 2, X86::ESP).addReg(X86::ESP).addZImm(NumBytes);
+      MI =BuildMI(X86::ADDri32, 1, X86::ESP, MOTy::UseAndDef).addZImm(NumBytes);
       MBBI = 1+MBB.insert(MBBI, MI);
     }
   }

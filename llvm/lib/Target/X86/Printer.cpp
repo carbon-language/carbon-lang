@@ -609,35 +609,31 @@ void Printer::printMachineInstruction(const MachineInstr *MI) {
     return;
   }
   case X86II::MRMDestReg: {
-    // There are two acceptable forms of MRMDestReg instructions, those with 2,
-    // 3 and 4 operands:
+    // There are three forms of MRMDestReg instructions, those with 2
+    // or 3 operands:
     //
-    // 2 Operands: this is for things like mov that do not read a second input
+    // 2 Operands: this is for things like mov that do not read a
+    // second input.
     //
-    // 3 Operands: in this form, the first two registers (the destination, and
-    // the first operand) should be the same, post register allocation.  The 3rd
-    // operand is an additional input.  This should be for things like add
-    // instructions.
+    // 2 Operands: two address instructions which def&use the first
+    // argument and use the second as input.
     //
-    // 4 Operands: This form is for instructions which are 3 operands forms, but
-    // have a constant argument as well.
+    // 3 Operands: in this form, two address instructions are the same
+    // as in 2 but have a constant argument as well.
     //
     bool isTwoAddr = TII.isTwoAddrInstr(Opcode);
     assert(MI->getOperand(0).isRegister() &&
            (MI->getNumOperands() == 2 ||
-	    (isTwoAddr && MI->getOperand(1).isRegister() &&
-	     MI->getOperand(0).getReg() == MI->getOperand(1).getReg() &&
-	     (MI->getNumOperands() == 3 ||
-	      (MI->getNumOperands() == 4 && MI->getOperand(3).isImmediate()))))
+            (MI->getNumOperands() == 3 && MI->getOperand(2).isImmediate()))
            && "Bad format for MRMDestReg!");
 
     O << TII.getName(MI->getOpCode()) << " ";
     printOp(MI->getOperand(0));
     O << ", ";
-    printOp(MI->getOperand(1+isTwoAddr));
-    if (MI->getNumOperands() == 4) {
+    printOp(MI->getOperand(1));
+    if (MI->getNumOperands() == 3) {
       O << ", ";
-      printOp(MI->getOperand(3));
+      printOp(MI->getOperand(2));
     }
     O << "\n";
     return;
@@ -659,40 +655,35 @@ void Printer::printMachineInstruction(const MachineInstr *MI) {
   }
 
   case X86II::MRMSrcReg: {
-    // There are three forms that are acceptable for MRMSrcReg instructions,
-    // those with 3 and 2 operands:
+    // There are three forms that are acceptable for MRMSrcReg
+    // instructions, those with 2 or 3 operands:
     //
-    // 3 Operands: in this form, the last register (the second input) is the
-    // ModR/M input.  The first two operands should be the same, post register
-    // allocation.  This is for things like: add r32, r/m32
+    // 2 Operands: this is for things like mov that do not read a
+    // second input.
+    //
+    // 2 Operands: in this form, the last register is the ModR/M
+    // input.  The first operand is a def&use.  This is for things
+    // like: add r32, r/m32
     //
     // 3 Operands: in this form, we can have 'INST R1, R2, imm', which is used
     // for instructions like the IMULri instructions.
     //
-    // 2 Operands: this is for things like mov that do not read a second input
     //
     assert(MI->getOperand(0).isRegister() &&
            MI->getOperand(1).isRegister() &&
-           (MI->getNumOperands() == 2 || 
-            (MI->getNumOperands() == 3 && 
-             (MI->getOperand(2).isRegister() ||
-              MI->getOperand(2).isImmediate())))
+           (MI->getNumOperands() == 2 ||
+            (MI->getNumOperands() == 3 &&
+             (MI->getOperand(2).isImmediate())))
            && "Bad format for MRMSrcReg!");
-    if (MI->getNumOperands() == 3 && !MI->getOperand(2).isImmediate() &&
-        MI->getOperand(0).getReg() != MI->getOperand(1).getReg())
-      O << "**";
 
     O << TII.getName(MI->getOpCode()) << " ";
     printOp(MI->getOperand(0));
-
-    // If this is IMULri* instructions, print the non-two-address operand.
-    if (MI->getNumOperands() == 3 && MI->getOperand(2).isImmediate()) {
-      O << ", ";
-      printOp(MI->getOperand(1));
-    }
-
     O << ", ";
-    printOp(MI->getOperand(MI->getNumOperands()-1));
+    printOp(MI->getOperand(1));
+    if (MI->getNumOperands() == 3) {
+        O << ", ";
+        printOp(MI->getOperand(2));
+    }
     O << "\n";
     return;
   }
@@ -705,7 +696,7 @@ void Printer::printMachineInstruction(const MachineInstr *MI) {
            (MI->getNumOperands() == 1+4 && isMem(MI, 1)) || 
            (MI->getNumOperands() == 2+4 && MI->getOperand(1).isRegister() && 
             isMem(MI, 2))
-           && "Bad format for MRMDestReg!");
+           && "Bad format for MRMSrcMem!");
     if (MI->getNumOperands() == 2+4 &&
         MI->getOperand(0).getReg() != MI->getOperand(1).getReg())
       O << "**";
