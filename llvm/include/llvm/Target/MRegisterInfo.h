@@ -33,6 +33,7 @@ struct MRegisterDesc {
 ///
 namespace MRF {  // MRF = Machine Register Flags
   enum {
+    Other            =   0 << 0,   // This is a non-standard register
     INT8             =   1 << 0,   // This is an 8 bit integer register
     INT16            =   1 << 1,   // This is a 16 bit integer register
     INT32            =   1 << 2,   // This is a 32 bit integer register
@@ -171,6 +172,12 @@ public:
   ///
   const unsigned *getAliasSet(unsigned RegNo) const {
     return get(RegNo).AliasSet;
+  }
+
+  /// getName - Return the symbolic target specific name for the specified
+  /// physical register.
+  const char *getName(unsigned RegNo) const {
+    return get(RegNo).Name;
   }
 
   virtual const unsigned* getCalleeSaveRegs() const = 0;
