@@ -25,14 +25,15 @@ namespace llvm {
 
 //===----------------------------------------------------------------------===//
 // AnalysisUsage - Represent the analysis usage information of a pass.  This
-// tracks analyses that the pass REQUIRES (must available when the pass runs),
-// and analyses that the pass PRESERVES (the pass does not invalidate the
-// results of these analyses).  This information is provided by a pass to the
+// tracks analyses that the pass REQUIRES (must be available when the pass 
+// runs), REQUIRES TRANSITIVE (must be available throughout the lifetime of the
+// pass), and analyses that the pass PRESERVES (the pass does not invalidate the
+// results of these analyses).  This information is provided by a pass to the 
 // Pass infrastructure through the getAnalysisUsage virtual function.
 //
 class AnalysisUsage {
   // Sets of analyses required and preserved by a pass
-  std::vector<AnalysisID> Required, Preserved;
+  std::vector<AnalysisID> Required, RequiredTransitive, Preserved;
   bool PreservesAll;
 public:
   AnalysisUsage() : PreservesAll(false) {}
@@ -48,6 +49,15 @@ public:
   AnalysisUsage &addRequired() {
     assert(Pass::getClassPassInfo<PassClass>() && "Pass class not registered!");
     Required.push_back(Pass::getClassPassInfo<PassClass>());
+    return *this;
+  }
+
+  template<class PassClass>
+  AnalysisUsage &addRequiredTransitive() {
+    AnalysisID ID = Pass::getClassPassInfo<PassClass>();
+    assert(ID && "Pass class not registered!");
+    Required.push_back(ID);
+    RequiredTransitive.push_back(ID);
     return *this;
   }
 
@@ -82,6 +92,9 @@ public:
   void setPreservesCFG();
 
   const std::vector<AnalysisID> &getRequiredSet() const { return Required; }
+  const std::vector<AnalysisID> &getRequiredTransitiveSet() const {
+    return RequiredTransitive;
+  }
   const std::vector<AnalysisID> &getPreservedSet() const { return Preserved; }
 };
 
