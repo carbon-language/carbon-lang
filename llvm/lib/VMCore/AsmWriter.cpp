@@ -1324,7 +1324,10 @@ int SlotMachine::getSlot(const Value *V) {
         // Return the slot number as the module's contribution to
         // the type plane plus the index in the function's contribution
         // to the type plane.
-        return MI->second.next_slot + FVI->second;
+        if (MI != mMap.end())
+          return MI->second.next_slot + FVI->second;
+        else
+          return FVI->second;
       }
     }
   }
