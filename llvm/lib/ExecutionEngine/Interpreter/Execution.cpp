@@ -546,8 +546,7 @@ void Interpreter::visitAllocationInst(AllocationInst &I) {
   unsigned NumElements = getOperandValue(I.getOperand(0), SF).UIntVal;
 
   // Allocate enough memory to hold the type...
-  // FIXME: Don't use CALLOC, use a tainted malloc.
-  void *Memory = calloc(NumElements, TD.getTypeSize(Ty));
+  void *Memory = malloc(NumElements * TD.getTypeSize(Ty));
 
   GenericValue Result = PTOGV(Memory);
   assert(Result.PointerVal != 0 && "Null pointer returned by malloc!");
