@@ -145,15 +145,13 @@ bool ADCE::dropReferencesOfDeadInstructionsInLiveBlock(BasicBlock *BB) {
         //
         PN->replaceAllUsesWith(Constant::getNullValue(PN->getType()));
 
-      } else {
-        if (isa<CallInst>(I))
-          ++NumCallRemoved;
-        else
-          ++NumInstRemoved;
-        
         // Delete the instruction...
-        BB->getInstList().erase(I++);
+        ++I;
+        BB->getInstList().erase(PN);
         Changed = true;
+        ++NumInstRemoved;
+      } else {
+        ++I;
       }
     } else {
       ++I;
