@@ -38,11 +38,9 @@ public:
 namespace {
   struct RegAllocSimple : public FunctionPass {
     TargetMachine &TM;
-    MachineBasicBlock *CurrMBB;
     MachineFunction *MF;
-    unsigned maxOffset;
     const MRegisterInfo *RegInfo;
-    unsigned NumBytesAllocated, ByteAlignment;
+    unsigned NumBytesAllocated;
     
     // Maps SSA Regs => offsets on the stack where these values are stored
     std::map<unsigned, unsigned> VirtReg2OffsetMap;
@@ -62,9 +60,8 @@ namespace {
     std::map<unsigned, unsigned> RegsUsed;
     std::map<const TargetRegisterClass*, unsigned> RegClassIdx;
 
-    RegAllocSimple(TargetMachine &tm) : TM(tm), CurrMBB(0), maxOffset(0), 
+    RegAllocSimple(TargetMachine &tm) : TM(tm),
                                         RegInfo(tm.getRegisterInfo()),
-                                        ByteAlignment(4),
                                         PhysRegClasses(RegInfo)
     {
       RegsUsed[RegInfo->getFramePointer()] = 1;
@@ -109,7 +106,7 @@ namespace {
     void cleanupAfterFunction() {
       VirtReg2OffsetMap.clear();
       SSA2PhysRegMap.clear();
-      NumBytesAllocated = ByteAlignment;
+      NumBytesAllocated = 4;   /* FIXME: This is X86 specific */
     }
 
     /// Moves value from memory into that register
@@ -144,19 +141,19 @@ unsigned RegAllocSimple::allocateStackSpaceFor(unsigned VirtReg,
                                             const TargetRegisterClass *regClass)
 {
   if (VirtReg2OffsetMap.find(VirtReg) == VirtReg2OffsetMap.end()) {
-#if 0
-    unsigned size = regClass->getDataSize();
-    unsigned over = NumBytesAllocated - (NumBytesAllocated % ByteAlignment);
-    if (size >= ByteAlignment - over) {
-      // need to pad by (ByteAlignment - over)
-      NumBytesAllocated += ByteAlignment - over;
-    }
+    unsigned RegSize = regClass->getDataSize();
+
+    // Align NumBytesAllocated.  We should be using TargetData alignment stuff
+    // to determine this, but we don't know the LLVM type associated with the
+    // virtual register.  Instead, just align to a multiple of the size for now.
+    NumBytesAllocated += RegSize-1;
+    NumBytesAllocated = NumBytesAllocated/RegSize*RegSize;
+
+    // Assign the slot...
     VirtReg2OffsetMap[VirtReg] = NumBytesAllocated;
-    NumBytesAllocated += size;
-#endif
-    // FIXME: forcing each arg to take 4 bytes on the stack
-    VirtReg2OffsetMap[VirtReg] = NumBytesAllocated;
-    NumBytesAllocated += ByteAlignment;
+
+    // Reserve the space!
+    NumBytesAllocated += RegSize;
   }
   return VirtReg2OffsetMap[VirtReg];
 }
@@ -241,7 +238,7 @@ bool RegAllocSimple::runOnMachineFunction(MachineFunction &Fn) {
   for (MachineFunction::iterator MBB = Fn.begin(), MBBe = Fn.end();
        MBB != MBBe; ++MBB)
   {
-    CurrMBB = &(*MBB);
+    MachineBasicBlock *CurrMBB = &(*MBB);
 
     // Handle PHI instructions specially: add moves to each pred block
     while (MBB->front()->getOpcode() == 0) {
