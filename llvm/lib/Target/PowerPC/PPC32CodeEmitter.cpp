@@ -197,7 +197,8 @@ int PPC32CodeEmitter::getMachineOpValue(MachineInstr &MI, MachineOperand &MO) {
       assert(MovePCtoLROffset && "MovePCtoLR not seen yet?");
       Reloc = PPC::reloc_absolute_loadhi;
       Offset = -((intptr_t)MovePCtoLROffset+4);
-    } else if (MI.getOpcode() == PPC::LA) {
+    } else if (MI.getOpcode() == PPC::LA || MI.getOpcode() == PPC::LWZ ||
+               MI.getOpcode() == PPC::LFS || MI.getOpcode() == PPC::LFD) {
       assert(MovePCtoLROffset && "MovePCtoLR not seen yet?");
       Reloc = PPC::reloc_absolute_la;
       Offset = -((intptr_t)MovePCtoLROffset+4);
