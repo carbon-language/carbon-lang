@@ -18,7 +18,7 @@
 ; equivelent form.
 ;
 ; RUN: llvm-as < %s | opt -q -raise > Output/%s.raised.bc
-; RUN: lli -force-interpreter -array-checks -abort-on-exception < Output/%s.raised.bc
+; RUN: lli -force-interpreter -array-checks < Output/%s.raised.bc
 ;
 
 implementation
