@@ -37,6 +37,14 @@ Xdefine PANIC		printf
 %term And=AndOPCODE
 %term Or=OrOPCODE
 %term Xor=XorOPCODE
+                /* Use the next 4 to distinguish bitwise operators (reg) from
+                 * logical operators (bool).  Burg will diverge otherwise.
+                 */
+%term BAnd=111
+%term BOr=112
+%term BXor=113
+%term BNot=105
+
 %term SetCC=114		/* use this to match all SetCC instructions */
 	/* %term SetEQ=13 */
 	/* %term SetNE=14 */
@@ -150,13 +158,13 @@ todoubleConst: ToDoubleTy(Constant) = 232 (10);
 	 */
 bool:	And(bool,bool)		=   38 (10);
 bool:	And(bool,not)		=  138 (0);	/* cost is counted for not */
-reg:	And(bool,boolconst)	=  238 (10);
+bool:	And(bool,boolconst)	=  238 (10);
 bool:	Or (bool,bool)		=   39 (10);
 bool:	Or (bool,not)		=  139 (0);	/* cost is counted for not */
-reg:	Or (bool,boolconst)	=  239 (10);
+bool:	Or (bool,boolconst)	=  239 (10);
 bool:	Xor(bool,bool)		=   40 (10);
 bool:	Xor(bool,not)		=  140 (0);	/* cost is counted for not */
-reg:	Xor(bool,boolconst)	=  240 (10);
+bool:	Xor(bool,boolconst)	=  240 (10);
 
 bool:	   not			=  221 (0);
 bool:	   tobool		=  222 (0);
@@ -199,6 +207,19 @@ reg:	Div(reg,reg)		=   36 (60);
 reg:	Rem(reg,reg)		=   37 (60);
 
 	/*
+	 * The binary bitwise logical operators.
+	 */
+reg:    BAnd(reg,reg)           =  338 (10);
+reg:    BAnd(reg,bnot)          =  438 (10);
+reg:    BOr( reg,reg)           =  339 (10);
+reg:    BOr( reg,bnot)          =  439 (10);
+reg:    BXor(reg,reg)           =  340 (10);
+reg:    BXor(reg,bnot)          =  440 (10);
+
+reg:    bnot                    =  321 ( 0);
+bnot:   BNot(reg)               =  421 (10);
+
+	/*
 	 * The binary operators with one constant argument.
 	 */
 reg:	Add(reg,Constant)	=  233 (10);
@@ -207,7 +228,11 @@ reg:	Mul(reg,Constant)	=  235 (30);
 reg:	Mul(todouble,todoubleConst) = 335 (20);	/* avoids 1-2 type converts */
 reg:	Div(reg,Constant)	=  236 (60);
 reg:	Rem(reg,Constant)	=  237 (60);
-	
+
+reg:    BAnd(reg,Constant)      =  538 (0);
+reg:    BOr( reg,Constant)      =  539 (0);
+reg:    BXor(reg,Constant)      =  540 (0);
+
 	/*
 	 * Memory access instructions
 	 */
