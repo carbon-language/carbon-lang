@@ -8,7 +8,11 @@
 #ifndef SPARC_INTERNALS_H
 #define SPARC_INTERNALS_H
 
-#include "SparcRegInfo.h"
+
+#include "SparcRegClassInfo.h"
+#include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/MachineInstrInfo.h"
+
 #include "llvm/Target/MachineSchedInfo.h"
 #include "llvm/Type.h"
 
@@ -855,15 +859,10 @@ public:
 };
 
 
-//---------------------------------------------------------------------------
-// class UltraSparcRegInfo 
-// 
-// Purpose:
-//   This class provides info about sparc register classes.
-//---------------------------------------------------------------------------
 
 class LiveRange;
 class UltraSparc;
+
 
 
 class UltraSparcRegInfo : public MachineRegInfo
@@ -893,27 +892,32 @@ class UltraSparcRegInfo : public MachineRegInfo
   // %f0 - %f5 are used (can hold 6 floats or 3 doubles)
   unsigned const NumOfFloatArgRegs;
 
-  void setCallArgColor(LiveRange *const LR, const unsigned RegNo) const;
+  //void setCallArgColor(LiveRange *const LR, const unsigned RegNo) const;
+
+  void setCallOrRetArgCol(LiveRange *const LR, const unsigned RegNo,
+			 const MachineInstr *MI,AddedInstrMapType &AIMap)const;
+
+  MachineInstr * getCopy2RegMI(const Value *SrcVal, const unsigned Reg,
+			       unsigned RegClassID) const ;
+
 
 
  public:
 
 
-  UltraSparcRegInfo(const UltraSparc *const USI )
-    : MachineRegInfo(),
-      UltraSparcInfo(USI), 
-      NumOfIntArgRegs(6), 
-      NumOfFloatArgRegs(6) 
+  UltraSparcRegInfo(const UltraSparc *const USI ) : UltraSparcInfo(USI), 
+						    NumOfIntArgRegs(6), 
+						    NumOfFloatArgRegs(6) 
   {    
     MachineRegClassArr.push_back( new SparcIntRegClass(IntRegClassID) );
     MachineRegClassArr.push_back( new SparcFloatRegClass(FloatRegClassID) );
     MachineRegClassArr.push_back( new SparcIntCCRegClass(IntCCRegClassID) );
     MachineRegClassArr.push_back( new SparcFloatCCRegClass(FloatCCRegClassID));
-    
+
     assert( SparcFloatRegOrder::StartOfNonVolatileRegs == 6 && 
 	    "6 Float regs are used for float arg passing");
   }
-  
+
   // ***** TODO  Delete
   ~UltraSparcRegInfo(void) { }              // empty destructor 
 
@@ -922,11 +926,7 @@ class UltraSparcRegInfo : public MachineRegInfo
     return *UltraSparcInfo;
   }
 
-  // returns the register that is hardwired to zero
-  virtual inline int getZeroRegNum() const {
-    return (int) SparcIntRegOrder::g0;
-  }
-  
+
 
   inline unsigned getRegClassIDOfValue (const Value *const Val,
 					bool isCCReg = false) const {
@@ -953,6 +953,18 @@ class UltraSparcRegInfo : public MachineRegInfo
 
   }
 
+  // returns the register tha contains always zero
+  inline int getZeroRegNum() const { return SparcIntRegOrder::g0; }
+
+  // returns the reg used for pushing the address when a method is called.
+  // This can be used for other purposes between calls
+  unsigned getCallAddressReg() const  { return SparcIntRegOrder::o7; }
+
+  
+  // and when we return from a method. It should be made sure that this 
+  // register contains the return value when a return instruction is reached.
+  unsigned getReturnAddressReg()  const { return SparcIntRegOrder::i7; }
+
   void colorArgs(const Method *const Meth, LiveRangeInfo& LRI) const;
 
   static void printReg(const LiveRange *const LR)  ;
@@ -960,6 +972,11 @@ class UltraSparcRegInfo : public MachineRegInfo
   void colorCallArgs(vector<const Instruction *> & CallInstrList, 
 		     LiveRangeInfo& LRI, 
 		     AddedInstrMapType& AddedInstrMap ) const;
+
+  void colorRetArg(vector<const Instruction *> & 
+		   RetInstrList, LiveRangeInfo& LRI,
+		   AddedInstrMapType &AddedInstrMap) const;
+
 
   // this method provides a unique number for each register 
   inline int getUnifiedRegNum(int RegClassID, int reg) const {
@@ -994,7 +1011,6 @@ class UltraSparcRegInfo : public MachineRegInfo
 
 
 };
-
 
 
 
