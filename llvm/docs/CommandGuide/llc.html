@@ -150,6 +150,19 @@ OPTIONS
 
 		<di> local
 		<dd>Local register allocator</dd>
+
+		<di> linearscan
+		<dd>Linear scan global register allocator (experimental)</dd>
+
+	<li>-spiller=&lt;sp&gt;
+	<br>
+        Specify the spiller to use for register allocators that support it.
+        Currently this option is used by the linear scan register
+        allocator. The default is <i>local</i>.
+        Valid spillers are:
+	<dl compact>
+		<di> local
+		<dd>Local spiller</dd>
 	</dl>
 	<p>
 

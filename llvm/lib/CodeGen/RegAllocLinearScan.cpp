@@ -41,6 +41,7 @@ namespace {
 
         std::auto_ptr<PhysRegTracker> prt_;
         std::auto_ptr<VirtRegMap> vrm_;
+        std::auto_ptr<Spiller> spiller_;
 
         typedef std::vector<float> SpillWeights;
         SpillWeights spillWeights_;
@@ -147,12 +148,13 @@ bool RA::runOnMachineFunction(MachineFunction &fn) {
     li_ = &getAnalysis<LiveIntervals>();
     if (!prt_.get()) prt_.reset(new PhysRegTracker(*mri_));
     vrm_.reset(new VirtRegMap(*mf_));
+    if (!spiller_.get()) spiller_.reset(createSpiller());
 
     initIntervalSets(li_->getIntervals());
 
     linearScan();
 
-    eliminateVirtRegs(*mf_, *vrm_);
+    spiller_->runOnMachineFunction(*mf_, *vrm_);
 
     return true;
 }

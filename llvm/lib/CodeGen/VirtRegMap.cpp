@@ -22,9 +22,10 @@
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetInstrInfo.h"
-#include "Support/Statistic.h"
+#include "Support/CommandLine.h"
 #include "Support/Debug.h"
 #include "Support/DenseMap.h"
+#include "Support/Statistic.h"
 #include "Support/STLExtras.h"
 #include <iostream>
 
@@ -35,6 +36,15 @@ namespace {
     Statistic<> numStores("spiller", "Number of stores added");
     Statistic<> numLoads ("spiller", "Number of loads added");
 
+    enum SpillerName { local };
+
+    cl::opt<SpillerName>
+    SpillerOpt("spiller",
+               cl::desc("Spiller to use: (default: local)"),
+               cl::Prefix,
+               cl::values(clEnumVal(local, "  local spiller"),
+                          0),
+               cl::init(local));
 }
 
 int VirtRegMap::assignVirt2StackSlot(unsigned virtReg)
@@ -88,41 +98,44 @@ std::ostream& llvm::operator<<(std::ostream& os, const VirtRegMap& vrm)
     return std::cerr << '\n';
 }
 
+Spiller::~Spiller()
+{
+
+}
+
 namespace {
 
-    class Spiller {
+    class LocalSpiller : public Spiller {
         typedef std::vector<unsigned> Phys2VirtMap;
         typedef std::vector<bool> PhysFlag;
         typedef DenseMap<MachineInstr*, VirtReg2IndexFunctor> Virt2MI;
 
-        MachineFunction& mf_;
-        const TargetMachine& tm_;
-        const TargetInstrInfo& tii_;
-        const MRegisterInfo& mri_;
-        const VirtRegMap& vrm_;
+        MachineFunction* mf_;
+        const TargetMachine* tm_;
+        const TargetInstrInfo* tii_;
+        const MRegisterInfo* mri_;
+        const VirtRegMap* vrm_;
         Phys2VirtMap p2vMap_;
         PhysFlag dirty_;
         Virt2MI lastDef_;
 
     public:
-        Spiller(MachineFunction& mf, const VirtRegMap& vrm)
-            : mf_(mf),
-              tm_(mf_.getTarget()),
-              tii_(tm_.getInstrInfo()),
-              mri_(*tm_.getRegisterInfo()),
-              vrm_(vrm),
-              p2vMap_(mri_.getNumRegs(), 0),
-              dirty_(mri_.getNumRegs(), false),
-              lastDef_() {
+        bool runOnMachineFunction(MachineFunction& mf, const VirtRegMap& vrm) {
+            mf_ = &mf;
+            tm_ = &mf_->getTarget();
+            tii_ = &tm_->getInstrInfo();
+            mri_ = tm_->getRegisterInfo();
+            vrm_ = &vrm;
+            p2vMap_.assign(mri_->getNumRegs(), 0);
+            dirty_.assign(mri_->getNumRegs(), false);
+
             DEBUG(std::cerr << "********** REWRITE MACHINE CODE **********\n");
             DEBUG(std::cerr << "********** Function: "
-                  << mf_.getFunction()->getName() << '\n');
-        }
+                  << mf_->getFunction()->getName() << '\n');
 
-        void eliminateVirtRegs() {
-            for (MachineFunction::iterator mbbi = mf_.begin(),
-                     mbbe = mf_.end(); mbbi != mbbe; ++mbbi) {
-                lastDef_.grow(mf_.getSSARegMap()->getLastVirtReg());
+            for (MachineFunction::iterator mbbi = mf_->begin(),
+                     mbbe = mf_->end(); mbbi != mbbe; ++mbbi) {
+                lastDef_.grow(mf_->getSSARegMap()->getLastVirtReg());
                 DEBUG(std::cerr << mbbi->getBasicBlock()->getName() << ":\n");
                 eliminateVirtRegsInMbb(*mbbi);
                 // clear map, dirty flag and last ref
@@ -130,6 +143,7 @@ namespace {
                 dirty_.assign(dirty_.size(), false);
                 lastDef_.clear();
             }
+            return true;
         }
 
     private:
@@ -137,21 +151,21 @@ namespace {
                                MachineBasicBlock::iterator mii,
                                unsigned physReg) {
             unsigned virtReg = p2vMap_[physReg];
-            if (dirty_[physReg] && vrm_.hasStackSlot(virtReg)) {
+            if (dirty_[physReg] && vrm_->hasStackSlot(virtReg)) {
                 assert(lastDef_[virtReg] && "virtual register is mapped "
                        "to a register and but was not defined!");
                 MachineBasicBlock::iterator lastDef = lastDef_[virtReg];
                 MachineBasicBlock::iterator nextLastRef = next(lastDef);
-                mri_.storeRegToStackSlot(*lastDef->getParent(),
+                mri_->storeRegToStackSlot(*lastDef->getParent(),
                                          nextLastRef,
                                          physReg,
-                                         vrm_.getStackSlot(virtReg),
-                                         mri_.getRegClass(physReg));
+                                         vrm_->getStackSlot(virtReg),
+                                         mri_->getRegClass(physReg));
                 ++numStores;
                 DEBUG(std::cerr << "added: ";
-                      prior(nextLastRef)->print(std::cerr, tm_);
+                      prior(nextLastRef)->print(std::cerr, *tm_);
                       std::cerr << "after: ";
-                      lastDef->print(std::cerr, tm_));
+                      lastDef->print(std::cerr, *tm_));
                 lastDef_[virtReg] = 0;
             }
             p2vMap_[physReg] = 0;
@@ -162,7 +176,7 @@ namespace {
                            MachineBasicBlock::iterator mii,
                            unsigned physReg) {
             vacateJustPhysReg(mbb, mii, physReg);
-            for (const unsigned* as = mri_.getAliasSet(physReg); *as; ++as)
+            for (const unsigned* as = mri_->getAliasSet(physReg); *as; ++as)
                 vacateJustPhysReg(mbb, mii, *as);
         }
 
@@ -175,13 +189,13 @@ namespace {
                 vacatePhysReg(mbb, mii, physReg);
                 p2vMap_[physReg] = virtReg;
                 // load if necessary
-                if (vrm_.hasStackSlot(virtReg)) {
-                    mri_.loadRegFromStackSlot(mbb, mii, physReg,
-                                              vrm_.getStackSlot(virtReg),
-                                              mri_.getRegClass(physReg));
+                if (vrm_->hasStackSlot(virtReg)) {
+                    mri_->loadRegFromStackSlot(mbb, mii, physReg,
+                                              vrm_->getStackSlot(virtReg),
+                                              mri_->getRegClass(physReg));
                     ++numLoads;
                     DEBUG(std::cerr << "added: ";
-                          prior(mii)->print(std::cerr,tm_));
+                          prior(mii)->print(std::cerr, *tm_));
                     lastDef_[virtReg] = mii;
                 }
             }
@@ -208,8 +222,8 @@ namespace {
                 // we clear all physical registers that may contain
                 // the value of the spilled virtual register
                 VirtRegMap::MI2VirtMap::const_iterator i, e;
-                for (tie(i, e) = vrm_.getFoldedVirts(mii); i != e; ++i) {
-                    unsigned physReg = vrm_.getPhys(i->second);
+                for (tie(i, e) = vrm_->getFoldedVirts(mii); i != e; ++i) {
+                    unsigned physReg = vrm_->getPhys(i->second);
                     if (physReg) vacateJustPhysReg(mbb, mii, physReg);
                 }
 
@@ -219,7 +233,7 @@ namespace {
                     if (op.isRegister() && op.getReg() && op.isUse() &&
                         MRegisterInfo::isVirtualRegister(op.getReg())) {
                         unsigned virtReg = op.getReg();
-                        unsigned physReg = vrm_.getPhys(virtReg);
+                        unsigned physReg = vrm_->getPhys(virtReg);
                         handleUse(mbb, mii, virtReg, physReg);
                         mii->SetMachineOperandReg(i, physReg);
                         // mark as dirty if this is def&use
@@ -231,7 +245,7 @@ namespace {
                 }
 
                 // spill implicit defs
-                const TargetInstrDescriptor& tid =tii_.get(mii->getOpcode());
+                const TargetInstrDescriptor& tid = tii_->get(mii->getOpcode());
                 for (const unsigned* id = tid.ImplicitDefs; *id; ++id)
                     vacatePhysReg(mbb, mii, *id);
 
@@ -243,13 +257,13 @@ namespace {
                         if (MRegisterInfo::isPhysicalRegister(op.getReg()))
                             vacatePhysReg(mbb, mii, op.getReg());
                         else {
-                            unsigned physReg = vrm_.getPhys(op.getReg());
+                            unsigned physReg = vrm_->getPhys(op.getReg());
                             handleDef(mbb, mii, op.getReg(), physReg);
                             mii->SetMachineOperandReg(i, physReg);
                         }
                 }
 
-                DEBUG(std::cerr << '\t'; mii->print(std::cerr, tm_));
+                DEBUG(std::cerr << '\t'; mii->print(std::cerr, *tm_));
             }
 
             for (unsigned i = 1, e = p2vMap_.size(); i != e; ++i)
@@ -259,8 +273,13 @@ namespace {
     };
 }
 
-
-void llvm::eliminateVirtRegs(MachineFunction& mf, const VirtRegMap& vrm)
+llvm::Spiller* llvm::createSpiller()
 {
-    Spiller(mf, vrm).eliminateVirtRegs();
+    switch (SpillerOpt) {
+    default:
+        std::cerr << "no spiller selected";
+        abort();
+    case local:
+        return new LocalSpiller();
+    }
 }

@@ -108,7 +108,14 @@ namespace llvm {
 
     std::ostream& operator<<(std::ostream& os, const VirtRegMap& li);
 
-    void eliminateVirtRegs(MachineFunction& mf, const VirtRegMap& vrm);
+    struct Spiller {
+        virtual ~Spiller();
+
+        virtual bool runOnMachineFunction(MachineFunction& mf, const VirtRegMap& vrm) = 0;
+
+    };
+
+    Spiller* createSpiller();
 
 } // End llvm namespace
 

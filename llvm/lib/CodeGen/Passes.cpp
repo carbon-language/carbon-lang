@@ -26,7 +26,7 @@ namespace {
            cl::Prefix,
            cl::values(clEnumVal(simple,      "  simple register allocator"),
                       clEnumVal(local,       "  local register allocator"),
-                      clEnumVal(linearscan,  "  linear-scan global register allocator"),
+                      clEnumVal(linearscan,  "  linear scan register allocator (experimental)"),
                       0),
            cl::init(local));
 }
