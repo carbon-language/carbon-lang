@@ -297,6 +297,18 @@ def SUBri32  : I2A32<"sub", 0x81, MRMS5r    >,         Pattern<(set R32, (minus 
 def SUBri16b : I2A8 <"sub", 0x83, MRMS5r    >, OpSize;
 def SUBri32b : I2A8 <"sub", 0x83, MRMS5r    >;
 
+def SUBmr8   : I2A8 <"sub", 0x28, MRMDestMem>;         // [mem8]  -= R8
+def SUBmr16  : I2A16<"sub", 0x29, MRMDestMem>, OpSize; // [mem16] -= R16
+def SUBmr32  : I2A32<"sub", 0x29, MRMDestMem>;         // [mem32] -= R32
+def SUBrm8   : I2A8 <"sub", 0x2A, MRMSrcMem >;         // R8  -= [mem8]
+def SUBrm16  : I2A16<"sub", 0x2B, MRMSrcMem >, OpSize; // R16 -= [mem16]
+def SUBrm32  : I2A32<"sub", 0x2B, MRMSrcMem >;         // R32 -= [mem32]
+def SUBmi8   : I2A8 <"sub", 0x80, MRMSrcMem >;         // [mem8] -= I8
+def SUBmi16  : I2A16<"sub", 0x81, MRMSrcMem >, OpSize; // [mem16] -= I16
+def SUBmi32  : I2A32<"sub", 0x81, MRMSrcMem >;         // [mem32] -= I8
+def SUBmi16b : I2A8 <"sub", 0x83, MRMSrcMem >, OpSize; // [mem16] -= I8
+def SUBmi32b : I2A8 <"sub", 0x83, MRMSrcMem >;         // [mem32] -= I32
+
 def SBBrr32  : I2A32<"sbb", 0x19, MRMDestReg>;         // R32 -= R32+Borrow
 def SBBrm32  : I2A32<"sbb", 0x19, MRMSrcMem >;         // R32 -= [mem32]+Borrow
 def SBBmr32  : I2A32<"sbb", 0x1B, MRMDestMem>;         // [mem32] -= R32+Borrow
