@@ -92,11 +92,13 @@ bool FPMover::runOnMachineBasicBlock (MachineBasicBlock &MBB) {
         DEBUG (std::cerr << "FPMover: new dest reg. is " << NewDestReg1
                          << "; inserted instr is: " << *MI2);
         ++NumFpMOVDs;
+        I = J;
+        --I;
       } else {
         MBB.erase (I);
         ++SkippedFpMOVDs;
+        I = J;
       }
-      I = J;
       Changed = true;
     }
   return Changed;
