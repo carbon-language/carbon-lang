@@ -822,6 +822,7 @@ void Interpreter::visitCallSite(CallSite CS) {
         SF.CurInst = Prev;
         ++SF.CurInst;
       }
+      return;
     }
 
   SF.Caller = CS;
