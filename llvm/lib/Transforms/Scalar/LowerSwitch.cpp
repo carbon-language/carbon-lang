@@ -160,8 +160,8 @@ BasicBlock* LowerSwitch::newLeafBlock(Case& Leaf, Value* Val,
 
   // If there were any PHI nodes in this successor, rewrite one entry
   // from OrigBlock to come from NewLeaf.
-  for (BasicBlock::iterator I = Succ->begin();
-       PHINode* PN = dyn_cast<PHINode>(I); ++I) {
+  for (BasicBlock::iterator I = Succ->begin(); isa<PHINode>(I); ++I) {
+    PHINode* PN = cast<PHINode>(I);
     int BlockIdx = PN->getBasicBlockIndex(OrigBlock);
     assert(BlockIdx != -1 && "Switch didn't go to this successor??");
     PN->setIncomingBlock((unsigned)BlockIdx, NewLeaf);
@@ -196,8 +196,8 @@ void LowerSwitch::processSwitchInst(SwitchInst *SI) {
 
   // If there is an entry in any PHI nodes for the default edge, make sure
   // to update them as well.
-  for (BasicBlock::iterator I = Default->begin();
-       PHINode *PN = dyn_cast<PHINode>(I); ++I) {
+  for (BasicBlock::iterator I = Default->begin(); isa<PHINode>(I); ++I) {
+    PHINode *PN = cast<PHINode>(I);
     int BlockIdx = PN->getBasicBlockIndex(OrigBlock);
     assert(BlockIdx != -1 && "Switch didn't go to this successor??");
     PN->setIncomingBlock((unsigned)BlockIdx, NewDefault);

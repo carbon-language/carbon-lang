@@ -155,8 +155,8 @@ bool LoopUnroll::visitLoop(Loop *L) {
   // PHI nodes.  Insert associations now.
   std::map<const Value*, Value*> LastValueMap;
   std::vector<PHINode*> OrigPHINode;
-  for (BasicBlock::iterator I = BB->begin();
-       PHINode *PN = dyn_cast<PHINode>(I); ++I) {
+  for (BasicBlock::iterator I = BB->begin(); isa<PHINode>(I); ++I) {
+    PHINode *PN = cast<PHINode>(I);
     OrigPHINode.push_back(PN);
     if (Instruction *I =dyn_cast<Instruction>(PN->getIncomingValueForBlock(BB)))
       if (I->getParent() == BB)

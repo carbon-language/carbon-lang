@@ -52,8 +52,8 @@ static bool PropagatePredecessorsForPHIs(BasicBlock *BB, BasicBlock *Succ) {
     if (std::find(BBPreds.begin(), BBPreds.end(), *PI) != BBPreds.end()) {
       // Loop over all of the PHI nodes checking to see if there are
       // incompatible values coming in.
-      for (BasicBlock::iterator I = Succ->begin();
-           PHINode *PN = dyn_cast<PHINode>(I); ++I) {
+      for (BasicBlock::iterator I = Succ->begin(); isa<PHINode>(I); ++I) {
+        PHINode *PN = cast<PHINode>(I);
         // Loop up the entries in the PHI node for BB and for *PI if the values
         // coming in are non-equal, we cannot merge these two blocks (instead we
         // should insert a conditional move or something, then merge the
@@ -68,8 +68,8 @@ static bool PropagatePredecessorsForPHIs(BasicBlock *BB, BasicBlock *Succ) {
     }
 
   // Loop over all of the PHI nodes in the successor BB.
-  for (BasicBlock::iterator I = Succ->begin();
-       PHINode *PN = dyn_cast<PHINode>(I); ++I) {
+  for (BasicBlock::iterator I = Succ->begin(); isa<PHINode>(I); ++I) {
+    PHINode *PN = cast<PHINode>(I);
     Value *OldVal = PN->removeIncomingValue(BB, false);
     assert(OldVal && "No entry in PHI for Pred BB!");
 
@@ -341,10 +341,12 @@ static bool SafeToMergeTerminators(TerminatorInst *SI1, TerminatorInst *SI2) {
   for (succ_iterator I = succ_begin(SI2BB), E = succ_end(SI2BB); I != E; ++I)
     if (SI1Succs.count(*I))
       for (BasicBlock::iterator BBI = (*I)->begin();
-           PHINode *PN = dyn_cast<PHINode>(BBI); ++BBI)
+           isa<PHINode>(BBI); ++BBI) {
+        PHINode *PN = cast<PHINode>(BBI);
         if (PN->getIncomingValueForBlock(SI1BB) !=
             PN->getIncomingValueForBlock(SI2BB))
           return false;
+      }
         
   return true;
 }
@@ -359,8 +361,8 @@ static void AddPredecessorToBlock(BasicBlock *Succ, BasicBlock *NewPred,
          succ_end(ExistPred) && "ExistPred is not a predecessor of Succ!");
   if (!isa<PHINode>(Succ->begin())) return; // Quick exit if nothing to do
 
-  for (BasicBlock::iterator I = Succ->begin();
-       PHINode *PN = dyn_cast<PHINode>(I); ++I) {
+  for (BasicBlock::iterator I = Succ->begin(); isa<PHINode>(I); ++I) {
+    PHINode *PN = cast<PHINode>(I);
     Value *V = PN->getIncomingValueForBlock(ExistPred);
     PN->addIncoming(V, NewPred);
   }
@@ -994,7 +996,8 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
           // PHI nodes in EdgeBB, they need entries to be added corresponding to
           // the number of edges added.
           for (BasicBlock::iterator BBI = EdgeBB->begin();
-               PHINode *PN = dyn_cast<PHINode>(BBI); ++BBI) {
+               isa<PHINode>(BBI); ++BBI) {
+            PHINode *PN = cast<PHINode>(BBI);
             Value *InVal = PN->getIncomingValueForBlock(*PI);
             for (unsigned i = 0, e = Values.size()-1; i != e; ++i)
               PN->addIncoming(InVal, *PI);

@@ -570,10 +570,11 @@ void IndVarSimplify::runOnLoop(Loop *L) {
   BasicBlock *Preheader = L->getLoopPreheader();
   
   std::set<Instruction*> DeadInsts;
-  for (BasicBlock::iterator I = Header->begin();
-       PHINode *PN = dyn_cast<PHINode>(I); ++I)
+  for (BasicBlock::iterator I = Header->begin(); isa<PHINode>(I); ++I) {
+    PHINode *PN = cast<PHINode>(I);
     if (isa<PointerType>(PN->getType()))
       EliminatePointerRecurrence(PN, Preheader, DeadInsts);
+  }
 
   if (!DeadInsts.empty())
     DeleteTriviallyDeadInstructions(DeadInsts);
@@ -597,8 +598,8 @@ void IndVarSimplify::runOnLoop(Loop *L) {
   // auxillary induction variables.
   std::vector<std::pair<PHINode*, SCEVHandle> > IndVars;
 
-  for (BasicBlock::iterator I = Header->begin();
-       PHINode *PN = dyn_cast<PHINode>(I); ++I)
+  for (BasicBlock::iterator I = Header->begin(); isa<PHINode>(I); ++I) {
+    PHINode *PN = cast<PHINode>(I);
     if (PN->getType()->isInteger()) {  // FIXME: when we have fast-math, enable!
       SCEVHandle SCEV = SE->getSCEV(PN);
       if (SCEV->hasComputableLoopEvolution(L))
@@ -611,6 +612,7 @@ void IndVarSimplify::runOnLoop(Loop *L) {
           if (AR->getNumOperands() == 2 && isa<SCEVConstant>(AR->getOperand(1)))
             IndVars.push_back(std::make_pair(PN, SCEV));
     }
+  }
 
   // If there are no induction variables in the loop, there is nothing more to
   // do.

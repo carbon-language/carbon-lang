@@ -572,8 +572,8 @@ void CEE::ForwardSuccessorTo(TerminatorInst *TI, unsigned SuccNo,
   // edge from the PHI node, and we need to replace any references to the PHI
   // node with a new value.
   //
-  for (BasicBlock::iterator I = OldSucc->begin();
-       PHINode *PN = dyn_cast<PHINode>(I); ) {
+  for (BasicBlock::iterator I = OldSucc->begin(); isa<PHINode>(I); ) {
+    PHINode *PN = cast<PHINode>(I);
 
     // Get the value flowing across the old edge and remove the PHI node entry
     // for this edge: we are about to remove the edge!  Don't remove the PHI

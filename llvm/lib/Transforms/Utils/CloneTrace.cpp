@@ -50,16 +50,17 @@ llvm::CloneTrace(const std::vector<BasicBlock*> &origTrace) {
     //only do this if we are NOT the first block
     if(T != origTrace.begin()) {
       for (BasicBlock::iterator I = clonedBlock->begin();
-	   PHINode *PN = dyn_cast<PHINode>(I); ++I) {
-	//get incoming value for the previous BB
-	Value *V = PN->getIncomingValueForBlock(*(T-1));
-	assert(V && "No incoming value from a BasicBlock in our trace!");
-	
-	//remap our phi node to point to incoming value
-	ValueMap[*&I] = V;
-	
-	//remove phi node
-	clonedBlock->getInstList().erase(PN);
+           isa<PHINode>(I); ++I) {
+        PHINode *PN = cast<PHINode>(I);
+        //get incoming value for the previous BB
+        Value *V = PN->getIncomingValueForBlock(*(T-1));
+        assert(V && "No incoming value from a BasicBlock in our trace!");
+        
+        //remap our phi node to point to incoming value
+        ValueMap[*&I] = V;
+        
+        //remove phi node
+        clonedBlock->getInstList().erase(PN);
       }
     }
   }

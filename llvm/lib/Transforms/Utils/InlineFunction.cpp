@@ -111,10 +111,11 @@ bool llvm::InlineFunction(CallSite CS) {
     // If there are PHI nodes in the exceptional destination block, we need to
     // keep track of which values came into them from this invoke, then remove
     // the entry for this block.
-    for (BasicBlock::iterator I = InvokeDest->begin();
-         PHINode *PN = dyn_cast<PHINode>(I); ++I)
+    for (BasicBlock::iterator I = InvokeDest->begin(); isa<PHINode>(I); ++I) {
+      PHINode *PN = cast<PHINode>(I);
       // Save the value to use for this edge...
       InvokeDestPHIValues.push_back(PN->getIncomingValueForBlock(OrigBB));
+    }
 
     for (Function::iterator BB = FirstNewBlock, E = Caller->end();
          BB != E; ++BB) {
@@ -149,8 +150,10 @@ bool llvm::InlineFunction(CallSite CS) {
             // there is now a new entry in them.
             unsigned i = 0;
             for (BasicBlock::iterator I = InvokeDest->begin();
-                 PHINode *PN = dyn_cast<PHINode>(I); ++I, ++i)
+                 isa<PHINode>(I); ++I, ++i) {
+              PHINode *PN = cast<PHINode>(I);
               PN->addIncoming(InvokeDestPHIValues[i], BB);
+            }
             
             // This basic block is now complete, start scanning the next one.
             break;
@@ -174,8 +177,10 @@ bool llvm::InlineFunction(CallSite CS) {
         // there is now a new entry in them.
         unsigned i = 0;
         for (BasicBlock::iterator I = InvokeDest->begin();
-             PHINode *PN = dyn_cast<PHINode>(I); ++I, ++i)
+             isa<PHINode>(I); ++I, ++i) {
+          PHINode *PN = cast<PHINode>(I);
           PN->addIncoming(InvokeDestPHIValues[i], BB);
+        }
       }
     }
 

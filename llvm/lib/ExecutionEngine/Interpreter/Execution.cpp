@@ -679,9 +679,10 @@ void Interpreter::SwitchToNewBasicBlock(BasicBlock *Dest, ExecutionContext &SF){
 
   // Now loop over all of the PHI nodes setting their values...
   SF.CurInst = SF.CurBB->begin();
-  for (unsigned i = 0; PHINode *PN = dyn_cast<PHINode>(SF.CurInst);
-       ++SF.CurInst, ++i)
+  for (unsigned i = 0; isa<PHINode>(SF.CurInst); ++SF.CurInst, ++i) {
+    PHINode *PN = cast<PHINode>(SF.CurInst);
     SetValue(PN, ResultValues[i], SF);
+  }
 }
 
 //===----------------------------------------------------------------------===//

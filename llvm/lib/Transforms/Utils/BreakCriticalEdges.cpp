@@ -118,8 +118,8 @@ bool llvm::SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum, Pass *P) {
   // If there are any PHI nodes in DestBB, we need to update them so that they
   // merge incoming values from NewBB instead of from TIBB.
   //
-  for (BasicBlock::iterator I = DestBB->begin();
-       PHINode *PN = dyn_cast<PHINode>(I); ++I) {
+  for (BasicBlock::iterator I = DestBB->begin(); isa<PHINode>(I); ++I) {
+    PHINode *PN = cast<PHINode>(I);
     // We no longer enter through TIBB, now we come in through NewBB.  Revector
     // exactly one entry in the PHI node that used to come from TIBB to come
     // from NewBB.

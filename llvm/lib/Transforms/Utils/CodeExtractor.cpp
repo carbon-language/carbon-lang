@@ -166,8 +166,8 @@ void CodeExtractor::severSplitPHINodes(BasicBlock *&Header) {
 
     // Okay, everthing within the region is now branching to the right block, we
     // just have to update the PHI nodes now, inserting PHI nodes into NewBB.
-    for (AfterPHIs = OldPred->begin();
-         PHINode *PN = dyn_cast<PHINode>(AfterPHIs); ++AfterPHIs) {
+    for (AfterPHIs = OldPred->begin(); isa<PHINode>(AfterPHIs); ++AfterPHIs) {
+      PHINode *PN = cast<PHINode>(AfterPHIs);
       // Create a new PHI node in the new region, which has an incoming value
       // from OldPred of PN.
       PHINode *NewPN = new PHINode(PN->getType(), PN->getName()+".ce",
@@ -644,20 +644,21 @@ ExtractCodeRegion(const std::vector<BasicBlock*> &code) {
 
   // Loop over all of the PHI nodes in the header block, and change any
   // references to the old incoming edge to be the new incoming edge.
-  for (BasicBlock::iterator I = header->begin();
-       PHINode *PN = dyn_cast<PHINode>(I); ++I)
+  for (BasicBlock::iterator I = header->begin(); isa<PHINode>(I); ++I) {
+    PHINode *PN = cast<PHINode>(I);
     for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
       if (!BlocksToExtract.count(PN->getIncomingBlock(i)))
         PN->setIncomingBlock(i, newFuncRoot);
-
+  }
+  
   // Look at all successors of the codeReplacer block.  If any of these blocks
   // had PHI nodes in them, we need to update the "from" block to be the code
   // replacer, not the original block in the extracted region.
   std::vector<BasicBlock*> Succs(succ_begin(codeReplacer),
                                  succ_end(codeReplacer));
   for (unsigned i = 0, e = Succs.size(); i != e; ++i)
-    for (BasicBlock::iterator I = Succs[i]->begin();
-         PHINode *PN = dyn_cast<PHINode>(I); ++I) {
+    for (BasicBlock::iterator I = Succs[i]->begin(); isa<PHINode>(I); ++I) {
+      PHINode *PN = cast<PHINode>(I);
       std::set<BasicBlock*> ProcessedPreds;
       for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
         if (BlocksToExtract.count(PN->getIncomingBlock(i)))

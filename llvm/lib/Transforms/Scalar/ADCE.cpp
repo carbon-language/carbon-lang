@@ -428,7 +428,8 @@ bool ADCE::doADCE() {
               // should be identical to the incoming values for LastDead.
               //
               for (BasicBlock::iterator II = NextAlive->begin();
-                   PHINode *PN = dyn_cast<PHINode>(II); ++II)
+                   isa<PHINode>(II); ++II) {
+                PHINode *PN = cast<PHINode>(II);
                 if (LiveSet.count(PN)) {  // Only modify live phi nodes
                   // Get the incoming value for LastDead...
                   int OldIdx = PN->getBasicBlockIndex(LastDead);
@@ -438,6 +439,7 @@ bool ADCE::doADCE() {
                   // Add an incoming value for BB now...
                   PN->addIncoming(InVal, BB);
                 }
+              }
             }
           }
 

@@ -198,9 +198,10 @@ private:
       // The destination is already executable, but we just made an edge
       // feasible that wasn't before.  Revisit the PHI nodes in the block
       // because they have potentially new operands.
-      for (BasicBlock::iterator I = Dest->begin();
-           PHINode *PN = dyn_cast<PHINode>(I); ++I)
+      for (BasicBlock::iterator I = Dest->begin(); isa<PHINode>(I); ++I) {
+        PHINode *PN = cast<PHINode>(I);
         visitPHINode(*PN);
+      }
 
     } else {
       DEBUG(std::cerr << "Marking Block Executable: " << Dest->getName()<<"\n");

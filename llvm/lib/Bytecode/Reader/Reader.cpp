@@ -347,14 +347,14 @@ unsigned BytecodeReader::getTypeSlot(const Type *Ty) {
   }
 
   // Check the function level types first...
-  TypeListTy::iterator I = find(FunctionTypes.begin(), FunctionTypes.end(), Ty);
+  TypeListTy::iterator I = std::find(FunctionTypes.begin(), FunctionTypes.end(), Ty);
 
   if (I != FunctionTypes.end())
     return Type::FirstDerivedTyID + ModuleTypes.size() + 
            (&*I - &FunctionTypes[0]);
 
   // Check the module level types now...
-  I = find(ModuleTypes.begin(), ModuleTypes.end(), Ty);
+  I = std::find(ModuleTypes.begin(), ModuleTypes.end(), Ty);
   if (I == ModuleTypes.end())
     error("Didn't find type in ModuleTypes.");
   return Type::FirstDerivedTyID + (&*I - &ModuleTypes[0]);
@@ -381,7 +381,7 @@ const Type *BytecodeReader::getGlobalTableType(unsigned Slot) {
 unsigned BytecodeReader::getGlobalTableTypeSlot(const Type *Ty) {
   if (Ty->isPrimitiveType())
     return Ty->getTypeID();
-  TypeListTy::iterator I = find(ModuleTypes.begin(),
+  TypeListTy::iterator I = std::find(ModuleTypes.begin(),
                                       ModuleTypes.end(), Ty);
   if (I == ModuleTypes.end())
     error("Didn't find type in ModuleTypes.");

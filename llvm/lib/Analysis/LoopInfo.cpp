@@ -404,15 +404,15 @@ PHINode *Loop::getCanonicalInductionVariable() const {
     return 0;
 
   // Loop over all of the PHI nodes, looking for a canonical indvar.
-  for (BasicBlock::iterator I = H->begin();
-       PHINode *PN = dyn_cast<PHINode>(I); ++I)
+  for (BasicBlock::iterator I = H->begin(); isa<PHINode>(I); ++I) {
+    PHINode *PN = cast<PHINode>(I);
     if (Instruction *Inc =
         dyn_cast<Instruction>(PN->getIncomingValueForBlock(Backedge)))
       if (Inc->getOpcode() == Instruction::Add && Inc->getOperand(0) == PN)
         if (ConstantInt *CI = dyn_cast<ConstantInt>(Inc->getOperand(1)))
           if (CI->equalsInt(1))
             return PN;
-
+  }
   return 0;
 }
 

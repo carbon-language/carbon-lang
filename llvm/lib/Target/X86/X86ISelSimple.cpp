@@ -643,8 +643,8 @@ void ISel::SelectPHINodes() {
 
     // Loop over all of the PHI nodes in the LLVM basic block...
     MachineBasicBlock::iterator PHIInsertPoint = MBB.begin();
-    for (BasicBlock::const_iterator I = BB->begin();
-         PHINode *PN = const_cast<PHINode*>(dyn_cast<PHINode>(I)); ++I) {
+    for (BasicBlock::const_iterator I = BB->begin(); isa<PHINode>(I); ++I) {
+      PHINode *PN = const_cast<PHINode*>(dyn_cast<PHINode>(I));
 
       // Create a new machine instr PHI node, and insert it.
       unsigned PHIReg = getReg(*PN);

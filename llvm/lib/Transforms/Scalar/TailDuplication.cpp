@@ -214,8 +214,8 @@ void TailDup::eliminateUnconditionalBranch(BranchInst *Branch) {
   for (succ_iterator SI = succ_begin(DestBlock), SE = succ_end(DestBlock);
        SI != SE; ++SI) {
     BasicBlock *Succ = *SI;
-    for (BasicBlock::iterator PNI = Succ->begin();
-         PHINode *PN = dyn_cast<PHINode>(PNI); ++PNI) {
+    for (BasicBlock::iterator PNI = Succ->begin(); isa<PHINode>(PNI); ++PNI) {
+      PHINode *PN = cast<PHINode>(PNI);
       // Ok, we have a PHI node.  Figure out what the incoming value was for the
       // DestBlock.
       Value *IV = PN->getIncomingValueForBlock(DestBlock);
