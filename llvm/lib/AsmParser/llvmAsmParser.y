@@ -912,7 +912,8 @@ Module *llvm::RunVMAsmParser(const std::string &Filename, FILE *F) {
 %token IMPLEMENTATION ZEROINITIALIZER TRUETOK FALSETOK BEGINTOK ENDTOK
 %token DECLARE GLOBAL CONSTANT VOLATILE
 %token TO DOTDOTDOT NULL_TOK CONST INTERNAL LINKONCE WEAK  APPENDING
-%token OPAQUE NOT EXTERNAL TARGET ENDIAN POINTERSIZE LITTLE BIG
+%token OPAQUE NOT EXTERNAL TARGET TRIPLE ENDIAN POINTERSIZE LITTLE BIG
+%token DEPLIBS
 
 // Basic Block Terminating Operators 
 %token <TermOpVal> RET BR SWITCH INVOKE UNWIND
@@ -1422,6 +1423,8 @@ ConstPool : ConstPool OptAssign TYPE TypesV {  // Types can be defined in the co
   }
   | ConstPool TARGET TargetDefinition { 
   }
+  | ConstPool DEPLIBS '=' LibrariesDefinition {
+  }
   | /* empty: end of list */ { 
   };
 
@@ -1440,8 +1443,26 @@ TargetDefinition : ENDIAN '=' BigOrLittle {
       CurModule.CurrentModule->setPointerSize(Module::Pointer64);
     else
       ThrowException("Invalid pointer size: '" + utostr($3) + "'!");
+  }
+  | TRIPLE '=' STRINGCONSTANT {
+    std::string triple($3);
+    CurModule.CurrentModule->setTargetTriple(triple);
   };
 
+LibrariesDefinition : '[' LibList ']'
+                    ;
+
+LibList : LibList ',' STRINGCONSTANT {
+          std::string lib($3);
+          CurModule.CurrentModule->linsert(lib);
+        }
+        | STRINGCONSTANT {
+          std::string lib($1);
+          CurModule.CurrentModule->linsert(lib);
+        }
+        | /* empty: end of list */ {
+        }
+        ;
 
 //===----------------------------------------------------------------------===//
 //                       Rules to match Function Headers
