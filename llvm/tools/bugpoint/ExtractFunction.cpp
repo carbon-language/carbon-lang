@@ -262,7 +262,11 @@ Module *BugDriver::ExtractMappedBlocksFromModule(const
   PI.push_back(getPI(new BlockExtractorPass()));
   Module *Ret = runPassesOn(M, PI);
   BlocksToNotExtract.clear();
-  if (Ret == 0)
+  if (Ret == 0) {
     std::cout << "*** Basic Block extraction failed, please report a bug!\n";
+    M = swapProgramIn(M);
+    EmitProgressBytecode("basicblockextractfail", true);
+    M = swapProgramIn(M);
+  }
   return Ret;
 }
