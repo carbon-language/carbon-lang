@@ -23,6 +23,12 @@ class TargetMachine;
 class FunctionPass;
 class IntrinsicLowering;
 
+enum X86VectorEnum {
+  NoSSE, SSE, SSE2, SSE3
+};
+
+extern X86VectorEnum X86Vector;
+
 /// createX86SimpleInstructionSelector - This pass converts an LLVM function
 /// into a machine code representation in a very simple peep-hole fashion.  The
 /// generated code sucks but the implementation is nice and simple.

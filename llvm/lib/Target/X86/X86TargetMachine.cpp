@@ -25,6 +25,8 @@
 #include "Support/Statistic.h"
 using namespace llvm;
 
+X86VectorEnum llvm::X86Vector = NoSSE;
+
 namespace {
   cl::opt<bool> NoSSAPeephole("disable-ssa-peephole", cl::init(true),
                         cl::desc("Disable the ssa-based peephole optimizer "
@@ -32,6 +34,18 @@ namespace {
   cl::opt<bool> DisableOutput("disable-x86-llc-output", cl::Hidden,
                               cl::desc("Disable the X86 asm printer, for use "
                                        "when profiling the code generator."));
+
+  // FIXME: This should eventually be handled with target triples and
+  // subtarget support!
+  cl::opt<X86VectorEnum, true>
+  SSEArg(
+    cl::desc("Enable SSE support in the X86 target:"),
+    cl::values(
+       clEnumValN(SSE,  "sse", "  Enable SSE support"),
+       clEnumValN(SSE2, "sse2", "  Enable SSE and SSE2 support"),
+       clEnumValN(SSE3, "sse3", "  Enable SSE, SSE2, and SSE3 support"),
+       clEnumValEnd),
+    cl::location(X86Vector), cl::init(NoSSE));
 
   // Register the target.
   RegisterTarget<X86TargetMachine> X("x86", "  IA-32 (Pentium and above)");
