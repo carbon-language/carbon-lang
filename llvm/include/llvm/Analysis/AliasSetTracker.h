@@ -218,7 +218,7 @@ private:
   void removeFromTracker(AliasSetTracker &AST);
 
   void addPointer(AliasSetTracker &AST, HashNodePair &Entry, unsigned Size);
-  void addCallSite(CallSite CS);
+  void addCallSite(CallSite CS, AliasAnalysis &AA);
   void setVolatile() { Volatile = true; }
 
   /// aliasesPointer - Return true if the specified pointer "may" (or must)
