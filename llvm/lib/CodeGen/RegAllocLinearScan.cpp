@@ -152,12 +152,17 @@ namespace {
             memcpy(regUse_, regUseBackup_, sizeof(regUseBackup_));
         }
 
-        void printVirt2PhysMap() const {
-            std::cerr << "allocated registers:\n";
+        void printVirtRegAssignment() const {
+            std::cerr << "register assignment:\n";
             for (Virt2PhysMap::const_iterator
                      i = v2pMap_.begin(), e = v2pMap_.end(); i != e; ++i) {
+                assert(i->second != 0);
                 std::cerr << '[' << i->first << ','
                           << mri_->getName(i->second) << "]\n";
+            }
+            for (Virt2StackSlotMap::const_iterator
+                     i = v2ssMap_.begin(), e = v2ssMap_.end(); i != e; ++i) {
+                std::cerr << '[' << i->first << ",ss#" << i->second << "]\n";
             }
             std::cerr << '\n';
         }
@@ -320,7 +325,7 @@ bool RA::runOnMachineFunction(MachineFunction &fn) {
     inactive_.clear();
 
     DEBUG(std::cerr << "finished register allocation\n");
-    DEBUG(printVirt2PhysMap());
+    DEBUG(printVirtRegAssignment());
 
     DEBUG(std::cerr << "Rewrite machine code:\n");
     for (currentMbb_ = mf_->begin(); currentMbb_ != mf_->end(); ++currentMbb_) {
@@ -341,11 +346,11 @@ bool RA::runOnMachineFunction(MachineFunction &fn) {
                 MachineOperand& op = (*currentInstr_)->getOperand(i);
                 if (op.isVirtualRegister()) {
                     unsigned virtReg = op.getAllocatedRegNum();
-                    unsigned physReg = v2pMap_[virtReg];
-                    if (physReg) {
-                        DEBUG(std::cerr << "\t\t\t%reg" << virtReg
-                              << " -> " << mri_->getName(physReg) << '\n');
-                        (*currentInstr_)->SetMachineOperandReg(i, physReg);
+                    Virt2PhysMap::const_iterator it = v2pMap_.find(virtReg);
+                    if (it != v2pMap_.end()) {
+                        DEBUG(std::cerr << "\t\t\t%reg" << it->second
+                              << " -> " << mri_->getName(it->second) << '\n');
+                        (*currentInstr_)->SetMachineOperandReg(i, it->second);
                     }
                 }
             }
@@ -357,8 +362,12 @@ bool RA::runOnMachineFunction(MachineFunction &fn) {
                 MachineOperand& op = (*currentInstr_)->getOperand(i);
                 if (op.isVirtualRegister() && op.isUse() && !op.isDef()) {
                     unsigned virtReg = op.getAllocatedRegNum();
-                    unsigned physReg = v2pMap_[virtReg];
-                    if (!physReg) {
+                    unsigned physReg = 0;
+                    Virt2PhysMap::const_iterator it = v2pMap_.find(virtReg);
+                    if (it != v2pMap_.end()) {
+                        physReg = it->second;
+                    }
+                    else {
                         physReg = getFreeTempPhysReg(virtReg);
                         loadVirt2PhysReg(virtReg, physReg);
                         tempUseOperands_.push_back(virtReg);
@@ -380,8 +389,12 @@ bool RA::runOnMachineFunction(MachineFunction &fn) {
                 MachineOperand& op = (*currentInstr_)->getOperand(i);
                 if (op.isVirtualRegister() && op.isDef()) {
                     unsigned virtReg = op.getAllocatedRegNum();
-                    unsigned physReg = v2pMap_[virtReg];
-                    if (!physReg) {
+                    unsigned physReg = 0;
+                    Virt2PhysMap::const_iterator it = v2pMap_.find(virtReg);
+                    if (it != v2pMap_.end()) {
+                        physReg = it->second;
+                    }
+                    else {
                         physReg = getFreeTempPhysReg(virtReg);
                     }
                     if (op.isUse()) { // def and use
@@ -563,6 +576,8 @@ void RA::assignStackSlotAtInterval(IntervalPtrs::value_type cur)
             minReg = reg;
         }
     }
+    DEBUG(std::cerr << "\t\t\tregister with min weight: "
+          << mri_->getName(minReg) << " (" << minWeight << ")\n");
 
     if (cur->weight < minWeight) {
         restoreRegUse();
@@ -570,7 +585,6 @@ void RA::assignStackSlotAtInterval(IntervalPtrs::value_type cur)
         assignVirt2StackSlot(cur->reg);
     }
     else {
-        DEBUG(std::cerr << "\t\t\t\tfreeing: " << mri_->getName(minReg) << '\n');
         std::set<unsigned> toSpill;
         toSpill.insert(minReg);
         for (const unsigned* as = mri_->getAliasSet(minReg); *as; ++as)
@@ -674,7 +688,9 @@ unsigned RA::getFreeTempPhysReg(unsigned virtReg)
 
 void RA::assignVirt2PhysReg(unsigned virtReg, unsigned physReg)
 {
-    v2pMap_[virtReg] = physReg;
+    bool inserted = v2pMap_.insert(std::make_pair(virtReg, physReg)).second;
+    assert(inserted && "attempting to assign a virt->phys mapping to an "
+           "already mapped register");
     markPhysRegNotFree(physReg);
 }
 
@@ -685,8 +701,7 @@ void RA::clearVirtReg(unsigned virtReg)
            "attempting to clear a not allocated virtual register");
     unsigned physReg = it->second;
     markPhysRegFree(physReg);
-    v2pMap_[virtReg] = 0; // this marks that this virtual register
-                          // lives on the stack
+    v2pMap_.erase(it);
     DEBUG(std::cerr << "\t\t\tcleared register " << mri_->getName(physReg)
           << "\n");
 }
@@ -703,10 +718,6 @@ void RA::assignVirt2StackSlot(unsigned virtReg)
     // and free the virtual register
     if (v2pMap_.find(virtReg) != v2pMap_.end()) {
         clearVirtReg(virtReg);
-    }
-    else {
-        v2pMap_[virtReg] = 0; // this marks that this virtual register
-                              // lives on the stack
     }
 }
 
