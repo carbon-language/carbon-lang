@@ -609,6 +609,11 @@ unsigned ISel::SelectExpr(SDOperand N) {
 
   return Result;
   }
+
+  case ISD::UNDEF: {
+    BuildMI(BB, IA64::IDEF, 0, Result);
+    return Result;
+  }
     
   case ISD::GlobalAddress: {
     GlobalValue *GV = cast<GlobalAddressSDNode>(N)->getGlobal();
@@ -799,9 +804,16 @@ assert(0 && "hmm, ISD::SIGN_EXTEND: shouldn't ever be reached. bad luck!\n");
   }
  
   case ISD::FNEG: {
-    Tmp1 = SelectExpr(N.getOperand(0));
     assert(DestType == MVT::f64 && "trying to fneg something other than f64?");
-    BuildMI(BB, IA64::FNEG, 1, Result).addReg(Tmp1);
+
+    if (ISD::FABS == N.getOperand(0).getOpcode()) { // && hasOneUse()? 
+      Tmp1 = SelectExpr(N.getOperand(0).getOperand(0));
+      BuildMI(BB, IA64::FNEGABS, 1, Result).addReg(Tmp1); // fold in abs
+    } else {
+      Tmp1 = SelectExpr(N.getOperand(0));
+      BuildMI(BB, IA64::FNEG, 1, Result).addReg(Tmp1); // plain old fneg
+    }
+
     return Result;
   }
       	 
