@@ -17,7 +17,7 @@
 #ifndef LLVM_CODEGEN_PHYSREGTRACKER_H
 #define LLVM_CODEGEN_PHYSREGTRACKER_H
 
-#include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/Target/MRegisterInfo.h"
 
 namespace llvm {
 
@@ -26,11 +26,9 @@ namespace llvm {
         std::vector<unsigned> regUse_;
 
     public:
-        PhysRegTracker(MachineFunction* mf)
-            : mri_(mf ? mf->getTarget().getRegisterInfo() : NULL) {
-            if (mri_) {
-                regUse_.assign(mri_->getNumRegs(), 0);
-            }
+        PhysRegTracker(const MRegisterInfo& mri)
+            : mri_(&mri),
+              regUse_(mri_->getNumRegs(), 0) {
         }
 
         PhysRegTracker(const PhysRegTracker& rhs)

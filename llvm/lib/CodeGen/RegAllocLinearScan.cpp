@@ -45,7 +45,7 @@ namespace {
         typedef std::list<LiveIntervals::Interval*> IntervalPtrs;
         IntervalPtrs unhandled_, fixed_, active_, inactive_, handled_;
 
-        PhysRegTracker prt_;
+        std::auto_ptr<PhysRegTracker> prt_;
 
         typedef std::map<unsigned, unsigned> Virt2PhysMap;
         Virt2PhysMap v2pMap_;
@@ -198,7 +198,7 @@ bool RA::runOnMachineFunction(MachineFunction &fn) {
     tii_ = &tm_->getInstrInfo();
     mri_ = tm_->getRegisterInfo();
     li_ = &getAnalysis<LiveIntervals>();
-    prt_ = PhysRegTracker(mf_);
+    if (!prt_.get()) prt_.reset(new PhysRegTracker(*mri_));
 
     initIntervalSets(li_->getIntervals());
 
@@ -239,7 +239,7 @@ bool RA::runOnMachineFunction(MachineFunction &fn) {
 
         // if this register is fixed we are done
         if (MRegisterInfo::isPhysicalRegister(cur->reg)) {
-            prt_.addRegUse(cur->reg);
+            prt_->addRegUse(cur->reg);
             active_.push_back(cur);
             handled_.push_back(cur);
         }
@@ -262,7 +262,7 @@ bool RA::runOnMachineFunction(MachineFunction &fn) {
         if (MRegisterInfo::isVirtualRegister(reg)) {
             reg = v2pMap_[reg];
         }
-        prt_.delRegUse(reg);
+        prt_->delRegUse(reg);
     }
 
     DEBUG(printVirtRegAssignment());
@@ -355,7 +355,7 @@ void RA::processActiveIntervals(IntervalPtrs::value_type cur)
             if (MRegisterInfo::isVirtualRegister(reg)) {
                 reg = v2pMap_[reg];
             }
-            prt_.delRegUse(reg);
+            prt_->delRegUse(reg);
             // remove from active
             i = active_.erase(i);
         }
@@ -365,7 +365,7 @@ void RA::processActiveIntervals(IntervalPtrs::value_type cur)
             if (MRegisterInfo::isVirtualRegister(reg)) {
                 reg = v2pMap_[reg];
             }
-            prt_.delRegUse(reg);
+            prt_->delRegUse(reg);
             // add to inactive
             inactive_.push_back(*i);
             // remove from active
@@ -395,7 +395,7 @@ void RA::processInactiveIntervals(IntervalPtrs::value_type cur)
             if (MRegisterInfo::isVirtualRegister(reg)) {
                 reg = v2pMap_[reg];
             }
-            prt_.addRegUse(reg);
+            prt_->addRegUse(reg);
             // add to active
             active_.push_back(*i);
             // remove from inactive
@@ -418,7 +418,7 @@ void RA::assignRegOrStackSlotAtInterval(IntervalPtrs::value_type cur)
 {
     DEBUG(std::cerr << "\tallocating current interval: ");
 
-    PhysRegTracker backupPrt = prt_;
+    PhysRegTracker backupPrt = *prt_;
 
     spillWeights_.assign(mri_->getNumRegs(), 0.0);
 
@@ -439,7 +439,7 @@ void RA::assignRegOrStackSlotAtInterval(IntervalPtrs::value_type cur)
             unsigned reg = (*i)->reg;
             if (MRegisterInfo::isVirtualRegister(reg))
                 reg = v2pMap_[reg];
-            prt_.addRegUse(reg);
+            prt_->addRegUse(reg);
             updateSpillWeights(reg, (*i)->weight);
         }
     }
@@ -450,14 +450,14 @@ void RA::assignRegOrStackSlotAtInterval(IntervalPtrs::value_type cur)
              e = fixed_.end(); i != e; ++i) {
         if (cur->overlaps(**i)) {
             unsigned reg = (*i)->reg;
-            prt_.addRegUse(reg);
+            prt_->addRegUse(reg);
             updateSpillWeights(reg, (*i)->weight);
         }
     }
 
     unsigned physReg = getFreePhysReg(cur);
     // restore the physical register tracker
-    prt_ = backupPrt;
+    *prt_ = backupPrt;
     // if we find a free register, we are done: assign this virtual to
     // the free physical register and add this interval to the active
     // list.
@@ -565,12 +565,12 @@ void RA::assignRegOrStackSlotAtInterval(IntervalPtrs::value_type cur)
             active_.erase(it);
             if (MRegisterInfo::isPhysicalRegister(i->reg)) {
                 fixed_.push_front(i);
-                prt_.delRegUse(i->reg);
+                prt_->delRegUse(i->reg);
             }
             else {
                 Virt2PhysMap::iterator v2pIt = v2pMap_.find(i->reg);
                 clearVirtReg(v2pIt);
-                prt_.delRegUse(v2pIt->second);
+                prt_->delRegUse(v2pIt->second);
                 if (i->spilled()) {
                     if (!i->empty()) {
                         IntervalPtrs::iterator it = unhandled_.begin();
@@ -625,10 +625,10 @@ void RA::assignRegOrStackSlotAtInterval(IntervalPtrs::value_type cur)
             DEBUG(std::cerr << "\t\t\tundo changes for: " << **i << '\n');
             active_.push_back(*i);
             if (MRegisterInfo::isPhysicalRegister((*i)->reg))
-                prt_.addRegUse((*i)->reg);
+                prt_->addRegUse((*i)->reg);
             else {
                 assert(v2pMap_.count((*i)->reg));
-                prt_.addRegUse(v2pMap_.find((*i)->reg)->second);
+                prt_->addRegUse(v2pMap_.find((*i)->reg)->second);
             }
         }
     }
@@ -706,7 +706,7 @@ unsigned RA::getFreePhysReg(IntervalPtrs::value_type cur)
     for (TargetRegisterClass::iterator i = rc->allocation_order_begin(*mf_);
          i != rc->allocation_order_end(*mf_); ++i) {
         unsigned reg = *i;
-        if (prt_.isRegAvail(reg))
+        if (prt_->isRegAvail(reg))
             return reg;
     }
     return 0;
@@ -720,7 +720,7 @@ RA::assignVirt2PhysReg(unsigned virtReg, unsigned physReg)
     tie(it, inserted) = v2pMap_.insert(std::make_pair(virtReg, physReg));
     assert(inserted && "attempting to assign a virt->phys mapping to an "
            "already mapped register");
-    prt_.addRegUse(physReg);
+    prt_->addRegUse(physReg);
     return it;
 }
 
