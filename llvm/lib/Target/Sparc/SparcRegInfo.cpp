@@ -343,8 +343,25 @@ void UltraSparcRegInfo::colorRetArg(vector<const Instruction *> &
       MachineCodeForVMInstr &  MInstVec = RetI->getMachineInstrVec();
       MachineCodeForVMInstr::const_iterator MIIt = MInstVec.begin();
 
+      
+      /*
+      for( ; MIIt != MInstVec.end() && 
+	   !getUltraSparcInfo().getInstrInfo().isReturn((*MIIt)->getOpCode()); 
+	   ++MIIt ) {
+
+	cout << "Inst = "<< TargetInstrDescriptors[(*MIIt)->getOpCode()].opCodeString << endl;
+
+
+      }
+      assert((MIIt != MInstVec.end()) &&"No return machine instruction found");
+      
+      */
+
+      
       assert(getUltraSparcInfo().getInstrInfo().isReturn((*MIIt)->getOpCode())
-	     && "First machine instruction is not a RET Machine Instr");
+	     &&	   "First machine inst is not a RETURN Machine Instr");
+      
+
       // RET machine isntruction
       const MachineInstr *const RetMI = *MIIt;
 
