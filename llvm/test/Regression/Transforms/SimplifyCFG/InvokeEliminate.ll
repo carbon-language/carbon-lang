@@ -6,14 +6,12 @@
 ; RUN: llvm-as < %s | opt -simplifycfg | llvm-dis | not egrep 'invoke|br'
 
 declare void %bar()
-declare void %llvm.unwind()
 
 int %test() {
 	invoke void %bar() to label %Ok except label %Rethrow
 Ok:
 	ret int 0
 Rethrow:
-	call void %llvm.unwind()
-	br label %Ok
+	unwind
 }
 
