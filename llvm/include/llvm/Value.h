@@ -40,7 +40,7 @@ class SymbolTable;
 /// Value - The base class of all values computed by a program that may be used
 /// as operands to other values.
 ///
-struct Value {
+class Value {
 private:
   unsigned SubclassID;               // Subclass identifier (for isa/dyn_cast)
   PATypeHolder Ty;
