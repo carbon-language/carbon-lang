@@ -64,7 +64,7 @@ struct DOTGraphTraits<const DSGraph*> : public DefaultDOTGraphTraits {
     if (G->hasFunction())
       return "Function " + G->getFunction().getName();
     else
-      return "Non-function graph";
+      return "Globals graph";
   }
 
   static const char *getGraphProperties(const DSGraph *G) {
