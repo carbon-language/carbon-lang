@@ -602,7 +602,13 @@ void IndVarSimplify::runOnLoop(Loop *L) {
     if (PN->getType()->isInteger()) {  // FIXME: when we have fast-math, enable!
       SCEVHandle SCEV = SE->getSCEV(PN);
       if (SCEV->hasComputableLoopEvolution(L))
-        if (SE->shouldSubstituteIndVar(SCEV))  // HACK!
+        // FIXME: Without a strength reduction pass, it is an extremely bad idea
+        // to indvar substitute anything more complex than a linear induction
+        // variable.  Doing so will put expensive multiply instructions inside
+        // of the loop.  For now just disable indvar subst on anything more
+        // complex than a linear addrec.
+        if (!isa<SCEVAddRecExpr>(SCEV) || 
+            cast<SCEVAddRecExpr>(SCEV)->getNumOperands() < 3)
           IndVars.push_back(std::make_pair(PN, SCEV));
     }
 
