@@ -33,7 +33,7 @@ address     { clear: right; }
                   text-align: left;  font-size: 12pt; padding: 4pt 4pt 4pt 4pt;
                   margin: 1.5em 0.5em 1.5em 0.5em }
 
-.doc_subsubsection { margin: 1.5em 0.5em 1.5 0.5em;
+.doc_subsubsection { margin: 1.5em 0.5em 1.5em 0.5em;
                      padding: 20pt 4pt 4pt 4pt;
                      font-weight: bold; font-style: oblique;
                      border-bottom: 1px solid #999999; font-size: 12pt }
