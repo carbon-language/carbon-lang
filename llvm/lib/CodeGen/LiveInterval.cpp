@@ -20,7 +20,8 @@
 
 #include "LiveInterval.h"
 #include "Support/STLExtras.h"
-#include <ostream>
+#include <iostream>
+#include <map>
 using namespace llvm;
 
 // An example for liveAt():
@@ -87,17 +88,27 @@ bool LiveInterval::overlaps(const LiveInterval& other) const {
   return false;
 }
 
+/// joinable - Two intervals are joinable if the either don't overlap at all
+/// or if the destination of the copy is a single assignment value, and it
+/// only overlaps with one value in the source interval.
+bool LiveInterval::joinable(const LiveInterval &other, unsigned CopyIdx) const {
+  return overlaps(other);
+}
+
+
 /// extendIntervalEndTo - This method is used when we want to extend the range
 /// specified by I to end at the specified endpoint.  To do this, we should
 /// merge and eliminate all ranges that this will overlap with.  The iterator is
 /// not invalidated.
 void LiveInterval::extendIntervalEndTo(Ranges::iterator I, unsigned NewEnd) {
   assert(I != ranges.end() && "Not a valid interval!");
+  unsigned ValId = I->ValId;
 
   // Search for the first interval that we can't merge with.
   Ranges::iterator MergeTo = next(I);
-  for (; MergeTo != ranges.end() && NewEnd >= MergeTo->end; ++MergeTo)
-    /*empty*/;
+  for (; MergeTo != ranges.end() && NewEnd >= MergeTo->end; ++MergeTo) {
+    assert(MergeTo->ValId == ValId && "Cannot merge with differing values!");
+  }
 
   // If NewEnd was in the middle of an interval, make sure to get its endpoint.
   I->end = std::max(NewEnd, prior(MergeTo)->end);
@@ -113,20 +124,23 @@ void LiveInterval::extendIntervalEndTo(Ranges::iterator I, unsigned NewEnd) {
 LiveInterval::Ranges::iterator 
 LiveInterval::extendIntervalStartTo(Ranges::iterator I, unsigned NewStart) {
   assert(I != ranges.end() && "Not a valid interval!");
+  unsigned ValId = I->ValId;
 
   // Search for the first interval that we can't merge with.
   Ranges::iterator MergeTo = I;
   do {
     if (MergeTo == ranges.begin()) {
       I->start = NewStart;
+      ranges.erase(MergeTo, I);
       return I;
     }
+    assert(MergeTo->ValId == ValId && "Cannot merge with differing values!");
     --MergeTo;
   } while (NewStart <= MergeTo->start);
 
   // If we start in the middle of another interval, just delete a range and
   // extend that interval.
-  if (MergeTo->end >= NewStart) {
+  if (MergeTo->end >= NewStart && MergeTo->ValId == ValId) {
     MergeTo->end = I->end;
   } else {
     // Otherwise, extend the interval right after.
@@ -148,37 +162,132 @@ LiveInterval::addRangeFrom(LiveRange LR, Ranges::iterator From) {
   // another interval, just extend that interval to contain the range of LR.
   if (it != ranges.begin()) {
     Ranges::iterator B = prior(it);
-    if (B->start <= Start && B->end >= Start) {
-      extendIntervalEndTo(B, End);
-      return B;
+    if (LR.ValId == B->ValId) {
+      if (B->start <= Start && B->end >= Start) {
+        extendIntervalEndTo(B, End);
+        return B;
+      }
+    } else {
+      // Check to make sure that we are not overlapping two live ranges with
+      // different ValId's.
+      assert(B->end <= Start &&
+             "Cannot overlap two LiveRanges with differing ValID's");
     }
   }
 
   // Otherwise, if this range ends in the middle of, or right next to, another
   // interval, merge it into that interval.
-  if (it != ranges.end() && it->start <= End)
-    return extendIntervalStartTo(it, Start);
+  if (it != ranges.end())
+    if (LR.ValId == it->ValId) {
+      if (it->start <= End) {
+        it = extendIntervalStartTo(it, Start);
+
+        // If LR is a complete superset of an interval, we may need to grow its
+        // endpoint as well.
+        if (End > it->end)
+          extendIntervalEndTo(it, End);
+        return it;
+      }
+    } else {
+      // Check to make sure that we are not overlapping two live ranges with
+      // different ValId's.
+      assert(it->start >= End &&
+             "Cannot overlap two LiveRanges with differing ValID's");
+    }
 
   // Otherwise, this is just a new range that doesn't interact with anything.
   // Insert it.
   return ranges.insert(it, LR);
 }
 
-void LiveInterval::join(const LiveInterval& other) {
-  isDefinedOnce &= other.isDefinedOnce;
+
+/// removeRange - Remove the specified range from this interval.  Note that
+/// the range must already be in this interval in its entirety.
+void LiveInterval::removeRange(unsigned Start, unsigned End) {
+  // Find the LiveRange containing this span.
+  Ranges::iterator I = std::upper_bound(ranges.begin(), ranges.end(), Start);
+  assert(I != ranges.begin() && "Range is not in interval!");
+  --I;
+  assert(I->contains(Start) && I->contains(End-1) &&
+         "Range is not entirely in interval!");
+
+  // If the span we are removing is at the start of the LiveRange, adjust it.
+  if (I->start == Start) {
+    if (I->end == End)
+      ranges.erase(I);  // Removed the whole LiveRange.
+    else
+      I->start = End;
+    return;
+  }
+
+  // Otherwise if the span we are removing is at the end of the LiveRange,
+  // adjust the other way.
+  if (I->end == End) {
+    I->start = Start;
+    return;
+  }
+
+  // Otherwise, we are splitting the LiveRange into two pieces.
+  unsigned OldEnd = I->end;
+  I->end = Start;   // Trim the old interval.
+
+  // Insert the new one.
+  ranges.insert(next(I), LiveRange(End, OldEnd, I->ValId));
+}
+
+/// getLiveRangeContaining - Return the live range that contains the
+/// specified index, or null if there is none.
+LiveRange *LiveInterval::getLiveRangeContaining(unsigned Idx) {
+  Ranges::iterator It = std::upper_bound(ranges.begin(), ranges.end(), Idx);
+  if (It != ranges.begin()) {
+    LiveRange &LR = *prior(It);
+    if (LR.contains(Idx))
+      return &LR;
+  }
+
+  return 0;
+}
+
+
+
+/// join - Join two live intervals (this, and other) together.  This operation
+/// is the result of a copy instruction in the source program, that occurs at
+/// index 'CopyIdx' that copies from 'Other' to 'this'.
+void LiveInterval::join(LiveInterval &Other, unsigned CopyIdx) {
+  LiveRange *SourceLR = Other.getLiveRangeContaining(CopyIdx-1);
+  LiveRange *DestLR = getLiveRangeContaining(CopyIdx);
+  assert(SourceLR && DestLR && "Not joining due to a copy?");
+  unsigned MergedSrcValIdx = SourceLR->ValId;
+  unsigned MergedDstValIdx = DestLR->ValId;
 
   // Join the ranges of other into the ranges of this interval.
-  Ranges::iterator cur = ranges.begin();
-  for (Ranges::const_iterator i = other.ranges.begin(),
-         e = other.ranges.end(); i != e; ++i)
-    cur = addRangeFrom(*i, cur);
+  Ranges::iterator InsertPos = ranges.begin();
+  std::map<unsigned, unsigned> Dst2SrcIdxMap;
+  for (Ranges::iterator I = Other.ranges.begin(),
+         E = Other.ranges.end(); I != E; ++I) {
+    // Map the ValId in the other live range to the current live range.
+    if (I->ValId == MergedSrcValIdx)
+      I->ValId = MergedDstValIdx;
+    else {
+      unsigned &NV = Dst2SrcIdxMap[I->ValId];
+      if (NV == 0) NV = getNextValue();
+      I->ValId = NV;
+    }
 
-  weight += other.weight;
+    InsertPos = addRangeFrom(*I, InsertPos);
+  }
+
+  weight += Other.weight;
 }
 
 std::ostream& llvm::operator<<(std::ostream& os, const LiveRange &LR) {
-  return os << "[" << LR.start << "," << LR.end << ")";
+  return os << '[' << LR.start << ',' << LR.end << ':' << LR.ValId << ")";
 }
+
+void LiveRange::dump() const {
+  std::cerr << *this << "\n";
+}
+
 
 std::ostream& llvm::operator<<(std::ostream& os, const LiveInterval& li) {
   os << "%reg" << li.reg << ',' << li.weight;
@@ -190,4 +299,8 @@ std::ostream& llvm::operator<<(std::ostream& os, const LiveInterval& li) {
          e = li.ranges.end(); i != e; ++i)
     os << *i;
   return os;
+}
+
+void LiveInterval::dump() const {
+  std::cerr << *this << "\n";
 }

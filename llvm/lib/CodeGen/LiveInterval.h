@@ -10,7 +10,7 @@
 // This file implements the LiveRange and LiveInterval classes.  Given some
 // numbering of each the machine instructions an interval [i, j) is said to be a
 // live interval for register v if there is no instruction with number j' > j
-// such that v is live at j' abd there is no instruction with number i' < i such
+// such that v is live at j' and there is no instruction with number i' < i such
 // that v is live at i'. In this implementation intervals can have holes,
 // i.e. an interval might look like [1,20), [50,65), [1000,1001).  Each
 // individual range is represented as an instance of LiveRange, and the whole
@@ -31,8 +31,10 @@ namespace llvm {
   /// These ranges are rendered as [start,end).
   struct LiveRange {
     unsigned start;  // Start point of the interval (inclusive)
-    unsigned end;  // End point of the interval (exclusive)
-    LiveRange(unsigned S, unsigned E) : start(S), end(E) {
+    unsigned end;    // End point of the interval (exclusive)
+    unsigned ValId;  // identifier for the value contained in this interval.
+
+    LiveRange(unsigned S, unsigned E, unsigned V) : start(S), end(E), ValId(V) {
       assert(S < E && "Cannot create empty or backwards range");
     }
 
@@ -48,6 +50,9 @@ namespace llvm {
     bool operator==(const LiveRange &LR) const {
       return start == LR.start && end == LR.end;
     }
+
+    void dump() const;
+
   private:
     LiveRange(); // DO NOT IMPLEMENT
   };
@@ -66,13 +71,16 @@ namespace llvm {
     unsigned reg;        // the register of this interval
     float weight;        // weight of this interval
     Ranges ranges;       // the ranges in which this register is live
-    bool isDefinedOnce;  // True if this interval contains one value.
 
     LiveInterval(unsigned Reg, float Weight)
-      : reg(Reg), weight(Weight), isDefinedOnce(false) {
+      : reg(Reg), weight(Weight), NumValues(0) {
     }
 
-    bool containsOneValue() const { return isDefinedOnce; }
+    bool containsOneValue() const { return NumValues == 1; }
+
+    unsigned getNextValue() {
+      return NumValues++;
+    }
 
     bool empty() const { return ranges.empty(); }
 
@@ -95,6 +103,17 @@ namespace llvm {
 
     bool liveAt(unsigned index) const;
 
+    /// getLiveRangeContaining - Return the live range that contains the
+    /// specified index, or null if there is none.
+    LiveRange *getLiveRangeContaining(unsigned Idx);
+
+
+    /// joinable - Two intervals are joinable if the either don't overlap at all
+    /// or if the destination of the copy is a single assignment value, and it
+    /// only overlaps with one value in the source interval.
+    bool joinable(const LiveInterval& other, unsigned CopyIdx) const;
+
+
     bool overlaps(const LiveInterval& other) const;
 
     /// addRange - Add the specified LiveRange to this interval, merging
@@ -104,17 +123,25 @@ namespace llvm {
       addRangeFrom(LR, ranges.begin());
     }
 
-    void join(const LiveInterval& other);
+    /// join - Join two live intervals (this, and other) together.  This
+    /// operation is the result of a copy instruction in the source program,
+    /// that occurs at index 'CopyIdx' that copies from 'other' to 'this'.  This
+    /// destroys 'other'.
+    void join(LiveInterval& other, unsigned CopyIdx);
+
+
+    /// removeRange - Remove the specified range from this interval.  Note that
+    /// the range must already be in this interval in its entirety.
+    void removeRange(unsigned Start, unsigned End);
 
     bool operator<(const LiveInterval& other) const {
       return start() < other.start();
     }
 
-    bool operator==(const LiveInterval& other) const {
-      return reg == other.reg;
-    }
+    void dump() const;
 
   private:
+    unsigned NumValues;  // the number of distinct values in this interval.
     Ranges::iterator addRangeFrom(LiveRange LR, Ranges::iterator From);
     void extendIntervalEndTo(Ranges::iterator I, unsigned NewEnd);
     Ranges::iterator extendIntervalStartTo(Ranges::iterator I, unsigned NewStr);
