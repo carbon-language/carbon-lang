@@ -63,6 +63,7 @@ private:
   friend class ConstantPointerRef;
   void mutateConstantPointerRef(GlobalValue *OldGV, GlobalValue *NewGV);
   ConstantPointerRef *getConstantPointerRef(GlobalValue *GV);
+  void destroyConstantPointerRef(ConstantPointerRef *CPR);
 
 public:
   Module();

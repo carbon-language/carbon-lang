@@ -252,7 +252,6 @@ protected:
   ConstantArray(const ArrayType *T, const std::vector<Constant*> &Val);
   ~ConstantArray() {}
 
-  virtual void destroyConstant();
 public:
   static ConstantArray *get(const ArrayType *T, const std::vector<Constant*> &);
   static ConstantArray *get(const std::string &Initializer);
@@ -266,6 +265,8 @@ public:
   // isNullValue - Return true if this is the value that would be returned by
   // getNullValue.
   virtual bool isNullValue() const { return false; }
+
+  virtual void destroyConstant();
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const ConstantArray *) { return true; }
@@ -285,7 +286,6 @@ protected:
   ConstantStruct(const StructType *T, const std::vector<Constant*> &Val);
   ~ConstantStruct() {}
 
-  virtual void destroyConstant();
 public:
   static ConstantStruct *get(const StructType *T,
                              const std::vector<Constant*> &V);
@@ -299,6 +299,8 @@ public:
   // isNullValue - Return true if this is the value that would be returned by
   // getNullValue.
   virtual bool isNullValue() const { return false; }
+
+  virtual void destroyConstant();
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const ConstantStruct *) { return true; }
@@ -352,6 +354,8 @@ public:
   // getNullValue.
   virtual bool isNullValue() const { return true; }
 
+  virtual void destroyConstant();
+
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const ConstantPointerNull *) { return true; }
   static inline bool classof(const ConstantPointer *P) {
@@ -376,8 +380,6 @@ class ConstantPointerRef : public ConstantPointer {
 protected:
   ConstantPointerRef(GlobalValue *GV);
   ~ConstantPointerRef() {}
-
-  virtual void destroyConstant() { destroyConstantImpl(); }
 public:
   static ConstantPointerRef *get(GlobalValue *GV);
 
@@ -387,6 +389,8 @@ public:
   GlobalValue *getValue() {
     return cast<GlobalValue>(Operands[0].get());
   }
+
+  virtual void destroyConstant();
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const ConstantPointerRef *) { return true; }
@@ -426,8 +430,6 @@ protected:
                const Type *DestTy);
   ~ConstantExpr() {}
   
-  virtual void destroyConstant();
-  
 public:
   // Static methods to construct a ConstantExpr of different kinds.
   
@@ -453,7 +455,9 @@ public:
   
   // isConstantExpr - Return true if this is a ConstantExpr
   virtual bool isConstantExpr() const { return true; }
-  
+
+  virtual void destroyConstant();
+    
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const ConstantExpr *) { return true; }
   static inline bool classof(const Constant *CPV) {

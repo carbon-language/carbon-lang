@@ -14,15 +14,6 @@ protected:
   inline Constant(const Type *Ty) : User(Ty, Value::ConstantVal) {}
   ~Constant() {}
 
-  // destroyConstant - Called if some element of this constant is no longer
-  // valid.  At this point only other constants may be on the use_list for this
-  // constant.  Any constants on our Use list must also be destroy'd.  The
-  // implementation must be sure to remove the constant from the list of
-  // available cached constants.  Implementations should call
-  // destroyConstantImpl as the last thing they do, to destroy all users and
-  // delete this.
-  //
-  virtual void destroyConstant() { assert(0 && "Not reached!"); }
   void destroyConstantImpl();
 public:
   // Specialize setName to handle symbol table majik...
@@ -39,6 +30,24 @@ public:
 
   // isConstantExpr - Return true if this is a ConstantExpr
   virtual bool isConstantExpr() const { return false; }
+
+
+  // destroyConstant - Called if some element of this constant is no longer
+  // valid.  At this point only other constants may be on the use_list for this
+  // constant.  Any constants on our Use list must also be destroy'd.  The
+  // implementation must be sure to remove the constant from the list of
+  // available cached constants.  Implementations should call
+  // destroyConstantImpl as the last thing they do, to destroy all users and
+  // delete this.
+  //
+  // Note that this call is only valid on non-primitive constants: You cannot
+  // destroy an integer constant for example.  This API is used to delete
+  // constants that have ConstantPointerRef's embeded in them when the module is
+  // deleted, and it is used by GlobalDCE to remove ConstantPointerRefs that are
+  // unneeded, allowing globals to be DCE'd.
+  //
+  virtual void destroyConstant() { assert(0 && "Not reached!"); }
+
   
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const Constant *) { return true; }
