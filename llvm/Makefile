@@ -48,5 +48,5 @@ TAGS: tags
 all:: tags
 
 tags:
-	$(ETAGS) $(ETAGSFLAGS) `find $(wildcard $(SourceDir)/include $(SourceDir)/lib $(SourceDir)/tools) -name '*.cpp' -o -name '*.h'`
+	find $(wildcard $(SourceDir)/include $(SourceDir)/lib $(SourceDir)/tools) -name '*.cpp' -o -name '*.h' | $(ETAGS) $(ETAGSFLAGS) -
 
