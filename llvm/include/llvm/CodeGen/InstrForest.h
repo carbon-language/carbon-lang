@@ -78,36 +78,26 @@ const int  ToPointerTy	= ToBoolTy + 12;
 typedef int OpLabel;
 typedef int StateLabel;
 
-struct BasicTreeNode {
-  BasicTreeNode* leftChild;
-  BasicTreeNode* rightChild;
-  BasicTreeNode* parent;
-  OpLabel        opLabel;
-  StateLabel     state;
-  InstrTreeNode *treeNodePtr;	// points to the C++ tree node object
-                                // that "contains" this node
-};
-
 //-------------------------------------------------------------------------
 // Declarations of data and functions created by BURG
 //-------------------------------------------------------------------------
 
 extern short*		burm_nts[];
   
-extern StateLabel	burm_label	(BasicTreeNode* p);
+extern StateLabel	burm_label	(InstrTreeNode* p);
   
 extern StateLabel	burm_state	(OpLabel op, StateLabel leftState,
 					 StateLabel rightState);
 
 extern StateLabel	burm_rule	(StateLabel state, int goalNT);
   
-extern BasicTreeNode**  burm_kids	(BasicTreeNode* p, int eruleno,
-					 BasicTreeNode* kids[]);
+extern InstrTreeNode**  burm_kids	(InstrTreeNode* p, int eruleno,
+					 InstrTreeNode* kids[]);
   
-extern void		printcover	(BasicTreeNode*, int, int);
-extern void		printtree	(BasicTreeNode*);
-extern int		treecost	(BasicTreeNode*, int, int);
-extern void		printMatches	(BasicTreeNode*);
+extern void		printcover	(InstrTreeNode*, int, int);
+extern void		printtree	(InstrTreeNode*);
+extern int		treecost	(InstrTreeNode*, int, int);
+extern void		printMatches	(InstrTreeNode*);
 
 
 //------------------------------------------------------------------------ 
@@ -125,8 +115,15 @@ public:
 			   NTConstNode,
 			   NTLabelNode };
   
+  // BASIC TREE NODE START
+  InstrTreeNode* LeftChild;
+  InstrTreeNode* RightChild;
+  InstrTreeNode* Parent;
+  OpLabel        opLabel;
+  StateLabel     state;
+  // BASIC TREE NODE END
+
 protected:
-  BasicTreeNode    basicNode;
   InstrTreeNodeType treeNodeType;
   Value*	   val;
   
@@ -135,30 +132,25 @@ public:
 					 Value* _val);
   /*dtor*/ virtual	~InstrTreeNode	() {}
   
-  BasicTreeNode*	getBasicNode	()	 { return &basicNode; }
-  
   InstrTreeNodeType	getNodeType	() const { return treeNodeType; }
   
   Value*		getValue	() const { return val; }
   
-  inline OpLabel	getOpLabel	() const { return basicNode.opLabel; }
+  inline OpLabel	getOpLabel	() const { return opLabel; }
   
   inline InstrTreeNode*	leftChild	() const {
-    return (basicNode.leftChild? basicNode.leftChild->treeNodePtr : NULL);
+    return LeftChild;
   }
   
   // If right child is a list node, recursively get its *left* child
-  inline InstrTreeNode* rightChild	() const {
-    return (InstrTreeNode*)
-      (basicNode.rightChild
-       ? (basicNode.rightChild->treeNodePtr->getOpLabel() == VRegListOp
-	  ? basicNode.rightChild->treeNodePtr->leftChild()
-	  : basicNode.rightChild->treeNodePtr)
-       : NULL);
+  inline InstrTreeNode* rightChild() const {
+    return (!RightChild ? 0 : 
+	    (RightChild->getOpLabel() == VRegListOp
+	     ? RightChild->LeftChild : RightChild));
   }
   
-  inline InstrTreeNode*	parent		() const {
-    return (basicNode.parent? basicNode.parent->treeNodePtr : NULL);
+  inline InstrTreeNode *parent() const {
+    return Parent;
   }
   
   void			dump		(int dumpChildren,

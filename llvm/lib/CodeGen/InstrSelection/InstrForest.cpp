@@ -38,23 +38,16 @@
 //------------------------------------------------------------------------ 
 
 
-InstrTreeNode::InstrTreeNode(InstrTreeNodeType nodeType,
-			     Value* _val)
-  : treeNodeType(nodeType),
-    val(_val)
-{
-  basicNode.leftChild = NULL;
-  basicNode.rightChild = NULL;
-  basicNode.parent = NULL;
-  basicNode.opLabel = InvalidOp;
-  basicNode.treeNodePtr = this;
+InstrTreeNode::InstrTreeNode(InstrTreeNodeType nodeType, Value* _val)
+  : treeNodeType(nodeType), val(_val) {
+  LeftChild   = 0;
+  RightChild  = 0;
+  Parent      = 0;
+  opLabel     = InvalidOp;
 }
 
-void
-InstrTreeNode::dump(int dumpChildren,
-		    int indent) const
-{
-  this->dumpNode(indent);
+void InstrTreeNode::dump(int dumpChildren, int indent) const {
+  dumpNode(indent);
   
   if (dumpChildren)
     {
@@ -122,7 +115,7 @@ InstructionNode::InstructionNode(Instruction* _instr)
 	}
     }
   
-  basicNode.opLabel = opLabel;
+  this->opLabel = opLabel;
 }
 
 
@@ -148,10 +141,8 @@ InstructionNode::dumpNode(int indent) const
 }
 
 
-VRegListNode::VRegListNode()
-  : InstrTreeNode(NTVRegListNode, NULL)
-{
-  basicNode.opLabel = VRegListOp;
+VRegListNode::VRegListNode() : InstrTreeNode(NTVRegListNode, 0) {
+  opLabel = VRegListOp;
 }
 
 void
@@ -164,10 +155,8 @@ VRegListNode::dumpNode(int indent) const
 }
 
 
-VRegNode::VRegNode(Value* _val)
-  : InstrTreeNode(NTVRegNode, _val)
-{
-  basicNode.opLabel = VRegNodeOp;
+VRegNode::VRegNode(Value* _val) : InstrTreeNode(NTVRegNode, _val) {
+  opLabel = VRegNodeOp;
 }
 
 void
@@ -181,10 +170,9 @@ VRegNode::dumpNode(int indent) const
 }
 
 
-ConstantNode::ConstantNode(ConstPoolVal* constVal)
-  : InstrTreeNode(NTConstNode, constVal)
-{
-  basicNode.opLabel = ConstantNodeOp;
+ConstantNode::ConstantNode(ConstPoolVal *constVal)
+  : InstrTreeNode(NTConstNode, constVal) {
+  opLabel = ConstantNodeOp;
 }
 
 void
@@ -198,10 +186,8 @@ ConstantNode::dumpNode(int indent) const
 }
 
 
-LabelNode::LabelNode(BasicBlock* _bblock)
-  : InstrTreeNode(NTLabelNode, _bblock)
-{
-  basicNode.opLabel = LabelNodeOp;
+LabelNode::LabelNode(BasicBlock *BB) : InstrTreeNode(NTLabelNode, BB) {
+  opLabel = LabelNodeOp;
 }
 
 void
@@ -255,10 +241,9 @@ InstrForest::noteTreeNodeForInstr(Instruction* instr,
 
 
 inline void
-InstrForest::setLeftChild(InstrTreeNode* parent, InstrTreeNode* child)
-{
-  parent->basicNode.leftChild = & child->basicNode;
-  child->basicNode.parent = & parent->basicNode;
+InstrForest::setLeftChild(InstrTreeNode* parent, InstrTreeNode* child) {
+  parent->LeftChild = child;
+  child->Parent = parent;
   if (child->getNodeType() == InstrTreeNode::NTInstructionNode)
     treeRoots.erase((InstructionNode*) child);	// no longer a tree root
 }
@@ -267,8 +252,8 @@ InstrForest::setLeftChild(InstrTreeNode* parent, InstrTreeNode* child)
 inline void
 InstrForest::setRightChild(InstrTreeNode* parent, InstrTreeNode* child)
 {
-  parent->basicNode.rightChild = & child->basicNode;
-  child->basicNode.parent = & parent->basicNode;
+  parent->RightChild = child;
+  child->Parent = parent;
   if (child->getNodeType() == InstrTreeNode::NTInstructionNode)
     treeRoots.erase((InstructionNode*) child);	// no longer a tree root
 }

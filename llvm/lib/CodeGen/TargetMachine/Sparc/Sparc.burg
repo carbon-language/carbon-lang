@@ -2,10 +2,10 @@
 #include <stdio.h>
 #include <llvm/CodeGen/InstrForest.h>
 
-typedef BasicTreeNode* NODEPTR_TYPE;
+typedef InstrTreeNode* NODEPTR_TYPE;
 #define OP_LABEL(p)	((p)->opLabel)
-#define LEFT_CHILD(p)	((p)->leftChild)
-#define RIGHT_CHILD(p)	((p)->rightChild)
+#define LEFT_CHILD(p)	((p)->LeftChild)
+#define RIGHT_CHILD(p)	((p)->RightChild)
 #define STATE_LABEL(p)	((p)->state)
 #define PANIC		printf
 %}

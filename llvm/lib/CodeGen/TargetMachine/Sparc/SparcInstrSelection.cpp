@@ -9,23 +9,18 @@
 //	7/02/01	 -  Vikram Adve  -  Created
 //**************************************************************************/
 
+#include "llvm/CodeGen/Sparc.h"
+#include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/CodeGen/InstrForest.h"
+#include "llvm/CodeGen/InstrSelection.h"
 #include "llvm/Support/MathExtras.h"
-#include "llvm/Type.h"
 #include "llvm/DerivedTypes.h"
-#include "llvm/SymbolTable.h"
-#include "llvm/Value.h"
-#include "llvm/Instruction.h"
-#include "llvm/InstrTypes.h"
 #include "llvm/iTerminators.h"
 #include "llvm/iMemory.h"
 #include "llvm/iOther.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/Method.h"
 #include "llvm/ConstPoolVals.h"
-#include "llvm/CodeGen/Sparc.h"
-#include "llvm/CodeGen/MachineInstr.h"
-#include "llvm/CodeGen/InstrForest.h"
-#include "llvm/CodeGen/InstrSelection.h"
 
 
 //******************** Internal Data Declarations ************************/
@@ -1982,7 +1977,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
     assert(ThisIsAChainRule(ruleForNode));
     assert(nts[0] && ! nts[1]
 	   && "A chain rule should have only one RHS non-terminal!");
-    nextRule = burm_rule(subtreeRoot->getBasicNode()->state, nts[0]);
+    nextRule = burm_rule(subtreeRoot->state, nts[0]);
     nts = burm_nts[nextRule];
     numInstr = GetInstructionsByRule(subtreeRoot, nextRule, nts,target,mvec);
     break;

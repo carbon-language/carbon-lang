@@ -10,29 +10,18 @@
 //**************************************************************************/
 
 
-//************************** System Include Files ***************************/
-
-
-//*************************** User Include Files ***************************/
-
 #include "llvm/CodeGen/InstrSelection.h"
+#include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Type.h"
 #include "llvm/iMemory.h"
 #include "llvm/Instruction.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/Method.h"
-#include "llvm/CodeGen/MachineInstr.h"
 
-
-//************************* Forward Declarations ***************************/
-
-static bool SelectInstructionsForTree(BasicTreeNode* treeRoot,
-				      int goalnt,
+static bool SelectInstructionsForTree(InstrTreeNode* treeRoot, int goalnt,
 				      TargetMachine &Target);
 
-
-//************************* Internal Data Types *****************************/
 
 enum SelectDebugLevel_t {
   Select_NoDebugInfo,
@@ -49,8 +38,6 @@ cl::Enum<enum SelectDebugLevel_t> SelectDebugLevel("dselect", cl::NoFlags, // cl
    clEnumValN(Select_DebugInstTrees,   "i", "print instr. selection debugging info"),
    clEnumValN(Select_DebugBurgTrees,   "b", "print burg trees"), 0);
 
-
-//************************** External Functions ****************************/
 
 
 //---------------------------------------------------------------------------
@@ -87,7 +74,7 @@ SelectInstructionsForMethod(Method* method,
        treeRootIter != treeRoots.end();
        ++treeRootIter)
     {
-      BasicTreeNode* basicNode = (*treeRootIter)->getBasicNode();
+      InstrTreeNode* basicNode = *treeRootIter;
       
       // Invoke BURM to label each tree node with a state
       (void) burm_label(basicNode);
@@ -192,8 +179,7 @@ FoldGetElemChain(const InstructionNode* getElemInstrNode,
 //---------------------------------------------------------------------------
 
 bool
-SelectInstructionsForTree(BasicTreeNode* treeRoot,
-			  int goalnt,
+SelectInstructionsForTree(InstrTreeNode* treeRoot, int goalnt,
 			  TargetMachine &Target)
 {
   // Use a static vector to avoid allocating a new one per VM instruction
@@ -220,7 +206,7 @@ SelectInstructionsForTree(BasicTreeNode* treeRoot,
   // 
   if (treeRoot->opLabel != VRegListOp)
     {
-      InstructionNode* instrNode = (InstructionNode*)treeRoot->treeNodePtr;
+      InstructionNode* instrNode = (InstructionNode*)treeRoot;
       assert(instrNode->getNodeType() == InstrTreeNode::NTInstructionNode);
       
       unsigned N = GetInstructionsByRule(instrNode, ruleForNode, nts, Target,
@@ -238,7 +224,7 @@ SelectInstructionsForTree(BasicTreeNode* treeRoot,
   if (nts[0])
     { // i.e., there is at least one kid
 
-      BasicTreeNode* kids[2];
+      InstrTreeNode* kids[2];
       int currentRule = ruleForNode;
       burm_kids(treeRoot, currentRule, kids);
       
@@ -258,8 +244,7 @@ SelectInstructionsForTree(BasicTreeNode* treeRoot,
       for (int i = 0; nts[i]; i++)
 	{
 	  assert(i < 2);
-	  InstrTreeNode::InstrTreeNodeType
-	    nodeType = kids[i]->treeNodePtr->getNodeType();
+	  InstrTreeNode::InstrTreeNodeType nodeType = kids[i]->getNodeType();
 	  if (nodeType == InstrTreeNode::NTVRegListNode ||
 	      nodeType == InstrTreeNode::NTInstructionNode)
 	    {
