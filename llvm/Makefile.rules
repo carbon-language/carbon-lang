@@ -685,6 +685,11 @@ USED_LIB_PATHS_G := $(addprefix $(DESTLIBDEBUG)/, $(STATICUSEDLIBS))
 USED_LIB_PATHS_O := $(addprefix $(DESTLIBRELEASE)/, $(STATICUSEDLIBS))
 USED_LIB_PATHS_P := $(addprefix $(DESTLIBPROFILE)/, $(STATICUSEDLIBS))
 
+LLVMSTATICUSEDLIBS   := $(patsubst %.a.o, lib%.a, $(addsuffix .o, $(LLVMLIBS)))
+LLVM_LIB_PATHS_G := $(addprefix $(LLVMLIBDEBUGSOURCE)/, $(LLVMSTATICUSEDLIBS))
+LLVM_LIB_PATHS_O := $(addprefix $(LLVMLIBRELEASESOURCE)/, $(LLVMSTATICUSEDLIBS))
+LLVM_LIB_PATHS_P := $(addprefix $(LLVMLIBPROFILEOURCE)/, $(LLVMSTATICUSEDLIBS))
+
 #
 # Libtool link options:
 #	Ensure that all binaries have their symbols exported so that they can
@@ -706,17 +711,17 @@ all::   $(TOOLEXENAMES)
 clean::
 	$(VERB) $(RM) -f $(TOOLEXENAMES)
 
-$(TOOLEXENAME_G): $(ObjectsG) $(USED_LIB_PATHS_G) $(DESTTOOLDEBUG)/.dir
+$(TOOLEXENAME_G): $(ObjectsG) $(USED_LIB_PATHS_G) $(LLVM_LIB_PATHS_G) $(DESTTOOLDEBUG)/.dir
 	@${ECHO} Linking $(TOOLNAME) debug executable $(STRIP_WARN_MSG)
 	$(VERB) $(LinkG) -o $@ $(ObjectsG) $(LIB_OPTS_G) $(LINK_OPTS) $(LIBS)
 	@${ECHO} ======= Finished building $(TOOLNAME) debug executable $(STRIP_WARN_MSG) =======
 
-$(TOOLEXENAME_O): $(ObjectsO) $(USED_LIB_PATHS_O) $(DESTTOOLRELEASE)/.dir
+$(TOOLEXENAME_O): $(ObjectsO) $(USED_LIB_PATHS_O) $(LLVM_LIB_PATHS_O) $(DESTTOOLRELEASE)/.dir
 	@${ECHO} Linking $(TOOLNAME) release executable
 	$(VERB) $(LinkO) -o $@ $(ObjectsO) $(LIB_OPTS_O) $(LINK_OPTS) $(LIBS)
 	@${ECHO} ======= Finished building $(TOOLNAME) release executable =======
 
-$(TOOLEXENAME_P): $(ObjectsP) $(USED_LIB_PATHS_P) $(DESTTOOLPROFILE)/.dir
+$(TOOLEXENAME_P): $(ObjectsP) $(USED_LIB_PATHS_P) $(LLVM_LIB_PATHS_P) $(DESTTOOLPROFILE)/.dir
 	@${ECHO} Linking $(TOOLNAME) profile executable
 	$(VERB) $(LinkP) -o $@ $(ObjectsP) $(LIB_OPTS_P) $(LINK_OPTS) $(LIBS)
 	@${ECHO} ======= Finished building $(TOOLNAME) profile executable =======
