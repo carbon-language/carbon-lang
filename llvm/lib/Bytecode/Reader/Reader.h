@@ -395,8 +395,9 @@ private:
   /// @brief Get a value from its typeid and slot number
   Value* getValue(unsigned TypeID, unsigned num, bool Create = true);
 
-  /// @brief Get a value from its type and slot number, ignoring compaction tables.
-  Value *getGlobalTableValue(const Type *Ty, unsigned SlotNo);
+  /// @brief Get a value from its type and slot number, ignoring compaction
+  /// tables.
+  Value *getGlobalTableValue(unsigned TyID, unsigned SlotNo);
 
   /// @brief Get a basic block for current function
   BasicBlock *getBasicBlock(unsigned ID);

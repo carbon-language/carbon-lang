@@ -218,14 +218,10 @@ public:
               << " is " << Ty->getDescription() << "\n"; 
   }
 
-  virtual void handleCompactionTableValue( 
-    unsigned i, 
-    unsigned TypSlot,
-    unsigned ValSlot, 
-    const Type* Ty ) { 
+  virtual void handleCompactionTableValue(unsigned i, unsigned TypSlot,
+                                          unsigned ValSlot) { 
     dump << "          Value: " << i << " TypSlot: " << TypSlot 
-         << " ValSlot:" << ValSlot << " is " << Ty->getDescription() 
-         << "\n";
+         << " ValSlot:" << ValSlot << "\n";
   }
 
   virtual void handleCompactionTableEnd() { 

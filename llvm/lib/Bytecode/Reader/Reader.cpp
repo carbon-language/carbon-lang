@@ -439,23 +439,31 @@ Value * BytecodeReader::getValue(unsigned type, unsigned oNum, bool Create) {
 /// This is just like getValue, but when a compaction table is in use, it 
 /// is ignored.  Also, no forward references or other fancy features are 
 /// supported.
-Value* BytecodeReader::getGlobalTableValue(const Type *Ty, unsigned SlotNo) {
-  // FIXME: getTypeSlot is inefficient!
-  unsigned TyID = getGlobalTableTypeSlot(Ty);
-  
-  if (TyID != Type::LabelTyID) {
-    if (SlotNo == 0)
-      return Constant::getNullValue(Ty);
-    --SlotNo;
+Value* BytecodeReader::getGlobalTableValue(unsigned TyID, unsigned SlotNo) {
+  if (SlotNo == 0)
+    return Constant::getNullValue(getType(TyID));
+
+  if (!CompactionTypes.empty() && TyID >= Type::FirstDerivedTyID) {
+    TyID -= Type::FirstDerivedTyID;
+    if (TyID >= CompactionTypes.size())
+      error("Type ID out of range for compaction table!");
+    TyID = CompactionTypes[TyID].second;
   }
+
+  --SlotNo;
 
   if (TyID >= ModuleValues.size() || ModuleValues[TyID] == 0 ||
       SlotNo >= ModuleValues[TyID]->size()) {
-    error("Corrupt compaction table entry!"
-        + utostr(TyID) + ", " + utostr(SlotNo) + ": " 
-        + utostr(ModuleValues.size()) + ", "
-        + utohexstr(intptr_t((void*)ModuleValues[TyID])) + ", "
-        + utostr(ModuleValues[TyID]->size()));
+    if (TyID >= ModuleValues.size() || ModuleValues[TyID] == 0)
+      error("Corrupt compaction table entry!"
+            + utostr(TyID) + ", " + utostr(SlotNo) + ": " 
+            + utostr(ModuleValues.size()));
+    else 
+      error("Corrupt compaction table entry!"
+            + utostr(TyID) + ", " + utostr(SlotNo) + ": " 
+            + utostr(ModuleValues.size()) + ", "
+            + utohexstr(intptr_t((void*)ModuleValues[TyID])) + ", "
+            + utostr(ModuleValues[TyID]->size()));
   }
   return ModuleValues[TyID]->getOperand(SlotNo);
 }
@@ -1096,30 +1104,27 @@ void BytecodeReader::ParseCompactionTable() {
     if (isTypeType) {
       ParseCompactionTypes(NumEntries);
     } else {
-      // Make sure we have enough room  for the plane 
+      // Make sure we have enough room for the plane.
       if (Ty >= CompactionValues.size())
         CompactionValues.resize(Ty+1);
 
-      // Make sure the plane is empty or we have some kind of error
+      // Make sure the plane is empty or we have some kind of error.
       if (!CompactionValues[Ty].empty())
         error("Compaction table plane contains multiple entries!");
 
-      // Notify handler about the plane
+      // Notify handler about the plane.
       if (Handler) Handler->handleCompactionTablePlane(Ty, NumEntries);
 
-      // Convert the type slot to a type
-      const Type *Typ = getType(Ty);
-
-      // Push the implicit zero
-      CompactionValues[Ty].push_back(Constant::getNullValue(Typ));
+      // Push the implicit zero.
+      CompactionValues[Ty].push_back(Constant::getNullValue(getType(Ty)));
 
       // Read in each of the entries, put them in the compaction table
       // and notify the handler that we have a new compaction table value.
       for (unsigned i = 0; i != NumEntries; ++i) {
         unsigned ValSlot = read_vbr_uint();
-        Value *V = getGlobalTableValue(Typ, ValSlot);
+        Value *V = getGlobalTableValue(Ty, ValSlot);
         CompactionValues[Ty].push_back(V);
-        if (Handler) Handler->handleCompactionTableValue(i, Ty, ValSlot, Typ);
+        if (Handler) Handler->handleCompactionTableValue(i, Ty, ValSlot);
       }
     }
   }
