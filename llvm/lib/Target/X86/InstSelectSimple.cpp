@@ -1619,32 +1619,6 @@ void ISel::visitCallInst(CallInst &CI) {
   doCall(ValueRecord(DestReg, CI.getType()), TheCall, Args);
 }         
 
-/// dyncastIsNan - Return the operand of an isnan operation if this is an isnan.
-///
-static Value *dyncastIsNan(Value *V) {
-  if (CallInst *CI = dyn_cast<CallInst>(V))
-    if (Function *F = CI->getCalledFunction())
-      if (F->getIntrinsicID() == Intrinsic::isnan)
-        return CI->getOperand(1);
-  return 0;
-}
-
-/// isOnlyUsedByUnorderedComparisons - Return true if this value is only used by
-/// or's whos operands are all calls to the isnan predicate.
-static bool isOnlyUsedByUnorderedComparisons(Value *V) {
-  assert(dyncastIsNan(V) && "The value isn't an isnan call!");
-
-  // Check all uses, which will be or's of isnans if this predicate is true.
-  for (Value::use_iterator UI = V->use_begin(), E = V->use_end(); UI != E;++UI){
-    Instruction *I = cast<Instruction>(*UI);
-    if (I->getOpcode() != Instruction::Or) return false;
-    if (I->getOperand(0) != V && !dyncastIsNan(I->getOperand(0))) return false;
-    if (I->getOperand(1) != V && !dyncastIsNan(I->getOperand(1))) return false;
-  }
-
-  return true;
-}
-
 /// LowerUnknownIntrinsicFunctionCalls - This performs a prepass over the
 /// function, lowering any calls to unknown intrinsic functions into the
 /// equivalent LLVM code.
@@ -1663,7 +1637,6 @@ void ISel::LowerUnknownIntrinsicFunctionCalls(Function &F) {
           case Intrinsic::frameaddress:
           case Intrinsic::memcpy:
           case Intrinsic::memset:
-          case Intrinsic::isnan:
           case Intrinsic::isunordered:
           case Intrinsic::readport:
           case Intrinsic::writeport:
@@ -1732,15 +1705,6 @@ void ISel::visitIntrinsicCall(Intrinsic::ID ID, CallInst &CI) {
       // Values other than zero are not implemented yet.
       BuildMI(BB, X86::MOV32ri, 1, TmpReg1).addImm(0);
     }
-    return;
-
-  case Intrinsic::isnan:
-    // If this is only used by 'isunordered' style comparisons, don't emit it.
-    if (isOnlyUsedByUnorderedComparisons(&CI)) return;
-    TmpReg1 = getReg(CI.getOperand(1));
-    emitUCOMr(BB, BB->end(), TmpReg1, TmpReg1);
-    TmpReg2 = getReg(CI);
-    BuildMI(BB, X86::SETPr, 0, TmpReg2);
     return;
 
   case Intrinsic::isunordered:
@@ -2160,20 +2124,6 @@ void ISel::emitSimpleBinaryOperation(MachineBasicBlock *MBB,
     assert(OperatorClass < 2 && "No logical ops for FP!");
     emitBinaryFPOperation(MBB, IP, Op0, Op1, OperatorClass, DestReg);
     return;
-  }
-
-  if (Op0->getType() == Type::BoolTy) {
-    if (OperatorClass == 3)
-      // If this is an or of two isnan's, emit an FP comparison directly instead
-      // of or'ing two isnan's together.
-      if (Value *LHS = dyncastIsNan(Op0))
-        if (Value *RHS = dyncastIsNan(Op1)) {
-          unsigned Op0Reg = getReg(RHS, MBB, IP), Op1Reg = getReg(LHS, MBB, IP);
-          emitUCOMr(MBB, IP, Op0Reg, Op1Reg);
-          BuildMI(*MBB, IP, X86::SETPr, 0, DestReg);
-          return;
-        }
-          
   }
 
   // sub 0, X -> neg X
