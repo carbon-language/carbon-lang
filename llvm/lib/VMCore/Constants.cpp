@@ -1081,11 +1081,15 @@ Constant *ConstantExpr::getShiftTy(const Type *ReqTy, unsigned Opcode,
 
 Constant *ConstantExpr::getGetElementPtrTy(const Type *ReqTy, Constant *C,
                                         const std::vector<Constant*> &IdxList) {
+  assert(GetElementPtrInst::getIndexedType(C->getType(),
+                   std::vector<Value*>(IdxList.begin(), IdxList.end()), true) &&
+         "GEP indices invalid!");
+
   if (Constant *FC = ConstantFoldGetElementPtr(C, IdxList))
     return FC;          // Fold a few common cases...
+
   assert(isa<PointerType>(C->getType()) &&
          "Non-pointer type for constant GetElementPtr expression");
-
   // Look up the constant in the table first to ensure uniqueness
   std::vector<Constant*> argVec(1, C);
   argVec.insert(argVec.end(), IdxList.begin(), IdxList.end());
@@ -1101,17 +1105,6 @@ Constant *ConstantExpr::getGetElementPtr(Constant *C,
   const Type *Ty = GetElementPtrInst::getIndexedType(C->getType(), VIdxList,
                                                      true);
   assert(Ty && "GEP indices invalid!");
-
-  if (C->isNullValue()) {
-    bool isNull = true;
-    for (unsigned i = 0, e = IdxList.size(); i != e; ++i)
-      if (!IdxList[i]->isNullValue()) {
-        isNull = false;
-        break;
-      }
-    if (isNull) return ConstantPointerNull::get(PointerType::get(Ty));
-  }
-
   return getGetElementPtrTy(PointerType::get(Ty), C, IdxList);
 }
 
