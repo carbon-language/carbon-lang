@@ -261,6 +261,8 @@ public:
     return regNum;
   }
   int64_t getImmedValue() const { assert(isImmediate()); return immedVal; }
+  void setImmedValue(int64_t ImmVal) { assert(isImmediate()); immedVal=ImmVal; }
+
   MachineBasicBlock *getMachineBasicBlock() const {
     assert(isMachineBasicBlock() && "Can't get MBB in non-MBB operand!");
     return MBB;
@@ -305,6 +307,10 @@ public:
   // ********** TODO: get rid of this duplicate code! ***********
   unsigned getReg() const {
     return getAllocatedRegNum();
+  }    
+  void setReg(unsigned Reg) {
+    assert(hasAllocatedReg() && "This operand cannot have a register number!");
+    regNum = Reg;
   }    
 
   friend std::ostream& operator<<(std::ostream& os, const MachineOperand& mop);
