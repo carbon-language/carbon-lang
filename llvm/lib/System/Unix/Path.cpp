@@ -85,13 +85,6 @@ Path::GetBytecodeLibraryPaths(std::vector<sys::Path>& Paths) {
   if (env_var != 0) {
     getPathList(env_var,Paths);
   }
-#ifdef LLVMGCCDIR
-  {
-    Path tmpPath(std::string(LLVMGCCDIR) + "lib/");
-    if (tmpPath.readable())
-      Paths.push_back(tmpPath);
-  }
-#endif
 #ifdef LLVM_LIBDIR
   {
     Path tmpPath;
