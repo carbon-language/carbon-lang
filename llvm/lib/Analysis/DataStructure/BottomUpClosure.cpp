@@ -40,6 +40,9 @@ bool BUDataStructures::runOnModule(Module &M) {
   GlobalsGraph = new DSGraph(LocalDSA.getGlobalsGraph());
   GlobalsGraph->setPrintAuxCalls();
 
+  IndCallGraphMap = new std::map<std::vector<Function*>,
+                           std::pair<DSGraph*, std::vector<DSNodeHandle> > >();
+
   std::vector<Function*> Stack;
   hash_map<Function*, unsigned> ValMap;
   unsigned NextID = 1;
@@ -64,11 +67,11 @@ bool BUDataStructures::runOnModule(Module &M) {
   // If we computed any temporary indcallgraphs, free them now.
   for (std::map<std::vector<Function*>,
          std::pair<DSGraph*, std::vector<DSNodeHandle> > >::iterator I =
-         IndCallGraphMap.begin(), E = IndCallGraphMap.end(); I != E; ++I) {
+         IndCallGraphMap->begin(), E = IndCallGraphMap->end(); I != E; ++I) {
     I->second.second.clear();  // Drop arg refs into the graph.
     delete I->second.first;
   }
-  IndCallGraphMap.clear();
+  delete IndCallGraphMap;
 
   // At the end of the bottom-up pass, the globals graph becomes complete.
   // FIXME: This is not the right way to do this, but it is sorta better than
@@ -340,7 +343,7 @@ void BUDataStructures::calculateGraph(DSGraph &Graph) {
         // See if we already computed a graph for this set of callees.
         std::sort(CalledFuncs.begin(), CalledFuncs.end());
         std::pair<DSGraph*, std::vector<DSNodeHandle> > &IndCallGraph =
-          IndCallGraphMap[CalledFuncs];
+          (*IndCallGraphMap)[CalledFuncs];
 
         if (IndCallGraph.first == 0) {
           std::vector<Function*>::iterator I = CalledFuncs.begin(),
