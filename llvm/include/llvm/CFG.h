@@ -106,7 +106,7 @@ inline df_const_iterator df_end  (const BasicBlock *BB);
 
 template <class _Ptr,  class _USE_iterator> // Predecessor Iterator
 class PredIterator {
-  const _Ptr ThisBB;
+  const _Ptr BB;
   _USE_iterator It;
 public:
   typedef PredIterator<_Ptr,_USE_iterator> _Self;
@@ -116,15 +116,16 @@ public:
   
   inline void advancePastConstPool() {
     // Loop to ignore constant pool references
-    while (It != ThisBB->use_end() && 
-	   ((*It)->getValueType() != Value::InstructionVal))
+    while (It != BB->use_end() && 
+	   (((*It)->getValueType() != Value::InstructionVal) ||
+	    !(((Instruction*)(*It))->isTerminator())))
       ++It;
   }
   
-  inline PredIterator(_Ptr BB) : ThisBB(BB), It(BB->use_begin()) {
+  inline PredIterator(_Ptr bb) : BB(bb), It(bb->use_begin()) {
     advancePastConstPool();
   }
-  inline PredIterator(_Ptr BB, bool) : ThisBB(BB), It(BB->use_end()) {}
+  inline PredIterator(_Ptr bb, bool) : BB(bb), It(bb->use_end()) {}
   
   inline bool operator==(const _Self& x) const { return It == x.It; }
   inline bool operator!=(const _Self& x) const { return !operator==(x); }

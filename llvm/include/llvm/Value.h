@@ -99,7 +99,7 @@ public:
   inline UseTy<ValueSubclass>(const UseTy<ValueSubclass> &user) {
     Val = 0;
     U = user.U;
-    operator=(user);
+    operator=(user.Val);
   }
   inline ValueSubclass *operator=(ValueSubclass *V) { 
     if (Val) Val->killUse(U);

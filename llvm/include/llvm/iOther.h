@@ -20,16 +20,10 @@
 // node, that can not exist in nature, but can be synthesized in a computer
 // scientist's overactive imagination.
 //
-// TODO: FIXME: This representation is not good enough.  Consider the following
-//       code:
-//       BB0: %x = int %0
-//       BB1: %y = int %1
-//       BB2: %z = phi int %0, %1 - Can't tell where constants come from!
-//
-// TOFIX: Store pair<Use,BasicBlockUse> instead of just <Use>
-//
 class PHINode : public Instruction {
-  vector<Use> IncomingValues;
+  typedef pair<Use,BasicBlockUse> PairTy;
+  vector<PairTy> IncomingValues;
+
   PHINode(const PHINode &PN);
 public:
   PHINode(const Type *Ty, const string &Name = "");
@@ -40,22 +34,24 @@ public:
   // Implement all of the functionality required by User...
   //
   virtual void dropAllReferences();
-  virtual const Value *getOperand(unsigned i) const { 
-    return (i < IncomingValues.size()) ? IncomingValues[i] : 0; 
+  virtual const Value *getOperand(unsigned i) const {
+    if (i >= IncomingValues.size()*2) return 0;
+    if (i & 1) return IncomingValues[i/2].second;
+    else       return IncomingValues[i/2].first;
   }
   inline Value *getOperand(unsigned i) {
     return (Value*)((const PHINode*)this)->getOperand(i);
   }
-  virtual unsigned getNumOperands() const { return IncomingValues.size(); }
+  virtual unsigned getNumOperands() const { return IncomingValues.size()*2; }
   virtual bool setOperand(unsigned i, Value *Val);
   virtual string getOpcode() const { return "phi"; }
 
   // addIncoming - Add an incoming value to the end of the PHI list
-  void addIncoming(Value *D);
+  void addIncoming(Value *D, BasicBlock *BB);
 
   // removeIncomingValue - Remove an incoming value.  This is useful if a
   // predecessor basic block is deleted.  The value removed is returned.
-  Value *removeIncomingValue(unsigned idx);
+  Value *removeIncomingValue(const BasicBlock *BB);
 };
 
 
