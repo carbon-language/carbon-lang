@@ -4283,13 +4283,6 @@ cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
 
-int
-main ()
-{
-
-  ;
-  return 0;
-}
 _ACEOF
 rm -f conftest.$ac_objext conftest$ac_exeext
 if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
@@ -5061,7 +5054,7 @@ fi
 
 
 # Provide some information about the compiler.
-echo "$as_me:5064:" \
+echo "$as_me:5057:" \
      "checking for Fortran 77 compiler version" >&5
 ac_compiler=`set X $ac_compile; echo $2`
 { (eval echo "$as_me:$LINENO: \"$ac_compiler --version </dev/null >&5\"") >&5
@@ -5836,13 +5829,13 @@ old_postuninstall_cmds=
 if test -n "$RANLIB"; then
   case $host_os in
   openbsd*)
-    old_postinstall_cmds="\$RANLIB -t \$oldlib;$old_postinstall_cmds"
+    old_postinstall_cmds="\$RANLIB -t \$oldlib~$old_postinstall_cmds"
     ;;
   *)
-    old_postinstall_cmds="\$RANLIB \$oldlib;$old_postinstall_cmds"
+    old_postinstall_cmds="\$RANLIB \$oldlib~$old_postinstall_cmds"
     ;;
   esac
-  old_archive_cmds="$old_archive_cmds;\$RANLIB \$oldlib"
+  old_archive_cmds="$old_archive_cmds~\$RANLIB \$oldlib"
 fi
 
 cc_basename=`$echo X"$compiler" | $Xsed -e 's%^.*/%%'`
@@ -6118,11 +6111,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:6121: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:6114: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:6125: \$? = $ac_status" >&5
+   echo "$as_me:6118: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -6361,11 +6354,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:6364: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:6357: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:6368: \$? = $ac_status" >&5
+   echo "$as_me:6361: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -6421,11 +6414,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:6424: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:6417: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:6428: \$? = $ac_status" >&5
+   echo "$as_me:6421: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -6549,7 +6542,7 @@ EOF
       ;;
 
     amigaos*)
-      archive_cmds='$rm $output_objdir/a2ixlibrary.data;$echo "#define NAME $libname" > $output_objdir/a2ixlibrary.data;$echo "#define LIBRARY_ID 1" >> $output_objdir/a2ixlibrary.data;$echo "#define VERSION $major" >> $output_objdir/a2ixlibrary.data;$echo "#define REVISION $revision" >> $output_objdir/a2ixlibrary.data;$AR $AR_FLAGS $lib $libobjs;$RANLIB $lib;(cd $output_objdir && a2ixlibrary -32)'
+      archive_cmds='$rm $output_objdir/a2ixlibrary.data~$echo "#define NAME $libname" > $output_objdir/a2ixlibrary.data~$echo "#define LIBRARY_ID 1" >> $output_objdir/a2ixlibrary.data~$echo "#define VERSION $major" >> $output_objdir/a2ixlibrary.data~$echo "#define REVISION $revision" >> $output_objdir/a2ixlibrary.data~$AR $AR_FLAGS $lib $libobjs~$RANLIB $lib~(cd $output_objdir && a2ixlibrary -32)'
       hardcode_libdir_flag_spec='-L$libdir'
       hardcode_minus_L=yes
 
@@ -6591,7 +6584,8 @@ EOF
 	else
 	  echo EXPORTS > $output_objdir/$soname.def;
 	  cat $export_symbols >> $output_objdir/$soname.def;
-	fi;$CC -shared $output_objdir/$soname.def $libobjs $deplibs $compiler_flags -o $output_objdir/$soname ${wl}--image-base=0x10000000  ${wl}--out-implib,$lib'
+	fi~
+	$CC -shared $output_objdir/$soname.def $libobjs $deplibs $compiler_flags -o $output_objdir/$soname ${wl}--image-base=0x10000000  ${wl}--out-implib,$lib'
       else
 	ld_shlibs=no
       fi
@@ -6648,7 +6642,9 @@ EOF
         *) supports_anon_versioning=yes ;;
       esac
       if test $supports_anon_versioning = yes; then
-        archive_expsym_cmds='$echo "{ global:" > $output_objdir/$libname.ver;cat $export_symbols | sed -e "s/\(.*\)/\1;/" >> $output_objdir/$libname.ver; $echo "local: *; };" >> $output_objdir/$libname.ver;
+        archive_expsym_cmds='$echo "{ global:" > $output_objdir/$libname.ver~
+cat $export_symbols | sed -e "s/\(.*\)/\1;/" >> $output_objdir/$libname.ver~
+$echo "local: *; };" >> $output_objdir/$libname.ver~
         $CC -shared $libobjs $deplibs $compiler_flags ${wl}-soname $wl$soname ${wl}-version-script ${wl}$output_objdir/$libname.ver -o $lib'
       else
         archive_expsym_cmds="$tmp_archive_cmds"
@@ -6685,7 +6681,7 @@ EOF
     aix3*)
       allow_undefined_flag=unsupported
       always_export_symbols=yes
-      archive_expsym_cmds='$LD -o $output_objdir/$soname $libobjs $deplibs $linker_flags -bE:$export_symbols -T512 -H512 -bM:SRE;$AR $AR_FLAGS $lib $output_objdir/$soname'
+      archive_expsym_cmds='$LD -o $output_objdir/$soname $libobjs $deplibs $linker_flags -bE:$export_symbols -T512 -H512 -bM:SRE~$AR $AR_FLAGS $lib $output_objdir/$soname'
       # Note: this linker hardcodes the directories in LIBPATH if there
       # are no directories specified by -L.
       hardcode_minus_L=yes
@@ -6909,13 +6905,13 @@ if test -z "$aix_libpath"; then aix_libpath="/usr/lib:/lib"; fi
 	  whole_archive_flag_spec=' '
 	  archive_cmds_need_lc=yes
 	  # This is similar to how AIX traditionally builds it's shared libraries.
-	  archive_expsym_cmds="\$CC $shared_flag"' -o $output_objdir/$soname $libobjs $deplibs $compiler_flags ${wl}-bE:$export_symbols ${wl}-bnoentry${allow_undefined_flag};$AR $AR_FLAGS $output_objdir/$libname$release.a $output_objdir/$soname'
+	  archive_expsym_cmds="\$CC $shared_flag"' -o $output_objdir/$soname $libobjs $deplibs $compiler_flags ${wl}-bE:$export_symbols ${wl}-bnoentry${allow_undefined_flag}~$AR $AR_FLAGS $output_objdir/$libname$release.a $output_objdir/$soname'
 	fi
       fi
       ;;
 
     amigaos*)
-      archive_cmds='$rm $output_objdir/a2ixlibrary.data;$echo "#define NAME $libname" > $output_objdir/a2ixlibrary.data;$echo "#define LIBRARY_ID 1" >> $output_objdir/a2ixlibrary.data;$echo "#define VERSION $major" >> $output_objdir/a2ixlibrary.data;$echo "#define REVISION $revision" >> $output_objdir/a2ixlibrary.data;$AR $AR_FLAGS $lib $libobjs;$RANLIB $lib;(cd $output_objdir && a2ixlibrary -32)'
+      archive_cmds='$rm $output_objdir/a2ixlibrary.data~$echo "#define NAME $libname" > $output_objdir/a2ixlibrary.data~$echo "#define LIBRARY_ID 1" >> $output_objdir/a2ixlibrary.data~$echo "#define VERSION $major" >> $output_objdir/a2ixlibrary.data~$echo "#define REVISION $revision" >> $output_objdir/a2ixlibrary.data~$AR $AR_FLAGS $lib $libobjs~$RANLIB $lib~(cd $output_objdir && a2ixlibrary -32)'
       hardcode_libdir_flag_spec='-L$libdir'
       hardcode_minus_L=yes
       # see comment about different semantics on the GNU ld section
@@ -6938,7 +6934,7 @@ if test -z "$aix_libpath"; then aix_libpath="/usr/lib:/lib"; fi
       # Tell ltmain to make .dll files, not .so files.
       shrext_cmds=".dll"
       # FIXME: Setting linknames here is a bad hack.
-      archive_cmds='$CC -o $lib $libobjs $compiler_flags `echo "$deplibs" | $SED -e '\''s/ -lc$//'\''` -link -dll;linknames='
+      archive_cmds='$CC -o $lib $libobjs $compiler_flags `echo "$deplibs" | $SED -e '\''s/ -lc$//'\''` -link -dll~linknames='
       # The linker will automatically build a .lib file if we build a DLL.
       old_archive_From_new_cmds='true'
       # FIXME: Should let the user specify the lib program.
@@ -6978,8 +6974,8 @@ if test -z "$aix_libpath"; then aix_libpath="/usr/lib:/lib"; fi
         archive_cmds='$CC -dynamiclib $allow_undefined_flag -o $lib $libobjs $deplibs $compiler_flags -install_name $rpath/$soname $verstring'
       module_cmds='$CC $allow_undefined_flag -o $lib -bundle $libobjs $deplibs$compiler_flags'
       # Don't fix this by using the ld -exported_symbols_list flag, it doesn't exist in older darwin ld's
-      archive_expsym_cmds='sed -e "s,#.*,," -e "s,^[    ]*,," -e "s,^\(..*\),_&," < $export_symbols > $output_objdir/${libname}-symbols.expsym;$CC -dynamiclib $allow_undefined_flag -o $lib $libobjs $deplibs $compiler_flags -install_name $rpath/$soname $verstring;nmedit -s $output_objdir/${libname}-symbols.expsym ${lib}'
-      module_expsym_cmds='sed -e "s,#.*,," -e "s,^[    ]*,," -e "s,^\(..*\),_&," < $export_symbols > $output_objdir/${libname}-symbols.expsym;$CC $allow_undefined_flag  -o $lib -bundle $libobjs $deplibs$compiler_flags;nmedit -s $output_objdir/${libname}-symbols.expsym ${lib}'
+      archive_expsym_cmds='sed -e "s,#.*,," -e "s,^[    ]*,," -e "s,^\(..*\),_&," < $export_symbols > $output_objdir/${libname}-symbols.expsym~$CC -dynamiclib $allow_undefined_flag -o $lib $libobjs $deplibs $compiler_flags -install_name $rpath/$soname $verstring~nmedit -s $output_objdir/${libname}-symbols.expsym ${lib}'
+      module_expsym_cmds='sed -e "s,#.*,," -e "s,^[    ]*,," -e "s,^\(..*\),_&," < $export_symbols > $output_objdir/${libname}-symbols.expsym~$CC $allow_undefined_flag  -o $lib -bundle $libobjs $deplibs$compiler_flags~nmedit -s $output_objdir/${libname}-symbols.expsym ${lib}'
     else
       case "$cc_basename" in
         xlc*)
@@ -6987,8 +6983,8 @@ if test -z "$aix_libpath"; then aix_libpath="/usr/lib:/lib"; fi
          archive_cmds='$CC -qmkshrobj $allow_undefined_flag -o $lib $libobjs $deplibs $compiler_flags ${wl}-install_name ${wl}`echo $rpath/$soname` $verstring'
          module_cmds='$CC $allow_undefined_flag -o $lib -bundle $libobjs $deplibs$compiler_flags'
           # Don't fix this by using the ld -exported_symbols_list flag, it doesn't exist in older darwin ld's
-         archive_expsym_cmds='sed -e "s,#.*,," -e "s,^[    ]*,," -e "s,^\(..*\),_&," < $export_symbols > $output_objdir/${libname}-symbols.expsym;$CC -qmkshrobj $allow_undefined_flag -o $lib $libobjs $deplibs $compiler_flags ${wl}-install_name ${wl}$rpath/$soname $verstring;nmedit -s $output_objdir/${libname}-symbols.expsym ${lib}'
-          module_expsym_cmds='sed -e "s,#.*,," -e "s,^[    ]*,," -e "s,^\(..*\),_&," < $export_symbols > $output_objdir/${libname}-symbols.expsym;$CC $allow_undefined_flag  -o $lib -bundle $libobjs $deplibs$compiler_flags;nmedit -s $output_objdir/${libname}-symbols.expsym ${lib}'
+         archive_expsym_cmds='sed -e "s,#.*,," -e "s,^[    ]*,," -e "s,^\(..*\),_&," < $export_symbols > $output_objdir/${libname}-symbols.expsym~$CC -qmkshrobj $allow_undefined_flag -o $lib $libobjs $deplibs $compiler_flags ${wl}-install_name ${wl}$rpath/$soname $verstring~nmedit -s $output_objdir/${libname}-symbols.expsym ${lib}'
+          module_expsym_cmds='sed -e "s,#.*,," -e "s,^[    ]*,," -e "s,^\(..*\),_&," < $export_symbols > $output_objdir/${libname}-symbols.expsym~$CC $allow_undefined_flag  -o $lib -bundle $libobjs $deplibs$compiler_flags~nmedit -s $output_objdir/${libname}-symbols.expsym ${lib}'
           ;;
        *)
          ld_shlibs=no
@@ -7036,9 +7032,9 @@ if test -z "$aix_libpath"; then aix_libpath="/usr/lib:/lib"; fi
 
     hpux9*)
       if test "$GCC" = yes; then
-	archive_cmds='$rm $output_objdir/$soname;$CC -shared -fPIC ${wl}+b ${wl}$install_libdir -o $output_objdir/$soname $libobjs $deplibs $compiler_flags;test $output_objdir/$soname = $lib || mv $output_objdir/$soname $lib'
+	archive_cmds='$rm $output_objdir/$soname~$CC -shared -fPIC ${wl}+b ${wl}$install_libdir -o $output_objdir/$soname $libobjs $deplibs $compiler_flags~test $output_objdir/$soname = $lib || mv $output_objdir/$soname $lib'
       else
-	archive_cmds='$rm $output_objdir/$soname;$LD -b +b $install_libdir -o $output_objdir/$soname $libobjs $deplibs $linker_flags;test $output_objdir/$soname = $lib || mv $output_objdir/$soname $lib'
+	archive_cmds='$rm $output_objdir/$soname~$LD -b +b $install_libdir -o $output_objdir/$soname $libobjs $deplibs $linker_flags~test $output_objdir/$soname = $lib || mv $output_objdir/$soname $lib'
       fi
       hardcode_libdir_flag_spec='${wl}+b ${wl}$libdir'
       hardcode_libdir_separator=:
@@ -7159,7 +7155,7 @@ if test -z "$aix_libpath"; then aix_libpath="/usr/lib:/lib"; fi
       hardcode_libdir_flag_spec='-L$libdir'
       hardcode_minus_L=yes
       allow_undefined_flag=unsupported
-      archive_cmds='$echo "LIBRARY $libname INITINSTANCE" > $output_objdir/$libname.def;$echo "DESCRIPTION \"$libname\"" >> $output_objdir/$libname.def;$echo DATA >> $output_objdir/$libname.def;$echo " SINGLE NONSHARED" >> $output_objdir/$libname.def;$echo EXPORTS >> $output_objdir/$libname.def;emxexp $libobjs >> $output_objdir/$libname.def;$CC -Zdll -Zcrtdll -o $lib $libobjs $deplibs $compiler_flags $output_objdir/$libname.def'
+      archive_cmds='$echo "LIBRARY $libname INITINSTANCE" > $output_objdir/$libname.def~$echo "DESCRIPTION \"$libname\"" >> $output_objdir/$libname.def~$echo DATA >> $output_objdir/$libname.def~$echo " SINGLE NONSHARED" >> $output_objdir/$libname.def~$echo EXPORTS >> $output_objdir/$libname.def~emxexp $libobjs >> $output_objdir/$libname.def~$CC -Zdll -Zcrtdll -o $lib $libobjs $deplibs $compiler_flags $output_objdir/$libname.def'
       old_archive_From_new_cmds='emximp -o $output_objdir/$libname.a $output_objdir/$libname.def'
       ;;
 
@@ -7183,7 +7179,9 @@ if test -z "$aix_libpath"; then aix_libpath="/usr/lib:/lib"; fi
       else
 	allow_undefined_flag=' -expect_unresolved \*'
 	archive_cmds='$LD -shared${allow_undefined_flag} $libobjs $deplibs $linker_flags -msym -soname $soname `test -n "$verstring" && echo -set_version $verstring` -update_registry ${output_objdir}/so_locations -o $lib'
-	archive_expsym_cmds='for i in `cat $export_symbols`; do printf "%s %s\\n" -exported_symbol "\$i" >> $lib.exp; done; echo "-hidden">> $lib.exp; $LD -shared${allow_undefined_flag} -input $lib.exp $linker_flags $libobjs $deplibs -soname $soname `test -n "$verstring" && echo -set_version $verstring` -update_registry ${objdir}/so_locations -o $lib;$rm $lib.exp'
+	archive_expsym_cmds='for i in `cat $export_symbols`; do printf "%s %s\\n" -exported_symbol "\$i" >> $lib.exp; done; echo "-hidden">> $lib.exp~
+	$LD -shared${allow_undefined_flag} -input $lib.exp $linker_flags $libobjs $deplibs -soname $soname `test -n "$verstring" && echo -set_version $verstring` -update_registry ${objdir}/so_locations -o $lib~$rm $lib.exp'
+
 	# Both c and cxx compiler support -rpath directly
 	hardcode_libdir_flag_spec='-rpath $libdir'
       fi
@@ -7202,10 +7200,12 @@ if test -z "$aix_libpath"; then aix_libpath="/usr/lib:/lib"; fi
       no_undefined_flag=' -z text'
       if test "$GCC" = yes; then
 	archive_cmds='$CC -shared ${wl}-h ${wl}$soname -o $lib $libobjs $deplibs $compiler_flags'
-	archive_expsym_cmds='$echo "{ global:" > $lib.exp;cat $export_symbols | $SED -e "s/\(.*\)/\1;/" >> $lib.exp;$echo "local: *; };" >> $lib.exp; $CC -shared ${wl}-M ${wl}$lib.exp ${wl}-h ${wl}$soname -o $lib $libobjs $deplibs $compiler_flags;$rm $lib.exp'
+	archive_expsym_cmds='$echo "{ global:" > $lib.exp~cat $export_symbols | $SED -e "s/\(.*\)/\1;/" >> $lib.exp~$echo "local: *; };" >> $lib.exp~
+	  $CC -shared ${wl}-M ${wl}$lib.exp ${wl}-h ${wl}$soname -o $lib $libobjs $deplibs $compiler_flags~$rm $lib.exp'
       else
 	archive_cmds='$LD -G${allow_undefined_flag} -h $soname -o $lib $libobjs $deplibs $linker_flags'
-	archive_expsym_cmds='$echo "{ global:" > $lib.exp;cat $export_symbols | $SED -e "s/\(.*\)/\1;/" >> $lib.exp;$echo "local: *; };" >> $lib.exp; $LD -G${allow_undefined_flag} -M $lib.exp -h $soname -o $lib $libobjs $deplibs $linker_flags;$rm $lib.exp'
+	archive_expsym_cmds='$echo "{ global:" > $lib.exp~cat $export_symbols | $SED -e "s/\(.*\)/\1;/" >> $lib.exp~$echo "local: *; };" >> $lib.exp~
+  	$LD -G${allow_undefined_flag} -M $lib.exp -h $soname -o $lib $libobjs $deplibs $linker_flags~$rm $lib.exp'
       fi
       hardcode_libdir_flag_spec='-R$libdir'
       hardcode_shlibpath_var=no
@@ -7294,7 +7294,8 @@ if test -z "$aix_libpath"; then aix_libpath="/usr/lib:/lib"; fi
       # $CC -shared without GNU ld will not create a library from C++
       # object files and a static libstdc++, better avoid it by now
       archive_cmds='$LD -G${allow_undefined_flag} -h $soname -o $lib $libobjs $deplibs $linker_flags'
-      archive_expsym_cmds='$echo "{ global:" > $lib.exp;cat $export_symbols | $SED -e "s/\(.*\)/\1;/" >> $lib.exp;$echo "local: *; };" >> $lib.exp; $LD -G${allow_undefined_flag} -M $lib.exp -h $soname -o $lib $libobjs $deplibs $linker_flags;$rm $lib.exp'
+      archive_expsym_cmds='$echo "{ global:" > $lib.exp~cat $export_symbols | $SED -e "s/\(.*\)/\1;/" >> $lib.exp~$echo "local: *; };" >> $lib.exp~
+  		$LD -G${allow_undefined_flag} -M $lib.exp -h $soname -o $lib $libobjs $deplibs $linker_flags~$rm $lib.exp'
       hardcode_libdir_flag_spec=
       hardcode_shlibpath_var=no
       runpath_var='LD_RUN_PATH'
@@ -7509,13 +7510,13 @@ cygwin* | mingw* | pw32*)
   yes,cygwin* | yes,mingw* | yes,pw32*)
     library_names_spec='$libname.dll.a'
     # DLL is installed to $(libdir)/../bin by postinstall_cmds
-    postinstall_cmds='base_file=`basename \${file}`;
-      dlpath=`$SHELL 2>&1 -c '\''. $dir/'\''\${base_file}'\''i;echo \$dlname'\''`;
-      dldir=$destdir/`dirname \$dlpath`;
-      test -d \$dldir || mkdir -p \$dldir;
+    postinstall_cmds='base_file=`basename \${file}`~
+      dlpath=`$SHELL 2>&1 -c '\''. $dir/'\''\${base_file}'\''i;echo \$dlname'\''`~
+      dldir=$destdir/`dirname \$dlpath`~
+      test -d \$dldir || mkdir -p \$dldir~
       $install_prog $dir/$dlname \$dldir/$dlname'
-    postuninstall_cmds='dldll=`$SHELL 2>&1 -c '\''. $file; echo \$dlname'\''`;
-      dlpath=$dir/\$dldll;
+    postuninstall_cmds='dldll=`$SHELL 2>&1 -c '\''. $file; echo \$dlname'\''`~
+      dlpath=$dir/\$dldll~
        $rm \$dlpath'
     shlibpath_overrides_runpath=yes
 
@@ -8598,7 +8599,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 8601 "configure"
+#line 8602 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -8696,7 +8697,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 8699 "configure"
+#line 8700 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -8816,7 +8817,7 @@ case "$host_os" in
 aix3*)
   test "$enable_shared" = yes && enable_static=no
   if test -n "$RANLIB"; then
-    archive_cmds="$archive_cmds;\$RANLIB \$lib"
+    archive_cmds="$archive_cmds~\$RANLIB \$lib"
     postinstall_cmds='$RANLIB $lib'
   fi
   ;;
@@ -9366,7 +9367,7 @@ echo "$as_me: error: tag name \"$tagname\" already exists" >&2;}
 
     # Update the list of available tags.
     if test -n "$tagname"; then
-      echo appending configuration tag \"$tagname\" to $ofile
+      echo appending configuration tag "$tagname" to $ofile
 
       case $tagname in
       CXX)
@@ -9834,7 +9835,7 @@ if test -z "$aix_libpath"; then aix_libpath="/usr/lib:/lib"; fi
 	whole_archive_flag_spec_CXX=' '
 	archive_cmds_need_lc_CXX=yes
 	# This is similar to how AIX traditionally builds it's shared libraries.
-	archive_expsym_cmds_CXX="\$CC $shared_flag"' -o $output_objdir/$soname $libobjs $deplibs $compiler_flags ${wl}-bE:$export_symbols ${wl}-bnoentry${allow_undefined_flag};$AR $AR_FLAGS $output_objdir/$libname$release.a $output_objdir/$soname'
+	archive_expsym_cmds_CXX="\$CC $shared_flag"' -o $output_objdir/$soname $libobjs $deplibs $compiler_flags ${wl}-bE:$export_symbols ${wl}-bnoentry${allow_undefined_flag}~$AR $AR_FLAGS $output_objdir/$libname$release.a $output_objdir/$soname'
       fi
     fi
     ;;
@@ -9865,7 +9866,8 @@ if test -z "$aix_libpath"; then aix_libpath="/usr/lib:/lib"; fi
       else
 	echo EXPORTS > $output_objdir/$soname.def;
 	cat $export_symbols >> $output_objdir/$soname.def;
-      fi;$CC -shared -nostdlib $output_objdir/$soname.def $predep_objects $libobjs $deplibs $postdep_objects $compiler_flags -o $output_objdir/$soname ${wl}--image-base=0x10000000 ${wl}--out-implib,$lib'
+      fi~
+      $CC -shared -nostdlib $output_objdir/$soname.def $predep_objects $libobjs $deplibs $postdep_objects $compiler_flags -o $output_objdir/$soname ${wl}--image-base=0x10000000 ${wl}--out-implib,$lib'
     else
       ld_shlibs_CXX=no
     fi
@@ -9906,16 +9908,16 @@ if test -z "$aix_libpath"; then aix_libpath="/usr/lib:/lib"; fi
       if test "X$lt_int_apple_cc_single_mod" = Xyes ; then
        archive_cmds_CXX='$CC -dynamiclib -single_module $allow_undefined_flag -o $lib $libobjs $deplibs $compiler_flags -install_name $rpath/$soname $verstring'
       else
-          archive_cmds_CXX='$CC -r -keep_private_externs -nostdlib -o ${lib}-master.o $libobjs;$CC -dynamiclib $allow_undefined_flag -o $lib ${lib}-master.o $deplibs $compiler_flags -install_name $rpath/$soname $verstring'
+          archive_cmds_CXX='$CC -r -keep_private_externs -nostdlib -o ${lib}-master.o $libobjs~$CC -dynamiclib $allow_undefined_flag -o $lib ${lib}-master.o $deplibs $compiler_flags -install_name $rpath/$soname $verstring'
         fi
         module_cmds_CXX='$CC $allow_undefined_flag -o $lib -bundle $libobjs $deplibs$compiler_flags'
         # Don't fix this by using the ld -exported_symbols_list flag, it doesn't exist in older darwin ld's
           if test "X$lt_int_apple_cc_single_mod" = Xyes ; then
-            archive_expsym_cmds_CXX='sed -e "s,#.*,," -e "s,^[    ]*,," -e "s,^\(..*\),_&," < $export_symbols > $output_objdir/${libname}-symbols.expsym;$CC -dynamiclib -single_module $allow_undefined_flag -o $lib $libobjs $deplibs $compiler_flags -install_name $rpath/$soname $verstring;nmedit -s $output_objdir/${libname}-symbols.expsym ${lib}'
+            archive_expsym_cmds_CXX='sed -e "s,#.*,," -e "s,^[    ]*,," -e "s,^\(..*\),_&," < $export_symbols > $output_objdir/${libname}-symbols.expsym~$CC -dynamiclib -single_module $allow_undefined_flag -o $lib $libobjs $deplibs $compiler_flags -install_name $rpath/$soname $verstring~nmedit -s $output_objdir/${libname}-symbols.expsym ${lib}'
           else
-            archive_expsym_cmds_CXX='sed -e "s,#.*,," -e "s,^[    ]*,," -e "s,^\(..*\),_&," < $export_symbols > $output_objdir/${libname}-symbols.expsym;$CC -r -keep_private_externs -nostdlib -o ${lib}-master.o $libobjs;$CC -dynamiclib $allow_undefined_flag -o $lib ${lib}-master.o $deplibs $compiler_flags -install_name $rpath/$soname $verstring;nmedit -s $output_objdir/${libname}-symbols.expsym ${lib}'
+            archive_expsym_cmds_CXX='sed -e "s,#.*,," -e "s,^[    ]*,," -e "s,^\(..*\),_&," < $export_symbols > $output_objdir/${libname}-symbols.expsym~$CC -r -keep_private_externs -nostdlib -o ${lib}-master.o $libobjs~$CC -dynamiclib $allow_undefined_flag -o $lib ${lib}-master.o $deplibs $compiler_flags -install_name $rpath/$soname $verstring~nmedit -s $output_objdir/${libname}-symbols.expsym ${lib}'
           fi
-            module_expsym_cmds_CXX='sed -e "s,#.*,," -e "s,^[    ]*,," -e "s,^\(..*\),_&," < $export_symbols > $output_objdir/${libname}-symbols.expsym;$CC $allow_undefined_flag  -o $lib -bundle $libobjs $deplibs$compiler_flags;nmedit -s $output_objdir/${libname}-symbols.expsym ${lib}'
+            module_expsym_cmds_CXX='sed -e "s,#.*,," -e "s,^[    ]*,," -e "s,^\(..*\),_&," < $export_symbols > $output_objdir/${libname}-symbols.expsym~$CC $allow_undefined_flag  -o $lib -bundle $libobjs $deplibs$compiler_flags~nmedit -s $output_objdir/${libname}-symbols.expsym ${lib}'
       else
       case "$cc_basename" in
         xlc*)
@@ -9923,8 +9925,8 @@ if test -z "$aix_libpath"; then aix_libpath="/usr/lib:/lib"; fi
           archive_cmds_CXX='$CC -qmkshrobj ${wl}-single_module $allow_undefined_flag -o $lib $libobjs $deplibs $compiler_flags ${wl}-install_name ${wl}`echo $rpath/$soname` $verstring'
           module_cmds_CXX='$CC $allow_undefined_flag -o $lib -bundle $libobjs $deplibs$compiler_flags'
           # Don't fix this by using the ld -exported_symbols_list flag, it doesn't exist in older darwin ld's
-          archive_expsym_cmds_CXX='sed -e "s,#.*,," -e "s,^[    ]*,," -e "s,^\(..*\),_&," < $export_symbols > $output_objdir/${libname}-symbols.expsym;$CC -qmkshrobj ${wl}-single_module $allow_undefined_flag -o $lib $libobjs $deplibs $compiler_flags ${wl}-install_name ${wl}$rpath/$soname $verstring;nmedit -s $output_objdir/${libname}-symbols.expsym ${lib}'
-          module_expsym_cmds_CXX='sed -e "s,#.*,," -e "s,^[    ]*,," -e "s,^\(..*\),_&," < $export_symbols > $output_objdir/${libname}-symbols.expsym;$CC $allow_undefined_flag  -o $lib -bundle $libobjs $deplibs$compiler_flags;nmedit -s $output_objdir/${libname}-symbols.expsym ${lib}'
+          archive_expsym_cmds_CXX='sed -e "s,#.*,," -e "s,^[    ]*,," -e "s,^\(..*\),_&," < $export_symbols > $output_objdir/${libname}-symbols.expsym~$CC -qmkshrobj ${wl}-single_module $allow_undefined_flag -o $lib $libobjs $deplibs $compiler_flags ${wl}-install_name ${wl}$rpath/$soname $verstring~nmedit -s $output_objdir/${libname}-symbols.expsym ${lib}'
+          module_expsym_cmds_CXX='sed -e "s,#.*,," -e "s,^[    ]*,," -e "s,^\(..*\),_&," < $export_symbols > $output_objdir/${libname}-symbols.expsym~$CC $allow_undefined_flag  -o $lib -bundle $libobjs $deplibs$compiler_flags~nmedit -s $output_objdir/${libname}-symbols.expsym ${lib}'
           ;;
        *)
          ld_shlibs_CXX=no
@@ -9979,7 +9981,7 @@ if test -z "$aix_libpath"; then aix_libpath="/usr/lib:/lib"; fi
       ld_shlibs_CXX=no
       ;;
     aCC)
-      archive_cmds_CXX='$rm $output_objdir/$soname;$CC -b ${wl}+b ${wl}$install_libdir -o $output_objdir/$soname $predep_objects $libobjs $deplibs $postdep_objects $compiler_flags;test $output_objdir/$soname = $lib || mv $output_objdir/$soname $lib'
+      archive_cmds_CXX='$rm $output_objdir/$soname~$CC -b ${wl}+b ${wl}$install_libdir -o $output_objdir/$soname $predep_objects $libobjs $deplibs $postdep_objects $compiler_flags~test $output_objdir/$soname = $lib || mv $output_objdir/$soname $lib'
       # Commands to make compiler produce verbose output that lists
       # what "hidden" libraries, object files and flags are used when
       # linking a shared library.
@@ -9992,7 +9994,7 @@ if test -z "$aix_libpath"; then aix_libpath="/usr/lib:/lib"; fi
       ;;
     *)
       if test "$GXX" = yes; then
-        archive_cmds_CXX='$rm $output_objdir/$soname;$CC -shared -nostdlib -fPIC ${wl}+b ${wl}$install_libdir -o $output_objdir/$soname $predep_objects $libobjs $deplibs $postdep_objects $compiler_flags;test $output_objdir/$soname = $lib || mv $output_objdir/$soname $lib'
+        archive_cmds_CXX='$rm $output_objdir/$soname~$CC -shared -nostdlib -fPIC ${wl}+b ${wl}$install_libdir -o $output_objdir/$soname $predep_objects $libobjs $deplibs $postdep_objects $compiler_flags~test $output_objdir/$soname = $lib || mv $output_objdir/$soname $lib'
       else
         # FIXME: insert proper C++ library support
         ld_shlibs_CXX=no
@@ -10308,7 +10310,10 @@ if test -z "$aix_libpath"; then aix_libpath="/usr/lib:/lib"; fi
       cxx)
 	allow_undefined_flag_CXX=' -expect_unresolved \*'
 	archive_cmds_CXX='$CC -shared${allow_undefined_flag} $predep_objects $libobjs $deplibs $postdep_objects $compiler_flags -msym -soname $soname `test -n "$verstring" && echo -set_version $verstring` -update_registry ${objdir}/so_locations -o $lib'
-	archive_expsym_cmds_CXX='for i in `cat $export_symbols`; do printf "%s %s\\n" -exported_symbol "\$i" >> $lib.exp; done; echo "-hidden">> $lib.exp;$CC -shared$allow_undefined_flag $predep_objects $libobjs $deplibs $postdep_objects $compiler_flags -msym -soname $soname -Wl,-input -Wl,$lib.exp  `test -n "$verstring" && echo -set_version	$verstring` -update_registry $objdir/so_locations -o $lib;$rm $lib.exp'
+	archive_expsym_cmds_CXX='for i in `cat $export_symbols`; do printf "%s %s\\n" -exported_symbol "\$i" >> $lib.exp; done~
+	  echo "-hidden">> $lib.exp~
+	  $CC -shared$allow_undefined_flag $predep_objects $libobjs $deplibs $postdep_objects $compiler_flags -msym -soname $soname -Wl,-input -Wl,$lib.exp  `test -n "$verstring" && echo -set_version	$verstring` -update_registry $objdir/so_locations -o $lib~
+	  $rm $lib.exp'
 
 	hardcode_libdir_flag_spec_CXX='-rpath $libdir'
 	hardcode_libdir_separator_CXX=:
@@ -10384,7 +10389,8 @@ if test -z "$aix_libpath"; then aix_libpath="/usr/lib:/lib"; fi
 	# Sun C++ 4.2, 5.x and Centerline C++
 	no_undefined_flag_CXX=' -zdefs'
 	archive_cmds_CXX='$CC -G${allow_undefined_flag} -nolib -h$soname -o $lib $predep_objects $libobjs $deplibs $postdep_objects $compiler_flags'
-	archive_expsym_cmds_CXX='$echo "{ global:" > $lib.exp;cat $export_symbols | $SED -e "s/\(.*\)/\1;/" >> $lib.exp;$echo "local: *; };" >> $lib.exp; $CC -G${allow_undefined_flag} -nolib ${wl}-M ${wl}$lib.exp -h$soname -o $lib $predep_objects $libobjs $deplibs $postdep_objects $compiler_flags;$rm $lib.exp'
+	archive_expsym_cmds_CXX='$echo "{ global:" > $lib.exp~cat $export_symbols | $SED -e "s/\(.*\)/\1;/" >> $lib.exp~$echo "local: *; };" >> $lib.exp~
+	$CC -G${allow_undefined_flag} -nolib ${wl}-M ${wl}$lib.exp -h$soname -o $lib $predep_objects $libobjs $deplibs $postdep_objects $compiler_flags~$rm $lib.exp'
 
 	hardcode_libdir_flag_spec_CXX='-R$libdir'
 	hardcode_shlibpath_var_CXX=no
@@ -10429,7 +10435,9 @@ if test -z "$aix_libpath"; then aix_libpath="/usr/lib:/lib"; fi
 	  no_undefined_flag_CXX=' ${wl}-z ${wl}defs'
 	  if $CC --version | grep -v '^2\.7' > /dev/null; then
 	    archive_cmds_CXX='$CC -shared -nostdlib $LDFLAGS $predep_objects $libobjs $deplibs $postdep_objects $compiler_flags ${wl}-h $wl$soname -o $lib'
-	    archive_expsym_cmds_CXX='$echo "{ global:" > $lib.exp;cat $export_symbols | $SED -e "s/\(.*\)/\1;/" >> $lib.exp;$echo "local: *; };" >> $lib.exp; $CC -shared -nostdlib ${wl}-M $wl$lib.exp -o $lib $predep_objects $libobjs $deplibs $postdep_objects $compiler_flags;$rm $lib.exp'
+	    archive_expsym_cmds_CXX='$echo "{ global:" > $lib.exp~cat $export_symbols | $SED -e "s/\(.*\)/\1;/" >> $lib.exp~$echo "local: *; };" >> $lib.exp~
+		$CC -shared -nostdlib ${wl}-M $wl$lib.exp -o $lib $predep_objects $libobjs $deplibs $postdep_objects $compiler_flags~$rm $lib.exp'
+
 	    # Commands to make compiler produce verbose output that lists
 	    # what "hidden" libraries, object files and flags are used when
 	    # linking a shared library.
@@ -10438,8 +10446,8 @@ if test -z "$aix_libpath"; then aix_libpath="/usr/lib:/lib"; fi
 	    # g++ 2.7 appears to require `-G' NOT `-shared' on this
 	    # platform.
 	    archive_cmds_CXX='$CC -G -nostdlib $LDFLAGS $predep_objects $libobjs $deplibs $postdep_objects $compiler_flags ${wl}-h $wl$soname -o $lib'
-	    archive_expsym_cmds_CXX='$echo "{ global:" > $lib.exp;cat $export_symbols | $SED -e "s/\(.*\)/\1;/" >> $lib.exp;$echo "local: *; };" >> $lib.exp;
-		$CC -G -nostdlib ${wl}-M $wl$lib.exp -o $lib $predep_objects $libobjs $deplibs $postdep_objects $compiler_flags;$rm $lib.exp'
+	    archive_expsym_cmds_CXX='$echo "{ global:" > $lib.exp~cat $export_symbols | $SED -e "s/\(.*\)/\1;/" >> $lib.exp~$echo "local: *; };" >> $lib.exp~
+		$CC -G -nostdlib ${wl}-M $wl$lib.exp -o $lib $predep_objects $libobjs $deplibs $postdep_objects $compiler_flags~$rm $lib.exp'
 
 	    # Commands to make compiler produce verbose output that lists
 	    # what "hidden" libraries, object files and flags are used when
@@ -10882,11 +10890,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:10885: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:10893: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:10889: \$? = $ac_status" >&5
+   echo "$as_me:10897: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -10942,11 +10950,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:10945: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:10953: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:10949: \$? = $ac_status" >&5
+   echo "$as_me:10957: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -11214,13 +11222,13 @@ cygwin* | mingw* | pw32*)
   yes,cygwin* | yes,mingw* | yes,pw32*)
     library_names_spec='$libname.dll.a'
     # DLL is installed to $(libdir)/../bin by postinstall_cmds
-    postinstall_cmds='base_file=`basename \${file}`;
-      dlpath=`$SHELL 2>&1 -c '\''. $dir/'\''\${base_file}'\''i;echo \$dlname'\''`;
-      dldir=$destdir/`dirname \$dlpath`;
-      test -d \$dldir || mkdir -p \$dldir;
+    postinstall_cmds='base_file=`basename \${file}`~
+      dlpath=`$SHELL 2>&1 -c '\''. $dir/'\''\${base_file}'\''i;echo \$dlname'\''`~
+      dldir=$destdir/`dirname \$dlpath`~
+      test -d \$dldir || mkdir -p \$dldir~
       $install_prog $dir/$dlname \$dldir/$dlname'
-    postuninstall_cmds='dldll=`$SHELL 2>&1 -c '\''. $file; echo \$dlname'\''`;
-      dlpath=$dir/\$dldll;
+    postuninstall_cmds='dldll=`$SHELL 2>&1 -c '\''. $file; echo \$dlname'\''`~
+      dlpath=$dir/\$dldll~
        $rm \$dlpath'
     shlibpath_overrides_runpath=yes
 
@@ -12303,7 +12311,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 12306 "configure"
+#line 12314 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -12401,7 +12409,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 12404 "configure"
+#line 12412 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -12998,7 +13006,7 @@ case "$host_os" in
 aix3*)
   test "$enable_shared" = yes && enable_static=no
   if test -n "$RANLIB"; then
-    archive_cmds="$archive_cmds;\$RANLIB \$lib"
+    archive_cmds="$archive_cmds~\$RANLIB \$lib"
     postinstall_cmds='$RANLIB $lib'
   fi
   ;;
@@ -13238,11 +13246,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:13241: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:13249: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:13245: \$? = $ac_status" >&5
+   echo "$as_me:13253: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -13298,11 +13306,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:13301: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:13309: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:13305: \$? = $ac_status" >&5
+   echo "$as_me:13313: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -13426,7 +13434,7 @@ EOF
       ;;
 
     amigaos*)
-      archive_cmds_F77='$rm $output_objdir/a2ixlibrary.data;$echo "#define NAME $libname" > $output_objdir/a2ixlibrary.data;$echo "#define LIBRARY_ID 1" >> $output_objdir/a2ixlibrary.data;$echo "#define VERSION $major" >> $output_objdir/a2ixlibrary.data;$echo "#define REVISION $revision" >> $output_objdir/a2ixlibrary.data;$AR $AR_FLAGS $lib $libobjs;$RANLIB $lib;(cd $output_objdir && a2ixlibrary -32)'
+      archive_cmds_F77='$rm $output_objdir/a2ixlibrary.data~$echo "#define NAME $libname" > $output_objdir/a2ixlibrary.data~$echo "#define LIBRARY_ID 1" >> $output_objdir/a2ixlibrary.data~$echo "#define VERSION $major" >> $output_objdir/a2ixlibrary.data~$echo "#define REVISION $revision" >> $output_objdir/a2ixlibrary.data~$AR $AR_FLAGS $lib $libobjs~$RANLIB $lib~(cd $output_objdir && a2ixlibrary -32)'
       hardcode_libdir_flag_spec_F77='-L$libdir'
       hardcode_minus_L_F77=yes
 
@@ -13468,7 +13476,8 @@ EOF
 	else
 	  echo EXPORTS > $output_objdir/$soname.def;
 	  cat $export_symbols >> $output_objdir/$soname.def;
-	fi;$CC -shared $output_objdir/$soname.def $libobjs $deplibs $compiler_flags -o $output_objdir/$soname ${wl}--image-base=0x10000000  ${wl}--out-implib,$lib'
+	fi~
+	$CC -shared $output_objdir/$soname.def $libobjs $deplibs $compiler_flags -o $output_objdir/$soname ${wl}--image-base=0x10000000  ${wl}--out-implib,$lib'
       else
 	ld_shlibs=no
       fi
@@ -13525,7 +13534,9 @@ EOF
         *) supports_anon_versioning=yes ;;
       esac
       if test $supports_anon_versioning = yes; then
-        archive_expsym_cmds_F77='$echo "{ global:" > $output_objdir/$libname.ver;cat $export_symbols | sed -e "s/\(.*\)/\1;/" >> $output_objdir/$libname.ver; $echo "local: *; };" >> $output_objdir/$libname.ver;
+        archive_expsym_cmds_F77='$echo "{ global:" > $output_objdir/$libname.ver~
+cat $export_symbols | sed -e "s/\(.*\)/\1;/" >> $output_objdir/$libname.ver~
+$echo "local: *; };" >> $output_objdir/$libname.ver~
         $CC -shared $libobjs $deplibs $compiler_flags ${wl}-soname $wl$soname ${wl}-version-script ${wl}$output_objdir/$libname.ver -o $lib'
       else
         archive_expsym_cmds_F77="$tmp_archive_cmds"
@@ -13562,7 +13573,7 @@ EOF
     aix3*)
       allow_undefined_flag_F77=unsupported
       always_export_symbols_F77=yes
-      archive_expsym_cmds_F77='$LD -o $output_objdir/$soname $libobjs $deplibs $linker_flags -bE:$export_symbols -T512 -H512 -bM:SRE;$AR $AR_FLAGS $lib $output_objdir/$soname'
+      archive_expsym_cmds_F77='$LD -o $output_objdir/$soname $libobjs $deplibs $linker_flags -bE:$export_symbols -T512 -H512 -bM:SRE~$AR $AR_FLAGS $lib $output_objdir/$soname'
       # Note: this linker hardcodes the directories in LIBPATH if there
       # are no directories specified by -L.
       hardcode_minus_L_F77=yes
@@ -13766,13 +13777,13 @@ if test -z "$aix_libpath"; then aix_libpath="/usr/lib:/lib"; fi
 	  whole_archive_flag_spec_F77=' '
 	  archive_cmds_need_lc_F77=yes
 	  # This is similar to how AIX traditionally builds it's shared libraries.
-	  archive_expsym_cmds_F77="\$CC $shared_flag"' -o $output_objdir/$soname $libobjs $deplibs $compiler_flags ${wl}-bE:$export_symbols ${wl}-bnoentry${allow_undefined_flag};$AR $AR_FLAGS $output_objdir/$libname$release.a $output_objdir/$soname'
+	  archive_expsym_cmds_F77="\$CC $shared_flag"' -o $output_objdir/$soname $libobjs $deplibs $compiler_flags ${wl}-bE:$export_symbols ${wl}-bnoentry${allow_undefined_flag}~$AR $AR_FLAGS $output_objdir/$libname$release.a $output_objdir/$soname'
 	fi
       fi
       ;;
 
     amigaos*)
-      archive_cmds_F77='$rm $output_objdir/a2ixlibrary.data;$echo "#define NAME $libname" > $output_objdir/a2ixlibrary.data;$echo "#define LIBRARY_ID 1" >> $output_objdir/a2ixlibrary.data;$echo "#define VERSION $major" >> $output_objdir/a2ixlibrary.data;$echo "#define REVISION $revision" >> $output_objdir/a2ixlibrary.data;$AR $AR_FLAGS $lib $libobjs;$RANLIB $lib;(cd $output_objdir && a2ixlibrary -32)'
+      archive_cmds_F77='$rm $output_objdir/a2ixlibrary.data~$echo "#define NAME $libname" > $output_objdir/a2ixlibrary.data~$echo "#define LIBRARY_ID 1" >> $output_objdir/a2ixlibrary.data~$echo "#define VERSION $major" >> $output_objdir/a2ixlibrary.data~$echo "#define REVISION $revision" >> $output_objdir/a2ixlibrary.data~$AR $AR_FLAGS $lib $libobjs~$RANLIB $lib~(cd $output_objdir && a2ixlibrary -32)'
       hardcode_libdir_flag_spec_F77='-L$libdir'
       hardcode_minus_L_F77=yes
       # see comment about different semantics on the GNU ld section
@@ -13795,7 +13806,7 @@ if test -z "$aix_libpath"; then aix_libpath="/usr/lib:/lib"; fi
       # Tell ltmain to make .dll files, not .so files.
       shrext_cmds=".dll"
       # FIXME: Setting linknames here is a bad hack.
-      archive_cmds_F77='$CC -o $lib $libobjs $compiler_flags `echo "$deplibs" | $SED -e '\''s/ -lc$//'\''` -link -dll;linknames='
+      archive_cmds_F77='$CC -o $lib $libobjs $compiler_flags `echo "$deplibs" | $SED -e '\''s/ -lc$//'\''` -link -dll~linknames='
       # The linker will automatically build a .lib file if we build a DLL.
       old_archive_From_new_cmds_F77='true'
       # FIXME: Should let the user specify the lib program.
@@ -13835,8 +13846,8 @@ if test -z "$aix_libpath"; then aix_libpath="/usr/lib:/lib"; fi
         archive_cmds_F77='$CC -dynamiclib $allow_undefined_flag -o $lib $libobjs $deplibs $compiler_flags -install_name $rpath/$soname $verstring'
       module_cmds_F77='$CC $allow_undefined_flag -o $lib -bundle $libobjs $deplibs$compiler_flags'
       # Don't fix this by using the ld -exported_symbols_list flag, it doesn't exist in older darwin ld's
-      archive_expsym_cmds_F77='sed -e "s,#.*,," -e "s,^[    ]*,," -e "s,^\(..*\),_&," < $export_symbols > $output_objdir/${libname}-symbols.expsym;$CC -dynamiclib $allow_undefined_flag -o $lib $libobjs $deplibs $compiler_flags -install_name $rpath/$soname $verstring;nmedit -s $output_objdir/${libname}-symbols.expsym ${lib}'
-      module_expsym_cmds_F77='sed -e "s,#.*,," -e "s,^[    ]*,," -e "s,^\(..*\),_&," < $export_symbols > $output_objdir/${libname}-symbols.expsym;$CC $allow_undefined_flag  -o $lib -bundle $libobjs $deplibs$compiler_flags;nmedit -s $output_objdir/${libname}-symbols.expsym ${lib}'
+      archive_expsym_cmds_F77='sed -e "s,#.*,," -e "s,^[    ]*,," -e "s,^\(..*\),_&," < $export_symbols > $output_objdir/${libname}-symbols.expsym~$CC -dynamiclib $allow_undefined_flag -o $lib $libobjs $deplibs $compiler_flags -install_name $rpath/$soname $verstring~nmedit -s $output_objdir/${libname}-symbols.expsym ${lib}'
+      module_expsym_cmds_F77='sed -e "s,#.*,," -e "s,^[    ]*,," -e "s,^\(..*\),_&," < $export_symbols > $output_objdir/${libname}-symbols.expsym~$CC $allow_undefined_flag  -o $lib -bundle $libobjs $deplibs$compiler_flags~nmedit -s $output_objdir/${libname}-symbols.expsym ${lib}'
     else
       case "$cc_basename" in
         xlc*)
@@ -13844,8 +13855,8 @@ if test -z "$aix_libpath"; then aix_libpath="/usr/lib:/lib"; fi
          archive_cmds_F77='$CC -qmkshrobj $allow_undefined_flag -o $lib $libobjs $deplibs $compiler_flags ${wl}-install_name ${wl}`echo $rpath/$soname` $verstring'
          module_cmds_F77='$CC $allow_undefined_flag -o $lib -bundle $libobjs $deplibs$compiler_flags'
           # Don't fix this by using the ld -exported_symbols_list flag, it doesn't exist in older darwin ld's
-         archive_expsym_cmds_F77='sed -e "s,#.*,," -e "s,^[    ]*,," -e "s,^\(..*\),_&," < $export_symbols > $output_objdir/${libname}-symbols.expsym;$CC -qmkshrobj $allow_undefined_flag -o $lib $libobjs $deplibs $compiler_flags ${wl}-install_name ${wl}$rpath/$soname $verstring;nmedit -s $output_objdir/${libname}-symbols.expsym ${lib}'
-          module_expsym_cmds_F77='sed -e "s,#.*,," -e "s,^[    ]*,," -e "s,^\(..*\),_&," < $export_symbols > $output_objdir/${libname}-symbols.expsym;$CC $allow_undefined_flag  -o $lib -bundle $libobjs $deplibs$compiler_flags;nmedit -s $output_objdir/${libname}-symbols.expsym ${lib}'
+         archive_expsym_cmds_F77='sed -e "s,#.*,," -e "s,^[    ]*,," -e "s,^\(..*\),_&," < $export_symbols > $output_objdir/${libname}-symbols.expsym~$CC -qmkshrobj $allow_undefined_flag -o $lib $libobjs $deplibs $compiler_flags ${wl}-install_name ${wl}$rpath/$soname $verstring~nmedit -s $output_objdir/${libname}-symbols.expsym ${lib}'
+          module_expsym_cmds_F77='sed -e "s,#.*,," -e "s,^[    ]*,," -e "s,^\(..*\),_&," < $export_symbols > $output_objdir/${libname}-symbols.expsym~$CC $allow_undefined_flag  -o $lib -bundle $libobjs $deplibs$compiler_flags~nmedit -s $output_objdir/${libname}-symbols.expsym ${lib}'
           ;;
        *)
          ld_shlibs_F77=no
@@ -13893,9 +13904,9 @@ if test -z "$aix_libpath"; then aix_libpath="/usr/lib:/lib"; fi
 
     hpux9*)
       if test "$GCC" = yes; then
-	archive_cmds_F77='$rm $output_objdir/$soname;$CC -shared -fPIC ${wl}+b ${wl}$install_libdir -o $output_objdir/$soname $libobjs $deplibs $compiler_flags;test $output_objdir/$soname = $lib || mv $output_objdir/$soname $lib'
+	archive_cmds_F77='$rm $output_objdir/$soname~$CC -shared -fPIC ${wl}+b ${wl}$install_libdir -o $output_objdir/$soname $libobjs $deplibs $compiler_flags~test $output_objdir/$soname = $lib || mv $output_objdir/$soname $lib'
       else
-	archive_cmds_F77='$rm $output_objdir/$soname;$LD -b +b $install_libdir -o $output_objdir/$soname $libobjs $deplibs $linker_flags;test $output_objdir/$soname = $lib || mv $output_objdir/$soname $lib'
+	archive_cmds_F77='$rm $output_objdir/$soname~$LD -b +b $install_libdir -o $output_objdir/$soname $libobjs $deplibs $linker_flags~test $output_objdir/$soname = $lib || mv $output_objdir/$soname $lib'
       fi
       hardcode_libdir_flag_spec_F77='${wl}+b ${wl}$libdir'
       hardcode_libdir_separator_F77=:
@@ -14016,7 +14027,7 @@ if test -z "$aix_libpath"; then aix_libpath="/usr/lib:/lib"; fi
       hardcode_libdir_flag_spec_F77='-L$libdir'
       hardcode_minus_L_F77=yes
       allow_undefined_flag_F77=unsupported
-      archive_cmds_F77='$echo "LIBRARY $libname INITINSTANCE" > $output_objdir/$libname.def;$echo "DESCRIPTION \"$libname\"" >> $output_objdir/$libname.def;$echo DATA >> $output_objdir/$libname.def;$echo " SINGLE NONSHARED" >> $output_objdir/$libname.def;$echo EXPORTS >> $output_objdir/$libname.def;emxexp $libobjs >> $output_objdir/$libname.def;$CC -Zdll -Zcrtdll -o $lib $libobjs $deplibs $compiler_flags $output_objdir/$libname.def'
+      archive_cmds_F77='$echo "LIBRARY $libname INITINSTANCE" > $output_objdir/$libname.def~$echo "DESCRIPTION \"$libname\"" >> $output_objdir/$libname.def~$echo DATA >> $output_objdir/$libname.def~$echo " SINGLE NONSHARED" >> $output_objdir/$libname.def~$echo EXPORTS >> $output_objdir/$libname.def~emxexp $libobjs >> $output_objdir/$libname.def~$CC -Zdll -Zcrtdll -o $lib $libobjs $deplibs $compiler_flags $output_objdir/$libname.def'
       old_archive_From_new_cmds_F77='emximp -o $output_objdir/$libname.a $output_objdir/$libname.def'
       ;;
 
@@ -14040,7 +14051,9 @@ if test -z "$aix_libpath"; then aix_libpath="/usr/lib:/lib"; fi
       else
 	allow_undefined_flag_F77=' -expect_unresolved \*'
 	archive_cmds_F77='$LD -shared${allow_undefined_flag} $libobjs $deplibs $linker_flags -msym -soname $soname `test -n "$verstring" && echo -set_version $verstring` -update_registry ${output_objdir}/so_locations -o $lib'
-	archive_expsym_cmds_F77='for i in `cat $export_symbols`; do printf "%s %s\\n" -exported_symbol "\$i" >> $lib.exp; done; echo "-hidden">> $lib.exp; $LD -shared${allow_undefined_flag} -input $lib.exp $linker_flags $libobjs $deplibs -soname $soname `test -n "$verstring" && echo -set_version $verstring` -update_registry ${objdir}/so_locations -o $lib;$rm $lib.exp'
+	archive_expsym_cmds_F77='for i in `cat $export_symbols`; do printf "%s %s\\n" -exported_symbol "\$i" >> $lib.exp; done; echo "-hidden">> $lib.exp~
+	$LD -shared${allow_undefined_flag} -input $lib.exp $linker_flags $libobjs $deplibs -soname $soname `test -n "$verstring" && echo -set_version $verstring` -update_registry ${objdir}/so_locations -o $lib~$rm $lib.exp'
+
 	# Both c and cxx compiler support -rpath directly
 	hardcode_libdir_flag_spec_F77='-rpath $libdir'
       fi
@@ -14059,10 +14072,12 @@ if test -z "$aix_libpath"; then aix_libpath="/usr/lib:/lib"; fi
       no_undefined_flag_F77=' -z text'
       if test "$GCC" = yes; then
 	archive_cmds_F77='$CC -shared ${wl}-h ${wl}$soname -o $lib $libobjs $deplibs $compiler_flags'
-	archive_expsym_cmds_F77='$echo "{ global:" > $lib.exp;cat $export_symbols | $SED -e "s/\(.*\)/\1;/" >> $lib.exp;$echo "local: *; };" >> $lib.exp; $CC -shared ${wl}-M ${wl}$lib.exp ${wl}-h ${wl}$soname -o $lib $libobjs $deplibs $compiler_flags;$rm $lib.exp'
+	archive_expsym_cmds_F77='$echo "{ global:" > $lib.exp~cat $export_symbols | $SED -e "s/\(.*\)/\1;/" >> $lib.exp~$echo "local: *; };" >> $lib.exp~
+	  $CC -shared ${wl}-M ${wl}$lib.exp ${wl}-h ${wl}$soname -o $lib $libobjs $deplibs $compiler_flags~$rm $lib.exp'
       else
 	archive_cmds_F77='$LD -G${allow_undefined_flag} -h $soname -o $lib $libobjs $deplibs $linker_flags'
-	archive_expsym_cmds_F77='$echo "{ global:" > $lib.exp;cat $export_symbols | $SED -e "s/\(.*\)/\1;/" >> $lib.exp;$echo "local: *; };" >> $lib.exp; $LD -G${allow_undefined_flag} -M $lib.exp -h $soname -o $lib $libobjs $deplibs $linker_flags;$rm $lib.exp'
+	archive_expsym_cmds_F77='$echo "{ global:" > $lib.exp~cat $export_symbols | $SED -e "s/\(.*\)/\1;/" >> $lib.exp~$echo "local: *; };" >> $lib.exp~
+  	$LD -G${allow_undefined_flag} -M $lib.exp -h $soname -o $lib $libobjs $deplibs $linker_flags~$rm $lib.exp'
       fi
       hardcode_libdir_flag_spec_F77='-R$libdir'
       hardcode_shlibpath_var_F77=no
@@ -14151,7 +14166,8 @@ if test -z "$aix_libpath"; then aix_libpath="/usr/lib:/lib"; fi
       # $CC -shared without GNU ld will not create a library from C++
       # object files and a static libstdc++, better avoid it by now
       archive_cmds_F77='$LD -G${allow_undefined_flag} -h $soname -o $lib $libobjs $deplibs $linker_flags'
-      archive_expsym_cmds_F77='$echo "{ global:" > $lib.exp;cat $export_symbols | $SED -e "s/\(.*\)/\1;/" >> $lib.exp;$echo "local: *; };" >> $lib.exp; $LD -G${allow_undefined_flag} -M $lib.exp -h $soname -o $lib $libobjs $deplibs $linker_flags;$rm $lib.exp'
+      archive_expsym_cmds_F77='$echo "{ global:" > $lib.exp~cat $export_symbols | $SED -e "s/\(.*\)/\1;/" >> $lib.exp~$echo "local: *; };" >> $lib.exp~
+  		$LD -G${allow_undefined_flag} -M $lib.exp -h $soname -o $lib $libobjs $deplibs $linker_flags~$rm $lib.exp'
       hardcode_libdir_flag_spec_F77=
       hardcode_shlibpath_var_F77=no
       runpath_var='LD_RUN_PATH'
@@ -14366,13 +14382,13 @@ cygwin* | mingw* | pw32*)
   yes,cygwin* | yes,mingw* | yes,pw32*)
     library_names_spec='$libname.dll.a'
     # DLL is installed to $(libdir)/../bin by postinstall_cmds
-    postinstall_cmds='base_file=`basename \${file}`;
-      dlpath=`$SHELL 2>&1 -c '\''. $dir/'\''\${base_file}'\''i;echo \$dlname'\''`;
-      dldir=$destdir/`dirname \$dlpath`;
-      test -d \$dldir || mkdir -p \$dldir;
+    postinstall_cmds='base_file=`basename \${file}`~
+      dlpath=`$SHELL 2>&1 -c '\''. $dir/'\''\${base_file}'\''i;echo \$dlname'\''`~
+      dldir=$destdir/`dirname \$dlpath`~
+      test -d \$dldir || mkdir -p \$dldir~
       $install_prog $dir/$dlname \$dldir/$dlname'
-    postuninstall_cmds='dldll=`$SHELL 2>&1 -c '\''. $file; echo \$dlname'\''`;
-      dlpath=$dir/\$dldll;
+    postuninstall_cmds='dldll=`$SHELL 2>&1 -c '\''. $file; echo \$dlname'\''`~
+      dlpath=$dir/\$dldll~
        $rm \$dlpath'
     shlibpath_overrides_runpath=yes
 
@@ -15329,11 +15345,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:15332: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:15348: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:15336: \$? = $ac_status" >&5
+   echo "$as_me:15352: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -15572,11 +15588,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:15575: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:15591: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:15579: \$? = $ac_status" >&5
+   echo "$as_me:15595: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -15632,11 +15648,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:15635: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:15651: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:15639: \$? = $ac_status" >&5
+   echo "$as_me:15655: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -15760,7 +15776,7 @@ EOF
       ;;
 
     amigaos*)
-      archive_cmds_GCJ='$rm $output_objdir/a2ixlibrary.data;$echo "#define NAME $libname" > $output_objdir/a2ixlibrary.data;$echo "#define LIBRARY_ID 1" >> $output_objdir/a2ixlibrary.data;$echo "#define VERSION $major" >> $output_objdir/a2ixlibrary.data;$echo "#define REVISION $revision" >> $output_objdir/a2ixlibrary.data;$AR $AR_FLAGS $lib $libobjs;$RANLIB $lib;(cd $output_objdir && a2ixlibrary -32)'
+      archive_cmds_GCJ='$rm $output_objdir/a2ixlibrary.data~$echo "#define NAME $libname" > $output_objdir/a2ixlibrary.data~$echo "#define LIBRARY_ID 1" >> $output_objdir/a2ixlibrary.data~$echo "#define VERSION $major" >> $output_objdir/a2ixlibrary.data~$echo "#define REVISION $revision" >> $output_objdir/a2ixlibrary.data~$AR $AR_FLAGS $lib $libobjs~$RANLIB $lib~(cd $output_objdir && a2ixlibrary -32)'
       hardcode_libdir_flag_spec_GCJ='-L$libdir'
       hardcode_minus_L_GCJ=yes
 
@@ -15802,7 +15818,8 @@ EOF
 	else
 	  echo EXPORTS > $output_objdir/$soname.def;
 	  cat $export_symbols >> $output_objdir/$soname.def;
-	fi;$CC -shared $output_objdir/$soname.def $libobjs $deplibs $compiler_flags -o $output_objdir/$soname ${wl}--image-base=0x10000000  ${wl}--out-implib,$lib'
+	fi~
+	$CC -shared $output_objdir/$soname.def $libobjs $deplibs $compiler_flags -o $output_objdir/$soname ${wl}--image-base=0x10000000  ${wl}--out-implib,$lib'
       else
 	ld_shlibs=no
       fi
@@ -15859,7 +15876,9 @@ EOF
         *) supports_anon_versioning=yes ;;
       esac
       if test $supports_anon_versioning = yes; then
-        archive_expsym_cmds_GCJ='$echo "{ global:" > $output_objdir/$libname.ver;cat $export_symbols | sed -e "s/\(.*\)/\1;/" >> $output_objdir/$libname.ver; $echo "local: *; };" >> $output_objdir/$libname.ver;
+        archive_expsym_cmds_GCJ='$echo "{ global:" > $output_objdir/$libname.ver~
+cat $export_symbols | sed -e "s/\(.*\)/\1;/" >> $output_objdir/$libname.ver~
+$echo "local: *; };" >> $output_objdir/$libname.ver~
         $CC -shared $libobjs $deplibs $compiler_flags ${wl}-soname $wl$soname ${wl}-version-script ${wl}$output_objdir/$libname.ver -o $lib'
       else
         archive_expsym_cmds_GCJ="$tmp_archive_cmds"
@@ -15896,7 +15915,7 @@ EOF
     aix3*)
       allow_undefined_flag_GCJ=unsupported
       always_export_symbols_GCJ=yes
-      archive_expsym_cmds_GCJ='$LD -o $output_objdir/$soname $libobjs $deplibs $linker_flags -bE:$export_symbols -T512 -H512 -bM:SRE;$AR $AR_FLAGS $lib $output_objdir/$soname'
+      archive_expsym_cmds_GCJ='$LD -o $output_objdir/$soname $libobjs $deplibs $linker_flags -bE:$export_symbols -T512 -H512 -bM:SRE~$AR $AR_FLAGS $lib $output_objdir/$soname'
       # Note: this linker hardcodes the directories in LIBPATH if there
       # are no directories specified by -L.
       hardcode_minus_L_GCJ=yes
@@ -16120,13 +16139,13 @@ if test -z "$aix_libpath"; then aix_libpath="/usr/lib:/lib"; fi
 	  whole_archive_flag_spec_GCJ=' '
 	  archive_cmds_need_lc_GCJ=yes
 	  # This is similar to how AIX traditionally builds it's shared libraries.
-	  archive_expsym_cmds_GCJ="\$CC $shared_flag"' -o $output_objdir/$soname $libobjs $deplibs $compiler_flags ${wl}-bE:$export_symbols ${wl}-bnoentry${allow_undefined_flag};$AR $AR_FLAGS $output_objdir/$libname$release.a $output_objdir/$soname'
+	  archive_expsym_cmds_GCJ="\$CC $shared_flag"' -o $output_objdir/$soname $libobjs $deplibs $compiler_flags ${wl}-bE:$export_symbols ${wl}-bnoentry${allow_undefined_flag}~$AR $AR_FLAGS $output_objdir/$libname$release.a $output_objdir/$soname'
 	fi
       fi
       ;;
 
     amigaos*)
-      archive_cmds_GCJ='$rm $output_objdir/a2ixlibrary.data;$echo "#define NAME $libname" > $output_objdir/a2ixlibrary.data;$echo "#define LIBRARY_ID 1" >> $output_objdir/a2ixlibrary.data;$echo "#define VERSION $major" >> $output_objdir/a2ixlibrary.data;$echo "#define REVISION $revision" >> $output_objdir/a2ixlibrary.data;$AR $AR_FLAGS $lib $libobjs;$RANLIB $lib;(cd $output_objdir && a2ixlibrary -32)'
+      archive_cmds_GCJ='$rm $output_objdir/a2ixlibrary.data~$echo "#define NAME $libname" > $output_objdir/a2ixlibrary.data~$echo "#define LIBRARY_ID 1" >> $output_objdir/a2ixlibrary.data~$echo "#define VERSION $major" >> $output_objdir/a2ixlibrary.data~$echo "#define REVISION $revision" >> $output_objdir/a2ixlibrary.data~$AR $AR_FLAGS $lib $libobjs~$RANLIB $lib~(cd $output_objdir && a2ixlibrary -32)'
       hardcode_libdir_flag_spec_GCJ='-L$libdir'
       hardcode_minus_L_GCJ=yes
       # see comment about different semantics on the GNU ld section
@@ -16149,7 +16168,7 @@ if test -z "$aix_libpath"; then aix_libpath="/usr/lib:/lib"; fi
       # Tell ltmain to make .dll files, not .so files.
       shrext_cmds=".dll"
       # FIXME: Setting linknames here is a bad hack.
-      archive_cmds_GCJ='$CC -o $lib $libobjs $compiler_flags `echo "$deplibs" | $SED -e '\''s/ -lc$//'\''` -link -dll;linknames='
+      archive_cmds_GCJ='$CC -o $lib $libobjs $compiler_flags `echo "$deplibs" | $SED -e '\''s/ -lc$//'\''` -link -dll~linknames='
       # The linker will automatically build a .lib file if we build a DLL.
       old_archive_From_new_cmds_GCJ='true'
       # FIXME: Should let the user specify the lib program.
@@ -16189,8 +16208,8 @@ if test -z "$aix_libpath"; then aix_libpath="/usr/lib:/lib"; fi
         archive_cmds_GCJ='$CC -dynamiclib $allow_undefined_flag -o $lib $libobjs $deplibs $compiler_flags -install_name $rpath/$soname $verstring'
       module_cmds_GCJ='$CC $allow_undefined_flag -o $lib -bundle $libobjs $deplibs$compiler_flags'
       # Don't fix this by using the ld -exported_symbols_list flag, it doesn't exist in older darwin ld's
-      archive_expsym_cmds_GCJ='sed -e "s,#.*,," -e "s,^[    ]*,," -e "s,^\(..*\),_&," < $export_symbols > $output_objdir/${libname}-symbols.expsym;$CC -dynamiclib $allow_undefined_flag -o $lib $libobjs $deplibs $compiler_flags -install_name $rpath/$soname $verstring;nmedit -s $output_objdir/${libname}-symbols.expsym ${lib}'
-      module_expsym_cmds_GCJ='sed -e "s,#.*,," -e "s,^[    ]*,," -e "s,^\(..*\),_&," < $export_symbols > $output_objdir/${libname}-symbols.expsym;$CC $allow_undefined_flag  -o $lib -bundle $libobjs $deplibs$compiler_flags;nmedit -s $output_objdir/${libname}-symbols.expsym ${lib}'
+      archive_expsym_cmds_GCJ='sed -e "s,#.*,," -e "s,^[    ]*,," -e "s,^\(..*\),_&," < $export_symbols > $output_objdir/${libname}-symbols.expsym~$CC -dynamiclib $allow_undefined_flag -o $lib $libobjs $deplibs $compiler_flags -install_name $rpath/$soname $verstring~nmedit -s $output_objdir/${libname}-symbols.expsym ${lib}'
+      module_expsym_cmds_GCJ='sed -e "s,#.*,," -e "s,^[    ]*,," -e "s,^\(..*\),_&," < $export_symbols > $output_objdir/${libname}-symbols.expsym~$CC $allow_undefined_flag  -o $lib -bundle $libobjs $deplibs$compiler_flags~nmedit -s $output_objdir/${libname}-symbols.expsym ${lib}'
     else
       case "$cc_basename" in
         xlc*)
@@ -16198,8 +16217,8 @@ if test -z "$aix_libpath"; then aix_libpath="/usr/lib:/lib"; fi
          archive_cmds_GCJ='$CC -qmkshrobj $allow_undefined_flag -o $lib $libobjs $deplibs $compiler_flags ${wl}-install_name ${wl}`echo $rpath/$soname` $verstring'
          module_cmds_GCJ='$CC $allow_undefined_flag -o $lib -bundle $libobjs $deplibs$compiler_flags'
           # Don't fix this by using the ld -exported_symbols_list flag, it doesn't exist in older darwin ld's
-         archive_expsym_cmds_GCJ='sed -e "s,#.*,," -e "s,^[    ]*,," -e "s,^\(..*\),_&," < $export_symbols > $output_objdir/${libname}-symbols.expsym;$CC -qmkshrobj $allow_undefined_flag -o $lib $libobjs $deplibs $compiler_flags ${wl}-install_name ${wl}$rpath/$soname $verstring;nmedit -s $output_objdir/${libname}-symbols.expsym ${lib}'
-          module_expsym_cmds_GCJ='sed -e "s,#.*,," -e "s,^[    ]*,," -e "s,^\(..*\),_&," < $export_symbols > $output_objdir/${libname}-symbols.expsym;$CC $allow_undefined_flag  -o $lib -bundle $libobjs $deplibs$compiler_flags;nmedit -s $output_objdir/${libname}-symbols.expsym ${lib}'
+         archive_expsym_cmds_GCJ='sed -e "s,#.*,," -e "s,^[    ]*,," -e "s,^\(..*\),_&," < $export_symbols > $output_objdir/${libname}-symbols.expsym~$CC -qmkshrobj $allow_undefined_flag -o $lib $libobjs $deplibs $compiler_flags ${wl}-install_name ${wl}$rpath/$soname $verstring~nmedit -s $output_objdir/${libname}-symbols.expsym ${lib}'
+          module_expsym_cmds_GCJ='sed -e "s,#.*,," -e "s,^[    ]*,," -e "s,^\(..*\),_&," < $export_symbols > $output_objdir/${libname}-symbols.expsym~$CC $allow_undefined_flag  -o $lib -bundle $libobjs $deplibs$compiler_flags~nmedit -s $output_objdir/${libname}-symbols.expsym ${lib}'
           ;;
        *)
          ld_shlibs_GCJ=no
@@ -16247,9 +16266,9 @@ if test -z "$aix_libpath"; then aix_libpath="/usr/lib:/lib"; fi
 
     hpux9*)
       if test "$GCC" = yes; then
-	archive_cmds_GCJ='$rm $output_objdir/$soname;$CC -shared -fPIC ${wl}+b ${wl}$install_libdir -o $output_objdir/$soname $libobjs $deplibs $compiler_flags;test $output_objdir/$soname = $lib || mv $output_objdir/$soname $lib'
+	archive_cmds_GCJ='$rm $output_objdir/$soname~$CC -shared -fPIC ${wl}+b ${wl}$install_libdir -o $output_objdir/$soname $libobjs $deplibs $compiler_flags~test $output_objdir/$soname = $lib || mv $output_objdir/$soname $lib'
       else
-	archive_cmds_GCJ='$rm $output_objdir/$soname;$LD -b +b $install_libdir -o $output_objdir/$soname $libobjs $deplibs $linker_flags;test $output_objdir/$soname = $lib || mv $output_objdir/$soname $lib'
+	archive_cmds_GCJ='$rm $output_objdir/$soname~$LD -b +b $install_libdir -o $output_objdir/$soname $libobjs $deplibs $linker_flags~test $output_objdir/$soname = $lib || mv $output_objdir/$soname $lib'
       fi
       hardcode_libdir_flag_spec_GCJ='${wl}+b ${wl}$libdir'
       hardcode_libdir_separator_GCJ=:
@@ -16370,7 +16389,7 @@ if test -z "$aix_libpath"; then aix_libpath="/usr/lib:/lib"; fi
       hardcode_libdir_flag_spec_GCJ='-L$libdir'
       hardcode_minus_L_GCJ=yes
       allow_undefined_flag_GCJ=unsupported
-      archive_cmds_GCJ='$echo "LIBRARY $libname INITINSTANCE" > $output_objdir/$libname.def;$echo "DESCRIPTION \"$libname\"" >> $output_objdir/$libname.def;$echo DATA >> $output_objdir/$libname.def;$echo " SINGLE NONSHARED" >> $output_objdir/$libname.def;$echo EXPORTS >> $output_objdir/$libname.def;emxexp $libobjs >> $output_objdir/$libname.def;$CC -Zdll -Zcrtdll -o $lib $libobjs $deplibs $compiler_flags $output_objdir/$libname.def'
+      archive_cmds_GCJ='$echo "LIBRARY $libname INITINSTANCE" > $output_objdir/$libname.def~$echo "DESCRIPTION \"$libname\"" >> $output_objdir/$libname.def~$echo DATA >> $output_objdir/$libname.def~$echo " SINGLE NONSHARED" >> $output_objdir/$libname.def~$echo EXPORTS >> $output_objdir/$libname.def~emxexp $libobjs >> $output_objdir/$libname.def~$CC -Zdll -Zcrtdll -o $lib $libobjs $deplibs $compiler_flags $output_objdir/$libname.def'
       old_archive_From_new_cmds_GCJ='emximp -o $output_objdir/$libname.a $output_objdir/$libname.def'
       ;;
 
@@ -16394,7 +16413,9 @@ if test -z "$aix_libpath"; then aix_libpath="/usr/lib:/lib"; fi
       else
 	allow_undefined_flag_GCJ=' -expect_unresolved \*'
 	archive_cmds_GCJ='$LD -shared${allow_undefined_flag} $libobjs $deplibs $linker_flags -msym -soname $soname `test -n "$verstring" && echo -set_version $verstring` -update_registry ${output_objdir}/so_locations -o $lib'
-	archive_expsym_cmds_GCJ='for i in `cat $export_symbols`; do printf "%s %s\\n" -exported_symbol "\$i" >> $lib.exp; done; echo "-hidden">> $lib.exp; $LD -shared${allow_undefined_flag} -input $lib.exp $linker_flags $libobjs $deplibs -soname $soname `test -n "$verstring" && echo -set_version $verstring` -update_registry ${objdir}/so_locations -o $lib;$rm $lib.exp'
+	archive_expsym_cmds_GCJ='for i in `cat $export_symbols`; do printf "%s %s\\n" -exported_symbol "\$i" >> $lib.exp; done; echo "-hidden">> $lib.exp~
+	$LD -shared${allow_undefined_flag} -input $lib.exp $linker_flags $libobjs $deplibs -soname $soname `test -n "$verstring" && echo -set_version $verstring` -update_registry ${objdir}/so_locations -o $lib~$rm $lib.exp'
+
 	# Both c and cxx compiler support -rpath directly
 	hardcode_libdir_flag_spec_GCJ='-rpath $libdir'
       fi
@@ -16413,10 +16434,12 @@ if test -z "$aix_libpath"; then aix_libpath="/usr/lib:/lib"; fi
       no_undefined_flag_GCJ=' -z text'
       if test "$GCC" = yes; then
 	archive_cmds_GCJ='$CC -shared ${wl}-h ${wl}$soname -o $lib $libobjs $deplibs $compiler_flags'
-	archive_expsym_cmds_GCJ='$echo "{ global:" > $lib.exp;cat $export_symbols | $SED -e "s/\(.*\)/\1;/" >> $lib.exp;$echo "local: *; };" >> $lib.exp; $CC -shared ${wl}-M ${wl}$lib.exp ${wl}-h ${wl}$soname -o $lib $libobjs $deplibs $compiler_flags;$rm $lib.exp'
+	archive_expsym_cmds_GCJ='$echo "{ global:" > $lib.exp~cat $export_symbols | $SED -e "s/\(.*\)/\1;/" >> $lib.exp~$echo "local: *; };" >> $lib.exp~
+	  $CC -shared ${wl}-M ${wl}$lib.exp ${wl}-h ${wl}$soname -o $lib $libobjs $deplibs $compiler_flags~$rm $lib.exp'
       else
 	archive_cmds_GCJ='$LD -G${allow_undefined_flag} -h $soname -o $lib $libobjs $deplibs $linker_flags'
-	archive_expsym_cmds_GCJ='$echo "{ global:" > $lib.exp;cat $export_symbols | $SED -e "s/\(.*\)/\1;/" >> $lib.exp;$echo "local: *; };" >> $lib.exp; $LD -G${allow_undefined_flag} -M $lib.exp -h $soname -o $lib $libobjs $deplibs $linker_flags;$rm $lib.exp'
+	archive_expsym_cmds_GCJ='$echo "{ global:" > $lib.exp~cat $export_symbols | $SED -e "s/\(.*\)/\1;/" >> $lib.exp~$echo "local: *; };" >> $lib.exp~
+  	$LD -G${allow_undefined_flag} -M $lib.exp -h $soname -o $lib $libobjs $deplibs $linker_flags~$rm $lib.exp'
       fi
       hardcode_libdir_flag_spec_GCJ='-R$libdir'
       hardcode_shlibpath_var_GCJ=no
@@ -16505,7 +16528,8 @@ if test -z "$aix_libpath"; then aix_libpath="/usr/lib:/lib"; fi
       # $CC -shared without GNU ld will not create a library from C++
       # object files and a static libstdc++, better avoid it by now
       archive_cmds_GCJ='$LD -G${allow_undefined_flag} -h $soname -o $lib $libobjs $deplibs $linker_flags'
-      archive_expsym_cmds_GCJ='$echo "{ global:" > $lib.exp;cat $export_symbols | $SED -e "s/\(.*\)/\1;/" >> $lib.exp;$echo "local: *; };" >> $lib.exp; $LD -G${allow_undefined_flag} -M $lib.exp -h $soname -o $lib $libobjs $deplibs $linker_flags;$rm $lib.exp'
+      archive_expsym_cmds_GCJ='$echo "{ global:" > $lib.exp~cat $export_symbols | $SED -e "s/\(.*\)/\1;/" >> $lib.exp~$echo "local: *; };" >> $lib.exp~
+  		$LD -G${allow_undefined_flag} -M $lib.exp -h $soname -o $lib $libobjs $deplibs $linker_flags~$rm $lib.exp'
       hardcode_libdir_flag_spec_GCJ=
       hardcode_shlibpath_var_GCJ=no
       runpath_var='LD_RUN_PATH'
@@ -16720,13 +16744,13 @@ cygwin* | mingw* | pw32*)
   yes,cygwin* | yes,mingw* | yes,pw32*)
     library_names_spec='$libname.dll.a'
     # DLL is installed to $(libdir)/../bin by postinstall_cmds
-    postinstall_cmds='base_file=`basename \${file}`;
-      dlpath=`$SHELL 2>&1 -c '\''. $dir/'\''\${base_file}'\''i;echo \$dlname'\''`;
-      dldir=$destdir/`dirname \$dlpath`;
-      test -d \$dldir || mkdir -p \$dldir;
+    postinstall_cmds='base_file=`basename \${file}`~
+      dlpath=`$SHELL 2>&1 -c '\''. $dir/'\''\${base_file}'\''i;echo \$dlname'\''`~
+      dldir=$destdir/`dirname \$dlpath`~
+      test -d \$dldir || mkdir -p \$dldir~
       $install_prog $dir/$dlname \$dldir/$dlname'
-    postuninstall_cmds='dldll=`$SHELL 2>&1 -c '\''. $file; echo \$dlname'\''`;
-      dlpath=$dir/\$dldll;
+    postuninstall_cmds='dldll=`$SHELL 2>&1 -c '\''. $file; echo \$dlname'\''`~
+      dlpath=$dir/\$dldll~
        $rm \$dlpath'
     shlibpath_overrides_runpath=yes
 
@@ -17809,7 +17833,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 17812 "configure"
+#line 17836 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -17907,7 +17931,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 17910 "configure"
+#line 17934 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
