@@ -102,6 +102,7 @@ MachineFunction::MachineFunction(const Function *F,
     currentTmpValuesSize(0), maxTmpValuesSize(0), compiledAsLeaf(false),
     spillsAreaFrozen(false), automaticVarsAreaFrozen(false)
 {
+  SSARegMapping = new SSARegMap();
 }
 
 void MachineFunction::dump() const { print(std::cerr); }
