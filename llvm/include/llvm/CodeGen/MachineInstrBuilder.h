@@ -18,7 +18,7 @@
 
 #include "llvm/CodeGen/MachineInstr.h"
 
-struct MachineInstrBuilder { 
+struct MachineInstrBuilder {
   MachineInstr *MI;
 
   MachineInstrBuilder(MachineInstr *mi) : MI(mi) {}
@@ -29,16 +29,17 @@ struct MachineInstrBuilder {
 
   /// addReg - Add a new virtual register operand...
   ///
-  const MachineInstrBuilder &addReg(int RegNo, bool isDef = false) const {
-    MI->addRegOperand(RegNo, isDef);
+  const MachineInstrBuilder &addReg(int RegNo,
+                                    MOTy::UseType Ty = MOTy::Use) const {
+    MI->addRegOperand(RegNo, Ty);
     return *this;
   }
 
   /// addReg - Add an LLVM value that is to be used as a register...
   ///
-  const MachineInstrBuilder &addReg(Value *V, bool isDef = false,
-                                    bool isDNU = false) const {
-    MI->addRegOperand(V, isDef, isDNU);
+  const MachineInstrBuilder &addReg(Value *V,
+                                    MOTy::UseType Ty = MOTy::Use) const {
+    MI->addRegOperand(V, Ty);
     return *this;
   }
 
@@ -61,8 +62,9 @@ struct MachineInstrBuilder {
 
   /// addMReg - Add a machine register operand...
   ///
-  const MachineInstrBuilder &addMReg(int Reg, bool isDef = false) const {
-    MI->addMachineRegOperand(Reg, isDef);
+  const MachineInstrBuilder &addMReg(int Reg,
+                                     MOTy::UseType Ty = MOTy::Use) const {
+    MI->addMachineRegOperand(Reg, Ty);
     return *this;
   }
 
@@ -106,7 +108,7 @@ inline MachineInstrBuilder BuildMI(MachineBasicBlock *BB, MachineOpCode Opcode,
                                    unsigned NumOperands, unsigned DestReg) {
   return MachineInstrBuilder(new MachineInstr(BB, Opcode,
                                               NumOperands+1)).addReg(DestReg,
-                                                                     true);
+                                                                     MOTy::Def);
 }
 
 #endif

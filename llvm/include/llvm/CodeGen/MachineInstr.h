@@ -20,6 +20,20 @@ class TargetMachine;
 
 typedef int MachineOpCode;
 
+/// MOTy - MachineOperandType - This namespace contains an enum that describes
+/// how the machine operand is used by the instruction: is it read, defined, or
+/// both?  Note that the MachineInstr/Operator class currently uses bool
+/// arguments to represent this information instead of an enum.  Eventually this
+/// should change over to use this _easier to read_ representation instead.
+///
+namespace MOTy {
+  enum UseType {
+    Use,             /// This machine operand is only read by the instruction
+    Def,             /// This machine operand is only written by the instruction
+    UseAndDef        /// This machine operand is read AND written
+  };
+}
+
 //---------------------------------------------------------------------------
 // class MachineOperand 
 // 
@@ -102,18 +116,26 @@ private:
       flags(0),
       regNum(-1) {}
 
-  MachineOperand(int Reg, MachineOperandType OpTy, bool isDef = false)
+  MachineOperand(int Reg, MachineOperandType OpTy, MOTy::UseType UseTy)
     : immedVal(0),
       opType(OpTy),
-      flags(isDef ? DEFFLAG : 0),
-      regNum(Reg) {}
+      regNum(Reg) {
+    switch (UseTy) {
+    case MOTy::Use:       flags = 0; break;
+    case MOTy::Def:       flags = DEFFLAG; break;
+    case MOTy::UseAndDef: flags = DEFUSEFLAG; break;
+    default: assert(0 && "Invalid value for UseTy!");
+    }
+  }
 
-  MachineOperand(Value *V, MachineOperandType OpTy,
-                 bool isDef = false, bool isDNU = false)
-    : value(V),
-      opType(OpTy),
-      regNum(-1) {
-    flags = (isDef ? DEFFLAG : 0) | (isDNU ? DEFUSEFLAG : 0);
+  MachineOperand(Value *V, MachineOperandType OpTy, MOTy::UseType UseTy) 
+    : value(V), opType(OpTy), regNum(-1) {
+    switch (UseTy) {
+    case MOTy::Use:       flags = 0; break;
+    case MOTy::Def:       flags = DEFFLAG; break;
+    case MOTy::UseAndDef: flags = DEFUSEFLAG; break;
+    default: assert(0 && "Invalid value for UseTy!");
+    }
   }
 
 public:
@@ -367,7 +389,14 @@ public:
     assert(!OperandsComplete() &&
            "Trying to add an operand to a machine instr that is already done!");
     operands.push_back(MachineOperand(V, MachineOperand::MO_VirtualRegister,
-                                      isDef, isDefAndUse));
+             !isDef ? MOTy::Use : (isDefAndUse ? MOTy::UseAndDef : MOTy::Def)));
+  }
+
+  void addRegOperand(Value *V, MOTy::UseType UTy = MOTy::Use) {
+    assert(!OperandsComplete() &&
+           "Trying to add an operand to a machine instr that is already done!");
+    operands.push_back(MachineOperand(V, MachineOperand::MO_VirtualRegister,
+                                      UTy));
   }
 
   /// addRegOperand - Add a symbolic virtual register reference...
@@ -376,7 +405,7 @@ public:
     assert(!OperandsComplete() &&
            "Trying to add an operand to a machine instr that is already done!");
     operands.push_back(MachineOperand(reg, MachineOperand::MO_VirtualRegister,
-                                      isDef));
+                                      isDef ? MOTy::Def : MOTy::Use));
   }
 
   /// addPCDispOperand - Add a PC relative displacement operand to the MI
@@ -384,7 +413,8 @@ public:
   void addPCDispOperand(Value *V) {
     assert(!OperandsComplete() &&
            "Trying to add an operand to a machine instr that is already done!");
-    operands.push_back(MachineOperand(V, MachineOperand::MO_PCRelativeDisp));
+    operands.push_back(MachineOperand(V, MachineOperand::MO_PCRelativeDisp,
+                                      MOTy::Use));
   }
 
   /// addMachineRegOperand - Add a virtual register operand to this MachineInstr
@@ -393,7 +423,7 @@ public:
     assert(!OperandsComplete() &&
            "Trying to add an operand to a machine instr that is already done!");
     operands.push_back(MachineOperand(reg, MachineOperand::MO_MachineRegister,
-                                      isDef));
+                                      isDef ? MOTy::Def : MOTy::Use));
     insertUsedReg(reg);
   }
 
