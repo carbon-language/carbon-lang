@@ -57,10 +57,10 @@ class InstTreeNode :
   };
 
   // Helper functions to make accessing our data nicer...
-  const Value *getValue() const { return getTreeData().first.first; }
-        Value *getValue()       { return getTreeData().first.first; }
+  const Value *getValue() const { return this->getTreeData().first.first; }
+        Value *getValue()       { return this->getTreeData().first.first; }
   enum NodeTypeTy getNodeType() const {
-    return (enum NodeTypeTy)getTreeData().first.second;
+    return (enum NodeTypeTy)this->getTreeData().first.second;
   }
 
   InstTreeNode(const InstTreeNode &);     // Do not implement
@@ -71,8 +71,8 @@ class InstTreeNode :
   bool CanMergeInstIntoTree(Instruction *Inst);
 public:
   // Accessor functions...
-  inline       Payload &getData()       { return getTreeData().second; }
-  inline const Payload &getData() const { return getTreeData().second; }
+  inline       Payload &getData()       { return this->getTreeData().second; }
+  inline const Payload &getData() const { return this->getTreeData().second; }
 
   // Type checking functions...
   inline bool isConstant()    const { return getNodeType() == ConstNode; }
@@ -126,8 +126,8 @@ public:
     o << getValue();
     if (!isa<Instruction>(getValue())) o << "\n";
 
-    for (unsigned i = 0; i < getNumChildren(); ++i)
-      getChild(i)->print(o, Indent+1);
+    for (unsigned i = 0; i < this->getNumChildren(); ++i)
+      this->getChild(i)->print(o, Indent+1);
   }
 };
 
@@ -161,9 +161,9 @@ class InstForest : public std::vector<InstTreeNode<Payload> *> {
   }
 
   void removeInstFromRootList(Instruction *I) {
-    for (unsigned i = size(); i > 0; --i)
-      if (operator[](i-1)->getValue() == I) {
-	erase(begin()+i-1);
+    for (unsigned i = this->size(); i > 0; --i)
+      if ((*this)[i-1]->getValue() == I) {
+	this->erase(this->begin()+i-1);
 	return;
       }
   }
@@ -182,8 +182,8 @@ public:
 
   // dtor - Free the trees...
   ~InstForest() {
-    for (unsigned i = size(); i != 0; --i)
-      delete operator[](i-1);
+    for (unsigned i = this->size(); i != 0; --i)
+      delete (*this)[i-1];
   }
 
   // getInstNode - Return the instruction node that corresponds to the specified
@@ -205,7 +205,7 @@ public:
 
   // print - Called by operator<< below...
   void print(std::ostream &out) const {
-    for (const_iterator I = begin(), E = end(); I != E; ++I)
+    for (const_iterator I = this->begin(), E = this->end(); I != E; ++I)
       out << *I;
   }
 };
@@ -239,18 +239,18 @@ bool InstTreeNode<Payload>::CanMergeInstIntoTree(Instruction *I) {
 template <class Payload>
 InstTreeNode<Payload>::InstTreeNode(InstForest<Payload> &IF, Value *V,
 				    InstTreeNode *Parent) : super(Parent) {
-  getTreeData().first.first = V;   // Save tree node
+  this->getTreeData().first.first = V;   // Save tree node
  
   if (!isa<Instruction>(V)) {
     assert((isa<Constant>(V) || isa<BasicBlock>(V) ||
 	    isa<Argument>(V) || isa<GlobalValue>(V)) &&
 	   "Unrecognized value type for InstForest Partition!");
     if (isa<Constant>(V))
-      getTreeData().first.second = ConstNode;
+      this->getTreeData().first.second = ConstNode;
     else if (isa<BasicBlock>(V))
-      getTreeData().first.second = BasicBlockNode;
+      this->getTreeData().first.second = BasicBlockNode;
     else 
-      getTreeData().first.second = TemporaryNode;
+      this->getTreeData().first.second = TemporaryNode;
       
     return;
   }
@@ -259,7 +259,7 @@ InstTreeNode<Payload>::InstTreeNode(InstForest<Payload> &IF, Value *V,
   Instruction *I = cast<Instruction>(V);
   if (Parent && !Parent->CanMergeInstIntoTree(I)) {
     // Not root node of tree, but mult uses?
-    getTreeData().first.second = TemporaryNode;   // Must be a temporary!
+    this->getTreeData().first.second = TemporaryNode;   // Must be a temporary!
     return;
   }
 
@@ -287,7 +287,7 @@ InstTreeNode<Payload>::InstTreeNode(InstForest<Payload> &IF, Value *V,
   }
 
   setChildren(Children);
-  getTreeData().first.second = InstructionNode;
+  this->getTreeData().first.second = InstructionNode;
 }
 
 } // End llvm namespace
