@@ -351,7 +351,7 @@ void Interpreter::executeAllocInst(AllocationInst *I, ExecutionContext &SF) {
   unsigned NumElements = 1;
 
   if (I->getNumOperands()) {   // Allocating a unsized array type?
-    assert(Ty->isArrayType() && Ty->isArrayType()->isUnsized() && 
+    assert(Ty->isArrayType() && Ty->castArrayType()->isUnsized() && 
 	   "Allocation inst with size operand for !unsized array type???");
     Ty = ((const ArrayType*)Ty)->getElementType();  // Get the actual type...
 
