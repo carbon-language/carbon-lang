@@ -578,7 +578,7 @@ bool DSGraph::isNodeDead(DSNode *N) {
       N->getSize() == 0 &&
       N->getReferrers().size() == N->getGlobals().size()) {
 
-    // Remove the globals from the valuemap, so that the referrer count will go
+    // Remove the globals from the ValueMap, so that the referrer count will go
     // down to zero.
     removeRefsToGlobal(N, ValueMap);
     assert(N->getReferrers().empty() && "Referrers should all be gone now!");
@@ -608,7 +608,7 @@ static void removeIdenticalCalls(vector<vector<DSNodeHandle> > &Calls,
 //
 void DSGraph::removeTriviallyDeadNodes(bool KeepAllGlobals) {
   for (unsigned i = 0; i != Nodes.size(); ++i)
-    if (! KeepAllGlobals || ! (Nodes[i]->NodeType & DSNode::GlobalNode))
+    if (!KeepAllGlobals || !(Nodes[i]->NodeType & DSNode::GlobalNode))
       if (isNodeDead(Nodes[i])) {               // This node is dead!
         delete Nodes[i];                        // Free memory...
         Nodes.erase(Nodes.begin()+i--);         // Remove from node list...
