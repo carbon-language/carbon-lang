@@ -23,7 +23,7 @@ namespace llvm {
 using namespace sys;
 
 bool 
-Path::isvalid() const {
+Path::isValid() const {
   if (path.empty()) 
     return false;
   char pathname[MAXPATHLEN];
