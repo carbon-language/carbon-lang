@@ -12,6 +12,7 @@
 #include "llvm/CodeGen/PhyRegAlloc.h"
 #include "llvm/CodeGen/InstrSelection.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/CodeGen/MachineCodeForInstruction.h"
 #include "llvm/CodeGen/MachineInstrAnnot.h"
 #include "llvm/CodeGen/FunctionLiveVarInfo.h"   // FIXME: Remove
 #include "../../CodeGen/RegAlloc/RegAllocCommon.h"   // FIXME!
@@ -940,10 +941,19 @@ void UltraSparcRegInfo::colorCallArgs(MachineInstr *CallMI,
   // 
   for(unsigned i=0; i < ReorderedVec.size(); i++)
     CallAI->InstrnsBefore.push_back( ReorderedVec[i] );
+
+  //Insert machine instructions before and after call into the
+  //call instructions map --- Anand
+  const CallInst *callInst = argDesc->getCallInst();
+  MachineCodeForInstruction &mvec = MachineCodeForInstruction::get(callInst);
+  mvec.insert(mvec.begin(), CallAI->InstrnsBefore.begin(), 
+	      CallAI->InstrnsBefore.end());
+  mvec.insert(mvec.end(), CallAI->InstrnsAfter.begin(), 
+	      CallAI->InstrnsAfter.end());
 }
 
 //---------------------------------------------------------------------------
-// This method is called for an LLVM return instruction to identify which
+// this method is called for an LLVM return instruction to identify which
 // values will be returned from this method and to suggest colors.
 //---------------------------------------------------------------------------
 void UltraSparcRegInfo::suggestReg4RetValue(MachineInstr *RetMI, 
