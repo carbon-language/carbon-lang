@@ -219,6 +219,15 @@ public:
     return AnalysisID(NextID++, CreatePass<AnalysisType>);
   }
 
+  // Special Copy Constructor - This is how analysis passes declare that they
+  // only depend on the CFG of the function they are working on, so they are not
+  // invalidated by other passes that do not modify the CFG.  This should be
+  // used like this:
+  // AnalysisID DominatorSet::ID(AnalysisID::create<DominatorSet>(), true);
+  //
+  AnalysisID(const AnalysisID &AID, bool DependsOnlyOnCFG = false);
+
+
   inline Pass *createPass() const { return Constructor(*this); }
 
   inline bool operator==(const AnalysisID &A) const {
