@@ -31,8 +31,10 @@ ReduceMiscompilingPasses::doTest(std::vector<const PassInfo*> &Prefix,
 
   std::string BytecodeResult;
   if (BD.runPasses(Suffix, BytecodeResult, false/*delete*/, true/*quiet*/)) {
-    std::cerr << BD.getToolName() << ": Error running this sequence of passes"
+    std::cerr << ": Error running this sequence of passes" 
               << " on the input program!\n";
+    BD.setPassesToRun(Suffix);
+    BD.EmitProgressBytecode("pass-error",  false);
     exit(1);
   }
 
@@ -92,7 +94,7 @@ ReduceMiscompilingPasses::doTest(std::vector<const PassInfo*> &Prefix,
   if (BD.runPasses(Suffix, BytecodeResult, false/*delete*/, true/*quiet*/)) {
     std::cerr << ": Error running this sequence of passes" 
               << " on the input program!\n";
-    BD.setPassesToRun(Prefix);
+    BD.setPassesToRun(Suffix);
     BD.EmitProgressBytecode("pass-error",  false);
     exit(1);
   }
@@ -205,8 +207,10 @@ bool ReduceMiscompilingFunctions::TestFuncs(const std::vector<Function*> &Funcs,
   std::string BytecodeResult;
   if (BD.runPasses(BD.PassesToRun, BytecodeResult, false/*delete*/,
                    true/*quiet*/)) {
-    std::cerr << BD.getToolName() << ": Error running this sequence of passes"
+    std::cerr << ": Error running this sequence of passes" 
               << " on the input program!\n";
+    BD.setPassesToRun(Suffix);
+    BD.EmitProgressBytecode("pass-error",  false);
     exit(1);
   }
 
