@@ -117,3 +117,14 @@ short %test18(sbyte %tmp3) {
 	ret short %t86
 }
 
+bool %test19(int %X) {
+	%Y = cast int %X to long
+	%Z = setlt long %Y, 12345
+	ret bool %Z
+}
+
+bool %test20(bool %B) {
+	%C = cast bool %B to int
+	%D = setlt int %C, -1
+	ret bool %D                ;; false
+}
