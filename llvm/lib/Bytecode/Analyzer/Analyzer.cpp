@@ -52,6 +52,8 @@ public:
     bca.fileDensity = 0.0;
     bca.globalsDensity = 0.0;
     bca.functionDensity = 0.0;
+    bca.instructionSize = 0;
+    bca.longInstructions = 0;
     bca.vbrCount32 = 0;
     bca.vbrCount64 = 0;
     bca.vbrCompBytes = 0;
@@ -167,6 +169,8 @@ public:
     currFunc->numPhis = 0;
     currFunc->numOperands = 0;
     currFunc->density = 0.0;
+    currFunc->instructionSize = 0;
+    currFunc->longInstructions = 0;
     currFunc->vbrCount32 = 0;
     currFunc->vbrCount64 = 0;
     currFunc->vbrCompBytes = 0;
@@ -188,9 +192,13 @@ public:
     std::vector<unsigned>& Operands, unsigned Size) {
     bca.numInstructions++;
     bca.numValues++;
+    bca.instructionSize += Size;
+    if (Size > 4 ) bca.longInstructions++;
     bca.numOperands += Operands.size();
     if ( currFunc ) {
       currFunc->numInstructions++;
+      currFunc->instructionSize += Size;
+      if (Size > 4 ) currFunc->longInstructions++;
       if ( Opcode == Instruction::PHI ) currFunc->numPhis++;
     }
     return Instruction::isTerminator(Opcode); 

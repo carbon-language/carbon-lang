@@ -55,6 +55,8 @@ struct BytecodeAnalysis {
     ///< the file is more sparse.
   double   globalsDensity;  ///< density of global defs (bytes/definition)
   double   functionDensity; ///< Average density of functions (bytes/function)
+  unsigned instructionSize; ///< Size of instructions in bytes
+  unsigned longInstructions;///< Number of instructions > 4 bytes
   unsigned vbrCount32;      ///< Number of 32-bit vbr values
   unsigned vbrCount64;      ///< Number of 64-bit vbr values
   unsigned vbrCompBytes;    ///< Number of vbr bytes (compressed)
@@ -67,13 +69,15 @@ struct BytecodeAnalysis {
   /// an analysis of a single function.
   struct BytecodeFunctionInfo {
     std::string description;  ///< Function type description
-    std::string name;	      ///< Name of function if it has one
+    std::string name;         ///< Name of function if it has one
     unsigned byteSize;        ///< The size of the function in bytecode bytes
     unsigned numInstructions; ///< The number of instructions in the function
     unsigned numBasicBlocks;  ///< The number of basic blocks in the function
     unsigned numPhis;         ///< Number of Phi Nodes in Instructions
     unsigned numOperands;     ///< The number of operands in the function
     double   density;         ///< Density of function
+    unsigned instructionSize; ///< Size of instructions in bytes
+    unsigned longInstructions;///< Number of instructions > 4 bytes
     unsigned vbrCount32;      ///< Number of 32-bit vbr values
     unsigned vbrCount64;      ///< Number of 64-bit vbr values
     unsigned vbrCompBytes;    ///< Number of vbr bytes (compressed)

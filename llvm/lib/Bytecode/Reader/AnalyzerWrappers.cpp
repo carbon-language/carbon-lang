@@ -249,6 +249,10 @@ void llvm::PrintBytecodeAnalysis(BytecodeAnalysis& bca, std::ostream& Out )
   print(Out, "Number Of Operands",              bca.numOperands);
   print(Out, "Number Of Compaction Tables",     bca.numCmpctnTables);
   print(Out, "Number Of Symbol Tables",         bca.numSymTab);
+  print(Out, "Long Instructions", bca.longInstructions);
+  print(Out, "Instruction Size", bca.instructionSize);
+  print(Out, "Average Instruction Size", 
+    double(bca.instructionSize)/double(bca.numInstructions));
   print(Out, "Maximum Type Slot Number",        bca.maxTypeSlot);
   print(Out, "Maximum Value Slot Number",       bca.maxValueSlot);
   print(Out, "Bytes Thrown To Alignment",       double(bca.numAlignment), 
@@ -304,6 +308,10 @@ void llvm::PrintBytecodeAnalysis(BytecodeAnalysis& bca, std::ostream& Out )
       print(Out, "Type:", I->second.description);
       print(Out, "Byte Size", I->second.byteSize);
       print(Out, "Instructions", I->second.numInstructions);
+      print(Out, "Long Instructions", I->second.longInstructions);
+      print(Out, "Instruction Size", I->second.instructionSize);
+      print(Out, "Average Instruction Size", 
+        double(I->second.instructionSize)/double(I->second.numInstructions));
       print(Out, "Basic Blocks", I->second.numBasicBlocks);
       print(Out, "Operand", I->second.numOperands);
       print(Out, "Function Density", I->second.density);
