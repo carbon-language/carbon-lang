@@ -1,4 +1,5 @@
-struct B { int i; };
+struct B { int i, j; };
 struct D : public B {};
-int D::*dp = &D::i;
+int D::*di = &D::i;
+int D::*dj = &D::j;
 
