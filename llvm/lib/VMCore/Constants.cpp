@@ -12,6 +12,7 @@
 #include "llvm/SlotCalculator.h"
 #include "Support/StringExtras.h"
 #include <algorithm>
+#include <iostream>
 
 using std::map;
 using std::pair;

@@ -10,6 +10,7 @@
 
 #include "llvm/Pass.h"
 #include "llvm/Bytecode/Writer.h"
+#include <iostream>
 
 class WriteBytecodePass : public Pass {
   std::ostream *Out;           // ostream to print on
