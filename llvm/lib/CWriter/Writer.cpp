@@ -570,7 +570,9 @@ void CWriter::printModule(Module *M) {
   // get declaration for alloca
   Out << "/* Provide Declarations */\n";
   Out << "#include <stdarg.h>\n";
+#ifdef HAVE_JUMP
   Out << "#include <setjmp.h>\n";
+#endif
   generateCompilerSpecificCode(Out);
   
   // Provide a definition for `bool' if not compiling with a C++ compiler.
@@ -1123,16 +1125,32 @@ void CWriter::visitCallInst(CallInst &I) {
         return;
         
       case LLVMIntrinsic::setjmp:
+#ifdef HAVE_JUMP
         Out << "setjmp(*(jmp_buf*)";
         writeOperand(I.getOperand(1));
         Out << ")";
+#else
+        //
+        // For right now, we don't really support non-local jumps.  So
+        // make setjmp() always evaluate to zero for now.
+        //
+        Out << "(0)";
+#endif
         return;
       case LLVMIntrinsic::longjmp:
+#ifdef HAVE_JUMP
         Out << "longjmp(*(jmp_buf*)";
         writeOperand(I.getOperand(1));
         Out << ", ";
         writeOperand(I.getOperand(2));
         Out << ")";
+#else
+        //
+        // For right now, we don't really support non-local jumps.  So
+        // make longjmp() abort the program.
+        //
+        Out << "abort()";
+#endif
         return;
       }
     }
