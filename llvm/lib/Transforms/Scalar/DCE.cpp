@@ -108,31 +108,8 @@ static bool RemoveSingularPHIs(BasicBlock *BB) {
   return true;  // Yes, we nuked at least one phi node
 }
 
-bool opt::DoRemoveUnusedConstants(SymTabValue *S) {
-  bool Changed = false;
-  ConstantPool &CP = S->getConstantPool();
-  for (ConstantPool::plane_iterator PI = CP.begin(); PI != CP.end(); ++PI)
-    Changed |= RemoveUnusedDefs(**PI, ConstPoolDCE());
-  return Changed;
-}
-
 static void ReplaceUsesWithConstant(Instruction *I) {
-  // Get the method level constant pool
-  ConstantPool &CP = I->getParent()->getParent()->getConstantPool();
-
-  ConstPoolVal *CPV = 0;
-  ConstantPool::PlaneType *P;
-  if (!CP.getPlane(I->getType(), P)) {  // Does plane exist?
-    // Yes, is it empty?
-    if (!P->empty()) CPV = P->front();
-  }
-
-  if (CPV == 0) { // We don't have an existing constant to reuse.  Just add one.
-    CPV = ConstPoolVal::getNullConstant(I->getType());  // Create a new constant
-
-    // Add the new value to the constant pool...
-    CP.insert(CPV);
-  }
+  ConstPoolVal *CPV = ConstPoolVal::getNullConstant(I->getType());
   
   // Make all users of this instruction reference the constant instead
   I->replaceAllUsesWith(CPV);
@@ -180,11 +157,13 @@ static void PropogatePredecessorsForPHIs(BasicBlock *BB, BasicBlock *Succ) {
 // WARNING:  The entry node of a method may not be simplified.
 //
 bool opt::SimplifyCFG(Method::iterator &BBIt) {
-  assert(*BBIt && (*BBIt)->getParent() && "Block not embedded in method!");
   BasicBlock *BB = *BBIt;
   Method *M = BB->getParent();
+
+  assert(BB && BB->getParent() && "Block not embedded in method!");
   assert(BB->getTerminator() && "Degenerate basic block encountered!");
   assert(BB->getParent()->front() != BB && "Can't Simplify entry block!");
+
 
   // Remove basic blocks that have no predecessors... which are unreachable.
   if (pred_begin(BB) == pred_end(BB) &&
@@ -210,7 +189,7 @@ bool opt::SimplifyCFG(Method::iterator &BBIt) {
     }
     delete M->getBasicBlocks().remove(BBIt);
     return true;
-  } 
+  }
 
   // Check to see if this block has no instructions and only a single 
   // successor.  If so, replace block references with successor.
@@ -310,8 +289,7 @@ static bool DoDCEPass(Method *M) {
     }
   }
 
-  // Remove unused constants
-  return Changed | opt::DoRemoveUnusedConstants(M);
+  return Changed;
 }
 
 
@@ -341,6 +319,5 @@ bool opt::DoDeadCodeElimination(Module *Mod) {
     }
   }
 
-  while (DoRemoveUnusedConstants(Mod)) Changed = true;
   return Changed;
 }
