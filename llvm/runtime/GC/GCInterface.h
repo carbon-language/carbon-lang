@@ -15,10 +15,16 @@
 #ifndef GCINTERFACE_H
 #define GCINTERFACE_H
 
+/* llvm_cg_walk_gcroots - This function is exposed by the LLVM code generator,
+ * and allows us to traverse the roots on the stack.
+ */
+void llvm_cg_walk_gcroots(void (*FP)(void **Root, void *Meta));
+
+
 /* llvm_gc_initialize - This function is called to initalize the garbage
  * collector.
  */
-void llvm_gc_initialize();
+void llvm_gc_initialize(unsigned InitialHeapSize);
 
 /* llvm_gc_allocate - This function allocates Size bytes from the heap and
  * returns a pointer to it.
