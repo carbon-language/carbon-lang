@@ -52,7 +52,7 @@ static void outputInstructionFormat0(const Instruction *I, unsigned Opcode,
 }
 
 
-// outputInstrVarArgsCall - Output the obsurdly annoying varargs function calls.
+// outputInstrVarArgsCall - Output the absurdly annoying varargs function calls.
 // This are more annoying than most because the signature of the call does not
 // tell us anything about the types of the arguments in the varargs portion.
 // Because of this, we encode (as type 0) all of the argument types explicitly
@@ -271,6 +271,6 @@ void BytecodeWriter::processInstruction(const Instruction &I) {
   }
 
   // If we weren't handled before here, we either have a large number of
-  // operands or a large operand index that we are refering to.
+  // operands or a large operand index that we are referring to.
   outputInstructionFormat0(&I, Opcode, Table, Type, Out);
 }

@@ -93,7 +93,7 @@ void RegClass::pushAllIGNodes()
     //
     IGNodeSpill->pushOnStack(); 
    
-    // now push NON-constrined ones, if any
+    // now push NON-constrained ones, if any
     //
     NeedMoreSpills = !pushUnconstrainedIGNodes(); 
 
@@ -154,7 +154,7 @@ bool  RegClass::pushUnconstrainedIGNodes()
 
 
 //----------------------------------------------------------------------------
-// Get the IGNode withe the minimum spill cost
+// Get the IGNode with the minimum spill cost
 //----------------------------------------------------------------------------
 IGNode * RegClass::getIGNodeWithMinSpillCost()
 {
@@ -216,8 +216,8 @@ void RegClass::colorIGNode(IGNode *const Node)
       IGNode *NeighIGNode = Node->getAdjIGNode(n);
       LiveRange *NeighLR = NeighIGNode->getParentLR();
       
-      // Don't use a color if it is in use by the neighbour,
-      // or is suggested for use by the neighbour,
+      // Don't use a color if it is in use by the neighbor,
+      // or is suggested for use by the neighbor,
       // markColorsUsed() should be given the color and the reg type for
       // LR, not for NeighLR, because it should mark registers used based on
       // the type we are looking for, not on the regType for the neighbour.

@@ -130,7 +130,7 @@ static bool ReadArchiveBuffer(const std::string &Filename,
 }
 
 
-// ReadArchiveFile - Read bytecode files from the specfied .a file, returning
+// ReadArchiveFile - Read bytecode files from the specified .a file, returning
 // true on error, or false on success.  This does not support reading files from
 // standard input.
 //

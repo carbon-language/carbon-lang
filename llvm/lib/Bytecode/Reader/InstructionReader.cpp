@@ -204,7 +204,7 @@ bool BytecodeParser::ParseInstruction(const unsigned char *&Buf,
       new SwitchInst(getValue(Raw.Ty, Raw.Arg1), 
                      cast<BasicBlock>(getValue(Type::LabelTy, Raw.Arg2)));
     Res = I;
-    if (Raw.NumOperands < 3) return false;  // No destinations?  Wierd.
+    if (Raw.NumOperands < 3) return false;  // No destinations?  Weird.
 
     if (Raw.NumOperands == 3 || Raw.VarArgs->size() & 1) {
       std::cerr << "Switch statement with odd number of arguments!\n";

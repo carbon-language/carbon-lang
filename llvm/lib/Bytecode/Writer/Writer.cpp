@@ -3,7 +3,7 @@
 // This library implements the functionality defined in llvm/Bytecode/Writer.h
 //
 // Note that this file uses an unusual technique of outputting all the bytecode
-// to a deque of unsigned char's, then copies the deque to an ostream.  The
+// to a deque of unsigned chare, then copies the deque to an ostream.  The
 // reason for this is that we must do "seeking" in the stream to do back-
 // patching, and some very important ostreams that we want to support (like
 // pipes) do not support seeking.  :( :( :(
@@ -143,7 +143,7 @@ void BytecodeWriter::outputConstants(bool isFunction) {
       const std::vector<const Value*> &Plane = Table.getPlane(pno);
       if (!Plane.empty()) {              // Skip empty type planes...
         unsigned ValNo = 0;
-        if (isFunction)                  // Don't reemit module constants
+        if (isFunction)                  // Don't re-emit module constants
           ValNo += Table.getModuleLevel(pno);
         
         if (pno >= Type::FirstDerivedTyID) {

@@ -436,7 +436,7 @@ bool BytecodeParser::ParseModuleGlobalInfo(const unsigned char *&Buf,
     BCR_TRACE(2, "Global Variable of type: " << *Ty << "\n");
     ResolveReferencesToValue(GV, (unsigned)DestSlot);
 
-    if (VarType & 2) { // Does it have an initalizer?
+    if (VarType & 2) { // Does it have an initializer?
       unsigned InitSlot;
       if (read_vbr(Buf, End, InitSlot)) return true;
       GlobalInits.push_back(std::make_pair(GV, InitSlot));

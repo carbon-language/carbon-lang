@@ -886,7 +886,7 @@ void CWriter::printFunction(Function *F) {
     BasicBlock *Prev = BB->getPrev();
 
     // Don't print the label for the basic block if there are no uses, or if the
-    // only terminator use is the precessor basic block's terminator.  We have
+    // only terminator use is the predecessor basic block's terminator.  We have
     // to scan the use list because PHI nodes use basic blocks too but do not
     // require a label to be generated.
     //
@@ -1022,8 +1022,8 @@ void CWriter::printBranchToBlock(BasicBlock *CurBB, BasicBlock *Succ,
   }
 }
 
-// Brach instruction printing - Avoid printing out a brach to a basic block that
-// immediately succeeds the current one.
+// Branch instruction printing - Avoid printing out a branch to a basic block
+// that immediately succeeds the current one.
 //
 void CWriter::visitBranchInst(BranchInst &I) {
   if (I.isConditional()) {
@@ -1155,7 +1155,7 @@ void CWriter::visitCallInst(CallInst &I) {
 
       case LLVMIntrinsic::setjmp:
       case LLVMIntrinsic::sigsetjmp:
-        // This instrinsic should never exist in the program, but until we get
+        // This intrinsic should never exist in the program, but until we get
         // setjmp/longjmp transformations going on, we should codegen it to
         // something reasonable.  This will allow code that never calls longjmp
         // to work.

@@ -4,7 +4,7 @@
 // constant pools.
 // 
 // Note that this library should be as fast as possible, reentrant, and 
-// threadsafe!!
+// thread-safe!!
 //
 //===----------------------------------------------------------------------===//
 
@@ -113,12 +113,12 @@ void BytecodeParser::refineAbstractType(const DerivedType *OldType,
 
 
 
-// parseTypeConstants - We have to use this wierd code to handle recursive
+// parseTypeConstants - We have to use this weird code to handle recursive
 // types.  We know that recursive types will only reference the current slab of
 // values in the type plane, but they can forward reference types before they
 // have been read.  For example, Type #0 might be '{ Ty#1 }' and Type #1 might
 // be 'Ty#0*'.  When reading Type #0, type number one doesn't exist.  To fix
-// this ugly problem, we pesimistically insert an opaque type for each type we
+// this ugly problem, we pessimistically insert an opaque type for each type we
 // are about to read.  This means that forward references will resolve to
 // something and when we reread the type later, we can replace the opaque type
 // with a new resolved concrete type.
@@ -327,7 +327,7 @@ bool BytecodeParser::parseConstantValue(const unsigned char *&Buf,
         if (!(GV = dyn_cast<GlobalValue>(Val))) return true;
         BCR_TRACE(5, "Value Found in ValueTable!\n");
       } else if (RevisionNum > 0) {
-        // Revision #0 could have forward references to globals that were wierd.
+        // Revision #0 could have forward references to globals that were weird.
         // We got rid of this in subsequent revs.
         return true;
       } else {         // Nope... find or create a forward ref. for it

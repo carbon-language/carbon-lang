@@ -104,7 +104,7 @@ PhyRegAlloc::~PhyRegAlloc() {
 } 
 
 //----------------------------------------------------------------------------
-// This method initally creates interference graphs (one in each reg class)
+// This method initially creates interference graphs (one in each reg class)
 // and IGNodeList (one in each IG). The actual nodes will be pushed later. 
 //----------------------------------------------------------------------------
 void PhyRegAlloc::createIGNodeListsAndIGs() {
@@ -145,7 +145,7 @@ void PhyRegAlloc::createIGNodeListsAndIGs() {
 
 //----------------------------------------------------------------------------
 // This method will add all interferences at for a given instruction.
-// Interence occurs only if the LR of Def (Inst or Arg) is of the same reg 
+// Interference occurs only if the LR of Def (Inst or Arg) is of the same reg 
 // class as that of live var. The live var passed to this function is the 
 // LVset AFTER the instruction
 //----------------------------------------------------------------------------
@@ -290,9 +290,9 @@ void PhyRegAlloc::buildInterferenceGraphs()
       bool isCallInst = TM.getInstrInfo().isCall(MInst->getOpCode());
 
       if (isCallInst ) {
-	// set the isCallInterference flag of each live range wich extends
-	// accross this call instruction. This information is used by graph
-	// coloring algo to avoid allocating volatile colors to live ranges
+	// set the isCallInterference flag of each live range which extends
+	// across this call instruction. This information is used by graph
+	// coloring algorithm to avoid allocating volatile colors to live ranges
 	// that span across calls (since they have to be saved/restored)
 	//
 	setCallInterferences(MInst, &LVSetAI);
@@ -331,7 +331,7 @@ void PhyRegAlloc::buildInterferenceGraphs()
   } // for all BBs in function
 
 
-  // add interferences for function arguments. Since there are no explict 
+  // add interferences for function arguments. Since there are no explicit 
   // defs in the function for args, we have to add them manually
   //  
   addInterferencesForArgs();          
@@ -343,7 +343,7 @@ void PhyRegAlloc::buildInterferenceGraphs()
 
 
 //--------------------------------------------------------------------------
-// Pseudo instructions will be exapnded to multiple instructions by the
+// Pseudo-instructions will be expanded to multiple instructions by the
 // assembler. Consequently, all the opernds must get distinct registers.
 // Therefore, we mark all operands of a pseudo instruction as they interfere
 // with one another.
@@ -404,7 +404,7 @@ void PhyRegAlloc::addInterferencesForArgs() {
 
 //----------------------------------------------------------------------------
 // This method is called after register allocation is complete to set the
-// allocated reisters in the machine code. This code will add register numbers
+// allocated registers in the machine code. This code will add register numbers
 // to MachineOperands that contain a Value. Also it calls target specific
 // methods to produce caller saving instructions. At the end, it adds all
 // additional instructions produced by the register allocator to the 
@@ -722,7 +722,7 @@ void PhyRegAlloc::updateMachineCode()
 // if it contains many spilled operands. Each time it is called, it finds
 // a register which is not live at that instruction and also which is not
 // used by other spilled operands of the same instruction. Then it uses
-// this register temporarily to accomodate the spilled value.
+// this register temporarily to accommodate the spilled value.
 //----------------------------------------------------------------------------
 
 void PhyRegAlloc::insertCode4SpilledLR(const LiveRange *LR, 
@@ -835,7 +835,7 @@ void PhyRegAlloc::insertCode4SpilledLR(const LiveRange *LR,
 
 
 //----------------------------------------------------------------------------
-// This method inserts caller saving/restoring instructons before/after
+// This method inserts caller saving/restoring instructions before/after
 // a call machine instruction. The caller saving/restoring instructions are
 // inserted like:
 //    ** caller saving instructions
@@ -1077,7 +1077,7 @@ int PhyRegAlloc::getUsableUniRegAtMI(const int RegType,
 
 //----------------------------------------------------------------------------
 // This method is called to get a new unused register that can be used
-// to accomodate a temporary value.  This method may be called several times
+// to accommodate a temporary value.  This method may be called several times
 // for a single machine instruction.  Each time it is called, it finds a
 // register which is not live at that instruction and also which is not used
 // by other spilled operands of the same instruction.  Return register number
@@ -1370,7 +1370,7 @@ void PhyRegAlloc::markUnusableSugColors()
 
 //----------------------------------------------------------------------------
 // The following method will set the stack offsets of the live ranges that
-// are decided to be spillled. This must be called just after coloring the
+// are decided to be spilled. This must be called just after coloring the
 // LRs using the graph coloring algo. For each live range that is spilled,
 // this method allocate a new spill position on the stack.
 //----------------------------------------------------------------------------
@@ -1450,8 +1450,8 @@ void PhyRegAlloc::allocateRegisters()
   for (unsigned rc=0; rc < NumOfRegClasses ; rc++)  
     RegClassList[rc]->colorAllRegs();    
 
-  // Atter graph coloring, if some LRs did not receive a color (i.e, spilled)
-  // a poistion for such spilled LRs
+  // After graph coloring, if some LRs did not receive a color (i.e, spilled)
+  // a position for such spilled LRs
   //
   allocateStackSpace4SpilledLRs();
 
