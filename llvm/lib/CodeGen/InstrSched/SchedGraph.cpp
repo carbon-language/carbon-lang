@@ -440,15 +440,15 @@ SchedGraph::addMemEdges(const std::vector<SchedGraphNode*>& memNodeVec,
   for (unsigned im=0, NM=memNodeVec.size(); im < NM; im++)
   {
     MachineOpCode fromOpCode = memNodeVec[im]->getOpCode();
-    int fromType = mii.isCall(fromOpCode)? SG_CALL_REF
-      : mii.isLoad(fromOpCode)? SG_LOAD_REF
-      : SG_STORE_REF;
+    int fromType = (mii.isCall(fromOpCode)? SG_CALL_REF
+                    : (mii.isLoad(fromOpCode)? SG_LOAD_REF
+                       : SG_STORE_REF));
     for (unsigned jm=im+1; jm < NM; jm++)
     {
       MachineOpCode toOpCode = memNodeVec[jm]->getOpCode();
-      int toType = mii.isCall(toOpCode)? SG_CALL_REF
-        : mii.isLoad(toOpCode)? SG_LOAD_REF
-        : SG_STORE_REF;
+      int toType = (mii.isCall(toOpCode)? SG_CALL_REF
+                    : (mii.isLoad(toOpCode)? SG_LOAD_REF
+                       : SG_STORE_REF));
           
       if (fromType != SG_LOAD_REF || toType != SG_LOAD_REF)
         (void) new SchedGraphEdge(memNodeVec[im], memNodeVec[jm],
@@ -465,14 +465,33 @@ SchedGraph::addMemEdges(const std::vector<SchedGraphNode*>& memNodeVec,
 // like with control dependences.
 // 
 void
-SchedGraph::addCallCCEdges(const std::vector<SchedGraphNode*>& memNodeVec,
-                           MachineBasicBlock& bbMvec,
-                           const TargetMachine& target)
+SchedGraph::addCallDepEdges(const std::vector<SchedGraphNode*>& callDepNodeVec,
+                            const TargetMachine& target)
 {
   const TargetInstrInfo& mii = target.getInstrInfo();
-  std::vector<SchedGraphNode*> callNodeVec;
   
+  // Instructions in memNodeVec are in execution order within the basic block,
+  // so simply look at all pairs <memNodeVec[i], memNodeVec[j: j > i]>.
+  // 
+  for (unsigned ic=0, NC=callDepNodeVec.size(); ic < NC; ic++)
+    if (mii.isCall(callDepNodeVec[ic]->getOpCode()))
+      {
+        // Add SG_CALL_REF edges from all preds to this instruction.
+        for (unsigned jc=0; jc < ic; jc++)
+          (void) new SchedGraphEdge(callDepNodeVec[jc], callDepNodeVec[ic],
+                                    SchedGraphEdge::MachineRegister,
+                                    MachineIntRegsRID,  0);
+
+        // And do the same from this instruction to all successors.
+        for (unsigned jc=ic+1; jc < NC; jc++)
+          (void) new SchedGraphEdge(callDepNodeVec[ic], callDepNodeVec[jc],
+                                    SchedGraphEdge::MachineRegister,
+                                    MachineIntRegsRID,  0);
+      }
+  
+#ifdef CALL_DEP_NODE_VEC_CANNOT_WORK
   // Find the call instruction nodes and put them in a vector.
+  std::vector<SchedGraphNode*> callNodeVec;
   for (unsigned im=0, NM=memNodeVec.size(); im < NM; im++)
     if (mii.isCall(memNodeVec[im]->getOpCode()))
       callNodeVec.push_back(memNodeVec[im]);
@@ -491,7 +510,9 @@ SchedGraph::addCallCCEdges(const std::vector<SchedGraphNode*>& memNodeVec,
         if (callNodeVec[lastCallNodeIdx]->getMachineInstr() == bbMvec[i])
           break;
       assert(lastCallNodeIdx < (int)callNodeVec.size() && "Missed Call?");
-    } else if (mii.isCCInstr(bbMvec[i]->getOpCode())) {
+    }
+    else if (mii.isCCInstr(bbMvec[i]->getOpCode()))
+    {
       // Add incoming/outgoing edges from/to preceding/later calls
       SchedGraphNode* ccNode = this->getGraphNodeForInstr(bbMvec[i]);
       int j=0;
@@ -502,6 +523,7 @@ SchedGraph::addCallCCEdges(const std::vector<SchedGraphNode*>& memNodeVec,
         (void) new SchedGraphEdge(ccNode, callNodeVec[j],
                                   MachineCCRegsRID, 0);
     }
+#endif
 }
 
 
@@ -509,10 +531,7 @@ void
 SchedGraph::addMachineRegEdges(RegToRefVecMap& regToRefVecMap,
 			       const TargetMachine& target)
 {
-  // This assumes that such hardwired registers are never allocated
-  // to any LLVM value (since register allocation happens later), i.e.,
-  // any uses or defs of this register have been made explicit!
-  // Also assumes that two registers with different numbers are
+  // This code assumes that two registers with different numbers are
   // not aliased!
   // 
   for (RegToRefVecMap::iterator I = regToRefVecMap.begin();
@@ -525,18 +544,19 @@ SchedGraph::addMachineRegEdges(RegToRefVecMap& regToRefVecMap,
     for (unsigned i=0; i < regRefVec.size(); ++i) {
       SchedGraphNode* node = regRefVec[i].first;
       unsigned int opNum   = regRefVec[i].second;
-      bool isDef = node->getMachineInstr()->getOperand(opNum).opIsDefOnly();
-      bool isDefAndUse =
-        node->getMachineInstr()->getOperand(opNum).opIsDefAndUse();
+      const MachineOperand& mop =
+        node->getMachineInstr()->getExplOrImplOperand(opNum);
+      bool isDef = mop.opIsDefOnly();
+      bool isDefAndUse = mop.opIsDefAndUse();
           
       for (unsigned p=0; p < i; ++p) {
         SchedGraphNode* prevNode = regRefVec[p].first;
         if (prevNode != node) {
           unsigned int prevOpNum = regRefVec[p].second;
-          bool prevIsDef =
-            prevNode->getMachineInstr()->getOperand(prevOpNum).opIsDefOnly();
-          bool prevIsDefAndUse =
-            prevNode->getMachineInstr()->getOperand(prevOpNum).opIsDefAndUse();
+          const MachineOperand& prevMop =
+            prevNode->getMachineInstr()->getExplOrImplOperand(prevOpNum);
+          bool prevIsDef = prevMop.opIsDefOnly();
+          bool prevIsDefAndUse = prevMop.opIsDefAndUse();
           if (isDef) {
             if (prevIsDef)
               new SchedGraphEdge(prevNode, node, regNum,
@@ -663,13 +683,17 @@ void
 SchedGraph::findDefUseInfoAtInstr(const TargetMachine& target,
                                   SchedGraphNode* node,
                                   std::vector<SchedGraphNode*>& memNodeVec,
+                                  std::vector<SchedGraphNode*>& callDepNodeVec,
                                   RegToRefVecMap& regToRefVecMap,
                                   ValueToDefVecMap& valueToDefVecMap)
 {
   const TargetInstrInfo& mii = target.getInstrInfo();
   
-  
   MachineOpCode opCode = node->getOpCode();
+
+  if (mii.isCall(opCode) || mii.isCCInstr(opCode))
+    callDepNodeVec.push_back(node);
+
   if (mii.isLoad(opCode) || mii.isStore(opCode) || mii.isCall(opCode))
     memNodeVec.push_back(node);
   
@@ -682,15 +706,29 @@ SchedGraph::findDefUseInfoAtInstr(const TargetMachine& target,
       
     // if this references a register other than the hardwired
     // "zero" register, record the reference.
-    if (mop.getType() == MachineOperand::MO_MachineRegister)
+    if (mop.hasAllocatedReg())
     {
-      int regNum = mop.getMachineRegNum();
+      int regNum = mop.getAllocatedRegNum();
+
+      // If this is not a dummy zero register, record the reference in order
       if (regNum != target.getRegInfo().getZeroRegNum())
-        regToRefVecMap[mop.getMachineRegNum()]
+        regToRefVecMap[mop.getAllocatedRegNum()]
           .push_back(std::make_pair(node, i));
+
+      // If this is a volatile register, add the instruction to callDepVec
+      // (only if the node is not already on the callDepVec!)
+      if (callDepNodeVec.size() == 0 || callDepNodeVec.back() != node)
+        {
+          unsigned rcid;
+          int regInClass = target.getRegInfo().getClassRegNum(regNum, rcid);
+          if (target.getRegInfo().getMachineRegClass(rcid)
+              ->isRegVolatile(regInClass))
+            callDepNodeVec.push_back(node);
+        }
+          
       continue;                     // nothing more to do
     }
-      
+    
     // ignore all other non-def operands
     if (!minstr.getOperand(i).opIsDefOnly() &&
         !minstr.getOperand(i).opIsDefAndUse())
@@ -706,15 +744,26 @@ SchedGraph::findDefUseInfoAtInstr(const TargetMachine& target,
   }
   
   // 
-  // Collect value defs. for implicit operands.  The interface to extract
-  // them assumes they must be virtual registers!
+  // Collect value defs. for implicit operands.  They may have allocated
+  // physical registers also.
   // 
   for (unsigned i=0, N = minstr.getNumImplicitRefs(); i != N; ++i)
-    if (minstr.getImplicitOp(i).opIsDefOnly() ||
-        minstr.getImplicitOp(i).opIsDefAndUse())
+  {
+    const MachineOperand& mop = minstr.getImplicitOp(i);
+    if (mop.hasAllocatedReg())
+    {
+      int regNum = mop.getAllocatedRegNum();
+      if (regNum != target.getRegInfo().getZeroRegNum())
+        regToRefVecMap[mop.getAllocatedRegNum()]
+          .push_back(std::make_pair(node, i + minstr.getNumOperands()));
+      continue;                     // nothing more to do
+    }
+
+    if (mop.opIsDefOnly() || mop.opIsDefAndUse())
       if (const Instruction* defInstr =
           dyn_cast_or_null<Instruction>(minstr.getImplicitRef(i)))
         valueToDefVecMap[defInstr].push_back(std::make_pair(node, -i)); 
+  }
 }
 
 
@@ -722,6 +771,7 @@ void
 SchedGraph::buildNodesForBB(const TargetMachine& target,
                             MachineBasicBlock& MBB,
                             std::vector<SchedGraphNode*>& memNodeVec,
+                            std::vector<SchedGraphNode*>& callDepNodeVec,
                             RegToRefVecMap& regToRefVecMap,
                             ValueToDefVecMap& valueToDefVecMap)
 {
@@ -735,8 +785,8 @@ SchedGraph::buildNodesForBB(const TargetMachine& target,
       noteGraphNodeForInstr(MBB[i], node);
       
       // Remember all register references and value defs
-      findDefUseInfoAtInstr(target, node, memNodeVec, regToRefVecMap,
-                            valueToDefVecMap);
+      findDefUseInfoAtInstr(target, node, memNodeVec, callDepNodeVec,
+                            regToRefVecMap, valueToDefVecMap);
     }
 }
 
@@ -752,9 +802,11 @@ SchedGraph::buildGraph(const TargetMachine& target)
   
   // Use this data structure to note all memory instructions.
   // We use this to add memory dependence edges without a second full walk.
-  // 
-  // vector<const Instruction*> memVec;
   std::vector<SchedGraphNode*> memNodeVec;
+
+  // Use this data structure to note all instructions that access physical
+  // registers that can be modified by a call (including call instructions)
+  std::vector<SchedGraphNode*> callDepNodeVec;
   
   // Use this data structure to note any uses or definitions of
   // machine registers so we can add edges for those later without
@@ -777,7 +829,8 @@ SchedGraph::buildGraph(const TargetMachine& target)
   // Also, remember the load/store instructions to add memory deps later.
   //----------------------------------------------------------------
 
-  buildNodesForBB(target, MBB, memNodeVec, regToRefVecMap, valueToDefVecMap);
+  buildNodesForBB(target, MBB, memNodeVec, callDepNodeVec,
+                  regToRefVecMap, valueToDefVecMap);
   
   //----------------------------------------------------------------
   // Now add edges for the following (all are incoming edges except (4)):
@@ -803,7 +856,7 @@ SchedGraph::buildGraph(const TargetMachine& target)
   this->addMemEdges(memNodeVec, target);
 
   // Then add edges between call instructions and CC set/use instructions
-  this->addCallCCEdges(memNodeVec, MBB, target);
+  this->addCallDepEdges(callDepNodeVec, target);
   
   // Then add incoming def-use (SSA) edges for each machine instruction.
   for (unsigned i=0, N=MBB.size(); i < N; i++)

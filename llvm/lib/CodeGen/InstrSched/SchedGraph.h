@@ -287,13 +287,15 @@ private:
   
   void          buildNodesForBB         (const TargetMachine& target,
                                          MachineBasicBlock &MBB,
-                                         std::vector<SchedGraphNode*>& memNod,
+                                         std::vector<SchedGraphNode*>& memNV,
+                                         std::vector<SchedGraphNode*>& callNV,
                                          RegToRefVecMap& regToRefVecMap,
                                          ValueToDefVecMap& valueToDefVecMap);
   
   void          findDefUseInfoAtInstr   (const TargetMachine& target,
                                          SchedGraphNode* node,
-                                         std::vector<SchedGraphNode*>& memNode,
+                                         std::vector<SchedGraphNode*>& memNV,
+                                         std::vector<SchedGraphNode*>& callNV,
                                          RegToRefVecMap& regToRefVecMap,
                                          ValueToDefVecMap& valueToDefVecMap);
                                          
@@ -304,11 +306,10 @@ private:
   void		addCDEdges		(const TerminatorInst* term,
 					 const TargetMachine& target);
   
-  void		addMemEdges         (const std::vector<SchedGraphNode*>& memNod,
+  void		addMemEdges         (const std::vector<SchedGraphNode*>& memNV,
                                      const TargetMachine& target);
   
-  void          addCallCCEdges      (const std::vector<SchedGraphNode*>& memNod,
-                                     MachineBasicBlock& bbMvec,
+  void          addCallDepEdges     (const std::vector<SchedGraphNode*>& callNV,
                                      const TargetMachine& target);
     
   void		addMachineRegEdges	(RegToRefVecMap& regToRefVecMap,
