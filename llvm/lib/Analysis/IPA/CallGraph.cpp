@@ -190,6 +190,7 @@ void CallGraph::changeFunction(Function *OldF, Function *NewF) {
   assert(I != FunctionMap.end() && I->second && !New &&
          "OldF didn't exist in CG or NewF already does!");
   New = I->second;
+  New->F = NewF;
   FunctionMap.erase(I);
 }
 
