@@ -16,9 +16,32 @@
 #define LLVM_PASSMANAGER_T_H
 
 #include "llvm/Pass.h"
-#include <string>
+#include "Support/CommandLine.h"
 #include <algorithm>
 class Annotable;
+
+//===----------------------------------------------------------------------===//
+// Pass debugging information.  Often it is useful to find out what pass is
+// running when a crash occurs in a utility.  When this library is compiled with
+// debugging on, a command line option (--debug-pass) is enabled that causes the
+// pass name to be printed before it executes.
+//
+
+// Different debug levels that can be enabled...
+enum PassDebugLevel {
+  None, Structure, Executions, Details
+};
+
+static cl::opt<enum PassDebugLevel>
+PassDebugging("debug-pass", cl::Hidden,
+              cl::desc("Print PassManager debugging information"),
+              cl::values(
+  clEnumVal(None      , "disable debug output"),
+  // TODO: add option to print out pass names "PassOptions"
+  clEnumVal(Structure , "print pass structure before run()"),
+  clEnumVal(Executions, "print pass name before it is executed"),
+  clEnumVal(Details   , "print pass details when it is executed"),
+                         0));
 
 //===----------------------------------------------------------------------===//
 // PMDebug class - a set of debugging functions, that are not to be
@@ -28,7 +51,10 @@ struct PMDebug {
   // If compiled in debug mode, these functions can be enabled by setting
   // -debug-pass on the command line of the tool being used.
   //
-  static void PrintPassStructure(Pass *P);
+  static void PrintPassStructure(Pass *P) {
+    if (PassDebugging >= Structure)
+      P->dumpPassStructure();
+  }
   static void PrintPassInformation(unsigned,const char*,Pass *, Annotable *);
   static void PrintAnalysisSetInfo(unsigned,const char*,Pass *P,
                                    const std::vector<AnalysisID> &);

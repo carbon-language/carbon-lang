@@ -10,7 +10,6 @@
 #include "PassManagerT.h"         // PassManagerT implementation
 #include "llvm/Module.h"
 #include "Support/STLExtras.h"
-#include "Support/CommandLine.h"
 #include "Support/TypeInfo.h"
 #include <typeinfo>
 #include <iostream>
@@ -21,21 +20,11 @@
 //   AnalysisID Class Implementation
 //
 
-static std::vector<AnalysisID> CFGOnlyAnalyses;
-#if 0
-// Source of unique analysis ID #'s.
-unsigned AnalysisID::NextID = 0;
+static std::vector<const PassInfo*> CFGOnlyAnalyses;
 
-AnalysisID::AnalysisID(const AnalysisID &AID, bool DependsOnlyOnCFG) {
-  ID = AID.ID;                    // Implement the copy ctor part...
-  Constructor = AID.Constructor;
-  
-  // If this analysis only depends on the CFG of the function, add it to the CFG
-  // only list...
-  if (DependsOnlyOnCFG)
-    CFGOnlyAnalyses.push_back(AID);
+void RegisterPassBase::setPreservesCFG() {
+  CFGOnlyAnalyses.push_back(PIObj);
 }
-#endif
 
 //===----------------------------------------------------------------------===//
 //   AnalysisResolver Class Implementation
@@ -137,33 +126,6 @@ TimingInfo::~TimingInfo() {
 }
 
 
-//===----------------------------------------------------------------------===//
-// Pass debugging information.  Often it is useful to find out what pass is
-// running when a crash occurs in a utility.  When this library is compiled with
-// debugging on, a command line option (--debug-pass) is enabled that causes the
-// pass name to be printed before it executes.
-//
-
-// Different debug levels that can be enabled...
-enum PassDebugLevel {
-  None, Structure, Executions, Details
-};
-
-static cl::opt<enum PassDebugLevel>
-PassDebugging("debug-pass", cl::Hidden,
-              cl::desc("Print PassManager debugging information"),
-              cl::values(
-  clEnumVal(None      , "disable debug output"),
-  // TODO: add option to print out pass names "PassOptions"
-  clEnumVal(Structure , "print pass structure before run()"),
-  clEnumVal(Executions, "print pass name before it is executed"),
-  clEnumVal(Details   , "print pass details when it is executed"),
-                         0));
-
-void PMDebug::PrintPassStructure(Pass *P) {
-  if (PassDebugging >= Structure)
-    P->dumpPassStructure();
-}
 
 void PMDebug::PrintPassInformation(unsigned Depth, const char *Action,
                                    Pass *P, Annotable *V) {
@@ -190,21 +152,11 @@ void PMDebug::PrintAnalysisSetInfo(unsigned Depth, const char *Msg,
                                    Pass *P, const std::vector<AnalysisID> &Set){
   if (PassDebugging >= Details && !Set.empty()) {
     std::cerr << (void*)P << std::string(Depth*2+3, ' ') << Msg << " Analyses:";
-    for (unsigned i = 0; i != Set.size(); ++i) {
-      // FIXME: This can use the local pass map!
-      Pass *P = Set[i]->createPass();   // Good thing this is just debug code...
-      std::cerr << "  " << P->getPassName();
-      delete P;
-    }
+    for (unsigned i = 0; i != Set.size(); ++i)
+      std::cerr << "  " << Set[i]->getPassName();
     std::cerr << "\n";
   }
 }
-
-// dumpPassStructure - Implement the -debug-passes=Structure option
-void Pass::dumpPassStructure(unsigned Offset) {
-  std::cerr << std::string(Offset*2, ' ') << getPassName() << "\n";
-}
-
 
 //===----------------------------------------------------------------------===//
 // Pass Implementation
@@ -214,6 +166,10 @@ void Pass::addToPassManager(PassManagerT<Module> *PM, AnalysisUsage &AU) {
   PM->addPass(this, AU);
 }
 
+// dumpPassStructure - Implement the -debug-passes=Structure option
+void Pass::dumpPassStructure(unsigned Offset) {
+  std::cerr << std::string(Offset*2, ' ') << getPassName() << "\n";
+}
 
 // getPassName - Use C++ RTTI to get a SOMEWHAT intelligable name for the pass.
 //
