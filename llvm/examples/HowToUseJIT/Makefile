@@ -8,8 +8,8 @@
 ##===----------------------------------------------------------------------===##
 LEVEL = ../..
 TOOLNAME = HowToUseJIT
-USEDLIBS = lli-jit lli-interpreter codegen executionengine x86 selectiondag \
-	   scalaropts analysis.a transformutils.a bcreader target.a vmcore \
-	   support.a LLVMsystem.a
+
+# Enable JIT support
+include $(LEVEL)/tools/Makefile.JIT
 
 include $(LEVEL)/Makefile.common

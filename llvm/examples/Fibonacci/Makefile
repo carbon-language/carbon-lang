@@ -6,10 +6,11 @@
 # the University of Illinois Open Source License. See LICENSE.TXT for details.
 # 
 ##===----------------------------------------------------------------------===##
+
 LEVEL = ../..
 TOOLNAME = Fibonacci
-USEDLIBS = lli-jit lli-interpreter codegen executionengine x86 selectiondag \
-	   scalaropts analysis.a transformutils.a bcreader target.a vmcore \
-	   support.a LLVMsystem.a
+
+# Enable JIT support
+include $(LEVEL)/tools/Makefile.JIT
 
 include $(LEVEL)/Makefile.common
