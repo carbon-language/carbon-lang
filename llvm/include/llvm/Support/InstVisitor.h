@@ -101,13 +101,12 @@ struct InstVisitor {
   //
   RetTy visit(Instruction &I) {
     switch (I.getOpcode()) {
+    default: assert(0 && "Unknown instruction type encountered!");
+             abort();
       // Build the switch statement using the Instruction.def file...
 #define HANDLE_INST(NUM, OPCODE, CLASS) \
     case Instruction::OPCODE:return ((SubClass*)this)->visit##OPCODE((CLASS&)I);
 #include "llvm/Instruction.def"
-
-    default: assert(0 && "Unknown instruction type encountered!");
-             abort();
     }
   }
 
