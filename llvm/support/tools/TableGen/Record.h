@@ -207,6 +207,7 @@ public:
 struct CodeRecTy : public RecTy {
   Init *convertValue(UnsetInit *UI) { return (Init*)UI; }
   Init *convertValue( CodeInit *CI) { return (Init*)CI; }
+  Init *convertValue(TypedInit *TI);
 
   void print(std::ostream &OS) const { OS << "code"; }
 

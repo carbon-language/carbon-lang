@@ -146,6 +146,12 @@ Init *ListRecTy::convertValue(TypedInit *TI) {
   return 0;
 }
 
+Init *CodeRecTy::convertValue(TypedInit *TI) {
+  if (TI->getType()->typeIsConvertibleTo(this))
+    return TI;
+  return 0;
+}
+
 Init *DagRecTy::convertValue(TypedInit *TI) {
   if (TI->getType()->typeIsConvertibleTo(this))
     return TI;
