@@ -49,7 +49,7 @@ namespace llvm {
     std::set<std::pair<MSchedGraphNode*, unsigned> > edgesToIgnore;
     
     //Vector containing the partial order
-    std::vector<std::vector<MSchedGraphNode*> > partialOrder;
+    std::vector<std::set<MSchedGraphNode*> > partialOrder;
     
     //Vector containing the final node order
     std::vector<MSchedGraphNode*> FinalNodeOrder;
@@ -85,8 +85,8 @@ namespace llvm {
     bool scheduleNode(MSchedGraphNode *node, 
 		      int start, int end);
 
-    void predIntersect(std::vector<MSchedGraphNode*> &CurrentSet, std::vector<MSchedGraphNode*> &IntersectResult);
-    void succIntersect(std::vector<MSchedGraphNode*> &CurrentSet, std::vector<MSchedGraphNode*> &IntersectResult);
+    void predIntersect(std::set<MSchedGraphNode*> &CurrentSet, std::set<MSchedGraphNode*> &IntersectResult);
+    void succIntersect(std::set<MSchedGraphNode*> &CurrentSet, std::set<MSchedGraphNode*> &IntersectResult);
     
     void reconstructLoop(MachineBasicBlock*);
     
@@ -101,6 +101,8 @@ namespace llvm {
 
     void removePHIs(const MachineBasicBlock *origBB, std::vector<MachineBasicBlock *> &prologues, std::vector<MachineBasicBlock *> &epilogues, MachineBasicBlock *kernelBB, std::map<Value*, MachineBasicBlock*> &newValLocation);
   
+    void connectedComponentSet(MSchedGraphNode *node, std::set<MSchedGraphNode*> &ccSet, std::set<MSchedGraphNode*> &lastNodes);
+
   public:
     ModuloSchedulingPass(TargetMachine &targ) : target(targ) {}
     virtual bool runOnFunction(Function &F);

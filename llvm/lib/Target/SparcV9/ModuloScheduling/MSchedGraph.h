@@ -21,6 +21,7 @@
 #include "llvm/ADT/iterator"
 #include <vector>
 
+
 namespace llvm {
   class MSchedGraph;
   class MSchedGraphNode;
@@ -99,7 +100,9 @@ namespace llvm {
     MSchedGraph* getParent() { return Parent; }
     bool hasPredecessors() { return (Predecessors.size() > 0); }
     bool hasSuccessors() { return (Successors.size() > 0); }
-    int getLatency() { return latency; }
+    unsigned getLatency() { return latency; }
+    unsigned getLatency() const { return latency; }
+
     MSchedGraphEdge getInEdge(MSchedGraphNode *pred);
     unsigned getInEdgeNum(MSchedGraphNode *pred);
 
@@ -307,8 +310,6 @@ namespace llvm {
       return map_iterator(((MSchedGraph*)G)->end(), DerefFun(getSecond));
     }
   };
-
-
 
 
 }

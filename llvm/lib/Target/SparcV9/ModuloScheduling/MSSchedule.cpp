@@ -63,6 +63,8 @@ bool MSSchedule::resourcesFree(MSchedGraphNode *node, int cycle) {
       for(unsigned j=0; j < resources[i].size(); ++j) {
 	int resourceNum = resources[i][j];
 
+	DEBUG(std::cerr << "Attempting to schedule Resource Num: " << resourceNum << " in cycle: " << currentCycle << "\n");
+
 	//Check if this resource is available for this cycle
 	std::map<int, std::map<int,int> >::iterator resourcesForCycle = resourceNumPerCycle.find(currentCycle);
 
@@ -111,14 +113,15 @@ bool MSSchedule::resourcesFree(MSchedGraphNode *node, int cycle) {
 
 	  //Check if this resource is available for this cycle
 	  std::map<int, std::map<int,int> >::iterator resourcesForCycle = resourceNumPerCycle.find(oldCycle);
-
-	  for(unsigned j=0; j < resources[i].size(); ++j) {
-	    int resourceNum = resources[i][j];
-	    //remove from map
-	    std::map<int, int>::iterator resourceUse = resourcesForCycle->second.find(resourceNum);
-	    //assert if not in the map.. since it should be!
-	    //assert(resourceUse != resourcesForCycle.end() && "Resource should be in map!");
-	    --resourceUse->second;
+	  if(resourcesForCycle != resourceNumPerCycle.end()) {
+	    for(unsigned j=0; j < resources[i].size(); ++j) {
+	      int resourceNum = resources[i][j];
+	      //remove from map
+	      std::map<int, int>::iterator resourceUse = resourcesForCycle->second.find(resourceNum);
+	      //assert if not in the map.. since it should be!
+	      //assert(resourceUse != resourcesForCycle.end() && "Resource should be in map!");
+	      --resourceUse->second;
+	    }
 	  }
 	}
 	else
