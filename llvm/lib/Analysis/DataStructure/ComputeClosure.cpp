@@ -79,13 +79,12 @@ static void ResolveNodesTo(const PointerVal &FromPtr,
   if (!isa<ShadowDSNode>(FromPtr.Node)) return;
   
   ShadowDSNode *Shadow = cast<ShadowDSNode>(FromPtr.Node);
+  Shadow->resetCriticalMark();
 
   typedef multimap<ShadowDSNode *, DSNode *> ShadNodeMapTy;
   ShadNodeMapTy NodeMapping;
   for (unsigned i = 0, e = ToVals.size(); i != e; ++i)
     CalculateNodeMapping(Shadow, ToVals[i].Node, NodeMapping);
-
-  copyEdgesFromTo(Shadow, ToVals);
 
   // Now loop through the shadow node graph, mirroring the edges in the shadow
   // graph onto the realized graph...
@@ -94,6 +93,9 @@ static void ResolveNodesTo(const PointerVal &FromPtr,
          E = NodeMapping.end(); I != E; ++I) {
     DSNode *Node = I->second;
     ShadowDSNode *ShadNode = I->first;
+    PointerValSet PVSx;
+    PVSx.add(Node);
+    copyEdgesFromTo(ShadNode, PVSx);
 
     // Must loop over edges in the shadow graph, adding edges in the real graph
     // that correspond to to the edges, but are mapped into real values by the
@@ -198,11 +200,19 @@ void FunctionDSGraph::computeClosure(const DataStructure &DS) {
       //
       const FunctionDSGraph &NewFunction = DS.getDSGraph(F);
 
+      unsigned StartShadowNodes = ShadowNodes.size();
+
       // Incorporate a copy of the called function graph into the current graph,
       // allowing us to do local transformations to local graph to link
       // arguments to call values, and call node to return value...
       //
       RetVals = cloneFunctionIntoSelf(NewFunction, false);
+
+      // Only detail is that we need to reset all of the critical shadow nodes
+      // in the incorporated graph, because they are now no longer critical.
+      //
+      for (unsigned i = StartShadowNodes, e = ShadowNodes.size(); i != e; ++i)
+        ShadowNodes[i]->resetCriticalMark();
 
     } else {     // We are looking at a recursive function!
       StartNode = 0;  // Arg nodes start at 0 now...
@@ -240,9 +250,29 @@ void FunctionDSGraph::computeClosure(const DataStructure &DS) {
 
           // ArgNode is no longer useful, delete now!
           delete ArgNode;
+        } else {
+          ArgOffset++;  // Step to the next argument...
         }
       }
     }
+
+    // Loop through the nodes, deleting alloc nodes in the inlined function...
+    // Since the memory has been released, we cannot access their pointer
+    // fields (with defined results at least), so it is not possible to use any
+    // pointers to the alloca.  Drop them now, and remove the alloca's since
+    // they are dead (we just removed all links to them).  Only do this if we
+    // are not self recursing though.  :)
+    //
+    if (StartNode)  // Don't do this if self recursing...
+      for (unsigned i = StartNode; i != Nodes.size(); ++i)
+        if (NewDSNode *NDS = dyn_cast<NewDSNode>(Nodes[i]))
+          if (NDS->isAllocaNode()) {
+            NDS->removeAllIncomingEdges();  // These edges are invalid now!
+            delete NDS;                     // Node is dead
+            Nodes.erase(Nodes.begin()+i);   // Remove slot in Nodes array
+            --i;                            // Don't skip the next node
+          }
+
 
     // Now the call node is completely destructable.  Eliminate it now.
     delete CN;
