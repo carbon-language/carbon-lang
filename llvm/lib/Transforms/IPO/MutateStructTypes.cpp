@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Transforms/MutateStructTypes.h"
+#include "llvm/Transforms/IPO/MutateStructTypes.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Method.h"
 #include "llvm/GlobalVariable.h"
@@ -513,4 +513,5 @@ bool MutateStructTypes::run(Module *M) {
            bind_obj(this, &MutateStructTypes::transformMethod));
 
   removeDeadGlobals(M);
+  return true;
 }

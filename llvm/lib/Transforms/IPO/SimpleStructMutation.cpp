@@ -1,4 +1,4 @@
-//===- SwapStructContents.cpp - Swap structure elements around ---*- C++ -*--=//
+//===- SimpleStructMutation.cpp - Swap structure elements around ---*- C++ -*--=//
 //
 // This pass does a simple transformation that swaps all of the elements of the
 // struct types in the program around.
@@ -6,11 +6,11 @@
 //===----------------------------------------------------------------------===//
 
 
-#include "llvm/Transforms/SwapStructContents.h"
-#include "llvm/Transforms/MutateStructTypes.h"
+#include "llvm/Transforms/IPO/SimpleStructMutation.h"
+#include "llvm/Transforms/IPO/MutateStructTypes.h"
 #include "llvm/Analysis/FindUsedTypes.h"
 #include "llvm/Analysis/FindUnsafePointerTypes.h"
-#include "TransformInternals.h"
+#include "../TransformInternals.h"
 #include <algorithm>
 #include <iostream>
 using std::vector;
