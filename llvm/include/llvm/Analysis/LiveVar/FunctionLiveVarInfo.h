@@ -55,13 +55,6 @@
     }
 
     See buildInterferenceGraph() for the above example.
-
-
-DOCUMENTATION:
--------------
-
-See README.    
-
 */
 
 
@@ -74,24 +67,15 @@ See README.
 
 static const int DEBUG_LV = 0;
 
-#include "LiveVarSet.h"
-#include "llvm/BasicBlock.h"
-#include "llvm/Instruction.h"
-#include "llvm/Method.h"
-
-#include "LiveVarMap.h"
 #include "BBLiveVar.h"
 
-
-class MethodLiveVarInfo
-{
- private:
+class MethodLiveVarInfo {
 
   // Live var anal is done on this method - set by constructor
   const Method *const Meth;   
 
   // A map betwn the BasicBlock and BBLiveVar
-  BBToBBLiveVarMapType  BB2BBLVMap;  
+  BBToBBLiveVarMapType BB2BBLVMap;  
 
   // Machine Instr to LiveVarSet Map for providing LVset BEFORE each inst
   MInstToLiveVarSetMapType MInst2LVSetBI; 
@@ -113,45 +97,36 @@ class MethodLiveVarInfo
   bool  doSingleBackwardPass(); 
 
   // calculates live var sets for instructions in a BB
-  void calcLiveVarSetsForBB(const BasicBlock *const BB);
+  void calcLiveVarSetsForBB(const BasicBlock *BB);
   
 
  public:
-  MethodLiveVarInfo(const Method *const Meth);    // constructor 
-
-  ~MethodLiveVarInfo();                           // destructor
+  MethodLiveVarInfo(const Method *Meth);
+  ~MethodLiveVarInfo();
 
   // performs a liver var analysis of a single method
   void analyze();            
 
   // gets OutSet of a BB
-  inline const LiveVarSet *getOutSetOfBB( const BasicBlock *const BB) const { 
+  inline const LiveVarSet *getOutSetOfBB( const BasicBlock *BB) const { 
     assert( HasAnalyzed && "call analyze() before calling this" );
-    return  ( (* (BB2BBLVMap.find(BB)) ).second ) ->getOutSet();
+    return BB2BBLVMap.find(BB)->second->getOutSet();
   }
 
   // gets InSet of a BB
-  inline const LiveVarSet *getInSetOfBB( const BasicBlock *const BB)  const { 
-    assert( HasAnalyzed && "call analyze() before calling this" );
-    return (   (* (BB2BBLVMap.find(BB)) ).second  )->getInSet();
+  inline const LiveVarSet *getInSetOfBB( const BasicBlock *BB)  const { 
+    assert(HasAnalyzed && "call analyze() before calling this" );
+    return BB2BBLVMap.find(BB)->second->getInSet();
   }
 
   // gets the Live var set BEFORE an instruction
-  const LiveVarSet * getLiveVarSetBeforeMInst(const MachineInstr *const Inst,
-					      const BasicBlock *const CurBB);
+  const LiveVarSet * getLiveVarSetBeforeMInst(const MachineInstr *Inst,
+					      const BasicBlock *CurBB);
 
   // gets the Live var set AFTER an instruction
-  const LiveVarSet * getLiveVarSetAfterMInst(const MachineInstr *const MInst,
-					     const BasicBlock *const CurBB);
+  const LiveVarSet * getLiveVarSetAfterMInst(const MachineInstr *MInst,
+					     const BasicBlock *CurBB);
 
 };
 
-
-
-
-
 #endif
-
-
-
-
