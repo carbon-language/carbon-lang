@@ -18,6 +18,18 @@
 #include "llvm/iOther.h"
 using namespace llvm;
 
+template <class ArgIt>
+static Function *EnsureFunctionExists(Module &M, const char *Name,
+                                      ArgIt ArgBegin, ArgIt ArgEnd,
+                                      const Type *RetTy) {
+  if (Function *F = M.getNamedFunction(Name)) return F;
+  // It doesn't already exist in the program, insert a new definition now.
+  std::vector<const Type *> ParamTys;
+  for (ArgIt I = ArgBegin; I != ArgEnd; ++I)
+    ParamTys.push_back(I->getType());
+  return M.getOrInsertFunction(Name, FunctionType::get(RetTy, ParamTys, false));
+}
+
 /// ReplaceCallWith - This function is used when we want to lower an intrinsic
 /// call to a call of an external function.  This handles hard cases such as
 /// when there was already a prototype for the external function, and if that
@@ -39,7 +51,7 @@ static CallInst *ReplaceCallWith(const char *NewFn, CallInst *CI,
       FCache = M->getOrInsertFunction(NewFn,
                                      FunctionType::get(RetTy, ParamTys, false));
     }
-  }
+   }
 
   const FunctionType *FT = FCache->getFunctionType();
   std::vector<Value*> Operands;
@@ -60,6 +72,36 @@ static CallInst *ReplaceCallWith(const char *NewFn, CallInst *CI,
   return new CallInst(FCache, Operands, Name, CI);
 }
 
+void DefaultIntrinsicLowering::AddPrototypes(Module &M) {
+  for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
+    if (I->isExternal() && !I->use_empty())
+      switch (I->getIntrinsicID()) {
+      default: break;
+      case Intrinsic::setjmp:
+        EnsureFunctionExists(M, "setjmp", I->abegin(), I->aend(), Type::IntTy);
+        break;
+      case Intrinsic::longjmp:
+        EnsureFunctionExists(M, "longjmp", I->abegin(), I->aend(),Type::VoidTy);
+        break;
+      case Intrinsic::siglongjmp:
+        EnsureFunctionExists(M, "abort", I->aend(), I->aend(), Type::VoidTy);
+        break;
+      case Intrinsic::memcpy:
+        EnsureFunctionExists(M, "memcpy", I->abegin(), --I->aend(),
+                             I->abegin()->getType());
+        break;
+      case Intrinsic::memmove:
+        EnsureFunctionExists(M, "memmove", I->abegin(), --I->aend(),
+                             I->abegin()->getType());
+        break;
+      case Intrinsic::memset:
+        EnsureFunctionExists(M, "memset", I->abegin(), --I->aend(),
+                             I->abegin()->getType());
+        break;
+
+      }
+
+}
 
 void DefaultIntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
   Function *Callee = CI->getCalledFunction();
