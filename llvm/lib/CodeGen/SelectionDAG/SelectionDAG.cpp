@@ -1112,6 +1112,7 @@ const char *SDNode::getOperationName() const {
   case ISD::CopyToReg:     return "CopyToReg";
   case ISD::CopyFromReg:   return "CopyFromReg";
   case ISD::ImplicitDef:   return "ImplicitDef";
+  case ISD::UNDEF:         return "undef";
 
   case ISD::ADD:    return "add";
   case ISD::SUB:    return "sub";

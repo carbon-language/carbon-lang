@@ -219,6 +219,23 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     if (Tmp1 != Node->getOperand(0))
       Result = DAG.getImplicitDef(Tmp1, cast<RegSDNode>(Node)->getReg());
     break;
+  case ISD::UNDEF: {
+    MVT::ValueType VT = Op.getValueType();
+    switch (TLI.getOperationAction(ISD::UNDEF, VT)) {
+    case Expand:
+    case Promote:
+      if (MVT::isInteger(VT))
+        Result = DAG.getConstant(0, VT);
+      else if (MVT::isFloatingPoint(VT))
+        Result = DAG.getConstantFP(0, VT);
+      else
+        assert(0 && "Unknown value type!");
+      break;
+    case Legal:
+      break;
+    }
+    break;
+  }
   case ISD::Constant:
     // We know we don't need to expand constants here, constants only have one
     // value and we check that it is fine above.
@@ -1018,6 +1035,9 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
     std::cerr << "NODE: "; Node->dump(); std::cerr << "\n";
     assert(0 && "Do not know how to promote this operator!");
     abort();
+  case ISD::UNDEF:
+    Result = DAG.getNode(ISD::UNDEF, NVT);
+    break;
   case ISD::Constant:
     Result = DAG.getNode(ISD::ZERO_EXTEND, NVT, Op);
     assert(isa<ConstantSDNode>(Result) && "Didn't constant fold zext?");
@@ -1574,6 +1594,10 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     std::cerr << "NODE: "; Node->dump(); std::cerr << "\n";
     assert(0 && "Do not know how to expand this operator!");
     abort();
+  case ISD::UNDEF:
+    Lo = DAG.getNode(ISD::UNDEF, NVT);
+    Hi = DAG.getNode(ISD::UNDEF, NVT);
+    break;
   case ISD::Constant: {
     uint64_t Cst = cast<ConstantSDNode>(Node)->getValue();
     Lo = DAG.getConstant(Cst, NVT);

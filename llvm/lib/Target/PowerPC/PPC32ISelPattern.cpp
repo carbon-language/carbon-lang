@@ -53,7 +53,7 @@ namespace {
       // PowerPC has an i16 but no i8 (or i1) SEXTLOAD
       setOperationAction(ISD::SEXTLOAD, MVT::i1, Expand);
       setOperationAction(ISD::SEXTLOAD, MVT::i8, Expand);
-
+      
       addLegalFPImmediate(+0.0); // Necessary for FSEL
       addLegalFPImmediate(-0.0); // 
 
@@ -251,15 +251,6 @@ PPC32TargetLowering::LowerCallTo(SDOperand Chain,
     unsigned ArgOffset = 24;
     unsigned GPR_remaining = 8;
     unsigned FPR_remaining = 13;
-    unsigned GPR_idx = 0, FPR_idx = 0;
-    static const unsigned GPR[] = { 
-      PPC::R3, PPC::R4, PPC::R5, PPC::R6,
-      PPC::R7, PPC::R8, PPC::R9, PPC::R10,
-    };
-    static const unsigned FPR[] = {
-      PPC::F1, PPC::F2, PPC::F3, PPC::F4, PPC::F5, PPC::F6, PPC::F7,
-      PPC::F8, PPC::F9, PPC::F10, PPC::F11, PPC::F12, PPC::F13
-    };
     
     std::vector<SDOperand> MemOps;
     for (unsigned i = 0, e = Args.size(); i != e; ++i) {
@@ -283,10 +274,8 @@ PPC32TargetLowering::LowerCallTo(SDOperand Chain,
         // FALL THROUGH
       case MVT::i32:
         if (GPR_remaining > 0) {
-          args_to_use.push_back(DAG.getCopyToReg(Chain, Args[i].first, 
-                                               GPR[GPR_idx]));
+          args_to_use.push_back(Args[i].first);
           --GPR_remaining;
-          ++GPR_idx;
         } else {
           MemOps.push_back(DAG.getNode(ISD::STORE, MVT::Other, Chain,
                                           Args[i].first, PtrOff));
@@ -302,13 +291,11 @@ PPC32TargetLowering::LowerCallTo(SDOperand Chain,
             Args[i].first, DAG.getConstant(1, MVT::i32));
           SDOperand Lo = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32, 
             Args[i].first, DAG.getConstant(0, MVT::i32));
-          args_to_use.push_back(DAG.getCopyToReg(Chain, Hi, GPR[GPR_idx]));
+          args_to_use.push_back(Hi);
           --GPR_remaining;
-          ++GPR_idx;
           if (GPR_remaining > 0) {
-            args_to_use.push_back(DAG.getCopyToReg(Chain, Lo, GPR[GPR_idx]));
+            args_to_use.push_back(Lo);
             --GPR_remaining;
-            ++GPR_idx;
           } else {
             SDOperand ConstFour = DAG.getConstant(4, getPointerTy());
             PtrOff = DAG.getNode(ISD::ADD, MVT::i32, PtrOff, ConstFour);
@@ -324,6 +311,8 @@ PPC32TargetLowering::LowerCallTo(SDOperand Chain,
       case MVT::f32:
       case MVT::f64:
         if (FPR_remaining > 0) {
+          args_to_use.push_back(Args[i].first);
+          --FPR_remaining;
           if (isVarArg) {
             SDOperand Store = DAG.getNode(ISD::STORE, MVT::Other, Chain,
                                           Args[i].first, PtrOff);
@@ -332,32 +321,29 @@ PPC32TargetLowering::LowerCallTo(SDOperand Chain,
             if (GPR_remaining > 0) {
               SDOperand Load = DAG.getLoad(MVT::i32, Store, PtrOff);
               MemOps.push_back(Load);
-              args_to_use.push_back(DAG.getCopyToReg(Load, Load, 
-                                                     GPR[GPR_idx]));
+              args_to_use.push_back(Load);
+              --GPR_remaining;
             }
-            if (GPR_remaining > 1 && MVT::f64 == ArgVT) {
+            if (GPR_remaining > 0 && MVT::f64 == ArgVT) {
               SDOperand ConstFour = DAG.getConstant(4, getPointerTy());
               PtrOff = DAG.getNode(ISD::ADD, MVT::i32, PtrOff, ConstFour);
               SDOperand Load = DAG.getLoad(MVT::i32, Store, PtrOff);
               MemOps.push_back(Load);
-              args_to_use.push_back(DAG.getCopyToReg(Load, Load, 
-                                                     GPR[GPR_idx+1]));
+              args_to_use.push_back(Load);
+              --GPR_remaining;
             }
-          }
-          args_to_use.push_back(DAG.getCopyToReg(Chain, Args[i].first, 
-                                                 FPR[FPR_idx]));
-          --FPR_remaining;
-          ++FPR_idx;
-          // If we have any FPRs remaining, we may also have GPRs remaining.
-          // Args passed in FPRs consume either 1 (f32) or 2 (f64) available
-          // GPRs.
-          if (GPR_remaining > 0) {
-            --GPR_remaining;
-            ++GPR_idx;
-          }
-          if (GPR_remaining > 0 && MVT::f64 == ArgVT) {
-            --GPR_remaining;
-            ++GPR_idx;
+          } else {
+            // If we have any FPRs remaining, we may also have GPRs remaining.
+            // Args passed in FPRs consume either 1 (f32) or 2 (f64) available
+            // GPRs.
+            if (GPR_remaining > 0) {
+              args_to_use.push_back(DAG.getNode(ISD::UNDEF, MVT::i32));
+              --GPR_remaining;
+            }
+            if (GPR_remaining > 0 && MVT::f64 == ArgVT) {
+              args_to_use.push_back(DAG.getNode(ISD::UNDEF, MVT::i32));
+              --GPR_remaining;
+            }
           }
         } else {
           MemOps.push_back(DAG.getNode(ISD::STORE, MVT::Other, Chain,
@@ -909,14 +895,20 @@ unsigned ISel::SelectExpr(SDOperand N) {
   }
 
   if (DestType == MVT::f64 || DestType == MVT::f32)
-    if (ISD::LOAD != opcode && ISD::EXTLOAD != opcode)
+    if (ISD::LOAD != opcode && ISD::EXTLOAD != opcode && ISD::UNDEF != opcode)
       return SelectExprFP(N, Result);
 
   switch (opcode) {
   default:
     Node->dump();
     assert(0 && "Node not handled!\n");
- 
+  case ISD::UNDEF:
+    if (Result != 1)
+      ExprMap[N.getValue(1)] = 1;
+    else
+      Result = ExprMap[N.getValue(0)] = MakeReg(N.getValue(0).getValueType());
+    BuildMI(BB, PPC::IMPLICIT_DEF, 0, Result);
+    return Result;
   case ISD::DYNAMIC_STACKALLOC:
     // Generate both result values.  FIXME: Need a better commment here?
     if (Result != 1)
@@ -1020,13 +1012,47 @@ unsigned ISel::SelectExpr(SDOperand N) {
   }
     
   case ISD::CALL: {
+    unsigned GPR_idx = 0, FPR_idx = 0;
+    static const unsigned GPR[] = { 
+      PPC::R3, PPC::R4, PPC::R5, PPC::R6,
+      PPC::R7, PPC::R8, PPC::R9, PPC::R10,
+    };
+    static const unsigned FPR[] = {
+      PPC::F1, PPC::F2, PPC::F3, PPC::F4, PPC::F5, PPC::F6, PPC::F7,
+      PPC::F8, PPC::F9, PPC::F10, PPC::F11, PPC::F12, PPC::F13
+    };
+
     // Lower the chain for this call.
     Select(N.getOperand(0));
     ExprMap[N.getValue(Node->getNumValues()-1)] = 1;
 
+    // Load the register args to virtual regs
+    std::vector<unsigned> ArgVR;
     for(int i = 2, e = Node->getNumOperands(); i < e; ++i)
-      Select(N.getOperand(i));
-      
+      ArgVR.push_back(SelectExpr(N.getOperand(i)));
+
+    // Copy the virtual registers into the appropriate argument register
+    for(int i = 0, e = ArgVR.size(); i < e; ++i) {
+      switch(N.getOperand(i+2).getValueType()) {
+      default: Node->dump(); assert(0 && "Unknown value type for call");
+      case MVT::i1:
+      case MVT::i8:
+      case MVT::i16:
+      case MVT::i32:
+        assert(GPR_idx < 8 && "Too many int args");
+        if (N.getOperand(i+2).getOpcode() != ISD::UNDEF)
+          BuildMI(BB, PPC::OR,2,GPR[GPR_idx]).addReg(ArgVR[i]).addReg(ArgVR[i]);
+        ++GPR_idx;
+        break;
+      case MVT::f64:
+      case MVT::f32:
+        assert(FPR_idx < 13 && "Too many fp args");
+        BuildMI(BB, PPC::FMR, 1, FPR[FPR_idx]).addReg(ArgVR[i]);
+        ++FPR_idx;
+        break;
+      }
+    }
+
     // Emit the correct call instruction based on the type of symbol called.
     if (GlobalAddressSDNode *GASD = 
         dyn_cast<GlobalAddressSDNode>(N.getOperand(1))) {
