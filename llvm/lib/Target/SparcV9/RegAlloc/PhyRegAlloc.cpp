@@ -1180,11 +1180,10 @@ void PhyRegAlloc::saveState () {
 }
 
 
-/// Check the saved state filled in by saveState(), and abort if it looks
-/// wrong. Only used when debugging. FIXME: Currently it just prints out
-/// the state, which isn't quite as useful.
+/// Dump the saved state filled in by saveState() out to stderr. Only
+/// used when debugging.
 ///
-void PhyRegAlloc::verifySavedState () {
+void PhyRegAlloc::dumpSavedState () {
   std::vector<AllocInfo> &state = FnAllocState[Fn];
   int ArgNum = 0;
   for (Function::const_aiterator i=Fn->abegin (), e=Fn->aend (); i != e; ++i) {
@@ -1379,15 +1378,18 @@ bool PhyRegAlloc::runOnFunction (Function &F) {
   // Save register allocation state for this function in a Constant.
   if (SaveRegAllocState) {
     saveState();
-    if (DEBUG_RA) // Check our work.
-      verifySavedState ();
-    if (!SaveStateToModule)
-      finishSavingState (const_cast<Module&> (*Fn->getParent ()));
   }
 
   // Now update the machine code with register names and add any additional
   // code inserted by the register allocator to the instruction stream.
   updateMachineCode(); 
+
+  if (SaveRegAllocState) {
+    if (DEBUG_RA) // Check our work.
+      dumpSavedState ();
+    if (!SaveStateToModule)
+      finishSavingState (const_cast<Module&> (*Fn->getParent ()));
+  }
 
   if (DEBUG_RA) {
     std::cerr << "\n**** Machine Code After Register Allocation:\n\n";

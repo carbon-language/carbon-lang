@@ -128,7 +128,7 @@ private:
   void saveStateForValue (std::vector<AllocInfo> &state,
                           const Value *V, int Insn, int Opnd);
   void saveState();
-  void verifySavedState();
+  void dumpSavedState();
   void finishSavingState(Module &M);
 
   void setCallInterferences(const MachineInstr *MI, 
