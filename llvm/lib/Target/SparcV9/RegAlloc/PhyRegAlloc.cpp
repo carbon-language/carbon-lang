@@ -484,7 +484,7 @@ void PhyRegAlloc::updateMachineCode()
     // their assigned registers or insert spill code, as appropriate. 
     // Also, fix operands of call/return instructions.
     for (MachineBasicBlock::iterator MII = MBB.begin(); MII != MBB.end(); ++MII)
-      if (! TM.getInstrInfo()->isDummyPhiInstr(MII->getOpcode()))
+      if (MII->getOpcode() != V9::PHI)
         updateInstruction(MII, MBB);
 
     // Now, move code out of delay slots of branches and returns if needed.
@@ -552,7 +552,7 @@ void PhyRegAlloc::updateMachineCode()
       MachineInstr *MInst = MII; 
 
       // do not process Phis
-      if (TM.getInstrInfo()->isDummyPhiInstr(MInst->getOpcode()))
+      if (MInst->getOpcode() == V9::PHI)
 	continue;
 
       // if there are any added instructions...

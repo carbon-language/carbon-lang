@@ -1444,8 +1444,7 @@ void ModuloSchedulingPass::removePHIs(const MachineBasicBlock *origBB, std::vect
   //Start with the kernel and for each phi insert a copy for the phi def and for each arg
   for(MachineBasicBlock::iterator I = kernelBB->begin(), E = kernelBB->end(); I != E; ++I) {
     //Get op code and check if its a phi
-     MachineOpCode OC = I->getOpcode();
-     if(TMI->isDummyPhiInstr(OC)) {
+     if(I->getOpcode() == V9::PHI) {
        Instruction *tmp = 0;
        for(unsigned i = 0; i < I->getNumOperands(); ++i) {
 	 //Get Operand
@@ -1491,8 +1490,7 @@ void ModuloSchedulingPass::removePHIs(const MachineBasicBlock *origBB, std::vect
   for(std::vector<MachineBasicBlock*>::iterator MB = epilogues.begin(), ME = epilogues.end(); MB != ME; ++MB) {
     for(MachineBasicBlock::iterator I = (*MB)->begin(), E = (*MB)->end(); I != E; ++I) {
       //Get op code and check if its a phi
-      MachineOpCode OC = I->getOpcode();
-      if(TMI->isDummyPhiInstr(OC)) {
+      if(I->getOpcode() == V9::PHI) {
 	Instruction *tmp = 0;
 	for(unsigned i = 0; i < I->getNumOperands(); ++i) {
 	  //Get Operand

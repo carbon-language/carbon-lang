@@ -21,6 +21,7 @@
 #include "llvm/Target/TargetMachine.h"
 #include "../../Target/SparcV9/MachineCodeForInstruction.h"
 #include "../../Target/SparcV9/SparcV9RegInfo.h"
+#include "../../Target/SparcV9/SparcV9InstrInfo.h"
 #include "Support/STLExtras.h"
 #include <iostream>
 
@@ -561,7 +562,7 @@ void SchedGraph::buildNodesForBB(const TargetMachine& target,
   unsigned i = 0;
   for (MachineBasicBlock::iterator I = MBB.begin(), E = MBB.end(); I != E;
        ++I, ++i)
-    if (!mii.isDummyPhiInstr(I->getOpcode())) {
+    if (I->getOpcode() != V9::PHI) {
       SchedGraphNode* node = new SchedGraphNode(getNumNodes(), &MBB, i, target);
       noteGraphNodeForInstr(I, node);
       

@@ -283,8 +283,8 @@ SparcV9AsmPrinter::printOneOperand(const MachineOperand &mop,
 void SparcV9AsmPrinter::emitMachineInst(const MachineInstr *MI) {
   unsigned Opcode = MI->getOpcode();
 
-  if (TM.getInstrInfo()->isDummyPhiInstr(Opcode))
-    return;  // IGNORE PHI NODES
+  if (Opcode == V9::PHI)
+    return;  // Ignore Machine-PHI nodes.
 
   O << "\t" << TM.getInstrInfo()->getName(Opcode) << "\t";
 
