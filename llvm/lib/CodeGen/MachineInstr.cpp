@@ -126,10 +126,11 @@ MachineInstr::SetMachineOperandReg(unsigned i,
   operands[i].value = NULL;
   operands[i].regNum = regNum;
 
-  if (isdef || TargetInstrDescriptors[opCode].resultPos == (int) i)
+  if (isdef || TargetInstrDescriptors[opCode].resultPos == (int)i) {
+    assert(operands[i].flags == MachineOperand::DEFONLYFLAG &&
+           "Shouldn't be changing a register type once set!");
     operands[i].flags = MachineOperand::DEFONLYFLAG;
-  else
-    operands[i].flags = 0;
+  }
 
   insertUsedReg(regNum);
 }
