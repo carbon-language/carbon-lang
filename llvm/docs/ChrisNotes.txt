@@ -8,9 +8,6 @@
 * The dropAllReferences code can be a noop when NDEBUG!!!
 * pred/succ iterators on basic blocks don't handle switch statements correctly
 * Provide a pass that eliminates critical edges from the CFG
-* I need to provide an option to the bytecode loader to ignore memory 
-  dependance edges.  Instead, the VM would just treat memory operations 
-  (load, store, getfield, putfield, call) as pinned instructions.
 * Need a way to attach bytecode block info at various levels of asm code.
 * Recognize and save comments in assembly and bytecode format
 * Encode line number table in bytecode (like #line), optional table
@@ -19,16 +16,10 @@
 
 * Implement switch to switch on a constant pool array of type: 
   [{ label, int }] or [label]   (lookup vs index switch)
-* Apparently bison has a %pure_parser option.  Maybe useful for Assembly/Parser
+* Apparently bison has a %pure_parser option.  Maybe useful for AsmParser
 
-* Implement a header file that can read either assembly or bytecode, implement 
-  a writer that can output either based on what is read with this reader..
 * Implement the following derived types:
   * "packed format", like this:    [4 x sbyte]: Packed SIMD datatype
-* Maybe 'tailcall' also?
-* Include a method level bytecode block that defines a mapping between values 
-  and registers that defines a minimally register allocated code.  This can
-  make me finally address how to encode extensions in assembly.
 * Bytecode reader should use extensions that may or may not be linked into the
   application to read blocks.  Thus an easy way to ignore symbol table info
   would be to not link in that reader into the app.
