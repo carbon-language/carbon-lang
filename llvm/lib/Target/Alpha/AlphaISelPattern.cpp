@@ -1,4 +1,4 @@
-//===-- AlphaISelPattern.cpp - A pattern matching inst selector for Alpha -----===//
+//===- AlphaISelPattern.cpp - A pattern matching inst selector for Alpha -===//
 // 
 //                     The LLVM Compiler Infrastructure
 //
@@ -12,7 +12,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "Alpha.h"
-//#include "X86InstrBuilder.h"
 #include "AlphaRegisterInfo.h"
 #include "llvm/Constants.h"                   // FIXME: REMOVE
 #include "llvm/Function.h"
@@ -54,10 +53,6 @@ namespace {
       setOperationAction(ISD::SEXTLOAD         , MVT::i16  , Expand);
 
       computeRegisterProperties();
-      
-      //      setOperationUnsupported(ISD::MUL, MVT::i8);
-      //      setOperationUnsupported(ISD::SELECT, MVT::i1);
-      //      setOperationUnsupported(ISD::SELECT, MVT::i8);
       
       //      addLegalFPImmediate(+0.0); // FLD0
       //      addLegalFPImmediate(+1.0); // FLD1
@@ -538,6 +533,48 @@ unsigned ISel::SelectExpr(SDOperand N) {
       return Result;
     }
 
+    //Most of the plain arithmetic and logic share the same form, and the same 
+    //constant immediate test
+  case ISD::AND:
+  case ISD::OR:
+  case ISD::XOR:
+  case ISD::SHL:
+  case ISD::SRL:
+  case ISD::MUL:
+    if(N.getOperand(1).getOpcode() == ISD::Constant &&
+       cast<ConstantSDNode>(N.getOperand(1))->getValue() >= 0 &&
+       cast<ConstantSDNode>(N.getOperand(1))->getValue() <= 255)
+      {
+	switch(N.getOpcode()) {
+	case ISD::AND: Opc = Alpha::ANDi; break;
+	case ISD::OR:  Opc = Alpha::BISi; break;
+	case ISD::XOR: Opc = Alpha::XORi; break;
+	case ISD::SHL: Opc = Alpha::SLi; break;
+	case ISD::SRL: Opc = Alpha::SRLi; break;
+	case ISD::SRA: Opc = Alpha::SRAi; break;
+	case ISD::MUL: Opc = Alpha::MULQi; break;
+	};
+	Tmp1 = SelectExpr(N.getOperand(0));
+	Tmp2 = cast<ConstantSDNode>(N.getOperand(1))->getValue();
+	BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addImm(Tmp2);
+      }
+    else
+      {
+	switch(N.getOpcode()) {
+	case ISD::AND: Opc = Alpha::AND; break;
+	case ISD::OR:  Opc = Alpha::BIS; break;
+	case ISD::XOR: Opc = Alpha::XOR; break;
+	case ISD::SHL: Opc = Alpha::SL; break;
+	case ISD::SRL: Opc = Alpha::SRL; break;
+	case ISD::SRA: Opc = Alpha::SRA; break;
+	case ISD::MUL: Opc = Alpha::MULQ; break;
+	};
+	Tmp1 = SelectExpr(N.getOperand(0));
+	Tmp2 = SelectExpr(N.getOperand(1));
+	BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(Tmp2);
+      }
+    return Result;
+
   case ISD::ADD:
     Tmp1 = SelectExpr(N.getOperand(0));
     Tmp2 = SelectExpr(N.getOperand(1));
@@ -549,27 +586,6 @@ unsigned ISel::SelectExpr(SDOperand N) {
     BuildMI(BB, Alpha::SUBQ, 2, Result).addReg(Tmp1).addReg(Tmp2);
     return Result;
 
-  case ISD::AND:
-    Tmp1 = SelectExpr(N.getOperand(0));
-    Tmp2 = SelectExpr(N.getOperand(1));
-    BuildMI(BB, Alpha::AND, 2, Result).addReg(Tmp1).addReg(Tmp2);
-    return Result;
-  case ISD::OR:
-    Tmp1 = SelectExpr(N.getOperand(0));
-    Tmp2 = SelectExpr(N.getOperand(1));
-    BuildMI(BB, Alpha::BIS, 2, Result).addReg(Tmp1).addReg(Tmp2);
-    return Result;
-  case ISD::XOR:
-    Tmp1 = SelectExpr(N.getOperand(0));
-    Tmp2 = SelectExpr(N.getOperand(1));
-    BuildMI(BB, Alpha::XOR, 2, Result).addReg(Tmp1).addReg(Tmp2);
-    return Result;
-
-  case ISD::MUL:
-    Tmp1 = SelectExpr(N.getOperand(0));
-    Tmp2 = SelectExpr(N.getOperand(1));
-    BuildMI(BB, Alpha::MULQ, 2, Result).addReg(Tmp1).addReg(Tmp2);
-    return Result;
   case ISD::UREM:
     Tmp1 = SelectExpr(N.getOperand(0));
     Tmp2 = SelectExpr(N.getOperand(1));
@@ -588,30 +604,12 @@ unsigned ISel::SelectExpr(SDOperand N) {
       return Result;
     }
 
-  case ISD::SHL:
-    Tmp1 = SelectExpr(N.getOperand(0));
-    Tmp2 = SelectExpr(N.getOperand(1));
-    BuildMI(BB, Alpha::SL, 2, Result).addReg(Tmp1).addReg(Tmp2);
-    return Result;
-  case ISD::SRL:
-    Tmp1 = SelectExpr(N.getOperand(0));
-    Tmp2 = SelectExpr(N.getOperand(1));
-    BuildMI(BB, Alpha::SRL, 1, Result).addReg(Tmp1).addReg(Tmp2);
-    return Result;
-  case ISD::SRA:
-    Tmp1 = SelectExpr(N.getOperand(0));
-    Tmp2 = SelectExpr(N.getOperand(1));
-    BuildMI(BB, Alpha::SRA, 2, Result).addReg(Tmp1).addReg(Tmp2);
-    return Result;
-
   case ISD::Constant:
     {
       long val = cast<ConstantSDNode>(N)->getValue();
       BuildMI(BB, Alpha::LOAD_IMM, 1, Result).addImm(val);
       return Result;
     }
-
-
 
   case ISD::LOAD: 
     {

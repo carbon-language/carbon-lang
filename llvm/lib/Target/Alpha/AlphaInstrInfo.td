@@ -18,6 +18,7 @@ include "AlphaInstrFormats.td"
   // //#define GP    $29
   // //#define SP    $30
 
+def u8imm   : Operand<i8>;
 def s14imm  : Operand<i16>;
 def s16imm  : Operand<i16>;
 def s21imm  : Operand<i32>;
@@ -41,7 +42,8 @@ let Defs = [R29] in
     def LDGP : PseudoInstAlpha<(ops), "ldgp $$29, 0($$27)">;
 
 let isCall = 1,
-    Defs = [R0, R1, R2, R3, R4, R5, R6, R7, R8, R16, R17, R18, R19, R20, R21, R22, R23, R24, R25, R26, R27, R29],
+    Defs = [R0, R1, R2, R3, R4, R5, R6, R7, R8, R16, R17, R18, R19,
+            R20, R21, R22, R23, R24, R25, R26, R27, R29],
     Uses = [R27, R29] in
       def CALL : PseudoInstAlpha< (ops s64imm:$TARGET), "jsr $TARGET">; //Jump to subroutine
 
@@ -70,55 +72,148 @@ let Uses = [R28, R23, R24, R25, R26] in
 //***********************
 
 //Operation Form:
-def ADDL : OForm<0x10, 0x00, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "addl $RA,$RB,$RC">; //Add longword
-def ADDL_V : OForm< 0x10, 0x40, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "ADDL/V $RA,$RB,$RC">;
-def ADDQ : OForm< 0x10, 0x20, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "addq $RA,$RB,$RC">; //Add quadword
-def ADDQ_V : OForm< 0x10, 0x60, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "ADDQ/V $RA,$RB,$RC">; 
-def AMASK : OForm< 0x11, 0x61, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "AMASK $RA,$RB,$RC">; //Architecture mask
-def AND : OForm< 0x11, 0x00, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "AND $RA,$RB,$RC">; //Logical product
-def BIC : OForm< 0x11, 0x08, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "BIC $RA,$RB,$RC">; //Bit clear
-def BIS  : OForm<0x11, 0x20, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "bis $RA,$RB,$RC">; //Logical sum
 
 //let isTwoAddress = 1 in {
- def CMOVEQ : OForm< 0x11, 0x24, 
-	(ops GPRC:$RDEST, GPRC:$RSRC, GPRC:$RCOND), 
-	"cmoveq $RCOND,$RSRC,$RDEST">; //CMOVE if RCOND =  zero
- def CMOVGE : OForm< 0x11, 0x46, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "CMOVGE $RA,$RB,$RC">; //CMOVE if ³ zero
- def CMOVGT  : OForm<0x11, 0x66, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "CMOVGT $RA,$RB,$RC">; //CMOVE if > zero
- def CMOVLBC : OForm< 0x11, 0x16, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "CMOVLBC $RA,$RB,$RC">; //CMOVE if low bit clear
- def CMOVLBS : OForm< 0x11, 0x14, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "CMOVLBS $RA,$RB,$RC">; //CMOVE if low bit set
- def CMOVLE  : OForm<0x11, 0x64, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "CMOVLE $RA,$RB,$RC">; //CMOVE if £ zero
- def CMOVLT : OForm< 0x11, 0x44, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "CMOVLT $RA,$RB,$RC">; //CMOVE if < zero
- def CMOVNE : OForm< 0x11, 0x26, 
-	(ops GPRC:$RC, GPRC:$DUMMY, GPRC:$RA, GPRC:$RB), 
-	"cmovne $RA,$RB,$RC">; //CMOVE if ¹ zero
+ def CMOVEQ   : OForm<  0x11, 0x24, (ops GPRC:$RDEST, GPRC:$RSRC, GPRC:$RCOND), "cmoveq $RCOND,$RSRC,$RDEST">; //CMOVE if RCOND =  zero
+ def CMOVEQi  : OFormL< 0x11, 0x24, (ops GPRC:$RDEST, u8imm:$L, GPRC:$RCOND),   "cmoveq $RCOND,$L,$RDEST">; //CMOVE if RCOND =  zero
+ def CMOVGE   : OForm<  0x11, 0x46, (ops GPRC:$RDEST, GPRC:$RSRC, GPRC:$RCOND), "CMOVGE $RCOND,$RSRC,$RDEST">; //CMOVE if RCOND >= zero
+ def CMOVGEi  : OFormL< 0x11, 0x46, (ops GPRC:$RDEST, u8imm:$L, GPRC:$RCOND),   "CMOVGE $RCOND,$L,$RDEST">; //CMOVE if RCOND >= zero
+ def CMOVGT   : OForm<  0x11, 0x66, (ops GPRC:$RDEST, GPRC:$RSRC, GPRC:$RCOND), "CMOVGT $RCOND,$RSRC,$RDEST">; //CMOVE if RCOND > zero
+ def CMOVGTi  : OFormL< 0x11, 0x66, (ops GPRC:$RDEST, u8imm:$L, GPRC:$RCOND),   "CMOVGT $RCOND,$L,$RDEST">; //CMOVE if RCOND > zero
+ def CMOVLBC  : OForm<  0x11, 0x16, (ops GPRC:$RDEST, GPRC:$RSRC, GPRC:$RCOND), "CMOVLBC $RCOND,$RSRC,$RDEST">; //CMOVE if RCOND low bit clear
+ def CMOVLBCi : OFormL< 0x11, 0x16, (ops GPRC:$RDEST, u8imm:$L, GPRC:$RCOND),   "CMOVLBC $RCOND,$L,$RDEST">; //CMOVE if RCOND low bit clear
+ def CMOVLBS  : OForm<  0x11, 0x14, (ops GPRC:$RDEST, GPRC:$RSRC, GPRC:$RCOND), "CMOVLBS $RCOND,$RSRC,$RDEST">; //CMOVE if RCOND low bit set
+ def CMOVLBSi : OFormL< 0x11, 0x14, (ops GPRC:$RDEST, u8imm:$L, GPRC:$RCOND),   "CMOVLBS $RCOND,$L,$RDEST">; //CMOVE if RCOND low bit set
+ def CMOVLE   : OForm<  0x11, 0x64, (ops GPRC:$RDEST, GPRC:$RSRC, GPRC:$RCOND), "CMOVLE $RCOND,$RSRC,$RDEST">; //CMOVE if RCOND <= zero
+ def CMOVLEi  : OFormL< 0x11, 0x64, (ops GPRC:$RDEST, u8imm:$L, GPRC:$RCOND),   "CMOVLE $RCOND,$L,$RDEST">; //CMOVE if RCOND <= zero
+ def CMOVLT   : OForm<  0x11, 0x44, (ops GPRC:$RDEST, GPRC:$RSRC, GPRC:$RCOND), "CMOVLT $RCOND,$RSRC,$RDEST">; //CMOVE if RCOND < zero
+ def CMOVLTi  : OFormL< 0x11, 0x44, (ops GPRC:$RDEST, u8imm:$L, GPRC:$RCOND),   "CMOVLT $RCOND,$L,$RDEST">; //CMOVE if RCOND < zero
+ def CMOVNE   : OForm<  0x11, 0x26, (ops GPRC:$RDEST, GPRC:$RSRC, GPRC:$RCOND), "cmovne $RCOND,$RSRC,$RDEST">; //CMOVE if RCOND != zero
+ def CMOVNEi  : OFormL< 0x11, 0x26, (ops GPRC:$RDEST, u8imm:$L, GPRC:$RCOND),   "cmovne $RCOND,$L,$RDEST">; //CMOVE if RCOND != zero
 //}
 
-def CMPBGE : OForm< 0x10, 0x0F, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "CMPBGE $RA,$RB,$RC">; //Compare byte
-def CMPEQ : OForm< 0x10, 0x2D, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "CMPEQ $RA,$RB,$RC">; //Compare signed quadword equal
-def CMPLE : OForm< 0x10, 0x6D, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "CMPLE $RA,$RB,$RC">; //Compare signed quadword less than or equal
-def CMPLT : OForm< 0x10, 0x4D, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "CMPLT $RA,$RB,$RC">; //Compare signed quadword less than
-def CMPULE : OForm< 0x10, 0x3D, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "CMPULE $RA,$RB,$RC">; //Compare unsigned quadword less than or equal
-def CMPULT : OForm< 0x10, 0x1D, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "CMPULT $RA,$RB,$RC">; //Compare unsigned quadword less than
-def CTLZ : OForm< 0x1C, 0x32, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "CTLZ $RA,$RB,$RC">; //Count leading zero
-def CTPOP : OForm< 0x1C, 0x30, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "CTPOP $RA,$RB,$RC">; //Count population
-def CTTZ  : OForm<0x1C, 0x33, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "CTTZ $RA,$RB,$RC">; //Count trailing zero
-def EQV : OForm< 0x11, 0x48, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "EQV $RA,$RB,$RC">; //Logical equivalence
-def EXTBL : OForm< 0x12, 0x06, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "EXTBL $RA,$RB,$RC">; //Extract byte low
-def EXTLH : OForm< 0x12, 0x6A, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "EXTLH $RA,$RB,$RC">; //Extract longword high
-def EXTLL : OForm< 0x12, 0x26, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "EXTLL $RA,$RB,$RC">; //Extract longword low
-def EXTQH : OForm< 0x12, 0x7A, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "EXTQH $RA,$RB,$RC">; //Extract quadword high
-def EXTQ : OForm< 0x12, 0x36, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "EXTQ $RA,$RB,$RC">; //Extract quadword low
-def EXTWH : OForm< 0x12, 0x5A, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "EXTWH $RA,$RB,$RC">; //Extract word high
-def EXTWL : OForm< 0x12, 0x16, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "EXTWL $RA,$RB,$RC">; //Extract word low
-def IMPLVER : OForm< 0x11, 0x6C, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "IMPLVER $RA,$RB,$RC">; //Implementation version
-def INSBL : OForm< 0x12, 0x0B, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "INSBL $RA,$RB,$RC">; //Insert byte low
-def INSLH : OForm< 0x12, 0x67, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "INSLH $RA,$RB,$RC">; //Insert longword high
-def INSLL : OForm< 0x12, 0x2B, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "INSLL $RA,$RB,$RC">; //Insert longword low
-def INSQH : OForm< 0x12, 0x77, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "INSQH $RA,$RB,$RC">; //Insert quadword high
-def INSQL : OForm< 0x12, 0x3B, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "INSQL $RA,$RB,$RC">; //Insert quadword low
-def INSWH : OForm< 0x12, 0x57, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "INSWH $RA,$RB,$RC">; //Insert word high
-def INSWL : OForm< 0x12, 0x1B, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "INSWL $RA,$RB,$RC">; //Insert word low
+def ADDL     : OForm< 0x10, 0x00, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "addl $RA,$RB,$RC">; //Add longword
+def ADDLi    : OFormL<0x10, 0x00, (ops GPRC:$RC, GPRC:$RA, u8imm:$L), "addl $RA,$L,$RC">; //Add longword
+def ADDQ     : OForm< 0x10, 0x20, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "addq $RA,$RB,$RC">; //Add quadword
+def ADDQi    : OFormL<0x10, 0x20, (ops GPRC:$RC, GPRC:$RA, u8imm:$L), "addq $RA,$L,$RC">; //Add quadword
+def AMASK    : OForm< 0x11, 0x61, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "AMASK $RA,$RB,$RC">; //Architecture mask
+def AMASKi   : OFormL<0x11, 0x61, (ops GPRC:$RC, GPRC:$RA, u8imm:$L), "AMASK $RA,$L,$RC">; //Architecture mask
+def AND      : OForm< 0x11, 0x00, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "AND $RA,$RB,$RC">; //Logical product
+def ANDi     : OFormL<0x11, 0x00, (ops GPRC:$RC, GPRC:$RA, u8imm:$L), "AND $RA,$L,$RC">; //Logical product
+def BIC      : OForm< 0x11, 0x08, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "BIC $RA,$RB,$RC">; //Bit clear
+def BICi     : OFormL<0x11, 0x08, (ops GPRC:$RC, GPRC:$RA, u8imm:$L), "BIC $RA,$L,$RC">; //Bit clear
+def BIS      : OForm< 0x11, 0x20, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "bis $RA,$RB,$RC">; //Logical sum
+def BISi     : OFormL<0x11, 0x20, (ops GPRC:$RC, GPRC:$RA, u8imm:$L), "bis $RA,$L,$RC">; //Logical sum
+def CMPBGE   : OForm< 0x10, 0x0F, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "CMPBGE $RA,$RB,$RC">; //Compare byte
+def CMPBGEi  : OFormL<0x10, 0x0F, (ops GPRC:$RC, GPRC:$RA, u8imm:$L), "CMPBGE $RA,$L,$RC">; //Compare byte
+def CMPEQ    : OForm< 0x10, 0x2D, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "CMPEQ $RA,$RB,$RC">; //Compare signed quadword equal
+def CMPEQi   : OFormL<0x10, 0x2D, (ops GPRC:$RC, GPRC:$RA, u8imm:$L), "CMPEQ $RA,$L,$RC">; //Compare signed quadword equal
+def CMPLE    : OForm< 0x10, 0x6D, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "CMPLE $RA,$RB,$RC">; //Compare signed quadword less than or equal
+def CMPLEi   : OFormL<0x10, 0x6D, (ops GPRC:$RC, GPRC:$RA, u8imm:$L), "CMPLE $RA,$L,$RC">; //Compare signed quadword less than or equal
+def CMPLT    : OForm< 0x10, 0x4D, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "CMPLT $RA,$RB,$RC">; //Compare signed quadword less than
+def CMPLTi   : OFormL<0x10, 0x4D, (ops GPRC:$RC, GPRC:$RA, u8imm:$L), "CMPLT $RA,$L,$RC">; //Compare signed quadword less than
+def CMPULE   : OForm< 0x10, 0x3D, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "CMPULE $RA,$RB,$RC">; //Compare unsigned quadword less than or equal
+def CMPULEi  : OFormL<0x10, 0x3D, (ops GPRC:$RC, GPRC:$RA, u8imm:$L), "CMPULE $RA,$L,$RC">; //Compare unsigned quadword less than or equal
+def CMPULT   : OForm< 0x10, 0x1D, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "CMPULT $RA,$RB,$RC">; //Compare unsigned quadword less than
+def CMPULTi  : OFormL<0x10, 0x1D, (ops GPRC:$RC, GPRC:$RA, u8imm:$L), "CMPULT $RA,$L,$RC">; //Compare unsigned quadword less than
+def CTLZ     : OForm< 0x1C, 0x32, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "CTLZ $RA,$RB,$RC">; //Count leading zero
+def CTLZi    : OFormL<0x1C, 0x32, (ops GPRC:$RC, GPRC:$RA, u8imm:$L), "CTLZ $RA,$L,$RC">; //Count leading zero
+def CTPOP    : OForm< 0x1C, 0x30, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "CTPOP $RA,$RB,$RC">; //Count population
+def CTPOPi   : OFormL<0x1C, 0x30, (ops GPRC:$RC, GPRC:$RA, u8imm:$L), "CTPOP $RA,$L,$RC">; //Count population
+def CTTZ     : OForm< 0x1C, 0x33, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "CTTZ $RA,$RB,$RC">; //Count trailing zero
+def CTTZi    : OFormL<0x1C, 0x33, (ops GPRC:$RC, GPRC:$RA, u8imm:$L), "CTTZ $RA,$L,$RC">; //Count trailing zero
+def EQV      : OForm< 0x11, 0x48, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "EQV $RA,$RB,$RC">; //Logical equivalence
+def EQVi     : OFormL<0x11, 0x48, (ops GPRC:$RC, GPRC:$RA, u8imm:$L), "EQV $RA,$L,$RC">; //Logical equivalence
+def EXTBL    : OForm< 0x12, 0x06, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "EXTBL $RA,$RB,$RC">; //Extract byte low
+def EXTBLi   : OFormL<0x12, 0x06, (ops GPRC:$RC, GPRC:$RA, u8imm:$L), "EXTBL $RA,$L,$RC">; //Extract byte low
+def EXTLH    : OForm< 0x12, 0x6A, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "EXTLH $RA,$RB,$RC">; //Extract longword high
+def EXTLHi   : OFormL<0x12, 0x6A, (ops GPRC:$RC, GPRC:$RA, u8imm:$L), "EXTLH $RA,$L,$RC">; //Extract longword high
+def EXTLL    : OForm< 0x12, 0x26, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "EXTLL $RA,$RB,$RC">; //Extract longword low
+def EXTLLi   : OFormL<0x12, 0x26, (ops GPRC:$RC, GPRC:$RA, u8imm:$L), "EXTLL $RA,$L,$RC">; //Extract longword low
+def EXTQH    : OForm< 0x12, 0x7A, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "EXTQH $RA,$RB,$RC">; //Extract quadword high
+def EXTQHi   : OFormL<0x12, 0x7A, (ops GPRC:$RC, GPRC:$RA, u8imm:$L), "EXTQH $RA,$L,$RC">; //Extract quadword high
+def EXTQ     : OForm< 0x12, 0x36, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "EXTQ $RA,$RB,$RC">; //Extract quadword low
+def EXTQi    : OFormL<0x12, 0x36, (ops GPRC:$RC, GPRC:$RA, u8imm:$L), "EXTQ $RA,$L,$RC">; //Extract quadword low
+def EXTWH    : OForm< 0x12, 0x5A, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "EXTWH $RA,$RB,$RC">; //Extract word high
+def EXTWHi   : OFormL<0x12, 0x5A, (ops GPRC:$RC, GPRC:$RA, u8imm:$L), "EXTWH $RA,$L,$RC">; //Extract word high
+def EXTWL    : OForm< 0x12, 0x16, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "EXTWL $RA,$RB,$RC">; //Extract word low
+def EXTWLi   : OFormL<0x12, 0x16, (ops GPRC:$RC, GPRC:$RA, u8imm:$L), "EXTWL $RA,$L,$RC">; //Extract word low
+def IMPLVER  : OForm< 0x11, 0x6C, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "IMPLVER $RA,$RB,$RC">; //Implementation version
+def IMPLVERi : OFormL<0x11, 0x6C, (ops GPRC:$RC, GPRC:$RA, u8imm:$L), "IMPLVER $RA,$L,$RC">; //Implementation version
+def INSBL    : OForm< 0x12, 0x0B, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "INSBL $RA,$RB,$RC">; //Insert byte low
+def INSBLi   : OFormL<0x12, 0x0B, (ops GPRC:$RC, GPRC:$RA, u8imm:$L), "INSBL $RA,$L,$RC">; //Insert byte low
+def INSLH    : OForm< 0x12, 0x67, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "INSLH $RA,$RB,$RC">; //Insert longword high
+def INSLHi   : OFormL<0x12, 0x67, (ops GPRC:$RC, GPRC:$RA, u8imm:$L), "INSLH $RA,$L,$RC">; //Insert longword high
+def INSLL    : OForm< 0x12, 0x2B, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "INSLL $RA,$RB,$RC">; //Insert longword low
+def INSLLi   : OFormL<0x12, 0x2B, (ops GPRC:$RC, GPRC:$RA, u8imm:$L), "INSLL $RA,$L,$RC">; //Insert longword low
+def INSQH    : OForm< 0x12, 0x77, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "INSQH $RA,$RB,$RC">; //Insert quadword high
+def INSQHi   : OFormL<0x12, 0x77, (ops GPRC:$RC, GPRC:$RA, u8imm:$L), "INSQH $RA,$L,$RC">; //Insert quadword high
+def INSQL    : OForm< 0x12, 0x3B, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "INSQL $RA,$RB,$RC">; //Insert quadword low
+def INSQLi   : OFormL<0x12, 0x3B, (ops GPRC:$RC, GPRC:$RA, u8imm:$L), "INSQL $RA,$L,$RC">; //Insert quadword low
+def INSWH    : OForm< 0x12, 0x57, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "INSWH $RA,$RB,$RC">; //Insert word high
+def INSWHi   : OFormL<0x12, 0x57, (ops GPRC:$RC, GPRC:$RA, u8imm:$L), "INSWH $RA,$L,$RC">; //Insert word high
+def INSWL    : OForm< 0x12, 0x1B, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "INSWL $RA,$RB,$RC">; //Insert word low
+def INSWLi   : OFormL<0x12, 0x1B, (ops GPRC:$RC, GPRC:$RA, u8imm:$L), "INSWL $RA,$L,$RC">; //Insert word low
+def MSKBL    : OForm< 0x12, 0x02, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "MSKBL $RA,$RB,$RC">; //Mask byte low
+def MSKBLi   : OFormL<0x12, 0x02, (ops GPRC:$RC, GPRC:$RA, u8imm:$L), "MSKBL $RA,$L,$RC">; //Mask byte low
+def MSKLH    : OForm< 0x12, 0x62, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "MSKLH $RA,$RB,$RC">; //Mask longword high
+def MSKLHi   : OFormL<0x12, 0x62, (ops GPRC:$RC, GPRC:$RA, u8imm:$L), "MSKLH $RA,$L,$RC">; //Mask longword high
+def MSKLL    : OForm< 0x12, 0x22, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "MSKLL $RA,$RB,$RC">; //Mask longword low
+def MSKLLi   : OFormL<0x12, 0x22, (ops GPRC:$RC, GPRC:$RA, u8imm:$L), "MSKLL $RA,$L,$RC">; //Mask longword low
+def MSKQH    : OForm< 0x12, 0x72, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "MSKQH $RA,$RB,$RC">; //Mask quadword high
+def MSKQHi   : OFormL<0x12, 0x72, (ops GPRC:$RC, GPRC:$RA, u8imm:$L), "MSKQH $RA,$L,$RC">; //Mask quadword high
+def MSKQL    : OForm< 0x12, 0x32, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "MSKQL $RA,$RB,$RC">; //Mask quadword low
+def MSKQLi   : OFormL<0x12, 0x32, (ops GPRC:$RC, GPRC:$RA, u8imm:$L), "MSKQL $RA,$L,$RC">; //Mask quadword low
+def MSKWH    : OForm< 0x12, 0x52, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "MSKWH $RA,$RB,$RC">; //Mask word high
+def MSKWHi   : OFormL<0x12, 0x52, (ops GPRC:$RC, GPRC:$RA, u8imm:$L), "MSKWH $RA,$L,$RC">; //Mask word high
+def MSKWL    : OForm< 0x12, 0x12, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "MSKWL $RA,$RB,$RC">; //Mask word low
+def MSKWLi   : OFormL<0x12, 0x12, (ops GPRC:$RC, GPRC:$RA, u8imm:$L), "MSKWL $RA,$L,$RC">; //Mask word low
+def MULL     : OForm< 0x13, 0x00, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "MULL $RA,$RB,$RC">; //Multiply longword
+def MULLi    : OFormL<0x13, 0x00, (ops GPRC:$RC, GPRC:$RA, u8imm:$L), "MULL $RA,$L,$RC">; //Multiply longword
+def MULQ     : OForm< 0x13, 0x20, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "MULQ $RA,$RB,$RC">; //Multiply quadword
+def MULQi    : OFormL<0x13, 0x20, (ops GPRC:$RC, GPRC:$RA, u8imm:$L), "MULQ $RA,$L,$RC">; //Multiply quadword
+def ORNOT    : OForm< 0x11, 0x28, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "ORNOT $RA,$RB,$RC">; //Logical sum with complement
+def ORNOTi   : OFormL<0x11, 0x28, (ops GPRC:$RC, GPRC:$RA, u8imm:$L), "ORNOT $RA,$L,$RC">; //Logical sum with complement
+def S4ADDL   : OForm< 0x10, 0x02, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "S4ADDL $RA,$RB,$RC">; //Scaled add longword by 4
+def S4ADDLi  : OFormL<0x10, 0x02, (ops GPRC:$RC, GPRC:$RA, u8imm:$L), "S4ADDL $RA,$L,$RC">; //Scaled add longword by 4
+def S4ADDQ   : OForm< 0x10, 0x22, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "S4ADDQ $RA,$RB,$RC">; //Scaled add quadword by 4
+def S4ADDQi  : OFormL<0x10, 0x22, (ops GPRC:$RC, GPRC:$RA, u8imm:$L), "S4ADDQ $RA,$L,$RC">; //Scaled add quadword by 4
+def S4SUBL   : OForm< 0x10, 0x0B, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "S4SUBL $RA,$RB,$RC">; //Scaled subtract longword by 4
+def S4SUBLi  : OFormL<0x10, 0x0B, (ops GPRC:$RC, GPRC:$RA, u8imm:$L), "S4SUBL $RA,$L,$RC">; //Scaled subtract longword by 4
+def S4SUBQ   : OForm< 0x10, 0x2B, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "S4SUBQ $RA,$RB,$RC">; //Scaled subtract quadword by 4
+def S4SUBQi  : OFormL<0x10, 0x2B, (ops GPRC:$RC, GPRC:$RA, u8imm:$L), "S4SUBQ $RA,$L,$RC">; //Scaled subtract quadword by 4
+def S8ADDL   : OForm< 0x10, 0x12, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "S8ADDL $RA,$RB,$RC">; //Scaled add longword by 8
+def S8ADDLi  : OFormL<0x10, 0x12, (ops GPRC:$RC, GPRC:$RA, u8imm:$L), "S8ADDL $RA,$L,$RC">; //Scaled add longword by 8
+def S8ADDQ   : OForm< 0x10, 0x32, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "S8ADDQ $RA,$RB,$RC">; //Scaled add quadword by 8
+def S8ADDQi  : OFormL<0x10, 0x32, (ops GPRC:$RC, GPRC:$RA, u8imm:$L), "S8ADDQ $RA,$L,$RC">; //Scaled add quadword by 8
+def S8SUBL   : OForm< 0x10, 0x1B, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "S8SUBL $RA,$RB,$RC">; //Scaled subtract longword by 8
+def S8SUBLi  : OFormL<0x10, 0x1B, (ops GPRC:$RC, GPRC:$RA, u8imm:$L), "S8SUBL $RA,$L,$RC">; //Scaled subtract longword by 8
+def S8SUBQ   : OForm< 0x10, 0x3B, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "S8SUBQ $RA,$RB,$RC">; //Scaled subtract quadword by 8
+def S8SUBQi  : OFormL<0x10, 0x3B, (ops GPRC:$RC, GPRC:$RA, u8imm:$L), "S8SUBQ $RA,$L,$RC">; //Scaled subtract quadword by 8
+def SEXTB    : OForm< 0x1C, 0x00, (ops GPRC:$RC, GPRC:$RB), "sextb $RB,$RC">; //Sign extend byte
+def SEXTBi   : OFormL<0x1C, 0x00, (ops GPRC:$RC, u8imm:$L), "sextb $L,$RC">; //Sign extend byte
+def SEXTW    : OForm< 0x1C, 0x01, (ops GPRC:$RC, GPRC:$RB), "sextw $RB,$RC">; //Sign extend word
+def SEXTWi   : OFormL<0x1C, 0x01, (ops GPRC:$RC, u8imm:$L), "sextw $L,$RC">; //Sign extend word
+def SL       : OForm< 0x12, 0x39, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "SLL $RA,$RB,$RC">; //Shift left logical
+def SLi      : OFormL<0x12, 0x39, (ops GPRC:$RC, GPRC:$RA, u8imm:$L), "SLL $RA,$L,$RC">; //Shift left logical
+def SRA      : OForm< 0x12, 0x3C, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "SRA $RA,$RB,$RC">; //Shift right arithmetic
+def SRAi     : OFormL<0x12, 0x3C, (ops GPRC:$RC, GPRC:$RA, u8imm:$L), "SRA $RA,$L,$RC">; //Shift right arithmetic
+def SRL      : OForm< 0x12, 0x34, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "SRL $RA,$RB,$RC">; //Shift right logical
+def SRLi     : OFormL<0x12, 0x34, (ops GPRC:$RC, GPRC:$RA, u8imm:$L), "SRL $RA,$L,$RC">; //Shift right logical
+def SUBL     : OForm< 0x10, 0x09, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "SUBL $RA,$RB,$RC">; //Subtract longword
+def SUBLi    : OFormL<0x10, 0x09, (ops GPRC:$RC, GPRC:$RA, u8imm:$L), "SUBL $RA,$L,$RC">; //Subtract longword
+def SUBQ     : OForm< 0x10, 0x29, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "SUBQ $RA,$RB,$RC">; //Subtract quadword
+def SUBQi    : OFormL<0x10, 0x29, (ops GPRC:$RC, GPRC:$RA, u8imm:$L), "SUBQ $RA,$L,$RC">; //Subtract quadword
+def UMULH    : OForm< 0x13, 0x30, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "UMULH $RA,$RB,$RC">; //Unsigned multiply quadword high
+def UMULHi   : OFormL<0x13, 0x30, (ops GPRC:$RC, GPRC:$RA, u8imm:$L), "UMULH $RA,$L,$RC">; //Unsigned multiply quadword high
+def XOR      : OForm< 0x11, 0x40, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "XOR $RA,$RB,$RC">; //Logical difference
+def XORi     : OFormL<0x11, 0x40, (ops GPRC:$RC, GPRC:$RA, u8imm:$L), "XOR $RA,$L,$RC">; //Logical difference
+def ZAP      : OForm< 0x12, 0x30, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "ZAP $RA,$RB,$RC">; //Zero bytes
+def ZAPi     : OFormL<0x12, 0x30, (ops GPRC:$RC, GPRC:$RA, u8imm:$L), "ZAP $RA,$L,$RC">; //Zero bytes
+def ZAPNOT   : OForm< 0x12, 0x31, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "ZAPNOT $RA,$RB,$RC">; //Zero bytes not
+def ZAPNOTi  : OFormL<0x12, 0x31, (ops GPRC:$RC, GPRC:$RA, u8imm:$L), "ZAPNOT $RA,$L,$RC">; //Zero bytes not
+
+//There are in the Multimedia extentions, so let's not use them yet
 def MAXSB8  : OForm<0x1C, 0x3E, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "MAXSB8 $RA,$RB,$RC">; //Vector signed byte maximum
 def MAXSW4 : OForm< 0x1C, 0x3F, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "MAXSW4 $RA,$RB,$RC">; //Vector signed word maximum
 def MAXUB8  : OForm<0x1C, 0x3C, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "MAXUB8 $RA,$RB,$RC">; //Vector unsigned byte maximum
@@ -127,44 +222,13 @@ def MINSB8 : OForm< 0x1C, 0x38, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "MINSB8 $RA,
 def MINSW4 : OForm< 0x1C, 0x39, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "MINSW4 $RA,$RB,$RC">; //Vector signed word minimum
 def MINUB8 : OForm< 0x1C, 0x3A, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "MINUB8 $RA,$RB,$RC">; //Vector unsigned byte minimum
 def MINUW4 : OForm< 0x1C, 0x3B, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "MINUW4 $RA,$RB,$RC">; //Vector unsigned word minimum
-def MSKBL : OForm< 0x12, 0x02, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "MSKBL $RA,$RB,$RC">; //Mask byte low
-def MSKLH : OForm< 0x12, 0x62, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "MSKLH $RA,$RB,$RC">; //Mask longword high
-def MSKLL : OForm< 0x12, 0x22, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "MSKLL $RA,$RB,$RC">; //Mask longword low
-def MSKQH : OForm< 0x12, 0x72, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "MSKQH $RA,$RB,$RC">; //Mask quadword high
-def MSKQL : OForm< 0x12, 0x32, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "MSKQL $RA,$RB,$RC">; //Mask quadword low
-def MSKWH : OForm< 0x12, 0x52, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "MSKWH $RA,$RB,$RC">; //Mask word high
-def MSKWL : OForm< 0x12, 0x12, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "MSKWL $RA,$RB,$RC">; //Mask word low
-def MULL : OForm< 0x13, 0x00, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "MULL $RA,$RB,$RC">; //Multiply longword
-def MULL_V : OForm< 0x13, 0x40, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "MULL/V $RA,$RB,$RC">; 
-def MULQ : OForm< 0x13, 0x20, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "MULQ $RA,$RB,$RC">; //Multiply quadword
-def MULQ_V : OForm< 0x13, 0x60, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "MULQ/V $RA,$RB,$RC">; 
-def ORNOT : OForm< 0x11, 0x28, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "ORNOT $RA,$RB,$RC">; //Logical sum with complement
 def PERR : OForm< 0x1C, 0x31, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "PERR $RA,$RB,$RC">; //Pixel error
 def PKLB : OForm< 0x1C, 0x37, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "PKLB $RA,$RB,$RC">; //Pack longwords to bytes
 def PKWB  : OForm<0x1C, 0x36, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "PKWB $RA,$RB,$RC">; //Pack words to bytes
-def S4ADDL : OForm< 0x10, 0x02, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "S4ADDL $RA,$RB,$RC">; //Scaled add longword by 4
-def S4ADDQ : OForm< 0x10, 0x22, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "S4ADDQ $RA,$RB,$RC">; //Scaled add quadword by 4
-def S4SUBL : OForm< 0x10, 0x0B, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "S4SUBL $RA,$RB,$RC">; //Scaled subtract longword by 4
-def S4SUBQ : OForm< 0x10, 0x2B, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "S4SUBQ $RA,$RB,$RC">; //Scaled subtract quadword by 4
-def S8ADDL : OForm< 0x10, 0x12, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "S8ADDL $RA,$RB,$RC">; //Scaled add longword by 8
-def S8ADDQ : OForm< 0x10, 0x32, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "S8ADDQ $RA,$RB,$RC">; //Scaled add quadword by 8
-def S8SUBL : OForm< 0x10, 0x1B, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "S8SUBL $RA,$RB,$RC">; //Scaled subtract longword by 8
-def S8SUBQ : OForm< 0x10, 0x3B, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "S8SUBQ $RA,$RB,$RC">; //Scaled subtract quadword by 8
-def SEXTB : OForm< 0x1C, 0x00, (ops GPRC:$RC, GPRC:$RB), "sextb $RB,$RC">; //Sign extend byte
-def SEXTW : OForm< 0x1C, 0x01, (ops GPRC:$RC, GPRC:$RB), "sextw $RB,$RC">; //Sign extend word
-def SL : OForm< 0x12, 0x39, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "SLL $RA,$RB,$RC">; //Shift left logical
-def SRA : OForm< 0x12, 0x3C, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "SRA $RA,$RB,$RC">; //Shift right arithmetic
-def SRL : OForm< 0x12, 0x34, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "SRL $RA,$RB,$RC">; //Shift right logical
-def SUBL : OForm< 0x10, 0x09, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "SUBL $RA,$RB,$RC">; //Subtract longword
-def SUBL_V : OForm< 0x10, 0x49, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "SUBL/V $RA,$RB,$RC">; 
-def SUBQ : OForm< 0x10, 0x29, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "SUBQ $RA,$RB,$RC">; //Subtract quadword
-def SUBQ_V : OForm< 0x10, 0x69, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "SUBQ/V $RA,$RB,$RC">; 
-def UMULH : OForm< 0x13, 0x30, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "UMULH $RA,$RB,$RC">; //Unsigned multiply quadword high
 def UNPKBL : OForm< 0x1C, 0x35, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "UNPKBL $RA,$RB,$RC">; //Unpack bytes to longwords
 def UNPKBW : OForm< 0x1C, 0x34, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "UNPKBW $RA,$RB,$RC">; //Unpack bytes to words
-def XOR : OForm< 0x11, 0x40, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "XOR $RA,$RB,$RC">; //Logical difference
-def ZAP : OForm< 0x12, 0x30, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "ZAP $RA,$RB,$RC">; //Zero bytes
-def ZAPNOT : OForm< 0x12, 0x31, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "ZAPNOT $RA,$RB,$RC">; //Zero bytes not
+
+//End operate
 
 let isReturn = 1, isTerminator = 1 in
   def RET : MForm< 0x1A, (ops GPRC:$RD, GPRC:$RS), "ret $RD,($RS),1">; //Return from subroutine

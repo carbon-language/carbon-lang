@@ -1,4 +1,4 @@
-//===- AlphaInstrInfo.cpp - Alpha Instruction Information ---*- C++ -*-===//
+//===- AlphaInstrInfo.cpp - Alpha Instruction Information ---*- C++ -*-----===//
 // 
 //                     The LLVM Compiler Infrastructure
 //
@@ -25,7 +25,6 @@ AlphaInstrInfo::AlphaInstrInfo()
 bool AlphaInstrInfo::isMoveInstr(const MachineInstr& MI,
                                  unsigned& sourceReg,
                                  unsigned& destReg) const {
-  //assert(0 && "TODO");
   MachineOpCode oc = MI.getOpcode();
   if (oc == Alpha::BIS) {  // or r1, r2, r2
     assert(MI.getNumOperands() == 3 &&

@@ -1,4 +1,4 @@
-//===- PPC64RegisterInfo.cpp - PowerPC64 Register Information ---*- C++ -*-===//
+//===- AlphaRegisterInfo.cpp - Alpha Register Information ---*- C++ -*-----===//
 // 
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,7 @@
 // 
 //===----------------------------------------------------------------------===//
 //
-// This file contains the PowerPC64 implementation of the MRegisterInfo class.
+// This file contains the Alpha implementation of the MRegisterInfo class.
 //
 //===----------------------------------------------------------------------===//
 

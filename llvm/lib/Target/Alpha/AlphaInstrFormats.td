@@ -23,7 +23,6 @@
 
 class InstAlpha<bits<6> op, dag OL, string asmstr> : Instruction {          // Alpha instruction baseline
   field bits<32> Inst;
-//  let Name = asmstr;
   let Namespace = "Alpha";
   let OperandList = OL;
   let AsmString = asmstr;
@@ -70,10 +69,10 @@ class OForm<bits<6> opcode, bits<7> fun, dag OL, string asmstr> : InstAlpha<opco
 }
 
 
-class OFormL<bits<6> opcode, dag OL, string asmstr> : InstAlpha<opcode, OL, asmstr> {
+class OFormL<bits<6> opcode, bits<7> fun, dag OL, string asmstr> : InstAlpha<opcode, OL, asmstr> {
   bits<5> Ra;
   bits<8> LIT;
-  bits<7> Function;
+  bits<7> Function = fun;
   bits<5> Rc;
 
   let Inst{25-21} = Ra;
