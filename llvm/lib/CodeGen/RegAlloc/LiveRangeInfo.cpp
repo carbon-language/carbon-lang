@@ -5,7 +5,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/CodeGen/LiveRangeInfo.h"
-#include "llvm/CodeGen/RegAllocCommon.h"
+#include "RegAllocCommon.h"
 #include "llvm/CodeGen/RegClass.h"
 #include "llvm/CodeGen/IGNode.h"
 #include "llvm/CodeGen/MachineInstr.h"

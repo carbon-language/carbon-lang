@@ -14,6 +14,7 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineInstrAnnot.h"
 #include "llvm/CodeGen/FunctionLiveVarInfo.h"   // FIXME: Remove
+#include "llvm/CodeGen/RegClass.h"
 #include "../../CodeGen/RegAlloc/RegAllocCommon.h"   // FIXME!
 #include "llvm/iTerminators.h"
 #include "llvm/iOther.h"
