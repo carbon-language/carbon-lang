@@ -79,9 +79,7 @@ protected:
   // disable default constructor and provide a ctor for single-block graphs
   SchedGraphNodeCommon();	// DO NOT IMPLEMENT
   
-  inline SchedGraphNodeCommon(unsigned Id, int index) : ID(Id), latency(0), 
-							origIndexInBB(index) {}
-  inline SchedGraphNodeCommon(unsigned Id, int late, int index) : ID(Id), latency(late), origIndexInBB(index) {}
+  inline SchedGraphNodeCommon(unsigned Id, int index, int late=0) : ID(Id), latency(late), origIndexInBB(index) {}
   
   virtual ~SchedGraphNodeCommon();
   
@@ -160,7 +158,8 @@ public:
   SchedGraphNodeCommon*	getSink() const { return sink; }
   int getMinDelay() const { return minDelay; }
   SchedGraphEdgeDepType getDepType() const { return depType; }
-  
+  unsigned int getDepOrderType() const { return depOrderType; }
+
   const Value* getValue() const {
     assert(depType == ValueDep); return val;
   }
