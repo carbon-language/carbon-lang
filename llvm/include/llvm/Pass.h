@@ -10,7 +10,7 @@
 // This file defines a base class that indicates that a specified class is a
 // transformation pass implementation.
 //
-// Pass's are designed this way so that it is possible to run passes in a cache
+// Passes are designed this way so that it is possible to run passes in a cache
 // and organizationally optimal order without having to specify it at the front
 // end.  This allows arbitrary passes to be strung together and have them
 // executed as effeciently as possible.
@@ -208,7 +208,7 @@ inline std::ostream &operator<<(std::ostream &OS, const Pass &P) {
 
 //===----------------------------------------------------------------------===//
 /// ModulePass class - This class is used to implement unstructured
-/// interprocedural optimizations and analyses.  ModulePass's may do anything
+/// interprocedural optimizations and analyses.  ModulePasses may do anything
 /// they want to the program.
 ///
 class ModulePass : public Pass {
@@ -303,7 +303,7 @@ private:
 ///      instruction at a time.
 ///   2. Optimizations do not modify the CFG of the contained function, or any
 ///      other basic block in the function.
-///   3. Optimizations conform to all of the constraints of FunctionPass's.
+///   3. Optimizations conform to all of the constraints of FunctionPasses.
 ///
 struct BasicBlockPass : public FunctionPass {
   /// doInitialization - Virtual method overridden by subclasses to do
