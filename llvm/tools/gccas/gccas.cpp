@@ -13,6 +13,7 @@
 #include "llvm/Transforms/RaisePointerReferences.h"
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Transforms/Scalar.h"
+#include "llvm/Analysis/LoadValueNumbering.h"
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/Bytecode/WriteBytecodePass.h"
 #include "llvm/Target/TargetData.h"
@@ -86,6 +87,7 @@ void AddConfiguredTransformationPasses(PassManager &PM) {
   addPass(PM, createInstructionCombiningPass());  // Combine silly seq's
   addPass(PM, createDeadInstEliminationPass());   // Kill InstCombine remnants
   addPass(PM, createLICMPass());                  // Hoist loop invariants
+  addPass(PM, createLoadValueNumberingPass());    // GVN for load instructions
   addPass(PM, createGCSEPass());                  // Remove common subexprs
   addPass(PM, createSCCPPass());                  // Constant prop with SCCP
 
