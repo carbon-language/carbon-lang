@@ -1,0 +1,21 @@
+// RUN: llvmgcc -xc -std=c99 %s -c -o - | llvm-dis | grep -v llvm.isunordered | not grep call
+
+#include <math.h>
+
+_Bool A, B, C, D, E, F;
+void TestF(float X, float Y) {
+  A = isgreater(X, Y);
+  B = isgreaterequal(X, Y);
+  C = isless(X, Y);
+  D = islessequal(X, Y);
+  E = islessgreater(X, Y);
+  F = isunordered(X, Y);
+}
+void TestD(double X, double Y) {
+  A = isgreater(X, Y);
+  B = isgreaterequal(X, Y);
+  C = isless(X, Y);
+  D = islessequal(X, Y);
+  E = islessgreater(X, Y);
+  F = isunordered(X, Y);
+}
