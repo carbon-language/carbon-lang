@@ -64,3 +64,10 @@ void PHINode::addIncoming(Value *D) {
   IncomingValues.push_back(Use(D, this));
 }
 
+// removeIncomingValue - Remove an incoming value.  This is useful if a
+// predecessor basic block is deleted.
+Value *PHINode::removeIncomingValue(unsigned idx) {
+  Value *Removed = IncomingValues[idx];
+  IncomingValues.erase(IncomingValues.begin()+idx);
+  return Removed;
+}
