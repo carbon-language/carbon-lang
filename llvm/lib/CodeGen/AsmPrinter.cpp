@@ -78,10 +78,14 @@ void AsmPrinter::emitConstantValueOnly(const Constant *CV) {
       // generate a symbolic expression for the byte address
       const Constant *ptrVal = CE->getOperand(0);
       std::vector<Value*> idxVec(CE->op_begin()+1, CE->op_end());
-      if (uint64_t Offset = TD.getIndexedOffset(ptrVal->getType(), idxVec)) {
-        O << "(";
+      if (int64_t Offset = TD.getIndexedOffset(ptrVal->getType(), idxVec)) {
+        if (Offset)
+          O << "(";
         emitConstantValueOnly(ptrVal);
-        O << ") + " << Offset;
+        if (Offset > 0)
+          O << ") + " << Offset;
+        else if (Offset < 0)
+          O << ") - " << -Offset;
       } else {
         emitConstantValueOnly(ptrVal);
       }
