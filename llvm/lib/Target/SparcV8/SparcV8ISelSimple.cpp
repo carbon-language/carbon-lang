@@ -251,7 +251,6 @@ void V8ISel::copyConstantToRegister(MachineBasicBlock *MBB,
   }
 
   if (C->getType()->isIntegral ()) {
-    uint64_t Val;
     unsigned Class = getClassB (C->getType ());
     if (Class == cLong) {
       unsigned TmpReg = makeAnotherReg (Type::IntTy);
@@ -267,12 +266,13 @@ void V8ISel::copyConstantToRegister(MachineBasicBlock *MBB,
     }
 
     assert(Class <= cInt && "Type not handled yet!");
+    unsigned Val;
 
     if (C->getType() == Type::BoolTy) {
       Val = (C == ConstantBool::True);
     } else {
       ConstantIntegral *CI = cast<ConstantIntegral> (C);
-      Val = CI->getRawValue ();
+      Val = CI->getRawValue();
     }
     if (C->getType()->isSigned()) {
       switch (Class) {
@@ -289,7 +289,7 @@ void V8ISel::copyConstantToRegister(MachineBasicBlock *MBB,
     }
     if (Val == 0) {
       BuildMI (*MBB, IP, V8::ORrr, 2, R).addReg (V8::G0).addReg(V8::G0);
-    } else if (((int64_t)Val >= -4096) && ((int64_t)Val <= 4095)) {
+    } else if ((int)Val >= -4096 && (int)Val <= 4095) {
       BuildMI (*MBB, IP, V8::ORri, 2, R).addReg (V8::G0).addSImm(Val);
     } else {
       unsigned TmpReg = makeAnotherReg (C->getType ());
@@ -1639,55 +1639,42 @@ void V8ISel::visitSetCondInst(SetCondInst &I) {
   //  thisMBB:
   //  ...
   //   subcc %reg0, %reg1, %g0
-  //   bCC copy1MBB
-  //   ba copy0MBB
+  //   TrueVal = or G0, 1
+  //   bCC sinkMBB
 
-  // FIXME: we wouldn't need copy0MBB (we could fold it into thisMBB)
-  // if we could insert other, non-terminator instructions after the
-  // bCC. But MBB->getFirstTerminator() can't understand this.
-  MachineBasicBlock *copy1MBB = new MachineBasicBlock (LLVM_BB);
-  F->getBasicBlockList ().push_back (copy1MBB);
-  BuildMI (BB, Opcode, 1).addMBB (copy1MBB);
+  unsigned TrueValue = makeAnotherReg (I.getType ());
+  BuildMI (BB, V8::ORri, 2, TrueValue).addReg (V8::G0).addZImm (1);
+
   MachineBasicBlock *copy0MBB = new MachineBasicBlock (LLVM_BB);
-  F->getBasicBlockList ().push_back (copy0MBB);
-  BuildMI (BB, V8::BA, 1).addMBB (copy0MBB);
+  MachineBasicBlock *sinkMBB = new MachineBasicBlock (LLVM_BB);
+  BuildMI (BB, Opcode, 1).addMBB (sinkMBB);
+
   // Update machine-CFG edges
-  BB->addSuccessor (copy1MBB);
+  BB->addSuccessor (sinkMBB);
   BB->addSuccessor (copy0MBB);
 
   //  copy0MBB:
   //   %FalseValue = or %G0, 0
-  //   ba sinkMBB
+  //   # fall through
   BB = copy0MBB;
+  F->getBasicBlockList ().push_back (BB);
   unsigned FalseValue = makeAnotherReg (I.getType ());
-  BuildMI (BB, V8::ORri, 2, FalseValue).addReg (V8::G0).addZImm (0);
-  MachineBasicBlock *sinkMBB = new MachineBasicBlock (LLVM_BB);
-  F->getBasicBlockList ().push_back (sinkMBB);
-  BuildMI (BB, V8::BA, 1).addMBB (sinkMBB);
+  BuildMI (BB, V8::ORrr, 2, FalseValue).addReg (V8::G0).addReg (V8::G0);
+
   // Update machine-CFG edges
   BB->addSuccessor (sinkMBB);
 
   DEBUG (std::cerr << "thisMBB is at " << (void*)thisMBB << "\n");
-  DEBUG (std::cerr << "copy1MBB is at " << (void*)copy1MBB << "\n");
   DEBUG (std::cerr << "copy0MBB is at " << (void*)copy0MBB << "\n");
   DEBUG (std::cerr << "sinkMBB is at " << (void*)sinkMBB << "\n");
 
-  //  copy1MBB:
-  //   %TrueValue = or %G0, 1
-  //   ba sinkMBB
-  BB = copy1MBB;
-  unsigned TrueValue = makeAnotherReg (I.getType ());
-  BuildMI (BB, V8::ORri, 2, TrueValue).addReg (V8::G0).addZImm (1);
-  BuildMI (BB, V8::BA, 1).addMBB (sinkMBB);
-  // Update machine-CFG edges
-  BB->addSuccessor (sinkMBB);
-
   //  sinkMBB:
-  //   %Result = phi [ %FalseValue, copy0MBB ], [ %TrueValue, copy1MBB ]
+  //   %Result = phi [ %FalseValue, copy0MBB ], [ %TrueValue, thisMBB ]
   //  ...
   BB = sinkMBB;
+  F->getBasicBlockList ().push_back (BB);
   BuildMI (BB, V8::PHI, 4, DestReg).addReg (FalseValue)
-    .addMBB (copy0MBB).addReg (TrueValue).addMBB (copy1MBB);
+    .addMBB (copy0MBB).addReg (TrueValue).addMBB (thisMBB);
 }
 
 void V8ISel::visitAllocaInst(AllocaInst &I) {
