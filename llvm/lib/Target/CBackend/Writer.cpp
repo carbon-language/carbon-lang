@@ -38,36 +38,49 @@
 using namespace llvm;
 
 namespace {
-  class CWriter : public Pass, public InstVisitor<CWriter> {
+  /// NameAllUsedStructs - This pass inserts names for any unnamed structure
+  /// types that are used by the program.
+  ///
+  class CBackendNameAllUsedStructs : public Pass {
+    void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.addRequired<FindUsedTypes>();
+    }
+
+    virtual const char *getPassName() const {
+      return "C backend type canonicalizer";
+    }
+
+    virtual bool run(Module &M);
+  };
+  
+  /// CWriter - This class is the main chunk of code that converts an LLVM
+  /// module to a C translation unit.
+  class CWriter : public FunctionPass, public InstVisitor<CWriter> {
     std::ostream &Out; 
     IntrinsicLowering &IL;
     Mangler *Mang;
     const Module *TheModule;
-    FindUsedTypes *FUT;
-
     std::map<const Type *, std::string> TypeNames;
 
     std::map<const ConstantFP *, unsigned> FPConstantMap;
   public:
     CWriter(std::ostream &o, IntrinsicLowering &il) : Out(o), IL(il) {}
 
-    void getAnalysisUsage(AnalysisUsage &AU) const {
-      AU.addRequired<FindUsedTypes>();
-    }
-
     virtual const char *getPassName() const { return "C backend"; }
 
-    bool doInitialization(Module &M);
-    bool run(Module &M) {
-      doInitialization(M);
+    virtual bool doInitialization(Module &M);
 
-      for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
-        if (!I->isExternal()) {
-          // First pass, lower all unhandled intrinsics.
-          lowerIntrinsics(*I);
-          printFunction(*I);
-        }
+    bool runOnFunction(Function &F) {
+      // Output all floating point constants that cannot be printed accurately.
+      printFloatingPointConstants(F);
+  
+      lowerIntrinsics(F);
+      printFunction(F);
+      FPConstantMap.clear();
+      return false;
+    }
 
+    virtual bool doFinalization(Module &M) {
       // Free memory...
       delete Mang;
       TypeNames.clear();
@@ -86,9 +99,9 @@ namespace {
 
     bool nameAllUsedStructureTypes(Module &M);
     void printModule(Module *M);
-    void printFloatingPointConstants(Module &M);
-    void printSymbolTable(const SymbolTable &ST);
+    void printModuleTypes(const SymbolTable &ST);
     void printContainedStructs(const Type *Ty, std::set<const StructType *> &);
+    void printFloatingPointConstants(Function &F);
     void printFunctionSignature(const Function *F, bool Prototype);
 
     void printFunction(Function &);
@@ -171,6 +184,46 @@ namespace {
                                  gep_type_iterator E);
   };
 }
+
+/// This method inserts names for any unnamed structure types that are used by
+/// the program, and removes names from structure types that are not used by the
+/// program.
+///
+bool CBackendNameAllUsedStructs::run(Module &M) {
+  // Get a set of types that are used by the program...
+  std::set<const Type *> UT = getAnalysis<FindUsedTypes>().getTypes();
+  
+  // Loop over the module symbol table, removing types from UT that are
+  // already named, and removing names for structure types that are not used.
+  //
+  SymbolTable &MST = M.getSymbolTable();
+  if (MST.find(Type::TypeTy) != MST.end())
+    for (SymbolTable::type_iterator I = MST.type_begin(Type::TypeTy),
+           E = MST.type_end(Type::TypeTy); I != E; ) {
+      SymbolTable::type_iterator It = I++;
+      if (StructType *STy = dyn_cast<StructType>(It->second)) {
+        // If this is not used, remove it from the symbol table.
+        std::set<const Type *>::iterator UTI = UT.find(STy);
+        if (UTI == UT.end())
+          MST.remove(It->first, It->second);
+        else
+          UT.erase(UTI);
+      }
+    }
+
+  // UT now contains types that are not named.  Loop over it, naming
+  // structure types.
+  //
+  bool Changed = false;
+  for (std::set<const Type *>::const_iterator I = UT.begin(), E = UT.end();
+       I != E; ++I)
+    if (const StructType *ST = dyn_cast<StructType>(*I)) {
+      ((Value*)ST)->setName("unnamed", &MST);
+      Changed = true;
+    }
+  return Changed;
+}
+
 
 // Pass the Type* and the variable name and this prints out the variable
 // declaration.
@@ -578,36 +631,6 @@ void CWriter::writeOperand(Value *Operand) {
     Out << ")";
 }
 
-// nameAllUsedStructureTypes - If there are structure types in the module that
-// are used but do not have names assigned to them in the symbol table yet then
-// we assign them names now.
-//
-bool CWriter::nameAllUsedStructureTypes(Module &M) {
-  // Get a set of types that are used by the program...
-  std::set<const Type *> UT = FUT->getTypes();
-
-  // Loop over the module symbol table, removing types from UT that are already
-  // named.
-  //
-  SymbolTable &MST = M.getSymbolTable();
-  if (MST.find(Type::TypeTy) != MST.end())
-    for (SymbolTable::type_iterator I = MST.type_begin(Type::TypeTy),
-           E = MST.type_end(Type::TypeTy); I != E; ++I)
-      UT.erase(cast<Type>(I->second));
-
-  // UT now contains types that are not named.  Loop over it, naming structure
-  // types.
-  //
-  bool Changed = false;
-  for (std::set<const Type *>::const_iterator I = UT.begin(), E = UT.end();
-       I != E; ++I)
-    if (const StructType *ST = dyn_cast<StructType>(*I)) {
-      ((Value*)ST)->setName("unnamed", &MST);
-      Changed = true;
-    }
-  return Changed;
-}
-
 // generateCompilerSpecificCode - This is where we add conditional compilation
 // directives to cater to specific compilers as need be.
 //
@@ -654,12 +677,10 @@ static void generateCompilerSpecificCode(std::ostream& Out) {
 bool CWriter::doInitialization(Module &M) {
   // Initialize
   TheModule = &M;
-  FUT = &getAnalysis<FindUsedTypes>();
 
   IL.AddPrototypes(M);
   
   // Ensure that all structure types have names...
-  bool Changed = nameAllUsedStructureTypes(M);
   Mang = new Mangler(M);
 
   // get declaration for alloca
@@ -683,7 +704,7 @@ bool CWriter::doInitialization(Module &M) {
   //
 
   // Loop over the symbol table, emitting all named constants...
-  printSymbolTable(M.getSymbolTable());
+  printModuleTypes(M.getSymbolTable());
 
   // Global variable declarations...
   if (!M.gempty()) {
@@ -765,9 +786,6 @@ bool CWriter::doInitialization(Module &M) {
       }
   }
 
-  // Output all floating point constants that cannot be printed accurately...
-  printFloatingPointConstants(M);
-  
   if (!M.empty())
     Out << "\n\n/* Function Bodies */\n";
   return false;
@@ -775,7 +793,7 @@ bool CWriter::doInitialization(Module &M) {
 
 
 /// Output all floating point constants that cannot be printed accurately...
-void CWriter::printFloatingPointConstants(Module &M) {
+void CWriter::printFloatingPointConstants(Function &F) {
   union {
     double D;
     uint64_t U;
@@ -791,39 +809,38 @@ void CWriter::printFloatingPointConstants(Module &M) {
   // the precision of the printed form, unless the printed form preserves
   // precision.
   //
-  unsigned FPCounter = 0;
-  for (Module::iterator F = M.begin(), E = M.end(); F != E; ++F)
-    for (constant_iterator I = constant_begin(F), E = constant_end(F);
-         I != E; ++I)
-      if (const ConstantFP *FPC = dyn_cast<ConstantFP>(*I))
-        if (!isFPCSafeToPrint(FPC) && // Do not put in FPConstantMap if safe.
-            !FPConstantMap.count(FPC)) {
-          double Val = FPC->getValue();
-          
-          FPConstantMap[FPC] = FPCounter;  // Number the FP constants
-          
-          if (FPC->getType() == Type::DoubleTy) {
-            DBLUnion.D = Val;
-            Out << "static const ConstantDoubleTy FPConstant" << FPCounter++
-                << " = 0x" << std::hex << DBLUnion.U << std::dec
-                << "ULL;    /* " << Val << " */\n";
-          } else if (FPC->getType() == Type::FloatTy) {
-            FLTUnion.F = Val;
-            Out << "static const ConstantFloatTy FPConstant" << FPCounter++
-                << " = 0x" << std::hex << FLTUnion.U << std::dec
-                << "U;    /* " << Val << " */\n";
-          } else
-            assert(0 && "Unknown float type!");
-        }
+  static unsigned FPCounter = 0;
+  for (constant_iterator I = constant_begin(&F), E = constant_end(&F);
+       I != E; ++I)
+    if (const ConstantFP *FPC = dyn_cast<ConstantFP>(*I))
+      if (!isFPCSafeToPrint(FPC) && // Do not put in FPConstantMap if safe.
+          !FPConstantMap.count(FPC)) {
+        double Val = FPC->getValue();
+        
+        FPConstantMap[FPC] = FPCounter;  // Number the FP constants
+        
+        if (FPC->getType() == Type::DoubleTy) {
+          DBLUnion.D = Val;
+          Out << "static const ConstantDoubleTy FPConstant" << FPCounter++
+              << " = 0x" << std::hex << DBLUnion.U << std::dec
+              << "ULL;    /* " << Val << " */\n";
+        } else if (FPC->getType() == Type::FloatTy) {
+          FLTUnion.F = Val;
+          Out << "static const ConstantFloatTy FPConstant" << FPCounter++
+              << " = 0x" << std::hex << FLTUnion.U << std::dec
+              << "U;    /* " << Val << " */\n";
+        } else
+          assert(0 && "Unknown float type!");
+      }
   
   Out << "\n";
- }
+}
 
 
 /// printSymbolTable - Run through symbol table looking for type names.  If a
 /// type name is found, emit it's declaration...
 ///
-void CWriter::printSymbolTable(const SymbolTable &ST) {
+void CWriter::printModuleTypes(const SymbolTable &ST) {
   // If there are no type names, exit early.
   if (ST.find(Type::TypeTy) == ST.end())
     return;
@@ -835,27 +852,23 @@ void CWriter::printSymbolTable(const SymbolTable &ST) {
   // Print out forward declarations for structure types before anything else!
   Out << "/* Structure forward decls */\n";
   for (; I != End; ++I)
-    if (const Type *STy = dyn_cast<StructType>(I->second))
-      // Only print out used types!
-      if (FUT->getTypes().count(STy)) {
-        std::string Name = "struct l_" + Mangler::makeNameProper(I->first);
-        Out << Name << ";\n";
-        TypeNames.insert(std::make_pair(STy, Name));
-      }
+    if (const Type *STy = dyn_cast<StructType>(I->second)) {
+      std::string Name = "struct l_" + Mangler::makeNameProper(I->first);
+      Out << Name << ";\n";
+      TypeNames.insert(std::make_pair(STy, Name));
+    }
 
   Out << "\n";
 
   // Now we can print out typedefs...
   Out << "/* Typedefs */\n";
-  for (I = ST.type_begin(Type::TypeTy); I != End; ++I)
-    // Only print out used types!
-    if (FUT->getTypes().count(cast<Type>(I->second))) {
-      const Type *Ty = cast<Type>(I->second);
-      std::string Name = "l_" + Mangler::makeNameProper(I->first);
-      Out << "typedef ";
-      printType(Out, Ty, Name);
-      Out << ";\n";
-    }
+  for (I = ST.type_begin(Type::TypeTy); I != End; ++I) {
+    const Type *Ty = cast<Type>(I->second);
+    std::string Name = "l_" + Mangler::makeNameProper(I->first);
+    Out << "typedef ";
+    printType(Out, Ty, Name);
+    Out << ";\n";
+  }
   
   Out << "\n";
 
@@ -869,8 +882,7 @@ void CWriter::printSymbolTable(const SymbolTable &ST) {
   for (I = ST.type_begin(Type::TypeTy); I != End; ++I)
     if (const StructType *STy = dyn_cast<StructType>(I->second))
       // Only print out used types!
-      if (FUT->getTypes().count(STy))
-        printContainedStructs(STy, StructPrinted);
+      printContainedStructs(STy, StructPrinted);
 }
 
 // Push the struct onto the stack and recursively push all structs
@@ -1450,6 +1462,7 @@ void CWriter::visitVAArgInst(VAArgInst &I) {
 bool CTargetMachine::addPassesToEmitAssembly(PassManager &PM, std::ostream &o) {
   PM.add(createLowerAllocationsPass());
   PM.add(createLowerInvokePass());
+  PM.add(new CBackendNameAllUsedStructs());
   PM.add(new CWriter(o, getIntrinsicLowering()));
   return false;
 }
