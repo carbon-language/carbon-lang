@@ -107,7 +107,12 @@ public:
   ///
   void eraseFromParent();
 
-
+  /// getSinglePredecessor - If this basic block has a single predecessor block,
+  /// return the block, otherwise return a null pointer.
+  BasicBlock *getSinglePredecessor();
+  const BasicBlock *getSinglePredecessor() const {
+    return const_cast<BasicBlock*>(this)->getSinglePredecessor();
+  }
 
   //===--------------------------------------------------------------------===//
   /// Instruction iterator methods

@@ -129,6 +129,16 @@ void BasicBlock::dropAllReferences() {
     I->dropAllReferences();
 }
 
+/// getSinglePredecessor - If this basic block has a single predecessor block,
+/// return the block, otherwise return a null pointer.
+BasicBlock *BasicBlock::getSinglePredecessor() {
+  pred_iterator PI = pred_begin(this), E = pred_end(this);
+  if (PI == E) return 0;         // No preds.
+  BasicBlock *ThePred = *PI;
+  ++PI;
+  return (PI == E) ? ThePred : 0 /*multiple preds*/;
+}
+
 // removePredecessor - This method is used to notify a BasicBlock that the
 // specified Predecessor of the block is no longer able to reach it.  This is
 // actually not used to update the Predecessor list, but is actually used to 
