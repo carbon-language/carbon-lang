@@ -171,6 +171,9 @@ White           [ \t]*
 %target%        { return handleSubstitution(TARGET_SUBST); }
 %time%          { return handleSubstitution(TIME_SUBST); }
 %verbose%       { return handleSubstitution(VERBOSE_SUBST); }
+%fOpts%         { return handleSubstitution(FOPTS_SUBST); }
+%MOpts%         { return handleSubstitution(MOPTS_SUBST); }
+%WOpts%         { return handleSubstitution(WOPTS_SUBST); }
 {BadSubst}      { YY_FATAL_ERROR("Invalid substitution token"); }
 
 {Assembly}      { return handleValueContext(ASSEMBLY); }
