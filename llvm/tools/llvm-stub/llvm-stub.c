@@ -15,7 +15,7 @@
 //
 // This allows the end user to just say ./<program> and have the JIT executed
 // automatically.  On unix, the stub executable emitted is actually a bourne
-// shell script that does the forwarding.  Windows doesn't not like #!/bin/sh
+// shell script that does the forwarding.  Windows does not like #!/bin/sh
 // programs in .exe files, so we make it an actual program, defined here.
 //
 //===----------------------------------------------------------------------===*/
