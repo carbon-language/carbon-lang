@@ -18,22 +18,22 @@
 <li><a href="#org">LLVM Test Suite Organization</a>
 <ul>
   <li><a href="#codefragments">Code Fragments</a></li>
-  <li><a href="#wholeprograms">Whole Programs</a></li>
+<li><a href="#wholeprograms">Whole Programs</a></li>
 </ul></li>
 <li><a href="#tree">LLVM Test Suite Tree</a></li>
 <li><a href="#qmstructure">QMTest Structure</a></li>
-<li><a href="#progstructure">Programs Structure</a></li>
+<li><a href="#progstructure"><tt>llvm-test</tt> Structure</a></li>
 <li><a href="#run">Running the LLVM Tests</a></li>
 <li><a href="#nightly">Running the nightly tester</a></li>
 </ol>
 
 <div class="doc_author">
-  <p>Written by John T. Criswell</p>
+<p>Written by John T. Criswell</p>
 </div>
 
-<!--===============================================================-->
+<!--=========================================================================-->
 <div class="doc_section"><a name="overview">Overview</a></div>
-<!--===============================================================-->
+<!--=========================================================================-->
 
 <div class="doc_text">
 
@@ -43,9 +43,9 @@ and run tests.</p>
 
 </div>
 
-<!--===============================================================-->
+<!--=========================================================================-->
 <div class="doc_section"><a name="Requirements">Requirements</a></div>
-<!--===============================================================-->
+<!--=========================================================================-->
 
 <div class="doc_text">
 
@@ -53,57 +53,79 @@ and run tests.</p>
 required to build LLVM, plus the following:</p>
 
 <dl>
-  <dt><a href="http://www.qmtest.com">QMTest</A></dt>
-  <dd>The LLVM test suite uses QMTest to organize and run tests. <b>Note:
-  you will need <a href="http://llvm.cs.uiuc.edu/qm-2.0.3.tar.gz">QMTest
-  2.0.3 (source tar.gz file)</a> to be successful. The tests do not run with
-  any other version.</b></dd>
+<dt><a href="http://www.qmtest.com">QMTest</A></dt>
+<dd>The LLVM test suite uses QMTest to organize and run tests. <b>Note:
+you will need <a href="http://llvm.cs.uiuc.edu/qm-2.0.3.tar.gz">QMTest
+2.0.3 (source tar.gz file)</a> to be successful. The tests do not run with
+any other version.</b></dd>
 
-  <dt><a href="http://www.python.org">Python</A></dt>
-  <dd>You will need a Python interpreter that works with QMTest. Python will
-  need zlib and SAX support enabled.</dd>
+<dt><a href="http://www.python.org">Python</A></dt>
+<dd>You will need a Python interpreter that works with QMTest. Python will
+need zlib and SAX support enabled.</dd>
 </dl>
 
 </div>
 
-<!--===============================================================-->
+<!--=========================================================================-->
 <div class="doc_section"><a name="quick">Quick Start</a></div>
-<!--===============================================================-->
+<!--=========================================================================-->
 
 <div class="doc_text">
 
-<p> The tests are located in the LLVM source tree under the directory
-<tt>llvm/test</tt>. To run all of the tests in LLVM, use the Master Makefile in
-that directory:</p>
-
+<p>The tests are located in two separate CVS modules. The basic feature and 
+regression tests are in the main "llvm" module under the directory 
+<tt>llvm/test</tt>. A more comprehensive test suite that includes whole 
+programs in C and C++ is in the <tt>llvm-test</tt> module. This module should 
+be checked out to the <tt>llvm/projects</tt> directory. When you
+<tt>configure</tt> the <tt>llvm</tt> module, the <tt>llvm-test</tt> module
+will be automatically configured. Or you can do it manually.</p>
+<p>To run all of the simple tests in LLVM, use the master Makefile in the
+<tt>llvm/test</tt> directory:</p>
 <pre>
- % gmake -C llvm/test
+% gmake -C llvm/test
 </pre>
 
 <p>To run only the code fragment tests (i.e. those that do basic testing of
 LLVM), run the tests organized by QMTest:</p>
-
 <pre>
- % gmake -C llvm/test qmtest
+% gmake -C llvm/test qmtest
 </pre>
 
-<p>To run only the tests that compile and execute whole programs, run the
-Programs tests:</p>
+<p>To run only the basic feature tests, QMTest supports the following
+target:</p>
+<pre>
+% gmake -C llvm/test Feature.t
+</pre>
+
+<p>To run only the regression tests, QMTest supports the following
+target:</p>
+<pre>
+% gmake -C llvm/test Regression.t
+</pre>
+
+<p>To run the comprehensive test suite (tests that compile and execute whole 
+programs), run the <tt>llvm-test</tt> tests:</p>
 
 <pre>
- % gmake -C llvm/test/Programs
+% cd llvm/projects
+% cvs co llvm-test
+% cd llvm-test
+% ./configure --with-llvmsrc=$LLVM_SRC_ROOT --with-llvmobj=$LLVM_OBJ_ROOT
+% gmake
 </pre>
 
 </div>
 
-<!--===============================================================-->
+<!--=========================================================================-->
 <div class="doc_section"><a name="org">LLVM Test Suite Organization</a></div>
-<!--===============================================================-->
+<!--=========================================================================-->
 
 <div class="doc_text">
 
 <p>The LLVM test suite contains two major categories of tests: code
-fragments and whole programs.</p>
+fragments and whole programs. Code fragments are in the <tt>llvm</tt> module
+under the directory under the <tt>llvm/test</tt> directory. The whole programs
+test suite are n the <tt>llvm-test</tt> module under the main directory.</p>
 
 </div>
 
@@ -120,8 +142,8 @@ language front end.</p>
 <p>Code fragments are not complete programs, and they are never executed to
 determine correct behavior.</p> 
 
-<p>The tests in the Features and Regression directories contain code
-fragments.</p>
+<p>Thes code fragment tests are located in the <tt>llvm/test/Features</tt> and 
+<tt>llvm/test/Regression</tt> directories.</p>
 
 </div>
 
@@ -133,7 +155,7 @@ fragments.</p>
 stand-alone program that can be executed.  These programs are generally written
 in high level languages such as C or C++, but sometimes they are written
 straight in LLVM assembly.</p>
-  
+
 <p>These programs are compiled and then executed using several different
 methods (native compiler, LLVM C backend, LLVM JIT, LLVM native code generation,
 etc).  The output of these programs is compared to ensure that LLVM is compiling
@@ -144,88 +166,84 @@ a way of benchmarking LLVM performance, both in terms of the efficiency of the
 programs generated as well as the speed with which LLVM compiles, optimizes, and
 generates code.</p>
 
-<p>The Programs directory contains all tests which compile and benchmark whole
-programs.</p> 
+<p>All "whole program" tests are located in the <tt>llvm-test</tt> CVS
+module.</p> 
 
 </div>
 
-<!--===============================================================-->
+<!--=========================================================================-->
 <div class="doc_section"><a name="tree">LLVM Test Suite Tree</a></div>
-<!--===============================================================-->
+<!--=========================================================================-->
 
 <div class="doc_text">
 
 <p>Each type of test in the LLVM test suite has its own directory. The major
 subtrees of the test suite directory tree are as follows:</p>
-      
-<ul>
-  <li>Features 
-    <p>This directory contains sample codes that test various features of the
-    LLVM language.  These pieces of sample code are run through various
-    assembler, disassembler, and optimizer passes.</p>
-
-  <li>Regression
-    <p>This directory contains regression tests for LLVM.  When a bug is found
-    in LLVM, a regression test containing just enough code to reproduce the
-    problem should be written and placed somewhere underneath this directory.
-    In most cases, this will be a small piece of LLVM assembly language code,
-    often distilled from an actual application or benchmark.</p>
-
-  <li>Programs
-    <p>The Programs directory contains programs that can be compiled with LLVM
-    and executed.  These programs are compiled using the native compiler and
-    various LLVM backends.  The output from the program compiled with the native
-    compiler is assumed correct; the results from the other programs are
-    compared to the native program output and pass if they match.  </p>
-  
-    <p> In addition for testing correctness, the Programs directory also
-    performs timing tests of various LLVM optimizations.  It also records
-    compilation times for the compilers and the JIT.  This information can be
-    used to compare the effectiveness of LLVM's optimizations and code
-    generation.</p>
     
-    <p>The Programs directory is subdivided into several smaller subdirectories:
-    </p>
+<ul>
+<li><tt>llvm/test/Features</tt>
+<p>This directory contains sample codes that test various features of the
+LLVM language.  These pieces of sample code are run through various
+assembler, disassembler, and optimizer passes.</p>
+</li>
 
-    <ul>
-      <li>Programs/SingleSource
-        <p>The SingleSource directory contains test programs that are only a
-        single source file in size.  These are usually small benchmark programs
-        or small programs that calculate a particular value.  Several such
-        programs are grouped together in each directory.</p></li>
+<li><tt>llvm/test/Regression</tt>
+<p>This directory contains regression tests for LLVM.  When a bug is found
+in LLVM, a regression test containing just enough code to reproduce the
+problem should be written and placed somewhere underneath this directory.
+In most cases, this will be a small piece of LLVM assembly language code,
+often distilled from an actual application or benchmark.</p>
+</li>
 
-      <li>Programs/MultiSource
-        <p>The MultiSource directory contains subdirectories which contain
-        entire programs with multiple source files.  Large benchmarks and whole
-        applications go here.</p></li>
+<li><tt>llvm-test</tt>
+<p>The <tt>llvm-test</tt> CVS module contains programs that can be compiled 
+with LLVM and executed.  These programs are compiled using the native compiler
+and various LLVM backends.  The output from the program compiled with the 
+native compiler is assumed correct; the results from the other programs are
+compared to the native program output and pass if they match.  </p>
 
-      <li>Programs/External
-        <p>The External directory contains Makefiles for building code that is
-        external to (i.e. not distributed with) LLVM.  The most prominent member
-        of this directory is the SPEC 2000 benchmark suite.  The presence and
-        location of these external programs is configured by the LLVM
-        <tt>configure</tt> script.</p></li>
-        
-    </ul></li>
+<p>In addition for testing correctness, the <tt>llvm-test</tt> directory also
+performs timing tests of various LLVM optimizations.  It also records
+compilation times for the compilers and the JIT.  This information can be
+used to compare the effectiveness of LLVM's optimizations and code
+generation.</p></li>
 
-  <li>QMTest
-    <p>This directory contains the QMTest information files.  Inside this
-    directory are QMTest administration files and the Python code that
-    implements the LLVM test and database classes.</p>
+<li><tt>llvm-test/SingleSource</tt>
+<p>The SingleSource directory contains test programs that are only a single 
+source file in size.  These are usually small benchmark programs or small 
+programs that calculate a particular value.  Several such programs are grouped 
+together in each directory.</p></li>
+
+<li><tt>llvm-test/MultiSource</tt>
+<p>The MultiSource directory contains subdirectories which contain entire 
+programs with multiple source files.  Large benchmarks and whole applications 
+go here.</p></li>
+
+<li><tt>llvm-test/External</tt>
+<p>The External directory contains Makefiles for building code that is
+external to (i.e. not distributed with) LLVM.  The most prominent member
+of this directory is the SPEC 2000 benchmark suite.  The presence and
+location of these external programs is configured by the llvm-test
+<tt>configure</tt> script.</p></li>
+      
+<li><tt>llvm/test/QMTest</tt>
+<p>This directory contains the QMTest information files.  Inside this
+directory are QMTest administration files and the Python code that
+implements the LLVM test and database classes.</p>
 
 </ul>
 
 </div>
 
-<!--===============================================================-->
+<!--=========================================================================-->
 <div class="doc_section"><a name="qmstructure">QMTest Structure</a></div>
-<!--===============================================================-->
+<!--=========================================================================-->
 
 <div class="doc_text">
 
 <p>The LLVM test suite is partially driven by QMTest and partially
 driven by GNU Make.  Specifically, the Features and Regression tests
-are all driven by QMTest.  The Programs directory is currently
+are all driven by QMTest.  The <tt>llvm-test</tt> module is currently
 driven by a set of Makefiles.</p>
 
 <p>The QMTest system needs to have several pieces of information
@@ -246,113 +264,138 @@ the database class performs (as described below).</p>
 suites:</p>
 
 <ul>
-  <li>Feature
-              <p>
-  These are the feature tests found in the Feature directory.
-  They are broken up into the following categories:
-              </p>
-  <ul>
-    <li>ad
-      <p>Assembler/Disassembler tests.  These tests verify that a piece of LLVM
-      assembly language can be assembled into bytecode and then disassembled
-      into the original assembly language code.  It does this several times to
-      ensure that assembled output can be disassembled and disassembler output
-      can be assembled.  It also verifies that the give assembly language file
-      can be assembled correctly.</p></li>
+<li>Feature
+            <p>
+These are the feature tests found in the Feature directory.
+They are broken up into the following categories:
+            </p>
+<ul>
+  <li>ad
+    <p>Assembler/Disassembler tests.  These tests verify that a piece of LLVM
+    assembly language can be assembled into bytecode and then disassembled
+    into the original assembly language code.  It does this several times to
+    ensure that assembled output can be disassembled and disassembler output
+    can be assembled.  It also verifies that the give assembly language file
+    can be assembled correctly.</p></li>
 
-    <li>opt
-      <p>Optimizer tests.  These tests verify that two of the optimizer passes
-      completely optimize a program (i.e.  after a single pass, they cannot
-      optimize a program any further).</p></li>
+  <li>opt
+    <p>Optimizer tests.  These tests verify that two of the optimizer passes
+    completely optimize a program (i.e.  after a single pass, they cannot
+    optimize a program any further).</p></li>
 
-    <li>mc
-      <p> Machine code tests.  These tests verify that the LLVM assembly
-      language file can be translated into native assembly code.</p></li>
+  <li>mc
+    <p> Machine code tests.  These tests verify that the LLVM assembly
+    language file can be translated into native assembly code.</p></li>
 
-    <li>cc
-      <p>C code tests.  These tests verify that the specified LLVM assembly
-      code can be converted into C source code using the C backend.</p></li>
-  </ul>
+  <li>cc
+    <p>C code tests.  These tests verify that the specified LLVM assembly
+    code can be converted into C source code using the C backend.</p></li>
+</ul>
 
-  <p>The LLVM database class looks at every file in the Feature directory and
-  creates a fake test hierarchy containing
-  <tt>Feature.&lt;testtype&gt;.&lt;testname&gt;</tt>.  So, if you add an LLVM
-  assembly language file to the Feature directory, it actually creates 5 new
-  tests: assembler/disassembler, assembler, optimizer, machine code, and C code.
-  </p>
+<p>The LLVM database class looks at every file in the Feature directory and
+creates a fake test hierarchy containing
+<tt>Feature.&lt;testtype&gt;.&lt;testname&gt;</tt>.  So, if you add an LLVM
+assembly language file to the Feature directory, it actually creates 5 new
+tests: assembler/disassembler, assembler, optimizer, machine code, and C code.
+</p>
 
-  <li>Regression
-    <p>These are the regression tests.  There is one suite for each
-    subdirectory of the Regression directory.  If you add a new subdirectory
-    there, you will need to modify, at least, the <tt>RegressionMap</tt>
-    variable in <tt>QMTest/llvmdb.py</tt> so that QMTest knows how to run the
-    tests in the new subdirectory.</p>
+<li>Regression
+  <p>These are the regression tests.  There is one suite for each
+  subdirectory of the Regression directory.  If you add a new subdirectory
+  there, you will need to modify, at least, the <tt>RegressionMap</tt>
+  variable in <tt>QMTest/llvmdb.py</tt> so that QMTest knows how to run the
+  tests in the new subdirectory.</p>
 
 </ul>
-      
+    
 </div>
 
-<!--===============================================================-->
-<div class="doc_section"><a name="progstructure">Programs Structure</a></div>
-<!--===============================================================-->
+<!--=========================================================================-->
+<div class="doc_section"><a name="progstructure"><tt>llvm-test</tt> 
+Structure</a></div>
+<!--=========================================================================-->
 
 <div class="doc_text">
 
-<p>As mentioned previously, the Programs tree in llvm/test provides three types
-of tests: MultiSource, SingleSource, and External.  Each tree is then subdivided
-into several categories, including applications, benchmarks, regression tests,
-code that is strange grammatically, etc.  These organizations should be
-relatively self explanatory.</p>
+  <p>As mentioned previously, the <tt>llvm-test</tt> module  provides three 
+  types of tests: MultiSource, SingleSource, and External.  Each tree is then 
+  subdivided into several categories, including applications, benchmarks, 
+  regression tests, code that is strange grammatically, etc.  These 
+  organizations should be relatively self explanatory.</p>
 
-<p>In addition to the regular Programs tests, the Programs tree also provides a
-mechanism for compiling the programs in different ways.  If the variable TEST is
-defined on the gmake command line, the test system will include a Makefile named
-<tt>TEST.&lt;value of TEST variable&gt;.Makefile</tt>.  This Makefile can modify
-build rules to yield different results.</p>
+  <p>In addition to the regular "whole program"  tests, the <tt>llvm-test</tt>
+  module also provides a mechanism for compiling the programs in different ways.  
+  If the variable TEST is defined on the gmake command line, the test system will 
+  include a Makefile named <tt>TEST.&lt;value of TEST variable&gt;.Makefile</tt>.  
+  This Makefile can modify build rules to yield different results.</p>
 
-<p>For example, the LLVM nightly tester uses <tt>TEST.nightly.Makefile</tt> to
-create the nightly test reports.  To run the nightly tests, run <tt>gmake
-TEST=nightly</tt>.</p>
+  <p>For example, the LLVM nightly tester uses <tt>TEST.nightly.Makefile</tt> to
+  create the nightly test reports.  To run the nightly tests, run <tt>gmake
+  TEST=nightly</tt>.</p>
 
-<p>There are several TEST Makefiles available in the tree.  Some of them are
-designed for internal LLVM research and will not work outside of the LLVM
-research group.  They may still be valuable, however, as a guide to writing your
-own TEST Makefile for any optimization or analysis passes that you develop with
-LLVM.</p>
+  <p>There are several TEST Makefiles available in the tree.  Some of them are
+  designed for internal LLVM research and will not work outside of the LLVM
+  research group.  They may still be valuable, however, as a guide to writing your
+  own TEST Makefile for any optimization or analysis passes that you develop with 
+  LLVM.</p>
       
 </div>
 
-<!--===============================================================-->
+<!--=========================================================================-->
 <div class="doc_section"><a name="run">Running the LLVM Tests</a></div>
-<!--===============================================================-->
+<!--=========================================================================-->
 
 <div class="doc_text">
 
 <p>First, all tests are executed within the LLVM object directory tree.  They
-<i>are not</i> executed inside of the LLVM source tree.  This is because the
-test suite creates temporary files during execution.  </p>
+<i>are not</i> executed inside of the LLVM source tree. This is because the
+test suite creates temporary files during execution.</p>
 
-<p>The master Makefile in llvm/test is capable of running both the QMTest driven
-tests and the Programs tests.  By default, it will run all of the tests.</p>
+<p>The master Makefile in llvm/test is capable of running only the QMTest driven
+tests. By default, it will run all of these tests.</p>
 
 <p>To run only the QMTest driven tests, run <tt>gmake qmtest</tt> at the
 command line in llvm/tests.  To run a specific qmtest, suffix the test name with
 ".t" when running gmake.</p>
 
-<p>For example, to run the Regression.LLC tests, type <tt>gmake
-Regression.LLC.t</tt> in llvm/tests.</p>
+<p>For example, to run the Regression.LLC tests, type 
+<tt>gmake Regression.LLC.t</tt> in <tt>llvm/tests</tt>.</p>
 
-<p>Note that the Makefiles in llvm/test/Features and llvm/test/Regression are
-gone. You must now use QMTest from the llvm/test directory to run them.</p>
+<p>Note that there are no Makefiles in <tt>llvm/test/Features</tt> and
+<tt>llvm/test/Regression</tt>. You must use QMTest from the <tt>llvm/test</tt>
+directory to run them.</p>
 
-<p>To run the Programs test, cd into the llvm/test/Programs directory and type
-<tt>gmake</tt>.  Alternatively, you can type <tt>gmake TEST=&lt;type&gt;
-test</tt> to run one of the specialized tests in
-llvm/test/Programs/TEST.&lt;type&gt;.Makefile. For example, you could run the
+<p>To run the <tt>llvm-test</tt> suite, you need to use the following steps:
+</p>
+<ol>
+  <li>cd into the llvm/projects directory</li>
+  <li>check out the <tt>llvm-test</tt> module with:<br/>
+  <tt>cvs -d :pserver:anon@llvm.cs.uiuc.edu:/var/cvs/llvm co -PR llvm-test</tt><br> 
+  This will get the test suite into <tt>llvm/projects/llvm-test</tt></li>
+  <li>configure the test suite. You can do this one of two ways:
+  <ol>
+    <li>Use the regular llvm configure:<br/>
+    <tt>cd $LLVM_OBJ_ROOT ; $LLVM_SRC_ROOT/configure</tt><br/>
+    This will ensure that the <tt>projects/llvm-test</tt> directory is also
+    properly configured.</li>
+    <li>Use the <tt>configure</tt> script found in the <tt>llvm-test</tt> source
+    directory:<br/>
+    <tt>$BUILD_SRC_DIR/configure --with-llvmsrc=$LLVM_SRC_ROOT --with-llvmobj=$LLVM_OBJ_ROOT</tt>
+    </li>
+  </ol>
+  <li>gmake</li>
+</ol>
+<p>Note that the second and third steps only need to be done once. After you
+have the suite checked out and configured, you don't need to do it again (unless
+the test code or configure script changes).</p>
+
+<p>To make a specialized test (use one of the
+<tt>llvm-test/TEST.&lt;type&gt;.Makefile</tt>s), just run:<br/>
+<tt>gmake TEST=&lt;type&gt; test</tt><br/>For example, you could run the
 nightly tester tests using the following commands:</p>
 
 <pre>
- % cd llvm/test/Programs
+ % cd llvm/projects/llvm-test
  % gmake TEST=nightly test
 </pre>
 
@@ -365,24 +408,24 @@ others are features that we haven't added yet (or may never add).  In QMTest,
 the result for such tests will be XFAIL (eXpected FAILure).  In this way, you
 can tell the difference between an expected and unexpected failure.</p>
 
-<p>The Programs tests have no such feature as of this time. If the test passes,
-only warnings and other miscellaneous output will be generated.  If a test
-fails, a large &lt;program&gt; FAILED message will be displayed.  This will help
-you separate benign warnings from actual test failures.</p>
+<p>The tests in <tt>llvm-test</tt> have no such feature as of this time. If 
+the test passes, only warnings and other miscellaneous output will be generated.  
+If a test fails, a large &lt;program&gt; FAILED message will be displayed.  
+This will help you separate benign warnings from actual test failures.</p>
 
 </div>
 
-<!--===============================================================-->
+<!--=========================================================================-->
 <div class="doc_section"><a name="nightly">Running the nightly tester</a></div>
-<!--===============================================================-->
+<!--=========================================================================-->
 
 <div class="doc_text">
 
 <p>
 The <a href="http://llvm.cs.uiuc.edu/testresults/">LLVM Nightly Testers</a>
 automatically check out an LLVM tree, build it, run the "nightly" 
-program test (described above) and all of the regression tests, then 
-delete the checked out tree.  This tester is designed to ensure that 
+program test (described above), run  all of the feature and regression tests, 
+and then delete the checked out tree.  This tester is designed to ensure that 
 programs don't break as well as keep track of LLVM's progress over time.</p>
 
 <p>
@@ -393,6 +436,23 @@ file.  We usually run it from a crontab entry that looks ilke this:
 
 <pre>
 5 3 * * *       LLVM_LIB_SEARCH_PATH=.../llvm-gcc/bytecode-libs $HOME/llvm/utils/NightlyTest.pl -parallel -enable-linscan ...CVSREPOSTRING... $HOME/buildtest-X86 $HOME/cvs/testresults-X86
+</pre>
+
+<p>Or, you can create a shell script to encapsulate the running of the script.
+The optimized x86 Linux nightly test is run from just such a script:
+<pre>
+#!/bin/bash
+BASE=/proj/work/llvm/nightlytest
+export CVSROOT=:pserver:anon@llvm.cs.uiuc.edu:/var/cvs/llvm
+export BUILDDIR=$BASE/build 
+export WEBDIR=$BASE/testresults 
+export LLVMGCCDIR=/proj/work/llvm/cfrontend/install
+export PATH=/proj/install/bin:$LLVMGCCDIR/bin:$PATH
+export LD_LIBRARY_PATH=/proj/install/lib
+export LLVM_LIB_SEARCH_PATH=/proj/work/llvm/cfrontend/install/bytecode-libs
+cd $BASE
+cp /proj/work/llvm/llvm/utils/NightlyTest.pl .
+nice ./NightlyTest.pl -nice -release -verbose -parallel -enable-linscan -noexternals
 </pre>
 
 <p>
@@ -413,7 +473,8 @@ we'll link your page to the global tester page.  Thanks!
   src="http://www.w3.org/Icons/valid-html401" alt="Valid HTML 4.01!" /></a>
 
   John T. Criswell<br>
-  <a href="http://llvm.cs.uiuc.edu">The LLVM Compiler Infrastructure</a><br>
+  <a href="http://llvm.x10sys.com/rspencer">Modified By Reid Spencer</a><br/>
+  <a href="http://llvm.cs.uiuc.edu">The LLVM Compiler Infrastructure</a><br/>
   Last modified: $Date$
 </address>
 </body>
