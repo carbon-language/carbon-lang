@@ -96,7 +96,6 @@ namespace {
       (void) llvm::createNoAAPass();
       (void) llvm::createNoProfileInfoPass();
       (void) llvm::createPREPass();
-      (void) llvm::createParallelizePass();
       (void) llvm::createProfileLoaderPass();
       (void) llvm::createProfilePathsPass();
       (void) llvm::createPromoteMemoryToRegister();

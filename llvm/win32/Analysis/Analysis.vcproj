@@ -210,40 +210,13 @@
 					RelativePath="..\..\lib\Analysis\DataStructure\DataStructureStats.cpp">
 				</File>
 				<File
-					RelativePath="..\..\lib\Analysis\DataStructure\DependenceGraph.cpp">
-				</File>
-				<File
-					RelativePath="..\..\lib\Analysis\DataStructure\DependenceGraph.h">
-				</File>
-				<File
 					RelativePath="..\..\lib\Analysis\DataStructure\DSCallSiteIterator.h">
 				</File>
 				<File
 					RelativePath="..\..\lib\Analysis\DataStructure\GraphChecker.cpp">
 				</File>
 				<File
-					RelativePath="..\..\lib\Analysis\DataStructure\IPModRef.cpp">
-				</File>
-				<File
-					RelativePath="..\..\lib\Analysis\DataStructure\IPModRef.h">
-				</File>
-				<File
 					RelativePath="..\..\lib\Analysis\DataStructure\Local.cpp">
-				</File>
-				<File
-					RelativePath="..\..\lib\Analysis\DataStructure\MemoryDepAnalysis.cpp">
-				</File>
-				<File
-					RelativePath="..\..\lib\Analysis\DataStructure\MemoryDepAnalysis.h">
-				</File>
-				<File
-					RelativePath="..\..\lib\Analysis\DataStructure\Parallelize.cpp">
-				</File>
-				<File
-					RelativePath="..\..\lib\Analysis\DataStructure\PgmDependenceGraph.cpp">
-				</File>
-				<File
-					RelativePath="..\..\lib\Analysis\DataStructure\PgmDependenceGraph.h">
 				</File>
 				<File
 					RelativePath="..\..\lib\Analysis\DataStructure\Printer.cpp">

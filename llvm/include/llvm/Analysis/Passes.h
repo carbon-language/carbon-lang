@@ -98,13 +98,6 @@ namespace llvm {
  
   //===--------------------------------------------------------------------===//
   //
-  // createParallelizePass - This pass parallelizes a program using the cilk
-  // multi-threaded runtime system.
-  //
-  ModulePass *createParallelizePass();
- 
-  //===--------------------------------------------------------------------===//
-  //
   // createSteensgaardPass - This pass uses the data structure graphs to do a
   // simple context insensitive alias analysis.
   //
