@@ -14,6 +14,7 @@
 #include "llvm/Transforms/LevelChange.h"
 #include "llvm/Transforms/ConstantMerge.h"
 #include "llvm/Transforms/ChangeAllocations.h"
+#include "llvm/Transforms/Scalar/ConstantProp.h"
 #include "llvm/Transforms/Scalar/DCE.h"
 #include "llvm/Transforms/Scalar/GCSE.h"
 #include "llvm/Transforms/Scalar/IndVarSimplify.h"
@@ -73,6 +74,7 @@ int main(int argc, char **argv) {
   //
   PassManager Passes;
   Passes.add(createFunctionResolvingPass());      // Resolve (...) functions
+  Passes.add(createConstantMergePass());          // Merge dup global constants
   Passes.add(createDeadInstEliminationPass());    // Remove Dead code/vars
   Passes.add(createRaiseAllocationsPass());       // call %malloc -> malloc inst
   Passes.add(createCleanupGCCOutputPass());       // Fix gccisms
@@ -80,9 +82,9 @@ int main(int argc, char **argv) {
   if (!StopAtLevelRaise) {
     Passes.add(createRaisePointerReferencesPass()); // Eliminate casts
     Passes.add(createPromoteMemoryToRegister());    // Promote alloca's to regs
-    Passes.add(createConstantMergePass());          // Merge dup global consts
     Passes.add(createInstructionCombiningPass());   // Combine silly seq's
     Passes.add(createDeadCodeEliminationPass());    // Remove Dead code/vars
+    Passes.add(createSCCPPass());                   // Constant prop with SCCP
     Passes.add(createGCSEPass());                   // Remove common subexprs
   }
   Passes.add(new WriteBytecodePass(&Out));        // Write bytecode to file...
