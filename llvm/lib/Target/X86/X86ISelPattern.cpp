@@ -1585,16 +1585,19 @@ unsigned ISel::SelectExpr(SDOperand N) {
 
     if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(Op1)) {
       if (CN->isAllOnesValue() && Node->getOpcode() == ISD::XOR) {
+        Opc = 0;
         switch (N.getValueType()) {
         default: assert(0 && "Cannot add this type!");
-        case MVT::i1:
+        case MVT::i1:  break;  // Not supported, don't invert upper bits!
         case MVT::i8:  Opc = X86::NOT8r;  break;
         case MVT::i16: Opc = X86::NOT16r; break;
         case MVT::i32: Opc = X86::NOT32r; break;
         }
-        Tmp1 = SelectExpr(Op0);
-        BuildMI(BB, Opc, 1, Result).addReg(Tmp1);
-        return Result;
+        if (Opc) {
+          Tmp1 = SelectExpr(Op0);
+          BuildMI(BB, Opc, 1, Result).addReg(Tmp1);
+          return Result;
+        }
       }
 
       switch (N.getValueType()) {
