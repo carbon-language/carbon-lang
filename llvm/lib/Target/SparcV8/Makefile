@@ -8,39 +8,12 @@
 ##===----------------------------------------------------------------------===##
 LEVEL = ../../../..
 LIBRARYNAME = sparcv8
-include $(LEVEL)/Makefile.common
-
-TDFILES := $(wildcard $(SourceDir)/*.td) $(SourceDir)/../../Target.td
-TDFILE  := $(SourceDir)/SparcV8.td
+TARGET = SparcV8
 
 # Make sure that tblgen is run, first thing.
-$(SourceDepend): SparcV8GenRegisterInfo.h.inc SparcV8GenRegisterNames.inc \
-                 SparcV8GenRegisterInfo.inc SparcV8GenInstrNames.inc \
-                 SparcV8GenInstrInfo.inc SparcV8GenCodeEmitter.inc
+BUILT_SOURCES = SparcV8GenRegisterInfo.h.inc SparcV8GenRegisterNames.inc \
+                SparcV8GenRegisterInfo.inc SparcV8GenInstrNames.inc \
+                SparcV8GenInstrInfo.inc SparcV8GenCodeEmitter.inc
 
-SparcV8GenRegisterNames.inc:: $(TDFILES) $(TBLGEN)
-	@echo "Building SparcV8.td register names with tblgen"
-	$(VERB) $(TBLGEN) -I $(BUILD_SRC_DIR) $(TDFILE) -gen-register-enums -o $@
+include $(LEVEL)/Makefile.common
 
-SparcV8GenRegisterInfo.h.inc:: $(TDFILES) $(TBLGEN)
-	@echo "Building SparcV8.td register information header with tblgen"
-	$(VERB) $(TBLGEN) -I $(BUILD_SRC_DIR) $(TDFILE) -gen-register-desc-header -o $@
-
-SparcV8GenRegisterInfo.inc:: $(TDFILES) $(TBLGEN)
-	@echo "Building SparcV8.td register information implementation with tblgen"
-	$(VERB) $(TBLGEN) -I $(BUILD_SRC_DIR) $(TDFILE) -gen-register-desc -o $@
-
-SparcV8GenInstrNames.inc:: $(TDFILES) $(TBLGEN)
-	@echo "Building SparcV8.td instruction names with tblgen"
-	$(VERB) $(TBLGEN) -I $(BUILD_SRC_DIR) $(TDFILE) -gen-instr-enums -o $@
-
-SparcV8GenInstrInfo.inc:: $(TDFILES) $(TBLGEN)
-	@echo "Building SparcV8.td instruction information with tblgen"
-	$(VERB) $(TBLGEN) -I $(BUILD_SRC_DIR) $(TDFILE) -gen-instr-desc -o $@
-
-SparcV8GenCodeEmitter.inc:: $(TDFILES) $(TBLGEN)
-	@echo "Building SparcV8.td code emitter with tblgen"
-	$(VERB) $(TBLGEN) -I $(SourceDir) $(TDFILE) -gen-emitter -o $@
-
-clean::
-	$(VERB) rm -f *.inc
