@@ -31,7 +31,7 @@ zero(t) Item_Set t;
 	int i;
 	DeltaCost base;
 	int exists;
-	int base_nt;
+	int base_nt = 0;
 
 	assert(!t->closed);
 
