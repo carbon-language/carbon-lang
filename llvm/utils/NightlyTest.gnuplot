@@ -9,7 +9,10 @@ set timefmt "%Y-%m-%d:"
 set format x "%b %d, %Y"
 
 ## Various labels for the graph
-set label "Removed\ndummy\nfunction" at "2003-07-30:", 150000
+set label "Reoptimizer checkins" at "2003-02-18:", 114000
+set label "Modulo Sched checkin" at "2003-03-28:", 119500
+set label "Reoptimizer checkins" at "2003-06-01:", 134000
+set label "'dummy'\nfunction" at "2003-07-20:", 150000
 
 set size .75,.75
 plot "running_loc.txt" using 1:2 title '', \

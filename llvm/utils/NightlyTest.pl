@@ -282,6 +282,7 @@ my $RemovedFilesList = AddPreTag join "\n", sort keys %RemovedFiles;
 my $TestError = 1;
 my $SingleSourceProgramsTable;
 my $MultiSourceProgramsTable;
+my $ExternalProgramsTable;
 
 
 sub TestDirectory {
@@ -327,8 +328,9 @@ sub TestDirectory {
 if ($BuildError eq "") {
   $SingleSourceProgramsTable = TestDirectory("SingleSource");
   $MultiSourceProgramsTable = TestDirectory("MultiSource");
+  $ExternalProgramsTable = TestDirectory("External");
   system "cat $Prefix-SingleSource-Tests.txt $Prefix-MultiSource-Tests.txt ".
-         " | sort > $Prefix-Tests.txt";
+         " $Prefix-External-Tests.txt | sort > $Prefix-Tests.txt";
 }
 
 my ($TestsAdded, $TestsRemoved, $TestsFixed, $TestsBroken) = ("","","","");
