@@ -13,6 +13,8 @@
 #include "llvm/Module.h"
 #include "llvm/Analysis/SlotCalculator.h"
 #include <algorithm>
+#include <hash_map>
+#include <strstream.h>
 #include <assert.h>
 
 ConstPoolBool *ConstPoolBool::True  = new ConstPoolBool(true);
@@ -161,16 +163,49 @@ string ConstPoolFP::getStrValue() const {
 }
 
 string ConstPoolArray::getStrValue() const {
-  string Result = "[";
-  if (Operands.size()) {
-    Result += " " + Operands[0]->getType()->getDescription() + 
-	      " " + cast<ConstPoolVal>(Operands[0])->getStrValue();
-    for (unsigned i = 1; i < Operands.size(); i++)
-      Result += ", " + Operands[i]->getType()->getDescription() + 
-	         " " + cast<ConstPoolVal>(Operands[i])->getStrValue();
+  string Result;
+  strstream makeString;
+  
+  // As a special case, print the array as a string if it is an array of
+  // ubytes or an array of sbytes with positive values.
+  // 
+  const Type* elType  = cast<ArrayType>(this->getType())->getElementType();
+  bool isString = (elType == Type::SByteTy || elType == Type::UByteTy)
+                  && Operands.size() > 0;
+  if (isString) {
+    for (unsigned i = 0; i < Operands.size(); i++) {
+      if (elType == Type::SByteTy && cast<ConstPoolSInt>(Operands[i]) < 0)
+        {
+          isString = false;
+          break;
+        }
+      // else it is a legal char and is safe to cast to an unsigned int
+      uint64_t c = ((elType == Type::SByteTy)
+                    ? (uint64_t) cast<ConstPoolSInt>(Operands[i])->getValue()
+                    : cast<ConstPoolUInt>(Operands[i])->getValue());
+      makeString << (char) c;
+    }
   }
-
-  return Result + " ]";
+  
+  if (isString) {
+    makeString << ends;
+    Result  = "c\"";
+    Result += makeString.str();
+    Result += "\"";
+    free(makeString.str());
+  } else {
+    Result = "[";
+    if (Operands.size()) {
+      Result += " " + Operands[0]->getType()->getDescription() + 
+	        " " + cast<ConstPoolVal>(Operands[0])->getStrValue();
+      for (unsigned i = 1; i < Operands.size(); i++)
+        Result += ", " + Operands[i]->getType()->getDescription() + 
+	           " " + cast<ConstPoolVal>(Operands[i])->getStrValue();
+    }
+    Result += " ]";
+  }
+  
+  return Result;
 }
 
 string ConstPoolStruct::getStrValue() const {
@@ -384,6 +419,7 @@ ConstPoolFP *ConstPoolFP::get(const Type *Ty, double V) {
 //---- ConstPoolArray::get() implementation...
 //
 static ValueMap<vector<ConstPoolVal*>, ConstPoolArray> ArrayConstants;
+static hash_map<const char*, ConstPoolArray*> StringConstants;
 
 ConstPoolArray *ConstPoolArray::get(const ArrayType *Ty,
 				    const vector<ConstPoolVal*> &V) {
@@ -392,6 +428,35 @@ ConstPoolArray *ConstPoolArray::get(const ArrayType *Ty,
     ArrayConstants.add(Ty, V, Result = new ConstPoolArray(Ty, V));
   return Result;
 }
+
+ConstPoolArray *ConstPoolArray::get(const string& stringConstant) {
+  ConstPoolArray *Result = StringConstants[stringConstant.c_str()];
+  if (Result == NULL) {
+    ArrayType *aty = ArrayType::get(Type::UByteTy/*,stringConstant.length()*/);
+    vector<ConstPoolVal*> charVals;
+    for (const char *c = stringConstant.c_str(); *c; ++c) {
+      if (isprint(*c))
+        charVals.push_back(ConstPoolUInt::get(Type::UByteTy, *c));
+      else {
+        char charString[3];
+        sprintf(charString, "\\%02X", *c);
+        charVals.push_back(ConstPoolUInt::get(Type::UByteTy, charString[0]));
+        charVals.push_back(ConstPoolUInt::get(Type::UByteTy, charString[1]));
+        charVals.push_back(ConstPoolUInt::get(Type::UByteTy, charString[2]));
+      }
+    }
+    
+    // Append "\00" which is the null character in LLVM
+    charVals.push_back(ConstPoolUInt::get(Type::UByteTy, '\\'));
+    charVals.push_back(ConstPoolUInt::get(Type::UByteTy, '0'));
+    charVals.push_back(ConstPoolUInt::get(Type::UByteTy, '0'));
+    
+    Result = ConstPoolArray::get(aty, charVals);
+    StringConstants[stringConstant.c_str()] = Result;
+  }
+  return Result;
+}
+
 
 // destroyConstant - Remove the constant from the constant table...
 //
