@@ -463,39 +463,49 @@ LiveIntervals::Interval::Interval(unsigned r)
 
 bool LiveIntervals::Interval::liveAt(unsigned index) const
 {
-    Ranges::const_iterator r = ranges.begin();
-    while (r != ranges.end() && index < (r->second - 1)) {
-        if (index >= r->first)
-            return true;
-        ++r;
-    }
-    return false;
+    Range dummy(index, index+1);
+    Ranges::const_iterator r = std::upper_bound(ranges.begin(),
+                                                ranges.end(),
+                                                dummy);
+    if (r == ranges.begin())
+        return false;
+
+    --r;
+    return index >= r->first && index < (r->second - 1);
 }
 
 bool LiveIntervals::Interval::overlaps(const Interval& other) const
 {
     Ranges::const_iterator i = ranges.begin();
+    Ranges::const_iterator ie = ranges.end();
     Ranges::const_iterator j = other.ranges.begin();
+    Ranges::const_iterator je = other.ranges.end();
+    if (i->first < j->first) {
+        i = std::upper_bound(i, ie, *j);
+        if (i != ranges.begin()) --i;
+    }
+    else if (j->first < i->first) {
+        j = std::upper_bound(j, je, *i);
+        if (j != other.ranges.begin()) --j;
+    }
 
-    while (i != ranges.end() && j != other.ranges.end()) {
-        if (i->first < j->first) {
+    while (i != ie && j != je) {
+        if (i->first == j->first) {
+            return true;
+        }
+        else {
+            if (i->first > j->first) {
+                swap(i, j);
+                swap(ie, je);
+            }
+            assert(i->first < j->first);
+
             if ((i->second - 1) > j->first) {
                 return true;
             }
             else {
                 ++i;
             }
-        }
-        else if (j->first < i->first) {
-            if ((j->second - 1) > i->first) {
-                return true;
-            }
-            else {
-                ++j;
-            }
-        }
-        else {
-            return true;
         }
     }
 
