@@ -121,6 +121,26 @@ MachineInstr *X86InstrInfo::convertToThreeAddress(MachineInstr *MI) const {
   return 0;
 }
 
+/// commuteInstruction - We have a few instructions that must be hacked on to
+/// commute them.
+///
+MachineInstr *X86InstrInfo::commuteInstruction(MachineInstr *MI) const {
+  switch (MI->getOpcode()) {
+  case X86::SHRD32rri8: // A = SHRD32rri8 B, C, I -> A = SHLD32rri8 C, B, (32-I)
+  case X86::SHLD32rri8:{// A = SHLD32rri8 B, C, I -> A = SHRD32rri8 C, B, (32-I)
+    unsigned Amt = MI->getOperand(3).getImmedValue();
+    unsigned A = MI->getOperand(0).getReg();
+    unsigned B = MI->getOperand(1).getReg();
+    unsigned C = MI->getOperand(2).getReg();
+    unsigned Opc = X86::SHRD32rri8;
+    if (MI->getOpcode() == X86::SHRD32rri8) Opc = X86::SHLD32rri8;
+    return BuildMI(Opc, 3, A).addReg(B).addReg(C).addImm(32-Amt);
+  }
+  default:
+    return TargetInstrInfo::commuteInstruction(MI);
+  }
+}
+
 
 void X86InstrInfo::insertGoto(MachineBasicBlock& MBB,
                               MachineBasicBlock& TMBB) const {

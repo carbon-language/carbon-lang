@@ -191,6 +191,12 @@ public:
   ///
   virtual MachineInstr *convertToThreeAddress(MachineInstr *TA) const;
 
+  /// commuteInstruction - We have a few instructions that must be hacked on to
+  /// commute them.
+  ///
+  virtual MachineInstr *commuteInstruction(MachineInstr *MI) const;
+
+
   /// Insert a goto (unconditional branch) sequence to TMBB, at the
   /// end of MBB
   virtual void insertGoto(MachineBasicBlock& MBB,

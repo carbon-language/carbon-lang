@@ -881,12 +881,15 @@ def SHLD32rrCL : I<0xA5, MRMDestReg, (ops R32:$dst, R32:$src1, R32:$src2),
 def SHRD32rrCL : I<0xAD, MRMDestReg, (ops R32:$dst, R32:$src1, R32:$src2),
                    "shrd{l} {%cl, $src2, $dst|$dst, $src2, %CL}">,
                    Imp<[CL],[]>, TB;
+
+let isCommutable = 1 in {  // These instructions commute to each other.
 def SHLD32rri8 : Ii8<0xA4, MRMDestReg,
                      (ops R32:$dst, R32:$src1, R32:$src2, i8imm:$src3),
                      "shld{l} {$src3, $src2, $dst|$dst, $src2, $src3}">, TB;
 def SHRD32rri8 : Ii8<0xAC, MRMDestReg,
                      (ops R32:$dst, R32:$src1, R32:$src2, i8imm:$src3),
                      "shrd{l} {$src3, $src2, $dst|$dst, $src2, $src3}">, TB;
+}
 
 let isTwoAddress = 0 in {
   def SHLD32mrCL : I<0xA5, MRMDestMem, (ops i32mem:$dst, R32:$src2),
