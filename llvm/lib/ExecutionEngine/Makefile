@@ -1,6 +1,6 @@
 LEVEL = ../..
 TOOLNAME = lli
-PARALLEL_DIRS = Interpreter JIT
+DIRS = Interpreter JIT
 
 JITLIBS  = lli-jit codegen x86
 USEDLIBS = lli-interpreter $(JITLIBS) bcreader vmcore analysis.a support.a target.a 
