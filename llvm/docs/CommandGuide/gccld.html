@@ -80,7 +80,7 @@ undefined symbols defined.
 <h4>Native code generation</h4>
 
 The <tt>gccld</tt> program has limited support for native code generation, when
-using the -native option.
+using the <tt>-native</tt> or <tt>-native-cbe</tt> options.
 
 
 <h3>OPTIONS</h3>
@@ -170,6 +170,15 @@ using the -native option.
   subsets of common libraries and then link in any part of the library that
   hasn't been converted to bytecode.
 	<p>
+
+	<li> -native-cbe
+	<br>
+	Generate a native, machine code executable with the LLVM C backend.
+        <p>
+          This option is identical to the <tt>-native</tt> option, but uses the
+          C backend to generate code for the program instead of an LLVM native
+          code generator.
+	</p>
 
 	<li> -s
 	<br>
