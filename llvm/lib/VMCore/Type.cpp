@@ -604,16 +604,6 @@ public:
       ArgTypes.push_back(args[i]);
   }
 
-  // We *MUST* have an explicit copy ctor so that the TypeHandles think that
-  // this FunctionValType owns them, not the old one!
-  //
-  FunctionValType(const FunctionValType &MVT)
-    : RetTy(MVT.RetTy), isVarArg(MVT.isVarArg) {
-    ArgTypes.reserve(MVT.ArgTypes.size());
-    for (unsigned i = 0; i < MVT.ArgTypes.size(); ++i)
-      ArgTypes.push_back(MVT.ArgTypes[i]);
-  }
-
   static FunctionValType get(const FunctionType *FT);
 
   // Subclass should override this... to update self as usual
@@ -676,11 +666,6 @@ class ArrayValType {
 public:
   ArrayValType(const Type *val, int sz) : ValTy(val), Size(sz) {}
 
-  // We *MUST* have an explicit copy ctor so that the ValTy thinks that this
-  // ArrayValType owns it, not the old one!
-  //
-  ArrayValType(const ArrayValType &AVT) : ValTy(AVT.ValTy), Size(AVT.Size) {}
-
   static ArrayValType get(const ArrayType *AT) {
     return ArrayValType(AT->getElementType(), AT->getNumElements());
   }
@@ -733,9 +718,6 @@ class StructValType {
   std::vector<const Type*> ElTypes;
 public:
   StructValType(const std::vector<const Type*> &args) : ElTypes(args) {}
-
-  // Explicit copy ctor not needed
-  StructValType(const StructValType &SVT) : ElTypes(SVT.ElTypes) {}
 
   static StructValType get(const StructType *ST) {
     std::vector<const Type *> ElTypes;
@@ -790,9 +772,6 @@ class PointerValType {
   const Type *ValTy;
 public:
   PointerValType(const Type *val) : ValTy(val) {}
-
-  // FIXME: delete explicit copy ctor
-  PointerValType(const PointerValType &PVT) : ValTy(PVT.ValTy) {}
 
   static PointerValType get(const PointerType *PT) {
     return PointerValType(PT->getElementType());
