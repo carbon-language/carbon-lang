@@ -25,6 +25,7 @@
 #include "SparcV9Internals.h"
 #include "SparcV9RegClassInfo.h"
 #include "SparcV9RegInfo.h"
+#include "SparcV9FrameInfo.h"
 #include "SparcV9TargetMachine.h"
 #include "SparcV9TmpInstr.h"
 #include <iostream>
@@ -492,7 +493,7 @@ void SparcV9RegInfo::colorMethodArgs(const Function *Meth,
         // a full double-word so the offset does not need to be adjusted.
         if (regType == FPSingleRegType) {
           unsigned argSize = target.getTargetData().getTypeSize(LR->getType());
-          unsigned slotSize = frameInfo.getSizeOfEachArgOnStack();
+          unsigned slotSize = SparcV9FrameInfo::SizeOfEachArgOnStack;
           assert(argSize <= slotSize && "Insufficient slot size!");
           offsetFromFP += slotSize - argSize;
         }
@@ -550,7 +551,7 @@ void SparcV9RegInfo::colorMethodArgs(const Function *Meth,
         // a full double-word so the offset does not need to be adjusted.
         if (regType == FPSingleRegType) {
           unsigned argSize = target.getTargetData().getTypeSize(LR->getType());
-          unsigned slotSize = frameInfo.getSizeOfEachArgOnStack();
+          unsigned slotSize = SparcV9FrameInfo::SizeOfEachArgOnStack;
           assert(argSize <= slotSize && "Insufficient slot size!");
           offsetFromFP += slotSize - argSize;
         }

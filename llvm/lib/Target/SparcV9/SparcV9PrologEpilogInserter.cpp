@@ -58,8 +58,8 @@ static unsigned getStaticStackSize (MachineFunction &MF) {
 
   unsigned staticStackSize = MF.getInfo()->getStaticStackSize();
 
-  if (staticStackSize < (unsigned) frameInfo.getMinStackFrameSize())
-    staticStackSize = (unsigned) frameInfo.getMinStackFrameSize();
+  if (staticStackSize < SparcV9FrameInfo::MinStackFrameSize)
+    staticStackSize = SparcV9FrameInfo::MinStackFrameSize;
   if (unsigned padsz = staticStackSize % 
                        SparcV9FrameInfo::StackFrameSizeAlignment)
     staticStackSize += SparcV9FrameInfo::StackFrameSizeAlignment - padsz;

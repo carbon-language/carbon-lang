@@ -2575,7 +2575,7 @@ CreateCodeForFixedSizeAlloca(const TargetMachine& target,
                                                                 paddedSize,
                                                          tsize * numElements);
 
-  if (((int)paddedSize) > 8 * target.getFrameInfo()->getSizeOfEachArgOnStack()||
+  if (((int)paddedSize) > 8 * SparcV9FrameInfo::SizeOfEachArgOnStack ||
       !target.getInstrInfo()->constantFitsInImmedField(V9::LDXi,offsetFromFP)) {
     CreateCodeForVariableSizeAlloca(target, result, tsize, 
 				    ConstantSInt::get(Type::IntTy,numElements),
@@ -3992,7 +3992,7 @@ void GetInstructionsByRule(InstructionNode* subtreeRoot, int ruleForNode,
               // not need to be adjusted.
               int argOffset = frameInfo.getOutgoingArgOffset(MF, argNo);
               if (argType->isFloatingPoint()) {
-                unsigned slotSize = frameInfo.getSizeOfEachArgOnStack();
+                unsigned slotSize = SparcV9FrameInfo::SizeOfEachArgOnStack;
                 assert(argSize <= slotSize && "Insufficient slot size!");
                 argOffset += slotSize - argSize;
               }
@@ -4132,7 +4132,7 @@ void GetInstructionsByRule(InstructionNode* subtreeRoot, int ruleForNode,
         Instruction* vaNextI = subtreeRoot->getInstruction();
         assert(target.getTargetData().getTypeSize(vaNextI->getType()) <= 8 &&
                "We assumed that all LLVM parameter types <= 8 bytes!");
-        int argSize = target.getFrameInfo()->getSizeOfEachArgOnStack();
+        unsigned argSize = SparcV9FrameInfo::SizeOfEachArgOnStack;
         mvec.push_back(BuildMI(V9::ADDi, 3).addReg(vaNextI->getOperand(0)).
                        addSImm(argSize).addRegDef(vaNextI));
         break;
