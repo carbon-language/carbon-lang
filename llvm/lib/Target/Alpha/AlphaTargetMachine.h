@@ -18,7 +18,6 @@
 #include "llvm/Target/TargetFrameInfo.h"
 #include "llvm/PassManager.h"
 #include "AlphaInstrInfo.h"
-//#include "AlphaJITInfo.h"
 
 namespace llvm {
 
@@ -28,7 +27,6 @@ class IntrinsicLowering;
 class AlphaTargetMachine : public TargetMachine {
   AlphaInstrInfo InstrInfo;
   TargetFrameInfo FrameInfo;
-  //  AlphaJITInfo JITInfo;
 
 public:
   AlphaTargetMachine(const Module &M, IntrinsicLowering *IL);
@@ -38,13 +36,7 @@ public:
   virtual const MRegisterInfo *getRegisterInfo() const {
     return &InstrInfo.getRegisterInfo();
   }
-  //  virtual TargetJITInfo *getJITInfo() {
-  //    return &JITInfo;
-  //  }
  
-  virtual bool addPassesToEmitMachineCode(FunctionPassManager &PM,
-					  MachineCodeEmitter &MCE);
-  
   virtual bool addPassesToEmitAssembly(PassManager &PM, std::ostream &Out);
   
 };

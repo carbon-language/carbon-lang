@@ -29,14 +29,6 @@ AlphaTargetMachine::AlphaTargetMachine( const Module &M, IntrinsicLowering *IL)
     FrameInfo(TargetFrameInfo::StackGrowsDown, 8, 0) //TODO: check these
 {}
 
-bool AlphaTargetMachine::addPassesToEmitMachineCode(FunctionPassManager &PM,
-					  MachineCodeEmitter &MCE)
-{
-  assert(0 && "TODO");
-  return false;
-}
-
-
 /// addPassesToEmitAssembly - Add passes to the specified pass manager
 /// to implement a static compiler for this target.
 ///
