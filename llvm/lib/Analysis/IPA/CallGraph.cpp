@@ -135,7 +135,7 @@ static void WriteToOutput(const CallGraphNode *CGN, std::ostream &o) {
     o << "Call graph node for function: '"
       << CGN->getFunction()->getName() <<"'\n";
   else
-    o << "Call graph node null function:\n";
+    o << "Call graph node <<null function: 0x" << CGN << ">>:\n";
 
   for (unsigned i = 0; i < CGN->size(); ++i)
     if ((*CGN)[i]->getFunction())
@@ -146,8 +146,12 @@ static void WriteToOutput(const CallGraphNode *CGN, std::ostream &o) {
 }
 
 void CallGraph::print(std::ostream &o, const Module *M) const {
-  o << "CallGraph Root is:\n" << getRoot();
-
+  o << "CallGraph Root is: ";
+  if (getRoot()->getFunction())
+    o << getRoot()->getFunction()->getName() << "\n";
+  else
+    o << "<<null function: 0x" << getRoot() << ">>\n";
+  
   for (CallGraph::const_iterator I = begin(), E = end(); I != E; ++I)
     WriteToOutput(I->second, o);
 }
