@@ -2166,6 +2166,7 @@ void BytecodeReader::ParseBytecode(BufPtr Buf, unsigned Length,
                                    const std::string &ModuleID) {
 
   try {
+    RevisionNum = 0;
     At = MemStart = BlockStart = Buf;
     MemEnd = BlockEnd = Buf + Length;
 
