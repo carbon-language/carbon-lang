@@ -31,6 +31,7 @@
 #include "llvm/Support/InstVisitor.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "Support/Debug.h"
+#include "Support/hash_map"
 #include "Support/Statistic.h"
 #include "Support/STLExtras.h"
 #include <algorithm>
@@ -95,9 +96,19 @@ public:
 namespace {
 class SCCP : public FunctionPass, public InstVisitor<SCCP> {
   std::set<BasicBlock*>     BBExecutable;// The basic blocks that are executable
-  std::map<Value*, InstVal> ValueState;  // The state each value is in...
+  hash_map<Value*, InstVal> ValueState;  // The state each value is in...
 
+  // The reason for two worklists is that overdefined is the lowest state
+  // on the lattice, and moving things to overdefined as fast as possible
+  // makes SCCP converge much faster.
+  // By having a separate worklist, we accomplish this because everything
+  // possibly overdefined will become overdefined at the soonest possible
+  // point.
+  std::vector<Instruction*> OverdefinedInstWorkList;// The overdefined 
+                                                    // instruction work list
   std::vector<Instruction*> InstWorkList;// The instruction work list
+
+
   std::vector<BasicBlock*>  BBWorkList;  // The BasicBlock work list
 
   /// UsersOfOverdefinedPHIs - Keep track of any users of PHI nodes that are not
@@ -126,7 +137,7 @@ public:
 private:
   friend class InstVisitor<SCCP>;        // Allow callbacks from visitor
 
-  // markValueOverdefined - Make a value be marked as "constant".  If the value
+  // markConstant - Make a value be marked as "constant".  If the value
   // is not already a constant, add it to the instruction work list so that 
   // the users of the instruction are updated later.
   //
@@ -140,14 +151,14 @@ private:
     markConstant(ValueState[I], I, C);
   }
 
-  // markValueOverdefined - Make a value be marked as "overdefined". If the
-  // value is not already overdefined, add it to the instruction work list so
-  // that the users of the instruction are updated later.
-  //
+  // markOverdefined - Make a value be marked as "overdefined". If the
+  // value is not already overdefined, add it to the overdefined instruction 
+  // work list so that the users of the instruction are updated later.
+  
   inline void markOverdefined(InstVal &IV, Instruction *I) {
     if (IV.markOverdefined()) {
       DEBUG(std::cerr << "markOverdefined: " << *I);
-      InstWorkList.push_back(I);  // Only instructions go on the work list
+      OverdefinedInstWorkList.push_back(I);  // Only instructions go on the work list
     }
   }
   inline void markOverdefined(Instruction *I) {
@@ -161,7 +172,7 @@ private:
   // Instruction object, then use this accessor to get its value from the map.
   //
   inline InstVal &getValueState(Value *V) {
-    std::map<Value*, InstVal>::iterator I = ValueState.find(V);
+    hash_map<Value*, InstVal>::iterator I = ValueState.find(V);
     if (I != ValueState.end()) return I->second;  // Common case, in the map
       
     if (Constant *CPV = dyn_cast<Constant>(V)) {  // Constants are constant
@@ -282,8 +293,26 @@ bool SCCP::runOnFunction(Function &F) {
   BBExecutable.insert(F.begin());   // Basic block is executable!
   BBWorkList.push_back(F.begin());  // Add the block to the work list!
 
-  // Process the work lists until their are empty!
-  while (!BBWorkList.empty() || !InstWorkList.empty()) {
+  // Process the work lists until they are empty!
+  while (!BBWorkList.empty() || !InstWorkList.empty() || 
+	 !OverdefinedInstWorkList.empty()) {
+    // Process the instruction work list...
+    while (!OverdefinedInstWorkList.empty()) {
+      Instruction *I = OverdefinedInstWorkList.back();
+      OverdefinedInstWorkList.pop_back();
+
+      DEBUG(std::cerr << "\nPopped off OI-WL: " << I);
+      
+      // "I" got into the work list because it either made the transition from
+      // bottom to constant
+      //
+      // Anything on this worklist that is overdefined need not be visited
+      // since all of its users will have already been marked as overdefined
+      // Update all of the users of this instruction's value...
+      //
+      for_each(I->use_begin(), I->use_end(),
+	       bind_obj(this, &SCCP::OperandChangedState));
+    }
     // Process the instruction work list...
     while (!InstWorkList.empty()) {
       Instruction *I = InstWorkList.back();
@@ -292,12 +321,16 @@ bool SCCP::runOnFunction(Function &F) {
       DEBUG(std::cerr << "\nPopped off I-WL: " << *I);
       
       // "I" got into the work list because it either made the transition from
-      // bottom to constant, or to Overdefined.
+      // bottom to constant
       //
+      // Anything on this worklist that is overdefined need not be visited
+      // since all of its users will have already been marked as overdefined.
       // Update all of the users of this instruction's value...
       //
-      for_each(I->use_begin(), I->use_end(),
-	       bind_obj(this, &SCCP::OperandChangedState));
+      InstVal &Ival = getValueState (I);
+      if (!Ival.isOverdefined())
+	for_each(I->use_begin(), I->use_end(),
+		 bind_obj(this, &SCCP::OperandChangedState));
     }
 
     // Process the basic block work list...
@@ -348,6 +381,7 @@ bool SCCP::runOnFunction(Function &F) {
   // Reset state so that the next invocation will have empty data structures
   BBExecutable.clear();
   ValueState.clear();
+  std::vector<Instruction*>().swap(OverdefinedInstWorkList);
   std::vector<Instruction*>().swap(InstWorkList);
   std::vector<BasicBlock*>().swap(BBWorkList);
 
