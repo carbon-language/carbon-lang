@@ -12,6 +12,10 @@ E: vadve@cs.uiuc.edu
 W: http://www.cs.uiuc.edu/~vadve/
 D: The Sparc64 backend, provider of much wisdom, and motivator for LLVM
 
+N: Nate Begeman
+E: natebegeman@mac.com
+D: Portions of the PowerPC backend
+
 N: Tanya Brethour
 E: tonic@nondot.org
 W: http://nondot.org/~tonic/
@@ -20,7 +24,8 @@ D: The llvm-ar tool
 N: Misha Brukman
 E: brukman+llvm@uiuc.edu
 W: http://misha.brukman.net
-D: Portions of X86 and Sparc JIT compilers, incremental bytecode loader
+D: Portions of X86 and Sparc JIT compilers, PowerPC backend
+D: Incremental bytecode loader
 
 N: Cameron Buschardt
 E: buschard@uiuc.edu
@@ -40,6 +45,9 @@ W: http://www.students.uiuc.edu/~gaeke/
 D: Portions of X86 static and JIT compilers. 
 D: Dynamic trace optimizer 
 D: FreeBSD/X86 compatibility fixes, the llvm-nm tool
+
+N: Louis Gerbarg
+D: Portions of the PowerPC backend
 
 N: Chris Lattner
 E: sabre@nondot.org
