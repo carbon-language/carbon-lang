@@ -484,7 +484,8 @@ static const InstrIssueDelta  SparcInstrIssueDeltas[] = {
   { V9::UDIVXi,		true,	true,	68 },
 //{ V9::SDIVcc,		true,	true,	36 },
 //{ V9::UDIVcc,		true,	true,	37 },
-  { V9::WRCCR,		true,	true,	4 },
+  { V9::WRCCRr,		true,	true,	4 },
+  { V9::WRCCRi,		true,	true,	4 },
 //{ V9::WRPR,		true,	true,	4 },
 //{ V9::RDCCR,		true,	true,	0 }, // no bubbles after, but see below
 //{ V9::RDPR,		true,	true,	0 },
