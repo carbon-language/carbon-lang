@@ -6,6 +6,13 @@ This directory houses a 32-bit SPARC V8 backend employing a expander-based
 instruction selector.  It is not yet functionally complete.  Watch
 this space for more news coming soon!
 
+Current shootout results as of 28-Sept-2004
+-------------------------------------------
+
+Working: ackermann fib2 hash hello lists matrix methcall nestedloop
+         objinst sieve strcat
+Broken: ary3 heapsort random 
+
 To-do
 -----
 
