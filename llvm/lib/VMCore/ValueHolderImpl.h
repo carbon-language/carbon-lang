@@ -138,4 +138,34 @@ ValueHolder<ValueSubclass,ItemParentType,SymTabType>
   return I;
 }
 
+// ValueHolder::insert - This method inserts the specified _range_ of values
+// before the 'Pos' iterator, and returns an iterator to the first newly
+// inserted element.  This currently only works for vector iterators...
+//
+// FIXME: This is not generic so that the code does not have to be around
+// to be used... is this ok?
+//
+template<class ValueSubclass, class ItemParentType, class SymTabType>
+void ValueHolder<ValueSubclass,ItemParentType,SymTabType>
+::insert(iterator Pos,                     // Where to insert
+         iterator First, iterator Last) {   // Vector to read insts from
+
+  // Check to make sure that the values are not already in some valueholder...
+  
+  for (iterator X = First; X != Last; ++X) {
+    assert((*X)->getParent() == 0 &&
+           "Cannot insert into valueholder, value already has a parent!");
+    (*X)->setParent(ItemParent);
+  }
+
+  // Add all of the values to the value holder...
+  ValueList.insert(Pos, First, Last);
+
+  // Insert all of the instructions in the symbol table...
+  if (Parent)
+    for (;First != Last; ++First)
+      if ((*First)->hasName())
+        Parent->getSymbolTableSure()->insert(*First);
+}
+
 #endif
