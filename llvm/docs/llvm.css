@@ -67,5 +67,17 @@ TABLE       { text-align: center; border: 2px solid black;
                   display:table;
                 }
 
+TABLE.layout    { text-align: left; border: none; border-collapse; collapse;
+                  padding: 4px 4px 4px 4px; }
+TR.layout       { border: none; padding: 4pt 4pt 2pt 2pt; }
+TD.layout       { border: none; padding: 4pt 4pt 2pt 2pt; 
+                  vertical-align: top;}
+TD.left         { border: none; padding: 4pt 4pt 2pt 2pt; text-align: left; 
+                  vertical-align: top;}
+TD.right        { border: none; padding: 4pt 4pt 2pt 2pt; text-align: right; 
+                  vertical-align: top;}
+TH.layout       { border: none font-weight: bold; font-size: 105%; 
+                  text-align:center; vertical-align: middle; }
+
 /* Left align table cell */
 .td_left        { border: 2px solid gray; text-align: left; }
