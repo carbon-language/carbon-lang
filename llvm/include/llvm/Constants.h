@@ -8,7 +8,12 @@
 //===----------------------------------------------------------------------===//
 //
 // This file contains the declarations for the subclasses of Constant, which
-// represent the different type of constant pool values
+// represent the different flavors of constant values that live in LLVM.  Note
+// that Constants are immutable (once created they never change) and are fully
+// shared by structural equivalence.  This means that two structurally
+// equivalent constants will always have the same address.  Constant's are
+// created on demand as needed and never deleted: thus clients don't have to
+// worry about the lifetime of the objects.
 //
 //===----------------------------------------------------------------------===//
 
@@ -31,8 +36,7 @@ struct ConstantCreator;
 template<class ConstantClass, class TypeClass>
 struct ConvertConstantType;
 
-
-//===---------------------------------------------------------------------------
+//===----------------------------------------------------------------------===//
 /// ConstantIntegral - Shared superclass of boolean and integer constants.
 ///
 /// This class just defines some common interfaces to be implemented.
@@ -86,7 +90,7 @@ public:
 };
 
 
-//===---------------------------------------------------------------------------
+//===----------------------------------------------------------------------===//
 /// ConstantBool - Boolean Values
 ///
 class ConstantBool : public ConstantIntegral {
@@ -121,7 +125,7 @@ public:
 };
 
 
-//===---------------------------------------------------------------------------
+//===----------------------------------------------------------------------===//
 /// ConstantInt - Superclass of ConstantSInt & ConstantUInt, to make dealing
 /// with integral constants easier.
 ///
@@ -161,7 +165,7 @@ public:
 };
 
 
-//===---------------------------------------------------------------------------
+//===----------------------------------------------------------------------===//
 /// ConstantSInt - Signed Integer Values [sbyte, short, int, long]
 ///
 class ConstantSInt : public ConstantInt {
@@ -214,7 +218,7 @@ public:
   }
 };
 
-//===---------------------------------------------------------------------------
+//===----------------------------------------------------------------------===//
 /// ConstantUInt - Unsigned Integer Values [ubyte, ushort, uint, ulong]
 ///
 class ConstantUInt : public ConstantInt {
@@ -251,7 +255,7 @@ public:
 };
 
 
-//===---------------------------------------------------------------------------
+//===----------------------------------------------------------------------===//
 /// ConstantFP - Floating Point Values [float, double]
 ///
 class ConstantFP : public Constant {
@@ -307,7 +311,7 @@ public:
   }
 };
 
-//===---------------------------------------------------------------------------
+//===----------------------------------------------------------------------===//
 /// ConstantAggregateZero - All zero aggregate value
 ///
 class ConstantAggregateZero : public Constant {
@@ -338,7 +342,7 @@ public:
 };
 
 
-//===---------------------------------------------------------------------------
+//===----------------------------------------------------------------------===//
 /// ConstantArray - Constant Array Declarations
 ///
 class ConstantArray : public Constant {
@@ -386,7 +390,7 @@ public:
 };
 
 
-//===---------------------------------------------------------------------------
+//===----------------------------------------------------------------------===//
 // ConstantStruct - Constant Struct Declarations
 //
 class ConstantStruct : public Constant {
@@ -426,7 +430,7 @@ public:
   }
 };
 
-//===---------------------------------------------------------------------------
+//===----------------------------------------------------------------------===//
 /// ConstantPacked - Constant Packed Declarations
 ///
 class ConstantPacked : public Constant {
@@ -464,7 +468,7 @@ public:
   }
 };
 
-//===---------------------------------------------------------------------------
+//===----------------------------------------------------------------------===//
 /// ConstantPointerNull - a constant pointer value that points to null
 ///
 class ConstantPointerNull : public Constant {
@@ -501,12 +505,12 @@ public:
 };
 
 
-// ConstantExpr - a constant value that is initialized with an expression using
-// other constant values.  This is only used to represent values that cannot be
-// evaluated at compile-time (e.g., something derived from an address) because
-// it does not have a mechanism to store the actual value.  Use the appropriate
-// Constant subclass above for known constants.
-//
+/// ConstantExpr - a constant value that is initialized with an expression using
+/// other constant values.  This is only used to represent values that cannot be
+/// evaluated at compile-time (e.g., something derived from an address) because
+/// it does not have a mechanism to store the actual value.  Use the appropriate
+/// Constant subclass above for known constants.
+///
 class ConstantExpr : public Constant {
   unsigned iType;      // Operation type (an Instruction opcode)
   friend struct ConstantCreator<ConstantExpr,Type,
