@@ -125,8 +125,10 @@ int main(int argc, char **argv) {
     else if (Opt->getDataCtor())
       Passes.add(Opt->getDataCtor()(TD));    // Provide dummy target data...
     else if (Opt->getTargetCtor()) {
+#if 0
       if (target.get() == NULL)
         target.reset(allocateSparcTargetMachine()); // FIXME: target option
+#endif
       assert(target.get() && "Could not allocate target machine!");
       Passes.add(Opt->getTargetCtor()(*target.get()));
     } else
