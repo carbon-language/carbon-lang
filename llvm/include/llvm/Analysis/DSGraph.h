@@ -368,10 +368,18 @@ class DSCallSite {
   DSNodeHandle Callee;                  // The function node called
   std::vector<DSNodeHandle> CallArgs;   // The pointer arguments
 
+  static DSNode *mapLookup(const DSNode *Node,
+                           const std::map<const DSNode*, DSNode*> &NodeMap) {
+    if (Node == 0) return 0;
+    std::map<const DSNode*, DSNode*>::const_iterator I = NodeMap.find(Node);
+    assert(I != NodeMap.end() && "Not not in mapping!");
+    return I->second;
+  }
+
   DSCallSite();                         // DO NOT IMPLEMENT
 public:
-  /// Note - This ctor destroys the argument vector passed in.  On exit, the
-  /// argument vector is empty.
+  /// Constructor.  Note - This ctor destroys the argument vector passed in.  On
+  /// exit, the argument vector is empty.
   ///
   DSCallSite(CallInst &inst, const DSNodeHandle &rv, const DSNodeHandle &callee,
              std::vector<DSNodeHandle> &Args)
@@ -379,16 +387,29 @@ public:
     Args.swap(CallArgs);
   }
 
-  /// Copy constructor with helper for cloning nodes.  The helper should be a
-  /// model of unary_function<const DSNodeHandle*, DSNodeHandle>, i.e., it
-  /// should take a pointer to DSNodeHandle and return a fresh DSNodeHandle.
-  /// If no helper is specified, this defaults to a simple copy constructor.
-  ///
-  template<typename CopyFunctor>
-  DSCallSite(const DSCallSite &FromCall, CopyFunctor nodeCopier);
-  DSCallSite(const DSCallSite &DSCS)
+  DSCallSite(const DSCallSite &DSCS)   // Simple copy ctor
     : Inst(DSCS.Inst), RetVal(DSCS.RetVal),
       Callee(DSCS.Callee), CallArgs(DSCS.CallArgs) {}
+
+  /// Mapping copy constructor - This constructor takes a preexisting call site
+  /// to copy plus a map that specifies how the links should be transformed.
+  /// This is useful when moving a call site from one graph to another.
+  ///
+  DSCallSite(const DSCallSite &FromCall,
+             const std::map<const DSNode*, DSNode*> &NodeMap) {
+    Inst = FromCall.Inst;
+    RetVal.setOffset(FromCall.RetVal.getOffset());
+    RetVal.setNode(mapLookup(FromCall.RetVal.getNode(), NodeMap));
+    Callee.setOffset(FromCall.Callee.getOffset());
+    Callee.setNode(mapLookup(FromCall.Callee.getNode(), NodeMap));
+    CallArgs.reserve(FromCall.CallArgs.size());
+
+    for (unsigned i = 0, e = FromCall.CallArgs.size(); i != e; ++i) {
+      const DSNodeHandle &OldNH = FromCall.CallArgs[i];
+      CallArgs.push_back(DSNodeHandle(mapLookup(OldNH.getNode(), NodeMap),
+                                      OldNH.getOffset()));
+    }
+  }
 
   // Accessor functions...
   Function           &getCaller()     const;

@@ -57,19 +57,13 @@ void TDDataStructures::ResolveCallSite(DSGraph &Graph,
     
     // TD ...Merge the formal arg scalar with the actual arg node
     DSNodeHandle &NodeForFormal = Graph.getNodeForValue(AI);
-    if (NodeForFormal.getNode())
-      NodeForFormal.mergeWith(CallSite.getPtrArg(i));
+    assert(NodeForFormal.getNode() && "Pointer argument has no dest node!");
+    NodeForFormal.mergeWith(CallSite.getPtrArg(i));
   }
   
   // Merge returned node in the caller with the "return" node in callee
   if (CallSite.getRetVal().getNode() && Graph.getRetNode().getNode())
     Graph.getRetNode().mergeWith(CallSite.getRetVal());
-}
-
-
-static DSNodeHandle copyHelper(const DSNodeHandle* fromNode,
-                               std::map<const DSNode*, DSNode*> *NodeMap) {
-  return DSNodeHandle((*NodeMap)[fromNode->getNode()], fromNode->getOffset());
 }
 
 
@@ -103,12 +97,9 @@ DSGraph &TDDataStructures::calculateGraph(Function &F) {
     DEBUG(std::cerr << "\t [TD] Inlining caller #" << c << " '"
           << Caller.getName() << "' into callee: " << F.getName() << "\n");
     
-    if (&Caller == &F) {
-      // Self-recursive call: this can happen after a cycle of calls is inlined.
-      ResolveCallSite(*Graph, CallSite);
-    } else {
-      // Recursively compute the graph for the Caller.  That should
-      // be fully resolved except if there is mutual recursion...
+    if (&Caller != &F) {
+      // Recursively compute the graph for the Caller.  It should be fully
+      // resolved except if there is mutual recursion...
       //
       DSGraph &CG = calculateGraph(Caller);  // Graph to inline
       
@@ -133,10 +124,9 @@ DSGraph &TDDataStructures::calculateGraph(Function &F) {
 
       // Make a temporary copy of the call site, and transform the argument node
       // pointers.
-      DSCallSite TmpCallSite(CallSite, std::bind2nd(std::ptr_fun(&copyHelper),
-                                                    &OldNodeMap));
-      ResolveCallSite(*Graph, CallSite);
+      //
     }
+    ResolveCallSite(*Graph, CallSite); 
   }
 
   // Recompute the Incomplete markers and eliminate unreachable nodes.

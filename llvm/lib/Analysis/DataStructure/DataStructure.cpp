@@ -361,18 +361,6 @@ Function &DSCallSite::getCaller() const {
   return *Inst->getParent()->getParent();
 }
 
-template <typename CopyFunctor>
-DSCallSite::DSCallSite(const DSCallSite &FromCall, CopyFunctor nodeCopier)
-  : Inst(FromCall.Inst) {
-
-  RetVal = nodeCopier(&FromCall.RetVal);
-  Callee = nodeCopier(&FromCall.Callee);
-
-  CallArgs.reserve(FromCall.CallArgs.size());
-  for (unsigned j = 0, ej = FromCall.CallArgs.size(); j != ej; ++j)
-    CallArgs.push_back(nodeCopier(&FromCall.CallArgs[j]));
-}
-
 
 //===----------------------------------------------------------------------===//
 // DSGraph Implementation
@@ -402,11 +390,6 @@ DSGraph::~DSGraph() {
 void DSGraph::dump() const { print(std::cerr); }
 
 
-static DSNodeHandle copyHelper(const DSNodeHandle* fromNode,
-                               std::map<const DSNode*, DSNode*> *NodeMap) {
-  return DSNodeHandle((*NodeMap)[fromNode->getNode()], fromNode->getOffset());
-}
-
 // Helper function used to clone a function list.
 // 
 static void CopyFunctionCallsList(const vector<DSCallSite>& fromCalls,
@@ -415,8 +398,7 @@ static void CopyFunctionCallsList(const vector<DSCallSite>& fromCalls,
   unsigned FC = toCalls.size();  // FirstCall
   toCalls.reserve(FC+fromCalls.size());
   for (unsigned i = 0, ei = fromCalls.size(); i != ei; ++i)
-    toCalls.push_back(DSCallSite(fromCalls[i], 
-                         std::bind2nd(std::ptr_fun(&copyHelper), &NodeMap)));
+    toCalls.push_back(DSCallSite(fromCalls[i], NodeMap));
 }
 
 /// remapLinks - Change all of the Links in the current node according to the
