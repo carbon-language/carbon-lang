@@ -185,7 +185,7 @@ DSGraph::DSGraph(const TargetData &td, Function &F, DSGraph *GG)
     for (DSScalarMap::global_iterator I = ScalarMap.global_begin();
          I != ScalarMap.global_end(); ++I)
       if (GlobalVariable *GV = dyn_cast<GlobalVariable>(*I))
-        if (GV->isConstant())
+        if (!GV->isExternal() && GV->isConstant())
           RC.merge(ScalarMap[GV], GG->ScalarMap[GV]);
   }
 
