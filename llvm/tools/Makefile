@@ -18,8 +18,7 @@ include $(LEVEL)/Makefile.config
 # on fork(2) behavior that Win32 doesn't have. At some point they'll be 
 # rewritten to not depend on fork at which time they should be added back to
 # the list above.
-
-ifeq ($(OS),Win32)
+ifneq ($(LLVM_ON_UNIX),1)
 PARALLEL_DIRS := $(filter-out bugpoint llvm-db,$(PARALLEL_DIRS))
 endif
 
