@@ -39,6 +39,7 @@ class SSARegMap {
   /// function with the specified register class.
   ///
   unsigned createVirtualRegister(const TargetRegisterClass *RegClass) {
+    assert(RegClass && "Cannot create register without RegClass!");
     RegClassMap.grow(NextRegNum);
     RegClassMap[NextRegNum] = RegClass;
     return NextRegNum++;
