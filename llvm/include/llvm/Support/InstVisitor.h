@@ -163,6 +163,7 @@ struct InstVisitor {
   RetTy visitGetElementPtrInst(GetElementPtrInst &I){ DELEGATE(Instruction); }
   RetTy visitPHINode(PHINode       &I)              { DELEGATE(Instruction); }
   RetTy visitCastInst(CastInst     &I)              { DELEGATE(Instruction); }
+  RetTy visitSelectInst(SelectInst &I)              { DELEGATE(Instruction); }
   RetTy visitCallInst(CallInst     &I)              { DELEGATE(Instruction); }
   RetTy visitShiftInst(ShiftInst   &I)              { DELEGATE(Instruction); }
   RetTy visitVANextInst(VANextInst &I)              { DELEGATE(Instruction); }
