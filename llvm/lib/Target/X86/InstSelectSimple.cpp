@@ -829,7 +829,14 @@ unsigned ISel::EmitComparison(unsigned OpNum, Value *Op0, Value *Op1,
   unsigned Op0r = getReg(Op0, MBB, IP);
 
   // Special case handling of: cmp R, i
-  if (ConstantInt *CI = dyn_cast<ConstantInt>(Op1)) {
+  if (isa<ConstantPointerNull>(Op1)) {
+    if (OpNum < 2)    // seteq/setne -> test
+      BuildMI(*MBB, IP, X86::TEST32rr, 2).addReg(Op0r).addReg(Op0r);
+    else
+      BuildMI(*MBB, IP, X86::CMP32ri, 2).addReg(Op0r).addImm(0);
+    return OpNum;
+
+  } else if (ConstantInt *CI = dyn_cast<ConstantInt>(Op1)) {
     if (Class == cByte || Class == cShort || Class == cInt) {
       unsigned Op1v = CI->getRawValue();
 
