@@ -329,13 +329,19 @@ bool BytecodeParser::ParseInstruction(const uchar *&Buf, const uchar *EndBuf,
   case Instruction::Malloc:
     if (Raw.NumOperands > 2) return true;
     V = Raw.NumOperands ? getValue(Type::UIntTy, Raw.Arg1) : 0;
-    Res = new MallocInst(Raw.Ty, V);
+    if (const PointerType *PTy = dyn_cast<PointerType>(Raw.Ty))
+      Res = new MallocInst(PTy->getElementType(), V);
+    else
+      return true;
     return false;
 
   case Instruction::Alloca:
     if (Raw.NumOperands > 2) return true;
     V = Raw.NumOperands ? getValue(Type::UIntTy, Raw.Arg1) : 0;
-    Res = new AllocaInst(Raw.Ty, V);
+    if (const PointerType *PTy = dyn_cast<PointerType>(Raw.Ty))
+      Res = new AllocaInst(PTy->getElementType(), V);
+    else
+      return true;
     return false;
 
   case Instruction::Free:

@@ -399,12 +399,14 @@ void MutateStructTypes::transformFunction(Function *m) {
         // Memory Instructions
       case Instruction::Alloca:
         NewI = 
-          new AllocaInst(ConvertType(I.getType()),
+          new MallocInst(
+                  ConvertType(cast<PointerType>(I.getType())->getElementType()),
                          I.getNumOperands() ? ConvertValue(I.getOperand(0)) :0);
         break;
       case Instruction::Malloc:
         NewI = 
-          new MallocInst(ConvertType(I.getType()),
+          new MallocInst(
+                  ConvertType(cast<PointerType>(I.getType())->getElementType()),
                          I.getNumOperands() ? ConvertValue(I.getOperand(0)) :0);
         break;
 

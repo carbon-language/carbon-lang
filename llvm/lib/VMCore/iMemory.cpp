@@ -10,8 +10,7 @@
 
 AllocationInst::AllocationInst(const Type *Ty, Value *ArraySize, unsigned iTy, 
                                const std::string &Name, Instruction *InsertBef)
-  : Instruction(Ty, iTy, Name, InsertBef) {
-  assert(isa<PointerType>(Ty) && "Can't allocate a non pointer type!");
+  : Instruction(PointerType::get(Ty), iTy, Name, InsertBef) {
 
   // ArraySize defaults to 1.
   if (!ArraySize) ArraySize = ConstantUInt::get(Type::UIntTy, 1);
@@ -29,6 +28,16 @@ bool AllocationInst::isArrayAllocation() const {
 
 const Type *AllocationInst::getAllocatedType() const {
   return getType()->getElementType();
+}
+
+AllocaInst::AllocaInst(const AllocaInst &AI)
+  : AllocationInst(AI.getType()->getElementType(), (Value*)AI.getOperand(0),
+                   Instruction::Alloca) {
+}
+
+MallocInst::MallocInst(const MallocInst &MI)
+  : AllocationInst(MI.getType()->getElementType(), (Value*)MI.getOperand(0),
+                   Instruction::Malloc) {
 }
 
 //===----------------------------------------------------------------------===//

@@ -63,13 +63,15 @@ public:
 //                                MallocInst Class
 //===----------------------------------------------------------------------===//
 
-struct MallocInst : public AllocationInst {
+class MallocInst : public AllocationInst {
+  MallocInst(const MallocInst &MI);
+public:
   MallocInst(const Type *Ty, Value *ArraySize = 0, const std::string &Name = "",
              Instruction *InsertBefore = 0)
     : AllocationInst(Ty, ArraySize, Malloc, Name, InsertBefore) {}
 
   virtual Instruction *clone() const { 
-    return new MallocInst((Type*)getType(), (Value*)Operands[0].get());
+    return new MallocInst(*this);
   }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
@@ -87,13 +89,15 @@ struct MallocInst : public AllocationInst {
 //                                AllocaInst Class
 //===----------------------------------------------------------------------===//
 
-struct AllocaInst : public AllocationInst {
+class AllocaInst : public AllocationInst {
+  AllocaInst(const AllocaInst &);
+public:
   AllocaInst(const Type *Ty, Value *ArraySize = 0, const std::string &Name = "",
              Instruction *InsertBefore = 0)
     : AllocationInst(Ty, ArraySize, Alloca, Name, InsertBefore) {}
 
   virtual Instruction *clone() const { 
-    return new AllocaInst((Type*)getType(), (Value*)Operands[0].get());
+    return new AllocaInst(*this);
   }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:

@@ -1639,9 +1639,8 @@ void PoolAllocate::CreatePools(Function *F, const vector<AllocDSNode*> &Allocs,
            "Pool type should not be abstract anymore!");
 
     // Add an allocation and a free for each pool...
-    AllocaInst *PoolAlloc
-      = new AllocaInst(PointerType::get(PI.PoolType), 0,
-                       CurModule->getTypeName(PI.PoolType));
+    AllocaInst *PoolAlloc = new AllocaInst(PI.PoolType, 0,
+                                           CurModule->getTypeName(PI.PoolType));
     PI.Handle = PoolAlloc;
     EntryNodeInsts.push_back(PoolAlloc);
     AllocationInst *AI = Allocs[i]->getAllocation();
