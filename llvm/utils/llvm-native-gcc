@@ -4,7 +4,7 @@
 
 # set up defaults.
 $Verbose = 0;
-$SaveTemps = 0;
+$SaveTemps = 1;
 $PreprocessOnly = 0;
 $CompileDontLink = 0;
 $Backend = 'cbe';
@@ -114,14 +114,14 @@ sub CompileBytecodeToNative {
 		} else {
 			$GeneratedCode = "/tmp/nativebuild-$$.c";
 		}
-		run "llc -march=c -f -o $GeneratedCode $BCFile";
+		run "llc -enable-correct-eh-support -march=c -f -o $GeneratedCode $BCFile";
 	} elsif ($Backend eq 'llc') {
 		if ($SaveTemps) {
 			$GeneratedCode = "${OutputFile}.s";
 		} else {
 			$GeneratedCode = "/tmp/nativebuild-$$.s";
 		}
-		run "llc -f -o $GeneratedCode $BCFile";
+		run "llc -enable-correct-eh-support -f -o $GeneratedCode $BCFile";
 	}
 	my $LibDirs = join (" ", @LibDirs);
 	my $Libs = join (" ", @Libs);
@@ -145,10 +145,10 @@ sub CompileCToNative {
 	my $GeneratedCode;
 	if ($Backend eq 'cbe') {
 		$GeneratedCode = "${OutputFile}.cbe.c";
-		run "llc -march=c -f -o $GeneratedCode $BCFile";
+		run "llc -enable-correct-eh-support -march=c -f -o $GeneratedCode $BCFile";
 	} elsif ($Backend eq 'llc') {
 		$GeneratedCode = "${OutputFile}.llc.s";
-		run "llc -f -o $GeneratedCode $BCFile";
+		run "llc -enable-correct-eh-support -f -o $GeneratedCode $BCFile";
 	}
 	my $NativeGCCOptions = "";
 	if ($CompileDontLink) {
