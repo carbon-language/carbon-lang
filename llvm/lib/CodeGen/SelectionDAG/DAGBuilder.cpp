@@ -20,9 +20,9 @@
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/InstVisitor.h"
+using namespace llvm;
 
 namespace llvm {
-
 struct SelectionDAGBuilder : public InstVisitor<SelectionDAGBuilder> {
   // DAG - the current dag we are building.
   SelectionDAG &DAG;
@@ -72,6 +72,7 @@ private:
   
   SelectionDAGNode *addSeqNode(SelectionDAGNode *N);
 };
+}  // end llvm namespace
 
 /// addSeqNode - The same as addNode, but the node is also included in the
 /// sequence nodes for this block.  This method should be called for any
@@ -273,4 +274,3 @@ SelectionDAG::SelectionDAG(MachineFunction &f, const TargetMachine &tm,
   Root = SDB.CurRoot;
 }
 
-} // End llvm namespace
