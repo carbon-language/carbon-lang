@@ -174,16 +174,22 @@ DSNodeHandle GraphBuilder::getValueDest(Value &Val) {
       return NH = getValueDest(*CPR->getValue());
     } else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C)) {
       if (CE->getOpcode() == Instruction::Cast)
-        return NH = getValueDest(*CE->getOperand(0));
-      if (CE->getOpcode() == Instruction::GetElementPtr) {
+        NH = getValueDest(*CE->getOperand(0));
+      else if (CE->getOpcode() == Instruction::GetElementPtr) {
         visitGetElementPtrInst(*CE);
         hash_map<Value*, DSNodeHandle>::iterator I = ScalarMap.find(CE);
         assert(I != ScalarMap.end() && "GEP didn't get processed right?");
-        return NH = I->second;
+        NH = I->second;
+      } else {
+        // This returns a conservative unknown node for any unhandled ConstExpr
+        return NH = createNode(DSNode::UnknownNode);
       }
+      if (NH.getNode() == 0) {  // (getelementptr null, X) returns null
+        ScalarMap.erase(V);
+        return 0;
+      }
+      return NH;
 
-      // This returns a conservative unknown node for any unhandled ConstExpr
-      return NH = createNode(DSNode::UnknownNode);
     } else if (ConstantIntegral *CI = dyn_cast<ConstantIntegral>(C)) {
       // Random constants are unknown mem
       return NH = createNode(DSNode::UnknownNode);
