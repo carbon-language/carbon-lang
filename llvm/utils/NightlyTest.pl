@@ -281,7 +281,7 @@ my $ProgramsTable = ReadFile "report.nightly.html";
 # Create a list of the tests which were run...
 #
 system "grep -E 'TEST-(PASS|FAIL)' < $Prefix-ProgramTest.txt "
-     . "| sort --key=3 > $Prefix-Tests.txt";
+     . "| sort > $Prefix-Tests.txt";
 
 # Compress the test output
 system "gzip $Prefix-ProgramTest.txt";
