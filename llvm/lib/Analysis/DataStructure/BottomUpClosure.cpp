@@ -320,12 +320,8 @@ void BUDataStructures::calculateGraph(DSGraph &Graph) {
 
   TempFCs.clear();
 
-  // Re-materialize nodes from the globals graph.
-  // Do not ignore globals inlined from callees -- they are not up-to-date!
-  assert(Graph.getInlinedGlobals().empty());
-  Graph.updateFromGlobalGraph();
-
   // Recompute the Incomplete markers
+  assert(Graph.getInlinedGlobals().empty());
   Graph.maskIncompleteMarkers();
   Graph.markIncompleteNodes(DSGraph::MarkFormalArgs);
 

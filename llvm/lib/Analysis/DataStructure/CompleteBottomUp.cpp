@@ -168,6 +168,7 @@ unsigned CompleteBUDataStructures::calculateSCCGraphs(DSGraph &FG,
 /// processGraph - Process the BU graphs for the program in bottom-up order on
 /// the SCC of the __ACTUAL__ call graph.  This builds "complete" BU graphs.
 void CompleteBUDataStructures::processGraph(DSGraph &G) {
+
   // The edges out of the current node are the call site targets...
   for (unsigned i = 0, e = G.getFunctionCalls().size(); i != e; ++i) {
     const DSCallSite &CS = G.getFunctionCalls()[i];
@@ -192,12 +193,8 @@ void CompleteBUDataStructures::processGraph(DSGraph &G) {
     }
   }
 
-  // Re-materialize nodes from the globals graph.
-  // Do not ignore globals inlined from callees -- they are not up-to-date!
-  assert(G.getInlinedGlobals().empty());
-  G.updateFromGlobalGraph();
-
   // Recompute the Incomplete markers
+  assert(G.getInlinedGlobals().empty());
   G.maskIncompleteMarkers();
   G.markIncompleteNodes(DSGraph::MarkFormalArgs);
 
