@@ -81,11 +81,7 @@ Program::ExecuteAndWait(const Path& path,
   // have embedded spaces.
 
   // First, determine the length of the command line.
-  std::string progname(path.getLast());
-  unsigned len = progname.length() + 1;
-  if (progname.find(' ') != std::string::npos)
-    len += 2;
-
+  unsigned len = 0;
   for (unsigned i = 0; args[i]; i++) {
     len += strlen(args[i]) + 1;
     if (strchr(args[i], ' '))
@@ -96,19 +92,10 @@ Program::ExecuteAndWait(const Path& path,
   char *command = reinterpret_cast<char *>(_alloca(len));
   char *p = command;
 
-  bool needsQuoting = progname.find(' ') != std::string::npos;
-  if (needsQuoting)
-    *p++ = '"';
-  memcpy(p, progname.c_str(), progname.length());
-  p += progname.length();
-  if (needsQuoting)
-    *p++ = '"';
-  *p++ = ' ';
-
   for (unsigned i = 0; args[i]; i++) {
     const char *arg = args[i];
 	size_t len = strlen(arg);
-    needsQuoting = strchr(arg, ' ') != 0;
+    bool needsQuoting = strchr(arg, ' ') != 0;
     if (needsQuoting)
       *p++ = '"';
     memcpy(p, arg, len);
