@@ -29,11 +29,6 @@ namespace llvm {
         typedef std::vector<unsigned> Virt2PhysMap;
         typedef std::vector<int> Virt2StackSlotMap;
 
-        enum {
-            NO_PHYS_REG   = 0,
-            NO_STACK_SLOT = INT_MAX
-        };
-
     private:
         MachineFunction* mf_;
         Virt2PhysMap v2pMap_;
@@ -49,6 +44,11 @@ namespace llvm {
         static unsigned fromIndex(unsigned index) {
             return index + MRegisterInfo::FirstVirtualRegister;
         }
+
+        enum {
+            NO_PHYS_REG   = 0,
+            NO_STACK_SLOT = INT_MAX
+        };
 
     public:
         VirtRegMap(MachineFunction& mf)
