@@ -272,8 +272,6 @@ StackerCompiler::compile(
             if (optLevel > 1) {
                 // Clean up disgusting code
                 Passes.add(createCFGSimplificationPass()); 
-                // Mark read-only globals const
-                Passes.add(createGlobalConstifierPass());  
                 // Remove unused globals
                 Passes.add(createGlobalDCEPass());         
                 // IP Constant Propagation
