@@ -9,7 +9,6 @@
 #include "llvm/Support/CFG.h"
 #include "Support/DepthFirstIterator.h"
 #include "Support/SetOperations.h"
-using std::set;
 
 //===----------------------------------------------------------------------===//
 //  PostDominatorSet Implementation
@@ -40,7 +39,7 @@ bool PostDominatorSet::runOnFunction(Function &F) {
   do {
     Changed = false;
 
-    set<const BasicBlock*> Visited;
+    std::set<const BasicBlock*> Visited;
     DomSetType WorkingSet;
     idf_iterator<BasicBlock*> It = idf_begin(Root), End = idf_end(Root);
     for ( ; It != End; ++It) {
