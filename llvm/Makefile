@@ -9,7 +9,6 @@
 LEVEL = .
 DIRS = lib/System lib/Support utils lib tools 
 
-
 ifneq ($(MAKECMDGOALS),tools-only)
 DIRS += runtime
 OPTIONAL_DIRS = examples projects
@@ -18,6 +17,19 @@ endif
 EXTRA_DIST := test llvm.spec include
 
 include $(LEVEL)/Makefile.common
+
+.PHONY: debug-opt-prof
+debug-opt-prof:
+	$(Echo) Building Debug Version
+	$(Verb) $(MAKE)
+	$(Echo)
+	$(Echo) Building Optimized Version
+	$(Echo)
+	$(Verb) $(MAKE) ENABLE_OPTIMIZED=1
+	$(Echo)
+	$(Echo) Building Profiling Version
+	$(Echo)
+	$(Verb) $(MAKE) ENABLE_PROFILING=1
 
 dist-hook::
 	$(Echo) Eliminating CVS directories from distribution
