@@ -179,6 +179,7 @@ private:
                                 const unsigned char *EndBuf);
 
   Value      *getValue(const Type *Ty, unsigned num, bool Create = true);
+  Value      *getValue(unsigned TypeID, unsigned num, bool Create = true);
   const Type *getType(unsigned ID);
   Constant   *getConstantValue(const Type *Ty, unsigned num);
 

@@ -55,8 +55,25 @@ const Type *BytecodeParser::getType(unsigned ID) {
   }
   
   //cerr << "Looking up Type ID: " << ID << "\n";
-  const Value *V = getValue(Type::TypeTy, ID, false);
-  return cast_or_null<Type>(V);
+
+  if (ID < Type::NumPrimitiveIDs) {
+    const Type *T = Type::getPrimitiveType((Type::PrimitiveID)ID);
+    if (T) return T;   // Asked for a primitive type...
+  }
+
+  // Otherwise, derived types need offset...
+  ID -= FirstDerivedTyID;
+
+  // Is it a module-level type?
+  if (ID < ModuleTypeValues.size())
+    return ModuleTypeValues[ID].get();
+
+  // Nope, is it a function-level type?
+  ID -= ModuleTypeValues.size();
+  if (ID < FunctionTypeValues.size())
+    return FunctionTypeValues[ID].get();
+
+  return 0;
 }
 
 int BytecodeParser::insertValue(Value *Val, ValueTable &ValueTab) {
@@ -95,35 +112,18 @@ void BytecodeParser::setValueTo(ValueTable &ValueTab, unsigned Slot,
   ValueTab[type]->setOperand(Slot-HasImplicitZeroInitializer, Val);
 }
 
+
 Value *BytecodeParser::getValue(const Type *Ty, unsigned oNum, bool Create) {
+  return getValue(getTypeSlot(Ty), oNum, Create);
+}
+
+Value *BytecodeParser::getValue(unsigned type, unsigned oNum, bool Create) {
+  assert(type != Type::TypeTyID && "getValue() cannot get types!");
   unsigned Num = oNum;
-  unsigned type = getTypeSlot(Ty);    // The type plane it lives in...
-
-  if (type == Type::TypeTyID) {   // The 'type' plane has implicit values
-    assert(Create == false);
-    if (Num < Type::NumPrimitiveIDs) {
-      const Type *T = Type::getPrimitiveType((Type::PrimitiveID)Num);
-      if (T) return (Value*)T;   // Asked for a primitive type...
-    }
-
-    // Otherwise, derived types need offset...
-    Num -= FirstDerivedTyID;
-
-    // Is it a module-level type?
-    if (Num < ModuleTypeValues.size())
-      return (Value*)ModuleTypeValues[Num].get();
-
-    // Nope, is it a function-level type?
-    Num -= ModuleTypeValues.size();
-    if (Num < FunctionTypeValues.size())
-      return (Value*)FunctionTypeValues[Num].get();
-
-    return 0;
-  }
 
   if (HasImplicitZeroInitializer && type >= FirstDerivedTyID) {
     if (Num == 0)
-      return Constant::getNullValue(Ty);
+      return Constant::getNullValue(getType(type));
     --Num;
   }
 
@@ -138,19 +138,13 @@ Value *BytecodeParser::getValue(const Type *Ty, unsigned oNum, bool Create) {
 
   if (!Create) return 0;  // Do not create a placeholder?
 
-  Value *d = 0;
-  switch (Ty->getPrimitiveID()) {
-  case Type::LabelTyID:
-    d = new BBPHolder(Ty, oNum);
-    break;
-  default:
-    d = new ValPHolder(Ty, oNum);
-    break;
-  }
+  const Type *Ty = getType(type);
+  Value *Val = type == Type::LabelTyID ? (Value*)new BBPHolder(Ty, oNum) : 
+                                         (Value*)new ValPHolder(Ty, oNum);
 
-  assert(d != 0 && "How did we not make something?");
-  if (insertValue(d, LateResolveValues) == -1) return 0;
-  return d;
+  assert(Val != 0 && "How did we not make something?");
+  if (insertValue(Val, LateResolveValues) == -1) return 0;
+  return Val;
 }
 
 /// getConstantValue - Just like getValue, except that it returns a null pointer
@@ -252,11 +246,12 @@ void BytecodeParser::ParseSymbolTable(const unsigned char *&Buf,
       if (read(Buf, EndBuf, Name, false))  // Not aligned...
         throw std::string("Buffer not aligned.");
 
-      Value *V = getValue(Ty, slot, false); // Find mapping...
-      if (V == 0) {
-        BCR_TRACE(3, "FAILED LOOKUP: Slot #" << slot << "\n");
-        throw std::string("Failed value look-up.");
-      }
+      Value *V;
+      if (Typ == Type::TypeTyID)
+        V = (Value*)getType(slot);
+      else
+        V = getValue(Typ, slot, false); // Find mapping...
+      if (V == 0) throw std::string("Failed value look-up.");
       BCR_TRACE(4, "Map: '" << Name << "' to #" << slot << ":" << *V;
                 if (!isa<Instruction>(V)) std::cerr << "\n");
 
