@@ -1649,6 +1649,7 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
   | PHI PHIList {
     const Type *Ty = $2->front().first->getType();
     $$ = new PHINode(Ty);
+    $$->op_reserve($2->size()*2);
     while ($2->begin() != $2->end()) {
       if ($2->front().first->getType() != Ty) 
 	ThrowException("All elements of a PHI node must be of the same type!");
