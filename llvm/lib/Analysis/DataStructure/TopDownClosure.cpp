@@ -8,12 +8,13 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Analysis/DataStructure.h"
+#include "llvm/Analysis/DSGraph.h"
 #include "llvm/Module.h"
 #include "llvm/DerivedTypes.h"
 #include "Support/Statistic.h"
 using std::map;
+using std::vector;
 
-#if 0
 static RegisterAnalysis<TDDataStructures>
 Y("tddatastructure", "Top-down Data Structure Analysis Closure");
 
@@ -41,40 +42,12 @@ bool TDDataStructures::run(Module &M) {
   return false;
 }
 
-
-// ResolveArguments - Resolve the formal and actual arguments for a function
-// call by merging the nodes for the actual arguments at the call site Call[] 
-// (these were copied over from the caller's graph into the callee's graph
-// by cloneInto, and the nodes can be found from OldNodeMap) with the
-// corresponding nodes for the formal arguments in the callee.
-// 
-static void ResolveArguments(std::vector<DSNodeHandle> &Call,
-                             Function &callee,
-                             std::map<Value*, DSNodeHandle> &CalleeValueMap,
-                             std::map<const DSNode*, DSNode*> OldNodeMap,
-                             bool ignoreNodeMap) {
-  // Resolve all of the function formal arguments...
-  Function::aiterator AI = callee.abegin();
-  for (unsigned i = 2, e = Call.size(); i != e; ++i) {
-    // Advance the argument iterator to the first pointer argument...
-    while (!isa<PointerType>(AI->getType())) ++AI;
-    
-    // TD ...Merge the formal arg scalar with the actual arg node
-    DSNode* actualArg = Call[i];
-    DSNode *nodeForActual = ignoreNodeMap? actualArg : OldNodeMap[actualArg];
-    assert(nodeForActual && "No node found for actual arg in callee graph!");
-    
-    DSNode *nodeForFormal = CalleeValueMap[AI]->getLink(0);
-    if (nodeForFormal)
-      nodeForFormal->mergeWith(nodeForActual);
-    ++AI;
-  }
-}
+#if 0
 
 // MergeGlobalNodes - Merge all existing global nodes with globals
 // inlined from the callee or with globals from the GlobalsGraph.
 //
-static void MergeGlobalNodes(DSGraph& Graph,
+static void MergeGlobalNodes(DSGraph &Graph,
                              map<Value*, DSNodeHandle> &OldValMap) {
   map<Value*, DSNodeHandle> &ValMap = Graph.getValueMap();
   for (map<Value*, DSNodeHandle>::iterator I = ValMap.begin(), E = ValMap.end();
@@ -97,62 +70,33 @@ static void MergeGlobalNodes(DSGraph& Graph,
     }
 }
 
-// Helper function to push a caller's graph into the calleeGraph,
-// once per call between the caller and the callee.
-// Remove each such resolved call from the OrigFunctionCalls vector.
-// NOTE: This may produce O(N^2) behavior because it uses linear search
-// through the vector OrigFunctionCalls to find all calls to this callee.
-// 
-void TDDataStructures::pushGraphIntoCallee(DSGraph &callerGraph,
-                                           DSGraph &calleeGraph,
-                                 std::map<Value*, DSNodeHandle> &OldValMap,
-                                 std::map<const DSNode*, DSNode*> &OldNodeMap) {
+#endif
 
-  Function& caller = callerGraph.getFunction();
+/// ResolveCallSite - This method is used to link the actual arguments together
+/// with the formal arguments for a function call in the top-down closure.  This
+/// method assumes that the call site arguments have been mapped into nodes
+/// local to the specified graph.
+///
+void TDDataStructures::ResolveCallSite(DSGraph &Graph,
+                                   const BUDataStructures::CallSite &CallSite) {
+  // Resolve all of the function formal arguments...
+  Function &F = Graph.getFunction();
+  Function::aiterator AI = F.abegin();
 
-  // Loop over all function calls in the caller to find those to this callee
-  std::vector<std::vector<DSNodeHandle> >& FunctionCalls =
-    callerGraph.getOrigFunctionCalls();
-
-  for (unsigned i = 0, ei = FunctionCalls.size(); i != ei; ++i) {
+  for (unsigned i = 2, e = CallSite.Context.size(); i != e; ++i, ++AI) {
+    // Advance the argument iterator to the first pointer argument...
+    while (!DataStructureAnalysis::isPointerType(AI->getType())) ++AI;
     
-    std::vector<DSNodeHandle>& Call = FunctionCalls[i];
-    assert(Call.size() >= 2 && "No function pointer in Call?");
-    DSNodeHandle& callee = Call[1];
-    std::vector<GlobalValue*> funcPtrs(callee->getGlobals());
-
-    // Loop over the function pointers in the call, looking for the callee
-    for (unsigned f = 0; f != funcPtrs.size(); ++f) {
-
-      // Must be a function type, so this cast MUST succeed.
-      Function &callee = cast<Function>(*funcPtrs[f]);
-      if (&callee != &calleeGraph.getFunction())
-        continue;
-
-      // Found a call to the callee.  Inline its graph
-      // copy caller pointer because inlining may modify the callers vector
-
-      // Merge actual arguments from the caller with formals in the callee.
-      // Don't use the old->new node map if this is a self-recursive call.
-      ResolveArguments(Call, callee, calleeGraph.getValueMap(), OldNodeMap,
-                       /*ignoreNodeMap*/ &caller == &callee);
-
-      // If its not a self-recursive call, merge global nodes in the inlined
-      // graph with the corresponding global nodes in the current graph
-      if (&caller != &callee)
-        MergeGlobalNodes(calleeGraph, OldValMap);
-
-      // Merge returned node in the caller with the "return" node in callee
-      if (Call[0])
-        calleeGraph.getRetNode()->mergeWith(OldNodeMap[Call[0]]);
-      
-      // Erase the entry in the globals vector
-      funcPtrs.erase(funcPtrs.begin()+f--);
-      
-    } // for each function pointer in the call node
-  } // for each original call node
+    // TD ...Merge the formal arg scalar with the actual arg node
+    DSNodeHandle &NodeForFormal = Graph.getNodeForValue(AI);
+    if (NodeForFormal.getNode())
+      NodeForFormal.mergeWith(CallSite.Context[i]);
+  }
+  
+  // Merge returned node in the caller with the "return" node in callee
+  if (CallSite.Context[0].getNode() && Graph.getRetNode().getNode())
+    Graph.getRetNode().mergeWith(CallSite.Context[0]);
 }
-
 
 DSGraph &TDDataStructures::calculateGraph(Function &F) {
   // Make sure this graph has not already been calculated, or that we don't get
@@ -161,62 +105,84 @@ DSGraph &TDDataStructures::calculateGraph(Function &F) {
   DSGraph *&Graph = DSInfo[&F];
   if (Graph) return *Graph;
 
-  // Copy the local version into DSInfo...
-  DSGraph& BUGraph = getAnalysis<BUDataStructures>().getDSGraph(F);
+  BUDataStructures &BU = getAnalysis<BUDataStructures>();
+  DSGraph &BUGraph = BU.getDSGraph(F);
   Graph = new DSGraph(BUGraph);
 
-  // Find the callers of this function recorded during the BU pass
-  std::set<Function*> &PendingCallers = BUGraph.getPendingCallers();
-
-  DEBUG(std::cerr << "  [TD] Inlining callers for: " << F.getName() << "\n");
-
-  for (std::set<Function*>::iterator I=PendingCallers.begin(),
-         E=PendingCallers.end(); I != E; ++I) {
-    Function& caller = **I;
-    assert(! caller.isExternal() && "Externals unexpected in callers list");
-    
-    DEBUG(std::cerr << "\t [TD] Inlining " << caller.getName()
-                    << " into callee: " << F.getName() << "\n");
-    
-    // These two maps keep track of where scalars in the old graph _used_
-    // to point to, and of new nodes matching nodes of the old graph.
-    // These remain empty if no other graph is inlined (i.e., self-recursive).
-    std::map<const DSNode*, DSNode*> OldNodeMap;
-    std::map<Value*, DSNodeHandle> OldValMap;
-    
-    if (&caller == &F) {
-      // Self-recursive call: this can happen after a cycle of calls is inlined.
-      pushGraphIntoCallee(*Graph, *Graph, OldValMap, OldNodeMap);
-    }
-    else {
-      // Recursively compute the graph for the caller.  That should
-      // be fully resolved except if there is mutual recursion...
-      //
-      DSGraph &callerGraph = calculateGraph(caller);  // Graph to inline
-      
-      DEBUG(std::cerr << "\t\t[TD] Got graph for " << caller.getName()
-                      << " in: " << F.getName() << "\n");
-
-      // Clone the caller's graph into the current graph, keeping
-      // track of where scalars in the old graph _used_ to point...
-      // Do this here because it only needs to happens once for each caller!
-      // Strip scalars but not allocas since they are visible in callee.
-      // 
-      DSNode *RetVal = Graph->cloneInto(callerGraph, OldValMap, OldNodeMap,
-                                        /*StripScalars*/   true,
-                                        /*StripAllocas*/   false,
-                                        /*CopyCallers*/    true,
-                                        /*CopyOrigCalls*/  false);
-
-      pushGraphIntoCallee(callerGraph, *Graph, OldValMap, OldNodeMap);
-    }
+  const vector<BUDataStructures::CallSite> *CallSitesP = BU.getCallSites(F);
+  if (CallSitesP == 0) {
+    DEBUG(std::cerr << "  [TD] No callers for: " << F.getName() << "\n");
+    return *Graph;  // If no call sites, the graph is the same as the BU graph!
   }
 
+  // Loop over all call sites of this function, merging each one into this
+  // graph.
+  //
+  DEBUG(std::cerr << "  [TD] Inlining callers for: " << F.getName() << "\n");
+  const vector<BUDataStructures::CallSite> &CallSites = *CallSitesP;
+  for (unsigned c = 0, ce = CallSites.size(); c != ce; ++c) {
+    const BUDataStructures::CallSite &CallSite = CallSites[c];  // Copy
+    Function &Caller = *CallSite.Caller;
+    assert(!Caller.isExternal() && "Externals function cannot 'call'!");
+    
+    DEBUG(std::cerr << "\t [TD] Inlining caller #" << c << " '"
+          << Caller.getName() << "' into callee: " << F.getName() << "\n");
+    
+    if (&Caller == &F) {
+      // Self-recursive call: this can happen after a cycle of calls is inlined.
+      ResolveCallSite(*Graph, CallSite);
+    } else {
+      // Recursively compute the graph for the Caller.  That should
+      // be fully resolved except if there is mutual recursion...
+      //
+      DSGraph &CG = calculateGraph(Caller);  // Graph to inline
+      
+      DEBUG(std::cerr << "\t\t[TD] Got graph for " << Caller.getName()
+                      << " in: " << F.getName() << "\n");
+
+      // These two maps keep track of where scalars in the old graph _used_
+      // to point to, and of new nodes matching nodes of the old graph.
+      std::map<Value*, DSNodeHandle> OldValMap;
+      std::map<const DSNode*, DSNode*> OldNodeMap;
+
+      // Clone the Caller's graph into the current graph, keeping
+      // track of where scalars in the old graph _used_ to point...
+      // Do this here because it only needs to happens once for each Caller!
+      // Strip scalars but not allocas since they are alive in callee.
+      // 
+      DSNodeHandle RetVal = Graph->cloneInto(CG, OldValMap, OldNodeMap,
+                                             /*StripScalars*/ true,
+                                             /*StripAllocas*/ false,
+                                             /*CopyCallers*/  true,
+                                             /*CopyOrigCalls*/false);
+
+      // Make a temporary copy of the call site, and transform the argument node
+      // pointers.
+      BUDataStructures::CallSite TmpCallSite = CallSite;
+      for (unsigned i = 0, e = CallSite.Context.size(); i != e; ++i) {
+        const DSNode *OldNode = TmpCallSite.Context[i].getNode();
+        TmpCallSite.Context[i].setNode(OldNodeMap[OldNode]);
+      }
+
+      ResolveCallSite(*Graph, CallSite);
+
+#if 0
+      // If its not a self-recursive call, merge global nodes in the inlined
+      // graph with the corresponding global nodes in the current graph
+      if (&caller != &callee)
+        MergeGlobalNodes(calleeGraph, OldValMap);
+#endif
+    }
+  }
+  
+
+#if 0
   // Recompute the Incomplete markers and eliminate unreachable nodes.
   Graph->maskIncompleteMarkers();
   Graph->markIncompleteNodes(/*markFormals*/ ! F.hasInternalLinkage()
                              /*&& FIXME: NEED TO CHECK IF ALL CALLERS FOUND!*/);
   Graph->removeDeadNodes(/*KeepAllGlobals*/ false, /*KeepCalls*/ false);
+#endif
 
   DEBUG(std::cerr << "  [TD] Done inlining callers for: " << F.getName() << " ["
         << Graph->getGraphSize() << "+" << Graph->getFunctionCalls().size()
@@ -224,4 +190,3 @@ DSGraph &TDDataStructures::calculateGraph(Function &F) {
 
   return *Graph;
 }
-#endif
