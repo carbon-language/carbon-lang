@@ -1,4 +1,4 @@
-//===-- Passes.cpp - Target independent code generation passes -*- C++ -*-===//
+//===-- Passes.cpp - Target independent code generation passes ------------===//
 // 
 //                     The LLVM Compiler Infrastructure
 //
@@ -14,8 +14,8 @@
 
 #include "llvm/CodeGen/Passes.h"
 #include "Support/CommandLine.h"
-
-namespace llvm {
+#include <iostream>
+using namespace llvm;
 
 namespace {
   enum RegAllocName { simple, local, linearscan };
@@ -31,19 +31,17 @@ namespace {
            cl::init(local));
 }
 
-FunctionPass *createRegisterAllocator()
-{
+FunctionPass *llvm::createRegisterAllocator() {
   switch (RegAlloc) {
+  default:
+    std::cerr << "no register allocator selected";
+    abort();
   case simple:
     return createSimpleRegisterAllocator();
   case local:
     return createLocalRegisterAllocator();
   case linearscan:
     return createLinearScanRegisterAllocator();
-  default:
-    assert(0 && "no register allocator selected");
-    return 0; // not reached
   }
 }
 
-} // End llvm namespace
