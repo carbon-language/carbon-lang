@@ -30,6 +30,7 @@
 #include "llvm/Analysis/CallGraph.h"
 #include "llvm/Support/CFG.h"
 #include "Support/SCCIterator.h"
+#include <iostream>
 
 namespace llvm {
 

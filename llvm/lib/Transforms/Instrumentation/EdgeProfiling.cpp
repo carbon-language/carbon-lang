@@ -23,6 +23,7 @@
 #include "llvm/Pass.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "ProfilingUtils.h"
+#include <iostream>
 #include <set>
 using namespace llvm;
 

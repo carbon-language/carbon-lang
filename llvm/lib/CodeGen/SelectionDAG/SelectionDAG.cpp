@@ -14,6 +14,8 @@
 
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/Type.h"
+#include <iostream>
+
 using namespace llvm;
 
 SelectionDAG::~SelectionDAG() {

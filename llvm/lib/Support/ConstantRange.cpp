@@ -25,6 +25,8 @@
 #include "llvm/Constants.h"
 #include "llvm/Instruction.h"
 #include "llvm/Type.h"
+#include <iostream>
+
 using namespace llvm;
 
 static ConstantIntegral *Next(ConstantIntegral *CI) {

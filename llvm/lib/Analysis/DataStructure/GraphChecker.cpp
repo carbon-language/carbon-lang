@@ -27,6 +27,7 @@
 #include "llvm/Analysis/DSGraph.h"
 #include "Support/CommandLine.h"
 #include "llvm/Value.h"
+#include <iostream>
 #include <set>
 
 using namespace llvm;

@@ -18,6 +18,8 @@
 #include "llvm/Constants.h"
 #include "llvm/Function.h"
 #include "llvm/Type.h"
+#include <iostream>
+
 using namespace llvm;
 
 ExprType::ExprType(Value *Val) {

@@ -47,6 +47,7 @@
 #include "Support/SetOperations.h"
 #include "Support/STLExtras.h"
 #include <cmath>
+#include <iostream>
 
 namespace llvm {
 

@@ -18,6 +18,8 @@
 #include "llvm/Analysis/Trace.h"
 #include "llvm/Function.h"
 #include "llvm/Assembly/Writer.h"
+#include <iostream>
+
 using namespace llvm;
 
 Function *Trace::getFunction() const {

@@ -18,6 +18,7 @@
 #include "llvm/Support/CFG.h"
 #include "Support/SetOperations.h"
 #include "../SparcV9Internals.h"
+#include <iostream>
 
 namespace llvm {
 

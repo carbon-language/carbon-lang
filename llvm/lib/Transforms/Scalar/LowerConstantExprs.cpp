@@ -22,6 +22,7 @@
 #include "llvm/iOther.h"
 #include "llvm/Support/InstIterator.h"
 #include <vector>
+#include <iostream>
 
 using namespace llvm;
 using namespace std;

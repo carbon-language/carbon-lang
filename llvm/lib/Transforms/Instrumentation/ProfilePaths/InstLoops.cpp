@@ -24,6 +24,7 @@
 #include "llvm/Pass.h"
 #include "Support/Debug.h"
 #include "../ProfilingUtils.h"
+#include <iostream>
 
 namespace llvm {
 

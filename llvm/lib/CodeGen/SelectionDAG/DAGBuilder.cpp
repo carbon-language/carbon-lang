@@ -20,6 +20,8 @@
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/InstVisitor.h"
+#include <iostream>
+
 using namespace llvm;
 
 namespace llvm {

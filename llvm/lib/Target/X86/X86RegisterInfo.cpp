@@ -26,6 +26,8 @@
 #include "llvm/Target/TargetMachineImpls.h"
 #include "Support/CommandLine.h"
 #include "Support/STLExtras.h"
+#include <iostream>
+
 using namespace llvm;
 
 namespace {

@@ -28,6 +28,7 @@
 #include "PgmDependenceGraph.h"
 #include "llvm/Analysis/PostDominators.h"
 #include "llvm/Function.h"
+#include <iostream>
 
 namespace llvm {
 

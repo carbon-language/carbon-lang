@@ -28,6 +28,7 @@
 #include "SparcV9RegClassInfo.h"
 #include "SparcV9RegInfo.h"
 #include "SparcV9TargetMachine.h"
+#include <iostream>
 
 namespace llvm {
 

@@ -28,6 +28,7 @@
 #include "llvm/CodeGen/MachineInstr.h"
 #include "Support/STLExtras.h"
 #include "Config/alloca.h"
+#include <iostream>
 
 namespace llvm {
 

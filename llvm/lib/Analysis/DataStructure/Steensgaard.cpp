@@ -19,6 +19,7 @@
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Module.h"
 #include "Support/Debug.h"
+#include <iostream>
 using namespace llvm;
 
 namespace {

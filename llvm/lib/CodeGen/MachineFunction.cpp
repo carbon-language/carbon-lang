@@ -26,6 +26,7 @@
 #include "llvm/iOther.h"
 #include "llvm/Type.h"
 #include "Support/LeakDetector.h"
+#include <iostream>
 
 using namespace llvm;
 

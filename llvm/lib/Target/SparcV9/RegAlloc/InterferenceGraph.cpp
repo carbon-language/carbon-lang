@@ -16,6 +16,7 @@
 #include "RegAllocCommon.h"
 #include "Support/STLExtras.h"
 #include <algorithm>
+#include <iostream>
 
 namespace llvm {
 

@@ -16,6 +16,8 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
 #include "llvm/iOther.h"
+#include <iostream>
+
 using namespace llvm;
 
 template <class ArgIt>

@@ -22,6 +22,8 @@
 #include "llvm/Support/CFG.h"
 #include "Support/DepthFirstIterator.h"
 #include <algorithm>
+#include <iostream>
+
 using namespace llvm;
 
 static RegisterAnalysis<LoopInfo>

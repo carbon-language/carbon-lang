@@ -16,6 +16,7 @@
 #include "llvm/iOther.h"
 #include "llvm/Support/CFG.h"
 #include "Graph.h"
+#include <iostream>
 
 using std::vector;
 using std::map;

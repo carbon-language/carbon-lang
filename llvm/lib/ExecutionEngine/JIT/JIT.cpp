@@ -23,6 +23,8 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetJITInfo.h"
 #include "Support/DynamicLinker.h"
+#include <iostream>
+
 using namespace llvm;
 
 JIT::JIT(ModuleProvider *MP, TargetMachine &tm, TargetJITInfo &tji)

@@ -15,6 +15,7 @@
 #include "RegAllocCommon.h"
 #include "RegClass.h"
 #include "../SparcV9RegInfo.h"
+#include <iostream>
 
 namespace llvm {
 

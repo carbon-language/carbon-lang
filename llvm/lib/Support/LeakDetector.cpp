@@ -13,6 +13,7 @@
 
 #include "Support/LeakDetector.h"
 #include "llvm/Value.h"
+#include <iostream>
 #include <set>
 using namespace llvm;
 

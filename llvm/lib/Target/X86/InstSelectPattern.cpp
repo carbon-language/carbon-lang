@@ -22,8 +22,8 @@
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/SSARegMap.h"
-
 #include "X86RegisterInfo.h"
+#include <iostream>
 
 // Include the generated instruction selector...
 #include "X86GenInstrSelector.inc"

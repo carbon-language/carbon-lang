@@ -23,6 +23,7 @@
 #include "Support/STLExtras.h"
 #include "Support/Debug.h"
 #include <algorithm>
+#include <iostream>
 using namespace llvm;
 
 static bool OperandConvertibleToType(User *U, Value *V, const Type *Ty,

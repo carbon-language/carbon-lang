@@ -15,6 +15,8 @@
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/Function.h"
 #include <fstream>
+#include <iostream>
+
 using namespace llvm;
 
 namespace {

@@ -35,6 +35,7 @@
 #include "Support/StringExtras.h"
 #include "Config/config.h"
 #include <algorithm>
+#include <iostream>
 #include <sstream>
 using namespace llvm;
 
@@ -222,7 +223,7 @@ bool CBackendNameAllUsedStructs::run(Module &M) {
   for (SymbolTable::type_iterator TI = MST.type_begin(), TE = MST.type_end();
        TI != TE; ) {
     SymbolTable::type_iterator I = TI++;
-    if (StructType *STy = dyn_cast<StructType>(I->second)) {
+    if (const StructType *STy = dyn_cast<StructType>(I->second)) {
       // If this is not used, remove it from the symbol table.
       std::set<const Type *>::iterator UTI = UT.find(STy);
       if (UTI == UT.end())

@@ -15,6 +15,8 @@
 #include "ValueMapper.h"
 #include "llvm/Constants.h"
 #include "llvm/Instruction.h"
+#include <iostream>
+
 using namespace llvm;
 
 Value *llvm::MapValue(const Value *V, std::map<const Value*, Value*> &VM) {

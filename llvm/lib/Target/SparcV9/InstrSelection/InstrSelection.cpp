@@ -27,6 +27,7 @@
 #include "../SparcV9RegInfo.h"
 #include "Support/CommandLine.h"
 #include "Support/LeakDetector.h"
+#include <iostream>
 
 namespace llvm {
   std::vector<MachineInstr*>

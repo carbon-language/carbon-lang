@@ -22,6 +22,7 @@
 #include "llvm/Target/TargetMachine.h"
 #include "../../Target/SparcV9/SparcV9RegInfo.h"
 #include "Support/STLExtras.h"
+#include <iostream>
 
 namespace llvm {
 

@@ -14,6 +14,7 @@
 
 #include "llvm/CodeGen/SchedGraphCommon.h"
 #include "Support/STLExtras.h"
+#include <iostream>
 
 namespace llvm {
 

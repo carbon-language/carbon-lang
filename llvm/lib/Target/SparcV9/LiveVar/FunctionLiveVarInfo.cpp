@@ -22,6 +22,7 @@
 #include "Support/SetOperations.h"
 #include "Support/CommandLine.h"
 #include "BBLiveVar.h"
+#include <iostream>
 
 namespace llvm {
 

@@ -22,6 +22,7 @@
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/Support/CFG.h"
 #include "Support/PostOrderIterator.h"
+#include <iostream>
 
 namespace llvm {
 

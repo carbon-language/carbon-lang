@@ -23,6 +23,7 @@
 #include "llvm/iPHINode.h"
 #include "ProfilingUtils.h"
 #include "Support/Debug.h"
+#include <iostream>
 #include <set>
 using namespace llvm;
 

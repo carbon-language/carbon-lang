@@ -21,6 +21,7 @@
 #include "llvm/BasicBlock.h"
 #include "Support/CommandLine.h"
 #include <algorithm>
+#include <iostream>
 
 namespace llvm {
 

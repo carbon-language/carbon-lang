@@ -24,6 +24,8 @@
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
 #include "ProfilingUtils.h"
+#include <iostream>
+
 using namespace llvm;
 
 namespace {

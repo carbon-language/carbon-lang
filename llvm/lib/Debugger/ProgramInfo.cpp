@@ -23,6 +23,8 @@
 #include "Support/FileUtilities.h"
 #include "Support/SlowOperationInformer.h"
 #include "Support/STLExtras.h"
+#include <iostream>
+
 using namespace llvm;
 
 /// getGlobalVariablesUsing - Return all of the global variables which have the

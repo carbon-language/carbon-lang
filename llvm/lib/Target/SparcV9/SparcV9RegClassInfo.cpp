@@ -19,6 +19,7 @@
 #include "SparcV9RegInfo.h"
 #include "RegAlloc/RegAllocCommon.h"
 #include "RegAlloc/IGNode.h"
+#include <iostream>
 
 namespace llvm {
 

@@ -20,6 +20,7 @@
 #include "llvm/Target/TargetData.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Support/InstIterator.h"
+#include <iostream>
 using namespace llvm;
 
 /// mergeSetIn - Merge the specified alias set into this alias set...

@@ -17,7 +17,9 @@
 #include "llvm/Module.h"
 #include "llvm/InstrTypes.h"
 #include <cstdio>
+#include <iostream>
 #include <map>
+
 using namespace llvm;
 
 // ByteSwap - Byteswap 'Var' if 'Really' is true.

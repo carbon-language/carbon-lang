@@ -21,6 +21,8 @@
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/MRegisterInfo.h"
 #include "Support/LeakDetector.h"
+#include <iostream>
+
 using namespace llvm;
 
 // Global variable holding an array of descriptors for machine instructions.
