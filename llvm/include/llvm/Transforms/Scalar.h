@@ -98,6 +98,14 @@ Pass *createInstructionCombiningPass();
 
 //===----------------------------------------------------------------------===//
 //
+// LICM - This pass is a simple natural loop based loop invariant code motion
+// pass.
+//
+Pass *createLICMPass();
+
+
+//===----------------------------------------------------------------------===//
+//
 // PiNodeInsertion - This pass inserts single entry Phi nodes into basic blocks
 // that are preceeded by a conditional branch, where the branch gives
 // information about the operands of the condition.  For example, this C code:
