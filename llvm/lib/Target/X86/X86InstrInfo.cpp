@@ -143,7 +143,7 @@ MachineInstr *X86InstrInfo::commuteInstruction(MachineInstr *MI) const {
     unsigned A = MI->getOperand(0).getReg();
     unsigned B = MI->getOperand(1).getReg();
     unsigned C = MI->getOperand(2).getReg();
-    return BuildMI(Opc, 3, A).addReg(B).addReg(C).addImm(Size-Amt);
+    return BuildMI(Opc, 3, A).addReg(C).addReg(B).addImm(Size-Amt);
   }
   default:
     return TargetInstrInfo::commuteInstruction(MI);
