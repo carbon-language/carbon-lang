@@ -662,6 +662,8 @@ def SETSr    : I  <"sets" , 0x98, MRM0r>, TB;            // R8 = <sign bit>
 def SETSm    : Im8<"sets" , 0x98, MRM0m>, TB;            // [mem8] = <sign bit>
 def SETNSr   : I  <"setns", 0x99, MRM0r>, TB;            // R8 = !<sign bit>
 def SETNSm   : Im8<"setns", 0x99, MRM0m>, TB;            // [mem8] = !<sign bit>
+def SETPr    : I  <"setp" , 0x9A, MRM0r>, TB;            // R8 = parity
+def SETPm    : Im8<"setp" , 0x9A, MRM0m>, TB;            // [mem8] = parity
 def SETLr    : I  <"setl" , 0x9C, MRM0r>, TB;            // R8 = <  signed
 def SETLm    : Im8<"setl" , 0x9C, MRM0m>, TB;            // [mem8] = <  signed
 def SETGEr   : I  <"setge", 0x9D, MRM0r>, TB;            // R8 = >= signed

@@ -236,6 +236,7 @@ MachineInstr* X86RegisterInfo::foldMemoryOperand(MachineInstr* MI,
     case X86::SETAr:     return MakeMInst( X86::SETAm,   FrameIndex, MI);
     case X86::SETSr:     return MakeMInst( X86::SETSm,   FrameIndex, MI);
     case X86::SETNSr:    return MakeMInst( X86::SETNSm,  FrameIndex, MI);
+    case X86::SETPr:     return MakeMInst( X86::SETPm,   FrameIndex, MI);
     case X86::SETLr:     return MakeMInst( X86::SETLm,   FrameIndex, MI);
     case X86::SETGEr:    return MakeMInst( X86::SETGEm,  FrameIndex, MI);
     case X86::SETLEr:    return MakeMInst( X86::SETLEm,  FrameIndex, MI);
