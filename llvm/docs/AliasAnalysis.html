@@ -366,9 +366,9 @@ simply iterate through the constructed alias sets, using the AliasSetTracker
 <tt>begin()</tt>/<tt>end()</tt> methods.</p>
 
 <p>The <tt>AliasSet</tt>s formed by the <tt>AliasSetTracker</tt> are guaranteed
-to be disjoint, calculate mod/ref information for the set, and keep track of
-whether or not all of the pointers in the set are Must aliases.  The
-AliasSetTracker also makes sure that sets are properly folded due to call
+to be disjoint, calculate mod/ref information and volatility for the set, and
+keep track of whether or not all of the pointers in the set are Must aliases.
+The AliasSetTracker also makes sure that sets are properly folded due to call
 instructions, and can provide a list of pointers in each set.</p>
 
 <p>As an example user of this, the <a href="/doxygen/structLICM.html">Loop
@@ -376,10 +376,37 @@ Invariant Code Motion</a> pass uses AliasSetTrackers to build alias information
 about each loop nest.  If an AliasSet in a loop is not modified, then all load
 instructions from that set may be hoisted out of the loop.  If any alias sets
 are stored <b>and</b> are must alias sets, then the stores may be sunk to
-outside of the loop.  Both of these transformations obviously only apply if the
-pointer argument is loop-invariant.</p>
+outside of the loop, promoting the memory location to a register for the
+duration of the loop nest.  Both of these transformations obviously only apply
+if the pointer argument is loop-invariant.</p>
 
 </div>
+
+<div class="doc_subsubsection">
+  The AliasSetTracker implementation
+</div>
+
+<div class="doc_text">
+
+<p>The AliasSetTracker class is implemented to be as efficient as possible.  It
+uses the union-find algorithm to efficiently merge AliasSets when a pointer is
+inserted into the AliasSetTracker that aliases multiple sets.  The primary data
+structure is a hash table mapping pointers to the AliasSet they are in.</p>
+
+<p>The AliasSetTracker class must maintain a list of all of the LLVM Value*'s
+that are in each AliasSet.  Since the hash table already has entries for each
+LLVM Value* of interest, the AliasesSets thread the linked list through these
+hash-table nodes to avoid having to allocate memory unnecessarily, and to make
+merging alias sets extremely efficient (the linked list merge is constant time).
+</p>
+
+<p>You shouldn't need to understand these details if you are just a client of
+the AliasSetTracker, but if you look at the code, hopefully this brief
+description will help make sense of why things are designed the way they
+are.</p>
+
+</div>
+
 
 <!-- ======================================================================= -->
 <div class="doc_subsection">
