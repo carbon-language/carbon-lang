@@ -102,7 +102,7 @@ void DSNode::assertOK() const {
          "Node not OK!");
 
   assert(ParentGraph && "Node has no parent?");
-  const DSGraph::ScalarMapTy &SM = ParentGraph->getScalarMap();
+  const DSScalarMap &SM = ParentGraph->getScalarMap();
   for (unsigned i = 0, e = Globals.size(); i != e; ++i) {
     assert(SM.count(Globals[i]));
     assert(SM.find(Globals[i])->second.getNode() == this);
@@ -1067,7 +1067,7 @@ void DSGraph::updateFromGlobalGraph() {
   for (DSScalarMap::global_iterator I = getScalarMap().global_begin(),
          E = getScalarMap().global_end(); I != E; ++I)
     if (InlinedGlobals.count(*I) == 0) { // GNode is not up-to-date
-      ScalarMapTy::iterator It = GlobalsGraph->ScalarMap.find(*I);
+      DSScalarMap::iterator It = GlobalsGraph->ScalarMap.find(*I);
       if (It != GlobalsGraph->ScalarMap.end())
         RC.merge(getNodeForValue(*I), It->second);
     }
@@ -1079,7 +1079,7 @@ void DSGraph::updateFromGlobalGraph() {
 ///
 /// The CloneFlags member controls various aspects of the cloning process.
 ///
-void DSGraph::cloneInto(const DSGraph &G, ScalarMapTy &OldValMap,
+void DSGraph::cloneInto(const DSGraph &G, DSScalarMap &OldValMap,
                         ReturnNodesTy &OldReturnNodes, NodeMapTy &OldNodeMap,
                         unsigned CloneFlags) {
   TIME_REGION(X, "cloneInto");
@@ -1111,7 +1111,7 @@ void DSGraph::cloneInto(const DSGraph &G, ScalarMapTy &OldValMap,
     Nodes[i]->remapLinks(OldNodeMap);
 
   // Copy the scalar map... merging all of the global nodes...
-  for (ScalarMapTy::const_iterator I = G.ScalarMap.begin(),
+  for (DSScalarMap::const_iterator I = G.ScalarMap.begin(),
          E = G.ScalarMap.end(); I != E; ++I) {
     DSNodeHandle &MappedNode = OldNodeMap[I->second.getNode()];
     DSNodeHandle &H = OldValMap[I->first];
@@ -1464,7 +1464,7 @@ void DSGraph::removeTriviallyDeadNodes() {
 
   // Likewise, forward any edges from the scalar nodes.  While we are at it,
   // clean house a bit.
-  for (ScalarMapTy::iterator I = ScalarMap.begin(),E = ScalarMap.end();I != E;){
+  for (DSScalarMap::iterator I = ScalarMap.begin(),E = ScalarMap.end();I != E;){
     I->second.getNode();
     ++I;
   }
@@ -1616,7 +1616,7 @@ void DSGraph::removeDeadNodes(unsigned Flags) {
 
   // Mark all nodes reachable by (non-global) scalar nodes as alive...
   { TIME_REGION(Y, "removeDeadNodes:scalarscan");
-  for (ScalarMapTy::iterator I = ScalarMap.begin(), E = ScalarMap.end(); I !=E;)
+  for (DSScalarMap::iterator I = ScalarMap.begin(), E = ScalarMap.end(); I !=E;)
     if (isa<GlobalValue>(I->first)) {             // Keep track of global nodes
       assert(I->second.getNode() && "Null global node?");
       assert(I->second.getNode()->isGlobalNode() && "Should be a global node!");
