@@ -16,6 +16,7 @@
 
 #include "MSchedGraph.h"
 #include <vector>
+#include <set>
 
 namespace llvm {
 
@@ -30,7 +31,7 @@ namespace llvm {
     bool resourcesFree(MSchedGraphNode*, int);
 
     //Resulting kernel
-    std::vector<std::pair<MSchedGraphNode*, int> > kernel;
+    std::vector<std::pair<MachineInstr*, int> > kernel;
 
     //Max stage count
     int maxStage;
@@ -44,8 +45,8 @@ namespace llvm {
     bool insert(MSchedGraphNode *node, int cycle);
     int getStartCycle(MSchedGraphNode *node);
     void clear() { schedule.clear(); resourceNumPerCycle.clear(); kernel.clear(); }
-    std::vector<std::pair<MSchedGraphNode*, int> >* getKernel() { return &kernel; }
-    bool constructKernel(int II, std::vector<MSchedGraphNode*> &branches);
+    std::vector<std::pair<MachineInstr*, int> >* getKernel() { return &kernel; }
+    bool constructKernel(int II, std::vector<MSchedGraphNode*> &branches, std::map<const MachineInstr*, unsigned> &indVar);
     int getMaxStage() { return maxStage; }
 
    
@@ -56,8 +57,8 @@ namespace llvm {
     schedule_iterator end() { return schedule.end(); };
     void print(std::ostream &os) const;
 
-    typedef std::vector<std::pair<MSchedGraphNode*, int> >::iterator kernel_iterator;
-    typedef std::vector<std::pair<MSchedGraphNode*, int> >::const_iterator kernel_const_iterator;
+    typedef std::vector<std::pair<MachineInstr*, int> >::iterator kernel_iterator;
+    typedef std::vector<std::pair<MachineInstr*, int> >::const_iterator kernel_const_iterator;
     kernel_iterator kernel_begin() { return kernel.begin(); }
     kernel_iterator kernel_end() { return kernel.end(); }
     

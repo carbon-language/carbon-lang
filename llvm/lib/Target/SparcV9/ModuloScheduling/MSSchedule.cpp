@@ -165,12 +165,27 @@ bool MSSchedule::resourcesFree(MSchedGraphNode *node, int cycle) {
 
 }
 
-bool MSSchedule::constructKernel(int II, std::vector<MSchedGraphNode*> &branches) {
+bool MSSchedule::constructKernel(int II, std::vector<MSchedGraphNode*> &branches, std::map<const MachineInstr*, unsigned> &indVar) {
  
-  int stageNum = (schedule.rbegin()->first)/ II;
+  //Our schedule is allowed to have negative numbers, so lets calculate this offset
+  int offset = schedule.begin()->first;
+  if(offset > 0)
+    offset = 0;
+
+  DEBUG(std::cerr << "Offset: " << offset << "\n");
+
+  //Not sure what happens in this case, but assert if offset is > II
+  //assert(offset > -II && "Offset can not be more then II");
+
+  std::vector<std::pair<MSchedGraphNode*, int> > tempKernel;
+
+
+  int stageNum = ((schedule.rbegin()->first-offset)+1)/ II;
+  int maxSN = 0;
+
   DEBUG(std::cerr << "Number of Stages: " << stageNum << "\n");
   
-  for(int index = 0; index < II; ++index) {
+  for(int index = offset; index < (II+offset); ++index) {
     int count = 0;
     for(int i = index; i <= (schedule.rbegin()->first); i+=II) {  
       if(schedule.count(i)) {
@@ -179,26 +194,61 @@ bool MSSchedule::constructKernel(int II, std::vector<MSchedGraphNode*> &branches
 	  //Check if its a branch
 	  if((*I)->isBranch()) {
 	    assert(count == 0 && "Branch can not be from a previous iteration");
-	    kernel.push_back(std::make_pair(*I, count));
+	    tempKernel.push_back(std::make_pair(*I, count));
 	  }
-	  else
+	  else {
 	  //FIXME: Check if the instructions in the earlier stage conflict
-	  kernel.push_back(std::make_pair(*I, count));
+	    tempKernel.push_back(std::make_pair(*I, count));
+	    maxSN = std::max(maxSN, count);
+	  }
 	}
       }
       ++count;
     }
   }
-  
-  //Push on branches. Branch vector is in order of last branch to first.
-  for(std::vector<MSchedGraphNode*>::reverse_iterator B = branches.rbegin() , BE = branches.rend(); B != BE; ++B) {
-    kernel.push_back(std::make_pair(*B, 0));
+
+  //Add in induction var code
+  for(std::vector<std::pair<MSchedGraphNode*, int> >::iterator I = tempKernel.begin(), IE = tempKernel.end();
+      I != IE; ++I) {
+    //Add indVar instructions before this one for the current iteration
+    if(I->second == 0) {
+      std::map<unsigned, MachineInstr*> tmpMap;
+
+      //Loop over induction variable instructions in the map that come before this instr
+      for(std::map<const MachineInstr*, unsigned>::iterator N = indVar.begin(), NE = indVar.end(); N != NE; ++N) {
+
+
+	if(N->second < I->first->getIndex())
+	  tmpMap[N->second] = (MachineInstr*) N->first;
+      }
+
+      //Add to kernel, and delete from indVar
+      for(std::map<unsigned, MachineInstr*>::iterator N = tmpMap.begin(), NE = tmpMap.end(); N != NE; ++N) {
+	kernel.push_back(std::make_pair(N->second, 0));
+	indVar.erase(N->second);
+      }
+    }
+   
+    kernel.push_back(std::make_pair((MachineInstr*) I->first->getInst(), I->second));
+
   }
 
-  if(stageNum > 0)
-    maxStage = stageNum;
-  else
-    maxStage = 0;
+  std::map<unsigned, MachineInstr*> tmpMap;
+
+  //Add remaining invar instructions
+  for(std::map<const MachineInstr*, unsigned>::iterator N = indVar.begin(), NE = indVar.end(); N != NE; ++N) {
+    tmpMap[N->second] = (MachineInstr*) N->first;
+  }
+
+  //Add to kernel, and delete from indVar
+  for(std::map<unsigned, MachineInstr*>::iterator N = tmpMap.begin(), NE = tmpMap.end(); N != NE; ++N) {
+    kernel.push_back(std::make_pair(N->second, 0));
+    indVar.erase(N->second);
+  }
+
+
+  maxStage = maxSN;
+
 
   return true;
 }
@@ -214,7 +264,7 @@ void MSSchedule::print(std::ostream &os) const {
   }
 
   os << "Kernel:\n";
-  for(std::vector<std::pair<MSchedGraphNode*, int> >::const_iterator I = kernel.begin(),
+  for(std::vector<std::pair<MachineInstr*, int> >::const_iterator I = kernel.begin(),
 	E = kernel.end(); I != E; ++I)
     os << "Node: " << *(I->first) << " Stage: " << I->second << "\n";
 }

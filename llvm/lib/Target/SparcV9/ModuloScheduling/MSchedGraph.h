@@ -7,37 +7,45 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// A graph class for dependencies
-//
+// A graph class for dependencies. This graph only contains true, anti, and
+// output data dependencies for a given MachineBasicBlock. Dependencies
+// across iterations are also computed. Unless data dependence analysis
+// is provided, a conservative approach of adding dependencies between all 
+// loads and stores is taken.
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_MSCHEDGRAPH_H
 #define LLVM_MSCHEDGRAPH_H
 
+#include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/TargetData.h"
 #include "llvm/ADT/GraphTraits.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/iterator"
 #include <vector>
 
-
 namespace llvm {
+  
   class MSchedGraph;
   class MSchedGraphNode;
   template<class IteratorType, class NodeType>
   class MSchedGraphNodeIterator;
 
-
+  //MSchedGraphEdge encapsulates the data dependence between nodes. It
+  //identifies the dependence type, on what, and the iteration
+  //difference
   struct MSchedGraphEdge {
     enum DataDepOrderType {
       TrueDep, AntiDep, OutputDep, NonDataDep
     };
     
     enum MSchedGraphEdgeType {
-      MemoryDep, ValueDep, MachineRegister
+      MemoryDep, ValueDep, MachineRegister, BranchDep
     };
 
+    //Get or set edge data 
     MSchedGraphNode *getDest() const { return dest; }
     unsigned getIteDiff() { return iteDiff; }
     unsigned getDepOrderType() { return depOrderType; }
@@ -55,6 +63,9 @@ namespace llvm {
     unsigned iteDiff;
   };
 
+  //MSchedGraphNode represents a machine instruction and its
+  //corresponding latency. Each node also contains a list of its
+  //predecessors and sucessors.
   class MSchedGraphNode {
    
     const MachineInstr* Inst; //Machine Instruction
@@ -63,9 +74,8 @@ namespace llvm {
     unsigned latency; //Latency of Instruction
     bool isBranchInstr; //Is this node the branch instr or not
     
-
     std::vector<MSchedGraphNode*> Predecessors; //Predecessor Nodes
-    std::vector<MSchedGraphEdge> Successors;
+    std::vector<MSchedGraphEdge> Successors; //Successor edges
 
   public:
     MSchedGraphNode(const MachineInstr *inst, MSchedGraph *graph, 
@@ -73,7 +83,7 @@ namespace llvm {
 
     MSchedGraphNode(const MSchedGraphNode &N);
 
-    //Iterators
+    //Iterators - Predecessor and Succussor
     typedef std::vector<MSchedGraphNode*>::iterator pred_iterator;
     pred_iterator pred_begin() { return Predecessors.begin(); }
     pred_iterator pred_end() { return Predecessors.end(); }
@@ -83,7 +93,6 @@ namespace llvm {
     pred_const_iterator pred_begin() const { return Predecessors.begin(); }
     pred_const_iterator pred_end() const { return Predecessors.end(); }
     
-    // Successor iterators.
     typedef MSchedGraphNodeIterator<std::vector<MSchedGraphEdge>::const_iterator,
 				    const MSchedGraphNode> succ_const_iterator;
     succ_const_iterator succ_begin() const;
@@ -93,32 +102,30 @@ namespace llvm {
 				    MSchedGraphNode> succ_iterator;
     succ_iterator succ_begin();
     succ_iterator succ_end();
-  
     unsigned succ_size() { return Successors.size(); }
 
+    //Get or set predecessor nodes, or successor edges
     void setPredecessor(unsigned index, MSchedGraphNode *dest) {
       Predecessors[index] = dest;
     }
-
+    
     MSchedGraphNode* getPredecessor(unsigned index) {
       return Predecessors[index];
     }
-
+    
     MSchedGraphEdge* getSuccessor(unsigned index) {
       return &Successors[index];
     }
-
+    
     void deleteSuccessor(MSchedGraphNode *node) {
       for (unsigned i = 0; i != Successors.size(); ++i)
 	if (Successors[i].getDest() == node) {
 	  Successors.erase(Successors.begin()+i);
 	  node->Predecessors.erase(std::find(node->Predecessors.begin(),
 					     node->Predecessors.end(), this));
-	  --i;
+	  --i; //Decrease index var since we deleted a node
 	}
     }
-
-
 
     void addOutEdge(MSchedGraphNode *destination, 
 		    MSchedGraphEdge::MSchedGraphEdgeType type, 
@@ -126,6 +133,8 @@ namespace llvm {
       Successors.push_back(MSchedGraphEdge(destination, type, deptype,diff));
       destination->Predecessors.push_back(this);
     }
+
+    //General methods to get and set data for the node
     const MachineInstr* getInst() { return Inst; }
     MSchedGraph* getParent() { return Parent; }
     bool hasPredecessors() { return (Predecessors.size() > 0); }
@@ -139,11 +148,13 @@ namespace llvm {
     bool isSuccessor(MSchedGraphNode *);
     bool isPredecessor(MSchedGraphNode *);
     bool isBranch() { return isBranchInstr; }
+
     //Debug support
     void print(std::ostream &os) const;
     void setParent(MSchedGraph *p) { Parent = p; }
   };
 
+  //Node iterator for graph generation
   template<class IteratorType, class NodeType>
   class MSchedGraphNodeIterator : public forward_iterator<NodeType*, ptrdiff_t> {
     IteratorType I;   // std::vector<MSchedGraphEdge>::iterator or const_iterator
@@ -219,6 +230,7 @@ namespace llvm {
   
 
 
+  //Graph class to represent dependence graph
   class MSchedGraph {
     
     const MachineBasicBlock *BB; //Machine basic block
@@ -229,20 +241,26 @@ namespace llvm {
 
     //Add Nodes and Edges to this graph for our BB
     typedef std::pair<int, MSchedGraphNode*> OpIndexNodePair;
-    void buildNodesAndEdges();
+    void buildNodesAndEdges(AliasAnalysis &AA, TargetData &TD, std::map<const MachineInstr*, unsigned> &ignoreInstrs);
     void addValueEdges(std::vector<OpIndexNodePair> &NodesInMap, 
 		       MSchedGraphNode *node,
-		       bool nodeIsUse, bool nodeIsDef, int diff=0);
+		       bool nodeIsUse, bool nodeIsDef, std::vector<const MachineInstr*> &phiInstrs, int diff=0);
     void addMachRegEdges(std::map<int, 
 			 std::vector<OpIndexNodePair> >& regNumtoNodeMap);
-    void addMemEdges(const std::vector<MSchedGraphNode*>& memInst);
+    void addMemEdges(const std::vector<MSchedGraphNode*>& memInst, AliasAnalysis &AA, TargetData &TD);
+    void addBranchEdges();
 
   public:
-    MSchedGraph(const MachineBasicBlock *bb, const TargetMachine &targ);
+    MSchedGraph(const MachineBasicBlock *bb, const TargetMachine &targ, AliasAnalysis &AA, TargetData &TD,
+		std::map<const MachineInstr*, unsigned> &ignoreInstrs);
+
+    //Copy constructor with maps to link old nodes to new nodes
     MSchedGraph(const MSchedGraph &G, std::map<MSchedGraphNode*, MSchedGraphNode*> &newNodes);
+    
+    //Deconstructor!
     ~MSchedGraph();
     
-    //Add Nodes to the Graph
+    //Add or delete nodes from the Graph
     void addNode(const MachineInstr* MI, MSchedGraphNode *node);
     void deleteNode(MSchedGraphNode *node);
 
@@ -256,21 +274,23 @@ namespace llvm {
     unsigned size() { return GraphMap.size(); }
     reverse_iterator rbegin() { return GraphMap.rbegin(); }
     reverse_iterator rend() { return GraphMap.rend(); }
+
+    //Get Target or original machine basic block
     const TargetMachine* getTarget() { return &Target; }
     const MachineBasicBlock* getBB() { return BB; }
   };
 
-  
-  static MSchedGraphNode& getSecond(std::pair<const MachineInstr* const,
-					 MSchedGraphNode*> &Pair) {
-    return *Pair.second;
-  }
 
+  
 
 
   // Provide specializations of GraphTraits to be able to use graph
-  // iterators on the scheduling graph!
-  //
+  // iterators on the scheduling graph
+  static MSchedGraphNode& getSecond(std::pair<const MachineInstr* const,
+				    MSchedGraphNode*> &Pair) {
+    return *Pair.second;
+  }
+
   template <> struct GraphTraits<MSchedGraph*> {
     typedef MSchedGraphNode NodeType;
     typedef MSchedGraphNode::succ_iterator ChildIteratorType;
@@ -361,8 +381,6 @@ namespace llvm {
       return map_iterator(((MSchedGraph*)G)->end(), DerefFun(getSecond));
     }
   };
-
-
 }
 
 #endif

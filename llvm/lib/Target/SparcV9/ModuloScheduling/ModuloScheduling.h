@@ -17,6 +17,8 @@
 #include "MSSchedule.h"
 #include "llvm/Function.h"
 #include "llvm/Pass.h"
+#include "llvm/Analysis/AliasAnalysis.h"
+#include "llvm/Target/TargetData.h"
 #include <set>
 
 namespace llvm {
@@ -41,6 +43,9 @@ namespace llvm {
 
     //Map to hold Value* defs
     std::map<const Value*, MachineInstr*> defMap;
+
+    //Map to hold list of instructions associate to the induction var for each BB
+    std::map<const MachineBasicBlock*, std::map<const MachineInstr*, unsigned> > indVarInstrs;
 
     //LLVM Instruction we know we can add TmpInstructions to its MCFI
     Instruction *defaultInst;
@@ -69,6 +74,8 @@ namespace llvm {
     //Internal functions
     bool CreateDefMap(MachineBasicBlock *BI);
     bool MachineBBisValid(const MachineBasicBlock *BI);
+    bool assocIndVar(Instruction *I, std::set<Instruction*> &indVar, 
+		     std::vector<Instruction*> &stack, BasicBlock *BB);
     int calculateResMII(const MachineBasicBlock *BI);
     int calculateRecMII(MSchedGraph *graph, int MII);
     void calculateNodeAttributes(MSchedGraph *graph, int MII);
@@ -101,9 +108,13 @@ namespace llvm {
 		    std::vector<MSchedGraphNode*> &path,
 		    std::set<MSchedGraphNode*> &nodesToAdd);
 
+    void pathToRecc(MSchedGraphNode *node, 
+		    std::vector<MSchedGraphNode*> &path,
+		    std::set<MSchedGraphNode*> &poSet, std::set<MSchedGraphNode*> &lastNodes);
+      
     void computePartialOrder();
 
-    bool computeSchedule();
+    bool computeSchedule(const MachineBasicBlock *BB);
     bool scheduleNode(MSchedGraphNode *node, 
 		      int start, int end);
 
@@ -116,12 +127,12 @@ namespace llvm {
 
     void fixBranches(std::vector<MachineBasicBlock *> &prologues, std::vector<BasicBlock*> &llvm_prologues, MachineBasicBlock *machineBB, BasicBlock *llvmBB, std::vector<MachineBasicBlock *> &epilogues, std::vector<BasicBlock*> &llvm_epilogues, MachineBasicBlock*);  
 
-    void writePrologues(std::vector<MachineBasicBlock *> &prologues, MachineBasicBlock *origBB, std::vector<BasicBlock*> &llvm_prologues, std::map<const Value*, std::pair<const MSchedGraphNode*, int> > &valuesToSave, std::map<Value*, std::map<int, Value*> > &newValues, std::map<Value*, MachineBasicBlock*> &newValLocation);
+    void writePrologues(std::vector<MachineBasicBlock *> &prologues, MachineBasicBlock *origBB, std::vector<BasicBlock*> &llvm_prologues, std::map<const Value*, std::pair<const MachineInstr*, int> > &valuesToSave, std::map<Value*, std::map<int, Value*> > &newValues, std::map<Value*, MachineBasicBlock*> &newValLocation);
 
-    void writeEpilogues(std::vector<MachineBasicBlock *> &epilogues, const MachineBasicBlock *origBB, std::vector<BasicBlock*> &llvm_epilogues, std::map<const Value*, std::pair<const MSchedGraphNode*, int> > &valuesToSave,std::map<Value*, std::map<int, Value*> > &newValues, std::map<Value*, MachineBasicBlock*> &newValLocation,  std::map<Value*, std::map<int, Value*> > &kernelPHIs);
+    void writeEpilogues(std::vector<MachineBasicBlock *> &epilogues, const MachineBasicBlock *origBB, std::vector<BasicBlock*> &llvm_epilogues, std::map<const Value*, std::pair<const MachineInstr*, int> > &valuesToSave,std::map<Value*, std::map<int, Value*> > &newValues, std::map<Value*, MachineBasicBlock*> &newValLocation,  std::map<Value*, std::map<int, Value*> > &kernelPHIs);
   
     
-    void writeKernel(BasicBlock *llvmBB, MachineBasicBlock *machineBB, std::map<const Value*, std::pair<const MSchedGraphNode*, int> > &valuesToSave, std::map<Value*, std::map<int, Value*> > &newValues, std::map<Value*, MachineBasicBlock*> &newValLocation, std::map<Value*, std::map<int, Value*> > &kernelPHIs);
+    void writeKernel(BasicBlock *llvmBB, MachineBasicBlock *machineBB, std::map<const Value*, std::pair<const MachineInstr*, int> > &valuesToSave, std::map<Value*, std::map<int, Value*> > &newValues, std::map<Value*, MachineBasicBlock*> &newValLocation, std::map<Value*, std::map<int, Value*> > &kernelPHIs);
 
     void removePHIs(const MachineBasicBlock *origBB, std::vector<MachineBasicBlock *> &prologues, std::vector<MachineBasicBlock *> &epilogues, MachineBasicBlock *kernelBB, std::map<Value*, MachineBasicBlock*> &newValLocation);
   
@@ -131,6 +142,13 @@ namespace llvm {
     ModuloSchedulingPass(TargetMachine &targ) : target(targ) {}
     virtual bool runOnFunction(Function &F);
     virtual const char* getPassName() const { return "ModuloScheduling"; }
+  
+    // getAnalysisUsage
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.addRequired<AliasAnalysis>();
+      AU.addRequired<TargetData>();
+    }
+
   };
 
 }
