@@ -128,13 +128,13 @@ Instruction *InstCombiner::visitAdd(BinaryOperator *I) {
     return I;
   }
 
-  // -B + A  -->  A - B
+  // -A + B  -->  B - A
   if (Value *V = dyn_castNegInst(LHS))
-    return BinaryOperator::create(Instruction::Sub, RHS, LHS);
+    return BinaryOperator::create(Instruction::Sub, RHS, V);
 
   // A + -B  -->  A - B
   if (Value *V = dyn_castNegInst(RHS))
-    return BinaryOperator::create(Instruction::Sub, LHS, RHS);
+    return BinaryOperator::create(Instruction::Sub, LHS, V);
 
   // Simplify add instructions with a constant RHS...
   if (Constant *Op2 = dyn_cast<Constant>(RHS)) {
@@ -176,13 +176,9 @@ Instruction *InstCombiner::visitSub(BinaryOperator *I) {
     if (Constant *RHS = *Constant::getNullValue(I->getType()) - *Op2) // 0 - RHS
       return BinaryOperator::create(Instruction::Add, Op0, RHS, I->getName());
 
-  // If this is a 'C = -B', check to see if 'B = -A', so that C = A...
-  if (Op0 == Constant::getNullValue(I->getType())) 
-    if (Value *V = dyn_castNegInst(Op1)) {
-      AddUsesToWorkList(I);         // Add all modified instrs to worklist
-      I->replaceAllUsesWith(V);
-      return I;
-    }
+  // If this is a 'C = x-B', check to see if 'B = -A', so that C = x+A...
+  if (Value *V = dyn_castNegInst(Op1))
+    return BinaryOperator::create(Instruction::Add, Op0, V);
 
   return 0;
 }
