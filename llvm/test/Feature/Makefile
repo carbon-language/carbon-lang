@@ -31,9 +31,9 @@ Output/%.opt: % $(LAS) $(LDIS) $(LOPT) Output/.dir
 Output/%.mc: Output/%.bc $(LLC)
 	@echo "======== Generating machine instructions for $<"
 	$(LLC) -f $(LLCFLAGS) $< > $@ || \
-                 ( rm -f $@; ./Failure.sh $@ )
+                 ( rm -f $@; $(FAILURE) $@ )
 
 Output/%.s: Output/%.bc $(LLC)
 	@echo "======== Generating assembly code for $<"
 	$(LLC) -f $(LLCFLAGS) $< -o $@ || \
-                 ( rm -f $@; ./Failure.sh $@ )
+                 ( rm -f $@; $(FAILURE) $@ )

@@ -30,4 +30,4 @@ echo "======== Running optimizier test on $1"
   rm $1.bc.[1234] $1.ll.[1234]
   
   touch Output/$1.opt  # Success!
-)|| ./Failure.sh "$1 Optimizer"
+)|| ../Failure.sh "$1 Optimizer"

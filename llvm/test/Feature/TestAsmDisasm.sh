@@ -27,5 +27,5 @@ echo "======== Running assembler/disassembler test on $1"
 
   rm $1.[bl][cl].[12]
   touch Output/$1.asmdis
-) || ./Failure.sh "$1 ASM/DIS"
+) || ../Failure.sh "$1 ASM/DIS"
 
