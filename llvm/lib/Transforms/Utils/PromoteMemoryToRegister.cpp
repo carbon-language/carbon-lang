@@ -44,6 +44,8 @@ namespace {
     map<BasicBlock*,vector<PHINode*> > NewPhiNodes; // the PhiNodes we're adding
 
   public:
+    const char *getPassName() const { return "Promote Memory to Register"; }
+
     // runOnFunction - To run this pass, first we calculate the alloca
     // instructions that are safe for promotion, then we promote each one.
     //

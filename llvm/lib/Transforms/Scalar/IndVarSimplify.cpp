@@ -197,6 +197,10 @@ static bool doit(Function *M, LoopInfo &Loops) {
 
 namespace {
   struct InductionVariableSimplify : public FunctionPass {
+    const char *getPassName() const {
+      return "Induction Variable Cannonicalize";
+    }
+
     virtual bool runOnFunction(Function *F) {
       return doit(F, getAnalysis<LoopInfo>());
     }

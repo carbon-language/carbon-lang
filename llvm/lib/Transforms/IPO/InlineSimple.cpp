@@ -271,6 +271,7 @@ static bool doFunctionInlining(Function *F) {
 
 namespace {
   struct FunctionInlining : public FunctionPass {
+    const char *getPassName() const { return "Function Inlining"; }
     virtual bool runOnFunction(Function *F) {
       return doFunctionInlining(F);
     }

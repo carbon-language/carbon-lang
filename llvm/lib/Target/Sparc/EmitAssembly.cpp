@@ -192,6 +192,10 @@ struct SparcFunctionAsmPrinter : public FunctionPass, public AsmPrinter {
   inline SparcFunctionAsmPrinter(std::ostream &os, const TargetMachine &t)
     : AsmPrinter(os, t) {}
 
+  const char *getPassName() const {
+    return "Output Sparc Assembly for Functions";
+  }
+
   virtual bool doInitialization(Module *M) {
     startModule(M);
     return false;
@@ -423,6 +427,8 @@ class SparcModuleAsmPrinter : public Pass, public AsmPrinter {
 public:
   SparcModuleAsmPrinter(std::ostream &os, TargetMachine &t)
     : AsmPrinter(os, t) {}
+
+  const char *getPassName() const { return "Output Sparc Assembly for Module"; }
 
   virtual bool run(Module *M) {
     startModule(M);

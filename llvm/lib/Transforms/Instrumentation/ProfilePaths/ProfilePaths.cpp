@@ -37,8 +37,9 @@
 
 using std::vector;
 
-class ProfilePaths: public FunctionPass {
- public:
+struct ProfilePaths : public FunctionPass {
+  const char *getPassName() const { return "ProfilePaths"; }
+
   bool runOnFunction(Function *F);
 
   // Before this pass, make sure that there is only one 

@@ -25,6 +25,9 @@ class InsertPrologEpilogCode : public FunctionPass {
   TargetMachine &Target;
 public:
   InsertPrologEpilogCode(TargetMachine &T) : Target(T) {}
+
+  const char *getPassName() const { return "Sparc Prolog/Epilog Inserter"; }
+
   bool runOnFunction(Function *F) {
     MachineCodeForMethod &mcodeInfo = MachineCodeForMethod::get(F);
     if (!mcodeInfo.isCompiledAsLeafMethod()) {

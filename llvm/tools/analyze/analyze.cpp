@@ -83,6 +83,8 @@ class PassPrinter<Pass, PassName> : public Pass {
   const AnalysisID ID;
 public:
   PassPrinter(const string &M, AnalysisID id) : Message(M), ID(id) {}
+
+  const char *getPassName() const { return "IP Pass Printer"; }
   
   virtual bool run(Module *M) {
     std::cout << Message << "\n";
@@ -101,6 +103,8 @@ class PassPrinter<FunctionPass, PassName> : public FunctionPass {
   const AnalysisID ID;
 public:
   PassPrinter(const string &M, AnalysisID id) : Message(M), ID(id) {}
+
+    const char *getPassName() const { return "Function Pass Printer"; }
   
   virtual bool runOnFunction(Function *F) {
     std::cout << Message << " on function '" << F->getName() << "'\n";
@@ -134,6 +138,8 @@ Pass *createPrintModulePass(const string &Message) {
 }
 
 struct InstForest : public FunctionPass {
+  const char *getPassName() const { return "InstForest Printer"; }
+
   void doit(Function *F) {
     std::cout << analysis::InstForest<char>(F);
   }
@@ -144,6 +150,8 @@ struct InstForest : public FunctionPass {
 };
 
 struct IndVars : public FunctionPass {
+  const char *getPassName() const { return "IndVars Printer"; }
+
   void doit(Function *F) {
     LoopInfo &LI = getAnalysis<LoopInfo>();
     for (inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I)
@@ -161,6 +169,8 @@ struct IndVars : public FunctionPass {
 };
 
 struct Exprs : public FunctionPass {
+  const char *getPassName() const { return "Expression Printer"; }
+
   static void doit(Function *F) {
     std::cout << "Classified expressions for: " << F->getName() << "\n";
     for (inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I) {
@@ -199,7 +209,7 @@ class PrinterPass : public TraitClass {
   const string Message;
 public:
   PrinterPass(const string &M) : Message(M) {}
-  
+
   virtual bool runOnFunction(Function *F) {
     std::cout << Message << " on function '" << F->getName() << "'\n";
 

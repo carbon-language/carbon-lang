@@ -39,6 +39,8 @@ public:
 
   IntervalPartition(AnalysisID AID) : RootInterval(0) { assert(AID == ID); }
 
+  const char *getPassName() const { return "Interval Partition Construction"; }
+
   // run - Calculate the interval partition for this function
   virtual bool runOnFunction(Function *F);
 

@@ -63,6 +63,11 @@ public:
 
   DominatorSet(AnalysisID id) : DominatorBase(id == PostDomID) {}
 
+  virtual const char *getPassName() const {
+    if (isPostDominator()) return "Post-Dominator Set Construction";
+    else return "Dominator Set Construction";
+  }
+
   virtual bool runOnFunction(Function *F);
 
   // Accessor interface:
@@ -114,6 +119,11 @@ public:
   static AnalysisID PostDomID;  // Build immediate postdominators
 
   ImmediateDominators(AnalysisID id) : DominatorBase(id == PostDomID) {}
+
+  virtual const char *getPassName() const {
+    if (isPostDominator()) return "Immediate Post-Dominators Construction";
+    else return "Immediate Dominators Construction";
+  }
 
   virtual bool runOnFunction(Function *F) {
     IDoms.clear();     // Reset from the last time we were run...
@@ -206,6 +216,11 @@ public:
   DominatorTree(AnalysisID id) : DominatorBase(id == PostDomID) {}
   ~DominatorTree() { reset(); }
 
+  virtual const char *getPassName() const {
+    if (isPostDominator()) return "Post-Dominator Tree Construction";
+    else return "Dominator Tree Construction";
+  }
+
   virtual bool runOnFunction(Function *F) {
     reset();
     DominatorSet *DS;
@@ -261,6 +276,11 @@ public:
   static AnalysisID PostDomID;  // Build postdominator frontier
 
   DominanceFrontier(AnalysisID id) : DominatorBase(id == PostDomID) {}
+
+  virtual const char *getPassName() const {
+    if (isPostDominator()) return "Post-Dominance Frontier Construction";
+    else return "Dominance Frontier Construction";
+  }
 
   virtual bool runOnFunction(Function *) {
     Frontiers.clear();

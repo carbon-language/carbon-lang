@@ -65,6 +65,8 @@ namespace {
     unsigned LastConstantSeen;
   public:
     inline ConstantMerge() : LastConstantSeen(0) {}
+
+    const char *getPassName() const {return "Merge Duplicate Global Constants";}
     
     // doInitialization - For this pass, process all of the globals in the
     // module, eliminating duplicate constants.
@@ -89,6 +91,8 @@ namespace {
   };
   
   struct DynamicConstantMerge : public ConstantMerge {
+    const char *getPassName() const { return "Dynamic Constant Merge"; }
+
     // runOnFunction - Check to see if any globals have been added to the 
     // global list for the module.  If so, eliminate them.
     //

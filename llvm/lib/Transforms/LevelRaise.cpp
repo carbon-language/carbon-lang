@@ -471,6 +471,8 @@ static bool doRPR(Function *F) {
 
 namespace {
   struct RaisePointerReferences : public FunctionPass {
+    const char *getPassName() const { return "Raise Pointer References"; }
+
     virtual bool runOnFunction(Function *F) { return doRPR(F); }
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {

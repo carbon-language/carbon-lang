@@ -1484,6 +1484,8 @@ namespace {
     const TargetMachine &target;
   public:
     inline InstructionSchedulingWithSSA(const TargetMachine &T) : target(T) {}
+
+    const char *getPassName() const { return "Instruction Scheduling"; }
   
     // getAnalysisUsage - We use LiveVarInfo...
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {

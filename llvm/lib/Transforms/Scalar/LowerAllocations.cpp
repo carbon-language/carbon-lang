@@ -34,6 +34,8 @@ public:
     MallocFunc = FreeFunc = 0;
   }
 
+  const char *getPassName() const { return "Lower Allocations"; }
+
   // doPassInitialization - For the lower allocations pass, this ensures that a
   // module contains a declaration for a malloc and a free function.
   //
@@ -53,6 +55,8 @@ class RaiseAllocations : public BasicBlockPass {
   Function *FreeFunc;     // Initialized by doPassInitializationVirt
 public:
   inline RaiseAllocations() : MallocFunc(0), FreeFunc(0) {}
+
+  const char *getPassName() const { return "Raise Allocations"; }
 
   // doPassInitialization - For the raise allocations pass, this finds a
   // declaration for malloc and free if they exist.
@@ -216,5 +220,3 @@ Pass *createLowerAllocationsPass(const TargetData &TD) {
 Pass *createRaiseAllocationsPass() {
   return new RaiseAllocations();
 }
-
-

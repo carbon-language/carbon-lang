@@ -466,6 +466,10 @@ namespace {
   // to prove whether a value is constant and whether blocks are used.
   //
   struct SCCPPass : public FunctionPass {
+    const char *getPassName() const {
+      return "Sparse Conditional Constant Propogation";
+    }
+
     inline bool runOnFunction(Function *F) {
       SCCP S(F);
       return S.doSCCP();

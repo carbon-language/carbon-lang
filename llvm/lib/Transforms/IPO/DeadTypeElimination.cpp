@@ -36,6 +36,8 @@ static const Type *PtrSByte = 0;    // 'sbyte*' type
 
 namespace {
   struct CleanupGCCOutput : public FunctionPass {
+    const char *getPassName() const { return "Cleanup GCC Output"; }
+
     // doPassInitialization - For this pass, it removes global symbol table
     // entries for primitive types.  These are never used for linking in GCC and
     // they make the output uglier to look at, so we nuke them.
@@ -337,6 +339,8 @@ bool CleanupGCCOutput::doFinalization(Module *M) {
 
 namespace {
   struct FunctionResolvingPass : public Pass {
+    const char *getPassName() const { return "Resolve Functions"; }
+
     bool run(Module *M);
   };
 }

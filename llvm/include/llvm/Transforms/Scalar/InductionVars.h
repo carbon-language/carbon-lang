@@ -12,6 +12,8 @@
 class IntervalPartition;
 
 struct InductionVariableCannonicalize : public FunctionPass {
+  const char *getPassName() const { return "**OLD IndVars ***"; }
+
   // doInductionVariableCannonicalize - Simplify induction variables in loops
   //
   static bool doIt(Function *F, IntervalPartition &IP);

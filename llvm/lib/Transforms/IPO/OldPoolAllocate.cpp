@@ -199,6 +199,8 @@ namespace {
 
   // Define the pass class that we implement...
   struct PoolAllocate : public Pass {
+    const char *getPassName() const { return "Pool Allocate"; }
+
     PoolAllocate() {
       switch (ReqPointerSize) {
       case Ptr32bits: POINTERTYPE = Type::UIntTy; break;

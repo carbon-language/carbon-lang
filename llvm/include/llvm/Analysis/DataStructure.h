@@ -439,6 +439,8 @@ public:
   DataStructure(AnalysisID id) { assert(id == ID); }
   ~DataStructure() { releaseMemory(); }
 
+  virtual const char *getPassName() const { return "Data Structure Analysis"; }
+
   // run - Do nothing, because methods are analyzed lazily
   virtual bool run(Module *TheModule) { return false; }
 

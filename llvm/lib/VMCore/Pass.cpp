@@ -97,12 +97,12 @@ TimingInfo::~TimingInfo() {
   cerr << std::string(79, '=') << "\n"
        << "                      ... Pass execution timing report ...\n"
        << std::string(79, '=') << "\n  Total Execution Time: " << TotalTime
-       << " seconds\n\n  % Time: Seconds:\tPass Name (mangled):\n";
+       << " seconds\n\n  % Time: Seconds:\tPass Name:\n";
 
   // Loop through all of the timing data, printing it out...
   for (unsigned i = 0, e = Data.size(); i != e; ++i) {
     fprintf(stderr, "  %6.2f%% %fs\t%s\n", Data[i].first*100 / TotalTime,
-            Data[i].first, typeid(*Data[i].second).name());
+            Data[i].first, Data[i].second->getPassName());
   }
   cerr << "  100.00% " << TotalTime << "s\tTOTAL\n"
        << std::string(79, '=') << "\n";
@@ -137,7 +137,7 @@ void PMDebug::PrintPassInformation(unsigned Depth, const char *Action,
                                    Pass *P, Annotable *V) {
   if (PassDebugging >= PassExecutions) {
     std::cerr << (void*)P << std::string(Depth*2+1, ' ') << Action << " '" 
-              << typeid(*P).name();
+              << P->getPassName();
     if (V) {
       std::cerr << "' on ";
 
@@ -160,7 +160,7 @@ void PMDebug::PrintAnalysisSetInfo(unsigned Depth, const char *Msg,
     std::cerr << (void*)P << std::string(Depth*2+3, ' ') << Msg << " Analyses:";
     for (unsigned i = 0; i != Set.size(); ++i) {
       Pass *P = Set[i].createPass();   // Good thing this is just debug code...
-      std::cerr << "  " << typeid(*P).name();
+      std::cerr << "  " << P->getPassName();
       delete P;
     }
     std::cerr << "\n";
@@ -169,7 +169,7 @@ void PMDebug::PrintAnalysisSetInfo(unsigned Depth, const char *Msg,
 
 // dumpPassStructure - Implement the -debug-passes=PassStructure option
 void Pass::dumpPassStructure(unsigned Offset = 0) {
-  std::cerr << std::string(Offset*2, ' ') << typeid(*this).name() << "\n";
+  std::cerr << std::string(Offset*2, ' ') << getPassName() << "\n";
 }
 
 
@@ -180,6 +180,11 @@ void Pass::dumpPassStructure(unsigned Offset = 0) {
 void Pass::addToPassManager(PassManagerT<Module> *PM, AnalysisUsage &AU) {
   PM->addPass(this, AU);
 }
+
+
+// getPassName - Use C++ RTTI to get a SOMEWHAT intelligable name for the pass.
+//
+const char *Pass::getPassName() const { return typeid(*this).name(); }
 
 //===----------------------------------------------------------------------===//
 // FunctionPass Implementation

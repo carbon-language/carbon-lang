@@ -9,15 +9,16 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/Scalar/DecomposeMultiDimRefs.h"
-#include "llvm/Constants.h"
+#include "llvm/Constant.h"
 #include "llvm/iMemory.h"
 #include "llvm/iOther.h"
 #include "llvm/BasicBlock.h"
-#include "llvm/Function.h"
 #include "llvm/Pass.h"
 
 namespace {
   struct DecomposePass : public BasicBlockPass {
+    const char *getPassName() const { return "Decompose Subscripting Exps"; }
+
     virtual bool runOnBasicBlock(BasicBlock *BB);
 
   private:
@@ -79,8 +80,9 @@ void DecomposePass::decomposeArrayRef(BasicBlock::iterator &BBI) {
       
     // Check for a zero index.  This will need a cast instead of
     // a getElementPtr, or it may need neither.
-    bool indexIsZero = isa<ConstantUInt>(*OI) && 
-                       cast<Constant>(*OI)->isNullValue();
+    bool indexIsZero = isa<Constant>(*OI) && 
+                       cast<Constant>(*OI)->isNullValue() &&
+                       (*OI)->getType() == Type::UIntTy;
       
     // Extract the first index.  If the ptr is a pointer to a structure
     // and the next index is a structure offset (i.e., not an array offset), 

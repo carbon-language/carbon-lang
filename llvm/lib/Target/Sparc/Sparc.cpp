@@ -130,6 +130,11 @@ class ConstructMachineCodeForFunction : public FunctionPass {
   TargetMachine &Target;
 public:
   inline ConstructMachineCodeForFunction(TargetMachine &T) : Target(T) {}
+
+  const char *getPassName() const {
+    return "Sparc ConstructMachineCodeForFunction";
+  }
+
   bool runOnFunction(Function *F) {
     MachineCodeForMethod::construct(F, Target);
     return false;
@@ -140,6 +145,8 @@ class InstructionSelection : public FunctionPass {
   TargetMachine &Target;
 public:
   inline InstructionSelection(TargetMachine &T) : Target(T) {}
+  const char *getPassName() const { return "Sparc Instruction Selection"; }
+
   bool runOnFunction(Function *F) {
     if (SelectInstructionsForMethod(F, Target)) {
       cerr << "Instr selection failed for function " << F->getName() << "\n";
@@ -150,6 +157,8 @@ public:
 };
 
 struct FreeMachineCodeForFunction : public FunctionPass {
+  const char *getPassName() const { return "Sparc FreeMachineCodeForFunction"; }
+
   static void freeMachineCode(Instruction *I) {
     MachineCodeForInstruction::destroy(I);
   }

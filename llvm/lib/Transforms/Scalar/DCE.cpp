@@ -64,6 +64,8 @@ static inline bool RemoveUnusedDefs(BasicBlock::InstListType &Vals) {
 }
 
 struct DeadInstElimination : public BasicBlockPass {
+  const char *getPassName() const { return "Dead Instruction Elimination"; }
+
   virtual bool runOnBasicBlock(BasicBlock *BB) {
     return RemoveUnusedDefs(BB->getInstList());
   }
@@ -340,6 +342,7 @@ static bool RemoveUnusedGlobalValues(Module *Mod) {
 
 namespace {
   struct DeadCodeElimination : public FunctionPass {
+    const char *getPassName() const { return "Dead Code Elimination"; }
 
     // Pass Interface...
     virtual bool doInitialization(Module *M) {

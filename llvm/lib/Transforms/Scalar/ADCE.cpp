@@ -290,6 +290,8 @@ BasicBlock *ADCE::fixupCFG(BasicBlock *BB, std::set<BasicBlock*> &VisitedBlocks,
 
 namespace {
   struct AgressiveDCE : public FunctionPass {
+    const char *getPassName() const {return "Aggressive Dead Code Elimination";}
+
     // doADCE - Execute the Agressive Dead Code Elimination Algorithm
     //
     virtual bool runOnFunction(Function *F) {

@@ -211,6 +211,8 @@ static bool DoConstPropPass(Function *F) {
 
 namespace {
   struct ConstantPropogation : public FunctionPass {
+    const char *getPassName() const { return "Simple Constant Propogation"; }
+
     inline bool runOnFunction(Function *F) {
       bool Modified = false;
 

@@ -105,6 +105,8 @@ public:
 
   FunctionLiveVarInfo(AnalysisID id = ID) { assert(id == ID); }
 
+  virtual const char *getPassName() const { return "Live Variable Analysis"; }
+
   // --------- Implement the FunctionPass interface ----------------------
 
   // runOnFunction - Perform analysis, update internal data structures.

@@ -44,6 +44,8 @@ namespace {
     TargetMachine &Target;
   public:
     inline RegisterAllocator(TargetMachine &T) : Target(T) {}
+
+    const char *getPassName() const { return "Register Allocation"; }
     
     bool runOnFunction(Function *F) {
       if (DEBUG_RA)

@@ -434,6 +434,7 @@ template<> struct PassManagerTraits<BasicBlock> : public BasicBlockPass {
   // getPMName() - Return the name of the unit the PassManager operates on for
   // debugging.
   const char *getPMName() const { return "BasicBlock"; }
+  virtual const char *getPassName() const { return "BasicBlock Pass Manager"; }
 
   // Implement the BasicBlockPass interface...
   virtual bool doInitialization(Module *M);
@@ -477,6 +478,7 @@ template<> struct PassManagerTraits<Function> : public FunctionPass {
   // getPMName() - Return the name of the unit the PassManager operates on for
   // debugging.
   const char *getPMName() const { return "Function"; }
+  virtual const char *getPassName() const { return "Function Pass Manager"; }
 
   // Implement the FunctionPass interface...
   virtual bool doInitialization(Module *M);
@@ -510,6 +512,7 @@ template<> struct PassManagerTraits<Module> : public Pass {
   // getPMName() - Return the name of the unit the PassManager operates on for
   // debugging.
   const char *getPMName() const { return "Module"; }
+  virtual const char *getPassName() const { return "Module Pass Manager"; }
 
   // TimingInformation - This data member maintains timing information for each
   // of the passes that is executed.

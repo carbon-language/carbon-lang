@@ -12,6 +12,8 @@
 #include "llvm/Function.h"
 
 class InternalizePass : public Pass {
+  const char *getPassName() const { return "Internalize Functions"; }
+
   virtual bool run(Module *M) {
     bool FoundMain = false;   // Look for a function named main...
     for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I)

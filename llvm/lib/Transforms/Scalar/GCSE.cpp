@@ -30,6 +30,10 @@ namespace {
     DominatorSet        *DomSetInfo;
     ImmediateDominators *ImmDominator;
   public:
+    const char *getPassName() const {
+      return "Global Common Subexpression Elimination";
+    }
+
     virtual bool runOnFunction(Function *F);
 
     // Visitation methods, these are invoked depending on the type of

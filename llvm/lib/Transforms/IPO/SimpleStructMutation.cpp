@@ -18,11 +18,12 @@ using std::set;
 using std::pair;
 
 namespace {
-  class SimpleStructMutation : public MutateStructTypes {
-  public:
+  struct SimpleStructMutation : public MutateStructTypes {
     enum Transform { SwapElements, SortElements } CurrentXForm;
     
     SimpleStructMutation(enum Transform XForm) : CurrentXForm(XForm) {}
+    
+    const char *getPassName() const { return "Simple Struct Mutation"; }
     
     virtual bool run(Module *M) {
       setTransforms(getTransforms(M, CurrentXForm));

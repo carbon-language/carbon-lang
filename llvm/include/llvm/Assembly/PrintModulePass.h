@@ -22,6 +22,8 @@ public:
   inline PrintModulePass(std::ostream *o = &std::cout, bool DS = false)
     : Out(o), DeleteStream(DS) {
   }
+
+  const char *getPassName() const { return "Module Printer"; }
   
   inline ~PrintModulePass() {
     if (DeleteStream) delete Out;
@@ -46,6 +48,8 @@ public:
                            bool DS = false)
     : Banner(B), Out(o), DeleteStream(DS) {
   }
+
+  const char *getPassName() const { return "Function Printer"; }
   
   inline ~PrintFunctionPass() {
     if (DeleteStream) delete Out;

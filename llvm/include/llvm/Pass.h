@@ -41,6 +41,11 @@ public:
   inline Pass(AnalysisResolver *AR = 0) : Resolver(AR) {}
   inline virtual ~Pass() {} // Destructor is virtual so we can be subclassed
 
+  // getPassName - Return a nice clean name for a pass.  This should be
+  // overloaded by the pass, but if it is not, C++ RTTI will be consulted to get
+  // a SOMEWHAT intelligable name for the pass.
+  //
+  virtual const char *getPassName() const;
 
   // run - Run this pass, returning true if a modification was made to the
   // module argument.  This should be implemented by all concrete subclasses.
@@ -311,7 +316,5 @@ struct AnalysisResolver {
 protected:
   void setAnalysisResolver(Pass *P, AnalysisResolver *AR);
 };
-
-
 
 #endif

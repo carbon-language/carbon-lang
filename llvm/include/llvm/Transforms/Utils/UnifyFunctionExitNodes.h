@@ -17,6 +17,8 @@ public:
   static AnalysisID ID;            // Pass ID
   UnifyFunctionExitNodes(AnalysisID id = ID) : ExitNode(0) { assert(ID == id); }
 
+  virtual const char *getPassName() const { return "Unify Function Exit Nodes";}
+
   // UnifyAllExitNodes - Unify all exit nodes of the CFG by creating a new
   // BasicBlock, and converting all returns to unconditional branches to this
   // new basic block.  The singular exit node is returned in ExitNode.

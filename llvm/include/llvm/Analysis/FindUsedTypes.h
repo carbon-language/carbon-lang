@@ -24,6 +24,7 @@ public:
   static AnalysisID IncludeSymbolTableID;
 
   FindUsedTypes(AnalysisID id) : IncludeSymbolTables(id != ID) {}
+  virtual const char *getPassName() const { return "Find Used Types"; }
 
   // getTypes - After the pass has been run, return the set containing all of
   // the types used in the module.

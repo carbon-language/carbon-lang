@@ -30,6 +30,8 @@ namespace {
     InsertTraceCode(bool traceBasicBlockExits, bool traceFunctionExits)
       : TraceBasicBlockExits(traceBasicBlockExits), 
         TraceFunctionExits(traceFunctionExits) {}
+
+    const char *getPassName() const { return "Trace Code Insertion"; }
     
     // Add a prototype for printf if it is not already in the program.
     //

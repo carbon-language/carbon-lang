@@ -61,6 +61,8 @@ static bool doStripGlobalSymbols(Module *M) {
 
 namespace {
   struct SymbolStripping : public FunctionPass {
+    const char *getPassName() const { return "Strip Symbols from Functions"; }
+
     virtual bool runOnFunction(Function *F) {
       return doSymbolStripping(F);
     }
@@ -70,6 +72,7 @@ namespace {
   };
 
   struct FullSymbolStripping : public SymbolStripping {
+    const char *getPassName() const { return "Strip Symbols from Module"; }
     virtual bool doInitialization(Module *M) {
       return doStripGlobalSymbols(M);
     }

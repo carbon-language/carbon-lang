@@ -58,6 +58,8 @@ namespace {  // Anonymous namespace for class
 
     Verifier() : Broken(false) {}
 
+    virtual const char *getPassName() const { return "Module Verifier"; }
+
     bool doInitialization(Module *M) {
       verifySymbolTable(M->getSymbolTable());
       return false;

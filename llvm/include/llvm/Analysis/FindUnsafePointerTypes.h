@@ -30,6 +30,8 @@ public:
 
   FindUnsafePointerTypes(AnalysisID id) { assert(ID == id); }
 
+  virtual const char *getPassName() const { return "Find Unsafe Pointer Types";}
+
   // Accessor for underlying type set...
   inline const std::set<PointerType*> &getUnsafeTypes() const {
     return UnsafeTypes;

@@ -19,6 +19,8 @@ public:
     : Out(o), DeleteStream(DS) {
   }
 
+  const char *getPassName() const { return "Bytecode Writer"; }
+
   inline ~WriteBytecodePass() {
     if (DeleteStream) delete Out;
   }

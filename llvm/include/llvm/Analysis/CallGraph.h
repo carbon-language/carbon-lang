@@ -115,6 +115,8 @@ public:
   CallGraph(AnalysisID AID) : Root(0) { assert(AID == ID); }
   ~CallGraph() { destroy(); }
 
+  virtual const char *getPassName() const { return "Call Graph Construction"; }
+
   // run - Compute the call graph for the specified module.
   virtual bool run(Module *TheModule);
 

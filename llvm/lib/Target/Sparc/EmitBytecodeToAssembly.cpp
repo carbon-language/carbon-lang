@@ -59,6 +59,8 @@ namespace {
   public:
     SparcBytecodeWriter(std::ostream &out) : Out(out) {}
 
+    const char *getPassName() const { return "Emit Bytecode to Sparc Assembly";}
+
     virtual bool run(Module *M) {
       // Write bytecode out to the sparc assembly stream
       Out << "\n\n!LLVM BYTECODE OUTPUT\n\t.section \".rodata\"\n\t.align 8\n";

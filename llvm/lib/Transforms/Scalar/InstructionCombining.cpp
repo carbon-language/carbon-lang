@@ -42,6 +42,8 @@ namespace {
     }
 
   public:
+    const char *getPassName() const { return "Instruction Combining"; }
+
     virtual bool runOnFunction(Function *F);
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
