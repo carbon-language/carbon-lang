@@ -43,10 +43,10 @@ public:
   inline CachedWriter &operator<<(const GlobalVariable *X) {
     return *this << (const Value*)X;
   }
-  inline CachedWriter &operator<<(const Method *X) {
+  inline CachedWriter &operator<<(const Function *X) {
     return *this << (const Value*)X;
   }
-  inline CachedWriter &operator<<(const MethodArgument *X) {
+  inline CachedWriter &operator<<(const FunctionArgument *X) {
     return *this << (const Value*)X;
   }
   inline CachedWriter &operator<<(const BasicBlock *X) {

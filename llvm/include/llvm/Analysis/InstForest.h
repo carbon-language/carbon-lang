@@ -1,4 +1,4 @@
-//===- llvm/Analysis/InstForest.h - Partition Method into forest -*- C++ -*--=//
+//===- llvm/Analysis/InstForest.h - Partition Func into forest ---*- C++ -*--=//
 //
 // This interface is used to partition a method into a forest of instruction
 // trees, where the following invariants hold:
@@ -163,8 +163,8 @@ class InstForest : public std::vector<InstTreeNode<Payload> *> {
 
 public:
   // ctor - Create an instruction forest for the specified method...
-  InstForest(Method *M) {
-    for (Method::iterator MI = M->begin(), ME = M->end(); MI != ME; ++MI) {
+  InstForest(Function *F) {
+    for (Function::iterator MI = F->begin(), ME = F->end(); MI != ME; ++MI) {
       BasicBlock *BB = *MI;
       for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I) {
         Instruction *Inst = *I;
@@ -240,7 +240,7 @@ InstTreeNode<Payload>::InstTreeNode(InstForest<Payload> &IF, Value *V,
  
   if (!isa<Instruction>(V)) {
     assert((isa<Constant>(V) || isa<BasicBlock>(V) ||
-	    isa<MethodArgument>(V) || isa<GlobalValue>(V)) &&
+	    isa<FunctionArgument>(V) || isa<GlobalValue>(V)) &&
 	   "Unrecognized value type for InstForest Partition!");
     if (isa<Constant>(V))
       getTreeData().first.second = ConstNode;

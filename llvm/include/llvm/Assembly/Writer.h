@@ -19,11 +19,6 @@
 #include <iostream>
 #include "llvm/Type.h"
 
-class Module;
-class GlobalVariable;
-class Function;
-class BasicBlock;
-class Instruction;
 class SlotCalculator;
 
 // The only interface defined by this file... convert the internal 
@@ -100,10 +95,11 @@ inline std::ostream &operator<<(std::ostream &o, const Value *I) {
   switch (I->getValueType()) {
   case Value::TypeVal:       return o << cast<const Type>(I);
   case Value::ConstantVal:   WriteToAssembly(cast<Constant>(I)      , o); break;
-  case Value::MethodArgumentVal: return o << I->getType() << " "<< I->getName();
+  case Value::FunctionArgumentVal:
+    return o << I->getType() << " " << I->getName();
   case Value::InstructionVal:WriteToAssembly(cast<Instruction>(I)   , o); break;
   case Value::BasicBlockVal: WriteToAssembly(cast<BasicBlock>(I)    , o); break;
-  case Value::MethodVal:     WriteToAssembly(cast<Function>(I)      , o); break;
+  case Value::FunctionVal:   WriteToAssembly(cast<Function>(I)      , o); break;
   case Value::GlobalVariableVal:
                              WriteToAssembly(cast<GlobalVariable>(I), o); break;
   case Value::ModuleVal:     WriteToAssembly(cast<Module>(I)        , o); break;
