@@ -405,18 +405,20 @@ bool BytecodeParser::ParseInstruction(const unsigned char *&Buf,
     return false;
   }
 
+  case 62:   // volatile load
   case Instruction::Load:
     if (Raw.NumOperands != 1) return true;
     if (!isa<PointerType>(Raw.Ty)) return true;
-    Res = new LoadInst(getValue(Raw.Ty, Raw.Arg1));
+    Res = new LoadInst(getValue(Raw.Ty, Raw.Arg1), "", Raw.Opcode == 62);
     return false;
 
+  case 63:   // volatile store 
   case Instruction::Store: {
     if (!isa<PointerType>(Raw.Ty) || Raw.NumOperands != 2) return true;
 
     Value *Ptr = getValue(Raw.Ty, Raw.Arg2);
     const Type *ValTy = cast<PointerType>(Ptr->getType())->getElementType();
-    Res = new StoreInst(getValue(ValTy, Raw.Arg1), Ptr);
+    Res = new StoreInst(getValue(ValTy, Raw.Arg1), Ptr, Raw.Opcode == 63);
     return false;
   }
   }  // end switch(Raw.Opcode) 
