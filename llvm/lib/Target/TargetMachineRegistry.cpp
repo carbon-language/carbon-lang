@@ -15,7 +15,67 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Target/TargetMachineRegistry.h"
+#include <algorithm>
 using namespace llvm;
 
 const TargetMachineRegistry::Entry *TargetMachineRegistry::List = 0;
 
+/// getClosestStaticTargetForModule - Given an LLVM module, pick the best target
+/// that is compatible with the module.  If no close target can be found, this
+/// returns null and sets the Error string to a reason.
+const TargetMachineRegistry::Entry *
+TargetMachineRegistry::getClosestStaticTargetForModule(const Module &M,
+                                                       std::string &Error) {
+  std::vector<std::pair<unsigned, const Entry *> > UsableTargets;
+  for (const Entry *E = getList(); E; E = E->getNext())
+    if (unsigned Qual = E->ModuleMatchQualityFn(M))
+      UsableTargets.push_back(std::make_pair(Qual, E));
+
+  if (UsableTargets.empty()) {
+    Error = "No available targets are compatible with this module";
+    return 0;
+  } else if (UsableTargets.size() == 1)
+    return UsableTargets.back().second;
+  
+  // Otherwise, take the best target, but make sure we don't have to equally
+  // good best targets.
+  std::sort(UsableTargets.begin(), UsableTargets.end());
+  if (UsableTargets.back().first ==UsableTargets[UsableTargets.size()-2].first){
+    Error = "Cannot choose between targets \"" +
+      std::string(UsableTargets.back().second->Name) + "\" and \"" +
+      std::string(UsableTargets[UsableTargets.size()-2].second->Name) + "\"";
+    return 0;
+  }
+  return UsableTargets.back().second;
+}
+
+/// getClosestTargetForJIT - Given an LLVM module, pick the best target that
+/// is compatible with the current host and the specified module.  If no
+/// close target can be found, this returns null and sets the Error string
+/// to a reason.
+const TargetMachineRegistry::Entry *
+TargetMachineRegistry::getClosestTargetForJIT(std::string &Error) {
+  std::vector<std::pair<unsigned, const Entry *> > UsableTargets;
+  for (const Entry *E = getList(); E; E = E->getNext())
+    if (unsigned Qual = E->JITMatchQualityFn())
+      UsableTargets.push_back(std::make_pair(Qual, E));
+
+  if (UsableTargets.empty()) {
+    Error = "No JIT is available for this host";
+    return 0;
+  } else if (UsableTargets.size() == 1)
+    return UsableTargets.back().second;
+  
+  // Otherwise, take the best target.  If there is a tie, just pick one.
+  unsigned MaxQual = UsableTargets.front().first;
+  const Entry *MaxQualTarget = UsableTargets.front().second;
+
+  for (unsigned i = 1, e = UsableTargets.size(); i != e; ++i)
+    if (UsableTargets[i].first > MaxQual) {
+      MaxQual = UsableTargets[i].first;
+      MaxQualTarget = UsableTargets[i].second;
+    }
+  
+  return MaxQualTarget;
+}
+                                    
