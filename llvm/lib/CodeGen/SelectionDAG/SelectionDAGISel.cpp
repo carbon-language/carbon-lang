@@ -28,10 +28,19 @@
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include <map>
 #include <iostream>
 using namespace llvm;
+
+#ifndef _NDEBUG
+static cl::opt<bool>
+ViewDAGs("view-isel-dags", cl::Hidden,
+         cl::desc("Pop up a window to show isel dags as they are selected"));
+#else
+static const bool ViewDAGS = 0;
+#endif
 
 namespace llvm {
   //===--------------------------------------------------------------------===//
@@ -889,6 +898,8 @@ void SelectionDAGISel::SelectBasicBlock(BasicBlock *LLVMBB, MachineFunction &MF,
   // Finally, instruction select all of the operations to machine code, adding
   // the code to the MachineBasicBlock.
   InstructionSelectBasicBlock(DAG);
+
+  if (ViewDAGs) DAG.viewGraph();
 
   DEBUG(std::cerr << "Selected machine code:\n");
   DEBUG(BB->dump());
