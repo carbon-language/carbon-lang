@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Assembly/CachedWriter.h"
+#include "llvm/Assembly/Writer.h"
 #include "llvm/SlotCalculator.h"
 #include "llvm/Module.h"
 #include "llvm/Function.h"
@@ -27,10 +28,6 @@ using std::string;
 using std::map;
 using std::vector;
 using std::ostream;
-
-void Value::dump() const {
-  std::cerr << this;
-}
 
 static const Module *getModuleFromVal(const Value *V) {
   if (const FunctionArgument *MA = dyn_cast<const FunctionArgument>(V))
@@ -636,55 +633,61 @@ ostream &AssemblyWriter::printType(const Type *Ty) {
 //===----------------------------------------------------------------------===//
 
 
-
-void WriteToAssembly(const Module *M, ostream &o) {
-  if (M == 0) { o << "<null> module\n"; return; }
-  SlotCalculator SlotTable(M, true);
-  AssemblyWriter W(o, SlotTable, M);
-
-  W.write(M);
+void Module::print(std::ostream &o) const {
+  SlotCalculator SlotTable(this, true);
+  AssemblyWriter W(o, SlotTable, this);
+  W.write(this);
 }
 
-void WriteToAssembly(const GlobalVariable *G, ostream &o) {
-  if (G == 0) { o << "<null> global variable\n"; return; }
-  SlotCalculator SlotTable(G->getParent(), true);
-  AssemblyWriter W(o, SlotTable, G->getParent());
-  W.write(G);
+void GlobalVariable::print(std::ostream &o) const {
+  SlotCalculator SlotTable(getParent(), true);
+  AssemblyWriter W(o, SlotTable, getParent());
+  W.write(this);
 }
 
-void WriteToAssembly(const Function *F, ostream &o) {
-  if (F == 0) { o << "<null> function\n"; return; }
-  SlotCalculator SlotTable(F->getParent(), true);
-  AssemblyWriter W(o, SlotTable, F->getParent());
+void Function::print(std::ostream &o) const {
+  SlotCalculator SlotTable(getParent(), true);
+  AssemblyWriter W(o, SlotTable, getParent());
 
-  W.write(F);
+  W.write(this);
 }
 
-
-void WriteToAssembly(const BasicBlock *BB, ostream &o) {
-  if (BB == 0) { o << "<null> basic block\n"; return; }
-
-  SlotCalculator SlotTable(BB->getParent(), true);
+void BasicBlock::print(std::ostream &o) const {
+  SlotCalculator SlotTable(getParent(), true);
   AssemblyWriter W(o, SlotTable, 
-                   BB->getParent() ? BB->getParent()->getParent() : 0);
-
-  W.write(BB);
+                   getParent() ? getParent()->getParent() : 0);
+  W.write(this);
 }
 
-void WriteToAssembly(const Constant *CPV, ostream &o) {
-  if (CPV == 0) { o << "<null> constant pool value\n"; return; }
-  o << " " << CPV->getType()->getDescription() << " " << CPV->getStrValue();
-}
-
-void WriteToAssembly(const Instruction *I, ostream &o) {
-  if (I == 0) { o << "<null> instruction\n"; return; }
-
-  const Function *F = I->getParent() ? I->getParent()->getParent() : 0;
+void Instruction::print(std::ostream &o) const {
+  const Function *F = getParent() ? getParent()->getParent() : 0;
   SlotCalculator SlotTable(F, true);
   AssemblyWriter W(o, SlotTable, F ? F->getParent() : 0);
 
-  W.write(I);
+  W.write(this);
 }
+
+void Constant::print(std::ostream &o) const {
+  if (this == 0) { o << "<null> constant value\n"; return; }
+  o << " " << getType()->getDescription() << " " << getStrValue();
+}
+
+void Type::print(std::ostream &o) const { 
+  if (this == 0)
+    o << "<null Type>";
+  else
+    o << getDescription();
+}
+
+void FunctionArgument::print(std::ostream &o) const {
+  o << getType() << " " << getName();
+}
+
+void Value::dump() const { print(std::cerr); }
+
+//===----------------------------------------------------------------------===//
+//  CachedWriter Class Implementation
+//===----------------------------------------------------------------------===//
 
 void CachedWriter::setModule(const Module *M) {
   delete SC; delete AW;
