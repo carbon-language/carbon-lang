@@ -13,7 +13,7 @@
 #include "llvm/Function.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
-#include <stdlib.h>
+#include "Config/stdlib.h"
 
 static const uint32_t MAXLO   = (1 << 10) - 1; // set bits set by %lo(*)
 static const uint32_t MAXSIMM = (1 << 12) - 1; // set bits in simm13 field of OR

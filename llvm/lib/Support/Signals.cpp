@@ -32,7 +32,7 @@ static const int *KillSigsEnd = KillSigs + sizeof(KillSigs)/sizeof(KillSigs[0]);
 
 
 // SignalHandler - The signal handler that runs...
-static void SignalHandler(int Sig) {
+static RETSIGTYPE SignalHandler(int Sig) {
   while (!FilesToRemove.empty()) {
     std::remove(FilesToRemove.back().c_str());
     FilesToRemove.pop_back();

@@ -17,10 +17,10 @@
 #include "llvm/SymbolTable.h"
 #include "llvm/Target/TargetData.h"
 #include <map>
-#include <dlfcn.h>
-#include <link.h>
+#include "Config/dlfcn.h"
+#include "Config/link.h"
 #include <cmath>
-#include <stdio.h>
+#include "Config/stdio.h"
 using std::vector;
 
 typedef GenericValue (*ExFunc)(FunctionType *, const vector<GenericValue> &);

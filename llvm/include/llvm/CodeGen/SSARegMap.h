@@ -11,6 +11,7 @@
 #define LLVM_CODEGEN_SSAREGMAP_H
 
 #include "llvm/Target/MRegisterInfo.h"
+
 class TargetRegisterClass;
 
 class SSARegMap {

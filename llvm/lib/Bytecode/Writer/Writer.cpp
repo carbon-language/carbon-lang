@@ -26,7 +26,7 @@
 #include "llvm/DerivedTypes.h"
 #include "Support/STLExtras.h"
 #include "Support/Statistic.h"
-#include <string.h>
+#include "Config/string.h"
 #include <algorithm>
 
 static RegisterPass<WriteBytecodePass> X("emitbytecode", "Bytecode Writer");

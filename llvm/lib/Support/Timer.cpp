@@ -4,15 +4,16 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "Config/malloc.h"
+
 #include "Support/Timer.h"
 #include "Support/CommandLine.h"
-#include <sys/resource.h>
-#include <sys/time.h>
-#include <unistd.h>
-#ifndef __FreeBSD__
-#include <malloc.h>
-#endif // __FreeBSD__
-#include <stdio.h>
+
+#include "Config/sys/resource.h"
+#include "Config/sys/time.h"
+#include "Config/unistd.h"
+#include "Config/malloc.h"
+#include "Config/stdio.h"
 #include <iostream>
 #include <algorithm>
 #include <functional>
@@ -21,10 +22,12 @@
 std::string LibSupportInfoOutputFilename;
 
 namespace {
+#ifdef HAVE_MALLINFO
   cl::opt<bool>
   TrackSpace("track-memory", cl::desc("Enable -time-passes memory "
                                       "tracking (this may be slow)"),
              cl::Hidden);
+#endif
 
   cl::opt<std::string, true>
   InfoOutputFilename("info-output-file",
@@ -76,12 +79,12 @@ Timer::~Timer() {
 }
 
 static long getMemUsage() {
-#ifndef __FreeBSD__
+#ifdef HAVE_MALLINFO
   if (TrackSpace) {
     struct mallinfo MI = mallinfo();
     return MI.uordblks/*+MI.hblkhd*/;
   }
-#endif // __FreeBSD__
+#endif
   return 0;
 }
 

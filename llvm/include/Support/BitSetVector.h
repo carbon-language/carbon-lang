@@ -24,7 +24,6 @@
 #include <vector>
 #include <functional>
 #include <iostream>
-#include <assert.h>
 
 class BitSetVector {
   enum { BITSET_WORDSIZE = sizeof(long)*8 };

@@ -14,6 +14,7 @@
 #define LLVM_GLOBAL_VARIABLE_H
 
 #include "llvm/GlobalValue.h"
+
 class Module;
 class Constant;
 class PointerType;

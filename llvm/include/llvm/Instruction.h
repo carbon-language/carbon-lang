@@ -9,6 +9,7 @@
 #define LLVM_INSTRUCTION_H
 
 #include "llvm/User.h"
+
 template<typename SC> struct ilist_traits;
 template<typename ValueSubClass, typename ItemParentClass, typename SymTabClass,
          typename SubClass> class SymbolTableListTraits;

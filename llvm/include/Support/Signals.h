@@ -10,6 +10,11 @@
 
 #include <string>
 
+//
+// This will include the signal handler return type.
+//
+#include "Config/config.h"
+
 // RemoveFileOnSignal - This function registers signal handlers to ensure that
 // if a signal gets delivered that the named file is removed.
 //

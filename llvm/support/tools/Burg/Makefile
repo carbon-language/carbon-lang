@@ -25,4 +25,4 @@ test:: $(TOOLEXENAME_G) sample.gr
 	$(TOOLEXENAME_G) -I      sample.gr -o tmp && cmp tmp sample.c
 	$(TOOLEXENAME_G) -I -O0 <sample.gr   >tmp && cmp tmp sample.c
 	$(TOOLEXENAME_G) -I -=  <sample.gr   >tmp && cmp tmp sample.c
-	rm -f tmp sample.c
+	$(RM) -f tmp sample.c

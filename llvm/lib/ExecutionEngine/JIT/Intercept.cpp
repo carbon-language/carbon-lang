@@ -9,7 +9,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "VM.h"
-#include <dlfcn.h>    // dlsym access
+#include "Config/dlfcn.h"    // dlsym access
 #include <iostream>
 
 // AtExitList - List of functions registered with the at_exit function

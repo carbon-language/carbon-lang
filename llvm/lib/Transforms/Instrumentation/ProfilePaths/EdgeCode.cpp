@@ -16,7 +16,7 @@
 #include "llvm/iOperators.h"
 #include "llvm/iPHINode.h"
 #include "llvm/Module.h"
-#include <stdio.h>
+#include "Config/stdio.h"
 
 #define INSERT_LOAD_COUNT
 #define INSERT_STORE

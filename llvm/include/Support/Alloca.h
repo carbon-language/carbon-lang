@@ -9,22 +9,6 @@
 #ifndef SUPPORT_ALLOCA_H
 #define SUPPORT_ALLOCA_H
 
-// TODO: Determine HAVE_ALLOCA_H based on autoconf results.
-// The following method is too brittle.
-#if defined(HAVE_ALLOCA_H)
-#undef HAVE_ALLOCA_H
-#endif
-
-#if defined(__linux__)
-#define HAVE_ALLOCA_H 1
-#elif defined(__sparc__)
-#define HAVE_ALLOCA_H 1
-#elif defined(__FreeBSD__)
-// not defined here
-#endif
-
-#if HAVE_ALLOCA_H
-#include <alloca.h>
-#endif
+#include "Config/alloca.h"
 
 #endif  /* SUPPORT_ALLOCA_H */

@@ -11,8 +11,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "Support/CommandLine.h"
-#include <dlfcn.h>
-#include <link.h>
+#include "Config/dlfcn.h"
+#include "Config/link.h"
 #include <iostream>
 
 namespace {

@@ -21,6 +21,7 @@
 #include "llvm/Type.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "Support/STLExtras.h"
+#include "Config/alloca.h"
 
 //------------------------------------------------------------------------ 
 // class InstrTreeNode

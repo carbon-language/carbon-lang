@@ -10,6 +10,8 @@
 #ifndef SUPPORT_SLIST
 #define SUPPORT_SLIST
 
+#include "Config/config.h"
+
 // Compiler Support Matrix
 //
 // Version   Namespace   Header File
@@ -17,18 +19,19 @@
 //  3.0.4       std      ext/slist
 //  3.1      __gnu_cxx   ext/slist
 //
-#if __GNUC__ == 3
-#include <ext/slist>
 
-#if __GNUC_MINOR__ == 0
-using std::slist;
+#ifdef HAVE_EXT_SLIST
+#include <ext/slist>
 #else
-using __gnu_cxx::slist;
+#include <slist>
 #endif
 
-#else
-// GCC 2.x
-#include <slist>
+#if HAVE_EXT_SLIST == std
+using std::slist;
+#endif
+
+#if HAVE_EXT_SLIST == gnu
+using __gnu_cxx::slist;
 #endif
 
 #endif

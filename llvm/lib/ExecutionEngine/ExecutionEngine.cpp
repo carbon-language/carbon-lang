@@ -12,7 +12,7 @@
 #include "llvm/Module.h"
 #include "llvm/Target/TargetData.h"
 #include "Support/Statistic.h"
-#include <dlfcn.h>
+#include "Config/dlfcn.h"
 
 Statistic<> NumInitBytes("lli", "Number of bytes of global vars initialized");
 

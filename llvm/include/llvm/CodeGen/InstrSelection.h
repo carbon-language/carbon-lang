@@ -8,6 +8,7 @@
 #define LLVM_CODEGEN_INSTR_SELECTION_H
 
 #include "llvm/Instruction.h"
+
 class Function;
 class InstrForest;
 class MachineInstr;

@@ -34,7 +34,7 @@
 #include "llvm/Module.h"
 #include "Graph.h"
 #include <fstream>
-#include <stdio.h>
+#include "Config/stdio.h"
 using std::vector;
 
 struct ProfilePaths : public FunctionPass {

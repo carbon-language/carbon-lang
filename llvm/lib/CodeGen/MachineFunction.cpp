@@ -19,7 +19,7 @@
 #include "llvm/Function.h"
 #include "llvm/iOther.h"
 #include "llvm/Pass.h"
-#include <limits.h>
+#include "Config/limits.h"
 
 const int INVALID_FRAME_OFFSET = INT_MAX; // std::numeric_limits<int>::max();
 

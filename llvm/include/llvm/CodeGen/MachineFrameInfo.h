@@ -35,7 +35,6 @@ class TargetData;
 class TargetRegisterClass;
 class MachineFunction;
 #include <vector>
-#include <assert.h>
 
 class MachineFrameInfo {
 

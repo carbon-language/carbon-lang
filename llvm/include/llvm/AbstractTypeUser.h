@@ -21,7 +21,16 @@
 #ifndef LLVM_ABSTRACT_TYPE_USER_H
 #define LLVM_ABSTRACT_TYPE_USER_H
 
-#include <assert.h>
+//
+// This is the "master" include for assert.h
+// Whether this file needs it or not, it must always include assert.h for the
+// files which include llvm/AbstractTypeUser.h
+//
+// In this way, most every LLVM source file will have access to the assert()
+// macro without having to #include <assert.h> directly.
+//
+#include "Config/assert.h"
+
 class Type;
 class DerivedType;
 

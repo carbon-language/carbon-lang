@@ -23,7 +23,7 @@
 #include <list>
 #include "llvmAsmParser.h"
 #include <ctype.h>
-#include <stdlib.h>
+#include "Config/stdlib.h"
 
 #define RET_TOK(type, Enum, sym) \
   llvmAsmlval.type = Instruction::Enum; return sym

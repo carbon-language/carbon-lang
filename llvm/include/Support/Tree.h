@@ -9,7 +9,6 @@
 #define SUPPORT_TREE_H
 
 #include <vector>
-#include <assert.h>
 
 template<class ConcreteTreeNode, class Payload>
 class Tree {

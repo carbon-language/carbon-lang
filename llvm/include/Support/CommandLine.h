@@ -18,7 +18,6 @@
 #include <utility>
 #include <cstdarg>
 #include "boost/type_traits/object_traits.hpp"
-#include <assert.h>
 
 /// cl Namespace - This namespace contains all of the command line option
 /// processing machinery.  It is intentionally a short name to make qualified

@@ -17,7 +17,7 @@
 #include "llvm/Target/TargetOptInfo.h"
 #include "llvm/Type.h"
 #include "SparcRegClassInfo.h"
-#include <sys/types.h>
+#include "Config/sys/types.h"
 
 class LiveRange;
 class UltraSparc;

@@ -3,7 +3,7 @@ TOOLNAME = lli
 PARALLEL_DIRS = Interpreter JIT
 
 # Get the config name...
-include $(LEVEL)/Makefile.$(shell uname)
+include $(LEVEL)/Makefile.config
 
 # Generic JIT libraries
 JITLIBS   = lli-jit codegen

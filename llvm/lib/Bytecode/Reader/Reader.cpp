@@ -11,17 +11,17 @@
 //===----------------------------------------------------------------------===//
 
 #include "ReaderInternals.h"
+#include "Config/sys/mman.h"
 #include "llvm/Bytecode/Reader.h"
 #include "llvm/Bytecode/Format.h"
 #include "llvm/Module.h"
 #include "llvm/Constants.h"
 #include "llvm/iPHINode.h"
 #include "llvm/iOther.h"
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/mman.h>
-#include <fcntl.h>
-#include <unistd.h>
+#include "Config/sys/types.h"
+#include "Config/sys/stat.h"
+#include "Config/fcntl.h"
+#include "Config/unistd.h"
 #include <algorithm>
 
 bool BytecodeParser::getTypeSlot(const Type *Ty, unsigned &Slot) {

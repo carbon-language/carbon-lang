@@ -19,9 +19,11 @@
 #ifndef SUPPORT_ITERATOR
 #define SUPPORT_ITERATOR
 
+#include "Config/config.h"
+
 #include <iterator>
 
-#if __GNUC__ == 3
+#ifdef HAVE_STD_ITERATOR
 
 // Define stupid wrappers around std::iterator...
 template<class Ty, class PtrDiffTy>
@@ -35,6 +37,7 @@ struct forward_iterator
 };
 
 #else
+
 // Just use bidirectional_iterator directly.
 using std::bidirectional_iterator;
 using std::forward_iterator;

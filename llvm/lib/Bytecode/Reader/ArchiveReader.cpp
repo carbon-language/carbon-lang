@@ -11,9 +11,9 @@
 
 #include "llvm/Bytecode/Reader.h"
 #include "llvm/Module.h"
-#include <sys/stat.h>
-#include <sys/mman.h>
-#include <fcntl.h>
+#include "Config/sys/stat.h"
+#include "Config/sys/mman.h"
+#include "Config/fcntl.h"
 
 namespace {
   struct ar_hdr {

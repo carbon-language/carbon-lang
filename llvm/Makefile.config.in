@@ -1,0 +1,159 @@
+#===-- Makefile.config - Local configuration for LLVM ------*- makefile -*--====
+#
+# This file is included by Makefile.common.  It defines paths and other
+# values specific to a particular installation of LLVM.
+#===-----------------------------------------------------------------------====
+
+#
+# Target operating system for which LLVM will be compiled.
+#
+OS=@OS@
+
+# Path to the C++ compiler to use.  This is an optional setting, which defaults
+# to whatever your gmake defaults to.
+#
+# Under Linux, for some reason the compiler driver wants to search the PATH to
+# find the system assembler, which breaks if the LLVM assembler is in our path.
+# Hack it to use the assembler in /usr/bin directly.
+#
+CXX = @CXX@
+
+# We have the same problem with the CC binary, which use used by testcases for
+# native builds.
+#
+CC := @CC@
+
+#
+# Compilation flags for the C and C++ compilers.
+#
+CPPFLAGS=@DEFS@
+CCFLAGS=@DEFS@
+LDFLAGS=@LDFLAGS@
+LIBS=@LIBS@
+
+#
+# Libraries needed by tools
+#
+TOOLLINKOPTS=@LIBS@
+
+#
+# Path to the archiver program.
+#
+AR_PATH = @AR@
+
+#
+# The pathnames of the Flex and Bison programs, respectively.
+#
+BISON    = @YACC@
+FLEX     = @LEX@
+
+#
+# Paths to miscellaneous programs.
+#
+SED     = @SED@
+RM      = @RM@
+ECHO    = @ECHO@
+MKDIR   = @abs_top_srcdir@/mkinstalldirs
+DATE    = @DATE@
+MV      = @MV@
+INSTALL = @INSTALL@
+DOT     = @DOT@
+ETAGS   = @ETAGS@
+
+#
+# Determine the target for which LLVM should generate code.
+#
+LLVMGCCARCH := @target@/3.4-llvm
+
+# Path to directory where object files should be stored during a build.
+# Set OBJ_ROOT to "." if you do not want to use a separate place for
+# object files.
+# 
+#OBJ_ROOT = .
+OBJ_ROOT := @OBJROOT@
+
+# Path to location for LLVM front-end this should only be specified here if you
+# want to override the value set in Makefile.$(uname)
+#
+LLVMGCCDIR := @LLVMGCCDIR@
+
+# When this setting is set to true, programs in the llvm/test/Programs hierarchy
+# are not recompiled from source code.  Instead, the bytecode for the file is
+# pulled from the BYTECODE_REPOSITORY directory.  This can be useful when disk
+# space is limited or when you just don't want to spend time running the C
+# frontend.
+#
+#USE_PRECOMPILED_BYTECODE := 1
+@UPB@
+
+# This path specifies the cannonical location of bytecode files for compiled
+# versions of the test/Programs/* programs.  This is used as the bytecode source
+# when USE_PRECOMPILED_BYTECODE is specified or when source code is not
+# available for the program (such as SPEC).
+#
+BYTECODE_REPOSITORY := @BCR@
+
+# Path to location for purify, this is only needed if you build with
+# ENABLE_PURIFY=1
+# 
+PURIFY = @PURIFY@
+
+#
+# SPEC benchmarks:
+#	Set the USE_SPEC variable to enable the use of the SPEC benchmarks.
+#	You must provide the SPEC benchmarks on your own.
+#
+@USE_SPEC@
+
+#
+# Path to the SPEC benchmarks.  If you have the SPEC benchmarks, place the
+# path here.
+#
+#SPEC_ROOT := /home/vadve/shared/benchmarks/speccpu2000/benchspec
+SPEC_ROOT := @SPEC_ROOT@
+
+#
+# Path to the PAPI code.  This is used by the reoptimizer only.
+#
+#PAPIDIR := /home/vadve/shared/papi-2.3.4.1
+PAPIDIR := @PAPIDIR@
+
+# These are options that can either be enabled here, or can be enabled on the
+# make command line (ie, make ENABLE_PROFILING=1)
+#
+
+# When ENABLE_OPTIMIZED is enabled, Release builds of all of the LLVM code are
+# turned on, and Debug builds are turned off.
+#
+#ENABLE_OPTIMIZED = 1
+@ENABLE_OPTIMIZED@
+
+# When ENABLE_PROFILING is enabled, the llvm source base is built with profile
+# information to allow gprof to be used to get execution frequencies.
+#
+#ENABLE_PROFILING = 1
+@ENABLE_PROFILING@
+
+#
+# This open tells the Makefiles to produce verbose output.
+# It essentially prints the commands that make is executing
+#
+#VERBOSE = 1
+@ENABLE_VERBOSE@
+
+# When ENABLE_PURIFY is set to 1, the LLVM tools are linked with purify (which
+# must be locally installed) to allow for some automated memory error debugging.
+#
+#ENABLE_PURIFY = 1
+@ENABLE_PURIFY@
+
+#
+# Enable JIT for this platform
+#
+@JIT@
+
+#
+# Disable LLC diffs for testing.
+#
+@DISABLE_LLC_DIFFS@
+

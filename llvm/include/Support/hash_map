@@ -17,23 +17,25 @@
 //  3.0.4       std      ext/hash_map
 //  3.1      __gnu_cxx   ext/hash_map
 //
-#if __GNUC__ == 3
+
+#include "Config/config.h"
+
+#ifdef HAVE_GNU_EXT_HASH_MAP
+
 #include <ext/hash_map>
-
-#ifndef HASH_NAMESPACE
-#if __GNUC_MINOR__ == 0
-#define HASH_NAMESPACE std
-#else
 #define HASH_NAMESPACE __gnu_cxx
-#endif
-#endif
 
 #else
 
-#include <hash_map>
-#ifndef HASH_NAMESPACE
+#ifdef HAVE_STD_EXT_HASH_MAP
+#include <ext/hash_map>
 #define HASH_NAMESPACE std
+
+#else
+#include <hash_map>
+#define HASH_NAMESPACE
 #endif
+
 #endif
 
 using HASH_NAMESPACE::hash_map;

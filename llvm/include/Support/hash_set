@@ -17,23 +17,25 @@
 //  3.0.4       std      ext/hash_set
 //  3.1      __gnu_cxx   ext/hash_set
 //
-#if __GNUC__==3
+
+#include "Config/config.h"
+
+#ifdef HAVE_GNU_EXT_HASH_SET
+
 #include <ext/hash_set>
-
-#ifndef HASH_NAMESPACE
-#if __GNUC_MINOR__ == 0
-#define HASH_NAMESPACE std
-#else
 #define HASH_NAMESPACE __gnu_cxx
-#endif
-#endif
 
 #else
 
-#include <hash_set>
-#ifndef HASH_NAMESPACE
+#ifdef HAVE_STD_EXT_HASH_SET
+#include <ext/hash_set>
 #define HASH_NAMESPACE std
+
+#else
+#include <hash_set>
+#define HASH_NAMESPACE
 #endif
+
 #endif
 
 using HASH_NAMESPACE::hash_set;

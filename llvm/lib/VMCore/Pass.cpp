@@ -11,10 +11,10 @@
 #include "llvm/Module.h"
 #include "Support/STLExtras.h"
 #include "Support/TypeInfo.h"
-#include <stdio.h>
-#include <sys/resource.h>
-#include <sys/time.h>
-#include <unistd.h>
+#include "Config/stdio.h"
+#include "Config/sys/resource.h"
+#include "Config/sys/time.h"
+#include "Config/unistd.h"
 #include <set>
 
 // IncludeFile - Stub function used to help linking out.
