@@ -149,6 +149,11 @@ SparcV9TargetMachine::addPassesToEmitAssembly(PassManager &PM, std::ostream &Out
   PM.add(createLICMPass());
   PM.add(createGCSEPass());
 
+  // If the user's trying to read the generated code, they'll need to see the
+  // transformed input.
+  if (PrintMachineCode)
+    PM.add(new PrintModulePass());
+
   // Construct and initialize the MachineFunction object for this fn.
   PM.add(createMachineCodeConstructionPass(*this));
 
