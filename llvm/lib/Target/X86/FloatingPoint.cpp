@@ -608,8 +608,9 @@ namespace {
     virtual const char *getPassName() const { return "X86 FP Killer"; }
     virtual bool runOnMachineFunction(MachineFunction &MF);
       virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-          AU.setPreservesAll();
+          AU.addPreserved<LiveVariables>();
           AU.addRequired<LiveVariables>();
+          AU.addPreservedID(PHIEliminationID);
           AU.addRequiredID(PHIEliminationID);
           MachineFunctionPass::getAnalysisUsage(AU);
       }
