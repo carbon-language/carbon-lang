@@ -374,10 +374,60 @@ static void ForceRenaming(GlobalValue *GV, const std::string &Name) {
          "ForceRenaming didn't work");
 }
 
+/// GetLinkageResult - This analyzes the two global values and determines what
+/// the result will look like in the destination module.  In particular, it
+/// computes the resultant linkage type, computes whether the global in the
+/// source should be copied over to the destination (replacing the existing
+/// one), and computes whether this linkage is an error or not.
+static bool GetLinkageResult(GlobalValue *Dest, GlobalValue *Src,
+                             GlobalValue::LinkageTypes &LT, bool &LinkFromSrc,
+                             std::string *Err) {
+  assert((!Dest || !Src->hasInternalLinkage()) &&
+         "If Src has internal linkage, Dest shouldn't be set!");
+  if (!Dest) {
+    // Linking something to nothing.
+    LinkFromSrc = true;
+    LT = Src->getLinkage();
+  } else if (Src->isExternal()) {
+    // If Src is external or if both Src & Drc are external..  Just link the
+    // external globals, we aren't adding anything.
+    LinkFromSrc = false;
+    LT = Dest->getLinkage();
+  } else if (Dest->isExternal()) {
+    // If Dest is external but Src is not:
+    LinkFromSrc = true;
+    LT = Src->getLinkage();
+  } else if (Src->hasAppendingLinkage() || Dest->hasAppendingLinkage()) {
+    if (Src->getLinkage() != Dest->getLinkage())
+      return Error(Err, "Linking globals named '" + Src->getName() +
+            "': can only link appending global with another appending global!");
+    LinkFromSrc = true; // Special cased.
+    LT = Src->getLinkage();
+  } else if (Src->hasWeakLinkage() || Src->hasLinkOnceLinkage()) {
+    // At this point we know that Dest has LinkOnce, External or Weak linkage.
+    if (Dest->hasLinkOnceLinkage() && Src->hasWeakLinkage()) {
+      LinkFromSrc = true;
+      LT = Src->getLinkage();
+    } else {
+      LinkFromSrc = false;
+      LT = Dest->getLinkage();
+    }
+  } else if (Dest->hasWeakLinkage() || Dest->hasLinkOnceLinkage()) {
+    // At this point we know that Src has External linkage.
+    LinkFromSrc = true;
+    LT = GlobalValue::ExternalLinkage;
+  } else {
+    assert(Dest->hasExternalLinkage() && Src->hasExternalLinkage() &&
+           "Unexpected linkage type!");
+    return Error(Err, "Linking globals named '" + Src->getName() + 
+                 "': symbol multiply defined!");
+  }
+  return false;
+}
 
 // LinkGlobals - Loop through the global variables in the src module and merge
 // them into the dest module.
-static bool LinkGlobals(Module *Dest, const Module *Src,
+static bool LinkGlobals(Module *Dest, Module *Src,
                         std::map<const Value*, Value*> &ValueMap,
                     std::multimap<std::string, GlobalVariable *> &AppendingVars,
                         std::map<std::string, GlobalValue*> &GlobalsByName,
@@ -387,8 +437,8 @@ static bool LinkGlobals(Module *Dest, const Module *Src,
   SymbolTable *ST = (SymbolTable*)&Dest->getSymbolTable();
   
   // Loop over all of the globals in the src module, mapping them over as we go
-  for (Module::const_giterator I = Src->gbegin(), E = Src->gend(); I != E; ++I){
-    const GlobalVariable *SGV = I;
+  for (Module::giterator I = Src->gbegin(), E = Src->gend(); I != E; ++I) {
+    GlobalVariable *SGV = I;
     GlobalVariable *DGV = 0;
     // Check to see if may have to link the global.
     if (SGV->hasName() && !SGV->hasInternalLinkage())
@@ -398,17 +448,23 @@ static bool LinkGlobals(Module *Dest, const Module *Src,
           GlobalsByName.find(SGV->getName());
         if (EGV != GlobalsByName.end())
           DGV = dyn_cast<GlobalVariable>(EGV->second);
-        if (DGV && RecursiveResolveTypes(SGV->getType(), DGV->getType(),ST, ""))
-          DGV = 0;  // FIXME: gross.
+        if (DGV)
+          // If types don't agree due to opaque types, try to resolve them.
+          RecursiveResolveTypes(SGV->getType(), DGV->getType(),ST, "");
       }
+
+    if (DGV && DGV->hasInternalLinkage())
+      DGV = 0;
 
     assert(SGV->hasInitializer() || SGV->hasExternalLinkage() &&
            "Global must either be external or have an initializer!");
 
-    bool SGExtern = SGV->isExternal();
-    bool DGExtern = DGV ? DGV->isExternal() : false;
+    GlobalValue::LinkageTypes NewLinkage;
+    bool LinkFromSrc;
+    if (GetLinkageResult(DGV, SGV, NewLinkage, LinkFromSrc, Err))
+      return true;
 
-    if (!DGV || DGV->hasInternalLinkage() || SGV->hasInternalLinkage()) {
+    if (!DGV) {
       // No linking to be performed, simply create an identical version of the
       // symbol over in the dest module... the initializer will be filled in
       // later by LinkGlobalInits...
@@ -428,81 +484,7 @@ static bool LinkGlobals(Module *Dest, const Module *Src,
       if (SGV->hasAppendingLinkage())
         // Keep track that this is an appending variable...
         AppendingVars.insert(std::make_pair(SGV->getName(), NewDGV));
-
-    } else if (SGV->isExternal()) {
-      // If SGV is external or if both SGV & DGV are external..  Just link the
-      // external globals, we aren't adding anything.
-      ValueMap.insert(std::make_pair(SGV, DGV));
-
-      // Inherit 'const' information.
-      if (SGV->isConstant()) DGV->setConstant(true);
-
-    } else if (DGV->isExternal()) {   // If DGV is external but SGV is not...
-      ValueMap.insert(std::make_pair(SGV, DGV));
-      DGV->setLinkage(SGV->getLinkage());    // Inherit linkage!
-
-      if (DGV->isConstant() && !SGV->isConstant())
-        return Error(Err, "Linking globals named '" + SGV->getName() +
-                     "': declaration is const but definition is not!");
-
-      // Inherit 'const' information.
-      if (SGV->isConstant()) DGV->setConstant(true);
-
-    } else if (SGV->hasWeakLinkage() || SGV->hasLinkOnceLinkage()) {
-      // At this point we know that DGV has LinkOnce, Appending, Weak, or
-      // External linkage.  If DGV is Appending, this is an error.
-      if (DGV->hasAppendingLinkage())
-        return Error(Err, "Linking globals named '" + SGV->getName() +
-                     "' with 'weak' and 'appending' linkage is not allowed!");
-
-      if (SGV->isConstant() != DGV->isConstant())
-        return Error(Err, "Global Variable Collision on '" + 
-                     ToStr(SGV->getType(), Src) + " %" + SGV->getName() +
-                     "' - Global variables differ in const'ness");
-
-      // Otherwise, just perform the link.
-      ValueMap.insert(std::make_pair(SGV, DGV));
-
-      // Linkonce+Weak = Weak
-      if (DGV->hasLinkOnceLinkage() && SGV->hasWeakLinkage())
-        DGV->setLinkage(SGV->getLinkage());
-
-    } else if (DGV->hasWeakLinkage() || DGV->hasLinkOnceLinkage()) {
-      // At this point we know that SGV has LinkOnce, Appending, or External
-      // linkage.  If SGV is Appending, this is an error.
-      if (SGV->hasAppendingLinkage())
-        return Error(Err, "Linking globals named '" + SGV->getName() +
-                     " ' with 'weak' and 'appending' linkage is not allowed!");
-
-      if (SGV->isConstant() != DGV->isConstant())
-        return Error(Err, "Global Variable Collision on '" + 
-                     ToStr(SGV->getType(), Src) + " %" + SGV->getName() +
-                     "' - Global variables differ in const'ness");
-
-      if (!SGV->hasLinkOnceLinkage())
-        DGV->setLinkage(SGV->getLinkage());    // Inherit linkage!
-      ValueMap.insert(std::make_pair(SGV, DGV));
-  
-    } else if (SGV->getLinkage() != DGV->getLinkage()) {
-      return Error(Err, "Global variables named '" + SGV->getName() +
-                   "' have different linkage specifiers!");
-      // Inherit 'const' information.
-      if (SGV->isConstant()) DGV->setConstant(true);
-
-    } else if (SGV->hasExternalLinkage()) {
-      // Allow linking two exactly identical external global variables...
-      if (SGV->isConstant() != DGV->isConstant())
-        return Error(Err, "Global Variable Collision on '" + 
-                     ToStr(SGV->getType(), Src) + " %" + SGV->getName() +
-                     "' - Global variables differ in const'ness");
-
-      if (SGV->getInitializer() != DGV->getInitializer())
-        return Error(Err, "Global Variable Collision on '" + 
-                     ToStr(SGV->getType(), Src) + " %" + SGV->getName() +
-                    "' - External linkage globals have different initializers");
-
-      ValueMap.insert(std::make_pair(SGV, DGV));
-    } else if (SGV->hasAppendingLinkage()) {
+    } else if (DGV->hasAppendingLinkage()) {
       // No linking is performed yet.  Just insert a new copy of the global, and
       // keep track of the fact that it is an appending variable in the
       // AppendingVars map.  The name is cleared out so that no linkage is
@@ -518,7 +500,42 @@ static bool LinkGlobals(Module *Dest, const Module *Src,
       // Keep track that this is an appending variable...
       AppendingVars.insert(std::make_pair(SGV->getName(), NewDGV));
     } else {
-      assert(0 && "Unknown linkage!");
+      // Otherwise, perform the mapping as instructed by GetLinkageResult.  If
+      // the types don't match, and if we are to link from the source, nuke DGV
+      // and create a new one of the appropriate type.
+      if (SGV->getType() != DGV->getType() && LinkFromSrc) {
+        GlobalVariable *NewDGV =
+          new GlobalVariable(SGV->getType()->getElementType(),
+                             DGV->isConstant(), DGV->getLinkage());
+        Dest->getGlobalList().insert(DGV, NewDGV);
+        DGV->replaceAllUsesWith(ConstantExpr::getCast(NewDGV, DGV->getType()));
+        DGV->eraseFromParent();
+        NewDGV->setName(SGV->getName());
+        DGV = NewDGV;
+      }
+
+      DGV->setLinkage(NewLinkage);
+
+      if (LinkFromSrc) {
+        if (DGV->isConstant() && !SGV->isConstant())
+          return Error(Err, "Global Variable Collision on global '" + 
+                       SGV->getName() + "': variables differ in const'ness");
+        // Inherit const as appropriate
+        if (SGV->isConstant()) DGV->setConstant(true);
+        DGV->setInitializer(0);
+      } else {
+        if (SGV->isConstant() && !DGV->isConstant()) {
+          if (!DGV->isExternal())
+            return Error(Err, "Global Variable Collision on global '" + 
+                         SGV->getName() + "': variables differ in const'ness");
+          else
+            DGV->setConstant(true);
+        }
+      }
+
+      ValueMap.insert(std::make_pair(SGV,
+                                     ConstantExpr::getCast(DGV,
+                                                           SGV->getType())));
     }
   }
   return false;
