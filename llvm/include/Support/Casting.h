@@ -71,7 +71,7 @@ struct isa_impl_cl {
   template<class ToCl>
   static bool isa(const FromCl &Val) {
     return isa_impl_wrap<ToCl,const FromCl,
-                         simplify_type<const FromCl>::SimpleType>::doit(Val);
+                   typename simplify_type<const FromCl>::SimpleType>::doit(Val);
   }
 };
 
@@ -153,7 +153,7 @@ struct cast_retty_wrap<To, FromTy, FromTy> {
 template<class To, class From>
 struct cast_retty {
   typedef typename cast_retty_wrap<To, From, 
-                         simplify_type<From>::SimpleType>::ret_type ret_type;
+                   typename simplify_type<From>::SimpleType>::ret_type ret_type;
 };
 
 // Ensure the non-simple values are converted using the simplify_type template
@@ -161,17 +161,17 @@ struct cast_retty {
 //
 template<class To, class From, class SimpleFrom> struct cast_convert_val {
   // This is not a simple type, use the template to simplify it...
-  static cast_retty<To, From>::ret_type doit(const From &Val) {
+  static typename cast_retty<To, From>::ret_type doit(const From &Val) {
     return cast_convert_val<To, SimpleFrom,
-      simplify_type<SimpleFrom>::SimpleType>::doit(
+      typename simplify_type<SimpleFrom>::SimpleType>::doit(
                           simplify_type<From>::getSimplifiedValue(Val));
   }
 };
 
 template<class To, class FromTy> struct cast_convert_val<To,FromTy,FromTy> {
   // This _is_ a simple type, just cast it.
-  static cast_retty<To, FromTy>::ret_type doit(const FromTy &Val) {
-    return (cast_retty<To, FromTy>::ret_type)Val;
+  static typename cast_retty<To, FromTy>::ret_type doit(const FromTy &Val) {
+    return (typename cast_retty<To, FromTy>::ret_type)Val;
   }
 };
 
@@ -185,16 +185,17 @@ template<class To, class FromTy> struct cast_convert_val<To,FromTy,FromTy> {
 //  cast<Instruction>(myVal)->getParent()
 //
 template <class X, class Y>
-inline cast_retty<X, Y>::ret_type cast(const Y &Val) {
+inline typename cast_retty<X, Y>::ret_type cast(const Y &Val) {
   assert(isa<X>(Val) && "cast<Ty>() argument of uncompatible type!");
-  return cast_convert_val<X, Y, simplify_type<Y>::SimpleType>::doit(Val);
+  return cast_convert_val<X, Y,
+                          typename simplify_type<Y>::SimpleType>::doit(Val);
 }
 
 // cast_or_null<X> - Functionally identical to cast, except that a null value is
 // accepted.
 //
 template <class X, class Y>
-inline cast_retty<X, Y*>::ret_type cast_or_null(Y *Val) {
+inline typename cast_retty<X, Y*>::ret_type cast_or_null(Y *Val) {
   if (Val == 0) return 0;
   assert(isa<X>(Val) && "cast_or_null<Ty>() argument of uncompatible type!");
   return cast<X>(Val);
@@ -210,7 +211,7 @@ inline cast_retty<X, Y*>::ret_type cast_or_null(Y *Val) {
 //
 
 template <class X, class Y>
-inline cast_retty<X, Y*>::ret_type dyn_cast(Y *Val) {
+inline typename cast_retty<X, Y*>::ret_type dyn_cast(Y *Val) {
   return isa<X>(Val) ? cast<X, Y*>(Val) : 0;
 }
 
@@ -218,7 +219,7 @@ inline cast_retty<X, Y*>::ret_type dyn_cast(Y *Val) {
 // value is accepted.
 //
 template <class X, class Y>
-inline cast_retty<X, Y*>::ret_type dyn_cast_or_null(Y *Val) {
+inline typename cast_retty<X, Y*>::ret_type dyn_cast_or_null(Y *Val) {
   return (Val && isa<X>(Val)) ? cast<X, Y*>(Val) : 0;
 }
 
