@@ -589,8 +589,11 @@ unsigned ISel::SelectExpr(SDOperand N) {
   }
 
   if (DestType == MVT::f64 || DestType == MVT::f32 ||
-      (opcode == ISD::LOAD && 
-       (N.getValue(0).getValueType() == MVT::f32 || N.getValue(0).getValueType() == MVT::f64)))
+      (
+       (opcode == ISD::LOAD || opcode == ISD::CopyFromReg || opcode == ISD::EXTLOAD) &&
+       (N.getValue(0).getValueType() == MVT::f32 || N.getValue(0).getValueType() == MVT::f64)
+       )
+      )
     return SelectExprFP(N, Result);
 
   switch (opcode) {
@@ -747,7 +750,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
         {
           //no need to restore GP as we are doing an indirect call
           Tmp1 = SelectExpr(N.getOperand(1));
-	  BuildMI(BB, Alpha::BIS, 2, Alpha::R27).addReg(Tmp1).addReg(Tmp1);
+          BuildMI(BB, Alpha::BIS, 2, Alpha::R27).addReg(Tmp1).addReg(Tmp1);
           BuildMI(BB, Alpha::JSR, 2, Alpha::R26).addReg(Alpha::R27).addImm(0);
         }
       
