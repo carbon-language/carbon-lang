@@ -615,8 +615,19 @@ bool RA::physRegAvailable(unsigned physReg)
 unsigned RA::getFreePhysReg(Intervals::const_iterator cur)
 {
     DEBUG(std::cerr << "\t\tgetting free physical register: ");
-
     const TargetRegisterClass* rc = mf_->getSSARegMap()->getRegClass(cur->reg);
+
+    if (unsigned reg = cur->hint) {
+        if (reg >= MRegisterInfo::FirstVirtualRegister &&
+            v2pMap_.find(reg) != v2pMap_.end())
+            reg = v2pMap_[reg];
+        if (reg && reg < MRegisterInfo::FirstVirtualRegister &&
+            mri_->getRegClass(reg) == rc && !regUse_[reg]) {
+            DEBUG(std::cerr << mri_->getName(reg) << '\n');
+            return reg;
+        }
+    }
+            
     for (TargetRegisterClass::iterator i = rc->allocation_order_begin(*mf_);
          i != rc->allocation_order_end(*mf_); ++i) {
         unsigned reg = *i;

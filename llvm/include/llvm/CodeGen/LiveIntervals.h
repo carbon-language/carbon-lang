@@ -38,6 +38,7 @@ namespace llvm {
             typedef std::pair<unsigned, unsigned> Range;
             typedef std::vector<Range> Ranges;
             unsigned reg;   // the register of this interval
+            unsigned hint;
             float weight;   // weight of this interval (number of uses
                             // * 10^loopDepth)
             Ranges ranges;  // the ranges this register is valid

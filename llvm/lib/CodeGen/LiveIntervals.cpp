@@ -108,6 +108,7 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
 
     // compute spill weights
     const LoopInfo& loopInfo = getAnalysis<LoopInfo>();
+    const TargetInstrInfo& tii = tm_->getInstrInfo();
 
     for (MbbIndex2MbbMap::iterator
              it = mbbi2mbbMap_.begin(), itEnd = mbbi2mbbMap_.end();
@@ -129,6 +130,21 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
                 Reg2IntervalMap::iterator r2iit = r2iMap_.find(reg);
                 assert(r2iit != r2iMap_.end());
                 intervals_[r2iit->second].weight += pow(10.0F, loopDepth);
+            }
+
+            // add hints for coalescing
+            unsigned src, dst;
+            if (tii.isMoveInstr(*instr, src, dst)) {
+                if (src >= MRegisterInfo::FirstVirtualRegister) {
+                    Reg2IntervalMap::iterator r2iit = r2iMap_.find(src);
+                    assert(r2iit != r2iMap_.end());
+                    intervals_[r2iit->second].hint = dst;
+                }
+                if (dst >= MRegisterInfo::FirstVirtualRegister) {
+                    Reg2IntervalMap::iterator r2iit = r2iMap_.find(dst);
+                    assert(r2iit != r2iMap_.end());
+                    intervals_[r2iit->second].hint = src;
+                }
             }
         }
     }
@@ -329,7 +345,7 @@ void LiveIntervals::computeIntervals()
 }
 
 LiveIntervals::Interval::Interval(unsigned r)
-    : reg(r),
+    : reg(r), hint(0),
       weight((r < MRegisterInfo::FirstVirtualRegister ?
               std::numeric_limits<float>::max() : 0.0F))
 {
