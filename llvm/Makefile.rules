@@ -155,7 +155,7 @@ USED_LIBS_OPTIONS = $(addprefix -l, $(USEDLIBS))
 # USED_LIB_PATHS - Compute the path of the libraries used so that tools are
 # rebuilt if libraries change
 #
-STATICUSEDLIBS = $(addsuffix .a, $(USEDLIBS)
+STATICUSEDLIBS = $(addsuffix .a, $(USEDLIBS))
 USED_LIB_PATHS_G = $(addprefix $(LEVEL)/lib/Debug/lib, $(STATICUSEDLIBS))
 USED_LIB_PATHS_O = $(addprefix $(LEVEL)/lib/Release/lib, $(STATICUSEDLIBS))
 
@@ -163,10 +163,10 @@ all::   $(TOOLEXENAMES)
 clean::
 	rm -f $(TOOLEXENAMES)
 
-$(TOOLEXENAME_G): $(ObjectsG) $(USED_LIBS_PATHS_G) $(LEVEL)/tools/Debug/.dir
+$(TOOLEXENAME_G): $(ObjectsG) $(USED_LIB_PATHS_G) $(LEVEL)/tools/Debug/.dir
 	$(LinkG) -o $@ $(ObjectsG) $(USED_LIBS_OPTIONS)
 
-$(TOOLEXENAME_O): $(ObjectsO) $(USED_LIBS_PATHS_O) $(LEVEL)/tools/Release/.dir
+$(TOOLEXENAME_O): $(ObjectsO) $(USED_LIB_PATHS_O) $(LEVEL)/tools/Release/.dir
 	$(LinkO) -o $@ $(ObjectsG) $(USED_LIBS_OPTIONS)
 
 endif
