@@ -1,122 +1,43 @@
-//===- ConstantProp.cpp - Code to perform Constant Propogation ------------===//
+//===- ConstantProp.cpp - Code to perform Simple Constant Propogation -----===//
 //
 // This file implements constant propogation and merging:
 //
 // Specifically, this:
-//   * Folds multiple identical constants in the constant pool together
-//     Note that if one is named and the other is not, that the result gets the
-//     original name.
-//   * Converts instructions like "add int %1, %2" into a direct def of %3 in
-//     the constant pool
-//   * Converts conditional branches on a constant boolean value into direct
-//     branches.
-//   * Converts phi nodes with one incoming def to the incoming def directly
-//   . Converts switch statements with one entry into a test & conditional
-//     branch
-//   . Converts switches on constant values into an unconditional branch.
+//   * Converts instructions like "add int 1, 2" into 3
 //
 // Notice that:
 //   * This pass has a habit of making definitions be dead.  It is a good idea
-//     to to run a DCE pass sometime after running this pass.
+//     to to run a DIE pass sometime after running this pass.
 //
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/Scalar/ConstantProp.h"
 #include "llvm/ConstantHandling.h"
-#include "llvm/Module.h"
 #include "llvm/Function.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/iTerminators.h"
-#include "llvm/iPHINode.h"
-#include "llvm/iOther.h"
 #include "llvm/Pass.h"
+#include "llvm/Support/InstIterator.h"
+#include <set>
 
-inline static bool 
-ConstantFoldUnaryInst(BasicBlock *BB, BasicBlock::iterator &II,
-                      UnaryOperator *Op, Constant *D) {
-  Constant *ReplaceWith = ConstantFoldUnaryInstruction(Op->getOpcode(), D);
+// FIXME: ConstantFoldInstruction & ConstantFoldTerminator should be moved out
+// to the Transformations library.
 
-  if (!ReplaceWith) return false;   // Nothing new to change...
+// ConstantFoldInstruction - If an instruction references constants, try to fold
+// them together...
+//
+bool doConstantPropogation(BasicBlock *BB, BasicBlock::iterator &II) {
+  Instruction *Inst = *II;
+  if (Constant *C = ConstantFoldInstruction(Inst)) {
+    // Replaces all of the uses of a variable with uses of the constant.
+    Inst->replaceAllUsesWith(C);
+    
+    // Remove the instruction from the basic block...
+    delete BB->getInstList().remove(II);
+    return true;
+  }
 
-  // Replaces all of the uses of a variable with uses of the constant.
-  Op->replaceAllUsesWith(ReplaceWith);
-  
-  // Remove the operator from the list of definitions...
-  Op->getParent()->getInstList().remove(II);
-  
-  // The new constant inherits the old name of the operator...
-  if (Op->hasName())
-    ReplaceWith->setName(Op->getName(), BB->getParent()->getSymbolTableSure());
-  
-  // Delete the operator now...
-  delete Op;
-  return true;
-}
-
-inline static bool 
-ConstantFoldCast(BasicBlock *BB, BasicBlock::iterator &II,
-                 CastInst *CI, Constant *D) {
-  Constant *ReplaceWith = ConstantFoldCastInstruction(D, CI->getType());
-
-  if (!ReplaceWith) return false;   // Nothing new to change...
-
-  // Replaces all of the uses of a variable with uses of the constant.
-  CI->replaceAllUsesWith(ReplaceWith);
-  
-  // Remove the cast from the list of definitions...
-  CI->getParent()->getInstList().remove(II);
-  
-  // The new constant inherits the old name of the cast...
-  if (CI->hasName())
-    ReplaceWith->setName(CI->getName(), BB->getParent()->getSymbolTableSure());
-  
-  // Delete the cast now...
-  delete CI;
-  return true;
-}
-
-inline static bool 
-ConstantFoldBinaryInst(BasicBlock *BB, BasicBlock::iterator &II,
-		       BinaryOperator *Op,
-		       Constant *D1, Constant *D2) {
-  Constant *ReplaceWith = ConstantFoldBinaryInstruction(Op->getOpcode(), D1,D2);
-  if (!ReplaceWith) return false;   // Nothing new to change...
-
-  // Replaces all of the uses of a variable with uses of the constant.
-  Op->replaceAllUsesWith(ReplaceWith);
-  
-  // Remove the operator from the list of definitions...
-  Op->getParent()->getInstList().remove(II);
-  
-  // The new constant inherits the old name of the operator...
-  if (Op->hasName())
-    ReplaceWith->setName(Op->getName(), BB->getParent()->getSymbolTableSure());
-  
-  // Delete the operator now...
-  delete Op;
-  return true;
-}
-
-inline static bool 
-ConstantFoldShiftInst(BasicBlock *BB, BasicBlock::iterator &II,
-		      ShiftInst *Op,
-		      Constant *D1, Constant *D2) {
-  Constant *ReplaceWith = ConstantFoldShiftInstruction(Op->getOpcode(), D1,D2);
-  if (!ReplaceWith) return false;   // Nothing new to change...
-
-  // Replaces all of the uses of a variable with uses of the constant.
-  Op->replaceAllUsesWith(ReplaceWith);
-  
-  // Remove the operator from the list of definitions...
-  Op->getParent()->getInstList().remove(II);
-  
-  // The new constant inherits the old name of the operator...
-  if (Op->hasName())
-    ReplaceWith->setName(Op->getName(), BB->getParent()->getSymbolTableSure());
-  
-  // Delete the operator now...
-  delete Op;
-  return true;
+  return false;
 }
 
 // ConstantFoldTerminator - If a terminator instruction is predicated on a
@@ -174,60 +95,16 @@ bool ConstantFoldTerminator(BasicBlock *BB, BasicBlock::iterator &II,
   return false;
 }
 
-// ConstantFoldInstruction - If an instruction references constants, try to fold
-// them together...
-//
-bool doConstantPropogation(BasicBlock *BB, BasicBlock::iterator &II) {
-  Instruction *Inst = *II;
-  if (TerminatorInst *TInst = dyn_cast<TerminatorInst>(Inst)) {
-    return ConstantFoldTerminator(BB, II, TInst);
-  } else if (Constant *C = ConstantFoldInstruction(Inst)) {
-    // Replaces all of the uses of a variable with uses of the constant.
-    Inst->replaceAllUsesWith(C);
-  
-    // Remove the instruction from the basic block...
-    delete BB->getInstList().remove(II);
-    return true;
 
-  }
-
-  return false;
-}
-
-// DoConstPropPass - Propogate constants and do constant folding on instructions
-// this returns true if something was changed, false if nothing was changed.
-//
-static bool DoConstPropPass(Function *F) {
-  bool SomethingChanged = false;
-
-  for (Function::iterator BBI = F->begin(); BBI != F->end(); ++BBI) {
-    BasicBlock *BB = *BBI;
-    for (BasicBlock::iterator I = BB->begin(); I != BB->end(); )
-      if (doConstantPropogation(BB, I))
-	SomethingChanged = true;
-      else
-	++I;
-  }
-  return SomethingChanged;
-}
 
 namespace {
   struct ConstantPropogation : public FunctionPass {
     const char *getPassName() const { return "Simple Constant Propogation"; }
 
-    inline bool runOnFunction(Function *F) {
-      bool Modified = false;
-
-      // Fold constants until we make no progress...
-      while (DoConstPropPass(F)) Modified = true;
-      
-      return Modified;
-    }
+    inline bool runOnFunction(Function *F);
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-      // FIXME: This pass does not preserve the CFG because it folds terminator
-      // instructions!
-      //AU.preservesCFG();
+      AU.preservesCFG();
     }
   };
 }
@@ -236,3 +113,30 @@ Pass *createConstantPropogationPass() {
   return new ConstantPropogation();
 }
 
+
+bool ConstantPropogation::runOnFunction(Function *F) {
+  // Initialize the worklist to all of the instructions ready to process...
+  std::set<Instruction*> WorkList(inst_begin(F), inst_end(F));
+  bool Changed = false;
+
+  while (!WorkList.empty()) {
+    Instruction *I = *WorkList.begin();
+    WorkList.erase(WorkList.begin());    // Get an element from the worklist...
+
+    if (!I->use_empty())                 // Don't muck with dead instructions...
+      if (Constant *C = ConstantFoldInstruction(I)) {
+        // Add all of the users of this instruction to the worklist, they might
+        // be constant propogatable now...
+        for (Value::use_iterator UI = I->use_begin(), UE = I->use_end();
+             UI != UE; ++UI)
+          WorkList.insert(cast<Instruction>(*UI));
+        
+        // Replace all of the uses of a variable with uses of the constant.
+        I->replaceAllUsesWith(C);
+        
+        // We made a change to the function...
+        Changed = true;
+      }
+  }
+  return Changed;
+}
