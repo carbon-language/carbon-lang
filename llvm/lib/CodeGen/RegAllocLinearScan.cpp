@@ -470,7 +470,7 @@ void RA::assignRegOrStackSlotAtInterval(LiveInterval* cur)
     // is active or inactive to properly update the PhysRegTracker
     // and the VirtRegMap
     IntervalPtrs::iterator it;
-    if ((it = find(active_.begin(), active_.end(), i)) != active_.end()) {
+    if ((it = std::find(active_.begin(), active_.end(), i)) != active_.end()) {
       active_.erase(it);
       if (MRegisterInfo::isPhysicalRegister(i->reg)) {
         prt_->delRegUse(i->reg);
@@ -483,7 +483,7 @@ void RA::assignRegOrStackSlotAtInterval(LiveInterval* cur)
         vrm_->clearVirt(i->reg);
       }
     }
-    else if ((it = find(inactive_.begin(), inactive_.end(), i)) != inactive_.end()) {
+    else if ((it = std::find(inactive_.begin(), inactive_.end(), i)) != inactive_.end()) {
       inactive_.erase(it);
       if (MRegisterInfo::isPhysicalRegister(i->reg))
         unhandled_.push(i);

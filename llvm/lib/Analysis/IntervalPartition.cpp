@@ -14,6 +14,7 @@
 
 #include "llvm/Analysis/IntervalIterator.h"
 #include "llvm/ADT/STLExtras.h"
+#include <algorithm>
 
 namespace llvm {
 
@@ -26,7 +27,7 @@ X("intervals", "Interval Partition Construction", true);
 
 // destroy - Reset state back to before function was analyzed
 void IntervalPartition::destroy() {
-  for_each(Intervals.begin(), Intervals.end(), deleter<Interval>);
+  std::for_each(Intervals.begin(), Intervals.end(), deleter<Interval>);
   IntervalMap.clear();
   RootInterval = 0;
 }

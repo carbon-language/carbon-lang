@@ -22,6 +22,7 @@
 #include "llvm/Pass.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
+#include <algorithm>
 using namespace llvm;
 
 // Make sure that anything that uses AliasAnalysis pulls in this file...

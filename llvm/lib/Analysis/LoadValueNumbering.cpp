@@ -33,6 +33,7 @@
 #include "llvm/Support/CFG.h"
 #include "llvm/Target/TargetData.h"
 #include <set>
+#include <algorithm>
 using namespace llvm;
 
 namespace {

@@ -26,6 +26,7 @@
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/ADT/StringExtras.h"
 #include <sstream>
+#include <algorithm>
 using namespace llvm;
 
 namespace {

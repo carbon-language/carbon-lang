@@ -33,6 +33,7 @@
 #include "llvm/ADT/STLExtras.h"
 #include "VirtRegMap.h"
 #include <cmath>
+#include <algorithm>
 
 using namespace llvm;
 

@@ -20,6 +20,7 @@
 #include "llvm/Pass.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/ADT/Statistic.h"
+#include <algorithm>
 using namespace llvm;
 
 namespace {

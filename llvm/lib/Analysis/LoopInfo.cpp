@@ -33,7 +33,7 @@ X("loops", "Natural Loop Construction", true);
 // Loop implementation
 //
 bool Loop::contains(const BasicBlock *BB) const {
-  return find(Blocks.begin(), Blocks.end(), BB) != Blocks.end();
+  return std::find(Blocks.begin(), Blocks.end(), BB) != Blocks.end();
 }
 
 bool Loop::isLoopExit(const BasicBlock *BB) const {

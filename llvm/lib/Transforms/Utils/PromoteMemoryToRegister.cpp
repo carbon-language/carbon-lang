@@ -24,6 +24,7 @@
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/StableBasicBlockNumbering.h"
 #include "llvm/ADT/StringExtras.h"
+#include <algorithm>
 using namespace llvm;
 
 /// isAllocaPromotable - Return true if this alloca is legal for promotion.

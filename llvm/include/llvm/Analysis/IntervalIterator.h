@@ -177,7 +177,7 @@ private:
            E = GT::child_end(Node); I != E; ++I)
       ProcessNode(Int, getSourceGraphNode(OrigContainer, *I));
 
-    IntStack.push(make_pair(Int, succ_begin(Int)));
+    IntStack.push(std::make_pair(Int, succ_begin(Int)));
     return true;
   }
   

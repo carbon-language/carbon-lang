@@ -49,7 +49,7 @@ static bool PropagatePredecessorsForPHIs(BasicBlock *BB, BasicBlock *Succ) {
   // with incompatible values coming in from the two edges!
   //
   for (pred_iterator PI = pred_begin(Succ), PE = pred_end(Succ); PI != PE; ++PI)
-    if (find(BBPreds.begin(), BBPreds.end(), *PI) != BBPreds.end()) {
+    if (std::find(BBPreds.begin(), BBPreds.end(), *PI) != BBPreds.end()) {
       // Loop over all of the PHI nodes checking to see if there are
       // incompatible values coming in.
       for (BasicBlock::iterator I = Succ->begin();
