@@ -25,7 +25,7 @@ using namespace llvm;
 
 namespace sys {
   // From CompilerDriver.cpp (for now)
-  extern bool FileReadable(const std::string& fname);
+  extern bool FileIsReadable(const std::string& fname);
 }
 
 namespace llvm {
@@ -155,6 +155,7 @@ namespace {
 
     bool parseSubstitution(CompilerDriver::StringVector& optList) {
       switch (token) {
+        case ARGS_SUBST:        optList.push_back("%args%"); break;
         case IN_SUBST:          optList.push_back("%in%"); break;
         case OUT_SUBST:         optList.push_back("%out%"); break;
         case TIME_SUBST:        optList.push_back("%time%"); break;
@@ -256,9 +257,29 @@ namespace {
             confDat->PreProcessor.clear(CompilerDriver::REQUIRED_FLAG);
           break;
         default:
-          error("Expecting 'command' or 'required'");
+          error("Expecting 'command' or 'required' but found '" +
+              ConfigLexerState.StringVal);
           break;
       }
+    }
+
+    bool parseOutputFlag() {
+      if (next() == EQUALS) {
+        if (next() == ASSEMBLY) {
+          return true;
+        } else if (token == BYTECODE) {
+          return false;
+        } else {
+          error("Expecting output type value");
+          return false;
+        }
+        if (next() != EOLTOK && token != 0) {
+          error("Extraneous tokens after output value");
+        }
+      }
+      else
+        error("Expecting '='");
+      return false;
     }
 
     void parseTranslator() {
@@ -278,28 +299,17 @@ namespace {
           else 
             confDat->Translator.clear(CompilerDriver::PREPROCESSES_FLAG);
           break;
-        case OPTIMIZES:
-          if (parseBoolean())
-            confDat->Translator.set(CompilerDriver::OPTIMIZES_FLAG);
-          else
-            confDat->Translator.clear(CompilerDriver::OPTIMIZES_FLAG);
-          break;
-        case GROKS_DASH_O:
-          if (parseBoolean())
-            confDat->Translator.set(CompilerDriver::GROKS_DASH_O_FLAG);
-          else
-            confDat->Translator.clear(CompilerDriver::GROKS_DASH_O_FLAG);
-          break;
-        case OUTPUT_IS_ASM:
-          if (parseBoolean())
+        case OUTPUT:
+          if (parseOutputFlag())
             confDat->Translator.set(CompilerDriver::OUTPUT_IS_ASM_FLAG);
           else
             confDat->Translator.clear(CompilerDriver::OUTPUT_IS_ASM_FLAG);
           break;
 
         default:
-          error("Expecting 'command', 'required', 'preprocesses', "
-                "'groks_dash_O' or 'optimizes'");
+          error("Expecting 'command', 'required', 'preprocesses', or "
+                "'output' but found '" + ConfigLexerState.StringVal +
+                "' instead");
           break;
       }
     }
@@ -321,20 +331,22 @@ namespace {
           else
             confDat->Optimizer.clear(CompilerDriver::TRANSLATES_FLAG);
           break;
-        case GROKS_DASH_O:
+        case REQUIRED:
           if (parseBoolean())
-            confDat->Optimizer.set(CompilerDriver::GROKS_DASH_O_FLAG);
+            confDat->Optimizer.set(CompilerDriver::REQUIRED_FLAG);
           else
-            confDat->Optimizer.clear(CompilerDriver::GROKS_DASH_O_FLAG);
+            confDat->Optimizer.clear(CompilerDriver::REQUIRED_FLAG);
           break;
-        case OUTPUT_IS_ASM:
-          if (parseBoolean())
+        case OUTPUT:
+          if (parseOutputFlag())
             confDat->Translator.set(CompilerDriver::OUTPUT_IS_ASM_FLAG);
           else
             confDat->Translator.clear(CompilerDriver::OUTPUT_IS_ASM_FLAG);
           break;
         default:
-          error("Expecting 'command' or 'groks_dash_O'");
+          error(std::string("Expecting 'command', 'preprocesses', ") +
+              "'translates' or 'output' but found '" + 
+              ConfigLexerState.StringVal + "' instead");
           break;
       }
     }
@@ -352,17 +364,12 @@ namespace {
 
     void parseLinker() {
       switch(next()) {
-        case COMMAND:
-          parseCommand(confDat->Linker);
-          break;
-        case GROKS_DASH_O:
-          if (parseBoolean())
-            confDat->Linker.set(CompilerDriver::GROKS_DASH_O_FLAG);
-          else
-            confDat->Linker.clear(CompilerDriver::GROKS_DASH_O_FLAG);
-          break;
+        case LIBS:
+          break; //FIXME
+        case LIBPATHS:
+          break; //FIXME
         default:
-          error("Expecting 'command'");
+          error("Expecting 'libs' or 'libpaths'");
           break;
       }
     }
@@ -415,7 +422,7 @@ LLVMC_ConfigDataProvider::ReadConfigData(const std::string& ftype) {
     if (conf) {
       dir_name = conf;
       dir_name += "/";
-      if (!::sys::FileReadable(dir_name + ftype))
+      if (!::sys::FileIsReadable(dir_name + ftype))
         throw "Configuration file for '" + ftype + "' is not available.";
     } else {
       // Try the user's home directory
@@ -423,14 +430,14 @@ LLVMC_ConfigDataProvider::ReadConfigData(const std::string& ftype) {
       if (home) {
         dir_name = home;
         dir_name += "/.llvm/etc/";
-        if (!::sys::FileReadable(dir_name + ftype)) {
+        if (!::sys::FileIsReadable(dir_name + ftype)) {
           // Okay, try the LLVM installation directory
           dir_name = LLVM_ETCDIR;
           dir_name += "/";
-          if (!::sys::FileReadable(dir_name + ftype)) {
+          if (!::sys::FileIsReadable(dir_name + ftype)) {
             // Okay, try the "standard" place
             dir_name = "/etc/llvm/";
-            if (!::sys::FileReadable(dir_name + ftype)) {
+            if (!::sys::FileIsReadable(dir_name + ftype)) {
               throw "Configuration file for '" + ftype + "' is not available.";
             }
           }
@@ -439,7 +446,7 @@ LLVMC_ConfigDataProvider::ReadConfigData(const std::string& ftype) {
     }
   } else {
     dir_name = configDir + "/";
-    if (!::sys::FileReadable(dir_name + ftype)) {
+    if (!::sys::FileIsReadable(dir_name + ftype)) {
       throw "Configuration file for '" + ftype + "' is not available.";
     }
   }
