@@ -77,7 +77,7 @@ ProfileInfoLoader::ProfileInfoLoader(const char *ToolName,
                                      Module &TheModule) : M(TheModule) {
   FILE *F = fopen(Filename.c_str(), "r");
   if (F == 0) {
-    std::cerr << ToolName << ": Error opening '" << Filename << ": ";
+    std::cerr << ToolName << ": Error opening '" << Filename << "': ";
     perror(0);
     exit(1);
   }
