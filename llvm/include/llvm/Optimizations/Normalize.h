@@ -16,4 +16,4 @@ class Method;
 //
 void NormalizePhiConstantArgs(Method *M);
 
-#endif LLVM_OPT_NORMALIZE_H
+#endif /*LLVM_OPT_NORMALIZE_H*/
