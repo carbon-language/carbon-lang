@@ -17,12 +17,10 @@ struct NodeType {
     // Both argument and return types...
     Val,            // A non-void type
     Arg0,           // Value matches the type of Arg0
+    Ptr,            // Tree node is the type of the target pointer
 
     // Return types
     Void,           // Tree node always returns void
-
-    // Argument types
-    Ptr,            // Tree node is the target argument type
   };
 
   ArgResultTypes ResultType;
@@ -36,7 +34,6 @@ struct NodeType {
   NodeType(const NodeType &N) : ResultType(N.ResultType), ArgTypes(N.ArgTypes){}
 
   static ArgResultTypes Translate(Record *R);
-
 };
 
 class InstrSelectorEmitter : public TableGenBackend {
@@ -54,6 +51,10 @@ private:
   // RecordKeeper, turning them into the more accessible NodeTypes data
   // structure.
   void ProcessNodeTypes();
+
+  // ProcessInstructionPatterns - Read in all subclasses of Instruction, and
+  // process those with a useful Pattern field.
+  void ProcessInstructionPatterns();
 };
 
 #endif
