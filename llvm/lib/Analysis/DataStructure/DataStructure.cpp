@@ -1168,8 +1168,7 @@ DSGraph::DSGraph(const DSGraph &G, EquivalenceClasses<GlobalValue*> &ECs,
                  unsigned CloneFlags)
   : GlobalsGraph(0), ScalarMap(ECs), TD(G.TD) {
   PrintAuxCalls = false;
-  NodeMapTy NodeMap;
-  cloneInto(G, NodeMap, CloneFlags);
+  cloneInto(G, CloneFlags);
 }
 
 DSGraph::~DSGraph() {
@@ -1235,11 +1234,11 @@ DSNode *DSGraph::addObjectToGraph(Value *Ptr, bool UseDeclaredType) {
 ///
 /// The CloneFlags member controls various aspects of the cloning process.
 ///
-void DSGraph::cloneInto(const DSGraph &G, NodeMapTy &OldNodeMap,
-                        unsigned CloneFlags) {
+void DSGraph::cloneInto(const DSGraph &G, unsigned CloneFlags) {
   TIME_REGION(X, "cloneInto");
-  assert(OldNodeMap.empty() && "Returned OldNodeMap should be empty!");
   assert(&G != this && "Cannot clone graph into itself!");
+
+  NodeMapTy OldNodeMap;
 
   // Remove alloca or mod/ref bits as specified...
   unsigned BitsToClear = ((CloneFlags & StripAllocaBit)? DSNode::AllocaNode : 0)

@@ -444,16 +444,11 @@ public:
   void computeCalleeCallerMapping(DSCallSite CS, const Function &Callee,
                                   DSGraph &CalleeGraph, NodeMapTy &NodeMap);
 
-  /// cloneInto - Clone the specified DSGraph into the current graph.  The
-  /// translated ScalarMap for the old function is filled into the OldValMap
-  /// member, and the translated ReturnNodes map is returned into ReturnNodes.
-  /// OldNodeMap contains a mapping from the original nodes to the newly cloned
-  /// nodes.
+  /// cloneInto - Clone the specified DSGraph into the current graph.
   ///
   /// The CloneFlags member controls various aspects of the cloning process.
   ///
-  void cloneInto(const DSGraph &G, NodeMapTy &OldNodeMap,
-                 unsigned CloneFlags = 0);
+  void cloneInto(const DSGraph &G, unsigned CloneFlags = 0);
 
   /// getFunctionArgumentsForCall - Given a function that is currently in this
   /// graph, return the DSNodeHandles that correspond to the pointer-compatible

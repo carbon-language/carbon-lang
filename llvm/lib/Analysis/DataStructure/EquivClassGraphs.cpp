@@ -270,8 +270,7 @@ void EquivClassGraphs::buildIndirectFunctionSets(Module &M) {
         }
         
         // Clone this member of the equivalence class into MergedG.
-        DSGraph::NodeMapTy NodeMap;    
-        MergedG.cloneInto(CBUGraph, NodeMap);
+        MergedG.cloneInto(CBUGraph);
       }
       
       // Merge the return nodes of all functions together.
@@ -362,10 +361,7 @@ processSCC(DSGraph &FG, std::vector<DSGraph*> &Stack, unsigned &NextID,
 
     // If the SCC found is not the same as those found in CBU, make sure to
     // merge the graphs as appropriate.
-    {
-      DSGraph::NodeMapTy NodeMap;
-      FG.cloneInto(*NG, NodeMap);
-    }
+    FG.cloneInto(*NG);
 
     // Update the DSInfo map and delete the old graph...
     for (DSGraph::retnodes_iterator I = NG->retnodes_begin();
