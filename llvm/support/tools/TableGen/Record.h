@@ -365,6 +365,13 @@ public:
 
   virtual RecTy *getFieldType(const std::string &FieldName) const;
   virtual Init *getFieldInit(Record &R, const std::string &FieldName) const;
+
+  /// resolveReferences - This method is used by classes that refer to other
+  /// variables which may not be defined at the time they expression is formed.
+  /// If a value is set for the variable later, this method will be called on
+  /// users of the value to allow the value to propagate out.
+  ///
+  virtual Init *resolveReferences(Record &R);
   
   virtual void print(std::ostream &OS) const { OS << VarName; }
 };

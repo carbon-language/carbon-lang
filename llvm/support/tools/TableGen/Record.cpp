@@ -215,6 +215,9 @@ bool BitsInit::printAsUnset(std::ostream &OS) const {
   return false;
 }
 
+// resolveReferences - If there are any field references that refer to fields
+// that have been filled in, we can propagate the values now.
+//
 Init *BitsInit::resolveReferences(Record &R) {
   bool Changed = false;
   BitsInit *New = new BitsInit(getNumBits());
@@ -309,7 +312,18 @@ Init *VarInit::getFieldInit(Record &R, const std::string &FieldName) const {
   return 0;
 }
 
-
+/// resolveReferences - This method is used by classes that refer to other
+/// variables which may not be defined at the time they expression is formed.
+/// If a value is set for the variable later, this method will be called on
+/// users of the value to allow the value to propagate out.
+///
+Init *VarInit::resolveReferences(Record &R) {
+  if (RecordVal *Val = R.getValue(VarName))
+    if (!dynamic_cast<UnsetInit*>(Val->getValue()))
+      return Val->getValue();
+  return this;
+}
+  
 
 Init *VarBitInit::resolveReferences(Record &R) {
   Init *I = getVariable()->resolveBitReference(R, getBitNum());
