@@ -35,7 +35,7 @@ InternalTargets  := preconditions distdir dist-hook
 #--------------------------------------------------------------------
 # Set the VPATH so that we can find source files.
 #--------------------------------------------------------------------
-VPATH=$(BUILD_SRC_DIR)
+VPATH=$(PROJ_SRC_DIR)
 
 #--------------------------------------------------------------------
 # Reset the list of suffixes we know how to build
@@ -61,14 +61,21 @@ $(UserTargets)::
 ################################################################################
 
 SrcMakefiles       := $(filter %Makefile %Makefile.tests,\
-                      $(wildcard $(BUILD_SRC_DIR)/Makefile*))
-ObjMakefiles       := $(subst $(BUILD_SRC_DIR),$(BUILD_OBJ_DIR),$(SrcMakefiles))
-ConfigureScript    := $(BUILD_SRC_ROOT)/configure
-ConfigStatusScript := $(BUILD_OBJ_ROOT)/config.status
-LConfigStatusScript:= $(LLVM_OBJ_ROOT)/config.status
-MakefileConfigIn   := $(LLVM_SRC_ROOT)/Makefile.config.in
-MakefileConfig     := $(LLVM_OBJ_ROOT)/Makefile.config
-PreConditions      := $(ConfigStatusScript) $(MakefileConfig) $(ObjMakefiles)
+                      $(wildcard $(PROJ_SRC_DIR)/Makefile*))
+ObjMakefiles       := $(subst $(PROJ_SRC_DIR),$(PROJ_OBJ_DIR),$(SrcMakefiles))
+ConfigureScript    := $(PROJ_SRC_ROOT)/configure
+ConfigStatusScript := $(PROJ_OBJ_ROOT)/config.status
+MakefileConfigIn   := $(strip $(wildcard $(PROJ_SRC_ROOT)/Makefile.config.in))
+MakefileCommonIn   := $(strip $(wildcard $(PROJ_SRC_ROOT)/Makefile.common.in))
+MakefileConfig     := $(PROJ_OBJ_ROOT)/Makefile.config
+MakefileCommon     := $(PROJ_OBJ_ROOT)/Makefile.common
+PreConditions      := $(ConfigStatusScript) $(ObjMakefiles)
+ifneq ($(MakefileCommonIn),)
+PreConditions      += $(MakefileCommon)
+endif
+ifneq ($(MakefileConfigIn),)
+PreConditions      += $(MakefileConfig)
+endif
 
 preconditions : $(PreConditions)
 
@@ -82,10 +89,10 @@ ifneq ($(strip $(BUILT_SOURCES)),)
 	-$(Verb) $(RM) -f $(BUILT_SOURCES)
 endif
 
-ifneq ($(BUILD_OBJ_ROOT),$(BUILD_SRC_ROOT))
+ifneq ($(PROJ_OBJ_ROOT),$(PROJ_SRC_ROOT))
 spotless:
 	$(Verb) if test -x config.status ; then \
-	  $(EchoCmd) Wiping out $(BUILD_OBJ_ROOT) ; \
+	  $(EchoCmd) Wiping out $(PROJ_OBJ_ROOT) ; \
 	  $(MKDIR) .spotless.save ; \
 	  $(MV) config.status .spotless.save ; \
 	  $(MV) mklib  .spotless.save ; \
@@ -95,11 +102,11 @@ spotless:
 	  $(MV) .spotless.save/mklib . ; \
 	  $(MV) .spotless.save/projects . ; \
 	  $(RM) -rf .spotless.save ; \
-	  $(EchoCmd) Rebuilding configuration of $(BUILD_OBJ_ROOT) ; \
+	  $(EchoCmd) Rebuilding configuration of $(PROJ_OBJ_ROOT) ; \
 	  $(ConfigStatusScript) --recheck $(ConfigureScriptFLAGS) && \
 	  $(ConfigStatusScript) ; \
 	else \
-	  $(EchoCmd) "make spotless" can only be run from $(BUILD_OBJ_ROOT); \
+	  $(EchoCmd) "make spotless" can only be run from $(PROJ_OBJ_ROOT); \
 	fi
 endif
 
@@ -109,10 +116,10 @@ $(BUILT_SOURCES) : $(ObjMakefiles)
 # Make sure we're not using a stale configuration
 #------------------------------------------------------------------------
 reconfigure:
-	$(Echo) Reconfiguring $(BUILD_OBJ_ROOT)
-	$(Verb) cd $(BUILD_OBJ_ROOT) && \
-	  if test -w $(BUILD_OBJ_ROOT)/config.cache ; then \
-	    $(RM) $(BUILD_OBJ_ROOT)/config.cache ; \
+	$(Echo) Reconfiguring $(PROJ_OBJ_ROOT)
+	$(Verb) cd $(PROJ_OBJ_ROOT) && \
+	  if test -w $(PROJ_OBJ_ROOT)/config.cache ; then \
+	    $(RM) $(PROJ_OBJ_ROOT)/config.cache ; \
 	  fi ; \
 	  $(ConfigStatusScript) --recheck $(ConfigureScriptFLAGS) && \
 	  $(ConfigStatusScript)
@@ -120,9 +127,9 @@ reconfigure:
 .PRECIOUS: $(ConfigStatusScript)
 $(ConfigStatusScript): $(ConfigureScript)
 	$(Echo) Reconfiguring with $<
-	$(Verb) cd $(BUILD_OBJ_ROOT) && \
-	  if test -w $(BUILD_OBJ_ROOT)/config.cache ; then \
-	    $(RM) $(BUILD_OBJ_ROOT)/config.cache ; \
+	$(Verb) cd $(PROJ_OBJ_ROOT) && \
+	  if test -w $(PROJ_OBJ_ROOT)/config.cache ; then \
+	    $(RM) $(PROJ_OBJ_ROOT)/config.cache ; \
 	  fi ; \
 	  $(ConfigStatusScript) --recheck $(ConfigureScriptFLAGS) && \
 	  $(ConfigStatusScript)
@@ -130,17 +137,25 @@ $(ConfigStatusScript): $(ConfigureScript)
 #------------------------------------------------------------------------
 # Make sure the configuration makefile is up to date
 #------------------------------------------------------------------------
-$(MakefileConfig): $(MakefileConfigIn) $(LConfigStatusScript)
+ifneq ($(MakefileConfigIn),)
+$(MakefileConfig): $(MakefileConfigIn) $(ConfigStatusScript)
 	$(Echo) Regenerating $@
-	$(Verb) cd $(LLVM_OBJ_ROOT) ; $(LConfigStatusScript) Makefile.config
+	$(Verb) cd $(PROJ_OBJ_ROOT) ; $(ConfigStatusScript) Makefile.config
+endif
+
+ifneq ($(MakefileCommonIn),)
+$(MakefileCommon): $(MakefileCommonIn) $(ConfigStatusScript)
+	$(Echo) Regenerating $@
+	$(Verb) cd $(PROJ_OBJ_ROOT) ; $(ConfigStatusScript) Makefile.common
+endif
 
 #------------------------------------------------------------------------
 # If the Makefile in the source tree has been updated, copy it over into the
 # build tree. But, only do this if the source and object makefiles differ
 #------------------------------------------------------------------------
-ifneq ($(BUILD_OBJ_DIR),$(BUILD_SRC_DIR))
+ifneq ($(PROJ_OBJ_DIR),$(PROJ_SRC_DIR))
 
-Makefile: $(BUILD_SRC_DIR)/Makefile
+Makefile: $(PROJ_SRC_DIR)/Makefile
 	$(Echo) "Updating Makefile"
 	$(Verb) $(MKDIR) $(@D)
 	$(Verb) $(CP) -f $< $@
@@ -148,7 +163,7 @@ Makefile: $(BUILD_SRC_DIR)/Makefile
 # Copy the Makefile.* files unless we're in the root directory which avoids
 # the copying of Makefile.config.in or other things that should be explicitly
 # taken care of.
-$(BUILD_OBJ_DIR)/Makefile% : $(BUILD_SRC_DIR)/Makefile%
+$(PROJ_OBJ_DIR)/Makefile% : $(PROJ_SRC_DIR)/Makefile%
 	@case '$?' in \
           *Makefile.rules) ;; \
           *.in) ;; \
@@ -216,10 +231,10 @@ LibTool.Flags := --tag=CXX
 #--------------------------------------------------------------------
 # Directory locations
 #--------------------------------------------------------------------
-ObjDir      := $(BUILD_OBJ_DIR)/$(BuildMode)
-LibDir      := $(BUILD_OBJ_ROOT)/$(BuildMode)/lib
-ToolDir     := $(BUILD_OBJ_ROOT)/$(BuildMode)/bin
-ExmplDir    := $(BUILD_OBJ_ROOT)/$(BuildMode)/examples
+ObjDir      := $(PROJ_OBJ_DIR)/$(BuildMode)
+LibDir      := $(PROJ_OBJ_ROOT)/$(BuildMode)/lib
+ToolDir     := $(PROJ_OBJ_ROOT)/$(BuildMode)/bin
+ExmplDir    := $(PROJ_OBJ_ROOT)/$(BuildMode)/examples
 LLVMLibDir  := $(LLVM_OBJ_ROOT)/$(BuildMode)/lib
 LLVMToolDir := $(LLVM_OBJ_ROOT)/$(BuildMode)/bin
 LLVMExmplDir:= $(LLVM_OBJ_ROOT)/$(BuildMode)/examples
@@ -288,7 +303,7 @@ ifndef VERBOSE
   Verb := @
   LibTool.Flags += --silent
   AR.Flags += >/dev/null 2>/dev/null
-  ConfigureScriptFLAGS += >$(BUILD_OBJ_DIR)/configure.out 2>&1
+  ConfigureScriptFLAGS += >$(PROJ_OBJ_DIR)/configure.out 2>&1
 else
   ConfigureScriptFLAGS := 
 endif
@@ -315,13 +330,12 @@ endif
 CompileCommonOpts := -Wall -W -Wwrite-strings -Wno-unused
 
 LD.Flags  += -L$(LibDir) -L$(LLVMLibDir)
-CPP.Flags += -I$(BUILD_OBJ_DIR) \
-	    -I$(BUILD_SRC_DIR) \
-	    -I$(BUILD_SRC_ROOT)/include \
-	    -I$(BUILD_OBJ_ROOT)/include \
-	    -I$(LLVM_OBJ_ROOT)/include \
-	    -I$(LLVM_SRC_ROOT)/include \
-	    -D_GNU_SOURCE -D__STDC_LIMIT_MACROS
+CPP.Flags += -I$(PROJ_OBJ_DIR) -I$(PROJ_SRC_DIR) \
+	     -I$(PROJ_OBJ_ROOT)/include \
+	     -I$(PROJ_SRC_ROOT)/include \
+	     -I$(LLVM_OBJ_ROOT)/include \
+	     -I$(LLVM_SRC_ROOT)/include \
+	     -D_GNU_SOURCE -D__STDC_LIMIT_MACROS
 
 Compile.C     = $(CC) $(CPP.Flags) $(CompileCommonOpts) -c $(C.Flags)
 LTCompile.C   = $(LIBTOOL) $(LibTool.Flags) --mode=compile $(Compile.C)
@@ -336,8 +350,8 @@ Link          = $(LIBTOOL) $(LibTool.Flags) --mode=link $(CXX) $(CPP.Flags) \
 Relink        = $(LIBTOOL) $(LibTool.Flags) --mode=link $(CXX) $(CPP.Flags) \
                 $(CompileCommonOpts)
 LTInstall     = $(LIBTOOL) $(LibTool.Flags) --mode=install $(INSTALL)
-Burg          = $(BURG) -I $(BUILD_SRC_DIR)
-TableGen      = $(TBLGEN) -I $(BUILD_SRC_DIR)
+Burg          = $(BURG) -I $(PROJ_SRC_DIR)
+TableGen      = $(TBLGEN) -I $(PROJ_SRC_DIR)
 Archive       = $(AR) $(AR.Flags)
 LArchive      = $(LLVMToolDir)/llvm-ar rcsf
 ifdef RANLIB
@@ -362,9 +376,9 @@ ifdef FAKE_SOURCES
   ObjectsBC := $(BaseNameSources:%=$(ObjDir)/%.bc)
 else
   ifndef SOURCES
-    Sources := $(notdir $(wildcard $(BUILD_SRC_DIR)/*.cpp \
-               $(BUILD_SRC_DIR)/*.cc $(BUILD_SRC_DIR)/*.c $(BUILD_SRC_DIR)/*.y \
-               $(BUILD_SRC_DIR)/*.l))
+    Sources := $(notdir $(wildcard $(PROJ_SRC_DIR)/*.cpp \
+               $(PROJ_SRC_DIR)/*.cc $(PROJ_SRC_DIR)/*.c $(PROJ_SRC_DIR)/*.y \
+               $(PROJ_SRC_DIR)/*.l))
   else
     Sources := $(SOURCES)
   endif 
@@ -388,17 +402,17 @@ endif
 # in the file so they get built before dependencies
 #---------------------------------------------------------
 
-$(bindir):
-	$(Verb) $(MKDIR) $(bindir)
+$(PROJ_bindir):
+	$(Verb) $(MKDIR) $(PROJ_bindir)
 
-$(libdir):
-	$(Verb) $(MKDIR) $(libdir)
+$(PROJ_libdir):
+	$(Verb) $(MKDIR) $(PROJ_libdir)
 
-$(includedir):
-	$(Verb) $(MKDIR) $(includedir)
+$(PROJ_includedir):
+	$(Verb) $(MKDIR) $(PROJ_includedir)
 
-$(sysconfdir):
-	$(Verb) $(MKDIR) $(sysconfdir)
+$(PROJ_etcdir):
+	$(Verb) $(MKDIR) $(PROJ_etcdir)
 
 # To create other directories, as needed, and timestamp their creation
 %/.dir:
@@ -419,7 +433,7 @@ $(RecursiveTargets)::
 	$(Verb) for dir in $(DIRS); do \
 	  if [ ! -f $$dir/Makefile ]; then \
 	    $(MKDIR) $$dir; \
-	    $(CP) $(BUILD_SRC_DIR)/$$dir/Makefile $$dir/Makefile; \
+	    $(CP) $(PROJ_SRC_DIR)/$$dir/Makefile $$dir/Makefile; \
 	  fi; \
 	  if [ ! -f $$dir/LLVM_DO_NOT_BUILD ]; then \
 	    ($(MAKE) -C $$dir $@ ) || exit 1; \
@@ -436,7 +450,7 @@ $(RecursiveTargets)::
 	$(Verb) for dir in $(EXPERIMENTAL_DIRS); do \
 	  if [ ! -f $$dir/Makefile ]; then \
 	    $(MKDIR) $$dir; \
-	    $(CP) $(BUILD_SRC_DIR)/$$dir/Makefile $$dir/Makefile; \
+	    $(CP) $(PROJ_SRC_DIR)/$$dir/Makefile $$dir/Makefile; \
 	  fi; \
 	  if [ ! -f $$dir/LLVM_DO_NOT_BUILD ]; then \
 	    ($(MAKE) -C $$dir $@ ) || exit 0; \
@@ -464,7 +478,7 @@ ParallelTargets := $(foreach T,$(RecursiveTargets),%/.make$(T))
 $(ParallelTargets) :
 	$(Verb) if [ ! -f $(@D)/Makefile ]; then \
 	  $(MKDIR) $(@D); \
-	  $(CP) $(BUILD_SRC_DIR)/$(@D)/Makefile $(@D)/Makefile; \
+	  $(CP) $(PROJ_SRC_DIR)/$(@D)/Makefile $(@D)/Makefile; \
 	fi; \
 	if [ ! -f $$dir/LLVM_DO_NOT_BUILD ]; then \
 	  $(MAKE) -C $(@D) $(subst $(@D)/.make,,$@) ; \
@@ -481,10 +495,10 @@ SubDirs += $(OPTIONAL_DIRS)
 
 $(RecursiveTargets)::
 	$(Verb) for dir in $(OPTIONAL_DIRS); do \
-	  if [ -d $(BUILD_SRC_DIR)/$$dir ]; then\
+	  if [ -d $(PROJ_SRC_DIR)/$$dir ]; then\
 	    if [ ! -f $$dir/Makefile ]; then \
 	      $(MKDIR) $$dir; \
-	      $(CP) $(BUILD_SRC_DIR)/$$dir/Makefile $$dir/Makefile; \
+	      $(CP) $(PROJ_SRC_DIR)/$$dir/Makefile $$dir/Makefile; \
 	    fi; \
 	    if [ ! -f $$dir/LLVM_DO_NOT_BUILD ]; then \
 	      ($(MAKE) -C$$dir $@ ) || exit 1; \
@@ -498,22 +512,22 @@ endif
 #---------------------------------------------------------
 ifdef CONFIG_FILES
 
-install-local:: $(sysconfdir) $(CONFIG_FILES)
-	$(Echo) Installing Configuration Files To $(sysconfdir)
+install-local:: $(PROJ_etcdir) $(CONFIG_FILES)
+	$(Echo) Installing Configuration Files To $(PROJ_etcdir)
 	$(Verb)for file in $(CONFIG_FILES); do \
-          if test -f $(BUILD_OBJ_DIR)/$${file} ; then \
-            $(INSTALL) $(BUILD_OBJ_DIR)/$${file} $(sysconfdir) ; \
-          elif test -f $(BUILD_SRC_DIR)/$${file} ; then \
-            $(INSTALL) $(BUILD_SRC_DIR)/$${file} $(sysconfdir) ; \
+          if test -f $(PROJ_OBJ_DIR)/$${file} ; then \
+            $(INSTALL) $(PROJ_OBJ_DIR)/$${file} $(PROJ_etcdir) ; \
+          elif test -f $(PROJ_SRC_DIR)/$${file} ; then \
+            $(INSTALL) $(PROJ_SRC_DIR)/$${file} $(PROJ_etcdir) ; \
           else \
             $(ECHO) Error: cannot find config file $${file}. ; \
           fi \
 	done
 
 uninstall-local::
-	$(Echo) Uninstalling Configuration Files From $(sysconfdir)
+	$(Echo) Uninstalling Configuration Files From $(PROJ_etcdir)
 	$(Verb)for file in $(CONFIG_FILES); do \
-	  $(RM) -f $(sysconfdir)/$${file} ; \
+	  $(RM) -f $(PROJ_etcdir)/$${file} ; \
 	done
 
 endif
@@ -553,7 +567,7 @@ endif
 ifdef BYTECODE_DESTINATION
 ModuleDestDir := $(BYTECODE_DESTINATION)
 else
-ModuleDestDir := $(libdir)
+ModuleDestDir := $(PROJ_libdir)
 endif
 
 DestModule := $(ModuleDestDir)/$(MODULE_NAME).bc
@@ -605,18 +619,18 @@ ifneq ($(strip $(LibName.LA)),)
 	-$(Verb) $(RM) -f $(LibName.LA)
 endif
 
-DestSharedLib = $(libdir)/lib$(LIBRARYNAME)$(SHLIBEXT)
+DestSharedLib = $(PROJ_libdir)/lib$(LIBRARYNAME)$(SHLIBEXT)
 
 install-local:: $(DestSharedLib)
 
-$(DestSharedLib): $(libdir) $(LibName.LA)
+$(DestSharedLib): $(PROJ_libdir) $(LibName.LA)
 	$(Echo) Installing $(BuildMode) Shared Library $(DestSharedLib)
 	$(Verb) $(LTInstall) $(LibName.LA) $(DestSharedLib)
-	$(Verb) $(LIBTOOL) --finish $(libdir)
+	$(Verb) $(LIBTOOL) --finish $(PROJ_libdir)
 
 uninstall-local:: 
 	$(Echo) Uninstalling $(BuildMode) Shared Library $(DestSharedLib)
-	-$(Verb) $(RM) -f $(libdir)/lib$(LIBRARYNAME).*
+	-$(Verb) $(RM) -f $(PROJ_libdir)/lib$(LIBRARYNAME).*
 
 endif
 
@@ -662,7 +676,7 @@ endif
 ifdef BYTECODE_DESTINATION
 BytecodeDestDir := $(BYTECODE_DESTINATION)
 else
-BytecodeDestDir := $(libdir)
+BytecodeDestDir := $(PROJ_libdir)
 endif
 
 DestBytecodeLib = $(BytecodeDestDir)/lib$(LIBRARYNAME).a
@@ -699,11 +713,11 @@ ifneq ($(strip $(LibName.O)),)
 	-$(Verb) $(RM) -f $(LibName.O)
 endif
 
-DestRelinkedLib = $(libdir)/$(LIBRARYNAME).o
+DestRelinkedLib = $(PROJ_libdir)/$(LIBRARYNAME).o
 
 install-local:: $(DestRelinkedLib)
 
-$(DestRelinkedLib): $(libdir) $(LibName.O)
+$(DestRelinkedLib): $(PROJ_libdir) $(LibName.O)
 	$(Echo) Installing $(BuildMode) Object Library $(DestRelinkedLib)
 	$(Verb) $(LTInstall) $(LibName.O) $(DestRelinkedLib)
 
@@ -733,13 +747,13 @@ ifneq ($(strip $(LibName.A)),)
 	-$(Verb) $(RM) -f $(LibName.A)
 endif
 
-DestArchiveLib := $(libdir)/lib$(LIBRARYNAME).a
+DestArchiveLib := $(PROJ_libdir)/lib$(LIBRARYNAME).a
 
 install-local:: $(DestArchiveLib)
 
-$(DestArchiveLib): $(libdir) $(LibName.A)
+$(DestArchiveLib): $(PROJ_libdir) $(LibName.A)
 	$(Echo) Installing $(BuildMode) Archive Library $(DestArchiveLib)
-	$(Verb) $(MKDIR) $(libdir)
+	$(Verb) $(MKDIR) $(PROJ_libdir)
 	$(Verb) $(LTInstall) $(LibName.A) $(DestArchiveLib)
 
 uninstall-local::
@@ -860,11 +874,11 @@ $(ToolBuildPath): $(ObjectsO) $(ProjLibsPaths) $(LLVMLibsPaths)
           $(LLVMLibsOptions) $(ExtraLibs) $(TOOLLINKOPTSB)
 	$(Echo) ======= Finished Linking $(BuildMode) Executable $(TOOLNAME) $(StripWarnMsg) 
 
-DestTool = $(bindir)/$(TOOLNAME)
+DestTool = $(PROJ_bindir)/$(TOOLNAME)
 
 install-local:: $(DestTool)
 
-$(DestTool): $(bindir) $(ToolBuildPath)
+$(DestTool): $(PROJ_bindir) $(ToolBuildPath)
 	$(Echo) Installing $(BuildMode) $(DestTool)
 	$(Verb) $(INSTALL) $(ToolBuildPath) $(DestTool)
 
@@ -980,7 +994,7 @@ $(ObjDir)/%.bc: %.ll $(ObjDir)/.dir $(LLVMAS)
 
 ifdef TARGET
 
-TDFiles := $(strip $(wildcard $(BUILD_SRC_DIR)/*.td) $(LLVM_SRC_ROOT)/lib/Target/Target.td)
+TDFiles := $(strip $(wildcard $(PROJ_SRC_DIR)/*.td) $(LLVM_SRC_ROOT)/lib/Target/Target.td)
 INCFiles := $(filter %.inc,$(BUILT_SOURCES))
 INCTMPFiles := $(INCFiles:%=$(ObjDir)/%.tmp)
 .PRECIOUS: $(INCTMPFiles) $(INCFiles)
@@ -1144,20 +1158,20 @@ clean-all-local::
 tags:: TAGS CTAGS
 
 TAGS: 
-	find $(BUILD_SRC_ROOT)/include $(BUILD_SRC_ROOT)/lib \
-          $(BUILD_SRC_ROOT)/tools $(BUILD_SRC_ROOT)/examples \
-          $(BUILD_OBJ_ROOT)/include $(BUILD_OBJ_ROOT)/lib \
-          $(BUILD_OBJ_ROOT)/tools $(BUILD_OBJ_ROOT)/examples \
+	find $(PROJ_SRC_ROOT)/include $(PROJ_SRC_ROOT)/lib \
+          $(PROJ_SRC_ROOT)/tools $(PROJ_SRC_ROOT)/examples \
+          $(PROJ_OBJ_ROOT)/include $(PROJ_OBJ_ROOT)/lib \
+          $(PROJ_OBJ_ROOT)/tools $(PROJ_OBJ_ROOT)/examples \
         -name '*.cpp' -o -name '*.h' | \
         $(ETAGS) $(ETAGSFLAGS) -
 
 CTAGS:
-	find $(BUILD_SRC_ROOT)/include $(BUILD_SRC_ROOT)/lib \
-          $(BUILD_SRC_ROOT)/tools $(BUILD_SRC_ROOT)/examples \
-          $(BUILD_OBJ_ROOT)/include $(BUILD_OBJ_ROOT)/lib \
-          $(BUILD_OBJ_ROOT)/tools $(BUILD_OBJ_ROOT)/examples \
+	find $(PROJ_SRC_ROOT)/include $(PROJ_SRC_ROOT)/lib \
+          $(PROJ_SRC_ROOT)/tools $(PROJ_SRC_ROOT)/examples \
+          $(PROJ_OBJ_ROOT)/include $(PROJ_OBJ_ROOT)/lib \
+          $(PROJ_OBJ_ROOT)/tools $(PROJ_OBJ_ROOT)/examples \
           \( -name '*.cpp' -o -name '*.h' \) -print | \
-          ctags -ImtT -o $(BUILD_OBJ_ROOT)/CTAGS -L -
+          ctags -ImtT -o $(PROJ_OBJ_ROOT)/CTAGS -L -
 
 
 ###############################################################################
@@ -1170,7 +1184,7 @@ ifneq ($strip($(filter-out clean clean-local dist-clean,$(MAKECMDGOALS))),)
 
 # Get the list of dependency files
 DependFiles := $(basename $(filter %.cpp %.c %.cc, $(Sources)))
-DependFiles := $(patsubst %,$(BUILD_OBJ_DIR)/$(BuildMode)/%.d,$(DependFiles))
+DependFiles := $(patsubst %,$(PROJ_OBJ_DIR)/$(BuildMode)/%.d,$(DependFiles))
 
 -include /dev/null $(DependFiles)
 
@@ -1183,10 +1197,10 @@ endif
 ###############################################################################
 
 check::
-	$(Verb) if test -d "$(BUILD_OBJ_ROOT)/test" ; then \
-	  if test -f "$(BUILD_OBJ_ROOT)/test/Makefile" ; then \
+	$(Verb) if test -d "$(PROJ_OBJ_ROOT)/test" ; then \
+	  if test -f "$(PROJ_OBJ_ROOT)/test/Makefile" ; then \
 	    $(EchoCmd) Running test suite ; \
-	    $(MAKE) -C $(BUILD_OBJ_ROOT)/test check-local \
+	    $(MAKE) -C $(PROJ_OBJ_ROOT)/test check-local \
 	      TESTSUITE=$(TESTSUITE) ; \
 	  else \
 	    $(EchoCmd) No Makefile in test directory ; \
@@ -1202,21 +1216,21 @@ check::
 #------------------------------------------------------------------------
 # Define distribution related variables
 #------------------------------------------------------------------------
-DistName    := $(LLVM_TARBALL_NAME)
-DistDir     := $(BUILD_OBJ_ROOT)/$(DistName)
-TopDistDir  := $(BUILD_OBJ_ROOT)/$(DistName)
-DistTarGZip := $(BUILD_OBJ_ROOT)/$(DistName).tar.gz
-DistZip     := $(BUILD_OBJ_ROOT)/$(DistName).zip
-DistTarBZ2  := $(BUILD_OBJ_ROOT)/$(DistName).tar.bz2
+DistName    := $(PROJECT_NAME)-$(PROJ_VERSION)
+DistDir     := $(PROJ_OBJ_ROOT)/$(DistName)
+TopDistDir  := $(PROJ_OBJ_ROOT)/$(DistName)
+DistTarGZip := $(PROJ_OBJ_ROOT)/$(DistName).tar.gz
+DistZip     := $(PROJ_OBJ_ROOT)/$(DistName).zip
+DistTarBZ2  := $(PROJ_OBJ_ROOT)/$(DistName).tar.bz2
 DistAlways  := CREDITS.TXT LICENSE.TXT README.txt README AUTHORS COPYING \
 	       ChangeLog INSTALL NEWS Makefile Makefile.common Makefile.rules \
 	       Makefile.config.in configure autoconf
 DistOther   := $(notdir $(wildcard \
-               $(BUILD_SRC_DIR)/*.h \
-               $(BUILD_SRC_DIR)/*.td \
-               $(BUILD_SRC_DIR)/*.def \
-               $(BUILD_SRC_DIR)/*.ll \
-               $(BUILD_SRC_DIR)/*.in))
+               $(PROJ_SRC_DIR)/*.h \
+               $(PROJ_SRC_DIR)/*.td \
+               $(PROJ_SRC_DIR)/*.def \
+               $(PROJ_SRC_DIR)/*.ll \
+               $(PROJ_SRC_DIR)/*.in))
 DistSubDirs := $(SubDirs)
 DistSources  = $(Sources) $(EXTRA_DIST)
 DistFiles    = $(DistAlways) $(DistSources) $(DistOther)
@@ -1224,27 +1238,18 @@ DistFiles    = $(DistAlways) $(DistSources) $(DistOther)
 #------------------------------------------------------------------------
 # We MUST build distribution with OBJ_DIR != SRC_DIR
 #------------------------------------------------------------------------
-ifeq ($(BUILD_SRC_DIR),$(BUILD_OBJ_DIR))
+ifeq ($(PROJ_SRC_DIR),$(PROJ_OBJ_DIR))
 dist dist-check dist-clean dist-gzip dist-bzip2 dist-zip ::
 	$(Echo) ERROR: Target $@ only available with OBJ_DIR != SRC_DIR
 
 else
 
 #------------------------------------------------------------------------
-# Prevent catastrophic remove
-#------------------------------------------------------------------------
-ifeq ($(LLVM_TARBALL_NAME),)
-$(error LLVM_TARBALL_NAME is empty.  Please rerun configure)
-endif
-
-#------------------------------------------------------------------------
 # Prevent attempt to run dist targets from anywhere but the top level
 #------------------------------------------------------------------------
 ifneq ($(LEVEL),.)
-
 dist dist-check dist-clean dist-gzip dist-bzip2 dist-zip ::
-	$(Echo) ERROR: You must run $@ from $(BUILD_OBJ_ROOT)
-
+	$(Echo) ERROR: You must run $@ from $(PROJ_OBJ_ROOT)
 else
 
 #------------------------------------------------------------------------
@@ -1255,14 +1260,14 @@ dist-gzip:: $(DistTarGZip)
 
 $(DistTarGZip) : $(TopDistDir)/.makedistdir
 	$(Echo) Packing gzipped distribution tar file.
-	$(Verb) cd $(BUILD_OBJ_ROOT) ; $(TAR) chf - "$(DistName)" | \
+	$(Verb) cd $(PROJ_OBJ_ROOT) ; $(TAR) chf - "$(DistName)" | \
 	  $(GZIP) -c > "$(DistTarGZip)"
 
 dist-bzip2:: $(DistTarBZ2)
 
 $(DistTarBZ2) : $(TopDistDir)/.makedistdir
 	$(Echo) Packing bzipped distribution tar file.
-	$(Verb) cd $(BUILD_OBJ_ROOT) ; $(TAR) chf - $(DistName) | \
+	$(Verb) cd $(PROJ_OBJ_ROOT) ; $(TAR) chf - $(DistName) | \
 	  $(BZIP2) -c >$(DistTarBZ2)
 
 dist-zip:: $(DistZip)
@@ -1270,7 +1275,7 @@ dist-zip:: $(DistZip)
 $(DistZip) : $(TopDistDir)/.makedistdir
 	$(Echo) Packing zipped distribution file.
 	$(Verb) rm -f $(DistZip)
-	$(Verb) cd $(BUILD_OBJ_ROOT) ; $(ZIP) -rq $(DistZip) $(DistName)
+	$(Verb) cd $(PROJ_OBJ_ROOT) ; $(ZIP) -rq $(DistZip) $(DistName)
 
 dist :: $(DistTarGZip) $(DistTarBZ2) $(DistZip) 
 	$(Echo) ===== DISTRIBUTION PACKAGING SUCESSFUL =====
@@ -1323,21 +1328,21 @@ $(DistDir)/.makedistdir: $(DistSources)
 	fi
 	$(Echo) Building Distribution Directory $(DistDir)
 	$(Verb) $(MKDIR) $(DistDir) 
-	$(Verb) srcdirstrip=`echo "$(BUILD_SRC_DIR)" | sed 's|.|.|g'`; \
-	srcrootstrip=`echo "$(BUILD_SRC_ROOT)" | sed 's|.|.|g'`; \
+	$(Verb) srcdirstrip=`echo "$(PROJ_SRC_DIR)" | sed 's|.|.|g'`; \
+	srcrootstrip=`echo "$(PROJ_SRC_ROOT)" | sed 's|.|.|g'`; \
 	for file in $(DistFiles) ; do \
 	  case "$$file" in \
-	    $(BUILD_SRC_DIR)/*) \
+	    $(PROJ_SRC_DIR)/*) \
 	      file=`echo "$$file" | sed "s#^$$srcdirstrip/##"` \
 	      ;; \
-	    $(BUILD_SRC_ROOT)/*) \
+	    $(PROJ_SRC_ROOT)/*) \
 	      file=`echo "$$file" | \
 		sed "s#^$$srcrootstrip/##"` \
 	      ;; \
 	  esac; \
-	  if test -f "$(BUILD_SRC_DIR)/$$file" || \
-	     test -d "$(BUILD_SRC_DIR)/$$file" ; then \
-	    from_dir="$(BUILD_SRC_DIR)" ; \
+	  if test -f "$(PROJ_SRC_DIR)/$$file" || \
+	     test -d "$(PROJ_SRC_DIR)/$$file" ; then \
+	    from_dir="$(PROJ_SRC_DIR)" ; \
 	  elif test -f "$$file" || test -d "$$file" ; then \
 	    from_dir=. ; \
 	  fi ; \
@@ -1353,9 +1358,9 @@ $(DistDir)/.makedistdir: $(DistSources)
             $(MKDIR) "$$to_dir/$$mid_dir" || exit 1; \
           fi ; \
 	  if test -d "$$from_dir/$$file"; then \
-	    if test -d "$(BUILD_SRC_DIR)/$$file" && \
-	       test "$$from_dir" != "$(BUILD_SRC_DIR)" ; then \
-	      $(CP) -pR "$(BUILD_SRC_DIR)/$$file" "$$to_dir" || exit 1; \
+	    if test -d "$(PROJ_SRC_DIR)/$$file" && \
+	       test "$$from_dir" != "$(PROJ_SRC_DIR)" ; then \
+	      $(CP) -pR "$(PROJ_SRC_DIR)/$$file" "$$to_dir" || exit 1; \
 	    fi; \
 	    $(CP) -pR $$from_dir/$$file $$to_dir || exit 1; \
 	  elif test -f "$$from_dir/$$file" ; then \
@@ -1406,21 +1411,21 @@ ifeq ($(LEVEL),.)
 #------------------------------------------------------------------------
 install-local::
 	$(Echo) Installing include files
-	$(Verb) $(MKDIR) $(includedir)
-	$(Verb) if [ -d "$(BUILD_SRC_ROOT)/include" ] ; then \
-	  cd $(BUILD_SRC_ROOT)/include && \
+	$(Verb) $(MKDIR) $(PROJ_includedir)
+	$(Verb) if [ -d "$(PROJ_SRC_ROOT)/include" ] ; then \
+	  cd $(PROJ_SRC_ROOT)/include && \
 	    find . -path '*/Internal' -prune -o '(' -type f \
 	      '!' '(' -name '*~' -o -name '.cvsignore' -o -name '.#*' ')' \
-	      -print ')' | grep -v CVS | pax -rwdvpe $(includedir) ; \
+	      -print ')' | grep -v CVS | pax -rwdvpe $(PROJ_includedir) ; \
 	fi
 
 uninstall-local::
 	$(Echo) Uninstalling include files
-	$(Verb) if [ -d "$(BUILD_SRC_ROOT)/include" ] ; then \
-	  cd $(BUILD_SRC_ROOT)/include && \
+	$(Verb) if [ -d "$(PROJ_SRC_ROOT)/include" ] ; then \
+	  cd $(PROJ_SRC_ROOT)/include && \
 	    $(RM) -f `find . -path '*/Internal' -prune -o '(' -type f \
 	      '!' '(' -name '*~' -o -name '.cvsignore' -o -name '.#*' ')' \
-	      -print ')' | grep -v CVS | sed 's#^#$(includedir)/#'` ; \
+	      -print ')' | grep -v CVS | sed 's#^#$(PROJ_includedir)/#'` ; \
 	fi 
 
 endif
@@ -1429,30 +1434,32 @@ endif
 # Print out the directories used for building
 #------------------------------------------------------------------------
 printvars::
-	$(Echo) "BuildMode      : " '$(BuildMode)'
-	$(Echo) "BUILD_SRC_ROOT : " '$(BUILD_SRC_ROOT)'
-	$(Echo) "BUILD_SRC_DIR  : " '$(BUILD_SRC_DIR)'
-	$(Echo) "BUILD_OBJ_ROOT : " '$(BUILD_OBJ_ROOT)'
-	$(Echo) "BUILD_OBJ_DIR  : " '$(BUILD_OBJ_DIR)'
-	$(Echo) "LLVM_SRC_ROOT  : " '$(LLVM_SRC_ROOT)'
-	$(Echo) "LLVM_OBJ_ROOT  : " '$(LLVM_OBJ_ROOT)'
-	$(Echo) "libdir         : " '$(libdir)'
-	$(Echo) "bindir         : " '$(bindir)'
-	$(Echo) "sysconfdir     : " '$(sysconfdir)'
-	$(Echo) "UserTargets    : " '$(UserTargets)'
-	$(Echo) "ObjMakefiles   : " '$(ObjMakefiles)'
-	$(Echo) "SrcMakefiles   : " '$(SrcMakefiles)'
-	$(Echo) "ObjDir         : " '$(ObjDir)'
-	$(Echo) "LibDir         : " '$(LibDir)'
-	$(Echo) "ToolDir        : " '$(ToolDir)'
-	$(Echo) "ExmplDir       : " '$(ExmplDir)'
-	$(Echo) "Sources        : " '$(Sources)'
-	$(Echo) "TDFiles        : " '$(TDFiles)'
-	$(Echo) "INCFiles       : " '$(INCFiles)'
-	$(Echo) "INCTMPFiles    : " '$(INCTMPFiles)'
-	$(Echo) "Compile.CXX    : " '$(Compile.CXX)'
-	$(Echo) "Compile.C      : " '$(Compile.C)'
-	$(Echo) "Archive        : " '$(Archive)'
-	$(Echo) "YaccFiles      : " '$(YaccFiles)'
-	$(Echo) "LexFiles       : " '$(LexFiles)'
-	$(Echo) "Module         : " '$(Module)'
+	$(Echo) "BuildMode    : " '$(BuildMode)'
+	$(Echo) "PROJ_SRC_ROOT: " '$(PROJ_SRC_ROOT)'
+	$(Echo) "PROJ_SRC_DIR : " '$(PROJ_SRC_DIR)'
+	$(Echo) "PROJ_OBJ_ROOT: " '$(PROJ_OBJ_ROOT)'
+	$(Echo) "PROJ_OBJ_DIR : " '$(PROJ_OBJ_DIR)'
+	$(Echo) "LLVM_SRC_ROOT: " '$(LLVM_SRC_ROOT)'
+	$(Echo) "LLVM_OBJ_ROOT: " '$(LLVM_OBJ_ROOT)'
+	$(Echo) "PROJ_prefix  : " '$(PROJ_prefix)'
+	$(Echo) "PROJ_bindir  : " '$(PROJ_bindir)'
+	$(Echo) "PROJ_libdir  : " '$(PROJ_libdir)'
+	$(Echo) "PROJ_etcdir  : " '$(PROJ_etcdir)'
+	$(Echo) "UserTargets  : " '$(UserTargets)'
+	$(Echo) "ObjMakefiles : " '$(ObjMakefiles)'
+	$(Echo) "SrcMakefiles : " '$(SrcMakefiles)'
+	$(Echo) "ObjDir       : " '$(ObjDir)'
+	$(Echo) "LibDir       : " '$(LibDir)'
+	$(Echo) "ToolDir      : " '$(ToolDir)'
+	$(Echo) "ExmplDir     : " '$(ExmplDir)'
+	$(Echo) "Sources      : " '$(Sources)'
+	$(Echo) "TDFiles      : " '$(TDFiles)'
+	$(Echo) "INCFiles     : " '$(INCFiles)'
+	$(Echo) "INCTMPFiles  : " '$(INCTMPFiles)'
+	$(Echo) "Preconditions: " '$(Preconditions)'
+	$(Echo) "Compile.CXX  : " '$(Compile.CXX)'
+	$(Echo) "Compile.C    : " '$(Compile.C)'
+	$(Echo) "Archive      : " '$(Archive)'
+	$(Echo) "YaccFiles    : " '$(YaccFiles)'
+	$(Echo) "LexFiles     : " '$(LexFiles)'
+	$(Echo) "Module       : " '$(Module)'
