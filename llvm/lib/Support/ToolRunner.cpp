@@ -215,19 +215,19 @@ int CBE::OutputC(const std::string &Bytecode,
                  std::string &OutputCFile) {
   OutputCFile = getUniqueFilename(Bytecode+".cbe.c");
   const char *DisArgs[] = {
-    DISPath.c_str(),
+    LLCPath.c_str(),
     "-o", OutputCFile.c_str(),   // Output to the C file
-    "-c",                        // Output to C
+    "-march=c",                  // Output to C
     "-f",                        // Overwrite as necessary...
     Bytecode.c_str(),            // This is the input bytecode
     0
   };
 
   std::cout << "<cbe>" << std::flush;
-  if (RunProgramWithTimeout(DISPath, DisArgs, "/dev/null", "/dev/null",
+  if (RunProgramWithTimeout(LLCPath, DisArgs, "/dev/null", "/dev/null",
                             "/dev/null")) {                            
     // If dis failed on the bytecode, print error...
-    std::cerr << "Error: `llvm-dis -c' failed!\n";
+    std::cerr << "Error: `llc -march=c' failed!\n";
     return 1;
   }
 
@@ -241,7 +241,7 @@ int CBE::ExecuteProgram(const std::string &Bytecode,
                         const std::vector<std::string> &SharedLibs) {
   std::string OutputCFile;
   if (OutputC(Bytecode, OutputCFile)) {
-    std::cerr << "Could not generate C code with `llvm-dis', exiting.\n";
+    std::cerr << "Could not generate C code with `llc', exiting.\n";
     exit(1);
   }
 
@@ -252,24 +252,24 @@ int CBE::ExecuteProgram(const std::string &Bytecode,
   return Result;
 }
 
-/// createCBE - Try to find the 'llvm-dis' executable
+/// createCBE - Try to find the 'llc' executable
 ///
 CBE *AbstractInterpreter::createCBE(const std::string &ProgramPath,
                                     std::string &Message) {
-  std::string DISPath = FindExecutable("llvm-dis", ProgramPath);
-  if (DISPath.empty()) {
+  std::string LLCPath = FindExecutable("llc", ProgramPath);
+  if (LLCPath.empty()) {
     Message = 
-      "Cannot find `llvm-dis' in executable directory or PATH!\n";
+      "Cannot find `llc' in executable directory or PATH!\n";
     return 0;
   }
 
-  Message = "Found llvm-dis: " + DISPath + "\n";
+  Message = "Found llc: " + LLCPath + "\n";
   GCC *gcc = GCC::create(ProgramPath, Message);
   if (!gcc) {
     std::cerr << Message << "\n";
     exit(1);
   }
-  return new CBE(DISPath, gcc);
+  return new CBE(LLCPath, gcc);
 }
 
 //===---------------------------------------------------------------------===//
