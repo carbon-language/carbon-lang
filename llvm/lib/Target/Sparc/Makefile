@@ -20,10 +20,10 @@ else
 endif
 
 Sparc.burg.in1 : Sparc.burg.in
-	$(CXX) -E -I$(LLVM_SRC_ROOT)/include $(DEBUG_FLAG) -x c++ $< | ${SED} '/^# /d' | ${SED} 's/Ydefine/#define/' > $@
+	$(CXX) -E -I$(LLVM_SRC_ROOT)/include $(DEBUG_FLAG) -x c++ $< | $(SED) '/^#/d' | $(SED) 's/Ydefine/#define/' > $@
 
 Sparc.burm : Sparc.burg.in1
-	$(CXX) -E -I$(LLVM_SRC_ROOT)/include $(DEBUG_FLAG) -x c++ $< | ${SED} '/^# /d' | ${SED} 's/Xinclude/#include/g' | ${SED} 's/Xdefine/#define/g' > $@
+	$(CXX) -E -I$(LLVM_SRC_ROOT)/include $(DEBUG_FLAG) -x c++ $< | $(SED) '/^#/d' | $(SED) 's/^Xinclude/#include/' | $(SED) 's/^Xdefine/#define/' > $@
 
 Sparc.burm.cpp: Sparc.burm
 	@echo "Burging $<"
@@ -52,5 +52,5 @@ $(TARGET_NAME)CodeEmitter.inc:: $(TARGET_NAME).td $(TABLEGEN_FILES) $(TBLGEN)
 	$(TBLGEN) -I $(SourceDir) $< -gen-emitter -o $@
 
 clean::
-	${RM} -f $(TARGET_NAME)CodeEmitter.inc Sparc.burg.in1 Sparc.burm Sparc.burm.cpp
+	$(RM) -f $(TARGET_NAME)CodeEmitter.inc Sparc.burg.in1 Sparc.burm Sparc.burm.cpp
 
