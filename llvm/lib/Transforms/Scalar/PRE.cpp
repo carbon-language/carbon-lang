@@ -34,6 +34,7 @@
 #include "llvm/ADT/PostOrderIterator.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/hash_set"
+#include "llvm/ADT/hash_map"
 using namespace llvm;
 
 namespace {
