@@ -1847,4 +1847,7 @@ void DSGraph::computeNodeMapping(const DSNodeHandle &NH1,
   for (unsigned i = 0, e = N1->getSize(); i < e; i += DS::PointerSize)
     if (unsigned(N2Idx)+i < N2Size)
       computeNodeMapping(N1->getLink(i), N2->getLink(N2Idx+i), NodeMap);
+    else
+      computeNodeMapping(N1->getLink(i),
+                         N2->getLink(unsigned(N2Idx+i) % N2Size), NodeMap);
 }
