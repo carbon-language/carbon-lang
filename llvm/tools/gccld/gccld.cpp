@@ -339,7 +339,7 @@ static int PrintAndReturn(const char *progname, const std::string &Message,
 //  not copy the char *'s from one array to another).
 //
 static char **
-copy_env (char ** envp)
+copy_env (char ** const envp)
 {
   // The new environment list
   char ** newenv;
@@ -414,7 +414,7 @@ copy_env (char ** envp)
 //  undocumented if they do exist).
 //
 static void
-remove_env (const char * name, char ** envp)
+remove_env (const char * name, char ** const envp)
 {
   // Pointer for scanning arrays
   register char * p;
@@ -602,17 +602,32 @@ int main(int argc, char **argv, char ** envp) {
       remove_env ("COLLECT_GCC", clean_env);
 
       //
+      // Determine the locations of the llc and gcc programs.
+      //
+      std::string llc=FindExecutable ("llc", argv[0]);
+      std::string gcc=FindExecutable ("gcc", argv[0]);
+      if (llc.empty())
+      {
+        return PrintAndReturn (argv[0], "Failed to find llc");
+      }
+
+      if (gcc.empty())
+      {
+        return PrintAndReturn (argv[0], "Failed to find gcc");
+      }
+
+      //
       // Run LLC to convert the bytecode file into assembly code.
       //
-      char * cmd[8];
+      const char * cmd[8];
       std::string AssemblyFile = OutputFilename + ".s";
 
-      cmd[0] = (char *) "llc";
-      cmd[1] = (char *) "-f";
-      cmd[2] = (char *) "-o";
-      cmd[3] = (char *) AssemblyFile.c_str();
-      cmd[4] = (char *) RealBytecodeOutput.c_str();
-      cmd[5] = (char *) NULL;
+      cmd[0] =  llc.c_str();
+      cmd[1] =  "-f";
+      cmd[2] =  "-o";
+      cmd[3] =  AssemblyFile.c_str();
+      cmd[4] =  RealBytecodeOutput.c_str();
+      cmd[5] =  NULL;
       if ((ExecWait (cmd, clean_env)) == -1)
       {
         return PrintAndReturn (argv[0], "Failed to compile bytecode");
@@ -626,11 +641,11 @@ int main(int argc, char **argv, char ** envp) {
       //  and linker because we don't know where to put the _start symbol.
       //  GCC mysteriously knows how to do it.
       //
-      cmd[0] = (char *) "gcc";
-      cmd[1] = (char *) "-o";
-      cmd[2] = (char *) OutputFilename.c_str();
-      cmd[3] = (char *) AssemblyFile.c_str();
-      cmd[4] = (char *) NULL;
+      cmd[0] =  gcc.c_str();
+      cmd[1] =  "-o";
+      cmd[2] =  OutputFilename.c_str();
+      cmd[3] =  AssemblyFile.c_str();
+      cmd[4] =  NULL;
       if ((ExecWait (cmd, clean_env)) == -1)
       {
         return PrintAndReturn (argv[0], "Failed to link native code file");
