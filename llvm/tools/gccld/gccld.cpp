@@ -13,6 +13,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "gccld.h"
 #include "llvm/Transforms/Utils/Linker.h"
 #include "llvm/Module.h"
 #include "llvm/PassManager.h"
@@ -25,13 +26,9 @@
 #include "Support/SystemUtils.h"
 #include "Support/CommandLine.h"
 #include "Support/Signals.h"
-#include "Config/unistd.h"
-#include "gccld.h"
 
 #include <fstream>
 #include <memory>
-#include <set>
-#include <algorithm>
 
 namespace {
   cl::list<std::string> 
@@ -68,7 +65,8 @@ namespace {
                                             " library, not an executable"));
 
   cl::opt<bool>    
-  Native("native", cl::desc("Generate a native binary instead of a shell script"));
+  Native("native",
+         cl::desc("Generate a native binary instead of a shell script"));
   
   // Compatibility options that are ignored but supported by LD
   cl::opt<std::string>
@@ -135,15 +133,10 @@ PrintAndReturn (const char *progname,
 char **
 CopyEnv (char ** const envp)
 {
-  // The new environment list
-  char ** newenv;
-
-  // The number of entries in the old environment list
-  int entries;
-
   //
   // Count the number of entries in the old list;
   //
+  unsigned entries;   // The number of entries in the old environment list
   for (entries = 0; envp[entries] != NULL; entries++)
   {
     ;
@@ -165,6 +158,7 @@ CopyEnv (char ** const envp)
   //
   // Allocate a new environment list.
   //
+  char **newenv;
   if ((newenv = new (char *) [entries]) == NULL)
   {
     return NULL;
@@ -211,18 +205,9 @@ CopyEnv (char ** const envp)
 void
 RemoveEnv (const char * name, char ** const envp)
 {
-  // Pointer for scanning arrays
-  register char * p;
-
-  // Index for selecting elements of the environment array
-  register int index;
-
-  for (index=0; envp[index] != NULL; index++)
-  {
-    //
+  for (unsigned index=0; envp[index] != NULL; index++) {
     // Find the first equals sign in the array and make it an EOS character.
-    //
-    p = strchr (envp[index], '=');
+    char *p = strchr (envp[index], '=');
     if (p == NULL)
     {
       continue;
@@ -232,7 +217,6 @@ RemoveEnv (const char * name, char ** const envp)
       *p = '\0';
     }
 
-    //
     // Compare the two strings.  If they are equal, zap this string.
     // Otherwise, restore it.
     //
@@ -272,8 +256,8 @@ main(int argc, char **argv, char ** envp)
                   Libraries.end());
 
   // Link in all of the files
-  LinkFiles (argv[0], Composite.get(), InputFilenames, Verbose);
-  LinkLibraries (argv[0], Composite.get(), Libraries, LibPaths, Verbose, Native);
+  LinkFiles(argv[0], Composite.get(), InputFilenames, Verbose);
+  LinkLibraries(argv[0], Composite.get(), Libraries, LibPaths, Verbose, Native);
 
   // Link in all of the libraries next...
 
@@ -296,8 +280,7 @@ main(int argc, char **argv, char ** envp)
   //
   // Generate the bytecode file.
   //
-  if (GenerateBytecode (Composite.get(), Strip, !NoInternalize, &Out))
-  {
+  if (GenerateBytecode (Composite.get(), Strip, !NoInternalize, &Out)) {
     Out.close();
     return PrintAndReturn(argv[0], "error generating bytcode");
   }
@@ -318,8 +301,7 @@ main(int argc, char **argv, char ** envp)
     //
     // Otherwise, create a script that will run the bytecode through the JIT.
     //
-    if (Native)
-    {
+    if (Native) {
       // Name of the Assembly Language output file
       std::string AssemblyFile = OutputFilename + ".s";
 
@@ -335,30 +317,25 @@ main(int argc, char **argv, char ** envp)
       std::string llc=FindExecutable ("llc", argv[0]);
       std::string gcc=FindExecutable ("gcc", argv[0]);
       if (llc.empty())
-      {
         return PrintAndReturn (argv[0], "Failed to find llc");
-      }
 
       if (gcc.empty())
-      {
         return PrintAndReturn (argv[0], "Failed to find gcc");
-      }
 
       //
       // Generate an assembly language file for the bytecode.
       //
       if (Verbose) std::cout << "Generating Assembly Code\n";
-      GenerateAssembly (AssemblyFile, RealBytecodeOutput, llc, envp);
+      GenerateAssembly(AssemblyFile, RealBytecodeOutput, llc, envp);
       if (Verbose) std::cout << "Generating Native Code\n";
-      GenerateNative   (OutputFilename, AssemblyFile, Libraries, LibPaths, gcc, envp);
+      GenerateNative(OutputFilename, AssemblyFile, Libraries, LibPaths,
+                     gcc, envp);
 
       //
       // Remove the assembly language file.
       //
       removeFile (AssemblyFile);
-    }
-    else
-    {
+    } else {
       // Output the script to start the program...
       std::ofstream Out2(OutputFilename.c_str());
       if (!Out2.good())
