@@ -420,10 +420,14 @@ static const InstrIssueDelta  SparcInstrIssueDeltas[] = {
 //{ V9::STDA,		true,	true,	0 },
 //{ V9::LDDF,		true,	true,	0 },
 //{ V9::LDDFA,		true,	true,	0 },
-  { V9::ADDC,		true,	true,	0 },
-  { V9::ADDCcc,		true,	true,	0 },
-  { V9::SUBC,		true,	true,	0 },
-  { V9::SUBCcc,		true,	true,	0 },
+  { V9::ADDCr,		true,	true,	0 },
+  { V9::ADDCi,		true,	true,	0 },
+  { V9::ADDCccr,	true,	true,	0 },
+  { V9::ADDCcci,	true,	true,	0 },
+  { V9::SUBCr,		true,	true,	0 },
+  { V9::SUBCi,		true,	true,	0 },
+  { V9::SUBCccr,	true,	true,	0 },
+  { V9::SUBCcci,	true,	true,	0 },
 //{ V9::LDSTUB,		true,	true,	0 },
 //{ V9::SWAP,		true,	true,	0 },
 //{ V9::SWAPA,		true,	true,	0 },
@@ -444,7 +448,8 @@ static const InstrIssueDelta  SparcInstrIssueDeltas[] = {
 //{ V9::FLUSH,		true,	true,	9 },
 //{ V9::FLUSHW,		true,	true,	9 },
 //{ V9::ALIGNADDR,	true,	true,	0 },
-  { V9::RETURN,		true,	true,	0 },
+  { V9::RETURNr,	true,	true,	0 },
+  { V9::RETURNi,	true,	true,	0 },
 //{ V9::DONE,		true,	true,	0 },
 //{ V9::RETRY,		true,	true,	0 },
 //{ V9::TCC,		true,	true,	0 },
@@ -453,11 +458,14 @@ static const InstrIssueDelta  SparcInstrIssueDeltas[] = {
 				// Special cases for breaking group *before*
 				// CURRENTLY NOT SUPPORTED!
   { V9::CALL,		false,	false,	0 },
-  { V9::JMPLCALL,	false,	false,	0 },
-  { V9::JMPLRET,	false,	false,	0 },
+  { V9::JMPLCALLr,	false,	false,	0 },
+  { V9::JMPLCALLi,	false,	false,	0 },
+  { V9::JMPLRETr,	false,	false,	0 },
+  { V9::JMPLRETi,	false,	false,	0 },
   
 				// Special cases for breaking the group *after*
-  { V9::MULX,		true,	true,	(4+34)/2 },
+  { V9::MULXr,		true,	true,	(4+34)/2 },
+  { V9::MULXi,		true,	true,	(4+34)/2 },
   { V9::FDIVS,		false,	true,	0 },
   { V9::FDIVD,		false,	true,	0 },
   { V9::FDIVQ,		false,	true,	0 },
@@ -470,8 +478,10 @@ static const InstrIssueDelta  SparcInstrIssueDeltas[] = {
 //{ V9::MULScc,		true,	true,	2 },
 //{ V9::SMULcc,		true,	true,	(4+18)/2 },
 //{ V9::UMULcc,		true,	true,	(4+19)/2 },
-  { V9::SDIVX,		true,	true,	68 },
-  { V9::UDIVX,		true,	true,	68 },
+  { V9::SDIVXr,		true,	true,	68 },
+  { V9::SDIVXi,		true,	true,	68 },
+  { V9::UDIVXr,		true,	true,	68 },
+  { V9::UDIVXi,		true,	true,	68 },
 //{ V9::SDIVcc,		true,	true,	36 },
 //{ V9::UDIVcc,		true,	true,	37 },
   { V9::WRCCR,		true,	true,	4 },
@@ -498,8 +508,10 @@ static const InstrRUsageDelta SparcInstrUsageDeltas[] = {
   // 
   // JMPL counts as a load/store instruction for issue!
   //
-  { V9::JMPLCALL, LSIssueSlots.rid,  0,  1 },
-  { V9::JMPLRET,  LSIssueSlots.rid,  0,  1 },
+  { V9::JMPLCALLr, LSIssueSlots.rid,  0,  1 },
+  { V9::JMPLCALLi, LSIssueSlots.rid,  0,  1 },
+  { V9::JMPLRETr,  LSIssueSlots.rid,  0,  1 },
+  { V9::JMPLRETi,  LSIssueSlots.rid,  0,  1 },
   
   // 
   // Many instructions cannot issue for the next 2 cycles after an FCMP
@@ -509,14 +521,18 @@ static const InstrRUsageDelta SparcInstrUsageDeltas[] = {
   { V9::FCMPD,    FCMPDelayCycle.rid, 1, 3 },
   { V9::FCMPQ,    FCMPDelayCycle.rid, 1, 3 },
   
-  { V9::MULX,     FCMPDelayCycle.rid, 1, 1 },
-  { V9::SDIVX,    FCMPDelayCycle.rid, 1, 1 },
-  { V9::UDIVX,    FCMPDelayCycle.rid, 1, 1 },
+  { V9::MULXr,     FCMPDelayCycle.rid, 1, 1 },
+  { V9::MULXi,     FCMPDelayCycle.rid, 1, 1 },
+  { V9::SDIVXr,    FCMPDelayCycle.rid, 1, 1 },
+  { V9::SDIVXi,    FCMPDelayCycle.rid, 1, 1 },
+  { V9::UDIVXr,    FCMPDelayCycle.rid, 1, 1 },
+  { V9::UDIVXi,    FCMPDelayCycle.rid, 1, 1 },
 //{ V9::SMULcc,   FCMPDelayCycle.rid, 1, 1 },
 //{ V9::UMULcc,   FCMPDelayCycle.rid, 1, 1 },
 //{ V9::SDIVcc,   FCMPDelayCycle.rid, 1, 1 },
 //{ V9::UDIVcc,   FCMPDelayCycle.rid, 1, 1 },
-  { V9::STD,      FCMPDelayCycle.rid, 1, 1 },
+  { V9::STDFr,    FCMPDelayCycle.rid, 1, 1 },
+  { V9::STDFi,    FCMPDelayCycle.rid, 1, 1 },
   { V9::FMOVRSZ,  FCMPDelayCycle.rid, 1, 1 },
   { V9::FMOVRSLEZ,FCMPDelayCycle.rid, 1, 1 },
   { V9::FMOVRSLZ, FCMPDelayCycle.rid, 1, 1 },
@@ -528,7 +544,8 @@ static const InstrRUsageDelta SparcInstrUsageDeltas[] = {
   // Some instructions are stalled in the GROUP stage if a CTI is in
   // the E or C stage.  We model that with a fake resource CTIDelayCycle.
   // 
-  { V9::LDD,      CTIDelayCycle.rid,  1, 1 },
+  { V9::LDDFr,    CTIDelayCycle.rid,  1, 1 },
+  { V9::LDDFi,    CTIDelayCycle.rid,  1, 1 },
 //{ V9::LDDA,     CTIDelayCycle.rid,  1, 1 },
 //{ V9::LDDSTUB,  CTIDelayCycle.rid,  1, 1 },
 //{ V9::LDDSTUBA, CTIDelayCycle.rid,  1, 1 },
@@ -543,14 +560,20 @@ static const InstrRUsageDelta SparcInstrUsageDeltas[] = {
   // Signed int loads of less than dword size return data in cycle N1 (not C)
   // and put all loads in consecutive cycles into delayed load return mode.
   //
-  { V9::LDSB,    LdReturn.rid,  2, -1 },
-  { V9::LDSB,    LdReturn.rid,  3,  1 },
+  { V9::LDSBr,    LdReturn.rid,  2, -1 },
+  { V9::LDSBr,    LdReturn.rid,  3,  1 },
+  { V9::LDSBi,    LdReturn.rid,  2, -1 },
+  { V9::LDSBi,    LdReturn.rid,  3,  1 },
   
-  { V9::LDSH,    LdReturn.rid,  2, -1 },
-  { V9::LDSH,    LdReturn.rid,  3,  1 },
+  { V9::LDSHr,    LdReturn.rid,  2, -1 },
+  { V9::LDSHr,    LdReturn.rid,  3,  1 },
+  { V9::LDSHi,    LdReturn.rid,  2, -1 },
+  { V9::LDSHi,    LdReturn.rid,  3,  1 },
   
-  { V9::LDSW,    LdReturn.rid,  2, -1 },
-  { V9::LDSW,    LdReturn.rid,  3,  1 },
+  { V9::LDSWr,    LdReturn.rid,  2, -1 },
+  { V9::LDSWr,    LdReturn.rid,  3,  1 },
+  { V9::LDSWi,    LdReturn.rid,  2, -1 },
+  { V9::LDSWi,    LdReturn.rid,  3,  1 },
 
   //
   // RDPR from certain registers and RD from any register are not dispatchable
@@ -574,7 +597,7 @@ static const InstrRUsageDelta SparcInstrUsageDeltas[] = {
 //{ V9::MULScc,  AllIssueSlots.rid, 2, 2-1 },
 //{ V9::MULScc,  AllIssueSlots.rid, 2, 2-1 },
 //{ V9::MULScc,  AllIssueSlots.rid, 2, 2-1 },
-//{ V9::MULScc,  AllIssueSlots.rid,  2, 2-1 },
+//{ V9::MULScc,  AllIssueSlots.rid, 2, 2-1 },
   
   // 
   // SMULcc inserts between 4 and 18 bubbles, depending on #leading 0s in rs1.
@@ -583,13 +606,13 @@ static const InstrRUsageDelta SparcInstrUsageDeltas[] = {
 //{ V9::SMULcc,  AllIssueSlots.rid, 2, ((4+18)/2)-1 },
 //{ V9::SMULcc,  AllIssueSlots.rid, 2, ((4+18)/2)-1 },
 //{ V9::SMULcc,  AllIssueSlots.rid, 2, ((4+18)/2)-1 },
-//{ V9::SMULcc,  AllIssueSlots.rid,  2, ((4+18)/2)-1 },
+//{ V9::SMULcc,  AllIssueSlots.rid, 2, ((4+18)/2)-1 },
   
   // SMULcc inserts between 4 and 19 bubbles, depending on #leading 0s in rs1.
 //{ V9::UMULcc,  AllIssueSlots.rid, 2, ((4+19)/2)-1 },
 //{ V9::UMULcc,  AllIssueSlots.rid, 2, ((4+19)/2)-1 },
 //{ V9::UMULcc,  AllIssueSlots.rid, 2, ((4+19)/2)-1 },
-//{ V9::UMULcc,  AllIssueSlots.rid,  2, ((4+19)/2)-1 },
+//{ V9::UMULcc,  AllIssueSlots.rid, 2, ((4+19)/2)-1 },
   
   // 
   // MULX inserts between 4 and 34 bubbles, depending on #leading 0s in rs1.
@@ -597,7 +620,7 @@ static const InstrRUsageDelta SparcInstrUsageDeltas[] = {
   { V9::MULX,    AllIssueSlots.rid, 2, ((4+34)/2)-1 },
   { V9::MULX,    AllIssueSlots.rid, 2, ((4+34)/2)-1 },
   { V9::MULX,    AllIssueSlots.rid, 2, ((4+34)/2)-1 },
-  { V9::MULX,    AllIssueSlots.rid,  2, ((4+34)/2)-1 },
+  { V9::MULX,    AllIssueSlots.rid, 2, ((4+34)/2)-1 },
   
   // 
   // SDIVcc inserts 36 bubbles.
@@ -605,13 +628,13 @@ static const InstrRUsageDelta SparcInstrUsageDeltas[] = {
 //{ V9::SDIVcc,  AllIssueSlots.rid, 2, 36-1 },
 //{ V9::SDIVcc,  AllIssueSlots.rid, 2, 36-1 },
 //{ V9::SDIVcc,  AllIssueSlots.rid, 2, 36-1 },
-//{ V9::SDIVcc,  AllIssueSlots.rid,  2, 36-1 },
+//{ V9::SDIVcc,  AllIssueSlots.rid, 2, 36-1 },
   
   // UDIVcc inserts 37 bubbles.
 //{ V9::UDIVcc,  AllIssueSlots.rid, 2, 37-1 },
 //{ V9::UDIVcc,  AllIssueSlots.rid, 2, 37-1 },
 //{ V9::UDIVcc,  AllIssueSlots.rid, 2, 37-1 },
-//{ V9::UDIVcc,  AllIssueSlots.rid,  2, 37-1 },
+//{ V9::UDIVcc,  AllIssueSlots.rid, 2, 37-1 },
   
   // 
   // SDIVX inserts 68 bubbles.
@@ -619,7 +642,7 @@ static const InstrRUsageDelta SparcInstrUsageDeltas[] = {
   { V9::SDIVX,   AllIssueSlots.rid, 2, 68-1 },
   { V9::SDIVX,   AllIssueSlots.rid, 2, 68-1 },
   { V9::SDIVX,   AllIssueSlots.rid, 2, 68-1 },
-  { V9::SDIVX,   AllIssueSlots.rid,  2, 68-1 },
+  { V9::SDIVX,   AllIssueSlots.rid, 2, 68-1 },
   
   // 
   // UDIVX inserts 68 bubbles.
@@ -627,7 +650,7 @@ static const InstrRUsageDelta SparcInstrUsageDeltas[] = {
   { V9::UDIVX,   AllIssueSlots.rid, 2, 68-1 },
   { V9::UDIVX,   AllIssueSlots.rid, 2, 68-1 },
   { V9::UDIVX,   AllIssueSlots.rid, 2, 68-1 },
-  { V9::UDIVX,   AllIssueSlots.rid,  2, 68-1 },
+  { V9::UDIVX,   AllIssueSlots.rid, 2, 68-1 },
   
   // 
   // WR inserts 4 bubbles.
@@ -635,7 +658,7 @@ static const InstrRUsageDelta SparcInstrUsageDeltas[] = {
 //{ V9::WR,     AllIssueSlots.rid, 2, 68-1 },
 //{ V9::WR,     AllIssueSlots.rid, 2, 68-1 },
 //{ V9::WR,     AllIssueSlots.rid, 2, 68-1 },
-//{ V9::WR,     AllIssueSlots.rid,  2, 68-1 },
+//{ V9::WR,     AllIssueSlots.rid, 2, 68-1 },
   
   // 
   // WRPR inserts 4 bubbles.
@@ -643,7 +666,7 @@ static const InstrRUsageDelta SparcInstrUsageDeltas[] = {
 //{ V9::WRPR,   AllIssueSlots.rid, 2, 68-1 },
 //{ V9::WRPR,   AllIssueSlots.rid, 2, 68-1 },
 //{ V9::WRPR,   AllIssueSlots.rid, 2, 68-1 },
-//{ V9::WRPR,   AllIssueSlots.rid,  2, 68-1 },
+//{ V9::WRPR,   AllIssueSlots.rid, 2, 68-1 },
   
   // 
   // DONE inserts 9 bubbles.
@@ -659,7 +682,7 @@ static const InstrRUsageDelta SparcInstrUsageDeltas[] = {
 //{ V9::RETRY,   AllIssueSlots.rid, 2, 9-1 },
 //{ V9::RETRY,   AllIssueSlots.rid, 2, 9-1 },
 //{ V9::RETRY,   AllIssueSlots.rid, 2, 9-1 },
-//{ V9::RETRY,   AllIssueSlots.rid,  2, 9-1 },
+//{ V9::RETRY,   AllIssueSlots.rid, 2, 9-1 },
 
 #endif  /*EXPLICIT_BUBBLES_NEEDED */
 };
