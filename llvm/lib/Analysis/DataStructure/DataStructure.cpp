@@ -4,13 +4,13 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/Analysis/DataStructure.h"
 #include "llvm/Module.h"
 #include "llvm/DerivedTypes.h"
 #include "Support/STLExtras.h"
 #include "Support/StatisticReporter.h"
 #include "Support/STLExtras.h"
 #include <algorithm>
-#include "llvm/Analysis/DataStructure.h"
 
 using std::vector;
 
