@@ -15,6 +15,7 @@
 #define LLVM_CODEGEN_MACHINERELOCATION_H
 
 #include "llvm/Support/DataTypes.h"
+#include <cassert>
 
 namespace llvm {
 class GlobalValue;
