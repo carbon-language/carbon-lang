@@ -44,46 +44,6 @@ const Type* MemAccessInst::getIndexedType(const Type *Ptr,
   }
 }
 
-unsigned int
-MemAccessInst::getIndexedOfsetForTarget(const Type *Ptr, 
-					const vector<ConstPoolVal*> &Idx,
-					const TargetMachine& targetMachine)
-{
-  if (!Ptr->isPointerType())
-    return 0;				// Type isn't a pointer type!
- 
-  unsigned int curOffset = 0;
-  
-  // Get the type pointed to...
-  Ptr = ((const PointerType*) Ptr)->getValueType();
-  
-  if (Ptr->isStructType()) {
-    unsigned CurIDX = 0;		// which element of Idx vector
-    while (Ptr->isStructType()) {
-      const StructType * SPtr = (StructType *) Ptr;
-      
-      if (Idx.size() == CurIDX) 
-	break;
-      
-      assert (Idx[CurIDX]->getType() == Type::UByteTy && "Illegal struct idx");
-      unsigned NextIdx = ((ConstPoolUInt*)Idx[CurIDX++])->getValue();
-      
-      // add the offset for the current element
-      curOffset += SPtr->getElementOffset(NextIdx, targetMachine);
-      
-      // and update Ptr to refer to current element
-      Ptr = SPtr->getElementTypes()[NextIdx];
-    }
-    return curOffset;
-  } else if (Ptr->isArrayType()) {
-    assert(0 && "Loading from arrays not implemented yet!");
-  } else {
-    assert (Idx.size() == 0 && "Indexing type that is not struct or array?");
-    return 0;				// Load directly through ptr
-  }
-}
-  
-
 //===----------------------------------------------------------------------===//
 //                           LoadInst Implementation
 //===----------------------------------------------------------------------===//
