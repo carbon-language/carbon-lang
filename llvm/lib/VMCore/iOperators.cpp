@@ -173,7 +173,8 @@ bool BinaryOperator::swapOperands() {
   if (isCommutative())
     ;  // If the instruction is commutative, it is safe to swap the operands
   else if (SetCondInst *SCI = dyn_cast<SetCondInst>(this))
-    iType = SCI->getSwappedCondition();
+    /// FIXME: SetCC instructions shouldn't all have different opcodes.
+    setOpcode(SCI->getSwappedCondition());
   else
     return true;   // Can't commute operands
 

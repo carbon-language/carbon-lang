@@ -25,9 +25,7 @@ void Instruction::init()
 
 Instruction::Instruction(const Type *ty, unsigned it, const std::string &Name,
                          Instruction *InsertBefore)
-  : User(ty, Value::InstructionVal, Name),
-    Parent(0),
-    iType(it) {
+  : User(ty, Value::InstructionVal + it, Name), Parent(0) {
   init();
 
   // If requested, insert this instruction into a basic block...
@@ -40,14 +38,16 @@ Instruction::Instruction(const Type *ty, unsigned it, const std::string &Name,
 
 Instruction::Instruction(const Type *ty, unsigned it, const std::string &Name,
                          BasicBlock *InsertAtEnd)
-  : User(ty, Value::InstructionVal, Name),
-    Parent(0),
-    iType(it) {
+  : User(ty, Value::InstructionVal + it, Name), Parent(0) {
   init();
 
   // append this instruction into the basic block
   assert(InsertAtEnd && "Basic block to append to may not be NULL!");
   InsertAtEnd->getInstList().push_back(this);
+}
+
+void Instruction::setOpcode(unsigned opc) {
+  setValueType(Value::InstructionVal + opc);
 }
 
 void Instruction::setParent(BasicBlock *P) {
