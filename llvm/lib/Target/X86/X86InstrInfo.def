@@ -73,6 +73,10 @@ I(CALLm32     , "call",  0xFF, M_BRANCH_FLAG, X86II::Void | X86II::MRMS2m | X86I
 
 // Misc instructions
 I(LEAVE       , "leave", 0xC9,             0, X86II::RawFrm, O_EBP, O_EBP)                   // leave
+I(BSWAPr32    , "bswap", 0xC8, M_2_ADDR_FLAG, X86II::AddRegFrm | X86II::TB |
+                                              X86II::Arg32, NoIR, NoIR)                      // R32 = bswap R32
+I(BSWAPr16    , "bswap", 0xC8, M_2_ADDR_FLAG, X86II::AddRegFrm | X86II::TB |
+                                              X86II::OpSize | X86II::Arg16, NoIR, NoIR)      // R16 = bswap R16
 
 // Move instructions
 I(MOVrr8      , "movb",  0x88,             0, X86II::MRMDestReg, NoIR, NoIR)                 // R8  = R8
@@ -100,9 +104,9 @@ I(ADDrr8      , "addb",  0x00, M_2_ADDR_FLAG, X86II::MRMDestReg, NoIR, NoIR)    
 I(ADDrr16     , "addw",  0x01, M_2_ADDR_FLAG, X86II::MRMDestReg | X86II::OpSize, NoIR, NoIR) // R16 += R16
 I(ADDrr32     , "addl",  0x01, M_2_ADDR_FLAG, X86II::MRMDestReg, NoIR, NoIR)                 // R32 += R32
 I(ADDri32     , "add",   0x81, M_2_ADDR_FLAG, X86II::MRMS0r |  X86II::Arg32, NoIR, NoIR)  // R32 += imm32
-I(SUBrr8      , "subb",  0x2A, M_2_ADDR_FLAG, X86II::MRMDestReg, NoIR, NoIR)                 // R8  -= R8
-I(SUBrr16     , "subw",  0x2B, M_2_ADDR_FLAG, X86II::MRMDestReg | X86II::OpSize, NoIR, NoIR) // R16 -= R16
-I(SUBrr32     , "subl",  0x2B, M_2_ADDR_FLAG, X86II::MRMDestReg, NoIR, NoIR)                 // R32 -= R32
+I(SUBrr8      , "subb",  0x28, M_2_ADDR_FLAG, X86II::MRMDestReg, NoIR, NoIR)                 // R8  -= R8
+I(SUBrr16     , "subw",  0x29, M_2_ADDR_FLAG, X86II::MRMDestReg | X86II::OpSize, NoIR, NoIR) // R16 -= R16
+I(SUBrr32     , "subl",  0x29, M_2_ADDR_FLAG, X86II::MRMDestReg, NoIR, NoIR)                 // R32 -= R32
 I(SUBri32     , "sub",   0x81, M_2_ADDR_FLAG, X86II::MRMS5r |  X86II::Arg32, NoIR, NoIR)  // R32 -= imm32
 I(MULrr8      , "mulb",  0xF6,             0, X86II::MRMS4r | X86II::Void, O_AL, O_AX)       // AX   = AL*R8
 I(MULrr16     , "mulw",  0xF7,             0, X86II::MRMS4r | X86II::Void |                  // DX:AX= AX*R16
