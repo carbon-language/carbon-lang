@@ -1452,7 +1452,7 @@ void ISel::emitDivRemOperation(MachineBasicBlock *BB,
   static const unsigned Regs[]     ={ X86::AL    , X86::AX     , X86::EAX     };
   static const unsigned MovOpcode[]={ X86::MOVrr8, X86::MOVrr16, X86::MOVrr32 };
   static const unsigned SarOpcode[]={ X86::SARir8, X86::SARir16, X86::SARir32 };
-  static const unsigned ClrOpcode[]={ X86::XORrr8, X86::XORrr16, X86::XORrr32 };
+  static const unsigned ClrOpcode[]={ X86::MOVir8, X86::MOVir16, X86::MOVir32 };
   static const unsigned ExtRegs[]  ={ X86::AH    , X86::DX     , X86::EDX     };
 
   static const unsigned DivOpcode[][4] = {
@@ -1473,8 +1473,8 @@ void ISel::emitDivRemOperation(MachineBasicBlock *BB,
     BMI(BB, IP, SarOpcode[Class], 2, ShiftResult).addReg(Op0Reg).addZImm(31);
     BMI(BB, IP, MovOpcode[Class], 1, ExtReg).addReg(ShiftResult);
   } else {
-    // If unsigned, emit a zeroing instruction... (reg = xor reg, reg)
-    BMI(BB, IP, ClrOpcode[Class], 2, ExtReg).addReg(ExtReg).addReg(ExtReg);
+    // If unsigned, emit a zeroing instruction... (reg = 0)
+    BMI(BB, IP, ClrOpcode[Class], 2, ExtReg).addZImm(0);
   }
 
   // Emit the appropriate divide or remainder instruction...
