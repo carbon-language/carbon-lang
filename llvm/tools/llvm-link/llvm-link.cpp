@@ -12,11 +12,11 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/Linker.h"
 #include "llvm/Module.h"
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/Bytecode/Reader.h"
 #include "llvm/Bytecode/Writer.h"
-#include "llvm/Support/Linker.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/System/Signals.h"
 #include "llvm/System/Path.h"
