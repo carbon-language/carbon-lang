@@ -9,30 +9,27 @@ this space for more news coming soon!
 Current expected test failures
 ------------------------------
 
-The SparcV8 backend works on many simple C++ SingleSource codes. Here
-are the known SingleSource failures:
+Here are the currently-expected SingleSource failures for V8
+(Some C++ programs are crashing in libstdc++ at the moment;
+I'm not sure why.)
 
-	Regression/C++/EH/exception_spec_test
-	Regression/C++/EH/throw_rethrow_test
-	Benchmarks/Shootout-C++/moments
-	Benchmarks/Shootout-C++/random
+  (llc) SingleSource/Regression/C++/EH/exception_spec_test
+  (llc) SingleSource/Regression/C++/EH/throw_rethrow_test
 
-Here are the known MultiSource test failures, neglecting FreeBench,
-MallocBench, and Prolangs-C++:
+Here are the currently-expected MultiSource failures for V8,
+neglecting FreeBench, MallocBench, and Prolangs-C++:
 
-  Applications/lambda
-  Applications/d/make_dparser
-  Applications/hbd
-  Applications/hexxagon
-  Benchmarks/Fhourstones
-  Benchmarks/McCat/03-testtrie
-  Benchmarks/McCat/18-imp
-  Benchmarks/Olden/tsp
-  Benchmarks/Ptrdist/anagram
-  Benchmarks/Prolangs-C/bison/mybison
-  Benchmarks/Prolangs-C/fixoutput
-  Benchmarks/Prolangs-C/gnugo
-  Benchmarks/Prolangs-C/plot2fig
+  (llc,cbe) MultiSource/Applications/d/make_dparser
+  (llc) MultiSource/Applications/hbd
+  (llc,cbe) MultiSource/Applications/hexxagon
+  (llc) MultiSource/Benchmarks/Fhourstones
+  (llc,cbe) MultiSource/Benchmarks/McCat/03-testtrie
+  (llc) MultiSource/Benchmarks/McCat/18-imp
+  (llc,cbe) MultiSource/Benchmarks/Prolangs-C/bison/mybison
+  (llc,cbe) MultiSource/Benchmarks/Prolangs-C/fixoutput
+  (llc,cbe) MultiSource/Benchmarks/Prolangs-C/gnugo
+  (llc,cbe) MultiSource/Benchmarks/Prolangs-C/plot2fig
+  (llc,cbe) MultiSource/Benchmarks/Ptrdist/anagram
 
 To-do
 -----
