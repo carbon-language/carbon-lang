@@ -82,6 +82,7 @@ public:
 // only performs a "Bottom Up" propagation (hence the name).
 //
 class BUDataStructures : public Pass {
+protected:
   // DSInfo, one graph for each function
   hash_map<Function*, DSGraph*> DSInfo;
   DSGraph *GlobalsGraph;
@@ -185,6 +186,39 @@ private:
                         std::vector<DSGraph*> &PostOrder,
                         const BUDataStructures::ActualCalleesTy &ActualCallees);
 };
+
+
+// CompleteBUDataStructures - This is the exact same as the bottom-up graphs,
+// but we use take a completed call graph and inline all indirect callees into
+// their callers graphs, making the result more useful for things like pool
+// allocation.
+//
+struct CompleteBUDataStructures : public BUDataStructures {
+  virtual bool run(Module &M);
+
+  bool hasGraph(const Function &F) const {
+    return DSInfo.find(const_cast<Function*>(&F)) != DSInfo.end();
+  }
+
+  // getDSGraph - Return the data structure graph for the specified function.
+  DSGraph &getDSGraph(const Function &F) const {
+    hash_map<Function*, DSGraph*>::const_iterator I =
+      DSInfo.find(const_cast<Function*>(&F));
+    assert(I != DSInfo.end() && "Function not in module!");
+    return *I->second;
+  }
+
+  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    AU.setPreservesAll();
+    AU.addRequired<BUDataStructures>();
+
+    // FIXME: TEMPORARY (remove once finalization of indirect call sites in the
+    // globals graph has been implemented in the BU pass)
+    AU.addRequired<TDDataStructures>();
+  }
+};
+
+
 
 } // End llvm namespace
 
