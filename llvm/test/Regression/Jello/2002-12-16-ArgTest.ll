@@ -1,8 +1,6 @@
-%.LC0 = internal global [14 x sbyte] c"in getoptions\00"		; <[14 x sbyte]*> [#uses=1]
+%.LC0 = internal global [10 x sbyte] c"argc: %d\0A\00"
 
 implementation   ; Functions:
-
-void %__main() { ret void } 
 
 declare int %puts(sbyte*)
 
@@ -11,12 +9,14 @@ bb0:		; No predecessors!
 	ret void
 }
 
+declare int %printf(sbyte*, ...)
+
 int %main(int %argc, sbyte** %argv) {
 bb0:		; No predecessors!
+	call int (sbyte*, ...)* %printf( sbyte* getelementptr ([10 x sbyte]* %.LC0, long 0, long 0), int %argc)
 	%cast224 = cast sbyte** %argv to sbyte*		; <sbyte*> [#uses=1]
 	%local = alloca sbyte*		; <sbyte**> [#uses=3]
 	store sbyte* %cast224, sbyte** %local
-	call void %__main( )
 	%cond226 = setle int %argc, 0		; <bool> [#uses=1]
 	br bool %cond226, label %bb3, label %bb2
 
