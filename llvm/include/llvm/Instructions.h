@@ -481,10 +481,12 @@ public:
   virtual CallInst *clone() const;
   bool mayWriteToMemory() const { return true; }
 
-  // FIXME: These methods should be inline once we eliminate
-  // ConstantPointerRefs!
-  const Function *getCalledFunction() const;
-  Function *getCalledFunction();
+  /// getCalledFunction - Return the function being called by this instruction
+  /// if it is a direct call.  If it is a call through a function pointer,
+  /// return null.
+  Function *getCalledFunction() const {
+    return dyn_cast<Function>(Operands[0]);
+  }
 
   // getCalledValue - Get a pointer to a method that is invoked by this inst.
   inline const Value *getCalledValue() const { return Operands[0]; }
@@ -1088,12 +1090,11 @@ public:
   bool mayWriteToMemory() const { return true; }
 
   /// getCalledFunction - Return the function called, or null if this is an
-  /// indirect function invocation... 
+  /// indirect function invocation.
   ///
-  /// FIXME: These should be inlined once we get rid of ConstantPointerRefs!
-  ///
-  const Function *getCalledFunction() const;
-  Function *getCalledFunction();
+  Function *getCalledFunction() const {
+    return dyn_cast<Function>(Operands[0]);
+  }
 
   // getCalledValue - Get a pointer to a function that is invoked by this inst.
   inline const Value *getCalledValue() const { return Operands[0]; }

@@ -74,8 +74,9 @@ public:
   /// getCalledFunction - Return the function being called if this is a direct
   /// call, otherwise return null (if it's an indirect call).
   ///
-  /// FIXME: This should be inlined once ConstantPointerRefs are gone.  :(
-  Function *getCalledFunction() const;
+  Function *getCalledFunction() const {
+    return dyn_cast<Function>(getCalledValue());
+  }
 
   /// setCalledFunction - Set the callee to the specified value...
   ///
