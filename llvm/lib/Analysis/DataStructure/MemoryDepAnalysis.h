@@ -20,7 +20,7 @@
 #ifndef LLVM_ANALYSIS_MEMORYDEPANALYSIS_H
 #define LLVM_ANALYSIS_MEMORYDEPANALYSIS_H
 
-#include "llvm/Analysis/DependenceGraph.h"
+#include "DependenceGraph.h"
 #include "llvm/Pass.h"
 #include "Support/hash_map"
 
