@@ -77,6 +77,7 @@ bool CompleteBUDataStructures::run(Module &M) {
     if (!I->isExternal() && !DSInfo.count(I))
       calculateSCCGraphs(getOrCreateGraph(*I), Stack, NextID, ValMap);
 
+  GlobalsGraph->removeTriviallyDeadNodes();
   return false;
 }
 
