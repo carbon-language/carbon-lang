@@ -13,6 +13,7 @@
 
 #include "llvm/iOther.h"
 #include "llvm/iTerminators.h"
+#include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
 
@@ -78,6 +79,22 @@ CallInst::CallInst(const CallInst &CI)
     Operands.push_back(Use(CI.Operands[i], this));
 }
 
+const Function *CallInst::getCalledFunction() const {
+  if (const Function *F = dyn_cast<Function>(Operands[0]))
+    return F;
+  if (const ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(Operands[0]))
+    return cast<Function>(CPR->getValue());
+  return 0;
+}
+Function *CallInst::getCalledFunction() {
+  if (Function *F = dyn_cast<Function>(Operands[0]))
+    return F;
+  if (ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(Operands[0]))
+    return cast<Function>(CPR->getValue());
+  return 0;
+}
+
+
 //===----------------------------------------------------------------------===//
 //                        InvokeInst Implementation
 //===----------------------------------------------------------------------===//
@@ -112,3 +129,17 @@ InvokeInst::InvokeInst(const InvokeInst &CI)
     Operands.push_back(Use(CI.Operands[i], this));
 }
 
+const Function *InvokeInst::getCalledFunction() const {
+  if (const Function *F = dyn_cast<Function>(Operands[0]))
+    return F;
+  if (const ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(Operands[0]))
+    return cast<Function>(CPR->getValue());
+  return 0;
+}
+Function *InvokeInst::getCalledFunction() {
+  if (Function *F = dyn_cast<Function>(Operands[0]))
+    return F;
+  if (ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(Operands[0]))
+    return cast<Function>(CPR->getValue());
+  return 0;
+}

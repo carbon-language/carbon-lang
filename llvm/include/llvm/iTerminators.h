@@ -214,15 +214,13 @@ public:
 
   bool mayWriteToMemory() const { return true; }
 
-  // getCalledFunction - Return the function called, or null if this is an
-  // indirect function invocation...
-  //
-  inline const Function *getCalledFunction() const {
-    return dyn_cast<Function>(Operands[0].get());
-  }
-  inline Function *getCalledFunction() {
-    return dyn_cast<Function>(Operands[0].get());
-  }
+  /// getCalledFunction - Return the function called, or null if this is an
+  /// indirect function invocation... 
+  ///
+  /// FIXME: These should be inlined once we get rid of ConstantPointerRefs!
+  ///
+  const Function *getCalledFunction() const;
+  Function *getCalledFunction();
 
   // getCalledValue - Get a pointer to a function that is invoked by this inst.
   inline const Value *getCalledValue() const { return Operands[0]; }

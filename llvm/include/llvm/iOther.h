@@ -69,12 +69,10 @@ public:
   virtual Instruction *clone() const { return new CallInst(*this); }
   bool mayWriteToMemory() const { return true; }
 
-  const Function *getCalledFunction() const {
-    return dyn_cast<Function>(Operands[0].get());
-  }
-  Function *getCalledFunction() {
-    return dyn_cast<Function>(Operands[0].get());
-  }
+  // FIXME: These methods should be inline once we eliminate
+  // ConstantPointerRefs!
+  const Function *getCalledFunction() const;
+  Function *getCalledFunction();
 
   // getCalledValue - Get a pointer to a method that is invoked by this inst.
   inline const Value *getCalledValue() const { return Operands[0]; }
