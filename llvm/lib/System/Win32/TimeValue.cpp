@@ -30,6 +30,10 @@ TimeValue TimeValue::now() {
     static_cast<TimeValue::NanoSecondsType>( (ft % 10000000) * 100) );
 }
 
+std::string TimeValue::toString() const {
+  return "Don't know how to conver time on Win32";
+}
+
 // vim: sw=2 smartindent smarttab tw=80 autoindent expandtab
 
 }

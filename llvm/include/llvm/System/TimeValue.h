@@ -195,24 +195,24 @@ namespace sys {
     /// Returns only the seconds component of the TimeValue. The nanoseconds
     /// portion is ignored. No rounding is performed.
     /// @brief Retrieve the seconds component
-    SecondsType seconds( void ) const { return seconds_; }
+    SecondsType seconds() const { return seconds_; }
 
     /// Returns only the nanoseconds component of the TimeValue. The seconds
     /// portion is ignored. 
     /// @brief Retrieve the nanoseconds component.
-    NanoSecondsType nanoseconds( void ) const { return nanos_; }
+    NanoSecondsType nanoseconds() const { return nanos_; }
 
     /// Returns only the fractional portion of the TimeValue rounded down to the
     /// nearest microsecond (divide by one thousand).
     /// @brief Retrieve the fractional part as microseconds;
-    uint32_t microseconds( void ) const { 
+    uint32_t microseconds() const { 
       return nanos_ / NANOSECONDS_PER_MICROSECOND;
     }
 
     /// Returns only the fractional portion of the TimeValue rounded down to the
     /// nearest millisecond (divide by one million).
     /// @brief Retrieve the fractional part as milliseconds;
-    uint32_t milliseconds( void ) const {
+    uint32_t milliseconds() const {
       return nanos_ / NANOSECONDS_PER_MILLISECOND;
     }
 
@@ -221,7 +221,7 @@ namespace sys {
     /// the range of a TimeValue. Nevertheless, this is useful on some operating
     /// systems and is therefore provided.
     /// @brief Convert to a number of microseconds (can overflow)
-    uint64_t usec( void ) const {
+    uint64_t usec() const {
       return seconds_ * MICROSECONDS_PER_SECOND + 
              ( nanos_ / NANOSECONDS_PER_MICROSECOND );
     }
@@ -231,7 +231,7 @@ namespace sys {
     /// the range of a TimeValue. Nevertheless, this is useful on some operating
     /// systems and is therefore provided.
     /// @brief Convert to a number of milliseconds (can overflow)
-    uint64_t msec( void ) const {
+    uint64_t msec() const {
       return seconds_ * MILLISECONDS_PER_SECOND + 
              ( nanos_ / NANOSECONDS_PER_MILLISECOND );
     }
@@ -239,7 +239,7 @@ namespace sys {
     /// Converts the TimeValue into the corresponding number of "ticks" for
     /// Posix, correcting for the difference in Posix zero time.
     /// @brief Convert to unix time (100 nanoseconds since 12:00:00a Jan 1,1970)
-    uint64_t toPosixTime( void ) const {
+    uint64_t toPosixTime() const {
       uint64_t result = seconds_ - PosixZeroTime.seconds_;
       result += nanos_ / NANOSECONDS_PER_POSIX_TICK;
       return result;
@@ -247,14 +247,14 @@ namespace sys {
 
     /// Converts the TimeValue into the corresponding number of seconds 
     /// since the epoch (00:00:00 Jan 1,1970). 
-    uint64_t toEpochTime(void) const {
+    uint64_t toEpochTime() const {
       return seconds_ - PosixZeroTime.seconds_;
     }
 
     /// Converts the TiemValue into the correspodning number of "ticks" for
     /// Win32 platforms, correcting for the difference in Win32 zero time.
     /// @brief Convert to windows time (seconds since 12:00:00a Jan 1, 1601)
-    uint64_t toWin32Time( void ) const {
+    uint64_t toWin32Time() const {
       uint64_t result = seconds_ - Win32ZeroTime.seconds_;
       result += nanos_ / NANOSECONDS_PER_WIN32_TICK;
       return result;
@@ -271,7 +271,7 @@ namespace sys {
     /// Provides conversion of the TimeValue into a readable time & date.
     /// @returns std::string containing the readable time value
     /// @brief Convert time to a string.
-    std::string toString();
+    std::string toString() const;
 
   /// @}
   /// @name Mutators
@@ -343,7 +343,7 @@ namespace sys {
     /// This causes the values to be represented so that the fractional
     /// part is minimized, possibly incrementing the seconds part.
     /// @brief Normalize to canonical form.
-    void normalize (void);
+    void normalize();
 
 /// @}
   /// @name Data
