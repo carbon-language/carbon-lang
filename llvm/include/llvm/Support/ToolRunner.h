@@ -64,7 +64,7 @@ public:
                      const std::string &InputFile,
                      const std::string &OutputFile,
                      const std::vector<std::string> &SharedLibs = 
-                         std::vector<std::string>());
+                         std::vector<std::string>(), unsigned Timeout = 0);
 
   /// MakeSharedObject - This compiles the specified file (which is either a .c
   /// file or a .s file) into a shared object.
@@ -110,7 +110,8 @@ struct AbstractInterpreter {
                              const std::string &InputFile,
                              const std::string &OutputFile,
                              const std::vector<std::string> &SharedLibs = 
-                               std::vector<std::string>()) = 0;
+                               std::vector<std::string>(),
+                             unsigned Timeout = 0) = 0;
 };
 
 //===---------------------------------------------------------------------===//
@@ -139,7 +140,8 @@ public:
                              const std::string &InputFile,
                              const std::string &OutputFile,
                              const std::vector<std::string> &SharedLibs = 
-                               std::vector<std::string>());
+                               std::vector<std::string>(),
+                             unsigned Timeout = 0);
 
   // Sometimes we just want to go half-way and only generate the .c file, not
   // necessarily compile it with GCC and run the program.  This throws an
@@ -175,7 +177,8 @@ public:
                              const std::string &InputFile,
                              const std::string &OutputFile,
                              const std::vector<std::string> &SharedLibs = 
-                                std::vector<std::string>());
+                                std::vector<std::string>(),
+                             unsigned Timeout = 0);
 
   // Sometimes we just want to go half-way and only generate the .s file,
   // not necessarily compile it all the way and run the program.  This throws
