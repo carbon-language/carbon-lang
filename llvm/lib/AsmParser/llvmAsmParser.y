@@ -45,6 +45,8 @@ string CurFilename;
 #define UR_OUT(X)
 #endif
 
+#define YYERROR_VERBOSE 1
+
 // This contains info used when building the body of a function.  It is
 // destroyed when the function is completed.
 //
@@ -94,7 +96,7 @@ static struct PerModuleInfo {
   }
 
 
-  // DeclareNewGlobalValue - Called every type a new GV has been defined.  This
+  // DeclareNewGlobalValue - Called every time a new GV has been defined.  This
   // is used to remove things from the forward declaration map, resolving them
   // to the correct thing as needed.
   //
@@ -108,22 +110,22 @@ static struct PerModuleInfo {
       I->first.second.destroy();  // Free string memory if neccesary
       
       // Loop over all of the uses of the GlobalValue.  The only thing they are
-      // allowed to be at this point is ConstantPointerRef's.
+      // allowed to be is ConstantPointerRef's.
       assert(OldGV->use_size() == 1 && "Only one reference should exist!");
       while (!OldGV->use_empty()) {
-	User *U = OldGV->use_back();  // Must be a ConstantPointerRef...
-	ConstantPointerRef *CPPR = cast<ConstantPointerRef>(U);
-	assert(CPPR->getValue() == OldGV && "Something isn't happy");
-	
-	// Change the const pool reference to point to the real global variable
-	// now.  This should drop a use from the OldGV.
-	CPPR->mutateReference(GV);
+        User *U = OldGV->use_back();  // Must be a ConstantPointerRef...
+        ConstantPointerRef *CPR = cast<ConstantPointerRef>(U);
+        assert(CPR->getValue() == OldGV && "Something isn't happy");
+        
+        // Change the const pool reference to point to the real global variable
+        // now.  This should drop a use from the OldGV.
+        CPR->mutateReferences(OldGV, GV);
       }
-    
-      // Remove GV from the module...
+      
+      // Remove OldGV from the module...
       CurrentModule->getGlobalList().remove(OldGV);
       delete OldGV;                        // Delete the old placeholder
-
+      
       // Remove the map entry for the global now that it has been created...
       GlobalRefs.erase(I);
     }
@@ -223,7 +225,7 @@ static const Type *getTypeVal(const ValID &D, bool DoNotImprovise = false) {
     return cast<const Type>(N);
   }
   default:
-    ThrowException("Invalid symbol type reference!");
+    ThrowException("Internal parser error: Invalid symbol type reference!");
   }
 
   // If we reached here, we referenced either a symbol that we don't know about
@@ -633,7 +635,7 @@ Module *RunVMAsmParser(const string &Filename, FILE *F) {
 %type <BasicBlockVal> BasicBlock InstructionList
 %type <TermInstVal>   BBTerminatorInst
 %type <InstVal>       Inst InstVal MemoryInst
-%type <ConstVal>      ConstVal
+%type <ConstVal>      ConstVal ConstExpr
 %type <ConstVector>   ConstVector
 %type <ArgList>       ArgList ArgListH
 %type <ArgVal>        ArgVal
@@ -687,7 +689,7 @@ Module *RunVMAsmParser(const string &Filename, FILE *F) {
 %token <BinaryOpVal> SETLE SETGE SETLT SETGT SETEQ SETNE  // Binary Comarators
 
 // Memory Instructions
-%token <MemoryOpVal> MALLOC ALLOCA FREE LOAD STORE GETELEMENTPTR
+%token <MemOpVal> MALLOC ALLOCA FREE LOAD STORE GETELEMENTPTR
 
 // Other Operators
 %type  <OtherOpVal> ShiftOps
@@ -833,7 +835,6 @@ ArgTypeListI : TypeListI
     $$ = new list<PATypeHolder>();
   };
 
-
 // ConstVal - The various declarations that go into the constant pool.  This
 // includes all forward declarations of types, constants, and functions.
 //
@@ -962,7 +963,38 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
     GlobalValue *GV = cast<GlobalValue>(V);
     $$ = ConstantPointerRef::get(GV);
     delete $1;            // Free the type handle
+  }
+  | ConstExpr {
+    $$ = $1;
   };
+
+
+ConstExpr: Types CAST ConstVal {
+    ConstantExpr* CPE = ConstantExpr::get($2, $3, $1->get());
+    if (CPE == 0) ThrowException("constant expression builder returned null!");
+    $$ = CPE;
+  }
+  | Types GETELEMENTPTR '(' ConstVal IndexList ')' {
+    ConstantExpr* CPE = ConstantExpr::get($2, $4, *$5, $1->get());
+    if (CPE == 0) ThrowException("constant expression builder returned null!");
+    $$ = CPE;
+  }
+  | Types UnaryOps ConstVal {
+    ConstantExpr* CPE = ConstantExpr::get($2, $3, $1->get());
+    if (CPE == 0) ThrowException("constant expression builder returned null!");
+    $$ = CPE;
+  }
+  | Types BinaryOps ConstVal ',' ConstVal {
+    ConstantExpr* CPE = ConstantExpr::get($2, $3, $5, $1->get());
+    if (CPE == 0) ThrowException("constant expression builder returned null!");
+    $$ = CPE;
+  }
+  | Types ShiftOps ConstVal ',' ConstVal {
+    ConstantExpr* CPE = ConstantExpr::get($2, $3, $5, $1->get());
+    if (CPE == 0) ThrowException("constant expression builder returned null!");
+    $$ = CPE;
+  }
+  ;
 
 
 ConstVal : SIntType EINT64VAL {     // integral constants
@@ -1067,7 +1099,7 @@ ConstPool : ConstPool OptAssign CONST ConstVal {
     Constant *Initializer = $5;
     if (Initializer == 0)
       ThrowException("Global value initializer is not a constant!");
-	 
+    
     GlobalVariable *GV = new GlobalVariable(Ty, $4, $3, Initializer);
     if (!setValueName(GV, $2)) {   // If not redefining...
       CurModule.CurrentModule->getGlobalList().push_back(GV);
@@ -1249,7 +1281,8 @@ ConstValueRef : ESINT64VAL {    // A reference to a direct constant
   }
   | NULL_TOK {
     $$ = ValID::createNull();
-  };
+  }
+  ;
 
 // SymbolicValueRef - Reference to one of two ways of symbolically refering to
 // another value.
@@ -1270,8 +1303,10 @@ ValueRef : SymbolicValueRef | ConstValueRef;
 // pool references (for things like: 'ret [2 x int] [ int 12, int 42]')
 ResolvedVal : Types ValueRef {
     $$ = getVal(*$1, $2); delete $1;
+  }
+  | ConstExpr {
+    $$ = $1;
   };
-
 
 BasicBlockList : BasicBlockList BasicBlock {
     ($$ = $1)->getBasicBlockList().push_back($2);
@@ -1591,6 +1626,13 @@ MemoryInst : MALLOC Types {
 
 %%
 int yyerror(const char *ErrorMsg) {
-  ThrowException(string("Parse error: ") + ErrorMsg);
+  string where  = string((CurFilename == "-")? string("<stdin>") : CurFilename)
+                  + ":" + utostr((unsigned) llvmAsmlineno) + ": ";
+  string errMsg = string(ErrorMsg) + string("\n") + where + " while reading ";
+  if (yychar == YYEMPTY)
+    errMsg += "end-of-file.";
+  else
+    errMsg += "token: '" + string(llvmAsmtext, llvmAsmleng) + "'";
+  ThrowException(errMsg);
   return 0;
 }
