@@ -221,6 +221,9 @@ static inline ExprType negate(const ExprType &E, Value *V) {
 //
 ExprType analysis::ClassifyExpression(Value *Expr) {
   assert(Expr != 0 && "Can't classify a null expression!");
+  if (Expr->getType() == Type::FloatTy || Expr->getType() == Type::DoubleTy)
+    return Expr;   // FIXME: Can't handle FP expressions
+
   switch (Expr->getValueType()) {
   case Value::InstructionVal: break;    // Instruction... hmmm... investigate.
   case Value::TypeVal:   case Value::BasicBlockVal:
