@@ -68,7 +68,7 @@ namespace {
   RegisterOpt<LoopUnswitch> X("loop-unswitch", "Unswitch loops");
 }
 
-FunctionPass *createLoopUnswitchPass() { return new LoopUnswitch(); }
+FunctionPass *llvm::createLoopUnswitchPass() { return new LoopUnswitch(); }
 
 bool LoopUnswitch::runOnFunction(Function &F) {
   bool Changed = false;
