@@ -3,7 +3,8 @@ union X {
   void *B;
 };
 
-union X void foo() {
+union X foo() {
 	union X A;
-	A.B = (void*)123
+	A.B = (void*)123;
+	return A;
 }
