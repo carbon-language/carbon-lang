@@ -9,7 +9,7 @@
 //===----------------------------------------------------------------------===*/
 
 Xinclude <cstdio>
-Xinclude <llvm/CodeGen/InstrForest.h>
+Xinclude "SparcV9InstrForest.h"
 
 typedef llvm::InstrTreeNode* NODEPTR_TYPE;
 Xdefine OP_LABEL(p)	((p)->opLabel)
