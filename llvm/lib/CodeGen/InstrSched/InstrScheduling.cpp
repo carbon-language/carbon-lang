@@ -661,7 +661,6 @@ RecordSchedule(const BasicBlock* bb, const SchedulingManager& S)
   // Erase all except the dummy PHI instructions from mvec, and
   // pre-allocate create space for the ones we will put back in.
   mvec.erase(I, mvec.end());
-  mvec.reserve(mvec.size() + S.isched.getNumInstructions());
   
   InstrSchedule::const_iterator NIend = S.isched.end();
   for (InstrSchedule::const_iterator NI = S.isched.begin(); NI != NIend; ++NI)
