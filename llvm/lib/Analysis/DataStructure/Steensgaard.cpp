@@ -156,7 +156,12 @@ bool Steens::run(Module &M) {
   // call nodes...
   //
   std::vector<DSCallSite> &Calls =
-    ResultGraph->getFunctionCalls();
+    ResultGraph->getAuxFunctionCalls();
+  assert(Calls.empty() && "Aux call list is already in use??");
+
+  // Start with a copy of the original call sites...
+  Calls = ResultGraph->getFunctionCalls();
+
   for (unsigned i = 0; i != Calls.size(); ) {
     DSCallSite &CurCall = Calls[i];
     
