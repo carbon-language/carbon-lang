@@ -1,4 +1,4 @@
-LLVM := /home/vadve/vadve/Research/DynOpt/LLVM/llvm
+LLVM := ..
 LLC  := $(LLVM)/tools/llc/llc
 AS   := $(LLVM)/tools/as/as
 LLCOPTS := -dsched t
