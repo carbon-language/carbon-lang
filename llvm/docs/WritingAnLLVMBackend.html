@@ -91,6 +91,18 @@ implement the following:</p>
       href="CodeGenerator.html#targetmachine">TargetMachine</a></tt>, which
       configures <tt><a href="CodeGenerator.html#targetdata">TargetData</a></tt>
       correctly</li>
+  <li>Register your new target using the <tt>RegisterTarget</tt>
+  template:<br><br>
+<div class="doc_code"><pre>
+RegisterTarget&lt;<em>MyTargetMachine</em>&gt; M("short_name", "  Target name");
+</pre></div>
+      <br>Here, <em>MyTargetMachine</em> is the name of your implemented
+      subclass of <tt><a
+      href="CodeGenerator.html#targetmachine">TargetMachine</a></tt>,
+      <em>short_name</em> is the option that will be active following
+      <tt>-march=</tt> to select a target in llc and lli, and the last string
+      is the description of your target to appear in <tt>-help</tt>
+      listing.</li>
   </ul></li>
 <li>Implement the assembly printer for the architecture.  Usually, if you have
 described the instruction set with the assembly printer generator in mind, that
