@@ -360,6 +360,7 @@ bool RA::runOnMachineFunction(MachineFunction &fn) {
     DEBUG(
         for (MachineFunction::iterator mbbi = mf_->begin(), mbbe = mf_->end();
              mbbi != mbbe; ++mbbi) {
+            std::cerr << mbbi->getBasicBlock()->getName() << ":\n";
             for (MachineBasicBlock::iterator mii = mbbi->begin(),
                      mie = mbbi->end(); mii != mie; ++mii) {
                 unsigned index = li_->getInstructionIndex(mii);

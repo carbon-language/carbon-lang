@@ -171,10 +171,13 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
                     std::ostream_iterator<Interval>(std::cerr, "\n")));
     DEBUG(std::cerr << "********** MACHINEINSTRS **********\n");
     DEBUG(
-        for (unsigned i = 0; i != i2miMap_.size(); ++i) {
-            if (const MachineInstr* mi = i2miMap_[i]) {
-                std:: cerr << i * InstrSlots::NUM << '\t';
-                mi->print(std::cerr, *tm_);
+        for (MachineFunction::iterator mbbi = mf_->begin(), mbbe = mf_->end();
+             mbbi != mbbe; ++mbbi) {
+            std::cerr << mbbi->getBasicBlock()->getName() << ":\n";
+            for (MachineBasicBlock::iterator mii = mbbi->begin(),
+                     mie = mbbi->end(); mii != mie; ++mii) {
+                std::cerr << getInstructionIndex(mii) << '\t';
+                mii->print(std::cerr, *tm_);
             }
         });
 
