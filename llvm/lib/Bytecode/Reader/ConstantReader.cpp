@@ -92,8 +92,8 @@ const Type *BytecodeParser::parseTypeConstant(const uchar *&Buf,
 
   default:
     std::cerr << __FILE__ << ":" << __LINE__
-	      << ": Don't know how to deserialize"
-	      << " primitive Type " << PrimType << "\n";
+              << ": Don't know how to deserialize"
+              << " primitive Type " << PrimType << "\n";
     return failure(Val);
   }
 }
@@ -327,8 +327,8 @@ bool BytecodeParser::parseConstantValue(const uchar *&Buf, const uchar *EndBuf,
 
   default:
     std::cerr << __FILE__ << ":" << __LINE__ 
-	      << ": Don't know how to deserialize constant value of type '"
-	      << Ty->getName() << "'\n";
+              << ": Don't know how to deserialize constant value of type '"
+              << Ty->getName() << "'\n";
     return failure(true);
   }
 
