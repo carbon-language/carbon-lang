@@ -32,6 +32,9 @@ struct X86RegisterInfo : public MRegisterInfo {
   unsigned getFramePointer() const;
   unsigned getStackPointer() const;
 
+  const unsigned* getCalleeSaveRegs() const;
+  const unsigned* getCallerSaveRegs() const;
+
   /// Returns register class appropriate for input SSA register
   /// 
   const TargetRegisterClass *getClassForReg(unsigned Reg) const;
@@ -40,6 +43,8 @@ struct X86RegisterInfo : public MRegisterInfo {
 
   unsigned getNumRegClasses() const;
 
+  void buildReg2RegClassMap(std::map<unsigned,const TargetRegisterClass*>&
+                            Reg2RegClassMap) const;
 
 };
 

@@ -56,3 +56,28 @@ unsigned X86RegisterInfo::getFramePointer() const {
 unsigned X86RegisterInfo::getStackPointer() const {
   return X86::ESP;
 }
+
+const unsigned* X86RegisterInfo::getCalleeSaveRegs() const {
+  static const unsigned CalleeSaveRegs[] = { X86::ESI, X86::EDI, X86::EBX, X86::EBP,
+                                             MRegisterInfo::NoRegister };
+  return CalleeSaveRegs;
+}
+
+
+const unsigned* X86RegisterInfo::getCallerSaveRegs() const {
+  static const unsigned CallerSaveRegs[] = { X86::EAX, X86::ECX, X86::EDX,
+                                             MRegisterInfo::NoRegister };
+  return CallerSaveRegs;
+}
+
+void
+X86RegisterInfo::buildReg2RegClassMap
+(std::map<unsigned,
+ const TargetRegisterClass*>& Reg2RegClassMap) const
+{
+  for (MRegisterInfo::const_iterator I = const_regclass_begin(),
+         E = const_regclass_end(); I != E; ++I)
+  {
+    I->buildReg2RegClassMap(Reg2RegClassMap);
+  }
+}
