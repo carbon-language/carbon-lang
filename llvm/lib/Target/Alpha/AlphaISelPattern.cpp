@@ -58,12 +58,14 @@ namespace {
 
       setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i1, Expand); //what is the sign expansion of 1? 1 or -1?
 
-      setOperationAction(ISD::SREM, MVT::f32, Expand);
-      setOperationAction(ISD::SREM, MVT::f64, Expand);
+      setOperationAction(ISD::SREM             , MVT::f32  , Expand);
+      setOperationAction(ISD::SREM             , MVT::f64  , Expand);
 
       setOperationAction(ISD::MEMMOVE          , MVT::Other, Expand);
-      setOperationAction(ISD::MEMSET              , MVT::Other, Expand);
-      setOperationAction(ISD::MEMCPY          , MVT::Other, Expand);
+      setOperationAction(ISD::MEMSET           , MVT::Other, Expand);
+      setOperationAction(ISD::MEMCPY           , MVT::Other, Expand);
+
+      setOperationAction(ISD::SETCC            , MVT::f32  ,   Promote);
 
      computeRegisterProperties();
       
@@ -311,6 +313,16 @@ unsigned ISel::SelectExprFP(SDOperand N, unsigned Result)
   default:
     Node->dump();
     assert(0 && "Node not handled!\n");
+
+  case ISD::SELECT:
+    {
+      Tmp1 = SelectExpr(N.getOperand(0)); //Cond
+      Tmp2 = SelectExpr(N.getOperand(1)); //Use if TRUE
+      Tmp3 = SelectExpr(N.getOperand(2)); //Use if FALSE
+      // Get the condition into the zero flag.
+      BuildMI(BB, Alpha::CMOVEQ, 2, Result).addReg(Tmp2).addReg(Tmp3).addReg(Tmp1);
+      return Result;
+    }
 
   case ISD::FP_ROUND:
     assert (DestType == MVT::f32 && N.getOperand(0).getValueType() == MVT::f64 && "only f64 to f32 conversion supported here");
@@ -797,7 +809,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
           bool isConst1 = false;
           bool isConst2 = false;
           int dir;
-
+	  
           //Tmp1 = SelectExpr(N.getOperand(0));
           if(N.getOperand(0).getOpcode() == ISD::Constant &&
              cast<ConstantSDNode>(N.getOperand(0))->getValue() <= 255)
@@ -862,19 +874,54 @@ unsigned ISel::SelectExpr(SDOperand N) {
               Tmp2 = SelectExpr(N.getOperand(1));
               BuildMI(BB, Alpha::CMPEQ, 2, Result).addReg(Tmp1).addReg(Tmp2);
             }
-          }
-        }
-        else
-          {
-            Node->dump();
-            assert(0 && "only integer");
-          }
+	  }
+	} else {
+ 	  bool rev = false;
+ 	  bool inv = false;
+  
+	  switch (SetCC->getCondition()) {
+	  default: Node->dump(); assert(0 && "Unknown FP comparison!");
+	  case ISD::SETEQ: Opc = Alpha::CMPTEQ; break;
+	  case ISD::SETLT: Opc = Alpha::CMPTLT; break;
+	  case ISD::SETLE: Opc = Alpha::CMPTLE; break;
+	  case ISD::SETGT: Opc = Alpha::CMPTLT; rev = true; break;
+	  case ISD::SETGE: Opc = Alpha::CMPTLE; rev = true; break;
+	  case ISD::SETNE: Opc = Alpha::CMPTEQ; inv = true; break;
+ 	  }
+
+ 	  Tmp1 = SelectExpr(N.getOperand(0));
+ 	  Tmp2 = SelectExpr(N.getOperand(1));
+ 	  if (rev) std::swap(Tmp1, Tmp2);
+ 	  Tmp3 = MakeReg(MVT::f64);
+ 	  //do the comparison
+ 	  BuildMI(BB, Opc, 2, Tmp3).addReg(Tmp1).addReg(Tmp2);
+
+ 	  //now arrange for Result (int) to have a 1 or 0
+
+ 	  // Spill the FP to memory and reload it from there.
+ 	  unsigned Size = MVT::getSizeInBits(MVT::f64)/8;
+ 	  MachineFunction *F = BB->getParent();
+ 	  int FrameIdx = F->getFrameInfo()->CreateStackObject(Size, 8);
+ 	  unsigned Tmp4 = MakeReg(MVT::f64);
+ 	  BuildMI(BB, Alpha::CVTTQ, 1, Tmp4).addReg(Tmp3);
+ 	  BuildMI(BB, Alpha::STT, 3).addReg(Tmp4).addFrameIndex(FrameIdx).addReg(Alpha::F31);
+ 	  unsigned Tmp5 = MakeReg(MVT::i64);
+ 	  BuildMI(BB, Alpha::LDQ, 2, Tmp5).addFrameIndex(FrameIdx).addReg(Alpha::F31);
+	  
+ 	  //now, set result based on Tmp5
+	  //Set Tmp6 if fp cmp was false
+	  unsigned Tmp6 = MakeReg(MVT::i64);
+	  BuildMI(BB, Alpha::CMPEQ, 2, Tmp6).addReg(Tmp5).addReg(Alpha::R31);
+	  //and invert
+	  BuildMI(BB, Alpha::CMPEQ, 2, Result).addReg(Tmp6).addReg(Alpha::R31);
+
       }
-      else
-        {
-          Node->dump();
-          assert(0 && "Not a setcc in setcc");
-        }
+//       else
+//         {
+//           Node->dump();
+//           assert(0 && "Not a setcc in setcc");
+//         }
+      }
       return Result;
     }
     
@@ -1101,7 +1148,8 @@ void ISel::Select(SDOperand N) {
     MachineBasicBlock *Dest =
       cast<BasicBlockSDNode>(N.getOperand(2))->getBasicBlock();
 
-    Select(N.getOperand(0));
+    Select(N.getOperand(0));  //chain
+
     Tmp1 = SelectExpr(N.getOperand(1));
     BuildMI(BB, Alpha::BNE, 2).addReg(Tmp1).addMBB(Dest);
     return;
