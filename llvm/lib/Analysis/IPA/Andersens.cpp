@@ -481,7 +481,7 @@ void Andersens::IdentifyObjects(Module &M) {
 Andersens::Node *Andersens::getNodeForConstantPointer(Constant *C) {
   assert(isa<PointerType>(C->getType()) && "Not a constant pointer!");
 
-  if (isa<ConstantPointerNull>(C))
+  if (isa<ConstantPointerNull>(C) || isa<UndefValue>(C))
     return &GraphNodes[NullPtr];
   else if (GlobalValue *GV = dyn_cast<GlobalValue>(C))
     return getNode(GV);
