@@ -19,8 +19,8 @@ class FunctionType;
 
 class Function : public GlobalValue, public SymTabValue {
 public:
-  typedef ValueHolder<FunctionArgument, Function, Function> ArgumentListType;
-  typedef ValueHolder<BasicBlock    , Function, Function> BasicBlocksType;
+  typedef ValueHolder<Argument  , Function, Function> ArgumentListType;
+  typedef ValueHolder<BasicBlock, Function, Function> BasicBlocksType;
 
   // BasicBlock iterators...
   typedef BasicBlocksType::iterator iterator;

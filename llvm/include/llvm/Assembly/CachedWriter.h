@@ -15,7 +15,7 @@
 
 class GlobalVariable;
 class Function;
-class FunctionArgument;
+class Argument;
 class BasicBlock;
 class Instruction;
 class Constant;
@@ -55,7 +55,7 @@ public:
   inline CachedWriter &operator<<(const Function *X) {
     return *this << (const Value*)X;
   }
-  inline CachedWriter &operator<<(const FunctionArgument *X) {
+  inline CachedWriter &operator<<(const Argument *X) {
     return *this << (const Value*)X;
   }
   inline CachedWriter &operator<<(const BasicBlock *X) {

@@ -19,7 +19,7 @@
 class User;
 class Type;
 class Constant;
-class FunctionArgument;
+class Argument;
 class Instruction;
 class BasicBlock;
 class GlobalValue;
@@ -40,7 +40,7 @@ public:
   enum ValueTy {
     TypeVal,                // This is an instance of Type
     ConstantVal,            // This is an instance of Constant
-    FunctionArgumentVal,    // This is an instance of FunctionArgument
+    ArgumentVal,            // This is an instance of Argument
     InstructionVal,         // This is an instance of Instruction
     BasicBlockVal,          // This is an instance of BasicBlock
     FunctionVal,            // This is an instance of Function
@@ -202,11 +202,11 @@ template <> inline bool isa<Constant, const Value*>(const Value *Val) {
 template <> inline bool isa<Constant, Value*>(Value *Val) { 
   return Val->getValueType() == Value::ConstantVal; 
 }
-template <> inline bool isa<FunctionArgument, const Value*>(const Value *Val) { 
-  return Val->getValueType() == Value::FunctionArgumentVal;
+template <> inline bool isa<Argument, const Value*>(const Value *Val) { 
+  return Val->getValueType() == Value::ArgumentVal;
 }
-template <> inline bool isa<FunctionArgument, Value*>(Value *Val) { 
-  return Val->getValueType() == Value::FunctionArgumentVal;
+template <> inline bool isa<Argument, Value*>(Value *Val) { 
+  return Val->getValueType() == Value::ArgumentVal;
 }
 template <> inline bool isa<Instruction, const Value*>(const Value *Val) { 
   return Val->getValueType() == Value::InstructionVal;

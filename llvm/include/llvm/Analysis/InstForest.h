@@ -240,7 +240,7 @@ InstTreeNode<Payload>::InstTreeNode(InstForest<Payload> &IF, Value *V,
  
   if (!isa<Instruction>(V)) {
     assert((isa<Constant>(V) || isa<BasicBlock>(V) ||
-	    isa<FunctionArgument>(V) || isa<GlobalValue>(V)) &&
+	    isa<Argument>(V) || isa<GlobalValue>(V)) &&
 	   "Unrecognized value type for InstForest Partition!");
     if (isa<Constant>(V))
       getTreeData().first.second = ConstNode;

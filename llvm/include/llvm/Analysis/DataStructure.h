@@ -13,7 +13,7 @@
 class Type;
 class CallInst;
 class AllocationInst;
-class FunctionArgument;
+class Argument;
 class DSNode;
 class FunctionRepBuilder;
 class GlobalValue;
@@ -312,9 +312,9 @@ private:
 // ArgDSNode - Represent an incoming argument to the current function...
 //
 class ArgDSNode : public DSNode {
-  FunctionArgument *FuncArg;
+  Argument *FuncArg;
 public:
-  ArgDSNode(FunctionArgument *MA);
+  ArgDSNode(Argument *FA);
   virtual std::string getCaption() const;
 
   // isEquivalentTo - Return true if the nodes should be merged...

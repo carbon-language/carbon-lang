@@ -1029,7 +1029,7 @@ MethodInfo::MethodInfo(Function *M) : Annotation(MethodInfoAID) {
   const Function::ArgumentListType &ArgList = M->getArgumentList();
   for (Function::ArgumentListType::const_iterator AI = ArgList.begin(), 
 	 AE = ArgList.end(); AI != AE; ++AI)
-    (*AI)->addAnnotation(new SlotNumber(getValueSlot(*AI)));
+    ((Value*)(*AI))->addAnnotation(new SlotNumber(getValueSlot((Value*)*AI)));
 
   // Iterate over all of the instructions...
   unsigned InstNum = 0;
@@ -1114,9 +1114,9 @@ void Interpreter::callMethod(Function *M, const vector<GenericValue> &ArgVals) {
   assert(ArgVals.size() == M->getArgumentList().size() &&
          "Invalid number of values passed to function invocation!");
   unsigned i = 0;
-  for (Function::ArgumentListType::iterator MI = M->getArgumentList().begin(),
-	 ME = M->getArgumentList().end(); MI != ME; ++MI, ++i) {
-    SetValue(*MI, ArgVals[i], StackFrame);
+  for (Function::ArgumentListType::iterator AI = M->getArgumentList().begin(),
+	 AE = M->getArgumentList().end(); AI != AE; ++AI, ++i) {
+    SetValue((Value*)*AI, ArgVals[i], StackFrame);
   }
 }
 
@@ -1360,7 +1360,8 @@ void Interpreter::printStackFrame(int FrameNo = -1) {
     if (i != 0) cout << ", ";
     CW << (Value*)Args[i] << "=";
     
-    printValue(Args[i]->getType(), getOperandValue(Args[i], ECStack[FrameNo]));
+    printValue(((Value*)Args[i])->getType(),
+               getOperandValue((Value*)Args[i], ECStack[FrameNo]));
   }
 
   cout << ")\n";
