@@ -1,4 +1,5 @@
 LEVEL = ../..
+DIRS = Instrumentation
 
 LIBRARYNAME = transforms
 
