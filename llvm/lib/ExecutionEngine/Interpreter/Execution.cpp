@@ -761,78 +761,7 @@ static void executeGEPInst(GetElementPtrInst &I, ExecutionContext &SF) {
 void Interpreter::executeLoadInst(LoadInst &I, ExecutionContext &SF) {
   GenericValue SRC = getOperandValue(I.getPointerOperand(), SF);
   GenericValue *Ptr = (GenericValue*)GVTOP(SRC);
-  GenericValue Result;
-
-  if (TD.isLittleEndian()) {
-    switch (I.getType()->getPrimitiveID()) {
-    case Type::BoolTyID:
-    case Type::UByteTyID:
-    case Type::SByteTyID:   Result.UByteVal = Ptr->Untyped[0]; break;
-    case Type::UShortTyID:
-    case Type::ShortTyID:   Result.UShortVal = (unsigned)Ptr->Untyped[0] |
-                                              ((unsigned)Ptr->Untyped[1] << 8);
-                            break;
-    Load4BytesLittleEndian:                            
-    case Type::FloatTyID:
-    case Type::UIntTyID:
-    case Type::IntTyID:     Result.UIntVal = (unsigned)Ptr->Untyped[0] |
-                                            ((unsigned)Ptr->Untyped[1] <<  8) |
-                                            ((unsigned)Ptr->Untyped[2] << 16) |
-                                            ((unsigned)Ptr->Untyped[3] << 24);
-                            break;
-    case Type::PointerTyID: if (getModule().has32BitPointers())
-                              goto Load4BytesLittleEndian;
-    case Type::DoubleTyID:
-    case Type::ULongTyID:
-    case Type::LongTyID:    Result.ULongVal = (uint64_t)Ptr->Untyped[0] |
-                                             ((uint64_t)Ptr->Untyped[1] <<  8) |
-                                             ((uint64_t)Ptr->Untyped[2] << 16) |
-                                             ((uint64_t)Ptr->Untyped[3] << 24) |
-                                             ((uint64_t)Ptr->Untyped[4] << 32) |
-                                             ((uint64_t)Ptr->Untyped[5] << 40) |
-                                             ((uint64_t)Ptr->Untyped[6] << 48) |
-                                             ((uint64_t)Ptr->Untyped[7] << 56);
-                            break;
-    default:
-      std::cout << "Cannot load value of type " << *I.getType() << "!\n";
-      abort();
-    }
-  } else {
-    switch (I.getType()->getPrimitiveID()) {
-    case Type::BoolTyID:
-    case Type::UByteTyID:
-    case Type::SByteTyID:   Result.UByteVal = Ptr->Untyped[0]; break;
-    case Type::UShortTyID:
-    case Type::ShortTyID:   Result.UShortVal = (unsigned)Ptr->Untyped[1] |
-                                              ((unsigned)Ptr->Untyped[0] << 8);
-                            break;
-    Load4BytesBigEndian:
-    case Type::FloatTyID:
-    case Type::UIntTyID:
-    case Type::IntTyID:     Result.UIntVal = (unsigned)Ptr->Untyped[3] |
-                                            ((unsigned)Ptr->Untyped[2] <<  8) |
-                                            ((unsigned)Ptr->Untyped[1] << 16) |
-                                            ((unsigned)Ptr->Untyped[0] << 24);
-                            break;
-    case Type::PointerTyID: if (getModule().has32BitPointers())
-                              goto Load4BytesBigEndian;
-    case Type::DoubleTyID:
-    case Type::ULongTyID:
-    case Type::LongTyID:    Result.ULongVal = (uint64_t)Ptr->Untyped[7] |
-                                             ((uint64_t)Ptr->Untyped[6] <<  8) |
-                                             ((uint64_t)Ptr->Untyped[5] << 16) |
-                                             ((uint64_t)Ptr->Untyped[4] << 24) |
-                                             ((uint64_t)Ptr->Untyped[3] << 32) |
-                                             ((uint64_t)Ptr->Untyped[2] << 40) |
-                                             ((uint64_t)Ptr->Untyped[1] << 48) |
-                                             ((uint64_t)Ptr->Untyped[0] << 56);
-                            break;
-    default:
-      std::cout << "Cannot load value of type " << *I.getType() << "!\n";
-      abort();
-    }
-  }
-
+  GenericValue Result = LoadValueFromMemory(Ptr, I.getType());
   SetValue(&I, Result, SF);
 }
 
@@ -1009,6 +938,26 @@ static void executeCastInst(CastInst &I, ExecutionContext &SF) {
   SetValue(&I, executeCastOperation(I.getOperand(0), I.getType(), SF), SF);
 }
 
+static void executeVarArgInst(VarArgInst &I, ExecutionContext &SF) {
+  // Get the pointer to the valist element.  LLI treats the valist in memory as
+  // an integer.
+  GenericValue VAListPtr = getOperandValue(I.getOperand(0), SF);
+
+  // Load the pointer
+  GenericValue VAList = 
+    TheEE->LoadValueFromMemory((GenericValue *)GVTOP(VAListPtr), Type::UIntTy);
+
+  unsigned Argument = VAList.IntVal++;
+
+  // Update the valist to point to the next argument...
+  TheEE->StoreValueToMemory(VAList, (GenericValue *)GVTOP(VAListPtr),
+                            Type::UIntTy);
+
+  // Set the value...
+  assert(Argument < SF.VarArgs.size() &&
+         "Accessing past the last vararg argument!");
+  SetValue(&I, SF.VarArgs[Argument], SF);
+}
 
 //===----------------------------------------------------------------------===//
 //                        Dispatch and Execution Code
@@ -1166,9 +1115,10 @@ bool Interpreter::executeInstruction() {
       // Miscellaneous Instructions
     case Instruction::Call:    executeCallInst (cast<CallInst> (I), SF); break;
     case Instruction::PHINode: executePHINode  (cast<PHINode>  (I), SF); break;
+    case Instruction::Cast:    executeCastInst (cast<CastInst> (I), SF); break;
     case Instruction::Shl:     executeShlInst  (cast<ShiftInst>(I), SF); break;
     case Instruction::Shr:     executeShrInst  (cast<ShiftInst>(I), SF); break;
-    case Instruction::Cast:    executeCastInst (cast<CastInst> (I), SF); break;
+    case Instruction::VarArg:  executeVarArgInst(cast<VarArgInst>(I),SF); break;
     default:
       std::cout << "Don't know how to execute this instruction!\n-->" << I;
       abort();
