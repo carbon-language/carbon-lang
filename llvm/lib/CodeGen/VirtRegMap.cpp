@@ -323,11 +323,13 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, const VirtRegMap &VRM) {
             std::map<int, unsigned>::iterator SSI =
               SpillSlotsAvailable.find(StackSlot);
             if (SSI != SpillSlotsAvailable.end()) {
+              DEBUG(std::cerr << "Reusing SS#" << StackSlot << " from physreg "
+                              << MRI->getName(SSI->second) << " for vreg"
+                              << VirtReg <<" instead of reloading into physreg "
+                              << MRI->getName(VRM.getPhys(VirtReg)) << "\n");
               // If this stack slot value is already available, reuse it!
               PhysReg = SSI->second;
               MI.SetMachineOperandReg(i, PhysReg);
-              DEBUG(std::cerr << "Reusing SS#" << StackSlot << " from physreg "
-                              << MRI->getName(SSI->second) << "\n");
 
               // The only technical detail we have is that we don't know that
               // PhysReg won't be clobbered by a reloaded stack slot that occurs
@@ -519,6 +521,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, const VirtRegMap &VRM) {
           // If there is a dead store to this stack slot, nuke it now.
           MachineInstr *&LastStore = MaybeDeadStores[StackSlot];
           if (LastStore) {
+            DEBUG(std::cerr << " Killed store:\t" << *LastStore);
             ++NumDSE;
             MBB.erase(LastStore);
           }
@@ -539,7 +542,8 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, const VirtRegMap &VRM) {
           PhysRegsAvailable[PhysReg] = StackSlot;
           SpillSlotsAvailable[StackSlot] = PhysReg;
           DEBUG(std::cerr << "Updating SS#" << StackSlot <<" in physreg "
-                          << MRI->getName(PhysReg) << "\n");
+                          << MRI->getName(PhysReg) << " for virtreg #"
+                          << VirtReg << "\n");
 
           ++NumStores;
           VirtReg = PhysReg;
