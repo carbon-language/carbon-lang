@@ -57,6 +57,10 @@ template<>
 static void printPass(LocalDataStructures &P, ostream &O, Module &M) {
   P.print(O, &M);
 }
+template<>
+static void printPass(BUDataStructures &P, ostream &O, Module &M) {
+  P.print(O, &M);
+}
 
 template<>
 static void printPass(FindUsedTypes &FUT, ostream &O, Module &M) {
@@ -227,7 +231,8 @@ enum Ans {
   print, intervals, exprs, instforest, loops, indvars,
 
   // ip analyses
-  printmodule, callgraph, datastructure, printusedtypes, unsafepointertypes,
+  printmodule, callgraph, datastructure, budatastructure,
+  printusedtypes, unsafepointertypes,
 
   domset, idom, domtree, domfrontier,
   postdomset, postidom, postdomtree, postdomfrontier,
@@ -247,6 +252,7 @@ cl::EnumList<enum Ans> AnalysesList(cl::NoFlags,
   clEnumVal(printmodule    , "Print entire module"),
   clEnumVal(callgraph      , "Print Call Graph"),
   clEnumVal(datastructure  , "Print data structure information"),
+  clEnumVal(budatastructure, "Print bottom-up data structure information"),
   clEnumVal(printusedtypes , "Print types used by module"),
   clEnumVal(unsafepointertypes, "Print unsafe pointer types"),
 
@@ -279,6 +285,7 @@ struct {
   { printusedtypes    , New<Pass, FindUsedTypes>          },
   { callgraph         , New<Pass, CallGraph>              },
   { datastructure     , New<Pass, LocalDataStructures>    },
+  { budatastructure   , New<Pass, BUDataStructures>       },
   { unsafepointertypes, New<Pass, FindUnsafePointerTypes> },
 
   // Dominator analyses
