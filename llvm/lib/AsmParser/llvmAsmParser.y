@@ -1250,12 +1250,6 @@ ConstValueRef : ESINT64VAL {    // A reference to a direct constant
     $$ = ValID::createNull();
   }
 
-/*
-  | STRINGCONSTANT {        // Quoted strings work too... especially for methods
-    $$ = ValID::create_conststr($1);
-  }
-*/
-
 // SymbolicValueRef - Reference to one of two ways of symbolically refering to
 // another value.
 //
