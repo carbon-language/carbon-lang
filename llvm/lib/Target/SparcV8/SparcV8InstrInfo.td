@@ -47,9 +47,9 @@ def FpMOVD : PseudoInstV8<"FpMOVD">; // pseudo 64-bit double move
 
 // Section A.3 - Synthetic Instructions, p. 85
 // special cases of JMPL:
-let isReturn = 1, isTerminator = 1, simm13 = 8 in
+let isReturn = 1, isTerminator = 1, hasDelaySlot = 1, simm13 = 8 in
   def RET : F3_2<2, 0b111000, "ret">;
-let isReturn = 1, isTerminator = 1, simm13 = 8 in
+let isReturn = 1, isTerminator = 1, hasDelaySlot = 1, simm13 = 8 in
   def RETL: F3_2<2, 0b111000, "retl">;
 // CMP is a special case of SUBCC where destination is ignored, by setting it to
 // %g0 (hardwired zero).
@@ -148,6 +148,7 @@ def RESTOREri : F3_2<2, 0b111101, "restore">;        // restore r, i, r
 class BranchV8<bits<4> cc, string nm> : F2_2<cc, 0b010, nm> {
   let isBranch = 1;
   let isTerminator = 1;
+  let hasDelaySlot = 1;
 }
 
 let isBarrier = 1 in
@@ -170,6 +171,7 @@ def BCS  : BranchV8<0b0101, "bcs">;
 class FPBranchV8<bits<4> cc, string nm> : F2_2<cc, 0b110, nm> {
   let isBranch = 1;
   let isTerminator = 1;
+  let hasDelaySlot = 1;
 }
 
 def FBA  : FPBranchV8<0b1000, "fba">;
@@ -191,14 +193,15 @@ def FBO  : FPBranchV8<0b1111, "fbo">;
 
 // Section B.24 - Call and Link Instruction, p. 125
 // This is the only Format 1 instruction
-let Defs = [O0, O1, O2, O3, O4, O5] in
-let isCall = 1 in { 
+let Defs = [O0, O1, O2, O3, O4, O5], hasDelaySlot = 1, isCall = 1 in { 
+  // pc-relative call:
   def CALL : InstV8 {
     bits<30> disp;
     let op = 1;
     let Inst{29-0} = disp;
     let Name = "call";
   }
+  // indirect call:
   def JMPLrr : F3_1<2, 0b111000, "jmpl">;              // jmpl [rs1+rs2], rd
 }
 
@@ -233,9 +236,14 @@ def FDIVS  : F3_3<2, 0b110100, 0b001001101, "fdivs">;
 def FDIVD  : F3_3<2, 0b110100, 0b001001110, "fdivd">;
 
 // Floating-point Compare Instructions, p. 148
-// Note: the 2nd template arg is different for these guys
-def FCMPS  : F3_3<2, 0b110101, 0b001010001, "fcmps">;
-def FCMPD  : F3_3<2, 0b110101, 0b001010010, "fcmpd">;
-def FCMPES : F3_3<2, 0b110101, 0b001010101, "fcmpes">;
-def FCMPED : F3_3<2, 0b110101, 0b001010110, "fcmped">;
+// Note: the 2nd template arg is different for these guys.
+// Note 2: the result of a FCMP is not available until the 2nd cycle
+// after the instr is retired, but there is no interlock. This behavior
+// is modelled as a delay slot.
+let hasDelaySlot = 1 in {
+  def FCMPS  : F3_3<2, 0b110101, 0b001010001, "fcmps">;
+  def FCMPD  : F3_3<2, 0b110101, 0b001010010, "fcmpd">;
+  def FCMPES : F3_3<2, 0b110101, 0b001010101, "fcmpes">;
+  def FCMPED : F3_3<2, 0b110101, 0b001010110, "fcmped">;
+}
 
