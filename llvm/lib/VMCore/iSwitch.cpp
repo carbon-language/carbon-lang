@@ -25,7 +25,19 @@ SwitchInst::SwitchInst(const SwitchInst &SI)
   }
 }
 
-void SwitchInst::dest_push_back(Constant *OnVal, BasicBlock *Dest) {
+/// addCase - Add an entry to the switch instruction...
+///
+void SwitchInst::addCase(Constant *OnVal, BasicBlock *Dest) {
   Operands.push_back(Use((Value*)OnVal, this));
   Operands.push_back(Use((Value*)Dest, this));
+}
+
+/// removeCase - This method removes the specified successor from the switch
+/// instruction.  Note that this cannot be used to remove the default
+/// destination (successor #0).
+///
+void SwitchInst::removeCase(unsigned idx) {
+  assert(idx != 0 && "Cannot remove the default case!");
+  assert(idx*2 < Operands.size() && "Successor index out of range!!!");
+  Operands.erase(Operands.begin()+idx*2, Operands.begin()+(idx+1)*2);  
 }

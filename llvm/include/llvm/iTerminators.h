@@ -147,7 +147,15 @@ public:
     return cast<BasicBlock>(Operands[1].get());
   }
 
-  void dest_push_back(Constant *OnVal, BasicBlock *Dest);
+  /// addCase - Add an entry to the switch instruction...
+  ///
+  void addCase(Constant *OnVal, BasicBlock *Dest);
+
+  /// removeCase - This method removes the specified successor from the switch
+  /// instruction.  Note that this cannot be used to remove the default
+  /// destination (successor #0).
+  ///
+  void removeCase(unsigned idx);
 
   virtual const BasicBlock *getSuccessor(unsigned idx) const {
     assert(idx < getNumSuccessors() &&"Successor idx out of range for switch!");
