@@ -29,10 +29,6 @@ using namespace llvm;
 
 namespace llvm {
   extern cl::list<std::string> InputArgv;
-  cl::opt<bool>
-  EnableBlockExtraction("enable-block-extraction",
-                        cl::desc("Enable basic block extraction for "
-                                 "miscompilation debugging (experimental)"));
 }
 
 namespace {
@@ -390,9 +386,6 @@ bool ReduceMiscompiledBlocks::TestFuncs(const std::vector<BasicBlock*> &BBs) {
 static bool ExtractBlocks(BugDriver &BD,
                           bool (*TestFn)(BugDriver &, Module *, Module *),
                           std::vector<Function*> &MiscompiledFunctions) {
-  // Not enabled??
-  if (!EnableBlockExtraction) return false;
-
   std::vector<BasicBlock*> Blocks;
   for (unsigned i = 0, e = MiscompiledFunctions.size(); i != e; ++i)
     for (Function::iterator I = MiscompiledFunctions[i]->begin(),
