@@ -73,7 +73,6 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
     Records.getAllDerivedDefinitions("RegisterClass");
 
   std::vector<Record*> Registers = Records.getAllDerivedDefinitions("Register");
-  Record *RegisterClass = Records.getClass("Register");
 
   std::set<Record*> RegistersFound;
   std::vector<std::string> RegClassNames;
@@ -99,7 +98,7 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
       DefInit *RegDef = dynamic_cast<DefInit*>(RegList->getElement(i));
       if (!RegDef) throw "Register class member is not a record!";      
       Record *Reg = RegDef->getDef();
-      if (!Reg->isSubClassOf(RegisterClass))
+      if (!Reg->isSubClassOf("Register"))
         throw "Register Class member '" + Reg->getName() +
               " does not derive from the Register class!";
       if (RegistersFound.count(Reg))

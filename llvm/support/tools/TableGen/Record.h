@@ -703,6 +703,13 @@ public:
     return false;
   }
 
+  bool isSubClassOf(const std::string &Name) const {
+    for (unsigned i = 0, e = SuperClasses.size(); i != e; ++i)
+      if (SuperClasses[i]->getName() == Name)
+        return true;
+    return false;
+  }
+
   void addSuperClass(Record *R) {
     assert(!isSubClassOf(R) && "Already subclassing record!");
     SuperClasses.push_back(R);
