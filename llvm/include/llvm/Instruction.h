@@ -10,23 +10,21 @@
 
 #include "llvm/User.h"
 
-class Type;
 class BasicBlock;
 class Method;
-class MachineInstr;
-class MachineCodeForVMInstr;
 
 class Instruction : public User {
   BasicBlock *Parent;
 
-  MachineCodeForVMInstr* machineInstrVec;
   friend class ValueHolder<Instruction,BasicBlock,Method>;
   inline void setParent(BasicBlock *P) { Parent = P; }
 protected:
   unsigned iType;      // InstructionType
 public:
   Instruction(const Type *Ty, unsigned iType, const std::string &Name = "");
-  virtual ~Instruction();  // Virtual dtor == good.
+  virtual ~Instruction() {
+    assert(Parent == 0 && "Instruction still embedded in basic block!");
+  }
 
   // Specialize setName to handle symbol table majik...
   virtual void setName(const std::string &name, SymbolTable *ST = 0);
@@ -44,17 +42,6 @@ public:
   inline       BasicBlock *getParent()       { return Parent; }
   virtual bool hasSideEffects() const { return false; }  // Memory & Call insts
 
-  // ---------------------------------------------------------------------------
-  // Machine code accessors...
-  //
-  inline MachineCodeForVMInstr &getMachineInstrVec() const {
-    return *machineInstrVec; 
-  }
-  
-  // Add a machine instruction used to implement this instruction
-  //
-  void addMachineInstruction(MachineInstr* minstr);
-  
   // ---------------------------------------------------------------------------
   // Subclass classification... getInstType() returns a member of 
   // one of the enums that is coming soon (down below)...
@@ -75,14 +62,6 @@ public:
   inline bool isBinaryOp() const {
     return iType >= FirstBinaryOp && iType < NumBinaryOps;
   }
-
-  // dropAllReferences() - This function is in charge of "letting go" of all
-  // objects that this Instruction refers to.  This first lets go of all
-  // references to hidden values generated code for this instruction,
-  // and then drops all references to its operands.
-  // 
-  void dropAllReferences();
-
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const Instruction *I) { return true; }
