@@ -876,51 +876,10 @@ Instruction *InstCombiner::visitShiftInst(ShiftInst &I) {
       Op0 == Constant::getNullValue(Op0->getType()))
     return ReplaceInstUsesWith(I, Op0);
 
-  // If this is a shift of a shift, see if we can fold the two together...
-  if (ShiftInst *Op0SI = dyn_cast<ShiftInst>(Op0)) {
-    if (isa<Constant>(Op1) && isa<Constant>(Op0SI->getOperand(1))) {
-      ConstantUInt *ShiftAmt1C = cast<ConstantUInt>(Op0SI->getOperand(1));
-      unsigned ShiftAmt1 = ShiftAmt1C->getValue();
-      unsigned ShiftAmt2 = cast<ConstantUInt>(Op1)->getValue();
-
-      // Check for (A << c1) << c2   and   (A >> c1) >> c2
-      if (I.getOpcode() == Op0SI->getOpcode()) {
-        unsigned Amt = ShiftAmt1+ShiftAmt2;   // Fold into one big shift...
-        return new ShiftInst(I.getOpcode(), Op0SI->getOperand(0),
-                             ConstantUInt::get(Type::UByteTy, Amt));
-      }
-
-      if (I.getType()->isUnsigned()) { // Check for (A << c1) >> c2 or visaversa
-        // Calculate bitmask for what gets shifted off the edge...
-        Constant *C = ConstantIntegral::getAllOnesValue(I.getType());
-        if (I.getOpcode() == Instruction::Shr)
-          C = ConstantExpr::getShift(Instruction::Shr, C, ShiftAmt1C);
-        else
-          C = ConstantExpr::getShift(Instruction::Shl, C, ShiftAmt1C);
-          
-        Instruction *Mask =
-          BinaryOperator::create(Instruction::And, Op0SI->getOperand(0),
-                                 C, Op0SI->getOperand(0)->getName()+".mask",&I);
-        WorkList.push_back(Mask);
-          
-        // Figure out what flavor of shift we should use...
-        if (ShiftAmt1 == ShiftAmt2)
-          return ReplaceInstUsesWith(I, Mask);  // (A << c) >> c  === A & c2
-        else if (ShiftAmt1 < ShiftAmt2) {
-          return new ShiftInst(I.getOpcode(), Mask,
-                         ConstantUInt::get(Type::UByteTy, ShiftAmt2-ShiftAmt1));
-        } else {
-          return new ShiftInst(Op0SI->getOpcode(), Mask,
-                         ConstantUInt::get(Type::UByteTy, ShiftAmt1-ShiftAmt2));
-        }
-      }
-    }
-  }
-
-  // shl uint X, 32 = 0 and shr ubyte Y, 9 = 0, ... just don't eliminate shr of
-  // a signed value.
-  //
   if (ConstantUInt *CUI = dyn_cast<ConstantUInt>(Op1)) {
+    // shl uint X, 32 = 0 and shr ubyte Y, 9 = 0, ... just don't eliminate shr
+    // of a signed value.
+    //
     unsigned TypeBits = Op0->getType()->getPrimitiveSize()*8;
     if (CUI->getValue() >= TypeBits &&
         (!Op0->getType()->isSigned() || I.getOpcode() == Instruction::Shl))
@@ -932,12 +891,54 @@ Instruction *InstCombiner::visitShiftInst(ShiftInst &I) {
       // Convert 'shl int %X, 1' to 'add int %X, %X'
       return BinaryOperator::create(Instruction::Add, Op0, Op0, I.getName());
 
+    // If this is a shift of a shift, see if we can fold the two together...
+    if (ShiftInst *Op0SI = dyn_cast<ShiftInst>(Op0)) {
+      if (isa<ConstantUInt>(Op1) && isa<Constant>(Op0SI->getOperand(1))) {
+        ConstantUInt *ShiftAmt1C = cast<ConstantUInt>(Op0SI->getOperand(1));
+        unsigned ShiftAmt1 = ShiftAmt1C->getValue();
+        unsigned ShiftAmt2 = CUI->getValue();
+        
+        // Check for (A << c1) << c2   and   (A >> c1) >> c2
+        if (I.getOpcode() == Op0SI->getOpcode()) {
+          unsigned Amt = ShiftAmt1+ShiftAmt2;   // Fold into one big shift...
+          return new ShiftInst(I.getOpcode(), Op0SI->getOperand(0),
+                               ConstantUInt::get(Type::UByteTy, Amt));
+        }
+        
+        // Check for (A << c1) >> c2 or visaversa
+        if (I.getType()->isUnsigned()) {
+          // Calculate bitmask for what gets shifted off the edge...
+          Constant *C = ConstantIntegral::getAllOnesValue(I.getType());
+          if (I.getOpcode() == Instruction::Shr)
+            C = ConstantExpr::getShift(Instruction::Shr, C, ShiftAmt1C);
+          else
+            C = ConstantExpr::getShift(Instruction::Shl, C, ShiftAmt1C);
+          
+          Instruction *Mask =
+            BinaryOperator::create(Instruction::And, Op0SI->getOperand(0),
+                                   C, Op0SI->getOperand(0)->getName()+".mask");
+          InsertNewInstBefore(Mask, I);
+          
+          // Figure out what flavor of shift we should use...
+          if (ShiftAmt1 == ShiftAmt2)
+            return ReplaceInstUsesWith(I, Mask);  // (A << c) >> c  === A & c2
+          else if (ShiftAmt1 < ShiftAmt2) {
+            return new ShiftInst(I.getOpcode(), Mask,
+                         ConstantUInt::get(Type::UByteTy, ShiftAmt2-ShiftAmt1));
+          } else {
+            return new ShiftInst(Op0SI->getOpcode(), Mask,
+                         ConstantUInt::get(Type::UByteTy, ShiftAmt1-ShiftAmt2));
+          }
+        }
+      }
+    }
   }
 
   // shr int -1, X = -1   (for any arithmetic shift rights of ~0)
-  if (ConstantSInt *CSI = dyn_cast<ConstantSInt>(Op0))
-    if (I.getOpcode() == Instruction::Shr && CSI->isAllOnesValue())
-      return ReplaceInstUsesWith(I, CSI);
+  if (I.getOpcode() == Instruction::Shr)
+    if (ConstantSInt *CSI = dyn_cast<ConstantSInt>(Op0))
+      if (CSI->isAllOnesValue())
+        return ReplaceInstUsesWith(I, CSI);
   
   return 0;
 }
