@@ -91,6 +91,17 @@ inline MachineInstrBuilder BuildMI(MachineOpCode Opcode, unsigned NumOperands) {
   return MachineInstrBuilder(new MachineInstr(Opcode, NumOperands, true, true));
 }
 
+/// BuildMI - This version of the builder also sets up the first "operand" as a
+/// destination virtual register.  NumOperands is the number of additional add*
+/// calls that are expected, it does not include the destination register.
+///
+inline MachineInstrBuilder BuildMI(MachineOpCode Opcode, unsigned NumOperands,
+                                   unsigned DestReg) {
+  return MachineInstrBuilder(new MachineInstr(Opcode, NumOperands+1,
+                                   true, true)).addReg(DestReg, MOTy::Def);
+}
+
+
 /// BuildMI - This version of the builder inserts the built MachineInstr into
 /// the specified MachineBasicBlock.
 ///
