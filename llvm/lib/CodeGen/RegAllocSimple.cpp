@@ -53,6 +53,10 @@ namespace {
       return RegsUsed.find(Reg) == RegsUsed.end();
     }
 
+    ///
+    unsigned allocateStackSpaceFor(unsigned VirtReg, 
+                                   const TargetRegisterClass *regClass);
+
     /// Given size (in bytes), returns a register that is currently unused
     /// Side effect: marks that register as being used until manually cleared
     unsigned getFreeReg(unsigned virtualReg);
@@ -84,6 +88,22 @@ namespace {
 
 }
 
+unsigned RegAllocSimple::allocateStackSpaceFor(unsigned VirtReg,
+                                            const TargetRegisterClass *regClass)
+{
+  if (RegMap.find(VirtReg) == RegMap.end()) {
+    unsigned size = regClass->getDataSize();
+    unsigned over = NumBytesAllocated - (NumBytesAllocated % ByteAlignment);
+    if (size >= ByteAlignment - over) {
+      // need to pad by (ByteAlignment - over)
+      NumBytesAllocated += ByteAlignment - over;
+    }
+    RegMap[VirtReg] = NumBytesAllocated;
+    NumBytesAllocated += size;
+  }
+  return RegMap[VirtReg];
+}
+
 unsigned RegAllocSimple::getFreeReg(unsigned virtualReg) {
   const TargetRegisterClass* regClass = MF->getRegClass(virtualReg);
   unsigned physReg;
@@ -112,29 +132,15 @@ RegAllocSimple::moveUseToReg (MachineBasicBlock::iterator I,
   const TargetRegisterClass* regClass = MF->getRegClass(VirtReg);
   assert(regClass);
 
-  unsigned stackOffset;
-  if (RegMap.find(VirtReg) == RegMap.end()) {
-    unsigned size = regClass->getDataSize();
-    unsigned over = NumBytesAllocated - (NumBytesAllocated % ByteAlignment);
-    if (size >= ByteAlignment - over) {
-      // need to pad by (ByteAlignment - over)
-      NumBytesAllocated += ByteAlignment - over;
-    }
-    RegMap[VirtReg] = NumBytesAllocated;
-    NumBytesAllocated += size;
-  }
-  stackOffset = RegMap[VirtReg];
+  unsigned stackOffset = allocateStackSpaceFor(VirtReg, regClass);
   PhysReg = getFreeReg(VirtReg);
-
-  // Add move instruction(s)
-  MachineBasicBlock::iterator newI =
-    RegInfo->loadRegOffset2Reg(CurrMBB, I, PhysReg,
-                               RegInfo->getFramePointer(),
-                               stackOffset, regClass->getDataSize());
 
   // FIXME: increment the frame pointer
 
-  return newI;
+  // Add move instruction(s)
+  return RegInfo->loadRegOffset2Reg(CurrMBB, I, PhysReg,
+                                    RegInfo->getFramePointer(),
+                                    stackOffset, regClass->getDataSize());
 }
 
 MachineBasicBlock::iterator
@@ -143,10 +149,9 @@ RegAllocSimple::saveRegToStack (MachineBasicBlock::iterator I,
 {
   const TargetRegisterClass* regClass = MF->getRegClass(VirtReg);
   assert(regClass);
-  assert(RegMap.find(VirtReg) != RegMap.end() &&
-         "Virtual reg has no stack offset mapping!");
 
-  unsigned offset = RegMap[VirtReg];
+  unsigned offset = allocateStackSpaceFor(VirtReg, regClass);
+
   // Add move instruction(s)
   return RegInfo->storeReg2RegOffset(CurrMBB, I, PhysReg,
                                      RegInfo->getFramePointer(),
@@ -165,7 +170,6 @@ bool RegAllocSimple::runOnMachineFunction(MachineFunction &Fn) {
   {
     CurrMBB = &(*MBB);
 
-    // FIXME: if return, special case => into return register
     //loop over each basic block
     for (MachineBasicBlock::iterator I = MBB->begin(); I != MBB->end(); ++I)
     {
@@ -185,20 +189,18 @@ bool RegAllocSimple::runOnMachineFunction(MachineFunction &Fn) {
           DEBUG(std::cerr << "const\n");
         } else if (op.isVirtualRegister()) {
           virtualReg = (unsigned) op.getAllocatedRegNum();
-#if 0
-          // FIXME: save register to stack
-          if (op.opIsDef()) {
-            MachineBasicBlock::iterator J = I;
-            saveRegToStack(++J, virtualReg, physReg);
-          }
-#endif
+          // save register to stack if it's a def
           DEBUG(std::cerr << "op: " << op << "\n");
           DEBUG(std::cerr << "\t inst[" << i << "]: ";
                 MI->print(std::cerr, TM));
-          I = moveUseToReg(I, virtualReg, physReg);
-          //MI = *I;
-          bool def = op.opIsDef() || op.opIsDefAndUse();
-          MI->SetMachineOperandReg(i, physReg, def);
+          if (op.opIsDef()) {
+            physReg = getFreeReg(virtualReg);
+            MachineBasicBlock::iterator J = I;
+            I = saveRegToStack(++J, virtualReg, physReg);
+          } else {
+            I = moveUseToReg(I, virtualReg, physReg);
+          }
+          MI->SetMachineOperandReg(i, physReg);
           DEBUG(std::cerr << "virt: " << virtualReg << 
                 ", phys: " << op.getAllocatedRegNum() << "\n");
         }
