@@ -918,19 +918,20 @@ SetOperandsForMemInstr(vector<MachineInstr*>& mvec,
   // The major work here is to extract these for all 3 instruction types
   // and then call the common function SetMemOperands_Internal().
   // 
-  vector<Value*> idxVec;
   Value* ptrVal = memInst->getPointerOperand();
   
-  // Test if a GetElemPtr instruction is being folded into this mem instrn.
-  // If so, it will be in the left child for Load and GetElemPtr,
-  // and in the right child for Store instructions.
-  // 
+  // Start with the index vector of this instruction, if any.
+  vector<Value*> idxVec;
+  idxVec.insert(idxVec.end(), memInst->idx_begin(), memInst->idx_end());
+  
+  // If there is a GetElemPtr instruction to fold in to this instr,
+  // it must be in the left child for Load and GetElemPtr, and in the
+  // right child for Store instructions.
   InstrTreeNode* ptrChild = (vmInstrNode->getOpLabel() == Instruction::Store
                              ? vmInstrNode->rightChild()
                              : vmInstrNode->leftChild()); 
   
   // Fold chains of GetElemPtr instructions for structure references.
-  // 
   if (isa<StructType>(cast<PointerType>(ptrVal->getType())->getElementType())
       && (ptrChild->getOpLabel() == Instruction::GetElementPtr ||
           ptrChild->getOpLabel() == GetElemPtrIdx))
@@ -939,10 +940,6 @@ SetOperandsForMemInstr(vector<MachineInstr*>& mvec,
       if (newPtr)
         ptrVal = newPtr;
     }
-  
-  // Append the index vector of this instruction (may be none) to the indexes
-  // folded in previous getElementPtr's (may be none)
-  idxVec.insert(idxVec.end(), memInst->idx_begin(), memInst->idx_end());
   
   SetMemOperands_Internal(mvec, mvecI, vmInstrNode, ptrVal, idxVec, target);
 }
@@ -1044,16 +1041,30 @@ SetMemOperands_Internal(vector<MachineInstr*>& mvec,
       smallConstOffset = 0;
     }
   
-  // Operand 0 is value for STORE, ptr for LOAD or GET_ELEMENT_PTR
-  // It is the left child in the instruction tree in all cases.
-  Value* leftVal = vmInstrNode->leftChild()->getValue();
-  (*mvecI)->SetMachineOperandVal(0, MachineOperand::MO_VirtualRegister,
-                                 leftVal);
+  // For STORE:
+  //   Operand 0 is value, operand 1 is ptr, operand 2 is offset
+  // For LOAD or GET_ELEMENT_PTR,
+  //   Operand 0 is ptr, operand 1 is offset, operand 2 is result.
+  // 
+  unsigned offsetOpNum, ptrOpNum;
+  if (memInst->getOpcode() == Instruction::Store)
+    {
+      (*mvecI)->SetMachineOperandVal(0, MachineOperand::MO_VirtualRegister,
+                                     vmInstrNode->leftChild()->getValue());
+      ptrOpNum = 1;
+      offsetOpNum = 2;
+    }
+  else
+    {
+      ptrOpNum = 0;
+      offsetOpNum = 1;
+      (*mvecI)->SetMachineOperandVal(2, MachineOperand::MO_VirtualRegister,
+                                     memInst);
+    }
   
-  // Operand 1 is ptr for STORE, offset for LOAD or GET_ELEMENT_PTR
-  // Operand 2 is offset for STORE, result reg for LOAD or GET_ELEMENT_PTR
-  //
-  unsigned offsetOpNum = (memInst->getOpcode() == Instruction::Store)? 2 : 1;
+  (*mvecI)->SetMachineOperandVal(ptrOpNum, MachineOperand::MO_VirtualRegister,
+                                 ptrVal);
+  
   if (offsetOpType == MachineOperand::MO_VirtualRegister)
     {
       assert(valueForRegOffset != NULL);
@@ -1063,13 +1074,6 @@ SetMemOperands_Internal(vector<MachineInstr*>& mvec,
   else
     (*mvecI)->SetMachineOperandConst(offsetOpNum, offsetOpType,
                                      smallConstOffset);
-  
-  if (memInst->getOpcode() == Instruction::Store)
-    (*mvecI)->SetMachineOperandVal(1, MachineOperand::MO_VirtualRegister,
-                                   ptrVal);
-  else
-    (*mvecI)->SetMachineOperandVal(2, MachineOperand::MO_VirtualRegister,
-                                   vmInstrNode->getValue());
 }
 
 
@@ -2089,16 +2093,10 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         CallInst *callInstr = cast<CallInst>(subtreeRoot->getInstruction());
         Value *callee = callInstr->getCalledValue();
         
-        Instruction* retAddrReg = new TmpInstruction(callInstr);
-        
-        // Note temporary values in the machineInstrVec for the VM instr.
-        //
-        // WARNING: Operands 0..N-1 must go in slots 0..N-1 of implicitUses.
-        //          The result value must go in slot N.  This is assumed
-        //          in register allocation.
-        // 
+        // Create hidden virtual register for return address, with type void*. 
+        Instruction* retAddrReg =
+          new TmpInstruction(PointerType::get(Type::VoidTy), callInstr);
         MachineCodeForInstruction::get(callInstr).addTemp(retAddrReg);
-        
         
         // Generate the machine instruction and its operands.
         // Use CALL for direct function calls; this optimistically assumes
@@ -2123,7 +2121,11 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
           }
         
         mvec.push_back(M);
-        
+
+        // WARNING: Operands 0..N-1 must go in slots 0..N-1 of implicitUses.
+        //          The result value must go in slot N.  This is assumed
+        //          in register allocation.
+        // 
         // Add the call operands and return value as implicit refs
         for (unsigned i=0, N=callInstr->getNumOperands(); i < N; ++i)
           if (callInstr->getOperand(i) != callee)
