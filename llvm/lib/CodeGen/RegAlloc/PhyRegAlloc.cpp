@@ -24,6 +24,7 @@
 #include "llvm/Type.h"
 #include "llvm/iOther.h"
 #include "Support/STLExtras.h"
+#include "Support/SetOperations.h"
 #include "Support/CommandLine.h"
 #include <math.h>
 using std::cerr;
@@ -747,18 +748,21 @@ void PhyRegAlloc::insertCode4SpilledLR(const LiveRange *LR,
   RegClass *RC = LR->getRegClass();
 
   // Get the live-variable set to find registers free before this instr.
-  // If this instr. is in the delay slot of a branch or return, use the live
-  // var set before that branch or return -- we don't want to trample those!
+  const ValueSet &LVSetBef = LVI->getLiveVarSetBeforeMInst(MInst, BB);
+
+#ifndef NDEBUG
+  // If this instr. is in the delay slot of a branch or return, we need to
+  // include all live variables before that branch or return -- we don't want to
+  // trample those!  Verify that the set is included in the LV set before MInst.
   // 
-  MachineInstr *LiveBeforeThisMI = MInst;
   if (MII != MBB.begin()) {
     MachineInstr *PredMI = *(MII-1);
-    if (unsigned DS = TM.getInstrInfo().getNumDelaySlots(PredMI->getOpCode())) {
-      assert(DS == 1 && "Only checking immediate pred. for delay slots!");
-      LiveBeforeThisMI = PredMI;
-    }
+    if (unsigned DS = TM.getInstrInfo().getNumDelaySlots(PredMI->getOpCode()))
+      assert(set_difference(LVI->getLiveVarSetBeforeMInst(PredMI), LVSetBef)
+             .empty() && "Live-var set before branch should be included in "
+             "live-var set of each delay slot instruction!");
   }
-  const ValueSet &LVSetBef = LVI->getLiveVarSetBeforeMInst(LiveBeforeThisMI,BB);
+#endif
 
   MF.getInfo()->pushTempValue(MRI.getSpilledRegSize(RegType) );
   
@@ -1204,13 +1208,13 @@ void PhyRegAlloc::setRelRegsUsedByThisInst(RegClass *RC, int RegType,
 void PhyRegAlloc::move2DelayedInstr(const MachineInstr *OrigMI,
                                     const MachineInstr *DelayedMI)
 {
-  if (DEBUG_RA) {
+  // "added after" instructions of the original instr
+  std::vector<MachineInstr *> &OrigAft = AddedInstrMap[OrigMI].InstrnsAfter;
+
+  if (DEBUG_RA && OrigAft.size() > 0) {
     cerr << "\nRegAlloc: Moved InstrnsAfter for: " << *OrigMI;
     cerr << "         to last delay slot instrn: " << *DelayedMI;
   }
-
-  // "added after" instructions of the original instr
-  std::vector<MachineInstr *> &OrigAft = AddedInstrMap[OrigMI].InstrnsAfter;
 
   // "added after" instructions of the delayed instr
   std::vector<MachineInstr *> &DelayedAft=AddedInstrMap[DelayedMI].InstrnsAfter;
