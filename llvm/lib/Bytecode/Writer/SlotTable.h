@@ -91,9 +91,6 @@ public:
   /// @brief Get the number of planes of values.
   size_t value_size() const { return vTable.size(); }
 
-  /// @brief Get the number of types.
-  size_t type_size() const { return tPlane.size(); }
-
   /// @brief Determine if a specific type plane in the value table exists
   bool plane_exists(PlaneNum plane) const {
     return vTable.size() > plane;

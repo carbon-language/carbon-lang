@@ -1071,7 +1071,7 @@ void BytecodeWriter::outputSymbolTable(const SymbolTable &MST) {
     if (I == End) continue;  // Don't mess with an absent type...
 
     // Write the number of values in this plane
-    output_vbr(MST.type_size(PI->first));
+    output_vbr(PI->second.size());
 
     // Write the slot number of the type for this plane
     Slot = Table.getSlot(PI->first);
