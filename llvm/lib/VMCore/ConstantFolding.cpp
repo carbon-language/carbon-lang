@@ -625,11 +625,18 @@ static Instruction::BinaryOps evaluateRelation(const Constant *V1,
     // If the first operand is simple, swap operands.
     assert((isa<ConstantPointerRef>(V2) || isa<ConstantExpr>(V2)) &&
            "Simple cases should have been handled by caller!");
-    return SetCondInst::getSwappedCondition(evaluateRelation(V2, V1));
+    Instruction::BinaryOps SwappedRelation = evaluateRelation(V2, V1);
+    if (SwappedRelation != Instruction::BinaryOpsEnd)
+      return SetCondInst::getSwappedCondition(SwappedRelation);
 
   } else if (const ConstantPointerRef *CPR1 = dyn_cast<ConstantPointerRef>(V1)){
-    if (isa<ConstantExpr>(V2))   // Swap as necessary.
-      return SetCondInst::getSwappedCondition(evaluateRelation(V2, V1));
+    if (isa<ConstantExpr>(V2)) {  // Swap as necessary.
+    Instruction::BinaryOps SwappedRelation = evaluateRelation(V2, V1);
+    if (SwappedRelation != Instruction::BinaryOpsEnd)
+      return SetCondInst::getSwappedCondition(SwappedRelation);
+    else
+      return Instruction::BinaryOpsEnd;
+    }
 
     // Now we know that the RHS is a ConstantPointerRef or simple constant,
     // which (since the types must match) means that it's a ConstantPointerNull.
