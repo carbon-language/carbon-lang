@@ -39,8 +39,7 @@ class MRegisterInfo;
 class LiveVariables : public MachineFunctionPass {
 public:
   struct VarInfo {
-    /// DefBlock - The basic block which defines this value...
-    MachineBasicBlock *DefBlock;
+    /// DefInst - The machine instruction that defines this register.
     MachineInstr      *DefInst;
 
     /// AliveBlocks - Set of blocks of which this value is alive completely
@@ -55,7 +54,7 @@ public:
     ///
     std::vector<std::pair<MachineBasicBlock*, MachineInstr*> > Kills;
 
-    VarInfo() : DefBlock(0), DefInst(0) {}
+    VarInfo() : DefInst(0) {}
 
     /// removeKill - Delete a kill corresponding to the specified
     /// machine instruction. Returns true if there was a kill

@@ -64,7 +64,7 @@ void LiveVariables::MarkVirtRegAliveInBlock(VarInfo &VRInfo,
       break;
     }
 
-  if (MBB == VRInfo.DefBlock) return;  // Terminate recursion
+  if (MBB == VRInfo.DefInst->getParent()) return;  // Terminate recursion
 
   if (VRInfo.AliveBlocks.size() <= BBNum)
     VRInfo.AliveBlocks.resize(BBNum+1);  // Make space...
@@ -95,7 +95,8 @@ void LiveVariables::HandleVirtRegUse(VarInfo &VRInfo, MachineBasicBlock *MBB,
     assert(VRInfo.Kills[i].first != MBB && "entry should be at end!");
 #endif
 
-  assert(MBB != VRInfo.DefBlock && "Should have kill for defblock!");
+  assert(MBB != VRInfo.DefInst->getParent() && 
+         "Should have kill for defblock!");
 
   // Add a new kill entry for this basic block.
   VRInfo.Kills.push_back(std::make_pair(MBB, MI));
@@ -230,8 +231,7 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &MF) {
           if (MRegisterInfo::isVirtualRegister(MO.getReg())) {
             VarInfo &VRInfo = getVarInfo(MO.getReg());
 
-            assert(VRInfo.DefBlock == 0 && "Variable multiply defined!");
-            VRInfo.DefBlock = MBB;                           // Created here...
+            assert(VRInfo.DefInst == 0 && "Variable multiply defined!");
             VRInfo.DefInst = MI;
             VRInfo.Kills.push_back(std::make_pair(MBB, MI)); // Defaults to dead
           } else if (MRegisterInfo::isPhysicalRegister(MO.getReg()) &&
