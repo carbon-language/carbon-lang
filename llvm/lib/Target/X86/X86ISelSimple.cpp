@@ -868,11 +868,8 @@ static SetCondInst *canFoldSetCCIntoBranchOrSelect(Value *V) {
   if (SetCondInst *SCI = dyn_cast<SetCondInst>(V))
     if (SCI->hasOneUse()) {
       Instruction *User = cast<Instruction>(SCI->use_back());
-      if ((isa<BranchInst>(User) || isa<SelectInst>(User)) &&
-          (getClassB(SCI->getOperand(0)->getType()) != cLong ||
-           SCI->getOpcode() == Instruction::SetEQ ||
-           SCI->getOpcode() == Instruction::SetNE) &&
-          (isa<BranchInst>(User) || User->getOperand(0) == V))
+      if (isa<BranchInst>(User) || (isa<SelectInst>(User) &&
+                                    User->getOperand(0) == V))
         return SCI;
     }
   return 0;
@@ -1012,29 +1009,11 @@ unsigned X86ISel::EmitComparison(unsigned OpNum, Value *Op0, Value *Op1,
         BuildMI(*MBB, IP, X86::OR32rr, 2, FinalTmp).addReg(LoTmp).addReg(HiTmp);
         return OpNum;
       } else {
-        // Emit a sequence of code which compares the high and low parts once
-        // each, then uses a conditional move to handle the overflow case.  For
-        // example, a setlt for long would generate code like this:
-        //
-        // AL = lo(op1) < lo(op2)   // Always unsigned comparison
-        // BL = hi(op1) < hi(op2)   // Signedness depends on operands
-        // dest = hi(op1) == hi(op2) ? BL : AL;
-        //
-
-        // FIXME: This would be much better if we had hierarchical register
-        // classes!  Until then, hardcode registers so that we can deal with
-        // their aliases (because we don't have conditional byte moves).
-        //
-        BuildMI(*MBB, IP, X86::CMP32ri, 2).addReg(Op0r).addImm(LowCst);
-        BuildMI(*MBB, IP, SetCCOpcodeTab[0][OpNum], 0, X86::AL);
-        BuildMI(*MBB, IP, X86::CMP32ri, 2).addReg(Op0r+1).addImm(HiCst);
-        BuildMI(*MBB, IP, SetCCOpcodeTab[CompTy->isSigned()][OpNum], 0,X86::BL);
-        BuildMI(*MBB, IP, X86::IMPLICIT_DEF, 0, X86::BH);
-        BuildMI(*MBB, IP, X86::IMPLICIT_DEF, 0, X86::AH);
-        BuildMI(*MBB, IP, X86::CMOVE16rr, 2, X86::BX).addReg(X86::BX)
-          .addReg(X86::AX);
-        // NOTE: visitSetCondInst knows that the value is dumped into the BL
-        // register at this point for long values...
+        // To compare A op B, compute A-B, and check the result flag.
+        unsigned LowTmp = makeAnotherReg(Type::IntTy);
+        unsigned HiTmp = makeAnotherReg(Type::IntTy);
+        BuildMI(*MBB, IP, X86::SUB32ri, 2, LowTmp).addReg(Op0r).addImm(LowCst);
+        BuildMI(*MBB, IP, X86::SBB32ri, 2, HiTmp).addReg(Op0r+1).addImm(HiCst);
         return OpNum;
       }
     }
@@ -1080,6 +1059,13 @@ unsigned X86ISel::EmitComparison(unsigned OpNum, Value *Op0, Value *Op1,
       BuildMI(*MBB, IP, X86::OR32rr,  2, FinalTmp).addReg(LoTmp).addReg(HiTmp);
       break;  // Allow the sete or setne to be generated from flags set by OR
     } else {
+      // To compare A op B, compute A-B, and check the result flag.
+      unsigned LowTmp = makeAnotherReg(Type::IntTy);
+      unsigned HiTmp = makeAnotherReg(Type::IntTy);
+      BuildMI(*MBB, IP, X86::SUB32rr, 2, LowTmp).addReg(Op0r).addReg(Op1r);
+      BuildMI(*MBB, IP, X86::SBB32rr, 2, HiTmp).addReg(Op0r+1).addReg(Op1r+1);
+      return OpNum;
+
       // Emit a sequence of code which compares the high and low parts once
       // each, then uses a conditional move to handle the overflow case.  For
       // example, a setlt for long would generate code like this:
@@ -1136,14 +1122,7 @@ void X86ISel::emitSetCCOperation(MachineBasicBlock *MBB,
   unsigned CompClass = getClassB(CompTy);
   bool isSigned = CompTy->isSigned() && CompClass != cFP;
 
-  if (CompClass != cLong || OpNum < 2) {
-    // Handle normal comparisons with a setcc instruction...
-    BuildMI(*MBB, IP, SetCCOpcodeTab[isSigned][OpNum], 0, TargetReg);
-  } else {
-    // Handle long comparisons by copying the value which is already in BL into
-    // the register we want...
-    BuildMI(*MBB, IP, X86::MOV8rr, 1, TargetReg).addReg(X86::BL);
-  }
+  BuildMI(*MBB, IP, SetCCOpcodeTab[isSigned][OpNum], 0, TargetReg);
 }
 
 void X86ISel::visitSelectInst(SelectInst &SI) {
