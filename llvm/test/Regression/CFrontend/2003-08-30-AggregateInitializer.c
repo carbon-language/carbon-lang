@@ -1,6 +1,7 @@
 // RUN: %llvmgcc -S %s -o /dev/null
 
-// XFAIL: linux,sun,darwin
+// XFAIL: *
+
 struct istruct {
   unsigned char C;
 };
