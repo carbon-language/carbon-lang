@@ -57,6 +57,23 @@ bool BUDataStructures::run(Module &M) {
 
   NumCallEdges += ActualCallees.size();
 
+
+  // At the end of the BU phase, clone the BU graph for main into the globals
+  // graph to make sure it has everything.
+  if (MainFunc) {
+    DSGraph &MainGraph = getOrCreateGraph(MainFunc);
+    DSScalarMap &MainSM = MainGraph.getScalarMap();
+    ReachabilityCloner RC(*GlobalsGraph, MainGraph, DSGraph::StripAllocaBit);
+
+    // Clone everything reachable from globals in the "main" graph into the
+    // globals graph.
+    for (DSScalarMap::global_iterator I = MainSM.global_begin(),
+           E = MainSM.global_end(); I != E; ++I) 
+      RC.getClonedNH(MainSM[*I]);
+
+
+  }
+
   // At the end of the bottom-up pass, the globals graph becomes complete.
   // FIXME: This is not the right way to do this, but it is sorta better than
   // nothing!  In particular, externally visible globals and unresolvable call
