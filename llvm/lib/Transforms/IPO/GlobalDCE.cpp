@@ -5,7 +5,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Transforms/IPO/GlobalDCE.h"
+#include "llvm/Transforms/IPO.h"
 #include "llvm/Module.h"
 #include "llvm/Function.h"
 #include "llvm/GlobalVariable.h"

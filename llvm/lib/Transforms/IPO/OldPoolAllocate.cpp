@@ -9,7 +9,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Transforms/IPO/PoolAllocate.h"
+#include "llvm/Transforms/IPO.h"
 #include "llvm/Transforms/Utils/CloneFunction.h"
 #include "llvm/Analysis/DataStructureGraph.h"
 #include "llvm/Module.h"
