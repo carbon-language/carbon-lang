@@ -30,7 +30,6 @@
 #include "llvm/SymbolTable.h"
 #include "Support/STLExtras.h"
 #include "Support/Statistic.h"
-#include "Support/Debug.h"
 #include <cstring>
 #include <algorithm>
 using namespace llvm;
@@ -86,12 +85,6 @@ BytecodeWriter::BytecodeWriter(std::deque<unsigned char> &o, const Module *M)
     unsigned ValNo = Type::FirstDerivedTyID; // Start at the derived types...
     outputConstantsInPlane(Plane, ValNo);      // Write out the types
   }
-
-  DEBUG(for (unsigned i = 0; i != Type::TypeTyID; ++i)
-          if (Table.getPlane(i).size())
-            std::cerr << "  ModuleLevel["
-                      << *Type::getPrimitiveType((Type::PrimitiveID)i)
-                      << "] = " << Table.getPlane(i).size() << "\n");
 
   // The ModuleInfoBlock follows directly after the type information
   outputModuleInfoBlock(M);
