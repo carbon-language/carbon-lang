@@ -53,7 +53,7 @@ proc llvm-runtest { programs objdir subdir target_triplet llvmgcc llvmgxx prcont
 		regsub -all {%llvmgxx} $new_runline $llvmgxx new_runline
 		
 		#replace %prcontext with prcontext.tcl (Goes away when we remove qmtest)
-		regsub -all {%prcontext} $new_runline "tclsh prcontext.tcl" new_runline
+		regsub -all {%prcontext} $new_runline $prcontext new_runline
 
 		puts $scriptFileId $new_runline
 	    } elseif {[regexp {XFAIL:[ *](.+)} $line match targets]} {
