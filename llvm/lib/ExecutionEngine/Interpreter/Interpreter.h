@@ -126,9 +126,9 @@ public:
   static void print(const Type *Ty, GenericValue V);
   static void printValue(const Type *Ty, GenericValue V);
 
-  // Hack until we can parse command line args...
   bool callMainMethod(const std::string &MainName,
                       const std::vector<std::string> &InputFilename);
+  GenericValue CreateArgv(const std::vector<std::string> &InputArgv);
 
   void list();             // Do the 'list' command
   void printStackTrace();  // Do the 'backtrace' command

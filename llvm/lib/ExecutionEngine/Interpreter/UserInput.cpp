@@ -238,23 +238,6 @@ bool Interpreter::callMethod(const string &Name) {
   return false;
 }
 
-static void *CreateArgv(const std::vector<string> &InputArgv) {
-  // Pointers are 64 bits...
-  uint64_t *Result = new PointerTy[InputArgv.size()+1];
-
-  for (unsigned i = 0; i < InputArgv.size(); ++i) {
-    unsigned Size = InputArgv[i].size()+1;
-    char *Dest = new char[Size];
-    copy(InputArgv[i].begin(), InputArgv[i].end(), Dest);
-    Dest[Size-1] = 0;
-    Result[i] = (PointerTy)Dest;
-  }
-
-  Result[InputArgv.size()] = 0;
-  return Result;
-}
-
-
 // callMainMethod - This is a nasty gross hack that will dissapear when
 // callMethod can parse command line options and stuff for us.
 //
@@ -289,8 +272,7 @@ bool Interpreter::callMainMethod(const string &Name,
       return true;
     }
 
-    GenericValue GV; GV.PointerVal = (uint64_t)CreateArgv(InputArgv);
-    Args.push_back(GV);
+    Args.push_back(CreateArgv(InputArgv));
   }
     // fallthrough
   case 1:

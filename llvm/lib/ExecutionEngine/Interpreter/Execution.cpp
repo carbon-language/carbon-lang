@@ -980,6 +980,28 @@ static void executeStoreInst(StoreInst &I, ExecutionContext &SF) {
 }
 
 
+GenericValue Interpreter::CreateArgv(const std::vector<std::string> &InputArgv){
+  // Pointers are 64 bits...
+  PointerTy *Result = new PointerTy[InputArgv.size()+1];  // 64 bit assumption
+
+  for (unsigned i = 0; i < InputArgv.size(); ++i) {
+    unsigned Size = InputArgv[i].size()+1;
+    char *Dest = new char[Size];
+    copy(InputArgv[i].begin(), InputArgv[i].end(), Dest);
+    Dest[Size-1] = 0;
+
+    GenericValue GV; GV.PointerVal = (PointerTy)Dest;
+    // Endian safe: Result[i] = (PointerTy)Dest;
+    StoreValueToMemory(GV, (GenericValue*)(Result+i),
+                       Type::LongTy);  // 64 bit assumption
+  }
+
+  Result[InputArgv.size()] = 0;
+  GenericValue GV; GV.PointerVal = (PointerTy)Result;
+  return GV;
+}
+
+
 //===----------------------------------------------------------------------===//
 //                 Miscellaneous Instruction Implementations
 //===----------------------------------------------------------------------===//
