@@ -316,6 +316,8 @@ static GlobalVariable *SRAGlobal(GlobalVariable *GV) {
     CE->destroyConstant();
   }
 
+  // Delete the old global, now that it is dead.
+  Globals.erase(GV);
   ++NumSRA;
   return NewGlobals[0];
 }
