@@ -379,6 +379,25 @@ void X86InstrInfo::print(const MachineInstr *MI, std::ostream &O,
     O << "\n";
     return;
   }
+
+  case X86II::MRMDestMem: {
+    // These instructions are the same as MRMDestReg, but instead of having a
+    // register reference for the mod/rm field, it's a memory reference.
+    //
+    assert(isMem(MI, 0) && MI->getNumOperands() == 4+1 &&
+           isReg(MI->getOperand(4)) && "Bad format for MRMDestMem!");
+    toHex(O, getBaseOpcodeFor(Opcode)) << " ";
+    emitMemModRMByte(O, MI, 0, getX86RegNum(MI->getOperand(4).getReg()));
+
+    O << "\n\t\t\t\t";
+    O << getName(MI->getOpCode()) << " <SIZE> PTR ";
+    printMemReference(O, MI, 0, RI);
+    O << ", ";
+    printOp(O, MI->getOperand(4), RI);
+    O << "\n";
+    return;
+  }
+
   case X86II::MRMSrcReg: {
     // There is a two forms that are acceptable for MRMSrcReg instructions,
     // those with 3 and 2 operands:
@@ -415,10 +434,7 @@ void X86InstrInfo::print(const MachineInstr *MI, std::ostream &O,
   case X86II::MRMSrcMem: {
     // These instructions are the same as MRMSrcReg, but instead of having a
     // register reference for the mod/rm field, it's a memory reference.
-
-    //I(MOVmr8      , "movb",  0x8A,             0, X86II::MRMSrcMem) 
-    // R8  = [mem]  8A/r
-
+    //
     assert(isReg(MI->getOperand(0)) &&
            (MI->getNumOperands() == 1+4 && isMem(MI, 1)) || 
            (MI->getNumOperands() == 2+4 && isReg(MI->getOperand(1)) && 
@@ -483,7 +499,6 @@ void X86InstrInfo::print(const MachineInstr *MI, std::ostream &O,
     return;
   }
 
-  case X86II::MRMDestMem:
   default:
     O << "\t\t\t-"; MI->print(O, TM); break;
   }
