@@ -21,10 +21,10 @@ bb1:					;[#uses=0]
 	%reg115 = malloc sbyte *, uint 1		; <sbyte * *> [#uses=1]
 	store sbyte * * %reg115, sbyte * * * %reg112
 	%reg121 = load sbyte * * * %reg112		; <sbyte * *> [#uses=1]
-	%size-idxcast1 = cast int %size to uint		; <uint> [#uses=1]
-	%reg1221 = getelementptr sbyte * * %reg121, uint %size-idxcast1		; <sbyte * *> [#uses=1]
+	%size-idxcast1 = cast int %size to long		; <uint> [#uses=1]
+	%reg1221 = getelementptr sbyte * * %reg121, long %size-idxcast1		; <sbyte * *> [#uses=1]
 	store sbyte * null, sbyte * * %reg1221
-	%reg232 = getelementptr sbyte * * * %reg112, uint 1		; <sbyte * * *> [#uses=1]
+	%reg232 = getelementptr sbyte * * * %reg112, long 1		; <sbyte * * *> [#uses=1]
 	%cast243 = cast int (uint) * %map to sbyte * *		; <sbyte * *> [#uses=1]
 	store sbyte * * %cast243, sbyte * * * %reg232
 	%cast246 = cast sbyte * * * %reg112 to %Hash		; <%Hash> [#uses=1]

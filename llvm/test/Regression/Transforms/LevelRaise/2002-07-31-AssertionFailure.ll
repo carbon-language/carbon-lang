@@ -18,7 +18,7 @@ bb2:                                    ;[#uses=3]
 bb5:                                    ;[#uses=2]
         %reg125 = phi sbyte* [ %reg126, %bb2], [ null, %0 ]
         %reg263 = malloc sbyte*, uint 3         ; <sbyte**> [#uses=4]
-        %reg2641 = getelementptr sbyte** %reg263, uint 1                ; <sbyte**> [#uses=1]
+        %reg2641 = getelementptr sbyte** %reg263, long 1                ; <sbyte**> [#uses=1]
         store sbyte* %reg125, sbyte** %reg2641
         store sbyte* %reg125, sbyte** %reg263
         %cast271 = cast sbyte** %reg263 to %CON_node*           ; <%CON_node*> [#uses=1]
