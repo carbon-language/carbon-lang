@@ -21,27 +21,24 @@ class GlobalValue;
 
 typedef int MachineOpCode;
 
-///---------------------------------------------------------------------------
+//===----------------------------------------------------------------------===//
 /// Special flags on instructions that modify the opcode.
 /// These flags are unused for now, but having them enforces that some
 /// changes will be needed if they are used.
-///---------------------------------------------------------------------------
-
+///
 enum MachineOpCodeFlags {
   AnnulFlag,         /// 1 if annul bit is set on a branch
   PredTakenFlag,     /// 1 if branch should be predicted taken
   PredNotTakenFlag   /// 1 if branch should be predicted not taken
 };
 
-///---------------------------------------------------------------------------
+//===----------------------------------------------------------------------===//
 /// MOTy - MachineOperandType - This namespace contains an enum that describes
 /// how the machine operand is used by the instruction: is it read, defined, or
 /// both?  Note that the MachineInstr/Operator class currently uses bool
 /// arguments to represent this information instead of an enum.  Eventually this
 /// should change over to use this _easier to read_ representation instead.
 ///
-///---------------------------------------------------------------------------
-
 namespace MOTy {
   enum UseType {
     Use,             /// This machine operand is only read by the instruction
@@ -50,7 +47,7 @@ namespace MOTy {
   };
 }
 
-//---------------------------------------------------------------------------
+//===----------------------------------------------------------------------===//
 // class MachineOperand 
 // 
 // Purpose:
@@ -83,7 +80,7 @@ namespace MOTy {
 //   -	Ptr will also be of virtual register type MO_VirtualReg.
 //	Again, the field Value* value identifies the value.
 // 
-//---------------------------------------------------------------------------
+//===----------------------------------------------------------------------===//
 
 struct MachineOperand {
   enum MachineOperandType {
@@ -322,7 +319,7 @@ private:
 };
 
 
-//---------------------------------------------------------------------------
+//===----------------------------------------------------------------------===//
 // class MachineInstr 
 // 
 // Purpose:
@@ -338,10 +335,10 @@ private:
 //  (2) "Implicit operands" are values implicitly used or defined by the
 //      machine instruction, such as arguments to a CALL, return value of
 //      a CALL (if any), and return value of a RETURN.
-//---------------------------------------------------------------------------
+//===----------------------------------------------------------------------===//
 
 class MachineInstr {
-  MachineOpCode    opCode;              // the opcode
+  int              opCode;              // the opcode
   unsigned         opCodeFlags;         // flags modifying instrn behavior
   std::vector<MachineOperand> operands; // the operands
   unsigned numImplicitRefs;             // number of implicit operands
@@ -356,26 +353,26 @@ class MachineInstr {
   MachineInstr(const MachineInstr &);  // DO NOT IMPLEMENT
   void operator=(const MachineInstr&); // DO NOT IMPLEMENT
 public:
-  MachineInstr(MachineOpCode Opcode, unsigned numOperands);
+  MachineInstr(int Opcode, unsigned numOperands);
 
   /// MachineInstr ctor - This constructor only does a _reserve_ of the
   /// operands, not a resize for them.  It is expected that if you use this that
   /// you call add* methods below to fill up the operands, instead of the Set
   /// methods.  Eventually, the "resizing" ctors will be phased out.
   ///
-  MachineInstr(MachineOpCode Opcode, unsigned numOperands, bool XX, bool YY);
+  MachineInstr(int Opcode, unsigned numOperands, bool XX, bool YY);
 
   /// MachineInstr ctor - Work exactly the same as the ctor above, except that
   /// the MachineInstr is created and added to the end of the specified basic
   /// block.
   ///
-  MachineInstr(MachineBasicBlock *MBB, MachineOpCode Opcode, unsigned numOps);
+  MachineInstr(MachineBasicBlock *MBB, int Opcode, unsigned numOps);
   
 
   // The opcode.
   // 
-  const MachineOpCode getOpcode() const { return opCode; }
-  const MachineOpCode getOpCode() const { return opCode; }
+  const int getOpcode() const { return opCode; }
+  const int getOpCode() const { return opCode; }
 
   // Opcode flags.
   // 
@@ -428,10 +425,17 @@ public:
     return getImplicitOp(i).getVRegValue();
   }
 
-  inline void addImplicitRef    (Value* V,
-                                 bool isDef=false,bool isDefAndUse=false);
-  inline void setImplicitRef    (unsigned i, Value* V,
-                                 bool isDef=false, bool isDefAndUse=false);
+  void addImplicitRef(Value* V, bool isDef = false, bool isDefAndUse = false) {
+    ++numImplicitRefs;
+    addRegOperand(V, isDef, isDefAndUse);
+  }
+  void setImplicitRef(unsigned i, Value* V, bool isDef=false,
+                      bool isDefAndUse=false) {
+    assert(i < getNumImplicitRefs() && "setImplicitRef() out of range!");
+    SetMachineOperandVal(i + getNumOperands(),
+                         MachineOperand::MO_VirtualRegister,
+                         V, isDef, isDefAndUse);
+  }
 
   //
   // Information about registers used in this instruction.
@@ -608,7 +612,7 @@ public:
   /// simply replace() and then set new operands with Set.*Operand methods
   /// below.
   /// 
-  void replace(MachineOpCode Opcode, unsigned numOperands);
+  void replace(int Opcode, unsigned numOperands);
 
   /// setOpcode - Replace the opcode of the current instruction with a new one.
   ///
@@ -721,38 +725,11 @@ public:
 };
 
 
-// Define here to enable inlining of the functions used.
-// 
-void MachineInstr::addImplicitRef(Value* V,
-                                  bool isDef,
-                                  bool isDefAndUse)
-{
-  ++numImplicitRefs;
-  addRegOperand(V, isDef, isDefAndUse);
-}
-
-void MachineInstr::setImplicitRef(unsigned i,
-                                  Value* V,
-                                  bool isDef,
-                                  bool isDefAndUse)
-{
-  assert(i < getNumImplicitRefs() && "setImplicitRef() out of range!");
-  SetMachineOperandVal(i + getNumOperands(),
-                       MachineOperand::MO_VirtualRegister,
-                       V, isDef, isDefAndUse);
-}
-
-
-//---------------------------------------------------------------------------
+//===----------------------------------------------------------------------===//
 // Debugging Support
-//---------------------------------------------------------------------------
 
-std::ostream& operator<<        (std::ostream& os,
-                                 const MachineInstr& minstr);
-
-std::ostream& operator<<        (std::ostream& os,
-                                 const MachineOperand& mop);
-					 
-void PrintMachineInstructions   (const Function *F);
+std::ostream& operator<<(std::ostream &OS, const MachineInstr &MI);
+std::ostream& operator<<(std::ostream &OS, const MachineOperand &MO);
+void PrintMachineInstructions(const Function *F);
 
 #endif
