@@ -17,20 +17,13 @@
 #include <list>
 #include <utility>
 #include <algorithm>
-using std::list;
-using std::vector;
-using std::pair;
-using std::map;
-using std::pair;
-using std::make_pair;
-using std::string;
 
 int yyerror(const char *ErrorMsg); // Forward declarations to prevent "implicit
 int yylex();                       // declaration" of xxx warnings.
 int yyparse();
 
 static Module *ParserResult;
-string CurFilename;
+std::string CurFilename;
 
 // DEBUG_UPREFS - Define this symbol if you want to enable debugging output
 // relating to upreferences in the input stream.
@@ -55,23 +48,24 @@ static BasicBlock *CurBB;
 // This contains info used when building the body of a function.  It is
 // destroyed when the function is completed.
 //
-typedef vector<Value *> ValueList;           // Numbered defs
-static void ResolveDefinitions(vector<ValueList> &LateResolvers,
-                               vector<ValueList> *FutureLateResolvers = 0);
+typedef std::vector<Value *> ValueList;           // Numbered defs
+static void ResolveDefinitions(std::vector<ValueList> &LateResolvers,
+                               std::vector<ValueList> *FutureLateResolvers = 0);
 
 static struct PerModuleInfo {
   Module *CurrentModule;
-  vector<ValueList>    Values;     // Module level numbered definitions
-  vector<ValueList>    LateResolveValues;
-  vector<PATypeHolder> Types;
-  map<ValID, PATypeHolder> LateResolveTypes;
+  std::vector<ValueList>    Values;     // Module level numbered definitions
+  std::vector<ValueList>    LateResolveValues;
+  std::vector<PATypeHolder> Types;
+  std::map<ValID, PATypeHolder> LateResolveTypes;
 
   // GlobalRefs - This maintains a mapping between <Type, ValID>'s and forward
   // references to global values.  Global values may be referenced before they
   // are defined, and if so, the temporary object that they represent is held
   // here.  This is used for forward references of ConstantPointerRefs.
   //
-  typedef map<pair<const PointerType *, ValID>, GlobalVariable*> GlobalRefsType;
+  typedef std::map<std::pair<const PointerType *,
+                             ValID>, GlobalVariable*> GlobalRefsType;
   GlobalRefsType GlobalRefs;
 
   void ModuleDone() {
@@ -85,7 +79,7 @@ static struct PerModuleInfo {
     // resolved!
     //
     if (!GlobalRefs.empty()) {
-      string UndefinedReferences = "Unresolved global references exist:\n";
+      std::string UndefinedReferences = "Unresolved global references exist:\n";
       
       for (GlobalRefsType::iterator I = GlobalRefs.begin(), E =GlobalRefs.end();
            I != E; ++I) {
@@ -108,7 +102,8 @@ static struct PerModuleInfo {
   void DeclareNewGlobalValue(GlobalValue *GV, ValID D) {
     // Check to see if there is a forward reference to this global variable...
     // if there is, eliminate it and patch the reference to use the new def'n.
-    GlobalRefsType::iterator I = GlobalRefs.find(make_pair(GV->getType(), D));
+    GlobalRefsType::iterator I =
+      GlobalRefs.find(std::make_pair(GV->getType(), D));
 
     if (I != GlobalRefs.end()) {
       GlobalVariable *OldGV = I->second;   // Get the placeholder...
@@ -139,10 +134,10 @@ static struct PerModuleInfo {
 static struct PerFunctionInfo {
   Function *CurrentFunction;     // Pointer to current function being created
 
-  vector<ValueList> Values;      // Keep track of numbered definitions
-  vector<ValueList> LateResolveValues;
-  vector<PATypeHolder> Types;
-  map<ValID, PATypeHolder> LateResolveTypes;
+  std::vector<ValueList> Values;      // Keep track of numbered definitions
+  std::vector<ValueList> LateResolveValues;
+  std::vector<PATypeHolder> Types;
+  std::map<ValID, PATypeHolder> LateResolveTypes;
   bool isDeclare;                // Is this function a forward declararation?
 
   inline PerFunctionInfo() {
@@ -175,7 +170,8 @@ static bool inFunctionScope() { return CurMeth.CurrentFunction != 0; }
 //               Code to handle definitions of all the types
 //===----------------------------------------------------------------------===//
 
-static int InsertValue(Value *D, vector<ValueList> &ValueTab = CurMeth.Values) {
+static int InsertValue(Value *D,
+                       std::vector<ValueList> &ValueTab = CurMeth.Values) {
   if (D->hasName()) return -1;           // Is this a numbered definition?
 
   // Yes, insert the value into the value table...
@@ -188,7 +184,7 @@ static int InsertValue(Value *D, vector<ValueList> &ValueTab = CurMeth.Values) {
 }
 
 // TODO: FIXME when Type are not const
-static void InsertType(const Type *Ty, vector<PATypeHolder> &Types) {
+static void InsertType(const Type *Ty, std::vector<PATypeHolder> &Types) {
   Types.push_back(Ty);
 }
 
@@ -209,7 +205,7 @@ static const Type *getTypeVal(const ValID &D, bool DoNotImprovise = false) {
     break;
   }
   case ValID::NameVal: {                // Is it a named definition?
-    string Name(D.Name);
+    std::string Name(D.Name);
     SymbolTable *SymTab = 0;
     Value *N = 0;
     if (inFunctionScope()) {
@@ -239,20 +235,20 @@ static const Type *getTypeVal(const ValID &D, bool DoNotImprovise = false) {
   //
   if (DoNotImprovise) return 0;  // Do we just want a null to be returned?
 
-  map<ValID, PATypeHolder> &LateResolver = inFunctionScope() ? 
+  std::map<ValID, PATypeHolder> &LateResolver = inFunctionScope() ? 
     CurMeth.LateResolveTypes : CurModule.LateResolveTypes;
   
-  map<ValID, PATypeHolder>::iterator I = LateResolver.find(D);
+  std::map<ValID, PATypeHolder>::iterator I = LateResolver.find(D);
   if (I != LateResolver.end()) {
     return I->second;
   }
 
   Type *Typ = OpaqueType::get();
-  LateResolver.insert(make_pair(D, Typ));
+  LateResolver.insert(std::make_pair(D, Typ));
   return Typ;
 }
 
-static Value *lookupInSymbolTable(const Type *Ty, const string &Name) {
+static Value *lookupInSymbolTable(const Type *Ty, const std::string &Name) {
   SymbolTable &SymTab = 
     inFunctionScope() ? CurMeth.CurrentFunction->getSymbolTable() :
                         CurModule.CurrentModule->getSymbolTable();
@@ -291,7 +287,7 @@ static Value *getValNonImprovising(const Type *Ty, const ValID &D) {
   }
 
   case ValID::NameVal: {                // Is it a named definition?
-    Value *N = lookupInSymbolTable(Ty, string(D.Name));
+    Value *N = lookupInSymbolTable(Ty, std::string(D.Name));
     if (N == 0) return 0;
 
     D.destroy();  // Free old strdup'd memory...
@@ -392,8 +388,8 @@ static Value *getVal(const Type *Ty, const ValID &D) {
 // time (forward branches, phi functions for loops, etc...) resolve the 
 // defs now...
 //
-static void ResolveDefinitions(vector<ValueList> &LateResolvers,
-                               vector<ValueList> *FutureLateResolvers) {
+static void ResolveDefinitions(std::vector<ValueList> &LateResolvers,
+                               std::vector<ValueList> *FutureLateResolvers) {
   // Loop over LateResolveDefs fixing up stuff that couldn't be resolved
   for (unsigned ty = 0; ty < LateResolvers.size(); ty++) {
     while (!LateResolvers[ty].empty()) {
@@ -433,17 +429,17 @@ static void ResolveDefinitions(vector<ValueList> &LateResolvers,
 // refering to the number can be resolved.  Do this now.
 //
 static void ResolveTypeTo(char *Name, const Type *ToTy) {
-  vector<PATypeHolder> &Types = inFunctionScope() ? 
+  std::vector<PATypeHolder> &Types = inFunctionScope() ? 
      CurMeth.Types : CurModule.Types;
 
    ValID D;
    if (Name) D = ValID::create(Name);
    else      D = ValID::create((int)Types.size());
 
-   map<ValID, PATypeHolder> &LateResolver = inFunctionScope() ? 
+   std::map<ValID, PATypeHolder> &LateResolver = inFunctionScope() ? 
      CurMeth.LateResolveTypes : CurModule.LateResolveTypes;
   
-   map<ValID, PATypeHolder>::iterator I = LateResolver.find(D);
+   std::map<ValID, PATypeHolder>::iterator I = LateResolver.find(D);
    if (I != LateResolver.end()) {
      ((DerivedType*)I->second.get())->refineAbstractTypeTo(ToTy);
      LateResolver.erase(I);
@@ -453,7 +449,7 @@ static void ResolveTypeTo(char *Name, const Type *ToTy) {
 // ResolveTypes - At this point, all types should be resolved.  Any that aren't
 // are errors.
 //
-static void ResolveTypes(map<ValID, PATypeHolder> &LateResolveTypes) {
+static void ResolveTypes(std::map<ValID, PATypeHolder> &LateResolveTypes) {
   if (!LateResolveTypes.empty()) {
     const ValID &DID = LateResolveTypes.begin()->first;
 
@@ -476,7 +472,7 @@ static void ResolveTypes(map<ValID, PATypeHolder> &LateResolveTypes) {
 static bool setValueName(Value *V, char *NameStr) {
   if (NameStr == 0) return false;
   
-  string Name(NameStr);           // Copy string
+  std::string Name(NameStr);      // Copy string
   free(NameStr);                  // Free old string
 
   if (V->getType() == Type::VoidTy) 
@@ -549,7 +545,7 @@ static bool TypeContains(const Type *Ty, const Type *E) {
 }
 
 
-static vector<pair<unsigned, OpaqueType *> > UpRefs;
+static std::vector<std::pair<unsigned, OpaqueType *> > UpRefs;
 
 static PATypeHolder HandleUpRefs(const Type *ty) {
   PATypeHolder Ty(ty);
@@ -566,7 +562,7 @@ static PATypeHolder HandleUpRefs(const Type *ty) {
       if (Level == 0) {                     // Upreference should be resolved! 
 	UR_OUT("  * Resolving upreference for "
                << UpRefs[i].second->getDescription() << endl;
-	       string OldName = UpRefs[i].second->getDescription());
+	       std::string OldName = UpRefs[i].second->getDescription());
 	UpRefs[i].second->refineAbstractTypeTo(Ty);
 	UpRefs.erase(UpRefs.begin()+i);     // Remove from upreference list...
 	UR_OUT("  * Type '" << OldName << "' refined upreference to: "
@@ -586,7 +582,7 @@ static PATypeHolder HandleUpRefs(const Type *ty) {
 //            RunVMAsmParser - Define an interface to this parser
 //===----------------------------------------------------------------------===//
 //
-Module *RunVMAsmParser(const string &Filename, FILE *F) {
+Module *RunVMAsmParser(const std::string &Filename, FILE *F) {
   llvmAsmin = F;
   CurFilename = Filename;
   llvmAsmlineno = 1;      // Reset the current line number...
@@ -792,12 +788,12 @@ UpRTypes : SymbolicValueRef {            // Named types are also simple types...
 UpRTypes : '\\' EUINT64VAL {                   // Type UpReference
     if ($2 > (uint64_t)INT64_MAX) ThrowException("Value out of range!");
     OpaqueType *OT = OpaqueType::get();        // Use temporary placeholder
-    UpRefs.push_back(make_pair((unsigned)$2, OT));  // Add to vector...
+    UpRefs.push_back(std::make_pair((unsigned)$2, OT));  // Add to vector...
     $$ = new PATypeHolder(OT);
     UR_OUT("New Upreference!\n");
   }
   | UpRTypesV '(' ArgTypeListI ')' {           // Function derived type?
-    vector<const Type*> Params;
+    std::vector<const Type*> Params;
     mapto($3->begin(), $3->end(), std::back_inserter(Params), 
 	  std::mem_fun_ref(&PATypeHandle<Type>::get));
     bool isVarArg = Params.size() && Params.back() == Type::VoidTy;
@@ -812,7 +808,7 @@ UpRTypes : '\\' EUINT64VAL {                   // Type UpReference
     delete $4;
   }
   | '{' TypeListI '}' {                        // Structure type?
-    vector<const Type*> Elements;
+    std::vector<const Type*> Elements;
     mapto($2->begin(), $2->end(), std::back_inserter(Elements), 
 	std::mem_fun_ref(&PATypeHandle<Type>::get));
 
@@ -820,7 +816,7 @@ UpRTypes : '\\' EUINT64VAL {                   // Type UpReference
     delete $2;
   }
   | '{' '}' {                                  // Empty structure type?
-    $$ = new PATypeHolder(StructType::get(vector<const Type*>()));
+    $$ = new PATypeHolder(StructType::get(std::vector<const Type*>()));
   }
   | UpRTypes '*' {                             // Pointer type?
     $$ = new PATypeHolder(HandleUpRefs(PointerType::get(*$1)));
@@ -831,7 +827,7 @@ UpRTypes : '\\' EUINT64VAL {                   // Type UpReference
 // declaration type lists
 //
 TypeListI : UpRTypes {
-    $$ = new list<PATypeHolder>();
+    $$ = new std::list<PATypeHolder>();
     $$->push_back(*$1); delete $1;
   }
   | TypeListI ',' UpRTypes {
@@ -844,10 +840,10 @@ ArgTypeListI : TypeListI
     ($$=$1)->push_back(Type::VoidTy);
   }
   | DOTDOTDOT {
-    ($$ = new list<PATypeHolder>())->push_back(Type::VoidTy);
+    ($$ = new std::list<PATypeHolder>())->push_back(Type::VoidTy);
   }
   | /*empty*/ {
-    $$ = new list<PATypeHolder>();
+    $$ = new std::list<PATypeHolder>();
   };
 
 // ConstVal - The various declarations that go into the constant pool.  This
@@ -891,7 +887,7 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
     if (NumElements != -1 && NumElements != 0) 
       ThrowException("Type mismatch: constant sized array initialized with 0"
 		     " arguments, but has size of " + itostr(NumElements) +"!");
-    $$ = ConstantArray::get(ATy, vector<Constant*>());
+    $$ = ConstantArray::get(ATy, std::vector<Constant*>());
     delete $1;
   }
   | Types 'c' STRINGCONSTANT {
@@ -907,7 +903,7 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
       ThrowException("Can't build string constant of size " + 
 		     itostr((int)(EndStr-$3)) +
 		     " when array has size " + itostr(NumElements) + "!");
-    vector<Constant*> Vals;
+    std::vector<Constant*> Vals;
     if (ETy == Type::SByteTy) {
       for (char *C = $3; C != EndStr; ++C)
 	Vals.push_back(ConstantSInt::get(ETy, *C));
@@ -978,7 +974,7 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
 
       // First check to see if the forward references value is already created!
       PerModuleInfo::GlobalRefsType::iterator I =
-	CurModule.GlobalRefs.find(make_pair(PT, $2));
+	CurModule.GlobalRefs.find(std::make_pair(PT, $2));
     
       if (I != CurModule.GlobalRefs.end()) {
 	V = I->second;             // Placeholder already exists, use it...
@@ -991,7 +987,7 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
                                                 false,
                                                 GlobalValue::ExternalLinkage);
 	// Keep track of the fact that we have a forward ref to recycle it
-	CurModule.GlobalRefs.insert(make_pair(make_pair(PT, $2), GV));
+	CurModule.GlobalRefs.insert(std::make_pair(std::make_pair(PT, $2), GV));
 
 	// Must temporarily push this value into the module table...
 	CurModule.CurrentModule->getGlobalList().push_back(GV);
@@ -1044,7 +1040,7 @@ ConstExpr: CAST '(' ConstVal TO Types ')' {
     if (!IdxTy)
       ThrowException("Index list invalid for constant getelementptr!");
 
-    vector<Constant*> IdxVec;
+    std::vector<Constant*> IdxVec;
     for (unsigned i = 0, e = $4->size(); i != e; ++i)
       if (Constant *C = dyn_cast<Constant>((*$4)[i]))
         IdxVec.push_back(C);
@@ -1072,7 +1068,7 @@ ConstVector : ConstVector ',' ConstVal {
     ($$ = $1)->push_back($3);
   }
   | ConstVal {
-    $$ = new vector<Constant*>();
+    $$ = new std::vector<Constant*>();
     $$->push_back($1);
   };
 
@@ -1194,7 +1190,7 @@ OptVAR_ID : VAR_ID | /*empty*/ { $$ = 0; };
 ArgVal : Types OptVAR_ID {
   if (*$1 == Type::VoidTy)
     ThrowException("void typed arguments are invalid!");
-  $$ = new pair<PATypeHolder*, char*>($1, $2);
+  $$ = new std::pair<PATypeHolder*, char*>($1, $2);
 };
 
 ArgListH : ArgListH ',' ArgVal {
@@ -1203,7 +1199,7 @@ ArgListH : ArgListH ',' ArgVal {
     delete $3;
   }
   | ArgVal {
-    $$ = new vector<pair<PATypeHolder*,char*> >();
+    $$ = new std::vector<std::pair<PATypeHolder*,char*> >();
     $$->push_back(*$1);
     delete $1;
   };
@@ -1213,11 +1209,12 @@ ArgList : ArgListH {
   }
   | ArgListH ',' DOTDOTDOT {
     $$ = $1;
-    $$->push_back(pair<PATypeHolder*, char*>(new PATypeHolder(Type::VoidTy),0));
+    $$->push_back(std::pair<PATypeHolder*,
+                            char*>(new PATypeHolder(Type::VoidTy), 0));
   }
   | DOTDOTDOT {
-    $$ = new vector<pair<PATypeHolder*,char*> >();
-    $$->push_back(pair<PATypeHolder*, char*>(new PATypeHolder(Type::VoidTy),0));
+    $$ = new std::vector<std::pair<PATypeHolder*,char*> >();
+    $$->push_back(std::make_pair(new PATypeHolder(Type::VoidTy), (char*)0));
   }
   | /* empty */ {
     $$ = 0;
@@ -1227,11 +1224,11 @@ FuncName : VAR_ID | STRINGCONSTANT;
 
 FunctionHeaderH : TypesV FuncName '(' ArgList ')' {
   UnEscapeLexed($2);
-  string FunctionName($2);
+  std::string FunctionName($2);
   
-  vector<const Type*> ParamTypeList;
+  std::vector<const Type*> ParamTypeList;
   if ($4) {   // If there are arguments...
-    for (vector<pair<PATypeHolder*,char*> >::iterator I = $4->begin();
+    for (std::vector<std::pair<PATypeHolder*,char*> >::iterator I = $4->begin();
          I != $4->end(); ++I)
       ParamTypeList.push_back(I->first->get());
   }
@@ -1279,7 +1276,7 @@ FunctionHeaderH : TypesV FuncName '(' ArgList ')' {
       $4->pop_back();  // Delete the last entry
     }
     Function::aiterator ArgIt = Fn->abegin();
-    for (vector<pair<PATypeHolder*, char*> >::iterator I = $4->begin();
+    for (std::vector<std::pair<PATypeHolder*, char*> >::iterator I =$4->begin();
          I != $4->end(); ++I, ++ArgIt) {
       delete I->first;                          // Delete the typeholder...
 
@@ -1423,7 +1420,7 @@ BBTerminatorInst : RET ResolvedVal {              // Return with a result...
                                    cast<BasicBlock>(getVal(Type::LabelTy, $6)));
     $$ = S;
 
-    vector<pair<Constant*,BasicBlock*> >::iterator I = $8->begin(),
+    std::vector<std::pair<Constant*,BasicBlock*> >::iterator I = $8->begin(),
       E = $8->end();
     for (; I != E; ++I)
       S->dest_push_back(I->first, I->second);
@@ -1436,9 +1433,10 @@ BBTerminatorInst : RET ResolvedVal {              // Return with a result...
     if (!(PFTy = dyn_cast<PointerType>($2->get())) ||
         !(Ty = dyn_cast<FunctionType>(PFTy->getElementType()))) {
       // Pull out the types of all of the arguments...
-      vector<const Type*> ParamTypes;
+      std::vector<const Type*> ParamTypes;
       if ($5) {
-        for (vector<Value*>::iterator I = $5->begin(), E = $5->end(); I!=E; ++I)
+        for (std::vector<Value*>::iterator I = $5->begin(), E = $5->end();
+             I != E; ++I)
           ParamTypes.push_back((*I)->getType());
       }
 
@@ -1460,14 +1458,14 @@ BBTerminatorInst : RET ResolvedVal {              // Return with a result...
 
     // Create the call node...
     if (!$5) {                                   // Has no arguments?
-      $$ = new InvokeInst(V, Normal, Except, vector<Value*>());
+      $$ = new InvokeInst(V, Normal, Except, std::vector<Value*>());
     } else {                                     // Has arguments?
       // Loop through FunctionType's arguments and ensure they are specified
       // correctly!
       //
       FunctionType::ParamTypes::const_iterator I = Ty->getParamTypes().begin();
       FunctionType::ParamTypes::const_iterator E = Ty->getParamTypes().end();
-      vector<Value*>::iterator ArgI = $5->begin(), ArgE = $5->end();
+      std::vector<Value*>::iterator ArgI = $5->begin(), ArgE = $5->end();
 
       for (; ArgI != ArgE && I != E; ++ArgI, ++I)
 	if ((*ArgI)->getType() != *I)
@@ -1490,16 +1488,16 @@ JumpTable : JumpTable IntType ConstValueRef ',' LABEL ValueRef {
     if (V == 0)
       ThrowException("May only switch on a constant pool value!");
 
-    $$->push_back(make_pair(V, cast<BasicBlock>(getVal($5, $6))));
+    $$->push_back(std::make_pair(V, cast<BasicBlock>(getVal($5, $6))));
   }
   | IntType ConstValueRef ',' LABEL ValueRef {
-    $$ = new vector<pair<Constant*, BasicBlock*> >();
+    $$ = new std::vector<std::pair<Constant*, BasicBlock*> >();
     Constant *V = cast<Constant>(getValNonImprovising($1, $2));
 
     if (V == 0)
       ThrowException("May only switch on a constant pool value!");
 
-    $$->push_back(make_pair(V, cast<BasicBlock>(getVal($4, $5))));
+    $$->push_back(std::make_pair(V, cast<BasicBlock>(getVal($4, $5))));
   };
 
 Inst : OptAssign InstVal {
@@ -1510,20 +1508,20 @@ Inst : OptAssign InstVal {
 };
 
 PHIList : Types '[' ValueRef ',' ValueRef ']' {    // Used for PHI nodes
-    $$ = new list<pair<Value*, BasicBlock*> >();
-    $$->push_back(make_pair(getVal(*$1, $3), 
-                            cast<BasicBlock>(getVal(Type::LabelTy, $5))));
+    $$ = new std::list<std::pair<Value*, BasicBlock*> >();
+    $$->push_back(std::make_pair(getVal(*$1, $3), 
+                                 cast<BasicBlock>(getVal(Type::LabelTy, $5))));
     delete $1;
   }
   | PHIList ',' '[' ValueRef ',' ValueRef ']' {
     $$ = $1;
-    $1->push_back(make_pair(getVal($1->front().first->getType(), $4),
-                            cast<BasicBlock>(getVal(Type::LabelTy, $6))));
+    $1->push_back(std::make_pair(getVal($1->front().first->getType(), $4),
+                                 cast<BasicBlock>(getVal(Type::LabelTy, $6))));
   };
 
 
 ValueRefList : ResolvedVal {    // Used for call statements, and memory insts...
-    $$ = new vector<Value*>();
+    $$ = new std::vector<Value*>();
     $$->push_back($1);
   }
   | ValueRefList ',' ResolvedVal {
@@ -1595,9 +1593,10 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
     if (!(PFTy = dyn_cast<PointerType>($2->get())) ||
         !(Ty = dyn_cast<FunctionType>(PFTy->getElementType()))) {
       // Pull out the types of all of the arguments...
-      vector<const Type*> ParamTypes;
+      std::vector<const Type*> ParamTypes;
       if ($5) {
-        for (vector<Value*>::iterator I = $5->begin(), E = $5->end(); I!=E; ++I)
+        for (std::vector<Value*>::iterator I = $5->begin(), E = $5->end();
+             I != E; ++I)
           ParamTypes.push_back((*I)->getType());
       }
 
@@ -1618,14 +1617,14 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
         ThrowException("No arguments passed to a function that "
                        "expects arguments!");
 
-      $$ = new CallInst(V, vector<Value*>());
+      $$ = new CallInst(V, std::vector<Value*>());
     } else {                                     // Has arguments?
       // Loop through FunctionType's arguments and ensure they are specified
       // correctly!
       //
       FunctionType::ParamTypes::const_iterator I = Ty->getParamTypes().begin();
       FunctionType::ParamTypes::const_iterator E = Ty->getParamTypes().end();
-      vector<Value*>::iterator ArgI = $5->begin(), ArgE = $5->end();
+      std::vector<Value*>::iterator ArgI = $5->begin(), ArgE = $5->end();
 
       for (; ArgI != ArgE && I != E; ++ArgI, ++I)
 	if ((*ArgI)->getType() != *I)
@@ -1648,7 +1647,7 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
 IndexList : ',' ValueRefList { 
   $$ = $2; 
 } | /* empty */ { 
-  $$ = new vector<Value*>(); 
+  $$ = new std::vector<Value*>(); 
 };
 
 MemoryInst : MALLOC Types {
@@ -1744,13 +1743,14 @@ MemoryInst : MALLOC Types {
 
 %%
 int yyerror(const char *ErrorMsg) {
-  string where  = string((CurFilename == "-")? string("<stdin>") : CurFilename)
+  std::string where 
+    = std::string((CurFilename == "-") ? std::string("<stdin>") : CurFilename)
                   + ":" + utostr((unsigned) llvmAsmlineno) + ": ";
-  string errMsg = string(ErrorMsg) + string("\n") + where + " while reading ";
+  std::string errMsg = std::string(ErrorMsg) + "\n" + where + " while reading ";
   if (yychar == YYEMPTY)
     errMsg += "end-of-file.";
   else
-    errMsg += "token: '" + string(llvmAsmtext, llvmAsmleng) + "'";
+    errMsg += "token: '" + std::string(llvmAsmtext, llvmAsmleng) + "'";
   ThrowException(errMsg);
   return 0;
 }
