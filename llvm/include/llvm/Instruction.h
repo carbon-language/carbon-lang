@@ -79,7 +79,7 @@ public:
 
   /// isAssociative - Return true if the instruction is associative:
   ///
-  ///   Associative operators satisfy:  x op (y op z) === (x op y) op z)
+  ///   Associative operators satisfy:  x op (y op z) === (x op y) op z
   ///
   /// In LLVM, the Add, Mul, And, Or, and Xor operators are associative, when
   /// not applied to floating point types.
@@ -89,7 +89,7 @@ public:
 
   /// isCommutative - Return true if the instruction is commutative:
   ///
-  ///   Commutative operators satistify: (x op y) === (y op x)
+  ///   Commutative operators satisfy: (x op y) === (y op x)
   ///
   /// In LLVM, these are the associative operators, plus SetEQ and SetNE, when
   /// applied to any type.
