@@ -177,11 +177,8 @@ SparcV9TargetMachine::addPassesToEmitAssembly(PassManager &PM, std::ostream &Out
   // function has been emitted.
   PM.add(createAsmPrinterPass(Out, *this));
 
-  // FIXME: this pass crashes if added; there is a double deletion going on
-  // somewhere inside it. This is caught when running the SparcV9 code generator
-  // on X86, but is typically ignored when running natively.
   // Free machine-code IR which is no longer needed:
-  // PM.add(createSparcV9MachineCodeDestructionPass());
+  PM.add(createSparcV9MachineCodeDestructionPass());
 
   // Emit bytecode to the assembly file into its special section next
   if (EmitMappingInfo)
