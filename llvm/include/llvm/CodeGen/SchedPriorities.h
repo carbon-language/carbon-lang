@@ -21,32 +21,14 @@
 #ifndef LLVM_CODEGEN_SCHEDPRIORITIES_H
 #define LLVM_CODEGEN_SCHEDPRIORITIES_H
 
-//************************** System Include Files **************************/
-
-#include <hash_map>
-#include <list>
-#include <vector>
-#include <algorithm>
-
-//*************************** User Include Files ***************************/
-
-#include "llvm/CFG.h"			// just for graph iterators
-#include "llvm/Support/NonCopyable.h"
-#include "llvm/Support/HashExtras.h"
+#include "llvm/CodeGen/InstrScheduling.h"
 #include "llvm/Analysis/LiveVar/MethodLiveVarInfo.h"
 #include "llvm/CodeGen/SchedGraph.h"
-#include "llvm/CodeGen/InstrScheduling.h"
-
-//************************* Opaque Declarations ****************************/
 
 class Method;
 class MachineInstr;
 class SchedulingManager;
 
-/******************** Exported Data Types and Constants ********************/
-
-
-//*********************** Public Class Declarations ************************/
 
 struct NodeDelayPair {
   const SchedGraphNode* node;
@@ -196,28 +178,23 @@ SchedPriorities::insertReady(const SchedGraphNode* node)
   
   if (SchedDebugLevel >= Sched_PrintSchedTrace)
     {
-      printIndent(2);
-      cout << "Cycle " << this->getTime() << ": "
+      cout << "    Cycle " << this->getTime() << ": "
 	   << " Node " << node->getNodeId() << " is ready; "
 	   << " Delay = " << this->getNodeDelayRef(node) << "; Instruction: "
 	   << endl;
-      printIndent(4);
-      cout << * node->getMachineInstr() << endl;
+      cout << "        " << *node->getMachineInstr() << endl;
     }
 }
 
-inline void
-SchedPriorities::updateTime(cycles_t c)
-{
+inline void SchedPriorities::updateTime(cycles_t c) {
   curTime = c;
   nextToTry = candsAsHeap.begin();
   mcands.clear();
 }
 
 inline ostream& operator<< (ostream& os, const NodeDelayPair* nd) {
-  os << "Delay for node " << nd->node->getNodeId()
-     << " = " << nd->delay << endl;
-  return os;
+  return os << "Delay for node " << nd->node->getNodeId()
+	    << " = " << nd->delay << endl;
 }
 
 /***************************************************************************/
