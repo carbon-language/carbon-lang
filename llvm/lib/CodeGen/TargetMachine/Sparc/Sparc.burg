@@ -1,6 +1,6 @@
 %{
 #include <stdio.h>
-#include <llvm/Codegen/InstrForest.h>
+#include <llvm/CodeGen/InstrForest.h>
 
 typedef BasicTreeNode* NODEPTR_TYPE;
 #define OP_LABEL(p)	((p)->opLabel)
