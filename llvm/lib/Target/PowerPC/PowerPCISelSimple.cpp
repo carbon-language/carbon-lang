@@ -529,7 +529,7 @@ void ISel::copyConstantToRegister(MachineBasicBlock *MBB,
     unsigned AddrReg = getReg(CPR->getValue(), MBB, IP);
     BuildMI(*MBB, IP, PPC32::OR, 2, R).addReg(AddrReg).addReg(AddrReg);
   } else {
-    std::cerr << "Offending constant: " << C << "\n";
+    std::cerr << "Offending constant: " << *C << "\n";
     assert(0 && "Type not handled yet!");
   }
 }

@@ -273,7 +273,7 @@ std::ostream &CWriter::printType(std::ostream &Out, const Type *Ty,
     case Type::FloatTyID:  return Out << "float "              << NameSoFar;
     case Type::DoubleTyID: return Out << "double "             << NameSoFar;
     default :
-      std::cerr << "Unknown primitive type: " << Ty << "\n";
+      std::cerr << "Unknown primitive type: " << *Ty << "\n";
       abort();
     }
   
@@ -517,7 +517,7 @@ void CWriter::printConstant(Constant *CPV) {
 
     default:
       std::cerr << "CWriter Error: Unhandled constant expression: "
-                << CE << "\n";
+                << *CE << "\n";
       abort();
     }
   }
@@ -626,7 +626,7 @@ void CWriter::printConstant(Constant *CPV) {
     }
     // FALL THROUGH
   default:
-    std::cerr << "Unknown constant type: " << CPV << "\n";
+    std::cerr << "Unknown constant type: " << *CPV << "\n";
     abort();
   }
 }

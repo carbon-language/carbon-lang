@@ -7,7 +7,8 @@
 # 
 ##===----------------------------------------------------------------------===##
 LEVEL = ../../..
-LIBRARYNAME = powerpc
+LIBRARYNAME = powerpc2
+SHARED_LIBRARY=1
 include $(LEVEL)/Makefile.common
 
 # Make sure that tblgen is run, first thing.

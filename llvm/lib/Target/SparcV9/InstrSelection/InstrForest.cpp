@@ -124,21 +124,21 @@ void
 VRegNode::dumpNode(int indent) const {
   for (int i=0; i < indent; i++)
     std::cerr << "    ";
-    std::cerr << "VReg " << getValue() << "\n";
+    std::cerr << "VReg " << *getValue() << "\n";
 }
 
 void
 ConstantNode::dumpNode(int indent) const {
   for (int i=0; i < indent; i++)
     std::cerr << "    ";
-  std::cerr << "Constant " << getValue() << "\n";
+  std::cerr << "Constant " << *getValue() << "\n";
 }
 
 void LabelNode::dumpNode(int indent) const {
   for (int i=0; i < indent; i++)
     std::cerr << "    ";
   
-  std::cerr << "Label " << getValue() << "\n";
+  std::cerr << "Label " << *getValue() << "\n";
 }
 
 //------------------------------------------------------------------------

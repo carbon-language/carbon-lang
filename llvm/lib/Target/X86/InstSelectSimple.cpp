@@ -507,7 +507,7 @@ void ISel::copyConstantToRegister(MachineBasicBlock *MBB,
       return;
 
     default:
-      std::cerr << "Offending expr: " << C << "\n";
+      std::cerr << "Offending expr: " << *C << "\n";
       assert(0 && "Constant expression not yet handled!\n");
     }
   }
@@ -557,7 +557,7 @@ void ISel::copyConstantToRegister(MachineBasicBlock *MBB,
   } else if (ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(C)) {
     BuildMI(*MBB, IP, X86::MOV32ri, 1, R).addGlobalAddress(CPR->getValue());
   } else {
-    std::cerr << "Offending constant: " << C << "\n";
+    std::cerr << "Offending constant: " << *C << "\n";
     assert(0 && "Type not handled yet!");
   }
 }
