@@ -87,28 +87,20 @@ public:
 
   // isLoop - Find out if there is a back edge in this interval...
   bool isLoop() const;
+
+
+  // succ_begin/succ_end - define methods so that Intervals may be used
+  // just like BasicBlocks can with the succ_* functions, and *::succ_iterator.
+  //
+  inline succ_iterator succ_begin() { return Successors.begin(); }
+  inline succ_iterator succ_end()   { return Successors.end(); }
+  
+  // pred_begin/pred_end - define methods so that Intervals may be used
+  // just like BasicBlocks can with the pred_* functions, and *::pred_iterator.
+  //
+  inline Interval::pred_iterator pred_begin() { return Predecessors.begin(); }
+  inline Interval::pred_iterator pred_end()   { return Predecessors.end(); }
 };
-
-
-// succ_begin/succ_end - define global functions so that Intervals may be used
-// just like BasicBlocks can with the succ_* functions, and *::succ_iterator.
-//
-inline Interval::succ_iterator succ_begin(Interval *I) { 
-  return I->Successors.begin();
-}
-inline Interval::succ_iterator succ_end(Interval *I) { 
-  return I->Successors.end();
-}
-
-// pred_begin/pred_end - define global functions so that Intervals may be used
-// just like BasicBlocks can with the pred_* functions, and *::pred_iterator.
-//
-inline Interval::pred_iterator pred_begin(Interval *I) { 
-  return I->Predecessors.begin();
-}
-inline Interval::pred_iterator pred_end(Interval *I) { 
-  return I->Predecessors.end();
-}
 
 }    // End namespace cfg
 
