@@ -97,7 +97,7 @@ namespace {
     ///
     bool runOnFunction(Function &Fn) {
       // Lazily create a stack slot for the return address if needed.
-      ReturnAddressIndex = -1;
+      ReturnAddressIndex = 0;
 
       // First pass over the function, lower any unknown intrinsic functions
       // with the IntrinsicLowering class.
@@ -1764,7 +1764,7 @@ void X86ISel::visitIntrinsicCall(Intrinsic::ID ID, CallInst &CI) {
   case Intrinsic::frameaddress:
     TmpReg1 = getReg(CI);
     if (cast<Constant>(CI.getOperand(1))->isNullValue()) {
-      if (ReturnAddressIndex == -1) {
+      if (ReturnAddressIndex == 0) {
         // Set up a frame object for the return address.
         ReturnAddressIndex = F->getFrameInfo()->CreateFixedObject(4, -4);
       }
