@@ -117,7 +117,7 @@ public:
       }
       
       if (EI != EE)
-        O << "|truncated...";
+        O << "|<g64>truncated...";
       O << "}";
     }
     O << "}\"];\n";   // Finish printing the "node" line
@@ -126,6 +126,8 @@ public:
     EI = GTraits::child_begin(Node);
     for (unsigned i = 0; EI != EE && i != 64; ++EI, ++i)
       writeEdge(Node, i, EI);
+    for (; EI != EE; ++EI)
+      writeEdge(Node, 64, EI);
   }
 
   void writeEdge(NodeType *Node, unsigned edgeidx, child_iterator EI) {
