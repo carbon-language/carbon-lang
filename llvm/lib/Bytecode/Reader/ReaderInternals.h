@@ -170,6 +170,7 @@ private:
   Constant   *getConstantValue(const Type *Ty, unsigned num);
 
   unsigned insertValue(Value *V, ValueTable &Table);
+  unsigned insertValue(Value *V, unsigned Type, ValueTable &Table);
 
   unsigned getTypeSlot(const Type *Ty);
 

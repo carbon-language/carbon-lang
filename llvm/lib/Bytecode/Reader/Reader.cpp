@@ -75,11 +75,15 @@ const Type *BytecodeParser::getType(unsigned ID) {
 }
 
 unsigned BytecodeParser::insertValue(Value *Val, ValueTable &ValueTab) {
+  return insertValue(Val, getTypeSlot(Val->getType()), ValueTab);
+}
+
+unsigned BytecodeParser::insertValue(Value *Val, unsigned type,
+                                     ValueTable &ValueTab) {
   assert((!HasImplicitZeroInitializer || !isa<Constant>(Val) ||
           Val->getType()->isPrimitiveType() ||
           !cast<Constant>(Val)->isNullValue()) &&
          "Cannot read null values from bytecode!");
-  unsigned type = getTypeSlot(Val->getType());
   assert(type != Type::TypeTyID && "Types should never be insertValue'd!");
  
   if (ValueTab.size() <= type) {
@@ -452,7 +456,7 @@ void BytecodeParser::ParseModuleGlobalInfo(const unsigned char *&Buf,
     GlobalVariable *GV = new GlobalVariable(ElTy, VarType & 1, Linkage,
                                             0, "", TheModule);
     BCR_TRACE(2, "Global Variable of type: " << *Ty << "\n");
-    ResolveReferencesToValue(GV, insertValue(GV, ModuleValues));
+    ResolveReferencesToValue(GV, insertValue(GV, SlotNo, ModuleValues));
 
     if (VarType & 2) { // Does it have an initializer?
       unsigned InitSlot;
@@ -483,7 +487,7 @@ void BytecodeParser::ParseModuleGlobalInfo(const unsigned char *&Buf,
     // Insert the placeholder...
     Function *Func = new Function(cast<FunctionType>(Ty),
                                   GlobalValue::InternalLinkage, "", TheModule);
-    unsigned DestSlot = insertValue(Func, ModuleValues);
+    unsigned DestSlot = insertValue(Func, FnSignature, ModuleValues);
     ResolveReferencesToValue(Func, DestSlot);
 
     // Keep track of this information in a list that is emptied as functions are

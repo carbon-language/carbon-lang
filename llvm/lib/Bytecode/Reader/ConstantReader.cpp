@@ -350,7 +350,7 @@ void BytecodeParser::ParseConstantPool(const unsigned char *&Buf,
         Constant *C = parseConstantValue(Buf, EndBuf, Ty);
         assert(C && "parseConstantValue returned NULL!");
         BCR_TRACE(4, "Read Constant: '" << *C << "'\n");
-        unsigned Slot = insertValue(C, Tab);
+        unsigned Slot = insertValue(C, Typ, Tab);
 
         // If we are reading a function constant table, make sure that we adjust
         // the slot number to be the real global constant number.
