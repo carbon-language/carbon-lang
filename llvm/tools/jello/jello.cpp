@@ -3,42 +3,14 @@
 // This tool implements a just-in-time compiler for LLVM, allowing direct
 // execution of LLVM bytecode in an efficient manner.
 //
-// FIXME: This code will get more object oriented as we get the call back
-// intercept stuff implemented.
-//
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Module.h"
-#include "llvm/PassManager.h"
 #include "llvm/Bytecode/Reader.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetMachineImpls.h"
 #include "Support/CommandLine.h"
-#include "Support/Statistic.h"
-
-
-#include "llvm/CodeGen/MachineCodeEmitter.h"
-#include "llvm/CodeGen/MachineFunction.h"
-struct JelloMachineCodeEmitter : public MachineCodeEmitter {
-  void startFunction(MachineFunction &F) {
-    std::cout << "\n**** Writing machine code for function: "
-              << F.getFunction()->getName() << "\n";
-  }
-  void finishFunction(MachineFunction &F) {
-    std::cout << "\n";
-  }
-  void startBasicBlock(MachineBasicBlock &BB) {
-    std::cout << "\n--- Basic Block: " << BB.getBasicBlock()->getName() << "\n";
-  }
-
-  void emitByte(unsigned char B) {
-    std::cout << "0x" << std::hex << (unsigned int)B << std::dec << " ";
-  }
-  void emitPCRelativeDisp(Value *V) {
-    std::cout << "<" << V->getName() << ": 0x00 0x00 0x00 0x00> ";
-  }
-};
-
+#include "VM.h"
 
 namespace {
   cl::opt<std::string>
@@ -57,10 +29,8 @@ int main(int argc, char **argv) {
 
   // Allocate a target... in the future this will be controllable on the
   // command line.
-  std::auto_ptr<TargetMachine> target(allocateX86TargetMachine());
-  assert(target.get() && "Could not allocate target machine!");
-
-  TargetMachine &Target = *target.get();
+  std::auto_ptr<TargetMachine> Target(allocateX86TargetMachine());
+  assert(Target.get() && "Could not allocate target machine!");
 
   // Parse the input bytecode file...
   std::string ErrorMsg;
@@ -71,29 +41,15 @@ int main(int argc, char **argv) {
     return 1;
   }
 
-  PassManager Passes;
+  // Create the virtual machine object...
+  VM TheVM(argv[0], *M.get(), *Target.get());
 
-  // Compile LLVM Code down to machine code in the intermediate representation
-  if (Target.addPassesToJITCompile(Passes)) {
-    std::cerr << argv[0] << ": target '" << Target.getName()
-              << "' doesn't support JIT compilation!\n";
+  Function *F = M.get()->getNamedFunction(MainFunction);
+  if (F == 0) {
+    std::cerr << "Could not find function '" << MainFunction <<"' in module!\n";
     return 1;
   }
 
-  // Turn the machine code intermediate representation into bytes in memory that
-  // may be executed.
-  //
-  JelloMachineCodeEmitter MCE;
-  if (Target.addPassesToEmitMachineCode(Passes, MCE)) {
-    std::cerr << argv[0] << ": target '" << Target.getName()
-              << "' doesn't support machine code emission!\n";
-    return 1;
-  }
-
-  // JIT all of the methods in the module.  Eventually this will JIT functions
-  // on demand.
-  Passes.run(*M.get());
-  
-  return 0;
+  // Run the virtual machine...
+  return TheVM.run(F);
 }
-
