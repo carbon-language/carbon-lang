@@ -64,7 +64,7 @@ Output/%.bc: Output/%.ll $(LGCCAS)
 	$(LGCCAS) $< -o $@
 
 Output/%.bc: %.ll $(LAS)
-	$(LAS) $< -o $@
+	$(LAS) -f $< -o $@
 
 #
 # Testing versions of provided utilities...
