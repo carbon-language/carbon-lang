@@ -269,7 +269,6 @@ void BytecodeParser::ResolveReferencesToValue(Value *NewV, unsigned Slot) {
 
   BCR_TRACE(3, "Mutating forward refs!\n");
   Value *VPH = I->second;   // Get the placeholder...
-
   VPH->replaceAllUsesWith(NewV);
 
   // If this is a global variable being resolved, remove the placeholder from
@@ -382,25 +381,33 @@ void BytecodeParser::materializeFunction(Function* F) {
     throw std::string("Illegal basic block operand reference");
   ParsedBasicBlocks.clear();
 
+  // Resolve forward references.  Replace any uses of a forward reference value
+  // with the real value.
 
-  // Resolve forward references
+  // replaceAllUsesWith is very inefficient for instructions which have a LARGE
+  // number of operands.  PHI nodes often have forward references, and can also
+  // often have a very large number of operands.
+  std::map<Value*, Value*> ForwardRefMapping;
+  for (std::map<std::pair<unsigned,unsigned>, Value*>::iterator 
+         I = ForwardReferences.begin(), E = ForwardReferences.end();
+       I != E; ++I)
+    ForwardRefMapping[I->second] = getValue(I->first.first, I->first.second,
+                                            false);
+
+  for (Function::iterator BB = F->begin(), E = F->end(); BB != E; ++BB)
+    for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I)
+      for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i)
+        if (Argument *A = dyn_cast<Argument>(I->getOperand(i))) {
+          std::map<Value*, Value*>::iterator It = ForwardRefMapping.find(A);
+          if (It != ForwardRefMapping.end()) I->setOperand(i, It->second);
+        }
+
   while (!ForwardReferences.empty()) {
     std::map<std::pair<unsigned,unsigned>, Value*>::iterator I =
       ForwardReferences.begin();
-    unsigned type = I->first.first;
-    unsigned Slot = I->first.second;
     Value *PlaceHolder = I->second;
     ForwardReferences.erase(I);
 
-    Value *NewVal = getValue(type, Slot, false);
-    if (NewVal == 0)
-      throw std::string("Unresolvable reference found: <" +
-                        PlaceHolder->getType()->getDescription() + ">:" + 
-                        utostr(Slot) + ".");
-
-    // Fixup all of the uses of this placeholder def...
-    PlaceHolder->replaceAllUsesWith(NewVal);
-      
     // Now that all the uses are gone, delete the placeholder...
     // If we couldn't find a def (error case), then leak a little
     // memory, because otherwise we can't remove all uses!
