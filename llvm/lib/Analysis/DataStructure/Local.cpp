@@ -523,7 +523,8 @@ void GraphBuilder::visitCallSite(CallSite CS) {
           N->setModifiedMarker();
         return;
       default:
-        if (F->getName() == "calloc") {
+        if (F->getName() == "calloc" || F->getName() == "posix_memalign" ||
+            F->getName() == "memalign" || F->getName() == "valloc") {
           setDestTo(*CS.getInstruction(),
                     createNode()->setHeapNodeMarker()->setModifiedMarker());
           return;
