@@ -959,7 +959,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
       case MVT::i1:
         Tmp2 = MakeReg(MVT::i64);
         BuildMI(BB, Alpha::ANDi, 2, Tmp2).addReg(Tmp1).addImm(1);
-        BuildMI(BB, Alpha::SUB, 2, Result).addReg(Alpha::F31).addReg(Tmp2);
+        BuildMI(BB, Alpha::SUBQ, 2, Result).addReg(Alpha::F31).addReg(Tmp2);
         break;
       }
       return Result;
