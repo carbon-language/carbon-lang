@@ -386,6 +386,7 @@ void IndVarSimplify::runOnLoop(Loop *L) {
 
   // Now that we know the largest of of the induction variables in this loop,
   // insert a canonical induction variable of the largest size.
+  LargestType = LargestType->getUnsignedVersion();
   Value *IndVar = Rewriter.GetOrInsertCanonicalInductionVariable(L,LargestType);
   ++NumInserted;
   Changed = true;
