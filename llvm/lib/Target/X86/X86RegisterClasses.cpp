@@ -48,6 +48,30 @@ namespace {
   };
 }
 
+
+// Create static lists to contain register alias sets...
+#define ALIASLIST(NAME, ...) \
+  static const unsigned NAME[] = { __VA_ARGS__ };
+#include "X86RegisterInfo.def"
+
+
+// X86Regs - Turn the X86RegisterInfo.def file into a bunch of register
+// descriptors
+//
+static const MRegisterDesc X86Regs[] = {
+#define R(ENUM, NAME, FLAGS, TSFLAGS, ALIAS_SET) \
+         { NAME, ALIAS_SET, FLAGS, TSFLAGS },
+#include "X86RegisterInfo.def"
+};
+
+X86RegisterInfo::X86RegisterInfo()
+  : MRegisterInfo(X86Regs, sizeof(X86Regs)/sizeof(X86Regs[0]),
+                  X86RegClasses,
+                  X86RegClasses+sizeof(X86RegClasses)/sizeof(X86RegClasses[0])){
+}
+
+
+
 const TargetRegisterClass* X86RegisterInfo::getRegClassForType(const Type* Ty)
   const {
   switch (Ty->getPrimitiveID()) {
@@ -71,17 +95,3 @@ const TargetRegisterClass* X86RegisterInfo::getRegClassForType(const Type* Ty)
     return 0;  // not reached
   }
 }
-
-
-MRegisterInfo::const_iterator X86RegisterInfo::regclass_begin() const {
-  return X86RegClasses;
-}
-
-unsigned X86RegisterInfo::getNumRegClasses() const {
-  return sizeof(X86RegClasses)/sizeof(X86RegClasses[0]);
-}
-
-MRegisterInfo::const_iterator X86RegisterInfo::regclass_end() const {
-  return X86RegClasses+getNumRegClasses();
-}
-

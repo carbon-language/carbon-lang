@@ -12,25 +12,6 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineFunction.h"
 
-// Create static lists to contain register alias sets...
-#define ALIASLIST(NAME, ...) \
-  static const unsigned NAME[] = { __VA_ARGS__ };
-#include "X86RegisterInfo.def"
-
-
-// X86Regs - Turn the X86RegisterInfo.def file into a bunch of register
-// descriptors
-//
-static const MRegisterDesc X86Regs[] = {
-#define R(ENUM, NAME, FLAGS, TSFLAGS, ALIAS_SET) \
-         { NAME, ALIAS_SET, FLAGS, TSFLAGS },
-#include "X86RegisterInfo.def"
-};
-
-X86RegisterInfo::X86RegisterInfo()
-  : MRegisterInfo(X86Regs, sizeof(X86Regs)/sizeof(X86Regs[0])) {
-}
-
 unsigned getIdx(unsigned dataSize) {
   switch (dataSize) {
   case 1: return 0;
