@@ -27,6 +27,10 @@
 #include "Support/PostOrderIterator.h"
 #include "Support/StatisticReporter.h"
 
+//#define DEBUG_REASSOC(x) std::cerr << x
+#define DEBUG_REASSOC(x)
+
+static Statistic<> NumLinear ("reassociate\t- Number of insts linearized");
 static Statistic<> NumChanged("reassociate\t- Number of insts reassociated");
 static Statistic<> NumSwapped("reassociate\t- Number of insts with operands swapped");
 
@@ -75,8 +79,9 @@ unsigned Reassociate::getRank(Value *V) {
         I->hasSideEffects())
       return RankMap[I->getParent()];
 
-    unsigned Rank = 0;
-    for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i)
+    unsigned Rank = 0, MaxRank = RankMap[I->getParent()];
+    for (unsigned i = 0, e = I->getNumOperands();
+         i != e && Rank != MaxRank; ++i)
       Rank = std::max(Rank, getRank(I->getOperand(i)));
 
     return Rank;
@@ -120,7 +125,7 @@ bool Reassociate::ReassociateExpr(BinaryOperator *I) {
     std::swap(LHSRank, RHSRank);
     Changed = true;
     ++NumSwapped;
-    //cerr << "Transposed: " << I << " Result BB: " << I->getParent();
+    DEBUG_REASSOC("Transposed: " << I << " Result BB: " << I->getParent());
   }
   
   // If the LHS is the same operator as the current one is, and if we are the
@@ -142,7 +147,7 @@ bool Reassociate::ReassociateExpr(BinaryOperator *I) {
         I->setOperand(1, LHSI);
 
         ++NumChanged;
-        //cerr << "Reassociated: " << I << " Result BB: " << I->getParent();
+        DEBUG_REASSOC("Reassociated: " << I << " Result BB: " <<I->getParent());
 
         // Since we modified the RHS instruction, make sure that we recheck it.
         ReassociateExpr(LHSI);
@@ -151,6 +156,55 @@ bool Reassociate::ReassociateExpr(BinaryOperator *I) {
     }
 
   return Changed;
+}
+
+
+// NegateValue - Insert instructions before the instruction pointed to by BI,
+// that computes the negative version of the value specified.  The negative
+// version of the value is returned, and BI is left pointing at the instruction
+// that should be processed next by the reassociation pass.
+//
+static Value *NegateValue(Value *V, BasicBlock *BB, BasicBlock::iterator &BI) {
+  // We are trying to expose opportunity for reassociation.  One of the things
+  // that we want to do to achieve this is to push a negation as deep into an
+  // expression chain as possible, to expose the add instructions.  In practice,
+  // this means that we turn this:
+  //   X = -(A+12+C+D)   into    X = -A + -12 + -C + -D = -12 + -A + -C + -D
+  // so that later, a: Y = 12+X could get reassociated with the -12 to eliminate
+  // the constants.  We assume that instcombine will clean up the mess later if
+  // we introduce tons of unneccesary negation instructions...
+  //
+  if (Instruction *I = dyn_cast<Instruction>(V))
+    if (I->getOpcode() == Instruction::Add && I->use_size() == 1) {
+      Value *RHS = NegateValue(I->getOperand(1), BB, BI);
+      Value *LHS = NegateValue(I->getOperand(0), BB, BI);
+
+      // We must actually insert a new add instruction here, because the neg
+      // instructions do not dominate the old add instruction in general.  By
+      // adding it now, we are assured that the neg instructions we just
+      // inserted dominate the instruction we are about to insert after them.
+      //
+      BasicBlock::iterator NBI = BI;
+
+      // Scan through the inserted instructions, looking for RHS, which must be
+      // after LHS in the instruction list.
+      while (*NBI != RHS) ++NBI;
+
+      Instruction *Add =
+        BinaryOperator::create(Instruction::Add, LHS, RHS, I->getName()+".neg");
+      BB->getInstList().insert(NBI+1, Add);  // Add to the basic block...
+      return Add;
+    }
+
+  // Insert a 'neg' instruction that subtracts the value from zero to get the
+  // negation.
+  //
+  Instruction *Neg =
+    BinaryOperator::create(Instruction::Sub,
+                           Constant::getNullValue(V->getType()), V,
+                           V->getName()+".neg");
+  BI = BB->getInstList().insert(BI, Neg);  // Add to the basic block...
+  return Neg;
 }
 
 
@@ -163,10 +217,35 @@ bool Reassociate::ReassociateBB(BasicBlock *BB) {
     // the two operands are sorted incorrectly, fix it now.
     //
     if (BinaryOperator *I = isCommutativeOperator(Inst)) {
-      // Make sure that this expression is correctly reassociated with respect
-      // to it's used values...
-      //
-      Changed |= ReassociateExpr(I);
+      if (!I->use_empty()) {
+        // Make sure that we don't have a tree-shaped computation.  If we do,
+        // linearize it.  Convert (A+B)+(C+D) into ((A+B)+C)+D
+        //
+        Instruction *LHSI = dyn_cast<Instruction>(I->getOperand(0));
+        Instruction *RHSI = dyn_cast<Instruction>(I->getOperand(1));
+        if (LHSI && (int)LHSI->getOpcode() == I->getOpcode() &&
+            RHSI && (int)RHSI->getOpcode() == I->getOpcode() &&
+            RHSI->use_size() == 1) {
+          // Insert a new temporary instruction... (A+B)+C
+          BinaryOperator *Tmp = BinaryOperator::create(I->getOpcode(), LHSI,
+                                                       RHSI->getOperand(0),
+                                                       RHSI->getName()+".ra");
+          BI = BB->getInstList().insert(BI, Tmp);  // Add to the basic block...
+          I->setOperand(0, Tmp);
+          I->setOperand(1, RHSI->getOperand(1));
+
+          // Process the temporary instruction for reassociation now.
+          I = Tmp;
+          ++NumLinear;
+          Changed = true;
+          DEBUG_REASSOC("Linearized: " << I << " Result BB: " << BB);
+        }
+
+        // Make sure that this expression is correctly reassociated with respect
+        // to it's used values...
+        //
+        Changed |= ReassociateExpr(I);
+      }
 
     } else if (Inst->getOpcode() == Instruction::Sub &&
                Inst->getOperand(0) != Constant::getNullValue(Inst->getType())) {
@@ -174,16 +253,23 @@ bool Reassociate::ReassociateBB(BasicBlock *BB) {
       // instructions can be commuted with other add instructions...
       //
       Instruction *New = BinaryOperator::create(Instruction::Add,
-                                                Inst->getOperand(0), Inst,
+                                                Inst->getOperand(0),
+                                                Inst->getOperand(1),
                                                 Inst->getName());
+      Value *NegatedValue = Inst->getOperand(1);
+
       // Everyone now refers to the add instruction...
       Inst->replaceAllUsesWith(New);
-      Inst->setName(Inst->getOperand(1)->getName()+".neg");
-      New->setOperand(1, Inst);        // Except for the add inst itself!
 
-      BI = BB->getInstList().insert(BI+1, New)-1;  // Add to the basic block...
-      Inst->setOperand(0, Constant::getNullValue(Inst->getType()));
+      // Put the new add in the place of the subtract... deleting the subtract
+      delete BB->getInstList().replaceWith(BI, New);
+
+      // Calculate the negative value of Operand 1 of the sub instruction...
+      // and set it as the RHS of the add instruction we just made...
+      New->setOperand(1, NegateValue(NegatedValue, BB, BI));
+      --BI;
       Changed = true;
+      DEBUG_REASSOC("Negated: " << New << " Result BB: " << BB);
     }
   }
 
