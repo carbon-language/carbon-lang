@@ -75,7 +75,12 @@ public:
   // s1 must be a valid value.  s2 may be NULL.
   TmpInstruction(MachineCodeForInstruction& mcfi,
                  Value *s1, Value *s2 = 0, const std::string &name = "");
-  
+                 
+  // Constructor that uses the type of S1 as the type of the temporary,
+  // but does not require a MachineCodeForInstruction.
+  // s1 must be a valid value.  s2 may be NULL.
+  TmpInstruction(Value *s1, Value *s2 = 0, const std::string &name = "");
+
   // Constructor that requires the type of the temporary to be specified.
   // Both S1 and S2 may be NULL.
   TmpInstruction(MachineCodeForInstruction& mcfi,
