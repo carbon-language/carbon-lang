@@ -47,7 +47,6 @@ static void ConvertCallTo(CallInst *CI, Function *Dest) {
   // Keep an iterator to where we want to insert cast instructions if the
   // argument types don't agree.
   //
-  BasicBlock::iterator BBI = CI;
   unsigned NumArgsToCopy = CI->getNumOperands()-1;
   if (NumArgsToCopy != ParamTys.size() &&
       !(NumArgsToCopy > ParamTys.size() &&
@@ -72,7 +71,7 @@ static void ConvertCallTo(CallInst *CI, Function *Dest) {
 
     if (i-1 < ParamTys.size() && V->getType() != ParamTys[i-1]) {
       // Must insert a cast...
-      V = new CastInst(V, ParamTys[i-1], "argcast", BBI);
+      V = new CastInst(V, ParamTys[i-1], "argcast", CI);
     }
 
     Params.push_back(V);
@@ -81,20 +80,18 @@ static void ConvertCallTo(CallInst *CI, Function *Dest) {
   // Replace the old call instruction with a new call instruction that calls
   // the real function.
   //
-  Instruction *NewCall = new CallInst(Dest, Params, "", BBI);
-
-  // Remove the old call instruction from the program...
-  BB->getInstList().remove(BBI);
+  Instruction *NewCall = new CallInst(Dest, Params, "", CI);
+  std::string Name = CI->getName(); CI->setName("");
 
   // Transfer the name over...
   if (NewCall->getType() != Type::VoidTy)
-    NewCall->setName(CI->getName());
+    NewCall->setName(Name);
 
   // Replace uses of the old instruction with the appropriate values...
   //
   if (NewCall->getType() == CI->getType()) {
     CI->replaceAllUsesWith(NewCall);
-    NewCall->setName(CI->getName());
+    NewCall->setName(Name);
 
   } else if (NewCall->getType() == Type::VoidTy) {
     // Resolved function does not return a value but the prototype does.  This
@@ -112,14 +109,13 @@ static void ConvertCallTo(CallInst *CI, Function *Dest) {
     //
     if (!CI->use_empty()) {
       // Insert the new cast instruction...
-      CastInst *NewCast = new CastInst(NewCall, CI->getType(),
-                                       NewCall->getName(), BBI);
+      CastInst *NewCast = new CastInst(NewCall, CI->getType(), Name, CI);
       CI->replaceAllUsesWith(NewCast);
     }
   }
 
   // The old instruction is no longer needed, destroy it!
-  delete CI;
+  BB->getInstList().erase(CI);
 }
 
 
@@ -132,14 +128,24 @@ static bool ResolveFunctions(Module &M, std::vector<GlobalValue*> &Globals,
       const FunctionType *OldMT = Old->getFunctionType();
       const FunctionType *ConcreteMT = Concrete->getFunctionType();
       
-      assert(OldMT->getParamTypes().size() <=
-             ConcreteMT->getParamTypes().size() &&
-             "Concrete type must have more specified parameters!");
+      if (OldMT->getParamTypes().size() <= ConcreteMT->getParamTypes().size())
+        if (!Old->use_empty()) {
+          std::cerr << "WARNING: Linking function '" << Old->getName()
+                    << "' is causing arguments to be dropped.\n";
+          std::cerr << "WARNING: Prototype: ";
+          WriteAsOperand(std::cerr, Old);
+          std::cerr << " resolved to ";
+          WriteAsOperand(std::cerr, Concrete);
+          std::cerr << "\n";
+        }
       
       // Check to make sure that if there are specified types, that they
       // match...
       //
-      for (unsigned i = 0; i < OldMT->getParamTypes().size(); ++i)
+      unsigned NumArguments = std::min(OldMT->getParamTypes().size(),
+                                       ConcreteMT->getParamTypes().size());
+
+      for (unsigned i = 0; i < NumArguments; ++i)
         if (OldMT->getParamTypes()[i] != ConcreteMT->getParamTypes()[i]) {
           std::cerr << "funcresolve: Function [" << Old->getName()
                     << "]: Parameter types conflict for: '" << OldMT
