@@ -161,6 +161,7 @@ void Interpreter::loadModule(const string &Filename) {
   }
   CW.setModule(CurMod);  // Update Writer
 
+#if 0
   string RuntimeLib = getCurrentExecutablePath();
   if (!RuntimeLib.empty()) RuntimeLib += "/";
   RuntimeLib += "RuntimeLib.bc";
@@ -173,6 +174,7 @@ void Interpreter::loadModule(const string &Filename) {
     std::cerr << "Error loading runtime library '"+RuntimeLib+"': "
               << ErrorMsg << "\n";
   }
+#endif
 }
 
 
