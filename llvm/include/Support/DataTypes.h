@@ -23,7 +23,11 @@
 #include <inttypes.h>
 
 #ifdef __linux__
-#include <endian.h>
+# include <endian.h>
+#else
+#if (BSD >= 199103)
+# include <machine/endian.h>
+#endif
 #endif
 
 #ifdef __sparc__
