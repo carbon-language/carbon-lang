@@ -297,6 +297,7 @@ void LiveIntervals::computeIntervals()
         }
     }
 
+    std::sort(intervals_.begin(), intervals_.end(), StartPointComp());
     DEBUG(std::copy(intervals_.begin(), intervals_.end(),
                     std::ostream_iterator<Interval>(std::cerr, "\n")));
 }
