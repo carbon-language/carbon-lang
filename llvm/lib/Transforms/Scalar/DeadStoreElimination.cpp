@@ -79,7 +79,8 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
     }
 #endif
 
-    if (!isa<StoreInst>(I) || cast<StoreInst>(I)->isVolatile()) {
+    if (!isa<FreeInst>(I) &&
+        (!isa<StoreInst>(I) || cast<StoreInst>(I)->isVolatile())) {
       // If this is a non-store instruction, it makes everything referenced no
       // longer killed.  Remove anything aliased from the alias set tracker.
       KillLocs.remove(I);
@@ -90,8 +91,16 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
     // the stored location is already in the tracker, then this is a dead
     // store.  We can just delete it here, but while we're at it, we also
     // delete any trivially dead expression chains.
-    unsigned ValSize = TD.getTypeSize(I->getOperand(0)->getType());
-    Value *Ptr = I->getOperand(1);
+    unsigned ValSize;
+    Value *Ptr;
+    if (isa<StoreInst>(I)) {
+      Ptr = I->getOperand(1);
+      ValSize = TD.getTypeSize(I->getOperand(0)->getType());
+    } else {
+      Ptr = I->getOperand(0);
+      ValSize = ~0;
+    }
+
     if (AliasSet *AS = KillLocs.getAliasSetForPointerIfExists(Ptr, ValSize))
       for (AliasSet::iterator ASI = AS->begin(), E = AS->end(); ASI != E; ++ASI)
         if (AA.alias(ASI.getPointer(), ASI.getSize(), Ptr, ValSize)
@@ -110,7 +119,7 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
 
     // Otherwise, this is a non-dead store just add it to the set of dead
     // locations.
-    KillLocs.add(cast<StoreInst>(I));
+    KillLocs.add(I);
   BigContinue:;
   }
   return MadeChange;
