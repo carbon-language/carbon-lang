@@ -121,7 +121,7 @@ RUNTESTFLAGS := --tool $(TESTSUITE)
 endif
 
 check:: site.exp
-	-PATH=$(LLVMToolDir):$(LLVM_SRC_ROOT)/test/Scripts:$(PATH) \
+	PATH=$(LLVMToolDir):$(LLVM_SRC_ROOT)/test/Scripts:$(PATH) \
 	$(RUNTEST) $(RUNTESTFLAGS)
 
 clean::
