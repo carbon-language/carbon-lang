@@ -797,7 +797,35 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
           (&*I == cast<Instruction>(BI->getCondition()) &&
            &*++I == BI))
         if (FoldValueComparisonIntoPredecessors(BI))
-          return SimplifyCFG(BB) || 1;
+          return SimplifyCFG(BB) | true;
+    }
+
+    if (BI->isConditional()) {
+      // If this block ends with a branch instruction, and if there is one
+      // predecessor, see if the previous block ended with a branch on the same
+      // condition, which makes this conditional branch redundant.
+      pred_iterator PI(pred_begin(BB)), PE(pred_end(BB));
+      BasicBlock *OnlyPred = *PI++;
+      for (; PI != PE; ++PI)// Search all predecessors, see if they are all same
+        if (*PI != OnlyPred) {
+          OnlyPred = 0;       // There are multiple different predecessors...
+          break;
+        }
+      
+      if (OnlyPred)
+        if (BranchInst *PBI = dyn_cast<BranchInst>(OnlyPred->getTerminator()))
+          if (PBI->isConditional() &&
+              PBI->getCondition() == BI->getCondition() &&
+              PBI->getSuccessor(0) != BB || PBI->getSuccessor(1) != BB) {
+            // Okay, the outcome of this conditional branch is statically
+            // knowable.  Delete the outgoing CFG edge that is impossible to
+            // execute.
+            bool CondIsTrue = PBI->getSuccessor(0) == BB;
+            BI->getSuccessor(CondIsTrue)->removePredecessor(BB);
+            new BranchInst(BI->getSuccessor(!CondIsTrue), BB);
+            BB->getInstList().erase(BI);
+            return SimplifyCFG(BB) | true;
+          }
     }
   }
 
@@ -812,7 +840,7 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
       OnlyPred = 0;       // There are multiple different predecessors...
       break;
     }
-  
+
   BasicBlock *OnlySucc = 0;
   if (OnlyPred && OnlyPred != BB &&    // Don't break self loops
       OnlyPred->getTerminator()->getOpcode() != Instruction::Invoke) {
