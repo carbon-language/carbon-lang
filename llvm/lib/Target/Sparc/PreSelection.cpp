@@ -87,7 +87,8 @@ namespace {
             GV = PI->second;            // put in map
           else
             {
-              GV = new GlobalVariable(CV->getType(), true,true,CV); //put in map
+              GV = new GlobalVariable(CV->getType(), true, //put in map
+                                      GlobalValue::InternalLinkage, CV);
               myModule->getGlobalList().push_back(GV); // GV owned by module now
             }
         }

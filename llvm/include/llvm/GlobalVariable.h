@@ -35,7 +35,7 @@ public:
   /// GlobalVariable ctor - If a parent module is specified, the global is
   /// automatically inserted into the end of the specified modules global list.
   ///
-  GlobalVariable(const Type *Ty, bool isConstant, bool isInternal,
+  GlobalVariable(const Type *Ty, bool isConstant, LinkageTypes Linkage,
 		 Constant *Initializer = 0, const std::string &Name = "",
                  Module *Parent = 0);
 

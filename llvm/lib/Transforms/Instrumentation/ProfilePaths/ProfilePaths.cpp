@@ -183,14 +183,19 @@ bool ProfilePaths::runOnFunction(Function &F){
   for(int xi=0; xi<numPaths; xi++)
     arrayInitialize.push_back(ConstantSInt::get(Type::IntTy, 0));
 
-  Constant *initializer =  ConstantArray::get(ArrayType::get(Type::IntTy, numPaths), arrayInitialize);
-  GlobalVariable *countVar = new GlobalVariable(ArrayType::get(Type::IntTy, numPaths), false, true, initializer, "Count", F.getParent());
+  const ArrayType *ATy = ArrayType::get(Type::IntTy, numPaths);
+  Constant *initializer =  ConstantArray::get(ATy, arrayInitialize);
+  GlobalVariable *countVar = new GlobalVariable(ATy, false,
+                                                GlobalValue::InternalLinkage, 
+                                                initializer, "Count",
+                                                F.getParent());
   static GlobalVariable *threshold = NULL;
   static bool insertedThreshold = false;
 
   if(!insertedThreshold){
-    threshold = new GlobalVariable(Type::IntTy, false, false, 0,
-                                                   "reopt_threshold");
+    threshold = new GlobalVariable(Type::IntTy, false,
+                                   GlobalValue::ExternalLinkage, 0,
+                                   "reopt_threshold");
 
     F.getParent()->getGlobalList().push_back(threshold);
     insertedThreshold = true;

@@ -33,7 +33,8 @@ bool EmitFunctionTable::run(Module &M){
   StructType *sttype = StructType::get(vType);
   ConstantStruct *cstruct = ConstantStruct::get(sttype, vConsts);
 
-  GlobalVariable *gb = new GlobalVariable(cstruct->getType(), true, false, 
+  GlobalVariable *gb = new GlobalVariable(cstruct->getType(), true,
+                                          GlobalValue::ExternalLinkage, 
                                           cstruct, "llvmFunctionTable");
   M.getGlobalList().push_back(gb);
   return true;  // Always modifies program

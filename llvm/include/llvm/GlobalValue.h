@@ -16,12 +16,19 @@ class Module;
 
 class GlobalValue : public User {
   GlobalValue(const GlobalValue &);             // do not implement
+public:
+  enum LinkageTypes {
+    ExternalLinkage,   // Externally visible function
+    LinkOnceLinkage,   // Keep one copy of named function when linking (inline)
+    AppendingLinkage,  // Special purpose, only applies to global arrays
+    InternalLinkage    // Rename collisions when linking (static functions)
+  };
 protected:
-  GlobalValue(const Type *Ty, ValueTy vty, bool hasInternalLinkage,
+  GlobalValue(const Type *Ty, ValueTy vty, LinkageTypes linkage,
 	      const std::string &name = "")
-    : User(Ty, vty, name), HasInternalLinkage(hasInternalLinkage), Parent(0) {}
+    : User(Ty, vty, name), Linkage(linkage), Parent(0) {}
 
-  bool HasInternalLinkage;    // Is this value accessable externally?
+  LinkageTypes Linkage;   // The linkage of this global
   Module *Parent;
 public:
   ~GlobalValue() {}
@@ -31,10 +38,12 @@ public:
     return (const PointerType*)User::getType();
   }
 
-  /// Internal Linkage - True if the global value is inaccessible to 
-  bool hasInternalLinkage() const { return HasInternalLinkage; }
-  bool hasExternalLinkage() const { return !HasInternalLinkage; }
-  void setInternalLinkage(bool HIL) { HasInternalLinkage = HIL; }
+  bool hasExternalLinkage()  const { return Linkage == ExternalLinkage; }
+  bool hasLinkOnceLinkage()  const { return Linkage == LinkOnceLinkage; }
+  bool hasAppendingLinkage() const { return Linkage == AppendingLinkage; }
+  bool hasInternalLinkage()  const { return Linkage == InternalLinkage; }
+  void setLinkage(LinkageTypes LT) { Linkage = LT; }
+  LinkageTypes getLinkage() const { return Linkage; }
 
   /// isExternal - Return true if the primary definition of this global value is
   /// outside of the current translation unit...

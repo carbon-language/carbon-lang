@@ -522,8 +522,7 @@ static bool setValueName(Value *V, char *NameStr) {
             EGV->setInitializer(GV->getInitializer());
           if (GV->isConstant())
             EGV->setConstant(true);
-          if (GV->hasInternalLinkage())
-            EGV->setInternalLinkage(true);
+          EGV->setLinkage(GV->getLinkage());
           
 	  delete GV;     // Destroy the duplicate!
           return true;   // They are equivalent!
@@ -624,6 +623,7 @@ Module *RunVMAsmParser(const string &Filename, FILE *F) {
   std::vector<std::pair<Constant*, BasicBlock*> > *JumpTable;
   std::vector<Constant*>           *ConstVector;
 
+  GlobalValue::LinkageTypes         Linkage;
   int64_t                           SInt64Val;
   uint64_t                          UInt64Val;
   int                               SIntVal;
@@ -654,7 +654,8 @@ Module *RunVMAsmParser(const string &Filename, FILE *F) {
 %type <ValueList>     IndexList                   // For GEP derived indices
 %type <TypeList>      TypeListI ArgTypeListI
 %type <JumpTable>     JumpTable
-%type <BoolVal>       GlobalType OptInternal      // GLOBAL or CONSTANT? Intern?
+%type <BoolVal>       GlobalType                  // GLOBAL or CONSTANT?
+%type <Linkage>       OptLinkage
 
 // ValueRef - Unresolved reference to a definition or BB
 %type <ValIDVal>      ValueRef ConstValueRef SymbolicValueRef
@@ -684,7 +685,8 @@ Module *RunVMAsmParser(const string &Filename, FILE *F) {
 
 
 %token IMPLEMENTATION TRUE FALSE BEGINTOK ENDTOK DECLARE GLOBAL CONSTANT
-%token TO EXCEPT DOTDOTDOT NULL_TOK CONST INTERNAL OPAQUE NOT EXTERNAL
+%token TO EXCEPT DOTDOTDOT NULL_TOK CONST INTERNAL LINKONCE APPENDING
+%token OPAQUE NOT EXTERNAL
 
 // Basic Block Terminating Operators 
 %token <TermOpVal> RET BR SWITCH
@@ -748,7 +750,10 @@ OptAssign : VAR_ID '=' {
     $$ = 0; 
   };
 
-OptInternal : INTERNAL { $$ = true; } | /*empty*/ { $$ = false; };
+OptLinkage : INTERNAL  { $$ = GlobalValue::InternalLinkage; } |
+             LINKONCE  { $$ = GlobalValue::LinkOnceLinkage; } |
+             APPENDING { $$ = GlobalValue::AppendingLinkage; } |
+             /*empty*/ { $$ = GlobalValue::ExternalLinkage; };
 
 //===----------------------------------------------------------------------===//
 // Types includes all predefined types... except void, because it can only be
@@ -982,7 +987,8 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
 	
 	// Create a placeholder for the global variable reference...
 	GlobalVariable *GV = new GlobalVariable(PT->getElementType(),
-                                                false, true);
+                                                false,
+                                                GlobalValue::ExternalLinkage);
 	// Keep track of the fact that we have a forward ref to recycle it
 	CurModule.GlobalRefs.insert(make_pair(make_pair(PT, $2), GV));
 
@@ -1136,7 +1142,7 @@ ConstPool : ConstPool OptAssign CONST ConstVal {
   }
   | ConstPool FunctionProto {       // Function prototypes can be in const pool
   }
-  | ConstPool OptAssign OptInternal GlobalType ConstVal {
+  | ConstPool OptAssign OptLinkage GlobalType ConstVal {
     const Type *Ty = $5->getType();
     // Global declarations appear in Constant Pool
     Constant *Initializer = $5;
@@ -1159,7 +1165,7 @@ ConstPool : ConstPool OptAssign CONST ConstVal {
   | ConstPool OptAssign EXTERNAL GlobalType Types {
     const Type *Ty = *$5;
     // Global declarations appear in Constant Pool
-    GlobalVariable *GV = new GlobalVariable(Ty, $4, false);
+    GlobalVariable *GV = new GlobalVariable(Ty,$4,GlobalValue::ExternalLinkage);
     if (!setValueName(GV, $2)) {   // If not redefining...
       CurModule.CurrentModule->getGlobalList().push_back(GV);
       int Slot = InsertValue(GV, CurModule.Values);
@@ -1255,7 +1261,7 @@ FunctionHeaderH : TypesV FuncName '(' ArgList ')' {
       AI->setName("");
 
   } else  {  // Not already defined?
-    Fn = new Function(FT, false, FunctionName);
+    Fn = new Function(FT, GlobalValue::ExternalLinkage, FunctionName);
     InsertValue(Fn, CurModule.Values);
     CurModule.DeclareNewGlobalValue(Fn, ValID::create($2));
   }
@@ -1288,13 +1294,12 @@ FunctionHeaderH : TypesV FuncName '(' ArgList ')' {
 
 BEGIN : BEGINTOK | '{';                // Allow BEGIN or '{' to start a function
 
-FunctionHeader : OptInternal FunctionHeaderH BEGIN {
+FunctionHeader : OptLinkage FunctionHeaderH BEGIN {
   $$ = CurMeth.CurrentFunction;
 
-  // Make sure that we keep track of the internal marker, even if there was
-  // a previous "declare".
-  if ($1)
-    $$->setInternalLinkage(true);
+  // Make sure that we keep track of the linkage type even if there was a
+  // previous "declare".
+  $$->setLinkage($1);
 
   // Resolve circular types before we parse the body of the function.
   ResolveTypes(CurMeth.LateResolveTypes);

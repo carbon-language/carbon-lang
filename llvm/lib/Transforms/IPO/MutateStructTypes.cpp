@@ -250,8 +250,7 @@ void MutateStructTypes::processGlobals(Module &M) {
         cast<FunctionType>(ConvertType(I->getFunctionType()));
       
       // Create a new function to put stuff into...
-      Function *NewMeth = new Function(NewMTy, I->hasInternalLinkage(),
-                                       I->getName());
+      Function *NewMeth = new Function(NewMTy, I->getLinkage(), I->getName());
       if (I->hasName())
         I->setName("OLD."+I->getName());
 

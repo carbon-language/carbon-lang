@@ -137,7 +137,8 @@ Cilkifier::Cilkifier(Module& M)
   DummySyncFunc = new Function(FunctionType::get( Type::VoidTy,
                                                  std::vector<const Type*>(),
                                                  /*isVararg*/ false),
-                               /*isInternal*/ false, DummySyncFuncName, &M);
+                               GlobalValue::ExternalLinkage, DummySyncFuncName,
+                               &M);
 }
 
 void Cilkifier::TransformFunc(Function* F,

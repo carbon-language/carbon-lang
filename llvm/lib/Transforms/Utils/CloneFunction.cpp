@@ -110,7 +110,7 @@ Function *CloneFunction(const Function *F,
                                     ArgTypes, F->getFunctionType()->isVarArg());
 
   // Create the new function...
-  Function *NewF = new Function(FTy, F->hasInternalLinkage(), F->getName());
+  Function *NewF = new Function(FTy, F->getLinkage(), F->getName());
   
   // Loop over the arguments, copying the names of the mapped arguments over...
   Function::aiterator DestI = NewF->abegin();

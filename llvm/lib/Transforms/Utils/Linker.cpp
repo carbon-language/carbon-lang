@@ -189,42 +189,48 @@ static bool LinkGlobals(Module *Dest, const Module *Src,
   //
   for (Module::const_giterator I = Src->gbegin(), E = Src->gend(); I != E; ++I){
     const GlobalVariable *SGV = I;
-    Value *V;
-
-    // If the global variable has a name, and that name is already in use in the
-    // Dest module, make sure that the name is a compatible global variable...
-    //
-    if (SGV->hasExternalLinkage() && SGV->hasName() &&
-	(V = ST->lookup(SGV->getType(), SGV->getName())) &&
-	cast<GlobalVariable>(V)->hasExternalLinkage()) {
-      // The same named thing is a global variable, because the only two things
+    GlobalVariable *DGV = 0;
+    if (SGV->hasName()) {
+      // A same named thing is a global variable, because the only two things
       // that may be in a module level symbol table are Global Vars and
       // Functions, and they both have distinct, nonoverlapping, possible types.
       // 
-      GlobalVariable *DGV = cast<GlobalVariable>(V);
+      DGV = cast_or_null<GlobalVariable>(ST->lookup(SGV->getType(),
+                                                    SGV->getName()));
+    }
 
+    assert(SGV->hasInitializer() || SGV->hasExternalLinkage() &&
+           "Global must either be external or have an initializer!");
+
+    if (!DGV || DGV->hasInternalLinkage() || SGV->hasInternalLinkage()) {
+      // No linking to be performed, simply create an identical version of the
+      // symbol over in the dest module... the initializer will be filled in
+      // later by LinkGlobalInits...
+      //
+      DGV = new GlobalVariable(SGV->getType()->getElementType(),
+                               SGV->isConstant(), SGV->getLinkage(), /*init*/0,
+                               SGV->getName(), Dest);
+
+      // Make sure to remember this mapping...
+      ValueMap.insert(std::make_pair(SGV, DGV));
+    } else if (SGV->getLinkage() != DGV->getLinkage()) {
+      return Error(Err, "Global variables named '" + SGV->getName() +
+                   "' have different linkage specifiers!");
+    } else if (SGV->hasExternalLinkage() || SGV->hasLinkOnceLinkage() ||
+               SGV->hasAppendingLinkage()) {
+      // If the global variable has a name, and that name is already in use in
+      // the Dest module, make sure that the name is a compatible global
+      // variable...
+      //
       // Check to see if the two GV's have the same Const'ness...
       if (SGV->isConstant() != DGV->isConstant())
         return Error(Err, "Global Variable Collision on '" + 
                      SGV->getType()->getDescription() + "':%" + SGV->getName() +
                      " - Global variables differ in const'ness");
-
       // Okay, everything is cool, remember the mapping...
       ValueMap.insert(std::make_pair(SGV, DGV));
     } else {
-      // No linking to be performed, simply create an identical version of the
-      // symbol over in the dest module... the initializer will be filled in
-      // later by LinkGlobalInits...
-      //
-      GlobalVariable *DGV = 
-        new GlobalVariable(SGV->getType()->getElementType(), SGV->isConstant(),
-                           SGV->hasInternalLinkage(), 0, SGV->getName());
-
-      // Add the new global to the dest module
-      Dest->getGlobalList().push_back(DGV);
-
-      // Make sure to remember this mapping...
-      ValueMap.insert(std::make_pair(SGV, DGV));
+      assert(0 && "Unknown linkage!");
     }
   }
   return false;
@@ -245,19 +251,28 @@ static bool LinkGlobalInits(Module *Dest, const Module *Src,
 
     if (SGV->hasInitializer()) {      // Only process initialized GV's
       // Figure out what the initializer looks like in the dest module...
-      Constant *DInit =
+      Constant *SInit =
         cast<Constant>(RemapOperand(SGV->getInitializer(), ValueMap, 0));
 
       GlobalVariable *DGV = cast<GlobalVariable>(ValueMap[SGV]);    
-      if (DGV->hasInitializer() && SGV->hasExternalLinkage() &&
-	  DGV->hasExternalLinkage()) {
-        if (DGV->getInitializer() != DInit)
-          return Error(Err, "Global Variable Collision on '" + 
-                       SGV->getType()->getDescription() + "':%" +SGV->getName()+
-                       " - Global variables have different initializers");
+      if (DGV->hasInitializer()) {
+        assert(SGV->getLinkage() == DGV->getLinkage());
+        if (SGV->hasExternalLinkage()) {
+          if (DGV->getInitializer() != SInit)
+            return Error(Err, "Global Variable Collision on '" + 
+                         SGV->getType()->getDescription() +"':%"+SGV->getName()+
+                         " - Global variables have different initializers");
+        } else if (DGV->hasLinkOnceLinkage()) {
+          // Nothing is required, mapped values will take the new global
+          // automatically.
+        } else if (DGV->hasAppendingLinkage()) {
+          assert(0 && "Appending linkage unimplemented!");
+        } else {
+          assert(0 && "Unknown linkage!");
+        }
       } else {
         // Copy the initializer over now...
-        DGV->setInitializer(DInit);
+        DGV->setInitializer(SInit);
       }
     }
   }
@@ -278,39 +293,42 @@ static bool LinkFunctionProtos(Module *Dest, const Module *Src,
   //
   for (Module::const_iterator I = Src->begin(), E = Src->end(); I != E; ++I) {
     const Function *SF = I;   // SrcFunction
-    Value *V;
-
-    // If the function has a name, and that name is already in use in the Dest
-    // module, make sure that the name is a compatible function...
-    //
-    if (SF->hasExternalLinkage() && SF->hasName() &&
-	(V = ST->lookup(SF->getType(), SF->getName())) &&
-	cast<Function>(V)->hasExternalLinkage()) {
+    Function *DF = 0;
+    if (SF->hasName())
       // The same named thing is a Function, because the only two things
       // that may be in a module level symbol table are Global Vars and
       // Functions, and they both have distinct, nonoverlapping, possible types.
       // 
-      Function *DF = cast<Function>(V);   // DestFunction
+      DF = cast_or_null<Function>(ST->lookup(SF->getType(), SF->getName()));
 
+    if (!DF || SF->hasInternalLinkage() || DF->hasInternalLinkage()) {
+      // Function does not already exist, simply insert an external function
+      // signature identical to SF into the dest module...
+      Function *DF = new Function(SF->getFunctionType(), SF->getLinkage(),
+                                  SF->getName(), Dest);
+
+      // ... and remember this mapping...
+      ValueMap.insert(std::make_pair(SF, DF));
+    } else if (SF->getLinkage() != DF->getLinkage()) {
+      return Error(Err, "Functions named '" + SF->getName() +
+                   "' have different linkage specifiers!");
+    } else if (SF->getLinkage() == GlobalValue::AppendingLinkage) {
+      return Error(Err, "Functions named '" + SF->getName() +
+                   "' have appending linkage!");
+    } else if (SF->getLinkage() == GlobalValue::ExternalLinkage) {
+      // If the function has a name, and that name is already in use in the Dest
+      // module, make sure that the name is a compatible function...
+      //
       // Check to make sure the function is not defined in both modules...
       if (!SF->isExternal() && !DF->isExternal())
         return Error(Err, "Function '" + 
                      SF->getFunctionType()->getDescription() + "':\"" + 
                      SF->getName() + "\" - Function is already defined!");
-
+      
       // Otherwise, just remember this mapping...
       ValueMap.insert(std::make_pair(SF, DF));
-    } else {
-      // Function does not already exist, simply insert an external function
-      // signature identical to SF into the dest module...
-      Function *DF = new Function(SF->getFunctionType(),
-                                  SF->hasInternalLinkage(),
-                                  SF->getName());
-
-      // Add the function signature to the dest module...
-      Dest->getFunctionList().push_back(DF);
-
-      // ... and remember this mapping...
+    } else if (SF->getLinkage() == GlobalValue::LinkOnceLinkage) {
+      // Completely ignore the source function.
       ValueMap.insert(std::make_pair(SF, DF));
     }
   }
@@ -391,6 +409,7 @@ static bool LinkFunctionBodies(Module *Dest, const Module *Src,
 
       // DF not external SF external?
       if (!DF->isExternal()) {
+        if (DF->hasLinkOnceLinkage()) continue; // No relinkage for link-once!
         if (Err)
           *Err = "Function '" + (SF->hasName() ? SF->getName() :std::string(""))
                + "' body multiply defined!";

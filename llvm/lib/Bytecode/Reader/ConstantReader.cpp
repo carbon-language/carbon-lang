@@ -352,7 +352,8 @@ bool BytecodeParser::parseConstantValue(const uchar *&Buf, const uchar *EndBuf,
           
           // Create a placeholder for the global variable reference...
           GlobalVariable *GVar =
-            new GlobalVariable(PT->getElementType(), false, true);
+            new GlobalVariable(PT->getElementType(), false,
+                               GlobalValue::InternalLinkage);
           
           // Keep track of the fact that we have a forward ref to recycle it
           GlobalRefs.insert(std::make_pair(std::make_pair(PT, Slot), GVar));

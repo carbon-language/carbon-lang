@@ -17,13 +17,14 @@
 Function *ilist_traits<Function>::createNode() {
   FunctionType *FTy =
     FunctionType::get(Type::VoidTy, std::vector<const Type*>(), false);
-  Function *Ret = new Function(FTy, false);
+  Function *Ret = new Function(FTy, GlobalValue::ExternalLinkage);
   // This should not be garbage monitored.
   LeakDetector::removeGarbageObject(Ret);
   return Ret;
 }
 GlobalVariable *ilist_traits<GlobalVariable>::createNode() {
-  GlobalVariable *Ret = new GlobalVariable(Type::IntTy, false, false);
+  GlobalVariable *Ret = new GlobalVariable(Type::IntTy, false,
+                                           GlobalValue::ExternalLinkage);
   // This should not be garbage monitored.
   LeakDetector::removeGarbageObject(Ret);
   return Ret;
@@ -87,7 +88,7 @@ Function *Module::getOrInsertFunction(const std::string &Name,
   if (Value *V = SymTab.lookup(PointerType::get(Ty), Name)) {
     return cast<Function>(V);      // Yup, got it
   } else {                         // Nope, add one
-    Function *New = new Function(Ty, false, Name);
+    Function *New = new Function(Ty, GlobalVariable::ExternalLinkage, Name);
     FunctionList.push_back(New);
     return New;                    // Return the new prototype...
   }

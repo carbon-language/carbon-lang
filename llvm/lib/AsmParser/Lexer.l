@@ -155,6 +155,8 @@ global          { return GLOBAL; }
 constant        { return CONSTANT; }
 const           { return CONST; }
 internal        { return INTERNAL; }
+linkonce        { return LINKONCE; }
+appending       { return APPENDING; }
 uninitialized   { return EXTERNAL; }    /* Deprecated, turn into external */
 external        { return EXTERNAL; }
 implementation  { return IMPLEMENTATION; }

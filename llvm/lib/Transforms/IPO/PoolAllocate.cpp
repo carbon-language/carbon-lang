@@ -161,7 +161,8 @@ Function *PoolAllocate::MakeFunctionClone(Function &F) {
   FunctionType *FuncTy = FunctionType::get(OldFuncTy->getReturnType(), ArgTys,
                                            OldFuncTy->isVarArg());
   // Create the new function...
-  Function *New = new Function(FuncTy, true, F.getName(), F.getParent());
+  Function *New = new Function(FuncTy, GlobalValue::InternalLinkage,
+                               F.getName(), F.getParent());
 
   // Set the rest of the new arguments names to be PDa<n> and add entries to the
   // pool descriptors map

@@ -307,7 +307,8 @@ bool BytecodeParser::ParseFunction(const uchar *&Buf, const uchar *EndBuf) {
   Function *F = FunctionSignatureList.back().first;
   unsigned FunctionSlot = FunctionSignatureList.back().second;
   FunctionSignatureList.pop_back();
-  F->setInternalLinkage(isInternal != 0);
+  F->setLinkage(isInternal ? GlobalValue::InternalLinkage :
+                             GlobalValue::ExternalLinkage);
 
   const FunctionType::ParamTypes &Params =F->getFunctionType()->getParamTypes();
   Function::aiterator AI = F->abegin();
@@ -399,8 +400,13 @@ bool BytecodeParser::ParseModuleGlobalInfo(const uchar *&Buf, const uchar *End){
 
     const Type *ElTy = cast<PointerType>(Ty)->getElementType();
 
+
+    GlobalValue::LinkageTypes Linkage = 
+      (VarType & 4) ? GlobalValue::InternalLinkage :
+                      GlobalValue::ExternalLinkage;
+
     // Create the global variable...
-    GlobalVariable *GV = new GlobalVariable(ElTy, VarType & 1, VarType & 4,
+    GlobalVariable *GV = new GlobalVariable(ElTy, VarType & 1, Linkage,
                                             0, "", TheModule);
     int DestSlot = insertValue(GV, ModuleValues);
     if (DestSlot == -1) return true;
@@ -435,7 +441,8 @@ bool BytecodeParser::ParseModuleGlobalInfo(const uchar *&Buf, const uchar *End){
     // this placeholder is replaced.
 
     // Insert the placeholder...
-    Function *Func = new Function(cast<FunctionType>(Ty), false, "", TheModule);
+    Function *Func = new Function(cast<FunctionType>(Ty),
+                                  GlobalValue::InternalLinkage, "", TheModule);
     int DestSlot = insertValue(Func, ModuleValues);
     if (DestSlot == -1) return true;
     ResolveReferencesToValue(Func, (unsigned)DestSlot);

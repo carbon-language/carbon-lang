@@ -16,13 +16,13 @@ namespace {
       }
 
       // Make sure our result is globally accessable...
-      Named->setInternalLinkage(false);
+      Named->setLinkage(GlobalValue::ExternalLinkage);
 
       // Mark all global variables internal
       for (Module::giterator I = M.gbegin(), E = M.gend(); I != E; ++I)
         if (!I->isExternal()) {
           I->setInitializer(0);  // Make all variables external
-          I->setInternalLinkage(false); // Make sure it's not internal
+          I->setLinkage(GlobalValue::ExternalLinkage);
         }
       
       // All of the functions may be used by global variables or the named
@@ -35,7 +35,9 @@ namespace {
       
       for (Module::iterator I = M.begin(); ; ++I) {
         if (&*I != Named) {
-          Function *New = new Function(I->getFunctionType(),false,I->getName());
+          Function *New = new Function(I->getFunctionType(),
+                                       GlobalValue::ExternalLinkage,
+                                       I->getName());
           I->setName("");  // Remove Old name
           
           // If it's not the named function, delete the body of the function

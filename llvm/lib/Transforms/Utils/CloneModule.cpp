@@ -29,13 +29,14 @@ Module *CloneModule(const Module *M) {
   // don't worry about attributes or initializers, they will come later.
   //
   for (Module::const_giterator I = M->gbegin(), E = M->gend(); I != E; ++I)
-    ValueMap[I] = new GlobalVariable(I->getType()->getElementType(),
-                                     false, false, 0, I->getName(), New);
+    ValueMap[I] = new GlobalVariable(I->getType()->getElementType(), false,
+                                     GlobalValue::ExternalLinkage, 0,
+                                     I->getName(), New);
 
   // Loop over the functions in the module, making external functions as before
   for (Module::const_iterator I = M->begin(), E = M->end(); I != E; ++I)
     ValueMap[I]=new Function(cast<FunctionType>(I->getType()->getElementType()),
-                             false, I->getName(), New);
+                             GlobalValue::ExternalLinkage, I->getName(), New);
 
   // Now that all of the things that global variable initializer can refer to
   // have been created, loop through and copy the global variable referrers
@@ -46,8 +47,7 @@ Module *CloneModule(const Module *M) {
     if (I->hasInitializer())
       GV->setInitializer(cast<Constant>(MapValue(I->getInitializer(),
                                                  ValueMap)));
-    if (I->hasInternalLinkage())
-      GV->setInternalLinkage(true);
+    GV->setLinkage(I->getLinkage());
   }
 
   // Similarly, copy over function bodies now...
@@ -65,8 +65,7 @@ Module *CloneModule(const Module *M) {
       CloneFunctionInto(F, I, ValueMap, Returns);
     }
 
-    if (I->hasInternalLinkage())
-      F->setInternalLinkage(true);
+    F->setLinkage(I->getLinkage());
   }
 
   return New;

@@ -71,8 +71,8 @@ public:
   /// function is automatically inserted into the end of the function list for
   /// the module.
   ///
-  Function(const FunctionType *Ty, bool isInternal, const std::string &N = "",
-           Module *M = 0);
+  Function(const FunctionType *Ty, LinkageTypes Linkage,
+           const std::string &N = "", Module *M = 0);
   ~Function();
 
   // Specialize setName to handle symbol table majik...

@@ -77,9 +77,9 @@ void Argument::setParent(Function *parent) {
 // Function Implementation
 //===----------------------------------------------------------------------===//
 
-Function::Function(const FunctionType *Ty, bool isInternal,
+Function::Function(const FunctionType *Ty, LinkageTypes Linkage,
                    const std::string &name, Module *ParentModule)
-  : GlobalValue(PointerType::get(Ty), Value::FunctionVal, isInternal, name) {
+  : GlobalValue(PointerType::get(Ty), Value::FunctionVal, Linkage, name) {
   BasicBlocks.setItemParent(this);
   BasicBlocks.setParent(this);
   ArgumentList.setItemParent(this);
@@ -154,10 +154,10 @@ void Function::dropAllReferences() {
 // GlobalVariable Implementation
 //===----------------------------------------------------------------------===//
 
-GlobalVariable::GlobalVariable(const Type *Ty, bool constant, bool isIntern,
+GlobalVariable::GlobalVariable(const Type *Ty, bool constant, LinkageTypes Link,
 			       Constant *Initializer,
 			       const std::string &Name, Module *ParentModule)
-  : GlobalValue(PointerType::get(Ty), Value::GlobalVariableVal, isIntern, Name),
+  : GlobalValue(PointerType::get(Ty), Value::GlobalVariableVal, Link, Name),
     isConstantGlobal(constant) {
   if (Initializer) Operands.push_back(Use((Value*)Initializer, this));
 

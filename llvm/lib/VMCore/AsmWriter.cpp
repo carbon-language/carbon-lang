@@ -535,8 +535,15 @@ void AssemblyWriter::printModule(const Module *M) {
 void AssemblyWriter::printGlobal(const GlobalVariable *GV) {
   if (GV->hasName()) Out << "%" << GV->getName() << " = ";
 
-  if (GV->hasInternalLinkage()) Out << "internal ";
-  if (!GV->hasInitializer()) Out << "external ";
+  if (!GV->hasInitializer()) 
+    Out << "external ";
+  else
+    switch (GV->getLinkage()) {
+    case GlobalValue::InternalLinkage: Out << "internal "; break;
+    case GlobalValue::LinkOnceLinkage: Out << "linkonce "; break;
+    case GlobalValue::AppendingLinkage: Out << "appending "; break;
+    case GlobalValue::ExternalLinkage: break;
+    }
 
   Out << (GV->isConstant() ? "constant " : "global ");
   printType(GV->getType()->getElementType());
@@ -594,8 +601,18 @@ void AssemblyWriter::printConstant(const Constant *CPV) {
 //
 void AssemblyWriter::printFunction(const Function *F) {
   // Print out the return type and name...
-  Out << "\n" << (F->isExternal() ? "declare " : "")
-      << (F->hasInternalLinkage() ? "internal " : "");
+  Out << "\n";
+
+  if (F->isExternal())
+    Out << "declare ";
+  else
+    switch (F->getLinkage()) {
+    case GlobalValue::InternalLinkage: Out << "internal "; break;
+    case GlobalValue::LinkOnceLinkage: Out << "linkonce "; break;
+    case GlobalValue::AppendingLinkage: Out << "appending "; break;
+    case GlobalValue::ExternalLinkage: break;
+    }
+
   printType(F->getReturnType()) << " %" << F->getName() << "(";
   Table.incorporateFunction(F);
 

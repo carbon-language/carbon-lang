@@ -29,7 +29,7 @@ namespace {
         if (&*I != MainFunc &&          // Leave the main function external
             !I->isExternal() &&         // Function must be defined here
             !I->hasInternalLinkage()) { // Can't already have internal linkage
-          I->setInternalLinkage(true);
+          I->setLinkage(GlobalValue::InternalLinkage);
           Changed = true;
           ++NumFunctions;
           DEBUG(std::cerr << "Internalizing func " << I->getName() << "\n");
@@ -38,7 +38,7 @@ namespace {
       // Mark all global variables with initializers as internal as well...
       for (Module::giterator I = M.gbegin(), E = M.gend(); I != E; ++I)
         if (!I->isExternal() && I->hasExternalLinkage()) {
-          I->setInternalLinkage(true);
+          I->setLinkage(GlobalValue::InternalLinkage);
           Changed = true;
           ++NumGlobals;
           DEBUG(std::cerr << "Internalizing gvar " << I->getName() << "\n");
