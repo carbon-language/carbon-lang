@@ -17,7 +17,7 @@
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/Type.h"
-#include "Support/STLExtras.h"
+#include "llvm/ADT/STLExtras.h"
 #include <iostream>
 using namespace llvm;
 

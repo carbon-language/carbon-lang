@@ -14,7 +14,7 @@
 #include "SparcV8.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
-#include "Support/Statistic.h"
+#include "llvm/ADT/Statistic.h"
 
 using namespace llvm;
 

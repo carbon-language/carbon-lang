@@ -23,9 +23,9 @@
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/Mangler.h"
-#include "Support/Statistic.h"
-#include "Support/StringExtras.h"
-#include "Support/CommandLine.h"
+#include "llvm/ADT/Statistic.h"
+#include "llvm/ADT/StringExtras.h"
+#include "llvm/Support/CommandLine.h"
 #include <cctype>
 using namespace llvm;
 
