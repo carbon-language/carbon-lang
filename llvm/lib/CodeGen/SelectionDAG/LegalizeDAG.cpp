@@ -1454,7 +1454,7 @@ ExpandIntToFP(bool isSigned, MVT::ValueType DestTy, SDOperand Source) {
   SDOperand InChain = FindInputOutputChains(Source.Val, OutChain,
                                             DAG.getEntryNode());
 
-  const char *FnName;
+  const char *FnName = 0;
   if (isSigned) {
     if (DestTy == MVT::f32)
       FnName = "__floatdisf";
