@@ -186,6 +186,10 @@ Debug/%.o: %.cpp Debug/.dir Depend/.dir
 Debug/%.o: %.c Debug/.dir Depend/.dir
 	$(CompileG) $< -o $@
 
+# Create a .cpp source file from a burg input file
+%.burm.cpp: %.burg
+	$(RunBurg) $< -o $@
+
 # Create a .cpp source file from a flex input file... this uses sed to cut down
 # on the warnings emited by GCC...
 %.cpp: %.l
