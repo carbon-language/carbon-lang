@@ -19,6 +19,11 @@
 #include "llvm/iOther.h"
 #include "llvm/iMemory.h"
 
+void DebugValue(const Value *V) {
+  cerr << V << endl;
+}
+
+
 class AssemblyWriter : public ModuleAnalyzer {
   ostream &Out;
   SlotCalculator &Table;
