@@ -818,6 +818,8 @@ clean::
 #	from C/C++ source files.
 ###########################################################################
 
+ifndef DISABLE_AUTO_DEPENDENCIES
+
 # If dependencies were generated for the file that included this file,
 # include the dependencies now...
 #
@@ -846,6 +848,4 @@ endif
 endif
 endif
 
-cleandeps::
-	$(VERB) rm -f $(SourceDepend)
-
+endif  # ifndef DISABLE_AUTO_DEPENDENCIES
