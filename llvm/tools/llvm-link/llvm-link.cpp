@@ -106,6 +106,7 @@ int main(int argc, char **argv) {
   if (DumpAsm) std::cerr << "Here's the assembly:\n" << Composite.get();
 
   std::ostream *Out = &std::cout;  // Default to printing to stdout...
+  if (OutputFilename != "-") {
     if (!Force && std::ifstream(OutputFilename.c_str())) {
       // If force is not specified, make sure not to overwrite a file!
       std::cerr << argv[0] << ": error opening '" << OutputFilename
