@@ -204,6 +204,12 @@ cases).</li>
 
 <li>Code for running C++ destructors is now properly shared when possible.  Before, the C++ front-end
 <a href="http://llvm.cs.uiuc.edu/PR11">generated N^2 amounts of duplicated cleanup code</a> in some cases.</li>
+
+<li>The JIT used to <a href="http://llvm.cs.uiuc.edu/PR177">generate code for 
+    all functions pointed to by globals</a> immediately, before the program 
+    started execution, but now it waits until the first time they are called to
+    compile them.  This dramatically speeds up short runs of large C++ programs,
+    which often have large numbers of functions pointed to by vtables.</li>
 </ol>
 
 
