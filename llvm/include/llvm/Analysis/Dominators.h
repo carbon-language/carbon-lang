@@ -183,6 +183,14 @@ public:
     IDoms[BB] = IDom;
   }
 
+  /// setImmediateDominator - Update the immediate dominator information to
+  /// change the current immediate dominator for the specified block to another
+  /// block.  This method requires that BB already have an IDom, otherwise just
+  /// use addNewBlock.
+  void setImmediateDominator(BasicBlock *BB, BasicBlock *NewIDom) {
+    assert(IDoms.find(BB) != IDoms.end() && "BB doesn't have idom yet!");
+    IDoms[BB] = NewIDom;
+  }
 
   // print - Convert to human readable form
   virtual void print(std::ostream &OS) const;
@@ -224,16 +232,25 @@ protected:
   void reset();
   typedef std::map<BasicBlock*, Node*> NodeMapType;
 public:
-  class Node2 : public std::vector<Node*> {
+  class Node2 {
     friend class DominatorTree;
     friend class PostDominatorTree;
     friend class DominatorTreeBase;
     BasicBlock *TheNode;
     Node2 *IDom;
+    std::vector<Node*> Children;
   public:
+    typedef std::vector<Node*>::iterator iterator;
+    typedef std::vector<Node*>::const_iterator const_iterator;
+
+    iterator begin()             { return Children.begin(); }
+    iterator end()               { return Children.end(); }
+    const_iterator begin() const { return Children.begin(); }
+    const_iterator end()   const { return Children.end(); }
+
     inline BasicBlock *getNode() const { return TheNode; }
     inline Node2 *getIDom() const { return IDom; }
-    inline const std::vector<Node*> &getChildren() const { return *this; }
+    inline const std::vector<Node*> &getChildren() const { return Children; }
 
     // dominates - Returns true iff this dominates N.  Note that this is not a 
     // constant time operation!
@@ -247,7 +264,9 @@ public:
   private:
     inline Node2(BasicBlock *node, Node *iDom) 
       : TheNode(node), IDom(iDom) {}
-    inline Node2 *addChild(Node *C) { push_back(C); return C; }
+    inline Node2 *addChild(Node *C) { Children.push_back(C); return C; }
+
+    void setIDom(Node2 *NewIDom);
   };
 
 public:
@@ -268,7 +287,7 @@ public:
     return getNode(BB);
   }
 
-  // API to update (Post)DominatorTree information based on modifications to
+  //===--------------------------------------------------------------------===//  // API to update (Post)DominatorTree information based on modifications to
   // the CFG...
 
   /// createNewNode - Add a new node to the dominator tree information.  This
@@ -280,6 +299,14 @@ public:
     Node *New = Nodes[BB] = new Node(BB, IDomNode);
     if (IDomNode) IDomNode->addChild(New);
     return New;
+  }
+
+  /// changeImmediateDominator - This method is used to update the dominator
+  /// tree information when a node's immediate dominator changes.
+  ///
+  void changeImmediateDominator(Node *Node, Node *NewIDom) {
+    assert(Node && NewIDom && "Cannot change null node pointers!");
+    Node->setIDom(NewIDom);
   }
 
   /// print - Convert to human readable form
