@@ -436,12 +436,12 @@ ConstantArray *ConstantArray::get(const string &Str) {
   vector<Constant*> ElementVals;
 
   for (unsigned i = 0; i < Str.length(); ++i)
-    ElementVals.push_back(ConstantUInt::get(Type::UByteTy, Str[i]));
+    ElementVals.push_back(ConstantSInt::get(Type::SByteTy, Str[i]));
 
   // Add a null terminator to the string...
-  ElementVals.push_back(ConstantUInt::get(Type::UByteTy, 0));
+  ElementVals.push_back(ConstantSInt::get(Type::SByteTy, 0));
 
-  ArrayType *ATy = ArrayType::get(Type::UByteTy/*,stringConstant.length()*/);
+  ArrayType *ATy = ArrayType::get(Type::SByteTy, Str.length()+1);
   return ConstantArray::get(ATy, ElementVals);
 }
 
