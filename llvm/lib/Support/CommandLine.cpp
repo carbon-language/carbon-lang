@@ -972,5 +972,11 @@ VersOp("version", cl::desc("display the version"),
 
 // Utility function for printing the help message.
 void cl::PrintHelpMessage() {
+  // This looks weird, but it actually prints the help message. The 
+  // NormalPrinter variable is a HelpPrinter and the help gets printed when
+  // its operator= is invoked. That's because the "normal" usages of the
+  // help printer is to be assigned true/false depending on whether the 
+  // --help option was given or not. Since we're circumventing that we have
+  // to make it look like --help was given, so we assign true.
   NormalPrinter = true;
 }
