@@ -2129,23 +2129,37 @@ void ISel::emitMultiply(MachineBasicBlock *MBB, MachineBasicBlock::iterator IP,
   TypeClass Class = getClass(Op0->getType());
 
   // Simple scalar multiply?
+  unsigned Op0Reg  = getReg(Op0, &BB, IP);
   switch (Class) {
   case cByte:
   case cShort:
   case cInt:
     if (ConstantInt *CI = dyn_cast<ConstantInt>(Op1)) {
-      unsigned Op0Reg  = getReg(Op0, &BB, IP);
       unsigned Val = (unsigned)CI->getRawValue(); // Isn't a 64-bit constant
       doMultiplyConst(&BB, IP, DestReg, Op0->getType(), Op0Reg, Val);
     } else {
-      unsigned Op0Reg  = getReg(Op0, &BB, IP);
       unsigned Op1Reg  = getReg(Op1, &BB, IP);
       doMultiply(&BB, IP, DestReg, Op1->getType(), Op0Reg, Op1Reg);
     }
     return;
   case cFP:
+    if (ConstantFP *Op1C = dyn_cast<ConstantFP>(Op1))
+      if (!Op1C->isExactlyValue(+0.0) && !Op1C->isExactlyValue(+1.0)) {
+        // Create a constant pool entry for this constant.
+        MachineConstantPool *CP = F->getConstantPool();
+        unsigned CPI = CP->getConstantPoolIndex(Op1C);
+        const Type *Ty = Op1C->getType();
+        
+        static const unsigned OpcodeTab[2] = { X86::FMUL32m, X86::FMUL64m };
+        
+        assert(Ty == Type::FloatTy||Ty == Type::DoubleTy&&"Unknown FP type!");
+        unsigned Opcode = OpcodeTab[Ty != Type::FloatTy];
+        addConstantPoolReference(BuildMI(*MBB, IP, Opcode, 5,
+                                         DestReg).addReg(Op0Reg), CPI);
+        return;
+      }
+
     {
-      unsigned Op0Reg  = getReg(Op0, &BB, IP);
       unsigned Op1Reg  = getReg(Op1, &BB, IP);
       doMultiply(&BB, IP, DestReg, Op1->getType(), Op0Reg, Op1Reg);
       return;
@@ -2153,8 +2167,6 @@ void ISel::emitMultiply(MachineBasicBlock *MBB, MachineBasicBlock::iterator IP,
   case cLong:
     break;
   }
-
-  unsigned Op0Reg  = getReg(Op0, &BB, IP);
 
   // Long value.  We have to do things the hard way...
   if (ConstantInt *CI = dyn_cast<ConstantInt>(Op1)) {
@@ -2248,17 +2260,48 @@ void ISel::visitDivRem(BinaryOperator &I) {
   MachineBasicBlock::iterator IP = BB->end();
   emitDivRemOperation(BB, IP, I.getOperand(0), I.getOperand(1),
                       I.getOpcode() == Instruction::Div, ResultReg);
-                      
 }
 
 void ISel::emitDivRemOperation(MachineBasicBlock *BB,
                                MachineBasicBlock::iterator IP,
                                Value *Op0, Value *Op1, bool isDiv,
                                unsigned ResultReg) {
-  unsigned Class = getClass(Op0->getType());
+  const Type *Ty = Op0->getType();
+  unsigned Class = getClass(Ty);
   switch (Class) {
   case cFP:              // Floating point divide
     if (isDiv) {
+      if (ConstantFP *CFP = dyn_cast<ConstantFP>(Op0))
+        if (!CFP->isExactlyValue(+0.0) && !CFP->isExactlyValue(+1.0)) {
+          // Create a constant pool entry for this constant.
+          MachineConstantPool *CP = F->getConstantPool();
+          unsigned CPI = CP->getConstantPoolIndex(CFP);
+          static const unsigned OpcodeTab[2] = { X86::FDIVR32m, X86::FDIVR64m };
+          
+          assert(Ty == Type::FloatTy||Ty == Type::DoubleTy&&"Unknown FP type!");
+          unsigned Opcode = OpcodeTab[Ty != Type::FloatTy];
+          unsigned Op1Reg = getReg(Op1, BB, IP);
+          addConstantPoolReference(BuildMI(*BB, IP, Opcode, 5,
+                                           ResultReg).addReg(Op1Reg), CPI);
+          return;
+        }
+
+      if (ConstantFP *CFP = dyn_cast<ConstantFP>(Op1))
+        if (!CFP->isExactlyValue(+0.0) && !CFP->isExactlyValue(+1.0)) {
+          // Create a constant pool entry for this constant.
+          MachineConstantPool *CP = F->getConstantPool();
+          unsigned CPI = CP->getConstantPoolIndex(CFP);
+          
+          static const unsigned OpcodeTab[2] = { X86::FDIV32m, X86::FDIV64m };
+          
+          assert(Ty == Type::FloatTy||Ty == Type::DoubleTy&&"Unknown FP type!");
+          unsigned Opcode = OpcodeTab[Ty != Type::FloatTy];
+          unsigned Op0Reg = getReg(Op0, BB, IP);
+          addConstantPoolReference(BuildMI(*BB, IP, Opcode, 5,
+                                           ResultReg).addReg(Op0Reg), CPI);
+          return;
+        }
+
       unsigned Op0Reg = getReg(Op0, BB, IP);
       unsigned Op1Reg = getReg(Op1, BB, IP);
       BuildMI(*BB, IP, X86::FpDIV, 2, ResultReg).addReg(Op0Reg).addReg(Op1Reg);
@@ -2278,7 +2321,7 @@ void ISel::emitDivRemOperation(MachineBasicBlock *BB,
       { "__moddi3", "__divdi3", "__umoddi3", "__udivdi3" };
     unsigned Op0Reg = getReg(Op0, BB, IP);
     unsigned Op1Reg = getReg(Op1, BB, IP);
-    unsigned NameIdx = Op0->getType()->isUnsigned()*2 + isDiv;
+    unsigned NameIdx = Ty->isUnsigned()*2 + isDiv;
     MachineInstr *TheCall =
       BuildMI(X86::CALLpcrel32, 1).addExternalSymbol(FnName[NameIdx], true);
 
@@ -2304,7 +2347,7 @@ void ISel::emitDivRemOperation(MachineBasicBlock *BB,
     { X86::IDIV8r, X86::IDIV16r, X86::IDIV32r, 0 },  // Signed division
   };
 
-  bool isSigned   = Op0->getType()->isSigned();
+  bool isSigned   = Ty->isSigned();
   unsigned Reg    = Regs[Class];
   unsigned ExtReg = ExtRegs[Class];
 
