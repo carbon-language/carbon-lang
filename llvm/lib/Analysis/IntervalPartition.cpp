@@ -21,13 +21,13 @@ AnalysisID IntervalPartition::ID = X;
 
 // destroy - Reset state back to before function was analyzed
 void IntervalPartition::destroy() {
-  for_each(begin(), end(), deleter<Interval>);
+  for_each(Intervals.begin(), Intervals.end(), deleter<Interval>);
   IntervalMap.clear();
   RootInterval = 0;
 }
 
 void IntervalPartition::print(std::ostream &O) const {
-  std::copy(begin(), end(),
+  std::copy(Intervals.begin(), Intervals.end(),
             std::ostream_iterator<const Interval *>(O, "\n"));
 }
 
@@ -36,7 +36,7 @@ void IntervalPartition::print(std::ostream &O) const {
 // interval itself (in the IntervalMap).
 //
 void IntervalPartition::addIntervalToPartition(Interval *I) {
-  push_back(I);
+  Intervals.push_back(I);
 
   // Add mappings for all of the basic blocks in I to the IntervalPartition
   for (Interval::node_iterator It = I->Nodes.begin(), End = I->Nodes.end();
@@ -74,7 +74,7 @@ bool IntervalPartition::runOnFunction(Function &F) {
 
   // Now that we know all of the successor information, propogate this to the
   // predecessors for each block...
-  for_each(begin(), end(), 
+  for_each(Intervals.begin(), Intervals.end(), 
 	   bind_obj(this, &IntervalPartition::updatePredecessors));
   return false;
 }
@@ -102,6 +102,6 @@ IntervalPartition::IntervalPartition(IntervalPartition &IP, bool) {
 
   // Now that we know all of the successor information, propogate this to the
   // predecessors for each block...
-  for_each(begin(), end(), 
+  for_each(Intervals.begin(), Intervals.end(), 
 	   bind_obj(this, &IntervalPartition::updatePredecessors));
 }
