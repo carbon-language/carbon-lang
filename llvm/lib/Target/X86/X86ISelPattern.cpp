@@ -379,6 +379,9 @@ unsigned ISel::ComputeRegPressure(SDOperand O) {
   unsigned &Result = RegPressureMap[N];
   if (Result) return Result;
 
+  // FIXME: Should operations like CALL (which clobber lots o regs) have a
+  // higher fixed cost??
+
   if (N->getNumOperands() == 0)
     return Result = 1;
 
@@ -771,6 +774,7 @@ void ISel::EmitSelectCC(SDOperand Cond, MVT::ValueType SVT,
   } else {
     // FIXME: CMP R, 0 -> TEST R, R
     EmitCMP(Cond.getOperand(0), Cond.getOperand(1));
+    std::swap(RTrue, RFalse);
   }
   BuildMI(BB, Opc, 2, RDest).addReg(RTrue).addReg(RFalse);
 }
@@ -1438,7 +1442,6 @@ unsigned ISel::SelectExpr(SDOperand N) {
     return Result;
 
   case ISD::SELECT:
-    // FIXME: implement folding of setcc into select.
     if (N.getValueType() != MVT::i1 && N.getValueType() != MVT::i8) {
       if (getRegPressure(N.getOperand(1)) > getRegPressure(N.getOperand(2))) {
         Tmp2 = SelectExpr(N.getOperand(1));
@@ -1452,10 +1455,17 @@ unsigned ISel::SelectExpr(SDOperand N) {
     } else {
       // FIXME: This should not be implemented here, it should be in the generic
       // code!
-      Tmp2 = SelectExpr(CurDAG->getNode(ISD::ZERO_EXTEND, MVT::i16,
-                                        N.getOperand(1)));
-      Tmp3 = SelectExpr(CurDAG->getNode(ISD::ZERO_EXTEND, MVT::i16,
-                                        N.getOperand(2)));
+      if (getRegPressure(N.getOperand(1)) > getRegPressure(N.getOperand(2))) {
+        Tmp2 = SelectExpr(CurDAG->getNode(ISD::ZERO_EXTEND, MVT::i16,
+                                          N.getOperand(1)));
+        Tmp3 = SelectExpr(CurDAG->getNode(ISD::ZERO_EXTEND, MVT::i16,
+                                          N.getOperand(2)));
+      } else {
+        Tmp3 = SelectExpr(CurDAG->getNode(ISD::ZERO_EXTEND, MVT::i16,
+                                          N.getOperand(2)));
+        Tmp2 = SelectExpr(CurDAG->getNode(ISD::ZERO_EXTEND, MVT::i16,
+                                          N.getOperand(1)));
+      }
       unsigned TmpReg = MakeReg(MVT::i16);
       EmitSelectCC(N.getOperand(0), MVT::i16, Tmp2, Tmp3, TmpReg);
       // FIXME: need subregs to do better than this!
@@ -1971,7 +1981,7 @@ void ISel::Select(SDOperand N) {
       default: assert(0 && "Unknown operand number!");
       case 0: Select(N.getOperand(0)); break;
       case 1: Tmp1 = SelectExpr(N.getOperand(1)); break;
-      case 2: SelectAddress(N.getOperand(2), AM);
+      case 2: SelectAddress(N.getOperand(2), AM); break;
       }
 
     addFullAddress(BuildMI(BB, Opc, 4+1), AM).addReg(Tmp1);
