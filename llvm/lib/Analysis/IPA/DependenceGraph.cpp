@@ -16,8 +16,6 @@
 
 #include "llvm/Analysis/DependenceGraph.h"
 #include "llvm/Function.h"
-#include "llvm/BasicBlock.h"
-#include "llvm/Instruction.h"
 
 
 //----------------------------------------------------------------------------
