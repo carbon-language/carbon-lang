@@ -56,8 +56,6 @@ struct SCC: public std::vector<typename GT::NodeType*> {
 // reverse topological order of the SCC DAG.
 //--------------------------------------------------------------------------
 
-const unsigned long MAXLONG = (1 << (8 * sizeof(unsigned long) - 1));
-
 namespace {
   Statistic<> NumSCCs("NumSCCs", "Number of Strongly Connected Components");
   Statistic<> MaxSCCSize("MaxSCCSize", "Size of largest Strongly Connected Component");
@@ -152,7 +150,7 @@ class TarjanSCC_iterator : public forward_iterator<SCC<GraphT, GT>, ptrdiff_t>
             do {
               CurrentSCC.push_back(SCCNodeStack.top());
               SCCNodeStack.pop();
-              nodeVisitNumbers[CurrentSCC.back()] = MAXLONG; 
+              nodeVisitNumbers[CurrentSCC.back()] = ~0UL; 
             } while (CurrentSCC.back() != visitingN);
 
             ++NumSCCs;
