@@ -13,6 +13,9 @@
 //     is a good idea to to run a constant propogation pass, then a DCE pass 
 //     sometime after running this pass.
 //
+// FIXME: This pass should transform alloca instructions in the called function
+//        into malloc/free pairs!
+//
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/MethodInlining.h"
