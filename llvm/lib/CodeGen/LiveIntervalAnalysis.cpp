@@ -223,7 +223,7 @@ addIntervalsForSpills(const LiveInterval &li, VirtRegMap &vrm, int slot) {
           if (MachineInstr* fmi = mri_->foldMemoryOperand(mi, i, slot)) {
             if (lv_)
               lv_->instructionChanged(mi, fmi);
-            vrm.virtFolded(li.reg, mi, fmi);
+            vrm.virtFolded(li.reg, mi, i, fmi);
             mi2iMap_.erase(mi);
             i2miMap_[index/InstrSlots::NUM] = fmi;
             mi2iMap_[fmi] = index;

@@ -26,7 +26,9 @@ namespace llvm {
 
   class VirtRegMap {
   public:
-    typedef std::multimap<MachineInstr*, unsigned> MI2VirtMapTy;
+    enum ModRef { isRef = 1, isMod = 2, isModRef = 3 };
+    typedef std::multimap<MachineInstr*,
+                          std::pair<unsigned, ModRef> > MI2VirtMapTy;
 
   private:
     MachineFunction &MF;
@@ -122,10 +124,11 @@ namespace llvm {
     /// the specified stack slot
     void assignVirt2StackSlot(unsigned virtReg, int frameIndex);
 
-    /// @brief updates information about the specified virtual
-    /// register's value folded into newMI machine instruction
-    void virtFolded(unsigned virtReg, MachineInstr* oldMI,
-                    MachineInstr* newMI);
+    /// @brief Updates information about the specified virtual register's value
+    /// folded into newMI machine instruction.  The OpNum argument indicates the
+    /// operand number of OldMI that is folded.
+    void virtFolded(unsigned VirtReg, MachineInstr *OldMI, unsigned OpNum,
+                    MachineInstr *NewMI);
 
     /// @brief returns the virtual registers' values folded in memory
     /// operands of this instruction

@@ -77,23 +77,26 @@ void VirtRegMap::assignVirt2StackSlot(unsigned virtReg, int frameIndex) {
   Virt2StackSlotMap[virtReg] = frameIndex;
 }
 
-void VirtRegMap::virtFolded(unsigned virtReg,
-                            MachineInstr* oldMI,
-                            MachineInstr* newMI) {
-  // move previous memory references folded to new instruction
-  std::vector<MI2VirtMapTy::mapped_type> regs;
-  for (MI2VirtMapTy::iterator I = MI2VirtMap.lower_bound(oldMI), 
-         E = MI2VirtMap.end(); I != E && I->first == oldMI; ) {
-    regs.push_back(I->second);
+void VirtRegMap::virtFolded(unsigned VirtReg, MachineInstr *OldMI,
+                            unsigned OpNo, MachineInstr *NewMI) {
+  // Move previous memory references folded to new instruction.
+  MI2VirtMapTy::iterator IP = MI2VirtMap.lower_bound(NewMI);
+  for (MI2VirtMapTy::iterator I = MI2VirtMap.lower_bound(OldMI), 
+         E = MI2VirtMap.end(); I != E && I->first == OldMI; ) {
+    MI2VirtMap.insert(IP, std::make_pair(NewMI, I->second));
     MI2VirtMap.erase(I++);
   }
 
-  MI2VirtMapTy::iterator IP = MI2VirtMap.lower_bound(newMI);
-  for (unsigned i = 0, e = regs.size(); i != e; ++i)
-    MI2VirtMap.insert(IP, std::make_pair(newMI, regs[i]));
+  ModRef MRInfo;
+  if (!OldMI->getOperand(OpNo).isDef()) {
+    assert(OldMI->getOperand(OpNo).isUse() && "Operand is not use or def?");
+    MRInfo = isRef;
+  } else {
+    MRInfo = OldMI->getOperand(OpNo).isUse() ? isModRef : isMod;
+  }
 
   // add new memory reference
-  MI2VirtMap.insert(IP, std::make_pair(newMI, virtReg));
+  MI2VirtMap.insert(IP, std::make_pair(NewMI, std::make_pair(VirtReg, MRInfo)));
 }
 
 void VirtRegMap::print(std::ostream &OS) const {
@@ -433,18 +436,37 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, const VirtRegMap &VRM) {
     // register
     VirtRegMap::MI2VirtMapTy::const_iterator I, E;
     for (tie(I, E) = VRM.getFoldedVirts(&MI); I != E; ++I) {
-      DEBUG(std::cerr << "Folded vreg: " << I->second);
-      if (VRM.hasStackSlot(I->second)) {
-        int SS = VRM.getStackSlot(I->second);
+      DEBUG(std::cerr << "Folded vreg: " << I->second.first << "  MR: "
+                      << I->second.second);
+      unsigned VirtReg = I->second.first;
+      VirtRegMap::ModRef MR = I->second.second;
+      if (VRM.hasStackSlot(VirtReg)) {
+        int SS = VRM.getStackSlot(VirtReg);
         DEBUG(std::cerr << " - StackSlot: " << SS << "\n");
 
-        // Any stores to this stack slot are not dead anymore.
-        MaybeDeadStores.erase(SS);
+        // If this reference is not a use, any previous store is now dead.
+        // Otherwise, the store to this stack slot is not dead anymore.
+        std::map<int, MachineInstr*>::iterator MDSI = MaybeDeadStores.find(SS);
+        if (MDSI != MaybeDeadStores.end()) {
+          if (MR & VirtRegMap::isRef)   // Previous store is not dead.
+            MaybeDeadStores.erase(SS);
+          else {
+            // If we get here, the store is dead, nuke it now.
+            assert(MR == VirtRegMap::isMod && "Can't be modref!");
+            MBB.erase(MDSI->second);
+            MaybeDeadStores.erase(MDSI);
+            ++NumDSE;
+          }
+        }
 
-        std::map<int, unsigned>::iterator I = SpillSlotsAvailable.find(SS);
-        if (I != SpillSlotsAvailable.end()) {
-          PhysRegsAvailable.erase(I->second);
-          SpillSlotsAvailable.erase(I);
+        // If the spill slot value is available, and this is a new definition of
+        // the value, the value is not available anymore.
+        if (MR & VirtRegMap::isMod) {
+          std::map<int, unsigned>::iterator It = SpillSlotsAvailable.find(SS);
+          if (It != SpillSlotsAvailable.end()) {
+            PhysRegsAvailable.erase(It->second);
+            SpillSlotsAvailable.erase(It);
+          }
         }
       } else {
         DEBUG(std::cerr << ": No stack slot!\n");
