@@ -19,6 +19,7 @@
     <li><a href="#glibc">Port glibc to LLVM</a></li>
     <li><a href="#programs">Compile programs with the LLVM Compiler</a></li>
     <li><a href="#llvm_ir">Extend the LLVM intermediate representation</a></li>
+    <li><a href="#target">Target backend improvements</a></li>
     <li><a href="#misc_imp">Miscellaneous Improvements</a></li>
   </ol></li>
 
@@ -155,6 +156,27 @@ all the back-ends: CBE, llc, and lli.</p>
 
 <!-- ======================================================================= -->
 <div class="doc_subsection">
+  <a name="target">Target backend improvements</a>
+</div>
+
+<div class="doc_text">
+
+<ol>
+  <li>Find benchmarks either using our <a
+  href="http://llvm.cs.uiuc.edu/testresults/">test results</a> or on your own,
+  where LLVM code generators do not produce optimal code or simply where another
+  compiler produces better code.  Try to minimize the test case that
+  demonstrates the issue.  Then, either <a
+  href="http://llvm.cs.uiuc.edu/bugs/">submit a bug</a> with your testcase and
+  the code that LLVM produces vs. the code that it <em>should</em> produce, or
+  even better, see if you can improve the code generator and submit a
+  patch.</li>
+</ol>
+
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
   <a name="misc_imp">Miscellaneous Improvements</a>
 </div>
 
@@ -204,7 +226,7 @@ also be very rewarding.</p>
 <div class="doc_text">
 
 <p>Many ideas for feature requests are stored in LLVM bugzilla.  Just <a
-  href="http://llvm.org/bugs/buglist.cgi?short_desc_type=allwordssubstr&amp;short_desc=&amp;long_desc_type=allwordssubstr&amp;long_desc=&amp;bug_file_loc_type=allwordssubstr&amp;bug_file_loc=&amp;status_whiteboard_type=allwordssubstr&amp;status_whiteboard=&amp;keywords_type=allwords&amp;keywords=new-feature&amp;bug_status=UNCONFIRMED&amp;bug_status=NEW&amp;bug_status=ASSIGNED&amp;bug_status=REOPENED&amp;emailassigned_to1=1&amp;emailtype1=substring&amp;email1=&amp;emailassigned_to2=1&amp;emailreporter2=1&amp;emailcc2=1&amp;emailtype2=substring&amp;email2=&amp;bugidtype=include&amp;bug_id=&amp;votes=&amp;changedin=&amp;chfieldfrom=&amp;chfieldto=Now&amp;chfieldvalue=&amp;cmdtype=doit&amp;namedcmd=All+PRs&amp;newqueryname=&amp;order=Bug+Number&amp;field0-0-0=noop&amp;type0-0-0=noop&amp;value0-0-0=">search for bugs with a "new-feature" keyword</a>.</p>
+  href="http://llvm.cs.uiuc.edu/bugs/buglist.cgi?short_desc_type=allwordssubstr&amp;short_desc=&amp;long_desc_type=allwordssubstr&amp;long_desc=&amp;bug_file_loc_type=allwordssubstr&amp;bug_file_loc=&amp;status_whiteboard_type=allwordssubstr&amp;status_whiteboard=&amp;keywords_type=allwords&amp;keywords=new-feature&amp;bug_status=UNCONFIRMED&amp;bug_status=NEW&amp;bug_status=ASSIGNED&amp;bug_status=REOPENED&amp;emailassigned_to1=1&amp;emailtype1=substring&amp;email1=&amp;emailassigned_to2=1&amp;emailreporter2=1&amp;emailcc2=1&amp;emailtype2=substring&amp;email2=&amp;bugidtype=include&amp;bug_id=&amp;votes=&amp;changedin=&amp;chfieldfrom=&amp;chfieldto=Now&amp;chfieldvalue=&amp;cmdtype=doit&amp;namedcmd=All+PRs&amp;newqueryname=&amp;order=Bug+Number&amp;field0-0-0=noop&amp;type0-0-0=noop&amp;value0-0-0=">search for bugs with a "new-feature" keyword</a>.</p>
 
 </div>
 
