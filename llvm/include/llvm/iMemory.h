@@ -30,6 +30,8 @@ public:
       assert(getType()->getValueType()->isArrayType() && 
              cast<ArrayType>(getType()->getValueType())->isUnsized() && 
            "Trying to allocate something other than unsized array, with size!");
+      assert(ArraySize->getType() == Type::UIntTy &&
+             "Malloc/Allocation array size != UIntTy!");
 
       Operands.reserve(1);
       Operands.push_back(Use(ArraySize, this));
@@ -162,15 +164,8 @@ public:
 class MemAccessInst : public Instruction {
 protected:
   inline MemAccessInst(const Type *Ty, unsigned Opcode,
-		       const vector<ConstPoolVal*> &Idx,
 		       const string &Nam = "")
-    : Instruction(Ty, Opcode, Nam),
-      indexVec(Idx)
-  {}
-  
-protected:
-  vector<ConstPoolVal*> indexVec;
-  
+    : Instruction(Ty, Opcode, Nam) {}
 public:
   // getIndexedType - Returns the type of the element that would be loaded with
   // a load instruction with the specified parameters.
@@ -179,9 +174,26 @@ public:
   // pointer type.
   //
   static const Type *getIndexedType(const Type *Ptr, 
-				    const vector<ConstPoolVal*> &Indices,
+				    const vector<Value*> &Indices,
 				    bool AllowStructLeaf = false);
+
+  const vector<ConstPoolVal*> getIndicesBROKEN() const;
   
+
+  inline op_iterator       idx_begin()       {
+    return op_begin()+getFirstIndexOperandNumber();
+  }
+  inline op_const_iterator idx_begin() const {
+    return op_begin()+getFirstIndexOperandNumber();
+  }
+  inline op_iterator       idx_end()         { return op_end(); }
+  inline op_const_iterator idx_end()   const { return op_end(); }
+
+
+  vector<Value*> copyIndices() const {
+    return vector<Value*>(idx_begin(), idx_end());
+  }
+
   Value *getPointerOperand() {
     return getOperand(getFirstIndexOperandNumber()-1);
   }
@@ -191,7 +203,6 @@ public:
   
   virtual unsigned getFirstIndexOperandNumber() const = 0;
 
-  const vector<ConstPoolVal*> &getIndices() const { return indexVec; }
   inline bool hasIndices() const {
     return getNumOperands() > getFirstIndexOperandNumber();
   }
@@ -203,15 +214,13 @@ public:
 //===----------------------------------------------------------------------===//
 
 class LoadInst : public MemAccessInst {
-  LoadInst(const LoadInst &LI) : MemAccessInst(LI.getType(), Load,
-                                               LI.getIndices()) {
+  LoadInst(const LoadInst &LI) : MemAccessInst(LI.getType(), Load) {
     Operands.reserve(LI.Operands.size());
     for (unsigned i = 0, E = LI.Operands.size(); i != E; ++i)
       Operands.push_back(Use(LI.Operands[i], this));
   }
 public:
-  LoadInst(Value *Ptr, const vector<ConstPoolVal*> &Idx,
-	   const string &Name = "");
+  LoadInst(Value *Ptr, const vector<Value*> &Idx, const string &Name = "");
   LoadInst(Value *Ptr, const string &Name = "");
 
   virtual Instruction *clone() const { return new LoadInst(*this); }
@@ -235,14 +244,13 @@ public:
 //===----------------------------------------------------------------------===//
 
 class StoreInst : public MemAccessInst {
-  StoreInst(const StoreInst &SI) : MemAccessInst(SI.getType(), Store,
-                                                 SI.getIndices()) {
+  StoreInst(const StoreInst &SI) : MemAccessInst(SI.getType(), Store) {
     Operands.reserve(SI.Operands.size());
     for (unsigned i = 0, E = SI.Operands.size(); i != E; ++i)
       Operands.push_back(Use(SI.Operands[i], this));
   }
 public:
-  StoreInst(Value *Val, Value *Ptr, const vector<ConstPoolVal*> &Idx,
+  StoreInst(Value *Val, Value *Ptr, const vector<Value*> &Idx,
 	    const string &Name = "");
   StoreInst(Value *Val, Value *Ptr, const string &Name = "");
   virtual Instruction *clone() const { return new StoreInst(*this); }
@@ -269,13 +277,13 @@ public:
 
 class GetElementPtrInst : public MemAccessInst {
   GetElementPtrInst(const GetElementPtrInst &EPI)
-    : MemAccessInst(EPI.getType(), GetElementPtr, EPI.getIndices()) {
+    : MemAccessInst(EPI.getType(), GetElementPtr) {
     Operands.reserve(EPI.Operands.size());
     for (unsigned i = 0, E = EPI.Operands.size(); i != E; ++i)
       Operands.push_back(Use(EPI.Operands[i], this));
   }
 public:
-  GetElementPtrInst(Value *Ptr, const vector<ConstPoolVal*> &Idx,
+  GetElementPtrInst(Value *Ptr, const vector<Value*> &Idx,
 		    const string &Name = "");
   virtual Instruction *clone() const { return new GetElementPtrInst(*this); }
   virtual const char *getOpcodeName() const { return "getelementptr"; }  
