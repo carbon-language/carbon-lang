@@ -19,6 +19,11 @@
 #elif HAVE_STD_ISINF_IN_CMATH
 # include <cmath>
 using std::isinf;
+#elif HAVE_FINITE_IN_IEEEFP_H
+// A handy workaround I found at http://www.unixguide.net/sun/faq ...
+// apparently this has been a problem with Solaris for years.
+# include <ieeefp.h>
+static int isinf(double x) { return !finite(x) && x==x; }
 #else
 # error "Don't know how to get isinf()"
 #endif
