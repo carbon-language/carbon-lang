@@ -56,6 +56,8 @@ namespace {
       (void) llvm::createConstantMergePass();
       (void) llvm::createConstantPropagationPass();
       (void) llvm::createCorrelatedExpressionEliminationPass();
+      (void) llvm::createDSAAPass();
+      (void) llvm::createDSOptPass();
       (void) llvm::createDeadArgEliminationPass();
       (void) llvm::createDeadCodeEliminationPass();
       (void) llvm::createDeadInstEliminationPass();
@@ -95,6 +97,7 @@ namespace {
       (void) llvm::createNoAAPass();
       (void) llvm::createNoProfileInfoPass();
       (void) llvm::createPREPass();
+      (void) llvm::createParallelizePass();
       (void) llvm::createProfilePathsPass();
       (void) llvm::createPromoteMemoryToRegister();
       (void) llvm::createPruneEHPass();
@@ -104,6 +107,7 @@ namespace {
       (void) llvm::createSCCPPass();
       (void) llvm::createScalarReplAggregatesPass();
       (void) llvm::createSingleLoopExtractorPass();
+      (void) llvm::createSteensgaardPass();
       (void) llvm::createStripSymbolsPass();
       (void) llvm::createTailCallEliminationPass();
       (void) llvm::createTailDuplicationPass();

@@ -80,6 +80,34 @@ namespace llvm {
   // createNoProfileInfoPass - This pass implements the default "no profile".
   //
   ImmutablePass *createNoProfileInfoPass();
+ 
+  //===--------------------------------------------------------------------===//
+  //
+  // createDSAAPass - This pass implements simple context sensitive alias
+  // analysis.
+  //
+  ModulePass *createDSAAPass();
+ 
+  //===--------------------------------------------------------------------===//
+  //
+  // createDSOptPass - This pass uses DSA to do a series of simple
+  // optimizations.
+  //
+  ModulePass *createDSOptPass();
+ 
+  //===--------------------------------------------------------------------===//
+  //
+  // createParallelizePass - This pass parallelizes a program using the cilk
+  // multi-threaded runtime system.
+  //
+  ModulePass *createParallelizePass();
+ 
+  //===--------------------------------------------------------------------===//
+  //
+  // createSteensgaardPass - This pass uses the data structure graphs to do a
+  // simple context insensitive alias analysis.
+  //
+  ModulePass *createSteensgaardPass();
 }
 
 #endif

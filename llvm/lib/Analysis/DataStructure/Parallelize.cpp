@@ -42,6 +42,7 @@
 #include "llvm/Instructions.h"
 #include "llvm/Module.h"
 #include "PgmDependenceGraph.h"
+#include "llvm/Analysis/Passes.h"
 #include "llvm/Analysis/DataStructure/DataStructure.h"
 #include "llvm/Analysis/DataStructure/DSGraph.h"
 #include "llvm/Support/InstVisitor.h"
@@ -407,6 +408,8 @@ namespace {
 
   RegisterOpt<Parallelize> X("parallel", "Parallelize program using Cilk");
 }
+
+ModulePass *llvm::createParallelizePass() { return new Parallelize(); }
 
 
 bool Parallelize::runOnModule(Module& M) {

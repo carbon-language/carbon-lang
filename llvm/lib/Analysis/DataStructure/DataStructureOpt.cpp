@@ -14,6 +14,7 @@
 
 #include "llvm/Analysis/DataStructure/DataStructure.h"
 #include "llvm/Analysis/DataStructure/DSGraph.h"
+#include "llvm/Analysis/Passes.h"
 #include "llvm/Module.h"
 #include "llvm/Constant.h"
 #include "llvm/ADT/Statistic.h"
@@ -47,6 +48,8 @@ namespace {
 
   RegisterOpt<DSOpt> X("ds-opt", "DSA-based simple optimizations");
 }
+
+ModulePass *llvm::createDSOptPass() { return new DSOpt(); }
 
 /// OptimizeGlobals - This method uses information taken from DSA to optimize
 /// global variables.

@@ -14,6 +14,7 @@
 
 #include "llvm/Module.h"
 #include "llvm/Analysis/AliasAnalysis.h"
+#include "llvm/Analysis/Passes.h"
 #include "llvm/Analysis/DataStructure/DataStructure.h"
 #include "llvm/Analysis/DataStructure/DSGraph.h"
 using namespace llvm;
@@ -70,6 +71,8 @@ namespace {
   // Register as an implementation of AliasAnalysis
   RegisterAnalysisGroup<AliasAnalysis, DSAA> Y;
 }
+
+ModulePass *llvm::createDSAAPass() { return new DSAA(); }
 
 // getGraphForValue - Return the DSGraph to use for queries about the specified
 // value...

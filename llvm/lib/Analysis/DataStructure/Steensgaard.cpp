@@ -17,6 +17,7 @@
 #include "llvm/Analysis/DataStructure/DataStructure.h"
 #include "llvm/Analysis/DataStructure/DSGraph.h"
 #include "llvm/Analysis/AliasAnalysis.h"
+#include "llvm/Analysis/Passes.h"
 #include "llvm/Module.h"
 #include "llvm/Support/Debug.h"
 using namespace llvm;
@@ -75,6 +76,8 @@ namespace {
   // Register as an implementation of AliasAnalysis
   RegisterAnalysisGroup<AliasAnalysis, Steens> Y;
 }
+
+ModulePass *llvm::createSteensgaardPass() { return new Steens(); }
 
 /// ResolveFunctionCall - Resolve the actual arguments of a call to function F
 /// with the specified call site descriptor.  This function links the arguments
