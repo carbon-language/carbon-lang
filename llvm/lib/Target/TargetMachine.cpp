@@ -49,10 +49,12 @@ TargetMachine::findOptimalStorageSize(const Type* ty) const
 
 
 /*ctor*/
-MachineInstrInfo::MachineInstrInfo(const MachineInstrDescriptor* _desc,
+MachineInstrInfo::MachineInstrInfo(const TargetMachine& tgt,
+                                   const MachineInstrDescriptor* _desc,
 				   unsigned int _descSize,
 				   unsigned int _numRealOpCodes)
-  : desc(_desc), descSize(_descSize), numRealOpCodes(_numRealOpCodes)
+  : target(tgt),
+    desc(_desc), descSize(_descSize), numRealOpCodes(_numRealOpCodes)
 {
   // FIXME: TargetInstrDescriptors should not be global
   assert(TargetInstrDescriptors == NULL && desc != NULL);

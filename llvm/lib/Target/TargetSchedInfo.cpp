@@ -78,14 +78,15 @@ ComputeMinGap(const InstrRUsage &fromRU,
 //	Interface to machine description for instruction scheduling
 //---------------------------------------------------------------------------
 
-MachineSchedInfo::MachineSchedInfo(int                     NumSchedClasses,
-                                   const MachineInstrInfo* Mii,
+MachineSchedInfo::MachineSchedInfo(const TargetMachine&    tgt,
+                                   int                     NumSchedClasses,
                                    const InstrClassRUsage* ClassRUsages,
                                    const InstrRUsageDelta* UsageDeltas,
                                    const InstrIssueDelta*  IssueDeltas,
                                    unsigned int		   NumUsageDeltas,
                                    unsigned int		   NumIssueDeltas)
-  : numSchedClasses(NumSchedClasses), mii(Mii),
+  : target(tgt),
+    numSchedClasses(NumSchedClasses), mii(& tgt.getInstrInfo()),
     classRUsages(ClassRUsages), usageDeltas(UsageDeltas),
     issueDeltas(IssueDeltas), numUsageDeltas(NumUsageDeltas),
     numIssueDeltas(NumIssueDeltas)
