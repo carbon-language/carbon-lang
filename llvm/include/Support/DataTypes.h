@@ -30,6 +30,10 @@
 // happening when system headers or C++ STL headers include stdint.h before
 // we define it here, we define it on the g++ command line (in Makefile.rules).
 
+#ifdef HAVE_STDINT_H
+#include <stdint.h>
+#endif
+
 #ifdef HAVE_INTTYPES_H
 #include <inttypes.h>
 #endif
