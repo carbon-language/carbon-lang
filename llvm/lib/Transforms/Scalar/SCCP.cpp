@@ -17,17 +17,13 @@
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/ConstantHandling.h"
 #include "llvm/Function.h"
-#include "llvm/iPHINode.h"
-#include "llvm/iMemory.h"
-#include "llvm/iTerminators.h"
-#include "llvm/iOther.h"
+#include "llvm/Instructions.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/InstVisitor.h"
 #include "Support/STLExtras.h"
 #include "Support/Statistic.h"
 #include <algorithm>
 #include <set>
-using std::cerr;
 
 // InstVal class - This class represents the different lattice values that an 
 // instruction may occupy.  It is a simple class with value semantics.
@@ -111,9 +107,8 @@ private:
   // the users of the instruction are updated later.
   //
   inline bool markConstant(Instruction *I, Constant *V) {
-    DEBUG(cerr << "markConstant: " << V << " = " << I);
-
     if (ValueState[I].markConstant(V)) {
+      DEBUG(std::cerr << "markConstant: " << V << " = " << I);
       InstWorkList.push_back(I);
       return true;
     }
@@ -127,7 +122,7 @@ private:
   inline bool markOverdefined(Value *V) {
     if (ValueState[V].markOverdefined()) {
       if (Instruction *I = dyn_cast<Instruction>(V)) {
-	DEBUG(cerr << "markOverdefined: " << V);
+	DEBUG(std::cerr << "markOverdefined: " << V);
 	InstWorkList.push_back(I);  // Only instructions go on the work list
       }
       return true;
@@ -161,10 +156,19 @@ private:
   // work list if it is not already executable...
   // 
   void markExecutable(BasicBlock *BB) {
-    if (BBExecutable.count(BB)) return;
-    DEBUG(cerr << "Marking BB Executable: " << *BB);
-    BBExecutable.insert(BB);   // Basic block is executable!
-    BBWorkList.push_back(BB);  // Add the block to the work list!
+    if (BBExecutable.count(BB)) {
+      // BB is already executable, but we may have just made an edge feasible
+      // that wasn't before.  Add the PHI nodes to the work list so that they
+      // can be rechecked.
+      for (BasicBlock::iterator I = BB->begin();
+           PHINode *PN = dyn_cast<PHINode>(I); ++I)
+        InstWorkList.push_back(PN);
+
+    } else {
+      DEBUG(std::cerr << "Marking BB Executable: " << *BB);
+      BBExecutable.insert(BB);   // Basic block is executable!
+      BBWorkList.push_back(BB);  // Add the block to the work list!
+    }
   }
 
 
@@ -193,7 +197,7 @@ private:
 
   void visitInstruction(Instruction &I) {
     // If a new instruction is added to LLVM that we don't handle...
-    cerr << "SCCP: Don't know how to handle: " << I;
+    std::cerr << "SCCP: Don't know how to handle: " << I;
     markOverdefined(&I);   // Just in case
   }
 
@@ -214,12 +218,12 @@ private:
   void OperandChangedState(User *U) {
     // Only instructions use other variable values!
     Instruction &I = cast<Instruction>(*U);
-    if (!BBExecutable.count(I.getParent())) return;// Inst not executable yet!
-    visit(I);
+    if (BBExecutable.count(I.getParent()))   // Inst is executable?
+      visit(I);
   }
 };
 
-  RegisterOpt<SCCP> X("sccp", "Sparse Conditional Constant Propogation");
+  RegisterOpt<SCCP> X("sccp", "Sparse Conditional Constant Propagation");
 } // end anonymous namespace
 
 
@@ -248,8 +252,7 @@ bool SCCP::runOnFunction(Function &F) {
       Instruction *I = InstWorkList.back();
       InstWorkList.pop_back();
 
-      DEBUG(cerr << "\nPopped off I-WL: " << I);
-
+      DEBUG(std::cerr << "\nPopped off I-WL: " << I);
       
       // "I" got into the work list because it either made the transition from
       // bottom to constant, or to Overdefined.
@@ -265,13 +268,7 @@ bool SCCP::runOnFunction(Function &F) {
       BasicBlock *BB = BBWorkList.back();
       BBWorkList.pop_back();
 
-      DEBUG(cerr << "\nPopped off BBWL: " << BB);
-
-      // If this block only has a single successor, mark it as executable as
-      // well... if not, terminate the do loop.
-      //
-      if (BB->getTerminator()->getNumSuccessors() == 1)
-        markExecutable(BB->getTerminator()->getSuccessor(0));
+      DEBUG(std::cerr << "\nPopped off BBWL: " << BB);
 
       // Notify all instructions in this basic block that they are newly
       // executable.
@@ -282,7 +279,7 @@ bool SCCP::runOnFunction(Function &F) {
   if (DebugFlag) {
     for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I)
       if (!BBExecutable.count(I))
-        cerr << "BasicBlock Dead:" << *I;
+        std::cerr << "BasicBlock Dead:" << *I;
   }
 
   // Iterate over all of the instructions in a function, replacing them with
@@ -295,7 +292,7 @@ bool SCCP::runOnFunction(Function &F) {
       InstVal &IV = ValueState[&Inst];
       if (IV.isConstant()) {
         Constant *Const = IV.getConstant();
-        DEBUG(cerr << "Constant: " << Const << " = " << Inst);
+        DEBUG(std::cerr << "Constant: " << Const << " = " << Inst);
 
         // Replaces all of the uses of a variable with uses of the constant.
         Inst.replaceAllUsesWith(Const);
@@ -325,7 +322,7 @@ bool SCCP::runOnFunction(Function &F) {
 // successors are reachable from a given terminator instruction.
 //
 void SCCP::getFeasibleSuccessors(TerminatorInst &TI, std::vector<bool> &Succs) {
-  assert(Succs.size() == TI.getNumSuccessors() && "Succs vector wrong size!");
+  Succs.resize(TI.getNumSuccessors());
   if (BranchInst *BI = dyn_cast<BranchInst>(&TI)) {
     if (BI->isUnconditional()) {
       Succs[0] = true;
@@ -362,7 +359,7 @@ void SCCP::getFeasibleSuccessors(TerminatorInst &TI, std::vector<bool> &Succs) {
       Succs[0] = true;
     }
   } else {
-    cerr << "SCCP: Don't know how to handle: " << TI;
+    std::cerr << "SCCP: Don't know how to handle: " << TI;
     Succs.assign(TI.getNumSuccessors(), true);
   }
 }
@@ -379,7 +376,7 @@ bool SCCP::isEdgeFeasible(BasicBlock *From, BasicBlock *To) {
   
   // Check to make sure this edge itself is actually feasible now...
   TerminatorInst *FT = From->getTerminator();
-  std::vector<bool> SuccFeasible(FT->getNumSuccessors());
+  std::vector<bool> SuccFeasible;
   getFeasibleSuccessors(*FT, SuccFeasible);
 
   // Check all edges from From to To.  If any are feasible, return true.
@@ -409,10 +406,8 @@ bool SCCP::isEdgeFeasible(BasicBlock *From, BasicBlock *To) {
 // 7. If a conditional branch has a value that is overdefined, make all
 //    successors executable.
 //
-
 void SCCP::visitPHINode(PHINode &PN) {
-  unsigned NumValues = PN.getNumIncomingValues(), i;
-  InstVal *OperandIV = 0;
+  if (getValueState(&PN).isOverdefined()) return;  // Quick exit
 
   // Look at all of the executable operands of the PHI node.  If any of them
   // are overdefined, the PHI becomes overdefined as well.  If they are all
@@ -420,24 +415,25 @@ void SCCP::visitPHINode(PHINode &PN) {
   // constant.  If they are constant and don't agree, the PHI is overdefined.
   // If there are no executable operands, the PHI remains undefined.
   //
-  for (i = 0; i < NumValues; ++i) {
+  Constant *OperandVal = 0;
+  for (unsigned i = 0, e = PN.getNumIncomingValues(); i != e; ++i) {
+    InstVal &IV = getValueState(PN.getIncomingValue(i));
+    if (IV.isUndefined()) continue;  // Doesn't influence PHI node.
+    if (IV.isOverdefined()) {   // PHI node becomes overdefined!
+      markOverdefined(&PN);
+      return;
+    }
+    
     if (isEdgeFeasible(PN.getIncomingBlock(i), PN.getParent())) {
-      InstVal &IV = getValueState(PN.getIncomingValue(i));
-      if (IV.isUndefined()) continue;  // Doesn't influence PHI node.
-      if (IV.isOverdefined()) {   // PHI node becomes overdefined!
-        markOverdefined(&PN);
-        return;
-      }
-
-      if (OperandIV == 0) {   // Grab the first value...
-        OperandIV = &IV;
+      if (OperandVal == 0) {   // Grab the first value...
+        OperandVal = IV.getConstant();
       } else {                // Another value is being merged in!
         // There is already a reachable operand.  If we conflict with it,
         // then the PHI node becomes overdefined.  If we agree with it, we
         // can continue on.
-
+        
         // Check to see if there are two different constants merging...
-        if (IV.getConstant() != OperandIV->getConstant()) {
+        if (IV.getConstant() != OperandVal) {
           // Yes there is.  This means the PHI node is not constant.
           // You must be overdefined poor PHI.
           //
@@ -449,18 +445,16 @@ void SCCP::visitPHINode(PHINode &PN) {
   }
 
   // If we exited the loop, this means that the PHI node only has constant
-  // arguments that agree with each other(and OperandIV is a pointer to one
-  // of their InstVal's) or OperandIV is null because there are no defined
-  // incoming arguments.  If this is the case, the PHI remains undefined.
+  // arguments that agree with each other(and OperandVal is the constant) or
+  // OperandVal is null because there are no defined incoming arguments.  If
+  // this is the case, the PHI remains undefined.
   //
-  if (OperandIV) {
-    assert(OperandIV->isConstant() && "Should only be here for constants!");
-    markConstant(&PN, OperandIV->getConstant());  // Aquire operand value
-  }
+  if (OperandVal)
+    markConstant(&PN, OperandVal);      // Aquire operand value
 }
 
 void SCCP::visitTerminatorInst(TerminatorInst &TI) {
-  std::vector<bool> SuccFeasible(TI.getNumSuccessors());
+  std::vector<bool> SuccFeasible;
   getFeasibleSuccessors(TI, SuccFeasible);
 
   // Mark all feasible successors executable...
@@ -468,14 +462,6 @@ void SCCP::visitTerminatorInst(TerminatorInst &TI) {
     if (SuccFeasible[i]) {
       BasicBlock *Succ = TI.getSuccessor(i);
       markExecutable(Succ);
-
-      // Visit all of the PHI nodes that merge values from this block...
-      // Because this edge may be new executable, and PHI nodes that used to be
-      // constant now may not be.
-      //
-      for (BasicBlock::iterator I = Succ->begin();
-           PHINode *PN = dyn_cast<PHINode>(I); ++I)
-        visitPHINode(*PN);
     }
 }
 
