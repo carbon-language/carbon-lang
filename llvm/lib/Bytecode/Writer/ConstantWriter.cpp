@@ -32,7 +32,7 @@ void BytecodeWriter::outputType(const Type *T) {
     output_vbr((unsigned)Slot, Out);
 
     // Output the number of arguments to method (+1 if varargs):
-    output_vbr(MT->getParamTypes().size()+MT->isVarArg(), Out);
+    output_vbr((unsigned)MT->getParamTypes().size()+MT->isVarArg(), Out);
 
     // Output all of the arguments...
     FunctionType::ParamTypes::const_iterator I = MT->getParamTypes().begin();
