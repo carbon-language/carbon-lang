@@ -5,7 +5,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "OSInterface.h"
 #include "SysUtils.h"
 #include "Config/errno.h"
 #include "Config/stdlib.h"
@@ -52,21 +51,6 @@ int execve(const char *filename, char *const argv[], char *const envp[])
   close(file);
   if (bytesRead != (ssize_t)headerSize) return EIO;
   if (!memcmp(llvmHeader, header, headerSize)) {
-    /*
-     * Check if we have a cached translation on disk
-     */ 
-    struct stat buf;
-    llvmStat(realFilename, &buf);
-    if (isExecutable(&buf)) {
-      size_t size;
-      void *fileAddr = llvmReadFile(realFilename, &size);
-      fprintf(stderr, "Found in cache: '%s'\n", realFilename);
-      if (fileAddr) {
-        free(fileAddr);
-      }
-      llvmExecve(realFilename, argv, envp);
-    }    
-
     /* 
      * This is a bytecode file, so execute the JIT with the program and
      * parameters.
