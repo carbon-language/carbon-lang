@@ -9,6 +9,7 @@
 #define LLVM_TRANSFORMS_SCALAR_H
 
 class Pass;
+class FunctionPass;
 class GetElementPtrInst;
 class PassInfo;
 class TerminatorInst;
@@ -244,7 +245,7 @@ Pass *createRaiseAllocationsPass();
 // This pass converts SwitchInst instructions into a sequence of chained binary
 // branch instructions.
 //
-Pass *createLowerSwitchPass();
+FunctionPass *createLowerSwitchPass();
 
 //===----------------------------------------------------------------------===//
 //

@@ -117,7 +117,7 @@ namespace {
   };
 }
 
-Pass *createX86FloatingPointStackifierPass() { return new FPS(); }
+FunctionPass *createX86FloatingPointStackifierPass() { return new FPS(); }
 
 /// runOnMachineFunction - Loop over all of the basic blocks, transforming FP
 /// register references into FP stack references.

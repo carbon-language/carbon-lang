@@ -224,6 +224,6 @@ bool RegAllocSimple::runOnMachineFunction(MachineFunction &Fn) {
   return true;
 }
 
-Pass *createSimpleRegisterAllocator() {
+FunctionPass *createSimpleRegisterAllocator() {
   return new RegAllocSimple();
 }

@@ -19,7 +19,7 @@ namespace {
   };
 }
 
-Pass *createX86PeepholeOptimizerPass() { return new PH(); }
+FunctionPass *createX86PeepholeOptimizerPass() { return new PH(); }
 
 bool PH::runOnMachineFunction(MachineFunction &MF) {
   bool Changed = false;

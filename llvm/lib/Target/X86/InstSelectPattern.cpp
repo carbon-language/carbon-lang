@@ -112,6 +112,6 @@ void ISel::expandArguments(SelectionDAG &SD, MachineFunction &F) {
 /// into a machine code representation using pattern matching and a machine
 /// description file.
 ///
-Pass *createX86PatternInstructionSelector(TargetMachine &TM) {
+FunctionPass *createX86PatternInstructionSelector(TargetMachine &TM) {
   return new ISel(TM);  
 }

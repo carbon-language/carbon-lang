@@ -62,7 +62,7 @@ namespace {
 /// createPrologEpilogCodeInserter - This function returns a pass that inserts
 /// prolog and epilog code, and eliminates abstract frame references.
 ///
-Pass *createPrologEpilogCodeInserter() { return new PEI(); }
+FunctionPass *createPrologEpilogCodeInserter() { return new PEI(); }
 
 
 /// saveCallerSavedRegisters - Scan the function for modified caller saved

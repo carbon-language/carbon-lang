@@ -30,7 +30,7 @@ namespace {
 }
 
 // createLowerSwitchPass - Interface to this file...
-Pass *createLowerSwitchPass() {
+FunctionPass *createLowerSwitchPass() {
   return new LowerSwitch();
 }
 

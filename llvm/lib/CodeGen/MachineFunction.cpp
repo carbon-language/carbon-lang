@@ -80,15 +80,15 @@ namespace {
   };
 }
 
-Pass *createMachineCodeConstructionPass(TargetMachine &Target) {
+FunctionPass *createMachineCodeConstructionPass(TargetMachine &Target) {
   return new ConstructMachineFunction(Target);
 }
 
-Pass *createMachineCodeDestructionPass() {
+FunctionPass *createMachineCodeDestructionPass() {
   return new DestroyMachineFunction();
 }
 
-Pass *createMachineFunctionPrinterPass() {
+FunctionPass *createMachineFunctionPrinterPass() {
   return new Printer();
 }
 

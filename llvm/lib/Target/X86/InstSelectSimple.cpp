@@ -2105,6 +2105,6 @@ void ISel::visitFreeInst(FreeInst &I) {
 /// into a machine code representation is a very simple peep-hole fashion.  The
 /// generated code sucks but the implementation is nice and simple.
 ///
-Pass *createX86SimpleInstructionSelector(TargetMachine &TM) {
+FunctionPass *createX86SimpleInstructionSelector(TargetMachine &TM) {
   return new ISel(TM);
 }

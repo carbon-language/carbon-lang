@@ -643,6 +643,6 @@ bool RA::runOnMachineFunction(MachineFunction &Fn) {
   return true;
 }
 
-Pass *createLocalRegisterAllocator() {
+FunctionPass *createLocalRegisterAllocator() {
   return new RA();
 }

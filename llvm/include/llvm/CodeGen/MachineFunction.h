@@ -17,15 +17,15 @@
 
 class Function;
 class TargetMachine;
-class Pass;
+class FunctionPass;
 class SSARegMap;
 class MachineFunctionInfo;
 class MachineFrameInfo;
 class MachineConstantPool;
 
-Pass *createMachineCodeConstructionPass(TargetMachine &TM);
-Pass *createMachineCodeDestructionPass();
-Pass *createMachineFunctionPrinterPass();
+FunctionPass *createMachineCodeConstructionPass(TargetMachine &TM);
+FunctionPass *createMachineCodeDestructionPass();
+FunctionPass *createMachineFunctionPrinterPass();
 
 class MachineFunction : private Annotation {
   const Function *Fn;
