@@ -1,4 +1,3 @@
-
 int %main() {
 	%A = add sbyte 0, 12
 	%B = sub sbyte %A, 1
@@ -23,6 +22,14 @@ int %main() {
 	%E = rem int %D, %D
 	%F = div uint 5, 6
 	%G = rem uint 6, 5
+
+	%A = add long 0, 12
+	%B = sub long %A, 1
+	%C = mul long %B, %B
+	%D = div long %C, %C
+	%E = rem long %D, %D
+	%F = div ulong 5, 6
+	%G = rem ulong 6, 5
 
 	ret int 0
 }
