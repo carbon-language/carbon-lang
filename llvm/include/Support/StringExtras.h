@@ -80,7 +80,7 @@ static inline std::string itostr(int X) {
 
 static inline std::string ftostr(double V) {
   char Buffer[200];
-  snprintf(Buffer, 200, "%e", V);
+  snprintf(Buffer, 200, "%20.6e", V);
   return Buffer;
 }
 
