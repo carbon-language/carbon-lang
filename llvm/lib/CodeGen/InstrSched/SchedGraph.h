@@ -22,6 +22,8 @@
 #include "llvm/Support/NonCopyable.h"
 #include "llvm/Support/HashExtras.h"
 #include "llvm/Support/GraphTraits.h"
+#include "llvm/Target/MachineInstrInfo.h"
+#include "llvm/CodeGen/MachineInstr.h"
 #include <hash_map>
 
 class Value;
@@ -159,6 +161,7 @@ public:
   unsigned int		getNodeId	() const { return nodeId; }
   const Instruction*	getInstr	() const { return instr; }
   const MachineInstr*	getMachineInstr	() const { return minstr; }
+  const MachineOpCode	getOpCode	() const { return minstr->getOpCode();}
   int			getLatency	() const { return latency; }
   unsigned int		getNumInEdges	() const { return inEdges.size(); }
   unsigned int		getNumOutEdges	() const { return outEdges.size(); }
@@ -302,28 +305,29 @@ private:
   
   void          buildNodesforVMInstr    (const TargetMachine& target,
                                          const Instruction* instr,
-                                         vector<const Instruction*>& memVec,
+                                         vector<SchedGraphNode*>& memNodeVec,
                                          RegToRefVecMap& regToRefVecMap,
                                          ValueToDefVecMap& valueToDefVecMap);
   
   void          findDefUseInfoAtInstr   (const TargetMachine& target,
                                          SchedGraphNode* node,
+                                         vector<SchedGraphNode*>& memNodeVec,
                                          RegToRefVecMap& regToRefVecMap,
                                          ValueToDefVecMap& valueToDefVecMap);
                                          
-  void		addEdgesForInstruction	(const MachineInstr& minstr,
+  void		addEdgesForInstruction(const MachineInstr& minstr,
                                      const ValueToDefVecMap& valueToDefVecMap,
                                      const TargetMachine& target);
   
   void		addCDEdges		(const TerminatorInst* term,
 					 const TargetMachine& target);
   
-  void		addMemEdges	     (const vector<const Instruction*>& memVec,
-				      const TargetMachine& target);
+  void		addMemEdges         (const vector<SchedGraphNode*>& memNodeVec,
+                                     const TargetMachine& target);
   
-  void          addCallCCEdges       (const vector<const Instruction*>& memVec,
-                                      MachineCodeForBasicBlock& bbMvec,
-                                      const TargetMachine& target);
+  void          addCallCCEdges      (const vector<SchedGraphNode*>& memNodeVec,
+                                     MachineCodeForBasicBlock& bbMvec,
+                                     const TargetMachine& target);
     
   void		addMachineRegEdges	(RegToRefVecMap& regToRefVecMap,
 					 const TargetMachine& target);
