@@ -1,4 +1,4 @@
-//===- Pass.cpp - LLVM Pass Infrastructure Impementation ------------------===//
+//===- Pass.cpp - LLVM Pass Infrastructure Implementation -----------------===//
 //
 // This file implements the LLVM Pass infrastructure.  It is primarily
 // responsible with ensuring that passes are executed and batched together
@@ -11,9 +11,6 @@
 #include "llvm/Module.h"
 #include "Support/STLExtras.h"
 #include "Support/TypeInfo.h"
-#include "Config/sys/resource.h"
-#include "Config/sys/time.h"
-#include "Config/unistd.h"
 #include <set>
 
 // IncludeFile - Stub function used to help linking out.
@@ -23,10 +20,15 @@ IncludeFile::IncludeFile(void*) {}
 //   AnalysisID Class Implementation
 //
 
-static std::vector<const PassInfo*> CFGOnlyAnalyses;
+// getCFGOnlyAnalyses - A wrapper around the CFGOnlyAnalyses which make it
+// initializer order independent.
+static std::vector<const PassInfo*> &getCFGOnlyAnalyses() {
+  static std::vector<const PassInfo*> CFGOnlyAnalyses;
+  return CFGOnlyAnalyses;
+}
 
 void RegisterPassBase::setOnlyUsesCFG() {
-  CFGOnlyAnalyses.push_back(PIObj);
+  getCFGOnlyAnalyses().push_back(PIObj);
 }
 
 //===----------------------------------------------------------------------===//
@@ -56,7 +58,7 @@ void AnalysisUsage::setPreservesCFG() {
   // that only depend on the CFG (like dominators, loop info, etc...)
   //
   Preserved.insert(Preserved.end(),
-                   CFGOnlyAnalyses.begin(), CFGOnlyAnalyses.end());
+                   getCFGOnlyAnalyses().begin(), getCFGOnlyAnalyses().end());
 }
 
 
