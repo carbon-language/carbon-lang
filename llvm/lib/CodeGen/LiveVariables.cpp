@@ -277,7 +277,9 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &MF) {
       // PHI nodes are guaranteed to be at the top of the block...
       for (MachineBasicBlock::iterator MI = Succ->begin(), ME = Succ->end();
 	   MI != ME && MI->getOpcode() == TargetInstrInfo::PHI; ++MI) {
-	for (unsigned i = 1; ; i += 2)
+	for (unsigned i = 1; ; i += 2) {
+          assert(MI->getNumOperands() > i+1 &&
+                 "Didn't find an entry for our predecessor??");
 	  if (MI->getOperand(i+1).getMachineBasicBlock() == MBB) {
 	    MachineOperand &MO = MI->getOperand(i);
 	    if (!MO.getVRegValueOrNull()) {
@@ -288,6 +290,7 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &MF) {
 	      break;   // Found the PHI entry for this block...
 	    }
 	  }
+        }
       }
     }
     
