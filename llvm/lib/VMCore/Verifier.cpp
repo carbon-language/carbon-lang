@@ -48,7 +48,6 @@
 #include "llvm/Support/InstVisitor.h"
 #include "Support/STLExtras.h"
 #include <algorithm>
-#include <iostream>
 
 namespace {  // Anonymous namespace for class
 
@@ -67,6 +66,13 @@ namespace {  // Anonymous namespace for class
 
     bool doInitialization(Module &M) {
       verifySymbolTable(M.getSymbolTable());
+
+      // If this is a real pass, in a pass manager, we must abort before
+      // returning back to the pass manager, or else the pass manager may try to
+      // run other passes on the broken module.
+      //
+      if (RealPass)
+        abortIfBroken();
       return false;
     }
 
@@ -74,6 +80,14 @@ namespace {  // Anonymous namespace for class
       // Get dominator information if we are being run by PassManager
       if (RealPass) DS = &getAnalysis<DominatorSet>();
       visit(F);
+
+      // If this is a real pass, in a pass manager, we must abort before
+      // returning back to the pass manager, or else the pass manager may try to
+      // run other passes on the broken module.
+      //
+      if (RealPass)
+        abortIfBroken();
+
       return false;
     }
 
@@ -83,10 +97,8 @@ namespace {  // Anonymous namespace for class
         if (I->isExternal() && I->hasInternalLinkage())
           CheckFailed("Function Declaration has Internal Linkage!", I);
 
-      if (Broken && AbortBroken) {
-        std::cerr << "Broken module found, compilation aborted!\n";
-        abort();
-      }
+      // If the module is broken, abort at this time.
+      abortIfBroken();
       return false;
     }
 
@@ -94,6 +106,16 @@ namespace {  // Anonymous namespace for class
       AU.setPreservesAll();
       if (RealPass)
         AU.addRequired<DominatorSet>();
+    }
+
+    // abortIfBroken - If the module is broken and we are supposed to abort on
+    // this condition, do so.
+    //
+    void abortIfBroken() const {
+      if (Broken && AbortBroken) {
+        std::cerr << "Broken module found, compilation aborted!\n";
+        abort();
+      }
     }
 
     // Verification methods...
