@@ -27,7 +27,7 @@
 #include "llvm/Target/MachineSchedInfo.h"
 #include "Support/CommandLine.h"
 #include <list>
-
+#include <hash_set>
 class Method;
 class MachineInstr;
 class SchedulingManager;
@@ -76,10 +76,9 @@ public:
   typedef std::list<NodeDelayPair*>::const_iterator const_iterator;
   
 public:
-  /*ctor*/	  NodeHeap	() : std::list<NodeDelayPair*>(), _size(0) {}
-  /*dtor*/	  ~NodeHeap	() {}
+  NodeHeap() : _size(0) {}
   
-  inline unsigned int	size	() const { return _size; }
+  inline unsigned       size() const { return _size; }
   
   const SchedGraphNode* getNode	(const_iterator i) const { return (*i)->node; }
   cycles_t		getDelay(const_iterator i) const { return (*i)->delay;}

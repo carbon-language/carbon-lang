@@ -11,12 +11,11 @@
 
 
 #include "llvm/CodeGen/InstrScheduling.h"
-#include "llvm/Analysis/LiveVar/BBLiveVar.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineCodeForInstruction.h"
 #include "llvm/CodeGen/MachineCodeForMethod.h"
 #include "llvm/Target/TargetMachine.h"
-#include "Support/CommandLine.h"
+#include "llvm/BasicBlock.h"
 #include "SchedPriorities.h"
 #include <ext/hash_set>
 #include <algorithm>
