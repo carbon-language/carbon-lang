@@ -108,9 +108,9 @@ bool LowerInvoke::doInitialization(Module &M) {
                                       GlobalValue::LinkOnceLinkage,
                                       Constant::getNullValue(PtrJBList),
                                       "llvm.sjljeh.jblist", &M);
-    SetJmpFn = M.getOrInsertFunction("setjmp", Type::IntTy,
+    SetJmpFn = M.getOrInsertFunction("llvm.setjmp", Type::IntTy,
                                      PointerType::get(JmpBufTy), 0);
-    LongJmpFn = M.getOrInsertFunction("longjmp", Type::VoidTy,
+    LongJmpFn = M.getOrInsertFunction("llvm.longjmp", Type::VoidTy,
                                       PointerType::get(JmpBufTy),
                                       Type::IntTy, 0);
     
