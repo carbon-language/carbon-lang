@@ -262,16 +262,15 @@ int UltraSparcRegInfo::getRegType(const Value *Val) const {
   
   switch (getRegClassIDOfValue(Val)) {
   case IntRegClassID: return IntRegType; 
-  case FloatRegClassID: 
-    Typ = Val->getType()->getPrimitiveID();
-    if (Typ == Type::FloatTyID)
+  case FloatRegClassID:
+    if (Val->getType() == Type::FloatTy)
       return FPSingleRegType;
-    else if (Typ == Type::DoubleTyID)
+    else if (Val->getType() == Type::DoubleTy)
       return FPDoubleRegType;
     assert(0 && "Unknown type in FloatRegClass");
     
-  case IntCCRegClassID: return IntCCRegType; 
-  case FloatCCRegClassID: return FloatCCRegType ; 
+  case IntCCRegClassID:   return IntCCRegType; 
+  case FloatCCRegClassID: return FloatCCRegType; 
   default: assert(0 && "Unknown reg class ID");
     return 0;
   }
