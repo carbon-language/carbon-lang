@@ -437,7 +437,7 @@ int main(int argc, char **argv) {
     if (!Out2.good())
       return PrintAndReturn(argv[0], "error opening '" + OutputFilename +
                                      "' for writing!");
-    Out2 << "#!/bin/sh\nlli -q -abort-on-exception $0.bc $*\n";
+    Out2 << "#!/bin/sh\nlli -q $0.bc $*\n";
     Out2.close();
   
     // Make the script executable...
