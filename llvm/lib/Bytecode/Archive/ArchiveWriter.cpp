@@ -22,8 +22,6 @@
 
 using namespace llvm;
 
-namespace {
-
 // Write an integer using variable bit rate encoding. This saves a few bytes
 // per entry in the symbol table.
 inline void writeInteger(unsigned num, std::ofstream& ARFile) {
@@ -43,17 +41,24 @@ inline void writeInteger(unsigned num, std::ofstream& ARFile) {
 // Compute how many bytes are taken by a given VBR encoded value. This is needed
 // to pre-compute the size of the symbol table.
 inline unsigned numVbrBytes(unsigned num) {
-  if (num < 128)          // 2^7
-    return 1;
-  if (num < 16384)        // 2^14
-    return 2;
-  if (num < 2097152)      // 2^21
-    return 3;
-  if (num < 268435456)    // 2^28
-    return 4;
-  return 5;                // anything >= 2^28 takes 5 bytes
-}
 
+  // Note that the following nested ifs are somewhat equivalent to a binary
+  // search. We split it in half by comparing against 2^14 first. This allows
+  // most reasonable values to be done in 2 comparisons instead of 1 for 
+  // small ones and four for large ones. We expect this to access file offsets
+  // in the 2^10 to 2^24 range and symbol lengths in the 2^0 to 2^8 rnage, 
+  // so this approach is reasonable.
+  if (num < 1<<14)
+    if (num < 1<<7)
+      return 1;
+    else
+      return 2;
+  if (num < 1<<21)
+    return 3;
+
+  if (num < 1<<28)
+    return 4;
+  return 5; // anything >= 2^28 takes 5 bytes
 }
 
 // Create an empty archive.
@@ -63,6 +68,12 @@ Archive::CreateEmpty(const sys::Path& FilePath ) {
   return result;
 }
 
+// Fill the ArchiveMemberHeader with the information from a member. If 
+// TruncateNames is true, names are flattened to 15 chars or less. The sz field
+// is provided here instead of coming from the mbr because the member might be 
+// stored compressed and the compressed size is not the ArchiveMember's size. 
+// Furthermore compressed files have negative size fields to identify them as 
+// compressed.
 bool
 Archive::fillHeader(const ArchiveMember &mbr, ArchiveMemberHeader& hdr,
                     int sz, bool TruncateNames) const {
@@ -78,7 +89,7 @@ Archive::fillHeader(const ArchiveMember &mbr, ArchiveMemberHeader& hdr,
   memcpy(hdr.gid,buffer,6);
 
   // Set the size field
-  if (sz < 0 ) {
+  if (sz < 0) {
     buffer[0] = '-';
     sprintf(&buffer[1],"%-9u",(unsigned)-sz);
   } else {
@@ -108,9 +119,9 @@ Archive::fillHeader(const ArchiveMember &mbr, ArchiveMemberHeader& hdr,
       nm += slashpos + 1;
       len -= slashpos +1;
     }
-    if (len >15) 
+    if (len > 15) 
       len = 15;
-    mbrPath.copy(hdr.name,len);
+    memcpy(hdr.name,nm,len);
     hdr.name[len] = '/';
   } else if (mbrPath.length() < 16 && mbrPath.find('/') == std::string::npos) {
     mbrPath.copy(hdr.name,mbrPath.length());
@@ -124,6 +135,8 @@ Archive::fillHeader(const ArchiveMember &mbr, ArchiveMemberHeader& hdr,
   return writeLongName;
 }
 
+// Insert a file into the archive before some other member. This also takes care
+// of extracting the necessary flags and information from the file.
 void
 Archive::addFileBefore(const sys::Path& filePath, iterator where) {
   assert(filePath.exists() && "Can't add a non-existent file");
@@ -156,19 +169,7 @@ Archive::addFileBefore(const sys::Path& filePath, iterator where) {
   members.insert(where,mbr);
 }
 
-void
-Archive::moveMemberBefore(iterator target, iterator where) {
-  assert(target != end() && "Target iterator for moveMemberBefore is invalid");
-  ArchiveMember* mbr = members.remove(target);
-  members.insert(where, mbr);
-}
-
-void
-Archive::remove(iterator target) {
-  assert(target != end() && "Target iterator for remove is invalid");
-  ArchiveMember* mbr = members.remove(target);
-  delete mbr;
-}
+// Write one member out to the file.
 void
 Archive::writeMember(
   const ArchiveMember& member,
@@ -291,8 +292,9 @@ Archive::writeMember(
   }
 }
 
+// Write out the LLVM symbol table as an archive member to the file.
 void
-Archive::writeSymbolTable(std::ofstream& ARFile,bool PrintSymTab ) {
+Archive::writeSymbolTable(std::ofstream& ARFile) {
 
   // Construct the symbol table's header
   ArchiveMemberHeader Hdr;
@@ -311,10 +313,6 @@ Archive::writeSymbolTable(std::ofstream& ARFile,bool PrintSymTab ) {
   // Save the starting position of the symbol tables data content.
   unsigned startpos = ARFile.tellp();
 
-  // Print the symbol table header if we're supposed to
-  if (PrintSymTab)
-    std::cout << "Symbol Table:\n";
-
   // Write out the symbols sequentially
   for ( Archive::SymTabType::iterator I = symTab.begin(), E = symTab.end();
         I != E; ++I)
@@ -325,13 +323,6 @@ Archive::writeSymbolTable(std::ofstream& ARFile,bool PrintSymTab ) {
     writeInteger(I->first.length(), ARFile);
     // Write out the symbol
     ARFile.write(I->first.data(), I->first.length());
-
-    // Print this entry to std::cout if we should
-    if (PrintSymTab) {
-      unsigned filepos = I->second + symTabSize + sizeof(ArchiveMemberHeader) +
-        (symTabSize % 2 != 0) + 8;
-      std::cout << "  " << std::setw(9) << filepos << "\t" << I->first << "\n";
-    }
   }
 
   // Now that we're done with the symbol table, get the ending file position
@@ -346,13 +337,17 @@ Archive::writeSymbolTable(std::ofstream& ARFile,bool PrintSymTab ) {
     ARFile << ARFILE_PAD;
 }
 
+// Write the entire archive to the file specified when the archive was created.
+// This writes to a temporary file first. Options are for creating a symbol 
+// table, flattening the file names (no directories, 15 chars max) and 
+// compressing each archive member.
 void
-Archive::writeToDisk(bool CreateSymbolTable, bool TruncateNames, 
-                        bool Compress, bool PrintSymTab) {
+Archive::writeToDisk(bool CreateSymbolTable, bool TruncateNames, bool Compress){
   
   // Make sure they haven't opened up the file, not loaded it,
   // but are now trying to write it which would wipe out the file.
-  assert(!(members.empty() && mapfile->size() > 8));
+  assert(!(members.empty() && mapfile->size() > 8) && 
+         "Can't write an archive not opened for writing");
 
   // Create a temporary file to store the archive in
   sys::Path TmpArchive = archPath;
@@ -396,6 +391,8 @@ Archive::writeToDisk(bool CreateSymbolTable, bool TruncateNames,
       // ensure compatibility with other archivers we need to put the symbol
       // table first in the file. Unfortunately, this means mapping the file
       // we just wrote back in and copying it to the destination file.
+
+      // Map in the archive we just wrote.
       sys::MappedFile arch(TmpArchive);
       const char* base = (const char*) arch.map();
 
@@ -408,8 +405,13 @@ Archive::writeToDisk(bool CreateSymbolTable, bool TruncateNames,
       // Write the file magic number
       FinalFile << ARFILE_MAGIC;
 
-      // Put out the symbol table
-      writeSymbolTable(FinalFile,PrintSymTab);
+      // If there is a foreign symbol table, put it into the file now.
+      if (foreignST) {
+        writeMember(*foreignST, FinalFile, false, false, false);
+      }
+
+      // Put out the LLVM symbol table now.
+      writeSymbolTable(FinalFile);
 
       // Copy the temporary file contents being sure to skip the file's magic
       // number.
