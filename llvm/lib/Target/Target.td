@@ -9,18 +9,26 @@
 //===----------------------------------------------------------------------===//
 //
 // Value types - These values correspond to the register types defined in the
-// ValueTypes.h file.
+// ValueTypes.h file.  If you update anything here, you must update it there as
+// well!
 //
-class ValueType<int size> { string Namespace = "MVT"; int Size = size; }
+class ValueType<int size, int value> {
+  string Namespace = "MVT";
+  int Size = size;
+  int Value = value;
+}
 
-def i1   : ValueType<1>;      // One bit boolean value
-def i8   : ValueType<8>;      // 8-bit integer value
-def i16  : ValueType<16>;     // 16-bit integer value
-def i32  : ValueType<32>;     // 32-bit integer value
-def i64  : ValueType<64>;     // 64-bit integer value
-def f32  : ValueType<32>;     // 32-bit floating point value
-def f64  : ValueType<64>;     // 64-bit floating point value
-def f80  : ValueType<80>;     // 80-bit floating point value
+def i1     : ValueType<1  ,  1>;   // One bit boolean value
+def i8     : ValueType<8  ,  2>;   // 8-bit integer value
+def i16    : ValueType<16 ,  3>;   // 16-bit integer value
+def i32    : ValueType<32 ,  4>;   // 32-bit integer value
+def i64    : ValueType<64 ,  5>;   // 64-bit integer value
+def i128   : ValueType<128,  5>;   // 128-bit integer value
+def f32    : ValueType<32 ,  7>;   // 32-bit floating point value
+def f64    : ValueType<64 ,  8>;   // 64-bit floating point value
+def f80    : ValueType<80 ,  9>;   // 80-bit floating point value
+def f128   : ValueType<128,  9>;   // 128-bit floating point value
+def isVoid : ValueType<0  , 11>;   // Produces no value
 
 //===----------------------------------------------------------------------===//
 // Register file description - These classes are used to fill in the target
@@ -147,48 +155,56 @@ class Target {
 //===----------------------------------------------------------------------===//
 // DAG node definitions used by the instruction selector...
 //
-class DagNodeResultType;
-def DNRT_void  : DagNodeResultType;  // Tree node always returns void
-def DNRT_val   : DagNodeResultType;  // A non-void type
-def DNRT_arg0  : DagNodeResultType;  // Tree node returns same type as Arg0
+class DagNodeValType;
+def DNVT_void  : DagNodeValType;  // Tree node always returns void
+def DNVT_val   : DagNodeValType;  // A non-void type
+def DNVT_arg0  : DagNodeValType;  // Tree node returns same type as Arg0
+def DNVT_ptr   : DagNodeValType;  // The target pointer type
 
-class DagNodeArgType;
-def DNAT_val   : DagNodeArgType;     // Any value
-def DNAT_arg0  : DagNodeArgType;     // Same as for arg #0
-def DNAT_ptr   : DagNodeArgType;     // Returns the target pointer type
-
-class DagNode<DagNodeResultType ret, list<DagNodeArgType> args> {
-  DagNodeResultType RetType = ret;
-  list<DagNodeArgType> ArgTypes = args;
+class DagNode<DagNodeValType ret, list<DagNodeValType> args> {
+  DagNodeValType RetType = ret;
+  list<DagNodeValType> ArgTypes = args;
   string EnumName = ?;
 }
 
 // BuiltinDagNodes are built into the instruction selector and correspond to
 // enum values.
-class BuiltinDagNode<DagNodeResultType Ret, list<DagNodeArgType> Args,
+class BuiltinDagNode<DagNodeValType Ret, list<DagNodeValType> Args,
                      string Ename> : DagNode<Ret, Args> {
   let EnumName = Ename;
 }
 
 // Magic nodes...
-def set     : DagNode<DNRT_void, [DNAT_val, DNAT_arg0]>;
+def set     : DagNode<DNVT_void, [DNVT_val, DNVT_arg0]>;
 
 // Terminals...
-def imm     : DagNode<DNRT_val, []>;
+def Constant : BuiltinDagNode<DNVT_val, [], "Contant">;
+// def frameidx : BuiltinDagNode<DNVT_ptr, [], "FrameIndex">;
 
 // Arithmetic...
-def plus    : BuiltinDagNode<DNRT_arg0, [DNAT_val, DNAT_arg0], "Plus">;
-def minus   : BuiltinDagNode<DNRT_arg0, [DNAT_val, DNAT_arg0], "Minus">;
-//def mult    : DagNode<2, DNRT_arg0>;
-//def div     : DagNode<2, DNRT_arg0>;
-//def udiv    : DagNode<2, DNRT_arg0>;
-//def mod     : DagNode<2, DNRT_arg0>;
-//def umod    : DagNode<2, DNRT_arg0>;
+def plus    : BuiltinDagNode<DNVT_arg0, [DNVT_val, DNVT_arg0], "Plus">;
+def minus   : BuiltinDagNode<DNVT_arg0, [DNVT_val, DNVT_arg0], "Minus">;
+//def mult    : DagNode<2, DNVT_arg0>;
+//def div     : DagNode<2, DNVT_arg0>;
+//def udiv    : DagNode<2, DNVT_arg0>;
+//def mod     : DagNode<2, DNVT_arg0>;
+//def umod    : DagNode<2, DNVT_arg0>;
 
-//def load    : DagNode<1, DNRT_val>;
-//def store   : DagNode<2, DNRT_Void>;
+def load    : DagNode<DNVT_val, [DNVT_ptr]>;
+//def store   : DagNode<2, DNVT_Void>;
 
 // Other...
-def ret     : BuiltinDagNode<DNRT_void, [DNAT_val], "Ret">;
-def retvoid : BuiltinDagNode<DNRT_void, [], "RetVoid">;
+def ret     : BuiltinDagNode<DNVT_void, [DNVT_val], "Ret">;
+def retvoid : BuiltinDagNode<DNVT_void, [], "RetVoid">;
+
+//===----------------------------------------------------------------------===//
+// DAG nonterminals definitions used by the instruction selector...
+//
+class Nonterminal<dag pattern> {
+  dag Pattern = pattern;
+  bit BuiltIn = 0;
+}
+
+// imm - Immediate value...
+def imm : Nonterminal<(Constant)> { let BuiltIn = 1; }
 
