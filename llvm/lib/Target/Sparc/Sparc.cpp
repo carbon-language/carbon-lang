@@ -223,17 +223,6 @@ public:
   }
 };
 
-class InstructionScheduling : public MethodPass {
-  TargetMachine &Target;
-public:
-  inline InstructionScheduling(TargetMachine &T) : Target(T) {}
-  bool runOnMethod(Method *M) {
-    if (ScheduleInstructionsWithSSA(M, Target))
-      cerr << "Instr scheduling failed for method " << M->getName() << "\n\n";
-    return false;
-  }
-};
-
 struct FreeMachineCodeForMethod : public MethodPass {
   static void freeMachineCode(Instruction *I) {
     MachineCodeForInstruction::destroy(I);
@@ -258,7 +247,7 @@ void UltraSparc::addPassesToEmitAssembly(PassManager &PM, std::ostream &Out) {
 
   PM.add(new InstructionSelection(*this));
 
-  //PM.add(new InstructionScheduling(*this));
+  //PM.add(createInstructionSchedulingWithSSAPass(*this));
 
   PM.add(getRegisterAllocator(*this));
   
