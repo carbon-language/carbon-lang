@@ -20,7 +20,7 @@
 // GCC 2.95.3 crashes if we do that, doh.
 //
 template<class AnalysisType>
-static Pass *CreatePass(AnalysisID ID) { return new AnalysisType(ID); }
+static Pass *CreatePass() { return new AnalysisType(); }
 
 //===----------------------------------------------------------------------===//
 // AnalysisID - This class is used to uniquely identify an analysis pass that
@@ -29,10 +29,10 @@ static Pass *CreatePass(AnalysisID ID) { return new AnalysisType(ID); }
 class AnalysisID {
   static unsigned NextID;               // Next ID # to deal out...
   unsigned ID;                          // Unique ID for this analysis
-  Pass *(*Constructor)(AnalysisID);     // Constructor to return the Analysis
+  Pass *(*Constructor)();               // Constructor to return the Analysis
 
   AnalysisID();                         // Disable default ctor
-  AnalysisID(unsigned id, Pass *(*Ct)(AnalysisID)) : ID(id), Constructor(Ct) {}
+  AnalysisID(unsigned id, Pass *(*Ct)()) : ID(id), Constructor(Ct) {}
 public:
   // create - the only way to define a new AnalysisID.  This static method is
   // supposed to be used to define the class static AnalysisID's that are
@@ -56,7 +56,7 @@ public:
   AnalysisID(const AnalysisID &AID, bool DependsOnlyOnCFG = false);
 
 
-  inline Pass *createPass() const { return Constructor(*this); }
+  inline Pass *createPass() const { return Constructor(); }
 
   inline bool operator==(const AnalysisID &A) const {
     return A.ID == ID;
