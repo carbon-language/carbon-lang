@@ -336,8 +336,8 @@ bool DSNode::mergeTypeInfo(const Type *NewTy, unsigned Offset,
 
   // Check to see if we have a compatible, but different type...
   if (NewTySize == SubTypeSize) {
-    // Check to see if this type is obviously convertable... int -> uint f.e.
-    if (NewTy->isLosslesslyConvertableTo(SubType))
+    // Check to see if this type is obviously convertible... int -> uint f.e.
+    if (NewTy->isLosslesslyConvertibleTo(SubType))
       return false;
 
     // Check to see if we have a pointer & integer mismatch going on here,

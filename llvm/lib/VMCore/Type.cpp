@@ -82,10 +82,10 @@ const Type *Type::getPrimitiveType(PrimitiveID IDNumber) {
   }
 }
 
-// isLosslesslyConvertableTo - Return true if this type can be converted to
+// isLosslesslyConvertibleTo - Return true if this type can be converted to
 // 'Ty' without any reinterpretation of bits.  For example, uint to int.
 //
-bool Type::isLosslesslyConvertableTo(const Type *Ty) const {
+bool Type::isLosslesslyConvertibleTo(const Type *Ty) const {
   if (this == Ty) return true;
   if ((!isPrimitiveType()    && !isa<PointerType>(this)) ||
       (!isa<PointerType>(Ty) && !Ty->isPrimitiveType())) return false;

@@ -811,7 +811,7 @@ static inline bool isEliminableCastOfCast(const CastInst &CI,
   // It is legal to eliminate the instruction if casting A->B->A if the sizes
   // are identical and the bits don't get reinterpreted (for example 
   // int->float->int would not be allowed)
-  if (SrcTy == DstTy && SrcTy->isLosslesslyConvertableTo(MidTy))
+  if (SrcTy == DstTy && SrcTy->isLosslesslyConvertibleTo(MidTy))
     return true;
 
   // Allow free casting and conversion of sizes as long as the sign doesn't

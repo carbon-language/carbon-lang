@@ -30,7 +30,7 @@ static inline const CompositeType *getPointedToComposite(const Type *Ty) {
   return PT ? dyn_cast<CompositeType>(PT->getElementType()) : 0;
 }
 
-// ConvertableToGEP - This function returns true if the specified value V is
+// ConvertibleToGEP - This function returns true if the specified value V is
 // a valid index into a pointer of type Ty.  If it is valid, Idx is filled in
 // with the values that would be appropriate to make this a getelementptr
 // instruction.  The type returned is the root type that the GEP would point
@@ -39,7 +39,7 @@ static inline const CompositeType *getPointedToComposite(const Type *Ty) {
 // If BI is nonnull, cast instructions are inserted as appropriate for the
 // arguments of the getelementptr.
 //
-const Type *ConvertableToGEP(const Type *Ty, Value *V,
+const Type *ConvertibleToGEP(const Type *Ty, Value *V,
                              std::vector<Value*> &Indices,
                              const TargetData &TD,
                              BasicBlock::iterator *BI = 0);
@@ -105,13 +105,13 @@ struct ValueMapCache {
 };
 
 
-bool ExpressionConvertableToType(Value *V, const Type *Ty, ValueTypeCache &Map,
+bool ExpressionConvertibleToType(Value *V, const Type *Ty, ValueTypeCache &Map,
                                  const TargetData &TD);
 Value *ConvertExpressionToType(Value *V, const Type *Ty, ValueMapCache &VMC,
                                const TargetData &TD);
 
-// ValueConvertableToType - Return true if it is possible
-bool ValueConvertableToType(Value *V, const Type *Ty,
+// ValueConvertibleToType - Return true if it is possible
+bool ValueConvertibleToType(Value *V, const Type *Ty,
                             ValueTypeCache &ConvertedTypes,
                             const TargetData &TD);
 

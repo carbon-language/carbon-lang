@@ -157,10 +157,10 @@ public:
   ///
   inline bool isRecursive() const { return Recursive; }
 
-  /// isLosslesslyConvertableTo - Return true if this type can be converted to
+  /// isLosslesslyConvertibleTo - Return true if this type can be converted to
   /// 'Ty' without any reinterpretation of bits.  For example, uint to int.
   ///
-  bool isLosslesslyConvertableTo(const Type *Ty) const;
+  bool isLosslesslyConvertibleTo(const Type *Ty) const;
 
 
   /// Here are some useful little methods to query what type derived types are

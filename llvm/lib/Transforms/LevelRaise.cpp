@@ -90,7 +90,7 @@ Pass *createRaisePointerReferencesPass() {
 // cast instruction would cause the underlying bits to change.
 //
 static inline bool isReinterpretingCast(const CastInst *CI) {
-  return!CI->getOperand(0)->getType()->isLosslesslyConvertableTo(CI->getType());
+  return!CI->getOperand(0)->getType()->isLosslesslyConvertibleTo(CI->getType());
 }
 
 
@@ -127,8 +127,8 @@ static bool HandleCastToPointer(BasicBlock::iterator BI,
 
   std::vector<Value*> Indices;
   Value *Src = CI.getOperand(0);
-  const Type *Result = ConvertableToGEP(DestPTy, Src, Indices, TD, &BI);
-  if (Result == 0) return false;  // Not convertable...
+  const Type *Result = ConvertibleToGEP(DestPTy, Src, Indices, TD, &BI);
+  if (Result == 0) return false;  // Not convertible...
 
   // Cannot handle subtracts if there is more than one index required...
   if (HasSubUse && Indices.size() != 1) return false;
@@ -212,8 +212,8 @@ static bool PeepholeOptimizeAddCast(BasicBlock *BB, BasicBlock::iterator &BI,
     return false;
 
   std::vector<Value*> Indices;
-  if (!ConvertableToGEP(SrcPtr->getType(), OffsetVal, Indices, TD, &BI))
-    return false;  // Not convertable... perhaps next time
+  if (!ConvertibleToGEP(SrcPtr->getType(), OffsetVal, Indices, TD, &BI))
+    return false;  // Not convertible... perhaps next time
 
   if (getPointedToComposite(AddOp1->getType())) {  // case 1
     PRINT_PEEPHOLE2("add-to-gep1:in", AddOp2, *BI);
@@ -271,7 +271,7 @@ bool RPR::PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
       // destination type of the cast...
       //
       ConvertedTypes[CI] = CI->getType();  // Make sure the cast doesn't change
-      if (ExpressionConvertableToType(Src, DestTy, ConvertedTypes, TD)) {
+      if (ExpressionConvertibleToType(Src, DestTy, ConvertedTypes, TD)) {
         PRINT_PEEPHOLE3("CAST-SRC-EXPR-CONV:in ", Src, CI, BB->getParent());
           
         DEBUG(cerr << "\nCONVERTING SRC EXPR TYPE:\n");
@@ -299,7 +299,7 @@ bool RPR::PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
       ConvertedTypes.clear();
       // Make sure the source doesn't change type
       ConvertedTypes[Src] = Src->getType();
-      if (ValueConvertableToType(CI, Src->getType(), ConvertedTypes, TD)) {
+      if (ValueConvertibleToType(CI, Src->getType(), ConvertedTypes, TD)) {
         PRINT_PEEPHOLE3("CAST-DEST-EXPR-CONV:in ", Src, CI, BB->getParent());
 
         DEBUG(cerr << "\nCONVERTING EXPR TYPE:\n");
@@ -357,7 +357,7 @@ bool RPR::PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
           }
 
         // If it doesn't have an add use, check to see if the dest type is
-        // losslessly convertable to one of the types in the start of the struct
+        // losslessly convertible to one of the types in the start of the struct
         // type.
         //
         if (!HasAddUse) {
@@ -386,7 +386,7 @@ bool RPR::PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
             Indices.push_back(Constant::getNullValue(CurCTy->getIndexType()));
 
             // Did we find what we're looking for?
-            if (ElTy->isLosslesslyConvertableTo(DestPointedTy)) break;
+            if (ElTy->isLosslesslyConvertibleTo(DestPointedTy)) break;
             
             // Nope, go a level deeper.
             ++Depth;
@@ -421,7 +421,7 @@ bool RPR::PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
     Value *Pointer = SI->getPointerOperand();
     
     // Peephole optimize the following instructions:
-    // %t = cast <T1>* %P to <T2> * ;; If T1 is losslessly convertable to T2
+    // %t = cast <T1>* %P to <T2> * ;; If T1 is losslessly convertible to T2
     // store <T2> %V, <T2>* %t
     //
     // Into: 
@@ -436,8 +436,8 @@ bool RPR::PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
     if (CastInst *CI = dyn_cast<CastInst>(Pointer))
       if (Value *CastSrc = CI->getOperand(0)) // CSPT = CastSrcPointerType
         if (const PointerType *CSPT = dyn_cast<PointerType>(CastSrc->getType()))
-          // convertable types?
-          if (Val->getType()->isLosslesslyConvertableTo(CSPT->getElementType())) {
+          // convertible types?
+          if (Val->getType()->isLosslesslyConvertibleTo(CSPT->getElementType())) {
             PRINT_PEEPHOLE3("st-src-cast:in ", Pointer, Val, SI);
 
             // Insert the new T cast instruction... stealing old T's name
@@ -459,7 +459,7 @@ bool RPR::PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
       cast<PointerType>(Pointer->getType())->getElementType();
     
     // Peephole optimize the following instructions:
-    // %Val = cast <T1>* to <T2>*    ;; If T1 is losslessly convertable to T2
+    // %Val = cast <T1>* to <T2>*    ;; If T1 is losslessly convertible to T2
     // %t = load <T2>* %P
     //
     // Into: 
@@ -474,8 +474,8 @@ bool RPR::PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
     if (CastInst *CI = dyn_cast<CastInst>(Pointer))
       if (Value *CastSrc = CI->getOperand(0)) // CSPT = CastSrcPointerType
         if (const PointerType *CSPT = dyn_cast<PointerType>(CastSrc->getType()))
-          // convertable types?
-          if (PtrElType->isLosslesslyConvertableTo(CSPT->getElementType())) {
+          // convertible types?
+          if (PtrElType->isLosslesslyConvertibleTo(CSPT->getElementType())) {
             PRINT_PEEPHOLE2("load-src-cast:in ", Pointer, LI);
 
             // Create the new load instruction... loading the pre-casted value
