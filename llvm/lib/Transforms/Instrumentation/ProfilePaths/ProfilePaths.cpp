@@ -43,7 +43,7 @@ struct ProfilePaths : public FunctionPass {
   // entry and only one exit node for the function in the CFG of the function
   //
   void ProfilePaths::getAnalysisUsage(AnalysisUsage &AU) const {
-    AU.addRequired(UnifyFunctionExitNodes::ID);
+    AU.addRequired<UnifyFunctionExitNodes>();
   }
 };
 

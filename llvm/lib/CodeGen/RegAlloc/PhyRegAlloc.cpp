@@ -64,8 +64,8 @@ namespace {
     }
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-      AU.addRequired(LoopInfo::ID);
-      AU.addRequired(FunctionLiveVarInfo::ID);
+      AU.addRequired<LoopInfo>();
+      AU.addRequired<FunctionLiveVarInfo>();
     }
   };
 }

@@ -92,7 +92,7 @@ namespace {  // Anonymous namespace for class
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesAll();
       if (RealPass)
-        AU.addRequired(DominatorSet::ID);
+        AU.addRequired<DominatorSet>();
     }
 
     // Verification methods...
