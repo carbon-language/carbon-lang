@@ -303,6 +303,10 @@ profiling code to work with the generic profiling interfaces.</li>
 <li>Implement a better instruction selector</li>
 <li>Implement support for the "switch" instruction without requiring the 
     lower-switches pass.</li>
+<li>Implement interprocedural register allocation. The CallGraphSCCPass can be
+    used to implement a bottom-up analysis that will determine the *actual* 
+    registers clobbered by a function. Use the pass to fine tune register usage 
+    in callers based on *actual* registers used by the callee.</li>
 </ol>
 
 </div>
