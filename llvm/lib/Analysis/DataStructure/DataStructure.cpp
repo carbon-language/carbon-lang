@@ -6,7 +6,6 @@
 
 #include "llvm/Analysis/DSGraph.h"
 #include "llvm/Function.h"
-#include "llvm/BasicBlock.h"
 #include "llvm/iOther.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Target/TargetData.h"
@@ -353,21 +352,23 @@ void DSNode::mergeWith(const DSNodeHandle &NH, unsigned Offset) {
   }
 }
 
+//===----------------------------------------------------------------------===//
+// DSCallSite Implementation
+//===----------------------------------------------------------------------===//
+
 // Define here to avoid including iOther.h and BasicBlock.h in DSGraph.h
-Function& DSCallSite::getCaller() const {
-  return * callInst->getParent()->getParent();
+Function &DSCallSite::getCaller() const {
+  return *callInst->getParent()->getParent();
 }
 
-template<typename _CopierFunction>
-DSCallSite::DSCallSite(const DSCallSite& FromCall,
-                       _CopierFunction nodeCopier)
-  : std::vector<DSNodeHandle>(),
-    callInst(&FromCall.getCallInst()) {
+template <typename CopyFunctor>
+DSCallSite::DSCallSite(const DSCallSite &FromCall, CopyFunctor nodeCopier)
+  : callInst(&FromCall.getCallInst()) {
 
   reserve(FromCall.size());
   for (unsigned j = 0, ej = FromCall.size(); j != ej; ++j)
-    push_back((&nodeCopier == (_CopierFunction*) 0)? DSNodeHandle(FromCall[j])
-                                                   : nodeCopier(&FromCall[j]));
+    push_back(&nodeCopier == 0 ? DSNodeHandle(FromCall[j])
+                               : nodeCopier(&FromCall[j]));
 }
 
 
