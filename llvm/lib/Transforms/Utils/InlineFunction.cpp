@@ -23,11 +23,10 @@
 #include "llvm/Intrinsics.h"
 #include "llvm/Support/CallSite.h"
 #include "llvm/Transforms/Utils/Local.h"
+using namespace llvm;
 
-namespace llvm {
-
-bool InlineFunction(CallInst *CI) { return InlineFunction(CallSite(CI)); }
-bool InlineFunction(InvokeInst *II) { return InlineFunction(CallSite(II)); }
+bool llvm::InlineFunction(CallInst *CI) { return InlineFunction(CallSite(CI)); }
+bool llvm::InlineFunction(InvokeInst *II) {return InlineFunction(CallSite(II));}
 
 // InlineFunction - This function inlines the called function into the basic
 // block of the caller.  This returns false if it is not possible to inline this
@@ -38,7 +37,7 @@ bool InlineFunction(InvokeInst *II) { return InlineFunction(CallSite(II)); }
 // exists in the instruction stream.  Similiarly this will inline a recursive
 // function by one level.
 //
-bool InlineFunction(CallSite CS) {
+bool llvm::InlineFunction(CallSite CS) {
   Instruction *TheCall = CS.getInstruction();
   assert(TheCall->getParent() && TheCall->getParent()->getParent() &&
          "Instruction not in function!");
@@ -280,5 +279,3 @@ bool InlineFunction(CallSite CS) {
   SimplifyCFG(AfterCallBB);
   return true;
 }
-
-} // End llvm namespace

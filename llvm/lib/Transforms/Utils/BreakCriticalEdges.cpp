@@ -24,8 +24,7 @@
 #include "llvm/iPHINode.h"
 #include "llvm/Support/CFG.h"
 #include "Support/Statistic.h"
-
-namespace llvm {
+using namespace llvm;
 
 namespace {
   Statistic<> NumBroken("break-crit-edges", "Number of blocks inserted");
@@ -49,8 +48,8 @@ namespace {
 }
 
 // Publically exposed interface to pass...
-const PassInfo *BreakCriticalEdgesID = X.getPassInfo();
-Pass *createBreakCriticalEdgesPass() { return new BreakCriticalEdges(); }
+const PassInfo *llvm::BreakCriticalEdgesID = X.getPassInfo();
+Pass *llvm::createBreakCriticalEdgesPass() { return new BreakCriticalEdges(); }
 
 // runOnFunction - Loop over all of the edges in the CFG, breaking critical
 // edges as they are found.
@@ -78,7 +77,7 @@ bool BreakCriticalEdges::runOnFunction(Function &F) {
 // Critical edges are edges from a block with multiple successors to a block
 // with multiple predecessors.
 //
-bool isCriticalEdge(const TerminatorInst *TI, unsigned SuccNum) {
+bool llvm::isCriticalEdge(const TerminatorInst *TI, unsigned SuccNum) {
   assert(SuccNum < TI->getNumSuccessors() && "Illegal edge specification!");
   if (TI->getNumSuccessors() == 1) return false;
 
@@ -97,7 +96,7 @@ bool isCriticalEdge(const TerminatorInst *TI, unsigned SuccNum) {
 // calling this pass will not invalidate either of them.  This returns true if
 // the edge was split, false otherwise.
 //
-bool SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum, Pass *P) {
+bool llvm::SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum, Pass *P) {
   if (!isCriticalEdge(TI, SuccNum)) return false;
   BasicBlock *TIBB = TI->getParent();
   BasicBlock *DestBB = TI->getSuccessor(SuccNum);
@@ -169,5 +168,3 @@ bool SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum, Pass *P) {
   }
   return true;
 }
-
-} // End llvm namespace

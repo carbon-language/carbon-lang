@@ -24,13 +24,12 @@
 #include "llvm/Constant.h"
 #include "llvm/Support/CFG.h"
 #include "Support/StringExtras.h"
-
-namespace llvm {
+using namespace llvm;
 
 /// isAllocaPromotable - Return true if this alloca is legal for promotion.
 /// This is true if there are only loads and stores to the alloca...
 ///
-bool isAllocaPromotable(const AllocaInst *AI, const TargetData &TD) {
+bool llvm::isAllocaPromotable(const AllocaInst *AI, const TargetData &TD) {
   // FIXME: If the memory unit is of pointer or integer type, we can permit
   // assignments to subsections of the memory unit.
 
@@ -454,12 +453,10 @@ void PromoteMem2Reg::RenamePass(BasicBlock *BB, BasicBlock *Pred,
 /// use of DominanceFrontier information.  This function does not modify the CFG
 /// of the function at all.  All allocas must be from the same function.
 ///
-void PromoteMemToReg(const std::vector<AllocaInst*> &Allocas,
-                     DominatorTree &DT, DominanceFrontier &DF,
-                     const TargetData &TD) {
+void llvm::PromoteMemToReg(const std::vector<AllocaInst*> &Allocas,
+                           DominatorTree &DT, DominanceFrontier &DF,
+                           const TargetData &TD) {
   // If there is nothing to do, bail out...
   if (Allocas.empty()) return;
   PromoteMem2Reg(Allocas, DT, DF, TD).run();
 }
-
-} // End llvm namespace

@@ -14,8 +14,7 @@
 
 #include "llvm/Pass.h"
 #include "llvm/Function.h"
-
-namespace llvm {
+using namespace llvm;
 
 namespace {
   // Hello - The first implementation, without getAnalysisUsage.
@@ -41,5 +40,3 @@ namespace {
   }; 
   RegisterOpt<Hello2> Y("hello2", "Hello World Pass (with getAnalysisUsage implemented)");
 }
-
-} // End llvm namespace

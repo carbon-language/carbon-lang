@@ -21,16 +21,15 @@
 #include "llvm/iTerminators.h"
 #include "llvm/Type.h"
 #include "Support/hash_set"
-
-namespace llvm {
+using namespace llvm;
 
 typedef hash_set<PHINode*>           PhiSet;
 typedef hash_set<PHINode*>::iterator PhiSetIterator;
 
 // Helper function to push a phi *and* all its operands to the worklist!
 // Do not push an instruction if it is already in the result set of Phis to go.
-inline void PushOperandsOnWorkList(std::vector<Instruction*>& workList,
-                                   PhiSet& phisToGo, PHINode* phiN) {
+static inline void PushOperandsOnWorkList(std::vector<Instruction*>& workList,
+                                          PhiSet& phisToGo, PHINode* phiN) {
   for (User::op_iterator OI = phiN->op_begin(), OE = phiN->op_end();
        OI != OE; ++OI) {
     Instruction* opI = cast<Instruction>(OI);
@@ -133,7 +132,7 @@ static void AddLoadsAndStores(AllocaInst* XSlot, Instruction& X,
 //
 // Returns the pointer to the alloca inserted to create a stack slot for X.
 //
-AllocaInst* DemoteRegToStack(Instruction& X) {
+AllocaInst* llvm::DemoteRegToStack(Instruction& X) {
   if (X.getType() == Type::VoidTy)
     return 0;                             // nothing to do!
 
@@ -162,5 +161,3 @@ AllocaInst* DemoteRegToStack(Instruction& X) {
 
   return XSlot;
 }
-
-} // End llvm namespace

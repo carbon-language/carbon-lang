@@ -20,8 +20,7 @@
 #include "llvm/Support/CFG.h"
 #include <algorithm>
 #include <functional>
-
-namespace llvm {
+using namespace llvm;
 
 // PropagatePredecessors - This gets "Succ" ready to have the predecessors from
 // "BB".  This is a little tricky because "Succ" has PHI nodes, which need to
@@ -98,7 +97,7 @@ static bool PropagatePredecessorsForPHIs(BasicBlock *BB, BasicBlock *Succ) {
 //
 // WARNING:  The entry node of a function may not be simplified.
 //
-bool SimplifyCFG(BasicBlock *BB) {
+bool llvm::SimplifyCFG(BasicBlock *BB) {
   bool Changed = false;
   Function *M = BB->getParent();
 
@@ -300,5 +299,3 @@ bool SimplifyCFG(BasicBlock *BB) {
   
   return Changed;
 }
-
-} // End llvm namespace

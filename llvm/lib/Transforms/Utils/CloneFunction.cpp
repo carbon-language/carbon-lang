@@ -18,8 +18,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
 #include "ValueMapper.h"
-
-namespace llvm {
+using namespace llvm;
 
 // RemapInstruction - Convert the instruction operands from referencing the 
 // current values into those specified by ValueMap.
@@ -41,9 +40,9 @@ static inline void RemapInstruction(Instruction *I,
 }
 
 // CloneBasicBlock - See comments in Cloning.h
-BasicBlock *CloneBasicBlock(const BasicBlock *BB,
-                            std::map<const Value*, Value*> &ValueMap,
-                            const char *NameSuffix) {
+BasicBlock *llvm::CloneBasicBlock(const BasicBlock *BB,
+                                  std::map<const Value*, Value*> &ValueMap,
+                                  const char *NameSuffix) {
   BasicBlock *NewBB = new BasicBlock("");
   if (BB->hasName()) NewBB->setName(BB->getName()+NameSuffix);
 
@@ -62,10 +61,10 @@ BasicBlock *CloneBasicBlock(const BasicBlock *BB,
 // Clone OldFunc into NewFunc, transforming the old arguments into references to
 // ArgMap values.
 //
-void CloneFunctionInto(Function *NewFunc, const Function *OldFunc,
-                       std::map<const Value*, Value*> &ValueMap,
-                       std::vector<ReturnInst*> &Returns,
-                       const char *NameSuffix) {
+void llvm::CloneFunctionInto(Function *NewFunc, const Function *OldFunc,
+                             std::map<const Value*, Value*> &ValueMap,
+                             std::vector<ReturnInst*> &Returns,
+                             const char *NameSuffix) {
   assert(NameSuffix && "NameSuffix cannot be null!");
   
 #ifndef NDEBUG
@@ -112,8 +111,8 @@ void CloneFunctionInto(Function *NewFunc, const Function *OldFunc,
 /// updated to include mappings from all of the instructions and basicblocks in
 /// the function from their old to new values.
 ///
-Function *CloneFunction(const Function *F,
-                        std::map<const Value*, Value*> &ValueMap) {
+Function *llvm::CloneFunction(const Function *F,
+                              std::map<const Value*, Value*> &ValueMap) {
   std::vector<const Type*> ArgTypes;
 
   // The user might be deleting arguments to the function by specifying them in
@@ -143,4 +142,3 @@ Function *CloneFunction(const Function *F,
   return NewF;                    
 }
 
-} // End llvm namespace

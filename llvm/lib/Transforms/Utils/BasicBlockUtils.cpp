@@ -18,14 +18,13 @@
 #include "llvm/Constant.h"
 #include "llvm/Type.h"
 #include <algorithm>
-
-namespace llvm {
+using namespace llvm;
 
 // ReplaceInstWithValue - Replace all uses of an instruction (specified by BI)
 // with a value, then remove and delete the original instruction.
 //
-void ReplaceInstWithValue(BasicBlock::InstListType &BIL,
-                          BasicBlock::iterator &BI, Value *V) {
+void llvm::ReplaceInstWithValue(BasicBlock::InstListType &BIL,
+                                BasicBlock::iterator &BI, Value *V) {
   Instruction &I = *BI;
   // Replaces all of the uses of the instruction with uses of the value
   I.replaceAllUsesWith(V);
@@ -45,8 +44,8 @@ void ReplaceInstWithValue(BasicBlock::InstListType &BIL,
 // instruction specified by I.  The original instruction is deleted and BI is
 // updated to point to the new instruction.
 //
-void ReplaceInstWithInst(BasicBlock::InstListType &BIL,
-                         BasicBlock::iterator &BI, Instruction *I) {
+void llvm::ReplaceInstWithInst(BasicBlock::InstListType &BIL,
+                               BasicBlock::iterator &BI, Instruction *I) {
   assert(I->getParent() == 0 &&
          "ReplaceInstWithInst: Instruction already inserted into basic block!");
 
@@ -63,7 +62,7 @@ void ReplaceInstWithInst(BasicBlock::InstListType &BIL,
 // ReplaceInstWithInst - Replace the instruction specified by From with the
 // instruction specified by To.
 //
-void ReplaceInstWithInst(Instruction *From, Instruction *To) {
+void llvm::ReplaceInstWithInst(Instruction *From, Instruction *To) {
   BasicBlock::iterator BI(From);
   ReplaceInstWithInst(From->getParent()->getInstList(), BI, To);
 }
@@ -75,7 +74,7 @@ void ReplaceInstWithInst(Instruction *From, Instruction *To) {
 // deleted, a return instruction is inserted in its place which can cause a
 // surprising change in program behavior if it is not expected.
 //
-void RemoveSuccessor(TerminatorInst *TI, unsigned SuccNum) {
+void llvm::RemoveSuccessor(TerminatorInst *TI, unsigned SuccNum) {
   assert(SuccNum < TI->getNumSuccessors() &&
          "Trying to remove a nonexistant successor!");
 
@@ -115,4 +114,3 @@ void RemoveSuccessor(TerminatorInst *TI, unsigned SuccNum) {
     ReplaceInstWithInst(TI, NewTI);
 }
 
-} // End llvm namespace

@@ -23,8 +23,7 @@
 #include "llvm/SymbolTable.h"
 #include "llvm/iOther.h"
 #include "llvm/Assembly/Writer.h"
-
-namespace llvm {
+using namespace llvm;
 
 // Error - Simple wrapper function to conditionally assign to E and return true.
 // This just makes error return conditions a little bit simpler...
@@ -842,7 +841,7 @@ static bool LinkAppendingVars(Module *M,
 // the problem.  Upon failure, the Dest module could be in a modified state, and
 // shouldn't be relied on to be consistent.
 //
-bool LinkModules(Module *Dest, const Module *Src, std::string *ErrorMsg) {
+bool llvm::LinkModules(Module *Dest, const Module *Src, std::string *ErrorMsg) {
   if (Dest->getEndianness() == Module::AnyEndianness)
     Dest->setEndianness(Src->getEndianness());
   if (Dest->getPointerSize() == Module::AnyPointerSize)
@@ -909,4 +908,3 @@ bool LinkModules(Module *Dest, const Module *Src, std::string *ErrorMsg) {
   return false;
 }
 
-} // End llvm namespace

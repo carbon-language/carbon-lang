@@ -24,8 +24,7 @@
 #include "llvm/Instructions.h"
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
-
-namespace llvm {
+using namespace llvm;
 
 static void insertInitializationCall(Function *MainFn, const char *FnName,
                                      GlobalValue *Array) {
@@ -184,4 +183,3 @@ bool BlockProfiler::run(Module &M) {
   return true;
 }
 
-} // End llvm namespace

@@ -15,10 +15,9 @@
 #include "ValueMapper.h"
 #include "llvm/Constants.h"
 #include "llvm/Instruction.h"
+using namespace llvm;
 
-namespace llvm {
-
-Value *MapValue(const Value *V, std::map<const Value*, Value*> &VM) {
+Value *llvm::MapValue(const Value *V, std::map<const Value*, Value*> &VM) {
   Value *&VMSlot = VM[V];
   if (VMSlot) return VMSlot;      // Does it exist in the map yet?
   
@@ -106,5 +105,3 @@ Value *MapValue(const Value *V, std::map<const Value*, Value*> &VM) {
   assert(0 && "Unknown value type: why didn't it get resolved?!");
   return 0;
 }
-
-} // End llvm namespace

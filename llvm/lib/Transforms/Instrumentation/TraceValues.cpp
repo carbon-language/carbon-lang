@@ -25,8 +25,7 @@
 #include "Support/StringExtras.h"
 #include <algorithm>
 #include <sstream>
-
-namespace llvm {
+using namespace llvm;
 
 static cl::opt<bool>
 DisablePtrHashing("tracedisablehashdisable", cl::Hidden,
@@ -112,11 +111,11 @@ namespace {
 } // end anonymous namespace
 
 
-Pass *createTraceValuesPassForFunction() {     // Just trace functions
+Pass *llvm::createTraceValuesPassForFunction() {     // Just trace functions
   return new FunctionTracer();
 }
 
-Pass *createTraceValuesPassForBasicBlocks() {  // Trace BB's and functions
+Pass *llvm::createTraceValuesPassForBasicBlocks() {  // Trace BB's and functions
   return new BasicBlockTracer();
 }
 
@@ -435,5 +434,3 @@ bool InsertTraceCode::runOnFunction(Function &F) {
   
   return true;
 }
-
-} // End llvm namespace

@@ -18,13 +18,11 @@
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/iPHINode.h"
 #include "llvm/Function.h"
-
-
-namespace llvm {
+using namespace llvm;
 
 //Clones the trace (a vector of basic blocks)
-std::vector<BasicBlock *> CloneTrace(const std::vector<BasicBlock*> &origTrace) {
-
+std::vector<BasicBlock *>
+llvm::CloneTrace(const std::vector<BasicBlock*> &origTrace) {
   std::vector<BasicBlock *> clonedTrace;
   std::map<const Value*, Value*> ValueMap;
   
@@ -88,5 +86,3 @@ std::vector<BasicBlock *> CloneTrace(const std::vector<BasicBlock*> &origTrace) 
   //return new vector of basic blocks
   return clonedTrace;
 }
-
-} // End llvm namespace
