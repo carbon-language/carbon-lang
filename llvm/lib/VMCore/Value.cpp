@@ -21,7 +21,7 @@ static inline const Type *checkType(const Type *Ty) {
 }
 
 Value::Value(const Type *ty, ValueTy vty, const std::string &name)
-  : Name(name), Ty(checkType(ty), this) {
+  : Name(name), Ty(checkType(ty)) {
   VTy = vty;
 }
 
@@ -34,7 +34,7 @@ Value::~Value() {
   // a <badref>
   //
   if (Uses.begin() != Uses.end()) {
-    std::cerr << "While deleting: " << Ty << "%" << Name << "\n";
+    std::cerr << "While deleting: " << *Ty << "%" << Name << "\n";
     for (use_const_iterator I = Uses.begin(); I != Uses.end(); ++I)
       std::cerr << "Use still stuck around after Def is destroyed:"
                 << **I << "\n";
@@ -85,18 +85,6 @@ void Value::uncheckedReplaceAllUsesWith(Value *New) {
   }
 }
 
-
-// refineAbstractType - This function is implemented because we use
-// potentially abstract types, and these types may be resolved to more
-// concrete types after we are constructed.  For the value class, we simply
-// change Ty to point to the right type.  :)
-//
-void Value::refineAbstractType(const DerivedType *OldTy, const Type *NewTy) {
-  assert(Ty.get() == OldTy && "Can't refine anything but my type!");
-  if (OldTy == NewTy && !OldTy->isAbstract())
-    Ty.removeUserFromConcrete();
-  Ty = NewTy;
-}
 
 void Value::killUse(User *U) {
   if (U == 0) return;
