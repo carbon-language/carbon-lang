@@ -92,9 +92,8 @@ bool DCE::runOnFunction(Function &F) {
       // instructions being used, add them to the worklist, because they might
       // go dead after this one is removed.
       //
-      for (User::use_iterator UI = I->use_begin(), UE = I->use_end();
-           UI != UE; ++UI)
-        if (Instruction *Used = dyn_cast<Instruction>(*UI))
+      for (User::op_iterator OI = I->op_begin(), E = I->op_end(); OI != E; ++OI)
+        if (Instruction *Used = dyn_cast<Instruction>(*OI))
           WorkList.push_back(Used);
 
       // Tell the instruction to let go of all of the values it uses...
