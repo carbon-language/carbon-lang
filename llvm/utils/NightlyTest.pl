@@ -19,6 +19,8 @@
 #                   -norunningtests.
 #  -norunningtests  Do not run the Olden benchmark suite with
 #                   LARGE_PROBLEM_SIZE enabled.
+#  -noexternals     Do not run the external tests (for cases where povray
+#                   or SPEC are not installed)
 #  -parallel        Run two parallel jobs with GNU Make.
 #  -release         Build an LLVM Release version
 #  -pedantic        Enable additional GCC warnings to detect possible errors.
@@ -70,6 +72,7 @@ my $NOFEATURES = 0;
 my $NOREGRESSIONS = 0;
 my $NOTEST     = 0;
 my $NORUNNINGTESTS = 0;
+my $NOEXTERNALS = 0;
 my $MAKEOPTS   = "";
 my $PROGTESTOPTS = "";
 my $VERBOSE  = 0;
@@ -266,6 +269,7 @@ while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
   if (/^-nice$/)           { $NICE  = "nice "; next; }
   if (/^-gnuplotscript$/)  { $PlotScriptFilename = $ARGV[0]; shift; next; }
   if (/^-templatefile$/)   { $Template = $ARGV[0]; shift;; next; }
+  if (/^-noexternals$/)    { $NOEXTERNALS = 1; next; }
 
   print "Unknown option: $_ : ignoring!\n";
 }
@@ -593,12 +597,20 @@ if ($BuildError eq "") {
     print "MultiSource TEST STAGE\n";
   }
   $MultiSourceProgramsTable = TestDirectory("MultiSource");
-  if ( $VERBOSE ) {
-    print "External TEST STAGE\n";
-  }
-  $ExternalProgramsTable = TestDirectory("External");
-  system "cat $Prefix-SingleSource-Tests.txt $Prefix-MultiSource-Tests.txt ".
+  if ( ! $NOEXTERNALS ) {
+    if ( $VERBOSE ) {
+      print "External TEST STAGE\n";
+    }
+    $ExternalProgramsTable = TestDirectory("External");
+    system "cat $Prefix-SingleSource-Tests.txt $Prefix-MultiSource-Tests.txt ".
          " $Prefix-External-Tests.txt | sort > $Prefix-Tests.txt";
+  } else {
+    if ( $VERBOSE ) {
+      print "External TEST STAGE SKIPPED\n";
+    }
+    system "cat $Prefix-SingleSource-Tests.txt $Prefix-MultiSource-Tests.txt ".
+         " | sort > $Prefix-Tests.txt";
+  }
 }
 
 if ( $VERBOSE ) { print "TEST INFORMATION COLLECTION STAGE\n"; }
