@@ -11,16 +11,23 @@
 #include <sys/unistd.h>
 #include <unistd.h>
 #include <malloc.h>
-#include <stdio.h>
 #include <iostream>
 #include <algorithm>
 #include <functional>
+#include <fstream>
+
+std::string LibSupportInfoOutputFilename;
 
 namespace {
   cl::opt<bool>
   TrackSpace("track-memory", cl::desc("Enable -time-passes memory "
                                       "tracking (this may be slow)"),
              cl::Hidden);
+
+  cl::opt<std::string, true>
+  InfoOutputFilename("info-output-file",
+                     cl::desc("File to append -stats and -timer output to"),
+                     cl::Hidden, cl::location(LibSupportInfoOutputFilename));
 }
 
 static TimerGroup *DefaultTimerGroup = 0;
@@ -161,35 +168,80 @@ void Timer::addPeakMemoryMeasurement() {
 //   TimerGroup Implementation
 //===----------------------------------------------------------------------===//
 
-static void printVal(double Val, double Total) {
-  if (Total < 1e-7)   // Avoid dividing by zero...
-    fprintf(stderr, "        -----     ");
-  else
-    fprintf(stderr, "  %7.4f (%5.1f%%)", Val, Val*100/Total);
+// printAlignedFP - Simulate the printf "%A.Bf" format, where A is the
+// TotalWidth size, and B is the AfterDec size.
+//
+static void printAlignedFP(double Val, unsigned AfterDec, unsigned TotalWidth,
+                           std::ostream &OS) {
+  assert(TotalWidth >= AfterDec+1 && "Bad FP Format!");
+  OS.width(TotalWidth-AfterDec-1);
+  char OldFill = OS.fill();
+  OS.fill(' ');
+  OS << (int)Val;  // Integer part;
+  OS << ".";
+  OS.width(AfterDec);
+  OS.fill('0');
+  unsigned ResultFieldSize = 1;
+  while (AfterDec--) ResultFieldSize *= 10;
+  OS << (int)(Val*ResultFieldSize) % ResultFieldSize;
+  OS.fill(OldFill);
 }
 
-void Timer::print(const Timer &Total) {
-  if (Total.UserTime)
-    printVal(UserTime, Total.UserTime);
-  if (Total.SystemTime)
-    printVal(SystemTime, Total.SystemTime);
-  if (Total.getProcessTime())
-    printVal(getProcessTime(), Total.getProcessTime());
-  printVal(Elapsed, Total.Elapsed);
-  
-  fprintf(stderr, "  ");
-
-  if (Total.MemUsed)
-    fprintf(stderr, " %8ld  ", MemUsed);
-  if (Total.PeakMem) {
-    if (PeakMem)
-      fprintf(stderr, " %8ld  ", PeakMem);
-    else
-      fprintf(stderr, "           ");
+static void printVal(double Val, double Total, std::ostream &OS) {
+  if (Total < 1e-7)   // Avoid dividing by zero...
+    OS << "        -----     ";
+  else {
+    OS << "  ";
+    printAlignedFP(Val, 4, 7, OS);
+    OS << " (";
+    printAlignedFP(Val*100/Total, 1, 5, OS);
+    OS << "%)";
   }
-  std::cerr << Name << "\n";
+}
+
+void Timer::print(const Timer &Total, std::ostream &OS) {
+  if (Total.UserTime)
+    printVal(UserTime, Total.UserTime, OS);
+  if (Total.SystemTime)
+    printVal(SystemTime, Total.SystemTime, OS);
+  if (Total.getProcessTime())
+    printVal(getProcessTime(), Total.getProcessTime(), OS);
+  printVal(Elapsed, Total.Elapsed, OS);
+  
+  OS << "  ";
+
+  if (Total.MemUsed) {
+    OS.width(9);
+    OS << MemUsed << "  ";
+  }
+  if (Total.PeakMem) {
+    if (PeakMem) {
+      OS.width(9);
+      OS << PeakMem << "  ";
+    } else
+      OS << "           ";
+  }
+  OS << Name << "\n";
 
   Started = false;  // Once printed, don't print again
+}
+
+// GetLibSupportInfoOutputFile - Return a file stream to print our output on...
+std::ostream *GetLibSupportInfoOutputFile() {
+  if (LibSupportInfoOutputFilename.empty())
+    return &std::cerr;
+  if (LibSupportInfoOutputFilename == "-")
+    return &std::cout;
+
+  std::ostream *Result = new std::ofstream(LibSupportInfoOutputFilename.c_str(),
+                                           std::ios_base::app);
+  if (!Result->good()) {
+    std::cerr << "Error opening info-output-file '"
+              << LibSupportInfoOutputFilename << " for appending!\n";
+    delete Result;
+    return &std::cerr;
+  }
+  return Result;
 }
 
 
@@ -203,6 +255,8 @@ void TimerGroup::removeTimer() {
     unsigned Padding = (80-Name.length())/2;
     if (Padding > 80) Padding = 0;         // Don't allow "negative" numbers
 
+    std::ostream *OutStream = GetLibSupportInfoOutputFile();
+
     ++NumTimers;
     {  // Scope to contain Total timer... don't allow total timer to drop us to
        // zero timers...
@@ -212,38 +266,42 @@ void TimerGroup::removeTimer() {
         Total.sum(TimersToPrint[i]);
       
       // Print out timing header...
-      std::cerr << "===" << std::string(73, '-') << "===\n"
-                << std::string(Padding, ' ') << Name << "\n"
-                << "===" << std::string(73, '-')
-                << "===\n  Total Execution Time: ";
+      *OutStream << "===" << std::string(73, '-') << "===\n"
+                 << std::string(Padding, ' ') << Name << "\n"
+                 << "===" << std::string(73, '-')
+                 << "===\n  Total Execution Time: ";
 
-      // Hack for GCC 2.96... :( it doesn't support manipulators!
-      fprintf(stderr, "%.4f seconds (%.4f wall clock)\n\n",
-              Total.getProcessTime(), Total.getWallTime());
+      printAlignedFP(Total.getProcessTime(), 4, 5, *OutStream);
+      *OutStream << " seconds (";
+      printAlignedFP(Total.getWallTime(), 4, 5, *OutStream);
+      *OutStream << " wall clock)\n\n";
 
       if (Total.UserTime)
-        std::cerr << "   ---User Time---";
+        *OutStream << "   ---User Time---";
       if (Total.SystemTime)
-        std::cerr << "   --System Time--";
+        *OutStream << "   --System Time--";
       if (Total.getProcessTime())
-        std::cerr << "   --User+System--";
-      std::cerr << "   ---Wall Time---";
+        *OutStream << "   --User+System--";
+      *OutStream << "   ---Wall Time---";
       if (Total.getMemUsed())
-        std::cerr << "  ---Mem---";
+        *OutStream << "  ---Mem---";
       if (Total.getPeakMem())
-        std::cerr << "  -PeakMem-";
-      std::cerr << "  --- Name ---\n";
+        *OutStream << "  -PeakMem-";
+      *OutStream << "  --- Name ---\n";
       
       // Loop through all of the timing data, printing it out...
       for (unsigned i = 0, e = TimersToPrint.size(); i != e; ++i)
-        TimersToPrint[i].print(Total);
+        TimersToPrint[i].print(Total, *OutStream);
     
-      Total.print(Total);
-      std::cerr << std::endl;  // Flush output
+      Total.print(Total, *OutStream);
+      *OutStream << std::endl;  // Flush output
     }
     --NumTimers;
 
     TimersToPrint.clear();
+
+    if (OutStream != &std::cerr && OutStream != &std::cout)
+      delete OutStream;   // Close the file...
   }
 
   // Delete default timer group!

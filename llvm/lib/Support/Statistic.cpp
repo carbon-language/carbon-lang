@@ -20,6 +20,9 @@
 #include <sstream>
 #include <algorithm>
 
+// GetLibSupportInfoOutputFile - Return a file stream to print our output on...
+std::ostream *GetLibSupportInfoOutputFile();
+
 bool DebugFlag;  // DebugFlag - Exported boolean set by the -debug option
 
 unsigned StatisticBase::NumStats = 0;
@@ -49,11 +52,12 @@ struct StatRecord {
     return std::strcmp(Name, SR.Name) < 0;
   }
 
-  void print(unsigned ValFieldSize, unsigned NameFieldSize) {
-    std::cerr << std::string(ValFieldSize-Value.length(), ' ')
-              << Value << " " << Name
-              << std::string(NameFieldSize-std::strlen(Name), ' ')
-              << " - " << Desc << "\n";
+  void print(unsigned ValFieldSize, unsigned NameFieldSize,
+             std::ostream &OS) {
+    OS << std::string(ValFieldSize-Value.length(), ' ')
+       << Value << " " << Name
+       << std::string(NameFieldSize-std::strlen(Name), ' ')
+       << " - " << Desc << "\n";
   }
 };
 
@@ -71,6 +75,8 @@ void StatisticBase::destroy() const {
   }
 
   if (--NumStats == 0 && AccumStats) {
+    std::ostream *OutStream = GetLibSupportInfoOutputFile();
+
     // Figure out how long the biggest Value and Name fields are...
     unsigned MaxNameLen = 0, MaxValLen = 0;
     for (unsigned i = 0, e = AccumStats->size(); i != e; ++i) {
@@ -84,18 +90,20 @@ void StatisticBase::destroy() const {
     std::stable_sort(AccumStats->begin(), AccumStats->end());
 
     // Print out the statistics header...
-    std::cerr << "===" << std::string(73, '-') << "===\n"
-              << "                          ... Statistics Collected ...\n"
-              << "===" << std::string(73, '-') << "===\n\n";
+    *OutStream << "===" << std::string(73, '-') << "===\n"
+               << "                          ... Statistics Collected ...\n"
+               << "===" << std::string(73, '-') << "===\n\n";
 
     // Print all of the statistics accumulated...
     for (unsigned i = 0, e = AccumStats->size(); i != e; ++i)
-      (*AccumStats)[i].print(MaxValLen, MaxNameLen);
+      (*AccumStats)[i].print(MaxValLen, MaxNameLen, *OutStream);
 
-    std::cerr << std::endl;  // Flush the output stream...
+    *OutStream << std::endl;  // Flush the output stream...
 
     // Free all accumulated statistics...
     delete AccumStats;
     AccumStats = 0;
+    if (OutStream != &std::cerr && OutStream != &std::cout)
+      delete OutStream;   // Close the file...
   }
 }
