@@ -100,6 +100,7 @@ DSGraph *DSAA::getGraphForValue(const Value *V) {
   return 0;
 }
 
+#if 0
 // isSinglePhysicalObject - For now, the only case that we know that there is
 // only one memory object in the node is when there is a single global in the
 // node, and the only composition bit set is Global.
@@ -109,6 +110,7 @@ static bool isSinglePhysicalObject(DSNode *N) {
   return N->isGlobalNode() && N->getGlobals().size() == 1 &&
          !N->isHeapNode() && !N->isAllocaNode() && !N->isUnknownNode();
 }
+#endif
 
 // alias - This is the only method here that does anything interesting...
 AliasAnalysis::AliasResult DSAA::alias(const Value *V1, unsigned V1Size,
