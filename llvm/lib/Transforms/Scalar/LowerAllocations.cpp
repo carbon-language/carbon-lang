@@ -117,7 +117,7 @@ bool LowerAllocations::runOnBasicBlock(BasicBlock &BB) {
     } else if (FreeInst *FI = dyn_cast<FreeInst>(I)) {
       // Cast the argument to free into a ubyte*...
       CastInst *MCast = new CastInst(FI->getOperand(0), 
-                                     PointerType::get(Type::UByteTy), "", I);
+                                     PointerType::get(Type::SByteTy), "", I);
       
       // Insert a call to the free function...
       CallInst *FCall = new CallInst(FreeFunc, std::vector<Value*>(1, MCast),
