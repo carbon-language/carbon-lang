@@ -118,10 +118,10 @@ void *JIT::getPointerToFunction(Function *F) {
   try {
     MP->materializeFunction(F);
   } catch ( std::string& errmsg ) {
-    std::cerr << "Error parsing bytecode file: " << errmsg << "\n";
+    std::cerr << "Error reading bytecode file: " << errmsg << "\n";
     abort();
   } catch (...) {
-    std::cerr << "Error parsing bytecode file!\n";
+    std::cerr << "Error reading bytecode file!\n";
     abort();
   }
 
