@@ -48,6 +48,12 @@ namespace {
                      MVT::ValueType VT) : OperandType(isMachineInstrOperand),
                                           Str(Printer), MIOpNo(OpNo), OpVT(VT){}
 
+    bool operator!=(const AsmWriterOperand &Other) const {
+      if (OperandType != Other.OperandType || Str != Other.Str) return true;
+      if (OperandType == isMachineInstrOperand)
+        return MIOpNo != Other.MIOpNo || OpVT != Other.OpVT;
+      return false;
+    }
     void EmitCode(std::ostream &OS) const;
   };
 
@@ -56,10 +62,12 @@ namespace {
     const CodeGenInstruction *CGI;
     
     AsmWriterInst(const CodeGenInstruction &CGI, unsigned Variant);
-    void EmitCode(std::ostream &OS) const {
-      for (unsigned i = 0, e = Operands.size(); i != e; ++i)
-        Operands[i].EmitCode(OS);
-    }
+
+    /// MatchesAllButOneString - If this instruction is exactly identical to the
+    /// specified instruction except for one differing literal string, return
+    /// the operand number of the literal string.  Otherwise return ~0.
+    unsigned MatchesAllButOneString(const AsmWriterInst &Other) const;
+
   private:
     void AddLiteralString(const std::string &Str) {
       // If the last operand was already a literal text string, append this to
@@ -174,6 +182,85 @@ AsmWriterInst::AsmWriterInst(const CodeGenInstruction &CGI, unsigned Variant) {
   AddLiteralString("\\n");
 }
 
+/// MatchesAllButOneString - If this instruction is exactly identical to the
+/// specified instruction except for one differing literal string, return
+/// the operand number of the literal string.  Otherwise return ~0.
+unsigned AsmWriterInst::MatchesAllButOneString(const AsmWriterInst &Other)const{
+  if (Operands.size() != Other.Operands.size()) return ~0;
+
+  unsigned MismatchOperand = ~0U;
+  for (unsigned i = 0, e = Operands.size(); i != e; ++i) {
+    if (Operands[i].OperandType != Other.Operands[i].OperandType)
+      return ~0U;
+
+    if (Operands[i] != Other.Operands[i])
+      if (Operands[i].OperandType == AsmWriterOperand::isMachineInstrOperand ||
+          MismatchOperand != ~0U)
+        return ~0U;
+      else 
+        MismatchOperand = i;
+  }
+  return MismatchOperand;
+}
+
+
+/// EmitInstructions - Emit the last instruction in the vector and any other
+/// instructions that are suitably similar to it.
+static void EmitInstructions(std::vector<AsmWriterInst> &Insts,
+                             std::ostream &O) {
+  AsmWriterInst FirstInst = Insts.back();
+  Insts.pop_back();
+
+  std::vector<AsmWriterInst> SimilarInsts;
+  unsigned DifferingOperand = ~0;
+  for (unsigned i = Insts.size(); i != 0; --i) {
+    unsigned DiffOp = Insts[i-1].MatchesAllButOneString(FirstInst);
+    if (DiffOp != ~0U) {
+      if (DifferingOperand == ~0U)  // First match!
+        DifferingOperand = DiffOp;
+
+      // If this differs in the same operand as the rest of the instructions in
+      // this class, move it to the SimilarInsts list.
+      if (DifferingOperand == DiffOp) {
+        SimilarInsts.push_back(Insts[i-1]);
+        Insts.erase(Insts.begin()+i-1);
+      }
+    }
+  }
+
+  std::string Namespace = FirstInst.CGI->Namespace;
+
+  O << "  case " << Namespace << "::"
+    << FirstInst.CGI->TheDef->getName() << ":\n";
+  for (unsigned i = 0, e = SimilarInsts.size(); i != e; ++i)
+    O << "  case " << Namespace << "::"
+      << SimilarInsts[i].CGI->TheDef->getName() << ":\n";
+  for (unsigned i = 0, e = FirstInst.Operands.size(); i != e; ++i) {
+    if (i != DifferingOperand) {
+      // If the operand is the same for all instructions, just print it.
+      O << "    ";
+      FirstInst.Operands[i].EmitCode(O);
+    } else {
+      // If this is the operand that varies between all of the instructions,
+      // emit a switch for just this operand now.
+      O << "    switch (MI->getOpcode()) {\n";
+      O << "    case " << Namespace << "::"
+        << FirstInst.CGI->TheDef->getName() << ": ";
+      FirstInst.Operands[i].EmitCode(O);
+      O << "break;\n";
+      for (unsigned si = 0, e = SimilarInsts.size(); si != e; ++si) {
+        O << "    case " << Namespace << "::"
+          << SimilarInsts[si].CGI->TheDef->getName() << ": ";
+        SimilarInsts[si].Operands[i].EmitCode(O);
+        O << "break;\n";
+      }
+      O << "    }";
+    }
+    O << "\n";
+  }
+
+  O << "    break;\n";
+}
 
 void AsmWriterEmitter::run(std::ostream &O) {
   EmitSourceFileHeader("Assembly Writer Source Fragment", O);
@@ -202,13 +289,13 @@ void AsmWriterEmitter::run(std::ostream &O) {
     if (!I->second.AsmString.empty())
       Instructions.push_back(AsmWriterInst(I->second, Variant));
 
-  for (unsigned i = 0, e = Instructions.size(); i != e; ++i) {
-    O << "  case " << Namespace << "::"
-      << Instructions[i].CGI->TheDef->getName() << ": ";
-    Instructions[i].EmitCode(O);
-    O << " break;\n";
-  }
+  // Because this is a vector we want to emit from the end.  Reverse all of the
+  // elements in the vector.
+  std::reverse(Instructions.begin(), Instructions.end());
   
+  while (!Instructions.empty())
+    EmitInstructions(Instructions, O);
+
   O << "  }\n"
        "  return true;\n"
        "}\n";
