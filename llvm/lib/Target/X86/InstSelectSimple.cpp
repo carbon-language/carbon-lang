@@ -434,15 +434,17 @@ ISel::visitCallInst (CallInst & CI)
   // If there is a return value, scavenge the result from the location the call
   // leaves it in...
   //
-  switch (getClass(CI.getType())) {
-  case cInt:
-    BuildMI(BB, X86::MOVrr32, 1, getReg(CI)).addReg(X86::EAX);
-    break;
-
-  default:
-    std::cerr << "Cannot get return value for call of type '"
-              << *CI.getType() << "'\n";
-    visitInstruction(CI);
+  if (CI.getType() != Type::VoidTy) {
+    switch (getClass(CI.getType())) {
+    case cInt:
+      BuildMI(BB, X86::MOVrr32, 1, getReg(CI)).addReg(X86::EAX);
+      break;
+      
+    default:
+      std::cerr << "Cannot get return value for call of type '"
+                << *CI.getType() << "'\n";
+      visitInstruction(CI);
+    }
   }
 }
 
