@@ -17,6 +17,7 @@
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Instructions.h"
+#include "llvm/Intrinsics.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Support/InstVisitor.h"
 #include "llvm/Target/TargetData.h"
@@ -456,39 +457,43 @@ void GraphBuilder::visitCallSite(CallSite CS) {
   // Special case handling of certain libc allocation functions here.
   if (Function *F = CS.getCalledFunction())
     if (F->isExternal())
-      if (F->getName() == "calloc") {
-        setDestTo(*CS.getInstruction(),
-                  createNode()->setHeapNodeMarker()->setModifiedMarker());
-        return;
-      } else if (F->getName() == "realloc") {
-        DSNodeHandle RetNH = getValueDest(*CS.getInstruction());
-        RetNH.mergeWith(getValueDest(**CS.arg_begin()));
-        if (DSNode *N = RetNH.getNode())
-          N->setHeapNodeMarker()->setModifiedMarker()->setReadMarker();
-        return;
-      } else if (F->getName() == "memset") {
-        // Merge the first argument with the return value, and mark the memory
+      switch (F->getIntrinsicID()) {
+      case Intrinsic::memmove:
+      case Intrinsic::memcpy: {
+        // Merge the first & second arguments, and mark the memory read and
         // modified.
-        DSNodeHandle RetNH = getValueDest(*CS.getInstruction());
-        RetNH.mergeWith(getValueDest(**CS.arg_begin()));
-        if (DSNode *N = RetNH.getNode())
-          N->setModifiedMarker();
-        return;
-      } else if (F->getName() == "memmove") {
-        // Merge the first & second arguments with the result, and mark the
-        // memory read and modified.
-        DSNodeHandle RetNH = getValueDest(*CS.getInstruction());
-        RetNH.mergeWith(getValueDest(**CS.arg_begin()));
+        DSNodeHandle RetNH = getValueDest(**CS.arg_begin());
         RetNH.mergeWith(getValueDest(**(CS.arg_begin()+1)));
         if (DSNode *N = RetNH.getNode())
           N->setModifiedMarker()->setReadMarker();
         return;
-      } else if (F->getName() == "bzero") {
-        // Mark the memory modified.
-        DSNodeHandle H = getValueDest(**CS.arg_begin());
-        if (DSNode *N = H.getNode())
-          N->setModifiedMarker();
-        return;
+      }
+      default:
+        if (F->getName() == "calloc") {
+          setDestTo(*CS.getInstruction(),
+                    createNode()->setHeapNodeMarker()->setModifiedMarker());
+          return;
+        } else if (F->getName() == "realloc") {
+          DSNodeHandle RetNH = getValueDest(*CS.getInstruction());
+          RetNH.mergeWith(getValueDest(**CS.arg_begin()));
+          if (DSNode *N = RetNH.getNode())
+            N->setHeapNodeMarker()->setModifiedMarker()->setReadMarker();
+          return;
+        } else if (F->getName() == "memset") {
+          // Merge the first argument with the return value, and mark the memory
+          // modified.
+          DSNodeHandle RetNH = getValueDest(*CS.getInstruction());
+          RetNH.mergeWith(getValueDest(**CS.arg_begin()));
+          if (DSNode *N = RetNH.getNode())
+            N->setModifiedMarker();
+          return;
+        } else if (F->getName() == "bzero") {
+          // Mark the memory modified.
+          DSNodeHandle H = getValueDest(**CS.arg_begin());
+          if (DSNode *N = H.getNode())
+            N->setModifiedMarker();
+          return;
+        }
       }
 
 
