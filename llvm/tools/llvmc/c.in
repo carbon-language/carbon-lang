@@ -28,7 +28,8 @@
   # To compile stacker source, we just run the stacker
   # compiler with a default stack size of 2048 entries.
   translator.command=@LLVMCC1@ -quiet %in% -o %out% \
-    %opt% %incls% %defs% %WOpts% %fOpts% %MOpts% %args%
+    %opt% %incls% %defs% %WOpts% %fOpts% %MOpts% %args% \
+    -D_GNU_SOURCE
 
   # stkrc doesn't preprocess but we set this to true so
   # that we don't run the cp command by default.
@@ -61,4 +62,4 @@
 ##########################################################
 # Assembler definitions
 ##########################################################
-  assembler.command=llc %in% -o %out% %target% %time% %stats%
+  assembler.command=@LLVM_BINDIR@/llc %in% -o %out% %target% %time% %stats%
