@@ -243,7 +243,7 @@ namespace {
 
     void BuildRankMap(Function &F);
     unsigned getRank(Value *V) const {
-      if (isa<Constant>(V) || isa<GlobalValue>(V)) return 0;
+      if (isa<Constant>(V)) return 0;
       std::map<Value*, unsigned>::const_iterator I = RankMap.find(V);
       if (I != RankMap.end()) return I->second;
       return 0; // Must be some other global thing
@@ -476,7 +476,8 @@ bool CEE::ForwardCorrelatedEdgeDestination(TerminatorInst *TI, unsigned SuccNo,
 
   ValueInfo &PredicateVI = NewRI.getValueInfo(BI->getCondition());
   if (PredicateVI.getReplacement() &&
-      isa<Constant>(PredicateVI.getReplacement())) {
+      isa<Constant>(PredicateVI.getReplacement()) &&
+      !isa<GlobalValue>(PredicateVI.getReplacement())) {
     ConstantBool *CB = cast<ConstantBool>(PredicateVI.getReplacement());
 
     // Forward to the successor that corresponds to the branch we will take.

@@ -140,7 +140,8 @@ bool LowerGC::doInitialization(Module &M) {
 /// not have the specified type, insert a cast.
 static void Coerce(Instruction *I, unsigned OpNum, Type *Ty) {
   if (I->getOperand(OpNum)->getType() != Ty) {
-    if (Constant *C = dyn_cast<Constant>(I->getOperand(OpNum)))
+    Constant *C = dyn_cast<Constant>(I->getOperand(OpNum));
+    if (C && !isa<GlobalValue>(I->getOperand(OpNum)))
       I->setOperand(OpNum, ConstantExpr::getCast(C, Ty));
     else {
       CastInst *C = new CastInst(I->getOperand(OpNum), Ty, "", I);
@@ -252,8 +253,7 @@ bool LowerGC::runOnFunction(Function &F) {
     Par[2] = ConstantUInt::get(Type::UIntTy, i);
     Par[3] = One;
     Value *MetaDataPtr = new GetElementPtrInst(AI, Par, "MetaDataPtr", IP);
-    assert(isa<Constant>(GCRoots[i]->getOperand(2)) || 
-           isa<GlobalValue>(GCRoots[i]->getOperand(2)));
+    assert(isa<Constant>(GCRoots[i]->getOperand(2)) && "Must be a constant");
     new StoreInst(GCRoots[i]->getOperand(2), MetaDataPtr, IP);
 
     // Initialize the root pointer to null on entry to the function.
