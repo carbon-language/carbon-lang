@@ -1057,7 +1057,9 @@ void CWriter::printBranchToBlock(BasicBlock *CurBB, BasicBlock *Succ,
     Out << ";   /* for PHI node */\n";
   }
 
-  if (CurBB->getNext() != Succ || isa<InvokeInst>(CurBB->getTerminator())) {
+  if (CurBB->getNext() != Succ ||
+      isa<InvokeInst>(CurBB->getTerminator()) ||
+      isa<SwitchInst>(CurBB->getTerminator())) {
     Out << std::string(Indent, ' ') << "  goto ";
     writeOperand(Succ);
     Out << ";\n";
