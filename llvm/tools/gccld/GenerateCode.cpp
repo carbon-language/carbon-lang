@@ -81,6 +81,17 @@ GenerateBytecode (Module *M, bool Strip, bool Internalize, std::ostream *Out) {
   addPass(Passes, createFunctionResolvingPass());
 
   if (!DisableOptimizations) {
+    if (Internalize) {
+      // Now that composite has been compiled, scan through the module, looking
+      // for a main function.  If main is defined, mark all other functions
+      // internal.
+      addPass(Passes, createInternalizePass());
+    }
+
+    // Now that we internalized some globals, see if we can mark any globals as
+    // being constant!
+    addPass(Passes, createGlobalConstifierPass());
+
     // Linking modules together can lead to duplicated global constants, only
     // keep one copy of each constant...
     addPass(Passes, createConstantMergePass());
@@ -90,13 +101,6 @@ GenerateBytecode (Module *M, bool Strip, bool Internalize, std::ostream *Out) {
     // supporting.
     if (Strip)
       addPass(Passes, createSymbolStrippingPass());
-
-    if (Internalize) {
-      // Now that composite has been compiled, scan through the module, looking
-      // for a main function.  If main is defined, mark all other functions
-      // internal.
-      addPass(Passes, createInternalizePass());
-    }
 
     // Propagate constants at call sites into the functions they call.
     addPass(Passes, createIPConstantPropagationPass());
