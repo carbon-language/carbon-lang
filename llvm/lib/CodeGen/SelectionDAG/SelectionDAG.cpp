@@ -220,26 +220,19 @@ void SelectionDAG::DeleteNodeIfDead(SDNode *N, void *NodeSet) {
                                                N->getOperand(1)),
                                 cast<SetCCSDNode>(N)->getCondition()));
     break;
-  case ISD::TRUNCSTORE: {
-    EVTStruct NN;
-    NN.Opcode = ISD::TRUNCSTORE;
-    NN.VT = N->getValueType(0);
-    NN.EVT = cast<MVTSDNode>(N)->getExtraValueType();
-    NN.Ops.push_back(N->getOperand(0));
-    NN.Ops.push_back(N->getOperand(1));
-    NN.Ops.push_back(N->getOperand(2));
-    MVTSDNodes.erase(NN);
-    break;
-  }
+  case ISD::TRUNCSTORE:
+  case ISD::SIGN_EXTEND_INREG:
+  case ISD::ZERO_EXTEND_INREG:
+  case ISD::FP_ROUND_INREG:
   case ISD::EXTLOAD:
   case ISD::SEXTLOAD:
   case ISD::ZEXTLOAD: {
     EVTStruct NN;
-    NN.Opcode = N->getOpcode();
+    NN.Opcode = ISD::TRUNCSTORE;
     NN.VT = N->getValueType(0);
     NN.EVT = cast<MVTSDNode>(N)->getExtraValueType();
-    NN.Ops.push_back(N->getOperand(0));
-    NN.Ops.push_back(N->getOperand(1));
+    for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i)
+      NN.Ops.push_back(N->getOperand(i));
     MVTSDNodes.erase(NN);
     break;
   }
@@ -857,6 +850,41 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
 }
 
 SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,SDOperand N1,
+                                MVT::ValueType EVT) {
+
+  switch (Opcode) {
+  default: assert(0 && "Bad opcode for this accessor!");
+  case ISD::FP_ROUND_INREG:
+    assert(VT == N1.getValueType() && "Not an inreg round!");
+    assert(MVT::isFloatingPoint(VT) && MVT::isFloatingPoint(EVT) &&
+           "Cannot FP_ROUND_INREG integer types");
+    if (EVT == VT) return N1;  // Not actually rounding
+    assert(EVT < VT && "Not rounding down!");
+    break;
+  case ISD::ZERO_EXTEND_INREG:
+  case ISD::SIGN_EXTEND_INREG:
+    assert(VT == N1.getValueType() && "Not an inreg extend!");
+    assert(MVT::isInteger(VT) && MVT::isInteger(EVT) &&
+           "Cannot *_EXTEND_INREG FP types");
+    if (EVT == VT) return N1;  // Not actually extending
+    assert(EVT < VT && "Not extending!");
+    break;
+  }
+
+  EVTStruct NN;
+  NN.Opcode = Opcode;
+  NN.VT = VT;
+  NN.EVT = EVT;
+  NN.Ops.push_back(N1);
+
+  SDNode *&N = MVTSDNodes[NN];
+  if (N) return SDOperand(N, 0);
+  N = new MVTSDNode(Opcode, VT, N1, EVT);
+  AllNodes.push_back(N);
+  return SDOperand(N, 0);
+}
+
+SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,SDOperand N1,
                                 SDOperand N2, MVT::ValueType EVT) {
   switch (Opcode) {
   default:  assert(0 && "Bad opcode for this accessor!");
@@ -894,10 +922,20 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,SDOperand N1,
   switch (Opcode) {
   default:  assert(0 && "Bad opcode for this accessor!");
   case ISD::TRUNCSTORE:
+#if 0 // FIXME: If the target supports EVT natively, convert to a truncate/store
+    // If this is a truncating store of a constant, convert to the desired type
+    // and store it instead.
+    if (isa<Constant>(N1)) {
+      SDOperand Op = getNode(ISD::TRUNCATE, EVT, N1);
+      if (isa<Constant>(Op))
+        N1 = Op;      
+    }
+    // Also for ConstantFP?
+#endif
     if (N1.getValueType() == EVT)       // Normal store?
       return getNode(ISD::STORE, VT, N1, N2, N3);
-    assert(N1.getValueType() > EVT && "Not a truncation?");
-    assert(MVT::isInteger(N1.getValueType()) == MVT::isInteger(EVT) &&
+    assert(N2.getValueType() > EVT && "Not a truncation?");
+    assert(MVT::isInteger(N2.getValueType()) == MVT::isInteger(EVT) &&
            "Can't do FP-INT conversion!");
     break;
   }
@@ -988,8 +1026,11 @@ const char *SDNode::getOperationName() const {
     // Conversion operators.
   case ISD::SIGN_EXTEND: return "sign_extend";
   case ISD::ZERO_EXTEND: return "zero_extend";
+  case ISD::SIGN_EXTEND_INREG: return "sign_extend_inreg";
+  case ISD::ZERO_EXTEND_INREG: return "zero_extend_inreg";
   case ISD::TRUNCATE:    return "truncate";
   case ISD::FP_ROUND:    return "fp_round";
+  case ISD::FP_ROUND_INREG: return "fp_round_inreg";
   case ISD::FP_EXTEND:   return "fp_extend";
 
   case ISD::SINT_TO_FP:  return "sint_to_fp";

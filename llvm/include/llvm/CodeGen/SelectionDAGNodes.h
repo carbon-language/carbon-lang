@@ -126,14 +126,29 @@ namespace ISD {
     SINT_TO_FP,
     UINT_TO_FP,
 
+    // SIGN_EXTEND_INREG/ZERO_EXTEND_INREG - These operators atomically performs
+    // a SHL/(SRA|SHL) pair to (sign|zero) extend a small value in a large
+    // integer register (e.g. sign extending the low 8 bits of a 32-bit register
+    // to fill the top 24 bits with the 7th bit).  The size of the smaller type
+    // is indicated by the ExtraValueType in the MVTSDNode for the operator.
+    SIGN_EXTEND_INREG,
+    ZERO_EXTEND_INREG,
+
     // FP_TO_[US]INT - Convert a floating point value to a signed or unsigned
     // integer.
     FP_TO_SINT,
     FP_TO_UINT,
 
     // FP_ROUND - Perform a rounding operation from the current
-    // precision down to the specified precision.
+    // precision down to the specified precision (currently always 64->32).
     FP_ROUND,
+
+    // FP_ROUND_INREG - This operator takes a floating point register, and
+    // rounds it to a floating point value.  It then promotes it and returns it
+    // in a register of the same size.  This operation effectively just discards
+    // excess precision.  The type to round down to is specified by the
+    // ExtraValueType in the MVTSDNode (currently always 64->32->64).
+    FP_ROUND_INREG,
 
     // FP_EXTEND - Extend a smaller FP type into a larger FP type.
     FP_EXTEND,
@@ -706,6 +721,10 @@ class MVTSDNode : public SDNode {
   MVT::ValueType ExtraValueType;
 protected:
   friend class SelectionDAG;
+  MVTSDNode(unsigned Opc, MVT::ValueType VT1, SDOperand Op0, MVT::ValueType EVT)
+    : SDNode(Opc, Op0), ExtraValueType(EVT) {
+    setValueTypes(VT1);
+  }
   MVTSDNode(unsigned Opc, MVT::ValueType VT1, MVT::ValueType VT2,
             SDOperand Op0, SDOperand Op1, MVT::ValueType EVT)
     : SDNode(Opc, Op0, Op1), ExtraValueType(EVT) {
@@ -723,6 +742,9 @@ public:
   static bool classof(const MVTSDNode *) { return true; }
   static bool classof(const SDNode *N) {
     return 
+      N->getOpcode() == ISD::SIGN_EXTEND_INREG ||
+      N->getOpcode() == ISD::ZERO_EXTEND_INREG ||
+      N->getOpcode() == ISD::FP_ROUND_INREG ||
       N->getOpcode() == ISD::EXTLOAD  ||
       N->getOpcode() == ISD::SEXTLOAD || 
       N->getOpcode() == ISD::ZEXTLOAD ||

@@ -570,7 +570,6 @@ void SelectionDAGLowering::visitStore(StoreInst &I) {
   SDOperand Src = getValue(SrcV);
   SDOperand Ptr = getValue(I.getOperand(1));
   DAG.setRoot(DAG.getNode(ISD::STORE, MVT::Other, DAG.getRoot(), Src, Ptr));
-  return;
 }
 
 void SelectionDAGLowering::visitCall(CallInst &I) {

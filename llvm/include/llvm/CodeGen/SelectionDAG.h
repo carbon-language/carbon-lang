@@ -145,9 +145,11 @@ public:
                     std::vector<SDOperand> &Children);
 
   // getNode - These versions take an extra value type for extending and
-  // truncating loads and stores.
+  // truncating loads, stores, rounds, extends etc.
   SDOperand getNode(unsigned Opcode, MVT::ValueType VT, SDOperand N1,
                     SDOperand N2, MVT::ValueType EVT);
+  SDOperand getNode(unsigned Opcode, MVT::ValueType VT,
+                    SDOperand N, MVT::ValueType EVT);
   SDOperand getNode(unsigned Opcode, MVT::ValueType VT, SDOperand N1,
                     SDOperand N2, SDOperand N3, MVT::ValueType EVT);
 
