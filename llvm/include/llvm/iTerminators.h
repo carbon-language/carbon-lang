@@ -126,7 +126,8 @@ public:
   inline bool isConditional()   const { return Operands.size() == 3; }
 
   inline Value *getCondition() const {
-    return isUnconditional() ? 0 : reinterpret_cast<Value*>(Operands[2].get());
+    assert(isConditional() && "Cannot get condition of an uncond branch!");
+    return Operands[2].get();
   }
 
   void setCondition(Value *V) {
