@@ -19,6 +19,7 @@
 #define DEBUG_TYPE "asmprinter"
 #include "PowerPC.h"
 #include "PowerPCInstrInfo.h"
+#include "PowerPCTargetMachine.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
@@ -47,7 +48,7 @@ namespace {
     /// Target machine description which we query for reg. names, data
     /// layout, etc.
     ///
-    TargetMachine &TM;
+    PowerPCTargetMachine &TM;
 
     /// Name-mangler for global names.
     ///
@@ -55,8 +56,8 @@ namespace {
     std::set<std::string> FnStubs, GVStubs, LinkOnceStubs;
     std::set<std::string> Strings;
 
-    Printer(std::ostream &o, TargetMachine &tm) : O(o), TM(tm), labelNumber(0)
-      { }
+    Printer(std::ostream &o, TargetMachine &tm) : O(o), 
+      TM(reinterpret_cast<PowerPCTargetMachine&>(tm)), labelNumber(0) { }
 
     /// Cache of mangled name for current function. This is
     /// recalculated at the beginning of each call to
@@ -131,7 +132,7 @@ static void printAsCString(std::ostream &O, const ConstantArray *CVA) {
     } else if (isprint(C)) {
       O << C;
     } else {
-      switch(C) {
+      switch (C) {
       case '\b': O << "\\b"; break;
       case '\f': O << "\\f"; break;
       case '\n': O << "\\n"; break;
@@ -167,7 +168,7 @@ void Printer::emitConstantValueOnly(const Constant *CV) {
     O << Mang->getValueName(GV);
   else if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(CV)) {
     const TargetData &TD = TM.getTargetData();
-    switch(CE->getOpcode()) {
+    switch (CE->getOpcode()) {
     case Instruction::GetElementPtr: {
       // generate a symbolic expression for the byte address
       const Constant *ptrVal = CE->getOperand(0);
@@ -450,20 +451,25 @@ void Printer::printOp(const MachineOperand &MO,
     if (!elideOffsetKeyword) {
       GlobalValue *GV = MO.getGlobal();
       std::string Name = Mang->getValueName(GV);
+
       // Dynamically-resolved functions need a stub for the function
       Function *F = dyn_cast<Function>(GV);
-      if (F && F->isExternal()) {
+      if (F && F->isExternal() &&
+          TM.CalledFunctions.find(F) != TM.CalledFunctions.end()) {
         FnStubs.insert(Name);
         O << "L" << Name << "$stub";
-      } else {
-        GlobalVariable *GVar = dyn_cast<GlobalVariable>(GV);
-        // External global variables need a non-lazily-resolved stub
-        if (GVar && GVar->isExternal()) {
-          GVStubs.insert(Name);
-          O << "L" << Name << "$non_lazy_ptr";
-        } else 
-          O << Mang->getValueName(GV);
+        return;
       }
+            
+      // External global variables need a non-lazily-resolved stub
+      if (GV->hasInternalLinkage() == false &&
+          TM.AddressTaken.find(GV) != TM.AddressTaken.end()) {
+        GVStubs.insert(Name);
+        O << "L" << Name << "$non_lazy_ptr";
+        return;
+      }
+            
+      O << Mang->getValueName(GV);
     }
     return;
     
@@ -613,10 +619,10 @@ bool Printer::doFinalization(Module &M) {
           (I->hasInternalLinkage() || I->hasWeakLinkage())) {
         SwitchSection(O, CurSection, ".data");
         if (I->hasInternalLinkage())
-          O << "\t.lcomm " << name << "," << TD.getTypeSize(C->getType())
+          O << ".lcomm " << name << "," << TD.getTypeSize(C->getType())
             << "," << (unsigned)TD.getTypeAlignment(C->getType());
         else 
-          O << "\t.comm " << name << "," << TD.getTypeSize(C->getType());
+          O << ".comm " << name << "," << TD.getTypeSize(C->getType());
         O << "\t\t; ";
         WriteAsOperand(O, I, true, true, &M);
         O << "\n";
@@ -661,8 +667,7 @@ bool Printer::doFinalization(Module &M) {
   if (LinkOnceStubs.begin() != LinkOnceStubs.end())
     O << ".data\n.align 2\n";
   for (std::set<std::string>::iterator i = LinkOnceStubs.begin(), 
-         e = LinkOnceStubs.end(); i != e; ++i)
-  {
+         e = LinkOnceStubs.end(); i != e; ++i) {
     O << *i << "$non_lazy_ptr:\n"
       << "\t.long\t" << *i << '\n';
   }
@@ -671,31 +676,32 @@ bool Printer::doFinalization(Module &M) {
   for (std::set<std::string>::iterator i = FnStubs.begin(), e = FnStubs.end(); 
        i != e; ++i)
   {
-    O << "\t.picsymbol_stub\n";
+    O << ".data\n";
+    O << ".section __TEXT,__picsymbolstub1,symbol_stubs,pure_instructions,32\n";
+    O << "\t.align 2\n";
     O << "L" << *i << "$stub:\n";
     O << "\t.indirect_symbol " << *i << "\n";
     O << "\tmflr r0\n";
-    O << "\tbl L0$" << *i << "\n";
+    O << "\tbcl 20,31,L0$" << *i << "\n";
     O << "L0$" << *i << ":\n";
     O << "\tmflr r11\n";
     O << "\taddis r11,r11,ha16(L" << *i << "$lazy_ptr-L0$" << *i << ")\n";
     O << "\tmtlr r0\n";
-    O << "\tlwz r12,lo16(L" << *i << "$lazy_ptr-L0$" << *i << ")(r11)\n";
+    O << "\tlwzu r12,lo16(L" << *i << "$lazy_ptr-L0$" << *i << ")(r11)\n";
     O << "\tmtctr r12\n";
-    O << "\taddi r11,r11,lo16(L" << *i << "$lazy_ptr - L0$" << *i << ")\n";
     O << "\tbctr\n";
     O << ".data\n";
     O << ".lazy_symbol_pointer\n";
     O << "L" << *i << "$lazy_ptr:\n";
-    O << ".indirect_symbol " << *i << "\n";
-    O << ".long dyld_stub_binding_helper\n";
+    O << "\t.indirect_symbol " << *i << "\n";
+    O << "\t.long dyld_stub_binding_helper\n";
   }
 
   O << "\n";
 
   // Output stubs for external global variables
   if (GVStubs.begin() != GVStubs.end())
-    O << ".data\n\t.non_lazy_symbol_pointer\n";
+    O << ".data\n.non_lazy_symbol_pointer\n";
   for (std::set<std::string>::iterator i = GVStubs.begin(), e = GVStubs.end(); 
        i != e; ++i) {
     O << "L" << *i << "$non_lazy_ptr:\n";

@@ -11,6 +11,7 @@
 #include "PowerPC.h"
 #include "PowerPCInstrBuilder.h"
 #include "PowerPCInstrInfo.h"
+#include "PowerPCTargetMachine.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
@@ -26,17 +27,31 @@
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Support/InstVisitor.h"
 #include "Support/Debug.h"
+#include "Support/Statistic.h"
 #include <vector>
-#include <iostream>
 using namespace llvm;
 
 namespace {
+  Statistic<> GEPConsts("ppc-codegen", "Number of const GEPs");
+  Statistic<> GEPSplits("ppc-codegen", "Number of partially const GEPs");
+
   /// TypeClass - Used by the PowerPC backend to group LLVM types by their basic
   /// PPC Representation.
   ///
   enum TypeClass {
     cByte, cShort, cInt, cFP32, cFP64, cLong
   };
+
+  // This struct is for recording the necessary operations to emit the GEP
+  typedef struct CollapsedGepOp {
+  public:
+    CollapsedGepOp(bool mul, Value *i, ConstantSInt *s) : 
+      isMul(mul), index(i), size(s) {}
+  
+    bool isMul;
+    Value *index;
+    ConstantSInt *size;
+  } CollapsedGepOp;
 }
 
 /// getClass - Turn a primitive type into a "class" number which is based on the
@@ -71,7 +86,7 @@ static inline TypeClass getClassB(const Type *Ty) {
 
 namespace {
   struct ISel : public FunctionPass, InstVisitor<ISel> {
-    TargetMachine &TM;
+    PowerPCTargetMachine &TM;
     MachineFunction *F;                 // The function we are compiling into
     MachineBasicBlock *BB;              // The current MBB we are compiling
     int VarArgsFrameIndex;              // FrameIndex for start of varargs area
@@ -90,7 +105,8 @@ namespace {
     // FrameIndex for the alloca.
     std::map<AllocaInst*, unsigned> AllocaMap;
 
-    ISel(TargetMachine &tm) : TM(tm), F(0), BB(0) {}
+    ISel(TargetMachine &tm) : TM(reinterpret_cast<PowerPCTargetMachine&>(tm)), 
+      F(0), BB(0) {}
 
     bool doInitialization(Module &M) {
       // Add external functions that we may call
@@ -582,6 +598,9 @@ void ISel::copyConstantToRegister(MachineBasicBlock *MBB,
     BuildMI(*MBB, IP, PPC32::LOADHiAddr, 2, TmpReg).addReg(CurPC)
       .addGlobalAddress(GV);
     BuildMI(*MBB, IP, Opcode, 2, R).addReg(TmpReg).addGlobalAddress(GV);
+  
+    // Add the GV to the list of things whose addresses have been taken.
+    TM.AddressTaken.insert(GV);
   } else {
     std::cerr << "Offending constant: " << *C << "\n";
     assert(0 && "Type not handled yet!");
@@ -1044,7 +1063,7 @@ void ISel::visitSetCondInst(SetCondInst &I) {
   //   %TrueValue = li 1
   //   b sinkMBB
   BB = copy1MBB;
-  unsigned TrueValue = makeAnotherReg (I.getType ());
+  unsigned TrueValue = makeAnotherReg(I.getType());
   BuildMI(BB, PPC32::LI, 1, TrueValue).addSImm(1);
   BuildMI(BB, PPC32::B, 1).addMBB(sinkMBB);
   // Update machine-CFG edges
@@ -1262,9 +1281,9 @@ static inline BasicBlock *getBlockAfter(BasicBlock *BB) {
 ///
 void ISel::visitBranchInst(BranchInst &BI) {
   // Update machine-CFG edges
-  BB->addSuccessor (MBBMap[BI.getSuccessor(0)]);
+  BB->addSuccessor(MBBMap[BI.getSuccessor(0)]);
   if (BI.isConditional())
-    BB->addSuccessor (MBBMap[BI.getSuccessor(1)]);
+    BB->addSuccessor(MBBMap[BI.getSuccessor(1)]);
   
   BasicBlock *NextBB = getBlockAfter(BI.getParent());  // BB after current one
 
@@ -1524,9 +1543,10 @@ void ISel::visitCallInst(CallInst &CI) {
       visitIntrinsicCall(ID, CI);   // Special intrinsics are not handled here
       return;
     }
-
     // Emit a CALL instruction with PC-relative displacement.
     TheCall = BuildMI(PPC32::CALLpcrel, 1).addGlobalAddress(F, true);
+    // Add it to the set of functions called to be used by the Printer
+    TM.CalledFunctions.insert(F);
   } else {  // Emit an indirect call through the CTR
     unsigned Reg = getReg(CI.getCalledValue());
     BuildMI(BB, PPC32::MTCTR, 1).addReg(Reg);
@@ -2084,6 +2104,7 @@ void ISel::emitDivRemOperation(MachineBasicBlock *BB,
       Args.push_back(ValueRecord(Op0Reg, Type::FloatTy));
       Args.push_back(ValueRecord(Op1Reg, Type::FloatTy));
       doCall(ValueRecord(ResultReg, Type::FloatTy), TheCall, Args, false);
+      TM.CalledFunctions.insert(fmodfFn);
     }
     return;
   case cFP64:
@@ -2101,6 +2122,7 @@ void ISel::emitDivRemOperation(MachineBasicBlock *BB,
       Args.push_back(ValueRecord(Op0Reg, Type::DoubleTy));
       Args.push_back(ValueRecord(Op1Reg, Type::DoubleTy));
       doCall(ValueRecord(ResultReg, Type::DoubleTy), TheCall, Args, false);
+      TM.CalledFunctions.insert(fmodFn);
     }
     return;
   case cLong: {
@@ -2116,6 +2138,7 @@ void ISel::emitDivRemOperation(MachineBasicBlock *BB,
     Args.push_back(ValueRecord(Op0Reg, Type::LongTy));
     Args.push_back(ValueRecord(Op1Reg, Type::LongTy));
     doCall(ValueRecord(ResultReg, Type::LongTy), TheCall, Args, false);
+    TM.CalledFunctions.insert(Funcs[NameIdx]);
     return;
   }
   case cByte: case cShort: case cInt:
@@ -2175,10 +2198,10 @@ void ISel::emitDivRemOperation(MachineBasicBlock *BB,
 /// because the shift amount has to be in CL, not just any old register.
 ///
 void ISel::visitShiftInst(ShiftInst &I) {
-  MachineBasicBlock::iterator IP = BB->end ();
-  emitShiftOperation(BB, IP, I.getOperand (0), I.getOperand (1),
-                     I.getOpcode () == Instruction::Shl, I.getType (),
-                     getReg (I));
+  MachineBasicBlock::iterator IP = BB->end();
+  emitShiftOperation(BB, IP, I.getOperand(0), I.getOperand(1),
+                     I.getOpcode() == Instruction::Shl, I.getType(),
+                     getReg(I));
 }
 
 /// emitShiftOperation - Common code shared between visitShiftInst and
@@ -2272,7 +2295,7 @@ void ISel::emitShiftOperation(MachineBasicBlock *MBB,
         if (isSigned) {
           // FIXME: Unimplemented
           // Page C-3 of the PowerPC 32bit Programming Environments Manual
-          std::cerr << "Unimplemented: signed right shift\n";
+          std::cerr << "ERROR: Unimplemented: signed right shift\n";
           abort();
         } else {
           BuildMI(*MBB, IP, PPC32::SUBFIC, 2, TmpReg1).addReg(ShiftAmountReg)
@@ -2527,17 +2550,17 @@ void ISel::emitCastOperation(MachineBasicBlock *MBB,
   }
   
   // Handle cast of LARGER int to SMALLER int with a clear or sign extend
-  if ((SrcClass <= cInt || SrcClass == cLong) && DestClass <= cInt
-      && SrcClass > DestClass) {
+  if ((SrcClass <= cInt || SrcClass == cLong) && DestClass <= cInt && 
+      SrcClass > DestClass) {
     bool isUnsigned = DestTy->isUnsigned() || DestTy == Type::BoolTy;
     unsigned source = (SrcClass == cLong) ? SrcReg+1 : SrcReg;
     
     if (isUnsigned) {
-      unsigned shift = (SrcClass == cByte) ? 24 : 16;
+      unsigned shift = (DestClass == cByte) ? 24 : 16;
       BuildMI(*BB, IP, PPC32::RLWINM, 4, DestReg).addReg(source).addZImm(0)
         .addImm(shift).addImm(31);
     } else {
-      BuildMI(*BB, IP, (SrcClass == cByte) ? PPC32::EXTSB : PPC32::EXTSH, 1, 
+      BuildMI(*BB, IP, (DestClass == cByte) ? PPC32::EXTSB : PPC32::EXTSH, 1, 
               DestReg).addReg(source);
     }
     return;
@@ -2554,6 +2577,7 @@ void ISel::emitCastOperation(MachineBasicBlock *MBB,
       MachineInstr *TheCall =
         BuildMI(PPC32::CALLpcrel, 1).addGlobalAddress(floatFn, true);
       doCall(ValueRecord(DestReg, DestTy), TheCall, Args, false);
+      TM.CalledFunctions.insert(floatFn);
       return;
     }
     
@@ -2621,6 +2645,7 @@ void ISel::emitCastOperation(MachineBasicBlock *MBB,
       MachineInstr *TheCall =
         BuildMI(PPC32::CALLpcrel, 1).addGlobalAddress(floatFn, true);
       doCall(ValueRecord(DestReg, DestTy), TheCall, Args, false);
+      TM.CalledFunctions.insert(floatFn);
       return;
     }
 
@@ -2729,13 +2754,18 @@ void ISel::emitGEPOperation(MachineBasicBlock *MBB,
   const TargetData &TD = TM.getTargetData();
   const Type *Ty = Src->getType();
   unsigned basePtrReg = getReg(Src, MBB, IP);
-
+  int64_t constValue = 0;
+  bool anyCombined = false;
+  
+  // Record the operations to emit the GEP in a vector so that we can emit them
+  // after having analyzed the entire instruction.
+  std::vector<CollapsedGepOp*> ops;
+  
   // GEPs have zero or more indices; we must perform a struct access
   // or array access for each one.
   for (GetElementPtrInst::op_iterator oi = IdxBegin, oe = IdxEnd; oi != oe;
        ++oi) {
     Value *idx = *oi;
-    unsigned nextBasePtrReg = makeAnotherReg(Type::UIntTy);
     if (const StructType *StTy = dyn_cast<StructType>(Ty)) {
       // It's a struct access.  idx is the index into the structure,
       // which names the field. Use the TargetData structure to
@@ -2746,17 +2776,16 @@ void ISel::emitGEPOperation(MachineBasicBlock *MBB,
       unsigned fieldIndex = cast<ConstantUInt>(idx)->getValue();
       unsigned memberOffset =
         TD.getStructLayout(StTy)->MemberOffsets[fieldIndex];
-      
-      if (0 == memberOffset) { // No-op
-        nextBasePtrReg = basePtrReg;
-      } else {
-        // Emit an ADDI to add memberOffset to the basePtr.
-        BuildMI (*MBB, IP, PPC32::ADDI, 2, nextBasePtrReg).addReg(basePtrReg)
-          .addSImm(memberOffset);
-      }
-      // The next type is the member of the structure selected by the index.
-      Ty = StTy->getElementType(fieldIndex);
-    } else if (const SequentialType *SqTy = dyn_cast<SequentialType>(Ty)) {
+      if (constValue != 0) anyCombined = true;
+
+      // StructType member offsets are always constant values.  Add it to the
+      // running total.
+      constValue += memberOffset;
+
+      // The next type is the member of the structure selected by the
+      // index.
+      Ty = StTy->getElementType (fieldIndex);
+    } else if (const SequentialType *SqTy = dyn_cast<SequentialType> (Ty)) {
       // Many GEP instructions use a [cast (int/uint) to LongTy] as their
       // operand.  Handle this case directly now...
       if (CastInst *CI = dyn_cast<CastInst>(idx))
@@ -2764,39 +2793,91 @@ void ISel::emitGEPOperation(MachineBasicBlock *MBB,
             CI->getOperand(0)->getType() == Type::UIntTy)
           idx = CI->getOperand(0);
 
+      // It's an array or pointer access: [ArraySize x ElementType].
+      // We want to add basePtrReg to (idxReg * sizeof ElementType). First, we
+      // must find the size of the pointed-to type (Not coincidentally, the next
+      // type is the type of the elements in the array).
       Ty = SqTy->getElementType();
       unsigned elementSize = TD.getTypeSize(Ty);
       
-      if (idx == Constant::getNullValue(idx->getType())) { // No-op
-        nextBasePtrReg = basePtrReg;
-      } else if (elementSize == 1) {
-        // If the element size is 1, we don't have to multiply, just add
-        unsigned idxReg = getReg(idx, MBB, IP);
-        BuildMI(*MBB, IP, PPC32::ADD, 2, nextBasePtrReg).addReg(basePtrReg)
-          .addReg(idxReg);
-      } else {
-        // It's an array or pointer access: [ArraySize x ElementType].
-        // We want to add basePtrReg to (idxReg * sizeof ElementType). First, we
-        // must find the size of the pointed-to type (Not coincidentally, the 
-        // next type is the type of the elements in the array).
-        unsigned OffsetReg = makeAnotherReg(idx->getType());
-        ConstantUInt *CUI = ConstantUInt::get(Type::UIntTy, elementSize);
-        doMultiplyConst(MBB, IP, OffsetReg, idx, CUI);
+      if (ConstantInt *C = dyn_cast<ConstantInt>(idx)) {
+        if (constValue != 0) anyCombined = true;
 
-        // Deal with long indices
-        if (getClass(idx->getType()) == cLong) ++OffsetReg;
-      
-        // Emit an ADD to add OffsetReg to the basePtr.
-        BuildMI (*MBB, IP, PPC32::ADD, 2, nextBasePtrReg).addReg(basePtrReg)
-          .addReg(OffsetReg);
+        if (ConstantSInt *CS = dyn_cast<ConstantSInt>(C))
+          constValue += CS->getValue() * elementSize;
+        else if (ConstantUInt *CU = dyn_cast<ConstantUInt>(C))
+          constValue += CU->getValue() * elementSize;
+        else
+          assert(0 && "Invalid ConstantInt GEP index type!");
+      } else {
+        // Push current gep state to this point as an add
+        CollapsedGepOp *addition = 
+          new CollapsedGepOp(false, 0, ConstantSInt::get(Type::IntTy,
+                constValue));
+        ops.push_back(addition);
+        
+        // Push multiply gep op and reset constant value
+        CollapsedGepOp *multiply = 
+          new CollapsedGepOp(true, idx, ConstantSInt::get(Type::IntTy, 
+                elementSize));
+        ops.push_back(multiply);
+        
+        constValue = 0;
       }
     }
+  }
+  // Do some statistical accounting
+  if (ops.empty())
+    ++GEPConsts;
+
+  if (anyCombined)
+    ++GEPSplits;
+    
+  // Emit instructions for all the collapsed ops
+  for(std::vector<CollapsedGepOp *>::iterator cgo_i = ops.begin(),
+      cgo_e = ops.end(); cgo_i != cgo_e; ++cgo_i) {
+    CollapsedGepOp *cgo = *cgo_i;
+    unsigned nextBasePtrReg = makeAnotherReg (Type::IntTy);
+
+    if (cgo->isMul) {
+      // We know the elementSize is a constant, so we can emit a constant mul
+      // and then add it to the current base reg
+      unsigned TmpReg = makeAnotherReg(Type::IntTy);
+      doMultiplyConst(MBB, IP, TmpReg, cgo->index, cgo->size);
+      BuildMI(*MBB, IP, PPC32::ADD, 2, nextBasePtrReg).addReg(basePtrReg)
+        .addReg(TmpReg);
+    } else {
+      // Try and generate an immediate addition if possible
+      if (cgo->size->isNullValue()) {
+        BuildMI(*MBB, IP, PPC32::OR, 2, nextBasePtrReg).addReg(basePtrReg)
+          .addReg(basePtrReg);
+      } else if (canUseAsImmediateForOpcode(cgo->size, 0)) {
+        BuildMI(*MBB, IP, PPC32::ADDI, 2, nextBasePtrReg).addReg(basePtrReg)
+          .addSImm(cgo->size->getValue());
+      } else {
+        unsigned Op1r = getReg(cgo->size, MBB, IP);
+        BuildMI(*MBB, IP, PPC32::ADD, 2, nextBasePtrReg).addReg(basePtrReg)
+          .addReg(Op1r);
+      }
+    }
+
     basePtrReg = nextBasePtrReg;
   }
+  // Add the current base register plus any accumulated constant value
+  ConstantSInt *remainder = ConstantSInt::get(Type::IntTy, constValue);
+  
   // After we have processed all the indices, the result is left in
   // basePtrReg.  Move it to the register where we were expected to
   // put the answer.
-  BuildMI(BB, PPC32::OR, 2, TargetReg).addReg(basePtrReg).addReg(basePtrReg);
+  if (remainder->isNullValue()) {
+    BuildMI (BB, PPC32::OR, 2, TargetReg).addReg(basePtrReg).addReg(basePtrReg);
+  } else if (canUseAsImmediateForOpcode(remainder, 0)) {
+    BuildMI(*MBB, IP, PPC32::ADDI, 2, TargetReg).addReg(basePtrReg)
+      .addSImm(remainder->getValue());
+  } else {
+    unsigned Op1r = getReg(remainder, MBB, IP);
+    BuildMI(*MBB, IP, PPC32::ADD, 2, TargetReg).addReg(basePtrReg).addReg(Op1r);
+  }
 }
 
 /// visitAllocaInst - If this is a fixed size alloca, allocate space from the
@@ -2863,6 +2944,7 @@ void ISel::visitMallocInst(MallocInst &I) {
   MachineInstr *TheCall = 
     BuildMI(PPC32::CALLpcrel, 1).addGlobalAddress(mallocFn, true);
   doCall(ValueRecord(getReg(I), I.getType()), TheCall, Args, false);
+  TM.CalledFunctions.insert(mallocFn);
 }
 
 
@@ -2875,6 +2957,7 @@ void ISel::visitFreeInst(FreeInst &I) {
   MachineInstr *TheCall = 
     BuildMI(PPC32::CALLpcrel, 1).addGlobalAddress(freeFn, true);
   doCall(ValueRecord(0, Type::VoidTy), TheCall, Args, false);
+  TM.CalledFunctions.insert(freeFn);
 }
    
 /// createPPC32SimpleInstructionSelector - This pass converts an LLVM function

@@ -19,15 +19,18 @@
 #include "llvm/PassManager.h"
 #include "PowerPCInstrInfo.h"
 #include "PowerPCJITInfo.h"
+#include <set>
 
 namespace llvm {
 
+class GlobalValue;
 class IntrinsicLowering;
 
 class PowerPCTargetMachine : public TargetMachine {
   PowerPCInstrInfo InstrInfo;
   TargetFrameInfo FrameInfo;
   PowerPCJITInfo JITInfo;
+
 public:
   PowerPCTargetMachine(const Module &M, IntrinsicLowering *IL);
 
@@ -53,6 +56,11 @@ public:
 
   static unsigned getModuleMatchQuality(const Module &M);
   static unsigned getJITMatchQuality();
+
+  // Two shared sets between the instruction selector and the printer allow for
+  // correct linkage on Darwin
+  std::set<GlobalValue*> CalledFunctions;
+  std::set<GlobalValue*> AddressTaken;
 };
 
 } // end namespace llvm
