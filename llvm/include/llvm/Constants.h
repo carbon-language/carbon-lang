@@ -492,16 +492,11 @@ public:
   ///
   static Constant *getCast(Constant *C, const Type *Ty);
 
-  /// Binary constant expr - Use with binary operators...
+  /// ConstantExpr::get - Return a binary or shift operator constant expression,
+  /// folding if possible.
   ///
   static Constant *get(unsigned Opcode, Constant *C1, Constant *C2) {
     return getTy(C1->getType(), Opcode, C1, C2);
-  }
-
-  /// getShift - Return a shift left or shift right constant expr
-  ///
-  static Constant *getShift(unsigned Opcode, Constant *C1, Constant *C2) {
-    return getShiftTy(C1->getType(), Opcode, C1, C2);
   }
 
   /// Getelementptr form...
