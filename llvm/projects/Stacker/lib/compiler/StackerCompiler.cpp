@@ -331,7 +331,7 @@ StackerCompiler::compile(
             // Merge & remove BBs
             Passes.add(createCFGSimplificationPass());
             // Memory To Register
-            Passes.add(createPromoteMemoryToRegister());
+            Passes.add(createPromoteMemoryToRegisterPass());
             // Compile silly sequences
             Passes.add(createInstructionCombiningPass());
             // Make sure everything is still good.

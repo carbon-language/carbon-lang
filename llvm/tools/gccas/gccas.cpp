@@ -83,7 +83,7 @@ void AddConfiguredTransformationPasses(PassManager &PM) {
 
   addPass(PM, createRaiseAllocationsPass());     // call %malloc -> malloc inst
   addPass(PM, createCFGSimplificationPass());    // Clean up disgusting code
-  addPass(PM, createPromoteMemoryToRegister());  // Kill useless allocas
+  addPass(PM, createPromoteMemoryToRegisterPass());// Kill useless allocas
   addPass(PM, createGlobalOptimizerPass());      // Optimize out global vars
   addPass(PM, createGlobalDCEPass());            // Remove unused fns and globs
   addPass(PM, createIPConstantPropagationPass());// IP Constant Propagation

@@ -160,7 +160,7 @@ FunctionPass *createLoopUnrollPass();
 //   %Y = load int* %X
 //   ret int %Y
 //
-FunctionPass *createPromoteMemoryToRegister();
+FunctionPass *createPromoteMemoryToRegisterPass();
 
 
 //===----------------------------------------------------------------------===//
