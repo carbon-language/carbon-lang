@@ -55,5 +55,6 @@ clean :
 
 
 %.o: %.s
-	$(CC) -c $(CCFLAGS) $<
+	$(CC) -c $(CCFLAGS) $< -xarch=v9
+
 
