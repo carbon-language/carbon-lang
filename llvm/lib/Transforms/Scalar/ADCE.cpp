@@ -13,6 +13,7 @@
 #include "llvm/Analysis/Writer.h"
 #include "llvm/iTerminators.h"
 #include "llvm/iPHINode.h"
+#include "llvm/Constant.h"
 #include "llvm/Support/CFG.h"
 #include "Support/STLExtras.h"
 #include "Support/DepthFirstIterator.h"
@@ -20,6 +21,9 @@
 #include <algorithm>
 #include <iostream>
 using std::cerr;
+
+static Statistic<> NumBlockRemoved("adce\t\t- Number of basic blocks removed");
+static Statistic<> NumInstRemoved ("adce\t\t- Number of instructions removed");
 
 namespace {
 
@@ -33,7 +37,6 @@ class ADCE : public FunctionPass {
   Function *Func;                       // The function that we are working on
   std::vector<Instruction*> WorkList;   // Instructions that just became live
   std::set<Instruction*>    LiveSet;    // The set of live instructions
-  bool MadeChanges;
 
   //===--------------------------------------------------------------------===//
   // The public interface for this class
@@ -41,18 +44,19 @@ class ADCE : public FunctionPass {
 public:
   const char *getPassName() const { return "Aggressive Dead Code Elimination"; }
   
-  // doADCE - Execute the Aggressive Dead Code Elimination Algorithm
+  // Execute the Aggressive Dead Code Elimination Algorithm
   //
   virtual bool runOnFunction(Function *F) {
-    Func = F; MadeChanges = false;
-    doADCE(getAnalysis<DominanceFrontier>(DominanceFrontier::PostDomID));
+    Func = F;
+    bool Changed = doADCE();
     assert(WorkList.empty());
     LiveSet.clear();
-    return MadeChanges;
+    return Changed;
   }
   // getAnalysisUsage - We require post dominance frontiers (aka Control
   // Dependence Graph)
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    AU.addRequired(DominatorTree::PostDomID);
     AU.addRequired(DominanceFrontier::PostDomID);
   }
 
@@ -64,7 +68,9 @@ private:
   // doADCE() - Run the Aggressive Dead Code Elimination algorithm, returning
   // true if the function was modified.
   //
-  void doADCE(DominanceFrontier &CDG);
+  bool doADCE();
+
+  void markBlockAlive(BasicBlock *BB);
 
   inline void markInstructionLive(Instruction *I) {
     if (LiveSet.count(I)) return;
@@ -77,26 +83,38 @@ private:
     DEBUG(cerr << "Terminat Live: " << BB->getTerminator());
     markInstructionLive((Instruction*)BB->getTerminator());
   }
-
-  // fixupCFG - Walk the CFG in depth first order, eliminating references to 
-  // dead blocks.
-  //
-  BasicBlock *fixupCFG(BasicBlock *Head, std::set<BasicBlock*> &VisitedBlocks,
-		       const std::set<BasicBlock*> &AliveBlocks);
 };
 
 } // End of anonymous namespace
 
-Pass *createAggressiveDCEPass() {
-  return new ADCE();
+Pass *createAggressiveDCEPass() { return new ADCE(); }
+
+
+void ADCE::markBlockAlive(BasicBlock *BB) {
+  // Mark the basic block as being newly ALIVE... and mark all branches that
+  // this block is control dependant on as being alive also...
+  //
+  DominanceFrontier &CDG =
+    getAnalysis<DominanceFrontier>(DominanceFrontier::PostDomID);
+
+  DominanceFrontier::const_iterator It = CDG.find(BB);
+  if (It != CDG.end()) {
+    // Get the blocks that this node is control dependant on...
+    const DominanceFrontier::DomSetType &CDB = It->second;
+    for_each(CDB.begin(), CDB.end(),   // Mark all their terminators as live
+             bind_obj(this, &ADCE::markTerminatorLive));
+  }
+  
+  // If this basic block is live, then the terminator must be as well!
+  markTerminatorLive(BB);
 }
 
 
 // doADCE() - Run the Aggressive Dead Code Elimination algorithm, returning
 // true if the function was modified.
 //
-void ADCE::doADCE(DominanceFrontier &CDG) {
-  DEBUG(cerr << "Function: " << Func);
+bool ADCE::doADCE() {
+  bool MadeChanges = false;
 
   // Iterate over all of the instructions in the function, eliminating trivially
   // dead instructions, and marking instructions live that are known to be 
@@ -116,6 +134,7 @@ void ADCE::doADCE(DominanceFrontier &CDG) {
       } else if (isInstructionTriviallyDead(I)) {
         // Remove the instruction from it's basic block...
         delete BB->getInstList().remove(II);
+        ++NumInstRemoved;
         MadeChanges = true;
       } else {
         ++II;  // Increment the inst iterator if the inst wasn't deleted
@@ -139,22 +158,21 @@ void ADCE::doADCE(DominanceFrontier &CDG) {
     WorkList.pop_back();
 
     BasicBlock *BB = I->getParent();
-    if (AliveBlocks.count(BB) == 0) {   // Basic block not alive yet...
-      // Mark the basic block as being newly ALIVE... and mark all branches that
-      // this block is control dependant on as being alive also...
-      //
-      AliveBlocks.insert(BB);   // Block is now ALIVE!
-      DominanceFrontier::const_iterator It = CDG.find(BB);
-      if (It != CDG.end()) {
-	// Get the blocks that this node is control dependant on...
-	const DominanceFrontier::DomSetType &CDB = It->second;
-	for_each(CDB.begin(), CDB.end(),   // Mark all their terminators as live
-		 bind_obj(this, &ADCE::markTerminatorLive));
-      }
-
-      // If this basic block is live, then the terminator must be as well!
-      markTerminatorLive(BB);
+    if (!AliveBlocks.count(BB)) {     // Basic block not alive yet...
+      AliveBlocks.insert(BB);         // Block is now ALIVE!
+      markBlockAlive(BB);             // Make it so now!
     }
+
+    // PHI nodes are a special case, because the incoming values are actually
+    // defined in the predecessor nodes of this block, meaning that the PHI
+    // makes the predecessors alive.
+    //
+    if (PHINode *PN = dyn_cast<PHINode>(I))
+      for (pred_iterator PI = pred_begin(BB), PE = pred_end(BB); PI != PE; ++PI)
+        if (!AliveBlocks.count(*PI)) {
+          AliveBlocks.insert(BB);         // Block is now ALIVE!
+          markBlockAlive(*PI);
+        }
 
     // Loop over all of the operands of the live instruction, making sure that
     // they are known to be alive as well...
@@ -174,124 +192,129 @@ void ADCE::doADCE(DominanceFrontier &CDG) {
       }
   }
 
-  // After the worklist is processed, recursively walk the CFG in depth first
-  // order, patching up references to dead blocks...
+  // Find the first postdominator of the entry node that is alive.  Make it the
+  // new entry node...
   //
-  std::set<BasicBlock*> VisitedBlocks;
-  BasicBlock *EntryBlock = fixupCFG(Func->front(), VisitedBlocks, AliveBlocks);
+  DominatorTree &DT = getAnalysis<DominatorTree>(DominatorTree::PostDomID);
 
-  // Now go through and tell dead blocks to drop all of their references so they
-  // can be safely deleted.  Also, as we are doing so, if the block has
-  // successors that are still live (and that have PHI nodes in them), remove
-  // the entry for this block from the phi nodes.
-  //
-  for (Function::iterator BI = Func->begin(), BE = Func->end(); BI != BE; ++BI){
-    BasicBlock *BB = *BI;
-    if (!AliveBlocks.count(BB)) {
-      // Remove entries from successors PHI nodes if they are still alive...
-      for (succ_iterator SI = succ_begin(BB), SE = succ_end(BB); SI != SE; ++SI)
-        if (AliveBlocks.count(*SI)) {  // Only if the successor is alive...
-          BasicBlock *Succ = *SI;
-          for (BasicBlock::iterator I = Succ->begin();// Loop over all PHI nodes
-               PHINode *PN = dyn_cast<PHINode>(*I); ++I)
-            PN->removeIncomingValue(BB);         // Remove value for this block
-        }
+  // If there are some blocks dead...
+  if (AliveBlocks.size() != Func->size()) {
+    // Insert a new entry node to eliminate the entry node as a special case.
+    BasicBlock *NewEntry = new BasicBlock();
+    NewEntry->getInstList().push_back(new BranchInst(Func->front()));
+    Func->getBasicBlocks().push_front(NewEntry);
+    AliveBlocks.insert(NewEntry);    // This block is always alive!
+    
+    // Loop over all of the alive blocks in the function.  If any successor
+    // blocks are not alive, we adjust the outgoing branches to branch to the
+    // first live postdominator of the live block, adjusting any PHI nodes in
+    // the block to reflect this.
+    //
+    for (Function::iterator I = Func->begin(), E = Func->end(); I != E; ++I)
+      if (AliveBlocks.count(*I)) {
+        BasicBlock *BB = *I;
+        TerminatorInst *TI = BB->getTerminator();
+      
+        // Loop over all of the successors, looking for ones that are not alive
+        for (unsigned i = 0, e = TI->getNumSuccessors(); i != e; ++i)
+          if (!AliveBlocks.count(TI->getSuccessor(i))) {
+            // Scan up the postdominator tree, looking for the first
+            // postdominator that is alive, and the last postdominator that is
+            // dead...
+            //
+            DominatorTree::Node *LastNode = DT[TI->getSuccessor(i)];
+            DominatorTree::Node *NextNode = LastNode->getIDom();
+            while (!AliveBlocks.count(NextNode->getNode())) {
+              LastNode = NextNode;
+              NextNode = NextNode->getIDom();
+            }
+            
+            // Get the basic blocks that we need...
+            BasicBlock *LastDead = LastNode->getNode();
+            BasicBlock *NextAlive = NextNode->getNode();
+            
+            // Make the conditional branch now go to the next alive block...
+            TI->getSuccessor(i)->removePredecessor(BB);
+            TI->setSuccessor(i, NextAlive);
+            
+            // If there are PHI nodes in NextAlive, we need to add entries to
+            // the PHI nodes for the new incoming edge.  The incoming values
+            // should be identical to the incoming values for LastDead.
+            //
+            for (BasicBlock::iterator II = NextAlive->begin();
+                 PHINode *PN = dyn_cast<PHINode>(*II); ++II) {
+              // Get the incoming value for LastDead...
+              int OldIdx = PN->getBasicBlockIndex(LastDead);
+              assert(OldIdx != -1 && "LastDead is not a pred of NextAlive!");
+              Value *InVal = PN->getIncomingValue(OldIdx);
+              
+              // Add an incoming value for BB now...
+              PN->addIncoming(InVal, BB);
+            }
+          }
 
-      BB->dropAllReferences();
-    }
+        // Now loop over all of the instructions in the basic block, telling
+        // dead instructions to drop their references.  This is so that the next
+        // sweep over the program can safely delete dead instructions without
+        // other dead instructions still refering to them.
+        //
+        for (BasicBlock::iterator I = BB->begin(), E = BB->end()-1; I != E; ++I)
+          if (!LiveSet.count(*I))               // Is this instruction alive?
+            (*I)->dropAllReferences();          // Nope, drop references... 
+      }
   }
 
-  cerr << "Before Deleting Blocks: " << Func;
+  // Loop over all of the basic blocks in the function, removing dead
+  // instructions from alive blocks, and dropping references of the dead blocks
+  //
+  for (Function::iterator I = Func->begin(), E = Func->end(); I != E; ++I) {
+    BasicBlock *BB = *I;
+    if (AliveBlocks.count(BB)) {
+      for (BasicBlock::iterator II = BB->begin(); II != BB->end()-1; )
+        if (!LiveSet.count(*II)) {             // Is this instruction alive?
+          // Nope... remove the instruction from it's basic block...
+          delete BB->getInstList().remove(II);
+          ++NumInstRemoved;
+          MadeChanges = true;
+        } else {
+          ++II;
+        }
+    } else {
+      // Remove all outgoing edges from this basic block and convert the
+      // terminator into a return instruction.
+      vector<BasicBlock*> Succs(succ_begin(BB), succ_end(BB));
+      
+      if (!Succs.empty()) {
+        // Loop over all of the successors, removing this block from PHI node
+        // entries that might be in the block...
+        while (!Succs.empty()) {
+          Succs.back()->removePredecessor(BB);
+          Succs.pop_back();
+        }
+        
+        // Delete the old terminator instruction...
+        delete BB->getInstList().remove(BB->end()-1);
+        const Type *RetTy = Func->getReturnType();
+        Instruction *New = new ReturnInst(RetTy != Type::VoidTy ?
+                                          Constant::getNullValue(RetTy) : 0);
+        BB->getInstList().push_back(New);
+      }
+
+      BB->dropAllReferences();
+      ++NumBlockRemoved;
+      MadeChanges = true;
+    }
+  }
 
   // Now loop through all of the blocks and delete them.  We can safely do this
   // now because we know that there are no references to dead blocks (because
   // they have dropped all of their references...
   //
-  for (Function::iterator BI = Func->begin(); BI != Func->end();) {
-    if (!AliveBlocks.count(*BI)) {
+  for (Function::iterator BI = Func->begin(); BI != Func->end(); )
+    if (!AliveBlocks.count(*BI))
       delete Func->getBasicBlocks().remove(BI);
-      MadeChanges = true;
-      continue;                                     // Don't increment iterator
-    }
-    ++BI;                                           // Increment iterator...
-  }
+    else
+      ++BI;                                           // Increment iterator...
 
-  if (EntryBlock && EntryBlock != Func->front()) {
-    // We need to move the new entry block to be the first bb of the function
-    Function::iterator EBI = find(Func->begin(), Func->end(), EntryBlock);
-    std::swap(*EBI, *Func->begin()); // Exchange old location with start of fn
-  }
-
-  while (PHINode *PN = dyn_cast<PHINode>(EntryBlock->front())) {
-    assert(PN->getNumIncomingValues() == 1 &&
-           "Can only have a single incoming value at this point...");
-    // The incoming value must be outside of the scope of the function, a
-    // global variable, constant or parameter maybe...
-    //
-    PN->replaceAllUsesWith(PN->getIncomingValue(0));
-    
-    // Nuke the phi node...
-    delete EntryBlock->getInstList().remove(EntryBlock->begin());
-  }
+  return MadeChanges;
 }
-
-
-// fixupCFG - Walk the CFG in depth first order, eliminating references to 
-// dead blocks:
-//  If the BB is alive (in AliveBlocks):
-//   1. Eliminate all dead instructions in the BB
-//   2. Recursively traverse all of the successors of the BB:
-//      - If the returned successor is non-null, update our terminator to
-//         reference the returned BB
-//   3. Return 0 (no update needed)
-//
-//  If the BB is dead (not in AliveBlocks):
-//   1. Add the BB to the dead set
-//   2. Recursively traverse all of the successors of the block:
-//      - Only one shall return a nonnull value (or else this block should have
-//        been in the alive set).
-//   3. Return the nonnull child, or 0 if no non-null children.
-//
-BasicBlock *ADCE::fixupCFG(BasicBlock *BB, std::set<BasicBlock*> &VisitedBlocks,
-			   const std::set<BasicBlock*> &AliveBlocks) {
-  if (VisitedBlocks.count(BB)) return 0;   // Revisiting a node? No update.
-  VisitedBlocks.insert(BB);                // We have now visited this node!
-
-  DEBUG(cerr << "Fixing up BB: " << BB);
-
-  if (AliveBlocks.count(BB)) {             // Is the block alive?
-    // Yes it's alive: loop through and eliminate all dead instructions in block
-    for (BasicBlock::iterator II = BB->begin(); II != BB->end()-1; )
-      if (!LiveSet.count(*II)) {             // Is this instruction alive?
-	// Nope... remove the instruction from it's basic block...
-	delete BB->getInstList().remove(II);
-	MadeChanges = true;
-      } else {
-        ++II;
-      }
-
-    // Recursively traverse successors of this basic block.  
-    for (succ_iterator SI = succ_begin(BB), SE = succ_end(BB); SI != SE; ++SI) {
-      BasicBlock *Succ = *SI;
-      BasicBlock *Repl = fixupCFG(Succ, VisitedBlocks, AliveBlocks);
-      if (Repl && Repl != Succ) {          // We have to replace the successor
-	Succ->replaceAllUsesWith(Repl);
-	MadeChanges = true;
-      }
-    }
-    return BB;
-  } else {                                 // Otherwise the block is dead...
-    BasicBlock *ReturnBB = 0;              // Default to nothing live down here
-    
-    // Recursively traverse successors of this basic block.  
-    for (succ_iterator SI = succ_begin(BB), SE = succ_end(BB); SI != SE; ++SI) {
-      BasicBlock *RetBB = fixupCFG(*SI, VisitedBlocks, AliveBlocks);
-      if (RetBB) {
-	assert(ReturnBB == 0 && "At most one live child allowed!");
-	ReturnBB = RetBB;
-      }
-    }
-    return ReturnBB;                       // Return the result of traversal
-  }
-}
-
