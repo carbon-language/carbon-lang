@@ -120,23 +120,18 @@ void ExternalFuncs::doInitialization(Module &M) {
   PrintfFunc = M.getOrInsertFunction("printf", MTy);
 
   // uint (sbyte*)
-  const FunctionType *hashFuncTy =
-    FunctionType::get(Type::UIntTy, vector<const Type*>(1, SBP), false);
-  HashPtrFunc = M.getOrInsertFunction("HashPointerToSeqNum", hashFuncTy);
+  HashPtrFunc = M.getOrInsertFunction("HashPointerToSeqNum", Type::UIntTy, SBP,
+                                      0);
   
   // void (sbyte*)
-  const FunctionType *voidSBPFuncTy =
-    FunctionType::get(Type::VoidTy, vector<const Type*>(1, SBP), false);
+  ReleasePtrFunc = M.getOrInsertFunction("ReleasePointerSeqNum", 
+                                         Type::VoidTy, SBP, 0);
+  RecordPtrFunc  = M.getOrInsertFunction("RecordPointer",
+                                         Type::VoidTy, SBP, 0);
   
-  ReleasePtrFunc = M.getOrInsertFunction("ReleasePointerSeqNum", voidSBPFuncTy);
-  RecordPtrFunc  = M.getOrInsertFunction("RecordPointer", voidSBPFuncTy);
-  
-  const FunctionType *voidvoidFuncTy =
-    FunctionType::get(Type::VoidTy, vector<const Type*>(), false);
-  
-  PushOnEntryFunc = M.getOrInsertFunction("PushPointerSet", voidvoidFuncTy);
+  PushOnEntryFunc = M.getOrInsertFunction("PushPointerSet", Type::VoidTy, 0);
   ReleaseOnReturnFunc = M.getOrInsertFunction("ReleasePointersPopSet",
-                                               voidvoidFuncTy);
+                                              Type::VoidTy, 0);
 }
 
 
