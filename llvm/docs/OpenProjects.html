@@ -1,159 +1,178 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<html><head><title>Open LLVM Projects</title></head>
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+                      "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+  <title>Open LLVM Projects</title>
+  <link rel="stylesheet" href="llvm.css" type="text/css">
+</head>
+<body>
 
-<body bgcolor=white>
-<center><h1><font size=7>Open LLVM Projects</font></h1></center>
+<div class="doc_title">
+  Open LLVM Projects
+</div>
 
 <ul>
-  <li><a href="#what">What is this?</a>
+  <li><a href="#what">What is this?</a></li>
   <li><a href="#improving">Improving the current system</a>
   <ol>
-    <li><a href="#glibc">Port glibc to LLVM</a>
-    <li><a href="#NightlyTest">Improving the Nightly Tester</a>
-    <li><a href="#programs">Compile programs with the LLVM Compiler</a>
-    <li><a href="#llvm_ir">Extend the LLVM intermediate representation</a>
-    <li><a href="#misc_imp">Miscellaneous Improvements</a>
-  </ol>
+    <li><a href="#glibc">Port glibc to LLVM</a></li>
+    <li><a href="#NightlyTest">Improving the Nightly Tester</a></li>
+    <li><a href="#programs">Compile programs with the LLVM Compiler</a></li>
+    <li><a href="#llvm_ir">Extend the LLVM intermediate representation</a></li>
+    <li><a href="#misc_imp">Miscellaneous Improvements</a></li>
+  </ol></li>
 
   <li><a href="#new">Adding new capabilities to LLVM</a>
   <ol>
-    <li><a href="#pointeranalysis">Pointer and Alias Analysis</a>
-    <li><a href="#profileguided">Profile Guided Optimization</a>
-    <li><a href="#xforms">New Transformations and Analyses</a>
-    <li><a href="#x86be">X86 Back-end Improvements</a>
-    <li><a href="#misc_new">Miscellaneous Additions</a>
-  </ol>
+    <li><a href="#pointeranalysis">Pointer and Alias Analysis</a></li>
+    <li><a href="#profileguided">Profile Guided Optimization</a></li>
+    <li><a href="#xforms">New Transformations and Analyses</a></li>
+    <li><a href="#x86be">X86 Back-end Improvements</a></li>
+    <li><a href="#misc_new">Miscellaneous Additions</a></li>
+  </ol></li>
 </ul>
 
-<br><br>
-
 <!-- *********************************************************************** -->
-<table width="100%" bgcolor="#330077" border=0 cellpadding=4 cellspacing=0>
-<tr><td align=center><font color="#EEEEFF" size=+2 face="Georgia,Palatino"><b>
-<a name="what">What is this?
-</b></font></td></tr></table><ul>
+<div class="doc_section">
+  <a name="what">What is this?</a>
+</div>
 <!-- *********************************************************************** -->
 
-This document is meant to be a sort of "big TODO list" for LLVM.  Each project
-in this document is something that would be useful for LLVM to have, and would
-also be a great way to get familiar with the system.  Some of these projects are
-small and self-contained, which may be implemented in a couple of days, others
-are larger.  Several of these projects may lead to interesting research projects
-in their own right.  In any case, we welcome all contributions.<p>
+<div class="doc_text">
 
-If you are thinking about tackling one of these projects, please send a mail to
-the <a href="http://mail.cs.uiuc.edu/mailman/listinfo/llvmdev">LLVM
+<p>This document is meant to be a sort of "big TODO list" for LLVM.  Each
+project in this document is something that would be useful for LLVM to have, and
+would also be a great way to get familiar with the system.  Some of these
+projects are small and self-contained, which may be implemented in a couple of
+days, others are larger.  Several of these projects may lead to interesting
+research projects in their own right.  In any case, we welcome all
+contributions.</p>
+
+<p>If you are thinking about tackling one of these projects, please send a mail
+to the <a href="http://mail.cs.uiuc.edu/mailman/listinfo/llvmdev">LLVM
 Developer's</a> mailing list, so that we know the project is being worked on.
 Additionally this is a good way to get more information about a specific project
-or to suggest other projects to add to this page.  Another good place to
-look for ideas is the
-<a href="http://llvm.cs.uiuc.edu/bugs/">LLVM bug tracker</a>.<p>
+or to suggest other projects to add to this page.  Another good place to look
+for ideas is the <a href="http://llvm.cs.uiuc.edu/bugs/">LLVM bug
+tracker</a>.</p>
 
+</div>
 
 <!-- *********************************************************************** -->
-</ul><table width="100%" bgcolor="#330077" border=0 cellpadding=4 cellspacing=0>
-<tr><td align=center><font color="#EEEEFF" size=+2 face="Georgia,Palatino"><b>
-<a name="improving">Improving the current system
-</b></font></td></tr></table><ul>
+<div class="doc_section">
+  <a name="improving">Improving the current system</a>
+</div>
 <!-- *********************************************************************** -->
 
-Improvements to the current infrastructure are always very welcome and tend to
-be fairly straight-forward to implement.  Here are some of the key areas that
-can use improvement...<p>
+<div class="doc_text">
+
+<p>Improvements to the current infrastructure are always very welcome and tend
+to be fairly straight-forward to implement.  Here are some of the key areas that
+can use improvement...</p>
+
+</div>
 
 <!-- ======================================================================= -->
-</ul><table width="50%" bgcolor="#441188" border=0 cellpadding=4 cellspacing=0>
-<tr><td>&nbsp;</td><td width=100%>&nbsp; 
-<font color="#EEEEFF" size=+1 face="Georgia,Palatino"><b>
-<a name="glibc">Port glibc to LLVM
-</b></font></td></tr></table><ul>
+<div class="doc_subsection">
+  <a name="glibc">Port glibc to LLVM</a>
+</div>
 
-It would be very useful to <a
+<div class="doc_text">
+
+<p>It would be very useful to <a
 href="http://www.gnu.org/software/libc/porting.html">port</a> <a
 href="http://www.gnu.org/software/glibc/">glibc</a> to LLVM.  This would allow a
 variety of interprocedural algorithms to be much more effective in the face of
 library calls.  The most important pieces to port are things like the string
 library and the <tt>stdio</tt> related functions... low-level system calls like
-'<tt>read</tt>' should stay unimplemented in LLVM.<p>
+'<tt>read</tt>' should stay unimplemented in LLVM.</p>
 
+</div>
 
 <!-- ======================================================================= -->
-</ul><table width="50%" bgcolor="#441188" border=0 cellpadding=4 cellspacing=0>
-<tr><td>&nbsp;</td><td width=100%>&nbsp; 
-<font color="#EEEEFF" size=+1 face="Georgia,Palatino"><b>
-<a name="NightlyTest">Improving the Nightly Tester
-</b></font></td></tr></table><ul>
+<div class="doc_subsection">
+  <a name="NightlyTest">Improving the Nightly Tester</a>
+</div>
 
-The <a href="/testresults/">Nightly Tester</a> is a simple perl script (located
-in utils/NightlyTest.pl) which runs every night to generate a daily report.  It
-could use the following improvements:<p>
+<div class="doc_text">
+
+<p>The <a href="/testresults/">Nightly Tester</a> is a simple perl script
+(located in <tt>utils/NightlyTest.pl</tt>) which runs every night to generate a
+daily report.  It could use the following improvements:</p>
 
 <ol>
-<li>Olden timings - Time the compilation and execution times for the Olden
-    benchmark suite, keeping track of these values over time.
-
 <li>Graphs - It would be great to have gnuplot graphs to keep track of how the
     tree is changing over time.  We already gather a several statistics, it
-    just necessary to add the script-fu to gnuplotize it.
+    just necessary to add the script-fu to gnuplotize it.</li>
 
 <li>Regression tests - We should run the regression tests in addition to the
-    program tests...
-</ol><p>
+    program tests...</li>
+</ol>
 
+</div>
 
 <!-- ======================================================================= -->
-</ul><table width="50%" bgcolor="#441188" border=0 cellpadding=4 cellspacing=0>
-<tr><td>&nbsp;</td><td width=100%>&nbsp; 
-<font color="#EEEEFF" size=+1 face="Georgia,Palatino"><b>
-<a name="programs">Compile programs with the LLVM Compiler
-</b></font></td></tr></table><ul>
+<div class="doc_subsection">
+  <a name="programs">Compile programs with the LLVM Compiler</a>
+</div>
 
-We are always looking for new testcases and benchmarks for use with LLVM.  In
+<div class="doc_text">
+
+<p>We are always looking for new testcases and benchmarks for use with LLVM.  In
 particular, it is useful to try compiling your favorite C source code with LLVM.
 If it doesn't compile, try to figure out why or report it to the <a
 href="http://mail.cs.uiuc.edu/pipermail/llvmbugs/">llvm-bugs</a> list.  If you
 get the program to compile, it would be extremely useful to convert the build
 system to be compatible with the LLVM Programs testsuite so that we can check it
 into CVS and the automated tester can use it to track progress of the
-compiler.<p>
+compiler.</p>
 
-When testing a code, try running it with a variety of optimizations, and with
-all the back-ends: CBE, llc, and lli.<p>
+<p>When testing a code, try running it with a variety of optimizations, and with
+all the back-ends: CBE, llc, and lli.</p>
 
+</div>
 
 <!-- ======================================================================= -->
-</ul><table width="50%" bgcolor="#441188" border=0 cellpadding=4 cellspacing=0>
-<tr><td>&nbsp;</td><td width=100%>&nbsp; 
-<font color="#EEEEFF" size=+1 face="Georgia,Palatino"><b>
-<a name="llvm_ir">Extend the LLVM intermediate representation
-</b></font></td></tr></table><ul>
+<div class="doc_subsection">
+  <a name="llvm_ir">Extend the LLVM intermediate representation</a>
+</div>
+
+<div class="doc_text">
 
 <ol>
-<li>Add a new conditional move instruction: <tt>X = select bool Cond, Y, Z</tt>
-<li>Add support for platform independent prefetch support.  The GCC <a
+
+<li>Add a new conditional move instruction: <tt>X = select bool Cond, Y,
+    Z</tt></li>
+
+<li>Add support for platform-independent prefetch support.  The GCC <a
     href="http://gcc.gnu.org/projects/prefetch.html">prefetch project</a> page
     has a good survey of the prefetching capabilities of a variety of modern
-    processors.
+    processors.</li>
+
 </ol>
 
+</div>
 
 <!-- ======================================================================= -->
-</ul><table width="50%" bgcolor="#441188" border=0 cellpadding=4 cellspacing=0>
-<tr><td>&nbsp;</td><td width=100%>&nbsp; 
-<font color="#EEEEFF" size=+1 face="Georgia,Palatino"><b>
-<a name="misc_imp">Miscellaneous Improvements
-</b></font></td></tr></table><ul>
+<div class="doc_subsection">
+  <a name="misc_imp">Miscellaneous Improvements</a>
+</div>
+
+<div class="doc_text">
 
 <ol>
 <li>Someone needs to look into getting the <tt>ranlib</tt> tool to index LLVM
     bytecode files, so that linking in .a files is not hideously slow.  They
     would also then have to implement the reader for this index in
-    <tt>gccld</tt>.<br>
+    <tt>gccld</tt>.</li>
 
-<li>Improve the efficiency of the bytecode loader/writer<br>
+<li>Improve the efficiency of the bytecode loader/writer</li>
+
 <li>Extend the FunctionPassManager to use a ModuleProvider to stream functions
-    in on demand.  This would improve the efficiency of the JIT.
-<li>Rework the PassManager to be more flexible
+    in on demand.  This would improve the efficiency of the JIT.</li>
+
+<li>Rework the PassManager to be more flexible</li>
+
 <li>Some transformations and analyses only work on reducible flow graphs.  It
 would be nice to have a transformation which could be "required" by these passes
 which makes irreducible graphs reducible.  This can easily be accomplished
@@ -161,126 +180,141 @@ through code duplication.  See <a
 href="http://citeseer.nj.nec.com/janssen97making.html">Making Graphs Reducible
 with Controlled Node Splitting</a> and perhaps <a
 href="http://doi.acm.org/10.1145/262004.262005">Nesting of Reducible and
-Irreducible Loops</a>.
+Irreducible Loops</a>.</li>
+
 </ol>
 
+</div>
 
 <!-- *********************************************************************** -->
-</ul><table width="100%" bgcolor="#330077" border=0 cellpadding=4 cellspacing=0>
-<tr><td align=center><font color="#EEEEFF" size=+2 face="Georgia,Palatino"><b>
-<a name="new">Adding new capabilities to LLVM
-</b></font></td></tr></table><ul>
+<div class="doc_section">
+  <a name="new">Adding new capabilities to LLVM</a>
+</div>
 <!-- *********************************************************************** -->
 
-Sometimes creating new things is more fun that improving existing things.  These
-projects tend to be more involved and perhaps require more work, but can also be
-very rewarding.<p>
+<div class="doc_text">
+
+<p>Sometimes creating new things is more fun that improving existing things.
+These projects tend to be more involved and perhaps require more work, but can
+also be very rewarding.</p>
+
+</div>
 
 <!-- ======================================================================= -->
-</ul><table width="50%" bgcolor="#441188" border=0 cellpadding=4 cellspacing=0>
-<tr><td>&nbsp;</td><td width=100%>&nbsp; 
-<font color="#EEEEFF" size=+1 face="Georgia,Palatino"><b>
-<a name="pointeranalysis">Pointer and Alias Analysis
-</b></font></td></tr></table><ul>
+<div class="doc_subsection">
+  <a name="pointeranalysis">Pointer and Alias Analysis</a>
+</div>
 
-We have a <a href="AliasAnalysis.html">strong base for development</a> of both
-pointer analysis based optimizations as well as pointer analyses themselves.  It
-seems natural to want to take advantage of this...<p>
+<div class="doc_text">
+
+<p>We have a <a href="AliasAnalysis.html">strong base for development</a> of
+both pointer analysis based optimizations as well as pointer analyses
+themselves.  It seems natural to want to take advantage of this...</p>
 
 <ol>
 <li>Implement a flow-sensitive context-sensitive alias analysis algorithm<br>
   - Pick one of the somewhat efficient algorithms, but strive for maximum
-    precision
+    precision</li>
+
 <li>Implement a flow-sensitive context-insensitive alias analysis algorithm<br>
-  - Just an efficient local algorithm perhaps?
+  - Just an efficient local algorithm perhaps?</li>
 
 <li>Implement an interface to update analyses in response to common code motion
-    transformations
-<li>Implement alias analysis based optimizations:
+    transformations</li>
+
+<li>Implement alias-analysis-based optimizations:
   <ul>
-  <li>Dead store elimination
-  </ul>
+  <li>Dead store elimination</li>
+  <li>...</li>
+  </ul></li>
 </ol>
 
-<!-- ======================================================================= -->
-</ul><table width="50%" bgcolor="#441188" border=0 cellpadding=4 cellspacing=0>
-<tr><td>&nbsp;</td><td width=100%>&nbsp; 
-<font color="#EEEEFF" size=+1 face="Georgia,Palatino"><b>
-<a name="profileguided">Profile Guided Optimization
-</b></font></td></tr></table><ul>
+</div>
 
-We are getting to the point where we really need a unified infrastructure for
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="profileguided">Profile Guided Optimization</a>
+</div>
+
+<div class="doc_text">
+
+<p>We are getting to the point where we really need a unified infrastructure for
 profile guided optimizations.  It would be wonderful to be able to write profile
 guided transformations which can be performed either at static compile time
 (compile time or offline optimization time) or at runtime in a JIT type setup.
-The LLVM transformation itself shouldn't need to know how it is being used.<p>
+The LLVM transformation itself shouldn't need to know how it is being used.</p>
 
-Ideas for profile guided transformations:<p>
+<p>Ideas for profile guided transformations:</p>
 
 <ol>
-<li>Superblock formation (with many optimizations)
-<li>Loop unrolling/peeling
-<li>Profile directed inlining
-<li>Code layout
-<li>...
-</ol><p>
+<li>Superblock formation (with many optimizations)</li>
+<li>Loop unrolling/peeling</li>
+<li>Profile directed inlining</li>
+<li>Code layout</li>
+<li>...</li>
+</ol>
 
+</div>
 
 <!-- ======================================================================= -->
-</ul><table width="50%" bgcolor="#441188" border=0 cellpadding=4 cellspacing=0>
-<tr><td>&nbsp;</td><td width=100%>&nbsp; 
-<font color="#EEEEFF" size=+1 face="Georgia,Palatino"><b>
-<a name="xforms">New Transformations and Analyses
-</b></font></td></tr></table><ul>
+<div class="doc_subsection">
+  <a name="xforms">New Transformations and Analyses</a>
+</div>
+
+<div class="doc_text">
 
 <ol>
 <li>Implement a Dependence Analysis Infrastructure<br>
-     - Design some way to represent and query dep analysis
+     - Design some way to represent and query dep analysis</li>
 <li>Implement a faster Dominator Set Construction Algorithm<br>
-     - A linear time or nearly so algorithm
-<li>Implement a strength reduction pass
-<li>Value range propagation pass
-<li>Implement an unswitching pass
-<li>Write a loop unroller, with a simple heuristic for when to unroll
+     - A linear time or nearly so algorithm</li>
+<li>Implement a strength reduction pass</li>
+<li>Value range propagation pass</li>
+<li>Implement an unswitching pass</li>
+<li>Write a loop unroller, with a simple heuristic for when to unroll</li>
 </ol>
 
+</div>
+
 <!-- ======================================================================= -->
-</ul><table width="50%" bgcolor="#441188" border=0 cellpadding=4 cellspacing=0>
-<tr><td>&nbsp;</td><td width=100%>&nbsp; 
-<font color="#EEEEFF" size=+1 face="Georgia,Palatino"><b>
-<a name="x86be">X86 Back-end Improvements
-</b></font></td></tr></table><ul>
+<div class="doc_section">
+  <a name="x86be">X86 Back-end Improvements</a>
+</div>
+
+<div class="doc_text">
 
 <ol>
-<li>Implement a global register allocator
-<li>Implement a better instruction selector
+<li>Implement a global register allocator</li>
+<li>Implement a better instruction selector</li>
 <li>Implement support for the "switch" instruction without requiring the 
-    lower-switches pass.
+    lower-switches pass.</li>
 </ol>
+
+</div>
 
 <!-- ======================================================================= -->
-</ul><table width="50%" bgcolor="#441188" border=0 cellpadding=4 cellspacing=0>
-<tr><td>&nbsp;</td><td width=100%>&nbsp; 
-<font color="#EEEEFF" size=+1 face="Georgia,Palatino"><b>
-<a name="misc_new">Miscellaneous Additions
-</b></font></td></tr></table><ul>
+<div class="doc_subsection">
+  <a name="misc_new">Miscellaneous Additions</a>
+</div>
+
+<div class="doc_text">
 
 <ol>
-<li>Write a new frontend for some language (Java? OCaml? Forth?)
-<li>Write a new backend for a target (IA64? MIPS? MMIX?)
+<li>Write a new frontend for some language (Java? OCaml? Forth?)</li>
+<li>Write a new backend for a target (IA64? MIPS? MMIX?)</li>
 </ol>
 
+</div>
 
 <!-- *********************************************************************** -->
-</ul>
-<!-- *********************************************************************** -->
 
-<hr><font size-1>
-<address><a href="mailto:sabre@nondot.org">Chris Lattner</a></address>
-<a href="http://llvm.cs.uiuc.edu">The LLVM Compiler Infrastructure</a>
-<br>
-<!-- Created: Tue Aug  6 15:00:33 CDT 2002 -->
-<!-- hhmts start -->
-Last modified: Mon Oct 27 12:00:00 CDT 2003
-<!-- hhmts end -->
-</font></body></html>
+<hr>
+<div class="doc_footer">
+  <address><a href="mailto:sabre@nondot.org">Chris Lattner</a></address>
+  <a href="http://llvm.cs.uiuc.edu">The LLVM Compiler Infrastructure</a>
+  <br>
+  Last modified: $Date$
+</div>
+
+</body>
+</html>
