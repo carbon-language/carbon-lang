@@ -8,6 +8,7 @@
 #include "llvm/Analysis/LiveVar/MethodLiveVarInfo.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/BasicBlock.h"
+#include "Support/SetOperations.h"
 
 /// BROKEN: Should not include sparc stuff directly into here
 #include "../../Target/Sparc/SparcInternals.h"  //  Only for PHI defn

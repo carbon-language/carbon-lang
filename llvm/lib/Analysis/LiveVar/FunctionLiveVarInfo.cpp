@@ -10,6 +10,7 @@
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/BasicBlock.h"
 #include "Support/PostOrderIterator.h"
+#include "Support/SetOperations.h"
 #include <iostream>
 
 AnalysisID MethodLiveVarInfo::ID(AnalysisID::create<MethodLiveVarInfo>());
