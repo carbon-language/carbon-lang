@@ -15,18 +15,23 @@
 #include "llvm/PassManager.h"
 
 namespace {
-  cl::opt<std::string>
-  Arch("march", cl::desc("Architecture: `x86' or `sparc'"), cl::Prefix,
-       cl::value_desc("machine architecture"));
-  
-  static std::string DefaultArch = 
-#if defined(i386) || defined(__i386__) || defined(__x86__)
-  "x86";
-#elif defined(sparc) || defined(__sparc__) || defined(__sparcv9)
-  "sparc";
-#else
-  "";
+  enum ArchName { nojit, x86, sparc };
+
+  cl::opt<ArchName>
+  Arch("march", cl::desc("Architecture to JIT to:"), cl::Prefix,
+       cl::values(clEnumVal(x86, "  IA-32 (pentium and above)"),
+#if defined(sparc) || defined(__sparc__) || defined(__sparcv9)
+                  clEnumVal(sparc, "  Sparc-V9"),
 #endif
+                  0),
+#if defined(i386) || defined(__i386__) || defined(__x86__)
+  cl::init(x86)
+#elif defined(sparc) || defined(__sparc__) || defined(__sparcv9)
+  cl::init(sparc)
+#else
+  cl::init(nojit)
+#endif
+       );
 }
 
 /// createJIT - Create an return a new JIT compiler if there is one available
@@ -35,30 +40,31 @@ namespace {
 ExecutionEngine *ExecutionEngine::createJIT(Module *M, unsigned Config) {
   
   TargetMachine* (*TargetMachineAllocator)(unsigned) = 0;
-  if (Arch == "")
-    Arch = DefaultArch;
 
   // Allow a command-line switch to override what *should* be the default target
   // machine for this platform. This allows for debugging a Sparc JIT on X86 --
   // our X86 machines are much faster at recompiling LLVM and linking lli.
-  if (Arch == "x86") {
+  switch (Arch) {
+  case x86:
     TargetMachineAllocator = allocateX86TargetMachine;
+    break;
 #if defined(sparc) || defined(__sparc__) || defined(__sparcv9)
-  } else if (Arch == "sparc") {
+  case sparc:
     TargetMachineAllocator = allocateSparcTargetMachine;
+    break;
 #endif
-  }
-
-  if (TargetMachineAllocator) {
-    // Allocate a target...
-    TargetMachine *Target = (*TargetMachineAllocator)(Config);
-    assert(Target && "Could not allocate target machine!");
-
-    // Create the virtual machine object...
-    return new VM(M, Target);
-  } else {
+  default:
+    assert(0 && "-march flag not supported on this host!");
+  case nojit:
     return 0;
   }
+
+  // Allocate a target...
+  TargetMachine *Target = (*TargetMachineAllocator)(Config);
+  assert(Target && "Could not allocate target machine!");
+  
+  // Create the virtual machine object...
+  return new VM(M, Target);
 }
 
 VM::VM(Module *M, TargetMachine *tm) : ExecutionEngine(M), TM(*tm) {
