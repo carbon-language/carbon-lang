@@ -109,8 +109,7 @@ namespace {
     /// the graph.
     ///
     DSNode *createNode(DSNode::NodeTy NodeType, const Type *Ty = 0) {
-      DSNode *N = new DSNode(NodeType, Ty);   // Create the node
-      Nodes.push_back(N);                     // Add node to nodes list
+      DSNode *N = new DSNode(NodeType, Ty, &G);   // Create the node
       if (DisableFieldSensitivity)
         N->foldNodeCompletely();
       return N;

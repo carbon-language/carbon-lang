@@ -183,16 +183,10 @@ void TDDataStructures::calculateGraph(Function &F) {
           for (unsigned i = 0, e = NewCS.getNumPtrArgs();
                i != e && AI != Callee->aend(); ++i, ++AI) {
             // Advance the argument iterator to the first pointer argument...
-            while (!DS::isPointerType(AI->getType())) {
+            while (AI != Callee->aend() && !DS::isPointerType(AI->getType()))
               ++AI;
-#ifndef NDEBUG
-              if (AI == Callee->aend())
-                std::cerr << "Bad call to Func: " << Callee->getName() << "\n";
-#endif
-              assert(AI != Callee->aend() &&
-                     "# Args provided is not # Args required!");
-            }
-          
+            if (AI == Callee->aend()) break;
+
             // Add the link from the argument scalar to the provided value
             DSNodeHandle &NH = CG.getNodeForValue(AI);
             assert(NH.getNode() && "Pointer argument without scalarmap entry?");

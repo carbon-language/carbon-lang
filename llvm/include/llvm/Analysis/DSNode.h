@@ -19,11 +19,32 @@ class DSNodeIterator;          // Data structure graph traversal iterator
 /// different types represented in this object.
 ///
 class DSNode {
-  /// Referrers - Keep track of all of the node handles that point to this
-  /// DSNode.  These pointers may need to be updated to point to a different
-  /// node if this node gets merged with it.
+  /// NumReferrers - The number of DSNodeHandles pointing to this node... if
+  /// this is a forwarding node, then this is the number of node handles which
+  /// are still forwarding over us.
   ///
-  std::vector<DSNodeHandle*> Referrers;
+  unsigned NumReferrers;
+
+  /// ForwardNH - This NodeHandle contain the node (and offset into the node)
+  /// that this node really is.  When nodes get folded together, the node to be
+  /// eliminated has these fields filled in, otherwise ForwardNH.getNode() is
+  /// null.
+  DSNodeHandle ForwardNH;
+
+  /// Size - The current size of the node.  This should be equal to the size of
+  /// the current type record.
+  ///
+  unsigned Size;
+
+  /// ParentGraph - The graph this node is currently embedded into.
+  ///
+  DSGraph *ParentGraph;
+
+  /// Ty - Keep track of the current outer most type of this object, in addition
+  /// to whether or not it has been indexed like an array or not.  If the
+  /// isArray bit is set, the node cannot grow.
+  ///
+  const Type *Ty;                 // The type itself...
 
   /// Links - Contains one entry for every sizeof(void*) bytes in this memory
   /// object.  Note that if the node is not a multiple of size(void*) bytes
@@ -36,18 +57,8 @@ class DSNode {
   ///
   std::vector<GlobalValue*> Globals;
 
-  /// Ty - Keep track of the current outer most type of this object, in addition
-  /// to whether or not it has been indexed like an array or not.  If the
-  /// isArray bit is set, the node cannot grow.
-  ///
-  const Type *Ty;                 // The type itself...
-
-  /// Size - The current size of the node.  This should be equal to the size of
-  /// the current type record.
-  ///
-  unsigned Size;
-
   void operator=(const DSNode &); // DO NOT IMPLEMENT
+  DSNode(const DSNode &);         // DO NOT IMPLEMENT
 public:
   enum NodeTy {
     ShadowNode  = 0,        // Nothing is known about this node...
@@ -73,8 +84,8 @@ public:
   ///
   unsigned short NodeType;
 
-  DSNode(enum NodeTy NT, const Type *T);
-  DSNode(const DSNode &);
+  DSNode(unsigned NodeTy, const Type *T, DSGraph *G);
+  DSNode(const DSNode &, DSGraph *G);
 
   ~DSNode() {
     dropAllReferences();
@@ -100,13 +111,14 @@ public:
   const Type *getType() const { return Ty; }
   bool isArray() const { return NodeType & Array; }
 
-  /// getReferrers - Return a list of the pointers to this node...
-  ///
-  const std::vector<DSNodeHandle*> &getReferrers() const { return Referrers; }
-
   /// hasNoReferrers - Return true if nothing is pointing to this node at all.
   ///
-  bool hasNoReferrers() const { return Referrers.empty(); }
+  bool hasNoReferrers() const { return getNumReferrers() == 0; }
+
+  /// getNumReferrers - This method returns the number of referrers to the
+  /// current node.  Note that if this node is a forwarding node, this will
+  /// return the number of nodes forwarding over the node!
+  unsigned getNumReferrers() const { return NumReferrers; }
 
   /// isModified - Return true if this node may be modified in this context
   ///
@@ -116,6 +128,18 @@ public:
   ///
   bool isRead() const { return (NodeType & Read) != 0; }
 
+  DSGraph *getParentGraph() const { return ParentGraph; }
+  void setParentGraph(DSGraph *G) { ParentGraph = G; }
+
+
+  /// getForwardNode - This method returns the node that this node is forwarded
+  /// to, if any.
+  DSNode *getForwardNode() const { return ForwardNH.getNode(); }
+  void stopForwarding() {
+    assert(!ForwardNH.isNull() &&
+           "Node isn't forwarding, cannot stopForwarding!");
+    ForwardNH.setNode(0);
+  }
 
   /// hasLink - Return true if this memory object has a link in slot #LinkNo
   ///
@@ -209,11 +233,20 @@ public:
   const std::vector<GlobalValue*> &getGlobals() const { return Globals; }
   std::vector<GlobalValue*> &getGlobals() { return Globals; }
 
+  /// forwardNode - Mark this node as being obsolete, and all references to it
+  /// should be forwarded to the specified node and offset.
+  ///
+  void forwardNode(DSNode *To, unsigned Offset);
+
   void print(std::ostream &O, const DSGraph *G) const;
   void dump() const;
 
+  void assertOK() const;
+
   void dropAllReferences() {
     Links.clear();
+    if (!ForwardNH.isNull())
+      ForwardNH.setNode(0);
   }
 
   /// remapLinks - Change all of the Links in the current node according to the
@@ -229,10 +262,6 @@ public:
 private:
   friend class DSNodeHandle;
 
-  // addReferrer - Keep the referrer set up to date...
-  void addReferrer(DSNodeHandle *H) { Referrers.push_back(H); }
-  void removeReferrer(DSNodeHandle *H);
-
   // static mergeNodes - Helper for mergeWith()
   static void MergeNodes(DSNodeHandle& CurNodeH, DSNodeHandle& NH);
 };
@@ -242,19 +271,50 @@ private:
 // Define inline DSNodeHandle functions that depend on the definition of DSNode
 //
 inline DSNode *DSNodeHandle::getNode() const {
+  assert((!N || Offset < N->Size || (N->Size == 0 && Offset == 0) ||
+          !N->ForwardNH.isNull()) && "Node handle offset out of range!");
+  if (!N || N->ForwardNH.isNull())
+    return N;
+
+  // Handle node forwarding here!
+  DSNode *Next = N->ForwardNH.getNode();  // Cause recursive shrinkage
+  Offset += N->ForwardNH.getOffset();
+
+  if (--N->NumReferrers == 0) {
+    // Removing the last referrer to the node, sever the forwarding link
+    N->stopForwarding();
+  }
+
+  N = Next;
+  N->NumReferrers++;
+  if (N->Size <= Offset) {
+    assert(N->Size <= 1 && "Forwarded to shrunk but not collapsed node?");
+    Offset = 0;
+  }
   return N;
 }
 
 inline void DSNodeHandle::setNode(DSNode *n) {
-  if (N) N->removeReferrer(this);
+  assert(!n || !n->getForwardNode() && "Cannot set node to a forwarded node!");
+  if (N) N->NumReferrers--;
   N = n;
-  if (N) N->addReferrer(this);
+  if (N) {
+    N->NumReferrers++;
+    if (Offset >= N->Size) {
+      assert((Offset == 0 || N->Size == 1) &&
+             "Pointer to non-collapsed node with invalid offset!");
+      Offset = 0;
+    }
+  }
   assert(!N || ((N->NodeType & DSNode::DEAD) == 0));
+
+  assert((!N || Offset < N->Size || (N->Size == 0 && Offset == 0) ||
+          !N->ForwardNH.isNull()) && "Node handle offset out of range!");
 }
 
 inline bool DSNodeHandle::hasLink(unsigned Num) const {
   assert(N && "DSNodeHandle does not point to a node yet!");
-  return N->hasLink(Num+Offset);
+  return getNode()->hasLink(Num+Offset);
 }
 
 
@@ -263,16 +323,16 @@ inline bool DSNodeHandle::hasLink(unsigned Num) const {
 ///
 inline const DSNodeHandle &DSNodeHandle::getLink(unsigned Off) const {
   assert(N && "DSNodeHandle does not point to a node yet!");
-  return N->getLink(Offset+Off);
+  return getNode()->getLink(Offset+Off);
 }
 inline DSNodeHandle &DSNodeHandle::getLink(unsigned Off) {
   assert(N && "DSNodeHandle does not point to a node yet!");
-  return N->getLink(Off+Offset);
+  return getNode()->getLink(Off+Offset);
 }
 
 inline void DSNodeHandle::setLink(unsigned Off, const DSNodeHandle &NH) {
   assert(N && "DSNodeHandle does not point to a node yet!");
-  N->setLink(Off+Offset, NH);
+  getNode()->setLink(Off+Offset, NH);
 }
 
 ///  addEdgeTo - Add an edge from the current node to the specified node.  This
@@ -280,7 +340,7 @@ inline void DSNodeHandle::setLink(unsigned Off, const DSNodeHandle &NH) {
 ///
 inline void DSNodeHandle::addEdgeTo(unsigned Off, const DSNodeHandle &Node) {
   assert(N && "DSNodeHandle does not point to a node yet!");
-  N->addEdgeTo(Off+Offset, Node);
+  getNode()->addEdgeTo(Off+Offset, Node);
 }
 
 /// mergeWith - Merge the logical node pointed to by 'this' with the node
@@ -288,24 +348,9 @@ inline void DSNodeHandle::addEdgeTo(unsigned Off, const DSNodeHandle &Node) {
 ///
 inline void DSNodeHandle::mergeWith(const DSNodeHandle &Node) {
   if (N != 0)
-    N->mergeWith(Node, Offset);
+    getNode()->mergeWith(Node, Offset);
   else     // No node to merge with, so just point to Node
     *this = Node;
-}
-
-inline void DSNodeHandle::swap(DSNodeHandle &NH) {
-  std::swap(Offset, NH.Offset);
-  if (N != NH.N) {
-    if (N) {
-      N->removeReferrer(this);
-      N->addReferrer(&NH);
-    }
-    if (NH.N) {
-      N->removeReferrer(&NH);
-      N->addReferrer(this);
-    }
-    std::swap(N, NH.N);
-  }
 }
 
 #endif

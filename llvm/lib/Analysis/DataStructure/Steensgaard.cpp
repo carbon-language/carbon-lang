@@ -193,6 +193,8 @@ bool Steens::run(Module &M) {
       ++i;                            // Skip this call site...
   }
 
+  RetValMap.clear();
+
   // Update the "incomplete" markers on the nodes, ignoring unknownness due to
   // incoming arguments...
   ResultGraph->maskIncompleteMarkers();

@@ -23,9 +23,11 @@ class DSNodeIterator : public forward_iterator<const DSNode, ptrdiff_t> {
   typedef DSNodeIterator<NodeTy> _Self;
 
   DSNodeIterator(NodeTy *N) : Node(N), Offset(0) {}   // begin iterator
-  DSNodeIterator(NodeTy *N, bool)       // Create end iterator
-    : Node(N) {
+  DSNodeIterator(NodeTy *N, bool) : Node(N) {         // Create end iterator
     Offset = N->getNumLinks() << DS::PointerShift;
+    if (Offset == 0 && Node->getForwardNode() &&
+        (Node->NodeType & DSNode::DEAD))        // Model Forward link
+      Offset += DS::PointerSize;
   }
 public:
   DSNodeIterator(const DSNodeHandle &NH)
@@ -43,7 +45,10 @@ public:
   }
   
   pointer operator*() const {
-    return Node->getLink(Offset).getNode();
+    if (Node->NodeType & DSNode::DEAD)
+      return Node->getForwardNode();
+    else
+      return Node->getLink(Offset).getNode();
   }
   pointer operator->() const { return operator*(); }
   

@@ -45,38 +45,54 @@ namespace DS { // FIXME: After the paper, this should get cleaned up
 /// DSNodeHandle (and friends) in one file complicates things.
 ///
 class DSNodeHandle {
-  DSNode *N;
-  unsigned Offset;
+  mutable DSNode *N;
+  mutable unsigned Offset;
   void operator==(const DSNode *N);  // DISALLOW, use to promote N to nodehandle
 public:
   // Allow construction, destruction, and assignment...
   DSNodeHandle(DSNode *n = 0, unsigned offs = 0) : N(0), Offset(offs) {
     setNode(n);
   }
-  DSNodeHandle(const DSNodeHandle &H) : N(0), Offset(H.Offset) { setNode(H.N); }
+  DSNodeHandle(const DSNodeHandle &H) : N(0), Offset(0) {
+    setNode(H.getNode());
+    Offset = H.Offset;      // Must read offset AFTER the getNode()
+  }
   ~DSNodeHandle() { setNode((DSNode*)0); }
   DSNodeHandle &operator=(const DSNodeHandle &H) {
-    setNode(H.N); Offset = H.Offset;
+    Offset = 0; setNode(H.getNode()); Offset = H.Offset;
     return *this;
   }
 
   bool operator<(const DSNodeHandle &H) const {  // Allow sorting
-    return N < H.N || (N == H.N && Offset < H.Offset);
+    return getNode() < H.getNode() || (N == H.N && Offset < H.Offset);
   }
   bool operator>(const DSNodeHandle &H) const { return H < *this; }
   bool operator==(const DSNodeHandle &H) const { // Allow comparison
-    return N == H.N && Offset == H.Offset;
+    return getNode() == H.getNode() && Offset == H.Offset;
   }
   bool operator!=(const DSNodeHandle &H) const { return !operator==(H); }
 
-  inline void swap(DSNodeHandle &H);
+  inline void swap(DSNodeHandle &NH) {
+    std::swap(Offset, NH.Offset);
+    std::swap(N, NH.N);
+  }
+
+  /// isNull - Check to see if getNode() == 0, without going through the trouble
+  /// of checking to see if we are forwarding...
+  bool isNull() const { return N == 0; }
 
   // Allow explicit conversion to DSNode...
   inline DSNode *getNode() const;  // Defined inline in DSNode.h
   unsigned getOffset() const { return Offset; }
 
   inline void setNode(DSNode *N);  // Defined inline in DSNode.h
-  void setOffset(unsigned O) { Offset = O; }
+  void setOffset(unsigned O) {
+    //assert((!N || Offset < N->Size || (N->Size == 0 && Offset == 0) ||
+    //       !N->ForwardNH.isNull()) && "Node handle offset out of range!");
+    //assert((!N || O < N->Size || (N->Size == 0 && O == 0) ||
+    //       !N->ForwardNH.isNull()) && "Node handle offset out of range!");
+    Offset = O;
+  }
 
   void addEdgeTo(unsigned LinkNo, const DSNodeHandle &N);
   void addEdgeTo(const DSNodeHandle &N) { addEdgeTo(0, N); }
@@ -98,7 +114,9 @@ public:
   inline void setLink(unsigned Num, const DSNodeHandle &NH);
 };
 
-inline void swap(DSNodeHandle &NH1, DSNodeHandle &NH2) { NH1.swap(NH2); }
+namespace std {
+  inline void swap(DSNodeHandle &NH1, DSNodeHandle &NH2) { NH1.swap(NH2); }
+}
 
 //===----------------------------------------------------------------------===//
 /// DSCallSite - Representation of a call site via its call instruction,
@@ -252,6 +270,7 @@ public:
   }
 };
 
-inline void swap(DSCallSite &CS1, DSCallSite &CS2) { CS1.swap(CS2); }
-
+namespace std {
+  inline void swap(DSCallSite &CS1, DSCallSite &CS2) { CS1.swap(CS2); }
+}
 #endif
