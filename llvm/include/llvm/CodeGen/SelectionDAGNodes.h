@@ -648,19 +648,11 @@ class RegSDNode : public SDNode {
   unsigned Reg;
 protected:
   friend class SelectionDAG;
-  RegSDNode(unsigned Opc, MVT::ValueType VT, SDOperand Chain,
-            SDOperand Src, unsigned reg)
+  RegSDNode(unsigned Opc, SDOperand Chain, SDOperand Src, unsigned reg)
     : SDNode(Opc, Chain, Src), Reg(reg) {
-    setValueTypes(VT);
   }
-  RegSDNode(unsigned Opc, MVT::ValueType VT, SDOperand Chain,
-            unsigned reg)
-    : SDNode(Opc, Chain), Reg(reg) {
-    setValueTypes(VT);
-  }
-  RegSDNode(unsigned Opc, MVT::ValueType VT, unsigned reg)
-    : SDNode(Opc, VT), Reg(reg) {
-  }
+  RegSDNode(unsigned Opc, SDOperand Chain, unsigned reg)
+    : SDNode(Opc, Chain), Reg(reg) {}
 public:
 
   unsigned getReg() const { return Reg; }
@@ -714,10 +706,10 @@ class MVTSDNode : public SDNode {
   MVT::ValueType ExtraValueType;
 protected:
   friend class SelectionDAG;
-  MVTSDNode(unsigned Opc, MVT::ValueType VT,
+  MVTSDNode(unsigned Opc, MVT::ValueType VT1, MVT::ValueType VT2,
             SDOperand Op0, SDOperand Op1, MVT::ValueType EVT)
     : SDNode(Opc, Op0, Op1), ExtraValueType(EVT) {
-    setValueTypes(VT);
+    setValueTypes(VT1, VT2);
   }
   MVTSDNode(unsigned Opc, MVT::ValueType VT,
             SDOperand Op0, SDOperand Op1, SDOperand Op2, MVT::ValueType EVT)
