@@ -4,7 +4,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/ValueHolderImpl.h"
 #include "llvm/InstrTypes.h"
 #include "llvm/SymbolTable.h"
 #include "llvm/SymTabValue.h"

@@ -5,14 +5,14 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/ValueHolderImpl.h"
+#include "llvm/Function.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/SymbolTable.h"
 #include "llvm/Module.h"
-#include "llvm/Function.h"
 #include "llvm/GlobalVariable.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/iOther.h"
+#include "ValueHolderImpl.h"
 
 //===----------------------------------------------------------------------===//
 // Function Implementation

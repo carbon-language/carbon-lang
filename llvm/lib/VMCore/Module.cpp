@@ -8,11 +8,11 @@
 #include "llvm/Function.h"
 #include "llvm/GlobalVariable.h"
 #include "llvm/InstrTypes.h"
-#include "llvm/ValueHolderImpl.h"
 #include "llvm/Type.h"
 #include "llvm/ConstantVals.h"
 #include "llvm/DerivedTypes.h"
 #include "Support/STLExtras.h"
+#include "ValueHolderImpl.h"
 #include <map>
 
 // Instantiate Templates - This ugliness is the price we have to pay
