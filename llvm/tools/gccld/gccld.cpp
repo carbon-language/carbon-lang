@@ -405,6 +405,10 @@ int main(int argc, char **argv) {
   //
   Passes.add(createInstructionCombiningPass());
 
+  // Delete basic blocks, which optimization passes may have killed...
+  //
+  Passes.add(createCFGSimplificationPass());
+
   // Now that we have optimized the program, discard unreachable functions...
   //
   Passes.add(createGlobalDCEPass());
