@@ -8,7 +8,6 @@
 
 #include "llvm/CodeGen/MachineInstr.h"  // For debug output
 #include "llvm/CodeGen/MachineFunction.h"
-#include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineCodeForInstruction.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/MachineFrameInfo.h"
