@@ -35,6 +35,7 @@ class Module;
 /// @brief Bytecode Analysis results structure
 struct BytecodeAnalysis {
   std::string ModuleId;     ///< Identification of the module
+  unsigned version;         ///< The version number of the bytecode file
   unsigned byteSize;        ///< The size of the bytecode file in bytes
   unsigned numTypes;        ///< The number of types
   unsigned numValues;       ///< The number of values
@@ -48,6 +49,8 @@ struct BytecodeAnalysis {
   unsigned numCmpctnTables; ///< The number of compaction tables
   unsigned numSymTab;       ///< The number of symbol tables
   unsigned numAlignment;    ///< The number of alignment bytes
+  unsigned numLibraries;    ///< The number of dependent libraries
+  unsigned libSize;         ///< Number of bytes taken by dep libs.
   unsigned maxTypeSlot;     ///< The maximum slot number for types
   unsigned maxValueSlot;    ///< The maximum slot number for values
   double   fileDensity;     ///< Density of file (bytes/definition)
@@ -64,7 +67,8 @@ struct BytecodeAnalysis {
   unsigned vbrCompBytes;    ///< Number of vbr bytes (compressed)
   unsigned vbrExpdBytes;    ///< Number of vbr bytes (expanded)
 
-  typedef std::map<BytecodeFormat::FileBlockIDs,unsigned> BlockSizeMap;
+  typedef std::map<BytecodeFormat::CompressedBytecodeBlockIdentifiers,unsigned> 
+      BlockSizeMap;
   BlockSizeMap BlockSizes;
 
   /// A structure that contains various pieces of information related to
@@ -90,14 +94,10 @@ struct BytecodeAnalysis {
   /// the function.
   std::map<const Function*,BytecodeFunctionInfo> FunctionInfo; 
 
-  /// The content of the bytecode dump
-  std::string BytecodeDump;
-
   /// The content of the progressive verification
   std::string VerifyInfo;
 
   /// Flags for what should be done
-  bool dumpBytecode;          ///< If true, BytecodeDump has contents
   bool detailedResults;       ///< If true, FunctionInfo has contents 
   bool progressiveVerify;     ///< If true, VerifyInfo has contents
 };
@@ -109,7 +109,8 @@ struct BytecodeAnalysis {
 Module* AnalyzeBytecodeFile(
       const std::string& Filename, ///< The name of the bytecode file to read
       BytecodeAnalysis& Results,   ///< The results of the analysis
-      std::string* ErrorStr = 0    ///< Errors, if any.
+      std::string* ErrorStr = 0,   ///< Errors, if any.
+      std::ostream* output = 0     ///< Stream for dump output, if wanted
     );
 
 /// This function is an alternate entry point into the bytecode analysis
@@ -122,7 +123,8 @@ Module* AnalyzeBytecodeBuffer(
        unsigned BufferSize,         ///< Size of the bytecode buffer
        const std::string& ModuleID, ///< Identifier for the module
        BytecodeAnalysis& Results,   ///< The results of the analysis
-       std::string* ErrorStr = 0    ///< Errors, if any.
+       std::string* ErrorStr = 0,   ///< Errors, if any.
+       std::ostream* output = 0     ///< Stream for dump output, if wanted
      );
 
 /// This function prints the contents of rhe BytecodeAnalysis structure in
