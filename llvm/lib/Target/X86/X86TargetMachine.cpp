@@ -48,7 +48,44 @@ X86TargetMachine::X86TargetMachine(unsigned Config)
 // does to emit statically compiled machine code.
 bool X86TargetMachine::addPassesToEmitAssembly(PassManager &PM,
 					       std::ostream &Out) {
-  addPassesToJITCompile(PM);
+  // FIXME: Implement the switch instruction in the instruction selector!
+  PM.add(createLowerSwitchPass());
+
+  if (NoPatternISel)
+    PM.add(createX86SimpleInstructionSelector(*this));
+  else
+    PM.add(createX86PatternInstructionSelector(*this));
+
+  // TODO: optional optimizations go here
+
+  // FIXME: Add SSA based peephole optimizer here.
+
+  // Print the instruction selected machine code...
+  if (PrintCode)
+    PM.add(createMachineFunctionPrinterPass());
+
+  // Perform register allocation to convert to a concrete x86 representation
+  if (NoLocalRA)
+    PM.add(createSimpleRegisterAllocator());
+  else
+    PM.add(createLocalRegisterAllocator());
+
+  if (PrintCode)
+    PM.add(createMachineFunctionPrinterPass());
+
+  PM.add(createX86FloatingPointStackifierPass());
+
+  if (PrintCode)
+    PM.add(createMachineFunctionPrinterPass());
+
+  // Insert prolog/epilog code.  Eliminate abstract frame index references...
+  PM.add(createPrologEpilogCodeInserter());
+
+  PM.add(createX86PeepholeOptimizerPass());
+
+  if (PrintCode)  // Print the register-allocated code
+    PM.add(createX86CodePrinterPass(std::cerr, *this));
+
   PM.add(createX86CodePrinterPass(Out, *this));
   return false; // success!
 }
@@ -57,7 +94,7 @@ bool X86TargetMachine::addPassesToEmitAssembly(PassManager &PM,
 /// implement a fast dynamic compiler for this target.  Return true if this is
 /// not supported for this target.
 ///
-bool X86TargetMachine::addPassesToJITCompile(PassManager &PM) {
+bool X86TargetMachine::addPassesToJITCompile(FunctionPassManager &PM) {
   // FIXME: Implement the switch instruction in the instruction selector!
   PM.add(createLowerSwitchPass());
 
