@@ -244,9 +244,8 @@ class StoreInst : public MemAccessInst {
       Operands.push_back(Use(SI.Operands[i], this));
   }
 public:
-  StoreInst(Value *Val, Value *Ptr, const std::vector<Value*> &Idx,
-	    const std::string &Name = "");
-  StoreInst(Value *Val, Value *Ptr, const std::string &Name = "");
+  StoreInst(Value *Val, Value *Ptr, const std::vector<Value*> &Idx);
+  StoreInst(Value *Val, Value *Ptr);
   virtual Instruction *clone() const { return new StoreInst(*this); }
 
   virtual const char *getOpcodeName() const { return "store"; }  
@@ -283,9 +282,6 @@ public:
   virtual const char *getOpcodeName() const { return "getelementptr"; }  
   virtual unsigned getFirstIndexOperandNumber() const { return 1; }
   
-  inline bool isArraySelector() const { return !isStructSelector(); }
-  bool isStructSelector() const;
-
   // getType - Overload to return most specific pointer type...
   inline const PointerType *getType() const {
     return cast<const PointerType>(Instruction::getType());
