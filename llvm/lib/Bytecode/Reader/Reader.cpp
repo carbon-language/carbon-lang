@@ -128,8 +128,14 @@ Value *BytecodeParser::getValue(unsigned type, unsigned oNum, bool Create) {
 
   if (!Create) return 0;  // Do not create a placeholder?
 
+  std::pair<unsigned,unsigned> KeyValue(type, oNum);
+  std::map<std::pair<unsigned,unsigned>, Value*>::iterator I = 
+    ForwardReferences.lower_bound(KeyValue);
+  if (I != ForwardReferences.end() && I->first == KeyValue)
+    return I->second;   // We have already created this placeholder
+
   Value *Val = new ValPHolder(getType(type), oNum);
-  if (insertValue(Val, LateResolveValues) == -1) return 0;
+  ForwardReferences.insert(I, std::make_pair(KeyValue, Val));
   return Val;
 }
 
@@ -377,31 +383,27 @@ void BytecodeParser::materializeFunction(Function* F) {
   ParsedBasicBlocks.clear();
 
 
-  // Check for unresolvable references
-  while (!LateResolveValues.empty()) {
-    ValueList &VL = *LateResolveValues.back();
-    LateResolveValues.pop_back();    
+  // Resolve forward references
+  while (!ForwardReferences.empty()) {
+    std::map<std::pair<unsigned,unsigned>, Value*>::iterator I = ForwardReferences.begin();
+    unsigned type = I->first.first;
+    unsigned Slot = I->first.second;
+    Value *PlaceHolder = I->second;
+    ForwardReferences.erase(I);
 
-    while (!VL.empty()) {
-      Value *V = VL.back();
-      unsigned IDNumber = getValueIDNumberFromPlaceHolder(V);
-      VL.pop_back();
+    Value *NewVal = getValue(type, Slot, false);
+    if (NewVal == 0)
+      throw std::string("Unresolvable reference found: <" +
+                        PlaceHolder->getType()->getDescription() + ">:" + 
+                        utostr(Slot) + ".");
 
-      Value *NewVal = getValue(V->getType(), IDNumber, false);
-      if (NewVal == 0)
-        throw std::string("Unresolvable reference found: <" +
-                          V->getType()->getDescription() + ">:" + 
-                          utostr(IDNumber) + ".");
-
-      // Fixup all of the uses of this placeholder def...
-      V->replaceAllUsesWith(NewVal);
+    // Fixup all of the uses of this placeholder def...
+    PlaceHolder->replaceAllUsesWith(NewVal);
       
-      // Now that all the uses are gone, delete the placeholder...
-      // If we couldn't find a def (error case), then leak a little
-      // memory, because otherwise we can't remove all uses!
-      delete V;
-    }
-    delete &VL;
+    // Now that all the uses are gone, delete the placeholder...
+    // If we couldn't find a def (error case), then leak a little
+    // memory, because otherwise we can't remove all uses!
+    delete PlaceHolder;
   }
 
   // Clear out function-level types...

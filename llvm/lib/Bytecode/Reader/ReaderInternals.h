@@ -57,7 +57,6 @@ public:
   }
   void freeState() {
     freeTable(Values);
-    freeTable(LateResolveValues);
     freeTable(ModuleValues);
   }
 
@@ -100,8 +99,9 @@ private:
   bool hasInternalMarkerOnly;       // Only types of linkage are intern/external
 
   typedef std::vector<ValueList*> ValueTable;
-  ValueTable Values, LateResolveValues;
+  ValueTable Values;
   ValueTable ModuleValues;
+  std::map<std::pair<unsigned,unsigned>, Value*> ForwardReferences;
 
   std::vector<BasicBlock*> ParsedBasicBlocks;
 
