@@ -21,8 +21,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/CodeGen/Passes.h"
-#include "llvm/iPHINode.h"
 #include "llvm/Constant.h"
+#include "llvm/Instructions.h"
 #include "llvm/Function.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/CFG.h"
