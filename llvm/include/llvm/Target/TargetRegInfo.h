@@ -122,7 +122,7 @@ public:
 			 LiveRangeInfo &LRI) const = 0;
 
   virtual void suggestRegs4CallArgs(MachineInstr *CallI, 
-			LiveRangeInfo &LRI, std::vector<RegClass *> RCL) const = 0;
+                                    LiveRangeInfo &LRI) const = 0;
 
   virtual void suggestReg4RetValue(MachineInstr *RetI, 
 				   LiveRangeInfo &LRI) const = 0;

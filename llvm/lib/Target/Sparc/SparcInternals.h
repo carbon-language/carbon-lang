@@ -277,8 +277,7 @@ class UltraSparcRegInfo : public MachineRegInfo {
   void suggestReg4RetAddr(MachineInstr *RetMI, 
 			  LiveRangeInfo &LRI) const;
 
-  void suggestReg4CallAddr(MachineInstr *CallMI, LiveRangeInfo &LRI,
-			   std::vector<RegClass *> RCList) const;
+  void suggestReg4CallAddr(MachineInstr *CallMI, LiveRangeInfo &LRI) const;
   
   void InitializeOutgoingArg(MachineInstr* CallMI, AddedInstrns *CallAI,
                              PhyRegAlloc &PRA, LiveRange* LR,
@@ -384,8 +383,7 @@ public:
 			      LiveRangeInfo& LRI) const;
 
   void suggestRegs4CallArgs(MachineInstr *CallMI, 
-			    LiveRangeInfo& LRI,
-                            std::vector<RegClass *> RCL) const; 
+			    LiveRangeInfo& LRI) const; 
 
   void suggestReg4RetValue(MachineInstr *RetMI, 
                            LiveRangeInfo& LRI) const;
