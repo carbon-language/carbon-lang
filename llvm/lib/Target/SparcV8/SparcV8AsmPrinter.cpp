@@ -365,15 +365,6 @@ bool V8Printer::runOnMachineFunction(MachineFunction &MF) {
   return false;
 }
 
-
-std::string LowercaseString (const std::string &S) {
-  std::string result (S);
-  for (unsigned i = 0; i < S.length(); ++i) 
-    if (isupper (result[i]))
-      result[i] = tolower(result[i]);
-  return result;
-}
-
 void V8Printer::printOperand(const MachineInstr *MI, int opNum) {
   const MachineOperand &MO = MI->getOperand (opNum);
   const MRegisterInfo &RI = *TM.getRegisterInfo();
@@ -381,7 +372,8 @@ void V8Printer::printOperand(const MachineInstr *MI, int opNum) {
   if (MI->getOpcode() == V8::SETHIi && !MO.isRegister() && !MO.isImmediate()) {
     O << "%hi(";
     CloseParen = true;
-  } else if (MI->getOpcode() ==V8::ORri &&!MO.isRegister() &&!MO.isImmediate()) {
+  } else if (MI->getOpcode() ==V8::ORri &&!MO.isRegister() &&!MO.isImmediate())
+  {
     O << "%lo(";
     CloseParen = true;
   }
