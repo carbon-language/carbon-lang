@@ -8,3 +8,12 @@
 LEVEL = ../../../..
 include $(LEVEL)/test/Programs/SingleSource/Makefile.singlesrc
 
+LLTESTS := $(wildcard *.ll)
+CTESTS  := $(wildcard *.c) 
+TESTS   := $(LLTESTS) $(CTESTS)
+
+all:: $(addprefix Output/, $(LLTESTS:%.ll=%.ll.out))
+
+Output/%.ll.out: %.ll Output/.dir $(LOPT)
+	-$(TESTRUNR) $<
+
