@@ -1,8 +1,8 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+                      "http://www.w3.org/TR/html4/strict.dtd">
 <html>
 <head>
-  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-  <link rel="stylesheet" href="llvm.css" type="text/css" media="screen" />
+  <link rel="stylesheet" href="llvm.css" type="text/css">
   <title>Alias Analysis Infrastructure in LLVM</title>
 </head>
 
@@ -15,40 +15,41 @@
 <ol>
   <li><a href="#introduction">Introduction</a></li>
 
-  <li><a href="#overview">AliasAnalysis Overview</a></li>
+  <li><a href="#overview">AliasAnalysis Overview</a>
     <ul>
     <li><a href="#pointers">Representation of Pointers</a></li>
     <li><a href="#MustMayNo">Must, May, and No Alias Responses</a></li>
     <li><a href="#ModRefInfo">The <tt>getModRefInfo</tt> methods</a></li>
-    </ul>
+    </ul></li>
 
-  <li><a href="#writingnew">Writing a new AliasAnalysis Implementation</a></li>
+  <li><a href="#writingnew">Writing a new AliasAnalysis Implementation</a>
     <ul>
     <li><a href="#passsubclasses">Different Pass styles</a></li>
     <li><a href="#requiredcalls">Required initialization calls</a></li>
     <li><a href="#interfaces">Interfaces which may be specified</a></li>
     <li><a href="#chaining">The AliasAnalysis chaining behavior</a></li>
     <li><a href="#implefficiency">Efficiency Issues</a></li>
-    </ul>
+    </ul></li>
 
-  <li><a href="#using">Using AliasAnalysis results</a></li>
+  <li><a href="#using">Using AliasAnalysis results</a>
     <ul>
     <li><a href="#loadvn">Using the <tt>-load-vn</tt> Pass</a></li>
     <li><a href="#ast">Using the <tt>AliasSetTracker</tt> class</a></li>
     <li><a href="#direct">Using the AliasAnalysis interface directly</a></li>
-    </ul>
-  <li><a href="#tools">Helpful alias analysis related tools</a></li>
+    </ul></li>
+
+  <li><a href="#tools">Helpful alias analysis related tools</a>
     <ul>
     <li><a href="#no-aa">The <tt>-no-aa</tt> pass</a></li>
     <li><a href="#print-alias-sets">The <tt>-print-alias-sets</tt> pass</a></li>
     <li><a href="#count-aa">The <tt>-count-aa</tt> pass</a></li>
     <li><a href="#aa-eval">The <tt>-aa-eval</tt> pass</a></li>
-    </ul>
-  </ul>
-
-  <p><b>Written by <a href="mailto:sabre@nondot.org">Chris Lattner</a></b></p>
+    </ul></li>
 </ol>
 
+<div class="doc_text">    
+  <p><b>Written by <a href="mailto:sabre@nondot.org">Chris Lattner</a></b></p>
+</div>
 
 <!-- *********************************************************************** -->
 <div class="doc_section">
@@ -113,17 +114,15 @@ mod/ref information for arbitrary instructions.
 </div>
 
 <div class="doc_text">
-<p>
-Most importantly, the AliasAnalysis class provides several methods which are
+
+<p>Most importantly, the AliasAnalysis class provides several methods which are
 used to query whether or not pointers alias, whether function calls can modify
-or read memory, etc.
-</p>
-<p>
-Representing memory objects as a starting address and a size is critically
+or read memory, etc.</p>
+
+<p>Representing memory objects as a starting address and a size is critically
 important for precise Alias Analyses.  For example, consider this (silly) C
-code:
-</p>
-<p>
+code:</p>
+
 <pre>
   int i;
   char C[2];
@@ -134,15 +133,13 @@ code:
     C[1] = A[9-i];        /* One byte store */
   }
 </pre>
-</p>
-<p>
-In this case, the <tt>basicaa</tt> pass will disambiguate the stores to
+
+<p>In this case, the <tt>basicaa</tt> pass will disambiguate the stores to
 <tt>C[0]</tt> and <tt>C[1]</tt> because they are accesses to two distinct
 locations one byte apart, and the accesses are each one byte.  In this case, the
 LICM pass can use store motion to remove the stores from the loop.  In
-constrast, the following code:
-</p>
-<p>
+constrast, the following code:</p>
+
 <pre>
   int i;
   char C[2];
@@ -153,13 +150,12 @@ constrast, the following code:
     C[1] = A[9-i];          /* One byte store */
   }
 </pre>
-</p>
-<p>
-In this case, the two stores to C do alias each other, because the access to the
-<tt>&amp;C[0]</tt> element is a two byte access.  If size information wasn't
+
+<p>In this case, the two stores to C do alias each other, because the access to
+the <tt>&amp;C[0]</tt> element is a two byte access.  If size information wasn't
 available in the query, even the first case would have to conservatively assume
-that the accesses alias.
-</p>
+that the accesses alias.</p>
+
 </div>
 
 <!-- ======================================================================= -->
@@ -168,18 +164,17 @@ that the accesses alias.
 </div>
 
 <div class="doc_text">
-<p>
-An Alias Analysis implementation can return one of three responses: MustAlias,
-MayAlias, and NoAlias.  The No and May alias results are obvious: if the two
-pointers may never equal each other, return NoAlias, if they might, return
-MayAlias.
-</p>
-<p>
-The Must Alias response is trickier though.  In LLVM, the Must Alias response
+
+<p>An Alias Analysis implementation can return one of three responses:
+MustAlias, MayAlias, and NoAlias.  The No and May alias results are obvious: if
+the two pointers may never equal each other, return NoAlias, if they might,
+return MayAlias.</p>
+
+<p>The Must Alias response is trickier though.  In LLVM, the Must Alias response
 may only be returned if the two memory objects are guaranteed to always start at
 exactly the same location.  If two memory objects overlap, but do not start at
-the same location, MayAlias must be returned.
-</p>
+the same location, MayAlias must be returned.</p>
+
 </div>
 
 <!-- ======================================================================= -->
@@ -188,12 +183,12 @@ the same location, MayAlias must be returned.
 </div>
 
 <div class="doc_text">
-<p>
-The <tt>getModRefInfo</tt> methods return information about whether the
+
+<p>The <tt>getModRefInfo</tt> methods return information about whether the
 execution of an instruction can read or modify a memory location.  Mod/Ref
 information is always conservative: if an action <b>may</b> read a location, Ref
-is returned.
-</p>
+is returned.</p>
+
 </div>
 
 <!-- *********************************************************************** -->
@@ -203,13 +198,13 @@ is returned.
 <!-- *********************************************************************** -->
 
 <div class="doc_text">
-<p>
-Writing a new alias analysis implementation for LLVM is quite straight-forward.
-There are already several implementations that you can use for examples, and the
-following information should help fill in any details.  For a minimal example,
-take a look at the <a href="/doxygen/structNoAA.html"><tt>no-aa</tt></a>
-implementation.
-</p>
+
+<p>Writing a new alias analysis implementation for LLVM is quite
+straight-forward.  There are already several implementations that you can use
+for examples, and the following information should help fill in any details.
+For a minimal example, take a look at the <a
+href="/doxygen/structNoAA.html"><tt>no-aa</tt></a> implementation.</p>
+
 </div>
 
 <!-- ======================================================================= -->
@@ -218,13 +213,13 @@ implementation.
 </div>
 
 <div class="doc_text">
-<p>
-The first step to determining what type of <a href="WritingAnLLVMPass.html">LLVM
-pass</a> you need to use for your Alias Analysis.  As is the case with most
-other analyses and transformations, the answer should be fairly obvious from
-what type of problem you are trying to solve:
-</p>
-<p>
+
+<p>The first step to determining what type of <a
+href="WritingAnLLVMPass.html">LLVM pass</a> you need to use for your Alias
+Analysis.  As is the case with most other analyses and transformations, the
+answer should be fairly obvious from what type of problem you are trying to
+solve:</p>
+
 <ol>
   <li>If you require interprocedural analysis, it should be a
       <tt>Pass</tt>.</li>
@@ -233,13 +228,12 @@ what type of problem you are trying to solve:
   <li>If you don't need to look at the program at all, subclass 
       <tt>ImmutablePass</tt>.</li>
 </ol>
-</p>
-<p>
-In addition to the pass that you subclass, you should also inherit from the
+
+<p>In addition to the pass that you subclass, you should also inherit from the
 <tt>AliasAnalysis</tt> interface, of course, and use the
 <tt>RegisterAnalysisGroup</tt> template to register as an implementation of
-<tt>AliasAnalysis</tt>.
-</p>
+<tt>AliasAnalysis</tt>.</p>
+
 </div>
 
 <!-- ======================================================================= -->
@@ -248,31 +242,28 @@ In addition to the pass that you subclass, you should also inherit from the
 </div>
 
 <div class="doc_text">
-<p>
-Your subclass of AliasAnalysis is required to invoke two methods on the
+
+<p>Your subclass of AliasAnalysis is required to invoke two methods on the
 AliasAnalysis base class: <tt>getAnalysisUsage</tt> and
 <tt>InitializeAliasAnalysis</tt>.  In particular, your implementation of
 <tt>getAnalysisUsage</tt> should explicitly call into the
 <tt>AliasAnalysis::getAnalysisUsage</tt> method in addition to doing any
 declaring any pass dependencies your pass has.  Thus you should have something
-like this:
-</p>
-<p>
+like this:</p>
+
 <pre>
     void getAnalysisUsage(AnalysisUsage &amp;AU) const {
       AliasAnalysis::getAnalysisUsage(AU);
       <i>// declare your dependencies here.</i>
     }
 </pre>
-</p>
-<p>
-Additionally, your must invoke the <tt>InitializeAliasAnalysis</tt> method from
-your analysis run method (<tt>run</tt> for a <tt>Pass</tt>,
+
+<p>Additionally, your must invoke the <tt>InitializeAliasAnalysis</tt> method
+from your analysis run method (<tt>run</tt> for a <tt>Pass</tt>,
 <tt>runOnFunction</tt> for a <tt>FunctionPass</tt>, <tt>runOnBasicBlock</tt> for
 a <tt>BasicBlockPass</tt>, or <tt>InitializeAliasAnalysis</tt> for an
-<tt>ImmutablePass</tt>).  For example (as part of a <tt>Pass</tt>):
-</p>
-<p>
+<tt>ImmutablePass</tt>).  For example (as part of a <tt>Pass</tt>):</p>
+
 <pre>
     bool run(Module &amp;M) {
       InitializeAliasAnalysis(this);
@@ -280,7 +271,7 @@ a <tt>BasicBlockPass</tt>, or <tt>InitializeAliasAnalysis</tt> for an
       return false;
     }
 </pre>
-</p>
+
 </div>
 
 <!-- ======================================================================= -->
@@ -289,13 +280,13 @@ a <tt>BasicBlockPass</tt>, or <tt>InitializeAliasAnalysis</tt> for an
 </div>
 
 <div class="doc_text">
-<p>
-All of the <a href="/doxygen/classAliasAnalysis.html">AliasAnalysis</a> virtual
-methods default to providing conservatively correct information (returning "May"
-Alias and "Mod/Ref" for alias and mod/ref queries respectively).  Depending on
-the capabilities of the analysis you are implementing, you just override the
-interfaces you can improve.
-</p>
+
+<p>All of the <a href="/doxygen/classAliasAnalysis.html">AliasAnalysis</a>
+virtual methods default to providing conservatively correct information
+(returning "May" Alias and "Mod/Ref" for alias and mod/ref queries
+respectively).  Depending on the capabilities of the analysis you are
+implementing, you just override the interfaces you can improve.</p>
+
 </div>
 
 <!-- ======================================================================= -->
@@ -304,15 +295,15 @@ interfaces you can improve.
 </div>
 
 <div class="doc_text">
-<p>
-With only two special exceptions (the <tt>basicaa</tt> and <a
+
+<p>With only two special exceptions (the <tt>basicaa</tt> and <a
 href="#no-aa"><tt>no-aa</tt></a> passes) every alias analysis pass should chain
 to another alias analysis implementation (for example, you could specify
 "<tt>-basic-aa -ds-aa -andersens-aa -licm</tt>" to get the maximum benefit from
 the three alias analyses).  To do this, simply "Require" AliasAnalysis in your
 <tt>getAnalysisUsage</tt> method, and if you need to return a conservative
-MayAlias or Mod/Ref result, simply chain to a lower analysis.
-</p>
+MayAlias or Mod/Ref result, simply chain to a lower analysis.</p>
+
 </div>
 
 <!-- ======================================================================= -->
@@ -321,14 +312,14 @@ MayAlias or Mod/Ref result, simply chain to a lower analysis.
 </div>
 
 <div class="doc_text">
-<p>
-From the LLVM perspective, the only thing you need to do to provide an efficient
-alias analysis is to make sure that alias analysis <b>queries</b> are serviced
-quickly.  The actual calculation of the alias analysis results (the "run"
-method) is only performed once, but many (perhaps duplicate) queries may be
-performed.  Because of this, try to move as much computation to the run method
-as possible (within reason).
-</p>
+
+<p>From the LLVM perspective, the only thing you need to do to provide an
+efficient alias analysis is to make sure that alias analysis <b>queries</b> are
+serviced quickly.  The actual calculation of the alias analysis results (the
+"run" method) is only performed once, but many (perhaps duplicate) queries may
+be performed.  Because of this, try to move as much computation to the run
+method as possible (within reason).</p>
+
 </div>
 
 <!-- *********************************************************************** -->
@@ -338,10 +329,10 @@ as possible (within reason).
 <!-- *********************************************************************** -->
 
 <div class="doc_text">
-<p>
-There are several different ways to use alias analysis results.  In order of
-preference, these are...
-</p>
+
+<p>There are several different ways to use alias analysis results.  In order of
+preference, these are...</p>
+
 </div>
 
 <!-- ======================================================================= -->
@@ -350,13 +341,13 @@ preference, these are...
 </div>
 
 <div class="doc_text">
-<p>
-The <tt>load-vn</tt> pass uses alias analysis to provide value numbering
+
+<p>The <tt>load-vn</tt> pass uses alias analysis to provide value numbering
 information for <tt>load</tt> instructions.  If your analysis or transformation
 can be modelled in a form that uses value numbering information, you don't have
 to do anything special to handle load instructions: just use the
-<tt>load-vn</tt> pass, which uses alias analysis.
-</p>
+<tt>load-vn</tt> pass, which uses alias analysis.</p>
+
 </div>
 
 <!-- ======================================================================= -->
@@ -365,36 +356,33 @@ to do anything special to handle load instructions: just use the
 </div>
 
 <div class="doc_text">
-<p>
-Many transformations need information about alias <b>sets</b> that are active in
-some scope, rather than information about pairwise aliasing.  The <tt><a
+
+<p>Many transformations need information about alias <b>sets</b> that are active
+in some scope, rather than information about pairwise aliasing.  The <tt><a
 href="/doxygen/classAliasSetTracker.html">AliasSetTracker</a></tt> class is used
 to efficiently build these Alias Sets from the pairwise alias analysis
-information provided by the AliasAnalysis interface.
-</p>
-<p>
-First you initialize the AliasSetTracker by use the "<tt>add</tt>" methods to
+information provided by the AliasAnalysis interface.</p>
+
+<p>First you initialize the AliasSetTracker by use the "<tt>add</tt>" methods to
 add information about various potentially aliasing instructions in the scope you
 are interested in.  Once all of the alias sets are completed, your pass should
 simply iterate through the constructed alias sets, using the AliasSetTracker
-<tt>begin()</tt>/<tt>end()</tt> methods.
-</p>
-<p>
-The <tt>AliasSet</tt>s formed by the <tt>AliasSetTracker</tt> are guaranteed to
-be disjoint, calculate mod/ref information for the set, and keep track of
+<tt>begin()</tt>/<tt>end()</tt> methods.</p>
+
+<p>The <tt>AliasSet</tt>s formed by the <tt>AliasSetTracker</tt> are guaranteed
+to be disjoint, calculate mod/ref information for the set, and keep track of
 whether or not all of the pointers in the set are Must aliases.  The
 AliasSetTracker also makes sure that sets are properly folded due to call
-instructions, and can provide a list of pointers in each set.
-</p>
-<p>
-As an example user of this, the <a href="/doxygen/structLICM.html">Loop
+instructions, and can provide a list of pointers in each set.</p>
+
+<p>As an example user of this, the <a href="/doxygen/structLICM.html">Loop
 Invariant Code Motion</a> pass uses AliasSetTrackers to build alias information
 about each loop nest.  If an AliasSet in a loop is not modified, then all load
 instructions from that set may be hoisted out of the loop.  If any alias sets
 are stored <b>and</b> are must alias sets, then the stores may be sunk to
 outside of the loop.  Both of these transformations obviously only apply if the
-pointer argument is loop-invariant.
-</p>
+pointer argument is loop-invariant.</p>
+
 </div>
 
 <!-- ======================================================================= -->
@@ -403,12 +391,12 @@ pointer argument is loop-invariant.
 </div>
 
 <div class="doc_text">
-<p>
-As a last resort, your pass could use the AliasAnalysis interface directly to
+
+<p>As a last resort, your pass could use the AliasAnalysis interface directly to
 service your pass.  If you find the need to do this, please <a
 href="mailto:sabre@nondot.org">let me know</a> so I can see if something new
-needs to be added to LLVM.
-</p>
+needs to be added to LLVM.</p>
+
 </div>
 
 <!-- *********************************************************************** -->
@@ -418,10 +406,11 @@ needs to be added to LLVM.
 <!-- *********************************************************************** -->
 
 <div class="doc_text">
-<p>
-If you're going to be working with the AliasAnalysis infrastructure, there are
-several nice tools that may be useful for you and are worth knowing about...
-</p>
+
+<p>If you're going to be working with the AliasAnalysis infrastructure, there
+are several nice tools that may be useful for you and are worth knowing
+about...</p>
+
 </div>
 
 <!-- ======================================================================= -->
@@ -430,13 +419,13 @@ several nice tools that may be useful for you and are worth knowing about...
 </div>
 
 <div class="doc_text">
-<p>
-The <tt>-no-aa</tt> analysis is just like what it sounds: an alias analysis that
-never returns any useful information.  This pass can be useful if you think that
-alias analysis is doing something wrong and are trying to narrow down a problem.
-If you don't specify an alias analysis, the default will be to use the
-<tt>basicaa</tt> pass which does quite a bit of disambiguation on its own.
-</p>
+
+<p>The <tt>-no-aa</tt> analysis is just like what it sounds: an alias analysis
+that never returns any useful information.  This pass can be useful if you think
+that alias analysis is doing something wrong and are trying to narrow down a
+problem.  If you don't specify an alias analysis, the default will be to use the
+<tt>basicaa</tt> pass which does quite a bit of disambiguation on its own.</p>
+
 </div>
 
 
@@ -446,12 +435,12 @@ If you don't specify an alias analysis, the default will be to use the
 </div>
 
 <div class="doc_text">
-<p>
-The <tt>-print-alias-sets</tt> pass is exposed as part of the <tt>analyze</tt>
-tool to print out the Alias Sets formed by the <a
+
+<p>The <tt>-print-alias-sets</tt> pass is exposed as part of the
+<tt>analyze</tt> tool to print out the Alias Sets formed by the <a
 href="#ast"><tt>AliasSetTracker</tt></a> class.  This is useful if you're using
-the <tt>AliasSetTracker</tt>.
-</p>
+the <tt>AliasSetTracker</tt>.</p>
+
 </div>
 
 <!-- ======================================================================= -->
@@ -460,22 +449,20 @@ the <tt>AliasSetTracker</tt>.
 </div>
 
 <div class="doc_text">
-<p>
-The <tt>-count-aa</tt> pass is useful to see how many queries a particular pass
-is making and what kinds of responses are returned by the alias analysis.  An
-example usage is:
-</p>
-<p>
+
+<p>The <tt>-count-aa</tt> pass is useful to see how many queries a particular
+pass is making and what kinds of responses are returned by the alias analysis.
+An example usage is:</p>
+
 <pre>
   $ opt -basicaa -count-aa -ds-aa -count-aa -licm
 </pre>
-</p>
-<p>
-Which will print out how many queries (and what responses are returned) by the
-<tt>-licm</tt> pass (of the <tt>-ds-aa</tt> pass) and how many queries are made
-of the <tt>-basicaa</tt> pass by the <tt>-ds-aa</tt> pass.  This can be useful
-when evaluating an alias analysis for precision.
-</p>
+
+<p>Which will print out how many queries (and what responses are returned) by
+the <tt>-licm</tt> pass (of the <tt>-ds-aa</tt> pass) and how many queries are
+made of the <tt>-basicaa</tt> pass by the <tt>-ds-aa</tt> pass.  This can be
+useful when evaluating an alias analysis for precision.</p>
+
 </div>
 
 <!-- ======================================================================= -->
@@ -484,20 +471,22 @@ when evaluating an alias analysis for precision.
 </div>
 
 <div class="doc_text">
-<p>
-The <tt>-aa-eval</tt> pass simply iterates through all pairs of pointers in a
+
+<p>The <tt>-aa-eval</tt> pass simply iterates through all pairs of pointers in a
 function and asks an alias analysis whether or not the pointers alias.  This
 gives an indication of the precision of the alias analysis.  Statistics are
 printed.
 </p>
+
 </div>
 
 <!-- *********************************************************************** -->
 
-<hr><font size="-1">
-<address><a href="mailto:sabre@nondot.org">Chris Lattner</a></address>
-Last modified: $Date$
-</font>
+<hr>
+<div class="doc_footer">
+  <address><a href="mailto:sabre@nondot.org">Chris Lattner</a></address>
+  Last modified: $Date$
+</div>
 
 </body>
 </html>
