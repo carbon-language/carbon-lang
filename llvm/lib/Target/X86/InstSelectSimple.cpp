@@ -1158,6 +1158,7 @@ void ISel::LowerUnknownIntrinsicFunctionCalls(Function &F) {
           case Intrinsic::va_copy:
           case Intrinsic::va_end:
           case Intrinsic::memcpy:
+          case Intrinsic::memset:
             // We directly implement these intrinsics
             break;
           default:
@@ -1200,7 +1201,7 @@ void ISel::visitIntrinsicCall(Intrinsic::ID ID, CallInst &CI) {
     // Turn the byte code into # iterations
     unsigned ByteReg;
     unsigned CountReg;
-    
+    unsigned Opcode;
     switch (Align & 3) {
     case 2:   // WORD aligned
       if (ConstantInt *I = dyn_cast<ConstantInt>(CI.getOperand(3))) {
@@ -1209,6 +1210,7 @@ void ISel::visitIntrinsicCall(Intrinsic::ID ID, CallInst &CI) {
         CountReg = makeAnotherReg(Type::IntTy);
         BuildMI(BB, X86::SHRir32, 2, CountReg).addReg(ByteReg).addZImm(1);
       }
+      Opcode = X86::REP_MOVSW;
       break;
     case 0:   // DWORD aligned
       if (ConstantInt *I = dyn_cast<ConstantInt>(CI.getOperand(3))) {
@@ -1217,10 +1219,12 @@ void ISel::visitIntrinsicCall(Intrinsic::ID ID, CallInst &CI) {
         CountReg = makeAnotherReg(Type::IntTy);
         BuildMI(BB, X86::SHRir32, 2, CountReg).addReg(ByteReg).addZImm(2);
       }
+      Opcode = X86::REP_MOVSD;
       break;
     case 1:   // BYTE aligned
     case 3:   // BYTE aligned
       CountReg = getReg(CI.getOperand(3));
+      Opcode = X86::REP_MOVSB;
       break;
     }
 
@@ -1231,20 +1235,70 @@ void ISel::visitIntrinsicCall(Intrinsic::ID ID, CallInst &CI) {
     BuildMI(BB, X86::MOVrr32, 1, X86::ECX).addReg(CountReg);
     BuildMI(BB, X86::MOVrr32, 1, X86::EDI).addReg(TmpReg1);
     BuildMI(BB, X86::MOVrr32, 1, X86::ESI).addReg(TmpReg2);
-
-    switch (Align & 3) {
-    case 1:   // BYTE aligned
-    case 3:   // BYTE aligned
-      BuildMI(BB, X86::REP_MOVSB, 0);
-      break;
-    case 2:   // WORD aligned
-      BuildMI(BB, X86::REP_MOVSW, 0);
-      break;
-    case 0:   // DWORD aligned
-      BuildMI(BB, X86::REP_MOVSD, 0);
-      break;
+    BuildMI(BB, Opcode, 0);
+    return;
+  }
+  case Intrinsic::memset: {
+    assert(CI.getNumOperands() == 5 && "Illegal llvm.memset call!");
+    unsigned Align = 1;
+    if (ConstantInt *AlignC = dyn_cast<ConstantInt>(CI.getOperand(4))) {
+      Align = AlignC->getRawValue();
+      if (Align == 0) Align = 1;
     }
 
+    // Turn the byte code into # iterations
+    unsigned ByteReg;
+    unsigned CountReg;
+    unsigned Opcode;
+    if (ConstantInt *ValC = dyn_cast<ConstantInt>(CI.getOperand(2))) {
+      unsigned Val = ValC->getRawValue() & 255;
+
+      // If the value is a constant, then we can potentially use larger copies.
+      switch (Align & 3) {
+      case 2:   // WORD aligned
+        if (ConstantInt *I = dyn_cast<ConstantInt>(CI.getOperand(3))) {
+          CountReg = getReg(ConstantUInt::get(Type::UIntTy, I->getRawValue()/2));
+        } else {
+          CountReg = makeAnotherReg(Type::IntTy);
+          BuildMI(BB, X86::SHRir32, 2, CountReg).addReg(ByteReg).addZImm(1);
+        }
+        BuildMI(BB, X86::MOVir16, 1, X86::AX).addZImm((Val << 8) | Val);
+        Opcode = X86::REP_STOSW;
+        break;
+      case 0:   // DWORD aligned
+        if (ConstantInt *I = dyn_cast<ConstantInt>(CI.getOperand(3))) {
+          CountReg = getReg(ConstantUInt::get(Type::UIntTy, I->getRawValue()/4));
+        } else {
+          CountReg = makeAnotherReg(Type::IntTy);
+          BuildMI(BB, X86::SHRir32, 2, CountReg).addReg(ByteReg).addZImm(2);
+        }
+        Val = (Val << 8) | Val;
+        BuildMI(BB, X86::MOVir32, 1, X86::EAX).addZImm((Val << 16) | Val);
+        Opcode = X86::REP_STOSD;
+        break;
+      case 1:   // BYTE aligned
+      case 3:   // BYTE aligned
+        CountReg = getReg(CI.getOperand(3));
+        BuildMI(BB, X86::MOVir8, 1, X86::AL).addZImm(Val);
+        Opcode = X86::REP_STOSB;
+        break;
+      }
+    } else {
+      // If it's not a constant value we are storing, just fall back.  We could
+      // try to be clever to form 16 bit and 32 bit values, but we don't yet.
+      unsigned ValReg = getReg(CI.getOperand(2));
+      BuildMI(BB, X86::MOVrr8, 1, X86::AL).addReg(ValReg);
+      CountReg = getReg(CI.getOperand(3));
+      Opcode = X86::REP_STOSB;
+    }
+
+    // No matter what the alignment is, we put the source in ESI, the
+    // destination in EDI, and the count in ECX.
+    TmpReg1 = getReg(CI.getOperand(1));
+    //TmpReg2 = getReg(CI.getOperand(2));
+    BuildMI(BB, X86::MOVrr32, 1, X86::ECX).addReg(CountReg);
+    BuildMI(BB, X86::MOVrr32, 1, X86::EDI).addReg(TmpReg1);
+    BuildMI(BB, Opcode, 0);
     return;
   }
 
