@@ -41,7 +41,7 @@ static RETSIGTYPE SigAlarmHandler(int Sig) {
   ShouldShowStatus = true;
 }
 
-static sighandler_t OldSigIntHandler;
+static void (*OldSigIntHandler) (int);
 
 
 SlowOperationInformer::SlowOperationInformer(const std::string &Name)
