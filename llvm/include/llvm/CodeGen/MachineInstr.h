@@ -128,7 +128,7 @@ private:
   int regNum;	                // register number for an explicit register
                                 // will be set for a value after reg allocation
 private:
-  MachineOperand(int64_t ImmVal = 0, MachineOperandType OpTy = MO_VirtualRegister)
+  MachineOperand(int ImmVal = 0, MachineOperandType OpTy = MO_VirtualRegister)
     : immedVal(ImmVal),
       flags(0),
       opType(OpTy),
@@ -228,8 +228,8 @@ public:
     assert(opType == MO_MachineRegister);
     return regNum;
   }
-  int64_t getImmedValue() const { assert(isImmediate()); return immedVal; }
-  void setImmedValue(int64_t ImmVal) { assert(isImmediate()); immedVal=ImmVal; }
+  int getImmedValue() const { assert(isImmediate()); return immedVal; }
+  void setImmedValue(int ImmVal) { assert(isImmediate()); immedVal = ImmVal; }
 
   MachineBasicBlock *getMachineBasicBlock() const {
     assert(isMachineBasicBlock() && "Can't get MBB in non-MBB operand!");
@@ -522,7 +522,7 @@ public:
   /// addZeroExtImmOperand - Add a zero extended constant argument to the
   /// machine instruction.
   ///
-  void addZeroExtImmOperand(int64_t intValue) {
+  void addZeroExtImmOperand(int intValue) {
     assert(!OperandsComplete() &&
            "Trying to add an operand to a machine instr that is already done!");
     operands.push_back(
@@ -532,7 +532,7 @@ public:
   /// addSignExtImmOperand - Add a zero extended constant argument to the
   /// machine instruction.
   ///
-  void addSignExtImmOperand(int64_t intValue) {
+  void addSignExtImmOperand(int intValue) {
     assert(!OperandsComplete() &&
            "Trying to add an operand to a machine instr that is already done!");
     operands.push_back(
@@ -600,13 +600,13 @@ public:
 
   // Access to set the operands when building the machine instruction
   // 
-  void SetMachineOperandVal     (unsigned i,
-                                 MachineOperand::MachineOperandType operandType,
-                                 Value* V);
+  void SetMachineOperandVal(unsigned i,
+                            MachineOperand::MachineOperandType operandType,
+                            Value* V);
 
-  void SetMachineOperandConst   (unsigned i,
-                                 MachineOperand::MachineOperandType operandType,
-                                 int64_t intValue);
+  void SetMachineOperandConst(unsigned i,
+                              MachineOperand::MachineOperandType operandType,
+                              int intValue);
 
   void SetMachineOperandReg(unsigned i, int regNum);
 

@@ -80,23 +80,29 @@ public:
 
   /// addMReg - Add a machine register operand...
   ///
-  const MachineInstrBuilder &addMReg(
-    int Reg,
-    MachineOperand::UseType Ty = MachineOperand::Use) const {
+  const MachineInstrBuilder &addMReg(int Reg, MachineOperand::UseType Ty
+                                        = MachineOperand::Use) const {
     MI->addMachineRegOperand(Reg, Ty);
+    return *this;
+  }
+  
+  /// addImm - Add a new immediate operand.
+  ///
+  const MachineInstrBuilder &addImm(int Val) const {
+    MI->addZeroExtImmOperand(Val);
     return *this;
   }
 
   /// addSImm - Add a new sign extended immediate operand...
   ///
-  const MachineInstrBuilder &addSImm(int64_t val) const {
+  const MachineInstrBuilder &addSImm(int val) const {
     MI->addSignExtImmOperand(val);
     return *this;
   }
 
   /// addZImm - Add a new zero extended immediate operand...
   ///
-  const MachineInstrBuilder &addZImm(int64_t Val) const {
+  const MachineInstrBuilder &addZImm(unsigned Val) const {
     MI->addZeroExtImmOperand(Val);
     return *this;
   }
