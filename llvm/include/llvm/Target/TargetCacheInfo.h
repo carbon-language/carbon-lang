@@ -12,7 +12,6 @@
 
 #include "llvm/Target/TargetMachine.h"
 #include "Support/DataTypes.h"
-#include <vector>
 
 
 //---------------------------------------------------------------------------
