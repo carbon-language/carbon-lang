@@ -310,7 +310,8 @@ private:
 					 const TargetMachine& target);
   
   void		addSSAEdge		(SchedGraphNode* node,
-					 const Value* val,
+                                         const Instruction* defVMInstr,
+                                         const Value* defValue,
 					 const TargetMachine& target);
   
   void		addNonSSAEdgesForValue	(const Instruction* instr,
