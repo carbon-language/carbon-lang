@@ -81,16 +81,16 @@ HANDLE_TERM_INST  ( 4, Invoke, InvokeInst)
 
 // Standard binary operators...
  FIRST_BINARY_INST( 6)
-HANDLE_BINARY_INST( 6, Add   , GenericBinaryInst)
-HANDLE_BINARY_INST( 7, Sub   , GenericBinaryInst)
-HANDLE_BINARY_INST( 8, Mul   , GenericBinaryInst)
-HANDLE_BINARY_INST( 9, Div   , GenericBinaryInst)
-HANDLE_BINARY_INST(10, Rem   , GenericBinaryInst)
+HANDLE_BINARY_INST( 6, Add   , BinaryOperator)
+HANDLE_BINARY_INST( 7, Sub   , BinaryOperator)
+HANDLE_BINARY_INST( 8, Mul   , BinaryOperator)
+HANDLE_BINARY_INST( 9, Div   , BinaryOperator)
+HANDLE_BINARY_INST(10, Rem   , BinaryOperator)
 
 // Logical operators...
-HANDLE_BINARY_INST(11, And   , GenericBinaryInst)
-HANDLE_BINARY_INST(12, Or    , GenericBinaryInst)
-HANDLE_BINARY_INST(13, Xor   , GenericBinaryInst)
+HANDLE_BINARY_INST(11, And   , BinaryOperator)
+HANDLE_BINARY_INST(12, Or    , BinaryOperator)
+HANDLE_BINARY_INST(13, Xor   , BinaryOperator)
 
 // Binary comparison operators...
 HANDLE_BINARY_INST(14, SetEQ , SetCondInst)
