@@ -27,9 +27,19 @@
 #include "llvm/Support/MathExtras.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/CommandLine.h"
 #include <set>
 #include <algorithm>
 using namespace llvm;
+
+namespace llvm {
+  cl::opt<bool> EnableAlphaIDIV("enable-alpha-intfpdiv", 
+                             cl::desc("Use the FP div instruction for integer div when possible"), 
+                             cl::Hidden);
+  cl::opt<bool> EnableAlpha("enable-alpha-ftoi", 
+                             cl::desc("Enablue use of ftoi* and itof* instructions (ev6 and higher)"), 
+                             cl::Hidden);
+}
 
 //===----------------------------------------------------------------------===//
 //  AlphaTargetLowering - Alpha Implementation of the TargetLowering interface
@@ -1696,6 +1706,11 @@ void ISel::Select(SDOperand N) {
     Opc = N.getOpcode() == ISD::ADJCALLSTACKDOWN ? Alpha::ADJUSTSTACKDOWN :
       Alpha::ADJUSTSTACKUP;
     BuildMI(BB, Opc, 1).addImm(Tmp1);
+    return;
+
+  case ISD::PCMARKER:
+    Select(N.getOperand(0)); //Chain
+    BuildMI(BB, Alpha::PCLABEL, 2).addImm( cast<ConstantSDNode>(N.getOperand(1))->getValue());
     return;
   }
   assert(0 && "Should not be reached!");

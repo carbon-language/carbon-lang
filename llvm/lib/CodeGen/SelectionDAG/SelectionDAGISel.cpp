@@ -662,6 +662,12 @@ void SelectionDAGLowering::visitCall(CallInst &I) {
       setValue(&I, DAG.getSetCC(ISD::SETUO, MVT::i1, getValue(I.getOperand(1)),
                                 getValue(I.getOperand(2))));
       return;
+    case Intrinsic::pcmarker: {
+      SDOperand Num = getValue(I.getOperand(1));
+      DAG.setRoot(DAG.getNode(ISD::PCMARKER, MVT::Other, getRoot(), Num));
+      return;
+    }
+
     }
   
   SDOperand Callee;

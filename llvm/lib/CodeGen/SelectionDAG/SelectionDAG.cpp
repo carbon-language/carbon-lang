@@ -1099,6 +1099,7 @@ bool SDNode::hasNUsesOfValue(unsigned NUses, unsigned Value) {
 const char *SDNode::getOperationName() const {
   switch (getOpcode()) {
   default: return "<<Unknown>>";
+  case ISD::PCMARKER:      return "PCMarker";
   case ISD::EntryToken:    return "EntryToken";
   case ISD::TokenFactor:   return "TokenFactor";
   case ISD::Constant:      return "Constant";

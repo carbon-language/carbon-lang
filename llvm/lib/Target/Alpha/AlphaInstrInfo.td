@@ -30,6 +30,8 @@ def WTF : PseudoInstAlpha<(ops ), "#wtf">;
 def ADJUSTSTACKUP : PseudoInstAlpha<(ops ), "ADJUP">;
 def ADJUSTSTACKDOWN : PseudoInstAlpha<(ops ), "ADJDOWN">;
 
+def PCLABEL : PseudoInstAlpha<(ops s64imm:$num), "PCMARKER_$num:\n">;
+
 //*****************
 //These are shortcuts, the assembler expands them
 //*****************

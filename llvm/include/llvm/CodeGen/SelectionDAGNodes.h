@@ -225,6 +225,8 @@ namespace ISD {
     ADJCALLSTACKDOWN,  // Beginning of a call sequence
     ADJCALLSTACKUP,    // End of a call sequence
 
+    // PCMARKER - This corrosponds to the pcmarker intrinsic.
+    PCMARKER,
 
     // BUILTIN_OP_END - This must be the last enum value in this list.
     BUILTIN_OP_END,
