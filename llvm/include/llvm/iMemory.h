@@ -79,7 +79,7 @@ public:
 
   virtual Instruction *clone() const { 
     return new MallocInst(getType(), 
-			  Operands.size() ? (Value*)Operands[1].get() : 0);
+			  Operands.size() ? (Value*)Operands[0].get() : 0);
   }
 
   virtual const char *getOpcodeName() const { return "malloc"; }
@@ -106,7 +106,7 @@ public:
 
   virtual Instruction *clone() const { 
     return new AllocaInst(getType(),
-			  Operands.size() ? (Value*)Operands[1].get() : 0);
+			  Operands.size() ? (Value*)Operands[0].get() : 0);
   }
 
   virtual const char *getOpcodeName() const { return "alloca"; }
