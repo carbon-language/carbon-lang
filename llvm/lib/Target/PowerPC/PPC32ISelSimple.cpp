@@ -2870,7 +2870,7 @@ void PPC32ISel::emitShiftOperation(MachineBasicBlock *MBB,
           //   Select correct least significant half if the shift amount > 32
           BB = TmpMBB;
           unsigned OrReg = makeAnotherReg(Type::IntTy);
-          BuildMI(BB, PPC::OR, 2, OrReg).addReg(TmpReg6).addImm(TmpReg6);
+          BuildMI(BB, PPC::OR, 2, OrReg).addReg(TmpReg6).addReg(TmpReg6);
           TmpMBB->addSuccessor(PhiMBB);
           
           BB = PhiMBB;
