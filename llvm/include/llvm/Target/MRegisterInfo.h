@@ -107,15 +107,20 @@ public:
   const MRegisterDesc &get(unsigned RegNo) const { return operator[](RegNo); }
 
 
-  virtual void copyReg2PCRel(MachineBasicBlock *MBB,
-                             MachineBasicBlock::iterator &MBBI,
-                             unsigned SrcReg, unsigned ImmOffset,
-                             unsigned dataSize) const = 0;
+  virtual MachineBasicBlock::iterator
+  storeReg2RegOffset(MachineBasicBlock *MBB,
+                     MachineBasicBlock::iterator &MBBI,
+                     unsigned SrcReg, unsigned DestReg,
+                     unsigned ImmOffset, unsigned dataSize) const = 0;
 
-  virtual void copyPCRel2Reg(MachineBasicBlock *MBB,
-                             MachineBasicBlock::iterator &MBBI,
-                             unsigned ImmOffset, unsigned DestReg,
-                             unsigned dataSize) const = 0;
+  virtual MachineBasicBlock::iterator
+  loadRegOffset2Reg(MachineBasicBlock *MBB,
+                    MachineBasicBlock::iterator &MBBI,
+                    unsigned DestReg, unsigned SrcReg,
+                    unsigned ImmOffset, unsigned dataSize) const = 0;
+
+  virtual unsigned getFramePointer() const = 0;
+  virtual unsigned getStackPointer() const = 0;
 
   /// Register class iterators
   typedef const TargetRegisterClass* const_iterator;
