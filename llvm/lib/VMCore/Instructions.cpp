@@ -416,9 +416,9 @@ StoreInst::StoreInst(Value *Val, Value *Ptr, bool isVolatile,
 }
 
 void StoreInst::init(Value *Val, Value *Ptr) {
-  assert(isa<PointerType>(Ptr->getType()) &&
-         Val->getType() == cast<PointerType>(Ptr->getType())->getElementType()
-         && "Ptr must have pointer type.");
+  assert(isa<PointerType>(Ptr->getType()) && "Ptr must have pointer type!");
+  assert(Val->getType() == cast<PointerType>(Ptr->getType())->getElementType()
+         && "Ptr must be a pointer to Val type!");
 
   Operands.reserve(2);
   Operands.push_back(Use(Val, this));
