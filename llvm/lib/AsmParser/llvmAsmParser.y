@@ -561,6 +561,7 @@ static void ParseGlobalVariable(char *NameStr,GlobalValue::LinkageTypes Linkage,
     GV->setInitializer(Initializer);
     GV->setLinkage(Linkage);
     GV->setConstant(isConstantGlobal);
+    InsertValue(GV, CurModule.Values);
     return;
   }
 
@@ -595,8 +596,10 @@ static void ParseGlobalVariable(char *NameStr,GlobalValue::LinkageTypes Linkage,
   }
 
   // Otherwise there is no existing GV to use, create one now.
-  new GlobalVariable(Ty, isConstantGlobal, Linkage, Initializer, Name, 
-                     CurModule.CurrentModule);
+  GlobalVariable *GV =
+    new GlobalVariable(Ty, isConstantGlobal, Linkage, Initializer, Name, 
+                       CurModule.CurrentModule);
+  InsertValue(GV, CurModule.Values);
 }
 
 // setTypeName - Set the specified type to the name given.  The name may be
