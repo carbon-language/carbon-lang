@@ -14,22 +14,23 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <set>
-
+#define DEBUG_TYPE "asmprinter"
 #include "PowerPC.h"
 #include "PowerPCInstrInfo.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
 #include "llvm/Assembly/Writer.h"
-#include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
+#include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/Mangler.h"
+#include "Support/CommandLine.h"
+#include "Support/Debug.h"
 #include "Support/Statistic.h"
 #include "Support/StringExtras.h"
-#include "Support/CommandLine.h"
+#include <set>
 
 namespace llvm {
 
@@ -526,7 +527,8 @@ void Printer::printMachineInstruction(const MachineInstr *MI) {
   }
 
   O << TII.getName(MI->getOpcode()) << " ";
-  std::cout << TII.getName(MI->getOpcode()) << " expects " << ArgCount << " args\n";
+  DEBUG(std::cerr << TII.getName(MI->getOpcode()) << " expects " 
+                  << ArgCount << " args\n");
 
   if(Opcode == PPC32::LOADLoAddr) {
     printOp(MI->getOperand(0));
