@@ -26,6 +26,20 @@
 
 using namespace MOTy;  // Get Use, Def, UseAndDef
 
+
+/// BMI - A special BuildMI variant that takes an iterator to insert the
+/// instruction at as well as a basic block.
+inline static MachineInstrBuilder BMI(MachineBasicBlock *BB,
+                                      MachineBasicBlock::iterator &I,
+                                      MachineOpCode Opcode,
+                                      unsigned NumOperands,
+                                      unsigned DestReg) {
+  MachineInstr *MI = new MachineInstr(Opcode, NumOperands+1, true, true);
+  I = ++BB->insert(I, MI);
+  return MachineInstrBuilder(MI).addReg(DestReg, MOTy::Def);
+}
+
+
 namespace {
   struct ISel : public FunctionPass, InstVisitor<ISel> {
     TargetMachine &TM;
@@ -35,6 +49,9 @@ namespace {
     unsigned CurReg;
     std::map<Value*, unsigned> RegMap;  // Mapping between Val's and SSA Regs
 
+    // MBBMap - Mapping between LLVM BB -> Machine BB
+    std::map<const BasicBlock*, MachineBasicBlock*> MBBMap;
+
     ISel(TargetMachine &tm)
       : TM(tm), F(0), BB(0), CurReg(MRegisterInfo::FirstVirtualRegister) {}
 
@@ -43,8 +60,18 @@ namespace {
     ///
     bool runOnFunction(Function &Fn) {
       F = &MachineFunction::construct(&Fn, TM);
+
+      for (Function::iterator I = Fn.begin(), E = Fn.end(); I != E; ++I)
+        F->getBasicBlockList().push_back(MBBMap[I] = new MachineBasicBlock(I));
+
+      // Instruction select everything except PHI nodes
       visit(Fn);
+
+      // Select the PHI nodes
+      SelectPHINodes();
+
       RegMap.clear();
+      MBBMap.clear();
       CurReg = MRegisterInfo::FirstVirtualRegister;
       F = 0;
       return false;  // We never modify the LLVM itself.
@@ -56,10 +83,15 @@ namespace {
     /// instructions will be invoked for all instructions in the basic block.
     ///
     void visitBasicBlock(BasicBlock &LLVM_BB) {
-      BB = new MachineBasicBlock(&LLVM_BB);
-      // FIXME: Use the auto-insert form when it's available
-      F->getBasicBlockList().push_back(BB);
+      BB = MBBMap[&LLVM_BB];
     }
+
+
+    /// SelectPHINodes - Insert machine code to generate phis.  This is tricky
+    /// because we have to generate our sources into the source basic blocks,
+    /// not the current one.
+    ///
+    void SelectPHINodes();
 
     // Visitation methods for various instructions.  These methods simply emit
     // fixed X86 code for each instruction.
@@ -106,7 +138,7 @@ namespace {
     
     // Other operators
     void visitShiftInst(ShiftInst &I);
-    void visitPHINode(PHINode &I);
+    void visitPHINode(PHINode &I) {}      // PHI nodes handled by second pass
     void visitCastInst(CastInst &I);
 
     void visitInstruction(Instruction &I) {
@@ -120,13 +152,16 @@ namespace {
     // emitGEPOperation - Common code shared between visitGetElementPtrInst and
     // constant expression GEP support.
     //
-    void emitGEPOperation(Value *Src, User::op_iterator IdxBegin,
+    void emitGEPOperation(MachineBasicBlock *BB, MachineBasicBlock::iterator IP,
+                          Value *Src, User::op_iterator IdxBegin,
                           User::op_iterator IdxEnd, unsigned TargetReg);
 
     /// copyConstantToRegister - Output the instructions required to put the
     /// specified constant into the specified register.
     ///
-    void copyConstantToRegister(Constant *C, unsigned Reg);
+    void copyConstantToRegister(Constant *C, unsigned Reg,
+                                MachineBasicBlock *MBB,
+                                MachineBasicBlock::iterator MBBI);
 
     /// makeAnotherReg - This method returns the next register number
     /// we haven't yet used.
@@ -141,7 +176,15 @@ namespace {
     /// every time it is queried.
     ///
     unsigned getReg(Value &V) { return getReg(&V); }  // Allow references
-    unsigned getReg(Value *V) {
+    unsigned getReg(Value *V, MachineBasicBlock *BB = 0) {
+      MachineBasicBlock::iterator IPt;
+      if (BB == 0) {    // Should we just append to the end of the current bb?
+        BB = this->BB;
+        IPt = BB->end();
+      } else {          // Otherwise, insert before the branch or ret instr...
+        IPt = BB->end()-1;
+      }
+
       unsigned &Reg = RegMap[V];
       if (Reg == 0) {
         Reg = makeAnotherReg(V->getType());
@@ -152,10 +195,10 @@ namespace {
       // the register here...
       //
       if (Constant *C = dyn_cast<Constant>(V)) {
-        copyConstantToRegister(C, Reg);
+        copyConstantToRegister(C, Reg, BB, IPt);
       } else if (GlobalValue *GV = dyn_cast<GlobalValue>(V)) {
         // Move the address of the global into the register
-        BuildMI(BB, X86::MOVir32, 1, Reg).addReg(GV);
+        BMI(BB, IPt, X86::MOVir32, 1, Reg).addReg(GV);
       } else if (Argument *A = dyn_cast<Argument>(V)) {
 	// Find the position of the argument in the argument list.
 	const Function *f = F->getFunction ();
@@ -164,19 +207,19 @@ namespace {
 	// [EBP + 4] -- return address
 	// [EBP + 8] -- first argument (leftmost lexically)
 	// So we want to start with counter = 2.
-	int counter = 2, argPosition = -1;
+	int counter = 2, argPos = -1;
 	for (Function::const_aiterator ai = f->abegin (), ae = f->aend ();
 	     ai != ae; ++ai) {
 	  if (&(*ai) == A) {
-	    argPosition = counter;
+	    argPos = counter;
 	    break; // Only need to find it once. ;-)
 	  }
 	  ++counter;
 	}
-	assert (argPosition != -1
+	assert (argPos != -1
 		&& "Argument not found in current function's argument list");
-	// Load it out of the stack frame at EBP + 4*argPosition.
-	addRegOffset (BuildMI (BB, X86::MOVmr32, 4, Reg), X86::EBP, 4*argPosition);
+	// Load it out of the stack frame at EBP + 4*argPos.
+	addRegOffset(BMI(BB, IPt, X86::MOVmr32, 4, Reg), X86::EBP, 4*argPos);
       }
 
       return Reg;
@@ -220,10 +263,13 @@ static inline TypeClass getClass(const Type *Ty) {
 /// copyConstantToRegister - Output the instructions required to put the
 /// specified constant into the specified register.
 ///
-void ISel::copyConstantToRegister(Constant *C, unsigned R) {
+void ISel::copyConstantToRegister(Constant *C, unsigned R,
+                                  MachineBasicBlock *BB,
+                                  MachineBasicBlock::iterator IP) {
   if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C)) {
     if (CE->getOpcode() == Instruction::GetElementPtr) {
-      emitGEPOperation(CE->getOperand(0), CE->op_begin()+1, CE->op_end(), R);
+      emitGEPOperation(BB, IP, CE->getOperand(0),
+                       CE->op_begin()+1, CE->op_end(), R);
       return;
     }
 
@@ -241,22 +287,56 @@ void ISel::copyConstantToRegister(Constant *C, unsigned R) {
 
     if (C->getType()->isSigned()) {
       ConstantSInt *CSI = cast<ConstantSInt>(C);
-      BuildMI(BB, IntegralOpcodeTab[Class], 1, R).addSImm(CSI->getValue());
+      BMI(BB, IP, IntegralOpcodeTab[Class], 1, R).addSImm(CSI->getValue());
     } else {
       ConstantUInt *CUI = cast<ConstantUInt>(C);
-      BuildMI(BB, IntegralOpcodeTab[Class], 1, R).addZImm(CUI->getValue());
+      BMI(BB, IP, IntegralOpcodeTab[Class], 1, R).addZImm(CUI->getValue());
     }
   } else if (isa <ConstantPointerNull> (C)) {
     // Copy zero (null pointer) to the register.
-    BuildMI (BB, X86::MOVir32, 1, R).addZImm(0);
+    BMI(BB, IP, X86::MOVir32, 1, R).addZImm(0);
   } else if (ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(C)) {
     unsigned SrcReg = getReg(CPR->getValue());
-    BuildMI (BB, X86::MOVrr32, 1, R).addReg(SrcReg);
+    BMI(BB, IP, X86::MOVrr32, 1, R).addReg(SrcReg);
   } else {
     std::cerr << "Offending constant: " << C << "\n";
     assert(0 && "Type not handled yet!");
   }
 }
+
+/// SelectPHINodes - Insert machine code to generate phis.  This is tricky
+/// because we have to generate our sources into the source basic blocks, not
+/// the current one.
+///
+void ISel::SelectPHINodes() {
+  const Function &LF = *F->getFunction();  // The LLVM function...
+  for (Function::const_iterator I = LF.begin(), E = LF.end(); I != E; ++I) {
+    const BasicBlock *BB = I;
+    MachineBasicBlock *MBB = MBBMap[I];
+
+    // Loop over all of the PHI nodes in the LLVM basic block...
+    unsigned NumPHIs = 0;
+    for (BasicBlock::const_iterator I = BB->begin();
+         PHINode *PN = (PHINode*)dyn_cast<PHINode>(&*I); ++I) {
+      // Create a new machine instr PHI node, and insert it.
+      MachineInstr *MI = BuildMI(X86::PHI, PN->getNumOperands(), getReg(*PN));
+      MBB->insert(MBB->begin()+NumPHIs++, MI); // Insert it at the top of the BB
+
+      for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i) {
+        MachineBasicBlock *PredMBB = MBBMap[PN->getIncomingBlock(i)];
+
+        // Get the incoming value into a virtual register.  If it is not already
+        // available in a virtual register, insert the computation code into
+        // PredMBB
+        MI->addRegOperand(getReg(PN->getIncomingValue(i), PredMBB));
+
+        // FIXME: Pass in the MachineBasicBlocks instead of the basic blocks...
+        MI->addPCDispOperand(PN->getIncomingBlock(i));  // PredMBB
+      }
+    }
+  }
+}
+
 
 
 /// SetCC instructions - Here we just emit boilerplate code to set a byte-sized
@@ -731,20 +811,6 @@ void ISel::visitStoreInst(StoreInst &I) {
 }
 
 
-/// visitPHINode - Turn an LLVM PHI node into an X86 PHI node...
-///
-void ISel::visitPHINode(PHINode &PN) {
-  MachineInstr *MI = BuildMI(BB, X86::PHI, PN.getNumOperands(), getReg(PN));
-
-  for (unsigned i = 0, e = PN.getNumIncomingValues(); i != e; ++i) {
-    // FIXME: This will put constants after the PHI nodes in the block, which
-    // is invalid.  They should be put inline into the PHI node eventually.
-    //
-    MI->addRegOperand(getReg(PN.getIncomingValue(i)));
-    MI->addPCDispOperand(PN.getIncomingBlock(i));
-  }
-}
-
 /// visitCastInst - Here we have various kinds of copying with or without
 /// sign extension going on.
 void
@@ -837,10 +903,13 @@ ISel::visitCastInst (CastInst &CI)
 void
 ISel::visitGetElementPtrInst (GetElementPtrInst &I)
 {
-  emitGEPOperation(I.getOperand(0), I.op_begin()+1, I.op_end(), getReg(I));
+  emitGEPOperation(BB, BB->end(), I.getOperand(0),
+                   I.op_begin()+1, I.op_end(), getReg(I));
 }
 
-void ISel::emitGEPOperation(Value *Src, User::op_iterator IdxBegin,
+void ISel::emitGEPOperation(MachineBasicBlock *BB,
+                            MachineBasicBlock::iterator IP,
+                            Value *Src, User::op_iterator IdxBegin,
                             User::op_iterator IdxEnd, unsigned TargetReg) {
   const TargetData &TD = TM.getTargetData();
   const Type *Ty = Src->getType();
@@ -887,9 +956,10 @@ void ISel::emitGEPOperation(Value *Src, User::op_iterator IdxBegin,
       Ty = SqTy->getElementType ();
       unsigned elementSize = TD.getTypeSize (Ty);
       unsigned elementSizeReg = makeAnotherReg(Type::UIntTy);
-      copyConstantToRegister (ConstantInt::get (typeOfSequentialTypeIndex,
-						elementSize),
-			      elementSizeReg);
+      copyConstantToRegister(ConstantInt::get(typeOfSequentialTypeIndex,
+                                              elementSize), elementSizeReg,
+                             BB, BB->end());
+                             
       unsigned idxReg = getReg (idx);
       // Emit a MUL to multiply the register holding the index by
       // elementSize, putting the result in memberOffsetReg.
