@@ -163,11 +163,6 @@ namespace {
   };
 }
 
-// A pointer type should not use parens around *'s alone, e.g., (**)
-inline bool ptrTypeNameNeedsParens(const std::string &NameSoFar) {
-  return NameSoFar.find_last_not_of('*') != std::string::npos;
-}
-
 // Pass the Type* and the variable name and this prints out the variable
 // declaration.
 //
@@ -240,12 +235,8 @@ std::ostream &CWriter::printType(std::ostream &Out, const Type *Ty,
     const PointerType *PTy = cast<PointerType>(Ty);
     std::string ptrName = "*" + NameSoFar;
 
-    // Do not need parens around "* NameSoFar" if NameSoFar consists only
-    // of zero or more '*' chars *and* this is not an unnamed pointer type
-    // such as the result type in a cast statement.  Otherwise, enclose in ( ).
-    if (ptrTypeNameNeedsParens(NameSoFar) ||
-        PTy->getElementType()->getPrimitiveID() == Type::ArrayTyID)
-      ptrName = "(" + ptrName + ")";    // 
+    if (isa<ArrayType>(PTy->getElementType()))
+      ptrName = "(" + ptrName + ")";
 
     return printType(Out, PTy->getElementType(), ptrName);
   }
