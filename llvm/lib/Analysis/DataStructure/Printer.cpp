@@ -168,8 +168,15 @@ static void printCollection(const Collection &C, std::ostream &O,
   }
 
   for (Module::const_iterator I = M->begin(), E = M->end(); I != E; ++I)
-    if (!I->isExternal() && (I->getName() == "main" || !OnlyPrintMain))
-      C.getDSGraph((Function&)*I).writeGraphToFile(O, Prefix+I->getName());
+    if (!I->isExternal()) {
+      DSGraph &Gr = C.getDSGraph((Function&)*I);
+      if (I->getName() == "main" || !OnlyPrintMain)
+        Gr.writeGraphToFile(O, Prefix+I->getName());
+      else {
+        O << "Skipped Writing '" << Prefix+I->getName() << ".dot'... ["
+          << Gr.getGraphSize() << "+" << Gr.getFunctionCalls().size() << "]\n";
+      }
+    }
 }
 
 
