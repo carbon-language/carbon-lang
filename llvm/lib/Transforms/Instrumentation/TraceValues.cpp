@@ -108,15 +108,15 @@ namespace {
   RegisterOpt<BasicBlockTracer> Y("trace","Insert BB and Function trace code");
 } // end anonymous namespace
 
-
-Pass *llvm::createTraceValuesPassForFunction() {     // Just trace functions
+/// Just trace functions
+FunctionPass *llvm::createTraceValuesPassForFunction() {
   return new FunctionTracer();
 }
 
-Pass *llvm::createTraceValuesPassForBasicBlocks() {  // Trace BB's and functions
+/// Trace BB's and functions
+FunctionPass *llvm::createTraceValuesPassForBasicBlocks() {
   return new BasicBlockTracer();
 }
-
 
 // Add a prototype for external functions used by the tracing code.
 //
