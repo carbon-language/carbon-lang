@@ -151,9 +151,9 @@ static bool LinkTypes(Module *Dest, const Module *Src, std::string *Err) {
   SymbolTable::const_iterator PI = SrcST->find(Type::TypeTy);
   if (PI == SrcST->end()) return false;  // No named types, do nothing.
 
-  // Some types cannot be resolved immediately becuse they depend on other types
-  // being resolved to each other first.  This contains a list of types we are
-  // waiting to recheck.
+  // Some types cannot be resolved immediately because they depend on other
+  // types being resolved to each other first.  This contains a list of types we
+  // are waiting to recheck.
   std::vector<std::string> DelayedTypesToResolve;
 
   const SymbolTable::VarMap &VM = PI->second;

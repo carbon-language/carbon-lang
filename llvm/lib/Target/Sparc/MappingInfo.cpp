@@ -132,7 +132,7 @@ bool MappingInfoAsmPrinter::doInitialization(Module &M) {
 /// Function. MachineBasicBlocks are numbered from begin() to end()
 /// in the Function's corresponding MachineFunction. Each successive
 /// MachineBasicBlock increments the numbering by the number of instructions
-/// it contains. The side-effect of this method is to fill in the paramete
+/// it contains. The side-effect of this method is to fill in the parameter
 /// KEY with the mapping of MachineBasicBlocks to numbers. KEY
 /// is keyed on MachineInstrs, so each MachineBasicBlock is represented
 /// therein by its first MachineInstr.

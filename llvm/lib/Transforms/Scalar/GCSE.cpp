@@ -193,7 +193,7 @@ Instruction *GCSE::EliminateCSE(Instruction *I, Instruction *Other) {
   Instruction *Ret = 0;
 
   if (BB1 == BB2) {
-    // Eliminate the second occuring instruction.  Add all uses of the second
+    // Eliminate the second occurring instruction.  Add all uses of the second
     // instruction to the worklist.
     //
     // Scan the basic block looking for the "first" instruction
@@ -242,7 +242,7 @@ Instruction *GCSE::EliminateCSE(Instruction *I, Instruction *Other) {
     //    ... X+Y ...
     //  }
     // 
-    // In thiscase, the expression would be hoisted to outside the 'if' stmt,
+    // In this case, the expression would be hoisted to outside the 'if' stmt,
     // causing the expression to be evaluated, even for the if (d) path, which
     // could cause problems, if, for example, it caused a divide by zero.  In
     // general the problem this case is trying to solve is better addressed with

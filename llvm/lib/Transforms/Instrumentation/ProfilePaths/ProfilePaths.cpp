@@ -1,6 +1,6 @@
 //===-- ProfilePaths.cpp - interface to insert instrumentation ---*- C++ -*--=//
 //
-// This inserts intrumentation for counting
+// This inserts instrumentation for counting
 // execution of paths though a given function
 // Its implemented as a "Function" Pass, and called using opt
 //
@@ -13,7 +13,7 @@
 //
 // The algorithms work on a Graph constructed over the nodes
 // made from Basic Blocks: The transformations then take place on
-// the constucted graph (implementation in Graph.cpp and GraphAuxillary.cpp)
+// the constructed graph (implementation in Graph.cpp and GraphAuxiliary.cpp)
 // and finally, appropriate instrumentation is placed over suitable edges.
 // (code inserted through EdgeCode.cpp).
 // 
@@ -81,7 +81,7 @@ bool ProfilePaths::runOnFunction(Function &F){
   Node *tmp;
   Node *exitNode = 0, *startNode = 0;
 
-  // The nodes must be uniquesly identified:
+  // The nodes must be uniquely identified:
   // That is, no two nodes must hav same BB*
   
   for (Function::iterator BB = F.begin(), BE = F.end(); BB != BE; ++BB) {
@@ -93,7 +93,7 @@ bool ProfilePaths::runOnFunction(Function &F){
       startNode=nd;
   }
 
-  // now do it againto insert edges
+  // now do it again to insert edges
   for (Function::iterator BB = F.begin(), BE = F.end(); BB != BE; ++BB){
     Node *nd=findBB(nodes, BB);
     assert(nd && "No node for this edge!");
@@ -174,7 +174,7 @@ bool ProfilePaths::runOnFunction(Function &F){
 
 
   if(fr->getParent()->getName() == "main"){
-    //intialize threshold
+    //initialize threshold
 
     // FIXME: THIS IS HORRIBLY BROKEN.  FUNCTION PASSES CANNOT DO THIS, EXCEPT
     // IN THEIR INITIALIZE METHOD!!

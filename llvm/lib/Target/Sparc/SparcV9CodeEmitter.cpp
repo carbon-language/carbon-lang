@@ -366,10 +366,11 @@ void JITResolver::CompilationCallback() {
 
   RestoreRegisters(DoubleFP, FSR, FPRS, CCR);
 
-  // Change the return address to reexecute the restore, then the jump. However,
-  // we can't just modify %i7 here, because we return to the function that will
-  // restore the floating-point registers for us. Thus, we just return the value
-  // we want it to be, and the parent will take care of setting %i7 correctly.
+  // Change the return address to re-execute the restore, then the jump.
+  // However, we can't just modify %i7 here, because we return to the function
+  // that will restore the floating-point registers for us. Thus, we just return
+  // the value we want it to be, and the parent will take care of setting %i7
+  // correctly.
   DEBUG(std::cerr << "Callback returning to: 0x"
                   << std::hex << (CameFrom-Offset-12) << "\n");
 #if defined(sparc) || defined(__sparc__) || defined(__sparcv9)
@@ -482,7 +483,7 @@ SparcV9CodeEmitter::getRealRegNum(unsigned fakeReg,
       // only numbered 0-31, hence can already fit into 5 bits (and 6)
       DEBUG(std::cerr << "FP single reg, returning: " << fakeReg << "\n");
     } else if (regType == UltraSparcRegInfo::FPDoubleRegType) {
-      // FIXME: This assumes that we only have 5-bit register fiels!
+      // FIXME: This assumes that we only have 5-bit register fields!
       // From Sparc Manual, page 40.
       // The bit layout becomes: b[4], b[3], b[2], b[1], b[5]
       fakeReg |= (fakeReg >> 5) & 1;
@@ -624,7 +625,7 @@ int64_t SparcV9CodeEmitter::getMachineOpValue(MachineInstr &MI,
         int64_t CallInstTarget = (rv - CurrPC) >> 2;
         if (CallInstTarget >= (1<<29) || CallInstTarget <= -(1<<29)) {
           DEBUG(std::cerr << "Making far call!\n");
-          // addresss is out of bounds for the 30-bit call,
+          // address is out of bounds for the 30-bit call,
           // make an indirect jump-and-link
           emitFarCall(rv);
           // this invalidates the instruction so that the call with an incorrect

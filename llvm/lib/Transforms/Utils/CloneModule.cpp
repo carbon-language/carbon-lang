@@ -14,7 +14,7 @@
 
 /// CloneModule - Return an exact copy of the specified module.  This is not as
 /// easy as it might seem because we have to worry about making copies of global
-/// variables and functions, and making their (intializers and references,
+/// variables and functions, and making their (initializers and references,
 /// respectively) refer to the right globals.
 ///
 Module *CloneModule(const Module *M) {

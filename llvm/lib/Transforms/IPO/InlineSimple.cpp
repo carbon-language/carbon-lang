@@ -52,7 +52,7 @@ int SimpleInliner::getInlineCost(CallSite CS) {
   if (Callee->use_size() == 1 && Callee->hasInternalLinkage())
     InlineCost -= 30000;
 
-  // Add to the inline quality for properties that make the call valueable to
+  // Add to the inline quality for properties that make the call valuable to
   // inline.  This includes factors that indicate that the result of inlining
   // the function will be optimizable.  Currently this just looks at arguments
   // passed into the function.

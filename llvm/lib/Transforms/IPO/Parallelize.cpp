@@ -81,7 +81,7 @@ static bool isSync(const CallInst& CI) {
 // class Cilkifier
 //
 // Code generation pass that transforms code to identify where Cilk keywords
-// should be inserted.  This relies on dis -c to print out the keywords.
+// should be inserted.  This relies on `llvm-dis -c' to print out the keywords.
 //---------------------------------------------------------------------------- 
 
 
@@ -167,7 +167,7 @@ void Cilkifier::DFSVisitInstr(Instruction* I,
       else
         syncI = new CallInst(DummySyncFunc, std::vector<Value*>(), "", I);
 
-      // Remember the sync for each spawn to eliminate rendundant ones later
+      // Remember the sync for each spawn to eliminate redundant ones later
       spawnToSyncsMap[cast<CallInst>(root)].insert(syncI);
 
       return;
@@ -494,7 +494,7 @@ bool Parallelize::run(Module& M)
 
 #undef CAN_USE_BIND1ST_ON_REFERENCE_TYPE_ARGS
 #ifdef CAN_USE_BIND1ST_ON_REFERENCE_TYPE_ARGS
-  // Use this undecipherable STLese because erase invalidates iterators.
+  // Use this indecipherable STLese because erase invalidates iterators.
   // Otherwise we have to copy sets as above.
   hash_set<Function*>::iterator extrasBegin = 
     std::remove_if(parallelFunctions.begin(), parallelFunctions.end(),

@@ -64,7 +64,7 @@ void ReplaceInstWithInst(Instruction *From, Instruction *To) {
 // degree of the current basic block, the actual terminator instruction itself
 // may have to be changed.  In the case where the last successor of the block is
 // deleted, a return instruction is inserted in its place which can cause a
-// suprising change in program behavior if it is not expected.
+// surprising change in program behavior if it is not expected.
 //
 void RemoveSuccessor(TerminatorInst *TI, unsigned SuccNum) {
   assert(SuccNum < TI->getNumSuccessors() &&

@@ -259,7 +259,7 @@ bool ADCE::doADCE() {
       // Loop over all of the instructions in the function, telling dead
       // instructions to drop their references.  This is so that the next sweep
       // over the program can safely delete dead instructions without other dead
-      // instructions still refering to them.
+      // instructions still referring to them.
       //
       dropReferencesOfDeadInstructionsInLiveBlock(I);
 
@@ -328,9 +328,9 @@ bool ADCE::doADCE() {
             if (LastNode == 0) {        // No postdominator!
               // Call RemoveSuccessor to transmogrify the terminator instruction
               // to not contain the outgoing branch, or to create a new
-              // terminator if the form fundementally changes (ie unconditional
-              // branch to return).  Note that this will change a branch into an
-              // infinite loop into a return instruction!
+              // terminator if the form fundamentally changes (i.e.,
+              // unconditional branch to return).  Note that this will change a
+              // branch into an infinite loop into a return instruction!
               //
               RemoveSuccessor(TI, i);
 
@@ -378,7 +378,7 @@ bool ADCE::doADCE() {
         // Now loop over all of the instructions in the basic block, telling
         // dead instructions to drop their references.  This is so that the next
         // sweep over the program can safely delete dead instructions without
-        // other dead instructions still refering to them.
+        // other dead instructions still referring to them.
         //
         dropReferencesOfDeadInstructionsInLiveBlock(BB);
       }

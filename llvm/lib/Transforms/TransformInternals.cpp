@@ -64,7 +64,7 @@ const Type *getStructOffsetType(const Type *Ty, unsigned &Offset,
     Indices.push_back(ConstantSInt::get(Type::LongTy, Offset/ChildSize));
     ThisOffset = (Offset/ChildSize)*ChildSize;
   } else {
-    Offset = 0;   // Return the offset that we were able to acheive
+    Offset = 0;   // Return the offset that we were able to achieve
     return Ty;    // Return the leaf type
   }
 

@@ -93,7 +93,7 @@ const Type *MutateStructTypes::ConvertType(const Type *Ty) {
 }
 
 
-// AdjustIndices - Convert the indexes specifed by Idx to the new changed form
+// AdjustIndices - Convert the indices specified by Idx to the new changed form
 // using the specified OldTy as the base type being indexed into.
 //
 void MutateStructTypes::AdjustIndices(const CompositeType *OldTy,

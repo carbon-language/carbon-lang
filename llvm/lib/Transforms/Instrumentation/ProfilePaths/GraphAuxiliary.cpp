@@ -1,6 +1,6 @@
-//===-- GrapAuxillary.cpp- Auxillary functions on graph ----------*- C++ -*--=//
+//===-- GrapAuxiliary.cpp- Auxiliary functions on graph ----------*- C++ -*--=//
 //
-//auxillary function associated with graph: they
+//auxiliary function associated with graph: they
 //all operate on graph, and help in inserting
 //instrumentation for trace generation
 //
@@ -132,7 +132,7 @@ int valueAssignmentToEdges(Graph& g,  map<Node *, int> nodePriority,
 }
 
 //This is a helper function to get the edge increments
-//This is used in conjuntion with inc_DFS
+//This is used in conjunction with inc_DFS
 //to get the edge increments
 //Edge increment implies assigning a value to all the edges in the graph
 //such that if we traverse along any path from root to exit, and
@@ -144,7 +144,7 @@ static int inc_Dir(Edge e, Edge f){
  if(e.isNull()) 
     return 1;
  
- //check that the edges must have atleast one common endpoint
+ //check that the edges must have at least one common endpoint
   assert(*(e.getFirst())==*(f.getFirst()) ||
 	 *(e.getFirst())==*(f.getSecond()) || 
 	 *(e.getSecond())==*(f.getFirst()) ||

@@ -174,7 +174,7 @@ void Graph::addNode(Node *nd){
 
 //add an edge
 //this adds an edge ONLY when 
-//the edge to be added doesn not already exist
+//the edge to be added does not already exist
 //we "equate" two edges here only with their 
 //end points
 void Graph::addEdge(Edge ed, int w){
@@ -497,7 +497,7 @@ void Graph::makeUnDirectional(){
 
 //reverse the sign of weights on edges
 //this way, max-spanning tree could be obtained
-//usin min-spanning tree, and vice versa
+//using min-spanning tree, and vice versa
 void Graph::reverseWts(){
   vector<Node *> allNodes=getAllNodes();
   for(vector<Node *>::iterator NI=allNodes.begin(), NE=allNodes.end(); NI!=NE; 

@@ -90,7 +90,7 @@ static inline bool Error(std::string *ErrorStr, const char *Message) {
 // 1) Generate the header for the symbol table. This is a normal
 //    archive member header, but it has a zero length name.
 // 2) For each archive member file, stat the file and parse the bytecode
-//    Store cummulative offset (file size + header size).
+//    Store cumulative offset (file size + header size).
 // 3) Loop over all the symbols for the current member file, 
 //    add offset entry to offset vector, and add symbol name to its vector.
 //    Note: The symbol name vector is a vector of chars to speed up calculating
@@ -206,7 +206,7 @@ bool WriteSymbolTable(std::ofstream &ArchiveFile) {
   //Adjustment to offset to start files on even byte boundaries
   unsigned adjust = 0;
   
-  //Update offsets write symbol tabel to archive.
+  //Update offsets write symbol table to archive.
   for(unsigned i=0; i<offsets.size(); ++i) {
     char output[4];
     offsets[i] = offsets[i] + symbolTableSize + SARMAG;

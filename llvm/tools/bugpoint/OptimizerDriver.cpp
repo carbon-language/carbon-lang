@@ -1,8 +1,8 @@
 //===- OptimizerDriver.cpp - Allow BugPoint to run passes safely ----------===//
 //
 // This file defines an interface that allows bugpoint to run various passes
-// without the threat of a buggy pass corrupting bugpoint (of course bugpoint
-// may have it's own bugs, but that's another story...).  It acheives this by
+// without the threat of a buggy pass corrupting bugpoint (of course, bugpoint
+// may have its own bugs, but that's another story...).  It achieves this by
 // forking a copy of itself and having the child process do the optimizations.
 // If this client dies, we can always fork a new one.  :)
 //
@@ -95,7 +95,7 @@ static void RunChild(Module *Program,const std::vector<const PassInfo*> &Passes,
 }
 
 /// runPasses - Run the specified passes on Program, outputting a bytecode file
-/// and writting the filename into OutputFile if successful.  If the
+/// and writing the filename into OutputFile if successful.  If the
 /// optimizations fail for some reason (optimizer crashes), return true,
 /// otherwise return false.  If DeleteOutput is set to true, the bytecode is
 /// deleted on success, and the filename string is undefined.  This prints to

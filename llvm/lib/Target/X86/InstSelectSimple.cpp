@@ -1214,7 +1214,7 @@ void ISel::visitDivRem(BinaryOperator &I) {
     return;
   }
   case cByte: case cShort: case cInt:
-    break;          // Small integerals, handled below...
+    break;          // Small integrals, handled below...
   default: assert(0 && "Unknown class!");
   }
 

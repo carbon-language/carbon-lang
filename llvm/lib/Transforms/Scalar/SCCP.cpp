@@ -499,7 +499,7 @@ void SCCP::visitPHINode(PHINode &PN) {
   // this is the case, the PHI remains undefined.
   //
   if (OperandVal)
-    markConstant(PNIV, &PN, OperandVal);      // Aquire operand value
+    markConstant(PNIV, &PN, OperandVal);      // Acquire operand value
 }
 
 void SCCP::visitTerminatorInst(TerminatorInst &TI) {

@@ -77,7 +77,7 @@ namespace {
     /// HoistRegion - Walk the specified region of the CFG (defined by all
     /// blocks dominated by the specified block, and that are in the current
     /// loop) in depth first order w.r.t the DominatorTree.  This allows us to
-    /// visit defintions before uses, allowing us to hoist a loop body in one
+    /// visit definitions before uses, allowing us to hoist a loop body in one
     /// pass without iteration.
     ///
     void HoistRegion(DominatorTree::Node *N);
@@ -240,7 +240,7 @@ void LICM::visitLoop(Loop *L, AliasSetTracker &AST) {
 
 /// HoistRegion - Walk the specified region of the CFG (defined by all blocks
 /// dominated by the specified block, and that are in the current loop) in depth
-/// first order w.r.t the DominatorTree.  This allows us to visit defintions
+/// first order w.r.t the DominatorTree.  This allows us to visit definitions
 /// before uses, allowing us to hoist a loop body in one pass without iteration.
 ///
 void LICM::HoistRegion(DominatorTree::Node *N) {

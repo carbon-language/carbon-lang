@@ -106,7 +106,7 @@ void SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum, Pass *P) {
     DS->addBasicBlock(NewBB, DomSet);
   }
 
-  // Should we update ImmdediateDominator information?
+  // Should we update ImmediateDominator information?
   if (ImmediateDominators *ID = P->getAnalysisToUpdate<ImmediateDominators>()) {
     // TIBB is the new immediate dominator for NewBB.  NewBB doesn't dominate
     // anything.

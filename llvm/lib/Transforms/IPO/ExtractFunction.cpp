@@ -15,7 +15,7 @@ namespace {
         if (Named == 0) return false;  // No function to extract
       }
 
-      // Make sure our result is globally accessable...
+      // Make sure our result is globally accessible...
       Named->setLinkage(GlobalValue::ExternalLinkage);
 
       // Mark all global variables internal

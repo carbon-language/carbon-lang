@@ -549,7 +549,7 @@ void FPS::handleTwoArgFP(MachineBasicBlock::iterator &I) {
 
 
 /// handleSpecialFP - Handle special instructions which behave unlike other
-/// floating point instructions.  This is primarily inteaded for use by pseudo
+/// floating point instructions.  This is primarily intended for use by pseudo
 /// instructions.
 ///
 void FPS::handleSpecialFP(MachineBasicBlock::iterator &I) {

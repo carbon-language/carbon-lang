@@ -19,7 +19,7 @@
 // have extra slots added to them to hold the merge edges from BB's
 // predecessors, and BB itself might have had PHI nodes in it.  This function
 // returns true (failure) if the Succ BB already has a predecessor that is a
-// predecessor of BB and incoming PHI arguments would not be discernable.
+// predecessor of BB and incoming PHI arguments would not be discernible.
 //
 // Assumption: Succ is the single successor for BB.
 //
@@ -269,10 +269,10 @@ bool SimplifyCFG(BasicBlock *BB) {
       // Delete the unconditional branch from the predecessor...
       OnlyPred->getInstList().pop_back();
       
-      // Move all definitions in the succecessor to the predecessor...
+      // Move all definitions in the successor to the predecessor...
       OnlyPred->getInstList().splice(OnlyPred->end(), BB->getInstList());
                                      
-      // Make all PHI nodes that refered to BB now refer to Pred as their
+      // Make all PHI nodes that referred to BB now refer to Pred as their
       // source...
       BB->replaceAllUsesWith(OnlyPred);
 

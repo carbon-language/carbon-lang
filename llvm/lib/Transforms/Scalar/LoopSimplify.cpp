@@ -13,7 +13,7 @@
 // as store-sinking that are built into LICM.
 //
 // Note that the simplifycfg pass will clean up blocks which are split out but
-// end up being unnecessary, so usage of this pass does not neccesarily
+// end up being unnecessary, so usage of this pass does not necessarily
 // pessimize generated code.
 //
 //===----------------------------------------------------------------------===//
@@ -203,7 +203,7 @@ void Preheaders::InsertPreheaderForLoop(Loop *L) {
     SplitBlockPredecessors(Header, ".preheader", OutsideBlocks);
   
   //===--------------------------------------------------------------------===//
-  //  Update analysis results now that we have preformed the transformation
+  //  Update analysis results now that we have performed the transformation
   //
   
   // We know that we have loop information to update... update it now.

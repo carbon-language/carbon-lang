@@ -121,7 +121,7 @@ namespace {
     void setReplacement(Value *Repl) { Replacement = Repl; }
 
     // getRelation - return the relationship entry for the specified value.
-    // This can invalidate references to other Relation's, so use it carefully.
+    // This can invalidate references to other Relations, so use it carefully.
     //
     Relation &getRelation(Value *V) {
       // Binary search for V's entry...
@@ -896,7 +896,7 @@ void CEE::PropagateRelation(Instruction::BinaryOps Opcode, Value *Op0,
     return;
   }
 
-  // If the information propogted is new, then we want process the uses of this
+  // If the information propagated is new, then we want process the uses of this
   // instruction to propagate the information down to them.
   //
   if (Op1R.incorporate(Opcode, VI))

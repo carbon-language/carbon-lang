@@ -261,7 +261,7 @@ void SparcFloatRegClass::colorIGNode(IGNode * Node,
     return;
   } else { 
 
-    // if we didn't find a color becuase the LR was single precision or
+    // if we didn't find a color because the LR was single precision or
     // all f32-f63 range is filled, we try to allocate a register from
     // the f0 - f31 region 
 
@@ -292,7 +292,7 @@ void SparcFloatRegClass::colorIGNode(IGNode * Node,
   }
 
   if (ColorFound >= 0) {
-    LR->setColor(ColorFound);         // first color found in prefered order
+    LR->setColor(ColorFound);         // first color found in preferred order
     LR->markForSaveAcrossCalls();  
   } else {
     // we are here because no color could be found

@@ -215,7 +215,8 @@ int main(int argc, char **argv, char **envp) {
   // We always look first in the current directory when searching for libraries.
   LibPaths.insert(LibPaths.begin(), ".");
 
-  // If the user specied an extra search path in their environment, respect it.
+  // If the user specified an extra search path in their environment, respect
+  // it.
   if (char *SearchPath = getenv("LLVM_LIB_SEARCH_PATH"))
     LibPaths.push_back(SearchPath);
 

@@ -104,7 +104,7 @@ static Instruction *ConvertMallocToType(MallocInst *MI, const Type *Ty,
 
   // If we have a scale, apply it first...
   if (Expr.Var) {
-    // Expr.Var is not neccesarily unsigned right now, insert a cast now.
+    // Expr.Var is not necessarily unsigned right now, insert a cast now.
     if (Expr.Var->getType() != Type::UIntTy)
       Expr.Var = new CastInst(Expr.Var, Type::UIntTy,
                               Expr.Var->getName()+"-uint", It);
@@ -255,7 +255,7 @@ bool ExpressionConvertibleToType(Value *V, const Type *Ty,
       // Do not Check to see if our incoming pointer can be converted
       // to be a ptr to an array of the right type... because in more cases than
       // not, it is simply not analyzable because of pointer/array
-      // discrepencies.  To fix this, we will insert a cast before the GEP.
+      // discrepancies.  To fix this, we will insert a cast before the GEP.
       //
 
       // Check to see if 'N' is an expression that can be converted to
@@ -1169,7 +1169,7 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
         Name = "";  // Make sure not to name a void call!
 
       // Get an iterator to the call instruction so that we can insert casts for
-      // operands if needbe.  Note that we do not require operands to be
+      // operands if need be.  Note that we do not require operands to be
       // convertible, we can insert casts if they are convertible but not
       // compatible.  The reason for this is that we prefer to have resolved
       // functions but casted arguments if possible.

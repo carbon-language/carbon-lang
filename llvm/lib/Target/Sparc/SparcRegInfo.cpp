@@ -466,7 +466,7 @@ void UltraSparcRegInfo::colorMethodArgs(const Function *Meth,
       }
       else {
 
-	// Now the arg is coming on stack. Since the LR recieved a register,
+	// Now the arg is coming on stack. Since the LR received a register,
 	// we just have to load the arg on stack into that register
 	//
         const TargetFrameInfo& frameInfo = target.getFrameInfo();
@@ -522,7 +522,7 @@ void UltraSparcRegInfo::colorMethodArgs(const Function *Meth,
       else {
 
 	// Now the arg is coming on stack. Since the LR did NOT 
-	// recieved a register as well, it is allocated a stack position. We
+	// received a register as well, it is allocated a stack position. We
 	// can simply change the stack position of the LR. We can do this,
 	// since this method is called before any other method that makes
 	// uses of the stack pos of the LR (e.g., updateMachineInstr)

@@ -232,7 +232,7 @@ void DAE::RemoveDeadArgumentsFromFunction(Function *F,
 bool DAE::run(Module &M) {
   // First phase: loop through the module, determining which arguments are live.
   // We assume all arguments are dead unless proven otherwise (allowing us to
-  // determing that dead arguments passed into recursive functions are dead).
+  // determine that dead arguments passed into recursive functions are dead).
   //
   std::set<Argument*> LiveArguments, MaybeLiveArguments, DeadArguments;
   std::multimap<Function*, CallSite> CallSites;

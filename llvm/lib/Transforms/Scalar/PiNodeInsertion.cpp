@@ -1,7 +1,7 @@
 //===- PiNodeInsertion.cpp - Insert Pi nodes into a program ---------------===//
 //
 // PiNodeInsertion - This pass inserts single entry Phi nodes into basic blocks
-// that are preceeded by a conditional branch, where the branch gives
+// that are preceded by a conditional branch, where the branch gives
 // information about the operands of the condition.  For example, this C code:
 //   if (x == 0) { ... = x + 4;
 // becomes:
@@ -15,7 +15,7 @@
 // saying that X has a value of 0 in this scope.  The power of this analysis
 // information is that "in the scope" translates to "for all uses of x2".
 //
-// This special form of Phi node is refered to as a Pi node, following the
+// This special form of Phi node is referred to as a Pi node, following the
 // terminology defined in the "Array Bounds Checks on Demand" paper.
 //
 // As a really trivial example of what the Pi nodes are good for, this pass

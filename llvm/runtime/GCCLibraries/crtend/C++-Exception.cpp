@@ -36,7 +36,7 @@ void *__llvm_cxxeh_allocate_exception(unsigned NumBytes) throw() {
   //
   llvm_cxx_exception *E =
     (llvm_cxx_exception *)malloc(NumBytes+sizeof(llvm_cxx_exception));
-  E->BaseException.ExceptionType = 0; // intialize to invalid
+  E->BaseException.ExceptionType = 0; // initialize to invalid
 
   return E+1;   // return the pointer after the header
 }
