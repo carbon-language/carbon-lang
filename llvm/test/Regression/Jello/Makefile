@@ -10,9 +10,15 @@ FTESTS := $(wildcard *.llx)   # Freeform tests
 
 all:: $(addprefix Output/, $(TESTS:%.ll=%.out))
 
+LLI_FLAGS = -force-interpreter=false
+
+ifdef DISABLE_FP_ELIM
+LLI_FLAGS += -no-fp-elim
+endif
+
 Output/%.out: Output/%.bc $(LLI)
 	@echo "======== Running $< ==================="
-	$(VERB) $(LLI) -force-interpreter=false -stats $< > $@ 2>&1 || \
+	$(VERB) $(LLI) $(LLI_FLAGS) -stats $< > $@ 2>&1 || \
                  ( cat $@; rm -f $@; $(FAILURE) $@ )
 
 
