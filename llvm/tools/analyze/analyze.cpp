@@ -79,15 +79,13 @@ class PassPrinter;  // Do not implement
 
 template <class PassName>
 class PassPrinter<Pass, PassName> : public Pass {
-  const string Message;
   const AnalysisID ID;
 public:
-  PassPrinter(const string &M, AnalysisID id) : Message(M), ID(id) {}
+  PassPrinter(AnalysisID id) : ID(id) {}
 
   const char *getPassName() const { return "IP Pass Printer"; }
   
   virtual bool run(Module &M) {
-    std::cout << Message << "\n";
     printPass(getAnalysis<PassName>(ID), std::cout, M);
     return false;
   }
@@ -99,15 +97,14 @@ public:
 
 template <class PassName>
 class PassPrinter<FunctionPass, PassName> : public FunctionPass {
-  const string Message;
   const AnalysisID ID;
 public:
-  PassPrinter(const string &M, AnalysisID id) : Message(M), ID(id) {}
+  PassPrinter(AnalysisID id) : ID(id) {}
 
     const char *getPassName() const { return "Function Pass Printer"; }
   
   virtual bool runOnFunction(Function &F) {
-    std::cout << Message << " on function '" << F.getName() << "'\n";
+    std::cout << "Running on function '" << F.getName() << "'\n";
     printPass(getAnalysis<PassName>(ID), std::cout, F);
     return false;
   }
@@ -121,19 +118,19 @@ public:
 
 
 template <class PassType, class PassName, AnalysisID &ID>
-Pass *New(const string &Message) {
-  return new PassPrinter<PassType, PassName>(Message, ID);
+Pass *New() {
+  return new PassPrinter<PassType, PassName>(ID);
 }
 template <class PassType, class PassName>
-Pass *New(const string &Message) {
-  return new PassPrinter<PassType, PassName>(Message, PassName::ID);
+Pass *New() {
+  return new PassPrinter<PassType, PassName>(PassName::ID);
 }
 
 
-Pass *createPrintFunctionPass(const string &Message) {
-  return new PrintFunctionPass(Message, &std::cout);
+Pass *createPrintFunctionPass() {
+  return new PrintFunctionPass("", &std::cout);
 }
-Pass *createPrintModulePass(const string &Message) {
+Pass *createPrintModulePass() {
   return new PrintModulePass(&std::cout);
 }
 
@@ -205,13 +202,11 @@ struct Exprs : public FunctionPass {
 
 
 template<class TraitClass>
-class PrinterPass : public TraitClass {
-  const string Message;
-public:
-  PrinterPass(const string &M) : Message(M) {}
+struct PrinterPass : public TraitClass {
+  PrinterPass() {}
 
   virtual bool runOnFunction(Function &F) {
-    std::cout << Message << " on function '" << F.getName() << "'\n";
+    std::cout << "Running on function '" << F.getName() << "'\n";
 
     TraitClass::doit(F);
     return false;
@@ -220,8 +215,8 @@ public:
 
 
 template<class PassClass>
-Pass *Create(const string &Message) {
-  return new PassClass(Message);
+Pass *Create() {
+  return new PassClass();
 }
 
 
@@ -238,10 +233,16 @@ enum Ans {
   postdomset, postidom, postdomtree, postdomfrontier,
 };
 
-cl::String InputFilename ("", "Load <arg> file to analyze", cl::NoFlags, "-");
-cl::Flag   Quiet         ("q", "Don't print analysis pass names");
-cl::Alias  QuietA        ("quiet", "Alias for -q", cl::NoFlags, Quiet);
-cl::EnumList<enum Ans> AnalysesList(cl::NoFlags,
+static cl::opt<string>
+InputFilename(cl::Positional, cl::desc("<input file>"), cl::init("-"),
+              cl::value_desc("filename"));
+
+static cl::opt<bool> Quiet("q", cl::desc("Don't print analysis pass names"));
+static cl::alias    QuietA("quiet", cl::desc("Alias for -q"),
+                           cl::aliasopt(Quiet));
+
+static cl::list<enum Ans>
+AnalysesList(cl::values(
   clEnumVal(print          , "Print each function"),
   clEnumVal(intervals      , "Print Interval Partitions"),
   clEnumVal(exprs          , "Classify Expressions"),
@@ -265,12 +266,12 @@ cl::EnumList<enum Ans> AnalysesList(cl::NoFlags,
   clEnumVal(postidom       , "Print Immediate Postdominators"),
   clEnumVal(postdomtree    , "Print Post Dominator Tree"),
   clEnumVal(postdomfrontier, "Print Postdominance Frontier"),
-0);
+0));
 
 
 struct {
   enum Ans AnID;
-  Pass *(*PassConstructor)(const string &Message);
+  Pass *(*PassConstructor)();
 } AnTable[] = {
   // Global analyses
   { print             , createPrintFunctionPass                 },
@@ -326,11 +327,7 @@ int main(int argc, char **argv) {
 
     for (unsigned j = 0; j < sizeof(AnTable)/sizeof(AnTable[0]); ++j) {
       if (AnTable[j].AnID == AnalysisPass) {
-        string Message;
-        if (!Quiet)
-          Message = "\nRunning: '" + 
-            string(AnalysesList.getArgDescription(AnalysisPass)) + "' analysis";
-        Analyses.add(AnTable[j].PassConstructor(Message));
+        Analyses.add(AnTable[j].PassConstructor());
         break;                       // get an error later
       }
     }
