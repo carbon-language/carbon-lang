@@ -60,6 +60,7 @@ bool LiveInterval::overlaps(const LiveInterval& other) const {
   Ranges::const_iterator ie = ranges.end();
   Ranges::const_iterator j = other.ranges.begin();
   Ranges::const_iterator je = other.ranges.end();
+
   if (i->start < j->start) {
     i = std::upper_bound(i, ie, j->start);
     if (i != ranges.begin()) --i;
@@ -92,7 +93,48 @@ bool LiveInterval::overlaps(const LiveInterval& other) const {
 /// or if the destination of the copy is a single assignment value, and it
 /// only overlaps with one value in the source interval.
 bool LiveInterval::joinable(const LiveInterval &other, unsigned CopyIdx) const {
-  return overlaps(other);
+  const LiveRange *SourceLR = other.getLiveRangeContaining(CopyIdx-1);
+  const LiveRange *DestLR = getLiveRangeContaining(CopyIdx);
+  assert(SourceLR && DestLR && "Not joining due to a copy?");
+  unsigned OtherValIdx = SourceLR->ValId;
+  unsigned ThisValIdx = DestLR->ValId;
+
+  Ranges::const_iterator i = ranges.begin();
+  Ranges::const_iterator ie = ranges.end();
+  Ranges::const_iterator j = other.ranges.begin();
+  Ranges::const_iterator je = other.ranges.end();
+
+  if (i->start < j->start) {
+    i = std::upper_bound(i, ie, j->start);
+    if (i != ranges.begin()) --i;
+  } else if (j->start < i->start) {
+    j = std::upper_bound(j, je, i->start);
+    if (j != other.ranges.begin()) --j;
+  }
+
+  while (i != ie && j != je) {
+    if (i->start == j->start) {
+      // If this is not the allowed value merge, we cannot join.
+      if (i->ValId != ThisValIdx || j->ValId != OtherValIdx)
+        return true;
+    } else if (i->start < j->start) {
+      if (i->end > j->start) {
+        if (i->ValId != ThisValIdx || j->ValId != OtherValIdx)
+          return true;
+      }
+    } else {
+      if (j->end > i->start) {
+        if (i->ValId != ThisValIdx || j->ValId != OtherValIdx)
+          return true;
+      }
+    }
+    if (i->end < j->end)
+      ++i;
+    else
+      ++j;
+  }
+
+  return false;
 }
 
 
