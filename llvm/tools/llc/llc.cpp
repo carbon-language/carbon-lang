@@ -164,7 +164,11 @@ int main(int argc, char **argv) {
       Out = &std::cout;
     } else {
       OutputFilename = GetFileNameRoot(InputFilename); 
-      OutputFilename += ".s";
+
+      if (Arch != CBackend)
+        OutputFilename += ".s";
+      else
+        OutputFilename += ".cbe.c";
       
       if (!Force && std::ifstream(OutputFilename.c_str())) {
         // If force is not specified, make sure not to overwrite a file!
