@@ -65,6 +65,6 @@ using HASH_NAMESPACE::hash;
 // out specializations like stl_bvector.h, causing link conflicts.
 #include <vector>
 
-#include <llvm/ADT/HashExtras.h>
+#include "llvm/ADT/HashExtras.h"
 
 #endif

@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <llvm/Support/DataTypes.h>
+#include "llvm/Support/DataTypes.h"
 
 #ifndef LLVM_SYSTEM_TIMEVALUE_H
 #define LLVM_SYSTEM_TIMEVALUE_H
