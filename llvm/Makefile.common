@@ -126,7 +126,7 @@ endif
 # Special tools used while building the LLVM tree.  Burg is built as part of the
 # utils directory.
 #
-BURG    := $(LEVEL)/utils/Burg/burg.$(UNAME)
+BURG    := $(TOOLDEBUG)/burg
 RunBurg := $(BURG) $(BURG_OPTS)
 
 
@@ -152,11 +152,18 @@ CPPFLAGS += -D_GNU_SOURCE
 # -Wno-unused-parameter
 CompileCommonOpts := -Wall -W  -Wwrite-strings -Wno-unused -I$(LEVEL)/include
 
-# Compile a file, don't link...
+# Compile a cpp file, don't link...
 Compile  := $(CXX) -c $(CPPFLAGS) $(CXXFLAGS) $(CompileCommonOpts)
 CompileG := $(Compile) -g  -D_DEBUG
 CompileO := $(Compile) -O3 -DNDEBUG -finline-functions -felide-constructors -fshort-enums ## DISABLE -freg-struct-return because of gcc3.2 bug
 CompileP := $(CompileO) $(PROFILE)
+
+# Compile a c file, don't link...
+CompileC  := $(CC) -c $(CPPFLAGS) $(CCFLAGS) $(CompileCommonOpts)
+CompileCG := $(CompileC) -g  -D_DEBUG
+CompileCO := $(CompileC) -O3 -DNDEBUG -finline-functions -felide-constructors -fshort-enums ## DISABLE -freg-struct-return because of gcc3.2 bug
+CompileCP := $(CompileCO) $(PROFILE)
+
 
 # Link final executable
 
@@ -179,9 +186,11 @@ MakeSOP  := $(MakeSOO) $(PROFILE)
 
 # Create dependancy file from CPP file, send to stdout.
 Depend   := $(CXX) -MM -I$(LEVEL)/include $(CPPFLAGS) 
+DependC  := $(CC)  -MM -I$(LEVEL)/include $(CPPFLAGS) 
 
 # Archive a bunch of .o files into a .a file...
 AR       = ar cq 
+BISON    = bison
 
 #----------------------------------------------------------
 
@@ -410,26 +419,30 @@ $(BUILD_ROOT)/Depend/%.d: %.cpp $(BUILD_ROOT)/Depend/.dir
 
 # Create dependencies for the *.c files...
 $(BUILD_ROOT)/Depend/%.d: %.c $(BUILD_ROOT)/Depend/.dir
-	$(VERB) $(Depend) $< | sed 's|$*\.o *|Release/& Profile/& Debug/& Depend/$(@F)|g' > $@
+	$(VERB) $(DependC) $< | sed 's|$*\.o *|Release/& Profile/& Debug/& Depend/$(@F)|g' > $@
 
 # Create .o files in the ObjectFiles directory from the .cpp and .c files...
 $(BUILD_ROOT)/Release/%.o: %.cpp $(BUILD_ROOT)/Release/.dir
 	@echo "Compiling $<"
 	$(VERB) $(CompileO) $< -o $@
 
-#Release/%.o: %.c Release/.dir Depend/.dir
-#	$(CompileOC) $< -o $@
+$(BUILD_ROOT)/Release/%.o: %.c $(BUILD_ROOT)/Release/.dir
+	$(VERB) $(CompileOC) $< -o $@
 
 $(BUILD_ROOT)/Profile/%.o: %.cpp $(BUILD_ROOT)/Profile/.dir
 	@echo "Compiling $<"
 	$(VERB) $(CompileP) $< -o $@
 
+$(BUILD_ROOT)/Profile/%.o: %.c $(BUILD_ROOT)/Profile/.dir
+	@echo "Compiling $<"
+	$(VERB) $(CompileCP) $< -o $@
+
 $(BUILD_ROOT)/Debug/%.o: %.cpp $(BUILD_ROOT)/Debug/.dir
 	@echo "Compiling $<"
 	$(VERB) $(CompileG) $< -o $@
 
-#Debug/%.o: %.c Debug/.dir 
-#	$(CompileGC) $< -o $@
+$(BUILD_ROOT)/Debug/%.o: %.c $(BUILD_ROOT)/Debug/.dir 
+	$(VERB) $(CompileCG) $< -o $@
 
 # Create a .cpp source file from a flex input file... this uses sed to cut down
 # on the warnings emited by GCC...
@@ -439,7 +452,7 @@ $(BUILD_ROOT)/Debug/%.o: %.cpp $(BUILD_ROOT)/Debug/.dir
 # Rule for building the bison parsers...
 
 %.cpp %.h : %.y
-	$(VERB) bison -v -d -p $(<:%Parser.y=%) $(basename $@).y
+	$(VERB) $(BISON) -v -d -p $(<:%Parser.y=%) $(basename $@).y
 	$(VERB) mv -f $(basename $@).tab.c $(basename $@).cpp
 	$(VERB) mv -f $(basename $@).tab.h $(basename $@).h
 
@@ -448,7 +461,7 @@ $(BUILD_ROOT)/Debug/%.o: %.cpp $(BUILD_ROOT)/Debug/.dir
 	$(VERB) mkdir -p $(@D)
 	@date > $@
 
-# Clean nukes the tree
+# 'make clean' nukes the tree
 clean::
 	$(VERB) rm -rf $(BUILD_ROOT)/Debug $(BUILD_ROOT)/Release $(BUILD_ROOT)/Profile $(BUILD_ROOT)/Depend
 	$(VERB) rm -f core *.o *.d *.so *~ *.flc
