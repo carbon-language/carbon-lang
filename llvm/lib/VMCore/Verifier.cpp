@@ -9,9 +9,9 @@
 //  * Both of a binary operator's parameters are the same type
 //  * Verify that the indices of mem access instructions match other operands
 //  . Verify that arithmetic and other things are only performed on first class
-//    types.  No adding structures or arrays.
+//    types.  Verify that shifts & logicals only happen on integrals f.e.
 //  . All of the constants in a switch statement are of the correct type
-//  . The code is in valid SSA form
+//  * The code is in valid SSA form
 //  . It should be illegal to put a label into any other type (like a structure)
 //    or to return one. [except constant arrays!]
 //  * Only phi nodes can be self referential: 'add int %0, %0 ; <int>:0' is bad
@@ -20,7 +20,6 @@
 //  * All basic blocks should only end with terminator insts, not contain them
 //  * The entry node to a function must not have predecessors
 //  * All Instructions must be embeded into a basic block
-//  . Verify that none of the Value getType()'s are null.
 //  . Function's cannot take a void typed parameter
 //  * Verify that a function's argument list agrees with it's declared type.
 //  . Verify that arrays and structures have fixed elements: No unsized arrays.
@@ -42,6 +41,8 @@
 #include "llvm/iOther.h"
 #include "llvm/iMemory.h"
 #include "llvm/SymbolTable.h"
+#include "llvm/PassManager.h"
+#include "llvm/Analysis/Dominators.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/InstVisitor.h"
 #include "Support/STLExtras.h"
@@ -51,9 +52,17 @@
 namespace {  // Anonymous namespace for class
 
   struct Verifier : public FunctionPass, InstVisitor<Verifier> {
-    bool Broken;
+    bool Broken;          // Is this module found to be broken?
+    bool RealPass;        // Are we not being run by a PassManager?
+    bool AbortBroken;     // If broken, should it or should it not abort?
+    
+    DominatorSet *DS; // Dominator set, caution can be null!
 
-    Verifier() : Broken(false) {}
+    Verifier() : Broken(false), RealPass(true), AbortBroken(true), DS(0) {}
+    Verifier(bool AB) : Broken(false), RealPass(true), AbortBroken(AB), DS(0) {}
+    Verifier(DominatorSet &ds) 
+      : Broken(false), RealPass(false), AbortBroken(false), DS(&ds) {}
+
 
     bool doInitialization(Module &M) {
       verifySymbolTable(M.getSymbolTable());
@@ -61,6 +70,8 @@ namespace {  // Anonymous namespace for class
     }
 
     bool runOnFunction(Function &F) {
+      // Get dominator information if we are being run by PassManager
+      if (RealPass) DS = &getAnalysis<DominatorSet>();
       visit(F);
       return false;
     }
@@ -71,7 +82,7 @@ namespace {  // Anonymous namespace for class
         if (I->isExternal() && I->hasInternalLinkage())
           CheckFailed("Function Declaration has Internal Linkage!", I);
 
-      if (Broken) {
+      if (Broken && AbortBroken) {
         std::cerr << "Broken module found, compilation aborted!\n";
         abort();
       }
@@ -80,6 +91,8 @@ namespace {  // Anonymous namespace for class
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesAll();
+      if (RealPass)
+        AU.addRequired(DominatorSet::ID);
     }
 
     // Verification methods...
@@ -365,21 +378,29 @@ void Verifier::visitInstruction(Instruction &I) {
           "Instruction has a name, but provides a void value!", &I);
 
   // Check that a definition dominates all of its uses.
-  // FIXME: This should use dominator set information, instead of this local
-  // hack that we have now.
   //
   for (User::use_iterator UI = I.use_begin(), UE = I.use_end();
        UI != UE; ++UI) {
-    Instruction *I2 = cast<Instruction>(*UI);
-    // Same basic block?
-    if (I.getParent() == I2->getParent() && !isa<PHINode>(I2)) {
-      // Make sure the instruction is not before the current instruction...
-      for (Instruction *Test = I.getPrev(); Test != 0; Test = Test->getPrev())
-        Assert2(Test != I2, "Definition of value does not dominate a use!",
-                &I, I2);
+    Instruction *Use = cast<Instruction>(*UI);
+      
+    // PHI nodes are more difficult than other nodes because they actually
+    // "use" the value in the predecessor basic blocks they correspond to.
+    if (PHINode *PN = dyn_cast<PHINode>(Use)) {
+      for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
+        if (&I == PN->getIncomingValue(i)) {
+          // Make sure that I dominates the end of pred(i)
+          BasicBlock *Pred = PN->getIncomingBlock(i);
+          
+          Assert2(DS->dominates(I.getParent(), Pred), 
+                  "Instruction does not dominate all uses!",
+                  &I, PN);
+        }
+
+    } else {
+      Assert2(DS->dominates(&I, Use),
+              "Instruction does not dominate all uses!", &I, Use);
     }
   }
-
 }
 
 
@@ -391,9 +412,21 @@ Pass *createVerifierPass() {
   return new Verifier();
 }
 
-bool verifyFunction(const Function &F) {
-  Verifier V;
-  V.visit((Function&)F);
+
+// verifyFunction - Create 
+bool verifyFunction(const Function &f) {
+  Function &F = (Function&)f;
+  assert(!F.isExternal() && "Cannot verify external functions");
+
+  DominatorSet DS;
+  DS.doInitialization(*F.getParent());
+  DS.runOnFunction(F);
+
+  Verifier V(DS);
+  V.runOnFunction(F);
+
+  DS.doFinalization(*F.getParent());
+
   return V.Broken;
 }
 
@@ -401,7 +434,9 @@ bool verifyFunction(const Function &F) {
 // Return true if the module is corrupt.
 //
 bool verifyModule(const Module &M) {
-  Verifier V;
-  V.run((Module&)M);
-  return V.Broken;
+  PassManager PM;
+  Verifier *V = new Verifier();
+  PM.add(V);
+  PM.run((Module&)M);
+  return V->Broken;
 }

@@ -87,7 +87,7 @@ bool DominatorSet::runOnFunction(Function &F) {
   // already have an entry.
   //
   for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I)
-    if (!Doms.count(I))
+    if (Doms[I].empty())
       Doms[I].insert(I);
 
   return false;
