@@ -10,7 +10,6 @@
 #include "llvm/Module.h"
 class Method;
 class TerminatorInst;
-class ConstantPool;
 
 namespace opt {
 
@@ -29,21 +28,6 @@ static inline bool DoConstantPropogation(Module *M) {
 //
 bool ConstantFoldTerminator(TerminatorInst *T);
 
-
-//===----------------------------------------------------------------------===//
-// Constant Pool Merging Pass
-//
-// This function merges all constants in the specified constant pool that have
-// identical types and values.  This is useful for passes that generate lots of
-// constants as a side effect of running.
-//
-bool DoConstantPoolMerging(ConstantPool &CP);
-bool DoConstantPoolMerging(Method *M);
-
-static inline bool DoConstantPoolMerging(Module *M) {
-  return M->reduceApply(DoConstantPoolMerging) |
-         DoConstantPoolMerging(M->getConstantPool());
-}
 
 //===----------------------------------------------------------------------===//
 // Sparse Conditional Constant Propogation Pass
