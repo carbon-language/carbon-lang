@@ -347,37 +347,6 @@ class DSGraph {
   //
   std::vector<std::vector<DSNodeHandle> > FunctionCalls;
 
-#if 0
-  // OrigFunctionCalls - This vector retains a copy of the original function
-  // calls of the current graph.  This is needed to support top-down inlining
-  // after bottom-up inlining is complete, since the latter deletes call nodes.
-  // 
-  std::vector<std::vector<DSNodeHandle> > OrigFunctionCalls;
-
-  // PendingCallers - This vector records all unresolved callers of the
-  // current function, i.e., ones whose graphs have not been inlined into
-  // the current graph.  As long as there are unresolved callers, the nodes
-  // for formal arguments in the current graph cannot be eliminated, and
-  // nodes in the graph reachable from the formal argument nodes or
-  // global variable nodes must be considered incomplete. 
-  std::set<Function*> PendingCallers;
-#endif
-  
-protected:
-
-#if 0
-  // clone all the call nodes and save the copies in OrigFunctionCalls
-  void saveOrigFunctionCalls() {
-    assert(OrigFunctionCalls.size() == 0 && "Do this only once!");
-    OrigFunctionCalls = FunctionCalls;
-  }
-
-  // get the saved copies of the original function call nodes
-  std::vector<std::vector<DSNodeHandle> > &getOrigFunctionCalls() {
-    return OrigFunctionCalls;
-  }
-#endif
-
   void operator=(const DSGraph &); // DO NOT IMPLEMENT
 public:
   DSGraph() : Func(0) {}           // Create a new, empty, DSGraph.
@@ -409,6 +378,11 @@ public:
   const std::vector<std::vector<DSNodeHandle> > &getFunctionCalls() const {
     return FunctionCalls;
   }
+
+  /// getNodeForValue - Given a value that is used or defined in the body of the
+  /// current function, return the DSNode that it points to.
+  ///
+  DSNodeHandle &getNodeForValue(Value *V) { return ValueMap[V]; }
 
   const DSNodeHandle &getRetNode() const { return RetNode; }
         DSNodeHandle &getRetNode()       { return RetNode; }
@@ -451,20 +425,6 @@ public:
   // inlining graphs.
   //
   void removeDeadNodes(bool KeepAllGlobals = false, bool KeepCalls = true);
-
-#if 0
-  // AddCaller - add a known caller node into the graph and mark it pending.
-  // getCallers - get a vector of the functions that call this one
-  // getCallersPending - get a matching vector of bools indicating if each
-  //                     caller's DSGraph has been resolved into this one.
-  // 
-  void addCaller(Function &caller) {
-    PendingCallers.insert(&caller);
-  }
-  std::set<Function*> &getPendingCallers() {
-    return PendingCallers;
-  }
-#endif
 
   // cloneInto - Clone the specified DSGraph into the current graph, returning
   // the Return node of the graph.  The translated ValueMap for the old function
