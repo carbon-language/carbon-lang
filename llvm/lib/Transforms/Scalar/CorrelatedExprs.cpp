@@ -29,13 +29,12 @@
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Pass.h"
 #include "llvm/Function.h"
-#include "llvm/iTerminators.h"
-#include "llvm/iPHINode.h"
-#include "llvm/iOperators.h"
+#include "llvm/Instructions.h"
 #include "llvm/ConstantHandling.h"
-#include "llvm/Assembly/Writer.h"
 #include "llvm/Analysis/Dominators.h"
+#include "llvm/Assembly/Writer.h"
 #include "llvm/Transforms/Utils/Local.h"
+#include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Support/ConstantRange.h"
 #include "llvm/Support/CFG.h"
 #include "Support/Debug.h"
@@ -605,8 +604,7 @@ void CEE::ForwardSuccessorTo(TerminatorInst *TI, unsigned SuccNo,
 
   // If we just introduced a critical edge in the flow graph, make sure to break
   // it right away...
-  if (isCriticalEdge(TI, SuccNo))
-    SplitCriticalEdge(TI, SuccNo, this);
+  SplitCriticalEdge(TI, SuccNo, this);
 
   // Make sure that we don't introduce critical edges from oldsucc now!
   for (unsigned i = 0, e = OldSucc->getTerminator()->getNumSuccessors();

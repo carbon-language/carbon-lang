@@ -16,6 +16,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/Scalar.h"
+#include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Function.h"
 #include "llvm/iTerminators.h"
@@ -66,13 +67,14 @@ bool isCriticalEdge(const TerminatorInst *TI, unsigned SuccNum) {
   return I != E;
 }
 
-// SplitCriticalEdge - Insert a new node node to split the critical edge.  This
-// will update DominatorSet, ImmediateDominator and DominatorTree information if
-// it is available, thus calling this pass will not invalidate either of them.
+// SplitCriticalEdge - If this edge is a critical edge, insert a new node to
+// split the critical edge.  This will update DominatorSet, ImmediateDominator,
+// DominatorTree, and DominatorFrontier information if it is available, thus
+// calling this pass will not invalidate either of them.  This returns true if
+// the edge was split, false otherwise.
 //
-void SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum, Pass *P) {
-  assert(isCriticalEdge(TI, SuccNum) &&
-         "Cannot break a critical edge, if it isn't a critical edge");
+bool SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum, Pass *P) {
+  if (!isCriticalEdge(TI, SuccNum)) return false;
   BasicBlock *TIBB = TI->getParent();
   BasicBlock *DestBB = TI->getSuccessor(SuccNum);
 
@@ -100,7 +102,7 @@ void SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum, Pass *P) {
   }
 
   // If we don't have a pass object, we can't update anything...
-  if (P == 0) return;
+  if (P == 0) return true;
 
   // Now update analysis information.  These are the analyses that we are
   // currently capable of updating...
@@ -142,6 +144,7 @@ void SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum, Pass *P) {
     NewDFSet.insert(DestBB);
     DF->addBasicBlock(NewBB, NewDFSet);
   }
+  return true;
 }
 
 // runOnFunction - Loop over all of the edges in the CFG, breaking critical
@@ -153,8 +156,7 @@ bool BreakCriticalEdges::runOnFunction(Function &F) {
     TerminatorInst *TI = I->getTerminator();
     if (TI->getNumSuccessors() > 1)
       for (unsigned i = 0, e = TI->getNumSuccessors(); i != e; ++i)
-        if (isCriticalEdge(TI, i)) {
-          SplitCriticalEdge(TI, i, this);
+        if (SplitCriticalEdge(TI, i, this)) {
           ++NumBroken;
           Changed = true;
         }
