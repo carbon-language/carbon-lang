@@ -1849,7 +1849,7 @@ void PPC32ISel::visitCallInst(CallInst &CI) {
     unsigned Reg = getReg(CI.getCalledValue());
     BuildMI(BB, PPC::OR, 2, PPC::R12).addReg(Reg).addReg(Reg);
     BuildMI(BB, PPC::MTCTR, 1).addReg(PPC::R12);
-    TheCall = BuildMI(PPC::CALLindirect, 2).addZImm(20).addZImm(0)
+    TheCall = BuildMI(PPC::CALLindirect, 3).addZImm(20).addZImm(0)
       .addReg(PPC::R12);
   }
 
