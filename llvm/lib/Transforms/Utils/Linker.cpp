@@ -48,55 +48,64 @@ static bool ResolveTypes(const Type *DestTy, const Type *SrcTy,
   return false;
 }
 
+static const FunctionType *getFT(const PATypeHolder &TH) {
+  return cast<FunctionType>(TH.get());
+}
+static const StructType *getsT(const PATypeHolder &TH) {
+  return cast<StructType>(TH.get());
+}
 
 // RecursiveResolveTypes - This is just like ResolveTypes, except that it
 // recurses down into derived types, merging the used types if the parent types
 // are compatible.
 //
-static bool RecursiveResolveTypes(const Type *DestTy, const Type *SrcTy,
+static bool RecursiveResolveTypes(const PATypeHolder &DestTy,
+                                  const PATypeHolder &SrcTy,
                                   SymbolTable *DestST, const std::string &Name){
-  if (DestTy == SrcTy) return false;       // If already equal, noop
+  const Type *SrcTyT = SrcTy.get();
+  const Type *DestTyT = DestTy.get();
+  if (DestTyT == SrcTyT) return false;       // If already equal, noop
   
   // If we found our opaque type, resolve it now!
-  if (isa<OpaqueType>(DestTy) || isa<OpaqueType>(SrcTy))
-    return ResolveTypes(DestTy, SrcTy, DestST, Name);
+  if (isa<OpaqueType>(DestTyT) || isa<OpaqueType>(SrcTyT))
+    return ResolveTypes(DestTyT, SrcTyT, DestST, Name);
   
   // Two types cannot be resolved together if they are of different primitive
   // type.  For example, we cannot resolve an int to a float.
-  if (DestTy->getPrimitiveID() != SrcTy->getPrimitiveID()) return true;
+  if (DestTyT->getPrimitiveID() != SrcTyT->getPrimitiveID()) return true;
 
   // Otherwise, resolve the used type used by this derived type...
-  switch (DestTy->getPrimitiveID()) {
+  switch (DestTyT->getPrimitiveID()) {
   case Type::FunctionTyID: {
-    const FunctionType *DFT = cast<FunctionType>(DestTy);
-    const FunctionType *SFT = cast<FunctionType>(SrcTy);
-    if (DFT->isVarArg() != SFT->isVarArg()) return true;
-    for (unsigned i = 0, e = DFT->getNumContainedTypes(); i != e; ++i)
-      if (RecursiveResolveTypes(DFT->getContainedType(i),
-                                SFT->getContainedType(i), DestST, Name))
+    if (cast<FunctionType>(DestTyT)->isVarArg() !=
+        cast<FunctionType>(SrcTyT)->isVarArg())
+      return true;
+    for (unsigned i = 0, e = getFT(DestTy)->getNumContainedTypes(); i != e; ++i)
+      if (RecursiveResolveTypes(getFT(DestTy)->getContainedType(i),
+                                getFT(SrcTy)->getContainedType(i), DestST,Name))
         return true;
     return false;
   }
   case Type::StructTyID: {
-    const StructType *DST = cast<StructType>(DestTy);
-    const StructType *SST = cast<StructType>(SrcTy);
-    if (DST->getNumContainedTypes() != SST->getNumContainedTypes()) return 1;
-    for (unsigned i = 0, e = DST->getNumContainedTypes(); i != e; ++i)
-      if (RecursiveResolveTypes(DST->getContainedType(i),
-                                SST->getContainedType(i), DestST, Name))
+    if (getST(DestTy)->getNumContainedTypes() != 
+        getST(SrcTy)->getNumContainedTypes()) return 1;
+    for (unsigned i = 0, e = getST(DestTy)->getNumContainedTypes(); i != e; ++i)
+      if (RecursiveResolveTypes(getST(DestTy)->getContainedType(i),
+                                getST(SrcTy)->getContainedType(i), DestST,Name))
         return true;
     return false;
   }
   case Type::ArrayTyID: {
-    const ArrayType *DAT = cast<ArrayType>(DestTy);
-    const ArrayType *SAT = cast<ArrayType>(SrcTy);
+    const ArrayType *DAT = cast<ArrayType>(DestTy.get());
+    const ArrayType *SAT = cast<ArrayType>(SrcTy.get());
     if (DAT->getNumElements() != SAT->getNumElements()) return true;
     return RecursiveResolveTypes(DAT->getElementType(), SAT->getElementType(),
                                  DestST, Name);
   }
   case Type::PointerTyID:
-    return RecursiveResolveTypes(cast<PointerType>(DestTy)->getElementType(),
-                                 cast<PointerType>(SrcTy)->getElementType(),
+    return RecursiveResolveTypes(
+                              cast<PointerType>(DestTy.get())->getElementType(),
+                              cast<PointerType>(SrcTy.get())->getElementType(),
                                  DestST, Name);
   default: assert(0 && "Unexpected type!"); return true;
   }  
@@ -158,8 +167,8 @@ static bool LinkTypes(Module *Dest, const Module *Src, std::string *Err) {
       // two types: { int* } and { opaque* }
       for (unsigned i = 0, e = DelayedTypesToResolve.size(); i != e; ++i) {
         const std::string &Name = DelayedTypesToResolve[i];
-        Type *T1 = cast<Type>(VM.find(Name)->second);
-        Type *T2 = cast<Type>(DestST->lookup(Type::TypeTy, Name));
+        PATypeHolder T1(cast<Type>(VM.find(Name)->second));
+        PATypeHolder T2(cast<Type>(DestST->lookup(Type::TypeTy, Name)));
 
         if (!RecursiveResolveTypes(T2, T1, DestST, Name)) {
           // We are making progress!
