@@ -140,8 +140,7 @@ bool LowerGC::doInitialization(Module &M) {
 /// not have the specified type, insert a cast.
 static void Coerce(Instruction *I, unsigned OpNum, Type *Ty) {
   if (I->getOperand(OpNum)->getType() != Ty) {
-    Constant *C = dyn_cast<Constant>(I->getOperand(OpNum));
-    if (C && !isa<GlobalValue>(I->getOperand(OpNum)))
+    if (Constant *C = dyn_cast<Constant>(I->getOperand(OpNum))) 
       I->setOperand(OpNum, ConstantExpr::getCast(C, Ty));
     else {
       CastInst *C = new CastInst(I->getOperand(OpNum), Ty, "", I);
