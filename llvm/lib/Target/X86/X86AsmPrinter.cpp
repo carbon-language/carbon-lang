@@ -36,6 +36,16 @@ using namespace llvm;
 
 namespace {
   Statistic<> EmittedInsts("asm-printer", "Number of machine instrs printed");
+  enum AsmWriterFlavor { att, intel };
+
+  cl::opt<AsmWriterFlavor>
+  AsmWriterFlavor("x86-asm-syntax",
+                  cl::desc("Choose style of code to emit from X86 backend:"),
+                  cl::values(
+                             clEnumVal(att, "  Emit AT&T Style"),
+                             clEnumVal(intel, "  Emit Intel Style"),
+                             clEnumValEnd),
+                  cl::init(intel));
 
   struct GasBugWorkaroundEmitter : public MachineCodeEmitter {
     GasBugWorkaroundEmitter(std::ostream& o) 
@@ -67,8 +77,8 @@ namespace {
     bool firstByte;
   };
 
-  struct X86AsmPrinter : public AsmPrinter {
-    X86AsmPrinter(std::ostream &O, TargetMachine &TM) : AsmPrinter(O, TM) { }
+  struct X86IntelAsmPrinter : public AsmPrinter {
+    X86IntelAsmPrinter(std::ostream &O, TargetMachine &TM) : AsmPrinter(O, TM) { }
 
     virtual const char *getPassName() const {
       return "X86 Assembly Printer";
@@ -128,12 +138,17 @@ namespace {
 /// regardless of whether the function is in SSA form.
 ///
 FunctionPass *llvm::createX86CodePrinterPass(std::ostream &o,TargetMachine &tm){
-  return new X86AsmPrinter(o, tm);
+  if (AsmWriterFlavor != intel) {
+    std::cerr << "AT&T syntax not fully implemented yet!\n";
+    abort();
+  }
+
+  return new X86IntelAsmPrinter(o, tm);
 }
 
 
 // Include the auto-generated portion of the assembly writer.
-#include "X86GenAsmWriter.inc"
+#include "X86GenIntelAsmWriter.inc"
 
 
 /// printConstantPool - Print to the current output stream assembly
@@ -141,7 +156,7 @@ FunctionPass *llvm::createX86CodePrinterPass(std::ostream &o,TargetMachine &tm){
 /// used to print out constants which have been "spilled to memory" by
 /// the code generator.
 ///
-void X86AsmPrinter::printConstantPool(MachineConstantPool *MCP) {
+void X86IntelAsmPrinter::printConstantPool(MachineConstantPool *MCP) {
   const std::vector<Constant*> &CP = MCP->getConstants();
   const TargetData &TD = TM.getTargetData();
  
@@ -159,7 +174,7 @@ void X86AsmPrinter::printConstantPool(MachineConstantPool *MCP) {
 /// runOnMachineFunction - This uses the printMachineInstruction()
 /// method to print assembly for each instruction.
 ///
-bool X86AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
+bool X86IntelAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   setupMachineFunction(MF);
   O << "\n\n";
 
@@ -207,7 +222,7 @@ static bool isMem(const MachineInstr *MI, unsigned Op) {
 
 
 
-void X86AsmPrinter::printOp(const MachineOperand &MO,
+void X86IntelAsmPrinter::printOp(const MachineOperand &MO,
                             bool elideOffsetKeyword /* = false */) {
   const MRegisterInfo &RI = *TM.getRegisterInfo();
   switch (MO.getType()) {
@@ -253,7 +268,7 @@ void X86AsmPrinter::printOp(const MachineOperand &MO,
   }
 }
 
-void X86AsmPrinter::printMemReference(const MachineInstr *MI, unsigned Op) {
+void X86IntelAsmPrinter::printMemReference(const MachineInstr *MI, unsigned Op) {
   assert(isMem(MI, Op) && "Invalid memory reference!");
 
   if (MI->getOperand(Op).isFrameIndex()) {
@@ -308,7 +323,7 @@ void X86AsmPrinter::printMemReference(const MachineInstr *MI, unsigned Op) {
 /// printMachineInstruction -- Print out a single X86 LLVM instruction
 /// MI in Intel syntax to the current output stream.
 ///
-void X86AsmPrinter::printMachineInstruction(const MachineInstr *MI) {
+void X86IntelAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
   ++EmittedInsts;
 
   // gas bugs:
@@ -349,7 +364,7 @@ void X86AsmPrinter::printMachineInstruction(const MachineInstr *MI) {
   }
 }
 
-bool X86AsmPrinter::doInitialization(Module &M) {
+bool X86IntelAsmPrinter::doInitialization(Module &M) {
   AsmPrinter::doInitialization(M);
   // Tell gas we are outputting Intel syntax (not AT&T syntax) assembly.
   //
@@ -375,7 +390,7 @@ static void SwitchSection(std::ostream &OS, std::string &CurSection,
   }
 }
 
-bool X86AsmPrinter::doFinalization(Module &M) {
+bool X86IntelAsmPrinter::doFinalization(Module &M) {
   const TargetData &TD = TM.getTargetData();
   std::string CurSection;
 

@@ -47,6 +47,18 @@ def X86InstrInfo : InstrInfo {
                        16];
 }
 
+// The X86 target supports two different syntaxes for emitting machine code.
+// This is controlled by the -x86-asm-syntax={att|intel}
+def ATTAsmWriter : AsmWriter {
+  string AsmWriterClassName  = "ATTAsmPrinter";
+  int Variant = 0;
+}
+def IntelAsmWriter : AsmWriter {
+  string AsmWriterClassName  = "IntelAsmPrinter";
+  int Variant = 1;
+}
+
+
 def X86 : Target {
   // Specify the callee saved registers.
   let CalleeSavedRegisters = [ESI, EDI, EBX, EBP];
@@ -56,4 +68,6 @@ def X86 : Target {
 
   // Information about the instructions...
   let InstructionSet = X86InstrInfo;
+
+  let AssemblyWriters = [ATTAsmWriter, IntelAsmWriter];
 }

@@ -15,7 +15,8 @@ TARGET = X86
 # Make sure that tblgen is run, first thing.
 $(SourceDepend): X86GenRegisterInfo.h.inc X86GenRegisterNames.inc \
                  X86GenRegisterInfo.inc X86GenInstrNames.inc \
-                 X86GenInstrInfo.inc X86GenAsmWriter.inc
+                 X86GenInstrInfo.inc X86GenATTAsmWriter.inc \
+                 X86GenIntelAsmWriter.inc
 
 TDFILES = $(SourceDir)/$(TARGET).td $(wildcard $(SourceDir)/*.td) \
           $(SourceDir)/../Target.td
@@ -40,9 +41,13 @@ $(TARGET)GenInstrInfo.inc:: $(TDFILES) $(TBLGEN)
 	@echo "Building $(TARGET).td instruction information with tblgen"
 	$(VERB) $(TBLGEN) -I $(BUILD_SRC_DIR) $< -gen-instr-desc -o $@
 
-$(TARGET)GenAsmWriter.inc:: $(TDFILES) $(TBLGEN)
-	@echo "Building $(TARGET).td assembly writer with tblgen"
+$(TARGET)GenATTAsmWriter.inc:: $(TDFILES) $(TBLGEN)
+	@echo "Building $(TARGET).td AT&T assembly writer with tblgen"
 	$(VERB) $(TBLGEN) -I $(BUILD_SRC_DIR) $< -gen-asm-writer -o $@
+
+$(TARGET)GenIntelAsmWriter.inc:: $(TDFILES) $(TBLGEN)
+	@echo "Building $(TARGET).td Intel assembly writer with tblgen"
+	$(VERB) $(TBLGEN) -I $(BUILD_SRC_DIR) $< -gen-asm-writer -asmwriternum=1 -o $@
 
 #$(TARGET)GenInstrSelector.inc:: $(TDFILES) $(TBLGEN)
 #	@echo "Building $(TARGET).td instruction selector with tblgen"
