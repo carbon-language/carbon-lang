@@ -118,6 +118,9 @@ else
 PROFILE =
 endif
 
+# Allow gnu extensions...
+CPPFLAGS += -D_GNU_SOURCE
+
 # -Wno-unused-parameter
 CompileCommonOpts := $(PROFILE) -Wall -W  -Wwrite-strings -Wno-unused -I$(LEVEL)/include
 
