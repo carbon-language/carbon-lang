@@ -366,7 +366,7 @@ void LiveIntervals::Interval::mergeRangesBackward(Ranges::iterator it)
 bool LiveIntervals::Interval::liveAt(unsigned index) const
 {
     Ranges::const_iterator r = ranges.begin();
-    while (r != ranges.end() && index < r->second) {
+    while (r != ranges.end() && index < (r->second - 1)) {
         if (index >= r->first)
             return true;
         ++r;
@@ -381,7 +381,7 @@ bool LiveIntervals::Interval::overlaps(const Interval& other) const
 
     while (i != ranges.end() && j != other.ranges.end()) {
         if (i->first < j->first) {
-            if (i->second > j->first) {
+            if ((i->second - 1) > j->first) {
                 return true;
             }
             else {
@@ -389,7 +389,7 @@ bool LiveIntervals::Interval::overlaps(const Interval& other) const
             }
         }
         else if (j->first < i->first) {
-            if (j->second > i->first) {
+            if ((j->second - 1) > i->first) {
                 return true;
             }
             else {
