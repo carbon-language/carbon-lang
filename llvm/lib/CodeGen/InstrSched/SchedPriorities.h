@@ -26,7 +26,7 @@
 #include "llvm/Analysis/LiveVar/MethodLiveVarInfo.h"
 #include "llvm/Target/MachineSchedInfo.h"
 #include <list>
-#include <ostream>
+//#include <ostream>
 
 class Method;
 class MachineInstr;
