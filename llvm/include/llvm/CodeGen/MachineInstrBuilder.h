@@ -81,6 +81,11 @@ struct MachineInstrBuilder {
     MI->addZeroExtImmOperand(Val);
     return *this;
   }
+
+  const MachineInstrBuilder &addMBB(MachineBasicBlock *MBB) const {
+    MI->addMachineBasicBlockOperand(MBB);
+    return *this;
+  }
 };
 
 /// BuildMI - Builder interface.  Specify how to create the initial instruction

@@ -79,6 +79,7 @@ public:
     MO_SignExtendedImmed,
     MO_UnextendedImmed,
     MO_PCRelativeDisp,
+    MO_MachineBasicBlock,       // MachineBasicBlock reference
   };
   
 private:
@@ -98,23 +99,25 @@ private:
 				// including hidden operands required for
 				// the generated machine code.     
     int64_t immedVal;		// constant value for an explicit constant
+
+    MachineBasicBlock *MBB;     // For MO_MachineBasicBlock type
   };
 
-  MachineOperandType opType:8;  // Pack into 8 bits efficiently after flags.
   char flags;                   // see bit field definitions above
+  MachineOperandType opType:8;  // Pack into 8 bits efficiently after flags.
   int regNum;	                // register number for an explicit register
                                 // will be set for a value after reg allocation
 private:
   MachineOperand()
     : immedVal(0),
-      opType(MO_VirtualRegister),
       flags(0),
+      opType(MO_VirtualRegister),
       regNum(-1) {}
 
   MachineOperand(int64_t ImmVal, MachineOperandType OpTy)
     : immedVal(ImmVal),
-      opType(OpTy),
       flags(0),
+      opType(OpTy),
       regNum(-1) {}
 
   MachineOperand(int Reg, MachineOperandType OpTy, MOTy::UseType UseTy)
@@ -139,11 +142,14 @@ private:
     }
   }
 
+  MachineOperand(MachineBasicBlock *mbb)
+    : MBB(mbb), flags(0), opType(MO_MachineBasicBlock), regNum(-1) {}
+
 public:
   MachineOperand(const MachineOperand &M)
     : immedVal(M.immedVal),
-      opType(M.opType),
       flags(M.flags),
+      opType(M.opType),
       regNum(M.regNum) {}
 
   ~MachineOperand() {}
@@ -163,8 +169,17 @@ public:
     return (opType == MO_VirtualRegister || opType == MO_MachineRegister) 
       && regNum >= MRegisterInfo::FirstVirtualRegister;
   }
-
+  bool isPhysicalRegister() const {
+    return (opType == MO_VirtualRegister || opType == MO_MachineRegister) 
+      && regNum < MRegisterInfo::FirstVirtualRegister;
+  }
+  bool isRegister() const { return isVirtualRegister() || isPhysicalRegister();}
   bool isMachineRegister() const { return !isVirtualRegister(); }
+  bool isMachineBasicBlock() const { return opType == MO_MachineBasicBlock; }
+  bool isPCRelativeDisp() const { return opType == MO_PCRelativeDisp; }
+  bool isImmediate() const {
+    return opType == MO_SignExtendedImmed || opType == MO_UnextendedImmed;
+  }
 
   inline Value*		getVRegValue	() const {
     assert(opType == MO_VirtualRegister || opType == MO_CCRegister || 
@@ -180,9 +195,14 @@ public:
     return regNum;
   }
   inline int64_t	getImmedValue	() const {
-    assert(opType == MO_SignExtendedImmed || opType == MO_UnextendedImmed);
+    assert(isImmediate());
     return immedVal;
   }
+  MachineBasicBlock *getMachineBasicBlock() const {
+    assert(isMachineBasicBlock() && "Can't get MBB in non-MBB operand!");
+    return MBB;
+  }
+
   bool		opIsDef		() const { return flags & DEFFLAG; }
   bool		opIsDefAndUse	() const { return flags & DEFUSEFLAG; }
   bool          opHiBits32      () const { return flags & HIFLAG32; }
@@ -482,6 +502,11 @@ public:
                                       MachineOperand::MO_SignExtendedImmed));
   }
 
+  void addMachineBasicBlockOperand(MachineBasicBlock *MBB) {
+    assert(!OperandsComplete() &&
+           "Trying to add an operand to a machine instr that is already done!");
+    operands.push_back(MachineOperand(MBB));
+  }
 
   unsigned substituteValue(const Value* oldVal, Value* newVal,
                            bool defsOnly = true);
