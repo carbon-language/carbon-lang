@@ -62,6 +62,10 @@ namespace llvm {
       if (NewSize > storage_.size())
         storage_.resize(NewSize, nullVal_);
     }
+
+    typename StorageT::size_type size() const {
+      return storage_.size();
+    }
   };
 
 } // End llvm namespace
