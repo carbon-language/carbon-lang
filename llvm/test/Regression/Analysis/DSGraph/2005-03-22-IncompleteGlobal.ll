@@ -1,5 +1,5 @@
-; RUN: analyze %s -datastructure-gc  -dsgc-check-flags=G:GIM -dsgc-dspass=bu
-
+; RUN: analyze %s -datastructure-gc  -dsgc-check-flags=G:GIM -dsgc-dspass=bu &&\
+; RUN: analyze %s -datastructure-gc  -dsgc-check-flags=G:GIM -dsgc-dspass=td
 
 %S = type { double, int }
 
