@@ -68,3 +68,16 @@ short %test10(short %A) {
 	%c2 = cast uint %c1 to short
 	ret short %c2
 }
+
+bool %test11(ubyte %A, ubyte %B) {
+        %C = sub ubyte %A, %B
+        %D = cast ubyte %C to bool    ; == setne A, B
+        ret bool %D
+}
+
+bool %test12(ubyte %A) {
+        %B = add ubyte %A, 255
+        %C = cast ubyte %B to bool    ; === A != 1
+        ret bool %C
+}
+
