@@ -42,7 +42,7 @@
 #include "llvm/Pass.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/InstVisitor.h"
-#include "llvm/Transforms/Utils/DemoteRegToStack.h"
+#include "llvm/Transforms/Utils/Local.h"
 #include "Support/DepthFirstIterator.h"
 #include "Support/Statistic.h"
 #include "Support/StringExtras.h"

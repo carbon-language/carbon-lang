@@ -38,14 +38,14 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Transforms/Utils/DemoteRegToStack.h"
+#include "llvm/DerivedTypes.h"
+#include "llvm/Instructions.h"
+#include "llvm/Module.h"
 #include "llvm/Analysis/PgmDependenceGraph.h"
 #include "llvm/Analysis/DataStructure.h"
 #include "llvm/Analysis/DSGraph.h"
-#include "llvm/Module.h"
-#include "llvm/Instructions.h"
-#include "llvm/DerivedTypes.h"
 #include "llvm/Support/InstVisitor.h"
+#include "llvm/Transforms/Utils/Local.h"
 #include "Support/Statistic.h"
 #include "Support/STLExtras.h"
 #include "Support/hash_set"

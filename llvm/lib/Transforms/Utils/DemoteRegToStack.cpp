@@ -14,7 +14,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Transforms/Utils/DemoteRegToStack.h"
+#include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Function.h"
 #include "llvm/iMemory.h"
 #include "llvm/iPHINode.h"
