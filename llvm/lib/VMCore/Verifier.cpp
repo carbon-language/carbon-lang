@@ -55,8 +55,6 @@ namespace {  // Anonymous namespace for class
 
     Verifier() : Broken(false) {}
 
-    virtual const char *getPassName() const { return "Module Verifier"; }
-
     bool doInitialization(Module &M) {
       verifySymbolTable(M.getSymbolTable());
       return false;
@@ -113,6 +111,8 @@ namespace {  // Anonymous namespace for class
       Broken = true;
     }
   };
+
+  RegisterPass<Verifier> X("verify", "Module Verifier");
 }
 
 // Assert - We know that cond should be true, if not print an error message.
