@@ -9,8 +9,8 @@
 //   --dsgc-abort-if-any-collapsed    - Abort if any collapsed nodes are found
 //   --dsgc-abort-if-collapsed=<list> - Abort if a node pointed to by an SSA
 //                                      value with name in <list> is collapsed
-//   --dsgc-abort-if-incomplete=<list>- Abort if any of the named SSA values
-//                                      are incomplete.
+//   --dsgc-check-flags=<list>        - Abort if the specified nodes have flags
+//                                      that are not specified.
 //   --dsgc-abort-if-merged=<list>    - Abort if any of the named SSA values
 //                                      point to the same node.
 //
@@ -38,8 +38,8 @@ namespace {
   AbortIfCollapsed("dsgc-abort-if-collapsed", cl::Hidden, cl::CommaSeparated,
                    cl::desc("Abort if any of the named symbols is collapsed"));
   cl::list<std::string>
-  AbortIfIncomplete("dsgc-abort-if-incomplete", cl::Hidden, cl::CommaSeparated,
-                   cl::desc("Abort if any of the named symbols is incomplete"));
+  CheckFlags("dsgc-check-flags", cl::Hidden, cl::CommaSeparated,
+             cl::desc("Check that flags are specified for nodes"));
   cl::list<std::string>
   AbortIfMerged("dsgc-abort-if-merged", cl::Hidden, cl::CommaSeparated,
              cl::desc("Abort if any of the named symbols are merged together"));
@@ -68,7 +68,7 @@ namespace {
 
 DSGC::DSGC() {
   if (!AbortIfAnyCollapsed && AbortIfCollapsed.empty() &&
-      AbortIfIncomplete.empty() && AbortIfMerged.empty()) {
+      CheckFlags.empty() && AbortIfMerged.empty()) {
     std::cerr << "The -datastructure-gc is useless if you don't specify any"
                  " -dsgc-* options.  See the -help-hidden output for a list.\n";
     abort();
@@ -114,16 +114,39 @@ void DSGC::verify(const DSGraph &G) {
       }
   }
 
-  if (!AbortIfCollapsed.empty() || !AbortIfIncomplete.empty() ||
+  if (!AbortIfCollapsed.empty() || !CheckFlags.empty() ||
       !AbortIfMerged.empty()) {
     // Convert from a list to a set, because we don't have cl::set's yet.  FIXME
     std::set<std::string> AbortIfCollapsedS(AbortIfCollapsed.begin(),
                                             AbortIfCollapsed.end());
-    std::set<std::string> AbortIfIncompleteS(AbortIfIncomplete.begin(),
-                                             AbortIfIncomplete.end());
     std::set<std::string> AbortIfMergedS(AbortIfMerged.begin(),
                                          AbortIfMerged.end());
+    std::map<std::string, unsigned> CheckFlagsM;
     
+    for (cl::list<std::string>::iterator I = CheckFlags.begin(),
+           E = CheckFlags.end(); I != E; ++I) {
+      unsigned ColonPos = I->rfind(':');
+      if (ColonPos == std::string::npos) {
+        std::cerr << "Error: '" << *I
+               << "' is an invalid value for the --dsgc-check-flags option!\n";
+        abort();
+      }
+
+      unsigned Flags = 0;
+      for (; ColonPos != I->size(); ++ColonPos)
+        switch ((*I)[ColonPos]) {
+        case 'S': Flags |= DSNode::AllocaNode;  break;
+        case 'H': Flags |= DSNode::HeapNode;    break;
+        case 'G': Flags |= DSNode::GlobalNode;  break;
+        case 'U': Flags |= DSNode::UnknownNode; break;
+        case 'I': Flags |= DSNode::Incomplete;  break;
+        case 'M': Flags |= DSNode::Modified;    break;
+        case 'R': Flags |= DSNode::Read;        break;
+        case 'A': Flags |= DSNode::Array;       break;
+        default: std::cerr << "Invalid DSNode flag!\n"; break;
+        }
+      CheckFlagsM[std::string(I->begin(), I->begin()+ColonPos)] = Flags;
+    }
     
     // Now we loop over all of the scalars, checking to see if any are collapsed
     // that are not supposed to be, or if any are merged together.
@@ -133,7 +156,7 @@ void DSGC::verify(const DSGraph &G) {
     for (DSGraph::ScalarMapTy::const_iterator I = SM.begin(), E = SM.end();
          I != E; ++I)
       if (I->first->hasName() && I->second.getNode()) {
-        std::string Name = I->first->getName();
+        const std::string &Name = I->first->getName();
         DSNode *N = I->second.getNode();
         
         // Verify it is not collapsed if it is not supposed to be...
@@ -143,8 +166,9 @@ void DSGC::verify(const DSGraph &G) {
           abort();
         }
 
-        if (N->isIncomplete() && AbortIfIncompleteS.count(Name)) {
-          std::cerr << "Node for value '%" << Name << "' is incomplete: ";
+        if (CheckFlagsM.count(Name) && CheckFlagsM[Name] != N->getNodeFlags()) {
+          std::cerr << "Node flags are not as expected for node: " << Name
+                    << "\n";
           N->print(std::cerr, &G);
           abort();
         }
