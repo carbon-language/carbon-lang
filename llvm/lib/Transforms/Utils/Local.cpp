@@ -80,6 +80,9 @@ bool ConstantFoldTerminator(BasicBlock *BB) {
     // single branch instruction!
     ConstantInt *CI = dyn_cast<ConstantInt>(SI->getCondition());
     BasicBlock *TheOnlyDest = SI->getSuccessor(0);  // The default dest
+    BasicBlock *DefaultDest = TheOnlyDest;
+    assert(TheOnlyDest == SI->getDefaultDest() &&
+           "Default destination is not successor #0?");
 
     // Figure out which case it goes to...
     for (unsigned i = 1, e = SI->getNumSuccessors(); i != e; ++i) {
@@ -87,6 +90,16 @@ bool ConstantFoldTerminator(BasicBlock *BB) {
       if (SI->getSuccessorValue(i) == CI) {
         TheOnlyDest = SI->getSuccessor(i);
         break;
+      }
+
+      // Check to see if this branch is going to the same place as the default
+      // dest.  If so, eliminate it as an explicit compare.
+      if (SI->getSuccessor(i) == DefaultDest) {
+        // Remove this entry...
+        DefaultDest->removePredecessor(SI->getParent());
+        SI->removeCase(i);
+        --i; --e;  // Don't skip an entry...
+        continue;
       }
 
       // Otherwise, check to see if the switch only branches to one destination.
