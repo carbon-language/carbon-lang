@@ -443,18 +443,25 @@ void DerivedType::dropAllTypeUses() {
   }
 }
 
-// isTypeAbstract - This is a recursive function that walks a type hierarchy
-// calculating whether or not a type is abstract.  Worst case it will have to do
-// a lot of traversing if you have some whacko opaque types, but in most cases,
-// it will do some simple stuff when it hits non-abstract types that aren't
-// recursive.
+// PromoteAbstractToConcrete - This is a recursive function that walks a type
+// graph calculating whether or not a type is abstract.
 //
-bool Type::isTypeAbstract() {
+// This method returns true if the type is found to still be abstract.
+//
+bool Type::PromoteAbstractToConcrete(void *Ptr) {
   if (!isAbstract())                           // Base case for the recursion
     return false;                              // Primitive = leaf type
   
   if (isa<OpaqueType>(this))                   // Base case for the recursion
     return true;                               // This whole type is abstract!
+
+  /// KnownAbstractTypes - This set contains all of the types that we know for
+  /// sure are abstract.  Once we discover that a type really is abstract, we
+  /// remember this so we don't have to do potentially exponential amounts of
+  /// checking in some cases.
+  std::set<Type*> &KnownAbstractTypes = *(std::set<Type*>*)Ptr;
+  if (KnownAbstractTypes.count(this))
+    return true;    // We already know this type is abstract!
 
   // We have to guard against recursion.  To do this, we temporarily mark this
   // type as concrete, so that if we get back to here recursively we will think
@@ -465,15 +472,14 @@ bool Type::isTypeAbstract() {
   // one!
   for (Type::subtype_iterator I = subtype_begin(), E = subtype_end(); 
        I != E; ++I)
-    if (const_cast<Type*>(I->get())->isTypeAbstract()) {
+    if (const_cast<Type*>(I->get())->PromoteAbstractToConcrete(Ptr)) {
+      KnownAbstractTypes.insert(this);
       setAbstract(true);        // Restore the abstract bit.
       return true;              // This type is abstract if subtype is abstract!
     }
   
-  // Restore the abstract bit.
-  setAbstract(true);
-
-  // Nothing looks abstract here...
+  // Nothing looks abstract here.
+  setAbstract(false);
   return false;
 }
 
@@ -725,7 +731,8 @@ public:
     // If the type is currently thought to be abstract, rescan all of our
     // subtypes to see if the type has just become concrete!
     if (Ty->isAbstract()) {
-      Ty->setAbstract(Ty->isTypeAbstract());
+      std::set<Type*> KnownAbstractTypes;
+      Ty->PromoteAbstractToConcrete(&KnownAbstractTypes);
 
       // If the type just became concrete, notify all users!
       if (!Ty->isAbstract())
