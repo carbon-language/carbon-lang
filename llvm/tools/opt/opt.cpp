@@ -21,6 +21,7 @@
 #include "llvm/Transforms/ChangeAllocations.h"
 #include "llvm/Transforms/IPO/SimpleStructMutation.h"
 #include "llvm/Transforms/IPO/GlobalDCE.h"
+#include "llvm/Transforms/IPO/PoolAllocate.h"
 #include "llvm/Transforms/Scalar/DCE.h"
 #include "llvm/Transforms/Scalar/ConstantProp.h"
 #include "llvm/Transforms/Scalar/IndVarSimplify.h"
@@ -51,7 +52,7 @@ enum Opts {
   trace, tracem, paths,
 
   // Interprocedural optimizations...
-  globaldce, swapstructs, sortstructs,
+  globaldce, swapstructs, sortstructs, poolalloc,
 };
 
 static Pass *createPrintMethodPass() {
@@ -79,6 +80,7 @@ struct {
   { adce       , createAgressiveDCEPass },
   { raise      , createRaisePointerReferencesPass },
   { mem2reg    , createPromoteMemoryToRegister },
+  { lowerrefs,   createDecomposeMultiDimRefsPass },
 
   { trace      , createTraceValuesPassForBasicBlocks },
   { tracem     , createTraceValuesPassForMethod },
@@ -92,7 +94,7 @@ struct {
   { globaldce  , createGlobalDCEPass },
   { swapstructs, createSwapElementsPass },
   { sortstructs, createSortElementsPass },
-  { lowerrefs,   createDecomposeMultiDimRefsPass } 
+  { poolalloc  , createPoolAllocatePass },
 };
 
 // Command line option handling code...
@@ -122,6 +124,7 @@ cl::EnumList<enum Opts> OptimizationList(cl::NoFlags,
   clEnumVal(globaldce  , "Remove unreachable globals"),
   clEnumVal(swapstructs, "Swap structure types around"),
   clEnumVal(sortstructs, "Sort structure elements"),
+  clEnumVal(poolalloc  , "Pool allocate disjoint datastructures"),
 
   clEnumVal(raiseallocs, "Raise allocations from calls to instructions"),
   clEnumVal(cleangcc   , "Cleanup GCC Output"),
