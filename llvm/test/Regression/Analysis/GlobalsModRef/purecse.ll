@@ -1,6 +1,6 @@
 ; Test that pure functions are cse'd away
 
-; RUN: llvm-as < %s | opt -globalsmodref-aa -load-vn -gcse -instcombine -adce| llvm-dis | not grep call
+; RUN: llvm-as < %s | opt -globalsmodref-aa -load-vn -gcse -instcombine | llvm-dis | not grep sub
 
 int %pure(int %X) {
 	%Y = add int %X, 1
