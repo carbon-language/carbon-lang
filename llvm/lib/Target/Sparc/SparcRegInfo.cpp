@@ -1733,9 +1733,8 @@ void UltraSparcRegInfo::moveInst2OrdVec(std::vector<MachineInstr *> &OrdVec,
 	  
 	  cpMem2RegMI(OrdVec, getFramePointer(), StackOff, DReg, RegType);
 	    
-	  cerr << "\nFixed CIRCULAR references by reordering";
-
 	  if( DEBUG_RA ) {
+            cerr << "\nFixed CIRCULAR references by reordering:";
 	    cerr << "\nBefore CIRCULAR Reordering:\n";
 	    cerr << *UnordInst;
 	    cerr << *OrdInst;
