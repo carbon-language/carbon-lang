@@ -61,7 +61,8 @@ $(USER_TARGETS)::
 # PRECONDITIONS: that which must be built/checked first
 ################################################################################
 
-SRCMKFILES    := $(wildcard $(BUILD_SRC_DIR)/Makefile*)
+SRCMKFILES    := $(filter-out Makefile.rules %.in,\
+                 $(wildcard $(BUILD_SRC_DIR)/Makefile.*))
 OBJMKFILES    := $(subst $(BUILD_SRC_DIR),$(BUILD_OBJ_DIR),$(SRCMKFILES))
 CONFIGURE     := $(LLVM_SRC_ROOT)/configure
 CONFIG_STATUS := $(LLVM_OBJ_ROOT)/config.status
@@ -106,18 +107,19 @@ $(BUILD_OBJ_DIR)/Makefile : $(BUILD_SRC_DIR)/Makefile
 	@$(ECHO) "Updating Makefile"
 	$(VERB) $(MKDIR) $(@D)
 	$(VERB) cp -f $< $@
-	$(VERB) $(MAKE) $(MAKECMDGOALS)
 
 # Copy the Makefile.* files unless we're in the root directory which avoids
 # the copying of Makefile.config.in or other things that should be explicitly
 # taken care of.
-ifneq ($(BUILD_OBJ_DIR),$(BUILD_OBJ_ROOT))
 $(BUILD_OBJ_DIR)/Makefile% : $(BUILD_SRC_DIR)/Makefile%
-	@$(ECHO) "Updating $(@F)"
-	$(VERB) $(MKDIR) $(@D)
-	$(VERB) cp -f $< $@
-	$(VERB) $(MAKE) $(MAKECMDGOALS)
-endif
+	@case '$?' in \
+          *Makefile.rules) ;; \
+          *.in) ;; \
+          *) $(ECHO) "Updating $(@F)" ; \
+	     $(MKDIR) $(@D) ; \
+	     cp -f $< $@ ;; \
+	esac
+         
 endif
 
 #------------------------------------------------------------------------
