@@ -1435,7 +1435,7 @@ void PPC32ISel::emitSelectOperation(MachineBasicBlock *MBB,
   //   fallthrough --> copy0MBB
   MachineBasicBlock *copy0MBB = new MachineBasicBlock(LLVM_BB);
   MachineBasicBlock *sinkMBB = new MachineBasicBlock(LLVM_BB);
-  unsigned TrueValue = getReg(TrueVal, BB, BB->begin());
+  unsigned TrueValue = getReg(TrueVal);
   BuildMI(BB, Opcode, 2).addReg(PPC::CR0).addMBB(sinkMBB);
   F->getBasicBlockList().insert(It, copy0MBB);
   F->getBasicBlockList().insert(It, sinkMBB);
@@ -1447,7 +1447,7 @@ void PPC32ISel::emitSelectOperation(MachineBasicBlock *MBB,
   //   %FalseValue = ...
   //   # fallthrough to sinkMBB
   BB = copy0MBB;
-  unsigned FalseValue = getReg(FalseVal, BB, BB->begin());
+  unsigned FalseValue = getReg(FalseVal);
   // Update machine-CFG edges
   BB->addSuccessor(sinkMBB);
 
