@@ -201,8 +201,7 @@ public:
   /// TargetData subsystem to do this.
   ///
   bool isSized() const {
-    return (ID >= BoolTyID && ID <= DoubleTyID) || ID == PointerTyID || 
-           isSizedDerivedType();
+    return !isAbstract() || ID == PointerTyID || isSizedDerivedType();
   }
 
   /// getPrimitiveSize - Return the basic size of this type if it is a primitive
