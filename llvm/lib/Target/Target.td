@@ -110,7 +110,7 @@ class Instruction {
   string Namespace = "";
 
   dag OperandList;          // An dag containing the MI operand list.
-  string AsmString;         // The .s format to print the instruction with.
+  string AsmString = "";    // The .s format to print the instruction with.
 
   // Pattern - Set to the DAG pattern for this instruction, if we know of one,
   // otherwise, uninitialized.
@@ -146,6 +146,11 @@ class InstrInfo {
   list<string> TSFlagsFields = [];
   list<int>    TSFlagsShifts = [];
 }
+
+/// ops definition - This is just a simple marker used to identify the operands
+/// list for an instruction.  This should be used like this:
+///     (ops R32:$dst, R32:$src) or something similar.
+def ops;
 
 
 //===----------------------------------------------------------------------===//
