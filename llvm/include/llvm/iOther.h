@@ -95,10 +95,6 @@ public:
     return dyn_cast<Function>(Operands[0]);
   }
 
-  // FIXME: Remove getCalledMethod's
-  const Function*getCalledMethod()const{return dyn_cast<Function>(Operands[0]);}
-  Function *getCalledMethod() { return dyn_cast<Function>(Operands[0]); }
-
   // getCalledValue - Get a pointer to a method that is invoked by this inst.
   inline const Value *getCalledValue() const { return Operands[0]; }
   inline       Value *getCalledValue()       { return Operands[0]; }
