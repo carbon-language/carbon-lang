@@ -20,6 +20,35 @@
 #include <iostream>
 #include <cstdio>
 
+/// CheckMagic - Returns true IFF the file named FN begins with Magic. FN must
+/// name a readable file.
+///
+bool CheckMagic (const std::string &FN, const std::string &Magic) {
+  char buf[1 + Magic.size ()];
+  std::ifstream f (FN.c_str ());
+  f.read (buf, Magic.size ());
+  buf[Magic.size ()] = '\0';
+  return Magic == buf;
+}
+
+/// IsArchive - Returns true IFF the file named FN appears to be a "ar" library
+/// archive. The file named FN must exist.
+///
+bool IsArchive(const std::string &FN) {
+  // Inspect the beginning of the file to see if it contains the "ar"
+  // library archive format magic string.
+  return CheckMagic (FN, "!<arch>\012");
+}
+
+/// IsBytecode - Returns true IFF the file named FN appears to be an LLVM
+/// bytecode file. The file named FN must exist.
+///
+bool IsBytecode(const std::string &FN) {
+  // Inspect the beginning of the file to see if it contains the LLVM
+  // bytecode format magic string.
+  return CheckMagic (FN, "llvm");
+}
+
 /// FileOpenable - Returns true IFF Filename names an existing regular
 /// file which we can successfully open.
 ///
