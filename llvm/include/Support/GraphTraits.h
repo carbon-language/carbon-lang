@@ -31,6 +31,13 @@ struct GraphTraits {
   //  
 
 
+  // typedef  ...iterator nodes_iterator;
+  // static nodes_iterator nodes_begin(GraphType *G)
+  // static nodes_iterator nodes_end  (GraphType *G)
+  //
+  //    nodes_iterator/begin/end - Allow iteration over all nodes in the graph
+
+
   // If anyone tries to use this class without having an appropriate
   // specialization, make an error.  If you get this error, it's because you
   // need to include the appropriate specialization of GraphTraits<> for your
