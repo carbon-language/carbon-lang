@@ -50,16 +50,27 @@ const unsigned M_RET_FLAG		= 1 << 3;
 const unsigned M_BARRIER_FLAG           = 1 << 4;
 const unsigned M_DELAY_SLOT_FLAG        = 1 << 5;
 const unsigned M_CC_FLAG		= 1 << 6;
-const unsigned M_LOAD_FLAG		= 1 << 10;
-const unsigned M_STORE_FLAG		= 1 << 12;
-// 3-addr instructions which really work like 2-addr ones, eg. X86 add/sub
-const unsigned M_2_ADDR_FLAG           = 1 << 15;
+const unsigned M_LOAD_FLAG		= 1 << 7;
+const unsigned M_STORE_FLAG		= 1 << 8;
+
+// M_2_ADDR_FLAG - 3-addr instructions which really work like 2-addr ones.
+const unsigned M_2_ADDR_FLAG            = 1 << 9;
+
+// M_CONVERTIBLE_TO_3_ADDR - This is a M_2_ADDR_FLAG instruction which can be
+// changed into a 3-address instruction if the first two operands cannot be
+// assigned to the same register.  The target must implement the
+// TargetInstrInfo::convertToThreeAddress method for this instruction.
+const unsigned M_CONVERTIBLE_TO_3_ADDR = 1 << 10;
+
+// This M_COMMUTABLE - is a 2- or 3-address instruction (of the form X = op Y,
+// Z), which produces the same result if Y and Z are exchanged.
+const unsigned M_COMMUTABLE            = 1 << 11;
 
 // M_TERMINATOR_FLAG - Is this instruction part of the terminator for a basic
 // block?  Typically this is things like return and branch instructions.
 // Various passes use this to insert code into the bottom of a basic block, but
 // before control flow occurs.
-const unsigned M_TERMINATOR_FLAG       = 1 << 16;
+const unsigned M_TERMINATOR_FLAG       = 1 << 12;
 
 class TargetInstrDescriptor {
 public:
@@ -150,6 +161,20 @@ public:
                            unsigned& sourceReg,
                            unsigned& destReg) const {
     return false;
+  }
+
+  /// convertToThreeAddress - This method must be implemented by targets that
+  /// set the M_CONVERTIBLE_TO_3_ADDR flag.  When this flag is set, the target
+  /// may be able to convert a two-address instruction into a true
+  /// three-address instruction on demand.  This allows the X86 target (for
+  /// example) to convert ADD and SHL instructions into LEA instructions if they
+  /// would require register copies due to two-addressness.
+  ///
+  /// This method returns a null pointer if the transformation cannot be
+  /// performed, otherwise it returns the new instruction.
+  ///
+  virtual MachineInstr *convertToThreeAddress(MachineInstr *TA) const {
+    return 0;
   }
 
   /// Insert a goto (unconditional branch) sequence to TMBB, at the
