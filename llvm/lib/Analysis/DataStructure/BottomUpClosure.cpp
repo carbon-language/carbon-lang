@@ -14,7 +14,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Analysis/DataStructure.h"
+#include "llvm/Analysis/DataStructure/DataStructure.h"
 #include "llvm/Module.h"
 #include "Support/Statistic.h"
 #include "Support/Debug.h"
