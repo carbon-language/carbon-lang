@@ -1,4 +1,4 @@
-setenv LD_LIBRARY_PATH ../lib/Assembly/Parser/Release:../lib/Assembly/Writer/Release:../lib/Analysis/Release:../lib/VMCore/Release:../lib/Bytecode/Writer/Release:../lib/Bytecode/Reader/Release:../lib/Optimizations/Release
+setenv LD_LIBRARY_PATH ../lib/Release
 
-setenv PATH ../tools/dis:../tools/opt:../tools/strip:../tools/analyze:${PATH}
-alias as ../tools/as/as
+setenv PATH ../tools/Release:${PATH}
+alias as ../tools/Release/as
