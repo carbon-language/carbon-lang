@@ -11,6 +11,7 @@
 #include "llvm/Analysis/DSGraph.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Module.h"
+#include "Support/Statistic.h"
 
 namespace {
   class Steens : public Pass, public AliasAnalysis {
@@ -192,7 +193,7 @@ bool Steens::run(Module &M) {
   // FIXME: We should be able to disable the globals graph for steens!
   ResultGraph->removeDeadNodes(DSGraph::KeepUnreachableGlobals);
 
-  //print(std::cerr, &M);
+  DEBUG(print(std::cerr, &M));
   return false;
 }
 
