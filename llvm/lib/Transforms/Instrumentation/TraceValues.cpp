@@ -23,10 +23,12 @@ using std::string;
 
 static cl::opt<bool>
 DisablePtrHashing("tracedisablehashdisable", cl::Hidden,
-                  cl::desc("Disable pointer hashing"));
+                  cl::desc("Disable pointer hashing in the -trace or -tracem "
+                           "passes"));
 
 static cl::list<string>
-TraceFuncNames("tracefunc", cl::desc("trace only specific functions"),
+TraceFuncNames("tracefunc", cl::desc("Only trace specific functions in the "
+                                     "-trace or -tracem passes"),
 	       cl::value_desc("function"), cl::Hidden);
 
 static void TraceValuesAtBBExit(BasicBlock *BB,
