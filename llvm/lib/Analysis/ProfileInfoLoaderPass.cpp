@@ -21,7 +21,8 @@ using namespace llvm;
 namespace {
   cl::opt<std::string>
   ProfileInfoFilename("profile-info-file", cl::init("llvmprof.out"),
-                      cl::desc(""));
+                      cl::value_desc("filename"),
+                      cl::desc("Profile file loaded by -profile-loader"));
 
   class LoaderPass : public Pass, public ProfileInfo {
     std::string Filename;
