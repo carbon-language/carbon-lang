@@ -1,0 +1,9 @@
+// RUN: %llvmgcc -xc %s -c -o - | llvm-dis | not grep declare
+
+int one (int a) {
+  two (a, 5);
+  return 0;
+}
+
+static int two (int a, int b) {
+}
