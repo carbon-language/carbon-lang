@@ -305,7 +305,7 @@ bool StructType::indexValid(const Value *V) const {
 //
 const Type *StructType::getTypeAtIndex(const Value *V) const {
   assert(indexValid(V) && "Invalid structure index!");
-  unsigned Idx = cast<ConstantUInt>(V)->getValue();
+  unsigned Idx = (unsigned)cast<ConstantUInt>(V)->getValue();
   return ContainedTys[Idx];
 }
 
