@@ -716,6 +716,14 @@ static void markIncompleteNode(DSNode *N) {
       markIncompleteNode(DSN);
 }
 
+static void markIncomplete(DSCallSite &Call) {
+  // Then the return value is certainly incomplete!
+  markIncompleteNode(Call.getRetVal().getNode());
+
+  // All objects pointed to by function arguments are incomplete!
+  for (unsigned i = 0, e = Call.getNumPtrArgs(); i != e; ++i)
+    markIncompleteNode(Call.getPtrArg(i).getNode());
+}
 
 // markIncompleteNodes - Traverse the graph, identifying nodes that may be
 // modified by other functions that have not been resolved yet.  This marks
@@ -735,15 +743,13 @@ void DSGraph::markIncompleteNodes(bool markFormalArgs) {
         markIncompleteNode(ScalarMap[I].getNode());
 
   // Mark stuff passed into functions calls as being incomplete...
-  for (unsigned i = 0, e = FunctionCalls.size(); i != e; ++i) {
-    DSCallSite &Call = FunctionCalls[i];
-    // Then the return value is certainly incomplete!
-    markIncompleteNode(Call.getRetVal().getNode());
-
-    // All objects pointed to by function arguments are incomplete!
-    for (unsigned i = 0, e = Call.getNumPtrArgs(); i != e; ++i)
-      markIncompleteNode(Call.getPtrArg(i).getNode());
-  }
+  if (!shouldPrintAuxCalls())
+    for (unsigned i = 0, e = FunctionCalls.size(); i != e; ++i)
+      markIncomplete(FunctionCalls[i]);
+  else
+    for (unsigned i = 0, e = AuxFunctionCalls.size(); i != e; ++i)
+      markIncomplete(AuxFunctionCalls[i]);
+    
 
   // Mark all of the nodes pointed to by global nodes as incomplete...
   for (unsigned i = 0, e = Nodes.size(); i != e; ++i)
