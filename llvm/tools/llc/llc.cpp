@@ -129,7 +129,7 @@ int main(int argc, char **argv) {
   
   // If LLVM dumping after transformations is requested, add it to the pipeline
   if (DumpAsm)
-    Passes.add(new PrintMethodPass("Code after xformations: \n", &cerr));
+    Passes.add(new PrintFunctionPass("Code after xformations: \n", &cerr));
 
   // Figure out where we are going to send the output...
   std::ostream *Out = 0;

@@ -56,7 +56,7 @@ enum Opts {
 };
 
 static Pass *createPrintMethodPass() {
-  return new PrintMethodPass("Current Method: \n", &cerr);
+  return new PrintFunctionPass("Current Method: \n", &cerr);
 }
 
 // OptTable - Correlate enum Opts to Pass constructors...
