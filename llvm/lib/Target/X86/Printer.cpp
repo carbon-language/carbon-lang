@@ -108,7 +108,7 @@ static void printOp(std::ostream &O, const MachineOperand &MO,
     O << (int)MO.getImmedValue();
     return;
   case MachineOperand::MO_PCRelativeDisp:
-    O << "< " << MO.getVRegValue()->getName() << ">";
+    O << "<" << MO.getVRegValue()->getName() << ">";
     return;
   default:
     O << "<unknown op ty>"; return;    
@@ -145,163 +145,11 @@ static void printMemReference(std::ostream &O, const MachineInstr *MI,
   O << "]";
 }
 
-static inline void toHexDigit(std::ostream &O, unsigned char V) {
-  if (V >= 10)
-    O << (char)('A'+V-10);
-  else
-    O << (char)('0'+V);
-}
-
-static std::ostream &toHex(std::ostream &O, unsigned char V) {
-  toHexDigit(O, V >> 4);
-  toHexDigit(O, V & 0xF);
-  return O;
-}
-
-static std::ostream &emitConstant(std::ostream &O, unsigned Val, unsigned Size){
-  // Output the constant in little endian byte order...
-  for (unsigned i = 0; i != Size; ++i) {
-    toHex(O, Val) << " ";
-    Val >>= 8;
-  }
-  return O;
-}
-
-namespace N86 {  // Native X86 Register numbers...
-  enum {
-    EAX = 0, ECX = 1, EDX = 2, EBX = 3, ESP = 4, EBP = 5, ESI = 6, EDI = 7
-  };
-}
-
-
-// getX86RegNum - This function maps LLVM register identifiers to their X86
-// specific numbering, which is used in various places encoding instructions.
-//
-static unsigned getX86RegNum(unsigned RegNo) {
-  switch(RegNo) {
-  case X86::EAX: case X86::AX: case X86::AL: return N86::EAX;
-  case X86::ECX: case X86::CX: case X86::CL: return N86::ECX;
-  case X86::EDX: case X86::DX: case X86::DL: return N86::EDX;
-  case X86::EBX: case X86::BX: case X86::BL: return N86::EBX;
-  case X86::ESP: case X86::SP: case X86::AH: return N86::ESP;
-  case X86::EBP: case X86::BP: case X86::CH: return N86::EBP;
-  case X86::ESI: case X86::SI: case X86::DH: return N86::ESI;
-  case X86::EDI: case X86::DI: case X86::BH: return N86::EDI;
-  default:
-    assert(RegNo >= MRegisterInfo::FirstVirtualRegister &&
-           "Unknown physical register!");
-    DEBUG(std::cerr << "Register allocator hasn't allocated " << RegNo
-                    << " correctly yet!\n");
-    return 0;
-  }
-}
-
-inline static unsigned char ModRMByte(unsigned Mod, unsigned RegOpcode,
-                                      unsigned RM) {
-  assert(Mod < 4 && RegOpcode < 8 && RM < 8 && "ModRM Fields out of range!");
-  return RM | (RegOpcode << 3) | (Mod << 6);
-}
-
-static void emitRegModRMByte(std::ostream &O, unsigned ModRMReg,
-                             unsigned RegOpcodeField) {
-  toHex(O, ModRMByte(3, RegOpcodeField, getX86RegNum(ModRMReg))) << " ";
-}
-
-inline static void emitSIBByte(std::ostream &O, unsigned SS, unsigned Index,
-                               unsigned Base) {
-  // SIB byte is in the same format as the ModRMByte...
-  toHex(O, ModRMByte(SS, Index, Base));
-}
-
-static bool isDisp8(int Value) {
-  return Value == (signed char)Value;
-}
-
-static void emitMemModRMByte(std::ostream &O, const MachineInstr *MI,
-                             unsigned Op, unsigned RegOpcodeField) {
-  assert(isMem(MI, Op) && "Invalid memory reference!");
-  const MachineOperand &BaseReg  = MI->getOperand(Op);
-  const MachineOperand &Scale    = MI->getOperand(Op+1);
-  const MachineOperand &IndexReg = MI->getOperand(Op+2);
-  const MachineOperand &Disp     = MI->getOperand(Op+3);
-
-  // Is a SIB byte needed?
-  if (IndexReg.getReg() == 0 && BaseReg.getReg() != X86::ESP) {
-    if (BaseReg.getReg() == 0) {  // Just a displacement?
-      // Emit special case [disp32] encoding
-      toHex(O, ModRMByte(0, RegOpcodeField, 5));
-      emitConstant(O, Disp.getImmedValue(), 4);
-    } else {
-      unsigned BaseRegNo = getX86RegNum(BaseReg.getReg());
-      if (Disp.getImmedValue() == 0 && BaseRegNo != N86::EBP) {
-        // Emit simple indirect register encoding... [EAX] f.e.
-        toHex(O, ModRMByte(0, RegOpcodeField, BaseRegNo));
-      } else if (isDisp8(Disp.getImmedValue())) {
-        // Emit the disp8 encoding... [REG+disp8]
-        toHex(O, ModRMByte(1, RegOpcodeField, BaseRegNo));
-        emitConstant(O, Disp.getImmedValue(), 1);
-      } else {
-        // Emit the most general non-SIB encoding: [REG+disp32]
-        toHex(O, ModRMByte(1, RegOpcodeField, BaseRegNo));
-        emitConstant(O, Disp.getImmedValue(), 4);
-      }
-    }
-
-  } else {  // We need a SIB byte, so start by outputting the ModR/M byte first
-    assert(IndexReg.getReg() != X86::ESP && "Cannot use ESP as index reg!");
-
-    bool ForceDisp32 = false;
-    if (BaseReg.getReg() == 0) {
-      // If there is no base register, we emit the special case SIB byte with
-      // MOD=0, BASE=5, to JUST get the index, scale, and displacement.
-      toHex(O, ModRMByte(0, RegOpcodeField, 4));
-      ForceDisp32 = true;
-    } else if (Disp.getImmedValue() == 0) {
-      // Emit no displacement ModR/M byte
-      toHex(O, ModRMByte(0, RegOpcodeField, 4));
-    } else if (isDisp8(Disp.getImmedValue())) {
-      // Emit the disp8 encoding...
-      toHex(O, ModRMByte(1, RegOpcodeField, 4));
-    } else {
-      // Emit the normal disp32 encoding...
-      toHex(O, ModRMByte(2, RegOpcodeField, 4));
-    }
-
-    // Calculate what the SS field value should be...
-    static const unsigned SSTable[] = { ~0, 0, 1, ~0, 2, ~0, ~0, ~0, 3 };
-    unsigned SS = SSTable[Scale.getImmedValue()];
-
-    if (BaseReg.getReg() == 0) {
-      // Handle the SIB byte for the case where there is no base.  The
-      // displacement has already been output.
-      assert(IndexReg.getReg() && "Index register must be specified!");
-      emitSIBByte(O, SS, getX86RegNum(IndexReg.getReg()), 5);
-    } else {
-      unsigned BaseRegNo = getX86RegNum(BaseReg.getReg());
-      unsigned IndexRegNo = getX86RegNum(IndexReg.getReg());
-      emitSIBByte(O, SS, IndexRegNo, BaseRegNo);
-    }
-
-    // Do we need to output a displacement?
-    if (Disp.getImmedValue() != 0 || ForceDisp32) {
-      if (!ForceDisp32 && isDisp8(Disp.getImmedValue()))
-        emitConstant(O, Disp.getImmedValue(), 1);
-      else
-        emitConstant(O, Disp.getImmedValue(), 4);
-    }
-  }
-}
-
-
 // print - Print out an x86 instruction in intel syntax
 void X86InstrInfo::print(const MachineInstr *MI, std::ostream &O,
                          const TargetMachine &TM) const {
   unsigned Opcode = MI->getOpcode();
   const MachineInstrDescriptor &Desc = get(Opcode);
-
-  // Print instruction prefixes if neccesary
-  if (Desc.TSFlags & X86II::OpSize) O << "66 "; // Operand size...
-  if (Desc.TSFlags & X86II::TB) O << "0F ";     // Two-byte opcode prefix
 
   switch (Desc.TSFlags & X86II::FormMask) {
   case X86II::RawFrm:
@@ -312,14 +160,6 @@ void X86InstrInfo::print(const MachineInstr *MI, std::ostream &O,
     assert(MI->getNumOperands() == 0 ||
            (MI->getNumOperands() == 1 && isPCRelativeDisp(MI->getOperand(0))) &&
            "Illegal raw instruction!");
-    toHex(O, getBaseOpcodeFor(Opcode)) << " ";
-
-    if (MI->getNumOperands() == 1) {
-      Value *V = MI->getOperand(0).getVRegValue();
-      emitConstant(O, 0, 4);
-    }
-
-    O << "\n\t\t\t\t";
     O << getName(MI->getOpCode()) << " ";
 
     if (MI->getNumOperands() == 1) {
@@ -340,14 +180,7 @@ void X86InstrInfo::print(const MachineInstr *MI, std::ostream &O,
            "Illegal form for AddRegFrm instruction!");
 
     unsigned Reg = MI->getOperand(0).getReg();
-    toHex(O, getBaseOpcodeFor(Opcode) + getX86RegNum(Reg)) << " ";
-
-    if (MI->getNumOperands() == 2) {
-      unsigned Size = 4;
-      emitConstant(O, MI->getOperand(1).getImmedValue(), Size);
-    }
     
-    O << "\n\t\t\t\t";
     O << getName(MI->getOpCode()) << " ";
     printOp(O, MI->getOperand(0), RI);
     if (MI->getNumOperands() == 2) {
@@ -377,12 +210,6 @@ void X86InstrInfo::print(const MachineInstr *MI, std::ostream &O,
         MI->getOperand(0).getReg() != MI->getOperand(1).getReg())
       O << "**";
 
-    toHex(O, getBaseOpcodeFor(Opcode)) << " ";
-    unsigned ModRMReg = MI->getOperand(0).getReg();
-    unsigned ExtraReg = MI->getOperand(MI->getNumOperands()-1).getReg();
-    emitRegModRMByte(O, ModRMReg, getX86RegNum(ExtraReg));
-
-    O << "\n\t\t\t\t";
     O << getName(MI->getOpCode()) << " ";
     printOp(O, MI->getOperand(0), RI);
     O << ", ";
@@ -397,10 +224,7 @@ void X86InstrInfo::print(const MachineInstr *MI, std::ostream &O,
     //
     assert(isMem(MI, 0) && MI->getNumOperands() == 4+1 &&
            isReg(MI->getOperand(4)) && "Bad format for MRMDestMem!");
-    toHex(O, getBaseOpcodeFor(Opcode)) << " ";
-    emitMemModRMByte(O, MI, 0, getX86RegNum(MI->getOperand(4).getReg()));
 
-    O << "\n\t\t\t\t";
     O << getName(MI->getOpCode()) << " <SIZE> PTR ";
     printMemReference(O, MI, 0, RI);
     O << ", ";
@@ -428,12 +252,6 @@ void X86InstrInfo::print(const MachineInstr *MI, std::ostream &O,
         MI->getOperand(0).getReg() != MI->getOperand(1).getReg())
       O << "**";
 
-    toHex(O, getBaseOpcodeFor(Opcode)) << " ";
-    unsigned ModRMReg = MI->getOperand(MI->getNumOperands()-1).getReg();
-    unsigned ExtraReg = MI->getOperand(0).getReg();
-    emitRegModRMByte(O, ModRMReg, getX86RegNum(ExtraReg));
-
-    O << "\n\t\t\t\t";
     O << getName(MI->getOpCode()) << " ";
     printOp(O, MI->getOperand(0), RI);
     O << ", ";
@@ -455,11 +273,6 @@ void X86InstrInfo::print(const MachineInstr *MI, std::ostream &O,
         MI->getOperand(0).getReg() != MI->getOperand(1).getReg())
       O << "**";
 
-    toHex(O, getBaseOpcodeFor(Opcode)) << " ";
-    unsigned ExtraReg = MI->getOperand(0).getReg();
-    emitMemModRMByte(O, MI, MI->getNumOperands()-4, getX86RegNum(ExtraReg));
-
-    O << "\n\t\t\t\t";
     O << getName(MI->getOpCode()) << " ";
     printOp(O, MI->getOperand(0), RI);
     O << ", <SIZE> PTR ";
@@ -491,17 +304,6 @@ void X86InstrInfo::print(const MachineInstr *MI, std::ostream &O,
         MI->getOperand(0).getReg() != MI->getOperand(1).getReg())
       O << "**";
 
-    toHex(O, getBaseOpcodeFor(Opcode)) << " ";
-    unsigned ExtraField = (Desc.TSFlags & X86II::FormMask)-X86II::MRMS0r;
-    emitRegModRMByte(O, MI->getOperand(0).getReg(), ExtraField);
-
-    if (isImmediate(MI->getOperand(MI->getNumOperands()-1))) {
-      unsigned Size = 4;
-      emitConstant(O, MI->getOperand(MI->getNumOperands()-1).getImmedValue(),
-                   Size);
-    }
-
-    O << "\n\t\t\t\t";
     O << getName(MI->getOpCode()) << " ";
     printOp(O, MI->getOperand(0), RI);
     if (isImmediate(MI->getOperand(MI->getNumOperands()-1))) {
