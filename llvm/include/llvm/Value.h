@@ -198,11 +198,4 @@ public:
 
 typedef UseTy<Value> Use;
 
-//----------------------------------------------------------------------
-// Debugging support for class Value and its subclasses.
-//
-
-void DebugValue(const Value *V);
-void DebugValue(const Value &V);
-
 #endif
