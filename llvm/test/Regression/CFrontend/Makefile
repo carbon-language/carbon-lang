@@ -11,5 +11,10 @@ LEVEL = ../../..
 include $(LEVEL)/test/Makefile.tests
 
 TESTS := $(wildcard *.c)
+TR_TESTS := $(wildcard *.c.tr)
 
 all:: $(addprefix Output/, $(TESTS:%.c=%.tbc))
+all:: $(addprefix Output/, $(TR_TESTS:%=%.out))
+
+Output/%.c.tr.out: %.c.tr Output/.dir $(LCC1)
+	-$(TESTRUNR) $<
