@@ -182,11 +182,11 @@ def REP_MOVSD : X86Inst<"rep movsd", 0xA5, RawFrm, NoArg>, REP,
                 Imp<[ECX,EDI,ESI], [ECX,EDI,ESI]>;
 
 def REP_STOSB : X86Inst<"rep stosb", 0xAA, RawFrm, NoArg>, REP,
-                Imp<[ECX,EDI], [ECX,EDI]>;
+                Imp<[AL,ECX,EDI], [ECX,EDI]>;
 def REP_STOSW : X86Inst<"rep stosw", 0xAB, RawFrm, NoArg>, REP, OpSize,
-                Imp<[ECX,EDI], [ECX,EDI]>;
+                Imp<[AX,ECX,EDI], [ECX,EDI]>;
 def REP_STOSD : X86Inst<"rep stosd", 0xAB, RawFrm, NoArg>, REP,
-                Imp<[ECX,EDI], [ECX,EDI]>;
+                Imp<[EAX,ECX,EDI], [ECX,EDI]>;
 
 //===----------------------------------------------------------------------===//
 //  Move Instructions...
