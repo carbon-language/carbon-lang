@@ -342,8 +342,8 @@ $(bindir):
 $(libdir):
 	$(Verb) $(MKDIR) $(libdir)
 
-$(bytecode_libdir):
-	$(Verb) $(MKDIR) $(bytecode_libdir)
+$(includedir):
+	$(Verb) $(MKDIR) $(includedir)
 
 $(sysconfdir):
 	$(Verb) $(MKDIR) $(sysconfdir)
@@ -498,11 +498,18 @@ ifneq ($(strip $(Module)),)
 	-$(Verb) $(RM) -f $(Module)
 endif
 
-DestModule := $(bytecode_libdir)/$(MODULE_NAME).bc
+ifdef BYTECODE_DESTINATION
+ModuleDestDir := $(BYTECODE_DESTINATION)
+else
+ModuleDestDir := $(BYTECODE_DESTINATION)
+endif
 
+DestModule := $(ModuleDestDir)/$(MODULE_NAME).bc
+
+install-module:: $(DestModule)
 install-local:: $(DestModule)
 
-$(DestModule): $(bytecode_libdir) $(Module) 
+$(DestModule): $(ModuleDestDir) $(Module) 
 	$(Echo) Installing $(BuildMode) Bytecode Module $(DestModule)
 	$(Verb) $(INSTALL) $(Module) $@
 
@@ -1362,7 +1369,6 @@ printvars::
 	$(Echo) "libdir         : " '$(libdir)'
 	$(Echo) "bindir         : " '$(bindir)'
 	$(Echo) "sysconfdir     : " '$(sysconfdir)'
-	$(Echo) "bytecode_libdir: " '$(bytecode_libdir)'
 	$(Echo) "UserTargets    : " '$(UserTargets)'
 	$(Echo) "ObjMakefiles   : " '$(ObjMakefiles)'
 	$(Echo) "SrcMakefiles   : " '$(SrcMakefiles)'
