@@ -34,7 +34,7 @@ public:
     Unknown,                 // Unknown type.  Start & Step are null
   } InductionType;
   
-  Value *Start, *Step;       // Start and step expressions for this indvar
+  Value *Start, *Step, *End; // Start, step, and end expressions for this indvar
   PHINode *Phi;              // The PHI node that corresponds to this indvar
 public:
 
@@ -46,6 +46,9 @@ public:
   // Classify Induction
   static enum iType Classify(const Value *Start, const Value *Step,
 			     const Loop *L = 0);
+
+  // Get number of times this loop will execute. Returns NULL if unpredictable.
+  Value* getExecutionCount(LoopInfo *LoopInfo);
 
   void print(std::ostream &OS) const;
 };
