@@ -48,6 +48,9 @@ static cl::opt<bool>
 PrintEachXForm("p", cl::desc("Print module after each transformation"));
 
 static cl::opt<bool>
+NoOutput("no-output", cl::desc("Do not write result bytecode file"), cl::Hidden);
+
+static cl::opt<bool>
 Quiet("q", cl::desc("Don't print 'program modified' message"));
 
 static cl::alias
@@ -128,7 +131,8 @@ int main(int argc, char **argv) {
   Passes.add(createVerifierPass());
 
   // Write bytecode out to disk or cout as the last step...
-  Passes.add(new WriteBytecodePass(Out, Out != &std::cout));
+  if (!NoOutput)
+    Passes.add(new WriteBytecodePass(Out, Out != &std::cout));
 
   // Now that we have all of the passes ready, run them.
   if (Passes.run(*M.get()) && !Quiet)
