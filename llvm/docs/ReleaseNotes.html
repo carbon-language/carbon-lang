@@ -76,9 +76,9 @@ front-end, and improving support for C++ in the LLVM core.  This release also
 includes a few new features, such as a simple profiler, support for Mac OS/X,
 and better interoperability with external source bases.</p>
 
-<p>At this time, LLVM is known to correctly compile the SPEC CPU2000 benchmarks
-(X86 only), the Olden benchmarks, and the Ptrdist benchmarks along with
-<b>many</b> other programs.  LLVM now also works with a fairly broad variety of
+<p>At this time, LLVM is known to correctly compile the C &amp; C++ SPEC CPU2000
+benchmarks (X86 only), the Olden benchmarks, and the Ptrdist benchmarks along
+with <b>many</b> other programs.  LLVM now also works with a broad variety of
 C++ programs, though it has still received much less testing than the C
 front-end.
 </p>
@@ -126,10 +126,11 @@ object tree as subdirectories are built.  This means that:
   </ol>
 </li>
 
-<li>
-The <tt>configure</tt> script will now configure all projects placed in the
-<tt>llvm/projects</tt> directory.
-</li>
+<li>The <tt>configure</tt> script will now configure all projects placed in the
+<tt>llvm/projects</tt> directory.</li>
+
+<li>The <tt>-basicaa</tt> pass (the default alias analysis) has been upgraded to be <a href="http://llvm.cs.uiuc.edu/PR86">significantly more precise</a>.</li>
+
 </ol>
 
 
