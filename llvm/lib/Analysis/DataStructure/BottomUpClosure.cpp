@@ -154,7 +154,7 @@ DSGraph &BUDataStructures::calculateGraph(Function &F) {
     if (Inlined) {
       Graph->maskIncompleteMarkers();
       Graph->markIncompleteNodes();
-      Graph->removeDeadNodes(/*KeepAllGlobals*/ true);
+      Graph->removeDeadNodes();
     }
   } while (Inlined && !FCs.empty());
 

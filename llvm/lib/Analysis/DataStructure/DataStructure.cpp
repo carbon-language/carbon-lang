@@ -810,9 +810,9 @@ static void removeIdenticalCalls(vector<DSCallSite> &Calls,
 // other nodes in the graph.  These nodes will all be trivially unreachable, so
 // we don't have to perform any non-trivial analysis here.
 //
-void DSGraph::removeTriviallyDeadNodes(bool KeepAllGlobals) {
+void DSGraph::removeTriviallyDeadNodes() {
   for (unsigned i = 0; i != Nodes.size(); ++i)
-    if (!KeepAllGlobals || !(Nodes[i]->NodeType & DSNode::GlobalNode))
+    if (!(Nodes[i]->NodeType & DSNode::GlobalNode))
       if (isNodeDead(Nodes[i])) {               // This node is dead!
         delete Nodes[i];                        // Free memory...
         Nodes.erase(Nodes.begin()+i--);         // Remove from node list...
@@ -981,9 +981,9 @@ static void markGlobalsAlive(DSGraph &G, std::set<DSNode*> &Alive,
 // from the caller's graph entirely.  This is only appropriate to use when
 // inlining graphs.
 //
-void DSGraph::removeDeadNodes(bool KeepAllGlobals) {
+void DSGraph::removeDeadNodes() {
   // Reduce the amount of work we have to do...
-  removeTriviallyDeadNodes(KeepAllGlobals);
+  removeTriviallyDeadNodes();
 
   // FIXME: Merge nontrivially identical call nodes...
 
@@ -1011,13 +1011,6 @@ void DSGraph::removeDeadNodes(bool KeepAllGlobals) {
 
   // The return value is alive as well...
   markAlive(RetNode.getNode(), Alive);
-
-  // Mark all globals or cast nodes that can reach a live node as alive.
-  // This also marks all nodes reachable from such nodes as alive.
-  // Of course, if KeepAllGlobals is specified, they would be live already.
-
-  if (!KeepAllGlobals)
-    markGlobalsAlive(*this, Alive, false);
 
   // Loop over all unreachable nodes, dropping their references...
   vector<DSNode*> DeadNodes;
@@ -1126,23 +1119,6 @@ DSNode* GlobalDSGraph::cloneNodeInto(DSNode *OldNode,
   NewNode->NodeType &= ~(DSNode::AllocaNode | DSNode::ScalarNode);
 
   return NewNode;
-}
-
-
-// GlobalDSGraph::cloneGlobals - Clone global nodes and all their externally
-// visible target links (and recursively their such links) into this graph.
-// 
-void GlobalDSGraph::cloneGlobals(DSGraph& Graph, bool CloneCalls) {
-  std::map<const DSNode*, DSNode*> NodeCache;
-#if 0
-  for (unsigned i = 0, N = Graph.Nodes.size(); i < N; ++i)
-    if (Graph.Nodes[i]->NodeType & DSNode::GlobalNode)
-      GlobalsGraph->cloneNodeInto(Graph.Nodes[i], NodeCache, false);
-  if (CloneCalls)
-    GlobalsGraph->cloneCalls(Graph);
-
-  GlobalsGraph->removeDeadNodes(/*KeepAllGlobals*/ true);
-#endif
 }
 
 
