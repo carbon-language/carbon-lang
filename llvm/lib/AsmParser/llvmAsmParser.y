@@ -351,6 +351,22 @@ static void ResolveDefinitions(vector<ValueList> &LateResolvers) {
   LateResolvers.clear();
 }
 
+// ResolveType - Take a specified unresolved type and resolve it.  If there is
+// nothing to resolve it to yet, return true.  Otherwise resolve it and return
+// false.
+//
+static bool ResolveType(PATypeHolder<Type> &T) {
+  const Type *Ty = T;
+  ValID &DID = getValIDFromPlaceHolder(Ty);
+
+  const Type *TheRealType = getTypeVal(DID, true);
+  if (TheRealType == 0) return true;
+
+  // Refine the opaque type we had to the new type we are getting.
+  cast<DerivedType>(Ty)->refineAbstractTypeTo(TheRealType);
+  return false;
+}
+
 
 // ResolveTypes - This goes through the forward referenced type table and makes
 // sure that all type references are complete.  This code is executed after the
@@ -358,12 +374,11 @@ static void ResolveDefinitions(vector<ValueList> &LateResolvers) {
 //
 static void ResolveTypes(vector<PATypeHolder<Type> > &LateResolveTypes) {
   while (!LateResolveTypes.empty()) {
-    const Type *Ty = LateResolveTypes.back();
-    ValID &DID = getValIDFromPlaceHolder(Ty);
+    if (ResolveType(LateResolveTypes.back())) {
+      const Type *Ty = LateResolveTypes.back();
+      ValID &DID = getValIDFromPlaceHolder(Ty);
 
-    const Type *TheRealType = getTypeVal(DID, true);
-    if (TheRealType == 0) {
-      if (DID.Type == 1)
+      if (DID.Type == ValID::NameVal)
 	ThrowException("Reference to an invalid type: '" +DID.getName(),
 		       getLineNumFromPlaceHolder(Ty));
       else
@@ -371,13 +386,26 @@ static void ResolveTypes(vector<PATypeHolder<Type> > &LateResolveTypes) {
 		       getLineNumFromPlaceHolder(Ty));
     }
 
-    // Refine the opaque type we had to the new type we are getting.
-    cast<DerivedType>(Ty)->refineAbstractTypeTo(TheRealType);
-
     // No need to delete type, refine does that for us.
     LateResolveTypes.pop_back();
   }
 }
+
+
+// ResolveSomeTypes - This goes through the forward referenced type table and
+// completes references that are now done.  This is so that types are
+// immediately resolved to be as concrete as possible.  This does not cause
+// thrown exceptions if not everything is resolved.
+//
+static void ResolveSomeTypes(vector<PATypeHolder<Type> > &LateResolveTypes) {
+  for (unsigned i = 0; i < LateResolveTypes.size(); ) {
+    if (ResolveType(LateResolveTypes[i]))
+      ++i;                                                // Type didn't resolve
+    else
+      LateResolveTypes.erase(LateResolveTypes.begin()+i); // Type resolved!
+  }
+}
+
 
 // setValueName - Set the specified value to the name given.  The name may be
 // null potentially, in which case this is a noop.  The string passed in is
@@ -396,19 +424,22 @@ static void setValueName(Value *V, char *NameStr) {
   if (Existing) {    // Inserting a name that is already defined???
     // There is only one case where this is allowed: when we are refining an
     // opaque type.  In this case, Existing will be an opaque type.
-    if (const Type *Ty = cast<const Type>(Existing))
+    if (const Type *Ty = dyn_cast<const Type>(Existing)) {
       if (OpaqueType *OpTy = dyn_cast<OpaqueType>(Ty)) {
 	// We ARE replacing an opaque type!
 	OpTy->refineAbstractTypeTo(cast<Type>(V));
 	return;
       }
+    }
 
     // Otherwise, we are a simple redefinition of a value, check to see if it
     // is defined the same as the old one...
     if (const Type *Ty = dyn_cast<const Type>(Existing)) {
       if (Ty == cast<const Type>(V)) return;  // Yes, it's equal.
+      cerr << "Type: " << Ty->getDescription() << " != "
+           << cast<const Type>(V)->getDescription() << "!\n";
     } else {
-
+      
     }
     ThrowException("Redefinition of value name '" + Name + "' in the '" +
 		   V->getType()->getDescription() + "' type plane!");
@@ -548,7 +579,7 @@ Module *RunVMAsmParser(const string &Filename, FILE *F) {
 %type <BasicBlockVal> BasicBlock InstructionList
 %type <TermInstVal>   BBTerminatorInst
 %type <InstVal>       Inst InstVal MemoryInst
-%type <ConstVal>      ConstVal ExtendedConstVal
+%type <ConstVal>      ConstVal
 %type <ConstVector>   ConstVector UByteList
 %type <MethodArgList> ArgList ArgListH
 %type <MethArgVal>    ArgVal
@@ -589,7 +620,7 @@ Module *RunVMAsmParser(const string &Filename, FILE *F) {
 
 
 %token IMPLEMENTATION TRUE FALSE BEGINTOK END DECLARE GLOBAL CONSTANT UNINIT
-%token TO DOTDOTDOT STRING NULL_TOK
+%token TO DOTDOTDOT STRING NULL_TOK CONST
 
 // Basic Block Terminating Operators 
 %token <TermOpVal> RET BR SWITCH
@@ -768,9 +799,7 @@ ArgTypeListI : TypeListI
 // ConstVal - The various declarations that go into the constant pool.  This
 // includes all forward declarations of types, constants, and functions.
 //
-// This is broken into two sections: ExtendedConstVal and ConstVal
-//
-ExtendedConstVal: ArrayType '[' ConstVector ']' { // Nonempty unsized arr
+ConstVal: ArrayType '[' ConstVector ']' { // Nonempty unsized arr
     const ArrayType *ATy = *$1;
     const Type *ETy = ATy->getElementType();
     int NumElements = ATy->getNumElements();
@@ -830,6 +859,10 @@ ExtendedConstVal: ArrayType '[' ConstVector ']' { // Nonempty unsized arr
     $$ = ConstPoolStruct::get(*$1, *$3);
     delete $1; delete $3;
   }
+  | PointerType NULL_TOK {
+    $$ = ConstPoolPointer::getNullPointer(*$1);
+    delete $1;
+  }
 /*
   | Types '*' ConstVal {
     assert(0);
@@ -837,10 +870,7 @@ ExtendedConstVal: ArrayType '[' ConstVector ']' { // Nonempty unsized arr
   }
 */
 
-ConstVal : ExtendedConstVal {
-    $$ = $1;
-  }
-  | SIntType EINT64VAL {     // integral constants
+ConstVal : SIntType EINT64VAL {     // integral constants
     if (!ConstPoolSInt::isValueValidForType($1, $2))
       ThrowException("Constant value doesn't fit in type!");
     $$ = ConstPoolSInt::get($1, $2);
@@ -875,9 +905,9 @@ GlobalType : GLOBAL { $$ = false; } | CONSTANT { $$ = true; }
 
 
 // ConstPool - Constants with optional names assigned to them.
-ConstPool : ConstPool OptAssign ConstVal { 
-    setValueName($3, $2);
-    InsertValue($3);
+ConstPool : ConstPool OptAssign CONST ConstVal { 
+    setValueName($4, $2);
+    InsertValue($4);
   }
   | ConstPool OptAssign TYPE TypesV {  // Types can be defined in the const pool
     // TODO: FIXME when Type are not const
@@ -888,13 +918,16 @@ ConstPool : ConstPool OptAssign ConstVal {
 		 CurMeth.CurrentMethod ? CurMeth.Types : CurModule.Types);
     }
     delete $4;
+
+    ResolveSomeTypes(CurMeth.CurrentMethod ? CurMeth.LateResolveTypes :
+                     CurModule.LateResolveTypes);
   }
   | ConstPool MethodProto {            // Method prototypes can be in const pool
   }
-  | ConstPool OptAssign GlobalType ResolvedVal {
+  | ConstPool OptAssign GlobalType ConstVal {
     const Type *Ty = $4->getType();
     // Global declarations appear in Constant Pool
-    ConstPoolVal *Initializer = cast<ConstPoolVal>($4);
+    ConstPoolVal *Initializer = $4;
     if (Initializer == 0)
       ThrowException("Global value initializer is not a constant!");
 	 
@@ -1088,10 +1121,7 @@ ValueRef : INTVAL {           // Is it an integer reference...?
 // ResolvedVal - a <type> <value> pair.  This is used only in cases where the
 // type immediately preceeds the value reference, and allows complex constant
 // pool references (for things like: 'ret [2 x int] [ int 12, int 42]')
-ResolvedVal : ExtendedConstVal {
-    $$ = $1;
-  }
-  | Types ValueRef {
+ResolvedVal : Types ValueRef {
     $$ = getVal(*$1, $2); delete $1;
   }
 

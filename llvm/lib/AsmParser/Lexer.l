@@ -124,6 +124,7 @@ false           { return FALSE; }
 declare         { return DECLARE; }
 global          { return GLOBAL; }
 constant        { return CONSTANT; }
+const           { return CONST; }
 uninitialized   { return UNINIT; }
 implementation  { return IMPLEMENTATION; }
 \.\.\.          { return DOTDOTDOT; }
