@@ -139,10 +139,11 @@ private:
 
 public:
 
-  // replaces the Value with its corresponding physical register afeter
+  // replaces the Value with its corresponding physical register after
   // register allocation is complete
   void setRegForValue(int reg) {
-    assert(opType == MO_VirtualRegister || opType == MO_CCRegister);
+    assert(opType == MO_VirtualRegister || opType == MO_CCRegister || 
+	   opType == MO_MachineRegister);
     regNum = reg;
   }
 
@@ -490,6 +491,71 @@ class MachineCodeForBasicBlock: public vector<MachineInstr*> {
 public:
   typedef vector<MachineInstr*>::iterator iterator;
   typedef vector<const MachineInstr*>::const_iterator const_iterator;
+};
+
+
+//---------------------------------------------------------------------------
+// class MachineCodeForMethod
+// 
+// Purpose:
+//   Collect native machine code information for a method.
+//   This allows target-specific information about the generated code
+//   to be stored with each method.
+//---------------------------------------------------------------------------
+
+
+class MachineCodeForMethod: public NonCopyable {
+private:
+  Method*       method;
+  bool          compiledAsLeaf;
+  unsigned	staticStackSize;
+  unsigned	automaticVarsSize;
+  unsigned	regSpillsSize;
+  unsigned	optionalOutgoingArgsSize;
+  hash_map<const Value*, int> offsetsFromFP;
+  hash_map<const Value*, int> offsetsFromSP;
+  
+  inline void     incrementAutomaticVarsSize(int incr)
+                                                  { automaticVarsSize+= incr;
+                                                    staticStackSize += incr; }
+  
+public:
+  /*ctor*/      MachineCodeForMethod(Method* _M)
+    : method(_M), compiledAsLeaf(false), staticStackSize(0),
+      automaticVarsSize(0), regSpillsSize(0), optionalOutgoingArgsSize(0) {}
+  
+  inline bool     isCompiledAsLeafMethod() const  { return compiledAsLeaf; }
+  inline unsigned getStaticStackSize()     const  { return staticStackSize; }
+  inline unsigned getAutomaticVarsSize()   const  { return automaticVarsSize; }
+  inline unsigned getRegSpillsSize()       const  { return regSpillsSize; }
+  inline unsigned getOptionalOutgoingArgsSize() const
+                                            { return optionalOutgoingArgsSize;}
+  
+  inline void     markAsLeafMethod()              { compiledAsLeaf = true; }
+  
+  inline void     incrementStackSize(int incr)    { staticStackSize += incr; }
+  
+  inline void     incrementRegSpillsSize(int incr)
+                                                  { regSpillsSize+= incr;
+                                                    staticStackSize += incr; }
+  
+  inline void     incrementOptionalOutgoingArgsSize(int incr)
+                                          { optionalOutgoingArgsSize+= incr;
+                                                    staticStackSize += incr; }
+  
+  void            putLocalVarAtOffsetFromFP(const Value* local,
+                                            int offset,
+                                            unsigned int size);
+  
+  void            putLocalVarAtOffsetFromSP(const Value* local,
+                                            int offset,
+                                            unsigned int size);
+  
+  int             getOffsetFromFP          (const Value* local) const;
+  
+  int             getOffsetFromSP          (const Value* local) const;
+  
+  void            dump                     () const;
 };
 
 
