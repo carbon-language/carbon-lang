@@ -403,7 +403,11 @@ int GCC::MakeSharedObject(const std::string &InputFile, FileType fileType,
     InputFile.c_str(),           // Specify the input filename...
 #if defined(sparc) || defined(__sparc__) || defined(__sparcv9)
     "-G",                        // Compile a shared library, `-G' for Sparc
-#else                             
+#elif (defined(__POWERPC__) || defined(__ppc__)) && defined(__APPLE__)
+    "-dynamiclib",               // `-dynamiclib' for MacOS X/PowerPC
+    "-fno-common",               // allow global vars w/o initializers to live
+                                 // in data segment, rather than generating blocks
+#else
     "-shared",                   // `-shared' for Linux/X86, maybe others
 #endif
     "-o", OutputFile.c_str(),    // Output to the right filename...
