@@ -378,7 +378,7 @@ static GlobalValue *FindGlobalNamed(const std::string &Name, const Type *Ty,
                                     SymbolTable *ST) {
   // See if an exact match exists in the symbol table...
   if (Value *V = ST->lookup(Ty, Name)) return cast<GlobalValue>(V);
-  
+
   // It doesn't exist exactly, scan through all of the type planes in the symbol
   // table, checking each of them for a type-compatible version.
   //
@@ -401,6 +401,27 @@ static GlobalValue *FindGlobalNamed(const std::string &Name, const Type *Ty,
     }
   }
   return 0;  // Otherwise, nothing could be found.
+}
+
+/// ForceRenaming - The LLVM SymbolTable class autorenames globals that conflict
+/// in the symbol table.  This is good for all clients except for us.  Go
+/// through the trouble to force this back.
+static void ForceRenaming(GlobalValue *GV, const std::string &Name) {
+  assert(GV->getName() != Name && "Can't force rename to self");
+  SymbolTable &ST = GV->getParent()->getSymbolTable();
+
+  // If there is a conflict, rename the conflict.
+  Value *ConflictVal = ST.lookup(GV->getType(), Name);
+  assert(ConflictVal&&"Why do we have to force rename if there is no conflic?");
+  GlobalValue *ConflictGV = cast<GlobalValue>(ConflictVal);
+  assert(ConflictGV->hasInternalLinkage() &&
+         "Not conflicting with a static global, should link instead!");
+
+  ConflictGV->setName("");          // Eliminate the conflict
+  GV->setName(Name);                // Force the name back
+  ConflictGV->setName(Name);        // This will cause ConflictGV to get renamed
+  assert(GV->getName() == Name() && ConflictGV->getName() != Name &&
+         "ForceRenaming didn't work");
 }
 
 
@@ -448,15 +469,8 @@ static bool LinkGlobals(Module *Dest, const Module *Src,
       // If the LLVM runtime renamed the global, but it is an externally visible
       // symbol, DGV must be an existing global with internal linkage.  Rename
       // it.
-      if (NewDGV->getName() != SGV->getName() && !NewDGV->hasInternalLinkage()){
-        assert(DGV && DGV->getName() == SGV->getName() &&
-               DGV->hasInternalLinkage());
-        DGV->setName("");
-        NewDGV->setName(SGV->getName());  // Force the name back
-        DGV->setName(SGV->getName());     // This will cause a renaming
-        assert(NewDGV->getName() == SGV->getName() &&
-               DGV->getName() != SGV->getName());
-      }
+      if (NewDGV->getName() != SGV->getName() && !NewDGV->hasInternalLinkage())
+        ForceRenaming(NewDGV, SGV->getName());
 
       // Make sure to remember this mapping...
       ValueMap.insert(std::make_pair(SGV, NewDGV));
@@ -622,14 +636,8 @@ static bool LinkFunctionProtos(Module *Dest, const Module *Src,
       // If the LLVM runtime renamed the function, but it is an externally
       // visible symbol, DF must be an existing function with internal linkage.
       // Rename it.
-      if (NewDF->getName() != SF->getName() && !NewDF->hasInternalLinkage()) {
-        assert(DF && DF->getName() == SF->getName() &&DF->hasInternalLinkage());
-        DF->setName("");
-        NewDF->setName(SF->getName());  // Force the name back
-        DF->setName(SF->getName());     // This will cause a renaming
-        assert(NewDF->getName() == SF->getName() &&
-               DF->getName() != SF->getName());
-      }
+      if (NewDF->getName() != SF->getName() && !NewDF->hasInternalLinkage())
+        ForceRenaming(DF, SF->getName());
 
       // ... and remember this mapping...
       ValueMap.insert(std::make_pair(SF, NewDF));
