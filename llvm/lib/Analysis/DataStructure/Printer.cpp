@@ -112,7 +112,9 @@ struct DOTGraphTraits<const DSGraph*> : public DefaultDOTGraphTraits {
     }
 
     // Output all of the call nodes...
-    const std::vector<DSCallSite> &FCs = G->getFunctionCalls();
+    const std::vector<DSCallSite> &FCs =
+      G->shouldPrintAuxCalls() ? G->getAuxFunctionCalls()
+      : G->getFunctionCalls();
     for (unsigned i = 0, e = FCs.size(); i != e; ++i) {
       const DSCallSite &Call = FCs[i];
       GW.emitSimpleNode(&Call, "shape=record", "call", Call.getNumPtrArgs()+2);
@@ -169,15 +171,18 @@ static void printCollection(const Collection &C, std::ostream &O,
 
   unsigned TotalNumNodes = 0, TotalCallNodes = 0;
   for (Module::const_iterator I = M->begin(), E = M->end(); I != E; ++I)
-    if (!I->isExternal()) {
+    if (C.hasGraph(*I)) {
       DSGraph &Gr = C.getDSGraph((Function&)*I);
       TotalNumNodes += Gr.getGraphSize();
-      TotalCallNodes += Gr.getFunctionCalls().size();
+      unsigned NumCalls = Gr.shouldPrintAuxCalls() ?
+        Gr.getAuxFunctionCalls().size() : Gr.getFunctionCalls().size();
+
+      TotalCallNodes += NumCalls;
       if (I->getName() == "main" || !OnlyPrintMain)
         Gr.writeGraphToFile(O, Prefix+I->getName());
       else {
         O << "Skipped Writing '" << Prefix+I->getName() << ".dot'... ["
-          << Gr.getGraphSize() << "+" << Gr.getFunctionCalls().size() << "]\n";
+          << Gr.getGraphSize() << "+" << NumCalls << "]\n";
       }
     }
 
