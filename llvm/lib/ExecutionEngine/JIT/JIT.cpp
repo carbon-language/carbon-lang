@@ -13,9 +13,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "JIT.h"
+#include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
 #include "llvm/GlobalVariable.h"
+#include "llvm/Instructions.h"
 #include "llvm/ModuleProvider.h"
 #include "llvm/CodeGen/MachineCodeEmitter.h"
 #include "llvm/CodeGen/MachineFunction.h"
@@ -35,7 +37,7 @@ JIT::JIT(ModuleProvider *MP, TargetMachine &tm, TargetJITInfo &tji)
   MCE = createEmitter(*this);
   
   // Add target data
-  PM.add (new TargetData (TM.getTargetData ()));
+  PM.add(new TargetData(TM.getTargetData()));
 
   // Compile LLVM Code down to machine code in the intermediate representation
   TJI.addPassesToJITCompile(PM);
@@ -43,7 +45,7 @@ JIT::JIT(ModuleProvider *MP, TargetMachine &tm, TargetJITInfo &tji)
   // Turn the machine code intermediate representation into bytes in memory that
   // may be executed.
   if (TM.addPassesToEmitMachineCode(PM, *MCE)) {
-    std::cerr << "lli: target '" << TM.getName()
+    std::cerr << "Target '" << TM.getName()
               << "' doesn't support machine code emission!\n";
     abort();
   }
@@ -139,13 +141,60 @@ GenericValue JIT::runFunction(Function *F,
     }
   }
 
-  // FIXME: This code should handle a couple of common cases efficiently, but
-  // it should also implement the general case by code-gening a new anonymous
-  // nullary function to call.
-  std::cerr << "Sorry, unimplemented feature in the LLVM JIT.  See LLVM"
-            << " PR#419\n for details.\n";
-  abort();
-  return GenericValue();
+  // Okay, this is not one of our quick and easy cases.  Because we don't have a
+  // full FFI, we have to codegen a nullary stub function that just calls the
+  // function we are interested in, passing in constants for all of the
+  // arguments.  Make this function and return.
+
+  // First, create the function.
+  FunctionType *STy=FunctionType::get(RetTy, std::vector<const Type*>(), false);
+  Function *Stub = new Function(STy, Function::InternalLinkage, "",
+                                F->getParent());
+
+  // Insert a basic block.
+  BasicBlock *StubBB = new BasicBlock("", Stub);
+
+  // Convert all of the GenericValue arguments over to constants.  Note that we
+  // currently don't support varargs.
+  std::vector<Value*> Args;
+  for (unsigned i = 0, e = ArgValues.size(); i != e; ++i) {
+    Constant *C = 0;
+    const Type *ArgTy = FTy->getParamType(i);
+    const GenericValue &AV = ArgValues[i];
+    switch (ArgTy->getTypeID()) {
+    default: assert(0 && "Unknown argument type for function call!");
+    case Type::BoolTyID:   C = ConstantBool::get(AV.BoolVal); break;
+    case Type::SByteTyID:  C = ConstantSInt::get(ArgTy, AV.SByteVal);  break;
+    case Type::UByteTyID:  C = ConstantUInt::get(ArgTy, AV.UByteVal);  break;
+    case Type::ShortTyID:  C = ConstantSInt::get(ArgTy, AV.ShortVal);  break;
+    case Type::UShortTyID: C = ConstantUInt::get(ArgTy, AV.UShortVal); break;
+    case Type::IntTyID:    C = ConstantSInt::get(ArgTy, AV.IntVal);    break;
+    case Type::UIntTyID:   C = ConstantUInt::get(ArgTy, AV.UIntVal);   break;
+    case Type::LongTyID:   C = ConstantSInt::get(ArgTy, AV.LongVal);   break;
+    case Type::ULongTyID:  C = ConstantUInt::get(ArgTy, AV.ULongVal);  break;
+    case Type::FloatTyID:  C = ConstantFP  ::get(ArgTy, AV.FloatVal);  break;
+    case Type::DoubleTyID: C = ConstantFP  ::get(ArgTy, AV.DoubleVal); break;
+    case Type::PointerTyID:
+      void *ArgPtr = GVTOP(AV);
+      if (sizeof(void*) == 4) {
+        C = ConstantSInt::get(Type::IntTy, (int)(intptr_t)ArgPtr);
+      } else {
+        C = ConstantSInt::get(Type::LongTy, (intptr_t)ArgPtr);
+      }
+      C = ConstantExpr::getCast(C, ArgTy);  // Cast the integer to pointer
+      break;
+    }
+    Args.push_back(C);
+  }
+
+  Value *TheCall = new CallInst(F, Args, "", StubBB);
+  if (TheCall->getType() != Type::VoidTy)
+    new ReturnInst(TheCall, StubBB);             // Return result of the call.
+  else
+    new ReturnInst(StubBB);                      // Just return void.
+
+  // Finally, return the value returned by our nullary stub function.
+  return runFunction(Stub, std::vector<GenericValue>());
 }
 
 /// runJITOnFunction - Run the FunctionPassManager full of
