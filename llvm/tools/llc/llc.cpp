@@ -33,7 +33,7 @@ enum ArchName { noarch, x86, Sparc };
 static cl::opt<ArchName>
 Arch("march", cl::desc("Architecture to generate assembly for:"), cl::Prefix,
      cl::values(clEnumVal(x86, "  IA-32 (Pentium and above)"),
-		clEnumValN(Sparc, "sparc", "  SPARC V9"),
+                clEnumValN(Sparc, "sparc", "  SPARC V9"),
 		0),
      cl::init(noarch));
 
