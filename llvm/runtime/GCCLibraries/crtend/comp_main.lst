@@ -1,0 +1,3 @@
+__main
+llvm.global_ctors
+llvm.global_dtors

@@ -1,0 +1,7 @@
+__llvm_sjljeh_throw_longjmp
+__llvm_sjljeh_init_setjmpmap
+__llvm_sjljeh_destroy_setjmpmap
+__llvm_sjljeh_add_setjmp_to_map
+__llvm_sjljeh_is_longjmp_exception
+__llvm_sjljeh_get_longjmp_value
+__llvm_sjljeh_try_catching_longjmp_exception

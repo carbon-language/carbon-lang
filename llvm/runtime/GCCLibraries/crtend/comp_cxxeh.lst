@@ -1,0 +1,11 @@
+__llvm_cxxeh_allocate_exception
+__llvm_cxxeh_free_exception
+__llvm_cxxeh_throw
+__llvm_cxxeh_call_terminate
+__llvm_cxxeh_current_uncaught_exception_isa
+__llvm_cxxeh_begin_catch
+__llvm_cxxeh_begin_catch_if_isa
+__llvm_cxxeh_end_catch
+__llvm_cxxeh_rethrow
+__llvm_cxxeh_get_last_caught
+__llvm_cxxeh_check_eh_spec
