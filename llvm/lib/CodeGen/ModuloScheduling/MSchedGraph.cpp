@@ -1,4 +1,4 @@
-//===-- MSchedGraph.cpp - Scheduling Graph ------------------------*- C++ -*-===//
+//===-- MSchedGraph.cpp - Scheduling Graph ----------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -17,6 +17,7 @@
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "Support/Debug.h"
+#include <cstdlib>
 using namespace llvm;
 
 MSchedGraphNode::MSchedGraphNode(const MachineInstr* inst, 
@@ -35,13 +36,13 @@ void MSchedGraphNode::print(std::ostream &os) const {
 MSchedGraphEdge MSchedGraphNode::getInEdge(MSchedGraphNode *pred) {
   //Loop over all the successors of our predecessor
   //return the edge the corresponds to this in edge
-  for(MSchedGraphNode::succ_iterator I = pred->succ_begin(), E = pred->succ_end();
-      I != E; ++I) {
-    if(*I == this)
+  for (MSchedGraphNode::succ_iterator I = pred->succ_begin(), 
+         E = pred->succ_end(); I != E; ++I) {
+    if (*I == this)
       return I.getEdge();
   }
   assert(0 && "Should have found edge between this node and its predecessor!");
- 
+  abort();
 }
 
 unsigned MSchedGraphNode::getInEdgeNum(MSchedGraphNode *pred) {
