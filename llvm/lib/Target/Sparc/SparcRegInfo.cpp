@@ -279,16 +279,6 @@ void UltraSparcRegInfo::colorMethodArgs(const Method *const Meth,
     assert( LR && "No live range found for method arg");
 
 
-    // if the LR received the suggested color, NOTHING to be done
-    if( LR->hasSuggestedColor() && LR->hasColor() )
-      if( LR->getSuggestedColor() == LR->getColor() )
-	continue;
-
-    // We are here because the LR did not have a suggested 
-    // color or did not receive the suggested color. Now handle
-    // individual cases.
-
-
     unsigned RegType = getRegType( LR );
     unsigned RegClassID = (LR->getRegClass())->getID();
 
@@ -296,11 +286,11 @@ void UltraSparcRegInfo::colorMethodArgs(const Method *const Meth,
     // find whether this argument is coming in a register (if not, on stack)
 
     bool isArgInReg = false;
-    unsigned UniArgReg = InvalidRegNum;
+    unsigned UniArgReg = InvalidRegNum;	 // reg that LR MUST be colored with
 
     if( (RegType== IntRegType && argNo <  NumOfIntArgRegs)) {
       isArgInReg = true;
-      UniArgReg = getUnifiedRegNum( RegClassID, SparcIntRegOrder::o0 + argNo );
+      UniArgReg = getUnifiedRegNum( RegClassID, SparcIntRegOrder::i0 + argNo );
     }
     else if(RegType == FPSingleRegType && argNo < NumOfFloatArgRegs)  { 
       isArgInReg = true;
@@ -315,16 +305,21 @@ void UltraSparcRegInfo::colorMethodArgs(const Method *const Meth,
     
     if( LR->hasColor() ) {
 
+      unsigned UniLRReg = getUnifiedRegNum(  RegClassID, LR->getColor() );
+
+      // if LR received the correct color, nothing to do
+      if( UniLRReg == UniArgReg )
+	continue;
+
       // We are here because the LR did not have a suggested 
       // color or did not receive the suggested color but LR got a register.
       // Now we have to copy %ix reg (or stack pos of arg) 
       // to the register it was colored with.
-
-      unsigned UniLRReg = getUnifiedRegNum(  RegClassID, LR->getColor() );
-       
-      // if the arg is coming in a register and goes into a register
+      
+      // if the arg is coming in UniArgReg register MUST go into
+      // the UniLRReg register
       if( isArgInReg ) 
-	AdMI = cpReg2RegMI(UniArgReg, UniLRReg, RegType );
+	AdMI = cpReg2RegMI( UniArgReg, UniLRReg, RegType );
 
       else 
 	assert(0 && "TODO: Color an Incoming arg on stack");
@@ -483,37 +478,45 @@ void UltraSparcRegInfo::colorCallArgs(const MachineInstr *const CallMI,
       assert( RetValLR && "ERR:No LR for non-void return value");
       //return;
     }
-    
-    bool recvSugColor = false;
-    
-    if( RetValLR->hasSuggestedColor() && RetValLR->hasColor() )
-      if( RetValLR->getSuggestedColor() == RetValLR->getColor())
-	recvSugColor = true;
-    
-    // if we didn't receive the suggested color for some reason, 
+
+    unsigned RegClassID = (RetValLR->getRegClass())->getID();    
+    bool recvCorrectColor = false;
+
+    unsigned CorrectCol;                // correct color for ret value
+    if(RegClassID == IntRegClassID)
+      CorrectCol = SparcIntRegOrder::o0;
+    else if(RegClassID == FloatRegClassID)
+      CorrectCol = SparcFloatRegOrder::f0;
+    else 
+      assert( 0 && "Unknown RegClass");
+
+
+    // if the LR received the correct color, NOTHING to do
+
+    if(  RetValLR->hasColor() )
+      if( RetValLR->getColor() == CorrectCol )
+	recvCorrectColor = true;
+
+
+    // if we didn't receive the correct color for some reason, 
     // put copy instruction
     
-    if( !recvSugColor ) {
+    if( !recvCorrectColor ) {
       
       if( RetValLR->hasColor() ) {
 	
 	unsigned RegType = getRegType( RetValLR );
-	unsigned RegClassID = (RetValLR->getRegClass())->getID();
-	
+
 	unsigned 
 	  UniRetLRReg=getUnifiedRegNum(RegClassID,RetValLR->getColor());
-	unsigned UniRetReg = InvalidRegNum;
+
+	// the  reg that LR must be colored with
+	unsigned UniRetReg = getUnifiedRegNum( RegClassID, CorrectCol);	
 	
-	// find where we receive the return value depending on
-	// register class
-	
-	if(RegClassID == IntRegClassID)
-	  UniRetReg = getUnifiedRegNum( RegClassID, SparcIntRegOrder::o0);
-	else if(RegClassID == FloatRegClassID)
-	  UniRetReg = getUnifiedRegNum( RegClassID, SparcFloatRegOrder::f0);
-	
-	
-	AdMI = cpReg2RegMI(UniRetReg, UniRetLRReg, RegType ); 	
+	// the return value is coming in UniRetReg but has to go into
+	// the UniRetLRReg
+
+	AdMI = cpReg2RegMI( UniRetReg, UniRetLRReg, RegType ); 	
 	CallAI->InstrnsAfter.push_back( AdMI );
 	
 	
@@ -546,7 +549,7 @@ void UltraSparcRegInfo::colorCallArgs(const MachineInstr *const CallMI,
     // find whether this argument is coming in a register (if not, on stack)
 
     bool isArgInReg = false;
-    unsigned UniArgReg = InvalidRegNum;
+    unsigned UniArgReg = InvalidRegNum;  // reg that LR must be colored with
 
     if( (RegType== IntRegType && argNo <  NumOfIntArgRegs)) {
       isArgInReg = true;
@@ -577,19 +580,22 @@ void UltraSparcRegInfo::colorCallArgs(const MachineInstr *const CallMI,
 
     // if the LR received the suggested color, NOTHING to do
 
-    if( LR->hasSuggestedColor() && LR->hasColor() )
-      if( LR->getSuggestedColor() == LR->getColor() )
-	continue;
-	
-    
+
     if( LR->hasColor() ) {
+
+
+      unsigned UniLRReg = getUnifiedRegNum( RegClassID,  LR->getColor() );
+
+      // if LR received the correct color, nothing to do
+      if( UniLRReg == UniArgReg )
+	continue;
 
       // We are here because though the LR is allocated a register, it
       // was not allocated the suggested register. So, we have to copy %ix reg 
       // (or stack pos of arg) to the register it was colored with
 
-
-      unsigned UniLRReg = getUnifiedRegNum( RegClassID,  LR->getColor() );
+      // the LR is colored with UniLRReg but has to go into  UniArgReg
+      // to pass it as an argument
 
       if( isArgInReg ) 
 	AdMI = cpReg2RegMI(UniLRReg, UniArgReg, RegType );
@@ -691,12 +697,11 @@ void UltraSparcRegInfo::colorRetValue(const  MachineInstr *const RetMI,
       assert( 0 && "Unknown RegClass");
 
 
-    // if the LR received the suggested color, NOTHING to do
+    // if the LR received the correct color, NOTHING to do
 
-    if( LR->hasSuggestedColor() && LR->hasColor() )
-      if( LR->getSuggestedColor() == LR->getColor() )
-	if( LR->getColor() == CorrectCol )
-	  return;
+    if(  LR->hasColor() )
+      if( LR->getColor() == CorrectCol )
+	return;
 
     unsigned UniRetReg =  getUnifiedRegNum( RegClassID, CorrectCol );
 
@@ -708,6 +713,9 @@ void UltraSparcRegInfo::colorRetValue(const  MachineInstr *const RetMI,
       // copy the LR of retun value to i0 or f0
 
       unsigned UniLRReg =getUnifiedRegNum( RegClassID, LR->getColor());
+
+      // the LR received  UniLRReg but must be colored with UniRetReg
+      // to pass as the return value
 
       AdMI = cpReg2RegMI( UniLRReg, UniRetReg, RegType); 
       RetAI->InstrnsBefore.push_back( AdMI );
