@@ -19,6 +19,7 @@ class InstrForest;
 class MachineInstr;
 class InstructionNode;
 class TargetMachine;
+class Pass;
 
 /************************* Required Functions *******************************
  * Target-dependent functions that MUST be implemented for each target.
@@ -39,16 +40,14 @@ extern bool	ThisIsAChainRule	(int eruleno);
 
 
 //---------------------------------------------------------------------------
-// Function: SelectInstructionsForMethod
+// Function: createInstructionSelectionPass
 // 
 // Purpose:
 //   Entry point for instruction selection using BURG.
-//   Returns true if instruction selection failed, false otherwise.
-//   Implemented in machine-specific instruction selection file.
+//   Return a pass that performs machine dependant instruction selection.
 //---------------------------------------------------------------------------
 
-bool		SelectInstructionsForMethod	(Function* function,
-						 TargetMachine &Target);
+Pass *createInstructionSelectionPass(TargetMachine &Target);
 
 
 //************************ Exported Data Types *****************************/
