@@ -52,22 +52,22 @@ def R28 : GPR<28, "$28">;  def R29 : GPR<29, "$29">;
 def R30 : GPR<30, "$30">;  def R31 : GPR<31, "$31">;
 
 // Floating-point registers
-def F0  : FPR< 0,  "F0">;  def F1  : FPR< 1,  "F1">;
-def F2  : FPR< 2,  "F2">;  def F3  : FPR< 3,  "F3">;
-def F4  : FPR< 4,  "F4">;  def F5  : FPR< 5,  "F5">;
-def F6  : FPR< 6,  "F6">;  def F7  : FPR< 7,  "F7">;
-def F8  : FPR< 8,  "F8">;  def F9  : FPR< 9,  "F9">;
-def F10 : FPR<10, "F10">;  def F11 : FPR<11, "F11">;
-def F12 : FPR<12, "F12">;  def F13 : FPR<13, "F13">;
-def F14 : FPR<14, "F14">;  def F15 : FPR<15, "F15">;
-def F16 : FPR<16, "F16">;  def F17 : FPR<17, "F17">;
-def F18 : FPR<18, "F18">;  def F19 : FPR<19, "F19">;
-def F20 : FPR<20, "F20">;  def F21 : FPR<21, "F21">;
-def F22 : FPR<22, "F22">;  def F23 : FPR<23, "F23">;
-def F24 : FPR<24, "F24">;  def F25 : FPR<25, "F25">;
-def F26 : FPR<26, "F26">;  def F27 : FPR<27, "F27">;
-def F28 : FPR<28, "F28">;  def F29 : FPR<29, "F29">;
-def F30 : FPR<30, "F30">;  def F31 : FPR<31, "F31">;
+def F0  : FPR< 0,  "$f0">;  def F1  : FPR< 1,  "$f1">;
+def F2  : FPR< 2,  "$f2">;  def F3  : FPR< 3,  "$f3">;
+def F4  : FPR< 4,  "$f4">;  def F5  : FPR< 5,  "$f5">;
+def F6  : FPR< 6,  "$f6">;  def F7  : FPR< 7,  "$f7">;
+def F8  : FPR< 8,  "$f8">;  def F9  : FPR< 9,  "$f9">;
+def F10 : FPR<10, "$f10">;  def F11 : FPR<11, "$f11">;
+def F12 : FPR<12, "$f12">;  def F13 : FPR<13, "$f13">;
+def F14 : FPR<14, "$f14">;  def F15 : FPR<15, "$f15">;
+def F16 : FPR<16, "$f16">;  def F17 : FPR<17, "$f17">;
+def F18 : FPR<18, "$f18">;  def F19 : FPR<19, "$f19">;
+def F20 : FPR<20, "$f20">;  def F21 : FPR<21, "$f21">;
+def F22 : FPR<22, "$f22">;  def F23 : FPR<23, "$f23">;
+def F24 : FPR<24, "$f24">;  def F25 : FPR<25, "$f25">;
+def F26 : FPR<26, "$f26">;  def F27 : FPR<27, "$f27">;
+def F28 : FPR<28, "$f28">;  def F29 : FPR<29, "$f29">;
+def F30 : FPR<30, "$f30">;  def F31 : FPR<31, "$f31">;
 
   // //#define FP    $15
   // //#define RA    $26
