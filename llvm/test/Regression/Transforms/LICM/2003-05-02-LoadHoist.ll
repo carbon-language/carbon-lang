@@ -3,7 +3,7 @@
 ; loaded from.  Basically if the load gets hoisted, the subtract gets turned
 ; into a constant zero.
 ;
-; RUN: as < %s | opt -licm -load-vn -gcse -instcombine | llvm-dis | grep load
+; RUN: as < %s | opt -licm -load-vn -gcse -instcombine | dis | grep load
 
 %X = global int 7
 declare void %foo()
