@@ -70,21 +70,23 @@ class IForm<bits<6> opcode, bit aa, bit lk, bit ppc64, bit vmx,
 class BForm<bits<6> opcode, bit aa, bit lk, bit ppc64, bit vmx,
             dag OL, string asmstr> : I<opcode, ppc64, vmx, OL, asmstr> {
   bits<5>  BO;
-  bits<5>  BI;
+  bits<3>  CRNum;
+  bits<2>  BICode;
   bits<14> BD;
 
   let Inst{6-10}  = BO;
-  let Inst{11-15} = BI;
+  let Inst{11-13} = CRNum;
+  let Inst{14-15} = BICode;
   let Inst{16-29} = BD;
   let Inst{30}    = aa;
   let Inst{31}    = lk;
 }
 
-class BForm_ext<bits<6> opcode, bit aa, bit lk, bits<5> bo, bits<5> bi, 
+class BForm_ext<bits<6> opcode, bit aa, bit lk, bits<5> bo, bits<2> bicode, 
                 bit ppc64, bit vmx, dag OL, string asmstr>
   : BForm<opcode, aa, lk, ppc64, vmx, OL, asmstr> {
   let BO = bo;
-  let BI = bi;
+  let BICode = bicode;
 }
 
 // 1.7.4 D-Form
