@@ -23,23 +23,26 @@
 #include <fstream>
 using std::cerr;
 
-// FIXME: This should eventually be parameterized...
-static TargetData TD("opt target");
+namespace {
+  // FIXME: This should eventually be parameterized...
+  TargetData TD("gccas target");
 
-static cl::opt<std::string>
-InputFilename(cl::Positional, cl::desc("<input llvm assembly>"), cl::Required);
+  cl::opt<std::string>
+  InputFilename(cl::Positional, cl::desc("<input llvm assembly>"),cl::Required);
 
-static cl::opt<std::string> 
-OutputFilename("o", cl::desc("Override output filename"),
-               cl::value_desc("filename"));
+  cl::opt<std::string> 
+  OutputFilename("o", cl::desc("Override output filename"),
+                 cl::value_desc("filename"));
 
-static cl::opt<int>
-RunNPasses("stopAfterNPasses",
-           cl::desc("Only run the first N passes of gccas"), cl::Hidden,
-           cl::value_desc("# passes"));
+  cl::opt<int>
+  RunNPasses("stopAfterNPasses",
+             cl::desc("Only run the first N passes of gccas"), cl::Hidden,
+             cl::value_desc("# passes"));
 
-static cl::opt<bool>   
-Verify("verify", cl::desc("Verify each pass result"));
+  cl::opt<bool>   
+  Verify("verify", cl::desc("Verify each pass result"));
+
+}
 
 
 static inline void addPass(PassManager &PM, Pass *P) {
