@@ -224,6 +224,8 @@ public:
   virtual void handleDependentLibrary(const std::string& libName) {
     bca.numLibraries++;
     bca.libSize += libName.size() + (libName.size() < 128 ? 1 : 2);
+    if (os)
+      *os << "      Library: '" << libName << "'\n";
   }
 
   virtual void handleModuleGlobalsEnd() { 
