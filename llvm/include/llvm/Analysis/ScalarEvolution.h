@@ -31,7 +31,6 @@ namespace llvm {
   class Loop;
   class LoopInfo;
   class SCEVHandle;
-  class ScalarEvolutionRewriter;
 
   /// SCEV - This class represent an analyzed expression in the program.  These
   /// are reference counted opaque objects that the client is not allowed to
@@ -75,13 +74,6 @@ namespace llvm {
     ///
     virtual const Type *getType() const = 0;
 
-    /// expandCodeFor - Given a rewriter object, expand this SCEV into a closed
-    /// form expression and return a Value corresponding to the expression in
-    /// question.
-    virtual Value *expandCodeFor(ScalarEvolutionRewriter &SER,
-                                 Instruction *InsertPt) = 0;
-
-
     /// print - Print out the internal representation of this scalar to the
     /// specified stream.  This should really only be used for debugging
     /// purposes.
@@ -109,7 +101,6 @@ namespace llvm {
     virtual bool isLoopInvariant(const Loop *L) const;
     virtual const Type *getType() const;
     virtual bool hasComputableLoopEvolution(const Loop *L) const;
-    virtual Value *expandCodeFor(ScalarEvolutionRewriter &, Instruction *);
     virtual void print(std::ostream &OS) const;
 
 
@@ -218,54 +209,6 @@ namespace llvm {
     virtual void releaseMemory();
     virtual void getAnalysisUsage(AnalysisUsage &AU) const;
     virtual void print(std::ostream &OS) const;
-  };
-
-  /// ScalarEvolutionRewriter - This class uses information about analyze
-  /// scalars to rewrite expressions in canonical form.  This can be used for
-  /// induction variable substitution, strength reduction, or loop exit value
-  /// replacement.
-  ///
-  /// Clients should create an instance of this class when rewriting is needed,
-  /// and destroying it when finished to allow the release of the associated
-  /// memory.
-  class ScalarEvolutionRewriter {
-    ScalarEvolution &SE;
-    LoopInfo &LI;
-    std::map<SCEVHandle, Value*> InsertedExpressions;
-    std::set<Instruction*> InsertedInstructions;
-  public:
-    ScalarEvolutionRewriter(ScalarEvolution &se, LoopInfo &li)
-      : SE(se), LI(li) {}
-
-    /// isInsertedInstruction - Return true if the specified instruction was
-    /// inserted by the code rewriter.  If so, the client should not modify the
-    /// instruction.
-    bool isInsertedInstruction(Instruction *I) const {
-      return InsertedInstructions.count(I);
-    }
-    
-    /// GetOrInsertCanonicalInductionVariable - This method returns the
-    /// canonical induction variable of the specified type for the specified
-    /// loop (inserts one if there is none).  A canonical induction variable
-    /// starts at zero and steps by one on each iteration.
-    Value *GetOrInsertCanonicalInductionVariable(const Loop *L, const Type *Ty);
-
-
-    /// addInsertedValue - Remember the specified instruction as being the
-    /// canonical form for the specified SCEV.
-    void addInsertedValue(Instruction *I, SCEV *S) {
-      InsertedExpressions[S] = (Value*)I;
-      InsertedInstructions.insert(I);
-    }
-
-    /// ExpandCodeFor - Insert code to directly compute the specified SCEV
-    /// expression into the program.  The inserted code is inserted into the
-    /// specified block.
-    ///
-    /// If a particular value sign is required, a type may be specified for the
-    /// result.
-    Value *ExpandCodeFor(SCEVHandle SH, Instruction *InsertPt,
-                         const Type *Ty = 0);
   };
 }
 

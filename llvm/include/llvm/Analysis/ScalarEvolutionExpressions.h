@@ -56,11 +56,6 @@ namespace llvm {
 
     virtual const Type *getType() const;
 
-    Value *expandCodeFor(ScalarEvolutionRewriter &SER,
-                         Instruction *InsertPt) {
-      return (Value*)getValue();
-    }
-    
     virtual void print(std::ostream &OS) const;
 
     /// Methods for support type inquiry through isa, cast, and dyn_cast:
@@ -99,9 +94,6 @@ namespace llvm {
     /// known to have.  This method is only valid on integer SCEV objects.
     virtual ConstantRange getValueRange() const;
 
-    Value *expandCodeFor(ScalarEvolutionRewriter &SER,
-                         Instruction *InsertPt);
-    
     virtual void print(std::ostream &OS) const;
 
     /// Methods for support type inquiry through isa, cast, and dyn_cast:
@@ -140,9 +132,6 @@ namespace llvm {
     /// known to have.  This method is only valid on integer SCEV objects.
     virtual ConstantRange getValueRange() const;
 
-    Value *expandCodeFor(ScalarEvolutionRewriter &SER,
-                         Instruction *InsertPt);
-    
     virtual void print(std::ostream &OS) const;
 
     /// Methods for support type inquiry through isa, cast, and dyn_cast:
@@ -236,9 +225,6 @@ namespace llvm {
 
     virtual const char *getOperationStr() const { return " + "; }
 
-    Value *expandCodeFor(ScalarEvolutionRewriter &SER,
-                         Instruction *InsertPt);
-
     /// Methods for support type inquiry through isa, cast, and dyn_cast:
     static inline bool classof(const SCEVAddExpr *S) { return true; }
     static inline bool classof(const SCEV *S) {
@@ -265,9 +251,6 @@ namespace llvm {
     }
 
     virtual const char *getOperationStr() const { return " * "; }
-
-    Value *expandCodeFor(ScalarEvolutionRewriter &SER,
-                         Instruction *InsertPt);
 
     /// Methods for support type inquiry through isa, cast, and dyn_cast:
     static inline bool classof(const SCEVMulExpr *S) { return true; }
@@ -305,9 +288,6 @@ namespace llvm {
 
     virtual const Type *getType() const;
 
-    Value *expandCodeFor(ScalarEvolutionRewriter &SER,
-                         Instruction *InsertPt);
-    
     void print(std::ostream &OS) const;
 
     /// Methods for support type inquiry through isa, cast, and dyn_cast:
@@ -376,10 +356,6 @@ namespace llvm {
 
     virtual const Type *getType() const { return Operands[0]->getType(); }
 
-    Value *expandCodeFor(ScalarEvolutionRewriter &SER,
-                         Instruction *InsertPt);
-
-
     /// isAffine - Return true if this is an affine AddRec (i.e., it represents
     /// an expressions A+B*x where A and B are loop invariant values.
     bool isAffine() const {
@@ -433,12 +409,11 @@ namespace llvm {
     /// SCEVUnknown.
     static SCEVHandle get(Value *V);
 
-    Value *getValue() const { return V; }
+    /// getIntegerSCEV - Given an integer or FP type, create a constant for the
+    /// specified signed integer value and return a SCEV for the constant.
+    static SCEVHandle getIntegerSCEV(int Val, const Type *Ty);
 
-    Value *expandCodeFor(ScalarEvolutionRewriter &SER,
-                         Instruction *InsertPt) {
-      return V;
-    }
+    Value *getValue() const { return V; }
 
     virtual bool isLoopInvariant(const Loop *L) const;
     virtual bool hasComputableLoopEvolution(const Loop *QL) const {
@@ -453,6 +428,42 @@ namespace llvm {
     static inline bool classof(const SCEVUnknown *S) { return true; }
     static inline bool classof(const SCEV *S) {
       return S->getSCEVType() == scUnknown;
+    }
+  };
+
+  /// SCEVVisitor - This class defines a simple visitor class that may be used
+  /// for various SCEV analysis purposes.
+  template<typename SC, typename RetVal=void>
+  struct SCEVVisitor {
+    RetVal visit(SCEV *S) {
+      switch (S->getSCEVType()) {
+      case scConstant:
+        return ((SC*)this)->visitConstant((SCEVConstant*)S);
+      case scTruncate:
+        return ((SC*)this)->visitTruncateExpr((SCEVTruncateExpr*)S);
+      case scZeroExtend:
+        return ((SC*)this)->visitZeroExtendExpr((SCEVZeroExtendExpr*)S);
+      case scAddExpr:
+        return ((SC*)this)->visitAddExpr((SCEVAddExpr*)S);
+      case scMulExpr:
+        return ((SC*)this)->visitMulExpr((SCEVMulExpr*)S);
+      case scUDivExpr:
+        return ((SC*)this)->visitUDivExpr((SCEVUDivExpr*)S);
+      case scAddRecExpr:
+        return ((SC*)this)->visitAddRecExpr((SCEVAddRecExpr*)S);
+      case scUnknown:
+        return ((SC*)this)->visitUnknown((SCEVUnknown*)S);
+      case scCouldNotCompute:
+        return ((SC*)this)->visitCouldNotCompute((SCEVCouldNotCompute*)S);
+      default:
+        assert(0 && "Unknown SCEV type!");
+      }
+    }
+
+    RetVal visitCouldNotCompute(SCEVCouldNotCompute *S) {
+      assert(0 && "Invalid use of SCEVCouldNotCompute!");
+      abort();
+      return RetVal();
     }
   };
 }
