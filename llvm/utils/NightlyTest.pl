@@ -20,6 +20,8 @@
 #  -norunningtests  Do not run the Olden benchmark suite with
 #                   LARGE_PROBLEM_SIZE enabled.
 #  -parallel        Run two parallel jobs with GNU Make.
+#  -release         Build an LLVM Release version
+#  -pedantic        Enable additional GCC warnings to detect possible errors.
 #  -enable-linscan  Enable linearscan tests
 #  -disable-codegen Disable LLC and JIT tests in the nightly tester.
 #  -verbose         Turn on some debug output
@@ -147,7 +149,12 @@ while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
   if (/^-noregressiontests$/){ $NOREGRESSIONS = 1; next; }
   if (/^-notest$/)         { $NOTEST     = 1; $NORUNNINGTESTS = 1; next; }
   if (/^-norunningtests$/) { $NORUNNINGTESTS = 1; next; }
-  if (/^-parallel$/)       { $MAKEOPTS   = "-j2 -l3.0"; next; }
+  if (/^-parallel$/)       { $MAKEOPTS   = "$MAKEOPTS -j2 -l3.0"; next; }
+  if (/^-release$/)        { $MAKEOPTS   = "$MAKEOPTS ENABLE_OPTIMIZED=1"; next; }
+  if (/^-pedantic$/)       { 
+      $MAKEOPTS   = "$MAKEOPTS CompileOptimizeOpts='-O3 -DNDEBUG -finline-functions -Wpointer-arith -Wcast-align -Wno-deprecated -Wold-style-cast -Wabi -Woverloaded-virtual -Weffc++ -ffor-scope'"; 
+      next; 
+  }
   if (/^-enable-linscan$/) { $PROGTESTOPTS .= " ENABLE_LINEARSCAN=1"; next; }
   if (/^-disable-codegen$/){ $PROGTESTOPTS .= " DISABLE_JIT=1 DISABLE_LLC=1";
                              $CONFIGUREARGS="--disable-jit --disable-llc_diffs";
