@@ -638,15 +638,20 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
     NumArgs = 1;
     break;
 
-  case Intrinsic:: readio:
+  case Intrinsic:: readio: {
+    const Type * ParamType  = FT->getParamType(0);
+    const Type * ReturnType = FT->getReturnType();
+
     Assert1(FT->getNumParams() == 1,
             "Illegal # arguments for intrinsic function!", IF);
-    Assert1(FT->getReturnType()->isFirstClassType(),
+    Assert1(ReturnType->isFirstClassType(),
             "Return type is not a first class type!", IF);
-    Assert1(FT->getParamType(0)->getPrimitiveID() == Type::PointerTyID,
+    Assert1(ParamType->getPrimitiveID() == Type::PointerTyID,
             "First argument not a pointer!", IF);
+    Assert1(((dyn_cast<PointerType>(ParamType)->getContainedType(0)) == ReturnType), "Pointer type doesn't match return type!", IF);
     NumArgs = 1;
     break;
+  }
 
   case Intrinsic::setjmp:          NumArgs = 1; break;
   case Intrinsic::longjmp:         NumArgs = 2; break;
