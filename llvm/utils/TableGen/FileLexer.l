@@ -1,4 +1,4 @@
-//===-- FileLexer.l - Scanner for TableGen Files ----------------*- C++ -*-===//
+/*===-- FileLexer.l - Scanner for TableGen Files ----------------*- C++ -*-===//
 // 
 //                     The LLVM Compiler Infrastructure
 //
@@ -10,7 +10,7 @@
 // This file defines a simple flex scanner for TableGen files.  This is pretty
 // straight-forward, except for the magic to handle file inclusion.
 //
-//===----------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===*/
 
 %option prefix="File"
 %option yylineno
