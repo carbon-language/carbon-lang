@@ -13,7 +13,9 @@
 #include <iostream>
 #include <vector>
 
-#define DEBUG_PRINT(x) x
+//#define DEBUG_PRINT(x) x
+
+#define DEBUG_PRINT(x) 
 
 // for debug information selecton
 enum ModuloSchedDebugLevel_t { 
@@ -98,6 +100,7 @@ public:
   // Debug functions:
   // Dump the schedule and core schedule
   void dumpScheduling();
+  void dumpFinalSchedule();
 
   // Dump the input vector of nodes
   // sch: the input vector of nodes

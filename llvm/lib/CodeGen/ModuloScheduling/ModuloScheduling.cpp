@@ -27,6 +27,7 @@
 #include <iostream>
 
 using std::endl;
+using std::cerr;
 
 //************************************************************
 // printing Debug information
@@ -52,10 +53,9 @@ SDL_opt("modsched", cl::Hidden, cl::location(ModuloSchedDebugLevel),
 
 // Computes the schedule and inserts epilogue and prologue
 //
-void ModuloScheduling::instrScheduling()
-{
+void 
+ModuloScheduling::instrScheduling(){
 
-  printf(" instrScheduling \n");
 
   if (ModuloScheduling::printScheduleProcess())
     DEBUG_PRINT(std::cerr << "************ computing modulo schedule ***********\n");
@@ -81,10 +81,9 @@ void ModuloScheduling::instrScheduling()
     }
   }
 
-  //print the final schedule if necessary
-  if (ModuloScheduling::printSchedule())
-    dumpScheduling();
-
+  //print the final schedule
+  dumpFinalSchedule();
+  
   //the schedule has been computed
   //create epilogue, prologue and kernel BasicBlock
 
@@ -127,10 +126,13 @@ void ModuloScheduling::instrScheduling()
 
 }
 
+
 // Clear memory from the last round and initialize if necessary
 //
-void ModuloScheduling::clearInitMem(const TargetSchedInfo & msi)
-{
+
+void 
+ModuloScheduling::clearInitMem(const TargetSchedInfo & msi){
+
   unsigned numIssueSlots = msi.maxNumIssueTotal;
   // clear nodeScheduled from the last round
   if (ModuloScheduling::printScheduleProcess()) {
@@ -162,8 +164,9 @@ void ModuloScheduling::clearInitMem(const TargetSchedInfo & msi)
 
 // Compute schedule and coreSchedule with the current II
 //
-bool ModuloScheduling::computeSchedule()
-{
+bool 
+ModuloScheduling::computeSchedule(){
+
 
   if (ModuloScheduling::printScheduleProcess())
     DEBUG_PRINT(std::cerr << "start to compute schedule\n");
@@ -276,8 +279,9 @@ bool ModuloScheduling::computeSchedule()
 
 // Get the successor of the BasicBlock
 //
-BasicBlock *ModuloScheduling::getSuccBB(BasicBlock *bb)
-{
+BasicBlock *
+ModuloScheduling::getSuccBB(BasicBlock *bb){
+
   BasicBlock *succ_bb;
   for (unsigned i = 0; i < II; ++i)
     for (unsigned j = 0; j < coreSchedule[i].size(); ++j)
@@ -310,8 +314,9 @@ BasicBlock *ModuloScheduling::getSuccBB(BasicBlock *bb)
 
 // Get the predecessor of the BasicBlock
 //
-BasicBlock *ModuloScheduling::getPredBB(BasicBlock *bb)
-{
+BasicBlock *
+ModuloScheduling::getPredBB(BasicBlock *bb){
+
   BasicBlock *pred_bb;
   for (unsigned i = 0; i < II; ++i)
     for (unsigned j = 0; j < coreSchedule[i].size(); ++j)
@@ -342,8 +347,9 @@ BasicBlock *ModuloScheduling::getPredBB(BasicBlock *bb)
 
 // Construct the prologue
 //
-void ModuloScheduling::constructPrologue(BasicBlock *prologue)
-{
+void 
+ModuloScheduling::constructPrologue(BasicBlock *prologue){
+
   InstListType & prologue_ist = prologue->getInstList();
   vvNodeType & tempSchedule_prologue =
       *(new std::vector<std::vector<ModuloSchedGraphNode*> >(schedule));
@@ -397,10 +403,11 @@ void ModuloScheduling::constructPrologue(BasicBlock *prologue)
 
 // Construct the kernel BasicBlock
 //
-void ModuloScheduling::constructKernel(BasicBlock *prologue,
+void 
+ModuloScheduling::constructKernel(BasicBlock *prologue,
                                        BasicBlock *kernel,
-                                       BasicBlock *epilogue)
-{
+                                       BasicBlock *epilogue){
+
   //*************fill instructions in the kernel****************
   InstListType & kernel_ist = kernel->getInstList();
   BranchInst *brchInst;
@@ -472,9 +479,9 @@ void ModuloScheduling::constructKernel(BasicBlock *prologue,
 
 // Construct the epilogue 
 //
-void ModuloScheduling::constructEpilogue(BasicBlock *epilogue,
-                                         BasicBlock *succ_bb)
-{
+void 
+ModuloScheduling::constructEpilogue(BasicBlock *epilogue,
+                                         BasicBlock *succ_bb){
 
   //compute the schedule for epilogue
   vvNodeType &tempSchedule_epilogue =
@@ -546,8 +553,9 @@ void ModuloScheduling::constructEpilogue(BasicBlock *epilogue,
 //its latest clone i.e. after this function is called, the ist is not used
 //anywhere and it can be erased.
 //------------------------------------------------------------------------------
-void ModuloScheduling::updateUseWithClone(Instruction * ist)
-{
+void 
+ModuloScheduling::updateUseWithClone(Instruction * ist){
+
 
   while (ist->use_size() > 0) {
     bool destroyed = false;
@@ -587,8 +595,9 @@ void ModuloScheduling::updateUseWithClone(Instruction * ist)
 //this function clear all clone mememoy
 //i.e. set all instruction's clone memory to NULL
 //*****************************************************
-void ModuloScheduling::clearCloneMemory()
-{
+void 
+ModuloScheduling::clearCloneMemory(){
+
   for (unsigned i = 0; i < coreSchedule.size(); i++)
     for (unsigned j = 0; j < coreSchedule[i].size(); j++)
       if (coreSchedule[i][j])
@@ -603,8 +612,9 @@ void ModuloScheduling::clearCloneMemory()
 // because LLVM is in SSA form and we should use the correct value
 //this fuction also update the instruction orn's latest clone memory
 //******************************************************************************
-Instruction *ModuloScheduling::cloneInstSetMemory(Instruction * orn)
-{
+Instruction *
+ModuloScheduling::cloneInstSetMemory(Instruction * orn){
+
   // make a clone instruction
   Instruction *cln = orn->clone();
 
@@ -624,10 +634,11 @@ Instruction *ModuloScheduling::cloneInstSetMemory(Instruction * orn)
 
 
 
-bool ModuloScheduling::ScheduleNode(ModuloSchedGraphNode * node,
+bool 
+ModuloScheduling::ScheduleNode(ModuloSchedGraphNode * node,
                                     unsigned start, unsigned end,
-                                    NodeVec & nodeScheduled)
-{
+                                    NodeVec & nodeScheduled){
+
   const TargetSchedInfo & msi = target.getSchedInfo();
   unsigned int numIssueSlots = msi.maxNumIssueTotal;
 
@@ -734,9 +745,10 @@ bool ModuloScheduling::ScheduleNode(ModuloSchedGraphNode * node,
 }
 
 
-void ModuloScheduling::updateResourceTable(Resources useResources,
-                                           int startCycle)
-{
+void 
+ModuloScheduling::updateResourceTable(Resources useResources,
+                                           int startCycle){
+
   for (unsigned i = 0; i < useResources.size(); i++) {
     int absCycle = startCycle + i;
     int coreCycle = absCycle % II;
@@ -752,9 +764,10 @@ void ModuloScheduling::updateResourceTable(Resources useResources,
   }
 }
 
-void ModuloScheduling::undoUpdateResourceTable(Resources useResources,
-                                               int startCycle)
-{
+void 
+ModuloScheduling::undoUpdateResourceTable(Resources useResources,
+                                               int startCycle){
+
   for (unsigned i = 0; i < useResources.size(); i++) {
     int absCycle = startCycle + i;
     int coreCycle = absCycle % II;
@@ -783,8 +796,9 @@ void ModuloScheduling::undoUpdateResourceTable(Resources useResources,
 //-----------------------------------------------------------------------
 
 
-bool ModuloScheduling::resourceTableNegative()
-{
+bool 
+ModuloScheduling::resourceTableNegative(){
+
   assert(resourceTable.size() == (unsigned) II
          && "resouceTable size must be equal to II");
   bool isNegative = false;
@@ -806,8 +820,9 @@ bool ModuloScheduling::resourceTableNegative()
 //
 //------------------------------------------------------------------------
 
-void ModuloScheduling::dumpResourceUsageTable()
-{
+void 
+ModuloScheduling::dumpResourceUsageTable(){
+
   DEBUG_PRINT(std::cerr << "dumping resource usage table\n");
   for (unsigned i = 0; i < resourceTable.size(); i++) {
     for (unsigned j = 0; j < resourceTable[i].size(); j++)
@@ -824,8 +839,9 @@ void ModuloScheduling::dumpResourceUsageTable()
 //       print out thisSchedule for debug
 //
 //-----------------------------------------------------------------------
-void ModuloScheduling::dumpSchedule(vvNodeType thisSchedule)
-{
+void 
+ModuloScheduling::dumpSchedule(vvNodeType thisSchedule){
+
   const TargetSchedInfo & msi = target.getSchedInfo();
   unsigned numIssueSlots = msi.maxNumIssueTotal;
   for (unsigned i = 0; i < numIssueSlots; i++)
@@ -850,8 +866,9 @@ void ModuloScheduling::dumpSchedule(vvNodeType thisSchedule)
 //
 //-------------------------------------------------------
 
-void ModuloScheduling::dumpScheduling()
-{
+void 
+ModuloScheduling::dumpScheduling(){
+
   DEBUG_PRINT(std::cerr << "dump schedule:" << "\n");
   const TargetSchedInfo & msi = target.getSchedInfo();
   unsigned numIssueSlots = msi.maxNumIssueTotal;
@@ -883,7 +900,47 @@ void ModuloScheduling::dumpScheduling()
   }
 }
 
+/*
+  print out final schedule
+*/
 
+void 
+ModuloScheduling::dumpFinalSchedule(){
+
+  cerr << "dump schedule:" << endl;
+  const TargetSchedInfo & msi = target.getSchedInfo();
+  unsigned numIssueSlots = msi.maxNumIssueTotal;
+
+  for (unsigned i = 0; i < numIssueSlots; i++)
+    cerr << "\t#";
+  cerr << endl;
+
+  for (unsigned i = 0; i < schedule.size(); i++) {
+    cerr << "cycle" << i << ": ";
+    
+    for (unsigned j = 0; j < schedule[i].size(); j++)
+      if (schedule[i][j] != NULL)
+        cerr << schedule[i][j]->getNodeId() << "\t";
+      else
+        cerr << "\t";
+    cerr << endl;
+  }
+  
+  cerr << "dump coreSchedule:" << endl;
+  for (unsigned i = 0; i < numIssueSlots; i++)
+    cerr << "\t#";
+  cerr << endl;
+  
+  for (unsigned i = 0; i < coreSchedule.size(); i++) {
+    cerr << "cycle" << i << ": ";
+    for (unsigned j = 0; j < coreSchedule[i].size(); j++)
+      if (coreSchedule[i][j] != NULL)
+        cerr << coreSchedule[i][j]->getNodeId() << "\t";
+      else
+        cerr << "\t";
+    cerr << endl;
+  }
+}
 
 //---------------------------------------------------------------------------
 // Function: ModuloSchedulingPass
@@ -915,20 +972,20 @@ namespace {
 }                               // end anonymous namespace
 
 
-bool ModuloSchedulingPass::runOnFunction(Function &F)
-{
-
+bool
+ModuloSchedulingPass::runOnFunction(Function &F){
+  
   ModuloSchedGraphSet *graphSet = new ModuloSchedGraphSet(&F, target);
 
   ModuloSchedulingSet ModuloSchedulingSet(*graphSet);
   
-  printf("runOnFunction  in ModuloSchedulingPass returns\n");
+  DEBUG_PRINT(cerr<<"runOnFunction  in ModuloSchedulingPass returns\n"<<endl);
   return false;
 }
 
 
-Pass *createModuloSchedulingPass(const TargetMachine & tgt)
-{
-  printf("creating modulo scheduling \n");
+Pass *
+createModuloSchedulingPass(const TargetMachine & tgt){
+  DEBUG_PRINT(cerr<<"creating modulo scheduling "<<endl);
   return new ModuloSchedulingPass(tgt);
 }
