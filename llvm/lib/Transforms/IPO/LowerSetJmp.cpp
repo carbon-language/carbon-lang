@@ -1,7 +1,7 @@
 //===- LowerSetJmp.cpp - Code pertaining to lowering set/long jumps -------===//
 //
 //  This file implements the lowering of setjmp and longjmp to use the
-//  LLVM invoke instruction as necessary.
+//  LLVM invoke and unwind instructions as necessary.
 //
 //  Lowering of longjmp is fairly trivial. We replace the call with a
 //  call to the LLVM library function "__llvm_sjljeh_throw_longjmp()".
@@ -16,6 +16,8 @@
 //  split. Invoke instructions are handled in a similar fashion with the
 //  original except block being executed if it isn't a longjmp except
 //  that is handled by that function.
+//
+// This pass was contributed to LLVM by Bill Wendling.
 //
 //===----------------------------------------------------------------------===//
 
@@ -218,10 +220,8 @@ bool LowerSetJmp::IsTransformableFunction(const std::string& Name)
 {
   std::string SJLJEh("__llvm_sjljeh");
 
-  if (Name.size() > SJLJEh.size()) {
-    std::string N(Name.begin(), Name.begin() + SJLJEh.size());
-    return N != SJLJEh;
-  }
+  if (Name.size() > SJLJEh.size())
+    return std::string(Name.begin(), Name.begin() + SJLJEh.size()) != SJLJEh;
 
   return true;
 }
@@ -353,29 +353,6 @@ void LowerSetJmp::TransformSetJmpCall(CallInst* Inst)
                                    ConstantUInt::get(Type::UIntTy,
                                                      SetJmpIDMap[Func]++), 0),
                "", Inst);
-
-  // FIXME: This is a nasty piece of code. We want the jump buffer to
-  // dominate all uses. However, we're doing unnatural things to the CFG
-  // which cause this dominance to be lost. The only way to guarantee we
-  // get it back is to place where the jump buffer is being allocated
-  // into the entry block. That's what this code does. The alloca for the
-  // jump buffer is followed by a getelementptr call.
-  if (GetElementPtrInst* GEP = dyn_cast<GetElementPtrInst>(Inst->getOperand(1)))
-    if (GEP->use_size() > 1) {
-      if (AllocaInst* AI = dyn_cast<AllocaInst>(GEP->getPointerOperand())) {
-        BasicBlock& Entry = Func->getEntryNode();
-        BasicBlock::InstListType& EntryIL = Entry.getInstList();
-
-        Instruction* NewAI = AI->clone();
-        Instruction* NewGEP = GEP->clone();
-        NewAI->setName(AI->getName());
-        NewGEP->setName(GEP->getName());
-        EntryIL.push_front(NewGEP);
-        EntryIL.push_front(NewAI);
-        GEP->replaceAllUsesWith(NewGEP);
-        AI->replaceAllUsesWith(NewAI);
-      }
-    }
 
   // Change the setjmp call into a branch statement. We'll remove the
   // setjmp call in a little bit. No worries.
