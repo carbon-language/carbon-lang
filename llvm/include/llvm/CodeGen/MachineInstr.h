@@ -444,9 +444,6 @@ public:
   const std::set<int> &getRegsUsed() const {
     return regsUsed;
   }
-  bool isRegUsed(int regNum) const {
-    return regsUsed.find(regNum) != regsUsed.end();
-  }
   void insertUsedReg(unsigned Reg) {
     assert(((int) Reg) >= 0 && "Invalid register being marked as used");
     regsUsed.insert((int) Reg);
