@@ -451,9 +451,12 @@ void Printer::printOp(const MachineOperand &MO,
     // FALLTHROUGH
   case MachineOperand::MO_MachineRegister:
   case MachineOperand::MO_CCRegister: {
-    // On AIX, do not print out the 'r' in register names
+    // On AIX, do not print out the 'R' (GPR) or 'F' (FPR) in reg names
     const char *regName = RI.get(MO.getReg()).Name;
-    O << &regName[1];
+    if (regName[0] == 'R' || regName[0] == 'F')
+      O << &regName[1];
+    else
+      O << regName;
     return;
   }
 
@@ -571,7 +574,6 @@ void Printer::printMachineInstruction(const MachineInstr *MI) {
 
   O << TII.getName(Opcode) << " ";
   if (Opcode == PPC::BLR || Opcode == PPC::NOP) {
-    // FIXME: BuildMI() should handle 0 params
     O << "\n";
   } else if (ArgCount == 3 && 
              (ArgType[1] == PPCII::Disimm16 || ArgType[1] == PPCII::Disimm14)) {
