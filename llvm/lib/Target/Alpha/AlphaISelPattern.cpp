@@ -148,7 +148,7 @@ AlphaTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG)
           argVreg.push_back(MF.getSSARegMap()->createVirtualRegister(getRegClassFor(getValueType(I->getType()))));
           argPreg.push_back(args_float[count]);
           argOpc.push_back(Alpha::CPYS);
-          newroot = DAG.getCopyFromReg(argVreg[count], getValueType(I->getType()), DAG.getRoot());
+          argt = newroot = DAG.getCopyFromReg(argVreg[count], getValueType(I->getType()), DAG.getRoot());
           break;
         case MVT::i1:
         case MVT::i8:
@@ -179,7 +179,7 @@ AlphaTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG)
 
   BuildMI(&BB, Alpha::IDEF, 0, Alpha::R29);
   BuildMI(&BB, Alpha::BIS, 2, GP).addReg(Alpha::R29).addReg(Alpha::R29);
-  for (int i = 0; i < count; ++i)
+  for (int i = 0; i < std::min(count,6); ++i)
     BuildMI(&BB, argOpc[i], 2, argVreg[i]).addReg(argPreg[i]).addReg(argPreg[i]);
   
   return ArgValues;
@@ -354,6 +354,14 @@ unsigned ISel::SelectExprFP(SDOperand N, unsigned Result)
 	  Opc = DestType == MVT::f64 ? Alpha::LDS : Alpha::LDT;
 	  BuildMI(BB, Opc, 1, Result).addGlobalAddress(cast<GlobalAddressSDNode>(Address)->getGlobal());
 	}
+      else if (ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(Address)) {
+	AlphaLowering.restoreGP(BB);
+	if (DestType == MVT::f64) {
+	  BuildMI(BB, Alpha::LDT_SYM, 1, Result).addConstantPoolIndex(CP->getIndex());
+	} else {
+	  BuildMI(BB, Alpha::LDS_SYM, 1, Result).addConstantPoolIndex(CP->getIndex());
+	}
+      }
       else
 	{
 	  Select(Chain);
@@ -401,7 +409,8 @@ unsigned ISel::SelectExprFP(SDOperand N, unsigned Result)
       if (Node->getValueType(0) == MVT::f64) {
         assert(cast<MVTSDNode>(Node)->getExtraValueType() == MVT::f32 &&
                "Bad EXTLOAD!");
-        BuildMI(BB, Alpha::LDS, 1, Tmp2).addConstantPoolIndex(CP->getIndex());
+	AlphaLowering.restoreGP(BB);
+        BuildMI(BB, Alpha::LDS_SYM, 1, Tmp2).addConstantPoolIndex(CP->getIndex());
         BuildMI(BB, Alpha::CVTST, 1, Result).addReg(Tmp2);
         return Result;
       }
@@ -412,9 +421,8 @@ unsigned ISel::SelectExprFP(SDOperand N, unsigned Result)
     return Result;
 
 
-    //case ISD::UINT_TO_FP:
-
-   case ISD::SINT_TO_FP:
+  case ISD::UINT_TO_FP:
+  case ISD::SINT_TO_FP:
     {
       assert (N.getOperand(0).getValueType() == MVT::i64 && "only quads can be loaded from");
       Tmp1 = SelectExpr(N.getOperand(0));  // Get the operand register
@@ -969,9 +977,8 @@ unsigned ISel::SelectExpr(SDOperand N) {
     Tmp2 = SelectExpr(N.getOperand(1));
     BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(Tmp2);
     return Result;
-//     //  case ISD::UINT_TO_FP:
 
-
+  case ISD::FP_TO_UINT:
   case ISD::FP_TO_SINT:
    {
       assert (DestType == MVT::i64 && "only quads can be loaded to");
@@ -1004,13 +1011,11 @@ unsigned ISel::SelectExpr(SDOperand N) {
  
   case ISD::SELECT:
     {
+      Tmp1 = SelectExpr(N.getOperand(0)); //Cond
       Tmp2 = SelectExpr(N.getOperand(1)); //Use if TRUE
       Tmp3 = SelectExpr(N.getOperand(2)); //Use if FALSE
-      Tmp1 = SelectExpr(N.getOperand(0)); //Cond
       // Get the condition into the zero flag.
-      unsigned dummy = MakeReg(MVT::i64);
-      BuildMI(BB, Alpha::BIS, 2, dummy).addReg(Tmp3).addReg(Tmp3);
-      BuildMI(BB, Alpha::CMOVEQ, 2, Result).addReg(Tmp2).addReg(Tmp1);
+      BuildMI(BB, Alpha::CMOVEQ, 2, Result).addReg(Tmp2).addReg(Tmp3).addReg(Tmp1);
       return Result;
     }
 
