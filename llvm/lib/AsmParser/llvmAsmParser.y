@@ -623,7 +623,7 @@ Module *RunVMAsmParser(const string &Filename, FILE *F) {
 %union {
   Module                           *ModuleVal;
   Method                           *MethodVal;
-  MethodArgument                   *MethArgVal;
+  std::pair<MethodArgument*,char*> *MethArgVal;
   BasicBlock                       *BasicBlockVal;
   TerminatorInst                   *TermInstVal;
   Instruction                      *InstVal;
@@ -633,7 +633,7 @@ Module *RunVMAsmParser(const string &Filename, FILE *F) {
   PATypeHolder<Type>               *TypeVal;
   Value                            *ValueVal;
 
-  std::list<MethodArgument*>       *MethodArgList;
+  std::list<std::pair<MethodArgument*,char*> > *MethodArgList;
   std::vector<Value*>              *ValueList;
   std::list<PATypeHolder<Type> >   *TypeList;
   std::list<std::pair<Value*,
@@ -1131,21 +1131,24 @@ MethodList : MethodList Method {
 OptVAR_ID : VAR_ID | /*empty*/ { $$ = 0; }
 
 ArgVal : Types OptVAR_ID {
-  $$ = new MethodArgument(*$1); delete $1;
-  if (setValueName($$, $2)) { assert(0 && "No arg redef allowed!"); }
+  $$ = new pair<MethodArgument*,char*>(new MethodArgument(*$1), $2);
+  delete $1;  // Delete the type handle..
 }
 
 ArgListH : ArgVal ',' ArgListH {
     $$ = $3;
-    $3->push_front($1);
+    $3->push_front(*$1);
+    delete $1;
   }
   | ArgVal {
-    $$ = new list<MethodArgument*>();
-    $$->push_front($1);
+    $$ = new list<pair<MethodArgument*,char*> >();
+    $$->push_front(*$1);
+    delete $1;
   }
   | DOTDOTDOT {
-    $$ = new list<MethodArgument*>();
-    $$->push_front(new MethodArgument(Type::VoidTy));
+    $$ = new list<pair<MethodArgument*, char*> >();
+    $$->push_front(pair<MethodArgument*,char*>(
+                            new MethodArgument(Type::VoidTy), 0));
   }
 
 ArgList : ArgListH {
@@ -1161,8 +1164,9 @@ MethodHeaderH : OptInternal TypesV STRINGCONSTANT '(' ArgList ')' {
   
   vector<const Type*> ParamTypeList;
   if ($5)
-    for (list<MethodArgument*>::iterator I = $5->begin(); I != $5->end(); ++I)
-      ParamTypeList.push_back((*I)->getType());
+    for (list<pair<MethodArgument*,char*> >::iterator I = $5->begin();
+         I != $5->end(); ++I)
+      ParamTypeList.push_back(I->first->getType());
 
   bool isVarArg = ParamTypeList.size() && ParamTypeList.back() == Type::VoidTy;
   if (isVarArg) ParamTypeList.pop_back();
@@ -1196,9 +1200,14 @@ MethodHeaderH : OptInternal TypesV STRINGCONSTANT '(' ArgList ')' {
   if ($5 && !CurMeth.isDeclare) {        // Is null if empty...
     Method::ArgumentListType &ArgList = M->getArgumentList();
 
-    for (list<MethodArgument*>::iterator I = $5->begin(); I != $5->end(); ++I) {
-      InsertValue(*I);
-      ArgList.push_back(*I);
+    for (list<pair<MethodArgument*, char*> >::iterator I = $5->begin();
+         I != $5->end(); ++I) {
+      if (setValueName(I->first, I->second)) {  // Insert into symtab...
+        assert(0 && "No arg redef allowed!");
+      }
+      
+      InsertValue(I->first);
+      ArgList.push_back(I->first);
     }
     delete $5;                     // We're now done with the argument list
   }
