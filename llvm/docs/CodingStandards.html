@@ -220,9 +220,9 @@ In practice, this means that you shouldn't assume much about the host compiler, 
 
 C++ doesn't do too well in the modularity department.  There is no real encapsulation or data hiding (unless you use expensive protocol classes), but it is what we have to work with.  When you write a public header file (in the LLVM source tree, they live in the top level "include" directory), you are defining a module of functionality.<p>
 
-Modules should be completely independent of each other, except for their dependence.  A module is not just a class, a function, or a namespace: <a href="http://www.cuj.com/articles/2000/0002/0002c/0002c.htm">it's a collection of these</a> that defines an interface.  This interface may be several functions, classes or data structures, but the important issues is how they work together.<p>
+Modules should be completely independent of each other, except for their dependence.  A module is not just a class, a function, or a namespace: <a href="http://www.cuj.com/articles/2000/0002/0002c/0002c.htm">it's a collection of these</a> that defines an interface.  This interface may be several functions, classes or data structures, but the important issue is how they work together.<p>
 
-One example of this is the <tt>llvm/include/llvm/CFG.h</tt> file.  It defines a collection of global functions, template classes, and member functions that are syntactically unrelated to each other.  Semantically, however, they all provide useful functionality for operating on a CFG, and so they are bound together.<p>
+<!--One example of this is the <tt>llvm/include/llvm/CFG.h</tt> file.  It defines a collection of global functions, template classes, and member functions that are syntactically unrelated to each other.  Semantically, however, they all provide useful functionality for operating on a CFG, and so they are bound together.<p> -->
 
 In general, a module should be implemented with one or more <tt>.cpp</tt> files.  Each of these <tt>.cpp</tt> files should include the header that defines their interface first.  This ensure that all of the dependences of the module header have been properly added to the module header itself, and are not implicit.  System headers should be included after user headers for a translation unit.<p>
 
@@ -646,7 +646,7 @@ If you get some free time, and you haven't read them: do so, you might learn som
 <address><a href="mailto:sabre@nondot.org">Chris Lattner</a></address>
 <!-- Created: Tue Jan 23 15:19:28 CST 2001 -->
 <!-- hhmts start -->
-Last modified: Mon Jul 23 15:40:22 CDT 2001
+Last modified: Mon Oct  1 08:17:21 CDT 2001
 <!-- hhmts end -->
 </font>
 </body></html>
