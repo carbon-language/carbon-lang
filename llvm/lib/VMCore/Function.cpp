@@ -5,13 +5,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Function.h"
-#include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
-#include "llvm/GlobalVariable.h"
-#include "llvm/BasicBlock.h"
+#include "llvm/DerivedTypes.h"
 #include "llvm/iOther.h"
-#include "llvm/Argument.h"
 #include "SymbolTableListTraitsImpl.h"
 
 iplist<BasicBlock> &ilist_traits<BasicBlock>::getList(Function *F) {
@@ -51,13 +47,16 @@ void Argument::setName(const std::string &name, SymbolTable *ST) {
 
 
 Function::Function(const FunctionType *Ty, bool isInternal,
-                   const std::string &name)
+                   const std::string &name, Module *ParentModule)
   : GlobalValue(PointerType::get(Ty), Value::FunctionVal, isInternal, name) {
   BasicBlocks.setItemParent(this);
   BasicBlocks.setParent(this);
   ArgumentList.setItemParent(this);
   ArgumentList.setParent(this);
   ParentSymTab = SymTab = 0;
+
+  if (ParentModule)
+    ParentModule->getFunctionList().push_back(this);
 }
 
 Function::~Function() {
