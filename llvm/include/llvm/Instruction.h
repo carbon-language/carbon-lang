@@ -95,6 +95,8 @@ public:
     return isTerminator(iType);
   }
 
+  static inline bool isPhiNode(unsigned OpCode) { return OpCode == PHI; }
+
   inline bool isBinaryOp() const {
     return iType >= BinaryOpsBegin && iType < BinaryOpsEnd;
   }
