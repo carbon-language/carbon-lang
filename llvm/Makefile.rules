@@ -77,6 +77,7 @@ Depend   = $(CXX) -MM -I$(LEVEL)/include $(CPPFLAGS)
 
 # Archive a bunch of .o files into a .a file...
 AR       = ar cq 
+MakeLib   = $(AR)
 
 #----------------------------------------------------------
 
@@ -85,7 +86,8 @@ AR       = ar cq
 ifndef Source
 Source   = $(wildcard *.cpp *.c *.y *.l)
 endif
-Objs = $(sort $(addsuffix .o,$(basename $(Source))))
+
+Objs = $(addsuffix .o,$(basename $(Source)))
 ObjectsO = $(addprefix Release/,$(Objs))
 ObjectsG = $(addprefix Debug/,$(Objs))
 
@@ -108,11 +110,13 @@ endif
 #---------------------------------------------------------
 
 ifdef LIBRARYNAME
+
 LIBNAME_O := Release/lib$(LIBRARYNAME).so
 LIBNAME_G := Debug/lib$(LIBRARYNAME).so
+LIBNAME_AO := Release/lib$(LIBRARYNAME).a
+LIBNAME_AG := Debug/lib$(LIBRARYNAME).a
 
-all:: $(LIBNAME_G)
-#$(LIBNAME_O)
+all:: $(LIBNAME_AG)
 # TODO: Enable optimized builds
 
 $(LIBNAME_O): $(ObjectsO) $(LibSubDirs) Release/.dir Depend/.dir
@@ -123,20 +127,40 @@ $(LIBNAME_G): $(ObjectsG) $(LibSubDirs) Debug/.dir Depend/.dir
 	@echo ======= Linking $(LIBRARYNAME) debug library =======
 	$(MakeSOG) -o $@ $(ObjectsG) $(LibSubDirs) $(LibLinkOpts)
 
+$(LIBNAME_AO): $(ObjectsO) $(LibSubDirs) Release/.dir Depend/.dir
+	@echo ======= Linking $(LIBRARYNAME) release library =======
+	rm -f $@
+	$(MakeLib) $@ $(ObjectsO) $(LibSubDirs)
+
+$(LIBNAME_AG): $(ObjectsG) $(LibSubDirs) Debug/.dir Depend/.dir
+	@echo ======= Linking $(LIBRARYNAME) debug library =======
+	rm -f $@
+	$(MakeLib) $@ $(ObjectsG) $(LibSubDirs)
+
 endif
 
 
 #---------------------------------------------------------
 
-# Create dependacies for the cpp files...
+# Create dependencies for the *.cpp files...
 Depend/%.d: %.cpp Depend/.dir
 	$(Depend) $< | sed 's|$*\.o *|Release/& Debug/& Depend/$(@F)|g' > $@
 
-# Create .o files in the ObjectFiles directory from the .cpp files...
+# Create dependencies for the *.c files...
+Depend/%.d: %.c Depend/.dir
+	$(Depend) $< | sed 's|$*\.o *|Release/& Debug/& Depend/$(@F)|g' > $@
+
+# Create .o files in the ObjectFiles directory from the .cpp and .c files...
 Release/%.o: %.cpp Release/.dir Depend/.dir
 	$(CompileO) $< -o $@
 
+Release/%.o: %.c Release/.dir Depend/.dir
+	$(CompileO) $< -o $@
+
 Debug/%.o: %.cpp Debug/.dir Depend/.dir
+	$(CompileG) $< -o $@
+
+Debug/%.o: %.c Debug/.dir Depend/.dir
 	$(CompileG) $< -o $@
 
 # Create a .cpp source file from a flex input file... this uses sed to cut down
