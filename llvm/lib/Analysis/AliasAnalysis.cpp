@@ -97,3 +97,22 @@ bool AliasAnalysis::canInstructionRangeModify(const Instruction &I1,
 extern void BasicAAStub();
 static IncludeFile INCLUDE_BASICAA_CPP((void*)&BasicAAStub);
 
+
+namespace {
+  struct NoAA : public ImmutablePass, public AliasAnalysis {
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AliasAnalysis::getAnalysisUsage(AU);
+    }
+    
+    virtual void initializePass() {
+      InitializeAliasAnalysis(this);
+    }
+  };
+ 
+  // Register this pass...
+  RegisterOpt<NoAA>
+  X("no-aa", "No Alias Analysis (always returns 'may' alias)");
+
+  // Declare that we implement the AliasAnalysis interface
+  RegisterAnalysisGroup<AliasAnalysis, NoAA> Y;
+}  // End of anonymous namespace
