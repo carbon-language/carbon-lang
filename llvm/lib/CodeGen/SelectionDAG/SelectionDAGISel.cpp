@@ -768,19 +768,21 @@ bool SelectionDAGISel::runOnFunction(Function &Fn) {
 }
 
 
-void SelectionDAGISel::CopyValueToVirtualRegister(SelectionDAGLowering &SDL,
-                                                  Value *V, unsigned Reg) {
+SDOperand SelectionDAGISel::
+CopyValueToVirtualRegister(SelectionDAGLowering &SDL, Value *V, unsigned Reg) {
   SelectionDAG &DAG = SDL.DAG;
   SDOperand Op = SDL.getValue(V);
   if (CopyRegSDNode *CR = dyn_cast<CopyRegSDNode>(Op))
     assert(CR->getReg() != Reg && "Copy from a reg to the same reg!");
-  DAG.setRoot(DAG.getCopyToReg(DAG.getRoot(), Op, Reg));
+  return DAG.getCopyToReg(DAG.getRoot(), Op, Reg);
 }
 
 void SelectionDAGISel::BuildSelectionDAG(SelectionDAG &DAG, BasicBlock *LLVMBB,
        std::vector<std::pair<MachineInstr*, unsigned> > &PHINodesToUpdate,
                                     FunctionLoweringInfo &FuncInfo) {
   SelectionDAGLowering SDL(DAG, TLI, FuncInfo);
+
+  std::vector<SDOperand> UnorderedChains;
   
   // If this is the entry block, emit arguments.
   Function *F = LLVMBB->getParent();
@@ -795,7 +797,8 @@ void SelectionDAGISel::BuildSelectionDAG(SelectionDAG &DAG, BasicBlock *LLVMBB,
     for (Function::aiterator AI = F->abegin(), E = F->aend(); AI != E; ++AI,++a)
       if (!AI->use_empty()) {
         SDL.setValue(AI, Args[a]);
-        CopyValueToVirtualRegister(SDL, AI, FuncInfo.ValueMap[AI]);
+        UnorderedChains.push_back(
+                 CopyValueToVirtualRegister(SDL, AI, FuncInfo.ValueMap[AI]));
       }
   }
 
@@ -813,7 +816,8 @@ void SelectionDAGISel::BuildSelectionDAG(SelectionDAG &DAG, BasicBlock *LLVMBB,
     if (!I->use_empty() && !isa<PHINode>(I)) {
       std::map<const Value*, unsigned>::iterator VMI =FuncInfo.ValueMap.find(I);
       if (VMI != FuncInfo.ValueMap.end())
-        CopyValueToVirtualRegister(SDL, I, VMI->second);
+        UnorderedChains.push_back(
+                           CopyValueToVirtualRegister(SDL, I, VMI->second));
     }
 
   // Handle PHI nodes in successor blocks.  Emit code into the SelectionDAG to
@@ -847,7 +851,8 @@ void SelectionDAGISel::BuildSelectionDAG(SelectionDAG &DAG, BasicBlock *LLVMBB,
           unsigned &RegOut = ConstantsOut[C];
           if (RegOut == 0) {
             RegOut = FuncInfo.CreateRegForValue(C);
-            CopyValueToVirtualRegister(SDL, C, RegOut);
+            UnorderedChains.push_back(
+                             CopyValueToVirtualRegister(SDL, C, RegOut));
           }
           Reg = RegOut;
         } else {
@@ -857,7 +862,8 @@ void SelectionDAGISel::BuildSelectionDAG(SelectionDAG &DAG, BasicBlock *LLVMBB,
                    FuncInfo.StaticAllocaMap.count(cast<AllocaInst>(PHIOp)) &&
                    "Didn't codegen value into a register!??");
             Reg = FuncInfo.CreateRegForValue(PHIOp);
-            CopyValueToVirtualRegister(SDL, PHIOp, Reg);
+            UnorderedChains.push_back(
+                             CopyValueToVirtualRegister(SDL, PHIOp, Reg));
           }
         }
         
@@ -870,6 +876,14 @@ void SelectionDAGISel::BuildSelectionDAG(SelectionDAG &DAG, BasicBlock *LLVMBB,
       }
   }
   ConstantsOut.clear();
+
+  // Turn all of the unordered chains into one factored node.
+  switch (UnorderedChains.size()) {
+  case 0: break;
+  case 1: DAG.setRoot(UnorderedChains[0]); break;
+  default:
+    DAG.setRoot(DAG.getNode(ISD::TokenFactor, MVT::Other, UnorderedChains));
+  }
 
   // Lower the terminator after the copies are emitted.
   SDL.visit(*LLVMBB->getTerminator());
