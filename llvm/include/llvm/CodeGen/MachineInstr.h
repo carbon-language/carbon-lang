@@ -136,14 +136,21 @@ public:
   inline bool           opLoBits64      () const {
     return flags & LOFLAG64;
   }
-  
-  // used to get the reg number if when one is allocated (must be
-  // called only after reg alloc)
+
+  // used to check if a machine register has been allocated to this operand
+  inline bool   hasAllocatedReg() const {
+    return (regNum >= 0 &&
+            (opType == MO_VirtualRegister || opType == MO_CCRegister || 
+             opType == MO_MachineRegister));
+  }
+
+  // used to get the reg number if when one is allocated
   inline int  getAllocatedRegNum() const {
     assert(opType == MO_VirtualRegister || opType == MO_CCRegister || 
 	   opType == MO_MachineRegister);
     return regNum;
   }
+
   
 public:
   friend std::ostream& operator<<(std::ostream& os, const MachineOperand& mop);
