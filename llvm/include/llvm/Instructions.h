@@ -31,9 +31,8 @@ class PointerType;
 /// AllocationInst - This class is the common base class of MallocInst and
 /// AllocaInst.
 ///
-class AllocationInst : public Instruction {
+class AllocationInst : public UnaryInstruction {
 protected:
-  void init(const Type *Ty, Value *ArraySize, unsigned iTy);
   AllocationInst(const Type *Ty, Value *ArraySize, unsigned iTy, 
 		 const std::string &Name = "", Instruction *InsertBefore = 0);
   AllocationInst(const Type *Ty, Value *ArraySize, unsigned iTy, 
@@ -49,8 +48,8 @@ public:
   /// getArraySize - Get the number of element allocated, for a simple
   /// allocation of a single element, this will return a constant 1 value.
   ///
-  inline const Value *getArraySize() const { return Operands[0]; }
-  inline Value *getArraySize() { return Operands[0]; }
+  inline const Value *getArraySize() const { return getOperand(0); }
+  inline Value *getArraySize() { return getOperand(0); }
 
   /// getType - Overload to return most specific pointer type
   ///
@@ -143,9 +142,8 @@ public:
 
 /// FreeInst - an instruction to deallocate memory
 ///
-class FreeInst : public Instruction {
-  void init(Value *Ptr);
-
+class FreeInst : public UnaryInstruction {
+  void AssertOK();
 public:
   explicit FreeInst(Value *Ptr, Instruction *InsertBefore = 0);
   FreeInst(Value *Ptr, BasicBlock *InsertAfter);
@@ -171,13 +169,17 @@ public:
 
 /// LoadInst - an instruction for reading from memory 
 ///
-class LoadInst : public Instruction {
-  LoadInst(const LoadInst &LI) : Instruction(LI.getType(), Load) {
-    Volatile = LI.isVolatile();
-    init(LI.Operands[0]);
-  }
+class LoadInst : public UnaryInstruction {
   bool Volatile;   // True if this is a volatile load
-  void init(Value *Ptr);
+
+  LoadInst(const LoadInst &LI)
+    : UnaryInstruction(LI.getType(), Load, LI.getOperand(0)),
+      Volatile(LI.isVolatile()) {
+#ifndef NDEBUG
+    AssertOK();
+#endif
+  }
+  void AssertOK();
 public:
   LoadInst(Value *Ptr, const std::string &Name, Instruction *InsertBefore);
   LoadInst(Value *Ptr, const std::string &Name, BasicBlock *InsertAtEnd);
@@ -221,12 +223,17 @@ public:
 /// StoreInst - an instruction for storing to memory 
 ///
 class StoreInst : public Instruction {
-  StoreInst(const StoreInst &SI) : Instruction(SI.getType(), Store) {
-    Volatile = SI.isVolatile();
-    init(SI.Operands[0], SI.Operands[1]);
-  }
+  Use Ops[2];
   bool Volatile;   // True if this is a volatile store
-  void init(Value *Val, Value *Ptr);
+  StoreInst(const StoreInst &SI) : Instruction(SI.getType(), Store, Ops, 2),
+                                   Volatile(SI.isVolatile()) {
+    Ops[0].init(SI.Ops[0], this);
+    Ops[1].init(SI.Ops[1], this);
+#ifndef NDEBUG
+    AssertOK();
+#endif
+  }
+  void AssertOK();
 public:
   StoreInst(Value *Val, Value *Ptr, Instruction *InsertBefore);
   StoreInst(Value *Val, Value *Ptr, BasicBlock *InsertAtEnd);
@@ -243,6 +250,18 @@ public:
   /// setVolatile - Specify whether this is a volatile load or not.
   ///
   void setVolatile(bool V) { Volatile = V; }
+
+  /// Transparently provide more efficient getOperand methods.
+  Value *getOperand(unsigned i) const { 
+    assert(i < 2 && "getOperand() out of range!");
+    return Ops[i];
+  }
+  void setOperand(unsigned i, Value *Val) {
+    assert(i < 2 && "setOperand() out of range!");
+    Ops[i] = Val;
+  }
+  unsigned getNumOperands() const { return 2; }
+
 
   virtual StoreInst *clone() const;
 
@@ -271,12 +290,13 @@ public:
 /// access elements of arrays and structs
 ///
 class GetElementPtrInst : public Instruction {
-  GetElementPtrInst(const GetElementPtrInst &EPI)
-    : Instruction((static_cast<const Instruction*>(&EPI)->getType()),
-                  GetElementPtr) {
-    Operands.reserve(EPI.Operands.size());
-    for (unsigned i = 0, E = (unsigned)EPI.Operands.size(); i != E; ++i)
-      Operands.push_back(Use(EPI.Operands[i], this));
+  GetElementPtrInst(const GetElementPtrInst &GEPI)
+    : Instruction(reinterpret_cast<const Type*>(GEPI.getType()), GetElementPtr,
+                  0, GEPI.getNumOperands()) {
+    Use *OL = OperandList = new Use[NumOperands];
+    Use *GEPIOL = GEPI.OperandList;
+    for (unsigned i = 0, E = NumOperands; i != E; ++i)
+      OL[i].init(GEPIOL[i], this);
   }
   void init(Value *Ptr, const std::vector<Value*> &Idx);
   void init(Value *Ptr, Value *Idx0, Value *Idx1);
@@ -296,6 +316,7 @@ public:
 		    const std::string &Name = "", Instruction *InsertBefore =0);
   GetElementPtrInst(Value *Ptr, Value *Idx0, Value *Idx1,
 		    const std::string &Name, BasicBlock *InsertAtEnd);
+  ~GetElementPtrInst();
 
   virtual GetElementPtrInst *clone() const;
   
@@ -408,25 +429,18 @@ public:
 /// CastInst - This class represents a cast from Operand[0] to the type of
 /// the instruction (i->getType()).
 ///
-class CastInst : public Instruction {
-  CastInst(const CastInst &CI) : Instruction(CI.getType(), Cast) {
-    Operands.reserve(1);
-    Operands.push_back(Use(CI.Operands[0], this));
-  }
-  void init(Value *S) {
-    Operands.reserve(1);
-    Operands.push_back(Use(S, this));
+class CastInst : public UnaryInstruction {
+  CastInst(const CastInst &CI) 
+    : UnaryInstruction(CI.getType(), Cast, CI.getOperand(0)) {
   }
 public:
   CastInst(Value *S, const Type *Ty, const std::string &Name = "",
            Instruction *InsertBefore = 0)
-    : Instruction(Ty, Cast, Name, InsertBefore) {
-    init(S);
+    : UnaryInstruction(Ty, Cast, S, Name, InsertBefore) {
   }
   CastInst(Value *S, const Type *Ty, const std::string &Name,
            BasicBlock *InsertAtEnd)
-    : Instruction(Ty, Cast, Name, InsertAtEnd) {
-    init(S);
+    : UnaryInstruction(Ty, Cast, S, Name, InsertAtEnd) {
   }
 
   virtual CastInst *clone() const;
@@ -476,6 +490,7 @@ public:
                     Instruction *InsertBefore = 0);
   explicit CallInst(Value *F, const std::string &Name, 
                     BasicBlock *InsertAtEnd);
+  ~CallInst();
 
   virtual CallInst *clone() const;
   bool mayWriteToMemory() const { return true; }
@@ -484,12 +499,12 @@ public:
   /// if it is a direct call.  If it is a call through a function pointer,
   /// return null.
   Function *getCalledFunction() const {
-    return dyn_cast<Function>(Operands[0]);
+    return (Function*)dyn_cast<Function>(getOperand(0));
   }
 
   // getCalledValue - Get a pointer to a method that is invoked by this inst.
-  inline const Value *getCalledValue() const { return Operands[0]; }
-  inline       Value *getCalledValue()       { return Operands[0]; }
+  inline const Value *getCalledValue() const { return getOperand(0); }
+  inline       Value *getCalledValue()       { return getOperand(0); }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const CallInst *) { return true; }
@@ -509,33 +524,44 @@ public:
 /// ShiftInst - This class represents left and right shift instructions.
 ///
 class ShiftInst : public Instruction {
-  ShiftInst(const ShiftInst &SI) : Instruction(SI.getType(), SI.getOpcode()) {
-    Operands.reserve(2);
-    Operands.push_back(Use(SI.Operands[0], this));
-    Operands.push_back(Use(SI.Operands[1], this));
+  Use Ops[2];
+  ShiftInst(const ShiftInst &SI)
+    : Instruction(SI.getType(), SI.getOpcode(), Ops, 2) {
+    Ops[0].init(SI.Ops[0], this);
+    Ops[1].init(SI.Ops[1], this);
   }
   void init(OtherOps Opcode, Value *S, Value *SA) {
     assert((Opcode == Shl || Opcode == Shr) && "ShiftInst Opcode invalid!");
-    Operands.reserve(2);
-    Operands.push_back(Use(S, this));
-    Operands.push_back(Use(SA, this));
+    Ops[0].init(S, this);
+    Ops[1].init(SA, this);
   }
 
 public:
   ShiftInst(OtherOps Opcode, Value *S, Value *SA, const std::string &Name = "",
             Instruction *InsertBefore = 0)
-    : Instruction(S->getType(), Opcode, Name, InsertBefore) {
+    : Instruction(S->getType(), Opcode, Ops, 2, Name, InsertBefore) {
     init(Opcode, S, SA);
   }
   ShiftInst(OtherOps Opcode, Value *S, Value *SA, const std::string &Name,
             BasicBlock *InsertAtEnd)
-    : Instruction(S->getType(), Opcode, Name, InsertAtEnd) {
+    : Instruction(S->getType(), Opcode, Ops, 2, Name, InsertAtEnd) {
     init(Opcode, S, SA);
   }
 
   OtherOps getOpcode() const {
     return static_cast<OtherOps>(Instruction::getOpcode());
   }
+
+  /// Transparently provide more efficient getOperand methods.
+  Value *getOperand(unsigned i) const {
+    assert(i < 2 && "getOperand() out of range!");
+    return Ops[i];
+  }
+  void setOperand(unsigned i, Value *Val) {
+    assert(i < 2 && "setOperand() out of range!");
+    Ops[i] = Val;
+  }
+  unsigned getNumOperands() const { return 2; }
 
   virtual ShiftInst *clone() const;
 
@@ -557,34 +583,46 @@ public:
 /// SelectInst - This class represents the LLVM 'select' instruction.
 ///
 class SelectInst : public Instruction {
-  SelectInst(const SelectInst &SI) : Instruction(SI.getType(), SI.getOpcode()) {
-    Operands.reserve(3);
-    Operands.push_back(Use(SI.Operands[0], this));
-    Operands.push_back(Use(SI.Operands[1], this));
-    Operands.push_back(Use(SI.Operands[2], this));
-  }
+  Use Ops[3];
+
   void init(Value *C, Value *S1, Value *S2) {
-    Operands.reserve(3);
-    Operands.push_back(Use(C, this));
-    Operands.push_back(Use(S1, this));
-    Operands.push_back(Use(S2, this));
+    Ops[0].init(C, this);
+    Ops[1].init(S1, this);
+    Ops[2].init(S2, this);
   }
 
+  SelectInst(const SelectInst &SI)
+    : Instruction(SI.getType(), SI.getOpcode(), Ops, 3) {
+    init(SI.Ops[0], SI.Ops[1], SI.Ops[2]);
+  }
 public:
   SelectInst(Value *C, Value *S1, Value *S2, const std::string &Name = "",
              Instruction *InsertBefore = 0)
-    : Instruction(S1->getType(), Instruction::Select, Name, InsertBefore) {
+    : Instruction(S1->getType(), Instruction::Select, Ops, 3,
+                  Name, InsertBefore) {
     init(C, S1, S2);
   }
   SelectInst(Value *C, Value *S1, Value *S2, const std::string &Name,
              BasicBlock *InsertAtEnd)
-    : Instruction(S1->getType(), Instruction::Select, Name, InsertAtEnd) {
+    : Instruction(S1->getType(), Instruction::Select, Ops, 3,
+                  Name, InsertAtEnd) {
     init(C, S1, S2);
   }
 
-  Value *getCondition() const { return Operands[0]; }
-  Value *getTrueValue() const { return Operands[1]; }
-  Value *getFalseValue() const { return Operands[2]; }
+  Value *getCondition() const { return Ops[0]; }
+  Value *getTrueValue() const { return Ops[1]; }
+  Value *getFalseValue() const { return Ops[2]; }
+
+  /// Transparently provide more efficient getOperand methods.
+  Value *getOperand(unsigned i) const {
+    assert(i < 3 && "getOperand() out of range!");
+    return Ops[i];
+  }
+  void setOperand(unsigned i, Value *Val) {
+    assert(i < 3 && "setOperand() out of range!");
+    Ops[i] = Val;
+  }
+  unsigned getNumOperands() const { return 3; }
 
   OtherOps getOpcode() const {
     return static_cast<OtherOps>(Instruction::getOpcode());
@@ -611,27 +649,23 @@ public:
 /// advances a vararg list passed an argument of the specified type, returning
 /// the resultant list.
 ///
-class VANextInst : public Instruction {
+class VANextInst : public UnaryInstruction {
   PATypeHolder ArgTy;
-  void init(Value *List) {
-    Operands.reserve(1);
-    Operands.push_back(Use(List, this));
-  }
   VANextInst(const VANextInst &VAN)
-    : Instruction(VAN.getType(), VANext), ArgTy(VAN.getArgType()) {
-    init(VAN.Operands[0]);
+    : UnaryInstruction(VAN.getType(), VANext, VAN.getOperand(0)),
+      ArgTy(VAN.getArgType()) {
   }
 
 public:
   VANextInst(Value *List, const Type *Ty, const std::string &Name = "",
              Instruction *InsertBefore = 0)
-    : Instruction(List->getType(), VANext, Name, InsertBefore), ArgTy(Ty) {
-    init(List);
+    : UnaryInstruction(List->getType(), VANext, List, Name, InsertBefore),
+      ArgTy(Ty) {
   }
   VANextInst(Value *List, const Type *Ty, const std::string &Name,
              BasicBlock *InsertAtEnd)
-    : Instruction(List->getType(), VANext, Name, InsertAtEnd), ArgTy(Ty) {
-    init(List);
+    : UnaryInstruction(List->getType(), VANext, List, Name, InsertAtEnd),
+      ArgTy(Ty) {
   }
 
   const Type *getArgType() const { return ArgTy; }
@@ -656,25 +690,17 @@ public:
 /// VAArgInst - This class represents the va_arg llvm instruction, which returns
 /// an argument of the specified type given a va_list.
 ///
-class VAArgInst : public Instruction {
-  void init(Value* List) {
-    Operands.reserve(1);
-    Operands.push_back(Use(List, this));
-  }
+class VAArgInst : public UnaryInstruction {
   VAArgInst(const VAArgInst &VAA)
-    : Instruction(VAA.getType(), VAArg) {
-    init(VAA.Operands[0]);
-  }
+    : UnaryInstruction(VAA.getType(), VAArg, VAA.getOperand(0)) {}
 public:
   VAArgInst(Value *List, const Type *Ty, const std::string &Name = "",
              Instruction *InsertBefore = 0)
-    : Instruction(Ty, VAArg, Name, InsertBefore) {
-    init(List);
+    : UnaryInstruction(Ty, VAArg, List, Name, InsertBefore) {
   }
   VAArgInst(Value *List, const Type *Ty, const std::string &Name,
             BasicBlock *InsertAtEnd)
-    : Instruction(Ty, VAArg, Name, InsertAtEnd) {
-    init(List);
+    : UnaryInstruction(Ty, VAArg, List, Name, InsertAtEnd) {
   }
 
   virtual VAArgInst *clone() const;
@@ -698,46 +724,59 @@ public:
 // scientist's overactive imagination.
 //
 class PHINode : public Instruction {
+  /// ReservedSpace - The number of operands actually allocated.  NumOperands is
+  /// the number actually in use.
+  unsigned ReservedSpace;
   PHINode(const PHINode &PN);
 public:
   PHINode(const Type *Ty, const std::string &Name = "",
           Instruction *InsertBefore = 0)
-    : Instruction(Ty, Instruction::PHI, Name, InsertBefore) {
+    : Instruction(Ty, Instruction::PHI, 0, 0, Name, InsertBefore),
+      ReservedSpace(0) {
   }
 
   PHINode(const Type *Ty, const std::string &Name, BasicBlock *InsertAtEnd)
-    : Instruction(Ty, Instruction::PHI, Name, InsertAtEnd) {
+    : Instruction(Ty, Instruction::PHI, 0, 0, Name, InsertAtEnd),
+      ReservedSpace(0) {
+  }
+
+  ~PHINode();
+
+  /// reserveOperandSpace - This method can be used to avoid repeated
+  /// reallocation of PHI operand lists by reserving space for the correct
+  /// number of operands before adding them.  Unlike normal vector reserves,
+  /// this method can also be used to trim the operand space.
+  void reserveOperandSpace(unsigned NumValues) {
+    resizeOperands(NumValues*2);
   }
 
   virtual PHINode *clone() const;
 
   /// getNumIncomingValues - Return the number of incoming edges
   ///
-  unsigned getNumIncomingValues() const { return (unsigned)Operands.size()/2; }
+  unsigned getNumIncomingValues() const { return getNumOperands()/2; }
 
   /// getIncomingValue - Return incoming value #x
   ///
   Value *getIncomingValue(unsigned i) const {
-    assert(i*2 < Operands.size() && "Invalid value number!");
-    return Operands[i*2];
+    assert(i*2 < getNumOperands() && "Invalid value number!");
+    return getOperand(i*2);
   }
   void setIncomingValue(unsigned i, Value *V) {
-    assert(i*2 < Operands.size() && "Invalid value number!");
-    Operands[i*2] = V;
+    assert(i*2 < getNumOperands() && "Invalid value number!");
+    setOperand(i*2, V);
   }
-  inline unsigned getOperandNumForIncomingValue(unsigned i) {
+  unsigned getOperandNumForIncomingValue(unsigned i) {
     return i*2;
   }
 
   /// getIncomingBlock - Return incoming basic block #x
   ///
   BasicBlock *getIncomingBlock(unsigned i) const { 
-    assert(i*2+1 < Operands.size() && "Invalid value number!");
-    return reinterpret_cast<BasicBlock*>(Operands[i*2+1].get());
+    return reinterpret_cast<BasicBlock*>(getOperand(i*2+1));
   }
   void setIncomingBlock(unsigned i, BasicBlock *BB) {
-    assert(i*2+1 < Operands.size() && "Invalid value number!");
-    Operands[i*2+1] = reinterpret_cast<Value*>(BB);
+    setOperand(i*2+1, reinterpret_cast<Value*>(BB));
   }
   unsigned getOperandNumForIncomingBlock(unsigned i) {
     return i*2+1;
@@ -748,8 +787,13 @@ public:
   void addIncoming(Value *V, BasicBlock *BB) {
     assert(getType() == V->getType() &&
            "All operands to PHI node must be the same type as the PHI node!");
-    Operands.push_back(Use(V, this));
-    Operands.push_back(Use(reinterpret_cast<Value*>(BB), this));
+    unsigned OpNo = NumOperands;
+    if (OpNo+2 > ReservedSpace)
+      resizeOperands(0);  // Get more space!
+    // Initialize some new operands.
+    NumOperands = OpNo+2;
+    OperandList[OpNo].init(V, this);
+    OperandList[OpNo+1].init(reinterpret_cast<Value*>(BB), this);
   }
   
   /// removeIncomingValue - Remove an incoming value.  This is useful if a
@@ -772,8 +816,9 @@ public:
   /// block in the value list for this PHI.  Returns -1 if no instance.
   ///
   int getBasicBlockIndex(const BasicBlock *BB) const {
-    for (unsigned i = 0; i < Operands.size()/2; ++i) 
-      if (getIncomingBlock(i) == BB) return i;
+    Use *OL = OperandList;
+    for (unsigned i = 0, e = getNumOperands(); i != e; i += 2) 
+      if (OL[i+1] == reinterpret_cast<const Value*>(BB)) return i/2;
     return -1;
   }
 
@@ -789,6 +834,8 @@ public:
   static inline bool classof(const Value *V) {
     return isa<Instruction>(V) && classof(cast<Instruction>(V));
   }
+ private:
+  void resizeOperands(unsigned NumOperands);
 };
 
 //===----------------------------------------------------------------------===//
@@ -800,12 +847,11 @@ public:
 /// does not continue in this function any longer.
 ///
 class ReturnInst : public TerminatorInst {
-  ReturnInst(const ReturnInst &RI) : TerminatorInst(Instruction::Ret) {
-    if (RI.Operands.size()) {
-      assert(RI.Operands.size() == 1 && "Return insn can only have 1 operand!");
-      Operands.reserve(1);
-      Operands.push_back(Use(RI.Operands[0], this));
-    }
+  Use RetVal;  // Possibly null retval.
+  ReturnInst(const ReturnInst &RI) : TerminatorInst(Instruction::Ret, &RetVal,
+                                                    RI.getNumOperands()) {
+    if (RI.getNumOperands())
+      RetVal.init(RI.RetVal, this);
   }
 
   void init(Value *RetVal);
@@ -822,34 +868,33 @@ public:
   //
   // NOTE: If the Value* passed is of type void then the constructor behaves as
   // if it was passed NULL.
-  ReturnInst(Value *RetVal = 0, Instruction *InsertBefore = 0)
-    : TerminatorInst(Instruction::Ret, InsertBefore) {
-    init(RetVal);
+  ReturnInst(Value *retVal = 0, Instruction *InsertBefore = 0)
+    : TerminatorInst(Instruction::Ret, &RetVal, 0, InsertBefore) {
+    init(retVal);
   }
-  ReturnInst(Value *RetVal, BasicBlock *InsertAtEnd)
-    : TerminatorInst(Instruction::Ret, InsertAtEnd) {
-    init(RetVal);
+  ReturnInst(Value *retVal, BasicBlock *InsertAtEnd)
+    : TerminatorInst(Instruction::Ret, &RetVal, 0, InsertAtEnd) {
+    init(retVal);
   }
   ReturnInst(BasicBlock *InsertAtEnd)
-    : TerminatorInst(Instruction::Ret, InsertAtEnd) {
+    : TerminatorInst(Instruction::Ret, &RetVal, 0, InsertAtEnd) {
   }
 
   virtual ReturnInst *clone() const;
 
-  inline const Value *getReturnValue() const {
-    return Operands.size() ? Operands[0].get() : 0; 
+  // Transparently provide more efficient getOperand methods.
+  Value *getOperand(unsigned i) const {
+    assert(i < getNumOperands() && "getOperand() out of range!");
+    return RetVal;
   }
-  inline       Value *getReturnValue()       {
-    return Operands.size() ? Operands[0].get() : 0;
+  void setOperand(unsigned i, Value *Val) {
+    assert(i < getNumOperands() && "setOperand() out of range!");
+    RetVal = Val;
   }
 
-  virtual const BasicBlock *getSuccessor(unsigned idx) const {
-    assert(0 && "ReturnInst has no successors!");
-    abort();
-    return 0;
-  }
-  virtual void setSuccessor(unsigned idx, BasicBlock *NewSucc);
-  virtual unsigned getNumSuccessors() const { return 0; }
+  Value *getReturnValue() const { return RetVal; }
+
+  unsigned getNumSuccessors() const { return 0; }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const ReturnInst *) { return true; }
@@ -859,6 +904,10 @@ public:
   static inline bool classof(const Value *V) {
     return isa<Instruction>(V) && classof(cast<Instruction>(V));
   }
+ private:
+  virtual BasicBlock *getSuccessorV(unsigned idx) const;
+  virtual unsigned getNumSuccessorsV() const;
+  virtual void setSuccessorV(unsigned idx, BasicBlock *B);
 };
 
 //===----------------------------------------------------------------------===//
@@ -869,9 +918,12 @@ public:
 /// BranchInst - Conditional or Unconditional Branch instruction.
 ///
 class BranchInst : public TerminatorInst {
+  /// Ops list - Branches are strange.  The operands are ordered:
+  ///  TrueDest, FalseDest, Cond.  This makes some accessors faster because
+  /// they don't have to check for cond/uncond branchness.
+  Use Ops[3];
   BranchInst(const BranchInst &BI);
-  void init(BasicBlock *IfTrue);
-  void init(BasicBlock *True, BasicBlock *False, Value *Cond);
+  void AssertOK();
 public:
   // BranchInst constructors (where {B, T, F} are blocks, and C is a condition):
   // BranchInst(BB *B)                           - 'br B'
@@ -881,34 +933,57 @@ public:
   // BranchInst(BB* B, BB *I)                    - 'br B'        insert at end
   // BranchInst(BB* T, BB *F, Value *C, BB *I)   - 'br C, T, F', insert at end
   BranchInst(BasicBlock *IfTrue, Instruction *InsertBefore = 0)
-    : TerminatorInst(Instruction::Br, InsertBefore) {
-    init(IfTrue);
+    : TerminatorInst(Instruction::Br, Ops, 1, InsertBefore) {
+    assert(IfTrue != 0 && "Branch destination may not be null!");
+    Ops[0].init(reinterpret_cast<Value*>(IfTrue), this);
   }
   BranchInst(BasicBlock *IfTrue, BasicBlock *IfFalse, Value *Cond,
              Instruction *InsertBefore = 0)
-    : TerminatorInst(Instruction::Br, InsertBefore) {
-    init(IfTrue, IfFalse, Cond);
+    : TerminatorInst(Instruction::Br, Ops, 3, InsertBefore) {
+    Ops[0].init(reinterpret_cast<Value*>(IfTrue), this);
+    Ops[1].init(reinterpret_cast<Value*>(IfFalse), this);
+    Ops[2].init(Cond, this);
+#ifndef NDEBUG
+    AssertOK();
+#endif
   }
 
   BranchInst(BasicBlock *IfTrue, BasicBlock *InsertAtEnd)
-    : TerminatorInst(Instruction::Br, InsertAtEnd) {
-    init(IfTrue);
+    : TerminatorInst(Instruction::Br, Ops, 1, InsertAtEnd) {
+    assert(IfTrue != 0 && "Branch destination may not be null!");
+    Ops[0].init(reinterpret_cast<Value*>(IfTrue), this);
   }
 
   BranchInst(BasicBlock *IfTrue, BasicBlock *IfFalse, Value *Cond,
              BasicBlock *InsertAtEnd)
-    : TerminatorInst(Instruction::Br, InsertAtEnd) {
-    init(IfTrue, IfFalse, Cond);
+    : TerminatorInst(Instruction::Br, Ops, 3, InsertAtEnd) {
+    Ops[0].init(reinterpret_cast<Value*>(IfTrue), this);
+    Ops[1].init(reinterpret_cast<Value*>(IfFalse), this);
+    Ops[2].init(Cond, this);
+#ifndef NDEBUG
+    AssertOK();
+#endif
+  }
+
+
+  /// Transparently provide more efficient getOperand methods.
+  Value *getOperand(unsigned i) const {
+    assert(i < getNumOperands() && "getOperand() out of range!");
+    return Ops[i];
+  }
+  void setOperand(unsigned i, Value *Val) {
+    assert(i < getNumOperands() && "setOperand() out of range!");
+    Ops[i] = Val;
   }
 
   virtual BranchInst *clone() const;
 
-  inline bool isUnconditional() const { return Operands.size() == 1; }
-  inline bool isConditional()   const { return Operands.size() == 3; }
+  inline bool isUnconditional() const { return getNumOperands() == 1; }
+  inline bool isConditional()   const { return getNumOperands() == 3; }
 
   inline Value *getCondition() const {
     assert(isConditional() && "Cannot get condition of an uncond branch!");
-    return Operands[2].get();
+    return getOperand(2);
   }
 
   void setCondition(Value *V) {
@@ -918,28 +993,28 @@ public:
 
   // setUnconditionalDest - Change the current branch to an unconditional branch
   // targeting the specified block.
-  //
+  // FIXME: Eliminate this ugly method.
   void setUnconditionalDest(BasicBlock *Dest) {
-    if (isConditional()) Operands.erase(Operands.begin()+1, Operands.end());
-    Operands[0] = reinterpret_cast<Value*>(Dest);
+    if (isConditional()) {  // Convert this to an uncond branch.
+      NumOperands = 1;
+      Ops[1].set(0);
+      Ops[2].set(0);
+    }
+    setOperand(0, reinterpret_cast<Value*>(Dest));
   }
 
-  virtual const BasicBlock *getSuccessor(unsigned i) const {
+  unsigned getNumSuccessors() const { return 1+isConditional(); }
+
+  BasicBlock *getSuccessor(unsigned i) const {
     assert(i < getNumSuccessors() && "Successor # out of range for Branch!");
-    return (i == 0) ? cast<BasicBlock>(Operands[0].get()) : 
-                      cast<BasicBlock>(Operands[1].get());
-  }
-  inline BasicBlock *getSuccessor(unsigned idx) {
-    const BranchInst *BI = this;
-    return const_cast<BasicBlock*>(BI->getSuccessor(idx));
+    return (i == 0) ? cast<BasicBlock>(getOperand(0)) : 
+                      cast<BasicBlock>(getOperand(1));
   }
 
-  virtual void setSuccessor(unsigned idx, BasicBlock *NewSucc) {
+  void setSuccessor(unsigned idx, BasicBlock *NewSucc) {
     assert(idx < getNumSuccessors() && "Successor # out of range for Branch!");
-    Operands[idx] = reinterpret_cast<Value*>(NewSucc);
+    setOperand(idx, reinterpret_cast<Value*>(NewSucc));
   }
-
-  virtual unsigned getNumSuccessors() const { return 1+isConditional(); }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const BranchInst *) { return true; }
@@ -949,6 +1024,10 @@ public:
   static inline bool classof(const Value *V) {
     return isa<Instruction>(V) && classof(cast<Instruction>(V));
   }
+private:
+  virtual BasicBlock *getSuccessorV(unsigned idx) const;
+  virtual unsigned getNumSuccessorsV() const;
+  virtual void setSuccessorV(unsigned idx, BasicBlock *B);
 };
 
 //===----------------------------------------------------------------------===//
@@ -959,42 +1038,49 @@ public:
 /// SwitchInst - Multiway switch
 ///
 class SwitchInst : public TerminatorInst {
+  unsigned ReservedSpace;
   // Operand[0]    = Value to switch on
   // Operand[1]    = Default basic block destination
   // Operand[2n  ] = Value to match
   // Operand[2n+1] = BasicBlock to go to on match
   SwitchInst(const SwitchInst &RI);
-  void init(Value *Value, BasicBlock *Default);
-
+  void init(Value *Value, BasicBlock *Default, unsigned NumCases);
+  void resizeOperands(unsigned No);
 public:
-  SwitchInst(Value *Value, BasicBlock *Default, Instruction *InsertBefore = 0) 
-    : TerminatorInst(Instruction::Switch, InsertBefore) {
-    init(Value, Default);
-  }
-  SwitchInst(Value *Value, BasicBlock *Default, BasicBlock  *InsertAtEnd) 
-    : TerminatorInst(Instruction::Switch, InsertAtEnd) {
-    init(Value, Default);
+  /// SwitchInst ctor - Create a new switch instruction, specifying a value to
+  /// switch on and a default destination.  The number of additional cases can
+  /// be specified here to make memory allocation more efficient.  This
+  /// constructor can also autoinsert before another instruction.
+  SwitchInst(Value *Value, BasicBlock *Default, unsigned NumCases,
+             Instruction *InsertBefore = 0) 
+    : TerminatorInst(Instruction::Switch, 0, 0, InsertBefore) {
+    init(Value, Default, NumCases);
   }
 
-  virtual SwitchInst *clone() const;
+  /// SwitchInst ctor - Create a new switch instruction, specifying a value to
+  /// switch on and a default destination.  The number of additional cases can
+  /// be specified here to make memory allocation more efficient.  This
+  /// constructor also autoinserts at the end of the specified BasicBlock.
+  SwitchInst(Value *Value, BasicBlock *Default, unsigned NumCases,
+             BasicBlock *InsertAtEnd) 
+    : TerminatorInst(Instruction::Switch, 0, 0, InsertAtEnd) {
+    init(Value, Default, NumCases);
+  }
+  ~SwitchInst();
+
 
   // Accessor Methods for Switch stmt
-  //
-  inline const Value *getCondition() const { return Operands[0]; }
-  inline       Value *getCondition()       { return Operands[0]; }
-  void setCondition(Value *V) { Operands[0] = V; }
+  inline Value *getCondition() const { return getOperand(0); }
+  void setCondition(Value *V) { setOperand(0, V); }
 
-  inline const BasicBlock *getDefaultDest() const {
-    return cast<BasicBlock>(Operands[1].get());
-  }
-  inline       BasicBlock *getDefaultDest()       {
-    return cast<BasicBlock>(Operands[1].get());
+  inline BasicBlock *getDefaultDest() const {
+    return cast<BasicBlock>(getOperand(1));
   }
 
   /// getNumCases - return the number of 'cases' in this switch instruction.
   /// Note that case #0 is always the default case.
   unsigned getNumCases() const {
-    return (unsigned)Operands.size()/2;
+    return getNumOperands()/2;
   }
 
   /// getCaseValue - Return the specified case value.  Note that case #0, the
@@ -1031,31 +1117,24 @@ public:
   ///
   void removeCase(unsigned idx);
 
-  virtual const BasicBlock *getSuccessor(unsigned idx) const {
-    assert(idx < getNumSuccessors() &&"Successor idx out of range for switch!");
-    return cast<BasicBlock>(Operands[idx*2+1].get());
-  }
-  inline BasicBlock *getSuccessor(unsigned idx) {
-    assert(idx < getNumSuccessors() &&"Successor idx out of range for switch!");
-    return cast<BasicBlock>(Operands[idx*2+1].get());
-  }
+  virtual SwitchInst *clone() const;
 
-  virtual void setSuccessor(unsigned idx, BasicBlock *NewSucc) {
+  unsigned getNumSuccessors() const { return getNumOperands()/2; }
+  BasicBlock *getSuccessor(unsigned idx) const {
+    assert(idx < getNumSuccessors() &&"Successor idx out of range for switch!");
+    return cast<BasicBlock>(getOperand(idx*2+1));
+  }
+  void setSuccessor(unsigned idx, BasicBlock *NewSucc) {
     assert(idx < getNumSuccessors() && "Successor # out of range for switch!");
-    Operands[idx*2+1] = reinterpret_cast<Value*>(NewSucc);
+    setOperand(idx*2+1, reinterpret_cast<Value*>(NewSucc));
   }
 
   // getSuccessorValue - Return the value associated with the specified
   // successor.
-  inline const Constant *getSuccessorValue(unsigned idx) const {
+  inline Constant *getSuccessorValue(unsigned idx) const {
     assert(idx < getNumSuccessors() && "Successor # out of range!");
-    return cast<Constant>(Operands[idx*2].get());
+    return cast<Constant>(getOperand(idx*2));
   }
-  inline Constant *getSuccessorValue(unsigned idx) {
-    assert(idx < getNumSuccessors() && "Successor # out of range!");
-    return cast<Constant>(Operands[idx*2].get());
-  }
-  virtual unsigned getNumSuccessors() const { return (unsigned)Operands.size()/2; }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const SwitchInst *) { return true; }
@@ -1065,6 +1144,10 @@ public:
   static inline bool classof(const Value *V) {
     return isa<Instruction>(V) && classof(cast<Instruction>(V));
   }
+private:
+  virtual BasicBlock *getSuccessorV(unsigned idx) const;
+  virtual unsigned getNumSuccessorsV() const;
+  virtual void setSuccessorV(unsigned idx, BasicBlock *B);
 };
 
 //===----------------------------------------------------------------------===//
@@ -1085,6 +1168,7 @@ public:
   InvokeInst(Value *Fn, BasicBlock *IfNormal, BasicBlock *IfException,
 	     const std::vector<Value*> &Params, const std::string &Name,
              BasicBlock *InsertAtEnd);
+  ~InvokeInst();
 
   virtual InvokeInst *clone() const;
 
@@ -1094,50 +1178,38 @@ public:
   /// indirect function invocation.
   ///
   Function *getCalledFunction() const {
-    return dyn_cast<Function>(Operands[0]);
+    return dyn_cast<Function>(getOperand(0));
   }
 
   // getCalledValue - Get a pointer to a function that is invoked by this inst.
-  inline const Value *getCalledValue() const { return Operands[0]; }
-  inline       Value *getCalledValue()       { return Operands[0]; }
+  inline Value *getCalledValue() const { return getOperand(0); }
 
   // get*Dest - Return the destination basic blocks...
-  inline const BasicBlock *getNormalDest() const {
-    return cast<BasicBlock>(Operands[1].get());
+  BasicBlock *getNormalDest() const {
+    return cast<BasicBlock>(getOperand(1));
   }
-  inline       BasicBlock *getNormalDest() {
-    return cast<BasicBlock>(Operands[1].get());
+  BasicBlock *getUnwindDest() const {
+    return cast<BasicBlock>(getOperand(2));
   }
-  inline const BasicBlock *getUnwindDest() const {
-    return cast<BasicBlock>(Operands[2].get());
-  }
-  inline       BasicBlock *getUnwindDest() {
-    return cast<BasicBlock>(Operands[2].get());
+  void setNormalDest(BasicBlock *B) {
+    setOperand(1, reinterpret_cast<Value*>(B));
   }
 
-  inline void setNormalDest(BasicBlock *B){
-    Operands[1] = reinterpret_cast<Value*>(B);
+  void setUnwindDest(BasicBlock *B) {
+    setOperand(2, reinterpret_cast<Value*>(B));
   }
 
-  inline void setUnwindDest(BasicBlock *B){
-    Operands[2] = reinterpret_cast<Value*>(B);
-  }
-
-  virtual const BasicBlock *getSuccessor(unsigned i) const {
-    assert(i < 2 && "Successor # out of range for invoke!");
-    return i == 0 ? getNormalDest() : getUnwindDest();
-  }
-  inline BasicBlock *getSuccessor(unsigned i) {
+  inline BasicBlock *getSuccessor(unsigned i) const {
     assert(i < 2 && "Successor # out of range for invoke!");
     return i == 0 ? getNormalDest() : getUnwindDest();
   }
 
-  virtual void setSuccessor(unsigned idx, BasicBlock *NewSucc) {
+  void setSuccessor(unsigned idx, BasicBlock *NewSucc) {
     assert(idx < 2 && "Successor # out of range for invoke!");
-    Operands[idx+1] = reinterpret_cast<Value*>(NewSucc);
+    setOperand(idx+1, reinterpret_cast<Value*>(NewSucc));
   }
 
-  virtual unsigned getNumSuccessors() const { return 2; }
+  unsigned getNumSuccessors() const { return 2; }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const InvokeInst *) { return true; }
@@ -1147,6 +1219,10 @@ public:
   static inline bool classof(const Value *V) {
     return isa<Instruction>(V) && classof(cast<Instruction>(V));
   }
+private:
+  virtual BasicBlock *getSuccessorV(unsigned idx) const;
+  virtual unsigned getNumSuccessorsV() const;
+  virtual void setSuccessorV(unsigned idx, BasicBlock *B);
 };
 
 
@@ -1161,21 +1237,15 @@ public:
 class UnwindInst : public TerminatorInst {
 public:
   UnwindInst(Instruction *InsertBefore = 0)
-    : TerminatorInst(Instruction::Unwind, InsertBefore) {
+    : TerminatorInst(Instruction::Unwind, 0, 0, InsertBefore) {
   }
   UnwindInst(BasicBlock *InsertAtEnd)
-    : TerminatorInst(Instruction::Unwind, InsertAtEnd) {
+    : TerminatorInst(Instruction::Unwind, 0, 0, InsertAtEnd) {
   }
 
   virtual UnwindInst *clone() const;
 
-  virtual const BasicBlock *getSuccessor(unsigned idx) const {
-    assert(0 && "UnwindInst has no successors!");
-    abort();
-    return 0;
-  }
-  virtual void setSuccessor(unsigned idx, BasicBlock *NewSucc);
-  virtual unsigned getNumSuccessors() const { return 0; }
+  unsigned getNumSuccessors() const { return 0; }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const UnwindInst *) { return true; }
@@ -1185,6 +1255,10 @@ public:
   static inline bool classof(const Value *V) {
     return isa<Instruction>(V) && classof(cast<Instruction>(V));
   }
+private:
+  virtual BasicBlock *getSuccessorV(unsigned idx) const;
+  virtual unsigned getNumSuccessorsV() const;
+  virtual void setSuccessorV(unsigned idx, BasicBlock *B);
 };
 
 //===----------------------------------------------------------------------===//
@@ -1199,21 +1273,15 @@ public:
 class UnreachableInst : public TerminatorInst {
 public:
   UnreachableInst(Instruction *InsertBefore = 0)
-    : TerminatorInst(Instruction::Unreachable, InsertBefore) {
+    : TerminatorInst(Instruction::Unreachable, 0, 0, InsertBefore) {
   }
   UnreachableInst(BasicBlock *InsertAtEnd)
-    : TerminatorInst(Instruction::Unreachable, InsertAtEnd) {
+    : TerminatorInst(Instruction::Unreachable, 0, 0, InsertAtEnd) {
   }
 
   virtual UnreachableInst *clone() const;
 
-  virtual const BasicBlock *getSuccessor(unsigned idx) const {
-    assert(0 && "UnreachableInst has no successors!");
-    abort();
-    return 0;
-  }
-  virtual void setSuccessor(unsigned idx, BasicBlock *NewSucc);
-  virtual unsigned getNumSuccessors() const { return 0; }
+  unsigned getNumSuccessors() const { return 0; }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const UnreachableInst *) { return true; }
@@ -1223,6 +1291,10 @@ public:
   static inline bool classof(const Value *V) {
     return isa<Instruction>(V) && classof(cast<Instruction>(V));
   }
+private:
+  virtual BasicBlock *getSuccessorV(unsigned idx) const;
+  virtual unsigned getNumSuccessorsV() const;
+  virtual void setSuccessorV(unsigned idx, BasicBlock *B);
 };
 
 } // End llvm namespace
