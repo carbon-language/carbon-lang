@@ -1247,32 +1247,32 @@ void ISel::doCall(const ValueRecord &Ret, MachineInstr *CallMI,
       case cFP:
         ArgReg = Args[i].Val ? getReg(Args[i].Val) : Args[i].Reg;
         if (Args[i].Ty == Type::FloatTy) {
-            // Reg or stack?
-            if (FPR_remaining > 0) {
-                BuildMI(BB, PPC32::FMR, 1, PPC32::F0 + FPR_idx).addReg(ArgReg);
-                FPR_remaining--;
-                FPR_idx++;
-            } else {
-                BuildMI(BB, PPC32::STFS, 3).addReg(ArgReg).addImm(ArgOffset)
-                  .addReg(PPC32::R1);
-            }
+          // Reg or stack?
+          if (FPR_remaining > 0) {
+              BuildMI(BB, PPC32::FMR, 1, PPC32::F0 + FPR_idx).addReg(ArgReg);
+              FPR_remaining--;
+              FPR_idx++;
+          } else {
+              BuildMI(BB, PPC32::STFS, 3).addReg(ArgReg).addImm(ArgOffset)
+                .addReg(PPC32::R1);
+          }
         } else {
           assert(Args[i].Ty == Type::DoubleTy && "Unknown FP type!");
-            // Reg or stack?
-            if (FPR_remaining > 0) {
-                BuildMI(BB, PPC32::FMR, 1, PPC32::F0 + FPR_idx).addReg(ArgReg);
-                FPR_remaining--;
-                FPR_idx++;
-            } else {
-                BuildMI(BB, PPC32::STFD, 3).addReg(ArgReg).addImm(ArgOffset)
-                  .addReg(PPC32::R1);
-            }
+          // Reg or stack?
+          if (FPR_remaining > 0) {
+              BuildMI(BB, PPC32::FMR, 1, PPC32::F0 + FPR_idx).addReg(ArgReg);
+              FPR_remaining--;
+              FPR_idx++;
+          } else {
+              BuildMI(BB, PPC32::STFD, 3).addReg(ArgReg).addImm(ArgOffset)
+                .addReg(PPC32::R1);
+          }
 
-            ArgOffset += 4;       // 8 byte entry, not 4.
-            if (GPR_remaining > 0) {
-                GPR_remaining--;    // uses up 2 GPRs
-                GPR_idx++;
-            }
+          ArgOffset += 4;       // 8 byte entry, not 4.
+          if (GPR_remaining > 0) {
+              GPR_remaining--;    // uses up 2 GPRs
+              GPR_idx++;
+          }
         }
         break;
 
