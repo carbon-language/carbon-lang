@@ -142,10 +142,6 @@ static ConstantRange intersect1Wrapped(const ConstantRange &LHS,
                                        const ConstantRange &RHS) {
   assert(LHS.isWrappedSet() && !RHS.isWrappedSet());
 
-  // Handle common special cases
-  if (RHS.isEmptySet()) return RHS;
-  if (RHS.isFullSet()) return LHS;
-
   // Check to see if we overlap on the Left side of RHS...
   //
   if ((*(Constant*)RHS.getLower() < *(Constant*)LHS.getUpper())->getValue()) {
@@ -178,21 +174,34 @@ static ConstantRange intersect1Wrapped(const ConstantRange &LHS,
   }
 }
 
+static ConstantIntegral *Min(ConstantIntegral *A, ConstantIntegral *B) {
+  if ((*(Constant*)A < *(Constant*)B)->getValue())
+    return A;
+  return B;
+}
+static ConstantIntegral *Max(ConstantIntegral *A, ConstantIntegral *B) {
+  if ((*(Constant*)A > *(Constant*)B)->getValue())
+    return A;
+  return B;
+}
+
   
 /// intersect - Return the range that results from the intersection of this
 /// range with another range.
 ///
 ConstantRange ConstantRange::intersectWith(const ConstantRange &CR) const {
   assert(getType() == CR.getType() && "ConstantRange types don't agree!");
+  // Handle common special cases
+  if (isEmptySet() || CR.isFullSet())  return *this;
+  if (isFullSet()  || CR.isEmptySet()) return CR;
 
   if (!isWrappedSet()) {
     if (!CR.isWrappedSet()) {
-      const Constant &L = std::max(*(Constant*)Lower, *(Constant*)CR.Lower);
-      const Constant &U = std::min(*(Constant*)Upper, *(Constant*)CR.Upper);
+      ConstantIntegral *L = Max(Lower, CR.Lower);
+      ConstantIntegral *U = Min(Upper, CR.Upper);
 
-      if ((L < U)->getValue())  // If range isn't empty...
-        return ConstantRange(cast<ConstantIntegral>((Constant*)&L),
-                             cast<ConstantIntegral>((Constant*)&U));
+      if ((*L < *U)->getValue())  // If range isn't empty...
+        return ConstantRange(L, U);
       else
         return ConstantRange(getType(), false);  // Otherwise, return empty set
     } else
@@ -202,11 +211,9 @@ ConstantRange ConstantRange::intersectWith(const ConstantRange &CR) const {
       return intersect1Wrapped(*this, CR);
     else {
       // Both ranges are wrapped...
-      const Constant &L = std::max(*(Constant*)Lower, *(Constant*)CR.Lower);
-      const Constant &U = std::min(*(Constant*)Upper, *(Constant*)CR.Upper);
-
-      return ConstantRange(cast<ConstantIntegral>((Constant*)&L),
-                           cast<ConstantIntegral>((Constant*)&U));      
+      ConstantIntegral *L = Max(Lower, CR.Lower);
+      ConstantIntegral *U = Min(Upper, CR.Upper);
+      return ConstantRange(L, U);
     }
   }
   return *this;
