@@ -15,6 +15,7 @@
 #include "SchedGraph.h"
 #include "llvm/CodeGen/InstrSelection.h"
 #include "llvm/CodeGen/MachineCodeForInstruction.h"
+#include "llvm/CodeGen/MachineCodeForBasicBlock.h"
 #include "llvm/Target/MachineRegInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/BasicBlock.h"
@@ -393,7 +394,7 @@ SchedGraph::addCDEdges(const TerminatorInst* term,
   // all preceding instructions in the basic block.  Use 0 latency again.
   // 
   const BasicBlock* bb = firstBrNode->getBB();
-  const MachineCodeForBasicBlock& mvec = bb->getMachineInstrVec();
+  const MachineCodeForBasicBlock& mvec = MachineCodeForBasicBlock::get(bb);
   for (unsigned i=0, N=mvec.size(); i < N; i++) 
     {
       if (mvec[i] == termMvec[first]) // reached the first branch
@@ -550,7 +551,9 @@ SchedGraph::addMachineRegEdges(RegToRefVecMap& regToRefVecMap,
 	  SchedGraphNode* node = regRefVec[i].first;
 	  unsigned int opNum   = regRefVec[i].second;
 	  bool isDef = node->getMachineInstr()->operandIsDefined(opNum);
-	        
+	  bool isDefAndUse =
+            node->getMachineInstr()->operandIsDefinedAndUsed(opNum);
+          
           for (unsigned p=0; p < i; ++p)
             {
               SchedGraphNode* prevNode = regRefVec[p].first;
@@ -559,14 +562,22 @@ SchedGraph::addMachineRegEdges(RegToRefVecMap& regToRefVecMap,
                   unsigned int prevOpNum = regRefVec[p].second;
                   bool prevIsDef =
                     prevNode->getMachineInstr()->operandIsDefined(prevOpNum);
-                  
+                  bool prevIsDefAndUse =
+                    prevNode->getMachineInstr()->operandIsDefinedAndUsed(prevOpNum);
                   if (isDef)
-                    new SchedGraphEdge(prevNode, node, regNum,
-                                       (prevIsDef)? SchedGraphEdge::OutputDep
-                                                  : SchedGraphEdge::AntiDep);
-                  else if (prevIsDef)
-                    new SchedGraphEdge(prevNode, node, regNum,
-                                       SchedGraphEdge::TrueDep);
+                    {
+                      if (prevIsDef)
+                        new SchedGraphEdge(prevNode, node, regNum,
+                                           SchedGraphEdge::OutputDep);
+                      if (!prevIsDef || prevIsDefAndUse)
+                        new SchedGraphEdge(prevNode, node, regNum,
+                                           SchedGraphEdge::AntiDep);
+                    }
+                  
+                  if (prevIsDef)
+                    if (!isDef || isDefAndUse)
+                      new SchedGraphEdge(prevNode, node, regNum,
+                                         SchedGraphEdge::TrueDep);
                 }
             }
         }
@@ -574,13 +585,20 @@ SchedGraph::addMachineRegEdges(RegToRefVecMap& regToRefVecMap,
 }
 
 
+// Adds dependences to/from refNode from/to all other defs
+// in the basic block.  refNode may be a use, a def, or both.
+// We do not consider other uses because we are not building use-use deps.
+// 
 void
 SchedGraph::addEdgesForValue(SchedGraphNode* refNode,
                              const RefVec& defVec,
                              const Value* defValue,
                              bool  refNodeIsDef,
+                             bool  refNodeIsDefAndUse,
                              const TargetMachine& target)
 {
+  bool refNodeIsUse = !refNodeIsDef || refNodeIsDefAndUse;
+  
   // Add true or output dep edges from all def nodes before refNode in BB.
   // Add anti or output dep edges to all def nodes after refNode.
   for (RefVec::const_iterator I=defVec.begin(), E=defVec.end(); I != E; ++I)
@@ -589,15 +607,23 @@ SchedGraph::addEdgesForValue(SchedGraphNode* refNode,
         continue;                       // Dont add any self-loops
       
       if ((*I).first->getOrigIndexInBB() < refNode->getOrigIndexInBB())
-        // (*).first is before refNode
-        (void) new SchedGraphEdge((*I).first, refNode, defValue,
-                                  (refNodeIsDef)? SchedGraphEdge::OutputDep
-                                                : SchedGraphEdge::TrueDep);
+        { // (*).first is before refNode
+          if (refNodeIsDef)
+            (void) new SchedGraphEdge((*I).first, refNode, defValue,
+                                      SchedGraphEdge::OutputDep);
+          if (refNodeIsUse)
+            (void) new SchedGraphEdge((*I).first, refNode, defValue,
+                                      SchedGraphEdge::TrueDep);
+        }
       else
-        // (*).first is after refNode
-        (void) new SchedGraphEdge(refNode, (*I).first, defValue,
-                                  (refNodeIsDef)? SchedGraphEdge::OutputDep
-                                                : SchedGraphEdge::AntiDep);
+        { // (*).first is after refNode
+          if (refNodeIsDef)
+            (void) new SchedGraphEdge(refNode, (*I).first, defValue,
+                                      SchedGraphEdge::OutputDep);
+          if (refNodeIsUse)
+            (void) new SchedGraphEdge(refNode, (*I).first, defValue,
+                                      SchedGraphEdge::AntiDep);
+        }
     }
 }
 
@@ -626,7 +652,8 @@ SchedGraph::addEdgesForInstruction(const MachineInstr& minstr,
               ValueToDefVecMap::const_iterator I = valueToDefVecMap.find(srcI);
               if (I != valueToDefVecMap.end())
                 addEdgesForValue(node, (*I).second, mop.getVRegValue(),
-                                 minstr.operandIsDefined(i), target);
+                                 minstr.operandIsDefined(i),
+                                 minstr.operandIsDefinedAndUsed(i), target);
             }
 	  break;
 	  
@@ -649,71 +676,18 @@ SchedGraph::addEdgesForInstruction(const MachineInstr& minstr,
   // value of a Ret instruction.
   // 
   for (unsigned i=0, N=minstr.getNumImplicitRefs(); i < N; ++i)
-    if (! minstr.implicitRefIsDefined(i))
+    if (! minstr.implicitRefIsDefined(i) ||
+        minstr.implicitRefIsDefinedAndUsed(i))
       if (const Instruction* srcI =
           dyn_cast_or_null<Instruction>(minstr.getImplicitRef(i)))
         {
           ValueToDefVecMap::const_iterator I = valueToDefVecMap.find(srcI);
           if (I != valueToDefVecMap.end())
             addEdgesForValue(node, (*I).second, minstr.getImplicitRef(i),
-                             minstr.implicitRefIsDefined(i), target);
+                             minstr.implicitRefIsDefined(i),
+                             minstr.implicitRefIsDefinedAndUsed(i), target);
         }
 }
-
-
-#undef NEED_SEPARATE_NONSSA_EDGES_CODE
-#ifdef NEED_SEPARATE_NONSSA_EDGES_CODE
-void
-SchedGraph::addNonSSAEdgesForValue(const Instruction* instr,
-                                   const TargetMachine& target)
-{
-  if (isa<PHINode>(instr))
-    return;
-  
-  MachineCodeForVMInstr& mvec = instr->getMachineInstrVec();
-  const MachineInstrInfo& mii = target.getInstrInfo();
-  RefVec refVec;
-  
-  for (unsigned i=0, N=mvec.size(); i < N; i++)
-    for (int o=0, N = mii.getNumOperands(mvec[i]->getOpCode()); o < N; o++)
-      {
-	const MachineOperand& mop = mvec[i]->getOperand(o); 
-	
-	if ((mop.getOperandType() == MachineOperand::MO_VirtualRegister ||
-             mop.getOperandType() == MachineOperand::MO_CCRegister)
-	    && mop.getVRegValue() == (Value*) instr)
-          {
-	    // this operand is a definition or use of value `instr'
-	    SchedGraphNode* node = this->getGraphNodeForInstr(mvec[i]);
-            assert(node && "No node for machine instruction in this BB?");
-            refVec.push_back(std::make_pair(node, o));
-          }
-      }
-  
-  // refVec is ordered by control flow order of the machine instructions
-  for (unsigned i=0; i < refVec.size(); ++i)
-    {
-      SchedGraphNode* node = refVec[i].first;
-      unsigned int   opNum = refVec[i].second;
-      bool isDef = node->getMachineInstr()->operandIsDefined(opNum);
-      
-      if (isDef)
-        // add output and/or anti deps to this definition
-        for (unsigned p=0; p < i; ++p)
-          {
-            SchedGraphNode* prevNode = refVec[p].first;
-            if (prevNode != node)
-              {
-                bool prevIsDef = prevNode->getMachineInstr()->
-                  operandIsDefined(refVec[p].second);
-                new SchedGraphEdge(prevNode, node, SchedGraphEdge::ValueDep,
-                                   (prevIsDef)? SchedGraphEdge::OutputDep
-                                              : SchedGraphEdge::AntiDep);
-              }
-          }
-    }
-}
-#endif //NEED_SEPARATE_NONSSA_EDGES_CODE
 
 
 void
@@ -786,7 +760,7 @@ SchedGraph::buildNodesforBB(const TargetMachine& target,
   
   // Build graph nodes for each VM instruction and gather def/use info.
   // Do both those together in a single pass over all machine instructions.
-  const MachineCodeForBasicBlock& mvec = bb->getMachineInstrVec();
+  const MachineCodeForBasicBlock& mvec = MachineCodeForBasicBlock::get(bb);
   for (unsigned i=0; i < mvec.size(); i++)
     if (! mii.isDummyPhiInstr(mvec[i]->getOpCode()))
       {
@@ -822,7 +796,7 @@ SchedGraph::buildNodesforBB(const TargetMachine& target,
         
         // Find the machine instruction that makes a copy of inval to (*PI).
         // This must be in the current basic block (bb).
-        const MachineCodeForVMInstr& mvec = (*PI)->getMachineInstrVec();
+        const MachineCodeForVMInstr& mvec = MachineCodeForBasicBlock::get(*PI);
         const MachineInstr* theCopy = NULL;
         for (unsigned i=0; i < mvec.size() && theCopy == NULL; i++)
           if (! mii.isDummyPhiInstr(mvec[i]->getOpCode()))
@@ -830,13 +804,17 @@ SchedGraph::buildNodesforBB(const TargetMachine& target,
             for (int o=0, N=(int) mvec[i]->getNumOperands(); o < N; o++)
               {
                 const MachineOperand& mop = mvec[i]->getOperand(o);
+                
                 if (mvec[i]->operandIsDefined(o))
                   assert(mop.getVRegValue() == (*PI) && "dest shd be my Phi");
-                else if (mop.getVRegValue() == inVal)
-                  { // found the copy!
-                    theCopy = mvec[i];
-                    break;
-                  }
+                
+                if (! mvec[i]->operandIsDefined(o) ||
+                    NOT NEEDED? mvec[i]->operandIsDefinedAndUsed(o))
+                  if (mop.getVRegValue() == inVal)
+                    { // found the copy!
+                      theCopy = mvec[i];
+                      break;
+                    }
               }
         
         // Found the dang instruction.  Now create a node and do the rest...
@@ -911,7 +889,7 @@ SchedGraph::buildGraph(const TargetMachine& target)
   // 
   //----------------------------------------------------------------
       
-  MachineCodeForBasicBlock& bbMvec = bb->getMachineInstrVec();
+  MachineCodeForBasicBlock& bbMvec = MachineCodeForBasicBlock::get(bb);
   
   // First, add edges to the terminator instruction of the basic block.
   this->addCDEdges(bb->getTerminator(), target);

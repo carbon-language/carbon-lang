@@ -28,9 +28,10 @@ SchedPriorities::SchedPriorities(const Function *, const SchedGraph *G,
                                  FunctionLiveVarInfo &LVI)
   : curTime(0), graph(G), methodLiveVarInfo(LVI),
     nodeDelayVec(G->getNumNodes(), INVALID_LATENCY), // make errors obvious
-    earliestForNode(G->getNumNodes(), 0),
+    earliestReadyTimeForNode(G->getNumNodes(), 0),
     earliestReadyTime(0),
-    nextToTry(candsAsHeap.begin()) {
+    nextToTry(candsAsHeap.begin())
+{
   computeDelays(graph);
 }
 
@@ -51,7 +52,7 @@ SchedPriorities::computeDelays(const SchedGraph* graph)
       const SchedGraphNode* node = *poIter;
       cycles_t nodeDelay;
       if (node->beginOutEdges() == node->endOutEdges())
-	nodeDelay = node->getLatency();
+        nodeDelay = node->getLatency();
       else
 	{
 	  // Iterate over the out-edges of the node to compute delay
@@ -59,7 +60,7 @@ SchedPriorities::computeDelays(const SchedGraph* graph)
 	  for (SchedGraphNode::const_iterator E=node->beginOutEdges();
 	       E != node->endOutEdges(); ++E)
 	    {
-	      cycles_t sinkDelay = getNodeDelayRef((*E)->getSink());
+	      cycles_t sinkDelay = getNodeDelay((*E)->getSink());
 	      nodeDelay = std::max(nodeDelay, sinkDelay + (*E)->getMinDelay());
 	    }
 	}
@@ -104,13 +105,13 @@ SchedPriorities::insertReady(const SchedGraphNode* node)
   candsAsSet.insert(node);
   mcands.clear(); // ensure reset choices is called before any more choices
   earliestReadyTime = std::min(earliestReadyTime,
-                               earliestForNode[node->getNodeId()]);
+                       getEarliestReadyTimeForNode(node));
   
   if (SchedDebugLevel >= Sched_PrintSchedTrace)
     {
       cerr << " Node " << node->getNodeId() << " will be ready in Cycle "
-           << earliestForNode[node->getNodeId()] << "; "
-	   << " Delay = " <<(long)getNodeDelayRef(node) << "; Instruction: \n";
+           << getEarliestReadyTimeForNode(node) << "; "
+	   << " Delay = " <<(long)getNodeDelay(node) << "; Instruction: \n";
       cerr << "        " << *node->getMachineInstr() << "\n";
     }
 }
@@ -123,21 +124,21 @@ SchedPriorities::issuedReadyNodeAt(cycles_t curTime,
   candsAsSet.erase(node);
   mcands.clear(); // ensure reset choices is called before any more choices
   
-  if (earliestReadyTime == getEarliestForNodeRef(node))
+  if (earliestReadyTime == getEarliestReadyTimeForNode(node))
     {// earliestReadyTime may have been due to this node, so recompute it
       earliestReadyTime = HUGE_LATENCY;
       for (NodeHeap::const_iterator I=candsAsHeap.begin();
 	   I != candsAsHeap.end(); ++I)
 	if (candsAsHeap.getNode(I))
 	  earliestReadyTime = std::min(earliestReadyTime, 
-				getEarliestForNodeRef(candsAsHeap.getNode(I)));
+				getEarliestReadyTimeForNode(candsAsHeap.getNode(I)));
     }
   
   // Now update ready times for successors
   for (SchedGraphNode::const_iterator E=node->beginOutEdges();
        E != node->endOutEdges(); ++E)
     {
-      cycles_t& etime = getEarliestForNodeRef((*E)->getSink());
+      cycles_t& etime = getEarliestReadyTimeForNodeRef((*E)->getSink());
       etime = std::max(etime, curTime + (*E)->getMinDelay());
     }    
 }
@@ -216,7 +217,7 @@ SchedPriorities::getNextHighest(const SchedulingManager& S,
       // If not, remove it from mcands and continue.  Refill mcands if
       // it becomes empty.
       nextChoice = candsAsHeap.getNode(mcands[nextIdx]);
-      if (getEarliestForNodeRef(nextChoice) > curTime
+      if (getEarliestReadyTimeForNode(nextChoice) > curTime
 	  || ! instrIsFeasible(S, nextChoice->getMachineInstr()->getOpCode()))
 	{
 	  mcands.erase(mcands.begin() + nextIdx);

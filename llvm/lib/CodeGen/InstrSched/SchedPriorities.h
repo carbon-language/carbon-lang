@@ -159,7 +159,8 @@ private:
   FunctionLiveVarInfo &methodLiveVarInfo;
   std::hash_map<const MachineInstr*, bool> lastUseMap;
   std::vector<cycles_t> nodeDelayVec;
-  std::vector<cycles_t> earliestForNode;
+  std::vector<cycles_t> nodeEarliestUseVec;
+  std::vector<cycles_t> earliestReadyTimeForNode;
   cycles_t earliestReadyTime;
   NodeHeap candsAsHeap;				// candidate nodes, ready to go
   std::hash_set<const SchedGraphNode*> candsAsSet;//same entries as candsAsHeap,
@@ -183,14 +184,21 @@ private:
 					 const SchedGraphNode* graphNode);
   
   // NOTE: The next two return references to the actual vector entries.
-  //       Use with care.
+  //       Use the following two if you don't need to modify the value.
   cycles_t&	getNodeDelayRef		(const SchedGraphNode* node) {
     assert(node->getNodeId() < nodeDelayVec.size());
     return nodeDelayVec[node->getNodeId()];
   }
-  cycles_t&	getEarliestForNodeRef	(const SchedGraphNode* node) {
-    assert(node->getNodeId() < earliestForNode.size());
-    return earliestForNode[node->getNodeId()];
+  cycles_t&     getEarliestReadyTimeForNodeRef   (const SchedGraphNode* node) {
+    assert(node->getNodeId() < earliestReadyTimeForNode.size());
+    return earliestReadyTimeForNode[node->getNodeId()];
+  }
+  
+  cycles_t      getNodeDelay            (const SchedGraphNode* node) const {
+    return ((SchedPriorities*) this)->getNodeDelayRef(node); 
+  }
+  cycles_t      getEarliestReadyTimeForNode(const SchedGraphNode* node) const {
+    return ((SchedPriorities*) this)->getEarliestReadyTimeForNodeRef(node);
   }
 };
 

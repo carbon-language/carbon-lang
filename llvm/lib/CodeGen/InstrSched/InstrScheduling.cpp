@@ -8,6 +8,7 @@
 #include "SchedPriorities.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineCodeForInstruction.h"
+#include "llvm/CodeGen/MachineCodeForBasicBlock.h"
 #include "llvm/CodeGen/MachineCodeForMethod.h"
 #include "llvm/Analysis/LiveVar/FunctionLiveVarInfo.h" // FIXME: Remove when modularized better
 #include "llvm/Target/TargetMachine.h"
@@ -631,7 +632,7 @@ AssignInstructionsToSlots(class SchedulingManager& S, unsigned maxIssue)
 static void
 RecordSchedule(const BasicBlock* bb, const SchedulingManager& S)
 {
-  MachineCodeForBasicBlock& mvec = bb->getMachineInstrVec();
+  MachineCodeForBasicBlock& mvec = MachineCodeForBasicBlock::get(bb);
   const MachineInstrInfo& mii = S.schedInfo.getInstrInfo();
   
 #ifndef NDEBUG
@@ -1220,7 +1221,7 @@ ReplaceNopsWithUsefulInstr(SchedulingManager& S,
   // fill delay slots, otherwise, just discard them.
   //  
   unsigned int firstDelaySlotIdx = node->getOrigIndexInBB() + 1;
-  MachineCodeForBasicBlock& bbMvec  = node->getBB()->getMachineInstrVec();
+  MachineCodeForBasicBlock& bbMvec = MachineCodeForBasicBlock::get(node->getBB());
   assert(bbMvec[firstDelaySlotIdx - 1] == brInstr &&
          "Incorrect instr. index in basic block for brInstr");
   
@@ -1313,7 +1314,7 @@ ChooseInstructionsForDelaySlots(SchedulingManager& S,
   // Simply passing in an empty delayNodeVec will have this effect.
   // 
   delayNodeVec.clear();
-  const MachineCodeForBasicBlock& bbMvec = bb->getMachineInstrVec();
+  const MachineCodeForBasicBlock& bbMvec = MachineCodeForBasicBlock::get(bb);
   for (unsigned i=0; i < bbMvec.size(); i++)
     if (bbMvec[i] != brInstr &&
         mii.getNumDelaySlots(bbMvec[i]->getOpCode()) > 0)

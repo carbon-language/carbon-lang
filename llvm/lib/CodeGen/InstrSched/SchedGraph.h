@@ -327,6 +327,7 @@ private:
                                          const RefVec& defVec,
                                          const Value* defValue,
                                          bool  refNodeIsDef,
+                                         bool  refNodeIsDefAndUse,
 					 const TargetMachine& target);
   
   void		addDummyEdges		();
