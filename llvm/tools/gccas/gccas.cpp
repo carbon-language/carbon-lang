@@ -60,7 +60,6 @@ void AddConfiguredTransformationPasses(PassManager &PM) {
   addPass(PM, createInstructionCombiningPass()); // Combine silly seq's
 
 
-  addPass(PM, createIndVarSimplifyPass());       // Simplify indvars
   addPass(PM, createReassociatePass());          // Reassociate expressions
   addPass(PM, createInstructionCombiningPass()); // Combine silly seq's
   addPass(PM, createCFGSimplificationPass());    // Merge & remove BBs
@@ -72,6 +71,7 @@ void AddConfiguredTransformationPasses(PassManager &PM) {
   // Run instcombine after redundancy elimination to exploit opportunities
   // opened up by them.
   addPass(PM, createInstructionCombiningPass());
+  addPass(PM, createIndVarSimplifyPass());       // Canonicalize indvars
   addPass(PM, createAggressiveDCEPass());        // SSA based 'Aggressive DCE'
   addPass(PM, createCFGSimplificationPass());    // Merge & remove BBs
   addPass(PM, createDeadTypeEliminationPass());  // Eliminate dead types
