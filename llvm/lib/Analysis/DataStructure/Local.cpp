@@ -142,6 +142,9 @@ namespace {
 // graph.
 DSGraph::DSGraph(Function &F, DSGraph *GG) : GlobalsGraph(GG) {
   PrintAuxCalls = false;
+
+  DEBUG(std::cerr << "  [Loc] Calculating graph for: " << F.getName() << "\n");
+
   // Use the graph builder to construct the local version of the graph
   GraphBuilder B(F, *this, Nodes, ReturnNodes[&F], ScalarMap, FunctionCalls);
 #ifndef NDEBUG
