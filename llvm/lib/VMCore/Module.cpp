@@ -168,17 +168,13 @@ void Module::dropAllReferences() {
 
   // If there are any GlobalVariable references still out there, nuke them now.
   // Since all references are hereby dropped, nothing could possibly reference
-  // them still.
-  if (GVRefMap) {
-    for (GlobalValueRefMap::iterator I = GVRefMap->Map.begin(),
-           E = GVRefMap->Map.end(); I != E; ++I) {
-      // Delete the ConstantPointerRef node...
-      I->second->destroyConstant();
-    }
-
-    // Since the table is empty, we can now delete it...
-    delete GVRefMap;
-  }
+  // them still.  Note that destroying all of the constant pointer refs will
+  // eventually cause the GVRefMap field to be set to null (by
+  // destroyConstantPointerRef, below).
+  //
+  while (GVRefMap)
+    // Delete the ConstantPointerRef node...  
+    GVRefMap->Map.begin()->second->destroyConstant();
 }
 
 // Accessor for the underlying GlobalValRefMap...
@@ -190,9 +186,19 @@ ConstantPointerRef *Module::getConstantPointerRef(GlobalValue *V){
   if (I != GVRefMap->Map.end()) return I->second;
 
   ConstantPointerRef *Ref = new ConstantPointerRef(V);
-  GVRefMap->Map.insert(std::make_pair(V, Ref));
-
+  GVRefMap->Map[V] = Ref;
   return Ref;
+}
+
+void Module::destroyConstantPointerRef(ConstantPointerRef *CPR) {
+  assert(GVRefMap && "No map allocated, but we have a CPR?");
+  if (!GVRefMap->Map.erase(CPR->getValue()))  // Remove it from the map...
+    assert(0 && "ConstantPointerRef not found in module CPR map!");
+  
+  if (GVRefMap->Map.empty()) {   // If the map is empty, delete it.
+    delete GVRefMap;
+    GVRefMap = 0;
+  }
 }
 
 void Module::mutateConstantPointerRef(GlobalValue *OldGV, GlobalValue *NewGV) {

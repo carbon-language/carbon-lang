@@ -441,6 +441,7 @@ void ConstantStruct::destroyConstant() {
   destroyConstantImpl();
 }
 
+
 //---- ConstantPointerNull::get() implementation...
 //
 static ValueMap<char, ConstantPointerNull> NullPtrConstants;
@@ -452,6 +453,14 @@ ConstantPointerNull *ConstantPointerNull::get(const PointerType *Ty) {
   return Result;
 }
 
+// destroyConstant - Remove the constant from the constant table...
+//
+void ConstantPointerNull::destroyConstant() {
+  NullPtrConstants.remove(this);
+  destroyConstantImpl();
+}
+
+
 //---- ConstantPointerRef::get() implementation...
 //
 ConstantPointerRef *ConstantPointerRef::get(GlobalValue *GV) {
@@ -460,6 +469,14 @@ ConstantPointerRef *ConstantPointerRef::get(GlobalValue *GV) {
   // The Module handles the pointer reference sharing...
   return GV->getParent()->getConstantPointerRef(GV);
 }
+
+// destroyConstant - Remove the constant from the constant table...
+//
+void ConstantPointerRef::destroyConstant() {
+  getValue()->getParent()->destroyConstantPointerRef(this);
+  destroyConstantImpl();
+}
+
 
 //---- ConstantExpr::get() implementations...
 //
