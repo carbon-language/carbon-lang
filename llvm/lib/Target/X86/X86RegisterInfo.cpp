@@ -144,6 +144,8 @@ void X86RegisterInfo::eliminateFrameIndex(MachineFunction &MF,
 
   if (!hasFP(MF))
     Offset += MF.getFrameInfo()->getStackSize();
+  else
+    Offset += 4;  // Skip the saved EBP
 
   MI.SetMachineOperandConst(i+3, MachineOperand::MO_SignExtendedImmed, Offset);
 }
@@ -152,9 +154,9 @@ void
 X86RegisterInfo::processFunctionBeforeFrameFinalized(MachineFunction &MF) const{
   if (hasFP(MF)) {
     // Create a frame entry for the EBP register that must be saved.
-    int FrameIdx = MF.getFrameInfo()->CreateStackObject(4, 4);
-    assert(FrameIdx == MF.getFrameInfo()->getObjectIndexEnd()-1 &&
-	   "Slot for EBP register must be last in order to be found!");
+    int FrameIdx = MF.getFrameInfo()->CreateFixedObject(4, -8);
+    assert(FrameIdx == MF.getFrameInfo()->getObjectIndexBegin() &&
+           "Slot for EBP register must be last in order to be found!");
   }
 }
 
@@ -169,7 +171,7 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
   if (hasFP(MF)) {
     // Get the offset of the stack slot for the EBP register... which is
     // guaranteed to be the last slot by processFunctionBeforeFrameFinalized.
-    int EBPOffset = MFI->getObjectOffset(MFI->getObjectIndexEnd()-1)+4;
+    int EBPOffset = MFI->getObjectOffset(MFI->getObjectIndexBegin())+4;
 
     if (NumBytes) {   // adjust stack pointer: ESP -= numbytes
       MI= BuildMI(X86::SUBri32, 1, X86::ESP, MOTy::UseAndDef).addZImm(NumBytes);
@@ -182,10 +184,10 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
     MBB.insert(MBBI, MI);
 
     // Update EBP with the new base value...
-    if (NumBytes == 0)    // mov EBP, ESP
+    if (NumBytes == 4)    // mov EBP, ESP
       MI = BuildMI(X86::MOVrr32, 2, X86::EBP).addReg(X86::ESP);
     else                  // lea EBP, [ESP+StackSize]
-      MI = addRegOffset(BuildMI(X86::LEAr32, 5, X86::EBP), X86::ESP, NumBytes);
+      MI = addRegOffset(BuildMI(X86::LEAr32, 5, X86::EBP), X86::ESP,NumBytes-4);
 
     MBB.insert(MBBI, MI);
 
@@ -231,8 +233,8 @@ void X86RegisterInfo::emitEpilogue(MachineFunction &MF,
     MI = BuildMI(X86::MOVrr32, 1,X86::ESP).addReg(X86::EBP);
     MBB.insert(MBBI, MI);
 
-    // mov EBP, [ESP-<offset>]
-    MI = addRegOffset(BuildMI(X86::MOVmr32, 5, X86::EBP), X86::ESP, EBPOffset);
+    // pop EBP
+    MI = BuildMI(X86::POPr32, 0, X86::EBP);
     MBB.insert(MBBI, MI);
   } else {
     // Get the number of bytes allocated from the FrameInfo...
