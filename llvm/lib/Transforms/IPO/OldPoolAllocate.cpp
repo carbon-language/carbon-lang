@@ -177,6 +177,23 @@ namespace {
       // pool entries for the same argument) are kept in depth first order.
       stable_sort(ArgInfo.begin(), ArgInfo.end());
     }
+
+    // addCallInfo - For a specified function call CI, figure out which pool
+    // descriptors need to be passed in as arguments, and which arguments need
+    // to be transformed into indices.  If Arg != -1, the specified call
+    // argument is passed in as a pointer to a data structure.
+    //
+    void addCallInfo(DataStructure *DS, CallInst *CI, int Arg,
+                     DSNode *GraphNode, map<DSNode*, PoolInfo> &PoolDescs);
+
+    // Make sure that all dependant arguments are added to this transformation
+    // info.  For example, if we call foo(null, P) and foo treats it's first and
+    // second arguments as belonging to the same data structure, the we MUST add
+    // entries to know that the null needs to be transformed into an index as
+    // well.
+    //
+    void ensureDependantArgumentsIncluded(DataStructure *DS,
+                                          map<DSNode*, PoolInfo> &PoolDescs);
   };
 
 
@@ -332,6 +349,10 @@ bool PoolAllocate::processFunction(Function *F) {
 
   if (Allocs.empty()) return false;  // Nothing to do.
 
+#ifdef DEBUG_TRANSFORM_PROGRESS
+  cerr << "Transforming Function: " << F->getName() << "\n";
+#endif
+
   // Insert instructions into the function we are processing to create all of
   // the memory pool objects themselves.  This also inserts destruction code.
   // This fills in the PoolDescs map to associate the alloc node with the
@@ -381,6 +402,8 @@ class NewInstructionCreator : public InstVisitor<NewInstructionCreator> {
   const ScalarInfo &getScalarRef(const Value *V) {
     for (unsigned i = 0, e = Scalars.size(); i != e; ++i)
       if (Scalars[i].Val == V) return Scalars[i];
+
+    cerr << "Could not find scalar " << V << " in scalar map!\n";
     assert(0 && "Scalar not found in getScalar!");
     abort();
     return Scalars[0];
@@ -740,29 +763,281 @@ public:
   }
 };
 
+static void addNodeMapping(DSNode *SrcNode, const PointerValSet &PVS,
+                           map<DSNode*, PointerValSet> &NodeMapping) {
+  for (unsigned i = 0, e = PVS.size(); i != e; ++i)
+    if (NodeMapping[SrcNode].add(PVS[i])) {  // Not in map yet?
+      assert(PVS[i].Index == 0 && "Node indexing not supported yet!");
+      DSNode *DestNode = PVS[i].Node;
+
+      // Loop over all of the outgoing links in the mapped graph
+      for (unsigned l = 0, le = DestNode->getNumOutgoingLinks(); l != le; ++l) {
+        PointerValSet &SrcSet = SrcNode->getOutgoingLink(l);
+        const PointerValSet &DestSet = DestNode->getOutgoingLink(l);
+
+        // Add all of the node mappings now!
+        for (unsigned si = 0, se = SrcSet.size(); si != se; ++si) {
+          assert(SrcSet[si].Index == 0 && "Can't handle node offset!");
+          addNodeMapping(SrcSet[si].Node, DestSet, NodeMapping);
+        }
+      }
+    }
+}
+
+// CalculateNodeMapping - There is a partial isomorphism between the graph
+// passed in and the graph that is actually used by the function.  We need to
+// figure out what this mapping is so that we can transformFunctionBody the
+// instructions in the function itself.  Note that every node in the graph that
+// we are interested in must be both in the local graph of the called function,
+// and in the local graph of the calling function.  Because of this, we only
+// define the mapping for these nodes [conveniently these are the only nodes we
+// CAN define a mapping for...]
+//
+// The roots of the graph that we are transforming is rooted in the arguments
+// passed into the function from the caller.  This is where we start our
+// mapping calculation.
+//
+// The NodeMapping calculated maps from the callers graph to the called graph.
+//
+static void CalculateNodeMapping(Function *F, TransformFunctionInfo &TFI,
+                                 FunctionDSGraph &CallerGraph,
+                                 FunctionDSGraph &CalledGraph, 
+                                 map<DSNode*, PointerValSet> &NodeMapping) {
+  int LastArgNo = -2;
+  for (unsigned i = 0, e = TFI.ArgInfo.size(); i != e; ++i) {
+    // Figure out what nodes in the called graph the TFI.ArgInfo[i].Node node
+    // corresponds to...
+    //
+    // Only consider first node of sequence.  Extra nodes may may be added
+    // to the TFI if the data structure requires more nodes than just the
+    // one the argument points to.  We are only interested in the one the
+    // argument points to though.
+    //
+    if (TFI.ArgInfo[i].ArgNo != LastArgNo) {
+      if (TFI.ArgInfo[i].ArgNo == -1) {
+        addNodeMapping(TFI.ArgInfo[i].Node, CalledGraph.getRetNodes(),
+                       NodeMapping);
+      } else {
+        // Figure out which node argument # ArgNo points to in the called graph.
+        Value *Arg = F->getArgumentList()[TFI.ArgInfo[i].ArgNo];     
+        addNodeMapping(TFI.ArgInfo[i].Node, CalledGraph.getValueMap()[Arg],
+                       NodeMapping);
+      }
+      LastArgNo = TFI.ArgInfo[i].ArgNo;
+    }
+  }
+}
 
 
-static void addCallInfo(DataStructure *DS,
-                        TransformFunctionInfo &TFI, CallInst *CI, int Arg, 
-                        DSNode *GraphNode,
-                        map<DSNode*, PoolInfo> &PoolDescs) {
+
+
+// addCallInfo - For a specified function call CI, figure out which pool
+// descriptors need to be passed in as arguments, and which arguments need to be
+// transformed into indices.  If Arg != -1, the specified call argument is
+// passed in as a pointer to a data structure.
+//
+void TransformFunctionInfo::addCallInfo(DataStructure *DS, CallInst *CI,
+                                        int Arg, DSNode *GraphNode,
+                                        map<DSNode*, PoolInfo> &PoolDescs) {
   assert(CI->getCalledFunction() && "Cannot handle indirect calls yet!");
-  assert(TFI.Func == 0 || TFI.Func == CI->getCalledFunction() &&
+  assert(Func == 0 || Func == CI->getCalledFunction() &&
          "Function call record should always call the same function!");
-  assert(TFI.Call == 0 || TFI.Call == CI &&
+  assert(Call == 0 || Call == CI &&
          "Call element already filled in with different value!");
-  TFI.Func = CI->getCalledFunction();
-  TFI.Call = CI;
-  //FunctionDSGraph &CalledGraph = DS->getClosedDSGraph(TFI.Func);
+  Func = CI->getCalledFunction();
+  Call = CI;
+  //FunctionDSGraph &CalledGraph = DS->getClosedDSGraph(Func);
 
   // For now, add the entire graph that is pointed to by the call argument.
   // This graph can and should be pruned to only what the function itself will
   // use, because often this will be a dramatically smaller subset of what we
   // are providing.
   //
+  // FIXME: This should use pool links instead of extra arguments!
+  //
   for (df_iterator<DSNode*> I = df_begin(GraphNode), E = df_end(GraphNode);
        I != E; ++I)
-    TFI.ArgInfo.push_back(CallArgInfo(Arg, *I, PoolDescs[*I].Handle));
+    ArgInfo.push_back(CallArgInfo(Arg, *I, PoolDescs[*I].Handle));
+}
+
+static void markReachableNodes(const PointerValSet &Vals,
+                               set<DSNode*> &ReachableNodes) {
+  for (unsigned n = 0, ne = Vals.size(); n != ne; ++n) {
+    DSNode *N = Vals[n].Node;
+    if (ReachableNodes.count(N) == 0)   // Haven't already processed node?
+      ReachableNodes.insert(df_begin(N), df_end(N)); // Insert all
+  }
+}
+
+// Make sure that all dependant arguments are added to this transformation info.
+// For example, if we call foo(null, P) and foo treats it's first and second
+// arguments as belonging to the same data structure, the we MUST add entries to
+// know that the null needs to be transformed into an index as well.
+//
+void TransformFunctionInfo::ensureDependantArgumentsIncluded(DataStructure *DS,
+                                           map<DSNode*, PoolInfo> &PoolDescs) {
+  // FIXME: This does not work for indirect function calls!!!
+  if (Func == 0) return;  // FIXME!
+
+  // Make sure argument entries are sorted.
+  finalizeConstruction();
+
+  // Loop over the function signature, checking to see if there are any pointer
+  // arguments that we do not convert...  if there is something we haven't
+  // converted, set done to false.
+  //
+  unsigned PtrNo = 0;
+  bool Done = true;
+  if (isa<PointerType>(Func->getReturnType()))    // Make sure we convert retval
+    if (PtrNo < ArgInfo.size() && ArgInfo[PtrNo++].ArgNo == -1) {
+      // We DO transform the ret val... skip all possible entries for retval
+      while (PtrNo < ArgInfo.size() && ArgInfo[PtrNo].ArgNo == -1)
+        PtrNo++;
+    } else {
+      Done = false;
+    }
+
+  for (unsigned i = 0, e = Func->getArgumentList().size(); i != e; ++i) {
+    Argument *Arg = Func->getArgumentList()[i];
+    if (isa<PointerType>(Arg->getType())) {
+      if (PtrNo < ArgInfo.size() && ArgInfo[PtrNo++].ArgNo == (int)i) {
+        // We DO transform this arg... skip all possible entries for argument
+        while (PtrNo < ArgInfo.size() && ArgInfo[PtrNo].ArgNo == (int)i)
+          PtrNo++;
+      } else {
+        Done = false;
+        break;
+      }
+    }
+  }
+
+  // If we already have entries for all pointer arguments and retvals, there
+  // certainly is no work to do.  Bail out early to avoid building relatively
+  // expensive data structures.
+  //
+  if (Done) return;
+
+#ifdef DEBUG_TRANSFORM_PROGRESS
+  cerr << "Must ensure dependant arguments for: " << Func->getName() << "\n";
+#endif
+
+  // Otherwise, we MIGHT have to add the arguments/retval if they are part of
+  // the same datastructure graph as some other argument or retval that we ARE
+  // processing.
+  //
+  // Get the data structure graph for the called function.
+  //
+  FunctionDSGraph &CalledDS = DS->getClosedDSGraph(Func);
+
+  // Build a mapping between the nodes in our current graph and the nodes in the
+  // called function's graph.  We build it based on our _incomplete_
+  // transformation information, because it contains all of the info that we
+  // should need.
+  //
+  map<DSNode*, PointerValSet> NodeMapping;
+  CalculateNodeMapping(Func, *this,
+                       DS->getClosedDSGraph(Call->getParent()->getParent()),
+                       CalledDS, NodeMapping);
+
+  // Build the inverted version of the node mapping, that maps from a node in
+  // the called functions graph to a single node in the caller graph.
+  // 
+  map<DSNode*, DSNode*> InverseNodeMap;
+  for (map<DSNode*, PointerValSet>::iterator I = NodeMapping.begin(),
+         E = NodeMapping.end(); I != E; ++I) {
+    PointerValSet &CalledNodes = I->second;
+    for (unsigned i = 0, e = CalledNodes.size(); i != e; ++i)
+      InverseNodeMap[CalledNodes[i].Node] = I->first;
+  }
+  NodeMapping.clear();  // Done with information, free memory
+  
+  // Build a set of reachable nodes from the arguments/retval that we ARE
+  // passing in...
+  set<DSNode*> ReachableNodes;
+
+  // Loop through all of the arguments, marking all of the reachable data
+  // structure nodes reachable if they are from this pointer...
+  //
+  for (unsigned i = 0, e = ArgInfo.size(); i != e; ++i) {
+    if (ArgInfo[i].ArgNo == -1) {
+      if (i == 0)   // Only process retvals once (performance opt)
+        markReachableNodes(CalledDS.getRetNodes(), ReachableNodes);
+    } else {  // If it's an argument value...
+      Argument *Arg = Func->getArgumentList()[ArgInfo[i].ArgNo];
+      if (isa<PointerType>(Arg->getType()))
+        markReachableNodes(CalledDS.getValueMap()[Arg], ReachableNodes);
+    }
+  }
+
+  // Now that we know which nodes are already reachable, see if any of the
+  // arguments that we are not passing values in for can reach one of the
+  // existing nodes...
+  //
+
+  // <FIXME> IN THEORY, we should allow arbitrary paths from the argument to
+  // nodes we know about.  The problem is that if we do this, then I don't know
+  // how to get pool pointers for this head list.  Since we are completely
+  // deadline driven, I'll just allow direct accesses to the graph. </FIXME>
+  //
+  
+  PtrNo = 0;
+  if (isa<PointerType>(Func->getReturnType()))    // Make sure we convert retval
+    if (PtrNo < ArgInfo.size() && ArgInfo[PtrNo++].ArgNo == -1) {
+      // We DO transform the ret val... skip all possible entries for retval
+      while (PtrNo < ArgInfo.size() && ArgInfo[PtrNo].ArgNo == -1)
+        PtrNo++;
+    } else {
+      // See what the return value points to...
+
+      // FIXME: This should generalize to any number of nodes, just see if any
+      // are reachable.
+      assert(CalledDS.getRetNodes().size() == 1 &&
+             "Assumes only one node is returned");
+      DSNode *N = CalledDS.getRetNodes()[0].Node;
+      
+      // If the return value is not marked as being passed in, but it NEEDS to
+      // be transformed, then make it known now.
+      //
+      if (ReachableNodes.count(N)) {
+#ifdef DEBUG_TRANSFORM_PROGRESS
+        cerr << "ensure dependant arguments adds return value entry!\n";
+#endif
+        addCallInfo(DS, Call, -1, InverseNodeMap[N], PoolDescs);
+
+        // Keep sorted!
+        finalizeConstruction();
+      }
+    }
+
+  for (unsigned i = 0, e = Func->getArgumentList().size(); i != e; ++i) {
+    Argument *Arg = Func->getArgumentList()[i];
+    if (isa<PointerType>(Arg->getType())) {
+      if (PtrNo < ArgInfo.size() && ArgInfo[PtrNo++].ArgNo == (int)i) {
+        // We DO transform this arg... skip all possible entries for argument
+        while (PtrNo < ArgInfo.size() && ArgInfo[PtrNo].ArgNo == (int)i)
+          PtrNo++;
+      } else {
+        // This should generalize to any number of nodes, just see if any are
+        // reachable.
+        assert(CalledDS.getValueMap()[Arg].size() == 1 &&
+               "Only handle case where pointing to one node so far!");
+
+        // If the arg is not marked as being passed in, but it NEEDS to
+        // be transformed, then make it known now.
+        //
+        DSNode *N = CalledDS.getValueMap()[Arg][0].Node;
+        if (ReachableNodes.count(N)) {
+#ifdef DEBUG_TRANSFORM_PROGRESS
+          cerr << "ensure dependant arguments adds for arg #" << i << "\n";
+#endif
+          addCallInfo(DS, Call, i, InverseNodeMap[N], PoolDescs);
+
+          // Keep sorted!
+          finalizeConstruction();
+        }
+      }
+    }
+  }
 }
 
 
@@ -833,7 +1108,7 @@ void PoolAllocate::transformFunctionBody(Function *F, FunctionDSGraph &IPFGraph,
     // Check to see if the scalar _IS_ a call...
     if (CallInst *CI = dyn_cast<CallInst>(ScalarVal))
       // If so, add information about the pool it will be returning...
-      addCallInfo(DS, CallMap[CI], CI, -1, Scalars[i].Pool.Node, PoolDescs);
+      CallMap[CI].addCallInfo(DS, CI, -1, Scalars[i].Pool.Node, PoolDescs);
 
     // Check to see if the scalar is an operand to a call...
     for (Value::use_iterator UI = ScalarVal->use_begin(),
@@ -848,18 +1123,26 @@ void PoolAllocate::transformFunctionBody(Function *F, FunctionDSGraph &IPFGraph,
         // than once!  It will get multiple entries for the first pointer.
 
         // Add the operand number and pool handle to the call table...
-        addCallInfo(DS, CallMap[CI], CI, OI-CI->op_begin()-1,
-                    Scalars[i].Pool.Node, PoolDescs);
+        CallMap[CI].addCallInfo(DS, CI, OI-CI->op_begin()-1,
+                                Scalars[i].Pool.Node, PoolDescs);
       }
     }
   }
+
+  // Make sure that all dependant arguments are added as well.  For example, if
+  // we call foo(null, P) and foo treats it's first and second arguments as
+  // belonging to the same data structure, the we MUST set up the CallMap to
+  // know that the null needs to be transformed into an index as well.
+  //
+  for (map<CallInst*, TransformFunctionInfo>::iterator I = CallMap.begin();
+       I != CallMap.end(); ++I)
+    I->second.ensureDependantArgumentsIncluded(DS, PoolDescs);
 
 #ifdef DEBUG_TRANSFORM_PROGRESS
   // Print out call map...
   for (map<CallInst*, TransformFunctionInfo>::iterator I = CallMap.begin();
        I != CallMap.end(); ++I) {
     cerr << "For call: " << I->first;
-    I->second.finalizeConstruction();
     cerr << I->second.Func->getName() << " must pass pool pointer for args #";
     for (unsigned i = 0; i < I->second.ArgInfo.size(); ++i)
       cerr << I->second.ArgInfo[i].ArgNo << ", ";
@@ -873,9 +1156,6 @@ void PoolAllocate::transformFunctionBody(Function *F, FunctionDSGraph &IPFGraph,
   //
   for (map<CallInst*, TransformFunctionInfo>::iterator I = CallMap.begin(),
          E = CallMap.end(); I != E; ++I) {
-    // Make sure the entries are sorted.
-    I->second.finalizeConstruction();
-
     // Transform all of the functions we need, or at least ensure there is a
     // cached version available.
     transformFunction(I->second, IPFGraph, PoolDescs);
@@ -965,7 +1245,6 @@ void PoolAllocate::transformFunctionBody(Function *F, FunctionDSGraph &IPFGraph,
       Argument *NewArg = new Argument(*TI, Arg->getName());
       XFormMap[Arg] = NewArg;  // Map old arg into new arg...
 
-
       // Replace the old argument and then delete it...
       delete F->getArgumentList().replaceWith(I, NewArg);
     }
@@ -994,70 +1273,6 @@ void PoolAllocate::transformFunctionBody(Function *F, FunctionDSGraph &IPFGraph,
   DS->invalidateFunction(F);
 }
 
-static void addNodeMapping(DSNode *SrcNode, const PointerValSet &PVS,
-                           map<DSNode*, PointerValSet> &NodeMapping) {
-  for (unsigned i = 0, e = PVS.size(); i != e; ++i)
-    if (NodeMapping[SrcNode].add(PVS[i])) {  // Not in map yet?
-      assert(PVS[i].Index == 0 && "Node indexing not supported yet!");
-      DSNode *DestNode = PVS[i].Node;
-
-      // Loop over all of the outgoing links in the mapped graph
-      for (unsigned l = 0, le = DestNode->getNumOutgoingLinks(); l != le; ++l) {
-        PointerValSet &SrcSet = SrcNode->getOutgoingLink(l);
-        const PointerValSet &DestSet = DestNode->getOutgoingLink(l);
-
-        // Add all of the node mappings now!
-        for (unsigned si = 0, se = SrcSet.size(); si != se; ++si) {
-          assert(SrcSet[si].Index == 0 && "Can't handle node offset!");
-          addNodeMapping(SrcSet[si].Node, DestSet, NodeMapping);
-        }
-      }
-    }
-}
-
-// CalculateNodeMapping - There is a partial isomorphism between the graph
-// passed in and the graph that is actually used by the function.  We need to
-// figure out what this mapping is so that we can transformFunctionBody the
-// instructions in the function itself.  Note that every node in the graph that
-// we are interested in must be both in the local graph of the called function,
-// and in the local graph of the calling function.  Because of this, we only
-// define the mapping for these nodes [conveniently these are the only nodes we
-// CAN define a mapping for...]
-//
-// The roots of the graph that we are transforming is rooted in the arguments
-// passed into the function from the caller.  This is where we start our
-// mapping calculation.
-//
-// The NodeMapping calculated maps from the callers graph to the called graph.
-//
-static void CalculateNodeMapping(Function *F, TransformFunctionInfo &TFI,
-                                 FunctionDSGraph &CallerGraph,
-                                 FunctionDSGraph &CalledGraph, 
-                                 map<DSNode*, PointerValSet> &NodeMapping) {
-  int LastArgNo = -2;
-  for (unsigned i = 0, e = TFI.ArgInfo.size(); i != e; ++i) {
-    // Figure out what nodes in the called graph the TFI.ArgInfo[i].Node node
-    // corresponds to...
-    //
-    // Only consider first node of sequence.  Extra nodes may may be added
-    // to the TFI if the data structure requires more nodes than just the
-    // one the argument points to.  We are only interested in the one the
-    // argument points to though.
-    //
-    if (TFI.ArgInfo[i].ArgNo != LastArgNo) {
-      if (TFI.ArgInfo[i].ArgNo == -1) {
-        addNodeMapping(TFI.ArgInfo[i].Node, CalledGraph.getRetNodes(),
-                       NodeMapping);
-      } else {
-        // Figure out which node argument # ArgNo points to in the called graph.
-        Value *Arg = F->getArgumentList()[TFI.ArgInfo[i].ArgNo];     
-        addNodeMapping(TFI.ArgInfo[i].Node, CalledGraph.getValueMap()[Arg],
-                       NodeMapping);
-      }
-      LastArgNo = TFI.ArgInfo[i].ArgNo;
-    }
-  }
-}
 
 
 // transformFunction - Transform the specified function the specified way.  It
@@ -1284,6 +1499,12 @@ void PoolAllocate::CreatePools(Function *F, const vector<AllocDSNode*> &Allocs,
   for (Function::iterator I = F->begin(), E = F->end(); I != E; ++I)
     if (isa<ReturnInst>((*I)->getTerminator()))
       ReturnNodes.push_back(*I);
+
+#ifdef DEBUG_CREATE_POOLS
+  cerr << "Allocs that we are pool allocating:\n";
+  for (unsigned i = 0, e = Allocs.size(); i != e; ++i)
+    Allocs[i]->dump();
+#endif
 
   map<DSNode*, PATypeHolder> AbsPoolTyMap;
 
