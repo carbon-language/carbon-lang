@@ -101,6 +101,9 @@ public:
   unsigned                 size() const { return BasicBlocks.size(); }
   bool                    empty() const { return BasicBlocks.empty(); }
 
+  iterator erase(iterator q)               { return BasicBlocks.erase (q); }
+  iterator erase(iterator q1, iterator q2) { return BasicBlocks.erase (q1, q2); }
+
   /// print - Write trace to output stream.
   ///
   void print (std::ostream &O) const;
