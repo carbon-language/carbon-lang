@@ -63,6 +63,13 @@ void LowerSwitch::processSwitchInst(SwitchInst *SI) {
   // Unlink the switch instruction from it's block.
   CurBlock->getInstList().remove(SI);
 
+  // If there is only the default destination, don't bother with the code below.
+  if (SI->getNumOperands() == 2) {
+    CurBlock->getInstList().push_back(new BranchInst(SI->getDefaultDest()));
+    delete SI;
+    return;
+  }
+
   // Expand comparisons for all of the non-default cases...
   for (unsigned i = 2, e = SI->getNumOperands(); i != e; i += 2) {
     // Insert a new basic block after the current one...
