@@ -1,9 +1,16 @@
-/*
- * Header file: resource.h
+/*===-- Config/sys/resource.h - Annotation classes --------------*- C++ -*-===//
+ * 
+ *                     The LLVM Compiler Infrastructure
  *
- * Description:
+ * This file was developed by the LLVM research group and is distributed under
+ * the University of Illinois Open Source License. See LICENSE.TXT for details.
+ * 
+ *===----------------------------------------------------------------------===//
+ *
  *	This header file is the autoconf replacement for sys/resource.h (if it
  *	lives on the system).
+ *
+ *===----------------------------------------------------------------------===//
  */
 
 #ifndef _CONFIG_SYS_RESOURCE_H

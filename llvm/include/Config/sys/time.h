@@ -1,9 +1,15 @@
-/*
- * Header file: time.h
+/*===-- Config/sys/time.h - Annotation classes ------------------*- C++ -*-===//
+ * 
+ *                     The LLVM Compiler Infrastructure
  *
- * Description:
+ * This file was developed by the LLVM research group and is distributed under
+ * the University of Illinois Open Source License. See LICENSE.TXT for details.
+ * 
+ *===----------------------------------------------------------------------===//
  *	This header file is the autoconf replacement for sys/time.h (if it
  *	lives on the system).
+ *
+ *===----------------------------------------------------------------------===//
  */
 
 #ifndef _CONFIG_SYS_TIME_H
