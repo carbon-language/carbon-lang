@@ -211,6 +211,7 @@ ExmplDir    := $(BUILD_OBJ_ROOT)/$(BuildMode)/examples
 LLVMLibDir  := $(LLVM_OBJ_ROOT)/$(BuildMode)/lib
 LLVMToolDir := $(LLVM_OBJ_ROOT)/$(BuildMode)/bin
 LExmplDir   := $(LLVM_OBJ_ROOT)/$(BuildMode)/examples
+CFERuntimeLibDir := $(LLVMGCCDIR)/lib
 
 #--------------------------------------------------------------------
 # Full Paths To Compiled Tools and Utilities
@@ -235,12 +236,6 @@ endif
 ifndef GCCLD
 GCCLD    := $(LLVMToolDir)/gccld$(EXEEXT)
 endif
-ifndef LLVMGCC
-LLVMGCC  := PATH=$(LLVMToolDir):$(PATH) $(LLVMGCCDIR)/bin/gcc
-endif
-ifndef LLVMGXX
-LLVMGXX  := PATH=$(LLVMToolDir):$(PATH) $(LLVMGCCDIR)/bin/g++
-endif
 ifndef LDIS
 LLVMDIS  := $(LLVMToolDir)/llvm-dis$(EXEEXT)
 endif
@@ -250,6 +245,8 @@ endif
 ifndef LOPT
 LOPT     := $(LLVMToolDir)/opt$(EXEEXT)
 endif
+LLVMGCCWITHPATH  := PATH=$(LLVMToolDir):$(PATH) $(LLVMGCC)
+LLVMGXXWITHPATH  := PATH=$(LLVMToolDir):$(PATH) $(LLVMGXX)
 
 #--------------------------------------------------------------------
 # Adjust to user's request
@@ -311,7 +308,8 @@ CPP.Flags += -I$(BUILD_OBJ_DIR) \
 
 Compile.C     = $(CC) $(CPP.Flags) $(CompileCommonOpts) -c $(C.Flags)
 LTCompile.C   = $(LIBTOOL) $(LibTool.Flags) --mode=compile $(Compile.C)
-BCCompile.C   = $(LLVMGCC) $(CPP.Flags) $(CompileCommonOpts) $(C.Flags) -c
+BCCompile.C   = $(LLVMGCCWITHPATH) $(CPP.Flags) $(CompileCommonOpts) \
+                $(C.Flags) -c
 Compile.CXX   = $(CXX) $(CPP.Flags) $(CompileCommonOpts) $(CXX.Flags) -c
 LTCompile.CXX = $(LIBTOOL) $(LibTool.Flags) --mode=compile $(Compile.CXX)
 BCCompile.CXX = $(LLVMGXX) $(CPP.Flags) $(CompileCommonOpts) $(CXX.Flags) -c
@@ -517,7 +515,7 @@ endif
 ifdef MODULE_NAME
 
 Module     := $(LibDir)/$(MODULE_NAME).bc
-LinkModule := $(LLVMGCC) -shared -nostdlib
+LinkModule := $(LLVMGCCWITHPATH) -shared -nostdlib
 
 ifdef EXPORTED_SYMBOL_FILE
 LinkMOdule += -Xlinker -internalize-public-api-file=$(EXPORTED_SYMBOL_FILE)
@@ -615,7 +613,7 @@ BCCompile.CXX += -Wa,-strip-debug
 all-local:: $(LibName.BCA)
 
 ifdef EXPORTED_SYMBOL_FILE
-BCLinkLib = $(LLVMGCC) -shared -nostdlib -Xlinker \
+BCLinkLib = $(LLVMGCCWITHPATH) -shared -nostdlib -Xlinker \
 	    -internalize-public-api-file=$(EXPORTED_SYMBOL_FILE)
 
 $(LibName.BCA): $(ObjectsBC) $(LibDir)/.dir $(GCCLD) \
