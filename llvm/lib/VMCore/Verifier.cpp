@@ -660,7 +660,7 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
             "Illegal # arguments for intrinsic function!", IF);
     Assert1(FT->getParamType(0)->isFirstClassType(),
             "First argument not a first class type!", IF);
-    Assert1(FT->getParamType(1)->getPrimitiveID() == Type::PointerTyID,
+    Assert1(isa<PointerType>(FT->getParamType(1)),
             "Second argument not a pointer!", IF);
     NumArgs = 2;
     break;
