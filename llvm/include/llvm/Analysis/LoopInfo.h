@@ -32,17 +32,17 @@ class LoopInfo;
 class Loop {
   Loop *ParentLoop;
   std::vector<Loop*> SubLoops;       // Loops contained entirely within this one
-  std::vector<BasicBlock *> Blocks;  // First entry is the header node
-  std::vector<BasicBlock *> ExitBlocks; // Reachable blocks outside the loop
+  std::vector<BasicBlock*> Blocks;   // First entry is the header node
+  std::vector<BasicBlock*> ExitBlocks; // Reachable blocks outside the loop
   unsigned LoopDepth;                // Nesting depth of this loop
 
   Loop(const Loop &);                  // DO NOT IMPLEMENT
   const Loop &operator=(const Loop &); // DO NOT IMPLEMENT
 public:
 
-  inline unsigned getLoopDepth() const { return LoopDepth; }
-  inline BasicBlock *getHeader() const { return Blocks.front(); }
-  inline Loop *getParentLoop() const { return ParentLoop; }
+  unsigned getLoopDepth() const { return LoopDepth; }
+  BasicBlock *getHeader() const { return Blocks.front(); }
+  Loop *getParentLoop() const { return ParentLoop; }
 
   /// contains - Return true of the specified basic block is in this loop
   bool contains(const BasicBlock *BB) const;
@@ -105,7 +105,7 @@ public:
   ///
   void changeExitBlock(BasicBlock *Old, BasicBlock *New);
 
-  void print(std::ostream &O) const;
+  void print(std::ostream &O, unsigned Depth = 0) const;
   void dump() const;
 private:
   friend class LoopInfo;
@@ -181,6 +181,8 @@ public:
 private:
   void Calculate(const DominatorSet &DS);
   Loop *ConsiderForLoop(BasicBlock *BB, const DominatorSet &DS);
+  void MoveSiblingLoopInto(Loop *NewChild, Loop *NewParent);
+  void InsertLoopInto(Loop *L, Loop *Parent);
 };
 
 

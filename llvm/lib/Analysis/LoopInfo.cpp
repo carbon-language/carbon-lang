@@ -47,8 +47,8 @@ unsigned Loop::getNumBackEdges() const {
   return NumBackEdges;
 }
 
-void Loop::print(std::ostream &OS) const {
-  OS << std::string(getLoopDepth()*2, ' ') << "Loop Containing: ";
+void Loop::print(std::ostream &OS, unsigned Depth) const {
+  OS << std::string(Depth*2, ' ') << "Loop Containing: ";
 
   for (unsigned i = 0; i < getBlocks().size(); ++i) {
     if (i) OS << ",";
@@ -65,7 +65,7 @@ void Loop::print(std::ostream &OS) const {
   OS << "\n";
 
   for (unsigned i = 0, e = getSubLoops().size(); i != e; ++i)
-    getSubLoops()[i]->print(OS);
+    getSubLoops()[i]->print(OS, Depth+2);
 }
 
 void Loop::dump() const {
@@ -186,7 +186,6 @@ Loop *LoopInfo::ConsiderForLoop(BasicBlock *BB, const DominatorSet &DS) {
       NewLoop->ParentLoop = L;
     }
 
-
   // Add the basic blocks that comprise this loop to the BBMap so that this
   // loop can be found for them.
   //
@@ -195,6 +194,46 @@ Loop *LoopInfo::ConsiderForLoop(BasicBlock *BB, const DominatorSet &DS) {
     std::map<BasicBlock*, Loop*>::iterator BBMI = BBMap.lower_bound(*I);
     if (BBMI == BBMap.end() || BBMI->first != *I)  // Not in map yet...
       BBMap.insert(BBMI, std::make_pair(*I, L));   // Must be at this level
+  }
+
+  // Now that we have a list of all of the child loops of this loop, check to
+  // see if any of them should actually be nested inside of each other.  We can
+  // accidentally pull loops our of their parents, so we must make sure to
+  // organize the loop nests correctly now.
+  {
+    std::map<BasicBlock*, Loop*> ContainingLoops;
+    for (unsigned i = 0; i != L->SubLoops.size(); ++i) {
+      Loop *Child = L->SubLoops[i];
+      assert(Child->getParentLoop() == L && "Not proper child loop?");
+
+      if (Loop *ContainingLoop = ContainingLoops[Child->getHeader()]) {
+        // If there is already a loop which contains this loop, move this loop
+        // into the containing loop.
+        MoveSiblingLoopInto(Child, ContainingLoop);
+        --i;  // The loop got removed from the SubLoops list.
+      } else {
+        // This is currently considered to be a top-level loop.  Check to see if
+        // any of the contained blocks are loop headers for subloops we have
+        // already processed.
+        for (unsigned b = 0, e = Child->Blocks.size(); b != e; ++b) {
+          Loop *&BlockLoop = ContainingLoops[Child->Blocks[b]];
+          if (BlockLoop == 0) {   // Child block not processed yet...
+            BlockLoop = Child;
+          } else if (BlockLoop != Child) {
+            // There is already a loop which contains this block, that means
+            // that we should reparent the loop which the block is currently
+            // considered to belong to to be a child of this loop.
+            MoveSiblingLoopInto(BlockLoop, Child);
+            
+            // Reparent all of the blocks which used to belong to BlockLoops
+            for (unsigned j = 0, e = BlockLoop->Blocks.size(); j != e; ++j)
+              ContainingLoops[BlockLoop->Blocks[j]] = Child;
+            
+            --i;  // We just shrunk the SubLoops list.
+          }
+        }
+      }      
+    }
   }
 
   // Now that we know all of the blocks that make up this loop, see if there are
@@ -207,6 +246,44 @@ Loop *LoopInfo::ConsiderForLoop(BasicBlock *BB, const DominatorSet &DS) {
 
   return L;
 }
+
+/// MoveSiblingLoopInto - This method moves the NewChild loop to live inside of
+/// the NewParent Loop, instead of being a sibling of it.
+void LoopInfo::MoveSiblingLoopInto(Loop *NewChild, Loop *NewParent) {
+  Loop *OldParent = NewChild->getParentLoop();
+  assert(OldParent && OldParent == NewParent->getParentLoop() &&
+         NewChild != NewParent && "Not sibling loops!");
+
+  // Remove NewChild from being a child of OldParent
+  std::vector<Loop*>::iterator I =
+    std::find(OldParent->SubLoops.begin(), OldParent->SubLoops.end(), NewChild);
+  assert(I != OldParent->SubLoops.end() && "Parent fields incorrect??");
+  OldParent->SubLoops.erase(I);   // Remove from parent's subloops list
+  NewChild->ParentLoop = 0;
+  
+  InsertLoopInto(NewChild, NewParent);  
+}
+
+/// InsertLoopInto - This inserts loop L into the specified parent loop.  If the
+/// parent loop contains a loop which should contain L, the loop gets inserted
+/// into L instead.
+void LoopInfo::InsertLoopInto(Loop *L, Loop *Parent) {
+  BasicBlock *LHeader = L->getHeader();
+  assert(Parent->contains(LHeader) && "This loop should not be inserted here!");
+  
+  // Check to see if it belongs in a child loop...
+  for (unsigned i = 0, e = Parent->SubLoops.size(); i != e; ++i)
+    if (Parent->SubLoops[i]->contains(LHeader)) {
+      InsertLoopInto(L, Parent->SubLoops[i]);
+      return;
+    }      
+
+  // If not, insert it here!
+  Parent->SubLoops.push_back(L);
+  L->ParentLoop = Parent;
+}
+
+
 
 /// getLoopPreheader - If there is a preheader for this loop, return it.  A
 /// loop has a preheader if there is only one edge to the header of the loop
