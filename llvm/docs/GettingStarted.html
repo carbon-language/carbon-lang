@@ -80,6 +80,7 @@
     <li>Edit <tt>Makefile.config</tt> to set local paths.  This includes
         setting the install location of the C frontend, and the various paths
         to the C and C++ compilers used to build LLVM itself.
+    <li>Set your LLVM_LIB_SEARCH_PATH environment variable.
     <li><tt>gmake -k |& tee gnumake.out
 	    &nbsp;&nbsp;&nbsp;# this is csh or tcsh syntax</tt>
     </ol>
@@ -144,6 +145,15 @@
 				 binaries and associated libraries.
     <p><li><i>PURIFY</i>       = Path to the purify program.
     </ul>
+
+    In addition to settings in this file, you must set a
+    <tt>LLVM_LIB_SEARCH_PATH</tt> environment variable in your startup scripts.
+    This environment variable is used to locate "system" libraries like
+    "<tt>-lc</tt>" and "<tt>-lm</tt>" when linking.  This variable should be set
+    to the absolute path for the bytecode-libs subdirectory of the C front-end
+    install.  For example,
+    <tt>/home/vadve/lattner/local/x86/llvm-gcc/bytecode-libs</tt> for the X86
+    version of the C front-end, on our research machines.<p>
 
     <!------------------------------------------------------------------------->
     <h3><a name="objfiles">The location for LLVM object files</a></h3>
@@ -462,7 +472,7 @@
 
 	    <!-- Created: Mon Jul  1 02:29:02 CDT 2002 -->
 	    <!-- hhmts start -->
-Last modified: Thu Feb 13 22:20:39 CST 2003
+Last modified: Sun May 11 16:49:46 CDT 2003
 <!-- hhmts end -->
   </body>
 </html>
