@@ -39,10 +39,10 @@
 
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/BasicBlock.h"
-#include "llvm/Constant.h"
+#include "llvm/Constants.h"
 #include "llvm/Instructions.h"
 #include "llvm/Type.h"
-#include "llvm/Analysis/ScalarEvolution.h"
+#include "llvm/Analysis/ScalarEvolutionExpressions.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Transforms/Utils/Local.h"
@@ -85,7 +85,7 @@ namespace {
     void EliminatePointerRecurrence(PHINode *PN, BasicBlock *Preheader,
                                     std::set<Instruction*> &DeadInsts);
     void LinearFunctionTestReplace(Loop *L, SCEV *IterationCount,
-                                   Value *IndVar, ScalarEvolutionRewriter &RW);
+                                   ScalarEvolutionRewriter &RW);
     void RewriteLoopExitValues(Loop *L);
 
     void DeleteTriviallyDeadInstructions(std::set<Instruction*> &Insts);
@@ -177,12 +177,11 @@ void IndVarSimplify::EliminatePointerRecurrence(PHINode *PN,
 }
 
 /// LinearFunctionTestReplace - This method rewrites the exit condition of the
-/// loop to be a canonical != comparison against the loop induction variable.
-/// This pass is able to rewrite the exit tests of any loop where the SCEV
-/// analysis can determine the trip count of the loop, which is actually a much
-/// broader range than just linear tests.
+/// loop to be a canonical != comparison against the incremented loop induction
+/// variable.  This pass is able to rewrite the exit tests of any loop where the
+/// SCEV analysis can determine a loop-invariant trip count of the loop, which
+/// is actually a much broader range than just linear tests.
 void IndVarSimplify::LinearFunctionTestReplace(Loop *L, SCEV *IterationCount,
-                                               Value *IndVar,
                                                ScalarEvolutionRewriter &RW) {
   // Find the exit block for the loop.  We can currently only handle loops with
   // a single exit.
@@ -210,9 +209,17 @@ void IndVarSimplify::LinearFunctionTestReplace(Loop *L, SCEV *IterationCount,
   if (Instruction *Cond = dyn_cast<Instruction>(BI->getCondition()))
     InstructionsToDelete.insert(Cond);
 
+  // The IterationCount expression contains the number of times that the
+  // backedge actually branches to the loop header.  This is one less than the
+  // number of times the loop executes, so add one to it.
+  Constant *OneC = ConstantInt::get(IterationCount->getType(), 1);
+  SCEVHandle TripCount=SCEVAddExpr::get(IterationCount, SCEVUnknown::get(OneC));
+
+  Value *IndVar = L->getCanonicalInductionVariableIncrement();
+
   // Expand the code for the iteration count into the preheader of the loop.
   BasicBlock *Preheader = L->getLoopPreheader();
-  Value *ExitCnt = RW.ExpandCodeFor(IterationCount, Preheader->getTerminator(),
+  Value *ExitCnt = RW.ExpandCodeFor(TripCount, Preheader->getTerminator(),
                                     IndVar->getType());
 
   // Insert a new setne or seteq instruction before the branch.
@@ -368,7 +375,7 @@ void IndVarSimplify::runOnLoop(Loop *L) {
   Changed = true;
 
   if (!isa<SCEVCouldNotCompute>(IterationCount))
-    LinearFunctionTestReplace(L, IterationCount, IndVar, Rewriter);
+    LinearFunctionTestReplace(L, IterationCount, Rewriter);
 
 #if 0
   // If there were induction variables of other sizes, cast the primary
