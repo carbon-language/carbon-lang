@@ -7,7 +7,7 @@ if test -d "$TOPDIR" ; then
   cd $TOPDIR
   find docs include lib tools utils projects -type f \
       \( -path '*/doxygen/*' -o -path '*/Burg/*' \) -prune -o \
-      -name '*.[cdhyl]*' \
+      -name '*.[cdhylt]*' \
       \! -name '*~' \
       \! -name '#*' \
       \! -name '*.ll' \
