@@ -83,7 +83,7 @@ private:
     int64_t immedVal;		// constant value for an explicit constant
   };
 
-  unsigned regNum;	        // register number for an explicit register
+  int regNum;	                // register number for an explicit register
                                 // will be set for a value after reg allocation
   bool isDef;                   // is this a defition for the value
   
@@ -107,7 +107,7 @@ public:
   }
   inline unsigned int	getMachineRegNum() const {
     assert(opType == MO_MachineRegister);
-    return regNum;
+    return (unsigned) regNum;
   }
   inline int64_t	getImmedValue	() const {
     assert(opType >= MO_SignExtendedImmed || opType <= MO_PCRelativeDisp);
@@ -148,7 +148,7 @@ public:
 
   // used to get the reg number if when one is allocted (must be
   // called only after reg alloc)
-  inline unsigned getAllocatedRegNum() const {
+  inline int  getAllocatedRegNum() const {
     assert(opType == MO_VirtualRegister || opType == MO_CCRegister || 
 	   opType == MO_MachineRegister);
     return regNum;
@@ -162,7 +162,7 @@ inline
 MachineOperand::MachineOperand()
   : opType(MO_VirtualRegister),
     immedVal(0),
-    regNum(0),
+    regNum(-1),
     isDef(false)
 {}
 
@@ -213,7 +213,7 @@ MachineOperand::InitializeReg(unsigned int _regNum)
 {
   opType = MO_MachineRegister;
   value = NULL;
-  regNum = _regNum;
+  regNum = (int) _regNum;
 }
 
 

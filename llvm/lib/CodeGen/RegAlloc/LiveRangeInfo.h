@@ -42,7 +42,7 @@
 
 
 typedef hash_map <const Value *,  LiveRange *, hashFuncValue> LiveRangeMapType;
-typedef vector <const Instruction *> CallRetInstrListType;
+typedef vector <const MachineInstr *> CallRetInstrListType;
 
 class LiveRangeInfo 
 {
@@ -65,6 +65,7 @@ private:
   void addInterference(const Instruction *const Inst, 
 		       const LiveVarSet *const LVSet);
   
+  void suggestRegs4CallRets();
 
 public:
   

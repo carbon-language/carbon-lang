@@ -39,12 +39,13 @@
 #include "llvm/CodeGen/LiveRangeInfo.h"
 #include "llvm/Analysis/LiveVar/MethodLiveVarInfo.h"
 
+#include <deque>
 
 class AddedInstrns
 {
  public:
-  vector<MachineInstr *> InstrnsBefore;
-  vector<MachineInstr *> InstrnsAfter;
+  deque<MachineInstr *> InstrnsBefore;
+  deque<MachineInstr *> InstrnsAfter;
 
   AddedInstrns() : InstrnsBefore(), InstrnsAfter() { }
 };
