@@ -204,19 +204,19 @@ def MOVrr32 : X86Inst<"mov", 0x89, MRMDestReg, Arg32>,         Pattern<(set R32,
 def MOVri8  : X86Inst<"mov", 0xB0, AddRegFrm , Arg8>,          Pattern<(set R8 , imm )>;
 def MOVri16 : X86Inst<"mov", 0xB8, AddRegFrm , Arg16>, OpSize, Pattern<(set R16, imm)>;
 def MOVri32 : X86Inst<"mov", 0xB8, AddRegFrm , Arg32>,         Pattern<(set R32, imm)>;
-def MOVmi8  : X86Inst<"mov", 0xC6, MRM0m     , Arg8>;             // [mem] = imm8
-def MOVmi16 : X86Inst<"mov", 0xC7, MRM0m     , Arg16>, OpSize;    // [mem] = imm16
-def MOVmi32 : X86Inst<"mov", 0xC7, MRM0m     , Arg32>;            // [mem] = imm32
+def MOVmi8  : X86Inst<"mov", 0xC6, MRM0m     , Arg8>;             // [mem8] = imm8
+def MOVmi16 : X86Inst<"mov", 0xC7, MRM0m     , Arg16>, OpSize;    // [mem16] = imm16
+def MOVmi32 : X86Inst<"mov", 0xC7, MRM0m     , Arg32>;            // [mem32] = imm32
 
-def MOVrm8  : X86Inst<"mov", 0x8A, MRMSrcMem , Arg8>;             // R8  = [mem]
-def MOVrm16 : X86Inst<"mov", 0x8B, MRMSrcMem , Arg16>, OpSize,    // R16 = [mem]
+def MOVrm8  : X86Inst<"mov", 0x8A, MRMSrcMem , Arg8>;             // R8  = [mem8]
+def MOVrm16 : X86Inst<"mov", 0x8B, MRMSrcMem , Arg16>, OpSize,    // R16 = [mem16]
               Pattern<(set R16, (load (plus R32, (plus (times imm, R32), imm))))>;
-def MOVrm32 : X86Inst<"mov", 0x8B, MRMSrcMem , Arg32>,            // R32 = [mem]
+def MOVrm32 : X86Inst<"mov", 0x8B, MRMSrcMem , Arg32>,            // R32 = [mem32]
               Pattern<(set R32, (load (plus R32, (plus (times imm, R32), imm))))>;
 
-def MOVmr8  : X86Inst<"mov", 0x88, MRMDestMem, Arg8>;             // [mem] = R8
-def MOVmr16 : X86Inst<"mov", 0x89, MRMDestMem, Arg16>, OpSize;    // [mem] = R16
-def MOVmr32 : X86Inst<"mov", 0x89, MRMDestMem, Arg32>;            // [mem] = R32
+def MOVmr8  : X86Inst<"mov", 0x88, MRMDestMem, Arg8>;             // [mem8] = R8
+def MOVmr16 : X86Inst<"mov", 0x89, MRMDestMem, Arg16>, OpSize;    // [mem16] = R16
+def MOVmr32 : X86Inst<"mov", 0x89, MRMDestMem, Arg32>;            // [mem32] = R32
 
 //===----------------------------------------------------------------------===//
 //  Fixed-Register Multiplication and Division Instructions...
