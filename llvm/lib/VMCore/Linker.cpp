@@ -457,15 +457,26 @@ static bool LinkGlobals(Module *Dest, const Module *Src,
       // external globals, we aren't adding anything.
       ValueMap.insert(std::make_pair(SGV, DGV));
 
+      // Inherit 'const' information.
+      if (SGV->isConstant()) DGV->setConstant(true);
+
     } else if (DGV->isExternal()) {   // If DGV is external but SGV is not...
       ValueMap.insert(std::make_pair(SGV, DGV));
       DGV->setLinkage(SGV->getLinkage());    // Inherit linkage!
+
+      if (DGV->isConstant() && !SGV->isConstant())
+        return Error(Err, "Linking globals named '" + SGV->getName() +
+                     "': declaration is const but definition is not!");
+
+      // Inherit 'const' information.
+      if (SGV->isConstant()) DGV->setConstant(true);
+
     } else if (SGV->hasWeakLinkage() || SGV->hasLinkOnceLinkage()) {
       // At this point we know that DGV has LinkOnce, Appending, Weak, or
       // External linkage.  If DGV is Appending, this is an error.
       if (DGV->hasAppendingLinkage())
         return Error(Err, "Linking globals named '" + SGV->getName() +
-                     " ' with 'weak' and 'appending' linkage is not allowed!");
+                     "' with 'weak' and 'appending' linkage is not allowed!");
 
       if (SGV->isConstant() != DGV->isConstant())
         return Error(Err, "Global Variable Collision on '" + 
@@ -498,6 +509,9 @@ static bool LinkGlobals(Module *Dest, const Module *Src,
     } else if (SGV->getLinkage() != DGV->getLinkage()) {
       return Error(Err, "Global variables named '" + SGV->getName() +
                    "' have different linkage specifiers!");
+      // Inherit 'const' information.
+      if (SGV->isConstant()) DGV->setConstant(true);
+
     } else if (SGV->hasExternalLinkage()) {
       // Allow linking two exactly identical external global variables...
       if (SGV->isConstant() != DGV->isConstant())
