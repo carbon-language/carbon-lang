@@ -164,20 +164,16 @@ unsigned Function::getIntrinsicID() const {
     return 0;  // All intrinsics start with 'llvm.'
   
   switch (getName()[5]) {
+  case 'l':
+    if (getName() == "llvm.longjmp")  return LLVMIntrinsic::longjmp;
+    break;
+  case 's':
+    if (getName() == "llvm.setjmp")   return LLVMIntrinsic::setjmp;
+    break;
   case 'v':
-    if (getName().size() >= 9) {
-      switch (getName()[8]) {
-      case 's':
-        if (getName() == "llvm.va_start") return LLVMIntrinsic::va_start;
-        break;
-      case 'e':
-        if (getName() == "llvm.va_end") return LLVMIntrinsic::va_end;
-        break;
-      case 'c':
-        if (getName() == "llvm.va_copy") return LLVMIntrinsic::va_copy;
-        break;
-      }
-    }
+    if (getName() == "llvm.va_copy")  return LLVMIntrinsic::va_copy;
+    if (getName() == "llvm.va_end")   return LLVMIntrinsic::va_end;
+    if (getName() == "llvm.va_start") return LLVMIntrinsic::va_start;
     break;
   }
   // The "llvm." namespace is reserved!

@@ -517,8 +517,10 @@ void Verifier::visitIntrinsicFunctionCall(LLVMIntrinsic::ID ID, CallInst &CI) {
             " args!", &CI);
     NumArgs = 1;
     break;
-  case LLVMIntrinsic::va_end: NumArgs = 1; break;
+  case LLVMIntrinsic::va_end:  NumArgs = 1; break;
   case LLVMIntrinsic::va_copy: NumArgs = 2; break;
+  case LLVMIntrinsic::setjmp:  NumArgs = 1; break;
+  case LLVMIntrinsic::longjmp: NumArgs = 2; break;
   case LLVMIntrinsic::not_intrinsic: 
     assert(0 && "Invalid intrinsic!"); NumArgs = 0; break;
   }

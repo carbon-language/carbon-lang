@@ -543,6 +543,7 @@ void CWriter::printModule(Module *M) {
   Out << "/* Provide Declarations */\n";
   generateAllocaDecl(Out);
   Out << "#include <stdarg.h>\n";
+  Out << "#include <setjmp.h>\n";
   
   // Provide a definition for null if one does not already exist,
   // and for `bool' if not compiling with a C++ compiler.
@@ -1022,7 +1023,6 @@ void CWriter::visitCallInst(CallInst &I) {
         writeOperand(&I.getParent()->getParent()->aback());
         Out << ")";
         return;
-
       case LLVMIntrinsic::va_end:
         Out << "va_end((va_list)*";
         writeOperand(I.getOperand(1));
@@ -1032,6 +1032,19 @@ void CWriter::visitCallInst(CallInst &I) {
         Out << "va_copy((va_list)*";
         writeOperand(I.getOperand(1));
         Out << ", (va_list)";
+        writeOperand(I.getOperand(2));
+        Out << ")";
+        return;
+        
+      case LLVMIntrinsic::setjmp:
+        Out << "setjmp((jmp_buf)";
+        writeOperand(I.getOperand(1));
+        Out << ")";
+        return;
+      case LLVMIntrinsic::longjmp:
+        Out << "longjmp((jmp_buf)";
+        writeOperand(I.getOperand(1));
+        Out << ", ";
         writeOperand(I.getOperand(2));
         Out << ")";
         return;
