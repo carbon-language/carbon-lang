@@ -1,4 +1,4 @@
 LEVEL = ../..
-DIRS  = PreOpts InstrSelection InstrSched RegAlloc PostOpts Mapping
+PARALLEL_DIRS  = PreOpts InstrSelection InstrSched RegAlloc PostOpts Mapping
 
 include $(LEVEL)/Makefile.common

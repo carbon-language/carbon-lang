@@ -1,5 +1,5 @@
 LEVEL = ../..
-DIRS = Utils Instrumentation Scalar IPO
+PARALLEL_DIRS = Utils Instrumentation Scalar IPO
 LIBRARYNAME = transforms
 BUILD_ARCHIVE = 1
 
