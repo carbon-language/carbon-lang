@@ -68,14 +68,16 @@ bool LiveInterval::overlapsFrom(const LiveInterval& other,
   const_iterator je = other.end();
 
   assert((StartPos->start <= i->start || StartPos == other.begin()) &&
-         "Bogus start position hint!");
+         StartPos != other.end() && "Bogus start position hint!");
 
   if (i->start < j->start) {
     i = std::upper_bound(i, ie, j->start);
     if (i != ranges.begin()) --i;
   } else if (j->start < i->start) {
-    j = std::upper_bound(j, je, i->start);
-    if (j != other.ranges.begin()) --j;
+    if ((++StartPos)->start <= i->start) {
+      j = std::upper_bound(j, je, i->start);
+      if (j != other.ranges.begin()) --j;
+    }
   } else {
     return true;
   }
