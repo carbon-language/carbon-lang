@@ -223,6 +223,7 @@ public:
   bool		isDummyPhiInstr		(MachineOpCode opCode) const {
     return getDescriptor(opCode).iclass & M_DUMMY_PHI_FLAG;
   }
+
   
   // 
   // Check if an instruction can be issued before its operands are ready,
@@ -628,6 +629,103 @@ protected:
 };
 
 
+
+//-----------------------------------------------------------------------------
+// class MachineRegClassInfo
+// 
+// Purpose:
+//   Interface to description of machine register class (e.g., int reg class
+//   float reg class etc)
+// 
+//--------------------------------------------------------------------------
+
+class IGNode;
+
+
+class MachineRegClassInfo {
+
+protected:
+  
+  const unsigned RegClassID;        // integer ID of a reg class
+  const unsigned NumOfAvailRegs;    // # of avail for coloring -without SP etc.
+  const unsigned NumOfAllRegs;      // # of all registers -including SP,g0 etc.
+
+public:
+  
+  inline unsigned getRegClassID() const { return RegClassID; }
+  inline unsigned getNumOfAvailRegs() const { return NumOfAvailRegs; }
+  inline unsigned getNumOfAllRegs() const { return NumOfAllRegs; }
+
+
+
+  // This method should find a color which is not used by neighbors
+  // (i.e., a false position in IsColorUsedArr) and 
+  virtual void colorIGNode(IGNode * Node, bool IsColorUsedArr[] ) const = 0;
+
+
+  MachineRegClassInfo(const unsigned ID, const unsigned NVR, 
+		      const unsigned NAR): RegClassID(ID), NumOfAvailRegs(NVR),
+                                           NumOfAllRegs(NAR)
+  { }                         // empty constructor
+
+};
+
+
+
+
+//---------------------------------------------------------------------------
+// class MachineRegInfo
+// 
+// Purpose:
+//   Interface to register info of target machine
+// 
+//--------------------------------------------------------------------------
+
+class Value;
+class LiveRangeInfo;
+class Method;
+class Instruction;
+
+// A vector of all machine register classes
+typedef vector<const MachineRegClassInfo *> MachineRegClassArrayType;
+
+
+class MachineRegInfo : public NonCopyableV {
+
+protected:
+
+  MachineRegClassArrayType MachineRegClassArr;    
+
+  
+public:
+
+
+  inline unsigned int getNumOfRegClasses() const { 
+    return MachineRegClassArr.size(); 
+  }  
+
+  const MachineRegClassInfo *const getMachineRegClass(unsigned i) const { 
+    return MachineRegClassArr[i]; 
+  }
+
+
+  virtual unsigned getRegClassIDOfValue (const Value *const Val) const = 0;
+
+  virtual void colorArgs(const Method *const Meth, 
+			 LiveRangeInfo & LRI) const = 0;
+
+  virtual void colorCallArgs(vector<const Instruction *> & CallInstrList, 
+		     LiveRangeInfo& LRI ) const = 0 ;
+
+
+  MachineRegInfo() { }
+
+};
+
+
+
+
+
 //---------------------------------------------------------------------------
 // class TargetMachine
 // 
@@ -653,10 +751,10 @@ public:
 			 unsigned char DoubleAl = 8, unsigned char FloatAl = 4,
 			 unsigned char LongAl = 8, unsigned char IntAl = 4,
 			 unsigned char ShortAl = 2, unsigned char ByteAl = 1)
-    : TargetName(targetname), DataLayout(targetname, PtrSize, PtrAl,
-					 DoubleAl, FloatAl, LongAl, IntAl,
-					 ShortAl, ByteAl)
-				    {}
+                         : TargetName(targetname), 
+                           DataLayout(targetname, PtrSize, PtrAl,
+				      DoubleAl, FloatAl, LongAl, IntAl, 
+				      ShortAl, ByteAl) { }
   
   /*dtor*/ virtual ~TargetMachine() {}
   
@@ -672,11 +770,15 @@ public:
     return (regNum1 == regNum2);
   }
   
+  const MachineRegInfo& getRegInfo() const { return *machineRegInfo; }
+
 protected:
   // Description of machine instructions
   // Protect so that subclass can control alloc/dealloc
   MachineInstrInfo* machineInstrInfo;
   MachineSchedInfo* machineSchedInfo;
+  const MachineRegInfo* machineRegInfo;
+
 };
 
 //**************************************************************************/

@@ -14,6 +14,7 @@
 
 #include <sys/types.h>
 #include "llvm/CodeGen/TargetMachine.h"
+#include "llvm/Type.h"
 
 // OpCodeMask definitions for the Sparc V9
 // 
@@ -831,7 +832,9 @@ const MachineInstrDescriptor SparcMachineInstrDesc[] = {
   
   // Synthetic phi operation for near-SSA form of machine code
   // Number of operands is variable, indicated by -1.  Result is the first op.
+
   { "PHI",	-1,  0,  0,  false, 0, 0, SPARC_INV,  M_DUMMY_PHI_FLAG },
+
 };
 
 
@@ -860,7 +863,85 @@ public:
     // 2 other groups, including NOPs if necessary).
     return (opCode == FCMPS || opCode == FCMPD || opCode == FCMPQ);
   }
+
 };
+
+//---------------------------------------------------------------------------
+// class UltraSparcInstrInfo 
+// 
+// Purpose:
+//   This class provides info about sparc register classes.
+//---------------------------------------------------------------------------
+
+#include "llvm/CodeGen/SparcRegInfo.h"
+
+class LiveRange;
+class UltraSparc;
+
+
+class UltraSparcRegInfo : public MachineRegInfo
+{
+
+ private:
+  enum RegClassIDs { IntRegClassID, FloatRegClassID, FloatCCREgClassID };
+
+  // reverse pointer to get info about the ultra sparc machine
+  const UltraSparc *const UltraSparcInfo;
+
+  // Int arguments can be passed in 6 int regs - %o0 to %o5 (cannot be changed)
+  unsigned const NumOfIntArgRegs;
+
+  // Float arguments can be passed in this many regs - can be canged if needed
+  // %f0 - %f5 are used (can hold 6 floats or 3 doubles)
+  unsigned const NumOfFloatArgRegs;
+
+  void setCallArgColor(LiveRange *const LR, const unsigned RegNo) const;
+
+
+ public:
+
+  UltraSparcRegInfo(const UltraSparc *USI ) : UltraSparcInfo(USI), 
+					      NumOfIntArgRegs(6), 
+					      NumOfFloatArgRegs(6) 
+  {    
+
+    MachineRegClassArr.push_back( new SparcIntRegClass(IntRegClassID) );
+    MachineRegClassArr.push_back( new SparcFloatRegClass(FloatRegClassID) );
+
+    assert( SparcFloatRegOrder::StartOfNonVolatileRegs == 6 && 
+	    "6 Float regs are used for float arg passing");
+
+  }
+
+  inline const UltraSparc & getUltraSparcInfo() const { 
+    return *UltraSparcInfo;
+  }
+
+  inline unsigned getRegClassIDOfValue (const Value *const Val) const {
+    Type::PrimitiveID ty = (Val->getType())->getPrimitiveID();
+    
+    if( ty && ty <= Type::LongTyID || (ty == Type::PointerTyID) )  
+      return IntRegClassID;             // sparc int reg (ty=0: void)
+    else if( ty <= Type::DoubleTyID)
+      return FloatRegClassID;           // sparc float reg class
+    else { 
+      cout << "TypeID: " << ty << endl;
+      assert(0 && "Cannot resolve register class for type");
+
+    }
+  }
+ 
+  void colorArgs(const Method *const Meth, LiveRangeInfo& LRI) const;
+
+  static void printReg(const LiveRange *const LR);
+
+  void colorCallArgs(vector<const Instruction *> & CallInstrList, 
+		     LiveRangeInfo& LRI ) const;
+
+};
+
+
+
 
 
 //---------------------------------------------------------------------------
@@ -878,6 +959,9 @@ public:
   /*ctor*/		UltraSparc	();
   /*dtor*/ virtual	~UltraSparc	();
 };
+
+
+
 
 
 /*---------------------------------------------------------------------------
