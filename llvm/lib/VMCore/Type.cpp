@@ -343,35 +343,42 @@ FunctionType::FunctionType(const Type *Result,
                            bool IsVarArgs) : DerivedType(FunctionTyID), 
     ResultType(PATypeHandle(Result, this)),
     isVarArgs(IsVarArgs) {
+  bool isAbstract = Result->isAbstract();
   ParamTys.reserve(Params.size());
-  for (unsigned i = 0; i < Params.size(); ++i)
+  for (unsigned i = 0; i < Params.size(); ++i) {
     ParamTys.push_back(PATypeHandle(Params[i], this));
+    isAbstract |= Params[i]->isAbstract();
+  }
 
-  setAbstract(true);
-  setDerivedTypeProperties();
+  // Calculate whether or not this type is abstract
+  setAbstract(isAbstract);
 }
 
 StructType::StructType(const std::vector<const Type*> &Types)
   : CompositeType(StructTyID) {
   ETypes.reserve(Types.size());
+  bool isAbstract = false;
   for (unsigned i = 0; i < Types.size(); ++i) {
     assert(Types[i] != Type::VoidTy && "Void type in method prototype!!");
     ETypes.push_back(PATypeHandle(Types[i], this));
+    isAbstract |= Types[i]->isAbstract();
   }
-  setAbstract(true);
-  setDerivedTypeProperties();
+
+  // Calculate whether or not this type is abstract
+  setAbstract(isAbstract);
 }
 
 ArrayType::ArrayType(const Type *ElType, unsigned NumEl)
   : SequentialType(ArrayTyID, ElType) {
   NumElements = NumEl;
-  setAbstract(true);
-  setDerivedTypeProperties();
+
+  // Calculate whether or not this type is abstract
+  setAbstract(ElType->isAbstract());
 }
 
 PointerType::PointerType(const Type *E) : SequentialType(PointerTyID, E) {
-  setAbstract(true);
-  setDerivedTypeProperties();
+  // Calculate whether or not this type is abstract
+  setAbstract(E->isAbstract());
 }
 
 OpaqueType::OpaqueType() : DerivedType(OpaqueTyID) {
