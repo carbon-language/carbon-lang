@@ -295,6 +295,9 @@ static Value *getVal(const Type *Ty, const ValID &D,
   vector<ValueList> *LateResolver =  (CurMeth.CurrentMethod) ? 
     &CurMeth.LateResolveValues : &CurModule.LateResolveValues;
 
+  if (isa<MethodType>(Ty))
+    ThrowException("Methods are not values and must be referenced as pointers");
+
   if (const PointerType *PTy = dyn_cast<PointerType>(Ty))
     if (const MethodType *MTy = dyn_cast<MethodType>(PTy->getValueType()))
       Ty = MTy;       // Convert pointer to method to method type
