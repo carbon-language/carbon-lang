@@ -143,6 +143,9 @@ UltraSparc::UltraSparc()
 //
 bool UltraSparc::addPassesToEmitAssembly(PassManager &PM, std::ostream &Out)
 {
+  // FIXME: implement the switch instruction in the instruction selector.
+  PM.add(createLowerSwitchPass());
+
   // Construct and initialize the MachineFunction object for this fn.
   PM.add(createMachineCodeConstructionPass(*this));
 

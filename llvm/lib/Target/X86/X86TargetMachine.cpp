@@ -6,10 +6,11 @@
 
 #include "X86TargetMachine.h"
 #include "X86.h"
+#include "llvm/PassManager.h"
 #include "llvm/Target/TargetMachineImpls.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/Passes.h"
-#include "llvm/PassManager.h"
+#include "llvm/Transforms/Scalar.h"
 #include "Support/CommandLine.h"
 #include "Support/Statistic.h"
 #include <iostream>
@@ -45,6 +46,9 @@ X86TargetMachine::X86TargetMachine(unsigned Config)
 /// not supported for this target.
 ///
 bool X86TargetMachine::addPassesToJITCompile(PassManager &PM) {
+  // FIXME: Implement the switch instruction in the instruction selector!
+  PM.add(createLowerSwitchPass());
+
   PM.add(createSimpleX86InstructionSelector(*this));
 
   // TODO: optional optimizations go here
