@@ -24,7 +24,7 @@ fi
 dnl see if one is installed
 if test x"${ac_cv_path_tclsh}" = x ; then
   AC_MSG_RESULT(none)
-  AC_PATH_PROGS([TCLSH],[tclsh tclsh8.4 tclsh8.4.8 tclsh8.4.7 tclsh8.4.6 tclsh8.4.5 tclsh8.4.4 tclsh8.4.3 tclsh8.4.2 tclsh8.4.1 tclsh8.4.0 tclsh8.3 tclsh8.3.5 tclsh8.3.4 tclsh8.3.3 .tclsh8.3.2 tclsh8.3.1 tclsh8.3.0])
+  AC_PATH_PROGS([TCLSH],[tclsh8.4 tclsh8.4.8 tclsh8.4.7 tclsh8.4.6 tclsh8.4.5 tclsh8.4.4 tclsh8.4.3 tclsh8.4.2 tclsh8.4.1 tclsh8.4.0 tclsh8.3 tclsh8.3.5 tclsh8.3.4 tclsh8.3.3 .tclsh8.3.2 tclsh8.3.1 tclsh8.3.0 tclsh])
   if test x"${TCLSH}" = x ; then
     ac_cv_path_tclsh='';
   else
