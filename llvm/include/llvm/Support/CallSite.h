@@ -10,6 +10,12 @@
 // This file defines the CallSite class, which is a handy wrapper for code that
 // wants to treat Call and Invoke instructions in a generic way.
 //
+// NOTE: This class is supposed to have "value semantics". So it should be
+// passed by value, not by reference; it should not be "new"ed or "delete"d. It
+// is efficiently copyable, assignable and constructable, with cost equivalent
+// to copying a pointer. (You will notice that it has only a single data
+// member.)
+//
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_SUPPORT_CALLSITE_H
