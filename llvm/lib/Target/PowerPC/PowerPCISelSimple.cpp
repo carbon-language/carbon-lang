@@ -72,6 +72,7 @@ namespace {
   struct ISel : public FunctionPass, InstVisitor<ISel> {
     TargetMachine &TM;
     MachineFunction *F;                 // The function we are compiling into
+    Module *M;                          // Current module
     MachineBasicBlock *BB;              // The current MBB we are compiling
     int VarArgsFrameIndex;              // FrameIndex for start of varargs area
     int ReturnAddressIndex;             // FrameIndex for the return address
@@ -87,10 +88,12 @@ namespace {
 
     ISel(TargetMachine &tm) : TM(tm), F(0), BB(0) {}
 
-		bool doInitialization(Module &M) {
+		bool doInitialization(Module &Mod) {
+      M = &Mod;
+      // Add external functions that we may call
 			Type *d = Type::DoubleTy;
 			// double fmod(double, double);
-			// M.getOrInsertFunction("fmod", d, d, d, 0);
+			Mod.getOrInsertFunction("fmod", d, d, d, 0);
 			// { "__moddi3", "__divdi3", "__umoddi3", "__udivdi3" };
 			return false;
 		}
@@ -1946,8 +1949,10 @@ void ISel::emitDivRemOperation(MachineBasicBlock *BB,
     } else {               // Floating point remainder...
       unsigned Op0Reg = getReg(Op0, BB, IP);
       unsigned Op1Reg = getReg(Op1, BB, IP);
+      Function *FmodFn = M->getNamedFunction("fmod");
+      assert(FmodFn && "fmod() does not exist in the module");
       MachineInstr *TheCall =
-        BuildMI(PPC32::CALLpcrel, 1).addExternalSymbol("fmod", true);
+        BuildMI(PPC32::CALLpcrel, 1).addGlobalAddress(FmodFn, true);
       std::vector<ValueRecord> Args;
       Args.push_back(ValueRecord(Op0Reg, Type::DoubleTy));
       Args.push_back(ValueRecord(Op1Reg, Type::DoubleTy));
