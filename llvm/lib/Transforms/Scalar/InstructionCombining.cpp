@@ -116,12 +116,13 @@ namespace {
     // InsertNewInstBefore - insert an instruction New before instruction Old
     // in the program.  Add the new instruction to the worklist.
     //
-    void InsertNewInstBefore(Instruction *New, Instruction &Old) {
+    Value *InsertNewInstBefore(Instruction *New, Instruction &Old) {
       assert(New && New->getParent() == 0 &&
              "New instruction already inserted into a basic block!");
       BasicBlock *BB = Old.getParent();
       BB->getInstList().insert(&Old, New);  // Insert inst
       WorkList.push_back(New);              // Add to worklist
+      return New;
     }
 
   public:
@@ -171,6 +172,31 @@ static unsigned getComplexity(Value *V) {
 // it.
 static bool isOnlyUse(Value *V) {
   return V->hasOneUse() || isa<Constant>(V);
+}
+
+// getSignedIntegralType - Given an unsigned integral type, return the signed
+// version of it that has the same size.
+static const Type *getSignedIntegralType(const Type *Ty) {
+  switch (Ty->getPrimitiveID()) {
+  default: assert(0 && "Invalid unsigned integer type!"); abort();
+  case Type::UByteTyID:  return Type::SByteTy;
+  case Type::UShortTyID: return Type::ShortTy;
+  case Type::UIntTyID:   return Type::IntTy;
+  case Type::ULongTyID:  return Type::LongTy;
+  }
+}
+
+// getPromotedType - Return the specified type promoted as it would be to pass
+// though a va_arg area...
+static const Type *getPromotedType(const Type *Ty) {
+  switch (Ty->getPrimitiveID()) {
+  case Type::SByteTyID:
+  case Type::ShortTyID:  return Type::IntTy;
+  case Type::UByteTyID:
+  case Type::UShortTyID: return Type::UIntTy;
+  case Type::FloatTyID:  return Type::DoubleTy;
+  default:               return Ty;
+  }
 }
 
 // SimplifyCommutative - This performs a few simplifications for commutative
@@ -557,6 +583,26 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
   return 0;
 }
 
+/// isSignBitCheck - Given an exploded setcc instruction, return true if it is
+/// really just returns true if the most significant (sign) bit is set.
+static bool isSignBitCheck(unsigned Opcode, Value *LHS, ConstantInt *RHS) {
+  if (RHS->getType()->isSigned()) {
+    // True if source is LHS < 0 or LHS <= -1
+    return Opcode == Instruction::SetLT && RHS->isNullValue() ||
+           Opcode == Instruction::SetLE && RHS->isAllOnesValue();
+  } else {
+    ConstantUInt *RHSC = cast<ConstantUInt>(RHS);
+    // True if source is LHS > 127 or LHS >= 128, where the constants depend on
+    // the size of the integer type.
+    if (Opcode == Instruction::SetGE)
+      return RHSC->getValue() == 1ULL<<(RHS->getType()->getPrimitiveSize()*8-1);
+    if (Opcode == Instruction::SetGT)
+      return RHSC->getValue() ==
+        (1ULL << (RHS->getType()->getPrimitiveSize()*8-1))-1;
+  }
+  return false;
+}
+
 Instruction *InstCombiner::visitMul(BinaryOperator &I) {
   bool Changed = SimplifyCommutative(I);
   Value *Op0 = I.getOperand(0);
@@ -616,23 +662,28 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
       Value *SCIOp0 = SCI->getOperand(0), *SCIOp1 = SCI->getOperand(1);
       const Type *SCOpTy = SCIOp0->getType();
 
-      // If the source is X < 0 or X <= -1, and X is a signed integer type,
-      // convert this multiply into a shift/and combination.
-      if (SCOpTy->isSigned() && isa<ConstantInt>(SCIOp1) &&
-          ((SCI->getOpcode() == Instruction::SetLT &&
-            cast<Constant>(SCIOp1)->isNullValue()) ||
-           (SCI->getOpcode() == Instruction::SetLE &&
-            cast<ConstantInt>(SCIOp1)->isAllOnesValue()))) {
+      // If the setcc is true iff the sign bit of X is set, then convert this
+      // multiply into a shift/and combination.
+      if (isa<ConstantInt>(SCIOp1) &&
+          isSignBitCheck(SCI->getOpcode(), SCIOp0, cast<ConstantInt>(SCIOp1))) {
         // Shift the X value right to turn it into "all signbits".
         Constant *Amt = ConstantUInt::get(Type::UByteTy,
                                           SCOpTy->getPrimitiveSize()*8-1);
-        Value *V = new ShiftInst(Instruction::Shr, SCIOp0, Amt,
-                                 BoolCast->getName()+".mask", &I);
+        if (SCIOp0->getType()->isUnsigned()) {
+          const Type *NewTy = getSignedIntegralType(SCIOp0->getType());
+          SCIOp0 = InsertNewInstBefore(new CastInst(SCIOp0, NewTy,
+                                                    SCIOp0->getName()), I);
+        }
+
+        Value *V =
+          InsertNewInstBefore(new ShiftInst(Instruction::Shr, SCIOp0, Amt,
+                                            BoolCast->getOperand(0)->getName()+
+                                            ".mask"), I);
 
         // If the multiply type is not the same as the source type, sign extend
         // or truncate to the multiply type.
         if (I.getType() != V->getType())
-          V = new CastInst(V, I.getType(), V->getName(), &I);
+          V = InsertNewInstBefore(new CastInst(V, I.getType(), V->getName()),I);
         
         Value *OtherOp = Op0 == BoolCast ? I.getOperand(1) : Op0;
         return BinaryOperator::create(Instruction::And, V, OtherOp);
@@ -1314,14 +1365,7 @@ Instruction *InstCombiner::visitSetCondInst(BinaryOperator &I) {
               Value *X = BO->getOperand(0);
               // If 'X' is not signed, insert a cast now...
               if (!BOC->getType()->isSigned()) {
-                const Type *DestTy;
-                switch (BOC->getType()->getPrimitiveID()) {
-                case Type::UByteTyID:  DestTy = Type::SByteTy; break;
-                case Type::UShortTyID: DestTy = Type::ShortTy; break;
-                case Type::UIntTyID:   DestTy = Type::IntTy;   break;
-                case Type::ULongTyID:  DestTy = Type::LongTy;  break;
-                default: assert(0 && "Invalid unsigned integer type!"); abort();
-                }
+                const Type *DestTy = getSignedIntegralType(BOC->getType());
                 CastInst *NewCI = new CastInst(X,DestTy,X->getName()+".signed");
                 InsertNewInstBefore(NewCI, I);
                 X = NewCI;
@@ -1827,19 +1871,6 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
 //
 Instruction *InstCombiner::visitInvokeInst(InvokeInst &II) {
   return visitCallSite(&II);
-}
-
-// getPromotedType - Return the specified type promoted as it would be to pass
-// though a va_arg area...
-static const Type *getPromotedType(const Type *Ty) {
-  switch (Ty->getPrimitiveID()) {
-  case Type::SByteTyID:
-  case Type::ShortTyID:  return Type::IntTy;
-  case Type::UByteTyID:
-  case Type::UShortTyID: return Type::UIntTy;
-  case Type::FloatTyID:  return Type::DoubleTy;
-  default:               return Ty;
-  }
 }
 
 // visitCallSite - Improvements for call and invoke instructions.
