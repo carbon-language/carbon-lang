@@ -57,7 +57,6 @@ PowerPCTargetMachine::PowerPCTargetMachine(const std::string &name,
 {}
 
 unsigned PPC32TargetMachine::getJITMatchQuality() {
-  return 0;
 #if defined(__POWERPC__) || defined (__ppc__) || defined(_POWER)
   return 10;
 #else
