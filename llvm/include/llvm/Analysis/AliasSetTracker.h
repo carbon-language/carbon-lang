@@ -77,6 +77,10 @@ class AliasSet {
     void removeFromList() {
       if (NextInList) NextInList->second.PrevInList = PrevInList;
       *PrevInList = NextInList;
+      if (AS->PtrListEnd == &NextInList) {
+        AS->PtrListEnd = PrevInList;
+        assert(*AS->PtrListEnd == 0 && "List not terminated right!");
+      }
     }
   };
 
