@@ -45,8 +45,6 @@
 # WEBDIR is the directory into which the test results web page will be written,
 #  AND in which the "index.html" is assumed to be a symlink to the most recent
 #  copy of the results. This directory will be created if it does not exist.
-# LLVMGCCDIR is the directory in which the LLVM GCC Front End is installed
-#  to. This is the same as you would have for a normal LLVM build.
 #
 use POSIX qw(strftime);
 use File::Copy;
@@ -282,9 +280,6 @@ while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
   print "Unknown option: $_ : ignoring!\n";
 }
 
-if ($ENV{'LLVMGCCDIR'}) {
-  $CONFIGUREARGS .= " --with-llvmgccdir=" . $ENV{'LLVMGCCDIR'};
-}
 if ($CONFIGUREARGS !~ /--disable-jit/) {
   $CONFIGUREARGS .= " --enable-jit";
 }
