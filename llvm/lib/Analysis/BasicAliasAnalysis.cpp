@@ -297,7 +297,7 @@ BasicAliasAnalysis::alias(const Value *V1, unsigned V1Size,
         // undefined to load or store bytes before or after an object).
         const Type *ElTy = cast<PointerType>(O1->getType())->getElementType();
         unsigned GlobalSize = getTargetData().getTypeSize(ElTy);
-        if (GlobalSize < V2Size)
+        if (GlobalSize < V2Size && V2Size != ~0U)
           return NoAlias;
       }
   }
@@ -313,7 +313,7 @@ BasicAliasAnalysis::alias(const Value *V1, unsigned V1Size,
         // undefined to load or store bytes before or after an object).
         const Type *ElTy = cast<PointerType>(O2->getType())->getElementType();
         unsigned GlobalSize = getTargetData().getTypeSize(ElTy);
-        if (GlobalSize < V1Size)
+        if (GlobalSize < V1Size && V1Size != ~0U)
           return NoAlias;
       }
   }
@@ -496,7 +496,7 @@ CheckGEPInstructions(const Type* BasePtr1Ty, std::vector<Value*> &GEP1Ops,
   //        A[i][0] != A[j][1] iff (&A[0][1]-&A[0][0] >= std::max(G1S, G2S))
   //
   unsigned SizeMax = std::max(G1S, G2S);
-  if (SizeMax == ~0U) return MayAlias; // Avoid frivolous work...
+  if (SizeMax == ~0U) return MayAlias; // Avoid frivolous work.
 
   // Scan for the first operand that is constant and unequal in the
   // two getelementptrs...
