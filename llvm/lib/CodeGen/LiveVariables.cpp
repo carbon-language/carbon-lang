@@ -32,14 +32,29 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/CFG.h"
 #include "Support/DepthFirstIterator.h"
-
-namespace llvm {
+using namespace llvm;
 
 static RegisterAnalysis<LiveVariables> X("livevars", "Live Variable Analysis");
 
 const std::pair<MachineBasicBlock*, unsigned> &
 LiveVariables::getMachineBasicBlockInfo(MachineBasicBlock *MBB) const{
   return BBMap.find(MBB->getBasicBlock())->second;
+}
+  
+/// getIndexMachineBasicBlock() - Given a block index, return the
+/// MachineBasicBlock corresponding to it.
+MachineBasicBlock *LiveVariables::getIndexMachineBasicBlock(unsigned Idx) {
+  if (BBIdxMap.empty()) {
+    BBIdxMap.resize(BBMap.size());
+    for (std::map<const BasicBlock*, std::pair<MachineBasicBlock*, unsigned> >
+           ::iterator I = BBMap.begin(), E = BBMap.end(); I != E; ++I) {
+      assert(BBIdxMap.size() > I->second.second &&"Indices are not sequential");
+      assert(BBIdxMap[I->second.second] == 0 && "Multiple idx collision!");
+      BBIdxMap[I->second.second] = I->second.first;
+    }
+  }
+  assert(Idx < BBIdxMap.size() && "BB Index out of range!");
+  return BBIdxMap[Idx];
 }
 
 LiveVariables::VarInfo &LiveVariables::getVarInfo(unsigned RegIdx) {
@@ -300,5 +315,3 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &MF) {
   
   return false;
 }
-
-} // End llvm namespace
