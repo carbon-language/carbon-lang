@@ -16,9 +16,9 @@
 #ifndef LLVM_CODEGEN_MACHINEINSTR_H
 #define LLVM_CODEGEN_MACHINEINSTR_H
 
-#include "llvm/Target/MRegisterInfo.h"
 #include "Support/Annotation.h"
 #include "Support/iterator"
+#include <vector>
 
 namespace llvm {
 
@@ -220,19 +220,13 @@ public:
   bool isPCRelative() const { return (flags & PCRELATIVE) != 0; }
 
 
-  // This is to finally stop caring whether we have a virtual or machine
-  // register -- an easier interface is to simply call both virtual and machine
-  // registers essentially the same, yet be able to distinguish when
-  // necessary. Thus the instruction selector can just add registers without
-  // abandon, and the register allocator won't be confused.
-  bool isVirtualRegister() const {
-    return (opType == MO_VirtualRegister || opType == MO_MachineRegister) 
-      && regNum >= MRegisterInfo::FirstVirtualRegister;
-  }
-  bool isRegister() const {
-    return opType == MO_VirtualRegister || opType == MO_MachineRegister;
-  }
-  bool isMachineRegister() const { return !isVirtualRegister(); }
+  /// isRegister - Return true if this operand is a register operand.
+  ///
+  /// Note: In the sparc backend, this only returns true for "machine
+  /// registers", not for "virtual registers".
+  ///
+  bool isRegister() const { return opType == MO_MachineRegister; }
+
   bool isMachineBasicBlock() const { return opType == MO_MachineBasicBlock; }
   bool isPCRelativeDisp() const { return opType == MO_PCRelativeDisp; }
   bool isImmediate() const {
