@@ -65,7 +65,7 @@ bool TraceBasicBlocks::run(Module &M) {
   unsigned BBNumber = 0;
   for (Module::iterator F = M.begin(), E = M.end(); F != E; ++F)
     for (Function::iterator BB = F->begin(), E = F->end(); BB != E; ++BB) {
-      InsertInstrumentationCall (BB, "llvm_basic_block_trace", BBNumber);
+      InsertInstrumentationCall (BB, "llvm_trace_basic_block", BBNumber);
       ++BBNumber;
     }
 
