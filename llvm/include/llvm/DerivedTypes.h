@@ -36,13 +36,6 @@ protected:
   //
   void typeIsRefined();
   
-  // setDerivedTypeProperties - Based on the subtypes, set the name of this
-  // type so that it is printed nicely by the type printer.  Also calculate
-  // whether this type is abstract or not.  Used by the constructor and when
-  // the type is refined.
-  //
-  void setDerivedTypeProperties();
-
 public:
 
   //===--------------------------------------------------------------------===//
