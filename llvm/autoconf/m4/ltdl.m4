@@ -75,7 +75,7 @@ AC_CONFIG_SUBDIRS([libltdl])
 # Perform all the checks necessary for compilation of the ltdl objects
 #  -- including compiler checks and header checks.
 AC_DEFUN([AC_LIB_LTDL],
-[AC_PREREQ(2.50)
+[AC_PREREQ(2.59)
 AC_REQUIRE([AC_PROG_CC])
 AC_REQUIRE([AC_C_CONST])
 AC_REQUIRE([AC_HEADER_STDC])
@@ -110,7 +110,7 @@ AC_CHECK_FUNCS([closedir opendir readdir])
 # ----------------------
 AC_DEFUN([AC_LTDL_ENABLE_INSTALL],
 [AC_ARG_ENABLE([ltdl-install],
-    [AC_HELP_STRING([--enable-ltdl-install], [install libltdl])])
+    [AS_HELP_STRING([--enable-ltdl-install], [install libltdl])])
 
 AM_CONDITIONAL(INSTALL_LTDL, test x"${enable_ltdl_install-no}" != xno)
 AM_CONDITIONAL(CONVENIENCE_LTDL, test x"${enable_ltdl_convenience-no}" != xno)
@@ -313,14 +313,11 @@ AC_CHECK_FUNC([shl_load],
 	  [AC_DEFINE([HAVE_LIBDL], [1],
 		     [Define if you have the libdl library or equivalent.])
 	        LIBADD_DL="-ldl" libltdl_cv_lib_dl_dlopen="yes"],
-      [AC_TRY_LINK([#if HAVE_DLFCN_H
+      [AC_LINK_IFELSE([AC_LANG_PROGRAM([[#if HAVE_DLFCN_H
 #  include <dlfcn.h>
 #endif
-      ],
-	[dlopen(0, 0);],
-	    [AC_DEFINE([HAVE_LIBDL], [1],
-		             [Define if you have the libdl library or equivalent.]) libltdl_cv_func_dlopen="yes"],
-	[AC_CHECK_LIB([svld], [dlopen],
+      ]], [[dlopen(0, 0);]])],[AC_DEFINE([HAVE_LIBDL], [1],
+		             [Define if you have the libdl library or equivalent.]) libltdl_cv_func_dlopen="yes"],[AC_CHECK_LIB([svld], [dlopen],
 	      [AC_DEFINE([HAVE_LIBDL], [1],
 			 [Define if you have the libdl library or equivalent.])
 	            LIBADD_DL="-lsvld" libltdl_cv_func_dlopen="yes"],
@@ -372,15 +369,15 @@ EOF
         if grep '^. nm_test_func ' "$ac_nlist" >/dev/null; then
 	  :
         else
-	  echo "configure: cannot find nm_test_func in $ac_nlist" >&AC_FD_CC
+	  echo "configure: cannot find nm_test_func in $ac_nlist" >&AS_MESSAGE_LOG_FD()
         fi
       fi
     else
-      echo "configure: cannot run $lt_cv_sys_global_symbol_pipe" >&AC_FD_CC
+      echo "configure: cannot run $lt_cv_sys_global_symbol_pipe" >&AS_MESSAGE_LOG_FD()
     fi
   else
-    echo "configure: failed program was:" >&AC_FD_CC
-    cat conftest.c >&AC_FD_CC
+    echo "configure: failed program was:" >&AS_MESSAGE_LOG_FD()
+    cat conftest.c >&AS_MESSAGE_LOG_FD()
   fi
   rm -rf conftest*
   ])
