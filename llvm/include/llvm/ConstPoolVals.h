@@ -175,24 +175,4 @@ public:
   inline const vector<Use> &getValues() const { return Operands; }
 };
 
-//===---------------------------------------------------------------------------
-// External functions
-//
-
-// Convenience functions to get the value of an integer constant, for an
-// appropriate integer or non-integer type that can be held in an integer.
-// The type of the argument must be the following:
-//   GetSignedIntConstantValue:   signed integer or bool
-//   GetUnsignedIntConstantValue: unsigned integer, bool, or pointer
-//   GetConstantValueAsSignedInt: any of the above, but the value
-//				  must fit into a int64_t.
-// 
-// isValidConstant is set to true if a valid constant was found.
-// 
-int64_t	 GetSignedIntConstantValue	(const Value* val, bool& isValidConst);
-uint64_t GetUnsignedIntConstantValue	(const Value* val, bool& isValidConst);
-int64_t	 GetConstantValueAsSignedInt	(const Value* val, bool& isValidConst);
-
-//===---------------------------------------------------------------------------
-
 #endif
