@@ -253,7 +253,8 @@ void GCSE::CommonSubExpressionFound(Instruction *I, Instruction *Other) {
 //
 //===----------------------------------------------------------------------===//
 
-bool GCSE::visitCastInst(CastInst &I) {
+bool GCSE::visitCastInst(CastInst &CI) {
+  Instruction &I = (Instruction&)CI;
   Value *Op = I.getOperand(0);
   Function *F = I.getParent()->getParent();
   

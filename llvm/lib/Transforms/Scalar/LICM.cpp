@@ -88,8 +88,9 @@ namespace {
       if (isLoopInvariant(I.getOperand(0)) && isLoopInvariant(I.getOperand(1)))
         hoist(I);
     }
-    void visitCastInst(CastInst &I) {
-      if (isLoopInvariant(I.getOperand(0))) hoist((Instruction&)I);
+    void visitCastInst(CastInst &CI) {
+      Instruction &I = (Instruction&)CI;
+      if (isLoopInvariant(I.getOperand(0))) hoist(I);
     }
     void visitShiftInst(ShiftInst &I) { visitBinaryOperator((Instruction&)I); }
 
