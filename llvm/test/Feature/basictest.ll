@@ -4,9 +4,9 @@ implementation
 ; format looks anyways (except for negative vs positive offsets)...
 ;
 void "void"(int, int)   ; Def %0, %1
-	const int 0          ; Def 2
-	const int -4         ; Def 3
 begin
+	add int 0, 0      ; Def 2
+	sub int 0, 4      ; Def 3
 	br label %1
 
 	add int %0, %1    ; Def 4
@@ -22,10 +22,8 @@ end
 
 ; This function always returns zero
 int "zarro"()
-	const uint 4000000000        ; Def 0 - uint plane
-	const int 0                  ; Def 0 - int plane
 begin
 Startup:
-	ret int %0
+	ret int 0
 end
 
