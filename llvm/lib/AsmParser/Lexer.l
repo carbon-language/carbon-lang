@@ -147,7 +147,7 @@ HexFPConstant 0x[0-9A-Fa-f]+
 {Comment}       { /* Ignore comments for now */ }
 
 begin           { return BEGINTOK; }
-end             { return END; }
+end             { return ENDTOK; }
 true            { return TRUE;  }
 false           { return FALSE; }
 declare         { return DECLARE; }

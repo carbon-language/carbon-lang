@@ -671,7 +671,7 @@ Module *RunVMAsmParser(const string &Filename, FILE *F) {
 %type  <StrVal>  OptVAR_ID OptAssign
 
 
-%token IMPLEMENTATION TRUE FALSE BEGINTOK END DECLARE GLOBAL CONSTANT UNINIT
+%token IMPLEMENTATION TRUE FALSE BEGINTOK ENDTOK DECLARE GLOBAL CONSTANT UNINIT
 %token TO EXCEPT DOTDOTDOT STRING NULL_TOK CONST INTERNAL OPAQUE
 
 // Basic Block Terminating Operators 
@@ -1205,12 +1205,16 @@ FunctionHeaderH : OptInternal TypesV STRINGCONSTANT '(' ArgList ')' {
   }
 }
 
-FunctionHeader : FunctionHeaderH ConstPool BEGINTOK {
+BEGIN : BEGINTOK | '{';                // Allow BEGIN or '{' to start a function
+
+FunctionHeader : FunctionHeaderH BEGIN {
   $$ = CurMeth.CurrentFunction;
 
   // Resolve circular types before we parse the body of the method.
   ResolveTypes(CurMeth.LateResolveTypes);
 }
+
+END : ENDTOK | '}';                    // Allow end of '}' to end a function
 
 Function : BasicBlockList END {
   $$ = $1;
