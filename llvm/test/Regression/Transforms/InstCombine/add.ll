@@ -135,3 +135,17 @@ bool %test21(uint %x) {
 	%y = seteq uint %t, 123
 	ret bool %y
 }
+
+int %test22(uint %V) {
+	%V2 = add uint %V, 10
+	switch uint %V2, label %Default [
+		uint 20, label %Lab1
+		uint 30, label %Lab2
+	]
+Default:
+	ret int 123
+Lab1:
+	ret int 12312
+Lab2:
+	ret int 1231231
+}
