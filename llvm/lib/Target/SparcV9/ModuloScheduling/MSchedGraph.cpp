@@ -20,6 +20,7 @@
 #include "../MachineCodeForInstruction.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/Instructions.h"
+#include "llvm/Type.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Support/Debug.h"
