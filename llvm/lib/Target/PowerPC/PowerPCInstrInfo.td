@@ -69,11 +69,14 @@ let isBranch = 1, isTerminator = 1, isCall = 1,
 
 def CMPI : DForm_5<"cmpi", 11, 0, 0>;
 def CMPWI : DForm_5_ext<"cmpwi", 11, 0, 0>;
+def CMPDI : DForm_5_ext<"cmpwi", 11, 1, 0>;
 def CMPW : XForm_16 <"cmpw", 31, 0, 0, 0>;
 def CMPLI : DForm_6<"cmpli", 10, 0, 0>;
 def CMPLWI : DForm_6_ext<"cmplwi", 10, 0, 0>;
+def CMPLDI : DForm_6_ext<"cmplwi", 10, 1, 0>;
 def CMPL : XForm_16<"cmpl", 31, 32, 0, 0>;
 def CMPLW : XForm_16_ext<"cmplw", 31, 32, 0, 0>;
+def CMPLD : XForm_16_ext<"cmplw", 31, 32, 1, 0>;
 def CRAND : XLForm_1<"crand", 19, 257, 0, 0>;
 def CRANDC : XLForm_1<"crandc", 19, 129, 0, 0>;
 def CRNOR : XLForm_1<"crnor", 19, 33, 0, 0>;
