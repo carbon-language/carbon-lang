@@ -38,6 +38,7 @@ Instruction::addMachineInstruction(MachineInstr* minstr)
   machineInstrVec->push_back(minstr);
 }
 
+#if 0
 // Dont make this inline because you would need to include
 // MachineInstr.h in Instruction.h, which creates a circular
 // sequence of forward declarations.  Trying to fix that will
@@ -48,6 +49,7 @@ Instruction::getTempValuesForMachineCode() const
 {
   return machineInstrVec->getTempValues();
 }
+#endif
 
 void
 Instruction::dropAllReferences() {

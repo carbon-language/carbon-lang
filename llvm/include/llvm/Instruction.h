@@ -8,7 +8,6 @@
 #ifndef LLVM_INSTRUCTION_H
 #define LLVM_INSTRUCTION_H
 
-#include <vector>
 #include "llvm/User.h"
 
 class Type;
@@ -48,10 +47,13 @@ public:
   inline const BasicBlock *getParent() const { return Parent; }
   inline       BasicBlock *getParent()       { return Parent; }
   virtual bool hasSideEffects() const { return false; }  // Memory & Call insts
-  inline       MachineCodeForVMInstr&
-		getMachineInstrVec() 	     { return *machineInstrVec; }
-  const vector<Value*>&
-		getTempValuesForMachineCode() const;
+
+  // ---------------------------------------------------------------------------
+  // Machine code accessors...
+  //
+  inline MachineCodeForVMInstr &getMachineInstrVec() {
+    return *machineInstrVec; 
+  }
   
   // ---------------------------------------------------------------------------
   // Subclass classification... getInstType() returns a member of 
