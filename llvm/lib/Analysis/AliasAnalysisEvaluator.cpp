@@ -17,6 +17,7 @@
 #include "llvm/Support/InstIterator.h"
 #include "llvm/Assembly/Writer.h"
 #include "Support/CommandLine.h"
+#include <set>
 
 namespace {
   cl::opt<bool> PrintNo  ("print-no-aliases", cl::ReallyHidden);
@@ -52,23 +53,27 @@ static inline void PrintResults(const char *Msg, bool P, Value *V1, Value *V2) {
 bool AAEval::runOnFunction(Function &F) {
   AliasAnalysis &AA = getAnalysis<AliasAnalysis>();
   
-  std::vector<Value *> Pointers;
+  std::set<Value *> Pointers;
 
   for (Function::aiterator I = F.abegin(), E = F.aend(); I != E; ++I)
     if (isa<PointerType>(I->getType()))    // Add all pointer arguments
-      Pointers.push_back(I);
+      Pointers.insert(I);
 
-  for (inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I)
+  for (inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I) {
     if (isa<PointerType>((*I)->getType())) // Add all pointer instructions
-      Pointers.push_back(*I);
+      Pointers.insert(*I);
+    for (User::op_iterator OI = (*I)->op_begin(); OI != (*I)->op_end(); ++OI)
+      if (isa<PointerType>((*OI)->getType()))
+        Pointers.insert(*OI);
+  }
 
   if (PrintNo || PrintMay || PrintMust)
     std::cerr << "Function: " << F.getName() << "\n";
 
   // iterate over the worklist, and run the full (n^2)/2 disambiguations
-  for (std::vector<Value *>::iterator I1 = Pointers.begin(), E = Pointers.end();
+  for (std::set<Value *>::iterator I1 = Pointers.begin(), E = Pointers.end();
        I1 != E; ++I1)
-    for (std::vector<Value *>::iterator I2 = Pointers.begin(); I2 != I1; ++I2)
+    for (std::set<Value *>::iterator I2 = Pointers.begin(); I2 != I1; ++I2)
       switch (AA.alias(*I1, 0, *I2, 0)) {
       case AliasAnalysis::NoAlias:
         PrintResults("No", PrintNo, *I1, *I2);
