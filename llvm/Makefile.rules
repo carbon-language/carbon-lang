@@ -97,6 +97,13 @@ LIBRELEASE  := $(BUILD_ROOT_TOP)/lib/Release
 TOOLDEBUG   := $(BUILD_ROOT_TOP)/tools/Debug
 TOOLRELEASE := $(BUILD_ROOT_TOP)/tools/Release
 
+# Verbosity levels
+ifdef VERBOSE
+VERB := 
+else
+VERB := @
+endif
+
 #---------------------------------------------------------
 # Compilation options...
 #---------------------------------------------------------
@@ -167,7 +174,7 @@ install :: $(addsuffix /.makeinstall, $(DIRS))
 clean   :: $(addsuffix /.makeclean  , $(DIRS))
 
 %/.makeall %/.makeclean %/.makeinstall:
-	cd $(@D); $(MAKE) $(subst $(@D)/.make,,$@)
+	$(VERB) cd $(@D); $(MAKE) $(subst $(@D)/.make,,$@)
 endif
 
 #---------------------------------------------------------
@@ -224,27 +231,28 @@ dynamic:: $(BUILD_LIBNAME_G) $(BUILD_LIBNAME_O)      # .so files
 
 $(LIBNAME_O): $(ObjectsO) $(LibSubDirs) $(LIBRELEASE)/.dir
 	@echo ======= Linking $(LIBRARYNAME) release library =======
-	$(MakeSOO) -o $@ $(ObjectsO) $(LibSubDirs) $(LibLinkOpts)
+	$(VERB) $(MakeSOO) -o $@ $(ObjectsO) $(LibSubDirs) $(LibLinkOpts)
 
 $(LIBNAME_G): $(ObjectsG) $(LibSubDirs) $(LIBDEBUG)/.dir
 	@echo ======= Linking $(LIBRARYNAME) debug library =======
-	$(MakeSO) -g -o $@ $(ObjectsG) $(LibSubDirs) $(LibLinkOpts)
+	$(VERB) $(MakeSO) -g -o $@ $(ObjectsG) $(LibSubDirs) $(LibLinkOpts)
 
 $(LIBNAME_AO): $(ObjectsO) $(LibSubDirs) $(LIBRELEASE)/.dir
 	@echo ======= Linking $(LIBRARYNAME) release library =======
 	@rm -f $@
-	$(AR) $@ $(ObjectsO) $(LibSubDirs)
+	$(VERB) $(AR) $@ $(ObjectsO) $(LibSubDirs)
 
 $(LIBNAME_AG): $(ObjectsG) $(LibSubDirs) $(LIBDEBUG)/.dir
 	@echo ======= Linking $(LIBRARYNAME) debug library =======
 	@rm -f $@
-	$(AR) $@ $(ObjectsG) $(LibSubDirs)
+	$(VERB) $(AR) $@ $(ObjectsG) $(LibSubDirs)
 
 $(LIBNAME_OBJO): $(ObjectsO) $(LibSubDirs) $(LIBRELEASE)/.dir
-	$(Relink) -o $@ $(ObjectsO) $(LibSubDirs)
+	@echo "Linking $@"
+	$(VERB) $(Relink) -o $@ $(ObjectsO) $(LibSubDirs)
 
 $(LIBNAME_OBJG): $(ObjectsG) $(LibSubDirs) $(LIBDEBUG)/.dir
-	$(Relink) -o $@ $(ObjectsG) $(LibSubDirs)
+	$(VERB) $(Relink) -o $@ $(ObjectsG) $(LibSubDirs)
 
 endif
 
@@ -293,13 +301,13 @@ USED_LIB_PATHS_O := $(addprefix $(LIBRELEASE)/, $(STATICUSEDLIBS))
 
 all::   $(TOOLEXENAMES)
 clean::
-	rm -f $(TOOLEXENAMES)
+	$(VERB) rm -f $(TOOLEXENAMES)
 
 $(TOOLEXENAME_G): $(ObjectsG) $(USED_LIB_PATHS_G) $(BUILD_ROOT_TOP)/tools/Debug/.dir
-	$(LinkG) -o $@ $(ObjectsG) $(USED_LIBS_OPTIONS_G) $(TOOLLINKOPTS)
+	$(VERB) $(LinkG) -o $@ $(ObjectsG) $(USED_LIBS_OPTIONS_G) $(TOOLLINKOPTS)
 
 $(TOOLEXENAME_O): $(ObjectsO) $(USED_LIB_PATHS_O) $(BUILD_ROOT_TOP)/tools/Release/.dir
-	$(LinkO) -o $@ $(ObjectsG) $(USED_LIBS_OPTIONS_O) $(TOOLLINKOPTS)
+	$(VERB) $(LinkO) -o $@ $(ObjectsG) $(USED_LIBS_OPTIONS_O) $(TOOLLINKOPTS)
 
 endif
 
@@ -311,21 +319,23 @@ endif
 
 # Create dependencies for the *.cpp files...
 $(BUILD_ROOT)/Depend/%.d: %.cpp $(BUILD_ROOT)/Depend/.dir
-	$(Depend) $< | sed 's|$*\.o *|$(BUILD_ROOT)/Release/& $(BUILD_ROOT)/Debug/& $(BUILD_ROOT)/Depend/$(@F)|g' > $@
+	$(VERB) $(Depend) $< | sed 's|$*\.o *|$(BUILD_ROOT)/Release/& $(BUILD_ROOT)/Debug/& $(BUILD_ROOT)/Depend/$(@F)|g' > $@
 
 # Create dependencies for the *.c files...
 $(BUILD_ROOT)/Depend/%.d: %.c $(BUILD_ROOT)/Depend/.dir
-	$(Depend) $< | sed 's|$*\.o *|Release/& Debug/& Depend/$(@F)|g' > $@
+	$(VERB) $(Depend) $< | sed 's|$*\.o *|Release/& Debug/& Depend/$(@F)|g' > $@
 
 # Create .o files in the ObjectFiles directory from the .cpp and .c files...
 $(BUILD_ROOT)/Release/%.o: %.cpp $(BUILD_ROOT)/Release/.dir
-	$(CompileO) $< -o $@
+	@echo "Compiling $<"
+	$(VERB) $(CompileO) $< -o $@
 
 #Release/%.o: %.c Release/.dir Depend/.dir
 #	$(CompileOC) $< -o $@
 
 $(BUILD_ROOT)/Debug/%.o: %.cpp $(BUILD_ROOT)/Debug/.dir
-	$(CompileG) $< -o $@
+	@echo "Compiling $<"
+	$(VERB) $(CompileG) $< -o $@
 
 #Debug/%.o: %.c Debug/.dir 
 #	$(CompileGC) $< -o $@
@@ -338,19 +348,19 @@ $(BUILD_ROOT)/Debug/%.o: %.cpp $(BUILD_ROOT)/Debug/.dir
 # Rule for building the bison parsers...
 
 %.cpp %.h : %.y
-	bison -v -d -p $(<:%Parser.y=%) $(basename $@).y
-	mv -f $(basename $@).tab.c $(basename $@).cpp
-	mv -f $(basename $@).tab.h $(basename $@).h
+	$(VERB) bison -v -d -p $(<:%Parser.y=%) $(basename $@).y
+	$(VERB) mv -f $(basename $@).tab.c $(basename $@).cpp
+	$(VERB) mv -f $(basename $@).tab.h $(basename $@).h
 
 # To create the directories...
 %/.dir:
-	mkdir -p $(@D)
+	$(VERB) mkdir -p $(@D)
 	@date > $@
 
 # Clean nukes the tree
 clean::
-	rm -rf $(BUILD_ROOT)/Debug $(BUILD_ROOT)/Release $(BUILD_ROOT)/Depend
-	rm -f core *.o *.d *.so *~ *.flc
+	$(VERB) rm -rf $(BUILD_ROOT)/Debug $(BUILD_ROOT)/Release $(BUILD_ROOT)/Depend
+	$(VERB) rm -f core *.o *.d *.so *~ *.flc
 
 # If dependancies were generated for the file that included this file,
 # include the dependancies now...
