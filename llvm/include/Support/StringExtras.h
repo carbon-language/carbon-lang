@@ -28,7 +28,7 @@ static inline std::string utohexstr(uint64_t X) {
   if (X == 0) *--BufPtr = '0';  // Handle special case...
 
   while (X) {
-    unsigned char Mod = unsigned char(X) & 15;
+    unsigned char Mod = (unsigned char)X & 15;
     if (Mod < 10)
       *--BufPtr = '0' + Mod;
     else
