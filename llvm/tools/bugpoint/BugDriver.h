@@ -209,12 +209,13 @@ public:
   bool runPasses(const std::vector<const PassInfo*> &PassesToRun,
                  std::string &OutputFilename, bool DeleteOutput = false,
 		 bool Quiet = false) const;
-private:
+
   /// writeProgramToFile - This writes the current "Program" to the named
   /// bytecode file.  If an error occurs, true is returned.
   ///
   bool writeProgramToFile(const std::string &Filename, Module *M = 0) const;
 
+private:
   /// runPasses - Just like the method above, but this just returns true or
   /// false indicating whether or not the optimizer crashed on the specified
   /// input (true = crashed).
