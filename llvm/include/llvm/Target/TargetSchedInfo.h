@@ -302,8 +302,8 @@ protected:
 			   conflictLists;   // indexed by [opcode]
 
 
-
-  friend class ModuloScheduling;
+  friend class ModuloSchedGraph;
+  friend class ModuloSchedulingPass;
   
 };
 
