@@ -114,8 +114,14 @@ namespace {
       abort();
     }
 
-    void promote32 (const unsigned targetReg, Value *v);
-    
+    void promote32(unsigned targetReg, Value *V);
+
+    // emitGEPOperation - Common code shared between visitGetElemenPtrInst and
+    // constant expression GEP support.
+    //
+    void emitGEPOperation(Value *Src, User::op_iterator IdxBegin,
+                          User::op_iterator IdxEnd, unsigned TargetReg);
+
     /// copyConstantToRegister - Output the instructions required to put the
     /// specified constant into the specified register.
     ///
@@ -123,9 +129,10 @@ namespace {
 
     /// makeAnotherReg - This method returns the next register number
     /// we haven't yet used.
-    unsigned makeAnotherReg (void) {
-      unsigned Reg = CurReg++;
-      return Reg;
+    unsigned makeAnotherReg(const Type *Ty) {
+      // Add the mapping of regnumber => reg class to MachineFunction
+      F->addRegMap(CurReg, TM.getRegisterInfo()->getRegClassForType(Ty));
+      return CurReg++;
     }
 
     /// getReg - This method turns an LLVM value into a register number.  This
@@ -136,12 +143,8 @@ namespace {
     unsigned getReg(Value *V) {
       unsigned &Reg = RegMap[V];
       if (Reg == 0) {
-        Reg = makeAnotherReg ();
+        Reg = makeAnotherReg(V->getType());
         RegMap[V] = Reg;
-
-        // Add the mapping of regnumber => reg class to MachineFunction
-        F->addRegMap(Reg,
-                     TM.getRegisterInfo()->getRegClassForType(V->getType()));
       }
 
       // If this operand is a constant, emit the code to copy the constant into
@@ -182,7 +185,9 @@ static inline TypeClass getClass(const Type *Ty) {
   case Type::PointerTyID: return cInt;       // Int's and pointers are class #2
 
   case Type::LongTyID:
-  case Type::ULongTyID:   return cLong;      // Longs are class #3
+  case Type::ULongTyID:   //return cLong;      // Longs are class #3
+    return cInt;          // FIXME: LONGS ARE TREATED AS INTS!
+
   case Type::FloatTyID:   return cFloat;     // Float is class #4
   case Type::DoubleTyID:  return cDouble;    // Doubles are class #5
   default:
@@ -196,12 +201,15 @@ static inline TypeClass getClass(const Type *Ty) {
 /// specified constant into the specified register.
 ///
 void ISel::copyConstantToRegister(Constant *C, unsigned R) {
-  if (isa<ConstantExpr> (C)) {
-    // FIXME: We really need to handle getelementptr exprs, among
-    // other things.
+  if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C)) {
+    if (CE->getOpcode() == Instruction::GetElementPtr) {
+      emitGEPOperation(CE->getOperand(0), CE->op_begin()+1, CE->op_end(), R);
+      return;
+    }
+
     std::cerr << "Offending expr: " << C << "\n";
+    assert (0 && "Constant expressions not yet handled!\n");
   }
-  assert (!isa<ConstantExpr>(C) && "Constant expressions not yet handled!\n");
 
   if (C->getType()->isIntegral()) {
     unsigned Class = getClass(C->getType());
@@ -221,6 +229,9 @@ void ISel::copyConstantToRegister(Constant *C, unsigned R) {
   } else if (isa <ConstantPointerNull> (C)) {
     // Copy zero (null pointer) to the register.
     BuildMI (BB, X86::MOVir32, 1, R).addZImm(0);
+  } else if (ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(C)) {
+    unsigned SrcReg = getReg(CPR->getValue());
+    BuildMI (BB, X86::MOVrr32, 1, R).addReg(SrcReg);
   } else {
     std::cerr << "Offending constant: " << C << "\n";
     assert(0 && "Type not handled yet!");
@@ -305,7 +316,7 @@ void ISel::visitSetCCInst(SetCondInst &I, unsigned OpNum) {
 /// promote32 - Emit instructions to turn a narrow operand into a 32-bit-wide
 /// operand, in the specified target register.
 void
-ISel::promote32 (const unsigned targetReg, Value *v)
+ISel::promote32 (unsigned targetReg, Value *v)
 {
   unsigned vReg = getReg (v);
   unsigned Class = getClass (v->getType ());
@@ -806,17 +817,21 @@ ISel::visitCastInst (CastInst &CI)
 void
 ISel::visitGetElementPtrInst (GetElementPtrInst &I)
 {
-  Value *basePtr = I.getPointerOperand ();
-  const TargetData &TD = TM.DataLayout;
-  unsigned basePtrReg = getReg (basePtr);
-  unsigned resultReg = getReg (I);
-  const Type *Ty = basePtr->getType();
+  emitGEPOperation(I.getOperand(0), I.op_begin()+1, I.op_end(), getReg(I));
+}
+
+void ISel::emitGEPOperation(Value *Src, User::op_iterator IdxBegin,
+                            User::op_iterator IdxEnd, unsigned TargetReg) {
+  const TargetData &TD = TM.getTargetData();
+  const Type *Ty = Src->getType();
+  unsigned basePtrReg = getReg(Src);
+
   // GEPs have zero or more indices; we must perform a struct access
   // or array access for each one.
-  for (GetElementPtrInst::op_iterator oi = I.idx_begin (),
-	 oe = I.idx_end (); oi != oe; ++oi) {
+  for (GetElementPtrInst::op_iterator oi = IdxBegin,
+         oe = IdxEnd; oi != oe; ++oi) {
     Value *idx = *oi;
-    unsigned nextBasePtrReg = makeAnotherReg ();
+    unsigned nextBasePtrReg = makeAnotherReg(Type::UIntTy);
     if (const StructType *StTy = dyn_cast <StructType> (Ty)) {
       // It's a struct access.  idx is the index into the structure,
       // which names the field. This index must have ubyte type.
@@ -839,10 +854,6 @@ ISel::visitGetElementPtrInst (GetElementPtrInst &I)
       Ty = StTy->getElementTypes ()[idxValue];
     } else if (const SequentialType *SqTy = cast <SequentialType> (Ty)) {
       // It's an array or pointer access: [ArraySize x ElementType].
-      // The documentation does not seem to match the code on the type
-      // of array indices. The code seems to use long, and the docs
-      // (and the comments) say uint. If it is long, I don't know what
-      // we are going to do, because the X86 loves 64-bit types.
       const Type *typeOfSequentialTypeIndex = SqTy->getIndexType ();
       // idx is the index into the array.  Unlike with structure
       // indices, we may not know its actual value at code-generation
@@ -855,14 +866,14 @@ ISel::visitGetElementPtrInst (GetElementPtrInst &I)
       // elements in the array.)
       Ty = SqTy->getElementType ();
       unsigned elementSize = TD.getTypeSize (Ty);
-      unsigned elementSizeReg = makeAnotherReg ();
+      unsigned elementSizeReg = makeAnotherReg(Type::UIntTy);
       copyConstantToRegister (ConstantInt::get (typeOfSequentialTypeIndex,
 						elementSize),
 			      elementSizeReg);
       unsigned idxReg = getReg (idx);
       // Emit a MUL to multiply the register holding the index by
       // elementSize, putting the result in memberOffsetReg.
-      unsigned memberOffsetReg = makeAnotherReg ();
+      unsigned memberOffsetReg = makeAnotherReg(Type::UIntTy);
       doMultiply (memberOffsetReg, typeOfSequentialTypeIndex,
 		  elementSizeReg, idxReg);
       // Emit an ADD to add memberOffsetReg to the basePtr.
@@ -877,7 +888,7 @@ ISel::visitGetElementPtrInst (GetElementPtrInst &I)
   // basePtrReg.  Move it to the register where we were expected to
   // put the answer.  A 32-bit move should do it, because we are in
   // ILP32 land.
-  BuildMI (BB, X86::MOVrr32, 1, getReg (I)).addReg (basePtrReg);
+  BuildMI (BB, X86::MOVrr32, 1, TargetReg).addReg (basePtrReg);
 }
 
 

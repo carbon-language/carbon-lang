@@ -106,12 +106,13 @@ namespace {
     case Type::UByteTyID:   return &X86ByteRegisterClassInstance;
     case Type::ShortTyID:
     case Type::UShortTyID:  return &X86ShortRegisterClassInstance;
+    case Type::LongTyID:    // None of these are handled yet!
+    case Type::ULongTyID:  // FIXME: Treat these like ints, this is bogus!
+
     case Type::IntTyID:
     case Type::UIntTyID:
     case Type::PointerTyID: return &X86IntRegisterClassInstance;
 
-    case Type::LongTyID:    /* None of these are handled yet! */
-    case Type::ULongTyID:
     case Type::FloatTyID:
     case Type::DoubleTyID:
 
