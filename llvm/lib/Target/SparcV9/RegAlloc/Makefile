@@ -6,12 +6,10 @@
 # the University of Illinois Open Source License. See LICENSE.TXT for details.
 # 
 ##===----------------------------------------------------------------------===##
+
 LEVEL = ../../../..
-
 DIRS  = 
-
 LIBRARYNAME = sparcv9regalloc
-
 BUILD_ARCHIVE = 1
 
 include $(LEVEL)/Makefile.common
