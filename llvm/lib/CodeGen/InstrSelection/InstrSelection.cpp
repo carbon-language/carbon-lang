@@ -98,12 +98,11 @@ SelectInstructionsForMethod(Method* method, TargetMachine &target)
   //
   // Invoke BURG instruction selection for each tree
   // 
-  const std::hash_set<InstructionNode*> &treeRoots = instrForest.getRootSet();
-  for (std::hash_set<InstructionNode*>::const_iterator
-	 treeRootIter = treeRoots.begin(); treeRootIter != treeRoots.end();
-       ++treeRootIter)
+  for (InstrForest::const_root_iterator RI = instrForest.roots_begin();
+       RI != instrForest.roots_end(); ++RI)
     {
-      InstrTreeNode* basicNode = *treeRootIter;
+      InstructionNode* basicNode = *RI;
+      assert(basicNode->parent() == NULL && "A `root' node has a parent?"); 
       
       // Invoke BURM to label each tree node with a state
       burm_label(basicNode);
@@ -131,7 +130,7 @@ SelectInstructionsForMethod(Method* method, TargetMachine &target)
       MachineCodeForBasicBlock& bbMvec = (*BI)->getMachineInstrVec();
       for (BasicBlock::iterator II = (*BI)->begin(); II != (*BI)->end(); ++II)
 	{
-	  MachineCodeForInstruction &mvec = MachineCodeForInstruction::get(*II);
+	  MachineCodeForInstruction &mvec =MachineCodeForInstruction::get(*II);
 	  for (unsigned i=0; i < mvec.size(); i++)
 	    bbMvec.push_back(mvec[i]);
 	}
@@ -163,7 +162,7 @@ void
 InsertPhiElimInstructions(BasicBlock *BB, const vector<MachineInstr*>& CpVec)
 { 
   Instruction *TermInst = (Instruction*)BB->getTerminator();
-  MachineCodeForInstruction &MC4Term = MachineCodeForInstruction::get(TermInst);
+  MachineCodeForInstruction &MC4Term =MachineCodeForInstruction::get(TermInst);
   MachineInstr *FirstMIOfTerm = *( MC4Term.begin() );
   
   assert( FirstMIOfTerm && "No Machine Instrs for terminator" );
@@ -209,8 +208,8 @@ InsertCode4AllPhisInMeth(Method *method, TargetMachine &target)
 
 	PHINode *PN = (PHINode *) (*IIt);
 
-	Value *PhiCpRes = new Value(PN->getType(), PN->getValueType(),"PhiCp:");
-
+	Value *PhiCpRes = new Value(PN->getType(),PN->getValueType(),"PhiCp:");
+        
 	// for each incoming value of the phi, insert phi elimination
 	//
         for (unsigned i = 0; i < PN->getNumIncomingValues(); ++i) {
@@ -219,7 +218,8 @@ InsertCode4AllPhisInMeth(Method *method, TargetMachine &target)
 	    target.getRegInfo().cpValue2Value(PN->getIncomingValue(i),
 					      PhiCpRes);
           
-          vector<MachineInstr*> CpVec = FixConstantOperandsForInstr(PN, CpMI, target);
+          vector<MachineInstr*> CpVec = FixConstantOperandsForInstr(PN, CpMI,
+                                                                    target);
           CpVec.push_back(CpMI);
           
 	  InsertPhiElimInstructions(PN->getIncomingBlock(i), CpVec);
