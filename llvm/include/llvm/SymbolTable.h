@@ -31,7 +31,7 @@ private:
 
   SymbolTable *ParentSymTab;
 
-  friend class SymTabValue;
+  friend class Function;
   inline void setParentSymTab(SymbolTable *P) { ParentSymTab = P; }
 
 public:
