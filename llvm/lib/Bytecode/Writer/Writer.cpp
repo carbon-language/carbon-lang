@@ -293,11 +293,23 @@ void BytecodeWriter::outputCompactionTablePlane(unsigned PlaneNo,
   assert(StartNo < End && "Cannot emit negative range!");
   assert(StartNo < Plane.size() && End <= Plane.size());
 
-  output_vbr(unsigned(End-StartNo), Out);   // Output the number of things.
-  output_vbr(PlaneNo, Out);                 // Emit the type plane this is
-
   // Do not emit the null initializer!
   if (PlaneNo != Type::TypeTyID) ++StartNo;
+
+  // Figure out which encoding to use.  By far the most common case we have is
+  // to emit 0-2 entries in a compaction table plane.
+  switch (End-StartNo) {
+  case 0:         // Avoid emitting two vbr's if possible.
+  case 1:
+  case 2:
+    output_vbr((PlaneNo << 2) | End-StartNo, Out);
+    break;
+  default:
+    // Output the number of things.
+    output_vbr((unsigned(End-StartNo) << 2) | 3, Out);
+    output_vbr(PlaneNo, Out);                 // Emit the type plane this is
+    break;
+  }
 
   for (unsigned i = StartNo; i != End; ++i)
     output_vbr(Table.getGlobalSlot(Plane[i]), Out);

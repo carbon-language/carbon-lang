@@ -496,8 +496,22 @@ void BytecodeParser::ParseCompactionTable(const unsigned char *&Buf,
                                           const unsigned char *End) {
 
   while (Buf != End) {
-    unsigned NumEntries = read_vbr_uint(Buf, End);
-    unsigned Ty         = read_vbr_uint(Buf, End);
+    unsigned NumEntries;
+    unsigned Ty;
+
+    NumEntries = read_vbr_uint(Buf, End);
+    switch (NumEntries & 3) {
+    case 0:
+    case 1:
+    case 2:
+      Ty = NumEntries >> 2;
+      NumEntries &= 3;
+      break;
+    case 3:
+      NumEntries >>= 2;
+      Ty = read_vbr_uint(Buf, End);
+      break;
+    }
 
     if (Ty >= CompactionTable.size())
       CompactionTable.resize(Ty+1);
@@ -513,11 +527,10 @@ void BytecodeParser::ParseCompactionTable(const unsigned char *&Buf,
 
       CompactionTable.resize(NumEntries+Type::FirstDerivedTyID);
     } else {
-      assert(NumEntries != 0 && "Cannot read zero entries!");
       const Type *Typ = getType(Ty);
       // Push the implicit zero
       CompactionTable[Ty].push_back(Constant::getNullValue(Typ));
-      for (unsigned i = 1; i != NumEntries; ++i) {
+      for (unsigned i = 0; i != NumEntries; ++i) {
         Value *V = getGlobalTableValue(Typ, read_vbr_uint(Buf, End));
         CompactionTable[Ty].push_back(V);
       }
