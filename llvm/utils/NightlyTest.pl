@@ -445,6 +445,8 @@ if(!$NODEJAGNU) {
   CopyFile("test/testrun.sum", $DejagnuSum);
 
   $DejagnuTestResults = GetDejagnuTestResults($DejagnuSum, $DejagnuLog);
+  print $DejagnuTestResults;
+
 } else {
   $DejagnuTestResults = "Skipped by user choice.";
   $DejagnuTime     = "0.0";
