@@ -18,7 +18,6 @@
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/ConstantHandling.h"
 #include "llvm/Function.h"
-#include "llvm/BasicBlock.h"
 #include "llvm/iPHINode.h"
 #include "llvm/iMemory.h"
 #include "llvm/iTerminators.h"
@@ -29,7 +28,6 @@
 #include "Support/StatisticReporter.h"
 #include <algorithm>
 #include <set>
-#include <iostream>
 using std::cerr;
 
 static Statistic<> NumInstRemoved("sccp\t\t- Number of instructions removed");
