@@ -1,8 +1,8 @@
-//===-- llvm/Target/InstrInfo.h - Target Instruction Information --*-C++-*-==//
+//===-- llvm/Target/MachineInstrInstrInfo.h - Instruction Infor ---*-C++-*-===//
 //
 // This file describes the target machine instructions to the code generator.
 //
-//===---------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
 
 #ifndef LLVM_TARGET_MACHINEINSTRINFO_H
 #define LLVM_TARGET_MACHINEINSTRINFO_H
@@ -68,6 +68,8 @@ struct MachineInstrDescriptor {
   InstrSchedClass schedClass;    // enum  identifying instr sched class
   unsigned        Flags;         // flags identifying machine instr class
   unsigned        TSFlags;       // Target Specific Flag values
+  const unsigned *ImplicitUses;  // Registers implicitly read by this instr
+  const unsigned *ImplicitDefs;  // Registers implicitly defined by this instr
 };
 
 
