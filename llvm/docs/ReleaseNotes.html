@@ -7,7 +7,7 @@
 </tr></table>
  
 <ol>
-  <li><a href="#intro">Instroduction</a>
+  <li><a href="#intro">Introduction</a>
   <li><a href="#whatsnew">What's New?</a>
   <li><a href="#install-instructions">Installation Instructions</a>
   <li><a href="#knownproblems">Known Problems</a>
@@ -120,7 +120,7 @@ missed something.  We welcome portability patches and error messages.<p>
     }
 </pre><p>
 
-<li>The following unix system functionality has not been tested and may not work:
+<li>The following Unix system functionality has not been tested and may not work:
 <ol>
    <li><tt>sigsetjmp</tt>, <tt>siglongjmp</tt> - These are not turned into the
        appropriate <tt>invoke</tt>/<tt>unwind</tt> instructions.
@@ -288,7 +288,7 @@ problem probably cannot be fixed.<p>
 <li>Initializers for global variables that include floating point numbers may
 not be initialized with exactly the right floating point number, if the number
 is not accurately representable in decimal.  This prevents the Olden "power"
-benchmark from producing exactly the right results with the C backend.<p>
+benchmark from producing exactly the right results with the C back-end.<p>
 
 <li>The code produces by the C back-end has only been tested with the Sun CC and
 GCC compilers.  It is possible that it will have to be adjusted to support other
