@@ -708,9 +708,6 @@ void PPC32ISel::copyConstantToRegister(MachineBasicBlock *MBB,
     } else {
       BuildMI(*MBB, IP, PPC::LA, 2, R).addReg(TmpReg).addGlobalAddress(GV);
     }
-  
-    // Add the GV to the list of things whose addresses have been taken.
-    TM.AddressTaken.insert(GV);
   } else {
     std::cerr << "Offending constant: " << *C << "\n";
     assert(0 && "Type not handled yet!");
@@ -1857,8 +1854,6 @@ void PPC32ISel::visitCallInst(CallInst &CI) {
     }
     // Emit a CALL instruction with PC-relative displacement.
     TheCall = BuildMI(PPC::CALLpcrel, 1).addGlobalAddress(F, true);
-    // Add it to the set of functions called to be used by the Printer
-    TM.CalledFunctions.insert(F);
   } else {  // Emit an indirect call through the CTR
     unsigned Reg = getReg(CI.getCalledValue());
     BuildMI(BB, PPC::OR, 2, PPC::R12).addReg(Reg).addReg(Reg);
@@ -2646,7 +2641,6 @@ void PPC32ISel::emitDivRemOperation(MachineBasicBlock *MBB,
       Args.push_back(ValueRecord(Op0Reg, Type::FloatTy));
       Args.push_back(ValueRecord(Op1Reg, Type::FloatTy));
       doCall(ValueRecord(ResultReg, Type::FloatTy), TheCall, Args, false);
-      TM.CalledFunctions.insert(fmodfFn);
     }
     return;
   case cFP64:
@@ -2664,7 +2658,6 @@ void PPC32ISel::emitDivRemOperation(MachineBasicBlock *MBB,
       Args.push_back(ValueRecord(Op0Reg, Type::DoubleTy));
       Args.push_back(ValueRecord(Op1Reg, Type::DoubleTy));
       doCall(ValueRecord(ResultReg, Type::DoubleTy), TheCall, Args, false);
-      TM.CalledFunctions.insert(fmodFn);
     }
     return;
   case cLong: {
@@ -2680,7 +2673,6 @@ void PPC32ISel::emitDivRemOperation(MachineBasicBlock *MBB,
     Args.push_back(ValueRecord(Op0Reg, Type::LongTy));
     Args.push_back(ValueRecord(Op1Reg, Type::LongTy));
     doCall(ValueRecord(ResultReg, Type::LongTy), TheCall, Args, false);
-    TM.CalledFunctions.insert(Funcs[NameIdx]);
     return;
   }
   case cByte: case cShort: case cInt:
@@ -3272,7 +3264,6 @@ void PPC32ISel::emitCastOperation(MachineBasicBlock *MBB,
         MachineInstr *TheCall =
           BuildMI(PPC::CALLpcrel, 1).addGlobalAddress(floatFn, true);
         doCall(ValueRecord(DestReg, DestTy), TheCall, Args, false);
-        TM.CalledFunctions.insert(floatFn);
       } else {
         std::vector<ValueRecord> CmpArgs, ClrArgs, SetArgs;
         unsigned ZeroLong = getReg(ConstantUInt::get(SrcTy, 0));
@@ -3295,7 +3286,6 @@ void PPC32ISel::emitCastOperation(MachineBasicBlock *MBB,
         MachineInstr *TheCall =
           BuildMI(PPC::CALLpcrel, 1).addGlobalAddress(__cmpdi2Fn, true);
         doCall(ValueRecord(CondReg, Type::IntTy), TheCall, CmpArgs, false);
-        TM.CalledFunctions.insert(__cmpdi2Fn);
         BuildMI(*MBB, IP, PPC::CMPWI, 2, PPC::CR0).addReg(CondReg).addSImm(0);
         BuildMI(*MBB, IP, PPC::BLE, 2).addReg(PPC::CR0).addMBB(SetMBB);
 
@@ -3305,7 +3295,6 @@ void PPC32ISel::emitCastOperation(MachineBasicBlock *MBB,
         ClrArgs.push_back(ValueRecord(SrcReg, SrcTy));
         TheCall = BuildMI(PPC::CALLpcrel, 1).addGlobalAddress(floatFn, true);
         doCall(ValueRecord(ClrReg, DestTy), TheCall, ClrArgs, false);
-        TM.CalledFunctions.insert(floatFn);
         BuildMI(BB, PPC::B, 1).addMBB(PhiMBB);
         BB->addSuccessor(PhiMBB);
         
@@ -3320,7 +3309,6 @@ void PPC32ISel::emitCastOperation(MachineBasicBlock *MBB,
         SetArgs.push_back(ValueRecord(ShiftedReg, SrcTy));
         TheCall = BuildMI(PPC::CALLpcrel, 1).addGlobalAddress(floatFn, true);
         doCall(ValueRecord(CallReg, DestTy), TheCall, SetArgs, false);
-        TM.CalledFunctions.insert(floatFn);
         unsigned SetOpcode = (DestClass == cFP32) ? PPC::FADDS : PPC::FADD;
         BuildMI(BB, SetOpcode, 2, SetReg).addReg(CallReg).addReg(CallReg);
         BB->addSuccessor(PhiMBB);
@@ -3389,7 +3377,6 @@ void PPC32ISel::emitCastOperation(MachineBasicBlock *MBB,
       MachineInstr *TheCall =
         BuildMI(PPC::CALLpcrel, 1).addGlobalAddress(floatFn, true);
       doCall(ValueRecord(DestReg, DestTy), TheCall, Args, false);
-      TM.CalledFunctions.insert(floatFn);
       return;
     }
 
@@ -3928,7 +3915,6 @@ void PPC32ISel::visitMallocInst(MallocInst &I) {
   MachineInstr *TheCall = 
     BuildMI(PPC::CALLpcrel, 1).addGlobalAddress(mallocFn, true);
   doCall(ValueRecord(getReg(I), I.getType()), TheCall, Args, false);
-  TM.CalledFunctions.insert(mallocFn);
 }
 
 /// visitFreeInst - Free instructions are code gen'd to call the free libc
@@ -3940,7 +3926,6 @@ void PPC32ISel::visitFreeInst(FreeInst &I) {
   MachineInstr *TheCall = 
     BuildMI(PPC::CALLpcrel, 1).addGlobalAddress(freeFn, true);
   doCall(ValueRecord(0, Type::VoidTy), TheCall, Args, false);
-  TM.CalledFunctions.insert(freeFn);
 }
    
 /// createPPC32ISelSimple - This pass converts an LLVM function into a machine

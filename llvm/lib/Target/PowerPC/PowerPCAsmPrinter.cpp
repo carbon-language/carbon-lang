@@ -360,15 +360,14 @@ void PowerPCAsmPrinter::printOp(const MachineOperand &MO, bool IsCallOp) {
     // wary however not to output $stub for external functions whose addresses
     // are taken.  Those should be emitted as $non_lazy_ptr below.
     Function *F = dyn_cast<Function>(GV);
-    if (F && F->isExternal() && IsCallOp && getTM().CalledFunctions.count(F)) {
+    if (F && IsCallOp && F->isExternal()) {
       FnStubs.insert(Name);
       O << "L" << Name << "$stub";
       return;
     }
     
     // External or weakly linked global variables need non-lazily-resolved stubs
-    if ((GV->isExternal() || GV->hasWeakLinkage() || GV->hasLinkOnceLinkage())
-         && getTM().AddressTaken.count(GV)) {
+    if ((GV->isExternal() || GV->hasWeakLinkage() || GV->hasLinkOnceLinkage())){
       if (GV->hasLinkOnceLinkage())
         LinkOnceStubs.insert(Name);
       else
