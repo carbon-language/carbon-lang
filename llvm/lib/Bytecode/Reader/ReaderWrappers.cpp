@@ -102,7 +102,7 @@ BytecodeBufferReader::BytecodeBufferReader(const unsigned char *Buf,
 {
   // If not aligned, allocate a new buffer to hold the bytecode...
   const unsigned char *ParseBegin = 0;
-  if ((intptr_t)Buf & 3) {
+  if (reinterpret_cast<uint64_t>(Buf) & 3) {
     Buffer = new unsigned char[Length+4];
     unsigned Offset = 4 - ((intptr_t)Buffer & 3);   // Make sure it's aligned
     ParseBegin = Buffer + Offset;

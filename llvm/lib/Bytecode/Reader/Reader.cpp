@@ -462,7 +462,8 @@ Value* BytecodeReader::getGlobalTableValue(unsigned TyID, unsigned SlotNo) {
       error("Corrupt compaction table entry!"
             + utostr(TyID) + ", " + utostr(SlotNo) + ": " 
             + utostr(ModuleValues.size()) + ", "
-            + utohexstr(intptr_t((void*)ModuleValues[TyID])) + ", "
+            + utohexstr(reinterpret_cast<uint64_t>(((void*)ModuleValues[TyID])))
+            + ", "
             + utostr(ModuleValues[TyID]->size()));
   }
   return ModuleValues[TyID]->getOperand(SlotNo);
