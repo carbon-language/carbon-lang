@@ -47,6 +47,7 @@ namespace DS { // FIXME: After the paper, this should get cleaned up
 class DSNodeHandle {
   DSNode *N;
   unsigned Offset;
+  void operator==(const DSNode *N);  // DISALLOW, use to promote N to nodehandle
 public:
   // Allow construction, destruction, and assignment...
   DSNodeHandle(DSNode *n = 0, unsigned offs = 0) : N(0), Offset(offs) {
@@ -103,19 +104,12 @@ inline void swap(DSNodeHandle &NH1, DSNodeHandle &NH2) { NH1.swap(NH2); }
 /// DSCallSite - Representation of a call site via its call instruction,
 /// the DSNode handle for the callee function (or function pointer), and
 /// the DSNode handles for the function arguments.
-///
-/// One unusual aspect of this callsite record is the ResolvingCaller member.
-/// If this is non-null, then it indicates the function that allowed a call-site
-/// to finally be resolved.  Because of indirect calls, this function may not
-/// actually be the function that contains the Call instruction itself.  This is
-/// used by the BU and TD passes to communicate.
 /// 
 class DSCallSite {
   CallInst    *Inst;                    // Actual call site
   DSNodeHandle RetVal;                  // Returned value
   DSNodeHandle Callee;                  // The function node called
   std::vector<DSNodeHandle> CallArgs;   // The pointer arguments
-  Function    *ResolvingCaller;         // See comments above
 
   static void InitNH(DSNodeHandle &NH, const DSNodeHandle &Src,
                      const hash_map<const DSNode*, DSNode*> &NodeMap) {
@@ -146,14 +140,13 @@ public:
   ///
   DSCallSite(CallInst &inst, const DSNodeHandle &rv, const DSNodeHandle &callee,
              std::vector<DSNodeHandle> &Args)
-    : Inst(&inst), RetVal(rv), Callee(callee), ResolvingCaller(0) {
+    : Inst(&inst), RetVal(rv), Callee(callee) {
     Args.swap(CallArgs);
   }
 
   DSCallSite(const DSCallSite &DSCS)   // Simple copy ctor
     : Inst(DSCS.Inst), RetVal(DSCS.RetVal),
-      Callee(DSCS.Callee), CallArgs(DSCS.CallArgs),
-      ResolvingCaller(DSCS.ResolvingCaller) {}
+      Callee(DSCS.Callee), CallArgs(DSCS.CallArgs) {}
 
   /// Mapping copy constructor - This constructor takes a preexisting call site
   /// to copy plus a map that specifies how the links should be transformed.
@@ -168,7 +161,6 @@ public:
     CallArgs.resize(FromCall.CallArgs.size());
     for (unsigned i = 0, e = FromCall.CallArgs.size(); i != e; ++i)
       InitNH(CallArgs[i], FromCall.CallArgs[i], NodeMap);
-    ResolvingCaller = FromCall.ResolvingCaller;
   }
 
   // Accessor functions...
@@ -181,9 +173,6 @@ public:
   void setCallee(const DSNodeHandle &H) { Callee = H; }
 
   unsigned            getNumPtrArgs() const { return CallArgs.size(); }
-
-  Function           *getResolvingCaller() const { return ResolvingCaller; }
-  void setResolvingCaller(Function *F) { ResolvingCaller = F; }
 
   DSNodeHandle &getPtrArg(unsigned i) {
     assert(i < CallArgs.size() && "Argument to getPtrArgNode is out of range!");
@@ -200,7 +189,6 @@ public:
       std::swap(RetVal, CS.RetVal);
       std::swap(Callee, CS.Callee);
       std::swap(CallArgs, CS.CallArgs);
-      std::swap(ResolvingCaller, CS.ResolvingCaller);
     }
   }
 
