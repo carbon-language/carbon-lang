@@ -54,6 +54,9 @@ namespace {
       setOperationAction(ISD::SEXTLOAD, MVT::i1, Expand);
       setOperationAction(ISD::SEXTLOAD, MVT::i8, Expand);
 
+      addLegalFPImmediate(+0.0); // Necessary for FSEL
+      addLegalFPImmediate(-0.0); // 
+
       computeRegisterProperties();
     }
 
@@ -478,7 +481,7 @@ public:
 /// placed in Imm.
 ///
 static unsigned canUseAsImmediateForOpcode(SDOperand N, unsigned Opcode,
-                                           unsigned& Imm) {
+                                           unsigned& Imm, bool U = false) {
   if (N.getOpcode() != ISD::Constant) return 0;
 
   int v = (int)cast<ConstantSDNode>(N)->getSignExtended();
@@ -498,8 +501,32 @@ static unsigned canUseAsImmediateForOpcode(SDOperand N, unsigned Opcode,
   case ISD::MUL:
     if (v <= 32767 && v >= -32768) { Imm = v & 0xFFFF; return 1; }
     break;
+  case ISD::SETCC:
+    if (U && (v >= 0 && v <= 65535)) { Imm = v & 0xFFFF; return 1; }
+    if (!U && (v <= 32767 && v >= -32768)) { Imm = v & 0xFFFF; return 1; }
+    break;
   }
   return 0;
+}
+
+/// getBCCForSetCC - Returns the PowerPC condition branch mnemonic corresponding
+/// to Condition.  If the Condition is unordered or unsigned, the bool argument
+/// U is set to true, otherwise it is set to false.
+static unsigned getBCCForSetCC(unsigned Condition, bool& U) {
+  U = false;
+  switch (Condition) {
+  default: assert(0 && "Unknown condition!"); abort();
+  case ISD::SETEQ:  return PPC::BEQ;
+  case ISD::SETNE:  return PPC::BNE;
+  case ISD::SETULT: U = true;
+  case ISD::SETLT:  return PPC::BLT;
+  case ISD::SETULE: U = true;
+  case ISD::SETLE:  return PPC::BLE;
+  case ISD::SETUGT: U = true;
+  case ISD::SETGT:  return PPC::BGT;
+  case ISD::SETUGE: U = true;
+  case ISD::SETGE:  return PPC::BGE;
+  }
 }
 }
 
@@ -539,15 +566,39 @@ void ISel::SelectBranchCC(SDOperand N)
   assert(N.getOpcode() == ISD::BRCOND && "Not a BranchCC???");
   MachineBasicBlock *Dest = 
     cast<BasicBlockSDNode>(N.getOperand(2))->getBasicBlock();
-  unsigned Opc;
-  
+
+  unsigned Opc, Tmp1, Tmp2;
   Select(N.getOperand(0));  //chain
-  SDOperand CC = N.getOperand(1);
-  
-  //Give up and do the stupid thing
-  unsigned Tmp1 = SelectExpr(CC);
-  BuildMI(BB, PPC::CMPLWI, 2, PPC::CR0).addReg(Tmp1).addImm(0);
-  BuildMI(BB, PPC::BNE, 2).addReg(PPC::CR0).addMBB(Dest);
+
+  // If the first operand to the select is a SETCC node, then we can fold it
+  // into the branch that selects which value to return.
+  SetCCSDNode* SetCC = dyn_cast<SetCCSDNode>(N.getOperand(1).Val);
+  if (SetCC && N.getOperand(1).getOpcode() == ISD::SETCC &&
+      MVT::isInteger(SetCC->getOperand(0).getValueType())) {
+    bool U;
+    Opc = getBCCForSetCC(SetCC->getCondition(), U);
+    Tmp1 = SelectExpr(SetCC->getOperand(0));
+
+    // Pass the optional argument U to canUseAsImmediateForOpcode for SETCC,
+    // so that it knows whether the SETCC immediate range is signed or not.
+    if (1 == canUseAsImmediateForOpcode(SetCC->getOperand(1), ISD::SETCC, 
+                                        Tmp2, U)) {
+      if (U)
+        BuildMI(BB, PPC::CMPLWI, 2, PPC::CR0).addReg(Tmp1).addImm(Tmp2);
+      else
+        BuildMI(BB, PPC::CMPWI, 2, PPC::CR0).addReg(Tmp1).addSImm(Tmp2);
+    } else {
+      Tmp2 = SelectExpr(SetCC->getOperand(1));
+      BuildMI(BB, U ? PPC::CMPLW : PPC::CMPW, 2, PPC::CR0).addReg(Tmp1)
+      .addReg(Tmp2);
+    }
+  } else {
+    Tmp1 = SelectExpr(N.getOperand(1));
+    BuildMI(BB, PPC::CMPLWI, 2, PPC::CR0).addReg(Tmp1).addImm(0);
+    Opc = PPC::BNE;
+  }
+
+  BuildMI(BB, Opc, 2).addReg(PPC::CR0).addMBB(Dest);
   return;
 }
 
@@ -565,10 +616,77 @@ unsigned ISel::SelectExprFP(SDOperand N, unsigned Result)
     assert(0 && "Node not handled!\n");
 
   case ISD::SELECT: {
-    Tmp1 = SelectExpr(N.getOperand(0)); //Cond
-
-    // FIXME: generate FSEL here
-
+    // Attempt to generate FSEL.  We can do this whenever we have an FP result,
+    // and an FP comparison in the SetCC node.
+    SetCCSDNode* SetCC = dyn_cast<SetCCSDNode>(N.getOperand(0).Val);
+    if (SetCC && N.getOperand(0).getOpcode() == ISD::SETCC &&
+        !MVT::isInteger(SetCC->getOperand(0).getValueType()) &&
+        SetCC->getCondition() != ISD::SETEQ &&
+        SetCC->getCondition() != ISD::SETNE) {
+      MVT::ValueType VT = SetCC->getOperand(0).getValueType();
+      Tmp1 = SelectExpr(SetCC->getOperand(0));   // Val to compare against
+      unsigned TV = SelectExpr(N.getOperand(1)); // Use if TRUE
+      unsigned FV = SelectExpr(N.getOperand(2)); // Use if FALSE
+      
+      ConstantFPSDNode *CN = dyn_cast<ConstantFPSDNode>(SetCC->getOperand(1));
+      if (CN && (CN->isExactlyValue(-0.0) || CN->isExactlyValue(0.0))) {
+        switch(SetCC->getCondition()) {
+        default: assert(0 && "Invalid FSEL condition"); abort();
+        case ISD::SETULT:
+        case ISD::SETLT:
+          BuildMI(BB, PPC::FSEL, 3, Result).addReg(Tmp1).addReg(FV).addReg(TV);
+          return Result;
+        case ISD::SETUGE:
+        case ISD::SETGE:
+          BuildMI(BB, PPC::FSEL, 3, Result).addReg(Tmp1).addReg(TV).addReg(FV);
+          return Result;
+        case ISD::SETUGT:
+        case ISD::SETGT: {
+          Tmp2 = MakeReg(VT);
+          BuildMI(BB, PPC::FNEG, 1, Tmp2).addReg(Tmp1);
+          BuildMI(BB, PPC::FSEL, 3, Result).addReg(Tmp2).addReg(FV).addReg(TV);
+          return Result;
+        }
+        case ISD::SETULE:
+        case ISD::SETLE: {
+          Tmp2 = MakeReg(VT);
+          BuildMI(BB, PPC::FNEG, 1, Tmp2).addReg(Tmp1);
+          BuildMI(BB, PPC::FSEL, 3, Result).addReg(Tmp2).addReg(TV).addReg(FV);
+          return Result;
+        }
+        }
+      } else {
+        Opc = (MVT::f64 == VT) ? PPC::FSUB : PPC::FSUBS;
+        Tmp2 = SelectExpr(SetCC->getOperand(1));
+        Tmp3 =  MakeReg(VT);
+        switch(SetCC->getCondition()) {
+        default: assert(0 && "Invalid FSEL condition"); abort();
+        case ISD::SETULT:
+        case ISD::SETLT:
+          BuildMI(BB, Opc, 2, Tmp3).addReg(Tmp1).addReg(Tmp2);
+          BuildMI(BB, PPC::FSEL, 3, Result).addReg(Tmp3).addReg(FV).addReg(TV);
+          return Result;
+        case ISD::SETUGE:
+        case ISD::SETGE:
+          BuildMI(BB, Opc, 2, Tmp3).addReg(Tmp1).addReg(Tmp2);
+          BuildMI(BB, PPC::FSEL, 3, Result).addReg(Tmp3).addReg(TV).addReg(FV);
+          return Result;
+        case ISD::SETUGT:
+        case ISD::SETGT:
+          BuildMI(BB, Opc, 2, Tmp3).addReg(Tmp2).addReg(Tmp1);
+          BuildMI(BB, PPC::FSEL, 3, Result).addReg(Tmp3).addReg(FV).addReg(TV);
+          return Result;
+        case ISD::SETULE:
+        case ISD::SETLE:
+          BuildMI(BB, Opc, 2, Tmp3).addReg(Tmp2).addReg(Tmp1);
+          BuildMI(BB, PPC::FSEL, 3, Result).addReg(Tmp3).addReg(TV).addReg(FV);
+          return Result;
+        }
+      }
+      assert(0 && "Should never get here");
+      return 0;
+    }
+    
     // Create an iterator with which to insert the MBB for copying the false 
     // value and the MBB to hold the PHI instruction for this SetCC.
     MachineBasicBlock *thisMBB = BB;
@@ -582,6 +700,7 @@ unsigned ISel::SelectExprFP(SDOperand N, unsigned Result)
     //   cmpTY cr0, r1, r2
     //   bCC copy1MBB
     //   fallthrough --> copy0MBB
+    Tmp1 = SelectExpr(N.getOperand(0)); //Cond
     BuildMI(BB, PPC::CMPLWI, 2, PPC::CR0).addReg(Tmp1).addImm(0);
     MachineBasicBlock *copy0MBB = new MachineBasicBlock(LLVM_BB);
     MachineBasicBlock *sinkMBB = new MachineBasicBlock(LLVM_BB);
@@ -1085,24 +1204,29 @@ unsigned ISel::SelectExpr(SDOperand N) {
       bool U = false;
       bool IsInteger = MVT::isInteger(SetCC->getOperand(0).getValueType());
       
-      switch (SetCC->getCondition()) {
-      default: Node->dump(); assert(0 && "Unknown comparison!");
-      case ISD::SETEQ:  Opc = PPC::BEQ; break;
-      case ISD::SETNE:  Opc = PPC::BNE; break;
-      case ISD::SETULT: U = true;
-      case ISD::SETLT:  Opc = PPC::BLT; break;
-      case ISD::SETULE: U = true;
-      case ISD::SETLE:  Opc = PPC::BLE; break;
-      case ISD::SETUGT: U = true;
-      case ISD::SETGT:  Opc = PPC::BGT; break;
-      case ISD::SETUGE: U = true;
-      case ISD::SETGE:  Opc = PPC::BGE; break;
-      }
-      
       // FIXME: Is there a situation in which we would ever need to emit fcmpo?
       static const unsigned CompareOpcodes[] = 
         { PPC::FCMPU, PPC::FCMPU, PPC::CMPW, PPC::CMPLW };
-      unsigned CompareOpc = CompareOpcodes[2 * IsInteger + U];
+
+      // Set the branch opcode to use below
+      Opc = getBCCForSetCC(SetCC->getCondition(), U);
+
+      // Try and use an integer compare with immediate, if applicable.  
+      // Normal setcc uses the sign-extended immediate range, unsigned setcc
+      // uses the zero extended immediate range.
+      if (IsInteger && 
+          1 == canUseAsImmediateForOpcode(N.getOperand(1), opcode, Tmp2, U)) {
+        Tmp1 = SelectExpr(N.getOperand(0));
+        if (U)
+          BuildMI(BB, PPC::CMPLWI, 2, PPC::CR0).addReg(Tmp1).addImm(Tmp2);
+        else
+          BuildMI(BB, PPC::CMPWI, 2, PPC::CR0).addReg(Tmp1).addSImm(Tmp2);
+      } else {
+        Tmp1 = SelectExpr(N.getOperand(0));
+        Tmp2 = SelectExpr(N.getOperand(1));
+        unsigned CompareOpc = CompareOpcodes[2 * IsInteger + U];
+        BuildMI(BB, CompareOpc, 2, PPC::CR0).addReg(Tmp1).addReg(Tmp2);
+      }
       
       // Create an iterator with which to insert the MBB for copying the false 
       // value and the MBB to hold the PHI instruction for this SetCC.
@@ -1116,9 +1240,6 @@ unsigned ISel::SelectExpr(SDOperand N) {
       //   cmpTY cr0, r1, r2
       //   %TrueValue = li 1
       //   bCC sinkMBB
-      Tmp1 = SelectExpr(N.getOperand(0));
-      Tmp2 = SelectExpr(N.getOperand(1));
-      BuildMI(BB, CompareOpc, 2, PPC::CR0).addReg(Tmp1).addReg(Tmp2);
       unsigned TrueValue = MakeReg(MVT::i32);
       BuildMI(BB, PPC::LI, 1, TrueValue).addSImm(1);
       MachineBasicBlock *copy0MBB = new MachineBasicBlock(LLVM_BB);
@@ -1152,8 +1273,6 @@ unsigned ISel::SelectExpr(SDOperand N) {
     return 0;
     
   case ISD::SELECT: {
-    Tmp1 = SelectExpr(N.getOperand(0)); //Cond
-
     // Create an iterator with which to insert the MBB for copying the false 
     // value and the MBB to hold the PHI instruction for this SetCC.
     MachineBasicBlock *thisMBB = BB;
@@ -1161,17 +1280,44 @@ unsigned ISel::SelectExpr(SDOperand N) {
     ilist<MachineBasicBlock>::iterator It = BB;
     ++It;
 
+    // If the first operand to the select is a SETCC node, then we can fold it
+    // into the branch that selects which value to return.
+    SetCCSDNode* SetCC = dyn_cast<SetCCSDNode>(N.getOperand(0).Val);
+    if (SetCC && N.getOperand(0).getOpcode() == ISD::SETCC &&
+        MVT::isInteger(SetCC->getOperand(0).getValueType())) {
+      bool U;
+      Opc = getBCCForSetCC(SetCC->getCondition(), U);
+      Tmp1 = SelectExpr(SetCC->getOperand(0));
+
+      // Pass the optional argument U to canUseAsImmediateForOpcode for SETCC,
+      // so that it knows whether the SETCC immediate range is signed or not.
+      if (1 == canUseAsImmediateForOpcode(SetCC->getOperand(1), ISD::SETCC, 
+                                          Tmp2, U)) {
+        if (U)
+          BuildMI(BB, PPC::CMPLWI, 2, PPC::CR0).addReg(Tmp1).addImm(Tmp2);
+        else
+          BuildMI(BB, PPC::CMPWI, 2, PPC::CR0).addReg(Tmp1).addSImm(Tmp2);
+      } else {
+        Tmp2 = SelectExpr(SetCC->getOperand(1));
+        BuildMI(BB, U ? PPC::CMPLW : PPC::CMPW, 2, PPC::CR0).addReg(Tmp1)
+          .addReg(Tmp2);
+      }
+    } else {
+      Tmp1 = SelectExpr(N.getOperand(0)); //Cond
+      BuildMI(BB, PPC::CMPLWI, 2, PPC::CR0).addReg(Tmp1).addImm(0);
+      Opc = PPC::BNE;
+    }
+
     //  thisMBB:
     //  ...
     //   TrueVal = ...
     //   cmpTY cr0, r1, r2
     //   bCC copy1MBB
     //   fallthrough --> copy0MBB
-    BuildMI(BB, PPC::CMPLWI, 2, PPC::CR0).addReg(Tmp1).addImm(0);
     MachineBasicBlock *copy0MBB = new MachineBasicBlock(LLVM_BB);
     MachineBasicBlock *sinkMBB = new MachineBasicBlock(LLVM_BB);
     unsigned TrueValue = SelectExpr(N.getOperand(1)); //Use if TRUE
-    BuildMI(BB, PPC::BNE, 2).addReg(PPC::CR0).addMBB(sinkMBB);
+    BuildMI(BB, Opc, 2).addReg(PPC::CR0).addMBB(sinkMBB);
     MachineFunction *F = BB->getParent();
     F->getBasicBlockList().insert(It, copy0MBB);
     F->getBasicBlockList().insert(It, sinkMBB);
