@@ -2,24 +2,19 @@
 //
 // This pass is designed to be a very quick global transformation that
 // eliminates global common subexpressions from a function.  It does this by
-// examining the SSA value graph of the function, instead of doing slow, dense,
-// bit-vector computations.
+// using an existing value numbering implementation to identify the common
+// subexpressions, eliminating them when possible.
 //
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/Scalar.h"
-#include "llvm/InstrTypes.h"
 #include "llvm/iMemory.h"
+#include "llvm/Type.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/ValueNumbering.h"
 #include "llvm/Support/InstIterator.h"
-#include "llvm/Support/CFG.h"
-#include "llvm/Type.h"
 #include "Support/StatisticReporter.h"
 #include <algorithm>
-using std::set;
-using std::map;
-
 
 namespace {
   Statistic<> NumInstRemoved("gcse\t\t- Number of instructions removed");
@@ -28,7 +23,7 @@ namespace {
                              "to non-instruction values");
 
   class GCSE : public FunctionPass {
-    set<Instruction*>       WorkList;
+    std::set<Instruction*>  WorkList;
     DominatorSet           *DomSetInfo;
 #if 0
     ImmediateDominators    *ImmDominator;
