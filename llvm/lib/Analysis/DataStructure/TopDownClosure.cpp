@@ -100,7 +100,7 @@ bool TDDataStructures::runOnModule(Module &M) {
 
   // Visit each of the graphs in reverse post-order now!
   while (!PostOrder.empty()) {
-    inlineGraphIntoCallees(*PostOrder.back());
+    InlineCallersIntoGraph(*PostOrder.back());
     PostOrder.pop_back();
   }
 
@@ -171,15 +171,82 @@ void TDDataStructures::releaseMyMemory() {
   GlobalsGraph = 0;
 }
 
-void TDDataStructures::inlineGraphIntoCallees(DSGraph &Graph) {
-  // Recompute the Incomplete markers and eliminate unreachable nodes.
-  Graph.maskIncompleteMarkers();
+/// InlineCallersIntoGraph - Inline all of the callers of the specified DS graph
+/// into it, then recompute completeness of nodes in the resultant graph.
+void TDDataStructures::InlineCallersIntoGraph(DSGraph &DSG) {
+  // Inline caller graphs into this graph.  First step, get the list of call
+  // sites that call into this graph.
+  std::vector<CallerCallEdge> EdgesFromCaller;
+  std::map<DSGraph*, std::vector<CallerCallEdge> >::iterator
+    CEI = CallerEdges.find(&DSG); 
+  if (CEI != CallerEdges.end()) {
+    std::swap(CEI->second, EdgesFromCaller);
+    CallerEdges.erase(CEI);
+  }
+  
+  // Sort the caller sites to provide a by-caller-graph ordering.
+  std::sort(EdgesFromCaller.begin(), EdgesFromCaller.end());
+
+
+  // Merge information from the globals graph into this graph.
+  // FIXME: is this necessary?
+  {
+    DSGraph &GG = *DSG.getGlobalsGraph();
+    ReachabilityCloner RC(DSG, GG,
+                          DSGraph::DontCloneCallNodes |
+                          DSGraph::DontCloneAuxCallNodes);
+    for (DSScalarMap::global_iterator
+           GI = DSG.getScalarMap().global_begin(),
+           E = DSG.getScalarMap().global_end(); GI != E; ++GI)
+      RC.getClonedNH(GG.getNodeForValue(*GI));
+
+
+  }
+
+  DEBUG(std::cerr << "[TD] Inlining callers into '" << DSG.getFunctionNames()
+        << "'\n");
+
+  // Iteratively inline caller graphs into this graph.
+  while (!EdgesFromCaller.empty()) {
+    DSGraph &CallerGraph = *EdgesFromCaller.back().CallerGraph;
+
+    // Iterate through all of the call sites of this graph, cloning and merging
+    // any nodes required by the call.
+    ReachabilityCloner RC(DSG, CallerGraph,
+                          DSGraph::DontCloneCallNodes |
+                          DSGraph::DontCloneAuxCallNodes);
+
+    // Inline all call sites from this caller graph.
+    do {
+      const DSCallSite &CS = *EdgesFromCaller.back().CS;
+      Function &CF = *EdgesFromCaller.back().CalledFunction;
+      DEBUG(std::cerr << "   [TD] Inlining graph for call to Fn '"
+            << CF.getName() << "' from Fn '"
+            << CS.getCallSite().getInstruction()->
+                            getParent()->getParent()->getName()
+            << "': " << CF.getFunctionType()->getNumParams()
+            << " args\n");
+      
+      // Get the formal argument and return nodes for the called function and
+      // merge them with the cloned subgraph.
+      RC.mergeCallSite(DSG.getCallSiteForArguments(CF), CS);
+      ++NumTDInlines;
+
+      EdgesFromCaller.pop_back();
+    } while (!EdgesFromCaller.empty() &&
+             EdgesFromCaller.back().CallerGraph == &CallerGraph);
+  }
+
+
+  // Next, now that this graph is finalized, we need to recompute the
+  // incompleteness markers for this graph and remove unreachable nodes.
+  DSG.maskIncompleteMarkers();
 
   // If any of the functions has incomplete incoming arguments, don't mark any
   // of them as complete.
   bool HasIncompleteArgs = false;
-  for (DSGraph::retnodes_iterator I = Graph.retnodes_begin(),
-         E = Graph.retnodes_end(); I != E; ++I)
+  for (DSGraph::retnodes_iterator I = DSG.retnodes_begin(),
+         E = DSG.retnodes_end(); I != E; ++I)
     if (ArgsRemainIncomplete.count(I->first)) {
       HasIncompleteArgs = true;
       break;
@@ -188,38 +255,23 @@ void TDDataStructures::inlineGraphIntoCallees(DSGraph &Graph) {
   // Recompute the Incomplete markers.  Depends on whether args are complete
   unsigned Flags
     = HasIncompleteArgs ? DSGraph::MarkFormalArgs : DSGraph::IgnoreFormalArgs;
-  Graph.markIncompleteNodes(Flags | DSGraph::IgnoreGlobals);
+  DSG.markIncompleteNodes(Flags | DSGraph::IgnoreGlobals);
 
   // Delete dead nodes.  Treat globals that are unreachable as dead also.
-  Graph.removeDeadNodes(DSGraph::RemoveUnreachableGlobals);
+  DSG.removeDeadNodes(DSGraph::RemoveUnreachableGlobals);
 
-  // We are done with computing the current TD Graph! Now move on to
-  // inlining the current graph into the graphs for its callees, if any.
-  // 
-  if (Graph.fc_begin() == Graph.fc_end()) {
-    DEBUG(std::cerr << "  [TD] No callees for: " << Graph.getFunctionNames()
-                    << "\n");
-    return;
-  }
-
-  // Now that we have information about all of the callees, propagate the
-  // current graph into the callees.  Clone only the reachable subgraph at
-  // each call-site, not the entire graph (even though the entire graph
-  // would be cloned only once, this should still be better on average).
-  //
-  DEBUG(std::cerr << "  [TD] Inlining '" << Graph.getFunctionNames() <<"' into "
-                  << Graph.getFunctionCalls().size() << " call nodes.\n");
+  // We are done with computing the current TD Graph!  Finally, before we can
+  // finish processing this function, we figure out which functions it calls and
+  // records these call graph edges, so that we have them when we process the
+  // callee graphs.
+  if (DSG.fc_begin() == DSG.fc_end()) return;
 
   const BUDataStructures::ActualCalleesTy &ActualCallees =
     getAnalysis<BUDataStructures>().getActualCallees();
 
-  // Loop over all the call sites and all the callees at each call site.  Build
-  // a mapping from called DSGraph's to the call sites in this function that
-  // invoke them.  This is useful because we can be more efficient if there are
-  // multiple call sites to the callees in the graph from this caller.
-  std::multimap<DSGraph*, std::pair<Function*, const DSCallSite*> > CallSites;
-
-  for (DSGraph::fc_iterator CI = Graph.fc_begin(), E = Graph.fc_end();
+  // Loop over all the call sites and all the callees at each call site, and add
+  // edges to the CallerEdges structure for each callee.
+  for (DSGraph::fc_iterator CI = DSG.fc_begin(), E = DSG.fc_end();
        CI != E; ++CI) {
     Instruction *CallI = CI->getCallSite().getInstruction();
     // For each function in the invoked function list at this call site...
@@ -230,50 +282,13 @@ void TDDataStructures::inlineGraphIntoCallees(DSGraph &Graph) {
     for (BUDataStructures::ActualCalleesTy::const_iterator I = IP.first;
          I != IP.second; ++I) {
       DSGraph& CalleeGraph = getDSGraph(*I->second);
-      if (&CalleeGraph != &Graph)
-        CallSites.insert(std::make_pair(&CalleeGraph,
-                                        std::make_pair(I->second, &*CI)));
+      if (&CalleeGraph != &DSG)
+        CallerEdges[&CalleeGraph].push_back(CallerCallEdge(&DSG, &*CI,
+                                                           I->second));
     }
   }
-
-  // Now that we built the mapping, actually perform the inlining a callee graph
-  // at a time.
-  std::multimap<DSGraph*,std::pair<Function*,const DSCallSite*> >::iterator CSI;
-  for (CSI = CallSites.begin(); CSI != CallSites.end(); ) {
-    DSGraph &CalleeGraph = *CSI->first;
-    // Iterate through all of the call sites of this graph, cloning and merging
-    // any nodes required by the call.
-    ReachabilityCloner RC(CalleeGraph, Graph, 0);
-
-    // Clone over any global nodes that appear in both graphs.
-    for (DSScalarMap::global_iterator
-           SI = CalleeGraph.getScalarMap().global_begin(),
-           SE = CalleeGraph.getScalarMap().global_end(); SI != SE; ++SI) {
-      DSScalarMap::const_iterator GI = Graph.getScalarMap().find(*SI);
-      if (GI != Graph.getScalarMap().end())
-        RC.merge(CalleeGraph.getNodeForValue(*SI), GI->second);
-    }
-
-    // Loop over all of the distinct call sites in the caller of the callee.
-    for (; CSI != CallSites.end() && CSI->first == &CalleeGraph; ++CSI) {
-      Function &CF = *CSI->second.first;
-      const DSCallSite &CS = *CSI->second.second;
-      DEBUG(std::cerr << "     [TD] Resolving arguments for callee graph '"
-            << CalleeGraph.getFunctionNames()
-            << "': " << CF.getFunctionType()->getNumParams()
-            << " args\n          at call site (DSCallSite*) 0x" << &CS << "\n");
-      
-      // Get the formal argument and return nodes for the called function and
-      // merge them with the cloned subgraph.
-      RC.mergeCallSite(CalleeGraph.getCallSiteForArguments(CF), CS);
-      ++NumTDInlines;
-    }
-  }
-
-  DEBUG(std::cerr << "  [TD] Done inlining into callees for: "
-        << Graph.getFunctionNames() << " [" << Graph.getGraphSize() << "+"
-        << Graph.getFunctionCalls().size() << "]\n");
 }
+
 
 static const Function *getFnForValue(const Value *V) {
   if (const Instruction *I = dyn_cast<Instruction>(V))
