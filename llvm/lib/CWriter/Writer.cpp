@@ -45,20 +45,10 @@ static std::string getConstArrayStrValue(const Constant* CPV) {
   const Type *ETy = cast<ArrayType>(CPV->getType())->getElementType();
   bool isString = (ETy == Type::SByteTy || ETy == Type::UByteTy);
 
-  if (ETy == Type::SByteTy) {
-    for (unsigned i = 0; i < CPV->getNumOperands(); ++i)
-      if (ETy == Type::SByteTy &&
-          cast<ConstantSInt>(CPV->getOperand(i))->getValue() < 0) {
-        isString = false;
-        break;
-      }
-  }
-  if (isString) {
-    // Make sure the last character is a null char, as automatically added by C
-    if (CPV->getNumOperands() == 0 ||
-        !cast<Constant>(*(CPV->op_end()-1))->isNullValue())
-      isString = false;
-  }
+  // Make sure the last character is a null char, as automatically added by C
+  if (CPV->getNumOperands() == 0 ||
+      !cast<Constant>(*(CPV->op_end()-1))->isNullValue())
+    isString = false;
   
   if (isString) {
     Result = "\"";
@@ -101,30 +91,21 @@ static std::string getConstArrayStrValue(const Constant* CPV) {
 
 static std::string getConstStrValue(const Constant* CPV) {
   switch (CPV->getType()->getPrimitiveID()) {
-  case Type::BoolTyID:
-    return CPV == ConstantBool::False ? "0" : "1";
+  case Type::BoolTyID:  return CPV == ConstantBool::False ? "0" : "1";
   case Type::SByteTyID:
   case Type::ShortTyID:
-  case Type::IntTyID:
-    return itostr(cast<ConstantSInt>(CPV)->getValue());
-  case Type::LongTyID:
-    return itostr(cast<ConstantSInt>(CPV)->getValue()) + "ll";
+  case Type::IntTyID:   return itostr(cast<ConstantSInt>(CPV)->getValue());
+  case Type::LongTyID:  return itostr(cast<ConstantSInt>(CPV)->getValue())+"ll";
 
   case Type::UByteTyID:
-    return utostr(cast<ConstantUInt>(CPV)->getValue());
-  case Type::UShortTyID:
-    return utostr(cast<ConstantUInt>(CPV)->getValue());
-  case Type::UIntTyID:
-    return utostr(cast<ConstantUInt>(CPV)->getValue())+"u";
-  case Type::ULongTyID:
-    return utostr(cast<ConstantUInt>(CPV)->getValue())+"ull";
+  case Type::UShortTyID:return utostr(cast<ConstantUInt>(CPV)->getValue());
+  case Type::UIntTyID:  return utostr(cast<ConstantUInt>(CPV)->getValue())+"u";
+  case Type::ULongTyID:return utostr(cast<ConstantUInt>(CPV)->getValue())+"ull";
 
   case Type::FloatTyID:
-  case Type::DoubleTyID:
-    return ftostr(cast<ConstantFP>(CPV)->getValue());
+  case Type::DoubleTyID: return ftostr(cast<ConstantFP>(CPV)->getValue());
 
-  case Type::ArrayTyID:
-    return getConstArrayStrValue(CPV);
+  case Type::ArrayTyID:  return getConstArrayStrValue(CPV);
 
   case Type::StructTyID: {
     std::string Result = "{";
@@ -192,8 +173,7 @@ static string calcTypeNameVar(const Type *Ty,
 	Result += ", ";
       Result += "...";
     }
-    Result += ")";
-    break;
+    return Result + ")";
   }
   case Type::StructTyID: {
     const StructType *STy = cast<const StructType>(Ty);
@@ -205,33 +185,30 @@ static string calcTypeNameVar(const Type *Ty,
       Result += "  " +calcTypeNameVar(*I, TypeNames, "field" + utostr(indx++));
       Result += ";\n";
     }
-    Result += "}";
-    break;
+    return Result + "}";
   }  
 
   case Type::PointerTyID: {
-    Result = calcTypeNameVar(cast<const PointerType>(Ty)->getElementType(), 
-			     TypeNames, "*" + NameSoFar);
-    break;
+    return calcTypeNameVar(cast<const PointerType>(Ty)->getElementType(), 
+                           TypeNames, "*" + NameSoFar);
   }
   
   case Type::ArrayTyID: {
     const ArrayType *ATy = cast<const ArrayType>(Ty);
     int NumElements = ATy->getNumElements();
-    Result = calcTypeNameVar(ATy->getElementType(), TypeNames, 
-			     NameSoFar + "[" + itostr(NumElements) + "]");
-    break;
+    return calcTypeNameVar(ATy->getElementType(), TypeNames, 
+                           NameSoFar + "[" + itostr(NumElements) + "]");
   }
   default:
     assert(0 && "Unhandled case in getTypeProps!");
-    Result = "<error>";
+    abort();
   }
 
   return Result;
 }
 
 namespace {
-  class CWriter {
+  class CWriter : public InstVisitor<CWriter> {
     ostream& Out; 
     SlotCalculator &Table;
     const Module *TheModule;
@@ -254,8 +231,8 @@ namespace {
     void writeOperand(const Value *Operand);
 
     string getValueName(const Value *V);
-  private :
 
+  private :
     void printModule(Module *M);
     void printSymbolTable(const SymbolTable &ST);
     void printGlobal(const GlobalVariable *GV);
@@ -263,306 +240,41 @@ namespace {
     void printFunctionDecl(const Function *F); // Print just the forward decl
     
     void printFunction(Function *);
-  };
-  /* END class CWriter */
-}
 
-namespace {
-  /* CLASS CInstPrintVisitor */
+    // Instruction visitation functions
+    friend class InstVisitor<CWriter>;
 
-  class CInstPrintVisitor: public InstVisitor<CInstPrintVisitor> {
-    CWriter& CW;
-    SlotCalculator& Table;
-    ostream &Out;
+    void visitReturnInst(ReturnInst *I);
+    void visitBranchInst(BranchInst *I);
 
-    void outputLValue(Instruction *);
-    void printBranchToBlock(BasicBlock *CurBlock, BasicBlock *SuccBlock,
-                            unsigned Indent);
-    void printIndexingExpr(MemAccessInst *MAI);
+    void visitPHINode(PHINode *I) {}
+    void visitNot(GenericUnaryInst *I);
+    void visitBinaryOperator(Instruction *I);
 
-  public:
-    CInstPrintVisitor (CWriter &cw, SlotCalculator& table, ostream& o) 
-      : CW(cw), Table(table), Out(o) {}
-    
     void visitCastInst(CastInst *I);
     void visitCallInst(CallInst *I);
     void visitShiftInst(ShiftInst *I) { visitBinaryOperator(I); }
-    void visitReturnInst(ReturnInst *I);
-    void visitBranchInst(BranchInst *I);
-    void visitSwitchInst(SwitchInst *I);
-    void visitInvokeInst(InvokeInst *I) ;
+
     void visitMallocInst(MallocInst *I);
     void visitAllocaInst(AllocaInst *I);
     void visitFreeInst(FreeInst   *I);
     void visitLoadInst(LoadInst   *I);
     void visitStoreInst(StoreInst  *I);
     void visitGetElementPtrInst(GetElementPtrInst *I);
-    void visitPHINode(PHINode *I) {}
 
-    void visitNot(GenericUnaryInst *I);
-    void visitBinaryOperator(Instruction *I);
+    void visitInstruction(Instruction *I) {
+      cerr << "C Writer does not know about " << I;
+      abort();
+    }
+
+    void outputLValue(Instruction *I) {
+      Out << "  " << getValueName(I) << " = ";
+    }
+    void printBranchToBlock(BasicBlock *CurBlock, BasicBlock *SuccBlock,
+                            unsigned Indent);
+    void printIndexingExpr(MemAccessInst *MAI);
   };
 }
-
-void CInstPrintVisitor::outputLValue(Instruction *I) {
-  Out << "  " << CW.getValueName(I) << " = ";
-}
-
-// Implement all "other" instructions, except for PHINode
-void CInstPrintVisitor::visitCastInst(CastInst *I) {
-  outputLValue(I);
-  Out << "(";
-  CW.printType(I->getType());
-  Out << ")";
-  CW.writeOperand(I->getOperand(0));
-  Out << ";\n";
-}
-
-void CInstPrintVisitor::visitCallInst(CallInst *I) {
-  if (I->getType() != Type::VoidTy)
-    outputLValue(I);
-  else
-    Out << "  ";
-
-  const PointerType  *PTy   = cast<PointerType>(I->getCalledValue()->getType());
-  const FunctionType *FTy   = cast<FunctionType>(PTy->getElementType());
-  const Type         *RetTy = FTy->getReturnType();
-  
-  Out << CW.getValueName(I->getOperand(0)) << "(";
-
-  if (I->getNumOperands() > 1) {
-    CW.writeOperand(I->getOperand(1));
-
-    for (unsigned op = 2, Eop = I->getNumOperands(); op != Eop; ++op) {
-      Out << ", ";
-      CW.writeOperand(I->getOperand(op));
-    }
-  }
-  Out << ");\n";
-} 
- 
-// Specific Instruction type classes... note that all of the casts are
-// neccesary because we use the instruction classes as opaque types...
-//
-void CInstPrintVisitor::visitReturnInst(ReturnInst *I) {
-  // Don't output a void return if this is the last basic block in the function
-  if (I->getNumOperands() == 0 && 
-      *(I->getParent()->getParent()->end()-1) == I->getParent())
-    return;
-
-  Out << "  return";
-  if (I->getNumOperands()) {
-    Out << " ";
-    CW.writeOperand(I->getOperand(0));
-  }
-  Out << ";\n";
-}
-
-// Return true if BB1 immediately preceeds BB2.
-static bool BBFollowsBB(BasicBlock *BB1, BasicBlock *BB2) {
-  Function *F = BB1->getParent();
-  Function::iterator I = find(F->begin(), F->end(), BB1);
-  assert(I != F->end() && "BB not in function!");
-  return *(I+1) == BB2;  
-}
-
-static bool isGotoCodeNeccessary(BasicBlock *From, BasicBlock *To) {
-  // If PHI nodes need copies, we need the copy code...
-  if (isa<PHINode>(To->front()) ||
-      !BBFollowsBB(From, To))      // Not directly successor, need goto
-    return true;
-
-  // Otherwise we don't need the code.
-  return false;
-}
-
-void CInstPrintVisitor::printBranchToBlock(BasicBlock *CurBB, BasicBlock *Succ,
-                                           unsigned Indent) {
-  for (BasicBlock::iterator I = Succ->begin();
-       PHINode *PN = dyn_cast<PHINode>(*I); ++I) {
-    //  now we have to do the printing
-    Out << string(Indent, ' ');
-    outputLValue(PN);
-    CW.writeOperand(PN->getIncomingValue(PN->getBasicBlockIndex(CurBB)));
-    Out << ";   /* for PHI node */\n";
-  }
-
-  if (!BBFollowsBB(CurBB, Succ)) {
-    Out << string(Indent, ' ') << "  goto ";
-    CW.writeOperand(Succ);
-    Out << ";\n";
-  }
-}
-
-// Brach instruction printing - Avoid printing out a brach to a basic block that
-// immediately succeeds the current one.
-//
-void CInstPrintVisitor::visitBranchInst(BranchInst *I) {
-  if (I->isConditional()) {
-    if (isGotoCodeNeccessary(I->getParent(), I->getSuccessor(0))) {
-      Out << "  if (";
-      CW.writeOperand(I->getCondition());
-      Out << ") {\n";
-      
-      printBranchToBlock(I->getParent(), I->getSuccessor(0), 2);
-      
-      if (isGotoCodeNeccessary(I->getParent(), I->getSuccessor(1))) {
-        Out << "  } else {\n";
-        printBranchToBlock(I->getParent(), I->getSuccessor(1), 2);
-      }
-    } else {
-      // First goto not neccesary, assume second one is...
-      Out << "  if (!";
-      CW.writeOperand(I->getCondition());
-      Out << ") {\n";
-
-      printBranchToBlock(I->getParent(), I->getSuccessor(1), 2);
-    }
-
-    Out << "  }\n";
-  } else {
-    printBranchToBlock(I->getParent(), I->getSuccessor(0), 0);
-  }
-  Out << "\n";
-}
-
-void CInstPrintVisitor::visitSwitchInst(SwitchInst *I) {
-  assert(0 && "Switch not implemented!");
-}
-
-void CInstPrintVisitor::visitInvokeInst(InvokeInst *I) {
-  assert(0 && "Invoke not implemented!");
-}
-
-void CInstPrintVisitor::visitMallocInst(MallocInst *I) {
-  outputLValue(I);
-  Out << "(";
-  CW.printType(I->getType());
-  Out << ")malloc(sizeof(";
-  CW.printType(I->getType()->getElementType());
-  Out << ")";
-
-  if (I->isArrayAllocation()) {
-    Out << " * " ;
-    CW.writeOperand(I->getOperand(0));
-  }
-  Out << ");\n";
-}
-
-void CInstPrintVisitor::visitAllocaInst(AllocaInst *I) {
-  outputLValue(I);
-  Out << "(";
-  CW.printType(I->getType());
-  Out << ") alloca(sizeof(";
-  CW.printType(I->getType()->getElementType());
-  Out << ")";
-  if (I->isArrayAllocation()) {
-    Out << " * " ;
-    CW.writeOperand(I->getOperand(0));
-  }
-  Out << ");\n";
-}
-
-void CInstPrintVisitor::visitFreeInst(FreeInst *I) {
-  Out << "  free(";
-  CW.writeOperand(I->getOperand(0));
-  Out << ");\n";
-}
-
-void CInstPrintVisitor::printIndexingExpr(MemAccessInst *MAI) {
-  MemAccessInst::op_iterator I = MAI->idx_begin(), E = MAI->idx_end();
-  if (I == E)
-    Out << "*";  // Implicit zero first argument: '*x' is equivalent to 'x[0]'
-
-  CW.writeOperand(MAI->getPointerOperand());
-
-  if (I == E) return;
-
-  // Print out the -> operator if possible...
-  Constant *CI = dyn_cast<Constant>(*I);
-  if (CI && CI->isNullValue() && I+1 != E &&
-      (*(I+1))->getType() == Type::UByteTy) {
-    ++I;
-    Out << "->field" << cast<ConstantUInt>(*I)->getValue();
-    ++I;
-  }
-    
-  for (; I != E; ++I)
-    if ((*I)->getType() == Type::UIntTy) {
-      Out << "[";
-      CW.writeOperand(*I);
-      Out << "]";
-    } else {
-      Out << ".field" << cast<ConstantUInt>(*I)->getValue();
-    }
-}
-
-void CInstPrintVisitor::visitLoadInst(LoadInst *I) {
-  outputLValue(I);
-  printIndexingExpr(I);
-  Out << ";\n";
-}
-
-void CInstPrintVisitor::visitStoreInst(StoreInst *I) {
-  Out << "  ";
-  printIndexingExpr(I);
-  Out << " = ";
-  CW.writeOperand(I->getOperand(0));
-  Out << ";\n";
-}
-
-void CInstPrintVisitor::visitGetElementPtrInst(GetElementPtrInst *I) {
-  outputLValue(I);
-  Out << "&";
-  printIndexingExpr(I);
-  Out << ";\n";
-}
-
-void CInstPrintVisitor::visitNot(GenericUnaryInst *I) {
-  outputLValue(I);
-  Out << "~";
-  CW.writeOperand(I->getOperand(0));
-  Out << ";\n";
-}
-
-void CInstPrintVisitor::visitBinaryOperator(Instruction *I) {
-  // binary instructions, shift instructions, setCond instructions.
-  outputLValue(I);
-  if (isa<PointerType>(I->getType())) {
-    Out << "(";
-    CW.printType(I->getType());
-    Out << ")";
-  }
-      
-  if (isa<PointerType>(I->getType())) Out << "(long long)";
-  CW.writeOperand(I->getOperand(0));
-
-  switch (I->getOpcode()) {
-  case Instruction::Add: Out << " + "; break;
-  case Instruction::Sub: Out << " - "; break;
-  case Instruction::Mul: Out << "*"; break;
-  case Instruction::Div: Out << "/"; break;
-  case Instruction::Rem: Out << "%"; break;
-  case Instruction::And: Out << " & "; break;
-  case Instruction::Or: Out << " | "; break;
-  case Instruction::Xor: Out << " ^ "; break;
-  case Instruction::SetEQ: Out << " == "; break;
-  case Instruction::SetNE: Out << " != "; break;
-  case Instruction::SetLE: Out << " <= "; break;
-  case Instruction::SetGE: Out << " >= "; break;
-  case Instruction::SetLT: Out << " < "; break;
-  case Instruction::SetGT: Out << " > "; break;
-  case Instruction::Shl : Out << " << "; break;
-  case Instruction::Shr : Out << " >> "; break;
-  default: cerr << "Invalid operator type!" << I; abort();
-  }
-
-  if (isa<PointerType>(I->getType())) Out << "(long long)";
-  CW.writeOperand(I->getOperand(1));
-  Out << ";\n";
-}
-
-/* END : CInstPrintVisitor implementation */
 
 // We dont want identifier names with ., space, -  in them. 
 // So we replace them with _
@@ -592,6 +304,29 @@ string CWriter::getValueName(const Value *V) {
   int Slot = Table.getValSlot(V);
   assert(Slot >= 0 && "Invalid value!");
   return "ltmp_" + itostr(Slot) + "_" + utostr(V->getType()->getUniqueID());
+}
+
+void CWriter::writeOperand(const Value *Operand) {
+  if (isa<GlobalVariable>(Operand))
+    Out << "(&";  // Global variables are references as their addresses by llvm
+
+  if (Operand->hasName()) {   
+    Out << getValueName(Operand);
+  } else if (const Constant *CPV = dyn_cast<const Constant>(Operand)) {
+    if (isa<ConstantPointerNull>(CPV)) {
+      Out << "((";
+      printTypeVar(CPV->getType(), "");
+      Out << ")NULL)";
+    } else
+      Out << getConstStrValue(CPV); 
+  } else {
+    int Slot = Table.getValSlot(Operand);
+    assert(Slot >= 0 && "Malformed LLVM!");
+    Out << "ltmp_" << Slot << "_" << Operand->getType()->getUniqueID();
+  }
+
+  if (isa<GlobalVariable>(Operand))
+    Out << ")";
 }
 
 void CWriter::printModule(Module *M) {
@@ -762,37 +497,258 @@ void CWriter::printFunction(Function *F) {
 
     // Output all of the instructions in the basic block...
     // print the basic blocks
-    CInstPrintVisitor CIPV(*this, Table, Out);
-    CIPV.visit(BB);
+    visit(BB);
   }
   
   Out << "}\n\n";
   Table.purgeFunction();
 }
 
-void CWriter::writeOperand(const Value *Operand) {
-  if (isa<GlobalVariable>(Operand))
-    Out << "(&";  // Global variables are references as their addresses by llvm
+// Specific Instruction type classes... note that all of the casts are
+// neccesary because we use the instruction classes as opaque types...
+//
+void CWriter::visitReturnInst(ReturnInst *I) {
+  // Don't output a void return if this is the last basic block in the function
+  if (I->getNumOperands() == 0 && 
+      *(I->getParent()->getParent()->end()-1) == I->getParent())
+    return;
 
-  if (Operand->hasName()) {   
-    Out << getValueName(Operand);
-  } else if (const Constant *CPV = dyn_cast<const Constant>(Operand)) {
-    if (isa<ConstantPointerNull>(CPV)) {
-      Out << "((";
-      printTypeVar(CPV->getType(), "");
-      Out << ")NULL)";
-    } else
-      Out << getConstStrValue(CPV); 
-  } else {
-    int Slot = Table.getValSlot(Operand);
-    assert(Slot >= 0 && "Malformed LLVM!");
-    Out << "ltmp_" << Slot << "_" << Operand->getType()->getUniqueID();
+  Out << "  return";
+  if (I->getNumOperands()) {
+    Out << " ";
+    writeOperand(I->getOperand(0));
   }
-
-  if (isa<GlobalVariable>(Operand))
-    Out << ")";
+  Out << ";\n";
 }
 
+// Return true if BB1 immediately preceeds BB2.
+static bool BBFollowsBB(BasicBlock *BB1, BasicBlock *BB2) {
+  Function *F = BB1->getParent();
+  Function::iterator I = find(F->begin(), F->end(), BB1);
+  assert(I != F->end() && "BB not in function!");
+  return *(I+1) == BB2;  
+}
+
+static bool isGotoCodeNeccessary(BasicBlock *From, BasicBlock *To) {
+  // If PHI nodes need copies, we need the copy code...
+  if (isa<PHINode>(To->front()) ||
+      !BBFollowsBB(From, To))      // Not directly successor, need goto
+    return true;
+
+  // Otherwise we don't need the code.
+  return false;
+}
+
+void CWriter::printBranchToBlock(BasicBlock *CurBB, BasicBlock *Succ,
+                                           unsigned Indent) {
+  for (BasicBlock::iterator I = Succ->begin();
+       PHINode *PN = dyn_cast<PHINode>(*I); ++I) {
+    //  now we have to do the printing
+    Out << string(Indent, ' ');
+    outputLValue(PN);
+    writeOperand(PN->getIncomingValue(PN->getBasicBlockIndex(CurBB)));
+    Out << ";   /* for PHI node */\n";
+  }
+
+  if (!BBFollowsBB(CurBB, Succ)) {
+    Out << string(Indent, ' ') << "  goto ";
+    writeOperand(Succ);
+    Out << ";\n";
+  }
+}
+
+// Brach instruction printing - Avoid printing out a brach to a basic block that
+// immediately succeeds the current one.
+//
+void CWriter::visitBranchInst(BranchInst *I) {
+  if (I->isConditional()) {
+    if (isGotoCodeNeccessary(I->getParent(), I->getSuccessor(0))) {
+      Out << "  if (";
+      writeOperand(I->getCondition());
+      Out << ") {\n";
+      
+      printBranchToBlock(I->getParent(), I->getSuccessor(0), 2);
+      
+      if (isGotoCodeNeccessary(I->getParent(), I->getSuccessor(1))) {
+        Out << "  } else {\n";
+        printBranchToBlock(I->getParent(), I->getSuccessor(1), 2);
+      }
+    } else {
+      // First goto not neccesary, assume second one is...
+      Out << "  if (!";
+      writeOperand(I->getCondition());
+      Out << ") {\n";
+
+      printBranchToBlock(I->getParent(), I->getSuccessor(1), 2);
+    }
+
+    Out << "  }\n";
+  } else {
+    printBranchToBlock(I->getParent(), I->getSuccessor(0), 0);
+  }
+  Out << "\n";
+}
+
+
+void CWriter::visitNot(GenericUnaryInst *I) {
+  outputLValue(I);
+  Out << "~";
+  writeOperand(I->getOperand(0));
+  Out << ";\n";
+}
+
+void CWriter::visitBinaryOperator(Instruction *I) {
+  // binary instructions, shift instructions, setCond instructions.
+  outputLValue(I);
+  if (isa<PointerType>(I->getType())) {
+    Out << "(";
+    printType(I->getType());
+    Out << ")";
+  }
+      
+  if (isa<PointerType>(I->getType())) Out << "(long long)";
+  writeOperand(I->getOperand(0));
+
+  switch (I->getOpcode()) {
+  case Instruction::Add: Out << " + "; break;
+  case Instruction::Sub: Out << " - "; break;
+  case Instruction::Mul: Out << "*"; break;
+  case Instruction::Div: Out << "/"; break;
+  case Instruction::Rem: Out << "%"; break;
+  case Instruction::And: Out << " & "; break;
+  case Instruction::Or: Out << " | "; break;
+  case Instruction::Xor: Out << " ^ "; break;
+  case Instruction::SetEQ: Out << " == "; break;
+  case Instruction::SetNE: Out << " != "; break;
+  case Instruction::SetLE: Out << " <= "; break;
+  case Instruction::SetGE: Out << " >= "; break;
+  case Instruction::SetLT: Out << " < "; break;
+  case Instruction::SetGT: Out << " > "; break;
+  case Instruction::Shl : Out << " << "; break;
+  case Instruction::Shr : Out << " >> "; break;
+  default: cerr << "Invalid operator type!" << I; abort();
+  }
+
+  if (isa<PointerType>(I->getType())) Out << "(long long)";
+  writeOperand(I->getOperand(1));
+  Out << ";\n";
+}
+
+void CWriter::visitCastInst(CastInst *I) {
+  outputLValue(I);
+  Out << "(";
+  printType(I->getType());
+  Out << ")";
+  writeOperand(I->getOperand(0));
+  Out << ";\n";
+}
+
+void CWriter::visitCallInst(CallInst *I) {
+  if (I->getType() != Type::VoidTy)
+    outputLValue(I);
+  else
+    Out << "  ";
+
+  const PointerType  *PTy   = cast<PointerType>(I->getCalledValue()->getType());
+  const FunctionType *FTy   = cast<FunctionType>(PTy->getElementType());
+  const Type         *RetTy = FTy->getReturnType();
+  
+  Out << getValueName(I->getOperand(0)) << "(";
+
+  if (I->getNumOperands() > 1) {
+    writeOperand(I->getOperand(1));
+
+    for (unsigned op = 2, Eop = I->getNumOperands(); op != Eop; ++op) {
+      Out << ", ";
+      writeOperand(I->getOperand(op));
+    }
+  }
+  Out << ");\n";
+}  
+
+void CWriter::visitMallocInst(MallocInst *I) {
+  outputLValue(I);
+  Out << "(";
+  printType(I->getType());
+  Out << ")malloc(sizeof(";
+  printType(I->getType()->getElementType());
+  Out << ")";
+
+  if (I->isArrayAllocation()) {
+    Out << " * " ;
+    writeOperand(I->getOperand(0));
+  }
+  Out << ");\n";
+}
+
+void CWriter::visitAllocaInst(AllocaInst *I) {
+  outputLValue(I);
+  Out << "(";
+  printType(I->getType());
+  Out << ") alloca(sizeof(";
+  printType(I->getType()->getElementType());
+  Out << ")";
+  if (I->isArrayAllocation()) {
+    Out << " * " ;
+    writeOperand(I->getOperand(0));
+  }
+  Out << ");\n";
+}
+
+void CWriter::visitFreeInst(FreeInst *I) {
+  Out << "  free(";
+  writeOperand(I->getOperand(0));
+  Out << ");\n";
+}
+
+void CWriter::printIndexingExpr(MemAccessInst *MAI) {
+  MemAccessInst::op_iterator I = MAI->idx_begin(), E = MAI->idx_end();
+  if (I == E)
+    Out << "*";  // Implicit zero first argument: '*x' is equivalent to 'x[0]'
+
+  writeOperand(MAI->getPointerOperand());
+
+  if (I == E) return;
+
+  // Print out the -> operator if possible...
+  Constant *CI = dyn_cast<Constant>(*I);
+  if (CI && CI->isNullValue() && I+1 != E &&
+      (*(I+1))->getType() == Type::UByteTy) {
+    ++I;
+    Out << "->field" << cast<ConstantUInt>(*I)->getValue();
+    ++I;
+  }
+    
+  for (; I != E; ++I)
+    if ((*I)->getType() == Type::UIntTy) {
+      Out << "[";
+      writeOperand(*I);
+      Out << "]";
+    } else {
+      Out << ".field" << cast<ConstantUInt>(*I)->getValue();
+    }
+}
+
+void CWriter::visitLoadInst(LoadInst *I) {
+  outputLValue(I);
+  printIndexingExpr(I);
+  Out << ";\n";
+}
+
+void CWriter::visitStoreInst(StoreInst *I) {
+  Out << "  ";
+  printIndexingExpr(I);
+  Out << " = ";
+  writeOperand(I->getOperand(0));
+  Out << ";\n";
+}
+
+void CWriter::visitGetElementPtrInst(GetElementPtrInst *I) {
+  outputLValue(I);
+  Out << "&";
+  printIndexingExpr(I);
+  Out << ";\n";
+}
 
 //===----------------------------------------------------------------------===//
 //                       External Interface declaration
