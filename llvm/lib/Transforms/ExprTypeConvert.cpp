@@ -320,7 +320,7 @@ Value *ConvertExpressionToType(Value *V, const Type *Ty, ValueMapCache &VMC) {
 
   Instruction *I = dyn_cast<Instruction>(V);
   if (I == 0) {
-    Constant *CPV = cast<Constant>(V)) {
+    Constant *CPV = cast<Constant>(V);
     // Constants are converted by constant folding the cast that is required.
     // We assume here that all casts are implemented for constant prop.
     Value *Result = ConstantFoldCastInstruction(CPV, Ty);
