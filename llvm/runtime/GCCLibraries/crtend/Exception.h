@@ -1,7 +1,17 @@
 //===- Exception.h - Generic language-independent exceptions ----*- C++ -*-===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This file defines the the shared data structures used by all language
 // specific exception handling runtime libraries.
+//
+// NOTE NOTE NOTE: A copy of this file lives in llvmgcc/libstdc++-v3/libsupc++/
+// Any modifications to this file must keep it in sync!
 //
 //===----------------------------------------------------------------------===//
 
