@@ -336,11 +336,50 @@ bool llvm::GetBytecodeDependentLibraries(const std::string &fname,
   try {
     std::auto_ptr<ModuleProvider> AMP( getBytecodeModuleProvider(fname));
     Module* M = AMP->releaseModule();
+
     deplibs = M->getLibraries();
     delete M;
     return true;
   } catch (...) {
     deplibs.clear();
+    return false;
+  }
+}
+
+// Get just the externally visible defined symbols from the bytecode
+bool llvm::GetBytecodeSymbols(const sys::Path& fName,
+                              std::vector<std::string>& symbols) {
+  try {
+    std::auto_ptr<ModuleProvider> AMP( getBytecodeModuleProvider(fName.get()));
+
+    // Get the module from the provider
+    Module* M = AMP->releaseModule();
+
+    // Loop over global variables
+    for (Module::giterator GI = M->gbegin(), GE=M->gend(); GI != GE; ++GI) {
+      if (GI->hasInitializer()) {
+        std::string name ( GI->getName() );
+        if (!name.empty()) {
+          symbols.push_back(name);
+        }
+      }
+    }
+
+    //Loop over functions
+    for (Module::iterator FI = M->begin(), FE=M->end(); FI != FE; ++FI) {
+      if (!FI->isExternal()) {
+        std::string name ( FI->getName() );
+        if (!name.empty()) {
+          symbols.push_back(name);
+        }
+      }
+    }
+
+    // Done with the module
+    delete M;
+    return true;
+
+  } catch (...) {
     return false;
   }
 }
