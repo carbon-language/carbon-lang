@@ -18,12 +18,12 @@ class MachineCodeForVMInstr;
 
 class Instruction : public User {
   BasicBlock *Parent;
-  unsigned iType;      // InstructionType
 
   MachineCodeForVMInstr* machineInstrVec;
   friend class ValueHolder<Instruction,BasicBlock,Method>;
   inline void setParent(BasicBlock *P) { Parent = P; }
-
+protected:
+  unsigned iType;      // InstructionType
 public:
   Instruction(const Type *Ty, unsigned iType, const string &Name = "");
   virtual ~Instruction();  // Virtual dtor == good.
