@@ -147,6 +147,7 @@ class Operand<ValueType ty> {
   string PrintMethod = "printOperand";
 }
 
+def i1imm  : Operand<i1>;
 def i8imm  : Operand<i8>;
 def i16imm : Operand<i16>;
 def i32imm : Operand<i32>;
