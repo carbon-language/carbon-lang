@@ -1,4 +1,4 @@
-##===- utils/TableGen/Makefile ------------------------------*- Makefile -*-===##
+##===- utils/TableGen/Makefile -----------------------------*- Makefile -*-===##
 # 
 #                     The LLVM Compiler Infrastructure
 #
