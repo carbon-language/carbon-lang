@@ -1,15 +1,15 @@
-//===-- llvm/Method.h - Class to represent a single VM method ----*- C++ -*--=//
+//===-- llvm/Function.h - Class to represent a single VM function -*- C++ -*-=//
 //
-// This file contains the declaration of the Method class, which represents a 
-// single Method/function/procedure in the VM.
+// This file contains the declaration of the Function class, which represents a 
+// single function/procedure in the VM.
 //
-// Note that basic blocks themselves are Def's, because they are referenced
-// by instructions like calls and can go in virtual function tables and stuff.
+// Note that basic blocks in the method are value's, because they are referenced
+// by instructions like calls and can go into virtual function tables and stuff.
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_METHOD_H
-#define LLVM_METHOD_H
+#ifndef LLVM_FUNCTION_H
+#define LLVM_FUNCTION_H
 
 #include "llvm/SymTabValue.h"
 #include "llvm/GlobalValue.h"
@@ -21,7 +21,7 @@ class MethodArgument;
 class MethodType;
 class Module;
 
-class Method : public GlobalValue, public SymTabValue {
+class Function : public GlobalValue, public SymTabValue {
 public:
   typedef ValueHolder<MethodArgument, Method, Method> ArgumentListType;
   typedef ValueHolder<BasicBlock    , Method, Method> BasicBlocksType;
@@ -38,12 +38,12 @@ private:
   BasicBlocksType  BasicBlocks;         // The basic blocks
   ArgumentListType ArgumentList;        // The formal arguments
   
-  friend class ValueHolder<Method, Module, Module>;
+  friend class ValueHolder<Function, Module, Module>;
   void setParent(Module *parent);
 
 public:
-  Method(const MethodType *Ty, bool isInternal, const std::string &Name = "");
-  ~Method();
+  Function(const MethodType *Ty, bool isInternal, const std::string &Name = "");
+  ~Function();
 
   // Specialize setName to handle symbol table majik...
   virtual void setName(const std::string &name, SymbolTable *ST = 0);
@@ -89,7 +89,7 @@ public:
 
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool classof(const Method *T) { return true; }
+  static inline bool classof(const Function *) { return true; }
   static inline bool classof(const Value *V) {
     return V->getValueType() == Value::MethodVal;
   }
@@ -104,7 +104,5 @@ public:
   //
   void dropAllReferences();
 };
-
-typedef Method Function;
 
 #endif
