@@ -25,6 +25,7 @@
 #include "PhysRegTracker.h"
 #include "VirtRegMap.h"
 #include <algorithm>
+#include <cmath>
 #include <iostream>
 
 using namespace llvm;
