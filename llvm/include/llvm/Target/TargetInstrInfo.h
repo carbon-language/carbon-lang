@@ -167,6 +167,8 @@ public:
   virtual MachineBasicBlock::iterator
   reverseBranchCondition(MachineBasicBlock::iterator MI) const {
     assert(0 && "Target didn't implement reverseBranchCondition!");
+    abort();
+    return MI;
   }
 
   //-------------------------------------------------------------------------
