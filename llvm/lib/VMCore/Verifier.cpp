@@ -340,6 +340,12 @@ void Verifier::visitPHINode(PHINode &PN) {
           "PHI nodes not grouped at top of basic block!",
           &PN, PN.getParent());
 
+  // Check that all of the operands of the PHI node have the same type as the
+  // result.
+  for (unsigned i = 0, e = PN.getNumIncomingValues(); i != e; ++i)
+    Assert1(PN.getType() == PN.getIncomingValue(i)->getType(),
+            "PHI node operands are not the same type as the result!", &PN);
+
   // All other PHI node constraints are checked in the visitBasicBlock method.
 
   visitInstruction(PN);
