@@ -2925,7 +2925,7 @@ void X86ISel::emitShiftOperation(MachineBasicBlock *MBB,
     //
     if (ConstantUInt *CUI = dyn_cast<ConstantUInt>(ShiftAmount)) {
       unsigned Amount = CUI->getValue();
-      if (Amount == 1) {   // X << 1 == X+X
+      if (Amount == 1 && isLeftShift) {   // X << 1 == X+X
         BuildMI(*MBB, IP, X86::ADD32rr, 2,
                 DestReg).addReg(SrcReg).addReg(SrcReg);
         BuildMI(*MBB, IP, X86::ADC32rr, 2,
