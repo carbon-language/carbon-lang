@@ -23,7 +23,7 @@
 #include "Support/STLExtras.h"
 #include "Support/SetOperations.h"
 #include "Support/CommandLine.h"
-#include <math.h>
+#include <cmath>
 
 RegAllocDebugLevel_t DEBUG_RA;
 
