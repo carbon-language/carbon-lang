@@ -17,6 +17,7 @@
 #include "JIT/JIT.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/IntrinsicLowering.h"
 #include "llvm/Module.h"
 #include "llvm/ModuleProvider.h"
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
@@ -105,20 +106,23 @@ int ExecutionEngine::runFunctionAsMain(Function *Fn,
 /// NULL is returned. 
 ///
 ExecutionEngine *ExecutionEngine::create(ModuleProvider *MP, 
-                                         bool ForceInterpreter) {
+                                         bool ForceInterpreter,
+                                         IntrinsicLowering *IL) {
   ExecutionEngine *EE = 0;
 
-  // Unless the interpreter was explicitly selected, make a JIT.
+  // Unless the interpreter was explicitly selected, try making a JIT.
   if (!ForceInterpreter)
-    EE = JIT::create(MP);
+    EE = JIT::create(MP, IL);
 
   // If we can't make a JIT, make an interpreter instead.
   try {
     if (EE == 0)
-      EE = Interpreter::create(MP->materializeModule());
+      EE = Interpreter::create(MP->materializeModule(), IL);
   } catch (...) {
     EE = 0;
   }
+
+  if (EE == 0) delete IL;
   return EE;
 }
 

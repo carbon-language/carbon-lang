@@ -79,6 +79,7 @@ struct ExecutionContext {
 class Interpreter : public ExecutionEngine, public InstVisitor<Interpreter> {
   int ExitCode;                // The exit code to be returned by the lli util
   TargetData TD;
+  IntrinsicLowering *IL;
 
   // The runtime stack of executing code.  The top of the stack is the current
   // function record.
@@ -89,17 +90,20 @@ class Interpreter : public ExecutionEngine, public InstVisitor<Interpreter> {
   std::vector<Function*> AtExitHandlers;
 
 public:
-  Interpreter(Module *M, bool isLittleEndian, bool isLongPointer);
-  inline ~Interpreter() { }
+  Interpreter(Module *M, bool isLittleEndian, bool isLongPointer,
+              IntrinsicLowering *IL);
+  ~Interpreter();
 
   /// runAtExitHandlers - Run any functions registered by the program's calls to
   /// atexit(3), which we intercept and store in AtExitHandlers.
   ///
   void runAtExitHandlers();
 
-  /// create - Create an interpreter ExecutionEngine. This can never fail.
+  /// create - Create an interpreter ExecutionEngine. This can never fail.  The
+  /// specified IntrinsicLowering implementation will be deleted when the
+  /// Interpreter execution engine is destroyed.
   ///
-  static ExecutionEngine *create(Module *M);
+  static ExecutionEngine *create(Module *M, IntrinsicLowering *IL);
 
   /// run - Start execution with the specified function and arguments.
   ///

@@ -53,8 +53,9 @@ namespace {
 /// create - Create an return a new JIT compiler if there is one available
 /// for the current target.  Otherwise, return null.
 ///
-ExecutionEngine *JIT::create(ModuleProvider *MP) {
-  TargetMachine* (*TargetMachineAllocator)(const Module &) = 0;
+ExecutionEngine *JIT::create(ModuleProvider *MP, IntrinsicLowering *IL) {
+  TargetMachine* (*TargetMachineAllocator)(const Module &,
+                                           IntrinsicLowering *IL) = 0;
 
   // Allow a command-line switch to override what *should* be the default target
   // machine for this platform. This allows for debugging a Sparc JIT on X86 --
@@ -80,7 +81,7 @@ ExecutionEngine *JIT::create(ModuleProvider *MP) {
 #endif
 
   // Allocate a target...
-  TargetMachine *Target = TargetMachineAllocator(*MP->getModule());
+  TargetMachine *Target = TargetMachineAllocator(*MP->getModule(), IL);
   assert(Target && "Could not allocate target machine!");
 
   // If the target supports JIT code generation, return a new JIT now.

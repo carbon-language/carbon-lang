@@ -14,13 +14,14 @@
 //===----------------------------------------------------------------------===//
 
 #include "Interpreter.h"
-#include "llvm/Module.h"
+#include "llvm/IntrinsicLowering.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/Module.h"
 using namespace llvm;
 
 /// create - Create a new interpreter object.  This can never fail.
 ///
-ExecutionEngine *Interpreter::create(Module *M){
+ExecutionEngine *Interpreter::create(Module *M, IntrinsicLowering *IL) {
   bool isLittleEndian = false;
   switch (M->getEndianness()) {
   case Module::LittleEndian: isLittleEndian = true; break;
@@ -41,22 +42,29 @@ ExecutionEngine *Interpreter::create(Module *M){
     break;
   }
 
-  return new Interpreter(M, isLittleEndian, isLongPointer);
+  return new Interpreter(M, isLittleEndian, isLongPointer, IL);
 }
 
 //===----------------------------------------------------------------------===//
 // Interpreter ctor - Initialize stuff
 //
-Interpreter::Interpreter(Module *M, bool isLittleEndian, bool isLongPointer)
-  : ExecutionEngine(M), ExitCode(0),
+Interpreter::Interpreter(Module *M, bool isLittleEndian, bool isLongPointer,
+                         IntrinsicLowering *il)
+  : ExecutionEngine(M), ExitCode(0), 
     TD("lli", isLittleEndian, isLongPointer ? 8 : 4, isLongPointer ? 8 : 4,
-       isLongPointer ? 8 : 4) {
+       isLongPointer ? 8 : 4), IL(il) {
 
   setTargetData(TD);
   // Initialize the "backend"
   initializeExecutionEngine();
   initializeExternalFunctions();
   emitGlobals();
+
+  if (IL == 0) IL = new DefaultIntrinsicLowering();
+}
+
+Interpreter::~Interpreter() {
+  delete IL;
 }
 
 void Interpreter::runAtExitHandlers () {

@@ -44,9 +44,11 @@ public:
   ~JIT();
 
   /// create - Create an return a new JIT compiler if there is one available
-  /// for the current target.  Otherwise, return null.
+  /// for the current target.  Otherwise, return null.  If the JIT is created
+  /// successfully, it takes responsibility for deleting the specified
+  /// IntrinsicLowering implementation.
   ///
-  static ExecutionEngine *create(ModuleProvider *MP);
+  static ExecutionEngine *create(ModuleProvider *MP, IntrinsicLowering *IL = 0);
 
   /// run - Start execution with the specified function and arguments.
   ///

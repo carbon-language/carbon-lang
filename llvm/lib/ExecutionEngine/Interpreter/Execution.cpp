@@ -12,11 +12,12 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "interpreter"
-
 #include "Interpreter.h"
-#include "llvm/Instructions.h"
-#include "llvm/DerivedTypes.h"
 #include "llvm/Constants.h"
+#include "llvm/DerivedTypes.h"
+#include "llvm/Instructions.h"
+#include "llvm/IntrinsicLowering.h"
+#include "llvm/Intrinsics.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "Support/Statistic.h"
 #include "Support/Debug.h"
@@ -25,15 +26,15 @@ using namespace llvm;
 
 namespace {
   Statistic<> NumDynamicInsts("lli", "Number of dynamic instructions executed");
-}
 
-namespace llvm {
   Interpreter *TheEE = 0;
 }
+
 
 //===----------------------------------------------------------------------===//
 //                     Value Manipulation code
 //===----------------------------------------------------------------------===//
+
 static GenericValue executeAddInst(GenericValue Src1, GenericValue Src2, 
 				   const Type *Ty);
 static GenericValue executeSubInst(GenericValue Src1, GenericValue Src2, 
@@ -764,6 +765,36 @@ void Interpreter::visitStoreInst(StoreInst &I) {
 
 void Interpreter::visitCallSite(CallSite CS) {
   ExecutionContext &SF = ECStack.back();
+
+  // Check to see if this is an intrinsic function call...
+  if (Function *F = CS.getCalledFunction())
+    switch (F->getIntrinsicID()) {
+    case Intrinsic::va_start:  // va_start: implemented by getFirstVarArg()
+      SetValue(CS.getInstruction(), getFirstVarArg(), SF);
+      return;
+    case Intrinsic::va_end:    // va_end is a noop for the interpreter
+      return;
+    case Intrinsic::va_copy:   // va_copy: dest = src
+      SetValue(CS.getInstruction(), getOperandValue(*CS.arg_begin(), SF), SF);
+      return;
+    default:
+      // If it is an unknown intrinsic function, using the intrinsic lowering
+      // class to transform it into hopefully tasty LLVM code.
+      //
+      Instruction *Prev = CS.getInstruction()->getPrev();
+      BasicBlock *Parent = CS.getInstruction()->getParent();
+      IL->LowerIntrinsicCall(cast<CallInst>(CS.getInstruction()));
+
+      // Restore the CurInst pointer to the first instruction newly inserted, if
+      // any.
+      if (!Prev) {
+        SF.CurInst = Parent->begin();
+      } else {
+        SF.CurInst = Prev;
+        ++SF.CurInst;
+      }
+    }
+
   SF.Caller = CS;
   std::vector<GenericValue> ArgVals;
   const unsigned NumArgs = SF.Caller.arg_size();

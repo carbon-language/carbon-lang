@@ -676,28 +676,6 @@ GenericValue lle_X_fprintf(FunctionType *M, const vector<GenericValue> &Args) {
   return GV;
 }
 
-//===----------------------------------------------------------------------===//
-// LLVM Intrinsic Functions...
-//===----------------------------------------------------------------------===//
-
-// <va_list> llvm.va_start() - Implement the va_start operation...
-GenericValue llvm_va_start(FunctionType *F, const vector<GenericValue> &Args) {
-  assert(Args.size() == 0);
-  return TheInterpreter->getFirstVarArg();
-}
-
-// void llvm.va_end(<va_list> *) - Implement the va_end operation...
-GenericValue llvm_va_end(FunctionType *F, const vector<GenericValue> &Args) {
-  assert(Args.size() == 1);
-  return GenericValue();    // Noop!
-}
-
-// <va_list> llvm.va_copy(<va_list>) - Implement the va_copy operation...
-GenericValue llvm_va_copy(FunctionType *F, const vector<GenericValue> &Args) {
-  assert(Args.size() == 1);
-  return Args[0];
-}
-
 } // End extern "C"
 
 
@@ -749,9 +727,5 @@ void Interpreter::initializeExternalFunctions() {
   FuncNames["lle_X_ungetc"]       = lle_X_ungetc;
   FuncNames["lle_X_fprintf"]      = lle_X_fprintf;
   FuncNames["lle_X_freopen"]      = lle_X_freopen;
-
-  FuncNames["lle_X_llvm.va_start"]= llvm_va_start;
-  FuncNames["lle_X_llvm.va_end"]  = llvm_va_end;
-  FuncNames["lle_X_llvm.va_copy"] = llvm_va_copy;
 }
 
