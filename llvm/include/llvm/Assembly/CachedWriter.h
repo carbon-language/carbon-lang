@@ -18,6 +18,7 @@ class SlotCalculator;
 class CachedWriter {
   AssemblyWriter *AW;
   SlotCalculator *SC;
+public:
   ostream &Out;
 public:
   CachedWriter(ostream &O = cout) : AW(0), SC(0), Out(O) { }
@@ -31,11 +32,42 @@ public:
 
   CachedWriter &operator<<(const Value *V);
 
-  template<class X>
-  inline CachedWriter &operator<<(X &v) {
-    Out << v;
-    return *this;
+  inline CachedWriter &operator<<(Value *X) {
+    return *this << (const Value*)X;
+  }
+  inline CachedWriter &operator<<(const Module *X) {
+    return *this << (const Value*)X;
+  }
+  inline CachedWriter &operator<<(const GlobalVariable *X) {
+    return *this << (const Value*)X;
+  }
+  inline CachedWriter &operator<<(const Method *X) {
+    return *this << (const Value*)X;
+  }
+  inline CachedWriter &operator<<(const MethodArgument *X) {
+    return *this << (const Value*)X;
+  }
+  inline CachedWriter &operator<<(const BasicBlock *X) {
+    return *this << (const Value*)X;
+  }
+  inline CachedWriter &operator<<(const Instruction *X) {
+    return *this << (const Value*)X; 
+  }
+  inline CachedWriter &operator<<(const ConstPoolVal *X) {
+    return *this << (const Value*)X; 
+  }
+  inline CachedWriter &operator<<(const Type *X) {
+    return *this << (const Value*)X;
+  }
+  inline CachedWriter &operator<<(const PointerType *X) {
+    return *this << (const Value*)X; 
   }
 };
+
+template<class X>
+inline CachedWriter &operator<<(CachedWriter &CW, const X &v) {
+  CW.Out << v;
+  return CW;
+}
 
 #endif
