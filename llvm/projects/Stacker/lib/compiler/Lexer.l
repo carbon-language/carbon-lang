@@ -117,10 +117,10 @@ OutChar		\>c
 {Colon}		{ return COLON; }
 {Semi}		{ return SEMI; }
 
-TRUE		{ return TRUE; }
-FALSE		{ return FALSE; }
-ON		{ return TRUE; }
-OFF		{ return FALSE; }
+TRUE		{ return TRUETOK; }
+FALSE		{ return FALSETOK; }
+ON		{ return TRUETOK; }
+OFF		{ return FALSETOK; }
 {Less}		{ return LESS; }
 LT		{ return LESS; }
 {More}		{ return MORE; }

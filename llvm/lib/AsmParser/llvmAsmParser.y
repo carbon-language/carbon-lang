@@ -857,7 +857,7 @@ using namespace llvm;
 %type  <StrVal> Name OptName OptAssign
 
 
-%token IMPLEMENTATION ZEROINITIALIZER TRUE FALSE BEGINTOK ENDTOK
+%token IMPLEMENTATION ZEROINITIALIZER TRUETOK FALSETOK BEGINTOK ENDTOK
 %token DECLARE GLOBAL CONSTANT VOLATILE
 %token TO DOTDOTDOT NULL_TOK CONST INTERNAL LINKONCE WEAK  APPENDING
 %token OPAQUE NOT EXTERNAL TARGET ENDIAN POINTERSIZE LITTLE BIG
@@ -1210,10 +1210,10 @@ ConstVal : SIntType EINT64VAL {      // integral constants
       ThrowException("Constant value doesn't fit in type!");
     $$ = ConstantUInt::get($1, $2);
   }
-  | BOOL TRUE {                      // Boolean constants
+  | BOOL TRUETOK {                      // Boolean constants
     $$ = ConstantBool::True;
   }
-  | BOOL FALSE {                     // Boolean constants
+  | BOOL FALSETOK {                     // Boolean constants
     $$ = ConstantBool::False;
   }
   | FPType FPVAL {                   // Float & Double constants
@@ -1550,10 +1550,10 @@ ConstValueRef : ESINT64VAL {    // A reference to a direct constant
   | FPVAL {                     // Perhaps it's an FP constant?
     $$ = ValID::create($1);
   }
-  | TRUE {
+  | TRUETOK {
     $$ = ValID::create(ConstantBool::True);
   } 
-  | FALSE {
+  | FALSETOK {
     $$ = ValID::create(ConstantBool::False);
   }
   | NULL_TOK {

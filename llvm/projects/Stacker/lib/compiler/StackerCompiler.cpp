@@ -820,13 +820,13 @@ StackerCompiler::handle_word( int tkn )
     }
 
     // Logical Operations
-    case TRUE :  // -- -1
+    case TRUETOK :  // -- -1
     {
 	if (echo) bb->setName("TRUE");
 	push_integer(bb,-1); 
 	break;
     }
-    case FALSE : // -- 0
+    case FALSETOK : // -- 0
     {
 	if (echo) bb->setName("FALSE");
 	push_integer(bb,0); 

@@ -174,8 +174,8 @@ HexIntConstant [us]0x[0-9A-Fa-f]+
 
 begin           { return BEGINTOK; }
 end             { return ENDTOK; }
-true            { return TRUE;  }
-false           { return FALSE; }
+true            { return TRUETOK;  }
+false           { return FALSETOK; }
 declare         { return DECLARE; }
 global          { return GLOBAL; }
 constant        { return CONSTANT; }

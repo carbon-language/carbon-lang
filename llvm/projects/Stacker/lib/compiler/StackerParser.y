@@ -55,7 +55,7 @@ int yyparse();
 
 /* Terminal Tokens */
 %token 			SEMI COLON FORWARD MAIN DUMP
-%token  		TRUE FALSE LESS MORE LESS_EQUAL MORE_EQUAL NOT_EQUAL EQUAL
+%token  		TRUETOK FALSETOK LESS MORE LESS_EQUAL MORE_EQUAL NOT_EQUAL EQUAL
 %token 			PLUS MINUS INCR DECR MULT DIV MODULUS NEGATE ABS MIN MAX STAR_SLASH 
 %token 			AND OR XOR LSHIFT RSHIFT 
 %token 			DROP DROP2 NIP NIP2 DUP DUP2 SWAP SWAP2	OVER OVER2 ROT ROT2 
@@ -109,8 +109,8 @@ Word : STRING 					{ $$ = SCI->handle_string( $1 ); } ;
 Word : INTEGER 					{ $$ = SCI->handle_integer( $1 ); } ;
 
 /* Everything else is a terminal symbol and goes to handle_word */
-Word : TRUE					{ $$ = SCI->handle_word( TRUE ); } ;
-Word : FALSE					{ $$ = SCI->handle_word( FALSE ); } ;
+Word : TRUETOK					{ $$ = SCI->handle_word( TRUETOK ); } ;
+Word : FALSETOK					{ $$ = SCI->handle_word( FALSETOK ); } ;
 Word : LESS					{ $$ = SCI->handle_word( LESS ); } ;
 Word : MORE					{ $$ = SCI->handle_word( MORE ); } ;
 Word : LESS_EQUAL				{ $$ = SCI->handle_word( LESS_EQUAL ); } ;
