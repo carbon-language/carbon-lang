@@ -25,8 +25,7 @@
 #include "llvm/Support/CFG.h"
 #include <sstream>
 #include <fstream>
-
-namespace llvm {
+using namespace llvm;
 
 /// CFGOnly flag - This is used to control whether or not the CFG graph printer
 /// prints out the contents of basic blocks or not.  This is acceptable because
@@ -34,6 +33,7 @@ namespace llvm {
 ///
 static bool CFGOnly = false;
 
+namespace llvm {
 template<>
 struct DOTGraphTraits<const Function*> : public DefaultDOTGraphTraits {
   static std::string getGraphName(const Function *F) {
@@ -87,6 +87,7 @@ struct DOTGraphTraits<const Function*> : public DefaultDOTGraphTraits {
     return "";
   }
 };
+}
 
 namespace {
   struct CFGPrinter : public FunctionPass {
@@ -112,7 +113,26 @@ namespace {
 
   RegisterAnalysis<CFGPrinter> P1("print-cfg",
                                   "Print CFG of function to 'dot' file");
-};
+
+  struct CFGOnlyPrinter : public CFGPrinter {
+    virtual bool runOnFunction(Function &F) {
+      bool OldCFGOnly = CFGOnly;
+      CFGOnly = true;
+      CFGPrinter::runOnFunction(F);
+      CFGOnly = OldCFGOnly;
+      return false;
+    }
+    void print(std::ostream &OS) const {}
+    
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.setPreservesAll();
+    }
+  };
+
+  RegisterAnalysis<CFGOnlyPrinter>
+  P2("print-cfg-only",
+     "Print CFG of function to 'dot' file (with no function bodies)");
+}
 
 /// viewCFG - This function is meant for use from the debugger.  You can just
 /// say 'call F->viewCFG()' and a ghostview window should pop up from the
@@ -153,5 +173,3 @@ void Function::viewCFGOnly() const {
   viewCFG();
   CFGOnly = false;
 }
-
-} // End llvm namespace
