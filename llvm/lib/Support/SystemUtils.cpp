@@ -134,6 +134,7 @@ int llvm::RunProgramWithTimeout(const std::string &ProgramPath,
                                 const std::string &StdErrFile) {
   // FIXME: install sigalarm handler here for timeout...
 
+#ifdef HAVE_SYS_WAIT_H
   int Child = fork();
   switch (Child) {
   case -1:
@@ -179,6 +180,11 @@ int llvm::RunProgramWithTimeout(const std::string &ProgramPath,
     exit(1);
   }
   return Status;
+
+#else
+  std::cerr << "RunProgramWithTimeout not implemented on this platform!\n";
+  return -1;
+#endif
 }
 
 
@@ -220,12 +226,7 @@ int llvm::RunProgramWithTimeout(const std::string &ProgramPath,
 //
 int llvm::ExecWait(const char * const old_argv[],
                    const char * const old_envp[]) {
-  // Child process ID
-  register int child;
-
-  // Status from child process when it exits
-  int status;
- 
+#ifdef HAVE_SYS_WAIT_H
   //
   // Create local versions of the parameters that can be passed into execve()
   // without creating const problems.
@@ -233,56 +234,37 @@ int llvm::ExecWait(const char * const old_argv[],
   char ** const argv = (char ** const) old_argv;
   char ** const envp = (char ** const) old_envp;
 
-  //
   // Create a child process.
-  //
-  switch (child=fork())
-  {
-    //
+  switch (fork()) {
     // An error occured:  Return to the caller.
-    //
     case -1:
       return 1;
       break;
 
-    //
     // Child process: Execute the program.
-    //
     case 0:
       execve (argv[0], argv, envp);
-
-      //
       // If the execve() failed, we should exit and let the parent pick up
       // our non-zero exit status.
-      //
       exit (1);
-      break;
 
-    //
     // Parent process: Break out of the switch to do our processing.
-    //
     default:
       break;
   }
 
-  //
   // Parent process: Wait for the child process to termiante.
-  //
+  int status;
   if ((wait (&status)) == -1)
-  {
     return 1;
-  }
 
-  //
   // If the program exited normally with a zero exit status, return success!
-  //
   if (WIFEXITED (status) && (WEXITSTATUS(status) == 0))
-  {
     return 0;
-  }
+#else
+  std::cerr << "llvm::ExecWait not implemented on this platform!\n";
+#endif
 
-  //
   // Otherwise, return failure.
-  //
   return 1;
 }
