@@ -50,7 +50,7 @@ bool TailCallElim::runOnFunction(Function &F) {
   // Loop over the function, looking for any returning blocks...
   for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
     if (ReturnInst *Ret = dyn_cast<ReturnInst>(BB->getTerminator()))
-      if (Ret != BB->begin())
+      if (Ret != BB->begin())  // Make sure there is something before the ret...
         if (CallInst *CI = dyn_cast<CallInst>(Ret->getPrev()))
           // Make sure the tail call is to the current function, and that the
           // return either returns void or returns the value computed by the
@@ -74,6 +74,7 @@ bool TailCallElim::runOnFunction(Function &F) {
               for (Function::aiterator I = F.abegin(), E = F.aend(); I!=E; ++I){
                 PHINode *PN = new PHINode(I->getType(), I->getName()+".tr",
                                           InsertPos);
+                I->replaceAllUsesWith(PN); // Everyone use the PHI node now!
                 PN->addIncoming(I, NewEntry);
                 ArgumentPHIs.push_back(PN);
               }
