@@ -304,13 +304,8 @@ static inline Value *dyn_castNegVal(Value *V) {
 
   // Constants can be considered to be negated values if they can be folded...
   if (Constant *C = dyn_cast<Constant>(V))
-    return ConstantExpr::getSub(Constant::getNullValue(V->getType()), C);
+    return ConstantExpr::getNeg(C);
   return 0;
-}
-
-static Constant *NotConstant(Constant *C) {
-  return ConstantExpr::getXor(C,
-                              ConstantIntegral::getAllOnesValue(C->getType()));
 }
 
 static inline Value *dyn_castNotVal(Value *V) {
@@ -319,7 +314,7 @@ static inline Value *dyn_castNotVal(Value *V) {
 
   // Constants can be considered to be not'ed values...
   if (ConstantIntegral *C = dyn_cast<ConstantIntegral>(V))
-    return NotConstant(C);
+    return ConstantExpr::getNot(C);
   return 0;
 }
 
@@ -1212,7 +1207,8 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
                                                      Op0Name);
           InsertNewInstBefore(Or, I);
           return BinaryOperator::createXor(Or,
-                                ConstantExpr::getAnd(Op0CI, NotConstant(RHS)));
+                                ConstantExpr::getAnd(Op0CI,
+                                                   ConstantExpr::getNot(RHS)));
         }
     }
 
@@ -1320,7 +1316,7 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
         case Instruction::Or:
           // (X | C1) ^ C2 --> (X | C1) & ~C2 iff (C1&C2) == C2
           if (ConstantExpr::getAnd(RHS, Op0CI) == RHS)
-            return BinaryOperator::createAnd(Op0, NotConstant(RHS));
+            return BinaryOperator::createAnd(Op0, ConstantExpr::getNot(RHS));
           break;
         default: break;
         }
@@ -1571,7 +1567,7 @@ Instruction *InstCombiner::visitSetCondInst(BinaryOperator &I) {
           // If bits are being or'd in that are not present in the constant we
           // are comparing against, then the comparison could never succeed!
           if (Constant *BOC = dyn_cast<Constant>(BO->getOperand(1))) {
-            Constant *NotCI = NotConstant(CI);
+            Constant *NotCI = ConstantExpr::getNot(CI);
             if (!ConstantExpr::getAnd(BOC, NotCI)->isNullValue())
               return ReplaceInstUsesWith(I, ConstantBool::get(isSetNE));
           }
@@ -1581,7 +1577,8 @@ Instruction *InstCombiner::visitSetCondInst(BinaryOperator &I) {
           if (ConstantInt *BOC = dyn_cast<ConstantInt>(BO->getOperand(1))) {
             // If bits are being compared against that are and'd out, then the
             // comparison can never succeed!
-            if (!ConstantExpr::getAnd(CI, NotConstant(BOC))->isNullValue())
+            if (!ConstantExpr::getAnd(CI,
+                                      ConstantExpr::getNot(BOC))->isNullValue())
               return ReplaceInstUsesWith(I, ConstantBool::get(isSetNE));
 
             // If we have ((X & C) == C), turn it into ((X & C) != 0).
