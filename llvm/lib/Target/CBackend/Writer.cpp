@@ -1358,30 +1358,38 @@ void CWriter::visitBinaryOperator(Instruction &I) {
     printType(Out, I.getType());
     Out << ")(";
   }
-      
-  writeOperand(I.getOperand(0));
 
-  switch (I.getOpcode()) {
-  case Instruction::Add: Out << " + "; break;
-  case Instruction::Sub: Out << " - "; break;
-  case Instruction::Mul: Out << '*'; break;
-  case Instruction::Div: Out << '/'; break;
-  case Instruction::Rem: Out << '%'; break;
-  case Instruction::And: Out << " & "; break;
-  case Instruction::Or: Out << " | "; break;
-  case Instruction::Xor: Out << " ^ "; break;
-  case Instruction::SetEQ: Out << " == "; break;
-  case Instruction::SetNE: Out << " != "; break;
-  case Instruction::SetLE: Out << " <= "; break;
-  case Instruction::SetGE: Out << " >= "; break;
-  case Instruction::SetLT: Out << " < "; break;
-  case Instruction::SetGT: Out << " > "; break;
-  case Instruction::Shl : Out << " << "; break;
-  case Instruction::Shr : Out << " >> "; break;
-  default: std::cerr << "Invalid operator type!" << I; abort();
+  // If this is a negation operation, print it out as such.  For FP, we don't
+  // want to print "-0.0 - X".
+  if (BinaryOperator::isNeg(&I)) {
+    Out << "-";
+    writeOperand(BinaryOperator::getNegArgument(cast<BinaryOperator>(&I)));
+
+  } else {
+    writeOperand(I.getOperand(0));
+
+    switch (I.getOpcode()) {
+    case Instruction::Add: Out << " + "; break;
+    case Instruction::Sub: Out << " - "; break;
+    case Instruction::Mul: Out << '*'; break;
+    case Instruction::Div: Out << '/'; break;
+    case Instruction::Rem: Out << '%'; break;
+    case Instruction::And: Out << " & "; break;
+    case Instruction::Or: Out << " | "; break;
+    case Instruction::Xor: Out << " ^ "; break;
+    case Instruction::SetEQ: Out << " == "; break;
+    case Instruction::SetNE: Out << " != "; break;
+    case Instruction::SetLE: Out << " <= "; break;
+    case Instruction::SetGE: Out << " >= "; break;
+    case Instruction::SetLT: Out << " < "; break;
+    case Instruction::SetGT: Out << " > "; break;
+    case Instruction::Shl : Out << " << "; break;
+    case Instruction::Shr : Out << " >> "; break;
+    default: std::cerr << "Invalid operator type!" << I; abort();
+    }
+
+    writeOperand(I.getOperand(1));
   }
-
-  writeOperand(I.getOperand(1));
 
   if (needsCast) {
     Out << "))";
