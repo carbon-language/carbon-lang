@@ -173,10 +173,25 @@ allocation (e.g., caller saving code)
 
 
 7. Furture work
----------------
+===============
 If it is necessary to port the register allocator to another architecture
 than Sparc, only the target specific code in ../lib/Target/Sparc needs to
 be rewritten. Methods defined in class MachineRegInfo must be provided for
 the new architecure.
 
-using  ReservedColorList in RegClass
+7.1 Using  ReservedColorList in RegClass
+----------------------------------------
+The register allocator allows reserving a set of registers - i.e. the reserved
+registers are not used by the register allocator. Currently, there are no
+reserved registers. It it is necessary to make some registers unavailable to
+a particular method, this feature will become handy. To do that, the reserved
+register list must be passed to the register allocator. See PhyRegAlloc.cpp
+
+
+7.2 %g registers on Sparc
+-------------------------
+Currently, %g registers are not allocated on Sparc. If it is necessary to
+allocate these %g registers, the enumeration of registers in SparcIntRegClass
+in SparcRegClassInfo.h must be changed. %g registers can be easily added as
+volatile registers just by moving them above in the eneumeration - see
+SparcRegClassInfo.h
