@@ -565,6 +565,12 @@ GenericValue lle_X_strlen(FunctionType *M, const vector<GenericValue> &Args) {
   return Ret;
 }
 
+// char *__strdup(const char *src);
+GenericValue lle_X___strdup(FunctionType *M, const vector<GenericValue> &Args) {
+  assert(Args.size() == 1);
+  return PTOGV(strdup((char*)GVTOP(Args[0])));
+}
+
 // void *memset(void *S, int C, size_t N)
 GenericValue lle_X_memset(FunctionType *M, const vector<GenericValue> &Args) {
   assert(Args.size() == 3);
@@ -803,6 +809,7 @@ void Interpreter::initializeExternalMethods() {
   FuncNames["lle_X_strcat"]       = lle_X_strcat;
   FuncNames["lle_X_strcpy"]       = lle_X_strcpy;
   FuncNames["lle_X_strlen"]       = lle_X_strlen;
+  FuncNames["lle_X___strdup"]       = lle_X___strdup;
   FuncNames["lle_X_memset"]       = lle_X_memset;
   FuncNames["lle_X_memcpy"]       = lle_X_memcpy;
 
