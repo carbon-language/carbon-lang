@@ -85,6 +85,11 @@ class SCCP : public FunctionPass, public InstVisitor<SCCP> {
 
   std::vector<Instruction*> InstWorkList;// The instruction work list
   std::vector<BasicBlock*>  BBWorkList;  // The BasicBlock work list
+
+  /// KnownFeasibleEdges - Entries in this set are edges which have already had
+  /// PHI nodes retriggered.
+  typedef std::pair<BasicBlock*,BasicBlock*> Edge;
+  std::set<Edge> KnownFeasibleEdges;
 public:
 
   // runOnFunction - Run the Sparse Conditional Constant Propagation algorithm,
@@ -153,22 +158,28 @@ private:
     return ValueState[V];
   }
 
-  // markExecutable - Mark a basic block as executable, adding it to the BB 
+  // markEdgeExecutable - Mark a basic block as executable, adding it to the BB 
   // work list if it is not already executable...
   // 
-  void markExecutable(BasicBlock *BB) {
-    if (BBExecutable.count(BB)) {
-      // BB is already executable, but we may have just made an edge feasible
-      // that wasn't before.  Add the PHI nodes to the work list so that they
-      // can be rechecked.
-      for (BasicBlock::iterator I = BB->begin();
+  void markEdgeExecutable(BasicBlock *Source, BasicBlock *Dest) {
+    if (!KnownFeasibleEdges.insert(Edge(Source, Dest)).second)
+      return;  // This edge is already known to be executable!
+
+    if (BBExecutable.count(Dest)) {
+      DEBUG(std::cerr << "Marking Edge Executable: " << Source->getName()
+                      << " -> " << Dest->getName() << "\n");
+
+      // The destination is already executable, but we just made an edge
+      // feasible that wasn't before.  Add the PHI nodes to the work list so
+      // that they can be rechecked.
+      for (BasicBlock::iterator I = Dest->begin();
            PHINode *PN = dyn_cast<PHINode>(I); ++I)
         visitPHINode(*PN);
 
     } else {
-      DEBUG(std::cerr << "Marking BB Executable: " << *BB);
-      BBExecutable.insert(BB);   // Basic block is executable!
-      BBWorkList.push_back(BB);  // Add the block to the work list!
+      DEBUG(std::cerr << "Marking Block Executable: " << Dest->getName()<<"\n");
+      BBExecutable.insert(Dest);   // Basic block is executable!
+      BBWorkList.push_back(Dest);  // Add the block to the work list!
     }
   }
 
@@ -249,7 +260,8 @@ Pass *createSCCPPass() {
 //
 bool SCCP::runOnFunction(Function &F) {
   // Mark the first block of the function as being executable...
-  markExecutable(&F.front());
+  BBExecutable.insert(F.begin());   // Basic block is executable!
+  BBWorkList.push_back(F.begin());  // Add the block to the work list!
 
   // Process the work lists until their are empty!
   while (!BBWorkList.empty() || !InstWorkList.empty()) {
@@ -494,12 +506,12 @@ void SCCP::visitTerminatorInst(TerminatorInst &TI) {
   std::vector<bool> SuccFeasible;
   getFeasibleSuccessors(TI, SuccFeasible);
 
+  BasicBlock *BB = TI.getParent();
+
   // Mark all feasible successors executable...
   for (unsigned i = 0, e = SuccFeasible.size(); i != e; ++i)
-    if (SuccFeasible[i]) {
-      BasicBlock *Succ = TI.getSuccessor(i);
-      markExecutable(Succ);
-    }
+    if (SuccFeasible[i])
+      markEdgeExecutable(BB, TI.getSuccessor(i));
 }
 
 void SCCP::visitCastInst(CastInst &I) {
