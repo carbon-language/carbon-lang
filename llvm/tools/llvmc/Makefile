@@ -8,7 +8,7 @@
 ##===----------------------------------------------------------------------===##
 LEVEL = ../..
 TOOLNAME = llvmc
-USEDLIBS = support.a
+USEDLIBS = bcreader vmcore support.a
 CONFIG_FILES = st ll
 
 include $(LEVEL)/Makefile.common
