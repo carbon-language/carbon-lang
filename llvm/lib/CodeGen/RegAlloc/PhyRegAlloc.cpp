@@ -11,6 +11,7 @@
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineInstrAnnot.h"
 #include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/CodeGen/MachineFunctionInfo.h"
 #include "llvm/Analysis/LiveVar/FunctionLiveVarInfo.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Target/TargetMachine.h"
@@ -508,7 +509,7 @@ void PhyRegAlloc::updateMachineCode() {
 	continue;
 
       // Reset tmp stack positions so they can be reused for each machine instr.
-      MF.popAllTempValues(TM);  
+      MF.getInfo()->popAllTempValues();  
 	
       // Now insert speical instructions (if necessary) for call/return
       // instructions. 
@@ -658,7 +659,7 @@ void PhyRegAlloc::insertCode4SpilledLR(const LiveRange *LR,
   RegClass *RC = LR->getRegClass();
   const ValueSet &LVSetBef = LVI->getLiveVarSetBeforeMInst(MInst, BB);
 
-  MF.pushTempValue(TM, MRI.getSpilledRegSize(RegType) );
+  MF.getInfo()->pushTempValue(MRI.getSpilledRegSize(RegType) );
   
   vector<MachineInstr*> MIBef, MIAft;
   vector<MachineInstr*> AdIMid;
@@ -749,7 +750,7 @@ int PhyRegAlloc::getUsableUniRegAtMI(const int RegType,
     // we couldn't find an unused register. Generate code to free up a reg by
     // saving it on stack and restoring after the instruction
     
-    int TmpOff = MF.pushTempValue(TM,  MRI.getSpilledRegSize(RegType) );
+    int TmpOff = MF.getInfo()->pushTempValue(MRI.getSpilledRegSize(RegType));
     
     RegU = getUniRegNotUsedByThisInst(RC, MInst);
     
@@ -1093,7 +1094,7 @@ void PhyRegAlloc::allocateStackSpace4SpilledLRs() {
     if (HMI->first && HMI->second) {
       LiveRange *L = HMI->second;      // get the LiveRange
       if (!L->hasColor()) {   //  NOTE: ** allocating the size of long Type **
-        int stackOffset = MF.allocateSpilledValue(TM, Type::LongTy);
+        int stackOffset = MF.getInfo()->allocateSpilledValue(Type::LongTy);
         L->setSpillOffFromFP(stackOffset);
         if (DEBUG_RA)
           cerr << "  LR# " << L->getUserIGNode()->getIndex()
@@ -1159,12 +1160,12 @@ void PhyRegAlloc::allocateRegisters()
   for (unsigned rc=0; rc < NumOfRegClasses ; rc++)  
     RegClassList[rc]->colorAllRegs();    
 
-  // Atter grpah coloring, if some LRs did not receive a color (i.e, spilled)
+  // Atter graph coloring, if some LRs did not receive a color (i.e, spilled)
   // a poistion for such spilled LRs
   //
   allocateStackSpace4SpilledLRs();
 
-  MF.popAllTempValues(TM);  // TODO **Check
+  MF.getInfo()->popAllTempValues();  // TODO **Check
 
   // color incoming args - if the correct color was not received
   // insert code to copy to the correct register
