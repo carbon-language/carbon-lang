@@ -98,11 +98,11 @@ const char * const SparcFloatRegClass::getRegName(unsigned reg) const {
 
 
 static const char * const IntCCRegNames[] = {    
-  "xcc",  "ccr"
+  "xcc",  "icc",  "ccr"
 };
 
 const char * const SparcIntCCRegClass::getRegName(unsigned reg) const {
-  assert(reg < 2);
+  assert(reg < 3);
   return IntCCRegNames[reg];
 }
 
@@ -1088,15 +1088,14 @@ UltraSparcRegInfo::cpReg2RegMI(std::vector<MachineInstr*>& mvec,
   case IntCCRegType:
     if (getRegType(DestReg) == IntRegType) {
       // copy intCC reg to int reg
-      // Use SrcReg+1 to get the name "%ccr" instead of "%xcc" for RDCCR
-      MI = BuildMI(V9::RDCCR, 2).addMReg(SrcReg+1).addMReg(DestReg,MOTy::Def);
+      MI = (BuildMI(V9::RDCCR, 2).addMReg(SparcIntCCRegClass::ccr).
+            addMReg(DestReg,MOTy::Def));
     } else {
       // copy int reg to intCC reg
-      // Use DestReg+1 to get the name "%ccr" instead of "%xcc" for WRCCR
       assert(getRegType(SrcReg) == IntRegType
              && "Can only copy CC reg to/from integer reg");
-      MI = BuildMI(V9::WRCCRr, 3).addMReg(SrcReg)
-        .addMReg(SparcIntRegClass::g0).addMReg(DestReg+1, MOTy::Def);
+      MI = (BuildMI(V9::WRCCRr, 3).addMReg(SrcReg).addMReg(SparcIntRegClass::g0)
+            .addMReg(SparcIntCCRegClass::ccr, MOTy::Def));
     }
     break;
     
@@ -1161,9 +1160,8 @@ UltraSparcRegInfo::cpReg2MemMI(std::vector<MachineInstr*>& mvec,
   case IntCCRegType:
     assert(scratchReg >= 0 && "Need scratch reg to store %ccr to memory");
     assert(getRegType(scratchReg) ==IntRegType && "Invalid scratch reg");
-    
-    // Use SrcReg+1 to get the name "%ccr" instead of "%xcc" for RDCCR
-    MI = BuildMI(V9::RDCCR, 2).addMReg(SrcReg+1).addMReg(scratchReg, MOTy::Def);
+    MI = (BuildMI(V9::RDCCR, 2).addMReg(SparcIntCCRegClass::ccr)
+          .addMReg(scratchReg, MOTy::Def));
     mvec.push_back(MI);
     
     cpReg2MemMI(mvec, scratchReg, DestPtrReg, Offset, IntRegType);
@@ -1221,10 +1219,8 @@ UltraSparcRegInfo::cpMem2RegMI(std::vector<MachineInstr*>& mvec,
     assert(scratchReg >= 0 && "Need scratch reg to load %ccr from memory");
     assert(getRegType(scratchReg) ==IntRegType && "Invalid scratch reg");
     cpMem2RegMI(mvec, SrcPtrReg, Offset, scratchReg, IntRegType);
-    
-    // Use DestReg+1 to get the name "%ccr" instead of "%xcc" for WRCCR
     MI = BuildMI(V9::WRCCRr, 3).addMReg(scratchReg)
-      .addMReg(SparcIntRegClass::g0).addMReg(DestReg+1,MOTy::Def);
+      .addMReg(SparcIntRegClass::g0).addMReg(SparcIntCCRegClass::ccr,MOTy::Def);
     break;
     
   case FloatCCRegType: {

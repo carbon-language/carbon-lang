@@ -393,12 +393,27 @@ SparcFunctionAsmPrinter::printOneOperand(const MachineOperand &mop,
   
   switch (mop.getType())
     {
-    case MachineOperand::MO_VirtualRegister:
     case MachineOperand::MO_CCRegister:
+      {
+        // We need to print %icc or %xcc as %ccr for certain opcodes.
+        int regNum = (int)mop.getAllocatedRegNum();
+        if (regNum != Target.getRegInfo().getInvalidRegNum() &&
+            Target.getRegInfo().getRegClassIDOfReg(regNum)
+            == UltraSparcRegInfo::IntCCRegClassID)
+          {
+            if (opCode == V9::RDCCR || opCode == V9::WRCCRi || opCode == V9::WRCCRr)
+              {
+                toAsm << "%" << Target.getRegInfo().getMachineRegClass(UltraSparcRegInfo::IntCCRegClassID)->getRegName(SparcIntCCRegClass::ccr);
+                break;
+              }
+          }
+        // all other cases can be handled like any other register
+      }
+
+    case MachineOperand::MO_VirtualRegister:
     case MachineOperand::MO_MachineRegister:
       {
         int regNum = (int)mop.getAllocatedRegNum();
-        
         if (regNum == Target.getRegInfo().getInvalidRegNum()) {
           // better to print code with NULL registers than to die
           toAsm << "<NULL VALUE>";

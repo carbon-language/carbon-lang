@@ -113,29 +113,24 @@ public:
 //-----------------------------------------------------------------------------
 // Int CC Register Class
 // Only one integer cc register is available. However, this register is
-// referred to as %xcc when instructions like subcc are executed but 
-// referred to as %ccr (i.e., %xcc + %icc") when this register is moved
-// into an integer register using RD or WR instrcutions. So, two ids are
-// allocated for two names.
+// referred to as %xcc or %icc when instructions like subcc are executed but 
+// referred to as %ccr (i.e., %xcc . %icc") when this register is moved
+// into an integer register using RD or WR instrcutions. So, three ids are
+// allocated for the three names.
 //-----------------------------------------------------------------------------
 
 struct SparcIntCCRegClass : public TargetRegClassInfo {
   SparcIntCCRegClass(unsigned ID) 
-    : TargetRegClassInfo(ID, 1, 2) {  }
+    : TargetRegClassInfo(ID, 1, 3) {  }
   
-  void colorIGNode(IGNode *Node, std::vector<bool> &IsColorUsedArr) const {
-    if (IsColorUsedArr[0])
-      Node->getParentLR()->markForSpill();
-    else
-      Node->setColor(0);    // only one int cc reg is available
-  }
-  
+  void colorIGNode(IGNode *Node, std::vector<bool> &IsColorUsedArr) const;
+
   // according to  Sparc 64 ABI,  %ccr is volatile
   //
   inline bool isRegVolatile(int Reg) const { return true; }
 
   enum {
-    xcc, ccr   // only one is available - see the note above
+    xcc, icc, ccr   // only one is available - see the note above
   };
 
   const char * const getRegName(unsigned reg) const;

@@ -112,6 +112,47 @@ void SparcIntRegClass::colorIGNode(IGNode * Node,
     LR->markForSpill();               // no color found - must spill
 }
 
+//-----------------------------------------------------------------------------
+// Int CC Register Class - method for coloring a node in the interference graph.
+//
+// Algorithm:
+//
+//     If the single int CC register is used (either as icc or xcc)
+//         mark the LR for spilling
+//     else {
+//         if (the LR is a 64-bit comparison) use %xcc
+//         else /*32-bit or smaller*/ use %icc
+//     }
+// 
+// Note: The third name (%ccr) is essentially an assembly mnemonic and
+// depends solely on the opcode, so the name can be chosen in EmitAssembly.
+//-----------------------------------------------------------------------------
+void SparcIntCCRegClass::colorIGNode(IGNode *Node,
+                                     std::vector<bool> &IsColorUsedArr) const
+{
+  if (IsColorUsedArr[xcc] && IsColorUsedArr[icc])
+    Node->getParentLR()->markForSpill();
+  else {
+    // Choose whether to use %xcc or %icc based on type of value compared
+    const LiveRange* ccLR = Node->getParentLR();
+    const Type* setCCType = (* ccLR->begin())->getType(); // any Value in LR
+    assert(setCCType->isIntegral());
+    int ccReg = (setCCType == Type::LongTy)? xcc : icc;
+
+#ifndef NDEBUG
+    // Let's just make sure values of two different types have not been
+    // coalesced into this LR.
+    for (ValueSet::const_iterator I=ccLR->begin(), E=ccLR->end(); I != E; ++I)
+      assert(setCCType->isIntegral() &&
+             ((ccReg == xcc && (*I)->getType() == Type::LongTy) ||
+              (ccReg == icc && (*I)->getType() != Type::LongTy))
+             && "Comparisons needing different intCC regs coalesced in LR!");
+#endif
+
+    Node->setColor(ccReg);                // only one int cc reg is available
+  }
+}
+
 
 //-----------------------------------------------------------------------------
 // Float Register Class - method for coloring a node in the interference graph.

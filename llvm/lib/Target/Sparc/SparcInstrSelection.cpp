@@ -386,16 +386,14 @@ GetTmpForCC(Value* boolVal, const Function *F, const Type* ccType,
 
 static inline MachineOpCode 
 ChooseBccInstruction(const InstructionNode* instrNode,
-                     bool& isFPBranch)
+                     const Type*& setCCType)
 {
   InstructionNode* setCCNode = (InstructionNode*) instrNode->leftChild();
   assert(setCCNode->getOpLabel() == SetCCOp);
   BinaryOperator* setCCInstr =cast<BinaryOperator>(setCCNode->getInstruction());
-  const Type* setCCType = setCCInstr->getOperand(0)->getType();
+  setCCType = setCCInstr->getOperand(0)->getType();
   
-  isFPBranch = setCCType->isFloatingPoint(); // Return value: don't delete!
-  
-  if (isFPBranch)
+  if (setCCType->isFloatingPoint())
     return ChooseBFpccInstruction(instrNode, setCCInstr);
   else
     return ChooseBpccInstruction(instrNode, setCCInstr);
@@ -1604,11 +1602,11 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         // TmpInstruction representing that CC.
         // 
         BranchInst* brInst = cast<BranchInst>(subtreeRoot->getInstruction());
-        bool isFPBranch;
-        unsigned Opcode = ChooseBccInstruction(subtreeRoot, isFPBranch);
+        const Type* setCCType;
+        unsigned Opcode = ChooseBccInstruction(subtreeRoot, setCCType);
         Value* ccValue = GetTmpForCC(subtreeRoot->leftChild()->getValue(),
                                      brInst->getParent()->getParent(),
-                                     isFPBranch? Type::FloatTy : Type::IntTy,
+                                     setCCType,
                                      MachineCodeForInstruction::get(brInst));
         M = BuildMI(Opcode, 2).addCCReg(ccValue)
                               .addPCDisp(brInst->getSuccessor(0));
@@ -2058,7 +2056,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         // 
         TmpInstruction* tmpForCC = GetTmpForCC(setCCInstr,
                                     setCCInstr->getParent()->getParent(),
-                                    isFPCompare ? Type::FloatTy : Type::IntTy,
+                                    leftVal->getType(),
                                     MachineCodeForInstruction::get(setCCInstr));
         if (! isFPCompare) {
           // Integer condition: set CC and discard result.
