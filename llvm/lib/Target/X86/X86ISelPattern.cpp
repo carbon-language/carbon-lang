@@ -1,0 +1,1415 @@
+//===-- X86ISelPattern.cpp - A pattern matching inst selector for X86 -----===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
+//
+// This file defines a pattern matching instruction selector for X86.
+//
+//===----------------------------------------------------------------------===//
+
+#include "X86.h"
+#include "X86InstrBuilder.h"
+#include "X86RegisterInfo.h"
+#include "llvm/Function.h"
+#include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/CodeGen/MachineFrameInfo.h"
+#include "llvm/CodeGen/SelectionDAG.h"
+#include "llvm/CodeGen/SelectionDAGISel.h"
+#include "llvm/CodeGen/SSARegMap.h"
+#include "llvm/Target/TargetData.h"
+#include "llvm/Target/TargetLowering.h"
+#include "llvm/Support/MathExtras.h"
+#include "llvm/ADT/Statistic.h"
+#include <set>
+using namespace llvm;
+
+//===----------------------------------------------------------------------===//
+//  X86TargetLowering - X86 Implementation of the TargetLowering interface
+namespace {
+  class X86TargetLowering : public TargetLowering {
+    int VarArgsFrameIndex;            // FrameIndex for start of varargs area.
+  public:
+    X86TargetLowering(TargetMachine &TM) : TargetLowering(TM) {
+      // Set up the TargetLowering object.
+      addRegisterClass(MVT::i8, X86::R8RegisterClass);
+      addRegisterClass(MVT::i16, X86::R16RegisterClass);
+      addRegisterClass(MVT::i32, X86::R32RegisterClass);
+      addRegisterClass(MVT::f64, X86::RFPRegisterClass);
+      
+      // FIXME: Eliminate these two classes when legalize can handle promotions
+      // well.
+      addRegisterClass(MVT::i1, X86::R8RegisterClass);
+      addRegisterClass(MVT::f32, X86::RFPRegisterClass);
+      
+      computeRegisterProperties();
+      
+      setOperationUnsupported(ISD::MUL, MVT::i8);
+      setOperationUnsupported(ISD::SELECT, MVT::i1);
+      setOperationUnsupported(ISD::SELECT, MVT::i8);
+      
+      addLegalFPImmediate(+0.0); // FLD0
+      addLegalFPImmediate(+1.0); // FLD1
+      addLegalFPImmediate(-0.0); // FLD0/FCHS
+      addLegalFPImmediate(-1.0); // FLD1/FCHS
+    }
+
+    /// LowerArguments - This hook must be implemented to indicate how we should
+    /// lower the arguments for the specified function, into the specified DAG.
+    virtual std::vector<SDOperand>
+    LowerArguments(Function &F, SelectionDAG &DAG);
+
+    /// LowerCallTo - This hook lowers an abstract call to a function into an
+    /// actual call.
+    virtual SDNode *LowerCallTo(const Type *RetTy, SDOperand Callee,
+                                ArgListTy &Args, SelectionDAG &DAG);
+  };
+}
+
+
+std::vector<SDOperand>
+X86TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
+  std::vector<SDOperand> ArgValues;
+
+  // Add DAG nodes to load the arguments...  On entry to a function on the X86,
+  // the stack frame looks like this:
+  //
+  // [ESP] -- return address
+  // [ESP + 4] -- first argument (leftmost lexically)
+  // [ESP + 8] -- second argument, if first argument is four bytes in size
+  //    ... 
+  //
+  MachineFunction &MF = DAG.getMachineFunction();
+  MachineFrameInfo *MFI = MF.getFrameInfo();
+  
+  unsigned ArgOffset = 0;   // Frame mechanisms handle retaddr slot
+  for (Function::aiterator I = F.abegin(), E = F.aend(); I != E; ++I) {
+    MVT::ValueType ObjectVT = getValueType(I->getType());
+    unsigned ArgIncrement = 4;
+    unsigned ObjSize;
+    switch (ObjectVT) {
+    default: assert(0 && "Unhandled argument type!");
+    case MVT::i1:
+    case MVT::i8:  ObjSize = 1;                break;
+    case MVT::i16: ObjSize = 2;                break;
+    case MVT::i32: ObjSize = 4;                break;
+    case MVT::i64: ObjSize = ArgIncrement = 8; break;
+    case MVT::f32: ObjSize = 4;                break;
+    case MVT::f64: ObjSize = ArgIncrement = 8; break;
+    }
+    // Create the frame index object for this incoming parameter...
+    int FI = MFI->CreateFixedObject(ObjSize, ArgOffset);
+    
+    // Create the SelectionDAG nodes corresponding to a load from this parameter
+    SDOperand FIN = DAG.getFrameIndex(FI, MVT::i32);
+
+    // Don't codegen dead arguments.  FIXME: remove this check when we can nuke
+    // dead loads.
+    SDOperand ArgValue;
+    if (!I->use_empty())
+      ArgValue = DAG.getLoad(ObjectVT, DAG.getEntryNode(), FIN);
+    else {
+      if (MVT::isInteger(ObjectVT))
+        ArgValue = DAG.getConstant(0, ObjectVT);
+      else
+        ArgValue = DAG.getConstantFP(0, ObjectVT);
+    }
+    ArgValues.push_back(ArgValue);
+
+    ArgOffset += ArgIncrement;   // Move on to the next argument...
+  }
+
+  // If the function takes variable number of arguments, make a frame index for
+  // the start of the first vararg value... for expansion of llvm.va_start.
+  if (F.isVarArg())
+    VarArgsFrameIndex = MFI->CreateFixedObject(1, ArgOffset);
+
+  return ArgValues;
+}
+
+SDNode *X86TargetLowering::LowerCallTo(const Type *RetTy, SDOperand Callee,
+                                       ArgListTy &Args, SelectionDAG &DAG) {
+  // Count how many bytes are to be pushed on the stack.
+  unsigned NumBytes = 0;
+
+  if (Args.empty()) {
+    // Save zero bytes.
+    DAG.setRoot(DAG.getNode(ISD::ADJCALLSTACKDOWN, MVT::Other, DAG.getRoot(),
+                            DAG.getConstant(0, getPointerTy())));
+  } else {
+    for (unsigned i = 0, e = Args.size(); i != e; ++i)
+      switch (getValueType(Args[i].second)) {
+      default: assert(0 && "Unknown value type!");
+      case MVT::i1:
+      case MVT::i8:
+      case MVT::i16:
+      case MVT::i32:
+      case MVT::f32:
+        NumBytes += 4;
+        break;
+      case MVT::i64:
+      case MVT::f64:
+        NumBytes += 8;
+        break;
+      }
+
+    DAG.setRoot(DAG.getNode(ISD::ADJCALLSTACKDOWN, MVT::Other, DAG.getRoot(), 
+                            DAG.getConstant(NumBytes, getPointerTy())));
+
+    // Arguments go on the stack in reverse order, as specified by the ABI.
+    unsigned ArgOffset = 0;
+    SDOperand StackPtr = DAG.getCopyFromReg(X86::ESP, MVT::i32);
+    for (unsigned i = 0, e = Args.size(); i != e; ++i) {
+      unsigned ArgReg;
+      SDOperand PtrOff = DAG.getConstant(ArgOffset, getPointerTy());
+      PtrOff = DAG.getNode(ISD::ADD, MVT::i32, StackPtr, PtrOff);
+
+      switch (getValueType(Args[i].second)) {
+      default: assert(0 && "Unexpected ValueType for argument!");
+      case MVT::i1:
+      case MVT::i8:
+      case MVT::i16:
+        // Promote the integer to 32 bits.  If the input type is signed use a
+        // sign extend, otherwise use a zero extend.
+        if (Args[i].second->isSigned())
+          Args[i].first =DAG.getNode(ISD::SIGN_EXTEND, MVT::i32, Args[i].first);
+        else
+          Args[i].first =DAG.getNode(ISD::ZERO_EXTEND, MVT::i32, Args[i].first);
+
+        // FALL THROUGH
+      case MVT::i32:
+      case MVT::f32:
+        // FIXME: Note that all of these stores are independent of each other.
+        DAG.setRoot(DAG.getNode(ISD::STORE, MVT::Other, DAG.getRoot(),
+                                Args[i].first, PtrOff));
+        ArgOffset += 4;
+        break;
+      case MVT::i64:
+      case MVT::f64:
+        // FIXME: Note that all of these stores are independent of each other.
+        DAG.setRoot(DAG.getNode(ISD::STORE, MVT::Other, DAG.getRoot(),
+                                Args[i].first, PtrOff));
+        ArgOffset += 8;
+        break;
+      }
+    }
+  }
+
+  std::vector<MVT::ValueType> RetVals;
+  MVT::ValueType RetTyVT = getValueType(RetTy);
+  if (RetTyVT != MVT::isVoid)
+    RetVals.push_back(RetTyVT);
+  RetVals.push_back(MVT::Other);
+
+  SDNode *TheCall = DAG.getCall(RetVals, DAG.getRoot(), Callee);
+  DAG.setRoot(SDOperand(TheCall, TheCall->getNumValues()-1));
+  DAG.setRoot(DAG.getNode(ISD::ADJCALLSTACKUP, MVT::Other, DAG.getRoot(),
+              DAG.getConstant(NumBytes, getPointerTy())));
+  return TheCall;
+}
+
+
+
+
+
+
+namespace {
+  Statistic<>
+  NumFPKill("x86-codegen", "Number of FP_REG_KILL instructions added");
+
+  //===--------------------------------------------------------------------===//
+  /// ISel - X86 specific code to select X86 machine instructions for
+  /// SelectionDAG operations.
+  ///
+  class ISel : public SelectionDAGISel {
+    /// ContainsFPCode - Every instruction we select that uses or defines a FP
+    /// register should set this to true.
+    bool ContainsFPCode;
+
+    /// X86Lowering - This object fully describes how to lower LLVM code to an
+    /// X86-specific SelectionDAG.
+    X86TargetLowering X86Lowering;
+
+
+    /// ExprMap - As shared expressions are codegen'd, we keep track of which
+    /// vreg the value is produced in, so we only emit one copy of each compiled
+    /// tree.
+    std::map<SDOperand, unsigned> ExprMap;
+    std::set<SDOperand> LoweredTokens;
+
+  public:
+    ISel(TargetMachine &TM) : SelectionDAGISel(X86Lowering), X86Lowering(TM) {
+    }
+
+    /// InstructionSelectBasicBlock - This callback is invoked by
+    /// SelectionDAGISel when it has created a SelectionDAG for us to codegen.
+    virtual void InstructionSelectBasicBlock(SelectionDAG &DAG) {
+      // While we're doing this, keep track of whether we see any FP code for
+      // FP_REG_KILL insertion.
+      ContainsFPCode = false;
+
+      // Codegen the basic block.
+      Select(DAG.getRoot());
+
+      // Insert FP_REG_KILL instructions into basic blocks that need them.  This
+      // only occurs due to the floating point stackifier not being aggressive
+      // enough to handle arbitrary global stackification.
+      //
+      // Currently we insert an FP_REG_KILL instruction into each block that
+      // uses or defines a floating point virtual register.
+      //
+      // When the global register allocators (like linear scan) finally update
+      // live variable analysis, we can keep floating point values in registers
+      // across basic blocks.  This will be a huge win, but we are waiting on
+      // the global allocators before we can do this.
+      //
+      if (ContainsFPCode && BB->succ_size()) {
+        BuildMI(*BB, BB->getFirstTerminator(), X86::FP_REG_KILL, 0);
+        ++NumFPKill;
+      }
+
+      // Clear state used for selection.
+      ExprMap.clear();
+      LoweredTokens.clear();
+    }
+
+    void EmitCMP(SDOperand LHS, SDOperand RHS);
+    bool EmitBranchCC(MachineBasicBlock *Dest, SDOperand Cond);
+    unsigned SelectExpr(SDOperand N);
+    bool SelectAddress(SDOperand N, X86AddressMode &AM);
+    void Select(SDOperand N);
+  };
+}
+
+/// SelectAddress - Add the specified node to the specified addressing mode,
+/// returning true if it cannot be done.
+bool ISel::SelectAddress(SDOperand N, X86AddressMode &AM) {
+  switch (N.getOpcode()) {
+  default: break;
+  case ISD::FrameIndex:
+    if (AM.BaseType == X86AddressMode::RegBase && AM.Base.Reg == 0) {
+      AM.BaseType = X86AddressMode::FrameIndexBase;
+      AM.Base.FrameIndex = cast<FrameIndexSDNode>(N)->getIndex();
+      return false;
+    }
+    break;
+  case ISD::GlobalAddress:
+    if (AM.GV == 0) {
+      AM.GV = cast<GlobalAddressSDNode>(N)->getGlobal();
+      return false;
+    }
+    break;
+  case ISD::Constant:
+    AM.Disp += cast<ConstantSDNode>(N)->getValue();
+    return false;
+  case ISD::SHL:
+    if (AM.IndexReg == 0 || AM.Scale == 1)
+      if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N.Val->getOperand(1))) {
+        unsigned Val = CN->getValue();
+        if (Val == 1 || Val == 2 || Val == 3) {
+          AM.Scale = 1 << Val;
+          AM.IndexReg = SelectExpr(N.Val->getOperand(0));
+          return false;
+        }
+      }
+    break;
+
+  case ISD::ADD: {
+    X86AddressMode Backup = AM;
+    if (!SelectAddress(N.Val->getOperand(0), AM) &&
+        !SelectAddress(N.Val->getOperand(1), AM))
+      return false;
+    AM = Backup;
+    break;
+  }
+  }
+
+  if (AM.BaseType != X86AddressMode::RegBase ||
+      AM.Base.Reg)
+    return true;
+
+  // Default, generate it as a register.
+  AM.BaseType = X86AddressMode::RegBase;
+  AM.Base.Reg = SelectExpr(N);
+  return false;
+}
+
+/// Emit2SetCCsAndLogical - Emit the following sequence of instructions,
+/// assuming that the temporary registers are in the 8-bit register class.
+///
+///  Tmp1 = setcc1
+///  Tmp2 = setcc2
+///  DestReg = logicalop Tmp1, Tmp2
+///
+static void Emit2SetCCsAndLogical(MachineBasicBlock *BB, unsigned SetCC1,
+                                  unsigned SetCC2, unsigned LogicalOp,
+                                  unsigned DestReg) {
+  SSARegMap *RegMap = BB->getParent()->getSSARegMap();
+  unsigned Tmp1 = RegMap->createVirtualRegister(X86::R8RegisterClass);
+  unsigned Tmp2 = RegMap->createVirtualRegister(X86::R8RegisterClass);
+  BuildMI(BB, SetCC1, 0, Tmp1);
+  BuildMI(BB, SetCC2, 0, Tmp2);
+  BuildMI(BB, LogicalOp, 2, DestReg).addReg(Tmp1).addReg(Tmp2);
+}
+
+/// EmitSetCC - Emit the code to set the specified 8-bit register to 1 if the
+/// condition codes match the specified SetCCOpcode.  Note that some conditions
+/// require multiple instructions to generate the correct value.
+static void EmitSetCC(MachineBasicBlock *BB, unsigned DestReg,
+                      ISD::CondCode SetCCOpcode, bool isFP) {
+  unsigned Opc;
+  if (!isFP) {
+    switch (SetCCOpcode) {
+    default: assert(0 && "Illegal integer SetCC!");
+    case ISD::SETEQ: Opc = X86::SETEr; break;
+    case ISD::SETGT: Opc = X86::SETGr; break;
+    case ISD::SETGE: Opc = X86::SETGEr; break;
+    case ISD::SETLT: Opc = X86::SETLr; break;
+    case ISD::SETLE: Opc = X86::SETLEr; break;
+    case ISD::SETNE: Opc = X86::SETNEr; break;
+    case ISD::SETULT: Opc = X86::SETBr; break;
+    case ISD::SETUGT: Opc = X86::SETAr; break;
+    case ISD::SETULE: Opc = X86::SETBEr; break;
+    case ISD::SETUGE: Opc = X86::SETAEr; break;
+    }
+  } else {
+    // On a floating point condition, the flags are set as follows:
+    // ZF  PF  CF   op
+    //  0 | 0 | 0 | X > Y
+    //  0 | 0 | 1 | X < Y
+    //  1 | 0 | 0 | X == Y
+    //  1 | 1 | 1 | unordered
+    //
+    switch (SetCCOpcode) {
+    default: assert(0 && "Invalid FP setcc!");
+    case ISD::SETUEQ:
+    case ISD::SETEQ:
+      Opc = X86::SETEr;    // True if ZF = 1
+      break;
+    case ISD::SETOGT:
+    case ISD::SETGT:
+      Opc = X86::SETAr;    // True if CF = 0 and ZF = 0
+      break;
+    case ISD::SETOGE:
+    case ISD::SETGE:
+      Opc = X86::SETAEr;   // True if CF = 0
+      break;
+    case ISD::SETULT:
+    case ISD::SETLT:
+      Opc = X86::SETBr;    // True if CF = 1
+      break;
+    case ISD::SETULE:
+    case ISD::SETLE:
+      Opc = X86::SETBEr;   // True if CF = 1 or ZF = 1
+      break;
+    case ISD::SETONE:
+    case ISD::SETNE:
+      Opc = X86::SETNEr;   // True if ZF = 0
+      break;
+    case ISD::SETUO:
+      Opc = X86::SETPr;    // True if PF = 1
+      break;
+    case ISD::SETO:
+      Opc = X86::SETNPr;   // True if PF = 0
+      break;
+    case ISD::SETOEQ:      // !PF & ZF
+      Emit2SetCCsAndLogical(BB, X86::SETNPr, X86::SETEr, X86::AND8rr, DestReg);
+      return;
+    case ISD::SETOLT:      // !PF & CF
+      Emit2SetCCsAndLogical(BB, X86::SETNPr, X86::SETBr, X86::AND8rr, DestReg);
+      return;
+    case ISD::SETOLE:      // !PF & (CF || ZF)
+      Emit2SetCCsAndLogical(BB, X86::SETNPr, X86::SETBEr, X86::AND8rr, DestReg);
+      return;
+    case ISD::SETUGT:      // PF | (!ZF & !CF)
+      Emit2SetCCsAndLogical(BB, X86::SETPr, X86::SETAr, X86::OR8rr, DestReg);
+      return;
+    case ISD::SETUGE:      // PF | !CF
+      Emit2SetCCsAndLogical(BB, X86::SETPr, X86::SETAEr, X86::OR8rr, DestReg);
+      return;
+    case ISD::SETUNE:      // PF | !ZF
+      Emit2SetCCsAndLogical(BB, X86::SETPr, X86::SETNEr, X86::OR8rr, DestReg);
+      return;
+    }
+  }
+  BuildMI(BB, Opc, 0, DestReg);
+}
+
+
+/// EmitBranchCC - Emit code into BB that arranges for control to transfer to
+/// the Dest block if the Cond condition is true.  If we cannot fold this
+/// condition into the branch, return true.
+///
+bool ISel::EmitBranchCC(MachineBasicBlock *Dest, SDOperand Cond) {
+  // FIXME: Evaluate whether it would be good to emit code like (X < Y) | (A >
+  // B) using two conditional branches instead of one condbr, two setcc's, and
+  // an or.
+  if ((Cond.getOpcode() == ISD::OR ||
+       Cond.getOpcode() == ISD::AND) && Cond.Val->hasOneUse()) {
+    // And and or set the flags for us, so there is no need to emit a TST of the
+    // result.  It is only safe to do this if there is only a single use of the
+    // AND/OR though, otherwise we don't know it will be emitted here.
+    SelectExpr(Cond);
+    BuildMI(BB, X86::JNE, 1).addMBB(Dest);
+    return false;
+  }
+
+  // Codegen br not C -> JE.
+  if (Cond.getOpcode() == ISD::XOR)
+    if (ConstantSDNode *NC = dyn_cast<ConstantSDNode>(Cond.Val->getOperand(1)))
+      if (NC->isAllOnesValue()) {
+        unsigned CondR = SelectExpr(Cond.Val->getOperand(0));
+        BuildMI(BB, X86::TEST8rr, 2).addReg(CondR).addReg(CondR);
+        BuildMI(BB, X86::JE, 1).addMBB(Dest);
+        return false;
+      }
+
+  SetCCSDNode *SetCC = dyn_cast<SetCCSDNode>(Cond);
+  if (SetCC == 0)
+    return true;                       // Can only handle simple setcc's so far.
+
+  unsigned Opc;
+
+  // Handle integer conditions first.
+  if (MVT::isInteger(SetCC->getOperand(0).getValueType())) {
+    switch (SetCC->getCondition()) {
+    default: assert(0 && "Illegal integer SetCC!");
+    case ISD::SETEQ: Opc = X86::JE; break;
+    case ISD::SETGT: Opc = X86::JG; break;
+    case ISD::SETGE: Opc = X86::JGE; break;
+    case ISD::SETLT: Opc = X86::JL; break;
+    case ISD::SETLE: Opc = X86::JLE; break;
+    case ISD::SETNE: Opc = X86::JNE; break;
+    case ISD::SETULT: Opc = X86::JB; break;
+    case ISD::SETUGT: Opc = X86::JA; break;
+    case ISD::SETULE: Opc = X86::JBE; break;
+    case ISD::SETUGE: Opc = X86::JAE; break;
+    }
+    EmitCMP(SetCC->getOperand(0), SetCC->getOperand(1));
+    BuildMI(BB, Opc, 1).addMBB(Dest);
+    return false;
+  }
+
+  ContainsFPCode = true;
+  unsigned Opc2 = 0;  // Second branch if needed.
+
+  // On a floating point condition, the flags are set as follows:
+  // ZF  PF  CF   op
+  //  0 | 0 | 0 | X > Y
+  //  0 | 0 | 1 | X < Y
+  //  1 | 0 | 0 | X == Y
+  //  1 | 1 | 1 | unordered
+  //
+  switch (SetCC->getCondition()) {
+  default: assert(0 && "Invalid FP setcc!");
+  case ISD::SETUEQ:
+  case ISD::SETEQ:   Opc = X86::JE;  break;     // True if ZF = 1
+  case ISD::SETOGT:
+  case ISD::SETGT:   Opc = X86::JA;  break;     // True if CF = 0 and ZF = 0
+  case ISD::SETOGE:
+  case ISD::SETGE:   Opc = X86::JAE; break;     // True if CF = 0
+  case ISD::SETULT:
+  case ISD::SETLT:   Opc = X86::JB;  break;     // True if CF = 1
+  case ISD::SETULE:
+  case ISD::SETLE:   Opc = X86::JBE; break;     // True if CF = 1 or ZF = 1
+  case ISD::SETONE:
+  case ISD::SETNE:   Opc = X86::JNE; break;     // True if ZF = 0
+  case ISD::SETUO:   Opc = X86::JP;  break;     // True if PF = 1
+  case ISD::SETO:    Opc = X86::JNP; break;     // True if PF = 0
+  case ISD::SETUGT:      // PF = 1 | (ZF = 0 & CF = 0)
+    Opc = X86::JA;       // ZF = 0 & CF = 0
+    Opc2 = X86::JP;      // PF = 1
+    break;
+  case ISD::SETUGE:      // PF = 1 | CF = 0
+    Opc = X86::JAE;      // CF = 0
+    Opc2 = X86::JP;      // PF = 1
+    break;
+  case ISD::SETUNE:      // PF = 1 | ZF = 0
+    Opc = X86::JNE;      // ZF = 0
+    Opc2 = X86::JP;      // PF = 1
+    break;
+  case ISD::SETOEQ:      // PF = 0 & ZF = 1
+    //X86::JNP, X86::JE
+    //X86::AND8rr
+    return true;    // FIXME: Emit more efficient code for this branch.
+  case ISD::SETOLT:      // PF = 0 & CF = 1
+    //X86::JNP, X86::JB
+    //X86::AND8rr
+    return true;    // FIXME: Emit more efficient code for this branch.
+  case ISD::SETOLE:      // PF = 0 & (CF = 1 || ZF = 1)
+    //X86::JNP, X86::JBE
+    //X86::AND8rr
+    return true;    // FIXME: Emit more efficient code for this branch.
+  }
+
+  EmitCMP(SetCC->getOperand(0), SetCC->getOperand(1));
+  BuildMI(BB, Opc, 1).addMBB(Dest);
+  if (Opc2)
+    BuildMI(BB, Opc2, 1).addMBB(Dest);
+  return false;
+}
+
+void ISel::EmitCMP(SDOperand LHS, SDOperand RHS) {
+  unsigned Tmp1 = SelectExpr(LHS), Opc;
+  if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(RHS)) {
+    Opc = 0;
+    switch (RHS.getValueType()) {
+    default: break;
+    case MVT::i1:
+    case MVT::i8:  Opc = X86::CMP8ri;  break;
+    case MVT::i16: Opc = X86::CMP16ri; break;
+    case MVT::i32: Opc = X86::CMP32ri; break;
+    }
+    if (Opc) {
+      BuildMI(BB, Opc, 2).addReg(Tmp1).addImm(CN->getValue());
+      return;
+    }
+  }
+
+  switch (LHS.getValueType()) {
+  default: assert(0 && "Cannot compare this value!");
+  case MVT::i1:
+  case MVT::i8:  Opc = X86::CMP8rr;  break;
+  case MVT::i16: Opc = X86::CMP16rr; break;
+  case MVT::i32: Opc = X86::CMP32rr; break;
+  case MVT::f32:
+  case MVT::f64: Opc = X86::FUCOMIr; ContainsFPCode = true; break;
+  }
+  unsigned Tmp2 = SelectExpr(RHS);
+  BuildMI(BB, Opc, 2).addReg(Tmp1).addReg(Tmp2);
+}
+
+unsigned ISel::SelectExpr(SDOperand N) {
+  unsigned Result;
+  unsigned Tmp1, Tmp2, Tmp3;
+  unsigned Opc = 0;
+
+  if (N.getOpcode() == ISD::CopyFromReg)
+    // Just use the specified register as our input.
+    return dyn_cast<CopyRegSDNode>(N)->getReg();
+
+  // If there are multiple uses of this expression, memorize the
+  // register it is code generated in, instead of emitting it multiple
+  // times.
+  // FIXME: Disabled for our current selection model.
+  if (1 || !N.Val->hasOneUse()) {
+    unsigned &Reg = ExprMap[N];
+    if (Reg) return Reg;
+
+    if (N.getOpcode() != ISD::CALL)
+      Reg = Result = (N.getValueType() != MVT::Other) ?
+                         MakeReg(N.getValueType()) : 1;
+    else {
+      // If this is a call instruction, make sure to prepare ALL of the result
+      // values as well as the chain.
+      if (N.Val->getNumValues() == 1)
+        Reg = Result = 1;  // Void call, just a chain.
+      else {
+        Result = MakeReg(N.Val->getValueType(0));
+        ExprMap[SDOperand(N.Val,0)] = Result;
+        for (unsigned i = 1, e = N.Val->getNumValues()-1; i != e; ++i)
+          ExprMap[SDOperand(N.Val, i)] = MakeReg(N.Val->getValueType(i));
+        ExprMap[SDOperand(N.Val, N.Val->getNumValues()-1)] = 1;
+      }
+    }
+  } else {
+    Result = MakeReg(N.getValueType());
+  }
+
+  switch (N.getOpcode()) {
+  default:
+    N.Val->dump();
+    assert(0 && "Node not handled!\n");
+  case ISD::FrameIndex:
+    Tmp1 = cast<FrameIndexSDNode>(N)->getIndex();
+    addFrameReference(BuildMI(BB, X86::LEA32r, 4, Result), (int)Tmp1);
+    return Result;
+  case ISD::ConstantPool:
+    Tmp1 = cast<ConstantPoolSDNode>(N)->getIndex();
+    addConstantPoolReference(BuildMI(BB, X86::LEA32r, 4, Result), Tmp1);
+    return Result;
+  case ISD::ConstantFP:
+    ContainsFPCode = true;
+    Tmp1 = Result;   // Intermediate Register
+    if (cast<ConstantFPSDNode>(N)->getValue() < 0.0 ||
+        cast<ConstantFPSDNode>(N)->isExactlyValue(-0.0))
+      Tmp1 = MakeReg(MVT::f64);
+
+    if (cast<ConstantFPSDNode>(N)->isExactlyValue(+0.0) ||
+        cast<ConstantFPSDNode>(N)->isExactlyValue(-0.0))
+      BuildMI(BB, X86::FLD0, 0, Tmp1);
+    else if (cast<ConstantFPSDNode>(N)->isExactlyValue(+1.0) ||
+             cast<ConstantFPSDNode>(N)->isExactlyValue(-1.0))
+      BuildMI(BB, X86::FLD1, 0, Tmp1);
+    else
+      assert(0 && "Unexpected constant!");
+    if (Tmp1 != Result)
+      BuildMI(BB, X86::FCHS, 1, Result).addReg(Tmp1);
+    return Result;
+  case ISD::Constant:
+    switch (N.getValueType()) {
+    default: assert(0 && "Cannot use constants of this type!");
+    case MVT::i1:
+    case MVT::i8:  Opc = X86::MOV8ri;  break;
+    case MVT::i16: Opc = X86::MOV16ri; break;
+    case MVT::i32: Opc = X86::MOV32ri; break;
+    }
+    BuildMI(BB, Opc, 1,Result).addImm(cast<ConstantSDNode>(N)->getValue());
+    return Result;
+  case ISD::GlobalAddress: {
+    GlobalValue *GV = cast<GlobalAddressSDNode>(N)->getGlobal();
+    BuildMI(BB, X86::MOV32ri, 1, Result).addGlobalAddress(GV);
+    return Result;
+  }
+  case ISD::ExternalSymbol: {
+    const char *Sym = cast<ExternalSymbolSDNode>(N)->getSymbol();
+    BuildMI(BB, X86::MOV32ri, 1, Result).addExternalSymbol(Sym);
+    return Result;
+  }
+  case ISD::FP_EXTEND:
+    Tmp1 = SelectExpr(N.getOperand(0));
+    BuildMI(BB, X86::FpMOV, 1, Result).addReg(Tmp1);
+    ContainsFPCode = true;
+    return Result;
+  case ISD::ZERO_EXTEND: {
+    int DestIs16 = N.getValueType() == MVT::i16;
+    int SrcIs16  = N.getOperand(0).getValueType() == MVT::i16;
+
+    static const unsigned Opc[3] = {
+      X86::MOVZX32rr8, X86::MOVZX32rr16, X86::MOVZX16rr8
+    };
+    Tmp1 = SelectExpr(N.getOperand(0));
+    BuildMI(BB, Opc[SrcIs16+DestIs16*2], 1, Result).addReg(Tmp1);
+    return Result;
+  }    
+  case ISD::SIGN_EXTEND: {
+    int DestIs16 = N.getValueType() == MVT::i16;
+    int SrcIs16  = N.getOperand(0).getValueType() == MVT::i16;
+
+    static const unsigned Opc[3] = {
+      X86::MOVSX32rr8, X86::MOVSX32rr16, X86::MOVSX16rr8
+    };
+    Tmp1 = SelectExpr(N.getOperand(0));
+    BuildMI(BB, Opc[SrcIs16+DestIs16*2], 1, Result).addReg(Tmp1);
+    return Result;
+  }
+  case ISD::TRUNCATE:
+    // Handle cast of LARGER int to SMALLER int using a move to EAX followed by
+    // a move out of AX or AL.
+    switch (N.getOperand(0).getValueType()) {
+    default: assert(0 && "Unknown truncate!");
+    case MVT::i8:  Tmp2 = X86::AL;  Opc = X86::MOV8rr;  break;
+    case MVT::i16: Tmp2 = X86::AX;  Opc = X86::MOV16rr; break;
+    case MVT::i32: Tmp2 = X86::EAX; Opc = X86::MOV32rr; break;
+    }
+    Tmp1 = SelectExpr(N.getOperand(0));
+    BuildMI(BB, Opc, 1, Tmp2).addReg(Tmp1);
+
+    switch (N.getValueType()) {
+    default: assert(0 && "Unknown truncate!");
+    case MVT::i1:
+    case MVT::i8:  Tmp2 = X86::AL;  Opc = X86::MOV8rr;  break;
+    case MVT::i16: Tmp2 = X86::AX;  Opc = X86::MOV16rr; break;
+    }
+    BuildMI(BB, Opc, 1, Result).addReg(Tmp2);
+    return Result;
+
+  case ISD::FP_ROUND:
+    // Truncate from double to float by storing to memory as float,
+    // then reading it back into a register.
+
+    // Create as stack slot to use.
+    Tmp1 = TLI.getTargetData().getFloatAlignment();
+    Tmp2 = BB->getParent()->getFrameInfo()->CreateStackObject(4, Tmp1);
+
+    // Codegen the input.
+    Tmp1 = SelectExpr(N.getOperand(0));
+
+    // Emit the store, then the reload.
+    addFrameReference(BuildMI(BB, X86::FST32m, 5), Tmp2).addReg(Tmp1);
+    addFrameReference(BuildMI(BB, X86::FLD32m, 5, Result), Tmp2);
+    ContainsFPCode = true;
+    return Result;
+
+  case ISD::ADD:
+    // See if we can codegen this as an LEA to fold operations together.
+    if (N.getValueType() == MVT::i32) {
+      X86AddressMode AM;
+      if (!SelectAddress(N.getOperand(0), AM) &&
+          !SelectAddress(N.getOperand(1), AM)) {
+	// If this is not just an add, emit the LEA.  For a simple add (like
+	// reg+reg or reg+imm), we just emit an add.  If might be a good idea to
+	// leave this as LEA, then peephole it to 'ADD' after two address elim
+	// happens.
+        if (AM.Scale != 1 || AM.BaseType == X86AddressMode::FrameIndexBase ||
+            AM.Base.Reg && AM.IndexReg && (AM.Disp || AM.GV)) {
+          addFullAddress(BuildMI(BB, X86::LEA32r, 4, Result), AM);
+          return Result;
+        }
+      }
+    }
+    Tmp1 = SelectExpr(N.getOperand(0));
+    if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
+      Opc = 0;
+      if (CN->getValue() == 1) {   // add X, 1 -> inc X
+        switch (N.getValueType()) {
+        default: assert(0 && "Cannot integer add this type!");
+        case MVT::i8:  Opc = X86::INC8r; break;
+        case MVT::i16: Opc = X86::INC16r; break;
+        case MVT::i32: Opc = X86::INC32r; break;
+        }
+      } else if (CN->isAllOnesValue()) { // add X, -1 -> dec X
+        switch (N.getValueType()) {
+        default: assert(0 && "Cannot integer add this type!");
+        case MVT::i8:  Opc = X86::DEC8r; break;
+        case MVT::i16: Opc = X86::DEC16r; break;
+        case MVT::i32: Opc = X86::DEC32r; break;
+        }
+      }
+
+      if (Opc) {
+        BuildMI(BB, Opc, 1, Result).addReg(Tmp1);
+        return Result;
+      }
+
+      switch (N.getValueType()) {
+      default: assert(0 && "Cannot add this type!");
+      case MVT::i8:  Opc = X86::ADD8ri; break;
+      case MVT::i16: Opc = X86::ADD16ri; break;
+      case MVT::i32: Opc = X86::ADD32ri; break;
+      }
+      if (Opc) {
+        BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addImm(CN->getValue());
+        return Result;
+      }
+    }
+
+    Tmp2 = SelectExpr(N.getOperand(1));
+    switch (N.getValueType()) {
+    default: assert(0 && "Cannot add this type!");
+    case MVT::i8:  Opc = X86::ADD8rr; break;
+    case MVT::i16: Opc = X86::ADD16rr; break;
+    case MVT::i32: Opc = X86::ADD32rr; break;
+    case MVT::f32: 
+    case MVT::f64: Opc = X86::FpADD; ContainsFPCode = true; break;
+    }
+    BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(Tmp2);
+    return Result;
+  case ISD::SUB:
+    if (MVT::isInteger(N.getValueType()))
+      if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N.getOperand(0)))
+        if (CN->isNullValue()) {   // 0 - N -> neg N
+          switch (N.getValueType()) {
+          default: assert(0 && "Cannot sub this type!");
+          case MVT::i1:
+          case MVT::i8:  Opc = X86::NEG8r;  break;
+          case MVT::i16: Opc = X86::NEG16r; break;
+          case MVT::i32: Opc = X86::NEG32r; break;
+          }
+          Tmp1 = SelectExpr(N.getOperand(1));
+          BuildMI(BB, Opc, 1, Result).addReg(Tmp1);
+          return Result;
+        }
+
+    Tmp1 = SelectExpr(N.getOperand(0));
+    if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
+      switch (N.getValueType()) {
+      default: assert(0 && "Cannot sub this type!");
+      case MVT::i1:
+      case MVT::i8:  Opc = X86::SUB8ri;  break;
+      case MVT::i16: Opc = X86::SUB16ri; break;
+      case MVT::i32: Opc = X86::SUB32ri; break;
+      }
+      BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addImm(CN->getValue());
+      return Result;
+    }
+    Tmp2 = SelectExpr(N.getOperand(1));
+    switch (N.getValueType()) {
+    default: assert(0 && "Cannot add this type!");
+    case MVT::i1:
+    case MVT::i8:  Opc = X86::SUB8rr; break;
+    case MVT::i16: Opc = X86::SUB16rr; break;
+    case MVT::i32: Opc = X86::SUB32rr; break;
+    case MVT::f32:
+    case MVT::f64: Opc = X86::FpSUB; ContainsFPCode = true; break;
+    }
+    BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(Tmp2);
+    return Result;
+
+  case ISD::AND:
+    Tmp1 = SelectExpr(N.getOperand(0));
+    if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
+      switch (N.getValueType()) {
+      default: assert(0 && "Cannot add this type!");
+      case MVT::i1:
+      case MVT::i8:  Opc = X86::AND8ri;  break;
+      case MVT::i16: Opc = X86::AND16ri; break;
+      case MVT::i32: Opc = X86::AND32ri; break;
+      }
+      BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addImm(CN->getValue());
+      return Result;
+    }
+    Tmp2 = SelectExpr(N.getOperand(1));
+    switch (N.getValueType()) {
+    default: assert(0 && "Cannot add this type!");
+    case MVT::i1:
+    case MVT::i8:  Opc = X86::AND8rr; break;
+    case MVT::i16: Opc = X86::AND16rr; break;
+    case MVT::i32: Opc = X86::AND32rr; break;
+    }
+    BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(Tmp2);
+    return Result;
+  case ISD::OR:
+    Tmp1 = SelectExpr(N.getOperand(0));
+    if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
+      switch (N.getValueType()) {
+      default: assert(0 && "Cannot add this type!");
+      case MVT::i1:
+      case MVT::i8:  Opc = X86::OR8ri;  break;
+      case MVT::i16: Opc = X86::OR16ri; break;
+      case MVT::i32: Opc = X86::OR32ri; break;
+      }
+      BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addImm(CN->getValue());
+      return Result;
+    }
+    Tmp2 = SelectExpr(N.getOperand(1));
+    switch (N.getValueType()) {
+    default: assert(0 && "Cannot add this type!");
+    case MVT::i1:
+    case MVT::i8:  Opc = X86::OR8rr; break;
+    case MVT::i16: Opc = X86::OR16rr; break;
+    case MVT::i32: Opc = X86::OR32rr; break;
+    }
+    BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(Tmp2);
+    return Result;
+  case ISD::XOR:
+    Tmp1 = SelectExpr(N.getOperand(0));
+    if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
+      switch (N.getValueType()) {
+      default: assert(0 && "Cannot add this type!");
+      case MVT::i1:
+      case MVT::i8:  Opc = X86::XOR8ri;  break;
+      case MVT::i16: Opc = X86::XOR16ri; break;
+      case MVT::i32: Opc = X86::XOR32ri; break;
+      }
+      BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addImm(CN->getValue());
+      return Result;
+    }
+    Tmp2 = SelectExpr(N.getOperand(1));
+    switch (N.getValueType()) {
+    default: assert(0 && "Cannot add this type!");
+    case MVT::i1:
+    case MVT::i8:  Opc = X86::XOR8rr; break;
+    case MVT::i16: Opc = X86::XOR16rr; break;
+    case MVT::i32: Opc = X86::XOR32rr; break;
+    }
+    BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(Tmp2);
+    return Result;
+
+  case ISD::MUL:
+    Tmp1 = SelectExpr(N.getOperand(0));
+    if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
+      Opc = 0;
+      switch (N.getValueType()) {
+      default: assert(0 && "Cannot multiply this type!");
+      case MVT::i8:  break;
+      case MVT::i16: Opc = X86::IMUL16rri; break;
+      case MVT::i32: Opc = X86::IMUL32rri; break;
+      }
+      if (Opc) {
+        BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addImm(CN->getValue());
+        return Result;
+      }
+    }
+    Tmp2 = SelectExpr(N.getOperand(1));
+    switch (N.getValueType()) {
+    default: assert(0 && "Cannot add this type!");
+    case MVT::i8: assert(0 && "FIXME: MUL i8 not implemented yet!");
+    case MVT::i16: Opc = X86::IMUL16rr; break;
+    case MVT::i32: Opc = X86::IMUL32rr; break;
+    case MVT::f32: 
+    case MVT::f64: Opc = X86::FpMUL; ContainsFPCode = true; break;
+    }
+    BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(Tmp2);
+    return Result;
+
+  case ISD::SELECT:
+    // FIXME: implement folding of setcc into select.
+    if (N.getValueType() != MVT::i1 && N.getValueType() != MVT::i8) {
+      Tmp2 = SelectExpr(N.getOperand(1));
+      Tmp3 = SelectExpr(N.getOperand(2));
+      Tmp1 = SelectExpr(N.getOperand(0));
+
+      switch (N.getValueType()) {
+      default: assert(0 && "Cannot select this type!");
+      case MVT::i16: Opc = X86::CMOVE16rr; break;
+      case MVT::i32: Opc = X86::CMOVE32rr; break;
+      case MVT::f32:
+      case MVT::f64: Opc = X86::FCMOVE; ContainsFPCode = true; break;
+      }
+
+      // Get the condition into the zero flag.
+      BuildMI(BB, X86::TEST8rr, 2).addReg(Tmp1).addReg(Tmp1);
+      BuildMI(BB, Opc, 2, Result).addReg(Tmp2).addReg(Tmp3);
+      return Result;
+    } else {
+      // FIXME: This should not be implemented here, it should be in the generic
+      // code!
+      Tmp2 = SelectExpr(CurDAG->getNode(ISD::ZERO_EXTEND, MVT::i16,
+                                        N.getOperand(1)));
+      Tmp3 = SelectExpr(CurDAG->getNode(ISD::ZERO_EXTEND, MVT::i16,
+                                        N.getOperand(2)));
+      Tmp1 = SelectExpr(N.getOperand(0));
+      BuildMI(BB, X86::TEST8rr, 2).addReg(Tmp1).addReg(Tmp1);
+      // FIXME: need subregs to do better than this!
+      unsigned TmpReg = MakeReg(MVT::i16);
+      BuildMI(BB, X86::CMOVE16rr, 2, TmpReg).addReg(Tmp2).addReg(Tmp3);
+      BuildMI(BB, X86::MOV16rr, 1, X86::AX).addReg(TmpReg);
+      BuildMI(BB, X86::MOV8rr, 1, Result).addReg(X86::AL);
+      return Result;
+    }
+
+  case ISD::SDIV:
+  case ISD::UDIV:
+  case ISD::SREM:
+  case ISD::UREM: {
+    Tmp1 = SelectExpr(N.getOperand(0));
+
+    if (N.getOpcode() == ISD::SDIV)
+      if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
+        // FIXME: These special cases should be handled by the lowering impl!
+        unsigned RHS = CN->getValue();
+        bool isNeg = false;
+        if ((int)RHS < 0) {
+          isNeg = true;
+          RHS = -RHS;
+        }
+        if (RHS && (RHS & (RHS-1)) == 0) {   // Signed division by power of 2?
+          unsigned Log = log2(RHS);
+          unsigned TmpReg = MakeReg(N.getValueType());
+          unsigned SAROpc, SHROpc, ADDOpc, NEGOpc;
+          switch (N.getValueType()) {
+          default: assert("Unknown type to signed divide!");
+          case MVT::i8:
+            SAROpc = X86::SAR8ri;
+            SHROpc = X86::SHR8ri;
+            ADDOpc = X86::ADD8rr;
+            NEGOpc = X86::NEG8r;
+            break;
+          case MVT::i16:
+            SAROpc = X86::SAR16ri;
+            SHROpc = X86::SHR16ri;
+            ADDOpc = X86::ADD16rr;
+            NEGOpc = X86::NEG16r;
+            break;
+          case MVT::i32:
+            SAROpc = X86::SAR32ri;
+            SHROpc = X86::SHR32ri;
+            ADDOpc = X86::ADD32rr;
+            NEGOpc = X86::NEG32r;
+            break;
+          }
+          BuildMI(BB, SAROpc, 2, TmpReg).addReg(Tmp1).addImm(Log-1);
+          unsigned TmpReg2 = MakeReg(N.getValueType());
+          BuildMI(BB, SHROpc, 2, TmpReg2).addReg(TmpReg).addImm(32-Log);
+          unsigned TmpReg3 = MakeReg(N.getValueType());
+          BuildMI(BB, ADDOpc, 2, TmpReg3).addReg(Tmp1).addReg(TmpReg2);
+          
+          unsigned TmpReg4 = isNeg ? MakeReg(N.getValueType()) : Result;
+          BuildMI(BB, SAROpc, 2, TmpReg4).addReg(TmpReg3).addImm(Log);
+          if (isNeg)
+            BuildMI(BB, NEGOpc, 1, Result).addReg(TmpReg4);
+          return Result;
+        }
+      }
+
+    Tmp2 = SelectExpr(N.getOperand(1));
+
+    bool isSigned = N.getOpcode() == ISD::SDIV || N.getOpcode() == ISD::SREM;
+    bool isDiv    = N.getOpcode() == ISD::SDIV || N.getOpcode() == ISD::UDIV;
+    unsigned LoReg, HiReg, DivOpcode, MovOpcode, ClrOpcode, SExtOpcode;
+    switch (N.getValueType()) {
+    default: assert(0 && "Cannot sdiv this type!");
+    case MVT::i8:
+      DivOpcode = isSigned ? X86::IDIV8r : X86::DIV8r;
+      LoReg = X86::AL;
+      HiReg = X86::AH;
+      MovOpcode = X86::MOV8rr;
+      ClrOpcode = X86::MOV8ri;
+      SExtOpcode = X86::CBW;
+      break;
+    case MVT::i16:
+      DivOpcode = isSigned ? X86::IDIV16r : X86::DIV16r;
+      LoReg = X86::AX;
+      HiReg = X86::DX;
+      MovOpcode = X86::MOV16rr;
+      ClrOpcode = X86::MOV16ri;
+      SExtOpcode = X86::CWD;
+      break;
+    case MVT::i32:
+      DivOpcode = isSigned ? X86::IDIV32r : X86::DIV32r;
+      LoReg =X86::EAX;
+      HiReg = X86::EDX;
+      MovOpcode = X86::MOV32rr;
+      ClrOpcode = X86::MOV32ri;
+      SExtOpcode = X86::CDQ;
+      break;
+    case MVT::i64: assert(0 && "FIXME: implement i64 DIV/REM libcalls!");
+    case MVT::f32: 
+    case MVT::f64:
+      ContainsFPCode = true;
+      if (N.getOpcode() == ISD::SDIV)
+        BuildMI(BB, X86::FpDIV, 2, Result).addReg(Tmp1).addReg(Tmp2);
+      else
+        assert(0 && "FIXME: Emit frem libcall to fmod!");
+      return Result;
+    }
+
+    // Set up the low part.
+    BuildMI(BB, MovOpcode, 1, LoReg).addReg(Tmp1);
+
+    if (isSigned) {
+      // Sign extend the low part into the high part.
+      BuildMI(BB, SExtOpcode, 0);
+    } else {
+      // Zero out the high part, effectively zero extending the input.
+      BuildMI(BB, ClrOpcode, 1, HiReg).addImm(0);
+    }
+
+    // Emit the DIV/IDIV instruction.
+    BuildMI(BB, DivOpcode, 1).addReg(Tmp2);    
+
+    // Get the result of the divide or rem.
+    BuildMI(BB, MovOpcode, 1, Result).addReg(isDiv ? LoReg : HiReg);
+    return Result;
+  }
+
+  case ISD::SHL:
+    Tmp1 = SelectExpr(N.getOperand(0));
+    if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
+      switch (N.getValueType()) {
+      default: assert(0 && "Cannot shift this type!");
+      case MVT::i8:  Opc = X86::SHL8ri; break;
+      case MVT::i16: Opc = X86::SHL16ri; break;
+      case MVT::i32: Opc = X86::SHL32ri; break;
+      }
+      BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addImm(CN->getValue());
+      return Result;
+    }
+    Tmp2 = SelectExpr(N.getOperand(1));
+    switch (N.getValueType()) {
+    default: assert(0 && "Cannot shift this type!");
+    case MVT::i8 : Opc = X86::SHL8rCL; break;
+    case MVT::i16: Opc = X86::SHL16rCL; break;
+    case MVT::i32: Opc = X86::SHL32rCL; break;
+    }
+    BuildMI(BB, X86::MOV8rr, 1, X86::CL).addReg(Tmp2);
+    BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(Tmp2);
+    return Result;
+  case ISD::SRL:
+    Tmp1 = SelectExpr(N.getOperand(0));
+    if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
+      switch (N.getValueType()) {
+      default: assert(0 && "Cannot shift this type!");
+      case MVT::i8:  Opc = X86::SHR8ri; break;
+      case MVT::i16: Opc = X86::SHR16ri; break;
+      case MVT::i32: Opc = X86::SHR32ri; break;
+      }
+      BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addImm(CN->getValue());
+      return Result;
+    }
+    Tmp2 = SelectExpr(N.getOperand(1));
+    switch (N.getValueType()) {
+    default: assert(0 && "Cannot shift this type!");
+    case MVT::i8 : Opc = X86::SHR8rCL; break;
+    case MVT::i16: Opc = X86::SHR16rCL; break;
+    case MVT::i32: Opc = X86::SHR32rCL; break;
+    }
+    BuildMI(BB, X86::MOV8rr, 1, X86::CL).addReg(Tmp2);
+    BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(Tmp2);
+    return Result;
+  case ISD::SRA:
+    Tmp1 = SelectExpr(N.getOperand(0));
+    if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
+      switch (N.getValueType()) {
+      default: assert(0 && "Cannot shift this type!");
+      case MVT::i8:  Opc = X86::SAR8ri; break;
+      case MVT::i16: Opc = X86::SAR16ri; break;
+      case MVT::i32: Opc = X86::SAR32ri; break;
+      }
+      BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addImm(CN->getValue());
+      return Result;
+    }
+    Tmp2 = SelectExpr(N.getOperand(1));
+    switch (N.getValueType()) {
+    default: assert(0 && "Cannot shift this type!");
+    case MVT::i8 : Opc = X86::SAR8rCL; break;
+    case MVT::i16: Opc = X86::SAR16rCL; break;
+    case MVT::i32: Opc = X86::SAR32rCL; break;
+    }
+    BuildMI(BB, X86::MOV8rr, 1, X86::CL).addReg(Tmp2);
+    BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(Tmp2);
+    return Result;
+
+  case ISD::SETCC:
+    if (MVT::isFloatingPoint(N.getOperand(0).getValueType()))
+      ContainsFPCode = true;
+    EmitCMP(N.getOperand(0), N.getOperand(1));
+    EmitSetCC(BB, Result, cast<SetCCSDNode>(N)->getCondition(),
+              MVT::isFloatingPoint(N.getOperand(1).getValueType()));
+    return Result;
+  case ISD::LOAD: {
+    Select(N.getOperand(0));
+
+    // Make sure we generate both values.
+    if (Result != 1)
+      ExprMap[N.getValue(1)] = 1;   // Generate the token
+    else
+      Result = ExprMap[N.getValue(0)] = MakeReg(N.getValue(0).getValueType());
+
+    switch (N.Val->getValueType(0)) {
+    default: assert(0 && "Cannot load this type!");
+    case MVT::i1:
+    case MVT::i8:  Opc = X86::MOV8rm; break;
+    case MVT::i16: Opc = X86::MOV16rm; break;
+    case MVT::i32: Opc = X86::MOV32rm; break;
+    case MVT::f32: Opc = X86::FLD32m; ContainsFPCode = true; break;
+    case MVT::f64: Opc = X86::FLD64m; ContainsFPCode = true; break;
+    }
+    if (ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(N.getOperand(1))){
+      addConstantPoolReference(BuildMI(BB, Opc, 4, Result), CP->getIndex());
+    } else {
+      X86AddressMode AM;
+      SelectAddress(N.getOperand(1), AM);
+      addFullAddress(BuildMI(BB, Opc, 4, Result), AM);
+    }
+    return Result;
+  }
+  case ISD::DYNAMIC_STACKALLOC:
+    Select(N.getOperand(0));
+
+    // Generate both result values.
+    if (Result != 1)
+      ExprMap[N.getValue(1)] = 1;   // Generate the token
+    else
+      Result = ExprMap[N.getValue(0)] = MakeReg(N.getValue(0).getValueType());
+
+    // FIXME: We are currently ignoring the requested alignment for handling
+    // greater than the stack alignment.  This will need to be revisited at some
+    // point.  Align = N.getOperand(2);
+
+    if (!isa<ConstantSDNode>(N.getOperand(2)) ||
+        cast<ConstantSDNode>(N.getOperand(2))->getValue() != 0) {
+      std::cerr << "Cannot allocate stack object with greater alignment than"
+                << " the stack alignment yet!";
+      abort();
+    }
+  
+    if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
+      BuildMI(BB, X86::SUB32ri, 2, X86::ESP).addReg(X86::ESP)
+        .addImm(CN->getValue());
+    } else {
+      Tmp1 = SelectExpr(N.getOperand(1));
+
+      // Subtract size from stack pointer, thereby allocating some space.
+      BuildMI(BB, X86::SUB32rr, 2, X86::ESP).addReg(X86::ESP).addReg(Tmp1);
+    }
+
+    // Put a pointer to the space into the result register, by copying the stack
+    // pointer.
+    BuildMI(BB, X86::MOV32rr, 1, Result).addReg(X86::ESP);
+    return Result;
+
+  case ISD::CALL:
+    Select(N.getOperand(0));
+    if (GlobalAddressSDNode *GASD =
+               dyn_cast<GlobalAddressSDNode>(N.getOperand(1))) {
+      BuildMI(BB, X86::CALLpcrel32, 1).addGlobalAddress(GASD->getGlobal(),true);
+    } else if (ExternalSymbolSDNode *ESSDN =
+               dyn_cast<ExternalSymbolSDNode>(N.getOperand(1))) {
+      BuildMI(BB, X86::CALLpcrel32,
+              1).addExternalSymbol(ESSDN->getSymbol(), true);
+    } else {
+      Tmp1 = SelectExpr(N.getOperand(1));
+      BuildMI(BB, X86::CALL32r, 1).addReg(Tmp1);
+    }
+    switch (N.Val->getValueType(0)) {
+    default: assert(0 && "Unknown value type for call result!");
+    case MVT::Other: return 1;
+    case MVT::i1:
+    case MVT::i8:
+      BuildMI(BB, X86::MOV8rr, 1, Result).addReg(X86::AL);
+      break;
+    case MVT::i16:
+      BuildMI(BB, X86::MOV16rr, 1, Result).addReg(X86::AX);
+      break;
+    case MVT::i32:
+      BuildMI(BB, X86::MOV32rr, 1, Result).addReg(X86::EAX);
+      if (N.Val->getValueType(1) == MVT::i32)
+        BuildMI(BB, X86::MOV32rr, 1, Result+1).addReg(X86::EDX);
+      break;
+    case MVT::f32:
+    case MVT::f64:     // Floating-point return values live in %ST(0)
+      ContainsFPCode = true;
+      BuildMI(BB, X86::FpGETRESULT, 1, Result);
+      break;
+    }
+    return Result+N.ResNo;
+  }
+
+  return 0;
+}
+
+void ISel::Select(SDOperand N) {
+  unsigned Tmp1, Tmp2, Opc;
+
+  // FIXME: Disable for our current expansion model!
+  if (/*!N->hasOneUse() &&*/ !LoweredTokens.insert(N).second)
+    return;  // Already selected.
+
+  switch (N.getOpcode()) {
+  default:
+    N.Val->dump(); std::cerr << "\n";
+    assert(0 && "Node not handled yet!");
+  case ISD::EntryToken: return;  // Noop
+  case ISD::CopyToReg:
+    Select(N.getOperand(0));
+    Tmp1 = SelectExpr(N.getOperand(1));
+    Tmp2 = cast<CopyRegSDNode>(N)->getReg();
+    
+    if (Tmp1 != Tmp2) {
+      switch (N.getOperand(1).getValueType()) {
+      default: assert(0 && "Invalid type for operation!");
+      case MVT::i1:
+      case MVT::i8:  Opc = X86::MOV8rr; break;
+      case MVT::i16: Opc = X86::MOV16rr; break;
+      case MVT::i32: Opc = X86::MOV32rr; break;
+      case MVT::f32:
+      case MVT::f64: Opc = X86::FpMOV; break;
+      }
+      BuildMI(BB, Opc, 1, Tmp2).addReg(Tmp1);
+    }
+    return;
+  case ISD::RET:
+    Select(N.getOperand(0));
+    switch (N.getNumOperands()) {
+    default:
+      assert(0 && "Unknown return instruction!");
+    case 3:
+      Tmp1 = SelectExpr(N.getOperand(1));
+      Tmp2 = SelectExpr(N.getOperand(2));
+      assert(N.getOperand(1).getValueType() == MVT::i32 &&
+	     N.getOperand(2).getValueType() == MVT::i32 &&
+	     "Unknown two-register value!");
+      BuildMI(BB, X86::MOV32rr, 1, X86::EAX).addReg(Tmp1);
+      BuildMI(BB, X86::MOV32rr, 1, X86::EDX).addReg(Tmp2);
+      // Declare that EAX & EDX are live on exit.
+      BuildMI(BB, X86::IMPLICIT_USE, 3).addReg(X86::EAX).addReg(X86::EDX)
+	.addReg(X86::ESP);
+      break;
+    case 2:
+      Tmp1 = SelectExpr(N.getOperand(1));
+      switch (N.getOperand(1).getValueType()) {
+      default: assert(0 && "All other types should have been promoted!!");
+      case MVT::f64:
+	BuildMI(BB, X86::FpSETRESULT, 1).addReg(Tmp1);
+	// Declare that top-of-stack is live on exit
+	BuildMI(BB, X86::IMPLICIT_USE, 2).addReg(X86::ST0).addReg(X86::ESP);
+	break;
+      case MVT::i32:
+	BuildMI(BB, X86::MOV32rr, 1, X86::EAX).addReg(Tmp1);
+	BuildMI(BB, X86::IMPLICIT_USE, 2).addReg(X86::EAX).addReg(X86::ESP);
+	break;
+      }
+      break;
+    case 1:
+      break;
+    }
+    BuildMI(BB, X86::RET, 0); // Just emit a 'ret' instruction
+    return;
+  case ISD::BR: {
+    Select(N.getOperand(0));
+    MachineBasicBlock *Dest =
+      cast<BasicBlockSDNode>(N.getOperand(1))->getBasicBlock();
+    BuildMI(BB, X86::JMP, 1).addMBB(Dest);
+    return;
+  }
+
+  case ISD::BRCOND: {
+    Select(N.getOperand(0));
+    MachineBasicBlock *Dest =
+      cast<BasicBlockSDNode>(N.getOperand(2))->getBasicBlock();
+    // Try to fold a setcc into the branch.  If this fails, emit a test/jne
+    // pair.
+    if (EmitBranchCC(Dest, N.getOperand(1))) {
+      Tmp1 = SelectExpr(N.getOperand(1));
+      BuildMI(BB, X86::TEST8rr, 2).addReg(Tmp1).addReg(Tmp1);
+      BuildMI(BB, X86::JNE, 1).addMBB(Dest);
+    }
+    return;
+  }
+  case ISD::LOAD:
+  case ISD::CALL:
+  case ISD::DYNAMIC_STACKALLOC:
+    SelectExpr(N);
+    return;
+  case ISD::STORE: {
+    Select(N.getOperand(0));
+    // Select the address.
+    X86AddressMode AM;
+    SelectAddress(N.getOperand(2), AM);
+
+    if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
+      Opc = 0;
+      switch (CN->getValueType(0)) {
+      default: assert(0 && "Invalid type for operation!");
+      case MVT::i1:
+      case MVT::i8:  Opc = X86::MOV8mi; break;
+      case MVT::i16: Opc = X86::MOV16mi; break;
+      case MVT::i32: Opc = X86::MOV32mi; break;
+      case MVT::f32:
+      case MVT::f64: break;
+      }
+      if (Opc) {
+        addFullAddress(BuildMI(BB, Opc, 4+1), AM).addImm(CN->getValue());
+        return;
+      }
+    }
+    Tmp1 = SelectExpr(N.getOperand(1));
+
+    switch (N.getOperand(1).getValueType()) {
+    default: assert(0 && "Cannot store this type!");
+    case MVT::i1:
+    case MVT::i8:  Opc = X86::MOV8mr; break;
+    case MVT::i16: Opc = X86::MOV16mr; break;
+    case MVT::i32: Opc = X86::MOV32mr; break;
+    case MVT::f32: Opc = X86::FST32m; ContainsFPCode = true; break;
+    case MVT::f64: Opc = X86::FST64m; ContainsFPCode = true; break;
+    }
+    addFullAddress(BuildMI(BB, Opc, 4+1), AM).addReg(Tmp1);
+    return;
+  }
+  case ISD::ADJCALLSTACKDOWN:
+  case ISD::ADJCALLSTACKUP:
+    Select(N.getOperand(0));
+    Tmp1 = cast<ConstantSDNode>(N.getOperand(1))->getValue();
+    
+    Opc = N.getOpcode() == ISD::ADJCALLSTACKDOWN ? X86::ADJCALLSTACKDOWN :
+                                                   X86::ADJCALLSTACKUP;
+    BuildMI(BB, Opc, 1).addImm(Tmp1);
+    return;
+  }
+  assert(0 && "Should not be reached!");
+}
+
+
+/// createX86PatternInstructionSelector - This pass converts an LLVM function
+/// into a machine code representation using pattern matching and a machine
+/// description file.
+///
+FunctionPass *llvm::createX86PatternInstructionSelector(TargetMachine &TM) {
+  return new ISel(TM);  
+}
