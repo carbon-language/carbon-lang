@@ -98,7 +98,6 @@ bool PruneEH::runOnSCC(const std::vector<CallGraphNode *> &SCC) {
               new BranchInst(II->getNormalDest(), II);
               
               // Finally, delete the invoke instruction!
-              
               I->getInstList().pop_back();
               
               ++NumRemoved;
