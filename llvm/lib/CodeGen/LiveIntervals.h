@@ -21,6 +21,7 @@
 #define LLVM_CODEGEN_LIVEINTERVALS_H
 
 #include "llvm/CodeGen/MachineFunctionPass.h"
+#include "LiveInterval.h"
 #include <list>
 
 namespace llvm {
@@ -28,81 +29,6 @@ namespace llvm {
     class LiveVariables;
     class MRegisterInfo;
     class VirtRegMap;
-
-    /// LiveRange structure - This represents a simple register range in the
-    /// program, with an inclusive start point and an exclusive end point.
-    /// These ranges are rendered as [start,end).
-    struct LiveRange {
-      unsigned start;  // Start point of the interval (inclusive)
-      unsigned end;  // End point of the interval (exclusive)
-      LiveRange(unsigned S, unsigned E) : start(S), end(E) {
-        assert(S < E && "Cannot create empty or backwards range");
-      }
-
-      bool operator<(const LiveRange &LR) const {
-        return start < LR.start || (start == LR.start && end < LR.end);
-      }
-      bool operator==(const LiveRange &LR) const {
-        return start == LR.start && end == LR.end;
-      }
-    private:
-      LiveRange(); // DO NOT IMPLEMENT
-    };
-    std::ostream& operator<<(std::ostream& os, const LiveRange &LR);
-
-    struct LiveInterval {
-        typedef std::vector<LiveRange> Ranges;
-        unsigned reg;   // the register of this interval
-        float weight;   // weight of this interval:
-                        //     (number of uses *10^loopDepth)
-        Ranges ranges;  // the ranges in which this register is live
-        bool isDefinedOnce;  // True if there is one def of this register
-
-        explicit LiveInterval(unsigned r);
-
-        bool empty() const { return ranges.empty(); }
-
-        bool spilled() const;
-
-        /// start - Return the lowest numbered slot covered by interval.
-        unsigned start() const {
-            assert(!empty() && "empty interval for register");
-            return ranges.front().start;
-        }
-
-        /// end - return the maximum point of the interval of the whole,
-        /// exclusive.
-        unsigned end() const {
-            assert(!empty() && "empty interval for register");
-            return ranges.back().end;
-        }
-
-        bool expiredAt(unsigned index) const {
-            return end() <= (index + 1);
-        }
-
-        bool liveAt(unsigned index) const;
-
-        bool overlaps(const LiveInterval& other) const;
-
-        void addRange(LiveRange R);
-
-        void join(const LiveInterval& other);
-
-        bool operator<(const LiveInterval& other) const {
-            return start() < other.start();
-        }
-
-        bool operator==(const LiveInterval& other) const {
-            return reg == other.reg;
-        }
-
-    private:
-        Ranges::iterator mergeRangesForward(Ranges::iterator it);
-        Ranges::iterator mergeRangesBackward(Ranges::iterator it);
-    };
-
-    std::ostream& operator<<(std::ostream& os, const LiveInterval& li);
 
     class LiveIntervals : public MachineFunctionPass
     {

@@ -250,6 +250,7 @@ std::vector<LiveInterval*> LiveIntervals::addIntervalsForSpills(
                         // the spill weight is now infinity as it
                         // cannot be spilled again
                         nI.weight = HUGE_VAL;
+                        DEBUG(std::cerr << " +" << LiveRange(start, end));
                         nI.addRange(LiveRange(start, end));
                         added.push_back(&nI);
                         // update live variables
@@ -309,7 +310,7 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock* mbb,
               assert(vi.AliveBlocks.empty() && 
                      "Shouldn't be alive across any blocks!");
               interval.addRange(LiveRange(defIndex, killIdx));
-              DEBUG(std::cerr << "\n");
+              DEBUG(std::cerr << " +" << LiveRange(defIndex, killIdx) << "\n");
               return;
            }
        }
@@ -318,9 +319,10 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock* mbb,
        // of the defining block, potentially live across some blocks, then is
        // live into some number of blocks, but gets killed.  Start by adding a
        // range that goes from this definition to the end of the defining block.
-       interval.addRange(LiveRange(defIndex, 
-                                   getInstructionIndex(&mbb->back()) +
-                                         InstrSlots::NUM));
+       LiveRange NewLR(defIndex, getInstructionIndex(&mbb->back()) +
+                                                   InstrSlots::NUM);
+       DEBUG(std::cerr << " +" << NewLR);
+       interval.addRange(NewLR);
 
        // Iterate over all of the blocks that the variable is completely
        // live in, adding [insrtIndex(begin), instrIndex(end)+4) to the
@@ -329,9 +331,10 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock* mbb,
            if (vi.AliveBlocks[i]) {
                MachineBasicBlock* mbb = mf_->getBlockNumbered(i);
                if (!mbb->empty()) {
-                   interval.addRange(LiveRange(
-                       getInstructionIndex(&mbb->front()),
-                       getInstructionIndex(&mbb->back()) + InstrSlots::NUM));
+                 LiveRange LR(getInstructionIndex(&mbb->front()),
+                             getInstructionIndex(&mbb->back())+InstrSlots::NUM);
+                 interval.addRange(LR);
+                 DEBUG(std::cerr << " +" << LR);
                }
            }
        }
@@ -340,9 +343,10 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock* mbb,
        // block to the 'use' slot of the killing instruction.
        for (unsigned i = 0, e = vi.Kills.size(); i != e; ++i) {
            MachineInstr *Kill = vi.Kills[i];
-           interval.addRange(LiveRange(
-                             getInstructionIndex(Kill->getParent()->begin()),
-                             getUseIndex(getInstructionIndex(Kill))+1));
+           LiveRange LR(getInstructionIndex(Kill->getParent()->begin()),
+                        getUseIndex(getInstructionIndex(Kill))+1);
+           interval.addRange(LR);
+           DEBUG(std::cerr << " +" << LR);
        }
 
     } else {
@@ -359,8 +363,10 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock* mbb,
          // the defined value will be live until the end of the basic block it
          // is defined in.
          unsigned defIndex = getDefIndex(getInstructionIndex(mi));
-         interval.addRange(LiveRange(defIndex, 
-                           getInstructionIndex(&mbb->back()) +InstrSlots::NUM));
+         LiveRange LR(defIndex, 
+                      getInstructionIndex(&mbb->back()) +InstrSlots::NUM);
+         interval.addRange(LR);
+         DEBUG(std::cerr << " +" << LR);
        }
        interval.isDefinedOnce = false;
     }
@@ -413,7 +419,7 @@ void LiveIntervals::handlePhysicalRegisterDef(MachineBasicBlock* mbb,
 exit:
     assert(start < end && "did not find end of interval?");
     interval.addRange(LiveRange(start, end));
-    DEBUG(std::cerr << '\n');
+    DEBUG(std::cerr << " +" << LiveRange(start, end) << '\n');
 }
 
 void LiveIntervals::handleRegisterDef(MachineBasicBlock* mbb,
@@ -547,10 +553,11 @@ void LiveIntervals::joinIntervalsInMachineBB(MachineBasicBlock *MBB) {
                     continue;
                 }
 
-                // if their intervals do not overlap we join them
-                if ((intA->isDefinedOnce && intB->isDefinedOnce) ||
+                // if their intervals do not overlap we join them.
+                if ((intA->containsOneValue() && intB->containsOneValue()) ||
                     !intB->overlaps(*intA)) {
                     intA->join(*intB);
+                    ++numJoins;
                     DEBUG(std::cerr << "Joined.  Result = " << *intA << "\n");
                     r2iB->second = r2iA->second;
                     r2rMap_.insert(std::make_pair(intB->reg, intA->reg));
@@ -582,6 +589,7 @@ void LiveIntervals::joinIntervalsInMachineBB(MachineBasicBlock *MBB) {
                 if (!intA->overlaps(*intB) &&
                     !overlapsAliases(*intA, *intB)) {
                     intA->join(*intB);
+                    ++numJoins;
                     DEBUG(std::cerr << "Joined.  Result = " << *intA << "\n");
                     r2iB->second = r2iA->second;
                     r2rMap_.insert(std::make_pair(intB->reg, intA->reg));
@@ -656,158 +664,11 @@ LiveInterval& LiveIntervals::getOrCreateInterval(unsigned reg)
 {
     Reg2IntervalMap::iterator r2iit = r2iMap_.lower_bound(reg);
     if (r2iit == r2iMap_.end() || r2iit->first != reg) {
-        intervals_.push_back(LiveInterval(reg));
+        float Weight = MRegisterInfo::isPhysicalRegister(reg) ?  HUGE_VAL :0.0F;
+        intervals_.push_back(LiveInterval(reg, Weight));
         r2iit = r2iMap_.insert(r2iit, std::make_pair(reg, --intervals_.end()));
     }
 
     return *r2iit->second;
 }
 
-LiveInterval::LiveInterval(unsigned r)
-    : reg(r),
-      weight((MRegisterInfo::isPhysicalRegister(r) ?  HUGE_VAL : 0.0F)),
-      isDefinedOnce(false) {
-}
-
-bool LiveInterval::spilled() const
-{
-    return (weight == HUGE_VAL &&
-            MRegisterInfo::isVirtualRegister(reg));
-}
-
-// An example for liveAt():
-//
-// this = [1,4), liveAt(0) will return false. The instruction defining
-// this spans slots [0,3]. The interval belongs to an spilled
-// definition of the variable it represents. This is because slot 1 is
-// used (def slot) and spans up to slot 3 (store slot).
-//
-bool LiveInterval::liveAt(unsigned index) const
-{
-    LiveRange dummy(index, index+1);
-    Ranges::const_iterator r = std::upper_bound(ranges.begin(),
-                                                ranges.end(),
-                                                dummy);
-    if (r == ranges.begin())
-        return false;
-
-    --r;
-    return index >= r->start && index < r->end;
-}
-
-// An example for overlaps():
-//
-// 0: A = ...
-// 4: B = ...
-// 8: C = A + B ;; last use of A
-//
-// The live intervals should look like:
-//
-// A = [3, 11)
-// B = [7, x)
-// C = [11, y)
-//
-// A->overlaps(C) should return false since we want to be able to join
-// A and C.
-bool LiveInterval::overlaps(const LiveInterval& other) const
-{
-    Ranges::const_iterator i = ranges.begin();
-    Ranges::const_iterator ie = ranges.end();
-    Ranges::const_iterator j = other.ranges.begin();
-    Ranges::const_iterator je = other.ranges.end();
-    if (i->start < j->start) {
-        i = std::upper_bound(i, ie, *j);
-        if (i != ranges.begin()) --i;
-    }
-    else if (j->start < i->start) {
-        j = std::upper_bound(j, je, *i);
-        if (j != other.ranges.begin()) --j;
-    }
-
-    while (i != ie && j != je) {
-        if (i->start == j->start)
-            return true;
-
-        if (i->start > j->start) {
-            swap(i, j);
-            swap(ie, je);
-        }
-        assert(i->start < j->start);
-
-        if (i->end > j->start)
-            return true;
-        ++i;
-    }
-
-    return false;
-}
-
-void LiveInterval::addRange(LiveRange LR) {
-    DEBUG(std::cerr << " +" << LR);
-    Ranges::iterator it =
-        ranges.insert(std::upper_bound(ranges.begin(), ranges.end(), LR), LR);
-
-    mergeRangesBackward(mergeRangesForward(it));
-}
-
-void LiveInterval::join(const LiveInterval& other)
-{
-    Ranges::iterator cur = ranges.begin();
-    isDefinedOnce &= other.isDefinedOnce;
-
-    for (Ranges::const_iterator i = other.ranges.begin(),
-             e = other.ranges.end(); i != e; ++i) {
-        cur = ranges.insert(std::upper_bound(cur, ranges.end(), *i), *i);
-        cur = mergeRangesForward(cur);
-        cur = mergeRangesBackward(cur);
-    }
-    weight += other.weight;
-    ++numJoins;
-}
-
-LiveInterval::Ranges::iterator LiveInterval::
-mergeRangesForward(Ranges::iterator it)
-{
-    Ranges::iterator n;
-    while ((n = next(it)) != ranges.end()) {
-        if (n->start > it->end)
-            break;
-        it->end = std::max(it->end, n->end);
-        n = ranges.erase(n);
-    }
-    return it;
-}
-
-LiveInterval::Ranges::iterator LiveInterval::
-mergeRangesBackward(Ranges::iterator it)
-{
-    while (it != ranges.begin()) {
-        Ranges::iterator p = prior(it);
-        if (it->start > p->end)
-            break;
-
-        it->start = std::min(it->start, p->start);
-        it->end = std::max(it->end, p->end);
-        it = ranges.erase(p);
-    }
-
-    return it;
-}
-
-std::ostream& llvm::operator<<(std::ostream& os, const LiveRange &LR) {
-  return os << "[" << LR.start << "," << LR.end << ")";
-}
-
-
-std::ostream& llvm::operator<<(std::ostream& os, const LiveInterval& li)
-{
-    os << "%reg" << li.reg << ',' << li.weight;
-    if (li.empty())
-        return os << "EMPTY";
-
-    os << " = ";
-    for (LiveInterval::Ranges::const_iterator i = li.ranges.begin(),
-           e = li.ranges.end(); i != e; ++i)
-        os << *i;
-    return os;
-}
