@@ -14,7 +14,6 @@ ifneq ($(MAKECMDGOALS),tools-only)
 DIRS += runtime
 endif
 
-
 include $(LEVEL)/Makefile.common
 
 test :: all
@@ -28,12 +27,6 @@ distclean:: clean
 	                  $(LEVEL)/TAGS
 
 tools-only: all
-
-configure: autoconf/configure.ac autoconf/aclocal.m4
-	cd autoconf && aclocal && autoconf -o ../configure configure.ac
-
-include/Config/config.h.in: autoconf/configure.ac autoconf/aclocal.m4
-	autoheader -I autoconf autoconf/configure.ac
 
 # Install support for llvm include files:
 .PHONY: install-includes
