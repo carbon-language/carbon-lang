@@ -431,7 +431,7 @@ bool Printer::runOnMachineFunction(MachineFunction &MF) {
   for (MachineFunction::const_iterator I = MF.begin(), E = MF.end();
        I != E; ++I) {
     // Print a label for the basic block.
-    O << ".BB" << NumberForBB[I->getBasicBlock()] << ":\t# "
+    O << ".LBB" << NumberForBB[I->getBasicBlock()] << ":\t# "
       << I->getBasicBlock()->getName() << "\n";
     for (MachineBasicBlock::const_iterator II = I->begin(), E = I->end();
 	 II != E; ++II) {
@@ -485,11 +485,13 @@ void Printer::printOp(const MachineOperand &MO,
       ValueMapTy::const_iterator i = NumberForBB.find(MO.getVRegValue());
       assert (i != NumberForBB.end()
 	      && "Could not find a BB I previously put in the NumberForBB map!");
-      O << ".BB" << i->second << " # PC rel: " << MO.getVRegValue()->getName();
+      O << ".LBB" << i->second << " # PC rel: " << MO.getVRegValue()->getName();
     }
     return;
   case MachineOperand::MO_GlobalAddress:
-    if (!elideOffsetKeyword) O << "OFFSET "; O << Mang->getValueName(MO.getGlobal());
+    if (!elideOffsetKeyword)
+      O << "OFFSET ";
+    O << Mang->getValueName(MO.getGlobal());
     return;
   case MachineOperand::MO_ExternalSymbol:
     O << MO.getSymbolName();
