@@ -21,14 +21,14 @@ void CodeEmitterGen::createEmitter(std::ostream &o) {
   o << "unsigned " << ClassName
     << "getBinaryCodeForInstr(MachineInstr &MI) {\n"
     << "  unsigned Value = 0;\n"
-    << "  std::cerr << MI;\n"
+    << "  DEBUG(std::cerr << MI);\n"
     << "  switch (MI.getOpcode()) {\n";
   for (std::vector<Record*>::iterator I = Insts.begin(), E = Insts.end();
        I != E; ++I)
   {
     Record *R = *I;
     o << "    case " << Namespace << R->getName() << ": {\n"
-      << "      std::cerr << \"Emitting " << R->getName() << "\\n\";\n";
+      << "      DEBUG(std::cerr << \"Emitting " << R->getName() << "\\n\");\n";
 
     const RecordVal *InstVal = R->getValue("Inst");
     Init *InitVal = InstVal->getValue();
@@ -115,7 +115,7 @@ void CodeEmitterGen::createEmitter(std::ostream &o) {
       << "    }\n";
   }
   o << "  default:\n"
-    << "    std::cerr << \"Not supported instr: \" << MI << \"\\n\";\n"
+    << "    DEBUG(std::cerr << \"Not supported instr: \" << MI << \"\\n\");\n"
     << "    abort();\n"
     << "  }\n"
     << "  return Value;\n"
