@@ -41,6 +41,11 @@ public:
     insertEntry(N->getName(), N->getType(), N);
   }
 
+  void remove(Value *N);
+  Value *type_remove(const type_iterator &It) {
+    return removeEntry(find(It->second->getType()), It);
+  }
+
   // insert - Insert a constant or type into the symbol table with the specified
   // name...  There can be a many to one mapping between names and
   // (constant/type)s.
@@ -51,9 +56,11 @@ public:
     insertEntry(Name, V->getType(), V);
   }
 
-  void remove(Value *N);
-  Value *type_remove(const type_iterator &It) {
-    return removeEntry(find(It->second->getType()), It);
+  /// remove - Remove a constant or type from the symbol table with the
+  /// specified name.
+  Value *remove(const std::string &Name, Value *V) {
+    iterator TI = find(V->getType());
+    return removeEntry(TI, TI->second.find(Name));
   }
 
   // getUniqueName - Given a base name, return a string that is either equal to
