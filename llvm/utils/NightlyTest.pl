@@ -279,8 +279,8 @@ if ($BuildError eq "") {
 
   if (`grep '^gmake: .*Error' $Prefix-ProgramTest.txt | wc -l` + 0) {
     $TestError = 1;
-    $ProgramsTable = "<h2>Error running tests!</h2>";
-  } else {
+    $ProgramsTable = "<font color=white><h2>Error running tests!</h2></font>";
+  } elsif (`grep '^gmake: .*No rule to make target' $Prefix-ProgramTest.txt | wc -l` + 0) {
     $TestError = 0;
     $ProgramsTable = ReadFile "report.nightly.html";
 
