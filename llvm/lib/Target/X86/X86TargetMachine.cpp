@@ -6,9 +6,9 @@
 
 #include "X86TargetMachine.h"
 #include "X86.h"
-#include "llvm/Transforms/Scalar.h"
 #include "llvm/Target/TargetMachineImpls.h"
 #include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/CodeGen/Passes.h"
 #include "llvm/PassManager.h"
 #include "Support/CommandLine.h"
 #include "Support/Statistic.h"
@@ -40,20 +40,16 @@ X86TargetMachine::X86TargetMachine(unsigned Config)
   FrameInfo(TargetFrameInfo::StackGrowsDown, 1/*16*/, 0) {
 }
 
-
 /// addPassesToJITCompile - Add passes to the specified pass manager to
 /// implement a fast dynamic compiler for this target.  Return true if this is
 /// not supported for this target.
 ///
 bool X86TargetMachine::addPassesToJITCompile(PassManager &PM) {
-  // For the moment we have decided that malloc and free will be
-  // taken care of by converting them to calls, using the existing
-  // LLVM scalar transforms pass to do this.
-  PM.add(createLowerAllocationsPass());
-
   PM.add(createSimpleX86InstructionSelector(*this));
 
   // TODO: optional optimizations go here
+
+  // FIXME: Add SSA based peephole optimizer here.
 
   // Print the instruction selected machine code...
   if (PrintCode)
@@ -68,13 +64,18 @@ bool X86TargetMachine::addPassesToJITCompile(PassManager &PM) {
   if (PrintCode)
     PM.add(createMachineFunctionPrinterPass());
 
+  PM.add(createX86FloatingPointStackifierPass());
+
+  if (PrintCode)
+    PM.add(createMachineFunctionPrinterPass());
+
   // Insert prolog/epilog code.  Eliminate abstract frame index references...
   PM.add(createPrologEpilogCodeInserter());
 
+  PM.add(createX86PeepholeOptimizerPass());
+
   if (PrintCode)  // Print the register-allocated code
     PM.add(createX86CodePrinterPass(std::cerr));
-
-  PM.add(createMachineCodeDestructionPass());
 
   return false; // success!
 }
