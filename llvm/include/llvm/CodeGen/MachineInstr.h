@@ -239,8 +239,7 @@ public:
   // Support to rewrite a machine instruction in place: for now, simply
   // replace() and then set new operands with Set.*Operand methods below.
   // 
-  void replace(MachineOpCode Opcode, unsigned numOperands,
-               OpCodeMask Mask = 0x0);
+  void replace(MachineOpCode Opcode, unsigned numOperands);
   
   //
   // The opcode.

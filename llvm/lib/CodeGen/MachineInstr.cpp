@@ -16,10 +16,8 @@ MachineInstr::MachineInstr(MachineOpCode _opCode)
 }
 
 // Constructor for instructions with variable #operands
-MachineInstr::MachineInstr(MachineOpCode OpCode, unsigned  numOperands/*,
-                                                                        OpCodeMask    OpCodeMask*/)
-  : opCode(OpCode), opCodeMask(0/*OpCodeMask*/),
-    operands(numOperands, MachineOperand()) {
+MachineInstr::MachineInstr(MachineOpCode OpCode, unsigned  numOperands)
+  : opCode(OpCode), opCodeMask(0), operands(numOperands, MachineOperand()) {
 }
 
 MachineInstr::MachineInstr(MachineOpCode Opcode, unsigned numOperands,
@@ -41,10 +39,9 @@ bool MachineInstr::OperandsComplete() const {
 // This only resets the size of the operand vector and initializes it.
 // The new operands must be set explicitly later.
 // 
-void MachineInstr::replace(MachineOpCode Opcode, unsigned numOperands,
-                           OpCodeMask Mask) {
+void MachineInstr::replace(MachineOpCode Opcode, unsigned numOperands) {
   opCode = Opcode;
-  opCodeMask = Mask;
+  opCodeMask = 0;
   operands.clear();
   operands.resize(numOperands, MachineOperand());
 }
