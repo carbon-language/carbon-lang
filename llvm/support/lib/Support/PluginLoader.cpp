@@ -18,7 +18,7 @@
 namespace {
   struct PluginLoader {
     void operator=(const std::string &Filename) {
-      if (dlopen(Filename.c_str(), RTLD_NOW) == 0)
+      if (dlopen(Filename.c_str(), RTLD_NOW|RTLD_GLOBAL) == 0)
         std::cerr << "Error opening '" << Filename << "': " << dlerror()
                   << "\n  -load request ignored.\n";
     }
