@@ -21,6 +21,7 @@
 #                   LARGE_PROBLEM_SIZE enabled.
 #  -noexternals     Do not run the external tests (for cases where povray
 #                   or SPEC are not installed)
+#  -rundejagnu      Runs features and regressions using Dejagnu
 #  -parallel        Run two parallel jobs with GNU Make.
 #  -release         Build an LLVM Release version
 #  -pedantic        Enable additional GCC warnings to detect possible errors.
@@ -50,6 +51,7 @@
 #  to. This is the same as you would have for a normal LLVM build.
 #
 use POSIX qw(strftime);
+use File::Copy;
 
 my $HOME = $ENV{'HOME'};
 my $CVSRootDir = $ENV{'CVSROOT'};
@@ -82,6 +84,7 @@ my $VERBOSE = 0;
 my $DEBUG = 0;
 my $CONFIGUREARGS = "";
 my $NICE = "";
+my $RUNDEJAGNU = 0;
 
 sub ReadFile {
   if (open (FILE, $_[0])) {
@@ -143,6 +146,13 @@ sub ChangeDir { # directory, logical name
   chomp($dir);
   if ( $VERBOSE ) { print "Changing To: $name ($dir)\n"; }
   chdir($dir) || die "Cannot change directory to: $name ($dir) ";
+}
+
+sub CopyFile { #filename, newfile
+  my ($file, $newfile) = @_;
+  chomp($file);
+  if ($VERBOSE) { print "Copying $file to $newfile\n"; }
+  copy($file, $newfile);
 }
 
 sub GetDir {
@@ -248,6 +258,52 @@ sub GetQMTestResults { # (filename)
   return "$content</li></ol>\n";
 } 
 
+sub GetDejagnuTestResults { # (filename, log)
+  my ($filename, $DejagnuLog) = @_;
+  my @lines;
+  my $firstline;
+  $/ = "\n"; #Make sure we're going line at a time.
+  if (open SRCHFILE, $filename) {
+    # Process test results
+    push(@lines,"<h3>UNEXPECTED TEST RESULTS</h3><ol><li>\n");
+    my $first_list = 1;
+    my $should_break = 1;
+    my $nocopy = 0;
+    my $readingsum = 0;
+    while ( <SRCHFILE> ) {
+      if ( length($_) > 1 ) { 
+        chomp($_);
+        if ( m/^XPASS:/ || m/^FAIL:/ ) {
+          $nocopy = 0;
+          if ( $first_list ) {
+            $first_list = 0;
+            $should_break = 1;
+            push(@lines,"<b>$_</b><br/>\n");
+          } else {
+            push(@lines,"</li><li><b>$_</b><br/>\n");
+          }
+        } elsif ( m/Summary/ ) {
+          if ( $first_list ) { push(@lines,"<b>PERFECT!</b>"); }
+          push(@lines,"</li></ol><h3>STATISTICS</h3><pre>\n");
+          $should_break = 0;
+          $nocopy = 0;
+          $readingsum = 1;
+        } elsif ( $readingsum ) {
+          push(@lines,"$_\n");
+        }
+      }
+    }
+  }
+  push(@lines, "</pre>\n");
+  close SRCHFILE;
+
+  #add link to complete testing log
+  push(@lines, "<p>A complete log of testing <a href=\"$DejagnuLog\">Feature and Regression</a> is available for further analysis.</p>\n");
+
+  my $content = join("",@lines);
+  return "$content</li></ol>\n";
+}
+
 
 #####################################################################
 ## MAIN PROGRAM
@@ -291,6 +347,7 @@ while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
     $CONFIGUREARGS .= " CC=$ARGV[0]/gcc CXX=$ARGV[0]/g++"; shift; next; 
   }
   if (/^-noexternals$/)    { $NOEXTERNALS = 1; next; }
+  if(/^-runDejagnu$/) { $RUNDEJAGNU = 1; next; }
 
   print "Unknown option: $_ : ignoring!\n";
 }
@@ -321,6 +378,9 @@ my $OldenTestsLog = "$Prefix-Olden-tests.txt";
 my $SingleSourceLog = "$Prefix-SingleSource-ProgramTest.txt.gz";
 my $MultiSourceLog = "$Prefix-MultiSource-ProgramTest.txt.gz";
 my $ExternalLog = "$Prefix-External-ProgramTest.txt.gz";
+my $DejagnuLog = "$Prefix-Dejagnu-testrun.log";
+my $DejagnuSum = "$Prefix-Dejagnu-testrun.sum";
+my $DejagnuTestsLog = "$Prefix-DejagnuTests-Log.txt";
 
 if ($VERBOSE) {
   print "INITIALIZED\n";
@@ -434,7 +494,7 @@ if (`grep '^gmake[^:]*: .*Error' $BuildLog | wc -l` + 0 ||
   if ($VERBOSE) { print "BUILD ERROR\n"; }
 }
 
-if ($BuildError) { $NOFEATURES = 1; $NOREGRESSIONS = 1; }
+if ($BuildError) { $NOFEATURES = 1; $NOREGRESSIONS = 1; $RUNDEJAGNU=0; }
 
 # Get results of feature tests.
 my $FeatureTestResults; # String containing the results of the feature tests
@@ -483,9 +543,37 @@ if (!$NOREGRESSIONS) {
   $RegressionWallTime = "0.0";
 }
 
+my $DejangnuTestResults; # String containing the results of the dejagnu
+if($RUNDEJAGNU) {
+  if($VERBOSE) { print "DEJAGNU FEATURE/REGRESSION TEST STAGE\n"; }
+  
+  my $dejagnu_output = "$DejagnuTestsLog";
+  
+  #Run the feature and regression tests, results are put into testrun.sum
+  #Full log in testrun.log
+  system "time -p gmake $MAKEOPTS check-dejagnu >& $dejagnu_output";
+
+  #Extract time of dejagnu tests
+  my $DejagnuTimeU = GetRegexNum "^user", 0, "([0-9.]+)", "$dejagnu_output";
+  my $DejagnuTimeS = GetRegexNum "^sys", 0, "([0-9.]+)", "$dejagnu_output";
+  $DejagnuTime  = $DejagnuTimeU+$DejagnuTimeS;  # DejagnuTime = User+System
+  $DejagnuWallTime = GetRegexNum "^real", 0,"([0-9.]+)","$dejagnu_output";
+
+  #Copy the testrun.log and testrun.sum to our webdir
+  CopyFile("test/testrun.log", $DejagnuLog);
+  CopyFile("test/testrun.sum", $DejagnuSum);
+
+  $DejagnuTestResults = GetDejagnuTestResults($DejagnuSum, $DejagnuLog);
+} else {
+  $DejagnuTestResults = "Skipped by user choice.";
+  $DejagnuTime     = "0.0";
+  $DejagnuWallTime = "0.0";
+}
+
 if ($DEBUG) {
   print $FeatureTestResults;
   print $RegressionTestResults;
+  print $DejagnuTestResults;
 }
 
 if ( $VERBOSE ) { print "BUILD INFORMATION COLLECTION STAGE\n"; }
