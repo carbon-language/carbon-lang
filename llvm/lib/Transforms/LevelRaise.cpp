@@ -438,7 +438,7 @@ static bool PeepholeMallocInst(BasicBlock *BB, BasicBlock::iterator &BI) {
 
 static bool PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
   Instruction *I = *BI;
-  if (I->use_size() == 0) return false;
+  if (I->use_size() == 0 && I->getType() != Type::VoidTy) return false;
 
   if (CastInst *CI = dyn_cast<CastInst>(I)) {
     Value       *Src    = CI->getOperand(0);
@@ -484,6 +484,31 @@ static bool PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
 
   } else if (MallocInst *MI = dyn_cast<MallocInst>(I)) {
     if (PeepholeMallocInst(BB, BI)) return true;
+
+  } else if (StoreInst *SI = dyn_cast<StoreInst>(I)) {
+    Value *Val     = SI->getOperand(0);
+    Value *Pointer = SI->getPtrOperand();
+    
+    if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(Pointer)) {
+      PRINT_PEEPHOLE2("gep-store:in", GEP, SI);
+      ReplaceInstWithInst(BB->getInstList(), BI,
+                          SI = new StoreInst(Val, GEP->getPtrOperand(),
+                                             GEP->getIndexVec()));
+      PRINT_PEEPHOLE1("gep-store:out", SI);
+      return true;
+    }
+
+  } else if (LoadInst *LI = dyn_cast<LoadInst>(I)) {
+    Value *Pointer = LI->getPtrOperand();
+    
+    if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(Pointer)) {
+      PRINT_PEEPHOLE2("gep-load:in", GEP, LI);
+      ReplaceInstWithInst(BB->getInstList(), BI,
+                          LI = new LoadInst(GEP->getPtrOperand(),
+                                            GEP->getIndexVec()));
+      PRINT_PEEPHOLE1("gep-load:out", LI);
+      return true;
+    }
   } else if (I->getOpcode() == Instruction::Add &&
              isa<CastInst>(I->getOperand(1))) {
 
