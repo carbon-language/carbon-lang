@@ -1,5 +1,5 @@
 
-void %main() {
+int %main() {
 	%int1 = add int 0, 0
 	%int2 = add int 0, 0
 	;%long1 = add long 0, 0
@@ -64,5 +64,5 @@ void %main() {
 	;%test46 = setle long %long1, %long2
 	;%test47 = setlt long %long1, %long2
 	;%test48 = setne long %long1, %long2
-	ret void
+	ret int 0
 }
