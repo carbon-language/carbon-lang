@@ -18,6 +18,7 @@
 #include "llvm/Module.h"
 #include "llvm/CodeGen/MachineCodeEmitter.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
+#include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/Support/Debug.h"
 
@@ -204,9 +205,15 @@ void PPC32CodeEmitter::emitBasicBlock(MachineBasicBlock &MBB) {
   for (MachineBasicBlock::iterator I = MBB.begin(), E = MBB.end(); I != E; ++I){
     MachineInstr &MI = *I;
     unsigned Opcode = MI.getOpcode();
-    if (Opcode == PPC::IMPLICIT_DEF) continue;
-
-    emitWord(getBinaryCodeForInstr(*I));
+    if (Opcode == PPC::IMPLICIT_DEF) 
+      continue; // pseudo opcode, no side effects
+    else if (Opcode == PPC::MovePCtoLR) {
+      // This can be simplified: the resulting 32-bit code is 0x48000005
+      MachineInstr *MI = BuildMI(PPC::BL, 1).addImm(1);
+      emitWord(getBinaryCodeForInstr(*MI));
+      delete MI;
+    } else
+      emitWord(getBinaryCodeForInstr(*I));
   }
 }
 
@@ -269,16 +276,15 @@ int64_t PPC32CodeEmitter::getMachineOpValue(MachineInstr &MI,
     rv = MO.getImmedValue();
   } else if (MO.isGlobalAddress()) {
     GlobalValue *GV = MO.getGlobal();
-    intptr_t Addr = (intptr_t)MCE.getGlobalValueAddress(GV);
-    if (Addr == 0) {
+    rv = MCE.getGlobalValueAddress(GV);
+    if (rv == 0) {
       if (Function *F = dyn_cast<Function>(GV)) {
         if (F->isExternal())
           rv = getAddressOfExternalFunction(F);
         else {
-          // Function has not yet been code generated!
+          // Function has not yet been code generated!  Use lazy resolution.
           getResolver(MCE).addFunctionReference(MCE.getCurrentPCValue(), F);
-          // Delayed resolution...
-          return (intptr_t)getResolver(MCE).getLazyResolver(F);
+          rv = getResolver(MCE).getLazyResolver(F);
         }
       } else if (GlobalVariable *GVar = dyn_cast<GlobalVariable>(GV)) {
         if (GVar->isExternal()) {
@@ -295,7 +301,7 @@ int64_t PPC32CodeEmitter::getMachineOpValue(MachineInstr &MI,
       }
     }
     if (MO.isPCRelative()) { // Global variable reference
-      rv = (Addr - MCE.getCurrentPCValue()) >> 2;
+      rv = (rv - MCE.getCurrentPCValue()) >> 2;
     }
   } else if (MO.isMachineBasicBlock()) {
     const BasicBlock *BB = MO.getMachineBasicBlock()->getBasicBlock();
