@@ -42,19 +42,22 @@ bool SparcV8TargetMachine::addPassesToEmitAssembly(PassManager &PM,
 					       std::ostream &Out) {
   PM.add(createSparcV8SimpleInstructionSelector(*this));
 
-  // Print machine instructions as they are created.
-  PM.add(createMachineFunctionPrinterPass(&std::cerr));
+  // Print machine instructions as they were initially generated.
+  if (PrintMachineCode)
+    PM.add(createMachineFunctionPrinterPass(&std::cerr));
 
   PM.add(createRegisterAllocator());
   PM.add(createPrologEpilogCodeInserter());
-  // <insert assembly code output passes here>
 
-  // This is not a correct asm writer by any means, but at least we see what we
-  // are producing.
-  PM.add(createMachineFunctionPrinterPass(&Out));
+  // Print machine instructions after register allocation and prolog/epilog
+  // insertion.
+  if (PrintMachineCode)
+    PM.add(createMachineFunctionPrinterPass(&std::cerr));
 
+  // Output assembly language.
   PM.add(createSparcV8CodePrinterPass(Out, *this));
 
+  // Delete the MachineInstrs we generated, since they're no longer needed.
   PM.add(createMachineCodeDeleter());
   return false;
 }
