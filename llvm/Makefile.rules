@@ -333,6 +333,7 @@ $(LIBNAME_OBJP): $(ObjectsP) $(LibSubDirs) $(LIBPROFILE)/.dir
 	$(VERB) $(Relink) -o $@ $(ObjectsP) $(LibSubDirs)
 
 $(LIBNAME_OBJG): $(ObjectsG) $(LibSubDirs) $(LIBDEBUG)/.dir
+	@echo "Linking $@"
 	$(VERB) $(Relink) -o $@ $(ObjectsG) $(LibSubDirs)
 
 endif
