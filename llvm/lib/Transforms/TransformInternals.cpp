@@ -203,7 +203,7 @@ const Type *ConvertableToGEP(const Type *Ty, Value *OffsetVal,
             Expr.Var = IdxCast;
           }
 
-          if (Scale > ElSize) {  // If we have to scale up our index, do so now
+          if (ScaleAmt) {         // If we have to scale up our index, do so now
             Value *ScaleAmtVal = ConstantUInt::get(Type::UIntTy, ScaleAmt);
             Instruction *Scaler = BinaryOperator::create(Instruction::Mul,
                                                          Expr.Var,ScaleAmtVal);
