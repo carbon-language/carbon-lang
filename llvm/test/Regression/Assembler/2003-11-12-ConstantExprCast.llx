@@ -1,0 +1,10 @@
+; RUN: llvm-as < %s | llvm-dis | grep ' cast ('
+
+%.Base64_1 = external constant [4 x sbyte] 
+
+ubyte %test(sbyte %X) {         ; No predecessors!
+        %X = cast sbyte %X to ubyte             ; <ubyte> [#uses=1]
+        %tmp.13 = add ubyte %X, cast (sbyte sub (sbyte 0, sbyte cast ([4 x sbyte]* %.Base64_1 to sbyte)) to ubyte)              ; <ubyte> [#uses=1]
+        ret ubyte %tmp.13
+}
+
