@@ -100,7 +100,7 @@ public:
       return I->op_begin()+3; // Skip Function, BB, BB
   }
   arg_iterator arg_end() const { return I->op_end(); }
-  unsigned arg_size() const { return arg_end() - arg_begin(); }
+  unsigned arg_size() const { return unsigned(arg_end() - arg_begin()); }
 
   bool operator<(const CallSite &CS) const {
     return getInstruction() < CS.getInstruction();
