@@ -536,6 +536,12 @@ static inline bool isEliminableCastOfCast(const CastInst &CI,
     if (SrcSize >= MidSize && MidSize >= DstSize)
       return true;
 
+    // Cases where the source and destination type are the same, but the middle
+    // type is bigger are noops.
+    //
+    if (SrcSize == DstSize && MidSize > SrcSize)
+      return true;
+
     // If we are monotonically growing, things are more complex.
     //
     if (SrcSize <= MidSize && MidSize <= DstSize) {
