@@ -7,13 +7,13 @@
 #ifndef LLVM_ANALYSIS_DATA_STRUCTURE_H
 #define LLVM_ANALYSIS_DATA_STRUCTURE_H
 
-#include "llvm/Analysis/DSSupport.h"
 #include "llvm/Pass.h"
 #include <set>
 
 class Type;
 class DSGraph;
 class DSNode;
+class DSCallSite;
 
 // FIXME: move this stuff to a private header
 namespace DataStructureAnalysis {
