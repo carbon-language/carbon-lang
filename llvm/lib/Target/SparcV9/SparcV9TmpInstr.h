@@ -24,16 +24,8 @@ namespace llvm {
 /// values used within the SparcV9 machine code for an LLVM instruction.
 /// 
 class TmpInstruction : public Instruction {
-  TmpInstruction(const TmpInstruction &TI)
-    : Instruction(TI.getType(), TI.getOpcode()) {
-    if (!TI.Operands.empty()) {
-      Operands.push_back(Use(TI.Operands[0], this));
-      if (TI.Operands.size() == 2)
-        Operands.push_back(Use(TI.Operands[1], this));
-      else
-        assert(0 && "Bad # operands to TmpInstruction!");
-    }
-  }
+  Use Ops[2];
+  TmpInstruction(const TmpInstruction &TI);
 public:
   // Constructor that uses the type of S1 as the type of the temporary.
   // s1 must be a valid value.  s2 may be NULL.

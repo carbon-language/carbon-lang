@@ -14,14 +14,24 @@
 
 #include "SparcV9TmpInstr.h"
 #include "llvm/Support/LeakDetector.h"
+using namespace llvm;
 
-namespace llvm {
+TmpInstruction::TmpInstruction(const TmpInstruction &TI)
+  : Instruction(TI.getType(), TI.getOpcode(), Ops, TI.getNumOperands()) {
+  if (TI.getNumOperands()) {
+    Ops[0].init(TI.Ops[0], this);
+    if (TI.getNumOperands() == 2)
+      Ops[1].init(TI.Ops[1], this);
+    else
+      assert(0 && "Bad # operands to TmpInstruction!");
+  }
+}
 
 TmpInstruction::TmpInstruction(Value *s1, Value *s2, const std::string &name)
-  : Instruction(s1->getType(), Instruction::UserOp1, name) {
-  Operands.push_back(Use(s1, this));  // s1 must be non-null
+  : Instruction(s1->getType(), Instruction::UserOp1, Ops, 1+(s2 != 0), name) {
+  Ops[0].init(s1, this);  // s1 must be non-null
   if (s2)
-    Operands.push_back(Use(s2, this));
+    Ops[1].init(s2, this);
 
   // TmpInstructions should not be garbage checked.
   LeakDetector::removeGarbageObject(this);
@@ -29,12 +39,12 @@ TmpInstruction::TmpInstruction(Value *s1, Value *s2, const std::string &name)
 
 TmpInstruction::TmpInstruction(MachineCodeForInstruction& mcfi,
                                Value *s1, Value *s2, const std::string &name)
-  : Instruction(s1->getType(), Instruction::UserOp1, name) {
+  : Instruction(s1->getType(), Instruction::UserOp1, Ops, 1+(s2 != 0), name) {
   mcfi.addTemp(this);
 
-  Operands.push_back(Use(s1, this));  // s1 must be non-null
+  Ops[0].init(s1, this);  // s1 must be non-null
   if (s2)
-    Operands.push_back(Use(s2, this));
+    Ops[1].init(s2, this);
 
   // TmpInstructions should not be garbage checked.
   LeakDetector::removeGarbageObject(this);
@@ -45,16 +55,17 @@ TmpInstruction::TmpInstruction(MachineCodeForInstruction& mcfi,
 TmpInstruction::TmpInstruction(MachineCodeForInstruction& mcfi,
                                const Type *Ty, Value *s1, Value* s2,
                                const std::string &name)
-  : Instruction(Ty, Instruction::UserOp1, name) {
+  : Instruction(Ty, Instruction::UserOp1, Ops, (s1 != 0)+(s2 != 0), name) {
   mcfi.addTemp(this);
 
-  if (s1) 
-    Operands.push_back(Use(s1, this));
-  if (s2)
-    Operands.push_back(Use(s2, this));
+  assert((s1 != 0 || s2 == 0) &&
+         "s2 cannot be non-null if s1 is non-null!");
+  if (s1) {
+    Ops[0].init(s1, this);
+    if (s2)
+      Ops[1].init(s2, this);
+  }
 
   // TmpInstructions should not be garbage checked.
   LeakDetector::removeGarbageObject(this);
 }
-
-} // end namespace llvm
