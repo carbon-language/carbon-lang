@@ -24,6 +24,7 @@
 
 #include "llvm/Value.h"               // Get the definition of Value
 #include "llvm/ValueHolder.h"
+#include "llvm/CFGdecls.h"
 
 class Instruction;
 class Method;
@@ -42,6 +43,11 @@ private :
   void setParent(Method *parent);
 
 public:
+  typedef cfg::succ_iterator succ_iterator;   // Include CFG.h to use these
+  typedef cfg::pred_iterator pred_iterator;
+  typedef cfg::succ_const_iterator succ_const_iterator;
+  typedef cfg::pred_const_iterator pred_const_iterator;
+
   BasicBlock(const string &Name = "", Method *Parent = 0);
   ~BasicBlock();
 
