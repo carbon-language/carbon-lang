@@ -62,7 +62,7 @@ static unsigned CountCodeReductionForConstant(Value *V) {
       Reduction += CI->getCalledValue() == V ? 500 : 0;
     } else if (InvokeInst *II = dyn_cast<InvokeInst>(*UI)) {
       // Turning an indirect call into a direct call is a BIG win
-      Reduction += CI->getCalledValue() == V ? 500 : 0;
+      Reduction += II->getCalledValue() == V ? 500 : 0;
     } else {
       // Figure out if this instruction will be removed due to simple constant
       // propagation.
