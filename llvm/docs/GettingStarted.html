@@ -1,0 +1,146 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+  <head>
+    <title>Specification for LLVM system code</title>
+  </head>
+
+  <body>
+    <h1>Specification for LLVM system</h1>
+    <h1><a name="index">Index</a></h1>
+    <ul>
+      <li><a href="#cvs">Checkout LLVM from CVS</a>
+      <li><a href="#compilerun">Compile and Run</a>
+      <li><a href="#layout">Program layout</a>
+	<ol>
+	  <li><a href="#d&d">Depend and Debug directories</a></li>
+	  <li><a href="#include">llvm/include</a>
+	  <li><a href="#lib">llvm/lib</a>
+	  <li><a href="#test">llvm/test</a>
+	  <li><a href="#tools">llvm/tools</a>  
+	</ol>
+      <li> <a href="#tutorial"> simple example for using tools</li>
+      <li><a href="#links">Links</a>
+    </ul>
+    <h2><a name="tools">Checkout LLVM from CVS</a></h2>
+    <p>  
+    <dl> 
+      <dt>cvs root directory:<dd> /home/vadve/vadve/Research/DynOpt/CVSRepository<br>
+      <dt>project name:<dd> llvm
+    </dl>
+    
+    For those who are not familar with cvs, there are two steps you should do:<br>
+    <ol>
+      <li>
+	set CVSROOT. Add the following line into the .cshrc file in your home directory if you are using tcsh or csh:<br>
+	<i>setenv CVSROOT /home/vadve/vadve/Research/DynOpt/CVSRepository</i>
+      </li>
+      <li>
+	check out. Go to the directory you want to store LLVM, type <br>
+	<i>cvs checkout llvm</i>
+      </li>
+    </ol>
+    
+    note: the c front-end implementation is not in cvs. If you want to use it, you can use excutable in Chris Lattner's directory<br>
+    <dd><i>/home/vadve/lattner/cvs/gcc_install/bin/gcc</i><br>
+      a brief usage of this gcc and other tools are introduced later. To read it now, click <a href="#tutorial">here</a>.
+      
+      <h2><a name="compilerun">Compile and Run</a></h2>
+      There is a makefile in each directory. You can simple type <i>gmake</i> in the <b>~/llvm</b> directory to compile all the files or you can type <i>gmake</i> in the certain directory to compile all files and subdirectories in that directory.<br>
+      You might want to add the the following directory into your path:<br>
+      <dd><i>llvm/tools/Debug</i><br>
+	so you can run tools in any directory. If you are using csh or tcsh, add <br>
+	<dd><i>setenv PATH llvm/tools/Debug:${PATH}</i><br>
+	  at the end of the file .cshrc in your home directory.
+	  
+	</dl>
+	  <h2><a name="layout">Program Layout</a></h2>
+	  Many useful infomation can be obtained from the LLVM doxygen tree available at <a href="http://llvm.cs.uiuc.edu/doxygen/"><i>http://llvm.cs.uiuc.edu/doxygen/ </i><br></a>
+	  The following is a brief introduction to code layout:
+	  
+	  <h3><a name="d&d">Depend and Debug directories</a></h3>
+	  Most directories contain these two directories. The depend directory contains dependance files which will be used during complilation. The debug directory contains object files, library files or executables after compilation.
+	  <h3><a name="include">llvm/include</a></h3>
+	  This directory contains common head files supporting the LLVM library. Specific head files which are only used by certain directory are place in that directory instead of here. 
+	  <h3><a name="lib">llvm/lib</a></h3>
+	  This directory contains most important files of LLVM system. <br>
+	  <dl compact>
+	    
+	    <dt>llvm/lib/transforms/<dd> This directory contains files and directories for transforming one representation to another representation.
+	    <dt>llvm/lib/Target/<dd> This directory contains files and directories for target machine. The files under llvm/lib/Target describe the common property for any target machine. The directory llvm/lib/Target/Sparc describe the sparc machine specification. <br>
+	      
+	    <dt>llvm/lib/Analysis/<dd> This directory contains files and directories for doing all kinds of data and control analysis.
+	    <dt>llvm/lib/AsmParser/<dd> This directory contains files and directories for parsing the llvm assemly files. 
+	    <dt>llvm/lib/ByteCode/<dd> This directory contains files and directories for reading and write LLVM bytecode.
+	    <dt>llvm/lib/CWrite/<dd> This directory contains files and directories for writing c files as output.
+	    <dt>llvm/lib/CodeGen/<dd> This directory contains files and directories for instruction selection, instruction scheduling and register allocation. 
+	    <dt>llvm/lib/Reoptimizer<dd> This directory contains files and directories for all kinds of optimizations, e.g. dead code elimination,  Loop Invariant Code Motion, etc. 
+	      
+	    <dt>llvm/lib/Support/<dd> This directory contains some files and directories supporting the library, e.g. commandline processor and statistic reporter.
+	    <dt>llvm/lib/VMCore/<dd> This directory contains files and directories for implementing the virtual machine instruction set.
+	  </dl>
+	  <h3><a name="test">llvm/test</a></h3>
+	This directory contains llvm assembly and other files to test the llvm library.
+	  
+	  <h3><a name="tools">llvm/tools</a></h3>
+    <p> The <b>tools</b> directory contains many tools. You can always get help by typing <i>command_name --help </i>. The following is a brief introduction to each tool. 
+    <dl compact>
+      <dt><i>analyze</i><dd> ???
+	    <dt><i>as</i><dd>llvm .ll -> .bc assembler
+	      <br>The assembler transfroms the human readable assembly to llvm bytecode.
+	    <dt><i>dis</i><dd>llvm .bc -> .ll disassembler
+	      <br>The disassembler transfroms the llvm bytecode to human readable assembly.
+	    <dt><i>extract</i><dd>  ???
+	    <dt><i>gccas</i><dd>llvm .ll -> .bc assembler
+	      <br>The assembler transfroms the human readable assembly to llvm bytecode.
+	    <dt><i>gccld</i><dd>many llvm bytecode -> llvm bytecode + optimizations
+	      <br> gccld links many llvm bytecode files into one bytecode file and does some optimization.
+	    <dt><i>link</i><dd>many llvm bytecode -> llvm bytecode
+	      <br> <i>link</i> takes many llvm bytecode files and link them into one llvm bytecode file.
+	    <dt><i>llc</i><dd>llvm bytecode -> SPARC assembly
+	      <br> <i>llc</i> takes a llvm bytecode file and output a SPARC assembly file.
+	    <dt><i>lli</i><dd>llvm interpreter
+	      <br><i>lli</i> reads a llvm bytecode file and execute it. 
+	    <dt><i>opt</i><dd>llvm .bc -> .bc modular optimizer
+	      <br> <i>opt</i> reads llvm bytecode and do certain optimization, then output llvm bytecode .
+	  </dl>
+	  
+	  <h2><a name="tutorial">tutorial for using tools</h2>
+	  <ul>
+	    <li>create a simple c file:<br>
+	      <pre>
+	      hello.c 
+
+	           int main() {
+	           printf("hello world\n");
+	           return 0;
+	           }
+	      </pre>
+	    </li>
+	    <li>compile the c file into a llvm bytecode file<br>
+	      <i>% alias llvmgcc /home/vadve/lattner/cvs/gcc_install/bin/gcc</i><br>
+	      <i>% llvmgcc hello.c </i><br>
+		there will be two output files: <b>a.out</b> and <b>a.out.bc</b>. The file <b>a.out</b> is a shell script and <b>a.out.bc</b> is the llvm bytecode. You can run a.out to excute or directly call the interpreter: <br>
+	      % <i>lli a.out.bc</i><br>
+	    <li> dissembler and assembler <br>
+	      read llvm bytecode and output human readable llvm assembly<br>
+	      %<i>dis a.out.bc -o hello.ll</i><br>
+	      read human readable llvm assembly code and output llvm bytecode<br>
+	      %<i>as hello.ll -o hello.bc</i>
+	    </li>
+	    <li> compile to sparc assembly<br>
+	      <i>%llc hello.bc -o hello.s</i>
+	    </li>
+	  </ul>
+	  <h2><a name="links">Links</a></h2>
+	  <ul>
+	    <li><a href="http://llvm.cs.uiuc.edu/">LLVM homepage</a></li>
+	    <li><a href="http://tank.cs.uiuc.edu/doxygen/">LLVM doxygen tree</a></li>
+	  </ul>
+	  <hr>
+	  If you have any question, please send an email to <a href="mailto:lattner@uiuc.edu">Lattner Chris Arthur</a> or <a href="mailto:gshi1@uiuc.edu">Guochun Shi</a>. <p>
+	    <!-- Created: Mon Jul  1 02:29:02 CDT 2002 -->
+	    <!-- hhmts start -->
+Last modified: Wed Jul 17 17:55:16 CDT 2002
+<!-- hhmts end -->
+  </body>
+</html>
