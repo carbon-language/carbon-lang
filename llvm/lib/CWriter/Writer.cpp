@@ -1193,6 +1193,12 @@ void CWriter::visitCallInst(CallInst &I) {
         
         Out << "va_start(*(va_list*)&" << Mang->getValueName(&I) << ", ";
         // Output the last argument to the enclosing function...
+        if (I.getParent()->getParent()->aempty()) {
+          std::cerr << "The C backend does not currently support zero "
+                    << "argument varargs functions, such as '"
+                    << I.getParent()->getParent()->getName() << "'!\n";
+          abort();
+        }
         writeOperand(&I.getParent()->getParent()->aback());
         Out << ")";
         return;
