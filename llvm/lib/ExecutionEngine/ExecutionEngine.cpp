@@ -14,7 +14,7 @@
 
 #define DEBUG_TYPE "jit"
 #include "Interpreter/Interpreter.h"
-#include "JIT/VM.h"
+#include "JIT/JIT.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
@@ -55,7 +55,7 @@ ExecutionEngine *ExecutionEngine::create(ModuleProvider *MP,
 
   // Unless the interpreter was explicitly selected, make a JIT.
   if (!ForceInterpreter)
-    EE = VM::create(MP);
+    EE = JIT::create(MP);
 
   // If we can't make a JIT, make an interpreter instead.
   try {
