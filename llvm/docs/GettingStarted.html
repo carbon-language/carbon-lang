@@ -5,17 +5,27 @@
   </head>
 
   <body bgcolor=white>
-    <h1>Getting Started with the LLVM System<br><font size=3>By: <a
-    href="mailto:gshi1@uiuc.edu">Guochun Shi</a> and <a 
-    href="mailto:sabre@nondot.org">Chris Lattner</a></font></h1>
+    <center><h1>Getting Started with the LLVM System<br><font size=3>By: <a
+    href="mailto:gshi1@uiuc.edu">Guochun Shi</a>,
+    <a href="mailto:sabre@nondot.org">Chris Lattner</a> and
+    <a href="http://www.cs.uiuc.edu/~vadve">Vikram Adve</a>
+    </font></h1></center>
+
+    <!--=====================================================================-->
+    <h2><a name="Contents">Contents</a></h2>
+    <!--=====================================================================-->
 
     <ul>
-      <li><a href="#quickstart">Getting started with LLVM</a>
+      <li><a href="#overview">Overview</a>
+      <li><a href="#starting">Getting started with LLVM</a>
         <ol>
-          <li><a href="#cvs">Checkout LLVM from CVS</a>
-          <li><a href="#shared">Access to <tt>/shared</tt></a>
-          <li><a href="#environment">Set up your environment</a>
-          <li><a href="#compile">Compiling the Source Code</a>
+          <li><a href="#quickstart">Getting started quickly (a summary)</a>
+          <li><a href="#checkout">Checkout LLVM from CVS</a>
+          <li><a href="#terminology">Terminology and Notation</tt></a>
+          <li><a href="#objfiles">The location for object files</tt></a>
+	  <li><a href="#config">Local Configuration Options</tt></a>
+          <li><a href="#environment">Setting up your environment</a>
+          <li><a href="#compile">Compiling the source code</a>
         </ol>
       <li><a href="#layout">Program layout</a>
 	<ol>
@@ -32,84 +42,149 @@
     </ul>
 
 
+    <!--=====================================================================-->
+    <center>
+    <h2><a name="overview"><b>Overview</b></a></h2>
+    </center>
+    <!--=====================================================================-->
+
+    <p>The <a href"starting">next section</a> of this guide is meant to get
+    you up and running with LLVM, and to give you some basic information about
+    the LLVM environment.  The <a href"#quickstart">first subsection</a> gives
+    a short summary for those who are already familiar with the system and
+    want to get started as quickly as possible.
+
+    <p>The later sections of this guide describe the <a
+    href"#layout">general layout</a> of the the llvm source tree, a <a
+    href="#tutorial">simple example</a> using the LLVM tool chain, and <a
+    href="#links">links</a> to find more information about LLVM or to get
+    help via e-mail.
 
     <!--=====================================================================-->
-    <h2><a name="quickstart">Getting Started with LLVM</a></h2>
+    <center>
+    <h2><a name="starting"><b>Getting Started</b></a></h2>
+    </center>
     <!--=====================================================================-->
 
-    <p>This guide is meant to get you up and running with LLVM as quickly as
-    possible.  Once you get the basic system running you can choose an area to
-    dive into and learn more about.  If you get stuck or something is missing
-    from this document, please email <a
-    href="mailto:sabre@nondot.org">Chris</a>.</p>
-    
+
+    <!--=====================================================================-->
+    <h3><a name="quickstart"><b>Getting Started Quickly (A Summary)</b></a></h3>
+    <!--=====================================================================-->
+
+    Here's the short story for getting up and running quickly with LLVM:
+    <ul>
+    <li>Find the path to the CVS repository containing LLVM (we'll call this <i>CVSROOTDIR</i>).
+    <li><tt>cd <i>where-you-want-llvm-to-live</i></tt>
+    <li><tt>cvs -d <i>CVSROOTDIR</i> checkout llvm</tt>
+    <li>Edit <tt>llvm/Makefile.config</tt> to set local paths if necessary.
+    <li><tt>cd llvm</tt>
+    <li><tt>gmake -k |& tee gnumake.out
+	    &nbsp;&nbsp;&nbsp;# this is csh or tcsh syntax</tt>
+    </ul>
+
+    <p>See <a href="#environment">Setting up your environment</a> on tips to
+    simplify working with the llvm front-end and compiled tools.  See the
+    other sub-sections below for other useful details in working with LLVM,
+    or go straight to <a href="#layout">Program Layout</a> to learn about the
+    layout of the source code tree.
 
     <!------------------------------------------------------------------------->
-    <h3><a name="tools">Checkout LLVM from CVS</a></h3>
+    <h3><a name="terminology">Terminology and Notation</a></h3>
     <!------------------------------------------------------------------------->
 
-    <p>First step is to get the actual source code.  To do this, all you need to
-    do is check it out from CVS.  From your home directory, just enter:</p>
-
-    <p><tt>cvs -d /home/vadve/vadve/Research/DynOpt/CVSRepository checkout
-    llvm</tt></p>
-
-    <p>This will create an '<tt>llvm</tt>' directory in your home directory and
-    fully populate it with the source code for LLVM.</p>
-
-
-    <!------------------------------------------------------------------------->
-    <h3><a name="shared">Access to <tt>/shared</tt></a></h3>
-    <!------------------------------------------------------------------------->
-
-    By default, LLVM is configured to send all compiled files into the
-    <tt>/shared/[yourloginname]/</tt> directory.  The idea is that this
-    directory is local to the machine you're working on, so the huge libraries
-    and <tt>.o</tt> files you will be compiling will not have to be sent over
-    NFS.  If you are in a situation where this setup is correct, you don't have
-    to do anything.  If you don't have a <tt>/shared</tt> directory, you will
-    have to make a couple of modifications to your setup.<p>
- 
-    The first modification is that you need to enable the "<tt>BUILD_ROOT =
-    .</tt> line in the top level <tt>Makefile.common</tt>.  This will instruct
-    LLVM to build into the current directory tree instead of
-    <tt>/shared</tt>.<p>
-
+    <p>Through this manual, the following names are used to denote paths
+    specific to the local system and working environment.  <i>These are not
+    environment variables you need to set, but just strings used in the rest
+    of this document below.</i>.  In any of the examples below, simply replace
+    each of these names with the appropriate pathname on your local system.
+    All these paths are absolute:</p>
+    <ul>
+    </ul>
 
     <!------------------------------------------------------------------------->
-    <h3><a name="tools">Set up your environment</a></h3>
+    <h3><a name="checkout">Checkout LLVM from CVS</a></h3>
     <!------------------------------------------------------------------------->
-    
-    <p>Now that you have the source code available, you should set up your
-    environment to be able to use the LLVM tools (once compiled) with as little
-    hassle as possible.  To do this, we recommend that you add the following
-    lines to your <tt>.cshrc</tt> (or the corresponding lines to your
-    <tt>.profile</tt> if you use a bourne shell derivative):
+
+    <p>Before checking out the source code, you will need to know the path to
+    CVS repository containing LLVM source code (we'll call this
+    <i>CVSROOTDIR</i> below).  Ask the person responsible for your local LLVM
+    installation to give you this path.
+
+    <p>To get a fresh copy of the entire source code, all you
+    need to do is check it out from CVS as follows:
+    <ul>
+    <li><tt>cd <i>where-you-want-llvm-to-live</i></tt>
+    <li><tt>cvs -d <i>CVSROOTDIR</i> checkout llvm</tt></p>
+    </ul>
+
+    <p>This will create an '<tt>llvm</tt>' directory in the current
+    directory and fully populate it with the LLVM source code, Makefiles,
+    test directories, and local copies of documentation files.</p>
+
+    <!------------------------------------------------------------------------->
+    <h3><a name="config">Local Configuration Options</a></h3>
+    <!------------------------------------------------------------------------->
+
+    <p>The file <tt>llvm/Makefile.config</tt>
+    defines the following path variables,
+    which are specific to a particular installation of LLVM.
+    These should need to be modified only once after checking out a copy
+    of LLVM (if the default values do not already match your system):
+
+    <ul>
+    <p><li><i>LLVM_OBJ_DIR</i> = Path to the llvm directory where
+				 object files should be placed.
+				 (See the Section on <a href=#objfiles>
+				 The location for LLVM object files</a>
+				 for more information.)
+    <p><li><i>LLVMGCCDIR</i>   = Path to the location of the LLVM front-end
+				 binaries and associated libraries.
+    <p><li><i>BURG</i>         = Path to the burg program used for instruction
+				 selection. 
+    <p><li><i>PURIFY</i>       = Path to the purify program.
+    </ul>
+
+    <!------------------------------------------------------------------------->
+    <h3><a name="objfiles">The location for LLVM object files</a></h3>
+    <!------------------------------------------------------------------------->
+
+    <p>The LLVM make system sends most output files generated during the build
+    into the directory defined by the variable LLVM_OBJ_DIR in
+    <tt>llvm/Makefile.config</tt>.
+    This can be either just your normal </tt>llvm</tt> source tree or some
+    other directory writable by you.  You may wish to put object files on a
+    different filesystem either to keep them from being backed up or to speed
+    up local builds.
+
+    <p>If you do not wish to use a different location for object files,
+    just set this variable to ".".
+
+    <!------------------------------------------------------------------------->
+    <h3><a name="environment">Setting up your environment</a></h3>
+    <!------------------------------------------------------------------------->
+
+    <i>NOTE: This step is optional but will set up your environment so you
+    can use the compiled LLVM tools with as little hassle as possible.</i>)
+
+    <p>Add the following lines to your <tt>.cshrc</tt> (or the corresponding
+    lines to your <tt>.profile</tt> if you use a bourne shell derivative).
 
     <pre>
-       # Make the C frontend easy to use...
-       alias llvmgcc /home/vadve/lattner/cvs/gcc_install/bin/gcc
+       # Make the C front end easy to use...
+       alias llvmgcc <i>LLVMGCCDIR</i><tt>/bin/gcc</tt>
 
        # Make the LLVM tools easy to use...
-       setenv PATH /shared/[yourloginname]/llvm/tools/Debug:${PATH}
+       setenv PATH <i>LLVM_OBJ_DIR</i>/tools/Debug:${PATH}
     </pre>
-
-    <p>The C compiler is not included in the CVS tree you just checked out, so
-    we just point to the cannonical location, and access it with the
-    <tt>llvmgcc</tt> command.  The rest of the <a href="#tools">LLVM tools</a>
-    will be built into the <tt>llvm/tools/Debug</tt> directory.  If you do not
-    have access to <tt>/shared</tt>, use this line instead:</p>
-
-    <pre>
-       setenv PATH ~/llvm/tools/Debug:${PATH}
-    </pre>
-
-    Adding these two lines to your path will make it much easier to use the LLVM
-    tools.</p>
-
+    The <tt>llvmgcc</tt> alias is useful because the C compiler is not
+    included in the CVS tree you just checked out.
+    
+    <p>The other LLVM <a href="#tools">LLVM tools</a> are part of the LLVM
+    source base, and built when compiling LLVM.  They will be built into the
+    <tt><i>LLVM_OBJ_DIR</i>/tools/Debug</tt> directory.</p>
 
     <!------------------------------------------------------------------------->
-    <h3><a name="compile">Compiling the Source Code</a></h3>
+    <h3><a name="compile">Compiling the source code</a></h3>
     <!------------------------------------------------------------------------->
 
     <p>Every directory in the LLVM source tree includes a Makefile to build it,
@@ -121,17 +196,16 @@
     in <tt>llvm/tools/Debug</tt>.  If you want to look at the libraries that
     were compiled, look in <tt>llvm/lib/Debug</tt>.</p>
 
-    <p>By default, the LLVM build process sends all temporary (<tt>.o</tt>,
-    <tt>.so</tt>, <tt>.a</tt>) files into a <tt>/shared/[your login
-    name]/...</tt> directory, which is supposed to be on a disk local to the
-    current machine.  If you get an error talking about a <tt>/shared</tt>
-    directory, follow the instructions in the <a href="#shared">section about
-    <tt>/shared</tt></a>.<p>
+    If you get an error talking about a <tt>/shared</tt> directory, follow the
+    instructions in the section about <a href="#environment">Setting Up Your
+    Environment.</a>
 
 
 
     <!--=====================================================================-->
-    <h2><a name="layout">Program Layout</a></h2>
+    <center>
+    <h2><a name="layout"><b>Program Layout</b></a></h2>
+    </center>
     <!--=====================================================================-->
 
     <p>One useful source of infomation about the LLVM sourcebase is the LLVM <a
@@ -274,9 +348,10 @@
       because it is quite large and not very interesting.<p>
 
       <ol>
-        <dt><tt><b>gccas</b></tt><dd> This took is invoked by the
+        <dt><tt><b>gccas</b></tt><dd> This tool is invoked by the
         <tt>llvmgcc</tt> frontend as the "assembler" part of the compiler.  This
-        tool actually assembles its input, performs a variety of optimizations,
+        tool actually assembles LLVM assembly to LLVM bytecode,
+	performs a variety of optimizations,
         and outputs LLVM bytecode.  Thus when you invoke <tt>llvmgcc -c x.c -o
         x.o</tt>, you are causing <tt>gccas</tt> to be run, which writes the
         <tt>x.o</tt> file (which is an LLVM bytecode file that can be
@@ -380,9 +455,9 @@
     <hr>
 
     If you have any questions or run into any snags (or you have any
-    additions...), please send an email to <a
-    href="mailto:sabre@nondot.org">Chris Lattner</a> or <a
-    href="mailto:gshi1@uiuc.edu">Guochun Shi</a>. <p>
+    additions...), please send an email to
+    <a href="mailto:hldnbrnd@uiuc.edu">Nicholas Hildenbrandt</a> or
+    <a href="mailto:sabre@nondot.org">Chris Lattner</a>.</p>
 
 	    <!-- Created: Mon Jul  1 02:29:02 CDT 2002 -->
 	    <!-- hhmts start -->
