@@ -45,12 +45,80 @@
 # 
 include $(LEVEL)/Makefile.config
 
+###########################################################################
+# Directory Configuration
+#	This section of the Makefile determines what is where.  To be
+#	specific, there are several locations that need to be defined:
+#
+#	o LLVM_SRC_ROOT  : The root directory of the LLVM source code.
+#	o LLVM_OBJ_ROOT  : The root directory containing the built LLVM code.
+#
+#	o BUILD_SRC_DIR  : The directory containing the code to build.
+#	o BUILD_SRC_ROOT : The root directory of the code to build.
+#
+#	o BUILD_OBJ_DIR  : The directory in which compiled code will be placed.
+#	o BUILD_OBJ_ROOT : The root directory in which compiled code is placed.
+#
+###########################################################################
+
+#
+# Set the source build directory.  That is almost always the current directory.
+#
+ifndef BUILD_SRC_DIR
+BUILD_SRC_DIR = $(shell pwd)
+endif
+
+#
+# Set the source root directory.
+#
+ifndef BUILD_SRC_ROOT
+BUILD_SRC_ROOT = $(BUILD_SRC_DIR)/$(LEVEL)
+endif
+
+#
+# Set the object build directory.  Its location depends upon the source path
+# and where object files should go.
+#
+ifndef BUILD_OBJ_DIR
+ifeq ($(OBJ_ROOT),.)
+BUILD_OBJ_DIR = $(shell pwd)
+else
+BUILD_OBJ_DIR := $(OBJ_ROOT)$(patsubst $(HOME)%,%,$(shell cd $(BUILD_SRC_DIR); pwd))
+endif
+endif
+
+#
+# Set the root of the object directory.
+#
+ifndef BUILD_OBJ_ROOT
+ifeq ($(OBJ_ROOT),.)
+BUILD_OBJ_ROOT = $(shell cd $(LEVEL); pwd)
+else
+BUILD_OBJ_ROOT := $(OBJ_ROOT)$(patsubst $(HOME)%,%,$(shell cd $(LEVEL); pwd))
+endif
+endif
+
+#
+# Set the LLVM source directory.
+# It is typically the root directory of what we're compiling now.
+#
+ifndef LLVM_SRC_ROOT
+LLVM_SRC_ROOT = $(BUILD_SRC_ROOT)
+endif
+
+#
+# Set the LLVM object directory.
+#
+ifndef LLVM_OBJ_ROOT
+LLVM_OBJ_ROOT = $(BUILD_OBJ_ROOT)
+endif
+
 # Figure out how to do platform specific stuff on this platform.  This is really
 # gross and should be autoconfiscated (automake actually), but should hopefully
 # work on Linux and solaris (SunOS).
 #
 UNAME := $(shell uname)
-include $(LEVEL)/Makefile.$(UNAME)
+include $(LLVM_SRC_ROOT)/Makefile.$(UNAME)
 
 ifdef SHARED_LIBRARY
 # if SHARED_LIBRARY is specified, the default is to build the dynamic lib
@@ -63,42 +131,8 @@ all ::
 # Default for install is to at least build everything...
 install ::
 
-
-# Figure out which directory to build stuff into.  We want to build into the
-# /shared directory by default because it is guaranteed to be local to the
-# current machine.
-#
-
-ifeq ($(LLVM_OBJ_DIR),.)
-BUILD_ROOT     = $(LLVM_OBJ_DIR)
-
-ifdef PROJ_COMPILE
-BUILD_ROOT_TOP = $(PROJLEVEL)
-else
-BUILD_ROOT_TOP = $(LEVEL)
-endif 
-
-else
-
-BUILD_ROOT := $(LLVM_OBJ_DIR)$(patsubst $(HOME)%,%,$(shell pwd))
-
-# Calculate the BUILD_ROOT_TOP variable, which is the top of the llvm/ tree.
-# Note that although this is just equal to $(BUILD_ROOT)/$(LEVEL), we cannot use
-# this expression because some of the directories on the source tree may not
-# exist in the build tree (for example the test/ heirarchy).  Thus we evaluate
-# the directory to eliminate the ../'s
-#
-ifdef PROJ_COMPILE
-TOP_DIRECTORY := $(shell cd $(PROJLEVEL); pwd)
-else 
-TOP_DIRECTORY := $(shell cd $(LEVEL); pwd)
-endif
-
-BUILD_ROOT_TOP := $(LLVM_OBJ_DIR)$(patsubst $(HOME)%,%,$(TOP_DIRECTORY))
-endif
-
-
-
+# Default rule for test.  It ensures everything has a test rule
+test::
 
 #--------------------------------------------------------------------
 # Variables derived from configuration options... 
@@ -110,7 +144,7 @@ endif
 
 BURG_OPTS = -I
 
-PURIFY := $(PURIFY) -cache-dir="$(BUILD_ROOT_TOP)/../purifycache" -chain-length="30" -messages=all 
+PURIFY := $(PURIFY) -cache-dir="$(BUILD_OBJ_ROOT)/../purifycache" -chain-length="30" -messages=all 
 
 ifdef ENABLE_PROFILING
   ENABLE_OPTIMIZED = 1
@@ -123,38 +157,56 @@ else
   endif
 endif
 
-# Shorthand for commonly accessed directories
-# DESTLIBXYZ indicates destination for the libraries built
-DESTLIBDEBUG    := $(BUILD_ROOT_TOP)/lib/Debug
-DESTLIBRELEASE  := $(BUILD_ROOT_TOP)/lib/Release
-DESTLIBPROFILE  := $(BUILD_ROOT_TOP)/lib/Profile
-DESTLIBCURRENT  := $(BUILD_ROOT_TOP)/lib/$(CONFIGURATION)
+###########################################################################
+# Library Locations
+#	These variables describe various library locations:
+#
+#	DEST* = Location of where libraries that are built will be placed.
+#	LLVM* = Location of LLVM libraries used for linking.
+#	PROJ* = Location of previously built libraries used for linking.
+###########################################################################
 
-ifdef PROJ_COMPILE
-#get the llvm libraries from LLVM_LIB_DIR
-LLVMLIBDEBUGSOURCE    := $(LLVM_LIB_DIR)/lib/Debug
-LLVMLIBRELEASESOURCE  := $(LLVM_LIB_DIR)/lib/Release
-LLVMLIBPROFILESOURCE  := $(LLVM_LIB_DIR)/lib/Profile
-LLVMLIBCURRENTSOURCE  := $(LLVM_LIB_DIR)/lib/$(CONFIGURATION)
+# Libraries that are being built
+DESTLIBDEBUG    := $(BUILD_OBJ_ROOT)/lib/Debug
+DESTLIBRELEASE  := $(BUILD_OBJ_ROOT)/lib/Release
+DESTLIBPROFILE  := $(BUILD_OBJ_ROOT)/lib/Profile
+DESTLIBCURRENT  := $(BUILD_OBJ_ROOT)/lib/$(CONFIGURATION)
 
-PROJLIBDEBUGSOURCE    := $(BUILD_ROOT_TOP)/lib/Debug
-PROJLIBRELEASESOURCE  := $(BUILD_ROOT_TOP)/lib/Release
-PROJLIBPROFILESOURCE  := $(BUILD_ROOT_TOP)/lib/Profile
-PROJLIBCURRENTSOURCE  := $(BUILD_ROOT_TOP)/lib/$(CONFIGURATION)
+# LLVM libraries used for linking
+LLVMLIBDEBUGSOURCE    := $(LLVM_OBJ_ROOT)/lib/Debug
+LLVMLIBRELEASESOURCE  := $(LLVM_OBJ_ROOT)/lib/Release
+LLVMLIBPROFILESOURCE  := $(LLVM_OBJ_ROOT)/lib/Profile
+LLVMLIBCURRENTSOURCE  := $(LLVM_OBJ_ROOT)/lib/$(CONFIGURATION)
 
-else 
-#when we are building llvm, destination is same as source
-LLVMLIBDEBUGSOURCE    := $(BUILD_ROOT_TOP)/lib/Debug
-LLVMLIBRELEASESOURCE  := $(BUILD_ROOT_TOP)/lib/Release
-LLVMLIBPROFILESOURCE  := $(BUILD_ROOT_TOP)/lib/Profile
-LLVMLIBCURRENTSOURCE  := $(BUILD_ROOT_TOP)/lib/$(CONFIGURATION)
-endif
+# Libraries that were built that will now be used for linking
+PROJLIBDEBUGSOURCE    := $(BUILD_OBJ_ROOT)/lib/Debug
+PROJLIBRELEASESOURCE  := $(BUILD_OBJ_ROOT)/lib/Release
+PROJLIBPROFILESOURCE  := $(BUILD_OBJ_ROOT)/lib/Profile
+PROJLIBCURRENTSOURCE  := $(BUILD_OBJ_ROOT)/lib/$(CONFIGURATION)
 
+###########################################################################
+# Tool Locations
+#	These variables describe various tool locations:
+#
+#	DEST* = Location of where tools that are built will be placed.
+#	LLVM* = Location of LLVM tools used for building.
+#	PROJ* = Location of previously built tools used for linking.
+###########################################################################
 
-TOOLDEBUG   := $(BUILD_ROOT_TOP)/tools/Debug
-TOOLRELEASE := $(BUILD_ROOT_TOP)/tools/Release
-TOOLPROFILE := $(BUILD_ROOT_TOP)/tools/Profile
-TOOLCURRENT := $(BUILD_ROOT_TOP)/tools/$(CONFIGURATION)
+DESTTOOLDEBUG   := $(BUILD_OBJ_ROOT)/tools/Debug
+DESTTOOLRELEASE := $(BUILD_OBJ_ROOT)/tools/Release
+DESTTOOLPROFILE := $(BUILD_OBJ_ROOT)/tools/Profile
+DESTTOOLCURRENT := $(BUILD_OBJ_ROOT)/tools/$(CONFIGURATION)
+
+LLVMTOOLDEBUG   := $(LLVM_OBJ_ROOT)/tools/Debug
+LLVMTOOLRELEASE := $(LLVM_OBJ_ROOT)/tools/Release
+LLVMTOOLPROFILE := $(LLVM_OBJ_ROOT)/tools/Profile
+LLVMTOOLCURRENT := $(LLVM_OBJ_ROOT)/tools/$(CONFIGURATION)
+
+PROJTOOLDEBUG   := $(BUILD_OBJ_ROOT)/tools/Debug
+PROJTOOLRELEASE := $(BUILD_OBJ_ROOT)/tools/Release
+PROJTOOLPROFILE := $(BUILD_OBJ_ROOT)/tools/Profile
+PROJTOOLCURRENT := $(BUILD_OBJ_ROOT)/tools/$(CONFIGURATION)
 
 # Verbosity levels
 ifndef VERBOSE
@@ -165,13 +217,14 @@ endif
 # Compilation options...
 #---------------------------------------------------------
 
+###########################################################################
 # Special tools used while building the LLVM tree.  Burg is built as part of the
 # utils directory.
-#
-BURG    := $(TOOLCURRENT)/burg
+###########################################################################
+BURG    := $(LLVMTOOLCURRENT)/burg
 RunBurg := $(BURG) $(BURG_OPTS)
 
-TBLGEN  := $(TOOLCURRENT)/tblgen
+TBLGEN  := $(LLVMTOOLCURRENT)/tblgen
 
 # Enable this for profiling support with 'gprof'
 # This automatically enables optimized builds.
@@ -179,12 +232,14 @@ ifdef ENABLE_PROFILING
   PROFILE = -pg
 endif
 
-#if PROJDIR is defined then we include project include directory
-ifndef PROJ_COMPILE
-PROJ_INCLUDE = .
-else
-PROJ_INCLUDE = $(TOP_DIRECTORY)/include
-endif 
+###########################################################################
+# Compile Time Flags
+###########################################################################
+
+#
+# Include both the project headers and the LLVM headers for compilation
+#
+CPPFLAGS += -I$(BUILD_SRC_ROOT)/include -I$(LLVM_SRC_ROOT)/include
 
 # By default, strip symbol information from executable
 ifndef KEEP_SYMBOLS
@@ -196,7 +251,7 @@ endif
 CPPFLAGS += -D_GNU_SOURCE
 
 # -Wno-unused-parameter
-CompileCommonOpts := -Wall -W  -Wwrite-strings -Wno-unused -I$(LEVEL)/include -I$(PROJ_INCLUDE)
+CompileCommonOpts := -Wall -W  -Wwrite-strings -Wno-unused -I$(LEVEL)/include
 CompileOptimizeOpts := -O3 -DNDEBUG -finline-functions -fshort-enums
 
 # Compile a cpp file, don't link...
@@ -242,8 +297,8 @@ MakeSOO  := $(MakeSO) -O3
 MakeSOP  := $(MakeSOO) $(PROFILE)
 
 # Create dependancy file from CPP file, send to stdout.
-Depend   := $(CXX) -MM -I$(LEVEL)/include -I$(PROJ_INCLUDE) $(CPPFLAGS) 
-DependC  := $(CC)  -MM -I$(LEVEL)/include -I$(PROJ_INCLUDE) $(CPPFLAGS) 
+Depend   := $(CXX) -MM -I$(LEVEL)/include $(CPPFLAGS) 
+DependC  := $(CC)  -MM -I$(LEVEL)/include $(CPPFLAGS) 
 
 # Archive a bunch of .o files into a .a file...
 AR       = ${AR_PATH} cq 
@@ -259,9 +314,9 @@ Source  := $(ExtraSource) $(wildcard *.cpp *.c *.y *.l)
 endif
 
 Objs := $(sort $(patsubst Debug/%.o, %.o, $(addsuffix .o,$(notdir $(basename $(Source))))))
-ObjectsO := $(addprefix $(BUILD_ROOT)/Release/,$(Objs))
-ObjectsP := $(addprefix $(BUILD_ROOT)/Profile/,$(Objs))
-ObjectsG := $(addprefix $(BUILD_ROOT)/Debug/,$(Objs))
+ObjectsO := $(addprefix $(BUILD_OBJ_DIR)/Release/,$(Objs))
+ObjectsP := $(addprefix $(BUILD_OBJ_DIR)/Profile/,$(Objs))
+ObjectsG := $(addprefix $(BUILD_OBJ_DIR)/Debug/,$(Objs))
 
 
 #---------------------------------------------------------
@@ -394,14 +449,12 @@ endif
 ifdef TOOLNAME
 
 # TOOLEXENAME* - These compute the output filenames to generate...
-TOOLEXENAME_G := $(BUILD_ROOT_TOP)/tools/Debug/$(TOOLNAME)
-TOOLEXENAME_O := $(BUILD_ROOT_TOP)/tools/Release/$(TOOLNAME)
-TOOLEXENAME_P := $(BUILD_ROOT_TOP)/tools/Profile/$(TOOLNAME)
-TOOLEXENAMES  := $(BUILD_ROOT_TOP)/tools/$(CONFIGURATION)/$(TOOLNAME)
+TOOLEXENAME_G := $(DESTTOOLDEBUG)/$(TOOLNAME)
+TOOLEXENAME_O := $(DESTTOOLRELEASE)/$(TOOLNAME)
+TOOLEXENAME_P := $(DESTTOOLPROFILE)/$(TOOLNAME)
+TOOLEXENAMES  := $(DESTTOOLCURRENT)/$(TOOLNAME)
 
 # USED_LIBS_OPTIONS - Compute the options line that add -llib1 -llib2, etc.
-ifdef PROJ_COMPILE
-
 PROJ_LIBS_OPTIONS   := $(patsubst %.a.o, -l%, $(addsuffix .o, $(USEDLIBS)))
 PROJ_LIBS_OPTIONS_G := $(patsubst %.o, $(PROJLIBDEBUGSOURCE)/%.o,  $(PROJ_LIBS_OPTIONS))
 PROJ_LIBS_OPTIONS_O := $(patsubst %.o, $(PROJLIBRELEASESOURCE)/%.o,$(PROJ_LIBS_OPTIONS))
@@ -415,23 +468,6 @@ LLVM_LIBS_OPTIONS_P := $(patsubst %.o, $(LLVMLIBPROFILESOURCE)/%.o,$(LLVM_LIBS_O
 LIB_OPTS_G :=  $(LLVM_LIBS_OPTIONS_G) $(PROJ_LIBS_OPTIONS_G)
 LIB_OPTS_O :=  $(LLVM_LIBS_OPTIONS_O) $(PROJ_LIBS_OPTIONS_P)
 LIB_OPTS_P :=  $(LLVM_LIBS_OPTIONS_P) $(PROJ_LIBS_OPTIONS_P)
-
-else
-
-LLVM_LIBS_OPTIONS   := $(patsubst %.a.o, -l%, $(addsuffix .o, $(USEDLIBS)))
-LLVM_LIBS_OPTIONS_G := $(patsubst %.o, $(LLVMLIBDEBUGSOURCE)/%.o,  $(LLVM_LIBS_OPTIONS))
-LLVM_LIBS_OPTIONS_O := $(patsubst %.o, $(LLVMLIBRELEASESOURCE)/%.o,$(LLVM_LIBS_OPTIONS))
-LLVM_LIBS_OPTIONS_P := $(patsubst %.o, $(LLVMLIBPROFILESOURCE)/%.o,$(LLVM_LIBS_OPTIONS))
-
-LIB_OPTS_G :=  $(LLVM_LIBS_OPTIONS_G) 
-LIB_OPTS_O :=  $(LLVM_LIBS_OPTIONS_O) 
-LIB_OPTS_P :=  $(LLVM_LIBS_OPTIONS_P)
-endif
-
-
-
-
-
 
 # USED_LIB_PATHS - Compute the path of the libraries used so that tools are
 # rebuilt if libraries change.  This has to make sure to handle .a/.so and .o
@@ -457,15 +493,15 @@ all::   $(TOOLEXENAMES)
 clean::
 	$(VERB) rm -f $(TOOLEXENAMES)
 
-$(TOOLEXENAME_G): $(ObjectsG) $(USED_LIB_PATHS_G) $(TOOLDEBUG)/.dir
+$(TOOLEXENAME_G): $(ObjectsG) $(USED_LIB_PATHS_G) $(DESTTOOLDEBUG)/.dir
 	@echo ======= Linking $(TOOLNAME) debug executable $(STRIP_WARN_MSG)=======
 	$(VERB) $(LinkG) -o $@ $(ObjectsG) $(LIB_OPTS_G) $(LINK_OPTS)
 
-$(TOOLEXENAME_O): $(ObjectsO) $(USED_LIB_PATHS_O) $(TOOLRELEASE)/.dir
+$(TOOLEXENAME_O): $(ObjectsO) $(USED_LIB_PATHS_O) $(DESTTOOLRELEASE)/.dir
 	@echo ======= Linking $(TOOLNAME) release executable =======
 	$(VERB) $(LinkO) -o $@ $(ObjectsO) $(LIB_OPTS_O) $(LINK_OPTS)
 
-$(TOOLEXENAME_P): $(ObjectsP) $(USED_LIB_PATHS_P) $(TOOLPROFILE)/.dir
+$(TOOLEXENAME_P): $(ObjectsP) $(USED_LIB_PATHS_P) $(DESTTOOLPROFILE)/.dir
 	@echo ======= Linking $(TOOLNAME) profile executable =======
 	$(VERB) $(LinkP) -o $@ $(ObjectsP) $(LIB_OPTS_P) $(LINK_OPTS)
 
@@ -474,30 +510,30 @@ endif
 
 
 #---------------------------------------------------------
-.PRECIOUS: $(BUILD_ROOT)/Depend/.dir
-.PRECIOUS: $(BUILD_ROOT)/Debug/.dir $(BUILD_ROOT)/Release/.dir
+.PRECIOUS: $(BUILD_OBJ_DIR)/Depend/.dir
+.PRECIOUS: $(BUILD_OBJ_DIR)/Debug/.dir $(BUILD_OBJ_DIR)/Release/.dir
 
 # Create .o files in the ObjectFiles directory from the .cpp and .c files...
-$(BUILD_ROOT)/Release/%.o: $(SourceDir)%.cpp $(BUILD_ROOT)/Release/.dir
+$(BUILD_OBJ_DIR)/Release/%.o: $(SourceDir)%.cpp $(BUILD_OBJ_DIR)/Release/.dir
 	@echo "Compiling $<"
 	$(VERB) $(CompileO) $< -o $@
 
-$(BUILD_ROOT)/Release/%.o: $(SourceDir)%.c $(BUILD_ROOT)/Release/.dir
+$(BUILD_OBJ_DIR)/Release/%.o: $(SourceDir)%.c $(BUILD_OBJ_DIR)/Release/.dir
 	$(VERB) $(CompileCO) $< -o $@
 
-$(BUILD_ROOT)/Profile/%.o: $(SourceDir)%.cpp $(BUILD_ROOT)/Profile/.dir
+$(BUILD_OBJ_DIR)/Profile/%.o: $(SourceDir)%.cpp $(BUILD_OBJ_DIR)/Profile/.dir
 	@echo "Compiling $<"
 	$(VERB) $(CompileP) $< -o $@
 
-$(BUILD_ROOT)/Profile/%.o: $(SourceDir)%.c $(BUILD_ROOT)/Profile/.dir
+$(BUILD_OBJ_DIR)/Profile/%.o: $(SourceDir)%.c $(BUILD_OBJ_DIR)/Profile/.dir
 	@echo "Compiling $<"
 	$(VERB) $(CompileCP) $< -o $@
 
-$(BUILD_ROOT)/Debug/%.o: $(SourceDir)%.cpp $(BUILD_ROOT)/Debug/.dir
+$(BUILD_OBJ_DIR)/Debug/%.o: $(SourceDir)%.cpp $(BUILD_OBJ_DIR)/Debug/.dir
 	@echo "Compiling $<"
 	$(VERB) $(CompileG) $< -o $@
 
-$(BUILD_ROOT)/Debug/%.o: $(SourceDir)%.c $(BUILD_ROOT)/Debug/.dir 
+$(BUILD_OBJ_DIR)/Debug/%.o: $(SourceDir)%.c $(BUILD_OBJ_DIR)/Debug/.dir 
 	$(VERB) $(CompileCG) $< -o $@
 
 #
@@ -543,7 +579,7 @@ YACC_OUTPUT = $(addprefix $(YACC_FILES:%.y=%), .h .cpp .output)
 
 # 'make clean' nukes the tree
 clean::
-	$(VERB) rm -rf $(BUILD_ROOT)/Debug $(BUILD_ROOT)/Release $(BUILD_ROOT)/Profile $(BUILD_ROOT)/Depend
+	$(VERB) rm -rf $(BUILD_OBJ_DIR)/Debug $(BUILD_OBJ_DIR)/Release $(BUILD_OBJ_DIR)/Profile $(BUILD_OBJ_DIR)/Depend
 	$(VERB) rm -f core core.[0-9][0-9]* *.o *.d *.so *~ *.flc
 	$(VERB) rm -f $(LEX_OUTPUT) $(YACC_OUTPUT)
 
@@ -551,16 +587,16 @@ clean::
 # include the dependancies now...
 #
 SourceBaseNames := $(basename $(notdir $(filter-out Debug/%, $(Source))))
-SourceDepend := $(SourceBaseNames:%=$(BUILD_ROOT)/Depend/%.d)
+SourceDepend := $(SourceBaseNames:%=$(BUILD_OBJ_DIR)/Depend/%.d)
 
 # Create dependencies for the *.cpp files...
 #$(SourceDepend): \x
-$(BUILD_ROOT)/Depend/%.d: $(SourceDir)%.cpp $(BUILD_ROOT)/Depend/.dir
-	$(VERB) $(Depend) $< | sed 's|$*\.o *|$(BUILD_ROOT)/Release/& $(BUILD_ROOT)/Profile/& $(BUILD_ROOT)/Debug/& $(BUILD_ROOT)/Depend/$(@F)|g' > $@
+$(BUILD_OBJ_DIR)/Depend/%.d: $(SourceDir)%.cpp $(BUILD_OBJ_DIR)/Depend/.dir
+	$(VERB) $(Depend) $< | sed 's|$*\.o *|$(BUILD_OBJ_DIR)/Release/& $(BUILD_OBJ_DIR)/Profile/& $(BUILD_OBJ_DIR)/Debug/& $(BUILD_OBJ_DIR)/Depend/$(@F)|g' > $@
 
 # Create dependencies for the *.c files...
 #$(SourceDepend): \x
-$(BUILD_ROOT)/Depend/%.d: $(SourceDir)%.c $(BUILD_ROOT)/Depend/.dir
+$(BUILD_OBJ_DIR)/Depend/%.d: $(SourceDir)%.c $(BUILD_OBJ_DIR)/Depend/.dir
 	$(VERB) $(DependC) $< | sed 's|$*\.o *|Release/& Profile/& Debug/& Depend/$(@F)|g' > $@
 
 ifneq ($(SourceDepend),)
