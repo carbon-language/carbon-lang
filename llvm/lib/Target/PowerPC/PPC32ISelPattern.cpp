@@ -172,8 +172,13 @@ PPC32TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
     // We need to load the argument to a virtual register if we determined above
     // that we ran out of physical registers of the appropriate type 
     if (needsLoad) {
+      unsigned SubregOffset = 0;
+      if (ObjectVT == MVT::i8)  SubregOffset = 3;
+      if (ObjectVT == MVT::i16) SubregOffset = 2;
       int FI = MFI->CreateFixedObject(ObjSize, ArgOffset);
       SDOperand FIN = DAG.getFrameIndex(FI, MVT::i32);
+      FIN = DAG.getNode(ISD::ADD, MVT::i32, FIN, 
+                        DAG.getConstant(SubregOffset, MVT::i32));
       argt = newroot = DAG.getLoad(ObjectVT, DAG.getEntryNode(), FIN);
     }
     
@@ -933,6 +938,9 @@ unsigned ISel::SelectExpr(SDOperand N) {
     break;
   }
 
+  if (ISD::CopyFromReg == opcode)
+    DestType = N.getValue(0).getValueType();
+    
   if (DestType == MVT::f64 || DestType == MVT::f32)
     if (ISD::LOAD != opcode && ISD::EXTLOAD != opcode && ISD::UNDEF != opcode)
       return SelectExprFP(N, Result);
@@ -1109,9 +1117,12 @@ unsigned ISel::SelectExpr(SDOperand N) {
     case MVT::i8:
     case MVT::i16:
     case MVT::i32:
-      BuildMI(BB, PPC::OR, 2, Result).addReg(PPC::R3).addReg(PPC::R3);
-      if (Node->getValueType(1) == MVT::i32)
-        BuildMI(BB, PPC::OR, 2, Result+1).addReg(PPC::R4).addReg(PPC::R4);
+      if (Node->getValueType(1) == MVT::i32) {
+        BuildMI(BB, PPC::OR, 2, Result+1).addReg(PPC::R3).addReg(PPC::R3);
+        BuildMI(BB, PPC::OR, 2, Result).addReg(PPC::R4).addReg(PPC::R4);
+      } else {
+        BuildMI(BB, PPC::OR, 2, Result).addReg(PPC::R3).addReg(PPC::R3);
+      }
       break;
     case MVT::f32:
     case MVT::f64:
