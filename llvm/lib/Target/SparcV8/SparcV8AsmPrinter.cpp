@@ -452,8 +452,10 @@ void V8Printer::printBaseOffsetPair (const MachineInstr *MI, int i) {
   assert (MI->getOperand (i + 1).isImmediate()
     && "2nd half of base-offset pair must be immediate-value machine operand");
   int Val = (int) MI->getOperand (i + 1).getImmedValue ();
-  O << ((Val >= 0) ? " + " : " - ");
-  O << ((Val >= 0) ? Val : -Val);
+  if (Val != 0) {
+    O << ((Val >= 0) ? " + " : " - ");
+    O << ((Val >= 0) ? Val : -Val);
+  }
   O << "]";
 }
 
