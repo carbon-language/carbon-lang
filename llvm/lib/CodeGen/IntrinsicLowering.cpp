@@ -206,9 +206,14 @@ void DefaultIntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
     break;
   }
   case Intrinsic::isunordered: {
-    static Function *isunorderedFCache = 0;
-    ReplaceCallWith("isunordered", CI, CI->op_begin()+1, CI->op_end(),
-                    Type::BoolTy, isunorderedFCache);
+    Value *L = CI->getOperand(1);
+    Value *R = CI->getOperand(2);
+
+    Value *LIsNan = new SetCondInst(Instruction::SetNE, L, L, "LIsNan", CI);
+    Value *RIsNan = new SetCondInst(Instruction::SetNE, R, R, "RIsNan", CI);
+    CI->replaceAllUsesWith(
+      BinaryOperator::create(Instruction::Or, LIsNan, RIsNan,
+                             "isunordered", CI));
     break;
   }
   }
