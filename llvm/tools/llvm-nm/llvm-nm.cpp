@@ -114,12 +114,13 @@ void DumpSymbolNamesFromModule (Module *M) {
 
 void DumpSymbolNamesFromFile (std::string &Filename) {
   std::string ErrorMessage;
-  if (!FileOpenable (Filename)) {
+  if (Filename != "-" && !FileOpenable (Filename)) {
     std::cerr << ToolName << ": " << Filename << ": " << strerror (errno)
               << "\n";
     return;
   }
-  if (IsBytecode (Filename)) {
+  // Note: Currently we do not support reading an archive from stdin.
+  if (Filename == "-" || IsBytecode (Filename)) {
     Module *Result = ParseBytecodeFile(Filename, &ErrorMessage);
     if (Result) {
       DumpSymbolNamesFromModule (Result);
