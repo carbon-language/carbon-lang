@@ -47,10 +47,16 @@ def ADJCALLSTACKUP : InstV8 {
 }
 
 // Section A.3 - Synthetic Instructions, p. 85
+// special cases of JMPL:
 let isReturn = 1, isTerminator = 1, simm13 = 8 in
   def RET : F3_2<2, 0b111000, "ret">;
 let isReturn = 1, isTerminator = 1, simm13 = 8 in
   def RETL: F3_2<2, 0b111000, "retl">;
+// CMP is a special case of SUBCC where destination is ignored, by setting it to
+// %g0 (hardwired zero).
+// FIXME: should keep track of the fact that it defs the integer condition codes
+let rd = 0 in
+  def CMPri: F3_2<2, 0b010100, "cmp">;
 
 // Section B.1 - Load Integer Instructions, p. 90
 def LDSBmr: F3_2<3, 0b001001, "ldsb">;
@@ -96,6 +102,7 @@ def ADDrr : F3_1<2, 0b000000, "add">;
 // Section B.15 - Subtract Instructions, p. 110
 def SUBrr   : F3_1<2, 0b000100, "sub">;
 def SUBCCrr : F3_1<2, 0b010100, "subcc">;
+def SUBCCri : F3_2<2, 0b010100, "subcc">;
 
 // Section B.18 - Multiply Instructions, p. 113
 def UMULrr : F3_1<2, 0b001010, "umul">;
@@ -116,6 +123,12 @@ def SAVErr    : F3_1<2, 0b111100, "save">;           // save    r, r, r
 def SAVEri    : F3_2<2, 0b111100, "save">;           // save    r, i, r
 def RESTORErr : F3_1<2, 0b111101, "restore">;        // restore r, r, r
 def RESTOREri : F3_2<2, 0b111101, "restore">;        // restore r, i, r
+
+// Section B.21 - Branch on Integer Condition Codes Instructions, p. 119
+def BA  : F2_2<0b1000, 0b010, "ba">;
+def BN  : F2_2<0b0000, 0b010, "bn">;
+def BNE : F2_2<0b1001, 0b010, "bne">;
+def BE  : F2_2<0b0001, 0b010, "be">;
 
 // Section B.24 - Call and Link Instruction, p. 125
 // This is the only Format 1 instruction
