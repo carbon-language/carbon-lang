@@ -463,6 +463,7 @@ public:
   }
   
   unsigned getGlobalBaseReg();
+  unsigned getConstDouble(double floatVal, unsigned Result);
   unsigned SelectSetCR0(SDOperand CC);
   unsigned SelectExpr(SDOperand N);
   unsigned SelectExprFP(SDOperand N, unsigned Result);
@@ -545,6 +546,20 @@ unsigned ISel::getGlobalBaseReg() {
     GlobalBaseInitialized = true;
   }
   return GlobalBaseReg;
+}
+
+/// getConstDouble - Loads a floating point value into a register, via the 
+/// Constant Pool.  Optionally takes a register in which to load the value.
+unsigned ISel::getConstDouble(double doubleVal, unsigned Result=0) {
+  unsigned Tmp1 = MakeReg(MVT::i32);
+  if (0 == Result) Result = MakeReg(MVT::f64);
+  MachineConstantPool *CP = BB->getParent()->getConstantPool();
+  ConstantFP *CFP = ConstantFP::get(Type::DoubleTy, doubleVal);
+  unsigned CPI = CP->getConstantPoolIndex(CFP);
+  BuildMI(BB, PPC::LOADHiAddr, 2, Tmp1).addReg(getGlobalBaseReg())
+    .addConstantPoolIndex(CPI);
+  BuildMI(BB, PPC::LFD, 2, Result).addConstantPoolIndex(CPI).addReg(Tmp1);
+  return Result;
 }
 
 unsigned ISel::SelectSetCR0(SDOperand CC) {
@@ -761,14 +776,8 @@ unsigned ISel::SelectExprFP(SDOperand N, unsigned Result)
     return Result;
     
   case ISD::ConstantFP: {
-    Tmp1 = MakeReg(MVT::i32);
     ConstantFPSDNode *CN = cast<ConstantFPSDNode>(N);
-    MachineConstantPool *CP = BB->getParent()->getConstantPool();
-    ConstantFP *CFP = ConstantFP::get(Type::DoubleTy, CN->getValue());
-    unsigned CPI = CP->getConstantPoolIndex(CFP);
-    BuildMI(BB, PPC::LOADHiAddr, 2, Tmp1).addReg(getGlobalBaseReg())
-      .addConstantPoolIndex(CPI);
-    BuildMI(BB, PPC::LFD, 2, Result).addConstantPoolIndex(CPI).addReg(Tmp1);
+    Result = getConstDouble(CN->getValue(), Result);
     return Result;
   }
     
@@ -838,7 +847,7 @@ unsigned ISel::SelectExprFP(SDOperand N, unsigned Result)
     return Result;
   }
   }
-  assert(0 && "should not get here");
+  assert(0 && "Should never get here");
   return 0;
 }
 
@@ -1210,9 +1219,75 @@ unsigned ISel::SelectExpr(SDOperand N) {
   }
     
   case ISD::FP_TO_UINT:
-  case ISD::FP_TO_SINT:
-    assert(0 && "FP_TO_S/UINT unimplemented");
-    abort();
+  case ISD::FP_TO_SINT: {
+    bool U = (ISD::FP_TO_UINT == opcode);
+    Tmp1 = SelectExpr(N.getOperand(0));
+    if (!U) {
+      Tmp2 = MakeReg(MVT::f64);
+      BuildMI(BB, PPC::FCTIWZ, 1, Tmp2).addReg(Tmp1);
+      int FrameIdx = BB->getParent()->getFrameInfo()->CreateStackObject(8, 8);
+      addFrameReference(BuildMI(BB, PPC::STFD, 3).addReg(Tmp2), FrameIdx);
+      addFrameReference(BuildMI(BB, PPC::LWZ, 2, Result), FrameIdx, 4);
+      return Result;
+    } else {
+      unsigned Zero = getConstDouble(0.0);
+      unsigned MaxInt = getConstDouble((1LL << 32) - 1);
+      unsigned Border = getConstDouble(1LL << 31);
+      unsigned UseZero = MakeReg(MVT::f64);
+      unsigned UseMaxInt = MakeReg(MVT::f64);
+      unsigned UseChoice = MakeReg(MVT::f64);
+      unsigned TmpReg = MakeReg(MVT::f64);
+      unsigned TmpReg2 = MakeReg(MVT::f64);
+      unsigned ConvReg = MakeReg(MVT::f64);
+      unsigned IntTmp = MakeReg(MVT::i32);
+      unsigned XorReg = MakeReg(MVT::i32);
+      MachineFunction *F = BB->getParent();
+      int FrameIdx = F->getFrameInfo()->CreateStackObject(8, 8);
+      // Update machine-CFG edges
+      MachineBasicBlock *XorMBB = new MachineBasicBlock(BB->getBasicBlock());
+      MachineBasicBlock *PhiMBB = new MachineBasicBlock(BB->getBasicBlock());
+      MachineBasicBlock *OldMBB = BB;
+      ilist<MachineBasicBlock>::iterator It = BB; ++It;
+      F->getBasicBlockList().insert(It, XorMBB);
+      F->getBasicBlockList().insert(It, PhiMBB);
+      BB->addSuccessor(XorMBB);
+      BB->addSuccessor(PhiMBB);
+      // Convert from floating point to unsigned 32-bit value
+      // Use 0 if incoming value is < 0.0
+      BuildMI(BB, PPC::FSEL, 3, UseZero).addReg(Tmp1).addReg(Tmp1).addReg(Zero);
+      // Use 2**32 - 1 if incoming value is >= 2**32
+      BuildMI(BB, PPC::FSUB, 2, UseMaxInt).addReg(MaxInt).addReg(Tmp1);
+      BuildMI(BB, PPC::FSEL, 3, UseChoice).addReg(UseMaxInt).addReg(UseZero)
+        .addReg(MaxInt);
+      // Subtract 2**31
+      BuildMI(BB, PPC::FSUB, 2, TmpReg).addReg(UseChoice).addReg(Border);
+      // Use difference if >= 2**31
+      BuildMI(BB, PPC::FCMPU, 2, PPC::CR0).addReg(UseChoice).addReg(Border);
+      BuildMI(BB, PPC::FSEL, 3, TmpReg2).addReg(TmpReg).addReg(TmpReg)
+        .addReg(UseChoice);
+      // Convert to integer
+      BuildMI(BB, PPC::FCTIWZ, 1, ConvReg).addReg(TmpReg2);
+      addFrameReference(BuildMI(BB, PPC::STFD, 3).addReg(ConvReg), FrameIdx);
+      addFrameReference(BuildMI(BB, PPC::LWZ, 2, IntTmp), FrameIdx, 4);
+      BuildMI(BB, PPC::BLT, 2).addReg(PPC::CR0).addMBB(PhiMBB);
+      BuildMI(BB, PPC::B, 1).addMBB(XorMBB);
+
+      // XorMBB:
+      //   add 2**31 if input was >= 2**31
+      BB = XorMBB;
+      BuildMI(BB, PPC::XORIS, 2, XorReg).addReg(IntTmp).addImm(0x8000);
+      XorMBB->addSuccessor(PhiMBB);
+
+      // PhiMBB:
+      //   DestReg = phi [ IntTmp, OldMBB ], [ XorReg, XorMBB ]
+      BB = PhiMBB;
+      BuildMI(BB, PPC::PHI, 4, Result).addReg(IntTmp).addMBB(OldMBB)
+        .addReg(XorReg).addMBB(XorMBB);
+      return Result;
+    }
+    assert(0 && "Should never get here");
+    return 0;
+  }
  
   case ISD::SETCC:
     if (SetCCSDNode *SetCC = dyn_cast<SetCCSDNode>(Node)) {
