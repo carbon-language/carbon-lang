@@ -122,6 +122,9 @@ ipo_iterator<T> ipo_end(T G){
 // }
 //
 
+#include "llvm/BasicBlock.h"  // FIXME!
+#include "llvm/Method.h"      // FIXME!
+
 typedef std::vector<BasicBlock*>::reverse_iterator rpo_iterator;
 // TODO: FIXME: ReversePostOrderTraversal is not generic!
 class ReversePostOrderTraversal {
