@@ -1026,7 +1026,7 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
     Tmp2 = PromoteOp(Node->getOperand(1));
     if (MVT::isInteger(NVT)) {
       Tmp1 = DAG.getNode(ISD::SIGN_EXTEND_INREG, NVT, Tmp1, VT);
-      Tmp2 = DAG.getNode(ISD::SIGN_EXTEND_INREG, NVT, Tmp1, VT);
+      Tmp2 = DAG.getNode(ISD::SIGN_EXTEND_INREG, NVT, Tmp2, VT);
     }
     Result = DAG.getNode(Node->getOpcode(), NVT, Tmp1, Tmp2);
 
@@ -1042,7 +1042,7 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
     Tmp2 = PromoteOp(Node->getOperand(1));
     assert(MVT::isInteger(NVT) && "Operators don't apply to FP!");
     Tmp1 = DAG.getNode(ISD::ZERO_EXTEND_INREG, NVT, Tmp1, VT);
-    Tmp2 = DAG.getNode(ISD::ZERO_EXTEND_INREG, NVT, Tmp1, VT);
+    Tmp2 = DAG.getNode(ISD::ZERO_EXTEND_INREG, NVT, Tmp2, VT);
     Result = DAG.getNode(Node->getOpcode(), NVT, Tmp1, Tmp2);
     break;
 
