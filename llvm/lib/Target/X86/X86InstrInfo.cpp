@@ -18,11 +18,19 @@
 // descriptors
 //
 static const MachineInstrDescriptor X86Insts[] = {
-#define I(ENUM, NAME, BASEOPCODE, FLAGS, TSFLAGS, IMPDEFS, IMPUSES)   \
+#define I(ENUM, NAME, BASEOPCODE, FLAGS, TSFLAGS, IMPUSES, IMPDEFS)   \
              { NAME,                    \
                -1, /* Always vararg */  \
                ((TSFLAGS) & X86II::Void) ? -1 : 0,  /* Result is in 0 */ \
-               0, false, 0, 0, TSFLAGS, FLAGS, TSFLAGS, IMPDEFS, IMPUSES },
+               0,                                   /* maxImmedConst field */\
+               false,                               /* immedIsSignExtended */\
+               0,                                   /* numDelaySlots */\
+               0,                                   /* latency */\
+               0,                                   /* schedClass */\
+               FLAGS,                               /* Flags */\
+               TSFLAGS,                             /* TSFlags */\
+               IMPUSES,                             /* ImplicitUses */\
+               IMPDEFS },                           /* ImplicitDefs */
 #include "X86InstrInfo.def"
 };
 
