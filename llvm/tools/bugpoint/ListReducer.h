@@ -23,8 +23,8 @@ struct ListReducer {
   // if the Kept list still satisfies the property, but if it is going to check
   // the prefix anyway, it can.
   //
-  virtual TestResult doTest(const std::vector<ElTy> &Prefix,
-                            const std::vector<ElTy> &Kept) = 0;
+  virtual TestResult doTest(std::vector<ElTy> &Prefix,
+                            std::vector<ElTy> &Kept) = 0;
 
   // reduceList - This function attempts to reduce the length of the specified
   // list while still maintaining the "test" property.  This is the core of the
