@@ -14,3 +14,8 @@ int %test1(int %A) {
 	ret int %C
 }
 
+bool %test2(int %A, int %B) {
+	%cond = setle int %A, %B     ; Can change into setge
+	%Ret = xor bool %cond, true
+	ret bool %Ret
+}
