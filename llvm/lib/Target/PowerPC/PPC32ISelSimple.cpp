@@ -612,6 +612,8 @@ void PPC32ISel::copyConstantToRegister(MachineBasicBlock *MBB,
                                        Constant *C, unsigned R) {
   if (isa<UndefValue>(C)) {
     BuildMI(*MBB, IP, PPC::IMPLICIT_DEF, 0, R);
+    if (getClass(C->getType()) == cLong)
+      BuildMI(*MBB, IP, PPC::IMPLICIT_DEF, 0, R+1);
     return;
   }
   if (C->getType()->isIntegral()) {
