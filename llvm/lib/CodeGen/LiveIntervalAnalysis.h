@@ -22,7 +22,6 @@
 
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "LiveInterval.h"
-#include <list>
 
 namespace llvm {
 
@@ -30,17 +29,10 @@ namespace llvm {
     class MRegisterInfo;
     class VirtRegMap;
 
-    class LiveIntervals : public MachineFunctionPass
-    {
-    public:
-        typedef std::list<LiveInterval> Intervals;
-
-    private:
+    class LiveIntervals : public MachineFunctionPass {
         MachineFunction* mf_;
         const TargetMachine* tm_;
         const MRegisterInfo* mri_;
-        MachineBasicBlock* currentMbb_;
-        MachineBasicBlock::iterator currentInstr_;
         LiveVariables* lv_;
 
         typedef std::map<MachineInstr*, unsigned> Mi2IndexMap;
@@ -49,13 +41,13 @@ namespace llvm {
         typedef std::vector<MachineInstr*> Index2MiMap;
         Index2MiMap i2miMap_;
 
-        typedef std::map<unsigned, Intervals::iterator> Reg2IntervalMap;
-        Reg2IntervalMap r2iMap_;
+        /// r2iMap_ - This map OWNS the interval pointed to by the map.  When
+        /// this map is destroyed or when entries are modified, this intervals
+        /// should be destroyed or modified as well.
+        std::map<unsigned, LiveInterval*> r2iMap_;
 
         typedef std::map<unsigned, unsigned> Reg2RegMap;
         Reg2RegMap r2rMap_;
-
-        Intervals intervals_;
 
     public:
         struct InstrSlots
@@ -88,15 +80,15 @@ namespace llvm {
             return getBaseIndex(index) + InstrSlots::STORE;
         }
 
-        virtual void getAnalysisUsage(AnalysisUsage &AU) const;
-        virtual void releaseMemory();
+        typedef std::map<unsigned, LiveInterval*>::const_iterator iterator;
+        iterator begin() const { return r2iMap_.begin(); }
+        iterator end() const { return r2iMap_.end(); }
+      unsigned getNumIntervals() const { return r2iMap_.size(); }
 
-        /// runOnMachineFunction - pass entry point
-        virtual bool runOnMachineFunction(MachineFunction&);
-
-        LiveInterval& getInterval(unsigned reg) {
-          Reg2IntervalMap::iterator I = r2iMap_.find(reg);
-          assert(I != r2iMap_.end()&& "Interval does not exist for register");
+        LiveInterval &getInterval(unsigned reg) const {
+          std::map<unsigned, LiveInterval*>::const_iterator I =
+              r2iMap_.find(reg);
+          assert(I != r2iMap_.end() && "Interval does not exist for register");
           return *I->second;
         }
 
@@ -116,11 +108,15 @@ namespace llvm {
           return i2miMap_[index];
         }
 
-        Intervals& getIntervals() { return intervals_; }
-
         std::vector<LiveInterval*> addIntervalsForSpills(const LiveInterval& i,
                                                          VirtRegMap& vrm,
                                                          int slot);
+
+        virtual void getAnalysisUsage(AnalysisUsage &AU) const;
+        virtual void releaseMemory();
+
+        /// runOnMachineFunction - pass entry point
+        virtual bool runOnMachineFunction(MachineFunction&);
 
     private:
         /// computeIntervals - compute live intervals
@@ -159,8 +155,14 @@ namespace llvm {
         bool overlapsAliases(const LiveInterval *lhs, 
                              const LiveInterval *rhs) const;
 
+        LiveInterval *createInterval(unsigned Reg) const;
 
-        LiveInterval& getOrCreateInterval(unsigned reg);
+        LiveInterval &getOrCreateInterval(unsigned reg) {
+          LiveInterval *&LI = r2iMap_[reg];
+          if (LI == 0) 
+            LI = createInterval(reg);
+          return *LI;
+        }
 
         /// rep - returns the representative of this register
         unsigned rep(unsigned reg) {

@@ -82,7 +82,7 @@ namespace {
 
         /// initIntervalSets - initializa the four interval sets:
         /// unhandled, fixed, active and inactive
-        void initIntervalSets(LiveIntervals::Intervals& li);
+        void initIntervalSets();
 
         /// processActiveIntervals - expire old intervals and move
         /// non-overlapping ones to the incative list
@@ -146,7 +146,7 @@ bool RA::runOnMachineFunction(MachineFunction &fn) {
     vrm_.reset(new VirtRegMap(*mf_));
     if (!spiller_.get()) spiller_.reset(createSpiller());
 
-    initIntervalSets(li_->getIntervals());
+    initIntervalSets();
 
     linearScan();
 
@@ -193,7 +193,7 @@ void RA::linearScan()
         DEBUG(printIntervals("active", active_.begin(), active_.end()));
         DEBUG(printIntervals("inactive", inactive_.begin(), inactive_.end()));
     }
-    numIntervals += li_->getIntervals().size();
+    numIntervals += li_->getNumIntervals();
     efficiency = double(numIterations) / double(numIntervals);
 
     // expire any remaining active intervals
@@ -217,17 +217,16 @@ void RA::linearScan()
     DEBUG(std::cerr << *vrm_);
 }
 
-void RA::initIntervalSets(LiveIntervals::Intervals& li)
+void RA::initIntervalSets()
 {
     assert(unhandled_.empty() && fixed_.empty() &&
            active_.empty() && inactive_.empty() &&
            "interval sets should be empty on initialization");
 
-    for (LiveIntervals::Intervals::iterator i = li.begin(), e = li.end();
-         i != e; ++i) {
-        unhandled_.push(&*i);
-        if (MRegisterInfo::isPhysicalRegister(i->reg))
-            fixed_.push_back(&*i);
+    for (LiveIntervals::iterator i = li_->begin(), e = li_->end(); i != e; ++i){
+        unhandled_.push(i->second);
+        if (MRegisterInfo::isPhysicalRegister(i->second->reg))
+            fixed_.push_back(i->second);
     }
 }
 

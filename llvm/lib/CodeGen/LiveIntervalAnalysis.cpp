@@ -76,9 +76,12 @@ void LiveIntervals::releaseMemory()
 {
     mi2iMap_.clear();
     i2miMap_.clear();
+    for (std::map<unsigned, LiveInterval*>::iterator I = r2iMap_.begin(),
+           E = r2iMap_.end(); I != E; ++I)
+      delete I->second;  // free all intervals.
     r2iMap_.clear();
+
     r2rMap_.clear();
-    intervals_.clear();
 }
 
 
@@ -104,18 +107,18 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
 
     computeIntervals();
 
-    numIntervals += intervals_.size();
+    numIntervals += getNumIntervals();
 
 #if 1
     DEBUG(std::cerr << "********** INTERVALS **********\n");
-    DEBUG(std::copy(intervals_.begin(), intervals_.end(),
-                    std::ostream_iterator<LiveInterval>(std::cerr, "\n")));
+    DEBUG(for (iterator I = begin(), E = end(); I != E; ++I)
+            std::cerr << *I->second << "\n");
 #endif
 
     // join intervals if requested
     if (EnableJoining) joinIntervals();
 
-    numIntervalsAfter += intervals_.size();
+    numIntervalsAfter += getNumIntervals();
 
     // perform a final pass over the instructions and compute spill
     // weights, coalesce virtual registers and remove identity moves
@@ -130,11 +133,11 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
         for (MachineBasicBlock::iterator mii = mbb->begin(), mie = mbb->end();
              mii != mie; ) {
             // if the move will be an identity move delete it
-            unsigned srcReg, dstReg;
+            unsigned srcReg, dstReg, RegRep;
             if (tii.isMoveInstr(*mii, srcReg, dstReg) &&
-                rep(srcReg) == rep(dstReg)) {
+                (RegRep = rep(srcReg)) == rep(dstReg)) {
                 // remove from def list
-                LiveInterval& interval = getOrCreateInterval(rep(dstReg));
+                LiveInterval &interval = getOrCreateInterval(RegRep);
                 // remove index -> MachineInstr and
                 // MachineInstr -> index mappings
                 Mi2IndexMap::iterator mi2i = mi2iMap_.find(mii);
@@ -154,9 +157,8 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
                         unsigned reg = rep(mop.getReg());
                         mii->SetMachineOperandReg(i, reg);
 
-                        Reg2IntervalMap::iterator r2iit = r2iMap_.find(reg);
-                        assert(r2iit != r2iMap_.end());
-                        r2iit->second->weight +=
+                        LiveInterval &RegInt = getInterval(reg);
+                        RegInt.weight +=
                             (mop.isUse() + mop.isDef()) * pow(10.0F, loopDepth);
                     }
                 }
@@ -166,8 +168,8 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
     }
 
     DEBUG(std::cerr << "********** INTERVALS **********\n");
-    DEBUG(std::copy(intervals_.begin(), intervals_.end(),
-                    std::ostream_iterator<LiveInterval>(std::cerr, "\n")));
+    DEBUG (for (iterator I = begin(), E = end(); I != E; ++I)
+             std::cerr << *I->second << "\n");
     DEBUG(std::cerr << "********** MACHINEINSTRS **********\n");
     DEBUG(
         for (MachineFunction::iterator mbbi = mf_->begin(), mbbe = mf_->end();
@@ -548,6 +550,8 @@ void LiveIntervals::joinIntervalsInMachineBB(MachineBasicBlock *MBB) {
       assert(IntA.reg == regA && IntB.reg == regB &&
              "Register mapping is horribly broken!");
             
+      // If two intervals contain a single value and are joined by a copy, it
+      // does not matter if the intervals overlap, they can always be joined.
       bool TriviallyJoinable =
         IntA.containsOneValue() && IntB.containsOneValue();
 
@@ -555,19 +559,18 @@ void LiveIntervals::joinIntervalsInMachineBB(MachineBasicBlock *MBB) {
       if ((TriviallyJoinable || !IntB.joinable(IntA, MIDefIdx)) &&
           !overlapsAliases(&IntA, &IntB)) {
         IntB.join(IntA, MIDefIdx);
-
-        // FIXME: Turn 'intervals_' into an ilist so we don't need to do these
-        // map lookups!
-        intervals_.erase(r2iMap_[regA]);
-        r2iMap_[regA] = r2iMap_[regB];
+        delete r2iMap_[regA];   // Delete the dead interval
 
         if (!MRegisterInfo::isPhysicalRegister(regA)) {
+          r2iMap_.erase(regA);
           r2rMap_[regA] = regB;
         } else {
           // Otherwise merge the data structures the other way so we don't lose
           // the physreg information.
           r2rMap_[regB] = regA;
           IntB.reg = regA;
+          r2iMap_[regA] = r2iMap_[regB];
+          r2iMap_.erase(regB);
         }
         DEBUG(std::cerr << "Joined.  Result = " << IntB << "\n");
         ++numJoins;
@@ -649,25 +652,15 @@ bool LiveIntervals::overlapsAliases(const LiveInterval *LHS,
          MRegisterInfo::isVirtualRegister(RHS->reg) &&
          "first interval must describe a physical register");
 
-    for (const unsigned *AS = mri_->getAliasSet(LHS->reg); *AS; ++AS) {
-        Reg2IntervalMap::const_iterator r2i = r2iMap_.find(*AS);
-        assert(r2i != r2iMap_.end() && "alias does not have interval?");
-        if (RHS->overlaps(*r2i->second))
-            return true;
-    }
+  for (const unsigned *AS = mri_->getAliasSet(LHS->reg); *AS; ++AS)
+    if (RHS->overlaps(getInterval(*AS)))
+      return true;
 
-    return false;
+  return false;
 }
 
-LiveInterval& LiveIntervals::getOrCreateInterval(unsigned reg)
-{
-    Reg2IntervalMap::iterator r2iit = r2iMap_.lower_bound(reg);
-    if (r2iit == r2iMap_.end() || r2iit->first != reg) {
-        float Weight = MRegisterInfo::isPhysicalRegister(reg) ?  HUGE_VAL :0.0F;
-        intervals_.push_back(LiveInterval(reg, Weight));
-        r2iit = r2iMap_.insert(r2iit, std::make_pair(reg, --intervals_.end()));
-    }
-
-    return *r2iit->second;
+LiveInterval *LiveIntervals::createInterval(unsigned reg) const {
+  float Weight = MRegisterInfo::isPhysicalRegister(reg) ?  HUGE_VAL :0.0F;
+  return new LiveInterval(reg, Weight);
 }
 
