@@ -995,18 +995,22 @@ SetOperandsForMemInstr(vector<MachineInstr*>& mvec,
 
   // If we have only constant indices, fold chains of constant indices
   // in this and any preceding GetElemPtr instructions.
+  bool foldedGEPs = false;
   if (allConstantIndices &&
       (ptrChild->getOpLabel() == Instruction::GetElementPtr ||
        ptrChild->getOpLabel() == GetElemPtrIdx))
-    if (Value* newPtr = FoldGetElemChain((InstructionNode*) ptrChild, idxVec))
+    if (Value* newPtr = FoldGetElemChain((InstructionNode*) ptrChild, idxVec)) {
       ptrVal = newPtr;
+      foldedGEPs = true;
+    }
 
   // Append the index vector of the current instruction, if any.
-  // Discard any leading [0] index.
-  if (memInst->getNumIndices() > 0)
+  // Skip the leading [0] index if preceding GEPs were folded into this.
+  if (memInst->getNumIndices() > 0) {
+    assert((!foldedGEPs || IsZero(*memInst->idx_begin())) && "1st index not 0");
     idxVec.insert(idxVec.end(),
-                  memInst->idx_begin() + IsZero(*memInst->idx_begin()),
-                  memInst->idx_end());
+                  memInst->idx_begin() + foldedGEPs, memInst->idx_end());
+  }
 
   // Now create the appropriate operands for the machine instruction
   SetMemOperands_Internal(mvec, mvecI, vmInstrNode,
