@@ -1,3 +1,4 @@
+// $Id$
 //***************************************************************************
 // File:
 //	InstrScheduling.cpp
@@ -6,7 +7,7 @@
 //	
 // History:
 //	7/23/01	 -  Vikram Adve  -  Created
-//***************************************************************************
+//**************************************************************************/
 
 #include "llvm/CodeGen/InstrScheduling.h"
 #include "SchedPriorities.h"
@@ -68,6 +69,7 @@ static bool	NodeCanFillDelaySlot	(const SchedulingManager& S,
 					 bool nodeIsPredecessor);
 
 static void	MarkNodeForDelaySlot	(SchedulingManager& S,
+					 SchedGraph* graph,
 					 SchedGraphNode* node,
 					 const SchedGraphNode* brNode,
 					 bool nodeIsPredecessor);
@@ -397,7 +399,6 @@ private:
   
 public:
   /*ctor*/	SchedulingManager	(const TargetMachine& _target,
-					 const MachineSchedInfo &schedinfo, 
 					 const SchedGraph* graph,
 					 SchedPriorities& schedPrio);
   /*dtor*/	~SchedulingManager	() {}
@@ -559,17 +560,16 @@ private:
 
 /*ctor*/
 SchedulingManager::SchedulingManager(const TargetMachine& target,
-				     const MachineSchedInfo &schedinfo,
 				     const SchedGraph* graph,
 				     SchedPriorities& _schedPrio)
-  : nslots(schedinfo.getMaxNumIssueTotal()),
-    schedInfo(schedinfo),
+  : nslots(target.getSchedInfo().getMaxNumIssueTotal()),
+    schedInfo(target.getSchedInfo()),
     schedPrio(_schedPrio),
     isched(nslots, graph->getNumNodes()),
     totalInstrCount(graph->getNumNodes() - 2),
     nextEarliestIssueTime(0),
     choicesForSlot(nslots),
-    numInClass(schedinfo.getNumSchedClasses(), 0),	// set all to 0
+    numInClass(target.getSchedInfo().getNumSchedClasses(), 0),	// set all to 0
     nextEarliestStartTime(target.getInstrInfo().getNumRealOpCodes(),
 			  (cycles_t) 0)				// set all to 0
 {
@@ -621,8 +621,10 @@ SchedulingManager::updateEarliestStartTimes(const SchedGraphNode* node,
 //   are still in SSA form.
 //---------------------------------------------------------------------------
 
-bool ScheduleInstructionsWithSSA(Method* method, const TargetMachine &target,
-				 const MachineSchedInfo &schedInfo) {
+bool
+ScheduleInstructionsWithSSA(Method* method,
+			    const TargetMachine &target)
+{
   SchedGraphSet graphSet(method, target);	
   
   if (SchedDebugLevel >= Sched_PrintSchedGraphs)
@@ -644,7 +646,7 @@ bool ScheduleInstructionsWithSSA(Method* method, const TargetMachine &target,
 	cout << endl << "*** TRACE OF INSTRUCTION SCHEDULING OPERATIONS\n\n";
       
       SchedPriorities schedPrio(method, graph);	     // expensive!
-      SchedulingManager S(target, schedInfo, graph, schedPrio);
+      SchedulingManager S(target, graph, schedPrio);
       
       ChooseInstructionsForDelaySlots(S, bb, graph); // modifies graph
       
@@ -718,6 +720,7 @@ instrIsFeasible(const SchedulingManager& S,
   return true;
 }
 
+
 //************************* Internal Functions *****************************/
 
 
@@ -771,21 +774,32 @@ ForwardListSchedule(SchedulingManager& S)
 static void
 RecordSchedule(const BasicBlock* bb, const SchedulingManager& S)
 {
+  MachineCodeForBasicBlock& mvec = bb->getMachineInstrVec();
+  const MachineInstrInfo& mii = S.schedInfo.getInstrInfo();
+  
+#ifndef NDEBUG
+  // Lets make sure we didn't lose any instructions, except possibly
+  // some NOPs from delay slots.  Also, PHIs are not included in the schedule.
+  unsigned numInstr = 0;
+  for (MachineCodeForBasicBlock::iterator I=mvec.begin(); I != mvec.end(); ++I)
+    if (! mii.isNop((*I)->getOpCode()) &&
+	! mii.isDummyPhiInstr((*I)->getOpCode()))
+      ++numInstr;
+  assert(S.isched.getNumInstructions() >= numInstr &&
+	 "Lost some non-NOP instructions during scheduling!");
+#endif
+  
   if (S.isched.getNumInstructions() == 0)
     return;				// empty basic block!
   
-  MachineCodeForBasicBlock& mvec = bb->getMachineInstrVec();
-  unsigned int oldSize = mvec.size(); 
-  
   // First find the dummy instructions at the start of the basic block
-  const MachineInstrInfo& mii = S.schedInfo.getInstrInfo();
   MachineCodeForBasicBlock::iterator I = mvec.begin();
   for ( ; I != mvec.end(); ++I)
     if (! mii.isDummyPhiInstr((*I)->getOpCode()))
       break;
   
   // Erase all except the dummy PHI instructions from mvec, and
-  // pre-allocate create space for the ones we will be put back in.
+  // pre-allocate create space for the ones we will put back in.
   mvec.erase(I, mvec.end());
   mvec.reserve(mvec.size() + S.isched.getNumInstructions());
   
@@ -801,7 +815,7 @@ ChooseOneGroup(SchedulingManager& S)
   assert(S.schedPrio.getNumReady() > 0
 	 && "Don't get here without ready instructions.");
   
-  DelaySlotInfo* getDelaySlotInfo;
+  DelaySlotInfo* getDelaySlotInfo = NULL;
   
   // Choose up to `nslots' feasible instructions and their possible slots.
   unsigned numIssued = FindSlotChoices(S, getDelaySlotInfo);
@@ -1289,11 +1303,11 @@ ChooseInstructionsForDelaySlots(SchedulingManager& S,
   
   // Mark the nodes chosen for delay slots.  This removes them from the graph.
   for (unsigned i=0; i < sdelayNodeVec.size(); i++)
-    MarkNodeForDelaySlot(S, sdelayNodeVec[i], brNode, true);
+    MarkNodeForDelaySlot(S, graph, sdelayNodeVec[i], brNode, true);
   
-  // And remove the unused NOPs the graph.
+  // And remove the unused NOPs from the graph.
   for (unsigned i=0; i < nopNodeVec.size(); i++)
-    nopNodeVec[i]->eraseAllEdges();
+    graph->eraseIncidentEdges(nopNodeVec[i], /*addDummyEdges*/ true);
 }
 
 
@@ -1355,14 +1369,16 @@ NodeCanFillDelaySlot(const SchedulingManager& S,
 
 void
 MarkNodeForDelaySlot(SchedulingManager& S,
+		     SchedGraph* graph,
 		     SchedGraphNode* node,
 		     const SchedGraphNode* brNode,
 		     bool nodeIsPredecessor)
 {
   if (nodeIsPredecessor)
     { // If node is in the same basic block (i.e., preceeds brNode),
-      // remove it and all its incident edges from the graph.
-      node->eraseAllEdges();
+      // remove it and all its incident edges from the graph.  Make sure we
+      // add dummy edges for pred/succ nodes that become entry/exit nodes.
+      graph->eraseIncidentEdges(node, /*addDummyEdges*/ true);
     }
   else
     { // If the node was from a target block, add the node to the graph
