@@ -19,7 +19,10 @@
 #include <cstdarg>
 #include "boost/type_traits/object_traits.hpp"
 
-namespace cl {   // Short namespace to make usage concise
+/// cl Namespace - This namespace contains all of the command line option
+/// processing machinery.  It is intentionally a short name to make qualified
+/// usage concise.
+namespace cl {
 
 //===----------------------------------------------------------------------===//
 // ParseCommandLineOptions - Command line option processing entry point.
