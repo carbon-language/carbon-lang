@@ -190,7 +190,7 @@ DSAA::getModRefInfo(CallSite CS, Value *P, unsigned Size) {
   DSScalarMap &CallerSM = CallerTDGraph.getScalarMap();
   DSScalarMap::iterator NI = CallerSM.find(P);
   if (NI == CallerSM.end()) {
-    if (isa<ConstantPointerNull>(P))
+    if (isa<ConstantPointerNull>(P) || isa<UndefValue>(P))
       Result = NoModRef;                 // null is never modified :)
     else {
       assert(isa<GlobalVariable>(P) &&
