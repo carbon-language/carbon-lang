@@ -240,3 +240,23 @@ ifndef SourceDir
 SourceDir=$(BUILD_SRC_DIR)
 endif
 
+# Installation directories, as provided by the configure script.
+
+exec_prefix = @exec_prefix@
+prefix = @prefix@
+program_transform_name = @program_transform_name@
+bindir = @bindir@
+sbindir = @sbindir@
+libexecdir = @libexecdir@
+datadir = @datadir@
+sysconfdir = @sysconfdir@
+sharedstatedir = @sharedstatedir@ 
+localstatedir = @localstatedir@
+libdir = @libdir@
+includedir = @includedir@
+infodir = @infodir@
+mandir = @mandir@
+INSTALL_PROGRAM = @INSTALL_PROGRAM@
+INSTALL_SCRIPT = @INSTALL_SCRIPT@
+INSTALL_DATA = @INSTALL_DATA@
+
