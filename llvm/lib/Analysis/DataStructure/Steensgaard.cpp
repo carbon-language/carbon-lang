@@ -127,26 +127,14 @@ bool Steens::runOnModule(Module &M) {
   // Loop over the rest of the module, merging graphs for non-external functions
   // into this graph.
   //
-  unsigned Count = 0;
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
     if (!I->isExternal()) {
-      DSGraph::ScalarMapTy ValMap(GlobalECs);
-      {  // Scope to free NodeMap memory ASAP
-        DSGraph::NodeMapTy NodeMap;
-        const DSGraph &FDSG = LDS.getDSGraph(*I);
-        ResultGraph->cloneInto(FDSG, ValMap, RetValMap, NodeMap, 0);
-      }
-
-      // Incorporate the inlined Function's ScalarMap into the global
-      // ScalarMap...
-      DSGraph::ScalarMapTy &GVM = ResultGraph->getScalarMap();
-      for (DSGraph::ScalarMapTy::iterator I = ValMap.begin(),
-             E = ValMap.end(); I != E; ++I)
-        GVM[I->first].mergeWith(I->second);
-
-      if ((++Count & 1) == 0)   // Prune nodes out every other time...
-        ResultGraph->removeTriviallyDeadNodes();
+      DSGraph::NodeMapTy NodeMap;
+      ResultGraph->cloneInto(LDS.getDSGraph(*I), ResultGraph->getScalarMap(),
+                             RetValMap, NodeMap, 0);
     }
+
+  ResultGraph->removeTriviallyDeadNodes();
 
   // FIXME: Must recalculate and use the Incomplete markers!!
 
