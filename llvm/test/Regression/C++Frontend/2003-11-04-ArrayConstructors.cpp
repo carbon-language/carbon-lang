@@ -1,6 +1,7 @@
 
 struct Foo { 
   Foo(int); 
+  ~Foo();
 };
 void foo() {
   struct {
