@@ -21599,7 +21599,8 @@ _ACEOF
 
 
 
-for ac_func in getcwd gettimeofday strdup strtoq strtoll backtrace
+
+for ac_func in getcwd gettimeofday strdup strtoq strtoll backtrace isatty
 do
 as_ac_var=`echo "ac_cv_func_$ac_func" | $as_tr_sh`
 echo "$as_me:$LINENO: checking for $ac_func" >&5
