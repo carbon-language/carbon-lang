@@ -69,3 +69,8 @@ int %test10(int %A) {    ; -A *c1 == A * -c1
 	ret int %E
 }
 
+bool %test11(ubyte %A, ubyte %B) {
+        %C = sub ubyte %A, %B
+        %cD = setne ubyte %C, 0    ; == setne A, B
+        ret bool %cD
+}

@@ -75,18 +75,6 @@ bool %test14(bool %A, bool %B) {
 	ret bool %C
 }
 
-; These instructions can be turned into cast-to-bool
-bool %test15(sbyte %A, short %A, int %A, long %A) {
-	%B1 = setne sbyte %A, 0
-	%B2 = seteq short %A, 0
-	%B3 = setne int %A, 0
-	%B4 = seteq long %A, 0
-	%C1 = or bool %B1, %B2
-	%C2 = or bool %B3, %B4
-	%D = or bool %C1, %C2
-	ret bool %D
-}
-
 bool %test16(uint %A) {
 	%B = and uint %A, 5
 	%C = seteq uint %B, 8    ; Is never true

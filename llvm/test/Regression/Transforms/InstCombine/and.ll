@@ -88,3 +88,8 @@ bool %test13(uint %A, uint %B) {
 	ret bool %D
 }
 
+bool %test14(ubyte %A) {
+	%B = and ubyte %A, 128
+	%C = setne ubyte %B, 0
+	ret bool %C
+}

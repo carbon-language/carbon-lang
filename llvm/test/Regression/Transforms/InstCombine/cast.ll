@@ -66,26 +66,3 @@ short %test10(short %A) {
 	ret short %c2
 }
 
-bool %test11(ubyte %A, ubyte %B) {
-        %C = sub ubyte %A, %B
-        %cD = cast ubyte %C to bool    ; == setne A, B
-        ret bool %cD
-}
-
-bool %test12(ubyte %A) {
-        %B = add ubyte %A, 255
-        %c = cast ubyte %B to bool    ; === A != 1
-        ret bool %c
-}
-
-bool %test13(ubyte %A, ubyte %b) {
-        %B = add ubyte %A, %b
-        %c = cast ubyte %B to bool    ; === A != -b
-        ret bool %c
-}
-
-bool %test14(ubyte %A) {
-	%B = xor ubyte %A, 4
-	%c = cast ubyte %B to bool
-	ret bool %c
-}

@@ -78,3 +78,9 @@ ubyte %test11(ubyte %A) {
 	%C = xor ubyte %B, 4        ; transform into an AND
 	ret ubyte %C
 }
+
+bool %test12(ubyte %A) {
+	%B = xor ubyte %A, 4
+	%c = setne ubyte %B, 0
+	ret bool %c
+}

@@ -60,3 +60,15 @@ int %test9(int %A) {
 	%C = add int %B, %B      ; === shl int %A, 5
 	ret int %C
 }
+
+bool %test10(ubyte %A, ubyte %b) {
+        %B = add ubyte %A, %b
+        %c = setne ubyte %B, 0    ; === A != -b
+        ret bool %c
+}
+
+bool %test11(ubyte %A) {
+        %B = add ubyte %A, 255
+        %c = setne ubyte %B, 0    ; === A != 1
+        ret bool %c
+}
