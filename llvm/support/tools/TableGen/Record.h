@@ -108,7 +108,7 @@ struct IntRecTy : public RecTy {
 struct StringRecTy : public RecTy {
   Init *convertValue(UnsetInit *UI) { return (Init*)UI; }
   Init *convertValue(StringInit *SI) { return (Init*)SI; }
-  Init *convertValue(TypedInit *VI);
+  Init *convertValue(TypedInit *TI);
   void print(std::ostream &OS) const { OS << "string"; }
 };
 
@@ -119,8 +119,14 @@ class ListRecTy : public RecTy {
   Record *Class;
 public:
   ListRecTy(Record *C) : Class(C) {}
+
+  /// getElementClass - Return the class that the list contains.
+  ///
+  Record *getElementClass() const { return Class; }
+
   Init *convertValue(UnsetInit *UI) { return (Init*)UI; }
   Init *convertValue(ListInit *LI);
+  Init *convertValue(TypedInit *TI);
   
   void print(std::ostream &OS) const;
 };

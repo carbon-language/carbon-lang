@@ -116,6 +116,14 @@ Init *ListRecTy::convertValue(ListInit *LI) {
   return LI;
 }
 
+Init *ListRecTy::convertValue(TypedInit *TI) {
+  // Ensure that TI is compatible with our class.
+  if (ListRecTy *LRT = dynamic_cast<ListRecTy*>(TI->getType()))
+    if (LRT->getElementClass() == getElementClass())
+      return TI;
+  return 0;
+}
+
 void RecordRecTy::print(std::ostream &OS) const {
   OS << Rec->getName();
 }
@@ -127,12 +135,12 @@ Init *RecordRecTy::convertValue(DefInit *DI) {
   return DI;
 }
 
-Init *RecordRecTy::convertValue(TypedInit *VI) {
-  // Ensure that VI is compatible with Rec.
-  if (RecordRecTy *RRT = dynamic_cast<RecordRecTy*>(VI->getType()))
+Init *RecordRecTy::convertValue(TypedInit *TI) {
+  // Ensure that TI is compatible with Rec.
+  if (RecordRecTy *RRT = dynamic_cast<RecordRecTy*>(TI->getType()))
     if (RRT->getRecord()->isSubClassOf(getRecord()) ||
         RRT->getRecord() == getRecord())
-      return VI;
+      return TI;
   return 0;
 }
 
