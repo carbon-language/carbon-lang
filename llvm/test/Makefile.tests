@@ -77,15 +77,6 @@ ifeq ($(TRACEM), yes)
     TRACELIBS := -L$(LEVEL)/test/Libraries/Output -linstr.$(ARCH)
 endif
 
-POOLFLAGS =
-DOPOOLALLOC =
-## If POOLALLOC is "yes", set the opt flag and the POOLLIBS varoab;e
-ifeq ($(POOLALLOC), yes)
-    POOLFLAGS += -poolalloc
-    DOPOOLALLOC = yes
-    POOLLIBS := -L$(LEVEL)/test/Libraries/Output
-endif
-
 LLCLIBS := $(LLCLIBS) -lm
 
 clean::
