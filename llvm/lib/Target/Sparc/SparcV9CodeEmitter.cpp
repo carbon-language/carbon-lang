@@ -593,8 +593,13 @@ int64_t SparcV9CodeEmitter::getMachineOpValue(MachineInstr &MI,
       unsigned* CurrPC = (unsigned*)(intptr_t)MCE.getCurrentPCValue();
       BBRefs.push_back(std::make_pair(BB, std::make_pair(CurrPC, &MI)));
     } else if (const Constant *C = dyn_cast<Constant>(V)) {
-      std::cerr << "ERROR: constants should not appear in PcRel:" << MO << "\n";
-      abort();
+      if (const ConstantInt *CI = dyn_cast<ConstantInt>(C)) {
+        rv = CI->getRawValue() - MCE.getCurrentPCValue();
+      } else {
+        std::cerr << "Cannot have non-integral const in instruction: "
+                  << *C;
+        abort();
+      }
     } else if (GlobalValue *GV = dyn_cast<GlobalValue>(V)) {
       // same as MO.isGlobalAddress()
       DEBUG(std::cerr << "GlobalValue: ");
@@ -797,11 +802,6 @@ void* SparcV9CodeEmitter::getGlobalAddress(GlobalValue *V, MachineInstr &MI,
         // Delayed resolution...
         return 
           (void*)(intptr_t)TheJITResolver->getLazyResolver(cast<Function>(V));
-
-      } else if (Constant *C = ConstantPointerRef::get(V)) {
-        // no longer applicable
-        std::cerr << "Unhandled Constant: " << *C << "\n";
-        abort();
       } else {
         std::cerr << "Unhandled global: " << *V << "\n";
         abort();
