@@ -333,7 +333,6 @@ private:
 
 class MachineInstr {
   int              opCode;              // the opcode
-  unsigned         opCodeFlags;         // flags modifying instrn behavior
   std::vector<MachineOperand> operands; // the operands
   unsigned numImplicitRefs;             // number of implicit operands
   MachineInstr* prev, *next;            // links for our intrusive list
