@@ -43,7 +43,8 @@ dnl Configure header files
 AC_CONFIG_HEADERS(include/llvm/Config/config.h)
 
 dnl Configure other output file
-AC_CONFIG_FILES(Makefile.config)
+AC_CONFIG_FILES([Makefile.config tools/llvmc/st tools/llvmc/cpp tools/llvmc/ll 
+                 tools/llvmc/c])
 AC_CONFIG_HEADERS([include/llvm/Support/DataTypes.h])
 AC_CONFIG_HEADERS([include/llvm/ADT/hash_map])
 AC_CONFIG_HEADERS([include/llvm/ADT/hash_set])

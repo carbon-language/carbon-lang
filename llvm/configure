@@ -1603,7 +1603,7 @@ done
           ac_config_headers="$ac_config_headers include/llvm/Config/config.h"
 
 
-          ac_config_files="$ac_config_files Makefile.config"
+                                                  ac_config_files="$ac_config_files Makefile.config tools/llvmc/st tools/llvmc/cpp tools/llvmc/ll tools/llvmc/c"
 
           ac_config_headers="$ac_config_headers include/llvm/Support/DataTypes.h"
 
@@ -25074,6 +25074,10 @@ do
   case "$ac_config_target" in
   # Handling of arguments.
   "Makefile.config" ) CONFIG_FILES="$CONFIG_FILES Makefile.config" ;;
+  "tools/llvmc/st" ) CONFIG_FILES="$CONFIG_FILES tools/llvmc/st" ;;
+  "tools/llvmc/cpp" ) CONFIG_FILES="$CONFIG_FILES tools/llvmc/cpp" ;;
+  "tools/llvmc/ll" ) CONFIG_FILES="$CONFIG_FILES tools/llvmc/ll" ;;
+  "tools/llvmc/c" ) CONFIG_FILES="$CONFIG_FILES tools/llvmc/c" ;;
   "lib/System/platform" ) CONFIG_LINKS="$CONFIG_LINKS lib/System/platform:lib/System/$platform_type" ;;
   "Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS Makefile" ;;
   "Makefile.common" ) CONFIG_COMMANDS="$CONFIG_COMMANDS Makefile.common" ;;
