@@ -153,6 +153,7 @@ public:
     FieldLinks.clear();
   }
 
+  static bool classof(const DSNode *N) { return true; }
 protected:
   virtual DSNode *cloneImpl() const = 0;
   virtual void mapNode(std::map<const DSNode*, DSNode*> &NodeMap,
@@ -303,8 +304,8 @@ class FunctionDSGraph {
   // as the data structure graph itself.
   //
   PointerValSet cloneFunctionIntoSelf(const FunctionDSGraph &G, bool ValueMap);
-  void RemoveUnreachableShadowNodes();
-  void UnlinkUndistinguishableShadowNodes();
+  bool RemoveUnreachableShadowNodes();
+  bool UnlinkUndistinguishableShadowNodes();
 public:
   FunctionDSGraph(Function *F);
   FunctionDSGraph(const FunctionDSGraph &DSG);
