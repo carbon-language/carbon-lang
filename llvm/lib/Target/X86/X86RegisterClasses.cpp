@@ -20,11 +20,7 @@ namespace {
 #include "X86RegisterInfo.def"
   };
 
-  class X86ByteRegisterClass : public TargetRegisterClass {
-  protected:
-
-  public:
-    X86ByteRegisterClass() {}
+  struct X86ByteRegisterClass : public TargetRegisterClass {
     unsigned getNumRegs() const { 
       return sizeof(X86ByteRegisterClassRegs)/
         sizeof(X86ByteRegisterClassRegs[0]);
@@ -35,7 +31,6 @@ namespace {
     }
 
     unsigned getDataSize() const { return 1; }
-
   } X86ByteRegisterClassInstance;
 
 
@@ -48,11 +43,7 @@ namespace {
 #include "X86RegisterInfo.def"
   };
 
-  class X86ShortRegisterClass : public TargetRegisterClass {
-  protected:
-
-  public:
-    X86ShortRegisterClass() {}
+  struct X86ShortRegisterClass : public TargetRegisterClass {
     unsigned getNumRegs() const { 
       return sizeof(X86ShortRegisterClassRegs)/
         sizeof(X86ShortRegisterClassRegs[0]); }
@@ -61,7 +52,6 @@ namespace {
       return X86ShortRegisterClassRegs[idx];
     }
     unsigned getDataSize() const { return 2; }
-
   } X86ShortRegisterClassInstance;
 
 //
@@ -74,11 +64,7 @@ namespace {
 #include "X86RegisterInfo.def"
   };
 
-  class X86IntRegisterClass : public TargetRegisterClass {
-  protected:
-
-  public:
-    X86IntRegisterClass() {}
+  struct X86IntRegisterClass : public TargetRegisterClass {
     unsigned getNumRegs() const {
       return sizeof(X86IntRegisterClassRegs)/
         sizeof(X86IntRegisterClassRegs[0]); }
@@ -87,7 +73,6 @@ namespace {
       return X86IntRegisterClassRegs[idx];
     }
     unsigned getDataSize() const { return 4; }
-
   } X86IntRegisterClassInstance;
 
 
@@ -120,21 +105,19 @@ namespace {
       assert(0 && "Invalid type to getClass!");
       return 0;  // not reached
     }
-
-
   }
 }
 
 
-MRegisterInfo::const_iterator X86RegisterInfo::const_regclass_begin() const {
-  return X86RegClasses[0];
+MRegisterInfo::const_iterator X86RegisterInfo::regclass_begin() const {
+  return X86RegClasses;
 }
 
 unsigned X86RegisterInfo::getNumRegClasses() const {
   return sizeof(X86RegClasses)/sizeof(X86RegClasses[0]);
 }
 
-MRegisterInfo::const_iterator X86RegisterInfo::const_regclass_end() const {
-  return (X86RegClasses[0]+getNumRegClasses());
+MRegisterInfo::const_iterator X86RegisterInfo::regclass_end() const {
+  return X86RegClasses+getNumRegClasses();
 }
 

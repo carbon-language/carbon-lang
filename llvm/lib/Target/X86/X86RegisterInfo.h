@@ -14,8 +14,8 @@ class Type;
 struct X86RegisterInfo : public MRegisterInfo {
   X86RegisterInfo();
 
-  MRegisterInfo::const_iterator const_regclass_begin() const;
-  MRegisterInfo::const_iterator const_regclass_end() const;
+  MRegisterInfo::const_iterator regclass_begin() const;
+  MRegisterInfo::const_iterator regclass_end() const;
 
   MachineBasicBlock::iterator
   storeReg2RegOffset(MachineBasicBlock *MBB,
