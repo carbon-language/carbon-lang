@@ -295,7 +295,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       std::vector<MVT::ValueType> RetTyVTs;
       RetTyVTs.reserve(Node->getNumValues());
       for (unsigned i = 0, e = Node->getNumValues(); i != e; ++i)
-        RetTyVTs.push_back(Node->getValueType(0));
+        RetTyVTs.push_back(Node->getValueType(i));
       Result = SDOperand(DAG.getCall(RetTyVTs, Tmp1, Tmp2), Op.ResNo);
     }
     break;
