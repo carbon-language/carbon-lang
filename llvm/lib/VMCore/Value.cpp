@@ -77,12 +77,18 @@ void Value::refineAbstractType(const DerivedType *OldTy, const Type *NewTy) {
   Ty = NewTy;
 }
 
-void Value::killUse(User *i) {
-  if (i == 0) return;
-  use_iterator I = find(Uses.begin(), Uses.end(), i);
+void Value::killUse(User *U) {
+  if (U == 0) return;
+  unsigned i;
 
-  assert(I != Uses.end() && "Use not in uses list!!");
-  Uses.erase(I);
+  // Scan backwards through the uses list looking for the user.  We do this
+  // because vectors like to be accessed on the end.  This is incredibly
+  // important from a performance perspective.
+  for (i = Uses.size()-1; Uses[i] != U; --i)
+    /* empty */;
+
+  assert(i < Uses.size() && "Use not in uses list!!");
+  Uses.erase(Uses.begin()+i);
 }
 
 User *Value::use_remove(use_iterator &I) {
