@@ -6,7 +6,10 @@
 
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Constant.h"
+#include "llvm/Intrinsics.h"
 #include "llvm/iPHINode.h"
+#include "llvm/iTerminators.h"
+#include "llvm/iOther.h"
 #include "llvm/Support/CFG.h"
 #include <algorithm>
 #include <functional>
@@ -87,11 +90,43 @@ static bool PropagatePredecessorsForPHIs(BasicBlock *BB, BasicBlock *Succ) {
 // WARNING:  The entry node of a function may not be simplified.
 //
 bool SimplifyCFG(BasicBlock *BB) {
+  bool Changed = false;
   Function *M = BB->getParent();
 
   assert(BB && BB->getParent() && "Block not embedded in function!");
   assert(BB->getTerminator() && "Degenerate basic block encountered!");
   assert(&BB->getParent()->front() != BB && "Can't Simplify entry block!");
+
+  // Check to see if the first instruction in this block is just an
+  // 'llvm.unwind'.  If so, replace any invoke instructions which use this as an
+  // exception destination with call instructions.
+  //
+  if (CallInst *CI = dyn_cast<CallInst>(&BB->front()))
+    if (Function *F = CI->getCalledFunction())
+      if (F->getIntrinsicID() == LLVMIntrinsic::unwind) {
+        std::vector<BasicBlock*> Preds(pred_begin(BB), pred_end(BB));
+        while (!Preds.empty()) {
+          BasicBlock *Pred = Preds.back();
+          if (InvokeInst *II = dyn_cast<InvokeInst>(Pred->getTerminator()))
+            if (II->getExceptionalDest() == BB) {
+              // Insert a new branch instruction before the invoke, because this
+              // is now a fall through...
+              BranchInst *BI = new BranchInst(II->getNormalDest(), II);
+              Pred->getInstList().remove(II);   // Take out of symbol table
+              
+              // Insert the call now...
+              std::vector<Value*> Args(II->op_begin()+3, II->op_end());
+              CallInst *CI = new CallInst(II->getCalledValue(), Args,
+                                          II->getName(), BI);
+              // If the invoke produced a value, the Call now does instead
+              II->replaceAllUsesWith(CI);
+              delete II;
+              Changed = true;
+            }
+          
+          Preds.pop_back();
+        }
+      }
 
   // Remove basic blocks that have no predecessors... which are unreachable.
   if (pred_begin(BB) == pred_end(BB) &&
@@ -123,7 +158,7 @@ bool SimplifyCFG(BasicBlock *BB) {
 
   // Check to see if we can constant propagate this terminator instruction
   // away...
-  bool Changed = ConstantFoldTerminator(BB);
+  Changed |= ConstantFoldTerminator(BB);
 
   // Check to see if this block has no non-phi instructions and only a single
   // successor.  If so, replace references to this basic block with references
