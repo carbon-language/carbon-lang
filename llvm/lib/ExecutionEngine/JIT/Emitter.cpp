@@ -38,7 +38,7 @@ namespace {
   /// are emitting is.  This never bothers to release the memory, because when
   /// we are ready to destroy the JIT, the program exits.
   class JITMemoryManager {
-    sys::Memory  MemBlock;       // Virtual memory block allocated RWX
+    sys::MemoryBlock  MemBlock;  // Virtual memory block allocated RWX
     unsigned char *MemBase;      // Base of block of memory, start of stub mem
     unsigned char *FunctionBase; // Start of the function body area
     unsigned char *CurStubPtr, *CurFunctionPtr;
@@ -53,7 +53,7 @@ namespace {
 
 JITMemoryManager::JITMemoryManager() {
   // Allocate a 16M block of memory...
-  sys::Memory::AllocateRWX(MemBlock,(16 << 20));
+  MemBlock = sys::Memory::AllocateRWX((16 << 20));
   MemBase = reinterpret_cast<unsigned char*>(MemBlock.base());
   FunctionBase = MemBase + 512*1024; // Use 512k for stubs
 

@@ -22,8 +22,8 @@ using namespace sys;
 //=== WARNING: Implementation here must contain only Win32 specific code.
 //===----------------------------------------------------------------------===//
 
-void* Memory::AllocateRWX(Memory&M, unsigned NumBytes) {
-  if (NumBytes == 0) return 0;
+MemoryBlock Memory::AllocateRWX(unsigned NumBytes) {
+  if (NumBytes == 0) return MemoryBlock();
 
   unsigned pageSize = Process::GetPageSize();
   unsigned NumPages = (NumBytes+pageSize-1)/pageSize;
@@ -33,12 +33,13 @@ void* Memory::AllocateRWX(Memory&M, unsigned NumBytes) {
     throw std::string("Couldn't allocate ") + utostr(NumBytes) + 
         " bytes of executable memory!";
   }
-  M.Address = P;
-  M.AllocSize = NumBytes;
-  return P;
+  MemoryBlock result;
+  result.Address = P;
+  result.Size = NumBytes;
+  return result;
 }
 
-void Memory::ReleaseRWX(Memory& M) {
-  if (M.Address == 0 ) return;
-  VirtualFree(M.Address, M.AllocSize, MEM_DECOMMIT, PAGE_NOACCESS);
+void Memory::ReleaseRWX(MemoryBlock& M) {
+  if (M.Address == 0 || M.Size == 0) return;
+  VirtualFree(M.Address, M.Size, MEM_DECOMMIT, PAGE_NOACCESS);
 }

@@ -30,8 +30,8 @@ using namespace sys;
 /// to emit code to the memory then jump to it.  Getting this type of memory
 /// is very OS specific.
 ///
-void* Memory::AllocateRWX(Memory& M, unsigned NumBytes) {
-  if (NumBytes == 0) return 0;
+MemoryBlock Memory::AllocateRWX(unsigned NumBytes) {
+  if (NumBytes == 0) return MemoryBlock();
 
   static const long pageSize = Process::GetPageSize();
   unsigned NumPages = (NumBytes+pageSize-1)/pageSize;
@@ -43,14 +43,15 @@ void* Memory::AllocateRWX(Memory& M, unsigned NumBytes) {
     strerror_r(errno, msg, MAXPATHLEN-1);
     throw std::string("Can't allocate RWX Memory: ") + msg;
   }
-  M.Address = pa;
-  M.AllocSize = NumPages*pageSize;
-  return pa;
+  MemoryBlock result;
+  result.Address = pa;
+  result.Size = NumPages*pageSize;
+  return result;
 }
 
-void Memory::ReleaseRWX(Memory& M) {
-  if (M.Address == 0 || M.AllocSize == 0) return;
-  if (0 != munmap(M.Address, M.AllocSize)) {
+void Memory::ReleaseRWX(MemoryBlock& M) {
+  if (M.Address == 0 || M.Size == 0) return;
+  if (0 != munmap(M.Address, M.Size)) {
     char msg[MAXPATHLEN];
     strerror_r(errno, msg, MAXPATHLEN-1);
     throw std::string("Can't release RWX Memory: ") + msg;

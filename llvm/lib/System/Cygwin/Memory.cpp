@@ -26,8 +26,8 @@ using namespace sys;
 //===          and must not be generic UNIX code (see ../Unix/Memory.cpp)
 //===----------------------------------------------------------------------===//
 
-void* Memory::AllocateRWX(Memory& M, unsigned NumBytes) {
-  if (NumBytes == 0) return 0;
+MemoryBlock Memory::AllocateRWX(unsigned NumBytes) {
+  if (NumBytes == 0) return MemoryBlock();
 
   static const long pageSize = Process::GetPageSize();
   unsigned NumPages = (NumBytes+pageSize-1)/pageSize;
@@ -37,14 +37,15 @@ void* Memory::AllocateRWX(Memory& M, unsigned NumBytes) {
   if (pa == (void*)-1) {
     throw std::string("Can't allocate RWX Memory: ") + strerror(errno);
   }
-  M.Address = pa;
-  M.AllocSize = NumPages*pageSize;
-  return pa;
+  MemoryBlock result;
+  result.Address = pa;
+  result.Size = NumPages*pageSize;
+  return result;
 }
 
 void Memory::ReleaseRWX(Memory& M) {
-  if (M.Address == 0 || M.AllocSize == 0) return;
-  if (0 != munmap(M.Address, M.AllocSize)) {
+  if (M.Address == 0 || M.Size == 0) return;
+  if (0 != munmap(M.Address, M.Size)) {
     throw std::string("Can't release RWX Memory: ") + strerror(errno);
   }
 }
