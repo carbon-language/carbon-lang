@@ -81,10 +81,7 @@ struct MachineInstrDescriptor {
 
 
 class MachineInstrInfo {
-public:
-  const TargetMachine& target;
-
-protected:
+private:
   const MachineInstrDescriptor* desc;	// raw array to allow static init'n
   unsigned descSize;		// number of entries in the desc array
   unsigned numRealOpCodes;		// number of non-dummy op codes
@@ -92,8 +89,7 @@ protected:
   MachineInstrInfo(const MachineInstrInfo &); // DO NOT IMPLEMENT
   void operator=(const MachineInstrInfo &);   // DO NOT IMPLEMENT
 public:
-  MachineInstrInfo(const TargetMachine& tgt,
-                   const MachineInstrDescriptor *desc, unsigned descSize,
+  MachineInstrInfo(const MachineInstrDescriptor *desc, unsigned descSize,
 		   unsigned numRealOpCodes);
   virtual ~MachineInstrInfo();
   
