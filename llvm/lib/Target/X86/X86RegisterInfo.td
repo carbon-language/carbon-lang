@@ -36,10 +36,10 @@ let Namespace = "X86" in {
   def SI : RegisterGroup<"SI", [ESI]>; def DI : RegisterGroup<"DI", [EDI]>;
   
   // 8-bit registers
-  def AL : RegisterGroup<"AL", [AX, EAX]>; def CL : RegisterGroup<"CL", [CX, ECX]>;
-  def DL : RegisterGroup<"DL", [DX, EDX]>; def BL : RegisterGroup<"BL", [BX, EBX]>;
-  def AH : RegisterGroup<"AH", [AX, EAX]>; def CH : RegisterGroup<"CH", [CX, ECX]>;
-  def DH : RegisterGroup<"DH", [DX, EDX]>; def BH : RegisterGroup<"BH", [BX, EBX]>;
+  def AL : RegisterGroup<"AL", [AX,EAX]>; def CL : RegisterGroup<"CL",[CX,ECX]>;
+  def DL : RegisterGroup<"DL", [DX,EDX]>; def BL : RegisterGroup<"BL",[BX,EBX]>;
+  def AH : RegisterGroup<"AH", [AX,EAX]>; def CH : RegisterGroup<"CH",[CX,ECX]>;
+  def DH : RegisterGroup<"DH", [DX,EDX]>; def BH : RegisterGroup<"BH",[BX,EBX]>;
   
   // Pseudo Floating Point registers
   def FP0 : Register<"FP0">; def FP1 : Register<"FP1">;
