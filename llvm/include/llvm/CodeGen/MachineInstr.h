@@ -166,8 +166,8 @@ private:
 		 bool isPCRelative = false)
     : value(V), opType(OpTy), regNum(-1) {
     switch (UseTy) {
-    case MOTy::Use:       flags = DEFFLAG; break;
-    case MOTy::Def:       flags = USEFLAG; break;
+    case MOTy::Use:       flags = USEFLAG; break;
+    case MOTy::Def:       flags = DEFFLAG; break;
     case MOTy::UseAndDef: flags = DEFFLAG | USEFLAG; break;
     default: assert(0 && "Invalid value for UseTy!");
     }
