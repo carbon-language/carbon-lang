@@ -26,7 +26,6 @@
 #include "llvm/Pass.h"
 #include "llvm/Type.h"
 #include "llvm/Support/CFG.h"
-#include "llvm/Support/ValueHolder.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "Support/CommandLine.h"
 #include "Support/Debug.h"
