@@ -19,6 +19,7 @@
 #include "llvm/ConstPoolVals.h"
 #include "llvm/iOther.h"
 #include "llvm/iMemory.h"
+#include "llvm/iTerminators.h"
 #include "llvm/Support/STLExtras.h"
 #include "llvm/SymbolTable.h"
 #include <algorithm>
@@ -50,6 +51,8 @@ ostream &WriteAsOperand(ostream &Out, const Value *V, bool PrintType,
 	  Table = new SlotCalculator(I->getParent()->getParent(), true);
 	} else if (const BasicBlock *BB = dyn_cast<const BasicBlock>(V)) {
 	  Table = new SlotCalculator(BB->getParent(), true);
+	} else if (const GlobalVariable *GV =dyn_cast<const GlobalVariable>(V)){
+	  Table = new SlotCalculator(GV->getParent(), true);
 	} else if (const Method *Meth = dyn_cast<const Method>(V)) {
 	  Table = new SlotCalculator(Meth, true);
 	} else if (const Module *Mod  = dyn_cast<const Module>(V)) {
@@ -95,6 +98,11 @@ private :
   void processInstruction(const Instruction *I);
   
   void writeOperand(const Value *Op, bool PrintType, bool PrintName = true);
+
+  // printInfoComment - Print a little comment after the instruction indicating
+  // which slot it occupies.
+  void printInfoComment(const Value *V);
+
 };
 
 
@@ -129,6 +137,7 @@ void AssemblyWriter::processGlobal(const GlobalVariable *GV) {
   if (GV->hasInitializer())
     writeOperand(GV->getInitializer(), false, false);
 
+  printInfoComment(GV);
   Out << endl;
 }
 
@@ -187,12 +196,22 @@ void AssemblyWriter::processMethod(const Method *M) {
   Table.incorporateMethod(M);
 
   // Loop over the arguments, processing them...
-  for_each(M->getArgumentList().begin(), M->getArgumentList().end(),
-	   bind_obj(this, &AssemblyWriter::processMethodArgument));
+  const MethodType *MT = cast<const MethodType>(M->getMethodType());
 
+  if (!M->isExternal()) {
+    for_each(M->getArgumentList().begin(), M->getArgumentList().end(),
+	     bind_obj(this, &AssemblyWriter::processMethodArgument));
+  } else {
+    // Loop over the arguments, processing them...
+    const MethodType *MT = cast<const MethodType>(M->getMethodType());
+    for (MethodType::ParamTypes::const_iterator I = MT->getParamTypes().begin(),
+	   E = MT->getParamTypes().end(); I != E; ++I) {
+      if (I != MT->getParamTypes().begin()) Out << ", ";
+      Out << *I;
+    }
+  }
 
   // Finish printing arguments...
-  const MethodType *MT = cast<const MethodType>(M->getMethodType());
   if (MT->isVarArg()) {
     if (MT->getParamTypes().size()) Out << ", ";
     Out << "...";  // Output varargs portion of signature!
@@ -253,6 +272,23 @@ void AssemblyWriter::processBasicBlock(const BasicBlock *BB) {
 	   bind_obj(this, &AssemblyWriter::processInstruction));
 }
 
+
+// printInfoComment - Print a little comment after the instruction indicating
+// which slot it occupies.
+//
+void AssemblyWriter::printInfoComment(const Value *V) {
+  if (V->getType() != Type::VoidTy) {
+    Out << "\t\t; <" << V->getType() << ">";
+
+    if (!V->hasName()) {
+      int Slot = Table.getValSlot(V); // Print out the def slot taken...
+      if (Slot >= 0) Out << ":" << Slot;
+      else Out << ":<badref>";
+    }
+    Out << "\t[#uses=" << V->use_size() << "]";  // Output # uses
+  }
+}
+
 // processInstruction - This member is called for each Instruction in a methd.
 //
 void AssemblyWriter::processInstruction(const Instruction *I) {
@@ -297,9 +333,9 @@ void AssemblyWriter::processInstruction(const Instruction *I) {
       writeOperand(I->getOperand(op  ), false); Out << ",";
       writeOperand(I->getOperand(op+1), false); Out << " ]";
     }
-  } else if (I->getOpcode() == Instruction::Ret && !Operand) {
+  } else if (isa<ReturnInst>(I) && !Operand) {
     Out << " void";
-  } else if (I->getOpcode() == Instruction::Call) {
+  } else if (isa<CallInst>(I)) {
     // TODO: Should try to print out short form of the Call instruction
     writeOperand(Operand, true);
     Out << "(";
@@ -310,6 +346,21 @@ void AssemblyWriter::processInstruction(const Instruction *I) {
     }
 
     Out << " )";
+  } else if (const InvokeInst *II = dyn_cast<InvokeInst>(I)) {
+    // TODO: Should try to print out short form of the Invoke instruction
+    writeOperand(Operand, true);
+    Out << "(";
+    if (I->getNumOperands() > 3) writeOperand(I->getOperand(3), true);
+    for (unsigned op = 4, Eop = I->getNumOperands(); op < Eop; ++op) {
+      Out << ",";
+      writeOperand(I->getOperand(op), true);
+    }
+
+    Out << " )\n\t\t\tto";
+    writeOperand(II->getNormalDest(), true);
+    Out << " except";
+    writeOperand(II->getExceptionalDest(), true);
+
   } else if (I->getOpcode() == Instruction::Malloc || 
 	     I->getOpcode() == Instruction::Alloca) {
     Out << " " << cast<const PointerType>(I->getType())->getValueType();
@@ -317,7 +368,7 @@ void AssemblyWriter::processInstruction(const Instruction *I) {
       Out << ",";
       writeOperand(I->getOperand(0), true);
     }
-  } else if (I->getOpcode() == Instruction::Cast) {
+  } else if (isa<CastInst>(I)) {
     writeOperand(Operand, true);
     Out << " to " << I->getType();
   } else if (Operand) {   // Print the normal way...
@@ -345,19 +396,7 @@ void AssemblyWriter::processInstruction(const Instruction *I) {
     }
   }
 
-  // Print a little comment after the instruction indicating which slot it
-  // occupies.
-  //
-  if (I->getType() != Type::VoidTy) {
-    Out << "\t\t; <" << I->getType() << ">";
-
-    if (!I->hasName()) {
-      int Slot = Table.getValSlot(I); // Print out the def slot taken...
-      if (Slot >= 0) Out << ":" << Slot;
-      else Out << ":<badref>";
-    }
-    Out << "\t[#uses=" << I->use_size() << "]";  // Output # uses
-  }
+  printInfoComment(I);
   Out << endl;
 }
 
