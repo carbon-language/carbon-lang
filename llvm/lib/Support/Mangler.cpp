@@ -71,8 +71,8 @@ std::string Mangler::getValueName(const Value *V) {
     } else {
       // Non-global, or global with internal linkage / colliding name
       // -> mangle.
-      name = "l" + utostr(V->getType()->getUniqueID()) + "_" +
-        makeNameProper(V->getName());      
+      unsigned TypeUniqueID = V->getType()->getUniqueID();
+      name = "l" + utostr(TypeUniqueID) + "_" + makeNameProper(V->getName());
     }
   } else {
     name = "ltmp_" + utostr(Count++) + "_"
