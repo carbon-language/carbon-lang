@@ -48,16 +48,11 @@ namespace sys {
     /// system with the mapping \p options provided.
     /// @throws std::string if an error occurs
     MappedFile(const Path& path, int options = READ_ACCESS)
-      : path_(path), options_(options), base_(0), info_(0) {
-      initialize();
-    }
+      : path_(path), options_(options), base_(0), info_(0) { initialize(); }
 
     /// Destruct a MappedFile and release all memory associated with it.
     /// @throws std::string if an error occurs
-    ~MappedFile() {
-      terminate();
-      path_.clear();
-    }
+    ~MappedFile() { terminate(); }
 
   /// @}
   /// @name Accessors
@@ -123,7 +118,7 @@ namespace sys {
     /// map(), base(), or baseChar() members as they may point to invalid
     /// areas of memory after this call.
     /// @throws std::string if an error occurs
-    /// @brief Set a full path from a std::string
+    /// @brief Set the size of the file and memory mapping.
     void size(size_t new_size);
 
   /// @}
@@ -143,7 +138,7 @@ namespace sys {
     MappedFileInfo* info_; ///< Platform specific info for the mapping
 
   /// @}
-  /// @name Deprecated
+  /// @name Disabled
   /// @{
   private:
     ///< Disallow assignment
