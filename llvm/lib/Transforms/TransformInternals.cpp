@@ -56,7 +56,8 @@ const Type *getStructOffsetType(const Type *Ty, unsigned &Offset,
     ThisOffset = Offset;
     NextType = getStructOffsetStep(STy, ThisOffset, Indices, TD);
   } else if (const ArrayType *ATy = dyn_cast<ArrayType>(Ty)) {
-    assert(Offset < TD.getTypeSize(ATy) && "Offset not in composite!");
+    assert(Offset == 0 || Offset < TD.getTypeSize(ATy) &&
+           "Offset not in composite!");
 
     NextType = ATy->getElementType();
     unsigned ChildSize = TD.getTypeSize(NextType);
