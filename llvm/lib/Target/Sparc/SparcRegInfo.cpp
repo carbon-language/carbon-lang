@@ -1,6 +1,7 @@
-#include "SparcInternals.h"
 #include "llvm/CodeGen/IGNode.h"
+#include "SparcRegInfo.h"
 
+#include "llvm/Target/Sparc.h"
 
 //-----------------------------------------------------------------------------
 // Int Register Class
@@ -219,6 +220,20 @@ void SparcFloatRegClass::colorIGNode(IGNode * Node,bool IsColorUsedArr[]) const
   
 
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
