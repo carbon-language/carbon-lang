@@ -386,7 +386,7 @@ Value *ConvertExpressionToType(Value *V, const Type *Ty, ValueMapCache &VMC) {
 
   ValueHandle IHandle(VMC, I);  // Prevent I from being removed!
   
-  Constant *Dummy = Constant::getNullConstant(Ty);
+  Constant *Dummy = Constant::getNullValue(Ty);
 
   switch (I->getOpcode()) {
   case Instruction::Cast:
@@ -415,7 +415,7 @@ Value *ConvertExpressionToType(Value *V, const Type *Ty, ValueMapCache &VMC) {
     LoadInst *LI = cast<LoadInst>(I);
     assert(!LI->hasIndices() || AllIndicesZero(LI));
 
-    Res = new LoadInst(Constant::getNullConstant(PointerType::get(Ty)), Name);
+    Res = new LoadInst(Constant::getNullValue(PointerType::get(Ty)), Name);
     VMC.ExprMap[I] = Res;
     Res->setOperand(0, ConvertExpressionToType(LI->getPointerOperand(),
                                                PointerType::get(Ty), VMC));
@@ -499,7 +499,7 @@ Value *ConvertExpressionToType(Value *V, const Type *Ty, ValueMapCache &VMC) {
                                           Indices, &It);
       if (ElTy) {        
         assert(ElTy == PVTy && "Internal error, setup wrong!");
-        Res = new GetElementPtrInst(Constant::getNullConstant(NewSrcTy),
+        Res = new GetElementPtrInst(Constant::getNullValue(NewSrcTy),
                                     Indices, Name);
         VMC.ExprMap[I] = Res;
         Res->setOperand(0, ConvertExpressionToType(I->getOperand(0),
@@ -514,7 +514,7 @@ Value *ConvertExpressionToType(Value *V, const Type *Ty, ValueMapCache &VMC) {
     //
     if (Res == 0) {
       const PointerType *NewSrcTy = PointerType::get(PVTy);
-      Res = new GetElementPtrInst(Constant::getNullConstant(NewSrcTy),
+      Res = new GetElementPtrInst(Constant::getNullValue(NewSrcTy),
                                   GEP->copyIndices(), Name);
       VMC.ExprMap[I] = Res;
       Res->setOperand(0, ConvertExpressionToType(I->getOperand(0),
@@ -925,7 +925,7 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
 
   const Type *NewTy = NewVal->getType();
   Constant *Dummy = (NewTy != Type::VoidTy) ? 
-                  Constant::getNullConstant(NewTy) : 0;
+                  Constant::getNullValue(NewTy) : 0;
 
   switch (I->getOpcode()) {
   case Instruction::Cast:
@@ -1001,7 +1001,7 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
   case Instruction::Store: {
     if (I->getOperand(0) == OldVal) {  // Replace the source value
       const PointerType *NewPT = PointerType::get(NewTy);
-      Res = new StoreInst(NewVal, Constant::getNullConstant(NewPT));
+      Res = new StoreInst(NewVal, Constant::getNullValue(NewPT));
       VMC.ExprMap[I] = Res;
       Res->setOperand(1, ConvertExpressionToType(I->getOperand(1), NewPT, VMC));
     } else {                           // Replace the source pointer
@@ -1015,7 +1015,7 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
         assert(Offset == 0 && ValTy);
       }
 
-      Res = new StoreInst(Constant::getNullConstant(ValTy), NewVal, Indices);
+      Res = new StoreInst(Constant::getNullValue(ValTy), NewVal, Indices);
       VMC.ExprMap[I] = Res;
       Res->setOperand(0, ConvertExpressionToType(I->getOperand(0), ValTy, VMC));
     }

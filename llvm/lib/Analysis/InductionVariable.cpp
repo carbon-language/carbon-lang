@@ -115,7 +115,7 @@ InductionVariable::InductionVariable(PHINode *P, cfg::LoopInfo *LoopInfo) {
     Step = 0;
 
     if (V2 == Phi) {  // referencing the PHI directly?  Must have zero step
-      Step = Constant::getNullConstant(Phi->getType());
+      Step = Constant::getNullValue(Phi->getType());
     } else if (BinaryOperator *I = dyn_cast<BinaryOperator>(V2)) {
       // TODO: This could be much better...
       if (I->getOpcode() == Instruction::Add) {
@@ -143,7 +143,7 @@ InductionVariable::InductionVariable(PHINode *P, cfg::LoopInfo *LoopInfo) {
         if (StepE.Offset)
           Step = (Value*)StepE.Offset;
         else
-          Step = Constant::getNullConstant(Step->getType());
+          Step = Constant::getNullValue(Step->getType());
         const Type *ETy = Phi->getType();
         if (ETy->isPointerType()) ETy = Type::ULongTy;
         Step  = (Value*)(StepE.Offset ? StepE.Offset : ConstantInt::get(ETy,0));

@@ -101,7 +101,7 @@ static bool TransformLoop(cfg::LoopInfo *Loops, cfg::Loop *Loop) {
     assert(PI == pred_end(Header) && "Loop headers should have 2 preds!");
     
     // Add incoming values for the PHI node...
-    PN->addIncoming(Constant::getNullConstant(Type::UIntTy), Incoming);
+    PN->addIncoming(Constant::getNullValue(Type::UIntTy), Incoming);
     PN->addIncoming(Add, BackEdgeBlock);
 
     // Analyze the new induction variable...

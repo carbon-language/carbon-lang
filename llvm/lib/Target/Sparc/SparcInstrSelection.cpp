@@ -1205,11 +1205,10 @@ CreateCopyInstructionsByType(const TargetMachine& target,
       // Use (unsigned long) 0 for a NULL pointer value.
       // 
       const Type* zeroValueType =
-        (resultType->getPrimitiveID() == Type::PointerTyID)? Type::ULongTy
-                                                           : resultType;
+        isa<PointerType>(resultType) ? Type::ULongTy : resultType;
       MachineInstr* minstr = new MachineInstr(opCode);
       minstr->SetMachineOperandVal(0, MachineOperand::MO_VirtualRegister,
-                                   Constant::getNullConstant(zeroValueType));
+                                   Constant::getNullValue(zeroValueType));
       minstr->SetMachineOperandVal(1, MachineOperand::MO_VirtualRegister, src);
       minstr->SetMachineOperandVal(2, MachineOperand::MO_VirtualRegister,dest);
       minstrVec.push_back(minstr);

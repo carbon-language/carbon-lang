@@ -108,10 +108,8 @@ static bool RemoveSingularPHIs(BasicBlock *BB) {
 }
 
 static void ReplaceUsesWithConstant(Instruction *I) {
-  Constant *CPV = Constant::getNullConstant(I->getType());
-  
   // Make all users of this instruction reference the constant instead
-  I->replaceAllUsesWith(CPV);
+  I->replaceAllUsesWith(Constant::getNullValue(I->getType()));
 }
 
 // PropogatePredecessors - This gets "Succ" ready to have the predecessors from

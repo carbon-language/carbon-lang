@@ -123,7 +123,7 @@ Instruction *InstCombiner::visitSub(BinaryOperator *I) {
   //
   if (Constant *Op2 = dyn_cast<Constant>(I->getOperand(1)))
     // Calculate 0 - RHS
-    if (Constant *RHS = *Constant::getNullConstant(I->getType()) - *Op2) {
+    if (Constant *RHS = *Constant::getNullValue(I->getType()) - *Op2) {
       return BinaryOperator::create(Instruction::Add, I->getOperand(0), RHS,
                                     I->getName());
     }
