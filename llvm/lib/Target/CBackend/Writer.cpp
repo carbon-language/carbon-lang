@@ -590,7 +590,15 @@ void CWriter::printConstant(Constant *CPV) {
         Out << "LLVM_INF" << (FPC->getType() == Type::FloatTy ? "F" : "")
             << " /*inf*/ ";
       } else {
-        std::string Num = ftostr(FPC->getValue());
+        std::string Num;
+#if HAVE_PRINTF_A
+        // Print out the constant as a floating point number.
+        char Buffer[100];
+        sprintf(Buffer, "%a", FPC->getValue());
+        Num = Buffer;
+#else
+        Num = ftostr(FPC->getValue());
+#endif
         Out << Num;
       }
     }
