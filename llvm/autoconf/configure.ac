@@ -40,9 +40,6 @@ dnl We will use the build machine information to set some variables.
 dnl
 case $build in
 	*i*86*)  AC_SUBST(OS,[Linux])
-	         dnl Turned off DISABLE_LLC_DIFFS now that LLC/x86 is 
-	         dnl viable for almost all our test cases.
-	         dnl AC_SUBST(DISABLE_LLC_DIFFS,[[DISABLE_LLC_DIFFS:=1]])
 	         AC_SUBST(LLVMGCCDIR,[/home/vadve/lattner/local/x86/llvm-gcc/])
 	         ;;
 
@@ -227,16 +224,62 @@ AC_CHECK_FUNC(mprotect,,AC_MSG_ERROR([Function mprotect() required but not found
 dnl **************************************************************************
 dnl * Enable various compile-time options
 dnl **************************************************************************
-AC_ARG_ENABLE(purify,AC_HELP_STRING([--enable-purify],[Compile with purify (default is NO)]), AC_SUBST(ENABLE_PURIFY,[[ENABLE_PURIFY=1]]), AC_SUBST(ENABLE_PURIFY,[[]]))
-AC_ARG_ENABLE(optimized,AC_HELP_STRING([--enable-optimized],[Compile with optimizations enabled (default is NO)]), AC_SUBST(ENABLE_OPTIMIZED,[[ENABLE_OPTIMIZED=1]]), AC_SUBST(ENABLE_OPTIMIZED,[[]]))
-AC_ARG_ENABLE(spec,AC_HELP_STRING([--enable-spec],[Compile SPEC benchmarks (default is NO)]), AC_SUBST(USE_SPEC,[[USE_SPEC=1]]), AC_SUBST(USE_SPEC,[[]]))
-AC_ARG_ENABLE(precompiled_bytecode,AC_HELP_STRING([--enable-precompiled_bytecode],[Use pre-compiled bytecode (default is NO)]), AC_SUBST(UPB,[[USE_PRECOMPILED_BYTECODE=1]]), AC_SUBST(UPB,[[]]))
-case $build in
-	*i*86*)  AC_ARG_ENABLE(jit,AC_HELP_STRING([--enable-jit],[Enable Just In Time Compiling (default is NO)]), AC_SUBST(JIT,[[TARGET_HAS_JIT=1]]), AC_SUBST(JIT,[[]]))
-	         ;;
-	*)
-	         ;;
-esac
+
+dnl Purify Option
+AC_ARG_ENABLE(purify,AC_HELP_STRING([--enable-purify],[Compile with purify (default is NO)]),,enableval="no")
+if test ${enableval} = "no"
+then
+	AC_SUBST(ENABLE_PURIFY,[[]])
+else
+	AC_SUBST(ENABLE_PURIFY,[[ENABLE_PURIFY=1]])
+fi
+
+dnl Optimized Option
+AC_ARG_ENABLE(optimized,AC_HELP_STRING([--enable-optimized],[Compile with optimizations enabled (default is NO)]),,enableval=no)
+if test ${enableval} = "no"
+then
+	AC_SUBST(ENABLE_OPTIMIZED,[[]])
+else
+	AC_SUBST(ENABLE_OPTIMIZED,[[ENABLE_OPTIMIZED=1]])
+fi
+
+dnl Spec Benchmarks
+AC_ARG_ENABLE(spec,AC_HELP_STRING([--enable-spec],[Compile SPEC benchmarks (default is NO)]),,enableval=no)
+if test ${enableval} = "no"
+then
+	AC_SUBST(USE_SPEC,[[]])
+else
+	AC_SUBST(USE_SPEC,[[USE_SPEC=1]])
+fi
+
+dnl Precompiled Bytecode Option
+AC_ARG_ENABLE(precompiled_bytecode,AC_HELP_STRING([--enable-precompiled_bytecode],[Use pre-compiled bytecode (default is NO)]),,enableval=no)
+if test ${enableval} = "no"
+then
+	AC_SUBST(UPB,[[]])
+else
+	AC_SUBST(UPB,[[USE_PRECOMPILED_BYTECODE=1]])
+fi
+
+
+dnl LLC Diff Option
+AC_ARG_ENABLE(llc_diffs,AC_HELP_STRING([--enable-llc_diffs],[Enable LLC Diffs when testing (default is YES)]),,enableval=yes)
+if test ${enableval} = "no"
+then
+	AC_SUBST(DISABLE_LLC_DIFFS,[DISABLE_LLC_DIFFS:=1])
+else
+	AC_SUBST(DISABLE_LLC_DIFFS,[[]])
+fi
+
+dnl JIT Option
+AC_ARG_ENABLE(jit,AC_HELP_STRING([--enable-jit],[Enable Just In Time Compiling (default is NO)]),,enableval=no)
+
+if test ${enableval} = "no"
+then
+	AC_SUBST(JIT,[[]])
+else
+	AC_SUBST(JIT,[[TARGET_HAS_JIT=1]])
+fi
 
 dnl **************************************************************************
 dnl * Set the location of various third-party software packages
