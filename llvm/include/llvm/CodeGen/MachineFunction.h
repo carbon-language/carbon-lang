@@ -21,8 +21,9 @@ class Pass;
 class SSARegMap;
 class MachineFunctionInfo;
 class MachineFrameInfo;
+class MachineConstantPool;
 
-Pass *createMachineCodeConstructionPass(TargetMachine &Target);
+Pass *createMachineCodeConstructionPass(TargetMachine &TM);
 Pass *createMachineCodeDestructionPass();
 Pass *createMachineFunctionPrinterPass();
 
@@ -42,8 +43,11 @@ class MachineFunction : private Annotation {
   // Keep track of objects allocated on the stack.
   MachineFrameInfo *FrameInfo;
 
+  // Keep track of constants which are spilled to memory
+  MachineConstantPool *ConstantPool;
+
 public:
-  MachineFunction(const Function *Fn, const TargetMachine& target);
+  MachineFunction(const Function *Fn, const TargetMachine &TM);
   ~MachineFunction();
 
   /// getFunction - Return the LLVM function that this machine code represents
@@ -65,6 +69,10 @@ public:
   /// frame of the current function in an abstract way.
   ///
   MachineFrameInfo *getFrameInfo() const { return FrameInfo; }
+
+  /// getConstantPool - Return the constant pool object for the current
+  /// function.
+  MachineConstantPool *getConstantPool() const { return ConstantPool; }
 
   /// MachineFunctionInfo - Keep track of various per-function pieces of
   /// information for the sparc backend.
@@ -90,8 +98,7 @@ public:
   //                for a given Method.
   // destruct()  -- Destroy the MachineFunction object
   // 
-  static MachineFunction& construct(const Function *Fn,
-                                    const TargetMachine &target);
+  static MachineFunction& construct(const Function *F, const TargetMachine &TM);
   static void destruct(const Function *F);
   static MachineFunction& get(const Function *F);
 
