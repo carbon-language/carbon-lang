@@ -1087,7 +1087,7 @@ void ReachabilityCloner::merge(const DSNodeHandle &NH,
 
 /// mergeCallSite - Merge the nodes reachable from the specified src call
 /// site into the nodes reachable from DestCS.
-void ReachabilityCloner::mergeCallSite(DSCallSite &DestCS,
+void ReachabilityCloner::mergeCallSite(const DSCallSite &DestCS,
                                        const DSCallSite &SrcCS) {
   merge(DestCS.getRetVal(), SrcCS.getRetVal());
   unsigned MinArgs = DestCS.getNumPtrArgs();
@@ -1097,7 +1097,7 @@ void ReachabilityCloner::mergeCallSite(DSCallSite &DestCS,
     merge(DestCS.getPtrArg(a), SrcCS.getPtrArg(a));
 
   for (unsigned a = MinArgs, e = SrcCS.getNumPtrArgs(); a != e; ++a)
-    DestCS.addPtrArg(getClonedNH(SrcCS.getPtrArg(a)));
+    const_cast<DSCallSite&>(DestCS).addPtrArg(getClonedNH(SrcCS.getPtrArg(a)));
 }
 
 
