@@ -110,9 +110,9 @@ convertOpcodeFromRegToImm(unsigned Opcode) {
   case V9::XNORccr: return V9::XNORcci;
 
     /* shift */
-  case V9::SLLr6:   return V9::SLLi6;
-  case V9::SRLr6:   return V9::SRLi6;
-  case V9::SRAr6:   return V9::SRAi6;
+  case V9::SLLr5:   return V9::SLLi5;
+  case V9::SRLr5:   return V9::SRLi5;
+  case V9::SRAr5:   return V9::SRAi5;
   case V9::SLLXr6:  return V9::SLLXi6;
   case V9::SRLXr6:  return V9::SRLXi6;
   case V9::SRAXr6:  return V9::SRAXi6;

@@ -121,6 +121,7 @@ set op2 = 0b101 in {
 #endif
 
 // Section A.6: Branch on Integer condition codes (Bicc) - p146
+#if 0 // instead of using deprecated version, use the predicted version below
 set isDeprecated = 1 in {
   set op2 = 0b010 in {
     def BA     : F2_2<0b1000, "ba">;              // Branch always
@@ -140,6 +141,29 @@ set isDeprecated = 1 in {
     def BVC    : F2_2<0b1111, "bvc">;             // Branch on overflow clear
     def BVS    : F2_2<0b0111, "bvs">;             // Branch on overflow set
   }
+}
+#endif
+
+// Using the format of A.7 instructions...
+set op2 = 0b001 in {
+  set cc = 0 in {   // BA and BN don't read condition codes
+    def BA   : F2_3<0b1000, "ba">;              // Branch always
+    def BN   : F2_3<0b0000, "bn">;              // Branch never
+  }
+  def BNE    : F2_3<0b1001, "bne">;             // Branch !=
+  def BE     : F2_3<0b0001, "be">;              // Branch ==
+  def BG     : F2_3<0b1010, "bg">;              // Branch >
+  def BLE    : F2_3<0b0010, "ble">;             // Branch <=
+  def BGE    : F2_3<0b1011, "bge">;             // Branch >=
+  def BL     : F2_3<0b0011, "bl">;              // Branch <
+  def BGU    : F2_3<0b1100, "bgu">;             // Branch unsigned >
+  def BLEU   : F2_3<0b0100, "bleu">;            // Branch unsigned <=
+  def BCC    : F2_3<0b1101, "bcc">;             // Branch unsigned >=
+  def BCS    : F2_3<0b0101, "bcs">;             // Branch unsigned <=
+  def BPOS   : F2_3<0b1110, "bpos">;            // Branch on positive
+  def BNEG   : F2_3<0b0110, "bneg">;            // Branch on negative
+  def BVC    : F2_3<0b1111, "bvc">;             // Branch on overflow clear
+  def BVS    : F2_3<0b0111, "bvs">;             // Branch on overflow set
 }
 
 // Section A.7: Branch on integer condition codes with prediction - p148
@@ -669,28 +693,20 @@ set x = 0 in {
 #endif
 
 // uses 6 least significant bits of rs2
+set x = 0 in { 
+  def SLLr5  : F3_11<2, 0b100101, "sll">;                // sll r, r, r
+  def SRLr5  : F3_11<2, 0b100110, "srl">;                // srl r, r, r
+  def SRAr5  : F3_11<2, 0b100111, "sra">;                // sra r, r, r
+}
 set x = 1 in {
-  def SLLr6  : F3_11<2, 0b100101, "sll">;                // sll r, r, r
-  def SRLr6  : F3_11<2, 0b100110, "srl">;                // srl r, r, r
-  def SRAr6  : F3_11<2, 0b100111, "sra">;                // sra r, r, r
   def SLLXr6 : F3_11<2, 0b100101, "sllx">;               // sllx r, r, r
   def SRLXr6 : F3_11<2, 0b100110, "srlx">;               // srlx r, r, r
   def SRAXr6 : F3_11<2, 0b100111, "srax">;               // srax r, r, r
 }
 
-// Not currently used in the Sparc backend
-#if 0
 def SLLi5  : F3_12<2, 0b100101, "sll">;                // sll r, shcnt32, r
 def SRLi5  : F3_12<2, 0b100110, "srl">;                // srl r, shcnt32, r
 def SRAi5  : F3_12<2, 0b100111, "sra">;                // sra r, shcnt32, r
-def SLLXi5 : F3_12<2, 0b100101, "sllx">;               // sllx r, shcnt32, r
-def SRLXi5 : F3_12<2, 0b100110, "srlx">;               // srlx r, shcnt32, r
-def SRAXi5 : F3_12<2, 0b100111, "srax">;               // srax r, shcnt32, r
-#endif
-
-def SLLi6  : F3_13<2, 0b100101, "sll">;                  // sll r, shcnt64, r
-def SRLi6  : F3_13<2, 0b100110, "srl">;                  // srl r, shcnt64, r
-def SRAi6  : F3_13<2, 0b100111, "sra">;                  // sra r, shcnt64, r
 def SLLXi6 : F3_13<2, 0b100101, "sllx">;                 // sllx r, shcnt64, r
 def SRLXi6 : F3_13<2, 0b100110, "srlx">;                 // srlx r, shcnt64, r
 def SRAXi6 : F3_13<2, 0b100111, "srax">;                 // srax r, shcnt64, r
@@ -754,3 +770,9 @@ def SUBCccr : F3_1<2, 0b011100, "subccc">;                // subccc r, r, r
 def SUBCcci : F3_2<2, 0b011100, "subccc">;                // subccc r, i, r
 
 // FIXME: More...?
+
+// Section A.63: Write State Register - p244
+set rd = 2 in {
+  def WRCCRr : F3_1<2, 0b110000, "wr">;                 // wr r, r, %y/ccr/etc
+  def WRCCRi : F3_2<2, 0b110000, "wr">;                 // wr r, i, %y/ccr/etc
+}

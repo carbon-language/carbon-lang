@@ -135,12 +135,12 @@ I(XNORccr, "xnorcc",	4,  2, B12, true , 0, 1, SPARC_IEU1,  M_INT_FLAG | M_LOGICA
 I(XNORcci, "xnorcc",	4,  2, B12, true , 0, 1, SPARC_IEU1,  M_INT_FLAG | M_LOGICAL_FLAG)
 
 // Shift operations
-I(SLLr6 , "sll",  	3,  2,  B5, true , 0, 1, SPARC_IEU0,  M_INT_FLAG | M_LOGICAL_FLAG)
-I(SLLi6 , "sll",  	3,  2,  B5, true , 0, 1, SPARC_IEU0,  M_INT_FLAG | M_LOGICAL_FLAG)
-I(SRLr6 , "srl",  	3,  2,  B5, true , 0, 1, SPARC_IEU0,  M_INT_FLAG | M_LOGICAL_FLAG)
-I(SRLi6 , "srl",  	3,  2,  B5, true , 0, 1, SPARC_IEU0,  M_INT_FLAG | M_LOGICAL_FLAG)
-I(SRAr6 , "sra",  	3,  2,  B5, true , 0, 1, SPARC_IEU0,  M_INT_FLAG | M_ARITH_FLAG)
-I(SRAi6 , "sra",  	3,  2,  B5, true , 0, 1, SPARC_IEU0,  M_INT_FLAG | M_ARITH_FLAG)
+I(SLLr5 , "sll",  	3,  2,  B5, true , 0, 1, SPARC_IEU0,  M_INT_FLAG | M_LOGICAL_FLAG)
+I(SLLi5 , "sll",  	3,  2,  B5, true , 0, 1, SPARC_IEU0,  M_INT_FLAG | M_LOGICAL_FLAG)
+I(SRLr5 , "srl",  	3,  2,  B5, true , 0, 1, SPARC_IEU0,  M_INT_FLAG | M_LOGICAL_FLAG)
+I(SRLi5 , "srl",  	3,  2,  B5, true , 0, 1, SPARC_IEU0,  M_INT_FLAG | M_LOGICAL_FLAG)
+I(SRAr5 , "sra",  	3,  2,  B5, true , 0, 1, SPARC_IEU0,  M_INT_FLAG | M_ARITH_FLAG)
+I(SRAi5 , "sra",  	3,  2,  B5, true , 0, 1, SPARC_IEU0,  M_INT_FLAG | M_ARITH_FLAG)
 I(SLLXr6, "sllx", 	3,  2,  B6, true , 0, 1, SPARC_IEU0,  M_INT_FLAG | M_LOGICAL_FLAG)
 I(SLLXi6, "sllx", 	3,  2,  B6, true , 0, 1, SPARC_IEU0,  M_INT_FLAG | M_LOGICAL_FLAG)
 I(SRLXr6, "srlx", 	3,  2,  B6, true , 0, 1, SPARC_IEU0,  M_INT_FLAG | M_LOGICAL_FLAG)
@@ -526,7 +526,8 @@ I(RESTOREi, "restore",	3,  2, B12, true , 0, 1,  SPARC_SINGLE, M_INT_FLAG | M_AR
 
 // Read and Write CCR register from/to an int reg
 I(RDCCR,  "rd",         2,   2, 0, false,  0,  1,  SPARC_SINGLE,  M_INT_FLAG | M_CC_FLAG)
-I(WRCCR,  "wr",         2,   2, 0, false,  0,  1,  SPARC_SINGLE,  M_INT_FLAG | M_CC_FLAG)
+I(WRCCRr,  "wr",         2,   2, 0, false,  0,  1,  SPARC_SINGLE,  M_INT_FLAG | M_CC_FLAG)
+I(WRCCRi,  "wr",         2,   2, 0, false,  0,  1,  SPARC_SINGLE,  M_INT_FLAG | M_CC_FLAG)
 
 // Synthetic phi operation for near-SSA form of machine code
 // Number of operands is variable, indicated by -1.  Result is the first op.

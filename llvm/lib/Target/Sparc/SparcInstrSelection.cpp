@@ -747,7 +747,7 @@ CreateShiftInstructions(const TargetMachine& target,
   Value* shiftDest = destVal;
   unsigned opSize = target.getTargetData().getTypeSize(argVal1->getType());
 
-  if ((shiftOpCode == V9::SLLr6 || shiftOpCode == V9::SLLXr6) && opSize < 8) {
+  if ((shiftOpCode == V9::SLLr5 || shiftOpCode == V9::SLLXr6) && opSize < 8) {
     // put SLL result into a temporary
     shiftDest = new TmpInstruction(mcfi, argVal1, optArgVal2, "sllTmp");
   }
@@ -815,7 +815,7 @@ CreateMulConstInstruction(const TargetMachine &target, Function* F,
         mvec.push_back(M);
       } else if (isPowerOf2(C, pow)) {
         unsigned opSize = target.getTargetData().getTypeSize(resultType);
-        MachineOpCode opCode = (opSize <= 32)? V9::SLLr6 : V9::SLLXr6;
+        MachineOpCode opCode = (opSize <= 32)? V9::SLLr5 : V9::SLLXr6;
         CreateShiftInstructions(target, F, opCode, lval, NULL, pow,
                                 destVal, mvec, mcfi);
       }
@@ -979,7 +979,7 @@ CreateDivConstInstruction(TargetMachine &target,
 
           // Create the SRL or SRLX instruction to get the sign bit
           mvec.push_back(BuildMI((resultType==Type::LongTy) ?
-                                 V9::SRLXi6 : V9::SRLi6, 3)
+                                 V9::SRLXi6 : V9::SRLi5, 3)
                          .addReg(LHS)
                          .addSImm((resultType==Type::LongTy)? 63 : 31)
                          .addRegDef(srlTmp));
@@ -990,11 +990,11 @@ CreateDivConstInstruction(TargetMachine &target,
 
           // Get the shift operand and "right-shift" opcode to do the divide
           shiftOperand = addTmp;
-          opCode = (resultType==Type::LongTy) ? V9::SRAXi6 : V9::SRAi6;
+          opCode = (resultType==Type::LongTy) ? V9::SRAXi6 : V9::SRAi5;
         } else {
           // Get the shift operand and "right-shift" opcode to do the divide
           shiftOperand = LHS;
-          opCode = (resultType==Type::LongTy) ? V9::SRLXi6 : V9::SRLi6;
+          opCode = (resultType==Type::LongTy) ? V9::SRLXi6 : V9::SRLi5;
         }
 
         // Now do the actual shift!
@@ -2419,7 +2419,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
                "Shl unsupported for other types");
         
         CreateShiftInstructions(target, shlInstr->getParent()->getParent(),
-                                (opType == Type::LongTy)? V9::SLLXr6:V9::SLLr6,
+                                (opType == Type::LongTy)? V9::SLLXr6:V9::SLLr5,
                                 argVal1, argVal2, 0, shlInstr, mvec,
                                 MachineCodeForInstruction::get(shlInstr));
         break;
@@ -2431,8 +2431,8 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         assert((opType->isInteger() || isa<PointerType>(opType)) &&
                "Shr unsupported for other types");
         Add3OperandInstr(opType->isSigned()
-                         ? (opType == Type::LongTy ? V9::SRAXr6 : V9::SRAr6)
-                         : (opType == Type::LongTy ? V9::SRLXr6 : V9::SRLr6),
+                         ? (opType == Type::LongTy ? V9::SRAXr6 : V9::SRAr5)
+                         : (opType == Type::LongTy ? V9::SRLXr6 : V9::SRLr5),
                          subtreeRoot, mvec);
         break;
       }
@@ -2503,7 +2503,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         for (unsigned i=0, N=mvec.size(); i < N; ++i)
           mvec[i]->substituteValue(dest, tmpI);
 
-        M = BuildMI(V9::SRLi6, 3).addReg(tmpI).addZImm(8*(4-destSize))
+        M = BuildMI(V9::SRLi5, 3).addReg(tmpI).addZImm(8*(4-destSize))
           .addReg(dest, MOTy::Def);
         mvec.push_back(M);
       } else if (destSize < 8) {

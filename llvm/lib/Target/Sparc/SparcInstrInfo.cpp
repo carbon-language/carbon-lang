@@ -145,7 +145,7 @@ CreateSETSWConst(const TargetMachine& target, int32_t C,
   // Sign-extend to the high 32 bits if needed.
   // NOTE: The value C = 0x80000000 is bad: -C == C and so -C is < MAXSIMM
   if (C < 0 && (C == -C || -C > (int32_t) MAXSIMM))
-    mvec.push_back(BuildMI(V9::SRAi6, 3).addReg(dest).addZImm(0).addRegDef(dest));
+    mvec.push_back(BuildMI(V9::SRAi5,3).addReg(dest).addZImm(0).addRegDef(dest));
 }
 
 
@@ -692,7 +692,7 @@ CreateBitExtensionInstructions(bool signExtend,
     srcVal = tmpI;
   }
 
-  mvec.push_back(BuildMI(signExtend? V9::SRAi6 : V9::SRLi6, 3)
+  mvec.push_back(BuildMI(signExtend? V9::SRAi5 : V9::SRLi5, 3)
                  .addReg(srcVal).addZImm(32-numLowBits).addRegDef(destVal));
 }
 

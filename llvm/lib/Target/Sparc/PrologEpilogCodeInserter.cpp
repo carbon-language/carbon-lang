@@ -86,7 +86,7 @@ void InsertPrologEpilogCode::InsertPrologCode(MachineFunction &MF)
     M->setOperandLo32(1);
     mvec.push_back(M);
     
-    M = BuildMI(V9::SRAi6, 3).addMReg(uregNum).addZImm(0)
+    M = BuildMI(V9::SRAi5, 3).addMReg(uregNum).addZImm(0)
       .addMReg(uregNum, MOTy::Def);
     mvec.push_back(M);
     

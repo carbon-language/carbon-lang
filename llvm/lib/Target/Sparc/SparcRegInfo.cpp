@@ -1068,7 +1068,8 @@ UltraSparcRegInfo::cpReg2RegMI(std::vector<MachineInstr*>& mvec,
                                unsigned SrcReg,
                                unsigned DestReg,
                                int RegType) const {
-  assert( ((int)SrcReg != getInvalidRegNum()) && ((int)DestReg != getInvalidRegNum()) &&
+  assert( ((int)SrcReg != getInvalidRegNum()) && 
+          ((int)DestReg != getInvalidRegNum()) &&
 	  "Invalid Register");
   
   MachineInstr * MI = NULL;
@@ -1085,7 +1086,8 @@ UltraSparcRegInfo::cpReg2RegMI(std::vector<MachineInstr*>& mvec,
       // Use DestReg+1 to get the name "%ccr" instead of "%xcc" for WRCCR
       assert(getRegType(SrcReg) == IntRegType
              && "Can only copy CC reg to/from integer reg");
-      MI = BuildMI(V9::WRCCR, 2).addMReg(SrcReg).addMReg(DestReg+1, MOTy::Def);
+      MI = BuildMI(V9::WRCCRr, 2).addMReg(SrcReg)
+        .addMReg(SparcIntRegClass::g0).addMReg(DestReg+1, MOTy::Def);
     }
     break;
     
@@ -1212,7 +1214,8 @@ UltraSparcRegInfo::cpMem2RegMI(std::vector<MachineInstr*>& mvec,
     cpMem2RegMI(mvec, SrcPtrReg, Offset, scratchReg, IntRegType);
     
     // Use DestReg+1 to get the name "%ccr" instead of "%xcc" for WRCCR
-    MI = BuildMI(V9::WRCCR, 2).addMReg(scratchReg).addMReg(DestReg+1,MOTy::Def);
+    MI = BuildMI(V9::WRCCRr, 2).addMReg(scratchReg)
+      .addMReg(SparcIntRegClass::g0).addMReg(DestReg+1,MOTy::Def);
     break;
     
   case FloatCCRegType: {
