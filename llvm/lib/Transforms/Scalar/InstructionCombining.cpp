@@ -2112,6 +2112,7 @@ static Value *EmitGEPOffset(User *GEP, Instruction &I, InstCombiner &IC) {
                                             SIntPtrTy);
     if (Constant *OpC = dyn_cast<Constant>(Op)) {
       if (!OpC->isNullValue()) {
+        OpC = ConstantExpr::getCast(OpC, SIntPtrTy);
         Scale = ConstantExpr::getMul(OpC, Scale);
         if (Constant *RC = dyn_cast<Constant>(Result))
           Result = ConstantExpr::getAdd(RC, Scale);
@@ -2123,13 +2124,19 @@ static Value *EmitGEPOffset(User *GEP, Instruction &I, InstCombiner &IC) {
         }
       }
     } else {
-      // We'll let instcombine(mul) convert this to a shl if possible.
-      Value *Offs = 
-        IC.InsertNewInstBefore(BinaryOperator::createMul(Op, Scale,
-                                                   GEP->getName()+".idx"), I);
+      //if (Op->getType() != Scale->getType())
+      if (Size != 1) {
+        // Convert to correct type.
+        Op = IC.InsertNewInstBefore(new CastInst(Op, SIntPtrTy,
+                                                 Op->getName()+".c"), I);
+
+        // We'll let instcombine(mul) convert this to a shl if possible.
+        Op = IC.InsertNewInstBefore(BinaryOperator::createMul(Op, Scale,
+                                                    GEP->getName()+".idx"), I);
+      }
 
       // Emit an add instruction.
-      Result = IC.InsertNewInstBefore(BinaryOperator::createAdd(Offs, Result,
+      Result = IC.InsertNewInstBefore(BinaryOperator::createAdd(Op, Result,
                                                     GEP->getName()+".offs"), I);
     }
   }
