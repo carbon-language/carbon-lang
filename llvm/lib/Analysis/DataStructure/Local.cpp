@@ -888,6 +888,13 @@ void GraphBuilder::visitCallSite(CallSite CS) {
           if (DSNode *N = H.getNode())
             N->setReadMarker();
           return;
+        } else if (F->getName() == "__assert_fail") {
+          for (CallSite::arg_iterator AI = CS.arg_begin(), E = CS.arg_end();
+               AI != E; ++AI)
+            if (isPointerType((*AI)->getType()))
+              if (DSNode *N = getValueDest(**AI).getNode())
+                N->setReadMarker();
+          return;
         } else if (F->getName() == "modf" && CS.arg_end()-CS.arg_begin() == 2) {
           // This writes its second argument, and forces it to double.
           DSNodeHandle H = getValueDest(**--CS.arg_end());
