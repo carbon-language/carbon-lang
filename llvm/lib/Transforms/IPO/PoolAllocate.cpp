@@ -19,6 +19,8 @@
 #include "Support/VectorExtras.h"
 using namespace PA;
 
+#define DEBUG_TYPE "PoolAllocation"
+
 namespace {
   const Type *VoidPtrTy = PointerType::get(Type::SByteTy);
 
@@ -52,6 +54,15 @@ void PoolAllocate::printFuncECs() {
 	 LE = leaderMap.end(); LI != LE; ++LI) {
     std::cerr << LI->first->getName() << ": leader is "
 	      << LI->second->getName() << "\n";
+  }
+}
+
+static void printNTOMap(std::map<Value*, const Value*> &NTOM) {
+  std::cerr << "NTOM MAP\n";
+  for (std::map<Value*, const Value *>::iterator I = NTOM.begin(), 
+	 E = NTOM.end(); I != E; ++I) {
+    if (!isa<Function>(I->first) && !isa<BasicBlock>(I->first))
+      std::cerr << *I->first << " to " << *I->second << "\n";
   }
 }
 
@@ -121,7 +132,7 @@ bool PoolAllocate::run(Module &M) {
 
   std::map<Function*, Function*> FuncMap;
 
-   // Loop over the functions in the original program finding the pool desc.
+  // Loop over the functions in the original program finding the pool desc.
   // arguments necessary for each function that is indirectly callable.
   // For each equivalence class, make a list of pool arguments and update
   // the PoolArgFirst and PoolArgLast values for each function.
@@ -195,8 +206,65 @@ void PoolAllocate::AddPoolPrototypes() {
   
 }
 
+// Inline the DSGraphs of functions corresponding to the potential targets at
+// indirect call sites into the DS Graph of the callee.
+// This is required to know what pools to create/pass at the call site in the 
+// caller
+//
+void PoolAllocate::InlineIndirectCalls(Function &F, DSGraph &G, 
+				       hash_set<Function*> &visited) {
+  std::vector<DSCallSite> callSites = G.getFunctionCalls();
+  
+  visited.insert(&F);
+
+  // For each indirect call site in the function, inline all the potential
+  // targets
+  for (std::vector<DSCallSite>::iterator CSI = callSites.begin(),
+	 CSE = callSites.end(); CSI != CSE; ++CSI) {
+    if (CSI->isIndirectCall()) {
+      CallInst &CI = CSI->getCallInst();
+      std::pair<std::multimap<CallInst*, Function*>::iterator,
+	std::multimap<CallInst*, Function*>::iterator> Targets =
+	CallInstTargets.equal_range(&CI);
+      for (std::multimap<CallInst*, Function*>::iterator TFI = Targets.first,
+	     TFE = Targets.second; TFI != TFE; ++TFI) {
+	DSGraph &TargetG = BU->getDSGraph(*TFI->second);
+	// Call the function recursively if the callee is not yet inlined
+	// and if it hasn't been visited in this sequence of calls
+	// The latter is dependent on the fact that the graphs of all functions
+	// in an SCC are actually the same
+	if (InlinedFuncs.find(TFI->second) == InlinedFuncs.end() && 
+	    visited.find(TFI->second) == visited.end()) {
+	  InlineIndirectCalls(*TFI->second, TargetG, visited);
+	}
+	G.mergeInGraph(*CSI, *TFI->second, TargetG, DSGraph::KeepModRefBits | 
+		       DSGraph::KeepAllocaBit | DSGraph::DontCloneCallNodes |
+		       DSGraph::DontCloneAuxCallNodes); 
+      }
+    }
+  }
+  
+  // Mark this function as one whose graph is inlined with its indirect 
+  // function targets' DS Graphs.  This ensures that every function is inlined
+  // exactly once
+  InlinedFuncs.insert(&F);
+
+  
+}
+
 void PoolAllocate::FindFunctionPoolArgs(Function &F) {
+
+  // The DSGraph is merged with the globals graph. 
   DSGraph &G = BU->getDSGraph(F);
+  G.mergeInGlobalsGraph();
+
+  // Inline the potential targets of indirect calls
+  hash_set<Function*> visitedFuncs;
+  InlineIndirectCalls(F, G, visitedFuncs);
+
+  // At this point the DS Graphs have been modified in place including
+  // information about globals as well as indirect calls, making it useful
+  // for pool allocation
   std::vector<DSNode*> &Nodes = G.getNodes();
   if (Nodes.empty()) return ;  // No memory activity, nothing is required
 
@@ -225,10 +293,13 @@ void PoolAllocate::FindFunctionPoolArgs(Function &F) {
   
   // Mark globals and incomplete nodes as live... (this handles arguments)
   if (F.getName() != "main")
-    for (unsigned i = 0, e = Nodes.size(); i != e; ++i)
-      if ((Nodes[i]->isGlobalNode() || Nodes[i]->isIncomplete()) &&
-          Nodes[i]->isHeapNode())
+    for (unsigned i = 0, e = Nodes.size(); i != e; ++i) {
+      if (Nodes[i]->isGlobalNode() && !Nodes[i]->isIncomplete())
+	DEBUG(std::cerr << "Global node is not Incomplete\n");
+      if ((Nodes[i]->isIncomplete() || Nodes[i]->isGlobalNode()) && 
+	  Nodes[i]->isHeapNode())
         Nodes[i]->markReachableNodes(MarkedNodes);
+    }
 
   // Marked the returned node as alive...
   if (DSNode *RetNode = G.getReturnNodeFor(F).getNode())
@@ -238,9 +309,20 @@ void PoolAllocate::FindFunctionPoolArgs(Function &F) {
   if (MarkedNodes.empty())   // We don't need to clone the function if there
     return;                  // are no incoming arguments to be added.
 
+  // Erase any marked node that is not a heap node
+
   for (hash_set<DSNode*>::iterator I = MarkedNodes.begin(),
-	 E = MarkedNodes.end(); I != E; ++I)
-    FI.PoolArgLast++;
+	 E = MarkedNodes.end(); I != E; ) {
+    // erase invalidates hash_set iterators if the iterator points to the
+    // element being erased
+    if (!(*I)->isHeapNode())
+      MarkedNodes.erase(I++);
+    else
+      ++I;
+  }
+
+  FI.PoolArgLast += MarkedNodes.size();
+
 
   if (FuncECs.findClass(&F)) {
     // Update the equivalence class last pool argument information
@@ -260,6 +342,7 @@ void PoolAllocate::FindFunctionPoolArgs(Function &F) {
 Function *PoolAllocate::MakeFunctionClone(Function &F) {
   
   DSGraph &G = BU->getDSGraph(F);
+
   std::vector<DSNode*> &Nodes = G.getNodes();
   if (Nodes.empty())
     return 0;
@@ -270,7 +353,6 @@ Function *PoolAllocate::MakeFunctionClone(Function &F) {
   
   if (!FuncECs.findClass(&F)) {
     // Not in any equivalence class
-
     if (MarkedNodes.empty())
       return 0;
   } else {
@@ -396,6 +478,7 @@ Function *PoolAllocate::MakeFunctionClone(Function &F) {
 //
 void PoolAllocate::ProcessFunctionBody(Function &F, Function &NewF) {
   DSGraph &G = BU->getDSGraph(F);
+
   std::vector<DSNode*> &Nodes = G.getNodes();
   if (Nodes.empty()) return;     // Quick exit if nothing to do...
   
@@ -455,8 +538,10 @@ void PoolAllocate::CreatePools(Function &F,
     // Void types in DS graph are never used
     if (Node->getType() != Type::VoidTy)
       ElSize = ConstantUInt::get(Type::UIntTy, TD.getTypeSize(Node->getType()));
-    else
+    else {
+      std::cerr << "Potential node collapsing in " << F.getName() << "\n";
       ElSize = ConstantUInt::get(Type::UIntTy, 0);
+    }
 	
     // Insert the call to initialize the pool...
     new CallInst(PoolInit, make_vector(AI, ElSize, 0), "", InsertPoint);
@@ -477,8 +562,8 @@ namespace {
   /// allocated functions.
   struct FuncTransform : public InstVisitor<FuncTransform> {
     PoolAllocate &PAInfo;
-    DSGraph &G;
-    DSGraph &TDG;
+    DSGraph &G;      // The Bottom-up DS Graph
+    DSGraph &TDG;    // The Top-down DS Graph
     FuncInfo &FI;
 
     FuncTransform(PoolAllocate &P, DSGraph &g, DSGraph &tdg, FuncInfo &fi)
@@ -509,9 +594,9 @@ namespace {
     }
 
   private:
-    DSNode *getDSNodeFor(Value *V) {
-      if (isa<Constant>(V))
-	return 0;
+    DSNodeHandle& getDSNodeHFor(Value *V) {
+      //      if (isa<Constant>(V))
+      //	return DSNodeHandle();
 
       if (!FI.NewToOldValueMap.empty()) {
         // If the NewToOldValueMap is in effect, use it.
@@ -520,10 +605,11 @@ namespace {
           V = (Value*)I->second;
       }
 
-      return G.getScalarMap()[V].getNode();
+      return G.getScalarMap()[V];
     }
+    
     Value *getPoolHandle(Value *V) {
-      DSNode *Node = getDSNodeFor(V);
+      DSNode *Node = getDSNodeHFor(V).getNode();
       // Get the pool handle for this DSNode...
       std::map<DSNode*, Value*>::iterator I = FI.PoolDescriptors.find(Node);
       return I != FI.PoolDescriptors.end() ? I->second : 0;
@@ -595,51 +681,87 @@ Value* FuncTransform::retCloneIfFunc(Value *V) {
   return 0;
 }
 
-void FuncTransform::visitReturnInst (ReturnInst &I) {
-  if (I.getNumOperands())
-    if (Value *clonedFunc = retCloneIfFunc(I.getOperand(0))) {
-      // Cast the clone of I.getOperand(0) to the non-pool-allocated type
-      CastInst *CastI = new CastInst(clonedFunc, I.getOperand(0)->getType(), 
-				     "tmp", &I);
+void FuncTransform::visitReturnInst (ReturnInst &RI) {
+  if (RI.getNumOperands())
+    if (Value *clonedFunc = retCloneIfFunc(RI.getOperand(0))) {
+      // Cast the clone of RI.getOperand(0) to the non-pool-allocated type
+      CastInst *CastI = new CastInst(clonedFunc, RI.getOperand(0)->getType(), 
+				     "tmp", &RI);
       // Insert return instruction that returns the casted value
-      new ReturnInst(CastI, &I);
+      ReturnInst *RetI = new ReturnInst(CastI, &RI);
 
       // Remove original return instruction
-      I.getParent()->getInstList().erase(&I);
+      RI.getParent()->getInstList().erase(&RI);
+
+      if (!FI.NewToOldValueMap.empty()) {
+	std::map<Value*,const Value*>::iterator II =
+	  FI.NewToOldValueMap.find(&RI);
+	assert(II != FI.NewToOldValueMap.end() && 
+	       "RI not found in clone?");
+	FI.NewToOldValueMap.insert(std::make_pair(RetI, II->second));
+	FI.NewToOldValueMap.erase(II);
+      }
     }
 }
 
-void FuncTransform::visitStoreInst (StoreInst &I) {
+void FuncTransform::visitStoreInst (StoreInst &SI) {
   // Check if a constant function is being stored
-  if (Value *clonedFunc = retCloneIfFunc(I.getOperand(0))) {
-    CastInst *CastI = new CastInst(clonedFunc, I.getOperand(0)->getType(), 
-				   "tmp", &I);
-    new StoreInst(CastI, I.getOperand(1), &I);
-    I.getParent()->getInstList().erase(&I);
+  if (Value *clonedFunc = retCloneIfFunc(SI.getOperand(0))) {
+    CastInst *CastI = new CastInst(clonedFunc, SI.getOperand(0)->getType(), 
+				   "tmp", &SI);
+    StoreInst *StoreI = new StoreInst(CastI, SI.getOperand(1), &SI);
+    SI.getParent()->getInstList().erase(&SI);
+    
+    // Update the NewToOldValueMap if this is a clone
+    if (!FI.NewToOldValueMap.empty()) {
+      std::map<Value*,const Value*>::iterator II =
+	FI.NewToOldValueMap.find(&SI);
+      assert(II != FI.NewToOldValueMap.end() && 
+	     "SI not found in clone?");
+      FI.NewToOldValueMap.insert(std::make_pair(StoreI, II->second));
+      FI.NewToOldValueMap.erase(II);
+    }
   }
 }
 
-void FuncTransform::visitPHINode(PHINode &I) {
+void FuncTransform::visitPHINode(PHINode &PI) {
   // If any of the operands of the PHI node is a constant function pointer
   // that is cloned, the cast instruction has to be inserted at the end of the
   // previous basic block
   
-  if (isFuncPtr(&I)) {
-    PHINode *V = new PHINode(I.getType(), I.getName(), &I);
-    for (unsigned i = 0 ; i < I.getNumIncomingValues(); ++i) {
-      if (Value *clonedFunc = retCloneIfFunc(I.getIncomingValue(i))) {
-	// Insert CastInst at the end of  I.getIncomingBlock(i)
-	BasicBlock::iterator BBI = --I.getIncomingBlock(i)->end();
+  if (isFuncPtr(&PI)) {
+    PHINode *V = new PHINode(PI.getType(), PI.getName(), &PI);
+    for (unsigned i = 0 ; i < PI.getNumIncomingValues(); ++i) {
+      if (Value *clonedFunc = retCloneIfFunc(PI.getIncomingValue(i))) {
+	// Insert CastInst at the end of  PI.getIncomingBlock(i)
+	BasicBlock::iterator BBI = --PI.getIncomingBlock(i)->end();
 	// BBI now points to the terminator instruction of the basic block.
-	CastInst *CastI = new CastInst(clonedFunc, I.getType(), "tmp", BBI);
-	V->addIncoming(CastI, I.getIncomingBlock(i));
+	CastInst *CastI = new CastInst(clonedFunc, PI.getType(), "tmp", BBI);
+	V->addIncoming(CastI, PI.getIncomingBlock(i));
       } else {
-	V->addIncoming(I.getIncomingValue(i), I.getIncomingBlock(i));
+	V->addIncoming(PI.getIncomingValue(i), PI.getIncomingBlock(i));
       }
       
     }
-    I.replaceAllUsesWith(V);
-    I.getParent()->getInstList().erase(&I);
+    PI.replaceAllUsesWith(V);
+    PI.getParent()->getInstList().erase(&PI);
+    
+    DSGraph::ScalarMapTy &SM = G.getScalarMap();
+    DSGraph::ScalarMapTy::iterator PII = SM.find(&PI); 
+
+    // Update Scalar map of DSGraph if this is one of the original functions
+    // Otherwise update the NewToOldValueMap
+    if (PII != SM.end()) {
+      SM.insert(std::make_pair(V, PII->second));
+      SM.erase(PII);                     // Destroy the PHINode
+    } else {
+      std::map<Value*,const Value*>::iterator II =
+	FI.NewToOldValueMap.find(&PI);
+      assert(II != FI.NewToOldValueMap.end() && 
+	     "PhiI not found in clone?");
+      FI.NewToOldValueMap.insert(std::make_pair(V, II->second));
+      FI.NewToOldValueMap.erase(II);
+    }
   }
 }
 
@@ -660,12 +782,16 @@ void FuncTransform::visitMallocInst(MallocInst &MI) {
   
   MI.setName("");  // Nuke MIs name
   
-  // Cast to the appropriate type...
-  Value *Casted = new CastInst(V, MI.getType(), V->getName(), &MI);
-  
+  Value *Casted = V;
+
+  // Cast to the appropriate type if necessary
+  if (V->getType() != MI.getType()) {
+    Casted = new CastInst(V, MI.getType(), V->getName(), &MI);
+  }
+    
   // Update def-use info
   MI.replaceAllUsesWith(Casted);
-  
+
   // Remove old malloc instruction
   MI.getParent()->getInstList().erase(&MI);
   
@@ -676,56 +802,96 @@ void FuncTransform::visitMallocInst(MallocInst &MI) {
   if (MII != SM.end()) {
     // V and Casted now point to whatever the original malloc did...
     SM.insert(std::make_pair(V, MII->second));
-    SM.insert(std::make_pair(Casted, MII->second));
+    if (V != Casted)
+      SM.insert(std::make_pair(Casted, MII->second));
     SM.erase(MII);                     // The malloc is now destroyed
   } else {             // Otherwise, update the NewToOldValueMap
     std::map<Value*,const Value*>::iterator MII =
       FI.NewToOldValueMap.find(&MI);
     assert(MII != FI.NewToOldValueMap.end() && "MI not found in clone?");
     FI.NewToOldValueMap.insert(std::make_pair(V, MII->second));
-    FI.NewToOldValueMap.insert(std::make_pair(Casted, MII->second));
+    if (V != Casted)
+      FI.NewToOldValueMap.insert(std::make_pair(Casted, MII->second));
     FI.NewToOldValueMap.erase(MII);
   }
 }
 
-void FuncTransform::visitFreeInst(FreeInst &FI) {
-  Value *Arg = FI.getOperand(0);
+void FuncTransform::visitFreeInst(FreeInst &FrI) {
+  Value *Arg = FrI.getOperand(0);
   Value *PH = getPoolHandle(Arg);  // Get the pool handle for this DSNode...
   if (PH == 0) return;
   // Insert a cast and a call to poolfree...
-  Value *Casted = new CastInst(Arg, PointerType::get(Type::SByteTy),
-                               Arg->getName()+".casted", &FI);
-  new CallInst(PAInfo.PoolFree, make_vector(PH, Casted, 0), "", &FI);
-  
+  Value *Casted = Arg;
+  if (Arg->getType() != PointerType::get(Type::SByteTy))
+    Casted = new CastInst(Arg, PointerType::get(Type::SByteTy),
+				 Arg->getName()+".casted", &FrI);
+
+  CallInst *FreeI = new CallInst(PAInfo.PoolFree, make_vector(PH, Casted, 0), 
+				 "", &FrI);
   // Delete the now obsolete free instruction...
-  FI.getParent()->getInstList().erase(&FI);
+  FrI.getParent()->getInstList().erase(&FrI);
+  
+  // Update the NewToOldValueMap if this is a clone
+  if (!FI.NewToOldValueMap.empty()) {
+    std::map<Value*,const Value*>::iterator II =
+      FI.NewToOldValueMap.find(&FrI);
+    assert(II != FI.NewToOldValueMap.end() && 
+	   "FrI not found in clone?");
+    FI.NewToOldValueMap.insert(std::make_pair(FreeI, II->second));
+    FI.NewToOldValueMap.erase(II);
+  }
 }
 
-static void CalcNodeMapping(DSNode *Caller, DSNode *Callee,
+static void CalcNodeMapping(DSNodeHandle& Caller, DSNodeHandle& Callee,
                             std::map<DSNode*, DSNode*> &NodeMapping) {
-  if (Callee == 0) return;
-  // assert(Caller && "Callee has node but caller doesn't??");
+  DSNode *CalleeNode = Callee.getNode();
+  DSNode *CallerNode = Caller.getNode();
+
+  unsigned CalleeOffset = Callee.getOffset();
+  unsigned CallerOffset = Caller.getOffset();
+
+  if (CalleeNode == 0) return;
 
   // If callee has a node and caller doesn't, then a constant argument was
   // passed by the caller
-  if (Caller == 0) {
-    NodeMapping.insert(NodeMapping.end(), std::make_pair(Callee, (DSNode*) 0));
+  if (CallerNode == 0) {
+    NodeMapping.insert(NodeMapping.end(), std::make_pair(CalleeNode, 
+							 (DSNode *) 0));
   }
 
-  std::map<DSNode*, DSNode*>::iterator I = NodeMapping.find(Callee);
+  // Map the callee node to the caller node. 
+  // NB: The callee node could be of a different type. Eg. if it points to the
+  // field of a struct that the caller points to
+  std::map<DSNode*, DSNode*>::iterator I = NodeMapping.find(CalleeNode);
   if (I != NodeMapping.end()) {   // Node already in map...
-    assert(I->second == Caller && "Node maps to different nodes on paths?");
+    assert(I->second == CallerNode && 
+	   "Node maps to different nodes on paths?");
   } else {
-    NodeMapping.insert(I, std::make_pair(Callee, Caller));
+    NodeMapping.insert(I, std::make_pair(CalleeNode, CallerNode));
     
-    // Recursively add pointed to nodes...
-    unsigned numCallerLinks = Caller->getNumLinks();
-    unsigned numCalleeLinks = Callee->getNumLinks();
+    if (CalleeNode->getType() != CallerNode->getType() && CallerOffset == 0) 
+      DEBUG(std::cerr << "NB: Mapping of nodes between different types\n");
 
-    assert (numCallerLinks <= numCalleeLinks || numCalleeLinks == 0);
+    // Recursively map the callee links to the caller links starting from the
+    // offset in the node into which they are mapped.
+    // Being a BU Graph, the callee ought to have smaller number of links unless
+    // there is collapsing in the caller
+    unsigned numCallerLinks = CallerNode->getNumLinks() - CallerOffset;
+    unsigned numCalleeLinks = CalleeNode->getNumLinks() - CalleeOffset;
     
-    for (unsigned i = 0, e = numCalleeLinks; i != e; ++i)
-      CalcNodeMapping(Caller->getLink((i%numCallerLinks) << DS::PointerShift).getNode(), Callee->getLink(i << DS::PointerShift).getNode(), NodeMapping);
+    if (numCallerLinks > 0) {
+      if (numCallerLinks < numCalleeLinks) {
+	std::cerr << "Potential node collapsing in caller\n";
+	for (unsigned i = 0, e = numCalleeLinks; i != e; ++i)
+	  CalcNodeMapping(CallerNode->getLink(((i%numCallerLinks) << DS::PointerShift) + CallerOffset), CalleeNode->getLink((i << DS::PointerShift) + CalleeOffset), NodeMapping);
+      } else {
+	for (unsigned i = 0, e = numCalleeLinks; i != e; ++i)
+	  CalcNodeMapping(CallerNode->getLink((i << DS::PointerShift) + CallerOffset), CalleeNode->getLink((i << DS::PointerShift) + CalleeOffset), NodeMapping);
+      }
+    } else if (numCalleeLinks > 0) {
+      std::cerr << 
+	"Caller has unexpanded node, due to indirect call perhaps!\n";
+    }
   }
 }
 
@@ -749,6 +915,8 @@ void FuncTransform::visitCallInst(CallInst &CI) {
     }    
 
   }
+
+  DSGraph &CallerG = G;
 
   std::vector<Value*> Args;  
   if (!CF) {   // Indirect call
@@ -781,17 +949,27 @@ void FuncTransform::visitCallInst(CallInst &CI) {
       unsigned OpNum = 1;
       for ( ; AI != AE; ++AI, ++OpNum) {
 	if (!isa<Constant>(CI.getOperand(OpNum)))
-	  CalcNodeMapping(getDSNodeFor(CI.getOperand(OpNum)), 
-			  CG.getScalarMap()[AI].getNode(),
+	  CalcNodeMapping(getDSNodeHFor(CI.getOperand(OpNum)), 
+			  CG.getScalarMap()[AI],
 			  NodeMapping);
       }
       assert(OpNum == CI.getNumOperands() && "Varargs calls not handled yet!");
       
       if (CI.getType() != Type::VoidTy)
-	CalcNodeMapping(getDSNodeFor(&CI),
-                        CG.getReturnNodeFor(*TFI->second).getNode(), 
+	CalcNodeMapping(getDSNodeHFor(&CI),
+                        CG.getReturnNodeFor(*TFI->second), 
 			NodeMapping);
       
+      // Map the nodes that are pointed to by globals.
+      // For all globals map getDSNodeForGlobal(g)->CG.getDSNodeForGlobal(g)
+      for (DSGraph::ScalarMapTy::iterator SMI = G.getScalarMap().begin(), 
+	     SME = G.getScalarMap().end(); SMI != SME; ++SMI)
+	if (isa<GlobalValue>(SMI->first)) { 
+	  CalcNodeMapping(SMI->second, 
+			  CG.getScalarMap()[SMI->first],
+			  NodeMapping);
+	}
+
       unsigned idx = CFI->PoolArgFirst;
 
       // The following loop determines the pool pointers corresponding to 
@@ -845,6 +1023,30 @@ void FuncTransform::visitCallInst(CallInst &CI) {
 
     CI.replaceAllUsesWith(NewCall);
     DEBUG(std::cerr << "  Result Call: " << *NewCall);
+      
+    if (CI.getType() != Type::VoidTy) {
+      // If we are modifying the original function, update the DSGraph... 
+      DSGraph::ScalarMapTy &SM = G.getScalarMap();
+      DSGraph::ScalarMapTy::iterator CII = SM.find(&CI); 
+      if (CII != SM.end()) {
+	SM.insert(std::make_pair(NewCall, CII->second));
+	SM.erase(CII);                     // Destroy the CallInst
+      } else { 
+	// Otherwise update the NewToOldValueMap with the new CI return value
+	std::map<Value*,const Value*>::iterator CII = 
+	  FI.NewToOldValueMap.find(&CI);
+	assert(CII != FI.NewToOldValueMap.end() && "CI not found in clone?");
+	FI.NewToOldValueMap.insert(std::make_pair(NewCall, CII->second));
+	FI.NewToOldValueMap.erase(CII);
+      }
+    } else if (!FI.NewToOldValueMap.empty()) {
+      std::map<Value*,const Value*>::iterator II =
+	FI.NewToOldValueMap.find(&CI);
+      assert(II != FI.NewToOldValueMap.end() && 
+	     "CI not found in clone?");
+      FI.NewToOldValueMap.insert(std::make_pair(NewCall, II->second));
+      FI.NewToOldValueMap.erase(II);
+    }
   }
   else {
 
@@ -855,7 +1057,7 @@ void FuncTransform::visitCallInst(CallInst &CI) {
     DEBUG(std::cerr << "  Handling call: " << CI);
     
     DSGraph &CG = PAInfo.getBUDataStructures().getDSGraph(*CF);  // Callee graph
-    
+
     // We need to figure out which local pool descriptors correspond to the pool
     // descriptor arguments passed into the function call.  Calculate a mapping
     // from callee DSNodes to caller DSNodes.  We construct a partial isomophism
@@ -867,20 +1069,26 @@ void FuncTransform::visitCallInst(CallInst &CI) {
     Function::aiterator AI = CF->abegin(), AE = CF->aend();
     unsigned OpNum = 1;
     for (; AI != AE; ++AI, ++OpNum) {
-      // Check if the operand of the call is a return of another call
-      // for the operand will be transformed in which case.
-      // Look up the OldToNewRetValMap to see if the operand is a new value.
       Value *callOp = CI.getOperand(OpNum);
       if (!isa<Constant>(callOp))
-	CalcNodeMapping(getDSNodeFor(callOp),CG.getScalarMap()[AI].getNode(), 
+	CalcNodeMapping(getDSNodeHFor(callOp), CG.getScalarMap()[AI], 
 			NodeMapping);
     }
     assert(OpNum == CI.getNumOperands() && "Varargs calls not handled yet!");
     
     // Map the return value as well...
     if (CI.getType() != Type::VoidTy)
-      CalcNodeMapping(getDSNodeFor(&CI), CG.getReturnNodeFor(*CF).getNode(),
+      CalcNodeMapping(getDSNodeHFor(&CI), CG.getReturnNodeFor(*CF),
 		      NodeMapping);
+
+    // Map the nodes that are pointed to by globals.
+    // For all globals map getDSNodeForGlobal(g)->CG.getDSNodeForGlobal(g)
+    for (DSGraph::ScalarMapTy::iterator SMI = G.getScalarMap().begin(), 
+	   SME = G.getScalarMap().end(); SMI != SME; ++SMI)
+      if (isa<GlobalValue>(SMI->first)) { 
+	CalcNodeMapping(SMI->second, 
+			CG.getScalarMap()[SMI->first], NodeMapping);
+      }
 
     // Okay, now that we have established our mapping, we can figure out which
     // pool descriptors to pass in...
@@ -893,13 +1101,12 @@ void FuncTransform::visitCallInst(CallInst &CI) {
 
     for (unsigned i = 0, e = CFI->ArgNodes.size(); i != e; ++i) {
       if (NodeMapping.count(CFI->ArgNodes[i])) {
-	assert(NodeMapping.count(CFI->ArgNodes[i]) && "Node not in mapping!");
+
 	DSNode *LocalNode = NodeMapping.find(CFI->ArgNodes[i])->second;
 	if (LocalNode) {
 	  assert(FI.PoolDescriptors.count(LocalNode) && "Node not pool allocated?");
 	  Args.push_back(FI.PoolDescriptors.find(LocalNode)->second);
-	}
-	else
+	} else
 	  Args.push_back(Constant::getNullValue(PoolDescPtr));
       } else {
 	Args.push_back(Constant::getNullValue(PoolDescPtr));
@@ -917,11 +1124,38 @@ void FuncTransform::visitCallInst(CallInst &CI) {
     Args.insert(Args.end(), CI.op_begin()+1, CI.op_end());
     
     std::string Name = CI.getName(); 
+
+    std::map<Value*,const Value*>::iterator CNewII; 
+    
     Value *NewCall = new CallInst(CFI->Clone, Args, Name, &CI);
+
     CI.replaceAllUsesWith(NewCall);
     DEBUG(std::cerr << "  Result Call: " << *NewCall);
 
+    if (CI.getType() != Type::VoidTy) {
+      // If we are modifying the original function, update the DSGraph... 
+      DSGraph::ScalarMapTy &SM = G.getScalarMap();
+      DSGraph::ScalarMapTy::iterator CII = SM.find(&CI); 
+      if (CII != SM.end()) {
+	SM.insert(std::make_pair(NewCall, CII->second));
+	SM.erase(CII);                     // Destroy the CallInst
+      } else { 
+	// Otherwise update the NewToOldValueMap with the new CI return value
+	std::map<Value*,const Value*>::iterator CNII = 
+	  FI.NewToOldValueMap.find(&CI);
+	assert(CNII != FI.NewToOldValueMap.end() && CNII->second && 
+	       "CI not found in clone?");
+	FI.NewToOldValueMap.insert(std::make_pair(NewCall, CNII->second));
+	FI.NewToOldValueMap.erase(CNII);
+      }
+    } else if (!FI.NewToOldValueMap.empty()) {
+      std::map<Value*,const Value*>::iterator II =
+	FI.NewToOldValueMap.find(&CI);
+      assert(II != FI.NewToOldValueMap.end() && "CI not found in clone?");
+      FI.NewToOldValueMap.insert(std::make_pair(NewCall, II->second));
+      FI.NewToOldValueMap.erase(II);
+    }
   }
-  
+
   CI.getParent()->getInstList().erase(&CI);
 }
