@@ -18,6 +18,8 @@
 
 #ifdef HAVE_WINDOWS_H
 #include <windows.h>
+#undef min
+#undef max
 #endif
 
 #endif
