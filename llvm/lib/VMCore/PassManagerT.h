@@ -261,13 +261,8 @@ public:
             ++I; // This analysis is preserved, leave it in the available set...
           else {
             if (!dynamic_cast<ImmutablePass*>(I->second)) {
-#if MAP_DOESNT_HAVE_BROKEN_ERASE_MEMBER
-              I = CurrentAnalyses.erase(I);   // Analysis not preserved!
-#else
-              // GCC 2.95.3 STL doesn't have correct erase member!
-              CurrentAnalyses.erase(I);
-              I = CurrentAnalyses.begin();
-#endif
+              std::map<AnalysisID, Pass*>::iterator J = I++;
+              CurrentAnalyses.erase(J);   // Analysis not preserved!
             } else {
               ++I;
             }
