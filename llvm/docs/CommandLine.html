@@ -36,6 +36,7 @@
         <li><a href="#valrequired">Controlling whether or not a value must be
                                    specified</a>
         <li><a href="#formatting">Controlling other formatting options</a>
+        <li><a href="#misc">Miscellaneous option modifiers</a>
         </ul>
       <li><a href="#toplevel">Top-Level Classes and Functions</a>
         <ul>
@@ -961,7 +962,7 @@ href="#cl::list">cl::list</a></tt>.  These modifiers give you the ability to
 tweak how options are parsed and how <tt>--help</tt> output is generated to fit
 your application well.<p>
 
-These options naturally fall into four main catagories:<p>
+These options fall into five main catagories:<p>
 
 <ol>
 <li><a href="#hiding">Hiding an option from <tt>--help</tt> output</a>
@@ -970,12 +971,14 @@ These options naturally fall into four main catagories:<p>
 <li><a href="#valrequired">Controlling whether or not a value must be
                            specified</a>
 <li><a href="#formatting">Controlling other formatting options</a>
+<li><a href="#misc">Miscellaneous option modifiers</a>
 </ol><p>
 
 It is not possible to specify two options from the same catagory (you'll get a
-runtime error) to a single option.  The CommandLine library specifies defaults
-for all of these settings that are the most useful in practice and the most
-common, which mean that you usually shouldn't have to worry about these.<p>
+runtime error) to a single option, except for options in the miscellaneous
+catagory.  The CommandLine library specifies defaults for all of these settings
+that are the most useful in practice and the most common, which mean that you
+usually shouldn't have to worry about these.<p>
 
 
 <!-- _______________________________________________________________________ -->
@@ -1151,6 +1154,29 @@ basically looks like this:<p>
 
 </ol>
 <tt>}</tt><p>
+
+
+
+<!-- _______________________________________________________________________ -->
+</ul><a name="misc"><h4><hr size=0>Miscellaneous option modifiers</h4><ul>
+
+The miscellaneous option modifiers are the only flags where you can specify more
+than one flag from the set: they are not mutually exclusive.  These flags
+specify boolean properties that modify the option.<p>
+
+<ul>
+
+<a name="cl::CommaSeparated">The <b><tt>cl::CommaSeparated</tt></b> modifier
+indicates that any commas specified for an option's value should be used to
+split the value up into multiple values for the option.  For example, these two
+options are equivalent when <tt>cl::CommaSeparated</tt> is specified:
+"<tt>-foo=a -foo=b -foo=c</tt>" and "<tt>-foo=a,b,c</tt>".  This option only
+makes sense to be used in a case where the option is allowed to accept one or
+more values (i.e. it is a <a href="#cl::list">cl::list</a> option).<p>
+</ul>
+
+So far, the only miscellaneous option modifier is the
+<tt>cl::CommaSeparated</tt> modifier.<p>
 
 
 <!-- ======================================================================= -->
@@ -1469,7 +1495,7 @@ line options </b></font></td></tr></table><ul>
 <address><a href="mailto:sabre@nondot.org">Chris Lattner</a></address>
 <!-- Created: Tue Jan 23 15:19:28 CST 2001 -->
 <!-- hhmts start -->
-Last modified: Wed Aug  7 13:22:40 CDT 2002
+Last modified: Thu May 22 15:35:19 CDT 2003
 <!-- hhmts end -->
 </font>
 </body></html>
