@@ -24,7 +24,7 @@
 
 namespace llvm {
 
-struct FunctionInfo;        // Defined in ExecutionAnnotations.h
+struct FunctionInfo;
 class gep_type_iterator;
 class ConstantExpr;
 
