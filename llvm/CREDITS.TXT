@@ -1,0 +1,44 @@
+Inspired by the CREDITS file from the Linux source tree, this file is,
+likewise, at least a partial list of people who have contributed to the LLVM
+project. The format and the next paragraph are stolen directly from that file.
+
+The list sorted by name and formatted to allow easy grepping and beautification
+by scripts.  The fields are: name (N), email (E), web-address (W), PGP key ID
+and fingerprint (P), description (D), and snail-mail address (S).
+
+N: Vikram Adve
+E: vadve@cs.uiuc.edu
+W: http://www.cs.uiuc.edu/~vadve/
+D: The Sparc64 backend, provider of much wisdom, and motivator for LLVM
+
+N: Misha Brukman
+E: brukman@uiuc.edu
+W: http://misha.brukman.net
+D: Portions of X86 and Sparc JIT compilers, various other hacks
+
+N: Cameron Buschardt
+D: Author of the mem2reg pass
+
+N: Casey Carter
+D: Fixes to the Reassociation pass, various improvement patches
+
+N: Brian Gaeke
+E: gaeke@uiuc.edu
+W: http://www.students.uiuc.edu/~gaeke/
+D: Portions of X86 static and JIT compilers, reoptimizer framework cleanups
+
+N: Chris Lattner
+E: sabre@nondot.org
+W: http://nondot.org/~sabre/
+D: Primary architect of LLVM
+
+N: Ruchira Sasanka
+E: sasanka@uiuc.edu
+D: Graph coloring register allocator for the Sparc64 backend
+
+N: Anand Shukla
+E: ashukla@cs.uiuc.edu
+D: The paths pass
+
+N: Bill Wendling
+D: The Lower Setjmp/Longjmp pass
