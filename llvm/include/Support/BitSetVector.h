@@ -36,14 +36,26 @@
 
 
 class BitSetVector {
+  // Types used internal to the representation
   typedef std::bitset<WORDSIZE> bitword;
   typedef bitword::reference reference;
   class iterator;
 
+  // Data used in the representation
   std::vector<bitword> bitsetVec;
   unsigned maxSize;
 
+private:
+  // Utility functions for the representation
   static unsigned NumWords(unsigned Size) { return (Size+WORDSIZE-1)/WORDSIZE;} 
+  static unsigned LastWordSize(unsigned Size) { return Size % WORDSIZE; }
+
+  // Clear the unused bits in the last word.
+  // The unused bits are the high (WORDSIZE - LastWordSize()) bits
+  void ClearUnusedBits() {
+    unsigned long usedBits = (1U << LastWordSize(size())) - 1;
+    bitsetVec.back() &= bitword(usedBits);
+  }
 
   const bitword& getWord(unsigned i) const { return bitsetVec[i]; }
         bitword& getWord(unsigned i)       { return bitsetVec[i]; }
@@ -68,29 +80,42 @@ public:
   ///  Modifier methods: reset, set for entire set, operator[] for one element.
   ///  
   void reset() {
-    for(std::vector<bitword>::iterator I=bitsetVec.begin(), E=bitsetVec.end();
-        I != E; ++I)
-      I->reset();
+    for (unsigned i=0, N = bitsetVec.size(); i < N; ++i)
+      bitsetVec[i].reset();
   }
   void set() {
-    for(std::vector<bitword>::iterator I=bitsetVec.begin(), E=bitsetVec.end();
-        I != E; ++I)
-      I->set();
+    for (unsigned i=0, N = bitsetVec.size(); i < N; ++i) // skip last word
+      bitsetVec[i].set();
+    ClearUnusedBits();
   }
-  std::bitset<32>::reference operator[](unsigned n) {
+  reference operator[](unsigned n) {
+    assert(n  < size() && "BitSetVector: Bit number out of range");
     unsigned ndiv = n / WORDSIZE, nmod = n % WORDSIZE;
-    assert(ndiv  < bitsetVec.size() && "BitSetVector: Bit number out of range");
     return bitsetVec[ndiv][nmod];
   }
   iterator begin() { return iterator::begin(*this); }
   iterator end()   { return iterator::end(*this);   } 
 
   /// 
+  ///  Comparison operations: equal, not equal
+  /// 
+  bool operator == (const BitSetVector& set2) const {
+    assert(maxSize == set2.maxSize && "Illegal == comparison");
+    for (unsigned i = 0; i < bitsetVec.size(); ++i)
+      if (getWord(i) != set2.getWord(i))
+        return false;
+    return true;
+  }
+  bool operator != (const BitSetVector& set2) const {
+    return ! (*this == set2);
+  }
+
+  /// 
   ///  Set membership operations: single element, any, none, count
   ///  
   bool test(unsigned n) const {
+    assert(n  < size() && "BitSetVector: Bit number out of range");
     unsigned ndiv = n / WORDSIZE, nmod = n % WORDSIZE;
-    assert(ndiv  < bitsetVec.size() && "BitSetVector: Bit number out of range");
     return bitsetVec[ndiv].test(nmod);
   }
   bool any() const {
@@ -107,6 +132,9 @@ public:
     for (unsigned i = 0; i < bitsetVec.size(); ++i)
       n += bitsetVec[i].count();
     return n;
+  }
+  bool all() const {
+    return (count() == size());
   }
 
   /// 
@@ -137,6 +165,7 @@ public:
     BitSetVector result(maxSize);
     for (unsigned i = 0; i < bitsetVec.size(); ++i)
       (result.getWord(i) = getWord(i)).flip();
+    result.ClearUnusedBits();
     return result;
   }
 
@@ -156,12 +185,12 @@ public:
   class iterator {
     unsigned   currentBit;
     unsigned   currentWord;
-    BitSetVector& bitvec;
-    iterator(unsigned B, unsigned W, BitSetVector _bitvec)
-      : currentBit(B), currentWord(W), bitvec(_bitvec) { }
+    BitSetVector* bitvec;
+    iterator(unsigned B, unsigned W, BitSetVector& _bitvec)
+      : currentBit(B), currentWord(W), bitvec(&_bitvec) { }
   public:
     iterator(BitSetVector& _bitvec)
-      : currentBit(0), currentWord(0), bitvec(_bitvec) { }
+      : currentBit(0), currentWord(0), bitvec(&_bitvec) { }
     iterator(const iterator& I)
       : currentBit(I.currentBit),currentWord(I.currentWord),bitvec(I.bitvec) { }
     iterator& operator=(const iterator& I) {
@@ -174,13 +203,13 @@ public:
     // Increment and decrement operators (pre and post)
     iterator& operator++() {
       if (++currentBit == WORDSIZE)
-        { currentBit = 0; if (currentWord < bitvec.maxSize) ++currentWord; }
+        { currentBit = 0; if (currentWord < bitvec->maxSize) ++currentWord; }
       return *this;
     }
     iterator& operator--() {
       if (currentBit == 0) {
         currentBit = WORDSIZE-1;
-        currentWord = (currentWord == 0)? bitvec.maxSize : --currentWord;
+        currentWord = (currentWord == 0)? bitvec->maxSize : --currentWord;
       }
       else
         --currentBit;
@@ -191,14 +220,14 @@ public:
 
     // Dereferencing operators
     reference operator*() {
-      assert(currentWord < bitvec.maxSize &&
+      assert(currentWord < bitvec->maxSize &&
              "Dereferencing iterator past the end of a BitSetVector");
-      return bitvec.getWord(currentWord)[currentBit];
+      return bitvec->getWord(currentWord)[currentBit];
     }
 
     // Comparison operator
     bool operator==(const iterator& I) {
-      return (&I.bitvec == &bitvec &&
+      return (I.bitvec == bitvec &&
               I.currentWord == currentWord && I.currentBit == currentBit);
     }
 
