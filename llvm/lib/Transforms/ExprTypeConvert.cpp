@@ -257,7 +257,6 @@ bool ExpressionConvertibleToType(Value *V, const Type *Ty,
     // and we could convert this to an appropriate GEP for the new type.
     //
     if (GEP->getNumOperands() == 2 &&
-        GEP->getOperand(1)->getType() == Type::LongTy &&
         GEP->getType() == PointerType::get(Type::SByteTy)) {
 
       // Do not Check to see if our incoming pointer can be converted
@@ -285,7 +284,6 @@ bool ExpressionConvertibleToType(Value *V, const Type *Ty,
     //     getelemenptr [[int] *] * %reg115, long %reg138      ; [int]**
     //
     if (GEP->getNumOperands() == 2 && 
-        GEP->getOperand(1)->getType() == Type::LongTy &&
         PTy->getElementType()->isSized() &&
         TD.getTypeSize(PTy->getElementType()) == 
         TD.getTypeSize(GEP->getType()->getElementType())) {
@@ -466,11 +464,10 @@ Value *ConvertExpressionToType(Value *V, const Type *Ty, ValueMapCache &VMC,
     }
 
     if (Res == 0 && GEP->getNumOperands() == 2 &&
-        GEP->getOperand(1)->getType() == Type::LongTy &&
         GEP->getType() == PointerType::get(Type::SByteTy)) {
       
       // Otherwise, we can convert a GEP from one form to the other iff the
-      // current gep is of the form 'getelementptr [sbyte]*, unsigned N
+      // current gep is of the form 'getelementptr sbyte*, unsigned N
       // and we could convert this to an appropriate GEP for the new type.
       //
       const PointerType *NewSrcTy = PointerType::get(PVTy);
@@ -774,8 +771,12 @@ static bool OperandConvertibleToType(User *U, Value *V, const Type *Ty,
           TD.getTypeSize(ElTy) != TD.getTypeSize(I->getOperand(0)->getType()))
         return false;
 
-      // Can convert store if the incoming value is convertible...
-      return ExpressionConvertibleToType(I->getOperand(0), ElTy, CTMap, TD);
+      // Can convert store if the incoming value is convertible and if the
+      // result will preserve semantics...
+      const Type *Op0Ty = I->getOperand(0)->getType();
+      if (!(Op0Ty->isIntegral() ^ ElTy->isIntegral()) &&
+          !(Op0Ty->isFloatingPoint() ^ ElTy->isFloatingPoint()))
+        return ExpressionConvertibleToType(I->getOperand(0), ElTy, CTMap, TD);
     }
     return false;
   }
