@@ -556,6 +556,7 @@ void ConstantArray::destroyConstant() {
 void ConstantArray::refineAbstractType(const DerivedType *OldTy,
                                        const Type *NewTy) {
   Value::refineAbstractType(OldTy, NewTy);
+  if (OldTy == NewTy) return;
 
   // Make everyone now use a constant of the new type...
   std::vector<Constant*> C;
@@ -625,6 +626,7 @@ void ConstantStruct::destroyConstant() {
 void ConstantStruct::refineAbstractType(const DerivedType *OldTy,
                                         const Type *NewTy) {
   Value::refineAbstractType(OldTy, NewTy);
+  if (OldTy == NewTy) return;
 
   // Make everyone now use a constant of the new type...
   std::vector<Constant*> C;
@@ -666,6 +668,7 @@ void ConstantPointerNull::destroyConstant() {
 void ConstantPointerNull::refineAbstractType(const DerivedType *OldTy,
                                              const Type *NewTy) {
   Value::refineAbstractType(OldTy, NewTy);
+  if (OldTy == NewTy) return;
 
   // Make everyone now use a constant of the new type...
   if (NewTy != OldTy) {
@@ -798,6 +801,7 @@ void ConstantExpr::destroyConstant() {
 void ConstantExpr::refineAbstractType(const DerivedType *OldTy,
                                       const Type *NewTy) {
   Value::refineAbstractType(OldTy, NewTy);
+  if (OldTy == NewTy) return;
 
   // FIXME: These need to use a lower-level implementation method, because the
   // ::get methods intuit the type of the result based on the types of the
