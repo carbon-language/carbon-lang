@@ -6,6 +6,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+#if 1
+#include "llvm/Pass.h"
+#else
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Transforms/Utils/CloneFunction.h"
 #include "llvm/Analysis/DataStructure.h"
@@ -26,8 +29,6 @@ using std::cerr;
 using std::map;
 using std::string;
 using std::set;
-
-#if 0
 
 // DEBUG_CREATE_POOLS - Enable this to turn on debug output for the pool
 // creation phase in the top level function of a transformed data structure.
