@@ -771,6 +771,11 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
   if (I.hasName())
     Out << getLLVMName(I.getName()) << " = ";
 
+  // If this is a volatile load or store, print out the volatile marker
+  if ((isa<LoadInst>(I)  && cast<LoadInst>(I).isVolatile()) ||
+      (isa<StoreInst>(I) && cast<StoreInst>(I).isVolatile()))
+      Out << "volatile ";
+
   // Print out the opcode...
   Out << I.getOpcodeName();
 

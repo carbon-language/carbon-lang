@@ -1,4 +1,4 @@
-//===-- iMemory.cpp - Implement Memory instructions --------------*- C++ -*--=//
+//===-- iMemory.cpp - Implement Memory instructions -----------------------===//
 //
 // This file implements the various memory related classes defined in iMemory.h
 //
@@ -58,18 +58,34 @@ FreeInst::FreeInst(Value *Ptr, Instruction *InsertBefore)
 
 LoadInst::LoadInst(Value *Ptr, const std::string &Name, Instruction *InsertBef)
   : Instruction(cast<PointerType>(Ptr->getType())->getElementType(),
-                Load, Name, InsertBef) {
+                Load, Name, InsertBef), Volatile(false) {
   Operands.reserve(1);
   Operands.push_back(Use(Ptr, this));
 }
 
+LoadInst::LoadInst(Value *Ptr, const std::string &Name, bool isVolatile,
+                   Instruction *InsertBef)
+  : Instruction(cast<PointerType>(Ptr->getType())->getElementType(),
+                Load, Name, InsertBef), Volatile(isVolatile) {
+  Operands.reserve(1);
+  Operands.push_back(Use(Ptr, this));
+}
 
 //===----------------------------------------------------------------------===//
 //                           StoreInst Implementation
 //===----------------------------------------------------------------------===//
 
 StoreInst::StoreInst(Value *Val, Value *Ptr, Instruction *InsertBefore)
-  : Instruction(Type::VoidTy, Store, "", InsertBefore) {
+  : Instruction(Type::VoidTy, Store, "", InsertBefore), Volatile(false) {
+  
+  Operands.reserve(2);
+  Operands.push_back(Use(Val, this));
+  Operands.push_back(Use(Ptr, this));
+}
+
+StoreInst::StoreInst(Value *Val, Value *Ptr, bool isVolatile, 
+                     Instruction *InsertBefore)
+  : Instruction(Type::VoidTy, Store, "", InsertBefore), Volatile(isVolatile) {
   
   Operands.reserve(2);
   Operands.push_back(Use(Val, this));

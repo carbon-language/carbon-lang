@@ -1,7 +1,7 @@
-//===-- llvm/iMemory.h - Memory Operator node definitions --------*- C++ -*--=//
+//===-- llvm/iMemory.h - Memory Operator node definitions -------*- C++ -*-===//
 //
 // This file contains the declarations of all of the memory related operators.
-// This includes: malloc, free, alloca, load, store, getfield, putfield
+// This includes: malloc, free, alloca, load, store, and getelementptr
 //
 //===----------------------------------------------------------------------===//
 
@@ -139,12 +139,23 @@ struct FreeInst : public Instruction {
 
 class LoadInst : public Instruction {
   LoadInst(const LoadInst &LI) : Instruction(LI.getType(), Load) {
+    Volatile = LI.isVolatile();
     Operands.reserve(1);
     Operands.push_back(Use(LI.Operands[0], this));
   }
+  bool Volatile;   // True if this is a volatile load
 public:
-  LoadInst(Value *Ptr, const std::string &Name = "",
+  LoadInst(Value *Ptr, const std::string &Name, Instruction *InsertBefore);
+  LoadInst(Value *Ptr, const std::string &Name = "", bool isVolatile = false,
            Instruction *InsertBefore = 0);
+
+  /// isVolatile - Return true if this is a load from a volatile memory
+  /// location.
+  bool isVolatile() const { return Volatile; }
+
+  /// setVolatile - Specify whether this is a volatile load or not.
+  ///
+  void setVolatile(bool V) { Volatile = V; }
 
   virtual Instruction *clone() const { return new LoadInst(*this); }
 
@@ -155,7 +166,7 @@ public:
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const LoadInst *) { return true; }
   static inline bool classof(const Instruction *I) {
-    return (I->getOpcode() == Instruction::Load);
+    return I->getOpcode() == Instruction::Load;
   }
   static inline bool classof(const Value *V) {
     return isa<Instruction>(V) && classof(cast<Instruction>(V));
@@ -169,12 +180,26 @@ public:
 
 class StoreInst : public Instruction {
   StoreInst(const StoreInst &SI) : Instruction(SI.getType(), Store) {
+    Volatile = SI.isVolatile();
     Operands.reserve(2);
     Operands.push_back(Use(SI.Operands[0], this));
     Operands.push_back(Use(SI.Operands[1], this));
   }
+  bool Volatile;   // True if this is a volatile store
 public:
-  StoreInst(Value *Val, Value *Ptr, Instruction *InsertBefore = 0);
+  StoreInst(Value *Val, Value *Ptr, Instruction *InsertBefore);
+  StoreInst(Value *Val, Value *Ptr, bool isVolatile = false,
+            Instruction *InsertBefore = 0);
+
+
+  /// isVolatile - Return true if this is a load from a volatile memory
+  /// location.
+  bool isVolatile() const { return Volatile; }
+
+  /// setVolatile - Specify whether this is a volatile load or not.
+  ///
+  void setVolatile(bool V) { Volatile = V; }
+
   virtual Instruction *clone() const { return new StoreInst(*this); }
 
   virtual bool mayWriteToMemory() const { return true; }
@@ -186,7 +211,7 @@ public:
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const StoreInst *) { return true; }
   static inline bool classof(const Instruction *I) {
-    return (I->getOpcode() == Instruction::Store);
+    return I->getOpcode() == Instruction::Store;
   }
   static inline bool classof(const Value *V) {
     return isa<Instruction>(V) && classof(cast<Instruction>(V));
