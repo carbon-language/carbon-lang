@@ -9,10 +9,16 @@
 #ifndef LLVM_CODEGEN_MACHINEINSTR_H
 #define LLVM_CODEGEN_MACHINEINSTR_H
 
-#include "llvm/Target/MachineInstrInfo.h"
 #include "llvm/Annotation.h"
 #include "Support/iterator"
-class Instruction;
+#include "Support/NonCopyable.h"
+#include <vector>
+class Value;
+class Function;
+
+typedef int MachineOpCode;
+typedef int OpCodeMask;
+typedef int InstrSchedClass;
 
 //---------------------------------------------------------------------------
 // class MachineOperand 

@@ -10,6 +10,7 @@
 
 #include "llvm/Instruction.h"
 #include "llvm/CodeGen/MachineInstr.h"
+#include "Support/DataTypes.h"
 class InstructionNode;
 class TargetMachine;
 
