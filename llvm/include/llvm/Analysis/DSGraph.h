@@ -290,14 +290,18 @@ public:
 
   void AssertGraphOK() const;
 
-  void DSGraph::mergeInGlobalsGraph();
+  /// mergeInGlobalsGraph - This method is useful for clients to incorporate the
+  /// globals graph into the DS, BU or TD graph for a function.  This code
+  /// retains all globals, i.e., does not delete unreachable globals after they
+  /// are inlined.
+  ///
+  void mergeInGlobalsGraph();
 
-public:
-  // removeTriviallyDeadNodes - After the graph has been constructed, this
-  // method removes all unreachable nodes that are created because they got
-  // merged with other nodes in the graph.  This is used as the first step of
-  // removeDeadNodes.
-  //
+  /// removeTriviallyDeadNodes - After the graph has been constructed, this
+  /// method removes all unreachable nodes that are created because they got
+  /// merged with other nodes in the graph.  This is used as the first step of
+  /// removeDeadNodes.
+  ///
   void removeTriviallyDeadNodes();
 };
 
