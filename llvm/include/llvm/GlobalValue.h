@@ -67,8 +67,15 @@ public:
   void setLinkage(LinkageTypes LT) { Linkage = LT; }
   LinkageTypes getLinkage() const { return Linkage; }
 
-  /// Override from Constant class. No GlobalValue's have null values so
-  /// this always returns false.
+  /// hasNotBeenReadFromBytecode - If a module provider is being used to lazily
+  /// stream in functions from disk, this method can be used to check to see if
+  /// the function has been read in yet or not.  Unless you are working on the
+  /// JIT or something else that streams stuff in lazily, you don't need to
+  /// worry about this.
+  bool hasNotBeenReadFromBytecode() const { return Linkage == GhostLinkage; }
+
+  /// Override from Constant class. No GlobalValue's are null values so this
+  /// always returns false.
   virtual bool isNullValue() const { return false; }
 
   /// Override from Constant class.
