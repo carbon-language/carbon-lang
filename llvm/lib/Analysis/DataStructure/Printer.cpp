@@ -179,6 +179,23 @@ void DSGraph::writeGraphToFile(std::ostream &O,
   }
 }
 
+/// viewGraph - Emit a dot graph, run 'dot', run gv on the postscript file,
+/// then cleanup.  For use from the debugger.
+///
+void DSGraph::viewGraph() const {
+  std::ofstream F("/tmp/tempgraph.dot");
+  if (!F.good()) {
+    std::cerr << "Error opening '/tmp/tempgraph.dot' for temporary graph!\n";
+    return;
+  }
+  print(F);
+  if (system("dot -Tps /tmp/tempgraph.dot > /tmp/tempgraph.ps"))
+    std::cerr << "Error running dot: 'dot' not in path?\n";
+  system("gv /tmp/tempgraph.ps");
+  system("rm /tmp/tempgraph.dot /tmp/tempgraph.ps");
+}
+
+
 template <typename Collection>
 static void printCollection(const Collection &C, std::ostream &O,
                             const Module *M, const std::string &Prefix) {
