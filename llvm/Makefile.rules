@@ -482,7 +482,7 @@ $(DestSharedLib): $(libdir) $(LibName.LA)
 
 uninstall-local:: 
 	$(Echo) Uninstalling $(BuildMode) Shared Library $(DestSharedLib)
-	-$(Verb) $(RM) -f $(DestSharedLib)
+	-$(Verb) $(RM) -f $(libdir)/lib$(LIBRARYNAME).*
 
 endif
 
@@ -922,10 +922,24 @@ clean-all-local::
 	-$(Verb) $(RM) -rf Debug Release Profile
 
 # Build tags database for Emacs/Xemacs:
-tags:: TAGS
+tags:: TAGS CTAGS
+
 TAGS: 
-	find include lib tools examples -name '*.cpp' -o -name '*.h' | \
+	find $(BUILD_SRC_ROOT)/include $(BUILD_SRC_ROOT)/lib \
+          $(BUILD_SRC_ROOT)/tools $(BUILD_SRC_ROOT)/examples \
+          $(BUILD_OBJ_ROOT)/include $(BUILD_OBJ_ROOT)/lib \
+          $(BUILD_OBJ_ROOT)/tools $(BUILD_OBJ_ROOT)/examples \
+        -name '*.cpp' -o -name '*.h' | \
         $(ETAGS) $(ETAGSFLAGS) -
+
+CTAGS:
+	find $(BUILD_SRC_ROOT)/include $(BUILD_SRC_ROOT)/lib \
+          $(BUILD_SRC_ROOT)/tools $(BUILD_SRC_ROOT)/examples \
+          $(BUILD_OBJ_ROOT)/include $(BUILD_OBJ_ROOT)/lib \
+          $(BUILD_OBJ_ROOT)/tools $(BUILD_OBJ_ROOT)/examples \
+          \( -name '*.cpp' -o -name '*.h' \) -print | \
+          ctags -ImtT -o $(BUILD_OBJ_ROOT)/CTAGS -L -
+
 
 ###############################################################################
 # DEPENDENCIES: Include the dependency files if we should
