@@ -183,18 +183,18 @@ static bool ResolveFunctions(Module &M, std::vector<GlobalValue*> &Globals,
             Changed = true;
             ++NumResolved;
           } else {
-            std::cerr << "Couldn't cleanup this function call, must be an"
-                      << " argument or something!" << CI;
             ++i;
           }
-        } else if (ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(U)) {
-          Constant *NewCPR = ConstantPointerRef::get(Concrete);
-          CPR->replaceAllUsesWith(ConstantExpr::getCast(NewCPR,CPR->getType()));
-          CPR->destroyConstant();
         } else {
-          std::cerr << "Cannot convert use of function: " << U << "\n";
           ++i;
         }
+      }
+
+      // If there are any more uses that we could not resolve, force them to use
+      // a casted pointer now.
+      if (!Old->use_empty()) {
+        Constant *NewCPR = ConstantPointerRef::get(Concrete);
+        Old->replaceAllUsesWith(ConstantExpr::getCast(NewCPR, Old->getType()));
       }
     }
   return Changed;
