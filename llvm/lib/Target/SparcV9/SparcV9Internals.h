@@ -22,7 +22,6 @@
 #include "SparcV9RegInfo.h"
 #include "llvm/Type.h"
 #include "SparcV9RegClassInfo.h"
-#include "llvm/Config/sys/types.h"
 
 namespace llvm {
 
