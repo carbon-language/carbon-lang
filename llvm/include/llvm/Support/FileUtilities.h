@@ -19,31 +19,6 @@
 
 namespace llvm {
 
-/// CheckMagic - Returns true IFF the file named FN begins with Magic. FN must
-/// name a readable file.
-///
-//bool CheckMagic (const std::string &FN, const std::string &Magic);
-
-/// IsArchive - Returns true IFF the file named FN appears to be a "ar" library
-/// archive. The file named FN must exist.
-///
-//bool IsArchive (const std::string &FN);
-
-/// IsBytecode - Returns true IFF the file named FN appears to be an LLVM
-/// bytecode file. The file named FN must exist.
-///
-//bool IsBytecode (const std::string &FN);
-
-/// IsSharedObject - Returns trus IFF the file named FN appears to be a shared
-/// object with an ELF header. The file named FN must exist.
-///
-//bool IsSharedObject(const std::string &FN);
-
-/// FileOpenable - Returns true IFF Filename names an existing regular file
-/// which we can successfully open.
-///
-//bool FileOpenable(const std::string &Filename);
-
 /// DiffFiles - Compare the two files specified, returning true if they are
 /// different or if there is a file error.  If you specify a string to fill in
 /// for the error option, it will set the string to an error message if an error
