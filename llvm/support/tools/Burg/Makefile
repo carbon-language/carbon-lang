@@ -2,8 +2,11 @@
 
 LEVEL = ../..
 
+UNAME := $(shell uname)
 include $(LEVEL)/Makefile.config
-include $(LEVEL)/Makefile.$(shell uname)
+include $(LEVEL)/Makefile.$(UNAME)
+
+TARGET = burg.$(UNAME)
 
 #CFLAGS	=
 #CFLAGS	= -O
@@ -50,6 +53,8 @@ BU_OBJS = \
 	trim.o \
 	zalloc.o
 
+BU_OBJS := $(addprefix $(UNAME)/,$(BU_OBJS))
+
 FE_OBJS = \
 	be.o \
 	fe.o \
@@ -60,17 +65,19 @@ FE_OBJS = \
 	symtab.o \
 	y.tab.o
 
-all: burg
+FE_OBJS := $(addprefix $(UNAME)/,$(FE_OBJS))
+
+all: $(TARGET)
 
 
-burg: $(BU_OBJS) $(FE_OBJS)
-	$(CC) -o burg $(CFLAGS) $(BU_OBJS) $(FE_OBJS)
+$(TARGET): $(BU_OBJS) $(FE_OBJS)
+	$(CC) -o $(TARGET) $(CFLAGS) $(BU_OBJS) $(FE_OBJS)
 
 y.tab.c y.tab.h: gram.y
 	yacc -d gram.y
 
 clean:
-	rm -f *.o y.tab.h y.tab.c core burg *.aux *.log *.dvi sample sample.c tmp
+	rm -rf $(UNAME) *.o y.tab.h y.tab.c core burg *.aux *.log *.dvi sample sample.c tmp
 
 $(FE_OBJS):	b.h
 $(BU_OBJS):	b.h
@@ -81,10 +88,13 @@ lex.o:	y.tab.h
 doc.dvi: doc.tex
 	latex doc; latex doc
 
-test: burg sample.gr
-	./burg -I     <sample.gr   >sample.c && cc $(CFLAGS) -o sample sample.c && ./sample
-	./burg -I      sample.gr   >tmp && cmp tmp sample.c
-	./burg -I     <sample.gr -o tmp && cmp tmp sample.c
-	./burg -I      sample.gr -o tmp && cmp tmp sample.c
-	./burg -I -O0 <sample.gr   >tmp && cmp tmp sample.c
-	./burg -I -=  <sample.gr   >tmp && cmp tmp sample.c
+$(UNAME)/%.o: %.c
+	$(VERB) $(CC) -c -g $< -o $@
+
+test: $(TARGET) sample.gr
+	./$(TARGET) -I     <sample.gr   >sample.c && cc $(CFLAGS) -o sample sample.c && ./sample
+	./$(TARGET) -I      sample.gr   >tmp && cmp tmp sample.c
+	./$(TARGET) -I     <sample.gr -o tmp && cmp tmp sample.c
+	./$(TARGET) -I      sample.gr -o tmp && cmp tmp sample.c
+	./$(TARGET) -I -O0 <sample.gr   >tmp && cmp tmp sample.c
+	./$(TARGET) -I -=  <sample.gr   >tmp && cmp tmp sample.c
