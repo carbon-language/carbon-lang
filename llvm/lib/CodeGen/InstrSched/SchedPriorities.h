@@ -32,7 +32,9 @@ class Method;
 class MachineInstr;
 class SchedulingManager;
 
+//---------------------------------------------------------------------------
 // Debug option levels for instruction scheduling
+
 enum SchedDebugLevel_t {
   Sched_NoDebugInfo,
   Sched_PrintMachineCode, 
@@ -41,6 +43,19 @@ enum SchedDebugLevel_t {
 };
 
 extern cl::Enum<SchedDebugLevel_t> SchedDebugLevel;
+
+//---------------------------------------------------------------------------
+// Function: instrIsFeasible
+// 
+// Purpose:
+//   Used by the priority analysis to filter out instructions
+//   that are not feasible to issue in the current cycle.
+//   Should only be used during schedule construction..
+//---------------------------------------------------------------------------
+
+bool instrIsFeasible(const SchedulingManager &S, MachineOpCode opCode);
+
+
 
 struct NodeDelayPair {
   const SchedGraphNode* node;
