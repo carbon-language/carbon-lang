@@ -131,21 +131,6 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
                 assert(r2iit != r2iMap_.end());
                 intervals_[r2iit->second].weight += pow(10.0F, loopDepth);
             }
-
-            // add hints for coalescing
-            unsigned src, dst;
-            if (tii.isMoveInstr(*instr, src, dst)) {
-                if (src >= MRegisterInfo::FirstVirtualRegister) {
-                    Reg2IntervalMap::iterator r2iit = r2iMap_.find(src);
-                    assert(r2iit != r2iMap_.end());
-                    intervals_[r2iit->second].hint = dst;
-                }
-                if (dst >= MRegisterInfo::FirstVirtualRegister) {
-                    Reg2IntervalMap::iterator r2iit = r2iMap_.find(dst);
-                    assert(r2iit != r2iMap_.end());
-                    intervals_[r2iit->second].hint = src;
-                }
-            }
         }
     }
 
