@@ -166,7 +166,7 @@ PowerPCRegisterInfo::eliminateFrameIndex(MachineFunction &MF,
   if (!hasFP(MF))
     Offset += MF.getFrameInfo()->getStackSize();
 
-  MI.SetMachineOperandConst(OffIdx, MachineOperand::MO_SignExtendedImmed, Offset);
+  MI.SetMachineOperandConst(OffIdx,MachineOperand::MO_SignExtendedImmed,Offset);
   DEBUG(std::cerr << "offset = " << Offset << std::endl);
 }
 
@@ -195,13 +195,12 @@ void PowerPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
     // eliminates the need for add/sub brackets around call sites.
     //
     NumBytes += MFI->getMaxCallFrameSize() + 
-                24   /* Predefined PowerPC link area */ + 
-                32   /* Predefined PowerPC params area */ +
-                 0   /* local variables - managed by llvm*/ +
-             0 * 4   /* volatile GPRs used - managed by llvm */ +
-             0 * 8   /* volatile FPRs used - managed by llvm */;
+                24 + // Predefined PowerPC link area
+                32 + // Predefined PowerPC params area
+                 0 + // local variables - managed by LLVM
+             0 * 4 + // volatile GPRs used - managed by LLVM
+             0 * 8;  // volatile FPRs used - managed by LLVM
              
-    
     // Round the size to a multiple of the alignment (don't forget the 4 byte
     // offset though).
     unsigned Align = MF.getTarget().getFrameInfo()->getStackAlignment();
@@ -217,6 +216,9 @@ void PowerPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
   // Update frame info to pretend that this is part of the stack...
   MFI->setStackSize(NumBytes);
   
+  // Do we need to allocate space on the stack?
+  if (NumBytes == 0) return;
+
   // adjust stack pointer: r1 -= numbytes
   if (NumBytes <= 32768) {
     MI = BuildMI(PPC32::STWU, 3).addReg(PPC32::R1).addSImm(-NumBytes)
@@ -252,11 +254,15 @@ void PowerPCRegisterInfo::emitEpilogue(MachineFunction &MF,
   // conservative.
   if (MFI->hasCalls() || true) {
     // Restore LR
-    MI = BuildMI(PPC32::LWZ, 2, PPC32::R0).addSImm(NumBytes+8).addReg(PPC32::R1);
+    MI = BuildMI(PPC32::LWZ, 2,PPC32::R0).addSImm(NumBytes+8).addReg(PPC32::R1);
     MBB.insert(MBBI, MI);
     MI = BuildMI(PPC32::MTLR, 1).addReg(PPC32::R0);
     MBB.insert(MBBI, MI);
   }
+
+  // Do we need to adjust the stack pointer back?
+  if (NumBytes == 0) return;
+
   // Adjust stack pointer back
   if (NumBytes <= 32767) {
     MI = BuildMI(PPC32::ADDI, 2, PPC32::R1).addReg(PPC32::R1).addSImm(NumBytes);
