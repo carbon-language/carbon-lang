@@ -6,29 +6,26 @@
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
 // 
 //===----------------------------------------------------------------------===//
-
-/* Title:   IGNode.h                      -*- C++ -*-
-   Author:  Ruchira Sasanka
-   Date:    July 25, 01
-   Purpose: Represents a node in an interference graph. 
-   Notes:
-
-   For efficiency, the AdjList is updated only once - ie. we can add but not
-   remove nodes from AdjList. 
-
-   The removal of nodes from IG is simulated by decrementing the CurDegree.
-   If this node is put on stack (that is removed from IG), the CurDegree of all
-   the neighbors are decremented and this node is marked OnStack. Hence
-   the effective neighbors in the AdjList are the ones that do not have the
-   OnStack flag set (therefore, they are in the IG).
-
-   The methods that modify/use the CurDegree must be called only
-   after all modifications to the IG are over (i.e., all neighbors are fixed).
-
-   The vector representation is the most efficient one for adj list.
-   Though nodes are removed when coalescing is done, we access it in sequence
-   for far many times when coloring (colorNode()).
-*/
+//
+// This file represents a node in an interference graph. 
+//
+// For efficiency, the AdjList is updated only once - ie. we can add but not
+// remove nodes from AdjList. 
+//
+// The removal of nodes from IG is simulated by decrementing the CurDegree.
+// If this node is put on stack (that is removed from IG), the CurDegree of all
+// the neighbors are decremented and this node is marked OnStack. Hence
+// the effective neighbors in the AdjList are the ones that do not have the
+// OnStack flag set (therefore, they are in the IG).
+//
+// The methods that modify/use the CurDegree must be called only
+// after all modifications to the IG are over (i.e., all neighbors are fixed).
+//
+// The vector representation is the most efficient one for adj list.
+// Though nodes are removed when coalescing is done, we access it in sequence
+// for far many times when coloring (colorNode()).
+//
+//===----------------------------------------------------------------------===//
 
 #ifndef IGNODE_H
 #define IGNODE_H

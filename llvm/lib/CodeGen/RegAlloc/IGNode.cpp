@@ -7,7 +7,8 @@
 // 
 //===----------------------------------------------------------------------===//
 // 
-//  class IGNode for coloring-based register allocation for LLVM.
+// This file implements an Interference graph node for coloring-based register
+// allocation.
 // 
 //===----------------------------------------------------------------------===//
 
@@ -28,7 +29,7 @@ void IGNode::pushOnStack() {
     assert(0 && "Invalid adj list size");
   }
 
-  for(int i=0; i < neighs; i++)
+  for (int i=0; i < neighs; i++)
     AdjList[i]->decCurDegree();
 }
  
@@ -39,7 +40,7 @@ void IGNode::pushOnStack() {
 
 void IGNode::delAdjIGNode(const IGNode *Node) {
   std::vector<IGNode *>::iterator It=find(AdjList.begin(), AdjList.end(), Node);
-  assert( It != AdjList.end() );      // the node must be there
+  assert(It != AdjList.end() && "The node must be there!");
   AdjList.erase(It);
 }
 
@@ -48,13 +49,10 @@ void IGNode::delAdjIGNode(const IGNode *Node) {
 //-----------------------------------------------------------------------------
 
 unsigned
-IGNode::getCombinedDegree(const IGNode* otherNode) const
-{
+IGNode::getCombinedDegree(const IGNode* otherNode) const {
   std::vector<IGNode*> nbrs(AdjList);
   nbrs.insert(nbrs.end(), otherNode->AdjList.begin(), otherNode->AdjList.end());
   sort(nbrs.begin(), nbrs.end());
   std::vector<IGNode*>::iterator new_end = unique(nbrs.begin(), nbrs.end());
   return new_end - nbrs.begin();
 }
-
-
