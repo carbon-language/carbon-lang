@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 path=$1
 shift
 let $((success=0))
