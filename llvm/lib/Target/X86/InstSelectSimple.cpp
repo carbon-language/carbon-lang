@@ -1233,7 +1233,7 @@ void ISel::visitIntrinsicCall(Intrinsic::ID ID, CallInst &CI) {
         CountReg = getReg(ConstantUInt::get(Type::UIntTy, I->getRawValue()/2));
       } else {
         CountReg = makeAnotherReg(Type::IntTy);
-        BuildMI(BB, X86::SHRir32, 2, CountReg).addReg(ByteReg).addZImm(1);
+        BuildMI(BB, X86::SHRri32, 2, CountReg).addReg(ByteReg).addZImm(1);
       }
       Opcode = X86::REP_MOVSW;
       break;
@@ -1242,7 +1242,7 @@ void ISel::visitIntrinsicCall(Intrinsic::ID ID, CallInst &CI) {
         CountReg = getReg(ConstantUInt::get(Type::UIntTy, I->getRawValue()/4));
       } else {
         CountReg = makeAnotherReg(Type::IntTy);
-        BuildMI(BB, X86::SHRir32, 2, CountReg).addReg(ByteReg).addZImm(2);
+        BuildMI(BB, X86::SHRri32, 2, CountReg).addReg(ByteReg).addZImm(2);
       }
       Opcode = X86::REP_MOVSD;
       break;
@@ -1285,7 +1285,7 @@ void ISel::visitIntrinsicCall(Intrinsic::ID ID, CallInst &CI) {
           CountReg =getReg(ConstantUInt::get(Type::UIntTy, I->getRawValue()/2));
         } else {
           CountReg = makeAnotherReg(Type::IntTy);
-          BuildMI(BB, X86::SHRir32, 2, CountReg).addReg(ByteReg).addZImm(1);
+          BuildMI(BB, X86::SHRri32, 2, CountReg).addReg(ByteReg).addZImm(1);
         }
         BuildMI(BB, X86::MOVri16, 1, X86::AX).addZImm((Val << 8) | Val);
         Opcode = X86::REP_STOSW;
@@ -1295,7 +1295,7 @@ void ISel::visitIntrinsicCall(Intrinsic::ID ID, CallInst &CI) {
           CountReg =getReg(ConstantUInt::get(Type::UIntTy, I->getRawValue()/4));
         } else {
           CountReg = makeAnotherReg(Type::IntTy);
-          BuildMI(BB, X86::SHRir32, 2, CountReg).addReg(ByteReg).addZImm(2);
+          BuildMI(BB, X86::SHRri32, 2, CountReg).addReg(ByteReg).addZImm(2);
         }
         Val = (Val << 8) | Val;
         BuildMI(BB, X86::MOVri32, 1, X86::EAX).addZImm((Val << 16) | Val);
@@ -1512,13 +1512,13 @@ void ISel::doMultiplyConst(MachineBasicBlock *MBB,
     switch (Class) {
     default: assert(0 && "Unknown class for this function!");
     case cByte:
-      BMI(MBB, IP, X86::SHLir32, 2, DestReg).addReg(op0Reg).addZImm(Shift-1);
+      BMI(MBB, IP, X86::SHLri32, 2, DestReg).addReg(op0Reg).addZImm(Shift-1);
       return;
     case cShort:
-      BMI(MBB, IP, X86::SHLir32, 2, DestReg).addReg(op0Reg).addZImm(Shift-1);
+      BMI(MBB, IP, X86::SHLri32, 2, DestReg).addReg(op0Reg).addZImm(Shift-1);
       return;
     case cInt:
-      BMI(MBB, IP, X86::SHLir32, 2, DestReg).addReg(op0Reg).addZImm(Shift-1);
+      BMI(MBB, IP, X86::SHLri32, 2, DestReg).addReg(op0Reg).addZImm(Shift-1);
       return;
     }
   }
@@ -1646,7 +1646,7 @@ void ISel::emitDivRemOperation(MachineBasicBlock *BB,
 
   static const unsigned Regs[]     ={ X86::AL    , X86::AX     , X86::EAX     };
   static const unsigned MovOpcode[]={ X86::MOVrr8, X86::MOVrr16, X86::MOVrr32 };
-  static const unsigned SarOpcode[]={ X86::SARir8, X86::SARir16, X86::SARir32 };
+  static const unsigned SarOpcode[]={ X86::SARri8, X86::SARri16, X86::SARri32 };
   static const unsigned ClrOpcode[]={ X86::MOVri8, X86::MOVri16, X86::MOVri32 };
   static const unsigned ExtRegs[]  ={ X86::AH    , X86::DX     , X86::EDX     };
 
@@ -1706,10 +1706,10 @@ void ISel::emitShiftOperation(MachineBasicBlock *MBB,
   unsigned Class = getClass (ResultTy);
   
   static const unsigned ConstantOperand[][4] = {
-    { X86::SHRir8, X86::SHRir16, X86::SHRir32, X86::SHRDir32 },  // SHR
-    { X86::SARir8, X86::SARir16, X86::SARir32, X86::SHRDir32 },  // SAR
-    { X86::SHLir8, X86::SHLir16, X86::SHLir32, X86::SHLDir32 },  // SHL
-    { X86::SHLir8, X86::SHLir16, X86::SHLir32, X86::SHLDir32 },  // SAL = SHL
+    { X86::SHRri8, X86::SHRri16, X86::SHRri32, X86::SHRDri32 },  // SHR
+    { X86::SARri8, X86::SARri16, X86::SARri32, X86::SHRDri32 },  // SAR
+    { X86::SHLri8, X86::SHLri16, X86::SHLri32, X86::SHLDri32 },  // SHL
+    { X86::SHLri8, X86::SHLri16, X86::SHLri32, X86::SHLDri32 },  // SAL = SHL
   };
 
   static const unsigned NonConstantOperand[][4] = {
@@ -1740,12 +1740,12 @@ void ISel::emitShiftOperation(MachineBasicBlock *MBB,
       } else {                 // Shifting more than 32 bits
         Amount -= 32;
         if (isLeftShift) {
-          BMI(MBB, IP, X86::SHLir32, 2,
+          BMI(MBB, IP, X86::SHLri32, 2,
               DestReg + 1).addReg(SrcReg).addZImm(Amount);
           BMI(MBB, IP, X86::MOVri32, 1,
               DestReg).addZImm(0);
         } else {
-          unsigned Opcode = isSigned ? X86::SARir32 : X86::SHRir32;
+          unsigned Opcode = isSigned ? X86::SARri32 : X86::SHRri32;
           BMI(MBB, IP, Opcode, 2, DestReg).addReg(SrcReg+1).addZImm(Amount);
           BMI(MBB, IP, X86::MOVri32, 1, DestReg+1).addZImm(0);
         }
@@ -1757,7 +1757,7 @@ void ISel::emitShiftOperation(MachineBasicBlock *MBB,
         // If this is a SHR of a Long, then we need to do funny sign extension
         // stuff.  TmpReg gets the value to use as the high-part if we are
         // shifting more than 32 bits.
-        BMI(MBB, IP, X86::SARir32, 2, TmpReg).addReg(SrcReg).addZImm(31);
+        BMI(MBB, IP, X86::SARri32, 2, TmpReg).addReg(SrcReg).addZImm(31);
       } else {
         // Other shifts use a fixed zero value if the shift is more than 32
         // bits.
@@ -1991,7 +1991,7 @@ void ISel::emitCastOperation(MachineBasicBlock *BB,
       if (isUnsigned)     // Zero out top bits...
         BMI(BB, IP, X86::MOVri32, 1, DestReg+1).addZImm(0);
       else                // Sign extend bottom half...
-        BMI(BB, IP, X86::SARir32, 2, DestReg+1).addReg(DestReg).addZImm(31);
+        BMI(BB, IP, X86::SARri32, 2, DestReg+1).addReg(DestReg).addZImm(31);
     }
     return;
   }

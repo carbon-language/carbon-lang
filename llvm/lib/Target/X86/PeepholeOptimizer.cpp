@@ -395,7 +395,7 @@ bool SSAPH::OptimizeAddress(MachineInstr *MI, unsigned OpNo) {
       }
       break;
 
-    case X86::SHLir32:
+    case X86::SHLri32:
       // If this shift could be folded into the index portion of the address if
       // it were the index register, move it to the index register operand now,
       // so it will be folded in below.
@@ -413,7 +413,7 @@ bool SSAPH::OptimizeAddress(MachineInstr *MI, unsigned OpNo) {
   // Attempt to fold instructions used by the index into the instruction
   if (MachineInstr *DefInst = getDefiningInst(IndexRegOp)) {
     switch (DefInst->getOpcode()) {
-    case X86::SHLir32: {
+    case X86::SHLri32: {
       // Figure out what the resulting scale would be if we folded this shift.
       unsigned ResScale = Scale * (1 << DefInst->getOperand(2).getImmedValue());
       if (isValidScaleAmount(ResScale)) {
