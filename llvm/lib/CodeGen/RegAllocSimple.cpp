@@ -142,10 +142,6 @@ namespace {
     saveVirtRegToStack (MachineBasicBlock &MBB,
                         MachineBasicBlock::iterator I, unsigned VirtReg,
                         unsigned PhysReg);
-
-    MachineBasicBlock::iterator
-    savePhysRegToStack (MachineBasicBlock &MBB,
-                        MachineBasicBlock::iterator I, unsigned PhysReg);
   };
 
 }
@@ -199,8 +195,6 @@ RegAllocSimple::moveUseToReg (MachineBasicBlock &MBB,
                               unsigned VirtReg, unsigned &PhysReg)
 {
   const TargetRegisterClass* regClass = MF->getRegClass(VirtReg);
-  assert(regClass);
-
   unsigned stackOffset = allocateStackSpaceFor(VirtReg, regClass);
   PhysReg = getFreeReg(VirtReg);
 
@@ -217,8 +211,6 @@ RegAllocSimple::saveVirtRegToStack (MachineBasicBlock &MBB,
                                     unsigned VirtReg, unsigned PhysReg)
 {
   const TargetRegisterClass* regClass = MF->getRegClass(VirtReg);
-  assert(regClass);
-
   unsigned stackOffset = allocateStackSpaceFor(VirtReg, regClass);
 
   // Add move instruction(s)
@@ -228,22 +220,6 @@ RegAllocSimple::saveVirtRegToStack (MachineBasicBlock &MBB,
                                      -stackOffset, regClass->getDataSize());
 }
 
-MachineBasicBlock::iterator
-RegAllocSimple::savePhysRegToStack (MachineBasicBlock &MBB,
-                                    MachineBasicBlock::iterator I,
-                                    unsigned PhysReg)
-{
-  const TargetRegisterClass* regClass = MF->getRegClass(PhysReg);
-  assert(regClass);
-
-  unsigned offset = allocateStackSpaceFor(PhysReg, regClass);
-
-  // Add move instruction(s)
-  ++NumSpilled;
-  return RegInfo->storeReg2RegOffset(MBB, I, PhysReg,
-                                     RegInfo->getFramePointer(),
-                                     offset, regClass->getDataSize());
-}
 
 /// EliminatePHINodes - Eliminate phi nodes by inserting copy instructions in
 /// predecessor basic blocks.
@@ -322,16 +298,16 @@ void RegAllocSimple::EliminatePHINodes(MachineBasicBlock &MBB) {
           opI = RegInfo->moveImm2Reg(opBlock, opI, physReg,
                                      (unsigned) opVal.getImmedValue(),
                                      dataSize);
-          saveVirtRegToStack(opBlock, opI, virtualReg, physReg);
         } else {
           // Allocate a physical register and add a move in the BB
           unsigned opVirtualReg = opVal.getAllocatedRegNum();
           unsigned opPhysReg;
           opI = moveUseToReg(opBlock, opI, opVirtualReg, physReg);
           
-          // Save that register value to the stack of the TARGET REG
-          saveVirtRegToStack(opBlock, opI, virtualReg, physReg);
         }
+
+        // Save that register value to the stack of the TARGET REG
+        saveVirtRegToStack(opBlock, opI, virtualReg, physReg);
       }
 
       // make regs available to other instructions
@@ -348,7 +324,7 @@ void RegAllocSimple::AllocateBasicBlock(MachineBasicBlock &MBB) {
   // Handle PHI instructions specially: add moves to each pred block
   EliminatePHINodes(MBB);
   
-  //loop over each basic block
+  // loop over each instruction
   for (MachineBasicBlock::iterator I = MBB.begin(); I != MBB.end(); ++I) {
     // Made to combat the incorrect allocation of r2 = add r1, r1
     std::map<unsigned, unsigned> VirtReg2PhysRegMap;
