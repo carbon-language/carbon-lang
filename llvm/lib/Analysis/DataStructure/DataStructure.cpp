@@ -599,10 +599,15 @@ DSNodeHandle DSGraph::cloneInto(const DSGraph &G,
 
   // Duplicate all of the nodes, populating the node map...
   Nodes.reserve(FN+G.Nodes.size());
+
+  // Remove alloca or mod/ref bits as specified...
+  unsigned clearBits = (CloneFlags & StripAllocaBit ? DSNode::AllocaNode : 0)
+    | (CloneFlags & StripModRefBits ? (DSNode::Modified | DSNode::Read) : 0);
+  clearBits |= DSNode::DEAD;  // Clear dead flag...
   for (unsigned i = 0, e = G.Nodes.size(); i != e; ++i) {
     DSNode *Old = G.Nodes[i];
     DSNode *New = new DSNode(*Old);
-    New->NodeType &= ~DSNode::DEAD;  // Clear dead flag...
+    New->NodeType &= ~clearBits;
     Nodes.push_back(New);
     OldNodeMap[Old] = New;
   }
@@ -614,13 +619,6 @@ DSNodeHandle DSGraph::cloneInto(const DSGraph &G,
   // Rewrite the links in the new nodes to point into the current graph now.
   for (unsigned i = FN, e = Nodes.size(); i != e; ++i)
     Nodes[i]->remapLinks(OldNodeMap);
-
-  // Remove alloca markers as specified
-  if (CloneFlags & (StripAllocaBit | StripModRefBits)) {
-    unsigned clearBits = (CloneFlags & StripAllocaBit ? DSNode::AllocaNode : 0)
-       | (CloneFlags & StripModRefBits ? (DSNode::Modified | DSNode::Read) : 0);
-    maskNodeTypes(~clearBits);
-  }
 
   // Copy the scalar map... merging all of the global nodes...
   for (hash_map<Value*, DSNodeHandle>::const_iterator I = G.ScalarMap.begin(),
