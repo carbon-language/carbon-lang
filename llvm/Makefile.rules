@@ -36,26 +36,6 @@
 # 
 include $(LEVEL)/Makefile.config
 
-# These are options that can either be enabled here, or can be enabled on the
-# make command line (ie, make ENABLE_PROFILING=1)
-#
-
-# When ENABLE_PROFILING is enabled, the llvm source base is built with profile
-# information to allow gprof to be used to get execution frequencies.
-#
-#ENABLE_PROFILING = 1
-
-# When ENABLE_PURIFY is enabled, the LLVM tools are linked with purify (which
-# must be locally installed) to allow for some automated memory error debugging.
-#
-#ENABLE_PURIFY    = 1
-
-# When ENABLE_OPTIMIZED is enabled, Release builds of all of the LLVM code are
-# turned on, and Debug builds are turned off.
-#
-#ENABLE_OPTIMIZED = 1
-
-
 # Figure out how to do platform specific stuff on this platform.  This is really
 # gross and should be autoconfiscated (automake actually), but should hopefully
 # work on Linux and solaris (SunOS).
@@ -109,7 +89,7 @@ endif
 #--------------------------------------------------------------------
 
 #BinInstDir=/usr/local/bin
-#LibInstDir=/usrl/local/lib/xxx
+#LibInstDir=/usr/local/lib/xxx
 #DocInstDir=/usr/doc/xxx
 
 BURG_OPTS = -I
@@ -247,7 +227,6 @@ DependC  := $(CC)  -MM -I$(LEVEL)/include -I$(PROJ_INCLUDE) $(CPPFLAGS)
 
 # Archive a bunch of .o files into a .a file...
 AR       = ar cq 
-BISON    = bison
 
 #----------------------------------------------------------
 
@@ -519,7 +498,7 @@ YACC_OUTPUT = $(addprefix $(YACC_FILES:%.y=%), .h .cpp .output)
 # FIXME.  (f.e. char Buffer[10000]; )
 #
 %.cpp: %.l
-	flex -t $< | sed '/^find_rule/d' | \
+	$(FLEX) -t $< | sed '/^find_rule/d' | \
                      sed 's/void yyunput/inline void yyunput/' | \
           sed 's/void \*yy_flex_realloc/inline void *yy_flex_realloc/' | \
           sed 's/#define YY_BUF_SIZE 16384/#define YY_BUF_SIZE (16384*64)/' > $@
