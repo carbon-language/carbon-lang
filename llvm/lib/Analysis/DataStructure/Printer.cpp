@@ -15,7 +15,7 @@ void DSNode::dump() const { print(std::cerr, 0); }
 
 string DSNode::getCaption(const DSGraph *G) const {
   std::stringstream OS;
-  Module *M = G ? G->getFunction().getParent() : 0;
+  Module *M = G && &G->getFunction()? G->getFunction().getParent() : 0;
   WriteTypeSymbolic(OS, getType(), M);
 
   OS << " ";
@@ -111,8 +111,12 @@ void DSGraph::print(std::ostream &O) const {
     << "\tnode [shape=Mrecord];\n"
     << "\tedge [arrowtail=\"dot\"];\n"
     << "\tsize=\"10,7.5\";\n"
-    << "\trotate=\"90\";\n"
-    << "\tlabel=\"Function\\ " << Func.getName() << "\";\n\n";
+    << "\trotate=\"90\";\n";
+
+  if (&Func != 0)
+    O << "\tlabel=\"Function\\ " << Func.getName() << "\";\n\n";
+  else
+    O << "\tlabel=\"Global Graph\";\n\n";
 
   // Output all of the nodes...
   for (unsigned i = 0, e = Nodes.size(); i != e; ++i)
@@ -146,6 +150,22 @@ void DSGraph::print(std::ostream &O) const {
   O << "}\n";
 }
 
+
+static void printGraph(const DSGraph &Graph, std::ostream &O,
+                       const string &GraphName, const string &Prefix) {
+  string Filename = Prefix + "." + GraphName + ".dot";
+  O << "Writing '" << Filename << "'...";
+  std::ofstream F(Filename.c_str());
+  
+  if (F.good()) {
+    Graph.print(F);
+    O << " [" << Graph.getGraphSize() << "+"
+      << Graph.getFunctionCalls().size() << "]\n";
+  } else {
+    O << "  error opening file for writing!\n";
+  }
+}
+
 template <typename Collection>
 static void printCollection(const Collection &C, std::ostream &O,
                             const Module *M, const string &Prefix) {
@@ -155,20 +175,8 @@ static void printCollection(const Collection &C, std::ostream &O,
   }
 
   for (Module::const_iterator I = M->begin(), E = M->end(); I != E; ++I)
-    if (!I->isExternal()) {
-      string Filename = Prefix + "." + I->getName() + ".dot";
-      O << "Writing '" << Filename << "'...";
-      std::ofstream F(Filename.c_str());
-      
-      if (F.good()) {
-        DSGraph &Graph = C.getDSGraph((Function&)*I);
-        Graph.print(F);
-        O << " [" << Graph.getGraphSize() << "+"
-          << Graph.getFunctionCalls().size() << "]\n";
-      } else {
-        O << "  error opening file for writing!\n";
-      }
-    }
+    if (!I->isExternal())
+      printGraph(C.getDSGraph((Function&)*I), O, I->getName(), Prefix);
 }
 
 
@@ -179,4 +187,20 @@ void LocalDataStructures::print(std::ostream &O, const Module *M) const {
 
 void BUDataStructures::print(std::ostream &O, const Module *M) const {
   printCollection(*this, O, M, "bu");
+
+  for (Module::const_iterator I = M->begin(), E = M->end(); I != E; ++I)
+    if (!I->isExternal()) {
+      printGraph(*getDSGraph(*I).GlobalsGraph, O, "program", "gg");
+      break;
+    }
+}
+
+void TDDataStructures::print(std::ostream &O, const Module *M) const {
+  printCollection(*this, O, M, "td");
+
+  for (Module::const_iterator I = M->begin(), E = M->end(); I != E; ++I)
+    if (!I->isExternal()) {
+      printGraph(*getDSGraph(*I).GlobalsGraph, O, "program", "gg");
+      break;
+    }
 }
