@@ -32,7 +32,7 @@ while ( !( $?options_done ) && ($#argv > 0))
 end
 
 if ($doit == 1) then
-    /bin/mv -f cvs.out cvs.out.bak
+    /bin/mv -f cvs.out cvs.out.bak >&/dev/null
     cvs update -P -d >& cvs.out
 ##    if ($status != 0) then
 ##        echo "ERROR: CVS update failed: "
