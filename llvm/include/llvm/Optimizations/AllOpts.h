@@ -32,8 +32,8 @@ static inline bool ApplyOptToAllMethods(Module *C, bool (*Opt)(Method*)) {
 //
 
 bool DoDeadCodeElimination(Method *M);         // DCE a method
-bool DoRemoveUnusedConstants(SymTabValue *S);  // RUC a method or class
-bool DoDeadCodeElimination(Module *C);         // DCE & RUC a whole class
+bool DoRemoveUnusedConstants(SymTabValue *S);  // RUC a method or module
+bool DoDeadCodeElimination(Module *C);         // DCE & RUC a whole module
 
 //===----------------------------------------------------------------------===//
 // Constant Propogation Pass
@@ -91,5 +91,17 @@ static inline bool DoSymbolStripping(Module *M) {
 // in a module, and all module level symbols. (method names, etc...)
 //
 bool DoFullSymbolStripping(Module *M);
+
+
+//===----------------------------------------------------------------------===//
+// Induction Variable Cannonicalization
+//
+
+// DoInductionVariableCannonicalize - Simplify induction variables in loops
+//
+bool DoInductionVariableCannonicalize(Method *M);
+static inline bool DoInductionVariableCannonicalize(Module *M) { 
+  return ApplyOptToAllMethods(M, DoInductionVariableCannonicalize); 
+}
 
 #endif
