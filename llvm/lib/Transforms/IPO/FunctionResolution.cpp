@@ -60,21 +60,16 @@ static void ConvertCallTo(CallInst *CI, Function *Dest) {
   for (unsigned i = 1; i < CI->getNumOperands(); ++i) {
     Value *V = CI->getOperand(i);
 
-    if (V->getType() != ParamTys[i-1]) { // Must insert a cast...
-      Instruction *Cast = new CastInst(V, ParamTys[i-1]);
-      BBI = ++BB->getInstList().insert(BBI, Cast);
-      V = Cast;
-    }
+    if (V->getType() != ParamTys[i-1])  // Must insert a cast...
+      V = new CastInst(V, ParamTys[i-1], "argcast", BBI);
 
     Params.push_back(V);
   }
 
-  Instruction *NewCall = new CallInst(Dest, Params);
-
   // Replace the old call instruction with a new call instruction that calls
   // the real function.
   //
-  BBI = ++BB->getInstList().insert(BBI, NewCall);
+  Instruction *NewCall = new CallInst(Dest, Params, "", BBI);
 
   // Remove the old call instruction from the program...
   BB->getInstList().remove(BBI);
@@ -104,11 +99,10 @@ static void ConvertCallTo(CallInst *CI, Function *Dest) {
     // value of the function is actually USED.
     //
     if (!CI->use_empty()) {
-      CastInst *NewCast = new CastInst(NewCall, CI->getType(),
-                                       NewCall->getName());
-      CI->replaceAllUsesWith(NewCast);
       // Insert the new cast instruction...
-      BB->getInstList().insert(BBI, NewCast);
+      CastInst *NewCast = new CastInst(NewCall, CI->getType(),
+                                       NewCall->getName(), BBI);
+      CI->replaceAllUsesWith(NewCast);
     }
   }
 
