@@ -8,7 +8,7 @@
 
 #include "llvm/Analysis/FindUsedTypes.h"
 
-class CleanupGCCOutput : public Pass {
+class CleanupGCCOutput : public MethodPass {
   Method *Malloc, *Free;  // Pointers to external declarations, or null if none
   FindUsedTypes FUT;      // Use FUT to eliminate type names that are never used
 public:
@@ -27,14 +27,14 @@ public:
   //
   // Also, initialize instance variables.
   //
-  bool doPassInitialization(Module *M);
+  bool doInitialization(Module *M);
 
   // doPerMethodWork - This method simplifies the specified method hopefully.
   //
-  bool doPerMethodWork(Method *M);
+  bool runOnMethod(Method *M);
 
   // doPassFinalization - Strip out type names that are unused by the program
-  bool doPassFinalization(Module *M);
+  bool doFinalization(Module *M);
 private:
   bool doOneCleanupPass(Method *M);
 };

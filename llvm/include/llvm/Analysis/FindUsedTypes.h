@@ -11,7 +11,7 @@
 #include <set>
 class SymbolTable;
 
-class FindUsedTypes : public Pass {
+class FindUsedTypes : public MethodPass {
   std::set<const Type *> UsedTypes;
 
   bool IncludeSymbolTables;
@@ -45,14 +45,14 @@ private:
   void IncorporateSymbolTable(const SymbolTable *ST);
 
 public:
-  // doPassInitialization - This loops over global constants defined in the
+  // doInitialization - This loops over global constants defined in the
   // module, converting them to their new type.
   //
-  bool doPassInitialization(Module *M);
+  bool doInitialization(Module *M);
 
-  // doPerMethodWork - This incorporates all types used by the specified method
+  // runOnMethod - This incorporates all types used by the specified method
   //
-  bool doPerMethodWork(Method *M);
+  bool runOnMethod(Method *M);
 };
 
 #endif

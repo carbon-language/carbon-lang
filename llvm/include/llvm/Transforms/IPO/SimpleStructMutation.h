@@ -1,22 +1,27 @@
-//===- llvm/Transforms/SwapStructContents.h - Permute Structs ----*- C++ -*--=//
+//===- llvm/Transforms/SimpleStructMutation.h - Permute Structs --*- C++ -*--=//
 //
-// This pass does a simple transformation that swaps all of the elements of the
-// struct types in the program around.
+// This pass does is a wrapper that can do a few simple structure mutation
+// transformations.
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TRANSFORMS_SWAPSTRUCTCONTENTS_H
-#define LLVM_TRANSFORMS_SWAPSTRUCTCONTENTS_H
+#ifndef LLVM_TRANSFORMS_SIMPLESTRUCTMUTATION_H
+#define LLVM_TRANSFORMS_SIMPLESTRUCTMUTATION_H
 
 #include "llvm/Transforms/MutateStructTypes.h"
 
-// FIXME: Move to correct location!
-class PrebuiltStructMutation : public MutateStructTypes {
+class SimpleStructMutation : public MutateStructTypes {
 public:
-  enum Transform { SwapElements, SortElements };
+  enum Transform { SwapElements, SortElements } CurrentXForm;
 
-  PrebuiltStructMutation(Module *M, enum Transform XForm)
-    : MutateStructTypes(getTransforms(M, XForm)) {}
+  SimpleStructMutation(enum Transform XForm) : CurrentXForm(XForm) {}
+
+  virtual bool run(Module *M) {
+    setTransforms(getTransforms(M, CurrentXForm));
+    bool Changed = MutateStructTypes::run(M);
+    clearTransforms();
+    return Changed;
+  }
 
 private:
   static TransformsType getTransforms(Module *M, enum Transform);

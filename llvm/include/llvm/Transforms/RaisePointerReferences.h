@@ -15,10 +15,10 @@
 // expressions as possible, by converting expressions to use getelementptr and
 // friends.
 //
-struct RaisePointerReferences : public Pass {
+struct RaisePointerReferences : public MethodPass {
   static bool doit(Method *M);
 
-  virtual bool doPerMethodWork(Method *M) { return doit(M); }
+  virtual bool runOnMethod(Method *M) { return doit(M); }
 };
 
 
@@ -26,10 +26,10 @@ struct RaisePointerReferences : public Pass {
 // converts all induction variables to reference a cannonical induction
 // variable (which starts at 0 and counts by 1).
 //
-struct EliminateAuxillaryInductionVariables : public Pass {
+struct EliminateAuxillaryInductionVariables : public MethodPass {
   static bool doit(Method *M) { return false; } // TODO!
 
-  virtual bool doPerMethodWork(Method *M) { return doit(M); }
+  virtual bool runOnMethod(Method *M) { return doit(M); }
 };
 
 #endif

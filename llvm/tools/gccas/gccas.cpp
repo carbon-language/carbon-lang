@@ -63,19 +63,19 @@ int main(int argc, char **argv) {
   // In addition to just parsing the input from GCC, we also want to spiff it up
   // a little bit.  Do this now.
   //
-  std::vector<Pass*> Passes;
-  Passes.push_back(new opt::DeadCodeElimination());  // Remove Dead code/vars
-  Passes.push_back(new CleanupGCCOutput());          // Fix gccisms
-  Passes.push_back(new InductionVariableSimplify()); // Simplify indvars
-  Passes.push_back(new RaisePointerReferences());    // Eliminate casts
-  Passes.push_back(new ConstantMerge());             // Merge dup global consts
-  Passes.push_back(new InstructionCombining());      // Combine silly seq's
-  Passes.push_back(new opt::DeadCodeElimination());  // Remove Dead code/vars
+  PassManager Passes;
+  Passes.add(new opt::DeadCodeElimination());  // Remove Dead code/vars
+  Passes.add(new CleanupGCCOutput());          // Fix gccisms
+  Passes.add(new InductionVariableSimplify()); // Simplify indvars
+  Passes.add(new RaisePointerReferences());    // Eliminate casts
+  Passes.add(new ConstantMerge());             // Merge dup global consts
+  Passes.add(new InstructionCombining());      // Combine silly seq's
+  Passes.add(new opt::DeadCodeElimination());  // Remove Dead code/vars
 
   // Run our queue of passes all at once now, efficiently.  This form of
   // runAllPasses frees the Pass objects after runAllPasses completes.
   //
-  Pass::runAllPassesAndFree(M.get(), Passes);
+  Passes.run(M.get());
 
   WriteBytecodeToFile(M.get(), *Out);
   return 0;

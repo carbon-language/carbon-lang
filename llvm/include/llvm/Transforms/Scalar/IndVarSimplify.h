@@ -10,10 +10,10 @@
 
 #include "llvm/Pass.h"
 
-struct InductionVariableSimplify : public Pass {
+struct InductionVariableSimplify : public MethodPass {
   static bool doit(Method *M);
 
-  virtual bool doPerMethodWork(Method *M) { return doit(M); }
+  virtual bool runOnMethod(Method *M) { return doit(M); }
 };
 
 #endif

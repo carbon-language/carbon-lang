@@ -52,21 +52,20 @@ static inline string GetFileNameRoot(const string &InputFilename) {
 // Native code generation for a specified target.
 //===---------------------------------------------------------------------===//
 
-class GenerateCodeForTarget : public Pass {
+class GenerateCodeForTarget : public MethodPass {
   TargetMachine &Target;
 public:
   inline GenerateCodeForTarget(TargetMachine &T) : Target(T) {}
 
-  // doPerMethodWork - This method does the actual work of generating code for
+  // runOnMethod - This method does the actual work of generating code for
   // the specified method.
   //
-  bool doPerMethodWork(Method *M) {
+  bool runOnMethod(Method *M) {
     if (!M->isExternal() && Target.compileMethod(M)) {
       cerr << "Error compiling " << InputFilename << "!\n";
-      return true;
     }
     
-    return false;
+    return true;
   }
 };
 
@@ -85,14 +84,14 @@ public:
   inline EmitAssembly(const TargetMachine &T, std::ostream *O, bool D)
     : Target(T), Out(O), DeleteStream(D) {}
 
-
-  virtual bool doPassFinalization(Module *M) {
+  virtual bool run(Module *M) {
     Target.emitAssembly(M, *Out);
 
     if (DeleteStream) delete Out;
     return false;
   }
 };
+
 
 
 //===---------------------------------------------------------------------===//
@@ -119,18 +118,18 @@ int main(int argc, char **argv) {
   }
 
   // Build up all of the passes that we want to do to the module...
-  std::vector<Pass*> Passes;
+  PassManager Passes;
 
   // Hoist constants out of PHI nodes into predecessor BB's
-  Passes.push_back(new HoistPHIConstants());
+  Passes.add(new HoistPHIConstants());
 
   if (TraceBBValues || TraceMethodValues) {   // If tracing enabled...
     // Insert trace code in all methods in the module
-    Passes.push_back(new InsertTraceCode(TraceBBValues, 
-                                         TraceBBValues ||TraceMethodValues));
+    Passes.add(new InsertTraceCode(TraceBBValues, 
+                                   TraceBBValues ||TraceMethodValues));
 
     // Eliminate duplication in constant pool
-    Passes.push_back(new DynamicConstantMerge());
+    Passes.add(new DynamicConstantMerge());
       
     // Then write out the module with tracing code before code generation 
     assert(InputFilename != "-" &&
@@ -152,20 +151,20 @@ int main(int argc, char **argv) {
       return 1;
     }
     
-    Passes.push_back(new WriteBytecodePass(os, true));
+    Passes.add(new WriteBytecodePass(os, true));
   }
   
   // Replace malloc and free instructions with library calls.
   // Do this after tracing until lli implements these lib calls.
   // For now, it will emulate malloc and free internally.
-  Passes.push_back(new LowerAllocations(Target.DataLayout));
+  Passes.add(new LowerAllocations(Target.DataLayout));
   
   // If LLVM dumping after transformations is requested, add it to the pipeline
   if (DumpAsm)
-    Passes.push_back(new PrintModulePass("Code after xformations: \n",&cerr));
+    Passes.add(new PrintMethodPass("Code after xformations: \n",&cerr));
 
   // Generate Target code...
-  Passes.push_back(new GenerateCodeForTarget(Target));
+  Passes.add(new GenerateCodeForTarget(Target));
 
   if (!DoNotEmitAssembly) {                // If asm output is enabled...
     // Figure out where we are going to send the output...
@@ -203,12 +202,11 @@ int main(int argc, char **argv) {
     }
     
     // Output assembly language to the .s file
-    Passes.push_back(new EmitAssembly(Target, Out, Out != &std::cout));
+    Passes.add(new EmitAssembly(Target, Out, Out != &std::cout));
   }
   
-  // Run our queue of passes all at once now, efficiently.  This form of
-  // runAllPasses frees the Pass objects after runAllPasses completes.
-  Pass::runAllPassesAndFree(M.get(), Passes);
+  // Run our queue of passes all at once now, efficiently.
+  Passes.run(M.get());
 
   return 0;
 }

@@ -35,10 +35,10 @@ void FindUsedTypes::IncorporateSymbolTable(const SymbolTable *ST) {
 }
 
 
-// doPassInitialization - This loops over global constants defined in the
+// doInitialization - This loops over global constants defined in the
 // module, converting them to their new type.
 //
-bool FindUsedTypes::doPassInitialization(Module *m) {
+bool FindUsedTypes::doInitialization(Module *m) {
   const Module *M = m;
   if (IncludeSymbolTables && M->hasSymbolTable())
     IncorporateSymbolTable(M->getSymbolTable()); // Add symtab first...
@@ -51,7 +51,7 @@ bool FindUsedTypes::doPassInitialization(Module *m) {
 
 // doPerMethodWork - This incorporates all types used by the specified method
 //
-bool FindUsedTypes::doPerMethodWork(Method *m) {
+bool FindUsedTypes::runOnMethod(Method *m) {
   const Method *M = m;
   if (IncludeSymbolTables && M->hasSymbolTable())
   IncorporateSymbolTable(M->getSymbolTable()); // Add symtab first...

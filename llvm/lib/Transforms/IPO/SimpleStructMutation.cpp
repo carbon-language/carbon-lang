@@ -58,18 +58,18 @@ static unsigned getIndex(const vector<pair<unsigned, unsigned> > &Vec,
 
 static inline void GetTransformation(const StructType *ST,
                                      vector<int> &Transform,
-                                enum PrebuiltStructMutation::Transform XForm) {
+                                enum SimpleStructMutation::Transform XForm) {
   unsigned NumElements = ST->getElementTypes().size();
   Transform.reserve(NumElements);
 
   switch (XForm) {
-  case PrebuiltStructMutation::SwapElements:
+  case SimpleStructMutation::SwapElements:
     // The transformation to do is: just simply swap the elements
     for (unsigned i = 0; i < NumElements; ++i)
       Transform.push_back(NumElements-i-1);
     break;
 
-  case PrebuiltStructMutation::SortElements: {
+  case SimpleStructMutation::SortElements: {
     vector<pair<unsigned, unsigned> > ElList;
 
     // Build mapping from index to size
@@ -87,26 +87,26 @@ static inline void GetTransformation(const StructType *ST,
   }
 }
 
-// doPassInitialization - This does all of the work of the pass
-//
-PrebuiltStructMutation::TransformsType
-  PrebuiltStructMutation::getTransforms(Module *M, enum Transform XForm) {
+SimpleStructMutation::TransformsType
+  SimpleStructMutation::getTransforms(Module *M, enum Transform XForm) {
+
+  // FIXME: These should be calculated by the Pass framework!
+
   // We need to know which types to modify, and which types we CAN'T modify
-  FindUsedTypes          FUT/*(true)*/; // TODO: Do symbol tables as well
-  FindUnsafePointerTypes FUPT;
+  FindUsedTypes          *FUT = new FindUsedTypes(/*true*/); // TODO: Do symbol tables as well
+  FindUnsafePointerTypes *FUPT = new FindUnsafePointerTypes();
 
   // Simutaneously find all of the types used, and all of the types that aren't
   // safe.
   //
-  vector<Pass*> Analyses;
-  Analyses.push_back(&FUT);
-  Analyses.push_back(&FUPT);
-  Pass::runAllPasses(M, Analyses);  // Do analyses
-
+  PassManager Analyses;
+  Analyses.add(FUT);
+  Analyses.add(FUPT);
+  Analyses.run(M);  // Do analyses
 
   // Get the results out of the analyzers...
-  const set<PointerType*> &UnsafePTys = FUPT.getUnsafeTypes();
-  const set<const Type *> &UsedTypes  = FUT.getTypes();
+  const set<PointerType*> &UnsafePTys = FUPT->getUnsafeTypes();
+  const set<const Type *> &UsedTypes  = FUT->getTypes();
 
 
   // Combine the two sets, weeding out non structure types.  Closures in C++

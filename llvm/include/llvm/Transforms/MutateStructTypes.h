@@ -51,25 +51,40 @@ public:
   //
   typedef std::map<const StructType*, std::vector<int> > TransformsType;
 
-  MutateStructTypes(const TransformsType &Transforms);
+  MutateStructTypes(const TransformsType &Transforms) {
+    setTransforms(Transforms);
+  }
 
+  // run - do the transformation
+  virtual bool run(Module *M);
 
-  // doPassInitialization - This loops over global constants defined in the
+protected:
+
+  // Alternatively, it is valid to subclass this class and provide transforms
+  // this way.  See SimpleStructMutation for an example.
+  //
+  MutateStructTypes() {}
+  void setTransforms(const TransformsType &Transforms);
+  void clearTransforms();
+
+private:
+
+  // processGlobals - This loops over global constants defined in the
   // module, converting them to their new type.  Also this creates placeholder
   // methods for methods than need to be copied because they have a new
   // signature type.
   //
-  bool doPassInitialization(Module *M);
+  void processGlobals(Module *M);
 
-  // doPerMethodWork - This transforms the instructions of the method to use the
+  // transformMethod - This transforms the instructions of the method to use the
   // new types.
   //
-  bool doPerMethodWork(Method *M);
+  void transformMethod(Method *M);
 
-  // doPassFinalization - This removes the old versions of methods that are no
+  // removeDeadGlobals - This removes the old versions of methods that are no
   // longer needed.
   //
-  virtual bool doPassFinalization(Module *M);
+  void removeDeadGlobals(Module *M);
 
 private:
   // ConvertType - Convert from the old type system to the new one...

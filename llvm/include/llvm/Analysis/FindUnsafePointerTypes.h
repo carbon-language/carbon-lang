@@ -22,7 +22,7 @@
 
 class PointerType;
 
-struct FindUnsafePointerTypes : public Pass {
+struct FindUnsafePointerTypes : public MethodPass {
   // UnsafeTypes - Set of types that are not safe to transform.
   std::set<PointerType*> UnsafeTypes;
 public:
@@ -32,11 +32,11 @@ public:
     return UnsafeTypes;
   }
 
-  // doPerMethodWork - Inspect the operations that the specified method does on
+  // runOnMethod - Inspect the operations that the specified method does on
   // values of various types.  If they are deemed to be 'unsafe' note that the
   // type is not safe to transform.
   //
-  virtual bool doPerMethodWork(Method *M);
+  virtual bool runOnMethod(Method *M);
 
   // printResults - Loop over the results of the analysis, printing out unsafe
   // types.

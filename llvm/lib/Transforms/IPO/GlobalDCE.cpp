@@ -11,10 +11,7 @@
 #include "Support/DepthFirstIterator.h"
 #include <set>
 
-static bool RemoveUnreachableMethods(Module *M, cfg::CallGraph *CG) {
-  // Create a call graph if one is not already available...
-  cfg::CallGraph &CallGraph = CG ? *CG : *new cfg::CallGraph(M);
-  
+static bool RemoveUnreachableMethods(Module *M, cfg::CallGraph &CallGraph) {
   // Calculate which methods are reachable from the external methods in the call
   // graph.
   //
@@ -36,11 +33,7 @@ static bool RemoveUnreachableMethods(Module *M, cfg::CallGraph *CG) {
   }
 
   // Nothing to do if no unreachable methods have been found...
-  if (MethodsToDelete.empty()) {
-    // Free the created call graph if it was not passed in
-    if (&CallGraph != CG) delete &CallGraph;
-    return false;
-  }
+  if (MethodsToDelete.empty()) return false;
 
   // Unreachables methods have been found and should have no references to them,
   // delete them now.
@@ -49,11 +42,12 @@ static bool RemoveUnreachableMethods(Module *M, cfg::CallGraph *CG) {
 	 E = MethodsToDelete.end(); I != E; ++I)
     delete CallGraph.removeMethodFromModule(*I);
 
-  // Free the created call graph if it was not passed in
-  if (&CallGraph != CG) delete &CallGraph;
   return true;
 }
 
-bool GlobalDCE::run(Module *M, cfg::CallGraph *CG = 0) {
-  return RemoveUnreachableMethods(M, CG);
+bool GlobalDCE::run(Module *M) {
+  // TODO: FIXME: GET THE CALL GRAPH FROM THE PASS!
+  // Create a call graph if one is not already available...
+  cfg::CallGraph CallGraph(M);
+  return RemoveUnreachableMethods(M, CallGraph);
 }

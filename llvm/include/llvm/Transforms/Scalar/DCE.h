@@ -13,7 +13,7 @@
 
 namespace opt {
 
-struct DeadCodeElimination : public Pass {
+struct DeadCodeElimination : public MethodPass {
   // External Interface:
   //
   static bool doDCE(Method *M);
@@ -33,23 +33,23 @@ struct DeadCodeElimination : public Pass {
   static bool RemoveUnusedGlobalValues(Module *M);
 
   // Pass Interface...
-  virtual bool doPassInitialization(Module *M) {
+  virtual bool doInitialization(Module *M) {
     return RemoveUnusedGlobalValues(M);
   }
-  virtual bool doPerMethodWork(Method *M) { return doDCE(M); }
-  virtual bool doPassFinalization(Module *M) {
+  virtual bool runOnMethod(Method *M) { return doDCE(M); }
+  virtual bool doFinalization(Module *M) {
     return RemoveUnusedGlobalValues(M);
   }
 };
 
 
 
-struct AgressiveDCE : public Pass {
+struct AgressiveDCE : public MethodPass {
   // DoADCE - Execute the Agressive Dead Code Elimination Algorithm
   //
   static bool doADCE(Method *M);                        // Defined in ADCE.cpp
 
-  virtual bool doPerMethodWork(Method *M) {
+  virtual bool runOnMethod(Method *M) {
     return doADCE(M);
   }
 };

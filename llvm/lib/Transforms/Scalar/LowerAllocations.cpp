@@ -17,12 +17,12 @@
 using std::vector;
 
 
-// doPassInitialization - For the lower allocations pass, this ensures that a
+// doInitialization - For the lower allocations pass, this ensures that a
 // module contains a declaration for a malloc and a free function.
 //
 // This function is always successful.
 //
-bool LowerAllocations::doPassInitialization(Module *M) {
+bool LowerAllocations::doInitialization(Module *M) {
   bool Changed = false;
   const MethodType *MallocType = 
     MethodType::get(PointerType::get(Type::SByteTy),
@@ -55,10 +55,10 @@ bool LowerAllocations::doPassInitialization(Module *M) {
   return Changed;  // Always successful
 }
 
-// doPerMethodWork - This method does the actual work of converting
+// runOnMethod - This method does the actual work of converting
 // instructions over, assuming that the pass has already been initialized.
 //
-bool LowerAllocations::doPerMethodWork(Method *M) {
+bool LowerAllocations::runOnMethod(Method *M) {
   bool Changed = false;
   assert(MallocMeth && FreeMeth && M && "Pass not initialized!");
 

@@ -23,7 +23,7 @@ using std::string;
 
 // Add a prototype for printf if it is not already in the program.
 //
-bool InsertTraceCode::doPassInitialization(Module *M) {
+bool InsertTraceCode::doInitialization(Module *M) {
   SymbolTable *ST = M->getSymbolTable();
   const Type *SBP = PointerType::get(Type::SByteTy);
   const MethodType *MTy =

@@ -12,28 +12,28 @@
 
 namespace opt {
 
-struct SymbolStripping : public Pass {
+struct SymbolStripping : public MethodPass {
   // doSymbolStripping - Remove all symbolic information from a method
   //
   static bool doSymbolStripping(Method *M);
 
-  virtual bool doPerMethodWork(Method *M) {
+  virtual bool runOnMethod(Method *M) {
     return doSymbolStripping(M);
   }
 };
 
-struct FullSymbolStripping : public Pass {
+struct FullSymbolStripping : public MethodPass {
   
   // doStripGlobalSymbols - Remove all symbolic information from all methods 
   // in a module, and all module level symbols. (method names, etc...)
   //
   static bool doStripGlobalSymbols(Module *M);
 
-  virtual bool doPassInitialization(Module *M) {
+  virtual bool doInitialization(Module *M) {
     return doStripGlobalSymbols(M);
   }
 
-  virtual bool doPerMethodWork(Method *M) {
+  virtual bool runOnMethod(Method *M) {
     return SymbolStripping::doSymbolStripping(M);
   }
 };

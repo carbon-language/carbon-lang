@@ -12,7 +12,7 @@ class TerminatorInst;
 
 namespace opt {
 
-struct ConstantPropogation : public Pass {
+struct ConstantPropogation : public MethodPass {
   // doConstantPropogation - Do trivial constant propogation and expression
   // folding
   static bool doConstantPropogation(Method *M);
@@ -22,7 +22,7 @@ struct ConstantPropogation : public Pass {
   //
   static bool doConstantPropogation(BasicBlock *BB, BasicBlock::iterator &I);
 
-  inline bool doPerMethodWork(Method *M) {
+  inline bool runOnMethod(Method *M) {
     return doConstantPropogation(M);
   }
 };
@@ -39,10 +39,10 @@ bool ConstantFoldTerminator(TerminatorInst *T);
 //===----------------------------------------------------------------------===//
 // Sparse Conditional Constant Propogation Pass
 //
-struct SCCPPass : public Pass {
+struct SCCPPass : public MethodPass {
   static bool doSCCP(Method *M);
 
-  inline bool doPerMethodWork(Method *M) {
+  inline bool runOnMethod(Method *M) {
     return doSCCP(M);
   }
 };

@@ -20,9 +20,9 @@
 #include "llvm/iMemory.h"
 #include "llvm/iTerminators.h"
 #include "llvm/iOther.h"
+#include "Support/STLExtras.h"
 #include <algorithm>
 using std::map;
-using std::make_pair;
 using std::vector;
 
 // To enable debugging, uncomment this...
@@ -56,7 +56,7 @@ const Type *MutateStructTypes::ConvertType(const Type *Ty) {
   const Type *DestTy = 0;
 
   PATypeHolder<Type> PlaceHolder = OpaqueType::get();
-  TypeMap.insert(make_pair(Ty, PlaceHolder.get()));
+  TypeMap.insert(std::make_pair(Ty, PlaceHolder.get()));
 
   switch (Ty->getPrimitiveID()) {
   case Type::MethodTyID: {
@@ -100,7 +100,7 @@ const Type *MutateStructTypes::ConvertType(const Type *Ty) {
 
   // Refine our little placeholder value into a real type...
   cast<DerivedType>(PlaceHolder.get())->refineAbstractTypeTo(DestTy);
-  TypeMap.insert(make_pair(Ty, PlaceHolder.get()));
+  TypeMap.insert(std::make_pair(Ty, PlaceHolder.get()));
 
   return PlaceHolder.get();
 }
@@ -179,21 +179,20 @@ Value *MutateStructTypes::ConvertValue(const Value *V) {
 }
 
 
-// Ctor - Take a map that specifies what transformation to do for each field
-// of the specified structure types.  There is one element of the vector for
-// each field of the structure.  The value specified indicates which slot of
+// setTransforms - Take a map that specifies what transformation to do for each
+// field of the specified structure types.  There is one element of the vector
+// for each field of the structure.  The value specified indicates which slot of
 // the destination structure the field should end up in.  A negative value 
 // indicates that the field should be deleted entirely.
 //
-MutateStructTypes::MutateStructTypes(const map<const StructType*,
-                                               vector<int> > &XForm) {
+void MutateStructTypes::setTransforms(const TransformsType &XForm) {
 
   // Loop over the types and insert dummy entries into the type map so that 
   // recursive types are resolved properly...
   for (map<const StructType*, vector<int> >::const_iterator I = XForm.begin(),
          E = XForm.end(); I != E; ++I) {
     const StructType *OldTy = I->first;
-    TypeMap.insert(make_pair(OldTy, OpaqueType::get()));
+    TypeMap.insert(std::make_pair(OldTy, OpaqueType::get()));
   }
 
   // Loop over the type specified and figure out what types they should become
@@ -229,17 +228,24 @@ MutateStructTypes::MutateStructTypes(const map<const StructType*,
     cast<DerivedType>(OldTypeStub)->refineAbstractTypeTo(NSTy);
 
     // Add the transformation to the Transforms map.
-    Transforms.insert(make_pair(OldTy, make_pair(NSTy, InVec)));
+    Transforms.insert(std::make_pair(OldTy, std::make_pair(NSTy, InVec)));
 
     DEBUG_MST(cerr << "Mutate " << OldTy << "\nTo " << NSTy << endl);
   }
 }
 
+void MutateStructTypes::clearTransforms() {
+  Transforms.clear();
+  TypeMap.clear();
+  GlobalMap.clear();
+  assert(LocalValueMap.empty() &&
+         "Local Value Map should always be empty between transformations!");
+}
 
-// doPassInitialization - This loops over global constants defined in the
+// doInitialization - This loops over global constants defined in the
 // module, converting them to their new type.
 //
-bool MutateStructTypes::doPassInitialization(Module *M) {
+void MutateStructTypes::processGlobals(Module *M) {
   // Loop through the methods in the module and create a new version of the
   // method to contained the transformed code.  Don't use an iterator, because
   // we will be adding values to the end of the vector, and it could be
@@ -285,14 +291,12 @@ bool MutateStructTypes::doPassInitialization(Module *M) {
       }
     }
   }
-
-  return true;
 }
 
 
-// doPassFinalization - For this pass, all this does is remove the old versions
+// removeDeadGlobals - For this pass, all this does is remove the old versions
 // of the methods and global variables that we no longer need.
-bool MutateStructTypes::doPassFinalization(Module *M) {
+void MutateStructTypes::removeDeadGlobals(Module *M) {
   // The first half of the methods in the module have to go.
   //unsigned NumMethods = M->size();
   //unsigned NumGVars   = M->gsize();
@@ -313,20 +317,18 @@ bool MutateStructTypes::doPassFinalization(Module *M) {
     else
       ++I;
   }
-  
-  return true;
 }
 
 
 
-// doPerMethodWork - This transforms the instructions of the method to use the
+// transformMethod - This transforms the instructions of the method to use the
 // new types.
 //
-bool MutateStructTypes::doPerMethodWork(Method *m) {
+void MutateStructTypes::transformMethod(Method *m) {
   const Method *M = m;
   map<const GlobalValue*, GlobalValue*>::iterator GMI = GlobalMap.find(M);
   if (GMI == GlobalMap.end())
-    return false;  // Do not affect one of our new methods that we are creating
+    return;  // Do not affect one of our new methods that we are creating
 
   Method *NewMeth = cast<Method>(GMI->second);
 
@@ -501,5 +503,14 @@ bool MutateStructTypes::doPerMethodWork(Method *m) {
   }
 
   LocalValueMap.clear();
-  return true;
+}
+
+
+bool MutateStructTypes::run(Module *M) {
+  processGlobals(M);
+
+  for_each(M->begin(), M->end(),
+           bind_obj(this, &MutateStructTypes::transformMethod));
+
+  removeDeadGlobals(M);
 }

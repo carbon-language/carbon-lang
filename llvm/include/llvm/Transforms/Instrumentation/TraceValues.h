@@ -11,7 +11,7 @@
 #include "llvm/Pass.h"
 class Method;
 
-class InsertTraceCode : public Pass {
+class InsertTraceCode : public MethodPass {
   bool TraceBasicBlockExits, TraceMethodExits;
   Method *PrintfMeth;
 public:
@@ -21,7 +21,7 @@ public:
 
   // Add a prototype for printf if it is not already in the program.
   //
-  bool doPassInitialization(Module *M);
+  bool doInitialization(Module *M);
 
   //--------------------------------------------------------------------------
   // Function InsertCodeToTraceValues
@@ -32,9 +32,9 @@ public:
   static bool doit(Method *M, bool traceBasicBlockExits,
                    bool traceMethodExits, Method *Printf);
 
-  // doPerMethodWork - This method does the work.  Always successful.
+  // runOnMethod - This method does the work.  Always successful.
   //
-  bool doPerMethodWork(Method *M) {
+  bool runOnMethod(Method *M) {
     return doit(M, TraceBasicBlockExits, TraceMethodExits, PrintfMeth);
   }
 };

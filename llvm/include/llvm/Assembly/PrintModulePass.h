@@ -1,7 +1,9 @@
 //===- llvm/Assembly/PrintModulePass.h - Printing Pass -----------*- C++ -*--=//
 //
-// This file defines a simple pass to print out methods of a module as they are
-// processed.
+// This file defines two passes to print out a module.  The PrintModulePass
+// pass simply prints out the entire module when it is executed.  The
+// PrintMethodPass class is designed to be pipelined with other MethodPass's,
+// and prints out the methods of the class as they are processed.
 //
 //===----------------------------------------------------------------------===//
 
@@ -13,36 +15,42 @@
 #include <iostream>
 
 class PrintModulePass : public Pass {
-  std::string Banner;     // String to print before each method
   std::ostream *Out;      // ostream to print on
   bool DeleteStream;      // Delete the ostream in our dtor?
-  bool PrintPerMethod;    // Print one method at a time rather than the whole?
 public:
-  inline PrintModulePass(const std::string &B, std::ostream *o = &std::cout,
-                         bool DS = false,
-                         bool printPerMethod = true)
-    : Banner(B), Out(o), DeleteStream(DS), PrintPerMethod(printPerMethod) {
+  inline PrintModulePass(std::ostream *o = &std::cout, bool DS = false)
+    : Out(o), DeleteStream(DS) {
   }
   
   inline ~PrintModulePass() {
     if (DeleteStream) delete Out;
   }
   
-  // doPerMethodWork - This pass just prints a banner followed by the method as
-  // it's processed.
-  //
-  bool doPerMethodWork(Method *M) {
-    if (PrintPerMethod)
-      (*Out) << Banner << M;
+  bool run(Module *M) {
+    (*Out) << M;
     return false;
   }
+};
 
-  // doPassFinalization - Virtual method overriden by subclasses to do any post
-  // processing needed after all passes have run.
+class PrintMethodPass : public MethodPass {
+  std::string Banner;     // String to print before each method
+  std::ostream *Out;      // ostream to print on
+  bool DeleteStream;      // Delete the ostream in our dtor?
+public:
+  inline PrintMethodPass(const std::string &B, std::ostream *o = &std::cout,
+                         bool DS = false)
+    : Banner(B), Out(o), DeleteStream(DS) {
+  }
+  
+  inline ~PrintMethodPass() {
+    if (DeleteStream) delete Out;
+  }
+  
+  // runOnMethod - This pass just prints a banner followed by the method as
+  // it's processed.
   //
-  bool doPassFinalization(Module *M) {
-    if (! PrintPerMethod)
-      (*Out) << Banner << M;
+  bool runOnMethod(Method *M) {
+    (*Out) << Banner << M;
     return false;
   }
 };

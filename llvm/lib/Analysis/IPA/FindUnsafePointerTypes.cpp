@@ -45,11 +45,11 @@ static inline bool isSafeInstruction(const Instruction *I) {
 }
 
 
-// doPerMethodWork - Inspect the operations that the specified method does on
+// runOnMethod - Inspect the operations that the specified method does on
 // values of various types.  If they are deemed to be 'unsafe' note that the
 // type is not safe to transform.
 //
-bool FindUnsafePointerTypes::doPerMethodWork(Method *Meth) {
+bool FindUnsafePointerTypes::runOnMethod(Method *Meth) {
   const Method *M = Meth;  // We don't need/want write access
   for (Method::const_inst_iterator I = M->inst_begin(), E = M->inst_end();
        I != E; ++I) {

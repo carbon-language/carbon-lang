@@ -22,7 +22,8 @@
 class Constant;
 class GlobalVariable;
 
-class ConstantMerge : public Pass {
+// FIXME: ConstantMerge should not be a methodPass!!!
+class ConstantMerge : public MethodPass {
 protected:
   std::map<Constant*, GlobalVariable*> Constants;
   unsigned LastConstantSeen;
@@ -34,14 +35,16 @@ public:
   //
   static bool mergeDuplicateConstants(Module *M);
 
-  // doPassInitialization - For this pass, process all of the globals in the
+  // doInitialization - For this pass, process all of the globals in the
   // module, eliminating duplicate constants.
   //
-  bool doPassInitialization(Module *M);
+  bool doInitialization(Module *M);
 
-  // doPassFinalization - Clean up internal state for this module
+  bool runOnMethod(Method*) { return false; }
+
+  // doFinalization - Clean up internal state for this module
   //
-  bool doPassFinalization(Module *M) {
+  bool doFinalization(Module *M) {
     LastConstantSeen = 0;
     Constants.clear();
     return false;
@@ -52,7 +55,7 @@ struct DynamicConstantMerge : public ConstantMerge {
   // doPerMethodWork - Check to see if any globals have been added to the 
   // global list for the module.  If so, eliminate them.
   //
-  bool doPerMethodWork(Method *M);
+  bool runOnMethod(Method *M);
 };
 
 #endif

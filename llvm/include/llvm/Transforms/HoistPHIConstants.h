@@ -11,12 +11,12 @@
 
 #include "llvm/Pass.h"
 
-struct HoistPHIConstants : public Pass {
+struct HoistPHIConstants : public MethodPass {
   // doHoistPHIConstants - Hoist constants out of PHI instructions
   //
   static bool doHoistPHIConstants(Method *M);
 
-  virtual bool doPerMethodWork(Method *M) { return doHoistPHIConstants(M); }
+  virtual bool runOnMethod(Method *M) { return doHoistPHIConstants(M); }
 };
 
 #endif

@@ -12,12 +12,12 @@
 
 namespace opt {
 
-struct InductionVariableCannonicalize : public Pass {
+struct InductionVariableCannonicalize : public MethodPass {
   // doInductionVariableCannonicalize - Simplify induction variables in loops
   //
   static bool doIt(Method *M);
 
-  virtual bool doPerMethodWork(Method *M) {
+  virtual bool runOnMethod(Method *M) {
     return doIt(M);
   }
 };

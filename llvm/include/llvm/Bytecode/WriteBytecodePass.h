@@ -23,7 +23,7 @@ public:
     if (DeleteStream) delete Out;
   }
   
-  bool doPassFinalization(Module *M) {
+  bool run(Module *M) {
     WriteBytecodeToFile(M, *Out);    
     return false;
   }

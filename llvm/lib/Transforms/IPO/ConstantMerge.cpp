@@ -65,16 +65,16 @@ bool ConstantMerge::mergeDuplicateConstants(Module *M) {
 }
 
 
-// doPassInitialization - For this pass, process all of the globals in the
+// doInitialization - For this pass, process all of the globals in the
 // module, eliminating duplicate constants.
 //
-bool ConstantMerge::doPassInitialization(Module *M) {
+bool ConstantMerge::doInitialization(Module *M) {
   return ::mergeDuplicateConstants(M, LastConstantSeen, Constants);
 }
 
 // doPerMethodWork - Check to see if any globals have been added to the 
 // global list for the module.  If so, eliminate them.
 //
-bool DynamicConstantMerge::doPerMethodWork(Method *M) {
+bool DynamicConstantMerge::runOnMethod(Method *M) {
   return ::mergeDuplicateConstants(M->getParent(), LastConstantSeen, Constants);
 }

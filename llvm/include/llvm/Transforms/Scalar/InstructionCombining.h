@@ -17,11 +17,11 @@
 
 #include "llvm/Pass.h"
 
-struct InstructionCombining : public Pass {
+struct InstructionCombining : public MethodPass {
   static bool doit(Method *M);
   static bool CombineInstruction(Instruction *I);
 
-  virtual bool doPerMethodWork(Method *M) { return doit(M); }
+  virtual bool runOnMethod(Method *M) { return doit(M); }
 };
 
 #endif

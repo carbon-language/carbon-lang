@@ -220,14 +220,14 @@ static inline bool ShouldNukeSymtabEntry(const std::pair<string, Value*> &E) {
   return false;
 }
 
-// doPassInitialization - For this pass, it removes global symbol table
+// doInitialization - For this pass, it removes global symbol table
 // entries for primitive types.  These are never used for linking in GCC and
 // they make the output uglier to look at, so we nuke them.
 //
-bool CleanupGCCOutput::doPassInitialization(Module *M) {
+bool CleanupGCCOutput::doInitialization(Module *M) {
   bool Changed = false;
 
-  FUT.doPassInitialization(M);
+  FUT.doInitialization(M);
 
   if (PtrSByte == 0)
     PtrSByte = PointerType::get(Type::SByteTy);
@@ -551,17 +551,17 @@ static bool fixLocalProblems(Method *M) {
 
 // doPerMethodWork - This method simplifies the specified method hopefully.
 //
-bool CleanupGCCOutput::doPerMethodWork(Method *M) {
+bool CleanupGCCOutput::runOnMethod(Method *M) {
   bool Changed = fixLocalProblems(M);
   while (doOneCleanupPass(M)) Changed = true;
 
-  FUT.doPerMethodWork(M);
+  FUT.runOnMethod(M);
   return Changed;
 }
 
-bool CleanupGCCOutput::doPassFinalization(Module *M) {
+bool CleanupGCCOutput::doFinalization(Module *M) {
   bool Changed = false;
-  FUT.doPassFinalization(M);
+  FUT.doFinalization(M);
 
   if (M->hasSymbolTable()) {
     SymbolTable *ST = M->getSymbolTable();

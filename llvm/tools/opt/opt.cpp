@@ -34,14 +34,13 @@ enum Opts {
   indvars, instcombine, sccp, adce, raise,
 
   // Interprocedural optimizations...
-  globaldce, swapstructs,
+  globaldce, swapstructs, sortstructs,
 };
 
 struct {
   enum Opts OptID;
   Pass *ThePass;
 } OptTable[] = {
-  { swapstructs, 0 },
   { dce        , new opt::DeadCodeElimination() },
   { constprop  , new opt::ConstantPropogation() }, 
   { inlining   , new opt::MethodInlining() },
@@ -55,8 +54,11 @@ struct {
   { raise      , new RaisePointerReferences() },
   { trace      , new InsertTraceCode(true, true) },
   { tracem     , new InsertTraceCode(false, true) },
-  { print      , new PrintModulePass("Current Method: \n",&cerr) },
+  { print      , new PrintMethodPass("Current Method: \n",&cerr) },
   { cleangcc   , new CleanupGCCOutput() },
+  { globaldce  , new GlobalDCE() },
+  { swapstructs, new SimpleStructMutation(SimpleStructMutation::SwapElements) },
+  { sortstructs, new SimpleStructMutation(SimpleStructMutation::SortElements) },
 };
 
 cl::String InputFilename ("", "Load <arg> file to optimize", cl::NoFlags, "-");
@@ -78,6 +80,7 @@ cl::EnumList<enum Opts> OptimizationList(cl::NoFlags,
 
   clEnumVal(globaldce  , "Remove unreachable globals"),
   clEnumVal(swapstructs, "Swap structure types around"),
+  clEnumVal(sortstructs, "Sort structure elements"),
 
   clEnumVal(cleangcc   , "Cleanup GCC Output"),
   clEnumVal(raise      , "Raise to Higher Level"),
@@ -95,18 +98,7 @@ static void RunOptimization(Module *M, enum Opts Opt) {
       return;
     }
   
-  // Special cases that haven't been fit into a consistent framework yet...
-  switch (Opt) {
-  case globaldce: {
-    GlobalDCE GDCE; GDCE.run(M); return;
-  }
-  case swapstructs: {
-    PrebuiltStructMutation SM(M, PrebuiltStructMutation::SortElements);
-    SM.run(M); return;
-  }
-  default:
-    cerr << "Optimization tables inconsistent!!\n";
-  }
+  cerr << "Optimization tables inconsistent!!\n";
 }
 
 int main(int argc, char **argv) {
@@ -117,6 +109,8 @@ int main(int argc, char **argv) {
     cerr << "bytecode didn't read correctly.\n";
     return 1;
   }
+
+  PassManager Passes;
 
   // Run all of the optimizations specified on the command line
   for (unsigned i = 0; i < OptimizationList.size(); ++i)
