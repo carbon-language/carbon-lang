@@ -93,6 +93,12 @@ public:
   /// the graph.
   void Legalize(TargetLowering &TLI);
 
+  /// RemoveDeadNodes - This method deletes all unreachable nodes in the
+  /// SelectionDAG, including nodes (like loads) that have uses of their token
+  /// chain but no other uses and no side effect.  If a node is passed in as an
+  /// argument, it is used as the seed for node deletion.
+  void RemoveDeadNodes(SDNode *N = 0);
+
   SDOperand getConstant(uint64_t Val, MVT::ValueType VT);
   SDOperand getConstantFP(double Val, MVT::ValueType VT);
   SDOperand getGlobalAddress(const GlobalValue *GV, MVT::ValueType VT);
@@ -150,6 +156,9 @@ public:
   }
 
   void dump() const;
+
+private:
+  void DeleteNodeIfDead(SDNode *N, void *NodeSet);
 };
 
 }

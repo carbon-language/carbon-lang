@@ -409,6 +409,17 @@ protected:
   void setValueTypes(std::vector<MVT::ValueType> &VTs) {
     std::swap(Values, VTs);
   }
+
+  void removeUser(SDNode *User) {
+    // Remove this user from the operand's use list.
+    for (unsigned i = Uses.size(); ; --i) {
+      assert(i != 0 && "Didn't find user!");
+      if (Uses[i-1] == User) {
+        Uses.erase(Uses.begin()+i-1);
+        break;
+      }
+    }
+  }
 };
 
 
@@ -498,7 +509,6 @@ protected:
   GlobalAddressSDNode(const GlobalValue *GA, MVT::ValueType VT)
     : SDNode(ISD::GlobalAddress, VT) {
     TheGlobal = const_cast<GlobalValue*>(GA);
-
   }
 public:
 
