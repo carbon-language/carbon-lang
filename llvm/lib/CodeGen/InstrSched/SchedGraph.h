@@ -26,7 +26,6 @@ class RefVec;
 
 class SchedGraphNode : public SchedGraphNodeCommon {
 
-  int origIndexInBB;            // original position of machine instr in BB
   MachineBasicBlock *MBB;
   const MachineInstr *MI;
 
@@ -46,7 +45,6 @@ public:
   bool isDummyNode() const { return (MI == NULL); }
   MachineBasicBlock &getMachineBasicBlock() const { return *MBB; }
 
-  int getOrigIndexInBB() const { return origIndexInBB; }
   void print(std::ostream &os) const;
 };
 

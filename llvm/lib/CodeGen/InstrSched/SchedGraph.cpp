@@ -44,8 +44,7 @@ struct ValueToDefVecMap: public hash_map<const Value*, RefVec> {
 
 SchedGraphNode::SchedGraphNode(unsigned NID, MachineBasicBlock *mbb,
                                int   indexInBB, const TargetMachine& Target)
-  : SchedGraphNodeCommon(NID), origIndexInBB(indexInBB), MBB(mbb), 
-    MI(mbb ? (*mbb)[indexInBB] : 0) {
+  : SchedGraphNodeCommon(NID,indexInBB), MBB(mbb), MI(mbb ? (*mbb)[indexInBB] : 0) {
   if (MI) {
     MachineOpCode mopCode = MI->getOpCode();
     latency = Target.getInstrInfo().hasResultInterlock(mopCode)
