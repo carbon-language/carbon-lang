@@ -23,7 +23,7 @@
 //
 // Because a transformation does not see all methods consecutively, it should
 // be careful about the state that it maintains... another pass may modify a
-// method between two invokacations of doPerMethodWork.
+// method between two invocatations of doPerMethodWork.
 //
 // Also, implementations of doMethodWork should not remove any methods from the
 // module.
@@ -47,13 +47,18 @@ struct Pass {
   // runAllPasses - Run a bunch of passes on the specified module, efficiently.
   static bool runAllPasses(Module *M, vector<Pass*> &Passes) {
     bool MadeChanges = false;
+    // Run all of the pass initializers
     for (unsigned i = 0; i < Passes.size(); ++i)
-      MadeChanges |= Passes[i]->doPassInitializationVirt(M);
+      MadeChanges |= Passes[i]->doPassInitialization(M);
     
     // Loop over all of the methods, applying all of the passes to them
-    for (Module::iterator I = M->begin(); I != M->end(); ++I)
+    for (unsigned m = 0; m < M->size(); ++m)
       for (unsigned i = 0; i < Passes.size(); ++i)
-        MadeChanges |= Passes[i]->doPerMethodWorkVirt(*I);
+        MadeChanges |= Passes[i]->doPerMethodWork(*(M->begin()+m));
+
+    // Run all of the pass finalizers...
+    for (unsigned i = 0; i < Passes.size(); ++i)
+      MadeChanges |= Passes[i]->doPassFinalization(M);
     return MadeChanges;
   }
 
@@ -75,21 +80,22 @@ struct Pass {
   // within it.  Returns true if any of the contained passes returned true.
   //
   bool run(Module *M) {
-    bool MadeChanges = doPassInitializationVirt(M);
+    bool MadeChanges = doPassInitialization(M);
 
     // Loop over methods in the module.  doPerMethodWork could add a method to
     // the Module, so we have to keep checking for end of method list condition.
     //
-    for (Module::iterator I = M->begin(); I != M->end(); ++I)
-      MadeChanges |= doPerMethodWorkVirt(*I);
-    return MadeChanges;
+    for (unsigned m = 0; m < M->size(); ++m)
+      MadeChanges |= doPerMethodWork(*(M->begin()+m));
+    return MadeChanges | doPassFinalization(M);
   }
 
   // run(Method*) - Run this pass on a module and one specific method.  Returns
   // false on success.
   //
   bool run(Method *M) {
-    return doPassInitializationVirt(M->getParent()) | doPerMethodWorkVirt(M);
+    return doPassInitialization(M->getParent()) | doPerMethodWork(M) |
+           doPassFinalization(M->getParent());
   }
 
 
@@ -100,97 +106,20 @@ struct Pass {
   // Destructor - Virtual so we can be subclassed
   inline virtual ~Pass() {}
 
-  // doPassInitializationVirt - Virtual method overridden by subclasses to do
+  // doPassInitialization - Virtual method overridden by subclasses to do
   // any neccesary per-module initialization.
   //
-  virtual bool doPassInitializationVirt(Module *M) = 0;
+  virtual bool doPassInitialization(Module *M) { return false; }
 
-  // doPerMethodWorkVirt - Virtual method overriden by subclasses to do the
+  // doPerMethodWork - Virtual method overriden by subclasses to do the
   // per-method processing of the pass.
   //
-  virtual bool doPerMethodWorkVirt(Method *M) = 0;
-};
+  virtual bool doPerMethodWork(Method *M) { return false; }
 
-
-//===----------------------------------------------------------------------===//
-// ConcretePass class - This is used by implementations of passes to fill in
-// boiler plate code.
-//
-// Deriving from this class is good because if new methods are added in the 
-// future, code for your pass won't have to change to stub out the unused
-// functionality.
-//
-struct ConcretePass : public Pass {
-
-  // doPassInitializationVirt - Default to success.
-  virtual bool doPassInitializationVirt(Module *M) { return false; }
-
-  // doPerMethodWorkVirt - Default to success.
-  virtual bool doPerMethodWorkVirt(Method *M) { return false; }
-};
-
-
-
-//===----------------------------------------------------------------------===//
-// StatelessPass<t> class - This is used by implementations of passes to fill in
-// boiler plate code.  Subclassing this class indicates that a class has no
-// state to keep around, so it's safe to invoke static versions of functions.
-// This can be more efficient that using virtual function dispatch all of the
-// time.
-//
-// SubClass should be a concrete class that is derived from StatelessPass.
-//
-template<class SubClass>
-struct StatelessPass : public ConcretePass {
-
-  //===--------------------------------------------------------------------===//
-  // The externally useful entry points - These are specialized to avoid the
-  // overhead of virtual method invokations if 
+  // doPassFinalization - Virtual method overriden by subclasses to do any post
+  // processing needed after all passes have run.
   //
-  // run(Module*) - Run this pass on a module and all of the methods contained
-  // within it.  Returns false on success.
-  //
-  static bool run(Module *M) {
-    bool MadeChange = doPassInitialization(M->getParent());
-
-    // Loop over methods in the module.  doPerMethodWork could add a method to
-    // the Module, so we have to keep checking for end of method list condition.
-    //
-    for (Module::iterator I = M->begin(); I != M->end(); ++I)
-      MadeChange |= doPerMethodWork(*I);
-    return MadeChange;
-  }
-
-  // run(Method*) - Run this pass on a module and one specific method.  Returns
-  // false on success.
-  //
-  static bool run(Method *M) {
-    return doPassInitialization(M->getParent()) | doPerMethodWork(M);
-  }
-
-  //===--------------------------------------------------------------------===//
-  // Default static method implementations, these should be defined in SubClass
-
-  static bool doPassInitialization(Module *M) { return false; }
-  static bool doPerMethodWork(Method *M) { return false; }
-
-
-  //===--------------------------------------------------------------------===//
-  // Virtual method forwarders...
-
-  // doPassInitializationVirt - For a StatelessPass, default to implementing in
-  // terms of the static method.
-  //
-  virtual bool doPassInitializationVirt(Module *M) {
-    return SubClass::doPassInitialization(M);
-  }
-
-  // doPerMethodWorkVirt - For a StatelessPass, default to implementing in
-  // terms of the static method.
-  //
-  virtual bool doPerMethodWorkVirt(Method *M) {
-    return SubClass::doPerMethodWork(M);
-  }
+  virtual bool doPassFinalization(Module *M) { return false; }
 };
 
 #endif
