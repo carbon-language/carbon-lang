@@ -1173,7 +1173,7 @@ into a <a href="#BasicBlock"><tt>BasicBlock</tt></a>), and it has no name.<p>
 	\end{itemize}
 <li>LoadInst, StoreInst, GetElemPtrInst : These subclasses represent load, store and getelementptr instructions in LLVM.
 	\begin{itemize}
-	<li><tt>Value * getPointerOperand ()</tt>: Returns the Pointer Operand which is typically the 0th operand.
+	<li><tt>Value * getPointerOperand()</tt>: Returns the Pointer Operand which is typically the 0th operand.
 	\end{itemize}
 <li>BranchInst : This is a subclass of TerminatorInst and defines the interface for conditional and unconditional branches in LLVM.
 	\begin{itemize}
@@ -1641,39 +1641,39 @@ ConstantArray etc for representing the various types of Constants.<p>
 <li><tt>bool isConstantExpr()</tt>: Returns true if it is a ConstantExpr
 
 
+<hr>
+Important Subclasses of Constant<p>
 
-
-\subsection{Important Subclasses of Constant}
-\begin{itemize}
+<ul>
 <li>ConstantSInt : This subclass of Constant represents a signed integer constant.
-	\begin{itemize}
-	<li><tt>int64_t getValue () const</tt>: Returns the underlying value of this constant.
-	\end{itemize}
+<ul>
+	<li><tt>int64_t getValue() const</tt>: Returns the underlying value of this constant.
+</ul>
 <li>ConstantUInt : This class represents an unsigned integer.
-	\begin{itemize}
-	<li><tt>uint64_t getValue () const</tt>: Returns the underlying value of this constant.
-	\end{itemize}
+<ul>
+	<li><tt>uint64_t getValue() const</tt>: Returns the underlying value of this constant.
+</ul>
 <li>ConstantFP : This class represents a floating point constant.
-	\begin{itemize}
-	<li><tt>double getValue () const</tt>: Returns the underlying value of this constant.
-	\end{itemize}
+<ul>
+	<li><tt>double getValue() const</tt>: Returns the underlying value of this constant.
+</ul>
 <li>ConstantBool : This represents a boolean constant.
-	\begin{itemize}
-	<li><tt>bool getValue () const</tt>: Returns the underlying value of this constant.
-	\end{itemize}
+<ul>
+	<li><tt>bool getValue() const</tt>: Returns the underlying value of this constant.
+</ul>
 <li>ConstantArray : This represents a constant array.
-	\begin{itemize}
+<ul>
 	<li><tt>const std::vector<Use> &amp;getValues() const</tt>: Returns a Vecotr of component constants that makeup this array.
-	\end{itemize}
+</ul>
 <li>ConstantStruct : This represents a constant struct.
-	\begin{itemize}
+<ul>
 	<li><tt>const std::vector<Use> &amp;getValues() const</tt>: Returns a Vecotr of component constants that makeup this array.
-	\end{itemize}
+</ul>
 <li>ConstantPointerRef : This represents a constant pointer value that is initialized to point to a global value, which lies at a constant fixed address.
-	\begin{itemize}
+<ul>
 <li><tt>GlobalValue *getValue()</tt>: Returns the global value to which this pointer is pointing to.
-	\end{itemize}
-\end{itemize}
+</ul>
+</ul>
 
 
 <!-- ======================================================================= -->
@@ -1694,45 +1694,48 @@ of any type structure at a time. This allows using pointer equality of Type *s f
 <!-- _______________________________________________________________________ -->
 </ul><h4><a name="m_Value"><hr size=0>Important Public Methods</h4><ul>
 
-<li><tt>PrimitiveID getPrimitiveID () const</tt>: Returns the base type of the type.
-<li><tt> bool isSigned () const</tt>: Returns whether an integral numeric type is signed. This is true for SByteTy, ShortTy, IntTy, LongTy. Note that this is not true for Float and Double.
-<li><tt>bool isUnsigned () const</tt>: Returns whether a numeric type is unsigned. This is not quite the complement of isSigned... nonnumeric types return false as they do with isSigned. This returns true for UByteTy, UShortTy, UIntTy, and ULongTy. 
-<li><tt> bool isInteger () const</tt>: Equilivent to isSigned() || isUnsigned(), but with only a single virtual function invocation. 
-<li><tt>bool isIntegral () const</tt>: Returns true if this is an integral type, which is either Bool type or one of the Integer types.
+<li><tt>PrimitiveID getPrimitiveID() const</tt>: Returns the base type of the type.
+<li><tt> bool isSigned() const</tt>: Returns whether an integral numeric type is signed. This is true for SByteTy, ShortTy, IntTy, LongTy. Note that this is not true for Float and Double.
+<li><tt>bool isUnsigned() const</tt>: Returns whether a numeric type is unsigned. This is not quite the complement of isSigned... nonnumeric types return false as they do with isSigned. This returns true for UByteTy, UShortTy, UIntTy, and ULongTy. 
+<li><tt> bool isInteger() const</tt>: Equilivent to isSigned() || isUnsigned(), but with only a single virtual function invocation. 
+<li><tt>bool isIntegral() const</tt>: Returns true if this is an integral type, which is either Bool type or one of the Integer types.
 
-<li><tt>bool isFloatingPoint ()</tt>: Return true if this is one of the two floating point types.
-<li><tt>bool isRecursive () const</tt>: Returns rue if the type graph contains a cycle.
+<li><tt>bool isFloatingPoint()</tt>: Return true if this is one of the two floating point types.
+<li><tt>bool isRecursive() const</tt>: Returns rue if the type graph contains a cycle.
 <li><tt>isLosslesslyConvertableTo (const Type *Ty) const</tt>: Return true if this type can be converted to 'Ty' without any reinterpretation of bits. For example, uint to int.
-<li><tt>bool isPrimitiveType () const</tt>: Returns true if it is a primitive type.
-<li><tt>bool isDerivedType () const</tt>: Returns true if it is a derived type.
+<li><tt>bool isPrimitiveType() const</tt>: Returns true if it is a primitive type.
+<li><tt>bool isDerivedType() const</tt>: Returns true if it is a derived type.
 <li><tt>const Type * getContainedType (unsigned i) const</tt>: 
 This method is used to implement the type iterator. For derived types, this returns the types 'contained' in the derived type, returning 0 when 'i' becomes invalid. This allows the user to iterate over the types in a struct, for example, really easily.
-<li><tt>unsigned getNumContainedTypes () const</tt>: Return the number of types in the derived type. 
+<li><tt>unsigned getNumContainedTypes() const</tt>: Return the number of types in the derived type. 
 
+<p>
 
+<hr>
+Derived Types<p>
 
-\subsection{Derived Types} 
-\begin{itemize}
+<ul>
 <li>SequentialType : This is subclassed by ArrayType and PointerType 
-	\begin{itemize}
-	<li><tt>const Type * getElementType () const</tt>: Returns the type of each of the elements in the sequential type.
-	\end{itemize}
+<ul>
+	<li><tt>const Type * getElementType() const</tt>: Returns the type of each of the elements in the sequential type.
+</ul>
 <li>ArrayType : This is a subclass of SequentialType and defines interface for array types.
-	\begin{itemize}
-	<li><tt>unsigned getNumElements () const</tt>: Returns the number of elements in the array.
-	\end{itemize}
+<ul>
+	<li><tt>unsigned getNumElements() const</tt>: Returns the number of elements in the array.
+</ul>
 <li>PointerType : Subclass of SequentialType for  pointer types.
 <li>StructType : subclass of DerivedTypes for struct types
 <li>FunctionType : subclass of DerivedTypes for function types.
-	\begin{itemize}
+
+<ul>
 	
-	<li><tt>bool isVarArg () const</tt>: Returns true if its a vararg function
-	<li><tt> const Type * getReturnType () const</tt>: Returns the return type of the function.
-	<li><tt> const ParamTypes &amp;getParamTypes () const</tt>: Returns a vector of parameter types.
+	<li><tt>bool isVarArg() const</tt>: Returns true if its a vararg function
+	<li><tt> const Type * getReturnType() const</tt>: Returns the return type of the function.
+	<li><tt> const ParamTypes &amp;getParamTypes() const</tt>: Returns a vector of parameter types.
 	<li><tt>const Type * getParamType (unsigned i)</tt>: Returns the type of the ith parameter.
-	<li><tt> const unsigned getNumParams () const</tt>: Returns the number of formal parameters.
-	\end{itemize}
-\end{itemize}
+	<li><tt> const unsigned getNumParams() const</tt>: Returns the number of formal parameters.
+</ul>
+</ul>
 
 
 
@@ -1760,6 +1763,6 @@ pointer to the parent Function.
 <a href="mailto:sabre@nondot.org">Chris Lattner</a></address>
 <!-- Created: Tue Aug  6 15:00:33 CDT 2002 -->
 <!-- hhmts start -->
-Last modified: Tue Oct  1 15:35:42 CDT 2002
+Last modified: Tue Oct  1 18:15:43 CDT 2002
 <!-- hhmts end -->
 </font></body></html>
