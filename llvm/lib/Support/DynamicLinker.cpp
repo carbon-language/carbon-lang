@@ -37,7 +37,12 @@ bool LinkDynamicObject (const char *filename, std::string *ErrorMessage) {
 
 void *GetAddressOfSymbol (const char *symbolName) {
 #if defined (HAVE_DLOPEN)
+#ifdef RTLD_DEFAULT
   return dlsym (RTLD_DEFAULT, symbolName);
+#else
+  static void* CurHandle = dlopen(0, RTLD_LAZY);
+  return dlsym(CurHandle, symbolName);
+#endif
 #else
   assert (0 && "Dynamic symbol lookup not implemented for this platform");
 #endif
