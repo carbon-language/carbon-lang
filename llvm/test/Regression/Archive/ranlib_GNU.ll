@@ -4,9 +4,4 @@
 ;RUN: cp %p/GNU.a %t.GNU.a
 ;RUN: llvm-ranlib %t.GNU.a
 ;RUN: llvm-ar t %t.GNU.a > %t1
-;RUN: grep -v '^;' %s >%t2
-;RUN: diff %t2 %t1
-evenlen
-oddlen
-very_long_bytecode_file_name.bc
-IsNAN.o
+;RUN: diff %t1 %p/GNU.toc
