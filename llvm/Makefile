@@ -22,6 +22,9 @@ distclean:: clean
 	                  $(LEVEL)/config.log \
 	                  $(LEVEL)/TAGS
 
+tools-only:
+	@for dir in lib/Support utils lib tools; do $(MAKE) -C $$dir; done
+
 AUTOCONF = autoconf
 AUTOHEADER = autoheader
 
