@@ -222,7 +222,8 @@ AC_SEARCH_LIBS(mallinfo,malloc,AC_DEFINE([HAVE_MALLINFO],[1],[Define if mallinfo
 
 dnl pthread locking functions are optional - but llvm will not be thread-safe
 dnl without locks.
-AC_SEARCH_LIBS(pthread_mutex_lock,pthread,AC_DEFINE(HAVE_PTHREAD_MUTEX_LOCK,1,[Define if PThread mutexes (e.g., pthread_mutex_lock) are available in the system's thread library.]))
+AC_SEARCH_LIBS(pthread_mutex_lock,pthread,HAVE_PTHREAD_MUTEX_LOCK=1,HAVE_PTHREAD_MUTEX_LOCK=0)
+AC_SUBST(HAVE_PTHREAD_MUTEX_LOCK)
 
 dnl Checks for header files.
 dnl We don't check for ancient stuff or things that are guaranteed to be there
@@ -447,7 +448,8 @@ dnl Create the output files
 AC_OUTPUT(Makefile.config
  include/Support/iterator
  include/Support/hash_map
- include/Support/hash_set)
+ include/Support/hash_set
+ include/Support/ThreadSupport.h)
 
 dnl Warn loudly if llvm-gcc was not obviously working
 if test $llvmgccwarn = yes
