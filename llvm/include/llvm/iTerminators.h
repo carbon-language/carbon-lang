@@ -70,7 +70,10 @@ public:
   virtual Instruction *clone() const { return new BranchInst(*this); }
 
   virtual void dropAllReferences();
-  
+ 
+  inline const Value *getCondition() const { return Condition; }
+  inline       Value *getCondition()       { return Condition; }
+
   inline bool isUnconditional() const {
     return Condition == 0 || !FalseDest;
   }
@@ -83,6 +86,9 @@ public:
   virtual const Value *getOperand(unsigned i) const;
   virtual bool setOperand(unsigned i, Value *Val);
   virtual unsigned getNumOperands() const { return isUnconditional() ? 1 : 3; }
+  inline BasicBlock *getSuccessor(unsigned idx) {
+    return (BasicBlock*)((const BranchInst *)this)->getSuccessor(idx);
+  }
 
   // Additionally, they must provide a method to get at the successors of this
   // terminator instruction.  If 'idx' is out of range, a null pointer shall be
@@ -114,6 +120,18 @@ public:
 
   virtual Instruction *clone() const { return new SwitchInst(*this); }
 
+  // Accessor Methods for Switch stmt
+  //
+  inline dest_iterator dest_begin() { return Destinations.begin(); }
+  inline dest_iterator dest_end  () { return Destinations.end(); }
+  inline dest_const_iterator dest_begin() const { return Destinations.begin(); }
+  inline dest_const_iterator dest_end  () const { return Destinations.end(); }
+
+  inline const Value *getCondition() const { return Val; }
+  inline       Value *getCondition()       { return Val; }
+  inline const BasicBlock *getDefaultDest() const { return DefaultDest; }
+  inline       BasicBlock *getDefaultDest()       { return DefaultDest; }
+
   void dest_push_back(ConstPoolVal *OnVal, BasicBlock *Dest);
 
   virtual string getOpcode() const { return "switch"; }
@@ -131,6 +149,9 @@ public:
   //
   virtual const BasicBlock *getSuccessor(unsigned idx) const;
   virtual unsigned getNumSuccessors() const { return 1+Destinations.size(); }
+  inline BasicBlock *getSuccessor(unsigned idx) {
+    return (BasicBlock*)((const SwitchInst *)this)->getSuccessor(idx);
+  }
 };
 
 #endif
