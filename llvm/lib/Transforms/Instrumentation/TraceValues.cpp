@@ -28,7 +28,7 @@ DisablePtrHashing("tracedisablehashdisable", cl::Hidden,
 
 static cl::list<string>
 TraceFuncName("tracefunc", cl::desc("trace only specific functions"),
-              cl::value_desc("function"));
+              cl::value_desc("function"), cl::Hidden);
 
 
 // We trace a particular function if no functions to trace were specified
