@@ -32,6 +32,14 @@ class ReturnInst : public TerminatorInst {
       Operands.push_back(Use(RI.Operands[0], this));
     }
   }
+
+  void init(Value *RetVal) {
+    if (RetVal) {
+      Operands.reserve(1);
+      Operands.push_back(Use(RetVal, this));
+    }
+  }
+
 public:
   // ReturnInst constructors:
   // ReturnInst()                  - 'ret void' instruction
@@ -42,17 +50,11 @@ public:
   // ReturnInst(Value* X, BB *B)   - 'ret X'    instruction, insert @ end of BB
   ReturnInst(Value *RetVal = 0, Instruction *InsertBefore = 0)
     : TerminatorInst(Instruction::Ret, InsertBefore) {
-    if (RetVal) {
-      Operands.reserve(1);
-      Operands.push_back(Use(RetVal, this));
-    }
+    init(RetVal);
   }
   ReturnInst(Value *RetVal, BasicBlock *InsertAtEnd)
     : TerminatorInst(Instruction::Ret, InsertAtEnd) {
-    if (RetVal) {
-      Operands.reserve(1);
-      Operands.push_back(Use(RetVal, this));
-    }
+    init(RetVal);
   }
 
   virtual Instruction *clone() const { return new ReturnInst(*this); }
@@ -87,6 +89,8 @@ public:
 ///
 class BranchInst : public TerminatorInst {
   BranchInst(const BranchInst &BI);
+  void init(BasicBlock *IfTrue);
+  void init(BasicBlock *True, BasicBlock *False, Value *Cond);
 public:
   // BranchInst constructors (where {B, T, F} are blocks, and C is a condition):
   // BranchInst(BB *B)                           - 'br B'
@@ -161,6 +165,8 @@ class SwitchInst : public TerminatorInst {
   // Operand[2n  ] = Value to match
   // Operand[2n+1] = BasicBlock to go to on match
   SwitchInst(const SwitchInst &RI);
+  void init(Value *Value, BasicBlock *Default);
+
 public:
   SwitchInst(Value *Value, BasicBlock *Default, Instruction *InsertBefore = 0);
   SwitchInst(Value *Value, BasicBlock *Default, BasicBlock  *InsertAtEnd);
@@ -259,6 +265,8 @@ public:
 ///
 class InvokeInst : public TerminatorInst {
   InvokeInst(const InvokeInst &BI);
+  void init(Value *Fn, BasicBlock *IfNormal, BasicBlock *IfException,
+            const std::vector<Value*> &Params);
 public:
   InvokeInst(Value *Fn, BasicBlock *IfNormal, BasicBlock *IfException,
 	     const std::vector<Value*> &Params, const std::string &Name = "",

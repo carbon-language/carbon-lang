@@ -29,8 +29,7 @@ TerminatorInst::TerminatorInst(Instruction::TermOps iType, Instruction *IB)
 }
 
 TerminatorInst::TerminatorInst(Instruction::TermOps iType, BasicBlock *IAE)
-  : Instruction(Type::VoidTy, iType) {
-  if (IAE) IAE->getInstList().push_back(this);
+  : Instruction(Type::VoidTy, iType, "", IAE) {
 }
 
 

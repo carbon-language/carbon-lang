@@ -36,11 +36,15 @@ class Instruction : public User, public Annotable {
   friend class SymbolTableListTraits<Instruction, BasicBlock, Function,
                                      ilist_traits<Instruction> >;
   void setParent(BasicBlock *P);
+  void init();
+
 protected:
   unsigned iType;      // InstructionType: The opcode of the instruction
 
   Instruction(const Type *Ty, unsigned iType, const std::string &Name = "",
               Instruction *InsertBefore = 0);
+  Instruction(const Type *Ty, unsigned iType, const std::string &Name,
+              BasicBlock *InsertAtEnd);
 public:
 
   ~Instruction() {

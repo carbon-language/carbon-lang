@@ -67,16 +67,14 @@ FreeInst::FreeInst(Value *Ptr, Instruction *InsertBefore)
 LoadInst::LoadInst(Value *Ptr, const std::string &Name, Instruction *InsertBef)
   : Instruction(cast<PointerType>(Ptr->getType())->getElementType(),
                 Load, Name, InsertBef), Volatile(false) {
-  Operands.reserve(1);
-  Operands.push_back(Use(Ptr, this));
+  init(Ptr);
 }
 
 LoadInst::LoadInst(Value *Ptr, const std::string &Name, bool isVolatile,
                    Instruction *InsertBef)
   : Instruction(cast<PointerType>(Ptr->getType())->getElementType(),
                 Load, Name, InsertBef), Volatile(isVolatile) {
-  Operands.reserve(1);
-  Operands.push_back(Use(Ptr, this));
+  init(Ptr);
 }
 
 //===----------------------------------------------------------------------===//
@@ -85,19 +83,13 @@ LoadInst::LoadInst(Value *Ptr, const std::string &Name, bool isVolatile,
 
 StoreInst::StoreInst(Value *Val, Value *Ptr, Instruction *InsertBefore)
   : Instruction(Type::VoidTy, Store, "", InsertBefore), Volatile(false) {
-  
-  Operands.reserve(2);
-  Operands.push_back(Use(Val, this));
-  Operands.push_back(Use(Ptr, this));
+  init(Val, Ptr);
 }
 
 StoreInst::StoreInst(Value *Val, Value *Ptr, bool isVolatile, 
                      Instruction *InsertBefore)
   : Instruction(Type::VoidTy, Store, "", InsertBefore), Volatile(isVolatile) {
-  
-  Operands.reserve(2);
-  Operands.push_back(Use(Val, this));
-  Operands.push_back(Use(Ptr, this));
+  init(Val, Ptr);
 }
 
 
@@ -113,16 +105,21 @@ static inline const Type *checkType(const Type *Ty) {
   return Ty;
 }
 
-GetElementPtrInst::GetElementPtrInst(Value *Ptr, const std::vector<Value*> &Idx,
-				     const std::string &Name, Instruction *InBe)
-  : Instruction(PointerType::get(checkType(getIndexedType(Ptr->getType(),
-                                                          Idx, true))),
-                GetElementPtr, Name, InBe) {
+void GetElementPtrInst::init(Value *Ptr, const std::vector<Value*> &Idx)
+{
   Operands.reserve(1+Idx.size());
   Operands.push_back(Use(Ptr, this));
 
   for (unsigned i = 0, E = Idx.size(); i != E; ++i)
     Operands.push_back(Use(Idx[i], this));
+}
+
+GetElementPtrInst::GetElementPtrInst(Value *Ptr, const std::vector<Value*> &Idx,
+				     const std::string &Name, Instruction *InBe)
+  : Instruction(PointerType::get(checkType(getIndexedType(Ptr->getType(),
+                                                          Idx, true))),
+                GetElementPtr, Name, InBe) {
+  init(Ptr, Idx);
 }
 
 // getIndexedType - Returns the type of the element that would be loaded with

@@ -15,20 +15,22 @@
 #include "llvm/BasicBlock.h"
 using namespace llvm;
 
-SwitchInst::SwitchInst(Value *V, BasicBlock *DefaultDest,
-                       Instruction *InsertBefore) 
-  : TerminatorInst(Instruction::Switch, InsertBefore) {
-  assert(V && DefaultDest);
-  Operands.push_back(Use(V, this));
-  Operands.push_back(Use(DefaultDest, this));
+void SwitchInst::init(Value *Value, BasicBlock *Default)
+{
+  assert(Value && Default);
+  Operands.push_back(Use(Value, this));
+  Operands.push_back(Use(Default, this));
 }
 
-SwitchInst::SwitchInst(Value *V, BasicBlock *DefaultDest,
-                       BasicBlock *InsertAtEnd) 
+SwitchInst::SwitchInst(Value *V, BasicBlock *D,
+                       Instruction *InsertBefore) 
+  : TerminatorInst(Instruction::Switch, InsertBefore) {
+  init(V, D);
+}
+
+SwitchInst::SwitchInst(Value *V, BasicBlock *D, BasicBlock *InsertAtEnd) 
   : TerminatorInst(Instruction::Switch, InsertAtEnd) {
-  assert(V && DefaultDest);
-  Operands.push_back(Use(V, this));
-  Operands.push_back(Use(DefaultDest, this));
+  init(V, D);
 }
 
 SwitchInst::SwitchInst(const SwitchInst &SI) 

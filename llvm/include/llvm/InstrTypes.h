@@ -32,9 +32,13 @@ protected:
   TerminatorInst(Instruction::TermOps iType, Instruction *InsertBefore = 0);
   TerminatorInst(const Type *Ty, Instruction::TermOps iType,
                  const std::string &Name = "", Instruction *InsertBefore = 0)
-    : Instruction(Ty, iType, Name, InsertBefore) {
-  }
+    : Instruction(Ty, iType, Name, InsertBefore) {}
+
   TerminatorInst(Instruction::TermOps iType, BasicBlock *InsertAtEnd);
+  TerminatorInst(const Type *Ty, Instruction::TermOps iType,
+                 const std::string &Name, BasicBlock *InsertAtEnd)
+    : Instruction(Ty, iType, Name, InsertAtEnd) {}
+
 public:
 
   /// Terminators must implement the methods required by Instruction...

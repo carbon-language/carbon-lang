@@ -99,51 +99,42 @@ Function *CallInst::getCalledFunction() {
 //                        InvokeInst Implementation
 //===----------------------------------------------------------------------===//
 
-InvokeInst::InvokeInst(Value *Func, BasicBlock *IfNormal,
-		       BasicBlock *IfException,
-                       const std::vector<Value*> &params,
-		       const std::string &Name, Instruction *InsertBefore)
-  : TerminatorInst(cast<FunctionType>(cast<PointerType>(Func->getType())
-				    ->getElementType())->getReturnType(),
-		   Instruction::Invoke, Name, InsertBefore) {
-  Operands.reserve(3+params.size());
-  Operands.push_back(Use(Func, this));
+void InvokeInst::init(Value *Fn, BasicBlock *IfNormal, BasicBlock *IfException,
+                      const std::vector<Value*> &Params)
+{
+  Operands.reserve(3+Params.size());
+  Operands.push_back(Use(Fn, this));
   Operands.push_back(Use((Value*)IfNormal, this));
   Operands.push_back(Use((Value*)IfException, this));
   const FunctionType *MTy = 
-    cast<FunctionType>(cast<PointerType>(Func->getType())->getElementType());
+    cast<FunctionType>(cast<PointerType>(Fn->getType())->getElementType());
   
-  assert((params.size() == MTy->getNumParams()) || 
-	 (MTy->isVarArg() && params.size() > MTy->getNumParams()) &&
+  assert((Params.size() == MTy->getNumParams()) || 
+	 (MTy->isVarArg() && Params.size() > MTy->getNumParams()) &&
 	 "Calling a function with bad signature");
   
-  for (unsigned i = 0; i < params.size(); i++)
-    Operands.push_back(Use(params[i], this));
+  for (unsigned i = 0; i < Params.size(); i++)
+    Operands.push_back(Use(Params[i], this));
 }
 
-InvokeInst::InvokeInst(Value *Func, BasicBlock *IfNormal,
+InvokeInst::InvokeInst(Value *Fn, BasicBlock *IfNormal,
 		       BasicBlock *IfException,
-                       const std::vector<Value*> &params,
-		       const std::string &Name, BasicBlock *InsertAtEnd)
-  : TerminatorInst(cast<FunctionType>(cast<PointerType>(Func->getType())
+                       const std::vector<Value*> &Params,
+		       const std::string &Name, Instruction *InsertBefore)
+  : TerminatorInst(cast<FunctionType>(cast<PointerType>(Fn->getType())
 				    ->getElementType())->getReturnType(),
-		   Instruction::Invoke, Name) {
-  Operands.reserve(3+params.size());
-  Operands.push_back(Use(Func, this));
-  Operands.push_back(Use((Value*)IfNormal, this));
-  Operands.push_back(Use((Value*)IfException, this));
-  const FunctionType *MTy = 
-    cast<FunctionType>(cast<PointerType>(Func->getType())->getElementType());
-  
-  assert((params.size() == MTy->getNumParams()) || 
-	 (MTy->isVarArg() && params.size() > MTy->getNumParams()) &&
-	 "Calling a function with bad signature");
-  
-  for (unsigned i = 0; i < params.size(); i++)
-    Operands.push_back(Use(params[i], this));
+		   Instruction::Invoke, Name, InsertBefore) {
+  init(Fn, IfNormal, IfException, Params);
+}
 
-  if (InsertAtEnd)
-    InsertAtEnd->getInstList().push_back(this);
+InvokeInst::InvokeInst(Value *Fn, BasicBlock *IfNormal,
+		       BasicBlock *IfException,
+                       const std::vector<Value*> &Params,
+		       const std::string &Name, BasicBlock *InsertAtEnd)
+  : TerminatorInst(cast<FunctionType>(cast<PointerType>(Fn->getType())
+				    ->getElementType())->getReturnType(),
+		   Instruction::Invoke, Name, InsertAtEnd) {
+  init(Fn, IfNormal, IfException, Params);
 }
 
 InvokeInst::InvokeInst(const InvokeInst &CI) 

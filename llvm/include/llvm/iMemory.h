@@ -163,6 +163,10 @@ class LoadInst : public Instruction {
     Operands.push_back(Use(LI.Operands[0], this));
   }
   bool Volatile;   // True if this is a volatile load
+  void init(Value *Ptr) {
+    Operands.reserve(1);
+    Operands.push_back(Use(Ptr, this));
+  }
 public:
   LoadInst(Value *Ptr, const std::string &Name, Instruction *InsertBefore);
   LoadInst(Value *Ptr, const std::string &Name = "", bool isVolatile = false,
@@ -210,6 +214,11 @@ class StoreInst : public Instruction {
     Operands.push_back(Use(SI.Operands[1], this));
   }
   bool Volatile;   // True if this is a volatile store
+  void init(Value *Val, Value *Ptr) {
+    Operands.reserve(2);
+    Operands.push_back(Use(Val, this));
+    Operands.push_back(Use(Ptr, this));
+  }
 public:
   StoreInst(Value *Val, Value *Ptr, Instruction *InsertBefore);
   StoreInst(Value *Val, Value *Ptr, bool isVolatile = false,
@@ -258,6 +267,8 @@ class GetElementPtrInst : public Instruction {
     for (unsigned i = 0, E = EPI.Operands.size(); i != E; ++i)
       Operands.push_back(Use(EPI.Operands[i], this));
   }
+  void init(Value *Ptr, const std::vector<Value*> &Idx);
+
 public:
   GetElementPtrInst(Value *Ptr, const std::vector<Value*> &Idx,
 		    const std::string &Name = "", Instruction *InsertBefore =0);

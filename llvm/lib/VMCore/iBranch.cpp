@@ -28,52 +28,45 @@ void UnwindInst::setSuccessor(unsigned idx, BasicBlock *NewSucc) {
   assert(0 && "UnwindInst has no successors!");
 }
 
+void BranchInst::init(BasicBlock *IfTrue)
+{
+  assert(IfTrue != 0 && "Branch destination may not be null!");
+  Operands.reserve(1);
+  Operands.push_back(Use(IfTrue, this));
+}
+
+void BranchInst::init(BasicBlock *IfTrue, BasicBlock *IfFalse, Value *Cond)
+{
+  assert(IfTrue && IfFalse && Cond &&
+         "Branch destinations and condition may not be null!");
+  assert(Cond && Cond->getType() == Type::BoolTy && 
+         "May only branch on boolean predicates!");
+  Operands.reserve(3);
+  Operands.push_back(Use(IfTrue, this));
+  Operands.push_back(Use(IfFalse, this));
+  Operands.push_back(Use(Cond, this));
+}
+
 BranchInst::BranchInst(BasicBlock *True, BasicBlock *False, Value *Cond,
                        Instruction *InsertBefore) 
   : TerminatorInst(Instruction::Br, InsertBefore) {
-  assert(True != 0 && "True branch destination may not be null!!!");
-  Operands.reserve(False ? 3 : 1);
-  Operands.push_back(Use(True, this));
-  if (False) {
-    Operands.push_back(Use(False, this));
-    Operands.push_back(Use(Cond, this));
-  }
-
-  assert(!!False == !!Cond &&
-	 "Either both cond and false or neither can be specified!");
-  assert((Cond == 0 || Cond->getType() == Type::BoolTy) && 
-         "May only branch on boolean predicates!!!!");
+  init(True, False, Cond);
 }
 
 BranchInst::BranchInst(BasicBlock *True, BasicBlock *False, Value *Cond,
                        BasicBlock *InsertAtEnd) 
   : TerminatorInst(Instruction::Br, InsertAtEnd) {
-  assert(True != 0 && "True branch destination may not be null!!!");
-  Operands.reserve(False ? 3 : 1);
-  Operands.push_back(Use(True, this));
-  if (False) {
-    Operands.push_back(Use(False, this));
-    Operands.push_back(Use(Cond, this));
-  }
-
-  assert(!!False == !!Cond &&
-	 "Either both cond and false or neither can be specified!");
-  assert((Cond == 0 || Cond->getType() == Type::BoolTy) && 
-         "May only branch on boolean predicates!!!!");
+  init(True, False, Cond);
 }
 
 BranchInst::BranchInst(BasicBlock *True, Instruction *InsertBefore) 
   : TerminatorInst(Instruction::Br, InsertBefore) {
-  assert(True != 0 && "True branch destination may not be null!!!");
-  Operands.reserve(1);
-  Operands.push_back(Use(True, this));
+  init(True);
 }
 
 BranchInst::BranchInst(BasicBlock *True, BasicBlock *InsertAtEnd) 
   : TerminatorInst(Instruction::Br, InsertAtEnd) {
-  assert(True != 0 && "True branch destination may not be null!!!");
-  Operands.reserve(1);
-  Operands.push_back(Use(True, this));
+  init(True);
 }
 
 BranchInst::BranchInst(const BranchInst &BI) : TerminatorInst(Instruction::Br) {
