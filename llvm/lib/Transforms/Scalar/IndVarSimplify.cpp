@@ -175,9 +175,8 @@ namespace {
 
       // Emit a bunch of add instructions
       for (int i = S->getNumOperands()-2; i >= 0; --i)
-        V = BinaryOperator::create(Instruction::Add, V,
-                                   expandInTy(S->getOperand(i), Ty),
-                                   "tmp.", InsertPt);
+        V = BinaryOperator::createAdd(V, expandInTy(S->getOperand(i), Ty),
+                                      "tmp.", InsertPt);
       return V;
     }
 
@@ -187,8 +186,7 @@ namespace {
       const Type *Ty = S->getType();
       Value *LHS = expandInTy(S->getLHS(), Ty);
       Value *RHS = expandInTy(S->getRHS(), Ty);
-      return BinaryOperator::create(Instruction::Div, LHS, RHS, "tmp.",
-                                    InsertPt);
+      return BinaryOperator::createDiv(LHS, RHS, "tmp.", InsertPt);
     }
 
     Value *visitAddRecExpr(SCEVAddRecExpr *S);
@@ -211,13 +209,11 @@ Value *SCEVExpander::visitMulExpr(SCEVMulExpr *S) {
     
   // Emit a bunch of multiply instructions
   for (; i >= FirstOp; --i)
-    V = BinaryOperator::create(Instruction::Mul, V,
-                               expandInTy(S->getOperand(i), Ty),
-                               "tmp.", InsertPt);
+    V = BinaryOperator::createMul(V, expandInTy(S->getOperand(i), Ty),
+                                  "tmp.", InsertPt);
   // -1 * ...  --->  0 - ...
   if (FirstOp == 1)
-    V = BinaryOperator::create(Instruction::Sub, Constant::getNullValue(Ty),
-                               V, "tmp.", InsertPt);
+    V = BinaryOperator::createNeg(V, "tmp.", InsertPt);
   return V;
 }
 
@@ -236,8 +232,7 @@ Value *SCEVExpander::visitAddRecExpr(SCEVAddRecExpr *S) {
     Value *Rest = expandInTy(SCEVAddRecExpr::get(NewOps, L), Ty);
 
     // FIXME: look for an existing add to use.
-    return BinaryOperator::create(Instruction::Add, Rest, Start, "tmp.",
-                                  InsertPt);
+    return BinaryOperator::createAdd(Rest, Start, "tmp.", InsertPt);
   }
 
   // {0,+,1} --> Insert a canonical induction variable into the loop!
@@ -259,9 +254,8 @@ Value *SCEVExpander::visitAddRecExpr(SCEVAddRecExpr *S) {
     // to the back-edge.
     Constant *One = Ty->isFloatingPoint() ? (Constant*)ConstantFP::get(Ty, 1.0)
                                           : ConstantInt::get(Ty, 1);
-    Instruction *Add = BinaryOperator::create(Instruction::Add, PN, One,
-                                              "indvar.next",
-                                              (*HPI)->getTerminator());
+    Instruction *Add = BinaryOperator::createAdd(PN, One, "indvar.next",
+                                                 (*HPI)->getTerminator());
 
     pred_iterator PI = pred_begin(Header);
     if (*PI == L->getLoopPreheader())
@@ -275,7 +269,7 @@ Value *SCEVExpander::visitAddRecExpr(SCEVAddRecExpr *S) {
 
   if (S->getNumOperands() == 2) {   // {0,+,F} --> i*F
     Value *F = expandInTy(S->getOperand(1), Ty);
-    return BinaryOperator::create(Instruction::Mul, I, F, "tmp.", InsertPt);
+    return BinaryOperator::createMul(I, F, "tmp.", InsertPt);
   }
 
   // If this is a chain of recurrences, turn it into a closed form, using the
@@ -380,12 +374,11 @@ void IndVarSimplify::EliminatePointerRecurrence(PHINode *PN,
       // Insert a new integer PHI node into the top of the block.
       PHINode *NewPhi = new PHINode(AddedVal->getType(),
                                     PN->getName()+".rec", PN);
-      NewPhi->addIncoming(Constant::getNullValue(NewPhi->getType()),
-                          Preheader);
+      NewPhi->addIncoming(Constant::getNullValue(NewPhi->getType()), Preheader);
+
       // Create the new add instruction.
-      Value *NewAdd = BinaryOperator::create(Instruction::Add, NewPhi,
-                                             AddedVal,
-                                             GEPI->getName()+".rec", GEPI);
+      Value *NewAdd = BinaryOperator::createAdd(NewPhi, AddedVal,
+                                                GEPI->getName()+".rec", GEPI);
       NewPhi->addIncoming(NewAdd, PN->getIncomingBlock(BackedgeIdx));
           
       // Update the existing GEP to use the recurrence.
