@@ -116,8 +116,7 @@ bool BytecodeParser::ParseRawInst(const unsigned char *&Buf,
 
 bool BytecodeParser::ParseInstruction(const unsigned char *&Buf,
                                       const unsigned char *EndBuf,
-				      Instruction *&Res,
-                                      BasicBlock *BB /*HACK*/) {
+				      Instruction *&Res) {
   RawInst Raw;
   if (ParseRawInst(Buf, EndBuf, Raw))
     return true;
@@ -359,14 +358,13 @@ bool BytecodeParser::ParseInstruction(const unsigned char *&Buf,
     Res = new FreeInst(V);
     return false;
 
-  case Instruction::Load:
   case Instruction::GetElementPtr: {
     std::vector<Value*> Idx;
     if (!isa<PointerType>(Raw.Ty)) return true;
     const CompositeType *TopTy = dyn_cast<CompositeType>(Raw.Ty);
 
     switch (Raw.NumOperands) {
-    case 0: std::cerr << "Invalid load encountered!\n"; return true;
+    case 0: std::cerr << "Invalid getelementptr encountered!\n"; return true;
     case 1: break;
     case 2:
       if (!TopTy) return true;
@@ -403,71 +401,20 @@ bool BytecodeParser::ParseInstruction(const unsigned char *&Buf,
       break;
     }
 
-    if (Raw.Opcode == Instruction::Load) {
-      Value *Src = getValue(Raw.Ty, Raw.Arg1);
-      if (!Idx.empty()) {
-        std::cerr << "WARNING: Bytecode contains load instruction with indices."
-                  << "  Replacing with getelementptr/load pair\n";
-        assert(GetElementPtrInst::getIndexedType(Raw.Ty, Idx) && 
-               "Bad indices for Load!");
-        Src = new GetElementPtrInst(Src, Idx);
-        // FIXME: Remove this compatibility code and the BB parameter to this
-        // method.
-        BB->getInstList().push_back(cast<Instruction>(Src));
-      }
-      Res = new LoadInst(Src);
-    } else if (Raw.Opcode == Instruction::GetElementPtr)
-      Res = new GetElementPtrInst(getValue(Raw.Ty, Raw.Arg1), Idx);
-    else
-      abort();
+    Res = new GetElementPtrInst(getValue(Raw.Ty, Raw.Arg1), Idx);
     return false;
   }
-  case Instruction::Store: {
-    std::vector<Value*> Idx;
+
+  case Instruction::Load:
+    if (Raw.NumOperands != 1) return true;
     if (!isa<PointerType>(Raw.Ty)) return true;
-    const CompositeType *TopTy = dyn_cast<CompositeType>(Raw.Ty);
+    Res = new LoadInst(getValue(Raw.Ty, Raw.Arg1));
+    return false;
 
-    switch (Raw.NumOperands) {
-    case 0: 
-    case 1: std::cerr << "Invalid store encountered!\n"; return true;
-    case 2: break;
-    case 3:
-      if (!TopTy) return true;
-      Idx.push_back(V = getValue(TopTy->getIndexType(), Raw.Arg3));
-      if (!V) return true;
-      break;
-    default:
-      std::vector<unsigned> &args = *Raw.VarArgs;
-      const CompositeType *ElTy = TopTy;
-      unsigned i, E;
-      for (i = 0, E = args.size(); ElTy && i != E; ++i) {
-	Idx.push_back(V = getValue(ElTy->getIndexType(), args[i]));
-	if (!V) return true;
-
-        const Type *ETy = GetElementPtrInst::getIndexedType(Raw.Ty, Idx, true);
-        ElTy = dyn_cast_or_null<CompositeType>(ETy);
-      }
-      if (i != E)
-        return true;  // didn't use up all of the indices!
-
-      delete Raw.VarArgs; 
-      break;
-    }
+  case Instruction::Store: {
+    if (!isa<PointerType>(Raw.Ty) || Raw.NumOperands != 2) return true;
 
     Value *Ptr = getValue(Raw.Ty, Raw.Arg2);
-    if (!Idx.empty()) {
-      std::cerr << "WARNING: Bytecode contains load instruction with indices.  "
-                << "Replacing with getelementptr/load pair\n";
-
-      const Type *ElType = GetElementPtrInst::getIndexedType(Raw.Ty, Idx);
-      if (ElType == 0) return true;
-
-      Ptr = new GetElementPtrInst(Ptr, Idx);
-      // FIXME: Remove this compatibility code and the BB parameter to this
-      // method.
-      BB->getInstList().push_back(cast<Instruction>(Ptr));
-    }
-
     const Type *ValTy = cast<PointerType>(Ptr->getType())->getElementType();
     Res = new StoreInst(getValue(ValTy, Raw.Arg1), Ptr);
     return false;

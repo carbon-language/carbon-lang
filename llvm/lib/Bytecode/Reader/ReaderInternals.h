@@ -137,7 +137,7 @@ private:
   bool ParseBasicBlock    (const unsigned char *&Buf, const unsigned char *End,
                            BasicBlock *&);
   bool ParseInstruction   (const unsigned char *&Buf, const unsigned char *End,
-                           Instruction *&, BasicBlock *BB /*HACK*/);
+                           Instruction *&);
   bool ParseRawInst       (const unsigned char *&Buf, const unsigned char *End,
                            RawInst &);
 

@@ -222,7 +222,7 @@ bool BytecodeParser::ParseBasicBlock(const unsigned char *&Buf,
 
   while (Buf < EndBuf) {
     Instruction *Inst;
-    if (ParseInstruction(Buf, EndBuf, Inst, /*HACK*/BB)) {
+    if (ParseInstruction(Buf, EndBuf, Inst)) {
       delete BB;
       return true;
     }
