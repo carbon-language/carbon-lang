@@ -29,6 +29,7 @@
 #include "llvm/DerivedTypes.h"
 #include "Support/STLExtras.h"
 #include "Support/Statistic.h"
+#include "Support/Debug.h"
 #include <cstring>
 #include <algorithm>
 using namespace llvm;
@@ -37,7 +38,18 @@ static RegisterPass<WriteBytecodePass> X("emitbytecode", "Bytecode Writer");
 
 static Statistic<> 
 BytesWritten("bytecodewriter", "Number of bytecode bytes written");
-
+static Statistic<> 
+ConstantTotalBytes("bytecodewriter", "Bytes of constants total");
+static Statistic<> 
+FunctionConstantTotalBytes("bytecodewriter", "Bytes of function constants total");
+static Statistic<>
+ConstantPlaneHeaderBytes("bytecodewriter", "Constant plane header bytes");
+static Statistic<> 
+InstructionBytes("bytecodewriter", "Bytes of bytes of instructions");
+static Statistic<> 
+SymTabBytes("bytecodewriter", "Bytes of symbol table");
+static Statistic<> 
+ModuleInfoBytes("bytecodewriter", "Bytes of module info");
 
 BytecodeWriter::BytecodeWriter(std::deque<unsigned char> &o, const Module *M) 
   : Out(o), Table(M, true) {
@@ -52,8 +64,9 @@ BytecodeWriter::BytecodeWriter(std::deque<unsigned char> &o, const Module *M)
   bool hasNoEndianness  = M->getEndianness() == Module::AnyEndianness;
   bool hasNoPointerSize = M->getPointerSize() == Module::AnyPointerSize;
 
-  // Output the version identifier... we are currently on bytecode version #0
-  unsigned Version = (0 << 4) | isBigEndian | (hasLongPointers << 1) |
+  // Output the version identifier... we are currently on bytecode version #1,
+  // which corresponds to LLVM v1.2.
+  unsigned Version = (1 << 4) | isBigEndian | (hasLongPointers << 1) |
                      (hasNoEndianness << 2) | (hasNoPointerSize << 3);
   output_vbr(Version, Out);
   align32(Out);
@@ -70,6 +83,12 @@ BytecodeWriter::BytecodeWriter(std::deque<unsigned char> &o, const Module *M)
     unsigned ValNo = Type::FirstDerivedTyID; // Start at the derived types...
     outputConstantsInPlane(Plane, ValNo);      // Write out the types
   }
+
+  DEBUG(for (unsigned i = 0; i != Type::TypeTyID; ++i)
+          if (Table.getPlane(i).size())
+            std::cerr << "  ModuleLevel["
+                      << *Type::getPrimitiveType((Type::PrimitiveID)i)
+                      << "] = " << Table.getPlane(i).size() << "\n");
 
   // The ModuleInfoBlock follows directly after the type information
   outputModuleInfoBlock(M);
@@ -104,6 +123,11 @@ void BytecodeWriter::outputConstantsInPlane(const std::vector<const Value*>
   NC -= ValNo;                      // Convert from index into count
   if (NC == 0) return;              // Skip empty type planes...
 
+  // FIXME: Most slabs only have 1 or 2 entries!  We should encode this much
+  // more compactly.
+
+  ConstantPlaneHeaderBytes -= Out.size();
+
   // Output type header: [num entries][type id number]
   //
   output_vbr(NC, Out);
@@ -112,6 +136,9 @@ void BytecodeWriter::outputConstantsInPlane(const std::vector<const Value*>
   int Slot = Table.getSlot(Plane.front()->getType());
   assert (Slot != -1 && "Type in constant pool but not in function!!");
   output_vbr((unsigned)Slot, Out);
+
+  ConstantPlaneHeaderBytes += Out.size();
+
 
   //cerr << "Emitting " << NC << " constants of type '" 
   //	 << Plane.front()->getType()->getName() << "' = Slot #" << Slot << "\n";
@@ -129,6 +156,8 @@ void BytecodeWriter::outputConstantsInPlane(const std::vector<const Value*>
 }
 
 void BytecodeWriter::outputConstants(bool isFunction) {
+  ConstantTotalBytes -= Out.size();
+  if (isFunction) FunctionConstantTotalBytes -= Out.size();
   BytecodeBlock CPool(BytecodeFormat::ConstantPool, Out);
 
   unsigned NumPlanes = Table.getNumPlanes();
@@ -160,6 +189,8 @@ void BytecodeWriter::outputConstants(bool isFunction) {
         outputConstantsInPlane(Plane, ValNo);
       }
     }
+  ConstantTotalBytes += Out.size();
+  if (isFunction) FunctionConstantTotalBytes += Out.size();
 }
 
 static unsigned getEncodedLinkage(const GlobalValue *GV) {
@@ -174,6 +205,8 @@ static unsigned getEncodedLinkage(const GlobalValue *GV) {
 }
 
 void BytecodeWriter::outputModuleInfoBlock(const Module *M) {
+  ModuleInfoBytes -= Out.size();
+
   BytecodeBlock ModuleInfoBlock(BytecodeFormat::ModuleGlobalInfo, Out);
   
   // Output the types for the global variables in the module...
@@ -206,6 +239,8 @@ void BytecodeWriter::outputModuleInfoBlock(const Module *M) {
   output_vbr((unsigned)Table.getSlot(Type::VoidTy), Out);
 
   align32(Out);
+
+  ModuleInfoBytes += Out.size();
 }
 
 void BytecodeWriter::outputFunction(const Function *F) {
@@ -222,10 +257,11 @@ void BytecodeWriter::outputFunction(const Function *F) {
 
     {  // Output all of the instructions in the body of the function
       BytecodeBlock ILBlock(BytecodeFormat::InstructionList, Out);
-
+      InstructionBytes -= Out.size();
       for (Function::const_iterator BB = F->begin(), E = F->end(); BB != E;++BB)
         for(BasicBlock::const_iterator I = BB->begin(), E = BB->end(); I!=E;++I)
           processInstruction(*I);
+      InstructionBytes += Out.size();
     }
     
     // If needed, output the symbol table for the function...
@@ -240,7 +276,9 @@ void BytecodeWriter::outputSymbolTable(const SymbolTable &MST) {
   // space!
   if (MST.begin() == MST.end()) return;
 
-  BytecodeBlock FunctionBlock(BytecodeFormat::SymbolTable, Out);
+  SymTabBytes -= Out.size();
+  
+  BytecodeBlock SymTabBlock(BytecodeFormat::SymbolTable, Out);
 
   for (SymbolTable::const_iterator TI = MST.begin(); TI != MST.end(); ++TI) {
     SymbolTable::type_const_iterator I = MST.type_begin(TI->first);
@@ -264,6 +302,8 @@ void BytecodeWriter::outputSymbolTable(const SymbolTable &MST) {
       output(I->first, Out, false); // Don't force alignment...
     }
   }
+
+  SymTabBytes += Out.size();
 }
 
 void llvm::WriteBytecodeToFile(const Module *C, std::ostream &Out) {

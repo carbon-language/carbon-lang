@@ -22,6 +22,23 @@ using namespace llvm;
 
 static Statistic<> 
 NumInstrs("bytecodewriter", "Number of instructions");
+static Statistic<> 
+NumOversizedInstrs("bytecodewriter", "Number of oversized instructions");
+static Statistic<> 
+BytesOversizedInstrs("bytecodewriter", "Bytes of oversized instructions");
+
+static Statistic<> 
+NumHugeOperandInstrs("bytecodewriter", "Number of instructions with > 3 operands");
+static Statistic<> 
+NumOversized1OpInstrs("bytecodewriter", "Number of oversized 1 operand instrs");
+static Statistic<> 
+NumOversized2OpInstrs("bytecodewriter", "Number of oversized 2 operand instrs");
+static Statistic<>
+NumOversized3OpInstrs("bytecodewriter", "Number of oversized 3 operand instrs");
+
+static Statistic<>
+NumOversidedBecauseOfTypes("bytecodewriter", "Number of oversized instructions because of their type");
+
 
 typedef unsigned char uchar;
 
@@ -33,6 +50,9 @@ typedef unsigned char uchar;
 static void outputInstructionFormat0(const Instruction *I, unsigned Opcode,
 				     const SlotCalculator &Table,
 				     unsigned Type, std::deque<uchar> &Out) {
+  NumOversizedInstrs++;
+  BytesOversizedInstrs -= Out.size();
+
   // Opcode must have top two bits clear...
   output_vbr(Opcode << 2, Out);                  // Instruction Opcode ID
   output_vbr(Type, Out);                         // Result type
@@ -58,6 +78,7 @@ static void outputInstructionFormat0(const Instruction *I, unsigned Opcode,
   }
 
   align32(Out);    // We must maintain correct alignment!
+  BytesOversizedInstrs += Out.size();
 }
 
 
@@ -275,6 +296,10 @@ void BytecodeWriter::processInstruction(const Instruction &I) {
       outputInstructionFormat1(&I, Opcode, Table, Slots, Type, Out);
       return;
     }
+    if (Type >= (1 << 12)-1)
+      NumOversidedBecauseOfTypes++;
+
+    NumOversized1OpInstrs++;
     break;
 
   case 2:
@@ -282,6 +307,9 @@ void BytecodeWriter::processInstruction(const Instruction &I) {
       outputInstructionFormat2(&I, Opcode, Table, Slots, Type, Out);
       return;
     }
+    if (Type >= (1 << 8)) 
+      NumOversidedBecauseOfTypes++;
+    NumOversized2OpInstrs++;
     break;
 
   case 3:
@@ -289,6 +317,12 @@ void BytecodeWriter::processInstruction(const Instruction &I) {
       outputInstructionFormat3(&I, Opcode, Table, Slots, Type, Out);
       return;
     }
+    if (Type >= (1 << 6)) 
+      NumOversidedBecauseOfTypes++;
+    NumOversized3OpInstrs++;
+    break;
+  default:
+    ++NumHugeOperandInstrs;
     break;
   }
 

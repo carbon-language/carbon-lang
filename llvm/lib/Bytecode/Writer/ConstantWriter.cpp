@@ -16,15 +16,26 @@
 #include "llvm/Constants.h"
 #include "llvm/SymbolTable.h"
 #include "llvm/DerivedTypes.h"
+#include "Support/Statistic.h"
 using namespace llvm;
 
+static Statistic<> 
+TypeBytes("bytecodewriter", "Bytes of types");
+static Statistic<> 
+ConstantBytes("bytecodewriter", "Bytes of constants");
+static Statistic<> 
+NumConstants("bytecodewriter", "Number of constants");
+
 void BytecodeWriter::outputType(const Type *T) {
+  TypeBytes -= Out.size();
   output_vbr((unsigned)T->getPrimitiveID(), Out);
   
   // That's all there is to handling primitive types...
-  if (T->isPrimitiveType())
+  if (T->isPrimitiveType()) {
+    TypeBytes += Out.size();
     return;     // We might do this if we alias a prim type: %x = type int
-  
+  }
+
   switch (T->getPrimitiveID()) {   // Handle derived types now.
   case Type::FunctionTyID: {
     const FunctionType *MT = cast<FunctionType>(T);
@@ -95,11 +106,15 @@ void BytecodeWriter::outputType(const Type *T) {
               << " Type '" << T->getDescription() << "'\n";
     break;
   }
+  TypeBytes += Out.size();
 }
 
 bool BytecodeWriter::outputConstant(const Constant *CPV) {
+  ConstantBytes -= Out.size();
   assert((CPV->getType()->isPrimitiveType() || !CPV->isNullValue()) &&
          "Shouldn't output null constants!");
+
+  ++NumConstants;
 
   // We must check for a ConstantExpr before switching by type because
   // a ConstantExpr can be of any type, and has no explicit value.
@@ -117,9 +132,10 @@ bool BytecodeWriter::outputConstant(const Constant *CPV) {
       Slot = Table.getSlot((*OI)->getType());
       output_vbr((unsigned)Slot, Out);
     }
+    ConstantBytes += Out.size();
     return false;
   } else {
-    output_vbr((unsigned)0, Out);       // flag as not a ConstantExpr
+    output_vbr(0U, Out);       // flag as not a ConstantExpr
   }
   
   switch (CPV->getType()->getPrimitiveID()) {
@@ -169,7 +185,7 @@ bool BytecodeWriter::outputConstant(const Constant *CPV) {
       int Slot = Table.getSlot(Vals[i]);
       assert(Slot != -1 && "Constant used but not available!!");
       output_vbr((unsigned)Slot, Out);
-    }      
+    }
     break;
   }
 
@@ -199,5 +215,6 @@ bool BytecodeWriter::outputConstant(const Constant *CPV) {
               << " type '" << CPV->getType()->getName() << "'\n";
     break;
   }
+    ConstantBytes += Out.size();
   return false;
 }
