@@ -186,12 +186,6 @@ PowerPCRegisterInfo::eliminateFrameIndex(MachineFunction &MF,
 }
 
 
-void
-PowerPCRegisterInfo::processFunctionBeforeFrameFinalized(MachineFunction &MF)
-  const {
-  // Do Nothing
-}
-
 void PowerPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
   MachineBasicBlock &MBB = MF.front();   // Prolog goes in entry BB
   MachineBasicBlock::iterator MBBI = MBB.begin();

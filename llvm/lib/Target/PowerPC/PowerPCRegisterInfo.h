@@ -47,8 +47,6 @@ struct PowerPCRegisterInfo : public PowerPCGenRegisterInfo {
   void eliminateFrameIndex(MachineFunction &MF,
                            MachineBasicBlock::iterator II) const;
 
-  void processFunctionBeforeFrameFinalized(MachineFunction &MF) const;
-
   void emitPrologue(MachineFunction &MF) const;
   void emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const;
 };
