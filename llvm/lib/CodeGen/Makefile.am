@@ -9,7 +9,7 @@
 
 include $(top_srcdir)/Makefile.rules.am
 
-SUBDIRS = InstrSched ModuloScheduling SelectionDAG
+SUBDIRS = ModuloScheduling SelectionDAG
 
 libexec_PROGRAMS = LLVMCodeGen.o
 
