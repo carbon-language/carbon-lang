@@ -143,3 +143,10 @@ ubyte %test22(ubyte %A) {
 	%E = xor ubyte %D, 12
 	ret ubyte %E
 }
+
+uint %test23(uint %A) {
+	%B = or uint %A, 4     ; Should be eliminated
+	%C = and uint %B, 8
+	ret uint %C
+}
+
