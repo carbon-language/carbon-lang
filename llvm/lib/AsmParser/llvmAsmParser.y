@@ -962,7 +962,7 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
 
 // FIXME: ConstExpr::get never return null!  Do checking here in the parser.
 ConstExpr: Types CAST ConstVal {
-    $$ = ConstantExpr::get(Instruction::Cast, $3, $1->get());
+    $$ = ConstantExpr::getCast($3, $1->get());
     delete $1;
   }
   | Types GETELEMENTPTR '(' ConstVal IndexList ')' {

@@ -217,7 +217,8 @@ bool BytecodeParser::parseConstantValue(const uchar *&Buf, const uchar *EndBuf,
     
     // Construct a ConstantExpr of the appropriate kind
     if (isExprNumArgs == 1) {           // All one-operand expressions
-      V = ConstantExpr::get(Opcode, ArgVec[0], Ty);
+      assert(Opcode == Instruction::Cast);
+      V = ConstantExpr::getCast(ArgVec[0], Ty);
     } else if (Opcode == Instruction::GetElementPtr) { // GetElementPtr
       std::vector<Constant*> IdxList(ArgVec.begin()+1, ArgVec.end());
       V = ConstantExpr::getGetElementPtr(ArgVec[0], IdxList);

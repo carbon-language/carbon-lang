@@ -119,10 +119,10 @@ static Value *RemapOperand(const Value *In, map<const Value*, Value*> &LocalMap,
       Result = ConstantPointerRef::get(cast<GlobalValue>(V));
     } else if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(CPV)) {
       if (CE->getNumOperands() == 1) {
-        // Cast instruction, unary operator
+        // Cast instruction
+        assert(CE->getOpcode() == Instruction::Cast);
         Value *V = RemapOperand(CE->getOperand(0), LocalMap, GlobalMap);
-        Result = ConstantExpr::get(CE->getOpcode(), cast<Constant>(V),
-                                   CE->getType());
+        Result = ConstantExpr::getCast(cast<Constant>(V), CE->getType());
       } else if (CE->getNumOperands() == 2) {
         // Binary operator...
         Value *V1 = RemapOperand(CE->getOperand(0), LocalMap, GlobalMap);

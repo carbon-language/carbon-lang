@@ -431,8 +431,8 @@ protected:
 public:
   // Static methods to construct a ConstantExpr of different kinds.
   
-  // Unary constant expr - Use with unary operators and casts
-  static ConstantExpr *get(unsigned Opcode, Constant *C, const Type *Ty);
+  // Cast constant expr
+  static ConstantExpr *getCast(Constant *C, const Type *Ty);
 
   // Binary constant expr - Use with binary operators...
   static ConstantExpr *get(unsigned Opcode, Constant *C1, Constant *C2);

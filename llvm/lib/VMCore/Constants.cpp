@@ -466,26 +466,16 @@ ConstantPointerRef *ConstantPointerRef::get(GlobalValue *GV) {
 typedef pair<unsigned, vector<Constant*> > ExprMapKeyType;
 static ValueMap<const ExprMapKeyType, ConstantExpr> ExprConstants;
 
-ConstantExpr *ConstantExpr::get(unsigned Opcode, Constant *C, const Type *Ty) {
+ConstantExpr *ConstantExpr::getCast(Constant *C, const Type *Ty) {
 
   // Look up the constant in the table first to ensure uniqueness
   vector<Constant*> argVec(1, C);
-  const ExprMapKeyType &Key = make_pair(Opcode, argVec);
+  const ExprMapKeyType &Key = make_pair(Instruction::Cast, argVec);
   ConstantExpr *Result = ExprConstants.get(Ty, Key);
   if (Result) return Result;
   
   // Its not in the table so create a new one and put it in the table.
-  // Check the operands for consistency first
-  assert(Opcode == Instruction::Cast ||
-         (Opcode >= Instruction::FirstUnaryOp &&
-          Opcode < Instruction::NumUnaryOps) &&
-         "Invalid opcode in unary ConstantExpr!");
-
-  // type of operand will not match result for Cast operation
-  assert((Opcode == Instruction::Cast || Ty == C->getType()) &&
-         "Type of operand in unary constant expression should match result");
-  
-  Result = new ConstantExpr(Opcode, C, Ty);
+  Result = new ConstantExpr(Instruction::Cast, C, Ty);
   ExprConstants.add(Ty, Key, Result);
   return Result;
 }
