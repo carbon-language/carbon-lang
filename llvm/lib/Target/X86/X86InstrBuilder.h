@@ -34,7 +34,6 @@ namespace llvm {
 /// also include the offset of a global value.
 struct X86AddressMode {
     enum {
-      UnknownBase,
       RegBase,
       FrameIndexBase,
     } BaseType;
@@ -49,7 +48,8 @@ struct X86AddressMode {
     unsigned Disp;
     GlobalValue *GV;
 
-    X86AddressMode() : BaseType(UnknownBase), GV(NULL) {}
+    X86AddressMode() : BaseType(RegBase), Scale(1), IndexReg(0), Disp(0),
+                       GV(NULL) {}
 };
 
 /// addDirectMem - This function is used to add a direct memory reference to the
