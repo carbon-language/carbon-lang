@@ -17,6 +17,7 @@
 #include "llvm/System/MappedFile.h"
 #include "llvm/ADT/StringExtras.h"
 #include <cmath>
+#include <cstring>
 using namespace llvm;
 
 static bool isNumberChar(char C) {
@@ -141,19 +142,15 @@ int llvm::DiffFilesWithTolerance(const sys::Path &FileA,
     // Okay, now that we opened the files, scan them for the first difference.
     char *File1Start = F1.charBase();
     char *File2Start = F2.charBase();
-    char *File1End = File1Start+F1.size();
-    char *File2End = File2Start+F2.size();
+    char *File1End = File1Start+A_size;
+    char *File2End = File2Start+B_size;
     char *F1P = File1Start;
     char *F2P = File2Start;
 
     if (A_size == B_size) {
-      // Scan for the end of file or first difference.
-      while (F1P < File1End && *F1P == *F2P)
-        ++F1P, ++F2P;
-
-      // Common case: identifical files.
-      if (F1P == File1End)
-        return 0; // Scanned to end, files same
+      // Are the buffers identical?
+      if (std::memcmp(File1Start, File2Start, A_size) == 0)
+        return 0;
 
       if (AbsTol == 0 && RelTol == 0)
         return 1;   // Files different!
