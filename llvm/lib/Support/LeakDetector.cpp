@@ -16,75 +16,92 @@
 #include <set>
 using namespace llvm;
 
-// Lazily allocate set so that release build doesn't have to do anything.
-static std::set<const void*> *Objects = 0;
-static std::set<const Value*> *LLVMObjects = 0;
+namespace {
 
-// Because the most common usage pattern, by far, is to add a garbage object,
-// then remove it immediately, we optimize this case.  When an object is added,
-// it is not added to the set immediately, it is added to the CachedValue Value.
-// If it is immediately removed, no set search need be performed.
-//
-static const Value *CachedValue;
+  template <typename T>
+  struct LeakDetectorImpl {
+    LeakDetectorImpl(const char* const name) : Cache(0), Name(name) { }
 
-void LeakDetector::addGarbageObjectImpl(void *Object) {
-  if (Objects == 0)
-    Objects = new std::set<const void*>();
-  assert(Objects->count(Object) == 0 && "Object already in set!");
-  Objects->insert(Object);
+    // Because the most common usage pattern, by far, is to add a
+    // garbage object, then remove it immediately, we optimize this
+    // case.  When an object is added, it is not added to the set
+    // immediately, it is added to the CachedValue Value.  If it is
+    // immediately removed, no set search need be performed.
+    void addGarbage(const T* o) {
+      if (Cache) {
+        assert(Ts.count(Cache) == 0 && "Object already in set!");
+        Ts.insert(Cache);
+      }
+      Cache = o;
+    }
+
+    void removeGarbage(const T* o) {
+      if (o == Cache)
+        Cache = 0; // Cache hit
+      else
+          Ts.erase(o);
+    }
+
+    bool hasGarbage(const std::string& Message) {
+      addGarbage(0); // Flush the Cache
+
+      assert(Cache == 0 && "No value should be cached anymore!");
+
+      if (!Ts.empty()) {
+        std::cerr
+            << "Leaked " << Name << " objects found: " << Message << ":\n\t";
+        std::copy(Ts.begin(), Ts.end(),
+                  std::ostream_iterator<const T*>(std::cerr, " "));
+        std::cerr << '\n';
+
+        // Clear out results so we don't get duplicate warnings on
+        // next call...
+        Ts.clear();
+        return true;
+      }
+      return false;
+    }
+
+  private:
+    std::set<const T*> Ts;
+      const T* Cache;
+      const char* const Name;
+  };
+
+  typedef LeakDetectorImpl<void>  Objects;
+  typedef LeakDetectorImpl<Value> LLVMObjects;
+
+  Objects& getObjects() {
+    static Objects o("GENERIC");
+    return o;
+  }
+
+  LLVMObjects& getLLVMObjects() {
+    static LLVMObjects o("LLVM");
+    return o;
+  }
 }
 
-void LeakDetector::removeGarbageObjectImpl(void *Object) {
-  if (Objects)
-    Objects->erase(Object);
+void LeakDetector::addGarbageObjectImpl(void *Object) {
+  getObjects().addGarbage(Object);
 }
 
 void LeakDetector::addGarbageObjectImpl(const Value *Object) {
-  if (CachedValue) {
-    if (LLVMObjects == 0)
-      LLVMObjects = new std::set<const Value*>();
-    assert(LLVMObjects->count(CachedValue) == 0 && "Object already in set!");
-    LLVMObjects->insert(CachedValue);
-  }
-  CachedValue = Object;
+  getLLVMObjects().addGarbage(Object);
+}
+
+void LeakDetector::removeGarbageObjectImpl(void *Object) {
+  getObjects().removeGarbage(Object);
 }
 
 void LeakDetector::removeGarbageObjectImpl(const Value *Object) {
-  if (Object == CachedValue)
-    CachedValue = 0;             // Cache hit!
-  else if (LLVMObjects)
-    LLVMObjects->erase(Object);
+  getLLVMObjects().removeGarbage(Object);
 }
 
 void LeakDetector::checkForGarbageImpl(const std::string &Message) {
-  if (CachedValue)  // Flush the cache to the set...
-    addGarbageObjectImpl((Value*)0);
-
-  assert(CachedValue == 0 && "No value should be cached anymore!");
-
-  if ((Objects && !Objects->empty()) || (LLVMObjects && !LLVMObjects->empty())){
-    std::cerr << "Leaked objects found: " << Message << "\n";
-
-    if (Objects && !Objects->empty()) {
-      std::cerr << "  Non-Value objects leaked:";
-      for (std::set<const void*>::iterator I = Objects->begin(),
-             E = Objects->end(); I != E; ++I)
-        std::cerr << " " << *I;
-    }
-
-    if (LLVMObjects && !LLVMObjects->empty()) {
-      std::cerr << "  LLVM Value subclasses leaked:";
-      for (std::set<const Value*>::iterator I = LLVMObjects->begin(),
-             E = LLVMObjects->end(); I != E; ++I)
-        std::cerr << **I << "\n";
-    }
-
-    std::cerr << "This is probably because you removed an LLVM value "
-              << "(Instruction, BasicBlock, \netc), but didn't delete it.  "
-              << "Please check your code for memory leaks.\n";
-
-    // Clear out results so we don't get duplicate warnings on next call...
-    delete Objects; delete LLVMObjects;
-    Objects = 0; LLVMObjects = 0;
-  }
+  // use non-short-circuit version so that both checks are performed
+  if (getObjects().hasGarbage(Message) |
+      getLLVMObjects().hasGarbage(Message))
+    std::cerr << "\nThis is probably because you removed an object, but didn't "
+                 "delete it.  Please check your code for memory leaks.\n";
 }
