@@ -17,6 +17,7 @@
 
 #include <string>
 #include <vector>
+#include <cassert>
 
 namespace llvm {
   class CLIDebugger;
