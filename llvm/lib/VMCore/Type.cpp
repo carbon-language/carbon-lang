@@ -143,7 +143,11 @@ ArrayType::ArrayType(const Type *ElType, int NumEl, const string &Name)
 }
 
 StructType::StructType(const vector<const Type*> &Types, const string &Name) 
-  : Type(Name, StructTyID), ETypes(Types) {
+  : Type(Name, StructTyID),
+    ETypes(Types),
+    layoutCache(new StructSizeAndOffsetInfo) 
+{
+  ResetCachedInfo();
 }
 
 PointerType::PointerType(const Type *E) 

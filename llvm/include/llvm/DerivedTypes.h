@@ -12,7 +12,11 @@
 #define LLVM_DERIVED_TYPES_H
 
 #include "llvm/Type.h"
-#include <vector>
+#include "llvm/Codegen/TargetMachine.h"
+#include "vector"
+
+class TargetMachine;
+
 
 // Future derived types: SIMD packed format
 
@@ -81,12 +85,20 @@ public:
 class StructType : public Type {
 public:
   typedef vector<const Type*> ElementTypes;
+
 private:
   ElementTypes ETypes;
-
+  struct StructSizeAndOffsetInfo {
+    int storageSize;			// -1 until the value is computd
+    vector<int> memberOffsets;		// -1 until values are computed 
+    const TargetMachine* targetInfo;
+  }
+  *layoutCache;
+  
+private:
   StructType(const StructType &);                   // Do not implement
   const StructType &operator=(const StructType &);  // Do not implement
-
+  
 protected:
   // This should really be private, but it squelches a bogus warning
   // from GCC to make them protected:  warning: `class StructType' only 
@@ -94,6 +106,10 @@ protected:
 
   // Private ctor - Only can be created by a static member...
   StructType(const vector<const Type*> &Types, const string &Name);
+  
+  // Reset cached info so it will be computed when first requested
+  void ResetCachedInfo() const;
+  
 public:
 
   inline const ElementTypes &getElementTypes() const { return ETypes; }
@@ -101,7 +117,63 @@ public:
   static const StructType *get(const ElementTypes &Params) {
     return getStructType(Params);
   }
+  unsigned int		   getStorageSize(const TargetMachine& tmi) const;
+  unsigned int		   getElementOffset(int i, const TargetMachine& tmi) const;
 };
+
+
+inline unsigned int
+StructType::getStorageSize(const TargetMachine& tmi) const
+{
+  if (layoutCache->targetInfo != NULL && ! (* layoutCache->targetInfo == tmi))
+    {// target machine has changed (hey it could happen). discard cached info.
+      ResetCachedInfo();
+      layoutCache->targetInfo = &tmi;
+    }
+  
+  if (layoutCache->storageSize < 0)
+    {
+      layoutCache->storageSize = tmi.findOptimalStorageSize(this);
+      assert(layoutCache->storageSize >= 0);
+    }
+  
+  return layoutCache->storageSize;
+}
+
+
+inline unsigned int
+StructType::getElementOffset(int i, const TargetMachine& tmi) const
+{
+  if (layoutCache->targetInfo != NULL && ! (* layoutCache->targetInfo == tmi))
+    {// target machine has changed (hey it could happen). discard cached info.
+      ResetCachedInfo();
+    }
+  
+  if (layoutCache->memberOffsets[i] < 0)
+    {
+      layoutCache->targetInfo = &tmi;	// remember which target was used
+      
+      unsigned int* offsetVec = tmi.findOptimalMemberOffsets(this);
+      for (unsigned i=0, N=layoutCache->memberOffsets.size(); i < N; i++)
+	{
+	  layoutCache->memberOffsets[i] = offsetVec[i];
+	  assert(layoutCache->memberOffsets[i] >= 0);
+	}
+      delete[] offsetVec; 
+    }
+  
+  return layoutCache->memberOffsets[i];
+}
+
+
+inline void
+StructType::ResetCachedInfo() const
+{
+  layoutCache->storageSize = -1;
+  layoutCache->memberOffsets.insert(layoutCache->memberOffsets.begin(),
+				    ETypes.size(), -1);
+  layoutCache->targetInfo = NULL;
+}
 
 
 class PointerType : public Type {
