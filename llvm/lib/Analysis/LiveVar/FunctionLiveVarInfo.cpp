@@ -14,7 +14,6 @@
 #include "llvm/BasicBlock.h"
 #include "Support/PostOrderIterator.h"
 #include <iostream>
-using std::cerr;
 
 AnalysisID MethodLiveVarInfo::ID(AnalysisID::create<MethodLiveVarInfo>());
 
@@ -24,7 +23,7 @@ AnalysisID MethodLiveVarInfo::ID(AnalysisID::create<MethodLiveVarInfo>());
 //-----------------------------------------------------------------------------
 
 bool MethodLiveVarInfo::runOnMethod(Method *M) {
-  if (DEBUG_LV) cerr << "Analysing live variables ...\n";
+  if (DEBUG_LV) std::cerr << "Analysing live variables ...\n";
 
   // create and initialize all the BBLiveVars of the CFG
   constructBBs(M);
@@ -32,7 +31,7 @@ bool MethodLiveVarInfo::runOnMethod(Method *M) {
   while (doSingleBackwardPass(M))
     ; // Iterate until we are done.
   
-  if (DEBUG_LV) cerr << "Live Variable Analysis complete!\n";
+  if (DEBUG_LV) std::cerr << "Live Variable Analysis complete!\n";
   return false;
 }
 
@@ -48,7 +47,7 @@ void MethodLiveVarInfo::constructBBs(const Method *M) {
       BBI != BBE; ++BBI, ++POId) { 
     const BasicBlock *BB = *BBI;        // get the current BB 
 
-    if (DEBUG_LV) { cerr << " For BB "; printValue(BB); cerr << ":\n"; }
+    if (DEBUG_LV) { std::cerr << " For BB "; printValue(BB); cerr << ":\n"; }
 
     // create a new BBLiveVar
     BBLiveVar *LVBB = new BBLiveVar(BB, POId);  
@@ -56,7 +55,7 @@ void MethodLiveVarInfo::constructBBs(const Method *M) {
     
     LVBB->calcDefUseSets();             // calculates the def and in set
 
-    if (DEBUG_LV) 
+    if (DEBUG_LV)
       LVBB->printAllSets();
   }
 
@@ -67,7 +66,7 @@ void MethodLiveVarInfo::constructBBs(const Method *M) {
   //
   for (Method::const_iterator BBRI = M->begin(), BBRE = M->end();
        BBRI != BBRE; ++BBRI, ++POId)
-    if (!BB2BBLVMap[*BBRI])   // Not yet processed?
+    if (!BB2BBLVMap[*BBRI])                  // Not yet processed?
       BB2BBLVMap[*BBRI] = new BBLiveVar(*BBRI, POId);
 }
 
@@ -75,19 +74,16 @@ void MethodLiveVarInfo::constructBBs(const Method *M) {
 //-----------------------------------------------------------------------------
 // do one backward pass over the CFG (for iterative analysis)
 //-----------------------------------------------------------------------------
+
 bool MethodLiveVarInfo::doSingleBackwardPass(const Method *M) {
-  bool ResultFlow, NeedAnotherIteration = false;
+  if (DEBUG_LV) std::cerr << "\n After Backward Pass ...\n";
 
-  if (DEBUG_LV) 
-    cerr << "\n After Backward Pass ...\n";
-
-  po_iterator<const Method*> BBI = po_begin(M);
-
-  for( ; BBI != po_end(M) ; ++BBI) { 
+  bool NeedAnotherIteration = false;
+  for (po_iterator<const Method*> BBI = po_begin(M); BBI != po_end(M) ; ++BBI) {
     BBLiveVar *LVBB = BB2BBLVMap[*BBI];
-    assert(LVBB);
+    assert(LVBB && "BasicBlock information not set for block!");
 
-    if (DEBUG_LV) cerr << " For BB " << (*BBI)->getName() << ":\n";
+    if (DEBUG_LV) std::cerr << " For BB " << (*BBI)->getName() << ":\n";
 
     if(LVBB->isOutSetChanged()) 
       LVBB->applyTransferFunc();        // apply the Tran Func to calc InSet
@@ -95,7 +91,7 @@ bool MethodLiveVarInfo::doSingleBackwardPass(const Method *M) {
     if (LVBB->isInSetChanged())        // to calc Outsets of preds
       NeedAnotherIteration |= LVBB->applyFlowFunc(BB2BBLVMap); 
 
-    if(DEBUG_LV) LVBB->printInOutSets();
+    if (DEBUG_LV) LVBB->printInOutSets();
   }
 
   // true if we need to reiterate over the CFG
@@ -105,13 +101,10 @@ bool MethodLiveVarInfo::doSingleBackwardPass(const Method *M) {
 
 void MethodLiveVarInfo::releaseMemory() {
   // First delete all BBLiveVar objects created in constructBBs(). A new object
-  // of type  BBLiveVa is created for every BasicBlock in the method
-
-  // hash map iterator for BB2BBLVMap
+  // of type BBLiveVar is created for every BasicBlock in the method
   //
-  BBToBBLiveVarMapType::iterator HMI = BB2BBLVMap.begin(); 
-
-  for( ; HMI != BB2BBLVMap.end(); ++HMI)
+  for (BBToBBLiveVarMapType::iterator HMI = BB2BBLVMap.begin(),
+         HME = BB2BBLVMap.end(); HMI != HME; ++HMI)
     delete HMI->second;                // delete all BBLiveVar in BB2BBLVMap
 
   BB2BBLVMap.clear();
@@ -121,12 +114,9 @@ void MethodLiveVarInfo::releaseMemory() {
   // to return LiveVarSet's before/after a machine instruction quickly). It
   // is sufficient to free up all LiveVarSet using only one cache since 
   // both caches refer to the same sets
-
-  // hash map iterator for MInst2LVSetBI
   //
-  MInstToLiveVarSetMapType::iterator MI = MInst2LVSetBI.begin(); 
-
-  for( ; MI != MInst2LVSetBI.end(); ++MI)
+  for (MInstToLiveVarSetMapType::iterator MI = MInst2LVSetBI.begin(),
+         ME = MInst2LVSetBI.end(); MI != ME; ++MI)
     delete MI->second;           // delete all LiveVarSets in  MInst2LVSetBI
 
   MInst2LVSetBI.clear();
@@ -137,30 +127,27 @@ void MethodLiveVarInfo::releaseMemory() {
 
 
 //-----------------------------------------------------------------------------
-/* Following functions will give the LiveVar info for any machine instr in
-   a method. It should be called after a call to analyze().
-
-   Thsese functions calucluates live var info for all the machine instrs in a 
-   BB when LVInfo for one inst is requested. Hence, this function is useful 
-   when live var info is required for many (or all) instructions in a basic 
-   block. Also, the arguments to this method does not require specific 
-   iterators.
-*/
+// Following functions will give the LiveVar info for any machine instr in
+// a method. It should be called after a call to analyze().
+//
+// Thsese functions calucluates live var info for all the machine instrs in a 
+// BB when LVInfo for one inst is requested. Hence, this function is useful 
+// when live var info is required for many (or all) instructions in a basic 
+// block. Also, the arguments to this method does not require specific 
+// iterators.
 //-----------------------------------------------------------------------------
 
 //-----------------------------------------------------------------------------
 // Gives live variable information before a machine instruction
 //-----------------------------------------------------------------------------
+
 const LiveVarSet *
 MethodLiveVarInfo::getLiveVarSetBeforeMInst(const MachineInstr *MInst,
-					    const BasicBlock *CurBB) {
-  const LiveVarSet *LVSet = MInst2LVSetBI[MInst];
-
-  if (LVSet) {
-    return LVSet;              // if found, just return the set
+					    const BasicBlock *BB) {
+  if (const LiveVarSet *LVSet = MInst2LVSetBI[MInst]) {
+    return LVSet;                      // if found, just return the set
   } else { 
-    calcLiveVarSetsForBB(CurBB);        // else, calc for all instrs in BB
-    assert(MInst2LVSetBI[MInst]);
+    calcLiveVarSetsForBB(BB);          // else, calc for all instrs in BB
     return MInst2LVSetBI[MInst];
   }
 }
@@ -170,16 +157,14 @@ MethodLiveVarInfo::getLiveVarSetBeforeMInst(const MachineInstr *MInst,
 // Gives live variable information after a machine instruction
 //-----------------------------------------------------------------------------
 const LiveVarSet * 
-MethodLiveVarInfo::getLiveVarSetAfterMInst(const MachineInstr *MInst,
-                                           const BasicBlock *CurBB) {
-  const LiveVarSet *LVSet = MInst2LVSetAI[MInst];
+MethodLiveVarInfo::getLiveVarSetAfterMInst(const MachineInstr *MI,
+                                           const BasicBlock *BB) {
 
-  if(LVSet) {
+  if (const LiveVarSet *LVSet = MInst2LVSetAI[MI]) {
     return LVSet;                       // if found, just return the set
   } else { 
-    calcLiveVarSetsForBB(CurBB);        // else, calc for all instrs in BB
-    assert(MInst2LVSetAI[MInst]);
-    return MInst2LVSetAI[MInst];
+    calcLiveVarSetsForBB(BB);           // else, calc for all instrs in BB
+    return MInst2LVSetAI[MI];
   }
 }
 
@@ -188,51 +173,31 @@ MethodLiveVarInfo::getLiveVarSetAfterMInst(const MachineInstr *MInst,
 //-----------------------------------------------------------------------------
 // This method calculates the live variable information for all the 
 // instructions in a basic block and enter the newly constructed live
-// variable sets into a the caches ( MInst2LVSetAI,  MInst2LVSetBI)
+// variable sets into a the caches (MInst2LVSetAI, MInst2LVSetBI)
 //-----------------------------------------------------------------------------
-void MethodLiveVarInfo::calcLiveVarSetsForBB(const BasicBlock *const BB)
-{
-  const MachineCodeForBasicBlock& MIVec = BB->getMachineInstrVec();
-  MachineCodeForBasicBlock::const_reverse_iterator 
-    MInstIterator = MIVec.rbegin();
+
+void MethodLiveVarInfo::calcLiveVarSetsForBB(const BasicBlock *BB) {
+  const MachineCodeForBasicBlock &MIVec = BB->getMachineInstrVec();
 
   LiveVarSet *CurSet = new LiveVarSet();
   const LiveVarSet *SetAI = getOutSetOfBB(BB); // init SetAI with OutSet
   CurSet->setUnion(SetAI);                     // CurSet now contains OutSet
 
   // iterate over all the machine instructions in BB
-  for( ; MInstIterator != MIVec.rend(); MInstIterator++) {  
+  for (MachineCodeForBasicBlock::const_reverse_iterator MII = MIVec.rbegin(),
+         MIE = MIVec.rend(); MII != MIE; ++MII) {  
+    // MI is cur machine inst
+    const MachineInstr *MI = *MII;  
 
-    // MInst is cur machine inst
-    const MachineInstr * MInst  = *MInstIterator;  
+    MInst2LVSetAI[MI] = SetAI;                 // record in After Inst map
 
-    MInst2LVSetAI[MInst] = SetAI;              // record in After Inst map
-    
-    CurSet->applyTranferFuncForMInst( MInst ); // apply the transfer Func
+    CurSet->applyTranferFuncForMInst(MI);      // apply the transfer Func
     LiveVarSet *NewSet = new LiveVarSet();     // create a new set and
-    NewSet->setUnion( CurSet );                // copy the set after T/F to it
+    NewSet->setUnion(CurSet);                  // copy the set after T/F to it
  
-    MInst2LVSetBI[MInst] = NewSet;             // record in Before Inst map
+    MInst2LVSetBI[MI] = NewSet;                // record in Before Inst map
 
     // SetAI will be used in the next iteration
     SetAI = NewSet;                 
   }
-  
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
