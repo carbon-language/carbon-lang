@@ -58,12 +58,10 @@ namespace llvm {
       /// @brief Action specific flags
       enum ConfigurationFlags {
         REQUIRED_FLAG        = 0x0001, ///< Should the action always be run?
-        GROKS_DASH_O_FLAG    = 0x0002, ///< Understands the -On options?
-        PREPROCESSES_FLAG    = 0x0004, ///< Does this action preprocess?
-        TRANSLATES_FLAG      = 0x0008, ///< Does this action translate?
-        OPTIMIZES_FLAG       = 0x0010, ///< Does this action optimize?
-        OUTPUT_IS_ASM_FLAG   = 0x0020, ///< Action produces .ll files?
-        FLAGS_MASK           = 0x003F, ///< Union of all flags
+        PREPROCESSES_FLAG    = 0x0002, ///< Does this action preprocess?
+        TRANSLATES_FLAG      = 0x0004, ///< Does this action translate?
+        OUTPUT_IS_ASM_FLAG   = 0x0008, ///< Action produces .ll files?
+        FLAGS_MASK           = 0x000F, ///< Union of all flags
       };
 
       /// This type is the input list to the CompilerDriver. It provides
