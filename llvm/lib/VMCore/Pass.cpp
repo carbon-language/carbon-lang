@@ -98,7 +98,7 @@ bool FunctionPassManager::run(Function &F) {
     std::cerr << "Error reading bytecode file: " << errstr << "\n";
     abort();
   } catch (...) {
-    std::cerr << "Error reading bytecode file:\n";
+    std::cerr << "Error reading bytecode file!\n";
     abort();
   }
   return PM->run(F); 
