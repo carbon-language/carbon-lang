@@ -46,6 +46,7 @@ E: criswell@uiuc.edu
 D: Autoconf support, QMTest database, documentation improvements
 
 N: Alkis Evlogimenos
+E: alkis@evlogimenos.com
 D: Linear scan register allocator, many codegen improvements, Java frontend
 
 N: Brian Gaeke
