@@ -88,6 +88,7 @@ int main(int argc, char **argv) {
     // opened up by them.
     Passes.add(createInstructionCombiningPass());
     Passes.add(createDeadCodeEliminationPass());    // Remove Dead code/vars
+    Passes.add(createCFGSimplificationPass());      // Merge & remove BBs
   }
   Passes.add(new WriteBytecodePass(&Out));        // Write bytecode to file...
 
