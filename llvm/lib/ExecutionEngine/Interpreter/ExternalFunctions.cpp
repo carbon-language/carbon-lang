@@ -213,6 +213,14 @@ GenericValue lle_X_free(MethodType *M, const vector<GenericValue> &Args) {
   return GenericValue();
 }
 
+// int atoi(char *)
+GenericValue lle_X_atoi(MethodType *M, const vector<GenericValue> &Args) {
+  assert(Args.size() == 1);
+  GenericValue GV;
+  GV.IntVal = atoi((char*)Args[0].PointerVal);
+  return GV;
+}
+
 // double pow(double, double)
 GenericValue lle_X_pow(MethodType *M, const vector<GenericValue> &Args) {
   assert(Args.size() == 2);
@@ -234,6 +242,14 @@ GenericValue lle_X_log(MethodType *M, const vector<GenericValue> &Args) {
   assert(Args.size() == 1);
   GenericValue GV;
   GV.DoubleVal = log(Args[0].DoubleVal);
+  return GV;
+}
+
+// double floor(double)
+GenericValue lle_X_floor(MethodType *M, const vector<GenericValue> &Args) {
+  assert(Args.size() == 1);
+  GenericValue GV;
+  GV.DoubleVal = floor(Args[0].DoubleVal);
   return GV;
 }
 
@@ -260,6 +276,12 @@ GenericValue lle_X_srand48(MethodType *M, const vector<GenericValue> &Args) {
   return GenericValue();
 }
 
+// void srand(uint)
+GenericValue lle_X_srand(MethodType *M, const vector<GenericValue> &Args) {
+  assert(Args.size() == 1);
+  srand(Args[0].UIntVal);
+  return GenericValue();
+}
 
 // int printf(sbyte *, ...) - a very rough implementation to make output useful.
 GenericValue lle_X_printf(MethodType *M, const vector<GenericValue> &Args) {
@@ -352,8 +374,11 @@ void Interpreter::initializeExternalMethods() {
   FuncNames["lle_X_exit"]         = lle_X_exit;
   FuncNames["lle_X_malloc"]       = lle_X_malloc;
   FuncNames["lle_X_free"]         = lle_X_free;
+  FuncNames["lle_X_atoi"]         = lle_X_atoi;
   FuncNames["lle_X_pow"]          = lle_X_pow;
   FuncNames["lle_X_log"]          = lle_X_log;
+  FuncNames["lle_X_floor"]        = lle_X_floor;
+  FuncNames["lle_X_srand"]        = lle_X_srand;
   FuncNames["lle_X_drand48"]      = lle_X_drand48;
   FuncNames["lle_X_srand48"]      = lle_X_srand48;
   FuncNames["lle_X_lrand48"]      = lle_X_lrand48;

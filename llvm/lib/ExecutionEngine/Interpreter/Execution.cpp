@@ -764,34 +764,54 @@ static void executeFreeInst(FreeInst *I, ExecutionContext &SF) {
 // function returns the offset that arguments ArgOff+1 -> NumArgs specify for
 // the pointer type specified by argument Arg.
 //
-static PointerTy getElementOffset(Instruction *I, unsigned ArgOff) {
-  assert(isa<PointerType>(I->getOperand(ArgOff)->getType()) &&
+static PointerTy getElementOffset(MemAccessInst *I, ExecutionContext &SF) {
+  assert(isa<PointerType>(I->getPointerOperand()->getType()) &&
          "Cannot getElementOffset of a nonpointer type!");
 
   PointerTy Total = 0;
   const Type *Ty =
-    cast<PointerType>(I->getOperand(ArgOff++)->getType())->getValueType();
+    cast<PointerType>(I->getPointerOperand()->getType())->getValueType();
   
+  unsigned ArgOff = I->getFirstIndexOperandNumber();
   while (ArgOff < I->getNumOperands()) {
-    const StructType *STy = cast<StructType>(Ty);
-    const StructLayout *SLO = TD.getStructLayout(STy);
-    
-    // Indicies must be ubyte constants...
-    const ConstPoolUInt *CPU = cast<ConstPoolUInt>(I->getOperand(ArgOff++));
-    assert(CPU->getType() == Type::UByteTy);
-    unsigned Index = CPU->getValue();
-
+    if (const StructType *STy = dyn_cast<StructType>(Ty)) {
+      const StructLayout *SLO = TD.getStructLayout(STy);
+      
+      // Indicies must be ubyte constants...
+      const ConstPoolUInt *CPU = cast<ConstPoolUInt>(I->getOperand(ArgOff++));
+      assert(CPU->getType() == Type::UByteTy);
+      unsigned Index = CPU->getValue();
+      
 #ifdef PROFILE_STRUCTURE_FIELDS
-    if (ProfileStructureFields) {
-      // Do accounting for this field...
-      vector<unsigned> &OfC = FieldAccessCounts[STy];
-      if (OfC.size() == 0) OfC.resize(STy->getElementTypes().size());
-      OfC[Index]++;
-    }
+      if (ProfileStructureFields) {
+        // Do accounting for this field...
+        vector<unsigned> &OfC = FieldAccessCounts[STy];
+        if (OfC.size() == 0) OfC.resize(STy->getElementTypes().size());
+        OfC[Index]++;
+      }
 #endif
+      
+      Total += SLO->MemberOffsets[Index];
+      Ty = STy->getElementTypes()[Index];
+    } else {
+      const ArrayType *AT = cast<ArrayType>(Ty);
 
-    Total += SLO->MemberOffsets[Index];
-    Ty = STy->getElementTypes()[Index];
+      // Get the index number for the array... which must be uint type...
+      assert(I->getOperand(ArgOff)->getType() == Type::UIntTy);
+      unsigned Idx = getOperandValue(I->getOperand(ArgOff++), SF).UIntVal;
+      if (AT->isSized() && Idx >= (unsigned)AT->getNumElements()) {
+        cerr << "Out of range memory access to element #" << Idx
+             << " of a " << AT->getNumElements() << " element array."
+             << " Subscript #" << (ArgOff-I->getFirstIndexOperandNumber())
+             << "\n";
+        // Get outta here!!!
+        siglongjmp(SignalRecoverBuffer, -1);
+      }
+
+      Ty = AT->getElementType();
+      unsigned Size = TD.getTypeSize(Ty);
+      Total += Size*Idx;
+    }  
   }
 
   return Total;
@@ -802,14 +822,14 @@ static void executeGEPInst(GetElementPtrInst *I, ExecutionContext &SF) {
   PointerTy SrcPtr = SRC.PointerVal;
 
   GenericValue Result;
-  Result.PointerVal = SrcPtr + getElementOffset(I, 0);
+  Result.PointerVal = SrcPtr + getElementOffset(I, SF);
   SetValue(I, Result, SF);
 }
 
 static void executeLoadInst(LoadInst *I, ExecutionContext &SF) {
   GenericValue SRC = getOperandValue(I->getPointerOperand(), SF);
   PointerTy SrcPtr = SRC.PointerVal;
-  PointerTy Offset = getElementOffset(I, 0);  // Handle any structure indices
+  PointerTy Offset = getElementOffset(I, SF);  // Handle any structure indices
   SrcPtr += Offset;
 
   GenericValue *Ptr = (GenericValue*)SrcPtr;
@@ -838,7 +858,7 @@ static void executeLoadInst(LoadInst *I, ExecutionContext &SF) {
 static void executeStoreInst(StoreInst *I, ExecutionContext &SF) {
   GenericValue SRC = getOperandValue(I->getPointerOperand(), SF);
   PointerTy SrcPtr = SRC.PointerVal;
-  SrcPtr += getElementOffset(I, 1);  // Handle any structure indices
+  SrcPtr += getElementOffset(I, SF);  // Handle any structure indices
 
   GenericValue *Ptr = (GenericValue *)SrcPtr;
   GenericValue Val = getOperandValue(I->getOperand(0), SF);
@@ -1117,10 +1137,10 @@ bool Interpreter::executeInstruction() {
   //
   if (int SigNo = sigsetjmp(SignalRecoverBuffer, 1)) {
     --SF.CurInst;   // Back up to erroring instruction
-    if (SigNo != SIGINT) {
+    if (SigNo != SIGINT && SigNo != -1) {
       cout << "EXCEPTION OCCURRED [" << _sys_siglistp[SigNo] << "]:\n";
       printStackTrace();
-    } else {
+    } else if (SigNo == SIGINT) {
       cout << "CTRL-C Detected, execution halted.\n";
     }
     InInstruction = false;
