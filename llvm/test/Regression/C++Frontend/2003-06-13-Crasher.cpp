@@ -1,4 +1,4 @@
-void bar();
+void bar(){}
 
 void foo() {
 	  struct TEST {

@@ -10,10 +10,7 @@ struct bar : public foo {
   bar();
 };
 
-//int bar::X() { return 0; }
-
-bar::bar() {
-
-}
+bar::bar() { }
+foo::foo() { }
 
 int main() { return 0; }
