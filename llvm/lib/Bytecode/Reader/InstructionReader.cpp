@@ -376,6 +376,8 @@ bool BytecodeParser::ParseInstruction(const uchar *&Buf, const uchar *EndBuf,
       delete Raw.VarArgs; 
       break;
     }
+    assert(LoadInst::getIndexedType(Raw.Ty, Idx) && 
+           "Bad indices for GEP or Load!");
     if (Raw.Opcode == Instruction::Load)
       Res = new LoadInst(getValue(Raw.Ty, Raw.Arg1), Idx);
     else if (Raw.Opcode == Instruction::GetElementPtr)
