@@ -24,6 +24,7 @@ class DSGraph;                 // A graph for a function
 class DSNodeIterator;          // Data structure graph traversal iterator
 class LocalDataStructures;     // A collection of local graphs for a program
 class BUDataStructures;        // A collection of bu graphs for a program
+class TDDataStructures;        // A collection of td graphs for a program
 
 //===----------------------------------------------------------------------===//
 // DSNodeHandle - Implement a "handle" to a data structure node that takes care
@@ -196,15 +197,46 @@ class DSGraph {
   // call, the second is the function scalar being invoked, and the rest are
   // pointer arguments to the function.
   //
+  // OrigFunctionCalls - This vector retains a copy of the original function
+  // calls of the current graph.  This is needed to support top-down inlining
+  // after bottom-up inlining is complete, since the latter deletes call nodes.
+  // 
   std::vector<std::vector<DSNodeHandle> > FunctionCalls;
+  std::vector<std::vector<DSNodeHandle> > OrigFunctionCalls;
 
+  // PendingCallers - This vector records all unresolved callers of the
+  // current function, i.e., ones whose graphs have not been inlined into
+  // the current graph.  As long as there are unresolved callers, the nodes
+  // for formal arguments in the current graph cannot be eliminated, and
+  // nodes in the graph reachable from the formal argument nodes or
+  // global variable nodes must be considered incomplete. 
+  std::vector<Function*> PendingCallers;
+  
 private:
   // Define the interface only accessable to DataStructure
   friend class LocalDataStructures;
   friend class BUDataStructures;
+  friend class TDDataStructures;
   DSGraph(Function &F);            // Compute the local DSGraph
   DSGraph(const DSGraph &DSG);     // Copy ctor
   ~DSGraph();
+
+  // clone all the call nodes and save the copies in OrigFunctionCalls
+  void saveOrigFunctionCalls() {
+    assert(OrigFunctionCalls.size() == 0 && "Do this only once!");
+    OrigFunctionCalls.reserve(FunctionCalls.size());
+    for (unsigned i = 0, ei = FunctionCalls.size(); i != ei; ++i) {
+      OrigFunctionCalls.push_back(std::vector<DSNodeHandle>());
+      OrigFunctionCalls[i].reserve(FunctionCalls[i].size());
+      for (unsigned j = 0, ej = FunctionCalls[i].size(); j != ej; ++j)
+        OrigFunctionCalls[i].push_back(FunctionCalls[i][j]);
+    }
+  }
+  
+  // get the saved copies of the original function call nodes
+  std::vector<std::vector<DSNodeHandle> >& getOrigFunctionCalls() {
+    return OrigFunctionCalls;
+  }
 
   void operator=(const DSGraph &); // DO NOT IMPLEMENT
 public:
@@ -236,7 +268,6 @@ public:
   void maskNodeTypes(unsigned char Mask);
   void maskIncompleteMarkers() { maskNodeTypes(~DSNode::Incomplete); }
 
-
   // markIncompleteNodes - Traverse the graph, identifying nodes that may be
   // modified by other functions that have not been resolved yet.  This marks
   // nodes that are reachable through three sources of "unknownness":
@@ -254,6 +285,18 @@ public:
   //
   void removeDeadNodes();
 
+  // AddCaller - add a known caller node into the graph and mark it pending.
+  // getCallers - get a vector of the functions that call this one
+  // getCallersPending - get a matching vector of bools indicating if each
+  //                     caller's DSGraph has been resolved into this one.
+  // 
+  void addCaller(Function& caller) {
+    PendingCallers.push_back(&caller);
+  }
+  std::vector<Function*>& getPendingCallers() {
+    return PendingCallers;
+  }
+  
   // cloneInto - Clone the specified DSGraph into the current graph, returning
   // the Return node of the graph.  The translated ValueMap for the old function
   // is filled into the OldValMap member.  If StripLocals is set to true, Scalar
@@ -261,6 +304,7 @@ public:
   // into a calling function's graph.
   //
   DSNode *cloneInto(const DSGraph &G, std::map<Value*, DSNodeHandle> &OldValMap,
+                    std::map<const DSNode*, DSNode*>& OldNodeMap,
                     bool StripLocals = true);
 private:
   bool isNodeDead(DSNode *N);
@@ -335,7 +379,7 @@ public:
     assert(I != DSInfo.end() && "Function not in module!");
     return *I->second;
   }
-
+  
   // print - Print out the analysis results...
   void print(std::ostream &O, Module *M) const;
 
@@ -352,4 +396,49 @@ private:
   DSGraph &calculateGraph(Function &F);
 };
 
+
+// TDDataStructures - Analysis that computes new data structure graphs
+// for each function using the closed graphs for the callers computed
+// by the bottom-up pass.
+//
+class TDDataStructures : public Pass {
+  // DSInfo, one graph for each function
+  std::map<Function*, DSGraph*> DSInfo;
+public:
+  static AnalysisID ID;            // TDDataStructure Analysis ID 
+
+  TDDataStructures(AnalysisID id) { assert(id == ID); }
+  ~TDDataStructures() { releaseMemory(); }
+
+  virtual const char *getPassName() const {
+    return "Top-downData Structure Analysis Closure";
+  }
+
+  virtual bool run(Module &M);
+
+  // getDSGraph - Return the data structure graph for the specified function.
+  DSGraph &getDSGraph(Function &F) const {
+    std::map<Function*, DSGraph*>::const_iterator I = DSInfo.find(&F);
+    assert(I != DSInfo.end() && "Function not in module!");
+    return *I->second;
+  }
+
+  // print - Print out the analysis results...
+  void print(std::ostream &O, Module *M) const;
+
+  // If the pass pipeline is done with this pass, we can release our memory...
+  virtual void releaseMemory();
+
+  // getAnalysisUsage - This obviously provides a data structure graph.
+  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    AU.setPreservesAll();
+    AU.addProvided(ID);
+    AU.addRequired(BUDataStructures::ID);
+  }
+private:
+  DSGraph &calculateGraph(Function &F);
+  void pushGraphIntoCallee(DSGraph &callerGraph, DSGraph &calleeGraph,
+                           std::map<Value*, DSNodeHandle> &OldValMap,
+                           std::map<const DSNode*, DSNode*> &OldNodeMap);
+};
 #endif

@@ -125,11 +125,13 @@ void DSNode::mergeWith(DSNode *N) {
 //===----------------------------------------------------------------------===//
 
 DSGraph::DSGraph(const DSGraph &G) : Func(G.Func) {
-  RetNode = cloneInto(G, ValueMap, false);
+  std::map<const DSNode*, DSNode*> NodeMap; // ignored
+  RetNode = cloneInto(G, ValueMap, NodeMap, false);
 }
 
 DSGraph::~DSGraph() {
   FunctionCalls.clear();
+  OrigFunctionCalls.clear();
   ValueMap.clear();
   RetNode = 0;
 
@@ -146,6 +148,25 @@ DSGraph::~DSGraph() {
 // dump - Allow inspection of graph in a debugger.
 void DSGraph::dump() const { print(std::cerr); }
 
+
+// Helper function used to clone a function list.
+// Each call really shd have an explicit representation as a separate class. 
+void
+CopyFunctionCallsList(const std::vector<std::vector<DSNodeHandle> >& fromCalls,
+                      std::vector<std::vector<DSNodeHandle> >& toCalls,
+                      std::map<const DSNode*, DSNode*>& NodeMap) {
+  
+  unsigned FC = toCalls.size();  // FirstCall
+  toCalls.reserve(FC+fromCalls.size());
+  for (unsigned i = 0, ei = fromCalls.size(); i != ei; ++i) {
+    toCalls.push_back(std::vector<DSNodeHandle>());
+    toCalls[FC+i].reserve(fromCalls[i].size());
+    for (unsigned j = 0, ej = fromCalls[i].size(); j != ej; ++j)
+      toCalls[FC+i].push_back(NodeMap[fromCalls[i][j]]);
+  }
+}
+
+
 // cloneInto - Clone the specified DSGraph into the current graph, returning the
 // Return node of the graph.  The translated ValueMap for the old function is
 // filled into the OldValMap member.  If StripLocals is set to true, Scalar and
@@ -154,9 +175,12 @@ void DSGraph::dump() const { print(std::cerr); }
 //
 DSNode *DSGraph::cloneInto(const DSGraph &G, 
                            std::map<Value*, DSNodeHandle> &OldValMap,
+                           std::map<const DSNode*, DSNode*>& OldNodeMap,
                            bool StripLocals) {
-  std::map<const DSNode*, DSNode*> NodeMap;
-  NodeMap[0] = 0;  // Null pointer maps to null
+
+  assert(OldNodeMap.size()==0 && "Return argument OldNodeMap should be empty");
+
+  OldNodeMap[0] = 0;  // Null pointer maps to null
 
   unsigned FN = Nodes.size();  // FirstNode...
 
@@ -165,13 +189,13 @@ DSNode *DSGraph::cloneInto(const DSGraph &G,
   for (unsigned i = 0, e = G.Nodes.size(); i != e; ++i) {
     DSNode *Old = G.Nodes[i], *New = new DSNode(*Old);
     Nodes.push_back(New);
-    NodeMap[Old] = New;
+    OldNodeMap[Old] = New;
   }
 
   // Rewrite the links in the nodes to point into the current graph now.
   for (unsigned i = FN, e = Nodes.size(); i != e; ++i)
     for (unsigned j = 0, e = Nodes[i]->getNumLinks(); j != e; ++j)
-      Nodes[i]->setLink(j, NodeMap[Nodes[i]->getLink(j)]);
+      Nodes[i]->setLink(j, OldNodeMap[Nodes[i]->getLink(j)]);
 
   // If we are inlining this graph into the called function graph, remove local
   // markers.
@@ -182,20 +206,18 @@ DSNode *DSGraph::cloneInto(const DSGraph &G,
   // Copy the value map...
   for (std::map<Value*, DSNodeHandle>::const_iterator I = G.ValueMap.begin(),
          E = G.ValueMap.end(); I != E; ++I)
-    OldValMap[I->first] = NodeMap[I->second];
+    OldValMap[I->first] = OldNodeMap[I->second];
 
-  // Copy the function calls list...
-  unsigned FC = FunctionCalls.size();  // FirstCall
-  FunctionCalls.reserve(FC+G.FunctionCalls.size());
-  for (unsigned i = 0, e = G.FunctionCalls.size(); i != e; ++i) {
-    FunctionCalls.push_back(std::vector<DSNodeHandle>());
-    FunctionCalls[FC+i].reserve(G.FunctionCalls[i].size());
-    for (unsigned j = 0, e = G.FunctionCalls[i].size(); j != e; ++j)
-      FunctionCalls[FC+i].push_back(NodeMap[G.FunctionCalls[i][j]]);
-  }
+  // Copy the current function calls list and the orig function calls list ...
+  CopyFunctionCallsList(G.FunctionCalls, FunctionCalls, OldNodeMap);
+  CopyFunctionCallsList(G.OrigFunctionCalls, OrigFunctionCalls, OldNodeMap);
+
+  // Copy the list of unresolved callers
+  PendingCallers.insert(PendingCallers.end(),
+                        G.PendingCallers.begin(), G.PendingCallers.end());
 
   // Return the returned node pointer...
-  return NodeMap[G.RetNode];
+  return OldNodeMap[G.RetNode];
 }
 
 
