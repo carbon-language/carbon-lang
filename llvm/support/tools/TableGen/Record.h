@@ -601,6 +601,7 @@ public:
   }
 
   Record *getNodeType() const { return NodeTypeDef; }
+  const std::vector<Init*> getArgs() const { return Args; }
 
   virtual void print(std::ostream &OS) const;
 };
