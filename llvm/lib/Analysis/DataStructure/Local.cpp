@@ -36,7 +36,7 @@ static RegisterAnalysis<LocalDataStructures>
 X("datastructure", "Local Data Structure Analysis");
 
 static cl::opt<bool>
-TrackIntegersAsPointers("dsa-track-integers",
+TrackIntegersAsPointers("dsa-track-integers", cl::Hidden,
          cl::desc("If this is set, track integers as potential pointers"));
 
 namespace llvm {
