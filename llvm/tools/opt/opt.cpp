@@ -62,9 +62,6 @@ NoVerify("disable-verify", cl::desc("Do not verify result module"), cl::Hidden);
 static cl::opt<bool>
 Quiet("q", cl::desc("Don't print 'program modified' message"));
 
-static cl::alias
-QuietA("quiet", cl::desc("Alias for -q"), cl::aliasopt(Quiet));
-
 
 //===----------------------------------------------------------------------===//
 // main for opt
@@ -164,8 +161,8 @@ int main(int argc, char **argv) {
     Passes.add(new WriteBytecodePass(Out, Out != &std::cout));
 
   // Now that we have all of the passes ready, run them.
-  if (Passes.run(*M.get()) && !Quiet)
-    std::cerr << "Program modified.\n";
+  if (Passes.run(*M.get()))
+    return 0;
 
-  return 0;
+  return 1;
 }
