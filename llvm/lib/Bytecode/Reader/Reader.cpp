@@ -48,15 +48,14 @@ bool BytecodeParser::getTypeSlot(const Type *Ty, unsigned &Slot) {
 }
 
 const Type *BytecodeParser::getType(unsigned ID) {
-  const Type *T = Type::getPrimitiveType((Type::PrimitiveID)ID);
-  if (T) return T;
+  if (ID < Type::NumPrimitiveIDs) {
+    const Type *T = Type::getPrimitiveType((Type::PrimitiveID)ID);
+    if (T) return T;
+  }
   
   //cerr << "Looking up Type ID: " << ID << "\n";
-
-  const Value *D = getValue(Type::TypeTy, ID, false);
-  if (D == 0) return 0;
-
-  return cast<Type>(D);
+  const Value *V = getValue(Type::TypeTy, ID, false);
+  return cast_or_null<Type>(V);
 }
 
 int BytecodeParser::insertValue(Value *Val, std::vector<ValueList> &ValueTab) {
@@ -82,8 +81,10 @@ Value *BytecodeParser::getValue(const Type *Ty, unsigned oNum, bool Create) {
 
   if (type == Type::TypeTyID) {  // The 'type' plane has implicit values
     assert(Create == false);
-    const Type *T = Type::getPrimitiveType((Type::PrimitiveID)Num);
-    if (T) return (Value*)T;   // Asked for a primitive type...
+    if (Num < Type::NumPrimitiveIDs) {
+      const Type *T = Type::getPrimitiveType((Type::PrimitiveID)Num);
+      if (T) return (Value*)T;   // Asked for a primitive type...
+    }
 
     // Otherwise, derived types need offset...
     Num -= FirstDerivedTyID;
@@ -452,7 +453,7 @@ bool BytecodeParser::ParseModuleGlobalInfo(const uchar *&Buf, const uchar *End,
       Error = "Function not ptr to func type!  Ty = " + Ty->getDescription();
       return true; 
     }
-    
+
     // We create methods by passing the underlying FunctionType to create...
     Ty = cast<PointerType>(Ty)->getElementType();
 
