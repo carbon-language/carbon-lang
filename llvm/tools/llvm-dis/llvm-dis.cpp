@@ -7,22 +7,13 @@
 //                       to the x.ll file.
 //  Options:
 //      --help   - Output information about command line switches
-//       -dfo    - Print basic blocks in depth first order
-//       -rdfo   - Print basic blocks in reverse depth first order
-//       -po     - Print basic blocks in post order
-//       -rpo    - Print basic blocks in reverse post order
-// 
-//       -c      - Print C code
-//
-// TODO: add -vcg which prints VCG compatible output.
+//       -c      - Print C code instead of LLVM assembly
 //
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Module.h"
 #include "llvm/Bytecode/Reader.h"
 #include "llvm/Support/CFG.h"
-#include "Support/DepthFirstIterator.h"
-#include "Support/PostOrderIterator.h"
 #include "Support/CommandLine.h"
 #include "Support/Signals.h"
 #include "llvm/Assembly/CWriter.h"
@@ -32,26 +23,16 @@ using std::cerr;
 
 // OutputMode - The different orderings to print basic blocks in...
 enum OutputMode {
-  Default = 0,           // Function Order (list order)
-  dfo,                   // Depth First ordering
-  rdfo,                  // Reverse Depth First ordering
-  po,                    // Post Order
-  rpo,                   // Reverse Post Order
-
-  c,                     // Generate C code
+  llvm = 0,           // Generate LLVM assembly (the default)
+  c,                  // Generate C code
 };
 
 cl::String InputFilename ("", "Load <arg> file, print as assembly", 0, "-");
 cl::String OutputFilename("o", "Override output filename", cl::NoFlags, "");
 cl::Flag   Force         ("f", "Overwrite output files", cl::NoFlags, false);
 cl::EnumFlags<enum OutputMode> WriteMode(cl::NoFlags,
-  clEnumVal(Default, "Write basic blocks in bytecode order"),
-  clEnumVal(dfo    , "Write basic blocks in depth first order"),
-  clEnumVal(rdfo   , "Write basic blocks in reverse DFO"),
-  clEnumVal(po     , "Write basic blocks in postorder"),
-  clEnumVal(rpo    , "Write basic blocks in reverse postorder"),
-
-  clEnumVal(c      , "Write corresponding C code"),
+  clEnumVal(llvm, "Output LLVM assembly"),
+  clEnumVal(c   , "Output C code for program"),
  0);
 
 int main(int argc, char **argv) {
@@ -85,9 +66,9 @@ int main(int argc, char **argv) {
 	OutputFilename = IFN;   // Append a .ll to it
       }
       if (WriteMode == c)
-	OutputFilename += ".c";
+        OutputFilename += ".c";
       else
-	OutputFilename += ".ll";
+        OutputFilename += ".ll";
 
       if (!Force && std::ifstream(OutputFilename.c_str())) {
         // If force is not specified, make sure not to overwrite a file!
@@ -109,47 +90,15 @@ int main(int argc, char **argv) {
     Out = &std::cout;
   }
 
-  // All that dis does is write the assembly or C out to a file... which is 
-  // exactly what the writer or cwriter library is supposed to do...
-  if (WriteMode == Default) {
-    (*Out) << M;           // Print out in list order
-  } else if (WriteMode == c) {
-    WriteToC(M, *Out);
-  } else {
-    // TODO: This does not print anything other than the basic blocks in the
-    // functions... more should definately be printed.  It should be valid
-    // output consumable by the assembler.
-    //
-    for (Module::iterator I = M->begin(), End = M->end(); I != End; ++I) {
-      Function *F = *I;
-      (*Out) << "-------------- Method: " << F->getName() << " -------------\n";
-
-      switch (WriteMode) {
-      case dfo:                   // Depth First ordering
-	copy(df_begin(F), df_end(F),
-	     std::ostream_iterator<BasicBlock*>(*Out, "\n"));
-	break;
-      case rdfo:            // Reverse Depth First ordering
-	copy(df_begin(F, true), df_end(F),
-	     std::ostream_iterator<BasicBlock*>(*Out, "\n"));
-	break;
-      case po:                    // Post Order
-	copy(po_begin(F), po_end(F),
-	     std::ostream_iterator<BasicBlock*>(*Out, "\n"));
-	break;
-      case rpo: {           // Reverse Post Order
-#if 0  // FIXME, GCC 3.0.4 bug
-	ReversePostOrderTraversal<Function*> RPOT(F);
-	copy(RPOT.begin(), RPOT.end(),
-	     std::ostream_iterator<BasicBlock*>(*Out, "\n"));
-#endif
-	break;
-      }
-      default:
-	abort();
-	break;
-      }
-    }
+  // All that dis does is write the assembly or C out to a file...
+  //
+  switch (WriteMode) {
+  case llvm:
+    (*Out) << M;           // Output LLVM assembly
+    break;
+  case c:
+    WriteToC(M, *Out);     // Convert LLVM to C
+    break;
   }
   delete M;
 
