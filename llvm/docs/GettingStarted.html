@@ -213,7 +213,7 @@ software you will need.</p>
 </tr>
 <tr>
   <td>Linux</td>
-  <td>x86<sup>1</sup></td>
+  <td>x86<sup><a href="#pf_1">1</a></sup></td>
   <td>GCC</td>
 </tr>
 <tr>
@@ -223,27 +223,27 @@ software you will need.</p>
 </tr>
 <tr>
   <td>FreeBSD</td>
-  <td>x86<sup>1</sup></td>
+  <td>x86<sup><a href="#pf_1">1</a></sup></td>
   <td>GCC</td>
 </tr>
 <tr>
-  <td>MacOS X<sup>2</sup></td>
+  <td>MacOS X<sup><a href="#pf_2">2</a></sup></td>
   <td>PowerPC</td>
   <td>GCC</td>
 </tr>
 <tr>
   <td>Cygwin/Win32</td>
-  <td>x86<sup>1</sup></td>
+  <td>x86<sup><a href="#pf_1">1</a></sup></td>
   <td>GCC 3.4.X, binutils 2.15</td>
 </tr>
 <tr>
   <td>MinGW/Win32</td>
-  <td>x86<sup>1,6</sup></td>
+  <td>x86<sup><a href="#pf_1">1</a>,<a href="#pf_6">6</a></sup></td>
   <td>GCC 3.4.X, binutils 2.15</td>
 </tr>
 <tr>
   <td>Linux</td>
-  <td>amd64<sup>3</sup></td>
+  <td>amd64<sup><a href="#pf_3">3</a></sup></td>
   <td>GCC</td>
 </tr>
 </table>
@@ -258,15 +258,15 @@ software you will need.</p>
 </tr>
 <tr>
   <td>Windows</td>
-  <td>x86<sup>1</sup></td>
-  <td>Visual Studio .NET<sup>4,5</sup></td>
+  <td>x86<sup><a href="#pf_1">1</a></sup></td>
+  <td>Visual Studio .NET<sup><a href="#pf_4">4</a>,<a href="#pf_5">5</a></sup></td>
 <tr>
-  <td>AIX<sup>3,4</sup></td>
+  <td>AIX<sup><a href="#pf_3">3</a>,<a href="#pf_4">4</a></sup></td>
   <td>PowerPC</td>
   <td>GCC</td>
 </tr>
 <tr>
-  <td>Linux<sup>3,5</sup></td>
+  <td>Linux<sup><a href="#pf_3">3</a>,<a href="#pf_5">5</a></sup></td>
   <td>PowerPC</td>
   <td>GCC</td>
 </tr>
@@ -275,12 +275,18 @@ software you will need.</p>
 <p><b>Notes:</b></p>
 
 <div style="background: #fafafa; border: 1px solid #cecece; padding: 1em">
-<sup>1</sup> Code generation supported for Pentium processors and up<br>
-<sup>2</sup> Code generation supported for 32-bit ABI only<br>
-<sup>3</sup> No native code generation<br>
-<sup>4</sup> Build is not complete: one or more tools don't link<br>
-<sup>5</sup> The GCC-based C/C++ frontend does not build<br>
-<sup>6</sup> The port is done using the MSYS shell. 
+<a name="pf_1"><sup>1</sup></a>
+    Code generation supported for Pentium processors and up<br>
+<a name="pf_2"><sup>2</sup></a>
+   Code generation supported for 32-bit ABI only<br>
+<a name="pf_3"><sup>3</sup></a>
+   No native code generation<br>
+<a name="pf_4"><sup>4</sup></a>
+   Build is not complete: one or more tools don't link<br>
+<a name="pf_5"><sup>5</sup></a>
+   The GCC-based C/C++ frontend does not build<br>
+<a name="pf_6"><sup>6</sup></a>
+   The port is done using the MSYS shell. 
 <a href="http://www.mingw.org/MinGWiki/">Download</a> and install 
 bison (excl. M4.exe) and flex in that order.  Build binutils-2.15 from source,
 if necessary.  If you need to create a library for an MS DLL, do the following:
@@ -411,7 +417,6 @@ href="CFEBuildInstrs.html">try to compile it</a> on your platform.</p>
       from that package.</a></li>
     <li><a name="Note2">Only needed if you want to run the automated test 
       suite in the <tt>test</tt> directory.</a></li>
-    </li>
     <li><a name="Note3">Only the C and C++ languages are needed so there's no
       need to build the other languages for LLVM's purposes.</a> See 
       <a href="#brokengcc">below</a> for specific version info.
@@ -580,7 +585,7 @@ compressed with the gzip program.
   <dd>Source release for the LLVM libraries and tools.<br/></dd>
 
   <dt><tt>llvm-test-x.y.tar.gz</tt></dt>
-  <dd>Source release for the LLVM test suite.</tt></dd>
+  <dd>Source release for the LLVM test suite.</dd>
 
   <dt><tt>cfrontend-x.y.source.tar.gz</tt></dt>
   <dd>Source release of the GCC front end.<br/></dd>
