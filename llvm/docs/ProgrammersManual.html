@@ -97,8 +97,8 @@
     <li>Important iterator invalidation semantics to be aware of
   </ul>
 
-  <p><b>Written by <a href="mailto:dhurjati@cs.uiuc.edu">Dinakar Dhurjati</a>
-      <a href="mailto:sabre@nondot.org">Chris Lattner</a>, and
+  <p><b>Written by <a href="mailto:sabre@nondot.org">Chris Lattner</a>,
+        <a href="mailto:dhurjati@cs.uiuc.edu">Dinakar Dhurjati</a>, and
       <a href="mailto:jstanley@cs.uiuc.edu">Joel Stanley</a></b><p>
 </ol>
 
@@ -235,7 +235,20 @@ checks to see if the operand is of the specified type, and if so, returns a
 pointer to it (this operator does not work with references).  If the operand is
 not of the correct type, a null pointer is returned.  Thus, this works very much
 like the <tt>dynamic_cast</tt> operator in C++, and should be used in the same
-circumstances.  An example is:<p>
+circumstances.  Typically, the <tt>dyn_cast&lt;&gt;</tt> operator is used in an
+<tt>if</tt> statement or some other flow control statement like this:<p>
+
+<pre>
+  if (<a href="#AllocationInst">AllocationInst</a> *AI = dyn_cast&lt;<a href="#AllocationInst">AllocationInst</a>&gt;(Val)) {
+    ...
+  }
+</pre><p>
+
+This form of the <tt>if</tt> statement effectively combines together a call to
+<tt>isa&lt;&gt;</tt> and a call to <tt>cast&lt;&gt;</tt> into one statement,
+which is very convenient.<p>
+
+Another common example is:<p>
 
 <pre>
   <i>// Loop over all of the phi nodes in a basic block</i>
@@ -244,12 +257,36 @@ circumstances.  An example is:<p>
     cerr &lt;&lt; *PN;
 </pre><p>
 
-Note that you should not use the <tt>dyn_cast&lt;&gt;</tt> operator in a series
-of chained if statements, use an visitor instead... FIXME: continue.<p>
+Note that the <tt>dyn_cast&lt;&gt;</tt> operator, like C++'s
+<tt>dynamic_cast</tt> or Java's <tt>instanceof</tt> operator, can be abused.  In
+particular you should not use big chained <tt>if/then/else</tt> blocks to check
+for lots of different variants of classes.  If you find yourself wanting to do
+this, it is much cleaner and more efficient to use the InstVisitor class to
+dispatch over the instruction type directly.<p>
 
+
+<dt><tt>cast_or_null&lt;&gt;</tt>:
+
+<dd>The <tt>cast_or_null&lt;&gt;</tt> operator works just like the
+<tt>cast&lt;&gt;</tt> operator, except that it allows for a null pointer as an
+argument (which it then propogates).  This can sometimes be useful, allowing you
+to combine several null checks into one.<p>
+
+
+<dt><tt>dyn_cast_or_null&lt;&gt;</tt>:
+
+<dd>The <tt>dyn_cast_or_null&lt;&gt;</tt> operator works just like the
+<tt>dyn_cast&lt;&gt;</tt> operator, except that it allows for a null pointer as
+an argument (which it then propogates).  This can sometimes be useful, allowing
+you to combine several null checks into one.<p>
 
 </dl>
 
+These five templates can be used with any classes, whether they have a v-table
+or not.  To add support for these templates, you simply need to add
+<tt>classof</tt> static methods to the class you are interested casting to.
+Describing this is currently outside the scope of this document, but there are
+lots of examples in the LLVM sourcebase.<p>
 
 
 
@@ -1352,6 +1389,6 @@ pointer to the parent Function.
 <a href="mailto:sabre@nondot.org">Chris Lattner</a></address>
 <!-- Created: Tue Aug  6 15:00:33 CDT 2002 -->
 <!-- hhmts start -->
-Last modified: Mon Sep  9 19:38:23 CDT 2002
+Last modified: Tue Sep 10 10:19:56 CDT 2002
 <!-- hhmts end -->
 </font></body></html>
