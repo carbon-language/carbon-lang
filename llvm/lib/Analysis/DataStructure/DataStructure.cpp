@@ -35,7 +35,7 @@ namespace {
                 cl::desc("Make DSA less aggressive when cloning graphs"));
 };
 
-#if 0
+#if 1
 #define TIME_REGION(VARNAME, DESC) \
    NamedRegionTimer VARNAME(DESC)
 #else
@@ -104,7 +104,7 @@ void DSNode::assertOK() const {
   assert(ParentGraph && "Node has no parent?");
   const DSGraph::ScalarMapTy &SM = ParentGraph->getScalarMap();
   for (unsigned i = 0, e = Globals.size(); i != e; ++i) {
-    assert(SM.find(Globals[i]) != SM.end());
+    assert(SM.count(Globals[i]));
     assert(SM.find(Globals[i])->second.getNode() == this);
   }
 }
@@ -1637,6 +1637,8 @@ void DSGraph::removeDeadNodes(unsigned Flags) {
       }
       ++I;
     } else {
+      DSNode *N = I->second.getNode();
+#if 0
       // Check to see if this is a worthless node generated for non-pointer
       // values, such as integers.  Consider an addition of long types: A+B.
       // Assuming we can track all uses of the value in this context, and it is
@@ -1647,13 +1649,13 @@ void DSGraph::removeDeadNodes(unsigned Flags) {
       // uninteresting for data structure analysis.  If we run across one of
       // these, prune the scalar pointing to it.
       //
-      DSNode *N = I->second.getNode();
       if (N->getNodeFlags() == DSNode::UnknownNode && !isa<Argument>(I->first))
         ScalarMap.erase(I++);
       else {
+#endif
         N->markReachableNodes(Alive);
         ++I;
-      }
+      //}
     }
   }
 
