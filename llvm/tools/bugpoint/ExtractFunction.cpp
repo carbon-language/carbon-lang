@@ -27,6 +27,7 @@
 #include "Support/CommandLine.h"
 #include "Support/Debug.h"
 #include "Support/FileUtilities.h"
+#include <iostream>
 #include <set>
 using namespace llvm;
 

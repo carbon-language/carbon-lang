@@ -21,6 +21,7 @@
 #include "Support/CommandLine.h"
 #include "llvm/System/Signals.h"
 #include <cstdio>
+#include <iostream>
 #include <map>
 #include <set>
 

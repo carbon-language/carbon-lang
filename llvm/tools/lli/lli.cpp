@@ -21,6 +21,7 @@
 #include "llvm/ExecutionEngine/GenericValue.h"
 #include "Support/CommandLine.h"
 #include "llvm/System/Signals.h"
+#include <iostream>
 
 using namespace llvm;
 

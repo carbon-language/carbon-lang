@@ -21,6 +21,7 @@
 #include "llvm/Pass.h"
 #include "llvm/Analysis/InstForest.h"
 #include "llvm/Support/CallSite.h"
+#include <iostream>
 
 using namespace llvm;
 

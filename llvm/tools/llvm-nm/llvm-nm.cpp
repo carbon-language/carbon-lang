@@ -24,6 +24,7 @@
 #include <cctype>
 #include <cerrno>
 #include <cstring>
+#include <iostream>
 
 using namespace llvm;
 

@@ -22,7 +22,9 @@
 #include "llvm/Support/ToolRunner.h"
 #include "Support/CommandLine.h"
 #include "Support/FileUtilities.h"
+#include <iostream>
 #include <memory>
+
 using namespace llvm;
 
 // Anonymous namespace to define command line options for debugging.

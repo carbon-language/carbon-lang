@@ -22,8 +22,9 @@
 #include "llvm/Pass.h"
 #include "Support/CommandLine.h"
 #include "llvm/System/Signals.h"
-#include <memory>
 #include <fstream>
+#include <iostream>
+#include <memory>
 
 using namespace llvm;
 

@@ -18,6 +18,7 @@
 #include "llvm/System/Signals.h"
 #include <string>
 #include <fstream>
+#include <iostream>
 #include <cstdio>
 #include <sys/stat.h>
 #include <sys/types.h> 

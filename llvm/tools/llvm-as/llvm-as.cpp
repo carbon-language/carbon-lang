@@ -22,6 +22,7 @@
 #include "Support/CommandLine.h"
 #include "llvm/System/Signals.h"
 #include <fstream>
+#include <iostream>
 #include <memory>
 
 using namespace llvm;
