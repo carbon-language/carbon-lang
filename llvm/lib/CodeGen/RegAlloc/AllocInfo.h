@@ -26,10 +26,12 @@
 struct AllocInfo {
   unsigned Instruction;
   unsigned Operand;
-  unsigned AllocState;
+  enum AllocStateTy { NotAllocated = 0, Allocated, Spilled };
+  AllocStateTy AllocState;
   int Placement;
+
   AllocInfo (unsigned Instruction_, unsigned Operand_,
-             unsigned AllocState_, int Placement_) :
+             AllocStateTy AllocState_, int Placement_) :
     Instruction (Instruction_), Operand (Operand_),
        AllocState (AllocState_), Placement (Placement_) { }
 
@@ -65,6 +67,14 @@ struct AllocInfo {
     return (X.AllocState == AllocState) && (X.Placement == Placement);
   } 
   bool operator!= (const AllocInfo &X) const { return !(*this == X); } 
+
+  /// Returns a human-readable string representation of the AllocState member.
+  ///
+  const std::string allocStateToString () const {
+    static const char *AllocStateNames[] =
+      { "NotAllocated", "Allocated", "Spilled" };
+    return std::string (AllocStateNames[AllocState]);
+  }
 };
 
 #endif // ALLOCINFO_H
