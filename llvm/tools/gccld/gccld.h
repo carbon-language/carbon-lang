@@ -47,6 +47,9 @@ GenerateAssembly (const std::string & OutputFilename,
                   const std::string & InputFilename,
                   const std::string & llc,
                   char ** const envp);
+
+int GenerateCFile(const std::string &OutputFile, const std::string &InputFile,
+                  const std::string &llc, char ** const envp);
 int
 GenerateNative (const std::string & OutputFilename,
                 const std::string & InputFilename,

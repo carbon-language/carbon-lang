@@ -78,6 +78,9 @@ namespace {
   cl::opt<bool>    
   Native("native",
          cl::desc("Generate a native binary instead of a shell script"));
+  cl::opt<bool>    
+  NativeCBE("native-cbe",
+            cl::desc("Generate a native binary with the C backend and GCC"));
   
   // Compatibility options that are ignored but supported by LD
   cl::opt<std::string>
@@ -276,6 +279,30 @@ int main(int argc, char **argv, char **envp) {
 
       // Remove the assembly language file.
       removeFile (AssemblyFile);
+    } else if (NativeCBE) {
+      std::string CFile = OutputFilename + ".cbe.c";
+
+      // Mark the output files for removal if we get an interrupt.
+      RemoveFileOnSignal(CFile);
+      RemoveFileOnSignal(OutputFilename);
+
+      // Determine the locations of the llc and gcc programs.
+      std::string llc = FindExecutable("llc", argv[0]);
+      std::string gcc = FindExecutable("gcc", argv[0]);
+      if (llc.empty())
+        return PrintAndReturn(argv[0], "Failed to find llc");
+      if (gcc.empty())
+        return PrintAndReturn(argv[0], "Failed to find gcc");
+
+      // Generate an assembly language file for the bytecode.
+      if (Verbose) std::cout << "Generating Assembly Code\n";
+      GenerateCFile(CFile, RealBytecodeOutput, llc, envp);
+      if (Verbose) std::cout << "Generating Native Code\n";
+      GenerateNative(OutputFilename, CFile, Libraries, LibPaths, gcc, envp);
+
+      // Remove the assembly language file.
+      removeFile(CFile);
+
     } else {
       // Output the script to start the program...
       std::ofstream Out2(OutputFilename.c_str());

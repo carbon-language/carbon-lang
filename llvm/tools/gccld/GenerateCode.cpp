@@ -25,7 +25,6 @@
 #include "llvm/Transforms/Utils/Linker.h"
 #include "Support/SystemUtils.h"
 #include "Support/CommandLine.h"
-
 using namespace llvm;
 
 namespace {
@@ -182,6 +181,23 @@ GenerateAssembly(const std::string &OutputFilename,
   return ExecWait(cmd, envp);
 }
 
+/// GenerateAssembly - generates a native assembly language source file from the
+/// specified bytecode file.
+int GenerateCFile(const std::string &OutputFile, const std::string &InputFile,
+                  const std::string &llc, char ** const envp) {
+  // Run LLC to convert the bytecode file into C.
+  const char *cmd[8];
+
+  cmd[0] = llc.c_str();
+  cmd[1] = "-march=c";
+  cmd[2] = "-f";
+  cmd[3] = "-o";
+  cmd[4] = OutputFile.c_str();
+  cmd[5] = InputFile.c_str();
+  cmd[6] = NULL;
+  return ExecWait(cmd, envp);
+}
+
 /// GenerateNative - generates a native assembly language source file from the
 /// specified assembly source file.
 ///
@@ -230,6 +246,7 @@ GenerateNative(const std::string &OutputFilename,
   //  and linker because we don't know where to put the _start symbol.
   //  GCC mysteriously knows how to do it.
   cmd.push_back(gcc.c_str());
+  cmd.push_back("-O3");
   cmd.push_back("-o");
   cmd.push_back(OutputFilename.c_str());
   cmd.push_back(InputFilename.c_str());
