@@ -40,6 +40,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Analysis/Verifier.h"
+#include "llvm/Assembly/Writer.h"
 #include "llvm/Pass.h"
 #include "llvm/Module.h"
 #include "llvm/DerivedTypes.h"
@@ -65,7 +66,7 @@ namespace {  // Anonymous namespace for class
     bool Broken;          // Is this module found to be broken?
     bool RealPass;        // Are we not being run by a PassManager?
     bool AbortBroken;     // If broken, should it or should it not abort?
-    
+    Module *Mod;      // Module we are verifying right now
     DominatorSet *DS; // Dominator set, caution can be null!
 
     Verifier() : Broken(false), RealPass(true), AbortBroken(true), DS(0) {}
@@ -75,6 +76,7 @@ namespace {  // Anonymous namespace for class
 
 
     bool doInitialization(Module &M) {
+      Mod = &M;
       verifySymbolTable(M.getSymbolTable());
 
       // If this is a real pass, in a pass manager, we must abort before
@@ -161,10 +163,10 @@ namespace {  // Anonymous namespace for class
                             const Value *V1 = 0, const Value *V2 = 0,
                             const Value *V3 = 0, const Value *V4 = 0) {
       std::cerr << Message << "\n";
-      if (V1) std::cerr << *V1 << "\n";
-      if (V2) std::cerr << *V2 << "\n";
-      if (V3) std::cerr << *V3 << "\n";
-      if (V4) std::cerr << *V4 << "\n";
+      if (V1) { WriteAsOperand (std::cerr, V1, true, true, Mod); std::cerr << "\n"; }
+      if (V2) { WriteAsOperand (std::cerr, V2, true, true, Mod); std::cerr << "\n"; }
+      if (V3) { WriteAsOperand (std::cerr, V3, true, true, Mod); std::cerr << "\n"; }
+      if (V4) { WriteAsOperand (std::cerr, V4, true, true, Mod); std::cerr << "\n"; }
       Broken = true;
     }
   };
