@@ -24,6 +24,7 @@
 #include "llvm/Function.h"
 #include "llvm/Constant.h"
 #include "llvm/Support/CFG.h"
+#include "llvm/Support/StableBasicBlockNumbering.h"
 #include "Support/StringExtras.h"
 using namespace llvm;
 
@@ -131,12 +132,9 @@ namespace {
     // Visited - The set of basic blocks the renamer has already visited.
     std::set<BasicBlock*> Visited;
 
-    // BasicBlockNumbering - Holds a numbering of the basic blocks in the
-    // function in a stable order that does not depend on their address.
-    std::map<BasicBlock*, unsigned> BasicBlockNumbering;
-
-    // NumberedBasicBlock - Holds the inverse mapping of BasicBlockNumbering.
-    std::vector<BasicBlock*> NumberedBasicBlock;
+    // BBNumbers - Contains a stable numbering of basic blocks to avoid
+    // non-determinstic behavior.
+    StableBasicBlockNumbering BBNumbers;
 
   public:
     PromoteMem2Reg(const std::vector<AllocaInst*> &A, DominatorTree &dt,
@@ -288,13 +286,7 @@ void PromoteMem2Reg::run() {
 
     // If we haven't computed a numbering for the BB's in the function, do so
     // now.
-    if (NumberedBasicBlock.empty()) {
-      unsigned n = 0;
-      for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I, ++n) {
-        NumberedBasicBlock.push_back(I);
-        BasicBlockNumbering[I] = n;
-      }
-    }
+    BBNumbers.compute(F);
 
     // Compute the locations where PhiNodes need to be inserted.  Look at the
     // dominance frontier of EACH basic-block we have a write in.
@@ -318,13 +310,13 @@ void PromoteMem2Reg::run() {
         // processing blocks in order of the occurance in the function.
         for (DominanceFrontier::DomSetType::iterator P = S.begin(),PE = S.end();
              P != PE; ++P)
-          DFBlocks.push_back(BasicBlockNumbering[*P]);
+          DFBlocks.push_back(BBNumbers.getNumber(*P));
 
         // Sort by which the block ordering in the function.
         std::sort(DFBlocks.begin(), DFBlocks.end());
 
         for (unsigned i = 0, e = DFBlocks.size(); i != e; ++i) {
-          BasicBlock *BB = NumberedBasicBlock[DFBlocks[i]];
+          BasicBlock *BB = BBNumbers.getBlock(DFBlocks[i]);
           if (QueuePhiNode(BB, AllocaNum, CurrentVersion, InsertedPHINodes))
             DefiningBlocks.push_back(BB);
         }
