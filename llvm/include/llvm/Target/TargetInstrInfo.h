@@ -241,17 +241,6 @@ public:
     isSignExtended = get(opCode).immedIsSignExtended;
     return get(opCode).maxImmedConst;
   }
-
-  //-------------------------------------------------------------------------
-  // Queries about representation of LLVM quantities (e.g., constants)
-  //-------------------------------------------------------------------------
-
-  /// ConstantTypeMustBeLoaded - Test if this type of constant must be loaded
-  /// from memory into a register, i.e., cannot be set bitwise in register and
-  /// cannot use immediate fields of instructions.  Note that this only makes
-  /// sense for primitive types.
-  ///
-  virtual bool ConstantTypeMustBeLoaded(const Constant* CV) const;
 };
 
 } // End llvm namespace

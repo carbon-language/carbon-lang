@@ -56,9 +56,4 @@ bool TargetInstrInfo::constantFitsInImmedField(MachineOpCode opCode,
   return false;
 }
 
-bool TargetInstrInfo::ConstantTypeMustBeLoaded(const Constant* CV) const {
-  assert(CV->getType()->isPrimitiveType() || isa<PointerType>(CV->getType()));
-  return !(CV->getType()->isIntegral() || isa<PointerType>(CV->getType()));
-}
-
 } // End llvm namespace
