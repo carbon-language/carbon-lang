@@ -48,7 +48,7 @@ const unsigned M_BRANCH_FLAG		= 1 << 1;
 const unsigned M_CALL_FLAG		= 1 << 2;
 const unsigned M_RET_FLAG		= 1 << 3;
 const unsigned M_BARRIER_FLAG           = 1 << 4;
-const unsigned M_DELAY_SLOT             = 1 << 5;
+const unsigned M_DELAY_SLOT_FLAG        = 1 << 5;
 const unsigned M_CC_FLAG		= 1 << 6;
 const unsigned M_LOAD_FLAG		= 1 << 10;
 const unsigned M_STORE_FLAG		= 1 << 12;
@@ -208,7 +208,7 @@ public:
   /// hasDelaySlot - Returns true if the specified instruction has a delay slot
   /// which must be filled by the code generator.
   bool hasDelaySlot(unsigned Opcode) const {
-    return get(Opcode).Flags & M_DELAY_SLOT;
+    return get(Opcode).Flags & M_DELAY_SLOT_FLAG;
   }
 
   virtual bool hasResultInterlock(MachineOpCode Opcode) const {
