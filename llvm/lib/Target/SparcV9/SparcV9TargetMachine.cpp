@@ -47,6 +47,10 @@ const TargetInstrDescriptor llvm::SparcV9MachineInstrDesc[] = {
 // Command line options to control choice of code generation passes.
 //---------------------------------------------------------------------------
 
+namespace llvm {
+  bool EmitMappingInfo = false;
+}
+
 namespace {
   cl::opt<bool> DisableSched("disable-sched",
                              cl::desc("Disable local scheduling pass"));
@@ -54,7 +58,9 @@ namespace {
   cl::opt<bool> DisablePeephole("disable-peephole",
                                 cl::desc("Disable peephole optimization pass"));
 
-  cl::opt<bool> EmitMappingInfo("enable-maps",
+  cl::opt<bool, true> EmitMappingInfoOpt("enable-maps",
+                 cl::location(EmitMappingInfo),
+                 cl::init(false),
                  cl::desc("Emit LLVM-to-MachineCode mapping info to assembly"));
 
   cl::opt<bool> DisableStrip("disable-strip",
