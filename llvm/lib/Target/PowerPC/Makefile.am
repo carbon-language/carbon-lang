@@ -14,8 +14,8 @@ lib_LIBRARIES = libLLVMPowerPC.a
 BUILT_SOURCES = \
   PowerPCGenInstrNames.inc \
   PowerPCGenRegisterNames.inc \
-  PowerPCGenCodeEmitter.inc \
   PowerPCGenAsmWriter.inc \
+  PPC32GenCodeEmitter.inc \
   PPC32GenRegisterInfo.h.inc \
   PPC32GenRegisterInfo.inc \
   PPC32GenInstrInfo.inc \
