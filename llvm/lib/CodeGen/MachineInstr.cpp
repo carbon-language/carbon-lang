@@ -268,7 +268,7 @@ static void print(const MachineOperand &MO, std::ostream &OS,
     OS << ")";
 }
 
-void MachineInstr::print(std::ostream &OS, const TargetMachine &TM) {
+void MachineInstr::print(std::ostream &OS, const TargetMachine &TM) const {
   unsigned StartOp = 0;
 
    // Specialize printing if op#0 is definition

@@ -347,7 +347,7 @@ public:
   //
   // Debugging support
   //
-  void print(std::ostream &OS, const TargetMachine &TM);
+  void print(std::ostream &OS, const TargetMachine &TM) const;
   void dump() const;
   friend std::ostream& operator<<(std::ostream& os, const MachineInstr& minstr);
 
