@@ -458,10 +458,10 @@ things it doesn't know about, like enums or '<tt>int*</tt>'s?</p>
 
 <p>The answer is that it uses a table driven generic parser (unless you specify
 your own parser, as described in the <a href="#extensionguide">Extension
-Guide</a>).  This parser maps literal strings to whatever type is required, are
+Guide</a>).  This parser maps literal strings to whatever type is required, and
 requires you to tell it what this mapping should be.</p>
 
-<p>Lets say that we would like to add four optimizations levels to our
+<p>Lets say that we would like to add four optimization levels to our
 optimizer, using the standard flags "<tt>-g</tt>", "<tt>-O0</tt>",
 "<tt>-O1</tt>", and "<tt>-O2</tt>".  We could easily implement this with boolean
 options like above, but there are several problems with this strategy:</p>
