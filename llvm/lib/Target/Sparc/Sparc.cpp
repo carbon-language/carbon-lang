@@ -18,8 +18,14 @@
 #include "llvm/Analysis/LiveVar/MethodLiveVarInfo.h"
 #include "llvm/CodeGen/PhyRegAlloc.h"
 
-
-//***************************** Internal Functions *************************/
+// Build the MachineInstruction Description Array...
+const MachineInstrDescriptor SparcMachineInstrDesc[] = {
+#define I(ENUM, OPCODESTRING, NUMOPERANDS, RESULTPOS, MAXIMM, IMMSE, \
+          NUMDELAYSLOTS, LATENCY, SCHEDCLASS, INSTFLAGS)             \
+  { OPCODESTRING, NUMOPERANDS, RESULTPOS, MAXIMM, IMMSE,             \
+          NUMDELAYSLOTS, LATENCY, SCHEDCLASS, INSTFLAGS },
+#include "SparcInstr.def"
+};
 
 //----------------------------------------------------------------------------
 // allocateSparcTargetMachine - Allocate and return a subclass of TargetMachine
@@ -57,10 +63,6 @@ void AllocateRegisters(Method *M, TargetMachine &TM)
 
 }
 
-
-
-
-//***************************** External Classes **************************/
 
 
 //---------------------------------------------------------------------------

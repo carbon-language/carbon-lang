@@ -85,7 +85,7 @@ private :
   // getID Wrappers - Ensure consistent usage...
   string getID(const Method *M) { return getID(M, "anon_method$"); }
   string getID(const BasicBlock *BB) {
-    return getID(BB, "LL", (".L$"+getID(BB->getParent())).c_str());
+    return getID(BB, "LL", (".L$"+getID(BB->getParent())+"$").c_str());
   }
 
   unsigned getOperandMask(unsigned Opcode) {

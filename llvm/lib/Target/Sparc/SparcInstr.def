@@ -1,0 +1,440 @@
+//===-- SparcInstr.def - Sparc Instruction Information -----------*- C++ -*-==//
+//
+// This file describes all of the instructions that the sparc backend uses.  It
+// relys on an external 'I' macro being defined that takes the arguments
+// specified below, and is used to make all of the information relavant to an
+// instruction be in one place.
+//
+//===----------------------------------------------------------------------===//
+
+// NOTE: No include guards desired
+
+#ifndef I
+#errror "Must define I macro before including SparcInstr.def!"
+#endif
+
+// Constants for defining the maximum constant size field.
+// One #define per bit size
+//
+#define B5  ((1 << 5) - 1)
+#define B6  ((1 << 6) - 1)
+#define B12 ((1 << 12) - 1)
+#define B15 ((1 << 15) - 1)
+#define B18 ((1 << 18) - 1)
+#define B21 ((1 << 21) - 1)
+#define B22 ((1 << 22) - 1)
+#define B29 ((1 << 29) - 1)
+
+// Arguments passed into the I macro
+// enum name,
+//     opCodeString,
+//           numOperands,
+//                resultPosition (0-based; -1 if no result),
+//                     maxImmedConst,
+//                         immedIsSignExtended,
+//                                numDelaySlots (in cycles)
+//					latency (in cycles)
+//					    instr sched class (defined above)
+//						instr class flags (defined in MachineInstrInfo.h)
+
+
+I(NOP, "nop",		0,  -1,  0, false, 0,	1,  SPARC_NONE,  M_NOP_FLAG)
+  
+// Synthetic SPARC assembly opcodes for setting a register to a constant.
+// Max immediate constant should be ignored for both these instructions.
+I(SETSW, "setsw",	2,   1,  0, true ,  0,  1,  SPARC_IEUN,  M_INT_FLAG | M_ARITH_FLAG)
+I(SETUW, "setuw",	2,   1,  0, false, 0,  1,  SPARC_IEUN,  M_INT_FLAG | M_LOGICAL_FLAG | M_ARITH_FLAG)
+
+// Set high-order bits of register and clear low-order bits
+I(SETHI, "sethi",	2,  1, B22, false, 0,  1,  SPARC_IEUN,  M_INT_FLAG | M_LOGICAL_FLAG | M_ARITH_FLAG)
+  
+// Add or add with carry.
+// Immed bit specifies if second operand is immediate(1) or register(0)
+I(ADD   , "add",	3,  2, B12, true , 0, 1, SPARC_IEUN,  M_INT_FLAG | M_ARITH_FLAG)
+I(ADDcc , "addcc",	4,  2, B12, true , 0, 1, SPARC_IEU1,  M_INT_FLAG | M_ARITH_FLAG)
+I(ADDC  , "addc",	3,  2, B12, true , 0, 1, SPARC_IEUN,  M_INT_FLAG | M_ARITH_FLAG)
+I(ADDCcc, "addccc",	4,  2, B12, true , 0, 1, SPARC_IEU1,  M_INT_FLAG | M_ARITH_FLAG)
+
+// Subtract or subtract with carry.
+// Immed bit specifies if second operand is immediate(1) or register(0)
+I(SUB   , "sub",	3,  2, B12, true , 0, 1, SPARC_IEUN,  M_INT_FLAG | M_ARITH_FLAG)
+I(SUBcc , "subcc",	4,  2, B12, true , 0, 1, SPARC_IEU1,  M_INT_FLAG | M_ARITH_FLAG)
+I(SUBC  , "subc",	3,  2, B12, true , 0, 1, SPARC_IEUN,  M_INT_FLAG | M_ARITH_FLAG)
+I(SUBCcc, "subccc",	4,  2, B12, true , 0, 1, SPARC_IEU1,  M_INT_FLAG | M_ARITH_FLAG)
+
+// Integer multiply, signed divide, unsigned divide.
+// Note that the deprecated 32-bit multiply and multiply-step are not used.
+I(MULX , "mulx",	3,  2, B12, true , 0, 3, SPARC_IEUN,  M_INT_FLAG | M_ARITH_FLAG)
+I(SDIVX, "sdivx",	3,  2, B12, true , 0, 6, SPARC_IEUN,  M_INT_FLAG | M_ARITH_FLAG)
+I(UDIVX, "udivx",	3,  2, B12, true , 0, 6, SPARC_IEUN,  M_INT_FLAG | M_ARITH_FLAG)
+  
+  // Floating point add, subtract, compare.
+  // Note that destination of FCMP* instructions is operand 0, not operand 2.
+I(FADDS, "fadds",	3,  2,   0, false, 0, 3,  SPARC_FPA,  M_FLOAT_FLAG | M_ARITH_FLAG)
+I(FADDD, "faddd",	3,  2,   0, false, 0, 3,  SPARC_FPA,  M_FLOAT_FLAG | M_ARITH_FLAG)
+I(FADDQ, "faddq",	3,  2,   0, false, 0, 3,  SPARC_FPA,  M_FLOAT_FLAG | M_ARITH_FLAG)
+I(FSUBS, "fsubs",	3,  2,   0, false, 0, 3,  SPARC_FPA,  M_FLOAT_FLAG | M_ARITH_FLAG)
+I(FSUBD, "fsubd",	3,  2,   0, false, 0, 3,  SPARC_FPA,  M_FLOAT_FLAG | M_ARITH_FLAG)
+I(FSUBQ, "fsubq",	3,  2,   0, false, 0, 3,  SPARC_FPA,  M_FLOAT_FLAG | M_ARITH_FLAG)
+I(FCMPS, "fcmps",	3,  0,   0, false, 0, 3,  SPARC_FPA,  M_FLOAT_FLAG | M_ARITH_FLAG)
+I(FCMPD, "fcmpd",	3,  0,   0, false, 0, 3,  SPARC_FPA,  M_FLOAT_FLAG | M_ARITH_FLAG)
+I(FCMPQ, "fcmpq",	3,  0,   0, false, 0, 3,  SPARC_FPA,  M_FLOAT_FLAG | M_ARITH_FLAG)
+// NOTE: FCMPE{S,D,Q}: FP Compare With Exception are currently unused!
+  
+// Floating point multiply or divide.
+I(FMULS , "fmuls",	3,  2,   0, false, 0, 3,  SPARC_FPM,  M_FLOAT_FLAG | M_ARITH_FLAG)
+I(FMULD , "fmuld",	3,  2,   0, false, 0, 3,  SPARC_FPM,  M_FLOAT_FLAG | M_ARITH_FLAG)
+I(FMULQ , "fmulq",	3,  2,   0, false, 0, 0,  SPARC_FPM,  M_FLOAT_FLAG | M_ARITH_FLAG)
+I(FSMULD, "fsmuld",	3,  2,   0, false, 0, 3,  SPARC_FPM,  M_FLOAT_FLAG | M_ARITH_FLAG)
+I(FDMULQ, "fdmulq",	3,  2,   0, false, 0, 0,  SPARC_FPM,  M_FLOAT_FLAG | M_ARITH_FLAG)
+I(FDIVS , "fdivs",	3,  2,   0, false, 0, 12, SPARC_FPM,  M_FLOAT_FLAG | M_ARITH_FLAG)
+I(FDIVD , "fdivd",	3,  2,   0, false, 0, 22, SPARC_FPM,  M_FLOAT_FLAG | M_ARITH_FLAG)
+I(FDIVQ , "fdivq",	3,  2,   0, false, 0, 0,  SPARC_FPM,  M_FLOAT_FLAG | M_ARITH_FLAG)
+I(FSQRTS, "fsqrts",	3,  2,   0, false, 0, 12, SPARC_FPM,  M_FLOAT_FLAG | M_ARITH_FLAG)
+I(FSQRTD, "fsqrtd",	3,  2,   0, false, 0, 22, SPARC_FPM,  M_FLOAT_FLAG | M_ARITH_FLAG)
+I(FSQRTQ, "fsqrtq",	3,  2,   0, false, 0, 0,  SPARC_FPM,  M_FLOAT_FLAG | M_ARITH_FLAG)
+  
+// Logical operations
+I(AND   , "and",	3,  2, B12, true , 0, 1, SPARC_IEUN,  M_INT_FLAG | M_LOGICAL_FLAG)
+I(ANDcc , "andcc",	4,  2, B12, true , 0, 1, SPARC_IEU1,  M_INT_FLAG | M_LOGICAL_FLAG)
+I(ANDN  , "andn",	3,  2, B12, true , 0, 1, SPARC_IEUN,  M_INT_FLAG | M_LOGICAL_FLAG)
+I(ANDNcc, "andncc",	4,  2, B12, true , 0, 1, SPARC_IEU1,  M_INT_FLAG | M_LOGICAL_FLAG)
+I(OR    , "or", 	3,  2, B12, true , 0, 1, SPARC_IEUN,  M_INT_FLAG | M_LOGICAL_FLAG)
+I(ORcc  , "orcc",	4,  2, B12, true , 0, 1, SPARC_IEU1,  M_INT_FLAG | M_LOGICAL_FLAG)
+I(ORN   , "orn",	3,  2, B12, true , 0, 1, SPARC_IEUN,  M_INT_FLAG | M_LOGICAL_FLAG)
+I(ORNcc , "orncc",	4,  2, B12, true , 0, 1, SPARC_IEU1,  M_INT_FLAG | M_LOGICAL_FLAG)
+I(XOR   , "xor",	3,  2, B12, true , 0, 1, SPARC_IEUN,  M_INT_FLAG | M_LOGICAL_FLAG)
+I(XORcc , "xorcc",	4,  2, B12, true , 0, 1, SPARC_IEU1,  M_INT_FLAG | M_LOGICAL_FLAG)
+I(XNOR  , "xnor",	3,  2, B12, true , 0, 1, SPARC_IEUN,  M_INT_FLAG | M_LOGICAL_FLAG)
+I(XNORcc, "xnorcc",	4,  2, B12, true , 0, 1, SPARC_IEU1,  M_INT_FLAG | M_LOGICAL_FLAG)
+  
+// Shift operations
+I(SLL , "sll",  	3,  2,  B5, true , 0, 1, SPARC_IEU0,  M_INT_FLAG | M_LOGICAL_FLAG)
+I(SRL , "srl",  	3,  2,  B5, true , 0, 1, SPARC_IEU0,  M_INT_FLAG | M_LOGICAL_FLAG)
+I(SRA , "sra",  	3,  2,  B5, true , 0, 1, SPARC_IEU0,  M_INT_FLAG | M_ARITH_FLAG)
+I(SLLX, "sllx", 	3,  2,  B6, true , 0, 1, SPARC_IEU0,  M_INT_FLAG | M_LOGICAL_FLAG)
+I(SRLX, "srlx", 	3,  2,  B6, true , 0, 1, SPARC_IEU0,  M_INT_FLAG | M_LOGICAL_FLAG)
+I(SRAX, "srax", 	3,  2,  B6, true , 0, 1, SPARC_IEU0,  M_INT_FLAG | M_ARITH_FLAG)
+  
+// Floating point move, negate, and abs instructions
+I(FMOVS, "fmovs",	2,  1,   0, false, 0, 1,  SPARC_FPA,  M_FLOAT_FLAG)
+I(FMOVD, "fmovd",	2,  1,   0, false, 0, 1,  SPARC_FPA,  M_FLOAT_FLAG)
+//I(FMOVQ, "fmovq",	2,  1,   0, false, 0, ?,  SPARC_FPA,  M_FLOAT_FLAG)
+I(FNEGS, "fnegs",	2,  1,   0, false, 0, 1,  SPARC_FPA,  M_FLOAT_FLAG)
+I(FNEGD, "fnegd",	2,  1,   0, false, 0, 1,  SPARC_FPA,  M_FLOAT_FLAG)
+//I(FNEGQ, "fnegq",	2,  1,   0, false, 0, ?,  SPARC_FPA,  M_FLOAT_FLAG)
+I(FABSS, "fabss",	2,  1,   0, false, 0, 1,  SPARC_FPA,  M_FLOAT_FLAG)
+I(FABSD, "fabsd",	2,  1,   0, false, 0, 1,  SPARC_FPA,  M_FLOAT_FLAG)
+//I(FABSQ, "fabsq",	2,  1,   0, false, 0, ?,  SPARC_FPA,  M_FLOAT_FLAG)
+  
+// Convert from floating point to floating point formats
+I(FSTOD, "fstod",	2,  1,   0, false, 0, 3,  SPARC_FPA,  M_FLOAT_FLAG | M_ARITH_FLAG)
+I(FSTOQ, "fstoq",	2,  1,   0, false, 0, 0,  SPARC_FPA,  M_FLOAT_FLAG | M_ARITH_FLAG)
+I(FDTOS, "fdtos",	2,  1,   0, false, 0, 3,  SPARC_FPA,  M_FLOAT_FLAG | M_ARITH_FLAG)
+I(FDTOQ, "fdtoq",	2,  1,   0, false, 0, 0,  SPARC_FPA,  M_FLOAT_FLAG | M_ARITH_FLAG)
+I(FQTOS, "fqtos",	2,  1,   0, false, 0, 0,  SPARC_FPA,  M_FLOAT_FLAG | M_ARITH_FLAG)
+I(FQTOD, "fqtod",	2,  1,   0, false, 0, 0,  SPARC_FPA,  M_FLOAT_FLAG | M_ARITH_FLAG)
+  
+// Convert from floating point to integer formats.
+// Note that this accesses both integer and floating point registers.
+I(FSTOX, "fstox",	2,  1,   0, false, 0, 3,  SPARC_FPA,  M_FLOAT_FLAG | M_INT_FLAG | M_ARITH_FLAG)
+I(FDTOX, "fdtox",	2,  1,   0, false, 0, 0,  SPARC_FPA,  M_FLOAT_FLAG | M_INT_FLAG | M_ARITH_FLAG)
+I(FQTOX, "fqtox",	2,  1,   0, false, 0, 2,  SPARC_FPA,  M_FLOAT_FLAG | M_INT_FLAG | M_ARITH_FLAG)
+I(FSTOI, "fstoi",	2,  1,   0, false, 0, 3,  SPARC_FPA,  M_FLOAT_FLAG | M_INT_FLAG | M_ARITH_FLAG)
+I(FDTOI, "fdtoi",	2,  1,   0, false, 0, 3,  SPARC_FPA,  M_FLOAT_FLAG | M_INT_FLAG | M_ARITH_FLAG)
+I(FQTOI, "fqtoi",	2,  1,   0, false, 0, 0,  SPARC_FPA,  M_FLOAT_FLAG | M_INT_FLAG | M_ARITH_FLAG)
+  
+// Convert from integer to floating point formats
+// Note that this accesses both integer and floating point registers.
+I(FXTOS, "fxtos",	2,  1,   0, false, 0, 3,  SPARC_FPA,  M_FLOAT_FLAG | M_INT_FLAG | M_ARITH_FLAG)
+I(FXTOD, "fxtod",	2,  1,   0, false, 0, 3,  SPARC_FPA,  M_FLOAT_FLAG | M_INT_FLAG | M_ARITH_FLAG)
+I(FXTOQ, "fxtoq",	2,  1,   0, false, 0, 0,  SPARC_FPA,  M_FLOAT_FLAG | M_INT_FLAG | M_ARITH_FLAG)
+I(FITOS, "fitos",	2,  1,   0, false, 0, 3,  SPARC_FPA,  M_FLOAT_FLAG | M_INT_FLAG | M_ARITH_FLAG)
+I(FITOD, "fitod",	2,  1,   0, false, 0, 3,  SPARC_FPA,  M_FLOAT_FLAG | M_INT_FLAG | M_ARITH_FLAG)
+I(FITOQ, "fitoq",	2,  1,   0, false, 0, 0,  SPARC_FPA,  M_FLOAT_FLAG | M_INT_FLAG | M_ARITH_FLAG)
+  
+// Branch on integer comparison with zero.
+// Annul bit specifies if intruction in delay slot is annulled(1) or not(0).
+// PredictTaken bit hints if branch should be predicted taken(1) or not(0).
+// Latency includes the delay slot.
+I(BRZ  , "brz", 	2, -1, B15, true , 1, 2,  SPARC_CTI,  M_INT_FLAG | M_BRANCH_FLAG)
+I(BRLEZ, "brlez",	2, -1, B15, true , 1, 2,  SPARC_CTI,  M_INT_FLAG | M_BRANCH_FLAG)
+I(BRLZ , "brlz",	2, -1, B15, true , 1, 2,  SPARC_CTI,  M_INT_FLAG | M_BRANCH_FLAG)
+I(BRNZ , "brnz",	2, -1, B15, true , 1, 2,  SPARC_CTI,  M_INT_FLAG | M_BRANCH_FLAG)
+I(BRGZ , "brgz",	2, -1, B15, true , 1, 2,  SPARC_CTI,  M_INT_FLAG | M_BRANCH_FLAG)
+I(BRGEZ, "brgez",	2, -1, B15, true , 1, 2,  SPARC_CTI,  M_INT_FLAG | M_BRANCH_FLAG)
+
+// Branch on integer condition code.
+// The first argument specifies the ICC register: %icc or %xcc
+// Latency includes the delay slot.
+// Annul bit specifies if intruction in delay slot is annulled(1) or not(0).
+// PredictTaken bit hints if branch should be predicted taken(1) or not(0).
+I(BA  , "ba",		2, -1, B21, true , 1, 2,  SPARC_CTI,  M_CC_FLAG | M_BRANCH_FLAG)
+I(BN  , "bn",		2, -1, B21, true , 1, 2,  SPARC_CTI,  M_CC_FLAG | M_BRANCH_FLAG)
+I(BNE , "bne",		2, -1, B21, true , 1, 2,  SPARC_CTI,  M_CC_FLAG | M_BRANCH_FLAG)
+I(BE  , "be",		2, -1, B21, true , 1, 2,  SPARC_CTI,  M_CC_FLAG | M_BRANCH_FLAG)
+I(BG  , "bg",		2, -1, B21, true , 1, 2,  SPARC_CTI,  M_CC_FLAG | M_BRANCH_FLAG)
+I(BLE , "ble",		2, -1, B21, true , 1, 2,  SPARC_CTI,  M_CC_FLAG | M_BRANCH_FLAG)
+I(BGE , "bge",		2, -1, B21, true , 1, 2,  SPARC_CTI,  M_CC_FLAG | M_BRANCH_FLAG)
+I(BL  , "bl",		2, -1, B21, true , 1, 2,  SPARC_CTI,  M_CC_FLAG | M_BRANCH_FLAG)
+I(BGU , "bgu",		2, -1, B21, true , 1, 2,  SPARC_CTI,  M_CC_FLAG | M_BRANCH_FLAG)
+I(BLEU, "bleu",		2, -1, B21, true , 1, 2,  SPARC_CTI,  M_CC_FLAG | M_BRANCH_FLAG)
+I(BCC , "bcc",		2, -1, B21, true , 1, 2,  SPARC_CTI,  M_CC_FLAG | M_BRANCH_FLAG)
+I(BCS , "bcs",		2, -1, B21, true , 1, 2,  SPARC_CTI,  M_CC_FLAG | M_BRANCH_FLAG)
+I(BPOS, "bpos",		2, -1, B21, true , 1, 2,  SPARC_CTI,  M_CC_FLAG | M_BRANCH_FLAG)
+I(BNEG, "bneg",		2, -1, B21, true , 1, 2,  SPARC_CTI,  M_CC_FLAG | M_BRANCH_FLAG)
+I(BVC , "bvc",		2, -1, B21, true , 1, 2,  SPARC_CTI,  M_CC_FLAG | M_BRANCH_FLAG)
+I(BVS , "bvs",		2, -1, B21, true , 1, 2,  SPARC_CTI,  M_CC_FLAG | M_BRANCH_FLAG)
+
+// Branch on floating point condition code.
+// Annul bit specifies if intruction in delay slot is annulled(1) or not(0).
+// PredictTaken bit hints if branch should be predicted taken(1) or not(0).
+// The first argument is the FCCn register (0 <= n <= 3).
+// Latency includes the delay slot.
+I(FBA  , "fba",		2, -1, B18, true , 1, 2,  SPARC_CTI,  M_CC_FLAG | M_BRANCH_FLAG)
+I(FBN  , "fbn",		2, -1, B18, true , 1, 2,  SPARC_CTI,  M_CC_FLAG | M_BRANCH_FLAG)
+I(FBU  , "fbu",		2, -1, B18, true , 1, 2,  SPARC_CTI,  M_CC_FLAG | M_BRANCH_FLAG)
+I(FBG  , "fbg",		2, -1, B18, true , 1, 2,  SPARC_CTI,  M_CC_FLAG | M_BRANCH_FLAG)
+I(FBUG , "fbug",	2, -1, B18, true , 1, 2,  SPARC_CTI,  M_CC_FLAG | M_BRANCH_FLAG)
+I(FBL  , "fbl",		2, -1, B18, true , 1, 2,  SPARC_CTI,  M_CC_FLAG | M_BRANCH_FLAG)
+I(FBUL , "fbul",	2, -1, B18, true , 1, 2,  SPARC_CTI,  M_CC_FLAG | M_BRANCH_FLAG)
+I(FBLG , "fblg",	2, -1, B18, true , 1, 2,  SPARC_CTI,  M_CC_FLAG | M_BRANCH_FLAG)
+I(FBNE , "fbne",	2, -1, B18, true , 1, 2,  SPARC_CTI,  M_CC_FLAG | M_BRANCH_FLAG)
+I(FBE  , "fbe",		2, -1, B18, true , 1, 2,  SPARC_CTI,  M_CC_FLAG | M_BRANCH_FLAG)
+I(FBUE , "fbue",	2, -1, B18, true , 1, 2,  SPARC_CTI,  M_CC_FLAG | M_BRANCH_FLAG)
+I(FBGE , "fbge",	2, -1, B18, true , 1, 2,  SPARC_CTI,  M_CC_FLAG | M_BRANCH_FLAG)
+I(FBUGE, "fbuge",	2, -1, B18, true , 1, 2,  SPARC_CTI,  M_CC_FLAG | M_BRANCH_FLAG)
+I(FBLE , "fble",	2, -1, B18, true , 1, 2,  SPARC_CTI,  M_CC_FLAG | M_BRANCH_FLAG)
+I(FBULE, "fbule",	2, -1, B18, true , 1, 2,  SPARC_CTI,  M_CC_FLAG | M_BRANCH_FLAG)
+I(FBO  , "fbo",		2, -1, B18, true , 1, 2,  SPARC_CTI,  M_CC_FLAG | M_BRANCH_FLAG)
+
+// Conditional move on integer comparison with zero.
+I(MOVRZ  , "movrz",	3,  2, B12, true , 0, 2,  SPARC_SINGLE,  M_CONDL_FLAG | M_INT_FLAG)
+I(MOVRLEZ, "movrlez",	3,  2, B12, true , 0, 2,  SPARC_SINGLE,  M_CONDL_FLAG | M_INT_FLAG)
+I(MOVRLZ , "movrlz",	3,  2, B12, true , 0, 2,  SPARC_SINGLE,  M_CONDL_FLAG | M_INT_FLAG)
+I(MOVRNZ , "movrnz",	3,  2, B12, true , 0, 2,  SPARC_SINGLE,  M_CONDL_FLAG | M_INT_FLAG)
+I(MOVRGZ , "movrgz",	3,  2, B12, true , 0, 2,  SPARC_SINGLE,  M_CONDL_FLAG | M_INT_FLAG)
+I(MOVRGEZ, "movrgez",	3,  2, B12, true , 0, 2,  SPARC_SINGLE,  M_CONDL_FLAG | M_INT_FLAG)
+
+// Conditional move on integer condition code.
+// The first argument specifies the ICC register: %icc or %xcc
+I(MOVA  , "mova",	3,  2, B12, true , 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_INT_FLAG)
+I(MOVN  , "movn",	3,  2, B12, true , 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_INT_FLAG)
+I(MOVNE , "movne",	3,  2, B12, true , 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_INT_FLAG)
+I(MOVE  , "move",	3,  2, B12, true , 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_INT_FLAG)
+I(MOVG  , "movg",	3,  2, B12, true , 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_INT_FLAG)
+I(MOVLE , "movle",	3,  2, B12, true , 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_INT_FLAG)
+I(MOVGE , "movge",	3,  2, B12, true , 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_INT_FLAG)
+I(MOVL  , "movl",	3,  2, B12, true , 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_INT_FLAG)
+I(MOVGU , "movgu",	3,  2, B12, true , 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_INT_FLAG)
+I(MOVLEU, "movleu",	3,  2, B12, true , 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_INT_FLAG)
+I(MOVCC , "movcc",	3,  2, B12, true , 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_INT_FLAG)
+I(MOVCS , "movcs",	3,  2, B12, true , 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_INT_FLAG)
+I(MOVPOS, "movpos",	3,  2, B12, true , 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_INT_FLAG)
+I(MOVNEG, "movneg",	3,  2, B12, true , 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_INT_FLAG)
+I(MOVVC , "movvc",	3,  2, B12, true , 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_INT_FLAG)
+I(MOVVS , "movvs",	3,  2, B12, true , 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_INT_FLAG)
+
+// Conditional move (of integer register) on floating point condition code.
+// The first argument is the FCCn register (0 <= n <= 3).
+// Note that the enum name above is not the same as the assembly mnemonic
+// because some of the assembly mnemonics are the same as the move on
+// integer CC (e.g., MOVG), and we cannot have the same enum entry twice.
+I(MOVFA  , "mova",	3,  2, B12, true , 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_INT_FLAG)
+I(MOVFN  , "movn",	3,  2, B12, true , 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_INT_FLAG)
+I(MOVFU  , "movu",	3,  2, B12, true , 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_INT_FLAG)
+I(MOVFG  , "movg",	3,  2, B12, true , 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_INT_FLAG)
+I(MOVFUG , "movug",	3,  2, B12, true , 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_INT_FLAG)
+I(MOVFL  , "movl",	3,  2, B12, true , 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_INT_FLAG)
+I(MOVFUL , "movul",	3,  2, B12, true , 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_INT_FLAG)
+I(MOVFLG , "movlg",	3,  2, B12, true , 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_INT_FLAG)
+I(MOVFNE , "movne",	3,  2, B12, true , 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_INT_FLAG)
+I(MOVFE  , "move",	3,  2, B12, true , 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_INT_FLAG)
+I(MOVFUE , "movue",	3,  2, B12, true , 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_INT_FLAG)
+I(MOVFGE , "movge",	3,  2, B12, true , 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_INT_FLAG)
+I(MOVFUGE, "movuge",	3,  2, B12, true , 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_INT_FLAG)
+I(MOVFLE , "movle",	3,  2, B12, true , 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_INT_FLAG)
+I(MOVFULE, "movule",	3,  2, B12, true , 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_INT_FLAG)
+I(MOVFO  , "movo",	3,  2, B12, true , 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_INT_FLAG)
+
+// Conditional move of floating point register on each of the above:
+// i.   on integer comparison with zero.
+// ii.  on integer condition code
+// iii. on floating point condition code
+// Note that the same set is repeated for S,D,Q register classes.
+I(FMOVRSZ  ,"fmovrsz",	3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CONDL_FLAG | M_FLOAT_FLAG | M_INT_FLAG)
+I(FMOVRSLEZ,"fmovrslez",3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CONDL_FLAG | M_FLOAT_FLAG | M_INT_FLAG)
+I(FMOVRSLZ ,"fmovrslz",	3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CONDL_FLAG | M_FLOAT_FLAG | M_INT_FLAG)
+I(FMOVRSNZ ,"fmovrsnz",	3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CONDL_FLAG | M_FLOAT_FLAG | M_INT_FLAG)
+I(FMOVRSGZ ,"fmovrsgz",	3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CONDL_FLAG | M_FLOAT_FLAG | M_INT_FLAG)
+I(FMOVRSGEZ,"fmovrsgez",3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CONDL_FLAG | M_FLOAT_FLAG | M_INT_FLAG)
+
+I(FMOVSA  , "fmovsa",	3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_FLOAT_FLAG)
+I(FMOVSN  , "fmovsn",	3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_FLOAT_FLAG)
+I(FMOVSNE , "fmovsne",	3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_FLOAT_FLAG)
+I(FMOVSE  , "fmovse",	3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_FLOAT_FLAG)
+I(FMOVSG  , "fmovsg",	3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_FLOAT_FLAG)
+I(FMOVSLE , "fmovsle",	3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_FLOAT_FLAG)
+I(FMOVSGE , "fmovsge",	3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_FLOAT_FLAG)
+I(FMOVSL  , "fmovsl",	3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_FLOAT_FLAG)
+I(FMOVSGU , "fmovsgu",	3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_FLOAT_FLAG)
+I(FMOVSLEU, "fmovsleu",	3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_FLOAT_FLAG)
+I(FMOVSCC , "fmovscc",	3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_FLOAT_FLAG)
+I(FMOVSCS , "fmovscs",	3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_FLOAT_FLAG)
+I(FMOVSPOS, "fmovspos",	3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_FLOAT_FLAG)
+I(FMOVSNEG, "fmovsneg",	3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_FLOAT_FLAG)
+I(FMOVSVC , "fmovsvc",	3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_FLOAT_FLAG)
+I(FMOVSVS , "fmovsvs",	3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_FLOAT_FLAG)
+
+I(FMOVSFA  , "fmovsa",	3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_FLOAT_FLAG)
+I(FMOVSFN  , "fmovsn",	3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_FLOAT_FLAG)
+I(FMOVSFU  , "fmovsu",	3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_FLOAT_FLAG)
+I(FMOVSFG  , "fmovsg",	3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_FLOAT_FLAG)
+I(FMOVSFUG , "fmovsug",	3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_FLOAT_FLAG)
+I(FMOVSFL  , "fmovsl",	3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_FLOAT_FLAG)
+I(FMOVSFUL , "fmovsul",	3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_FLOAT_FLAG)
+I(FMOVSFLG , "fmovslg",	3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_FLOAT_FLAG)
+I(FMOVSFNE , "fmovsne",	3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_FLOAT_FLAG)
+I(FMOVSFE  , "fmovse",	3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_FLOAT_FLAG)
+I(FMOVSFUE , "fmovsue",	3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_FLOAT_FLAG)
+I(FMOVSFGE , "fmovsge",	3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_FLOAT_FLAG)
+I(FMOVSFUGE, "fmovsuge",3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_FLOAT_FLAG)
+I(FMOVSFLE , "fmovsle",	3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_FLOAT_FLAG)
+I(FMOVSFULE, "fmovslue",3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_FLOAT_FLAG)
+I(FMOVSFO  , "fmovso",	3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_FLOAT_FLAG)
+
+I(FMOVRDZ  , "fmovrdz",	3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CONDL_FLAG | M_FLOAT_FLAG | M_INT_FLAG)
+I(FMOVRDLEZ, "fmovrdlez",3, 2,   0, false, 0, 2,  SPARC_SINGLE,  M_CONDL_FLAG | M_FLOAT_FLAG | M_INT_FLAG)
+I(FMOVRDLZ , "fmovrdlz",3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CONDL_FLAG | M_FLOAT_FLAG | M_INT_FLAG)
+I(FMOVRDNZ , "fmovrdnz",3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CONDL_FLAG | M_FLOAT_FLAG | M_INT_FLAG)
+I(FMOVRDGZ , "fmovrdgz",3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CONDL_FLAG | M_FLOAT_FLAG | M_INT_FLAG)
+I(FMOVRDGEZ, "fmovrdgez",3, 2,   0, false, 0, 2,  SPARC_SINGLE,  M_CONDL_FLAG | M_FLOAT_FLAG | M_INT_FLAG)
+
+I(FMOVDA  , "fmovda",	3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_FLOAT_FLAG)
+I(FMOVDN  , "fmovdn",	3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_FLOAT_FLAG)
+I(FMOVDNE , "fmovdne",	3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_FLOAT_FLAG)
+I(FMOVDE  , "fmovde",	3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_FLOAT_FLAG)
+I(FMOVDG  , "fmovdg",	3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_FLOAT_FLAG)
+I(FMOVDLE , "fmovdle",	3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_FLOAT_FLAG)
+I(FMOVDGE , "fmovdge",	3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_FLOAT_FLAG)
+I(FMOVDL  , "fmovdl",	3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_FLOAT_FLAG)
+I(FMOVDGU , "fmovdgu",	3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_FLOAT_FLAG)
+I(FMOVDLEU, "fmovdleu",	3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_FLOAT_FLAG)
+I(FMOVDCC , "fmovdcc",	3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_FLOAT_FLAG)
+I(FMOVDCS , "fmovdcs",	3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_FLOAT_FLAG)
+I(FMOVDPOS, "fmovdpos",	3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_FLOAT_FLAG)
+I(FMOVDNEG, "fmovdneg",	3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_FLOAT_FLAG)
+I(FMOVDVC , "fmovdvc",	3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_FLOAT_FLAG)
+I(FMOVDVS , "fmovdvs",	3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_FLOAT_FLAG)
+
+I(FMOVDFA  , "fmovda",	3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_FLOAT_FLAG)
+I(FMOVDFN  , "fmovdn",	3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_FLOAT_FLAG)
+I(FMOVDFU  , "fmovdu",	3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_FLOAT_FLAG)
+I(FMOVDFG  , "fmovdg",	3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_FLOAT_FLAG)
+I(FMOVDFUG , "fmovdug",	3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_FLOAT_FLAG)
+I(FMOVDFL  , "fmovdl",	3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_FLOAT_FLAG)
+I(FMOVDFUL , "fmovdul",	3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_FLOAT_FLAG)
+I(FMOVDFLG , "fmovdlg",	3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_FLOAT_FLAG)
+I(FMOVDFNE , "fmovdne",	3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_FLOAT_FLAG)
+I(FMOVDFE  , "fmovde",	3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_FLOAT_FLAG)
+I(FMOVDFUE , "fmovdue",	3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_FLOAT_FLAG)
+I(FMOVDFGE , "fmovdge",	3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_FLOAT_FLAG)
+I(FMOVDFUGE, "fmovduge",3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_FLOAT_FLAG)
+I(FMOVDFLE , "fmovdle",	3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_FLOAT_FLAG)
+I(FMOVDFULE, "fmovdule",3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_FLOAT_FLAG)
+I(FMOVDFO  , "fmovdo",	3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_FLOAT_FLAG)
+
+I(FMOVRQZ  , "fmovrqz",	3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CONDL_FLAG | M_FLOAT_FLAG | M_INT_FLAG)
+I(FMOVRQLEZ, "fmovrqlez",3, 2,   0, false, 0, 2,  SPARC_SINGLE,  M_CONDL_FLAG | M_FLOAT_FLAG | M_INT_FLAG)
+I(FMOVRQLZ , "fmovrqlz",3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CONDL_FLAG | M_FLOAT_FLAG | M_INT_FLAG)
+I(FMOVRQNZ , "fmovrqnz",3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CONDL_FLAG | M_FLOAT_FLAG | M_INT_FLAG)
+I(FMOVRQGZ , "fmovrqgz",3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CONDL_FLAG | M_FLOAT_FLAG | M_INT_FLAG)
+I(FMOVRQGEZ, "fmovrqgez",3, 2,   0, false, 0, 2,  SPARC_SINGLE,  M_CONDL_FLAG | M_FLOAT_FLAG | M_INT_FLAG)
+
+I(FMOVQA  , "fmovqa",	3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_FLOAT_FLAG)
+I(FMOVQN  , "fmovqn",	3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_FLOAT_FLAG)
+I(FMOVQNE , "fmovqne",	3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_FLOAT_FLAG)
+I(FMOVQE  , "fmovqe",	3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_FLOAT_FLAG)
+I(FMOVQG  , "fmovqg",	3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_FLOAT_FLAG)
+I(FMOVQLE , "fmovqle",	3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_FLOAT_FLAG)
+I(FMOVQGE , "fmovqge",	3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_FLOAT_FLAG)
+I(FMOVQL  , "fmovql",	3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_FLOAT_FLAG)
+I(FMOVQGU , "fmovqgu",	3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_FLOAT_FLAG)
+I(FMOVQLEU, "fmovqleu",	3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_FLOAT_FLAG)
+I(FMOVQCC , "fmovqcc",	3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_FLOAT_FLAG)
+I(FMOVQCS , "fmovqcs",	3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_FLOAT_FLAG)
+I(FMOVQPOS, "fmovqpos",	3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_FLOAT_FLAG)
+I(FMOVQNEG, "fmovqneg",	3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_FLOAT_FLAG)
+I(FMOVQVC , "fmovqvc",	3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_FLOAT_FLAG)
+I(FMOVQVS , "fmovqvs",	3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_FLOAT_FLAG)
+
+I(FMOVQFA  , "fmovqa",	3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_FLOAT_FLAG)
+I(FMOVQFN  , "fmovqn",	3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_FLOAT_FLAG)
+I(FMOVQFU  , "fmovqu",	3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_FLOAT_FLAG)
+I(FMOVQFG  , "fmovqg",	3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_FLOAT_FLAG)
+I(FMOVQFUG , "fmovqug",	3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_FLOAT_FLAG)
+I(FMOVQFL  , "fmovql",	3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_FLOAT_FLAG)
+I(FMOVQFUL , "fmovqul",	3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_FLOAT_FLAG)
+I(FMOVQFLG , "fmovqlg",	3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_FLOAT_FLAG)
+I(FMOVQFNE , "fmovqne",	3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_FLOAT_FLAG)
+I(FMOVQFE  , "fmovqe",	3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_FLOAT_FLAG)
+I(FMOVQFUE , "fmovque",	3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_FLOAT_FLAG)
+I(FMOVQFGE , "fmovqge",	3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_FLOAT_FLAG)
+I(FMOVQFUGE, "fmovquge",3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_FLOAT_FLAG)
+I(FMOVQFLE , "fmovqle",	3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_FLOAT_FLAG)
+I(FMOVQFULE, "fmovqule",3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_FLOAT_FLAG)
+I(FMOVQFO  , "fmovqo",	3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_FLOAT_FLAG)
+  
+// Load integer instructions
+// Latency includes 1 cycle for address generation (Sparc IIi)
+// Signed loads of less than 64 bits need an extra cycle for sign-extension.
+//
+// Not reflected here: After a 3-cycle loads, all subsequent consecutive
+// loads also require 3 cycles to avoid contention for the load return
+// stage.  Latency returns to 2 cycles after the first cycle with no load.
+I(LDSB, "ldsb",		3,  2, B12, true , 0, 3,  SPARC_LD,  M_INT_FLAG | M_LOAD_FLAG)
+I(LDSH, "ldsh",		3,  2, B12, true , 0, 3,  SPARC_LD,  M_INT_FLAG | M_LOAD_FLAG)
+I(LDSW, "ldsw",		3,  2, B12, true , 0, 3,  SPARC_LD,  M_INT_FLAG | M_LOAD_FLAG)
+I(LDUB, "ldub",		3,  2, B12, true , 0, 2,  SPARC_LD,  M_INT_FLAG | M_LOAD_FLAG)
+I(LDUH, "lduh",		3,  2, B12, true , 0, 2,  SPARC_LD,  M_INT_FLAG | M_LOAD_FLAG)
+I(LDUW, "lduw",		3,  2, B12, true , 0, 2,  SPARC_LD,  M_INT_FLAG | M_LOAD_FLAG)
+I(LDX , "ldx",		3,  2, B12, true , 0, 2,  SPARC_LD,  M_INT_FLAG | M_LOAD_FLAG)
+  
+// Load floating-point instructions
+// Latency includes 1 cycle for address generation (Sparc IIi)
+I(LD , "ld",		3,  2, B12, true , 0, 2,  SPARC_LD,  M_FLOAT_FLAG | M_LOAD_FLAG)
+I(LDD, "ldd",		3,  2, B12, true , 0, 2,  SPARC_LD,  M_FLOAT_FLAG | M_LOAD_FLAG)
+I(LDQ, "ldq",		3,  2, B12, true , 0, 2,  SPARC_LD,  M_FLOAT_FLAG | M_LOAD_FLAG)
+  
+// Store integer instructions
+// Latency includes 1 cycle for address generation (Sparc IIi)
+I(STB, "stb",		3, -1, B12, true , 0, 2,  SPARC_ST,  M_INT_FLAG | M_STORE_FLAG)
+I(STH, "sth",		3, -1, B12, true , 0, 2,  SPARC_ST,  M_INT_FLAG | M_STORE_FLAG)
+I(STW, "stw",		3, -1, B12, true , 0, 2,  SPARC_ST,  M_INT_FLAG | M_STORE_FLAG)
+I(STX, "stx",		3, -1, B12, true , 0, 3,  SPARC_ST,  M_INT_FLAG | M_STORE_FLAG)
+  
+// Store floating-point instructions (Sparc IIi)
+I(ST , "st",		3, -1, B12, true , 0, 2,  SPARC_ST,  M_FLOAT_FLAG | M_STORE_FLAG)
+I(STD, "std",		3, -1, B12, true , 0, 2,  SPARC_ST,  M_FLOAT_FLAG | M_STORE_FLAG)
+  
+// Call, Return and "Jump and link".
+// Latency includes the delay slot.
+I(CALL  , "call",	1, -1, B29, true , 1, 2,  SPARC_CTI,  M_BRANCH_FLAG | M_CALL_FLAG)
+I(JMPL  , "jmpl",	3, -1, B12, true , 1, 2,  SPARC_CTI,  M_BRANCH_FLAG | M_CALL_FLAG)
+I(RETURN, "return",	2, -1,   0, false, 1, 2,  SPARC_CTI,  M_BRANCH_FLAG | M_RET_FLAG)
+  
+// Synthetic phi operation for near-SSA form of machine code
+// Number of operands is variable, indicated by -1.  Result is the first op.
+I(PHI, "<phi>", 	-1, 0,   0, false, 0, 0,  SPARC_INV,  M_DUMMY_PHI_FLAG)
+
+
+#undef B5
+#undef B6
+#undef B12
+#undef B15
+#undef B18
+#undef B21
+#undef B22
+#undef B29
+
+#undef I
