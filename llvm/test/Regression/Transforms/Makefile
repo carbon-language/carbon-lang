@@ -16,6 +16,7 @@ DIRS  = ADCE \
 	LICM \
 	Mem2Reg \
 	PiNodeInserter \
+	PRE \
 	LoopPreheaders \
 	ProfilePaths \
 	Reassociate \
