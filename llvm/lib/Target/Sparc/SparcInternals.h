@@ -1211,6 +1211,8 @@ protected:
 // 
 // Purpose:
 //   Interface to stack frame layout info for the UltraSPARC.
+//   Starting offsets for each area of the stack frame are aligned at
+//   a multiple of getStackFrameSizeAlignment().
 //---------------------------------------------------------------------------
 
 class UltraSparcFrameInfo: public MachineFrameInfo {

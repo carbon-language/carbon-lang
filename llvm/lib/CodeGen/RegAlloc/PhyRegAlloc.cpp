@@ -528,8 +528,10 @@ void PhyRegAlloc::insertCode4SpilledLR(const LiveRange *LR,
   int SpillOff = LR->getSpillOffFromFP();
   RegClass *RC = LR->getRegClass();
   const LiveVarSet *LVSetBef =  LVI->getLiveVarSetBeforeMInst(MInst, BB);
+
+  /**** NOTE: THIS SHOULD USE THE RIGHT SIZE FOR THE REG BEING PUSHED ****/
   int TmpOff = 
-    mcInfo.pushTempValue(TM, TM.findOptimalStorageSize(LR->getType()));
+    mcInfo.pushTempValue(TM, 8 /* TM.findOptimalStorageSize(LR->getType()) */);
   
   MachineInstr *MIBef=NULL,  *AdIMid=NULL, *MIAft=NULL;
   int TmpReg;

@@ -193,7 +193,8 @@ UltraSparcSchedInfo::initializeResources()
 // 
 // Purpose:
 //   Interface to stack frame layout info for the UltraSPARC.
-//   Note that there is no machine-independent interface to this information
+//   Starting offsets for each area of the stack frame are aligned at
+//   a multiple of getStackFrameSizeAlignment().
 //---------------------------------------------------------------------------
 
 int
@@ -210,7 +211,9 @@ UltraSparcFrameInfo::getRegSpillAreaOffset(MachineCodeForMethod& mcInfo,
 {
   pos = false;                          // static stack area grows downwards
   unsigned int autoVarsSize = mcInfo.getAutomaticVarsSize();
-  return  StaticAreaOffsetFromFP - autoVarsSize;
+  if (int mod = autoVarsSize % getStackFrameSizeAlignment())  
+    autoVarsSize += (getStackFrameSizeAlignment() - mod);
+  return StaticAreaOffsetFromFP - autoVarsSize; 
 }
 
 int
@@ -220,7 +223,10 @@ UltraSparcFrameInfo::getTmpAreaOffset(MachineCodeForMethod& mcInfo,
   pos = false;                          // static stack area grows downwards
   unsigned int autoVarsSize = mcInfo.getAutomaticVarsSize();
   unsigned int spillAreaSize = mcInfo.getRegSpillsSize();
-  return StaticAreaOffsetFromFP - (autoVarsSize + spillAreaSize);
+  int offset = autoVarsSize + spillAreaSize;
+  if (int mod = offset % getStackFrameSizeAlignment())  
+    offset += (getStackFrameSizeAlignment() - mod);
+  return StaticAreaOffsetFromFP - offset;
 }
 
 int
@@ -229,7 +235,9 @@ UltraSparcFrameInfo::getDynamicAreaOffset(MachineCodeForMethod& mcInfo,
 {
   // dynamic stack area grows downwards starting at top of opt-args area
   unsigned int optArgsSize = mcInfo.getMaxOptionalArgsSize();
-  return optArgsSize + FirstOptionalOutgoingArgOffsetFromSP;
+  int offset = optArgsSize + FirstOptionalOutgoingArgOffsetFromSP;
+  assert(offset % getStackFrameSizeAlignment() == 0);
+  return offset;
 }
 
 

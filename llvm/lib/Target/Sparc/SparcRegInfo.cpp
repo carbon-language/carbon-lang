@@ -709,9 +709,9 @@ void UltraSparcRegInfo::colorCallArgs(const MachineInstr *const CallMI,
 	
 	int TReg = PRA.getRegNotUsedByThisInst( LR->getRegClass(), CallMI );
 
-	int TmpOff = PRA.mcInfo.pushTempValue(target,
-                              target.findOptimalStorageSize(LR->getType()));
-                  // getStackOffsets().getNewTmpPosOffFromFP();
+    /**** NOTE: THIS SHOULD USE THE RIGHT SIZE FOR THE REG BEING PUSHED ****/
+	int TmpOff = PRA.mcInfo.pushTempValue(target, 8);
+                          // target.findOptimalStorageSize(LR->getType()));
         
 	int argOffset = PRA.mcInfo.allocateOptionalArg(target, LR->getType()); 
         
@@ -1174,8 +1174,9 @@ void UltraSparcRegInfo::insertCallerSavingCode(const MachineInstr *MInst,
 	    // and add them to InstrnsBefore and InstrnsAfter of the
 	    // call instruction
 
-	    int StackOff =  PRA.mcInfo.pushTempValue(target,
-                              target.findOptimalStorageSize(LR->getType()));
+    /**** NOTE: THIS SHOULD USE THE RIGHT SIZE FOR THE REG BEING PUSHED ****/
+	    int StackOff =  PRA.mcInfo.pushTempValue(target, 8);
+                // target.findOptimalStorageSize(LR->getType()));
             
 	    MachineInstr *AdIBefCC, *AdIAftCC, *AdICpCC;
 	    MachineInstr *AdIBef, *AdIAft;
@@ -1548,6 +1549,7 @@ void UltraSparcRegInfo::moveInst2OrdVec(vector<MachineInstr *> &OrdVec,
 	  MachineInstr *AdIBef, *AdIAft;
 	      
 	  // TODO: Change 8 below
+    /**** NOTE: THIS SHOULD USE THE RIGHT SIZE FOR THE REG BEING PUSHED ****/
 	  const int StackOff =  PRA.mcInfo.pushTempValue(target, 8);
 	  
 	  // Save the UReg (%ox) on stack before it's destroyed
