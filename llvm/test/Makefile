@@ -96,7 +96,9 @@ gui::
 	$(QMTEST) gui --no-browser --daemon
 
 # Also get rid of qmtest garbage when we 'make clean' in this directory.
-clean::
+clean:: qmtest-clean
+
+qmtest-clean:
 	$(RM) -rf $(LLVM_OBJ_ROOT)/test/tmp
 	$(RM) -f $(LLVM_SRC_ROOT)/test/QMTest/*.pyo \
 		$(LLVM_OBJ_ROOT)/test/QMTest/*.pyo
