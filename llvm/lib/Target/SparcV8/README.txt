@@ -13,12 +13,8 @@ SingleSource/Benchmarks:
 fldry heapsort objinst Oscar Queens chomp misr pi whetstone
 
 SingleSource/UnitTests:
-C++Catch SimpleC++Test 2002-05-02-ArgumentTest 2002-05-02-ManyArguments
-2002-05-03-NotTest 2002-05-19-DivTest 2002-10-12-StructureArgs
-2002-10-12-StructureArgsSimple 2003-05-07-VarArgs 2003-05-26-Shorts
-2003-05-31-CastToBool 2003-05-31-LongShifts 2003-07-09-LoadShorts
-2003-07-09-SignedArgs 2003-08-05-CastFPToUint 2003-08-11-VaListArg
-StructModifyTest
+C++Catch SimpleC++Test 2002-05-02-ArgumentTest 2002-05-03-NotTest
+2003-05-07-VarArgs 2003-07-09-SignedArgs 2003-08-11-VaListArg
 
 To-do
 -----
