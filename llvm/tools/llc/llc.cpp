@@ -10,7 +10,8 @@
 #include "llvm/Transforms/Instrumentation/TraceValues.h"
 #include "llvm/Transforms/LowerAllocations.h"
 #include "llvm/Transforms/HoistPHIConstants.h"
-#include "llvm/Transforms/PrintModulePass.h"
+#include "llvm/Assembly/PrintModulePass.h"
+#include "llvm/Bytecode/WriteBytecodePass.h"
 #include "llvm/Transforms/ConstantMerge.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Module.h"
@@ -144,7 +145,7 @@ int main(int argc, char **argv) {
       return 1;
     }
     
-    Passes.push_back(new WriteModuleBytecode(os, true));
+    Passes.push_back(new WriteBytecodePass(os, true));
   }
   
   // Replace malloc and free instructions with library calls.
