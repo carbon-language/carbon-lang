@@ -47,7 +47,7 @@ struct DSCallSiteIterator {
     while (CallSite < FCs->size()) {
       if ((*FCs)[CallSite].isDirectCall()) {
         if (CallSiteEntry == 0 &&        // direct call only has one target...
-            ! DSCallSite::isUnresolvableFunc((*FCs)[CallSite].getCalleeFunc()))
+            ! isUnresolvableFunc((*FCs)[CallSite].getCalleeFunc()))
           return;                       // and not an unresolvable external func
       } else {
         DSNode *CalleeNode = (*FCs)[CallSite].getCalleeNode();
