@@ -311,9 +311,6 @@
 					RelativePath="..\..\lib\Transforms\Scalar\SimplifyCFG.cpp">
 				</File>
 				<File
-					RelativePath="..\..\lib\Transforms\Scalar\SymbolStripping.cpp">
-				</File>
-				<File
 					RelativePath="..\..\lib\Transforms\Scalar\TailDuplication.cpp">
 				</File>
 				<File

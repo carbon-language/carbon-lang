@@ -12,7 +12,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "Win32.h"
-#include <windef.h>
 
 namespace llvm {
 using namespace sys;
@@ -23,33 +22,30 @@ using namespace sys;
 //===----------------------------------------------------------------------===//
 
 DynamicLibrary::DynamicLibrary() : handle(0) {
-  handle = new HMODULE;
-  *((HMODULE*)handle) = GetModuleHandle(NULL);
+  handle = (void*) GetModuleHandle(NULL);
   
-  if (*((HMODULE*)handle) == 0) {
+  if (handle == 0) {
     ThrowError("Can't GetModuleHandle: ");
   }
 }
 
 DynamicLibrary::DynamicLibrary(const char*filename) : handle(0) {
-  handle = new HMODULE;
-  *((HMODULE*)handle) = LoadLibrary(filename);
+  handle = LoadLibrary(filename);
 
-  if (*((HMODULE*)handle) == 0) {
+  if (handle == 0) {
     ThrowError("Can't LoadLibrary: ");
   }
 }
 
 DynamicLibrary::~DynamicLibrary() {
   assert(handle !=0 && "Invalid DynamicLibrary handle");
-  if (*((HMODULE*)handle))
-    FreeLibrary(*((HMODULE*)handle));
-  delete (HMODULE*)handle;
+  if (handle)
+    FreeLibrary((HMODULE*)handle);
 }
 
 void *DynamicLibrary::GetAddressOfSymbol(const char *symbolName) {
   assert(handle !=0 && "Invalid DynamicLibrary handle");
-  return (void*) GetProcAddress(*((HMODULE*)handle), symbolName);
+  return (void*) GetProcAddress((HMODULE*)handle, symbolName);
 }
 
 }
