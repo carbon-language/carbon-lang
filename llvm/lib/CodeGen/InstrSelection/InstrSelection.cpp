@@ -56,7 +56,7 @@ namespace {
     TargetMachine &Target;
     void InsertCodeForPhis(Function &F);
     void InsertPhiElimInstructions(BasicBlock *BB,
-                                   const std::vector<MachineInstr*>& CpVec);
+                                   const vector<MachineInstr*>& CpVec);
     void SelectInstructionsForTree(InstrTreeNode* treeRoot, int goalnt);
     void PostprocessMachineCodeForTree(InstructionNode* instrNode,
                                        int ruleForNode, short* nts);
@@ -186,7 +186,7 @@ InstructionSelection::InsertCodeForPhis(Function &F)
 
 void
 InstructionSelection::InsertPhiElimInstructions(BasicBlock *BB,
-                                                const std::vector<MachineInstr*>& CpVec)
+                                                const vector<MachineInstr*>& CpVec)
 { 
   Instruction *TermInst = (Instruction*)BB->getTerminator();
   MachineCodeForInstruction &MC4Term = MachineCodeForInstruction::get(TermInst);
@@ -248,7 +248,7 @@ InstructionSelection::SelectInstructionsForTree(InstrTreeNode* treeRoot,
   // 
   if (treeRoot->opLabel != VRegListOp)
     {
-      std::vector<MachineInstr*> minstrVec;
+      vector<MachineInstr*> minstrVec;
       
       InstructionNode* instrNode = (InstructionNode*)treeRoot;
       assert(instrNode->getNodeType() == InstrTreeNode::NTInstructionNode);
@@ -315,13 +315,12 @@ InstructionSelection::PostprocessMachineCodeForTree(InstructionNode* instrNode,
   // 
   Instruction* vmInstr = instrNode->getInstruction();
   MachineCodeForInstruction &mvec = MachineCodeForInstruction::get(vmInstr);
-  for (int i = (int) mvec.size()-1; i >= 0; i--)
+  for (unsigned i = mvec.size(); i != 0; --i)
     {
-      std::vector<MachineInstr*> loadConstVec =
-        FixConstantOperandsForInstr(vmInstr, mvec[i], Target);
+      vector<MachineInstr*> loadConstVec =
+        FixConstantOperandsForInstr(vmInstr, mvec[i-1], Target);
       
-      if (loadConstVec.size() > 0)
-        mvec.insert(mvec.begin()+i, loadConstVec.begin(), loadConstVec.end());
+      mvec.insert(mvec.begin()+i-1, loadConstVec.begin(), loadConstVec.end());
     }
 }
 
