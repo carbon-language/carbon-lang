@@ -18,6 +18,7 @@
     <ol>
       <li><a href="#hardware">Hardware</a>
       <li><a href="#software">Software</a>
+      <li><a href="#brokengcc">Broken versions of GCC</a>
     </ol></li>
 
   <li><a href="#starting">Getting Started with LLVM</a>
@@ -144,9 +145,10 @@ from the LLVM suite.</p>
 
   <li>Build the LLVM Suite:
   <ol>
-      <li>Set your LLVM_LIB_SEARCH_PATH environment variable.
-      <li><tt>gmake -k |& tee gnumake.out
-      &nbsp;&nbsp;&nbsp;# this is csh or tcsh syntax</tt>
+      <li>Set your LLVM_LIB_SEARCH_PATH environment variable.</li>
+      <li><tt>gmake -k |&amp; tee gnumake.out
+      &nbsp;&nbsp;&nbsp;# this is csh or tcsh syntax</tt></li>
+      <li>If you get an "internal compiler error (ICE)" see <a href="#brokengcc">below</a>.</li>
   </ol>
 
 </ol>
@@ -255,7 +257,7 @@ installed:</p>
 
 <ul>
   <li><a href="http://gcc.gnu.org">GCC 3.x with C and C++ language
-  support</a></li>
+  support</a>  (See <a href="#brokengcc">below</a> for specific version info)</li>
 
   <li><a href="http://savannah.gnu.org/projects/make">GNU Make</a></li>
 
@@ -297,25 +299,55 @@ LLVM:</p>
       </li>
 
 </ul>
+</div>
 
-<p>The remainder of this guide is meant to get you up and running with
-LLVM and to give you some basic information about the LLVM environment.
-A <a href="#starting">complete guide to installation</a> is provided in the
-next section.</p>
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="brokengcc">Broken versions of GCC</a>
+</div>
 
-<p>The later sections of this guide describe the <a
-href="#layout">general layout</a> of the the LLVM source tree, a <a
-href="#tutorial">simple example</a> using the LLVM tool chain, and <a
-href="#links">links</a> to find more information about LLVM or to get
-help via e-mail.</p>
+<div class="doc_text">
+
+<p>LLVM is very demanding of the host C++ compiler, and as such tends to expose
+bugs in the compiler.  In particular, several versions of GCC crash when trying
+to compile LLVM.  We routinely use GCC 3.3.3 and GCC 3.4.0 and have had success
+with them.  Other versions of GCC will probably work as well.  GCC versions listed
+here are known to not work.  If you are using one of these versions, please try
+to upgrade your GCC to something more recent.  If you run into a problem with a
+version of GCC not listed here, please <a href="mailto:llvmdev@cs.uiuc.edu">let
+us know</a>.  Please use the "<tt>gcc -v</tt>" command to find out which version
+of GCC you are using.
+</p>
+
+<p><b>GCC versions prior to 3.0</b>: GCC 2.96.x and before had several
+problems in the STL that effectively prevent it from compiling LLVM.
+</p>
+
+<p><b>GCC 3.3.2</b>: This version of GCC suffered from a <a 
+href="http://gcc.gnu.org/PR13392">serious bug</a> which causes it to crash in
+the "<tt>convert_from_eh_region_ranges_1</tt>" GCC function.</p>
 
 </div>
+
+
 
 <!-- *********************************************************************** -->
 <div class="doc_section">
   <a name="starting"><b>Getting Started with LLVM</b></a>
 </div>
 <!-- *********************************************************************** -->
+
+<div class="doc_text">
+
+<p>The remainder of this guide is meant to get you up and running with
+LLVM and to give you some basic information about the LLVM environment.</p>
+
+<p>The later sections of this guide describe the <a
+href="#layout">general layout</a> of the the LLVM source tree, a <a
+href="#tutorial">simple example</a> using the LLVM tool chain, and <a
+href="#links">links</a> to find more information about LLVM or to get
+help via e-mail.</p>
+</div>
 
 <!-- ======================================================================= -->
 <div class="doc_subsection">
@@ -671,7 +703,11 @@ builds:</p>
 
 <p><tt>gmake</tt></p>
 
-<p>If you have multiple processors in your machine, you may wish to use some of
+<p>If the build fails, please <a href="#brokengcc">check here</a> to see if you
+are using a known broken version of GCC to compile LLVM with.</p>
+
+<p>
+If you have multiple processors in your machine, you may wish to use some of
 the parallel build options provided by GNU Make.  For example, you could use the
 command:</p>
 
