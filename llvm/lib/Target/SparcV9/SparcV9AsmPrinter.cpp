@@ -323,7 +323,9 @@ void AsmPrinter::printSingleConstantValue(const Constant* CV) {
     O << ConstantExprToString(CE, TM) << "\n";
   } else if (CV->getType()->isPrimitiveType()) {
     // Check primitive types last
-    if (CV->getType()->isFloatingPoint()) {
+    if (isa<UndefValue>(CV)) {
+      O << "0\n";
+    } else if (CV->getType()->isFloatingPoint()) {
       // FP Constants are printed as integer constants to avoid losing
       // precision...
       double Val = cast<ConstantFP>(CV)->getValue();
@@ -385,7 +387,7 @@ void AsmPrinter::printConstantValueOnly(const Constant* CV,
     }
     assert(sizeSoFar == cvsLayout->StructSize &&
            "Layout of constant struct may be incorrect!");
-  } else if (isa<ConstantAggregateZero>(CV)) {
+  } else if (isa<ConstantAggregateZero>(CV) || isa<UndefValue>(CV)) {
     PrintZeroBytesToPad(TM.getTargetData().getTypeSize(CV->getType()));
   } else
     printSingleConstantValue(CV);
