@@ -156,7 +156,7 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
 
             LiveInterval &RegInt = getInterval(reg);
             RegInt.weight +=
-              (mop.isUse() + mop.isDef()) * pow(10.0F, loopDepth);
+              (mop.isUse() + mop.isDef()) * pow(10.0F, (int)loopDepth);
           }
         }
         ++mii;
