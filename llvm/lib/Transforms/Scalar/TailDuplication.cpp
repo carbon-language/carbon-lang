@@ -121,6 +121,48 @@ bool TailDup::shouldEliminateUnconditionalBranch(TerminatorInst *TI) {
   return true;  
 }
 
+/// FindObviousSharedDomOf - We know there is a branch from SrcBlock to
+/// DestBlock, and that SrcBlock is not the only predecessor of DstBlock.  If we
+/// can find a predecessor of SrcBlock that is a dominator of both SrcBlock and
+/// DstBlock, return it.
+static BasicBlock *FindObviousSharedDomOf(BasicBlock *SrcBlock,
+                                          BasicBlock *DstBlock) {
+  // SrcBlock must have a single predecessor.
+  pred_iterator PI = pred_begin(SrcBlock), PE = pred_end(SrcBlock);
+  if (PI == PE || ++PI != PE) return 0;
+
+  BasicBlock *SrcPred = *pred_begin(SrcBlock);
+  
+  // Look at the predecessors of DstBlock.  One of them will be SrcBlock.  If
+  // there is only one other pred, get it, otherwise we can't handle it.
+  PI = pred_begin(DstBlock); PE = pred_end(DstBlock);
+  BasicBlock *DstOtherPred = 0;
+  if (*PI == SrcBlock) {
+    if (++PI == PE) return 0;
+    DstOtherPred = *PI;
+    if (++PI != PE) return 0;
+  } else {
+    DstOtherPred = *PI;
+    if (++PI == PE || *PI != SrcBlock || ++PI != PE) return 0;
+  }
+
+  // We can handle two situations here: "if then" and "if then else" blocks.  An
+  // 'if then' situation is just where DstOtherPred == SrcPred.
+  if (DstOtherPred == SrcPred)
+    return SrcPred;
+
+  // Check to see if we have an "if then else" situation, which means that
+  // DstOtherPred will have a single predecessor and it will be SrcPred.
+  PI = pred_begin(DstOtherPred); PE = pred_end(DstOtherPred);
+  if (PI != PE && *PI == SrcPred) {
+    if (++PI != PE) return 0;  // Not a single pred.
+    return SrcPred;  // Otherwise, it's an "if then" situation.  Return the if.
+  }
+
+  // Otherwise, this is something we can't handle.
+  return 0;
+}
+
 
 /// eliminateUnconditionalBranch - Clone the instructions from the destination
 /// block into the source block, eliminating the specified unconditional branch.
@@ -134,6 +176,39 @@ void TailDup::eliminateUnconditionalBranch(BranchInst *Branch) {
 
   DEBUG(std::cerr << "TailDuplication[" << SourceBlock->getParent()->getName()
                   << "]: Eliminating branch: " << *Branch);
+
+  // See if we can avoid duplicating code by moving it up to a dominator of both
+  // blocks.
+  if (BasicBlock *DomBlock = FindObviousSharedDomOf(SourceBlock, DestBlock)) {
+    DEBUG(std::cerr << "Found shared dominator: " << DomBlock->getName()
+                    << "\n");
+
+    // If there are non-phi instructions in DestBlock that have no operands
+    // defined in DestBlock, and if the instruction has no side effects, we can
+    // move the instruction to DomBlock instead of duplicating it.
+    BasicBlock::iterator BBI = DestBlock->begin();
+    while (isa<PHINode>(BBI)) ++BBI;
+    while (!isa<TerminatorInst>(BBI)) {
+      Instruction *I = BBI++;
+      
+      bool CanHoist = !I->isTrapping() && !I->mayWriteToMemory();
+      if (CanHoist) {
+        for (unsigned op = 0, e = I->getNumOperands(); op != e; ++op)
+          if (Instruction *OpI = dyn_cast<Instruction>(I->getOperand(op)))
+            if (OpI->getParent() == DestBlock ||
+                (isa<InvokeInst>(OpI) && OpI->getParent() == DomBlock)) {
+              CanHoist = false;
+              break;
+            }
+        if (CanHoist) {
+          // Remove from DestBlock, move right before the term in DomBlock.
+          DestBlock->getInstList().remove(I);
+          DomBlock->getInstList().insert(DomBlock->getTerminator(), I);
+          DEBUG(std::cerr << "Hoisted: " << *I);
+        }
+      }
+    }
+  }
 
   // Tail duplication can not update SSA properties correctly if the values
   // defined in the duplicated tail are used outside of the tail itself.  For
