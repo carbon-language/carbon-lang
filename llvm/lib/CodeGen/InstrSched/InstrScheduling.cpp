@@ -149,10 +149,10 @@ public: // iterators
   typedef ScheduleIterator<SchedGraphNode> iterator;
   typedef ScheduleIterator<const SchedGraphNode> const_iterator;
   
-        iterator begin();
-  const_iterator begin() const;
-        iterator end();
-  const_iterator end()   const;
+        iterator begin()       { return iterator::begin(*this); }
+  const_iterator begin() const { return const_iterator::begin(*this); }
+        iterator end()         { return iterator::end(*this); }
+  const_iterator end() const   { return const_iterator::end(*this); }
   
 public: // constructors and destructor
   /*ctor*/		InstrSchedule	(unsigned int _nslots,
@@ -278,30 +278,6 @@ ScheduleIterator<_NodeType>
 ScheduleIterator<_NodeType>::end(const InstrSchedule& _schedule)
 {
   return _Self(_schedule, _schedule.groups.size(), 0);
-}
-
-InstrSchedule::iterator
-InstrSchedule::begin()
-{
-  return iterator::begin(*this);
-}
-
-InstrSchedule::const_iterator
-InstrSchedule::begin() const
-{
-  return const_iterator::begin(*this);
-}
-
-InstrSchedule::iterator
-InstrSchedule::end()
-{
-  return iterator::end(*this);
-}
-
-InstrSchedule::const_iterator
-InstrSchedule::end() const
-{
-  return const_iterator::end(  *this);
 }
 
 
