@@ -72,6 +72,30 @@ struct ListReducer {
         break;
       }
     }
+
+    // Okay, we trimmed as much off the top and the bottom of the list as we
+    // could.  If there is more two elements in the list, try deleting interior
+    // elements and testing that.
+    //
+    if (TheList.size() > 2) {
+      bool Changed = true;
+      std::vector<ElTy> EmptyList;
+      while (Changed) {
+        Changed = false;
+        std::vector<ElTy> TrimmedList;
+        for (unsigned i = 1; i < TheList.size()-1; ++i) { // Check interior elts
+          std::vector<ElTy> TestList(TheList);
+          TestList.erase(TestList.begin()+i);
+
+          if (doTest(EmptyList, TestList) == KeepSuffix) {
+            // We can trim down the list!
+            TheList.swap(TestList);
+            --i;  // Don't skip an element of the list
+            Changed = true;
+          }
+        }
+      }
+    }
   }
 };
 
@@ -187,7 +211,7 @@ public:
                             const std::vector<Function*> &Kept) {
     if (TestFuncs(Kept, false))
       return KeepSuffix;
-    if (TestFuncs(Prefix, false))
+    if (!Prefix.empty() && TestFuncs(Prefix, false))
       return KeepPrefix;
     return NoFailure;
   }
