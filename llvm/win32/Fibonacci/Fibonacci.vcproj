@@ -37,9 +37,9 @@
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
+				AdditionalDependencies="$(SolutionDir)X86\$(IntDir)\X86TargetMachine.obj"
 				OutputFile="$(OutDir)/Fibonacci.exe"
 				LinkIncremental="2"
-				ForceSymbolReferences="_X86TargetMachineModule"
 				GenerateDebugInformation="TRUE"
 				ProgramDatabaseFile="$(OutDir)/Fibonacci.pdb"
 				SubSystem="1"
@@ -88,9 +88,9 @@
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
+				AdditionalDependencies="$(SolutionDir)X86\$(IntDir)\X86TargetMachine.obj"
 				OutputFile="$(OutDir)/Fibonacci.exe"
 				LinkIncremental="1"
-				ForceSymbolReferences="_X86TargetMachineModule"
 				GenerateDebugInformation="TRUE"
 				SubSystem="1"
 				OptimizeReferences="2"
