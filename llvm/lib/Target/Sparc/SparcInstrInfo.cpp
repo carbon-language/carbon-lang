@@ -7,6 +7,7 @@
 #include "llvm/CodeGen/InstrSelection.h"
 #include "llvm/CodeGen/InstrSelectionSupport.h"
 #include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/CodeGen/MachineFunctionInfo.h"
 #include "llvm/CodeGen/MachineCodeForInstruction.h"
 #include "llvm/Function.h"
 #include "llvm/Constants.h"
@@ -396,8 +397,8 @@ UltraSparcInstrInfo::CreateCodeToLoadConst(const TargetMachine& target,
   else if (valType->isIntegral())
     {
       bool isValidConstant;
-      unsigned opSize = target.DataLayout.getTypeSize(val->getType());
-      unsigned destSize = target.DataLayout.getTypeSize(dest->getType());
+      unsigned opSize = target.getTargetData().getTypeSize(val->getType());
+      unsigned destSize = target.getTargetData().getTypeSize(dest->getType());
       
       if (! dest->getType()->isSigned())
         {
@@ -406,7 +407,7 @@ UltraSparcInstrInfo::CreateCodeToLoadConst(const TargetMachine& target,
 
           if (opSize > destSize ||
               (val->getType()->isSigned()
-               && destSize < target.DataLayout.getIntegerRegize()))
+               && destSize < target.getTargetData().getIntegerRegize()))
             { // operand is larger than dest,
               //    OR both are equal but smaller than the full register size
               //       AND operand is signed, so it may have extra sign bits:
@@ -461,7 +462,7 @@ UltraSparcInstrInfo::CreateCodeToLoadConst(const TargetMachine& target,
       mvec.push_back(MI);
       
       // Make sure constant is emitted to constant pool in assembly code.
-      MachineFunction::get(F).addToConstantPool(cast<Constant>(val));
+      MachineFunction::get(F).getInfo()->addToConstantPool(cast<Constant>(val));
     }
 }
 
@@ -487,10 +488,10 @@ UltraSparcInstrInfo::CreateCodeToCopyIntToFloat(const TargetMachine& target,
          && "Dest type must be float/double");
 
   // Get a stack slot to use for the copy
-  int offset = MachineFunction::get(F).allocateLocalVar(target, val); 
+  int offset = MachineFunction::get(F).getInfo()->allocateLocalVar(val);
 
   // Get the size of the source value being copied. 
-  size_t srcSize = target.DataLayout.getTypeSize(val->getType());
+  size_t srcSize = target.getTargetData().getTypeSize(val->getType());
 
   // Store instruction stores `val' to [%fp+offset].
   // The store and load opCodes are based on the size of the source value.
@@ -499,7 +500,7 @@ UltraSparcInstrInfo::CreateCodeToCopyIntToFloat(const TargetMachine& target,
   // Note that the store instruction is the same for signed and unsigned ints.
   const Type* storeType = (srcSize <= 4)? Type::IntTy : Type::LongTy;
   Value* storeVal = val;
-  if (srcSize < target.DataLayout.getTypeSize(Type::FloatTy))
+  if (srcSize < target.getTargetData().getTypeSize(Type::FloatTy))
     { // sign- or zero-extend respectively
       storeVal = new TmpInstruction(storeType, val);
       if (val->getType()->isSigned())
@@ -549,7 +550,7 @@ UltraSparcInstrInfo::CreateCodeToCopyFloatToInt(const TargetMachine& target,
   assert((destTy->isIntegral() || isa<PointerType>(destTy))
          && "Dest type must be integer, bool or pointer");
 
-  int offset = MachineFunction::get(F).allocateLocalVar(target, val); 
+  int offset = MachineFunction::get(F).getInfo()->allocateLocalVar(val); 
 
   // Store instruction stores `val' to [%fp+offset].
   // The store opCode is based only the source value being copied.
