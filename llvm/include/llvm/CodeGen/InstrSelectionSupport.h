@@ -115,6 +115,18 @@ Create2OperandInstr(MachineOpCode opCode, Value* argVal1, Value* argVal2)
 }
 
 inline MachineInstr*
+Create2OperandInstr(MachineOpCode opCode,
+                    Value* argVal1, MachineOperand::MachineOperandType type1,
+                    Value* argVal2, MachineOperand::MachineOperandType type2)
+{
+  MachineInstr* M = new MachineInstr(opCode);
+  M->SetMachineOperandVal(0, type1, argVal1);
+  M->SetMachineOperandVal(1, type2, argVal2);
+  return M;
+}
+
+
+inline MachineInstr*
 Create2OperandInstr_UImmed(MachineOpCode opCode,
                            unsigned int unextendedImmed, Value* argVal2)
 {
@@ -132,6 +144,16 @@ Create2OperandInstr_SImmed(MachineOpCode opCode,
   MachineInstr* M = new MachineInstr(opCode);
   M->SetMachineOperandConst(0, MachineOperand::MO_SignExtendedImmed,
                                signExtendedImmed);
+  M->SetMachineOperandVal(1, MachineOperand::MO_VirtualRegister, argVal2);
+  return M;
+}
+
+inline MachineInstr*
+Create2OperandInstr_Addr(MachineOpCode opCode,
+                         Value* label, Value* argVal2)
+{
+  MachineInstr* M = new MachineInstr(opCode);
+  M->SetMachineOperandVal(0, MachineOperand::MO_PCRelativeDisp,  label);
   M->SetMachineOperandVal(1, MachineOperand::MO_VirtualRegister, argVal2);
   return M;
 }
@@ -200,6 +222,17 @@ Create3OperandInstr_SImmed(MachineOpCode opCode, Value* argVal1,
   M->SetMachineOperandVal(0, MachineOperand::MO_VirtualRegister, argVal1);
   M->SetMachineOperandConst(1, MachineOperand::MO_SignExtendedImmed,
                                  signExtendedImmed);
+  M->SetMachineOperandVal(2, MachineOperand::MO_VirtualRegister, argVal3);
+  return M;
+}
+
+inline MachineInstr*
+Create3OperandInstr_Addr(MachineOpCode opCode, Value* argVal1,
+                         Value* label, Value* argVal3)
+{
+  MachineInstr* M = new MachineInstr(opCode);
+  M->SetMachineOperandVal(0, MachineOperand::MO_VirtualRegister, argVal1);
+  M->SetMachineOperandVal(1, MachineOperand::MO_PCRelativeDisp,  label);
   M->SetMachineOperandVal(2, MachineOperand::MO_VirtualRegister, argVal3);
   return M;
 }
