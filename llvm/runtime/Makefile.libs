@@ -31,10 +31,13 @@ ifdef EXPORTED_SYMBOL_LIST
 LLINK_OPTS += -internalize -internalize-public-api-list=$(EXPORTED_SYMBOL_LIST)
 endif
 
+# Standard set of postlink optimizations...
+LLINK_OPTS +=  -inline -globaldce -funcresolve -deadtypeelim -instcombine -simplifycfg
+
 # Link the library, then perform postlink optimization...
 $(DESTLIBNAME): $(DESTLIBDIR)/.dir $(LObjects) $(LLINK) $(LOPT)
 	$(LLINK) -f $(LObjects) $(LDFLAGS) | \
-	 $(LOPT) -f -q -funcresolve -deadtypeelim $(LLINK_OPTS) -globaldce -o $@
+	 $(LOPT) -f -q $(LLINK_OPTS) -o $@
 
 # Install target for libraries: Copy into the gcc install directory.
 #
