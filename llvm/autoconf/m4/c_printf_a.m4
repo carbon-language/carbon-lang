@@ -3,7 +3,7 @@
 # This is modified from:
 # http://www.gnu.org/software/ac-archive/htmldoc/ac_cxx_have_ext_slist.html
 AC_DEFUN([AC_C_PRINTF_A],
-[AC_CACHE_CHECK([if printf has the %a format character],[ac_cv_printf_a],
+[AC_CACHE_CHECK([if printf has the %a format character],[llvm_cv_c_printf_a],
 [AC_LANG_PUSH([C])
  AC_RUN_IFELSE([
   AC_LANG_PROGRAM([[
@@ -21,11 +21,11 @@ if (A != B)
 if (A != 0x1.999999999999ap-4)
   return (1);
 return (0);]])],
-  ac_c_printf_a=yes,
-  ac_c_printf_a=no,
-  ac_c_printf_a=no)
+  llvm_cv_c_printf_a=yes,
+  llvmac_cv_c_printf_a=no,
+  llvmac_cv_c_printf_a=no)
  AC_LANG_POP([C])])
- if test "$ac_cv_printf_a" = "yes"; then
+ if test "$llvm_cv_c_printf_a" = "yes"; then
    AC_DEFINE([HAVE_PRINTF_A],[1],[Define to have the %a format string])
  fi
 ])
