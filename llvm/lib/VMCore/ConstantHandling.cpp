@@ -171,7 +171,7 @@ Constant *llvm::ConstantFoldGetElementPtr(const Constant *C,
            I != E; ++I)
         LastTy = *I;
 
-      if (LastTy && isa<ArrayType>(LastTy)) {
+      if ((LastTy && isa<ArrayType>(LastTy)) || IdxList[0]->isNullValue()) {
         std::vector<Constant*> NewIndices;
         NewIndices.reserve(IdxList.size() + CE->getNumOperands());
         for (unsigned i = 1, e = CE->getNumOperands()-1; i != e; ++i)
@@ -179,11 +179,13 @@ Constant *llvm::ConstantFoldGetElementPtr(const Constant *C,
 
         // Add the last index of the source with the first index of the new GEP.
         // Make sure to handle the case when they are actually different types.
-        Constant *Combined =
-          ConstantExpr::get(Instruction::Add,
-                            ConstantExpr::getCast(IdxList[0], Type::LongTy),
-   ConstantExpr::getCast(CE->getOperand(CE->getNumOperands()-1), Type::LongTy));
-                            
+        Constant *Combined = CE->getOperand(CE->getNumOperands()-1);
+        if (!IdxList[0]->isNullValue())   // Otherwise it must be an array
+          Combined = 
+            ConstantExpr::get(Instruction::Add,
+                              ConstantExpr::getCast(IdxList[0], Type::LongTy),
+                              ConstantExpr::getCast(Combined, Type::LongTy));
+        
         NewIndices.push_back(Combined);
         NewIndices.insert(NewIndices.end(), IdxList.begin()+1, IdxList.end());
         return ConstantExpr::getGetElementPtr(CE->getOperand(0), NewIndices);
