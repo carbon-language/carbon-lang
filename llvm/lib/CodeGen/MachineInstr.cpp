@@ -15,7 +15,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/CodeGen/MachineInstr.h"
-#include "llvm/CodeGen/MachineBasicBlock.h"
+#include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/Value.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetInstrInfo.h"
@@ -198,13 +198,13 @@ static inline std::ostream& OutputValue(std::ostream &os, const Value* val) {
 
 static inline void OutputReg(std::ostream &os, unsigned RegNo,
                              const MRegisterInfo *MRI = 0) {
-  if (MRI) {
-    if (MRegisterInfo::isPhysicalRegister(RegNo))
+  if (MRegisterInfo::isPhysicalRegister(RegNo)) {
+    if (MRI)
       os << "%" << MRI->get(RegNo).Name;
     else
-      os << "%reg" << RegNo;
+      os << "%mreg(" << RegNo << ")";
   } else
-    os << "%mreg(" << RegNo << ")";
+    os << "%reg" << RegNo;
 }
 
 static void print(const MachineOperand &MO, std::ostream &OS,
@@ -328,7 +328,17 @@ void MachineInstr::print(std::ostream &OS, const TargetMachine &TM) const {
   OS << "\n";
 }
 
-std::ostream &operator<<(std::ostream& os, const MachineInstr& MI) {
+std::ostream &operator<<(std::ostream &os, const MachineInstr &MI) {
+  // If the instruction is embedded into a basic block, we can find the target
+  // info for the instruction.
+  if (const MachineBasicBlock *MBB = MI.getParent()) {
+    const MachineFunction *MF = MBB->getParent();
+    MI.print(os, MF->getTarget());
+    return os;
+  }
+
+  // Otherwise, print it out in the "raw" format without symbolic register names
+  // and such.
   os << TargetInstrDescriptors[MI.getOpcode()].Name;
   
   for (unsigned i=0, N=MI.getNumOperands(); i < N; i++) {
