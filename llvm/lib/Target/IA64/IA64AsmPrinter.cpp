@@ -142,9 +142,8 @@ bool IA64SharedAsmPrinter::doFinalization(Module &M) {
           // FALL THROUGH
         case GlobalValue::InternalLinkage:
           if (C->isNullValue())
-            SwitchSection(O, CurSection, ".data"); // FIXME: this was
-	  // '.bss', but in ia64-land .bss means "nobits" (i.e. uninitialized)
-	  // hmm.
+            SwitchSection(O, CurSection, ".bss");
+	  // FIXME? in ia64-land .bss means "nobits" (i.e. uninitialized)
           else
             SwitchSection(O, CurSection, ".data");
           break;
@@ -191,12 +190,17 @@ namespace {
       : IA64SharedAsmPrinter(O, TM) {
 
       CommentString = "//";
-      Data8bitsDirective = "\tdata1\t";
-      Data16bitsDirective = "\tdata2\t";
-      Data32bitsDirective = "\tdata4\t";
-      Data64bitsDirective = "\tdata8\t";
+      Data8bitsDirective = "\tdata1\t";     // FIXME: check that we are
+      Data16bitsDirective = "\tdata2.ua\t"; // disabling auto-alignment
+      Data32bitsDirective = "\tdata4.ua\t"; // properly
+      Data64bitsDirective = "\tdata8.ua\t";
       ZeroDirective = "\t.skip\t";
       AsciiDirective = "\tstring\t";
+
+      GlobalVarAddrPrefix="";
+      GlobalVarAddrSuffix="";
+      FunctionAddrPrefix="@fptr(";
+      FunctionAddrSuffix=")";
 
     }
 
