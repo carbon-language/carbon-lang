@@ -19,7 +19,9 @@ class TargetMachine;
 //
 extern const PassInfo *PHIEliminationID;
 
-enum RegAllocName { simple, local };
+/// Creates a register allocator as the user specified on the command
+/// line.
+FunctionPass *createRegisterAllocator();
 
 /// SimpleRegisterAllocation Pass - This pass converts the input machine code
 /// from SSA form to use explicit registers by spilling every register.  Wow,
