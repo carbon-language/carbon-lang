@@ -264,28 +264,7 @@ void BUDataStructures::calculateGraph(DSGraph &Graph) {
 
   DSGraph::ReturnNodesTy &ReturnNodes = Graph.getReturnNodes();
 
-  // Print out multi-call sites.
   bool Printed = false;
-  for (std::list<DSCallSite>::iterator I = TempFCs.begin(), E = TempFCs.end();
-       I != E; ++I) {
-    if (!I->isDirectCall()) {
-      DSNode *Node = I->getCalleeNode();
-      if (Node->getGlobals().size() > 1) {
-        if (!Printed)
-          std::cerr << "In Fns: " << Graph.getFunctionNames() << "\n";
-        std::cerr << "  calls " << Node->getGlobals().size()
-                  << " fns from site: " << I->getCallSite().getInstruction() 
-                  << "  " << *I->getCallSite().getInstruction();
-        unsigned NumToPrint = Node->getGlobals().size();
-        if (NumToPrint > 5) NumToPrint = 5;
-        std::cerr << "   Fns =";
-        for (unsigned i = 0; i != NumToPrint; ++i) 
-          std::cerr << " " << Node->getGlobals()[i]->getName();
-        std::cerr << "\n";
-      }
-    }
-  }
-
   while (!TempFCs.empty()) {
     DSCallSite &CS = *TempFCs.begin();
 
