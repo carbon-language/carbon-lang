@@ -7,6 +7,6 @@
 # 
 ##===----------------------------------------------------------------------===##
 LEVEL = ../../..
-LIBRARYNAME = lli-interpreter
+LIBRARYNAME = LLVMInterpreter
 
 include $(LEVEL)/Makefile.common

@@ -7,7 +7,7 @@
 # 
 ##===----------------------------------------------------------------------===##
 LEVEL = ../../..
-LIBRARYNAME = lli-jit
+LIBRARYNAME = LLVMJIT
 
 # Get the $(ARCH) setting
 include $(LEVEL)/Makefile.config
