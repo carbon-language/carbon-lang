@@ -91,7 +91,8 @@ namespace {
       // emit it inline where it would go.
       if (I.getType() == Type::VoidTy || I.use_size() != 1 ||
           isa<TerminatorInst>(I) || isa<CallInst>(I) || isa<PHINode>(I) || 
-          isa<LoadInst>(I)) // Don't inline a load across a store!
+          isa<LoadInst>(I) || isa<VarArgInst>(I))
+        // Don't inline a load across a store or other bad things!
         return false;
 
       // Only inline instruction it it's use is in the same BB as the inst.
