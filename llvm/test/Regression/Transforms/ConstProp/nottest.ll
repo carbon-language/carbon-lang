@@ -1,6 +1,6 @@
 ; Ensure constant propogation of 'not' instructions is working correctly.
 
-; RUN: if as < %s | opt -constprop | dis | grep not
+; RUN: if as < %s | opt -constprop -die | dis | grep not
 ; RUN: then exit 1
 ; RUN: else exit 0
 ; RUN: fi

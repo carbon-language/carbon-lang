@@ -1,7 +1,7 @@
 ; This is a basic sanity check for constant propogation.  The add instruction 
 ; should be eliminated.
 
-; RUN: if as < %s | opt -constprop | dis | grep add
+; RUN: if as < %s | opt -constprop -die | dis | grep add
 ; RUN: then exit 1
 ; RUN: else exit 0
 ; RUN: fi

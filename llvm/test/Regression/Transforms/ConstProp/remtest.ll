@@ -1,6 +1,6 @@
 ; Ensure constant propogation of remainder instructions is working correctly.
 
-; RUN: if as < %s | opt -constprop | dis | grep rem
+; RUN: if as < %s | opt -constprop -die | dis | grep rem
 ; RUN: then exit 1
 ; RUN: else exit 0
 ; RUN: fi
