@@ -153,13 +153,13 @@ void RegAllocSimple::AllocateBasicBlock(MachineBasicBlock &MBB) {
     // are used by the instruction (including implicit uses)
     unsigned Opcode = MI->getOpcode();
     const TargetInstrDescriptor &Desc = TM->getInstrInfo().get(Opcode);
-    if (const unsigned *Regs = Desc.ImplicitUses)
-      while (*Regs)
-	RegsUsed[*Regs++] = true;
+    const unsigned *Regs = Desc.ImplicitUses;
+    while (*Regs)
+      RegsUsed[*Regs++] = true;
     
-    if (const unsigned *Regs = Desc.ImplicitDefs)
-      while (*Regs)
-	RegsUsed[*Regs++] = true;
+    Regs = Desc.ImplicitDefs;
+    while (*Regs)
+      RegsUsed[*Regs++] = true;
     
     // Loop over uses, move from memory into registers
     for (int i = MI->getNumOperands() - 1; i >= 0; --i) {

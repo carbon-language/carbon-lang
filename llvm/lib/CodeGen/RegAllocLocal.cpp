@@ -120,9 +120,10 @@ namespace {
     ///
     bool areRegsEqual(unsigned R1, unsigned R2) const {
       if (R1 == R2) return true;
-      if (const unsigned *AliasSet = RegInfo->getAliasSet(R2))
-        for (unsigned i = 0; AliasSet[i]; ++i)
-          if (AliasSet[i] == R1) return true;
+      for (const unsigned *AliasSet = RegInfo->getAliasSet(R2);
+           *AliasSet; ++AliasSet) {
+        if (*AliasSet == R1) return true;
+      }
       return false;
     }
 
@@ -271,14 +272,15 @@ void RA::spillPhysReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator &I,
   if (PI != PhysRegsUsed.end()) {             // Only spill it if it's used!
     if (PI->second || !OnlyVirtRegs)
       spillVirtReg(MBB, I, PI->second, PhysReg);
-  } else if (const unsigned *AliasSet = RegInfo->getAliasSet(PhysReg)) {
+  } else {
     // If the selected register aliases any other registers, we must make
     // sure that one of the aliases isn't alive...
-    for (unsigned i = 0; AliasSet[i]; ++i) {
-      PI = PhysRegsUsed.find(AliasSet[i]);
+    for (const unsigned *AliasSet = RegInfo->getAliasSet(PhysReg);
+         *AliasSet; ++AliasSet) {
+      PI = PhysRegsUsed.find(*AliasSet);
       if (PI != PhysRegsUsed.end())     // Spill aliased register...
         if (PI->second || !OnlyVirtRegs)
-          spillVirtReg(MBB, I, PI->second, AliasSet[i]);
+          spillVirtReg(MBB, I, PI->second, *AliasSet);
     }
   }
 }
@@ -308,10 +310,10 @@ bool RA::isPhysRegAvailable(unsigned PhysReg) const {
 
   // If the selected register aliases any other allocated registers, it is
   // not free!
-  if (const unsigned *AliasSet = RegInfo->getAliasSet(PhysReg))
-    for (unsigned i = 0; AliasSet[i]; ++i)
-      if (PhysRegsUsed.count(AliasSet[i])) // Aliased register in use?
-        return false;                      // Can't use this reg then.
+  for (const unsigned *AliasSet = RegInfo->getAliasSet(PhysReg);
+       *AliasSet; ++AliasSet)
+    if (PhysRegsUsed.count(*AliasSet)) // Aliased register in use?
+      return false;                    // Can't use this reg then.
   return true;
 }
 
@@ -414,12 +416,13 @@ unsigned RA::getReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator &I,
         } else {
           // If one of the registers aliased to the current register is
           // compatible, use it.
-          if (const unsigned *AliasSet = RegInfo->getAliasSet(R))
-            for (unsigned a = 0; AliasSet[a]; ++a)
-              if (RegInfo->getRegClass(AliasSet[a]) == RC) {
-                PhysReg = AliasSet[a];    // Take an aliased register
-                break;
-              }
+          for (const unsigned *AliasSet = RegInfo->getAliasSet(R);
+               *AliasSet; ++AliasSet) {
+            if (RegInfo->getRegClass(*AliasSet) == RC) {
+              PhysReg = *AliasSet;    // Take an aliased register
+              break;
+            }
+          }
         }
       }
     }
@@ -485,9 +488,9 @@ void RA::AllocateBasicBlock(MachineBasicBlock &MBB) {
 
     // Loop over the implicit uses, making sure that they are at the head of the
     // use order list, so they don't get reallocated.
-    if (const unsigned *ImplicitUses = TID.ImplicitUses)
-      for (unsigned i = 0; ImplicitUses[i]; ++i)
-        MarkPhysRegRecentlyUsed(ImplicitUses[i]);
+    for (const unsigned *ImplicitUses = TID.ImplicitUses;
+         *ImplicitUses; ++ImplicitUses)
+        MarkPhysRegRecentlyUsed(*ImplicitUses);
 
     // Get the used operands into registers.  This has the potential to spill
     // incoming values if we are out of registers.  Note that we completely

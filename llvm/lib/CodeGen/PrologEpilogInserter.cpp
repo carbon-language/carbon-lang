@@ -127,12 +127,15 @@ void PEI::saveCallerSavedRegisters(MachineFunction &Fn) {
     unsigned Reg = CSRegs[i];
     if (ModifiedRegs[Reg]) {
       RegsToSave.push_back(Reg);  // If modified register...
-    } else if (const unsigned *AliasSet = RegInfo->getAliasSet(Reg))
-      for (unsigned j = 0; AliasSet[j]; ++j)     // Check alias registers too...
-	if (ModifiedRegs[AliasSet[j]]) {
+    } else {
+      for (const unsigned *AliasSet = RegInfo->getAliasSet(Reg);
+           *AliasSet; ++AliasSet) {  // Check alias registers too...
+	if (ModifiedRegs[*AliasSet]) {
 	  RegsToSave.push_back(Reg);
 	  break;
 	}
+      }
+    }
   }
 
   if (RegsToSave.empty())

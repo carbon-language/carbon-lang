@@ -65,6 +65,10 @@ void InstrInfoEmitter::run(std::ostream &OS) {
   std::vector<Record*> Instructions =
     Records.getAllDerivedDefinitions("Instruction");
   
+  // Emit empty implicit uses and defs lists
+  OS << "static const unsigned EmptyImpUses[] = { 0 };\n"
+     << "static const unsigned EmptyImpDefs[] = { 0 };\n";
+
   // Emit all of the instruction's implicit uses and defs...
   for (unsigned i = 0, e = Instructions.size(); i != e; ++i) {
     Record *Inst = Instructions[i];
@@ -113,13 +117,13 @@ void InstrInfoEmitter::emitRecord(Record *R, unsigned Num, Record *InstrInfo,
   // Emit the implicit uses and defs lists...
   LI = R->getValueAsListInit("Uses");
   if (!LI->getSize())
-    OS << "0, ";
+    OS << "EmptyImpUses, ";
   else 
     OS << R->getName() << "ImpUses, ";
 
   LI = R->getValueAsListInit("Defs");
   if (!LI->getSize())
-    OS << "0 ";
+    OS << "EmptyImpDefs ";
   else 
     OS << R->getName() << "ImpDefs ";
 

@@ -138,7 +138,7 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
   std::vector<Record*> RegisterAliasesRecs =
     Records.getAllDerivedDefinitions("RegisterAliases");
   std::map<Record*, std::set<Record*> > RegisterAliases;
-  
+
   for (unsigned i = 0, e = RegisterAliasesRecs.size(); i != e; ++i) {
     Record *AS = RegisterAliasesRecs[i];
     Record *R = AS->getValueAsDef("Reg");
@@ -166,6 +166,8 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
   if (!RegisterAliases.empty())
     OS << "\n\n  // Register Alias Sets...\n";
   
+  // Emit the empty alias list
+  OS << "  const unsigned Empty_AliasSet[] = { 0 };\n";
   // Loop over all of the registers which have aliases, emitting the alias list
   // to memory.
   for (std::map<Record*, std::set<Record*> >::iterator
@@ -192,7 +194,7 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
     if (RegisterAliases.count(Reg))
       OS << Reg->getName() << "_AliasSet,\t";
     else
-      OS << "0,\t\t";
+      OS << "Empty_AliasSet,\t";
     OS << "0, 0 },\n";    
   }
   OS << "  };\n";      // End of register descriptors...

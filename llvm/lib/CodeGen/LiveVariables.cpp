@@ -108,12 +108,14 @@ void LiveVariables::HandlePhysRegUse(unsigned Reg, MachineInstr *MI) {
   if (PhysRegInfo[Reg]) {
     PhysRegInfo[Reg] = MI;
     PhysRegUsed[Reg] = true;
-  } else if (const unsigned *AliasSet = RegInfo->getAliasSet(Reg)) {
-    for (; unsigned NReg = AliasSet[0]; ++AliasSet)
-      if (MachineInstr *LastUse = PhysRegInfo[NReg]) {
-	PhysRegInfo[NReg] = MI;
-	PhysRegUsed[NReg] = true;
+  } else {
+    for (const unsigned *AliasSet = RegInfo->getAliasSet(Reg);
+         *AliasSet; ++AliasSet) {
+      if (MachineInstr *LastUse = PhysRegInfo[*AliasSet]) {
+	PhysRegInfo[*AliasSet] = MI;
+	PhysRegUsed[*AliasSet] = true;
       }
+    }
   }
 }
 
@@ -124,15 +126,17 @@ void LiveVariables::HandlePhysRegDef(unsigned Reg, MachineInstr *MI) {
       RegistersKilled.insert(std::make_pair(LastUse, Reg));
     else
       RegistersDead.insert(std::make_pair(LastUse, Reg));
-  } else if (const unsigned *AliasSet = RegInfo->getAliasSet(Reg)) {
-    for (; unsigned NReg = AliasSet[0]; ++AliasSet)
-      if (MachineInstr *LastUse = PhysRegInfo[NReg]) {
-	if (PhysRegUsed[NReg])
-	  RegistersKilled.insert(std::make_pair(LastUse, NReg));
+  } else {
+    for (const unsigned *AliasSet = RegInfo->getAliasSet(Reg);
+         *AliasSet; ++AliasSet) {
+      if (MachineInstr *LastUse = PhysRegInfo[*AliasSet]) {
+	if (PhysRegUsed[*AliasSet])
+	  RegistersKilled.insert(std::make_pair(LastUse, *AliasSet));
 	else
-	  RegistersDead.insert(std::make_pair(LastUse, NReg));
-	PhysRegInfo[NReg] = 0;  // Kill the aliased register
+	  RegistersDead.insert(std::make_pair(LastUse, *AliasSet));
+	PhysRegInfo[*AliasSet] = 0;  // Kill the aliased register
       }
+    }
   }
   PhysRegInfo[Reg] = MI;
   PhysRegUsed[Reg] = false;
@@ -206,9 +210,9 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &MF) {
 	NumOperandsToProcess = 1;
 
       // Loop over implicit uses, using them.
-      if (const unsigned *ImplicitUses = MID.ImplicitUses)
-	for (unsigned i = 0; ImplicitUses[i]; ++i)
-	  HandlePhysRegUse(ImplicitUses[i], MI);
+      for (const unsigned *ImplicitUses = MID.ImplicitUses;
+           *ImplicitUses; ++ImplicitUses)
+	HandlePhysRegUse(*ImplicitUses, MI);
 
       // Process all explicit uses...
       for (unsigned i = 0; i != NumOperandsToProcess; ++i) {
