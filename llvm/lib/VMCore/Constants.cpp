@@ -213,7 +213,10 @@ ConstantArray::ConstantArray(const ArrayType *T,
                              const std::vector<Constant*> &V) : Constant(T) {
   Operands.reserve(V.size());
   for (unsigned i = 0, e = V.size(); i != e; ++i) {
-    assert(V[i]->getType() == T->getElementType());
+    assert(V[i]->getType() == T->getElementType() ||
+           (T->isAbstract() &&
+            V[i]->getType()->getPrimitiveID() ==
+            T->getElementType()->getPrimitiveID()));
     Operands.push_back(Use(V[i], this));
   }
 }
