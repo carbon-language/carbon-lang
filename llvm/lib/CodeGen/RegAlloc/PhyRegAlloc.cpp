@@ -437,8 +437,8 @@ void PhyRegAlloc::updateMachineCode()
 	    // LR did NOT receive a color (register). Now, insert spill code
 	    // for spilled opeands in this machine instruction
 
-	    assert(0 && "LR must be spilled");
-	    //	    insertCode4SpilledLR(LR, MInst, *BBI, OpNum );
+	    //assert(0 && "LR must be spilled");
+	    insertCode4SpilledLR(LR, MInst, *BBI, OpNum );
 
 	  }
 	}
@@ -501,6 +501,89 @@ void PhyRegAlloc::updateMachineCode()
     } // for each machine instruction
   }
 }
+
+
+
+//----------------------------------------------------------------------------
+// This method inserts spill code for AN operand whose LR was spilled.
+// This method may be called several times for a single machine instruction
+// if it contains many spilled operands. Each time it is called, it finds
+// a register which is not live at that instruction and also which is not
+// used by other spilled operands of the same instruction. Then it uses
+// this register temporarily to accomodate the spilled value.
+//----------------------------------------------------------------------------
+void PhyRegAlloc::insertCode4SpilledLR(const LiveRange *LR, 
+				       MachineInstr *MInst,
+				       const BasicBlock *BB,
+				       const unsigned OpNum) {
+
+  MachineOperand& Op = MInst->getOperand(OpNum);
+  bool isDef =  MInst->operandIsDefined(OpNum);
+  unsigned RegType = MRI.getRegType( LR );
+  int SpillOff = LR->getSpillOffFromFP();
+  RegClass *RC = LR->getRegClass();
+  const LiveVarSet *LVSetBef =  LVI->getLiveVarSetBeforeMInst(MInst, BB);
+  int TmpOff = 
+    mcInfo.pushTempValue(TM, TM.findOptimalStorageSize(LR->getType()));
+  
+  MachineInstr *MIBef,  *AdIMid, *MIAft;
+  int TmpReg;
+
+  TmpReg = getUsableRegAtMI(RC, RegType, MInst,LVSetBef, MIBef, MIAft);
+  TmpReg = MRI.getUnifiedRegNum( RC->getID(), TmpReg );
+  
+  
+  if( !isDef ) {
+
+    // for a USE, we have to load the value of LR from stack to a TmpReg
+    // and use the TmpReg as one operand of instruction
+
+    // actual loading instruction
+    AdIMid = MRI.cpMem2RegMI(MRI.getFramePointer(), SpillOff, TmpReg, RegType);
+
+    if( MIBef )
+      ((AddedInstrMap[MInst])->InstrnsBefore).push_back(MIBef);
+
+    ((AddedInstrMap[MInst])->InstrnsBefore).push_back(AdIMid);
+
+    if( MIAft)
+      ((AddedInstrMap[MInst])->InstrnsAfter).push_front(MIAft);
+
+    
+  } 
+  else {   // if this is a Def
+
+    // for a DEF, we have to store the value produced by this instruction
+    // on the stack position allocated for this LR
+
+    // actual storing instruction
+    AdIMid = MRI.cpReg2MemMI(TmpReg, MRI.getFramePointer(), SpillOff, RegType);
+
+    if( MIBef )
+      ((AddedInstrMap[MInst])->InstrnsBefore).push_back(MIBef);
+
+    ((AddedInstrMap[MInst])->InstrnsBefore).push_back(AdIMid);
+
+    if( MIAft)
+      ((AddedInstrMap[MInst])->InstrnsAfter).push_front(MIAft);
+
+  }  // if !DEF
+
+  cerr << "\nFor Inst " << *MInst;
+  cerr << "\n - SPILLED LR:"; LR->printSet();
+  cerr << "\n - Added Instructions:";
+  if( MIBef ) cerr <<  *MIBef;
+  cerr <<  *AdIMid;
+  if( MIAft ) cerr <<  *MIAft;
+
+  Op.setRegForValue( TmpReg );    // set the opearnd
+
+
+}
+
+
+
+
 
 
 //----------------------------------------------------------------------------
