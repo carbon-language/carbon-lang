@@ -44,7 +44,7 @@ namespace {
 
       // Set up the register classes.
       addRegisterClass(MVT::i32, PPC32::GPRCRegisterClass);
-      addRegisterClass(MVT::f32, PPC32::GPRCRegisterClass);
+      addRegisterClass(MVT::f32, PPC32::FPRCRegisterClass);
       addRegisterClass(MVT::f64, PPC32::FPRCRegisterClass);
       
       computeRegisterProperties();
@@ -322,13 +322,9 @@ PPC32TargetLowering::LowerCallTo(SDOperand Chain,
             // store only the non-fixed arguments in a vararg function.
             Stores.push_back(DAG.getNode(ISD::STORE, MVT::Other, Chain,
                                          Args[i].first, PtrOff));
-            if (GPR_remaining > 0)
-              args_to_use.push_back(DAG.getLoad(MVT::i32, Chain, PtrOff));
-            if (GPR_remaining > 1) {
-              SDOperand ConstFour = DAG.getConstant(4, getPointerTy());
-              PtrOff = DAG.getNode(ISD::ADD, MVT::i32, PtrOff, ConstFour);
-              args_to_use.push_back(DAG.getLoad(MVT::i32, Chain, PtrOff));
-            }
+            // FIXME: Need a way to communicate to the ISD::CALL select code
+            // that a particular argument is non-fixed so that we can load them
+            // into the correct GPR to shadow the FPR
           }
           args_to_use.push_back(Args[i].first);
           --FPR_remaining;
