@@ -290,6 +290,62 @@ void AliasSetTracker::add(const AliasSetTracker &AST) {
     }
 }
 
+/// remove - Remove the specified (potentially non-empty) alias set from the
+/// tracker.
+void AliasSetTracker::remove(AliasSet &AS) {
+  bool SetDead;
+  do {
+    AliasSet::iterator I = AS.begin();
+    Value *Ptr = I.getPointer(); ++I;
+
+    // deleteValue will delete the set automatically when the last pointer
+    // reference is destroyed.  "Predict" when this will happen.
+    SetDead = I == AS.end();
+    deleteValue(Ptr);  // Delete all of the pointers from the set
+  } while (!SetDead);
+}
+
+
+bool AliasSetTracker::remove(LoadInst *LI) {
+  unsigned Size = AA.getTargetData().getTypeSize(LI->getType());
+  AliasSet *AS = findAliasSetForPointer(LI->getOperand(0), Size);
+  if (!AS) return false;
+  remove(*AS);
+  return true;
+}
+
+bool AliasSetTracker::remove(StoreInst *SI) {
+  unsigned Size = AA.getTargetData().getTypeSize(SI->getOperand(0)->getType());
+  AliasSet *AS = findAliasSetForPointer(SI->getOperand(1), Size);
+  if (!AS) return false;
+  remove(*AS);
+  return true;
+}
+
+bool AliasSetTracker::remove(CallSite CS) {
+  if (Function *F = CS.getCalledFunction())
+    if (AA.doesNotAccessMemory(F))
+      return false; // doesn't alias anything
+
+  AliasSet *AS = findAliasSetForCallSite(CS);
+  if (!AS) return false;
+  remove(*AS);
+  return true;
+}
+
+bool AliasSetTracker::remove(Instruction *I) {
+  // Dispatch to one of the other remove methods...
+  if (LoadInst *LI = dyn_cast<LoadInst>(I))
+    return remove(LI);
+  else if (StoreInst *SI = dyn_cast<StoreInst>(I))
+    return remove(SI);
+  else if (CallInst *CI = dyn_cast<CallInst>(I))
+    return remove(CI);
+  else if (InvokeInst *II = dyn_cast<InvokeInst>(I))
+    return remove(II);
+  return true;
+}
+
 
 // deleteValue method - This method is used to remove a pointer value from the
 // AliasSetTracker entirely.  It should be used when an instruction is deleted
