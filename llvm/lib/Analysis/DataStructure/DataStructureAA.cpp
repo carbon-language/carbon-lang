@@ -111,45 +111,45 @@ AliasAnalysis::AliasResult DSAA::alias(const Value *V1, unsigned V1Size,
 
   const DSGraph::ScalarMapTy &GSM = G.getScalarMap();
   DSGraph::ScalarMapTy::const_iterator I = GSM.find((Value*)V1);
-  if (I != GSM.end()) {
-    assert(I->second.getNode() && "Scalar map points to null node?");
-    DSGraph::ScalarMapTy::const_iterator J = GSM.find((Value*)V2);
-    if (J != GSM.end()) {
-      assert(J->second.getNode() && "Scalar map points to null node?");
+  if (I == GSM.end()) return NoAlias;
 
-      DSNode  *N1 = I->second.getNode(),  *N2 = J->second.getNode();
-      unsigned O1 = I->second.getOffset(), O2 = J->second.getOffset();
+  assert(I->second.getNode() && "Scalar map points to null node?");
+  DSGraph::ScalarMapTy::const_iterator J = GSM.find((Value*)V2);
+  if (J == GSM.end()) return NoAlias;
+
+  assert(J->second.getNode() && "Scalar map points to null node?");
+
+  DSNode  *N1 = I->second.getNode(),  *N2 = J->second.getNode();
+  unsigned O1 = I->second.getOffset(), O2 = J->second.getOffset();
         
-      // We can only make a judgment of one of the nodes is complete...
-      if (N1->isComplete() || N2->isComplete()) {
-        if (N1 != N2)
-          return NoAlias;   // Completely different nodes.
+  // We can only make a judgment of one of the nodes is complete...
+  if (N1->isComplete() || N2->isComplete()) {
+    if (N1 != N2)
+      return NoAlias;   // Completely different nodes.
 
 #if 0  // This does not correctly handle arrays!
-        // Both point to the same node and same offset, and there is only one
-        // physical memory object represented in the node, return must alias.
-        //
-        // FIXME: This isn't correct because we do not handle array indexing
-        // correctly.
+    // Both point to the same node and same offset, and there is only one
+    // physical memory object represented in the node, return must alias.
+    //
+    // FIXME: This isn't correct because we do not handle array indexing
+    // correctly.
 
-        if (O1 == O2 && isSinglePhysicalObject(N1))
-          return MustAlias; // Exactly the same object & offset
+    if (O1 == O2 && isSinglePhysicalObject(N1))
+      return MustAlias; // Exactly the same object & offset
 #endif
 
-        // See if they point to different offsets...  if so, we may be able to
-        // determine that they do not alias...
-        if (O1 != O2) {
-          if (O2 < O1) {    // Ensure that O1 <= O2
-            std::swap(V1, V2);
-            std::swap(O1, O2);
-            std::swap(V1Size, V2Size);
-          }
-
-          // FIXME: This is not correct because we do not handle array
-          // indexing correctly with this check!
-          //if (O1+V1Size <= O2) return NoAlias;
-        }
+    // See if they point to different offsets...  if so, we may be able to
+    // determine that they do not alias...
+    if (O1 != O2) {
+      if (O2 < O1) {    // Ensure that O1 <= O2
+        std::swap(V1, V2);
+        std::swap(O1, O2);
+        std::swap(V1Size, V2Size);
       }
+
+      // FIXME: This is not correct because we do not handle array
+      // indexing correctly with this check!
+      //if (O1+V1Size <= O2) return NoAlias;
     }
   }
 
