@@ -23,13 +23,13 @@ namespace llvm {
 // 
 const TargetInstrDescriptor* TargetInstrDescriptors = 0;
 
-
 TargetInstrInfo::TargetInstrInfo(const TargetInstrDescriptor* Desc,
 				 unsigned DescSize,
 				 unsigned NumRealOpCodes)
   : desc(Desc), descSize(DescSize), numRealOpCodes(NumRealOpCodes) {
   // FIXME: TargetInstrDescriptors should not be global
-  assert(TargetInstrDescriptors == NULL && desc != NULL);
+  assert(TargetInstrDescriptors == NULL && desc != NULL
+         && "TargetMachine data structure corrupt; maybe you tried to create another TargetMachine? (only one may exist in a program)");
   TargetInstrDescriptors = desc;	// initialize global variable
 }
 
