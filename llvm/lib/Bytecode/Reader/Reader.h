@@ -405,6 +405,8 @@ private:
     }
   }
 
+  inline void error(std::string errmsg);
+
   BytecodeReader(const BytecodeReader &);  // DO NOT IMPLEMENT
   void operator=(const BytecodeReader &);  // DO NOT IMPLEMENT
 
