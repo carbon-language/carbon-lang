@@ -1555,19 +1555,23 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
       case  31:	// reg:   ToFloatTy(reg):
       case  32:	// reg:   ToDoubleTy(reg):
       case 232:	// reg:   ToDoubleTy(Constant):
-
+      
         // If this instruction has a parent (a user) in the tree 
         // and the user is translated as an FsMULd instruction,
         // then the cast is unnecessary.  So check that first.
         // In the future, we'll want to do the same for the FdMULq instruction,
         // so do the check here instead of only for ToFloatTy(reg).
         // 
-        if (subtreeRoot->parent() != NULL &&
-            MachineCodeForInstruction::get(((InstructionNode*)subtreeRoot->parent())->getInstruction())[0]->getOpCode() == FSMULD)
+        if (subtreeRoot->parent() != NULL)
           {
-            forwardOperandNum = 0;          // forward first operand to user
+            const MachineCodeForInstruction& mcfi =
+              MachineCodeForInstruction::get(
+                cast<InstructionNode>(subtreeRoot->parent())->getInstruction());
+            if (mcfi.size() == 0 || mcfi.front()->getOpCode() == FSMULD)
+              forwardOperandNum = 0;    // forward first operand to user
           }
-        else
+
+        if (forwardOperandNum != 0)     // we do need the cast
           {
             Value* leftVal = subtreeRoot->leftChild()->getValue();
             const Type* opType = leftVal->getType();
