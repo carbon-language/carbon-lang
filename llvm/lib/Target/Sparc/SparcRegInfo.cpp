@@ -11,7 +11,6 @@
 #include "llvm/CodeGen/MachineFunctionInfo.h"
 #include "llvm/CodeGen/PhyRegAlloc.h"
 #include "llvm/CodeGen/InstrSelection.h"
-#include "llvm/CodeGen/InstrSelectionSupport.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineInstrAnnot.h"
 #include "llvm/CodeGen/RegAllocCommon.h"

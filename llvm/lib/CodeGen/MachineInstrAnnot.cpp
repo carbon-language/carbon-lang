@@ -7,7 +7,6 @@
 
 #include "llvm/CodeGen/MachineInstrAnnot.h"
 #include "llvm/CodeGen/InstrSelection.h"
-#include "llvm/CodeGen/InstrSelectionSupport.h"
 #include "llvm/CodeGen/MachineCodeForInstruction.h"
 #include "llvm/iOther.h"
 #include "llvm/Type.h"
