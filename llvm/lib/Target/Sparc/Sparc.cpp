@@ -17,6 +17,7 @@
 #include "llvm/CodeGen/MachineCodeForInstruction.h"
 #include "llvm/CodeGen/MachineCodeForMethod.h"
 #include "llvm/CodeGen/RegisterAllocation.h"
+#include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/Method.h"
 #include "llvm/PassManager.h"
 #include <iostream>

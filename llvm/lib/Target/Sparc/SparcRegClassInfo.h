@@ -17,34 +17,27 @@
 
 // Int register names in same order as enum in class SparcIntRegOrder
 
-static const std::string IntRegNames[] = 
-  {  
+static const std::string IntRegNames[] =  {  
     "o0", "o1", "o2", "o3", "o4", "o5",       "o7",
     "l0", "l1", "l2", "l3", "l4", "l5", "l6", "l7",
     "i0", "i1", "i2", "i3", "i4", "i5",  
     "i6", "i7",
     "g0", "g1", "g2", "g3", "g4", "g5",  "g6", "g7", 
-    "o6" }; 
+    "o6"
+}; 
 
 
 
-class SparcIntRegOrder{ 
-
- public:
-
-  enum RegsInPrefOrder   // colors possible for a LR (in preferred order)
-   { 
+struct SparcIntRegOrder { 
+  enum RegsInPrefOrder {   // colors possible for a LR (in preferred order)
      // --- following colors are volatile across function calls
      // %g0 can't be used for coloring - always 0
-                     
- 
      o0, o1, o2, o3, o4, o5, o7,  // %o0-%o5, 
 
      // %o6 is sp, 
      // all %0's can get modified by a call
 
      // --- following colors are NON-volatile across function calls
-      
      l0, l1, l2, l3, l4, l5, l6, l7,    //  %l0-%l7
      i0, i1, i2, i3, i4, i5,         // %i0-%i5: i's need not be preserved 
       
@@ -64,8 +57,7 @@ class SparcIntRegOrder{
      // enumeration of %o0 (change StartOfAllRegs below)
      // change isRegVloatile method below
      // Also change IntRegNames above.
-
-   };
+  };
 
   // max # of colors reg coloring  can allocate
   static unsigned int const NumOfAvailRegs = i6;
@@ -75,41 +67,26 @@ class SparcIntRegOrder{
   static unsigned int const NumOfAllRegs = o6 + 1; 
 
 
-  static const std::string getRegName(const unsigned reg) {
+  static const std::string getRegName(unsigned reg) {
     assert( reg < NumOfAllRegs );
     return IntRegNames[reg];
   }
 
-  static unsigned int getRegNumInCallersWindow(const unsigned reg) {
-    if (reg <= l7 || reg == o6) {
-      assert(0 && "registers o0-o7 and l0-l7 are not visible in caller");
-      return reg;
-    }
-    if (reg <= i7)
-      return reg - (i0 - o0);
-    assert((reg >= g0 || reg <= g7) && "Unrecognized integer register number");
-      return reg;
-  }
 };
 
 
 
-class SparcIntRegClass : public MachineRegClassInfo
-{
- public:
-
+struct SparcIntRegClass : public MachineRegClassInfo {
   SparcIntRegClass(unsigned ID) 
     : MachineRegClassInfo(ID, 
 			  SparcIntRegOrder::NumOfAvailRegs,
-			  SparcIntRegOrder::NumOfAllRegs)
-    {  }
+			  SparcIntRegOrder::NumOfAllRegs) {  }
 
-  void colorIGNode(IGNode * Node, bool IsColorUsedArr[] ) const;
+  void colorIGNode(IGNode *Node, bool IsColorUsedArr[]) const;
 
-  inline bool isRegVolatile(const int Reg) const {
+  inline bool isRegVolatile(int Reg) const {
     return (Reg < (int) SparcIntRegOrder::StartOfNonVolatileRegs); 
   }
-
 };
 
 
@@ -157,37 +134,27 @@ class SparcFloatRegOrder{
   static unsigned int const StartOfAllRegs = f0;
 
 
-  static const std::string getRegName(const unsigned reg) {
-    assert( reg < NumOfAllRegs );
+  static const std::string getRegName(unsigned reg) {
+    assert (reg < NumOfAllRegs);
     return FloatRegNames[reg];
   }
-
-
 };
 
 
 
-class SparcFloatRegClass : public MachineRegClassInfo
-{
- private:
-
-  int findFloatColor(const LiveRange *const LR, unsigned Start,
-		     unsigned End, bool IsColorUsedArr[] ) const;
-
- public:
-
+class SparcFloatRegClass : public MachineRegClassInfo {
+  int findFloatColor(const LiveRange *LR, unsigned Start,
+		     unsigned End, bool IsColorUsedArr[]) const;
+public:
   SparcFloatRegClass(unsigned ID) 
     : MachineRegClassInfo(ID, 
 			  SparcFloatRegOrder::NumOfAvailRegs,
-			  SparcFloatRegOrder::NumOfAllRegs)
-    {  }
+			  SparcFloatRegOrder::NumOfAllRegs) {}
 
-  void colorIGNode(IGNode * Node, bool IsColorUsedArr[] ) const;
+  void colorIGNode(IGNode *Node, bool IsColorUsedArr[]) const;
 
   // according to  Sparc 64 ABI, all %fp regs are volatile
-  inline bool isRegVolatile(const int Reg) const { return true; }
-
-
+  inline bool isRegVolatile(int Reg) const { return true; }
 };
 
 
@@ -203,44 +170,35 @@ class SparcFloatRegClass : public MachineRegClassInfo
 //-----------------------------------------------------------------------------
 
 
-static const std::string IntCCRegNames[] = 
-  {    
-    "xcc",  "ccr"
-  };
+static const std::string IntCCRegNames[] = {    
+  "xcc",  "ccr"
+};
 
 
-class SparcIntCCRegOrder{ 
-
- public:
-
+struct  SparcIntCCRegOrder { 
   enum RegsInPrefOrder {
-
     xcc, ccr   // only one is available - see the note above
   };
 
-  static const std::string getRegName(const unsigned reg) {
-    assert( reg < 2 );
+  static const std::string getRegName(unsigned reg) {
+    assert(reg < 2);
     return IntCCRegNames[reg];
   }
-
 };
 
 
 
-class SparcIntCCRegClass : public MachineRegClassInfo
-{
-public:
-
+struct SparcIntCCRegClass : public MachineRegClassInfo {
   SparcIntCCRegClass(unsigned ID) 
     : MachineRegClassInfo(ID, 1, 2) {  }
 
-  inline void colorIGNode(IGNode * Node, bool IsColorUsedArr[] ) const {
+  inline void colorIGNode(IGNode *Node, bool IsColorUsedArr[]) const {
     Node->setColor(0);    // only one int cc reg is available
   }
 
   // according to  Sparc 64 ABI,  %ccr is volatile
   //
-  inline bool isRegVolatile(const int Reg) const { return true; }
+  inline bool isRegVolatile(int Reg) const { return true; }
 
 };
 
@@ -252,54 +210,35 @@ public:
 // Only 4 Float CC registers are available
 //-----------------------------------------------------------------------------
 
+static const std::string FloatCCRegNames[] = {    
+  "fcc0", "fcc1",  "fcc2",  "fcc3"
+};
 
-static const std::string FloatCCRegNames[] = 
-  {    
-    "fcc0",  "fcc1",  "fcc2",  "fcc3"
-  };
-
-
-class SparcFloatCCRegOrder{ 
-
- public:
-
+struct SparcFloatCCRegOrder{ 
   enum RegsInPrefOrder {
-
     fcc0, fcc1, fcc2, fcc3
   };
 
-  static const std::string getRegName(const unsigned reg) {
-    assert( reg < 4 );
+  static const std::string getRegName(unsigned reg) {
+    assert (reg < 4);
     return FloatCCRegNames[reg];
   }
-
 };
 
-
-
-class SparcFloatCCRegClass : public MachineRegClassInfo
-{
-public:
-
+struct SparcFloatCCRegClass : public MachineRegClassInfo {
   SparcFloatCCRegClass(unsigned ID) 
     : MachineRegClassInfo(ID, 4, 4) {  }
 
-  void colorIGNode(IGNode * Node, bool IsColorUsedArr[] ) const {
+  void colorIGNode(IGNode *Node, bool IsColorUsedArr[]) const {
     int c;
     for(c=0; c < 4  && IsColorUsedArr[c] ; ++c) ; // find color
-    assert( (c < 4)  && "Can allocate only 4 float cc registers");
+    assert ((c < 4)  && "Can allocate only 4 float cc registers");
     Node->setColor(c);   
   }
 
-
   // according to  Sparc 64 ABI, all %fp CC regs are volatile
   //
-  inline bool isRegVolatile(const int Reg) const { return true; }
-
-
+  inline bool isRegVolatile(int Reg) const { return true; }
 };
-
-
-
 
 #endif

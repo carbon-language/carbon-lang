@@ -1,4 +1,4 @@
-#include "SparcInternals.h"
+#include "SparcRegClassInfo.h"
 #include "llvm/CodeGen/IGNode.h"
 #include "llvm/Target/Sparc.h"
 #include <iostream>
@@ -17,23 +17,22 @@ using std::cerr;
 //     If both above fail, spill.
 //  
 //-----------------------------------------------------------------------------
-void SparcIntRegClass::colorIGNode(IGNode * Node, bool IsColorUsedArr[]) const 
-{
-  LiveRange * LR = Node->getParentLR();
+void SparcIntRegClass::colorIGNode(IGNode * Node, bool IsColorUsedArr[]) const {
+  LiveRange *LR = Node->getParentLR();
   unsigned NumNeighbors =  Node->getNumOfNeighbors();   // total # of neighbors
 
-  for(unsigned n=0; n < NumNeighbors; n++) {            // for each neigh 
+  for (unsigned n=0; n < NumNeighbors; n++) {            // for each neigh 
     IGNode *NeighIGNode = Node->getAdjIGNode(n);
     LiveRange *NeighLR = NeighIGNode->getParentLR();
 
-    if( NeighLR->hasColor() )                        // if has a color
-      IsColorUsedArr[ NeighLR->getColor() ] = true; // record that color
+    if(NeighLR->hasColor())                        // if has a color
+      IsColorUsedArr[NeighLR->getColor()] = true; // record that color
 
-    else if( NeighLR->hasSuggestedColor() ) {
+    else if (NeighLR->hasSuggestedColor()) {
 
-	// if the neighbout can use the suggested color 
-	if( NeighLR-> isSuggestedColorUsable() ) 
-	  IsColorUsedArr[ NeighLR->getSuggestedColor() ] = true; 
+      // if the neighbout can use the suggested color 
+      if(NeighLR->isSuggestedColorUsable()) 
+        IsColorUsedArr[NeighLR->getSuggestedColor()] = true; 
     }    
   }
 
@@ -108,7 +107,7 @@ void SparcIntRegClass::colorIGNode(IGNode * Node, bool IsColorUsedArr[]) const
       if( ! IsColorUsedArr[ c ] ) { ColorFound = true; break; }
     }
 
-    if( ColorFound) { 
+    if (ColorFound) { 
        LR->setColor(c);  
        //  get the live range corresponding to live var
        // since LR span across calls, must save across calls 
@@ -122,13 +121,8 @@ void SparcIntRegClass::colorIGNode(IGNode * Node, bool IsColorUsedArr[]) const
   // If we couldn't find a color regardless of call interference - i.e., we
   // don't have either a volatile or non-volatile color left
   //
-  if( !ColorFound )  
+  if (!ColorFound)  
     LR->markForSpill();               // no color found - must spill
-
-
-  if( DEBUG_RA)                  
-      UltraSparcRegInfo::printReg(  LR  );
-
 }
 
 
@@ -213,10 +207,8 @@ void SparcFloatRegClass::colorIGNode(IGNode * Node,bool IsColorUsedArr[]) const
 
   if( ColorFound >= 0 ) {               // if we could find a color
     LR->setColor(ColorFound);                
-    if( DEBUG_RA) UltraSparcRegInfo::printReg( LR );
     return;
-  }
-  else { 
+  } else { 
 
     // if we didn't find a color becuase the LR was single precision or
     // all f32-f63 range is filled, we try to allocate a register from
@@ -241,7 +233,6 @@ void SparcFloatRegClass::colorIGNode(IGNode * Node,bool IsColorUsedArr[]) const
 
   if( ColorFound >= 0 ) {               // if we could find a color
     LR->setColor(ColorFound);                  
-    if( DEBUG_RA) UltraSparcRegInfo::printReg( LR );
     return;
   }
   else if( isCallInterf ) { 
@@ -260,18 +251,11 @@ void SparcFloatRegClass::colorIGNode(IGNode * Node,bool IsColorUsedArr[]) const
   if( ColorFound >= 0 ) {
     LR->setColor(ColorFound);         // first color found in preffered order
     LR->markForSaveAcrossCalls();  
-    if( DEBUG_RA) UltraSparcRegInfo::printReg( LR );
-    return;
+  } else {
+    // we are here because no color could be found
+    LR->markForSpill();               // no color found - must spill
   }
-
-
-  // we are here because no color could be found
-
-  LR->markForSpill();               // no color found - must spill
-  if( DEBUG_RA) UltraSparcRegInfo::printReg( LR );
-  
 }
-
 
 
 //-----------------------------------------------------------------------------
@@ -279,44 +263,24 @@ void SparcFloatRegClass::colorIGNode(IGNode * Node,bool IsColorUsedArr[]) const
 // Finds the first available color in the range [Start,End] depending on the
 // type of the Node (i.e., float/double)
 //-----------------------------------------------------------------------------
-int SparcFloatRegClass::findFloatColor(const LiveRange *const LR, 
-				       unsigned Start,
- 				       unsigned End, 
-				       bool IsColorUsedArr[] ) const {
 
+int SparcFloatRegClass::findFloatColor(const LiveRange *LR, 
+				       unsigned Start, unsigned End, 
+				       bool IsColorUsedArr[] ) const {
   bool ColorFound = false;
   unsigned c;
 
-  if( LR->getTypeID() == Type::DoubleTyID ) { 
-      
+  if (LR->getTypeID() == Type::DoubleTyID) { 
     // find first unused color for a double 
-    for( c=Start; c < End ;c+= 2){
-      if( ! IsColorUsedArr[ c ] &&  ! IsColorUsedArr[ c+1 ]) 
-	{ ColorFound=true;  break; }
-    }
-    
+    for (c=Start; c < End ; c+= 2)
+      if (!IsColorUsedArr[c] && !IsColorUsedArr[c+1]) 
+	return c;
   } else {
-    
     // find first unused color for a single
-    for( c=Start; c < End; c++) { 
-      if( ! IsColorUsedArr[ c ] ) { ColorFound=true;  break; }
-    }
+    for (c = Start; c < End; c++)
+      if (!IsColorUsedArr[c])
+        return c;
   }
   
-  if( ColorFound ) return c;
-  else return -1;
+  return -1;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
