@@ -20,7 +20,7 @@ not_less:
 			       int cast (int* %XB to int) ), %less], 
                       [ sub ( int cast (int* %XA to int), 
 			       int cast (int* %XB to int) ), %entry]
-	%tmp.39 = call int (sbyte*, ...)* %printf( sbyte* getelementptr ([16 x sbyte]*  %.str_1, long 0, long 0) )		; <int> [#uses=0]
+	%tmp.39 = call int (sbyte*, ...)* %printf( sbyte* getelementptr ([16 x sbyte]*  %.str_1, long 0, long 0), int %t2 )
 	ret void
 }
 
