@@ -14,10 +14,12 @@
 #include "llvm/Module.h"
 #include "llvm/Function.h"
 #include "llvm/iPHINode.h"
+#include "llvm/Type.h"
 #include "llvm/PassManager.h"
 #include "llvm/Bytecode/Reader.h"
 #include "llvm/Assembly/Parser.h"
 #include "llvm/Assembly/PrintModulePass.h"
+#include "llvm/Assembly/Writer.h"
 #include "llvm/Analysis/Writer.h"
 #include "llvm/Analysis/InstForest.h"
 #include "llvm/Analysis/Dominators.h"
@@ -129,7 +131,7 @@ Pass *New(const string &Message) {
 
 
 Pass *NewPrintFunction(const string &Message) {
-  return new PrintMethodPass(Message, &std::cout);
+  return new PrintFunctionPass(Message, &std::cout);
 }
 Pass *NewPrintModule(const string &Message) {
   return new PrintModulePass(&std::cout);
