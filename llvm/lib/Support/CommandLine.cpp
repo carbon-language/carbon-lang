@@ -57,7 +57,8 @@ void cl::ParseCommandLineOptions(int &argc, char **argv,
       while (*ArgName == '-') ++ArgName;  // Eat leading dashes
 
       const char *ArgNameEnd = ArgName;
-      while (*ArgNameEnd && *ArgNameEnd != '=') ++ArgNameEnd; // Scan till end
+      while (*ArgNameEnd && *ArgNameEnd != '=' &&
+             *ArgNameEnd != '/') ++ArgNameEnd; // Scan till end
 
       Value = ArgNameEnd;
       if (*Value)           // If we have an equals sign...
@@ -72,7 +73,7 @@ void cl::ParseCommandLineOptions(int &argc, char **argv,
 
     if (Handler == 0) {
       cerr << "Unknown command line argument '" << argv[i] << "'.  Try: "
-	   << argv[0] << " --help\n'";
+	   << argv[0] << " --help'\n";
       ErrorParsing = true;
       continue;
     }
@@ -111,8 +112,10 @@ void cl::ParseCommandLineOptions(int &argc, char **argv,
     switch (I->second->getNumOccurancesFlag()) {
     case Required:
     case OneOrMore:
-      if (I->second->getNumOccurances() == 0)
+      if (I->second->getNumOccurances() == 0) {
 	I->second->error(" must be specified at least once!");
+        ErrorParsing = true;
+      }
       // Fall through
     default:
       break;
