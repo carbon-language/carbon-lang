@@ -51,3 +51,14 @@ int %gep_distance_test(int* %A) {
         ret int %r
 }
 
+; Test that if two pointers are spaced out by a constant offset, that they
+; cannot alias, even if there is a variable offset between them...
+int %gep_distance_test2({int,int}* %A, long %distance) {
+	%A = getelementptr {int,int}* %A, long 0, ubyte 0
+	%REMOVEu = load int* %A
+	%B = getelementptr {int,int}* %A, long %distance, ubyte 1
+	store int 7, int* %B    ; B cannot alias A, it's at least 4 bytes away
+	%REMOVEv = load int* %A
+        %r = sub int %REMOVEu, %REMOVEv
+        ret int %r
+}
