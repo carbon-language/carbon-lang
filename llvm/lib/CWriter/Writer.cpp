@@ -196,12 +196,12 @@ ostream &CWriter::printType(const Type *Ty, const string &NameSoFar,
     }
   
   // Check to see if the type is named.
-  if (!IgnoreName) {
+  if (!IgnoreName || isa<OpaqueType>(Ty)) {
     map<const Type *, string>::iterator I = TypeNames.find(Ty);
     if (I != TypeNames.end()) {
       return Out << I->second << " " << NameSoFar;
     }
-  }  
+  }
 
   switch (Ty->getPrimitiveID()) {
   case Type::FunctionTyID: {
@@ -256,6 +256,14 @@ ostream &CWriter::printType(const Type *Ty, const string &NameSoFar,
     unsigned NumElements = ATy->getNumElements();
     return printType(ATy->getElementType(),
                      NameSoFar + "[" + utostr(NumElements) + "]");
+  }
+
+  case Type::OpaqueTyID: {
+    static int Count = 0;
+    string TyName = "struct opaque_" + itostr(Count++);
+    assert(TypeNames.find(Ty) == TypeNames.end());
+    TypeNames[Ty] = TyName;
+    return Out << TyName << " " << NameSoFar;
   }
   default:
     assert(0 && "Unhandled case in getTypeProps!");
