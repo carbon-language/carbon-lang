@@ -764,13 +764,13 @@ void AssemblyWriter::printModule(const Module *M) {
   if (!M->getTargetTriple().empty())
     Out << "target triple = \"" << M->getTargetTriple() << "\"\n";
   
-  // Loop over the dependent libraries and emit them
+  // Loop over the dependent libraries and emit them.
   Module::lib_iterator LI = M->lib_begin();
   Module::lib_iterator LE = M->lib_end();
   if (LI != LE) {
     Out << "deplibs = [ ";
     while (LI != LE) {
-      Out << "\"" << *LI << "\"";
+      Out << '"' << *LI << '"';
       ++LI;
       if (LI != LE)
         Out << ", ";
@@ -778,21 +778,21 @@ void AssemblyWriter::printModule(const Module *M) {
     Out << " ]\n";
   }
 
-  // Loop over the link time pass list and emit them
+  // Loop over the link time pass list and emit them.
   Module::pass_iterator PI = M->pass_begin();
   Module::pass_iterator PE = M->pass_end();
   if (LI != LE) {
-    Out << "passes = [\n";
+    Out << "passes = [ ";
     while (LI != LE) {
-      Out << "\"" << *LI << "\"";
+      Out << '"' << *LI << '"';
       ++LI;
       if (LI != LE)
-        Out << ",\n";
+        Out << ", ";
     }
     Out << " ]\n";
   }
   
-  // Loop over the symbol table, emitting all named constants...
+  // Loop over the symbol table, emitting all named constants.
   printSymbolTable(M->getSymbolTable());
   
   for (Module::const_giterator I = M->gbegin(), E = M->gend(); I != E; ++I)
@@ -800,7 +800,7 @@ void AssemblyWriter::printModule(const Module *M) {
 
   Out << "\nimplementation   ; Functions:\n";
   
-  // Output all of the functions...
+  // Output all of the functions.
   for (Module::const_iterator I = M->begin(), E = M->end(); I != E; ++I)
     printFunction(I);
 }
