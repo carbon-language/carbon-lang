@@ -324,9 +324,9 @@ ChooseAddInstructionByType(const Type* resultType)
   MachineOpCode opCode = INVALID_OPCODE;
   
   if (resultType->isIntegral() ||
-      isa<PointerType>(resultType) ||
-      isa<MethodType>(resultType) ||
+      resultType->isPointerType() ||
       resultType->isLabelType() ||
+      isa<MethodType>(resultType) ||
       resultType == Type::BoolTy)
     {
       opCode = ADD;
@@ -519,8 +519,8 @@ CreateMulConstInstruction(TargetMachine &target,
                           const InstructionNode* instrNode,
                           MachineInstr*& getMinstr2)
 {
-  MachineInstr* minstr = NULL;
-  getMinstr2 = NULL;
+  MachineInstr* minstr = NULL; // return NULL if we cannot exploit constant
+  getMinstr2 = NULL;           // to create a cheaper instruction
   bool needNeg = false;
 
   Value* constOp = ((InstrTreeNode*) instrNode->rightChild())->getValue();
@@ -580,32 +580,20 @@ CreateMulConstInstruction(TargetMachine &target,
       if (resultType == Type::FloatTy ||
           resultType == Type::DoubleTy)
         {
-          bool isValidConst;
           double dval = ((ConstPoolFP*) constOp)->getValue();
-          
-          if (isValidConst)
+          if (fabs(dval) == 1)
             {
-              if (dval == 0)
-                {
-                  minstr = new MachineInstr((resultType == Type::FloatTy)
-                                            ? FITOS : FITOD);
-                  minstr->SetMachineOperand(0,
-                                        target.getRegInfo().getZeroRegNum());
-                }
-              else if (fabs(dval) == 1)
-                {
-                  bool needNeg = (dval < 0);
-                  
-                  MachineOpCode opCode = needNeg
-                    ? (resultType == Type::FloatTy? FNEGS : FNEGD)
-                    : (resultType == Type::FloatTy? FMOVS : FMOVD);
-                  
-                  minstr = new MachineInstr(opCode);
-                  minstr->SetMachineOperand(0,
-                                           MachineOperand::MO_VirtualRegister,
-                                           instrNode->leftChild()->getValue());
-                } 
-            }
+              bool needNeg = (dval < 0);
+              
+              MachineOpCode opCode = needNeg
+                ? (resultType == Type::FloatTy? FNEGS : FNEGD)
+                : (resultType == Type::FloatTy? FMOVS : FMOVD);
+              
+              minstr = new MachineInstr(opCode);
+              minstr->SetMachineOperand(0,
+                                        MachineOperand::MO_VirtualRegister,
+                                        instrNode->leftChild()->getValue());
+            } 
         }
     }
   
@@ -705,10 +693,8 @@ CreateDivConstInstruction(TargetMachine &target,
       if (resultType == Type::FloatTy ||
           resultType == Type::DoubleTy)
         {
-          bool isValidConst;
           double dval = ((ConstPoolFP*) constOp)->getValue();
-          
-          if (isValidConst && fabs(dval) == 1)
+          if (fabs(dval) == 1)
             {
               bool needNeg = (dval < 0);
               
@@ -1139,8 +1125,6 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
 {
   int numInstr = 1;			// initialize for common case
   bool checkCast = false;		// initialize here to use fall-through
-  Value *leftVal, *rightVal;
-  const Type* opType;
   int nextRule;
   int forwardOperandNum = -1;
   int64_t s0=0, s8=8;			// variables holding constants to avoid
@@ -1365,42 +1349,94 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
 
       case 322:	// reg:   ToBoolTy(bool):
       case 22:	// reg:   ToBoolTy(reg):
-        opType = subtreeRoot->leftChild()->getValue()->getType();
-        assert(opType->isIntegral() || opType == Type::BoolTy);
+      {
+        const Type* opType = subtreeRoot->leftChild()->getValue()->getType();
+        assert(opType->isIntegral() || opType->isPointerType()
+               || opType == Type::BoolTy);
         numInstr = 0;
         forwardOperandNum = 0;
         break;
-
+      }
+      
       case 23:	// reg:   ToUByteTy(reg)
       case 25:	// reg:   ToUShortTy(reg)
       case 27:	// reg:   ToUIntTy(reg)
       case 29:	// reg:   ToULongTy(reg)
-        opType = subtreeRoot->leftChild()->getValue()->getType();
+      {
+        const Type* opType = subtreeRoot->leftChild()->getValue()->getType();
         assert(opType->isIntegral() ||
                opType->isPointerType() ||
                opType == Type::BoolTy && "Cast is illegal for other types");
         numInstr = 0;
         forwardOperandNum = 0;
         break;
-        
+      }
+      
       case 24:	// reg:   ToSByteTy(reg)
       case 26:	// reg:   ToShortTy(reg)
       case 28:	// reg:   ToIntTy(reg)
       case 30:	// reg:   ToLongTy(reg)
-        opType = subtreeRoot->leftChild()->getValue()->getType();
-        if (opType->isIntegral() || opType == Type::BoolTy)
+      {
+        const Type* opType = subtreeRoot->leftChild()->getValue()->getType();
+        if (opType->isIntegral()
+            || opType->isPointerType()
+            || opType == Type::BoolTy)
           {
             numInstr = 0;
             forwardOperandNum = 0;
           }
         else
           {
-            mvec[0] = new MachineInstr(ChooseConvertToIntInstr(subtreeRoot,
-                                                              opType));
-            Set2OperandsFromInstr(mvec[0], subtreeRoot, target);
+            // If the source operand is an FP type, the int result must be
+            // copied from float to int register via memory!
+            Instruction *dest = subtreeRoot->getInstruction();
+            Value* leftVal = subtreeRoot->leftChild()->getValue();
+            Value* destForCast;
+            vector<MachineInstr*> minstrVec;
+            
+            if (opType == Type::FloatTy || opType == Type::DoubleTy)
+              {
+                // Create a temporary to represent the INT register
+                // into which the FP value will be copied via memory.
+                // The type of this temporary will determine the FP
+                // register used: single-prec for a 32-bit int or smaller,
+                // double-prec for a 64-bit int.
+                // 
+                const Type* destTypeToUse =
+                  (dest->getType() == Type::LongTy)? Type::DoubleTy
+                                                   : Type::FloatTy;
+                destForCast = new TmpInstruction(TMP_INSTRUCTION_OPCODE,
+                                                 destTypeToUse, leftVal, NULL);
+                dest->getMachineInstrVec().addTempValue(destForCast);
+                
+                vector<TmpInstruction*> tempVec;
+                target.getInstrInfo().CreateCodeToCopyFloatToInt(
+                    dest->getParent()->getParent(),
+                    (TmpInstruction*) destForCast, dest,
+                    minstrVec, tempVec, target);
+                
+                for (unsigned i=0; i < tempVec.size(); ++i)
+                  dest->getMachineInstrVec().addTempValue(tempVec[i]);
+              }
+            else
+              destForCast = leftVal;
+            
+            MachineOpCode opCode=ChooseConvertToIntInstr(subtreeRoot, opType);
+            assert(opCode != INVALID_OPCODE && "Expected to need conversion!");
+            
+            mvec[0] = new MachineInstr(opCode);
+            mvec[0]->SetMachineOperand(0, MachineOperand::MO_VirtualRegister,
+                                          leftVal);
+            mvec[0]->SetMachineOperand(1, MachineOperand::MO_VirtualRegister,
+                                          destForCast);
+
+            assert(numInstr == 1 && "Should be initialized to 1 at the top");
+            for (unsigned i=0; i < minstrVec.size(); ++i)
+              mvec[numInstr++] = minstrVec[i];
           }
         break;
-        
+      }  
+      
       case  31:	// reg:   ToFloatTy(reg):
       case  32:	// reg:   ToDoubleTy(reg):
       case 232:	// reg:   ToDoubleTy(Constant):
@@ -1419,8 +1455,8 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
           }
         else
           {
-            leftVal = subtreeRoot->leftChild()->getValue();
-            opType = leftVal->getType();
+            Value* leftVal = subtreeRoot->leftChild()->getValue();
+            const Type* opType = leftVal->getType();
             MachineOpCode opCode=ChooseConvertToFloatInstr(subtreeRoot,opType);
             if (opCode == INVALID_OPCODE)	// no conversion needed
               {
@@ -1438,8 +1474,16 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
                   {
                     // Create a temporary to represent the FP register
                     // into which the integer will be copied via memory.
+                    // The type of this temporary will determine the FP
+                    // register used: single-prec for a 32-bit int or smaller,
+                    // double-prec for a 64-bit int.
+                    // 
+                    const Type* srcTypeToUse =
+                      (leftVal->getType() == Type::LongTy)? Type::DoubleTy
+                                                          : Type::FloatTy;
+                    
                     srcForCast = new TmpInstruction(TMP_INSTRUCTION_OPCODE,
-                                                    dest, NULL);
+                                                    srcTypeToUse, dest, NULL);
                     dest->getMachineInstrVec().addTempValue(srcForCast);
                     
                     vector<MachineInstr*> minstrVec;
@@ -1627,8 +1671,9 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         // 
         // Otherwise this is just the same as case 42, so just fall through.
         // 
-        if (subtreeRoot->leftChild()->getValue()->getType()->isIntegral() &&
-            subtreeRoot->parent() != NULL)
+        if ((subtreeRoot->leftChild()->getValue()->getType()->isIntegral() ||
+             subtreeRoot->leftChild()->getValue()->getType()->isPointerType())
+            && subtreeRoot->parent() != NULL)
           {
             InstructionNode* parent = (InstructionNode*) subtreeRoot->parent();
             assert(parent->getNodeType() == InstrTreeNode::NTInstructionNode);
@@ -1684,7 +1729,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         // condition code.  Think of this as casting the bool result to
         // a FP condition code register.
         // 
-        leftVal = subtreeRoot->leftChild()->getValue();
+        Value* leftVal = subtreeRoot->leftChild()->getValue();
         bool isFPCompare = (leftVal->getType() == Type::FloatTy || 
                             leftVal->getType() == Type::DoubleTy);
         
@@ -1938,16 +1983,17 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
       }
 
       case 62:	// reg:   Shl(reg, reg)
-        opType = subtreeRoot->leftChild()->getValue()->getType();
+      { const Type* opType = subtreeRoot->leftChild()->getValue()->getType();
         assert(opType->isIntegral()
                || opType == Type::BoolTy
                || opType->isPointerType()&& "Shl unsupported for other types");
         mvec[0] = new MachineInstr((opType == Type::LongTy)? SLLX : SLL);
         Set3OperandsFromInstr(mvec[0], subtreeRoot, target);
         break;
-
+      }
+      
       case 63:	// reg:   Shr(reg, reg)
-        opType = subtreeRoot->leftChild()->getValue()->getType();
+      { const Type* opType = subtreeRoot->leftChild()->getValue()->getType();
         assert(opType->isIntegral()
                || opType == Type::BoolTy
                || opType->isPointerType() &&"Shr unsupported for other types");
@@ -1956,7 +2002,8 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
                                     : ((opType == Type::LongTy)? SRLX : SRL)));
         Set3OperandsFromInstr(mvec[0], subtreeRoot, target);
         break;
-
+      }
+      
       case 64:	// reg:   Phi(reg,reg)
       {		// This instruction has variable #operands, so resultPos is 0.
         Instruction* phi = subtreeRoot->getInstruction();
@@ -1968,6 +2015,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
                                           phi->getOperand(i));
         break;
       }  
+      
       case 71:	// reg:     VReg
       case 72:	// reg:     Constant
         numInstr = 0;			// don't forward the value
