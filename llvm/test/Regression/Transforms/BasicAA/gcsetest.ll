@@ -34,3 +34,13 @@ out:
         ret int %X
 }
 
+declare void %external()
+
+int %test3() {
+	%X = alloca int
+	store int 7, int* %X
+	call void %external()
+	%V = load int* %X
+	ret int %V
+}
+
