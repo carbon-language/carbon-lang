@@ -1541,6 +1541,35 @@ void ISel::LowerUnknownIntrinsicFunctionCalls(Function &F) {
           case Intrinsic::writeport:
             // We directly implement these intrinsics
             break;
+          case Intrinsic::readio: {
+            // On X86, memory operations are in-order.  Lower this intrinsic
+            // into a volatile load.
+            Instruction *Before = CI->getPrev();
+            LoadInst * LI = new LoadInst (CI->getOperand(1), "", true, CI);
+            CI->replaceAllUsesWith (LI);
+            BB->getInstList().erase (CI);
+            if (Before) {        // Move iterator to instruction after call
+              I = Before;  ++I;
+            } else {
+              I = BB->begin();
+            }
+            break;
+          }
+          case Intrinsic::writeio: {
+            // On X86, memory operations are in-order.  Lower this intrinsic
+            // into a volatile store.
+            Instruction *Before = CI->getPrev();
+            StoreInst * LI = new StoreInst (CI->getOperand(1),
+                                            CI->getOperand(2), true, CI);
+            CI->replaceAllUsesWith (LI);
+            BB->getInstList().erase (CI);
+            if (Before) {        // Move iterator to instruction after call
+              I = Before;  ++I;
+            } else {
+              I = BB->begin();
+            }
+            break;
+          }
           default:
             // All other intrinsic calls we must lower.
             Instruction *Before = CI->getPrev();
