@@ -530,9 +530,9 @@ install-local:: $(PROJ_etcdir) $(CONFIG_FILES)
 	$(Echo) Installing Configuration Files To $(PROJ_etcdir)
 	$(Verb)for file in $(CONFIG_FILES); do \
           if test -f $(PROJ_OBJ_DIR)/$${file} ; then \
-            $(Install) -D -m 0644 $(PROJ_OBJ_DIR)/$${file} $(PROJ_etcdir) ; \
+            $(Install) -m 0644 $(PROJ_OBJ_DIR)/$${file} $(PROJ_etcdir) ; \
           elif test -f $(PROJ_SRC_DIR)/$${file} ; then \
-            $(Install) -D -m 0644 $(PROJ_SRC_DIR)/$${file} $(PROJ_etcdir) ; \
+            $(Install) -m 0644 $(PROJ_SRC_DIR)/$${file} $(PROJ_etcdir) ; \
           else \
             $(ECHO) Error: cannot find config file $${file}. ; \
           fi \
