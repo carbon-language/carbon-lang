@@ -35,7 +35,7 @@ namespace {
   /// PPC Representation.
   ///
   enum TypeClass {
-    cByte, cShort, cInt, cFP, cLong
+    cByte, cShort, cInt, cFP32, cFP64, cLong
   };
 }
 
@@ -52,11 +52,11 @@ static inline TypeClass getClass(const Type *Ty) {
   case Type::UIntTyID:
   case Type::PointerTyID: return cInt;       // Ints and pointers are class #2
 
-  case Type::FloatTyID:
-  case Type::DoubleTyID:  return cFP;        // Floating Point is #3
+  case Type::FloatTyID:   return cFP32;      // Single float is #3
+  case Type::DoubleTyID:  return cFP64;      // Double Point is #4
 
   case Type::LongTyID:
-  case Type::ULongTyID:   return cLong;      // Longs are class #4
+  case Type::ULongTyID:   return cLong;      // Longs are class #5
   default:
     assert(0 && "Invalid type to getClass!");
     return cByte;  // not reached
@@ -80,8 +80,9 @@ namespace {
     std::map<Value*, unsigned> RegMap;  // Mapping between Values and SSA Regs
 
     // External functions used in the Module
-    Function *fmodFn, *__moddi3Fn, *__divdi3Fn, *__umoddi3Fn, *__udivdi3Fn,
-      *__fixdfdiFn, *__floatdisfFn, *__floatdidfFn, *mallocFn, *freeFn;
+    Function *fmodfFn, *fmodFn, *__moddi3Fn, *__divdi3Fn, *__umoddi3Fn, 
+      *__udivdi3Fn, *__fixsfdiFn, *__fixdfdiFn, *__floatdisfFn, *__floatdidfFn,
+      *mallocFn, *freeFn;
 
     // MBBMap - Mapping between LLVM BB -> Machine BB
     std::map<const BasicBlock*, MachineBasicBlock*> MBBMap;
@@ -99,6 +100,8 @@ namespace {
       Type *l = Type::LongTy;
       Type *ul = Type::ULongTy;
       Type *voidPtr = PointerType::get(Type::SByteTy);
+      // float fmodf(float, float);
+      fmodfFn = M.getOrInsertFunction("fmodf", f, f, f, 0);
       // double fmod(double, double);
       fmodFn = M.getOrInsertFunction("fmod", d, d, d, 0);
       // long __moddi3(long, long);
@@ -109,6 +112,8 @@ namespace {
       __umoddi3Fn = M.getOrInsertFunction("__umoddi3", ul, ul, ul, 0);
       // unsigned long __udivdi3(unsigned long, unsigned long);
       __udivdi3Fn = M.getOrInsertFunction("__udivdi3", ul, ul, ul, 0);
+      // long __fixsfdi(float)
+      __fixdfdiFn = M.getOrInsertFunction("__fixsfdi", l, f, 0);
       // long __fixdfdi(double)
       __fixdfdiFn = M.getOrInsertFunction("__fixdfdi", l, d, 0);
       // float __floatdisf(long)
@@ -465,13 +470,29 @@ void ISel::copyConstantToRegister(MachineBasicBlock *MBB,
     if (Class == cLong) {
       // Copy the value into the register pair.
       uint64_t Val = cast<ConstantInt>(C)->getRawValue();
-      unsigned hiTmp = makeAnotherReg(Type::IntTy);
-      unsigned loTmp = makeAnotherReg(Type::IntTy);
-      BuildMI(*MBB, IP, PPC32::LIS, 1, loTmp).addImm(Val >> 48);
-      BuildMI(*MBB, IP, PPC32::ORI, 2, R).addReg(loTmp)
-        .addImm((Val >> 32) & 0xFFFF);
-      BuildMI(*MBB, IP, PPC32::LIS, 1, hiTmp).addImm((Val >> 16) & 0xFFFF);
-      BuildMI(*MBB, IP, PPC32::ORI, 2, R+1).addReg(hiTmp).addImm(Val & 0xFFFF);
+      
+      if (Val < (1ULL << 16)) {
+        BuildMI(*MBB, IP, PPC32::LI, 1, R).addImm(Val & 0xFFFF);
+        BuildMI(*MBB, IP, PPC32::LI, 1, R+1).addImm(0);
+      } else if (Val < (1ULL << 32)) {
+        unsigned Temp = makeAnotherReg(Type::IntTy);
+        BuildMI(*MBB, IP, PPC32::LIS, 1, Temp).addImm((Val >> 16) & 0xFFFF);
+        BuildMI(*MBB, IP, PPC32::ORI, 2, R).addReg(Temp).addImm(Val & 0xFFFF);
+        BuildMI(*MBB, IP, PPC32::LI, 1, R+1).addImm(0);
+      } else if (Val < (1ULL << 48)) {
+        unsigned Temp = makeAnotherReg(Type::IntTy);
+        BuildMI(*MBB, IP, PPC32::LIS, 1, Temp).addImm((Val >> 16) & 0xFFFF);
+        BuildMI(*MBB, IP, PPC32::ORI, 2, R).addReg(Temp).addImm(Val & 0xFFFF);
+        BuildMI(*MBB, IP, PPC32::LI, 1, R+1).addImm((Val >> 32) & 0xFFFF);
+      } else {
+        unsigned TempLo = makeAnotherReg(Type::IntTy);
+        unsigned TempHi = makeAnotherReg(Type::IntTy);
+        BuildMI(*MBB, IP, PPC32::LIS, 1, TempLo).addImm((Val >> 16) & 0xFFFF);
+        BuildMI(*MBB, IP, PPC32::ORI, 2, R).addReg(TempLo).addImm(Val & 0xFFFF);
+        BuildMI(*MBB, IP, PPC32::LIS, 1, TempHi).addImm((Val >> 48) & 0xFFFF);
+        BuildMI(*MBB, IP, PPC32::ORI, 2, R+1).addReg(TempHi)
+          .addImm((Val >> 32) & 0xFFFF);
+      }
       return;
     }
 
@@ -613,31 +634,39 @@ void ISel::LoadArgumentsToVirtualRegs(Function &Fn) {
         GPR_idx++;
       }
       break;
-    case cFP:
-      if (ArgLive) {
-        unsigned Opcode;
-        if (I->getType() == Type::FloatTy) {
-          Opcode = PPC32::LFS;
-          FI = MFI->CreateFixedObject(4, ArgOffset);
-        } else {
-          Opcode = PPC32::LFD;
-          FI = MFI->CreateFixedObject(8, ArgOffset);
-        }
+    case cFP32:
+     if (ArgLive) {
+        FI = MFI->CreateFixedObject(4, ArgOffset);
+
         if (FPR_remaining > 0) {
           BuildMI(BB, PPC32::IMPLICIT_DEF, 0, FPR[FPR_idx]);
           BuildMI(BB, PPC32::FMR, 1, Reg).addReg(FPR[FPR_idx]);
           FPR_remaining--;
           FPR_idx++;
         } else {
-          addFrameReference(BuildMI(BB, Opcode, 2, Reg), FI);
+          addFrameReference(BuildMI(BB, PPC32::LFS, 2, Reg), FI);
         }
       }
-      if (I->getType() == Type::DoubleTy) {
-        ArgOffset += 4;   // doubles require 4 additional bytes
-        if (GPR_remaining > 0) {
-          GPR_remaining--;    // uses up 2 GPRs
-          GPR_idx++;
+      break;
+    case cFP64:
+      if (ArgLive) {
+        FI = MFI->CreateFixedObject(8, ArgOffset);
+
+        if (FPR_remaining > 0) {
+          BuildMI(BB, PPC32::IMPLICIT_DEF, 0, FPR[FPR_idx]);
+          BuildMI(BB, PPC32::FMR, 1, Reg).addReg(FPR[FPR_idx]);
+          FPR_remaining--;
+          FPR_idx++;
+        } else {
+          addFrameReference(BuildMI(BB, PPC32::LFD, 2, Reg), FI);
         }
+      }
+
+      // doubles require 4 additional bytes and use 2 GPRs of param space
+      ArgOffset += 4;   
+      if (GPR_remaining > 0) {
+        GPR_remaining--;
+        GPR_idx++;
       }
       break;
     default:
@@ -917,7 +946,8 @@ unsigned ISel::EmitComparison(unsigned OpNum, Value *Op0, Value *Op1,
             PPC32::CR0).addReg(Op0r).addReg(Op1r);
     break;
 
-  case cFP:
+  case cFP32:
+  case cFP64:
     emitUCOM(MBB, IP, Op0r, Op1r);
     break;
 
@@ -966,8 +996,6 @@ void ISel::visitSetCondInst(SetCondInst &I) {
   if (canFoldSetCCIntoBranchOrSelect(&I))
     return;
 
-  unsigned Op0Reg = getReg(I.getOperand(0));
-  unsigned Op1Reg = getReg(I.getOperand(1));
   unsigned DestReg = getReg(I);
   unsigned OpNum = I.getOpcode();
   const Type *Ty = I.getOperand (0)->getType();
@@ -977,6 +1005,9 @@ void ISel::visitSetCondInst(SetCondInst &I) {
   unsigned Opcode = getPPCOpcodeForSetCCNumber(OpNum);
   MachineBasicBlock *thisMBB = BB;
   const BasicBlock *LLVM_BB = BB->getBasicBlock();
+  ilist<MachineBasicBlock>::iterator It = BB;
+  ++It;
+  
   //  thisMBB:
   //  ...
   //   cmpTY cr0, r1, r2
@@ -987,10 +1018,10 @@ void ISel::visitSetCondInst(SetCondInst &I) {
   // if we could insert other, non-terminator instructions after the
   // bCC. But MBB->getFirstTerminator() can't understand this.
   MachineBasicBlock *copy1MBB = new MachineBasicBlock(LLVM_BB);
-  F->getBasicBlockList().push_back(copy1MBB);
+  F->getBasicBlockList().insert(It, copy1MBB);
   BuildMI(BB, Opcode, 2).addReg(PPC32::CR0).addMBB(copy1MBB);
   MachineBasicBlock *copy0MBB = new MachineBasicBlock(LLVM_BB);
-  F->getBasicBlockList().push_back(copy0MBB);
+  F->getBasicBlockList().insert(It, copy0MBB);
   BuildMI(BB, PPC32::B, 1).addMBB(copy0MBB);
   // Update machine-CFG edges
   BB->addSuccessor(copy1MBB);
@@ -1003,7 +1034,7 @@ void ISel::visitSetCondInst(SetCondInst &I) {
   unsigned FalseValue = makeAnotherReg(I.getType());
   BuildMI(BB, PPC32::LI, 1, FalseValue).addImm(0);
   MachineBasicBlock *sinkMBB = new MachineBasicBlock(LLVM_BB);
-  F->getBasicBlockList().push_back(sinkMBB);
+  F->getBasicBlockList().insert(It, sinkMBB);
   BuildMI(BB, PPC32::B, 1).addMBB(sinkMBB);
   // Update machine-CFG edges
   BB->addSuccessor(sinkMBB);
@@ -1047,29 +1078,10 @@ void ISel::emitSelectOperation(MachineBasicBlock *MBB,
                                Value *Cond, Value *TrueVal, Value *FalseVal,
                                unsigned DestReg) {
   unsigned SelectClass = getClassB(TrueVal->getType());
+  unsigned Opcode;
 
-  /*
-  unsigned TrueReg  = getReg(TrueVal, MBB, IP);
-  unsigned FalseReg = getReg(FalseVal, MBB, IP);
-
-  if (TrueReg == FalseReg) {
-    if (SelectClass == cFP) {
-      BuildMI(*MBB, IP, PPC32::FMR, 1, DestReg).addReg(TrueReg);
-    } else {
-      BuildMI(*MBB, IP, PPC32::OR, 2, DestReg).addReg(TrueReg).addReg(TrueReg);
-    }
-    
-    if (SelectClass == cLong)
-      BuildMI(*MBB, IP, PPC32::OR, 2, DestReg+1).addReg(TrueReg+1)
-        .addReg(TrueReg+1);
-    return;
-  }
-  */
-  
   // See if we can fold the setcc into the select instruction, or if we have
   // to get the register of the Cond value
-  
-  unsigned Opcode;
   if (SetCondInst *SCI = canFoldSetCCIntoBranchOrSelect(Cond)) {
     // We successfully folded the setcc into the select instruction.
     
@@ -1092,15 +1104,17 @@ void ISel::emitSelectOperation(MachineBasicBlock *MBB,
 
   MachineBasicBlock *thisMBB = BB;
   const BasicBlock *LLVM_BB = BB->getBasicBlock();
+  ilist<MachineBasicBlock>::iterator It = BB;
+  ++It;
 
   // FIXME: we wouldn't need copy0MBB (we could fold it into thisMBB)
   // if we could insert other, non-terminator instructions after the
   // bCC. But MBB->getFirstTerminator() can't understand this.
   MachineBasicBlock *copy1MBB = new MachineBasicBlock(LLVM_BB);
-  F->getBasicBlockList().push_back(copy1MBB);
+  F->getBasicBlockList().insert(It, copy1MBB);
   BuildMI(BB, Opcode, 2).addReg(PPC32::CR0).addMBB(copy1MBB);
   MachineBasicBlock *copy0MBB = new MachineBasicBlock(LLVM_BB);
-  F->getBasicBlockList().push_back(copy0MBB);
+  F->getBasicBlockList().insert(It, copy0MBB);
   BuildMI(BB, PPC32::B, 1).addMBB(copy0MBB);
   // Update machine-CFG edges
   BB->addSuccessor(copy1MBB);
@@ -1115,7 +1129,7 @@ void ISel::emitSelectOperation(MachineBasicBlock *MBB,
   BB = copy0MBB;
   unsigned FalseValue = getReg(FalseVal, BB, BB->begin());
   MachineBasicBlock *sinkMBB = new MachineBasicBlock(LLVM_BB);
-  F->getBasicBlockList().push_back(sinkMBB);
+  F->getBasicBlockList().insert(It, sinkMBB);
   BuildMI(BB, PPC32::B, 1).addMBB(sinkMBB);
   // Update machine-CFG edges
   BB->addSuccessor(sinkMBB);
@@ -1211,7 +1225,8 @@ void ISel::visitReturnInst(ReturnInst &I) {
     case cInt:
       promote32(PPC32::R3, ValueRecord(RetVal));
       break;
-    case cFP: {   // Floats & Doubles: Return in f1
+    case cFP32:
+    case cFP64: {   // Floats & Doubles: Return in f1
       unsigned RetReg = getReg(RetVal);
       BuildMI(BB, PPC32::FMR, 1, PPC32::F1).addReg(RetReg);
       break;
@@ -1329,8 +1344,10 @@ void ISel::doCall(const ValueRecord &Ret, MachineInstr *CallMI,
         NumBytes += 4; break;
       case cLong:
         NumBytes += 8; break;
-      case cFP:
-        NumBytes += Args[i].Ty == Type::FloatTy ? 4 : 8;
+      case cFP32:
+        NumBytes += 4; break;
+      case cFP64:
+        NumBytes += 8; break;
         break;
       default: assert(0 && "Unknown class!");
       }
@@ -1339,7 +1356,8 @@ void ISel::doCall(const ValueRecord &Ret, MachineInstr *CallMI,
     BuildMI(BB, PPC32::ADJCALLSTACKDOWN, 1).addImm(NumBytes);
 
     // Arguments go on the stack in reverse order, as specified by the ABI.
-    unsigned ArgOffset = 0;
+    // Offset to the paramater area on the stack is 24.
+    unsigned ArgOffset = 24;
     int GPR_remaining = 8, FPR_remaining = 13;
     unsigned GPR_idx = 0, FPR_idx = 0;
     static const unsigned GPR[] = { 
@@ -1365,6 +1383,7 @@ void ISel::doCall(const ValueRecord &Ret, MachineInstr *CallMI,
         if (GPR_remaining > 0) {
           BuildMI(BB, PPC32::OR, 2, GPR[GPR_idx]).addReg(ArgReg)
             .addReg(ArgReg);
+          CallMI->addRegOperand(GPR[GPR_idx], MachineOperand::Use);
         } else {
           BuildMI(BB, PPC32::STW, 3).addReg(ArgReg).addImm(ArgOffset)
             .addReg(PPC32::R1);
@@ -1377,6 +1396,7 @@ void ISel::doCall(const ValueRecord &Ret, MachineInstr *CallMI,
         if (GPR_remaining > 0) {
           BuildMI(BB, PPC32::OR, 2, GPR[GPR_idx]).addReg(ArgReg)
             .addReg(ArgReg);
+          CallMI->addRegOperand(GPR[GPR_idx], MachineOperand::Use);
         } else {
           BuildMI(BB, PPC32::STW, 3).addReg(ArgReg).addImm(ArgOffset)
             .addReg(PPC32::R1);
@@ -1389,8 +1409,10 @@ void ISel::doCall(const ValueRecord &Ret, MachineInstr *CallMI,
         if (GPR_remaining > 1) {
           BuildMI(BB, PPC32::OR, 2, GPR[GPR_idx]).addReg(ArgReg)
             .addReg(ArgReg);
-          BuildMI(BB, PPC32::OR, 2, GPR[GPR_idx + 1]).addReg(ArgReg+1)
+          BuildMI(BB, PPC32::OR, 2, GPR[GPR_idx+1]).addReg(ArgReg+1)
             .addReg(ArgReg+1);
+          CallMI->addRegOperand(GPR[GPR_idx], MachineOperand::Use);
+          CallMI->addRegOperand(GPR[GPR_idx+1], MachineOperand::Use);
         } else {
           BuildMI(BB, PPC32::STW, 3).addReg(ArgReg).addImm(ArgOffset)
             .addReg(PPC32::R1);
@@ -1402,70 +1424,63 @@ void ISel::doCall(const ValueRecord &Ret, MachineInstr *CallMI,
         GPR_remaining -= 1;    // uses up 2 GPRs
         GPR_idx += 1;
         break;
-      case cFP:
+      case cFP32:
         ArgReg = Args[i].Val ? getReg(Args[i].Val) : Args[i].Reg;
-        if (Args[i].Ty == Type::FloatTy) {
-          assert(!isVarArg && "Cannot pass floats to vararg functions!");
-          // Reg or stack?
-          if (FPR_remaining > 0) {
-            BuildMI(BB, PPC32::FMR, 1, FPR[FPR_idx]).addReg(ArgReg);
-            FPR_remaining--;
-            FPR_idx++;
-          } else {
+        // Reg or stack?
+        if (FPR_remaining > 0) {
+          BuildMI(BB, PPC32::FMR, 1, FPR[FPR_idx]).addReg(ArgReg);
+          CallMI->addRegOperand(FPR[FPR_idx], MachineOperand::Use);
+          FPR_remaining--;
+          FPR_idx++;
+          
+          // If this is a vararg function, and there are GPRs left, also
+          // pass the float in an int.  Otherwise, put it on the stack.
+          if (isVarArg) {
             BuildMI(BB, PPC32::STFS, 3).addReg(ArgReg).addImm(ArgOffset)
-              .addReg(PPC32::R1);
+            .addReg(PPC32::R1);
+            if (GPR_remaining > 0) {
+              BuildMI(BB, PPC32::LWZ, 2, GPR[GPR_idx])
+              .addImm(ArgOffset).addReg(ArgReg);
+              CallMI->addRegOperand(GPR[GPR_idx], MachineOperand::Use);
+            }
           }
         } else {
-          assert(Args[i].Ty == Type::DoubleTy && "Unknown FP type!");
-          // Reg or stack?
-          if (FPR_remaining > 0) {
-            BuildMI(BB, PPC32::FMR, 1, FPR[FPR_idx]).addReg(ArgReg);
-            FPR_remaining--;
-            FPR_idx++;
-            // For vararg functions, must pass doubles via int regs as well
-            if (isVarArg) {
-              Value *Val = Args[i].Val;
-              if (ConstantFP *CFP = dyn_cast<ConstantFP>(Val)) {
-                union DU {
-                  double FVal;
-                  struct {
-                    uint32_t hi32;
-                    uint32_t lo32;
-                  } UVal;
-                } U;
-                U.FVal = CFP->getValue();
-                if (GPR_remaining > 0) {
-                  Constant *hi32 = minUConstantForValue(U.UVal.hi32);
-                  copyConstantToRegister(BB, BB->end(), hi32, GPR[GPR_idx]);
-                }
-                if (GPR_remaining > 1) {
-                  Constant *lo32 = minUConstantForValue(U.UVal.lo32);
-                  copyConstantToRegister(BB, BB->end(), lo32, GPR[GPR_idx+1]);
-                }
-              } else {
-                // Since this is not a constant, we must load it into int regs
-                // via memory
-                BuildMI(BB, PPC32::STFD, 3).addReg(ArgReg).addImm(ArgOffset)
-                  .addReg(PPC32::R1);
-                if (GPR_remaining > 0)
-                  BuildMI(BB, PPC32::LWZ, 2, GPR[GPR_idx]).addImm(ArgOffset)
-                    .addReg(PPC32::R1);
-                if (GPR_remaining > 1)
-                  BuildMI(BB, PPC32::LWZ, 2, GPR[GPR_idx+1])
-                    .addImm(ArgOffset+4).addReg(PPC32::R1);
-              }
-            }
-          } else {
-            BuildMI(BB, PPC32::STFD, 3).addReg(ArgReg).addImm(ArgOffset)
-              .addReg(PPC32::R1);
-          }
-
-          ArgOffset += 4;       // 8 byte entry, not 4.
-          GPR_remaining--;      // uses up 2 GPRs
-          GPR_idx++;
+          BuildMI(BB, PPC32::STFS, 3).addReg(ArgReg).addImm(ArgOffset)
+          .addReg(PPC32::R1);
         }
         break;
-
+      case cFP64:
+        ArgReg = Args[i].Val ? getReg(Args[i].Val) : Args[i].Reg;
+        // Reg or stack?
+        if (FPR_remaining > 0) {
+          BuildMI(BB, PPC32::FMR, 1, FPR[FPR_idx]).addReg(ArgReg);
+          CallMI->addRegOperand(FPR[FPR_idx], MachineOperand::Use);
+          FPR_remaining--;
+          FPR_idx++;
+          // For vararg functions, must pass doubles via int regs as well
+          if (isVarArg) {
+            BuildMI(BB, PPC32::STFD, 3).addReg(ArgReg).addImm(ArgOffset)
+            .addReg(PPC32::R1);
+            
+            if (GPR_remaining > 1) {
+              BuildMI(BB, PPC32::LWZ, 2, GPR[GPR_idx]).addImm(ArgOffset)
+              .addReg(PPC32::R1);
+              BuildMI(BB, PPC32::LWZ, 2, GPR[GPR_idx+1])
+                .addImm(ArgOffset+4).addReg(PPC32::R1);
+              CallMI->addRegOperand(GPR[GPR_idx], MachineOperand::Use);
+              CallMI->addRegOperand(GPR[GPR_idx+1], MachineOperand::Use);
+            }
+          }
+        } else {
+          BuildMI(BB, PPC32::STFD, 3).addReg(ArgReg).addImm(ArgOffset)
+          .addReg(PPC32::R1);
+        }
+        // Doubles use 8 bytes, and 2 GPRs worth of param space
+        ArgOffset += 4;
+        GPR_remaining--;
+        GPR_idx++;
+        break;
+        
       default: assert(0 && "Unknown class!");
       }
       ArgOffset += 4;
@@ -1491,7 +1506,8 @@ void ISel::doCall(const ValueRecord &Ret, MachineInstr *CallMI,
       // Integral results are in r3
       BuildMI(BB, PPC32::OR, 2, Ret.Reg).addReg(PPC32::R3).addReg(PPC32::R3);
       break;
-    case cFP:     // Floating-point return values live in f1
+    case cFP32:     // Floating-point return values live in f1
+    case cFP64:
       BuildMI(BB, PPC32::FMR, 1, Ret.Reg).addReg(PPC32::F1);
       break;
     case cLong:   // Long values are in r3:r4
@@ -1519,8 +1535,8 @@ void ISel::visitCallInst(CallInst &CI) {
     TheCall = BuildMI(PPC32::CALLpcrel, 1).addGlobalAddress(F, true);
   } else {  // Emit an indirect call through the CTR
     unsigned Reg = getReg(CI.getCalledValue());
-    BuildMI(BB, PPC32::MTSPR, 2).addZImm(9).addReg(Reg);
-    TheCall = BuildMI(PPC32::CALLindirect, 1).addZImm(20).addZImm(0);
+    BuildMI(BB, PPC32::MTCTR, 1).addReg(Reg);
+    TheCall = BuildMI(PPC32::CALLindirect, 2).addZImm(20).addZImm(0);
   }
 
   std::vector<ValueRecord> Args;
@@ -1766,7 +1782,7 @@ void ISel::emitSimpleBinaryOperation(MachineBasicBlock *MBB,
     PPC32::ADDE, PPC32::SUBFE, PPC32::AND, PPC32::OR, PPC32::XOR
   };
   
-  if (Class == cFP) {
+  if (Class == cFP32 || Class == cFP64) {
     assert(OperatorClass < 2 && "No logical ops for FP!");
     emitBinaryFPOperation(MBB, IP, Op0, Op1, OperatorClass, DestReg);
     return;
@@ -1859,9 +1875,9 @@ void ISel::emitSimpleBinaryOperation(MachineBasicBlock *MBB,
     // with 0xFFFFFFFF00000000 -> noop, etc.
     
     BuildMI(*MBB, IP, BottomTab[OperatorClass], 2, DestReg).addReg(Op0r)
-      .addImm(Op1r);
+      .addReg(Op1r);
     BuildMI(*MBB, IP, TopTab[OperatorClass], 2, DestReg+1).addReg(Op0r+1)
-      .addImm(Op1r+1);
+      .addReg(Op1r+1);
     return;
   }
 
@@ -1873,9 +1889,9 @@ void ISel::emitSimpleBinaryOperation(MachineBasicBlock *MBB,
     BuildMI(*MBB, IP, Opcode, 2, DestReg).addReg(Op0r).addReg(Op1r);
   } else {
     BuildMI(*MBB, IP, BottomTab[OperatorClass], 2, DestReg).addReg(Op0r)
-      .addImm(Op1r);
+      .addReg(Op1r);
     BuildMI(*MBB, IP, TopTab[OperatorClass], 2, DestReg+1).addReg(Op0r+1)
-      .addImm(Op1r+1);
+      .addReg(Op1r+1);
   }
   return;
 }
@@ -1950,18 +1966,11 @@ void ISel::doMultiplyConst(MachineBasicBlock *MBB,
   }
   
   // Most general case, emit a normal multiply...
-  unsigned TmpReg1 = makeAnotherReg(Type::IntTy);
-  unsigned TmpReg2 = makeAnotherReg(Type::IntTy);
-  unsigned TmpReg3 = makeAnotherReg(Type::IntTy);
-  BuildMI(*MBB, IP, PPC32::LIS, 1, TmpReg1).addImm(ConstRHS >> 16);
-  BuildMI(*MBB, IP, PPC32::RLWINM, 4, TmpReg2).addReg(TmpReg1)
-    .addImm(16).addImm(0).addImm(15);
-  BuildMI(*MBB, IP, PPC32::ORI, 2, TmpReg3).addReg(TmpReg2)
-    .addImm(ConstRHS & 0xFFFF);
-  
-  // Emit a MUL to multiply the register holding the index by
-  // elementSize, putting the result in OffsetReg.
-  doMultiply(MBB, IP, DestReg, DestTy, op0Reg, TmpReg3);
+  unsigned TmpReg = makeAnotherReg(Type::IntTy);
+  Constant *C = ConstantUInt::get(Type::UIntTy, ConstRHS);
+
+  copyConstantToRegister(MBB, IP, C, TmpReg);
+  doMultiply(MBB, IP, DestReg, DestTy, op0Reg, TmpReg);
 }
 
 void ISel::visitMul(BinaryOperator &I) {
@@ -1993,7 +2002,8 @@ void ISel::emitMultiply(MachineBasicBlock *MBB, MachineBasicBlock::iterator IP,
       doMultiply(&BB, IP, DestReg, Op1->getType(), Op0Reg, Op1Reg);
     }
     return;
-  case cFP:
+  case cFP32:
+  case cFP64:
     emitBinaryFPOperation(MBB, IP, Op0, Op1, 2, DestReg);
     return;
   case cLong:
@@ -2098,11 +2108,30 @@ void ISel::emitDivRemOperation(MachineBasicBlock *BB,
   const Type *Ty = Op0->getType();
   unsigned Class = getClass(Ty);
   switch (Class) {
-  case cFP:              // Floating point divide
+  case cFP32:
     if (isDiv) {
+      // Floating point divide...
       emitBinaryFPOperation(BB, IP, Op0, Op1, 3, ResultReg);
       return;
-    } else {               // Floating point remainder...
+    } else {
+      // Floating point remainder via fmodf(float x, float y);
+      unsigned Op0Reg = getReg(Op0, BB, IP);
+      unsigned Op1Reg = getReg(Op1, BB, IP);
+      MachineInstr *TheCall =
+        BuildMI(PPC32::CALLpcrel, 1).addGlobalAddress(fmodfFn, true);
+      std::vector<ValueRecord> Args;
+      Args.push_back(ValueRecord(Op0Reg, Type::FloatTy));
+      Args.push_back(ValueRecord(Op1Reg, Type::FloatTy));
+      doCall(ValueRecord(ResultReg, Type::FloatTy), TheCall, Args, false);
+    }
+    return;
+  case cFP64:
+    if (isDiv) {
+      // Floating point divide...
+      emitBinaryFPOperation(BB, IP, Op0, Op1, 3, ResultReg);
+      return;
+    } else {               
+      // Floating point remainder via fmod(double x, double y);
       unsigned Op0Reg = getReg(Op0, BB, IP);
       unsigned Op1Reg = getReg(Op1, BB, IP);
       MachineInstr *TheCall =
@@ -2114,7 +2143,7 @@ void ISel::emitDivRemOperation(MachineBasicBlock *BB,
     }
     return;
   case cLong: {
-     static Function* const Funcs[] =
+    static Function* const Funcs[] =
       { __moddi3Fn, __divdi3Fn, __umoddi3Fn, __udivdi3Fn };
     unsigned Op0Reg = getReg(Op0, BB, IP);
     unsigned Op1Reg = getReg(Op1, BB, IP);
@@ -2453,14 +2482,14 @@ void ISel::visitCastInst(CastInst &CI) {
 /// emitCastOperation - Common code shared between visitCastInst and constant
 /// expression cast support.
 ///
-void ISel::emitCastOperation(MachineBasicBlock *BB,
+void ISel::emitCastOperation(MachineBasicBlock *MBB,
                              MachineBasicBlock::iterator IP,
                              Value *Src, const Type *DestTy,
                              unsigned DestReg) {
   const Type *SrcTy = Src->getType();
   unsigned SrcClass = getClassB(SrcTy);
   unsigned DestClass = getClassB(DestTy);
-  unsigned SrcReg = getReg(Src, BB, IP);
+  unsigned SrcReg = getReg(Src, MBB, IP);
 
   // Implement casts to bool by using compare on the operand followed by set if
   // not zero on the result.
@@ -2470,29 +2499,21 @@ void ISel::emitCastOperation(MachineBasicBlock *BB,
     case cShort:
     case cInt: {
       unsigned TmpReg = makeAnotherReg(Type::IntTy);
-      BuildMI(*BB, IP, PPC32::ADDIC, 2, TmpReg).addReg(SrcReg).addImm(-1);
-      BuildMI(*BB, IP, PPC32::SUBFE, 2, DestReg).addReg(TmpReg).addReg(SrcReg);
+      BuildMI(*MBB, IP, PPC32::ADDIC, 2, TmpReg).addReg(SrcReg).addImm(-1);
+      BuildMI(*MBB, IP, PPC32::SUBFE, 2, DestReg).addReg(TmpReg).addReg(SrcReg);
       break;
     }
     case cLong: {
       unsigned TmpReg = makeAnotherReg(Type::IntTy);
       unsigned SrcReg2 = makeAnotherReg(Type::IntTy);
-      BuildMI(*BB, IP, PPC32::OR, 2, SrcReg2).addReg(SrcReg).addReg(SrcReg+1);
-      BuildMI(*BB, IP, PPC32::ADDIC, 2, TmpReg).addReg(SrcReg2).addImm(-1);
-      BuildMI(*BB, IP, PPC32::SUBFE, 2, DestReg).addReg(TmpReg).addReg(SrcReg2);
+      BuildMI(*MBB, IP, PPC32::OR, 2, SrcReg2).addReg(SrcReg).addReg(SrcReg+1);
+      BuildMI(*MBB, IP, PPC32::ADDIC, 2, TmpReg).addReg(SrcReg2).addImm(-1);
+      BuildMI(*MBB, IP, PPC32::SUBFE, 2, DestReg).addReg(TmpReg).addReg(SrcReg2);
       break;
     }
-    case cFP:
-      // FIXME
-      // Load -0.0
-      // Compare
-      // move to CR1
-      // Negate -0.0
-      // Compare
-      // CROR
-      // MFCR
-      // Left-align
-      // SRA ?
+    case cFP32:
+    case cFP64:
+      // FSEL perhaps?
       std::cerr << "Cast fp-to-bool not implemented!";
       abort();
     }
@@ -2503,21 +2524,12 @@ void ISel::emitCastOperation(MachineBasicBlock *BB,
   // getClass) by using a register-to-register move.
   if (SrcClass == DestClass) {
     if (SrcClass <= cInt) {
-      BuildMI(*BB, IP, PPC32::OR, 2, DestReg).addReg(SrcReg).addReg(SrcReg);
-    } else if (SrcClass == cFP && SrcTy == DestTy) {
-      BuildMI(*BB, IP, PPC32::FMR, 1, DestReg).addReg(SrcReg);
-    } else if (SrcClass == cFP) {
-      if (SrcTy == Type::FloatTy) {  // float -> double
-        assert(DestTy == Type::DoubleTy && "Unknown cFP member!");
-        BuildMI(*BB, IP, PPC32::FMR, 1, DestReg).addReg(SrcReg);
-      } else {                       // double -> float
-        assert(SrcTy == Type::DoubleTy && DestTy == Type::FloatTy &&
-               "Unknown cFP member!");
-        BuildMI(*BB, IP, PPC32::FRSP, 1, DestReg).addReg(SrcReg);
-      }
+      BuildMI(*MBB, IP, PPC32::OR, 2, DestReg).addReg(SrcReg).addReg(SrcReg);
+    } else if (SrcClass == cFP32 || SrcClass == cFP64) {
+      BuildMI(*MBB, IP, PPC32::FMR, 1, DestReg).addReg(SrcReg);
     } else if (SrcClass == cLong) {
-      BuildMI(*BB, IP, PPC32::OR, 2, DestReg).addReg(SrcReg).addReg(SrcReg);
-      BuildMI(*BB, IP, PPC32::OR, 2, DestReg+1).addReg(SrcReg+1)
+      BuildMI(*MBB, IP, PPC32::OR, 2, DestReg).addReg(SrcReg).addReg(SrcReg);
+      BuildMI(*MBB, IP, PPC32::OR, 2, DestReg+1).addReg(SrcReg+1)
         .addReg(SrcReg+1);
     } else {
       assert(0 && "Cannot handle this type of cast instruction!");
@@ -2525,7 +2537,19 @@ void ISel::emitCastOperation(MachineBasicBlock *BB,
     }
     return;
   }
-
+  
+  // Handle cast of Float -> Double
+  if (SrcClass == cFP32 && DestClass == cFP64) {
+    BuildMI(*MBB, IP, PPC32::FMR, 1, DestReg).addReg(SrcReg);
+    return;
+  }
+  
+  // Handle cast of Double -> Float
+  if (SrcClass == cFP64 && DestClass == cFP32) {
+    BuildMI(*MBB, IP, PPC32::FRSP, 1, DestReg).addReg(SrcReg);
+    return;
+  }
+  
   // Handle cast of SMALLER int to LARGER int using a move with sign extension
   // or zero extension, depending on whether the source type was signed.
   if (SrcClass <= cInt && (DestClass <= cInt || DestClass == cLong) &&
@@ -2578,46 +2602,23 @@ void ISel::emitCastOperation(MachineBasicBlock *BB,
   }
 
   // Handle casts from integer to floating point now...
-  if (DestClass == cFP) {
+  if (DestClass == cFP32 || DestClass == cFP64) {
 
     // Emit a library call for long to float conversion
     if (SrcClass == cLong) {
       std::vector<ValueRecord> Args;
       Args.push_back(ValueRecord(SrcReg, SrcTy));
-      Function *floatFn = (SrcTy==Type::FloatTy) ? __floatdisfFn : __floatdidfFn;
+      Function *floatFn = (DestClass == cFP32) ? __floatdisfFn : __floatdidfFn;
       MachineInstr *TheCall =
         BuildMI(PPC32::CALLpcrel, 1).addGlobalAddress(floatFn, true);
       doCall(ValueRecord(DestReg, DestTy), TheCall, Args, false);
       return;
     }
-
-    unsigned TmpReg = makeAnotherReg(Type::IntTy);
-    switch (SrcTy->getTypeID()) {
-    case Type::BoolTyID:
-    case Type::SByteTyID:
-      BuildMI(*BB, IP, PPC32::EXTSB, 1, TmpReg).addReg(SrcReg);
-      break;
-    case Type::UByteTyID:
-      BuildMI(*BB, IP, PPC32::RLWINM, 4, TmpReg).addReg(SrcReg).addZImm(0)
-        .addImm(24).addImm(31);
-      break;
-    case Type::ShortTyID:
-      BuildMI(*BB, IP, PPC32::EXTSB, 1, TmpReg).addReg(SrcReg);
-      break;
-    case Type::UShortTyID:
-      BuildMI(*BB, IP, PPC32::RLWINM, 4, TmpReg).addReg(SrcReg).addZImm(0)
-        .addImm(16).addImm(31);
-      break;
-    case Type::IntTyID:
-      BuildMI(*BB, IP, PPC32::OR, 2, TmpReg).addReg(SrcReg).addReg(SrcReg);
-      break;
-    case Type::UIntTyID:
-      BuildMI(*BB, IP, PPC32::OR, 2, TmpReg).addReg(SrcReg).addReg(SrcReg);
-      break;
-    default:  // No promotion needed...
-      break;
-    }
     
+    // Make sure we're dealing with a full 32 bits
+    unsigned TmpReg = makeAnotherReg(Type::IntTy);
+    promote32(TmpReg, ValueRecord(SrcReg, SrcTy));
+
     SrcReg = TmpReg;
     
     // Spill the integer to memory and reload it from there.
@@ -2669,34 +2670,44 @@ void ISel::emitCastOperation(MachineBasicBlock *BB,
   }
 
   // Handle casts from floating point to integer now...
-  if (SrcClass == cFP) {
-
+  if (SrcClass == cFP32 || SrcClass == cFP64) {
     // emit library call
     if (DestClass == cLong) {
       std::vector<ValueRecord> Args;
       Args.push_back(ValueRecord(SrcReg, SrcTy));
+      Function *floatFn = (DestClass == cFP32) ? __fixsfdiFn : __fixdfdiFn;
       MachineInstr *TheCall =
-        BuildMI(PPC32::CALLpcrel, 1).addGlobalAddress(__fixdfdiFn, true);
+        BuildMI(PPC32::CALLpcrel, 1).addGlobalAddress(floatFn, true);
       doCall(ValueRecord(DestReg, DestTy), TheCall, Args, false);
       return;
     }
 
     int ValueFrameIdx =
-      F->getFrameInfo()->CreateStackObject(Type::DoubleTy, TM.getTargetData());
+      F->getFrameInfo()->CreateStackObject(SrcTy, TM.getTargetData());
 
-    // load into 32 bit value, and then truncate as necessary
-    // FIXME: This is wrong for unsigned dest types
-    //if (DestTy->isSigned()) {
+    if (DestTy->isSigned()) {
+        unsigned LoadOp = (DestClass == cShort) ? PPC32::LHA : PPC32::LWZ;
         unsigned TempReg = makeAnotherReg(Type::DoubleTy);
+        
+        // Convert to integer in the FP reg and store it to a stack slot
         BuildMI(*BB, IP, PPC32::FCTIWZ, 1, TempReg).addReg(SrcReg);
         addFrameReference(BuildMI(*BB, IP, PPC32::STFD, 3)
                             .addReg(TempReg), ValueFrameIdx);
-        addFrameReference(BuildMI(*BB, IP, PPC32::LWZ, 2, DestReg), 
-                          ValueFrameIdx+4);
-    //} else {
-    //}
-    
-    // FIXME: Truncate return value
+        
+        // There is no load signed byte opcode, so we must emit a sign extend
+        if (DestClass == cByte) {
+          unsigned TempReg2 = makeAnotherReg(DestTy);
+          addFrameReference(BuildMI(*BB, IP, LoadOp, 2, TempReg2), 
+                            ValueFrameIdx+4);
+          BuildMI(*MBB, IP, PPC32::EXTSB, DestReg).addReg(TempReg2);
+        } else {
+          addFrameReference(BuildMI(*BB, IP, LoadOp, 2, DestReg), 
+                            ValueFrameIdx+4);
+        }
+    } else {
+      std::cerr << "Cast fp-to-unsigned not implemented!";
+      abort();
+    }
     return;
   }
 
@@ -2851,8 +2862,8 @@ void ISel::emitGEPOperation(MachineBasicBlock *MBB,
     
         // Emit an ADD to add OffsetReg to the basePtr.
         unsigned Reg = makeAnotherReg(Type::UIntTy);
-        BuildMI(*MBB, IP, PPC32::ADD, 2, TargetReg).addReg(Reg).addReg(OffsetReg);
-    
+        BuildMI(*MBB, IP, PPC32::ADD,2,TargetReg).addReg(Reg).addReg(OffsetReg);
+
         // Step to the first instruction of the multiply.
         if (BeforeIt == MBB->end())
           IP = MBB->begin();
