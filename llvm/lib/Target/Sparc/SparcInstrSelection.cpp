@@ -1819,16 +1819,26 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
       case 56:	// reg:   GetElemPtrIdx(reg,reg)
         if (subtreeRoot->parent() != NULL)
           {
-            // Check if the parent was an array access.
-            // If so, we still need to generate this instruction.
-            MemAccessInst* memInst = (MemAccessInst*)
-              subtreeRoot->getInstruction();
-            const PointerType* ptrType =
-              (const PointerType*) memInst->getPtrOperand()->getType();
-            if (! ptrType->getValueType()->isArrayType())
-              {// we don't need a separate instr
-                numInstr = 0;		// don't forward operand!
-                break;
+            // If the parent was a memory operation and not an array access,
+            // the parent will fold this instruction in so generate nothing.
+            // 
+            Instruction* parent =
+              cast<Instruction>(subtreeRoot->parent()->getValue());
+            if (parent->getOpcode() == Instruction::Load ||
+                parent->getOpcode() == Instruction::Store ||
+                parent->getOpcode() == Instruction::GetElementPtr)
+              {
+                // Check if the parent is an array access,
+                // If so, we still need to generate this instruction.
+                GetElementPtrInst* getElemInst =
+                  cast<GetElementPtrInst>(subtreeRoot->getInstruction());
+                const PointerType* ptrType =
+                  (const PointerType*) getElemInst->getPtrOperand()->getType();
+                if (! ptrType->getValueType()->isArrayType())
+                  {// we don't need a separate instr
+                    numInstr = 0;		// don't forward operand!
+                    break;
+                  }
               }
           }
         // else in all other cases we need to a separate ADD instruction
