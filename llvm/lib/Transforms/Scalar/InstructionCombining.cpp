@@ -1451,76 +1451,76 @@ Instruction *InstCombiner::visitSetCondInst(BinaryOperator &I) {
   // can be folded into the comparison.
   if (ConstantInt *CI = dyn_cast<ConstantInt>(Op1)) {
     if (Instruction *LHSI = dyn_cast<Instruction>(Op0))
-      if (LHSI->hasOneUse())
-        switch (LHSI->getOpcode()) {
-        case Instruction::And:
-          if (isa<ConstantInt>(LHSI->getOperand(1)) &&
-              LHSI->getOperand(0)->hasOneUse()) {
-            // If this is: (X >> C1) & C2 != C3 (where any shift and any compare
-            // could exist), turn it into (X & (C2 << C1)) != (C3 << C1).  This
-            // happens a LOT in code produced by the C front-end, for bitfield
-            // access.
-            ShiftInst *Shift = dyn_cast<ShiftInst>(LHSI->getOperand(0));
-            ConstantUInt *ShAmt;
-            ShAmt = Shift ? dyn_cast<ConstantUInt>(Shift->getOperand(1)) : 0;
-            ConstantInt *AndCST = cast<ConstantInt>(LHSI->getOperand(1));
-            const Type *Ty = LHSI->getType();
-                  
-            // We can fold this as long as we can't shift unknown bits
-            // into the mask.  This can only happen with signed shift
-            // rights, as they sign-extend.
-            if (ShAmt) {
-              bool CanFold = Shift->getOpcode() != Instruction::Shr ||
-                             Shift->getType()->isUnsigned();
-              if (!CanFold) {
-                // To test for the bad case of the signed shr, see if any
-                // of the bits shifted in could be tested after the mask.
-                Constant *OShAmt = ConstantUInt::get(Type::UByteTy, 
+      switch (LHSI->getOpcode()) {
+      case Instruction::And:
+        if (LHSI->hasOneUse() && isa<ConstantInt>(LHSI->getOperand(1)) &&
+            LHSI->getOperand(0)->hasOneUse()) {
+          // If this is: (X >> C1) & C2 != C3 (where any shift and any compare
+          // could exist), turn it into (X & (C2 << C1)) != (C3 << C1).  This
+          // happens a LOT in code produced by the C front-end, for bitfield
+          // access.
+          ShiftInst *Shift = dyn_cast<ShiftInst>(LHSI->getOperand(0));
+          ConstantUInt *ShAmt;
+          ShAmt = Shift ? dyn_cast<ConstantUInt>(Shift->getOperand(1)) : 0;
+          ConstantInt *AndCST = cast<ConstantInt>(LHSI->getOperand(1));
+          const Type *Ty = LHSI->getType();
+          
+          // We can fold this as long as we can't shift unknown bits
+          // into the mask.  This can only happen with signed shift
+          // rights, as they sign-extend.
+          if (ShAmt) {
+            bool CanFold = Shift->getOpcode() != Instruction::Shr ||
+                          Shift->getType()->isUnsigned();
+            if (!CanFold) {
+              // To test for the bad case of the signed shr, see if any
+              // of the bits shifted in could be tested after the mask.
+              Constant *OShAmt = ConstantUInt::get(Type::UByteTy, 
                                    Ty->getPrimitiveSize()*8-ShAmt->getValue());
-                Constant *ShVal = 
-                 ConstantExpr::getShl(ConstantInt::getAllOnesValue(Ty), OShAmt);
-                if (ConstantExpr::getAnd(ShVal, AndCST)->isNullValue())
-                  CanFold = true;
-              }
-
-              if (CanFold) {
-                unsigned ShiftOp = Shift->getOpcode() == Instruction::Shl
-                  ? Instruction::Shr : Instruction::Shl;
-                Constant *NewCst = ConstantExpr::get(ShiftOp, CI, ShAmt);
-
-                // Check to see if we are shifting out any of the bits being
-                // compared.
-                if (ConstantExpr::get(Shift->getOpcode(), NewCst, ShAmt) != CI){
-                  // If we shifted bits out, the fold is not going to work out.
-                  // As a special case, check to see if this means that the
-                  // result is always true or false now.
-                  if (I.getOpcode() == Instruction::SetEQ)
-                    return ReplaceInstUsesWith(I, ConstantBool::False);
-                  if (I.getOpcode() == Instruction::SetNE)
-                    return ReplaceInstUsesWith(I, ConstantBool::True);
-                } else {
-                  I.setOperand(1, NewCst);
-                  LHSI->setOperand(1, ConstantExpr::get(ShiftOp, AndCST,ShAmt));
-                  LHSI->setOperand(0, Shift->getOperand(0));
-                  WorkList.push_back(Shift); // Shift is dead.
-                  AddUsesToWorkList(I);
-                  return &I;
-                }
+              Constant *ShVal = 
+                ConstantExpr::getShl(ConstantInt::getAllOnesValue(Ty), OShAmt);
+              if (ConstantExpr::getAnd(ShVal, AndCST)->isNullValue())
+                CanFold = true;
+            }
+            
+            if (CanFold) {
+              unsigned ShiftOp = Shift->getOpcode() == Instruction::Shl
+                ? Instruction::Shr : Instruction::Shl;
+              Constant *NewCst = ConstantExpr::get(ShiftOp, CI, ShAmt);
+              
+              // Check to see if we are shifting out any of the bits being
+              // compared.
+              if (ConstantExpr::get(Shift->getOpcode(), NewCst, ShAmt) != CI){
+                // If we shifted bits out, the fold is not going to work out.
+                // As a special case, check to see if this means that the
+                // result is always true or false now.
+                if (I.getOpcode() == Instruction::SetEQ)
+                  return ReplaceInstUsesWith(I, ConstantBool::False);
+                if (I.getOpcode() == Instruction::SetNE)
+                  return ReplaceInstUsesWith(I, ConstantBool::True);
+              } else {
+                I.setOperand(1, NewCst);
+                LHSI->setOperand(1, ConstantExpr::get(ShiftOp, AndCST,ShAmt));
+                LHSI->setOperand(0, Shift->getOperand(0));
+                WorkList.push_back(Shift); // Shift is dead.
+                AddUsesToWorkList(I);
+                return &I;
               }
             }
           }
-          break;
-        case Instruction::Div:
-          if (0 && isa<ConstantInt>(LHSI->getOperand(1))) {
-            std::cerr << "COULD FOLD: " << *LHSI;
-            std::cerr << "COULD FOLD: " << I << "\n";
-          }
-          break;
-        case Instruction::Select:
-          // If either operand of the select is a constant, we can fold the
-          // comparison into the select arms, which will cause one to be
-          // constant folded and the select turned into a bitwise or.
-          Value *Op1 = 0, *Op2 = 0;
+        }
+        break;
+      case Instruction::Div:
+        if (0 && isa<ConstantInt>(LHSI->getOperand(1))) {
+          std::cerr << "COULD FOLD: " << *LHSI;
+          std::cerr << "COULD FOLD: " << I << "\n";
+        }
+        break;
+      case Instruction::Select:
+        // If either operand of the select is a constant, we can fold the
+        // comparison into the select arms, which will cause one to be
+        // constant folded and the select turned into a bitwise or.
+        Value *Op1 = 0, *Op2 = 0;
+        if (LHSI->hasOneUse()) {
           if (Constant *C = dyn_cast<Constant>(LHSI->getOperand(1))) {
             // Fold the known value into the constant operand.
             Op1 = ConstantExpr::get(I.getOpcode(), C, CI);
@@ -1536,12 +1536,13 @@ Instruction *InstCombiner::visitSetCondInst(BinaryOperator &I) {
                                                       LHSI->getOperand(1), CI,
                                                       I.getName()), I);
           }
-
-          if (Op1)
-            return new SelectInst(LHSI->getOperand(0), Op1, Op2);
-          break;
         }
-
+        
+        if (Op1)
+          return new SelectInst(LHSI->getOperand(0), Op1, Op2);
+        break;
+      }
+    
     // Simplify seteq and setne instructions...
     if (I.getOpcode() == Instruction::SetEQ ||
         I.getOpcode() == Instruction::SetNE) {
