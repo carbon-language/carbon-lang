@@ -55,7 +55,7 @@ usage () {
 	echo ""
 	echo "OBJECTS-FILE is a text file containing the names of all the .o files"
 	echo "PROGRAM is the name of the executable under test"
-	echo "(there must also exist a Makefile in the current directory which
+	echo "(there must also exist a Makefile in the current directory which"
 	echo "has PROGRAM as a target)"
 	echo "LINKER is the script that builds PROGRAM; try --make-linker-script" 
 	echo "to automatically generate it"
