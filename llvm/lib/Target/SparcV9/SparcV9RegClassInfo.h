@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef SPARC_REG_CLASS_INFO_H
-#define SPARC_REG_CLASS_INFO_H
+#ifndef SPARCV9REGCLASSINFO_H
+#define SPARCV9REGCLASSINFO_H
 
 #include "llvm/Target/TargetRegInfo.h"
 
@@ -81,8 +81,6 @@ struct SparcV9IntRegClass : public TargetRegClassInfo {
 };
 
 
-
-
 //-----------------------------------------------------------------------------
 // Float Register Class
 //-----------------------------------------------------------------------------
@@ -142,8 +140,6 @@ public:
 };
 
 
-
-
 //-----------------------------------------------------------------------------
 // Int CC Register Class
 // Only one integer cc register is available. However, this register is
@@ -160,8 +156,8 @@ struct SparcV9IntCCRegClass : public TargetRegClassInfo {
   void colorIGNode(IGNode *Node,
                    const std::vector<bool> &IsColorUsedArr) const;
 
-  // according to  SparcV9 64 ABI,  %ccr is volatile
-  //
+  // according to the 64-bit SparcV9 ABI, all integer CC regs are
+  // volatile.
   inline bool isRegVolatile(int Reg) const { return true; }
 
   enum {
@@ -179,21 +175,22 @@ struct SparcV9IntCCRegClass : public TargetRegClassInfo {
 
 struct SparcV9FloatCCRegClass : public TargetRegClassInfo {
   SparcV9FloatCCRegClass(unsigned ID) 
-    : TargetRegClassInfo(ID, 4, 5) {  }
+    : TargetRegClassInfo(ID, 4, 4) {  }
 
   void colorIGNode(IGNode *Node,
                    const std::vector<bool> &IsColorUsedArr) const;
   
-  // according to  SparcV9 64 ABI, all %fp CC regs are volatile
-  //
+  // according to the 64-bit SparcV9 ABI, all floating-point CC regs are
+  // volatile.
   inline bool isRegVolatile(int Reg) const { return true; }
 
   enum {
-    fcc0, fcc1, fcc2, fcc3, fsr         // fsr is not used in allocation
-  };                                    // but has a name in getRegName()
-
+    fcc0, fcc1, fcc2, fcc3
+  };
+  
   const char * const getRegName(unsigned reg) const;
 };
+
 
 //-----------------------------------------------------------------------------
 // SparcV9 special register class.  These registers are not used for allocation
