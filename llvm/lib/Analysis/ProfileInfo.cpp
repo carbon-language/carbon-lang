@@ -38,5 +38,5 @@ namespace {
   X("no-profile", "No Profile Information");
 
   // Declare that we implement the AliasAnalysis interface
-  RegisterAnalysisGroup<ProfileInfo, NoProfileInfo> Y;
+  RegisterAnalysisGroup<ProfileInfo, NoProfileInfo, true> Y;
 }  // End of anonymous namespace
