@@ -86,8 +86,6 @@ public:
 
 
   virtual bool doPassFinalization(Module *M) {
-    // TODO: This should be performed as a moduleCleanup function, but we don't
-    // have one yet!
     Target.emitAssembly(M, *Out);
 
     if (DeleteStream) delete Out;
@@ -147,11 +145,11 @@ int main(int argc, char **argv) {
              << "! SKIPPING OUTPUT OF TRACE CODE\n";
         delete os;
         retCode = 1;
+      } else {
+        Passes.push_back(new PrintModulePass("", os,
+                                             /*deleteStream*/ true,
+                                             /*printAsBytecode*/ ! DebugTrace));
       }
-      
-      Passes.push_back(new PrintModulePass("", os,
-                                           /*deleteStream*/ true,
-                                           /*printAsBytecode*/ ! DebugTrace));
     }
   
   // If LLVM dumping after transformations is requested, add it to the pipeline
