@@ -15,8 +15,12 @@
 #define CODEMITTERGEN_H
 
 #include "TableGenBackend.h"
+#include <map>
+#include <vector>
 
 namespace llvm {
+
+class RecordVal;
 
 class CodeEmitterGen : public TableGenBackend {
   RecordKeeper &Records;
@@ -28,6 +32,10 @@ public:
 private:
   void emitMachineOpEmitter(std::ostream &o, const std::string &Namespace);
   void emitGetValueBit(std::ostream &o, const std::string &Namespace);
+  void emitInstrOpBits(std::ostream &o,
+                       const std::vector<RecordVal> &Vals,
+                       std::map<std::string, unsigned> &OpOrder,
+                       std::map<std::string, bool> &OpContinuous);
 };
 
 } // End llvm namespace

@@ -19,6 +19,58 @@
 #include "llvm/Support/Debug.h"
 using namespace llvm;
 
+void CodeEmitterGen::emitInstrOpBits(std::ostream &o,
+                                     const std::vector<RecordVal> &Vals,
+                                     std::map<std::string, unsigned> &OpOrder,
+                                     std::map<std::string, bool> &OpContinuous)
+{
+  for (unsigned f = 0, e = Vals.size(); f != e; ++f) {
+    if (Vals[f].getPrefix()) {
+      BitsInit *FieldInitializer = (BitsInit*)Vals[f].getValue();
+
+      // Scan through the field looking for bit initializers of the current
+      // variable...
+      for (int i = FieldInitializer->getNumBits()-1; i >= 0; --i) {
+        Init *I = FieldInitializer->getBit(i);
+        if (BitInit *BI = dynamic_cast<BitInit*>(I)) {
+          DEBUG(o << "      // bit init: f: " << f << ", i: " << i << "\n");
+        } else if (UnsetInit *UI = dynamic_cast<UnsetInit*>(I)) {
+          DEBUG(o << "      // unset init: f: " << f << ", i: " << i << "\n");
+        } else if (VarBitInit *VBI = dynamic_cast<VarBitInit*>(I)) {
+          TypedInit *TI = VBI->getVariable();
+          if (VarInit *VI = dynamic_cast<VarInit*>(TI)) {
+            // If the bits of the field are laid out consecutively in the
+            // instruction, then instead of separately ORing in bits, just
+            // mask and shift the entire field for efficiency.
+            if (OpContinuous[VI->getName()]) {
+              // already taken care of in the loop above, thus there is no
+              // need to individually OR in the bits
+
+              // for debugging, output the regular version anyway, commented
+              DEBUG(o << "      // Value |= getValueBit(op"
+                      << OpOrder[VI->getName()] << ", " << VBI->getBitNum()
+                      << ")" << " << " << i << ";\n");
+            } else {
+              o << "      Value |= getValueBit(op" << OpOrder[VI->getName()]
+                << ", " << VBI->getBitNum()
+                << ")" << " << " << i << ";\n";
+            }
+          } else if (FieldInit *FI = dynamic_cast<FieldInit*>(TI)) {
+            // FIXME: implement this!
+            std::cerr << "Error: FieldInit not implemented!\n";
+            abort();
+          } else {
+            std::cerr << "Error: unimplemented case in "
+                      << "CodeEmitterGen::emitInstrOpBits()\n";
+            abort();
+          }
+        }
+      }
+    }
+  }
+}
+
+
 void CodeEmitterGen::run(std::ostream &o) {
   CodeGenTarget Target;
   std::vector<Record*> Insts = Records.getAllDerivedDefinitions("Instruction");
@@ -43,6 +95,24 @@ void CodeEmitterGen::run(std::ostream &o) {
 
     BitsInit *BI = R->getValueAsBitsInit("Inst");
 
+    // For little-endian instruction bit encodings, reverse the bit order
+    if (Target.isLittleEndianEncoding()) {
+      unsigned numBits = BI->getNumBits();
+      BitsInit *NewBI = new BitsInit(numBits);
+      for (unsigned bit = 0, end = numBits / 2; bit != end; ++bit) {
+        unsigned bitSwapIdx = numBits - bit - 1;
+        Init *OrigBit = BI->getBit(bit);
+        Init *BitSwap = BI->getBit(bitSwapIdx);
+        NewBI->setBit(bit, BitSwap);
+        NewBI->setBit(bitSwapIdx, OrigBit);
+      }
+      if (numBits % 2) {
+        unsigned middle = (numBits + 1) / 2;
+        NewBI->setBit(middle, BI->getBit(middle));
+      }
+      BI = NewBI;
+    }
+ 
     unsigned Value = 0;
     const std::vector<RecordVal> &Vals = R->getValues();
 
@@ -61,17 +131,16 @@ void CodeEmitterGen::run(std::ostream &o) {
     DEBUG(o << "      // " << *R->getValue("Inst") << "\n");
     o << "      Value = " << Value << "U;\n\n";
     
-    // Loop over all of the fields in the instruction determining which are the
+    // Loop over all of the fields in the instruction, determining which are the
     // operands to the instruction. 
-    //
     unsigned op = 0;
     std::map<std::string, unsigned> OpOrder;
     std::map<std::string, bool> OpContinuous;
     for (unsigned i = 0, e = Vals.size(); i != e; ++i) {
-      if (!Vals[i].getPrefix() &&  !Vals[i].getValue()->isComplete()) {
+      if (!Vals[i].getPrefix() && !Vals[i].getValue()->isComplete()) {
         // Is the operand continuous? If so, we can just mask and OR it in
         // instead of doing it bit-by-bit, saving a lot in runtime cost.        
-        const BitsInit *InstInit = BI;
+        BitsInit *InstInit = BI;
         int beginBitInVar = -1, endBitInVar = -1;
         int beginBitInInst = -1, endBitInInst = -1;
         bool continuous = true;
@@ -173,58 +242,19 @@ void CodeEmitterGen::run(std::ostream &o) {
       }
     }
 
-    for (unsigned f = 0, e = Vals.size(); f != e; ++f) {
-      if (Vals[f].getPrefix()) {
-        BitsInit *FieldInitializer = (BitsInit*)Vals[f].getValue();
-
-        // Scan through the field looking for bit initializers of the current
-        // variable...
-        for (int i = FieldInitializer->getNumBits()-1; i >= 0; --i) {
-          Init *I = FieldInitializer->getBit(i);
-          if (BitInit *BI = dynamic_cast<BitInit*>(I)) {
-            DEBUG(o << "      // bit init: f: " << f << ", i: " << i << "\n");
-          } else if (UnsetInit *UI = dynamic_cast<UnsetInit*>(I)) {
-            DEBUG(o << "      // unset init: f: " << f << ", i: " << i << "\n");
-          } else if (VarBitInit *VBI = dynamic_cast<VarBitInit*>(I)) {
-            TypedInit *TI = VBI->getVariable();
-            if (VarInit *VI = dynamic_cast<VarInit*>(TI)) {
-              // If the bits of the field are laid out consecutively in the
-              // instruction, then instead of separately ORing in bits, just
-              // mask and shift the entire field for efficiency.
-              if (OpContinuous[VI->getName()]) {
-                // already taken care of in the loop above, thus there is no
-                // need to individually OR in the bits
-
-                // for debugging, output the regular version anyway, commented
-                DEBUG(o << "      // Value |= getValueBit(op"
-                        << OpOrder[VI->getName()] << ", " << VBI->getBitNum()
-                        << ")" << " << " << i << ";\n");
-              } else {
-                o << "      Value |= getValueBit(op" << OpOrder[VI->getName()]
-                  << ", " << VBI->getBitNum()
-                  << ")" << " << " << i << ";\n";
-              }
-            } else if (FieldInit *FI = dynamic_cast<FieldInit*>(TI)) {
-              // FIXME: implement this!
-              o << "FIELD INIT not implemented yet!\n";
-            } else {
-              o << "Error: UNIMPLEMENTED\n";
-            }
-          }
-        }
-      }
-    }
+    emitInstrOpBits(o, Vals, OpOrder, OpContinuous);
 
     o << "      break;\n"
       << "    }\n";
   }
 
+  // Default case: unhandled opcode
   o << "  default:\n"
     << "    std::cerr << \"Not supported instr: \" << MI << \"\\n\";\n"
     << "    abort();\n"
     << "  }\n"
     << "  return Value;\n"
-    << "}\n";
+    << "}\n\n";
 
   o << "} // End llvm namespace \n";
 }
