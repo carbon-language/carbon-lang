@@ -15,6 +15,7 @@
 #define LLVM_ANALYSIS_DSSUPPORT_H
 
 #include <functional>
+#include "llvm/ADT/hash_map"
 #include "llvm/ADT/hash_set"
 #include "llvm/Support/CallSite.h"
 

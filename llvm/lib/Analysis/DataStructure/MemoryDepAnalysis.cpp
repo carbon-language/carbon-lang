@@ -49,7 +49,8 @@ namespace llvm {
 /// not copied over from one table to another since it is no longer useful.
 ///--------------------------------------------------------------------------
 
-struct ModRefTable {
+class ModRefTable {
+public:
   typedef hash_map<Instruction*, ModRefInfo> ModRefMap;
   typedef ModRefMap::const_iterator                 const_map_iterator;
   typedef ModRefMap::      iterator                       map_iterator;

@@ -16,6 +16,7 @@
 #define LLVM_ANALYSIS_DSGRAPH_H
 
 #include "llvm/Analysis/DataStructure/DSNode.h"
+#include "llvm/ADT/hash_map"
 
 namespace llvm {
 
@@ -97,7 +98,8 @@ public:
 //===----------------------------------------------------------------------===//
 /// DSGraph - The graph that represents a function.
 ///
-struct DSGraph {
+class DSGraph {
+public:
   // Public data-type declarations...
   typedef DSScalarMap ScalarMapTy;
   typedef hash_map<Function*, DSNodeHandle> ReturnNodesTy;
