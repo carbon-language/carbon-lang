@@ -162,7 +162,7 @@ IA64TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
   unsigned used_FPArgs=0; // how many FP args have been used so far?
   
   int count = 0;
-  for (Function::aiterator I = F.abegin(), E = F.aend(); I != E; ++I)
+  for (Function::arg_iterator I = F.arg_begin(), E = F.arg_end(); I != E; ++I)
     {
       SDOperand newroot, argt;
       if(count < 8) { // need to fix this logic? maybe.
