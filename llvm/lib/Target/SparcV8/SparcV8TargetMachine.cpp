@@ -41,6 +41,10 @@ unsigned SparcV8TargetMachine::getJITMatchQuality() {
 }
 
 unsigned SparcV8TargetMachine::getModuleMatchQuality(const Module &M) {
+  std::string TT = M.getTargetTriple();
+  if (TT.size() >= 6 && std::string(TT.begin(), TT.begin()+6) == "sparc-")
+    return 20;
+
   if (M.getEndianness()  == Module::BigEndian &&
       M.getPointerSize() == Module::Pointer32)
 #ifdef __sparc__

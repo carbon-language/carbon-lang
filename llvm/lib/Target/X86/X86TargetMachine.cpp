@@ -69,9 +69,15 @@ unsigned X86TargetMachine::getJITMatchQuality() {
 }
 
 unsigned X86TargetMachine::getModuleMatchQuality(const Module &M) {
+  // We strongly match "i[3-9]86-*".
+  std::string TT = M.getTargetTriple();
+  if (TT.size() >= 5 && TT[0] == 'i' && TT[2] == '8' && TT[3] == '6' &&
+      TT[4] == '-' && TT[1] - '3' < 6)
+    return 20;
+
   if (M.getEndianness()  == Module::LittleEndian &&
       M.getPointerSize() == Module::Pointer32)
-    return 10;                                   // Direct match
+    return 10;                                   // Weak match
   else if (M.getEndianness() != Module::AnyEndianness ||
            M.getPointerSize() != Module::AnyPointerSize)
     return 0;                                    // Match for some other target

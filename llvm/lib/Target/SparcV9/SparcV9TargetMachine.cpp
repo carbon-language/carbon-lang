@@ -79,9 +79,14 @@ unsigned SparcV9TargetMachine::getJITMatchQuality() {
 }
 
 unsigned SparcV9TargetMachine::getModuleMatchQuality(const Module &M) {
+  // We strongly match "sparcv9-*".
+  std::string TT = M.getTargetTriple();
+  if (TT.size() >= 8 && std::string(TT.begin(), TT.begin()+8) == "sparcv9-")
+    return 20;
+
   if (M.getEndianness()  == Module::BigEndian &&
       M.getPointerSize() == Module::Pointer64)
-    return 10;                                   // Direct match
+    return 10;                                   // Weak match
   else if (M.getEndianness() != Module::AnyEndianness ||
            M.getPointerSize() != Module::AnyPointerSize)
     return 0;                                    // Match for some other target
