@@ -59,14 +59,19 @@ JIT::~JIT() {
 GenericValue JIT::runFunction(Function *F,
                               const std::vector<GenericValue> &ArgValues) {
   assert(F && "Function *F was null at entry to run()");
-  GenericValue rv;
 
   void *FPtr = getPointerToFunction(F);
   assert(FPtr && "Pointer to fn's code was null after getPointerToFunction");
-  const Type *RetTy = F->getReturnType();
   const FunctionType *FTy = F->getFunctionType();
+  const Type *RetTy = FTy->getReturnType();
 
-  // Handle some common cases first.
+  assert((FTy->getNumParams() <= ArgValues.size() || FTy->isVarArg()) &&
+         "Too many arguments passed into function!");
+  assert(FTy->getNumParams() == ArgValues.size() &&
+         "This doesn't support passing arguments through varargs (yet)!");
+
+  // Handle some common cases first.  These cases correspond to common 'main'
+  // prototypes.
   if (RetTy == Type::IntTy || RetTy == Type::UIntTy || RetTy == Type::VoidTy) {
     switch (ArgValues.size()) {
     case 3:
@@ -79,6 +84,7 @@ GenericValue JIT::runFunction(Function *F,
           (int(*)(int, char **, const char **))FPtr;
         
         // Call the function.
+        GenericValue rv;
         rv.IntVal = PF(ArgValues[0].IntVal, (char **)GVTOP(ArgValues[1]),
                        (const char **)GVTOP(ArgValues[2]));
         return rv;
@@ -88,15 +94,48 @@ GenericValue JIT::runFunction(Function *F,
       if (FTy->getNumParams() == 1 &&
           (FTy->getParamType(0) == Type::IntTy || 
            FTy->getParamType(0) == Type::UIntTy)) {
+        GenericValue rv;
         int (*PF)(int) = (int(*)(int))FPtr;
         rv.IntVal = PF(ArgValues[0].IntVal);
         return rv;
       }
       break;
-    case 0:
-      int (*PF)() = (int(*)())FPtr;
-      rv.IntVal = PF();
+    }
+  }
+
+  // Handle cases where no arguments are passed first.
+  if (ArgValues.empty()) {
+    GenericValue rv;
+    switch (RetTy->getTypeID()) {
+    default: assert(0 && "Unknown return type for function call!");
+    case Type::BoolTyID:
+      rv.BoolVal = ((bool(*)())FPtr)();
       return rv;
+    case Type::SByteTyID:
+    case Type::UByteTyID:
+      rv.SByteVal = ((char(*)())FPtr)();
+      return rv;
+    case Type::ShortTyID:
+    case Type::UShortTyID:
+      rv.ShortVal = ((short(*)())FPtr)();
+      return rv;
+    case Type::VoidTyID:
+    case Type::IntTyID:
+    case Type::UIntTyID:
+      rv.IntVal = ((int(*)())FPtr)();
+      return rv;
+    case Type::LongTyID:
+    case Type::ULongTyID:
+      rv.LongVal = ((int64_t(*)())FPtr)();
+      return rv;
+    case Type::FloatTyID:
+      rv.FloatVal = ((float(*)())FPtr)();
+      return rv;
+    case Type::DoubleTyID:
+      rv.DoubleVal = ((double(*)())FPtr)();
+      return rv;
+    case Type::PointerTyID:
+      return PTOGV(((void*(*)())FPtr)());
     }
   }
 
@@ -106,7 +145,7 @@ GenericValue JIT::runFunction(Function *F,
   std::cerr << "Sorry, unimplemented feature in the LLVM JIT.  See LLVM"
             << " PR#419\n for details.\n";
   abort();
-  return rv;
+  return GenericValue();
 }
 
 /// runJITOnFunction - Run the FunctionPassManager full of
