@@ -49,17 +49,15 @@ unsigned BytecodeParser::getTypeSlot(const Type *Ty) {
 }
 
 const Type *BytecodeParser::getType(unsigned ID) {
-  if (ID < Type::NumPrimitiveIDs) {
-    const Type *T = Type::getPrimitiveType((Type::PrimitiveID)ID);
-    if (T) return T;
-  }
+  if (ID < Type::NumPrimitiveIDs)
+    if (const Type *T = Type::getPrimitiveType((Type::PrimitiveID)ID))
+      return T;
   
   //cerr << "Looking up Type ID: " << ID << "\n";
 
-  if (ID < Type::NumPrimitiveIDs) {
-    const Type *T = Type::getPrimitiveType((Type::PrimitiveID)ID);
-    if (T) return T;   // Asked for a primitive type...
-  }
+  if (ID < Type::NumPrimitiveIDs)
+    if (const Type *T = Type::getPrimitiveType((Type::PrimitiveID)ID))
+      return T;   // Asked for a primitive type...
 
   // Otherwise, derived types need offset...
   ID -= FirstDerivedTyID;
@@ -73,10 +71,10 @@ const Type *BytecodeParser::getType(unsigned ID) {
   if (ID < FunctionTypeValues.size())
     return FunctionTypeValues[ID].get();
 
-  return 0;
+  throw std::string("Illegal type reference!");
 }
 
-int BytecodeParser::insertValue(Value *Val, ValueTable &ValueTab) {
+unsigned BytecodeParser::insertValue(Value *Val, ValueTable &ValueTab) {
   assert((!HasImplicitZeroInitializer || !isa<Constant>(Val) ||
           Val->getType()->isPrimitiveType() ||
           !cast<Constant>(Val)->isNullValue()) &&
@@ -200,10 +198,7 @@ BasicBlock *BytecodeParser::ParseBasicBlock(const unsigned char *&Buf,
 
   while (Buf < EndBuf) {
     Instruction *Inst = ParseInstruction(Buf, EndBuf);
-    if (insertValue(Inst, Values) == -1) { 
-      throw std::string("Could not insert value.");
-    }
-
+    insertValue(Inst, Values);
     BB->getInstList().push_back(Inst);
     BCR_TRACE(4, Inst);
   }
@@ -221,9 +216,7 @@ void BytecodeParser::ParseSymbolTable(const unsigned char *&Buf,
     if (read_vbr(Buf, EndBuf, NumEntries) ||
         read_vbr(Buf, EndBuf, Typ)) throw Error_readvbr;
     const Type *Ty = getType(Typ);
-    if (Ty == 0) throw std::string("Invalid type read in symbol table.");
-
-    BCR_TRACE(3, "Plane Type: '" << Ty << "' with " << NumEntries <<
+    BCR_TRACE(3, "Plane Type: '" << *Ty << "' with " << NumEntries <<
                  " entries\n");
 
     for (unsigned i = 0; i < NumEntries; ++i) {
@@ -328,10 +321,8 @@ void BytecodeParser::materializeFunction(Function* F) {
   const FunctionType::ParamTypes &Params =F->getFunctionType()->getParamTypes();
   Function::aiterator AI = F->abegin();
   for (FunctionType::ParamTypes::const_iterator It = Params.begin();
-       It != Params.end(); ++It, ++AI) {
-    if (insertValue(AI, Values) == -1)
-      throw std::string("Error reading function arguments!");
-  }
+       It != Params.end(); ++It, ++AI)
+    insertValue(AI, Values);
 
   // Keep track of how many basic blocks we have read in...
   unsigned BlockNum = 0;
@@ -435,7 +426,7 @@ void BytecodeParser::ParseModuleGlobalInfo(const unsigned char *&Buf,
     }
 
     const Type *Ty = getType(SlotNo);
-    if (!Ty || !isa<PointerType>(Ty))
+    if (!isa<PointerType>(Ty))
       throw std::string("Global not pointer type!  Ty = " + 
                         Ty->getDescription());
 
@@ -444,10 +435,8 @@ void BytecodeParser::ParseModuleGlobalInfo(const unsigned char *&Buf,
     // Create the global variable...
     GlobalVariable *GV = new GlobalVariable(ElTy, VarType & 1, Linkage,
                                             0, "", TheModule);
-    int DestSlot = insertValue(GV, ModuleValues);
-    if (DestSlot == -1) throw Error_DestSlot;
     BCR_TRACE(2, "Global Variable of type: " << *Ty << "\n");
-    ResolveReferencesToValue(GV, (unsigned)DestSlot);
+    ResolveReferencesToValue(GV, insertValue(GV, ModuleValues));
 
     if (VarType & 2) { // Does it have an initializer?
       unsigned InitSlot;
@@ -462,11 +451,10 @@ void BytecodeParser::ParseModuleGlobalInfo(const unsigned char *&Buf,
   if (read_vbr(Buf, End, FnSignature)) throw Error_readvbr;
   while (FnSignature != Type::VoidTyID) { // List is terminated by Void
     const Type *Ty = getType(FnSignature);
-    if (!Ty || !isa<PointerType>(Ty) ||
-        !isa<FunctionType>(cast<PointerType>(Ty)->getElementType())) { 
+    if (!isa<PointerType>(Ty) ||
+        !isa<FunctionType>(cast<PointerType>(Ty)->getElementType()))
       throw std::string("Function not ptr to func type!  Ty = " +
                         Ty->getDescription());
-    }
 
     // We create functions by passing the underlying FunctionType to create...
     Ty = cast<PointerType>(Ty)->getElementType();
@@ -479,9 +467,8 @@ void BytecodeParser::ParseModuleGlobalInfo(const unsigned char *&Buf,
     // Insert the placeholder...
     Function *Func = new Function(cast<FunctionType>(Ty),
                                   GlobalValue::InternalLinkage, "", TheModule);
-    int DestSlot = insertValue(Func, ModuleValues);
-    if (DestSlot == -1) throw Error_DestSlot;
-    ResolveReferencesToValue(Func, (unsigned)DestSlot);
+    unsigned DestSlot = insertValue(Func, ModuleValues);
+    ResolveReferencesToValue(Func, DestSlot);
 
     // Keep track of this information in a list that is emptied as functions are
     // loaded...

@@ -27,7 +27,6 @@ const Type *BytecodeParser::parseTypeConstant(const unsigned char *&Buf,
     unsigned Typ;
     if (read_vbr(Buf, EndBuf, Typ)) return Val;
     const Type *RetType = getType(Typ);
-    if (RetType == 0) return Val;
 
     unsigned NumParams;
     if (read_vbr(Buf, EndBuf, NumParams)) return Val;
@@ -35,9 +34,7 @@ const Type *BytecodeParser::parseTypeConstant(const unsigned char *&Buf,
     std::vector<const Type*> Params;
     while (NumParams--) {
       if (read_vbr(Buf, EndBuf, Typ)) return Val;
-      const Type *Ty = getType(Typ);
-      if (Ty == 0) return Val;
-      Params.push_back(Ty);
+      Params.push_back(getType(Typ));
     }
 
     bool isVarArg = Params.size() && Params.back() == Type::VoidTy;
@@ -49,7 +46,6 @@ const Type *BytecodeParser::parseTypeConstant(const unsigned char *&Buf,
     unsigned ElTyp;
     if (read_vbr(Buf, EndBuf, ElTyp)) return Val;
     const Type *ElementType = getType(ElTyp);
-    if (ElementType == 0) return Val;
 
     unsigned NumElements;
     if (read_vbr(Buf, EndBuf, NumElements)) return Val;
@@ -64,10 +60,7 @@ const Type *BytecodeParser::parseTypeConstant(const unsigned char *&Buf,
 
     if (read_vbr(Buf, EndBuf, Typ)) return Val;
     while (Typ) {         // List is terminated by void/0 typeid
-      const Type *Ty = getType(Typ);
-      if (Ty == 0) return Val;
-      Elements.push_back(Ty);
-      
+      Elements.push_back(getType(Typ));
       if (read_vbr(Buf, EndBuf, Typ)) return Val;
     }
 
@@ -77,9 +70,7 @@ const Type *BytecodeParser::parseTypeConstant(const unsigned char *&Buf,
     unsigned ElTyp;
     if (read_vbr(Buf, EndBuf, ElTyp)) return Val;
     BCR_TRACE(5, "Pointer Type Constant #" << ElTyp << "\n");
-    const Type *ElementType = getType(ElTyp);
-    if (ElementType == 0) return Val;
-    return PointerType::get(ElementType);
+    return PointerType::get(getType(ElTyp));
   }
 
   case Type::OpaqueTyID: {
@@ -169,9 +160,8 @@ Constant *BytecodeParser::parseConstantValue(const unsigned char *&Buf,
       if (read_vbr(Buf, EndBuf, ArgValSlot)) throw Error_readvbr;
       if (read_vbr(Buf, EndBuf, ArgTypeSlot)) throw Error_readvbr;
       const Type *ArgTy = getType(ArgTypeSlot);
-      if (ArgTy == 0) throw std::string("Argument type slot not found.");
       
-      BCR_TRACE(4, "CE Arg " << i << ": Type: '" << ArgTy << "'  slot: "
+      BCR_TRACE(4, "CE Arg " << i << ": Type: '" << *ArgTy << "'  slot: "
                 << ArgValSlot << "\n");
       
       // Get the arg value from its slot if it exists, otherwise a placeholder
@@ -355,27 +345,25 @@ void BytecodeParser::ParseConstantPool(const unsigned char *&Buf,
 
     if (read_vbr(Buf, EndBuf, NumEntries) ||
         read_vbr(Buf, EndBuf, Typ)) throw Error_readvbr;
-    const Type *Ty = getType(Typ);
-    if (Ty == 0) throw std::string("Invalid type read.");
-    BCR_TRACE(3, "Type: '" << Ty << "'  NumEntries: " << NumEntries << "\n");
-
     if (Typ == Type::TypeTyID) {
+      BCR_TRACE(3, "Type: 'type'  NumEntries: " << NumEntries << "\n");
       parseTypeConstants(Buf, EndBuf, TypeTab, NumEntries);
     } else {
+      const Type *Ty = getType(Typ);
+      BCR_TRACE(3, "Type: '" << *Ty << "'  NumEntries: " << NumEntries << "\n");
+
       for (unsigned i = 0; i < NumEntries; ++i) {
         Constant *C = parseConstantValue(Buf, EndBuf, Ty);
         assert(C && "parseConstantValue returned NULL!");
         BCR_TRACE(4, "Read Constant: '" << *C << "'\n");
-        int Slot;
-        if ((Slot = insertValue(C, Tab)) == -1)
-          throw std::string("Could not insert value into ValueTable.");
+        unsigned Slot = insertValue(C, Tab);
 
         // If we are reading a function constant table, make sure that we adjust
         // the slot number to be the real global constant number.
         //
         if (&Tab != &ModuleValues && Typ < ModuleValues.size())
           Slot += ModuleValues[Typ]->size();
-        ResolveReferencesToValue(C, (unsigned)Slot);
+        ResolveReferencesToValue(C, Slot);
       }
     }
   }

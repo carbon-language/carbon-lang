@@ -14,8 +14,6 @@
 #include "llvm/Bytecode/Primitives.h"
 #include <utility>
 #include <map>
-#include <memory>
-class Module;
 
 // Enable to trace to figure out what the heck is going on when parsing fails
 //#define TRACE_LEVEL 10
@@ -26,17 +24,6 @@ class Module;
 #else
 #define BCR_TRACE(n, X)
 #endif
-
-struct RawInst {       // The raw fields out of the bytecode stream...
-  unsigned NumOperands;
-  unsigned Opcode;
-  const Type *Ty;
-  unsigned Arg1, Arg2;
-  union {
-    unsigned Arg3;
-    std::vector<unsigned> *VarArgs; // Contains arg #3,4,5... if NumOperands > 3
-  };
-};
 
 struct LazyFunctionInfo {
   const unsigned char *Buf, *EndBuf;
@@ -62,11 +49,9 @@ public:
 
   Module* releaseModule() {
     // Since we're losing control of this Module, we must hand it back complete
-    materializeModule();
+    Module *M = ModuleProvider::releaseModule();
     freeState();
-    Module *tempM = TheModule; 
-    TheModule = 0; 
-    return tempM; 
+    return M;
   }
 
   void ParseBytecode(const unsigned char *Buf, unsigned Length,
@@ -165,8 +150,6 @@ private:
 
   Instruction *ParseInstruction(const unsigned char *&Buf,
                                 const unsigned char *End);
-  std::auto_ptr<RawInst> ParseRawInst(const unsigned char *&Buf,
-                                      const unsigned char *End);
 
   void ParseConstantPool(const unsigned char *&Buf, const unsigned char *EndBuf,
                          ValueTable &Tab, TypeValuesListTy &TypeTab);
@@ -185,7 +168,7 @@ private:
   BasicBlock *getBasicBlock(unsigned ID);
   Constant   *getConstantValue(const Type *Ty, unsigned num);
 
-  int insertValue(Value *V, ValueTable &Table);  // -1 = Failure
+  unsigned insertValue(Value *V, ValueTable &Table);
 
   unsigned getTypeSlot(const Type *Ty);
 
