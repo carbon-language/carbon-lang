@@ -998,7 +998,6 @@ SetOperandsForMemInstr(vector<MachineInstr*>& mvec,
                  && "Array refs must be lowered before Instruction Selection");
 
           Value* idxVal = idxVec[firstIdxIsZero];
-          assert(! isa<Constant>(idxVal) && "Need to sign-extend uint to 64b!");
 
           vector<MachineInstr*> mulVec;
           Instruction* addr = new TmpInstruction(Type::UIntTy, memInst);
@@ -1012,7 +1011,7 @@ SetOperandsForMemInstr(vector<MachineInstr*>& mvec,
                                            /*AllowCompositeLeaf*/ true)
                                  : ptrType);
           const Type* eltType = cast<SequentialType>(vecType)->getElementType();
-          ConstantUInt* eltSizeVal = ConstantUInt::get(Type::UIntTy,
+          ConstantUInt* eltSizeVal = ConstantUInt::get(Type::ULongTy,
                                        target.DataLayout.getTypeSize(eltType));
 
           // CreateMulInstruction() folds constants intelligently enough.
