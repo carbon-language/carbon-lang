@@ -107,7 +107,7 @@ TargetData::TargetData(const std::string &ToolName, const Module *M) {
   PointerAlignment = PointerSize;
   DoubleAlignment  = PointerSize;
   FloatAlignment   = 4;
-  LongAlignment    = 8;
+  LongAlignment    = PointerSize;
   IntAlignment     = 4;
   ShortAlignment   = 2;
   ByteAlignment    = 1;
