@@ -21,7 +21,6 @@
 
 #include "llvm/CodeGen/LiveRangeInfo.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
-#include "Support/NonCopyable.h"
 #include <map>
 
 class MachineFunction;
@@ -51,7 +50,7 @@ struct AddedInstrns {
 // registers for a Function.
 //----------------------------------------------------------------------------
 
-class PhyRegAlloc : public NonCopyable {
+class PhyRegAlloc {
   std::vector<RegClass *> RegClassList; // vector of register classes
   const TargetMachine &TM;              // target machine
   const Function *Fn;                   // name of the function we work on
@@ -73,6 +72,8 @@ class PhyRegAlloc : public NonCopyable {
   AddedInstrns AddedInstrAtEntry;       // to store instrns added at entry
   LoopInfo *LoopDepthCalc;              // to calculate loop depths 
 
+  PhyRegAlloc(const PhyRegAlloc&);     // DO NOT IMPLEMENT
+  void operator=(const PhyRegAlloc&);  // DO NOT IMPLEMENT
 public:
   PhyRegAlloc(Function *F, const TargetMachine& TM, FunctionLiveVarInfo *Lvi,
               LoopInfo *LoopDepthCalc);
@@ -84,10 +85,10 @@ public:
 
   // access to register classes by class ID
   // 
-  const RegClass*  getRegClassByID(unsigned int id) const {
+  const RegClass* getRegClassByID(unsigned id) const {
     return RegClassList[id];
   }
-  RegClass*  getRegClassByID(unsigned int id) {
+  RegClass* getRegClassByID(unsigned id) {
     return RegClassList[id];
   }
 
@@ -99,19 +100,18 @@ private:
   void createIGNodeListsAndIGs();
   void buildInterferenceGraphs();
 
-  void setCallInterferences(const MachineInstr *MInst, 
-			    const ValueSet *LVSetAft );
+  void setCallInterferences(const MachineInstr *MI, 
+			    const ValueSet *LVSetAft);
 
   void move2DelayedInstr(const MachineInstr *OrigMI, 
-			 const MachineInstr *DelayedMI );
+			 const MachineInstr *DelayedMI);
 
   void markUnusableSugColors();
   void allocateStackSpace4SpilledLRs();
 
-  void insertCode4SpilledLR     (const LiveRange *LR, 
-                                 MachineBasicBlock::iterator& MII,
-                                 MachineBasicBlock &MBB,
-                                 const unsigned OpNum);
+  void insertCode4SpilledLR(const LiveRange *LR, 
+                            MachineBasicBlock::iterator& MII,
+                            MachineBasicBlock &MBB, unsigned OpNum);
 
   // Method for inserting caller saving code. The caller must save all the
   // volatile registers live across a call.
@@ -128,33 +128,32 @@ private:
   void updateInstruction(MachineBasicBlock::iterator& MII,
                          MachineBasicBlock &MBB);
 
-  void printLabel(const Value *const Val);
+  void printLabel(const Value *Val);
   void printMachineCode();
 
 
-  int getUsableUniRegAtMI(int RegType, 
-			  const ValueSet *LVSetBef,
-			  MachineInstr *MInst,
+  int getUsableUniRegAtMI(int RegType, const ValueSet *LVSetBef,
+			  MachineInstr *MI,
                           std::vector<MachineInstr*>& MIBef,
                           std::vector<MachineInstr*>& MIAft);
   
   // Callback method used to find unused registers. 
   // LVSetBef is the live variable set to search for an unused register.
-  // If it is not specified, the LV set before the current MInst is used.
+  // If it is not specified, the LV set before the current MI is used.
   // This is sufficient as long as no new copy instructions are generated
   // to copy the free register to memory.
   // 
-  int getUnusedUniRegAtMI(RegClass *RC, const int RegType,
-                          const MachineInstr *MInst,
+  int getUnusedUniRegAtMI(RegClass *RC, int RegType,
+                          const MachineInstr *MI,
                           const ValueSet *LVSetBef = 0);
   
-  void setRelRegsUsedByThisInst(RegClass *RC, const int RegType,
-                                const MachineInstr *MInst );
+  void setRelRegsUsedByThisInst(RegClass *RC, int RegType,
+                                const MachineInstr *MI);
 
-  int getUniRegNotUsedByThisInst(RegClass *RC, const int RegType,
-                                 const MachineInstr *MInst);
+  int getUniRegNotUsedByThisInst(RegClass *RC, int RegType,
+                                 const MachineInstr *MI);
 
-  void addInterf4PseudoInstr(const MachineInstr *MInst);
+  void addInterf4PseudoInstr(const MachineInstr *MI);
 };
 
 
