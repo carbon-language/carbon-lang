@@ -387,6 +387,9 @@ void AssemblyWriter::processInstruction(const Instruction *I) {
       }
     }
 
+    // Shift Left & Right print both types even for Ubyte LHS
+    if (isa<ShiftInst>(I)) PrintAllTypes = true;
+
     if (!PrintAllTypes)
       Out << " " << I->getOperand(0)->getType();
 
