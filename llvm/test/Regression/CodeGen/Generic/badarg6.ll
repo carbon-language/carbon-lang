@@ -2,11 +2,6 @@
 
 ; On this code, llc did not pass the sixth argument (%reg321) to printf.
 ; It passed the first five in %o0 - %o4, but never initialized %o5.
-; Fix in  SparcInstrSelection.cpp: 
-; 2030c2030
-; -                 if (i < target.getRegInfo().GetNumOfIntArgRegs())
-; +                 if (i <= target.getRegInfo().GetNumOfIntArgRegs())
-; 
 
 %.LC12 = internal global [44 x sbyte] c"\09\09M = %g, I = %g, V = %g\0A\09\09O = %g, E = %g\0A\0A\00"           ; <[44 x sbyte]*>
 

@@ -19,8 +19,6 @@
 ;;           and/or to stack locations as needed.
 ;;
 
-target endian = little
-target pointersize = 32
 	%struct..s_annealing_sched = type { uint, float, float, float, float }
 	%struct..s_chan = type { uint, float, float, float, float }
 	%struct..s_det_routing_arch = type { uint, float, float, float, uint, int, short, short, short, float, float }

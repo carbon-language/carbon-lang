@@ -10,21 +10,6 @@
 ;;	   (2) (A or NOT(B)) was being folded into A orn B, which is ok
 ;;	       for bitwise operations but not booleans!  For booleans,
 ;;	       the result has to be compared with 0.
-;; 
-;; LLC Output for the basic block (LLVM assembly is shown below):
-;; 
-;; .L_adj_7_LL_4:
-;;         sethi   0, %i0
-;;         subcc   %i1, 2, %g0
-;;         move    %icc, 1, %i0
-;;         orn     %i0, %i1, %i0
-;;         ba      .L_adj_7_LL_5
-;;         nop     
-;; 
-
-
-target endian = big
-target pointersize = 64
 
 %.str_1 = internal constant [30 x sbyte] c"d = %d, ct = %d, d ^ ct = %d\0A\00"
 

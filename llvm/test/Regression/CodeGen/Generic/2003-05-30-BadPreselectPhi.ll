@@ -8,33 +8,7 @@
 ;;           the Phi instead of in predecessor blocks.  This later
 ;;           causes llc to produces an invalid register <NULL VALUE>
 ;;           for the phi arguments.
-;;
-;; PreSelection Output:
-;; *** LLVM code after pre-selection for function handlerfn:
-;; 
-;; 
-;; %struct..task* %handlerfn(%struct..packet*) {
-;; ; <label>:0             ; No predecessors!
-;;         setne %struct..packet* %0, null         ; <bool>:0 [#uses=1]
-;;         br bool %0, label %1, label %2
-;; 
-;; ; <label>:1             ; preds = %0
-;;         br label %2
-;; 
-;; ; <label>:2             ; preds = %0, %1
-;;         %addrOfGlobal = getelementptr int* %v2, long 0          ; <int*> [#uses=1]
-;;         %addrOfGlobal1 = getelementptr int* %v1, long 0         ; <int*> [#uses=1]
-;;         phi int* [ %addrOfGlobal, %1 ], [ %addrOfGlobal1, %0 ]          ; <int*>:0 [#uses=1]
-;;         cast int* %0 to %struct..packet*                ; <%struct..packet*>:1 [#uses=1]
-;;         call void %append( %struct..packet* %0, %struct..packet* %1 )
-;;         ret %struct..task* null
-;; }
-;; llc: ../../../include/llvm/CodeGen/MachineInstr.h:294: int MachineOperand::getAllocatedRegNum() const: Assertion `hasAllocatedReg()' failed.
-;; 
 
-
-target endian = little
-target pointersize = 32
 	%struct..packet = type { %struct..packet*, int, int, int, [4 x sbyte] }
 	%struct..task = type { %struct..task*, int, int, %struct..packet*, int, %struct..task* (%struct..packet*)*, int, int }
 %v1 = external global int

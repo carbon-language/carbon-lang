@@ -1,7 +1,5 @@
 ; RUN: llvm-as -f %s -o - | llc
 
-target endian = big
-target pointersize = 64
 
 %.str_1 = internal constant [42 x sbyte] c"   ui = %u (0x%x)\09\09UL-ui = %lld (0x%llx)\0A\00"
 
