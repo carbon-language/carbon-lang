@@ -17,6 +17,7 @@
 <a href="#Changes">Changes</a><br>
 <a href="#Trends">Trends</a><br>
 <a href="#Programs">Programs</a><br>
+<a href="#Feature">Feature</a><br>
 <a href="#Regression">Regression</a><br>
 </td></tr></table></td></tr></table>
 
@@ -65,6 +66,10 @@
                (<b>$ConfigWallTime</b> seconds wall time)<br>
     Time to build CVS tree:      <b>$BuildTime</b> seconds
                (<b>$BuildWallTime</b> seconds wall time)<br>
+    Time to run feature tests:      <b>$FeatureTime</b> seconds
+               (<b>$FeatureWallTime</b> seconds wall time)<br>
+    Time to run regression tests:   <b>$RegressionTime</b> seconds
+               (<b>$RegressionWallTime</b> seconds wall time)<br>
     Number of object files compiled: <b>$NumObjects</b><br>
     Number of libraries linked: <b>$NumLibraries</b><br>
     Number of executables linked:<b> $NumExecutables</b><br>
@@ -233,13 +238,21 @@ $SingleSourceProgramsTable
 
 
 
-<br><br><center>
+<br/><br/><center>
+<table border="0" cellspacing="0" cellpadding="2"><tr><td bgcolor="#000000"> 
+<table border="0" cellpadding="10" cellspacing="0"><tr><td bgcolor="#DDAA77"
+<font size=+2 face=Verdana><b><a name="Feature">Feature Test Results</font></b>
+</td></tr></table></td></tr></table></center>
+<br/>
+$FeatureTestResults
+
+<br/><br/><center>
 <table border="0" cellspacing="0" cellpadding="2"><tr><td bgcolor="#000000"> 
 <table border="0" cellpadding="10" cellspacing="0"><tr><td bgcolor="#DDAA77"
 <font size=+2 face=Verdana><b><a name="Regression">Regression Tests</font></b>
-</td></tr></table></td></tr></table></center><p>
-
-Not yet implemented<p>
+</td></tr></table></td></tr></table></center>
+<br/>
+$RegressionTestResults
 
 </td></tr>
 

@@ -13,12 +13,16 @@
 #  -nocheckout      Do not create, checkout, update, or configure
 #                   the source tree.
 #  -noremove        Do not remove the BUILDDIR after it has been built.
+#  -nofeaturetests  Do not run the feature tests.
+#  -noregressiontests Do not run the regression tests.
 #  -notest          Do not even attempt to run the test programs. Implies
 #                   -norunningtests.
 #  -norunningtests  Do not run the Olden benchmark suite with
 #                   LARGE_PROBLEM_SIZE enabled.
 #  -parallel        Run two parallel jobs with GNU Make.
 #  -enable-linscan  Enable linearscan tests
+#  -verbose         Turn on some debug output
+#  -debug           Print information useful only to maintainers of this script.
 #
 # CVSROOT is the CVS repository from which the tree will be checked out,
 #  specified either in the full :method:user@host:/dir syntax, or
@@ -36,9 +40,13 @@ use POSIX qw(strftime);
 my $HOME = $ENV{'HOME'};
 my $CVSRootDir = $ENV{'CVSROOT'};
    $CVSRootDir = "/home/vadve/shared/PublicCVS"
-    unless $CVSRootDir;
-my $BuildDir   = "$HOME/buildtest";
-my $WebDir     = "$HOME/cvs/testresults-X86";
+     unless $CVSRootDir;
+my $BuildDir   = $ENV{'BUILDDIR'};
+   $BuildDir   = "$HOME/buildtest"
+     unless $BuildDir;
+my $WebDir     = $ENV{'WEBDIR'};
+   $WebDir     = "$HOME/cvs/testresults-X86"
+     unless $WebDir;
 
 # Calculate the date prefix...
 @TIME = localtime;
@@ -116,10 +124,14 @@ sub FormatTime {
 # Command line argument settings...
 my $NOCHECKOUT = 0;
 my $NOREMOVE   = 0;
+my $NOFEATURES = 0;
+my $NOREGRESSIONS = 0;
 my $NOTEST     = 0;
 my $NORUNNINGTESTS = 0;
 my $MAKEOPTS   = "";
 my $ENABLELINEARSCAN = "";
+my $VERBOSE  = 0;
+my $DEBUG = 0;
 
 # Parse arguments...
 while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
@@ -129,10 +141,14 @@ while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
   # List command line options here...
   if (/^-nocheckout$/)     { $NOCHECKOUT = 1; next; }
   if (/^-noremove$/)       { $NOREMOVE   = 1; next; }
+  if (/^-nofeaturetests$/) { $NOFEATURES   = 1; next; }
+  if (/^-noregressiontests$/){ $NOREGRESSIONS   = 1; next; }
   if (/^-notest$/)         { $NOTEST     = 1; $NORUNNINGTESTS = 1; next; }
   if (/^-norunningtests$/) { $NORUNNINGTESTS = 1; next; }
   if (/^-parallel$/)       { $MAKEOPTS   = "-j2 -l3.0"; next; }
   if (/^-enable-linscan$/) { $ENABLELINEARSCAN = "ENABLE_LINEARSCAN=1"; next; }
+  if (/^-verbose$/)        { $VERBOSE  = 1; next; }
+  if (/^-debug$/)          { $DEBUG  = 1; next; }
 
   print "Unknown option: $_ : ignoring!\n";
 }
@@ -145,10 +161,12 @@ if (@ARGV == 3) {
   $WebDir     = $ARGV[2];
 }
 
+
 my $Template = "$BuildDir/llvm/utils/NightlyTestTemplate.html";
 my $Prefix = "$WebDir/$DATE";
 
-if (0) {
+if ($VERBOSE) {
+  print "INITIALIZED\n";
   print "CVS Root = $CVSRootDir\n";
   print "BuildDir = $BuildDir\n";
   print "WebDir   = $WebDir\n";
@@ -160,6 +178,13 @@ if (0) {
 # Create the CVS repository directory
 #
 if (!$NOCHECKOUT) {
+  if (-d $BuildDir) {
+    if (!$NOREMOVE) {
+      rmdir $BuildDir or die "Could not remove CVS checkout directory $BuildDir!";
+    } else {
+       die "CVS checkout directory $BuildDir already exists!";
+    }
+  }
   mkdir $BuildDir or die "Could not create CVS checkout directory $BuildDir!";
 }
 chdir $BuildDir or die "Could not change to CVS checkout directory $BuildDir!";
@@ -170,12 +195,17 @@ chdir $BuildDir or die "Could not change to CVS checkout directory $BuildDir!";
 #
 $CVSOPT = "";
 $CVSOPT = "-z3" if $CVSRootDir =~ /^:ext:/; # Use compression if going over ssh.
-system "(time -p cvs $CVSOPT -d $CVSRootDir co llvm) > $Prefix-CVS-Log.txt 2>&1"
-  if (!$NOCHECKOUT);
+if (!$NOCHECKOUT) {
+  if ( $VERBOSE ) { print "CHECKOUT STAGE\n"; }
+  system "(time -p cvs $CVSOPT -d $CVSRootDir co llvm) > $Prefix-CVS-Log.txt 2>&1";
+}
 
 chdir "llvm" or die "Could not change into llvm directory!";
 
-system "cvs up -P -d > /dev/null 2>&1" if (!$NOCHECKOUT);
+if (!$NOCHECKOUT) {
+  if ( $VERBOSE ) { print "UPDATE STAGE\n"; }
+  system "cvs update -P -d > /dev/null 2>&1" ;
+}
 
 # Read in the HTML template file...
 my $TemplateContents = ReadFile $Template;
@@ -193,8 +223,10 @@ $LOC = GetRegex "([0-9]+) +total", `wc -l \`utils/getsrcs.sh\` | grep total`;
 # Build the entire tree, saving build messages to the build log
 #
 if (!$NOCHECKOUT) {
+  if ( $VERBOSE ) { print "CONFIGURE STAGE\n"; }
   system "(time -p ./configure --enable-jit --enable-spec --with-objroot=.) > $Prefix-Build-Log.txt 2>&1";
 
+  if ( $VERBOSE ) { print "BUILD STAGE\n"; }
   # Build the entire tree, capturing the output into $Prefix-Build-Log.txt
   system "(time -p gmake $MAKEOPTS) >> $Prefix-Build-Log.txt 2>&1";
 }
@@ -232,6 +264,84 @@ if (`grep '^gmake[^:]*: .*Error' $Prefix-Build-Log.txt | wc -l` + 0 ||
   print "BUILD ERROR\n";
 }
 
+sub GetQMTestResults { # (filename)
+  my ($filename) = @_;
+  my @lines;
+  my $firstline;
+  $/ = "\n"; #Make sure we're going line at a time.
+  if (open SRCHFILE, $filename) {
+    while ( <SRCHFILE> ) {
+      if ( m/^--- TEST RESULTS/ ) { 
+	  push(@lines, $_); last; 
+      }
+    }
+    while ( <SRCHFILE> ) {
+      if ( length($_) > 1 ) { 
+	  if ( ! m/^gmake:/ && ! m/^    qmtest.target:/ && !/^      local/ ) {
+	  push(@lines,$_); 
+	}
+      }
+    }
+    close SRCHFILE;
+  }
+  my $content = join("",@lines);
+  return "<pre>\n@lines</pre>\n";
+}
+
+
+# Get results of feature tests.
+my $FeatureTestResults; # String containing the results of the feature tests
+my $FeatureTime;        # System+CPU Time for feature tests
+my $FeatureWallTime;    # Wall Clock Time for feature tests
+if (!$NOFEATURES) {
+  if ( $VERBOSE ) { print "FEATURE TEST STAGE\n"; }
+  my $feature_output = "$Prefix-FeatureTests-Log.txt";
+
+  # Run the feature tests so we can summarize the results
+  system "(time -p gmake -C test Feature.t) > $feature_output 2>&1";
+
+  # Extract test results
+  $FeatureTestResults = GetQMTestResults("$feature_output");
+
+  # Extract time of feature tests
+  my $FeatureTimeU = GetRegexNum "^user", 0, "([0-9.]+)", "$feature_output";
+  my $FeatureTimeS = GetRegexNum "^sys", 0, "([0-9.]+)", "$feature_output";
+  $FeatureTime  = $FeatureTimeU+$FeatureTimeS;  # FeatureTime = User+System
+  $FeatureWallTime = GetRegexNum "^real", 0,"([0-9.]+)","$feature_output";
+  # Run the regression tests so we can summarize the results
+} else {
+  $FeatureTestResults = "Skipped by user choice.";
+  $FeatureTime     = "0.0";
+  $FeatureWallTime = "0.0";
+}
+
+if (!$NOREGRESSIONS) {
+  if ( $VERBOSE ) { print "REGRESSION TEST STAGE\n"; }
+  my $regression_output = "$Prefix-RegressionTests-Log.txt";
+
+  # Run the regression tests so we can summarize the results
+  system "(time -p gmake -C test Regression.t) > $regression_output 2>&1";
+
+  # Extract test results
+  $RegressionTestResults = GetQMTestResults("$regression_output");
+
+  # Extract time of regressions tests
+  my $RegressionTimeU = GetRegexNum "^user", 0, "([0-9.]+)", "$regression_output";
+  my $RegressionTimeS = GetRegexNum "^sys", 0, "([0-9.]+)", "$regression_output";
+  $RegressionTime  = $RegressionTimeU+$RegressionTimeS;  # RegressionTime = User+System
+  $RegressionWallTime = GetRegexNum "^real", 0,"([0-9.]+)","$regression_output";
+} else {
+  $RegressionTestResults = "Skipped by user choice.";
+  $RegressionTime     = "0.0";
+  $RegressionWallTime = "0.0";
+}
+
+if ($DEBUG) {
+  print $FeatureTestResults;
+  print $RegressionTestResults;
+}
+
+if ( $VERBOSE ) { print "BUILD INFORMATION COLLECTION STAGE\n"; }
 #
 # Get warnings from the build
 #
@@ -267,6 +377,7 @@ $WarningsRemoved = AddPreTag $WarningsRemoved;
 #
 # Get some statistics about CVS commits over the current day...
 #
+if ($VERBOSE) { print "CVS HISTORY ANALYSIS STAGE\n"; }
 @CVSHistory = split "\n", `cvs history -D '1 day ago' -a -xAMROCGUW`;
 #print join "\n", @CVSHistory; print "\n";
 
@@ -361,13 +472,25 @@ sub TestDirectory {
 
 # If we build the tree successfully, run the nightly programs tests...
 if ($BuildError eq "") {
+  if ( $VERBOSE ) {
+    print "SingleSource TEST STAGE\n";
+  }
   $SingleSourceProgramsTable = TestDirectory("SingleSource");
+  if ( $VERBOSE ) {
+    print "MultiSource TEST STAGE\n";
+  }
   $MultiSourceProgramsTable = TestDirectory("MultiSource");
+  if ( $VERBOSE ) {
+    print "External TEST STAGE\n";
+  }
   $ExternalProgramsTable = TestDirectory("External");
   system "cat $Prefix-SingleSource-Tests.txt $Prefix-MultiSource-Tests.txt ".
          " $Prefix-External-Tests.txt | sort > $Prefix-Tests.txt";
 }
 
+if ( $VERBOSE ) {
+  print "TEST INFORMATION COLLECTION STAGE\n";
+}
 my ($TestsAdded, $TestsRemoved, $TestsFixed, $TestsBroken) = ("","","","");
 
 if ($TestError) {
@@ -493,6 +616,9 @@ chdir $WebDir or die "Could not change into web directory!";
 AddRecord($LOC, "running_loc.txt");
 AddRecord($BuildTime, "running_build_time.txt");
 
+if ( $VERBOSE ) {
+  print "GRAPH GENERATION STAGE\n";
+}
 #
 # Rebuild the graphs now...
 #
@@ -509,12 +635,13 @@ system "rm -rf $BuildDir" if (!$NOCHECKOUT and !$NOREMOVE);
 #
 # Print out information...
 #
-if (0) {
+if ($VERBOSE) {
   print "DateString: $DateString\n";
   print "CVS Checkout: $CVSCheckoutTime seconds\n";
   print "Files/Dirs/LOC in CVS: $NumFilesInCVS/$NumDirsInCVS/$LOC\n";
-
   print "Build Time: $BuildTime seconds\n";
+  print "Feature Test Time: $FeatureTime seconds\n";
+  print "Regression Test Time: $RegressionTime seconds\n";
   print "Libraries/Executables/Objects built: $NumLibraries/$NumExecutables/$NumObjects\n";
 
   print "WARNINGS:\n  $WarningsList\n";
@@ -532,6 +659,9 @@ if (0) {
 # Output the files...
 #
 
+if ( $VERBOSE ) {
+  print "OUTPUT STAGE\n";
+}
 # Main HTML file...
 my $Output;
 eval "\$Output = <<ENDOFFILE;$TemplateContents\nENDOFFILE\n";
