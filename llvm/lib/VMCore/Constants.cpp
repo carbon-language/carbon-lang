@@ -174,10 +174,14 @@ ConstantInt::ConstantInt(const Type *Ty, uint64_t V) : ConstantIntegral(Ty) {
 }
 
 ConstantSInt::ConstantSInt(const Type *Ty, int64_t V) : ConstantInt(Ty, V) {
+  assert(Ty->isInteger() && Ty->isSigned() &&
+         "Illegal type for unsigned integer constant!");
   assert(isValueValidForType(Ty, V) && "Value too large for type!");
 }
 
 ConstantUInt::ConstantUInt(const Type *Ty, uint64_t V) : ConstantInt(Ty, V) {
+  assert(Ty->isInteger() && Ty->isUnsigned() &&
+         "Illegal type for unsigned integer constant!");
   assert(isValueValidForType(Ty, V) && "Value too large for type!");
 }
 
