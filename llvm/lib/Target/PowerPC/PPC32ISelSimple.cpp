@@ -2989,6 +2989,8 @@ void PPC32ISel::visitLoadInst(LoadInst &I) {
   if (Class == cShort && I.getType()->isSigned()) ImmOpcode = PPC::LHA;
   if (Class == cShort && I.getType()->isSigned()) IdxOpcode = PPC::LHAX;
 
+  // If this is a fixed size alloca, emit a load directly from the stack slot
+  // corresponding to it.
   if (AllocaInst *AI = dyn_castFixedAlloca(SourceAddr)) {
     unsigned FI = getFixedSizedAllocaFI(AI);
     if (Class == cLong) {
@@ -3071,6 +3073,16 @@ void PPC32ISel::visitStoreInst(StoreInst &I) {
   unsigned IdxOpcode = IdxOpcodes[Class];
   unsigned ValReg    = getReg(I.getOperand(0));
 
+  // If this is a fixed size alloca, emit a store directly to the stack slot
+  // corresponding to it.
+  if (AllocaInst *AI = dyn_castFixedAlloca(SourceAddr)) {
+    unsigned FI = getFixedSizedAllocaFI(AI);
+    addFrameReference(BuildMI(BB, ImmOpcode, 3).addReg(ValReg), FI);
+    if (Class == cLong)
+      addFrameReference(BuildMI(BB, ImmOpcode, 3).addReg(ValReg+1), FI, 4);
+    return;
+  }
+  
   // If the offset fits in 16 bits, we can emit a reg+imm store, otherwise, we
   // use the index from the FoldedGEP struct and use reg+reg addressing.
   if (GetElementPtrInst *GEPI = canFoldGEPIntoLoadOrStore(SourceAddr)) {
