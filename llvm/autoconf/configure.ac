@@ -273,12 +273,12 @@ AC_FUNC_ALLOCA
 AC_FUNC_MMAP
 if test "$ac_cv_func_mmap_fixed_mapped" = "no"
 then
-	AC_MSG_ERROR([mmap() required but not found])
+	AC_MSG_WARN([mmap() required but not found])
 fi
 AC_FUNC_MMAP_FILE
 if test "$ac_cv_func_mmap_file" = "no"
 then
-	AC_MSG_ERROR([mmap() of files required but not found])
+	AC_MSG_WARN([mmap() of files required but not found])
 fi
 AC_HEADER_MMAP_ANONYMOUS
 AC_TYPE_SIGNAL

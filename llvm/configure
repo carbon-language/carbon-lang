@@ -21368,9 +21368,8 @@ rm -f conftest.mmap
 
 if test "$ac_cv_func_mmap_fixed_mapped" = "no"
 then
-	{ { echo "$as_me:$LINENO: error: mmap() required but not found" >&5
-echo "$as_me: error: mmap() required but not found" >&2;}
-   { (exit 1); exit 1; }; }
+	{ echo "$as_me:$LINENO: WARNING: mmap() required but not found" >&5
+echo "$as_me: WARNING: mmap() required but not found" >&2;}
 fi
 echo "$as_me:$LINENO: checking for mmap of files" >&5
 echo $ECHO_N "checking for mmap of files... $ECHO_C" >&6
@@ -21460,9 +21459,8 @@ fi
 
 if test "$ac_cv_func_mmap_file" = "no"
 then
-	{ { echo "$as_me:$LINENO: error: mmap() of files required but not found" >&5
-echo "$as_me: error: mmap() of files required but not found" >&2;}
-   { (exit 1); exit 1; }; }
+	{ echo "$as_me:$LINENO: WARNING: mmap() of files required but not found" >&5
+echo "$as_me: WARNING: mmap() of files required but not found" >&2;}
 fi
 echo "$as_me:$LINENO: checking for MAP_ANONYMOUS vs. MAP_ANON" >&5
 echo $ECHO_N "checking for MAP_ANONYMOUS vs. MAP_ANON... $ECHO_C" >&6
