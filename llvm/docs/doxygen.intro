@@ -1,14 +1,7 @@
-////////////////////////////////////////////////////////////////////////////////
-/// @file doxygen.intro
-/// @author Reid Spencer <rspencer@x10sys.com> 
-/// @date 2003/12/30
-/// @brief LLVM API documentation introduction.
-////////////////////////////////////////////////////////////////////////////////
-///
-/// @mainpage LLVM:Low Level Virtual Machine
+/// @mainpage Low Level Virtual Machine
 ///
 /// @section main_intro Introduction
-/// Welcome to the Low Level Virtual Machine (LLVM)
+/// Welcome to the Low Level Virtual Machine (LLVM).
 ///
 /// This documentation describes the @b internal software that makes 
 /// up LLVM, not the @b external use of  LLVM. There are no instructions
