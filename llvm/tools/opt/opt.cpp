@@ -47,7 +47,7 @@ static cl::opt<bool>
 PrintEachXForm("p", cl::desc("Print module after each transformation"));
 
 static cl::opt<bool>
-Quiet("q", cl::desc("Don't print modifying pass names"));
+Quiet("q", cl::desc("Don't print 'program modified' message"));
 
 static cl::alias
 QuietA("quiet", cl::desc("Alias for -q"), cl::aliasopt(Quiet));
