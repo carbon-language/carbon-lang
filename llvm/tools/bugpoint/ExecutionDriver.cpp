@@ -265,8 +265,11 @@ bool BugDriver::diffProgram(const std::string &BytecodeFile,
                                       &ProgramExitedNonzero);
 
   // If we're checking the program exit code, assume anything nonzero is bad.
-  if (CheckProgramExitCode && ProgramExitedNonzero)
+  if (CheckProgramExitCode && ProgramExitedNonzero) {
+    removeFile(Output);
+    if (RemoveBytecode) removeFile(BytecodeFile);
     return true;
+  }
 
   std::string Error;
   bool FilesDifferent = false;
