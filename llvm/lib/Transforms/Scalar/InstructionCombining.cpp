@@ -3064,21 +3064,33 @@ Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
       if (isSafeToLoadUnconditionally(SI->getOperand(1), SI) &&
           isSafeToLoadUnconditionally(SI->getOperand(2), SI)) {
         Value *V1 = InsertNewInstBefore(new LoadInst(SI->getOperand(1),
-                                     SI->getOperand(1)->getName()+".val"), *SI);
+                                     SI->getOperand(1)->getName()+".val"), LI);
         Value *V2 = InsertNewInstBefore(new LoadInst(SI->getOperand(2),
-                                     SI->getOperand(2)->getName()+".val"), *SI);
+                                     SI->getOperand(2)->getName()+".val"), LI);
         return new SelectInst(SI->getCondition(), V1, V2);
       }
 
     } else if (PHINode *PN = dyn_cast<PHINode>(Op)) {
       // load (phi (&V1, &V2, &V3))  --> phi(load &V1, load &V2, load &V3)
-      bool Safe = true;
-      for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
+      bool Safe = PN->getParent() == LI.getParent();
+
+      // Scan all of the instructions between the PHI and the load to make
+      // sure there are no instructions that might possibly alter the value
+      // loaded from the PHI.
+      if (Safe) {
+        BasicBlock::iterator I = &LI;
+        for (--I; !isa<PHINode>(I); --I)
+          if (isa<StoreInst>(I) || isa<CallInst>(I)) {
+            Safe = false;
+            break;
+          }
+      }
+
+      for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e && Safe; ++i)
         if (!isSafeToLoadUnconditionally(PN->getIncomingValue(i),
-                                    PN->getIncomingBlock(i)->getTerminator())) {
+                                    PN->getIncomingBlock(i)->getTerminator()))
           Safe = false;
-          break;
-        }
+
       if (Safe) {
         // Create the PHI.
         PHINode *NewPN = new PHINode(LI.getType(), PN->getName());
