@@ -65,7 +65,7 @@ static inline TypeClass getClass(const Type *Ty) {
 
 // getClassB - Just like getClass, but treat boolean values as ints.
 static inline TypeClass getClassB(const Type *Ty) {
-  if (Ty == Type::BoolTy) return cInt;
+  if (Ty == Type::BoolTy) return cByte;
   return getClass(Ty);
 }
 
@@ -444,7 +444,8 @@ bool ISel::canUseAsImmediateForOpcode(ConstantInt *CI, unsigned Operator)
       
   // ANDIo, ORI, and XORI take unsigned values
   bool cond3 = (Operator >= 2)
-    && (Op1Cs = dyn_cast<ConstantSInt>(CI)) 
+    && (Op1Cs = dyn_cast<ConstantSInt>(CI))
+    && (Op1Cs->getValue() >= 0)
     && (Op1Cs->getValue() <= 32767);
 
   // ADDI and SUBI take SIMMs, so we have to make sure the UInt would fit
@@ -905,15 +906,13 @@ unsigned ISel::EmitComparison(unsigned OpNum, Value *Op0, Value *Op1,
   unsigned CR1field = (OpNum == 2 || OpNum == 3) ? 4 : 5;
   // ? cr0[lt] : cr0[gt]
   unsigned CR0field = (OpNum == 2 || OpNum == 5) ? 0 : 1;
+  unsigned Opcode = CompTy->isSigned() ? PPC32::CMPW : PPC32::CMPLW;
+  unsigned OpcodeImm = CompTy->isSigned() ? PPC32::CMPWI : PPC32::CMPLWI;
 
   // Special case handling of: cmp R, i
-  if (isa<ConstantPointerNull>(Op1)) {
-    BuildMI(*MBB, IP, PPC32::CMPI, 2, PPC32::CR0).addReg(Op0r).addSImm(0);
-  } else if (ConstantInt *CI = dyn_cast<ConstantInt>(Op1)) {
+  if (ConstantInt *CI = dyn_cast<ConstantInt>(Op1)) {
     if (Class == cByte || Class == cShort || Class == cInt) {
       unsigned Op1v = CI->getRawValue() & 0xFFFF;
-      unsigned Opcode = CompTy->isSigned() ? PPC32::CMPW : PPC32::CMPLW;
-      unsigned OpcodeImm = CompTy->isSigned() ? PPC32::CMPWI : PPC32::CMPLWI;
 
       // Treat compare like ADDI for the purposes of immediate suitability
       if (canUseAsImmediateForOpcode(CI, 0)) {
@@ -949,9 +948,9 @@ unsigned ISel::EmitComparison(unsigned OpNum, Value *Op0, Value *Op1,
         copyConstantToRegister(MBB, IP, CI, ConstReg);
         
         // cr0 = r3 ccOpcode r5 or (r3 == r5 AND r4 ccOpcode r6)
-        BuildMI(*MBB, IP, PPC32::CMPW, 2, PPC32::CR0).addReg(Op0r)
+        BuildMI(*MBB, IP, Opcode, 2, PPC32::CR0).addReg(Op0r)
           .addReg(ConstReg);
-        BuildMI(*MBB, IP, PPC32::CMPW, 2, PPC32::CR1).addReg(Op0r+1)
+        BuildMI(*MBB, IP, Opcode, 2, PPC32::CR1).addReg(Op0r+1)
           .addReg(ConstReg+1);
         BuildMI(*MBB, IP, PPC32::CRAND, 3).addImm(2).addImm(2).addImm(CR1field);
         BuildMI(*MBB, IP, PPC32::CROR, 3).addImm(CR0field).addImm(CR0field)
@@ -962,7 +961,6 @@ unsigned ISel::EmitComparison(unsigned OpNum, Value *Op0, Value *Op1,
   }
 
   unsigned Op1r = getReg(Op1, MBB, IP);
-  unsigned Opcode = CompTy->isSigned() ? PPC32::CMPW : PPC32::CMPLW;
 
   switch (Class) {
   default: assert(0 && "Unknown type class!");
@@ -991,10 +989,8 @@ unsigned ISel::EmitComparison(unsigned OpNum, Value *Op0, Value *Op1,
       unsigned TmpReg2 = makeAnotherReg(Type::IntTy);
 
       // cr0 = r3 ccOpcode r5 or (r3 == r5 AND r4 ccOpcode r6)
-      BuildMI(*MBB, IP, PPC32::CMPW, 2, PPC32::CR0).addReg(Op0r)
-        .addReg(Op1r);
-      BuildMI(*MBB, IP, PPC32::CMPW, 2, PPC32::CR1).addReg(Op1r)
-        .addReg(Op1r+1);
+      BuildMI(*MBB, IP, Opcode, 2, PPC32::CR0).addReg(Op0r).addReg(Op1r);
+      BuildMI(*MBB, IP, Opcode, 2, PPC32::CR1).addReg(Op0r+1).addReg(Op1r+1);
       BuildMI(*MBB, IP, PPC32::CRAND, 3).addImm(2).addImm(2).addImm(CR1field);
       BuildMI(*MBB, IP, PPC32::CROR, 3).addImm(CR0field).addImm(CR0field)
         .addImm(2);
@@ -1457,12 +1453,15 @@ void ISel::doCall(const ValueRecord &Ret, MachineInstr *CallMI,
             BuildMI(BB, PPC32::STFD, 3).addReg(ArgReg).addSImm(ArgOffset)
             .addReg(PPC32::R1);
             
-            if (GPR_remaining > 1) {
+            // Doubles can be split across reg + stack for varargs
+            if (GPR_remaining > 0) {
               BuildMI(BB, PPC32::LWZ, 2, GPR[GPR_idx]).addSImm(ArgOffset)
               .addReg(PPC32::R1);
+              CallMI->addRegOperand(GPR[GPR_idx], MachineOperand::Use);
+            }
+            if (GPR_remaining > 1) {
               BuildMI(BB, PPC32::LWZ, 2, GPR[GPR_idx+1])
                 .addSImm(ArgOffset+4).addReg(PPC32::R1);
-              CallMI->addRegOperand(GPR[GPR_idx], MachineOperand::Use);
               CallMI->addRegOperand(GPR[GPR_idx+1], MachineOperand::Use);
             }
           }
@@ -1779,6 +1778,9 @@ void ISel::emitSimpleBinaryOperation(MachineBasicBlock *MBB,
   static const unsigned ImmOpcodeTab[] = {
     PPC32::ADDI, PPC32::SUBI, PPC32::ANDIo, PPC32::ORI, PPC32::XORI
   };
+  static const unsigned RImmOpcodeTab[] = {
+    PPC32::ADDI, PPC32::SUBFIC, PPC32::ANDIo, PPC32::ORI, PPC32::XORI
+  };
 
   // Otherwise, code generate the full operation with a constant.
   static const unsigned BottomTab[] = {
@@ -1810,17 +1812,35 @@ void ISel::emitSimpleBinaryOperation(MachineBasicBlock *MBB,
         }
   }
 
-  // sub 0, X -> neg X
+  // Special case: op <const int>, Reg
   if (ConstantInt *CI = dyn_cast<ConstantInt>(Op0)) {
-    if (OperatorClass == 1 && CI->isNullValue()) {
+    // sub 0, X -> subfic
+    if (OperatorClass == 1 && canUseAsImmediateForOpcode(CI, 0)) {
       unsigned Op1r = getReg(Op1, MBB, IP);
+      int imm = CI->getRawValue() & 0xFFFF;
 
       if (Class == cLong) {
-        BuildMI(*MBB, IP, PPC32::SUBFIC, 2, DestReg+1).addReg(Op1r+1).addSImm(0);
+        BuildMI(*MBB, IP, PPC32::SUBFIC, 2, DestReg+1).addReg(Op1r+1)
+          .addSImm(imm);
         BuildMI(*MBB, IP, PPC32::SUBFZE, 1, DestReg).addReg(Op1r);
       } else {
-        BuildMI(*MBB, IP, PPC32::NEG, 1, DestReg).addReg(Op1r);
+        BuildMI(*MBB, IP, PPC32::SUBFIC, 2, DestReg).addReg(Op1r).addSImm(imm);
       }
+      return;
+    }
+    
+    // If it is easy to do, swap the operands and emit an immediate op
+    if (Class != cLong && OperatorClass != 1 && 
+        canUseAsImmediateForOpcode(CI, OperatorClass)) {
+      unsigned Op1r = getReg(Op1, MBB, IP);
+      int imm = CI->getRawValue() & 0xFFFF;
+    
+      if (OperatorClass < 2)
+        BuildMI(*MBB, IP, RImmOpcodeTab[OperatorClass], 2, DestReg).addReg(Op1r)
+          .addSImm(imm);
+      else
+        BuildMI(*MBB, IP, RImmOpcodeTab[OperatorClass], 2, DestReg).addReg(Op1r)
+          .addZImm(imm);
       return;
     }
   }
@@ -1838,16 +1858,15 @@ void ISel::emitSimpleBinaryOperation(MachineBasicBlock *MBB,
       return;
     }
     
-    // FIXME: We're not handling ANDI right now since it could trash the CR
     if (Class != cLong) {
       if (canUseAsImmediateForOpcode(Op1C, OperatorClass)) {
         int immediate = Op1C->getRawValue() & 0xFFFF;
         
         if (OperatorClass < 2)
-          BuildMI(*MBB, IP, ImmOpcodeTab[OperatorClass], 2, DestReg).addReg(Op0r)
+          BuildMI(*MBB, IP, ImmOpcodeTab[OperatorClass], 2,DestReg).addReg(Op0r)
             .addSImm(immediate);
         else
-          BuildMI(*MBB, IP, ImmOpcodeTab[OperatorClass], 2, DestReg).addReg(Op0r)
+          BuildMI(*MBB, IP, ImmOpcodeTab[OperatorClass], 2,DestReg).addReg(Op0r)
             .addZImm(immediate);
       } else {
         unsigned Op1r = getReg(Op1, MBB, IP);
@@ -1865,7 +1884,9 @@ void ISel::emitSimpleBinaryOperation(MachineBasicBlock *MBB,
       .addReg(Op1r);
     return;
   }
-
+  
+  // We couldn't generate an immediate variant of the op, load both halves into
+  // registers and emit the appropriate opcode.
   unsigned Op0r = getReg(Op0, MBB, IP);
   unsigned Op1r = getReg(Op1, MBB, IP);
 
@@ -1981,8 +2002,7 @@ void ISel::doMultiplyConst(MachineBasicBlock *MBB,
   }
   
   // If 32 bits or less and immediate is in right range, emit mul by immediate
-  if (Class == cByte || Class == cShort || Class == cInt)
-  {
+  if (Class == cByte || Class == cShort || Class == cInt) {
     if (canUseAsImmediateForOpcode(CI, 0)) {
       unsigned Op0r = getReg(Op0, MBB, IP);
       unsigned imm = CI->getRawValue() & 0xFFFF;
@@ -2237,11 +2257,13 @@ void ISel::emitShiftOperation(MachineBasicBlock *MBB,
           .addSImm(32);
         BuildMI(*MBB, IP, PPC32::SLW, 2, TmpReg2).addReg(SrcReg)
           .addReg(ShiftAmountReg);
-        BuildMI(*MBB, IP, PPC32::SRW, 2, TmpReg3).addReg(SrcReg+1).addReg(TmpReg1);
-        BuildMI(*MBB, IP, PPC32::OR, 2, TmpReg4).addReg(TmpReg2).addReg(TmpReg3);
+        BuildMI(*MBB, IP, PPC32::SRW, 2, TmpReg3).addReg(SrcReg+1)
+          .addReg(TmpReg1);
+        BuildMI(*MBB, IP, PPC32::OR, 2,TmpReg4).addReg(TmpReg2).addReg(TmpReg3);
         BuildMI(*MBB, IP, PPC32::ADDI, 2, TmpReg5).addReg(ShiftAmountReg)
           .addSImm(-32);
-        BuildMI(*MBB, IP, PPC32::SLW, 2, TmpReg6).addReg(SrcReg+1).addReg(TmpReg5);
+        BuildMI(*MBB, IP, PPC32::SLW, 2, TmpReg6).addReg(SrcReg+1)
+          .addReg(TmpReg5);
         BuildMI(*MBB, IP, PPC32::OR, 2, DestReg).addReg(TmpReg4)
           .addReg(TmpReg6);
         BuildMI(*MBB, IP, PPC32::SLW, 2, DestReg+1).addReg(SrcReg+1)
@@ -2311,10 +2333,11 @@ void ISel::visitLoadInst(LoadInst &I) {
   static const unsigned Opcodes[] = { 
     PPC32::LBZ, PPC32::LHZ, PPC32::LWZ, PPC32::LFS 
   };
+
   unsigned Class = getClassB(I.getType());
   unsigned Opcode = Opcodes[Class];
   if (I.getType() == Type::DoubleTy) Opcode = PPC32::LFD;
-
+  if (Class == cShort && I.getType()->isSigned()) Opcode = PPC32::LHA;
   unsigned DestReg = getReg(I);
 
   if (AllocaInst *AI = dyn_castFixedAlloca(I.getOperand(0))) {
@@ -2322,6 +2345,10 @@ void ISel::visitLoadInst(LoadInst &I) {
     if (Class == cLong) {
       addFrameReference(BuildMI(BB, PPC32::LWZ, 2, DestReg), FI);
       addFrameReference(BuildMI(BB, PPC32::LWZ, 2, DestReg+1), FI, 4);
+    } else if (Class == cByte && I.getType()->isSigned()) {
+      unsigned TmpReg = makeAnotherReg(I.getType());
+      addFrameReference(BuildMI(BB, Opcode, 2, TmpReg), FI);
+      BuildMI(BB, PPC32::EXTSB, 1, DestReg).addReg(TmpReg);
     } else {
       addFrameReference(BuildMI(BB, Opcode, 2, DestReg), FI);
     }
@@ -2331,6 +2358,10 @@ void ISel::visitLoadInst(LoadInst &I) {
     if (Class == cLong) {
       BuildMI(BB, PPC32::LWZ, 2, DestReg).addSImm(0).addReg(SrcAddrReg);
       BuildMI(BB, PPC32::LWZ, 2, DestReg+1).addSImm(4).addReg(SrcAddrReg);
+    } else if (Class == cByte && I.getType()->isSigned()) {
+      unsigned TmpReg = makeAnotherReg(I.getType());
+      BuildMI(BB, Opcode, 2, TmpReg).addSImm(0).addReg(SrcAddrReg);
+      BuildMI(BB, PPC32::EXTSB, 1, DestReg).addReg(TmpReg);
     } else {
       BuildMI(BB, Opcode, 2, DestReg).addSImm(0).addReg(SrcAddrReg);
     }
@@ -2430,7 +2461,7 @@ void ISel::emitCastOperation(MachineBasicBlock *MBB,
     case cFP32:
     case cFP64:
       // FSEL perhaps?
-      std::cerr << "Cast fp-to-bool not implemented!";
+      std::cerr << "ERROR: Cast fp-to-bool not implemented!\n";
       abort();
     }
     return;
@@ -2476,26 +2507,15 @@ void ISel::emitCastOperation(MachineBasicBlock *MBB,
       ++DestReg;
     }
     
-    bool isUnsigned = SrcTy->isUnsigned() || SrcTy == Type::BoolTy;
-    if (SrcClass < cInt) {
-      if (isUnsigned) {
-        unsigned shift = (SrcClass == cByte) ? 24 : 16;
-        BuildMI(*BB, IP, PPC32::RLWINM, 4, DestReg).addReg(SrcReg).addZImm(0)
-          .addImm(shift).addImm(31);
-      } else {
-        BuildMI(*BB, IP, (SrcClass == cByte) ? PPC32::EXTSB : PPC32::EXTSH, 
-                1, DestReg).addReg(SrcReg);
-      }
-    } else {
-      BuildMI(*BB, IP, PPC32::OR, 2, DestReg).addReg(SrcReg).addReg(SrcReg);
-    }
+    bool isUnsigned = DestTy->isUnsigned() || DestTy == Type::BoolTy;
+    BuildMI(*BB, IP, PPC32::OR, 2, DestReg).addReg(SrcReg).addReg(SrcReg);
 
     if (isLong) {  // Handle upper 32 bits as appropriate...
       --DestReg;
       if (isUnsigned)     // Zero out top bits...
         BuildMI(*BB, IP, PPC32::LI, 1, DestReg).addSImm(0);
       else                // Sign extend bottom half...
-        BuildMI(*BB, IP, PPC32::SRAWI, 2, DestReg).addReg(DestReg).addImm(31);
+        BuildMI(*BB, IP, PPC32::SRAWI, 2, DestReg).addReg(SrcReg).addImm(31);
     }
     return;
   }
@@ -2509,7 +2529,7 @@ void ISel::emitCastOperation(MachineBasicBlock *MBB,
   // Handle cast of LARGER int to SMALLER int with a clear or sign extend
   if ((SrcClass <= cInt || SrcClass == cLong) && DestClass <= cInt
       && SrcClass > DestClass) {
-    bool isUnsigned = SrcTy->isUnsigned() || SrcTy == Type::BoolTy;
+    bool isUnsigned = DestTy->isUnsigned() || DestTy == Type::BoolTy;
     unsigned source = (SrcClass == cLong) ? SrcReg+1 : SrcReg;
     
     if (isUnsigned) {
@@ -2627,7 +2647,7 @@ void ISel::emitCastOperation(MachineBasicBlock *MBB,
                             ValueFrameIdx, 4);
         }
     } else {
-      std::cerr << "Cast fp-to-unsigned not implemented!";
+      std::cerr << "ERROR: Cast fp-to-unsigned not implemented!\n";
       abort();
     }
     return;
@@ -2706,33 +2726,37 @@ void ISel::emitGEPOperation(MachineBasicBlock *MBB,
                             MachineBasicBlock::iterator IP,
                             Value *Src, User::op_iterator IdxBegin,
                             User::op_iterator IdxEnd, unsigned TargetReg) {
-  const TargetData &TD = TM.getTargetData ();
-  const Type *Ty = Src->getType ();
-  unsigned basePtrReg = getReg (Src, MBB, IP);
+  const TargetData &TD = TM.getTargetData();
+  const Type *Ty = Src->getType();
+  unsigned basePtrReg = getReg(Src, MBB, IP);
 
   // GEPs have zero or more indices; we must perform a struct access
   // or array access for each one.
   for (GetElementPtrInst::op_iterator oi = IdxBegin, oe = IdxEnd; oi != oe;
        ++oi) {
     Value *idx = *oi;
-    unsigned nextBasePtrReg = makeAnotherReg (Type::UIntTy);
-    if (const StructType *StTy = dyn_cast<StructType> (Ty)) {
+    unsigned nextBasePtrReg = makeAnotherReg(Type::UIntTy);
+    if (const StructType *StTy = dyn_cast<StructType>(Ty)) {
       // It's a struct access.  idx is the index into the structure,
       // which names the field. Use the TargetData structure to
       // pick out what the layout of the structure is in memory.
       // Use the (constant) structure index's value to find the
       // right byte offset from the StructLayout class's list of
       // structure member offsets.
-      unsigned fieldIndex = cast<ConstantUInt> (idx)->getValue ();
+      unsigned fieldIndex = cast<ConstantUInt>(idx)->getValue();
       unsigned memberOffset =
-        TD.getStructLayout (StTy)->MemberOffsets[fieldIndex];
-      // Emit an ADDI to add memberOffset to the basePtr.
-      BuildMI (*MBB, IP, PPC32::ADDI, 2, nextBasePtrReg).addReg(basePtrReg)
-        .addSImm(memberOffset);
-      // The next type is the member of the structure selected by the
-      // index.
-      Ty = StTy->getElementType (fieldIndex);
-    } else if (const SequentialType *SqTy = dyn_cast<SequentialType> (Ty)) {
+        TD.getStructLayout(StTy)->MemberOffsets[fieldIndex];
+      
+      if (0 == memberOffset) { // No-op
+        nextBasePtrReg = basePtrReg;
+      } else {
+        // Emit an ADDI to add memberOffset to the basePtr.
+        BuildMI (*MBB, IP, PPC32::ADDI, 2, nextBasePtrReg).addReg(basePtrReg)
+          .addSImm(memberOffset);
+      }
+      // The next type is the member of the structure selected by the index.
+      Ty = StTy->getElementType(fieldIndex);
+    } else if (const SequentialType *SqTy = dyn_cast<SequentialType>(Ty)) {
       // Many GEP instructions use a [cast (int/uint) to LongTy] as their
       // operand.  Handle this case directly now...
       if (CastInst *CI = dyn_cast<CastInst>(idx))
@@ -2741,10 +2765,9 @@ void ISel::emitGEPOperation(MachineBasicBlock *MBB,
           idx = CI->getOperand(0);
 
       Ty = SqTy->getElementType();
-      unsigned elementSize = TD.getTypeSize (Ty);
+      unsigned elementSize = TD.getTypeSize(Ty);
       
-      if (idx == Constant::getNullValue(idx->getType())) {
-        // GEP with idx 0 is a no-op
+      if (idx == Constant::getNullValue(idx->getType())) { // No-op
         nextBasePtrReg = basePtrReg;
       } else if (elementSize == 1) {
         // If the element size is 1, we don't have to multiply, just add
@@ -2754,8 +2777,8 @@ void ISel::emitGEPOperation(MachineBasicBlock *MBB,
       } else {
         // It's an array or pointer access: [ArraySize x ElementType].
         // We want to add basePtrReg to (idxReg * sizeof ElementType). First, we
-        // must find the size of the pointed-to type (Not coincidentally, the next
-        // type is the type of the elements in the array).
+        // must find the size of the pointed-to type (Not coincidentally, the 
+        // next type is the type of the elements in the array).
         unsigned OffsetReg = makeAnotherReg(idx->getType());
         ConstantUInt *CUI = ConstantUInt::get(Type::UIntTy, elementSize);
         doMultiplyConst(MBB, IP, OffsetReg, idx, CUI);
@@ -2773,7 +2796,7 @@ void ISel::emitGEPOperation(MachineBasicBlock *MBB,
   // After we have processed all the indices, the result is left in
   // basePtrReg.  Move it to the register where we were expected to
   // put the answer.
-  BuildMI (BB, PPC32::OR, 2, TargetReg).addReg(basePtrReg).addReg(basePtrReg);
+  BuildMI(BB, PPC32::OR, 2, TargetReg).addReg(basePtrReg).addReg(basePtrReg);
 }
 
 /// visitAllocaInst - If this is a fixed size alloca, allocate space from the
