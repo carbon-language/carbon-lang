@@ -13,10 +13,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Module.h"
-#include "llvm/Constant.h"
 #include "llvm/DerivedTypes.h"
-#include "llvm/Instructions.h"
-#include "llvm/Intrinsics.h"
+#include "llvm/IntrinsicInst.h"
 #include "llvm/Support/LeakDetector.h"
 #include "SymbolTableListTraitsImpl.h"
 using namespace llvm;
@@ -265,5 +263,31 @@ unsigned Function::getIntrinsicID() const {
   return 0;
 }
 
+Value *MemIntrinsic::StripPointerCasts(Value *Ptr) {
+  if (ConstantExpr *CE = dyn_cast<ConstantExpr>(Ptr)) {
+    if (CE->getOpcode() == Instruction::Cast) {
+      if (isa<PointerType>(CE->getOperand(0)->getType()))
+        return StripPointerCasts(CE->getOperand(0));
+    } else if (CE->getOpcode() == Instruction::GetElementPtr) {
+      for (unsigned i = 1, e = CE->getNumOperands(); i != e; ++i)
+        if (!CE->getOperand(i)->isNullValue())
+          return Ptr;
+      return StripPointerCasts(CE->getOperand(0));
+    }
+    return Ptr;
+  }
+
+  if (CastInst *CI = dyn_cast<CastInst>(Ptr)) {
+    if (isa<PointerType>(CI->getOperand(0)->getType()))
+      return StripPointerCasts(CI->getOperand(0));
+  } else if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(Ptr)) {
+    for (unsigned i = 1, e = CE->getNumOperands(); i != e; ++i)
+      if (!isa<Constant>(CE->getOperand(i)) ||
+          !cast<Constant>(CE->getOperand(i))->isNullValue())
+        return Ptr;
+    return StripPointerCasts(CE->getOperand(0));
+  }
+  return Ptr;
+}
 
 // vim: sw=2 ai
