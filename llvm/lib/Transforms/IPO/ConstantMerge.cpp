@@ -14,12 +14,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Transforms/ConstantMerge.h"
+#include "llvm/Transforms/IPO.h"
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
 #include "Support/StatisticReporter.h"
-
-static Statistic<> NumMerged("constmerge\t\t- Number of global constants merged");
 
 namespace {
   struct ConstantMerge : public Pass {
@@ -33,6 +31,7 @@ namespace {
     }
   };
 
+Statistic<> NumMerged("constmerge\t\t- Number of global constants merged");
 RegisterPass<ConstantMerge> X("constmerge", "Merge Duplicate Global Constants");
 }
 
