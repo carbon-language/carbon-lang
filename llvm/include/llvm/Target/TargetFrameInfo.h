@@ -14,6 +14,8 @@
 #ifndef LLVM_TARGET_TARGETFRAMEINFO_H
 #define LLVM_TARGET_TARGETFRAMEINFO_H
 
+#include <utility>
+
 namespace llvm {
 
 class MachineFunction;
@@ -56,6 +58,21 @@ public:
   ///
   int getOffsetOfLocalArea() const { return LocalAreaOffset; }
 
+  /// getCalleeSaveSpillSlots - This method returns a pointer to an array of
+  /// pairs, that contains an entry for each callee save register that must be
+  /// spilled to a particular stack location if it is spilled.
+  ///
+  /// Each entry in this array contains a <register,offset> pair, indicating the
+  /// fixed offset from the incoming stack pointer that each register should be
+  /// spilled at.  If a register is not listed here, the code generator is
+  /// allowed to spill it anywhere it chooses.
+  /// 
+  virtual std::pair<unsigned, int> *
+  getCalleeSaveSpillSlots(unsigned &NumEntries) const {
+    NumEntries = 0;
+    return 0;
+  }
+  
   //===--------------------------------------------------------------------===//
   // These methods provide details of the stack frame used by Sparc, thus they
   // are Sparc specific.
