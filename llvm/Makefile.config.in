@@ -155,6 +155,10 @@ ifndef SourceDir
 SourceDir=$(BUILD_SRC_DIR)
 endif
 
+# Handle configured libraries
+HAVE_BZIP2 := @HAVE_BZIP2@
+HAVE_ZILB  := @HAVE_ZLIB@
+
 # Installation directories, as provided by the configure script.
 exec_prefix = @exec_prefix@
 prefix = @prefix@

@@ -250,6 +250,8 @@ AC_CHECK_LIB(elf, elf_begin)
 dnl Check for bzip2 and zlib compression libraries needed for archive reading/writing
 AC_CHECK_LIB(bz2,BZ2_bzCompressInit,[bzip2_found=1],[bzip2_found=0])
 AC_CHECK_LIB(z,gzopen,[zlib_found=1],[zlib_found=0])
+AC_SUBST([HAVE_ZLIB],$zlib_found)
+AC_SUBST([HAVE_BZIP2],$bzip2_found)
 if test $zlib_found -eq 1 ; then
   AC_DEFINE([HAVE_ZLIB],[1],[Define if zlib library is available on this platform.])
 fi

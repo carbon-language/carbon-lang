@@ -463,8 +463,8 @@ $(sysconfdir):
 	$(MKDIR) $(sysconfdir)
 
 install-config-files: $(sysconfdir) $(CONFIG_FILES)
-	$(VERB) echo Installing Configuration Files To $(sysconfdir)
-	$(VERB) for file in $(CONFIG_FILES); do \
+	$(VERB)$(ECHO) Installing Configuration Files To $(sysconfdir)
+	$(VERB)for file in $(CONFIG_FILES); do \
 		$(INSTALL) $(SourceDir)/$${file} $(sysconfdir) ; \
 	done
 endif
@@ -527,7 +527,7 @@ install-bytecode-library:: $(DESTDIR)$(bytecode_libdir)/lib$(LIBRARYNAME).bc
 
 $(DESTDIR)$(bytecode_libdir)/lib$(LIBRARYNAME).bc: $(LIBNAME_BC) $(DESTDIR)$(bytecode_libdir)
 	@${ECHO} ======= Installing $(LIBRARYNAME) bytecode library =======
-	cp $< $@
+	$(VERB)cp $< $@
 
 # Does the library want a .o version built?
 ifndef DONT_BUILD_RELINKED
@@ -593,7 +593,7 @@ install-dynamic-library: $(LIBNAME_CUR)
 #
 $(LIBNAME_AO): $(ObjectsO) $(LibSubDirs) $(DESTLIBRELEASE)/.dir
 	@${ECHO} Linking $(LIBRARYNAME) archive release library
-	@$(RM) -f $@
+	$(VERB)$(RM) -f $@
 	$(VERB) $(Link) -03 -o $@ $(ObjectsO) $(LibSubDirs) -static
 	@${ECHO} Finished building $(LIBRARYNAME) archive release library =======
 
@@ -656,6 +656,13 @@ endif
 #
 ifdef TOOLNAME
 
+# Handle compression libraries automatically
+ifeq ($(HAVE_BZIP2),1)
+USEDLIBS += bz2.a
+endif
+ifeq ($(HAVE_ZLIB),1)
+USEDLIBS += z.a
+endif
 # TOOLEXENAME* - These compute the output filenames to generate...
 TOOLEXENAME_G := $(DESTTOOLDEBUG)/$(TOOLNAME)
 TOOLEXENAME_O := $(DESTTOOLRELEASE)/$(TOOLNAME)
@@ -728,8 +735,9 @@ $(TOOLEXENAME_P): $(ObjectsP) $(USED_LIB_PATHS_P) $(LLVM_LIB_PATHS_P) $(DESTTOOL
 	@${ECHO} ======= Finished building $(TOOLNAME) profile executable =======
 
 install:: $(TOOLEXENAMES)
-	$(MKDIR) $(DESTDIR)$(bindir)
-	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) -c -m 0755 $(TOOLEXENAMES) $(DESTDIR)$(bindir)/$(TOOLNAME)
+	@${ECHO} Installing $(TOOLEXENAMES) to $(DESTDIR)$(bindir)
+	$(VERB)$(MKDIR) $(DESTDIR)$(bindir)
+	$(VERB)$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) -c -m 0755 $(TOOLEXENAMES) $(DESTDIR)$(bindir)/$(TOOLNAME)
 
 endif
 
