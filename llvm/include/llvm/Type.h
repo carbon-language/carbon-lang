@@ -248,22 +248,22 @@ private:
 
     typedef TypeIterator _Self;
   public:
-    inline TypeIterator(const Type *ty, unsigned idx) : Ty(ty), Idx(idx) {}
-    inline ~TypeIterator() {}
+    TypeIterator(const Type *ty, unsigned idx) : Ty(ty), Idx(idx) {}
+    ~TypeIterator() {}
     
-    inline bool operator==(const _Self& x) const { return Idx == x.Idx; }
-    inline bool operator!=(const _Self& x) const { return !operator==(x); }
+    bool operator==(const _Self& x) const { return Idx == x.Idx; }
+    bool operator!=(const _Self& x) const { return !operator==(x); }
     
-    inline pointer operator*() const { return Ty->getContainedType(Idx); }
-    inline pointer operator->() const { return operator*(); }
+    pointer operator*() const { return Ty->getContainedType(Idx); }
+    pointer operator->() const { return operator*(); }
     
-    inline _Self& operator++() { ++Idx; return *this; } // Preincrement
-    inline _Self operator++(int) { // Postincrement
+    _Self& operator++() { ++Idx; return *this; } // Preincrement
+    _Self operator++(int) { // Postincrement
       _Self tmp = *this; ++*this; return tmp; 
     }
     
-    inline _Self& operator--() { --Idx; return *this; }  // Predecrement
-    inline _Self operator--(int) { // Postdecrement
+    _Self& operator--() { --Idx; return *this; }  // Predecrement
+    _Self operator--(int) { // Postdecrement
       _Self tmp = *this; --*this; return tmp;
     }
   };
