@@ -178,9 +178,8 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &MF) {
   }
 
   // Build BBMap... 
-  unsigned BBNum = 0;
   for (MachineFunction::iterator I = MF.begin(), E = MF.end(); I != E; ++I)
-    BBMap[I] = BBNum++;
+    BBMap[I] = I->getNumber();
 
   // PhysRegInfo - Keep track of which instruction was the last use of a
   // physical register.  This is a purely local property, because all physical
@@ -201,8 +200,9 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &MF) {
   // nodes, which are treated as a special case).
   //
   MachineBasicBlock *Entry = MF.begin();
-  for (df_iterator<MachineBasicBlock*> DFI = df_begin(Entry), E = df_end(Entry);
-       DFI != E; ++DFI) {
+  std::set<MachineBasicBlock*> Visited;
+  for (df_ext_iterator<MachineBasicBlock*> DFI = df_ext_begin(Entry, Visited),
+         E = df_ext_end(Entry, Visited); DFI != E; ++DFI) {
     MachineBasicBlock *MBB = *DFI;
     unsigned BBNum = getMachineBasicBlockIndex(MBB);
 
@@ -310,7 +310,7 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &MF) {
         RegistersKilled.insert(std::make_pair(VirtRegInfo[i].Kills[j].second,
                                i + MRegisterInfo::FirstVirtualRegister));
     }
-  
+
   return false;
 }
 
