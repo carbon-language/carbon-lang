@@ -1,0 +1,15 @@
+; The old instruction selector used to load all arguments to a call up in 
+; registers, then start pushing them all onto the stack.  This is bad news as
+; it makes a ton of annoying overlapping live ranges.  This code should not
+; cause spills!
+;
+; RUN: as < %s | lli -stats 2>&1 | not grep spilled
+
+target endian = little
+target pointersize = 32
+
+int %test(int, int, int, int, int, int, int, int, int, int) { ret int 0 }
+int %main() {
+	%X = call int %test(int 1, int 2, int 3, int 4, int 5, int 6, int 7, int 8, int 9, int 10)
+	ret int %X
+}
