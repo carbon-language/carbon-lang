@@ -187,8 +187,6 @@ public:
 
   virtual Instruction *clone() const { return new VAArgInst(*this); }
 
-  bool mayWriteToMemory() const { return true; }
-
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const VAArgInst *) { return true; }
   static inline bool classof(const Instruction *I) {
