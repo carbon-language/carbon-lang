@@ -28,11 +28,11 @@ namespace {
     void finishFunction(MachineFunction &F) {
       std::cout << "\n";
     }
-    void startFunctionStub(const Function &F, unsigned StubSize) {
-      std::cout << "\n--- Function stub for function: " << F.getName() << "\n";
+    void startFunctionStub(unsigned StubSize) {
+      std::cout << "\n--- Function stub:\n";
     }
-    void *finishFunctionStub(const Function &F) {
-      std::cout << "\n";
+    void *finishFunctionStub(const Function *F) {
+      std::cout << "\n--- End of stub for Function\n";
       return 0;
     }
     
@@ -105,11 +105,11 @@ namespace {
       MCE.emitConstantPool(MCP);
     }
 
-    void startFunctionStub(const Function &F, unsigned StubSize) {
-      MCE.startFunctionStub(F, StubSize);
+    void startFunctionStub(unsigned StubSize) {
+      MCE.startFunctionStub(StubSize);
     }
 
-    void *finishFunctionStub(const Function &F) {
+    void *finishFunctionStub(const Function *F) {
       return MCE.finishFunctionStub(F);
     }
     

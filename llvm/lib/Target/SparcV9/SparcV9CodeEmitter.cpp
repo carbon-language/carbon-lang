@@ -420,7 +420,7 @@ void JITResolver::CompilationCallback() {
 /// directly.
 ///
 uint64_t JITResolver::emitStubForFunction(Function *F) {
-  MCE.startFunctionStub(*F, 44);
+  MCE.startFunctionStub(44);
 
   DEBUG(std::cerr << "Emitting stub at addr: 0x" 
                   << std::hex << MCE.getCurrentPCValue() << "\n");
@@ -461,7 +461,7 @@ uint64_t JITResolver::emitStubForFunction(Function *F) {
   }
 
   SparcV9.emitWord(0xDEADBEEF); // marker so that we know it's really a stub
-  return (intptr_t)MCE.finishFunctionStub(*F)+4; /* 1 instr past the restore */
+  return (intptr_t)MCE.finishFunctionStub(F)+4; /* 1 instr past the restore */
 }
 
 SparcV9CodeEmitter::SparcV9CodeEmitter(TargetMachine &tm,
