@@ -67,8 +67,8 @@ struct CPUResource {
   resourceId_t rid;
   int maxNumUsers;   // MAXINT if no restriction
   
-  CPUResource(const std::string& resourceName, int maxUsers)
-    : rname(resourceName), rid(nextId++), maxNumUsers(maxUsers) {}
+  CPUResource(const std::string& resourceName, int maxUsers);
+
 private:
   static resourceId_t nextId;
 };
@@ -303,7 +303,7 @@ protected:
 
 
 
-  friend class ModuloSchedulingPass;
+  friend class ModuloScheduling;
   
 };
 
