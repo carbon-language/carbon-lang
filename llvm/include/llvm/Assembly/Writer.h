@@ -16,21 +16,12 @@
 #ifndef LLVM_ASSEMBLY_WRITER_H
 #define LLVM_ASSEMBLY_WRITER_H
 
-#include <iostream>
-#include "llvm/Type.h"
-
+#include <iosfwd>
+class Type;
+class Module;
+class Value;
 class SlotCalculator;
 
-// The only interface defined by this file... convert the internal 
-// representation of an object into an ascii bytestream that the parser can 
-// understand later... (the parser only understands whole classes though)
-//
-void WriteToAssembly(const Module  *Module, std::ostream &o);
-void WriteToAssembly(const GlobalVariable *G, std::ostream &o);
-void WriteToAssembly(const Function    *F , std::ostream &o);
-void WriteToAssembly(const BasicBlock  *BB, std::ostream &o);
-void WriteToAssembly(const Instruction *In, std::ostream &o);
-void WriteToAssembly(const Constant     *V, std::ostream &o);
 
 // WriteTypeSymbolic - This attempts to write the specified type as a symbolic
 // type, iff there is an entry in the modules symbol table for the specified
@@ -45,56 +36,5 @@ std::ostream &WriteTypeSymbolic(std::ostream &, const Type *, const Module *M);
 //
 std::ostream &WriteAsOperand(std::ostream &, const Value *, bool PrintTy = true,
                              bool PrintName = true, SlotCalculator *Table = 0);
-
-
-// Define operator<< to work on the various classes that we can send to an 
-// ostream...
-//
-inline std::ostream &operator<<(std::ostream &o, const Module *C) {
-  WriteToAssembly(C, o); return o;
-}
-
-inline std::ostream &operator<<(std::ostream &o, const GlobalVariable *G) {
-  WriteToAssembly(G, o); return o;
-}
-
-inline std::ostream &operator<<(std::ostream &o, const Function *F) {
-  WriteToAssembly(F, o); return o;
-}
-
-inline std::ostream &operator<<(std::ostream &o, const BasicBlock *B) {
-  WriteToAssembly(B, o); return o;
-}
-
-inline std::ostream &operator<<(std::ostream &o, const Instruction *I) {
-  WriteToAssembly(I, o); return o;
-}
-
-inline std::ostream &operator<<(std::ostream &o, const Constant *I) {
-  WriteToAssembly(I, o); return o;
-}
-
-
-inline std::ostream &operator<<(std::ostream &o, const Type *T) {
-  if (!T) return o << "<null Type>";
-  return o << T->getDescription();
-}
-
-inline std::ostream &operator<<(std::ostream &o, const Value *I) {
-  switch (I->getValueType()) {
-  case Value::TypeVal:       return o << cast<const Type>(I);
-  case Value::ConstantVal:   WriteToAssembly(cast<Constant>(I)      , o); break;
-  case Value::FunctionArgumentVal:
-    return o << I->getType() << " " << I->getName();
-  case Value::InstructionVal:WriteToAssembly(cast<Instruction>(I)   , o); break;
-  case Value::BasicBlockVal: WriteToAssembly(cast<BasicBlock>(I)    , o); break;
-  case Value::FunctionVal:   WriteToAssembly(cast<Function>(I)      , o); break;
-  case Value::GlobalVariableVal:
-                             WriteToAssembly(cast<GlobalVariable>(I), o); break;
-  case Value::ModuleVal:     WriteToAssembly(cast<Module>(I)        , o); break;
-  default: return o << "<unknown value type: " << I->getValueType() << ">";
-  }
-  return o;
-}
 
 #endif
