@@ -25,9 +25,3 @@ X86InstrInfo::X86InstrInfo()
 }
 
 
-// print - Print out an x86 instruction in GAS syntax
-void X86InstrInfo::print(const MachineInstr *MI, std::ostream &O) const {
-  // FIXME: This sucks.
-  O << getName(MI->getOpCode()) << "\n";
-}
-

@@ -30,7 +30,7 @@ public:
   ///
   virtual const MRegisterInfo &getRegisterInfo() const { return RI; }
 
-  /// print - Print out an x86 instruction in GAS syntax
+  /// print - Print out an x86 instruction in intel syntax
   ///
   virtual void print(const MachineInstr *MI, std::ostream &O) const;
 

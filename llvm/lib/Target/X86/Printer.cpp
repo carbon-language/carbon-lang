@@ -11,7 +11,7 @@
 #include "llvm/Function.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/CodeGen/MachineFunction.h"
-#include <iostream>
+#include "llvm/CodeGen/MachineInstr.h"
 
 namespace {
   struct Printer : public FunctionPass {
@@ -24,6 +24,15 @@ namespace {
   };
 }
 
+/// createX86CodePrinterPass - Print out the specified machine code function to
+/// the specified stream.  This function should work regardless of whether or
+/// not the function is in SSA form or not.
+///
+Pass *createX86CodePrinterPass(TargetMachine &TM, std::ostream &O) {
+  return new Printer(TM, O);
+}
+
+
 /// runOnFunction - This uses the X86InstructionInfo::print method
 /// to print assembly for each instruction.
 bool Printer::runOnFunction (Function & F)
@@ -31,9 +40,8 @@ bool Printer::runOnFunction (Function & F)
   static unsigned bbnumber = 0;
   MachineFunction & MF = MachineFunction::get (&F);
   const MachineInstrInfo & MII = TM.getInstrInfo ();
-  const X86InstrInfo & x86ii = dynamic_cast <const X86InstrInfo &> (MII);
 
-  O << "# x86 printing not implemented yet!\n";
+  O << "# x86 printing only sorta implemented so far!\n";
 
   // Print out labels for the function.
   O << "\t.globl\t" << F.getName () << "\n";
@@ -51,7 +59,7 @@ bool Printer::runOnFunction (Function & F)
 	{
 	  // Print the assembly for the instruction.
 	  O << "\t";
-	  x86ii.print (*i_i, O);
+          MII.print(*i_i, O);
 	}
     }
 
@@ -59,10 +67,9 @@ bool Printer::runOnFunction (Function & F)
   return false;
 }
 
-/// createX86CodePrinterPass - Print out the specified machine code function to
-/// the specified stream.  This function should work regardless of whether or
-/// not the function is in SSA form or not.
-///
-Pass *createX86CodePrinterPass(TargetMachine &TM, std::ostream &O) {
-  return new Printer(TM, O);
+
+// print - Print out an x86 instruction in intel syntax
+void X86InstrInfo::print(const MachineInstr *MI, std::ostream &O) const {
+  // FIXME: This sucks.
+  O << getName(MI->getOpCode()) << "\n";
 }
