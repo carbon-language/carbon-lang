@@ -10,6 +10,7 @@
 #define LLVM_CODEGEN_MACHINEINSTR_H
 
 #include "llvm/Target/MachineInstrInfo.h"
+#include "llvm/Annotation.h"
 #include <iterator>
 class Instruction;
 
@@ -232,7 +233,8 @@ MachineOperand::InitializeReg(int _regNum, bool isCCReg)
 //      a CALL (if any), and return value of a RETURN.
 //---------------------------------------------------------------------------
 
-class MachineInstr : public NonCopyable {
+class MachineInstr :  public Annotable,         // Values are annotable
+                      public NonCopyableV {     // Disable copy operations
   MachineOpCode         opCode;
   OpCodeMask            opCodeMask;	// extra bits for variants of an opcode
   std::vector<MachineOperand> operands;
