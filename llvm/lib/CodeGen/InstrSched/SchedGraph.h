@@ -33,6 +33,7 @@ class SchedGraphEdge;
 class SchedGraphNode; 
 class SchedGraph; 
 class NodeToRegRefMap;
+class MachineInstr;
 
 /******************** Exported Data Types and Constants ********************/
 
