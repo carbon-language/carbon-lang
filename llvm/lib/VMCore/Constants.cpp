@@ -649,6 +649,12 @@ Constant *ConstantExpr::getCast(Constant *C, const Type *Ty) {
 }
 
 Constant *ConstantExpr::get(unsigned Opcode, Constant *C1, Constant *C2) {
+  // Check the operands for consistency first
+  assert((Opcode >= Instruction::BinaryOpsBegin &&
+          Opcode < Instruction::BinaryOpsEnd) &&
+         "Invalid opcode in binary constant expression");
+  assert(C1->getType() == C2->getType() &&
+         "Operand types in binary constant expression should match");
   
   if (Constant *FC = ConstantFoldBinaryInstruction(Opcode, C1, C2))
     return FC;          // Fold a few common cases...
@@ -659,19 +665,36 @@ Constant *ConstantExpr::get(unsigned Opcode, Constant *C1, Constant *C2) {
   ConstantExpr *Result = ExprConstants.get(C1->getType(), Key);
   if (Result) return Result;
   
-  // Its not in the table so create a new one and put it in the table.
-  // Check the operands for consistency first
-  assert((Opcode >= Instruction::BinaryOpsBegin &&
-          Opcode < Instruction::BinaryOpsEnd) &&
-         "Invalid opcode in binary constant expression");
-
-  assert(C1->getType() == C2->getType() &&
-         "Operand types in binary constant expression should match");
-  
+  // It's not in the table so create a new one and put it in the table.
   Result = new ConstantExpr(Opcode, C1, C2);
   ExprConstants.add(C1->getType(), Key, Result);
   return Result;
 }
+
+/// getShift - Return a shift left or shift right constant expr
+Constant *ConstantExpr::getShift(unsigned Opcode, Constant *C1, Constant *C2) {
+  // Check the operands for consistency first
+  assert((Opcode == Instruction::Shl ||
+          Opcode == Instruction::Shr) &&
+         "Invalid opcode in binary constant expression");
+  assert(C1->getType()->isIntegral() && C2->getType() == Type::UByteTy &&
+         "Invalid operand types for Shift constant expr!");
+
+  if (Constant *FC = ConstantFoldShiftInstruction(Opcode, C1, C2))
+    return FC;          // Fold a few common cases...
+
+  // Look up the constant in the table first to ensure uniqueness
+  std::vector<Constant*> argVec(1, C1); argVec.push_back(C2);
+  const ExprMapKeyType &Key = std::make_pair(Opcode, argVec);
+  ConstantExpr *Result = ExprConstants.get(C1->getType(), Key);
+  if (Result) return Result;
+  
+  // It's not in the table so create a new one and put it in the table.
+  Result = new ConstantExpr(Opcode, C1, C2);
+  ExprConstants.add(C1->getType(), Key, Result);
+  return Result;
+}
+
 
 Constant *ConstantExpr::getGetElementPtr(Constant *C,
                                          const std::vector<Constant*> &IdxList){
