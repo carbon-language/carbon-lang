@@ -208,7 +208,7 @@ bool llvm::LinkInArchive(Module *M,
     // findModulesDefiningSymbols are ones that the archive does not define. So
     // we add them to the NotDefinedByArchive variable now.
     NotDefinedByArchive.insert(UndefinedSymbols.begin(),
-        UndefinedSymbols.end());;
+        UndefinedSymbols.end());
 
     // Loop over all the ModuleProviders that we got back from the archive
     for (std::set<ModuleProvider*>::iterator I=Modules.begin(), E=Modules.end();
