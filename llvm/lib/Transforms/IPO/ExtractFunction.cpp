@@ -19,14 +19,14 @@ using namespace llvm;
 namespace {
   class FunctionExtractorPass : public Pass {
     Function *Named;
-    bool isolateFunc;
+    bool deleteFunc;
   public:
-    /// FunctionExtractorPass - ctor for the pass. If isolateFn is true, then
-    /// the named function is the only thing left in the Module (default
-    /// behavior), otherwise the function is the thing deleted.
+    /// FunctionExtractorPass - If deleteFn is true, this pass deletes as the
+    /// specified function. Otherwise, it deletes as much of the module as
+    /// possible, except for the function specified.
     ///
-    FunctionExtractorPass(Function *F = 0, bool isolateFn = true) 
-      : Named(F), isolateFunc(isolateFn) {}
+    FunctionExtractorPass(Function *F = 0, bool deleteFn = true) 
+      : Named(F), deleteFunc(deleteFn) {}
 
     bool run(Module &M) {
       if (Named == 0) {
@@ -34,10 +34,10 @@ namespace {
         if (Named == 0) return false;  // No function to extract
       }
 
-      if (isolateFunc)
-        return isolateFunction(M);
-      else 
+      if (deleteFunc)
         return deleteFunction();
+      else 
+        return isolateFunction(M);
     }
 
     bool deleteFunction() {
@@ -112,6 +112,6 @@ namespace {
   RegisterPass<FunctionExtractorPass> X("extract", "Function Extractor");
 }
 
-Pass *llvm::createFunctionExtractionPass(Function *F, bool isolateFn) {
-  return new FunctionExtractorPass(F, isolateFn);
+Pass *llvm::createFunctionExtractionPass(Function *F, bool deleteFn) {
+  return new FunctionExtractorPass(F, deleteFn);
 }
