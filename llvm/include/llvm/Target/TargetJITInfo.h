@@ -41,15 +41,34 @@ namespace llvm {
     /// overwriting OLD with a branch to NEW.  This is used for self-modifying
     /// code.
     ///
-    virtual void replaceMachineCodeForFunction (void *Old, void *New) = 0;
+    virtual void replaceMachineCodeForFunction(void *Old, void *New) = 0;
     
-    /// getJITStubForFunction - Create or return a stub for the specified
-    /// function.  This stub acts just like the specified function, except that
-    /// it allows the "address" of the function to be taken without having to
-    /// generate code for it.  Targets do not need to implement this method, but
-    /// doing so will allow for faster startup of the JIT.
-    ///
-    virtual void *getJITStubForFunction(Function *F, MachineCodeEmitter &MCE) {
+    /// emitFunctionStub - Use the specified MachineCodeEmitter object to emit a
+    /// small native function that simply calls the function at the specified
+    /// address.  Return the address of the resultant function.
+    virtual void *emitFunctionStub(void *Fn, MachineCodeEmitter &MCE) {
+      assert(0 && "This target doesn't implement emitFunctionStub!");
+    }
+
+    /// LazyResolverFn - This typedef is used to represent the function that
+    /// unresolved call points should invoke.  This is a target specific
+    /// function that knows how to walk the stack and find out which stub the
+    /// call is coming from.
+    typedef void (*LazyResolverFn)();
+
+    /// JITCompilerFn - This typedef is used to represent the JIT function that
+    /// lazily compiles the function corresponding to a stub.  The JIT keeps
+    /// track of the mapping between stubs and LLVM Functions, the target
+    /// provides the ability to figure out the address of a stub that is called
+    /// by the LazyResolverFn.
+    typedef void* (*JITCompilerFn)(void *);
+
+    /// getLazyResolverFunction - This method is used to initialize the JIT,
+    /// giving the target the function that should be used to compile a
+    /// function, and giving the JIT the target function used to do the lazy
+    /// resolving.
+    virtual LazyResolverFn getLazyResolverFunction(JITCompilerFn) {
+      assert(0 && "Not implemented for this target!");
       return 0;
     }
 
