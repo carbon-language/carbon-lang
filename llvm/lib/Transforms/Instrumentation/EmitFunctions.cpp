@@ -7,7 +7,9 @@
 // 
 //===----------------------------------------------------------------------===//
 //
-// This inserts a global constant table with function pointers all along
+// This inserts a global constant table with function pointers all along.
+//
+// NOTE: This pass is used by the reoptimizer only.
 //
 //===----------------------------------------------------------------------===//
 
@@ -16,24 +18,24 @@
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/CFG.h"
-
-namespace llvm {
-
-enum Color{
-  WHITE,
-  GREY,
-  BLACK
-};
+using namespace llvm;
 
 namespace {
+  enum Color{
+    WHITE,
+    GREY,
+    BLACK
+  };
+  
   struct EmitFunctionTable : public Pass {
     bool run(Module &M);
   };
   
-  RegisterOpt<EmitFunctionTable> X("emitfuncs", "Emit a Function Table");
+  RegisterOpt<EmitFunctionTable>
+  X("emitfuncs", "Emit a function table for the reoptimizer");
 }
 
-char doDFS(BasicBlock * node,std::map<BasicBlock *, Color > &color){
+static char doDFS(BasicBlock * node,std::map<BasicBlock *, Color > &color){
   color[node] = GREY;
 
   for(succ_iterator vl = succ_begin(node), ve = succ_end(node); vl != ve; ++vl){
@@ -56,7 +58,7 @@ char doDFS(BasicBlock * node,std::map<BasicBlock *, Color > &color){
   return 1;
 }
 
-char hasBackEdge(Function *F){
+static char hasBackEdge(Function *F){
   std::map<BasicBlock *, Color > color;
   return doDFS(F->begin(), color);
 }
@@ -106,5 +108,3 @@ bool EmitFunctionTable::run(Module &M){
   M.getGlobalList().push_back(fnCount);
   return true;  // Always modifies program
 }
-
-} // End llvm namespace
