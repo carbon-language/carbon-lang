@@ -56,17 +56,13 @@ let isReturn = 1, isTerminator = 1 in
 let Uses = [R28] in
   def LOAD_IMM : PseudoInstAlpha<(ops GPRC:$RC, s64imm:$IMM), "ldiq $RC,$IMM">; //Load Immediate Quadword
 
-let Uses = [R29, R28] in
+let Uses = [R29, R28] in {
   def STORE : PseudoInstAlpha<(ops GPRC:$RA, s64imm:$DISP), "stq $RA,$DISP">; //Store quadword
-
-let Uses = [R29, R28] in
   def LOAD_ADDR : PseudoInstAlpha<(ops GPRC:$RA, s64imm:$DISP), "lda $RA,$DISP">;  //Load address
-
-let Uses = [R29, R28] in
   def LOAD : PseudoInstAlpha<(ops GPRC:$RA, s64imm:$DISP), "ldq $RA,$DISP">; //Load quadword
-
-def LDW : PseudoInstAlpha<(ops GPRC:$RA, s16imm:$DISP, GPRC:$RB), "ldw $RA,$DISP($RB)">; // Load sign-extended word
-def LDB : PseudoInstAlpha<(ops GPRC:$RA, s16imm:$DISP, GPRC:$RB), "ldb $RA,$DISP($RB)">; //Load byte
+  def LDW : PseudoInstAlpha<(ops GPRC:$RA, s16imm:$DISP, GPRC:$RB), "ldw $RA,$DISP($RB)">; // Load sign-extended word
+  def LDB : PseudoInstAlpha<(ops GPRC:$RA, s16imm:$DISP, GPRC:$RB), "ldb $RA,$DISP($RB)">; //Load byte
+}
 
 let Uses = [R28, R23, R24, R25, R26] in
 {
@@ -252,7 +248,7 @@ let isCall = 1,
             F0, F1,
             F10, F11, F12, F13, F14, F15, F16, F17, F18, F19,
             F20, F21, F22, F23, F24, F25, F26, F27, F28, F29, F30],
-    Uses = [R27, R29] in {
+    Uses = [R29] in {
     def JSR : MForm< 0x1A, (ops GPRC:$RD, GPRC:$RS, s14imm:$DISP), "jsr $RD,($RS),$DISP">; //Jump to subroutine
     def BSR : BForm<0x34, (ops GPRC:$RD, s21imm:$DISP), "bsr $RD,$DISP">; //Branch to subroutine
 }
@@ -260,15 +256,12 @@ let isCall = 1,
 def JSR_COROUTINE : MForm< 0x1A, (ops GPRC:$RD, GPRC:$RS), "jsr_coroutine $RD,($RS),1">; //Jump to subroutine return
 def BR : BForm<0x30, (ops GPRC:$RD, s21imm:$DISP), "br $RD,$DISP">; //Branch
 
+let Uses = [R29, R28] in {
 //Stores, int
 def STB : MForm<0x0E, (ops GPRC:$RA, s16imm:$DISP, GPRC:$RB), "stb $RA,$DISP($RB)">; // Store byte
 def STW : MForm<0x0D, (ops GPRC:$RA, s16imm:$DISP, GPRC:$RB), "stw $RA,$DISP($RB)">; // Store word
 def STL : MForm<0x2C, (ops GPRC:$RA, s16imm:$DISP, GPRC:$RB), "stl $RA,$DISP($RB)">; // Store longword
 def STQ : MForm<0x2D, (ops GPRC:$RA, s16imm:$DISP, GPRC:$RB), "stq $RA,$DISP($RB)">; //Store quadword
-
-//Load address
-def LDA : MForm<0x08, (ops GPRC:$RA, s16imm:$DISP, GPRC:$RB), "lda $RA,$DISP($RB)">;  //Load address
-def LDAH : MForm<0x08, (ops GPRC:$RA, s16imm:$DISP, GPRC:$RB), "ldah $RA,$DISP($RB)">;  //Load address high
 
 //Loads, int
 def LDL : MForm<0x28, (ops GPRC:$RA, s16imm:$DISP, GPRC:$RB), "ldq $RA,$DISP($RB)">; // Load sign-extended longword
@@ -283,6 +276,11 @@ def STT : MForm<0x27, (ops FPRC:$RA, s16imm:$DISP, GPRC:$RB), "stt $RA,$DISP($RB
 //Loads, float
 def LDS : MForm<0x22, (ops FPRC:$RA, s16imm:$DISP, GPRC:$RB), "lds $RA,$DISP($RB)">; //Load S_floating
 def LDT : MForm<0x23, (ops FPRC:$RA, s16imm:$DISP, GPRC:$RB), "ldt $RA,$DISP($RB)">; //Load T_floating
+}
+
+//Load address
+def LDA : MForm<0x08, (ops GPRC:$RA, s16imm:$DISP, GPRC:$RB), "lda $RA,$DISP($RB)">;  //Load address
+def LDAH : MForm<0x08, (ops GPRC:$RA, s16imm:$DISP, GPRC:$RB), "ldah $RA,$DISP($RB)">;  //Load address high
 
 
 //Branches, int

@@ -307,6 +307,12 @@ unsigned ISel::SelectExprFP(SDOperand N, unsigned Result)
     Node->dump();
     assert(0 && "Node not handled!\n");
 
+  case ISD::FP_ROUND:
+    assert (DestType == MVT::f32 && N.getOperand(0).getValueType() == MVT::f64 && "only f64 to f32 conversion supported here");
+    Tmp1 = SelectExpr(N.getOperand(0));
+    BuildMI(BB, Alpha::CVTTS, 1, Result).addReg(Tmp1);
+    return Result;
+
   case ISD::FP_EXTEND:
     assert (DestType == MVT::f64 && N.getOperand(0).getValueType() == MVT::f32 && "only f32 to f64 conversion supported here");
     Tmp1 = SelectExpr(N.getOperand(0));
@@ -660,7 +666,8 @@ unsigned ISel::SelectExpr(SDOperand N) {
         {
           //no need to restore GP as we are doing an indirect call
           Tmp1 = SelectExpr(N.getOperand(1));
-          BuildMI(BB, Alpha::JSR, 2, Alpha::R26).addReg(Tmp1).addImm(1);
+	  BuildMI(BB, Alpha::BIS, 2, Alpha::R27).addReg(Tmp1).addReg(Tmp1);
+          BuildMI(BB, Alpha::JSR, 2, Alpha::R26).addReg(Alpha::R27).addImm(0);
         }
       
       //push the result into a virtual register
