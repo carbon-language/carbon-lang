@@ -37,6 +37,9 @@ namespace {
                      cl::desc("Print LLVM code with frequency annotations"));
   cl::alias PrintAnnotated2("A", cl::desc("Alias for --annotated-llvm"),
                             cl::aliasopt(PrintAnnotatedLLVM));
+  cl::opt<bool>
+  PrintAllCode("print-all-code",
+               cl::desc("Print annotated code for the entire program"));
 }
 
 // PairSecondSort - A sorting predicate to sort by the second element of a pair.
@@ -171,13 +174,13 @@ int main(int argc, char **argv) {
     BlockFreqs.insert(Counts.begin(), Counts.end());
   }
   
-  if (PrintAnnotatedLLVM) {
+  if (PrintAnnotatedLLVM || PrintAllCode) {
     std::cout << "\n===" << std::string(73, '-') << "===\n";
     std::cout << "Annotated LLVM code for the module:\n\n";
     
     ProfileAnnotator PA(FuncFreqs, BlockFreqs);
 
-    if (FunctionsToPrint.empty())
+    if (FunctionsToPrint.empty() || PrintAllCode)
       M->print(std::cout, &PA);
     else
       // Print just a subset of the functions...
