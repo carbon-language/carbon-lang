@@ -179,7 +179,6 @@ false           { return FALSETOK; }
 declare         { return DECLARE; }
 global          { return GLOBAL; }
 constant        { return CONSTANT; }
-const           { return CONST; }
 internal        { return INTERNAL; }
 linkonce        { return LINKONCE; }
 weak            { return WEAK; }

@@ -1424,12 +1424,7 @@ FunctionList : FunctionList Function {
   };
 
 // ConstPool - Constants with optional names assigned to them.
-ConstPool : ConstPool OptAssign CONST ConstVal { 
-    // FIXME: THIS SHOULD REALLY BE ELIMINATED.  It is totally unneeded.
-    if (!setValueNameMergingDuplicates($4, $2))
-      InsertValue($4);
-  }
-  | ConstPool OptAssign TYPE TypesV {  // Types can be defined in the const pool
+ConstPool : ConstPool OptAssign TYPE TypesV {  // Types can be defined in the const pool
     // Eagerly resolve types.  This is not an optimization, this is a
     // requirement that is due to the fact that we could have this:
     //
