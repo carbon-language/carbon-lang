@@ -20,7 +20,7 @@
 #include "SparcInternals.h"
 #include "SparcV9CodeEmitter.h"
 
-bool UltraSparc::addPassesToEmitMachineCode(PassManager &PM,
+bool UltraSparc::addPassesToEmitMachineCode(FunctionPassManager &PM,
                                             MachineCodeEmitter &MCE) {
   MachineCodeEmitter *M = &MCE;
   DEBUG(M = MachineCodeEmitter::createFilePrinterEmitter(MCE));

@@ -225,7 +225,7 @@ bool UltraSparc::addPassesToEmitAssembly(PassManager &PM, std::ostream &Out)
 // addPassesToJITCompile - This method controls the JIT method of code
 // generation for the UltraSparc.
 //
-bool UltraSparc::addPassesToJITCompile(PassManager &PM) {
+bool UltraSparc::addPassesToJITCompile(FunctionPassManager &PM) {
   const TargetData &TD = getTargetData();
 
   PM.add(new TargetData("lli", TD.isLittleEndian(), TD.getPointerSize(),
