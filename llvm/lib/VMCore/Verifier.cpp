@@ -379,9 +379,9 @@ void Verifier::visitTerminatorInst(TerminatorInst &I) {
 void Verifier::visitReturnInst(ReturnInst &RI) {
   Function *F = RI.getParent()->getParent();
   if (RI.getNumOperands() == 0)
-    Assert1(F->getReturnType() == Type::VoidTy,
-            "Function returns no value, but ret instruction found that does!",
-            &RI);
+    Assert2(F->getReturnType() == Type::VoidTy,
+            "Found return instr that returns void in Function of non-void "
+            "return type!", &RI, F->getReturnType());
   else
     Assert2(F->getReturnType() == RI.getOperand(0)->getType(),
             "Function return type does not match operand "
