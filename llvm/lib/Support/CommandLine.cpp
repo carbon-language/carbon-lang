@@ -348,8 +348,17 @@ void cl::ParseCommandLineOptions(int &argc, char **argv,
     unsigned ValNo = 0;
     for (unsigned j = 1, e = PositionalOpts.size(); j != e; ++j)
       if (RequiresValue(PositionalOpts[j]))
-        ErrorParsing |=
-          ProvidePositionalOption(PositionalOpts[j], PositionalVals[ValNo++]);
+        ErrorParsing |= ProvidePositionalOption(PositionalOpts[j],
+                                                PositionalVals[ValNo++]);
+
+    // Handle the case where there is just one positional option, and it's
+    // optional.  In this case, we want to give JUST THE FIRST option to the
+    // positional option and keep the rest for the consume after.  The above
+    // loop would have assigned no values to positional options in this case.
+    //
+    if (PositionalOpts.size() == 2 && ValNo == 0)
+      ErrorParsing |= ProvidePositionalOption(PositionalOpts[1],
+                                              PositionalVals[ValNo++]);
     
     // Handle over all of the rest of the arguments to the
     // cl::ConsumeAfter command line option...
