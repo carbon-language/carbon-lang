@@ -110,13 +110,13 @@ struct DOTGraphTraits<const DSGraph*> : public DefaultDOTGraphTraits {
     const std::vector<DSCallSite> &FCs = G->getFunctionCalls();
     for (unsigned i = 0, e = FCs.size(); i != e; ++i) {
       const DSCallSite &Call = FCs[i];
-      GW.emitSimpleNode(&Call, "shape=record", "call", Call.size());
+      GW.emitSimpleNode(&Call, "shape=record", "call", Call.getNumPtrArgs()+2);
 
-      for (unsigned j = 0, e = Call.size(); j != e; ++j)
-        if (Call[j].getNode()) {
-          int EdgeDest = Call[j].getOffset();
+      for (unsigned j = 0, e = Call.getNumPtrArgs(); j != e; ++j)
+        if (DSNode *N = Call.getPtrArg(j).getNode()) {
+          int EdgeDest = Call.getPtrArg(j).getOffset();
           if (EdgeDest == 0) EdgeDest = -1;
-          GW.emitEdge(&Call, j, Call[j].getNode(), EdgeDest, "color=gray63");
+          GW.emitEdge(&Call, j+2, N, EdgeDest, "color=gray63");
         }
     }
   }

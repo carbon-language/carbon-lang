@@ -47,6 +47,7 @@ public:
   bool operator<(const DSNodeHandle &H) const {  // Allow sorting
     return N < H.N || (N == H.N && Offset < H.Offset);
   }
+  bool operator>(const DSNodeHandle &H) const { return H < *this; }
   bool operator==(const DSNodeHandle &H) const { // Allow comparison
     return N == H.N && Offset == H.Offset;
   }
@@ -361,28 +362,66 @@ inline void DSNodeHandle::mergeWith(const DSNodeHandle &Node) {
 /// the DSNode handle for the callee function (or function pointer), and
 /// the DSNode handles for the function arguments.
 /// 
-class DSCallSite: public std::vector<DSNodeHandle> {
-  CallInst* callInst;
-  DSCallSite();                         // do not implement
+class DSCallSite {
+  CallInst    *Inst;                    // Actual call site
+  DSNodeHandle RetVal;                  // Returned value
+  DSNodeHandle Callee;                  // The function node called
+  std::vector<DSNodeHandle> CallArgs;   // The pointer arguments
 
+  DSCallSite();                         // DO NOT IMPLEMENT
 public:
-  DSCallSite(CallInst& _callInst) : callInst(&_callInst) { }
+  /// Note - This ctor destroys the argument vector passed in.  On exit, the
+  /// argument vector is empty.
+  ///
+  DSCallSite(CallInst &inst, const DSNodeHandle &rv, const DSNodeHandle &callee,
+             std::vector<DSNodeHandle> &Args)
+    : Inst(&inst), RetVal(rv), Callee(callee) {
+    Args.swap(CallArgs);
+  }
 
-  // Copy constructor with helper for cloning nodes.  The helper should be a
-  // model of unary_function<const DSNodeHandle*, DSNodeHandle>, i.e., it
-  // should take a pointer to DSNodeHandle and return a fresh DSNodeHandle.
-  // If no helper is specified, this defaults to a simple copy constructor.
-  template<typename _CopierFunction>
-  DSCallSite(const DSCallSite& FromCall,
-             _CopierFunction nodeCopier = *(_CopierFunction*) 0);
+  /// Copy constructor with helper for cloning nodes.  The helper should be a
+  /// model of unary_function<const DSNodeHandle*, DSNodeHandle>, i.e., it
+  /// should take a pointer to DSNodeHandle and return a fresh DSNodeHandle.
+  /// If no helper is specified, this defaults to a simple copy constructor.
+  ///
+  template<typename CopyFunctor>
+  DSCallSite(const DSCallSite &FromCall, CopyFunctor nodeCopier);
+  DSCallSite(const DSCallSite &DSCS)
+    : Inst(DSCS.Inst), RetVal(DSCS.RetVal),
+      Callee(DSCS.Callee), CallArgs(DSCS.CallArgs) {}
 
-  Function&     getCaller()                const;
-  CallInst&     getCallInst()              const { return *callInst; }
-  DSNodeHandle  getReturnValueNode()       const { return (*this)[0]; }
-  DSNodeHandle  getCalleeNode()            const { return (*this)[1]; }
-  unsigned      getNumPtrArgs()            const { return (size() - 2); }
-  DSNodeHandle  getPtrArgNode(unsigned i)  const { assert(i < getNumPtrArgs());
-                                                   return (*this)[i+2]; }
+  // Accessor functions...
+  Function           &getCaller()     const;
+  CallInst           &getCallInst()   const { return *Inst; }
+        DSNodeHandle &getRetVal()           { return RetVal; }
+        DSNodeHandle &getCallee()           { return Callee; }
+  const DSNodeHandle &getRetVal()     const { return RetVal; }
+  const DSNodeHandle &getCallee()     const { return Callee; }
+  unsigned            getNumPtrArgs() const { return CallArgs.size(); }
+
+  DSNodeHandle &getPtrArg(unsigned i) {
+    assert(i < CallArgs.size() && "Argument to getPtrArgNode is out of range!");
+    return CallArgs[i];
+  }
+  const DSNodeHandle &getPtrArg(unsigned i) const {
+    assert(i < CallArgs.size() && "Argument to getPtrArgNode is out of range!");
+    return CallArgs[i];
+  }
+
+  bool operator<(const DSCallSite &CS) const {
+    if (Inst < CS.Inst) return true;
+    if (Inst > CS.Inst) return false;
+    if (RetVal < CS.RetVal) return true;
+    if (RetVal > CS.RetVal) return false;
+    if (Callee < CS.Callee) return true;
+    if (Callee > CS.Callee) return false;
+    return CallArgs < CS.CallArgs;
+  }
+
+  bool operator==(const DSCallSite &CS) const {
+    return Inst == CS.Inst && RetVal == CS.RetVal && Callee == CS.Callee &&
+           CallArgs == CS.CallArgs;
+  }
 };
 
 

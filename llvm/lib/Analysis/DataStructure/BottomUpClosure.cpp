@@ -66,7 +66,7 @@ static void ResolveArguments(DSCallSite &Call, Function &F,
     
     // Add the link from the argument scalar to the provided value
     DSNodeHandle &NN = ValueMap[AI];
-    NN.addEdgeTo(Call.getPtrArgNode(i));
+    NN.addEdgeTo(Call.getPtrArg(i));
     ++AI;
   }
 }
@@ -100,12 +100,12 @@ DSGraph &BUDataStructures::calculateGraph(Function &F) {
       DSCallSite Call = FCs[i];
 
       // If the function list is complete...
-      if ((Call.getCalleeNode().getNode()->NodeType & DSNode::Incomplete)==0) {
+      if ((Call.getCallee().getNode()->NodeType & DSNode::Incomplete)==0) {
         // Start inlining all of the functions we can... some may not be
         // inlinable if they are external...
         //
         std::vector<GlobalValue*> Callees =
-          Call.getCalleeNode().getNode()->getGlobals();
+          Call.getCallee().getNode()->getGlobals();
 
         // Loop over the functions, inlining whatever we can...
         for (unsigned c = 0; c != Callees.size(); ++c) {
@@ -118,8 +118,8 @@ DSGraph &BUDataStructures::calculateGraph(Function &F) {
             DEBUG(std::cerr << "\t[BU] Self Inlining: " << F.getName() << "\n");
 
             // Handle the return value if present...
-            if (Call.getReturnValueNode().getNode())
-              Graph->getRetNode().mergeWith(Call.getReturnValueNode());
+            if (Call.getRetVal().getNode())
+              Graph->getRetNode().mergeWith(Call.getRetVal());
 
             // Resolve the arguments in the call to the actual values...
             ResolveArguments(Call, F, Graph->getValueMap());
@@ -162,8 +162,8 @@ DSGraph &BUDataStructures::calculateGraph(Function &F) {
             // Resolve the arguments in the call to the actual values...
             ResolveArguments(Call, FI, OldValMap);
 
-            if (Call.getReturnValueNode().getNode())  // Handle the return value if present
-              RetVal.mergeWith(Call.getReturnValueNode());
+            if (Call.getRetVal().getNode())// Handle the return value if present
+              RetVal.mergeWith(Call.getRetVal());
 
             // Erase the entry in the Callees vector
             Callees.erase(Callees.begin()+c--);
@@ -181,7 +181,8 @@ DSGraph &BUDataStructures::calculateGraph(Function &F) {
           // Erase the call if it is resolvable...
           FCs.erase(FCs.begin()+i--);  // Don't skip a the next call...
           Inlined = true;
-        } else if (Callees.size() != Call.getCalleeNode().getNode()->getGlobals().size()) {
+        } else if (Callees.size() !=
+                   Call.getCallee().getNode()->getGlobals().size()) {
           // Was able to inline SOME, but not all of the functions.  Construct a
           // new global node here.
           //

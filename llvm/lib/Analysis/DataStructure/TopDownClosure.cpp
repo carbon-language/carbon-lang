@@ -60,12 +60,12 @@ void TDDataStructures::ResolveCallSite(DSGraph &Graph,
     // TD ...Merge the formal arg scalar with the actual arg node
     DSNodeHandle &NodeForFormal = Graph.getNodeForValue(AI);
     if (NodeForFormal.getNode())
-      NodeForFormal.mergeWith(CallSite.getPtrArgNode(i));
+      NodeForFormal.mergeWith(CallSite.getPtrArg(i));
   }
   
   // Merge returned node in the caller with the "return" node in callee
-  if (CallSite.getReturnValueNode().getNode() && Graph.getRetNode().getNode())
-    Graph.getRetNode().mergeWith(CallSite.getReturnValueNode());
+  if (CallSite.getRetVal().getNode() && Graph.getRetNode().getNode())
+    Graph.getRetNode().mergeWith(CallSite.getRetVal());
 }
 
 

@@ -257,6 +257,7 @@ DSNodeHandle &GraphBuilder::getLink(const DSNodeHandle &node,
 /// object, pointing the scalar to it.
 ///
 void GraphBuilder::handleAlloc(AllocationInst &AI, DSNode::NodeTy NodeType) {
+  //DSNode *New = createNode(NodeType, Type::VoidTy);
   DSNode *New = createNode(NodeType, AI.getAllocatedType());
 
   // Make the scalar point to the new node...
@@ -354,28 +355,30 @@ void GraphBuilder::visitReturnInst(ReturnInst &RI) {
 }
 
 void GraphBuilder::visitCallInst(CallInst &CI) {
-  // Add a new function call entry...
-  FunctionCalls.push_back(CI);
-  DSCallSite &Args = FunctionCalls.back();
-
   // Set up the return value...
+  DSNodeHandle RetVal;
   if (isPointerType(CI.getType()))
-    Args.push_back(getLink(getValueNode(CI), 0, CI.getType()));
-  else
-    Args.push_back(DSNodeHandle());
+    RetVal = getLink(getValueNode(CI), 0, CI.getType());
 
-  unsigned Start = 0;
+  DSNodeHandle Callee;
   // Special case for a direct call, avoid creating spurious scalar node...
-  if (GlobalValue *GV = dyn_cast<GlobalValue>(CI.getOperand(0))) {
-    Args.push_back(getGlobalNode(*GV));
-    Start = 1;
-  }
+  if (GlobalValue *GV = dyn_cast<GlobalValue>(CI.getOperand(0)))
+    Callee = getGlobalNode(*GV);
+  else
+    Callee = getLink(getValueNode(*CI.getOperand(0)), 0,
+                     CI.getOperand(0)->getType());
 
-  // Pass the arguments in...
-  for (unsigned i = Start, e = CI.getNumOperands(); i != e; ++i)
+  std::vector<DSNodeHandle> Args;
+  Args.reserve(CI.getNumOperands()-1);
+
+  // Calculate the arguments vector...
+  for (unsigned i = 1, e = CI.getNumOperands(); i != e; ++i)
     if (isPointerType(CI.getOperand(i)->getType()))
       Args.push_back(getLink(getValueNode(*CI.getOperand(i)), 0,
                              CI.getOperand(i)->getType()));
+
+  // Add a new function call entry...
+  FunctionCalls.push_back(DSCallSite(CI, RetVal, Callee, Args));
 }
 
 /// Handle casts...

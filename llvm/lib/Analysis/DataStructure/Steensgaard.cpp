@@ -87,15 +87,15 @@ void Steens::ResolveFunctionCall(Function *F,
   std::map<Value*, DSNodeHandle> &ValMap = ResultGraph->getValueMap();
 
   // Handle the return value of the function...
-  if (Call.getReturnValueNode().getNode() && RetVal.getNode())
-    RetVal.mergeWith(Call.getReturnValueNode());
+  if (Call.getRetVal().getNode() && RetVal.getNode())
+    RetVal.mergeWith(Call.getRetVal());
 
   // Loop over all pointer arguments, resolving them to their provided pointers
   unsigned PtrArgIdx = 0;
   for (Function::aiterator AI = F->abegin(), AE = F->aend(); AI != AE; ++AI) {
     std::map<Value*, DSNodeHandle>::iterator I = ValMap.find(AI);
     if (I != ValMap.end())    // If its a pointer argument...
-      I->second.addEdgeTo(Call.getPtrArgNode(PtrArgIdx++));
+      I->second.addEdgeTo(Call.getPtrArg(PtrArgIdx++));
   }
 
   assert(PtrArgIdx == Call.getNumPtrArgs() && "Argument resolution mismatch!");
@@ -160,7 +160,8 @@ bool Steens::run(Module &M) {
     DSCallSite &CurCall = Calls[i];
     
     // Loop over the called functions, eliminating as many as possible...
-    std::vector<GlobalValue*> CallTargets = CurCall.getCalleeNode().getNode()->getGlobals();
+    std::vector<GlobalValue*> CallTargets =
+      CurCall.getCallee().getNode()->getGlobals();
     for (unsigned c = 0; c != CallTargets.size(); ) {
       // If we can eliminate this function call, do so!
       bool Eliminated = false;

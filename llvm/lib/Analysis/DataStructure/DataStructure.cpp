@@ -358,17 +358,19 @@ void DSNode::mergeWith(const DSNodeHandle &NH, unsigned Offset) {
 
 // Define here to avoid including iOther.h and BasicBlock.h in DSGraph.h
 Function &DSCallSite::getCaller() const {
-  return *callInst->getParent()->getParent();
+  return *Inst->getParent()->getParent();
 }
 
 template <typename CopyFunctor>
 DSCallSite::DSCallSite(const DSCallSite &FromCall, CopyFunctor nodeCopier)
-  : callInst(&FromCall.getCallInst()) {
+  : Inst(FromCall.Inst) {
 
-  reserve(FromCall.size());
-  for (unsigned j = 0, ej = FromCall.size(); j != ej; ++j)
-    push_back(&nodeCopier == 0 ? DSNodeHandle(FromCall[j])
-                               : nodeCopier(&FromCall[j]));
+  RetVal = nodeCopier(&RetVal);
+  Callee = nodeCopier(&Callee);
+
+  CallArgs.reserve(FromCall.CallArgs.size());
+  for (unsigned j = 0, ej = FromCall.CallArgs.size(); j != ej; ++j)
+    CallArgs.push_back(nodeCopier(&FromCall.CallArgs[j]));
 }
 
 
@@ -555,13 +557,13 @@ void DSGraph::markIncompleteNodes(bool markFormalArgs) {
   for (unsigned i = 0, e = FunctionCalls.size(); i != e; ++i) {
     DSCallSite &Call = FunctionCalls[i];
     // Then the return value is certainly incomplete!
-    markIncompleteNode(Call.getReturnValueNode().getNode());
+    markIncompleteNode(Call.getRetVal().getNode());
 
     // The call does not make the function argument incomplete...
  
     // All arguments to the function call are incomplete though!
     for (unsigned i = 0, e = Call.getNumPtrArgs(); i != e; ++i)
-      markIncompleteNode(Call.getPtrArgNode(i).getNode());
+      markIncompleteNode(Call.getPtrArg(i).getNode());
   }
 
   // Mark all of the nodes pointed to by global or cast nodes as incomplete...
@@ -693,7 +695,7 @@ static void markGlobalsIteration(std::set<DSNode*>& GlobalNodes,
   // Iterate, marking globals or cast nodes alive until no new live nodes
   // are added to Alive
   std::set<DSNode*> Visiting;           // Used to identify cycles 
-  std::set<DSNode*>::iterator I=GlobalNodes.begin(), E=GlobalNodes.end();
+  std::set<DSNode*>::iterator I = GlobalNodes.begin(), E = GlobalNodes.end();
   for (size_t liveCount = 0; liveCount < Alive.size(); ) {
     liveCount = Alive.size();
     for ( ; I != E; ++I)
@@ -708,24 +710,39 @@ static void markGlobalsIteration(std::set<DSNode*>& GlobalNodes,
   // Since all call nodes must be live if any one is live, we have to mark
   // all nodes of the call as live and continue the iteration (via recursion).
   if (FilterCalls) {
-    bool recurse = false;
-    for (int i = 0, ei = Calls.size(); i < ei; ++i) {
+    bool Recurse = false;
+    for (unsigned i = 0, ei = Calls.size(); i < ei; ++i) {
       bool CallIsDead = true, CallHasDeadArg = false;
-      for (unsigned j = 0, ej = Calls[i].size(); j != ej; ++j) {
-        bool argIsDead = Calls[i][j].getNode() == 0 ||
-                         Alive.count(Calls[i][j].getNode()) == 0;
-        CallHasDeadArg |= (Calls[i][j].getNode() != 0 && argIsDead);
-        CallIsDead &= argIsDead;
+      DSCallSite &CS = Calls[i];
+      for (unsigned j = 0, ej = CS.getNumPtrArgs(); j != ej; ++j)
+        if (DSNode *N = CS.getPtrArg(j).getNode()) {
+          bool ArgIsDead  = !Alive.count(N);
+          CallHasDeadArg |= ArgIsDead;
+          CallIsDead     &= ArgIsDead;
+        }
+
+      if (DSNode *N = CS.getRetVal().getNode()) {
+        bool RetIsDead  = !Alive.count(N);
+        CallHasDeadArg |= RetIsDead;
+        CallIsDead     &= RetIsDead;
       }
+
+      DSNode *N = CS.getCallee().getNode();
+      bool FnIsDead  = !Alive.count(N);
+      CallHasDeadArg |= FnIsDead;
+      CallIsDead     &= FnIsDead;
+
       if (!CallIsDead && CallHasDeadArg) {
         // Some node in this call is live and another is dead.
         // Mark all nodes of call as live and iterate once more.
-        recurse = true;
-        for (unsigned j = 0, ej = Calls[i].size(); j != ej; ++j)
-          markAlive(Calls[i][j].getNode(), Alive);
+        Recurse = true;
+        for (unsigned j = 0, ej = CS.getNumPtrArgs(); j != ej; ++j)
+          markAlive(CS.getPtrArg(j).getNode(), Alive);
+        markAlive(CS.getRetVal().getNode(), Alive);
+        markAlive(CS.getCallee().getNode(), Alive);
       }
     }
-    if (recurse)
+    if (Recurse)
       markGlobalsIteration(GlobalNodes, Calls, Alive, FilterCalls);
   }
 }
@@ -746,10 +763,15 @@ static void markGlobalsAlive(DSGraph &G, std::set<DSNode*> &Alive,
   // Add all call nodes to the same set
   vector<DSCallSite> &Calls = G.getFunctionCalls();
   if (FilterCalls) {
-    for (unsigned i = 0, e = Calls.size(); i != e; ++i)
-      for (unsigned j = 0, e = Calls[i].size(); j != e; ++j)
-        if (Calls[i][j].getNode())
-          GlobalNodes.insert(Calls[i][j].getNode());
+    for (unsigned i = 0, e = Calls.size(); i != e; ++i) {
+      for (unsigned j = 0, e = Calls[i].getNumPtrArgs(); j != e; ++j)
+        if (DSNode *N = Calls[i].getPtrArg(j).getNode())
+          GlobalNodes.insert(N);
+      if (DSNode *N = Calls[i].getRetVal().getNode())
+        GlobalNodes.insert(N);
+      if (DSNode *N = Calls[i].getCallee().getNode())
+        GlobalNodes.insert(N);
+    }
   }
 
   // Iterate and recurse until no new live node are discovered.
@@ -766,8 +788,9 @@ static void markGlobalsAlive(DSGraph &G, std::set<DSNode*> &Alive,
   if (FilterCalls)
     for (int ei = Calls.size(), i = ei-1; i >= 0; --i) {
       bool CallIsDead = true;
-      for (unsigned j = 0, ej = Calls[i].size(); CallIsDead && j != ej; ++j)
-        CallIsDead = Alive.count(Calls[i][j].getNode()) == 0;
+      for (unsigned j = 0, ej = Calls[i].getNumPtrArgs();
+           CallIsDead && j != ej; ++j)
+        CallIsDead = Alive.count(Calls[i].getPtrArg(j).getNode()) == 0;
       if (CallIsDead)
         Calls.erase(Calls.begin() + i); // remove the call entirely
     }
@@ -793,9 +816,12 @@ void DSGraph::removeDeadNodes(bool KeepAllGlobals, bool KeepCalls) {
 
   // If KeepCalls, mark all nodes reachable by call nodes as alive...
   if (KeepCalls)
-    for (unsigned i = 0, e = FunctionCalls.size(); i != e; ++i)
-      for (unsigned j = 0, e = FunctionCalls[i].size(); j != e; ++j)
-        markAlive(FunctionCalls[i][j].getNode(), Alive);
+    for (unsigned i = 0, e = FunctionCalls.size(); i != e; ++i) {
+      for (unsigned j = 0, e = FunctionCalls[i].getNumPtrArgs(); j != e; ++j)
+        markAlive(FunctionCalls[i].getPtrArg(j).getNode(), Alive);
+      markAlive(FunctionCalls[i].getRetVal().getNode(), Alive);
+      markAlive(FunctionCalls[i].getCallee().getNode(), Alive);
+    }
 
 #if 0
   for (unsigned i = 0, e = OrigFunctionCalls.size(); i != e; ++i)
@@ -817,7 +843,7 @@ void DSGraph::removeDeadNodes(bool KeepAllGlobals, bool KeepCalls) {
   // Mark all globals or cast nodes that can reach a live node as alive.
   // This also marks all nodes reachable from such nodes as alive.
   // Of course, if KeepAllGlobals is specified, they would be live already.
-  if (! KeepAllGlobals)
+  if (!KeepAllGlobals)
     markGlobalsAlive(*this, Alive, ! KeepCalls);
 
   // Loop over all unreachable nodes, dropping their references...
