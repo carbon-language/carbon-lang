@@ -14,15 +14,15 @@
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetData.h"
+#include "Support/Statistic.h"
 #include "Support/hash_set"
 #include "SparcInternals.h"
 #include "SparcV9CodeEmitter.h"
 
 bool UltraSparc::addPassesToEmitMachineCode(PassManager &PM,
                                             MachineCodeEmitter &MCE) {
-  //PM.add(new SparcV9CodeEmitter(MCE));
-  //MachineCodeEmitter *M = MachineCodeEmitter::createDebugMachineCodeEmitter();
-  MachineCodeEmitter *M = MachineCodeEmitter::createFilePrinterEmitter(MCE);
+  MachineCodeEmitter *M = &MCE;
+  DEBUG(MachineCodeEmitter::createFilePrinterEmitter(MCE));
   PM.add(new SparcV9CodeEmitter(*this, *M));
   PM.add(createMachineCodeDestructionPass()); // Free stuff no longer needed
   return false;
@@ -182,7 +182,7 @@ uint64_t JITResolver::insertFarJumpAtAddr(int64_t Target, uint64_t Addr) {
 void JITResolver::CompilationCallback() {
   uint64_t CameFrom = (uint64_t)(intptr_t)__builtin_return_address(0);
   int64_t Target = (int64_t)TheJITResolver->resolveFunctionReference(CameFrom);
-  std::cerr << "In callback! Addr=0x" << std::hex << CameFrom << "\n";
+  DEBUG(std::cerr << "In callback! Addr=0x" << std::hex << CameFrom << "\n");
 
   // Rewrite the call target... so that we don't fault every time we execute
   // the call.
@@ -275,8 +275,8 @@ void JITResolver::CompilationCallback() {
 uint64_t JITResolver::emitStubForFunction(Function *F) {
   MCE.startFunctionStub(*F, 6);
 
-  std::cerr << "Emitting stub at addr: 0x" 
-            << std::hex << MCE.getCurrentPCValue() << "\n";
+  DEBUG(std::cerr << "Emitting stub at addr: 0x" 
+                  << std::hex << MCE.getCurrentPCValue() << "\n");
 
   unsigned o6 = SparcIntRegClass::o6;
   // save %sp, -192, %sp
@@ -289,7 +289,8 @@ uint64_t JITResolver::emitStubForFunction(Function *F) {
 
   int64_t CallTarget = (Addr-CurrPC) >> 2;
   if (CallTarget >= (1 << 30) || CallTarget <= -(1 << 30)) {
-    std::cerr << "Call target beyond 30 bit limit of CALL: " <<CallTarget<<"\n";
+    std::cerr << "Call target beyond 30 bit limit of CALL: " 
+              << CallTarget << "\n";
     abort();
   }
   // call CallTarget              ;; invoke the callback
@@ -403,30 +404,29 @@ int64_t SparcV9CodeEmitter::getMachineOpValue(MachineInstr &MI,
                   // or things that get fixed up later by the JIT.
 
   if (MO.isVirtualRegister()) {
-    std::cerr << "ERROR: virtual register found in machine code.\n";
+    DEBUG(std::cerr << "ERROR: virtual register found in machine code.\n");
     abort();
   } else if (MO.isPCRelativeDisp()) {
-    std::cerr << "PCRelativeDisp: ";
+    DEBUG(std::cerr << "PCRelativeDisp: ");
     Value *V = MO.getVRegValue();
     if (BasicBlock *BB = dyn_cast<BasicBlock>(V)) {
-      std::cerr << "Saving reference to BB (VReg)\n";
+      DEBUG(std::cerr << "Saving reference to BB (VReg)\n");
       unsigned* CurrPC = (unsigned*)(intptr_t)MCE.getCurrentPCValue();
       BBRefs.push_back(std::make_pair(BB, std::make_pair(CurrPC, &MI)));
     } else if (const Constant *C = dyn_cast<Constant>(V)) {
       if (ConstantMap.find(C) != ConstantMap.end()) {
         rv = (int64_t)MCE.getConstantPoolEntryAddress(ConstantMap[C]);
-        std::cerr << "const: 0x" << std::hex << rv
-                  << "\n" << std::dec;
+        DEBUG(std::cerr << "const: 0x" << std::hex << rv << "\n");
       } else {
-        std::cerr << "ERROR: constant not in map:" << MO << "\n";
+        DEBUG(std::cerr << "ERROR: constant not in map:" << MO << "\n");
         abort();
       }
     } else if (GlobalValue *GV = dyn_cast<GlobalValue>(V)) {
       // same as MO.isGlobalAddress()
-      std::cerr << "GlobalValue: ";
+      DEBUG(std::cerr << "GlobalValue: ");
       // external function calls, etc.?
       if (Function *F = dyn_cast<Function>(GV)) {
-        std::cerr << "Function: ";
+        DEBUG(std::cerr << "Function: ");
         if (F->isExternal()) {
           // Sparc backend broken: this MO should be `ExternalSymbol'
           rv = (int64_t)MCE.getGlobalValueAddress(F->getName());
@@ -434,31 +434,30 @@ int64_t SparcV9CodeEmitter::getMachineOpValue(MachineInstr &MI,
           rv = (int64_t)MCE.getGlobalValueAddress(F);
         }
         if (rv == 0) {
-          std::cerr << "not yet generated\n";
+          DEBUG(std::cerr << "not yet generated\n");
           // Function has not yet been code generated!
           TheJITResolver->addFunctionReference(MCE.getCurrentPCValue(), F);
           // Delayed resolution...
           rv = TheJITResolver->getLazyResolver(F);
         } else {
-          std::cerr << "already generated: 0x" << std::hex << rv << "\n" 
-                    << std::dec;
+          DEBUG(std::cerr << "already generated: 0x" << std::hex << rv << "\n");
         }
       } else {
-        std::cerr << "not a function: " << *GV << "\n";
+        DEBUG(std::cerr << "not a function: " << *GV << "\n");
         abort();
       }
       // The real target of the call is Addr = PC + (rv * 4)
       // So undo that: give the instruction (Addr - PC) / 4
       if (MI.getOpcode() == V9::CALL) {
         int64_t CurrPC = MCE.getCurrentPCValue();
-        std::cerr << "rv addr: 0x" << std::hex << rv << "\n";
-        std::cerr << "curr PC: 0x" << CurrPC << "\n";
+        DEBUG(std::cerr << "rv addr: 0x" << std::hex << rv << "\n"
+                        << "curr PC: 0x" << CurrPC << "\n");
         rv = (rv - CurrPC) >> 2;
         if (rv >= (1<<29) || rv <= -(1<<29)) {
           std::cerr << "addr out of bounds for the 30-bit call: " << rv << "\n";
           abort();
         }
-        std::cerr << "returning addr: 0x" << rv << "\n" << std::dec;
+        DEBUG(std::cerr << "returning addr: 0x" << rv << "\n");
       }
     } else {
       std::cerr << "ERROR: PC relative disp unhandled:" << MO << "\n";
@@ -477,21 +476,21 @@ int64_t SparcV9CodeEmitter::getMachineOpValue(MachineInstr &MI,
     // Find the real register number for use in an instruction
     /////realReg = getRealRegNum(fakeReg, regClass, MI);
     realReg = getRealRegNum(fakeReg, regType, MI);
-    std::cerr << MO << ": Reg[" << std::dec << fakeReg << "] = "
-              << realReg << "\n";
+    DEBUG(std::cerr << MO << ": Reg[" << std::dec << fakeReg << "] = "
+                    << realReg << "\n");
     rv = realReg;
   } else if (MO.isImmediate()) {
     rv = MO.getImmedValue();
-    std::cerr << "immed: " << rv << "\n";
+    DEBUG(std::cerr << "immed: " << rv << "\n");
   } else if (MO.isGlobalAddress()) {
-    std::cerr << "GlobalAddress: not PC-relative\n";
+    DEBUG(std::cerr << "GlobalAddress: not PC-relative\n");
     rv = (int64_t)
       (intptr_t)getGlobalAddress(cast<GlobalValue>(MO.getVRegValue()),
                                  MI, MO.isPCRelative());
   } else if (MO.isMachineBasicBlock()) {
     // Duplicate code of the above case for VirtualRegister, BasicBlock... 
     // It should really hit this case, but Sparc backend uses VRegs instead
-    std::cerr << "Saving reference to MBB\n";
+    DEBUG(std::cerr << "Saving reference to MBB\n");
     BasicBlock *BB = MO.getMachineBasicBlock()->getBasicBlock();
     unsigned* CurrPC = (unsigned*)(intptr_t)MCE.getCurrentPCValue();
     BBRefs.push_back(std::make_pair(BB, std::make_pair(CurrPC, &MI)));
@@ -537,9 +536,9 @@ unsigned SparcV9CodeEmitter::getValueBit(int64_t Val, unsigned bit) {
 
 bool SparcV9CodeEmitter::runOnMachineFunction(MachineFunction &MF) {
   MCE.startFunction(MF);
-  std::cerr << "Starting function " << MF.getFunction()->getName()
+  DEBUG(std::cerr << "Starting function " << MF.getFunction()->getName()
             << ", address: " << "0x" << std::hex 
-            << (long)MCE.getCurrentPCValue() << "\n";
+            << (long)MCE.getCurrentPCValue() << "\n");
 
   // The Sparc backend does not use MachineConstantPool;
   // instead, it has its own constant pool implementation.
@@ -551,7 +550,8 @@ bool SparcV9CodeEmitter::runOnMachineFunction(MachineFunction &MF) {
   {
     Constant *C = (Constant*)*I;
     unsigned idx = MCP.getConstantPoolIndex(C);
-    std::cerr << "Mapping constant 0x" << (intptr_t)C << " to " << idx << "\n";
+    DEBUG(std::cerr << "Mapping constant 0x" << (intptr_t)C << " to " 
+                    << idx << "\n");
     ConstantMap[C] = idx;
   }  
   MCE.emitConstantPool(&MCP);
@@ -560,14 +560,15 @@ bool SparcV9CodeEmitter::runOnMachineFunction(MachineFunction &MF) {
     emitBasicBlock(*I);
   MCE.finishFunction(MF);
 
-  std::cerr << "Finishing function " << MF.getFunction()->getName() << "\n";
+  DEBUG(std::cerr << "Finishing function " << MF.getFunction()->getName() 
+                  << "\n");
   ConstantMap.clear();
   for (unsigned i = 0, e = BBRefs.size(); i != e; ++i) {
     long Location = BBLocations[BBRefs[i].first];
     unsigned *Ref = BBRefs[i].second.first;
     MachineInstr *MI = BBRefs[i].second.second;
-    std::cerr << "Fixup @" << std::hex << Ref << " to " << Location
-              << " in instr: " << std::dec << *MI << "\n";
+    DEBUG(std::cerr << "Fixup @" << std::hex << Ref << " to " << Location
+                    << " in instr: " << std::dec << *MI << "\n");
   }
 
   // Resolve branches to BasicBlocks for the entire function
@@ -575,7 +576,7 @@ bool SparcV9CodeEmitter::runOnMachineFunction(MachineFunction &MF) {
     long Location = BBLocations[BBRefs[i].first];
     unsigned *Ref = BBRefs[i].second.first;
     MachineInstr *MI = BBRefs[i].second.second;
-    std::cerr << "attempting to resolve BB: " << i << "\n";
+    DEBUG(std::cerr << "attempting to resolve BB: " << i << "\n");
     for (unsigned ii = 0, ee = MI->getNumOperands(); ii != ee; ++ii) {
       MachineOperand &op = MI->getOperand(ii);
       if (op.isPCRelativeDisp()) {
@@ -596,7 +597,7 @@ bool SparcV9CodeEmitter::runOnMachineFunction(MachineFunction &MF) {
         else if (hiBits32) { MI->setOperandHi32(ii); }
         else if (loBits64) { MI->setOperandLo64(ii); }
         else if (hiBits64) { MI->setOperandHi64(ii); }
-        std::cerr << "Rewrote BB ref: ";
+        DEBUG(std::cerr << "Rewrote BB ref: ");
         unsigned fixedInstr = SparcV9CodeEmitter::getBinaryCodeForInstr(*MI);
         *Ref = fixedInstr;
         break;
