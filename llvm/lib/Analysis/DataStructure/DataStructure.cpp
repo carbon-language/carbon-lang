@@ -347,18 +347,25 @@ void DSNode::mergeWith(const DSNodeHandle &NH, unsigned Offset) {
   if (N == 0 || (N == this && NH.getOffset() == Offset))
     return;  // Noop
 
-  assert(NH.getNode() != this &&
-         "Cannot merge two portions of the same node yet!");
+  if (N == this) {
+    std::cerr << "WARNING: Cannot merge two portions of the same node yet, so we collapse instead!\n";
+    N->foldNodeCompletely();
+    return;
+  }
 
   // If we are merging a node with a completely folded node, then both nodes are
   // now completely folded.
   //
   if (isNodeCompletelyFolded()) {
-    N->foldNodeCompletely();
-  } else if (NH.getNode()->isNodeCompletelyFolded()) {
+    if (!N->isNodeCompletelyFolded())
+      N->foldNodeCompletely();
+  } else if (N->isNodeCompletelyFolded()) {
     foldNodeCompletely();
     Offset = 0;
   }
+  N = NH.getNode();
+
+  if (this == N) return;
 
   // If both nodes are not at offset 0, make sure that we are merging the node
   // at an later offset into the node with the zero offset.
@@ -401,7 +408,7 @@ void DSNode::mergeWith(const DSNodeHandle &NH, unsigned Offset) {
     DSNodeHandle &Ref = *N->Referrers.back();
     Ref = DSNodeHandle(this, NOffset+Ref.getOffset());
   }
-
+  
   // We must merge fields in this node due to nodes merged in the source node.
   // In order to handle this we build a map that converts from the source node's
   // MergeMap values to our MergeMap values.  This map is indexed by the
@@ -440,7 +447,7 @@ void DSNode::mergeWith(const DSNodeHandle &NH, unsigned Offset) {
   //
   for (unsigned i = 0, e = NSize; i != e; ++i)
     if (DSNodeHandle *Link = N->getLink(i)) {
-      addEdgeTo(i+NOffset, *Link);
+      addEdgeTo((i+NOffset) % getSize(), *Link);
       N->MergeMap[i] = -1;  // Kill outgoing edge
     }
 
