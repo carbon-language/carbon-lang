@@ -78,6 +78,15 @@ class ConstantRange {
   ///
   uint64_t getSetSize() const;
 
+  /// operator== - Return true if this range is equal to another range.
+  ///
+  bool operator==(const ConstantRange &CR) const {
+    return Lower == CR.Lower && Upper == CR.Upper;
+  }
+  bool operator!=(const ConstantRange &CR) const {
+    return !operator==(CR);
+  }
+
   /// intersect - Return the range that results from the intersection of this
   /// range with another range.  The resultant range is pruned as much as
   /// possible, but there may be cases where elements are included that are in
