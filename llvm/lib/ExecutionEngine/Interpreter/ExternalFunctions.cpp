@@ -685,7 +685,7 @@ GenericValue lle_X_ungetc(FunctionType *M, const vector<GenericValue> &Args) {
 // int fprintf(FILE *,sbyte *, ...) - a very rough implementation to make output
 // useful.
 GenericValue lle_X_fprintf(FunctionType *M, const vector<GenericValue> &Args) {
-  assert(Args.size() > 2);
+  assert(Args.size() >= 2);
   char Buffer[10000];
   vector<GenericValue> NewArgs;
   NewArgs.push_back(PTOGV(Buffer));
