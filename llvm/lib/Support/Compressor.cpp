@@ -19,11 +19,17 @@
 #include <string>
 
 #ifdef HAVE_BZIP2
+#ifdef HAVE_BZLIB_H
 #include <bzlib.h>
-#endif
+#define BZIP2_GOOD
+#endif 
+#endif 
 
 #ifdef HAVE_ZLIB
+#ifdef HAVE_ZLIB_H
 #include <zlib.h>
+#define ZLIB_GOOD
+#endif
 #endif
 
 namespace {
@@ -250,7 +256,7 @@ uint64_t Compressor::compress(const char* in, unsigned size,
 
   switch (hint) {
     case COMP_TYPE_BZIP2: {
-#if defined(HAVE_BZIP2)
+#if defined(BZIP2_GOOD)
       // Set up the bz_stream
       bz_stream bzdata;
       bzdata.bzalloc = 0;
@@ -307,7 +313,7 @@ uint64_t Compressor::compress(const char* in, unsigned size,
     }
 
     case COMP_TYPE_ZLIB: {
-#if defined(HAVE_ZLIB)
+#if defined(ZLIB_GOOD)
       z_stream zdata;
       zdata.zalloc = Z_NULL;
       zdata.zfree = Z_NULL;
@@ -414,7 +420,7 @@ uint64_t Compressor::decompress(const char *in, unsigned size,
 
   switch (*in++) {
     case COMP_TYPE_BZIP2: {
-#if !defined(HAVE_BZIP2)
+#if !defined(BZIP2_GOOD)
       throw std::string("Can't decompress BZIP2 data");
 #else
       // Set up the bz_stream
@@ -469,7 +475,7 @@ uint64_t Compressor::decompress(const char *in, unsigned size,
     }
 
     case COMP_TYPE_ZLIB: {
-#if !defined(HAVE_ZLIB)
+#if !defined(ZLIB_GOOD)
       throw std::string("Can't decompress ZLIB data");
 #else
       z_stream zdata;
