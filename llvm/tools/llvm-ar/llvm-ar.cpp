@@ -35,58 +35,68 @@ using std::cout;
 #define  ARFMAG    "\n"      /* header trailer string */ 
 #define  ARMAG   "!<arch>\n"  /* magic string */ 
 #define  SARMAG  8            /* length of magic string */ 
+#define VERSION "llvm-ar is a part of the LLVM compiler infrastructure.\nPlease see http://llvm.cs.uiuc.edu for more information.\n";
 
-namespace {
 
-  // Each file member is preceded by a file member header. Which is
-  // of the following format:
-  //
-  // char ar_name[16]  - '/' terminated file member name. 
-  //                     If the file name does not fit, a dummy name is used.
-  // char ar_date[12]  - file date in decimal
-  // char ar_uid[6]    - User id of file owner in decimal.
-  // char ar_gid[6]    - Group ID file belongs to in decimal.
-  // char ar_mode[8]   - File mode in octal.
-  // char ar_size[10]  - Size of file in decimal.
-  // char ar_fmag[2]   - Trailer of header file, a newline.
-  struct ar_hdr {
-    char name[16];
-    char date[12];
-    char uid[6];
-    char gid[6];
-    char mode[8];
-    char size[10];
-    char fmag[2]; 
-    void init() {
-      memset(name,' ',16);
-      memset(date,' ',12);
-      memset(uid,' ',6);
-      memset(gid,' ',6);
-      memset(mode,' ',8);
-      memset(size,' ',10);
-      memset(fmag,' ',2);
+// Each file member is preceded by a file member header. Which is
+// of the following format:
+//
+// char ar_name[16]  - '/' terminated file member name. 
+//                     If the file name does not fit, a dummy name is used.
+// char ar_date[12]  - file date in decimal
+// char ar_uid[6]    - User id of file owner in decimal.
+// char ar_gid[6]    - Group ID file belongs to in decimal.
+// char ar_mode[8]   - File mode in octal.
+// char ar_size[10]  - Size of file in decimal.
+// char ar_fmag[2]   - Trailer of header file, a newline.
+struct ar_hdr {
+  char name[16];
+  char date[12];
+  char uid[6];
+  char gid[6];
+  char mode[8];
+  char size[10];
+  char fmag[2]; 
+  void init() {
+    memset(name,' ',16);
+    memset(date,' ',12);
+    memset(uid,' ',6);
+    memset(gid,' ',6);
+    memset(mode,' ',8);
+    memset(size,' ',10);
+    memset(fmag,' ',2);
     }
-  };
-}
-
-//Option to generate symbol table or not
-//running llvm-ar -s is the same as ranlib
-cl::opt<bool> SymbolTableOption ("s", cl::desc("Generate an archive symbol table"));
-
-//Archive name
-cl::opt<string> Archive (cl::Positional, cl::desc("<archive file>"), 
-			 cl::Required);
-
-//For now we require one or more member files, this should change so
-//we can just run llvm-ar -s on an archive to generate the symbol
-//table
-cl::list<string> Members(cl::ConsumeAfter, cl::desc("<archive members>..."));
+};
 
 
-static inline bool Error(std::string *ErrorStr, const char *Message) {
-  if (ErrorStr) *ErrorStr = Message;
-  return true;
-}
+//Option for X32_64, not used but must allow it to be present.
+cl::opt<bool> X32Option ("X32_64", cl::desc("Ignored option spelt -X32_64, for compatibility with AIX"), cl::Optional);
+
+//llvm-ar options
+cl::opt<string> Options(cl::Positional, cl::desc("{dmpqrstx}[abcfilNoPsSuvV] "), cl::Required);
+
+//llvm-ar options
+cl::list<string> RestofArgs(cl::Positional, cl::desc("[relpos] [count]] <archive-file> [members..]"), cl::Optional);
+
+//booleans to represent Operation, only one can be preformed at a time
+bool Print, Delete, Move, QuickAppend, InsertWithReplacement, DisplayTable;
+bool Extract;
+
+//Modifiers to follow operation to vary behavior
+bool AddAfter, AddBefore, Create, TruncateNames, InsertBefore, UseCount;
+bool OriginalDates,  FullPath, SymTable, OnlyUpdate, Verbose;
+
+//Realtive Pos Arg
+string RelPos;
+
+//Count, use for multiple entries in the archive with the same name
+int Count;
+
+//Archive
+string Archive;
+
+//Member Files
+vector<string> Members;
 
 
 // WriteSymbolTable - Writes symbol table to ArchiveFile, return false
@@ -248,13 +258,15 @@ bool WriteSymbolTable(std::ofstream &ArchiveFile) {
 // 4) Keep track of total offset into file, and insert a newline if it is odd.
 //
 bool AddMemberToArchive(string Member, std::ofstream &ArchiveFile) {
-  
+
+  cout << "Member File Start: " << ArchiveFile.tellp() << "\n";
+
   ar_hdr Hdr; //Header for archive member file.
-  
+
   //stat the file to get info
   struct stat StatBuf;
   if (stat(Member.c_str(), &StatBuf) == -1 || StatBuf.st_size == 0)
-    cout << "ERROR\n";
+    return false;
 
   //fill in header
   
@@ -312,9 +324,11 @@ bool AddMemberToArchive(string Member, std::ofstream &ArchiveFile) {
 
   //write to archive file
   ArchiveFile.write((char*)buf,Length);
-    
+  
   // Unmmap the memberfile
   munmap((char*)buf, Length);
+  
+  cout << "Member File End: " << ArchiveFile.tellp() << "\n";
 
   return true;
 }
@@ -324,6 +338,8 @@ bool AddMemberToArchive(string Member, std::ofstream &ArchiveFile) {
 //
 void CreateArchive() {
   
+  std::cerr << "Archive File: " << Archive << "\n";
+
   //Create archive file for output.
   std::ofstream ArchiveFile(Archive.c_str());
   
@@ -337,7 +353,7 @@ void CreateArchive() {
   ArchiveFile << ARMAG;
 
   //If the '-s' option was specified, generate symbol table.
-  if(SymbolTableOption) {
+  if(SymTable) {
     cout << "Symbol Table Start: " << ArchiveFile.tellp() << "\n";
     if(!WriteSymbolTable(ArchiveFile)) {
       std::cerr << "Error creating symbol table. Exiting program.";
@@ -346,31 +362,204 @@ void CreateArchive() {
     cout << "Symbol Table End: " << ArchiveFile.tellp() << "\n";
   }
   //Loop over all member files, and add to the archive.
-  for(unsigned i=0; i<Members.size(); ++i) {
+  for(unsigned i=0; i < Members.size(); ++i) {
     if(ArchiveFile.tellp() % 2 != 0)
       ArchiveFile << ARFMAG;
-
-    cout << "Member File Start: " << ArchiveFile.tellp() << "\n";
-
     if(AddMemberToArchive(Members[i],ArchiveFile) != true) {
-      std::cerr << "Error adding file to archive. Exiting program.";
+      std::cerr << "Error adding " << Members[i] << "to archive. Exiting program.\n";
       exit(1);
     }
-    cout << "Member File End: " << ArchiveFile.tellp() << "\n";
   }
   
   //Close archive file.
   ArchiveFile.close();
 }
 
+//Print out usage for errors in command line
+void printUse() {
+  std::cout << "USAGE: ar [-X32_64] [-]{dmpqrstx}[abcfilNoPsSuvV] [member-name] [count] archive-file [files..]\n\n";
+
+  std::cout << "commands:\n" <<
+    "d            - delete file(s) from the archive\n"
+  << "m[ab]        - move file(s) in the archive\n"
+  << "p            - print file(s) found in the archive\n"
+  << "q[f]         - quick append file(s) to the archive\n"
+  << "r[ab][f][u]  - replace existing or insert new file(s) into the archive\n"
+  << "t            - display contents of archive\n"
+  << "x[o]         - extract file(s) from the archive\n";
+
+  std::cout << "\ncommand specific modifiers:\n"
+	    << "[a]          - put file(s) after [member-name]\n"
+	    << "[b]          - put file(s) before [member-name] (same as [i])\n"
+	    << "[N]          - use instance [count] of name\n"
+	    << "[f]          - truncate inserted file names\n"
+	    << "[P]          - use full path names when matching\n"
+	    << "[o]          - preserve original dates\n"
+	    << "[u]          - only replace files that are newer than current archive contents\n";
+
+  std::cout << "generic modifiers:\n"
+	    << "[c]          - do not warn if the library had to be created\n"
+	    << "[s]          - create an archive index (cf. ranlib)\n"
+	    << "[S]          - do not build a symbol table\n"
+	    << "[v]          - be verbose\n"
+	    << "[V]          - display the version number\n";
+  exit(1);
+}
+
+
+//Print version
+void printVersion() {
+  cout << VERSION;
+  exit(0);
+}
+
+//Extract the memberfile name from the command line
+void getRelPos() {
+  if(RestofArgs.size() > 0) {
+    RelPos = RestofArgs[0];
+    RestofArgs.erase(RestofArgs.begin());
+  }
+  //Throw error if needed and not present
+  else
+    printUse();
+}
+
+//Extract count from the command line
+void getCount() {
+  if(RestofArgs.size() > 0) {
+    Count = atoi(RestofArgs[0].c_str());
+    RestofArgs.erase(RestofArgs.begin());
+  }
+  //Throw error if needed and not present
+  else
+    printUse();
+}
+
+//Get the Archive File Name from the command line
+void getArchive() {
+  std::cerr << RestofArgs.size() << "\n";
+  if(RestofArgs.size() > 0) {
+    Archive = RestofArgs[0];
+    RestofArgs.erase(RestofArgs.begin());
+  }
+  //Throw error if needed and not present
+  else
+    printUse();
+}
+
+
+//Copy over remaining items in RestofArgs to our Member File vector.
+//This is just for clarity.
+void getMembers() {
+  std::cerr << RestofArgs.size() << "\n";
+  if(RestofArgs.size() > 0)
+    Members = vector<string>(RestofArgs); 
+}
+
+// Parse the operations and operation modifiers
+// FIXME: Not all of these options has been implemented, but we still
+// do all the command line parsing for them.
+void parseCL() {
+
+  //Keep track of number of operations. We can only specify one
+  //per execution
+  unsigned NumOperations = 0;
+
+  for(unsigned i=0; i<Options.size(); ++i) {
+    switch(Options[i]) {
+    case 'd':
+      ++NumOperations;
+      Delete = true;
+      break;
+    case 'm':
+      ++NumOperations;
+      Move = true;
+      break;
+    case 'p':
+      ++NumOperations;
+      Print = true;
+      break;
+    case 'r':
+      ++NumOperations;
+      InsertWithReplacement = true;
+      break;
+    case 't':
+      ++NumOperations;
+      DisplayTable = true;
+      break;
+    case 'x':
+      ++NumOperations;
+      Extract = true;
+      break;
+    case 'a':
+      AddAfter = true;
+      getRelPos();
+      break;
+    case 'b':
+      AddBefore = true;
+      getRelPos();
+      break;
+    case 'c':
+      Create = true;
+      break;
+    case 'f':
+      TruncateNames = true;
+      break;
+    case 'i':
+      InsertBefore = true;
+      getRelPos();
+      break;
+    case 'l':
+      break;
+    case 'N':
+      UseCount = true;
+      getCount();
+      break;
+    case 'o':
+      OriginalDates = true;
+      break;
+    case 'P':
+      FullPath = true;
+      break;
+    case 's':
+      SymTable = true;
+      break;
+    case 'S':
+      SymTable = false;
+      break;
+    case 'u':
+      OnlyUpdate = true;
+      break;
+    case 'v':
+      Verbose = true;
+      break;
+    case 'V':
+      printVersion();
+      break;
+    default:
+      printUse();
+    }
+  }
+
+  //Check that only one operation has been specified
+  if(NumOperations > 1)
+    printUse();
+
+  getArchive();
+  getMembers();
+
+}
 
 int main(int argc, char **argv) {
 
   //Parse Command line options
-  cl::ParseCommandLineOptions(argc, argv, " llvm-ar\n");
+  cl::ParseCommandLineOptions(argc, argv);
+  parseCL();
 
   //Create archive!
-  CreateArchive();
+  if(Create)
+    CreateArchive();
 
   return 0;
 }
+
