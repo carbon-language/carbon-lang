@@ -198,7 +198,7 @@ public:
 
   /// remapLinks - Change all of the Links in the current node according to the
   /// specified mapping.
-  void remapLinks(std::map<const DSNode*, DSNode*> &OldNodeMap);
+  void remapLinks(std::map<const DSNode*, DSNodeHandle> &OldNodeMap);
 
 private:
   friend class DSNodeHandle;

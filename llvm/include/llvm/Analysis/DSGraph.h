@@ -43,7 +43,7 @@ public:
   // destination graph, you may optionally do this by specifying a map to record
   // this into.
   DSGraph(const DSGraph &DSG);
-  DSGraph(const DSGraph &DSG, std::map<const DSNode*, DSNode*> &BUNodeMap);
+  DSGraph(const DSGraph &DSG, std::map<const DSNode*, DSNodeHandle> &NodeMap);
   ~DSGraph();
 
   bool hasFunction() const { return Func != 0; }
@@ -138,7 +138,7 @@ public:
   //
   DSNodeHandle cloneInto(const DSGraph &G,
                          std::map<Value*, DSNodeHandle> &OldValMap,
-                         std::map<const DSNode*, DSNode*> &OldNodeMap,
+                         std::map<const DSNode*, DSNodeHandle> &OldNodeMap,
                          AllocaBit StripAllocas = KeepAllocaBit);
 
   /// mergeInGraph - The method is used for merging graphs together.  If the
