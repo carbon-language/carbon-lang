@@ -23,7 +23,6 @@ USEDLIBS = mapping \
            vmcore \
            support
 TOOLLINKOPTS = -ldl
-KEEP_SYMBOLS = 1
 
 include $(LEVEL)/Makefile.common
 
