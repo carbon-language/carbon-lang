@@ -586,6 +586,24 @@ void GraphBuilder::visitCallSite(CallSite CS) {
               N->mergeTypeInfo(PTy->getElementType(), StatBuf.getOffset());
           }
           return;
+        } else if (F->getName() == "strtod" || F->getName() == "strtof" ||
+                   F->getName() == "strtold") {
+          // These functions read the first pointer
+          if (DSNode *Str = getValueDest(**CS.arg_begin()).getNode()) {
+            Str->setReadMarker();
+            // If the second parameter is passed, it will point to the first
+            // argument node.
+            const DSNodeHandle &EndPtrNH = getValueDest(**(CS.arg_begin()+1));
+            if (DSNode *End = EndPtrNH.getNode()) {
+              End->mergeTypeInfo(PointerType::get(Type::SByteTy),
+                                 EndPtrNH.getOffset(), false);
+              End->setModifiedMarker();
+              DSNodeHandle &Link = getLink(EndPtrNH);
+              Link.mergeWith(getValueDest(**CS.arg_begin()));
+            }
+          }
+
+          return;
         } else if (F->getName() == "fopen" || F->getName() == "fdopen" ||
                    F->getName() == "freopen") {
           // These functions read all of their pointer operands.
@@ -748,6 +766,54 @@ void GraphBuilder::visitCallSite(CallSite CS) {
               if (DSNode *N = getValueDest(**AI).getNode())
                 N->setReadMarker();   
           }
+          return;
+        } else if (F->getName() == "vprintf" || F->getName() == "vfprintf" ||
+                   F->getName() == "vsprintf") {
+          CallSite::arg_iterator AI = CS.arg_begin(), E = CS.arg_end();
+
+          if (F->getName() == "vfprintf") {
+            // ffprintf reads and writes the FILE argument, and applies the type
+            // to it.
+            DSNodeHandle H = getValueDest(**AI);
+            if (DSNode *N = H.getNode()) {
+              N->setModifiedMarker()->setReadMarker();
+              const Type *ArgTy = (*AI)->getType();
+              if (const PointerType *PTy = dyn_cast<PointerType>(ArgTy))
+                N->mergeTypeInfo(PTy->getElementType(), H.getOffset());
+            }
+            ++AI;
+          } else if (F->getName() == "vsprintf") {
+            // vsprintf writes the first string argument.
+            DSNodeHandle H = getValueDest(**AI++);
+            if (DSNode *N = H.getNode()) {
+              N->setModifiedMarker();
+              const Type *ArgTy = (*AI)->getType();
+              if (const PointerType *PTy = dyn_cast<PointerType>(ArgTy))
+                N->mergeTypeInfo(PTy->getElementType(), H.getOffset());
+            }
+          }
+
+          // Read the format
+          if (AI != E) {
+            if (isPointerType((*AI)->getType()))
+              if (DSNode *N = getValueDest(**AI).getNode())
+                N->setReadMarker();
+            ++AI;
+          }
+          
+          // Read the valist, and the pointed-to objects.
+          if (AI != E && isPointerType((*AI)->getType())) {
+            const DSNodeHandle &VAList = getValueDest(**AI);
+            if (DSNode *N = VAList.getNode()) {
+              N->setReadMarker();
+              N->mergeTypeInfo(PointerType::get(Type::SByteTy),
+                               VAList.getOffset(), false);
+
+              DSNodeHandle &VAListObjs = getLink(VAList);
+              VAListObjs.getNode()->setReadMarker();
+            }
+          }
+
           return;
         } else if (F->getName() == "scanf" || F->getName() == "fscanf" ||
                    F->getName() == "sscanf") {
