@@ -12,23 +12,19 @@
 #define LLVM_SUPPORT_EQUIVALENCE_CLASSES_H
 
 #include <map>
-#include <set>
 #include <vector>
-using std::map;
-using std::set;
-using std::vector;
 
 template <class ElemTy>
 class EquivalenceClasses {
   // Maps each element to the element that is the leader of its 
   // equivalence class.
-  map<ElemTy, ElemTy> Elem2ECLeaderMap;
+  std::map<ElemTy, ElemTy> Elem2ECLeaderMap;
   
   // Make Element2 the leader of the union of classes Element1 and Element2
   // Element1 and Element2 are presumed to be leaders of their respective
   // equivalence classes.
   void attach(ElemTy Element1, ElemTy Element2) {
-    for (typename map<ElemTy, ElemTy>::iterator ElemI = 
+    for (typename std::map<ElemTy, ElemTy>::iterator ElemI = 
 	   Elem2ECLeaderMap.begin(), ElemE = Elem2ECLeaderMap.end(); 
 	 ElemI != ElemE; ++ElemI) {
       if (ElemI->second == Element1)
@@ -53,7 +49,7 @@ public:
   /// Attach the set with Element1 to the set with Element2 adding Element1 and
   /// Element2 to the set of equivalence classes if they are not there already.
   /// Implication: Make Element1 the element in the smaller set.
-  void unionElements(ElemTy Element1, ElemTy Element2) {
+  void unionSetsWith(ElemTy Element1, ElemTy Element2) {
     // If either Element1 or Element2 does not already exist, include it
     if (Elem2ECLeaderMap.find(Element1) == Elem2ECLeaderMap.end())
       Elem2ECLeaderMap[Element1] = Element1;
@@ -65,15 +61,15 @@ public:
   
   // Returns a vector containing all the elements in the equivalent class
   // including Element1
-  vector<ElemTy> getEqClass(ElemTy Element1) {
-    vector<ElemTy> EqClass;
+  std::vector<ElemTy> getEqClass(ElemTy Element1) {
+    std::vector<ElemTy> EqClass;
     
     if (Elem2ECLeaderMap.find(EqClass) == Elem2ECLeaderMap.end())
       return EqClass;
     
     ElemTy classLeader = Elem2ECLeaderMap[Element1];
 
-    for (typename map<ElemTy, ElemTy>::iterator ElemI = 
+    for (typename std::map<ElemTy, ElemTy>::iterator ElemI = 
 	   Elem2ECLeaderMap.begin(), ElemE = Elem2ECLeaderMap.end(); 
 	 ElemI != ElemE; ++ElemI) {
       if (ElemI->second == classLeader)
@@ -84,7 +80,7 @@ public:
     
   }
 
-  map<ElemTy, ElemTy> getLeaderMap() {
+  std::map<ElemTy, ElemTy>& getLeaderMap() {
     return Elem2ECLeaderMap ;
   }
   
