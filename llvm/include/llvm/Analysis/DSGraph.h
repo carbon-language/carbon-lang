@@ -126,19 +126,13 @@ public:
   //
   void markIncompleteNodes(bool markFormalArgs = true);
 
-  // removeTriviallyDeadNodes - After the graph has been constructed, this
-  // method removes all unreachable nodes that are created because they got
-  // merged with other nodes in the graph.
-  //
-  void removeTriviallyDeadNodes(bool KeepAllGlobals = false);
-
   // removeDeadNodes - Use a more powerful reachability analysis to eliminate
   // subgraphs that are unreachable.  This often occurs because the data
   // structure doesn't "escape" into it's caller, and thus should be eliminated
   // from the caller's graph entirely.  This is only appropriate to use when
   // inlining graphs.
   //
-  void removeDeadNodes(bool KeepAllGlobals = false, bool KeepCalls = true);
+  void removeDeadNodes(bool KeepAllGlobals, bool KeepCalls);
 
   // CloneFlags enum - Bits that may be passed into the cloneInto method to
   // specify how to clone the function graph.
@@ -167,19 +161,15 @@ public:
   ///
   void mergeInGraph(DSCallSite &CS, const DSGraph &Graph, unsigned CloneFlags);
 
-#if 0
-  // cloneGlobalInto - Clone the given global node (or the node for the given
-  // GlobalValue) from the GlobalsGraph and all its target links (recursively).
-  // 
-  DSNode* cloneGlobalInto(const DSNode* GNode);
-  DSNode* cloneGlobalInto(GlobalValue* GV) {
-    assert(!GV || (((DSGraph*) GlobalsGraph)->ScalarMap[GV] != 0));
-    return GV? cloneGlobalInto(((DSGraph*) GlobalsGraph)->ScalarMap[GV]) : 0;
-  }
-#endif
-
 private:
   bool isNodeDead(DSNode *N);
+
+  // removeTriviallyDeadNodes - After the graph has been constructed, this
+  // method removes all unreachable nodes that are created because they got
+  // merged with other nodes in the graph.  This is used as the first step of
+  // removeDeadNodes.
+  //
+  void removeTriviallyDeadNodes(bool KeepAllGlobals = false);
 };
 
 #endif
