@@ -56,8 +56,8 @@ bool IsBytecode(const std::string &FN) {
 /// object with an ELF header. The file named FN must exist.
 ///
 bool IsSharedObject(const std::string &FN) {
-  // Inspect the beginning of the file to see if it contains the LLVM
-  // bytecode format magic string.
+  // Inspect the beginning of the file to see if it contains the ELF shared
+  // object magic string.
   static const char elfMagic[] = { 0x7f, 'E', 'L', 'F', '\0' };
   return CheckMagic(FN, elfMagic);
 }
