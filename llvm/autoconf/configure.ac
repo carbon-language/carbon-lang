@@ -294,6 +294,10 @@ AC_SEARCH_LIBS(dlopen,dl,AC_DEFINE([HAVE_DLOPEN],[1],[Define if dlopen() is avai
 dnl mallinfo is optional; the code can compile (minus features) without it
 AC_SEARCH_LIBS(mallinfo,malloc,AC_DEFINE([HAVE_MALLINFO],[1],[Define if mallinfo() is available on this platform.]))
 
+dnl pthread locking functions are optional - but llvm will not be thread-safe
+dnl without locks.
+AC_SEARCH_LIBS(pthread_mutex_lock,pthread,AC_DEFINE(HAVE_PTHREAD_MUTEX_LOCK,1,[Define if PThread mutexes (e.g., pthread_mutex_lock) are available in the system's thread library.]))
+
 dnl
 dnl The math libraries are used by the test code, but not by the actual LLVM
 dnl code.
