@@ -48,7 +48,7 @@
   errors.</li>
   <li>I've built LLVM and am testing it, but the tests freeze.</li>
   <li>Why do test results differ when I perform different types of builds?</li>
-  <li>Compiling LLVM with GCC 3.3 on SuSE 9 fails, what should I do?</li>
+  <li>Compiling LLVM with GCC 3.3.2 fails, what should I do?</li>
   </ol></li>
 
   <li><a href="#cfe">Using the GCC Front End</a>
@@ -330,12 +330,12 @@ build.</p>
 </div>
 
 <div class="question">
-<p>Compiling LLVM with GCC 3.3 on SuSE 9 fails, what should I do?</p>
+<p>Compiling LLVM with GCC 3.3.2 fails, what should I do?</p>
 </div>
 
 <div class="answer">
-<p>This is a bug in the customized version of GCC shipped with SuSE, and affects
-   projects other than LLVM.  Complain loudly to SuSE.  :)</p>
+<p>This is <a href="http://gcc.gnu.org/PR?13392">a bug in GCC</a>, and 
+   affects projects other than LLVM.  Try upgrading or downgrading your GCC.</p>
 </div>
 
 <!-- *********************************************************************** -->
