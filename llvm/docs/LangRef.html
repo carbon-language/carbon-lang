@@ -407,9 +407,12 @@ be any type with a size.</p>
 <h5>Overview:</h5>
 <p>The function type can be thought of as a function signature.  It
 consists of a return type and a list of formal parameter types. 
-Function types are usually used when to build virtual function tables
+Function types are usually used to build virtual function tables
 (which are structures of pointers to functions), for indirect function
 calls, and when defining a function.</p>
+<p>
+The return type of a function type cannot be an aggregate type.
+</p>
 <h5>Syntax:</h5>
 <pre>  &lt;returntype&gt; (&lt;parameter list&gt;)<br></pre>
 <p>Where '<tt>&lt;parameter list&gt;</tt>' is a comma-separated list of
@@ -638,6 +641,12 @@ immediately executed on entrance to the function, and it is not allowed
 to have predecessor basic blocks (i.e. there can not be any branches to
 the entry block of a function).  Because the block can have no
 predecessors, it also cannot have any <a href="#i_phi">PHI nodes</a>.</p>
+<p>
+LLVM functions are identified by their name and type signature.  Hence, two
+functions with the same name but different parameter lists or return values
+are considered different functions, and LLVM will resolves references to each
+appropriately.
+</p>
 </div>
 <!-- *********************************************************************** -->
 <div class="doc_section"> <a name="instref">Instruction Reference</a> </div>
