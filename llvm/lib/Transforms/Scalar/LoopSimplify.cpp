@@ -192,6 +192,22 @@ void Preheaders::InsertPreheaderForLoop(Loop *L) {
   // We know that we have loop information to update... update it now.
   if (Loop *Parent = L->getParentLoop())
     Parent->addBasicBlockToLoop(NewBB, getAnalysis<LoopInfo>());
+
+  // If the header for the loop used to be an exit node for another loop, then
+  // we need to update this to know that the loop-preheader is now the exit
+  // node.  Note that the only loop that could have our header as an exit node
+  // is a sibling loop, ie, one with the same parent loop.
+  const std::vector<Loop*> *ParentSubLoops;
+  if (Loop *Parent = L->getParentLoop())
+    ParentSubLoops = &Parent->getSubLoops();
+  else       // Must check top-level loops...
+    ParentSubLoops = &getAnalysis<LoopInfo>().getTopLevelLoops();
+
+  // Loop over all sibling loops, performing the substitution...
+  for (unsigned i = 0, e = ParentSubLoops->size(); i != e; ++i)
+    if ((*ParentSubLoops)[i]->hasExitBlock(Header))
+      (*ParentSubLoops)[i]->changeExitBlock(Header, NewBB);
+
   
   DominatorSet &DS = getAnalysis<DominatorSet>();  // Update dominator info
   {
