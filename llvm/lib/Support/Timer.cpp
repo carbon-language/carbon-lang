@@ -93,15 +93,15 @@ Timer::~Timer() {
   }
 }
 
-static inline long getMemUsage() {
+static inline size_t getMemUsage() {
   if (TrackSpace)
-    return (long)sys::Process::GetMallocUsage();
+    return sys::Process::GetMallocUsage();
   return 0;
 }
 
 struct TimeRecord {
   double Elapsed, UserTime, SystemTime;
-  long MemUsed;
+  size_t MemUsed;
 };
 
 static TimeRecord getTimeRecord(bool Start) {
@@ -111,7 +111,7 @@ static TimeRecord getTimeRecord(bool Start) {
   sys::TimeValue user(0,0);
   sys::TimeValue sys(0,0);
 
-  long MemUsed = 0;
+  size_t MemUsed = 0;
   if (Start) {
     sys::Process::GetTimeUsage(now,user,sys);
     MemUsed = getMemUsage();
@@ -171,7 +171,7 @@ void Timer::sum(const Timer &T) {
 /// currently active timers, which will be printed when the timer group prints
 ///
 void Timer::addPeakMemoryMeasurement() {
-  long MemUsed = getMemUsage();
+  size_t MemUsed = getMemUsage();
 
   for (std::vector<Timer*>::iterator I = ActiveTimers.begin(),
          E = ActiveTimers.end(); I != E; ++I)

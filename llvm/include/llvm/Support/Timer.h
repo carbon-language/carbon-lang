@@ -36,9 +36,9 @@ class Timer {
   double Elapsed;        // Wall clock time elapsed in seconds
   double UserTime;       // User time elapsed
   double SystemTime;     // System time elapsed
-  long   MemUsed;        // Memory allocated (in bytes)
-  long   PeakMem;        // Peak memory used
-  long   PeakMemBase;    // Temporary for peak calculation...
+  size_t MemUsed;        // Memory allocated (in bytes)
+  size_t PeakMem;        // Peak memory used
+  size_t PeakMemBase;    // Temporary for peak calculation...
   std::string Name;      // The name of this time variable
   bool Started;          // Has this time variable ever been started?
   TimerGroup *TG;        // The TimerGroup this Timer is in.
@@ -50,8 +50,8 @@ public:
 
   double getProcessTime() const { return UserTime+SystemTime; }
   double getWallTime() const { return Elapsed; }
-  long getMemUsed() const { return MemUsed; }
-  long getPeakMem() const { return PeakMem; }
+  size_t getMemUsed() const { return MemUsed; }
+  size_t getPeakMem() const { return PeakMem; }
   std::string getName() const { return Name; }
 
   const Timer &operator=(const Timer &T) {

@@ -51,7 +51,7 @@ Process::GetPageSize() {
   return PageSize;
 }
 
-uint64_t 
+size_t 
 Process::GetMallocUsage()
 {
   _HEAPINFO hinfo;
@@ -65,7 +65,7 @@ Process::GetMallocUsage()
   return size;
 }
 
-uint64_t
+size_t
 Process::GetTotalMemoryUsage()
 {
   PROCESS_MEMORY_COUNTERS pmc;

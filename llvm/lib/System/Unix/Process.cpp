@@ -47,7 +47,7 @@ Process::GetPageSize()
 static char* som = reinterpret_cast<char*>(::sbrk(0));
 #endif
 
-uint64_t 
+size_t 
 Process::GetMallocUsage()
 {
 #if defined(HAVE_MALLINFO)
@@ -68,7 +68,7 @@ Process::GetMallocUsage()
 #endif
 }
 
-uint64_t
+size_t
 Process::GetTotalMemoryUsage()
 {
 #if defined(HAVE_MALLINFO)

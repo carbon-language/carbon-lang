@@ -40,14 +40,14 @@ namespace sys {
       /// allocated space. 
       /// @throws nothing
       /// @brief Return process memory usage.
-      static uint64_t GetMallocUsage();
+      static size_t GetMallocUsage();
 
       /// This static function will return the total memory usage of the 
       /// process. This includes code, data, stack and mapped pages usage. Notei
       /// that the value returned here is not necessarily the Running Set Size,
       /// it is the total virtual memory usage, regardless of mapped state of
       /// that memory.
-      static uint64_t GetTotalMemoryUsage();
+      static size_t GetTotalMemoryUsage();
 
       /// This static function will set \p user_time to the amount of CPU time 
       /// spent in user (non-kernel) mode and \p sys_time to the amount of CPU
