@@ -381,6 +381,8 @@ static inline bool hasNullValue(unsigned TyID) {
 /// getOrCreateCompactionTableSlot - This method is used to build up the initial
 /// approximation of the compaction table.
 unsigned SlotCalculator::getOrCreateCompactionTableSlot(const Value *V) {
+  if (const ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(V))
+    V = CPR->getValue();
   std::map<const Value*, unsigned>::iterator I =
     CompactionNodeMap.lower_bound(V);
   if (I != CompactionNodeMap.end() && I->first == V)
