@@ -13,6 +13,7 @@
 
 #include "Win32.h"
 #include <malloc.h>
+#include <io.h>
 
 //===----------------------------------------------------------------------===//
 //=== WARNING: Implementation here must contain only Win32 specific code 
@@ -66,7 +67,34 @@ Program::FindProgramByName(const std::string& progName) {
   }
 }
 
-//
+static HANDLE RedirectIO(const Path *path, int fd) {
+  HANDLE h;
+  if (path == 0) {
+    DuplicateHandle(GetCurrentProcess(), (HANDLE)_get_osfhandle(fd),
+                    GetCurrentProcess(), &h,
+                    0, TRUE, DUPLICATE_SAME_ACCESS);
+    return h;
+  }
+
+  const char *fname = path->toString().c_str();
+  if (*fname == 0)
+    fname = "NUL";
+
+  SECURITY_ATTRIBUTES sa;
+  sa.nLength = sizeof(sa);
+  sa.lpSecurityDescriptor = 0;
+  sa.bInheritHandle = TRUE;
+
+  h = CreateFile(fname, fd ? GENERIC_WRITE : GENERIC_READ, FILE_SHARE_READ,
+                 &sa, fd ? OPEN_EXISTING : CREATE_ALWAYS,
+                 FILE_ATTRIBUTE_NORMAL, NULL);
+  if (h == INVALID_HANDLE_VALUE) {
+    ThrowError(std::string(fname) + ": Can't open file for " +
+        (fd ? "input: " : "output: "));
+  }
+  return h;
+}
+
 int 
 Program::ExecuteAndWait(const Path& path, 
                         const char** args,
@@ -111,15 +139,50 @@ Program::ExecuteAndWait(const Path& path,
   STARTUPINFO si;
   memset(&si, 0, sizeof(si));
   si.cb = sizeof(si);
+  si.hStdInput = INVALID_HANDLE_VALUE;
+  si.hStdOutput = INVALID_HANDLE_VALUE;
+  si.hStdError = INVALID_HANDLE_VALUE;
 
-  // TODO: do replacement of standard input/output/error handles.
+  if (redirects) {
+    si.dwFlags = STARTF_USESTDHANDLES;
+    
+    try {
+      si.hStdInput = RedirectIO(redirects[0], 0);
+      si.hStdOutput = RedirectIO(redirects[1], 1);
+      if (redirects[1] && redirects[2] && *(redirects[1]) != *(redirects[2])) {
+        si.hStdError = RedirectIO(redirects[2], 2);
+      } else {
+        DuplicateHandle(GetCurrentProcess(), si.hStdOutput,
+                        GetCurrentProcess(), &si.hStdError,
+                        0, TRUE, DUPLICATE_SAME_ACCESS);
+      }
+    } catch (...) {
+      CloseHandle(si.hStdInput);
+      CloseHandle(si.hStdOutput);
+      CloseHandle(si.hStdError);
+      throw;
+    }
+  }
 
   PROCESS_INFORMATION pi;
   memset(&pi, 0, sizeof(pi));
 
-  if (!CreateProcess(path.c_str(), command, NULL, NULL, FALSE, 0,
-                     envp, NULL, &si, &pi))
+  fflush(stdout);
+  fflush(stderr);
+  BOOL rc = CreateProcess(path.c_str(), command, NULL, NULL, FALSE, 0,
+                          envp, NULL, &si, &pi);
+  DWORD err = GetLastError();
+
+  // Regardless of whether the process got created or not, we are done with
+  // the handles we created for it to inherit.
+  CloseHandle(si.hStdInput);
+  CloseHandle(si.hStdOutput);
+  CloseHandle(si.hStdError);
+
+  // Now throw an error if the process didn't get created.
+  if (!rc)
   {
+    SetLastError(err);
     ThrowError(std::string("Couldn't execute program '") + 
                path.toString() + "'");
   }
@@ -139,15 +202,18 @@ Program::ExecuteAndWait(const Path& path,
   
   // Get its exit status.
   DWORD status;
-  BOOL rc = GetExitCodeProcess(pi.hProcess, &status);
+  rc = GetExitCodeProcess(pi.hProcess, &status);
+  err = GetLastError();
 
   // Done with the handles; go close them.
   CloseHandle(pi.hProcess);
   CloseHandle(pi.hThread);
 
-  if (!rc)
+  if (!rc) {
+    SetLastError(err);
     ThrowError(std::string("Failed getting status for program '") + 
                path.toString() + "'");
+  }
 
   return status;
 }
