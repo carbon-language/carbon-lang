@@ -432,6 +432,10 @@ public:
 
   const PointerValSet &getRetNodes() const { return RetNode; }
 
+  unsigned getGraphSize() const {
+    return ArgNodes.size() + AllocNodes.size() + ShadowNodes.size() +
+      GlobalNodes.size() + CallNodes.size();
+  }
 
   void printFunction(std::ostream &O, const char *Label) const;
 };
