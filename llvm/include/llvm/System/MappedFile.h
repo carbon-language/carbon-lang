@@ -121,6 +121,8 @@ namespace sys {
     /// @brief Set the size of the file and memory mapping.
     void size(size_t new_size);
 
+    void close() { terminate(); }
+
   /// @}
   /// @name Implementation
   /// @{
