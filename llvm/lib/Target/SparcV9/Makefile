@@ -42,19 +42,17 @@ $(BUILD_OBJ_DIR)/Profile/SparcV9.burm.lo: SparcV9.burm.cpp
 $(BUILD_OBJ_DIR)/Depend/SparcV9.burm.d: $(BUILD_OBJ_DIR)/Depend/.dir
 	touch $@
 
-TARGET_NAME := SparcV9
-
 TABLEGEN_FILES := $(notdir $(wildcard $(SourceDir)/*.td))
 
 # Make sure that tblgen is run, first thing.
-$(SourceDepend): $(TARGET_NAME)CodeEmitter.inc
+$(SourceDepend): SparcV9CodeEmitter.inc
 
-$(TARGET_NAME)CodeEmitter.cpp:: $(TARGET_NAME)CodeEmitter.inc
+SparcV9CodeEmitter.cpp:: SparcV9CodeEmitter.inc
 
-$(TARGET_NAME)CodeEmitter.inc:: $(SourceDir)/$(TARGET_NAME).td $(TABLEGEN_FILES) $(TBLGEN)
+SparcV9CodeEmitter.inc:: $(SourceDir)/SparcV9.td $(TABLEGEN_FILES) $(TBLGEN)
 	@echo "Tblgen'ing `basename $<`"
 	$(TBLGEN) -I $(SourceDir) $< -gen-emitter -o $@
 
 clean::
-	$(RM) -f $(TARGET_NAME)CodeEmitter.inc SparcV9.burg.in1 SparcV9.burm SparcV9.burm.cpp
+	$(RM) -f SparcV9CodeEmitter.inc SparcV9.burg.in1 SparcV9.burm SparcV9.burm.cpp
 
