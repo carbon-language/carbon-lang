@@ -144,7 +144,6 @@ namespace {
     // These methods do the actual work of specializing code
     void visitInstruction(Instruction &I);   // common work for every instr. 
     void visitGetElementPtrInst(GetElementPtrInst &I);
-    void visitCastInst(CastInst &I);
     void visitCallInst(CallInst &I);
 
     // Helper functions for visiting operands of every instruction
@@ -340,34 +339,6 @@ PreSelection::visitGetElementPtrInst(GetElementPtrInst &I)
   visitInstruction(*curI);
 }
 
-
-// Cast instructions:
-// -- make multi-step casts explicit:
-//    -- float/double to uint32_t:
-//         If target does not have a float-to-unsigned instruction, we
-//         need to convert to uint64_t and then to uint32_t, or we may
-//         overflow the signed int representation for legal uint32_t
-//         values.  Expand this without checking target.
-// -- other common transformations on operands
-// 
-void
-PreSelection::visitCastInst(CastInst &I)
-{ 
-  CastInst* castI = NULL;
-
-  // Check for a global and put its address into a register before this instr
-  if (I.getType() == Type::UIntTy &&
-      I.getOperand(0)->getType()->isFloatingPoint()) {
-    // insert a cast-fp-to-long before I, and then replace the operand of I
-    castI = new CastInst(I.getOperand(0), Type::LongTy, "fp2Long2Uint", &I);
-    I.setOperand(0, castI);           // replace fp operand with long
-  }
-
-  // Perform other transformations common to all instructions
-  visitInstruction(I);
-  if (castI)
-    visitInstruction(*castI);
-}
 
 void
 PreSelection::visitCallInst(CallInst &I)
