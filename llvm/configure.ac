@@ -37,7 +37,9 @@ dnl We will use the build machine information to set some variables.
 dnl
 case $build in
 	*i*86*)  AC_SUBST(OS,[Linux])
-	         AC_SUBST(DISABLE_LLC_DIFFS,[[DISABLE_LLC_DIFFS:=1]])
+	         dnl Turned off DISABLE_LLC_DIFFS now that LLC/x86 is 
+	         dnl viable for almost all our test cases.
+	         dnl AC_SUBST(DISABLE_LLC_DIFFS,[[DISABLE_LLC_DIFFS:=1]])
 	         AC_SUBST(LLVMGCCDIR,[/home/vadve/lattner/local/x86/llvm-gcc/])
 	         ;;
 
