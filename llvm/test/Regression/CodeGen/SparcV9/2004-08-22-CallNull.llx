@@ -1,0 +1,9 @@
+; RUN: llvm-as < %s | llc -march=sparcv9
+
+implementation   ; Functions:
+
+void %main() {
+entry:
+        call void null( )
+        ret void
+}
