@@ -50,16 +50,16 @@ namespace {
     // alias - This is the only method here that does anything interesting...
     Result alias(const Value *V1, const Value *V2) const;
     
-    /// canCallModify - We are not interprocedural, so we do nothing exciting.
+    /// canCallModify - Not implemented yet: FIXME
     ///
     Result canCallModify(const CallInst &CI, const Value *Ptr) const {
       return MayAlias;
     }
     
-    /// canInvokeModify - We are not interprocedural, so we do nothing exciting.
+    /// canInvokeModify - Not implemented yet: FIXME
     ///
     Result canInvokeModify(const InvokeInst &I, const Value *Ptr) const {
-      return MayAlias;  // We are not interprocedural
+      return MayAlias;
     }
 
   private:
