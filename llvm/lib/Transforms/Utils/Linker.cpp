@@ -347,17 +347,18 @@ static GlobalValue *FindGlobalNamed(const std::string &Name, const Type *Ty,
   // It doesn't exist exactly, scan through all of the type planes in the symbol
   // table, checking each of them for a type-compatible version.
   //
-  for (SymbolTable::iterator I = ST->begin(), E = ST->end(); I != E; ++I) {
-    SymbolTable::VarMap &VM = I->second;
-    // Does this type plane contain an entry with the specified name?
-    SymbolTable::type_iterator TI = VM.find(Name);
-    if (TI != VM.end()) {
-      // Determine whether we can fold the two types together, resolving them.
-      // If so, we can use this value.
-      if (!RecursiveResolveTypes(Ty, I->first, ST, ""))
-        return cast<GlobalValue>(TI->second);
+  for (SymbolTable::iterator I = ST->begin(), E = ST->end(); I != E; ++I)
+    if (I->first->getType() != Type::TypeTy) {
+      SymbolTable::VarMap &VM = I->second;
+      // Does this type plane contain an entry with the specified name?
+      SymbolTable::type_iterator TI = VM.find(Name);
+      if (TI != VM.end()) {
+        // Determine whether we can fold the two types together, resolving them.
+        // If so, we can use this value.
+        if (!RecursiveResolveTypes(Ty, I->first, ST, ""))
+          return cast<GlobalValue>(TI->second);
+      }
     }
-  }
   return 0;  // Otherwise, nothing could be found.
 }
 
