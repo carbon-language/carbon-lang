@@ -27,7 +27,6 @@
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Support/InstVisitor.h"
 #include "llvm/Support/CFG.h"
-#include <iostream>
 using namespace llvm;
 
 namespace {
