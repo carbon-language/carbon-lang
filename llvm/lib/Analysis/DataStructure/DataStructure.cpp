@@ -448,7 +448,7 @@ void DSNode::MergeNodes(DSNodeHandle& CurNodeH, DSNodeHandle& NH) {
   // Make all of the outgoing links of *NH now be outgoing links of
   // this.  This can cause recursive merging!
   // 
-  for (unsigned i = 0; i < NSize; i += DS::PointerSize) {
+  for (unsigned i = 0; i < NH.getNode()->getSize(); i += DS::PointerSize) {
     DSNodeHandle &Link = NH.getNode()->getLink(i);
     if (Link.getNode()) {
       // Compute the offset into the current node at which to
