@@ -109,6 +109,41 @@ bool llvm::DiffFiles(const std::string &FileA, const std::string &FileB,
 }
 
 
+/// CopyFile - Copy the specified source file to the specified destination,
+/// overwriting destination if it exists.  This returns true on failure.
+///
+bool llvm::CopyFile(const std::string &Dest, const std::string &Src) {
+  FDHandle InFD(open(Src.c_str(), O_RDONLY));
+  if (InFD == -1) return true;
+
+  FileRemover FR(Dest);
+
+  FDHandle OutFD(open(Dest.c_str(), O_WRONLY|O_CREAT, 0666));
+  if (OutFD == -1) return true;
+
+  char Buffer[16*1024];
+  while (ssize_t Amt = read(InFD, Buffer, 16*1024)) {
+    if (Amt == -1) {
+      if (errno != EINTR) return true;  // Error reading the file.
+    } else {
+      char *BufPtr = Buffer;
+      while (Amt) {
+        ssize_t AmtWritten = write(OutFD, BufPtr, Amt);
+        if (AmtWritten == -1) {
+          if (errno != EINTR) return true;  // Error writing the file.
+        } else {
+          Amt -= AmtWritten;
+          BufPtr += AmtWritten;
+        }
+      }
+    }
+  }
+
+  FR.releaseFile();  // Success!
+  return false;
+}
+
+
 /// MoveFileOverIfUpdated - If the file specified by New is different than Old,
 /// or if Old does not exist, move the New file over the Old file.  Otherwise,
 /// remove the New file.
