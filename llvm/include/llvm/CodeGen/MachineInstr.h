@@ -18,6 +18,7 @@ class Value;
 class Function;
 class MachineBasicBlock;
 class TargetMachine;
+class GlobalValue;
 
 typedef int MachineOpCode;
 
@@ -70,8 +71,7 @@ namespace MOTy {
 // 
 //---------------------------------------------------------------------------
 
-class MachineOperand {
-public:
+struct MachineOperand {
   enum MachineOperandType {
     MO_VirtualRegister,		// virtual register for *value
     MO_MachineRegister,		// pre-assigned machine register `regNum'
@@ -81,29 +81,38 @@ public:
     MO_PCRelativeDisp,
     MO_MachineBasicBlock,       // MachineBasicBlock reference
     MO_FrameIndex,              // Abstract Stack Frame Index
+    MO_ConstantPoolIndex,       // Address of indexed Constant in Constant Pool
+    MO_ExternalSymbol,          // Name of external global symbol
+    MO_GlobalAddress,           // Address of a global value
   };
   
 private:
   // Bit fields of the flags variable used for different operand properties
-  static const char DEFFLAG    = 0x01; // this is a def of the operand
-  static const char DEFUSEFLAG = 0x02; // this is both a def and a use
-  static const char HIFLAG32   = 0x04; // operand is %hi32(value_or_immedVal)
-  static const char LOFLAG32   = 0x08; // operand is %lo32(value_or_immedVal)
-  static const char HIFLAG64   = 0x10; // operand is %hi64(value_or_immedVal)
-  static const char LOFLAG64   = 0x20; // operand is %lo64(value_or_immedVal)
-
-  static const char USEDEFMASK = 0x03;
+  enum {
+    DEFFLAG    = 0x01,        // this is a def of the operand
+    DEFUSEFLAG = 0x02,        // this is both a def and a use
+    HIFLAG32   = 0x04,        // operand is %hi32(value_or_immedVal)
+    LOFLAG32   = 0x08,        // operand is %lo32(value_or_immedVal)
+    HIFLAG64   = 0x10,        // operand is %hi64(value_or_immedVal)
+    LOFLAG64   = 0x20,        // operand is %lo64(value_or_immedVal)
+    PCRELATIVE = 0x40,        // Operand is relative to PC, not a global address
   
+    USEDEFMASK = 0x03,
+  };
+
 private:
   union {
     Value*	value;		// BasicBlockVal for a label operand.
 				// ConstantVal for a non-address immediate.
 				// Virtual register for an SSA operand,
-				// including hidden operands required for
-				// the generated machine code.     
-    int64_t immedVal;		// constant value for an explicit constant
+				//   including hidden operands required for
+				//   the generated machine code.     
+                                // LLVM global for MO_GlobalAddress.
+
+    int64_t immedVal;		// Constant value for an explicit constant
 
     MachineBasicBlock *MBB;     // For MO_MachineBasicBlock type
+    std::string *SymbolName;    // For MO_ExternalSymbol type
   };
 
   char flags;                   // see bit field definitions above
@@ -135,7 +144,8 @@ private:
     }
   }
 
-  MachineOperand(Value *V, MachineOperandType OpTy, MOTy::UseType UseTy) 
+  MachineOperand(Value *V, MachineOperandType OpTy, MOTy::UseType UseTy,
+		 bool isPCRelative = false)
     : value(V), opType(OpTy), regNum(-1) {
     switch (UseTy) {
     case MOTy::Use:       flags = 0; break;
@@ -143,24 +153,51 @@ private:
     case MOTy::UseAndDef: flags = DEFUSEFLAG; break;
     default: assert(0 && "Invalid value for UseTy!");
     }
+    if (isPCRelative) flags |= PCRELATIVE;
   }
 
   MachineOperand(MachineBasicBlock *mbb)
     : MBB(mbb), flags(0), opType(MO_MachineBasicBlock), regNum(-1) {}
 
-public:
-  MachineOperand(const MachineOperand &M)
-    : immedVal(M.immedVal),
-      flags(M.flags),
-      opType(M.opType),
-      regNum(M.regNum) {}
+  MachineOperand(const std::string &SymName, bool isPCRelative)
+    : SymbolName(new std::string(SymName)), flags(isPCRelative ? PCRELATIVE :0),
+      opType(MO_ExternalSymbol), regNum(-1) {}
 
-  ~MachineOperand() {}
+public:
+  MachineOperand(const MachineOperand &M) : immedVal(M.immedVal),
+					    flags(M.flags),
+					    opType(M.opType),
+					    regNum(M.regNum) {
+    if (isExternalSymbol())
+      SymbolName = new std::string(M.getSymbolName());
+  }
+
+  ~MachineOperand() {
+    if (isExternalSymbol())
+      delete SymbolName;
+  }
   
+  const MachineOperand &operator=(const MachineOperand &MO) {
+    immedVal = MO.immedVal;
+    flags    = MO.flags;
+    opType   = MO.opType;
+    regNum   = MO.regNum;
+    if (isExternalSymbol())
+      SymbolName = new std::string(MO.getSymbolName());
+    return *this;
+  }
+
   // Accessor methods.  Caller is responsible for checking the
   // operand type before invoking the corresponding accessor.
   // 
   MachineOperandType getType() const { return opType; }
+
+  /// isPCRelative - This returns the value of the PCRELATIVE flag, which
+  /// indicates whether this operand should be emitted as a PC relative value
+  /// instead of a global address.  This is used for operands of the forms:
+  /// MachineBasicBlock, GlobalAddress, ExternalSymbol
+  ///
+  bool isPCRelative() const { return (flags & PCRELATIVE) != 0; }
 
 
   // This is to finally stop caring whether we have a virtual or machine
@@ -174,7 +211,7 @@ public:
   }
   bool isPhysicalRegister() const {
     return (opType == MO_VirtualRegister || opType == MO_MachineRegister) 
-      && regNum < MRegisterInfo::FirstVirtualRegister;
+      && (unsigned)regNum < MRegisterInfo::FirstVirtualRegister;
   }
   bool isRegister() const { return isVirtualRegister() || isPhysicalRegister();}
   bool isMachineRegister() const { return !isVirtualRegister(); }
@@ -184,6 +221,9 @@ public:
     return opType == MO_SignExtendedImmed || opType == MO_UnextendedImmed;
   }
   bool isFrameIndex() const { return opType == MO_FrameIndex; }
+  bool isConstantPoolIndex() const { return opType == MO_ConstantPoolIndex; }
+  bool isGlobalAddress() const { return opType == MO_GlobalAddress; }
+  bool isExternalSymbol() const { return opType == MO_ExternalSymbol; }
 
   Value* getVRegValue() const {
     assert(opType == MO_VirtualRegister || opType == MO_CCRegister || 
@@ -204,6 +244,20 @@ public:
     return MBB;
   }
   int getFrameIndex() const { assert(isFrameIndex()); return immedVal; }
+  unsigned getConstantPoolIndex() const {
+    assert(isConstantPoolIndex());
+    return immedVal;
+  }
+
+  GlobalValue *getGlobal() const {
+    assert(isGlobalAddress());
+    return (GlobalValue*)value;
+  }
+
+  const std::string &getSymbolName() const {
+    assert(isExternalSymbol());
+    return *SymbolName;
+  }
 
   bool          opIsUse         () const { return (flags & USEDEFMASK) == 0; }
   bool		opIsDef		() const { return flags & DEFFLAG; }
@@ -412,11 +466,12 @@ public:
              !isDef ? MOTy::Use : (isDefAndUse ? MOTy::UseAndDef : MOTy::Def)));
   }
 
-  void addRegOperand(Value *V, MOTy::UseType UTy = MOTy::Use) {
+  void addRegOperand(Value *V, MOTy::UseType UTy = MOTy::Use,
+		     bool isPCRelative = false) {
     assert(!OperandsComplete() &&
            "Trying to add an operand to a machine instr that is already done!");
     operands.push_back(MachineOperand(V, MachineOperand::MO_VirtualRegister,
-                                      UTy));
+                                      UTy, isPCRelative));
   }
 
   /// addRegOperand - Add a symbolic virtual register reference...
@@ -500,6 +555,28 @@ public:
     operands.push_back(MachineOperand(Idx, MachineOperand::MO_FrameIndex));
   }
 
+  /// addConstantPoolndexOperand - Add a constant pool object index to the
+  /// instruction.
+  ///
+  void addConstantPoolIndexOperand(unsigned I) {
+    assert(!OperandsComplete() &&
+           "Trying to add an operand to a machine instr that is already done!");
+    operands.push_back(MachineOperand(I, MachineOperand::MO_ConstantPoolIndex));
+  }
+
+  void addGlobalAddressOperand(GlobalValue *GV, bool isPCRelative) {
+    assert(!OperandsComplete() &&
+           "Trying to add an operand to a machine instr that is already done!");
+    operands.push_back(MachineOperand((Value*)GV,
+				      MachineOperand::MO_GlobalAddress,
+                                      MOTy::Use, isPCRelative));
+  }
+
+  /// addExternalSymbolOperand - Add an external symbol operand to this instr
+  ///
+  void addExternalSymbolOperand(const std::string &SymName, bool isPCRelative) {
+    operands.push_back(MachineOperand(SymName, isPCRelative));
+  }
 
   //===--------------------------------------------------------------------===//
   // Accessors used to modify instructions in place.
@@ -511,6 +588,17 @@ public:
   /// below.
   /// 
   void replace(MachineOpCode Opcode, unsigned numOperands);
+
+  /// setOpcode - Replace the opcode of the current instruction with a new one.
+  ///
+  void setOpcode(unsigned Op) { opCode = Op; }
+
+  /// RemoveOperand - Erase an operand  from an instruction, leaving it with one
+  /// fewer operand than it started with.
+  ///
+  void RemoveOperand(unsigned i) {
+    operands.erase(operands.begin()+i);
+  }
 
   // Access to set the operands when building the machine instruction
   // 
