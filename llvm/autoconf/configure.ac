@@ -32,7 +32,7 @@ do
       "llvm-tv")      AC_CONFIG_SUBDIRS([projects/llvm-tv])   ;;
       "llvm-fefw")    AC_CONFIG_SUBDIRS([projects/llvm-fefw]) ;;
       *)              
-        AC_MSG_WARN([Unknown projects (${i})won't be configured automatically])
+        AC_MSG_WARN([Unknown project (${i}) won't be configured automatically])
         ;;
     esac
   fi

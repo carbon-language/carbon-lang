@@ -1588,8 +1588,8 @@ subdirs="$subdirs projects/llvm-tv"
 subdirs="$subdirs projects/llvm-fefw"
  ;;
       *)
-        { echo "$as_me:$LINENO: WARNING: Unknown projects (${i})won't be configured automatically" >&5
-echo "$as_me: WARNING: Unknown projects (${i})won't be configured automatically" >&2;}
+        { echo "$as_me:$LINENO: WARNING: Unknown project (${i}) won't be configured automatically" >&5
+echo "$as_me: WARNING: Unknown project (${i}) won't be configured automatically" >&2;}
         ;;
     esac
   fi
