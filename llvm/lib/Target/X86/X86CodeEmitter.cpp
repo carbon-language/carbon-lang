@@ -168,7 +168,6 @@ unsigned JITResolver::emitStubForFunction(Function *F) {
 }
 
 
-
 namespace {
   class Emitter : public MachineFunctionPass {
     const X86InstrInfo  *II;
@@ -176,7 +175,9 @@ namespace {
     std::map<const BasicBlock*, unsigned> BasicBlockAddrs;
     std::vector<std::pair<const BasicBlock*, unsigned> > BBRefs;
   public:
-    Emitter(MachineCodeEmitter &mce) : II(0), MCE(mce) {}
+    explicit Emitter(MachineCodeEmitter &mce) : II(0), MCE(mce) {}
+    Emitter(MachineCodeEmitter &mce, const X86InstrInfo& ii)
+        : II(&ii), MCE(mce) {}
 
     bool runOnMachineFunction(MachineFunction &MF);
 
@@ -184,9 +185,10 @@ namespace {
       return "X86 Machine Code Emitter";
     }
 
+    void emitInstruction(const MachineInstr &MI);
+
   private:
     void emitBasicBlock(const MachineBasicBlock &MBB);
-    void emitInstruction(const MachineInstr &MI);
 
     void emitPCRelativeBlockAddress(const BasicBlock *BB);
     void emitMaybePCRelativeValue(unsigned Address, bool isPCRelative);
@@ -201,6 +203,14 @@ namespace {
                           unsigned Op, unsigned RegOpcodeField);
 
   };
+}
+
+// This function is required by Printer.cpp to workaround gas bugs
+void llvm::X86::emitInstruction(MachineCodeEmitter& mce,
+                                const X86InstrInfo& ii,
+                                const MachineInstr& mi)
+{
+    Emitter(mce, ii).emitInstruction(mi);
 }
 
 /// addPassesToEmitMachineCode - Add passes to the specified pass manager to get

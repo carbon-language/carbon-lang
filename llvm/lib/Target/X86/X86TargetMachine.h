@@ -53,6 +53,13 @@ public:
   virtual bool addPassesToEmitAssembly(PassManager &PM, std::ostream &Out);
 };
 
+  // this is implemented in X86CodeEmitter.cpp
+  namespace X86 {
+    void emitInstruction(MachineCodeEmitter& mce,
+                         const X86InstrInfo& ii,
+                         const MachineInstr& MI);
+  }
+
 } // End llvm namespace
 
 #endif
