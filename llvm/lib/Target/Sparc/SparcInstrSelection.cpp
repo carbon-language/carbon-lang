@@ -35,6 +35,227 @@ static inline void Add3OperandInstr(unsigned Opcode, InstructionNode* Node,
 
 
 
+//---------------------------------------------------------------------------
+// Function: GetMemInstArgs
+// 
+// Purpose:
+//   Get the pointer value and the index vector for a memory operation
+//   (GetElementPtr, Load, or Store).  If all indices of the given memory
+//   operation are constant, fold in constant indices in a chain of
+//   preceding GetElementPtr instructions (if any), and return the
+//   pointer value of the first instruction in the chain.
+//   All folded instructions are marked so no code is generated for them.
+//
+// Return values:
+//   Returns the pointer Value to use.
+//   Returns the resulting IndexVector in idxVec.
+//   Returns true/false in allConstantIndices if all indices are/aren't const.
+//---------------------------------------------------------------------------
+
+
+//---------------------------------------------------------------------------
+// Function: FoldGetElemChain
+// 
+// Purpose:
+//   Fold a chain of GetElementPtr instructions containing only
+//   constant offsets into an equivalent (Pointer, IndexVector) pair.
+//   Returns the pointer Value, and stores the resulting IndexVector
+//   in argument chainIdxVec. This is a helper function for
+//   FoldConstantIndices that does the actual folding. 
+//---------------------------------------------------------------------------
+
+
+// Check for a constant 0.
+inline bool
+IsZero(Value* idx)
+{
+  return (idx == ConstantSInt::getNullValue(idx->getType()));
+}
+
+static Value*
+FoldGetElemChain(InstrTreeNode* ptrNode, vector<Value*>& chainIdxVec,
+                 bool lastInstHasLeadingNonZero)
+{
+  InstructionNode* gepNode = dyn_cast<InstructionNode>(ptrNode);
+  GetElementPtrInst* gepInst =
+    dyn_cast_or_null<GetElementPtrInst>(gepNode ? gepNode->getInstruction() :0);
+
+  // ptr value is not computed in this tree or ptr value does not come from GEP
+  // instruction
+  if (gepInst == NULL)
+    return NULL;
+
+  // Return NULL if we don't fold any instructions in.
+  Value* ptrVal = NULL;
+
+  // Now chase the chain of getElementInstr instructions, if any.
+  // Check for any non-constant indices and stop there.
+  // Also, stop if the first index of child is a non-zero array index
+  // and the last index of the current node is a non-array index:
+  // in that case, a non-array declared type is being accessed as an array
+  // which is not type-safe, but could be legal.
+  // 
+  InstructionNode* ptrChild = gepNode;
+  while (ptrChild && (ptrChild->getOpLabel() == Instruction::GetElementPtr ||
+                      ptrChild->getOpLabel() == GetElemPtrIdx))
+    {
+      // Child is a GetElemPtr instruction
+      gepInst = cast<GetElementPtrInst>(ptrChild->getValue());
+      User::op_iterator OI, firstIdx = gepInst->idx_begin();
+      User::op_iterator lastIdx = gepInst->idx_end();
+      bool allConstantOffsets = true;
+
+      // The first index of every GEP must be an array index.
+      assert((*firstIdx)->getType() == Type::LongTy &&
+             "INTERNAL ERROR: Structure index for a pointer type!");
+
+      // If the last instruction had a leading non-zero index, check if the
+      // current one references a sequential (i.e., indexable) type.
+      // If not, the code is not type-safe and we would create an illegal GEP
+      // by folding them, so don't fold any more instructions.
+      // 
+      if (lastInstHasLeadingNonZero)
+        if (! isa<SequentialType>(gepInst->getType()->getElementType()))
+          break;   // cannot fold in any preceding getElementPtr instrs.
+
+      // Check that all offsets are constant for this instruction
+      for (OI = firstIdx; allConstantOffsets && OI != lastIdx; ++OI)
+        allConstantOffsets = isa<ConstantInt>(*OI);
+
+      if (allConstantOffsets)
+        { // Get pointer value out of ptrChild.
+          ptrVal = gepInst->getPointerOperand();
+
+          // Remember if it has leading zero index: it will be discarded later.
+          lastInstHasLeadingNonZero = ! IsZero(*firstIdx);
+
+          // Insert its index vector at the start, skipping any leading [0]
+          chainIdxVec.insert(chainIdxVec.begin(),
+                             firstIdx + !lastInstHasLeadingNonZero, lastIdx);
+
+          // Mark the folded node so no code is generated for it.
+          ((InstructionNode*) ptrChild)->markFoldedIntoParent();
+
+          // Get the previous GEP instruction and continue trying to fold
+          ptrChild = dyn_cast<InstructionNode>(ptrChild->leftChild());
+        }
+      else // cannot fold this getElementPtr instr. or any preceding ones
+        break;
+    }
+
+  // If the first getElementPtr instruction had a leading [0], add it back.
+  // Note that this instruction is the *last* one successfully folded above.
+  if (ptrVal && ! lastInstHasLeadingNonZero) 
+    chainIdxVec.insert(chainIdxVec.begin(), ConstantSInt::get(Type::LongTy,0));
+
+  return ptrVal;
+}
+
+
+//---------------------------------------------------------------------------
+// Function: GetGEPInstArgs
+// 
+// Purpose:
+//   Helper function for GetMemInstArgs that handles the final getElementPtr
+//   instruction used by (or same as) the memory operation.
+//   Extracts the indices of the current instruction and tries to fold in
+//   preceding ones if all indices of the current one are constant.
+//---------------------------------------------------------------------------
+
+static Value *
+GetGEPInstArgs(InstructionNode* gepNode,
+               vector<Value*>& idxVec,
+               bool& allConstantIndices)
+{
+  allConstantIndices = true;
+  GetElementPtrInst* gepI = cast<GetElementPtrInst>(gepNode->getInstruction());
+
+  // Default pointer is the one from the current instruction.
+  Value* ptrVal = gepI->getPointerOperand();
+  InstrTreeNode* ptrChild = gepNode->leftChild(); 
+
+  // Extract the index vector of the GEP instructin.
+  // If all indices are constant and first index is zero, try to fold
+  // in preceding GEPs with all constant indices.
+  for (User::op_iterator OI=gepI->idx_begin(),  OE=gepI->idx_end();
+       allConstantIndices && OI != OE; ++OI)
+    if (! isa<Constant>(*OI))
+      allConstantIndices = false;     // note: this also terminates loop!
+
+  // If we have only constant indices, fold chains of constant indices
+  // in this and any preceding GetElemPtr instructions.
+  bool foldedGEPs = false;
+  bool leadingNonZeroIdx = gepI && ! IsZero(*gepI->idx_begin());
+  if (allConstantIndices)
+    if (Value* newPtr = FoldGetElemChain(ptrChild, idxVec, leadingNonZeroIdx))
+      {
+        ptrVal = newPtr;
+        foldedGEPs = true;
+      }
+
+  // Append the index vector of the current instruction.
+  // Skip the leading [0] index if preceding GEPs were folded into this.
+  idxVec.insert(idxVec.end(),
+                gepI->idx_begin() + (foldedGEPs && !leadingNonZeroIdx),
+                gepI->idx_end());
+
+  return ptrVal;
+}
+
+//---------------------------------------------------------------------------
+// Function: GetMemInstArgs
+// 
+// Purpose:
+//   Get the pointer value and the index vector for a memory operation
+//   (GetElementPtr, Load, or Store).  If all indices of the given memory
+//   operation are constant, fold in constant indices in a chain of
+//   preceding GetElementPtr instructions (if any), and return the
+//   pointer value of the first instruction in the chain.
+//   All folded instructions are marked so no code is generated for them.
+//
+// Return values:
+//   Returns the pointer Value to use.
+//   Returns the resulting IndexVector in idxVec.
+//   Returns true/false in allConstantIndices if all indices are/aren't const.
+//---------------------------------------------------------------------------
+
+static Value*
+GetMemInstArgs(InstructionNode* memInstrNode,
+               vector<Value*>& idxVec,
+               bool& allConstantIndices)
+{
+  allConstantIndices = false;
+  Instruction* memInst = memInstrNode->getInstruction();
+  assert(idxVec.size() == 0 && "Need empty vector to return indices");
+
+  // If there is a GetElemPtr instruction to fold in to this instr,
+  // it must be in the left child for Load and GetElemPtr, and in the
+  // right child for Store instructions.
+  InstrTreeNode* ptrChild = (memInst->getOpcode() == Instruction::Store
+                             ? memInstrNode->rightChild()
+                             : memInstrNode->leftChild()); 
+  
+  // Default pointer is the one from the current instruction.
+  Value* ptrVal = ptrChild->getValue(); 
+
+  // Find the "last" GetElemPtr instruction: this one or the immediate child.
+  // There will be none if this is a load or a store from a scalar pointer.
+  InstructionNode* gepNode = NULL;
+  if (isa<GetElementPtrInst>(memInst))
+    gepNode = memInstrNode;
+  else if (isa<InstructionNode>(ptrChild) && isa<GetElementPtrInst>(ptrVal))
+    { // Child of load/store is a GEP and memInst is its only use.
+      // Use its indices and mark it as folded.
+      gepNode = cast<InstructionNode>(ptrChild);
+      gepNode->markFoldedIntoParent();
+    }
+
+  // If there are no indices, return the current pointer.
+  // Else extract the pointer from the GEP and fold the indices.
+  return gepNode ? GetGEPInstArgs(gepNode, idxVec, allConstantIndices)
+                 : ptrVal;
+}
+
 
 //************************ Internal Functions ******************************/
 
@@ -964,8 +1185,7 @@ SetOperandsForMemInstr(unsigned Opcode,
           // offset.  (An extra leading zero offset, if any, can be ignored.)
           // Generate code sequence to compute address from index.
           // 
-          bool firstIdxIsZero =
-            (idxVec[0] == Constant::getNullValue(idxVec[0]->getType()));
+          bool firstIdxIsZero = IsZero(idxVec[0]);
           assert(idxVec.size() == 1U + firstIdxIsZero 
                  && "Array refs must be lowered before Instruction Selection");
 

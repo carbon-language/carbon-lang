@@ -742,4 +742,6 @@ public:
   Pass* getEmitBytecodeToAsmPass(std::ostream &Out);
 };
 
+int64_t GetConstantValueAsSignedInt(const Value *V, bool &isValidConstant);
+
 #endif

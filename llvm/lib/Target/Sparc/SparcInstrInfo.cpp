@@ -20,6 +20,53 @@ static const uint32_t MAXLO   = (1 << 10) - 1; // set bits set by %lo(*)
 static const uint32_t MAXSIMM = (1 << 12) - 1; // set bits in simm13 field of OR
 
 
+//---------------------------------------------------------------------------
+// Function GetConstantValueAsUnsignedInt
+// Function GetConstantValueAsSignedInt
+// 
+// Convenience functions to get the value of an integral constant, for an
+// appropriate integer or non-integer type that can be held in a signed
+// or unsigned integer respectively.  The type of the argument must be
+// the following:
+//      Signed or unsigned integer
+//      Boolean
+//      Pointer
+// 
+// isValidConstant is set to true if a valid constant was found.
+//---------------------------------------------------------------------------
+
+static uint64_t
+GetConstantValueAsUnsignedInt(const Value *V,
+                              bool &isValidConstant)
+{
+  isValidConstant = true;
+
+  if (isa<Constant>(V))
+    if (const ConstantBool *CB = dyn_cast<ConstantBool>(V))
+      return (int64_t)CB->getValue();
+    else if (const ConstantSInt *CS = dyn_cast<ConstantSInt>(V))
+      return (uint64_t)CS->getValue();
+    else if (const ConstantUInt *CU = dyn_cast<ConstantUInt>(V))
+      return CU->getValue();
+
+  isValidConstant = false;
+  return 0;
+}
+
+int64_t
+GetConstantValueAsSignedInt(const Value *V, bool &isValidConstant)
+{
+  uint64_t C = GetConstantValueAsUnsignedInt(V, isValidConstant);
+  if (isValidConstant) {
+    if (V->getType()->isSigned() || C < INT64_MAX) // safe to cast to signed
+      return (int64_t) C;
+    else
+      isValidConstant = false;
+  }
+  return 0;
+}
+
+
 //----------------------------------------------------------------------------
 // Function: CreateSETUWConst
 // 
