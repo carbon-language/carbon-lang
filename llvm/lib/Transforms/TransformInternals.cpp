@@ -18,7 +18,7 @@
 const TargetData TD("LevelRaise: Should be GCC though!");
 
 
-static const Type *getStructOffsetStep(const StructType *STy, unsigned &Offset,
+static const Type *getStructOffsetStep(const StructType *STy, uint64_t &Offset,
                                        std::vector<Value*> &Indices) {
   assert(Offset < TD.getTypeSize(STy) && "Offset not in composite!");
   const StructLayout *SL = TD.getStructLayout(STy);
@@ -56,7 +56,7 @@ const Type *getStructOffsetType(const Type *Ty, unsigned &Offset,
   if (Offset == 0 && StopEarly && !Indices.empty())
     return Ty;    // Return the leaf type
 
-  unsigned ThisOffset;
+  uint64_t ThisOffset;
   const Type *NextType;
   if (const StructType *STy = dyn_cast<StructType>(Ty)) {
     ThisOffset = Offset;
@@ -99,8 +99,8 @@ const Type *ConvertableToGEP(const Type *Ty, Value *OffsetVal,
   // Get the offset and scale values if they exists...
   // A scale of zero with Expr.Var != 0 means a scale of 1.
   //
-  int Offset = Expr.Offset ? getConstantValue(Expr.Offset) : 0;
-  int Scale  = Expr.Scale  ? getConstantValue(Expr.Scale)  : 0;
+  int64_t Offset = Expr.Offset ? getConstantValue(Expr.Offset) : 0;
+  int64_t Scale  = Expr.Scale  ? getConstantValue(Expr.Scale)  : 0;
 
   if (Expr.Var && Scale == 0) Scale = 1;   // Scale != 0 if Expr.Var != 0
  
@@ -115,7 +115,7 @@ const Type *ConvertableToGEP(const Type *Ty, Value *OffsetVal,
 
     if (const StructType *StructTy = dyn_cast<StructType>(CompTy)) {
       // Step into the appropriate element of the structure...
-      unsigned ActualOffset = (Offset < 0) ? 0 : (unsigned)Offset;
+      uint64_t ActualOffset = (Offset < 0) ? 0 : (uint64_t)Offset;
       NextTy = getStructOffsetStep(StructTy, ActualOffset, Indices);
       Offset -= ActualOffset;
     } else {
@@ -123,7 +123,7 @@ const Type *ConvertableToGEP(const Type *Ty, Value *OffsetVal,
       if (!ElTy->isSized())
         return 0; // Type is unreasonable... escape!
       unsigned ElSize = TD.getTypeSize(ElTy);
-      int ElSizeS = (int)ElSize;
+      int64_t ElSizeS = ElSize;
 
       // See if the user is indexing into a different cell of this array...
       if (Scale && (Scale >= ElSizeS || -Scale >= ElSizeS)) {
@@ -131,12 +131,12 @@ const Type *ConvertableToGEP(const Type *Ty, Value *OffsetVal,
         // array by one.  In this case, we will have to insert math to munge
         // the index.
         //
-        int ScaleAmt = Scale/ElSizeS;
+        int64_t ScaleAmt = Scale/ElSizeS;
         if (Scale-ScaleAmt*ElSizeS)
           return 0;  // Didn't scale by a multiple of element size, bail out
         Scale = 0;   // Scale is consumed
 
-        int Index = Offset/ElSize;            // is zero unless Offset > ElSize
+        int64_t Index = Offset/ElSize;        // is zero unless Offset > ElSize
         Offset -= Index*ElSize;               // Consume part of the offset
 
         if (BI) {              // Generate code?
@@ -165,11 +165,11 @@ const Type *ConvertableToGEP(const Type *Ty, Value *OffsetVal,
 
         Indices.push_back(Expr.Var);
         Expr.Var = 0;
-      } else if (Offset >= (int)ElSize || -Offset >= (int)ElSize) {
+      } else if (Offset >= (int64_t)ElSize || -Offset >= (int64_t)ElSize) {
         // Calculate the index that we are entering into the array cell with
-        unsigned Index = Offset/ElSize;
+        uint64_t Index = Offset/ElSize;
         Indices.push_back(ConstantSInt::get(Type::LongTy, Index));
-        Offset -= (int)(Index*ElSize);            // Consume part of the offset
+        Offset -= (int64_t)(Index*ElSize);        // Consume part of the offset
 
       } else if (isa<ArrayType>(CompTy) || Indices.empty()) {
         // Must be indexing a small amount into the first cell of the array

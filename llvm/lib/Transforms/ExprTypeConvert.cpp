@@ -53,13 +53,13 @@ static bool MallocConvertableToType(MallocInst *MI, const Type *Ty,
   if (!Expr.Offset && !Expr.Scale && OldTypeSize == 1) return false;
 
   // Get the offset and scale of the allocation...
-  int OffsetVal = Expr.Offset ? getConstantValue(Expr.Offset) : 0;
-  int ScaleVal = Expr.Scale ? getConstantValue(Expr.Scale) : (Expr.Var ? 1 : 0);
+  int64_t OffsetVal = Expr.Offset ? getConstantValue(Expr.Offset) : 0;
+  int64_t ScaleVal = Expr.Scale ? getConstantValue(Expr.Scale) :(Expr.Var != 0);
 
   // The old type might not be of unit size, take old size into consideration
   // here...
-  int Offset = OffsetVal * OldTypeSize;
-  int Scale  = ScaleVal  * OldTypeSize;
+  int64_t Offset = OffsetVal * OldTypeSize;
+  int64_t Scale  = ScaleVal  * OldTypeSize;
   
   // In order to be successful, both the scale and the offset must be a multiple
   // of the requested data type's size.
@@ -87,13 +87,13 @@ static Instruction *ConvertMallocToType(MallocInst *MI, const Type *Ty,
   unsigned OldTypeSize = TD.getTypeSize(MI->getType()->getElementType());
 
   // Get the offset and scale coefficients that we are allocating...
-  int OffsetVal = (Expr.Offset ? getConstantValue(Expr.Offset) : 0);
-  int ScaleVal = Expr.Scale ? getConstantValue(Expr.Scale) : (Expr.Var ? 1 : 0);
+  int64_t OffsetVal = (Expr.Offset ? getConstantValue(Expr.Offset) : 0);
+  int64_t ScaleVal = Expr.Scale ? getConstantValue(Expr.Scale) : (Expr.Var !=0);
 
   // The old type might not be of unit size, take old size into consideration
   // here...
-  unsigned Offset = (unsigned)OffsetVal * OldTypeSize / DataSize;
-  unsigned Scale  = (unsigned)ScaleVal  * OldTypeSize / DataSize;
+  unsigned Offset = (uint64_t)OffsetVal * OldTypeSize / DataSize;
+  unsigned Scale  = (uint64_t)ScaleVal  * OldTypeSize / DataSize;
 
   // Locate the malloc instruction, because we may be inserting instructions
   It = MI;
