@@ -1,0 +1,116 @@
+<html>
+<title>
+LLVM: llvm-nm tool
+</title>
+
+<body bgcolor=white>
+
+<center><h1>LLVM: <tt>llvm-nm</tt> tool</h1></center>
+<HR>
+
+<h3>NAME</h3>
+<tt>llvm-nm</tt>
+
+<h3>SYNOPSIS</h3>
+<tt>llvm-nm [options] [filenames...]</tt>
+
+<h3>DESCRIPTION</h3>
+
+<p>The <tt>llvm-nm</tt> utility lists the names of symbols from the
+LLVM bytecode files named on the command line, along with some
+ancillary information about each symbol.</p>
+
+<p><tt>llvm-nm</tt>'s default output format is the traditional BSD
+<tt>nm(1)</tt> output format. Each such output record consists of an
+(optional) 8-digit hexadecimal address, followed by a type code
+character, followed by a name, for each symbol. One record is printed
+per line; fields are separated by spaces. When the address is omitted,
+it is replaced by 8 spaces.</p>
+
+<p>Type code characters currently supported, and their meanings, are
+as follows:</p>
+
+<table border>
+<tr><td>U</td><td>Named object is referenced but undefined in this
+              bytecode file</td></tr>
+<tr><td>C</td><td>Common (multiple defs link together into one
+              def)</td></tr>
+<tr><td>W</td><td>Weak reference (multiple defs link together into zero or
+              one defs)</td></tr>
+<tr><td>t</td><td>Local function (text) object</td></tr>
+<tr><td>T</td><td>Global function (text) object</td></tr>
+<tr><td>d</td><td>Local data object</td></tr>
+<tr><td>D</td><td>Global data object</td></tr>
+<tr><td>?</td><td>Something unrecognizable</td></tr>
+</table>
+
+<p>Because LLVM bytecode files typically contain objects that are not
+considered to have addresses until they are linked into an executable
+image or dynamically compiled "just-in-time", <tt>llvm-nm</tt> does
+not print an address for any symbol, even symbols which are defined in
+the bytecode file.</p>
+
+<h3>OPTIONS</h3>
+
+<ul>
+	<li> -P
+	<br>
+        Use POSIX.2 output format. Alias for --format=posix.
+	<p>
+	<li> -B    (default)
+	<br>
+        Use BSD output format. Alias for --format=bsd.
+	<p>
+
+	<li> -help
+	<br>
+	Print a summary of command-line options and their meanings.
+	<p>
+
+	<li> -defined-only
+	<br>
+	Print only symbols defined in this bytecode file (as opposed
+        to symbols which may be referenced by objects in this file,
+        but not defined in this file.)
+	<p>
+
+	<li> -extern-only, -g
+	<br>
+	Print only symbols whose definitions are external; that is,
+        accessible from other bytecode files.
+	<p>
+
+	<li> -undefined-only, -u
+	<br>
+	Print only symbols referenced but not defined in this bytecode
+        file.
+	<p>
+
+	<li> -format=<i>fmt</i>, -f
+	<br>
+	Select an output format; <i>fmt</i> may be sysv, posix, or
+        bsd. The default is bsd.
+	<p>
+</ul>
+
+<h3>BUGS</h3>
+
+<tt>llvm-nm</tt> cannot currently see inside <tt>ar(1)</tt> library
+archive files, like <tt>nm(1)</tt> can. It cannot demangle C++ mangled
+names, like GNU <tt>nm(1)</tt> can.
+
+<h3>EXIT STATUS</h3>
+
+<tt>llvm-nm</tt> exits with an exit code of zero.
+
+<h3>SEE ALSO</h3>
+
+<a href="llvm-dis.html"><tt>llvm-dis</tt></a>,
+<tt>ar(1)</tt>,
+<tt>nm(1)</tt>
+
+<HR>
+Maintained by the <a href="http://llvm.cs.uiuc.edu">LLVM Team</a>.
+</body>
+</html>
+
