@@ -33,12 +33,10 @@ namespace llvm { extern std::ostream *GetLibSupportInfoOutputFile(); }
 // problem is that a Statistic<> object gets destroyed, which ends up calling
 // 'GetLibSupportInfoOutputFile()' (below), which calls this function.
 // LibSupportInfoOutputFilename used to be a global variable, but sometimes it
-// would get destroyed before the Statistic, causing havoc to ensue.  We "fix"
-// this by creating the string the first time it is needed and never destroying
-// it.
+// would get destroyed before the Statistic, causing havoc to ensue.
 static std::string &getLibSupportInfoOutputFilename() {
-  static std::string *LibSupportInfoOutputFilename = new std::string();
-  return *LibSupportInfoOutputFilename;
+  static std::string LibSupportInfoOutputFilename;
+  return LibSupportInfoOutputFilename;
 }
 
 namespace {

@@ -51,6 +51,7 @@ namespace {
     unsigned char *CurStubPtr, *CurFunctionPtr;
   public:
     JITMemoryManager();
+    ~JITMemoryManager();
     
     inline unsigned char *allocateStub(unsigned StubSize);
     inline unsigned char *startFunctionBody();
@@ -67,6 +68,10 @@ JITMemoryManager::JITMemoryManager() {
   // Allocate stubs backwards from the function base, allocate functions forward
   // from the function base.
   CurStubPtr = CurFunctionPtr = FunctionBase;
+}
+
+JITMemoryManager::~JITMemoryManager() {
+  sys::Memory::ReleaseRWX(MemBlock);
 }
 
 unsigned char *JITMemoryManager::allocateStub(unsigned StubSize) {
