@@ -24,35 +24,36 @@ class PointerType;
 //===----------------------------------------------------------------------===//
 //                             AllocationInst Class
 //===----------------------------------------------------------------------===//
-//
-// AllocationInst - This class is the common base class of MallocInst and
-// AllocaInst.
-//
+
+/// AllocationInst - This class is the common base class of MallocInst and
+/// AllocaInst.
+///
 class AllocationInst : public Instruction {
 protected:
   AllocationInst(const Type *Ty, Value *ArraySize, unsigned iTy, 
 		 const std::string &Name = "", Instruction *InsertBefore = 0);
 public:
 
-  // isArrayAllocation - Return true if there is an allocation size parameter
-  // to the allocation instruction that is not 1.
-  //
+  /// isArrayAllocation - Return true if there is an allocation size parameter
+  /// to the allocation instruction that is not 1.
+  ///
   bool isArrayAllocation() const;
 
-  // getArraySize - Get the number of element allocated, for a simple allocation
-  // of a single element, this will return a constant 1 value.
-  //
+  /// getArraySize - Get the number of element allocated, for a simple
+  /// allocation of a single element, this will return a constant 1 value.
+  ///
   inline const Value *getArraySize() const { return Operands[0]; }
   inline Value *getArraySize() { return Operands[0]; }
 
-  // getType - Overload to return most specific pointer type...
+  /// getType - Overload to return most specific pointer type
+  ///
   inline const PointerType *getType() const {
     return reinterpret_cast<const PointerType*>(Instruction::getType()); 
   }
 
-  // getAllocatedType - Return the type that is being allocated by the
-  // instruction.
-  //
+  /// getAllocatedType - Return the type that is being allocated by the
+  /// instruction.
+  ///
   const Type *getAllocatedType() const;
 
   virtual Instruction *clone() const = 0;
@@ -73,6 +74,8 @@ public:
 //                                MallocInst Class
 //===----------------------------------------------------------------------===//
 
+/// MallocInst - an instruction to allocated memory on the heap
+///
 class MallocInst : public AllocationInst {
   MallocInst(const MallocInst &MI);
 public:
@@ -99,6 +102,8 @@ public:
 //                                AllocaInst Class
 //===----------------------------------------------------------------------===//
 
+/// AllocaInst - an instruction to allocate memory on the stack
+///
 class AllocaInst : public AllocationInst {
   AllocaInst(const AllocaInst &);
 public:
@@ -125,6 +130,8 @@ public:
 //                                 FreeInst Class
 //===----------------------------------------------------------------------===//
 
+/// FreeInst - an instruction to deallocate memory
+///
 struct FreeInst : public Instruction {
   FreeInst(Value *Ptr, Instruction *InsertBefore = 0);
 
@@ -147,6 +154,8 @@ struct FreeInst : public Instruction {
 //                                LoadInst Class
 //===----------------------------------------------------------------------===//
 
+/// LoadInst - an instruction for reading from memory 
+///
 class LoadInst : public Instruction {
   LoadInst(const LoadInst &LI) : Instruction(LI.getType(), Load) {
     Volatile = LI.isVolatile();
@@ -161,6 +170,7 @@ public:
 
   /// isVolatile - Return true if this is a load from a volatile memory
   /// location.
+  ///
   bool isVolatile() const { return Volatile; }
 
   /// setVolatile - Specify whether this is a volatile load or not.
@@ -190,6 +200,8 @@ public:
 //                                StoreInst Class
 //===----------------------------------------------------------------------===//
 
+/// StoreInst - an instruction for storing to memory 
+///
 class StoreInst : public Instruction {
   StoreInst(const StoreInst &SI) : Instruction(SI.getType(), Store) {
     Volatile = SI.isVolatile();
@@ -206,6 +218,7 @@ public:
 
   /// isVolatile - Return true if this is a load from a volatile memory
   /// location.
+  ///
   bool isVolatile() const { return Volatile; }
 
   /// setVolatile - Specify whether this is a volatile load or not.
@@ -235,6 +248,9 @@ public:
 //                             GetElementPtrInst Class
 //===----------------------------------------------------------------------===//
 
+/// GetElementPtrInst - an instruction for type-safe pointer arithmetic to
+/// access elements of arrays and structs
+///
 class GetElementPtrInst : public Instruction {
   GetElementPtrInst(const GetElementPtrInst &EPI)
     : Instruction(reinterpret_cast<const Type*>(EPI.getType()), GetElementPtr) {
@@ -262,12 +278,8 @@ public:
 				    const std::vector<Value*> &Indices,
 				    bool AllowStructLeaf = false);
   
-  inline op_iterator       idx_begin()       {
-    return op_begin()+1;
-  }
-  inline const_op_iterator idx_begin() const {
-    return op_begin()+1;
-  }
+  inline op_iterator       idx_begin()       { return op_begin()+1; }
+  inline const_op_iterator idx_begin() const { return op_begin()+1; }
   inline op_iterator       idx_end()         { return op_end(); }
   inline const_op_iterator idx_end()   const { return op_end(); }
 
