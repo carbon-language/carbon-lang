@@ -77,7 +77,7 @@ $(filter-out clean clean-local,UserTargets):: $(BUILT_SOURCES)
 
 clean-local::
 ifneq ($(strip $(BUILT_SOURCES)),)
-	$(Verb) $(RM) -f $(BUILT_SOURCES)
+	-$(Verb) $(RM) -f $(BUILT_SOURCES)
 endif
 
 $(BUILT_SOURCES) : $(ObjMakefiles)
@@ -374,7 +374,7 @@ SubDirs += $(PARALLEL_DIRS)
 # recursive targets are added.
 all      :: $(addsuffix /.makeall      ,$(PARALLEL_DIRS))
 clean    :: $(addsuffix /.makeclean    ,$(PARALLEL_DIRS))
-clean-all:: $(addsuffix /.makecleanall ,$(PARALLEL_DIRS))
+clean-all:: $(addsuffix /.makeclean-all,$(PARALLEL_DIRS))
 check    :: $(addsuffix /.makecheck    ,$(PARALLEL_DIRS))
 install  :: $(addsuffix /.makeinstall  ,$(PARALLEL_DIRS))
 uninstall:: $(addsuffix /.makeuninstall,$(PARALLEL_DIRS))
@@ -460,7 +460,7 @@ $(LibName.LA): $(BUILT_SOURCES) $(ObjectsLO) $(LibDir)/.dir
 
 clean-local::
 ifneq ($(strip $(LibName.LA)),)
-	$(Verb) $(RM) -f $(LibName.LA)
+	-$(Verb) $(RM) -f $(LibName.LA)
 endif
 
 DestSharedLib = $(libdir)/lib$(LIBRARYNAME)$(SHLIBEXT)
@@ -474,7 +474,7 @@ $(DestSharedLib): $(libdir) $(LibName.LA)
 
 uninstall-local:: 
 	$(Echo) Uninstalling $(BuildMode) Shared Library $(DestSharedLib)
-	$(Verb) $(RM) -f $(DestSharedLib)
+	-$(Verb) $(RM) -f $(DestSharedLib)
 
 endif
 
@@ -504,7 +504,7 @@ $(LibName.BC): $(BUILT_SOURCES) $(ObjectsBC) $(LibDir)/.dir
 
 clean-local::
 ifneq ($(strip $(LibName.BC)),)
-	$(Verb) $(RM) -f $(LibName.BC)
+	-$(Verb) $(RM) -f $(LibName.BC)
 endif
 
 DestBytecodeLib = $(bytecode_libdir)/lib$(LIBRARYNAME).bc
@@ -517,7 +517,7 @@ $(DestBytecodeLib): $(bytecode_libdir) $(LibName.BC)
 
 uninstall-local::
 	$(Echo) Uninstalling $(BuildMode) Bytecode Library $(DestBytecodeLib)
-	$(Verb) $(RM) -f $(DestBytecodeLib)
+	-$(Verb) $(RM) -f $(DestBytecodeLib)
 
 endif
 
@@ -536,7 +536,7 @@ $(LibName.O): $(BUILT_SOURCES) $(ObjectsO) $(LibDir)/.dir
 
 clean-local::
 ifneq ($(strip $(LibName.O)),)
-	$(Verb) $(RM) -f $(LibName.O)
+	-$(Verb) $(RM) -f $(LibName.O)
 endif
 
 DestRelinkedLib = $(libdir)/$(LIBRARYNAME).o
@@ -549,7 +549,7 @@ $(DestRelinkedLib): $(libdir) $(LibName.O)
 
 uninstall-local::
 	$(Echo) Uninstalling $(BuildMode) Object Library $(DestRelinkedLib)
-	$(Verb) $(RM) -f $(DestRelinkedLib)
+	-$(Verb) $(RM) -f $(DestRelinkedLib)
 
 endif
 
@@ -564,13 +564,13 @@ all-local:: $(LibName.A)
 
 $(LibName.A): $(BUILT_SOURCES) $(ObjectsO) $(LibDir)/.dir
 	$(Echo) Building $(BuildMode) Archive Library $(notdir $@)
-	$(Verb)$(RM) -f $@
+	-$(Verb) $(RM) -f $@
 	$(Verb) $(Archive) $@ $(ObjectsO)
 	$(Verb) $(Ranlib) $@
 
 clean-local::
 ifneq ($(strip $(LibName.A)),)
-	$(Verb) $(RM) -f $(LibName.A)
+	-$(Verb) $(RM) -f $(LibName.A)
 endif
 
 DestArchiveLib := $(libdir)/lib$(LIBRARYNAME).a
@@ -584,7 +584,7 @@ $(DestArchiveLib): $(libdir) $(LibName.A)
 
 uninstall-local::
 	$(Echo) Uninstalling $(BuildMode) Archive Library $(DestArchiveLib)
-	$(Verb) $(RM) -f $(DestArchiveLib)
+	-$(Verb) $(RM) -f $(DestArchiveLib)
 
 endif
 
@@ -635,7 +635,7 @@ all-local:: $(ToolBuildPath)
 
 clean-local::
 ifneq ($(strip $(ToolBuildPath)),)
-	$(Verb) $(RM) -f $(ToolBuildPath)
+	-$(Verb) $(RM) -f $(ToolBuildPath)
 endif
 
 $(ToolBuildPath): $(BUILT_SOURCES) $(ObjectsO) $(ProjLibsPaths) $(LLVMLibsPaths)\
@@ -655,7 +655,7 @@ $(DestTool): $(bindir) $(ToolBuildPath)
 
 uninstall-local::
 	$(Echo) Uninstalling $(BuildMode) $(DestTool)
-	$(Verb) $(RM) -f $(DestTool)
+	-$(Verb) $(RM) -f $(DestTool)
 
 endif
 
@@ -811,7 +811,7 @@ $(INCFiles) : $(TBLGEN) $(TDFiles)
 	$(Verb) $(TableGen) -gen-emitter -o $@ $<
 
 clean-local::
-	$(Verb) $(RM) -f $(INCFiles)
+	-$(Verb) $(RM) -f $(INCFiles)
 
 endif
 
@@ -847,6 +847,7 @@ LexOutput := $(strip $(patsubst %.l,%.cpp,$(LexFiles)))
 	  > $@
 
 clean-local::
+	-$(Verb) $(RM) -f $(LexOutput)
 	$(Verb) $(RM) -f $(LexOutput)
 
 endif
@@ -875,6 +876,7 @@ YaccOutput := $(addprefix $(patsubst %.y,%,$(YaccFiles)),.h .cpp .output)
 	$(Verb) $(MV) -f $*.tab.h $*.h
 
 clean-local::
+	-$(Verb) $(RM) -f $(YaccOutput)
 	$(Verb) $(RM) -f $(YaccOutput)
 endif
 
@@ -901,15 +903,15 @@ endif
 # errors or disastrous removal.
 clean-local::
 ifneq ($(strip $(ObjDir)),)
-	$(Verb) $(RM) -rf $(ObjDir)
+	-$(Verb) $(RM) -rf $(ObjDir)
 endif
-	$(Verb) $(RM) -f core core.[0-9][0-9]* *.o *.d *~ *.flc
+	-$(Verb) $(RM) -f core core.[0-9][0-9]* *.o *.d *~ *.flc
 ifneq ($(strip $(SHLIBEXT)),) # Extra paranoia - make real sure SHLIBEXT is set
-	$(Verb)	$(RM) -f *$(SHLIBEXT)
+	-$(Verb) $(RM) -f *$(SHLIBEXT)
 endif
 
 clean-all-local::
-	$(Verb) $(RM) -rf Debug Release Profile
+	-$(Verb) $(RM) -rf Debug Release Profile
 
 # Build tags database for Emacs/Xemacs:
 tags:: TAGS
@@ -1041,7 +1043,7 @@ dist-check:: $(DistCheckTop) $(DistTarGZip)
 
 dist-clean::
 	$(Echo) Cleaning distribution files
-	$(Verb) $(RM) -rf $(DistTarGZip) $(DistTarBZ2) $(DistZip) $(DistName) $(DistCheckDir)
+	-$(Verb) $(RM) -rf $(DistTarGZip) $(DistTarBZ2) $(DistZip) $(DistName) $(DistCheckDir)
 
 endif
 
