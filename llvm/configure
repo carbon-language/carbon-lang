@@ -1779,7 +1779,7 @@ if test "${llvm_cv_target_arch+set}" = set; then
 else
   case $target in
   i?86-*)                 llvm_cv_target_arch="x86" ;;
-  amd64-* | x86_64-*)     llvm_cv_target_arch="AMD64" ;;
+  amd64-* | x86_64-*)     llvm_cv_target_arch="X86_64" ;;
   sparc*-*)               llvm_cv_target_arch="Sparc" ;;
   powerpc*-*)             llvm_cv_target_arch="PowerPC" ;;
   *)                      llvm_cv_target_arch="Unknown" ;;
@@ -2991,7 +2991,7 @@ else
  ;;
     PowerPC) JIT=TARGET_HAS_JIT=1
  ;;
-    AMD64)   JIT=
+    x86_64)  JIT=
  ;;
     *)       JIT=
  ;;
