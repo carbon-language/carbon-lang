@@ -25,12 +25,11 @@ LObjects := $(addprefix Output/,$(LObjs))
 # Link the library, then perform postlink optimization...
 $(DESTLIBNAME): $(DESTLIBDIR)/.dir $(LObjects)
 	$(LLINK) -f $(LObjects) $(LDFLAGS) | \
-	   $(LOPT) -f -deadtypeelim -raise -constprop -dce -o $@
+	   $(LOPT) -f -funcresolve -deadtypeelim -globaldce -o $@
 
-# Install target for libraries: Copy into the gcc install directory in chris's
-# tree...
+# Install target for libraries: Copy into the gcc install directory.
 #
-INSTALL_DIR := /home/vadve/lattner/cvs/gcc_install_x86/llvm/lib/
+INSTALL_DIR := $(LLVMGCCDIR)/bytecode-libs/
 
 install:: $(DESTLIBNAME)
 	cp $(DESTLIBNAME) $(INSTALL_DIR)
