@@ -19,11 +19,9 @@
 
 #define DEBUG_TYPE "inline"
 #include "llvm/CallGraphSCCPass.h"
-#include <set>
 
 namespace llvm {
-
-class CallSite;
+  class CallSite;
 
 /// Inliner - This class contains all of the helper code which is used to
 /// perform the inlining operations that does not depend on the policy.
@@ -51,12 +49,6 @@ struct Inliner : public CallGraphSCCPass {
   /// not inlined.
   ///
   virtual int getInlineCost(CallSite CS) = 0;
-  
-  /// getRecursiveInlineCost - This method can be implemented by subclasses if
-  /// it wants to treat calls to functions within the current SCC specially.  If
-  /// this method is not overloaded, it just chains to getInlineCost().
-  ///
-  virtual int getRecursiveInlineCost(CallSite CS);
 
 private:
   // InlineThreshold - Cache the value here for easy access.
