@@ -182,6 +182,12 @@ public:
     return get(RegNo).Name;
   }
 
+  /// getNumRegs - Return the number of registers this target has
+  /// (useful for sizing arrays holding per register information)
+  unsigned getNumRegs() const {
+    return NumRegs;
+  }
+
   virtual const unsigned* getCalleeSaveRegs() const = 0;
 
 
