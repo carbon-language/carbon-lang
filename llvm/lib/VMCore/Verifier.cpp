@@ -44,6 +44,7 @@
 #include "llvm/Constants.h"
 #include "llvm/Pass.h"
 #include "llvm/Module.h"
+#include "llvm/ModuleProvider.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Instructions.h"
 #include "llvm/Intrinsics.h"
@@ -619,19 +620,14 @@ FunctionPass *llvm::createVerifierPass() {
 
 // verifyFunction - Create 
 bool llvm::verifyFunction(const Function &f) {
-  Function &F = (Function&)f;
+  Function &F = const_cast<Function&>(f);
   assert(!F.isExternal() && "Cannot verify external functions");
-
-  DominatorSet DS;
-  DS.doInitialization(*F.getParent());
-  DS.runOnFunction(F);
-
-  Verifier V(DS);
-  V.runOnFunction(F);
-
-  DS.doFinalization(*F.getParent());
-
-  return V.Broken;
+  
+  FunctionPassManager FPM(new ExistingModuleProvider(F.getParent()));
+  Verifier *V = new Verifier();
+  FPM.add(V);
+  FPM.run(F);
+  return V->Broken;
 }
 
 /// verifyModule - Check a module for errors, printing messages on stderr.
