@@ -201,7 +201,7 @@ end
 ;
 int "checkFoldGEP"(%Domain* %D, long %idx)
 begin
-        %reg841 = getelementptr %Domain* %D, long 0, ubyte 2, long %idx
+        %reg841 = getelementptr %Domain* %D, long 0, ubyte 1
         %reg820 = load int* %reg841
         ret int %reg820
 end

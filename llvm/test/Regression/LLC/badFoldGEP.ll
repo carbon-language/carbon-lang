@@ -10,7 +10,7 @@
 ;; 
 
 %Domain = type { sbyte*, int, int*, int, int, int*, %Domain* }
-%domain_array = internal uninitialized global [497 x %Domain] 
+%domain_array = uninitialized global [497 x %Domain] 
 
 implementation; Functions:
 

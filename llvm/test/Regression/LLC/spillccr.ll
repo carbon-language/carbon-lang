@@ -16,7 +16,7 @@
 	%struct.hash = type { %HashEntry*, int (uint)*, int }
 	%struct.hash_entry = type { uint, sbyte*, %HashEntry }
 	%struct.vert_st = type { int, %Vertex, %Hash }
-%HashRange = internal uninitialized global int		; <int*> [#uses=1]
+%HashRange = uninitialized global int		; <int*> [#uses=1]
 %.LC0 = internal global [13 x sbyte] c"Make phase 2\00"		; <[13 x sbyte]*> [#uses=1]
 %.LC1 = internal global [13 x sbyte] c"Make phase 3\00"		; <[13 x sbyte]*> [#uses=1]
 %.LC2 = internal global [13 x sbyte] c"Make phase 4\00"		; <[13 x sbyte]*> [#uses=1]
