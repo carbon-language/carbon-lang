@@ -171,13 +171,16 @@ static bool TestMergedProgram(BugDriver &BD, Module *M1, Module *M2,
                               bool DeleteInputs) {
   // Link the two portions of the program back to together.
   std::string ErrorMsg;
-  if (!DeleteInputs) M1 = CloneModule(M1);
+  if (!DeleteInputs) {
+    M1 = CloneModule(M1);
+    M2 = CloneModule(M2);
+  }
   if (LinkModules(M1, M2, &ErrorMsg)) {
     std::cerr << BD.getToolName() << ": Error linking modules together:"
               << ErrorMsg << '\n';
     exit(1);
   }
-  if (DeleteInputs) delete M2;  // We are done with this module...
+  delete M2;   // We are done with this module.
 
   Module *OldProgram = BD.swapProgramIn(M1);
 
@@ -289,6 +292,12 @@ static bool ExtractLoops(BugDriver &BD,
 
     std::cout << "*** Loop extraction successful!\n";
 
+    std::vector<std::pair<std::string, const FunctionType*> > MisCompFunctions;
+    for (Module::iterator I = ToOptimizeLoopExtracted->begin(),
+           E = ToOptimizeLoopExtracted->end(); I != E; ++I)
+      MisCompFunctions.push_back(std::make_pair(I->getName(),
+                                                I->getFunctionType()));
+
     // Okay, great!  Now we know that we extracted a loop and that loop
     // extraction both didn't break the program, and didn't mask the problem.
     // Replace the current program with the loop extracted version, and try to
@@ -299,21 +308,18 @@ static bool ExtractLoops(BugDriver &BD,
                 << ErrorMsg << '\n';
       exit(1);
     }
+    delete ToOptimizeLoopExtracted;
 
     // All of the Function*'s in the MiscompiledFunctions list are in the old
     // module.  Update this list to include all of the functions in the
     // optimized and loop extracted module.
     MiscompiledFunctions.clear();
-    for (Module::iterator I = ToOptimizeLoopExtracted->begin(),
-           E = ToOptimizeLoopExtracted->end(); I != E; ++I) {
-      if (!I->isExternal()) {
-        Function *NewF = ToNotOptimize->getFunction(I->getName(),
-                                                    I->getFunctionType());
-        assert(NewF && "Function not found??");
-        MiscompiledFunctions.push_back(NewF);
-      }
+    for (unsigned i = 0, e = MisCompFunctions.size(); i != e; ++i) {
+      Function *NewF = ToNotOptimize->getFunction(MisCompFunctions[i].first,
+                                                  MisCompFunctions[i].second);
+      assert(NewF && "Function not found??");
+      MiscompiledFunctions.push_back(NewF);
     }
-    delete ToOptimizeLoopExtracted;
 
     BD.setNewProgram(ToNotOptimize);
     MadeChange = true;
@@ -423,12 +429,19 @@ static bool ExtractBlocks(BugDriver &BD,
   // together.
   delete ToExtract;
 
+  std::vector<std::pair<std::string, const FunctionType*> > MisCompFunctions;
+  for (Module::iterator I = Extracted->begin(), E = Extracted->end();
+       I != E; ++I)
+    MisCompFunctions.push_back(std::make_pair(I->getName(),
+                                              I->getFunctionType()));
+
   std::string ErrorMsg;
   if (LinkModules(ProgClone, Extracted, &ErrorMsg)) {
     std::cerr << BD.getToolName() << ": Error linking modules together:"
               << ErrorMsg << '\n';
     exit(1);
   }
+  delete Extracted;
 
   // Set the new program and delete the old one.
   BD.setNewProgram(ProgClone);
@@ -436,15 +449,12 @@ static bool ExtractBlocks(BugDriver &BD,
   // Update the list of miscompiled functions.
   MiscompiledFunctions.clear();
 
-  for (Module::iterator I = Extracted->begin(), E = Extracted->end(); I != E;
-       ++I)
-    if (!I->isExternal()) {
-      Function *NF = ProgClone->getFunction(I->getName(), I->getFunctionType());
-      assert(NF && "Mapped function not found!");
-      MiscompiledFunctions.push_back(NF);
-    }
-
-  delete Extracted;
+  for (unsigned i = 0, e = MisCompFunctions.size(); i != e; ++i) {
+    Function *NewF = ProgClone->getFunction(MisCompFunctions[i].first,
+                                            MisCompFunctions[i].second);
+    assert(NewF && "Function not found??");
+    MiscompiledFunctions.push_back(NewF);
+  }
 
   return true;
 }
