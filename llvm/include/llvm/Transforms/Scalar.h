@@ -279,11 +279,20 @@ FunctionPass *createLowerSelectPass(bool OnlyFP = false);
 // handling mechanisms.  Note that after this pass runs the CFG is not entirely
 // accurate (exceptional control flow edges are not correct anymore) so only
 // very simple things should be done after the lowerinvoke pass has run (like
-// generation of native code).  This should not be used as a general purpose "my
-// LLVM-to-LLVM pass doesn't support the invoke instruction yet" lowering pass.
+// generation of native code).  This should *NOT* be used as a general purpose
+// "my LLVM-to-LLVM pass doesn't support the invoke instruction yet" lowering
+// pass.
 //
 FunctionPass *createLowerInvokePass();
 extern const PassInfo *LowerInvokePassID;
+
+  
+//===----------------------------------------------------------------------===//
+/// createLowerGCPass - This function returns an instance of the "lowergc"
+/// pass, which lowers garbage collection intrinsics to normal LLVM code.
+///
+FunctionPass *createLowerGCPass();
+  
 
 //===----------------------------------------------------------------------===//
 //
