@@ -1,0 +1,197 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head><title>How to submit an LLVM bug report</title></head>
+
+<body bgcolor=white>
+
+<table width="100%" bgcolor="#330077" border=0 cellpadding=4 cellspacing=0>
+<tr><td>&nbsp; <font size=+3 color="#EEEEFF" face="Georgia,Palatino,Times,Roman"><b>How to submit an LLVM bug report</b></font></td>
+</tr></table>
+
+<table border=0 width=100%>
+<tr><td valign=top>
+<p><font size=+1>
+<ol>
+  <li><a href="#introduction">Introduction - Got bugs?</a>
+  <li><a href="#crashers">Crashing Bugs</a>
+    <ul>
+    <li><a href="#front-end">Front-end bugs</a>
+    <li><a href="#gccas">GCCAS bugs</a>
+    <li><a href="#gccld">GCCLD bugs</a>
+    <li><a href="#passes">Bugs in LLVM passes</a>
+    </ul>
+  <li><a href="#miscompilations">Miscompilations</a>
+
+  <p><b>Written by <a href="mailto:sabre@nondot.org">Chris Lattner</a></b><p>
+</ol><p></font>
+</td><td valign=top align=right>
+<img src="Debugging.gif" width=444 height=314>
+</td></tr>
+</table>
+
+
+<!-- *********************************************************************** -->
+<table width="100%" bgcolor="#330077" border=0 cellpadding=4 cellspacing=0>
+<tr><td align=center><font color="#EEEEFF" size=+2 face="Georgia,Palatino"><b>
+<a name="introduction">Introduction - Got bugs?
+</b></font></td></tr></table><ul>
+<!-- *********************************************************************** -->
+
+If you're working with LLVM and run into a bug, we definitely want to know about
+it.  This document describes what you can do to increase the odds of getting it
+fixed quickly.<p>
+
+Basically you have to do two things at a minimum.  First, decide whether the bug
+<a href="#crashers">crashes the compiler</a> (or an LLVM pass), or if the
+compiler is <a href="#miscompilations">miscompiling</a> the program.  Based on
+what type of bug it is, follow the instructions in the linked section to narrow
+down the bug so that the person who fixes it will be able to find the problem
+more easily.<p>
+
+Once you have a reduced test-case, email information about the bug to: <a
+href="mailto:llvmbugs@cs.uiuc.edu">llvmbugs@cs.uiuc.edu</a>.  This should
+include all of the information necessary to reproduce the problem, including
+where you got the LLVM tree from (if you're not working out of CVS).<p>
+
+Thanks for helping us make LLVM better!<p>
+
+
+<!-- *********************************************************************** -->
+</ul><table width="100%" bgcolor="#330077" border=0 cellpadding=4 cellspacing=0>
+<tr><td align=center><font color="#EEEEFF" size=+2 face="Georgia,Palatino"><b>
+<a name="crashers">Crashing Bugs
+</b></font></td></tr></table><ul>
+<!-- *********************************************************************** -->
+
+More often than not, bugs in the compiler cause it to crash - often due to an
+assertion failure of some sort.  If you are running <tt><b>opt</b></tt> or
+<tt><b>analyze</b></tt> directly, and something crashes, jump to the section on
+<a href="#passes">bugs in LLVM passes</a>.  Otherwise, the most important
+piece of the puzzle is to figure out if it is the GCC-based front-end that is
+buggy or if it's one of the LLVM tools that has problems.<p>
+
+To figure out which program is crashing (the front-end, <tt><b>gccas</b></tt>,
+or <tt><b>gccld</b></tt>), run the <tt><b>llvm-gcc</b></tt> command line as you
+were when the crash occurred, but add a <tt>-v</tt> option to the command line.
+The compiler will print out a bunch of stuff, and should end with telling you
+that one of <tt><b>cc1</b></tt>, <tt><b>gccas</b></tt>, or <tt><b>gccld</b></tt>
+crashed.<p>
+
+<ul>
+<li>If <tt><b>cc1</b></tt> crashed, you found a problem with the front-end.
+Jump ahead to the section on <a href="#front-end">front-end bugs</a>.
+<li>If <tt><b>gccas</b></tt> crashed, you found a bug in <a href="#gccas">one of
+the passes in <tt><b>gccas</b></tt></a>.
+<li>If <tt><b>gccld</b></tt> crashed, you found a bug in <a href="#gccld">one
+of the passes in <tt><b>gccld</b></tt></a>.
+<li>Otherwise, something really weird happened.  Email the list with what you
+have at this point.
+</ul><p>
+
+
+<!-- ======================================================================= -->
+</ul><table width="100%" bgcolor="#441188" border=0 cellpadding=4 cellspacing=0>
+<tr><td>&nbsp;</td><td width="100%">&nbsp; 
+<font color="#EEEEFF" face="Georgia,Palatino"><b>
+<a name="front-end">Front-end bugs
+</b></font></td></tr></table><ul>
+
+If the problem is in the front-end, pretty much the only thing you can do is
+preprocess the input (compile with the <tt>-E</tt> option) and send us the
+results.  There is no good way to reduce source-level test-cases that I know
+of... if you do know, send me information and we can extend this section. :)<p>
+
+
+<!-- ======================================================================= -->
+</ul><table width="100%" bgcolor="#441188" border=0 cellpadding=4 cellspacing=0>
+<tr><td>&nbsp;</td><td width="100%">&nbsp; 
+<font color="#EEEEFF" face="Georgia,Palatino"><b>
+<a name="gccas">GCCAS bugs
+</b></font></td></tr></table><ul>
+
+If you find that a bug crashes in the <tt><b>gccas</b></tt> stage of
+compilation, compile your test-case to a <tt>.s</tt> file with the <tt>-S</tt>
+option to <tt><b>llvm-gcc</b></tt>.  Then run:<p>
+
+<pre>
+  <b>gccas</b> -debug-pass=Arguments &lt; /dev/null -o - &gt; /dev/null
+</pre><p>
+
+... which will print a list of arguments, indicating the list of passes that
+<tt><b>gccas</b></tt> runs.  Once you have the input file and the list of
+passes, go to the section on <a href="#passes">debugging bugs in LLVM
+passes</a>.<p>
+
+
+<!-- ======================================================================= -->
+</ul><table width="100%" bgcolor="#441188" border=0 cellpadding=4 cellspacing=0>
+<tr><td>&nbsp;</td><td width="100%">&nbsp; 
+<font color="#EEEEFF" face="Georgia,Palatino"><b>
+<a name="gccld">GCCLD bugs
+</b></font></td></tr></table><ul>
+
+If you find that a bug crashes in the <tt><b>gccld</b></tt> stage of
+compilation, gather all of the <tt>.o</tt> bytecode files and libraries that are
+being linked together (the "<tt><b>llvm-gcc</b> -v</tt>" output should include
+the full list of objects linked).  Then run:<p>
+
+<pre>
+  <b>gccld</b> -debug-pass=Arguments &lt; /dev/null -o - &gt; /dev/null
+</pre><p>
+
+... which will print a list of arguments, indicating the list of passes that
+<tt><b>gccld</b></tt> runs.  Once you have the input files and the list of
+passes, go to the section on <a href="#passes">debugging bugs in LLVM
+passes</a>.<p>
+
+<!-- ======================================================================= -->
+</ul><table width="100%" bgcolor="#441188" border=0 cellpadding=4 cellspacing=0>
+<tr><td>&nbsp;</td><td width="100%">&nbsp; 
+<font color="#EEEEFF" face="Georgia,Palatino"><b>
+<a name="passes">Bugs in LLVM passes
+</b></font></td></tr></table><ul>
+
+At this point, you should have some number of LLVM assembly files or bytecode
+files and a list of passes which crash when run on the specified input.  In
+order to reduce the list of passes (which is probably large) and the input to
+something tractable, use the <tt><b>bugpoint</b></tt> tool as follows:<p>
+
+<pre>
+  <b>bugpoint</b> &lt;input files&gt; &lt;list of passes&gt;
+</pre><p>
+
+<tt><b>bugpoint</b></tt> will print a bunch of output as it reduces the
+test-case, but it should eventually print something like this:<p>
+
+<pre>
+  ...
+  Emitted bytecode to 'bugpoint-reduced-simplified.bc'
+
+  *** You can reproduce the problem with: opt bugpoint-reduced-simplified.bc -licm
+</pre><p>
+
+Once you complete this, please send the LLVM bytecode file and the command line
+to reproduce the problem to the llvmbugs mailing list.<p>
+
+
+<!-- *********************************************************************** -->
+</ul><table width="100%" bgcolor="#330077" border=0 cellpadding=4 cellspacing=0>
+<tr><td align=center><font color="#EEEEFF" size=+2 face="Georgia,Palatino"><b>
+<a name="miscompilations">Miscompilations
+</b></font></td></tr></table><ul>
+<!-- *********************************************************************** -->
+
+Fortunately we haven't had to many miscompilations.  Because of this, this
+section is a TODO.  Basically, use bugpoint to track down the problem.<p>
+
+
+<!-- *********************************************************************** -->
+</ul>
+<!-- *********************************************************************** -->
+
+<hr><font size-1>
+<address><a href="mailto:sabre@nondot.org">Chris Lattner</a></address>
+<!-- Created: Tue Aug  6 15:00:33 CDT 2002 -->
+<!-- hhmts start -->
+Last modified: Wed May 21 17:20:13 CDT 2003
+<!-- hhmts end -->
+</font></body></html>
