@@ -377,7 +377,7 @@ static GlobalVariable *SRAGlobal(GlobalVariable *GV) {
     else
       assert(0 && "Unknown aggregate sequential type!");
 
-    if (NumElements > 16 && GV->getNumUses() > 16)
+    if (NumElements > 16 && GV->hasNUsesOrMore(16))
       return 0; // It's not worth it.
     NewGlobals.reserve(NumElements);
     for (unsigned i = 0, e = NumElements; i != e; ++i) {

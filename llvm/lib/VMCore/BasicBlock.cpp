@@ -136,7 +136,7 @@ void BasicBlock::dropAllReferences() {
 // called while the predecessor still refers to this block.
 //
 void BasicBlock::removePredecessor(BasicBlock *Pred) {
-  assert((getNumUses() > 16 ||// Reduce cost of this assertion for complex CFGs.
+  assert((hasNUsesOrMore(16)||// Reduce cost of this assertion for complex CFGs.
           find(pred_begin(this), pred_end(this), Pred) != pred_end(this)) &&
 	 "removePredecessor: BB is not a predecessor!");
 
