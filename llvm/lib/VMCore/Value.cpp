@@ -7,6 +7,7 @@
 #include "llvm/InstrTypes.h"
 #include "llvm/SymbolTable.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/Constant.h"
 #include "Support/LeakDetector.h"
 #include <algorithm>
 
@@ -45,23 +46,23 @@ Value::~Value() {
   LeakDetector::removeGarbageObject(this);
 }
 
-void Value::replaceAllUsesWith(Value *D) {
-  assert(D && "Value::replaceAllUsesWith(<null>) is invalid!");
-  assert(D != this && "V->replaceAllUsesWith(V) is NOT valid!");
-  assert(D->getType() == getType() &&
+
+
+
+void Value::replaceAllUsesWith(Value *New) {
+  assert(New && "Value::replaceAllUsesWith(<null>) is invalid!");
+  assert(New != this && "this->replaceAllUsesWith(this) is NOT valid!");
+  assert(New->getType() == getType() &&
          "replaceAllUses of value with new value of different type!");
   while (!Uses.empty()) {
     User *Use = Uses.back();
-#ifndef NDEBUG
-    unsigned NumUses = Uses.size();
-#endif
-    Use->replaceUsesOfWith(this, D);
-
-#ifndef NDEBUG      // only in -g mode...
-    if (Uses.size() == NumUses)
-      std::cerr << "Use: " << *Use << "replace with: " << *D;
-#endif
-    assert(Uses.size() != NumUses && "Didn't remove definition!");
+    // Must handle Constants specially, we cannot call replaceUsesOfWith on a
+    // constant!
+    if (Constant *C = dyn_cast<Constant>(Use)) {
+      C->replaceUsesOfWithOnConstant(this, New);
+    } else {
+      Use->replaceUsesOfWith(this, New);
+    }
   }
 }
 
@@ -105,6 +106,9 @@ User::User(const Type *Ty, ValueTy vty, const std::string &name)
 void User::replaceUsesOfWith(Value *From, Value *To) {
   if (From == To) return;   // Duh what?
 
+  assert(!isa<Constant>(this) &&
+         "Cannot call User::replaceUsesofWith on a constant!");
+
   for (unsigned i = 0, E = getNumOperands(); i != E; ++i)
     if (getOperand(i) == From) {  // Is This operand is pointing to oldval?
       // The side effects of this setOperand call include linking to
@@ -113,5 +117,3 @@ void User::replaceUsesOfWith(Value *From, Value *To) {
       setOperand(i, To); // Fix it now...
     }
 }
-
-
