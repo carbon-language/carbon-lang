@@ -16,8 +16,8 @@ include "PowerPCInstrFormats.td"
 
 let isTerminator = 1 in {
   let isReturn = 1 in
-    def BLR : XLForm_2_ext<19, 16, 20, 31, 1, 0, 0, (ops), "blr">;
-  def BCTR : XLForm_2_ext<19, 528, 20, 31, 1, 0, 0, (ops), "bctr">;
+    def BLR : XLForm_2_ext<19, 16, 20, 0, 0, 0, 0, (ops), "blr">;
+  def BCTR : XLForm_2_ext<19, 528, 20, 0, 0, 0, 0, (ops), "bctr">;
 }
 
 def u5imm   : Operand<i8> {
