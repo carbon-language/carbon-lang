@@ -175,7 +175,7 @@ prdirs::
 # which are marked as Phony.
 #
 .PHONY: all dynamic bytecodelib bytecodelib-install
-.PHONY: clean distclean install test bytecode prdirs
+.PHONY: clean cleandeps distclean install test bytecode prdirs
 
 ###########################################################################
 # Miscellaneous paths and commands:
@@ -435,7 +435,7 @@ RObjectsG := $(addprefix $(BUILD_OBJ_DIR)/Debug/,$(RObjs))
 #---------------------------------------------------------
 
 ifdef DIRS
-all install clean test bytecode ::
+all install clean cleandeps test bytecode ::
 	$(VERB) for dir in ${DIRS}; do \
 		(cd $$dir; $(MAKE) $@) || exit 1; \
 	done
@@ -446,16 +446,18 @@ ifdef PARALLEL_DIRS
 all      :: $(addsuffix /.makeall     , $(PARALLEL_DIRS))
 install  :: $(addsuffix /.makeinstall , $(PARALLEL_DIRS))
 clean    :: $(addsuffix /.makeclean   , $(PARALLEL_DIRS))
+cleandeps:: $(addsuffix /.makecleandeps, $(PARALLEL_DIRS))
 test     :: $(addsuffix /.maketest    , $(PARALLEL_DIRS))
 bytecode :: $(addsuffix /.makebytecode, $(PARALLEL_DIRS))
 
-%/.makeall %/.makeinstall %/.makeclean %/.maketest %/.makebytecode:
+%/.makeall %/.makeinstall %/.makeclean %/.makecleandeps %/.maketest \
+    %/.makebytecode:
 	$(VERB) cd $(@D); $(MAKE) $(subst $(@D)/.make,,$@)
 endif
 
 # Handle directories that may or may not exist
 ifdef OPTIONAL_DIRS
-all install clean test bytecode ::
+all install clean cleandeps test bytecode ::
 	$(VERB) for dir in ${OPTIONAL_DIRS}; do \
 		if [ -d $$dir ]; \
 		then\
@@ -831,8 +833,14 @@ $(BUILD_OBJ_DIR)/Depend/%.d: $(SourceDir)%.c $(BUILD_OBJ_DIR)/Depend/.dir
 #
 ifneq ($(MAKECMDGOALS),clean)
 ifneq ($(MAKECMDGOALS),distclean)
+ifneq ($(MAKECMDGOALS),cleandeps)
 ifneq ($(SourceDepend),)
 -include $(SourceDepend)
 endif
 endif
 endif
+endif
+
+cleandeps::
+	$(VERB) rm -f $(SourceDepend)
+
