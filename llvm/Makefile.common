@@ -34,6 +34,9 @@ install ::
 #LibInstDir=/usrl/local/lib/xxx
 #DocInstDir=/usr/doc/xxx
 
+BURG = /home/vadve/vadve/Research/DynOpt/Burg/burg
+BURG_OPTS = -I
+
 #---------------------------------------------------------
 # Compilation options...
 #---------------------------------------------------------
@@ -51,6 +54,9 @@ LibPathsO = -L $(LEVEL)/lib/Support/Release \
             -L $(LEVEL)/lib/CodeGen/TargetMachine/Release \
             -L $(LEVEL)/lib/CodeGen/TargetMachine/Sparc/Release
 
+##            -L $(LEVEL)/lib/CodeGen/InstrSched/Release \
+
+
 LibPathsG = $(LibPathsO:Release=Debug)
 
 
@@ -61,6 +67,9 @@ LibPathsG = $(LibPathsO:Release=Debug)
 LibsO = $(addsuffix /lib*.a,$(subst -L,,$(LibPathsO)))
 LibsG = $(addsuffix /lib*.a,$(subst -L,,$(LibPathsG)))
 
+
+# Special tools used while building
+RunBurg  = $(BURG) $(BURG_OPTS)
 
 # Enable this for profiling support with 'gprof'
 #Prof = -pg
