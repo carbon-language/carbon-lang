@@ -234,7 +234,10 @@ int main(int argc, char **argv, char **envp) {
   // Link in all of the files
   if (LinkFiles(argv[0], Composite.get(), InputFilenames, Verbose))
     return 1; // Error already printed
-  LinkLibraries(argv[0], Composite.get(), Libraries, LibPaths, Verbose, Native);
+
+  if (!LinkAsLibrary)
+    LinkLibraries(argv[0], Composite.get(), Libraries, LibPaths,
+                  Verbose, Native);
 
   // Link in all of the libraries next...
 
