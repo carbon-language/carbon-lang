@@ -18,7 +18,6 @@ class Method;
 class InstrForest;
 class MachineInstr;
 class InstructionNode;
-class TmpInstruction;
 class TargetMachine;
 
 
@@ -27,8 +26,6 @@ class TargetMachine;
  ***************************************************************************/
 
 const unsigned MAX_INSTR_PER_VMINSTR = 8;
-
-const Instruction::OtherOps TMP_INSTRUCTION_OPCODE = Instruction::UserOp1;
 
 extern unsigned	GetInstructionsByRule	(InstructionNode* subtreeRoot,
 					 int ruleForNode,
@@ -74,49 +71,44 @@ bool		SelectInstructionsForMethod	(Method* method,
 //---------------------------------------------------------------------------
 
 class TmpInstruction : public Instruction {
-  TmpInstruction (const TmpInstruction  &ci)
-    : Instruction(ci.getType(), ci.getOpcode())
-  {
-    Operands.reserve(2);
-    Operands.push_back(Use(Operands[0], this));
-    Operands.push_back(Use(Operands[1], this));
+  TmpInstruction(const TmpInstruction &TI)
+    : Instruction(TI.getType(), TI.getOpcode()) {
+    if (!TI.Operands.empty()) {
+      Operands.push_back(Use(TI.Operands[0], this));
+      if (TI.Operands.size() == 2)
+        Operands.push_back(Use(TI.Operands[1], this));
+      else
+        assert(0 && "Bad # operands to TmpInstruction!");
+    }
   }
 public:
   // Constructor that uses the type of S1 as the type of the temporary.
   // s1 must be a valid value.  s2 may be NULL.
-  TmpInstruction(OtherOps opcode, Value *s1, Value* s2,
-                 const std::string &name = "")
-    : Instruction(s1->getType(), opcode, name)
-  {
-    assert(s1 != NULL && "Use different constructor if both operands are 0");
-    Initialize(opcode, s1, s2);
+  TmpInstruction(Value *s1, Value *s2 = 0, const std::string &name = "")
+    : Instruction(s1->getType(), Instruction::UserOp1, name) {
+    Operands.push_back(Use(s1, this));  // s1 must be nonnull
+    if (s2) {
+      Operands.push_back(Use(s2, this));
+#if 0
+      assert(s2->getType() == getType() &&
+             "TmpInstruction operand types do not match!");
+#endif
+    }
   }
   
-  // Constructor that allows the type of the temporary to be specified.
+  // Constructor that requires the type of the temporary to be specified.
   // Both S1 and S2 may be NULL.
-  TmpInstruction(OtherOps opcode, const Type* tmpType,
-                 Value *s1, Value* s2, const std::string &name = "")
-    : Instruction(tmpType, opcode, name)
-  {
-    Initialize(opcode, s1, s2);
+  TmpInstruction(const Type *Ty, Value *s1 = 0, Value* s2 = 0,
+                 const std::string &name = "")
+    : Instruction(Ty, Instruction::UserOp1, name) {
+    if (s1) { Operands.push_back(Use(s1, this)); /*assert(s1->getType() == Ty);*/ }
+    if (s2) { Operands.push_back(Use(s2, this)); /*assert(s2->getType() == Ty);*/ }
   }
   
   virtual Instruction *clone() const { return new TmpInstruction(*this); }
   virtual const char *getOpcodeName() const {
-    return "userOp1";
-  }
-  
-private:
-  void Initialize(OtherOps opcode, Value *s1, Value* s2) {
-    assert(opcode==TMP_INSTRUCTION_OPCODE && "Tmp instruction opcode invalid");
-    Operands.reserve(s1 && s2? 2 : ((s1 || s2)? 1 : 0));
-    if (s1)
-      Operands.push_back(Use(s1, this));
-    if (s2)
-      Operands.push_back(Use(s2, this));
+    return "TemporaryInstruction";
   }
 };
-
-//**************************************************************************/
 
 #endif
