@@ -271,6 +271,13 @@ void SymbolTable::refineAbstractType(const DerivedType *OldType,
           else
             M->getGlobalList().remove(cast<GlobalVariable>(NewGV));
           delete NewGV;
+        } else {
+          // If they are not global values, they must be just random values who
+          // happen to conflict now that types have been resolved.  If this is
+          // the case, reinsert the value into the new plane, allowing it to get
+          // renamed.
+          assert(V.second->getType() == NewType &&"Type resolution is broken!");
+          insert(V.second);
         }
       } else {
         insertEntry(V.first, NewType, V.second);
