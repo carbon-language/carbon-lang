@@ -23,6 +23,39 @@
 
 namespace llvm {
 
+// ilist_traits
+template <>
+class ilist_traits<MachineBasicBlock> {
+  // this is only set by the MachineFunction owning the ilist
+  friend class MachineFunction;
+  MachineFunction* parent;
+  
+public:
+  ilist_traits<MachineBasicBlock>() : parent(0) { }
+  
+  static MachineBasicBlock* getPrev(MachineBasicBlock* N) { return N->Prev; }
+  static MachineBasicBlock* getNext(MachineBasicBlock* N) { return N->Next; }
+  
+  static const MachineBasicBlock*
+  getPrev(const MachineBasicBlock* N) { return N->Prev; }
+  
+  static const MachineBasicBlock*
+  getNext(const MachineBasicBlock* N) { return N->Next; }
+  
+  static void setPrev(MachineBasicBlock* N, MachineBasicBlock* prev) { N->Prev = prev; }
+  static void setNext(MachineBasicBlock* N, MachineBasicBlock* next) { N->Next = next; }
+  
+  static MachineBasicBlock* createNode();
+  void addNodeToList(MachineBasicBlock* N);
+  void removeNodeFromList(MachineBasicBlock* N);
+  void transferNodesFromList(
+			     iplist<MachineBasicBlock, ilist_traits<MachineBasicBlock> >& toList,
+			     ilist_iterator<MachineBasicBlock> first,
+			     ilist_iterator<MachineBasicBlock> last);
+};
+  
+
+
 class Function;
 class TargetMachine;
 class SSARegMap;

@@ -24,6 +24,8 @@
 #include "llvm/Target/TargetFrameInfo.h"
 #include "llvm/Function.h"
 #include "llvm/iOther.h"
+#include "Support/LeakDetector.h"
+
 using namespace llvm;
 
 static AnnotationID MF_AID(
@@ -84,6 +86,22 @@ FunctionPass *llvm::createMachineCodeDeleter() {
 //===---------------------------------------------------------------------===//
 // MachineFunction implementation
 //===---------------------------------------------------------------------===//
+MachineBasicBlock* ilist_traits<MachineBasicBlock>::createNode()
+{
+    MachineBasicBlock* dummy = new MachineBasicBlock();
+    LeakDetector::removeGarbageObject(dummy);
+    return dummy;
+}
+
+void ilist_traits<MachineBasicBlock>::transferNodesFromList(
+    iplist<MachineBasicBlock, ilist_traits<MachineBasicBlock> >& toList,
+    ilist_iterator<MachineBasicBlock> first,
+    ilist_iterator<MachineBasicBlock> last)
+{
+    if (parent != toList.parent)
+        for (; first != last; ++first)
+            first->Parent = toList.parent;
+}
 
 MachineFunction::MachineFunction(const Function *F,
                                  const TargetMachine &TM)
@@ -92,6 +110,7 @@ MachineFunction::MachineFunction(const Function *F,
   MFInfo = new MachineFunctionInfo(*this);
   FrameInfo = new MachineFrameInfo();
   ConstantPool = new MachineConstantPool();
+  BasicBlocks.parent = this;
 }
 
 MachineFunction::~MachineFunction() { 

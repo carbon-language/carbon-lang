@@ -20,29 +20,25 @@
 #include "Support/LeakDetector.h"
 using namespace llvm;
 
-const MachineFunction *MachineBasicBlock::getParent() const {
-  // Get the parent by getting the Function parent of the basic block, and
-  // getting the MachineFunction from it.
-  return &MachineFunction::get(getBasicBlock()->getParent());
-}
-
-MachineFunction *MachineBasicBlock::getParent() {
-  // Get the parent by getting the Function parent of the basic block, and
-  // getting the MachineFunction from it.
-  return &MachineFunction::get(getBasicBlock()->getParent());
-}
-
 // MBBs start out as #-1. When a MBB is added to a MachineFunction, it 
 // gets the next available unique MBB number. If it is removed from a
 // MachineFunction, it goes back to being #-1.
 void ilist_traits<MachineBasicBlock>::addNodeToList (MachineBasicBlock* N)
 {
-  N->Number = N->getParent ()->getNextMBBNumber ();
+  assert(N->Parent == 0 && "machine instruction already in a basic block");
+  N->Parent = parent;
+  N->Number = parent->getNextMBBNumber();
+  LeakDetector::removeGarbageObject(N);
+  
+
 }
 
 void ilist_traits<MachineBasicBlock>::removeNodeFromList (MachineBasicBlock* N)
 {
+  assert(N->Parent != 0 && "machine instruction not in a basic block");
+  N->Parent = 0;
   N->Number = -1;
+  LeakDetector::addGarbageObject(N);
 }
 
 
@@ -93,8 +89,13 @@ void MachineBasicBlock::dump() const
 
 void MachineBasicBlock::print(std::ostream &OS) const
 {
+  if(!getParent()) {
+    OS << "Can't print out MachineBasicBlock because parent MachineFunction is null\n";
+    return;
+  }
     const BasicBlock *LBB = getBasicBlock();
-    OS << "\n" << LBB->getName() << " (" << (const void*)LBB << "):\n";
+    if(LBB)
+      OS << "\n" << LBB->getName() << " (" << (const void*)LBB << "):\n";
     for (const_iterator I = begin(); I != end(); ++I) {
         OS << "\t";
         I->print(OS, getParent()->getTarget());

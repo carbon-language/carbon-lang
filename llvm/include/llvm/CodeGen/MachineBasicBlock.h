@@ -64,10 +64,11 @@ public:
   std::vector<MachineBasicBlock *> Predecessors;
   std::vector<MachineBasicBlock *> Successors;
   int Number;
+  MachineFunction *Parent;
 
 public:
   MachineBasicBlock(const BasicBlock *bb = 0) : Prev(0), Next(0), BB(bb),
-                                                Number(-1) {
+                                                Number(-1), Parent(0) {
     Insts.parent = this;
   }
   ~MachineBasicBlock() {}
@@ -79,8 +80,8 @@ public:
 
   /// getParent - Return the MachineFunction containing this basic block.
   ///
-  const MachineFunction *getParent() const;
-        MachineFunction *getParent();
+  const MachineFunction *getParent() const { return Parent; }
+  MachineFunction *getParent() { return Parent; }
 
   typedef ilist<MachineInstr>::iterator                       iterator;
   typedef ilist<MachineInstr>::const_iterator           const_iterator;
