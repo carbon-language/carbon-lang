@@ -29,8 +29,8 @@ struct MachineInstrBuilder {
 
   /// addReg - Add a new virtual register operand...
   ///
-  MachineInstrBuilder &addReg(int RegNo) {
-    MI->addRegOperand(RegNo);
+  MachineInstrBuilder &addReg(int RegNo, bool isDef = false) {
+    MI->addRegOperand(RegNo, isDef);
     return *this;
   }
 
@@ -72,15 +72,31 @@ struct MachineInstrBuilder {
 };
 
 /// BuildMI - Builder interface.  Specify how to create the initial instruction
-/// itself.
+/// itself.  NumOperands is the number of operands to the machine instruction to
+/// allow for memory efficient representation of machine instructions.
 ///
 inline MachineInstrBuilder BuildMI(MachineOpCode Opcode, unsigned NumOperands) {
   return MachineInstrBuilder(new MachineInstr(Opcode, NumOperands, true, true));
 }
 
+/// BuildMI - This version of the builder inserts the built MachineInstr into
+/// the specified MachineBasicBlock.
+///
 inline MachineInstrBuilder BuildMI(MachineBasicBlock *BB, MachineOpCode Opcode,
                                    unsigned NumOperands) {
   return MachineInstrBuilder(new MachineInstr(BB, Opcode, NumOperands));
+}
+
+/// BuildMI - This version of the builder inserts the built MachineInstr into
+/// the specified MachineBasicBlock, and also sets up the first "operand" as a
+/// destination virtual register.  NumOperands is the number of additional add*
+/// calls that are expected, it does not include the destination register.
+///
+inline MachineInstrBuilder BuildMI(MachineBasicBlock *BB, MachineOpCode Opcode,
+                                   unsigned NumOperands, unsigned DestReg) {
+  return MachineInstrBuilder(new MachineInstr(BB, Opcode,
+                                              NumOperands+1)).addReg(DestReg,
+                                                                     true);
 }
 
 #endif

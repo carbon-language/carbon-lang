@@ -372,10 +372,11 @@ public:
 
   /// addRegOperand - Add a symbolic virtual register reference...
   ///
-  void addRegOperand(int reg) {
+  void addRegOperand(int reg, bool isDef = false) {
     assert(!OperandsComplete() &&
            "Trying to add an operand to a machine instr that is already done!");
-    operands.push_back(MachineOperand(reg, MachineOperand::MO_VirtualRegister));
+    operands.push_back(MachineOperand(reg, MachineOperand::MO_VirtualRegister,
+                                      isDef));
   }
 
   /// addPCDispOperand - Add a PC relative displacement operand to the MI
