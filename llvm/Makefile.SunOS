@@ -19,5 +19,5 @@ ExportSymbols :=
 # be overriden by the Makefile.config option, and should not override it if set.
 #
 ifndef LLVMGCCDIR
-LLVMGCCDIR := /home/vadve/lattner/cvs/gcc_install
+LLVMGCCDIR := /home/vadve/lattner/cvs/gcc_install_sparc
 endif
