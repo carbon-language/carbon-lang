@@ -16,12 +16,14 @@ using std::cerr;
 
 //Routines to get the path trace!
 
-void getPathFrmNode(Node *n, vector<BasicBlock*> &vBB, int pathNo, Graph g, 
+void getPathFrmNode(Node *n, vector<BasicBlock*> &vBB, int pathNo, Graph &g, 
 		    vector<Edge> &stDummy, vector<Edge> &exDummy, 
 		    vector<Edge> &be,
 		    double strand){
-  Graph::nodeList nlist=g.getNodeList(n);
+  Graph::nodeList &nlist = g.getNodeList(n);
   
+  //printGraph(g);
+  //std::cerr<<"Path No: "<<pathNo<<"\n";
   int maxCount=-9999999;
   bool isStart=false;
 
@@ -30,7 +32,7 @@ void getPathFrmNode(Node *n, vector<BasicBlock*> &vBB, int pathNo, Graph g,
 
   double edgeRnd=0;
   Node *nextRoot=n;
-  for(Graph::nodeList::iterator NLI=nlist.begin(), NLE=nlist.end(); NLI!=NLE;
+  for(Graph::nodeList::iterator NLI = nlist.begin(), NLE=nlist.end(); NLI!=NLE;
       ++NLI){
     if(NLI->weight>maxCount && NLI->weight<=pathNo){
       maxCount=NLI->weight;
@@ -116,7 +118,8 @@ static Node *findBB(std::vector<Node *> &st, BasicBlock *BB){
   return NULL;
 }
 
-void getBBtrace(vector<BasicBlock *> &vBB, int pathNo, Function *M){
+void getBBtrace(vector<BasicBlock *> &vBB, int pathNo, Function *M){//,
+  //                vector<Instruction *> &instToErase){
   //step 1: create graph
   //Transform the cfg s.t. we have just one exit node
   
@@ -124,8 +127,14 @@ void getBBtrace(vector<BasicBlock *> &vBB, int pathNo, Function *M){
   std::vector<Edge> edges;
   Node *tmp;
   Node *exitNode=0, *startNode=0;
-  static std::map<Function *, Graph *> graphMap;
+
+  //Creat cfg just once for each function!
+  static std::map<Function *, Graph *> graphMap; 
+
+  //get backedges, exit and start edges for the graphs and store them
   static std::map<Function *, vector<Edge> > stMap, exMap, beMap; 
+  static std::map<Function *, Value *> pathReg; //path register
+
 
   if(!graphMap[M]){
     BasicBlock *ExitNode = 0;
@@ -142,17 +151,39 @@ void getBBtrace(vector<BasicBlock *> &vBB, int pathNo, Function *M){
     //The nodes must be uniquely identified:
     //That is, no two nodes must hav same BB*
   
+    //keep a map for trigger basicblocks!
+    std::map<BasicBlock *, unsigned char> triggerBBs;
     //First enter just nodes: later enter edges
     for(Function::iterator BB = M->begin(), BE=M->end(); BB != BE; ++BB){
-      if(BB->size()==2){
-        const Instruction *inst = BB->getInstList().begin();
-        if(isa<CallInst>(inst)){
-          Instruction *ii1 = BB->getInstList().begin();
-          CallInst *callInst = dyn_cast<CallInst>(ii1);
-          if(callInst->getCalledFunction()->getName()=="trigger")
-            continue;
+      bool cont = false;
+      
+      if(BB->size()==3 || BB->size() ==2){
+        for(BasicBlock::iterator II = BB->begin(), IE = BB->end();
+            II != IE; ++II){
+          if(CallInst *callInst = dyn_cast<CallInst>(&*II)){
+            //std::cerr<<*callInst;
+            Function *calledFunction = callInst->getCalledFunction();
+            if(calledFunction && calledFunction->getName() == "trigger"){
+              triggerBBs[BB] = 9;
+              cont = true;
+              //std::cerr<<"Found trigger!\n";
+              break;
+            }
+          }
         }
       }
+      
+      if(cont)
+        continue;
+      
+      // const Instruction *inst = BB->getInstList().begin();
+      // if(isa<CallInst>(inst)){
+      // Instruction *ii1 = BB->getInstList().begin();
+      // CallInst *callInst = dyn_cast<CallInst>(ii1);
+      // if(callInst->getCalledFunction()->getName()=="trigger")
+      // continue;
+      // }
+      
       Node *nd=new Node(BB);
       nodes.push_back(nd); 
       if(&*BB==ExitNode)
@@ -164,32 +195,55 @@ void getBBtrace(vector<BasicBlock *> &vBB, int pathNo, Function *M){
     assert(exitNode!=0 && startNode!=0 && "Start or exit not found!");
  
     for (Function::iterator BB = M->begin(), BE=M->end(); BB != BE; ++BB){
-      if(BB->size()==2){
-        const Instruction *inst = BB->getInstList().begin();
-        if(isa<CallInst>(inst)){
-          Instruction *ii1 = BB->getInstList().begin();
-          CallInst *callInst = dyn_cast<CallInst>(ii1);
-          if(callInst->getCalledFunction()->getName()=="trigger")
-            continue;
-        }
-      }
-
+      if(triggerBBs[BB] == 9) 
+        continue;
+      
+      //if(BB->size()==3)
+      //if(CallInst *callInst = dyn_cast<CallInst>(&*BB->getInstList().begin()))
+      //if(callInst->getCalledFunction()->getName() == "trigger")
+      //continue;
+      
+      // if(BB->size()==2){
+      //         const Instruction *inst = BB->getInstList().begin();
+      //         if(isa<CallInst>(inst)){
+      //           Instruction *ii1 = BB->getInstList().begin();
+      //           CallInst *callInst = dyn_cast<CallInst>(ii1);
+      //           if(callInst->getCalledFunction()->getName()=="trigger")
+      //             continue;
+      //         }
+      //       }
+      
       Node *nd=findBB(nodes, BB);
       assert(nd && "No node for this edge!");
-
+      
       for(BasicBlock::succ_iterator s=succ_begin(&*BB), se=succ_end(&*BB); 
           s!=se; ++s){
-        if((*s)->size()==2){
-          const Instruction *inst = (*s)->getInstList().begin();
-          if(isa<CallInst>(inst)){
-            Instruction *ii1 = (*s)->getInstList().begin();
-            CallInst *callInst = dyn_cast<CallInst>(ii1);
-            if(callInst->getCalledFunction()->getName()=="trigger")
-              continue;
-          }
+        
+        if(triggerBBs[*s] == 9){
+          //if(!pathReg[M]){ //Get the path register for this!
+          //if(BB->size()>8)
+          //  if(LoadInst *ldInst = dyn_cast<LoadInst>(&*BB->getInstList().begin()))
+          //    pathReg[M] = ldInst->getPointerOperand();
+          //}
+          continue;
         }
-
-        Node *nd2=findBB(nodes,*s);
+        //if((*s)->size()==3)
+        //if(CallInst *callInst = 
+        //   dyn_cast<CallInst>(&*(*s)->getInstList().begin()))
+        //  if(callInst->getCalledFunction()->getName() == "trigger")
+        //    continue;
+        
+        //  if((*s)->size()==2){
+        //           const Instruction *inst = (*s)->getInstList().begin();
+        //           if(isa<CallInst>(inst)){
+        //             Instruction *ii1 = (*s)->getInstList().begin();
+        //             CallInst *callInst = dyn_cast<CallInst>(ii1);
+        //             if(callInst->getCalledFunction()->getName()=="trigger")
+        //               continue;
+        //           }
+        //         }
+        
+        Node *nd2 = findBB(nodes,*s);
         assert(nd2 && "No node for this edge!");
         Edge ed(nd,nd2,0);
         edges.push_back(ed);
@@ -201,23 +255,45 @@ void getBBtrace(vector<BasicBlock *> &vBB, int pathNo, Function *M){
     Graph *g = graphMap[M];
 
     if (M->size() <= 1) return; //uninstrumented 
-
+    
     //step 2: getBackEdges
     //vector<Edge> be;
     std::map<Node *, int> nodePriority;
     g->getBackEdges(beMap[M], nodePriority);
-
+    
     //step 3: add dummy edges
     //vector<Edge> stDummy;
     //vector<Edge> exDummy;
     addDummyEdges(stMap[M], exMap[M], *g, beMap[M]);
-
+    
     //step 4: value assgn to edges
     int numPaths = valueAssignmentToEdges(*g, nodePriority, beMap[M]);
   }
-
+  
+  
   //step 5: now travel from root, select max(edge) < pathNo, 
   //and go on until reach the exit
-  return getPathFrmNode(graphMap[M]->getRoot(), vBB, pathNo, *graphMap[M], 
-                        stMap[M], exMap[M], beMap[M], -1);
+  getPathFrmNode(graphMap[M]->getRoot(), vBB, pathNo, *graphMap[M], 
+                 stMap[M], exMap[M], beMap[M], -1);
+  
+
+  //post process vBB to locate instructions to be erased
+  /*
+  if(pathReg[M]){
+    for(vector<BasicBlock *>::iterator VBI = vBB.begin(), VBE = vBB.end();
+        VBI != VBE; ++VBI){
+      for(BasicBlock::iterator BBI = (*VBI)->begin(), BBE = (*VBI)->end();
+          BBI != BBE; ++BBI){
+        if(LoadInst *ldInst = dyn_cast<LoadInst>(&*BBI)){
+          if(pathReg[M] == ldInst->getPointerOperand())
+            instToErase.push_back(ldInst);
+        }
+        else if(StoreInst *stInst = dyn_cast<StoreInst>(&*BBI)){
+          if(pathReg[M] == stInst->getPointerOperand())
+            instToErase.push_back(stInst);
+        }
+      }
+    }
+  }
+  */
 }

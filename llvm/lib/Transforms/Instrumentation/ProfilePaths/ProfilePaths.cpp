@@ -155,6 +155,8 @@ bool ProfilePaths::runOnFunction(Function &F){
   // numPaths is the number of acyclic paths in the graph
   int numPaths=valueAssignmentToEdges(g, nodePriority, be);
 
+  //if(numPaths<=1) return false;
+
   if(numPaths<=1 || numPaths >5000) return false;
   
 #ifdef DEBUG_PATH_PROFILES  
@@ -172,10 +174,17 @@ bool ProfilePaths::runOnFunction(Function &F){
     AllocaInst(Type::IntTy, 
                ConstantUInt::get(Type::UIntTy,1),"R");
 
-  Instruction *countVar=new 
-    AllocaInst(Type::IntTy, 
-               ConstantUInt::get(Type::UIntTy, numPaths), "Count");
-  
+  //Instruction *countVar=new 
+  //AllocaInst(Type::IntTy, 
+  //           ConstantUInt::get(Type::UIntTy, numPaths), "Count");
+
+  //initialize counter array!
+  std::vector<Constant*> arrayInitialize;
+  for(int xi=0; xi<numPaths; xi++)
+    arrayInitialize.push_back(ConstantSInt::get(Type::IntTy, 0));
+
+  Constant *initializer =  ConstantArray::get(ArrayType::get(Type::IntTy, numPaths), arrayInitialize);
+  GlobalVariable *countVar = new GlobalVariable(ArrayType::get(Type::IntTy, numPaths), false, true, initializer, "Count", F.getParent());
   static GlobalVariable *threshold = NULL;
   static bool insertedThreshold = false;
 
@@ -191,7 +200,7 @@ bool ProfilePaths::runOnFunction(Function &F){
 
   // insert initialization code in first (entry) BB
   // this includes initializing r and count
-  insertInTopBB(&F.getEntryNode(),numPaths, rVar, countVar, threshold);
+  insertInTopBB(&F.getEntryNode(),numPaths, rVar, threshold);
     
   //now process the graph: get path numbers,
   //get increments along different paths,

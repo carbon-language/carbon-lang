@@ -479,7 +479,7 @@ static void moveDummyCode(vector<Edge> &stDummy,
 //appropriate locations
 void processGraph(Graph &g, 
 		  Instruction *rInst, 
-		  Instruction *countInst, 
+		  Value *countInst, 
 		  vector<Edge >& be, 
 		  vector<Edge >& stDummy, 
 		  vector<Edge >& exDummy, 

@@ -151,7 +151,7 @@ bool Graph::hasEdgeAndWt(Edge ed){
     return false;
 
   Node *nd2=ed.getSecond();
-  nodeList nli = nodes[ed.getFirst()];//getNodeList(ed.getFirst());
+  nodeList &nli = nodes[ed.getFirst()];//getNodeList(ed.getFirst());
   
   for(nodeList::iterator NI=nli.begin(), NE=nli.end(); NI!=NE; ++NI)
     if(*NI->element == *nd2 && ed.getWeight()==NI->weight)
@@ -400,7 +400,7 @@ Graph* Graph::getMaxSpanningTree(){
     
     //assign wt(v) to all adjacent vertices v of u
     //only if v is in vt
-    Graph::nodeList nl=getNodeList(u);
+    Graph::nodeList &nl = getNodeList(u);
     for(nodeList::iterator NI=nl.begin(), NE=nl.end(); NI!=NE; ++NI){
       Node *v=NI->element;
       int weight=-NI->weight;
@@ -437,7 +437,7 @@ void Graph::printGraph(){
    cerr<<"Graph---------------------\n";
    for(vector<Node *>::iterator LI=lt.begin(), LE=lt.end(); LI!=LE; ++LI){
      cerr<<((*LI)->getElement())->getName()<<"->";
-     Graph::nodeList nl=getNodeList(*LI);
+     Graph::nodeList &nl = getNodeList(*LI);
      for(Graph::nodeList::iterator NI=nl.begin(), NE=nl.end(); NI!=NE; ++NI){
        cerr<<":"<<"("<<(NI->element->getElement())
 	 ->getName()<<":"<<NI->element->getWeight()<<","<<NI->weight<<")";
@@ -483,7 +483,7 @@ void Graph::makeUnDirectional(){
   vector<Node* > allNodes=getAllNodes();
   for(vector<Node *>::iterator NI=allNodes.begin(), NE=allNodes.end(); NI!=NE; 
       ++NI) {
-    nodeList nl=getNodeList(*NI);
+    nodeList &nl = getNodeList(*NI);
     for(nodeList::iterator NLI=nl.begin(), NLE=nl.end(); NLI!=NLE; ++NLI){
       Edge ed(NLI->element, *NI, NLI->weight);
       if(!hasEdgeAndWt(ed)){
@@ -502,7 +502,7 @@ void Graph::reverseWts(){
   vector<Node *> allNodes=getAllNodes();
   for(vector<Node *>::iterator NI=allNodes.begin(), NE=allNodes.end(); NI!=NE; 
       ++NI) {
-    nodeList node_list=getNodeList(*NI);
+    nodeList &node_list = getNodeList(*NI);
     for(nodeList::iterator NLI=nodes[*NI].begin(), NLE=nodes[*NI].end(); 
 	NLI!=NLE; ++NLI)
       NLI->weight=-NLI->weight;

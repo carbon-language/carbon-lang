@@ -25,7 +25,7 @@ using std::vector;
 
 
 static void getTriggerCode(Module *M, BasicBlock *BB, int MethNo, Value *pathNo,
-                           Value *cnt){ 
+                           Value *cnt, Instruction *rInst){ 
   
   vector<const Type*> args;
   //args.push_back(PointerType::get(Type::SByteTy));
@@ -33,7 +33,14 @@ static void getTriggerCode(Module *M, BasicBlock *BB, int MethNo, Value *pathNo,
   args.push_back(Type::IntTy);
   //args.push_back(Type::IntTy);
   args.push_back(PointerType::get(Type::IntTy));
+  args.push_back(PointerType::get(Type::IntTy));
   const FunctionType *MTy = FunctionType::get(Type::VoidTy, args, false);
+
+  vector<Value *> tmpVec;
+  tmpVec.push_back(Constant::getNullValue(Type::LongTy));
+  tmpVec.push_back(Constant::getNullValue(Type::LongTy));
+  Instruction *Idx = new GetElementPtrInst(cnt, tmpVec, "");//,
+  BB->getInstList().push_back(Idx);
 
   Function *trigMeth = M->getOrInsertFunction("trigger", MTy);
   assert(trigMeth && "trigger method could not be inserted!");
@@ -42,7 +49,8 @@ static void getTriggerCode(Module *M, BasicBlock *BB, int MethNo, Value *pathNo,
 
   trargs.push_back(ConstantSInt::get(Type::IntTy,MethNo));
   trargs.push_back(pathNo);
-  trargs.push_back(cnt);
+  trargs.push_back(Idx);
+  trargs.push_back(rInst);
 
   Instruction *callInst=new CallInst(trigMeth, trargs, "");//, BB->begin());
   BB->getInstList().push_back(callInst);
@@ -52,7 +60,7 @@ static void getTriggerCode(Module *M, BasicBlock *BB, int MethNo, Value *pathNo,
 
 //get the code to be inserted on the edge
 //This is determined from cond (1-6)
-void getEdgeCode::getCode(Instruction *rInst, Instruction *countInst, 
+void getEdgeCode::getCode(Instruction *rInst, Value *countInst, 
 			  Function *M, BasicBlock *BB, 
                           vector<Value *> &retVec){
   
@@ -105,9 +113,14 @@ void getEdgeCode::getCode(Instruction *rInst, Instruction *countInst,
 
   //count[inc]++
   case 4:{
-    Instruction *Idx = new GetElementPtrInst(countInst, 
-                 vector<Value*>(1,ConstantSInt::get(Type::LongTy, inc)),
-                                             "");//, InsertPos);
+    vector<Value *> tmpVec;
+    tmpVec.push_back(Constant::getNullValue(Type::LongTy));
+    tmpVec.push_back(ConstantSInt::get(Type::LongTy, inc));
+    Instruction *Idx = new GetElementPtrInst(countInst, tmpVec, "");//,
+
+    //Instruction *Idx = new GetElementPtrInst(countInst, 
+    //           vector<Value*>(1,ConstantSInt::get(Type::LongTy, inc)),
+    //                                       "");//, InsertPos);
     BB->getInstList().push_back(Idx);
 
     Instruction *ldInst=new LoadInst(Idx, "ti1");//, InsertPos);
@@ -156,8 +169,10 @@ void getEdgeCode::getCode(Instruction *rInst, Instruction *countInst,
 				       Type::LongTy,"ctin");//, InsertPos);
     BB->getInstList().push_back(castInst);
 
-    Instruction *Idx = new GetElementPtrInst(countInst, 
-                                             vector<Value*>(1,castInst), "");//,
+    vector<Value *> tmpVec;
+    tmpVec.push_back(Constant::getNullValue(Type::LongTy));
+    tmpVec.push_back(castInst);
+    Instruction *Idx = new GetElementPtrInst(countInst, tmpVec, "");//,
     //                                             InsertPos);
     BB->getInstList().push_back(Idx);
 
@@ -166,6 +181,7 @@ void getEdgeCode::getCode(Instruction *rInst, Instruction *countInst,
 
     Value *cons=ConstantSInt::get(Type::IntTy,1);
     //count[addIndex]++
+    //std::cerr<<"Type ldInst:"<<ldInst->getType()<<"\t cons:"<<cons->getType()<<"\n";
     Instruction *newCount = BinaryOperator::create(Instruction::Add, ldInst, 
                                                    cons,"");
     BB->getInstList().push_back(newCount);
@@ -194,8 +210,14 @@ void getEdgeCode::getCode(Instruction *rInst, Instruction *countInst,
     Instruction *castInst2=new CastInst(ldIndex, Type::LongTy,"ctin");
     BB->getInstList().push_back(castInst2);
 
-    Instruction *Idx = new GetElementPtrInst(countInst, 
-                                             vector<Value*>(1,castInst2), "");
+    vector<Value *> tmpVec;
+    tmpVec.push_back(Constant::getNullValue(Type::LongTy));
+    tmpVec.push_back(castInst2);
+    Instruction *Idx = new GetElementPtrInst(countInst, tmpVec, "");//,
+
+    //Instruction *Idx = new GetElementPtrInst(countInst, 
+    //                                       vector<Value*>(1,castInst2), "");
+    
     BB->getInstList().push_back(Idx);
     
     Instruction *ldInst=new LoadInst(Idx, "ti2");//, InsertPos);
@@ -233,17 +255,16 @@ void getEdgeCode::getCode(Instruction *rInst, Instruction *countInst,
 //the number of executions of path k
 void insertInTopBB(BasicBlock *front, 
 		   int k, 
-		   Instruction *rVar, 
-		   Instruction *countVar, Value *threshold){
+		   Instruction *rVar, Value *threshold){
   //rVar is variable r, 
-  //countVar is array Count, and these are allocatted outside
+  //countVar is count[]
 
   Value *Int0 = ConstantInt::get(Type::IntTy, 0);
   
   //now push all instructions in front of the BB
   BasicBlock::iterator here=front->begin();
   front->getInstList().insert(here, rVar);
-  front->getInstList().insert(here,countVar);
+  //front->getInstList().insert(here,countVar);
   
   //Initialize Count[...] with 0
 
@@ -258,19 +279,19 @@ void insertInTopBB(BasicBlock *front,
   new StoreInst(Int0, rVar, here);
 
   //insert initialize function for initializing 
-  vector<const Type*> inCountArgs;
-  inCountArgs.push_back(PointerType::get(Type::IntTy));
-  inCountArgs.push_back(Type::IntTy);
+  //vector<const Type*> inCountArgs;
+  //inCountArgs.push_back(PointerType::get(Type::IntTy));
+  //inCountArgs.push_back(Type::IntTy);
 
-  const FunctionType *cFty = FunctionType::get(Type::VoidTy, inCountArgs, 
-                                               false);
-  Function *inCountMth = front->getParent()->getParent()->getOrInsertFunction("llvmInitializeCounter", cFty);
-  assert(inCountMth && "Initialize method could not be inserted!");
+  //const FunctionType *cFty = FunctionType::get(Type::VoidTy, inCountArgs, 
+  //                                               false);
+//Function *inCountMth = front->getParent()->getParent()->getOrInsertFunction("llvmInitializeCounter", cFty);
+//assert(inCountMth && "Initialize method could not be inserted!");
 
-  vector<Value *> iniArgs;
-  iniArgs.push_back(countVar);
-  iniArgs.push_back(ConstantSInt::get(Type::IntTy, k));
-  new CallInst(inCountMth, iniArgs, "", here);
+//vector<Value *> iniArgs;
+//iniArgs.push_back(countVar);
+//iniArgs.push_back(ConstantSInt::get(Type::IntTy, k));
+//new CallInst(inCountMth, iniArgs, "", here);
   
 
   if(front->getParent()->getName() == "main"){
@@ -296,7 +317,7 @@ void insertInTopBB(BasicBlock *front,
 void insertBB(Edge ed,
 	      getEdgeCode *edgeCode, 
 	      Instruction *rInst, 
-	      Instruction *countInst, 
+	      Value *countInst, 
 	      int numPaths, int Methno, Value *threshold){
 
   BasicBlock* BB1=ed.getFirst()->getElement();
@@ -338,7 +359,7 @@ void insertBB(Edge ed,
   if(retVec.size()>0){
     triggerBB = new BasicBlock("trigger", BB1->getParent());
     getTriggerCode(BB1->getParent()->getParent(), triggerBB, Methno, 
-                   retVec[1], countInst);//retVec[0]);
+                   retVec[1], countInst, rInst);//retVec[0]);
 
     //Instruction *castInst = new CastInst(retVec[0], Type::IntTy, "");
     Instruction *etr = new LoadInst(threshold, "threshold");
