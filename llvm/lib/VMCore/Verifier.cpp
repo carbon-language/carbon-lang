@@ -55,6 +55,7 @@
 #include "llvm/Support/InstVisitor.h"
 #include "Support/STLExtras.h"
 #include <algorithm>
+#include <iostream>
 #include <sstream>
 using namespace llvm;
 

@@ -17,6 +17,7 @@
 #include "llvm/Constant.h"
 #include "Support/LeakDetector.h"
 #include <algorithm>
+#include <iostream>
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//

@@ -20,6 +20,7 @@
 #include "SymbolTableListTraitsImpl.h"
 #include <algorithm>
 #include <cstdarg>
+#include <iostream>
 #include <map>
 using namespace llvm;
 

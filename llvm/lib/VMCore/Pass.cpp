@@ -19,6 +19,7 @@
 #include "llvm/ModuleProvider.h"
 #include "Support/STLExtras.h"
 #include "Support/TypeInfo.h"
+#include <iostream>
 #include <set>
 using namespace llvm;
 
