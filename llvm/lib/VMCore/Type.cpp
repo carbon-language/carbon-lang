@@ -259,13 +259,12 @@ OpaqueType::OpaqueType() : DerivedType(OpaqueTyID) {
 //
 static string getTypeProps(const Type *Ty, vector<const Type *> &TypeStack,
 			   bool &isAbstract, bool &isRecursive) {
-  string Result;
   if (!Ty->isAbstract() && !Ty->isRecursive() && // Base case for the recursion
       Ty->getDescription().size()) {
-    Result = Ty->getDescription();               // Primitive = leaf type
+    return Ty->getDescription();                 // Primitive = leaf type
   } else if (isa<OpaqueType>(Ty)) {              // Base case for the recursion
-    Result = Ty->getDescription();               // Opaque = leaf type
     isAbstract = true;                           // This whole type is abstract!
+    return Ty->getDescription();                 // Opaque = leaf type
   } else {
     // Check to see if the Type is already on the stack...
     unsigned Slot = 0, CurSize = TypeStack.size();
@@ -276,9 +275,10 @@ static string getTypeProps(const Type *Ty, vector<const Type *> &TypeStack,
     // Generate the appropriate upreference to handle this.
     // 
     if (Slot < CurSize) {
-      Result = "\\" + utostr(CurSize-Slot);       // Here's the upreference
       isRecursive = true;                         // We know we are recursive
+      return "\\" + utostr(CurSize-Slot);         // Here's the upreference
     } else {                      // Recursive case: abstract derived type...
+      string Result;
       TypeStack.push_back(Ty);    // Add us to the stack..
       
       switch (Ty->getPrimitiveID()) {
@@ -334,9 +334,9 @@ static string getTypeProps(const Type *Ty, vector<const Type *> &TypeStack,
       }
 
       TypeStack.pop_back();       // Remove self from stack...
+      return Result;
     }
   }
-  return Result;
 }
 
 
@@ -1043,7 +1043,7 @@ void StructType::refineAbstractType(const DerivedType *OldType,
        << OldType->getDescription() << "], " << (void*)NewType << " [" 
        << NewType->getDescription() << "])\n";
 #endif
-  for (unsigned i = 0, e = ETypes.size(); i != e; ++i)
+  for (int i = ETypes.size()-1; i >= 0; --i)
     if (ETypes[i] == OldType) {
       ETypes[i].removeUserFromConcrete();
 
