@@ -40,8 +40,8 @@ namespace {
     AlphaTargetLowering(TargetMachine &TM) : TargetLowering(TM) {
       // Set up the TargetLowering object.
       //I am having problems with shr n ubyte 1
-      setShiftAmountType(MVT::i64); //are these needed?
-      setSetCCResultType(MVT::i64); //are these needed?
+      setShiftAmountType(MVT::i64);
+      setSetCCResultType(MVT::i64);
       
       addRegisterClass(MVT::i64, Alpha::GPRCRegisterClass);
       addRegisterClass(MVT::f64, Alpha::FPRCRegisterClass);
