@@ -20,14 +20,14 @@ class CallArgInfo {
   static const unsigned char FPArgReg  = 0x2;
   static const unsigned char StackSlot = 0x4;
   
-  const Value* argVal;          // this argument
-  int          argCopyReg;      // register used for second copy of arg. when
+  Value*        argVal;         // this argument
+  int           argCopyReg;     // register used for second copy of arg. when
                                 // multiple  copies must be passed in registers
   unsigned char passingMethod;  // flags recording passing methods
   
 public:
   // Constructors
-  CallArgInfo(const Value* _argVal)
+  CallArgInfo(Value* _argVal)
     : argVal(_argVal), argCopyReg(TargetRegInfo::getInvalidRegNum()),
       passingMethod(0x0) {}
   
@@ -36,14 +36,14 @@ public:
       passingMethod(obj.passingMethod) {}
   
   // Accessor methods
-  const Value*  getArgVal()       { return argVal; }
+  Value*        getArgVal()       { return argVal; }
   int           getArgCopy()      { return argCopyReg; }
   bool          usesIntArgReg()   { return (bool) (passingMethod & IntArgReg);} 
   bool          usesFPArgReg()    { return (bool) (passingMethod & FPArgReg); } 
   bool          usesStackSlot()   { return (bool) (passingMethod & StackSlot);} 
   
   // Modifier methods
-  void          replaceArgVal(const Value* newVal) { argVal = newVal; }
+  void          replaceArgVal(Value* newVal) { argVal = newVal; }
   void          setUseIntArgReg() { passingMethod |= IntArgReg; }
   void          setUseFPArgReg()  { passingMethod |= FPArgReg; }
   void          setUseStackSlot() { passingMethod |= StackSlot; }
@@ -54,14 +54,14 @@ public:
 class CallArgsDescriptor {
 
   std::vector<CallArgInfo> argInfoVec;  // Descriptor for each argument
-  const CallInst* callInstr;            // The call instruction == result value
-  const Value* funcPtr;                 // Pointer for indirect calls 
+  CallInst* callInstr;                  // The call instruction == result value
+  Value* funcPtr;                       // Pointer for indirect calls 
   TmpInstruction* retAddrReg;           // Tmp value for return address reg.
   bool isVarArgs;                       // Is this a varargs call?
   bool noPrototype;                     // Is this a call with no prototype?
   
 public:
-  CallArgsDescriptor(const CallInst* _callInstr, TmpInstruction* _retAddrReg,
+  CallArgsDescriptor(CallInst* _callInstr, TmpInstruction* _retAddrReg,
                      bool _isVarArgs, bool _noPrototype);
   
   // Accessor methods to retrieve information about the call
@@ -69,9 +69,9 @@ public:
   unsigned int    getNumArgs() const          { return argInfoVec.size(); }
   CallArgInfo&    getArgInfo(unsigned int op) { assert(op < argInfoVec.size());
                                                 return argInfoVec[op]; }
-  const CallInst* getCallInst() const         { return callInstr; }
-  const CallInst* getReturnValue() const;
-  const Value*    getIndirectFuncPtr() const  { return funcPtr; }
+  CallInst*       getCallInst() const         { return callInstr; }
+  CallInst*       getReturnValue() const;
+  Value*          getIndirectFuncPtr() const  { return funcPtr; }
   TmpInstruction* getReturnAddrReg() const    { return retAddrReg; }
   bool            isVarArgsFunc() const       { return isVarArgs; }
   bool            hasNoPrototype() const      { return noPrototype; }

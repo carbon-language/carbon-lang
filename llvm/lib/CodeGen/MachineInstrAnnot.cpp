@@ -12,7 +12,7 @@
 #include "llvm/Type.h"
 
 
-CallArgsDescriptor::CallArgsDescriptor(const CallInst* _callInstr,
+CallArgsDescriptor::CallArgsDescriptor(CallInst* _callInstr,
                                        TmpInstruction* _retAddrReg,
                                        bool _isVarArgs, bool _noPrototype)
   : callInstr(_callInstr),
@@ -35,7 +35,7 @@ CallArgsDescriptor::CallArgsDescriptor(const CallInst* _callInstr,
 }
 
 
-const CallInst*
+CallInst*
 CallArgsDescriptor::getReturnValue() const
 {
   return (callInstr->getType() == Type::VoidTy? NULL : callInstr);
