@@ -9,7 +9,7 @@
 
 include $(top_srcdir)/Makefile.rules.am
 
-SUBDIRS = LiveVar RegAlloc
+SUBDIRS = InstrSched LiveVar RegAlloc
 
 libexec_PROGRAMS = LLVMSparcV9.o
 
