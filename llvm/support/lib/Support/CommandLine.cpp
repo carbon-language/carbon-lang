@@ -10,7 +10,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "Support/CommandLine.h"
-#include "Support/STLExtras.h"
 #include <algorithm>
 #include <map>
 #include <set>
