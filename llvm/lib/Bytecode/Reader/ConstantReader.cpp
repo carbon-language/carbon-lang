@@ -250,7 +250,7 @@ bool BytecodeParser::parseConstPoolValue(const uchar *&Buf,
   }
 
   case Type::StructTyID: {
-    const StructType *ST = (const StructType*)Ty;
+    const StructType *ST = Ty->castStructType();
     const StructType::ElementTypes &ET = ST->getElementTypes();
 
     vector<ConstPoolVal *> Elements;
@@ -266,6 +266,17 @@ bool BytecodeParser::parseConstPoolValue(const uchar *&Buf,
     V = ConstPoolStruct::get(ST, Elements);
     break;
   }    
+
+  case Type::PointerTyID: {
+    const PointerType *PT = Ty->castPointerType();
+    unsigned SubClass;
+    if (read_vbr(Buf, EndBuf, SubClass)) return failure(true);
+    if (SubClass != 0) return failure(true);
+
+
+    V = ConstPoolPointer::getNullPointer(PT);
+    break;
+  }
 
   default:
     cerr << __FILE__ << ":" << __LINE__ 

@@ -141,6 +141,11 @@ bool BytecodeWriter::outputConstant(const ConstPoolVal *CPV) {
     break;
   }
 
+  case Type::PointerTyID: {
+    output_vbr((unsigned)0, Out);
+    break;
+  }
+
   case Type::FloatTyID: {   // Floating point types...
     float Tmp = (float)((const ConstPoolFP*)CPV)->getValue();
     output_data(&Tmp, &Tmp+1, Out);

@@ -63,9 +63,11 @@ static inline void ThrowException(const string &message,
 // putting classes with ctor's in unions.  :(
 //
 struct ValID {
-  int Type;               // 0 = number, 1 = name, 2 = const pool, 
-                          // 3 = unsigned const pool, 4 = const string, 
-                          // 5 = const fp
+  enum {
+    NumberVal, NameVal, ConstSIntVal, ConstUIntVal, ConstStringVal, 
+    ConstFPVal, ConstNullVal
+  } Type;
+
   union {
     int      Num;         // If it's a numeric reference
     char    *Name;        // If it's a named reference.  Memory must be free'd.
@@ -75,35 +77,40 @@ struct ValID {
   };
 
   static ValID create(int Num) {
-    ValID D; D.Type = 0; D.Num = Num; return D;
+    ValID D; D.Type = NumberVal; D.Num = Num; return D;
   }
 
   static ValID create(char *Name) {
-    ValID D; D.Type = 1; D.Name = Name; return D;
+    ValID D; D.Type = NameVal; D.Name = Name; return D;
   }
 
   static ValID create(int64_t Val) {
-    ValID D; D.Type = 2; D.ConstPool64 = Val; return D;
+    ValID D; D.Type = ConstSIntVal; D.ConstPool64 = Val; return D;
   }
 
   static ValID create(uint64_t Val) {
-    ValID D; D.Type = 3; D.UConstPool64 = Val; return D;
+    ValID D; D.Type = ConstUIntVal; D.UConstPool64 = Val; return D;
   }
 
   static ValID create_conststr(char *Name) {
-    ValID D; D.Type = 4; D.Name = Name; return D;
+    ValID D; D.Type = ConstStringVal; D.Name = Name; return D;
   }
 
   static ValID create(double Val) {
-    ValID D; D.Type = 5; D.ConstPoolFP = Val; return D;
+    ValID D; D.Type = ConstFPVal; D.ConstPoolFP = Val; return D;
+  }
+
+  static ValID createNull() {
+    ValID D; D.Type = ConstNullVal; return D;
   }
 
   inline void destroy() const {
-    if (Type == 1 || Type == 4) free(Name);  // Free this strdup'd memory...
+    if (Type == NameVal || Type == ConstStringVal)
+      free(Name);    // Free this strdup'd memory...
   }
 
   inline ValID copy() const {
-    if (Type != 1 && Type != 4) return *this;
+    if (Type != NameVal && Type != ConstStringVal) return *this;
     ValID Result = *this;
     Result.Name = strdup(Name);
     return Result;
@@ -111,11 +118,16 @@ struct ValID {
 
   inline string getName() const {
     switch (Type) {
-    case 0:  return string("#") + itostr(Num);
-    case 1:  return Name;
-    case 4:  return string("\"") + Name + string("\"");
-    case 5:  return ftostr(ConstPoolFP);
-    default: return string("%") + itostr(ConstPool64);
+    case NumberVal     : return string("#") + itostr(Num);
+    case NameVal       : return Name;
+    case ConstStringVal: return string("\"") + Name + string("\"");
+    case ConstFPVal    : return ftostr(ConstPoolFP);
+    case ConstNullVal  : return "null";
+    case ConstUIntVal  :
+    case ConstSIntVal  : return string("%") + itostr(ConstPool64);
+    default:
+      assert(0 && "Unknown value!");
+      abort();
     }
   }
 };

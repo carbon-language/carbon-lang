@@ -128,6 +128,7 @@ uninitialized   { return UNINIT; }
 implementation  { return IMPLEMENTATION; }
 \.\.\.          { return DOTDOTDOT; }
 string          { return STRING; }
+null            { return NULL_TOK; }
 
 void            { llvmAsmlval.PrimType = Type::VoidTy  ; return VOID;   }
 bool            { llvmAsmlval.PrimType = Type::BoolTy  ; return BOOL;   }

@@ -180,7 +180,7 @@ static Value *getVal(const Type *Ty, const ValID &D,
   assert(Ty != Type::TypeTy && "Should use getTypeVal for types!");
 
   switch (D.Type) {
-  case 0: {                 // Is it a numbered definition?
+  case ValID::NumberVal: {                 // Is it a numbered definition?
     unsigned type = Ty->getUniqueID();
     unsigned Num = (unsigned)D.Num;
 
@@ -202,7 +202,7 @@ static Value *getVal(const Type *Ty, const ValID &D,
   
     return CurMeth.Values[type][Num];
   }
-  case 1: {                // Is it a named definition?
+  case ValID::NameVal: {                // Is it a named definition?
     string Name(D.Name);
     SymbolTable *SymTab = 0;
     if (CurMeth.CurrentMethod) 
@@ -223,16 +223,17 @@ static Value *getVal(const Type *Ty, const ValID &D,
     return N;
   }
 
-  case 2:                 // Is it a constant pool reference??
-  case 3:                 // Is it an unsigned const pool reference?
-  case 4:                 // Is it a string const pool reference?
-  case 5:{                // Is it a floating point const pool reference?
+  case ValID::ConstSIntVal:     // Is it a constant pool reference??
+  case ValID::ConstUIntVal:     // Is it an unsigned const pool reference?
+  case ValID::ConstStringVal:   // Is it a string const pool reference?
+  case ValID::ConstFPVal:       // Is it a floating point const pool reference?
+  case ValID::ConstNullVal: {   // Is it a null value?
     ConstPoolVal *CPV = 0;
 
     // Check to make sure that "Ty" is an integral type, and that our 
     // value will fit into the specified type...
     switch (D.Type) {
-    case 2:
+    case ValID::ConstSIntVal:
       if (Ty == Type::BoolTy) {  // Special handling for boolean data
         CPV = ConstPoolBool::get(D.ConstPool64 != 0);
       } else {
@@ -243,7 +244,7 @@ static Value *getVal(const Type *Ty, const ValID &D,
         CPV = ConstPoolSInt::get(Ty, D.ConstPool64);
       }
       break;
-    case 3:
+    case ValID::ConstUIntVal:
       if (!ConstPoolUInt::isValueValidForType(Ty, D.UConstPool64)) {
         if (!ConstPoolSInt::isValueValidForType(Ty, D.ConstPool64)) {
           ThrowException("Integral constant pool reference is invalid!");
@@ -254,16 +255,22 @@ static Value *getVal(const Type *Ty, const ValID &D,
         CPV = ConstPoolUInt::get(Ty, D.UConstPool64);
       }
       break;
-    case 4:
+    case ValID::ConstStringVal:
       cerr << "FIXME: TODO: String constants [sbyte] not implemented yet!\n";
       abort();
       break;
-    case 5:
+    case ValID::ConstFPVal:
       if (!ConstPoolFP::isValueValidForType(Ty, D.ConstPoolFP))
 	ThrowException("FP constant invalid for type!!");
-      else
-	CPV = ConstPoolFP::get(Ty, D.ConstPoolFP);
+      CPV = ConstPoolFP::get(Ty, D.ConstPoolFP);
       break;
+    case ValID::ConstNullVal:
+      if (!Ty->isPointerType())
+        ThrowException("Cannot create a a non pointer null!");
+      CPV = ConstPoolPointer::getNullPointer(Ty->castPointerType());
+      break;
+    default:
+      assert(0 && "Unhandled case!");
     }
     assert(CPV && "How did we escape creating a constant??");
     return CPV;
@@ -508,6 +515,7 @@ Module *RunVMAsmParser(const string &Filename, FILE *F) {
   PATypeHolder<Type>               *TypeVal;
   PATypeHolder<ArrayType>          *ArrayTypeTy;
   PATypeHolder<StructType>         *StructTypeTy;
+  PATypeHolder<PointerType>        *PointerTypeTy;
   Value                            *ValueVal;
 
   list<MethodArgument*>            *MethodArgList;
@@ -573,13 +581,14 @@ Module *RunVMAsmParser(const string &Filename, FILE *F) {
 %token <PrimType> FLOAT DOUBLE TYPE LABEL
 %type  <ArrayTypeTy> ArrayType ArrayTypeI
 %type  <StructTypeTy> StructType StructTypeI
+%type  <PointerTypeTy> PointerType PointerTypeI
 
 %token <StrVal>     VAR_ID LABELSTR STRINGCONSTANT
 %type  <StrVal>  OptVAR_ID OptAssign
 
 
 %token IMPLEMENTATION TRUE FALSE BEGINTOK END DECLARE GLOBAL CONSTANT UNINIT
-%token TO DOTDOTDOT STRING
+%token TO DOTDOTDOT STRING NULL_TOK
 
 // Basic Block Terminating Operators 
 %token <TermOpVal> RET BR SWITCH
@@ -692,6 +701,10 @@ StructTypeI : '{' TypeListI '}' {              // Structure type?
     $$ = newTH(StructType::get(vector<const Type*>()));
   }
 
+PointerTypeI : UpRTypes '*' {                             // Pointer type?
+    $$ = newTHC<PointerType>(HandleUpRefs(PointerType::get(*$1)));
+    delete $1;  // Delete the type handle
+  }
 
 // Include derived types in the Types production.
 //
@@ -716,16 +729,15 @@ UpRTypes : '\\' EUINT64VAL {                   // Type UpReference
   | StructTypeI {                              // Structure type?
     $$ = newTHC<Type>(*$1); delete $1;
   }
-  | UpRTypes '*' {                             // Pointer type?
-    $$ = newTH(HandleUpRefs(PointerType::get(*$1)));
-    delete $1;  // Delete the type handle
+  | PointerTypeI {                             // Pointer type?
+    $$ = newTHC<Type>(*$1); delete $1;
   }
 
 // Define some helpful top level types that do not allow UpReferences to escape
 //
-ArrayType  : ArrayTypeI  { TypeDone($$ = $1); }
-StructType : StructTypeI { TypeDone($$ = $1); }
-
+ArrayType   : ArrayTypeI   { TypeDone($$ = $1); }
+StructType  : StructTypeI  { TypeDone($$ = $1); }
+PointerType : PointerTypeI { TypeDone($$ = $1); }
 
 
 // TypeList - Used for struct declarations and as a basis for method type 
@@ -1051,6 +1063,10 @@ ConstValueRef : ESINT64VAL {    // A reference to a direct constant
   | FALSE {
     $$ = ValID::create((int64_t)0);
   }
+  | NULL_TOK {
+    $$ = ValID::createNull();
+  }
+
 /*
   | STRINGCONSTANT {        // Quoted strings work too... especially for methods
     $$ = ValID::create_conststr($1);
