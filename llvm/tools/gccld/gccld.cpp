@@ -28,34 +28,34 @@
 #include <algorithm>
 #include <sys/types.h>     // For FileExists
 #include <sys/stat.h>
-using std::cerr;
 
-static cl::list<std::string> 
-InputFilenames(cl::Positional, cl::desc("<input bytecode files>"),
-               cl::OneOrMore);
+namespace {
+  cl::list<std::string> 
+  InputFilenames(cl::Positional, cl::desc("<input bytecode files>"),
+                 cl::OneOrMore);
 
-static cl::opt<std::string> 
-OutputFilename("o", cl::desc("Override output filename"), cl::init("a.out"),
-               cl::value_desc("filename"));
+  cl::opt<std::string> 
+  OutputFilename("o", cl::desc("Override output filename"), cl::init("a.out"),
+                 cl::value_desc("filename"));
 
-static cl::opt<bool>    
-Verbose("v", cl::desc("Print information about actions taken"));
+  cl::opt<bool>    
+  Verbose("v", cl::desc("Print information about actions taken"));
+  
+  cl::list<std::string> 
+  LibPaths("L", cl::desc("Specify a library search path"), cl::Prefix,
+           cl::value_desc("directory"));
 
-static cl::list<std::string> 
-LibPaths("L", cl::desc("Specify a library search path"), cl::Prefix,
-         cl::value_desc("directory"));
+  cl::list<std::string> 
+  Libraries("l", cl::desc("Specify libraries to link to"), cl::Prefix,
+            cl::value_desc("library prefix"));
 
-static cl::list<std::string> 
-Libraries("l", cl::desc("Specify libraries to link to"), cl::Prefix,
-          cl::value_desc("library prefix"));
+  cl::opt<bool>
+  Strip("s", cl::desc("Strip symbol info from executable"));
 
-static cl::opt<bool>
-Strip("s", cl::desc("Strip symbol info from executable"));
-
-static cl::opt<bool>
-NoInternalize("disable-internalize",
-              cl::desc("Do not mark all symbols as internal"));
-
+  cl::opt<bool>
+  NoInternalize("disable-internalize",
+                cl::desc("Do not mark all symbols as internal"));
+}
 
 // FileExists - Return true if the specified string is an openable file...
 static inline bool FileExists(const std::string &FN) {
@@ -74,15 +74,15 @@ static inline std::auto_ptr<Module> LoadFile(const std::string &FN) {
   bool FoundAFile = false;
 
   while (1) {
-    if (Verbose) cerr << "Loading '" << Filename << "'\n";
+    if (Verbose) std::cerr << "Loading '" << Filename << "'\n";
     if (FileExists(Filename)) FoundAFile = true;
     Module *Result = ParseBytecodeFile(Filename, &ErrorMessage);
     if (Result) return std::auto_ptr<Module>(Result);   // Load successful!
 
     if (Verbose) {
-      cerr << "Error opening bytecode file: '" << Filename << "'";
-      if (ErrorMessage.size()) cerr << ": " << ErrorMessage;
-      cerr << "\n";
+      std::cerr << "Error opening bytecode file: '" << Filename << "'";
+      if (ErrorMessage.size()) std::cerr << ": " << ErrorMessage;
+      std::cerr << "\n";
     }
     
     if (NextLibPathIdx == LibPaths.size()) break;
@@ -90,10 +90,10 @@ static inline std::auto_ptr<Module> LoadFile(const std::string &FN) {
   }
 
   if (FoundAFile)
-    cerr << "Bytecode file '" << FN << "' corrupt!  "
-         << "Use 'gccld -v ...' for more info.\n";
+    std::cerr << "Bytecode file '" << FN << "' corrupt!  "
+              << "Use 'gccld -v ...' for more info.\n";
   else
-    cerr << "Could not locate bytecode file: '" << FN << "'\n";
+    std::cerr << "Could not locate bytecode file: '" << FN << "'\n";
   return std::auto_ptr<Module>();
 }
 
@@ -124,11 +124,11 @@ int main(int argc, char **argv) {
     std::auto_ptr<Module> M(LoadFile(InputFilenames[i]));
     if (M.get() == 0) return 1;
 
-    if (Verbose) cerr << "Linking in '" << InputFilenames[i] << "'\n";
+    if (Verbose) std::cerr << "Linking in '" << InputFilenames[i] << "'\n";
 
     if (LinkModules(Composite.get(), M.get(), &ErrorMessage)) {
-      cerr << argv[0] << ": error linking in '" << InputFilenames[i] << "': "
-	   << ErrorMessage << "\n";
+      std::cerr << argv[0] << ": error linking in '" << InputFilenames[i]
+                << "': " << ErrorMessage << "\n";
       return 1;
     }
   }
@@ -172,8 +172,8 @@ int main(int argc, char **argv) {
   // Add the pass that writes bytecode to the output file...
   std::ofstream Out((OutputFilename+".bc").c_str());
   if (!Out.good()) {
-    cerr << argv[0] << ": error opening '" << OutputFilename
-         << ".bc' for writing!\n";
+    std::cerr << argv[0] << ": error opening '" << OutputFilename
+              << ".bc' for writing!\n";
     return 1;
   }
   Passes.add(new WriteBytecodePass(&Out));        // Write bytecode to file...
@@ -188,8 +188,8 @@ int main(int argc, char **argv) {
   // Output the script to start the program...
   std::ofstream Out2(OutputFilename.c_str());
   if (!Out2.good()) {
-    cerr << argv[0] << ": error opening '" << OutputFilename
-         << "' for writing!\n";
+    std::cerr << argv[0] << ": error opening '" << OutputFilename
+              << "' for writing!\n";
     return 1;
   }
   Out2 << "#!/bin/sh\nlli -q -abort-on-exception $0.bc $*\n";
