@@ -618,6 +618,9 @@ bool V8Printer::doFinalization(Module &M) {
           else
             SwitchSection(O, CurSection, ".data");
           break;
+        case GlobalValue::GhostLinkage:
+          std::cerr << "Should not have any unmaterialized functions!\n";
+          abort();
         }
 
         O << "\t.align " << Align << "\n";
