@@ -1966,13 +1966,22 @@ static CastType getCastType(const Type *Src, const Type *Dest) {
 // instruction.
 //
 static inline bool isEliminableCastOfCast(const Type *SrcTy, const Type *MidTy,
-                                          const Type *DstTy) {
+                                          const Type *DstTy, TargetData *TD) {
 
   // It is legal to eliminate the instruction if casting A->B->A if the sizes
   // are identical and the bits don't get reinterpreted (for example 
   // int->float->int would not be allowed)
   if (SrcTy == DstTy && SrcTy->isLosslesslyConvertibleTo(MidTy))
     return true;
+
+  // If the source and destination types are pointer types, and the intermediate
+  // is an integer type bigger than a pointer, eliminate the casts.
+  if (isa<PointerType>(SrcTy) && isa<PointerType>(DstTy)) {
+    if (isa<PointerType>(MidTy)) return true;
+
+    if (MidTy->isInteger() && MidTy->getPrimitiveSize() >= TD->getPointerSize())
+      return true;
+  }
 
   // Allow free casting and conversion of sizes as long as the sign doesn't
   // change...
@@ -2010,18 +2019,14 @@ static inline bool isEliminableCastOfCast(const Type *SrcTy, const Type *MidTy,
       return true;
     }
   }
-
-  // Otherwise, we cannot succeed.  Specifically we do not want to allow things
-  // like:  short -> ushort -> uint, because this can create wrong results if
-  // the input short is negative!
-  //
   return false;
 }
 
-static bool ValueRequiresCast(const Value *V, const Type *Ty) {
+static bool ValueRequiresCast(const Value *V, const Type *Ty, TargetData *TD) {
   if (V->getType() == Ty || isa<Constant>(V)) return false;
   if (const CastInst *CI = dyn_cast<CastInst>(V))
-    if (isEliminableCastOfCast(CI->getOperand(0)->getType(), CI->getType(), Ty))
+    if (isEliminableCastOfCast(CI->getOperand(0)->getType(), CI->getType(), Ty,
+                               TD))
       return false;
   return true;
 }
@@ -2056,7 +2061,7 @@ Instruction *InstCombiner::visitCastInst(CastInst &CI) {
   //
   if (CastInst *CSrc = dyn_cast<CastInst>(Src)) {
     if (isEliminableCastOfCast(CSrc->getOperand(0)->getType(),
-                               CSrc->getType(), CI.getType())) {
+                               CSrc->getType(), CI.getType(), TD)) {
       // This instruction now refers directly to the cast's src operand.  This
       // has a good chance of making CSrc dead.
       CI.setOperand(0, CSrc->getOperand(0));
@@ -2153,8 +2158,8 @@ Instruction *InstCombiner::visitCastInst(CastInst &CI) {
           // Don't insert two casts if they cannot be eliminated.  We allow two
           // casts to be inserted if the sizes are the same.  This could only be
           // converting signedness, which is a noop.
-          if (DestBitSize == SrcBitSize || !ValueRequiresCast(Op1, DestTy) ||
-              !ValueRequiresCast(Op0, DestTy)) {
+          if (DestBitSize == SrcBitSize || !ValueRequiresCast(Op1, DestTy,TD) ||
+              !ValueRequiresCast(Op0, DestTy, TD)) {
             Value *Op0c = InsertOperandCastBefore(Op0, DestTy, SrcI);
             Value *Op1c = InsertOperandCastBefore(Op1, DestTy, SrcI);
             return BinaryOperator::create(cast<BinaryOperator>(SrcI)
