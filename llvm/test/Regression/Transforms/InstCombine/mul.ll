@@ -1,7 +1,7 @@
 ; This test makes sure that mul instructions are properly eliminated.
 ;
 
-; RUN: as < %s | opt -instcombine | dis | grep-not mul
+; RUN: as < %s | opt -instcombine | dis | not grep mul
 
 implementation
 

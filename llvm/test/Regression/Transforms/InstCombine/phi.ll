@@ -1,7 +1,7 @@
 ; This test makes sure that these instructions are properly eliminated.
 ;
 
-; RUN: as < %s | opt -instcombine -die | dis | grep-not phi
+; RUN: as < %s | opt -instcombine -die | dis | not grep phi
 
 implementation
 

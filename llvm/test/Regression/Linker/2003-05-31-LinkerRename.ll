@@ -5,7 +5,7 @@
 
 ; RUN: echo "implementation internal int %foo() { ret int 7 }" | as > Output/%s.1.bc
 ; RUN: as < %s > Output/%s.2.bc
-; RUN: link Output/%s.[12].bc | dis | grep 'internal' | grep-not '%foo('
+; RUN: link Output/%s.[12].bc | dis | grep 'internal' | not grep '%foo('
 
 implementation
 declare int %foo() 

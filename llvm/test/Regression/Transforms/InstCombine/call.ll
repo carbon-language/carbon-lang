@@ -1,4 +1,4 @@
-; RUN: as < %s | opt -instcombine -die | dis | grep call | grep-not cast
+; RUN: as < %s | opt -instcombine -die | dis | grep call | not grep cast
 
 implementation
 

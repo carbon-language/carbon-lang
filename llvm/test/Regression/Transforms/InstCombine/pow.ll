@@ -2,7 +2,7 @@
 ;
 ; Equivalent to: http://gcc.gnu.org/ml/gcc-patches/2003-02/msg01786.html
 
-; RUN: as < %s | opt -instcombine | dis | grep-not 'call double %pow'
+; RUN: as < %s | opt -instcombine | dis | not grep 'call double %pow'
 
 declare double %pow(double, double)
 

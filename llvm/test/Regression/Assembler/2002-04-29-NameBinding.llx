@@ -4,7 +4,7 @@
 ; Check by running globaldce, which will remove the constant if there are
 ; no references to it!
 ; 
-; RUN: as < %s | opt -globaldce | dis | grep-not constant
+; RUN: as < %s | opt -globaldce | dis | not grep constant
 ;
 	
 %v1 = internal constant int 5

@@ -1,7 +1,7 @@
 ; This test makes sure that these instructions are properly eliminated.
 ;
 
-; RUN: as < %s | opt -instcombine -die | dis | grep sub | grep-not -v 'sub int %Cok, %Bok'
+; RUN: as < %s | opt -instcombine -die | dis | grep sub | not grep -v 'sub int %Cok, %Bok'
 
 implementation
 

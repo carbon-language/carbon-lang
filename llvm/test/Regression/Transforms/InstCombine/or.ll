@@ -1,7 +1,7 @@
 ; This test makes sure that these instructions are properly eliminated.
 ;
 
-; RUN: as < %s | opt -instcombine | dis | grep -v '%OROK = or' | grep-not 'or '
+; RUN: as < %s | opt -instcombine | dis | grep -v '%OROK = or' | not grep 'or '
 
 implementation
 

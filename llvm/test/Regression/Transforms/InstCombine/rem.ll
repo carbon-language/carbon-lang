@@ -1,7 +1,7 @@
 ; This test makes sure that these instructions are properly eliminated.
 ;
 
-; RUN: as < %s | opt -instcombine | dis | grep-not rem
+; RUN: as < %s | opt -instcombine | dis | not grep rem
 
 implementation
 

@@ -1,7 +1,7 @@
 ; This test makes sure that these instructions are properly eliminated.
 ;
 
-; RUN: as < %s | opt -instcombine | dis | grep-not load
+; RUN: as < %s | opt -instcombine | dis | not grep load
 
 %X = constant int 42
 %Y = constant [2 x { int, float }] [ { int, float } { int 12, float 1.0 }, 

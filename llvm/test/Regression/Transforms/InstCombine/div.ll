@@ -1,7 +1,7 @@
 ; This test makes sure that div instructions are properly eliminated.
 ;
 
-; RUN: as < %s | opt -instcombine | dis | grep-not div
+; RUN: as < %s | opt -instcombine | dis | not grep div
 
 implementation
 
