@@ -42,7 +42,7 @@ public:
   ~SymbolTable();
 
   // lookup - Returns null on failure...
-  Value *lookup(const Type *Ty, const std::string &name);
+  Value *lookup(const Type *Ty, const std::string &name) const;
 
   // insert - Add named definition to the symbol table...
   inline void insert(Value *N) {

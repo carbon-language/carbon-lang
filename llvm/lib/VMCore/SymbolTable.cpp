@@ -72,10 +72,10 @@ std::string SymbolTable::getUniqueName(const Type *Ty,
 
 
 // lookup - Returns null on failure...
-Value *SymbolTable::lookup(const Type *Ty, const std::string &Name) {
-  iterator I = find(Ty);
+Value *SymbolTable::lookup(const Type *Ty, const std::string &Name) const {
+  const_iterator I = find(Ty);
   if (I != end()) {                      // We have symbols in that plane...
-    type_iterator J = I->second.find(Name);
+    type_const_iterator J = I->second.find(Name);
     if (J != I->second.end())            // and the name is in our hash table...
       return J->second;
   }
