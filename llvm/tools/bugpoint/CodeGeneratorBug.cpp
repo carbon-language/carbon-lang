@@ -233,11 +233,25 @@ bool ReduceMisCodegenFunctions::TestFuncs(const std::vector<Function*> &Funcs,
 
   // Run the code generator on the `Test' code, loading the shared library.
   // The function returns whether or not the new output differs from reference.
-  int Result =  BD.diffProgram(TestModuleBC, SharedObject, false);
+  int Result = BD.diffProgram(TestModuleBC, SharedObject, false);
+
+  if (Result)
+    std::cerr << ": Still failing!\n";
+  else
+    std::cerr << ": didn't fail.\n";
+    
+
   if (KeepFiles) {
-    std::cout << "You can reproduce the problem with the command line: \n"
-              << (BD.isExecutingJIT() ? "lli" : "llc")
-              << " -load " << SharedObject << " " << TestModuleBC;
+    std::cout << "You can reproduce the problem with the command line: \n";
+    if (BD.isExecutingJIT()) {
+      std::cout << "  lli -load " << SharedObject << " " << TestModuleBC;
+    } else {
+      //<< (BD.isExecutingJIT() ? "lli" : "llc")
+      std::cout << "  llc " << TestModuleBC << " -o " << TestModuleBC << ".s\n";
+      std::cout << "  gcc " << SharedObject << " " << TestModuleBC
+                << ".s -o " << TestModuleBC << ".exe\n";
+      std::cout << "  " << TestModuleBC << ".exe";
+    }
     for (unsigned i=0, e = InputArgv.size(); i != e; ++i)
       std::cout << " " << InputArgv[i];
     std::cout << "\n";
@@ -365,8 +379,8 @@ bool BugDriver::debugCodeGenerator() {
 
   // Do the reduction...
   if (!ReduceMisCodegenFunctions(*this).reduceList(MisCodegenFunctions)) {
-    std::cerr << "*** Execution matches reference output!  No problem "
-	      << "detected...\nbugpoint can't help you with your problem!\n";
+    std::cerr << "*** Execution matches reference output! "
+	      << "bugpoint can't help you with your problem!\n";
     return false;
   }
 
