@@ -4,7 +4,6 @@
 // At every backedge, insert a counter for that backedge and a call function
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Reoptimizer/InstLoops.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Constants.h"
@@ -48,13 +47,6 @@ namespace{
   
   RegisterOpt<InstLoops> X("instloops", "Instrument backedges for profiling");
 }
-
-// createInstLoopsPass - Create a new pass to add path profiling
-//
-Pass *createInstLoopsPass() {
-  return new InstLoops();
-}
-
 
 //helper function to get back edges: it is called by 
 //the "getBackEdges" function below

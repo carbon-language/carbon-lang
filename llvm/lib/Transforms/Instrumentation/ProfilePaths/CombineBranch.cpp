@@ -1,10 +1,9 @@
-//===-- InstLoops.cpp ---------------------------------------- ---*- C++ -*--=//
+//===-- CombineBranch.cpp ------------------------------------ ---*- C++ -*--=//
 // Pass to instrument loops
 //
 // At every backedge, insert a counter for that backedge and a call function
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Reoptimizer/InstLoops.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Constants.h"
@@ -45,13 +44,6 @@ namespace{
   
   RegisterOpt<CombineBranches> X("branch-combine", "Multiple backedges going to same target are merged");
 }
-
-// Create a new pass to merge branches
-//
-Pass *createCombineBranchesPass() {
-  return new CombineBranches();
-}
-
 
 //helper function to get back edges: it is called by 
 //the "getBackEdges" function below
