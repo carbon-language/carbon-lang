@@ -638,8 +638,6 @@ static bool TypeHasCycleThroughItself(const Type *Ty) {
 }
 
 
-
-
 //===----------------------------------------------------------------------===//
 //                       Derived Type Factory Functions
 //===----------------------------------------------------------------------===//
@@ -653,7 +651,9 @@ template<class ValType, class TypeClass>
 class TypeMap {
   std::map<ValType, PATypeHolder> Map;
 
-  /// TypesByHash - Keep track of each type by its structure hash value.
+  /// TypesByHash - Keep track of types by their structure hash value.  Note
+  /// that we only keep track of types that have cycles through themselves in
+  /// this map.
   ///
   std::multimap<unsigned, PATypeHolder> TypesByHash;
 public:
@@ -705,8 +705,7 @@ public:
     Map.erase(ValType::get(Ty));
 
     // Remember the structural hash for the type before we start hacking on it,
-    // in case we need it later.  Also, check to see if the type HAD a cycle
-    // through it, if so, we know it will when we hack on it.
+    // in case we need it later.
     unsigned OldTypeHash = ValType::hashTypeStructure(Ty);
 
     // Find the type element we are refining... and change it now!
@@ -721,17 +720,19 @@ public:
     // If there are no cycles going through this node, we can do a simple,
     // efficient lookup in the map, instead of an inefficient nasty linear
     // lookup.
-    bool TypeHasCycle = Ty->isAbstract() && TypeHasCycleThroughItself(Ty);
-    if (!TypeHasCycle) {
-      iterator I = Map.find(ValType::get(Ty));
-      if (I != Map.end()) {
-        // We already have this type in the table.  Get rid of the newly refined
-        // type.
-        assert(Ty->isAbstract() && "Replacing a non-abstract type?");
-        TypeClass *NewTy = cast<TypeClass>((Type*)I->second.get());
-        
+    if (!Ty->isAbstract() || !TypeHasCycleThroughItself(Ty)) {
+      typename std::map<ValType, PATypeHolder>::iterator I;
+      bool Inserted;
+
+      ValType V = ValType::get(Ty);
+      tie(I, Inserted) = Map.insert(std::make_pair(V, Ty));
+      if (!Inserted) {
         // Refined to a different type altogether?
         RemoveFromTypesByHash(TypeHash, Ty);
+
+        // We already have this type in the table.  Get rid of the newly refined
+        // type.
+        TypeClass *NewTy = cast<TypeClass>((Type*)I->second.get());
         Ty->refineAbstractTypeTo(NewTy);
         return;
       }
@@ -741,8 +742,8 @@ public:
       // structurally identical to the newly refined type.  If so, this type
       // gets refined to the pre-existing type.
       //
-      std::multimap<unsigned, PATypeHolder>::iterator I,E, Entry;
-      tie(I, E) = TypesByHash.equal_range(TypeHash);
+      std::multimap<unsigned, PATypeHolder>::iterator I, E, Entry;
+      tie(I, E) = TypesByHash.equal_range(OldTypeHash);
       Entry = E;
       for (; I != E; ++I) {
         if (I->second != Ty) {
@@ -768,19 +769,18 @@ public:
           Entry = I;
         }
       }
+
+
+      // If there is no existing type of the same structure, we reinsert an
+      // updated record into the map.
+      Map.insert(std::make_pair(ValType::get(Ty), Ty));
     }
 
-    // If we succeeded, we need to insert the type into the cycletypes table.
-    // There are several cases here, depending on whether the original type
-    // had the same hash code and was itself cyclic.
+    // If the hash codes differ, update TypesByHash
     if (TypeHash != OldTypeHash) {
       RemoveFromTypesByHash(OldTypeHash, Ty);
       TypesByHash.insert(std::make_pair(TypeHash, Ty));
     }
-
-    // If there is no existing type of the same structure, we reinsert an
-    // updated record into the map.
-    Map.insert(std::make_pair(ValType::get(Ty), Ty));
 
     // If the type is currently thought to be abstract, rescan all of our
     // subtypes to see if the type has just become concrete!
