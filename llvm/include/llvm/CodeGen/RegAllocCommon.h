@@ -5,6 +5,6 @@
 // if DEBUG_RA is 1 normal output messages
 // if DEBUG_RA is 2 extensive debug info for each instr
 
-#define DEBUG_RA (1)
+#define DEBUG_RA (0)
 
 #endif
