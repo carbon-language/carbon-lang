@@ -33,6 +33,7 @@ namespace {
     const DSGraph *TDGraph;
 
     DSNode *getNodeForValue(Value *V);
+    bool isNodeForValueCollapsed(Value *V);
   public:
     /// Driver functions to compute the Load/Store Dep. Graph per function.
     bool runOnFunction(Function& F);
@@ -90,14 +91,24 @@ void DSGraphStats::countCallees(const Function& F) {
 
 DSNode *DSGraphStats::getNodeForValue(Value *V) {
   const DSGraph *G = TDGraph;
-  if (isa<GlobalValue>(V))
+  if (isa<GlobalValue>(V) || isa<Constant>(V))
     G = TDGraph->getGlobalsGraph();
 
-  return G->getNodeForValue(V).getNode();
+  const DSGraph::ScalarMapTy &ScalarMap = G->getScalarMap();
+  DSGraph::ScalarMapTy::const_iterator I = ScalarMap.find(V);
+  if (I != ScalarMap.end())
+    return I->second.getNode();
+  return 0;
+}
+
+bool DSGraphStats::isNodeForValueCollapsed(Value *V) {
+  if (DSNode *N = getNodeForValue(V))
+    return N->isNodeCompletelyFolded();
+  return false;
 }
 
 void DSGraphStats::visitLoad(LoadInst &LI) {
-  if (getNodeForValue(LI.getOperand(0))->isNodeCompletelyFolded()) {
+  if (isNodeForValueCollapsed(LI.getOperand(0))) {
     NumUntypedMemAccesses++;
   } else {
     NumTypedMemAccesses++;
@@ -105,7 +116,7 @@ void DSGraphStats::visitLoad(LoadInst &LI) {
 }
 
 void DSGraphStats::visitStore(StoreInst &SI) {
-  if (getNodeForValue(SI.getOperand(1))->isNodeCompletelyFolded()) {
+  if (isNodeForValueCollapsed(SI.getOperand(1))) {
     NumUntypedMemAccesses++;
   } else {
     NumTypedMemAccesses++;
