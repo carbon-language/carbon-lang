@@ -171,9 +171,8 @@ bool SROA::performScalarRepl(Function &F) {
     // Now that we have created the alloca instructions that we want to use,
     // expand the getelementptr instructions to use them.
     //
-    for (Value::use_iterator I = AI->use_begin(), E = AI->use_end();
-         I != E; ++I) {
-      Instruction *User = cast<Instruction>(*I);
+    while (!AI->use_empty()) {
+      Instruction *User = cast<Instruction>(AI->use_back());
       if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(User)) {
         // We now know that the GEP is of the form: GEP <ptr>, 0, <cst>
         uint64_t Idx = cast<ConstantInt>(GEPI->getOperand(2))->getRawValue();
