@@ -22,6 +22,7 @@
 #include "llvm/Constants.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Support/MathExtras.h"
+#include <algorithm>
 using namespace llvm;
 
 // Handle the Pass registration stuff necessary to use TargetData's.
@@ -69,6 +70,22 @@ StructLayout::StructLayout(const StructType *ST, const TargetData &TD) {
   // and all array elements would be aligned correctly.
   if (StructSize % StructAlignment != 0)
     StructSize = (StructSize/StructAlignment + 1) * StructAlignment;
+}
+
+
+/// getElementContainingOffset - Given a valid offset into the structure,
+/// return the structure index that contains it.
+unsigned StructLayout::getElementContainingOffset(uint64_t Offset) const {
+  std::vector<uint64_t>::const_iterator SI =
+    std::upper_bound(MemberOffsets.begin(), MemberOffsets.end(),
+                     Offset);
+  assert(SI != MemberOffsets.begin() && "Offset not in structure type!");
+  --SI;
+  assert(*SI <= Offset && "upper_bound didn't work");
+  assert((SI == MemberOffsets.begin() || *(SI-1) < Offset) &&
+         (SI+1 == MemberOffsets.end() || *(SI+1) > Offset) &&
+         "Upper bound didn't work!");
+  return SI-MemberOffsets.begin();
 }
 
 //===----------------------------------------------------------------------===//
