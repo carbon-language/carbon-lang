@@ -125,7 +125,7 @@ static Instruction *ConvertMallocToType(MallocInst *MI, const Type *Ty,
   }
 
   assert(AllocTy == Ty);
-  return = new MallocInst(AllocTy, Expr.Var, Name);
+  return new MallocInst(AllocTy, Expr.Var, Name);
 }
 
 
