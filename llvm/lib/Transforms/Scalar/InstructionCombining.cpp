@@ -1086,7 +1086,7 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
                                 ConstantIntegral::getAllOnesValue(I.getType()));
 
   if (Instruction *Op1I = dyn_cast<Instruction>(Op1))
-    if (Op1I->getOpcode() == Instruction::Or)
+    if (Op1I->getOpcode() == Instruction::Or) {
       if (Op1I->getOperand(0) == Op0) {              // B^(B|A) == (A|B)^B
         cast<BinaryOperator>(Op1I)->swapOperands();
         I.swapOperands();
@@ -1094,7 +1094,13 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
       } else if (Op1I->getOperand(1) == Op0) {       // B^(A|B) == (A|B)^B
         I.swapOperands();
         std::swap(Op0, Op1);
-      }
+      }      
+    } else if (Op1I->getOpcode() == Instruction::Xor) {
+      if (Op0 == Op1I->getOperand(0))                        // A^(A^B) == B
+        return ReplaceInstUsesWith(I, Op1I->getOperand(1));
+      else if (Op0 == Op1I->getOperand(1))                   // A^(B^A) == B
+        return ReplaceInstUsesWith(I, Op1I->getOperand(0));
+    }
 
   if (Instruction *Op0I = dyn_cast<Instruction>(Op0))
     if (Op0I->getOpcode() == Instruction::Or && Op0I->hasOneUse()) {
@@ -1106,6 +1112,11 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
         return BinaryOperator::create(Instruction::And, Op0I->getOperand(0),
                                       NotB);
       }
+    } else if (Op0I->getOpcode() == Instruction::Xor) {
+      if (Op1 == Op0I->getOperand(0))                        // (A^B)^A == B
+        return ReplaceInstUsesWith(I, Op0I->getOperand(1));
+      else if (Op1 == Op0I->getOperand(1))                   // (B^A)^A == B
+        return ReplaceInstUsesWith(I, Op0I->getOperand(0));
     }
 
   // (A & C1)^(B & C2) -> (A & C1)|(B & C2) iff C1^C2 == 0
