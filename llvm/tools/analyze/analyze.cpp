@@ -19,6 +19,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Analysis/Writer.h"
 
+#include "llvm/Analysis/InstForest.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/IntervalPartition.h"
 #include "llvm/Analysis/Expressions.h"
@@ -59,6 +60,9 @@ static void PrintClassifiedExprs(Method *M) {
   }
 }
 
+static void PrintInstForest(Method *M) {
+  cout << analysis::InstForest<char>(M);
+}
 
 static void PrintDominatorSets(Method *M) {
   cout << cfg::DominatorSet(M);
@@ -87,7 +91,7 @@ static void PrintPostDomFrontier(Method *M) {
 }
 
 enum Ans {
-  print, intervals, exprclassify,
+  print, intervals, exprclassify, instforest,
   domset, idom, domtree, domfrontier,
   postdomset, postidom, postdomtree, postdomfrontier,
 };
@@ -99,6 +103,7 @@ cl::EnumList<enum Ans> AnalysesList(cl::NoFlags,
   clEnumVal(print          , "Print each Method"),
   clEnumVal(intervals      , "Print Interval Partitions"),
   clEnumVal(exprclassify   , "Classify Expressions"),
+  clEnumVal(instforest     , "Print Instruction Forest"),
 
   clEnumVal(domset         , "Print Dominator Sets"),
   clEnumVal(idom           , "Print Immediate Dominators"),
@@ -118,6 +123,7 @@ struct {
   { print          , PrintMethod              },
   { intervals      , PrintIntervalPartition   },
   { exprclassify   , PrintClassifiedExprs     },
+  { instforest     , PrintInstForest          },
 
   { domset         , PrintDominatorSets       },
   { idom           , PrintImmediateDominators },
