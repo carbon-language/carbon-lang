@@ -304,14 +304,15 @@ bool llvm::InlineFunction(CallSite CS) {
     // Splice the code from the return block into the block that it will return
     // to, which contains the code that was after the call.
     BasicBlock *ReturnBB = Returns[0]->getParent();
-    ReturnBB->getInstList().splice(Returns[0], AfterCallBB->getInstList());
+    AfterCallBB->getInstList().splice(AfterCallBB->begin(),
+                                      ReturnBB->getInstList());
 
-    // Update PHI nodes that use the AfterCallBB to use the ReturnBB.
-    AfterCallBB->replaceAllUsesWith(ReturnBB);
+    // Update PHI nodes that use the ReturnBB to use the AfterCallBB.
+    ReturnBB->replaceAllUsesWith(AfterCallBB);
       
-    // Delete the return instruction now and empty AfterCallBB now.
+    // Delete the return instruction now and empty ReturnBB now.
     Returns[0]->getParent()->getInstList().erase(Returns[0]);
-    Caller->getBasicBlockList().erase(AfterCallBB);
+    Caller->getBasicBlockList().erase(ReturnBB);
   }
     
   // Since we are now done with the Call/Invoke, we can delete it.
