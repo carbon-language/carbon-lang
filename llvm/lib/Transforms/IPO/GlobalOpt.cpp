@@ -38,6 +38,7 @@ namespace {
   Statistic<> NumDeleted  ("globalopt", "Number of globals deleted");
   Statistic<> NumFnDeleted("globalopt", "Number of functions deleted");
   Statistic<> NumGlobUses ("globalopt", "Number of global uses devirtualized");
+  Statistic<> NumLocalized("globalopt", "Number of globals localized");
   Statistic<> NumShrunkToBool("globalopt",
                               "Number of global vars shrunk to booleans");
 
@@ -92,12 +93,20 @@ struct GlobalStatus {
   /// ever stored to this global, keep track of what value it is.
   Value *StoredOnceValue;
 
+  // AccessingFunction/HasMultipleAccessingFunctions - These start out
+  // null/false.  When the first accessing function is noticed, it is recorded.
+  // When a second different accessing function is noticed,
+  // HasMultipleAccessingFunctions is set to true.
+  Function *AccessingFunction;
+  bool HasMultipleAccessingFunctions;
+
   /// isNotSuitableForSRA - Keep track of whether any SRA preventing users of
   /// the global exist.  Such users include GEP instruction with variable
   /// indexes, and non-gep/load/store users like constant expr casts.
   bool isNotSuitableForSRA;
 
   GlobalStatus() : isLoaded(false), StoredType(NotStored), StoredOnceValue(0),
+                   AccessingFunction(0), HasMultipleAccessingFunctions(false),
                    isNotSuitableForSRA(false) {}
 };
 
@@ -146,6 +155,13 @@ static bool AnalyzeGlobal(Value *V, GlobalStatus &GS,
       }
 
     } else if (Instruction *I = dyn_cast<Instruction>(*UI)) {
+      if (!GS.HasMultipleAccessingFunctions) {
+        Function *F = I->getParent()->getParent();
+        if (GS.AccessingFunction == 0)
+          GS.AccessingFunction = F;
+        else if (GS.AccessingFunction != F)
+          GS.HasMultipleAccessingFunctions = true;
+      }
       if (isa<LoadInst>(I)) {
         GS.isLoaded = true;
       } else if (StoreInst *SI = dyn_cast<StoreInst>(I)) {
@@ -898,6 +914,30 @@ bool GlobalOpt::ProcessInternalGlobal(GlobalVariable *GV,
   }
 
   if (!AnalyzeGlobal(GV, GS, PHIUsers)) {
+    // If this is a first class global and has only one accessing function
+    // and this function is main (which we know is not recursive we can make
+    // this global a local variable) we replace the global with a local alloca
+    // in this function.
+    //
+    // NOTE: It doesn't make sense to promote non first class types since we
+    // are just replacing static memory to stack memory.
+    if (!GS.HasMultipleAccessingFunctions &&
+        GS.AccessingFunction &&
+        GV->getType()->getElementType()->isFirstClassType() &&
+        GS.AccessingFunction->getName() == "main" &&
+        GS.AccessingFunction->hasExternalLinkage()) {
+      DEBUG(std::cerr << "LOCALIZING GLOBAL: " << *GV);
+      Instruction* FirstI = GS.AccessingFunction->getEntryBlock().begin();
+      const Type* ElemTy = GV->getType()->getElementType();
+      AllocaInst* Alloca = new AllocaInst(ElemTy, NULL, GV->getName(), FirstI);
+      if (!isa<UndefValue>(GV->getInitializer()))
+        new StoreInst(GV->getInitializer(), Alloca, FirstI);
+   
+      GV->replaceAllUsesWith(Alloca);
+      GV->eraseFromParent();
+      ++NumLocalized;
+      return true;
+    }
     // If the global is never loaded (but may be stored to), it is dead.
     // Delete it now.
     if (!GS.isLoaded) {
