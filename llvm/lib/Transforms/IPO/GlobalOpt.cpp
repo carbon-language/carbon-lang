@@ -458,6 +458,9 @@ static bool AllUsesOfValueWillTrapIfNull(Value *V) {
       if (!AllUsesOfValueWillTrapIfNull(CI)) return false;
     } else if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(*UI)) {
       if (!AllUsesOfValueWillTrapIfNull(GEPI)) return false;
+    } else if (isa<SetCondInst>(*UI) && 
+               isa<ConstantPointerNull>(UI->getOperand(1))) {
+      // Ignore setcc X, null
     } else {
       //std::cerr << "NONTRAPPING USE: " << **UI;
       return false;
@@ -466,7 +469,8 @@ static bool AllUsesOfValueWillTrapIfNull(Value *V) {
 }
 
 /// AllUsesOfLoadedValueWillTrapIfNull - Return true if all uses of any loads
-/// from GV will trap if the loaded value is null.
+/// from GV will trap if the loaded value is null.  Note that this also permits
+/// comparisons of the loaded value against null, as a special case.
 static bool AllUsesOfLoadedValueWillTrapIfNull(GlobalVariable *GV) {
   for (Value::use_iterator UI = GV->use_begin(), E = GV->use_end(); UI!=E; ++UI)
     if (LoadInst *LI = dyn_cast<LoadInst>(*UI)) {
@@ -653,24 +657,63 @@ static GlobalVariable *OptimizeGlobalAddressOfMalloc(GlobalVariable *GV,
   
   // Anything that used the malloc now uses the global directly.
   MI->replaceAllUsesWith(NewGV);
-  MI->eraseFromParent();
 
   Constant *RepValue = NewGV;
   if (NewGV->getType() != GV->getType()->getElementType())
     RepValue = ConstantExpr::getCast(RepValue, GV->getType()->getElementType());
 
+  // If there is a comparison against null, we will insert a global bool to
+  // keep track of whether the global was initialized yet or not.
+  GlobalVariable *InitBool = 0;
+
   // Loop over all uses of GV, processing them in turn.
   while (!GV->use_empty())
     if (LoadInst *LI = dyn_cast<LoadInst>(GV->use_back())) {
-      LI->replaceAllUsesWith(RepValue);
+      while (!LI->use_empty()) {
+        // FIXME: the iterator should expose a getUse() method.
+        Use &LoadUse = *(const iplist<Use>::iterator&)LI->use_begin();
+        if (!isa<SetCondInst>(LoadUse.getUser()))
+          LoadUse = RepValue;
+        else {
+          if (InitBool == 0) {
+            InitBool = new GlobalVariable(Type::BoolTy, false,
+                                          GlobalValue::InternalLinkage, 
+                                          ConstantBool::False,
+                                          GV->getName()+".init");
+            GV->getParent()->getGlobalList().insert(GV, InitBool);
+            // The global is initialized when the malloc is run.
+            new StoreInst(ConstantBool::True, InitBool, MI);
+          }
+          // Replace the setcc X, 0 with a use of the bool value.
+          SetCondInst *SCI = cast<SetCondInst>(LoadUse.getUser());
+          Value *LV = new LoadInst(InitBool, InitBool->getName()+".val", SCI);
+          switch (SCI->getOpcode()) {
+          default: assert(0 && "Unknown opcode!");
+          case Instruction::SetLT:
+            LV = ConstantBool::False;   // X < null -> always false
+            break;
+          case Instruction::SetEQ:
+          case Instruction::SetLE:
+            LV = BinaryOperator::createNot(LV, "notinit", SCI);
+            break;
+          case Instruction::SetNE:
+          case Instruction::SetGE:
+          case Instruction::SetGT:
+            break;  // no change.
+          }
+          SCI->replaceAllUsesWith(LV);
+          SCI->eraseFromParent();
+        }
+      }
       LI->eraseFromParent();
     } else {
       StoreInst *SI = cast<StoreInst>(GV->use_back());
       SI->eraseFromParent();
     }
 
-  // Now the GV is dead, nuke it.
+  // Now the GV is dead, nuke it and the malloc.
   GV->eraseFromParent();
+  MI->eraseFromParent();
 
   // To further other optimizations, loop over all users of NewGV and try to
   // constant prop them.  This will promote GEP instructions with constant
