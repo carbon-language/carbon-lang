@@ -606,12 +606,9 @@ int64_t SparcV9CodeEmitter::getMachineOpValue(MachineInstr &MI,
       // external function calls, etc.?
       if (Function *F = dyn_cast<Function>(GV)) {
         DEBUG(std::cerr << "Function: ");
-        if (F->isExternal()) {
-          // Sparc backend broken: this MO should be `ExternalSymbol'
-          rv = (int64_t)MCE.getGlobalValueAddress(F->getName());
-        } else {
-          rv = (int64_t)MCE.getGlobalValueAddress(F);
-        }
+        // NOTE: This results in stubs being generated even for
+        // external, native functions, which is not optimal. See PR103.
+        rv = (int64_t)MCE.getGlobalValueAddress(F);
         if (rv == 0) {
           DEBUG(std::cerr << "not yet generated\n");
           // Function has not yet been code generated!
