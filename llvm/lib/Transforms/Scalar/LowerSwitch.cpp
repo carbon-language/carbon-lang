@@ -84,7 +84,7 @@ void LowerSwitch::processSwitchInst(SwitchInst *SI) {
     Instruction *Br = new BranchInst(Succ, NextBlock, Comp);
     CurBlock->getInstList().push_back(Br);
 
-    // If there were any PHI nodes in this success, rewrite one entry from
+    // If there were any PHI nodes in this successor, rewrite one entry from
     // OrigBlock to come from CurBlock.
     for (BasicBlock::iterator I = Succ->begin();
          PHINode *PN = dyn_cast<PHINode>(I); ++I) {
@@ -93,9 +93,19 @@ void LowerSwitch::processSwitchInst(SwitchInst *SI) {
       PN->setIncomingBlock((unsigned)BlockIdx, CurBlock);
     }
 
+    if (i == e-2) {  // Is this looking at the default destination?
+      // If there is an entry in any PHI nodes for the default edge, make sure
+      // to update them as well.
+      for (BasicBlock::iterator I = NextBlock->begin();
+           PHINode *PN = dyn_cast<PHINode>(I); ++I) {
+        int BlockIdx = PN->getBasicBlockIndex(OrigBlock);
+        assert(BlockIdx != -1 && "Switch didn't go to this successor??");
+        PN->setIncomingBlock((unsigned)BlockIdx, CurBlock);
+      }
+    }
+
     CurBlock = NextBlock;  // Move on to the next condition
   }
-
 
   // We are now done with the switch instruction, delete it.
   delete SI;
