@@ -1,9 +1,9 @@
 //===-- X86RegisterInfo.def - X86 Register Information ----------*- C++ -*-===//
 //
-// This file describes all of the registers that the X86 backend uses.  It relys
+// This file describes all of the registers that the X86 backend uses. It relies
 // on an external 'R' macro being defined that takes the arguments specified
-// below, and is used to make all of the information relevant to an registers be
-// in one place.
+// below, and is used to make all of the information relevant to registers be in
+// one place.
 //
 //===----------------------------------------------------------------------===//
 
