@@ -394,8 +394,8 @@ DSGraph::~DSGraph() {
 void DSGraph::dump() const { print(std::cerr); }
 
 
-DSNodeHandle copyHelper(const DSNodeHandle* fromNode,
-                        std::map<const DSNode*, DSNode*> *NodeMap) {
+static DSNodeHandle copyHelper(const DSNodeHandle* fromNode,
+                               std::map<const DSNode*, DSNode*> *NodeMap) {
   return DSNodeHandle((*NodeMap)[fromNode->getNode()], fromNode->getOffset());
 }
 
