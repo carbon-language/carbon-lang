@@ -514,7 +514,7 @@ void MachineInstr::setImplicitRef(unsigned i,
                                   bool isDefAndUse)
 {
   assert(i < getNumImplicitRefs() && "setImplicitRef() out of range!");
-  SetMachineOperandVal(i + getNumImplicitRefs(),
+  SetMachineOperandVal(i + getNumOperands(),
                        MachineOperand::MO_VirtualRegister,
                        V, isDef, isDefAndUse);
 }
