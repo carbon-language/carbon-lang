@@ -12,6 +12,7 @@
 class Type;
 class DSGraph;
 class DSNodeHandle;
+class DSCallSite;
 class LocalDataStructures;     // A collection of local graphs for a program
 class BUDataStructures;        // A collection of bu graphs for a program
 class TDDataStructures;        // A collection of td graphs for a program
@@ -63,19 +64,10 @@ public:
 // only performs a "Bottom Up" propogation (hence the name).
 //
 class BUDataStructures : public Pass {
-public:
-  struct CallSite {
-    Function *Caller;
-    std::vector<DSNodeHandle> Context;
-
-    CallSite(Function &C, const std::vector<DSNodeHandle> &Con)
-      : Caller(&C), Context(Con) {}
-  };
-
 private:
   // DSInfo, one graph for each function
   std::map<const Function*, DSGraph*> DSInfo;
-  std::map<const Function*, std::vector<CallSite> > CallSites;
+  std::map<const Function*, std::vector<DSCallSite> > CallSites;
 public:
   ~BUDataStructures() { releaseMemory(); }
 
@@ -88,8 +80,8 @@ public:
     return *I->second;
   }
 
-  const std::vector<CallSite> *getCallSites(const Function &F) const {
-    std::map<const Function*, std::vector<CallSite> >::const_iterator I
+  const std::vector<DSCallSite> *getCallSites(const Function &F) const {
+    std::map<const Function*, std::vector<DSCallSite> >::const_iterator I
       = CallSites.find(&F);
     return I != CallSites.end() ? &I->second : 0;
   }
@@ -143,7 +135,7 @@ private:
   DSGraph &calculateGraph(Function &F);
 
   void ResolveCallSite(DSGraph &Graph,
-                       const BUDataStructures::CallSite &CallSite);
+                       const DSCallSite &CallSite);
 };
 
 #if 0
