@@ -1512,9 +1512,9 @@ void ISel::LowerUnknownIntrinsicFunctionCalls(Function &F) {
             // On PPC, memory operations are in-order.  Lower this intrinsic
             // into a volatile store.
             Instruction *Before = CI->getPrev();
-            StoreInst *LI = new StoreInst(CI->getOperand(1),
+            StoreInst *SI = new StoreInst(CI->getOperand(1),
                                           CI->getOperand(2), true, CI);
-            CI->replaceAllUsesWith(LI);
+            CI->replaceAllUsesWith(SI);
             BB->getInstList().erase(CI);
             break;
           }
@@ -1864,7 +1864,7 @@ void ISel::doMultiplyConst(MachineBasicBlock *MBB,
     case cShort:
     case cInt:
       BuildMI(*MBB, IP, PPC32::RLWINM, 4, DestReg).addReg(op0Reg)
-        .addImm(Shift-1).addImm(0).addImm(31-Shift-1);
+        .addImm(Shift-1).addImm(0).addImm(31-Shift+1);
       return;
     }
   }
@@ -1872,13 +1872,17 @@ void ISel::doMultiplyConst(MachineBasicBlock *MBB,
   // Most general case, emit a normal multiply...
   unsigned TmpReg1 = makeAnotherReg(Type::IntTy);
   unsigned TmpReg2 = makeAnotherReg(Type::IntTy);
+  unsigned TmpReg3 = makeAnotherReg(Type::IntTy);
   BuildMI(*MBB, IP, PPC32::ADDIS, 2, TmpReg1).addReg(PPC32::R0)
     .addImm(ConstRHS >> 16);
-  BuildMI(*MBB, IP, PPC32::ORI, 2, TmpReg2).addReg(TmpReg1).addImm(ConstRHS);
+  BuildMI(*MBB, IP, PPC32::RLWINM, 4, TmpReg2).addReg(TmpReg1)
+    .addImm(16).addImm(0).addImm(15);
+  BuildMI(*MBB, IP, PPC32::ORI, 2, TmpReg3).addReg(TmpReg2)
+    .addImm(ConstRHS & 0xFFFF);
   
   // Emit a MUL to multiply the register holding the index by
   // elementSize, putting the result in OffsetReg.
-  doMultiply(MBB, IP, DestReg, DestTy, op0Reg, TmpReg2);
+  doMultiply(MBB, IP, DestReg, DestTy, op0Reg, TmpReg3);
 }
 
 void ISel::visitMul(BinaryOperator &I) {
