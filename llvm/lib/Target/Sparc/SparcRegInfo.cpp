@@ -668,7 +668,11 @@ void UltraSparcRegInfo::colorCallArgs(const MachineInstr *const CallMI,
 	AdMI = cpReg2MemMI(UniLRReg, getStackPointer(), argOffset, RegType );
       }
 
-      AddedInstrnsBefore.push_back( AdMI );  // Now add the instruction
+      // Now add the instruction. We can directly add to
+      // CallAI->InstrnsBefore since we are just saving a reg on stack
+      //
+      CallAI->InstrnsBefore.push_back( AdMI ); 
+      //cerr << "\nCaution: Passing a reg on stack";
     }
 
     else {                          // LR is not colored (i.e., spilled)      
@@ -683,6 +687,7 @@ void UltraSparcRegInfo::colorCallArgs(const MachineInstr *const CallMI,
 	AdMI = cpMem2RegMI(getFramePointer(), LR->getSpillOffFromFP(),
 			   UniArgReg, RegType );
         
+	cerr << "\nCaution: Loading a spilled val to a reg as a call arg";
 	AddedInstrnsBefore.push_back( AdMI );  // Now add the instruction
       }
       
@@ -728,7 +733,7 @@ void UltraSparcRegInfo::colorCallArgs(const MachineInstr *const CallMI,
 	CallAI->InstrnsBefore.push_back( Ad3 );  
 	CallAI->InstrnsBefore.push_back( Ad4 );  
 
-	cerr << "\n Caution: Call arg moved from stack to stack";
+	cerr << "\nCaution: Call arg moved from stack2stack for: " << *CallMI ;
       }
 
     }
