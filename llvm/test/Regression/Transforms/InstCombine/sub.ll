@@ -8,29 +8,29 @@
 
 implementation
 
-int "test1"(int %A) {
+int %test1(int %A) {
 	%B = sub int %A, %A    ; ISA constant 0
 	ret int %B
 }
 
-int "test2"(int %A) {
+int %test2(int %A) {
 	%B = sub int %A, 0
 	ret int %B
 }
 
-int "test3"(int %A) {
+int %test3(int %A) {
 	%B = sub int 0, %A       ; B = -A
 	%C = sub int 0, %B       ; C = -B = A
 	ret int %C
 }
 
-int "test4"(int %A, int %x) {
+int %test4(int %A, int %x) {
 	%B = sub int 0, %A
 	%C = sub int %x, %B
 	ret int %C
 }
 
-int "test5"(int %A, int %Bok, int %Cok) {
+int %test5(int %A, int %Bok, int %Cok) {
 	%D = sub int %Bok, %Cok
 	%E = sub int %A, %D
 	ret int %E
