@@ -19,13 +19,13 @@ struct X86RegisterInfo : public MRegisterInfo {
 
   MachineBasicBlock::iterator
   storeReg2RegOffset(MachineBasicBlock *MBB,
-                     MachineBasicBlock::iterator &MBBI,
+                     MachineBasicBlock::iterator MBBI,
                      unsigned DestReg, unsigned SrcReg, 
                      unsigned ImmOffset, unsigned dataSize) const;
 
   MachineBasicBlock::iterator
   loadRegOffset2Reg(MachineBasicBlock *MBB,
-                    MachineBasicBlock::iterator &MBBI,
+                    MachineBasicBlock::iterator MBBI,
                     unsigned DestReg, unsigned SrcReg,
                     unsigned ImmOffset, unsigned dataSize) const;
 

@@ -26,7 +26,7 @@ X86RegisterInfo::X86RegisterInfo()
 
 MachineBasicBlock::iterator
 X86RegisterInfo::storeReg2RegOffset(MachineBasicBlock *MBB,
-                                    MachineBasicBlock::iterator &MBBI,
+                                    MachineBasicBlock::iterator MBBI,
                                     unsigned SrcReg, unsigned DestReg, 
                                     unsigned ImmOffset, unsigned dataSize)
   const
@@ -38,7 +38,7 @@ X86RegisterInfo::storeReg2RegOffset(MachineBasicBlock *MBB,
 
 MachineBasicBlock::iterator
 X86RegisterInfo::loadRegOffset2Reg(MachineBasicBlock *MBB,
-                                   MachineBasicBlock::iterator &MBBI,
+                                   MachineBasicBlock::iterator MBBI,
                                    unsigned DestReg, unsigned SrcReg,
                                    unsigned ImmOffset, unsigned dataSize)
   const

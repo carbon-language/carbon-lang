@@ -119,13 +119,13 @@ public:
 
   virtual MachineBasicBlock::iterator
   storeReg2RegOffset(MachineBasicBlock *MBB,
-                     MachineBasicBlock::iterator &MBBI,
+                     MachineBasicBlock::iterator MBBI,
                      unsigned SrcReg, unsigned DestReg,
                      unsigned ImmOffset, unsigned dataSize) const = 0;
 
   virtual MachineBasicBlock::iterator
   loadRegOffset2Reg(MachineBasicBlock *MBB,
-                    MachineBasicBlock::iterator &MBBI,
+                    MachineBasicBlock::iterator MBBI,
                     unsigned DestReg, unsigned SrcReg,
                     unsigned ImmOffset, unsigned dataSize) const = 0;
 
