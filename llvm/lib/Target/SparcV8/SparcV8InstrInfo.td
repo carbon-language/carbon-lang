@@ -47,10 +47,12 @@ def FpMOVD : PseudoInstV8<"FpMOVD">; // pseudo 64-bit double move
 
 // Section A.3 - Synthetic Instructions, p. 85
 // special cases of JMPL:
-let isReturn = 1, isTerminator = 1, hasDelaySlot = 1, simm13 = 8 in
-  def RET : F3_2<2, 0b111000, "ret">;
-let isReturn = 1, isTerminator = 1, hasDelaySlot = 1, simm13 = 8 in
-  def RETL: F3_2<2, 0b111000, "retl">;
+let isReturn = 1, isTerminator = 1, hasDelaySlot = 1 in {
+  let rd = I7.Num, rs1 = G0.Num, simm13 = 8 in
+    def RET : F3_2<2, 0b111000, "ret">;
+  let rd = O7.Num, rs1 = G0.Num, simm13 = 8 in
+    def RETL: F3_2<2, 0b111000, "retl">;
+}
 // CMP is a special case of SUBCC where destination is ignored, by setting it to
 // %g0 (hardwired zero).
 // FIXME: should keep track of the fact that it defs the integer condition codes
