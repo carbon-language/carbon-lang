@@ -87,6 +87,7 @@ DSGraph &TDDataStructures::getOrCreateDSGraph(Function &F) {
   if (G == 0) { // Not created yet?  Clone BU graph...
     G = new DSGraph(getAnalysis<BUDataStructures>().getDSGraph(F));
     G->getAuxFunctionCalls().clear();
+    G->setPrintAuxCalls();
     G->setGlobalsGraph(GlobalsGraph);
   }
   return *G;
