@@ -26,6 +26,7 @@
 #include <algorithm>
 #include <iostream>
 using std::cerr;
+using std::pair;
 using std::make_pair;
 
 bool BytecodeParser::getTypeSlot(const Type *Ty, unsigned &Slot) {
