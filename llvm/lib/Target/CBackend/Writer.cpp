@@ -493,6 +493,9 @@ void CWriter::printConstant(Constant *CPV) {
     case Instruction::Mul:
     case Instruction::Div:
     case Instruction::Rem:
+    case Instruction::And:
+    case Instruction::Or:
+    case Instruction::Xor:
     case Instruction::SetEQ:
     case Instruction::SetNE:
     case Instruction::SetLT:
@@ -509,6 +512,9 @@ void CWriter::printConstant(Constant *CPV) {
       case Instruction::Mul: Out << " * "; break;
       case Instruction::Div: Out << " / "; break;
       case Instruction::Rem: Out << " % "; break;
+      case Instruction::And: Out << " & "; break;
+      case Instruction::Or:  Out << " | "; break;
+      case Instruction::Xor: Out << " ^ "; break;
       case Instruction::SetEQ: Out << " == "; break;
       case Instruction::SetNE: Out << " != "; break;
       case Instruction::SetLT: Out << " < "; break;
