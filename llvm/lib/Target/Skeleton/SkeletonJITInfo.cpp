@@ -25,12 +25,6 @@ bool SkeletonTargetMachine::addPassesToEmitMachineCode(FunctionPassManager &PM,
   return true;  // Not implemented yet!
 }
 
-void *SkeletonJITInfo::getJITStubForFunction(Function *F,
-                                             MachineCodeEmitter &MCE) {
-  assert (0 && "getJITStubForFunction not implemented");
-  return 0;
-}
-
 void SkeletonJITInfo::replaceMachineCodeForFunction (void *Old, void *New) {
   assert (0 && "replaceMachineCodeForFunction not implemented");
 }
