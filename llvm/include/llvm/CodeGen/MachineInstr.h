@@ -303,7 +303,7 @@ public:
 
 
 //---------------------------------------------------------------------------
-// class MachineInstructionsForVMInstr
+// class MachineCodeForVMInstr
 // 
 // Purpose:
 //   Representation of the sequence of machine instructions created
@@ -355,6 +355,23 @@ MachineCodeForVMInstr::~MachineCodeForVMInstr()
   for (unsigned i=0, N=this->size(); i < N; i++)
     delete (*this)[i];
 }
+
+
+//---------------------------------------------------------------------------
+// class MachineCodeForBasicBlock
+// 
+// Purpose:
+//   Representation of the sequence of machine instructions created
+//   for a basic block.
+//---------------------------------------------------------------------------
+
+
+class MachineCodeForBasicBlock: public vector<const MachineInstr*> {
+public:
+  typedef vector<const MachineInstr*>::iterator iterator;
+  typedef vector<const MachineInstr*>::const_iterator const_iterator;
+};
+
 
 //---------------------------------------------------------------------------
 // Target-independent utility routines for creating machine instructions
