@@ -1742,24 +1742,20 @@ void ISel::emitSimpleBinaryOperation(MachineBasicBlock *MBB,
     }
 
     // add X, -1 -> dec X
-    if (OperatorClass == 0 && Op1C->isAllOnesValue()) {
-      static unsigned const DECTab[] = {
-        X86::DEC8r, X86::DEC16r, X86::DEC32r, 0, X86::DEC32r
-      };
+    if (OperatorClass == 0 && Op1C->isAllOnesValue() && Class != cLong) {
+      // Note that we can't use dec for 64-bit decrements, because it does not
+      // set the carry flag!
+      static unsigned const DECTab[] = { X86::DEC8r, X86::DEC16r, X86::DEC32r };
       BuildMI(*MBB, IP, DECTab[Class], 1, DestReg).addReg(Op0r);
-      if (Class == cLong)  // Dh = sbb Sh, 0
-        BuildMI(*MBB, IP, X86::SBB32ri, 2, DestReg+1).addReg(Op0r+1).addImm(0);
       return;
     }
 
     // add X, 1 -> inc X
-    if (OperatorClass == 0 && Op1C->equalsInt(1)) {
-      static unsigned const INCTab[] = {
-        X86::INC8r, X86::INC16r, X86::INC32r, 0, X86::INC32r
-      };
+    if (OperatorClass == 0 && Op1C->equalsInt(1) && Class != cLong) {
+      // Note that we can't use inc for 64-bit increments, because it does not
+      // set the carry flag!
+      static unsigned const INCTab[] = { X86::INC8r, X86::INC16r, X86::INC32r };
       BuildMI(*MBB, IP, INCTab[Class], 1, DestReg).addReg(Op0r);
-      if (Class == cLong)  // Dh = adc Sh, 0
-        BuildMI(*MBB, IP, X86::ADC32ri, 2, DestReg+1).addReg(Op0r+1).addImm(0);
       return;
     }
   
