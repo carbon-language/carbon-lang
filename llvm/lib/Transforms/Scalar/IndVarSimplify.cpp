@@ -22,31 +22,61 @@
 #include "llvm/Analysis/InductionVariable.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Support/CFG.h"
+#include "llvm/Target/TargetData.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "Support/Debug.h"
 #include "Support/Statistic.h"
-#include "Support/STLExtras.h"
-#include <algorithm>
 using namespace llvm;
 
 namespace {
   Statistic<> NumRemoved ("indvars", "Number of aux indvars removed");
   Statistic<> NumInserted("indvars", "Number of canonical indvars added");
+
+  class IndVarSimplify : public FunctionPass {
+    LoopInfo *Loops;
+    TargetData *TD;
+  public:
+    virtual bool runOnFunction(Function &) {
+      Loops = &getAnalysis<LoopInfo>();
+      TD = &getAnalysis<TargetData>();
+      
+      // Induction Variables live in the header nodes of loops
+      bool Changed = false;
+      for (unsigned i = 0, e = Loops->getTopLevelLoops().size(); i != e; ++i)
+        Changed |= runOnLoop(Loops->getTopLevelLoops()[i]);
+      return Changed;
+    }
+
+    unsigned getTypeSize(const Type *Ty) {
+      if (unsigned Size = Ty->getPrimitiveSize())
+        return Size;
+      return TD->getTypeSize(Ty);  // Must be a pointer
+    }
+
+    bool runOnLoop(Loop *L);
+
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.addRequired<TargetData>();   // Need pointer size
+      AU.addRequired<LoopInfo>();
+      AU.addRequiredID(LoopSimplifyID);
+      AU.addPreservedID(LoopSimplifyID);
+      AU.setPreservesCFG();
+    }
+  };
+  RegisterOpt<IndVarSimplify> X("indvars", "Canonicalize Induction Variables");
 }
 
-// InsertCast - Cast Val to Ty, setting a useful name on the cast if Val has a
-// name...
-//
-static Instruction *InsertCast(Value *Val, const Type *Ty,
-                               Instruction *InsertBefore) {
-  return new CastInst(Val, Ty, Val->getName()+"-casted", InsertBefore);
+Pass *llvm::createIndVarSimplifyPass() {
+  return new IndVarSimplify();
 }
 
-static bool TransformLoop(LoopInfo *Loops, Loop *Loop) {
+
+bool IndVarSimplify::runOnLoop(Loop *Loop) {
   // Transform all subloops before this loop...
-  bool Changed = reduce_apply_bool(Loop->getSubLoops().begin(),
-                                   Loop->getSubLoops().end(),
-                              std::bind1st(std::ptr_fun(TransformLoop), Loops));
+  bool Changed = false;
+  for (unsigned i = 0, e = Loop->getSubLoops().size(); i != e; ++i)
+    Changed |= runOnLoop(Loop->getSubLoops()[i]);
+
   // Get the header node for this loop.  All of the phi nodes that could be
   // induction variables must live in this basic block.
   //
@@ -67,32 +97,54 @@ static bool TransformLoop(LoopInfo *Loops, Loop *Loop) {
   
   // Loop over the induction variables, looking for a canonical induction
   // variable, and checking to make sure they are not all unknown induction
-  // variables.
+  // variables.  Keep track of the largest integer size of the induction
+  // variable.
   //
-  bool FoundIndVars = false;
   InductionVariable *Canonical = 0;
-  for (unsigned i = 0; i < IndVars.size(); ++i) {
-    if (IndVars[i].InductionType == InductionVariable::Canonical &&
-        !isa<PointerType>(IndVars[i].Phi->getType()))
-      Canonical = &IndVars[i];
-    if (IndVars[i].InductionType != InductionVariable::Unknown)
-      FoundIndVars = true;
+  unsigned MaxSize = 0;
+
+  for (unsigned i = 0; i != IndVars.size(); ++i) {
+    InductionVariable &IV = IndVars[i];
+
+    if (IV.InductionType != InductionVariable::Unknown) {
+      unsigned IVSize = getTypeSize(IV.Phi->getType());
+
+      if (IV.InductionType == InductionVariable::Canonical &&
+          !isa<PointerType>(IV.Phi->getType()) && IVSize >= MaxSize)
+        Canonical = &IV;
+      
+      if (IVSize > MaxSize) MaxSize = IVSize;
+
+      // If this variable is larger than the currently identified canonical
+      // indvar, the canonical indvar is not usable.
+      if (Canonical && IVSize > getTypeSize(Canonical->Phi->getType()))
+        Canonical = 0;
+    }
   }
 
   // No induction variables, bail early... don't add a canonical indvar
-  if (!FoundIndVars) return Changed;
+  if (MaxSize == 0) return Changed;
 
   // Okay, we want to convert other induction variables to use a canonical
   // indvar.  If we don't have one, add one now...
   if (!Canonical) {
     // Create the PHI node for the new induction variable, and insert the phi
     // node at the start of the PHI nodes...
-    PHINode *PN = new PHINode(Type::UIntTy, "cann-indvar", Header->begin());
+    const Type *IVType;
+    switch (MaxSize) {
+    default: assert(0 && "Unknown integer type size!");
+    case 1: IVType = Type::UByteTy; break;
+    case 2: IVType = Type::UShortTy; break;
+    case 4: IVType = Type::UIntTy; break;
+    case 8: IVType = Type::ULongTy; break;
+    }
+    
+    PHINode *PN = new PHINode(IVType, "cann-indvar", Header->begin());
 
     // Create the increment instruction to add one to the counter...
     Instruction *Add = BinaryOperator::create(Instruction::Add, PN,
-                                              ConstantUInt::get(Type::UIntTy,1),
-                                              "add1-indvar", AfterPHIIt);
+                                              ConstantUInt::get(IVType, 1),
+                                              "next-indvar", AfterPHIIt);
 
     // Figure out which block is incoming and which is the backedge for the loop
     BasicBlock *Incoming, *BackEdgeBlock;
@@ -108,7 +160,7 @@ static bool TransformLoop(LoopInfo *Loops, Loop *Loop) {
     assert(PI == pred_end(Header) && "Loop headers should have 2 preds!");
     
     // Add incoming values for the PHI node...
-    PN->addIncoming(Constant::getNullValue(Type::UIntTy), Incoming);
+    PN->addIncoming(Constant::getNullValue(IVType), Incoming);
     PN->addIncoming(Add, BackEdgeBlock);
 
     // Analyze the new induction variable...
@@ -136,7 +188,7 @@ static bool TransformLoop(LoopInfo *Loops, Loop *Loop) {
   // Loop through and replace all of the auxiliary induction variables with
   // references to the canonical induction variable...
   //
-  for (unsigned i = 0; i < IndVars.size(); ++i) {
+  for (unsigned i = 0; i != IndVars.size(); ++i) {
     InductionVariable *IV = &IndVars[i];
 
     DEBUG(IV->print(std::cerr));
@@ -155,9 +207,10 @@ static bool TransformLoop(LoopInfo *Loops, Loop *Loop) {
 
         // If the types are not compatible, insert a cast now...
         if (Val->getType() != IVTy)
-          Val = InsertCast(Val, IVTy, AfterPHIIt);
+          Val = new CastInst(Val, IVTy, Val->getName(), AfterPHIIt);
         if (IV->Step->getType() != IVTy)
-          IV->Step = InsertCast(IV->Step, IVTy, AfterPHIIt);
+          IV->Step = new CastInst(IV->Step, IVTy, IV->Step->getName(),
+                                  AfterPHIIt);
 
         Val = BinaryOperator::create(Instruction::Mul, Val, IV->Step,
                                      IV->Phi->getName()+"-scale", AfterPHIIt);
@@ -167,9 +220,10 @@ static bool TransformLoop(LoopInfo *Loops, Loop *Loop) {
       if (IV->Start != Constant::getNullValue(IV->Start->getType())) {
         // If the types are not compatible, insert a cast now...
         if (Val->getType() != IVTy)
-          Val = InsertCast(Val, IVTy, AfterPHIIt);
+          Val = new CastInst(Val, IVTy, Val->getName(), AfterPHIIt);
         if (IV->Start->getType() != IVTy)
-          IV->Start = InsertCast(IV->Start, IVTy, AfterPHIIt);
+          IV->Start = new CastInst(IV->Start, IVTy, IV->Start->getName(),
+                                   AfterPHIIt);
 
         // Insert the instruction after the phi nodes...
         Val = BinaryOperator::create(Instruction::Add, Val, IV->Start,
@@ -178,7 +232,7 @@ static bool TransformLoop(LoopInfo *Loops, Loop *Loop) {
 
       // If the PHI node has a different type than val is, insert a cast now...
       if (Val->getType() != IV->Phi->getType())
-        Val = InsertCast(Val, IV->Phi->getType(), AfterPHIIt);
+        Val = new CastInst(Val, IV->Phi->getType(), Val->getName(), AfterPHIIt);
       
       // Replace all uses of the old PHI node with the new computed value...
       IV->Phi->replaceAllUsesWith(Val);
@@ -227,30 +281,5 @@ static bool TransformLoop(LoopInfo *Loops, Loop *Loop) {
   }
 
   return Changed;
-}
-
-namespace {
-  struct InductionVariableSimplify : public FunctionPass {
-    virtual bool runOnFunction(Function &) {
-      LoopInfo &LI = getAnalysis<LoopInfo>();
-
-      // Induction Variables live in the header nodes of loops
-      return reduce_apply_bool(LI.getTopLevelLoops().begin(),
-                               LI.getTopLevelLoops().end(),
-                               std::bind1st(std::ptr_fun(TransformLoop), &LI));
-    }
-    
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-      AU.addRequired<LoopInfo>();
-      AU.addRequiredID(LoopSimplifyID);
-      AU.setPreservesCFG();
-    }
-  };
-  RegisterOpt<InductionVariableSimplify> X("indvars",
-                                           "Canonicalize Induction Variables");
-}
-
-Pass *llvm::createIndVarSimplifyPass() {
-  return new InductionVariableSimplify();
 }
 
