@@ -85,7 +85,7 @@ std::string getUniqueFilename(const std::string &FilenameBase) {
     exit(1);
   }
 
-  // We don't need to hold the temp file descriptor... we will trust that noone
+  // We don't need to hold the temp file descriptor... we will trust that no one
   // will overwrite/delete the file while we are working on it...
   close(TempFD);
   std::string Result(FNBuffer);

@@ -103,7 +103,7 @@ static void RedirectFD(const std::string &File, int FD) {
 
 /// RunProgramWithTimeout - This function executes the specified program, with
 /// the specified null-terminated argument array, with the stdin/out/err fd's
-/// redirected, with a timeout specified on the commandline.  This terminates
+/// redirected, with a timeout specified on the command line.  This terminates
 /// the calling program if there is an error executing the specified program.
 /// It returns the return value of the program, or -1 if a timeout is detected.
 ///

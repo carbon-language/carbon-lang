@@ -1,7 +1,7 @@
 //===- Signals.cpp - Signal Handling support ------------------------------===//
 //
 // This file defines some helpful functions for dealing with the possibility of
-// unix signals occuring while your program is running.
+// Unix signals occuring while your program is running.
 //
 //===----------------------------------------------------------------------===//
 

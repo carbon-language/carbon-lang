@@ -330,7 +330,7 @@ void cl::ParseCommandLineOptions(int &argc, char **argv,
 
       if (*ArgName == 0 && !DashDashFound) {   // Is this the mythical "--"?
         DashDashFound = true;  // Yup, take note of that fact...
-        continue;              // Don't try to process it as an argument iself.
+        continue;              // Don't try to process it as an argument itself.
       }
 
       const char *ArgNameEnd = ArgName;
