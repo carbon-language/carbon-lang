@@ -2123,16 +2123,13 @@ static Value *EmitGEPOffset(User *GEP, Instruction &I, InstCombiner &IC) {
         }
       }
     } else {
-      //if (Op->getType() != Scale->getType())
-      if (Size != 1) {
-        // Convert to correct type.
-        Op = IC.InsertNewInstBefore(new CastInst(Op, SIntPtrTy,
-                                                 Op->getName()+".c"), I);
-
+      // Convert to correct type.
+      Op = IC.InsertNewInstBefore(new CastInst(Op, SIntPtrTy,
+                                               Op->getName()+".c"), I);
+      if (Size != 1)
         // We'll let instcombine(mul) convert this to a shl if possible.
         Op = IC.InsertNewInstBefore(BinaryOperator::createMul(Op, Scale,
                                                     GEP->getName()+".idx"), I);
-      }
 
       // Emit an add instruction.
       Result = IC.InsertNewInstBefore(BinaryOperator::createAdd(Op, Result,
