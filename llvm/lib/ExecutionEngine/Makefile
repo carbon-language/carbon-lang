@@ -40,7 +40,7 @@ ifdef ENABLE_SPARC_JIT
 endif
 
 USEDLIBS = lli-interpreter $(JITLIBS) $(ARCHLIBS) scalaropts analysis.a \
-           transformutils.a bcreader vmcore support.a target.a
+           transformutils.a bcreader vmcore support target.a
 
 # Have gcc tell the linker to export symbols from the program so that
 # dynamically loaded modules can be linked against them.
