@@ -302,7 +302,7 @@ bool ADCE::doADCE() {
     //
     if (!AliveBlocks.count(&Func->front())) {
       BasicBlock *NewEntry = new BasicBlock();
-      new BranchInst(&Func->front(), 0, 0, NewEntry);
+      new BranchInst(&Func->front(), NewEntry);
       Func->getBasicBlockList().push_front(NewEntry);
       AliveBlocks.insert(NewEntry);    // This block is always alive!
       LiveSet.insert(NewEntry->getTerminator());  // The branch is live

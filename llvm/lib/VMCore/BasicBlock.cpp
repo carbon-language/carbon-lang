@@ -21,33 +21,33 @@
 #include "Support/LeakDetector.h"
 #include "SymbolTableListTraitsImpl.h"
 #include <algorithm>
+using namespace llvm;
 
-namespace llvm {
+namespace {
+  /// DummyInst - An instance of this class is used to mark the end of the
+  /// instruction list.  This is not a real instruction.
+  struct DummyInst : public Instruction {
+    DummyInst() : Instruction(Type::VoidTy, OtherOpsEnd) {
+      // This should not be garbage monitored.
+      LeakDetector::removeGarbageObject(this);
+    }
 
-// DummyInst - An instance of this class is used to mark the end of the
-// instruction list.  This is not a real instruction.
-//
-struct DummyInst : public Instruction {
-  DummyInst() : Instruction(Type::VoidTy, OtherOpsEnd) {
-    // This should not be garbage monitored.
-    LeakDetector::removeGarbageObject(this);
-  }
+    virtual Instruction *clone() const {
+      assert(0 && "Cannot clone EOL");abort();
+      return 0;
+    }
+    virtual const char *getOpcodeName() const { return "*end-of-list-inst*"; }
 
-  virtual Instruction *clone() const {
-    assert(0 && "Cannot clone EOL");abort();
-    return 0;
-  }
-  virtual const char *getOpcodeName() const { return "*end-of-list-inst*"; }
-
-  // Methods for support type inquiry through isa, cast, and dyn_cast...
-  static inline bool classof(const DummyInst *) { return true; }
-  static inline bool classof(const Instruction *I) {
-    return I->getOpcode() == OtherOpsEnd;
-  }
-  static inline bool classof(const Value *V) {
-    return isa<Instruction>(V) && classof(cast<Instruction>(V));
-  }
-};
+    // Methods for support type inquiry through isa, cast, and dyn_cast...
+    static inline bool classof(const DummyInst *) { return true; }
+    static inline bool classof(const Instruction *I) {
+      return I->getOpcode() == OtherOpsEnd;
+    }
+    static inline bool classof(const Value *V) {
+      return isa<Instruction>(V) && classof(cast<Instruction>(V));
+    }
+  };
+}
 
 Instruction *ilist_traits<Instruction>::createNode() {
   return new DummyInst();
@@ -243,7 +243,7 @@ BasicBlock *BasicBlock::splitBasicBlock(iterator I, const std::string &BBName) {
   } while (Inst != &*I);   // Loop until we move the specified instruction.
 
   // Add a branch instruction to the newly formed basic block.
-  new BranchInst(New, 0, 0, this);
+  new BranchInst(New, this);
 
   // Now we must loop through all of the successors of the New block (which
   // _were_ the successors of the 'this' block), and update any PHI nodes in
@@ -265,5 +265,3 @@ BasicBlock *BasicBlock::splitBasicBlock(iterator I, const std::string &BBName) {
   }
   return New;
 }
-
-} // End llvm namespace

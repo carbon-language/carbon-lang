@@ -76,7 +76,7 @@ bool TailCallElim::runOnFunction(Function &F) {
               // us to branch back to the old entry block.
               OldEntry = &F.getEntryBlock();
               BasicBlock *NewEntry = new BasicBlock("tailrecurse", OldEntry);
-              new BranchInst(OldEntry, 0, 0, NewEntry);
+              new BranchInst(OldEntry, NewEntry);
               
               // Now that we have created a new block, which jumps to the entry
               // block, insert a PHI node for each argument of the function.

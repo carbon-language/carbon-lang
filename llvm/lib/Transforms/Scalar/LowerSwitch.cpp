@@ -186,7 +186,7 @@ void LowerSwitch::processSwitchInst(SwitchInst *SI) {
 
   // If there is only the default destination, don't bother with the code below.
   if (SI->getNumOperands() == 2) {
-    new BranchInst(SI->getDefaultDest(), 0, 0, CurBlock);
+    new BranchInst(SI->getDefaultDest(), CurBlock);
     delete SI;
     return;
   }
@@ -196,7 +196,7 @@ void LowerSwitch::processSwitchInst(SwitchInst *SI) {
   BasicBlock* NewDefault = new BasicBlock("NewDefault");
   F->getBasicBlockList().insert(Default, NewDefault);
 
-  new BranchInst(Default, 0, 0, NewDefault);
+  new BranchInst(Default, NewDefault);
 
   // If there is an entry in any PHI nodes for the default edge, make sure
   // to update them as well.
@@ -219,7 +219,7 @@ void LowerSwitch::processSwitchInst(SwitchInst *SI) {
                                           OrigBlock, NewDefault);
 
   // Branch to our shiny new if-then stuff...
-  new BranchInst(SwitchBlock, 0, 0, OrigBlock);
+  new BranchInst(SwitchBlock, OrigBlock);
 
   // We are now done with the switch instruction, delete it.
   delete SI;

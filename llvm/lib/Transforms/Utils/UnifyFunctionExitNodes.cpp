@@ -21,13 +21,12 @@
 #include "llvm/iTerminators.h"
 #include "llvm/iPHINode.h"
 #include "llvm/Type.h"
-
-namespace llvm {
+using namespace llvm;
 
 static RegisterOpt<UnifyFunctionExitNodes>
 X("mergereturn", "Unify function exit nodes");
 
-Pass *createUnifyFunctionExitNodesPass() {
+Pass *llvm::createUnifyFunctionExitNodesPass() {
   return new UnifyFunctionExitNodes();
 }
 
@@ -91,11 +90,8 @@ bool UnifyFunctionExitNodes::runOnFunction(Function &F) {
     // If the function doesn't return void... add a PHI node to the block...
     PN = new PHINode(F.getReturnType(), "UnifiedRetVal");
     NewRetBlock->getInstList().push_back(PN);
-    new ReturnInst(PN, NewRetBlock);
-  } else {
-    // If it returns void, just add a return void instruction to the block
-    new ReturnInst(0, NewRetBlock);
   }
+  new ReturnInst(PN, NewRetBlock);
 
   // Loop over all of the blocks, replacing the return instruction with an
   // unconditional branch.
@@ -109,10 +105,8 @@ bool UnifyFunctionExitNodes::runOnFunction(Function &F) {
     if (PN) PN->addIncoming(BB->getTerminator()->getOperand(0), BB);
 
     BB->getInstList().pop_back();  // Remove the return insn
-    new BranchInst(NewRetBlock, 0, 0, BB);
+    new BranchInst(NewRetBlock, BB);
   }
   ReturnBlock = NewRetBlock;
   return true;
 }
-
-} // End llvm namespace

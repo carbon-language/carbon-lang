@@ -106,7 +106,7 @@ bool SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum, Pass *P) {
   BasicBlock *NewBB = new BasicBlock(TIBB->getName() + "." +
                                      DestBB->getName() + "_crit_edge");
   // Create our unconditional branch...
-  new BranchInst(DestBB, 0, 0, NewBB);
+  new BranchInst(DestBB, NewBB);
   
   // Branch to the new block, breaking the edge...
   TI->setSuccessor(SuccNum, NewBB);
