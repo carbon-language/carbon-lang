@@ -1,4 +1,4 @@
-/*===-- Config/sys/time.h - Annotation classes ------------------*- C++ -*-===//
+/*===-- Config/sys/time.h ---------------------------------------*- C++ -*-===//
  * 
  *                     The LLVM Compiler Infrastructure
  *

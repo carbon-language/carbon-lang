@@ -1,4 +1,4 @@
-/*===-- Config/sys/wait.h - Annotation classes ------------------*- C++ -*-===//
+/*===-- Config/sys/wait.h ---------------------------------------*- C++ -*-===//
  * 
  *                     The LLVM Compiler Infrastructure
  *

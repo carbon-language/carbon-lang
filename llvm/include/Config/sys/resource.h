@@ -1,4 +1,4 @@
-/*===-- Config/sys/resource.h - Annotation classes --------------*- C++ -*-===//
+/*===-- Config/sys/resource.h -----------------------------------*- C++ -*-===//
  * 
  *                     The LLVM Compiler Infrastructure
  *

@@ -1,4 +1,4 @@
-/*===-- Config/sys/stat.h - Annotation classes --------------*- ----C++ -*-===//
+/*===-- Config/sys/stat.h -----------------------------------*- ----C++ -*-===//
  * 
  *                     The LLVM Compiler Infrastructure
  *

@@ -1,4 +1,4 @@
-/*===-- Config/sys/types.h - Annotation classes --------------*- C++ -*-===//
+/*===-- Config/sys/types.h --------------------------------------*- C++ -*-===//
  * 
  *                     The LLVM Compiler Infrastructure
  *
