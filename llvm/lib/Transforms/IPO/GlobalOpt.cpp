@@ -842,11 +842,34 @@ static void ShrinkGlobalToBoolean(GlobalVariable *GV, Constant *OtherVal) {
       // Change the store into a boolean store.
       bool StoringOther = SI->getOperand(0) == OtherVal;
       // Only do this if we weren't storing a loaded value.
+      Value *StoreVal;
       if (StoringOther || SI->getOperand(0) == InitVal)
-        new StoreInst(ConstantBool::get(StoringOther), NewGV, SI);
-    } else {
+        StoreVal = ConstantBool::get(StoringOther);
+      else {
+        // Otherwise, we are storing a previously loaded copy.  To do this,
+        // change the copy from copying the original value to just copying the
+        // bool.
+        Instruction *StoredVal = cast<Instruction>(SI->getOperand(0));
+
+        // If we're already replaced the input, StoredVal will be a cast or
+        // select instruction.  If not, it will be a load of the original
+        // global.
+        if (LoadInst *LI = dyn_cast<LoadInst>(StoredVal)) {
+          assert(LI->getOperand(0) == GV && "Not a copy!");
+          // Insert a new load, to preserve the saved value.
+          StoreVal = new LoadInst(NewGV, LI->getName()+".b", LI);
+        } else {
+          assert((isa<CastInst>(StoredVal) || isa<SelectInst>(StoredVal)) &&
+                 "This is not a form that we understand!");
+          StoreVal = StoredVal->getOperand(0);
+          assert(isa<LoadInst>(StoreVal) && "Not a load of NewGV!");
+        }
+      }
+      new StoreInst(StoreVal, NewGV, SI);
+    } else if (!UI->use_empty()) {
       // Change the load into a load of bool then a select.
       LoadInst *LI = cast<LoadInst>(UI);
+      
       std::string Name = LI->getName(); LI->setName("");
       LoadInst *NLI = new LoadInst(NewGV, Name+".b", LI);
       Value *NSI;
