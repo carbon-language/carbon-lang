@@ -90,7 +90,7 @@ function and then be turned into an instruction if warranted.</p>
 <li><tt>llvm/include/llvm/Intrinsics.h</tt>:
     add an enum in the <tt>llvm::Intrinsic</tt> namespace</li>
 
-<li><tt>llvm/lib/VMCore/IntrinsicLowering.cpp</tt>:
+<li><tt>llvm/lib/CodeGen/IntrinsicLowering.cpp</tt>:
     implement the lowering for this intrinsic</li>
 
 <li><tt>llvm/lib/VMCore/Verifier.cpp</tt>:
@@ -101,7 +101,7 @@ function and then be turned into an instruction if warranted.</p>
     that you added.</li>
 
 <li><tt>llvm/lib/Analysis/BasicAliasAnalysis.cpp</tt>: If the new intrinsic does
-    not access memory, or does not write to memory, add it to the relevant list
+    not access memory or does not write to memory, add it to the relevant list
     of functions.</li>
 
 <li><tt>llvm/lib/Transforms/Utils/Local.cpp</tt>: If it is possible to constant
