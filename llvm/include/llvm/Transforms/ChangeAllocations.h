@@ -13,7 +13,7 @@
 #include "llvm/Transforms/Pass.h"
 class TargetData;
 
-class LowerAllocations : public ConcretePass {
+class LowerAllocations : public Pass {
   Method *MallocMeth;   // Methods in the module we are processing
   Method *FreeMeth;     // Initialized by doPassInitializationVirt
 
@@ -28,12 +28,12 @@ public:
   //
   // This function is always successful.
   //
-  bool doPassInitializationVirt(Module *M);
+  bool doPassInitialization(Module *M);
 
   // doPerMethodWork - This method does the actual work of converting
   // instructions over, assuming that the pass has already been initialized.
   //
-  bool doPerMethodWorkVirt(Method *M);
+  bool doPerMethodWork(Method *M);
 };
 
 #endif

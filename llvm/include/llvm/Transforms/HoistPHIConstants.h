@@ -11,10 +11,11 @@
 
 #include "llvm/Transforms/Pass.h"
 
-struct HoistPHIConstants : public StatelessPass<HoistPHIConstants> {
-  // doPerMethodWork - This method does the work.  Always successful.
-  //
-  static bool doPerMethodWork(Method *M);
+struct HoistPHIConstants : public Pass {
+  static bool doHoistPHIConstants(Method *M);
+
+
+  virtual bool doPerMethodWork(Method *M) { return doHoistPHIConstants(M); }
 };
 
 #endif

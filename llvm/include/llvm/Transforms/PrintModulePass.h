@@ -11,7 +11,7 @@
 #include "llvm/Transforms/Pass.h"
 #include "llvm/Assembly/Writer.h"
 
-class PrintModulePass : public ConcretePass {
+class PrintModulePass : public Pass {
   string Banner;          // String to print before each method
   ostream *Out;           // ostream to print on
   bool DeleteStream;      // Delete the ostream in our dtor?
@@ -26,7 +26,7 @@ public:
   // doPerMethodWork - This pass just prints a banner followed by the method as
   // it's processed.
   //
-  bool doPerMethodWorkVirt(Method *M) {
+  bool doPerMethodWork(Method *M) {
     (*Out) << Banner << M;
     return false;
   }
