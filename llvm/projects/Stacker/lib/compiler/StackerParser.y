@@ -1,4 +1,4 @@
-//===-- llvmAsmParser.y - Parser for llvm assembly files --------*- C++ -*-===//
+//===-- StackerParser.y - Parser for Stacker programs -----------*- C++ -*-===//
 // 
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,11 +7,9 @@
 // 
 //===----------------------------------------------------------------------===//
 //
-//  This file implements the bison parser for LLVM assembly languages files.
+// This file implements the bison parser for Stacker programs.
 //
 //===----------------------------------------------------------------------===//
-
-%debug
 
 %{
 #include "StackerCompiler.h"
