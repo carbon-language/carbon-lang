@@ -16,11 +16,10 @@ class WriteBytecodePass : public Pass {
   std::ostream *Out;           // ostream to print on
   bool DeleteStream;
 public:
-  inline WriteBytecodePass(std::ostream *o = &std::cout, bool DS = false)
+  WriteBytecodePass() : Out(&std::cout), DeleteStream(false) {}
+  WriteBytecodePass(std::ostream *o, bool DS = false) 
     : Out(o), DeleteStream(DS) {
   }
-
-  const char *getPassName() const { return "Bytecode Writer"; }
 
   inline ~WriteBytecodePass() {
     if (DeleteStream) delete Out;
