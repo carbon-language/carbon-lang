@@ -2075,6 +2075,8 @@ void DSGraph::computeNodeMapping(const DSNodeHandle &NH1,
   // mapping the edges together now.
   int N2Idx = NH2.getOffset()-NH1.getOffset();
   unsigned N2Size = N2->getSize();
+  if (N2Size == 0) return;   // No edges to map to.
+
   for (unsigned i = 0, e = N1->getSize(); i < e; i += DS::PointerSize)
     if (unsigned(N2Idx)+i < N2Size)
       computeNodeMapping(N1->getLink(i), N2->getLink(N2Idx+i), NodeMap);
