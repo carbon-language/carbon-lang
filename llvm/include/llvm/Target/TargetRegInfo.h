@@ -174,9 +174,11 @@ public:
   //
   virtual int getRegType(const LiveRange *LR) const = 0;
 
-  // Gives the return value contained in a CALL machine instruction
+  // To obtain the return value and the indirect call address (if any)
+  // contained in a CALL machine instruction
   //
   virtual const Value *getCallInstRetVal(const MachineInstr *CallMI) const = 0;
+  virtual const Value *getCallInstIndirectAddrVal(const MachineInstr *CallMI) const = 0;
 
   // The following methods are used to get the frame/stack pointers
   // 
