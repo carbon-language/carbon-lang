@@ -7,7 +7,8 @@
 // 
 //===----------------------------------------------------------------------===//
 //
-// This library converts LLVM code to C code, compilable by GCC.
+// This library converts LLVM code to C code, compilable by GCC and other C
+// compilers.
 //
 //===----------------------------------------------------------------------===//
 
@@ -24,15 +25,11 @@
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Support/InstVisitor.h"
-#include "llvm/Support/InstIterator.h"
 #include "llvm/Support/Mangler.h"
 #include "Support/StringExtras.h"
-#include "Support/STLExtras.h"
-#include "Config/config.h"
 #include <algorithm>
 #include <sstream>
-
-namespace llvm {
+using namespace llvm;
 
 namespace {
   class CWriter : public Pass, public InstVisitor<CWriter> {
@@ -1476,6 +1473,4 @@ void CWriter::visitVAArgInst(VAArgInst &I) {
 //                       External Interface declaration
 //===----------------------------------------------------------------------===//
 
-Pass *createWriteToCPass(std::ostream &o) { return new CWriter(o); }
-
-} // End llvm namespace
+Pass *llvm::createWriteToCPass(std::ostream &o) { return new CWriter(o); }
