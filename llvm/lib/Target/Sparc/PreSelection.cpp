@@ -34,38 +34,16 @@ namespace {
   //===--------------------------------------------------------------------===//
   // PreSelection Pass - Specialize LLVM code for the current target machine.
   // 
-  class PreSelection : public Pass, public InstVisitor<PreSelection> {
+  class PreSelection : public FunctionPass, public InstVisitor<PreSelection> {
     const TargetInstrInfo &instrInfo;
-    Module *TheModule;
-
-    std::map<const Constant*, GlobalVariable*> gvars;
-
-    GlobalVariable* getGlobalForConstant(Constant* CV) {
-      std::map<const Constant*, GlobalVariable*>::iterator I = gvars.find(CV);
-      if (I != gvars.end()) return I->second;    // global exists so return it
-
-      return I->second = new GlobalVariable(CV->getType(), true,
-                                            GlobalValue::InternalLinkage, CV,
-                                            "immcst", TheModule);
-    }
 
   public:
     PreSelection(const TargetMachine &T)
-      : instrInfo(T.getInstrInfo()), TheModule(0) {}
+      : instrInfo(T.getInstrInfo()) {}
 
-    // run - apply this pass to the entire Module
-    bool run(Module &M) {
-      TheModule = &M;
-
-      // Build reverse map for pre-existing global constants so we can find them
-      for (Module::giterator I = M.gbegin(), E = M.gend(); I != E; ++I)
-        if (I->hasInitializer() && I->isConstant())
-          gvars[I->getInitializer()] = I;
-
-      for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
-        visit(*I);
-
-      gvars.clear();
+    // runOnFunction - apply this pass to each Function
+    bool runOnFunction(Function &F) {
+      visit(F);
       return true;
     }
 
@@ -87,10 +65,12 @@ namespace {
                          Instruction& insertBefore);
   };
 
+#if 0
   // Register the pass...
-  RegisterOpt<PreSelection> X("preselect",
-                              "Specialize LLVM code for a target machine",
-                              createPreSelectionPass);
+  RegisterPass<PreSelection> X("preselect",
+                               "Specialize LLVM code for a target machine"
+                               createPreselectionPass);
+#endif
 }  // end anonymous namespace
 
 
@@ -184,10 +164,8 @@ PreSelection::visitOneOperand(Instruction &I, Value* Op, unsigned opNum,
     I.setOperand(opNum, computeConst); // replace expr operand with result
   } else if (instrInfo.ConstantTypeMustBeLoaded(CV)) {
     // load address of constant into a register, then load the constant
-    GetElementPtrInst* gep = getGlobalAddr(getGlobalForConstant(CV),
-                                           insertBefore);
-    LoadInst* ldI = new LoadInst(gep, "loadConst", &insertBefore);
-    I.setOperand(opNum, ldI);        // replace operand with copy in v.reg.
+    // this is now done during instruction selection
+    // the constant will live in the MachineConstantPool later on
   } else if (instrInfo.ConstantMayNotFitInImmedField(CV, &I)) {
     // put the constant into a virtual register using a cast
     CastInst* castI = new CastInst(CV, CV->getType(), "copyConst",
@@ -263,6 +241,6 @@ void PreSelection::visitCallInst(CallInst &I) {
 // createPreSelectionPass - Public entrypoint for pre-selection pass
 // and this file as a whole...
 //
-Pass* createPreSelectionPass(TargetMachine &T) {
-  return new PreSelection(T);
+FunctionPass* createPreSelectionPass(const TargetMachine &TM) {
+  return new PreSelection(TM);
 }
