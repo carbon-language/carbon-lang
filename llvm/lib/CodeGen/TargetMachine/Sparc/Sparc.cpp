@@ -15,7 +15,7 @@
 //*************************** User Include Files ***************************/
 
 #include "llvm/DerivedTypes.h"
-#include "llvm/Codegen/Sparc.h"
+#include "llvm/CodeGen/Sparc.h"
 
 
 //************************ Exported Constants ******************************/

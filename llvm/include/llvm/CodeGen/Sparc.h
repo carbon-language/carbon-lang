@@ -16,8 +16,8 @@
 
 //*************************** User Include Files ***************************/
 
-#include "llvm/Codegen/TargetMachine.h"
-#include "llvm/Codegen/MachineInstr.h"
+#include "llvm/CodeGen/TargetMachine.h"
+#include "llvm/CodeGen/MachineInstr.h"
 
 
 //************************* Opaque Declarations ****************************/

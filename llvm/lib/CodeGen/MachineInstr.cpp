@@ -26,8 +26,8 @@
 #include "llvm/ConstPoolVals.h"
 #include "llvm/Value.h"
 #include "llvm/Instruction.h"
-#include "llvm/Codegen/InstrForest.h"
-#include "llvm/Codegen/MachineInstr.h"
+#include "llvm/CodeGen/InstrForest.h"
+#include "llvm/CodeGen/MachineInstr.h"
 
 //************************ Class Implementations **************************/
 

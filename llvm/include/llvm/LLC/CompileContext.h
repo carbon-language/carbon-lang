@@ -19,7 +19,7 @@
 
 //*************************** User Include Files ***************************/
 
-#include "llvm/Codegen/Sparc.h"
+#include "llvm/CodeGen/Sparc.h"
 #include "llvm/LLC/LLCOptions.h"
 
 //************************** Forward Declarations **************************/

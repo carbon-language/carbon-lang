@@ -26,9 +26,9 @@
 #include "llvm/iMemory.h"
 #include "llvm/Instruction.h"
 #include "llvm/LLC/CompileContext.h"
-#include "llvm/Codegen/InstrForest.h"
-#include "llvm/Codegen/MachineInstr.h"
-#include "llvm/Codegen/InstrSelection.h"
+#include "llvm/CodeGen/InstrForest.h"
+#include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/CodeGen/InstrSelection.h"
 
 
 //************************* Forward Declarations ***************************/

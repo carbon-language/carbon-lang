@@ -29,10 +29,10 @@
 #include "llvm/Method.h"
 #include "llvm/ConstPoolVals.h"
 #include "llvm/LLC/CompileContext.h"
-#include "llvm/Codegen/Sparc.h"
-#include "llvm/Codegen/MachineInstr.h"
-#include "llvm/Codegen/InstrForest.h"
-#include "llvm/Codegen/InstrSelection.h"
+#include "llvm/CodeGen/Sparc.h"
+#include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/CodeGen/InstrForest.h"
+#include "llvm/CodeGen/InstrSelection.h"
 
 
 //******************** Internal Data Declarations ************************/

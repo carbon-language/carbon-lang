@@ -44,8 +44,8 @@
 #include "llvm/Bytecode/Writer.h"
 #include "llvm/Tools/CommandLine.h"
 #include "llvm/LLC/CompileContext.h"
-#include "llvm/Codegen/MachineInstr.h"
-#include "llvm/Codegen/InstrForest.h"
+#include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/CodeGen/InstrForest.h"
 
 //************************ Class Implementations **************************/
 

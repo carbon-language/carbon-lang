@@ -19,8 +19,8 @@
 #include "llvm/Method.h"
 #include "llvm/Bytecode/Reader.h"
 #include "llvm/Bytecode/Writer.h"
-#include "llvm/Codegen/InstrForest.h"
-#include "llvm/Codegen/InstrSelection.h"
+#include "llvm/CodeGen/InstrForest.h"
+#include "llvm/CodeGen/InstrSelection.h"
 #include "llvm/LLC/LLCOptions.h"
 #include "llvm/LLC/CompileContext.h"
 

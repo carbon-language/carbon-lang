@@ -15,7 +15,7 @@
 //*************************** User Include Files ***************************/
 
 #include "llvm/DerivedTypes.h"
-#include "llvm/Codegen/TargetMachine.h"
+#include "llvm/CodeGen/TargetMachine.h"
 
 
 //************************* Opaque Declarations ****************************/

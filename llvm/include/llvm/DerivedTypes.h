@@ -12,7 +12,7 @@
 #define LLVM_DERIVED_TYPES_H
 
 #include "llvm/Type.h"
-#include "llvm/Codegen/TargetMachine.h"
+#include "llvm/CodeGen/TargetMachine.h"
 #include "vector"
 
 class TargetMachine;

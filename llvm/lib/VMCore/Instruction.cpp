@@ -8,7 +8,7 @@
 #include "llvm/BasicBlock.h"
 #include "llvm/Method.h"
 #include "llvm/SymbolTable.h"
-#include "llvm/Codegen/MachineInstr.h"
+#include "llvm/CodeGen/MachineInstr.h"
 
 Instruction::Instruction(const Type *ty, unsigned it, const string &Name) 
   : User(ty, Value::InstructionVal, Name), 

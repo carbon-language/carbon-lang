@@ -25,7 +25,7 @@
 #include "llvm/Tools/DataTypes.h"
 #include "llvm/Instruction.h"
 #include "llvm/Support/Unique.h"
-#include "llvm/Codegen/TargetMachine.h"
+#include "llvm/CodeGen/TargetMachine.h"
 
 
 //************************* Opaque Declarations ****************************/
