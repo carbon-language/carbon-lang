@@ -15,9 +15,11 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/Analysis/Trace.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/iPHINode.h"
 #include "llvm/Function.h"
+#include "ValueMapper.h"
 using namespace llvm;
 
 //Clones the trace (a vector of basic blocks)
@@ -84,3 +86,34 @@ llvm::CloneTrace(const std::vector<BasicBlock*> &origTrace) {
   //return new vector of basic blocks
   return clonedTrace;
 }
+
+/// CloneTraceInto - Clone T into NewFunc. Original<->clone mapping is
+/// saved in ValueMap.
+///
+void llvm::CloneTraceInto(Function *NewFunc, Trace &T,
+                          std::map<const Value*, Value*> &ValueMap,
+                          const char *NameSuffix) {
+  assert(NameSuffix && "NameSuffix cannot be null!");
+
+  // Loop over all of the basic blocks in the trace, cloning them as
+  // appropriate.
+  //
+  for (Trace::const_iterator BI = T.begin(), BE = T.end(); BI != BE; ++BI) {
+    const BasicBlock *BB = *BI;
+
+    // Create a new basic block and copy instructions into it!
+    BasicBlock *CBB = CloneBasicBlock(BB, ValueMap, NameSuffix, NewFunc);
+    ValueMap[BB] = CBB;                       // Add basic block mapping.
+  }
+
+  // Loop over all of the instructions in the new function, fixing up operand
+  // references as we go.  This uses ValueMap to do all the hard work.
+  //
+  for (Function::iterator BB =
+         cast<BasicBlock>(ValueMap[T.getEntryBasicBlock()]),
+         BE = NewFunc->end(); BB != BE; ++BB)
+    // Loop over all instructions, fixing each one as we find it...
+    for (BasicBlock::iterator II = BB->begin(); II != BB->end(); ++II)
+      RemapInstruction(II, ValueMap);
+}
+
