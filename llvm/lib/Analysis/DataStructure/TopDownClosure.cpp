@@ -160,7 +160,8 @@ void TDDataStructures::calculateGraph(Function &F) {
         
         // Resolve all of the arguments...
         Function::aiterator AI = Callee->abegin();
-        for (unsigned i = 0, e = NewCS.getNumPtrArgs(); i != e; ++i, ++AI) {
+        for (unsigned i = 0, e = NewCS.getNumPtrArgs();
+             i != e && AI != Callee->aend(); ++i, ++AI) {
           // Advance the argument iterator to the first pointer argument...
           while (!DS::isPointerType(AI->getType())) {
             ++AI;
