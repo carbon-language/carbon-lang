@@ -288,7 +288,8 @@ These different primitive types fall into a few useful classifications:<p>
 <table border=1 cellspacing=0 cellpadding=4 align=center>
 <tr><td><a name="t_signed">signed</td>    <td><tt>sbyte, short, int, long, float, double</tt></td></tr>
 <tr><td><a name="t_unsigned">unsigned</td><td><tt>ubyte, ushort, uint, ulong</tt></td></tr>
-<tr><td><a name="t_integral">integral</td><td><tt>ubyte, sbyte, ushort, short, uint, int, ulong, long</tt></td></tr>
+<tr><td><a name="t_integral">integer</td><td><tt>ubyte, sbyte, ushort, short, uint, int, ulong, long</tt></td></tr>
+<tr><td><a name="t_integral">integral</td><td><tt>bool, ubyte, sbyte, ushort, short, uint, int, ulong, long</tt></td></tr>
 <tr><td><a name="t_floating">floating point</td><td><tt>float, double</tt></td></tr>
 <tr><td><a name="t_firstclass">first class</td><td><tt>bool, ubyte, sbyte, ushort, short,<br> uint, int, ulong, long, float, double, <a href="#t_pointer">pointer</a></tt></td></tr>
 </table><p>
@@ -832,11 +833,11 @@ There are several different binary operators:<p>
 The '<tt>add</tt>' instruction returns the sum of its two operands.<p>
 
 <h5>Arguments:</h5>
-The two arguments to the '<tt>add</tt>' instruction must be either <a href="#t_integral">integral</a> or <a href="#t_floating">floating point</a> values.  Both arguments must have identical types.<p>
+The two arguments to the '<tt>add</tt>' instruction must be either <a href="#t_integer">integer</a> or <a href="#t_floating">floating point</a> values.  Both arguments must have identical types.<p>
 
 <h5>Semantics:</h5>
 
-The value produced is the integral or floating point sum of the two operands.<p>
+The value produced is the integer or floating point sum of the two operands.<p>
 
 <h5>Example:</h5>
 <pre>
@@ -862,12 +863,12 @@ instruction present in most other intermediate representations.<p>
 <h5>Arguments:</h5>
 
 The two arguments to the '<tt>sub</tt>' instruction must be either <a
-href="#t_integral">integral</a> or <a href="#t_floating">floating point</a>
+href="#t_integer">integer</a> or <a href="#t_floating">floating point</a>
 values.  Both arguments must have identical types.<p>
 
 <h5>Semantics:</h5>
 
-The value produced is the integral or floating point difference of the two
+The value produced is the integer or floating point difference of the two
 operands.<p>
 
 <h5>Example:</h5>
@@ -888,11 +889,11 @@ operands.<p>
 The  '<tt>mul</tt>' instruction returns the product of its two operands.<p>
 
 <h5>Arguments:</h5>
-The two arguments to the '<tt>mul</tt>' instruction must be either <a href="#t_integral">integral</a> or <a href="#t_floating">floating point</a> values.  Both arguments must have identical types.<p>
+The two arguments to the '<tt>mul</tt>' instruction must be either <a href="#t_integer">integer</a> or <a href="#t_floating">floating point</a> values.  Both arguments must have identical types.<p>
 
 <h5>Semantics:</h5>
 
-The value produced is the integral or floating point product of the two
+The value produced is the integer or floating point product of the two
 operands.<p>
 
 There is no signed vs unsigned multiplication.  The appropriate action is taken
@@ -920,12 +921,12 @@ The  '<tt>div</tt>' instruction returns the quotient of its two operands.<p>
 <h5>Arguments:</h5>
 
 The two arguments to the '<tt>div</tt>' instruction must be either <a
-href="#t_integral">integral</a> or <a href="#t_floating">floating point</a>
+href="#t_integer">integer</a> or <a href="#t_floating">floating point</a>
 values.  Both arguments must have identical types.<p>
 
 <h5>Semantics:</h5>
 
-The value produced is the integral or floating point quotient of the two
+The value produced is the integer or floating point quotient of the two
 operands.<p>
 
 <h5>Example:</h5>
@@ -946,7 +947,7 @@ operands.<p>
 The  '<tt>rem</tt>' instruction returns the remainder from the division of its two operands.<p>
 
 <h5>Arguments:</h5>
-The two arguments to the '<tt>rem</tt>' instruction must be either <a href="#t_integral">integral</a> or <a href="#t_floating">floating point</a> values.  Both arguments must have identical types.<p>
+The two arguments to the '<tt>rem</tt>' instruction must be either <a href="#t_integer">integer</a> or <a href="#t_floating">floating point</a> values.  Both arguments must have identical types.<p>
 
 <h5>Semantics:</h5>
 
@@ -1044,9 +1045,9 @@ The '<tt>and</tt>' instruction returns the bitwise logical and of its two operan
 
 <h5>Arguments:</h5>
 
-The two arguments to the '<tt>and</tt>' instruction must be either <a
-href="#t_integral">integral</a> or <tt>bool</tt> values.  Both arguments must
-have identical types.<p>
+The two arguments to the '<tt>and</tt>' instruction must be <a
+href="#t_integral">integral</a> values.  Both arguments must have identical
+types.<p>
 
 
 <h5>Semantics:</h5>
@@ -1084,9 +1085,9 @@ inclusive or of its two operands.<p>
 
 <h5>Arguments:</h5>
 
-The two arguments to the '<tt>or</tt>' instruction must be either <a
-href="#t_integral">integral</a> or <tt>bool</tt> values.  Both arguments must
-have identical types.<p>
+The two arguments to the '<tt>or</tt>' instruction must be <a
+href="#t_integral">integral</a> values.  Both arguments must have identical
+types.<p>
 
 
 <h5>Semantics:</h5>
@@ -1125,9 +1126,9 @@ two operands.<p>
 
 <h5>Arguments:</h5>
 
-The two arguments to the '<tt>xor</tt>' instruction must be either <a
-href="#t_integral">integral</a> or <tt>bool</tt> values.  Both arguments must
-have identical types.<p>
+The two arguments to the '<tt>xor</tt>' instruction must be <a
+href="#t_integral">integral</a> values.  Both arguments must have identical
+types.<p>
 
 
 <h5>Semantics:</h5>
@@ -1167,7 +1168,7 @@ specified number of bits.
 <h5>Arguments:</h5>
 
 The first argument to the '<tt>shl</tt>' instruction must be an <a
-href="#t_integral">integral</a> type.  The second argument must be an
+href="#t_integer">integer</a> type.  The second argument must be an
 '<tt>ubyte</tt>' type.<p>
 
 <h5>Semantics:</h5>
@@ -1196,7 +1197,7 @@ The value produced is <tt>var1</tt> * 2<sup><tt>var2</tt></sup>.<p>
 The '<tt>shr</tt>' instruction returns the first operand shifted to the right a specified number of bits.
 
 <h5>Arguments:</h5>
-The first argument to the '<tt>shr</tt>' instruction must be an  <a href="#t_integral">integral</a> type.  The second argument must be an '<tt>ubyte</tt>' type.<p>
+The first argument to the '<tt>shr</tt>' instruction must be an  <a href="#t_integer">integer</a> type.  The second argument must be an '<tt>ubyte</tt>' type.<p>
 
 <h5>Semantics:</h5>
 
@@ -1699,7 +1700,7 @@ more...
 <address><a href="mailto:sabre@nondot.org">Chris Lattner</a></address>
 <!-- Created: Tue Jan 23 15:19:28 CST 2001 -->
 <!-- hhmts start -->
-Last modified: Fri Aug 30 16:49:39 CDT 2002
+Last modified: Mon Sep  2 19:52:16 CDT 2002
 <!-- hhmts end -->
 </font>
 </body></html>
