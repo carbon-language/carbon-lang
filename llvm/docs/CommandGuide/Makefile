@@ -82,7 +82,7 @@ install-local:: $(HTML) $(MAN) $(PS)
 	$(Verb) $(MKDIR) $(HTML_DIR)
 	$(Verb) $(DataInstall) $(HTML) $(HTML_DIR)
 	$(Verb) $(DataInstall) $(PROJ_SRC_DIR)/index.html $(HTML_DIR)
-	$(Verb) $(DataInstall) -C $(PROJ_SRC_DIR)/manpage.css $(HTML_DIR)
+	$(Verb) $(DataInstall) $(PROJ_SRC_DIR)/manpage.css $(HTML_DIR)
 	$(Echo) Installing MAN CommandGuide Documentation
 	$(Verb) $(MKDIR) $(MAN_DIR)
 	$(Verb) $(DataInstall) $(MAN) $(MAN_DIR)
