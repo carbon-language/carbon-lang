@@ -9,7 +9,7 @@
 #define INSTRSELECTOR_EMITTER_H
 
 #include "TableGenBackend.h"
-#include "llvm/CodeGen/ValueTypes.h"
+#include "CodeGenWrappers.h"
 #include <vector>
 #include <map>
 class DagInit;
@@ -82,6 +82,7 @@ std::ostream &operator<<(std::ostream &OS, const TreePatternNode &N);
 
 class InstrSelectorEmitter : public TableGenBackend {
   RecordKeeper &Records;
+  CodeGenTarget Target;
 
   std::map<Record*, NodeType> NodeTypes;
 public:
@@ -95,6 +96,10 @@ private:
   // RecordKeeper, turning them into the more accessible NodeTypes data
   // structure.
   void ProcessNodeTypes();
+
+  // ProcessNonTerminals - Read in all nonterminals and incorporate them into
+  // our pattern database.
+  void ProcessNonTerminals();
 
   // ProcessInstructionPatterns - Read in all subclasses of Instruction, and
   // process those with a useful Pattern field.

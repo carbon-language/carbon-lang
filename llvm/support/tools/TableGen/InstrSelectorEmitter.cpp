@@ -82,11 +82,13 @@ static MVT::ValueType getIntrinsicType(Record *R) {
       return getValueType(R->getValueAsDef("RegType"));
     } else if (SuperClasses[i]->getName() == "Register") {
       std::cerr << "WARNING: Explicit registers not handled yet!\n";
+      return MVT::Other;
     } else if (SuperClasses[i]->getName() == "Nonterminal") {
+      //std::cerr << "Warning nonterminal type not handled yet:" << R->getName()
+      //          << "\n";
+      return MVT::Other;
     }
-  //throw "Error: Unknown value used: " + R->getName();
-
-  return MVT::Other;
+  throw "Error: Unknown value used: " + R->getName();
 }
 
 // Parse the specified DagInit into a TreePattern which we can use.
@@ -159,13 +161,15 @@ bool InstrSelectorEmitter::InferTypes(TreePatternNode *N,
 
     switch (NT.ArgTypes[i]) {
     case NodeType::Arg0:
-      MadeChange |=UpdateNodeType(Children[i], Children[0]->getType(), RecName);
+      MadeChange |= UpdateNodeType(Children[i], Children[0]->getType(),RecName);
       break;
     case NodeType::Val:
       if (Children[i]->getType() == MVT::isVoid)
         throw "In pattern for " + RecName + " should not get a void node!";
       break;
-    case NodeType::Ptr: // FIXME
+    case NodeType::Ptr:
+      MadeChange |= UpdateNodeType(Children[i],Target.getPointerType(),RecName);
+      break;
     default: assert(0 && "Invalid argument ArgType!");
     }
   }
@@ -179,8 +183,14 @@ bool InstrSelectorEmitter::InferTypes(TreePatternNode *N,
     MadeChange |= UpdateNodeType(N, Children[0]->getType(), RecName);
     break;
 
-  case NodeType::Ptr:   // FIXME: get from target
+  case NodeType::Ptr:
+    MadeChange |= UpdateNodeType(N, Target.getPointerType(), RecName);
+    break;
   case NodeType::Val:
+    if (N->getType() == MVT::isVoid)
+      throw "In pattern for " + RecName + " should not get a void node!";
+    break;
+  default:
     assert(0 && "Unhandled type constraint!");
     break;
   }
@@ -210,6 +220,19 @@ TreePatternNode *InstrSelectorEmitter::ReadAndCheckPattern(DagInit *DI,
   return Pattern;
 }
 
+// ProcessNonTerminals - Read in all nonterminals and incorporate them into
+// our pattern database.
+void InstrSelectorEmitter::ProcessNonTerminals() {
+  std::vector<Record*> NTs = Records.getAllDerivedDefinitions("Nonterminal");
+  for (unsigned i = 0, e = NTs.size(); i != e; ++i) {
+    DagInit *DI = NTs[i]->getValueAsDag("Pattern");
+
+    TreePatternNode *Pattern = ReadAndCheckPattern(DI, NTs[i]->getName());
+
+    DEBUG(std::cerr << "Parsed nonterm pattern " << NTs[i]->getName() << "\t= "
+          << *Pattern << "\n");
+  }
+}
 
 
 /// ProcessInstructionPatterns - Read in all subclasses of Instruction, and
@@ -221,7 +244,6 @@ void InstrSelectorEmitter::ProcessInstructionPatterns() {
     Record *Inst = Insts[i];
     if (DagInit *DI = dynamic_cast<DagInit*>(Inst->getValueInit("Pattern"))) {
       TreePatternNode *Pattern = ReadAndCheckPattern(DI, Inst->getName());
-
 
       DEBUG(std::cerr << "Parsed inst pattern " << Inst->getName() << "\t= "
                       << *Pattern << "\n");
@@ -235,6 +257,7 @@ void InstrSelectorEmitter::run(std::ostream &OS) {
   ProcessNodeTypes();
   
   // Read in all of the nonterminals...
+  //ProcessNonTerminals();
 
   // Read all of the instruction patterns in...
   ProcessInstructionPatterns();
