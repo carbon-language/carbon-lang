@@ -139,14 +139,6 @@ private:
   friend class Instruction;
 };
 
-inline std::ostream &operator<<(std::ostream &OS, const Value *V) {
-  if (V == 0)
-    OS << "<null> value!\n";
-  else
-    V->print(OS);
-  return OS;
-}
-
 inline std::ostream &operator<<(std::ostream &OS, const Value &V) {
   V.print(OS);
   return OS;

@@ -389,7 +389,6 @@ template <> inline bool isa_impl<PointerType, Type>(const Type &Ty) {
   return Ty.getTypeID() == Type::PointerTyID;
 }
 
-std::ostream &operator<<(std::ostream &OS, const Type *T);
 std::ostream &operator<<(std::ostream &OS, const Type &T);
 
 } // End llvm namespace
