@@ -593,13 +593,8 @@ int64_t SparcV9CodeEmitter::getMachineOpValue(MachineInstr &MI,
       unsigned* CurrPC = (unsigned*)(intptr_t)MCE.getCurrentPCValue();
       BBRefs.push_back(std::make_pair(BB, std::make_pair(CurrPC, &MI)));
     } else if (const Constant *C = dyn_cast<Constant>(V)) {
-      if (ConstantMap.find(C) != ConstantMap.end()) {
-        rv = (int64_t)MCE.getConstantPoolEntryAddress(ConstantMap[C]);
-        DEBUG(std::cerr << "const: 0x" << std::hex << rv << "\n");
-      } else {
-        std::cerr << "ERROR: constant not in map:" << MO << "\n";
-        abort();
-      }
+      std::cerr << "ERROR: constants should not appear in PcRel:" << MO << "\n";
+      abort();
     } else if (GlobalValue *GV = dyn_cast<GlobalValue>(V)) {
       // same as MO.isGlobalAddress()
       DEBUG(std::cerr << "GlobalValue: ");
@@ -623,17 +618,6 @@ int64_t SparcV9CodeEmitter::getMachineOpValue(MachineInstr &MI,
         }
       } else {
         rv = (int64_t)MCE.getGlobalValueAddress(GV);
-        if (rv == 0) {
-          if (Constant *C = ConstantPointerRef::get(GV)) {
-            if (ConstantMap.find(C) != ConstantMap.end()) {
-              rv = MCE.getConstantPoolEntryAddress(ConstantMap[C]);
-            } else {
-              std::cerr << "Constant: 0x" << std::hex << (intptr_t)C
-                        << ", " << *V << " not found in ConstantMap!\n";
-              abort();
-            }
-          }
-        }
         DEBUG(std::cerr << "Global addr: 0x" << std::hex << rv << "\n");
       }
       // The real target of the call is Addr = PC + (rv * 4)
@@ -698,9 +682,8 @@ int64_t SparcV9CodeEmitter::getMachineOpValue(MachineInstr &MI,
     std::cerr << "ERROR: Frame index unhandled.\n";
     abort();
   } else if (MO.isConstantPoolIndex()) {
-    // Sparc backend doesn't generate this (yet...)
-    std::cerr << "ERROR: Constant Pool index unhandled.\n";
-    abort();
+    unsigned Index = MO.getConstantPoolIndex();
+    rv = MCE.getConstantPoolEntryAddress(Index);
   } else {
     std::cerr << "ERROR: Unknown type of MachineOperand: " << MO << "\n";
     abort();
@@ -734,27 +717,12 @@ bool SparcV9CodeEmitter::runOnMachineFunction(MachineFunction &MF) {
             << ", address: " << "0x" << std::hex 
             << (long)MCE.getCurrentPCValue() << "\n");
 
-  // The Sparc backend does not use MachineConstantPool;
-  // instead, it has its own constant pool implementation.
-  // We create a new MachineConstantPool here to be compatible with the emitter.
-  MachineConstantPool MCP;
-  const hash_set<const Constant*> &pool = MF.getInfo()->getConstantPoolValues();
-  for (hash_set<const Constant*>::const_iterator I = pool.begin(),
-         E = pool.end();  I != E; ++I)
-  {
-    Constant *C = (Constant*)*I;
-    unsigned idx = MCP.getConstantPoolIndex(C);
-    DEBUG(std::cerr << "Constant[" << idx << "] = 0x" << (intptr_t)C << "\n");
-    ConstantMap[C] = idx;
-  }  
-  MCE.emitConstantPool(&MCP);
-
+  MCE.emitConstantPool(MF.getConstantPool());
   for (MachineFunction::iterator I = MF.begin(), E = MF.end(); I != E; ++I)
     emitBasicBlock(*I);
   MCE.finishFunction(MF);
 
   DEBUG(std::cerr << "Finishing fn " << MF.getFunction()->getName() << "\n");
-  ConstantMap.clear();
 
   // Resolve branches to BasicBlocks for the entire function
   for (unsigned i = 0, e = BBRefs.size(); i != e; ++i) {
@@ -831,14 +799,9 @@ void* SparcV9CodeEmitter::getGlobalAddress(GlobalValue *V, MachineInstr &MI,
           (void*)(intptr_t)TheJITResolver->getLazyResolver(cast<Function>(V));
 
       } else if (Constant *C = ConstantPointerRef::get(V)) {
-        if (ConstantMap.find(C) != ConstantMap.end()) {
-          return (void*)
-            (intptr_t)MCE.getConstantPoolEntryAddress(ConstantMap[C]);
-        } else {
-          std::cerr << "Constant: 0x" << std::hex << &*C << std::dec
-                    << ", " << *V << " not found in ConstantMap!\n";
-          abort();
-        }
+        // no longer applicable
+        std::cerr << "Unhandled Constant: " << *C << "\n";
+        abort();
       } else {
         std::cerr << "Unhandled global: " << *V << "\n";
         abort();

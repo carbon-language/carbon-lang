@@ -34,10 +34,6 @@ class SparcV9CodeEmitter : public MachineFunctionPass {
   // Tracks where each BasicBlock starts
   std::map<const BasicBlock*, long> BBLocations;
 
-  // Tracks locations of Constants which are laid out in memory (e.g. FP)
-  // But we also need to map Constants to ConstantPool indices
-  std::map<const Constant*, unsigned> ConstantMap;
-
 public:
   SparcV9CodeEmitter(TargetMachine &T, MachineCodeEmitter &M);
   ~SparcV9CodeEmitter();
