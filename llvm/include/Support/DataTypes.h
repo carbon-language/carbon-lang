@@ -4,10 +4,10 @@
 // This file is important because different host OS's define different macros,
 // which makes portability tough.  This file exports the following definitions:
 //
-//   LITTLE_ENDIAN: is #define'd if the host is little endian
-//   int64_t      : is a typedef for the signed 64 bit system type
-//   uint64_t     : is a typedef for the unsigned 64 bit system type
-//   INT64_MAX    : is a #define specifying the max value for int64_t's
+//   ENDIAN_LITTLE : is #define'd if the host is little endian
+//   int64_t       : is a typedef for the signed 64 bit system type
+//   uint64_t      : is a typedef for the unsigned 64 bit system type
+//   INT64_MAX     : is a #define specifying the max value for int64_t's
 //
 // No library is required when using these functinons.
 //
@@ -44,11 +44,26 @@
 #  endif
 #endif
 
-#if (defined(LITTLE_ENDIAN) && defined(BIG_ENDIAN))
-#error "Cannot define both LITTLE_ENDIAN and BIG_ENDIAN!"
+//
+// Convert the information from the header files into our own local
+// endian macros.  We do this because various strange systems define both
+// BIG_ENDIAN and LITTLE_ENDIAN, and we don't want to conflict with them.
+//
+// Don't worry; once we introduce autoconf, this will look a lot nicer.
+// 
+#ifdef LITTLE_ENDIAN
+#define ENDIAN_LITTLE
 #endif
 
-#if (!defined(LITTLE_ENDIAN) && !defined(BIG_ENDIAN)) || !defined(INT64_MAX)
+#ifdef BIG_ENDIAN
+#define ENDIAN_BIG
+#endif
+
+#if (defined(ENDIAN_LITTLE) && defined(ENDIAN_BIG))
+#error "Cannot define both ENDIAN_LITTLE and ENDIAN_BIG!"
+#endif
+
+#if (!defined(ENDIAN_LITTLE) && !defined(ENDIAN_BIG)) || !defined(INT64_MAX)
 #error "include/Support/DataTypes.h could not determine endianness!"
 #endif
 

@@ -23,7 +23,7 @@
 static inline bool read(const unsigned char *&Buf, const unsigned char *EndBuf,
 			unsigned &Result) {
   if (Buf+4 > EndBuf) return true;
-#ifdef LITTLE_ENDIAN
+#ifdef ENDIAN_LITTLE
   Result = *(unsigned*)Buf;
 #else
   Result = Buf[0] | (Buf[1] << 8) | (Buf[2] << 16) | (Buf[3] << 24);
@@ -36,7 +36,7 @@ static inline bool read(const unsigned char *&Buf, const unsigned char *EndBuf,
 			uint64_t &Result) {
   if (Buf+8 > EndBuf) return true;
 
-#ifdef LITTLE_ENDIAN
+#ifdef ENDIAN_LITTLE
   Result = *(uint64_t*)Buf;
 #else
   Result = Buf[0] | (Buf[1] << 8) | (Buf[2] << 16) | (Buf[3] << 24) |
@@ -136,7 +136,7 @@ static inline bool input_data(const unsigned char *&Buf,
   unsigned char *Start = (unsigned char *)Ptr;
   unsigned Amount = (unsigned char *)End - Start;
   if (Buf+Amount > EndBuf) return true;
-#ifdef LITTLE_ENDIAN
+#ifdef ENDIAN_LITTLE
   std::copy(Buf, Buf+Amount, Start);
   Buf += Amount;
 #else
@@ -159,7 +159,7 @@ static inline bool input_data(const unsigned char *&Buf,
 //
 static inline void output(unsigned i, std::deque<unsigned char> &Out,
                           int pos = -1) {
-#ifdef LITTLE_ENDIAN
+#ifdef ENDIAN_LITTLE
   if (pos == -1) 
     Out.insert(Out.end(), (unsigned char*)&i, (unsigned char*)&i+4);
   else
@@ -257,7 +257,7 @@ static inline void output(const std::string &s, std::deque<unsigned char> &Out,
 static inline void output_data(void *Ptr, void *End,
 			       std::deque<unsigned char> &Out,
                                bool Align = false) {
-#ifdef LITTLE_ENDIAN
+#ifdef ENDIAN_LITTLE
   Out.insert(Out.end(), (unsigned char*)Ptr, (unsigned char*)End);
 #else
   unsigned char *E = (unsigned char *)End;
