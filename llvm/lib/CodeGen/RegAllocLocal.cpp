@@ -10,11 +10,14 @@
 #include "llvm/Target/MachineInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "Support/Statistic.h"
+#include "Support/CommandLine.h"
 #include <iostream>
 
 namespace {
   Statistic<> NumSpilled ("ra-local", "Number of registers spilled");
   Statistic<> NumReloaded("ra-local", "Number of registers reloaded");
+  cl::opt<bool> DisableKill("no-kill", cl::Hidden, 
+                            cl::desc("Disable register kill in local-ra"));
 
   class RA : public FunctionPass {
     TargetMachine &TM;
@@ -49,15 +52,23 @@ namespace {
     //
     std::vector<unsigned> PhysRegsUseOrder;
 
+    // LastUserOf map - This multimap contains the set of registers that each
+    // key instruction is the last user of.  If an instruction has an entry in
+    // this map, that means that the specified operands are killed after the 
+    // instruction is executed, thus they don't need to be spilled into memory
+    //
+    std::multimap<MachineInstr*, unsigned> LastUserOf;
+
     void MarkPhysRegRecentlyUsed(unsigned Reg) {
-      assert(std::find(PhysRegsUseOrder.begin(), PhysRegsUseOrder.end(), Reg) !=
-             PhysRegsUseOrder.end() && "Register isn't used yet!");
+      assert(!PhysRegsUseOrder.empty() && "No registers used!");
       if (PhysRegsUseOrder.back() != Reg) {
-        for (unsigned i = PhysRegsUseOrder.size(); ; --i)
-          if (PhysRegsUseOrder[i-1] == Reg) {  // remove from middle
+        for (unsigned i = PhysRegsUseOrder.size(); i != 0; --i)
+          if (areRegsEqual(Reg, PhysRegsUseOrder[i-1])) { // remove from middle
+            unsigned RegMatch = PhysRegsUseOrder[i-1];
             PhysRegsUseOrder.erase(PhysRegsUseOrder.begin()+i-1);
-            PhysRegsUseOrder.push_back(Reg);  // Add it to the end of the list
-            return;
+            PhysRegsUseOrder.push_back(RegMatch);  // Add it to the end of the list
+            if (RegMatch == Reg) 
+              return;    // Found an exact match, exit early
           }
       }
     }
@@ -88,6 +99,16 @@ namespace {
     /// in predecessor basic blocks.
     void EliminatePHINodes(MachineBasicBlock &MBB);
 
+    /// CalculateLastUseOfVReg - Calculate an approximation of the killing
+    /// uses for the virtual registers in the function.  Here we try to capture
+    /// registers that are defined and only used within the same basic block.
+    /// Because we don't have use-def chains yet, we have to do this the hard
+    /// way.
+    ///
+    void CalculateLastUseOfVReg(MachineBasicBlock &MBB,
+                        std::map<unsigned, MachineInstr*> &LastUseOfVReg) const;
+
+
     /// EmitPrologue/EmitEpilogue - Use the register info object to add a
     /// prologue/epilogue to the function and save/restore any callee saved
     /// registers we are responsible for.
@@ -95,21 +116,23 @@ namespace {
     void EmitPrologue();
     void EmitEpilogue(MachineBasicBlock &MBB);
 
+    /// areRegsEqual - This method returns true if the specified registers are
+    /// related to each other.  To do this, it checks to see if they are equal
+    /// or if the first register is in the alias set of the second register.
+    ///
+    bool areRegsEqual(unsigned R1, unsigned R2) const {
+      if (R1 == R2) return true;
+      if (const unsigned *AliasSet = RegInfo.getAliasSet(R2))
+        for (unsigned i = 0; AliasSet[i]; ++i)
+          if (AliasSet[i] == R1) return true;
+      return false;
+    }
+
     /// isAllocatableRegister - A register may be used by the program if it's
     /// not the stack or frame pointer.
     bool isAllocatableRegister(unsigned R) const {
       unsigned FP = RegInfo.getFramePointer(), SP = RegInfo.getStackPointer();
-      // Don't allocate the Frame or Stack pointers
-      if (R == FP || R == SP)
-        return false;
-
-      // Check to see if this register aliases the stack or frame pointer...
-      if (const unsigned *AliasSet = RegInfo.getAliasSet(R)) {
-        for (unsigned i = 0; AliasSet[i]; ++i)
-          if (AliasSet[i] == FP || AliasSet[i] == SP)
-            return false;
-      }
-      return true;
+      return !areRegsEqual(FP, R) && !areRegsEqual(SP, R);
     }
 
     /// getStackSpaceFor - This returns the offset of the specified virtual
@@ -122,6 +145,7 @@ namespace {
       NumBytesAllocated = 4;   // FIXME: This is X86 specific
     }
 
+    void removePhysReg(unsigned PhysReg);
 
     /// spillVirtReg - This method spills the value specified by PhysReg into
     /// the virtual register slot specified by VirtReg.  It then updates the RA
@@ -136,8 +160,17 @@ namespace {
     void spillPhysReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator &I,
                       unsigned PhysReg) {
       std::map<unsigned, unsigned>::iterator PI = PhysRegsUsed.find(PhysReg);
-      if (PI != PhysRegsUsed.end())   // Only spill it if it's used!
+      if (PI != PhysRegsUsed.end()) {               // Only spill it if it's used!
         spillVirtReg(MBB, I, PI->second, PhysReg);
+      } else if (const unsigned *AliasSet = RegInfo.getAliasSet(PhysReg)) {
+        // If the selected register aliases any other registers, we must make sure
+        // that one of the aliases isn't alive...
+        for (unsigned i = 0; AliasSet[i]; ++i) {
+          PI = PhysRegsUsed.find(AliasSet[i]);
+          if (PI != PhysRegsUsed.end())     // Spill aliased register...
+            spillVirtReg(MBB, I, PI->second, AliasSet[i]);
+        }
+      }
     }
 
     void AssignVirtToPhysReg(unsigned VirtReg, unsigned PhysReg);
@@ -146,7 +179,7 @@ namespace {
     /// free and available for use.  This also includes checking to see if
     /// aliased registers are all free...
     ///
-    bool RA::isPhysRegAvailable(unsigned PhysReg) const;
+    bool isPhysRegAvailable(unsigned PhysReg) const;
     
     /// getFreeReg - Find a physical register to hold the specified virtual
     /// register.  If all compatible physical registers are used, this method
@@ -196,6 +229,19 @@ unsigned RA::getStackSpaceFor(unsigned VirtReg,
 }
 
 
+/// removePhysReg - This method marks the specified physical register as no 
+/// longer being in use.
+///
+void RA::removePhysReg(unsigned PhysReg) {
+  PhysRegsUsed.erase(PhysReg);      // PhyReg no longer used
+
+  std::vector<unsigned>::iterator It =
+    std::find(PhysRegsUseOrder.begin(), PhysRegsUseOrder.end(), PhysReg);
+  assert(It != PhysRegsUseOrder.end() &&
+         "Spilled a physical register, but it was not in use list!");
+  PhysRegsUseOrder.erase(It);
+}
+
 /// spillVirtReg - This method spills the value specified by PhysReg into the
 /// virtual register slot specified by VirtReg.  It then updates the RA data
 /// structures to indicate the fact that PhysReg is now available.
@@ -213,13 +259,8 @@ void RA::spillVirtReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator &I,
     ++NumSpilled;   // Update statistics
     Virt2PhysRegMap.erase(VirtReg);   // VirtReg no longer available
   }
-  PhysRegsUsed.erase(PhysReg);      // PhyReg no longer used
 
-  std::vector<unsigned>::iterator It =
-    std::find(PhysRegsUseOrder.begin(), PhysRegsUseOrder.end(), PhysReg);
-  assert(It != PhysRegsUseOrder.end() &&
-         "Spilled a physical register, but it was not in use list!");
-  PhysRegsUseOrder.erase(It);
+  removePhysReg(PhysReg);
 }
 
 
@@ -300,13 +341,6 @@ unsigned RA::getFreeReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator &I,
     // At this point PhysRegsUseOrder[i] is the least recently used register of
     // compatible register class.  Spill it to memory and reap its remains.
     spillPhysReg(MBB, I, PhysReg);
-
-    // If the selected register aliases any other registers, we must make sure
-    // to spill them as well...
-    if (const unsigned *AliasSet = RegInfo.getAliasSet(PhysReg))
-      for (unsigned i = 0; AliasSet[i]; ++i)
-        if (PhysRegsUsed.count(AliasSet[i]))     // Spill aliased register...
-          spillPhysReg(MBB, I, AliasSet[i]);
   }
 
   // Now that we know which register we need to assign this to, do it now!
@@ -352,6 +386,41 @@ unsigned RA::reloadVirtReg(MachineBasicBlock &MBB,
   return PhysReg;
 }
 
+/// CalculateLastUseOfVReg - Calculate an approximation of the killing uses for
+/// the virtual registers in the function.  Here we try to capture registers 
+/// that are defined and only used within the same basic block.  Because we 
+/// don't have use-def chains yet, we have to do this the hard way.
+///
+void RA::CalculateLastUseOfVReg(MachineBasicBlock &MBB, 
+                      std::map<unsigned, MachineInstr*> &LastUseOfVReg) const {
+  // Calculate the last machine instruction in this basic block that uses the
+  // specified virtual register defined in this basic block.
+  std::map<unsigned, MachineInstr*> LastLocalUses;
+
+  for (MachineBasicBlock::iterator I = MBB.begin(), E = MBB.end(); I != E;++I){
+    MachineInstr *MI = *I;
+    for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+      MachineOperand &Op = MI->getOperand(i);
+      if (Op.isVirtualRegister()) {
+        if (Op.opIsDef()) {   // Definition of a new virtual reg?
+          LastLocalUses[Op.getAllocatedRegNum()] = 0;  // Record it
+        } else {              // Use of a virtual reg.
+          std::map<unsigned, MachineInstr*>::iterator It = 
+                               LastLocalUses.find(Op.getAllocatedRegNum());
+          if (It != LastLocalUses.end())  // Local use?
+            It->second = MI;              // Update last use
+          else
+            LastUseOfVReg[Op.getAllocatedRegNum()] = 0;
+        }
+      }
+    }
+  }
+
+  // Move local uses over... if there are any uses of a local already in the 
+  // lastuse map, the newly inserted entry is ignored.
+  LastUseOfVReg.insert(LastLocalUses.begin(), LastLocalUses.end());
+}
+ 
 
 /// EliminatePHINodes - Eliminate phi nodes by inserting copy instructions in
 /// predecessor basic blocks.
@@ -364,7 +433,6 @@ void RA::EliminatePHINodes(MachineBasicBlock &MBB) {
     // Unlink the PHI node from the basic block... but don't delete the PHI yet
     MBB.erase(MBB.begin());
     
-    DEBUG(std::cerr << "num ops: " << MI->getNumOperands() << "\n");
     assert(MI->getOperand(0).isVirtualRegister() &&
            "PHI node doesn't write virt reg?");
 
@@ -448,9 +516,15 @@ void RA::AllocateBasicBlock(MachineBasicBlock &MBB) {
     if (const unsigned *ImplicitDefs = MID.ImplicitDefs)
       for (unsigned i = 0; ImplicitDefs[i]; ++i) {
         unsigned Reg = ImplicitDefs[i];
-        spillPhysReg(MBB, I, Reg);
-        PhysRegsUsed[Reg] = 0;  // It's free now, and it's reserved
-        PhysRegsUseOrder.push_back(Reg);
+
+        // We don't want to spill implicit definitions if they were explicitly
+        // chosen.  For this reason, check to see now if the register we are
+        // to spill has a vreg of 0.
+        if (PhysRegsUsed.count(Reg) && PhysRegsUsed[Reg] != 0) {
+          spillPhysReg(MBB, I, Reg);
+          PhysRegsUsed[Reg] = 0;  // It's free now, and it's reserved
+          PhysRegsUseOrder.push_back(Reg);
+        }
       }
 
     // Loop over the implicit uses, making sure that they are at the head of the
@@ -475,7 +549,7 @@ void RA::AllocateBasicBlock(MachineBasicBlock &MBB) {
     // that would be destroyed by defs of this instruction.  Loop over the
     // implicit defs and assign them to a register, spilling the incoming value
     // if we need to scavange a register.
-
+    //
     for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i)
       if (MI->getOperand(i).opIsDef() &&
           !MI->getOperand(i).isPhysicalRegister()) {
@@ -500,6 +574,23 @@ void RA::AllocateBasicBlock(MachineBasicBlock &MBB) {
         }
         MI->SetMachineOperandReg(i, DestPhysReg);  // Assign the output register
       }
+
+    if (!DisableKill) {
+      // If this instruction is the last user of anything in registers, kill the 
+      // value, freeing the register being used, so it doesn't need to be spilled
+      // to memory at the end of the block.
+      std::multimap<MachineInstr*, unsigned>::iterator LUOI = 
+             LastUserOf.lower_bound(MI);
+      for (; LUOI != LastUserOf.end() && LUOI->first == MI; ++MI) {// entry found?
+        unsigned VirtReg = LUOI->second;
+        unsigned PhysReg = Virt2PhysRegMap[VirtReg];
+        if (PhysReg) {
+          DEBUG(std::cout << "V: " << VirtReg << " P: " << PhysReg << " Last use of: " << *MI);
+          removePhysReg(PhysReg);
+        }
+        Virt2PhysRegMap.erase(VirtReg);
+      }
+    }
   }
 
   // Rewind the iterator to point to the first flow control instruction...
@@ -578,12 +669,29 @@ bool RA::runOnMachineFunction(MachineFunction &Fn) {
   MF = &Fn;
 
   // First pass: eliminate PHI instructions by inserting copies into predecessor
-  // blocks.
-  // FIXME: In this pass, count how many uses of each VReg exist!
+  // blocks, and calculate a simple approximation of killing uses for virtual 
+  // registers.
+  //
+  std::map<unsigned, MachineInstr*> LastUseOfVReg;
   for (MachineFunction::iterator MBB = Fn.begin(), MBBe = Fn.end();
        MBB != MBBe; ++MBB) {
+    if (!DisableKill)
+      CalculateLastUseOfVReg(*MBB, LastUseOfVReg);
     EliminatePHINodes(*MBB);
   }
+
+  // At this point LastUseOfVReg has been filled in to contain the last 
+  // MachineInstr user of the specified virtual register, if that user is 
+  // within the same basic block as the definition (otherwise it contains
+  // null).  Invert this mapping now:
+  if (!DisableKill)
+    for (std::map<unsigned, MachineInstr*>::iterator I = LastUseOfVReg.begin(),
+         E = LastUseOfVReg.end(); I != E; ++I)
+      if (I->second)
+        LastUserOf.insert(std::make_pair(I->second, I->first));
+
+  // We're done with the temporary list now.
+  LastUseOfVReg.clear();
 
   // Loop over all of the basic blocks, eliminating virtual register references
   for (MachineFunction::iterator MBB = Fn.begin(), MBBe = Fn.end();
@@ -604,6 +712,7 @@ bool RA::runOnMachineFunction(MachineFunction &Fn) {
       EmitEpilogue(*MBB);
   }
 
+  LastUserOf.clear();
   cleanupAfterFunction();
   return true;
 }
