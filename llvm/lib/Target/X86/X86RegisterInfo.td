@@ -17,54 +17,44 @@
 //  Register definitions...
 //
 let Namespace = "X86" in {
+
+  // In the register alias definitions below, we define which registers alias
+  // which others.  We only specify which registers the small registers alias,
+  // because the register file generator is smart enough to figure out that
+  // AL aliases AX if we tell it that AX aliased AL (for example).
+
   // 32-bit registers
-  def EAX : Register; def ECX : Register;
-  def EDX : Register; def EBX : Register;
-  def ESP : Register; def EBP : Register;
-  def ESI : Register; def EDI : Register;
+  def EAX : Register<"EAX">; def ECX : Register<"ECX">;
+  def EDX : Register<"EDX">; def EBX : Register<"EBX">;
+  def ESP : Register<"ESP">; def EBP : Register<"EBP">;
+  def ESI : Register<"ESI">; def EDI : Register<"EDI">;
   
   // 16-bit registers
-  def AX : Register; def CX : Register;
-  def DX : Register; def BX : Register;
-  def SP : Register; def BP : Register;
-  def SI : Register; def DI : Register;
+  def AX : RegisterGroup<"AX", [EAX]>; def CX : RegisterGroup<"CX", [ECX]>;
+  def DX : RegisterGroup<"DX", [EDX]>; def BX : RegisterGroup<"BX", [EBX]>;
+  def SP : RegisterGroup<"SP", [ESP]>; def BP : RegisterGroup<"BP", [EBP]>;
+  def SI : RegisterGroup<"SI", [ESI]>; def DI : RegisterGroup<"DI", [EDI]>;
   
   // 8-bit registers
-  def AL : Register; def CL : Register;
-  def DL : Register; def BL : Register;
-  def AH : Register; def CH : Register;
-  def DH : Register; def BH : Register;
+  def AL : RegisterGroup<"AL", [AX, EAX]>; def CL : RegisterGroup<"CL", [CX, ECX]>;
+  def DL : RegisterGroup<"DL", [DX, EDX]>; def BL : RegisterGroup<"BL", [BX, EBX]>;
+  def AH : RegisterGroup<"AH", [AX, EAX]>; def CH : RegisterGroup<"CH", [CX, ECX]>;
+  def DH : RegisterGroup<"DH", [DX, EDX]>; def BH : RegisterGroup<"BH", [BX, EBX]>;
   
   // Pseudo Floating Point registers
-  def FP0 : Register; def FP1 : Register;
-  def FP2 : Register; def FP3 : Register;
-  def FP4 : Register; def FP5 : Register;
-  def FP6 : Register; 
+  def FP0 : Register<"FP0">; def FP1 : Register<"FP1">;
+  def FP2 : Register<"FP2">; def FP3 : Register<"FP3">;
+  def FP4 : Register<"FP4">; def FP5 : Register<"FP5">;
+  def FP6 : Register<"FP6">; 
 
   // Floating point stack registers
-  def ST0 : NamedReg<"ST(0)">; def ST1 : NamedReg<"ST(1)">;
-  def ST2 : NamedReg<"ST(2)">; def ST3 : NamedReg<"ST(3)">;
-  def ST4 : NamedReg<"ST(4)">; def ST5 : NamedReg<"ST(5)">;
-  def ST6 : NamedReg<"ST(6)">; def ST7 : NamedReg<"ST(7)">; 
+  def ST0 : Register<"ST(0)">; def ST1 : Register<"ST(1)">;
+  def ST2 : Register<"ST(2)">; def ST3 : Register<"ST(3)">;
+  def ST4 : Register<"ST(4)">; def ST5 : Register<"ST(5)">;
+  def ST6 : Register<"ST(6)">; def ST7 : Register<"ST(7)">; 
   
   // Flags, Segment registers, etc...
 }
-
-//===----------------------------------------------------------------------===//
-// Register alias definitions... define which registers alias which others.  We
-// only specify which registers the small registers alias, because the register
-// file generator is smart enough to figure out that AL aliases AX if we tell it
-// that AX aliases AL (for example).
-//
-def : RegisterAliases<AL, [AX, EAX]>; def : RegisterAliases<BL, [BX, EBX]>;
-def : RegisterAliases<CL, [CX, ECX]>; def : RegisterAliases<DL, [DX, EDX]>;
-def : RegisterAliases<AH, [AX, EAX]>; def : RegisterAliases<BH, [BX, EBX]>;
-def : RegisterAliases<CH, [CX, ECX]>; def : RegisterAliases<DH, [DX, EDX]>;
-
-def : RegisterAliases<AX, [EAX]>;     def : RegisterAliases<BX, [EBX]>;
-def : RegisterAliases<CX, [ECX]>;     def : RegisterAliases<DX, [EDX]>;
-def : RegisterAliases<SI, [ESI]>;     def : RegisterAliases<DI, [EDI]>;
-def : RegisterAliases<SP, [ESP]>;     def : RegisterAliases<BP, [EBP]>;
 
 //===----------------------------------------------------------------------===//
 // Register Class Definitions... now that we have all of the pieces, define the

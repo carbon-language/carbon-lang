@@ -139,15 +139,12 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
   OS << "  };\n";
 
   // Emit register class aliases...
-  std::vector<Record*> RegisterAliasesRecs =
-    Records.getAllDerivedDefinitions("RegisterAliases");
   std::map<Record*, std::set<Record*> > RegisterAliases;
+  const std::vector<CodeGenRegister> &Regs = Target.getRegisters();
 
-  for (unsigned i = 0, e = RegisterAliasesRecs.size(); i != e; ++i) {
-    Record *AS = RegisterAliasesRecs[i];
-    Record *R = AS->getValueAsDef("Reg");
-    ListInit *LI = AS->getValueAsListInit("Aliases");
-
+  for (unsigned i = 0, e = Regs.size(); i != e; ++i) {
+    Record *R = Regs[i].TheDef;
+    ListInit *LI = Regs[i].TheDef->getValueAsListInit("Aliases");
     // Add information that R aliases all of the elements in the list... and
     // that everything in the list aliases R.
     for (unsigned j = 0, e = LI->getSize(); j != e; ++j) {
@@ -165,7 +162,7 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
                   << " specified multiple times!\n";
       RegisterAliases[Reg->getDef()].insert(R);
     }
-  }
+  } 
 
   if (!RegisterAliases.empty())
     OS << "\n\n  // Register Alias Sets...\n";

@@ -43,12 +43,11 @@ def isVoid : ValueType<0  , 11>;   // Produces no value
 // description classes in llvm/Target/MRegisterInfo.h
 
 
-// Register - You should define one instance of this class for each register in
-// the target machine.
-//
-class Register {
+// Register - You should define one instance of this class for each register
+// in the target machine.  String n will become the "name" of the register.
+class RegisterBase<string n> {
   string Namespace = "";
-  string Name = "";
+  string Name = n;
 
   // SpillSize - If this value is set to a non-zero value, it is the size in
   // bits of the spill slot required to hold this register.  If this value is
@@ -62,21 +61,17 @@ class Register {
   int SpillAlignment = 0;
 }
 
-// NamedReg - If the name for the 'def' of the register should not become the
-// "name" of the register, you can use this to specify a custom name instead.
-//
-class NamedReg<string n> : Register {
-  let Name = n;
+class Register<string n> : RegisterBase<n> {
+  list<RegisterBase> Aliases = [];
 }
 
-// RegisterAliases - You should define instances of this class to indicate which
-// registers in the register file are aliased together.  This allows the code
-// generator to be careful not to put two values with overlapping live ranges
-// into registers which alias.
-//
-class RegisterAliases<Register reg, list<Register> aliases> {
-  Register Reg = reg;
-  list<Register> Aliases = aliases;
+// RegisterGroup - This can be used to define instances of Register which
+// need to specify aliases.
+// List "aliases" specifies which registers are aliased to this one.  This
+// allows the code generator to be careful not to put two values with 
+// overlapping live ranges into registers which alias.
+class RegisterGroup<string n, list<Register> aliases> : Register<n> {
+  let Aliases = aliases;
 }
 
 // RegisterClass - Now that all of the registers are defined, and aliases
