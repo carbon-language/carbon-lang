@@ -67,14 +67,6 @@ TESTRUNR = $(LEVEL)/test/TestRunner.sh
 NATGCC  = /usr/dcs/software/supported/bin/gcc
 CP	= /bin/cp -f
 
-ifndef DISABLE_LLC_DIFFS
-CC      = /opt/SUNWspro/bin/cc
-AS	= /opt/SUNWspro/bin/cc
-DIS     = /usr/ccs/bin/dis
-CFLAGS  += -g -xarch=v9
-endif
-
-
 ifeq ($(TRACE), yes)
     LLCFLAGS += -trace basicblock
     LLCLIBS := -L$(LEVEL)/test/Libraries/Output -linstr64
@@ -106,16 +98,6 @@ Output/%.bc: Output/%.ll $(LGCCAS)
 #
 Output/%.bc: %.ll $(LAS) Output/.dir
 	$(LAS) -f $< -o $@
-
-# Compile a linked program to machine code for this processor.
-#
-Output/%.llc.s: Output/%.llvm.bc $(LLC)
-	$(LLC) $(LLCFLAGS) -f $< -o $@
-
-# Assemble (and link) an LLVM-linked program using the system assembler...
-#
-Output/%.llc: Output/%.llc.s
-	$(CC) $(CFLAGS) $< $(LLCLIBS) -o $@
 
 #
 # Testing versions of provided utilities...
