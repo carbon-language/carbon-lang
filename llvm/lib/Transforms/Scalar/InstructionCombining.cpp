@@ -792,7 +792,8 @@ bool InstCombiner::runOnFunction(Function &F) {
       for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i)
         if (Instruction *Op = dyn_cast<Instruction>(I->getOperand(i)))
           WorkList.push_back(Op);
-      I->replaceAllUsesWith(C);
+      ReplaceInstUsesWith(*I, C);
+
       ++NumConstProp;
       BasicBlock::iterator BBI = I;
       if (dceInstruction(BBI)) {
