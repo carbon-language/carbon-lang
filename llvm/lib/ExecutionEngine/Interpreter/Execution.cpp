@@ -822,7 +822,7 @@ static GenericValue executeGEPOperation(Value *Ptr, User::op_iterator I,
     } else if (const SequentialType *ST = cast<SequentialType>(Ty)) {
 
       // Get the index number for the array... which must be uint type...
-      assert((*I)->getType() == Type::UIntTy);
+      assert((*I)->getType() == Type::LongTy);
       unsigned Idx = getOperandValue(*I, SF).UIntVal;
       if (const ArrayType *AT = dyn_cast<ArrayType>(ST))
         if (Idx >= AT->getNumElements() && ArrayChecksEnabled) {

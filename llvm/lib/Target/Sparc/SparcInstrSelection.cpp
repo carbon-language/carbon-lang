@@ -24,9 +24,6 @@
 #include <math.h>
 using std::vector;
 
-//************************* Forward Declarations ***************************/
-
-
 //************************ Internal Functions ******************************/
 
 
@@ -937,15 +934,6 @@ CreateCodeForFixedSizeAlloca(const TargetMachine& target,
 }
 
 
-
-// Check for a constant (uint) 0.
-inline bool
-IsZero(Value* idx)
-{
-  return (isa<ConstantInt>(idx) && cast<ConstantInt>(idx)->isNullValue());
-}
-
-
 //------------------------------------------------------------------------ 
 // Function SetOperandsForMemInstr
 //
@@ -1004,7 +992,8 @@ SetOperandsForMemInstr(vector<MachineInstr*>& mvec,
           // offset.  (An extra leading zero offset, if any, can be ignored.)
           // Generate code sequence to compute address from index.
           // 
-          bool firstIdxIsZero = IsZero(idxVec[0]);
+          bool firstIdxIsZero =
+            (idxVec[0] == Constant::getNullValue(idxVec[0]->getType()));
           assert(idxVec.size() == 1U + firstIdxIsZero 
                  && "Array refs must be lowered before Instruction Selection");
 
