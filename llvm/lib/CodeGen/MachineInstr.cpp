@@ -10,6 +10,7 @@
 #include "llvm/Target/MRegisterInfo.h"
 using std::cerr;
 
+
 // Global variable holding an array of descriptors for machine instructions.
 // The actual object needs to be created separately for each target machine.
 // This variable is initialized and reset by class MachineInstrInfo.
@@ -268,6 +269,15 @@ static void print(const MachineOperand &MO, std::ostream &OS,
   case MachineOperand::MO_FrameIndex:
     OS << "<fi#" << MO.getFrameIndex() << ">";
     break;
+  case MachineOperand::MO_ConstantPoolIndex:
+    OS << "<cp#" << MO.getConstantPoolIndex() << ">";
+    break;
+  case MachineOperand::MO_GlobalAddress:
+    OS << "<ga:" << ((Value*)MO.getGlobal())->getName() << ">";
+    break;
+  case MachineOperand::MO_ExternalSymbol:
+    OS << "<es:" << MO.getSymbolName() << ">";
+    break;
   default:
     assert(0 && "Unrecognized operand type");
   }
@@ -316,26 +326,26 @@ void MachineInstr::print(std::ostream &OS, const TargetMachine &TM) const {
 }
 
 
-std::ostream &operator<<(std::ostream& os, const MachineInstr& minstr)
+std::ostream &operator<<(std::ostream& os, const MachineInstr& MI)
 {
-  os << TargetInstrDescriptors[minstr.opCode].Name;
+  os << TargetInstrDescriptors[MI.opCode].Name;
   
-  for (unsigned i=0, N=minstr.getNumOperands(); i < N; i++) {
-    os << "\t" << minstr.getOperand(i);
-    if( minstr.operandIsDefined(i) ) 
-      os << "*";
-    if( minstr.operandIsDefinedAndUsed(i) ) 
-      os << "*";
+  for (unsigned i=0, N=MI.getNumOperands(); i < N; i++) {
+    os << "\t" << MI.getOperand(i);
+    if (MI.operandIsDefined(i))
+      os << "<d>";
+    if (MI.operandIsDefinedAndUsed(i))
+      os << "<d&u>";
   }
   
   // code for printing implict references
-  unsigned NumOfImpRefs =  minstr.getNumImplicitRefs();
-  if(  NumOfImpRefs > 0 ) {
+  unsigned NumOfImpRefs = MI.getNumImplicitRefs();
+  if (NumOfImpRefs > 0) {
     os << "\tImplicit: ";
-    for(unsigned z=0; z < NumOfImpRefs; z++) {
-      OutputValue(os, minstr.getImplicitRef(z)); 
-      if( minstr.implicitRefIsDefined(z)) os << "*";
-      if( minstr.implicitRefIsDefinedAndUsed(z)) os << "*";
+    for (unsigned z=0; z < NumOfImpRefs; z++) {
+      OutputValue(os, MI.getImplicitRef(z)); 
+      if (MI.implicitRefIsDefined(z)) os << "<d>";
+      if (MI.implicitRefIsDefinedAndUsed(z)) os << "<d&u>";
       os << "\t";
     }
   }
@@ -357,11 +367,13 @@ std::ostream &operator<<(std::ostream &OS, const MachineOperand &MO)
   switch (MO.getType())
     {
     case MachineOperand::MO_VirtualRegister:
-      OS << "%reg";
-      OutputValue(OS, MO.getVRegValue());
-      if (MO.hasAllocatedReg()) {
-        OS << "==";
+      if (MO.hasAllocatedReg())
         OutputReg(OS, MO.getAllocatedRegNum());
+
+      if (MO.getVRegValue()) {
+	if (MO.hasAllocatedReg()) OS << "==";
+	OS << "%vreg";
+	OutputValue(OS, MO.getVRegValue());
       }
       break;
     case MachineOperand::MO_CCRegister:
@@ -400,6 +412,15 @@ std::ostream &operator<<(std::ostream &OS, const MachineOperand &MO)
       break;
     case MachineOperand::MO_FrameIndex:
       OS << "<fi#" << MO.getFrameIndex() << ">";
+      break;
+    case MachineOperand::MO_ConstantPoolIndex:
+      OS << "<cp#" << MO.getConstantPoolIndex() << ">";
+      break;
+    case MachineOperand::MO_GlobalAddress:
+      OS << "<ga:" << ((Value*)MO.getGlobal())->getName() << ">";
+      break;
+    case MachineOperand::MO_ExternalSymbol:
+      OS << "<es:" << MO.getSymbolName() << ">";
       break;
     default:
       assert(0 && "Unrecognized operand type");
