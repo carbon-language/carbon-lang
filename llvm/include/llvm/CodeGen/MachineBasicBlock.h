@@ -15,15 +15,15 @@ template <typename T> struct ilist_traits;
 class MachineBasicBlock {
   std::vector<MachineInstr*> Insts;
   MachineBasicBlock *Prev, *Next;
-  BasicBlock *BB;
+  const BasicBlock *BB;
 public:
-  MachineBasicBlock(BasicBlock *bb = 0) : Prev(0), Next(0), BB(bb) {}
+  MachineBasicBlock(const BasicBlock *bb = 0) : Prev(0), Next(0), BB(bb) {}
   ~MachineBasicBlock() {}
   
   /// getBasicBlock - Return the LLVM basic block that this instance
   /// corresponded to originally.
   ///
-  BasicBlock *getBasicBlock() const { return BB; }
+  const BasicBlock *getBasicBlock() const { return BB; }
   
   typedef std::vector<MachineInstr*>::iterator                iterator;
   typedef std::vector<MachineInstr*>::const_iterator    const_iterator;
