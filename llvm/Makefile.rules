@@ -860,7 +860,7 @@ dist dist-check dist-clean dist-gzip dist-bzip2 dist-zip ::
 else
 
 ifeq ($(LLVM_TARBALL_NAME),)
-$(error LLVM_TARBALL_NAME is empty)
+$(error LLVM_TARBALL_NAME is empty.  Please rerun configure)
 endif
 
 ifneq ($(LEVEL),.)
