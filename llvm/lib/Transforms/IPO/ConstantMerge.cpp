@@ -31,8 +31,8 @@ namespace {
     }
   };
 
-Statistic<> NumMerged("constmerge\t\t- Number of global constants merged");
-RegisterPass<ConstantMerge> X("constmerge", "Merge Duplicate Global Constants");
+  Statistic<> NumMerged("constmerge\t\t- Number of global constants merged");
+  RegisterOpt<ConstantMerge> X("constmerge","Merge Duplicate Global Constants");
 }
 
 Pass *createConstantMergePass() { return new ConstantMerge(); }

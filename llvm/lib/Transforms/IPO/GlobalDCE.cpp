@@ -86,7 +86,7 @@ namespace {
       AU.addRequired(CallGraph::ID);
     }
   };
-  RegisterPass<GlobalDCE> X("globaldce", "Dead Global Elimination");
+  RegisterOpt<GlobalDCE> X("globaldce", "Dead Global Elimination");
 }
 
 Pass *createGlobalDCEPass() { return new GlobalDCE(); }

@@ -47,7 +47,7 @@ struct ProfilePaths : public FunctionPass {
   }
 };
 
-static RegisterPass<ProfilePaths> X("paths", "Profile Paths");
+static RegisterOpt<ProfilePaths> X("paths", "Profile Paths");
 
 // createProfilePathsPass - Create a new pass to add path profiling
 //

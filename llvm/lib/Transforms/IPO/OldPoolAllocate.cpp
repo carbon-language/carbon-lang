@@ -315,8 +315,8 @@ namespace {
 
   };
 
-  RegisterPass<PoolAllocate> X("poolalloc",
-                               "Pool allocate disjoint datastructures");
+  RegisterOpt<PoolAllocate> X("poolalloc",
+                              "Pool allocate disjoint datastructures");
 }
 
 // isNotPoolableAlloc - This is a predicate that returns true if the specified

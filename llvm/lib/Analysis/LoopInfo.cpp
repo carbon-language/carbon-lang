@@ -13,6 +13,8 @@
 #include "Support/DepthFirstIterator.h"
 #include <algorithm>
 
+static RegisterAnalysis<LoopInfo>
+X("loops", "Natural Loop Construction");
 AnalysisID LoopInfo::ID(AnalysisID::create<LoopInfo>(), true);
 
 //===----------------------------------------------------------------------===//

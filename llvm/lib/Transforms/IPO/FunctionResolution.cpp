@@ -32,7 +32,7 @@ namespace {
   struct FunctionResolvingPass : public Pass {
     bool run(Module &M);
   };
-  RegisterPass<FunctionResolvingPass> X("funcresolve", "Resolve Functions");
+  RegisterOpt<FunctionResolvingPass> X("funcresolve", "Resolve Functions");
 }
 
 Pass *createFunctionResolvingPass() {

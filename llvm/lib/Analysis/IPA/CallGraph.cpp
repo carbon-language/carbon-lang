@@ -40,13 +40,12 @@
 
 #include "llvm/Analysis/CallGraph.h"
 #include "llvm/Module.h"
-#include "llvm/Function.h"
-#include "llvm/BasicBlock.h"
 #include "llvm/iOther.h"
 #include "llvm/iTerminators.h"
 #include "Support/STLExtras.h"
 #include <algorithm>
-#include <iostream>
+
+static RegisterAnalysis<CallGraph> X("callgraph", "Call Graph Construction");
 
 AnalysisID CallGraph::ID(AnalysisID::create<CallGraph>());
 

@@ -15,6 +15,8 @@
 #include "Support/CommandLine.h"
 #include <iostream>
 
+static RegisterAnalysis<FunctionLiveVarInfo>
+X("livevar", "Live Variable Analysis");
 AnalysisID FunctionLiveVarInfo::ID(AnalysisID::create<FunctionLiveVarInfo>());
 
 LiveVarDebugLevel_t DEBUG_LV;

@@ -18,6 +18,11 @@ using std::set;
 //  DominatorSet Implementation
 //===----------------------------------------------------------------------===//
 
+static RegisterAnalysis<DominatorSet>
+A("domset", "Dominator Set Construction");
+static RegisterAnalysis<PostDominatorSet>
+B("postdomset", "Post-Dominator Set Construction");
+
 AnalysisID DominatorSet::ID(AnalysisID::create<DominatorSet>(), true);
 AnalysisID PostDominatorSet::ID(AnalysisID::create<PostDominatorSet>(), true);
 
@@ -151,6 +156,11 @@ void PostDominatorSet::getAnalysisUsage(AnalysisUsage &AU) const {
 //  ImmediateDominators Implementation
 //===----------------------------------------------------------------------===//
 
+static RegisterAnalysis<ImmediateDominators>
+C("idom", "Immediate Dominators Construction");
+static RegisterAnalysis<ImmediatePostDominators>
+D("postidom", "Immediate Post-Dominators Construction");
+
 AnalysisID ImmediateDominators::ID(AnalysisID::create<ImmediateDominators>(), true);
 AnalysisID ImmediatePostDominators::ID(AnalysisID::create<ImmediatePostDominators>(), true);
 
@@ -194,6 +204,11 @@ void ImmediateDominatorsBase::calcIDoms(const DominatorSetBase &DS) {
 //===----------------------------------------------------------------------===//
 //  DominatorTree Implementation
 //===----------------------------------------------------------------------===//
+
+static RegisterAnalysis<DominatorTree>
+E("domtree", "Dominator Tree Construction");
+static RegisterAnalysis<PostDominatorTree>
+F("postdomtree", "Post-Dominator Tree Construction");
 
 AnalysisID DominatorTree::ID(AnalysisID::create<DominatorTree>(), true);
 AnalysisID PostDominatorTree::ID(AnalysisID::create<PostDominatorTree>(), true);
@@ -306,6 +321,11 @@ void PostDominatorTree::calculate(const PostDominatorSet &DS) {
 //===----------------------------------------------------------------------===//
 //  DominanceFrontier Implementation
 //===----------------------------------------------------------------------===//
+
+static RegisterAnalysis<DominanceFrontier>
+G("domfrontier", "Dominance Frontier Construction");
+static RegisterAnalysis<PostDominanceFrontier>
+H("postdomfrontier", "Post-Dominance Frontier Construction");
 
 AnalysisID DominanceFrontier::ID(AnalysisID::create<DominanceFrontier>(), true);
 AnalysisID PostDominanceFrontier::ID(AnalysisID::create<PostDominanceFrontier>(), true);

@@ -10,6 +10,9 @@
 
 using std::make_pair;
 
+static RegisterAnalysis<IntervalPartition>
+X("intervals", "Interval Partition Construction");
+
 AnalysisID IntervalPartition::ID(AnalysisID::create<IntervalPartition>(), true);
 
 //===----------------------------------------------------------------------===//

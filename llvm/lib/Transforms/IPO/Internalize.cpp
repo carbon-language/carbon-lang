@@ -41,7 +41,7 @@ class InternalizePass : public Pass {
   }
 };
 
-RegisterPass<InternalizePass> X("internalize", "Internalize Functions");
+  RegisterOpt<InternalizePass> X("internalize", "Internalize Functions");
 } // end anonymous namespace
 
 Pass *createInternalizePass() {

@@ -189,10 +189,10 @@ Pass *createSortElementsPass(const TargetData &TD) {
 }
 
 namespace {
-  RegisterPass<SwapStructElements> X("swapstructs",
-                                     "Swap structure types around",
-                                     createSwapElementsPass);
-  RegisterPass<SortStructElements> Y("sortstructs",
-                                     "Sort structure elements by size",
-                                     createSortElementsPass);
+  RegisterOpt<SwapStructElements> X("swapstructs",
+                                    "Swap structure types around",
+                                    createSwapElementsPass);
+  RegisterOpt<SortStructElements> Y("sortstructs",
+                                    "Sort structure elements by size",
+                                    createSortElementsPass);
 }
