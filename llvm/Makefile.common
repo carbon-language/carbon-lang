@@ -41,9 +41,19 @@
 #
 #ENABLE_OPTIMIZED = 1
 
-# If you do not want to build into /shared, uncomment this
+# Current working directory, used below
+CUR_DIRECTORY := $(shell pwd)
+
+# Path to directory where object files should be stored during a build.
+# Set this to "." if you do not want to use a separate place for object files.
+# 
+BUILD_DIR = /shared/$(LOGIN_NAME)$(patsubst $(HOME)%,%,$(CUR_DIRECTORY))
+
+# Flag whether or not to use a separate location for build files
 #
-#BUILD_ROOT = .
+ifeq ($(BUILD_DIR),".")
+  BUILD_ROOT = $(BUILD_DIR)
+endif
 
 ifdef SHARED_LIBRARY
 # if SHARED_LIBRARY is specified, the default is to build the dynamic lib
@@ -66,8 +76,7 @@ BUILD_ROOT_TOP := $(LEVEL)
 else
 
 LOGIN_NAME := $(shell whoami)
-CUR_DIRECTORY := $(shell pwd)
-BUILD_ROOT := /shared/$(LOGIN_NAME)$(patsubst $(HOME)%,%,$(CUR_DIRECTORY))
+BUILD_ROOT := $(BUILD_DIR)
 
 # Calculate the BUILD_ROOT_TOP variable, which is the top of the llvm/ tree.
 # Note that although this is just equal to $(BUILD_ROOT)/$(LEVEL), we cannot use
