@@ -45,7 +45,7 @@ Path::GetTemporaryDirectory() {
 
 std::string
 Path::GetDLLSuffix() {
-  return "dyld";
+  return "dylib";
 }
 
 }
