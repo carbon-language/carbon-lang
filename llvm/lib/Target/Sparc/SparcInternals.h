@@ -90,14 +90,14 @@ struct UltraSparcInstrInfo : public TargetInstrInfo {
     bool ignore;
     if (this->maxImmedConstant(opCode, ignore) != 0) {
       // 1st store opcode
-      assert(! this->isStore((MachineOpCode) V9::STB - 1)); //r
+      assert(! this->isStore((MachineOpCode) V9::STBr - 1));
       // last store opcode
-      assert(! this->isStore((MachineOpCode) V9::STXFSR + 1)); //i
+      assert(! this->isStore((MachineOpCode) V9::STXFSRi + 1));
 
       if (opCode == V9::SETSW || opCode == V9::SETUW ||
           opCode == V9::SETX  || opCode == V9::SETHI)
         return 0;
-      if (opCode >= V9::STB && opCode <= V9::STXFSR) //r, i
+      if (opCode >= V9::STBr && opCode <= V9::STXFSRi)
         return 2;
       return 1;
     }
