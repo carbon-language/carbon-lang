@@ -2422,10 +2422,10 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
         }
         Sum = BinaryOperator::create(Instruction::Add, SO1, GO1,
                                      GEP.getOperand(0)->getName()+".sum", &GEP);
+        WorkList.push_back(cast<Instruction>(Sum));
       }
       GEP.setOperand(0, SrcGEPOperands[0]);
       GEP.setOperand(1, Sum);
-      WorkList.push_back(cast<Instruction>(Sum));
       return &GEP;
     } else if (isa<Constant>(*GEP.idx_begin()) && 
                cast<Constant>(*GEP.idx_begin())->isNullValue() &&
