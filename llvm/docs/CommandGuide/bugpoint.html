@@ -23,12 +23,22 @@ if <tt><a href="gccas.html">gccas</a></tt> crashes while optimizing a file, it
 will identify the optimization (or combination of optimizations) that causes the
 crash, and reduce the file down to a small example which triggers the crash.<p>
 
+<tt>bugpoint</tt> has been designed to be a useful tool without requiring any
+hooks into the LLVM intrastructure at all.  It works with any and all LLVM
+passes and code generators, and does not need to "know" how they work.  Because
+of this, it may appear to do a lot of stupid things or miss obvious
+simplifications.  Remember, however, that computer time is much cheaper than
+programmer time, so if it takes a long time to reduce a testcase it is still
+worth it.  :)<p>
+
+<a name="crashdebug">
+<h4>Automatic Mode Selection</h4>
+
 <tt>bugpoint</tt> reads the specified list of <tt>.bc</tt> or <tt>.ll</tt> files
 specified on the command-line and links them together.  If any LLVM passes are
 specified on the command line, it runs these passes on the resultant module.  If
-any of the passes crash, or if they produce an LLVM module which is not
-verifiable, <tt>bugpoint</tt> enters <a href="#crashdebug">crash debugging
-mode</a>.<p>
+any of the passes crash, or if they produce a malformed LLVM module,
+<tt>bugpoint</tt> enters <a href="#crashdebug">crash debugging mode</a>.<p>
 
 Otherwise, if the <a href="#opt_output"><tt>-output</tt></a> option was not
 specified, <tt>bugpoint</tt> runs the initial program with the C backend (which
@@ -66,43 +76,63 @@ reproduce the failure with <tt><a href="opt.html">opt</a></tt> or
 <a name="codegendebug">
 <h4>Code generator debugging mode</h4>
 
-TODO
+The code generator debugger attempts to narrow down the amount of code that is
+being miscompiled by the <a href="#opt_run-">selected</a> code generator.  To do
+this, it takes the LLVM program and partitions it into two pieces: one piece
+which it compiles with the C backend (into a shared object), and one piece which
+it runs with either the JIT or the static LLC compiler.  It uses several
+techniques to reduce the amount of code pushed through the LLVM code generator,
+to reduce the potential scope of the problem.  After it is finished, it emits
+two bytecode files (the "test" [to be compiled with the code generator] and
+"safe" [to be compiled with the C backend] modules), and instructions for
+reproducing the problem.  This module assume the C backend produces good
+code.<p>
+
+If you are using this mode and get an error message that says "Non-instruction
+is using an external function!", try using the <tt>-run-llc</tt> option instead
+of the <tt>-run-jit</tt> option.  This is due to an unimplemented feature in the
+code generator debugging mode.<p>
 
 <a name="miscompilationdebug">
 <h4>Miscompilation debugging mode</h4>
 
-TODO
+The miscompilation debugging mode works similarly to the code generator
+debugging mode.  It works by splitting the program into two pieces, running the
+optimizations specified on one piece, relinking the program, then executing it.
+It attempts to narrow down the list of passes to the one (or few) which are
+causing the miscompilation, then reduce the portion of the program which is
+being miscompiled.  This module assumes that the selected code generator is
+working properly.<p>
 
 
 <h3>OPTIONS</h3>
 
 <ul>
-	<li><tt>-args &lt;arguments&gt;</tt>
-	<br>
-	All arguments specified after <tt>-args</tt> are passed into the
-	executed program when the program must be executed.
-	<p>
+	<li><tt>-additional-so &lt;library.so&gt;</tt><br>
 
-	<li><tt>-disable-(adce,dce,final-cleanup,simplifycfg)</tt>
-	<br>
+        Use this option to specify .so files which must be loaded by the program
+        when it is run.  This is useful if you are debugging programs which
+        depend on non-LLVM libraries (such as the X or curses libraries) to
+        run.<p>
+
+	<li><tt>-args &lt;arguments&gt;</tt><br>
+	All arguments specified after <tt>-args</tt> are passed into the
+	executed program when the program must be executed.<p>
+
+	<li><tt>-disable-(adce,dce,final-cleanup,simplifycfg)</tt><br>
 	<tt>bugpoint</tt> uses several passes internally for cleanup routines to
 	reduce the size of the program.  If you're trying to find a bug in one
 	of these passes, <tt>bugpoint</tt> may crash.  These options tell
-	<tt>bugpoint</tt> not use the specified passes.
-	<p>
+	<tt>bugpoint</tt> not use the specified passes.<p>
 
-	<li> <tt>-help</tt>
-	<br>
-	Print a summary of command line options.
-	<p>
+	<li> <tt>-help</tt><br>
+	Print a summary of command line options.<p>
 
-	<a name="opt_input"><li><tt>-input &lt;filename&gt;</tt>
-	<br>
+	<a name="opt_input"><li><tt>-input &lt;filename&gt;</tt><br>
 	Specify the contents of &lt;stdin&gt; when the program must be executed.
 	<p>
 
-	<li> <tt>-load &lt;plugin.so&gt;</tt>
-	<br>
+	<li> <tt>-load &lt;plugin.so&gt;</tt><br>
 	Load the dynamic object plugin.so.  This object should register new
 	optimization passes.  Once loaded, the object will add new command line
 	options to enable various optimizations.  To see the new complete list
@@ -111,17 +141,13 @@ TODO
 	<tt>opt -load  &lt;plugin.so&gt; -help</tt>
 	<p>
 
-	<a name="opt_output"><li><tt>-output &lt;filename&gt;</tt>
-	<br>
-	Specify a reference output for the &lt;stdout&gt; file stream.
-	<p>
+	<a name="opt_output"><li><tt>-output &lt;filename&gt;</tt><br>
+	Specify a reference output for the &lt;stdout&gt; file stream.<p>
 
-	<a name="opt_run-"><li><tt>-run-(int|jit|llc|cbe)</tt>
-	<br>
+	<a name="opt_run-"><li><tt>-run-(int|jit|llc|cbe)</tt><br>
 	Specify which code generator <tt>bugpoint</tt> should use to run the
-	program.
-	<p>
-
+	program.  You may choose the interpreter, the JIT compiler, the static
+	native code compiler, or the C backend.<p>
 </ul>
 
 <h3>EXIT STATUS</h3>
