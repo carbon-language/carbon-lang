@@ -23,7 +23,6 @@
 //  * All Instructions must be embeded into a basic block
 //  . Function's cannot take a void typed parameter
 //  * Verify that a function's argument list agrees with it's declared type.
-//  . Verify that arrays and structures have fixed elements: No unsized arrays.
 //  * It is illegal to specify a name for a void value.
 //  * It is illegal to have a internal global value with no intitalizer
 //  * It is illegal to have a ret instruction that returns a value that does not

@@ -116,16 +116,18 @@ const Type* GetElementPtrInst::getIndexedType(const Type *Ptr,
   // Handle the special case of the empty set index set...
   if (Idx.empty()) return cast<PointerType>(Ptr)->getElementType();
  
-  unsigned CurIDX = 0;
+  unsigned CurIdx = 0;
   while (const CompositeType *CT = dyn_cast<CompositeType>(Ptr)) {
-    if (Idx.size() == CurIDX) {
+    if (Idx.size() == CurIdx) {
       if (AllowCompositeLeaf || CT->isFirstClassType()) return Ptr;
       return 0;   // Can't load a whole structure or array!?!?
     }
 
-    Value *Index = Idx[CurIDX++];
+    Value *Index = Idx[CurIdx++];
+    if (isa<PointerType>(CT) && CurIdx != 1)
+      return 0;  // Can only index into pointer types at the first index!
     if (!CT->indexValid(Index)) return 0;
     Ptr = CT->getTypeAtIndex(Index);
   }
-  return CurIDX == Idx.size() ? Ptr : 0;
+  return CurIdx == Idx.size() ? Ptr : 0;
 }
