@@ -12,3 +12,6 @@ int main() {
 
 	return q;
 }
+
+// This is the source that corresponds to funccall.ll
+// RUN: exit 0
