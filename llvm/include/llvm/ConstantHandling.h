@@ -67,14 +67,11 @@ public:
   virtual Constant *op_not(const Constant *V) const = 0;
 
   // Binary Operators...
-  virtual Constant *add(const Constant *V1, 
-                        const Constant *V2) const = 0;
-  virtual Constant *sub(const Constant *V1, 
-                        const Constant *V2) const = 0;
-  virtual Constant *mul(const Constant *V1, 
-                        const Constant *V2) const = 0;
-  virtual Constant *div(const Constant *V1, 
-                        const Constant *V2) const = 0;
+  virtual Constant *add(const Constant *V1, const Constant *V2) const = 0;
+  virtual Constant *sub(const Constant *V1, const Constant *V2) const = 0;
+  virtual Constant *mul(const Constant *V1, const Constant *V2) const = 0;
+  virtual Constant *div(const Constant *V1, const Constant *V2) const = 0;
+  virtual Constant *rem(const Constant *V1, const Constant *V2) const = 0;
 
   virtual ConstantBool *lessthan(const Constant *V1, 
                                  const Constant *V2) const = 0;
@@ -127,7 +124,7 @@ private :
 };
 
 
-inline Constant *operator!(const Constant &V) {
+inline Constant *operator~(const Constant &V) {
   return ConstRules::get(V)->op_not(&V);
 }
 
@@ -151,6 +148,11 @@ inline Constant *operator*(const Constant &V1, const Constant &V2) {
 inline Constant *operator/(const Constant &V1, const Constant &V2) {
   assert(V1.getType() == V2.getType() && "Constant types must be identical!");
   return ConstRules::get(V1)->div(&V1, &V2);
+}
+
+inline Constant *operator%(const Constant &V1, const Constant &V2) {
+  assert(V1.getType() == V2.getType() && "Constant types must be identical!");
+  return ConstRules::get(V1)->rem(&V1, &V2);
 }
 
 inline ConstantBool *operator<(const Constant &V1, 
@@ -192,8 +194,7 @@ inline Constant *ConstantFoldCastInstruction(const Constant *V,
 inline Constant *ConstantFoldUnaryInstruction(unsigned Opcode, 
                                               const Constant *V) {
   switch (Opcode) {
-  case Instruction::Not:  return !*V;
-    // TODO: Handle get element ptr instruction here in the future? GEP null?
+  case Instruction::Not:  return ~*V;
   }
   return 0;
 }
@@ -206,6 +207,7 @@ inline Constant *ConstantFoldBinaryInstruction(unsigned Opcode,
   case Instruction::Sub:     return *V1 - *V2;
   case Instruction::Mul:     return *V1 * *V2;
   case Instruction::Div:     return *V1 / *V2;
+  case Instruction::Rem:     return *V1 % *V2;
 
   case Instruction::SetEQ:   return *V1 == *V2;
   case Instruction::SetNE:   return *V1 != *V2;
