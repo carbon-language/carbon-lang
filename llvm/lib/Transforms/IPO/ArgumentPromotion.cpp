@@ -15,13 +15,16 @@
 // of code, and lead to the elimination of allocas, especially in C++ template
 // code like the STL.
 //
+// This pass also handles aggregate arguments that are passed into a function,
+// scalarizing them if the elements of the aggregate are only loaded.  Note that
+// we refuse to scalarize aggregates which would require passing in more than
+// three operands to the function, because we don't want to pass thousands of
+// operands for a large array or something!
+//
 // Note that this transformation could also be done for arguments that are only
 // stored to (returning the value instead), but we do not currently handle that
-// case.
-//
-// Note that we should be able to promote pointers to structures that are only
-// loaded from as well.  The danger is creating way to many arguments, so this
-// transformation should be limited to 3 element structs or something.
+// case.  This case would be best handled when and if we start supporting
+// multiple return values from functions.
 //
 //===----------------------------------------------------------------------===//
 
@@ -38,12 +41,15 @@
 #include "Support/Debug.h"
 #include "Support/DepthFirstIterator.h"
 #include "Support/Statistic.h"
+#include "Support/StringExtras.h"
 #include <set>
 using namespace llvm;
 
 namespace {
   Statistic<> NumArgumentsPromoted("argpromotion",
                                    "Number of pointer arguments promoted");
+  Statistic<> NumAggregatesPromoted("argpromotion",
+                                    "Number of aggregate arguments promoted");
   Statistic<> NumArgumentsDead("argpromotion",
                                "Number of dead pointer args eliminated");
 
@@ -166,20 +172,57 @@ bool ArgPromotion::PromoteArguments(Function *F) {
 }
 
 bool ArgPromotion::isSafeToPromoteArgument(Argument *Arg) const {
-  // We can only promote this argument if all of the uses are loads...
+  // We can only promote this argument if all of the uses are loads, or are GEP
+  // instructions (with constant indices) that are subsequently loaded.
   std::vector<LoadInst*> Loads;
+  std::vector<std::vector<Constant*> > GEPIndices;
   for (Value::use_iterator UI = Arg->use_begin(), E = Arg->use_end();
        UI != E; ++UI)
     if (LoadInst *LI = dyn_cast<LoadInst>(*UI)) {
       if (LI->isVolatile()) return false;  // Don't hack volatile loads
       Loads.push_back(LI);
-    } else
-      return false;
+    } else if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(*UI)) {
+      if (GEP->use_empty()) {
+        // Dead GEP's cause trouble later.  Just remove them if we run into
+        // them.
+        GEP->getParent()->getInstList().erase(GEP);
+        return isSafeToPromoteArgument(Arg);
+      }
+      // Ensure that all of the indices are constants.
+      std::vector<Constant*> Operands;
+      for (unsigned i = 1, e = GEP->getNumOperands(); i != e; ++i)
+        if (Constant *C = dyn_cast<Constant>(GEP->getOperand(i)))
+          Operands.push_back(C);
+        else
+          return false;  // Not a constant operand GEP!
+
+      // Ensure that the only users of the GEP are load instructions.
+      for (Value::use_iterator UI = GEP->use_begin(), E = GEP->use_end();
+           UI != E; ++UI)
+        if (LoadInst *LI = dyn_cast<LoadInst>(*UI)) {
+          if (LI->isVolatile()) return false;  // Don't hack volatile loads
+          Loads.push_back(LI);
+        } else {
+          return false;
+        }
+
+      // See if there is already a GEP with these indices.  If so, check to make
+      // sure that we aren't promoting too many elements.  If not, nothing to
+      // do.
+      if (std::find(GEPIndices.begin(), GEPIndices.end(), Operands) ==
+          GEPIndices.end()) {
+        if (GEPIndices.size() == 3) {
+          // We limit aggregate promotion to only promoting up to three elements
+          // of the aggregate.
+          return false;
+        }
+        GEPIndices.push_back(Operands);
+      }
+    } else {
+      return false;  // Not a load or a GEP.
+    }
 
   if (Loads.empty()) return true;  // No users, dead argument.
-
-  const Type *LoadTy = cast<PointerType>(Arg->getType())->getElementType();
-  unsigned LoadSize = getAnalysis<TargetData>().getTypeSize(LoadTy);
 
   // Okay, now we know that the argument is only used by load instructions.
   // Check to see if the pointer is guaranteed to not be modified from entry of
@@ -191,12 +234,18 @@ bool ArgPromotion::isSafeToPromoteArgument(Argument *Arg) const {
   std::set<BasicBlock*> TranspBlocks;
 
   AliasAnalysis &AA = getAnalysis<AliasAnalysis>();
+  TargetData &TD = getAnalysis<TargetData>();
 
   for (unsigned i = 0, e = Loads.size(); i != e; ++i) {
     // Check to see if the load is invalidated from the start of the block to
     // the load itself.
     LoadInst *Load = Loads[i];
     BasicBlock *BB = Load->getParent();
+
+    const PointerType *LoadTy =
+      cast<PointerType>(Load->getOperand(0)->getType());
+    unsigned LoadSize = TD.getTypeSize(LoadTy->getElementType());
+
     if (AA.canInstructionRangeModify(BB->front(), *Load, Arg, LoadSize))
       return false;  // Pointer is invalidated!
 
@@ -225,12 +274,39 @@ void ArgPromotion::DoPromotion(Function *F, std::vector<Argument*> &Args2Prom) {
   const FunctionType *FTy = F->getFunctionType();
   std::vector<const Type*> Params;
 
+  // ScalarizedElements - If we are promoting a pointer that has elements
+  // accessed out of it, keep track of which elements are accessed so that we
+  // can add one argument for each.
+  //
+  // Arguments that are directly loaded will have a zero element value here, to
+  // handle cases where there are both a direct load and GEP accesses.
+  //
+  std::map<Argument*, std::set<std::vector<Value*> > > ScalarizedElements;
+
   for (Function::aiterator I = F->abegin(), E = F->aend(); I != E; ++I)
     if (!ArgsToPromote.count(I)) {
       Params.push_back(I->getType());
     } else if (!I->use_empty()) {
-      Params.push_back(cast<PointerType>(I->getType())->getElementType());
-      ++NumArgumentsPromoted;
+      // Okay, this is being promoted.  Check to see if there are any GEP uses
+      // of the argument.
+      std::set<std::vector<Value*> > &ArgIndices = ScalarizedElements[I];
+      for (Value::use_iterator UI = I->use_begin(), E = I->use_end(); UI != E;
+           ++UI) {
+        Instruction *User = cast<Instruction>(*UI);
+        assert(isa<LoadInst>(User) || isa<GetElementPtrInst>(User));
+        ArgIndices.insert(std::vector<Value*>(User->op_begin()+1,
+                                              User->op_end()));
+      }
+
+      // Add a parameter to the function for each element passed in.
+      for (std::set<std::vector<Value*> >::iterator SI = ArgIndices.begin(),
+             E = ArgIndices.end(); SI != E; ++SI)
+        Params.push_back(GetElementPtrInst::getIndexedType(I->getType(), *SI));
+
+      if (ArgIndices.size() == 1 && ArgIndices.begin()->empty())
+        ++NumArgumentsPromoted;
+      else
+        ++NumAggregatesPromoted;
     } else {
       ++NumArgumentsDead;
     }
@@ -268,8 +344,16 @@ void ArgPromotion::DoPromotion(Function *F, std::vector<Argument*> &Args2Prom) {
       if (!ArgsToPromote.count(I))
         Args.push_back(*AI);          // Unmodified argument
       else if (!I->use_empty()) {
-        // Non-dead instruction
-        Args.push_back(new LoadInst(*AI, (*AI)->getName()+".val", Call));
+        // Non-dead argument.
+        std::set<std::vector<Value*> > &ArgIndices = ScalarizedElements[I];
+        for (std::set<std::vector<Value*> >::iterator SI = ArgIndices.begin(),
+               E = ArgIndices.end(); SI != E; ++SI) {
+          Value *V = *AI;
+          if (!SI->empty())
+            V = new GetElementPtrInst(V, *SI, V->getName()+".idx", Call);
+
+          Args.push_back(new LoadInst(V, V->getName()+".val", Call));
+        }
       }
 
     if (ExtraArgHack)
@@ -320,20 +404,56 @@ void ArgPromotion::DoPromotion(Function *F, std::vector<Argument*> &Args2Prom) {
       // Otherwise, if we promoted this argument, then all users are load
       // instructions, and all loads should be using the new argument that we
       // added.
-      DEBUG(std::cerr << "*** Promoted argument '" << I->getName()
-                      << "' of function '" << F->getName() << "'\n");
-      I2->setName(I->getName()+".val");
+      std::set<std::vector<Value*> > &ArgIndices = ScalarizedElements[I];
+
       while (!I->use_empty()) {
-        LoadInst *LI = cast<LoadInst>(I->use_back());
-        LI->replaceAllUsesWith(I2);
-        LI->getParent()->getInstList().erase(LI);
+        if (LoadInst *LI = dyn_cast<LoadInst>(I->use_back())) {
+          assert(ArgIndices.begin()->empty() &&
+                 "Load element should sort to front!");
+          I2->setName(I->getName()+".val");
+          LI->replaceAllUsesWith(I2);
+          LI->getParent()->getInstList().erase(LI);
+          DEBUG(std::cerr << "*** Promoted argument '" << I->getName()
+                          << "' of function '" << F->getName() << "'\n");
+        } else {
+          GetElementPtrInst *GEP = cast<GetElementPtrInst>(I->use_back());
+          std::vector<Value*> Operands(GEP->op_begin()+1, GEP->op_end());
+
+          unsigned ArgNo = 0;
+          Function::aiterator TheArg = I2;
+          for (std::set<std::vector<Value*> >::iterator It = ArgIndices.begin();
+               *It != Operands; ++It, ++TheArg) {
+            assert(It != ArgIndices.end() && "GEP not handled??");
+          }
+
+          std::string NewName = I->getName();
+          for (unsigned i = 0, e = Operands.size(); i != e; ++i)
+            if (ConstantInt *CI = dyn_cast<ConstantInt>(Operands[i]))
+              NewName += "."+itostr((int64_t)CI->getRawValue());
+            else
+              NewName += ".x";
+          TheArg->setName(NewName+".val");
+
+          DEBUG(std::cerr << "*** Promoted agg argument '" << TheArg->getName()
+                          << "' of function '" << F->getName() << "'\n");
+
+          // All of the uses must be load instructions.  Replace them all with
+          // the argument specified by ArgNo.
+          while (!GEP->use_empty()) {
+            LoadInst *L = cast<LoadInst>(GEP->use_back());
+            L->replaceAllUsesWith(TheArg);
+            L->getParent()->getInstList().erase(L);
+          }
+          GEP->getParent()->getInstList().erase(GEP);
+        }
       }
 
       // If we inserted a new pointer type, it's possible that IT could be
-      // promoted too.
-      if (isa<PointerType>(I2->getType()))
-        WorkList.insert(NF);
-      ++I2;
+      // promoted too.  Also, increment I2 past all of the arguments for this
+      // pointer.
+      for (unsigned i = 0, e = ArgIndices.size(); i != e; ++i, ++I2)
+        if (isa<PointerType>(I2->getType()))
+          WorkList.insert(NF);
     }
 
   // Now that the old function is dead, delete it.
