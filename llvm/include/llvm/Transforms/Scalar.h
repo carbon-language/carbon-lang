@@ -216,26 +216,10 @@ FunctionPass *createCFGSimplificationPass();
 //   AU.addRequiredID(BreakCriticalEdgesID);
 //
 // This pass obviously invalidates the CFG, but can update forward dominator
-// (set, immediate dominators, and tree) information.
+// (set, immediate dominators, tree, and frontier) information.
 //
 Pass *createBreakCriticalEdgesPass();
 extern const PassInfo *BreakCriticalEdgesID;
-
-// The BreakCriticalEdges pass also exposes some low-level functionality that
-// may be used by other passes.
-
-/// isCriticalEdge - Return true if the specified edge is a critical edge.
-/// Critical edges are edges from a block with multiple successors to a block
-/// with multiple predecessors.
-///
-bool isCriticalEdge(const TerminatorInst *TI, unsigned SuccNum);
-
-/// SplitCriticalEdge - Insert a new node node to split the critical edge.  This
-/// will update DominatorSet, ImmediateDominator and DominatorTree information
-/// if a pass is specified, thus calling this pass will not invalidate these
-/// analyses.
-///
-void SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum, Pass *P = 0);
 
 //===----------------------------------------------------------------------===//
 //
