@@ -244,19 +244,17 @@ exactly equivalent to <tt>(*i).size()</tt> just like you'd expect.
 </ul><h4><a name="iterate_basicblock"><hr size=0>Iterating over the
 <tt>Instruction</tt>s in a <tt>BasicBlock</tt> </h4><ul>
 
-Just like when dealing with <tt>BasicBlock</tt>s in <tt>Function</tt>s, it's
-easy to iterate over the individual instructions that make up
-<tt>BasicBlock</tt>s.  Here's a code snippet that prints out each instruction in
-a <tt>BasicBlock</tt>:
+Just like when dealing with <tt>BasicBlock</tt>s in
+<tt>Function</tt>s, it's easy to iterate over the individual
+instructions that make up <tt>BasicBlock</tt>s.  Here's a code snippet
+that prints out each instruction in a <tt>BasicBlock</tt>:
 
 <pre>
   // blk is a pointer to a BasicBlock instance
   for(BasicBlock::iterator i = blk-&gt;begin(), e = blk-&gt;end(); i != e; ++i) {
      // the next statement works since operator&lt;&lt;(ostream&amp;,...) 
      // is overloaded for Instruction&amp;
-
      cerr &lt;&lt; *i &lt;&lt; endl;
-  }
 </pre>
 
 However, this isn't really the best way to print out the contents of a
@@ -323,12 +321,8 @@ void printNextInstruction(Instruction* inst) {
     if(it != inst-&gt;getParent()->end()) cerr &lt;&lt *it &lt;&lt endl;
 }
 </pre>
-
-Of course, this example is strictly pedagogical, because it'd be
-better to do something like 
-
-<pre>if(inst-&gt;getNext()) cerr &lt;&lt inst-&gt;getNext() &lt;&lt endl;</pre>
-
+Of course, this example is strictly pedagogical, because it'd be much
+better to explicitly grab the next instruction directly from inst.
 
 <!--   dereferenced iterator = Class &
        iterators have converting constructor for 'Class *'
@@ -400,7 +394,6 @@ virtual runOnFunction(Function&amp F) {
 
 We could then print out the value of callCounter (if we wanted to)
 inside the doFinalization method of our FunctionPass.
-
 
 <!-- ======================================================================= -->
 </ul><table width="100%" bgcolor="#441188" border=0 cellpadding=4 cellspacing=0>
@@ -1243,6 +1236,10 @@ pointer to the parent Function.
 <a href="mailto:sabre@nondot.org">Chris Lattner</a></address>
 <!-- Created: Tue Aug  6 15:00:33 CDT 2002 -->
 <!-- hhmts start -->
+<<<<<<< ProgrammersManual.html
+Last modified: Fri Sep  6 18:24:38 EDT 2002
+=======
 Last modified: Fri Sep  6 18:03:31 EDT 2002
+>>>>>>> 1.10
 <!-- hhmts end -->
 </font></body></html>
