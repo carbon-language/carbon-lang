@@ -12,6 +12,15 @@
 //
 // This is a simple worklist driven algorithm.
 //
+// This pass guarantees that the following cannonicalizations are performed on
+// the program:
+//    1. If a binary operator has a constant operand, it is moved to the RHS
+//    2. Logical operators with constant operands are always grouped so that
+//       'or's are performed first, then 'and's, then 'xor's.
+//    3. SetCC instructions are converted from <,>,<=,>= to ==,!= if possible
+//    4. All SetCC instructions on boolean values are replaced with logical ops
+//    N. This list is incomplete
+//
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/Scalar.h"
