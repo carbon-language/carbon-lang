@@ -225,7 +225,9 @@ ConstantStruct::ConstantStruct(const StructType *T,
          "Invalid initializer vector for constant structure");
   Operands.reserve(V.size());
   for (unsigned i = 0, e = V.size(); i != e; ++i) {
-    assert(V[i]->getType() == ETypes[i] &&
+    assert((V[i]->getType() == ETypes[i] ||
+            (ETypes[i]->isAbstract() &&
+             ETypes[i]->getPrimitiveID()==V[i]->getType()->getPrimitiveID())) &&
            "Initializer for struct element doesn't match struct element type!");
     Operands.push_back(Use(V[i], this));
   }
@@ -563,9 +565,11 @@ void ConstantArray::refineAbstractType(const DerivedType *OldTy,
   std::vector<Constant*> C;
   for (unsigned i = 0, e = getNumOperands(); i != e; ++i)
     C.push_back(cast<Constant>(getOperand(i)));
-  replaceAllUsesWith(ConstantArray::get(cast<ArrayType>(NewTy),
-                                        C));
-  destroyConstant();    // This constant is now dead, destroy it.
+  Constant *New = ConstantArray::get(cast<ArrayType>(NewTy), C);
+  if (New != this) {
+    replaceAllUsesWith(New);
+    destroyConstant();    // This constant is now dead, destroy it.
+  }
 }
 
 
@@ -633,9 +637,11 @@ void ConstantStruct::refineAbstractType(const DerivedType *OldTy,
   std::vector<Constant*> C;
   for (unsigned i = 0, e = getNumOperands(); i != e; ++i)
     C.push_back(cast<Constant>(getOperand(i)));
-  replaceAllUsesWith(ConstantStruct::get(cast<StructType>(NewTy),
-                                         C));
-  destroyConstant();    // This constant is now dead, destroy it.
+  Constant *New = ConstantStruct::get(cast<StructType>(NewTy), C);
+  if (New != this) {
+    replaceAllUsesWith(New);
+    destroyConstant();    // This constant is now dead, destroy it.
+  }
 }
 
 
@@ -672,10 +678,13 @@ void ConstantPointerNull::refineAbstractType(const DerivedType *OldTy,
   if (OldTy == NewTy) return;
 
   // Make everyone now use a constant of the new type...
-  replaceAllUsesWith(ConstantPointerNull::get(cast<PointerType>(NewTy)));
+  Constant *New = ConstantPointerNull::get(cast<PointerType>(NewTy));
+  if (New != this) {
+    replaceAllUsesWith(New);
     
-  // This constant is now dead, destroy it.
-  destroyConstant();
+    // This constant is now dead, destroy it.
+    destroyConstant();
+  }
 }
 
 
@@ -806,13 +815,14 @@ void ConstantExpr::refineAbstractType(const DerivedType *OldTy,
   // ::get methods intuit the type of the result based on the types of the
   // operands.  The operand types may not have had their types resolved yet.
   //
+  Constant *New;
   if (getOpcode() == Instruction::Cast) {
-    replaceAllUsesWith(getCast(getOperand(0), NewTy));
+    New = getCast(getOperand(0), NewTy);
   } else if (getOpcode() >= Instruction::BinaryOpsBegin &&
              getOpcode() < Instruction::BinaryOpsEnd) {
-    replaceAllUsesWith(get(getOpcode(), getOperand(0), getOperand(0)));
+    New = get(getOpcode(), getOperand(0), getOperand(0));
   } else if (getOpcode() == Instruction::Shl || getOpcode() ==Instruction::Shr){
-    replaceAllUsesWith(getShift(getOpcode(), getOperand(0), getOperand(0)));
+    New = getShift(getOpcode(), getOperand(0), getOperand(0));
   } else {
     assert(getOpcode() == Instruction::GetElementPtr);
 
@@ -820,10 +830,12 @@ void ConstantExpr::refineAbstractType(const DerivedType *OldTy,
     std::vector<Constant*> C;
     for (unsigned i = 1, e = getNumOperands(); i != e; ++i)
       C.push_back(cast<Constant>(getOperand(i)));
-    replaceAllUsesWith(ConstantExpr::getGetElementPtr(getOperand(0),
-                                                      C));
+    New = ConstantExpr::getGetElementPtr(getOperand(0), C);
   }
-  destroyConstant();    // This constant is now dead, destroy it.
+  if (New != this) {
+    replaceAllUsesWith(New);
+    destroyConstant();    // This constant is now dead, destroy it.
+  }
 }
 
 
