@@ -206,6 +206,26 @@ bool BitsInit::printAsUnset(std::ostream &OS) const {
   return false;
 }
 
+Init *BitsInit::resolveReferences(Record &R) {
+  bool Changed = false;
+  BitsInit *New = new BitsInit(getNumBits());
+
+  for (unsigned i = 0, e = Bits.size(); i != e; ++i) {
+    Init *B;
+    New->setBit(i, getBit(i));
+    do {
+      B = New->getBit(i);
+      New->setBit(i, B->resolveReferences(R));
+      Changed |= B != New->getBit(i);
+    } while (B != New->getBit(i));
+  }
+
+  if (Changed)
+    return New;
+  delete New;
+  return this;
+}
+
 Init *IntInit::convertInitializerBitRange(const std::vector<unsigned> &Bits) {
   BitsInit *BI = new BitsInit(Bits.size());
 
@@ -244,26 +264,12 @@ Init *VarInit::convertInitializerBitRange(const std::vector<unsigned> &Bits) {
   return BI;
 }
 
-Init *BitsInit::resolveReferences(Record &R) {
-  bool Changed = false;
-  BitsInit *New = new BitsInit(getNumBits());
-
-  for (unsigned i = 0, e = Bits.size(); i != e; ++i) {
-    Init *B;
-    New->setBit(i, getBit(i));
-    do {
-      B = New->getBit(i);
-      New->setBit(i, B->resolveReferences(R));
-      Changed |= B != New->getBit(i);
-    } while (B != New->getBit(i));
-  }
-
-  if (Changed)
-    return New;
-  delete New;
-  return this;
+RecTy *VarInit::getFieldType(const std::string &FieldName) const {
+  if (RecordRecTy *RTy = dynamic_cast<RecordRecTy*>(Ty))
+    if (const RecordVal *RV = RTy->getRecord()->getValue(FieldName))
+      return RV->getType();
+  return 0;
 }
-
 
 
 Init *VarBitInit::resolveReferences(Record &R) {
