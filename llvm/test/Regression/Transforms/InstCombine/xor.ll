@@ -48,8 +48,8 @@ int %test7(int %A, int %B) {
 
         %A1 = and int %A, 7
         %B1 = and int %B, 128
-        %OROK = xor int %A1, %B1
-        ret int %OROK
+        %C1 = xor int %A1, %B1
+        ret int %C1
 }
 
 ubyte %test8(bool %c) {
@@ -65,4 +65,16 @@ bool %test9(ubyte %A) {
 	%B = xor ubyte %A, 123      ; xor can be eliminated
 	%C = seteq ubyte %B, 34
 	ret bool %C
+}
+
+ubyte %test10(ubyte %A) {
+	%B = and ubyte %A, 3
+	%C = xor ubyte %B, 4        ; transform into an OR
+	ret ubyte %C
+}
+
+ubyte %test11(ubyte %A) {
+	%B = or ubyte %A, 12
+	%C = xor ubyte %B, 4        ; transform into an AND
+	ret ubyte %C
 }
