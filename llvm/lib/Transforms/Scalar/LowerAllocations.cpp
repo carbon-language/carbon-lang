@@ -32,7 +32,8 @@ bool LowerAllocations::doPassInitialization(Module *M) {
   if (Value *V = SymTab->lookup(PointerType::get(MallocType), "malloc")) {
     MallocMeth = cast<Method>(V);      // Yup, got it
   } else {                             // Nope, add one
-    M->getMethodList().push_back(MallocMeth = new Method(MallocType, "malloc"));
+    M->getMethodList().push_back(MallocMeth = new Method(MallocType, false, 
+                                                         "malloc"));
     Changed = true;
   }
 
@@ -45,7 +46,7 @@ bool LowerAllocations::doPassInitialization(Module *M) {
   if (Value *V = SymTab->lookup(PointerType::get(FreeType), "free")) {
     FreeMeth = cast<Method>(V);      // Yup, got it
   } else {                             // Nope, add one
-    M->getMethodList().push_back(FreeMeth = new Method(FreeType, "free"));
+    M->getMethodList().push_back(FreeMeth = new Method(FreeType, false,"free"));
     Changed = true;
   }
 
