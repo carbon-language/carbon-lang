@@ -54,8 +54,12 @@ namespace llvm {
             : mf_(&mf),
               v2pMap_(NO_PHYS_REG),
               v2ssMap_(NO_STACK_SLOT) {
-            v2pMap_.grow(mf.getSSARegMap()->getLastVirtReg());
-            v2ssMap_.grow(mf.getSSARegMap()->getLastVirtReg());
+            grow();
+        }
+
+        void grow() {
+            v2pMap_.grow(mf_->getSSARegMap()->getLastVirtReg());
+            v2ssMap_.grow(mf_->getSSARegMap()->getLastVirtReg());
         }
 
         bool hasPhys(unsigned virtReg) const {
