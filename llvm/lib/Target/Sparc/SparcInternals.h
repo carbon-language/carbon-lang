@@ -275,14 +275,8 @@ class UltraSparcRegInfo : public TargetRegInfo {
                              std::vector<MachineInstr *>& AddedInstrnsBefore)
     const;
   
-  // The following 4 methods are used to find the RegType (see enum above)
-  // for a reg class and a given primitive type, a LiveRange, a Value,
-  // or a particular machine register.
-  // The fifth function gives the reg class of the given RegType.
-  // 
-  int getRegType(unsigned regClassID, const Type* type) const;
+  int getRegType(const Type* type) const;
   int getRegType(const LiveRange *LR) const;
-  int getRegType(const Value *Val) const;
   int getRegType(int unifiedRegNum) const;
 
   // Used to generate a copy instruction based on the register class of
@@ -322,13 +316,6 @@ public:
   //
   unsigned getRegClassIDOfType(const Type *type,
                                bool isCCReg = false) const;
-
-  // To find the register class of a Value
-  //
-  inline unsigned getRegClassIDOfValue(const Value *Val,
-                                       bool isCCReg = false) const {
-    return getRegClassIDOfType(Val->getType(), isCCReg);
-  }
 
   // To find the register class to which a specified register belongs
   //
