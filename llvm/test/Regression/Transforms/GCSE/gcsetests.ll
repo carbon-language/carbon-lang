@@ -12,9 +12,9 @@ begin
 	%C = shl int %i, ubyte 1
 	%D = shl int %i, ubyte 1
 
-	%E = getelementptr int* %p, uint 12
-	%F = getelementptr int* %p, uint 12
-	%G = getelementptr int* %p, uint 13
+	%E = getelementptr int* %p, long 12
+	%F = getelementptr int* %p, long 12
+	%G = getelementptr int* %p, long 13
 	ret void
 end
 
