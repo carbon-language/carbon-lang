@@ -8,7 +8,7 @@
 ##===----------------------------------------------------------------------===##
 LEVEL = ../../..
 LIBRARYNAME = sparc
-DIRS = RegAlloc
+DIRS = InstrSelection RegAlloc
 
 ExtraSource = Sparc.burm.cpp 
 
