@@ -54,7 +54,8 @@ const unsigned	M_PREFETCH_FLAG		= 1 << 11;
 const unsigned	M_STORE_FLAG		= 1 << 12;
 const unsigned	M_DUMMY_PHI_FLAG	= 1 << 13;
 const unsigned  M_PSEUDO_FLAG           = 1 << 14;
-
+// 3-addr instructions which really work like 2-addr ones, eg. X86 add/sub
+const unsigned  M_2_ADDR_FLAG           = 1 << 15;
 
 struct MachineInstrDescriptor {
   const char *    Name;          // Assembly language mnemonic for the opcode.
@@ -185,6 +186,9 @@ public:
   }
   bool isPseudoInstr(const MachineOpCode opCode) const {
     return get(opCode).Flags & M_PSEUDO_FLAG;
+  }
+  bool isTwoAddrInstr(const MachineOpCode opCode) const {
+    return get(opCode).Flags & M_2_ADDR_FLAG;
   }
 
   // Check if an instruction can be issued before its operands are ready,
