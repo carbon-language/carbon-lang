@@ -299,7 +299,7 @@ int main(int argc, char **argv, char **envp ) {
                        Libraries, gcc, envp );
 
         // Remove the assembly language file.
-        AssemblyFile.destroyFile();;
+        AssemblyFile.destroyFile();
       } else if (NativeCBE) {
         sys::Path CFile (OutputFilename);
         CFile.appendSuffix("cbe.c");
