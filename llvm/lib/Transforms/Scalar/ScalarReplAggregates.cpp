@@ -23,6 +23,10 @@ namespace {
     bool runOnFunction(Function &F);
 
   private:
+    bool isSafeArrayElementUse(Value *Ptr);
+    bool isSafeUseOfAllocation(Instruction *User);
+    bool isSafeStructAllocaToPromote(AllocationInst *AI);
+    bool isSafeArrayAllocaToPromote(AllocationInst *AI);
     AllocaInst *AddNewAlloca(Function &F, const Type *Ty, AllocationInst *Base);
   };
 
@@ -59,48 +63,13 @@ bool SROA::runOnFunction(Function &F) {
         (!isa<StructType>(AI->getAllocatedType()) &&
          !isa<ArrayType>(AI->getAllocatedType()))) continue;
 
-    const ArrayType *AT = dyn_cast<ArrayType>(AI->getAllocatedType());
-
-    // Loop over the use list of the alloca.  We can only transform it if there
-    // are only getelementptr instructions (with a zero first index) and free
-    // instructions.
-    //
-    bool CannotTransform = false;
-    for (Value::use_iterator I = AI->use_begin(), E = AI->use_end();
-         I != E; ++I) {
-      Instruction *User = cast<Instruction>(*I);
-      if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(User)) {
-        // The GEP is safe to transform if it is of the form GEP <ptr>, 0, <cst>
-        if (GEPI->getNumOperands() <= 2 ||
-            GEPI->getOperand(1) != Constant::getNullValue(Type::LongTy) ||
-            !isa<Constant>(GEPI->getOperand(2)) ||
-            isa<ConstantExpr>(GEPI->getOperand(2))) {
-          DEBUG(std::cerr << "Cannot transform: " << *AI << "  due to user: "
-                          << User);
-          CannotTransform = true;
-          break;
-        }
-
-        // If this is an array access, check to make sure that index falls
-        // within the array.  If not, something funny is going on, so we won't
-        // do the optimization.
-        if (AT && cast<ConstantSInt>(GEPI->getOperand(2))->getValue() >=
-            AT->getNumElements()) {
-          DEBUG(std::cerr << "Cannot transform: " << *AI << "  due to user: "
-                          << User);
-          CannotTransform = true;
-          break;
-        }
-
-      } else {
-        DEBUG(std::cerr << "Cannot transform: " << *AI << "  due to user: "
-                        << User);
-        CannotTransform = true;
-        break;
-      }
-    }
-
-    if (CannotTransform) continue;
+    // Check that all of the users of the allocation are capable of being
+    // transformed.
+    if (isa<StructType>(AI->getAllocatedType())) {
+      if (!isSafeStructAllocaToPromote(AI))
+        continue;
+    } else if (!isSafeArrayAllocaToPromote(AI))
+      continue;
 
     DEBUG(std::cerr << "Found inst to xform: " << *AI);
     Changed = true;
@@ -115,6 +84,7 @@ bool SROA::runOnFunction(Function &F) {
         WorkList.push_back(NA);  // Add to worklist for recursive processing
       }
     } else {
+      const ArrayType *AT = cast<ArrayType>(AI->getAllocatedType());
       ElementAllocas.reserve(AT->getNumElements());
       const Type *ElTy = AT->getElementType();
       for (unsigned i = 0, e = AT->getNumElements(); i != e; ++i) {
@@ -177,3 +147,119 @@ bool SROA::runOnFunction(Function &F) {
 
   return Changed;
 }
+
+
+/// isSafeUseOfAllocation - Check to see if this user is an allowed use for an
+/// aggregate allocation.
+///
+bool SROA::isSafeUseOfAllocation(Instruction *User) {
+  if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(User)) {
+    // The GEP is safe to transform if it is of the form GEP <ptr>, 0, <cst>
+    if (GEPI->getNumOperands() <= 2 ||
+        GEPI->getOperand(1) != Constant::getNullValue(Type::LongTy) ||
+        !isa<Constant>(GEPI->getOperand(2)) ||
+        isa<ConstantExpr>(GEPI->getOperand(2)))
+      return false;
+  } else {
+    return false;
+  }
+  return true;
+}
+
+
+/// isSafeArrayElementUse - Check to see if this use is an allowed use for a
+/// getelementptr instruction of an array aggregate allocation.
+///
+bool SROA::isSafeArrayElementUse(Value *Ptr) {
+  for (Value::use_iterator I = Ptr->use_begin(), E = Ptr->use_end();
+       I != E; ++I) {
+    Instruction *User = cast<Instruction>(*I);
+    switch (User->getOpcode()) {
+    case Instruction::Load:  return true;
+    case Instruction::Store: return User->getOperand(0) != Ptr;
+    case Instruction::GetElementPtr: {
+      GetElementPtrInst *GEP = cast<GetElementPtrInst>(User);
+      if (GEP->getNumOperands() > 1) {
+        if (!isa<Constant>(GEP->getOperand(1)) ||
+            !cast<Constant>(GEP->getOperand(1))->isNullValue())
+          return false;  // Using pointer arithmetic to navigate the array...
+        
+        // Check to see if there are any structure indexes involved in this GEP.
+        // If so, then we can safely break the array up until at least the
+        // structure.
+        for (unsigned i = 2, e = GEP->getNumOperands(); i != e; ++i)
+          if (GEP->getOperand(i)->getType()->isUnsigned())
+            break;
+      }
+      return isSafeArrayElementUse(GEP);
+    }
+    default:
+      DEBUG(std::cerr << "  Transformation preventing inst: " << *User);
+      return false;
+    }
+  }
+  return true;  // All users look ok :)
+}
+
+
+/// isSafeStructAllocaToPromote - Check to see if the specified allocation of a
+/// structure can be broken down into elements.
+///
+bool SROA::isSafeStructAllocaToPromote(AllocationInst *AI) {
+  // Loop over the use list of the alloca.  We can only transform it if all of
+  // the users are safe to transform.
+  //
+  for (Value::use_iterator I = AI->use_begin(), E = AI->use_end();
+       I != E; ++I)
+    if (!isSafeUseOfAllocation(cast<Instruction>(*I))) {
+      DEBUG(std::cerr << "Cannot transform: " << *AI << "  due to user: "
+                      << *I);
+      return false;
+    }
+  return true;
+}
+
+
+/// isSafeArrayAllocaToPromote - Check to see if the specified allocation of a
+/// structure can be broken down into elements.
+///
+bool SROA::isSafeArrayAllocaToPromote(AllocationInst *AI) {
+  const ArrayType *AT = cast<ArrayType>(AI->getAllocatedType());
+  int64_t NumElements = AT->getNumElements();
+
+  // Loop over the use list of the alloca.  We can only transform it if all of
+  // the users are safe to transform.  Array allocas have extra constraints to
+  // meet though.
+  //
+  for (Value::use_iterator I = AI->use_begin(), E = AI->use_end();
+       I != E; ++I) {
+    Instruction *User = cast<Instruction>(*I);
+    if (!isSafeUseOfAllocation(User)) {
+      DEBUG(std::cerr << "Cannot transform: " << *AI << "  due to user: "
+                      << User);
+      return false;
+    }
+
+    // Check to make sure that getelementptr follow the extra rules for arrays:
+    if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(User)) {
+      // Check to make sure that index falls within the array.  If not,
+      // something funny is going on, so we won't do the optimization.
+      //
+      if (cast<ConstantSInt>(GEPI->getOperand(2))->getValue() >= NumElements)
+        return false;
+
+      // Check to make sure that the only thing that uses the resultant pointer
+      // is safe for an array access.  For example, code that looks like:
+      //   P = &A[0];  P = P + 1
+      // is legal, and should prevent promotion.
+      //
+      if (!isSafeArrayElementUse(GEPI)) {
+        DEBUG(std::cerr << "Cannot transform: " << *AI
+                        << "  due to uses of user: " << *GEPI);
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
