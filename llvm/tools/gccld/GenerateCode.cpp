@@ -17,6 +17,7 @@
 #include "llvm/Module.h"
 #include "llvm/PassManager.h"
 #include "llvm/Analysis/LoadValueNumbering.h"
+#include "llvm/Analysis/Passes.h"
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/Bytecode/WriteBytecodePass.h"
 #include "llvm/Target/TargetData.h"
@@ -37,6 +38,9 @@ namespace {
   cl::opt<bool>
   DisableOptimizations("disable-opt",
                        cl::desc("Do not run any optimization passes"));
+  cl::opt<bool>
+  DisableGlobalsModRef("disable-globalsmodref", cl::Hidden,
+                      cl::desc("Turn on the more aggressive alias analysis"));
 }
 
 /// CopyEnv - This function takes an array of environment variables and makes a
@@ -196,11 +200,13 @@ int llvm::GenerateBytecode(Module *M, bool Strip, bool Internalize,
     addPass(Passes, createScalarReplAggregatesPass()); // Break up allocas
 
     // Run a few AA driven optimizations here and now, to cleanup the code.
-    // Eventually we should put an IP AA in place here.
+    if (!DisableGlobalsModRef)
+      addPass(Passes, createGlobalsModRefPass());    // IP alias analysis
 
     addPass(Passes, createLICMPass());               // Hoist loop invariants
     addPass(Passes, createLoadValueNumberingPass()); // GVN for load instrs
     addPass(Passes, createGCSEPass());               // Remove common subexprs
+    addPass(Passes, createDeadStoreEliminationPass()); // Nuke dead stores
 
     // Cleanup and simplify the code after the scalar optimizations.
     addPass(Passes, createInstructionCombiningPass());
