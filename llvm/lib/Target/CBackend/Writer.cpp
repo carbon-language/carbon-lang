@@ -13,7 +13,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "CTargetMachine.h"
-#include "llvm/Target/TargetMachineImpls.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
@@ -1510,11 +1509,6 @@ bool CTargetMachine::addPassesToEmitAssembly(PassManager &PM, std::ostream &o) {
   PM.add(new CBackendNameAllUsedStructs());
   PM.add(new CWriter(o, getIntrinsicLowering()));
   return false;
-}
-
-TargetMachine *llvm::allocateCTargetMachine(const Module &M,
-                                            IntrinsicLowering *IL) {
-  return new CTargetMachine(M, IL);
 }
 
 // vim: sw=2
