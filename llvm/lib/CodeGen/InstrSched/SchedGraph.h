@@ -19,12 +19,10 @@
 #ifndef LLVM_CODEGEN_SCHEDGRAPH_H
 #define LLVM_CODEGEN_SCHEDGRAPH_H
 
-#include "llvm/Target/MachineInstrInfo.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "Support/NonCopyable.h"
 #include "Support/HashExtras.h"
 #include "Support/GraphTraits.h"
-#include <ext/hash_map>
 
 class Value;
 class Instruction;
