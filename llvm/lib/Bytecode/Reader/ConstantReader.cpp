@@ -306,7 +306,8 @@ bool BytecodeParser::parseConstPoolValue(const uchar *&Buf,
 	  BCR_TRACE(5, "Creating new forward ref variable!\n");
 
 	  // Create a placeholder for the global variable reference...
-	  GlobalVariable *GVar = new GlobalVariable(PT->getValueType(), false);
+	  GlobalVariable *GVar =
+	    new GlobalVariable(PT->getValueType(), false, true);
 
 	  // Keep track of the fact that we have a forward ref to recycle it
 	  GlobalRefs.insert(make_pair(make_pair(PT, Slot), GVar));

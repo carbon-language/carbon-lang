@@ -265,9 +265,12 @@ bool BytecodeParser::ParseMethod(const uchar *&Buf, const uchar *EndBuf,
   const MethodType  *MTy  = dyn_cast<const MethodType>(PMTy->getValueType());
   if (MTy == 0) return failure(true);  // Not ptr to method!
 
+  unsigned isInternal;
+  if (read_vbr(Buf, EndBuf, isInternal)) return failure(true);
+
   unsigned MethSlot = MethodSignatureList.front().second;
   MethodSignatureList.pop_front();
-  Method *M = new Method(MTy);
+  Method *M = new Method(MTy, isInternal != 0);
 
   BCR_TRACE(2, "METHOD TYPE: " << MTy << endl);
 
@@ -380,8 +383,9 @@ bool BytecodeParser::ParseModuleGlobalInfo(const uchar *&Buf, const uchar *End,
   unsigned VarType;
   if (read_vbr(Buf, End, VarType)) return failure(true);
   while (VarType != Type::VoidTyID) { // List is terminated by Void
-    // VarType Fields: bit0 = isConstant, bit1 = hasInitializer, bit2+ = slot#
-    const Type *Ty = getType(VarType >> 2);
+    // VarType Fields: bit0 = isConstant, bit1 = hasInitializer,
+    // bit2 = isInternal, bit3+ = slot#
+    const Type *Ty = getType(VarType >> 3);
     if (!Ty || !Ty->isPointerType()) { 
       Error = "Global not pointer type!  Ty = " + Ty->getDescription();
       return failure(true); 
@@ -404,7 +408,8 @@ bool BytecodeParser::ParseModuleGlobalInfo(const uchar *&Buf, const uchar *End,
     }
 
     // Create the global variable...
-    GlobalVariable *GV = new GlobalVariable(ElTy, VarType & 1, Initializer);
+    GlobalVariable *GV = new GlobalVariable(ElTy, VarType & 1, VarType & 4,
+					    Initializer);
     int DestSlot = insertValue(GV, ModuleValues);
     if (DestSlot == -1) return failure(true);
 

@@ -149,7 +149,7 @@ struct BBPlaceHolderHelper : public BasicBlock {
 
 struct MethPlaceHolderHelper : public Method {
   MethPlaceHolderHelper(const Type *Ty) 
-    : Method(cast<const MethodType>(Ty)) {
+    : Method(cast<const MethodType>(Ty), true) {
   }
 };
 

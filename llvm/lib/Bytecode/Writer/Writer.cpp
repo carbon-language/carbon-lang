@@ -121,9 +121,10 @@ void BytecodeWriter::outputModuleInfoBlock(const Module *M) {
     int Slot = Table.getValSlot(GV->getType());
     assert(Slot != -1 && "Module global vars is broken!");
 
-    // Fields: bit0 = isConstant, bit1 = hasInitializer, bit2+ = slot#
-    unsigned oSlot = ((unsigned)Slot << 2) | (GV->hasInitializer() << 1) | 
-                        GV->isConstant();
+    // Fields: bit0 = isConstant, bit1 = hasInitializer, bit2=InternalLinkage,
+    // bit3+ = slot#
+    unsigned oSlot = ((unsigned)Slot << 3) | (GV->hasInternalLinkage() << 2) |
+                     (GV->hasInitializer() << 1) | GV->isConstant();
     output_vbr(oSlot, Out);
 
     // If we have an initializer, output it now.
@@ -150,9 +151,10 @@ void BytecodeWriter::outputModuleInfoBlock(const Module *M) {
 
 void BytecodeWriter::processMethod(const Method *M) {
   BytecodeBlock MethodBlock(BytecodeFormat::Method, Out);
-
+  output_vbr((unsigned)M->hasInternalLinkage(), Out);
   // Only output the constant pool and other goodies if needed...
   if (!M->isExternal()) {
+
     // Get slot information about the method...
     Table.incorporateMethod(M);
 
