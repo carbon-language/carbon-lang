@@ -30,7 +30,7 @@ using namespace llvm;
 // FIXME: This should be a property of the target so that more than one target
 // at a time can be active...
 //
-namespace {
+namespace llvm {
   extern const TargetInstrDescriptor *TargetInstrDescriptors;
 }
 
@@ -329,6 +329,7 @@ void MachineInstr::print(std::ostream &OS, const TargetMachine &TM) const {
   OS << "\n";
 }
 
+namespace llvm {
 std::ostream &operator<<(std::ostream &os, const MachineInstr &MI) {
   // If the instruction is embedded into a basic block, we can find the target
   // info for the instruction.
@@ -448,3 +449,4 @@ std::ostream &operator<<(std::ostream &OS, const MachineOperand &MO) {
   return OS;
 }
 
+}
