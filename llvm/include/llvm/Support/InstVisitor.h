@@ -71,8 +71,6 @@ class AllocationInst;
 
 template<typename SubClass, typename RetTy=void>
 struct InstVisitor {
-  virtual ~InstVisitor() {}           // We are meant to be derived from
-
   //===--------------------------------------------------------------------===//
   // Interface code - This is the public interface of the InstVisitor that you
   // use to visit instructions...
