@@ -17,12 +17,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "ctype.h"
-#include "stdio.h"
-#include "stdlib.h"
+#include <ctype.h>
+#include <stdio.h>
+#include <stdlib.h>
 
-extern long _index_;
-extern int _stack_[1024];
+extern long long _index_;
+extern int _stack_[];
 extern void _MAIN_();
 
 void
@@ -49,7 +49,7 @@ main ( int argc, char** argv )
     // so that they get popped in the order presented
     while ( a > 0 )
     {
-	if ( isdigit( argv[--a][0] ) )
+	if ( isdigit( (int) argv[--a][0] ) )
 	{
 	    _stack_[_index_++] = atoi( argv[a] );
 	}
