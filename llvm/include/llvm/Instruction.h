@@ -21,6 +21,7 @@
 namespace llvm {
 
 struct AssemblyAnnotationWriter;
+class BinaryOperator;
 
 template<typename SC> struct ilist_traits;
 template<typename ValueSubClass, typename ItemParentClass, typename SymTabClass,
@@ -38,9 +39,12 @@ class Instruction : public User, public Annotable {
   void setParent(BasicBlock *P);
   void init();
 
+private:
+  // FIXME: This is a dirty hack.  Setcc instructions shouldn't encode the CC
+  // into the opcode field.  When they don't, this will be unneeded.
+  void setOpcode(unsigned NewOpcode);
+  friend class BinaryOperator;
 protected:
-  unsigned iType;      // InstructionType: The opcode of the instruction
-
   Instruction(const Type *Ty, unsigned iType, const std::string &Name = "",
               Instruction *InsertBefore = 0);
   Instruction(const Type *Ty, unsigned iType, const std::string &Name,
@@ -81,7 +85,7 @@ public:
   /// Subclass classification... getOpcode() returns a member of 
   /// one of the enums that is coming soon (down below)...
   ///
-  unsigned getOpcode() const { return iType; }
+  unsigned getOpcode() const { return getValueType() - InstructionVal; }
   virtual const char *getOpcodeName() const {
     return getOpcodeName(getOpcode());
   }
@@ -92,11 +96,11 @@ public:
   }
 
   inline bool isTerminator() const {   // Instance of TerminatorInst?
-    return isTerminator(iType);
+    return isTerminator(getOpcode());
   }
 
   inline bool isBinaryOp() const {
-    return iType >= BinaryOpsBegin && iType < BinaryOpsEnd;
+    return getOpcode() >= BinaryOpsBegin && getOpcode() < BinaryOpsEnd;
   }
 
   /// isAssociative - Return true if the instruction is associative:

@@ -133,6 +133,11 @@ public:
   unsigned getValueType() const {
     return SubclassID;
   }
+
+private:
+  /// FIXME: this is a gross hack, needed by another gross hack.  Eliminate!
+  void setValueType(unsigned VT) { SubclassID = VT; }
+  friend class Instruction;
 };
 
 inline std::ostream &operator<<(std::ostream &OS, const Value *V) {
@@ -190,7 +195,7 @@ template <> inline bool isa_impl<Argument, Value>(const Value &Val) {
   return Val.getValueType() == Value::ArgumentVal;
 }
 template <> inline bool isa_impl<Instruction, Value>(const Value &Val) { 
-  return Val.getValueType() == Value::InstructionVal;
+  return Val.getValueType() >= Value::InstructionVal;
 }
 template <> inline bool isa_impl<BasicBlock, Value>(const Value &Val) { 
   return Val.getValueType() == Value::BasicBlockVal;
