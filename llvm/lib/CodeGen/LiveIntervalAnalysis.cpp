@@ -172,7 +172,7 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
 void LiveIntervals::print(std::ostream &O) const {
   O << "********** INTERVALS **********\n";
   for (const_iterator I = begin(), E = end(); I != E; ++I)
-    O << I->second << "\n";
+    O << "  " << I->second << "\n";
 
   O << "********** MACHINEINSTRS **********\n";
   for (MachineFunction::iterator mbbi = mf_->begin(), mbbe = mf_->end();
@@ -184,7 +184,6 @@ void LiveIntervals::print(std::ostream &O) const {
     }
   }
 }
-
 
 std::vector<LiveInterval*> LiveIntervals::
 addIntervalsForSpills(const LiveInterval &li, VirtRegMap &vrm, int slot) {
