@@ -7,12 +7,10 @@
 // 
 //===----------------------------------------------------------------------===//
 //
-// This file implements a useful analysis step to figure out what numbered 
-// slots values in a program will land in (keeping track of per plane
-// information as required.
+// This file implements a useful analysis step to figure out what numbered slots
+// values in a program will land in (keeping track of per plane information).
 //
-// This is used primarily for when writing a file to disk, either in bytecode
-// or source format.
+// This is used when writing a file to disk, either in bytecode or assembly.
 //
 //===----------------------------------------------------------------------===//
 
@@ -69,7 +67,7 @@ SlotCalculator::SlotCalculator(const Function *M, bool buildBytecodeInfo) {
   if (TheModule == 0) return;   // Empty table...
 
   processModule();              // Process module level stuff
-  incorporateFunction(M);         // Start out in incorporated state
+  incorporateFunction(M);       // Start out in incorporated state
 }
 
 unsigned SlotCalculator::getGlobalSlot(const Value *V) const {
@@ -78,10 +76,35 @@ unsigned SlotCalculator::getGlobalSlot(const Value *V) const {
   if (const ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(V))
     V = CPR->getValue();
   std::map<const Value*, unsigned>::const_iterator I = NodeMap.find(V);
-  assert(I != NodeMap.end() && "Didn't find entry!");
+  assert(I != NodeMap.end() && "Didn't find global slot entry!");
   return I->second;
 }
 
+SlotCalculator::TypePlane &SlotCalculator::getPlane(unsigned Plane) {
+  unsigned PIdx = Plane;
+  if (CompactionTable.empty()) {                // No compaction table active?
+    // fall out
+  } else if (!CompactionTable[Plane].empty()) { // Compaction table active.
+    assert(Plane < CompactionTable.size());
+    return CompactionTable[Plane];
+  } else {
+    // Final case: compaction table active, but this plane is not
+    // compactified.  If the type plane is compactified, unmap back to the
+    // global type plane corresponding to "Plane".
+    if (!CompactionTable[Type::TypeTyID].empty()) {
+      const Type *Ty = cast<Type>(CompactionTable[Type::TypeTyID][Plane]);
+      std::map<const Value*, unsigned>::iterator It = NodeMap.find(Ty);
+      assert(It != NodeMap.end() && "Type not in global constant map?");
+      PIdx = It->second;
+    }
+  }
+
+  // Okay we are just returning an entry out of the main Table.  Make sure the
+  // plane exists and return it.
+  if (PIdx >= Table.size())
+    Table.resize(PIdx+1);
+  return Table[PIdx];
+}
 
 
 // processModule - Process all of the module level function declarations and
@@ -167,8 +190,6 @@ void SlotCalculator::processModule() {
       }
       processSymbolTableConstants(&F->getSymbolTable());
     }
-
-
   }
 
   // Insert constants that are named at module level into the slot pool so that
@@ -249,11 +270,11 @@ void SlotCalculator::incorporateFunction(const Function *F) {
   // If we emitted all of the function constants, build a compaction table.
   if (BuildBytecodeInfo && ModuleContainsAllFunctionConstants)
     buildCompactionTable(F);
-  else {
-    // Save the Table state before we process the function...
-    for (unsigned i = 0, e = Table.size(); i != e; ++i)
-      ModuleLevel.push_back(Table[i].size());
-  }
+
+  // Update the ModuleLevel entries to be accurate.
+  ModuleLevel.resize(getNumPlanes());
+  for (unsigned i = 0, e = getNumPlanes(); i != e; ++i)
+    ModuleLevel[i] = getPlane(i).size();
 
   // Iterate over function arguments, adding them to the value table...
   for(Function::const_aiterator I = F->abegin(), E = F->aend(); I != E; ++I)
@@ -293,6 +314,11 @@ void SlotCalculator::incorporateFunction(const Function *F) {
     }
   }
 
+  // If we are building a compaction table, prune out planes that do not benefit
+  // from being compactified.
+  if (!CompactionTable.empty())
+    pruneCompactionTable();
+
   SC_DEBUG("end processFunction!\n");
 }
 
@@ -306,41 +332,44 @@ void SlotCalculator::purgeFunction() {
   CompactionNodeMap.clear();
 
   // Next, remove values from existing type planes
-  for (unsigned i = 0; i != NumModuleTypes; ++i)
-    if (i >= CompactionTable.size() || CompactionTable[i].empty()) {
-      unsigned ModuleSize = ModuleLevel[i];// Size of plane before function came
-      TypePlane &CurPlane = Table[i];
-      
-      while (CurPlane.size() != ModuleSize) {
-        std::map<const Value *, unsigned>::iterator NI =
-          NodeMap.find(CurPlane.back());
-        assert(NI != NodeMap.end() && "Node not in nodemap?");
-        NodeMap.erase(NI);       // Erase from nodemap
-        CurPlane.pop_back();     // Shrink plane
-      }
+  for (unsigned i = 0; i != NumModuleTypes; ++i) {
+    // Size of plane before function came
+    unsigned ModuleLev = getModuleLevel(i);
+    assert(int(ModuleLev) >= 0 && "BAD!");
+
+    TypePlane &Plane = getPlane(i);
+
+    assert(ModuleLev <= Plane.size() && "module levels higher than elements?");
+    while (Plane.size() != ModuleLev) {
+      assert(!isa<GlobalValue>(Plane.back()) &&
+             "Functions cannot define globals!");
+      NodeMap.erase(Plane.back());       // Erase from nodemap
+      Plane.pop_back();                  // Shrink plane
     }
+  }
 
   // We don't need this state anymore, free it up.
   ModuleLevel.clear();
 
+  // Finally, remove any type planes defined by the function...
   if (!CompactionTable.empty()) {
     CompactionTable.clear();
   } else {
-    //  FIXME: this will require adjustment when we don't compact everything.
-
-    // Finally, remove any type planes defined by the function...
-    while (NumModuleTypes != Table.size()) {
+    while (Table.size() > NumModuleTypes) {
       TypePlane &Plane = Table.back();
       SC_DEBUG("Removing Plane " << (Table.size()-1) << " of size "
                << Plane.size() << "\n");
       while (Plane.size()) {
-        NodeMap.erase(NodeMap.find(Plane.back()));   // Erase from nodemap
-        Plane.pop_back();                            // Shrink plane
+        assert(!isa<GlobalValue>(Plane.back()) &&
+               "Functions cannot define globals!");
+        NodeMap.erase(Plane.back());   // Erase from nodemap
+        Plane.pop_back();              // Shrink plane
       }
       
-      Table.pop_back();                    // Nuke the plane, we don't like it.
+      Table.pop_back();                // Nuke the plane, we don't like it.
     }
   }
+
   SC_DEBUG("end purgeFunction!\n");
 }
 
@@ -358,7 +387,11 @@ unsigned SlotCalculator::getOrCreateCompactionTableSlot(const Value *V) {
     return I->second;  // Already exists?
 
   // Make sure the type is in the table.
-  unsigned Ty = getOrCreateCompactionTableSlot(V->getType());
+  unsigned Ty;
+  if (!CompactionTable[Type::TypeTyID].empty())
+    Ty = getOrCreateCompactionTableSlot(V->getType());
+  else    // If the type plane was decompactified, use the global plane ID
+    Ty = getSlot(V->getType());
   if (CompactionTable.size() <= Ty)
     CompactionTable.resize(Ty+1);
 
@@ -437,23 +470,126 @@ void SlotCalculator::buildCompactionTable(const Function *F) {
     }
   
   // Okay, now at this point, we have a legal compaction table.  Since we want
-  // to emit the smallest possible binaries, we delete planes that do not NEED
-  // to be compacted, starting with the type plane.
+  // to emit the smallest possible binaries, do not compactify the type plane if
+  // it will not save us anything.  Because we have not yet incorporated the
+  // function body itself yet, we don't know whether or not it's a good idea to
+  // compactify other planes.  We will defer this decision until later.
+  TypePlane &GlobalTypes = Table[Type::TypeTyID];
+  
+  // All of the values types will be scrunched to the start of the types plane
+  // of the global table.  Figure out just how many there are.
+  assert(!GlobalTypes.empty() && "No global types???");
+  unsigned NumFCTypes = GlobalTypes.size()-1;
+  while (!cast<Type>(GlobalTypes[NumFCTypes])->isFirstClassType())
+    --NumFCTypes;
 
+  // If there are fewer that 64 types, no instructions will be exploded due to
+  // the size of the type operands.  Thus there is no need to compactify types.
+  // Also, if the compaction table contains most of the entries in the global
+  // table, there really is no reason to compactify either.
+  if (NumFCTypes < 64) {
+    // Decompactifying types is tricky, because we have to move type planes all
+    // over the place.  At least we don't need to worry about updating the
+    // CompactionNodeMap for non-types though.
+    std::vector<TypePlane> TmpCompactionTable;
+    std::swap(CompactionTable, TmpCompactionTable);
+    TypePlane Types;
+    std::swap(Types, TmpCompactionTable[Type::TypeTyID]);
+    
+    // Move each plane back over to the uncompactified plane
+    while (!Types.empty()) {
+      const Type *Ty = cast<Type>(Types.back());
+      Types.pop_back();
+      CompactionNodeMap.erase(Ty);  // Decompactify type!
 
-  // If decided not to compact anything, do not modify ModuleLevels.
-  if (CompactionTable.empty())
-    // FIXME: must update ModuleLevel.
-    return;
+      if (Ty != Type::TypeTy) {
+        // Find the global slot number for this type.
+        int TySlot = getSlot(Ty);
+        assert(TySlot != -1 && "Type doesn't exist in global table?");
+        
+        // Now we know where to put the compaction table plane.
+        if (CompactionTable.size() <= unsigned(TySlot))
+          CompactionTable.resize(TySlot+1);
+        // Move the plane back into the compaction table.
+        std::swap(CompactionTable[TySlot], TmpCompactionTable[Types.size()]);
 
-  // Finally, for any planes that we have decided to compact, update the
-  // ModuleLevel entries to be accurate.
-
-  // FIXME: This does not yet work for partially compacted tables.
-  ModuleLevel.resize(CompactionTable.size());
-  for (unsigned i = 0, e = CompactionTable.size(); i != e; ++i)
-    ModuleLevel[i] = CompactionTable[i].size();
+        // And remove the empty plane we just moved in.
+        TmpCompactionTable.pop_back();
+      }
+    }
+  }
 }
+
+
+/// pruneCompactionTable - Once the entire function being processed has been
+/// incorporated into the current compaction table, look over the compaction
+/// table and check to see if there are any values whose compaction will not
+/// save us any space in the bytecode file.  If compactifying these values
+/// serves no purpose, then we might as well not even emit the compactification
+/// information to the bytecode file, saving a bit more space.
+///
+/// Note that the type plane has already been compactified if possible.
+///
+void SlotCalculator::pruneCompactionTable() {
+  TypePlane &TyPlane = CompactionTable[Type::TypeTyID];
+  for (unsigned ctp = 0, e = CompactionTable.size(); ctp != e; ++ctp)
+    if (ctp != Type::TypeTyID && !CompactionTable[ctp].empty()) {
+      TypePlane &CPlane = CompactionTable[ctp];
+      unsigned GlobalSlot = ctp;
+      if (!TyPlane.empty())
+        GlobalSlot = getGlobalSlot(TyPlane[ctp]);
+
+      if (GlobalSlot >= Table.size())
+        Table.resize(GlobalSlot+1);
+      TypePlane &GPlane = Table[GlobalSlot];
+      
+      unsigned ModLevel = getModuleLevel(ctp);
+      unsigned NumFunctionObjs = CPlane.size()-ModLevel;
+
+      // If the maximum index required if all entries in this plane were merged
+      // into the global plane is less than 64, go ahead and eliminate the
+      // plane.
+      bool PrunePlane = GPlane.size() + NumFunctionObjs < 64;
+
+      // If there are no function-local values defined, and the maximum
+      // referenced global entry is less than 64, we don't need to compactify.
+      if (!PrunePlane && NumFunctionObjs == 0) {
+        unsigned MaxIdx = 0;
+        for (unsigned i = 0; i != ModLevel; ++i) {
+          unsigned Idx = NodeMap[CPlane[i]];
+          if (Idx > MaxIdx) MaxIdx = Idx;
+        }
+        PrunePlane = MaxIdx < 64;
+      }
+
+      // Ok, finally, if we decided to prune this plane out of the compaction
+      // table, do so now.
+      if (PrunePlane) {
+        TypePlane OldPlane;
+        std::swap(OldPlane, CPlane);
+
+        // Loop over the function local objects, relocating them to the global
+        // table plane.
+        for (unsigned i = ModLevel, e = OldPlane.size(); i != e; ++i) {
+          const Value *V = OldPlane[i];
+          CompactionNodeMap.erase(V);
+          assert(NodeMap.count(V) == 0 && "Value already in table??");
+          getOrCreateSlot(V);
+        }
+
+        // For compactified global values, just remove them from the compaction
+        // node map.
+        for (unsigned i = 0; i != ModLevel; ++i)
+          CompactionNodeMap.erase(OldPlane[i]);
+
+        // Update the new modulelevel for this plane.
+        assert(ctp < ModuleLevel.size() && "Cannot set modulelevel!");
+        ModuleLevel[ctp] = GPlane.size()-NumFunctionObjs;
+        assert((int)ModuleLevel[ctp] >= 0 && "Bad computation!");
+      }
+    }
+}
+
 
 int SlotCalculator::getSlot(const Value *V) const {
   // If there is a CompactionTable active...
@@ -462,7 +598,8 @@ int SlotCalculator::getSlot(const Value *V) const {
       CompactionNodeMap.find(V);
     if (I != CompactionNodeMap.end())
       return (int)I->second;
-    return -1;
+    // Otherwise, if it's not in the compaction table, it must be in a
+    // non-compactified plane.
   }
 
   std::map<const Value*, unsigned>::const_iterator I = NodeMap.find(V);
@@ -478,6 +615,8 @@ int SlotCalculator::getSlot(const Value *V) const {
 
 
 int SlotCalculator::getOrCreateSlot(const Value *V) {
+  if (V->getType() == Type::VoidTy) return -1;
+
   int SlotNo = getSlot(V);        // Check to see if it's already in!
   if (SlotNo != -1) return SlotNo;
 
@@ -526,8 +665,11 @@ int SlotCalculator::insertValue(const Value *D, bool dontIgnore) {
     assert(!isa<Type>(D) && !isa<Constant>(D) && !isa<GlobalValue>(D) &&
            "Types, constants, and globals should be in global SymTab!");
 
-    // FIXME: this does not yet handle partially compacted tables yet!
-    return getOrCreateCompactionTableSlot(D);
+    int Plane = getSlot(D->getType());
+    assert(Plane != -1 && CompactionTable.size() > (unsigned)Plane &&
+           "Didn't find value type!");
+    if (!CompactionTable[Plane].empty())
+      return getOrCreateCompactionTableSlot(D);
   }
 
   // If this node does not contribute to a plane, or if the node has a 
@@ -590,7 +732,11 @@ int SlotCalculator::doInsertValue(const Value *D) {
   //  cerr << "Inserting type '" << cast<Type>(D)->getDescription() << "'!\n";
 
   if (Typ->isDerivedType()) {
-    int ValSlot = getSlot(Typ);
+    int ValSlot;
+    if (CompactionTable.empty())
+      ValSlot = getSlot(Typ);
+    else
+      ValSlot = getGlobalSlot(Typ);
     if (ValSlot == -1) {                // Have we already entered this type?
       // Nope, this is the first we have seen the type, process it.
       ValSlot = insertValue(Typ, true);
