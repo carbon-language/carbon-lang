@@ -150,29 +150,33 @@ DSNodeHandle GraphBuilder::getValueDest(Value &Val) {
   if (V == Constant::getNullValue(V->getType()))
     return 0;  // Null doesn't point to anything, don't add to ScalarMap!
 
-  DSNodeHandle &NH = ScalarMap[V];
-  if (NH.getNode())
-    return NH;     // Already have a node?  Just return it...
-
   if (Constant *C = dyn_cast<Constant>(V))
     if (ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(C)) {
-      return NH = getValueDest(*CPR->getValue());
+      return getValueDest(*CPR->getValue());
     } else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C)) {
       if (CE->getOpcode() == Instruction::Cast)
-        return NH = getValueDest(*CE->getOperand(0));
+        return getValueDest(*CE->getOperand(0));
       if (CE->getOpcode() == Instruction::GetElementPtr) {
         visitGetElementPtrInst(*CE);
-        return ScalarMap[CE];
+        std::map<Value*, DSNodeHandle>::iterator I = ScalarMap.find(CE);
+        assert(I != ScalarMap.end() && "GEP didn't get processed right?");
+        DSNodeHandle NH = I->second;
+        ScalarMap.erase(I);           // Remove constant from scalarmap
+        return NH;
       }
 
       // This returns a conservative unknown node for any unhandled ConstExpr
-      return NH = createNode(DSNode::UnknownNode);
+      return createNode(DSNode::UnknownNode);
     } else if (ConstantIntegral *CI = dyn_cast<ConstantIntegral>(C)) {
       // Random constants are unknown mem
-      return NH = createNode(DSNode::UnknownNode);
+      return createNode(DSNode::UnknownNode);
     } else {
       assert(0 && "Unknown constant type!");
     }
+
+  DSNodeHandle &NH = ScalarMap[V];
+  if (NH.getNode())
+    return NH;     // Already have a node?  Just return it...
 
   // Otherwise we need to create a new node to point to...
   DSNode *N;
