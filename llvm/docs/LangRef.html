@@ -1697,7 +1697,7 @@ int %test(int %X, ...) {
   %aq = alloca sbyte*
 
   ; Initialize variable argument processing
-  call void (sbyte**, ...)* %<a href="#i_va_start">llvm.va_start</a>(sbyte** %ap, int %X)
+  call void (sbyte**)* %<a href="#i_va_start">llvm.va_start</a>(sbyte** %ap)
 
   ; Read a single integer argument
   %tmp = <a href="#i_va_arg">va_arg</a> sbyte** %ap, int 
@@ -1718,7 +1718,7 @@ int %test(int %X, ...) {
 
 <h5>Syntax:</h5>
 <pre>
-  call void (va_list*, ...)* %llvm.va_start(&lt;va_list&gt;* &lt;arglist&gt;, &lt;argument&gt;)
+  call void (va_list*)* %llvm.va_start(&lt;va_list&gt;* &lt;arglist&gt;)
 </pre>
 
 <h5>Overview:</h5>
@@ -1730,18 +1730,16 @@ invoked.<p>
 
 <h5>Arguments:</h5>
 
-The first argument is a pointer to a <tt>va_list</tt> element to initialize.
-The second argument is required to be the last LLVM argument before the
-ellipsis.  In the future, this restriction may be relaxed (to allow it to be
-other arguments).<p>
+The argument is a pointer to a <tt>va_list</tt> element to initialize.<p>
 
 <h5>Semantics:</h5>
 
 The '<tt>llvm.va_start</tt>' intrinsic works just like the <tt>va_start</tt>
 macro available in C.  In a target-dependent way, it initializes the
-<tt>va_list</tt> element the first argument points to, so that the next call to
-<tt>va_arg</tt> will produce the first variable argument passed to the
-function.<p>
+<tt>va_list</tt> element the argument points to, so that the next call to
+<tt>va_arg</tt> will produce the first variable argument passed to the function.
+Unlike the C <tt>va_start</tt> macro, this intrinsic does not need to know the
+last argument of the function, the compiler can figure that out.<p>
 
 
 <!-- _______________________________________________________________________ -->
@@ -1812,7 +1810,7 @@ arbitrarily complex and require memory allocation, for example.<p>
 <address><a href="mailto:sabre@nondot.org">Chris Lattner</a></address>
 <!-- Created: Tue Jan 23 15:19:28 CST 2001 -->
 <!-- hhmts start -->
-Last modified: Thu May  8 00:06:36 CDT 2003
+Last modified: Thu May  8 10:48:46 CDT 2003
 <!-- hhmts end -->
 </font>
 </body></html>
