@@ -5,17 +5,17 @@
 //===----------------------------------------------------------------------===//
 
 #include <stdlib.h>
-void *malloc(unsigned);
+void *malloc(size_t);
 void free(void *);
 
-unsigned strlen(const char *Str) {
-  int Count = 0;
+size_t strlen(const char *Str) {
+  size_t Count = 0;
   while (*Str) { ++Count; ++Str; }
   return Count;
 }
 
 char *strdup(const char *str) {
-  int Len = strlen(str);
+  long Len = strlen(str);
   char *Result = (char*)malloc((Len+1)*sizeof(char));
   memcpy(Result, str, Len+1);
   return Result;

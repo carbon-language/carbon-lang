@@ -6,9 +6,9 @@
 
 #include <stdlib.h>
 
-void *malloc(unsigned);
+void *malloc(size_t);
 void free(void *);
-void *memset(void *, int, unsigned);
+void *memset(void *, int, size_t);
 
 void *calloc(size_t nelem, size_t elsize) {
   void *Result = malloc(nelem*elsize);
