@@ -96,6 +96,23 @@ ValueSubclass *ValueHolder<ValueSubclass,ItemParentType,SymTabType>
   return i;
 }
 
+
+template<class ValueSubclass, class ItemParentType, class SymTabType>
+void ValueHolder<ValueSubclass,ItemParentType,SymTabType>
+::remove(iterator S, iterator E) {
+  for (iterator I = S; I != E; ++I) {
+    ValueSubclass *i = *I;
+    i->setParent(0);  // I don't own you anymore... byebye...
+  
+    // You don't get to be in the symbol table anymore... byebye
+    if (i->hasName() && Parent)
+      Parent->getSymbolTable()->remove(i);
+  }
+
+  ValueList.erase(S, E);
+}
+
+
 template<class ValueSubclass, class ItemParentType, class SymTabType>
 ValueSubclass *ValueHolder<ValueSubclass,ItemParentType,SymTabType>
 ::replaceWith(iterator &DI, ValueSubclass *NewVal) {
