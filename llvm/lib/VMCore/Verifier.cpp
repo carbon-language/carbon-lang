@@ -169,7 +169,7 @@ namespace {  // Anonymous namespace for class
     }
   };
 
-  RegisterPass<Verifier> X("verify", "Module Verifier");
+  RegisterOpt<Verifier> X("verify", "Module Verifier");
 
 // Assert - We know that cond should be true, if not print an error message.
 #define Assert(C, M) \
