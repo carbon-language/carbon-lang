@@ -18,6 +18,7 @@
 #include "CodeGenRegisters.h"
 #include "Record.h"
 #include "Support/StringExtras.h"
+#include "Support/STLExtras.h"
 #include <set>
 using namespace llvm;
 
@@ -94,6 +95,10 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
   // Loop over all of the register classes... emitting each one.
   OS << "namespace {     // Register classes...\n";
 
+  // RegClassesBelongedTo - Keep track of which register classes each reg
+  // belongs to.
+  std::multimap<Record*, const CodeGenRegisterClass*> RegClassesBelongedTo;
+
   for (unsigned rc = 0, e = RegisterClasses.size(); rc != e; ++rc) {
     const CodeGenRegisterClass &RC = RegisterClasses[rc];
 
@@ -115,6 +120,9 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
               "' included in multiple register classes!";
       RegistersFound.insert(Reg);
       OS << getQualifiedName(Reg) << ", ";
+
+      // Keep track of which regclasses this register is in.
+      RegClassesBelongedTo.insert(std::make_pair(Reg, &RC));
     }
     OS << "\n  };\n\n";
 
@@ -122,8 +130,7 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
        << "    " << Name << "Class() : TargetRegisterClass("
        << RC.SpillSize/8 << ", " << RC.SpillAlignment << ", " << Name << ", "
        << Name << " + " << RC.Elements.size() << ") {}\n"
-       << RC.MethodDefinitions
-       << "  } " << Name << "Instance;\n\n";
+       << RC.MethodDefinitions << "  } " << Name << "Instance;\n\n";
   }
 
   OS << "  const TargetRegisterClass* const RegisterClasses[] = {\n";
@@ -195,7 +202,31 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
       OS << Reg.getName() << "_AliasSet,\t";
     else
       OS << "Empty_AliasSet,\t";
-    OS << "0, 0 },\n";    
+
+    // Figure out what the size and alignment of the spill slots are for this
+    // reg.  This may be explicitly declared in the register, or it may be
+    // inferred from the register classes it is part of.
+    std::multimap<Record*, const CodeGenRegisterClass*>::iterator I, E;
+    tie(I, E) = RegClassesBelongedTo.equal_range(Reg.TheDef);
+    unsigned SpillSize = Reg.DeclaredSpillSize;
+    unsigned SpillAlign = Reg.DeclaredSpillAlignment;
+    for (; I != E; ++I) {   // For each reg class this belongs to.
+      const CodeGenRegisterClass *RC = I->second;
+      if (SpillSize == 0)
+        SpillSize = RC->SpillSize;
+      else if (SpillSize != RC->SpillSize)
+        throw "Spill size for regclass '" + RC->getName() +
+              "' doesn't match spill sized already inferred for register '" +
+              Reg.getName() + "'!";
+      if (SpillAlign == 0)
+        SpillAlign = RC->SpillAlignment;
+      else if (SpillAlign != RC->SpillAlignment)
+        throw "Spill alignment for regclass '" + RC->getName() +
+              "' doesn't match spill sized already inferred for register '" +
+              Reg.getName() + "'!";
+    }
+
+    OS << SpillSize << ", " << SpillAlign << " },\n";    
   }
   OS << "  };\n";      // End of register descriptors...
   OS << "}\n\n";       // End of anonymous namespace...
