@@ -42,7 +42,7 @@ bool IsSharedObject(const std::string &FN);
 /// FileOpenable - Returns true IFF Filename names an existing regular file
 /// which we can successfully open.
 ///
-bool FileOpenable (const std::string &Filename);
+bool FileOpenable(const std::string &Filename);
 
 /// DiffFiles - Compare the two files specified, returning true if they are
 /// different or if there is a file error.  If you specify a string to fill in
@@ -92,6 +92,16 @@ long long getFileSize(const std::string &Filename);
 /// updated since that last time the timestampt was aquired.  If the file does
 /// not exist or there is an error getting the time-stamp, zero is returned.
 unsigned long long getFileTimestamp(const std::string &Filename);
+
+/// ReadFileIntoAddressSpace - Attempt to map the specific file into the 
+/// address space of the current process for reading.  If this succeeds, 
+/// return the address of the buffer and the length of the file mapped.  On 
+/// failure, return null.
+void *ReadFileIntoAddressSpace(const std::string &Filename, unsigned &Length);
+
+/// UnmapFileFromAddressSpace - Remove the specified file from the current
+/// address space.
+void UnmapFileFromAddressSpace(void *Buffer, unsigned Length);
 
 
 /// FDHandle - Simple handle class to make sure a file descriptor gets closed

@@ -14,8 +14,10 @@
 
 #include "Support/FileUtilities.h"
 #include "Config/unistd.h"
+#include "Config/fcntl.h"
 #include "Config/sys/stat.h"
 #include "Config/sys/types.h"
+#include "Config/sys/mman.h"
 #include <fstream>
 #include <iostream>
 #include <cstdio>
@@ -215,8 +217,40 @@ unsigned long long llvm::getFileTimestamp(const std::string &Filename) {
   return StatBuf.st_mtime;  
 }
 
+/// ReadFileIntoAddressSpace - Attempt to map the specific file into the
+/// address space of the current process for reading.  If this succeeds,
+/// return the address of the buffer and the length of the file mapped.  On
+/// failure, return null.
+void *llvm::ReadFileIntoAddressSpace(const std::string &Filename, 
+                                     unsigned &Length) {
+#ifdef HAVE_MMAP_FILE
+  Length = getFileSize(Filename);
+  if ((int)Length == -1) return 0;
 
+  FDHandle FD(open(Filename.c_str(), O_RDONLY));
+  if (FD == -1) return 0;
 
+  // mmap in the file all at once...
+  void *Buffer = (void*)mmap(0, Length, PROT_READ, MAP_PRIVATE, FD, 0);
+
+  if (Buffer == (void*)MAP_FAILED)
+    return 0;
+  return Buffer;
+#else
+  // FIXME: implement with read/write
+  return 0;
+#endif
+}
+
+/// UnmapFileFromAddressSpace - Remove the specified file from the current
+/// address space.
+void llvm::UnmapFileFromAddressSpace(void *Buffer, unsigned Length) {
+#ifdef HAVE_MMAP_FILE
+  munmap((char*)Buffer, Length);
+#else
+  free(Buffer);
+#endif
+}
 
 //===----------------------------------------------------------------------===//
 // FDHandle class implementation
