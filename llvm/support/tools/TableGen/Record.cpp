@@ -316,7 +316,7 @@ Init *VarInit::getFieldInit(Record &R, const std::string &FieldName) const {
       if (Init *I = RV->getValue()->getFieldInit(R, FieldName))
         return I;
       else
-        return (Init*)this;
+        return 0;
   return 0;
 }
 
@@ -373,14 +373,22 @@ Init *FieldInit::convertInitializerBitRange(const std::vector<unsigned> &Bits) {
 
 Init *FieldInit::resolveBitReference(Record &R, unsigned Bit) {
   Init *BitsVal = Rec->getFieldInit(R, FieldName);
-  assert(BitsVal && "No initializer found!");
+  if (BitsVal)
+    if (BitsInit *BI = dynamic_cast<BitsInit*>(BitsVal)) {
+      assert(Bit < BI->getNumBits() && "Bit reference out of range!");
+      Init *B = BI->getBit(Bit);
+      
+      if (dynamic_cast<BitInit*>(B))  // If the bit is set...
+        return B;                     // Replace the VarBitInit with it.
+    }
+  return this;
+}
 
-  if (BitsInit *BI = dynamic_cast<BitsInit*>(BitsVal)) {
-    assert(Bit < BI->getNumBits() && "Bit reference out of range!");
-    Init *B = BI->getBit(Bit);
-    
-    if (dynamic_cast<BitInit*>(B))  // If the bit is set...
-      return B;                     // Replace the VarBitInit with it.
+Init *FieldInit::resolveReferences(Record &R) {
+  Init *BitsVal = Rec->getFieldInit(R, FieldName);
+  if (BitsVal) {
+    Init *BVR = BitsVal->resolveReferences(R);
+    return BVR->isComplete() ? BVR : this;
   }
   return this;
 }

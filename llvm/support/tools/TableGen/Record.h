@@ -480,6 +480,8 @@ public:
 
   virtual Init *resolveBitReference(Record &R, unsigned Bit);
 
+  virtual Init *resolveReferences(Record &R);
+
   virtual void print(std::ostream &OS) const {
     Rec->print(OS); OS << "." << FieldName;
   }
