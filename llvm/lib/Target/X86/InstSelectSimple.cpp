@@ -188,13 +188,6 @@ namespace {
     void visitSimpleBinary(BinaryOperator &B, unsigned OpcodeClass);
     void visitAdd(BinaryOperator &B) { visitSimpleBinary(B, 0); }
     void visitSub(BinaryOperator &B) { visitSimpleBinary(B, 1); }
-    void doMultiply(MachineBasicBlock *MBB, MachineBasicBlock::iterator MBBI,
-                    unsigned DestReg, const Type *DestTy,
-                    unsigned Op0Reg, unsigned Op1Reg);
-    void doMultiplyConst(MachineBasicBlock *MBB, 
-                         MachineBasicBlock::iterator MBBI,
-                         unsigned DestReg, const Type *DestTy,
-                         unsigned Op0Reg, unsigned Op1Val);
     void visitMul(BinaryOperator &B);
 
     void visitDiv(BinaryOperator &B) { visitDivRem(B); }
@@ -279,10 +272,21 @@ namespace {
                                    Value *Op0, Value *Op1,
                                    unsigned OperatorClass, unsigned TargetReg);
 
+    void emitMultiply(MachineBasicBlock *BB, MachineBasicBlock::iterator IP,
+                      Value *Op0, Value *Op1, unsigned TargetReg);
+
+    void doMultiply(MachineBasicBlock *MBB, MachineBasicBlock::iterator MBBI,
+                    unsigned DestReg, const Type *DestTy,
+                    unsigned Op0Reg, unsigned Op1Reg);
+    void doMultiplyConst(MachineBasicBlock *MBB, 
+                         MachineBasicBlock::iterator MBBI,
+                         unsigned DestReg, const Type *DestTy,
+                         unsigned Op0Reg, unsigned Op1Val);
+
     void emitDivRemOperation(MachineBasicBlock *BB,
                              MachineBasicBlock::iterator IP,
-                             unsigned Op0Reg, unsigned Op1Reg, bool isDiv,
-                             const Type *Ty, unsigned TargetReg);
+                             Value *Op0, Value *Op1, bool isDiv,
+                             unsigned TargetReg);
 
     /// emitSetCCOperation - Common code shared between visitSetCondInst and
     /// constant expression support.
@@ -407,21 +411,15 @@ void ISel::copyConstantToRegister(MachineBasicBlock *MBB,
                                 Class, R);
       return;
 
-    case Instruction::Mul: {
-      unsigned Op0Reg = getReg(CE->getOperand(0), MBB, IP);
-      unsigned Op1Reg = getReg(CE->getOperand(1), MBB, IP);
-      doMultiply(MBB, IP, R, CE->getType(), Op0Reg, Op1Reg);
+    case Instruction::Mul:
+      emitMultiply(MBB, IP, CE->getOperand(0), CE->getOperand(1), R);
       return;
-    }
+
     case Instruction::Div:
-    case Instruction::Rem: {
-      unsigned Op0Reg = getReg(CE->getOperand(0), MBB, IP);
-      unsigned Op1Reg = getReg(CE->getOperand(1), MBB, IP);
-      emitDivRemOperation(MBB, IP, Op0Reg, Op1Reg,
-                          CE->getOpcode() == Instruction::Div,
-                          CE->getType(), R);
+    case Instruction::Rem:
+      emitDivRemOperation(MBB, IP, CE->getOperand(0), CE->getOperand(1),
+                          CE->getOpcode() == Instruction::Div, R);
       return;
-    }
 
     case Instruction::SetNE:
     case Instruction::SetEQ:
@@ -2062,6 +2060,9 @@ static unsigned ExactLog2(unsigned Val) {
   return Count+1;
 }
 
+
+/// doMultiplyConst - This function is specialized to efficiently codegen an 8,
+/// 16, or 32-bit integer multiply by a constant.
 void ISel::doMultiplyConst(MachineBasicBlock *MBB,
                            MachineBasicBlock::iterator IP,
                            unsigned DestReg, const Type *DestTy,
@@ -2116,97 +2117,123 @@ void ISel::doMultiplyConst(MachineBasicBlock *MBB,
 /// with the EAX register explicitly.
 ///
 void ISel::visitMul(BinaryOperator &I) {
-  unsigned Op0Reg  = getReg(I.getOperand(0));
-  unsigned DestReg = getReg(I);
+  unsigned ResultReg = getReg(I);
+
+  MachineBasicBlock::iterator IP = BB->end();
+  emitMultiply(BB, IP, I.getOperand(0), I.getOperand(1), ResultReg);
+}
+
+void ISel::emitMultiply(MachineBasicBlock *MBB, MachineBasicBlock::iterator IP,
+                        Value *Op0, Value *Op1, unsigned DestReg) {
+  MachineBasicBlock &BB = *MBB;
+  TypeClass Class = getClass(Op0->getType());
 
   // Simple scalar multiply?
-  if (getClass(I.getType()) != cLong) {
-    if (ConstantInt *CI = dyn_cast<ConstantInt>(I.getOperand(1))) {
-      unsigned Val = (unsigned)CI->getRawValue(); // Cannot be 64-bit constant
-      MachineBasicBlock::iterator MBBI = BB->end();
-      doMultiplyConst(BB, MBBI, DestReg, I.getType(), Op0Reg, Val);
+  switch (Class) {
+  case cByte:
+  case cShort:
+  case cInt:
+    if (ConstantInt *CI = dyn_cast<ConstantInt>(Op1)) {
+      unsigned Op0Reg  = getReg(Op0, &BB, IP);
+      unsigned Val = (unsigned)CI->getRawValue(); // Isn't a 64-bit constant
+      doMultiplyConst(&BB, IP, DestReg, Op0->getType(), Op0Reg, Val);
     } else {
-      unsigned Op1Reg  = getReg(I.getOperand(1));
-      MachineBasicBlock::iterator MBBI = BB->end();
-      doMultiply(BB, MBBI, DestReg, I.getType(), Op0Reg, Op1Reg);
+      unsigned Op0Reg  = getReg(Op0, &BB, IP);
+      unsigned Op1Reg  = getReg(Op1, &BB, IP);
+      doMultiply(&BB, IP, DestReg, Op1->getType(), Op0Reg, Op1Reg);
     }
-  } else {
-    // Long value.  We have to do things the hard way...
-    if (ConstantInt *CI = dyn_cast<ConstantInt>(I.getOperand(1))) {
-      unsigned CLow = CI->getRawValue();
-      unsigned CHi  = CI->getRawValue() >> 32;
+    return;
+  case cFP:
+    {
+      unsigned Op0Reg  = getReg(Op0, &BB, IP);
+      unsigned Op1Reg  = getReg(Op1, &BB, IP);
+      doMultiply(&BB, IP, DestReg, Op1->getType(), Op0Reg, Op1Reg);
+      return;
+    }
+  case cLong:
+    break;
+  }
 
-      if (CLow == 0) {
-        // If the low part of the constant is all zeros, things are simple.
-        BuildMI(BB, X86::MOV32ri, 1, DestReg).addImm(0);
-        doMultiplyConst(BB, BB->end(), DestReg+1, Type::UIntTy, Op0Reg, CHi);
-        return;
-      }
+  unsigned Op0Reg  = getReg(Op0, &BB, IP);
 
-      // Multiply the two low parts... capturing carry into EDX
-      unsigned OverflowReg = 0;
-      if (CLow == 1) {
-        BuildMI(BB, X86::MOV32rr, 1, DestReg).addReg(Op0Reg);
-      } else {
-        unsigned Op1RegL = makeAnotherReg(Type::UIntTy);
-        OverflowReg = makeAnotherReg(Type::UIntTy);
-        BuildMI(BB, X86::MOV32ri, 1, Op1RegL).addImm(CLow);
-        BuildMI(BB, X86::MOV32rr, 1, X86::EAX).addReg(Op0Reg);
-        BuildMI(BB, X86::MUL32r, 1).addReg(Op1RegL);  // AL*BL
-      
-        BuildMI(BB, X86::MOV32rr, 1, DestReg).addReg(X86::EAX);   // AL*BL
-        BuildMI(BB, X86::MOV32rr, 1,OverflowReg).addReg(X86::EDX);// AL*BL >> 32
-      }
-      
-      unsigned AHBLReg = makeAnotherReg(Type::UIntTy);   // AH*BL
-      doMultiplyConst(BB, BB->end(), AHBLReg, Type::UIntTy, Op0Reg+1, CLow);
-      
-      unsigned AHBLplusOverflowReg;
-      if (OverflowReg) {
-        AHBLplusOverflowReg = makeAnotherReg(Type::UIntTy);
-        BuildMI(BB, X86::ADD32rr, 2,                // AH*BL+(AL*BL >> 32)
-                AHBLplusOverflowReg).addReg(AHBLReg).addReg(OverflowReg);
-      } else {
-        AHBLplusOverflowReg = AHBLReg;
-      }
-      
-      if (CHi == 0) {
-        BuildMI(BB, X86::MOV32rr, 1, DestReg+1).addReg(AHBLplusOverflowReg);
-      } else {
-        unsigned ALBHReg = makeAnotherReg(Type::UIntTy); // AL*BH
-        doMultiplyConst(BB, BB->end(), ALBHReg, Type::UIntTy, Op0Reg, CHi);
-      
-        BuildMI(BB, X86::ADD32rr, 2,      // AL*BH + AH*BL + (AL*BL >> 32)
-                DestReg+1).addReg(AHBLplusOverflowReg).addReg(ALBHReg);
-      }
+  // Long value.  We have to do things the hard way...
+  if (ConstantInt *CI = dyn_cast<ConstantInt>(Op1)) {
+    unsigned CLow = CI->getRawValue();
+    unsigned CHi  = CI->getRawValue() >> 32;
+    
+    if (CLow == 0) {
+      // If the low part of the constant is all zeros, things are simple.
+      BuildMI(BB, IP, X86::MOV32ri, 1, DestReg).addImm(0);
+      doMultiplyConst(&BB, IP, DestReg+1, Type::UIntTy, Op0Reg, CHi);
+      return;
+    }
+    
+    // Multiply the two low parts... capturing carry into EDX
+    unsigned OverflowReg = 0;
+    if (CLow == 1) {
+      BuildMI(BB, IP, X86::MOV32rr, 1, DestReg).addReg(Op0Reg);
     } else {
-      unsigned Op1Reg  = getReg(I.getOperand(1));
-      // Multiply the two low parts... capturing carry into EDX
-      BuildMI(BB, X86::MOV32rr, 1, X86::EAX).addReg(Op0Reg);
-      BuildMI(BB, X86::MUL32r, 1).addReg(Op1Reg);  // AL*BL
+      unsigned Op1RegL = makeAnotherReg(Type::UIntTy);
+      OverflowReg = makeAnotherReg(Type::UIntTy);
+      BuildMI(BB, IP, X86::MOV32ri, 1, Op1RegL).addImm(CLow);
+      BuildMI(BB, IP, X86::MOV32rr, 1, X86::EAX).addReg(Op0Reg);
+      BuildMI(BB, IP, X86::MUL32r, 1).addReg(Op1RegL);  // AL*BL
       
-      unsigned OverflowReg = makeAnotherReg(Type::UIntTy);
-      BuildMI(BB, X86::MOV32rr, 1, DestReg).addReg(X86::EAX);     // AL*BL
-      BuildMI(BB, X86::MOV32rr, 1, OverflowReg).addReg(X86::EDX); // AL*BL >> 32
-      
-      MachineBasicBlock::iterator MBBI = BB->end();
-      unsigned AHBLReg = makeAnotherReg(Type::UIntTy);   // AH*BL
-      BuildMI(*BB, MBBI, X86::IMUL32rr, 2,
-              AHBLReg).addReg(Op0Reg+1).addReg(Op1Reg);
-      
-      unsigned AHBLplusOverflowReg = makeAnotherReg(Type::UIntTy);
-      BuildMI(*BB, MBBI, X86::ADD32rr, 2,                // AH*BL+(AL*BL >> 32)
+      BuildMI(BB, IP, X86::MOV32rr, 1, DestReg).addReg(X86::EAX);   // AL*BL
+      BuildMI(BB, IP, X86::MOV32rr, 1,
+              OverflowReg).addReg(X86::EDX);                    // AL*BL >> 32
+    }
+    
+    unsigned AHBLReg = makeAnotherReg(Type::UIntTy);   // AH*BL
+    doMultiplyConst(&BB, IP, AHBLReg, Type::UIntTy, Op0Reg+1, CLow);
+    
+    unsigned AHBLplusOverflowReg;
+    if (OverflowReg) {
+      AHBLplusOverflowReg = makeAnotherReg(Type::UIntTy);
+      BuildMI(BB, IP, X86::ADD32rr, 2,                // AH*BL+(AL*BL >> 32)
               AHBLplusOverflowReg).addReg(AHBLReg).addReg(OverflowReg);
-      
-      MBBI = BB->end();
+    } else {
+      AHBLplusOverflowReg = AHBLReg;
+    }
+    
+    if (CHi == 0) {
+      BuildMI(BB, IP, X86::MOV32rr, 1, DestReg+1).addReg(AHBLplusOverflowReg);
+    } else {
       unsigned ALBHReg = makeAnotherReg(Type::UIntTy); // AL*BH
-      BuildMI(*BB, MBBI, X86::IMUL32rr, 2,
-              ALBHReg).addReg(Op0Reg).addReg(Op1Reg+1);
+      doMultiplyConst(&BB, IP, ALBHReg, Type::UIntTy, Op0Reg, CHi);
       
-      BuildMI(*BB, MBBI, X86::ADD32rr, 2,      // AL*BH + AH*BL + (AL*BL >> 32)
+      BuildMI(BB, IP, X86::ADD32rr, 2,      // AL*BH + AH*BL + (AL*BL >> 32)
               DestReg+1).addReg(AHBLplusOverflowReg).addReg(ALBHReg);
     }
+    return;
   }
+
+  // General 64x64 multiply
+
+  unsigned Op1Reg  = getReg(Op1, &BB, IP);
+  // Multiply the two low parts... capturing carry into EDX
+  BuildMI(BB, IP, X86::MOV32rr, 1, X86::EAX).addReg(Op0Reg);
+  BuildMI(BB, IP, X86::MUL32r, 1).addReg(Op1Reg);  // AL*BL
+  
+  unsigned OverflowReg = makeAnotherReg(Type::UIntTy);
+  BuildMI(BB, IP, X86::MOV32rr, 1, DestReg).addReg(X86::EAX);     // AL*BL
+  BuildMI(BB, IP, X86::MOV32rr, 1,
+          OverflowReg).addReg(X86::EDX); // AL*BL >> 32
+  
+  unsigned AHBLReg = makeAnotherReg(Type::UIntTy);   // AH*BL
+  BuildMI(BB, IP, X86::IMUL32rr, 2,
+          AHBLReg).addReg(Op0Reg+1).addReg(Op1Reg);
+  
+  unsigned AHBLplusOverflowReg = makeAnotherReg(Type::UIntTy);
+  BuildMI(BB, IP, X86::ADD32rr, 2,                // AH*BL+(AL*BL >> 32)
+          AHBLplusOverflowReg).addReg(AHBLReg).addReg(OverflowReg);
+  
+  unsigned ALBHReg = makeAnotherReg(Type::UIntTy); // AL*BH
+  BuildMI(BB, IP, X86::IMUL32rr, 2,
+          ALBHReg).addReg(Op0Reg).addReg(Op1Reg+1);
+  
+  BuildMI(BB, IP, X86::ADD32rr, 2,      // AL*BH + AH*BL + (AL*BL >> 32)
+          DestReg+1).addReg(AHBLplusOverflowReg).addReg(ALBHReg);
 }
 
 
@@ -2216,25 +2243,28 @@ void ISel::visitMul(BinaryOperator &I) {
 /// instructions work differently for signed and unsigned operands.
 ///
 void ISel::visitDivRem(BinaryOperator &I) {
-  unsigned Op0Reg = getReg(I.getOperand(0));
-  unsigned Op1Reg = getReg(I.getOperand(1));
   unsigned ResultReg = getReg(I);
 
   MachineBasicBlock::iterator IP = BB->end();
-  emitDivRemOperation(BB, IP, Op0Reg, Op1Reg, I.getOpcode() == Instruction::Div,
-                      I.getType(), ResultReg);
+  emitDivRemOperation(BB, IP, I.getOperand(0), I.getOperand(1),
+                      I.getOpcode() == Instruction::Div, ResultReg);
+                      
 }
 
 void ISel::emitDivRemOperation(MachineBasicBlock *BB,
                                MachineBasicBlock::iterator IP,
-                               unsigned Op0Reg, unsigned Op1Reg, bool isDiv,
-                               const Type *Ty, unsigned ResultReg) {
-  unsigned Class = getClass(Ty);
+                               Value *Op0, Value *Op1, bool isDiv,
+                               unsigned ResultReg) {
+  unsigned Class = getClass(Op0->getType());
   switch (Class) {
   case cFP:              // Floating point divide
     if (isDiv) {
+      unsigned Op0Reg = getReg(Op0, BB, IP);
+      unsigned Op1Reg = getReg(Op1, BB, IP);
       BuildMI(*BB, IP, X86::FpDIV, 2, ResultReg).addReg(Op0Reg).addReg(Op1Reg);
     } else {               // Floating point remainder...
+      unsigned Op0Reg = getReg(Op0, BB, IP);
+      unsigned Op1Reg = getReg(Op1, BB, IP);
       MachineInstr *TheCall =
         BuildMI(X86::CALLpcrel32, 1).addExternalSymbol("fmod", true);
       std::vector<ValueRecord> Args;
@@ -2246,8 +2276,9 @@ void ISel::emitDivRemOperation(MachineBasicBlock *BB,
   case cLong: {
     static const char *FnName[] =
       { "__moddi3", "__divdi3", "__umoddi3", "__udivdi3" };
-
-    unsigned NameIdx = Ty->isUnsigned()*2 + isDiv;
+    unsigned Op0Reg = getReg(Op0, BB, IP);
+    unsigned Op1Reg = getReg(Op1, BB, IP);
+    unsigned NameIdx = Op0->getType()->isUnsigned()*2 + isDiv;
     MachineInstr *TheCall =
       BuildMI(X86::CALLpcrel32, 1).addExternalSymbol(FnName[NameIdx], true);
 
@@ -2273,16 +2304,18 @@ void ISel::emitDivRemOperation(MachineBasicBlock *BB,
     { X86::IDIV8r, X86::IDIV16r, X86::IDIV32r, 0 },  // Signed division
   };
 
-  bool isSigned   = Ty->isSigned();
+  bool isSigned   = Op0->getType()->isSigned();
   unsigned Reg    = Regs[Class];
   unsigned ExtReg = ExtRegs[Class];
 
   // Put the first operand into one of the A registers...
+  unsigned Op0Reg = getReg(Op0, BB, IP);
+  unsigned Op1Reg = getReg(Op1, BB, IP);
   BuildMI(*BB, IP, MovOpcode[Class], 1, Reg).addReg(Op0Reg);
 
   if (isSigned) {
     // Emit a sign extension instruction...
-    unsigned ShiftResult = makeAnotherReg(Ty);
+    unsigned ShiftResult = makeAnotherReg(Op0->getType());
     BuildMI(*BB, IP, SarOpcode[Class], 2,ShiftResult).addReg(Op0Reg).addImm(31);
     BuildMI(*BB, IP, MovOpcode[Class], 1, ExtReg).addReg(ShiftResult);
   } else {
