@@ -43,18 +43,10 @@ namespace {
     Statistic<> numInstrsAdded("twoaddressinstruction",
                                "Number of instructions added");
 
-    class TwoAddressInstructionPass : public MachineFunctionPass
+    struct TwoAddressInstructionPass : public MachineFunctionPass
     {
-    private:
-        MachineFunction* mf_;
-        const TargetMachine* tm_;
-        const MRegisterInfo* mri_;
-        LiveVariables* lv_;
-
-    public:
         virtual void getAnalysisUsage(AnalysisUsage &AU) const;
 
-    private:
         /// runOnMachineFunction - pass entry point
         bool runOnMachineFunction(MachineFunction&);
     };
@@ -75,31 +67,32 @@ void TwoAddressInstructionPass::getAnalysisUsage(AnalysisUsage &AU) const
 }
 
 /// runOnMachineFunction - Reduce two-address instructions to two
-/// operands
+/// operands.
 ///
-bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &fn) {
+bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
     DEBUG(std::cerr << "Machine Function\n");
-    mf_ = &fn;
-    tm_ = &fn.getTarget();
-    mri_ = tm_->getRegisterInfo();
-    lv_ = &getAnalysis<LiveVariables>();
+    const TargetMachine &TM = MF.getTarget();
+    const MRegisterInfo &MRI = *TM.getRegisterInfo();
+    LiveVariables &LV = getAnalysis<LiveVariables>();
+    const TargetInstrInfo &TII = TM.getInstrInfo();
 
-    const TargetInstrInfo& tii = tm_->getInstrInfo();
+    bool MadeChange = false;
 
-    for (MachineFunction::iterator mbbi = mf_->begin(), mbbe = mf_->end();
+    for (MachineFunction::iterator mbbi = MF.begin(), mbbe = MF.end();
          mbbi != mbbe; ++mbbi) {
         for (MachineBasicBlock::iterator mii = mbbi->begin();
              mii != mbbi->end(); ++mii) {
             MachineInstr* mi = *mii;
-
             unsigned opcode = mi->getOpcode();
+
             // ignore if it is not a two-address instruction
-            if (!tii.isTwoAddrInstr(opcode))
+            if (!TII.isTwoAddrInstr(opcode))
                 continue;
 
             ++numTwoAddressInstrs;
+            MadeChange = true;
 
-            DEBUG(std::cerr << "\tinstruction: "; mi->print(std::cerr, *tm_));
+            DEBUG(std::cerr << "\tinstruction: "; mi->print(std::cerr, TM));
 
             // we have nothing to do if the two operands are the same
             if (mi->getOperand(0).getAllocatedRegNum() ==
@@ -133,23 +126,23 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &fn) {
             }
 
             const TargetRegisterClass* rc =
-                mf_->getSSARegMap()->getRegClass(regA);
-            numInstrsAdded += mri_->copyRegToReg(*mbbi, mii, regA, regB, rc);
+                MF.getSSARegMap()->getRegClass(regA);
+            numInstrsAdded += MRI.copyRegToReg(*mbbi, mii, regA, regB, rc);
 
             MachineInstr* prevMi = *(mii - 1);
             DEBUG(std::cerr << "\t\tadded instruction: ";
-                  prevMi->print(std::cerr, *tm_));
+                  prevMi->print(std::cerr, TM));
 
             // update live variables for regA
-            LiveVariables::VarInfo& varInfo = lv_->getVarInfo(regA);
+            LiveVariables::VarInfo& varInfo = LV.getVarInfo(regA);
             varInfo.DefInst = prevMi;
 
             // update live variables for regB
-            if (lv_->removeVirtualRegisterKilled(regB, &*mbbi, mi))
-                lv_->addVirtualRegisterKilled(regB, &*mbbi, prevMi);
+            if (LV.removeVirtualRegisterKilled(regB, &*mbbi, mi))
+                LV.addVirtualRegisterKilled(regB, &*mbbi, prevMi);
 
-            if (lv_->removeVirtualRegisterDead(regB, &*mbbi, mi))
-                lv_->addVirtualRegisterDead(regB, &*mbbi, prevMi);
+            if (LV.removeVirtualRegisterDead(regB, &*mbbi, mi))
+                LV.addVirtualRegisterDead(regB, &*mbbi, prevMi);
 
             // replace all occurences of regB with regA
             for (unsigned i = 1; i < mi->getNumOperands(); ++i) {
@@ -158,11 +151,11 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &fn) {
                     mi->SetMachineOperandReg(i, regA);
             }
             DEBUG(std::cerr << "\t\tmodified original to: ";
-                  mi->print(std::cerr, *tm_));
+                  mi->print(std::cerr, TM));
             assert(mi->getOperand(0).getAllocatedRegNum() ==
                    mi->getOperand(1).getAllocatedRegNum());
         }
     }
 
-    return numInstrsAdded != 0;
+    return MadeChange;
 }
