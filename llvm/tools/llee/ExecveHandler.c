@@ -65,14 +65,8 @@ int execve(const char *filename, char *const argv[], char *const envp[])
         free(fileAddr);
       }
       llvmExecve(realFilename, argv, envp);
-    } else {
-      /* 
-       * Not in cache: save translation
-       */ 
-      //llvmSaveFile(realFilename, addr, len);
-      //fprintf(stderr, "Cached: '%s'\n", realFilename);
-    }
-    
+    }    
+
     /* 
      * This is a bytecode file, so execute the JIT with the program and
      * parameters.
