@@ -691,8 +691,9 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
     }
 
   } else if (SwitchInst *SI = dyn_cast<SwitchInst>(BB->begin())) {
-    if (FoldValueComparisonIntoPredecessors(SI))
-      return SimplifyCFG(BB) || 1;
+    if (isValueEqualityComparison(SI))
+      if (FoldValueComparisonIntoPredecessors(SI))
+        return SimplifyCFG(BB) || 1;
   } else if (BranchInst *BI = dyn_cast<BranchInst>(BB->getTerminator())) {
     if (Value *CompVal = isValueEqualityComparison(BB->getTerminator())) {
       // This block must be empty, except for the setcond inst, if it exists.
