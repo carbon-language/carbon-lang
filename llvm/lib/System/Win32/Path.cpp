@@ -123,67 +123,60 @@ Path::GetDLLSuffix() {
   return "dll";
 }
 
-static inline bool IsLibrary(Path& path, const std::string& basename) {
-  if (path.appendFile(std::string("lib") + basename)) {
-    if (path.appendSuffix(Path::GetDLLSuffix()) && path.readable())
-      return true;
-    else if (path.elideSuffix() && path.appendSuffix("a") && path.readable())
-      return true;
-    else if (path.elideSuffix() && path.appendSuffix("o") && path.readable())
-      return true;
-    else if (path.elideSuffix() && path.appendSuffix("bc") && path.readable())
-      return true;
-  } else if (path.elideFile() && path.appendFile(basename)) {
-    if (path.appendSuffix(Path::GetDLLSuffix()) && path.readable())
-      return true;
-    else if (path.elideSuffix() && path.appendSuffix("a") && path.readable())
-      return true;
-    else if (path.elideSuffix() && path.appendSuffix("o") && path.readable())
-      return true;
-    else if (path.elideSuffix() && path.appendSuffix("bc") && path.readable())
-      return true;
+static void getPathList(const char*path, std::vector<sys::Path>& Paths) {
+  const char* at = path;
+  const char* delim = strchr(at, ';');
+  Path tmpPath;
+  while( delim != 0 ) {
+    std::string tmp(at, size_t(delim-at));
+    if (tmpPath.setDirectory(tmp))
+      if (tmpPath.readable())
+        Paths.push_back(tmpPath);
+    at = delim + 1;
+    delim = strchr(at, ';');
   }
-  path.clear();
-  return false;
+  if (*at != 0)
+    if (tmpPath.setDirectory(std::string(at)))
+      if (tmpPath.readable())
+        Paths.push_back(tmpPath);
+
 }
 
-Path 
-Path::GetLibraryPath(const std::string& basename, 
-                     const std::vector<std::string>& LibPaths) {
-  Path result;
-
-  // Try the paths provided
-  for (std::vector<std::string>::const_iterator I = LibPaths.begin(),
-       E = LibPaths.end(); I != E; ++I ) {
-    if (result.setDirectory(*I) && IsLibrary(result,basename))
-      return result;
+void 
+Path::GetSystemLibraryPaths(std::vector<sys::Path>& Paths) {
+#ifdef LTDL_SHLIBPATH_VAR
+  char* env_var = getenv(LTDL_SHLIBPATH_VAR);
+  if (env_var != 0) {
+    getPathList(env_var,Paths);
   }
-
-  // Try the LLVM lib directory in the LLVM install area
-  //if (result.setDirectory(LLVM_LIBDIR) && IsLibrary(result,basename))
-  //  return result;
-
-  // Try /usr/lib
-  if (result.setDirectory("/usr/lib/") && IsLibrary(result,basename))
-    return result;
-
-  // Try /lib
-  if (result.setDirectory("/lib/") && IsLibrary(result,basename))
-    return result;
-
-  // Can't find it, give up and return invalid path.
-  result.clear();
-  return result;
+#endif
+  // FIXME: Should this look at LD_LIBRARY_PATH too?
+  Paths.push_back(sys::Path("C:\\WINDOWS\\SYSTEM32\\"));
+  Paths.push_back(sys::Path("C:\\WINDOWS\\"));
 }
 
-Path
-Path::GetSystemLibraryPath1() {
-  return Path("/lib/");
-}
-
-Path
-Path::GetSystemLibraryPath2() {
-  return Path("/usr/lib/");
+void
+Path::GetBytecodeLibraryPaths(std::vector<sys::Path>& Paths) {
+  char * env_var = getenv("LLVM_LIB_SEARCH_PATH");
+  if (env_var != 0) {
+    getPathList(env_var,Paths);
+  }
+#ifdef LLVMGCCDIR
+  {
+    Path tmpPath(std::string(LLVMGCCDIR) + "bytecode-libs/");
+    if (tmpPath.readable())
+      Paths.push_back(tmpPath);
+  }
+#endif
+#ifdef LLVM_LIBDIR
+  {
+    Path tmpPath;
+    if (tmpPath.setDirectory(LLVM_LIBDIR))
+      if (tmpPath.readable())
+        Paths.push_back(tmpPath);
+  }
+#endif
+  GetSystemLibraryPaths(Paths);
 }
 
 Path
