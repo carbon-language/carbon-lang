@@ -73,15 +73,17 @@ static uint64_t HexIntToVal(const char *Buffer) {
 // point representation of it.
 //
 static double HexToFP(const char *Buffer) {
-  uint64_t Result = HexIntToVal(Buffer);
-
-  assert(sizeof(double) == sizeof(Result) &&
-         "Data sizes incompatible on this target!");
   // Behave nicely in the face of C TBAA rules... see:
   // http://www.nullstone.com/htmls/category/aliastyp.htm
-  //
-  char *ProxyPointer = (char*)&Result;
-  return *(double*)ProxyPointer;   // Cast Hex constant to double
+  union {
+    uint64_t UI;
+    double FP;
+  } UIntToFP;
+  UIntToFP.UI = HexIntToVal(Buffer);
+
+  assert(sizeof(double) == sizeof(uint64_t) &&
+         "Data sizes incompatible on this target!");
+  return UIntToFP.FP;   // Cast Hex constant to double
 }
 
 
