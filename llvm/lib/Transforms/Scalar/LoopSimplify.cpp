@@ -37,6 +37,7 @@
 #include "llvm/Instructions.h"
 #include "llvm/Function.h"
 #include "llvm/Type.h"
+#include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Support/CFG.h"
@@ -54,6 +55,10 @@ namespace {
   NumNested("loopsimplify", "Number of nested loops split out");
 
   struct LoopSimplify : public FunctionPass {
+    // AA - If we have an alias analysis object to update, this is it, otherwise
+    // this is null.
+    AliasAnalysis *AA;
+
     virtual bool runOnFunction(Function &F);
     
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
@@ -96,6 +101,7 @@ FunctionPass *llvm::createLoopSimplifyPass() { return new LoopSimplify(); }
 bool LoopSimplify::runOnFunction(Function &F) {
   bool Changed = false;
   LoopInfo &LI = getAnalysis<LoopInfo>();
+  AA = getAnalysisToUpdate<AliasAnalysis>();
 
   for (LoopInfo::iterator I = LI.begin(), E = LI.end(); I != E; ++I)
     Changed |= ProcessLoop(*I);
@@ -130,6 +136,7 @@ bool LoopSimplify::ProcessLoop(Loop *L) {
           (*SI)->removePredecessor(DeadBlock);  // Remove PHI node entries
 
         // Delete the dead terminator.
+        if (AA) AA->deleteValue(&DeadBlock->back());
         DeadBlock->getInstList().pop_back();
 
         Value *RetVal = 0;
@@ -230,6 +237,7 @@ BasicBlock *LoopSimplify::SplitBlockPredecessors(BasicBlock *BB,
       if (InVal == 0) {
         // Create the new PHI node, insert it into NewBB at the end of the block
         PHINode *NewPHI = new PHINode(PN->getType(), PN->getName()+".ph", BI);
+        if (AA) AA->copyValue(PN, NewPHI);
         
         // Move all of the edges from blocks outside the loop to the new PHI
         for (unsigned i = 0, e = Preds.size(); i != e; ++i) {
@@ -253,6 +261,7 @@ BasicBlock *LoopSimplify::SplitBlockPredecessors(BasicBlock *BB,
         if (!isa<Instruction>(V) ||
             getAnalysis<DominatorSet>().dominates(cast<Instruction>(V), PN)) {
           PN->replaceAllUsesWith(V);
+          if (AA) AA->deleteValue(PN);
           BB->getInstList().erase(PN);
         }
       }
@@ -429,7 +438,8 @@ static void AddBlockAndPredsToSet(BasicBlock *BB, BasicBlock *StopBlock,
 
 /// FindPHIToPartitionLoops - The first part of loop-nestification is to find a
 /// PHI node that tells us how to partition the loops.
-static PHINode *FindPHIToPartitionLoops(Loop *L, DominatorSet &DS) {
+static PHINode *FindPHIToPartitionLoops(Loop *L, DominatorSet &DS,
+                                        AliasAnalysis *AA) {
   for (BasicBlock::iterator I = L->getHeader()->begin(); isa<PHINode>(I); ) {
     PHINode *PN = cast<PHINode>(I);
     ++I;
@@ -437,6 +447,7 @@ static PHINode *FindPHIToPartitionLoops(Loop *L, DominatorSet &DS) {
       if (!isa<Instruction>(V) || DS.dominates(cast<Instruction>(V), PN)) {
         // This is a degenerate PHI already, don't modify it!
         PN->replaceAllUsesWith(V);
+        if (AA) AA->deleteValue(PN);
         PN->eraseFromParent();
         continue;
       }
@@ -469,7 +480,7 @@ static PHINode *FindPHIToPartitionLoops(Loop *L, DominatorSet &DS) {
 /// created.
 ///
 Loop *LoopSimplify::SeparateNestedLoop(Loop *L) {
-  PHINode *PN = FindPHIToPartitionLoops(L, getAnalysis<DominatorSet>());
+  PHINode *PN = FindPHIToPartitionLoops(L, getAnalysis<DominatorSet>(), AA);
   if (PN == 0) return 0;  // No known way to partition.
 
   // Pull out all predecessors that have varying values in the loop.  This
@@ -576,6 +587,7 @@ void LoopSimplify::InsertUniqueBackedgeBlock(Loop *L) {
     PHINode *NewPN = new PHINode(PN->getType(), PN->getName()+".be",
                                  BETerminator);
     NewPN->reserveOperandSpace(BackedgeBlocks.size());
+    if (AA) AA->copyValue(PN, NewPN);
 
     // Loop over the PHI node, moving all entries except the one for the
     // preheader over to the new PHI node.
@@ -616,6 +628,7 @@ void LoopSimplify::InsertUniqueBackedgeBlock(Loop *L) {
     // eliminate the PHI Node.
     if (HasUniqueIncomingValue) {
       NewPN->replaceAllUsesWith(UniqueValue);
+      if (AA) AA->deleteValue(NewPN);
       BEBlock->getInstList().erase(NewPN);
     }
   }
