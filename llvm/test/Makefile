@@ -1,5 +1,3 @@
-default: testcodegen
-
 LLC  := ../tools/Debug/llc
 AS   := ../tools/Debug/as
 LLCOPTS := -dsched y
