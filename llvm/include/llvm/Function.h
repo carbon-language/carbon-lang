@@ -63,7 +63,12 @@ public:
   inline const BasicBlocksType  &getBasicBlocks() const { return BasicBlocks; }
   inline       BasicBlocksType  &getBasicBlocks()       { return BasicBlocks; }
 
-
+  inline const BasicBlock*       getEntryNode() const   { return front(); }
+  inline       BasicBlock*       getEntryNode()         { return front(); }
+  
+  inline const BasicBlock*       getExitNode()  const   { return back();  }
+  inline       BasicBlock*       getExitNode()          { return back();  }
+  
   //===--------------------------------------------------------------------===//
   // BasicBlock iterator forwarding functions
   //
