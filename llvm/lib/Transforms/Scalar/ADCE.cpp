@@ -235,11 +235,15 @@ bool ADCE::doADCE() {
       dropReferencesOfDeadInstructionsInLiveBlock(I);
     
   } else {                                   // If there are some blocks dead...
-    // Insert a new entry node to eliminate the entry node as a special case.
-    BasicBlock *NewEntry = new BasicBlock();
-    NewEntry->getInstList().push_back(new BranchInst(&Func->front()));
-    Func->getBasicBlockList().push_front(NewEntry);
-    AliveBlocks.insert(NewEntry);    // This block is always alive!
+    // If the entry node is dead, insert a new entry node to eliminate the entry
+    // node as a special case.
+    //
+    if (!AliveBlocks.count(&Func->front())) {
+      BasicBlock *NewEntry = new BasicBlock();
+      NewEntry->getInstList().push_back(new BranchInst(&Func->front()));
+      Func->getBasicBlockList().push_front(NewEntry);
+      AliveBlocks.insert(NewEntry);    // This block is always alive!
+    }
     
     // Loop over all of the alive blocks in the function.  If any successor
     // blocks are not alive, we adjust the outgoing branches to branch to the
