@@ -477,12 +477,62 @@ void V8ISel::visitBranchInst(BranchInst &I) {
 /// emitGEPOperation - Common code shared between visitGetElementPtrInst and
 /// constant expression GEP support.
 ///
-void V8ISel::emitGEPOperation (MachineBasicBlock *BB,
+void V8ISel::emitGEPOperation (MachineBasicBlock *MBB,
                                MachineBasicBlock::iterator IP,
 		               Value *Src, User::op_iterator IdxBegin,
 		               User::op_iterator IdxEnd, unsigned TargetReg) {
-  std::cerr << "Sorry, GEPs not yet supported\n";
-  abort ();
+  const TargetData &TD = TM.getTargetData ();
+  const Type *Ty = Src->getType ();
+  unsigned basePtrReg = getReg (Src);
+
+  // GEPs have zero or more indices; we must perform a struct access
+  // or array access for each one.
+  for (GetElementPtrInst::op_iterator oi = IdxBegin, oe = IdxEnd; oi != oe;
+       ++oi) {
+    Value *idx = *oi;
+    unsigned nextBasePtrReg = makeAnotherReg (Type::UIntTy);
+    if (const StructType *StTy = dyn_cast<StructType> (Ty)) {
+      // It's a struct access.  idx is the index into the structure,
+      // which names the field. Use the TargetData structure to
+      // pick out what the layout of the structure is in memory.
+      // Use the (constant) structure index's value to find the
+      // right byte offset from the StructLayout class's list of
+      // structure member offsets.
+      unsigned fieldIndex = cast<ConstantUInt> (idx)->getValue ();
+      unsigned memberOffset =
+        TD.getStructLayout (StTy)->MemberOffsets[fieldIndex];
+      // Emit an ADD to add memberOffset to the basePtr.
+      BuildMI (*MBB, IP, V8::ADDri, 2,
+               nextBasePtrReg).addReg (basePtrReg).addZImm (memberOffset);
+      // The next type is the member of the structure selected by the
+      // index.
+      Ty = StTy->getElementType (fieldIndex);
+    } else if (const SequentialType *SqTy = dyn_cast<SequentialType> (Ty)) {
+      // It's an array or pointer access: [ArraySize x ElementType].
+      // We want to add basePtrReg to (idxReg * sizeof ElementType). First, we
+      // must find the size of the pointed-to type (Not coincidentally, the next
+      // type is the type of the elements in the array).
+      Ty = SqTy->getElementType ();
+      unsigned elementSize = TD.getTypeSize (Ty);
+      unsigned idxReg = getReg (idx, MBB, IP);
+      unsigned OffsetReg = makeAnotherReg (Type::IntTy);
+      unsigned elementSizeReg = makeAnotherReg (Type::UIntTy);
+      BuildMI (*MBB, IP, V8::ORri, 2,
+               elementSizeReg).addZImm (elementSize).addReg (V8::G0);
+      // Emit a SMUL to multiply the register holding the index by
+      // elementSize, putting the result in OffsetReg.
+      BuildMI (*MBB, IP, V8::SMULrr, 2,
+               OffsetReg).addReg (elementSizeReg).addReg (idxReg);
+      // Emit an ADD to add OffsetReg to the basePtr.
+      BuildMI (*MBB, IP, V8::ADDrr, 2,
+               nextBasePtrReg).addReg (basePtrReg).addReg (OffsetReg);
+    }
+    basePtrReg = nextBasePtrReg;
+  }
+  // After we have processed all the indices, the result is left in
+  // basePtrReg.  Move it to the register where we were expected to
+  // put the answer.
+  BuildMI (BB, V8::ORrr, 1, TargetReg).addReg (V8::G0).addReg (basePtrReg);
 }
 
 void V8ISel::visitGetElementPtrInst (GetElementPtrInst &I) {
