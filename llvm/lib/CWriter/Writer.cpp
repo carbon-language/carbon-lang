@@ -1019,19 +1019,16 @@ void CWriter::printIndexingExpression(Value *Ptr, User::op_iterator I,
 }
 
 void CWriter::visitLoadInst(LoadInst &I) {
-  //Out << "*";
   writeOperand(I.getOperand(0));
 }
 
 void CWriter::visitStoreInst(StoreInst &I) {
-  Out << "*";
   writeOperand(I.getPointerOperand());
   Out << " = ";
   writeOperand(I.getOperand(0));
 }
 
 void CWriter::visitGetElementPtrInst(GetElementPtrInst &I) {
-  //Out << "&";
   printIndexingExpression(I.getPointerOperand(), I.idx_begin(), I.idx_end());
 }
 
