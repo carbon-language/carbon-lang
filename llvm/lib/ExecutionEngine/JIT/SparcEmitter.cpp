@@ -106,13 +106,18 @@ void SparcEmitter::finishFunction(MachineFunction &F) {
         // Location is the target of the branch
         // Ref is the location of the instruction, and hence the PC
         unsigned branchTarget = (Location - (long)Ref) >> 2;
+        // Save the flags.
+        bool loBits32=false, hiBits32=false, loBits64=false, hiBits64=false;
+        if (op.opLoBits32()) { loBits32=true; }
+        if (op.opHiBits32()) { hiBits32=true; }
+        if (op.opLoBits64()) { loBits64=true; }
+        if (op.opHiBits64()) { hiBits64=true; }
         MI->SetMachineOperandConst(ii, MachineOperand::MO_SignExtendedImmed,
                                    branchTarget);
-        // Copy the flags.
-        if (op.opLoBits32()) { MI->setOperandLo32(ii); }
-        else if (op.opHiBits32()) { MI->setOperandHi32(ii); }
-        else if (op.opLoBits64()) { MI->setOperandLo64(ii); }
-        else if (op.opHiBits64()) { MI->setOperandHi64(ii); }
+        if (loBits32) { MI->setOperandLo32(ii); }
+        else if (hiBits32) { MI->setOperandHi32(ii); }
+        else if (loBits64) { MI->setOperandLo64(ii); }
+        else if (hiBits64) { MI->setOperandHi64(ii); }
         std::cerr << "Rewrote BB ref: ";
         unsigned fixedInstr = SparcV9CodeEmitter::getBinaryCodeForInstr(*MI);
         *Ref = fixedInstr;
