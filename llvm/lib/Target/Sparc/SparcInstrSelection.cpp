@@ -1240,10 +1240,10 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         MachineCodeForInstruction::get(returnInstr).addTemp(returnReg);
         
         M = new MachineInstr(JMPLRET);
-        M->SetMachineOperandReg(0, MachineOperand::MO_VirtualRegister,
-                                      returnReg);
+        M->SetMachineOperandVal(0, MachineOperand::MO_VirtualRegister,
+                                returnReg);
         M->SetMachineOperandConst(1,MachineOperand::MO_SignExtendedImmed,
-                                   (int64_t)8);
+                                  (int64_t)8);
         M->SetMachineOperandReg(2, target.getRegInfo().getZeroRegNum());
         
         if (returnInstr->getReturnValue() != NULL)
