@@ -24,6 +24,30 @@ bool Loop::contains(const BasicBlock *BB) const {
   return find(Blocks.begin(), Blocks.end(), BB) != Blocks.end();
 }
 
+bool Loop::isLoopExit(const BasicBlock *BB) const {
+  for (BasicBlock::succ_const_iterator SI = succ_begin(BB), SE = succ_end(BB);
+       SI != SE; ++SI) {
+    if (! contains(*SI))
+      return true;
+  }
+  return false;
+}
+
+unsigned Loop::getNumBackEdges() const {
+  unsigned numBackEdges = 0;
+  BasicBlock *header = Blocks.front();
+
+  for (std::vector<BasicBlock*>::const_iterator i = Blocks.begin(), e = Blocks.end();
+       i != e; ++i) {
+    for (BasicBlock::succ_iterator Successor = succ_begin(*i), SEnd = succ_end(*i);
+	 Successor != SEnd; ++Successor) {
+      if (header == *Successor)
+	++numBackEdges;
+    }
+  }
+  return numBackEdges;
+}
+
 void Loop::print(std::ostream &OS) const {
   OS << std::string(getLoopDepth()*2, ' ') << "Loop Containing: ";
 

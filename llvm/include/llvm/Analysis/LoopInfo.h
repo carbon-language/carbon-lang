@@ -44,7 +44,10 @@ public:
 
   /// isLoopExit - True if terminator in the block can branch to another block
   /// that is outside of the current loop.
-  bool isLoopExit(BasicBlock *BB) const;
+  bool isLoopExit(const BasicBlock *BB) const;
+
+  /// Find number of back edges
+  unsigned getNumBackEdges() const;
 
   /// getLoopPreheader - If there is a preheader for this loop, return it.  A
   /// loop has a preheader if there is only one edge to the header of the loop
