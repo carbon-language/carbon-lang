@@ -1,7 +1,7 @@
 //===-- Intercept.cpp - System function interception routines -------------===//
 //
 // If a function call occurs to an external function, the JIT is designed to use
-// dlsym on the current process to find a function to call.  This is useful for
+// the dynamic loader interface to find a function to call.  This is useful for
 // calling system calls and library functions that are not available in LLVM.
 // Some system calls, however, need to be handled specially.  For this reason,
 // we intercept some of them here and use our own stubs to handle them.
@@ -9,7 +9,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "VM.h"
-#include "Config/dlfcn.h"    // dlsym access
+#include "Support/DynamicLinker.h"
 #include <iostream>
 
 // AtExitHandlers - List of functions to call when the program exits,
@@ -50,8 +50,8 @@ static int jit_atexit(void (*Fn)(void)) {
 //===----------------------------------------------------------------------===//
 // 
 /// getPointerToNamedFunction - This method returns the address of the specified
-/// function by using the dlsym function call.  As such it is only useful for
-/// resolving library symbols, not code generated symbols.
+/// function by using the dynamic loader interface.  As such it is only useful 
+/// for resolving library symbols, not code generated symbols.
 ///
 void *VM::getPointerToNamedFunction(const std::string &Name) {
   // Check to see if this is one of the functions we want to intercept...
@@ -59,12 +59,7 @@ void *VM::getPointerToNamedFunction(const std::string &Name) {
   if (Name == "atexit") return (void*)&jit_atexit;
 
   // If it's an external function, look it up in the process image...
-  // On Sparc, RTLD_SELF is already defined and it's not zero
-  // Linux/x86 wants to use a 0, other systems may differ
-#ifndef RTLD_SELF
-#define RTLD_SELF 0
-#endif
-  void *Ptr = dlsym(RTLD_SELF, Name.c_str());
+  void *Ptr = GetAddressOfSymbol(Name);
   if (Ptr == 0) {
     std::cerr << "WARNING: Cannot resolve fn '" << Name
 	      << "' using a dummy noop function instead!\n";

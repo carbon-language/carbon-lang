@@ -16,6 +16,7 @@
 #include "llvm/Target/TargetData.h"
 #include "Support/Debug.h"
 #include "Support/Statistic.h"
+#include "Support/DynamicLinker.h"
 #include "Config/dlfcn.h"
 
 Statistic<> NumInitBytes("lli", "Number of bytes of global vars initialized");
@@ -339,14 +340,9 @@ void ExecutionEngine::emitGlobals() {
       DEBUG(std::cerr << "Global '" << I->getName() << "' -> "
 	              << (void*)GlobalAddress[I] << "\n");
     } else {
-      // On Sparc, RTLD_SELF is already defined and it's not zero
-      // Linux/x86 wants to use a 0, other systems may differ
-#ifndef RTLD_SELF
-#define RTLD_SELF 0
-#endif
-      // External variable reference, try to use dlsym to get a pointer to it in
-      // the LLI image.
-      if (void *SymAddr = dlsym(RTLD_SELF, I->getName().c_str()))
+      // External variable reference. Try to use the dynamic loader to
+      // get a pointer to it.
+      if (void *SymAddr = GetAddressOfSymbol(I->getName().c_str()))
         GlobalAddress[I] = SymAddr;
       else {
         std::cerr << "Could not resolve external global address: "
