@@ -460,7 +460,7 @@ public:
 
   /// clone - Create a copy of 'this' instruction that is identical in
   /// all ways except the the instruction has no parent, prev, or next.
-  MachineInstr* clone();
+  MachineInstr* clone() const;
 
   //
   // Debugging support

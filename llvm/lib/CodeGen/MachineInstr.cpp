@@ -78,6 +78,12 @@ MachineInstr::MachineInstr(const MachineInstr &MI) {
   //Add operands
   for(unsigned i=0; i < MI.getNumOperands(); ++i)
     operands.push_back(MachineOperand(MI.getOperand(i)));
+
+  //Set parent, next, and prev to null
+  parent = 0;
+  prev = 0;
+  next = 0;
+  
 }
 
 
@@ -89,7 +95,7 @@ MachineInstr::~MachineInstr()
 ///clone - Create a copy of 'this' instruction that is identical in
 ///all ways except the following: The instruction has no parent The
 ///instruction has no name
-MachineInstr* MachineInstr::clone() {
+MachineInstr* MachineInstr::clone() const {
   return new MachineInstr(*this);
 }
 
