@@ -167,7 +167,7 @@ dnl the OS.
 AC_CACHE_CHECK([target architecture],[llvm_cv_target_arch],
 [case $target in
   i?86-*)                 llvm_cv_target_arch="x86" ;;
-  amd64-* | x86_64-*)     llvm_cv_target_arch="X86_64" ;;
+  amd64-* | x86_64-*)     llvm_cv_target_arch="x86_64" ;;
   sparc*-*)               llvm_cv_target_arch="Sparc" ;;
   powerpc*-*)             llvm_cv_target_arch="PowerPC" ;;
   *)                      llvm_cv_target_arch="Unknown" ;;
