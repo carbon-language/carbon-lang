@@ -48,6 +48,7 @@ bool BytecodeParser::ParseRawInst(const uchar *&Buf, const uchar *EndBuf,
     if (read_vbr(Buf, EndBuf, Result.Opcode)) return failure(true);
     if (read_vbr(Buf, EndBuf, Typ)) return failure(true);
     Result.Ty = getType(Typ);
+    if (Result.Ty == 0) return failure(true);
     if (read_vbr(Buf, EndBuf, Result.NumOperands)) return failure(true);
 
     switch (Result.NumOperands) {
@@ -109,10 +110,13 @@ bool BytecodeParser::ParseInstruction(const uchar *&Buf, const uchar *EndBuf,
 
   Value *V;
   switch (Raw.Opcode) {
-  case Instruction::Cast:
-    Res = new CastInst(getValue(Raw.Ty, Raw.Arg1), getType(Raw.Arg2));
+  case Instruction::Cast: {
+    V = getValue(Raw.Ty, Raw.Arg1);
+    const Type *Ty = getType(Raw.Arg2);
+    if (V == 0 || Ty == 0) { cerr << "Invalid cast!\n"; return true; }
+    Res = new CastInst(V, Ty);
     return false;
-
+  }
   case Instruction::PHINode: {
     PHINode *PN = new PHINode(Raw.Ty);
     switch (Raw.NumOperands) {
