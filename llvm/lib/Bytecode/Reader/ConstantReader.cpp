@@ -326,7 +326,8 @@ void BytecodeParser::ParseConstantPool(const unsigned char *&Buf,
         // If we are reading a function constant table, make sure that we adjust
         // the slot number to be the real global constant number.
         //
-        if (&Tab != &ModuleValues && Typ < ModuleValues.size())
+        if (&Tab != &ModuleValues && Typ < ModuleValues.size() &&
+            ModuleValues[Typ])
           Slot += ModuleValues[Typ]->size();
         ResolveReferencesToConstant(C, Slot);
       }
