@@ -243,25 +243,18 @@ static inline ExprType negate(const ExprType &E, Value *V) {
 //
 ExprType llvm::ClassifyExpr(Value *Expr) {
   assert(Expr != 0 && "Can't classify a null expression!");
-  if (Expr->getType() == Type::FloatTy || Expr->getType() == Type::DoubleTy)
+  if (Expr->getType()->isFloatingPoint())
     return Expr;   // FIXME: Can't handle FP expressions
 
-  switch (Expr->getValueType()) {
-  case Value::InstructionVal: break;    // Instruction... hmmm... investigate.
-  case Value::TypeVal:   case Value::BasicBlockVal:
-  case Value::FunctionVal: default:
-    //assert(0 && "Unexpected expression type to classify!");
-    std::cerr << "Bizarre thing to expr classify: " << Expr << "\n";
-    return Expr;
-  case Value::GlobalVariableVal:        // Global Variable & Function argument:
-  case Value::ArgumentVal:              // nothing known, return variable itself
-    return Expr;
-  case Value::ConstantVal:              // Constant value, just return constant
+  if (Constant *C = dyn_cast<Constant>(Expr)) {
     if (ConstantInt *CPI = dyn_cast<ConstantInt>(cast<Constant>(Expr)))
       // It's an integral constant!
       return ExprType(CPI->isNullValue() ? 0 : CPI);
     return Expr;
+  } else if (!isa<Instruction>(Expr)) {
+    return Expr;
   }
+
   
   Instruction *I = cast<Instruction>(Expr);
   const Type *Ty = I->getType();
