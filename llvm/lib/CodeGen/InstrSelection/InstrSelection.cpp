@@ -15,6 +15,7 @@
 
 //*************************** User Include Files ***************************/
 
+#include "llvm/CodeGen/InstrSelection.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Type.h"
 #include "llvm/iMemory.h"
@@ -22,7 +23,6 @@
 #include "llvm/BasicBlock.h"
 #include "llvm/Method.h"
 #include "llvm/CodeGen/MachineInstr.h"
-#include "llvm/CodeGen/InstrSelection.h"
 
 
 //************************* Forward Declarations ***************************/
