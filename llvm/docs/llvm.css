@@ -25,7 +25,7 @@ TABLE       { text-align: center; border: 2px solid black;
 /* Common for title and header */
 .doc_title, .doc_section, .doc_subsection { 
   color: black; background: url("img/lines.gif");
-  font-family: "Georgia,Palatino,Times,Roman"; font-weight: bold;
+  font-family: "Georgia,Palatino,Times,Roman,SanSerif"; font-weight: bold;
   border-width: 1px;
   border-style: solid none solid none;
   text-align: center;
@@ -76,7 +76,7 @@ TD.left         { border: none; padding: 4pt 4pt 2pt 2pt; text-align: left;
                   vertical-align: top;}
 TD.right        { border: none; padding: 4pt 4pt 2pt 2pt; text-align: right; 
                   vertical-align: top;}
-TH.layout       { border: none font-weight: bold; font-size: 105%; 
+TH.layout       { border: none; font-weight: bold; font-size: 105%; 
                   text-align:center; vertical-align: middle; }
 
 /* Left align table cell */
