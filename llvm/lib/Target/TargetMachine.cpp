@@ -21,9 +21,10 @@ using namespace llvm;
 // Command-line options that tend to be useful on more than one back-end.
 //
 
-bool llvm::PrintMachineCode;
-bool llvm::NoFramePointerElim;
-
+namespace llvm {
+  bool PrintMachineCode;
+  bool NoFramePointerElim;
+};
 namespace {
   cl::opt<bool, true> PrintCode("print-machineinstrs",
     cl::desc("Print generated machine code"),
