@@ -27,6 +27,8 @@ extern int llvmAsmlineno;
 extern std::string CurFilename;
 Module *RunVMAsmParser(const std::string &Filename, FILE *F);
 
+extern char* llvmAsmtext;
+extern int   llvmAsmleng;
 
 // UnEscapeLexed - Run through the specified buffer and change \xx codes to the
 // appropriate character.  If AllowNull is set to false, a \00 value will cause
