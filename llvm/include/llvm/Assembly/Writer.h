@@ -23,6 +23,7 @@ class Module;
 class Method;
 class BasicBlock;
 class Instruction;
+class SlotCalculator;
 
 // The only interface defined by this file... convert the internal 
 // representation of an object into an ascii bytestream that the parser can 
@@ -33,6 +34,14 @@ void WriteToAssembly(const Method  *Method, ostream &o);
 void WriteToAssembly(const BasicBlock  *BB, ostream &o);
 void WriteToAssembly(const Instruction *In, ostream &o);
 void WriteToAssembly(const ConstPoolVal *V, ostream &o);
+
+// WriteAsOperand - Write the name of the specified value out to the specified
+// ostream.  This can be useful when you just want to print int %reg126, not the
+// whole instruction that generated it.
+//
+ostream &WriteAsOperand(ostream &o, const Value *V, bool PrintType = true,
+                       	bool PrintName = true, SlotCalculator *Table = 0);
+
 
 // WriteToVCG - Dump the specified structure to a VCG file.  If method is
 // dumped, then the file named is created.  If a module is to be written, a
