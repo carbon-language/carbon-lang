@@ -19,6 +19,7 @@
 #include "Support/StringExtras.h"
 #include "Config/fcntl.h"
 #include <sys/stat.h>
+#include <cerrno>
 #include "Config/unistd.h"
 #include "Config/sys/mman.h"
 using namespace llvm;
@@ -57,22 +58,26 @@ namespace {
   };
 }
 
+static std::string ErrnoMessage (int savedErrNum, std::string descr) {
+   return ::strerror(savedErrNum) + std::string(", while trying to ") + descr;
+}
+
 BytecodeFileReader::BytecodeFileReader(const std::string &Filename) {
   FDHandle FD = open(Filename.c_str(), O_RDONLY);
   if (FD == -1)
-    throw std::string("Error opening file!");
+    throw ErrnoMessage(errno, "open '" + Filename + "'");
 
   // Stat the file to get its length...
   struct stat StatBuf;
   if (fstat(FD, &StatBuf) == -1 || StatBuf.st_size == 0)
-    throw std::string("Error stat'ing file!");
+    throw ErrnoMessage(errno, "stat '" + Filename + "'");
 
   // mmap in the file all at once...
   Length = StatBuf.st_size;
   Buffer = (unsigned char*)mmap(0, Length, PROT_READ, MAP_PRIVATE, FD, 0);
 
   if (Buffer == (unsigned char*)MAP_FAILED)
-    throw std::string("Error mmapping file!");
+    throw ErrnoMessage(errno, "map '" + Filename + "' into memory");
 
   try {
     // Parse the bytecode we mmapped in
@@ -167,7 +172,7 @@ BytecodeStdinReader::BytecodeStdinReader() {
   // Read in all of the data from stdin, we cannot mmap stdin...
   while ((BlockSize = ::read(0 /*stdin*/, Buffer, 4096*4))) {
     if (BlockSize == -1)
-      throw std::string("Error reading from stdin!");
+      throw ErrnoMessage(errno, "read from standard input");
     
     FileData.insert(FileData.end(), Buffer, Buffer+BlockSize);
   }
