@@ -35,7 +35,7 @@ clean :
 %.bc: %.ll
 	$(AS) $< -f
 
-%.mc: %.ll
+%.mc: %.ll $(LLC) $(AS)
 	@echo "Generating machine instructions for $<"
 	$(AS) < $< | $(LLC) -dsched=t > $@
 
