@@ -98,9 +98,9 @@ void FindUsedTypes::print(std::ostream &o, const Module *M) const {
     CachedWriter CW(M, o);
     for (std::set<const Type *>::const_iterator I = UsedTypes.begin(),
            E = UsedTypes.end(); I != E; ++I)
-      CW << "  " << *I << "\n";
+      CW << "  " << **I << "\n";
   } else
     for (std::set<const Type *>::const_iterator I = UsedTypes.begin(),
            E = UsedTypes.end(); I != E; ++I)
-      o << "  " << *I << "\n";
+      o << "  " << **I << "\n";
 }

@@ -25,12 +25,11 @@
 
 #include "llvm/Analysis/FindUnsafePointerTypes.h"
 #include "llvm/Assembly/CachedWriter.h"
-#include "llvm/Type.h"
+#include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
 #include "llvm/Support/InstIterator.h"
 #include "Support/CommandLine.h"
-
-namespace llvm {
+using namespace llvm;
 
 static RegisterAnalysis<FindUnsafePointerTypes>
 X("unsafepointertypes", "Find Unsafe Pointer Types");
@@ -72,7 +71,7 @@ bool FindUnsafePointerTypes::run(Module &Mod) {
           if (PrintFailures) {
             CachedWriter CW(F->getParent(), std::cerr);
             std::cerr << "FindUnsafePointerTypes: Type '";
-            CW << ITy;
+            CW << *ITy;
             std::cerr << "' marked unsafe in '" << F->getName() << "' by:\n";
             CW << *I;
           }
@@ -101,8 +100,7 @@ void FindUnsafePointerTypes::print(std::ostream &o, const Module *M) const {
          E = getUnsafeTypes().end(); I != E; ++I, ++Counter) {
     
     o << " #" << Counter << ". ";
-    CW << (Type*)*I << "\n";
+    CW << **I << "\n";
   }
 }
 
-} // End llvm namespace
