@@ -61,7 +61,7 @@ static bool LinkTypes(Module *Dest, const Module *Src, string *Err = 0) {
       if (Entry != RHS)            // If it's the same, noop.  Otherwise, error.
         return Error(Err, "Type named '" + Name + 
                      "' of different shape in modules.\n  Src='" + 
-                     Entry->getDescription() + "'.  Dest='" + 
+                     Entry->getDescription() + "'.\n  Dst='" + 
                      RHS->getDescription() + "'");
     } else {                       // Type not in dest module.  Add it now.
       // TODO: FIXME WHEN TYPES AREN'T CONST
