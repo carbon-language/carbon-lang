@@ -1210,50 +1210,50 @@ FunctionHeaderH : OptInternal TypesV FuncName '(' ArgList ')' {
   string FunctionName($3);
   
   vector<const Type*> ParamTypeList;
-  if ($5)
+  if ($5) {   // If there are arguments...
     for (vector<pair<PATypeHolder*,char*> >::iterator I = $5->begin();
          I != $5->end(); ++I)
       ParamTypeList.push_back(I->first->get());
+  }
 
   bool isVarArg = ParamTypeList.size() && ParamTypeList.back() == Type::VoidTy;
   if (isVarArg) ParamTypeList.pop_back();
 
-  const FunctionType *MT = FunctionType::get(*$2, ParamTypeList, isVarArg);
-  const PointerType *PMT = PointerType::get(MT);
+  const FunctionType *FT = FunctionType::get(*$2, ParamTypeList, isVarArg);
+  const PointerType *PFT = PointerType::get(FT);
   delete $2;
 
-  Function *M = 0;
-  if (SymbolTable *ST = CurModule.CurrentModule->getSymbolTable()) {
-    // Is the function already in symtab?
-    if (Value *V = ST->lookup(PMT, FunctionName)) {
-      M = cast<Function>(V);
+  Function *Fn = 0;
+  // Is the function already in symtab?
+  if ((Fn = CurModule.CurrentModule->getFunction(FunctionName, FT))) {
+    // Yes it is.  If this is the case, either we need to be a forward decl,
+    // or it needs to be.
+    if (!CurMeth.isDeclare && !Fn->isExternal())
+      ThrowException("Redefinition of function '" + FunctionName + "'!");
+    
+    // Make sure that we keep track of the internal marker, even if there was
+    // a previous "declare".
+    if ($1)
+      Fn->setInternalLinkage(true);
 
-      // Yes it is.  If this is the case, either we need to be a forward decl,
-      // or it needs to be.
-      if (!CurMeth.isDeclare && !M->isExternal())
-	ThrowException("Redefinition of function '" + FunctionName + "'!");
+    // If we found a preexisting function prototype, remove it from the
+    // module, so that we don't get spurious conflicts with global & local
+    // variables.
+    //
+    CurModule.CurrentModule->getFunctionList().remove(Fn);
 
-      // Make sure that we keep track of the internal marker, even if there was
-      // a previous "declare".
-      if ($1)
-        M->setInternalLinkage(true);
+    // Make sure to strip off any argument names so we can't get conflicts...
+    for (Function::aiterator AI = Fn->abegin(), AE = Fn->aend(); AI != AE; ++AI)
+      AI->setName("");
 
-      // If we found a preexisting function prototype, remove it from the
-      // module, so that we don't get spurious conflicts with global & local
-      // variables.
-      //
-      CurModule.CurrentModule->getFunctionList().remove(M);
-    }
-  }
-
-  if (M == 0) {  // Not already defined?
-    M = new Function(MT, $1, FunctionName);
-    InsertValue(M, CurModule.Values);
-    CurModule.DeclareNewGlobalValue(M, ValID::create($3));
+  } else  {  // Not already defined?
+    Fn = new Function(FT, $1, FunctionName);
+    InsertValue(Fn, CurModule.Values);
+    CurModule.DeclareNewGlobalValue(Fn, ValID::create($3));
   }
   free($3);  // Free strdup'd memory!
 
-  CurMeth.FunctionStart(M);
+  CurMeth.FunctionStart(Fn);
 
   // Add all of the arguments we parsed to the function...
   if ($5) {                     // Is null if empty...
@@ -1263,7 +1263,7 @@ FunctionHeaderH : OptInternal TypesV FuncName '(' ArgList ')' {
       delete $5->back().first;
       $5->pop_back();  // Delete the last entry
     }
-    Function::aiterator ArgIt = M->abegin();
+    Function::aiterator ArgIt = Fn->abegin();
     for (vector<pair<PATypeHolder*, char*> >::iterator I = $5->begin();
          I != $5->end(); ++I, ++ArgIt) {
       delete I->first;                          // Delete the typeholder...
@@ -1411,11 +1411,11 @@ BBTerminatorInst : RET ResolvedVal {              // Return with a result...
   }
   | INVOKE TypesV ValueRef '(' ValueRefListE ')' TO ResolvedVal 
     EXCEPT ResolvedVal {
-    const PointerType *PMTy;
+    const PointerType *PFTy;
     const FunctionType *Ty;
 
-    if (!(PMTy = dyn_cast<PointerType>($2->get())) ||
-        !(Ty = dyn_cast<FunctionType>(PMTy->getElementType()))) {
+    if (!(PFTy = dyn_cast<PointerType>($2->get())) ||
+        !(Ty = dyn_cast<FunctionType>(PFTy->getElementType()))) {
       // Pull out the types of all of the arguments...
       vector<const Type*> ParamTypes;
       if ($5) {
@@ -1427,11 +1427,11 @@ BBTerminatorInst : RET ResolvedVal {              // Return with a result...
       if (isVarArg) ParamTypes.pop_back();
 
       Ty = FunctionType::get($2->get(), ParamTypes, isVarArg);
-      PMTy = PointerType::get(Ty);
+      PFTy = PointerType::get(Ty);
     }
     delete $2;
 
-    Value *V = getVal(PMTy, $3);   // Get the function we're calling...
+    Value *V = getVal(PFTy, $3);   // Get the function we're calling...
 
     BasicBlock *Normal = dyn_cast<BasicBlock>($8);
     BasicBlock *Except = dyn_cast<BasicBlock>($10);
@@ -1570,11 +1570,11 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
     delete $2;  // Free the list...
   } 
   | CALL TypesV ValueRef '(' ValueRefListE ')' {
-    const PointerType *PMTy;
+    const PointerType *PFTy;
     const FunctionType *Ty;
 
-    if (!(PMTy = dyn_cast<PointerType>($2->get())) ||
-        !(Ty = dyn_cast<FunctionType>(PMTy->getElementType()))) {
+    if (!(PFTy = dyn_cast<PointerType>($2->get())) ||
+        !(Ty = dyn_cast<FunctionType>(PFTy->getElementType()))) {
       // Pull out the types of all of the arguments...
       vector<const Type*> ParamTypes;
       if ($5) {
@@ -1586,11 +1586,11 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
       if (isVarArg) ParamTypes.pop_back();
 
       Ty = FunctionType::get($2->get(), ParamTypes, isVarArg);
-      PMTy = PointerType::get(Ty);
+      PFTy = PointerType::get(Ty);
     }
     delete $2;
 
-    Value *V = getVal(PMTy, $3);   // Get the function we're calling...
+    Value *V = getVal(PFTy, $3);   // Get the function we're calling...
 
     // Create the call node...
     if (!$5) {                                   // Has no arguments?
