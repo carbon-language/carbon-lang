@@ -236,13 +236,24 @@ public:
                                       vector<MachineInstr*>& minstrVec,
                                       vector<TmpInstruction*>& temps) const =0;
 
-  // Create an instruction sequence to copy an integer value `val' from an
-  // integer to a floating point register `dest'.  val must be an integral
-  // type.  dest must be a Float or Double.
+  // Create an instruction sequence to copy an integer value `val'
+  // to a floating point value `dest' by copying to memory and back.
+  // val must be an integral type.  dest must be a Float or Double.
   // The generated instructions are returned in `minstrVec'.
   // Any temp. registers (TmpInstruction) created are returned in `tempVec'.
   // 
   virtual void  CreateCodeToCopyIntToFloat(Method* method,
+                                           Value* val,
+                                           Instruction* dest,
+                                           vector<MachineInstr*>& minstrVec,
+                                           vector<TmpInstruction*>& tempVec,
+                                           TargetMachine& target) const = 0;
+
+  // Similarly, create an instruction sequence to copy an FP value
+  // `val' to an integer value `dest' by copying to memory and back.
+  // See the previous function for information about return values.
+  // 
+  virtual void  CreateCodeToCopyFloatToInt(Method* method,
                                            Value* val,
                                            Instruction* dest,
                                            vector<MachineInstr*>& minstrVec,

@@ -16,6 +16,7 @@ class MachineInstrDescriptor;
 class MachineSchedInfo;
 class MachineRegInfo;
 class MachineFrameInfo;
+class MachineCacheInfo;
 
 //---------------------------------------------------------------------------
 // Data types used to define information about a single machine instruction
@@ -65,6 +66,7 @@ public:
   virtual const MachineSchedInfo&       getSchedInfo() const = 0;
   virtual const MachineRegInfo&	        getRegInfo()   const = 0;
   virtual const MachineFrameInfo&       getFrameInfo() const = 0;
+  virtual const MachineCacheInfo&       getCacheInfo() const = 0;
   
   //
   // Data storage information
