@@ -167,6 +167,19 @@ BasicBlock *Preheaders::SplitBlockPredecessors(BasicBlock *BB,
   return NewBB;
 }
 
+// ChangeExitBlock - This recursive function is used to change any exit blocks
+// that use OldExit to use NewExit instead.  This is recursive because children
+// may need to be processed as well.
+//
+static void ChangeExitBlock(Loop *L, BasicBlock *OldExit, BasicBlock *NewExit) {
+  if (L->hasExitBlock(OldExit)) {
+    L->changeExitBlock(OldExit, NewExit);
+    const std::vector<Loop*> &SubLoops = L->getSubLoops();
+    for (unsigned i = 0, e = SubLoops.size(); i != e; ++i)
+      ChangeExitBlock(SubLoops[i], OldExit, NewExit);
+  }
+}
+
 
 /// InsertPreheaderForLoop - Once we discover that a loop doesn't have a
 /// preheader, this method is called to insert one.  This method has two phases:
@@ -197,18 +210,19 @@ void Preheaders::InsertPreheaderForLoop(Loop *L) {
   // If the header for the loop used to be an exit node for another loop, then
   // we need to update this to know that the loop-preheader is now the exit
   // node.  Note that the only loop that could have our header as an exit node
-  // is a sibling loop, ie, one with the same parent loop.
+  // is a sibling loop, ie, one with the same parent loop, or one if it's
+  // children.
+  //
   const std::vector<Loop*> *ParentSubLoops;
   if (Loop *Parent = L->getParentLoop())
     ParentSubLoops = &Parent->getSubLoops();
   else       // Must check top-level loops...
     ParentSubLoops = &getAnalysis<LoopInfo>().getTopLevelLoops();
 
-  // Loop over all sibling loops, performing the substitution...
+  // Loop over all sibling loops, performing the substitution (recursively to
+  // include child loops)...
   for (unsigned i = 0, e = ParentSubLoops->size(); i != e; ++i)
-    if ((*ParentSubLoops)[i]->hasExitBlock(Header))
-      (*ParentSubLoops)[i]->changeExitBlock(Header, NewBB);
-
+    ChangeExitBlock((*ParentSubLoops)[i], Header, NewBB);
   
   DominatorSet &DS = getAnalysis<DominatorSet>();  // Update dominator info
   {
