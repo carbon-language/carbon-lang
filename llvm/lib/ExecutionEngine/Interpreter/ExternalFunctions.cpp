@@ -371,10 +371,87 @@ GenericValue lle_X_printf(MethodType *M, const vector<GenericValue> &Args) {
   return GV;
 }
 
+// int sscanf(const char *format, ...);
+GenericValue lle_X_sscanf(MethodType *M, const vector<GenericValue> &args) {
+  assert(args.size() < 10 && "Only handle up to 10 args to sscanf right now!");
+
+  const char *Args[10];
+  for (unsigned i = 0; i < args.size(); ++i)
+    Args[i] = (const char*)args[i].PointerVal;
+
+  GenericValue GV;
+  GV.IntVal = sscanf(Args[0], Args[1], Args[2], Args[3], Args[4],
+                     Args[5], Args[6], Args[7], Args[8], Args[9]);
+  return GV;
+}
+
+
 // int clock(void) - Profiling implementation
 GenericValue lle_i_clock(MethodType *M, const vector<GenericValue> &Args) {
   extern int clock(void);
   GenericValue GV; GV.IntVal = clock();
+  return GV;
+}
+
+//===----------------------------------------------------------------------===//
+// IO Functions...
+//===----------------------------------------------------------------------===//
+
+// FILE *fopen(const char *filename, const char *mode);
+GenericValue lle_X_fopen(MethodType *M, const vector<GenericValue> &Args) {
+  assert(Args.size() == 2);
+  GenericValue GV;
+
+  GV.PointerVal = (PointerTy)fopen((const char *)Args[0].PointerVal,
+                                   (const char *)Args[1].PointerVal);
+  return GV;
+}
+
+// int fclose(FILE *F);
+GenericValue lle_X_fclose(MethodType *M, const vector<GenericValue> &Args) {
+  assert(Args.size() == 1);
+  GenericValue GV;
+
+  GV.IntVal = fclose((FILE *)Args[0].PointerVal);
+  return GV;
+}
+
+// size_t fread(void *ptr, size_t size, size_t nitems, FILE *stream);
+GenericValue lle_X_fread(MethodType *M, const vector<GenericValue> &Args) {
+  assert(Args.size() == 4);
+  GenericValue GV;
+
+  GV.UIntVal = fread((void*)Args[0].PointerVal, Args[1].UIntVal,
+                     Args[2].UIntVal, (FILE*)Args[3].PointerVal);
+  return GV;
+}
+
+// size_t fwrite(const void *ptr, size_t size, size_t nitems, FILE *stream);
+GenericValue lle_X_fwrite(MethodType *M, const vector<GenericValue> &Args) {
+  assert(Args.size() == 4);
+  GenericValue GV;
+
+  GV.UIntVal = fwrite((void*)Args[0].PointerVal, Args[1].UIntVal,
+                      Args[2].UIntVal, (FILE*)Args[3].PointerVal);
+  return GV;
+}
+
+// char *fgets(char *s, int n, FILE *stream);
+GenericValue lle_X_fgets(MethodType *M, const vector<GenericValue> &Args) {
+  assert(Args.size() == 3);
+  GenericValue GV;
+
+  GV.PointerVal = (PointerTy)fgets((char*)Args[0].PointerVal, Args[1].IntVal,
+                                   (FILE*)Args[2].PointerVal);
+  return GV;
+}
+
+// int fflush(FILE *stream);
+GenericValue lle_X_fflush(MethodType *M, const vector<GenericValue> &Args) {
+  assert(Args.size() == 1);
+  GenericValue GV;
+
+  GV.IntVal = fflush((FILE*)Args[0].PointerVal);
   return GV;
 }
 
@@ -416,5 +493,12 @@ void Interpreter::initializeExternalMethods() {
   FuncNames["lle_X_sqrt"]         = lle_X_sqrt;
   FuncNames["lle_X_printf"]       = lle_X_printf;
   FuncNames["lle_X_sprintf"]      = lle_X_sprintf;
+  FuncNames["lle_X_sscanf"]       = lle_X_sscanf;
   FuncNames["lle_i_clock"]        = lle_i_clock;
+  FuncNames["lle_X_fopen"]        = lle_X_fopen;
+  FuncNames["lle_X_fclose"]       = lle_X_fclose;
+  FuncNames["lle_X_fread"]        = lle_X_fread;
+  FuncNames["lle_X_fwrite"]       = lle_X_fwrite;
+  FuncNames["lle_X_fgets"]        = lle_X_fgets;
+  FuncNames["lle_X_fflush"]       = lle_X_fflush;
 }
