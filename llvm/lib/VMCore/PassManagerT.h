@@ -31,8 +31,6 @@
 
 namespace llvm {
 
-class Annotable;
-
 //===----------------------------------------------------------------------===//
 // Pass debugging information.  Often it is useful to find out what pass is
 // running when a crash occurs in a utility.  When this library is compiled with
@@ -75,7 +73,9 @@ struct PMDebug {
   }
 
   static void PrintArgumentInformation(const Pass *P);
-  static void PrintPassInformation(unsigned,const char*,Pass *, Annotable *);
+  static void PrintPassInformation(unsigned,const char*,Pass *, Module *);
+  static void PrintPassInformation(unsigned,const char*,Pass *, Function *);
+  static void PrintPassInformation(unsigned,const char*,Pass *, BasicBlock *);
   static void PrintAnalysisSetInfo(unsigned,const char*,Pass *P,
                                    const std::vector<AnalysisID> &);
 };
@@ -216,8 +216,7 @@ public:
     for (unsigned i = 0, e = Passes.size(); i < e; ++i) {
       PassClass *P = Passes[i];
       
-      PMDebug::PrintPassInformation(getDepth(), "Executing Pass", P,
-                                    (Annotable*)M);
+      PMDebug::PrintPassInformation(getDepth(), "Executing Pass", P, M);
 
       // Get information about what analyses the pass uses...
       AnalysisUsage AnUsage;
@@ -259,8 +258,7 @@ public:
                                     P->getPassName() + "'");
 
       if (Changed)
-        PMDebug::PrintPassInformation(getDepth()+1, "Made Modification", P,
-                                      (Annotable*)M);
+        PMDebug::PrintPassInformation(getDepth()+1, "Made Modification", P, M);
       PMDebug::PrintAnalysisSetInfo(getDepth(), "Preserved", P,
                                     AnUsage.getPreservedSet());
 
@@ -301,8 +299,7 @@ public:
       std::vector<Pass*> &DeadPass = LastUserOf[P];
       for (std::vector<Pass*>::iterator I = DeadPass.begin(),E = DeadPass.end();
            I != E; ++I) {
-        PMDebug::PrintPassInformation(getDepth()+1, "Freeing Pass", *I,
-                                      (Annotable*)M);
+        PMDebug::PrintPassInformation(getDepth()+1, "Freeing Pass", *I, M);
         (*I)->releaseMemory();
       }
 

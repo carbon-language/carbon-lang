@@ -133,22 +133,31 @@ void PMDebug::PrintArgumentInformation(const Pass *P) {
 }
 
 void PMDebug::PrintPassInformation(unsigned Depth, const char *Action,
-                                   Pass *P, Annotable *V) {
+                                   Pass *P, Module *M) {
   if (PassDebugging >= Executions) {
     std::cerr << (void*)P << std::string(Depth*2+1, ' ') << Action << " '" 
               << P->getPassName();
-    if (V) {
-      std::cerr << "' on ";
+    if (M) std::cerr << "' on Module '" << M->getModuleIdentifier() << "'\n";
+    std::cerr << "'...\n";
+  }
+}
 
-      if (dynamic_cast<Module*>(V)) {
-        std::cerr << "Module\n"; return;
-      } else if (Function *F = dynamic_cast<Function*>(V))
-        std::cerr << "Function '" << F->getName();
-      else if (BasicBlock *BB = dynamic_cast<BasicBlock*>(V))
-        std::cerr << "BasicBlock '" << BB->getName();
-      else if (Value *Val = dynamic_cast<Value*>(V))
-        std::cerr << typeid(*Val).name() << " '" << Val->getName();
-    }
+void PMDebug::PrintPassInformation(unsigned Depth, const char *Action,
+                                   Pass *P, Function *F) {
+  if (PassDebugging >= Executions) {
+    std::cerr << (void*)P << std::string(Depth*2+1, ' ') << Action << " '" 
+              << P->getPassName();
+    if (F) std::cerr << "' on Function '" << F->getName();
+    std::cerr << "'...\n";
+  }
+}
+
+void PMDebug::PrintPassInformation(unsigned Depth, const char *Action,
+                                   Pass *P, BasicBlock *BB) {
+  if (PassDebugging >= Executions) {
+    std::cerr << (void*)P << std::string(Depth*2+1, ' ') << Action << " '" 
+              << P->getPassName();
+    if (BB) std::cerr << "' on BasicBlock '" << BB->getName();
     std::cerr << "'...\n";
   }
 }
