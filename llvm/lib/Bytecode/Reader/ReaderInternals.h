@@ -55,6 +55,16 @@ public:
     freeTable(ModuleValues);
   }
 
+  Module* materializeModule() {
+    while (! LazyFunctionLoadMap.empty()) {
+      std::map<Function*, LazyFunctionInfo>::iterator i = 
+        LazyFunctionLoadMap.begin();
+      materializeFunction((*i).first);
+    }
+
+    return TheModule;
+  }
+
   Module* releaseModule() {
     // Since we're losing control of this Module, we must hand it back complete
     Module *M = ModuleProvider::releaseModule();
