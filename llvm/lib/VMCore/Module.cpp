@@ -137,21 +137,6 @@ Function *Module::getFunction(const std::string &Name, const FunctionType *Ty) {
   return cast_or_null<Function>(SymTab.lookup(PointerType::get(Ty), Name));
 }
 
-// addTypeName - Insert an entry in the symbol table mapping Str to Type.  If
-// there is already an entry for this name, true is returned and the symbol
-// table is not modified.
-//
-bool Module::addTypeName(const std::string &Name, const Type *Ty) {
-  SymbolTable &ST = getSymbolTable();
-
-  if (ST.lookup(Type::TypeTy, Name)) return true;  // Already in symtab...
-  
-  // Not in symbol table?  Set the name with the Symtab as an argument so the
-  // type knows what to update...
-  ((Value*)Ty)->setName(Name, &ST);
-
-  return false;
-}
 
 /// getMainFunction - This function looks up main efficiently.  This is such a
 /// common case, that it is a method in Module.  If main cannot be found, a
@@ -217,11 +202,33 @@ Function *Module::getNamedFunction(const std::string &Name) {
 }
 
 
+// addTypeName - Insert an entry in the symbol table mapping Str to Type.  If
+// there is already an entry for this name, true is returned and the symbol
+// table is not modified.
+//
+bool Module::addTypeName(const std::string &Name, const Type *Ty) {
+  SymbolTable &ST = getSymbolTable();
+
+  if (ST.lookup(Type::TypeTy, Name)) return true;  // Already in symtab...
+  
+  // Not in symbol table?  Set the name with the Symtab as an argument so the
+  // type knows what to update...
+  ((Value*)Ty)->setName(Name, &ST);
+
+  return false;
+}
+
+/// getTypeByName - Return the type with the specified name in this module, or
+/// null if there is none by that name.
+const Type *Module::getTypeByName(const std::string &Name) const {
+  const SymbolTable &ST = getSymbolTable();
+  return cast_or_null<Type>(ST.lookup(Type::TypeTy, Name));
+}
 
 // getTypeName - If there is at least one entry in the symbol table for the
 // specified type, return it.
 //
-std::string Module::getTypeName(const Type *Ty) {
+std::string Module::getTypeName(const Type *Ty) const {
   const SymbolTable &ST = getSymbolTable();
   if (ST.find(Type::TypeTy) == ST.end())
     return ""; // No names for types...

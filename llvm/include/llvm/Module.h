@@ -132,7 +132,11 @@ public:
   /// getTypeName - If there is at least one entry in the symbol table for the
   /// specified type, return it.
   ///
-  std::string getTypeName(const Type *Ty);
+  std::string getTypeName(const Type *Ty) const;
+
+  /// getTypeByName - Return the type with the specified name in this module, or
+  /// null if there is none by that name.
+  const Type *getTypeByName(const std::string &Name) const;
 
   /// Get the underlying elements of the Module...
   inline const GlobalListType &getGlobalList() const  { return GlobalList; }
