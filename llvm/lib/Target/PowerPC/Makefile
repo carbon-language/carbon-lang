@@ -35,12 +35,14 @@ PowerPCGenRegisterInfo.inc:: $(SourceDir)/PowerPC.td \
 
 PowerPCGenInstrNames.inc:: $(SourceDir)/PowerPC.td \
                        $(SourceDir)/PowerPCInstrInfo.td \
+                       $(SourceDir)/PowerPCInstrFormats.td \
                        $(SourceDir)/../Target.td $(TBLGEN)
 	@echo "Building PowerPC.td instruction names with tblgen"
 	$(VERB) $(TBLGEN) -I $(BUILD_SRC_DIR) $< -gen-instr-enums -o $@
 
 PowerPCGenInstrInfo.inc:: $(SourceDir)/PowerPC.td \
                       $(SourceDir)/PowerPCInstrInfo.td \
+                       $(SourceDir)/PowerPCInstrFormats.td \
                       $(SourceDir)/../Target.td $(TBLGEN)
 	@echo "Building PowerPC.td instruction information with tblgen"
 	$(VERB) $(TBLGEN) -I $(BUILD_SRC_DIR) $< -gen-instr-desc -o $@
