@@ -28,7 +28,7 @@ ExecutionEngine::ExecutionEngine(ModuleProvider *P) :
 }
 
 ExecutionEngine::ExecutionEngine(Module *M) : CurMod(*M), MP(0) {
-   assert(M && "Module is null?");
+  assert(M && "Module is null?");
 }
 
 ExecutionEngine::~ExecutionEngine() {
@@ -51,7 +51,7 @@ ExecutionEngine *ExecutionEngine::create(ModuleProvider *MP,
   // If we can't make a JIT, make an interpreter instead.
   try {
     if (EE == 0)
-      EE = Interpreter::create(MP->releaseModule(), TraceMode);
+      EE = Interpreter::create(MP->materializeModule(), TraceMode);
   } catch (...) {
     EE = 0;
   }
