@@ -3,188 +3,249 @@
 <head>
   <title>LLVM Public Release Project</title>
 </head>
- <body bgcolor="white">
-           
-<center>     
+  <body bgcolor="white">
+             
+<center>      
 <h1><font size="7">LLVM Public Release Project</font></h1>
- </center>
-            
+  </center>
+              
 <ul>
-        <li><a href="#what">What is this?</a>   </li>
-       <li><a href="#priorities">Priorities</a>                         
-  
+         <li><a href="#what">What is this?</a>   </li>
+        <li><a href="#priorities">Priorities</a>                        
+        
     <ol>
-          <li><a href="#high">High Priority</a>     </li>
-           <li><a href="#medium">Medimum Priority</a>     </li>
-           <li><a href="#low">Low Priority</a>     </li>
-                             
+           <li><a href="#high">High Priority</a>     </li>
+            <li><a href="#medium">Medimum Priority</a>     </li>
+            <li><a href="#low">Low Priority</a>     </li>
+                                   
     </ol>
-       </li>
-         
+        </li>
+           
 </ul>
-       <br>
-  <!-- *********************************************************************** --> 
-            
+        <br>
+   <!-- *********************************************************************** -->
+              
 <table width="100%" bgcolor="#330077" border="0" cellpadding="4"
  cellspacing="0">
-      <tbody>
-         <tr>
-           <td align="center"><font color="#eeeeff" size="+2"
+       <tbody>
+          <tr>
+            <td align="center"><font color="#eeeeff" size="+2"
  face="Georgia,Palatino"><b> <a name="what">What is this? </a></b><a
  name="what"></a></font></td>
-         </tr>
-                   
-  </tbody>     
+          </tr>
+                       
+  </tbody>      
 </table>
-         
+           
 <ul>
-      <!-- *********************************************************************** -->
-    This document is a list of things to do before the LLVM project is publicly 
-  released. &nbsp;It will provide a checklist so that we know what has been 
- done and what is left to be done. &nbsp;It will also keep a "wishlist" of 
- desirable features.                          
-  <p>   <!-- *********************************************************************** -->
+       <!-- *********************************************************************** --> 
+    This document is a list of things to do before the LLVM project is publicly
+   released. &nbsp;It will provide a checklist so that we know what has been
+  done and what is left to be done. &nbsp;It will also keep a "wishlist"
+of   desirable features.                             
+  <p>   <!-- *********************************************************************** --> 
      </p>
-         
+           
 </ul>
-         
+           
 <table width="100%" bgcolor="#330077" border="0" cellpadding="4"
  cellspacing="0">
-      <tbody>
-         <tr>
-           <td align="center"><font color="#eeeeff" size="+2"
+       <tbody>
+          <tr>
+            <td align="center"><font color="#eeeeff" size="+2"
  face="Georgia,Palatino"><b> <a name="priorities">Priorities</a></b><a
  name="improving"></a></font></td>
-         </tr>
-                   
-  </tbody>     
+          </tr>
+                       
+  </tbody>      
 </table>
-         
+           
 <ul>
-      <!-- *********************************************************************** -->The 
-  list of things to do...               
-  <p>  <!-- ======================================================================= -->
+       <!-- *********************************************************************** -->The
+   list of things to do...                  
+  <p>  <!-- ======================================================================= --> 
      </p>
-         
+           
 </ul>
-         
+           
 <table width="50%" bgcolor="#441188" border="0" cellpadding="4"
  cellspacing="0">
-      <tbody>
-         <tr>
-           <td>&nbsp;</td>
-           <td width="100%">&nbsp;&nbsp;<font color="#eeeeff" size="+1"
+       <tbody>
+          <tr>
+            <td>&nbsp;</td>
+            <td width="100%">&nbsp;&nbsp;<font color="#eeeeff" size="+1"
  face="Georgia,Palatino"><b><a name="high">High Priority</a></b><a
  name="glibc"></a></font></td>
-         </tr>
-                   
-  </tbody>     
+          </tr>
+                       
+  </tbody>      
 </table>
-         
+           
 <ul>
-                   
+                       
   <ul>
-                                            
+                                                  
     <ul>
-                                                                     
+                                                                        
+  
     </ul>
-         <li>Document the procedure for extracting, building, and installing
-LLVM.</li>
-    <li>Document how to start a project that uses LLVM and its build system.<br>
+               <li>Fix currently known bugs and write regression tests.</li>
+    <ul>
+      <li>The gccld segfault from GlobalDCE.cpp.</li>
+      <li>The infinite loop for Tail Recursion.</li>
+      <li>The C++ constructor on dlopen() bug on Solaris.<br>
+      </li>
+    </ul>
+          <li>Get autoconf to configure source and build directories according
+to normal autoconf procedures.</li>
+    <ul>
+      <li>Get test tree to work properly when configuring for a different
+object root.</li>
+      <li>Get lex/yacc/etc output to be placed into the build tree, not the
+source tree.<br>
+      </li>
+    </ul>
+    <li>Test Suite</li>
+    <ul>
+      <li>Create a nightly tester for Sparc.</li>
+      <li>Modify the test suite to have consistent output.</li>
+      <li>Add Pass/Fail tests to nightly tester.<br>
+      </li>
+      <li>Make the USE_SPEC option work for the test directory.</li>
+      <li>Cleanup test/Programs.</li>
+    </ul>
+    <li>Move the pool allocator and Reoptimizer code out of mainline CVS
+and the release.</li>
+    <li>Documentation</li>
+    <ul>
+      <li>Write documentation on the LLVM tools.</li>
+      <li>Review docs, ensuring that the information is up to date.</li>
+    </ul>
+    <li>GCC C Front End<br>
     </li>
-    <li>Ensure that the C front end compiles and installs nicely.</li>
-         <li>Place the C front end into the CVS repository.<br>
-         </li>
-         <li>Get the Reoptimizer code to work, ensuring that it does not
-rely   upon code outside of the source tree.<br>
-         </li>
-                  <li>Create a system for managing development and releases
+    <ul>
+      <li>Create a fix (i.e. better hack) for the sys/select.h hack.</li>
+    </ul>
+    <li>Licenses</li>
+    <ul>
+      <li>Ensure all software in source tree has proper license.<br>
+      </li>
+    </ul>
+    <ul>
+      <li>Check licenses in test/Programs to ensure everything is good.</li>
+      <li>Create license files for anything in the distribution that is not
+under our license.<br>
+      </li>
+    </ul>
+    <li>Ensure SafeCode builds.</li>
+                   <li>Create a system for managing development and releases 
 (i.e. CVS   branching, labeling revisions, etc).<br>
-         </li>
-                   
+          </li>
+                       
   </ul>
-                   
-  <p>   <!-- ======================================================================= -->
+                       
+  <p>   <!-- ======================================================================= --> 
      </p>
-         
+           
 </ul>
-         
+           
 <table width="50%" bgcolor="#441188" border="0" cellpadding="4"
  cellspacing="0">
-      <tbody>
-         <tr>
-           <td>&nbsp;</td>
-           <td width="100%">&nbsp;&nbsp;<font color="#eeeeff" size="+1"
+       <tbody>
+          <tr>
+            <td>&nbsp;</td>
+            <td width="100%">&nbsp;&nbsp;<font color="#eeeeff" size="+1"
  face="Georgia,Palatino"><b><a name="medium">Medium Priority</a></b><a
  name="NightlyTest"></a></font></td>
-         </tr>
-                   
-  </tbody>     
-</table>
-         
-<ul>
-                   
-  <ul>
-         <li>Improve the testing framework.</li>
+          </tr>
                        
+  </tbody>      
+</table>
+           
+<ul>
+                       
+  <ul>
+          <li>Improve documentation on how to create an LLVM project.<br>
+ </li>
+          <li>Testing</li>
+                             
     <ul>
-          <li>Cleanup Reoptimizer tests so that they fit into the framework.<br>
-         </li>
-         <li>Create descriptions of what each test is doing (test specifications).</li>
-                              
+           <li>Cleanup Reoptimizer tests so that they fit into the framework.<br>
+          </li>
+                                              
     </ul>
-         <li>Get the Reoptimizer tests to compile under x86.<br>
-         </li>
-         <li>Determine which sub-projects of LLVM will be distributed.</li>
-                  <li>Create an installer for the software.</li>
-    <li>Move over to the autoconf method of specifying object code directories.</li>
-    <li>Add an install target in the Makefiles that will "install" LLVM,
-easing deployment.<br>
+                                       <li>Create an installer for the software.</li>
+    <li>Put autoconf files into a separate directory (i.e. not llvm).<br>
     </li>
-                   
+                                 
   </ul>
-                   
-  <p>   <!-- ======================================================================= -->
+                       
+  <p>   <!-- ======================================================================= --> 
      </p>
-         
+           
 </ul>
-         
+           
 <table width="50%" bgcolor="#441188" border="0" cellpadding="4"
  cellspacing="0">
-      <tbody>
-         <tr>
-           <td>&nbsp;</td>
-           <td width="100%">&nbsp;&nbsp;<font color="#eeeeff" size="+1"
+       <tbody>
+          <tr>
+            <td>&nbsp;</td>
+            <td width="100%">&nbsp;&nbsp;<font color="#eeeeff" size="+1"
  face="Georgia,Palatino"><b><a name="low">Low Priority</a></b><a
  name="programs"></a></font></td>
-         </tr>
-                   
-  </tbody>     
+          </tr>
+                       
+  </tbody>      
 </table>
-         
+           
 <ul>
-                   
+                       
   <ul>
-         <li>Make the projects/sample directory an actual example of LLVM
-code.</li>
-         <li>Find and implement a bug reporting system (i.e. Bugzilla).</li>
-         <li>Test installations on various Linux distributions.</li>
-         <li>Create a license for the UIUC specific LLVM code.</li>
-         <li>Add a license file to the distribution.</li>
-         <li>Add a copyright notice and license information to each source
- file.</li>
-        <li>Create man pages for the LLVM utilities.<br>
-        </li>
-                   
+          <li>GCC C Front End</li>
+    <ul>
+      <li>Place the C front end into the CVS repository.</li>
+      <li>Ensure that the C front end compiles and installs nicely.</li>
+      <li>Add C++ support.<br>
+      </li>
+    </ul>
+    <li>Release Management</li>
+    <ul>
+      <li>Find and implement a bug reporting system (i.e. Bugzilla).</li>
+    </ul>
+    <li>Make the projects/sample directory an actual example of LLVM code.</li>
+                    <li>Testing</li>
+    <ul>
+      <li>Create descriptions of what each test is doing (test specifications).<br>
+      </li>
+      <li>Test LLVM on various Linux distributions.</li>
+      <li>Test LLVM on various Solaris distributions.</li>
+      <li>Test LLVM on Solaris/x86.<br>
+      </li>
+    </ul>
+          <li>Licenses</li>
+    <ul>
+      <li>Create a license for the UIUC specific LLVM code.</li>
+      <li>Add a license file to the distribution.</li>
+      <li>Add a copyright notice and license information to each source 
+file.</li>
+    </ul>
+                             <li>Documentation</li>
+    <ul>
+      <li>Create man pages for the LLVM utilities.</li>
+      <li>Create man pages for the LLVM libraries.<br>
+      </li>
+    </ul>
+                       
   </ul>
-         
+           
 </ul>
-     <font size-1="">      
+      <font size-1="">       
 <address><a href="mailto:criswell@cs.uiuc.edu">John Criswell</a></address>
-      <!-- Created: Tue Aug  6 15:00:33 CDT 2002 --> <!-- hhmts start --> 
-Last modified: Sat May 31 14:54:03 CDT 2003 <!-- hhmts end --></font> <br>
-    <br>
-    <br>
+       <!-- Created: Tue Aug  6 15:00:33 CDT 2002 --> <!-- hhmts start -->
+ Last modified: Sat May 31 14:54:03 CDT 2003 <!-- hhmts end --></font> <br>
+     <br>
+     <br>
+  <br>
  <br>
 </body>
 </html>
