@@ -13,6 +13,37 @@
 #include <functional>
 
 //===----------------------------------------------------------------------===//
+//     Extra additions to <functional>
+//===----------------------------------------------------------------------===//
+
+// bind_obj - Often times you want to apply the member function of an object
+// as a unary functor.  This macro is shorthand that makes it happen less
+// verbosely.
+//
+// Example:
+//  struct Summer { void accumulate(int x); }
+//  vector<int> Numbers;
+//  Summer MyS;
+//  for_each(Numbers.begin(), Numbers.end(),
+//           bind_obj(&MyS, &Summer::accumulate));
+//
+// TODO: When I get lots of extra time, convert this from an evil macro
+//
+#define bind_obj(OBJ, METHOD) std::bind1st(std::mem_fun(METHOD), OBJ)
+
+
+// bitwise_or - This is a simple functor that applys operator| on its two 
+// arguments to get a boolean result.
+//
+template<class Ty>
+struct bitwise_or : public binary_function<Ty, Ty, bool> {
+  bool operator()(const Ty& left, const Ty& right) const {
+    return left | right;
+  }
+};
+
+
+//===----------------------------------------------------------------------===//
 //     Extra additions to <iterator>
 //===----------------------------------------------------------------------===//
 
@@ -102,10 +133,21 @@ inline mapped_iterator<ItTy, FuncTy> map_iterator(const ItTy &I, FuncTy F) {
 }
 
 
-
 //===----------------------------------------------------------------------===//
 //     Extra additions to <algorithm>
 //===----------------------------------------------------------------------===//
+
+// apply_until - Apply a functor to a sequence continually, unless the
+// functor returns true.  Return true if the functor returned true, return false
+// if the functor never returned true.
+//
+template <class InputIt, class Function>
+bool apply_until(InputIt First, InputIt Last, Function Func) {
+  for ( ; First != Last; ++First)
+    if (Func(*First)) return true;
+  return false;
+}
+
 
 // reduce - Reduce a sequence values into a single value, given an initial
 // value and an operator.
@@ -123,8 +165,8 @@ ValueType reduce(InputIt First, InputIt Last, Function Func, ValueType Value) {
 // sequence, given an initial value, an operator, a function, and a sequence.
 //
 template <class InputIt, class Function, class ValueType, class TransFunc>
-ValueType reduce_apply(InputIt First, InputIt Last, Function Func, 
-		       ValueType Value, TransFunc XForm) {
+inline ValueType reduce_apply(InputIt First, InputIt Last, Function Func, 
+			      ValueType Value, TransFunc XForm) {
   for ( ; First != Last; ++First)
     Value = Func(XForm(*First), Value);
   return Value;
@@ -136,44 +178,21 @@ ValueType reduce_apply(InputIt First, InputIt Last, Function Func,
 // sequence, given an initial value, an operator, a function, and a sequence.
 //
 template <class InputIt, class Function, class ValueType, class TransFunc>
-ValueType reduce_apply2(InputIt First, InputIt Last, Function Func, 
-		       ValueType Value, TransFunc XForm) {
-  return reduce(map_iterator(First, XForm), 
-		map_iterator(Last, XForm),
+inline ValueType reduce_apply2(InputIt First, InputIt Last, Function Func, 
+			       ValueType Value, TransFunc XForm) {
+  return reduce(map_iterator(First, XForm), map_iterator(Last, XForm),
 		Func, Value);
 }
 #endif
 
 
-
-//===----------------------------------------------------------------------===//
-//     Extra additions to <functional>
-//===----------------------------------------------------------------------===//
-
-// bind_obj - Often times you want to apply the member function of an object
-// as a unary functor.  This macro is shorthand that makes it happen less
-// verbosely.
+// reduce_apply_bool - Reduce the result of applying a (bool returning) function
+// to each value in a sequence.  All of the bools returned by the mapped
+// function are bitwise or'd together, and the result is returned.
 //
-// Example:
-//  struct Summer { void accumulate(int x); }
-//  vector<int> Numbers;
-//  Summer MyS;
-//  for_each(Numbers.begin(), Numbers.end(),
-//           bind_obj(&MyS, &Summer::accumulate));
-//
-// TODO: When I get lots of extra time, convert this from an evil macro
-//
-#define bind_obj(OBJ, METHOD) std::bind1st(std::mem_fun(METHOD), OBJ)
-
-
-// bitwise_or - This is a simple functor that applys operator| on its two 
-// arguments to get a boolean result.
-//
-template<class Ty>
-struct bitwise_or : public binary_function<Ty, Ty, bool> {
-  bool operator()(const Ty& left, const Ty& right) const {
-    return left | right;
-  }
-};
+template <class InputIt, class Function>
+inline bool reduce_apply_bool(InputIt First, InputIt Last, Function Func) {
+  return reduce_apply(First, Last, bitwise_or<bool>(), false, Func);
+}
 
 #endif
