@@ -19,6 +19,7 @@
 #include "llvm/PassManager.h"
 #include "llvm/Bytecode/Reader.h"
 #include "llvm/Bytecode/WriteBytecodePass.h"
+#include "llvm/Transforms/SymbolStripping.h"
 #include "llvm/Transforms/CleanupGCCOutput.h"
 #include "llvm/Transforms/ConstantMerge.h"
 #include "llvm/Transforms/IPO/GlobalDCE.h"
@@ -36,7 +37,7 @@ cl::String OutputFilename("o", "Override output filename", cl::NoFlags,"a.out");
 cl::Flag   Verbose       ("v", "Print information about actions taken");
 cl::StringList LibPaths  ("L", "Specify a library search path", cl::ZeroOrMore);
 cl::StringList Libraries ("l", "Specify libraries to link to", cl::ZeroOrMore);
-
+cl::Flag       Strip     ("s", "Strip symbol info from executable");
 
 // FileExists - Return true if the specified string is an openable file...
 static inline bool FileExists(const std::string &FN) {
@@ -135,6 +136,13 @@ int main(int argc, char **argv) {
   // arguments).  This pass merges the two functions, among other things.
   //
   Passes.add(createCleanupGCCOutputPass());
+
+  // If the -s command line option was specified, strip the symbols out of the
+  // resulting program to make it smaller.  -s is a GCC option that we are
+  // supporting.
+  //
+  if (Strip)
+    Passes.add(createSymbolStrippingPass());
 
   // Now that composite has been compiled, scan through the module, looking for
   // a main function.  If main is defined, mark all other functions internal.
