@@ -1,4 +1,4 @@
-//===-- Constants.cpp - Implement Constant nodes -----------------*- C++ -*--=//
+//===-- Constants.cpp - Implement Constant nodes --------------------------===//
 //
 // This file implements the Constant* classes...
 //
@@ -12,11 +12,6 @@
 #include "llvm/Module.h"
 #include "Support/StringExtras.h"
 #include <algorithm>
-
-using std::map;
-using std::pair;
-using std::make_pair;
-using std::vector;
 
 ConstantBool *ConstantBool::True  = new ConstantBool(true);
 ConstantBool *ConstantBool::False = new ConstantBool(false);
@@ -462,22 +457,22 @@ void ConstantExpr::replaceUsesOfWithOnConstant(Value *From, Value *To) {
 
 template<class ValType, class ConstantClass>
 struct ValueMap {
-  typedef pair<const Type*, ValType> ConstHashKey;
-  map<ConstHashKey, ConstantClass *> Map;
+  typedef std::pair<const Type*, ValType> ConstHashKey;
+  std::map<ConstHashKey, ConstantClass *> Map;
 
   inline ConstantClass *get(const Type *Ty, ValType V) {
-    typename map<ConstHashKey,ConstantClass *>::iterator I =
+    typename std::map<ConstHashKey,ConstantClass *>::iterator I =
       Map.find(ConstHashKey(Ty, V));
     return (I != Map.end()) ? I->second : 0;
   }
 
   inline void add(const Type *Ty, ValType V, ConstantClass *CP) {
-    Map.insert(make_pair(ConstHashKey(Ty, V), CP));
+    Map.insert(std::make_pair(ConstHashKey(Ty, V), CP));
   }
 
   inline void remove(ConstantClass *CP) {
-    for (typename map<ConstHashKey,ConstantClass *>::iterator I = Map.begin(),
-                                                      E = Map.end(); I != E;++I)
+    for (typename std::map<ConstHashKey, ConstantClass*>::iterator
+           I = Map.begin(), E = Map.end(); I != E; ++I)
       if (I->second == CP) {
 	Map.erase(I);
 	return;
@@ -633,7 +628,7 @@ void ConstantPointerRef::destroyConstant() {
 
 //---- ConstantExpr::get() implementations...
 //
-typedef pair<unsigned, vector<Constant*> > ExprMapKeyType;
+typedef std::pair<unsigned, std::vector<Constant*> > ExprMapKeyType;
 static ValueMap<const ExprMapKeyType, ConstantExpr> ExprConstants;
 
 Constant *ConstantExpr::getCast(Constant *C, const Type *Ty) {
@@ -641,8 +636,8 @@ Constant *ConstantExpr::getCast(Constant *C, const Type *Ty) {
     return FC;          // Fold a few common cases...
 
   // Look up the constant in the table first to ensure uniqueness
-  vector<Constant*> argVec(1, C);
-  const ExprMapKeyType &Key = make_pair(Instruction::Cast, argVec);
+  std::vector<Constant*> argVec(1, C);
+  const ExprMapKeyType &Key = std::make_pair(Instruction::Cast, argVec);
   ConstantExpr *Result = ExprConstants.get(Ty, Key);
   if (Result) return Result;
   
@@ -658,8 +653,8 @@ Constant *ConstantExpr::get(unsigned Opcode, Constant *C1, Constant *C2) {
     return FC;          // Fold a few common cases...
 
   // Look up the constant in the table first to ensure uniqueness
-  vector<Constant*> argVec(1, C1); argVec.push_back(C2);
-  const ExprMapKeyType &Key = make_pair(Opcode, argVec);
+  std::vector<Constant*> argVec(1, C1); argVec.push_back(C2);
+  const ExprMapKeyType &Key = std::make_pair(Opcode, argVec);
   ConstantExpr *Result = ExprConstants.get(C1->getType(), Key);
   if (Result) return Result;
   
@@ -684,10 +679,10 @@ Constant *ConstantExpr::getGetElementPtr(Constant *C,
   const Type *Ty = C->getType();
 
   // Look up the constant in the table first to ensure uniqueness
-  vector<Constant*> argVec(1, C);
+  std::vector<Constant*> argVec(1, C);
   argVec.insert(argVec.end(), IdxList.begin(), IdxList.end());
   
-  const ExprMapKeyType &Key = make_pair(Instruction::GetElementPtr, argVec);
+  const ExprMapKeyType &Key = std::make_pair(Instruction::GetElementPtr,argVec);
   ConstantExpr *Result = ExprConstants.get(Ty, Key);
   if (Result) return Result;
 
