@@ -487,9 +487,15 @@ void LICM::findPromotableValuesInLoop(
 
         bool PointerOk = true;
         for (std::set<Value*>::const_iterator I =CurLBI->LoadedPointers.begin(),
-               E = CurLBI->LoadedPointers.end(); I != E; ++I)
-          if (AA->alias(V, ~0, *I, ~0) == AliasAnalysis::MayAlias) {
+               E = CurLBI->LoadedPointers.end(); PointerOk && I != E; ++I)
+          switch (AA->alias(V, ~0, *I, ~0)) {
+          case AliasAnalysis::MustAlias:
+            if (V->getType() != (*I)->getType())
+              PointerOk = false;
+            break;
+          case AliasAnalysis::MayAlias:
             PointerOk = false;
+          case AliasAnalysis::NoAlias:
             break;
           }
 
