@@ -1,4 +1,4 @@
-//===-- JIT.cpp - LLVM Just in Time Compiler ------------------------------===//
+//===-- JIT.cpp - LLVM Just-In-Time Compiler ------------------------------===//
 // 
 //                     The LLVM Compiler Infrastructure
 //
@@ -19,12 +19,11 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetMachineImpls.h"
 #include "Support/CommandLine.h"
+using namespace llvm;
 
 #if !defined(ENABLE_X86_JIT) && !defined(ENABLE_SPARC_JIT)
 #define NO_JITS_ENABLED
 #endif
-
-namespace llvm {
 
 namespace {
   enum ArchName { x86, Sparc };
@@ -120,5 +119,3 @@ GenericValue VM::run(Function *F, const std::vector<GenericValue> &ArgValues)
   rv.IntVal = ExitCode;
   return rv;
 }
-
-} // End llvm namespace
