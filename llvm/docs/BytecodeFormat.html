@@ -46,8 +46,8 @@ and <a href="mailto:sabre@nondot.org">Chris Lattner</a></b></p>
 <div class="doc_section"> <a name="abstract">Abstract </a></div>
 <!-- *********************************************************************** -->
 <div class="doc_text">
-<p>This document is an (after the fact) specification of the LLVM bytecode
-file format. It documents the binary encoding rules of the bytecode file format
+<p>This document describes the LLVM bytecode
+file format. It specifies the binary encoding rules of the bytecode file format
 so that equivalent systems can encode bytecode files correctly.  The LLVM 
 bytecode representation is used to store the intermediate representation on 
 disk in compacted form.
@@ -58,7 +58,10 @@ disk in compacted form.
 <!-- *********************************************************************** -->
 <div class="doc_text">
 <p>This section describes the general concepts of the bytecode file format 
-without getting into bit and byte level specifics.</p>
+without getting into bit and byte level specifics.  Note that the LLVM bytecode
+format may change in the future, but will always be backwards compatible with
+older formats.  This document only describes the most current version of the
+bytecode format.</p>
 </div>
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsection"><a name="blocks">Blocks</a> </div>
@@ -83,19 +86,20 @@ next in the file.</p>
   <li><b>InstructionList (0x32)</b>.</li>
   <li><b>CompactionTable (0x33)</b>.</li>
 </ol>
-<p> All blocks are variable length. They consume just enough bytes to express 
-their contents.  Each block begins with an integer identifier and the length 
-of the block.</p>
+<p> All blocks are variable length, and the block header specifies the size of 
+the block.  All blocks are rounded aligned to even 32-bit boundaries, so they 
+always start and end of this boundary.  Each block begins with an integer 
+identifier and the length of the block, which does not include the padding 
+bytes needed for alignment.</p>
 </div>
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsection"><a name="lists">Lists</a> </div>
 <div class="doc_text">
 <p>Most blocks are constructed of lists of information. Lists can be constructed
 of other lists, etc. This decomposition of information follows the containment
-hierarchy of the LLVM Intermediate Representation. For example, a function is
-composed of a list of basic blocks. Each basic block is composed of a set of
-instructions. This list of list nesting and hierarchy is maintained in the
-bytecode file.</p>
+hierarchy of the LLVM Intermediate Representation. For example, a function 
+contains a list of instructions (the terminator instructions implicitly define 
+the end of the basic blocks).</p>
 <p>A list is encoded into the file simply by encoding the number of entries as
 an integer followed by each of the entries. The reader knows when the list is
 done because it will have filled the list with the required numbe of entries.
@@ -106,7 +110,7 @@ done because it will have filled the list with the required numbe of entries.
 <div class="doc_text">
 <p>Fields are units of information that LLVM knows how to write atomically.
 Most fields have a uniform length or some kind of length indication built into
-their encoding. For example, a constant string (array of SByte or UByte) is
+their encoding. For example, a constant string (array of bytes) is
 written simply as the length followed by the characters. Although this is 
 similar to a list, constant strings are treated atomically and are thus
 fields.</p>
@@ -121,7 +125,8 @@ written and how the bits are to be interpreted.</p>
 <p>Each field that can be put out is encoded into the file using a small set 
 of primitives. The rules for these primitives are described below.</p>
 <h3>Variable Bit Rate Encoding</h3>
-<p>To minimize the number of bytes written for small quantities, an encoding
+<p>Most of the values written to LLVM bytecode files are small integers.  To 
+minimize the number of bytes written for these quantities, an encoding
 scheme similar to UTF-8 is used to write integer data. The scheme is known as
 variable bit rate (vbr) encoding.  In this encoding, the high bit of each 
 byte is used to indicate if more bytes follow. If (byte &amp; 0x80) is non-zero 
@@ -148,8 +153,15 @@ as follows:</p>
   <tr><td>9</td><td>56-62</td><td>9,223,372,036,854,775,807</td></tr>
   <tr><td>10</td><td>63-69</td><td>1,180,591,620,717,411,303,423</td></tr>
 </table>
-<p>Note that in practice, the tenth byte could only encode bits 63 and 64
+<p>Note that in practice, the tenth byte could only encode bit 63 
 since the maximum quantity to use this encoding is a 64-bit integer.</p>
+
+<p><em>Signed</em> VBR values are encoded with the standard vbr encoding, but 
+with the sign bit as the low order bit instead of the high order bit.  This 
+allows small negative quantities to be encoded efficiently.  For example, -3
+is encoded as "((3 &lt;&lt; 1) | 1)" and 3 is encoded as "(3 &lt;&lt; 1) | 
+0)", emitted with the standard vbr encoding above.</p>
+
 <p>The table below defines the encoding rules for type names used in the
 descriptions of blocks and fields in the next section. Any type name with
 the suffix <em>_vbr</em> indicate a quantity that is encoded using 
@@ -176,7 +188,7 @@ variable bit rate encoding as described above.</p>
   </tr><tr>
     <td>int64_vbr</td>
     <td align="left">A 64-bit signed integer that occupies from one to ten 
-    bytes using variable bit rate encoding.</td>
+    bytes using the signed variable bit rate encoding.</td>
   </tr><tr>
     <td>char</td>
     <td align="left">A single unsigned character encoded into one byte</td>
@@ -187,8 +199,7 @@ variable bit rate encoding as described above.</p>
     <td>string</td>
     <td align="left">A uint_vbr indicating the length of the character string 
     immediately followed by the characters of the string. There is no 
-    terminating null byte in the string. Characters are interpreted as unsigned 
-    char and are generally US-ASCII encoded.</td>
+    terminating null byte in the string.</td>
   </tr><tr>
     <td>data</td>
     <td align="left">An arbitrarily long segment of data to which no 
@@ -219,18 +230,18 @@ bit and byte level specifics.</p>
   fields in detail. These descriptions are provided in tabular form. Each table
   has four columns that specify:</p>
   <ol>
-    <li><b>Byte(s)</b>. The offset in bytes of the field from the start of
+    <li><b>Byte(s)</b>: The offset in bytes of the field from the start of
     its container (block, list, other field).</li>
-    <li><b>Bit(s)</b>. The offset in bits of the field from the start of
+    <li><b>Bit(s)</b>: The offset in bits of the field from the start of
     the byte field. Bits are always little endian. That is, bit addresses with
     smaller values have smaller address (i.e. 2<sup>0</sup> is at bit 0, 
     2<sup>1</sup> at 1, etc.)
     </li>
-    <li><b>Align?</b> Indicates if this field is aligned to 32 bits or not.
+    <li><b>Align?</b>: Indicates if this field is aligned to 32 bits or not.
     This indicates where the <em>next</em> field starts, always on a 32 bit
     boundary.</li>
-    <li><b>Type</b>. The basic type of information contained in the field.</li>
-    <li><b>Description</b>. Descripts the contents of the field.</li>
+    <li><b>Type</b>: The basic type of information contained in the field.</li>
+    <li><b>Description</b>: Describes the contents of the field.</li>
   </ol>
 </div>
 <!-- _______________________________________________________________________ -->
@@ -240,20 +251,21 @@ bit and byte level specifics.</p>
   of bytes known as blocks. The blocks are written sequentially to the file in
   the following order:</p>
 <ol>
-  <li><a href="#signature">Signature</a>. This block contains the file signature 
-  (magic number) that identifies the file as LLVM bytecode.</li>
-  <li><a href="#module">Module Block</a>. This is the top level block in a
+  <li><a href="#signature">Signature</a>: This contains the file signature 
+  (magic number) that identifies the file as LLVM bytecode and the bytecode 
+  version number.</li>
+  <li><a href="#module">Module Block</a>: This is the top level block in a
   bytecode file. It contains all the other blocks.</li>
-  <li><a href="#gtypepool">Global Type Pool</a>. This block contains all the
+  <li><a href="#gtypepool">Global Type Pool</a>: This block contains all the
   global (module) level types.</li>
-  <li><a href="#modinfo">Module Info</a>. This block contains the types of the
+  <li><a href="#modinfo">Module Info</a>: This block contains the types of the
   global variables and functions in the module as well as the constant
   initializers for the global variables</li>
-  <li><a href="#constants">Constants</a>. This block contains all the global
+  <li><a href="#constants">Constants</a>: This block contains all the global
   constants except function arguments, global values and constant strings.</li>
-  <li><a href="#functions">Functions</a>. One function block is written for
+  <li><a href="#functions">Functions</a>: One function block is written for
   each function in the module. </li>
-  <li><a href="$symtab">Symbol Table</a>. The module level symbol table that
+  <li><a href="$symtab">Symbol Table</a>: The module level symbol table that
   provides names for the various other entries in the file is the final block 
   written.</li>
 </ol>
@@ -261,7 +273,7 @@ bit and byte level specifics.</p>
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsection"><a name="signature">Signature Block</a> </div>
 <div class="doc_text">
-<p>The signature block occurs in every LLVM bytecode file and is always first. 
+<p>The signature occurs in every LLVM bytecode file and is always first.
 It simply provides a few bytes of data to identify the file as being an LLVM
 bytecode file. This block is always four bytes in length and differs from the
 other blocks because there is no identifier and no block length at the start
@@ -294,12 +306,18 @@ of the block. Essentially, this block is just the "magic number" for the file.
 <p>The module block contains a small pre-amble and all the other blocks in
 the file. Of particular note, the bytecode format number is simply a 28-bit
 monotonically increase integer that identifiers the version of the bytecode
-format. While the bytecode format version is not related to the LLVM release
-(it doesn't automatically get increased with each new LLVM release), there is
-a definite correspondence between the bytecode format version and the LLVM
-release.</p>
-<p>The table below shows the format of the module block header. The blocks it
-contains are detailed in other sections.</p>
+format (which is not directly related to the LLVM release number).  The 
+bytecode versions defined so far are (note that this document only describes 
+the latest version): </p>
+
+<ul>
+<li>#0: LLVM 1.0 &amp; 1.1</li>
+<li>#1: LLVM 1.2</li>
+<li>#2: LLVM 1.3</li>
+</ul>
+
+<p>The table below shows the format of the module block header. It is defined 
+by blocks described in other sections.</p>
 <table class="doc_table_nw" >
   <tr>
     <th><b>Byte(s)</b></th>
@@ -337,11 +355,17 @@ contains are detailed in other sections.</p>
     solely of other block types in sequence.</td>
   </tr>
 </table>
+
+<p>Note that we plan to eventually expand the target description capabilities
+of bytecode files to <a href="http://llvm.cs.uiuc.edu/PR263">target 
+triples</a>.</p>
+
 </div>
+
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsection"><a name="gtypepool">Global Type Pool</a> </div>
 <div class="doc_text">
-<p>The global type pool consists of type definitions. Their order of appearnce
+<p>The global type pool consists of type definitions. Their order of appearance
 in the file determines their slot number (0 based). Slot numbers are used to 
 replace pointers in the intermediate representation. Each slot number uniquely
 identifies one entry in a type plane (a collection of values of the same type).
