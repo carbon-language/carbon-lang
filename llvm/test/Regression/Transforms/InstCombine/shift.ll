@@ -145,3 +145,16 @@ bool %test20(sbyte %A) {
 	%C = seteq sbyte %B, 123    ;; false
 	ret bool %C
 }
+
+bool %test21(ubyte %A) {
+	%B = shl ubyte %A, ubyte 4
+	%C = seteq ubyte %B, 128
+	ret bool %C
+}
+
+bool %test22(ubyte %A) {
+	%B = shl ubyte %A, ubyte 4
+	%C = seteq ubyte %B, 0
+	ret bool %C
+}
+
