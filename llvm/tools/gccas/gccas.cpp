@@ -84,8 +84,8 @@ int main(int argc, char **argv) {
     Passes.add(createPromoteMemoryToRegister());    // Promote alloca's to regs
     Passes.add(createInstructionCombiningPass());   // Combine silly seq's
     Passes.add(createDeadInstEliminationPass());    // Kill InstCombine remnants
-    Passes.add(createSCCPPass());                   // Constant prop with SCCP
     Passes.add(createGCSEPass());                   // Remove common subexprs
+    Passes.add(createSCCPPass());                   // Constant prop with SCCP
     Passes.add(createDeadCodeEliminationPass());    // Remove Dead code/vars
   }
   Passes.add(new WriteBytecodePass(&Out));        // Write bytecode to file...
