@@ -134,6 +134,9 @@ object tree as subdirectories are built.  This means that:
 <li>The <tt>configure</tt> script will now configure all projects placed in the
 <tt>llvm/projects</tt> directory.</li>
 
+<li>The <tt>-tailcallelim</tt> pass can now introduce "accumulator" variables
+    to transform functions in many common cases that it could not before.</li>
+
 <li>The <tt>-licm</tt> pass can now sink instructions out the bottom of loops
 in addition to being able to hoist them out the top.</li>
 
