@@ -95,11 +95,14 @@ have at this point.
 <a name="front-end">Front-end bugs
 </b></font></td></tr></table><ul>
 
-If the problem is in the front-end, pretty much the only thing you can do is
-preprocess the input (compile with the <tt>-E</tt> option) and send us the
-results.  There is no good way to reduce source-level test-cases that I know
-of... if you do know, send me information and we can extend this section. :)<p>
-
+If the problem is in the front-end, you should re-run the same
+<tt>llvm-gcc</tt> command that resulted in the crash, but add the
+<tt>-save-temps</tt> option.  The compiler will crash again, but it
+will leave behind a <tt><i>foo</i>.i</tt> file (containing preprocessed
+C source code) and possibly <tt><i>foo</i>.s</tt> (containing LLVM
+assembly code), for each compiled <tt><i>foo</i>.c</tt> file. Send us
+the <tt><i>foo</i>.i</tt> file, along with a brief description of the
+error it caused.<p>
 
 <!-- ======================================================================= -->
 </ul><table width="100%" bgcolor="#441188" border=0 cellpadding=4 cellspacing=0>
@@ -109,8 +112,8 @@ of... if you do know, send me information and we can extend this section. :)<p>
 </b></font></td></tr></table><ul>
 
 If you find that a bug crashes in the <tt><b>gccas</b></tt> stage of
-compilation, compile your test-case to a <tt>.s</tt> file with the <tt>-S</tt>
-option to <tt><b>llvm-gcc</b></tt>.  Then run:<p>
+compilation, compile your test-case to a <tt>.s</tt> file with the
+<tt>-save-temps</tt> option to <tt><b>llvm-gcc</b></tt>. Then run:<p>
 
 <pre>
   <b>gccas</b> -debug-pass=Arguments &lt; /dev/null -o - &gt; /dev/null
