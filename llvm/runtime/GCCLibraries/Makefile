@@ -1,4 +1,4 @@
-##===- runtime/GCCLibraries/Makefile ------------------------------*- Makefile -*-===##
+##===- runtime/GCCLibraries/Makefile -----------------------*- Makefile -*-===##
 # 
 #                     The LLVM Compiler Infrastructure
 #
@@ -6,14 +6,13 @@
 # the University of Illinois Open Source License. See LICENSE.TXT for details.
 # 
 ##===----------------------------------------------------------------------===##
-# llvm/runtime/GCCLibraries Makefile:  Build all subdirectories automatically
 
 LEVEL = ../..
-PARALLEL_DIRS := crtend libc libcurses libg libgcc libgdbm libm libmalloc libtermcap libucb libutempter libutil
+PARALLEL_DIRS := crtend libc libcurses libg libgcc libgdbm libm libmalloc \
+                 libtermcap libucb libutempter libutil
 include $(LEVEL)/Makefile.common
 
-# Install target for libraries: Copy into the gcc install directory in chris's
-# tree...
+# Install target for libraries: copy bytecode files to $LLVMGCCDIR/bytecode-libs
 #
 install::
 
