@@ -50,8 +50,9 @@
   <p>The Visual Studio port at this time is experimental.  It is suitable for
   use only if you are writing your own compiler front end or otherwise have a
   need to dynamically generate machine code.  The JIT and interpreter are
-  functional, but it is currently not possible to directly generate an
-  executable file.  You can do so indirectly by using the C back end.</p>
+  functional, but it is currently not possible to generate assembly code which
+  is then assembled into an executable.  You can indirectly create executables
+  by using the C back end.</p>
 
   <p>To emphasize, there is no C/C++ front end currently available.
   <tt>llvm-gcc</tt> is based on GCC, which cannot be bootstrapped using VC++.
@@ -166,7 +167,8 @@ progress has been made since the 1.4 release.</p>
   <p>You will need Visual Studio .NET 2003.  Earlier versions cannot open the
   solution/project files.  The VS 2005 beta can, but will migrate these files
   to its own format in the process.  While it should work with the VS 2005
-  beta, there are no guarantees and there is no support for it at this time.</p>
+  beta, there are no guarantees and there is no support for it at this time.
+  It has been reported that VC++ Express also works.</p>
 
   <p>You will also need several open source packages:  bison, flex, and sed.
   These must be installed in <tt>llvm/win32/tools</tt>.  These can be found at
