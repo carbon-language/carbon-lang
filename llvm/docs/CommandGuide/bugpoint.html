@@ -90,22 +90,17 @@ href="analyze.html">analyze</a></tt>, or <tt><a href="llc.html">llc</a></tt>.<p>
 <a name="codegendebug">
 <h4>Code generator debugger</h4>
 
-The code generator debugger attempts to narrow down the amount of code that is
-being miscompiled by the <a href="#opt_run-">selected</a> code generator.  To do
-this, it takes the test program and partitions it into two pieces: one piece
+<p>The code generator debugger attempts to narrow down the amount of code that
+is being miscompiled by the <a href="#opt_run-">selected</a> code generator.  To
+do this, it takes the test program and partitions it into two pieces: one piece
 which it compiles with the C backend (into a shared object), and one piece which
 it runs with either the JIT or the static LLC compiler.  It uses several
 techniques to reduce the amount of code pushed through the LLVM code generator,
 to reduce the potential scope of the problem.  After it is finished, it emits
 two bytecode files (called "test" [to be compiled with the code generator] and
-"safe" [to be compiled with the C backend] respectively), and instructions for
-reproducing the problem.  The code generator debugger assumes that the C
-backend produces good code.<p>
-
-If you are using the code generator debugger and get an error message that
-says "UNSUPPORTED: external function used as a global initializer!", try using
-the <tt>-run-llc</tt> option instead of the <tt>-run-jit</tt> option.  This is
-due to an unimplemented feature in the code generator debugger.<p>
+"safe" [to be compiled with the C backend], respectively), and instructions for
+reproducing the problem.  The code generator debugger assumes that the C backend
+produces good code.</p>
 
 <a name="miscompilationdebug">
 <h4>Miscompilation debugger</h4>
