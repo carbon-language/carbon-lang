@@ -32,7 +32,7 @@
 using namespace llvm;
 
 namespace {
-  Statistic<> NumClear("ppc-codegen", "Number of AND turned into mask");
+  Statistic<> NumHiAndLo("ppc-codegen", "Number of 32b imms not loaded");
 
   /// TypeClass - Used by the PowerPC backend to group LLVM types by their basic
   /// PPC Representation.
@@ -2128,12 +2128,18 @@ void PPC32ISel::emitBinaryConstOperation(MachineBasicBlock *MBB,
   if (Opcode == 2) {
     unsigned MB, ME, mask = CI->getRawValue();
     if (isRunOfOnes(mask, MB, ME)) {
-      ++NumClear;
       BuildMI(*MBB, IP, PPC::RLWINM, 4, DestReg).addReg(Op0Reg).addImm(0)
         .addImm(MB).addImm(ME);
       return;
     }
   }
+
+  // PowerPC 16 bit signed immediates are sign extended before use by the
+  // instruction.  Therefore, we can only split up an add of a reg with a 32 bit
+  // immediate into addis and addi if the sign bit of the low 16 bits is cleared
+  // so that for register A, const imm X, we don't end up with
+  // A + XXXX0000 + FFFFXXXX.
+  bool WontSignExtend = (0 == (Op1->getRawValue() & 0x8000));
 
   // For Add, Sub, and SubF the instruction takes a signed immediate.  For And,
   // Or, and Xor, the instruction takes an unsigned immediate.  There is no 
@@ -2152,6 +2158,20 @@ void PPC32ISel::emitBinaryConstOperation(MachineBasicBlock *MBB,
     else
       BuildMI(*MBB, IP, ImmOpTab[1][Opcode], 2, DestReg).addReg(Op0Reg)
         .addZImm(Op1->getRawValue() >> 16);
+  } else if ((Opcode < 2 && WontSignExtend) || Opcode == 3 || Opcode == 4) {
+    unsigned TmpReg = makeAnotherReg(Op1->getType());
+    ++NumHiAndLo;
+    if (Opcode < 2) {
+      BuildMI(*MBB, IP, ImmOpTab[1][Opcode], 2, TmpReg).addReg(Op0Reg)
+        .addSImm(Op1->getRawValue() >> 16);
+      BuildMI(*MBB, IP, ImmOpTab[0][Opcode], 2, DestReg).addReg(TmpReg)
+        .addSImm(Op1->getRawValue());
+    } else {
+      BuildMI(*MBB, IP, ImmOpTab[1][Opcode], 2, TmpReg).addReg(Op0Reg)
+        .addZImm(Op1->getRawValue() >> 16);
+      BuildMI(*MBB, IP, ImmOpTab[0][Opcode], 2, DestReg).addReg(TmpReg)
+        .addZImm(Op1->getRawValue());
+    }
   } else {
     unsigned Op1Reg = getReg(Op1, MBB, IP);
     BuildMI(*MBB, IP, OpTab[Opcode], 2, DestReg).addReg(Op0Reg).addReg(Op1Reg);
