@@ -210,7 +210,8 @@ PPC32TargetLowering::LowerCallTo(SDOperand Chain,
   unsigned NumBytes = 24;
 
   if (Args.empty()) {
-    NumBytes = 0;    // Save zero bytes.
+    Chain = DAG.getNode(ISD::ADJCALLSTACKDOWN, MVT::Other, Chain,
+                        DAG.getConstant(NumBytes, getPointerTy()));
   } else {
     for (unsigned i = 0, e = Args.size(); i != e; ++i)
       switch (getValueType(Args[i].second)) {
@@ -1545,12 +1546,7 @@ void ISel::Select(SDOperand N) {
         }
       }
 
-      if (Address.getOpcode() == ISD::GlobalAddress)
-      {
-        BuildMI(BB, Opc, 2).addReg(Tmp1)
-          .addGlobalAddress(cast<GlobalAddressSDNode>(Address)->getGlobal());
-      }
-      else if(Address.getOpcode() == ISD::FrameIndex)
+      if(Address.getOpcode() == ISD::FrameIndex)
       {
         Tmp2 = cast<FrameIndexSDNode>(Address)->getIndex();
         addFrameReference(BuildMI(BB, Opc, 3).addReg(Tmp1), (int)Tmp2);
