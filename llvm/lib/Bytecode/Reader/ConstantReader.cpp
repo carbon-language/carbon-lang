@@ -19,8 +19,7 @@
 #include "llvm/Module.h"
 #include "llvm/Constants.h"
 #include <algorithm>
-
-namespace llvm {
+using namespace llvm;
 
 const Type *BytecodeParser::parseTypeConstant(const unsigned char *&Buf,
 					      const unsigned char *EndBuf) {
@@ -104,7 +103,7 @@ const Type *BytecodeParser::parseTypeConstant(const unsigned char *&Buf,
 // something and when we reread the type later, we can replace the opaque type
 // with a new resolved concrete type.
 //
-void debug_type_tables();
+namespace llvm { void debug_type_tables(); }
 void BytecodeParser::parseTypeConstants(const unsigned char *&Buf,
                                         const unsigned char *EndBuf,
 					TypeValuesListTy &Tab,
@@ -112,6 +111,8 @@ void BytecodeParser::parseTypeConstants(const unsigned char *&Buf,
   assert(Tab.size() == 0 && "should not have read type constants in before!");
 
   // Insert a bunch of opaque types to be resolved later...
+  // FIXME: this is dumb
+  Tab.reserve(NumEntries);
   for (unsigned i = 0; i < NumEntries; ++i)
     Tab.push_back(OpaqueType::get());
 
@@ -149,7 +150,7 @@ void BytecodeParser::parseTypeConstants(const unsigned char *&Buf,
 
 Constant *BytecodeParser::parseConstantValue(const unsigned char *&Buf,
                                              const unsigned char *EndBuf,
-                                             const Type *Ty) {
+                                             unsigned TypeID) {
 
   // We must check for a ConstantExpr before switching by type because
   // a ConstantExpr can be of any type, and has no explicit value.
@@ -178,7 +179,7 @@ Constant *BytecodeParser::parseConstantValue(const unsigned char *&Buf,
     // Construct a ConstantExpr of the appropriate kind
     if (isExprNumArgs == 1) {           // All one-operand expressions
       assert(Opcode == Instruction::Cast);
-      return ConstantExpr::getCast(ArgVec[0], Ty);
+      return ConstantExpr::getCast(ArgVec[0], getType(TypeID));
     } else if (Opcode == Instruction::GetElementPtr) { // GetElementPtr
       std::vector<Constant*> IdxList(ArgVec.begin()+1, ArgVec.end());
       return ConstantExpr::getGetElementPtr(ArgVec[0], IdxList);
@@ -190,6 +191,7 @@ Constant *BytecodeParser::parseConstantValue(const unsigned char *&Buf,
   }
   
   // Ok, not an ConstantExpr.  We now know how to read the given type...
+  const Type *Ty = getType(TypeID);
   switch (Ty->getPrimitiveID()) {
   case Type::BoolTyID: {
     unsigned Val;
@@ -274,37 +276,14 @@ Constant *BytecodeParser::parseConstantValue(const unsigned char *&Buf,
     BCR_TRACE(4, "CPR: Type: '" << Ty << "'  slot: " << Slot << "\n");
     
     // Check to see if we have already read this global variable...
-    Value *Val = getValue(PT, Slot, false);
+    Value *Val = getValue(TypeID, Slot, false);
     GlobalValue *GV;
     if (Val) {
       if (!(GV = dyn_cast<GlobalValue>(Val))) 
         throw std::string("Value of ConstantPointerRef not in ValueTable!");
       BCR_TRACE(5, "Value Found in ValueTable!\n");
-    } else if (RevisionNum > 0) {
-      // Revision #0 could have forward references to globals that were weird.
-      // We got rid of this in subsequent revs.
-      throw std::string("Forward references to globals not allowed.");
-    } else {         // Nope... find or create a forward ref. for it
-      GlobalRefsType::iterator I = GlobalRefs.find(std::make_pair(PT, Slot));
-      
-      if (I != GlobalRefs.end()) {
-        BCR_TRACE(5, "Previous forward ref found!\n");
-        GV = cast<GlobalValue>(I->second);
-      } else {
-        BCR_TRACE(5, "Creating new forward ref to a global variable!\n");
-        
-        // Create a placeholder for the global variable reference...
-        GlobalVariable *GVar =
-          new GlobalVariable(PT->getElementType(), false,
-                             GlobalValue::InternalLinkage);
-        
-        // Keep track of the fact that we have a forward ref to recycle it
-        GlobalRefs.insert(std::make_pair(std::make_pair(PT, Slot), GVar));
-        
-        // Must temporarily push this value into the module table...
-        TheModule->getGlobalList().push_back(GVar);
-        GV = GVar;
-      }
+    } else {
+      throw std::string("Forward references are not allowed here.");
     }
     
     return ConstantPointerRef::get(GV);
@@ -335,11 +314,11 @@ void BytecodeParser::ParseConstantPool(const unsigned char *&Buf,
       BCR_TRACE(3, "Type: 'type'  NumEntries: " << NumEntries << "\n");
       parseTypeConstants(Buf, EndBuf, TypeTab, NumEntries);
     } else {
-      const Type *Ty = getType(Typ);
-      BCR_TRACE(3, "Type: '" << *Ty << "'  NumEntries: " << NumEntries << "\n");
+      BCR_TRACE(3, "Type: '" << *getType(Typ) << "'  NumEntries: "
+                << NumEntries << "\n");
 
       for (unsigned i = 0; i < NumEntries; ++i) {
-        Constant *C = parseConstantValue(Buf, EndBuf, Ty);
+        Constant *C = parseConstantValue(Buf, EndBuf, Typ);
         assert(C && "parseConstantValue returned NULL!");
         BCR_TRACE(4, "Read Constant: '" << *C << "'\n");
         unsigned Slot = insertValue(C, Typ, Tab);
@@ -349,12 +328,10 @@ void BytecodeParser::ParseConstantPool(const unsigned char *&Buf,
         //
         if (&Tab != &ModuleValues && Typ < ModuleValues.size())
           Slot += ModuleValues[Typ]->size();
-        ResolveReferencesToValue(C, Slot);
+        ResolveReferencesToConstant(C, Slot);
       }
     }
   }
   
   if (Buf > EndBuf) throw std::string("Read past end of buffer.");
 }
-
-} // End llvm namespace
