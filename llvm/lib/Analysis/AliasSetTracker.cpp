@@ -233,6 +233,13 @@ bool AliasSetTracker::add(StoreInst *SI) {
   return NewPtr;
 }
 
+bool AliasSetTracker::add(FreeInst *FI) {
+  bool NewPtr;
+  AliasSet &AS = addPointer(FI->getOperand(0), ~0,
+                            AliasSet::Mods, NewPtr);
+  return NewPtr;
+}
+
 
 bool AliasSetTracker::add(CallSite CS) {
   bool NewPtr;
@@ -262,6 +269,8 @@ bool AliasSetTracker::add(Instruction *I) {
     return add(CI);
   else if (InvokeInst *II = dyn_cast<InvokeInst>(I))
     return add(II);
+  else if (FreeInst *FI = dyn_cast<FreeInst>(I))
+    return add(FI);
   return true;
 }
 
@@ -326,6 +335,13 @@ bool AliasSetTracker::remove(StoreInst *SI) {
   return true;
 }
 
+bool AliasSetTracker::remove(FreeInst *FI) {
+  AliasSet *AS = findAliasSetForPointer(FI->getOperand(0), ~0);
+  if (!AS) return false;
+  remove(*AS);
+  return true;
+}
+
 bool AliasSetTracker::remove(CallSite CS) {
   if (Function *F = CS.getCalledFunction())
     if (AA.doesNotAccessMemory(F))
@@ -345,8 +361,8 @@ bool AliasSetTracker::remove(Instruction *I) {
     return remove(SI);
   else if (CallInst *CI = dyn_cast<CallInst>(I))
     return remove(CI);
-  else if (InvokeInst *II = dyn_cast<InvokeInst>(I))
-    return remove(II);
+  else if (FreeInst *FI = dyn_cast<FreeInst>(I))
+    return remove(FI);
   return true;
 }
 

@@ -27,6 +27,7 @@ namespace llvm {
 class AliasAnalysis;
 class LoadInst;
 class StoreInst;
+class FreeInst;
 class AliasSetTracker;
 class AliasSet;
 
@@ -263,6 +264,7 @@ public:
   ///
   bool add(LoadInst *LI);
   bool add(StoreInst *SI);
+  bool add(FreeInst *FI);
   bool add(CallSite CS);          // Call/Invoke instructions
   bool add(CallInst *CI)   { return add(CallSite(CI)); }
   bool add(InvokeInst *II) { return add(CallSite(II)); }
@@ -275,6 +277,7 @@ public:
   /// alias sets were eliminated.
   bool remove(LoadInst *LI);
   bool remove(StoreInst *SI);
+  bool remove(FreeInst *FI);
   bool remove(CallSite CS);
   bool remove(CallInst *CI)   { return remove(CallSite(CI)); }
   bool remove(InvokeInst *II) { return remove(CallSite(II)); }
