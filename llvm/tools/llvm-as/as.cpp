@@ -6,7 +6,7 @@
 //   as [options]      - Read LLVM assembly from stdin, write bytecode to stdout
 //   as [options] x.ll - Read LLVM assembly from the x.ll file, write bytecode
 //                       to the x.bc file.
-//
+// 
 //===------------------------------------------------------------------------===
 
 #include "llvm/Module.h"
@@ -16,6 +16,8 @@
 #include "Support/Signals.h"
 #include <fstream>
 #include <memory>
+#include <iostream>
+using std::cerr;
 
 cl::String InputFilename ("", "Parse <arg> file, compile to bytecode", 0, "-");
 cl::String OutputFilename("o", "Override output filename", cl::NoFlags, "");
@@ -25,7 +27,7 @@ cl::Flag   DumpAsm       ("d", "Print assembly as parsed", cl::Hidden, false);
 int main(int argc, char **argv) {
   cl::ParseCommandLineOptions(argc, argv, " llvm .ll -> .bc assembler\n");
 
-  ostream *Out = 0;
+  std::ostream *Out = 0;
   try {
     // Parse the file now...
     std::auto_ptr<Module> M(ParseAssemblyFile(InputFilename));
@@ -47,7 +49,7 @@ int main(int argc, char **argv) {
     } else {
       if (InputFilename == "-") {
 	OutputFilename = "-";
-	Out = &cout;
+	Out = &std::cout;
       } else {
 	std::string IFN = InputFilename;
 	int Len = IFN.length();
@@ -80,11 +82,11 @@ int main(int argc, char **argv) {
    
     WriteBytecodeToFile(M.get(), *Out);
   } catch (const ParseException &E) {
-    cerr << E.getMessage() << endl;
+    cerr << E.getMessage() << std::endl;
     return 1;
   }
 
-  if (Out != &cout) delete Out;
+  if (Out != &std::cout) delete Out;
   return 0;
 }
 

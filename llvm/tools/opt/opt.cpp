@@ -30,6 +30,9 @@
 #include "Support/Signals.h"
 #include <fstream>
 #include <memory>
+#include <iostream>
+
+using std::cerr;
 
 // FIXME: This should be parameterizable eventually for different target
 // types...
@@ -100,7 +103,6 @@ struct {
   { trace      , createTraceValuesPassForBasicBlocks },
   { tracem     , createTraceValuesPassForFunction    },
   { paths      , createProfilePathsPass              },
-
   { print      , createPrintFunctionPass },
   { printm     , createPrintModulePass   },
   { verify     , createVerifierPass      },
