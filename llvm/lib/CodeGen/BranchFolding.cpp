@@ -20,6 +20,7 @@
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
+#include "Support/STLExtras.h"
 using namespace llvm;
 
 namespace {
@@ -113,7 +114,7 @@ bool BranchFolder::OptimizeBlock(MachineBasicBlock *MBB,
   // explicitly.
   if (MBB->empty()) {
     if (MBB->pred_empty()) return false;
-    MachineFunction::iterator FallThrough = MBB; ++FallThrough;
+    MachineFunction::iterator FallThrough = next(MBB);
     assert(FallThrough != MBB->getParent()->end() &&
            "Fell off the end of the function!");
     while (!MBB->pred_empty()) {
@@ -138,7 +139,7 @@ bool BranchFolder::OptimizeBlock(MachineBasicBlock *MBB,
 
       // If MBB does not end with a barrier, add a goto instruction to the end.
       if (Pred->empty() || !TII.isBarrier(Pred->back().getOpcode()))
-        TII.insertGoto(*Pred, *++MachineFunction::iterator(MBB));
+        TII.insertGoto(*Pred, *next(MBB));
 
       // Update the CFG now.
       Pred->removeSuccessor(Pred->succ_begin());
@@ -170,7 +171,7 @@ bool BranchFolder::OptimizeBlock(MachineBasicBlock *MBB,
   if (isUncondBranch(--MBB->end(), TII)) {
     MachineBasicBlock::iterator MI = --MBB->end();
     MachineInstr *UncondBr = MI;
-    MachineFunction::iterator FallThrough = MBB; ++FallThrough;
+    MachineFunction::iterator FallThrough = next(MBB);
 
     MachineFunction::iterator UncondDest =
       MI->getOperand(0).getMachineBasicBlock();
@@ -187,7 +188,8 @@ bool BranchFolder::OptimizeBlock(MachineBasicBlock *MBB,
       // We assume that conditional branches always have the branch dest as the
       // last operand.  This could be generalized in the future if needed.
       unsigned LastOpnd = MI->getNumOperands()-1;
-      if (MI->getOperand(LastOpnd).getMachineBasicBlock() == &*FallThrough) {
+      if (MachineFunction::iterator(
+            MI->getOperand(LastOpnd).getMachineBasicBlock()) == FallThrough) {
         // Change the cond branch to go to the uncond dest, nuke the uncond,
         // then reverse the condition.
         MI->getOperand(LastOpnd).setMachineBasicBlock(UncondDest);
