@@ -1886,10 +1886,13 @@ void BytecodeReader::ParseModuleGlobalInfo() {
     insertValue(Func, FnSignature >> 5, ModuleValues);
 
     // Flags are not used yet.
-    //unsigned Flags = FnSignature & 31;
+    unsigned Flags = FnSignature & 31;
 
-    // Save this for later so we know type of lazily instantiated functions
-    FunctionSignatureList.push_back(Func);
+    // Save this for later so we know type of lazily instantiated functions.
+    // Note that known-external functions do not have FunctionInfo blocks, so we
+    // do not add them to the FunctionSignatureList.
+    if ((Flags & (1 << 4)) == 0)
+      FunctionSignatureList.push_back(Func);
 
     if (Handler) Handler->handleFunctionDeclaration(Func);
 
