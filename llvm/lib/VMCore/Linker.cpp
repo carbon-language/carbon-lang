@@ -23,6 +23,8 @@
 #include "llvm/SymbolTable.h"
 #include "llvm/iOther.h"
 #include "llvm/Assembly/Writer.h"
+#include <iostream>
+
 using namespace llvm;
 
 // Error - Simple wrapper function to conditionally assign to E and return true.
@@ -183,7 +185,7 @@ static bool LinkTypes(Module *Dest, const Module *Src, std::string *Err) {
 
   for ( ; TI != TE; ++TI ) {
     const std::string &Name = TI->first;
-    Type *RHS = TI->second;
+    const Type *RHS = TI->second;
 
     // Check to see if this type name is already in the dest module...
     Type *Entry = DestST->lookupType(Name);
