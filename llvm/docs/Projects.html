@@ -89,39 +89,52 @@ the name of your project.</li>
 
 <li>Add your source code and Makefiles to your source tree.</li>
 
-<li>If you want your Makefiles to be configured by the <tt>configure</tt>
-script, or if you want to support multiple object directories, add your
-Makefiles to the <tt>configure</tt> script by adding them into the
-<tt>autoconf/configure.ac</tt> file.  The macro <tt>AC_CONFIG_MAKEFILE</tt> will
-copy a file, unmodified, from the source directory to the object directory.</li>
+<li>If you want your project to be configured with the <tt>configure</tt> script
+then you need to edit <tt>autoconf/configure.ac</tt> as follows:
+  <ul>
+    <li><b>AC_INIT</b>. Place the name of your project, its version number and
+    a contact email address for your project as the arguments to this macro</li>
+    <li><b>AC_CONFIG_AUC_DIR</tt>. If your project isn't in the
+    <tt>llvm/projects</tt> directory then you might need to adjust this so that
+    it specifies a relative path to the <tt>llvm/autoconf</tt> directory.</li>
+    <li><b>LLVM_CONFIG_PROJECT</b>. Just leave this alone.</li>
+    <li><b>AC_CONFIG_SRCDIR</b>. Specify a path to a file name that identifies
+    your project; or just leave it at <tt>Makefile.config.in</tt></li>
+    <li><b>AC_CONFIG_FILES</b>. Do not change.</li>
+    <li><b>AC_CONFIG_MAKEFILE</b>. Use one of these macros for each Makefile
+    that your project uses. This macro arranges for your makefiles to be copied
+    from the source directory, unmodified, to the build directory.</li>
+  </ul>
+</li>
 
 <li>After updating <tt>autoconf/configure.ac</tt>, regenerate the
 configure script with these commands:
 
 <div class="doc_code">
 <p><tt>% cd autoconf<br>
-       % autoconf -o ../configure</tt></p>
+       % AutoRegen.sh</tt></p>
 </div>
 
-<p>You must be using Autoconf version 2.57 or higher.</p></li>
+<p>You must be using Autoconf version 2.59 or later and your aclocal version 
+should 1.9 or later.</p></li>
 
 <li>Run <tt>configure</tt> in the directory in which you want to place
 object code.  Use the following options to tell your project where it
 can find LLVM:
 
   <dl>
-    <dt><tt>--with-llvmsrc=&lt;directory&gt;</tt>
-    <dd>
-    Tell your project where the LLVM source tree is located.
-    <p>
-    <dt><tt>--with-llvmobj=&lt;directory&gt;</tt>
-    <dd>
-    Tell your project where the LLVM object tree is located.
+    <dt><tt>--with-llvmsrc=&lt;directory&gt;</tt></dt>
+    <dd>Tell your project where the LLVM source tree is located.</dd>
+    <dt><br/><tt>--with-llvmobj=&lt;directory&gt;</tt></dt>
+    <dd>Tell your project where the LLVM object tree is located.</dd>
+    <dt><br/><tt>--prefix=&lt;directory&gt;</tt></dt>
+    <dd>Tell your project where it should get installed.</dd>
   </dl>
 </ol>
 
-<p>That's it!  Now all you have to do is type <tt>gmake</tt> in the root of
-your object directory, and your project should build.</p>
+<p>That's it!  Now all you have to do is type <tt>gmake</tt> (or <tt>make</tt>
+if your on a GNU/Linux system) in the root of your object directory, and your 
+project should build.</p>
 
 </div>
 
