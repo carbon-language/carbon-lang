@@ -111,6 +111,11 @@ GenerateBytecode (Module *M, bool Strip, bool Internalize, std::ostream *Out) {
     if (!DisableInline)
       addPass(Passes, createFunctionInliningPass()); // Inline small functions
 
+    // The IPO passes may leave cruft around.  Clean up after them.
+    addPass(Passes, createInstructionCombiningPass());
+
+    addPass(Passes, createScalarReplAggregatesPass()); // Break up allocas
+
     // Run a few AA driven optimizations here and now, to cleanup the code.
     // Eventually we should put an IP AA in place here.
 
@@ -118,8 +123,7 @@ GenerateBytecode (Module *M, bool Strip, bool Internalize, std::ostream *Out) {
     addPass(Passes, createLoadValueNumberingPass()); // GVN for load instrs
     addPass(Passes, createGCSEPass());               // Remove common subexprs
 
-    // The FuncResolve pass may leave cruft around if functions were prototyped
-    // differently than they were defined.  Remove this cruft.
+    // Cleanup and simplify the code after the scalar optimizations.
     addPass(Passes, createInstructionCombiningPass());
 
     // Delete basic blocks, which optimization passes may have killed...
