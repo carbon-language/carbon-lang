@@ -175,6 +175,10 @@ non-obvious ways.  Here are some hints and tips:<p>
         part of the <tt>-args</tt> option, not as options to <tt>bugpoint</tt>
         itself.<p>
 
+	<li><tt>-check-exit-code={true,false}</tt><br>
+    Assume a non-zero exit code or core dump from the test program is
+    a failure. Defaults to true.<p>
+
 	<li><tt>-disable-{adce,dce,simplifycfg}</tt><br>
     Do not run the specified passes to clean up and reduce the size of the
     test program. By default, <tt>bugpoint</tt> uses these passes internally
