@@ -370,7 +370,7 @@ unsigned ISel::getReg(Value *V, MachineBasicBlock *MBB,
     // Move the address of the global into the register
     BuildMI(*MBB, IPt, PPC32::LOADHiAddr, 2, Reg1).addReg(PPC32::R0)
       .addGlobalAddress(GV);
-    BuildMI(*MBB, IPt, PPC32::LOADLoAddr, 2, Reg2).addReg(Reg1)i
+    BuildMI(*MBB, IPt, PPC32::LOADLoAddr, 2, Reg2).addReg(Reg1)
       .addGlobalAddress(GV);
     return Reg2;
   } else if (CastInst *CI = dyn_cast<CastInst>(V)) {
