@@ -115,3 +115,33 @@ bool %test16(int %X) {
         %tmp.7 = setne int %tmp.6, 0  ;; X & 16 != 0
         ret bool %tmp.7
 }
+
+bool %test17(uint %A) {
+	%B = shr uint %A, ubyte 3
+	%C = seteq uint %B, 1234
+	ret bool %C
+}
+
+bool %test18(ubyte %A) {
+	%B = shr ubyte %A, ubyte 7
+	%C = seteq ubyte %B, 123    ;; false
+	ret bool %C
+}
+
+bool %test19(int %A) {
+	%B = shr int %A, ubyte 2
+	%C = seteq int %B, 0        ;; (X & -4) == 0
+	ret bool %C
+}
+
+bool %test19a(int %A) {
+	%B = shr int %A, ubyte 2
+	%C = seteq int %B, -1        ;; (X & -4) == -4
+	ret bool %C
+}
+
+bool %test20(sbyte %A) {
+	%B = shr sbyte %A, ubyte 7
+	%C = seteq sbyte %B, 123    ;; false
+	ret bool %C
+}
