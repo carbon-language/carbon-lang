@@ -19,7 +19,8 @@ Loop:        ;; Merge point, nothing is known here...
 	br bool %c2, label %Forwarded, label %Bottom
 
 Forwarded:
-	call int %test(int 0, int %Z, bool true)
+	%Z2 = phi int [%Z, %Loop]
+	call int %test(int 0, int %Z2, bool true)
 	br label %Bottom
 
 Bottom:
