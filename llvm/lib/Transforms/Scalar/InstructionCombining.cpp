@@ -1378,6 +1378,43 @@ Instruction *InstCombiner::visitSetCondInst(BinaryOperator &I) {
         default: break;
         }
       }
+    } else {  // Not a SetEQ/SetNE
+      // If the LHS is a cast from an integral value of the same size, 
+      if (CastInst *Cast = dyn_cast<CastInst>(Op0)) {
+        Value *CastOp = Cast->getOperand(0);
+        const Type *SrcTy = CastOp->getType();
+        unsigned SrcTySize = SrcTy->getPrimitiveSize();
+        if (SrcTy != Cast->getType() && SrcTy->isInteger() &&
+            SrcTySize == Cast->getType()->getPrimitiveSize()) {
+          assert((SrcTy->isSigned() ^ Cast->getType()->isSigned()) && 
+                 "Source and destination signednesses should differ!");
+          if (Cast->getType()->isSigned()) {
+            // If this is a signed comparison, check for comparisons in the
+            // vicinity of zero.
+            if (I.getOpcode() == Instruction::SetLT && CI->isNullValue())
+              // X < 0  => x > 127
+              return BinaryOperator::create(Instruction::SetGT, CastOp,
+                         ConstantUInt::get(SrcTy, (1ULL << (SrcTySize*8-1))-1));
+            else if (I.getOpcode() == Instruction::SetGT &&
+                     cast<ConstantSInt>(CI)->getValue() == -1)
+              // X > -1  => x < 128
+              return BinaryOperator::create(Instruction::SetGT, CastOp,
+                         ConstantUInt::get(SrcTy, 1ULL << (SrcTySize*8-1)));
+          } else {
+            ConstantUInt *CUI = cast<ConstantUInt>(CI);
+            if (I.getOpcode() == Instruction::SetLT &&
+                CUI->getValue() == 1ULL << (SrcTySize*8-1))
+              // X < 128 => X > -1
+              return BinaryOperator::create(Instruction::SetGT, CastOp,
+                                            ConstantSInt::get(SrcTy, -1));
+            else if (I.getOpcode() == Instruction::SetGT &&
+                     CUI->getValue() == (1ULL << (SrcTySize*8-1))-1)
+              // X > 127 => X < 0
+              return BinaryOperator::create(Instruction::SetLT, CastOp,
+                                            Constant::getNullValue(SrcTy));
+          }
+        }
+      }
     }
 
     // Check to see if we are comparing against the minimum or maximum value...
