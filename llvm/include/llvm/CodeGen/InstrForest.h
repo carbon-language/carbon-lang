@@ -41,22 +41,22 @@ const int  VRegNodeOp	=  98;
 const int  ConstantNodeOp= 99;
 const int  LabelNodeOp	= 100;
 
-const int  RetValueOp	= 100 + Instruction::Ret;
-const int  BrCondOp	= 100 + Instruction::Br;
+const int  RetValueOp	= 100 + Instruction::Ret;               // 101
+const int  BrCondOp	= 100 + Instruction::Br;                // 102
 
-const int  BAndOp       = 100 + Instruction::And;
-const int  BOrOp        = 100 + Instruction::Or;
-const int  BXorOp       = 100 + Instruction::Xor;
-const int  BNotOp       = 200 + Instruction::Xor;
-const int   NotOp       = 300 + Instruction::Xor;
+const int  BAndOp       = 100 + Instruction::And;               // 111
+const int  BOrOp        = 100 + Instruction::Or;                // 112
+const int  BXorOp       = 100 + Instruction::Xor;               // 113
+const int  BNotOp       = 200 + Instruction::Xor;               // 213
+const int   NotOp       = 300 + Instruction::Xor;               // 313
 
-const int  SetCCOp	= 100 + Instruction::SetEQ;
+const int  SetCCOp	= 100 + Instruction::SetEQ;             // 114
 
-const int  AllocaN	= 100 + Instruction::Alloca;		// 121
-const int  LoadIdx	= 100 + Instruction::Load;		// 122
-const int  GetElemPtrIdx= 100 + Instruction::GetElementPtr;	// 124
+const int  AllocaN	= 100 + Instruction::Alloca;		// 122
+const int  LoadIdx	= 100 + Instruction::Load;		// 123
+const int  GetElemPtrIdx= 100 + Instruction::GetElementPtr;	// 125
 
-const int  ToBoolTy	= 100 + Instruction::Cast;		// 126
+const int  ToBoolTy	= 100 + Instruction::Cast;		// 127
 const int  ToUByteTy	= ToBoolTy +  1;
 const int  ToSByteTy	= ToBoolTy +  2;
 const int  ToUShortTy	= ToBoolTy +  3;
