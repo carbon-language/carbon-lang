@@ -49,8 +49,9 @@ void __main(void) {
       abort();  /* Should be able to install ONE atexit handler! */
 
   /* FIXME: This should sort the list by priority! */
-  for (; R->FP; ++R)
-    R->FP();
+  if (R->FP)
+    for (; R->FP; ++R)
+      R->FP();
 }
 
 static void run_destructors(void) {
