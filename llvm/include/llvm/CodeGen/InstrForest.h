@@ -20,7 +20,6 @@
 #define LLVM_CODEGEN_INSTRFOREST_H
 
 #include "llvm/Instruction.h"
-#include "Support/NonCopyable.h"
 #include "Support/HashExtras.h"
 
 class Constant;
@@ -106,7 +105,9 @@ extern void		printMatches	(InstrTreeNode*);
 // instruction selection via BURG.
 //------------------------------------------------------------------------ 
 
-class InstrTreeNode : public NonCopyableV {
+class InstrTreeNode {
+  InstrTreeNode(const InstrTreeNode &);   // DO NOT IMPLEMENT
+  void operator=(const InstrTreeNode &);  // DO NOT IMPLEMENT
 public:
   enum InstrTreeNodeType { NTInstructionNode,
 			   NTVRegListNode,
