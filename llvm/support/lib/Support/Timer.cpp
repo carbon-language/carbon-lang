@@ -17,7 +17,18 @@
 #include <functional>
 #include <fstream>
 
-static std::string LibSupportInfoOutputFilename;
+// getLibSupportInfoOutputFilename - This ugly hack is brought to you courtesy
+// of constructor/destructor ordering being unspecified by C++.  Basically the
+// problem is that a Statistic<> object gets destroyed, which ends up calling
+// 'GetLibSupportInfoOutputFile()' (below), which calls this function.
+// LibSupportInfoOutputFilename used to be a global variable, but sometimes it
+// would get destroyed before the Statistic, causing havoc to ensue.  We "fix"
+// this by creating the string the first time it is needed and never destroying
+// it.
+static std::string &getLibSupportInfoOutputFilename() {
+  static std::string *LibSupportInfoOutputFilename = new std::string();
+  return *LibSupportInfoOutputFilename;
+}
 
 namespace {
 #ifdef HAVE_MALLINFO
@@ -30,7 +41,7 @@ namespace {
   cl::opt<std::string, true>
   InfoOutputFilename("info-output-file",
                      cl::desc("File to append -stats and -timer output to"),
-                     cl::Hidden, cl::location(LibSupportInfoOutputFilename));
+                   cl::Hidden, cl::location(getLibSupportInfoOutputFilename()));
 }
 
 static TimerGroup *DefaultTimerGroup = 0;
@@ -232,6 +243,7 @@ void Timer::print(const Timer &Total, std::ostream &OS) {
 
 // GetLibSupportInfoOutputFile - Return a file stream to print our output on...
 std::ostream *GetLibSupportInfoOutputFile() {
+  std::string &LibSupportInfoOutputFilename = getLibSupportInfoOutputFilename();
   if (LibSupportInfoOutputFilename.empty())
     return &std::cerr;
   if (LibSupportInfoOutputFilename == "-")
