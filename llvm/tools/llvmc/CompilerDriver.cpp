@@ -1,4 +1,4 @@
-//===- DriverAction.cpp - Compile Driver Actions ----------------*- C++ -*-===//
+//===- CompilerDriver.cpp - The LLVM Compiler Driver ------------*- C++ -*-===//
 //
 // 
 //                     The LLVM Compiler Infrastructure
@@ -8,8 +8,7 @@
 // 
 //===----------------------------------------------------------------------===//
 //
-// This file implements support for executable actions in the LLVM Compiler
-// Driver (llvmc).
+// This file implements the bulk of the LLVM Compiler Driver (llvmc).
 //
 //===------------------------------------------------------------------------===
 
