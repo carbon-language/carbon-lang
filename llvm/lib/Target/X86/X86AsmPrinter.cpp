@@ -150,7 +150,7 @@ void X86AsmPrinter::printConstantPool(MachineConstantPool *MCP) {
   for (unsigned i = 0, e = CP.size(); i != e; ++i) {
     O << "\t.section .rodata\n";
     emitAlignment(TD.getTypeAlignmentShift(CP[i]->getType()));
-    O << ".CPI" << CurrentFnName << "_" << i << ":\t\t\t\t\t" << CommentChar
+    O << ".CPI" << CurrentFnName << "_" << i << ":\t\t\t\t\t" << CommentString
       << *CP[i] << "\n";
     emitGlobalConstant(CP[i]);
   }
@@ -178,7 +178,7 @@ bool X86AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
        I != E; ++I) {
     // Print a label for the basic block.
     O << ".LBB" << CurrentFnName << "_" << I->getNumber() << ":\t"
-      << CommentChar << " " << I->getBasicBlock()->getName() << "\n";
+      << CommentString << " " << I->getBasicBlock()->getName() << "\n";
     for (MachineBasicBlock::const_iterator II = I->begin(), E = I->end();
          II != E; ++II) {
       // Print the assembly for the instruction.

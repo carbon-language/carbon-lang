@@ -45,7 +45,7 @@ namespace {
 
     PPC32AsmPrinter(std::ostream &O, TargetMachine &TM)
       : AsmPrinter(O, TM), LabelNumber(0) {
-      CommentChar = ";";
+      CommentString = ";";
       GlobalPrefix = "_";
       ZeroDirective = "\t.space\t";  // ".space N" emits N zeros.
       Data64bitsDirective = 0;       // we can't emit a 64-bit unit
@@ -123,7 +123,7 @@ void PPC32AsmPrinter::printConstantPool(MachineConstantPool *MCP) {
   for (unsigned i = 0, e = CP.size(); i != e; ++i) {
     O << "\t.const\n";
     emitAlignment(TD.getTypeAlignmentShift(CP[i]->getType()));
-    O << ".CPI" << CurrentFnName << "_" << i << ":\t\t\t\t\t" << CommentChar
+    O << ".CPI" << CurrentFnName << "_" << i << ":\t\t\t\t\t" << CommentString
       << *CP[i] << "\n";
     emitGlobalConstant(CP[i]);
   }
@@ -150,7 +150,7 @@ bool PPC32AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
        I != E; ++I) {
     // Print a label for the basic block.
     O << ".LBB" << CurrentFnName << "_" << I->getNumber() << ":\t"
-      << CommentChar << " " << I->getBasicBlock()->getName() << "\n";
+      << CommentString << " " << I->getBasicBlock()->getName() << "\n";
     for (MachineBasicBlock::const_iterator II = I->begin(), E = I->end();
          II != E; ++II) {
       // Print the assembly for the instruction.
