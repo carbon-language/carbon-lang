@@ -1423,12 +1423,12 @@ is its address (after linking) which is guaranteed to be constant.</p>
     is necessary to use when you need to update the list or perform a complex
     action that doesn't have a forwarding method.</p></li>
 
-  <li><tt>Function::aiterator</tt> - Typedef for the argument list
+  <li><tt>Function::arg_iterator</tt> - Typedef for the argument list
 iterator<br>
-    <tt>Function::const_aiterator</tt> - Typedef for const_iterator.<br>
+    <tt>Function::const_arg_iterator</tt> - Typedef for const_iterator.<br>
 
-    <tt>abegin()</tt>, <tt>aend()</tt>, <tt>afront()</tt>, <tt>aback()</tt>,
-    <tt>asize()</tt>, <tt>aempty()</tt>, <tt>arbegin()</tt>, <tt>arend()</tt>
+    <tt>arg_begin()</tt>, <tt>arg_end()</tt>, <tt>arg_front()</tt>, <tt>arg_back()</tt>,
+    <tt>arg_size()</tt>, <tt>arg_empty()</tt>
 
     <p>These are forwarding methods that make it easy to access the contents of
     a <tt>Function</tt> object's <a href="#Argument"><tt>Argument</tt></a>
@@ -1591,12 +1591,12 @@ provide a name for it (probably based on the name of the translation unit).</p>
 <hr>
 
 <ul>
-  <li><tt>Module::giterator</tt> - Typedef for global variable list iterator<br>
+  <li><tt>Module::global_iterator</tt> - Typedef for global variable list iterator<br>
 
-    <tt>Module::const_giterator</tt> - Typedef for const_iterator.<br>
+    <tt>Module::const_global_iterator</tt> - Typedef for const_iterator.<br>
 
-    <tt>gbegin()</tt>, <tt>gend()</tt>, <tt>gfront()</tt>, <tt>gback()</tt>,
-    <tt>gsize()</tt>, <tt>gempty()</tt>, <tt>grbegin()</tt>, <tt>grend()</tt>
+    <tt>global_begin()</tt>, <tt>global_end()</tt>, <tt>global_front()</tt>, <tt>global_back()</tt>,
+    <tt>global_size()</tt>, <tt>global_empty()</tt>
 
     <p> These are forwarding methods that make it easy to access the contents of
     a <tt>Module</tt> object's <a
