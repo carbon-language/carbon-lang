@@ -219,7 +219,7 @@ static inline void readBlock(const unsigned char *&Buf,
 #ifdef DEBUG_OUTPUT
   bool Result = read(Buf, EndBuf, Type) || read(Buf, EndBuf, Size);
   std::cerr << "StartLoc = " << ((unsigned)Buf & 4095)
-       << " Type = " << Type << " Size = " << Size << std::endl;
+       << " Type = " << Type << " Size = " << Size << "\n";
   if (Result) throw Error_read;
 #else
   if (read(Buf, EndBuf, Type) || read(Buf, EndBuf, Size)) throw Error_read;
