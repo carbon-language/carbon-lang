@@ -26,6 +26,7 @@
 #include "llvm/Transforms/Scalar/IndVarSimplify.h"
 #include "llvm/Transforms/Scalar/InstructionCombining.h"
 #include "llvm/Transforms/Scalar/PromoteMemoryToRegister.h"
+#include "llvm/Transforms/Scalar/DecomposeMultiDimRefs.h"
 #include "llvm/Transforms/Instrumentation/TraceValues.h"
 #include "llvm/Transforms/Instrumentation/ProfilePaths.h"
 #include "Support/CommandLine.h"
@@ -38,7 +39,7 @@ enum Opts {
   dce, die, constprop, inlining, constmerge, strip, mstrip, mergereturn,
 
   // Miscellaneous Transformations
-  raiseallocs, cleangcc,
+  raiseallocs, cleangcc, lowerrefs,
 
   // Printing and verifying...
   print, verify,
@@ -91,6 +92,7 @@ struct {
   { globaldce  , createGlobalDCEPass },
   { swapstructs, createSwapElementsPass },
   { sortstructs, createSortElementsPass },
+  { lowerrefs,   createDecomposeMultiDimRefsPass } 
 };
 
 // Command line option handling code...
@@ -129,6 +131,7 @@ cl::EnumList<enum Opts> OptimizationList(cl::NoFlags,
   clEnumVal(paths      , "Insert path profiling instrumentation"),
   clEnumVal(print      , "Print working method to stderr"),
   clEnumVal(verify     , "Verify module is well formed"),
+  clEnumVal(lowerrefs  , "Decompose multi-dimensional structure/array refs to use one index per instruction"),
 0);
 
 

@@ -10,6 +10,7 @@
 #include "llvm/Transforms/Instrumentation/TraceValues.h"
 #include "llvm/Transforms/ChangeAllocations.h"
 #include "llvm/Transforms/HoistPHIConstants.h"
+#include "llvm/Transforms/Scalar/DecomposeMultiDimRefs.h"
 #include "llvm/Assembly/PrintModulePass.h"
 #include "llvm/Bytecode/WriteBytecodePass.h"
 #include "llvm/Transforms/ConstantMerge.h"
@@ -92,8 +93,13 @@ int main(int argc, char **argv) {
 
     // Eliminate duplication in constant pool
     Passes.add(createDynamicConstantMergePass());
-      
-    // Then write out the module with tracing code before code generation 
+  }
+  
+  // Decompose multi-dimensional refs into a sequence of 1D refs
+  Passes.add(createDecomposeMultiDimRefsPass());
+  
+  // Write out the module with tracing code just before code generation
+  if (TraceValues != TraceOff) {   // If tracing enabled...
     assert(InputFilename != "-" &&
            "files on stdin not supported with tracing");
     string traceFileName = GetFileNameRoot(InputFilename) + ".trace.bc";
@@ -104,7 +110,7 @@ int main(int argc, char **argv) {
            << "Use -f command line argument to force output\n";
       return 1;
     }
-
+    
     std::ostream *os = new std::ofstream(traceFileName.c_str());
     if (!os->good()) {
       cerr << "Error opening " << traceFileName
