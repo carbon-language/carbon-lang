@@ -1,0 +1,177 @@
+
+=pod
+
+=head1 NAME
+
+gccld - optimizing LLVM linker
+
+=head1 SYNOPSIS
+
+gccld [options] file1 [file2 ...]
+
+=head1 DESCRIPTION
+
+The B<gccld> utility takes a set of LLVM bytecode files and links them
+together into a single LLVM bytecode file.  The output bytecode file can be
+another bytecode library or an executable bytecode program.  Using additional
+options, B<gccld> is able to produce native code executables.
+
+The B<gccld> utility is primarily used by the L<llvmgcc> and
+L<llvmg++|llvmgxx> front-ends, and as such, attempts to mimic the interface
+provided by the default system linker so that it can act as a ``drop-in''
+replacement.
+
+The B<gccld> tool performs a small set of interprocedural, post-link
+optimizations on the program.
+
+=head2 Search Order
+
+When looking for objects specified on the command line, B<gccld> will search for
+the object first in the current directory and then in the directory specified by
+the B<LLVM_LIB_SEARCH_PATH> environment variable.  If it cannot find the object,
+it fails.
+
+When looking for a library specified with the B<-l> option, B<gccld> first
+attempts to load a file with that name from the current directory.  If that
+fails, it looks for libI<library>.bc, libI<library>.a, or libI<library>.I<shared
+library extension>, in that order, in each directory added to the library search
+path with the B<-L> option.  These directories are searched in the order they
+were specified.  If the library cannot be located, then B<gccld> looks in the
+directory specified by the B<LLVM_LIB_SEARCH_PATH> environment variable.  If it
+does not find a library there, it fails.
+
+The shared library extension may be I<.so>, I<.dyld>, I<.dll>, or something
+different, depending upon the system.
+
+The B<-L> option is global.  It does not matter where it is specified in the
+list of command line arguments; the directory is simply added to the search path
+and is applied to all libraries, preceding or succeeding, in the command line.
+
+=head2 Link order
+
+All object files are linked first in the order they were specified on the
+command line.  All library files are linked next.  Some libraries may not be
+linked into the object program; see below.
+
+=head2 Library Linkage
+
+Object files and static bytecode objects are always linked into the output
+file.  Library archives (.a files) load only the objects within the archive
+that define symbols needed by the output file.  Hence, libraries should be
+listed after the object files and libraries which need them; otherwise, the
+library may not be linked in, and the dependent library will not have its
+undefined symbols defined.
+
+=head2 Native code generation
+
+The B<gccld> program has limited support for native code generation, when
+using the B<-native> or B<-native-cbe> options.
+
+=head1 OPTIONS
+
+=over
+
+=item B<-help>
+
+Print a summary of command line options.
+
+=item B<-o> I<filename>
+
+Specify the output filename which will hold the linked bytecode.
+
+=item B<-stats>
+
+Print statistics.
+
+=item B<-time-passes>
+
+Record the amount of time needed for each pass and print it to standard
+error.
+
+=item B<-verify>
+
+Verify each pass result.
+
+=item B<-disable-opt>
+
+Disable all link-time optimization passes.
+
+=item B<-disable-inlining>
+
+Do not run the inliner pass.
+
+=item B<-L>I<directory>
+
+Add directory to the list of directories to search when looking for
+libraries.
+
+=item B<-disable-internalize>
+
+Do not mark all symbols as internal.
+
+=item B<-internalize-public-api-file> I<filename>
+
+Preserve the list of symbol names in the file filename.
+
+=item B<-internalize-public-api-list &lt;list&gt;>
+
+Preserve the symbol names in list.
+
+=item B<-l>I<library>
+
+Specify libraries to include when linking the output file.  When linking,
+B<gccld> will first attempt to load a file with the pathname B<library>.  If
+that fails, it will then attempt to load libI<library>.bc, libI<library>.a, and
+libI<library>.I<shared library extension>, in that order.
+
+=item B<-link-as-library>
+
+Link the .bc files together as a library, not an executable.
+
+=item B<-native>
+
+Generate a native machine code executable.
+
+When generating native executables, B<gccld> first checks for a bytecode
+version of the library and links it in, if necessary.  If the library is
+missing, B<gccld> skips it.  Then, B<gccld> links in the same
+libraries as native code.
+
+In this way, B<gccld> should be able to link in optimized bytecode
+subsets of common libraries and then link in any part of the library that
+hasn't been converted to bytecode.
+
+=item B<-native-cbe>
+
+Generate a native machine code executable with the LLVM C backend.
+      
+This option is identical to the B<-native> option, but uses the
+C backend to generate code for the program instead of an LLVM native
+code generator.
+
+=item B<-s>
+
+Strip symbol information from the generated executable.
+
+=item B<-v>
+
+Print information about actions taken.
+
+=back
+
+=head1 EXIT STATUS
+
+If B<gccld> succeeds, it will exit with an exit status of 0.
+Otherwise, if an error occurs, it will exit with a non-zero exit
+status.
+
+=head1 SEE ALSO
+
+L<llvm-link>, L<gccas>
+
+=head1 AUTHORS
+
+Maintained by the LLVM Team (L<http://llvm.cs.uiuc.edu>).
+
+=cut
+
