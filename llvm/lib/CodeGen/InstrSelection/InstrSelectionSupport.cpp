@@ -13,6 +13,8 @@
 
 #include "llvm/CodeGen/InstrSelectionSupport.h"
 #include "llvm/CodeGen/InstrSelection.h"
+#include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/CodeGen/MachineInstrAnnot.h"
 #include "llvm/CodeGen/MachineCodeForInstruction.h"
 #include "llvm/CodeGen/MachineCodeForMethod.h"
 #include "llvm/CodeGen/InstrForest.h"
@@ -28,6 +30,9 @@ using std::vector;
 //*************************** Local Functions ******************************/
 
 
+// Generate code to load the constant into a TmpInstruction (virtual reg) and
+// returns the virtual register.
+// 
 static TmpInstruction*
 InsertCodeToLoadConstant(Function *F,
                          Value* opValue,
@@ -39,15 +44,11 @@ InsertCodeToLoadConstant(Function *F,
   
   // Create a tmp virtual register to hold the constant.
   TmpInstruction* tmpReg = new TmpInstruction(opValue);
-  MachineCodeForInstruction &MCFI = MachineCodeForInstruction::get(vmInstr);
-  MCFI.addTemp(tmpReg);
+  MachineCodeForInstruction &mcfi = MachineCodeForInstruction::get(vmInstr);
+  mcfi.addTemp(tmpReg);
   
-  target.getInstrInfo().CreateCodeToLoadConst(F, opValue, tmpReg,
-                                              loadConstVec, tempVec);
-  
-  // Register the new tmp values created for this m/c instruction sequence
-  for (unsigned i=0; i < tempVec.size(); i++)
-    MCFI.addTemp(tempVec[i]);
+  target.getInstrInfo().CreateCodeToLoadConst(target, F, opValue, tmpReg,
+                                              loadConstVec, mcfi);
   
   // Record the mapping from the tmp VM instruction to machine instruction.
   // Do this for all machine instructions that were not mapped to any
@@ -107,7 +108,7 @@ GetConstantValueAsSignedInt(const Value *V,
 // 
 // Purpose:
 //   Fold a chain of GetElementPtr instructions containing only
-//   structure offsets into an equivalent (Pointer, IndexVector) pair.
+//   constant offsets into an equivalent (Pointer, IndexVector) pair.
 //   Returns the pointer Value, and stores the resulting IndexVector
 //   in argument chainIdxVec.
 //---------------------------------------------------------------------------
@@ -121,15 +122,12 @@ FoldGetElemChain(const InstructionNode* getElemInstrNode,
   
   // Return NULL if we don't fold any instructions in.
   Value* ptrVal = NULL;
-
-  // The incoming index vector must be for the user of the chain.
-  // Its leading index must be [0] and we insert indices after that.
-  assert(chainIdxVec.size() > 0 &&
-         isa<ConstantUInt>(chainIdxVec.front()) &&
-         cast<ConstantUInt>(chainIdxVec.front())->getValue() == 0);
+  
+  // Remember if the last instruction had a leading [0] index.
+  bool hasLeadingZero = false;
   
   // Now chase the chain of getElementInstr instructions, if any.
-  // Check for any array indices and stop there.
+  // Check for any non-constant indices and stop there.
   // 
   const InstrTreeNode* ptrChild = getElemInstrNode;
   while (ptrChild->getOpLabel() == Instruction::GetElementPtr ||
@@ -139,29 +137,29 @@ FoldGetElemChain(const InstructionNode* getElemInstrNode,
       getElemInst = (MemAccessInst*)
 	((InstructionNode*) ptrChild)->getInstruction();
       const vector<Value*>& idxVec = getElemInst->copyIndices();
-      bool allStructureOffsets = true;
+      bool allConstantOffsets = true;
       
-      // If it is a struct* access, the first offset must be array index [0],
-      // and all other offsets must be structure (not array) offsets
-      if (!isa<ConstantUInt>(idxVec.front()) ||
-          cast<ConstantUInt>(idxVec.front())->getValue() != 0)
-        allStructureOffsets = false;
+      // Check for a leading [0] index, if any.  It will be discarded later.
+      ConstantUInt* CV = dyn_cast<ConstantUInt>(idxVec[0]);
+      hasLeadingZero = bool(CV && CV->getType() == Type::UIntTy &&
+                            (CV->getValue() == 0));
       
-      if (allStructureOffsets)
-        for (unsigned int i=1; i < idxVec.size(); i++)
-          if (idxVec[i]->getType() == Type::UIntTy)
-            {
-              allStructureOffsets = false; 
-              break;
-            }
+      // Check that all offsets are constant for this instruction
+      for (unsigned int i=0; i < idxVec.size(); i++)
+        if (! isa<ConstantUInt>(idxVec[i]))
+          {
+            allConstantOffsets = false; 
+            break;
+          }
       
-      if (allStructureOffsets)
+      if (allConstantOffsets)
         { // Get pointer value out of ptrChild.
           ptrVal = getElemInst->getPointerOperand();
-
-          // Insert its index vector at the start, but after the leading [0]
-          chainIdxVec.insert(chainIdxVec.begin()+1,
-                             idxVec.begin()+1, idxVec.end());
+          
+          // Insert its index vector at the start.
+          chainIdxVec.insert(chainIdxVec.begin(),
+                             idxVec.begin() + (hasLeadingZero? 1:0),
+                             idxVec.end());
           
           // Mark the folded node so no code is generated for it.
           ((InstructionNode*) ptrChild)->markFoldedIntoParent();
@@ -171,6 +169,11 @@ FoldGetElemChain(const InstructionNode* getElemInstrNode,
       
       ptrChild = ptrChild->leftChild();
     }
+  
+  // If the first getElementPtr instruction had a leading [0], add it back.
+  // Note that this instruction is the *last* one handled above.
+  if (hasLeadingZero) 
+    chainIdxVec.insert(chainIdxVec.begin(), ConstantUInt::get(Type::UIntTy,0));
   
   return ptrVal;
 }
@@ -195,9 +198,6 @@ FoldGetElemChain(const InstructionNode* getElemInstrNode,
 //		     in the machine instruction the 3 operands (arg1, arg2
 //		     and result) should go.
 // 
-// RETURN VALUE: unsigned int flags, where
-//	flags & 0x01	=> operand 1 is constant and needs a register
-//	flags & 0x02	=> operand 2 is constant and needs a register
 //------------------------------------------------------------------------ 
 
 void
@@ -310,7 +310,9 @@ ChooseRegOrImmed(Value* val,
   else if (canUseImmed &&
 	   target.getInstrInfo().constantFitsInImmedField(opCode, intValue))
     {
-      opType = MachineOperand::MO_SignExtendedImmed;
+      opType = CPV->getType()->isSigned()
+        ? MachineOperand::MO_SignExtendedImmed
+        : MachineOperand::MO_UnextendedImmed;
       getImmedValue = intValue;
     }
   
@@ -380,7 +382,7 @@ FixConstantOperandsForInstr(Instruction* vmInstr,
       
       if (constantThatMustBeLoaded || isa<GlobalValue>(opValue))
         { // opValue is a constant that must be explicitly loaded into a reg.
-          TmpInstruction* tmpReg = InsertCodeToLoadConstant(F, opValue, vmInstr,
+          TmpInstruction* tmpReg = InsertCodeToLoadConstant(F, opValue,vmInstr,
                                                             loadConstVec,
                                                             target);
           minstr->SetMachineOperandVal(op, MachineOperand::MO_VirtualRegister,
@@ -389,8 +391,9 @@ FixConstantOperandsForInstr(Instruction* vmInstr,
     }
   
   // 
-  // Also, check for implicit operands used (not those defined) by the
-  // machine instruction.  These include:
+  // Also, check for implicit operands used by the machine instruction
+  // (no need to check those defined since they cannot be constants).
+  // These include:
   // -- arguments to a Call
   // -- return value of a Return
   // Any such operand that is a constant value needs to be fixed also.
@@ -398,6 +401,12 @@ FixConstantOperandsForInstr(Instruction* vmInstr,
   // have no immediate fields, so the constant always needs to be loaded
   // into a register.
   // 
+  bool isCall = target.getInstrInfo().isCall(minstr->getOpCode());
+  unsigned lastCallArgNum = 0;          // unused if not a call
+  CallArgsDescriptor* argDesc = NULL;   // unused if not a call
+  if (isCall)
+    argDesc = CallArgsDescriptor::get(minstr);
+  
   for (unsigned i=0, N=minstr->getNumImplicitRefs(); i < N; ++i)
     if (isa<Constant>(minstr->getImplicitRef(i)) ||
         isa<GlobalValue>(minstr->getImplicitRef(i)))
@@ -406,6 +415,17 @@ FixConstantOperandsForInstr(Instruction* vmInstr,
         TmpInstruction* tmpReg =
           InsertCodeToLoadConstant(F, oldVal, vmInstr, loadConstVec, target);
         minstr->setImplicitRef(i, tmpReg);
+        
+        if (isCall)
+          { // find and replace the argument in the CallArgsDescriptor
+            unsigned i=lastCallArgNum;
+            while (argDesc->getArgInfo(i).getArgVal() != oldVal)
+              ++i;
+            assert(i < argDesc->getNumArgs() &&
+                   "Constant operands to a call *must* be in the arg list");
+            lastCallArgNum = i;
+            argDesc->getArgInfo(i).replaceArgVal(tmpReg);
+          }
       }
   
   return loadConstVec;
