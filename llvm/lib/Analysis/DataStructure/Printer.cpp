@@ -155,7 +155,9 @@ void DSGraph::writeGraphToFile(std::ostream &O, const string &GraphName) const {
   
   if (F.good()) {
     print(F);
-    O << " [" << getGraphSize() << "+" << getFunctionCalls().size() << "]\n";
+    unsigned NumCalls = shouldPrintAuxCalls() ?
+      getAuxFunctionCalls().size() : getFunctionCalls().size();
+    O << " [" << getGraphSize() << "+" << NumCalls << "]\n";
   } else {
     O << "  error opening file for writing!\n";
   }
