@@ -256,7 +256,11 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       bool isDouble = VT == MVT::f64;
       ConstantFP *LLVMC = ConstantFP::get(isDouble ? Type::DoubleTy :
                                              Type::FloatTy, CFP->getValue());
-      if (isDouble && CFP->isExactlyValue((float)CFP->getValue())) {
+      if (isDouble && CFP->isExactlyValue((float)CFP->getValue()) &&
+          // Only do this if the target has a native EXTLOAD instruction from
+          // f32.
+          TLI.getOperationAction(ISD::EXTLOAD,
+                                 MVT::f32) == TargetLowering::Legal) {
         LLVMC = cast<ConstantFP>(ConstantExpr::getCast(LLVMC, Type::FloatTy));
         VT = MVT::f32;
         Extend = true;
