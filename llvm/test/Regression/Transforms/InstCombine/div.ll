@@ -24,3 +24,9 @@ int %test4(int %A) {
 	%B = div int %A, -1    ; 0-A
 	ret int %B
 }
+
+uint %test5(uint %A) {
+	%B = div uint %A, 4294967280
+	%C = div uint %B, 4294967292
+	ret uint %C
+}
