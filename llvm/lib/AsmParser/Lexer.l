@@ -59,7 +59,7 @@ uint64_t atoull(const char *Buffer) {
 /* Comments start with a ; and go till end of line */
 Comment    ;.*
 
-/* Variable(Def) identifiers start with a % sign */
+/* Variable(Value) identifiers start with a % sign */
 VarID       %[a-zA-Z$._][a-zA-Z$._0-9]*
 
 /* Label identifiers end with a colon */
@@ -94,9 +94,6 @@ true            { return TRUE;  }
 false           { return FALSE; }
 declare         { return DECLARE; }
 implementation  { return IMPLEMENTATION; }
-
--               { cerr << "deprecated argument '-' used!\n"; return '-'; }
-bb              { cerr << "deprecated type 'bb' used!\n"; llvmAsmlval.TypeVal = Type::LabelTy; return LABEL;}
 
 void            { llvmAsmlval.TypeVal = Type::VoidTy  ; return VOID;   }
 bool            { llvmAsmlval.TypeVal = Type::BoolTy  ; return BOOL;   }

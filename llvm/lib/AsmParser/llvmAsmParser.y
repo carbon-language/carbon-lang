@@ -58,11 +58,13 @@ static struct PerModuleInfo {
 static struct PerMethodInfo {
   Method *CurrentMethod;         // Pointer to current method being created
 
-  vector<ValueList> Values;          // Keep track of numbered definitions
+  vector<ValueList> Values;      // Keep track of numbered definitions
   vector<ValueList> LateResolveValues;
+  bool isDeclare;                // Is this method a forward declararation?
 
   inline PerMethodInfo() {
     CurrentMethod = 0;
+    isDeclare = false;
   }
 
   inline ~PerMethodInfo() {}
@@ -78,6 +80,7 @@ static struct PerMethodInfo {
 
     Values.clear();         // Clear out method local definitions
     CurrentMethod = 0;
+    isDeclare = false;
   }
 } CurMeth;  // Info for the current method...
 
@@ -413,7 +416,7 @@ Module *RunVMAsmParser(const ToolCommandLine &Opts, FILE *F) {
 }
 
 %type <ModuleVal>     Module MethodList
-%type <MethodVal>     Method MethodHeader BasicBlockList
+%type <MethodVal>     Method MethodProto MethodHeader BasicBlockList
 %type <BasicBlockVal> BasicBlock InstructionList
 %type <TermInstVal>   BBTerminatorInst
 %type <InstVal>       Inst InstVal MemoryInst
@@ -671,10 +674,17 @@ Module : MethodList {
 // MethodList - A list of methods, preceeded by a constant pool.
 //
 MethodList : MethodList Method {
-    $1->getMethodList().push_back($2);
-    CurMeth.MethodDone();
     $$ = $1;
+    if (!$2->getParent())
+      $1->getMethodList().push_back($2);
+    CurMeth.MethodDone();
   } 
+  | MethodList MethodProto {
+    $$ = $1;
+    if (!$2->getParent())
+      $1->getMethodList().push_back($2);
+    CurMeth.MethodDone();
+  }
   | ConstPool IMPLEMENTATION {
     $$ = CurModule.CurrentModule;
   }
@@ -718,15 +728,29 @@ MethodHeaderH : TypesV STRINGCONSTANT '(' ArgList ')' {
 
   const MethodType *MT = MethodType::getMethodType($1, ParamTypeList);
 
-  Method *M = new Method(MT, $2);
-  free($2);  // Free strdup'd memory!
+  Method *M = 0;
+  if (SymbolTable *ST = CurModule.CurrentModule->getSymbolTable()) {
+    if (Value *V = ST->lookup(MT, $2)) {  // Method already in symtab?
+      M = V->castMethodAsserting();
 
-  InsertValue(M, CurModule.Values);
+      // Yes it is.  If this is the case, either we need to be a forward decl,
+      // or it needs to be.
+      if (!CurMeth.isDeclare && !M->isExternal())
+	ThrowException("Redefinition of method '" + string($2) + "'!");      
+    }
+  }
+
+  if (M == 0) {  // Not already defined?
+    M = new Method(MT, $2);
+    InsertValue(M, CurModule.Values);
+  }
+
+  free($2);  // Free strdup'd memory!
 
   CurMeth.MethodStart(M);
 
   // Add all of the arguments we parsed to the method...
-  if ($4) {        // Is null if empty...
+  if ($4 && !CurMeth.isDeclare) {        // Is null if empty...
     Method::ArgumentListType &ArgList = M->getArgumentList();
 
     for (list<MethodArgument*>::iterator I = $4->begin(); I != $4->end(); ++I) {
@@ -745,6 +769,9 @@ Method : BasicBlockList END {
   $$ = $1;
 }
 
+MethodProto : DECLARE { CurMeth.isDeclare = true; } MethodHeaderH {
+  $$ = CurMeth.CurrentMethod;
+}
 
 //===----------------------------------------------------------------------===//
 //                        Rules to match Basic Blocks
