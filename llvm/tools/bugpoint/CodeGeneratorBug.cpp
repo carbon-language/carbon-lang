@@ -349,9 +349,13 @@ static void DisambiguateGlobalSymbols(Module *M) {
 
 bool BugDriver::debugCodeGenerator() {
   if ((void*)cbe == (void*)Interpreter) {
-    std::cout << "*** The C backend cannot match the reference diff, but it is "
-              << "used as the 'known good'\n     code generator, so I can't deb"
-              << "ug it.  Perhaps you have a front-end problem?\n";
+    std::string Result = executeProgramWithCBE("bugpoint.cbe.out");
+    std::cout << "\n*** The C backend cannot match the reference diff, but it "
+              << "is used as the 'known good'\n    code generator, so I can't"
+              << " debug it.  Perhaps you have a front-end problem?\n    As a"
+              << " sanity check, I left the result of executing the program "
+              << "with the C backend\n    in this file for you: '"
+              << Result << "'.\n";
     return true;
   }
 
