@@ -18,6 +18,7 @@
 class GlobalVariable;
 class GlobalValueRefMap;   // Used by ConstantVals.cpp
 class ConstantPointerRef;
+class FunctionType;
 
 class Module : public Value, public SymTabValue {
 public:
@@ -51,6 +52,16 @@ private:
 public:
   Module();
   ~Module();
+
+  // getOrInsertFunction - Look up the specified function in the module symbol
+  // table.  If it does not exist, add a prototype for the function and return
+  // it.
+  Function *getOrInsertFunction(const std::string &Name, const FunctionType *T);
+
+  // getFunction - Look up the specified function in the module symbol table.
+  // If it does not exist, return null.
+  //
+  Function *getFunction(const std::string &Name, const FunctionType *Ty);
 
   // Get the underlying elements of the Module...
   inline const GlobalListType &getGlobalList() const  { return GlobalList; }
