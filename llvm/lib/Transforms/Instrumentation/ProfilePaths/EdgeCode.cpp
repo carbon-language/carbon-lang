@@ -19,7 +19,7 @@
 #include "llvm/Module.h"
 #include "llvm/SymbolTable.h"
 #include "llvm/GlobalVariable.h"
-#include "llvm/Constants.h"//llvm/ConstantVals.h"
+#include "llvm/Constants.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/Function.h"
 #include <string.h>
@@ -33,9 +33,7 @@ using std::vector;
 
 
 void getTriggerCode(Module *M, BasicBlock *BB, int MethNo, Value *pathNo, 
-		    Value *cnt){
-  //  return;
-  //cerr<<"In trigger code"<<endl;
+		    Value *cnt){ 
   static int i=-1;
   i++;
   char gstr[100];
@@ -43,7 +41,7 @@ void getTriggerCode(Module *M, BasicBlock *BB, int MethNo, Value *pathNo,
   std::string globalVarName=gstr;
   SymbolTable *ST = M->getSymbolTable();
   vector<const Type*> args;
-  args.push_back(PointerType::get(Type::SByteTy));
+  //args.push_back(PointerType::get(Type::SByteTy));
   args.push_back(Type::IntTy);
   args.push_back(Type::IntTy);
   args.push_back(Type::IntTy);
@@ -58,21 +56,26 @@ void getTriggerCode(Module *M, BasicBlock *BB, int MethNo, Value *pathNo,
   vector<Value *> trargs;
 
   //pred_iterator piter=BB->pred_begin();
-  std::string predName=BB->getName();
-  Constant *bbName=ConstantArray::get(predName);//BB->getName());
-  GlobalVariable *gbl=new GlobalVariable(ArrayType::get(Type::SByteTy, 
-							predName.size()+1), 
-					 true, true, bbName, gstr);
-  M->getGlobalList().push_back(gbl);
+  //std::string predName = "uu";//BB->getName();
+  //Constant *bbName=ConstantArray::get(predName);//BB->getName());
+  //GlobalVariable *gbl=new GlobalVariable(ArrayType::get(Type::SByteTy, 
+  //					predName.size()+1), 
+  //				 true, true, bbName, gstr);
+  
+  //M->getGlobalList().push_back(gbl);
 
   vector<Value *> elargs;
   elargs.push_back(ConstantUInt::get(Type::UIntTy, 0));
   elargs.push_back(ConstantUInt::get(Type::UIntTy, 0));
 
-  Instruction *getElmntInst=new GetElementPtrInst(gbl,elargs,"elmntInst");
-
+  // commented out bb name frm which its called
+  //Instruction *getElmntInst=new GetElementPtrInst(gbl,elargs,"elmntInst");
+  
   //trargs.push_back(ConstantArray::get(BB->getName()));
-  trargs.push_back(getElmntInst);
+  
+  //trargs.push_back(getElmntInst);
+  //trargs.push_back(bbName);
+
   trargs.push_back(ConstantSInt::get(Type::IntTy,MethNo));
     
   //trargs.push_back(ConstantSInt::get(Type::IntTy,-1));//erase this
@@ -82,14 +85,8 @@ void getTriggerCode(Module *M, BasicBlock *BB, int MethNo, Value *pathNo,
 
   BasicBlock::InstListType& instList=BB->getInstList();
   BasicBlock::iterator here=instList.begin();
-  here = ++instList.insert(here, getElmntInst);
+  //here = ++instList.insert(here, getElmntInst);
   instList.insert(here,callInst);
-  //}
-  //else{
-  //insert trigger method
-    
-  //assert(0&&"No method trigger");
-  //}
 }
 
 
@@ -340,8 +337,9 @@ void insertBB(Edge ed,
   //Is terminator a branch instruction?
   //then we need to change branch destinations to include new BB
 
-  BranchInst *BI=cast<BranchInst>(TI);
- 
+  //std::cerr<<"before cast!\n";
+  BranchInst *BI =  cast<BranchInst>(TI);
+
   if(BI->isUnconditional()){
     BI->setUnconditionalDest(newBB);
     Instruction *newBI2=new BranchInst(BB2);
@@ -358,6 +356,7 @@ void insertBB(Edge ed,
     newBB->getInstList().push_back(newBI2);
   }
   
+  //std::cerr<<"After casting\n";
   //get code for the new BB
    //now iterate over BB2, and set its Phi nodes right
   for(BasicBlock::iterator BB2Inst = BB2->begin(), BBend = BB2->end(); 
