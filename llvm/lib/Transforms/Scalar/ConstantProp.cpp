@@ -29,45 +29,6 @@
 #include "llvm/iTerminators.h"
 #include "llvm/iOther.h"
 #include "llvm/ConstPoolVals.h"
-#include "llvm/ConstantPool.h"
-
-// Merge identical constant values in the constant pool.
-// 
-// TODO: We can do better than this simplistic N^2 algorithm...
-//
-bool opt::DoConstantPoolMerging(Method *M) {
-  return DoConstantPoolMerging(M->getConstantPool());
-}
-
-bool opt::DoConstantPoolMerging(ConstantPool &CP) {
-  bool Modified = false;
-  for (ConstantPool::plane_iterator PI = CP.begin(); PI != CP.end(); ++PI) {
-    for (ConstantPool::PlaneType::iterator I = (*PI)->begin(); 
-	 I != (*PI)->end(); ++I) {
-      ConstPoolVal *C = *I;
-
-      ConstantPool::PlaneType::iterator J = I;
-      for (++J; J != (*PI)->end(); ++J) {
-	if (C->equals(*J)) {
-	  Modified = true;
-	  // Okay we know that *I == *J.  So now we need to make all uses of *I
-	  // point to *J.
-	  //
-	  C->replaceAllUsesWith(*J);
-
-	  (*PI)->remove(I); // Remove C from constant pool...
-	  
-	  if (C->hasName() && !(*J)->hasName())  // The merged constant inherits
-	    (*J)->setName(C->getName());         // the old name...
-	  
-	  delete C;                              // Delete the constant itself.
-	  break;  // Break out of inner for loop
-	}
-      }
-    }
-  }
-  return Modified;
-}
 
 inline static bool 
 ConstantFoldUnaryInst(Method *M, Method::inst_iterator &DI,
@@ -77,10 +38,6 @@ ConstantFoldUnaryInst(Method *M, Method::inst_iterator &DI,
 
   if (!ReplaceWith) return false;   // Nothing new to change...
 
-
-  // Add the new value to the constant pool...
-  M->getConstantPool().insert(ReplaceWith);
-  
   // Replaces all of the uses of a variable with uses of the constant.
   Op->replaceAllUsesWith(ReplaceWith);
   
@@ -88,7 +45,8 @@ ConstantFoldUnaryInst(Method *M, Method::inst_iterator &DI,
   Op->getParent()->getInstList().remove(DI.getInstructionIterator());
   
   // The new constant inherits the old name of the operator...
-  if (Op->hasName()) ReplaceWith->setName(Op->getName());
+  if (Op->hasName())
+    ReplaceWith->setName(Op->getName(), M->getSymbolTableSure());
   
   // Delete the operator now...
   delete Op;
@@ -103,9 +61,6 @@ ConstantFoldBinaryInst(Method *M, Method::inst_iterator &DI,
     opt::ConstantFoldBinaryInstruction(Op->getOpcode(), D1, D2);
   if (!ReplaceWith) return false;   // Nothing new to change...
 
-  // Add the new value to the constant pool...
-  M->getConstantPool().insert(ReplaceWith);
-  
   // Replaces all of the uses of a variable with uses of the constant.
   Op->replaceAllUsesWith(ReplaceWith);
   
@@ -113,7 +68,8 @@ ConstantFoldBinaryInst(Method *M, Method::inst_iterator &DI,
   Op->getParent()->getInstList().remove(DI.getInstructionIterator());
   
   // The new constant inherits the old name of the operator...
-  if (Op->hasName()) ReplaceWith->setName(Op->getName());
+  if (Op->hasName())
+    ReplaceWith->setName(Op->getName(), M->getSymbolTableSure());
   
   // Delete the operator now...
   delete Op;
@@ -151,7 +107,12 @@ bool opt::ConstantFoldTerminator(TerminatorInst *T) {
       // unconditional branch.
       BI->setUnconditionalDest(Destination);
       return true;
-    } else if (Dest2 == Dest1) {       // Conditional branch to same location?
+    }
+#if 0
+    // FIXME: TODO: This doesn't work if the destination has PHI nodes with
+    // different incoming values on each branch!
+    //
+    else if (Dest2 == Dest1) {       // Conditional branch to same location?
       // This branch matches something like this:  
       //     br bool %cond, label %Dest, label %Dest
       // and changes it into:  br label %Dest
@@ -164,6 +125,7 @@ bool opt::ConstantFoldTerminator(TerminatorInst *T) {
       BI->setUnconditionalDest(Dest1);
       return true;
     }
+#endif
   }
   return false;
 }
@@ -196,7 +158,8 @@ ConstantFoldInstruction(Method *M, Method::inst_iterator &II) {
       PN->replaceAllUsesWith(V);                 // Replace all uses of this PHI
                                                  // Unlink from basic block
       PN->getParent()->getInstList().remove(II.getInstructionIterator());
-      if (PN->hasName()) V->setName(PN->getName()); // Inherit PHINode name
+      if (PN->hasName())                         // Inherit PHINode name
+	V->setName(PN->getName(), M->getSymbolTableSure());
       delete PN;                                 // Finally, delete the node...
       return true;
     }
@@ -242,11 +205,6 @@ bool opt::DoConstantPropogation(Method *M) {
 
   // Fold constants until we make no progress...
   while (DoConstPropPass(M)) Modified = true;
-
-  // Merge identical constants last: this is important because we may have just
-  // introduced constants that already exist!
-  //
-  Modified |= DoConstantPoolMerging(M->getConstantPool());
 
   return Modified;
 }
