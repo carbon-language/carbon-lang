@@ -128,6 +128,11 @@ struct DominatorSet : public DominatorSetBase {
 
   virtual bool runOnFunction(Function &F);
 
+  /// recalculate - This method may be called by external passes that modify the
+  /// CFG and then need dominator information recalculated.  This method is
+  /// obviously really slow, so it should be avoided if at all possible.
+  void recalculate();
+
   // getAnalysisUsage - This simply provides a dominator set
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
     AU.setPreservesAll();

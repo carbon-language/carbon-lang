@@ -92,10 +92,15 @@ void DominatorSet::calculateDominatorsFromBlock(BasicBlock *RootBB) {
 // specified function.
 //
 bool DominatorSet::runOnFunction(Function &F) {
-  Doms.clear();   // Reset from the last time we were run...
   Root = &F.getEntryNode();
   assert(pred_begin(Root) == pred_end(Root) &&
 	 "Root node has predecessors in function!");
+  recalculate();
+  return false;
+}
+
+void DominatorSet::recalculate() {
+  Doms.clear();   // Reset from the last time we were run...
 
   // Calculate dominator sets for the reachable basic blocks...
   calculateDominatorsFromBlock(Root);
@@ -106,11 +111,10 @@ bool DominatorSet::runOnFunction(Function &F) {
   // extra pass over the function, calculating dominator information for
   // unreachable blocks.
   //
-  for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I)
+  Function *F = Root->getParent();
+  for (Function::iterator I = F->begin(), E = F->end(); I != E; ++I)
     if (Doms[I].count(I) == 0)
       calculateDominatorsFromBlock(I);
-
-  return false;
 }
 
 
