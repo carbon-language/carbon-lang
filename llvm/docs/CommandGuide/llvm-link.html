@@ -22,9 +22,9 @@ standard output, unless the -o option is used to specify a filename.
 <p>
 
 The <tt>llvm-link</tt> command attempts to load the input files from the current
-directory.  If that fails, it attempts to locate each file within the
+directory.  If that fails, it looks for each file in each of the
 directories specified by the -L options on the command line.  The library search
-paths are global; each one is search for every input file if necessary.  The
+paths are global; each one is searched for every input file if necessary.  The
 directories are searched in the order they were specified on the command line.
 
 <h3>
@@ -55,7 +55,7 @@ OPTIONS
 
 	<li>-d
 	<br>
-	If specified, <tt>llvm-link</tt> prints a human readable version of the
+	If specified, <tt>llvm-link</tt> prints a human-readable version of the
 	output bytecode file to standard error.
 	<p>
 
@@ -67,6 +67,8 @@ OPTIONS
 	<li>-v
 	<br>
 	Verbose mode.  Print information about what <tt>llvm-link</tt> is doing.
+    This typically includes a message for each bytecode file linked in
+    and for each library found.
 </ul>
 
 <h3>
