@@ -59,9 +59,7 @@ ExecutionEngine *VM::create(ModuleProvider *MP) {
   // Allow a command-line switch to override what *should* be the default target
   // machine for this platform. This allows for debugging a Sparc JIT on X86 --
   // our X86 machines are much faster at recompiling LLVM and linking LLI.
-#ifdef NO_JITS_ENABLED
-  return 0;
-#endif
+#ifndef NO_JITS_ENABLED
 
   switch (Arch) {
 #ifdef ENABLE_X86_JIT
@@ -77,6 +75,9 @@ ExecutionEngine *VM::create(ModuleProvider *MP) {
   default:
     assert(0 && "-march flag not supported on this host!");
   }
+#else
+  return 0;
+#endif
 
   // Allocate a target...
   TargetMachine *Target = TargetMachineAllocator(*MP->getModule());
