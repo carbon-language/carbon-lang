@@ -423,7 +423,13 @@ public:
     /// site into the nodes reachable from DestCS.
     void mergeCallSite(const DSCallSite &DestCS, const DSCallSite &SrcCS);
 
-    bool clonedNode() const { return !NodeMap.empty(); }
+    bool clonedAnyNodes() const { return !NodeMap.empty(); }
+
+    /// hasClonedNode - Return true if the specified node has been cloned from
+    /// the source graph into the destination graph.
+    bool hasClonedNode(const DSNode *N) {
+      return NodeMap.count(N);
+    }
 
     void destroy() { NodeMap.clear(); }
   };
