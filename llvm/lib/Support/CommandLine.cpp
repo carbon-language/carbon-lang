@@ -838,7 +838,15 @@ void generic_parser_base::printOptionInfo(const Option &O,
 // If this variable is set, it is a pointer to a function that the user wants
 // us to call after we print out the help info. Basically a hook to allow
 // additional help to be printed.
-void (*cl::MoreHelp)() = 0;
+static  std::vector<const char*>* MoreHelp = 0;
+
+extrahelp::extrahelp(const char* Help)
+  : morehelp(Help) {
+  if (!MoreHelp) {
+    MoreHelp = new std::vector<const char*>;
+  }
+  MoreHelp->push_back(Help);
+}
 
 namespace {
 
@@ -913,11 +921,16 @@ public:
     for (unsigned i = 0, e = Options.size(); i != e; ++i)
       Options[i].second->printOptionInfo(MaxArgLen);
 
-    // Call the user's hook so help output can be extended.
-    if (MoreHelp != 0)
-      (*MoreHelp)();
+    // Print any extra help the user has declared. If MoreHelp is not null,
+    // then the user used at least one cl::extrahelp instance to provide
+    // additional help. We just print it out now.
+    if (MoreHelp != 0) {
+      for (std::vector<const char *>::iterator I = MoreHelp->begin(),
+           E = MoreHelp->end(); I != E; ++I)
+        std::cerr << *I;
+    }
 
-    // Halt the program if help information is printed
+    // Halt the program since help information was printed
     exit(1);
   }
 };
@@ -954,4 +967,10 @@ cl::opt<VersionPrinter, true, parser<bool> >
 VersOp("version", cl::desc("display the version"), 
     cl::location(VersionPrinterInstance), cl::ValueDisallowed);
 
+
 } // End anonymous namespace
+
+// Utility function for printing the help message.
+void cl::PrintHelpMessage() {
+  NormalPrinter = true;
+}

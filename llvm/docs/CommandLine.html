@@ -2,6 +2,7 @@
                       "http://www.w3.org/TR/html4/strict.dtd">
 <html>
 <head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
   <title>CommandLine 2.0 Library Manual</title>
   <link rel="stylesheet" href="llvm.css" type="text/css">
 </head>
@@ -61,6 +62,7 @@
         <li><a href="#cl::opt">The <tt>cl::opt</tt> class</a></li>
         <li><a href="#cl::list">The <tt>cl::list</tt> class</a></li>
         <li><a href="#cl::alias">The <tt>cl::alias</tt> class</a></li>
+        <li><a href="#cl::extrahelp">The <tt>cl::extrahelp</tt> class</a></li>
         </ul></li>
 
       <li><a href="#builtinparsers">Builtin parsers</a>
@@ -1517,6 +1519,34 @@ used to specify which option this is an alias for.  Alias arguments default to
 being <a href="#cl::Hidden">Hidden</a>, and use the aliased options parser to do
 the conversion from string to data.</p>
 
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="cl::extrahelp">The <tt>cl::extrahelp</tt> class</a>
+</div>
+
+<div class="doc_text">
+
+<p>The <tt>cl::extrahelp</tt> class is a nontemplated class that allows extra
+help text to be printed out for the <tt>--help</tt> option.</p>
+
+<pre>
+<b>namespace</b> cl {
+  <b>struct</b> extrahelp;
+}
+</pre>
+
+<p>To use the extrahelp, simply construct one with a <tt>const char*</tt> 
+parameter to the constructor. The text passed to the constructor will be printed
+at the bottom of the help message, verbatim. Note that multiple
+<tt>cl::extrahelp</tt> <b>can</b> be used but this practice is discouraged. If
+your tool needs to print additional help information, put all that help into a
+single <tt>cl::extrahelp</tt> instance.</p>
+<p>For example:</p>
+<pre>
+  cl::extrahelp("\nADDITIONAL HELP:\n\n  This is the extra help\n");
+</pre>
 </div>
 
 <!-- ======================================================================= -->

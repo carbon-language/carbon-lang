@@ -1046,13 +1046,19 @@ struct aliasopt {
   void apply(alias &A) const { A.setAliasFor(Opt); }
 };
 
-/// Permit the tool to provide additional help output after the normal
-/// help output. To use this, create a function that returns void and
-/// takes no arguments. Assign its address to cl::MoreHelp. If set, 
-/// this function will be called just before the CommandLine exits
-/// after printing the help.
-/// @brief Optional pointer to additional help function
-extern void (*MoreHelp)();
+// extrahelp - provide additional help at the end of the normal help
+// output. All occurrences of cl::extrahelp will be accumulated and
+// printed to std::cerr at the end of the regular help, just before
+// exit is called.
+struct extrahelp {
+  const char * morehelp;
+  extrahelp(const char* help);
+};
+
+// This function just prints the help message, exactly the same way as if the
+// --help option had been given on the command line.
+// NOTE: THIS FUNCTION TERMINATES THE PROGRAM!
+void PrintHelpMessage();
 
 } // End namespace cl
 
