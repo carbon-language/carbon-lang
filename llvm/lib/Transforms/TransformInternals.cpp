@@ -53,6 +53,11 @@ const Type *getStructOffsetType(const Type *Ty, unsigned &Offset,
   uint64_t ThisOffset;
   const Type *NextType;
   if (const StructType *STy = dyn_cast<StructType>(Ty)) {
+    if (STy->getElementTypes().empty()) {
+      Offset = 0;
+      return STy;
+    }
+
     ThisOffset = Offset;
     NextType = getStructOffsetStep(STy, ThisOffset, Indices, TD);
   } else if (const ArrayType *ATy = dyn_cast<ArrayType>(Ty)) {
