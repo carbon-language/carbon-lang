@@ -608,6 +608,13 @@ namespace {
     void remove(ConstantClass *CP) {
       MapIterator I = Map.find(MapKey((TypeClass*)CP->getRawType(),
                                       getValType(CP)));
+      if (I == Map.end() || I->second != CP) {
+        // FIXME: This should not use a linear scan.  If this gets to be a
+        // performance problem, someone should look at this.
+        for (I = Map.begin(); I != Map.end() && I->second != CP; ++I)
+          /* empty */;
+      }
+
       assert(I != Map.end() && "Constant not found in constant table!");
       assert(I->second == CP && "Didn't find correct element?");
 
