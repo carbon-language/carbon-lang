@@ -21,7 +21,6 @@
 
 class LiveRange;
 class UltraSparc;
-class PhyRegAlloc;
 class Pass;
 
 enum SparcInstrSchedClass {
@@ -158,6 +157,19 @@ struct UltraSparcInstrInfo : public TargetInstrInfo {
   // 
   virtual MachineOpCode getNOPOpCode() const { return V9::NOP; }
 
+  // Get the value of an integral constant in the form that must
+  // be put into the machine register.  The specified constant is interpreted
+  // as (i.e., converted if necessary to) the specified destination type.  The
+  // result is always returned as an uint64_t, since the representation of
+  // int64_t and uint64_t are identical.  The argument can be any known const.
+  // 
+  // isValidConstant is set to true if a valid constant was found.
+  // 
+  virtual uint64_t ConvertConstantToIntType(const TargetMachine &target,
+                                            const Value *V,
+                                            const Type *destType,
+                                            bool  &isValidConstant) const;
+
   // Create an instruction sequence to put the constant `val' into
   // the virtual register `dest'.  `val' may be a Constant or a
   // GlobalValue, viz., the constant address of a global variable or function.
@@ -271,34 +283,8 @@ private:
 
   void suggestReg4CallAddr(MachineInstr *CallMI, LiveRangeInfo &LRI) const;
   
-  void InitializeOutgoingArg(MachineInstr* CallMI, AddedInstrns *CallAI,
-                             PhyRegAlloc &PRA, LiveRange* LR,
-                             unsigned regType, unsigned RegClassID,
-                             int  UniArgReg, unsigned int argNo,
-                             std::vector<MachineInstr *>& AddedInstrnsBefore)
-    const;
-
   // Helper used by the all the getRegType() functions.
   int getRegTypeForClassAndType(unsigned regClassID, const Type* type) const;
-
-  // Used to generate a copy instruction based on the register class of
-  // value.
-  //
-  MachineInstr *cpValue2RegMI(Value *Val,  unsigned DestReg,
-                              int RegType) const;
-
-
-  // The following 2 methods are used to order the instructions addeed by
-  // the register allocator in association with function calling. See
-  // SparcRegInfo.cpp for more details
-  //
-  void moveInst2OrdVec(std::vector<MachineInstr *> &OrdVec,
-                       MachineInstr *UnordInst,
-		       PhyRegAlloc &PRA) const;
-
-  void OrderAddedInstrns(std::vector<MachineInstr *> &UnordVec, 
-                         std::vector<MachineInstr *> &OrdVec,
-                         PhyRegAlloc &PRA) const;
 
 public:
   // Type of registers available in Sparc. There can be several reg types
@@ -382,16 +368,9 @@ public:
   void suggestReg4RetValue(MachineInstr *RetMI, 
                            LiveRangeInfo& LRI) const;
   
-  void colorMethodArgs(const Function *Meth,  LiveRangeInfo &LRI,
-		       AddedInstrns *FirstAI) const;
-
-  // This method inserts the caller saving code for call instructions
-  //
-  void insertCallerSavingCode(std::vector<MachineInstr*>& instrnsBefore,
-                              std::vector<MachineInstr*>& instrnsAfter,
-                              MachineInstr *CallMI, 
-			      const BasicBlock *BB,
-                              PhyRegAlloc &PRA ) const;
+  void colorMethodArgs(const Function *Meth,  LiveRangeInfo& LRI,
+                       std::vector<MachineInstr*>& InstrnsBefore,
+                       std::vector<MachineInstr*>& InstrnsAfter) const;
 
   // method used for printing a register for debugging purposes
   //
@@ -439,17 +418,6 @@ public:
 
   void cpValue2Value(Value *Src, Value *Dest,
                      std::vector<MachineInstr*>& mvec) const;
-
-  // To see whether a register is a volatile (i.e., whehter it must be
-  // preserved acorss calls)
-  //
-  inline bool isRegVolatile(int RegClassID, int Reg) const {
-    return MachineRegClassArr[RegClassID]->isRegVolatile(Reg);
-  }
-
-  inline bool modifiedByCall(int RegClassID, int Reg) const {
-    return MachineRegClassArr[RegClassID]->modifiedByCall(Reg);
-  }
 
   // Get the register type for a register identified different ways.
   // Note that getRegTypeForLR(LR) != getRegTypeForDataType(LR->getType())!
@@ -726,8 +694,6 @@ public:
   // getEmitBytecodeToAsmPass - Emits final LLVM bytecode to assembly file.
   Pass* getEmitBytecodeToAsmPass(std::ostream &Out);
 };
-
-int64_t GetConstantValueAsSignedInt(const Value *V, bool &isValidConstant);
 
 Pass *getFunctionInfo(std::ostream &out);
 
