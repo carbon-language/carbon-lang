@@ -372,6 +372,7 @@ bool RPR::PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
           std::vector<Value*> Indices;
           Indices.push_back(ConstantSInt::get(Type::LongTy, 0));
           while (CurCTy && !isa<PointerType>(CurCTy)) {
+            const Type *IdxType;
             if (const StructType *CurSTy = dyn_cast<StructType>(CurCTy)) {
               // Check for a zero element struct type... if we have one, bail.
               if (CurSTy->getElementTypes().size() == 0) break;
@@ -380,12 +381,14 @@ bool RPR::PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
               // offset zero in the struct.
               //
               ElTy = CurSTy->getElementTypes()[0];
+              IdxType = Type::UByteTy;   // FIXME when PR82 is fixed.
             } else {
               ElTy = cast<ArrayType>(CurCTy)->getElementType();
+              IdxType = Type::LongTy;    // FIXME when PR82 is fixed.
             }
 
             // Insert a zero to index through this type...
-            Indices.push_back(Constant::getNullValue(CurCTy->getIndexType()));
+            Indices.push_back(Constant::getNullValue(IdxType));
 
             // Did we find what we're looking for?
             if (ElTy->isLosslesslyConvertibleTo(DestPointedTy)) break;
