@@ -16,14 +16,11 @@
 
 #include "Support/Statistic.h"
 #include "Support/CommandLine.h"
-#include <iostream>
 #include <sstream>
-#include <algorithm>
+#include <iostream>
 
 // GetLibSupportInfoOutputFile - Return a file stream to print our output on...
 std::ostream *GetLibSupportInfoOutputFile();
-
-bool DebugFlag;  // DebugFlag - Exported boolean set by the -debug option
 
 unsigned StatisticBase::NumStats = 0;
 
@@ -32,14 +29,6 @@ unsigned StatisticBase::NumStats = 0;
 //
 static cl::opt<bool>
 Enabled("stats", cl::desc("Enable statistics output from program"));
-
-#ifndef NDEBUG
-// -debug - Command line option to enable the DEBUG statements in the passes.
-// This flag may only be enabled in debug builds.
-static cl::opt<bool, true>
-Debug("debug", cl::desc("Enable debug output"), cl::Hidden,
-      cl::location(DebugFlag));
-#endif
 
 struct StatRecord {
   std::string Value;
