@@ -18,6 +18,7 @@
 
 #include "llvm/Module.h"
 #include "llvm/Bytecode/Reader.h"
+#include "llvm/Bytecode/Archive.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FileUtilities.h"
 #include "llvm/System/Signals.h"
@@ -132,11 +133,13 @@ void DumpSymbolNamesFromFile (std::string &Filename) {
       std::cerr << ToolName << ": " << Filename << ": " << ErrorMessage << "\n";
       return;
     }
-  } else if (IsArchive (Filename)) {
+  } else if (IsArchive(Filename)) {
+    Archive* archive = Archive::OpenAndLoad(sys::Path(Filename));
+    if (!archive)
+      std::cerr << ToolName << ": " << Filename << ": " << ErrorMessage << "\n";
     std::vector<Module *> Modules;
-    if (ReadArchiveFile (Filename, Modules, &ErrorMessage)) {
-      std::cerr << ToolName << ": " << Filename << ": "
-                << ErrorMessage << "\n";
+    if (archive->getAllModules(Modules,&ErrorMessage)) {
+      std::cerr << ToolName << ": " << Filename << ": " << ErrorMessage << "\n";
       return;
     }
     MultipleFiles = true;
