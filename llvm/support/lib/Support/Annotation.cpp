@@ -14,7 +14,7 @@ static unsigned IDCounter = 0;  // Unique ID counter
 static IDMapType &getIDMap() { static IDMapType TheMap; return TheMap; }
 
 // On demand annotation creation support...
-typedef Annotation *(*AnnFactory)(AnnotationID, Annotable *, void *);
+typedef Annotation *(*AnnFactory)(AnnotationID, const Annotable *, void *);
 typedef map<unsigned, pair<AnnFactory,void*> > FactMapType;
 static FactMapType &getFactMap() { static FactMapType FactMap; return FactMap; }
 
@@ -57,7 +57,7 @@ void AnnotationManager::registerAnnotationFactory(AnnotationID ID,
 // specified object, using a register annotation creation function.
 //
 Annotation *AnnotationManager::createAnnotation(AnnotationID ID, 
-						Annotable *Obj) {
+						const Annotable *Obj) {
   FactMapType::iterator I = getFactMap().find(ID.ID);
   if (I == getFactMap().end()) return 0;
   return I->second.first(ID, Obj, I->second.second);
