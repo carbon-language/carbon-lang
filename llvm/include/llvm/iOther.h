@@ -1,7 +1,7 @@
 //===-- llvm/iOther.h - "Other" instruction node definitions -----*- C++ -*--=//
 //
 // This file contains the declarations for instructions that fall into the 
-// grandios 'other' catagory...
+// grandiose 'other' catagory...
 //
 //===----------------------------------------------------------------------===//
 
@@ -14,17 +14,18 @@
 //                                 CastInst Class
 //===----------------------------------------------------------------------===//
 
-// CastInst - This class represents a cast from Operand[0] to the type of
-// the instruction (i->getType()).
-//
+/// CastInst - This class represents a cast from Operand[0] to the type of
+/// the instruction (i->getType()).
+///
 class CastInst : public Instruction {
   CastInst(const CastInst &CI) : Instruction(CI.getType(), Cast) {
     Operands.reserve(1);
     Operands.push_back(Use(CI.Operands[0], this));
   }
 public:
-  CastInst(Value *S, const Type *Ty, const std::string &Name = "")
-    : Instruction(Ty, Cast, Name) {
+  CastInst(Value *S, const Type *Ty, const std::string &Name = "",
+           Instruction *InsertBefore = 0)
+    : Instruction(Ty, Cast, Name, InsertBefore) {
     Operands.reserve(1);
     Operands.push_back(Use(S, this));
   }
@@ -43,13 +44,14 @@ public:
 
 
 //===----------------------------------------------------------------------===//
-//             Classes to function calls and method invocations
+//                                 CallInst Class
 //===----------------------------------------------------------------------===//
 
 class CallInst : public Instruction {
   CallInst(const CallInst &CI);
 public:
-  CallInst(Value *M, const std::vector<Value*> &Par, const std::string & = "");
+  CallInst(Value *F, const std::vector<Value*> &Par,
+           const std::string &Name = "", Instruction *InsertBefore = 0);
 
   virtual Instruction *clone() const { return new CallInst(*this); }
   bool hasSideEffects() const { return true; }
@@ -89,8 +91,9 @@ class ShiftInst : public Instruction {
     Operands.push_back(Use(SI.Operands[1], this));
   }
 public:
-  ShiftInst(OtherOps Opcode, Value *S, Value *SA, const std::string &Name = "")
-    : Instruction(S->getType(), Opcode, Name) {
+  ShiftInst(OtherOps Opcode, Value *S, Value *SA, const std::string &Name = "",
+            Instruction *InsertBefore = 0)
+    : Instruction(S->getType(), Opcode, Name, InsertBefore) {
     assert((Opcode == Shl || Opcode == Shr) && "ShiftInst Opcode invalid!");
     Operands.reserve(2);
     Operands.push_back(Use(S, this));

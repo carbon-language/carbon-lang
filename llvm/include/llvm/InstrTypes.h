@@ -20,9 +20,11 @@
 ///
 class TerminatorInst : public Instruction {
 protected:
-  TerminatorInst(Instruction::TermOps iType);
+  TerminatorInst(Instruction::TermOps iType, Instruction *InsertBefore = 0);
   TerminatorInst(const Type *Ty, Instruction::TermOps iType,
-                 const std::string &Name = "");
+                 const std::string &Name = "", Instruction *InsertBefore = 0)
+    : Instruction(Ty, iType, Name, InsertBefore) {
+  }
 public:
 
   /// Terminators must implement the methods required by Instruction...
@@ -59,23 +61,20 @@ public:
 
 class BinaryOperator : public Instruction {
 protected:
-  BinaryOperator(BinaryOps iType, Value *S1, Value *S2, 
-                 const std::string &Name = "") 
-    : Instruction(S1->getType(), iType, Name) {
-    Operands.reserve(2);
-    Operands.push_back(Use(S1, this));
-    Operands.push_back(Use(S2, this));
-    assert(Operands[0] && Operands[1] && 
-	   Operands[0]->getType() == Operands[1]->getType());
-  }
+  BinaryOperator(BinaryOps iType, Value *S1, Value *S2, const Type *Ty,
+                 const std::string &Name, Instruction *InsertBefore);
 
 public:
 
-  /// create() - Construct a binary instruction, given the opcode
-  /// and the two operands.
+  /// create() - Construct a binary instruction, given the opcode and the two
+  /// operands.  Optionally (if InstBefore is specified) insert the instruction
+  /// into a BasicBlock right before the specified instruction.  The specified
+  /// Instruction is allowed to be a dereferenced end iterator.
   ///
   static BinaryOperator *create(BinaryOps Op, Value *S1, Value *S2,
-				const std::string &Name = "");
+				const std::string &Name = "",
+                                Instruction *InsertBefore = 0);
+                               
 
   /// Helper functions to construct and inspect unary operations (NEG and NOT)
   /// via binary operators SUB and XOR:
@@ -83,8 +82,10 @@ public:
   /// createNeg, createNot - Create the NEG and NOT
   ///     instructions out of SUB and XOR instructions.
   ///
-  static BinaryOperator *createNeg(Value *Op, const std::string &Name = "");
-  static BinaryOperator *createNot(Value *Op, const std::string &Name = "");
+  static BinaryOperator *createNeg(Value *Op, const std::string &Name = "",
+                                   Instruction *InsertBefore = 0);
+  static BinaryOperator *createNot(Value *Op, const std::string &Name = "",
+                                   Instruction *InsertBefore = 0);
 
   /// isNeg, isNot - Check if the given Value is a NEG or NOT instruction.
   ///

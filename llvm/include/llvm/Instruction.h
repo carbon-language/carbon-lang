@@ -1,4 +1,4 @@
-//===-- llvm/Instruction.h - Instruction class definition --------*- C++ -*--=//
+//===-- llvm/Instruction.h - Instruction class definition -------*- C++ -*-===//
 //
 // This file contains the declaration of the Instruction class, which is the
 // base class for all of the LLVM instructions.
@@ -25,8 +25,10 @@ class Instruction : public User {
   void setParent(BasicBlock *P);
 protected:
   unsigned iType;      // InstructionType: The opcode of the instruction
+
+  Instruction(const Type *Ty, unsigned iType, const std::string &Name = "",
+              Instruction *InsertBefore = 0);
 public:
-  Instruction(const Type *Ty, unsigned iType, const std::string &Name = "");
   virtual ~Instruction() {
     assert(Parent == 0 && "Instruction still embedded in basic block!");
   }

@@ -21,7 +21,7 @@ class PointerType;
 class AllocationInst : public Instruction {
 protected:
   AllocationInst(const Type *Ty, Value *ArraySize, unsigned iTy, 
-		 const std::string &Name = "");
+		 const std::string &Name = "", Instruction *InsertBefore = 0);
 public:
 
   // isArrayAllocation - Return true if there is an allocation size parameter
@@ -64,8 +64,9 @@ public:
 //===----------------------------------------------------------------------===//
 
 struct MallocInst : public AllocationInst {
-  MallocInst(const Type *Ty, Value *ArraySize = 0, const std::string &Name = "")
-    : AllocationInst(Ty, ArraySize, Malloc, Name) {}
+  MallocInst(const Type *Ty, Value *ArraySize = 0, const std::string &Name = "",
+             Instruction *InsertBefore = 0)
+    : AllocationInst(Ty, ArraySize, Malloc, Name, InsertBefore) {}
 
   virtual Instruction *clone() const { 
     return new MallocInst((Type*)getType(), (Value*)Operands[0].get());
@@ -87,8 +88,9 @@ struct MallocInst : public AllocationInst {
 //===----------------------------------------------------------------------===//
 
 struct AllocaInst : public AllocationInst {
-  AllocaInst(const Type *Ty, Value *ArraySize = 0, const std::string &Name = "")
-    : AllocationInst(Ty, ArraySize, Alloca, Name) {}
+  AllocaInst(const Type *Ty, Value *ArraySize = 0, const std::string &Name = "",
+             Instruction *InsertBefore = 0)
+    : AllocationInst(Ty, ArraySize, Alloca, Name, InsertBefore) {}
 
   virtual Instruction *clone() const { 
     return new AllocaInst((Type*)getType(), (Value*)Operands[0].get());
@@ -110,7 +112,7 @@ struct AllocaInst : public AllocationInst {
 //===----------------------------------------------------------------------===//
 
 struct FreeInst : public Instruction {
-  FreeInst(Value *Ptr);
+  FreeInst(Value *Ptr, Instruction *InsertBefore = 0);
 
   virtual Instruction *clone() const { return new FreeInst(Operands[0]); }
 
@@ -137,7 +139,8 @@ class LoadInst : public Instruction {
     Operands.push_back(Use(LI.Operands[0], this));
   }
 public:
-  LoadInst(Value *Ptr, const std::string &Name = "");
+  LoadInst(Value *Ptr, const std::string &Name = "",
+           Instruction *InsertBefore = 0);
 
   virtual Instruction *clone() const { return new LoadInst(*this); }
 
@@ -166,7 +169,7 @@ class StoreInst : public Instruction {
     Operands.push_back(Use(SI.Operands[1], this));
   }
 public:
-  StoreInst(Value *Val, Value *Ptr);
+  StoreInst(Value *Val, Value *Ptr, Instruction *InsertBefore = 0);
   virtual Instruction *clone() const { return new StoreInst(*this); }
 
   virtual bool hasSideEffects() const { return true; }
@@ -198,7 +201,7 @@ class GetElementPtrInst : public Instruction {
   }
 public:
   GetElementPtrInst(Value *Ptr, const std::vector<Value*> &Idx,
-		    const std::string &Name = "");
+		    const std::string &Name = "", Instruction *InsertBefore =0);
   virtual Instruction *clone() const { return new GetElementPtrInst(*this); }
   
   // getType - Overload to return most specific pointer type...

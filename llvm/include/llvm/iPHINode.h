@@ -21,26 +21,30 @@ class BasicBlock;
 class PHINode : public Instruction {
   PHINode(const PHINode &PN);
 public:
-  PHINode(const Type *Ty, const std::string &Name = "");
+  PHINode(const Type *Ty, const std::string &Name = "",
+          Instruction *InsertBefore = 0)
+    : Instruction(Ty, Instruction::PHINode, Name, InsertBefore) {
+  }
 
   virtual Instruction *clone() const { return new PHINode(*this); }
 
-  // getNumIncomingValues - Return the number of incoming edges the PHI node has
-  inline unsigned getNumIncomingValues() const { return Operands.size()/2; }
+  /// getNumIncomingValues - Return the number of incoming edges the PHI node
+  /// has
+  unsigned getNumIncomingValues() const { return Operands.size()/2; }
 
-  // getIncomingValue - Return incoming value #x
-  inline const Value *getIncomingValue(unsigned i) const {
+  /// getIncomingValue - Return incoming value #x
+  const Value *getIncomingValue(unsigned i) const {
     return Operands[i*2];
   }
-  inline Value *getIncomingValue(unsigned i) {
+  Value *getIncomingValue(unsigned i) {
     return Operands[i*2];
   }
-  inline void setIncomingValue(unsigned i, Value *V) {
+  void setIncomingValue(unsigned i, Value *V) {
     Operands[i*2] = V;
   }
 
-  // getIncomingBlock - Return incoming basic block #x
-  inline const BasicBlock *getIncomingBlock(unsigned i) const { 
+  /// getIncomingBlock - Return incoming basic block #x
+  const BasicBlock *getIncomingBlock(unsigned i) const { 
     return (const BasicBlock*)Operands[i*2+1].get();
   }
   inline BasicBlock *getIncomingBlock(unsigned i) { 
@@ -50,23 +54,23 @@ public:
     Operands[i*2+1] = (Value*)BB;
   }
 
-  // addIncoming - Add an incoming value to the end of the PHI list
+  /// addIncoming - Add an incoming value to the end of the PHI list
   void addIncoming(Value *D, BasicBlock *BB);
-
-  // removeIncomingValue - Remove an incoming value.  This is useful if a
-  // predecessor basic block is deleted.  The value removed is returned.
+  
+  /// removeIncomingValue - Remove an incoming value.  This is useful if a
+  /// predecessor basic block is deleted.  The value removed is returned.
   Value *removeIncomingValue(const BasicBlock *BB);
 
-  // getBasicBlockIndex - Return the first index of the specified basic 
-  // block in the value list for this PHI.  Returns -1 if no instance.
-  //
+  /// getBasicBlockIndex - Return the first index of the specified basic 
+  /// block in the value list for this PHI.  Returns -1 if no instance.
+  ///
   int getBasicBlockIndex(const BasicBlock *BB) const {
     for (unsigned i = 0; i < Operands.size()/2; ++i) 
       if (getIncomingBlock(i) == BB) return i;
     return -1;
   }
 
-  // Methods for support type inquiry through isa, cast, and dyn_cast:
+  /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const PHINode *) { return true; }
   static inline bool classof(const Instruction *I) {
     return I->getOpcode() == Instruction::PHINode; 

@@ -1,9 +1,8 @@
-//===-- llvm/iTerminators.h - Termintator instruction nodes ------*- C++ -*--=//
+//===-- llvm/iTerminators.h - Termintator instruction nodes -----*- C++ -*-===//
 //
-// This file contains the declarations for all the subclasses of the
-// Instruction class, which is itself defined in the Instruction.h file.  In 
-// between these definitions and the Instruction class are classes that expose
-// the SSA properties of each instruction, and that form the SSA graph.
+// This file contains the declarations for all the subclasses of the Instruction
+// class which represent "terminator" instructions.  Terminator instructions are
+// the only instructions allowed and required to terminate a BasicBlock.
 //
 //===----------------------------------------------------------------------===//
 
@@ -11,11 +10,6 @@
 #define LLVM_ITERMINATORS_H
 
 #include "llvm/InstrTypes.h"
-
-//===----------------------------------------------------------------------===//
-//         Classes to represent Basic Block "Terminator" instructions
-//===----------------------------------------------------------------------===//
-
 
 //===---------------------------------------------------------------------------
 // ReturnInst - Return a value (possibly void), from a method.  Execution does
@@ -30,7 +24,8 @@ class ReturnInst : public TerminatorInst {
     }
   }
 public:
-  ReturnInst(Value *RetVal = 0) : TerminatorInst(Instruction::Ret) {
+  ReturnInst(Value *RetVal = 0, Instruction *InsertBefore = 0)
+    : TerminatorInst(Instruction::Ret, InsertBefore) {
     if (RetVal) {
       Operands.reserve(1);
       Operands.push_back(Use(RetVal, this));
@@ -74,7 +69,8 @@ class BranchInst : public TerminatorInst {
   BranchInst(const BranchInst &BI);
 public:
   // If cond = null, then is an unconditional br...
-  BranchInst(BasicBlock *IfTrue, BasicBlock *IfFalse = 0, Value *cond = 0);
+  BranchInst(BasicBlock *IfTrue, BasicBlock *IfFalse = 0, Value *cond = 0,
+             Instruction *InsertBefore = 0);
 
   virtual Instruction *clone() const { return new BranchInst(*this); }
 
@@ -84,7 +80,7 @@ public:
   inline const Value *getCondition() const {
     return isUnconditional() ? 0 : Operands[2].get();
   }
-  inline       Value *getCondition()       {
+  Value *getCondition() {
     return isUnconditional() ? 0 : Operands[2].get();
   }
 
@@ -133,7 +129,7 @@ class SwitchInst : public TerminatorInst {
   // Operand[2n+1] = BasicBlock to go to on match
   SwitchInst(const SwitchInst &RI);
 public:
-  SwitchInst(Value *Value, BasicBlock *Default);
+  SwitchInst(Value *Value, BasicBlock *Default, Instruction *InsertBefore = 0);
 
   virtual Instruction *clone() const { return new SwitchInst(*this); }
 
@@ -194,7 +190,8 @@ class InvokeInst : public TerminatorInst {
   InvokeInst(const InvokeInst &BI);
 public:
   InvokeInst(Value *Meth, BasicBlock *IfNormal, BasicBlock *IfException,
-	     const std::vector<Value*> &Params, const std::string &Name = "");
+	     const std::vector<Value*> &Params, const std::string &Name = "",
+             Instruction *InsertBefore = 0);
 
   virtual Instruction *clone() const { return new InvokeInst(*this); }
 
