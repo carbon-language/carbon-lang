@@ -15,9 +15,13 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/Linker.h"
-#include "llvm/Bytecode/Reader.h"
-#include "llvm/Bytecode/Writer.h"
 #include "llvm/Module.h"
+#include "llvm/PassManager.h"
+#include "llvm/Bytecode/Reader.h"
+#include "llvm/Bytecode/WriteBytecodePass.h"
+#include "llvm/Transforms/CleanupGCCOutput.h"
+#include "llvm/Transforms/ConstantMerge.h"
+#include "llvm/Transforms/IPO/GlobalDCE.h"
 #include "Support/CommandLine.h"
 #include <fstream>
 #include <memory>
@@ -115,29 +119,48 @@ int main(int argc, char **argv) {
     }
   }
 
+  // In addition to just parsing the input from GCC, we also want to spiff it up
+  // a little bit.  Do this now.
+  //
+  PassManager Passes;
+
+  // Linking modules together can lead to duplicated global constants, only keep
+  // one copy of each constant...
+  //
+  Passes.add(createConstantMergePass());
+
+  // Often if the programmer does not specify proper prototypes for the
+  // functions they are calling, they end up calling a vararg version of the
+  // function that does not get a body filled in (the real function has typed
+  // arguments).  This pass merges the two functions, among other things.
+  //
+  Passes.add(createCleanupGCCOutputPass());
+
   // Now that composite has been compiled, scan through the module, looking for
   // a main function.  If main is defined, mark all other functions internal.
   //
+  // TODO:
 
-  // Next run globaldce...
+  // Now that we have optimized the program, discard unreachable functions...
+  //
+  Passes.add(createGlobalDCEPass());
 
-  // next ?
-
-
+  // Add the pass that writes bytecode to the output file...
   std::ofstream Out((OutputFilename+".bc").c_str());
   if (!Out.good()) {
     cerr << "Error opening '" << OutputFilename << ".bc' for writing!\n";
     return 1;
   }
+  Passes.add(new WriteBytecodePass(&Out));        // Write bytecode to file...
 
-  if (Verbose) cerr << "Writing bytecode...\n";
-  WriteBytecodeToFile(Composite.get(), Out);
+  // Run our queue of passes all at once now, efficiently.
+  Passes.run(Composite.get());
   Out.close();
 
   // Output the script to start the program...
   std::ofstream Out2(OutputFilename.c_str());
   if (!Out2.good()) {
-    cerr << "Error openeing '" << OutputFilename << "' for writing!\n";
+    cerr << "Error opening '" << OutputFilename << "' for writing!\n";
     return 1;
   }
   Out2 << "#!/bin/sh\nlli -q $0.bc $*\n";
