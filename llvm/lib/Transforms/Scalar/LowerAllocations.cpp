@@ -13,7 +13,6 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/iMemory.h"
 #include "llvm/iOther.h"
-#include "llvm/SymbolTable.h"
 #include "llvm/ConstantVals.h"
 #include "llvm/Pass.h"
 #include "TransformInternals.h"
@@ -73,37 +72,18 @@ public:
 // This function is always successful.
 //
 bool LowerAllocations::doInitialization(Module *M) {
-  bool Changed = false;
-  const MethodType *MallocType = 
-    MethodType::get(PointerType::get(Type::SByteTy),
-                    vector<const Type*>(1, Type::UIntTy), false);
+  const FunctionType *MallocType = 
+    FunctionType::get(PointerType::get(Type::SByteTy),
+                      vector<const Type*>(1, Type::UIntTy), false);
+  const FunctionType *FreeType = 
+    FunctionType::get(Type::VoidTy,
+                      vector<const Type*>(1, PointerType::get(Type::SByteTy)),
+                      false);
 
-  SymbolTable *SymTab = M->getSymbolTableSure();
-  
-  // Check for a definition of malloc
-  if (Value *V = SymTab->lookup(PointerType::get(MallocType), "malloc")) {
-    MallocFunc = cast<Function>(V);      // Yup, got it
-  } else {                             // Nope, add one
-    M->getFunctionList().push_back(MallocFunc = new Function(MallocType, false, 
-                                                             "malloc"));
-    Changed = true;
-  }
+  MallocFunc = M->getOrInsertFunction("malloc", MallocType);
+  FreeFunc   = M->getOrInsertFunction("free"  , FreeType);
 
-  const MethodType *FreeType = 
-    MethodType::get(Type::VoidTy,
-                    vector<const Type*>(1, PointerType::get(Type::SByteTy)),
-		    false);
-
-  // Check for a definition of free
-  if (Value *V = SymTab->lookup(PointerType::get(FreeType), "free")) {
-    FreeFunc = cast<Function>(V);      // Yup, got it
-  } else {                             // Nope, add one
-    FreeFunc = new Function(FreeType, false,"free");
-    M->getFunctionList().push_back(FreeFunc);
-    Changed = true;
-  }
-
-  return Changed;
+  return false;
 }
 
 // runOnBasicBlock - This method does the actual work of converting
@@ -172,9 +152,6 @@ bool LowerAllocations::runOnBasicBlock(BasicBlock *BB) {
 }
 
 bool RaiseAllocations::doInitialization(Module *M) {
-  SymbolTable *ST = M->getSymbolTable();
-  if (!ST) return false;
-
   // If the module has a symbol table, they might be referring to the malloc
   // and free functions.  If this is the case, grab the method pointers that 
   // the module is using.
@@ -183,20 +160,21 @@ bool RaiseAllocations::doInitialization(Module *M) {
   // don't exist, or are not external, we do not worry about converting calls
   // to that function into the appropriate instruction.
   //
-  const PointerType *MallocType =   // Get the type for malloc
-    PointerType::get(MethodType::get(PointerType::get(Type::SByteTy),
-                                  vector<const Type*>(1, Type::UIntTy), false));
-  MallocFunc = cast_or_null<Function>(ST->lookup(MallocType, "malloc"));
-  if (MallocFunc && !MallocFunc->isExternal())
-    MallocFunc = 0;  // Don't mess with locally defined versions of the fn
+  const FunctionType *MallocType =   // Get the type for malloc
+    FunctionType::get(PointerType::get(Type::SByteTy),
+                      vector<const Type*>(1, Type::UIntTy), false);
 
-  const PointerType *FreeType =     // Get the type for free
-    PointerType::get(MethodType::get(Type::VoidTy,
-            vector<const Type*>(1, PointerType::get(Type::SByteTy)), false));
-  FreeFunc = cast_or_null<Function>(ST->lookup(FreeType, "free"));
-  if (FreeFunc && !FreeFunc->isExternal())
-    FreeFunc = 0;  // Don't mess with locally defined versions of the fn
+  const FunctionType *FreeType =     // Get the type for free
+    FunctionType::get(Type::VoidTy,
+                      vector<const Type*>(1, PointerType::get(Type::SByteTy)),
+                      false);
 
+  MallocFunc = M->getFunction("malloc", MallocType);
+  FreeFunc   = M->getFunction("free"  , FreeType);
+
+  // Don't mess with locally defined versions of these functions...
+  if (MallocFunc && !MallocFunc->isExternal()) MallocFunc = 0;
+  if (FreeFunc && !FreeFunc->isExternal())     FreeFunc = 0;
   return false;
 }
 
