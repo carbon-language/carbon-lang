@@ -26,8 +26,9 @@ VPATH=$(BUILD_SRC_DIR)
 #--------------------------------------------------------------------
 RECURSIVE_TARGETS := all clean check install uninstall
 LOCAL_TARGETS     := all-local clean-local check-local install-local printvars\
-                     uninstall-local
+	             uninstall-local
 TOPLEV_TARGETS    := dist dist-check dist-clean tags
+USER_TARGETS      := $(RECURSIVE_TARGETS) $(LOCAL_TARGETS) $(TOPLEV_TARGETS)
 INTERNAL_TARGETS  := preconditions \
   install-config-dir install-shared-library install-bytecode-library \
   install-archive-library install-relinked-library install-tool \
@@ -37,25 +38,22 @@ INTERNAL_TARGETS  := preconditions \
 #--------------------------------------------------------------------
 # Mark all of these targets as phony to avoid implicit rule search
 #--------------------------------------------------------------------
-.PHONY: $(RECURSIVE_TARGETS) $(LOCAL_TARGETS) $(TOP_TARGETS) $(INTERNAL_TARGETS)
+.PHONY: $(USER_TARGETS) $(INTERNAL_TARGETS)
 
 #--------------------------------------------------------------------
 # Make sure all the user-target rules are double colon rules and that
 # the preconditions are run first.
 #--------------------------------------------------------------------
 
+$(USER_TARGETS) :: preconditions
+
 all :: all-local
 check:: check-local
 clean:: clean-local 
 install :: install-local
 uninstall :: uninstall-local
-
-all-local :: preconditions
-clean-local :: preconditions
 check-local :: all-local
 install-local :: all-local 
-printvars :: preconditions
-uninstall-local :: preconditions
 
 ###############################################################################
 # SUFFIXES: Reset the list of suffixes we know how to build
@@ -132,6 +130,9 @@ ifndef VERBOSE
   VERB := @
   LIBTOOL += --silent
   AR += >/dev/null 2>/dev/null
+  CONFIGUREFLAGS += >$(BUILD_OBJ_DIR)/configure.out 2>&1
+else
+  CONFIGUREFLAGS := 
 endif
 
 # By default, strip symbol information from executable
@@ -162,12 +163,12 @@ CompileCommonOpts := -Wall -W -Wwrite-strings -Wno-unused
 
 LDFLAGS  += -L$(LIBDIR) -L$(LLVMLIBDIR)
 CPPFLAGS += -I$(BUILD_OBJ_DIR) \
-            -I$(BUILD_SRC_DIR) \
-            -I$(BUILD_SRC_ROOT)/include \
-            -I$(BUILD_OBJ_ROOT)/include \
-            -I$(LLVM_OBJ_ROOT)/include \
-            -I$(LLVM_SRC_ROOT)/include \
-            -D_GNU_SOURCE -D__STDC_LIMIT_MACROS
+	    -I$(BUILD_SRC_DIR) \
+	    -I$(BUILD_SRC_ROOT)/include \
+	    -I$(BUILD_OBJ_ROOT)/include \
+	    -I$(LLVM_OBJ_ROOT)/include \
+	    -I$(LLVM_SRC_ROOT)/include \
+	    -D_GNU_SOURCE -D__STDC_LIMIT_MACROS
 
 Compile.C     = $(CC) $(CPPFLAGS) $(CompileCommonOpts) -c $(CFLAGS)
 Compile.CXX   = $(CXX) $(CPPFLAGS) $(CompileCommonOpts) $(CXXFLAGS) -c
@@ -176,7 +177,7 @@ LTCompile.CXX = $(LIBTOOL) --tag=CXX --mode=compile $(Compile.CXX)
 BCCompile.CXX = $(LLVMGXX) $(CPPFLAGS) $(CompileCommonOpts) $(CXXFLAGS) -c
 BCCompile.C   = $(LLVMGCC) $(CPPFLAGS) $(CompileCommonOpts) $(CFLAGS) -c
 Link          = $(LIBTOOL) --tag=CXX --mode=link $(CXX) $(CPPFLAGS) \
-                $(CompileCommonOpts) $(LDFLAGS) $(STRIP)
+	        $(CompileCommonOpts) $(LDFLAGS) $(STRIP)
 Relink        = $(LIBTOOL) --tag=CXX --mode=link $(CXX)
 BCLinkLib     = $(LLVMGCC) -shared -nostdlib
 Burg          = $(BURG) -I $(BUILD_SRC_DIR)
@@ -193,8 +194,8 @@ endif
 #----------------------------------------------------------
 ifndef SOURCES
 SOURCES  := $(notdir $(wildcard $(BUILD_SRC_DIR)/*.cpp \
-            $(BUILD_SRC_DIR)/*.cc $(BUILD_SRC_DIR)/*.c $(BUILD_SRC_DIR)/*.y \
-            $(BUILD_SRC_DIR)/*.l))
+	    $(BUILD_SRC_DIR)/*.cc $(BUILD_SRC_DIR)/*.c $(BUILD_SRC_DIR)/*.y \
+	    $(BUILD_SRC_DIR)/*.l))
 endif
 
 ifdef BUILT_SOURCES
@@ -218,14 +219,16 @@ ObjectsBC := $(BASENAME_SOURCES:%=$(OBJDIR)/%.bc)
 # Handle the DIRS options for sequential construction
 #---------------------------------------------------------
 
+SUBDIRS := 
 ifdef DIRS
+SUBDIRS += $(DIRS)
 $(RECURSIVE_TARGETS)::
 	$(VERB) for dir in $(DIRS); do \
 	  if [ ! -f $$dir/Makefile ]; then \
 	    $(MKDIR) $$dir; \
 	    cp $(BUILD_SRC_DIR)/$$dir/Makefile $$dir/Makefile; \
 	  fi; \
-	  ($(MAKE) -C $$dir $@ $(MFLAGS)) || exit 1; \
+	  ($(MAKE) -C $$dir $@ ) || exit 1; \
 	done
 endif
 
@@ -240,7 +243,7 @@ $(RECURSIVE_TARGETS)::
 	    $(MKDIR) $$dir; \
 	    cp $(BUILD_SRC_DIR)/$$dir/Makefile $$dir/Makefile; \
 	  fi; \
-	  ($(MAKE) -C $$dir $@ $(MFLAGS)) || exit 0; \
+	  ($(MAKE) -C $$dir $@ ) || exit 0; \
 	done
 endif
 
@@ -249,6 +252,7 @@ endif
 #---------------------------------------------------------
 ifdef PARALLEL_DIRS
 
+SUBDIRS += $(PARALLEL_DIRS)
 # Unfortunately, this list must be maintained if new 
 # recursive targets are added.
 all      :: $(addsuffix /.makeall     , $(PARALLEL_DIRS))
@@ -264,7 +268,7 @@ $(Parallel_Targets) :
 	  $(MKDIR) $(@D); \
 	  cp $(BUILD_SRC_DIR)/$(@D)/Makefile $(@D)/Makefile; \
 	fi; \
-	$(MAKE) -C $(@D) $(subst $(@D)/.make,,$@) $(MFLAGS)
+	$(MAKE) -C $(@D) $(subst $(@D)/.make,,$@)
 endif
 
 #---------------------------------------------------------
@@ -272,6 +276,9 @@ endif
 # or may not exist.
 #---------------------------------------------------------
 ifdef OPTIONAL_DIRS
+
+SUBDIRS += $(OPTIONAL_DIRS)
+
 $(RECURSIVE_TARGETS)::
 	$(VERB) for dir in $(OPTIONAL_DIRS); do \
 	  if [ -d $(BUILD_SRC_DIR)/$$dir ]; then\
@@ -279,7 +286,7 @@ $(RECURSIVE_TARGETS)::
 	      $(MKDIR) $$dir; \
 	      cp $(BUILD_SRC_DIR)/$$dir/Makefile $$dir/Makefile; \
 	    fi; \
-	    ($(MAKE) -C$$dir $@ $(MFLAGS)) || exit 1; \
+	    ($(MAKE) -C$$dir $@ ) || exit 1; \
 	  fi \
 	done
 endif
@@ -302,7 +309,7 @@ uninstall-local:: uninstall-config-dir
 uninstall-config-dir:
 	$(VERB)$(ECHO) Uninstalling Configuration Files From $(sysconfdir)
 	$(VERB)for file in $(CONFIG_FILES); do \
-          $(RM) -f $(sysconfdir)/$${file} ; \
+	  $(RM) -f $(sysconfdir)/$${file} ; \
 	done
 
 $(sysconfdir):
@@ -564,13 +571,13 @@ $(OBJDIR)/%.lo $(OBJDIR)/%.o: %.cpp $(OBJDIR)/.dir
 	@$(ECHO) "Compiling $(CONFIGURATION) $*.cpp For Shared Library"
 	$(VERB) if $(LTCompile.CXX) -MD -MT $@ -MP -MF $(OBJDIR)/$*.LACXXd $< -o $@ ; \
 	then $(MV) -f "$(OBJDIR)/$*.LACXXd" "$(OBJDIR)/$*.d"; \
-        else $(RM) -f "$(OBJDIR)/$*.LACXXd"; exit 1; fi
+	else $(RM) -f "$(OBJDIR)/$*.LACXXd"; exit 1; fi
 
 $(OBJDIR)/%.lo $(OBJDIR)/%.o: %.c $(OBJDIR)/.dir 
 	@$(ECHO) "Compiling $(CONFIGURATION) $*.c For Shared Library"
 	$(VERB) if $(LTCompile.C) -MD -MT $@ -MP -MF $(OBJDIR)/$*.LACd $< -o $@ ; \
 	then $(MV) -f "$(OBJDIR)/$*.LACd" "$(OBJDIR)/$*.d"; \
-        else $(RM) -f "$(OBJDIR)/$*.LACd"; exit 1; fi
+	else $(RM) -f "$(OBJDIR)/$*.LACd"; exit 1; fi
 
 else
 
@@ -578,13 +585,13 @@ $(OBJDIR)/%.o: %.cpp $(OBJDIR)/.dir
 	@$(ECHO) "Compiling $(CONFIGURATION) $*.cpp For Archive"
 	$(VERB) if $(Compile.CXX) -MD -MT $@ -MP -MF $(OBJDIR)/$*.CXXd $< -o $@ ; \
 	then $(MV) -f "$(OBJDIR)/$*.CXXd" "$(OBJDIR)/$*.d"; \
-        else $(RM) -f "$(OBJDIR)/$*.CXXd"; exit 1; fi
+	else $(RM) -f "$(OBJDIR)/$*.CXXd"; exit 1; fi
 
 $(OBJDIR)/%.o: %.c $(OBJDIR)/.dir
 	@$(ECHO) "Compiling $(CONFIGURATION) $*.c For Archive"
 	$(VERB) if $(Compile.C) -MD -MT $@ -MP -MF $(OBJDIR)/$*.Cd $< -o $@ ; \
 	then $(MV) -f "$(OBJDIR)/$*.Cd" "$(OBJDIR)/$*.d"; \
-        else $(RM) -f "$(OBJDIR)/$*.Cd"; exit 1; fi
+	else $(RM) -f "$(OBJDIR)/$*.Cd"; exit 1; fi
 
 endif
 
@@ -593,13 +600,13 @@ $(OBJDIR)/%.bc: %.cpp $(OBJDIR)/.dir
 	@$(ECHO) "Compiling $(CONFIGURATION) $*.cpp to bytecode"
 	$(VERB) if $(BCCompile.CXX) -MD -MT $@ -MP -MF "$(OBJDIR)/$*.BCCXXd" $< -o $@ ; \
 	then $(MV) -f "$(OBJDIR)/$*.BCCXXd" "$(OBJDIR)/$*.d"; \
-        else $(RM) -f "$(OBJDIR)/$*.BCCXXd"; exit 1; fi
+	else $(RM) -f "$(OBJDIR)/$*.BCCXXd"; exit 1; fi
 
 $(OBJDIR)/%.bc: %.c $(OBJDIR)/.dir
 	@$(ECHO) "Compiling $(CONFIGURATION) $*.c to bytecode"
 	$(VERB) if $(BCCompile.C) -MD -MT $@ -MP -MF "$(OBJDIR)/$*.BCCd" $< -o $@ ; \
 	then $(MV) -f "$(OBJDIR)/$*.BCCd" "$(OBJDIR)/$*.d"; \
-        else $(RM) -f "$(OBJDIR)/$*.BCCd"; exit 1; fi
+	else $(RM) -f "$(OBJDIR)/$*.BCCd"; exit 1; fi
 
 else
 
@@ -802,9 +809,10 @@ MAKE_CONFIG := $(LLVM_OBJ_ROOT)/Makefile.config
 #------------------------------------------------------------------------
 # List of the preconditions
 #------------------------------------------------------------------------
+
 preconditions: $(CONFIG_STATUS) $(MAKE_CONFIG) $(OBJMKFILE) 
 
-all all-local check check-local dist dist-check install:: $(BUILT_SOURCES)
+$(filter-out clean clean-local,USER_TARGETS):: $(BUILT_SOURCES)
 
 clean-local::
 ifneq ($(strip $(BUILT_SOURCES)),)
@@ -816,18 +824,15 @@ endif
 #------------------------------------------------------------------------
 .PRECIOUS: $(CONFIG_STATUS)
 $(CONFIG_STATUS): $(CONFIGURE)
-	@$(ECHO) Reconfiguring with $@
-	$(VERB) $(CONFIG_STATUS) --recheck
+	@$(ECHO) Reconfiguring with $<
+	$(VERB) $(CONFIG_STATUS) --recheck $(CONFIGUREFLAGS)
 
 #------------------------------------------------------------------------
 # Make sure the configuration makefile is up to date
 #------------------------------------------------------------------------
-$(MAKE_CONFIG): $(MAKE_CONFIG_IN)
+$(MAKE_CONFIG): $(MAKE_CONFIG_IN) $(CONFIG_STATUS)
 	@$(ECHO) Regenerating $@
 	$(VERB) cd $(LLVM_OBJ_ROOT) ; $(CONFIG_STATUS) Makefile.config
-	$(VERB) $(MAKE) $(MFLAGS) $(MAKECMDGOALS)
-	@exit 0;
-
 
 #------------------------------------------------------------------------
 # If the Makefile in the source tree has been updated, copy it over into the
@@ -836,11 +841,146 @@ $(MAKE_CONFIG): $(MAKE_CONFIG_IN)
 ifneq ($(OBJMKFILE),$(SRCMKFILE))
 .PRECIOUS: $(OBJMKFILE)
 $(OBJMKFILE): $(SRCMKFILE)
-	@$(ECHO) "Updating Makefile from : $(dir $<)"
+	@$(ECHO) "Updating Makefile from: $(dir $<)"
 	$(VERB) $(MKDIR) $(@D)
 	$(VERB) cp -f $< $@
-	$(VERB) $(MAKE) $(MFLAGS) $(MAKECMDGOALS)
-	@exit 0;
+endif
+
+###############################################################################
+# Handle construction of a distribution tarball
+###############################################################################
+
+.PHONY: dist dist-chck dist-clean distdir dist-gzip dist-bzip2 dist-zip
+
+ifeq ($(BUILD_SRC_DIR),$(BUILD_OBJ_DIR))
+
+dist dist-check dist-clean dist-gzip dist-bzip2 dist-zip ::
+	@$(ECHO) ERROR: Target $@ only available with OBJ_DIR != SRC_DIR
+
+else
+
+ifeq ($(LLVM_TARBALL_NAME),)
+$(error LLVM_TARBALL_NAME is empty)
+endif
+
+ifneq ($(LEVEL),.)
+
+dist dist-check dist-clean dist-gzip dist-bzip2 dist-zip ::
+	@$(ECHO) ERROR: You must run $@ from $(BUILD_OBJ_ROOT)
+
+DistTopCheck :=
+
+else
+
+DistTopCheck := check
+
+dist-gzip: distdir
+	@$(ECHO) Packing gzipped distribution tar file.
+	$(VERB) $(TAR) chf - "$(TopDistDir)" | gzip -c > "$(DistTarGZip)"
+
+dist-bzip2: distdir
+	@$(ECHO) Packing bzipped distribution tar file.
+	$(VERB) $(TAR) chf - $(DistName) | $(BZIP2) -c >$(DistTarBZ2)
+
+dist-zip: distdir
+	@$(ECHO) Packing zipped distribution file.
+	$(VERB) rm -f $(DistZip)
+	$(VERB) $(ZIP) -rq $(DistZip) $(DistName)
+
+dist :: distdir
+	@$(ECHO) Packing gzipped distribution tar file.
+	$(VERB) $(TAR) chf - $(DistName) | $(GZIP) -c >$(DistTarGZip)
+	@$(ECHO) Packing bzipped distribution tar file.
+	$(VERB) $(TAR) chf - $(DistName) | $(BZIP2) -c >$(DistTarBZ2)
+	@$(ECHO) Packing zipped distribution file.
+	$(VERB) rm -f $(DistZip)
+	$(VERB) $(ZIP) -rq $(DistZip) $(DistName)
+	@$(ECHO) ===== DISTRIBUTION PACKAGING SUCESSFUL =====
+
+dist-check:: dist 
+
+dist-clean::
+	@$(ECHO) Cleaning distribution files
+	$(VERB) $(RM) -rf $(DistTarGZip) $(DistTarBZ2) $(DistZip) $(DistName)
+
+endif
+
+DistName    := $(LLVM_TARBALL_NAME)
+DistDir     := $(BUILD_OBJ_ROOT)/$(DistName)
+TopDistDir  := $(DistDir)
+DistTarGZip := $(BUILD_OBJ_ROOT)/$(DistName).tar.gz
+DistZip     := $(BUILD_OBJ_ROOT)/$(DistName).zip
+DistTarBZ2  := $(BUILD_OBJ_ROOT)/$(DistName).tar.bz2
+DistAlways  := CREDITS.TXT LICENSE.TXT README.txt README AUTHORS COPYING \
+	       ChangeLog INSTALL NEWS Makefile Makefile.common Makefile.rules \
+	       Makefile.config.in
+DistSources := $(filter-out projects,$(SOURCES) $(EXTRA_DIST))
+DistSubDirs := $(filter-out projects,$(SUBDIRS))
+DistFiles   := $(DistAlways) $(DistSources)
+RmDistDir   := { test ! -d $(DistDir) || { \
+	         find $(DistDir) -type d ! -perm -200 -exec chmod u+w {} ';' \
+	         && rm -rf $(DistDir); }; }
+
+distdir : $(DistTopCheck) $(DistSources)
+	@$(ECHO) Building Distribution Directory $(DistDir)
+	$(VERB) $(RmDistDir) 
+	$(VERB) $(MKDIR) $(DistDir) 
+	$(VERB) srcdirstrip=`echo "$(BUILD_SRC_DIR)" | sed 's|.|.|g'`; \
+	srcrootstrip=`echo "$(BUILD_SRC_ROOT)" | sed 's|.|.|g'`; \
+	for file in $(DistFiles) ; do \
+	  case "$$file" in \
+	    $(BUILD_SRC_DIR)/*) file=`echo "$$file" | sed "s#^$$srcdirstrip/##"`;; \
+	    $(BUILD_SRC_ROOT)/*) file=`echo "$$file" | sed "s#^$srcrootstrip/#$(BUILD_OBJ_ROOT)/#"`;; \
+	  esac; \
+	  if test -f "$$file" || test -d "$$file" ; then \
+	    from_dir=. ; \
+	  else \
+	    from_dir=$(BUILD_SRC_DIR); \
+	  fi; \
+	  to_dir=`echo "$$file" | sed -e 's#/[^/]*$$##'`; \
+	  if test "$$to_dir" != "$$file" && test "$$to_dir" != "."; then \
+	    to_dir="$(DistDir)/$$dir"; \
+	    $(MKDIR) "$$to_dir" ; \
+	  else \
+	    to_dir="$(DistDir)"; \
+	  fi; \
+	  mid_dir=`echo "$$file" | sed -n -e 's#^\(.*\)/[^/]*$$#\1#p'`; \
+	  if test -n "$$mid_dir" ; then \
+            $(MKDIR) "$$to_dir/$$mid_dir" ; \
+          fi ; \
+	  if test -d "$$from_dir/$$file"; then \
+	    if test -d "$(BUILD_SRC_DIR)/$$file" && \
+	       test "$$from_dir" != "$(BUILD_SRC_DIR)" ; then \
+	      cp -pR "$(BUILD_SRC_DIR)/$$file" "$$to_dir" || exit 1; \
+	    fi; \
+	    cp -pR $$from_dir/$$file $$to_dir || exit 1; \
+	  elif test -f "$$from_dir/$$file" ; then \
+	    cp -p "$$from_dir/$$file" "$(DistDir)/$$file" || exit 1; \
+	  elif test -L "$$from_dir/$$file" ; then \
+	    cp -pd "$$from_dir/$$file" $(DistDir)/$$file || exit 1; \
+	  elif echo "$(DistAlways)" | grep -v "$$file" >/dev/null ; then \
+	    $(ECHO) "===== WARNING: Distribution Source $$from_dir/$$file Not Found!" ; \
+	  elif test "$(VERB)" != '@' ; then \
+	    $(ECHO) "Skipping non-existent $$from_dir/$$file" ; \
+	  fi; \
+	done
+	$(VERB) for subdir in $(SUBDIRS) ; do \
+	  if test "$$subdir" \!= "." ; then \
+	    test -d "$(DistDir)/$$subdir" || $(MKDIR) "$(DistDir)/$$subdir" || exit 1; \
+	    new_distdir="$(DistDir)/$$subdir" ; \
+            ( cd $$subdir && $(MAKE) DistDir="$$new_distdir" distdir ) || exit 1; \
+	  fi; \
+	done
+	$(VERB) $(MAKE) DistDir="$(DistDir)" dist-hook
+	-$(VERB) find $(DistDir) -type d ! -perm -777 -exec chmod a+rwx {} \; -o \
+	  ! -type d ! -perm -444 -links 1 -exec chmod a+r {} \; -o \
+	  ! -type d ! -perm -400 -exec chmod a+r {} \; -o \
+	  ! -type d ! -perm -444 -exec $(SHELL) $(INSTALL_SH) -c -m a+r {} {} \; \
+	|| chmod -R a+r $(DistDir)
+
+dist-hook::
+
+
 endif
 
 ###############################################################################
@@ -848,17 +988,6 @@ endif
 ###############################################################################
 
 ifeq ($(LEVEL),.)
-
-#------------------------------------------------------------------------
-# Handle construction of a distribution 
-dist:: preconditions
-	@$(ECHO) Target dist is not implemented yet
-
-dist-check:: preconditions dist
-	@$(ECHO) Target dist-check is not implemented yet
-
-dist-clean:: preconditions
-	@$(ECHO) Target dist-clean is not implemented yet
 
 #------------------------------------------------------------------------
 # Install support for project's include files:
@@ -885,17 +1014,11 @@ uninstall-local::
 #------------------------------------------------------------------------
 # Build tags database for Emacs/Xemacs:
 #------------------------------------------------------------------------
-TAGS: tags
+tags:: TAGS
 
-tags::
+TAGS: 
 	find include lib tools examples -name '*.cpp' -o -name '*.h' | $(ETAGS) $(ETAGSFLAGS) -
 
-dist-clean:: clean
-	$(VERB) $(RM) -rf $(LEVEL)/Makefile.config \
-	                  $(LEVEL)/include/llvm/Config/config.h \
-	                  $(LEVEL)/autoconf/autom4te.cache \
-	                  $(LEVEL)/config.log \
-	                  $(LEVEL)/TAGS
 endif
 
 ###############################################################################
@@ -924,6 +1047,6 @@ printvars::
 # deleted his unix kernel.
 pony::
 	@wget -q \
-        http://search.cpan.org/src/ASAVIGE/Acme-EyeDrops-1.40/lib/Acme/EyeDrops/pony2.eye \
-        -O /tmp/resistor.pony
+	http://search.cpan.org/src/ASAVIGE/Acme-EyeDrops-1.40/lib/Acme/EyeDrops/pony2.eye \
+	-O /tmp/resistor.pony
 	@cat /tmp/resistor.pony

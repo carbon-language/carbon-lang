@@ -40,23 +40,28 @@ TOOLLINKOPTS=@LIBS@
 # Path to the library archiver program.
 AR_PATH = @AR@
 
-# The pathnames of the Flex and Bison programs, respectively.
-YACC     = @YACC@
-BISON    = @BISON@
-FLEX     = @LEX@
-
-# Paths to miscellaneous programs.
-RPWD    = pwd
-SED     = sed
-RM      = rm
-ECHO    = echo
-MKDIR   = @abs_top_srcdir@/autoconf/mkinstalldirs
-DATE    = date
-MV      = mv
+# The pathnames of the programs we require to build
+YACC    = @YACC@
+BISON   = @BISON@
+FLEX    = @LEX@
+TAR     = @TAR@
 INSTALL = @INSTALL@
 DOT     = @DOT@
 ETAGS   = @ETAGS@
 ETAGSFLAGS = @ETAGSFLAGS@
+
+# Paths to miscellaneous programs we assume are present
+RPWD    = pwd
+SED     = sed
+RM      = rm
+ECHO    = echo "llvm["$(MAKELEVEL)"]:" 
+MKDIR   = @abs_top_srcdir@/autoconf/mkinstalldirs
+INSTALL_SH = $(BUILD_SRC_ROOT)/autoconf/install-sh
+DATE    = date
+MV      = mv
+GZIP    = gzip
+ZIP     = zip
+BZIP2   = bzip2
 
 # Determine the target for which LLVM should generate code.
 LLVMGCCARCH := @target@/3.4-llvm
@@ -173,4 +178,5 @@ mandir = @mandir@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_DATA = @INSTALL_DATA@
+LLVM_TARBALL_NAME = @PACKAGE_NAME@-@PACKAGE_VERSION@
 
