@@ -4623,24 +4623,38 @@ static Constant *GetGEPGlobalInitializer(Constant *C, ConstantExpr *CE) {
 
 static Instruction *InstCombineLoadCast(InstCombiner &IC, LoadInst &LI) {
   User *CI = cast<User>(LI.getOperand(0));
+  Value *CastOp = CI->getOperand(0);
 
   const Type *DestPTy = cast<PointerType>(CI->getType())->getElementType();
-  if (const PointerType *SrcTy =
-      dyn_cast<PointerType>(CI->getOperand(0)->getType())) {
+  if (const PointerType *SrcTy = dyn_cast<PointerType>(CastOp->getType())) {
     const Type *SrcPTy = SrcTy->getElementType();
-    if (SrcPTy->isSized() && DestPTy->isSized() &&
-        IC.getTargetData().getTypeSize(SrcPTy) == 
-            IC.getTargetData().getTypeSize(DestPTy) &&
-        (SrcPTy->isInteger() || isa<PointerType>(SrcPTy)) &&
-        (DestPTy->isInteger() || isa<PointerType>(DestPTy))) {
-      // Okay, we are casting from one integer or pointer type to another of
-      // the same size.  Instead of casting the pointer before the load, cast
-      // the result of the loaded value.
-      Value *NewLoad = IC.InsertNewInstBefore(new LoadInst(CI->getOperand(0),
-                                                           CI->getName(),
-                                                           LI.isVolatile()),LI);
-      // Now cast the result of the load.
-      return new CastInst(NewLoad, LI.getType());
+
+    if (DestPTy->isInteger() || isa<PointerType>(DestPTy)) {
+      // If the source is an array, the code below will not succeed.  Check to
+      // see if a trivial 'gep P, 0, 0' will help matters.  Only do this for
+      // constants.
+      if (const ArrayType *ASrcTy = dyn_cast<ArrayType>(SrcPTy))
+        if (Constant *CSrc = dyn_cast<Constant>(CastOp))
+          if (ASrcTy->getNumElements() != 0) {
+            std::vector<Value*> Idxs(2, Constant::getNullValue(Type::IntTy));
+            CastOp = ConstantExpr::getGetElementPtr(CSrc, Idxs);
+            SrcTy = cast<PointerType>(CastOp->getType());
+            SrcPTy = SrcTy->getElementType();
+          }
+
+      if ((SrcPTy->isInteger() || isa<PointerType>(SrcPTy)) &&
+          IC.getTargetData().getTypeSize(SrcPTy) == 
+               IC.getTargetData().getTypeSize(DestPTy)) {
+          
+        // Okay, we are casting from one integer or pointer type to another of
+        // the same size.  Instead of casting the pointer before the load, cast
+        // the result of the loaded value.
+        Value *NewLoad = IC.InsertNewInstBefore(new LoadInst(CastOp,
+                                                             CI->getName(),
+                                                         LI.isVolatile()),LI);
+        // Now cast the result of the load.
+        return new CastInst(NewLoad, LI.getType());
+      }
     }
   }
   return 0;
