@@ -904,7 +904,7 @@ void V8ISel::visitBinaryOperator (Instruction &I) {
     BuildMI (BB, Opcodes[OpCase], 2, ResultReg).addReg (Op0Reg).addReg (Op1Reg);
   }
 
-  switch (getClass (I.getType ())) {
+  switch (getClassB (I.getType ())) {
     case cByte: 
       if (I.getType ()->isSigned ()) { // add byte
         BuildMI (BB, V8::ANDri, 2, DestReg).addReg (ResultReg).addZImm (0xff);
@@ -926,7 +926,7 @@ void V8ISel::visitBinaryOperator (Instruction &I) {
       }
       break;
     case cInt:
-      // Nothing todo here.
+      // Nothing to do here.
       break;
     case cLong:
       // Only support and, or, xor.
