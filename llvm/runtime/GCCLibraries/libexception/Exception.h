@@ -42,9 +42,9 @@ struct llvm_exception {
 };
 
 enum {
-  ErrorException   = 0,
-  LongjmpException = 1,
-  CXXException     = 2,
+  ErrorException = 0,
+  SJLJException  = 1,
+  CXXException   = 2,
 };
 
 // Language independent exception handling API...
