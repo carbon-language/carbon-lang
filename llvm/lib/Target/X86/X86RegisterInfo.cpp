@@ -113,9 +113,12 @@ const unsigned* X86RegisterInfo::getCallerSaveRegs() const {
 }
 
 void X86RegisterInfo::emitPrologue(MachineFunction &MF,
-                                   unsigned numBytes) const {
+                                   unsigned NumBytes) const {
   MachineBasicBlock &MBB = MF.front();   // Prolog goes in entry BB
   MachineBasicBlock::iterator MBBI = MBB.begin();
+
+  // Round stack allocation up to a nice alignment to keep the stack aligned
+  NumBytes = (NumBytes + 3) & ~3;
 
   // PUSH ebp
   MachineInstr *MI = BuildMI(X86::PUSHr32, 1).addReg(X86::EBP);
@@ -126,7 +129,7 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF,
   MBBI = ++MBB.insert(MBBI, MI);
 
   // adjust stack pointer: ESP -= numbytes
-  MI  = BuildMI(X86::SUBri32, 2, X86::ESP).addReg(X86::ESP).addZImm(numBytes);
+  MI  = BuildMI(X86::SUBri32, 2, X86::ESP).addReg(X86::ESP).addZImm(NumBytes);
   MBBI = ++MBB.insert(MBBI, MI);
 }
 
