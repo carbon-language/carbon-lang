@@ -240,7 +240,7 @@ void PPC64RegisterInfo::emitPrologue(MachineFunction &MF) const {
   // Add the size of R1 to  NumBytes size for the store of R1 to the bottom 
   // of the stack and round the size to a multiple of the alignment.
   unsigned Align = MF.getTarget().getFrameInfo()->getStackAlignment();
-  unsigned GPRSize = getSpillSize(PPC::R1);
+  unsigned GPRSize = getSpillSize(PPC::R1)/8;
   unsigned Size = hasFP(MF) ? GPRSize + GPRSize : GPRSize;
   NumBytes = (NumBytes+Size+Align-1)/Align*Align;
 

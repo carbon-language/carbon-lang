@@ -238,7 +238,7 @@ void PPC32RegisterInfo::emitPrologue(MachineFunction &MF) const {
   // Add the size of R1 to  NumBytes size for the store of R1 to the bottom 
   // of the stack and round the size to a multiple of the alignment.
   unsigned Align = MF.getTarget().getFrameInfo()->getStackAlignment();
-  unsigned GPRSize = getSpillSize(PPC::R1);
+  unsigned GPRSize = getSpillSize(PPC::R1)/8;
   unsigned Size = hasFP(MF) ? GPRSize + GPRSize : GPRSize;
   NumBytes = (NumBytes+Size+Align-1)/Align*Align;
 
@@ -278,7 +278,7 @@ void PPC32RegisterInfo::emitEpilogue(MachineFunction &MF,
   
   // Get the number of bytes allocated from the FrameInfo...
   unsigned NumBytes = MFI->getStackSize();
-  unsigned GPRSize = getSpillSize(PPC::R31);
+  unsigned GPRSize = getSpillSize(PPC::R31)/8;
 
   if (NumBytes != 0) {
     if (hasFP(MF)) {
