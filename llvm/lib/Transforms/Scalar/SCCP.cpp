@@ -22,11 +22,12 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/Scalar.h"
-#include "llvm/ConstantHandling.h"
+#include "llvm/Constants.h"
 #include "llvm/Function.h"
 #include "llvm/GlobalVariable.h"
 #include "llvm/Instructions.h"
 #include "llvm/Pass.h"
+#include "llvm/Type.h"
 #include "llvm/Support/InstVisitor.h"
 #include "Support/Debug.h"
 #include "Support/Statistic.h"
@@ -558,17 +559,10 @@ void SCCP::visitTerminatorInst(TerminatorInst &TI) {
 void SCCP::visitCastInst(CastInst &I) {
   Value *V = I.getOperand(0);
   InstVal &VState = getValueState(V);
-  if (VState.isOverdefined()) {        // Inherit overdefinedness of operand
+  if (VState.isOverdefined())          // Inherit overdefinedness of operand
     markOverdefined(&I);
-  } else if (VState.isConstant()) {    // Propagate constant value
-    Constant *Result =
-      ConstantFoldCastInstruction(VState.getConstant(), I.getType());
-
-    if (Result)   // If this instruction constant folds!
-      markConstant(&I, Result);
-    else
-      markOverdefined(&I);   // Don't know how to fold this instruction.  :(
-  }
+  else if (VState.isConstant())        // Propagate constant value
+    markConstant(&I, ConstantExpr::getCast(VState.getConstant(), I.getType()));
 }
 
 // Handle BinaryOperators and Shift Instructions...
