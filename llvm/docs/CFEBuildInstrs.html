@@ -1,0 +1,140 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head><title>Bootstrapping the C/C++ Front-End</title></head>
+
+<body bgcolor=white>
+<center><h1><font size=7>Bootstrapping the C/C++ Front-End</font></h1></center>
+
+<br><br>
+
+<!-- *********************************************************************** -->
+<table width="100%" bgcolor="#330077" border=0 cellpadding=4 cellspacing=0>
+<tr><td align=center><font color="#EEEEFF" size=+2 face="Georgia,Palatino"><b>
+<a name="instructions">Instructions
+</b></font></td></tr></table><ul>
+<!-- *********************************************************************** -->
+
+<p>This document is intended to explain the process of building the LLVM
+C/C++ front-end, based on GCC 3.4, from source.</p>
+
+<p><b>NOTE:</b> This is currently a somewhat fragile, error-prone
+process, and you should only try to do it if (A) you really, really,
+really can't use the binaries we distribute, and (B) you are a wicked
+good GCC hacker.</p>
+
+<p>We welcome patches to help make this process simpler.</p>
+
+<ol>
+<li><p>Configure and build the LLVM libraries and tools using:</p>
+<pre>
+ % cd llvm
+ % ./configure [options...]
+ % gmake tools-only
+</pre>
+    <p>The use of the non-default target "tools-only" means that the
+    LLVM tools and libraries will build, and the binaries will be
+    deposited in llvm/tools/Debug, but the runtime (bytecode)
+    libraries will not build.</p>
+
+<li><p>Add the directory containing the tools to your PATH.</p>
+<pre>
+ % set path = ( `cd llvm/tools/Debug && pwd` $path )
+</pre>
+
+<li><p>Unpack the C/C++ front-end source into cfrontend/src.</p>
+
+<li><p>Edit src/configure.  Change the first line (starting w/ #!) to
+       contain the correct full pathname of sh.</p>
+
+<li><p>Make "build" and "install" directories as siblings of the "src"
+       tree.</p>
+<pre>
+ % pwd
+ /usr/local/example/cfrontend/src
+ % cd ..
+ % mkdir build install
+ % set CFEINSTALL = `pwd`/install
+</pre>
+
+<li><p>Configure, build and install the C front-end:</p>
+<pre>
+ % cd build
+ % ../src/configure --prefix=$CFEINSTALL --disable-nls --disable-shared \
+   --enable-languages=c,c++
+ % gmake all-gcc
+ % setenv LLVM_LIB_SEARCH_PATH `pwd`/gcc 
+ % gmake all; gmake install
+</pre>
+
+ <p><b>Common Problem 1:</b> You may get error messages regarding the fact
+ that LLVM does not support inline assembly. Here are two common
+ fixes:</p>
+
+ <ul>
+  <li><p><b>Fix 1:</b> If you have system header files that include
+   inline assembly, you may have to modify them to remove the inline
+   assembly, and install the modified versions in
+   <code>$CFEINSTALL/<i>target-triplet</i>/sys-include</code>.</p>
+
+  <li><b>Fix 2:</b> If you are building the C++ front-end on a CPU we
+   haven't tried yet, you will probably have to edit the appropriate
+   version of atomicity.h under
+   <code>src/libstdc++-v3/config/cpu/<i>name-of-cpu</i>/atomicity.h</code>
+   and apply a patch so that it does not use inline assembly.</p>
+ </ul>
+
+ <p><b>Common Problem 2:</b> <b>FIXME:</b> Chris should add a section about
+ common problems porting to a new architecture, including changes you
+ might have to make to the gcc/gcc/config/<i>name-of-cpu</i>
+ directory. For example (expand these):</p>
+
+ <ul>
+  <li>Munge linker flags so they are compatible with gccld.
+  <li>Change the target so it doesn't have long double; just use double
+      instead.
+  <li>No inline assembly for position independent code.
+  <li>We handle init and fini differently.
+  <li>Do not include inline assembly map things for SPARC, or profile things.
+ </ul>
+
+<li><p>Go back into the LLVM source tree proper. Edit Makefile.config
+to redefine <code>LLVMGCCDIR</code> to the full pathname of the
+<code>$CFEINSTALL</code> directory, which is the directory you just
+installed the C front-end into. (The ./configure script is likely to
+have set this to a directory which does not exist on your system.)</p>
+
+<li><p>If you edited header files during the C/C++ front-end build as
+described in "Fix 1" above, you must now copy those header files from
+<code>$CFEINSTALL/<i>target-triplet</i>/sys-include</code> to
+<code>$CFEINSTALL/lib/gcc/<i>target-triplet</i>/3.4-llvm/include</code>.
+(This should be the "include" directory in the same directory as the
+libgcc.a library, which you can find by running
+<code>$CFEINSTALL/bin/gcc --print-libgcc-file-name</code>.)</p>
+
+<li><p>Build and install the runtime (bytecode) libraries by running:</p>
+<pre>
+ % gmake -C runtime
+ % mkdir $CFEINSTALL/bytecode-libs
+ % gmake -C runtime install
+ % setenv LLVM_LIB_SEARCH_PATH $CFEINSTALL/bytecode-libs
+</pre>
+
+<li><p>Test the newly-installed C frontend by one or more of the
+following means:</p>
+ <ul>
+  <li> compiling and running a "hello, world" program in C or C++.
+  <li> running the tests under test/Programs using <code>gmake -C
+   test/Programs</code>;
+ </ul>
+
+</p>
+</ol>
+
+<!-- *********************************************************************** -->
+</ul>
+<!-- *********************************************************************** -->
+
+<hr><font size-1>
+<address><a href="mailto:gaeke -at- uiuc.edu">Brian Gaeke</a></address>
+Last modified: $Date$
+</font></body></html>
+
