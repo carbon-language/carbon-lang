@@ -51,7 +51,8 @@ CONTEXT= -c "srcroot=$(LLVM_SRC_ROOT)" \
          -c "cxx=$(CXX)" \
          -c "llvmgcc=$(LLVMGCC)" \
          -c "llvmgxx=$(LLVMGXX)" \
-         -c "make=$(MAKE)"
+         -c "make=$(MAKE)" \
+         -c "python=$(PYTHON)"
 
 #
 # Location of the QMTest program.
