@@ -38,7 +38,7 @@ AbortOnExceptions("abort-on-exception",
 // Create a TargetData structure to handle memory addressing and size/alignment
 // computations
 //
-static TargetData TD("lli Interpreter");
+TargetData TD("lli Interpreter");
 CachedWriter CW;     // Object to accelerate printing of LLVM
 
 
