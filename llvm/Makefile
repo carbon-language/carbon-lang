@@ -35,3 +35,6 @@ check ::
 	cd test; $(MAKE) 
 
 tools-only: all
+
+check-dejagnu:
+	cd test; $(MAKE) check-dejagnu
