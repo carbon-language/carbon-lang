@@ -30,6 +30,7 @@ using namespace llvm;
 
 namespace {
   Statistic<> NumInitBytes("lli", "Number of bytes of global vars initialized");
+  Statistic<> NumGlobals  ("lli", "Number of global vars initialized");
 }
 
 ExecutionEngine::ExecutionEngine(ModuleProvider *P) : 
@@ -372,7 +373,7 @@ void ExecutionEngine::emitGlobals() {
       
       // Allocate some memory for it!
       unsigned Size = TD.getTypeSize(Ty);
-      GlobalAddress[I] = new char[Size];
+      addGlobalMapping(I, new char[Size]);
       NumInitBytes += Size;
 
       DEBUG(std::cerr << "Global '" << I->getName() << "' -> "
@@ -394,5 +395,18 @@ void ExecutionEngine::emitGlobals() {
   for (Module::giterator I = getModule().gbegin(), E = getModule().gend();
        I != E; ++I)
     if (!I->isExternal())
-      InitializeMemory(I->getInitializer(), GlobalAddress[I]);
+      EmitGlobalVariable(I);
+}
+
+// EmitGlobalVariable - This method emits the specified global variable to the
+// address specified in GlobalAddresses, or allocates new memory if it's not
+// already in the map.
+void ExecutionEngine::EmitGlobalVariable(GlobalVariable *GV) {
+  void *&GA = GlobalAddress[GV];
+  if (GA == 0) {
+    // If it's not already specified, allocate memory for the global.
+    GA = new char[getTargetData().getTypeSize(GV->getType()->getElementType())];
+  }
+  InitializeMemory(GV->getInitializer(), GA);
+  ++NumGlobals;
 }
