@@ -17,13 +17,15 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/Utils/PromoteMemToReg.h"
-#include "llvm/Analysis/Dominators.h"
-#include "llvm/Instructions.h"
-#include "llvm/Function.h"
 #include "llvm/Constant.h"
+#include "llvm/DerivedTypes.h"
+#include "llvm/Function.h"
+#include "llvm/Instructions.h"
+#include "llvm/Analysis/Dominators.h"
+#include "llvm/Analysis/AliasSetTracker.h"
+#include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/StableBasicBlockNumbering.h"
-#include "llvm/ADT/StringExtras.h"
 #include <algorithm>
 using namespace llvm;
 
@@ -116,29 +118,44 @@ bool llvm::isAllocaPromotable(const AllocaInst *AI, const TargetData &TD) {
 
 namespace {
   struct PromoteMem2Reg {
-    // Allocas - The alloca instructions being promoted
+    /// Allocas - The alloca instructions being promoted.
+    ///
     std::vector<AllocaInst*> Allocas;
     DominatorTree &DT;
     DominanceFrontier &DF;
     const TargetData &TD;
 
-    // AllocaLookup - Reverse mapping of Allocas
+    /// AST - An AliasSetTracker object to update.  If null, don't update it.
+    ///
+    AliasSetTracker *AST;
+
+    /// AllocaLookup - Reverse mapping of Allocas.
+    ///
     std::map<AllocaInst*, unsigned>  AllocaLookup;
 
-    // NewPhiNodes - The PhiNodes we're adding.
+    /// NewPhiNodes - The PhiNodes we're adding.
+    ///
     std::map<BasicBlock*, std::vector<PHINode*> > NewPhiNodes;
 
-    // Visited - The set of basic blocks the renamer has already visited.
+    /// PointerAllocaValues - If we are updating an AliasSetTracker, then for
+    /// each alloca that is of pointer type, we keep track of what to copyValue
+    /// to the inserted PHI nodes here.
+    ///
+    std::vector<Value*> PointerAllocaValues;
+
+    /// Visited - The set of basic blocks the renamer has already visited.
+    ///
     std::set<BasicBlock*> Visited;
 
-    // BBNumbers - Contains a stable numbering of basic blocks to avoid
-    // non-determinstic behavior.
+    /// BBNumbers - Contains a stable numbering of basic blocks to avoid
+    /// non-determinstic behavior.
     StableBasicBlockNumbering BBNumbers;
 
   public:
     PromoteMem2Reg(const std::vector<AllocaInst*> &A, DominatorTree &dt,
-                   DominanceFrontier &df, const TargetData &td)
-      : Allocas(A), DT(dt), DF(df), TD(td) {}
+                   DominanceFrontier &df, const TargetData &td,
+                   AliasSetTracker *ast)
+      : Allocas(A), DT(dt), DF(df), TD(td), AST(ast) {}
 
     void run();
 
@@ -166,6 +183,7 @@ void PromoteMem2Reg::run() {
   // that are live in a single basic block by the basic block they are live in.
   std::map<BasicBlock*, std::vector<AllocaInst*> > LocallyUsedAllocas;
 
+  if (AST) PointerAllocaValues.resize(Allocas.size());
 
   for (unsigned AllocaNum = 0; AllocaNum != Allocas.size(); ++AllocaNum) {
     AllocaInst *AI = Allocas[AllocaNum];
@@ -177,6 +195,7 @@ void PromoteMem2Reg::run() {
 
     if (AI->use_empty()) {
       // If there are no uses of the alloca, just delete it now.
+      if (AST) AST->deleteValue(AI);
       AI->getParent()->getInstList().erase(AI);
 
       // Remove the alloca from the Allocas list, since it has been processed
@@ -198,18 +217,21 @@ void PromoteMem2Reg::run() {
     // decide whether all of the loads and stores to the alloca are within the
     // same basic block.
   RestartUseScan:
+    Value *AllocaPointerVal = 0;
     for (Value::use_iterator U =AI->use_begin(), E = AI->use_end(); U != E;++U){
       Instruction *User = cast<Instruction>(*U);
       if (StoreInst *SI = dyn_cast<StoreInst>(User)) {
         // Remember the basic blocks which define new values for the alloca
         DefiningBlocks.push_back(SI->getParent());
+        AllocaPointerVal = SI->getOperand(0);
       } else if (LoadInst *LI = dyn_cast<LoadInst>(User)) {
         // Otherwise it must be a load instruction, keep track of variable reads
         UsingBlocks.push_back(LI->getParent());
+        AllocaPointerVal = LI;
       } else if (SelectInst *SI = dyn_cast<SelectInst>(User)) {
         // Because of the restrictions we placed on Select instruction uses
-        // above things are very simple.  Transform the PHI of addresses into a
-        // select of loaded values.
+        // above things are very simple.  Transform the select of addresses into
+        // a select of loaded values.
         LoadInst *Load = cast<LoadInst>(SI->use_back());
         std::string LoadName = Load->getName(); Load->setName("");
 
@@ -220,6 +242,13 @@ void PromoteMem2Reg::run() {
 
         Value *NewSI = new SelectInst(SI->getOperand(0), TrueVal,
                                       FalseVal, Load->getName(), SI);
+        if (AST && isa<PointerType>(Load->getType())) {
+          AST->copyValue(Load, TrueVal);
+          AST->copyValue(Load, FalseVal);
+          AST->copyValue(Load, NewSI);
+          AST->deleteValue(Load);
+        }
+
         Load->replaceAllUsesWith(NewSI);
         Load->getParent()->getInstList().erase(Load);
         SI->getParent()->getInstList().erase(SI);
@@ -248,6 +277,15 @@ void PromoteMem2Reg::run() {
                                    PN->getIncomingValue(i)->getName()+".val",
                                    Pred->getTerminator());
           NewPN->addIncoming(NewLoad, Pred);
+        }
+
+        if (AST && isa<PointerType>(NewPN->getType())) {
+          for (std::map<BasicBlock*, LoadInst*>::iterator I = NewLoads.begin(),
+                 E = NewLoads.end(); I != E; ++I)
+            AST->copyValue(PNUser, I->second);
+          AST->copyValue(PNUser, NewPN);
+          AST->deleteValue(PNUser);
+          AST->deleteValue(PN);
         }
 
         // Remove the old load.
@@ -282,6 +320,9 @@ void PromoteMem2Reg::run() {
       --AllocaNum;
       continue;
     }
+
+    if (AST)
+      PointerAllocaValues[AllocaNum] = AllocaPointerVal;
 
     // If we haven't computed a numbering for the BB's in the function, do so
     // now.
@@ -352,6 +393,8 @@ void PromoteMem2Reg::run() {
       if (!HasOtherPHIs)
         NewPhiNodes.erase(PN->getParent());
 
+      if (AST && isa<PointerType>(PN->getType()))
+        AST->deleteValue(PN);
       PN->getParent()->getInstList().erase(PN);      
     }
 
@@ -402,6 +445,7 @@ void PromoteMem2Reg::run() {
     //
     if (!A->use_empty())
       A->replaceAllUsesWith(Constant::getNullValue(A->getType()));
+    if (AST) AST->deleteValue(A);
     A->getParent()->getInstList().erase(A);
   }
 
@@ -508,6 +552,8 @@ void PromoteMem2Reg::PromoteLocallyUsedAlloca(BasicBlock *BB, AllocaInst *AI) {
     if (LoadInst *LI = dyn_cast<LoadInst>(U)) {
       // Must be a load of uninitialized value.
       LI->replaceAllUsesWith(Constant::getNullValue(AI->getAllocatedType()));
+      if (AST && isa<PointerType>(LI->getType()))
+        AST->deleteValue(LI);
     } else {
       // Otherwise it must be a store which is never read.
       assert(isa<StoreInst>(U));
@@ -523,6 +569,8 @@ void PromoteMem2Reg::PromoteLocallyUsedAlloca(BasicBlock *BB, AllocaInst *AI) {
         if (LI->getOperand(0) == AI) {
           // Loads just returns the "current value"...
           LI->replaceAllUsesWith(CurVal);
+          if (AST && isa<PointerType>(LI->getType()))
+            AST->deleteValue(LI);
           BB->getInstList().erase(LI);
         }
       } else if (StoreInst *SI = dyn_cast<StoreInst>(Inst)) {
@@ -538,6 +586,7 @@ void PromoteMem2Reg::PromoteLocallyUsedAlloca(BasicBlock *BB, AllocaInst *AI) {
   // After traversing the basic block, there should be no more uses of the
   // alloca, remove it now.
   assert(AI->use_empty() && "Uses of alloca from more than one BB??");
+  if (AST) AST->deleteValue(AI);
   AI->getParent()->getInstList().erase(AI);
 }
 
@@ -563,6 +612,8 @@ PromoteLocallyUsedAllocas(BasicBlock *BB, const std::vector<AllocaInst*> &AIs) {
           if (AIt->second == 0)   // Uninitialized value??
             AIt->second =Constant::getNullValue(AIt->first->getAllocatedType());
           LI->replaceAllUsesWith(AIt->second);
+          if (AST && isa<PointerType>(LI->getType()))
+            AST->deleteValue(LI);
           BB->getInstList().erase(LI);
         }
       }
@@ -587,7 +638,7 @@ PromoteLocallyUsedAllocas(BasicBlock *BB, const std::vector<AllocaInst*> &AIs) {
 bool PromoteMem2Reg::QueuePhiNode(BasicBlock *BB, unsigned AllocaNo,
                                   unsigned &Version,
                                   std::set<PHINode*> &InsertedPHINodes) {
-  // Look up the basic-block in question
+  // Look up the basic-block in question.
   std::vector<PHINode*> &BBPNs = NewPhiNodes[BB];
   if (BBPNs.empty()) BBPNs.resize(Allocas.size());
 
@@ -596,10 +647,15 @@ bool PromoteMem2Reg::QueuePhiNode(BasicBlock *BB, unsigned AllocaNo,
 
   // Create a PhiNode using the dereferenced type... and add the phi-node to the
   // BasicBlock.
-  BBPNs[AllocaNo] = new PHINode(Allocas[AllocaNo]->getAllocatedType(),
-                                Allocas[AllocaNo]->getName() + "." +
+  PHINode *PN = new PHINode(Allocas[AllocaNo]->getAllocatedType(),
+                            Allocas[AllocaNo]->getName() + "." +
                                         utostr(Version++), BB->begin());
-  InsertedPHINodes.insert(BBPNs[AllocaNo]);
+  BBPNs[AllocaNo] = PN;
+  InsertedPHINodes.insert(PN);
+
+  if (AST && isa<PointerType>(PN->getType()))
+    AST->copyValue(PointerAllocaValues[AllocaNo], PN);
+
   return true;
 }
 
@@ -644,6 +700,8 @@ void PromoteMem2Reg::RenamePass(BasicBlock *BB, BasicBlock *Pred,
 
           // walk the use list of this load and replace all uses with r
           LI->replaceAllUsesWith(V);
+          if (AST && isa<PointerType>(LI->getType()))
+            AST->deleteValue(LI);
           BB->getInstList().erase(LI);
         }
       }
@@ -674,10 +732,13 @@ void PromoteMem2Reg::RenamePass(BasicBlock *BB, BasicBlock *Pred,
 /// use of DominanceFrontier information.  This function does not modify the CFG
 /// of the function at all.  All allocas must be from the same function.
 ///
+/// If AST is specified, the specified tracker is updated to reflect changes
+/// made to the IR.
+///
 void llvm::PromoteMemToReg(const std::vector<AllocaInst*> &Allocas,
                            DominatorTree &DT, DominanceFrontier &DF,
-                           const TargetData &TD) {
+                           const TargetData &TD, AliasSetTracker *AST) {
   // If there is nothing to do, bail out...
   if (Allocas.empty()) return;
-  PromoteMem2Reg(Allocas, DT, DF, TD).run();
+  PromoteMem2Reg(Allocas, DT, DF, TD, AST).run();
 }
