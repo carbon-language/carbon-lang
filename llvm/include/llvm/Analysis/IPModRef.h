@@ -113,6 +113,7 @@ public:
 
 class FunctionModRefInfo {
   const Function&       F;                  // The function
+  IPModRef&             IPModRefObj;        // The IPModRef Object owning this
   const DSGraph&        funcTDGraph;        // Top-down DS graph for function
   const DSGraph&        funcLocalGraph;     // Local DS graph for function
   ModRefInfo            funcModRefInfo;     // ModRefInfo for the function body
@@ -127,6 +128,7 @@ class FunctionModRefInfo {
 
 public:
   /* ctor */    FunctionModRefInfo      (const Function& func,
+                                         IPModRef& IPModRefObj,
                                          const DSGraph& tdg,
                                          const DSGraph& ldg);
   /* dtor */    ~FunctionModRefInfo     ();

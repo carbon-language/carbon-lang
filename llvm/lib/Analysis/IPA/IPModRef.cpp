@@ -44,9 +44,10 @@ void ModRefInfo::dump() const
 // This constructor computes a node numbering for the TD graph.
 // 
 FunctionModRefInfo::FunctionModRefInfo(const Function& func,
+                                       IPModRef& ipmro,
                                        const DSGraph& tdg,
                                        const DSGraph& ldg)
-  : F(func),
+  : F(func), IPModRefObj(ipmro), 
     funcTDGraph(tdg),
     funcLocalGraph(ldg),
     funcModRefInfo(tdg.getGraphSize())
@@ -76,7 +77,7 @@ unsigned FunctionModRefInfo::getNodeId(const Value* value) const {
 // Dummy function that will be replaced with one that inlines
 // the callee's BU graph into the caller's TD graph.
 // 
-const DSGraph* ResolveGraphForCallSite(const DSGraph& funcTDGraph,
+static const DSGraph* ResolveGraphForCallSite(const DSGraph& funcTDGraph,
                                        const CallInst& callInst)
 {
   return &funcTDGraph;                    // TEMPORARY
@@ -203,9 +204,9 @@ FunctionModRefInfo& IPModRef::getFuncInfo(const Function& func,
 {
   FunctionModRefInfo*& funcInfo = funcToModRefInfoMap[&func];
   assert (funcInfo != NULL || computeIfMissing);
-  if (funcInfo == NULL && computeIfMissing)
+  if (funcInfo == NULL)
     { // Create a new FunctionModRefInfo object
-      funcInfo = new FunctionModRefInfo(func,  // inserts into map
+      funcInfo = new FunctionModRefInfo(func, *this, // inserts into map
                               getAnalysis<TDDataStructures>().getDSGraph(func),
                           getAnalysis<LocalDataStructures>().getDSGraph(func));
       funcInfo->computeModRef(func);            // computes the mod/ref info
@@ -219,6 +220,7 @@ FunctionModRefInfo& IPModRef::getFuncInfo(const Function& func,
 void IPModRef::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.setPreservesAll();
   AU.addRequired<LocalDataStructures>();
+  AU.addRequired<BUDataStructures>();
   AU.addRequired<TDDataStructures>();
 }
 
