@@ -248,6 +248,7 @@ public:
   bool isRead() const       { return NodeType & Read; }
 
   bool isIncomplete() const { return NodeType & Incomplete; }
+  bool isComplete() const   { return !isIncomplete(); }
   bool isDeadNode() const   { return NodeType & DEAD; }
 
   DSNode *setAllocaNodeMarker()  { NodeType |= AllocaNode;  return this; }
