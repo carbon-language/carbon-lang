@@ -54,7 +54,9 @@ static inline std::auto_ptr<Module> LoadFile(const string &FN) {
 }
 
 int main(int argc, char **argv) {
-  cl::ParseCommandLineOptions(argc, argv, " llvm linker\n");
+  cl::ParseCommandLineOptions(argc, argv, " llvm linker\n",
+			      cl::EnableSingleLetterArgValue |
+			      cl::DisableSingleLetterArgGrouping);
   assert(InputFilenames.size() > 0 && "OneOrMore is not working");
 
   unsigned BaseArg = 0;
