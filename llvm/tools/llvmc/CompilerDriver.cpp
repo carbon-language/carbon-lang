@@ -279,6 +279,90 @@ bool CompilerDriver::DoAction(Action*action) {
   return true;
 }
 
+/// This method tries various variants of a linkage item's file
+/// name to see if it can find an appropriate file to link with
+/// in the directory specified.
+std::string CompilerDriver::GetPathForLinkageItem(const std::string& link_item,
+                                                  const std::string& dir) {
+  std::string fullpath(dir + "/" + link_item + ".o");
+  if (::sys::FileIsReadable(fullpath)) 
+    return fullpath;
+  fullpath = dir + "/" + link_item + ".bc";
+  if (::sys::FileIsReadable(fullpath)) 
+    return fullpath;
+  fullpath = dir + "/lib" + link_item + ".a";
+  if (::sys::FileIsReadable(fullpath))
+    return fullpath;
+  fullpath = dir + "/lib" + link_item + ".so";
+  if (::sys::FileIsReadable(fullpath))
+    return fullpath;
+  return "";
+}
+
+/// This method processes a linkage item. The item could be a
+/// Bytecode file needing translation to native code and that is
+/// dependent on other bytecode libraries, or a native code
+/// library that should just be linked into the program.
+bool CompilerDriver::ProcessLinkageItem(const std::string& link_item,
+                                        SetVector<std::string>& set,
+                                        std::string& err) {
+  // First, see if the unadorned file name is not readable. If so,
+  // we must track down the file in the lib search path.
+  std::string fullpath;
+  if (!sys::FileIsReadable(link_item)) {
+    // First, look for the library using the -L arguments specified
+    // on the command line.
+    StringVector::iterator PI = LibraryPaths.begin();
+    StringVector::iterator PE = LibraryPaths.end();
+    while (PI != PE && fullpath.empty()) {
+      fullpath = GetPathForLinkageItem(link_item,*PI);
+      ++PI;
+    }
+
+    // If we didn't find the file in any of the library search paths
+    // so we have to bail. No where else to look.
+    if (fullpath.empty()) {
+      err = std::string("Can't find linkage item '") + link_item + "'";
+      return false;
+    }
+  } else {
+    fullpath = link_item;
+  }
+
+  // If we got here fullpath is the path to the file, and its readable.
+  set.insert(fullpath);
+
+  // If its an LLVM bytecode file ...
+  if (CheckMagic(fullpath, "llvm")) {
+    // Process the dependent libraries recursively
+    Module::LibraryListType modlibs;
+    if (GetBytecodeDependentLibraries(fullpath,modlibs)) {
+      // Traverse the dependent libraries list
+      Module::lib_iterator LI = modlibs.begin();
+      Module::lib_iterator LE = modlibs.end();
+      while ( LI != LE ) {
+        if (!ProcessLinkageItem(*LI,set,err)) {
+          if (err.empty()) {
+            err = std::string("Library '") + *LI + 
+                  "' is not valid for linking but is required by file '" +
+                  fullpath + "'";
+          } else {
+            err += " which is required by file '" + fullpath + "'";
+          }
+          return false;
+        }
+        ++LI;
+      }
+    } else if (err.empty()) {
+      err = std::string("The dependent libraries could not be extracted from '")
+                        + fullpath;
+      return false;
+    }
+  }
+  return true;
+}
+
+
 int CompilerDriver::execute(const InputList& InpList, 
                             const std::string& Output ) {
   // Echo the configuration of options if we're running verbose
@@ -488,6 +572,14 @@ int CompilerDriver::execute(const InputList& InpList,
     ++I;
   }
 
+  /// RUN THE COMPILATION ACTIONS
+  std::vector<Action*>::iterator aIter = actions.begin();
+  while (aIter != actions.end()) {
+    if (!DoAction(*aIter))
+      error("Action failed");
+    aIter++;
+  }
+
   /// LINKING PHASE
   if (finalPhase == LINKING) {
     if (emitNativeCode) {
@@ -498,46 +590,19 @@ int CompilerDriver::execute(const InputList& InpList,
       // link bytecode.
       StringVector::const_iterator I = LinkageItems.begin();
       StringVector::const_iterator E = LinkageItems.end();
-      StringVector lib_list;
-      while (I != E ) {
-        if (sys::FileIsReadable(*I)) {
-          if (CheckMagic(*I, "llvm")) {
-            // Examine the bytecode file for additional bytecode libraries to
-            // link in.
-            ModuleProvider* mp = getBytecodeModuleProvider(*I);
-            assert(mp!=0 && "Couldn't get module provider from bytecode file");
-            Module* M = mp->releaseModule();
-            assert(M!=0 && "Couldn't get module from module provider");
-            Module::lib_iterator LI = M->lib_begin();
-            Module::lib_iterator LE = M->lib_end();
-            while ( LI != LE ) {
-              if (sys::FileIsReadable(*LI)) {
-                if (CheckMagic(*I,"llvm")) {
-                  lib_list.push_back(*LI);
-                } else {
-                  error(std::string("Library '") + *LI + "' required by file '"
-                        + *I + "' is not an LLVM bytecode file");
-                }
-              } else {
-                error(std::string("Library '") + *LI + "' required by file '"
-                      + *I + "' is not readable");
-              }
-              ++I;
-            }
-          } else {
-            error(std::string("File '") + *I + " is not an LLVM byte code file");
-          } 
-        } else {
-          error(std::string("File '") + *I + " is not readable");
-        }
+      SetVector<std::string> link_items;
+      std::string errmsg;
+      while (I != E && ProcessLinkageItem(*I,link_items,errmsg))
         ++I;
-      }
+
+      if (!errmsg.empty())
+        error(errmsg);
 
       // We're emitting bytecode so let's build an llvm-link Action
       Action* link = new Action();
       link->program = "llvm-link";
       link->args = LinkageItems;
-      link->args.insert(link->args.end(), lib_list.begin(), lib_list.end());
+      link->args.insert(link->args.end(), link_items.begin(), link_items.end());
       link->args.push_back("-f");
       link->args.push_back("-o");
       link->args.push_back(OutFile);
@@ -547,14 +612,6 @@ int CompilerDriver::execute(const InputList& InpList,
         link->args.push_back("-stats");
       actions.push_back(link);
     }
-  }
-
-  /// RUN THE ACTIONS
-  std::vector<Action*>::iterator aIter = actions.begin();
-  while (aIter != actions.end()) {
-    if (!DoAction(*aIter))
-      error("Action failed");
-    aIter++;
   }
 
   if (!keepTemps) {
