@@ -70,14 +70,6 @@ Pass *createInternalizePass();
 
 
 //===----------------------------------------------------------------------===//
-// createPoolAllocatePass - This transform changes programs so that disjoint
-// data structures are allocated out of different pools of memory, increasing
-// locality and shrinking pointer size.
-//
-Pass *createPoolAllocatePass();
-
-
-//===----------------------------------------------------------------------===//
 // These passes are wrappers that can do a few simple structure mutation
 // transformations.
 //
