@@ -148,6 +148,19 @@ public:
   ///
   virtual const MRegisterInfo &getRegisterInfo() const { return RI; }
 
+  /// createNOPinstr - returns the target's implementation of NOP, which is
+  /// usually a pseudo-instruction, implemented by a degenerate version of
+  /// another instruction, e.g. X86: `xchg ax, ax'; SparcV9: `sethi r0, r0, r0'
+  ///
+  MachineInstr* createNOPinstr() const;
+
+  /// isNOPinstr - since we no longer have a special NOP opcode, we need to know
+  /// if a given instruction is interpreted as an `official' NOP instr, i.e.,
+  /// there may be more than one way to `do nothing' but only one canonical
+  /// way to slack off.
+  ///
+  bool isNOPinstr(const MachineInstr &MI) const;
+
   /// print - Print out an x86 instruction in intel syntax
   ///
   virtual void print(const MachineInstr *MI, std::ostream &O,

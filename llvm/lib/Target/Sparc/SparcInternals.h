@@ -8,6 +8,7 @@
 #ifndef SPARC_INTERNALS_H
 #define SPARC_INTERNALS_H
 
+#include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetSchedInfo.h"
 #include "llvm/Target/TargetFrameInfo.h"
@@ -15,6 +16,7 @@
 #include "llvm/Target/TargetRegInfo.h"
 #include "llvm/Target/TargetOptInfo.h"
 #include "llvm/Type.h"
+#include "SparcRegClassInfo.h"
 #include <sys/types.h>
 
 class LiveRange;
@@ -101,6 +103,33 @@ struct UltraSparcInstrInfo : public TargetInstrInfo {
     }
     else
       return -1;
+  }
+
+  /// createNOPinstr - returns the target's implementation of NOP, which is
+  /// usually a pseudo-instruction, implemented by a degenerate version of
+  /// another instruction, e.g. X86: xchg ax, ax; SparcV9: sethi g0, 0
+  ///
+  MachineInstr* createNOPinstr() const {
+    return BuildMI(V9::SETHI, 2).addReg(SparcIntRegClass::g0).addZImm(0);
+  }
+
+  /// isNOPinstr - since we no longer have a special NOP opcode, we need to know
+  /// if a given instruction is interpreted as an `official' NOP instr, i.e.,
+  /// there may be more than one way to `do nothing' but only one canonical
+  /// way to slack off.
+  ///
+  bool isNOPinstr(const MachineInstr &MI) const {
+    // Make sure the instruction is EXACTLY `sethi g0, 0'
+    if (MI.getOpcode() == V9::SETHI && MI.getNumOperands() == 2) {
+      const MachineOperand &op0 = MI.getOperand(0), &op1 = MI.getOperand(1);
+      if (op0.isMachineRegister() &&
+          op0.getMachineRegNum() == SparcIntRegClass::g0 &&
+          op1.isImmediate() && op1.getImmedValue() == 0)
+      {
+        return true;
+      }
+    }
+    return false;
   }
   
   virtual bool hasResultInterlock(MachineOpCode opCode) const
