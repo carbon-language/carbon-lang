@@ -1,4 +1,4 @@
-//===-- Writer.cpp - Library for writing VM bytecode files ----------------===//
+//===-- Writer.cpp - Library for writing LLVM bytecode files --------------===//
 // 
 //                     The LLVM Compiler Infrastructure
 //
@@ -19,10 +19,6 @@
 // "append" speed, plus the free "seek"/replace in the middle of the stream. I
 // didn't use a vector because the stream could end up very large and copying
 // the whole thing to reallocate would be kinda silly.
-//
-// Note that the performance of this library is not terribly important, because
-// it shouldn't be used by JIT type applications... so it is not a huge focus
-// at least.  :)
 //
 //===----------------------------------------------------------------------===//
 
