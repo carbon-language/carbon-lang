@@ -318,14 +318,14 @@ I(FSTr64      , "fst",   0xDD,            0,             X86II::Void | X86II::Ar
 I(FSTPr32     , "fstp",  0xD9,            0,             X86II::Void | X86II::ArgF32 | X86II::MRMS3m                   , NoIR, NoIR)   // store float, pop
 I(FSTPr64     , "fstp",  0xDD,            0,             X86II::Void | X86II::ArgF64 | X86II::MRMS3m                   , NoIR, NoIR)   // store double, pop
 I(FSTPr80     , "fstp",  0xDB,            0,             X86II::Void | X86II::ArgF80 | X86II::MRMS7m | X86II::OneArgFP , NoIR, NoIR)   // store extended, pop
-I(FSTrr       , "fst"  ,   0xD0,            0, X86II::DD | X86II::Void | X86II::ArgF80 | X86II::AddRegFrm                , NoIR, NoIR)   // ST(i) = ST(0)
-I(FSTPrr      , "fstp" ,   0xD8,            0, X86II::DD | X86II::Void | X86II::ArgF80 | X86II::AddRegFrm                , NoIR, NoIR)   // ST(i) = ST(0), pop
+I(FSTrr       , "fst"  ,   0xD0,            0, X86II::DD | X86II::Void | X86II::ArgF80 | X86II::AddRegFrm                , O_ST0, NoIR)   // ST(i) = ST(0)
+I(FSTPrr      , "fstp" ,   0xD8,            0, X86II::DD | X86II::Void | X86II::ArgF80 | X86II::AddRegFrm                , O_ST0, NoIR)   // ST(i) = ST(0), pop
 
 I(FISTr16     , "fist",  0xDF,            0,             X86II::Void | X86II::Arg16  | X86II::MRMS2m | X86II::OneArgFP , NoIR, NoIR)   // store signed short
 I(FISTr32     , "fist",  0xDB,            0,             X86II::Void | X86II::Arg32  | X86II::MRMS2m | X86II::OneArgFP , NoIR, NoIR)   // store signed int
 I(FISTPr16    , "fistp", 0xDF,            0,             X86II::Void | X86II::Arg16  | X86II::MRMS3m                   , NoIR, NoIR)   // store short, pop
 I(FISTPr32    , "fistp", 0xDB,            0,             X86II::Void | X86II::Arg32  | X86II::MRMS3m                   , NoIR, NoIR)   // store int, pop
-I(FISTPr64    , "fistp", 0xDF,            0,             X86II::Void | X86II::Arg64  | X86II::MRMS7m | X86II::OneArgFP , NoIR, NoIR)   // store long, pop
+I(FISTPr64    , "fistpll", 0xDF,          0,             X86II::Void | X86II::Arg64  | X86II::MRMS7m | X86II::OneArgFP , NoIR, NoIR)   // store long, pop
 
 
 I(FXCH        , "fxch" , 0xC8,              0, X86II::D9 | X86II::Void | X86II::ArgF80 | X86II::AddRegFrm                , O_ST0, O_ST0) // fxch ST(i), ST(0)
@@ -335,34 +335,34 @@ I(FLD0        , "fldz" , 0xEE,              0, X86II::D9 |               X86II::
 I(FLD1        , "fld1" , 0xE8,              0, X86II::D9 |               X86II::ArgF80 | X86II::RawFrm | X86II::ZeroArgFP, NoIR, NoIR)   // load +1.0
 
 // Binary arithmetic operations...
-I(FADDST0r    , "fadd",   0xC0,           0, X86II::D8 |               X86II::ArgF80 | X86II::AddRegFrm               , NoIR, NoIR)   // ST(0) = ST(0) + ST(i)
-I(FADDrST0    , "fadd",   0xC0,           0, X86II::DC |               X86II::ArgF80 | X86II::AddRegFrm               , NoIR, NoIR)   // ST(i) = ST(i) + ST(0)
-I(FADDPrST0   , "faddp",  0xC0,           0, X86II::DE |               X86II::ArgF80 | X86II::AddRegFrm               , NoIR, NoIR)   // ST(i) = ST(i) + ST(0), pop
+I(FADDST0r    , "fadd",   0xC0,           0, X86II::D8 |               X86II::ArgF80 | X86II::AddRegFrm               , O_ST0, O_ST0)   // ST(0) = ST(0) + ST(i)
+I(FADDrST0    , "fadd",   0xC0,           0, X86II::DC |               X86II::ArgF80 | X86II::AddRegFrm | X86II::PrintImplUses, O_ST0, NoIR)   // ST(i) = ST(i) + ST(0)
+I(FADDPrST0   , "faddp",  0xC0,           0, X86II::DE |               X86II::ArgF80 | X86II::AddRegFrm               , O_ST0, NoIR)    // ST(i) = ST(i) + ST(0), pop
 
-I(FSUBRST0r   , "fsubr" , 0xE8,           0, X86II::D8 |               X86II::ArgF80 | X86II::AddRegFrm               , NoIR, NoIR)   // ST(0) = ST(i) - ST(0)
-I(FSUBrST0    , "fsub"  , 0xE8,           0, X86II::DC |               X86II::ArgF80 | X86II::AddRegFrm               , NoIR, NoIR)   // ST(i) = ST(i) - ST(0)
-I(FSUBPrST0   , "fsubp" , 0xE8,           0, X86II::DE |               X86II::ArgF80 | X86II::AddRegFrm               , NoIR, NoIR)   // ST(i) = ST(i) - ST(0), pop
+I(FSUBRST0r   , "fsubr" , 0xE8,           0, X86II::D8 |               X86II::ArgF80 | X86II::AddRegFrm               , O_ST0, O_ST0)   // ST(0) = ST(i) - ST(0)
+I(FSUBrST0    , "fsub"  , 0xE8,           0, X86II::DC |               X86II::ArgF80 | X86II::AddRegFrm | X86II::PrintImplUses, O_ST0, NoIR)   // ST(i) = ST(i) - ST(0)
+I(FSUBPrST0   , "fsubp" , 0xE8,           0, X86II::DE |               X86II::ArgF80 | X86II::AddRegFrm               , O_ST0, NoIR)    // ST(i) = ST(i) - ST(0), pop
 
-I(FSUBST0r    , "fsub"  , 0xE0,           0, X86II::D8 |               X86II::ArgF80 | X86II::AddRegFrm               , NoIR, NoIR)   // ST(0) = ST(0) - ST(i)
-I(FSUBRrST0   , "fsubr" , 0xE0,           0, X86II::DC |               X86II::ArgF80 | X86II::AddRegFrm               , NoIR, NoIR)   // ST(i) = ST(0) - ST(i)
-I(FSUBRPrST0  , "fsubrp", 0xE0,           0, X86II::DE |               X86II::ArgF80 | X86II::AddRegFrm               , NoIR, NoIR)   // ST(i) = ST(0) - ST(i), pop
+I(FSUBST0r    , "fsub"  , 0xE0,           0, X86II::D8 |               X86II::ArgF80 | X86II::AddRegFrm               , O_ST0, O_ST0)   // ST(0) = ST(0) - ST(i)
+I(FSUBRrST0   , "fsubr" , 0xE0,           0, X86II::DC |               X86II::ArgF80 | X86II::AddRegFrm | X86II::PrintImplUses, O_ST0, NoIR)   // ST(i) = ST(0) - ST(i)
+I(FSUBRPrST0  , "fsubrp", 0xE0,           0, X86II::DE |               X86II::ArgF80 | X86II::AddRegFrm               , O_ST0, NoIR)    // ST(i) = ST(0) - ST(i), pop
 
-I(FMULST0r    , "fmul",   0xC8,           0, X86II::D8 |               X86II::ArgF80 | X86II::AddRegFrm               , NoIR, NoIR)   // ST(0) = ST(0) * ST(i)
-I(FMULrST0    , "fmul",   0xC8,           0, X86II::DC |               X86II::ArgF80 | X86II::AddRegFrm               , NoIR, NoIR)   // ST(i) = ST(i) * ST(0)
-I(FMULPrST0   , "fmulp",  0xC8,           0, X86II::DE |               X86II::ArgF80 | X86II::AddRegFrm               , NoIR, NoIR)   // ST(i) = ST(i) * ST(0), pop
+I(FMULST0r    , "fmul",   0xC8,           0, X86II::D8 |               X86II::ArgF80 | X86II::AddRegFrm               , O_ST0, O_ST0)   // ST(0) = ST(0) * ST(i)
+I(FMULrST0    , "fmul",   0xC8,           0, X86II::DC |               X86II::ArgF80 | X86II::AddRegFrm | X86II::PrintImplUses, O_ST0, NoIR)   // ST(i) = ST(i) * ST(0)
+I(FMULPrST0   , "fmulp",  0xC8,           0, X86II::DE |               X86II::ArgF80 | X86II::AddRegFrm               , O_ST0, NoIR)    // ST(i) = ST(i) * ST(0), pop
 
-I(FDIVRST0r   , "fdivr" , 0xF8,           0, X86II::D8 |               X86II::ArgF80 | X86II::AddRegFrm               , NoIR, NoIR)   // ST(0) = ST(i) / ST(0)
-I(FDIVrST0    , "fdiv"  , 0xF8,           0, X86II::DC |               X86II::ArgF80 | X86II::AddRegFrm               , NoIR, NoIR)   // ST(i) = ST(i) / ST(0)
-I(FDIVPrST0   , "fdivp" , 0xF8,           0, X86II::DE |               X86II::ArgF80 | X86II::AddRegFrm               , NoIR, NoIR)   // ST(i) = ST(i) / ST(0), pop
+I(FDIVRST0r   , "fdivr" , 0xF8,           0, X86II::D8 |               X86II::ArgF80 | X86II::AddRegFrm               , O_ST0, O_ST0)   // ST(0) = ST(i) / ST(0)
+I(FDIVrST0    , "fdiv"  , 0xF8,           0, X86II::DC |               X86II::ArgF80 | X86II::AddRegFrm | X86II::PrintImplUses, O_ST0, NoIR)   // ST(i) = ST(i) / ST(0)
+I(FDIVPrST0   , "fdivp" , 0xF8,           0, X86II::DE |               X86II::ArgF80 | X86II::AddRegFrm               , O_ST0, NoIR)    // ST(i) = ST(i) / ST(0), pop
 
-I(FDIVST0r    , "fdiv"  , 0xF0,           0, X86II::D8 |               X86II::ArgF80 | X86II::AddRegFrm               , NoIR, NoIR)   // ST(0) = ST(0) / ST(i)
-I(FDIVRrST0   , "fdivr" , 0xF0,           0, X86II::DC |               X86II::ArgF80 | X86II::AddRegFrm               , NoIR, NoIR)   // ST(i) = ST(0) / ST(i)
-I(FDIVRPrST0  , "fdivrp", 0xF0,           0, X86II::DE |               X86II::ArgF80 | X86II::AddRegFrm               , NoIR, NoIR)   // ST(i) = ST(0) / ST(i), pop
+I(FDIVST0r    , "fdiv"  , 0xF0,           0, X86II::D8 |               X86II::ArgF80 | X86II::AddRegFrm               , O_ST0, O_ST0)   // ST(0) = ST(0) / ST(i)
+I(FDIVRrST0   , "fdivr" , 0xF0,           0, X86II::DC |               X86II::ArgF80 | X86II::AddRegFrm | X86II::PrintImplUses, O_ST0, NoIR)   // ST(i) = ST(0) / ST(i)
+I(FDIVRPrST0  , "fdivrp", 0xF0,           0, X86II::DE |               X86II::ArgF80 | X86II::AddRegFrm               , O_ST0, NoIR)    // ST(i) = ST(0) / ST(i), pop
 
 // Floating point compares
-I(FUCOMr      , "fucom"   , 0xE0,           0, X86II::DD | X86II::Void | X86II::ArgF80 | X86II::AddRegFrm               , NoIR, NoIR)   // FPSW = compare ST(0) with ST(i)
-I(FUCOMPr     , "fucomp"  , 0xE8,           0, X86II::DD | X86II::Void | X86II::ArgF80 | X86II::AddRegFrm               , NoIR, NoIR)   // compare, pop
-I(FUCOMPPr    , "fucompp" , 0xE9,           0, X86II::DA | X86II::Void                 | X86II::RawFrm                  , NoIR, NoIR)   // compare ST(0) with ST(1), pop, pop
+I(FUCOMr      , "fucom"   , 0xE0,           0, X86II::DD | X86II::Void | X86II::ArgF80 | X86II::AddRegFrm               , O_ST0, NoIR)   // FPSW = compare ST(0) with ST(i)
+I(FUCOMPr     , "fucomp"  , 0xE8,           0, X86II::DD | X86II::Void | X86II::ArgF80 | X86II::AddRegFrm               , O_ST0, NoIR)   // compare, pop
+I(FUCOMPPr    , "fucompp" , 0xE9,           0, X86II::DA | X86II::Void                 | X86II::RawFrm                  , O_ST0, NoIR)   // compare ST(0) with ST(1), pop, pop
 
 // Floating point flag ops
 I(FNSTSWr8    , "fnstsw"  , 0xE0,           0, X86II::DF | X86II::Void                 | X86II::RawFrm                  , NoIR, O_AX)   // AX = fp flags

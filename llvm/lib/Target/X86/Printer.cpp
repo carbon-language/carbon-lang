@@ -665,6 +665,11 @@ void Printer::printMachineInstruction(const MachineInstr *MI, std::ostream &O,
       O << ", ";
       printOp(O, MI->getOperand(1), RI);
     }
+    if (Desc.TSFlags & X86II::PrintImplUses) {
+      for (const unsigned *p = Desc.ImplicitUses; *p; ++p) {
+	O << ", " << RI.get(*p).Name;
+      }
+    }
     O << "\n";
     return;
   }
@@ -819,7 +824,10 @@ void Printer::printMachineInstruction(const MachineInstr *MI, std::ostream &O,
            isMem(MI, 0) && "Bad MRMSxM format!");
     assert((MI->getNumOperands() != 5 || MI->getOperand(4).isImmediate()) &&
            "Bad MRMSxM format!");
-    // Work around GNU assembler bugs in FSTP and FLD.
+    // Bug: The 80-bit FP store-pop instruction "fstp XWORD PTR [...]"
+    // is misassembled by gas in intel_syntax mode as its 32-bit
+    // equivalent "fstp DWORD PTR [...]". Workaround: Output the raw
+    // opcode bytes instead of the instruction.
     if (MI->getOpCode() == X86::FSTPr80) {
       if ((MI->getOperand(0).getReg() == X86::ESP)
 	  && (MI->getOperand(1).getImmedValue() == 1)) {
@@ -834,7 +842,12 @@ void Printer::printMachineInstruction(const MachineInstr *MI, std::ostream &O,
             << std::dec << "\t# ";
 	}
       }
-    } else if (MI->getOpCode() == X86::FLDr80) {
+    }
+    // Bug: The 80-bit FP load instruction "fld XWORD PTR [...]" is
+    // misassembled by gas in intel_syntax mode as its 32-bit
+    // equivalent "fld DWORD PTR [...]". Workaround: Output the raw
+    // opcode bytes instead of the instruction.
+    if (MI->getOpCode() == X86::FLDr80) {
       if ((MI->getOperand(0).getReg() == X86::ESP)
           && (MI->getOperand(1).getImmedValue() == 1)) {
 	int DispVal = MI->getOperand(3).getImmedValue();
@@ -849,6 +862,42 @@ void Printer::printMachineInstruction(const MachineInstr *MI, std::ostream &O,
 	}
       }
     }
+    // Bug: gas intel_syntax mode treats "fild QWORD PTR [...]" as an
+    // invalid opcode, saying "64 bit operations are only supported in
+    // 64 bit modes." libopcodes disassembles it as "fild DWORD PTR
+    // [...]", which is wrong. Workaround: Output the raw opcode bytes
+    // instead of the instruction.
+    if (MI->getOpCode() == X86::FILDr64) {
+      if ((MI->getOperand(0).getReg() == X86::ESP)
+          && (MI->getOperand(1).getImmedValue() == 1)) {
+	int DispVal = MI->getOperand(3).getImmedValue();
+	if ((DispVal < -128) || (DispVal > 127)) { // 4 byte disp.
+          unsigned int val = (unsigned int) DispVal;
+          O << ".byte 0xdf, 0xac, 0x24\n\t";
+          O << ".long 0x" << std::hex << (unsigned) val << std::dec << "\t# ";
+	} else { // 1 byte disp.
+          unsigned char val = (unsigned char) DispVal;
+          O << ".byte 0xdf, 0x6c, 0x24, 0x" << std::hex << (unsigned) val
+            << std::dec << "\t# ";
+	}
+      }
+    }
+    // Bug: gas intel_syntax mode treats "fistp QWORD PTR [...]" as
+    // an invalid opcode, saying "64 bit operations are only
+    // supported in 64 bit modes." libopcodes disassembles it as
+    // "fistpll DWORD PTR [...]", which is wrong. Workaround: Output
+    // "fistpll DWORD PTR " instead, which is what libopcodes is
+    // expecting to see.
+    if (MI->getOpCode() == X86::FISTPr64) {
+      O << "fistpll DWORD PTR ";
+      printMemReference(O, MI, 0, RI);
+      if (MI->getNumOperands() == 5) {
+	O << ", ";
+	printOp(O, MI->getOperand(4), RI);
+      }
+      O << "\t# ";
+    }
+    
     O << TII.getName(MI->getOpCode()) << " ";
     O << sizePtr(Desc) << " ";
     printMemReference(O, MI, 0, RI);
