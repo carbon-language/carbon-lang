@@ -159,7 +159,7 @@ public:
   }
 
   GenericValue *getFirstVarArg () {
-    return &(ECStack[ECStack.size () - 2].VarArgs[0]);
+    return &(ECStack.back ().VarArgs[0]);
   }
 
   //FIXME: private:
