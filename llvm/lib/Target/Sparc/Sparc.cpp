@@ -14,8 +14,9 @@
 #include "llvm/Target/Sparc.h"
 #include "llvm/CodeGen/InstrScheduling.h"
 #include "llvm/CodeGen/InstrSelection.h"
+#include "llvm/CodeGen/MachineCodeForInstruction.h"
+#include "llvm/CodeGen/MachineCodeForMethod.h"
 #include "llvm/CodeGen/PhyRegAlloc.h"
-#include "llvm/Analysis/LiveVar/MethodLiveVarInfo.h"
 #include "llvm/Method.h"
 #include <iostream>
 using std::cerr;
@@ -102,11 +103,11 @@ InsertEpilogCode(Method* method, TargetMachine& target)
         unsigned N = GetInstructionsForEpilog(exitBB, target, minstrVec);
         
         MachineCodeForBasicBlock& bbMvec = exitBB->getMachineInstrVec();
-        MachineCodeForVMInstr& termMvec =
-          exitBB->getTerminator()->getMachineInstrVec();
+        MachineCodeForInstruction &termMvec =
+          MachineCodeForInstruction::get(exitBB->getTerminator());
         
         // Remove the NOPs in the delay slots of the return instruction
-        const MachineInstrInfo& mii = target.getInstrInfo();
+        const MachineInstrInfo &mii = target.getInstrInfo();
         unsigned numNOPs = 0;
         while (termMvec.back()->getOpCode() == NOP)
           {
@@ -283,7 +284,7 @@ bool
 UltraSparc::compileMethod(Method *method)
 {
   // Construct and initialize the MachineCodeForMethod object for this method.
-  (void) MachineCodeForMethod::construct(method, *this);
+  MachineCodeForMethod::construct(method, *this);
   
   if (SelectInstructionsForMethod(method, *this))
     {
@@ -309,4 +310,20 @@ UltraSparc::compileMethod(Method *method)
   InsertPrologEpilog(method, *this);
   
   return false;
+}
+
+static void freeMachineCode(Instruction *I) {
+  MachineCodeForInstruction::destroy(I);
+}
+
+//
+// freeCompiledMethod - Release all memory associated with the compiled image
+// for this method.
+//
+void 
+UltraSparc::freeCompiledMethod(Method *M)
+{
+  for_each(M->inst_begin(), M->inst_end(), freeMachineCode);
+  // Don't destruct MachineCodeForMethod - The global printer needs it
+  //MachineCodeForMethod::destruct(M);
 }
