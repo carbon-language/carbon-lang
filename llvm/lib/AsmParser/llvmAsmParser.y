@@ -1934,6 +1934,10 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
     delete $2;
   }
   | SetCondOps Types ValueRef ',' ValueRef {
+    if(isa<PackedType>((*$2).get())) {
+      ThrowException(
+        "PackedTypes currently not supported in setcc instructions!");
+    }
     $$ = new SetCondInst($1, getVal(*$2, $3), getVal(*$2, $5));
     if ($$ == 0)
       ThrowException("binary operator returned null!");
