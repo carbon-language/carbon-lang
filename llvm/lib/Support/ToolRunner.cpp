@@ -23,7 +23,7 @@ using namespace llvm;
 
 static void ProcessFailure(std::string ProgPath, const char** Args) {
   std::ostringstream OS;
-  OS << "\nError running tool:\n";
+  OS << "\nError running tool:\n ";
   for (const char **Arg = Args; *Arg; ++Arg)
     OS << " " << *Arg;
   OS << "\n";
