@@ -34,7 +34,7 @@ namespace llvm {
 /// There is a TypeMap typedef that is the mapping of names to Types. 
 /// Similarly there is a ValueMap typedef that is the mapping of 
 /// names to Values. Finally, there is a PlaneMap typedef that is the
-/// mapping of types to planes of ValueMap. THis is the basic structure
+/// mapping of types to planes of ValueMap. This is the basic structure
 /// of the symbol table. When you call type_begin() you're asking
 /// for an iterator at the start of the TypeMap. When you call
 /// plane_begin(), you're asking for an iterator at the start of 
