@@ -22,6 +22,7 @@
 #define LLVM_SUPPORT_CALLSITE_H
 
 #include "llvm/Instruction.h"
+#include "llvm/BasicBlock.h"
 
 namespace llvm {
 
@@ -59,6 +60,10 @@ public:
   /// getInstruction - Return the instruction this call site corresponds to
   ///
   Instruction *getInstruction() const { return I; }
+
+  /// getCaller - Return the caller function for this call site
+  ///
+  Function *getCaller() const { return I->getParent()->getParent(); }
 
   /// getCalledValue - Return the pointer to function that is being called...
   ///
