@@ -12,7 +12,7 @@
 // and signals).
 //
 // When the process is started, the debugger creates a pair of pipes, forks, and
-// makes the child starts executing the program.  The child executes the process
+// makes the child start executing the program.  The child executes the process
 // with an IntrinsicLowering instance that turns debugger intrinsics into actual
 // callbacks.
 //
@@ -35,7 +35,8 @@
 #include "Support/FileUtilities.h"
 #include "Support/StringExtras.h"
 #include <cerrno>
-#include <unistd.h>        // Unix specific debugger support
+#include <csignal>
+#include <unistd.h>        // Unix-specific debugger support
 #include <sys/types.h>
 #include <sys/wait.h>
 using namespace llvm;
@@ -55,7 +56,7 @@ static void runChild(Module *M, const std::vector<std::string> &Arguments,
 // enters a message processing loop, where it reads and responds to commands
 // until the parent decides that it wants to continue execution in some way.
 //
-// Whenever the child process stops, it notifies the debugger by sending an
+// Whenever the child process stops, it notifies the debugger by sending a
 // character over the wire.
 //
 
@@ -569,6 +570,7 @@ namespace {
 
     /// writeToParent - Send the specified buffer of data to the debugger
     /// process.
+    ///
     void writeToParent(const void *Buffer, unsigned Size);
 
     /// readFromParent - Read the specified number of bytes from the parent.
@@ -584,6 +586,7 @@ namespace {
 
     /// startSubprogram - This method creates a new region for the subroutine
     /// with the specified descriptor.
+    ///
     void startSubprogram(void *FuncDesc);
 
     /// startRegion - This method initiates the creation of an anonymous region.
@@ -597,6 +600,7 @@ namespace {
     /// reachedLine - This method is automatically called by the program every
     /// time it executes an llvm.dbg.stoppoint intrinsic.  If the debugger wants
     /// us to stop here, we do so, otherwise we continue execution.
+    ///
     void reachedLine(unsigned Line, unsigned Col, void *SourceDesc);
   };
 
@@ -852,12 +856,12 @@ namespace {
         break;
 
       case Intrinsic::dbg_region_end:
-        // Turn call into a call to llvm_debugger_stop
+        // Turn call into a call to llvm_dbg_region_end
         CI->setOperand(0, M->getOrInsertFunction("llvm_dbg_region_end",
                                   CI->getCalledFunction()->getFunctionType()));
         break;
       case Intrinsic::dbg_func_start:
-        // Turn call into a call to llvm_debugger_stop
+        // Turn call into a call to llvm_dbg_subprogram
         CI->setOperand(0, M->getOrInsertFunction("llvm_dbg_subprogram",
                                   CI->getCalledFunction()->getFunctionType()));
         break;
