@@ -11,7 +11,7 @@
 // parameters and the return value as appropriate.
 //
 // FIXME: This pass should transform alloca instructions in the called function
-//        into malloc/free pairs!  Or perhaps it should refuse to inline them!
+// into alloca/dealloca pairs!  Or perhaps it should refuse to inline them!
 //
 //===----------------------------------------------------------------------===//
 
@@ -50,7 +50,31 @@ bool llvm::InlineFunction(CallSite CS) {
   BasicBlock *OrigBB = TheCall->getParent();
   Function *Caller = OrigBB->getParent();
 
-  // We want to clone the entire callee function into the whole between the
+  // Calculate the vector of arguments to pass into the function cloner...
+  std::map<const Value*, Value*> ValueMap;
+  assert(std::distance(CalledFunc->abegin(), CalledFunc->aend()) == 
+         std::distance(CS.arg_begin(), CS.arg_end()) &&
+         "No varargs calls can be inlined!");
+
+  CallSite::arg_iterator AI = CS.arg_begin();
+  for (Function::const_aiterator I = CalledFunc->abegin(), E=CalledFunc->aend();
+       I != E; ++I, ++AI)
+    ValueMap[I] = *AI;
+
+  // Get an iterator to the last basic block in the function, which will have
+  // the new function inlined after it.
+  //
+  Function::iterator LastBlock = &Caller->back();
+
+  // Clone the entire body of the callee into the caller.  Make sure to capture
+  // all of the return instructions from the cloned function.
+  std::vector<ReturnInst*> Returns;
+  CloneFunctionInto(Caller, CalledFunc, ValueMap, Returns, ".i");
+
+  
+
+
+  // We want to clone the entire callee function into the hole between the
   // "starter" and "ender" blocks.  How we accomplish this depends on whether
   // this is an invoke instruction or a call instruction.
 
@@ -96,72 +120,50 @@ bool llvm::InlineFunction(CallSite CS) {
   // node that gets values from each of the old RET instructions in the original
   // function.
   //
-  PHINode *PHI = 0;
   if (!TheCall->use_empty()) {
-    // The PHI node should go at the front of the new basic block to merge all 
-    // possible incoming values.
-    //
-    PHI = new PHINode(CalledFunc->getReturnType(), TheCall->getName(),
-                      AfterCallBB->begin());
+    // We only need to make the PHI if there is more than one return instruction
+    if (Returns.size() > 1) {
+      // The PHI node should go at the front of the new basic block to merge all
+      // possible incoming values.
+      //
+      PHINode *PHI = new PHINode(CalledFunc->getReturnType(),
+                                 TheCall->getName(), AfterCallBB->begin());
 
-    // Anything that used the result of the function call should now use the PHI
-    // node as their operand.
-    //
-    TheCall->replaceAllUsesWith(PHI);
+      // Anything that used the result of the function call should now use the
+      // PHI node as their operand.
+      //
+      TheCall->replaceAllUsesWith(PHI);
+
+      // Add all of the return instructions as entries in the PHI node.
+      for (unsigned i = 0, e = Returns.size(); i != e; ++i) {
+        ReturnInst *RI = Returns[i];
+
+        assert(RI->getReturnValue() && "Ret should have value!");
+        assert(RI->getReturnValue()->getType() == PHI->getType() && 
+               "Ret value not consistent in function!");
+        PHI->addIncoming(RI->getReturnValue(), RI->getParent());
+      }
+
+    } else if (!Returns.empty()) {
+      // Otherwise, if there is exactly one return value, just replace anything
+      // using the return value of the call with the computed value.
+      TheCall->replaceAllUsesWith(Returns[0]->getReturnValue());
+    }
   }
-
-  // Get an iterator to the last basic block in the function, which will have
-  // the new function inlined after it.
-  //
-  Function::iterator LastBlock = &Caller->back();
-
-  // Calculate the vector of arguments to pass into the function cloner...
-  std::map<const Value*, Value*> ValueMap;
-  assert(std::distance(CalledFunc->abegin(), CalledFunc->aend()) == 
-         std::distance(CS.arg_begin(), CS.arg_end()) &&
-         "No varargs calls can be inlined!");
-
-  CallSite::arg_iterator AI = CS.arg_begin();
-  for (Function::const_aiterator I = CalledFunc->abegin(), E=CalledFunc->aend();
-       I != E; ++I, ++AI)
-    ValueMap[I] = *AI;
 
   // Since we are now done with the Call/Invoke, we can delete it.
   delete TheCall;
-
-  // Make a vector to capture the return instructions in the cloned function...
-  std::vector<ReturnInst*> Returns;
-
-  // Do all of the hard part of cloning the callee into the caller...
-  CloneFunctionInto(Caller, CalledFunc, ValueMap, Returns, ".i");
 
   // Loop over all of the return instructions, turning them into unconditional
   // branches to the merge point now...
   for (unsigned i = 0, e = Returns.size(); i != e; ++i) {
     ReturnInst *RI = Returns[i];
-    BasicBlock *BB = RI->getParent();
 
     // Add a branch to the merge point where the PHI node lives if it exists.
     new BranchInst(AfterCallBB, RI);
 
-    if (PHI) {   // The PHI node should include this value!
-      assert(RI->getReturnValue() && "Ret should have value!");
-      assert(RI->getReturnValue()->getType() == PHI->getType() && 
-             "Ret value not consistent in function!");
-      PHI->addIncoming(RI->getReturnValue(), BB);
-    }
-
     // Delete the return instruction now
-    BB->getInstList().erase(RI);
-  }
-
-  // Check to see if the PHI node only has one argument.  This is a common
-  // case resulting from there only being a single return instruction in the
-  // function call.  Because this is so common, eliminate the PHI node.
-  //
-  if (PHI && PHI->getNumIncomingValues() == 1) {
-    PHI->replaceAllUsesWith(PHI->getIncomingValue(0));
-    PHI->getParent()->getInstList().erase(PHI);
+    RI->getParent()->getInstList().erase(RI);
   }
 
   // Change the branch that used to go to AfterCallBB to branch to the first
