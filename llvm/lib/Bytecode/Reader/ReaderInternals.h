@@ -136,4 +136,13 @@ static inline bool readBlock(const uchar *&Buf, const uchar *EndBuf,
 #endif
 }
 
+
+// failure Template - This template function is used as a place to put
+// breakpoints in to debug failures of the bytecode parser.
+//
+template <typename X>
+static X failure(X Value) {
+  return Value;
+}
+
 #endif

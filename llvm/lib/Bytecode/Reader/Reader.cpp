@@ -30,7 +30,7 @@ bool BytecodeParser::getTypeSlot(const Type *Ty, unsigned &Slot) {
     Slot = Ty->getPrimitiveID();
   } else {
     TypeMapType::iterator I = TypeMap.find(Ty);
-    if (I == TypeMap.end()) return true;   // Didn't find type!
+    if (I == TypeMap.end()) return failure(true);   // Didn't find type!
     Slot = I->second;
   }
   //cerr << "getTypeSlot '" << Ty->getName() << "' = " << Slot << endl;
@@ -44,7 +44,7 @@ const Type *BytecodeParser::getType(unsigned ID) {
   //cerr << "Looking up Type ID: " << ID << endl;
 
   const Value *D = getValue(Type::TypeTy, ID, false);
-  if (D == 0) return 0;
+  if (D == 0) return failure<const Type*>(0);
 
   assert(D->getType() == Type::TypeTy);
   return ((const ConstPoolType*)D->castConstantAsserting())->getValue();
@@ -52,7 +52,7 @@ const Type *BytecodeParser::getType(unsigned ID) {
 
 bool BytecodeParser::insertValue(Value *Def, vector<ValueList> &ValueTab) {
   unsigned type;
-  if (getTypeSlot(Def->getType(), type)) return true;
+  if (getTypeSlot(Def->getType(), type)) return failure(true);
  
   if (ValueTab.size() <= type)
     ValueTab.resize(type+1, ValueList());
@@ -80,7 +80,7 @@ Value *BytecodeParser::getValue(const Type *Ty, unsigned oNum, bool Create) {
   unsigned Num = oNum;
   unsigned type;   // The type plane it lives in...
 
-  if (getTypeSlot(Ty, type)) return 0; // TODO: true
+  if (getTypeSlot(Ty, type)) return failure<Value*>(0); // TODO: true
 
   if (type == Type::TypeTyID) {  // The 'type' plane has implicit values
     const Type *T = Type::getPrimitiveType((Type::PrimitiveID)Num);
@@ -99,7 +99,7 @@ Value *BytecodeParser::getValue(const Type *Ty, unsigned oNum, bool Create) {
   if (Values.size() > type && Values[type].size() > Num)
     return Values[type][Num];
 
-  if (!Create) return 0;  // Do not create a placeholder?
+  if (!Create) return failure<Value*>(0);  // Do not create a placeholder?
 
   Value *d = 0;
   switch (Ty->getPrimitiveID()) {
@@ -114,7 +114,7 @@ Value *BytecodeParser::getValue(const Type *Ty, unsigned oNum, bool Create) {
   }
 
   assert(d != 0 && "How did we not make something?");
-  if (insertValue(d, LateResolveValues)) return 0;
+  if (insertValue(d, LateResolveValues)) return failure<Value*>(0);
   return d;
 }
 
@@ -156,11 +156,11 @@ bool BytecodeParser::ParseBasicBlock(const uchar *&Buf, const uchar *EndBuf,
     Instruction *Def;
     if (ParseInstruction(Buf, EndBuf, Def)) {
       delete BB;
-      return true;
+      return failure(true);
     }
 
-    if (Def == 0) { delete BB; return true; }
-    if (insertValue(Def, Values)) { delete BB; return true; }
+    if (Def == 0) { delete BB; return failure(true); }
+    if (insertValue(Def, Values)) { delete BB; return failure(true); }
 
     BB->getInstList().push_back(Def);
   }
@@ -173,25 +173,26 @@ bool BytecodeParser::ParseSymbolTable(const uchar *&Buf, const uchar *EndBuf) {
     // Symtab block header: [num entries][type id number]
     unsigned NumEntries, Typ;
     if (read_vbr(Buf, EndBuf, NumEntries) ||
-        read_vbr(Buf, EndBuf, Typ)) return true;
+        read_vbr(Buf, EndBuf, Typ)) return failure(true);
     const Type *Ty = getType(Typ);
-    if (Ty == 0) return true;
+    if (Ty == 0) return failure(true);
 
     for (unsigned i = 0; i < NumEntries; ++i) {
       // Symtab entry: [def slot #][name]
       unsigned slot;
-      if (read_vbr(Buf, EndBuf, slot)) return true;
+      if (read_vbr(Buf, EndBuf, slot)) return failure(true);
       string Name;
       if (read(Buf, EndBuf, Name, false))  // Not aligned...
-	return true;
+	return failure(true);
 
       Value *D = getValue(Ty, slot, false); // Find mapping...
-      if (D == 0) return true;
+      if (D == 0) return failure(true);
       D->setName(Name);
     }
   }
 
-  return Buf > EndBuf;
+  if (Buf > EndBuf) return failure(true);
+  return false;
 }
 
 
@@ -199,7 +200,7 @@ bool BytecodeParser::ParseMethod(const uchar *&Buf, const uchar *EndBuf,
 				 Module *C) {
   // Clear out the local values table...
   Values.clear();
-  if (MethodSignatureList.empty()) return true;  // Unexpected method!
+  if (MethodSignatureList.empty()) return failure(true);  // Unexpected method!
 
   const MethodType *MTy = MethodSignatureList.front().first;
   unsigned MethSlot = MethodSignatureList.front().second;
@@ -210,20 +211,20 @@ bool BytecodeParser::ParseMethod(const uchar *&Buf, const uchar *EndBuf,
   for (MethodType::ParamTypes::const_iterator It = Params.begin();
        It != Params.end(); ++It) {
     MethodArgument *MA = new MethodArgument(*It);
-    if (insertValue(MA, Values)) { delete M; return true; }
+    if (insertValue(MA, Values)) { delete M; return failure(true); }
     M->getArgumentList().push_back(MA);
   }
 
   while (Buf < EndBuf) {
     unsigned Type, Size;
     const uchar *OldBuf = Buf;
-    if (readBlock(Buf, EndBuf, Type, Size)) { delete M; return true; }
+    if (readBlock(Buf, EndBuf, Type, Size)) { delete M; return failure(true); }
 
     switch (Type) {
     case BytecodeFormat::ConstantPool:
       if (ParseConstantPool(Buf, Buf+Size, M->getConstantPool(), Values)) {
 	cerr << "Error reading constant pool!\n";
-	delete M; return true;
+	delete M; return failure(true);
       }
       break;
 
@@ -232,7 +233,7 @@ bool BytecodeParser::ParseMethod(const uchar *&Buf, const uchar *EndBuf,
       if (ParseBasicBlock(Buf, Buf+Size, BB) ||
 	  insertValue(BB, Values)) {
 	cerr << "Error parsing basic block!\n";
-	delete M; return true;                       // Parse error... :(
+	delete M; return failure(true);                // Parse error... :(
       }
 
       M->getBasicBlocks().push_back(BB);
@@ -242,24 +243,24 @@ bool BytecodeParser::ParseMethod(const uchar *&Buf, const uchar *EndBuf,
     case BytecodeFormat::SymbolTable:
       if (ParseSymbolTable(Buf, Buf+Size)) {
 	cerr << "Error reading method symbol table!\n";
-	delete M; return true;
+	delete M; return failure(true);
       }
       break;
 
     default:
       Buf += Size;
-      if (OldBuf > Buf) return true; // Wrap around!
+      if (OldBuf > Buf) return failure(true); // Wrap around!
       break;
     }
     if (align32(Buf, EndBuf)) {
       delete M;    // Malformed bc file, read past end of block.
-      return true;
+      return failure(true);
     }
   }
 
   if (postResolveValues(LateResolveValues) ||
       postResolveValues(LateResolveModuleValues)) {
-    delete M; return true;     // Unresolvable references!
+    delete M; return failure(true);     // Unresolvable references!
   }
 
   Value *MethPHolder = getValue(MTy, MethSlot, false);
@@ -287,18 +288,19 @@ bool BytecodeParser::ParseMethod(const uchar *&Buf, const uchar *EndBuf,
 bool BytecodeParser::ParseModuleGlobalInfo(const uchar *&Buf, const uchar *End,
 					  Module *C) {
 
-  if (!MethodSignatureList.empty()) return true;  // Two ModuleGlobal blocks?
+  if (!MethodSignatureList.empty()) 
+    return failure(true);  // Two ModuleGlobal blocks?
 
   // Read the method signatures for all of the methods that are coming, and 
   // create fillers in the Value tables.
   unsigned MethSignature;
-  if (read_vbr(Buf, End, MethSignature)) return true;
+  if (read_vbr(Buf, End, MethSignature)) return failure(true);
   while (MethSignature != Type::VoidTyID) { // List is terminated by Void
     const Type *Ty = getType(MethSignature);
     if (!Ty || !Ty->isMethodType()) { 
       cerr << "Method not meth type! ";
       if (Ty) cerr << Ty->getName(); else cerr << MethSignature; cerr << endl; 
-      return true; 
+      return failure(true); 
     }
 
     // When the ModuleGlobalInfo section is read, we load the type of each method
@@ -312,7 +314,7 @@ bool BytecodeParser::ParseModuleGlobalInfo(const uchar *&Buf, const uchar *End,
 
     // Figure out which entry of its typeslot it went into...
     unsigned TypeSlot;
-    if (getTypeSlot(Def->getType(), TypeSlot)) return true;
+    if (getTypeSlot(Def->getType(), TypeSlot)) return failure(true);
 
     unsigned SlotNo = ModuleValues[TypeSlot].size()-1;
     
@@ -320,10 +322,10 @@ bool BytecodeParser::ParseModuleGlobalInfo(const uchar *&Buf, const uchar *End,
     // methods are loaded...
     //
     MethodSignatureList.push_back(make_pair((const MethodType*)Ty, SlotNo));
-    if (read_vbr(Buf, End, MethSignature)) return true;
+    if (read_vbr(Buf, End, MethSignature)) return failure(true);
   }
 
-  if (align32(Buf, End)) return true;
+  if (align32(Buf, End)) return failure(true);
 
   // This is for future proofing... in the future extra fields may be added that
   // we don't understand, so we transparently ignore them.
@@ -336,39 +338,39 @@ bool BytecodeParser::ParseModule(const uchar *Buf, const uchar *EndBuf,
 				Module *&C) {
 
   unsigned Type, Size;
-  if (readBlock(Buf, EndBuf, Type, Size)) return true;
+  if (readBlock(Buf, EndBuf, Type, Size)) return failure(true);
   if (Type != BytecodeFormat::Module || Buf+Size != EndBuf)
-    return true;                               // Hrm, not a class?
+    return failure(true);                      // Hrm, not a class?
 
   MethodSignatureList.clear();                 // Just in case...
 
   // Read into instance variables...
-  if (read_vbr(Buf, EndBuf, FirstDerivedTyID)) return true;
-  if (align32(Buf, EndBuf)) return true;
+  if (read_vbr(Buf, EndBuf, FirstDerivedTyID)) return failure(true);
+  if (align32(Buf, EndBuf)) return failure(true);
 
   C = new Module();
 
   while (Buf < EndBuf) {
     const uchar *OldBuf = Buf;
-    if (readBlock(Buf, EndBuf, Type, Size)) { delete C; return true; }
+    if (readBlock(Buf, EndBuf, Type, Size)) { delete C; return failure(true); }
     switch (Type) {
     case BytecodeFormat::ModuleGlobalInfo:
       if (ParseModuleGlobalInfo(Buf, Buf+Size, C)) {
 	cerr << "Error reading class global info section!\n";
-	delete C; return true;
+	delete C; return failure(true);
       }
       break;
 
     case BytecodeFormat::ConstantPool:
       if (ParseConstantPool(Buf, Buf+Size, C->getConstantPool(), ModuleValues)) {
 	cerr << "Error reading class constant pool!\n";
-	delete C; return true;
+	delete C; return failure(true);
       }
       break;
 
     case BytecodeFormat::Method: {
       if (ParseMethod(Buf, Buf+Size, C)) {
-	delete C; return true;               // Error parsing method
+	delete C; return failure(true);               // Error parsing method
       }
       break;
     }
@@ -376,21 +378,21 @@ bool BytecodeParser::ParseModule(const uchar *Buf, const uchar *EndBuf,
     case BytecodeFormat::SymbolTable:
       if (ParseSymbolTable(Buf, Buf+Size)) {
 	cerr << "Error reading class symbol table!\n";
-	delete C; return true;
+	delete C; return failure(true);
       }
       break;
 
     default:
       cerr << "Unknown class block: " << Type << endl;
       Buf += Size;
-      if (OldBuf > Buf) return true; // Wrap around!
+      if (OldBuf > Buf) return failure(true); // Wrap around!
       break;
     }
-    if (align32(Buf, EndBuf)) { delete C; return true; }
+    if (align32(Buf, EndBuf)) { delete C; return failure(true); }
   }
 
   if (!MethodSignatureList.empty())      // Expected more methods!
-    return true;
+    return failure(true);
   return false;
 }
 
@@ -400,7 +402,7 @@ Module *BytecodeParser::ParseBytecode(const uchar *Buf, const uchar *EndBuf) {
   // Read and check signature...
   if (read(Buf, EndBuf, Sig) ||
       Sig != ('l' | ('l' << 8) | ('v' << 16) | 'm' << 24))
-    return 0;                                         // Invalid signature!
+    return failure<Module*>(0);                          // Invalid signature!
 
   Module *Result;
   if (ParseModule(Buf, EndBuf, Result)) return 0;
@@ -421,15 +423,15 @@ Module *ParseBytecodeFile(const string &Filename) {
 
   if (Filename != string("-")) {        // Read from a file...
     int FD = open(Filename.c_str(), O_RDONLY);
-    if (FD == -1) return 0;
+    if (FD == -1) return failure<Module*>(0);
 
-    if (fstat(FD, &StatBuf) == -1) { close(FD); return 0; }
+    if (fstat(FD, &StatBuf) == -1) { close(FD); return failure<Module*>(0); }
 
     int Length = StatBuf.st_size;
-    if (Length == 0) { close(FD); return 0; }
+    if (Length == 0) { close(FD); return failure<Module*>(0); }
     uchar *Buffer = (uchar*)mmap(0, Length, PROT_READ, 
 				MAP_PRIVATE, FD, 0);
-    if (Buffer == (uchar*)-1) { close(FD); return 0; }
+    if (Buffer == (uchar*)-1) { close(FD); return failure<Module*>(0); }
 
     BytecodeParser Parser;
     Result  = Parser.ParseBytecode(Buffer, Buffer+Length);
@@ -441,14 +443,14 @@ Module *ParseBytecodeFile(const string &Filename) {
     int BlockSize;
     uchar Buffer[4096], *FileData = 0;
     while ((BlockSize = read(0, Buffer, 4))) {
-      if (BlockSize == -1) { free(FileData); return 0; }
+      if (BlockSize == -1) { free(FileData); return failure<Module*>(0); }
 
       FileData = (uchar*)realloc(FileData, FileSize+BlockSize);
       memcpy(FileData+FileSize, Buffer, BlockSize);
       FileSize += BlockSize;
     }
 
-    if (FileSize == 0) { free(FileData); return 0; }
+    if (FileSize == 0) { free(FileData); return failure<Module*>(0); }
 
 #define ALIGN_PTRS 1
 #if ALIGN_PTRS

@@ -20,7 +20,7 @@
 bool BytecodeParser::ParseRawInst(const uchar *&Buf, const uchar *EndBuf, 
 				  RawInst &Result) {
   unsigned Op, Typ;
-  if (read(Buf, EndBuf, Op)) return true;
+  if (read(Buf, EndBuf, Op)) return failure(true);
 
   Result.NumOperands =  Op >> 30;
   Result.Opcode      = (Op >> 24) & 63;
@@ -45,38 +45,38 @@ bool BytecodeParser::ParseRawInst(const uchar *&Buf, const uchar *EndBuf,
     break;
   case 0:
     Buf -= 4;  // Hrm, try this again...
-    if (read_vbr(Buf, EndBuf, Result.Opcode)) return true;
-    if (read_vbr(Buf, EndBuf, Typ)) return true;
+    if (read_vbr(Buf, EndBuf, Result.Opcode)) return failure(true);
+    if (read_vbr(Buf, EndBuf, Typ)) return failure(true);
     Result.Ty = getType(Typ);
-    if (read_vbr(Buf, EndBuf, Result.NumOperands)) return true;
+    if (read_vbr(Buf, EndBuf, Result.NumOperands)) return failure(true);
 
     switch (Result.NumOperands) {
     case 0: 
       cerr << "Zero Arg instr found!\n"; 
-      return true;  // This encoding is invalid!
+      return failure(true);  // This encoding is invalid!
     case 1: 
-      if (read_vbr(Buf, EndBuf, Result.Arg1)) return true;
+      if (read_vbr(Buf, EndBuf, Result.Arg1)) return failure(true);
       break;
     case 2:
       if (read_vbr(Buf, EndBuf, Result.Arg1) || 
-	  read_vbr(Buf, EndBuf, Result.Arg2)) return true;
+	  read_vbr(Buf, EndBuf, Result.Arg2)) return failure(true);
       break;
     case 3:
       if (read_vbr(Buf, EndBuf, Result.Arg1) || 
 	  read_vbr(Buf, EndBuf, Result.Arg2) ||
-	  read_vbr(Buf, EndBuf, Result.Arg3)) return true;
+          read_vbr(Buf, EndBuf, Result.Arg3)) return failure(true);
       break;
     default:
       if (read_vbr(Buf, EndBuf, Result.Arg1) || 
-	  read_vbr(Buf, EndBuf, Result.Arg2)) return true;
+	  read_vbr(Buf, EndBuf, Result.Arg2)) return failure(true);
 
       // Allocate a vector to hold arguments 3, 4, 5, 6 ...
       Result.VarArgs = new vector<unsigned>(Result.NumOperands-2);
       for (unsigned a = 0; a < Result.NumOperands-2; a++)
-	if (read_vbr(Buf, EndBuf, (*Result.VarArgs)[a])) return true;
+	if (read_vbr(Buf, EndBuf, (*Result.VarArgs)[a])) return failure(true);
       break;
     }
-    if (align32(Buf, EndBuf)) return true;
+    if (align32(Buf, EndBuf)) return failure(true);
     break;
   }
 
@@ -92,7 +92,7 @@ bool BytecodeParser::ParseRawInst(const uchar *&Buf, const uchar *EndBuf,
 bool BytecodeParser::ParseInstruction(const uchar *&Buf, const uchar *EndBuf,
 				      Instruction *&Res) {
   RawInst Raw;
-  if (ParseRawInst(Buf, EndBuf, Raw)) return true;;
+  if (ParseRawInst(Buf, EndBuf, Raw)) return failure(true);
 
   if (Raw.Opcode >= Instruction::FirstUnaryOp && 
       Raw.Opcode <  Instruction::NumUnaryOps  && Raw.NumOperands == 1) {
@@ -120,7 +120,7 @@ bool BytecodeParser::ParseInstruction(const uchar *&Buf, const uchar *EndBuf,
     case 1: 
     case 3: cerr << "Invalid phi node encountered!\n"; 
             delete PN; 
-	    return true;
+	    return failure(true);
     case 2: PN->addIncoming(getValue(Raw.Ty, Raw.Arg1),
 			    (BasicBlock*)getValue(Type::LabelTy, Raw.Arg2)); 
       break;
@@ -130,7 +130,7 @@ bool BytecodeParser::ParseInstruction(const uchar *&Buf, const uchar *EndBuf,
       if (Raw.VarArgs->size() & 1) {
 	cerr << "PHI Node with ODD number of arguments!\n";
 	delete PN;
-	return true;
+	return failure(true);
       } else {
         vector<unsigned> &args = *Raw.VarArgs;
         for (unsigned i = 0; i < args.size(); i+=2)
@@ -180,7 +180,7 @@ bool BytecodeParser::ParseInstruction(const uchar *&Buf, const uchar *EndBuf,
     if (Raw.NumOperands == 3 || Raw.VarArgs->size() & 1) {
       cerr << "Switch statement with odd number of arguments!\n";
       delete I;
-      return true;
+      return failure(true);
     }      
     
     vector<unsigned> &args = *Raw.VarArgs;
@@ -194,7 +194,7 @@ bool BytecodeParser::ParseInstruction(const uchar *&Buf, const uchar *EndBuf,
 
   case Instruction::Call: {
     Method *M = (Method*)getValue(Raw.Ty, Raw.Arg1);
-    if (M == 0) return true;
+    if (M == 0) return failure(true);
 
     vector<Value *> Params;
     const MethodType::ParamTypes &PL = M->getMethodType()->getParamTypes();
@@ -204,37 +204,36 @@ bool BytecodeParser::ParseInstruction(const uchar *&Buf, const uchar *EndBuf,
 
       switch (Raw.NumOperands) {
       case 0: cerr << "Invalid call instruction encountered!\n";
-	return true;
+	return failure(true);
       case 1: break;
       case 2: Params.push_back(getValue(*It++, Raw.Arg2)); break;
       case 3: Params.push_back(getValue(*It++, Raw.Arg2)); 
-	if (It == PL.end()) return true;
+	if (It == PL.end()) return failure(true);
 	Params.push_back(getValue(*It++, Raw.Arg3)); break;
       default:
 	Params.push_back(getValue(*It++, Raw.Arg2));
 	{
 	  vector<unsigned> &args = *Raw.VarArgs;
 	  for (unsigned i = 0; i < args.size(); i++) {
-	    if (It == PL.end()) return true;
+	    if (It == PL.end()) return failure(true);
 	    // TODO: Check getValue for null!
 	    Params.push_back(getValue(*It++, args[i]));
 	  }
 	}
 	delete Raw.VarArgs;
       }
-      if (It != PL.end()) return true;
+      if (It != PL.end()) return failure(true);
     } else {
       // The first parameter does not have a type specifier... because there
       // must be at least one concrete argument to a vararg type...
       Params.push_back(getValue(PL.front(), Raw.Arg2));
 
       vector<unsigned> &args = *Raw.VarArgs;
-      if ((args.size() & 1) != 0) return true;  // Must be pairs of type/value
+      if ((args.size() & 1) != 0)
+	return failure(true);  // Must be pairs of type/value
       for (unsigned i = 0; i < args.size(); i+=2) {
-	Value *Ty = getValue(Type::TypeTy, args[i]);
-	if (!Ty) return true;
 	// TODO: Check getValue for null!
-	Params.push_back(getValue(Ty->castTypeAsserting(), args[i+1]));
+	Params.push_back(getValue(getType(args[i]), args[i+1]));
       }
       delete Raw.VarArgs;
     }
@@ -243,20 +242,20 @@ bool BytecodeParser::ParseInstruction(const uchar *&Buf, const uchar *EndBuf,
     return false;
   }
   case Instruction::Malloc:
-    if (Raw.NumOperands > 2) return true;
+    if (Raw.NumOperands > 2) return failure(true);
     V = Raw.NumOperands ? getValue(Type::UIntTy, Raw.Arg1) : 0;
     Res = new MallocInst(Raw.Ty, V);
     return false;
 
   case Instruction::Alloca:
-    if (Raw.NumOperands > 2) return true;
+    if (Raw.NumOperands > 2) return failure(true);
     V = Raw.NumOperands ? getValue(Type::UIntTy, Raw.Arg1) : 0;
     Res = new AllocaInst(Raw.Ty, V);
     return false;
 
   case Instruction::Free:
     V = getValue(Raw.Ty, Raw.Arg1);
-    if (!V->getType()->isPointerType()) return true;
+    if (!V->getType()->isPointerType()) return failure(true);
     Res = new FreeInst(V);
     return false;
 
@@ -264,27 +263,27 @@ bool BytecodeParser::ParseInstruction(const uchar *&Buf, const uchar *EndBuf,
   case Instruction::GetElementPtr: {
     vector<ConstPoolVal*> Idx;
     switch (Raw.NumOperands) {
-    case 0: cerr << "Invalid load encountered!\n"; return true;
+    case 0: cerr << "Invalid load encountered!\n"; return failure(true);
     case 1: break;
     case 2: V = getValue(Type::UByteTy, Raw.Arg2);
-            if (!V->isConstant()) return true;
+            if (!V->isConstant()) return failure(true);
             Idx.push_back(V->castConstant());
             break;
     case 3: V = getValue(Type::UByteTy, Raw.Arg2);
-            if (!V->isConstant()) return true;
+            if (!V->isConstant()) return failure(true);
             Idx.push_back(V->castConstant());
 	    V = getValue(Type::UByteTy, Raw.Arg3);
-            if (!V->isConstant()) return true;
+            if (!V->isConstant()) return failure(true);
             Idx.push_back(V->castConstant());
             break;
     default:
       V = getValue(Type::UByteTy, Raw.Arg2);
-      if (!V->isConstant()) return true;
+      if (!V->isConstant()) return failure(true);
       Idx.push_back(V->castConstant());
       vector<unsigned> &args = *Raw.VarArgs;
       for (unsigned i = 0, E = args.size(); i != E; ++i) {
 	V = getValue(Type::UByteTy, args[i]);
-	if (!V->isConstant()) return true;
+	if (!V->isConstant()) return failure(true);
 	Idx.push_back(V->castConstant());
       }
       delete Raw.VarArgs; 
@@ -302,17 +301,17 @@ bool BytecodeParser::ParseInstruction(const uchar *&Buf, const uchar *EndBuf,
     vector<ConstPoolVal*> Idx;
     switch (Raw.NumOperands) {
     case 0: 
-    case 1: cerr << "Invalid store encountered!\n"; return true;
+    case 1: cerr << "Invalid store encountered!\n"; return failure(true);
     case 2: break;
     case 3: V = getValue(Type::UByteTy, Raw.Arg3);
-            if (!V->isConstant()) return true;
+            if (!V->isConstant()) return failure(true);
             Idx.push_back(V->castConstant());
             break;
     default:
       vector<unsigned> &args = *Raw.VarArgs;
       for (unsigned i = 0, E = args.size(); i != E; ++i) {
 	V = getValue(Type::UByteTy, args[i]);
-	if (!V->isConstant()) return true;
+	if (!V->isConstant()) return failure(true);
 	Idx.push_back(V->castConstant());
       }
       delete Raw.VarArgs; 
@@ -320,7 +319,7 @@ bool BytecodeParser::ParseInstruction(const uchar *&Buf, const uchar *EndBuf,
     }
 
     const Type *ElType = StoreInst::getIndexedType(Raw.Ty, Idx);
-    if (ElType == 0) return true;
+    if (ElType == 0) return failure(true);
     Res = new StoreInst(getValue(ElType, Raw.Arg1), getValue(Raw.Ty, Raw.Arg2),
 			Idx);
     return false;
@@ -329,5 +328,5 @@ bool BytecodeParser::ParseInstruction(const uchar *&Buf, const uchar *EndBuf,
 
   cerr << "Unrecognized instruction! " << Raw.Opcode 
        << " ADDR = 0x" << (void*)Buf << endl;
-  return true;
+  return failure(true);
 }
