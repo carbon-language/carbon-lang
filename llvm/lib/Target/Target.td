@@ -49,6 +49,17 @@ def isVoid : ValueType<0  , 11>;   // Produces no value
 class Register {
   string Namespace = "";
   string Name = "";
+
+  // SpillSize - If this value is set to a non-zero value, it is the size in
+  // bits of the spill slot required to hold this register.  If this value is
+  // set to zero, the information is inferred from any register classes the
+  // register belongs to.
+  int SpillSize = 0;
+
+  // SpillAlignment - This value is used to specify the alignment required for
+  // spilling the register.  Like SpillSize, this should only be explicitly
+  // specified if the register is not in a register class.
+  int SpillAlignment = 0;
 }
 
 // NamedReg - If the name for the 'def' of the register should not become the
