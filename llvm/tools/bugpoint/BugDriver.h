@@ -129,6 +129,16 @@ public:
     return OldProgram;
   }
 
+  AbstractInterpreter *switchToCBE() {
+    AbstractInterpreter *Old = Interpreter;
+    Interpreter = (AbstractInterpreter*)cbe;
+    return Old;
+  }
+
+  void switchToInterpreter(AbstractInterpreter *AI) {
+    Interpreter = AI;
+  }
+ 
   /// setNewProgram - If we reduce or update the program somehow, call this
   /// method to update bugdriver with it.  This deletes the old module and sets
   /// the specified one as the current program.

@@ -7,18 +7,29 @@
 // 
 //===----------------------------------------------------------------------===//
 //
-// This file implements program miscompilation debugging support.
+// This file implements optimizer and code generation miscompilation debugging
+// support.
 //
 //===----------------------------------------------------------------------===//
 
 #include "BugDriver.h"
 #include "ListReducer.h"
+#include "llvm/Constants.h"
+#include "llvm/DerivedTypes.h"
+#include "llvm/Instructions.h"
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
+#include "llvm/Analysis/Verifier.h"
+#include "llvm/Support/Mangler.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Transforms/Utils/Linker.h"
+#include "Support/CommandLine.h"
 #include "Support/FileUtilities.h"
 using namespace llvm;
+
+namespace llvm {
+  extern cl::list<std::string> InputArgv;
+}
 
 namespace {
   class ReduceMiscompilingPasses : public ListReducer<const PassInfo*> {
@@ -218,7 +229,10 @@ static bool ExtractLoops(BugDriver &BD,
     // we're going to test the newly loop extracted program to make sure nothing
     // has broken.  If something broke, then we'll inform the user and stop
     // extraction.
+    AbstractInterpreter *AI = BD.switchToCBE();
     if (TestMergedProgram(BD, ToOptimizeLoopExtracted, ToNotOptimize, false)) {
+      BD.switchToInterpreter(AI);
+
       // Merged program doesn't work anymore!
       std::cerr << "  *** ERROR: Loop extraction broke the program. :("
                 << " Please report a bug!\n";
@@ -227,6 +241,7 @@ static bool ExtractLoops(BugDriver &BD,
       delete ToOptimizeLoopExtracted;
       return MadeChange;
     }
+    BD.switchToInterpreter(AI);
     
     std::cout << "  Testing after loop extraction:\n";
     // Clone modules, the tester function will free them.
@@ -319,6 +334,9 @@ DebugAMiscompilation(BugDriver &BD,
   return MiscompiledFunctions;
 }
 
+/// TestOptimizer - This is the predicate function used to check to see if the
+/// "Test" portion of the program is misoptimized.  If so, return true.  In any
+/// case, both module arguments are deleted.
 static bool TestOptimizer(BugDriver &BD, Module *Test, Module *Safe) {
   // Run the optimization passes on ToOptimize, producing a transformed version
   // of the functions being tested.
@@ -374,3 +392,239 @@ bool BugDriver::debugMiscompilation() {
   return false;
 }
 
+/// CleanupAndPrepareModules - Get the specified modules ready for code
+/// generator testing.
+static void CleanupAndPrepareModules(BugDriver &BD, Module *&Test,
+                                     Module *Safe) {
+  // Clean up the modules, removing extra cruft that we don't need anymore...
+  Test = BD.performFinalCleanups(Test);
+
+  // If we are executing the JIT, we have several nasty issues to take care of.
+  if (!BD.isExecutingJIT()) return;
+
+  // First, if the main function is in the Safe module, we must add a stub to
+  // the Test module to call into it.  Thus, we create a new function `main'
+  // which just calls the old one.
+  if (Function *oldMain = Safe->getNamedFunction("main"))
+    if (!oldMain->isExternal()) {
+      // Rename it
+      oldMain->setName("llvm_bugpoint_old_main");
+      // Create a NEW `main' function with same type in the test module.
+      Function *newMain = new Function(oldMain->getFunctionType(), 
+                                       GlobalValue::ExternalLinkage,
+                                       "main", Test);
+      // Create an `oldmain' prototype in the test module, which will
+      // corresponds to the real main function in the same module.
+      Function *oldMainProto = new Function(oldMain->getFunctionType(), 
+                                            GlobalValue::ExternalLinkage,
+                                            oldMain->getName(), Test);
+      // Set up and remember the argument list for the main function.
+      std::vector<Value*> args;
+      for (Function::aiterator I = newMain->abegin(), E = newMain->aend(),
+             OI = oldMain->abegin(); I != E; ++I, ++OI) {
+        I->setName(OI->getName());    // Copy argument names from oldMain
+        args.push_back(I);
+      }
+
+      // Call the old main function and return its result
+      BasicBlock *BB = new BasicBlock("entry", newMain);
+      CallInst *call = new CallInst(oldMainProto, args);
+      BB->getInstList().push_back(call);
+    
+      // If the type of old function wasn't void, return value of call
+      new ReturnInst(oldMain->getReturnType() != Type::VoidTy ? call : 0, BB);
+    }
+
+  // The second nasty issue we must deal with in the JIT is that the Safe
+  // module cannot directly reference any functions defined in the test
+  // module.  Instead, we use a JIT API call to dynamically resolve the
+  // symbol.
+    
+  // Add the resolver to the Safe module.
+  // Prototype: void *getPointerToNamedFunction(const char* Name)
+  Function *resolverFunc = 
+    Safe->getOrInsertFunction("getPointerToNamedFunction",
+                              PointerType::get(Type::SByteTy),
+                              PointerType::get(Type::SByteTy), 0);
+    
+  // Use the function we just added to get addresses of functions we need.
+  for (Module::iterator F = Safe->begin(), E = Safe->end(); F != E; ++F){
+    if (F->isExternal() && !F->use_empty() && &*F != resolverFunc &&
+        F->getIntrinsicID() == 0 /* ignore intrinsics */) {
+      Function *TestFn =Test->getFunction(F->getName(), F->getFunctionType());
+
+      // Don't forward functions which are external in the test module too.
+      if (TestFn && !TestFn->isExternal()) {
+        // 1. Add a string constant with its name to the global file
+        Constant *InitArray = ConstantArray::get(F->getName());
+        GlobalVariable *funcName =
+          new GlobalVariable(InitArray->getType(), true /*isConstant*/,
+                             GlobalValue::InternalLinkage, InitArray,    
+                             F->getName() + "_name", Safe);
+
+        // 2. Use `GetElementPtr *funcName, 0, 0' to convert the string to an
+        // sbyte* so it matches the signature of the resolver function.
+
+        // GetElementPtr *funcName, ulong 0, ulong 0
+        std::vector<Constant*> GEPargs(2,Constant::getNullValue(Type::IntTy));
+        Value *GEP =
+          ConstantExpr::getGetElementPtr(ConstantPointerRef::get(funcName),
+                                         GEPargs);
+        std::vector<Value*> ResolverArgs;
+        ResolverArgs.push_back(GEP);
+
+        // 3. Replace all uses of `func' with calls to resolver by:
+        // (a) Iterating through the list of uses of this function
+        // (b) Insert a cast instruction in front of each use
+        // (c) Replace use of old call with new call
+
+        // Insert code at the beginning of the function
+        while (!F->use_empty())
+          if (Instruction *Inst = dyn_cast<Instruction>(F->use_back())) {
+            // call resolver(GetElementPtr...)
+            CallInst *resolve = new CallInst(resolverFunc, ResolverArgs, 
+                                             "resolver", Inst);
+            // cast the result from the resolver to correctly-typed function
+            CastInst *castResolver =
+              new CastInst(resolve, PointerType::get(F->getFunctionType()),
+                           "resolverCast", Inst);
+            // actually use the resolved function
+            Inst->replaceUsesOfWith(F, castResolver);
+          } else {
+            // FIXME: need to take care of cases where a function is used by
+            // something other than an instruction; e.g., global variable
+            // initializers and constant expressions.
+            std::cerr << "UNSUPPORTED: Non-instruction is using an external "
+                      << "function, " << F->getName() << "().\n";
+            abort();
+          }
+      }
+    }
+  }
+
+  if (verifyModule(*Test) || verifyModule(*Safe)) {
+    std::cerr << "Bugpoint has a bug, which corrupted a module!!\n";
+    abort();
+  }
+}
+
+
+
+/// TestCodeGenerator - This is the predicate function used to check to see if
+/// the "Test" portion of the program is miscompiled by the code generator under
+/// test.  If so, return true.  In any case, both module arguments are deleted.
+static bool TestCodeGenerator(BugDriver &BD, Module *Test, Module *Safe) {
+  CleanupAndPrepareModules(BD, Test, Safe);
+
+  std::string TestModuleBC = getUniqueFilename("bugpoint.test.bc");
+  if (BD.writeProgramToFile(TestModuleBC, Test)) {
+    std::cerr << "Error writing bytecode to `" << TestModuleBC << "'\nExiting.";
+    exit(1);
+  }
+  delete Test;
+
+  // Make the shared library
+  std::string SafeModuleBC = getUniqueFilename("bugpoint.safe.bc");
+
+  if (BD.writeProgramToFile(SafeModuleBC, Safe)) {
+    std::cerr << "Error writing bytecode to `" << SafeModuleBC << "'\nExiting.";
+    exit(1);
+  }
+  std::string SharedObject = BD.compileSharedObject(SafeModuleBC);
+  delete Safe;
+
+  // Run the code generator on the `Test' code, loading the shared library.
+  // The function returns whether or not the new output differs from reference.
+  int Result = BD.diffProgram(TestModuleBC, SharedObject, false);
+
+  if (Result)
+    std::cerr << ": still failing!\n";
+  else
+    std::cerr << ": didn't fail.\n";
+  removeFile(TestModuleBC);
+  removeFile(SafeModuleBC);
+  removeFile(SharedObject);
+
+  return Result;
+}
+
+
+
+static void DisambiguateGlobalSymbols(Module *M) {
+  // Try not to cause collisions by minimizing chances of renaming an
+  // already-external symbol, so take in external globals and functions as-is.
+  // The code should work correctly without disambiguation (assuming the same
+  // mangler is used by the two code generators), but having symbols with the
+  // same name causes warnings to be emitted by the code generator.
+  Mangler Mang(*M);
+  for (Module::giterator I = M->gbegin(), E = M->gend(); I != E; ++I)
+    I->setName(Mang.getValueName(I));
+  for (Module::iterator  I = M->begin(),  E = M->end();  I != E; ++I)
+    I->setName(Mang.getValueName(I));
+}
+
+
+
+bool BugDriver::debugCodeGenerator() {
+  if ((void*)cbe == (void*)Interpreter) {
+    std::string Result = executeProgramWithCBE("bugpoint.cbe.out");
+    std::cout << "\n*** The C backend cannot match the reference diff, but it "
+              << "is used as the 'known good'\n    code generator, so I can't"
+              << " debug it.  Perhaps you have a front-end problem?\n    As a"
+              << " sanity check, I left the result of executing the program "
+              << "with the C backend\n    in this file for you: '"
+              << Result << "'.\n";
+    return true;
+  }
+
+  DisambiguateGlobalSymbols(Program);
+
+  std::vector<Function*> Funcs = DebugAMiscompilation(*this, TestCodeGenerator);
+
+  // Split the module into the two halves of the program we want.
+  Module *ToNotCodeGen = CloneModule(getProgram());
+  Module *ToCodeGen = SplitFunctionsOutOfModule(ToNotCodeGen, Funcs);
+
+  // Condition the modules
+  CleanupAndPrepareModules(*this, ToCodeGen, ToNotCodeGen);
+
+  std::string TestModuleBC = getUniqueFilename("bugpoint.test.bc");
+  if (writeProgramToFile(TestModuleBC, ToCodeGen)) {
+    std::cerr << "Error writing bytecode to `" << TestModuleBC << "'\nExiting.";
+    exit(1);
+  }
+  delete ToCodeGen;
+
+  // Make the shared library
+  std::string SafeModuleBC = getUniqueFilename("bugpoint.safe.bc");
+  if (writeProgramToFile(SafeModuleBC, ToNotCodeGen)) {
+    std::cerr << "Error writing bytecode to `" << SafeModuleBC << "'\nExiting.";
+    exit(1);
+  }
+  std::string SharedObject = compileSharedObject(SafeModuleBC);
+  delete ToNotCodeGen;
+
+  std::cout << "You can reproduce the problem with the command line: \n";
+  if (isExecutingJIT()) {
+    std::cout << "  lli -load " << SharedObject << " " << TestModuleBC;
+  } else {
+    std::cout << "  llc " << TestModuleBC << " -o " << TestModuleBC << ".s\n";
+    std::cout << "  gcc " << SharedObject << " " << TestModuleBC
+              << ".s -o " << TestModuleBC << ".exe -Wl,-R.\n";
+    std::cout << "  " << TestModuleBC << ".exe";
+  }
+  for (unsigned i=0, e = InputArgv.size(); i != e; ++i)
+    std::cout << " " << InputArgv[i];
+  std::cout << "\n";
+  std::cout << "The shared object was created with:\n  llc -march=c "
+            << SafeModuleBC << " -o temporary.c\n"
+            << "  gcc -xc temporary.c -O2 -o " << SharedObject
+#if defined(sparc) || defined(__sparc__) || defined(__sparcv9)
+            << " -G"            // Compile a shared library, `-G' for Sparc
+#else
+            << " -shared"       // `-shared' for Linux/X86, maybe others
+#endif
+            << " -fno-strict-aliasing\n";
+
+  return false;
+}
