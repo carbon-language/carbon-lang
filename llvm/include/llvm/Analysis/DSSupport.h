@@ -72,10 +72,10 @@ public:
   inline void swap(DSNodeHandle &H);
 
   // Allow explicit conversion to DSNode...
-  DSNode *getNode() const { return N; }
+  inline DSNode *getNode() const;  // Defined inline in DSNode.h
   unsigned getOffset() const { return Offset; }
 
-  inline void setNode(DSNode *N);  // Defined inline later...
+  inline void setNode(DSNode *N);  // Defined inline in DSNode.h
   void setOffset(unsigned O) { Offset = O; }
 
   void addEdgeTo(unsigned LinkNo, const DSNodeHandle &N);

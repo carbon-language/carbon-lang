@@ -78,7 +78,7 @@ public:
 
   ~DSNode() {
     dropAllReferences();
-    assert(Referrers.empty() && "Referrers to dead node exist!");
+    assert(hasNoReferrers() && "Referrers to dead node exist!");
   }
 
   // Iterator for graph interface... Defined in DSGraphTraits.h
@@ -241,6 +241,10 @@ private:
 //===----------------------------------------------------------------------===//
 // Define inline DSNodeHandle functions that depend on the definition of DSNode
 //
+inline DSNode *DSNodeHandle::getNode() const {
+  return N;
+}
+
 inline void DSNodeHandle::setNode(DSNode *n) {
   if (N) N->removeReferrer(this);
   N = n;
