@@ -59,6 +59,12 @@ public:
     Extend,     // Oversized shift pulls in zeros or sign bits.
   };
 
+  enum SetCCResultValue {
+    UndefinedSetCCResult,          // SetCC returns a garbage/unknown extend.
+    ZeroOrOneSetCCResult,          // SetCC returns a zero extended result.
+    ZeroOrNegativeOneSetCCResult,  // SetCC returns a sign extended result.
+  };
+
   TargetLowering(TargetMachine &TM);
   virtual ~TargetLowering();
 
@@ -68,8 +74,16 @@ public:
   bool isLittleEndian() const { return IsLittleEndian; }
   MVT::ValueType getPointerTy() const { return PointerTy; }
   MVT::ValueType getShiftAmountTy() const { return ShiftAmountTy; }
-  MVT::ValueType getSetCCResultTy() const { return SetCCResultTy; }
   OutOfRangeShiftAmount getShiftAmountFlavor() const {return ShiftAmtHandling; }
+
+  /// getSetCCResultTy - Return the ValueType of the result of setcc operations.
+  ///
+  MVT::ValueType getSetCCResultTy() const { return SetCCResultTy; }
+
+  /// getSetCCResultContents - For targets without boolean registers, this flag
+  /// returns information about the contents of the high-bits in the setcc
+  /// result register.
+  SetCCResultValue getSetCCResultContents() const { return SetCCResultContents;}
 
   /// getRegClassFor - Return the register class that should be used for the
   /// specified value type.  This may only be called on legal types.
@@ -183,6 +197,10 @@ protected:
   /// of a setcc operation.  This defaults to the pointer type.
   void setSetCCResultType(MVT::ValueType VT) { SetCCResultTy = VT; }
 
+  /// setSetCCResultContents - Specify how the target extends the result of a
+  /// setcc operation in a register.
+  void setSetCCResultContents(SetCCResultValue Ty) { SetCCResultContents = Ty; }
+
   /// setShiftAmountFlavor - Describe how the target handles out of range shift
   /// amounts.
   void setShiftAmountFlavor(OutOfRangeShiftAmount OORSA) {
@@ -295,6 +313,10 @@ private:
   /// SetCCResultTy - The type that SetCC operations use.  This defaults to the
   /// PointerTy.
   MVT::ValueType SetCCResultTy;
+
+  /// SetCCResultContents - Information about the contents of the high-bits in
+  /// the result of a setcc comparison operation.
+  SetCCResultValue SetCCResultContents;
 
   /// RegClassForVT - This indicates the default register class to use for
   /// each ValueType the target supports natively.
