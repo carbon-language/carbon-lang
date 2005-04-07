@@ -241,7 +241,7 @@ void SelectionDAG::DeleteNodeIfDead(SDNode *N, void *NodeSet) {
   case ISD::SEXTLOAD:
   case ISD::ZEXTLOAD: {
     EVTStruct NN;
-    NN.Opcode = ISD::TRUNCSTORE;
+    NN.Opcode = N->getOpcode();
     NN.VT = N->getValueType(0);
     NN.EVT = cast<MVTSDNode>(N)->getExtraValueType();
     for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i)
