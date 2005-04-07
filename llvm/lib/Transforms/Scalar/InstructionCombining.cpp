@@ -792,7 +792,15 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
         return NV;
   }
 
-  if (BinaryOperator *Op1I = dyn_cast<BinaryOperator>(Op1))
+  if (BinaryOperator *Op1I = dyn_cast<BinaryOperator>(Op1)) {
+    if (Op1I->getOpcode() == Instruction::Add &&
+        !Op0->getType()->isFloatingPoint()) {
+      if (Op1I->getOperand(0) == Op0)             // X-(X+Y) == -Y
+        return BinaryOperator::createNeg(Op1I->getOperand(1), I.getName());
+      else if (Op1I->getOperand(1) == Op0)        // X-(Y+X) == -Y
+        return BinaryOperator::createNeg(Op1I->getOperand(0), I.getName());
+    }
+
     if (Op1I->hasOneUse()) {
       // Replace (x - (y - z)) with (x + (z - y)) if the (y - z) subexpression
       // is not used by anyone else...
@@ -822,7 +830,7 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
       // -(X sdiv C)  -> (X sdiv -C)
       if (Op1I->getOpcode() == Instruction::Div)
         if (ConstantSInt *CSI = dyn_cast<ConstantSInt>(Op0))
-          if (CSI->getValue() == 0)
+          if (CSI->isNullValue())
             if (Constant *DivRHS = dyn_cast<Constant>(Op1I->getOperand(1)))
               return BinaryOperator::createDiv(Op1I->getOperand(0), 
                                                ConstantExpr::getNeg(DivRHS));
@@ -835,6 +843,7 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
         return BinaryOperator::createMul(Op0, CP1);
       }
     }
+  }
 
   if (BinaryOperator *Op0I = dyn_cast<BinaryOperator>(Op0))
     if (Op0I->getOpcode() == Instruction::Add) 
