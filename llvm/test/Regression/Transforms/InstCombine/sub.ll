@@ -119,3 +119,8 @@ long %test18(long %Y) {
         ret long %tmp.8
 }
 
+int %test19(int %X, int %Y) {
+	%Z = sub int %X, %Y
+	%Q = add int %Z, %Y
+	ret int %Q
+}
