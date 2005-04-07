@@ -16,6 +16,12 @@
 include "IA64InstrFormats.td"
 
 def u6imm : Operand<i8>;
+def s8imm : Operand<i8> {
+  let PrintMethod = "printS8ImmOperand";
+}
+def s14imm  : Operand<i16> {
+  let PrintMethod = "printS14ImmOperand";
+}
 def s16imm  : Operand<i16>;
 def s21imm  : Operand<i32> {
   let PrintMethod = "printS21ImmOperand";
@@ -107,8 +113,12 @@ def SHLI : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src1, s21imm:$imm),
   "shl $dst = $src1, $imm;;">; // FIXME: 6 immediate bits, not 21
 def SHRU : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src1, GR:$src2),
   "shr.u $dst = $src1, $src2;;">;
+def SHRUI : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src1, s21imm:$imm),
+  "shr.u $dst = $src1, $imm;;">;
 def SHRS : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src1, GR:$src2),
   "shr $dst = $src1, $src2;;">;
+def SHRSI : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src1, s21imm:$imm),
+  "shr $dst = $src1, $imm;;">;
 
 def DEPZ : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src1, u6imm:$imm1, u6imm:$imm2),	  "dep.z $dst = $src1, $imm1, $imm2;;">;
 
@@ -177,6 +187,8 @@ def BCMPEQ : AForm<0x03, 0x0b, (ops PR:$dst1, PR:$dst2, GR:$src1, GR:$src2),
 
 def ADD : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src1, GR:$src2),
   "add $dst = $src1, $src2;;">;
+def ADDIMM14 : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src1, s14imm:$imm),
+  "adds $dst = $imm, $src1;;">;
 
 def ADDIMM22 : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src1, s21imm:$imm),
   "add $dst = $imm, $src1;;">;
@@ -194,6 +206,8 @@ def TPCMPIMM8NE : AForm<0x03, 0x0b,
 
 def SUB : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src1, GR:$src2),
   "sub $dst = $src1, $src2;;">;
+def SUBIMM8 : AForm<0x03, 0x0b, (ops GR:$dst, s8imm:$imm, GR:$src2),
+  "sub $dst = $imm, $src2;;">;
 
 def ST1 : AForm<0x03, 0x0b, (ops GR:$dstPtr, GR:$value),
   "st1 [$dstPtr] = $value;;">;
