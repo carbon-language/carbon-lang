@@ -1755,7 +1755,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
           BuildMI(BB, Alpha::S4ADDQ, 2, Result).addReg(Tmp2).addReg(Tmp1);
         }
       }
-      else if(N.getOperand(0).getOpcode() == ISD::SHL && isAdd &&
+      else if(N.getOperand(1).getOpcode() == ISD::SHL && isAdd &&
          N.getOperand(1).getOperand(1).getOpcode() == ISD::Constant &&
          cast<ConstantSDNode>(N.getOperand(1).getOperand(1))->getValue() == 3)
       {
