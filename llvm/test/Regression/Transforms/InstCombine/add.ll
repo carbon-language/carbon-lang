@@ -191,3 +191,8 @@ int %test27(bool %C, int %X, int %Y) {
         ret int %D
 }
 
+int %test28(int %X) {
+	%Y = add int %X, 1234
+	%Z = sub int 42, %Y
+	ret int %Z
+}
