@@ -1090,7 +1090,7 @@ unsigned ISel::SelectExprFP(SDOperand N, unsigned Result)
 
 unsigned ISel::SelectExpr(SDOperand N) {
   unsigned Result;
-  unsigned Tmp1, Tmp2, Tmp3;
+  unsigned Tmp1, Tmp2 = 0, Tmp3;
   unsigned Opc = 0;
   unsigned opcode = N.getOpcode();
 
@@ -1448,7 +1448,6 @@ unsigned ISel::SelectExpr(SDOperand N) {
                 Tmp2 = SelectExpr(N.getOperand(0).getOperand(1));
 
               Tmp1 = SelectExpr(N.getOperand(0).getOperand(0));
-              Tmp2 = SelectExpr(N.getOperand(0).getOperand(1));
               BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(Tmp2);
             }
             return Result;
@@ -1810,7 +1809,6 @@ unsigned ISel::SelectExpr(SDOperand N) {
       {
         unsigned k = ExactLog2(abs(CSD->getSignExtended()));
         Tmp1 = SelectExpr(N.getOperand(0));
-        Tmp2 = MakeReg(MVT::i64);
         if (k == 1)
           Tmp2 = Tmp1;
         else
