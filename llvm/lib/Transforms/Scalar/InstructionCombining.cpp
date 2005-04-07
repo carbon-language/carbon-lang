@@ -629,6 +629,17 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
   // X + X --> X << 1
   if (I.getType()->isInteger()) {
     if (Instruction *Result = AssociativeOpt(I, AddRHS(RHS))) return Result;
+
+    if (Instruction *RHSI = dyn_cast<Instruction>(RHS)) {
+      if (RHSI->getOpcode() == Instruction::Sub)
+        if (LHS == RHSI->getOperand(1))                   // A + (B - A) --> B
+          return ReplaceInstUsesWith(I, RHSI->getOperand(0));
+    }
+    if (Instruction *LHSI = dyn_cast<Instruction>(LHS)) {
+      if (LHSI->getOpcode() == Instruction::Sub)
+        if (RHS == LHSI->getOperand(1))                   // (B - A) + A --> B
+          return ReplaceInstUsesWith(I, LHSI->getOperand(0));
+    }
   }
 
   // -A + B  -->  B - A
@@ -640,6 +651,7 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
     if (Value *V = dyn_castNegVal(RHS))
       return BinaryOperator::createSub(LHS, V);
 
+  
   ConstantInt *C2;
   if (Value *X = dyn_castFoldableMul(LHS, C2)) {
     if (X == RHS)   // X*C + X --> X * (C+1)
@@ -851,13 +863,16 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
     }
   }
 
-  if (BinaryOperator *Op0I = dyn_cast<BinaryOperator>(Op0))
-    if (Op0I->getOpcode() == Instruction::Add) 
-      if (!Op0->getType()->isFloatingPoint()) {
+  if (!Op0->getType()->isFloatingPoint())
+    if (BinaryOperator *Op0I = dyn_cast<BinaryOperator>(Op0))
+      if (Op0I->getOpcode() == Instruction::Add) {
         if (Op0I->getOperand(0) == Op1)             // (Y+X)-Y == X
           return ReplaceInstUsesWith(I, Op0I->getOperand(1));
         else if (Op0I->getOperand(1) == Op1)        // (X+Y)-Y == X
           return ReplaceInstUsesWith(I, Op0I->getOperand(0));
+      } else if (Op0I->getOpcode() == Instruction::Sub) {
+        if (Op0I->getOperand(0) == Op1)             // (X-Y)-X == -Y
+          return BinaryOperator::createNeg(Op0I->getOperand(1), I.getName());
       }
   
   ConstantInt *C1;
