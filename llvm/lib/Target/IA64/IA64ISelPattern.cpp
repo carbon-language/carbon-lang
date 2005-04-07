@@ -454,6 +454,30 @@ static unsigned ponderIntegerDivisionBy(SDOperand N, bool isSigned,
   return 0; // fallthrough
 }
 
+static unsigned ponderIntegerAdditionWith(SDOperand N, unsigned& Imm) {
+  if (N.getOpcode() != ISD::Constant) return 0; // if not adding a
+                                                // constant, give up.
+  int64_t v = (int64_t)cast<ConstantSDNode>(N)->getSignExtended();
+
+  if (v <= 8191 && v >= -8192) { // if this constants fits in 14 bits, say so
+    Imm = v & 0x3FFF; // 14 bits
+    return 1;
+  } 
+  return 0; // fallthrough
+}
+
+static unsigned ponderIntegerSubtractionFrom(SDOperand N, unsigned& Imm) {
+  if (N.getOpcode() != ISD::Constant) return 0; // if not subtracting a
+                                                // constant, give up.
+  int64_t v = (int64_t)cast<ConstantSDNode>(N)->getSignExtended();
+
+  if (v <= 127 && v >= -128) { // if this constants fits in 8 bits, say so
+    Imm = v & 0xFF; // 8 bits
+    return 1;
+  } 
+  return 0; // fallthrough
+}
+
 unsigned ISel::SelectExpr(SDOperand N) {
   unsigned Result;
   unsigned Tmp1, Tmp2, Tmp3;
@@ -799,10 +823,16 @@ assert(0 && "hmm, ISD::SIGN_EXTEND: shouldn't ever be reached. bad luck!\n");
     }
     Tmp1 = SelectExpr(N.getOperand(0));
     Tmp2 = SelectExpr(N.getOperand(1));
-    if(DestType != MVT::f64)
-      BuildMI(BB, IA64::ADD, 2, Result).addReg(Tmp1).addReg(Tmp2); // int
-    else
-      BuildMI(BB, IA64::FADD, 2, Result).addReg(Tmp1).addReg(Tmp2); // FP
+    if(DestType != MVT::f64) { // integer addition:
+        switch (ponderIntegerAdditionWith(N.getOperand(1), Tmp3)) {
+	  case 1: // adding a constant that's 14 bits
+	    BuildMI(BB, IA64::ADDIMM14, 2, Result).addReg(Tmp1).addSImm(Tmp3);
+	    return Result; // early exit
+	} // fallthrough and emit a reg+reg ADD:
+	BuildMI(BB, IA64::ADD, 2, Result).addReg(Tmp1).addReg(Tmp2);
+    } else { // this is a floating point addition
+      BuildMI(BB, IA64::FADD, 2, Result).addReg(Tmp1).addReg(Tmp2);
+    }
     return Result;
   }
 
@@ -839,10 +869,16 @@ assert(0 && "hmm, ISD::SIGN_EXTEND: shouldn't ever be reached. bad luck!\n");
     }
     Tmp1 = SelectExpr(N.getOperand(0));
     Tmp2 = SelectExpr(N.getOperand(1));
-    if(DestType != MVT::f64)
-      BuildMI(BB, IA64::SUB, 2, Result).addReg(Tmp1).addReg(Tmp2);
-    else
+    if(DestType != MVT::f64) { // integer subtraction:
+        switch (ponderIntegerSubtractionFrom(N.getOperand(0), Tmp3)) {
+	  case 1: // subtracting *from* an 8 bit constant:
+	    BuildMI(BB, IA64::SUBIMM8, 2, Result).addSImm(Tmp3).addReg(Tmp2);
+	    return Result; // early exit
+	} // fallthrough and emit a reg+reg SUB:
+	BuildMI(BB, IA64::SUB, 2, Result).addReg(Tmp1).addReg(Tmp2);
+    } else { // this is a floating point subtraction
       BuildMI(BB, IA64::FSUB, 2, Result).addReg(Tmp1).addReg(Tmp2);
+    }
     return Result;
   }
 
@@ -1025,20 +1061,37 @@ pC = pA OR pB
 
   case ISD::SHL: {
     Tmp1 = SelectExpr(N.getOperand(0));
-    Tmp2 = SelectExpr(N.getOperand(1));
-    BuildMI(BB, IA64::SHL, 2, Result).addReg(Tmp1).addReg(Tmp2);
+    if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
+      Tmp2 = CN->getValue();
+      BuildMI(BB, IA64::SHLI, 2, Result).addReg(Tmp1).addImm(Tmp2);
+    } else {
+      Tmp2 = SelectExpr(N.getOperand(1));
+      BuildMI(BB, IA64::SHL, 2, Result).addReg(Tmp1).addReg(Tmp2);
+    }
     return Result;
   }
+		 
   case ISD::SRL: {
     Tmp1 = SelectExpr(N.getOperand(0));
-    Tmp2 = SelectExpr(N.getOperand(1));
-    BuildMI(BB, IA64::SHRU, 2, Result).addReg(Tmp1).addReg(Tmp2);
+    if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
+      Tmp2 = CN->getValue();
+      BuildMI(BB, IA64::SHRUI, 2, Result).addReg(Tmp1).addImm(Tmp2);
+    } else {
+      Tmp2 = SelectExpr(N.getOperand(1));
+      BuildMI(BB, IA64::SHRU, 2, Result).addReg(Tmp1).addReg(Tmp2);
+    }
     return Result;
   }
+		 
   case ISD::SRA: {
     Tmp1 = SelectExpr(N.getOperand(0));
-    Tmp2 = SelectExpr(N.getOperand(1));
-    BuildMI(BB, IA64::SHRS, 2, Result).addReg(Tmp1).addReg(Tmp2);
+    if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
+      Tmp2 = CN->getValue();
+      BuildMI(BB, IA64::SHRSI, 2, Result).addReg(Tmp1).addImm(Tmp2);
+    } else {
+      Tmp2 = SelectExpr(N.getOperand(1));
+      BuildMI(BB, IA64::SHRS, 2, Result).addReg(Tmp1).addReg(Tmp2);
+    }
     return Result;
   }
 
