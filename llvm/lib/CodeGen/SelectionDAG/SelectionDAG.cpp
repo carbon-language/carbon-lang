@@ -399,7 +399,7 @@ SDOperand SelectionDAG::getSetCC(ISD::CondCode Cond, MVT::ValueType VT,
       case ISD::SETLE:  return getConstant((int64_t)C1 <= (int64_t)C2, VT);
       case ISD::SETGE:  return getConstant((int64_t)C1 >= (int64_t)C2, VT);
       }
-    } else if (1) {
+    } else {
       uint64_t MinVal, MaxVal;
       unsigned OperandBitSize = MVT::getSizeInBits(N2C->getValueType(0));
       if (ISD::isSignedIntSetCC(Cond)) {
