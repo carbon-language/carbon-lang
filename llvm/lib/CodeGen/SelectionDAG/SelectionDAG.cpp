@@ -375,9 +375,10 @@ SDOperand SelectionDAG::getSetCC(ISD::CondCode Cond, MVT::ValueType VT,
   case ISD::SETTRUE2:  return getConstant(1, VT);
   }
 
-  if (ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1.Val))
-    if (ConstantSDNode *N2C = dyn_cast<ConstantSDNode>(N2.Val)) {
-      uint64_t C1 = N1C->getValue(), C2 = N2C->getValue();
+  if (ConstantSDNode *N2C = dyn_cast<ConstantSDNode>(N2.Val)) {
+    uint64_t C2 = N2C->getValue();
+    if (ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1.Val)) {
+      uint64_t C1 = N1C->getValue();
       
       // Sign extend the operands if required
       if (ISD::isSignedIntSetCC(Cond)) {
@@ -398,11 +399,52 @@ SDOperand SelectionDAG::getSetCC(ISD::CondCode Cond, MVT::ValueType VT,
       case ISD::SETLE:  return getConstant((int64_t)C1 <= (int64_t)C2, VT);
       case ISD::SETGE:  return getConstant((int64_t)C1 >= (int64_t)C2, VT);
       }
-    } else {
-      // Ensure that the constant occurs on the RHS.
-      Cond = ISD::getSetCCSwappedOperands(Cond);
-      std::swap(N1, N2);
+    } else if (1) {
+      uint64_t MinVal, MaxVal;
+      unsigned OperandBitSize = MVT::getSizeInBits(N2C->getValueType(0));
+      if (ISD::isSignedIntSetCC(Cond)) {
+        MinVal = 1ULL << (OperandBitSize-1);
+        if (OperandBitSize != 1)   // Avoid X >> 64, which is undefined.
+          MaxVal = ~0ULL >> (65-OperandBitSize);
+        else
+          MaxVal = 0;
+      } else {
+        MinVal = 0;
+        MaxVal = ~0ULL >> (64-OperandBitSize);
+      }
+
+      // Canonicalize GE/LE comparisons to use GT/LT comparisons.
+      if (Cond == ISD::SETGE || Cond == ISD::SETUGE) {
+        if (C2 == MinVal) return getConstant(1, VT);   // X >= MIN --> true
+        --C2;                                          // X >= C1 --> X > (C1-1)
+        Cond = (Cond == ISD::SETGE) ? ISD::SETGT : ISD::SETUGT;
+        N2 = getConstant(C2, N2.getValueType());
+        N2C = cast<ConstantSDNode>(N2.Val);
+      }
+
+      if (Cond == ISD::SETLE || Cond == ISD::SETULE) {
+        if (C2 == MaxVal) return getConstant(1, VT);   // X <= MAX --> true
+        ++C2;                                          // X <= C1 --> X < (C1+1)
+        Cond = (Cond == ISD::SETLE) ? ISD::SETLT : ISD::SETULT;
+        N2 = getConstant(C2, N2.getValueType());
+        N2C = cast<ConstantSDNode>(N2.Val);
+      }
+
+      // If we have "setcc X, C1", check to see if we can shrink the immediate
+      // by changing cc.
+
+      // SETUGT X, SINTMAX  -> SETLT X, 0
+      if (Cond == ISD::SETUGT && OperandBitSize != 1 &&
+          C2 == (~0ULL >> (65-OperandBitSize)))
+        return getSetCC(ISD::SETLT, VT, N1, getConstant(0, N2.getValueType()));
+
+      // FIXME: Implement the rest of these.
+
     }
+  } else if (isa<ConstantSDNode>(N1.Val)) {
+      // Ensure that the constant occurs on the RHS.
+    return getSetCC(ISD::getSetCCSwappedOperands(Cond), VT, N2, N1);
+  }
 
   if (ConstantFPSDNode *N1C = dyn_cast<ConstantFPSDNode>(N1.Val))
     if (ConstantFPSDNode *N2C = dyn_cast<ConstantFPSDNode>(N2.Val)) {
