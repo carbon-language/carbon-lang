@@ -795,10 +795,16 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
   if (BinaryOperator *Op1I = dyn_cast<BinaryOperator>(Op1)) {
     if (Op1I->getOpcode() == Instruction::Add &&
         !Op0->getType()->isFloatingPoint()) {
-      if (Op1I->getOperand(0) == Op0)             // X-(X+Y) == -Y
+      if (Op1I->getOperand(0) == Op0)              // X-(X+Y) == -Y
         return BinaryOperator::createNeg(Op1I->getOperand(1), I.getName());
-      else if (Op1I->getOperand(1) == Op0)        // X-(Y+X) == -Y
+      else if (Op1I->getOperand(1) == Op0)         // X-(Y+X) == -Y
         return BinaryOperator::createNeg(Op1I->getOperand(0), I.getName());
+      else if (ConstantInt *CI1 = dyn_cast<ConstantInt>(I.getOperand(0))) {
+        if (ConstantInt *CI2 = dyn_cast<ConstantInt>(Op1I->getOperand(1)))
+          // C1-(X+C2) --> (C1-C2)-X
+          return BinaryOperator::createSub(ConstantExpr::getSub(CI1, CI2),
+                                           Op1I->getOperand(0));
+      }
     }
 
     if (Op1I->hasOneUse()) {
