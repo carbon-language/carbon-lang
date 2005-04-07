@@ -53,6 +53,7 @@ namespace {
       //I am having problems with shr n ubyte 1
       setShiftAmountType(MVT::i64);
       setSetCCResultType(MVT::i64);
+      setSetCCResultContents(ZeroOrOneSetCCResult);
       
       addRegisterClass(MVT::i64, Alpha::GPRCRegisterClass);
       addRegisterClass(MVT::f64, Alpha::FPRCRegisterClass);
