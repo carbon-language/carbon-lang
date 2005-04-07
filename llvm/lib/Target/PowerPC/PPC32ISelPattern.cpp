@@ -1898,8 +1898,64 @@ unsigned ISel::SelectExpr(SDOperand N) {
  
   case ISD::SETCC:
     if (SetCCSDNode *SetCC = dyn_cast<SetCCSDNode>(Node)) {
+      // We can codegen setcc op, 0 very efficiently compared to a conditional
+      // branch.  Check for that here.
+      if (ConstantSDNode *CN = 
+          dyn_cast<ConstantSDNode>(SetCC->getOperand(1).Val)) {
+        if (CN->getValue() == 0) {
+          Tmp1 = SelectExpr(SetCC->getOperand(0));
+          switch (SetCC->getCondition()) {
+          default: assert(0 && "Unhandled SetCC condition"); abort();
+          case ISD::SETEQ:
+          case ISD::SETULE:
+            Tmp2 = MakeReg(MVT::i32);
+            BuildMI(BB, PPC::CNTLZW, 1, Tmp2).addReg(Tmp1);
+            BuildMI(BB, PPC::RLWINM, 4, Result).addReg(Tmp2).addImm(27)
+              .addImm(5).addImm(31);
+            break;
+          case ISD::SETNE:
+          case ISD::SETUGT:
+            Tmp2 = MakeReg(MVT::i32);
+            BuildMI(BB, PPC::ADDIC, 2, Tmp2).addReg(Tmp1).addSImm(-1);
+            BuildMI(BB, PPC::SUBFE, 2, Result).addReg(Tmp2).addReg(Tmp1);
+            break;
+          case ISD::SETULT:
+            BuildMI(BB, PPC::LI, 1, Result).addSImm(0);
+            break;
+          case ISD::SETLT:
+            BuildMI(BB, PPC::RLWINM, 4, Result).addReg(Tmp1).addImm(1)
+              .addImm(31).addImm(31);
+            break;
+          case ISD::SETLE:
+            Tmp2 = MakeReg(MVT::i32);
+            Tmp3 = MakeReg(MVT::i32);
+            BuildMI(BB, PPC::NEG, 2, Tmp2).addReg(Tmp1);
+            BuildMI(BB, PPC::ORC, 2, Tmp3).addReg(Tmp1).addReg(Tmp2);
+            BuildMI(BB, PPC::RLWINM, 4, Result).addReg(Tmp3).addImm(1)
+              .addImm(31).addImm(31);
+            break;
+          case ISD::SETGT:
+            Tmp2 = MakeReg(MVT::i32);
+            Tmp3 = MakeReg(MVT::i32);
+            BuildMI(BB, PPC::NEG, 2, Tmp2).addReg(Tmp1);
+            BuildMI(BB, PPC::ANDC, 2, Tmp3).addReg(Tmp2).addReg(Tmp1);
+            BuildMI(BB, PPC::RLWINM, 4, Result).addReg(Tmp3).addImm(1)
+              .addImm(31).addImm(31);
+            break;
+          case ISD::SETUGE:
+            BuildMI(BB, PPC::LI, 1, Result).addSImm(1);
+            break;
+          case ISD::SETGE:
+            BuildMI(BB, PPC::RLWINM, 4, Tmp2).addReg(Tmp1).addImm(1)
+              .addImm(31).addImm(31);
+            BuildMI(BB, PPC::XORI, 2, Result).addReg(Tmp2).addImm(1);
+            break;
+          }
+          return Result;
+        }
+      }
+    
       Opc = SelectSetCR0(N);
-      
       unsigned TrueValue = MakeReg(MVT::i32);
       BuildMI(BB, PPC::LI, 1, TrueValue).addSImm(1);
       unsigned FalseValue = MakeReg(MVT::i32);
@@ -1946,6 +2002,25 @@ unsigned ISel::SelectExpr(SDOperand N) {
     return 0;
     
   case ISD::SELECT: {
+    // We can codegen select (a < 0) ? b : 0 very efficiently compared to a 
+    // conditional branch.  Check for that here.
+    if (SetCCSDNode *SetCC = dyn_cast<SetCCSDNode>(N.getOperand(0).Val)) {
+      if (ConstantSDNode *CN = 
+          dyn_cast<ConstantSDNode>(SetCC->getOperand(1).Val)) {
+        if (ConstantSDNode *CNF = 
+            dyn_cast<ConstantSDNode>(N.getOperand(2).Val)) {
+          if (CN->getValue() == 0 && CNF->getValue() == 0 &&
+              SetCC->getCondition() == ISD::SETLT) {
+            Tmp1 = SelectExpr(N.getOperand(1)); // TRUE value
+            Tmp2 = SelectExpr(SetCC->getOperand(0));
+            Tmp3 = MakeReg(MVT::i32);
+            BuildMI(BB, PPC::SRAWI, 2, Tmp3).addReg(Tmp2).addImm(31);
+            BuildMI(BB, PPC::AND, 2, Result).addReg(Tmp1).addReg(Tmp3);
+            return Result;
+          }
+        }
+      }
+    }
     unsigned TrueValue = SelectExpr(N.getOperand(1)); //Use if TRUE
     unsigned FalseValue = SelectExpr(N.getOperand(2)); //Use if FALSE
     Opc = SelectSetCR0(N.getOperand(0));
@@ -1986,8 +2061,6 @@ unsigned ISel::SelectExpr(SDOperand N) {
     BB = sinkMBB;
     BuildMI(BB, PPC::PHI, 4, Result).addReg(FalseValue)
       .addMBB(copy0MBB).addReg(TrueValue).addMBB(thisMBB);
-
-    // FIXME: Select i64?
     return Result;
   }
 
@@ -2123,7 +2196,7 @@ void ISel::Select(SDOperand N) {
       } else { //ISD::TRUNCSTORE
         switch(cast<MVTSDNode>(Node)->getExtraValueType()) {
         default: assert(0 && "unknown Type in store");
-        case MVT::i1: //FIXME: DAG does not promote this load
+        case MVT::i1:
         case MVT::i8: Opc  = PPC::STB; break;
         case MVT::i16: Opc = PPC::STH; break;
         }
