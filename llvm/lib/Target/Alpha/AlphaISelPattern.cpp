@@ -1136,6 +1136,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
     Tmp1 = SelectExpr(N.getOperand(0));
     Tmp2 = SelectExpr(N.getOperand(1));
     BuildMI(BB, Alpha::UMULH, 2, Result).addReg(Tmp1).addReg(Tmp2);
+    return Result;
   case ISD::MULHS:
     {
       //MULHU - Ra<63>*Rb - Rb<63>*Ra
