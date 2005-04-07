@@ -233,6 +233,18 @@ namespace {
                             MVT::ValueType VT) {
       O << (unsigned short)MI->getOperand(OpNo).getImmedValue();
     }
+    void printS8ImmOperand(const MachineInstr *MI, unsigned OpNo,
+                            MVT::ValueType VT) {
+      int val=(unsigned int)MI->getOperand(OpNo).getImmedValue();
+      if(val>=128) val=val-256; // if negative, flip sign
+      O << val;
+    }
+    void printS14ImmOperand(const MachineInstr *MI, unsigned OpNo,
+                            MVT::ValueType VT) {
+      int val=(unsigned int)MI->getOperand(OpNo).getImmedValue();
+      if(val>=8192) val=val-16384; // if negative, flip sign
+      O << val;
+    }
     void printS21ImmOperand(const MachineInstr *MI, unsigned OpNo,
                             MVT::ValueType VT) {
       O << (int)MI->getOperand(OpNo).getImmedValue(); // FIXME (21, not 32!)
