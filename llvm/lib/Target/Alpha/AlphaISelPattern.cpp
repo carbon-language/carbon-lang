@@ -413,7 +413,7 @@ static struct ms magic(int64_t d) {
   ad = abs(d);
   t = two63 + ((uint64_t)d >> 63);
   anc = t - 1 - t%ad;   // absolute value of nc
-  p = 31;               // initialize p
+  p = 63;               // initialize p
   q1 = two63/anc;       // initialize q1 = 2p/abs(nc)
   r1 = two63 - q1*anc;  // initialize r1 = rem(2p,abs(nc))
   q2 = two63/ad;        // initialize q2 = 2p/abs(d)
@@ -450,11 +450,11 @@ static struct mu magicu(uint64_t d)
   struct mu magu;
   magu.a = 0;               // initialize "add" indicator
   nc = - 1 - (-d)%d;
-  p = 31;                   // initialize p
-  q1 = 0x8000000000000000ll/nc;       // initialize q1 = 2p/nc
-  r1 = 0x8000000000000000ll - q1*nc;  // initialize r1 = rem(2p,nc)
-  q2 = 0x7FFFFFFFFFFFFFFFll/d;        // initialize q2 = (2p-1)/d
-  r2 = 0x7FFFFFFFFFFFFFFFll - q2*d;   // initialize r2 = rem((2p-1),d)
+  p = 63;                   // initialize p
+  q1 = 0x8000000000000000ull/nc;       // initialize q1 = 2p/nc
+  r1 = 0x8000000000000000ull - q1*nc;  // initialize r1 = rem(2p,nc)
+  q2 = 0x7FFFFFFFFFFFFFFFull/d;        // initialize q2 = (2p-1)/d
+  r2 = 0x7FFFFFFFFFFFFFFFull - q2*d;   // initialize r2 = rem((2p-1),d)
   do {
     p = p + 1;
     if (r1 >= nc - r1 ) {
@@ -466,19 +466,19 @@ static struct mu magicu(uint64_t d)
       r1 = 2*r1; // update r1
     }
     if (r2 + 1 >= d - r2) {
-      if (q2 >= 0x7FFFFFFFFFFFFFFFll) magu.a = 1;
+      if (q2 >= 0x7FFFFFFFFFFFFFFFull) magu.a = 1;
       q2 = 2*q2 + 1;     // update q2
       r2 = 2*r2 + 1 - d; // update r2
     }
     else {
-      if (q2 >= 0x8000000000000000ll) magu.a = 1;
+      if (q2 >= 0x8000000000000000ull) magu.a = 1;
       q2 = 2*q2;     // update q2
       r2 = 2*r2 + 1; // update r2
     }
     delta = d - 1 - r2;
   } while (p < 64 && (q1 < delta || (q1 == delta && r1 == 0)));
   magu.m = q2 + 1; // resulting magic number
-  magu.s = p - 32;  // resulting shift
+  magu.s = p - 64;  // resulting shift
   return magu;
 }
 
@@ -487,7 +487,7 @@ static struct mu magicu(uint64_t d)
 /// multiplying by a magic number.  See:
 /// <http://the.wall.riscom.net/books/proc/ppc/cwg/code2.html>
 SDOperand ISel::BuildSDIVSequence(SDOperand N) {
-  int d = (int)cast<ConstantSDNode>(N.getOperand(1))->getSignExtended();
+  int64_t d = (int64_t)cast<ConstantSDNode>(N.getOperand(1))->getSignExtended();
   ms magics = magic(d);
   // Multiply the numerator (operand 0) by the magic value
   SDOperand Q = ISelDAG->getNode(ISD::MULHS, MVT::i64, N.getOperand(0), 
