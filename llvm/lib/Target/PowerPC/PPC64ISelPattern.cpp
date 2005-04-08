@@ -985,7 +985,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
     BuildMI(BB, PPC::LOADHiAddr, 2, Tmp1).addReg(getGlobalBaseReg())
       .addGlobalAddress(GV);
     if (GV->hasWeakLinkage() || GV->isExternal()) {
-      BuildMI(BB, PPC::LWZ, 2, Result).addGlobalAddress(GV).addReg(Tmp1);
+      BuildMI(BB, PPC::LD, 2, Result).addGlobalAddress(GV).addReg(Tmp1);
     } else {
       BuildMI(BB, PPC::LA, 2, Result).addReg(Tmp1).addGlobalAddress(GV);
     }
@@ -1171,35 +1171,35 @@ unsigned ISel::SelectExpr(SDOperand N) {
   case ISD::SHL:
     Tmp1 = SelectExpr(N.getOperand(0));
     if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
-      Tmp2 = CN->getValue() & 0x1F;
-      BuildMI(BB, PPC::RLWINM, 4, Result).addReg(Tmp1).addImm(Tmp2).addImm(0)
-        .addImm(31-Tmp2);
+      Tmp2 = CN->getValue() & 0x3F;
+      BuildMI(BB, PPC::RLDICR, 3, Result).addReg(Tmp1).addImm(Tmp2)
+        .addImm(63-Tmp2);
     } else {
       Tmp2 = SelectExpr(N.getOperand(1));
-      BuildMI(BB, PPC::SLW, 2, Result).addReg(Tmp1).addReg(Tmp2);
+      BuildMI(BB, PPC::SLD, 2, Result).addReg(Tmp1).addReg(Tmp2);
     }
     return Result;
     
   case ISD::SRL:
     Tmp1 = SelectExpr(N.getOperand(0));
     if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
-      Tmp2 = CN->getValue() & 0x1F;
-      BuildMI(BB, PPC::RLWINM, 4, Result).addReg(Tmp1).addImm(32-Tmp2)
-        .addImm(Tmp2).addImm(31);
+      Tmp2 = CN->getValue() & 0x3F;
+      BuildMI(BB, PPC::RLDICL, 3, Result).addReg(Tmp1).addImm(64-Tmp2)
+        .addImm(Tmp2);
     } else {
       Tmp2 = SelectExpr(N.getOperand(1));
-      BuildMI(BB, PPC::SRW, 2, Result).addReg(Tmp1).addReg(Tmp2);
+      BuildMI(BB, PPC::SRD, 2, Result).addReg(Tmp1).addReg(Tmp2);
     }
     return Result;
     
   case ISD::SRA:
     Tmp1 = SelectExpr(N.getOperand(0));
     if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
-      Tmp2 = CN->getValue() & 0x1F;
-      BuildMI(BB, PPC::SRAWI, 2, Result).addReg(Tmp1).addImm(Tmp2);
+      Tmp2 = CN->getValue() & 0x3F;
+      BuildMI(BB, PPC::SRADI, 2, Result).addReg(Tmp1).addImm(Tmp2);
     } else {
       Tmp2 = SelectExpr(N.getOperand(1));
-      BuildMI(BB, PPC::SRAW, 2, Result).addReg(Tmp1).addReg(Tmp2);
+      BuildMI(BB, PPC::SRAD, 2, Result).addReg(Tmp1).addReg(Tmp2);
     }
     return Result;
   
@@ -1325,7 +1325,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
     if (3 == getImmediateForOpcode(N.getOperand(1), opcode, Tmp3)) {
       Tmp1 = MakeReg(MVT::i64);
       Tmp2 = SelectExpr(N.getOperand(0));
-      BuildMI(BB, PPC::SRAWI, 2, Tmp1).addReg(Tmp2).addImm(Tmp3);
+      BuildMI(BB, PPC::SRADI, 2, Tmp1).addReg(Tmp2).addImm(Tmp3);
       BuildMI(BB, PPC::ADDZE, 1, Result).addReg(Tmp1);
       return Result;
     }
@@ -1335,19 +1335,6 @@ unsigned ISel::SelectExpr(SDOperand N) {
     BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(Tmp2);
     return Result;
 
-  case ISD::UREM:
-  case ISD::SREM: {
-    Tmp1 = SelectExpr(N.getOperand(0));
-    Tmp2 = SelectExpr(N.getOperand(1));
-    Tmp3 = MakeReg(MVT::i64);
-    unsigned Tmp4 = MakeReg(MVT::i64);
-    Opc = (ISD::UREM == opcode) ? PPC::DIVDU : PPC::DIVD;
-    BuildMI(BB, Opc, 2, Tmp3).addReg(Tmp1).addReg(Tmp2);
-    BuildMI(BB, PPC::MULLD, 2, Tmp4).addReg(Tmp3).addReg(Tmp2);
-    BuildMI(BB, PPC::SUBF, 2, Result).addReg(Tmp4).addReg(Tmp1);
-    return Result;
-  }
-    
   case ISD::FP_TO_UINT:
   case ISD::FP_TO_SINT: {
     Tmp1 = SelectExpr(N.getOperand(0));
