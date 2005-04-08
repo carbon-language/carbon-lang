@@ -605,7 +605,9 @@ public:
 
   bool isNullValue() const { return Value == 0; }
   bool isAllOnesValue() const {
-    return Value == (1ULL << MVT::getSizeInBits(getValueType(0)))-1;
+    int NumBits = MVT::getSizeInBits(getValueType(0));
+    if (NumBits == 64) return Value+1 == 0;
+    return Value == (1ULL << NumBits)-1;
   }
 
   static bool classof(const ConstantSDNode *) { return true; }
