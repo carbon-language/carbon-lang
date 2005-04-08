@@ -1122,9 +1122,21 @@ pC = pA OR pB
       switch (ponderIntegerDivisionBy(N.getOperand(1), isSigned, Tmp3)) {
 	case 1: // division by a constant that's a power of 2
 	  Tmp1 = SelectExpr(N.getOperand(0));
-	  if(isSigned)   // becomes a shift right:
-	    BuildMI(BB, IA64::SHRS, 2, Result).addReg(Tmp1).addImm(Tmp3);
-	  else
+	  if(isSigned) {  // argument could be negative, so emit some code:
+	    unsigned divAmt=Tmp3;
+	    unsigned tempGR1=MakeReg(MVT::i64);
+	    unsigned tempGR2=MakeReg(MVT::i64);
+	    unsigned tempGR3=MakeReg(MVT::i64);
+	    BuildMI(BB, IA64::SHRS, 2, tempGR1)
+	      .addReg(Tmp1).addImm(divAmt-1);
+	    BuildMI(BB, IA64::EXTRU, 3, tempGR2)
+	      .addReg(tempGR1).addImm(64-divAmt).addImm(divAmt);
+	    BuildMI(BB, IA64::ADD, 2, tempGR3)
+	      .addReg(Tmp1).addReg(tempGR2);
+	    BuildMI(BB, IA64::SHRS, 2, Result)
+	      .addReg(tempGR3).addImm(divAmt);
+	  }
+	  else // unsigned div-by-power-of-2 becomes a simple shift right:
 	    BuildMI(BB, IA64::SHRU, 2, Result).addReg(Tmp1).addImm(Tmp3);
 	  return Result; // early exit
       }
@@ -1171,10 +1183,11 @@ pC = pA OR pB
     }
 
     // we start by computing an approximate reciprocal (good to 9 bits?)
-    // note, this instruction writes _both_ TmpF5 (answer) and tmpPR (predicate)
-    // FIXME: or at least, it should!!
-    BuildMI(BB, IA64::FRCPAS1FLOAT, 2, TmpF5).addReg(TmpF3).addReg(TmpF4);
-    BuildMI(BB, IA64::FRCPAS1PREDICATE, 2, TmpPR).addReg(TmpF3).addReg(TmpF4);
+    // note, this instruction writes _both_ TmpF5 (answer) and TmpPR (predicate)
+    BuildMI(BB, IA64::FRCPAS1, 4)
+      .addReg(TmpF5, MachineOperand::Def)
+      .addReg(TmpPR, MachineOperand::Def)
+      .addReg(TmpF3).addReg(TmpF4);
 
     if(!isModulus) { // if this is a divide, we worry about div-by-zero
       unsigned bogusPR=MakeReg(MVT::i1); // won't appear, due to twoAddress

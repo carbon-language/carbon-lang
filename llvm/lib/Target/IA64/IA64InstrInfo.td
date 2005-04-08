@@ -120,6 +120,9 @@ def SHRS : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src1, GR:$src2),
 def SHRSI : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src1, s21imm:$imm),
   "shr $dst = $src1, $imm;;">;
 
+def EXTRU : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src1, u6imm:$imm1, u6imm:$imm2),
+  "extr.u $dst = $src1, $imm1, $imm2;;">;
+
 def DEPZ : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src1, u6imm:$imm1, u6imm:$imm2),	  "dep.z $dst = $src1, $imm1, $imm2;;">;
 
 def SXT1 : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src), "sxt1 $dst = $src;;">;
@@ -258,14 +261,8 @@ def CFNMAS1 : AForm<0x03, 0x0b,
   (ops FP:$dst, FP:$src1, FP:$src2, FP:$src3, PR:$qp),
     "($qp) fnma.s1 $dst = $src1, $src2, $src3;;">;
 
-// FIXME: we 'explode' FRCPA (which should write two registers) into two
-// operations that write one each. this is a waste, and is also destroying
-// f127. not cool.
-def FRCPAS1FLOAT : AForm<0x03, 0x0b, (ops FP:$dst, FP:$src1, FP:$src2),
-  "frcpa.s1 $dst , p0 = $src1, $src2;;">;
-// XXX: this _will_ break things: (f127)
-def FRCPAS1PREDICATE : AForm<0x03, 0x0b, (ops PR:$dst, FP:$src1, FP:$src2),
-  "frcpa.s1 f127 , $dst = $src1, $src2;; // XXX FIXME!!!!">;
+def FRCPAS1 : AForm<0x03, 0x0b, (ops FP:$dstFR, PR:$dstPR, FP:$src1, FP:$src2),
+  "frcpa.s1 $dstFR, $dstPR = $src1, $src2;;">;
 
 def XMAL : AForm<0x03, 0x0b, (ops FP:$dst, FP:$src1, FP:$src2, FP:$src3),
   "xma.l $dst = $src1, $src2, $src3;;">;
