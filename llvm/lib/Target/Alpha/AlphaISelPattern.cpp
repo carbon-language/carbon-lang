@@ -39,6 +39,9 @@ namespace llvm {
   cl::opt<bool> EnableAlphaFTOI("enable-alpha-ftoi", 
                              cl::desc("Enable use of ftoi* and itof* instructions (ev6 and higher)"), 
                              cl::Hidden);
+  cl::opt<bool> EnableAlphaCount("enable-alpha-count", 
+                             cl::desc("Print estimates on live ins and outs"), 
+                             cl::Hidden);
 }
 
 //===----------------------------------------------------------------------===//
@@ -353,6 +356,10 @@ class ISel : public SelectionDAGISel {
   //CCInvMap sometimes (SetNE) we have the inverse CC code for free
   std::map<SDOperand, unsigned> CCInvMap;
   
+  int count_ins;
+  int count_outs;
+  bool has_sym;
+
 public:
   ISel(TargetMachine &TM) : SelectionDAGISel(AlphaLowering), AlphaLowering(TM) 
   {}
@@ -361,9 +368,21 @@ public:
   /// SelectionDAGISel when it has created a SelectionDAG for us to codegen.
   virtual void InstructionSelectBasicBlock(SelectionDAG &DAG) {
     DEBUG(BB->dump());
+    count_ins = 0;
+    count_outs = 0;
+    has_sym = false;
+
     // Codegen the basic block.
     ISelDAG = &DAG;
     Select(DAG.getRoot());
+
+    if(has_sym)
+      ++count_ins;
+    if(EnableAlphaCount)
+      std::cerr << "COUNT: " << BB->getParent()->getFunction ()->getName() << " " 
+                << BB->getNumber() << " " 
+                << count_ins << " "
+                << count_outs << "\n";
     
     // Clear state used for selection.
     ExprMap.clear();
@@ -387,6 +406,27 @@ public:
 
 };
 }
+
+//Factorize a number using the list of constants
+static bool factorize(int v[], int res[], int size, uint64_t c)
+{
+  bool cont = true;
+  while (c != 1 && cont)
+  {
+    cont = false;
+    for(int i = 0; i < size; ++i)
+    {
+      if (c % v[i] == 0)
+      {
+        c /= v[i];
+        ++res[i];
+        cont=true;
+      }
+    }
+  }
+  return c == 1;
+}
+
 
 //Shamelessly adapted from PPC32
 // Structure used to return the necessary information to codegen an SDIV as 
@@ -975,11 +1015,13 @@ unsigned ISel::SelectExprFP(SDOperand N, unsigned Result)
       if (Address.getOpcode() == ISD::GlobalAddress) {
         AlphaLowering.restoreGP(BB);
         Opc = GetSymVersion(Opc);
+        has_sym = true;
         BuildMI(BB, Opc, 1, Result).addGlobalAddress(cast<GlobalAddressSDNode>(Address)->getGlobal());
       }
       else if (ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(Address)) {
         AlphaLowering.restoreGP(BB);
         Opc = GetSymVersion(Opc);
+        has_sym = true;
         BuildMI(BB, Opc, 1, Result).addConstantPoolIndex(CP->getIndex());
       }
       else if(Address.getOpcode() == ISD::FrameIndex) {
@@ -1050,12 +1092,14 @@ unsigned ISel::SelectExprFP(SDOperand N, unsigned Result)
       
       if (Address.getOpcode() == ISD::GlobalAddress) {
         AlphaLowering.restoreGP(BB);
+        has_sym = true;
         BuildMI(BB, Alpha::LDS_SYM, 1, Tmp1).addGlobalAddress(cast<GlobalAddressSDNode>(Address)->getGlobal());
       }
       else if (ConstantPoolSDNode *CP = 
                dyn_cast<ConstantPoolSDNode>(N.getOperand(1))) 
       {
         AlphaLowering.restoreGP(BB);
+        has_sym = true;
         BuildMI(BB, Alpha::LDS_SYM, 1, Tmp1).addConstantPoolIndex(CP->getIndex());
       }
       else if(Address.getOpcode() == ISD::FrameIndex) {
@@ -1246,11 +1290,13 @@ unsigned ISel::SelectExpr(SDOperand N) {
       if (Address.getOpcode() == ISD::GlobalAddress) {
         AlphaLowering.restoreGP(BB);
         Opc = GetSymVersion(Opc);
+        has_sym = true;
         BuildMI(BB, Opc, 1, Result).addGlobalAddress(cast<GlobalAddressSDNode>(Address)->getGlobal());
       }
       else if (ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(Address)) {
         AlphaLowering.restoreGP(BB);
         Opc = GetSymVersion(Opc);
+        has_sym = true;
         BuildMI(BB, Opc, 1, Result).addConstantPoolIndex(CP->getIndex());
       }
       else if(Address.getOpcode() == ISD::FrameIndex) {
@@ -1267,6 +1313,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
 
   case ISD::GlobalAddress:
     AlphaLowering.restoreGP(BB);
+    has_sym = true;
     BuildMI(BB, Alpha::LOAD_ADDR, 1, Result)
       .addGlobalAddress(cast<GlobalAddressSDNode>(N)->getGlobal());
     return Result;
@@ -1343,6 +1390,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
         //if (GASD->getGlobal()->isExternal()) {
           //use safe calling convention
           AlphaLowering.restoreGP(BB);
+          has_sym = true;
           BuildMI(BB, Alpha::CALL, 1).addGlobalAddress(GASD->getGlobal(),true);
           //} else {
           //use PC relative branch call
@@ -1353,6 +1401,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
                dyn_cast<ExternalSymbolSDNode>(N.getOperand(1))) 
       {
         AlphaLowering.restoreGP(BB);
+        has_sym = true;
         BuildMI(BB, Alpha::CALL, 1).addExternalSymbol(ESSDN->getSymbol(), true);
       } else {
         //no need to restore GP as we are doing an indirect call
@@ -1383,8 +1432,9 @@ unsigned ISel::SelectExpr(SDOperand N) {
     
   case ISD::SIGN_EXTEND_INREG:
     {
-      //do SDIV opt for all levels of ints
-      if (EnableAlphaIDIV && N.getOperand(0).getOpcode() == ISD::SDIV)
+      //do SDIV opt for all levels of ints if not dividing by a constant
+      if (EnableAlphaIDIV && N.getOperand(0).getOpcode() == ISD::SDIV
+          && N.getOperand(0).getOperand(1).getOpcode() != ISD::Constant)
       {
         unsigned Tmp4 = MakeReg(MVT::f64);
         unsigned Tmp5 = MakeReg(MVT::f64);
@@ -1483,7 +1533,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
       case MVT::i1:
         Tmp2 = MakeReg(MVT::i64);
         BuildMI(BB, Alpha::ANDi, 2, Tmp2).addReg(Tmp1).addImm(1);
-        BuildMI(BB, Alpha::SUBQ, 2, Result).addReg(Alpha::F31).addReg(Tmp2);
+        BuildMI(BB, Alpha::SUBQ, 2, Result).addReg(Alpha::R31).addReg(Tmp2);
         break;
       }
       return Result;
@@ -1609,6 +1659,8 @@ unsigned ISel::SelectExpr(SDOperand N) {
     
   case ISD::CopyFromReg:
     {
+      ++count_ins;
+
       // Make sure we generate both values.
       if (Result != notIn)
 	ExprMap[N.getValue(1)] = notIn;   // Generate the token
@@ -1626,10 +1678,10 @@ unsigned ISel::SelectExpr(SDOperand N) {
 
     //Most of the plain arithmetic and logic share the same form, and the same 
     //constant immediate test
-  case ISD::OR:
+  case ISD::XOR:
     //Match Not
     if (N.getOperand(1).getOpcode() == ISD::Constant &&
-	cast<ConstantSDNode>(N.getOperand(1))->isAllOnesValue())
+	cast<ConstantSDNode>(N.getOperand(1))->getSignExtended() == -1)
       {
 	Tmp1 = SelectExpr(N.getOperand(0));
 	BuildMI(BB, Alpha::ORNOT, 2, Result).addReg(Alpha::R31).addReg(Tmp1);
@@ -1637,11 +1689,11 @@ unsigned ISel::SelectExpr(SDOperand N) {
       }
     //Fall through
   case ISD::AND:
-  case ISD::XOR:
+  case ISD::OR:
     //Check operand(0) == Not
-    if (N.getOperand(0).getOpcode() == ISD::OR && 
+    if (N.getOperand(0).getOpcode() == ISD::XOR && 
         N.getOperand(0).getOperand(1).getOpcode() == ISD::Constant &&
-	cast<ConstantSDNode>(N.getOperand(0).getOperand(1))->isAllOnesValue())
+	cast<ConstantSDNode>(N.getOperand(0).getOperand(1))->getSignExtended() == -1)
       {
 	switch(opcode) {
 	case ISD::AND: Opc = Alpha::BIC; break;
@@ -1654,9 +1706,9 @@ unsigned ISel::SelectExpr(SDOperand N) {
 	return Result;
       }
     //Check operand(1) == Not
-    if (N.getOperand(1).getOpcode() == ISD::OR && 
+    if (N.getOperand(1).getOpcode() == ISD::XOR && 
         N.getOperand(1).getOperand(1).getOpcode() == ISD::Constant &&
-	cast<ConstantSDNode>(N.getOperand(1).getOperand(1))->isAllOnesValue())
+	cast<ConstantSDNode>(N.getOperand(1).getOperand(1))->getSignExtended() == -1)
       {
 	switch(opcode) {
 	case ISD::AND: Opc = Alpha::BIC; break;
@@ -2044,6 +2096,7 @@ void ISel::Select(SDOperand N) {
   }
 
   case ISD::ImplicitDef:
+    ++count_ins;
     Select(N.getOperand(0));
     BuildMI(BB, Alpha::IDEF, 0, cast<RegSDNode>(N)->getReg());
     return;
@@ -2060,6 +2113,7 @@ void ISel::Select(SDOperand N) {
     return;
 
   case ISD::CopyToReg:
+    ++count_outs;
     Select(N.getOperand(0));
     Tmp1 = SelectExpr(N.getOperand(1));
     Tmp2 = cast<RegSDNode>(N)->getReg();
@@ -2074,6 +2128,7 @@ void ISel::Select(SDOperand N) {
     return;
 
   case ISD::RET:
+    ++count_outs;
     switch (N.getNumOperands()) {
     default:
       std::cerr << N.getNumOperands() << "\n";
@@ -2137,6 +2192,7 @@ void ISel::Select(SDOperand N) {
       {
         AlphaLowering.restoreGP(BB);
         Opc = GetSymVersion(Opc);
+        has_sym = true;
         BuildMI(BB, Opc, 2).addReg(Tmp1).addGlobalAddress(cast<GlobalAddressSDNode>(Address)->getGlobal());
       }
       else if(Address.getOpcode() == ISD::FrameIndex)
