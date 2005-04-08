@@ -1068,23 +1068,25 @@ Instruction *InstCombiner::visitDiv(BinaryOperator &I) {
           I.setOperand(1, SFO);
           return &I;          
         } else if (SFO->getValue() == 0) {
-          I.setOperand(1, STO);
+          I.setOperand(2, STO);
           return &I;          
         }
 
-        if (uint64_t TSA = Log2(STO->getValue()))
-          if (uint64_t FSA = Log2(SFO->getValue())) {
-            Constant *TC = ConstantUInt::get(Type::UByteTy, TSA);
-            Instruction *TSI = new ShiftInst(Instruction::Shr, Op0,
-                                             TC, SI->getName()+".t");
-            TSI = InsertNewInstBefore(TSI, I);
-
-            Constant *FC = ConstantUInt::get(Type::UByteTy, FSA);
-            Instruction *FSI = new ShiftInst(Instruction::Shr, Op0,
-                                             FC, SI->getName()+".f");
-            FSI = InsertNewInstBefore(FSI, I);
-            return new SelectInst(SI->getOperand(0), TSI, FSI);
-          }
+        uint64_t TVA = STO->getValue(), FVA = SFO->getValue();
+        unsigned TSA = 0, FSA = 0;
+        if ((TVA == 1 || (TSA = Log2(TVA))) &&    // Log2 fails for 0 & 1.
+            (FVA == 1 || (FSA = Log2(FVA)))) {
+          Constant *TC = ConstantUInt::get(Type::UByteTy, TSA);
+          Instruction *TSI = new ShiftInst(Instruction::Shr, Op0,
+                                           TC, SI->getName()+".t");
+          TSI = InsertNewInstBefore(TSI, I);
+          
+          Constant *FC = ConstantUInt::get(Type::UByteTy, FSA);
+          Instruction *FSI = new ShiftInst(Instruction::Shr, Op0,
+                                           FC, SI->getName()+".f");
+          FSI = InsertNewInstBefore(FSI, I);
+          return new SelectInst(SI->getOperand(0), TSI, FSI);
+        }
       }
   
   // 0 / X == 0, we don't need to preserve faults!
