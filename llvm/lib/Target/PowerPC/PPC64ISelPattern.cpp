@@ -101,7 +101,7 @@ PPC64TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
   // fixed size array of physical args, for the sake of simplicity let the STL
   // handle tracking them for us.
   std::vector<unsigned> argVR, argPR, argOp;
-  unsigned ArgOffset = 24;
+  unsigned ArgOffset = 48;
   unsigned GPR_remaining = 8;
   unsigned FPR_remaining = 13;
   unsigned GPR_idx = 0, FPR_idx = 0;
@@ -115,11 +115,10 @@ PPC64TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
   };
 
   // Add DAG nodes to load the arguments...  On entry to a function on PPC,
-  // the arguments start at offset 24, although they are likely to be passed
+  // the arguments start at offset 48, although they are likely to be passed
   // in registers.
   for (Function::arg_iterator I = F.arg_begin(), E = F.arg_end(); I != E; ++I) {
     SDOperand newroot, argt;
-    unsigned ObjSize;
     bool needsLoad = false;
     MVT::ValueType ObjectVT = getValueType(I->getType());
     
@@ -129,35 +128,19 @@ PPC64TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
     case MVT::i8:
     case MVT::i16:
     case MVT::i32: 
-      ObjSize = 4;
+    case MVT::i64:
       if (GPR_remaining > 0) {
         BuildMI(&BB, PPC::IMPLICIT_DEF, 0, GPR[GPR_idx]);
         argt = newroot = DAG.getCopyFromReg(GPR[GPR_idx], MVT::i32,
                                             DAG.getRoot());
-        if (ObjectVT != MVT::i32)
+        if (ObjectVT != MVT::i64)
           argt = DAG.getNode(ISD::TRUNCATE, ObjectVT, newroot);
       } else {
         needsLoad = true;
       }
       break;
-      case MVT::i64: ObjSize = 8;
-      // FIXME: can split 64b load between reg/mem if it is last arg in regs
-      if (GPR_remaining > 1) {
-        BuildMI(&BB, PPC::IMPLICIT_DEF, 0, GPR[GPR_idx]);
-        BuildMI(&BB, PPC::IMPLICIT_DEF, 0, GPR[GPR_idx+1]);
-        // Copy the extracted halves into the virtual registers
-        SDOperand argHi = DAG.getCopyFromReg(GPR[GPR_idx], MVT::i32, 
-                                             DAG.getRoot());
-        SDOperand argLo = DAG.getCopyFromReg(GPR[GPR_idx+1], MVT::i32, argHi);
-        // Build the outgoing arg thingy
-        argt = DAG.getNode(ISD::BUILD_PAIR, MVT::i64, argLo, argHi);
-        newroot = argLo;
-      } else {
-        needsLoad = true; 
-      }
-      break;
-      case MVT::f32: ObjSize = 4;
-      case MVT::f64: ObjSize = 8;
+    case MVT::f32:
+    case MVT::f64:
       if (FPR_remaining > 0) {
         BuildMI(&BB, PPC::IMPLICIT_DEF, 0, FPR[FPR_idx]);
         argt = newroot = DAG.getCopyFromReg(FPR[FPR_idx], ObjectVT, 
@@ -174,23 +157,30 @@ PPC64TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
     // that we ran out of physical registers of the appropriate type 
     if (needsLoad) {
       unsigned SubregOffset = 0;
-      if (ObjectVT == MVT::i8 || ObjectVT == MVT::i1) SubregOffset = 3;
-      if (ObjectVT == MVT::i16) SubregOffset = 2;
-      int FI = MFI->CreateFixedObject(ObjSize, ArgOffset);
-      SDOperand FIN = DAG.getFrameIndex(FI, MVT::i32);
-      FIN = DAG.getNode(ISD::ADD, MVT::i32, FIN, 
-                        DAG.getConstant(SubregOffset, MVT::i32));
+      switch (ObjectVT) {
+      default: assert(0 && "Unhandled argument type!");
+      case MVT::i1:
+      case MVT::i8:   SubregOffset = 7; break;
+      case MVT::i16:  SubregOffset = 6; break;
+      case MVT::i32: 
+      case MVT::f32:  SubregOffset = 4; break;
+      case MVT::i64:  
+      case MVT::f64:  SubregOffset = 0; break;
+      }
+      int FI = MFI->CreateFixedObject(8, ArgOffset);
+      SDOperand FIN = DAG.getFrameIndex(FI, MVT::i64);
+      FIN = DAG.getNode(ISD::ADD, MVT::i64, FIN, 
+                        DAG.getConstant(SubregOffset, MVT::i64));
       argt = newroot = DAG.getLoad(ObjectVT, DAG.getEntryNode(), FIN);
     }
     
     // Every 4 bytes of argument space consumes one of the GPRs available for
     // argument passing.
     if (GPR_remaining > 0) {
-      unsigned delta = (GPR_remaining > 1 && ObjSize == 8) ? 2 : 1;
-      GPR_remaining -= delta;
-      GPR_idx += delta;
+      --GPR_remaining;
+      ++GPR_idx;
     }
-    ArgOffset += ObjSize;
+    ArgOffset += 8;
     
     DAG.setRoot(newroot.getValue(1));
     ArgValues.push_back(argt);
@@ -199,20 +189,20 @@ PPC64TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
   // If the function takes variable number of arguments, make a frame index for
   // the start of the first vararg value... for expansion of llvm.va_start.
   if (F.isVarArg()) {
-    VarArgsFrameIndex = MFI->CreateFixedObject(4, ArgOffset);
-    SDOperand FIN = DAG.getFrameIndex(VarArgsFrameIndex, MVT::i32);
+    VarArgsFrameIndex = MFI->CreateFixedObject(8, ArgOffset);
+    SDOperand FIN = DAG.getFrameIndex(VarArgsFrameIndex, MVT::i64);
     // If this function is vararg, store any remaining integer argument regs
     // to their spots on the stack so that they may be loaded by deferencing the
     // result of va_next.
     std::vector<SDOperand> MemOps;
     for (; GPR_remaining > 0; --GPR_remaining, ++GPR_idx) {
       BuildMI(&BB, PPC::IMPLICIT_DEF, 0, GPR[GPR_idx]);
-      SDOperand Val = DAG.getCopyFromReg(GPR[GPR_idx], MVT::i32, DAG.getRoot());
+      SDOperand Val = DAG.getCopyFromReg(GPR[GPR_idx], MVT::i64, DAG.getRoot());
       SDOperand Store = DAG.getNode(ISD::STORE, MVT::Other, Val.getValue(1), 
                                     Val, FIN);
       MemOps.push_back(Store);
-      // Increment the address by four for the next argument to store
-      SDOperand PtrOff = DAG.getConstant(4, getPointerTy());
+      // Increment the address by eight for the next argument to store
+      SDOperand PtrOff = DAG.getConstant(8, getPointerTy());
       FIN = DAG.getNode(ISD::ADD, MVT::i32, FIN, PtrOff);
     }
     DAG.setRoot(DAG.getNode(ISD::TokenFactor, MVT::Other, MemOps));
@@ -231,31 +221,17 @@ PPC64TargetLowering::LowerCallTo(SDOperand Chain,
 
   // Count how many bytes are to be pushed on the stack, including the linkage
   // area, and parameter passing area.
-  unsigned NumBytes = 24;
+  unsigned NumBytes = 48;
 
   if (Args.empty()) {
     Chain = DAG.getNode(ISD::ADJCALLSTACKDOWN, MVT::Other, Chain,
                         DAG.getConstant(NumBytes, getPointerTy()));
   } else {
-    for (unsigned i = 0, e = Args.size(); i != e; ++i)
-      switch (getValueType(Args[i].second)) {
-      default: assert(0 && "Unknown value type!");
-      case MVT::i1:
-      case MVT::i8:
-      case MVT::i16:
-      case MVT::i32:
-      case MVT::f32:
-        NumBytes += 4;
-        break;
-      case MVT::i64:
-      case MVT::f64:
-        NumBytes += 8;
-        break;
-      }
+    NumBytes = 8 * Args.size(); // All arguments are rounded up to 8 bytes
     
-    // Just to be safe, we'll always reserve the full 24 bytes of linkage area 
-    // plus 32 bytes of argument space in case any called code gets funky on us.
-    if (NumBytes < 56) NumBytes = 56;
+    // Just to be safe, we'll always reserve the full 48 bytes of linkage area 
+    // plus 64 bytes of argument space in case any called code gets funky on us.
+    if (NumBytes < 112) NumBytes = 112;
 
     // Adjust the stack pointer for the new arguments...
     // These operations are automatically eliminated by the prolog/epilog pass
@@ -272,7 +248,7 @@ PPC64TargetLowering::LowerCallTo(SDOperand Chain,
     // memory.  Also, if this is a vararg function, floating point operations
     // must be stored to our stack, and loaded into integer regs as well, if
     // any integer regs are available for argument passing.
-    unsigned ArgOffset = 24;
+    unsigned ArgOffset = 48;
     unsigned GPR_remaining = 8;
     unsigned FPR_remaining = 13;
     
@@ -289,43 +265,18 @@ PPC64TargetLowering::LowerCallTo(SDOperand Chain,
       case MVT::i1:
       case MVT::i8:
       case MVT::i16:
-        // Promote the integer to 32 bits.  If the input type is signed use a
+      case MVT::i32:
+        // Promote the integer to 64 bits.  If the input type is signed use a
         // sign extend, otherwise use a zero extend.
         if (Args[i].second->isSigned())
-          Args[i].first =DAG.getNode(ISD::SIGN_EXTEND, MVT::i32, Args[i].first);
+          Args[i].first =DAG.getNode(ISD::SIGN_EXTEND, MVT::i64, Args[i].first);
         else
-          Args[i].first =DAG.getNode(ISD::ZERO_EXTEND, MVT::i32, Args[i].first);
+          Args[i].first =DAG.getNode(ISD::ZERO_EXTEND, MVT::i64, Args[i].first);
         // FALL THROUGH
-      case MVT::i32:
+      case MVT::i64:
         if (GPR_remaining > 0) {
           args_to_use.push_back(Args[i].first);
           --GPR_remaining;
-        } else {
-          MemOps.push_back(DAG.getNode(ISD::STORE, MVT::Other, Chain,
-                                          Args[i].first, PtrOff));
-        }
-        ArgOffset += 4;
-        break;
-      case MVT::i64:
-        // If we have one free GPR left, we can place the upper half of the i64
-        // in it, and store the other half to the stack.  If we have two or more
-        // free GPRs, then we can pass both halves of the i64 in registers.
-        if (GPR_remaining > 0) {
-          SDOperand Hi = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32, 
-            Args[i].first, DAG.getConstant(1, MVT::i32));
-          SDOperand Lo = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32, 
-            Args[i].first, DAG.getConstant(0, MVT::i32));
-          args_to_use.push_back(Hi);
-          --GPR_remaining;
-          if (GPR_remaining > 0) {
-            args_to_use.push_back(Lo);
-            --GPR_remaining;
-          } else {
-            SDOperand ConstFour = DAG.getConstant(4, getPointerTy());
-            PtrOff = DAG.getNode(ISD::ADD, MVT::i32, PtrOff, ConstFour);
-            MemOps.push_back(DAG.getNode(ISD::STORE, MVT::Other, Chain,
-                                            Lo, PtrOff));
-          }
         } else {
           MemOps.push_back(DAG.getNode(ISD::STORE, MVT::Other, Chain,
                                           Args[i].first, PtrOff));
@@ -343,29 +294,16 @@ PPC64TargetLowering::LowerCallTo(SDOperand Chain,
             MemOps.push_back(Store);
             // Float varargs are always shadowed in available integer registers
             if (GPR_remaining > 0) {
-              SDOperand Load = DAG.getLoad(MVT::i32, Store, PtrOff);
-              MemOps.push_back(Load);
-              args_to_use.push_back(Load);
-              --GPR_remaining;
-            }
-            if (GPR_remaining > 0 && MVT::f64 == ArgVT) {
-              SDOperand ConstFour = DAG.getConstant(4, getPointerTy());
-              PtrOff = DAG.getNode(ISD::ADD, MVT::i32, PtrOff, ConstFour);
-              SDOperand Load = DAG.getLoad(MVT::i32, Store, PtrOff);
+              SDOperand Load = DAG.getLoad(MVT::i64, Store, PtrOff);
               MemOps.push_back(Load);
               args_to_use.push_back(Load);
               --GPR_remaining;
             }
           } else {
             // If we have any FPRs remaining, we may also have GPRs remaining.
-            // Args passed in FPRs consume either 1 (f32) or 2 (f64) available
-            // GPRs.
+            // Args passed in FPRs also consume an available GPR.
             if (GPR_remaining > 0) {
-              args_to_use.push_back(DAG.getNode(ISD::UNDEF, MVT::i32));
-              --GPR_remaining;
-            }
-            if (GPR_remaining > 0 && MVT::f64 == ArgVT) {
-              args_to_use.push_back(DAG.getNode(ISD::UNDEF, MVT::i32));
+              args_to_use.push_back(DAG.getNode(ISD::UNDEF, MVT::i64));
               --GPR_remaining;
             }
           }
@@ -373,7 +311,7 @@ PPC64TargetLowering::LowerCallTo(SDOperand Chain,
           MemOps.push_back(DAG.getNode(ISD::STORE, MVT::Other, Chain,
                                           Args[i].first, PtrOff));
         }
-        ArgOffset += (ArgVT == MVT::f32) ? 4 : 8;
+        ArgOffset += 8;
         break;
       }
     }
@@ -398,7 +336,7 @@ PPC64TargetLowering::LowerCallTo(SDOperand Chain,
 std::pair<SDOperand, SDOperand>
 PPC64TargetLowering::LowerVAStart(SDOperand Chain, SelectionDAG &DAG) {
   //vastart just returns the address of the VarArgsFrameIndex slot.
-  return std::make_pair(DAG.getFrameIndex(VarArgsFrameIndex, MVT::i32), Chain);
+  return std::make_pair(DAG.getFrameIndex(VarArgsFrameIndex, MVT::i64), Chain);
 }
 
 std::pair<SDOperand,SDOperand> PPC64TargetLowering::
@@ -409,16 +347,8 @@ LowerVAArgNext(bool isVANext, SDOperand Chain, SDOperand VAList,
   if (!isVANext) {
     Result = DAG.getLoad(ArgVT, DAG.getEntryNode(), VAList);
   } else {
-    unsigned Amt;
-    if (ArgVT == MVT::i32 || ArgVT == MVT::f32)
-      Amt = 4;
-    else {
-      assert((ArgVT == MVT::i64 || ArgVT == MVT::f64) &&
-             "Other types should have been promoted for varargs!");
-      Amt = 8;
-    }
     Result = DAG.getNode(ISD::ADD, VAList.getValueType(), VAList,
-                         DAG.getConstant(Amt, VAList.getValueType()));
+                         DAG.getConstant(8, VAList.getValueType()));
   }
   return std::make_pair(Result, Chain);
 }
@@ -596,7 +526,7 @@ unsigned ISel::getGlobalBaseReg() {
 /// getConstDouble - Loads a floating point value into a register, via the 
 /// Constant Pool.  Optionally takes a register in which to load the value.
 unsigned ISel::getConstDouble(double doubleVal, unsigned Result=0) {
-  unsigned Tmp1 = MakeReg(MVT::i32);
+  unsigned Tmp1 = MakeReg(MVT::i64);
   if (0 == Result) Result = MakeReg(MVT::f64);
   MachineConstantPool *CP = BB->getParent()->getConstantPool();
   ConstantFP *CFP = ConstantFP::get(Type::DoubleTy, doubleVal);
