@@ -91,6 +91,28 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
   allocatableRegs_ = mri_->getAllocatableSet(fn);
   r2rMap_.grow(mf_->getSSARegMap()->getLastVirtReg());
 
+  // If this function has any live ins, insert a dummy instruction at the
+  // beginning of the function that we will pretend "defines" the values.  This
+  // is to make the interval analysis simpler by providing a number.
+  if (fn.livein_begin() != fn.livein_end()) {
+    unsigned FirstLiveIn = *fn.livein_begin();
+
+    // Find a reg class that contains this live in.
+    const TargetRegisterClass *RC = 0;
+    for (MRegisterInfo::regclass_iterator RCI = mri_->regclass_begin(),
+           E = mri_->regclass_end(); RCI != E; ++RCI)
+      if ((*RCI)->contains(FirstLiveIn)) {
+        RC = *RCI;
+        break;
+      }
+
+    MachineInstr *OldFirstMI = fn.begin()->begin();
+    mri_->copyRegToReg(*fn.begin(), fn.begin()->begin(),
+                       FirstLiveIn, FirstLiveIn, RC);
+    assert(OldFirstMI != fn.begin()->begin() &&
+           "copyRetToReg didn't insert anything!");
+  }
+
   // number MachineInstrs
   unsigned miIndex = 0;
   for (MachineFunction::iterator mbb = mf_->begin(), mbbEnd = mf_->end();
@@ -102,6 +124,19 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
       i2miMap_.push_back(mi);
       miIndex += InstrSlots::NUM;
     }
+
+  // Note intervals due to live-in values.
+  if (fn.livein_begin() != fn.livein_end()) {
+    MachineBasicBlock *Entry = fn.begin();
+    for (MachineFunction::liveinout_iterator I = fn.livein_begin(),
+           E = fn.livein_end(); I != E; ++I) {
+      handlePhysicalRegisterDef(Entry, Entry->begin(),
+                                getOrCreateInterval(*I), 0, 0);
+      for (const unsigned* AS = mri_->getAliasSet(*I); *AS; ++AS)
+        handlePhysicalRegisterDef(Entry, Entry->begin(),
+                                  getOrCreateInterval(*AS), 0, 0);
+    }
+  }
 
   computeIntervals();
 
@@ -163,6 +198,11 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
       }
     }
   }
+
+  // If we inserted a placeholder instruction at the entry of the block, remove
+  // it now.
+  if (fn.livein_begin() != fn.livein_end())
+    fn.begin()->erase(fn.begin()->begin());
 
   DEBUG(dump());
   return true;
@@ -557,14 +597,16 @@ void LiveIntervals::computeIntervals()
   DEBUG(std::cerr << "********** COMPUTING LIVE INTERVALS **********\n");
   DEBUG(std::cerr << "********** Function: "
         << ((Value*)mf_->getFunction())->getName() << '\n');
+  bool IgnoreFirstInstr = mf_->livein_begin() != mf_->livein_end();
 
   for (MachineFunction::iterator I = mf_->begin(), E = mf_->end();
        I != E; ++I) {
     MachineBasicBlock* mbb = I;
     DEBUG(std::cerr << ((Value*)mbb->getBasicBlock())->getName() << ":\n");
 
-    for (MachineBasicBlock::iterator mi = mbb->begin(), miEnd = mbb->end();
-         mi != miEnd; ++mi) {
+    MachineBasicBlock::iterator mi = mbb->begin(), miEnd = mbb->end();
+    if (IgnoreFirstInstr) { ++mi; IgnoreFirstInstr = false; }
+    for (; mi != miEnd; ++mi) {
       const TargetInstrDescriptor& tid =
         tm_->getInstrInfo()->get(mi->getOpcode());
       DEBUG(std::cerr << getInstructionIndex(mi) << "\t" << *mi);
