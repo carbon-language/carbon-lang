@@ -618,7 +618,8 @@ void X86ISel::LoadArgumentsToVirtualRegs(Function &Fn) {
   unsigned ArgOffset = 0;   // Frame mechanisms handle retaddr slot
   MachineFrameInfo *MFI = F->getFrameInfo();
 
-  for (Function::arg_iterator I = Fn.arg_begin(), E = Fn.arg_end(); I != E; ++I) {
+  for (Function::arg_iterator I = Fn.arg_begin(), E = Fn.arg_end();
+       I != E; ++I) {
     bool ArgLive = !I->use_empty();
     unsigned Reg = ArgLive ? getReg(*I) : 0;
     int FI;          // Frame object index
@@ -676,6 +677,25 @@ void X86ISel::LoadArgumentsToVirtualRegs(Function &Fn) {
   // llvm.va_start.
   if (Fn.getFunctionType()->isVarArg())
     VarArgsFrameIndex = MFI->CreateFixedObject(1, ArgOffset);
+
+  // Finally, inform the compiler what our live-outs will be, aka, what we will
+  // be returning in registers.
+  if (Fn.getReturnType() != Type::VoidTy)
+    switch (getClassB(Fn.getReturnType())) {
+    default: assert(0 && "Unknown type!");
+    case cByte:
+    case cShort:
+    case cInt:
+      F->addLiveOut(X86::EAX);
+      break;
+    case cLong:
+      F->addLiveOut(X86::EAX);
+      F->addLiveOut(X86::EDX);
+      break;
+    case cFP:
+      F->addLiveOut(X86::ST0);
+      break;
+    }
 }
 
 /// EmitSpecialCodeForMain - Emit any code that needs to be executed only in
@@ -1434,23 +1454,16 @@ void X86ISel::visitReturnInst(ReturnInst &I) {
   case cShort:
   case cInt:
     promote32(X86::EAX, ValueRecord(RetVal));
-    // Declare that EAX is live on exit
-    BuildMI(BB, X86::IMPLICIT_USE, 2).addReg(X86::EAX).addReg(X86::ESP);
     break;
   case cFP: {                  // Floats & Doubles: Return in ST(0)
     unsigned RetReg = getReg(RetVal);
     BuildMI(BB, X86::FpSETRESULT, 1).addReg(RetReg);
-    // Declare that top-of-stack is live on exit
-    BuildMI(BB, X86::IMPLICIT_USE, 2).addReg(X86::ST0).addReg(X86::ESP);
     break;
   }
   case cLong: {
     unsigned RetReg = getReg(RetVal);
     BuildMI(BB, X86::MOV32rr, 1, X86::EAX).addReg(RetReg);
     BuildMI(BB, X86::MOV32rr, 1, X86::EDX).addReg(RetReg+1);
-    // Declare that EAX & EDX are live on exit
-    BuildMI(BB, X86::IMPLICIT_USE, 3).addReg(X86::EAX).addReg(X86::EDX)
-      .addReg(X86::ESP);
     break;
   }
   default:

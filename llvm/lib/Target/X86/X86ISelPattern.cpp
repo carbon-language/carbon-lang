@@ -160,6 +160,26 @@ X86TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
   if (F.isVarArg())
     VarArgsFrameIndex = MFI->CreateFixedObject(1, ArgOffset);
   ReturnAddrIndex = 0;  // No return address slot generated yet.
+
+  // Finally, inform the code generator which regs we return values in.
+  switch (getValueType(F.getReturnType())) {
+  default: assert(0 && "Unknown type!");
+  case MVT::isVoid: break;
+  case MVT::i1:
+  case MVT::i8:
+  case MVT::i16:
+  case MVT::i32:
+    MF.addLiveOut(X86::EAX);
+    break;
+  case MVT::i64:
+    MF.addLiveOut(X86::EAX);
+    MF.addLiveOut(X86::EDX);
+    break;
+  case MVT::f32:
+  case MVT::f64:
+    MF.addLiveOut(X86::ST0);
+    break;
+  }
   return ArgValues;
 }
 
@@ -2929,9 +2949,6 @@ void ISel::Select(SDOperand N) {
 
       BuildMI(BB, X86::MOV32rr, 1, X86::EAX).addReg(Tmp1);
       BuildMI(BB, X86::MOV32rr, 1, X86::EDX).addReg(Tmp2);
-      // Declare that EAX & EDX are live on exit.
-      BuildMI(BB, X86::IMPLICIT_USE, 3).addReg(X86::EAX).addReg(X86::EDX)
-	.addReg(X86::ESP);
       break;
     case 2:
       if (getRegPressure(N.getOperand(0)) > getRegPressure(N.getOperand(1))) {
@@ -2945,12 +2962,9 @@ void ISel::Select(SDOperand N) {
       default: assert(0 && "All other types should have been promoted!!");
       case MVT::f64:
 	BuildMI(BB, X86::FpSETRESULT, 1).addReg(Tmp1);
-	// Declare that top-of-stack is live on exit
-	BuildMI(BB, X86::IMPLICIT_USE, 2).addReg(X86::ST0).addReg(X86::ESP);
 	break;
       case MVT::i32:
 	BuildMI(BB, X86::MOV32rr, 1, X86::EAX).addReg(Tmp1);
-	BuildMI(BB, X86::IMPLICIT_USE, 2).addReg(X86::EAX).addReg(X86::ESP);
 	break;
       }
       break;
