@@ -391,6 +391,39 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       Result = DAG.getNode(ISD::BRCOND, MVT::Other, Tmp1, Tmp2,
                            Node->getOperand(2));
     break;
+  case ISD::BRCONDTWOWAY:
+    Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
+    switch (getTypeAction(Node->getOperand(1).getValueType())) {
+    case Expand: assert(0 && "It's impossible to expand bools");
+    case Legal:
+      Tmp2 = LegalizeOp(Node->getOperand(1)); // Legalize the condition.
+      break;
+    case Promote:
+      Tmp2 = PromoteOp(Node->getOperand(1));  // Promote the condition.
+      break;
+    }
+    // If this target does not support BRCONDTWOWAY, lower it to a BRCOND/BR
+    // pair.
+    switch (TLI.getOperationAction(ISD::BRCONDTWOWAY, MVT::Other)) {
+    case TargetLowering::Promote:
+    default: assert(0 && "This action is not supported yet!");
+    case TargetLowering::Legal:
+      if (Tmp1 != Node->getOperand(0) || Tmp2 != Node->getOperand(1)) {
+        std::vector<SDOperand> Ops;
+        Ops.push_back(Tmp1);
+        Ops.push_back(Tmp2);
+        Ops.push_back(Node->getOperand(2));
+        Ops.push_back(Node->getOperand(3));
+        Result = DAG.getNode(ISD::BRCONDTWOWAY, MVT::Other, Ops);
+      }
+      break;
+    case TargetLowering::Expand:
+      Result = DAG.getNode(ISD::BRCOND, MVT::Other, Tmp1, Tmp2,
+                           Node->getOperand(2));
+      Result = DAG.getNode(ISD::BR, MVT::Other, Result, Node->getOperand(3));
+      break;
+    }
+    break;
 
   case ISD::LOAD:
     Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
