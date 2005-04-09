@@ -55,6 +55,10 @@ namespace {
       setOperationAction(ISD::SEXTLOAD, MVT::i1, Expand);
       setOperationAction(ISD::SEXTLOAD, MVT::i8, Expand);
 
+      // PowerPC has no SREM/UREM instructions
+      setOperationAction(ISD::SREM, MVT::i64, Expand);
+      setOperationAction(ISD::UREM, MVT::i64, Expand);
+
       setShiftAmountFlavor(Extend);   // shl X, 32 == 0
       addLegalFPImmediate(+0.0); // Necessary for FSEL
       addLegalFPImmediate(-0.0); // 
