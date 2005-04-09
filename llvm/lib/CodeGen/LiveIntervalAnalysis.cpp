@@ -199,11 +199,6 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
     }
   }
 
-  // If we inserted a placeholder instruction at the entry of the block, remove
-  // it now.
-  if (fn.livein_begin() != fn.livein_end())
-    fn.begin()->erase(fn.begin()->begin());
-
   DEBUG(dump());
   return true;
 }
