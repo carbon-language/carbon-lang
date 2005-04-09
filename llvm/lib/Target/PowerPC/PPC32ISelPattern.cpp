@@ -203,8 +203,9 @@ PPC32TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
       GPR_idx += delta;
     }
     ArgOffset += ObjSize;
+    if (newroot.Val)
+      DAG.setRoot(newroot.getValue(1));
     
-    DAG.setRoot(newroot.getValue(1));
     ArgValues.push_back(argt);
   }
 
