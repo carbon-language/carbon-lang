@@ -565,6 +565,8 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
 
   if (ConstantFPSDNode *C = dyn_cast<ConstantFPSDNode>(Operand.Val))
     switch (Opcode) {
+    case ISD::FNEG:
+      return getConstantFP(-C->getValue(), VT);
     case ISD::FP_ROUND:
     case ISD::FP_EXTEND:
       return getConstantFP(C->getValue(), VT);
@@ -601,6 +603,17 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
       else
         return Operand.Val->getOperand(0);
     }
+    break;
+  case ISD::FNEG:
+    if (OpOpcode == ISD::SUB)   // -(X-Y) -> (Y-X)
+      return getNode(ISD::SUB, VT, Operand.Val->getOperand(1),
+                     Operand.Val->getOperand(0));
+    if (OpOpcode == ISD::FNEG)  // --X -> X
+      return Operand.Val->getOperand(0);
+    break;
+  case ISD::FABS:
+    if (OpOpcode == ISD::FNEG)  // abs(-X) -> abs(X)
+      return getNode(ISD::FABS, VT, Operand.Val->getOperand(0));
     break;
   }
 
@@ -859,6 +872,12 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
   case ISD::XOR:
     if (N1 == N2) return getConstant(0, VT);  // xor X, Y -> 0
     break;
+  case ISD::ADD:
+    if (N2.getOpcode() == ISD::FNEG)          // (A+ (-B) -> A-B
+      return getNode(ISD::SUB, VT, N1, N2.getOperand(0));
+    if (N1.getOpcode() == ISD::FNEG)          // ((-A)+B) -> B-A
+      return getNode(ISD::SUB, VT, N2, N1.getOperand(0));
+    break;
   case ISD::SUB:
     if (N1.getOpcode() == ISD::ADD) {
       if (N1.Val->getOperand(0) == N2)
@@ -866,6 +885,8 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
       if (N1.Val->getOperand(1) == N2)
         return N1.Val->getOperand(0);         // (A+B)-B == A
     }
+    if (N2.getOpcode() == ISD::FNEG)          // (A- (-B) -> A+B
+      return getNode(ISD::ADD, VT, N1, N2.getOperand(0));
     break;
   }
 
