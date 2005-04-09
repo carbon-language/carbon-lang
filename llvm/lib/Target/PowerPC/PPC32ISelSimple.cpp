@@ -871,6 +871,16 @@ void PPC32ISel::LoadArgumentsToVirtualRegs(Function &Fn) {
 void PPC32ISel::SelectPHINodes() {
   const TargetInstrInfo &TII = *TM.getInstrInfo();
   const Function &LF = *F->getFunction();  // The LLVM function...
+
+  MachineBasicBlock::iterator MFLRIt = F->begin()->begin();
+  if (GlobalBaseInitialized) {
+    // If we emitted a MFLR for the global base reg, get an iterator to an
+    // instruction after it.
+    while (MFLRIt->getOpcode() != PPC::MFLR)
+      ++MFLRIt;
+    ++MFLRIt;  // step one MI past it.
+  }
+
   for (Function::const_iterator I = LF.begin(), E = LF.end(); I != E; ++I) {
     const BasicBlock *BB = I;
     MachineBasicBlock &MBB = *MBBMap[I];
@@ -937,6 +947,12 @@ void PPC32ISel::SelectPHINodes() {
             // Skip over any PHI nodes though!
             while (PI != PredMBB->end() && PI->getOpcode() == PPC::PHI)
               ++PI;
+
+            // If this is the entry block, and if the entry block contains a
+            // MFLR instruction, emit this operation after it.  This is needed
+            // because global addresses use it.
+            if (PredMBB == F->begin())
+              PI = MFLRIt;
 
             ValReg = getReg(Val, PredMBB, PI);
           }
