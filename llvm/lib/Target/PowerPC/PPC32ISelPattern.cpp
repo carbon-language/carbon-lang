@@ -999,7 +999,6 @@ unsigned ISel::SelectExprFP(SDOperand N, unsigned Result)
         SetCC->getCondition() != ISD::SETEQ &&
         SetCC->getCondition() != ISD::SETNE) {
       MVT::ValueType VT = SetCC->getOperand(0).getValueType();
-      Tmp1 = SelectExpr(SetCC->getOperand(0));   // Val to compare against
       unsigned TV = SelectExpr(N.getOperand(1)); // Use if TRUE
       unsigned FV = SelectExpr(N.getOperand(2)); // Use if FALSE
       
@@ -1009,29 +1008,31 @@ unsigned ISel::SelectExprFP(SDOperand N, unsigned Result)
         default: assert(0 && "Invalid FSEL condition"); abort();
         case ISD::SETULT:
         case ISD::SETLT:
-          BuildMI(BB, PPC::FSEL, 3, Result).addReg(Tmp1).addReg(FV).addReg(TV);
-          return Result;
+          std::swap(TV, FV);  // fsel is natively setge, swap operands for setlt
         case ISD::SETUGE:
         case ISD::SETGE:
+          Tmp1 = SelectExpr(SetCC->getOperand(0));   // Val to compare against
           BuildMI(BB, PPC::FSEL, 3, Result).addReg(Tmp1).addReg(TV).addReg(FV);
           return Result;
         case ISD::SETUGT:
-        case ISD::SETGT: {
-          Tmp2 = MakeReg(VT);
-          BuildMI(BB, PPC::FNEG, 1, Tmp2).addReg(Tmp1);
-          BuildMI(BB, PPC::FSEL, 3, Result).addReg(Tmp2).addReg(FV).addReg(TV);
-          return Result;
-        }
+        case ISD::SETGT:
+          std::swap(TV, FV);  // fsel is natively setge, swap operands for setlt
         case ISD::SETULE:
         case ISD::SETLE: {
-          Tmp2 = MakeReg(VT);
-          BuildMI(BB, PPC::FNEG, 1, Tmp2).addReg(Tmp1);
+          if (SetCC->getOperand(0).getOpcode() == ISD::FNEG) {
+            Tmp2 = SelectExpr(SetCC->getOperand(0).getOperand(0));
+          } else {
+            Tmp2 = MakeReg(VT);
+            Tmp1 = SelectExpr(SetCC->getOperand(0));   // Val to compare against
+            BuildMI(BB, PPC::FNEG, 1, Tmp2).addReg(Tmp1);
+          }
           BuildMI(BB, PPC::FSEL, 3, Result).addReg(Tmp2).addReg(TV).addReg(FV);
           return Result;
         }
         }
       } else {
         Opc = (MVT::f64 == VT) ? PPC::FSUB : PPC::FSUBS;
+        Tmp1 = SelectExpr(SetCC->getOperand(0));   // Val to compare against
         Tmp2 = SelectExpr(SetCC->getOperand(1));
         Tmp3 =  MakeReg(VT);
         switch(SetCC->getCondition()) {
