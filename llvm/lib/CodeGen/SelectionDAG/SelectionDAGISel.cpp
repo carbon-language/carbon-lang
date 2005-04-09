@@ -430,7 +430,6 @@ void SelectionDAGLowering::visitBr(BranchInst &I) {
     MachineBasicBlock *Succ1MBB = FuncInfo.MBBMap[I.getSuccessor(1)];
 
     SDOperand Cond = getValue(I.getCondition());
-
     if (Succ1MBB == NextBlock) {
       // If the condition is false, fall through.  This means we should branch
       // if the condition is true to Succ #0.
@@ -444,12 +443,12 @@ void SelectionDAGLowering::visitBr(BranchInst &I) {
       DAG.setRoot(DAG.getNode(ISD::BRCOND, MVT::Other, getRoot(),
 			      Cond, DAG.getBasicBlock(Succ1MBB)));
     } else {
-      // Neither edge is a fall through.  If the comparison is true, jump to
-      // Succ#0, otherwise branch unconditionally to succ #1.
-      DAG.setRoot(DAG.getNode(ISD::BRCOND, MVT::Other, getRoot(),
-			      Cond, DAG.getBasicBlock(Succ0MBB)));
-      DAG.setRoot(DAG.getNode(ISD::BR, MVT::Other, getRoot(),
-			      DAG.getBasicBlock(Succ1MBB)));
+      std::vector<SDOperand> Ops;
+      Ops.push_back(getRoot());
+      Ops.push_back(Cond);
+      Ops.push_back(DAG.getBasicBlock(Succ0MBB));
+      Ops.push_back(DAG.getBasicBlock(Succ1MBB));
+      DAG.setRoot(DAG.getNode(ISD::BRCONDTWOWAY, MVT::Other, Ops));
     }
   }
 }
