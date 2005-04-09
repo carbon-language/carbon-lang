@@ -1738,7 +1738,7 @@ static Value *GetGEPInstArgs(InstructionNode *gepNode,
   // in this and any preceding GetElemPtr instructions.
   bool foldedGEPs = false;
   bool leadingNonZeroIdx = gepI && ! IsZero(*gepI->idx_begin());
-  if (allConstantIndices)
+  if (allConstantIndices && !leadingNonZeroIdx)
     if (Value* newPtr = FoldGetElemChain(ptrChild, idxVec, leadingNonZeroIdx)) {
       ptrVal = newPtr;
       foldedGEPs = true;
