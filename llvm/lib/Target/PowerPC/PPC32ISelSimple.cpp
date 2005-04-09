@@ -729,7 +729,8 @@ void PPC32ISel::LoadArgumentsToVirtualRegs(Function &Fn) {
     
   MachineFrameInfo *MFI = F->getFrameInfo();
  
-  for (Function::arg_iterator I = Fn.arg_begin(), E = Fn.arg_end(); I != E; ++I) {
+  for (Function::arg_iterator I = Fn.arg_begin(), E = Fn.arg_end();
+       I != E; ++I) {
     bool ArgLive = !I->use_empty();
     unsigned Reg = ArgLive ? getReg(*I) : 0;
     int FI;          // Frame object index
@@ -739,7 +740,7 @@ void PPC32ISel::LoadArgumentsToVirtualRegs(Function &Fn) {
       if (ArgLive) {
         FI = MFI->CreateFixedObject(4, ArgOffset);
         if (GPR_remaining > 0) {
-          BuildMI(BB, PPC::IMPLICIT_DEF, 0, GPR[GPR_idx]);
+          F->addLiveIn(GPR[GPR_idx]);
           BuildMI(BB, PPC::OR, 2, Reg).addReg(GPR[GPR_idx])
             .addReg(GPR[GPR_idx]);
         } else {
@@ -751,7 +752,7 @@ void PPC32ISel::LoadArgumentsToVirtualRegs(Function &Fn) {
       if (ArgLive) {
         FI = MFI->CreateFixedObject(4, ArgOffset);
         if (GPR_remaining > 0) {
-          BuildMI(BB, PPC::IMPLICIT_DEF, 0, GPR[GPR_idx]);
+          F->addLiveIn(GPR[GPR_idx]);
           BuildMI(BB, PPC::OR, 2, Reg).addReg(GPR[GPR_idx])
             .addReg(GPR[GPR_idx]);
         } else {
@@ -763,7 +764,7 @@ void PPC32ISel::LoadArgumentsToVirtualRegs(Function &Fn) {
       if (ArgLive) {
         FI = MFI->CreateFixedObject(4, ArgOffset);
         if (GPR_remaining > 0) {
-          BuildMI(BB, PPC::IMPLICIT_DEF, 0, GPR[GPR_idx]);
+          F->addLiveIn(GPR[GPR_idx]);
           BuildMI(BB, PPC::OR, 2, Reg).addReg(GPR[GPR_idx])
             .addReg(GPR[GPR_idx]);
         } else {
@@ -775,8 +776,8 @@ void PPC32ISel::LoadArgumentsToVirtualRegs(Function &Fn) {
       if (ArgLive) {
         FI = MFI->CreateFixedObject(8, ArgOffset);
         if (GPR_remaining > 1) {
-          BuildMI(BB, PPC::IMPLICIT_DEF, 0, GPR[GPR_idx]);
-          BuildMI(BB, PPC::IMPLICIT_DEF, 0, GPR[GPR_idx+1]);
+          F->addLiveIn(GPR[GPR_idx]);
+          F->addLiveIn(GPR[GPR_idx+1]);
           BuildMI(BB, PPC::OR, 2, Reg).addReg(GPR[GPR_idx])
             .addReg(GPR[GPR_idx]);
           BuildMI(BB, PPC::OR, 2, Reg+1).addReg(GPR[GPR_idx+1])
@@ -798,7 +799,7 @@ void PPC32ISel::LoadArgumentsToVirtualRegs(Function &Fn) {
         FI = MFI->CreateFixedObject(4, ArgOffset);
 
         if (FPR_remaining > 0) {
-          BuildMI(BB, PPC::IMPLICIT_DEF, 0, FPR[FPR_idx]);
+          F->addLiveIn(FPR[FPR_idx]);
           BuildMI(BB, PPC::FMR, 1, Reg).addReg(FPR[FPR_idx]);
           FPR_remaining--;
           FPR_idx++;
@@ -812,7 +813,7 @@ void PPC32ISel::LoadArgumentsToVirtualRegs(Function &Fn) {
         FI = MFI->CreateFixedObject(8, ArgOffset);
 
         if (FPR_remaining > 0) {
-          BuildMI(BB, PPC::IMPLICIT_DEF, 0, FPR[FPR_idx]);
+          F->addLiveIn(FPR[FPR_idx]);
           BuildMI(BB, PPC::FMR, 1, Reg).addReg(FPR[FPR_idx]);
           FPR_remaining--;
           FPR_idx++;
@@ -843,6 +844,23 @@ void PPC32ISel::LoadArgumentsToVirtualRegs(Function &Fn) {
   // llvm.va_start.
   if (Fn.getFunctionType()->isVarArg())
     VarArgsFrameIndex = MFI->CreateFixedObject(4, ArgOffset);
+
+  if (Fn.getReturnType() != Type::VoidTy)
+    switch (getClassB(Fn.getReturnType())) {
+    case cByte:
+    case cShort:
+    case cInt:
+      F->addLiveOut(PPC::R3);
+      break;
+    case cLong:
+      F->addLiveOut(PPC::R3);
+      F->addLiveOut(PPC::R4);
+      break;
+    case cFP32:
+    case cFP64:
+      F->addLiveOut(PPC::F1);
+      break;
+    }
 }
 
 
