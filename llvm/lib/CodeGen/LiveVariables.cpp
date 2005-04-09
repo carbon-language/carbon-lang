@@ -163,6 +163,14 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &MF) {
 
   /// Get some space for a respectable number of registers...
   VirtRegInfo.resize(64);
+
+  // Mark live-in registers as live-in.
+  for (MachineFunction::liveinout_iterator I = MF.livein_begin(),
+         E = MF.livein_end(); I != E; ++I) {
+    assert(MRegisterInfo::isPhysicalRegister(*I) &&
+           "Cannot have a live-in virtual register!");
+    HandlePhysRegDef(*I, 0);
+  }
   
   // Calculate live variable information in depth first order on the CFG of the
   // function.  This guarantees that we will see the definition of a virtual
@@ -260,6 +268,18 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &MF) {
       }
     }
     
+    // Finally, if the last block in the function is a return, make sure to mark
+    // it as using all of the live-out values in the function.
+    if (!MBB->empty() && TII.isReturn(MBB->back().getOpcode())) {
+      MachineInstr *Ret = &MBB->back();
+      for (MachineFunction::liveinout_iterator I = MF.liveout_begin(),
+             E = MF.liveout_end(); I != E; ++I) {
+        assert(MRegisterInfo::isPhysicalRegister(*I) &&
+               "Cannot have a live-in virtual register!");
+        HandlePhysRegUse(*I, Ret);
+      }
+    }
+
     // Loop over PhysRegInfo, killing any registers that are available at the
     // end of the basic block.  This also resets the PhysRegInfo map.
     for (unsigned i = 0, e = RegInfo->getNumRegs(); i != e; ++i)
