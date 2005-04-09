@@ -992,18 +992,31 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
   case 1: return getNode(Opcode, VT, Children[0]);
   case 2: return getNode(Opcode, VT, Children[0], Children[1]);
   case 3: return getNode(Opcode, VT, Children[0], Children[1], Children[2]);
-  default:
-    // FIXME: MEMOIZE!!
-    SDNode *N = new SDNode(Opcode, Children);
-    if (Opcode != ISD::ADD_PARTS && Opcode != ISD::SUB_PARTS) {
-      N->setValueTypes(VT);
-    } else {
-      std::vector<MVT::ValueType> V(N->getNumOperands()/2, VT);
-      N->setValueTypes(V);
-    }
-    AllNodes.push_back(N);
-    return SDOperand(N, 0);
+  default: break;
   }
+
+  ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(Children[1].Val);
+  switch (Opcode) {
+  default: break;
+  case ISD::BRCONDTWOWAY:
+    if (N1C)
+      if (N1C->getValue()) // Unconditional branch to true dest.
+        return getNode(ISD::BR, MVT::Other, Children[0], Children[2]);
+      else                 // Unconditional branch to false dest.
+        return getNode(ISD::BR, MVT::Other, Children[0], Children[3]);
+    break;
+  }
+
+  // FIXME: MEMOIZE!!
+  SDNode *N = new SDNode(Opcode, Children);
+  if (Opcode != ISD::ADD_PARTS && Opcode != ISD::SUB_PARTS) {
+    N->setValueTypes(VT);
+  } else {
+    std::vector<MVT::ValueType> V(N->getNumOperands()/2, VT);
+    N->setValueTypes(V);
+  }
+  AllNodes.push_back(N);
+  return SDOperand(N, 0);
 }
 
 SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,SDOperand N1,
@@ -1243,6 +1256,7 @@ const char *SDNode::getOperationName() const {
     // Control flow instructions
   case ISD::BR:      return "br";
   case ISD::BRCOND:  return "brcond";
+  case ISD::BRCONDTWOWAY:  return "brcondtwoway";
   case ISD::RET:     return "ret";
   case ISD::CALL:    return "call";
   case ISD::ADJCALLSTACKDOWN:  return "adjcallstackdown";
