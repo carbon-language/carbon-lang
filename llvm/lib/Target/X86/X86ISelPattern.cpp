@@ -56,6 +56,7 @@ namespace {
       // well.
 /**/  addRegisterClass(MVT::i1, X86::R8RegisterClass);
 
+      setOperationAction(ISD::BRCONDTWOWAY     , MVT::Other, Expand);
       setOperationAction(ISD::MEMMOVE          , MVT::Other, Expand);
       setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i16  , Expand);
       setOperationAction(ISD::ZERO_EXTEND_INREG, MVT::i16  , Expand);

@@ -62,6 +62,7 @@ namespace {
       addRegisterClass(MVT::f64, Alpha::FPRCRegisterClass);
       addRegisterClass(MVT::f32, Alpha::FPRCRegisterClass);
       
+      setOperationAction(ISD::BRCONDTWOWAY, MVT::Other, Expand);
       setOperationAction(ISD::EXTLOAD  , MVT::i1   , Promote);
       setOperationAction(ISD::EXTLOAD  , MVT::f32  , Promote);
 
