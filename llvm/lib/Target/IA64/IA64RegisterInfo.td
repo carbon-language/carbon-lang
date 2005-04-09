@@ -254,7 +254,12 @@ def GR : RegisterClass<i64, 64,
   {
     let Methods = [{
       iterator allocation_order_end(MachineFunction &MF) const {
-	return end()-7; // 7 special registers
+	int numReservedRegs=7; // the 7 special registers r0,r1,r2,r12,r13 etc
+	// we also can't allocate registers for use as locals if they're
+	// already required as 'out' registers
+	numReservedRegs+=MF.getInfo<IA64FunctionInfo>()->outRegsUsed;
+	
+	return end()-numReservedRegs; // hide registers appropriately
       }
   }];
 }
