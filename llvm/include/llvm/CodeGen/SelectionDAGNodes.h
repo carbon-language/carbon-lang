@@ -216,6 +216,13 @@ namespace ISD {
     // to if the condition is true.
     BRCOND,
 
+    // BRCONDTWOWAY - Two-way conditional branch.  The first operand is the
+    // chain, the second is the condition, the third is the block to branch to
+    // if true, and the forth is the block to branch to if false.  Targets
+    // usually do not implement this, preferring to have legalize demote the
+    // operation to BRCOND/BR pairs when necessary.
+    BRCONDTWOWAY,
+
     // RET - Return from function.  The first operand is the chain,
     // and any subsequent operands are the return values for the
     // function.  This operation can have variable number of operands.
