@@ -16,7 +16,7 @@
 #include "PowerPC.h"
 #include "PowerPCInstrBuilder.h"
 #include "PowerPCInstrInfo.h"
-#include "PPC32RegisterInfo.h"
+#include "PPC32TargetMachine.h"
 #include "llvm/Constants.h"                   // FIXME: REMOVE
 #include "llvm/Function.h"
 #include "llvm/CodeGen/MachineConstantPool.h" // FIXME: REMOVE
@@ -49,7 +49,6 @@ namespace {
       addRegisterClass(MVT::f64, PPC32::FPRCRegisterClass);
       
       // PowerPC has no intrinsics for these particular operations
-      setOperationAction(ISD::BRCONDTWOWAY, MVT::Other, Expand);
       setOperationAction(ISD::MEMMOVE, MVT::Other, Expand);
       setOperationAction(ISD::MEMSET, MVT::Other, Expand);
       setOperationAction(ISD::MEMCPY, MVT::Other, Expand);
@@ -129,6 +128,7 @@ PPC32TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
     SDOperand newroot, argt;
     unsigned ObjSize;
     bool needsLoad = false;
+    bool ArgLive = !I->use_empty();
     MVT::ValueType ObjectVT = getValueType(I->getType());
     
     switch (ObjectVT) {
@@ -138,8 +138,9 @@ PPC32TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
     case MVT::i16:
     case MVT::i32: 
       ObjSize = 4;
+      if (!ArgLive) break;
       if (GPR_remaining > 0) {
-        BuildMI(&BB, PPC::IMPLICIT_DEF, 0, GPR[GPR_idx]);
+        MF.addLiveIn(GPR[GPR_idx]);
         argt = newroot = DAG.getCopyFromReg(GPR[GPR_idx], MVT::i32,
                                             DAG.getRoot());
         if (ObjectVT != MVT::i32)
@@ -149,10 +150,11 @@ PPC32TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
       }
       break;
       case MVT::i64: ObjSize = 8;
+      if (!ArgLive) break;
       // FIXME: can split 64b load between reg/mem if it is last arg in regs
       if (GPR_remaining > 1) {
-        BuildMI(&BB, PPC::IMPLICIT_DEF, 0, GPR[GPR_idx]);
-        BuildMI(&BB, PPC::IMPLICIT_DEF, 0, GPR[GPR_idx+1]);
+        MF.addLiveIn(GPR[GPR_idx]);
+        MF.addLiveIn(GPR[GPR_idx+1]);
         // Copy the extracted halves into the virtual registers
         SDOperand argHi = DAG.getCopyFromReg(GPR[GPR_idx], MVT::i32, 
                                              DAG.getRoot());
@@ -164,10 +166,12 @@ PPC32TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
         needsLoad = true; 
       }
       break;
-      case MVT::f32: ObjSize = 4;
-      case MVT::f64: ObjSize = 8;
+      case MVT::f32:
+      case MVT::f64:
+      ObjSize = (ObjectVT == MVT::f64) ? 8 : 4;
+      if (!ArgLive) break;
       if (FPR_remaining > 0) {
-        BuildMI(&BB, PPC::IMPLICIT_DEF, 0, FPR[FPR_idx]);
+        MF.addLiveIn(FPR[FPR_idx]);
         argt = newroot = DAG.getCopyFromReg(FPR[FPR_idx], ObjectVT, 
                                             DAG.getRoot());
         --FPR_remaining;
@@ -214,7 +218,7 @@ PPC32TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
     // result of va_next.
     std::vector<SDOperand> MemOps;
     for (; GPR_remaining > 0; --GPR_remaining, ++GPR_idx) {
-      BuildMI(&BB, PPC::IMPLICIT_DEF, 0, GPR[GPR_idx]);
+      MF.addLiveIn(GPR[GPR_idx]);
       SDOperand Val = DAG.getCopyFromReg(GPR[GPR_idx], MVT::i32, DAG.getRoot());
       SDOperand Store = DAG.getNode(ISD::STORE, MVT::Other, Val.getValue(1), 
                                     Val, FIN);
@@ -224,6 +228,26 @@ PPC32TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
       FIN = DAG.getNode(ISD::ADD, MVT::i32, FIN, PtrOff);
     }
     DAG.setRoot(DAG.getNode(ISD::TokenFactor, MVT::Other, MemOps));
+  }
+
+  // Finally, inform the code generator which regs we return values in.
+  switch (getValueType(F.getReturnType())) {
+  default: assert(0 && "Unknown type!");
+  case MVT::isVoid: break;
+  case MVT::i1:
+  case MVT::i8:
+  case MVT::i16:
+  case MVT::i32:
+    MF.addLiveOut(PPC::R3);
+    break;
+  case MVT::i64:
+    MF.addLiveOut(PPC::R3);
+    MF.addLiveOut(PPC::R4);
+    break;
+  case MVT::f32:
+  case MVT::f64:
+    MF.addLiveOut(PPC::F1);
+    break;
   }
 
   return ArgValues;
@@ -440,7 +464,7 @@ LowerFrameReturnAddress(bool isFrameAddress, SDOperand Chain, unsigned Depth,
 }
 
 namespace {
-Statistic<>NotLogic("ppc-codegen", "Number of inverted logical ops");
+Statistic<>Rotates("ppc-codegen", "Number of rotates emitted");
 Statistic<>FusedFP("ppc-codegen", "Number of fused fp operations");
 //===--------------------------------------------------------------------===//
 /// ISel - PPC32 specific code to select PPC32 machine instructions for
@@ -837,6 +861,7 @@ unsigned ISel::getConstDouble(double doubleVal, unsigned Result=0) {
 /// 3. or shr, and   7. or shr, shl
 /// 4. or and, shr
 bool ISel::SelectBitfieldInsert(SDOperand OR, unsigned Result) {
+  bool IsRotate = false;
   unsigned TgtMask = 0xFFFFFFFF, InsMask = 0xFFFFFFFF, Amount = 0;
   unsigned Op0Opc = OR.getOperand(0).getOpcode();
   unsigned Op1Opc = OR.getOperand(1).getOpcode();
@@ -865,12 +890,14 @@ bool ISel::SelectBitfieldInsert(SDOperand OR, unsigned Result) {
     switch(Op1Opc) {
     case ISD::SHL: 
       Amount = CN->getValue(); 
-      InsMask <<= Amount; 
+      InsMask <<= Amount;
+      if (Op0Opc == ISD::SRL) IsRotate = true;
       break;
     case ISD::SRL: 
       Amount = CN->getValue(); 
       InsMask >>= Amount; 
       Amount = 32-Amount;
+      if (Op0Opc == ISD::SHL) IsRotate = true;
       break;
     case ISD::AND: 
       InsMask &= (unsigned)CN->getValue();
@@ -887,6 +914,16 @@ bool ISel::SelectBitfieldInsert(SDOperand OR, unsigned Result) {
   unsigned MB, ME;
   if (((TgtMask ^ InsMask) == 0xFFFFFFFF) && IsRunOfOnes(InsMask, MB, ME)) {
     unsigned Tmp1, Tmp2;
+    // Check for rotlwi / rotrwi here, a special case of bitfield insert
+    // where both bitfield halves are sourced from the same value.
+    if (IsRotate && 
+        OR.getOperand(0).getOperand(0) == OR.getOperand(1).getOperand(0)) {
+      ++Rotates;  // Statistic
+      Tmp1 = SelectExpr(OR.getOperand(0).getOperand(0));
+      BuildMI(BB, PPC::RLWINM, 4, Result).addReg(Tmp1).addImm(Amount)
+        .addImm(0).addImm(31);
+      return true;
+    }
     if (Op0Opc == ISD::AND)
       Tmp1 = SelectExpr(OR.getOperand(0).getOperand(0));
     else
@@ -954,26 +991,38 @@ bool ISel::SelectAddr(SDOperand N, unsigned& Reg, int& offset)
 
 void ISel::SelectBranchCC(SDOperand N)
 {
-  assert(N.getOpcode() == ISD::BRCOND && "Not a BranchCC???");
   MachineBasicBlock *Dest = 
     cast<BasicBlockSDNode>(N.getOperand(2))->getBasicBlock();
 
-  // Get the MBB we will fall through to so that we can hand it off to the
-  // branch selection pass as an argument to the PPC::COND_BRANCH pseudo op.
-  //ilist<MachineBasicBlock>::iterator It = BB;
-  //MachineBasicBlock *Fallthrough = ++It;
-  
   Select(N.getOperand(0));  //chain
   unsigned Opc = SelectSetCR0(N.getOperand(1));
-  // FIXME: Use this once we have something approximating two-way branches
-  // We cannot currently use this in case the ISel hands us something like
-  // BRcc MBBx
-  // BR MBBy
-  // since the fallthrough basic block for the conditional branch does not start
-  // with the unconditional branch (it is skipped over).
-  //BuildMI(BB, PPC::COND_BRANCH, 4).addReg(PPC::CR0).addImm(Opc)
-  //  .addMBB(Dest).addMBB(Fallthrough);
-  BuildMI(BB, Opc, 2).addReg(PPC::CR0).addMBB(Dest);
+
+  // Iterate to the next basic block, unless we're already at the end of the
+  ilist<MachineBasicBlock>::iterator It = BB, E = BB->getParent()->end();
+  if (It != E) ++It;
+
+  // If this is a two way branch, then grab the fallthrough basic block argument
+  // and build a PowerPC branch pseudo-op, suitable for long branch conversion
+  // if necessary by the branch selection pass.  Otherwise, emit a standard
+  // conditional branch.
+  if (N.getOpcode() == ISD::BRCONDTWOWAY) {
+    MachineBasicBlock *Fallthrough = 
+      cast<BasicBlockSDNode>(N.getOperand(3))->getBasicBlock();
+    if (Dest != It) {
+      BuildMI(BB, PPC::COND_BRANCH, 4).addReg(PPC::CR0).addImm(Opc)
+        .addMBB(Dest).addMBB(Fallthrough);
+      if (Fallthrough != It)
+        BuildMI(BB, PPC::B, 1).addMBB(Fallthrough);
+    } else {
+      if (Fallthrough != It) {
+        Opc = PPC32InstrInfo::invertPPCBranchOpcode(Opc);
+        BuildMI(BB, PPC::COND_BRANCH, 4).addReg(PPC::CR0).addImm(Opc)
+          .addMBB(Fallthrough).addMBB(Dest);
+      }
+    }
+  } else {
+    BuildMI(BB, Opc, 2).addReg(PPC::CR0).addMBB(Dest);
+  }
   return;
 }
 
@@ -1670,7 +1719,6 @@ unsigned ISel::SelectExpr(SDOperand N) {
     if (N.getOperand(0).getOpcode() == ISD::XOR &&
         N.getOperand(0).getOperand(1).getOpcode() == ISD::Constant &&
         cast<ConstantSDNode>(N.getOperand(0).getOperand(1))->isAllOnesValue()) {
-      ++NotLogic;
       Tmp1 = SelectExpr(N.getOperand(0).getOperand(0));
       Tmp2 = SelectExpr(N.getOperand(1));
       BuildMI(BB, PPC::EQV, 2, Result).addReg(Tmp1).addReg(Tmp2);
@@ -1679,7 +1727,6 @@ unsigned ISel::SelectExpr(SDOperand N) {
     // Check for NOT, NOR, and NAND: xor (copy, or, and), -1
     if (N.getOperand(1).getOpcode() == ISD::Constant &&
         cast<ConstantSDNode>(N.getOperand(1))->isAllOnesValue()) {
-      ++NotLogic;
       switch(N.getOperand(0).getOpcode()) {
       case ISD::OR:
         Tmp1 = SelectExpr(N.getOperand(0).getOperand(0));
@@ -2145,6 +2192,7 @@ void ISel::Select(SDOperand N) {
     return;
   }
   case ISD::BRCOND: 
+  case ISD::BRCONDTWOWAY:
     SelectBranchCC(N);
     return;
   case ISD::CopyToReg:
