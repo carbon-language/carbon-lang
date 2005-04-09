@@ -49,6 +49,7 @@ namespace {
       addRegisterClass(MVT::f64, PPC32::FPRCRegisterClass);
       
       // PowerPC has no intrinsics for these particular operations
+      setOperationAction(ISD::BRCONDTWOWAY, MVT::Other, Expand);
       setOperationAction(ISD::MEMMOVE, MVT::Other, Expand);
       setOperationAction(ISD::MEMSET, MVT::Other, Expand);
       setOperationAction(ISD::MEMCPY, MVT::Other, Expand);
