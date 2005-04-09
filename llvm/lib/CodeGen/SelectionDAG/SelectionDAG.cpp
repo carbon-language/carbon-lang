@@ -766,6 +766,17 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
       if (!C2) return N2;         // X and 0 -> 0
       if (N2C->isAllOnesValue())
 	return N1;                // X and -1 -> X
+
+      // and (zero_extend_inreg x:16:32), 1 -> and x, 1
+      if (N1.getOpcode() == ISD::ZERO_EXTEND_INREG ||
+          N1.getOpcode() == ISD::SIGN_EXTEND_INREG) {
+        // If we are masking out the part of our input that was extended, just
+        // mask the input to the extension directly.
+        unsigned ExtendBits =
+          MVT::getSizeInBits(cast<MVTSDNode>(N1)->getExtraValueType());
+        if ((C2 & (~0ULL << ExtendBits)) == 0)
+          return getNode(ISD::AND, VT, N1.getOperand(0), N2);
+      }
       break;
     case ISD::OR:
       if (!C2)return N1;          // X or 0 -> X
