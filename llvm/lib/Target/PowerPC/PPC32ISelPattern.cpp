@@ -1000,7 +1000,7 @@ void ISel::SelectBranchCC(SDOperand N)
 
   // Iterate to the next basic block, unless we're already at the end of the
   ilist<MachineBasicBlock>::iterator It = BB, E = BB->getParent()->end();
-  if (It != E) ++It;
+  if (++It == E) It = BB;
 
   // If this is a two way branch, then grab the fallthrough basic block argument
   // and build a PowerPC branch pseudo-op, suitable for long branch conversion
