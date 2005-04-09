@@ -3742,7 +3742,7 @@ void PPC32ISel::emitGEPOperation(MachineBasicBlock *MBB,
   User::op_iterator IdxEnd = GEPI->op_end();
   const TargetData &TD = TM.getTargetData();
   const Type *Ty = Src->getType();
-  int64_t constValue = 0;
+  int32_t constValue = 0;
   
   // Record the operations to emit the GEP in a vector so that we can emit them
   // after having analyzed the entire instruction.
