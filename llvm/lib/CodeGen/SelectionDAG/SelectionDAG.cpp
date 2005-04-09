@@ -952,6 +952,27 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
       }
     }
 
+    // If this is a selectcc, check to see if we can simplify the result.
+    if (SetCCSDNode *SetCC = dyn_cast<SetCCSDNode>(N1)) {
+      if (ConstantFPSDNode *CFP =
+          dyn_cast<ConstantFPSDNode>(SetCC->getOperand(1)))
+        if (CFP->getValue() == 0.0) {   // Allow either -0.0 or 0.0
+          // select (setg[te] X, +/-0.0), X, fneg(X) -> fabs
+          if ((SetCC->getCondition() == ISD::SETGE ||
+               SetCC->getCondition() == ISD::SETGT) &&
+              N2 == SetCC->getOperand(0) && N3.getOpcode() == ISD::FNEG &&
+              N3.getOperand(0) == N2)
+            return getNode(ISD::FABS, VT, N2);
+
+          // select (setl[te] X, +/-0.0), fneg(X), X -> fabs
+          if ((SetCC->getCondition() == ISD::SETLT ||
+               SetCC->getCondition() == ISD::SETLE) &&
+              N3 == SetCC->getOperand(0) && N2.getOpcode() == ISD::FNEG &&
+              N2.getOperand(0) == N3)
+            return getNode(ISD::FABS, VT, N3);
+        }
+
+    }
     break;
   case ISD::BRCOND:
     if (N2C)
