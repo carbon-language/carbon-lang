@@ -105,6 +105,11 @@ class MachineFunction : private Annotation {
   /// for other target specific uses.
   bool *UsedPhysRegs;
 
+  /// LiveIns/LiveOuts - Keep track of the physical registers that are
+  /// livein/liveout of the function.  Live in values are typically arguments in
+  /// registers, live out values are typically return values in registers.
+  std::vector<unsigned> LiveIns, LiveOuts;
+
 public:
   MachineFunction(const Function *Fn, const TargetMachine &TM);
   ~MachineFunction();
@@ -166,6 +171,22 @@ public:
   /// changePhyRegUsed - This method allows code that runs after register
   /// allocation to keep the PhysRegsUsed array up-to-date.
   void changePhyRegUsed(unsigned Reg, bool State) { UsedPhysRegs[Reg] = State; }
+
+
+  // LiveIn/LiveOut management methods.
+
+  /// addLiveIn/Out - Add the specified register as a live in/out.  Note that it
+  /// is an error to add the same register to the same set more than once.
+  void addLiveIn(unsigned Reg) { LiveIns.push_back(Reg); }
+  void addLiveOut(unsigned Reg) { LiveOuts.push_back(Reg); }
+  
+  // Iteration support for live in/out sets.  These sets are kept in sorted
+  // order by their register number.
+  typedef std::vector<unsigned>::const_iterator liveinout_iterator;
+  liveinout_iterator livein_begin() const { return LiveIns.begin(); }
+  liveinout_iterator livein_end()   const { return LiveIns.end(); }
+  liveinout_iterator liveout_begin() const { return LiveOuts.begin(); }
+  liveinout_iterator liveout_end()   const { return LiveOuts.end(); }
 
   /// getBlockNumbered - MachineBasicBlocks are automatically numbered when they
   /// are inserted into the machine function.  The block number for a machine
