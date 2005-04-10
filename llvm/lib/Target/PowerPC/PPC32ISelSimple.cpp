@@ -292,9 +292,9 @@ namespace {
 
     // Comparison operators...
     void visitSetCondInst(SetCondInst &I);
-    unsigned EmitComparison(unsigned OpNum, Value *Op0, Value *Op1,
-                            MachineBasicBlock *MBB,
-                            MachineBasicBlock::iterator MBBI);
+    void EmitComparison(unsigned OpNum, Value *Op0, Value *Op1,
+                        MachineBasicBlock *MBB,
+                        MachineBasicBlock::iterator MBBI);
     void visitSelectInst(SelectInst &SI);
     
     
@@ -1049,7 +1049,7 @@ static unsigned getSetCCNumber(unsigned Opcode) {
   }
 }
 
-static unsigned getPPCOpcodeForSetCCNumber(unsigned Opcode) {
+static unsigned getPPCOpcodeForSetCCOpcode(unsigned Opcode) {
   switch (Opcode) {
   default: assert(0 && "Unknown setcc instruction!");
   case Instruction::SetEQ: return PPC::BEQ;
@@ -1101,12 +1101,12 @@ unsigned PPC32ISel::ExtendOrClear(MachineBasicBlock *MBB,
   return Reg;
 }
 
-/// EmitComparison - emits a comparison of the two operands, returning the
-/// extended setcc code to use.  The result is in CR0.
+/// EmitComparison - emits a comparison of the two operands. The result is in
+/// CR0.
 ///
-unsigned PPC32ISel::EmitComparison(unsigned OpNum, Value *Op0, Value *Op1,
-                                   MachineBasicBlock *MBB,
-                                   MachineBasicBlock::iterator IP) {
+void PPC32ISel::EmitComparison(unsigned OpNum, Value *Op0, Value *Op1,
+                               MachineBasicBlock *MBB,
+                               MachineBasicBlock::iterator IP) {
   // The arguments are already supposed to be of the same type.
   const Type *CompTy = Op0->getType();
   unsigned Class = getClassB(CompTy);
@@ -1134,7 +1134,7 @@ unsigned PPC32ISel::EmitComparison(unsigned OpNum, Value *Op0, Value *Op1,
         unsigned Op1r = getReg(Op1, MBB, IP);
         BuildMI(*MBB, IP, Opcode, 2, PPC::CR0).addReg(Op0r).addReg(Op1r);
       }
-      return OpNum;
+      return;
     } else {
       assert(Class == cLong && "Unknown integer class!");
       unsigned LowCst = CI->getRawValue();
@@ -1155,7 +1155,7 @@ unsigned PPC32ISel::EmitComparison(unsigned OpNum, Value *Op0, Value *Op1,
         BuildMI(*MBB, IP, PPC::XORIS, 2, HiTmp).addReg(HiLow)
           .addImm(HiCst >> 16);
         BuildMI(*MBB, IP, PPC::ORo, 2, FinalTmp).addReg(LoTmp).addReg(HiTmp);
-        return OpNum;
+        return;
       } else {
         unsigned ConstReg = makeAnotherReg(CompTy);
         copyConstantToRegister(MBB, IP, CI, ConstReg);
@@ -1168,7 +1168,7 @@ unsigned PPC32ISel::EmitComparison(unsigned OpNum, Value *Op0, Value *Op1,
         BuildMI(*MBB, IP, PPC::CRAND, 3).addImm(2).addImm(2).addImm(CR1field);
         BuildMI(*MBB, IP, PPC::CROR, 3).addImm(CR0field).addImm(CR0field)
           .addImm(2);
-        return OpNum;
+        return;
       }
     }
   }
@@ -1207,10 +1207,10 @@ unsigned PPC32ISel::EmitComparison(unsigned OpNum, Value *Op0, Value *Op1,
       BuildMI(*MBB, IP, PPC::CRAND, 3).addImm(2).addImm(2).addImm(CR1field);
       BuildMI(*MBB, IP, PPC::CROR, 3).addImm(CR0field).addImm(CR0field)
         .addImm(2);
-      return OpNum;
+      return;
     }
   }
-  return OpNum;
+  return;
 }
 
 /// visitSetCondInst - emit code to calculate the condition via
@@ -1306,7 +1306,7 @@ void PPC32ISel::visitSetCondInst(SetCondInst &I) {
       return;
   	}
   }
-  unsigned PPCOpcode = getPPCOpcodeForSetCCNumber(Opcode);
+  unsigned PPCOpcode = getPPCOpcodeForSetCCOpcode(Opcode);
 
   // Create an iterator with which to insert the MBB for copying the false value
   // and the MBB to hold the PHI instruction for this SetCC.
@@ -1320,7 +1320,7 @@ void PPC32ISel::visitSetCondInst(SetCondInst &I) {
   //   cmpTY cr0, r1, r2
   //   %TrueValue = li 1
   //   bCC sinkMBB
-  EmitComparison(Opcode, Op0, Op1, BB, BB->end());
+  EmitComparison(OpNum, Op0, Op1, BB, BB->end());
   unsigned TrueValue = makeAnotherReg(I.getType());
   BuildMI(BB, PPC::LI, 1, TrueValue).addSImm(1);
   MachineBasicBlock *copy0MBB = new MachineBasicBlock(LLVM_BB);
@@ -1446,12 +1446,12 @@ void PPC32ISel::emitSelectOperation(MachineBasicBlock *MBB,
         return;
       }
     }
-    OpNum = EmitComparison(OpNum, SCI->getOperand(0),SCI->getOperand(1),MBB,IP);
-    Opcode = getPPCOpcodeForSetCCNumber(SCI->getOpcode());
+    EmitComparison(OpNum, SCI->getOperand(0),SCI->getOperand(1),MBB,IP);
+    Opcode = getPPCOpcodeForSetCCOpcode(SCI->getOpcode());
   } else {
     unsigned CondReg = getReg(Cond, MBB, IP);
     BuildMI(*MBB, IP, PPC::CMPWI, 2, PPC::CR0).addReg(CondReg).addSImm(0);
-    Opcode = getPPCOpcodeForSetCCNumber(Instruction::SetNE);
+    Opcode = getPPCOpcodeForSetCCOpcode(Instruction::SetNE);
   }
 
   MachineBasicBlock *thisMBB = BB;
@@ -1633,9 +1633,9 @@ void PPC32ISel::visitBranchInst(BranchInst &BI) {
   }
 
   unsigned OpNum = getSetCCNumber(SCI->getOpcode());
-  unsigned Opcode = getPPCOpcodeForSetCCNumber(SCI->getOpcode());
+  unsigned Opcode = getPPCOpcodeForSetCCOpcode(SCI->getOpcode());
   MachineBasicBlock::iterator MII = BB->end();
-  OpNum = EmitComparison(OpNum, SCI->getOperand(0), SCI->getOperand(1), BB,MII);
+  EmitComparison(OpNum, SCI->getOperand(0), SCI->getOperand(1), BB,MII);
   
   if (BI.getSuccessor(0) != NextBB) {
     BuildMI(BB, PPC::COND_BRANCH, 4).addReg(PPC::CR0).addImm(Opcode)
