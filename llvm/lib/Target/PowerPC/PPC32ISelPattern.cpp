@@ -151,14 +151,22 @@ PPC32TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
       break;
       case MVT::i64: ObjSize = 8;
       if (!ArgLive) break;
-      // FIXME: can split 64b load between reg/mem if it is last arg in regs
-      if (GPR_remaining > 1) {
+      if (GPR_remaining > 0) {
+        SDOperand argHi, argLo;
         MF.addLiveIn(GPR[GPR_idx]);
-        MF.addLiveIn(GPR[GPR_idx+1]);
-        // Copy the extracted halves into the virtual registers
-        SDOperand argHi = DAG.getCopyFromReg(GPR[GPR_idx], MVT::i32, 
-                                             DAG.getRoot());
-        SDOperand argLo = DAG.getCopyFromReg(GPR[GPR_idx+1], MVT::i32, argHi);
+        argHi = DAG.getCopyFromReg(GPR[GPR_idx], MVT::i32, DAG.getRoot());
+        // If we have two or more remaining argument registers, then both halves
+        // of the i64 can be sourced from there.  Otherwise, the lower half will
+        // have to come off the stack.  This can happen when an i64 is preceded
+        // by 28 bytes of arguments.
+        if (GPR_remaining > 1) {
+          MF.addLiveIn(GPR[GPR_idx+1]);
+          argLo = DAG.getCopyFromReg(GPR[GPR_idx+1], MVT::i32, argHi);
+        } else {
+          int FI = MFI->CreateFixedObject(4, ArgOffset+4);
+          SDOperand FIN = DAG.getFrameIndex(FI, MVT::i32);
+          argLo = DAG.getLoad(MVT::i32, DAG.getEntryNode(), FIN);
+        }
         // Build the outgoing arg thingy
         argt = DAG.getNode(ISD::BUILD_PAIR, MVT::i64, argLo, argHi);
         newroot = argLo;
