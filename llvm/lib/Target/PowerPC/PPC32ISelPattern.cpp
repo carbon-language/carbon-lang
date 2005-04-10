@@ -1022,7 +1022,9 @@ void ISel::SelectBranchCC(SDOperand N)
       }
     }
   } else {
-    BuildMI(BB, Opc, 2).addReg(PPC::CR0).addMBB(Dest);
+    BuildMI(BB, PPC::COND_BRANCH, 4).addReg(PPC::CR0).addImm(Opc)
+      .addMBB(Dest).addMBB(It);
+    //BuildMI(BB, Opc, 2).addReg(PPC::CR0).addMBB(Dest);
   }
   return;
 }

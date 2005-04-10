@@ -107,7 +107,7 @@ namespace {
       // Branches can take an immediate operand.  This is used by the branch
       // selection pass to print $+8, an eight byte displacement from the PC.
       if (MI->getOperand(OpNo).isImmediate()) {
-        O << "$+" << MI->getOperand(OpNo).getImmedValue() << '\n';
+        O << "$+" << MI->getOperand(OpNo).getImmedValue();
       } else {
         printOp(MI->getOperand(OpNo), 
                 TM.getInstrInfo()->isCall(MI->getOpcode()));
