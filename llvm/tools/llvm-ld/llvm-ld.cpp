@@ -221,10 +221,11 @@ static int GenerateAssembly(const std::string &OutputFilename,
                             const sys::Path &llc) {
   // Run LLC to convert the bytecode file into assembly code.
   std::vector<const char*> args;
-  args.push_back( "-f");
-  args.push_back( "-o");
-  args.push_back( OutputFilename.c_str() );
-  args.push_back( InputFilename.c_str() );
+  args.push_back(llc.c_str());
+  args.push_back("-f");
+  args.push_back("-o");
+  args.push_back(OutputFilename.c_str());
+  args.push_back(InputFilename.c_str());
   args.push_back(0);
 
   return sys::Program::ExecuteAndWait(llc,&args[0]);
@@ -237,11 +238,12 @@ static int GenerateCFile(const std::string &OutputFile,
                          const sys::Path &llc) {
   // Run LLC to convert the bytecode file into C.
   std::vector<const char*> args;
-  args.push_back( "-march=c");
-  args.push_back( "-f");
-  args.push_back( "-o");
-  args.push_back( OutputFile.c_str() );
-  args.push_back( InputFile.c_str() );
+  args.push_back(llc.c_str());
+  args.push_back("-march=c");
+  args.push_back("-f");
+  args.push_back("-o");
+  args.push_back(OutputFile.c_str());
+  args.push_back(InputFile.c_str());
   args.push_back(0);
   return sys::Program::ExecuteAndWait(llc, &args[0]);
 }
@@ -290,6 +292,7 @@ static int GenerateNative(const std::string &OutputFilename,
   //  and linker because we don't know where to put the _start symbol.
   //  GCC mysteriously knows how to do it.
   std::vector<const char*> args;
+  args.push_back(gcc.c_str());
   args.push_back("-fno-strict-aliasing");
   args.push_back("-O3");
   args.push_back("-o");

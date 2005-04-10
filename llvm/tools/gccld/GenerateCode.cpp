@@ -300,6 +300,7 @@ int llvm::GenerateAssembly(const std::string &OutputFilename,
                            const sys::Path &llc) {
   // Run LLC to convert the bytecode file into assembly code.
   std::vector<const char*> args;
+  args.push_back(llc.c_str());
   args.push_back("-f");
   args.push_back("-o");
   args.push_back(OutputFilename.c_str());
@@ -313,9 +314,10 @@ int llvm::GenerateAssembly(const std::string &OutputFilename,
 /// specified bytecode file.
 int llvm::GenerateCFile(const std::string &OutputFile,
                         const std::string &InputFile,
-                        const sys::Path &llc ) {
+                        const sys::Path &llc) {
   // Run LLC to convert the bytecode file into C.
   std::vector<const char*> args;
+  args.push_back(llc.c_str());
   args.push_back("-march=c");
   args.push_back("-f");
   args.push_back("-o");
@@ -372,6 +374,7 @@ int llvm::GenerateNative(const std::string &OutputFilename,
   //  and linker because we don't know where to put the _start symbol.
   //  GCC mysteriously knows how to do it.
   std::vector<const char*> args;
+  args.push_back(gcc.c_str());
   args.push_back("-fno-strict-aliasing");
   args.push_back("-O3");
   args.push_back("-o");
