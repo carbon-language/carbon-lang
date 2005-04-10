@@ -84,10 +84,8 @@ PPC32RegisterInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
   unsigned OC = Opcode[getIdx(getClass(SrcReg))];
   if (SrcReg == PPC::LR) {
     BuildMI(MBB, MI, PPC::MFLR, 1, PPC::R11).addReg(PPC::LR);
-    BuildMI(MBB, MI, PPC::IMPLICIT_DEF, 0, PPC::R0);
     addFrameReference(BuildMI(MBB, MI, OC, 3).addReg(PPC::R11),FrameIdx);
   } else {
-    BuildMI(MBB, MI, PPC::IMPLICIT_DEF, 0, PPC::R0);
     addFrameReference(BuildMI(MBB, MI, OC, 3).addReg(SrcReg),FrameIdx);
   }
 }
@@ -101,11 +99,9 @@ PPC32RegisterInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
   };
   unsigned OC = Opcode[getIdx(getClass(DestReg))];
   if (DestReg == PPC::LR) {
-    BuildMI(MBB, MI, PPC::IMPLICIT_DEF, 0, PPC::R0);
     addFrameReference(BuildMI(MBB, MI, OC, 2, PPC::R11), FrameIdx);
     BuildMI(MBB, MI, PPC::MTLR, 1).addReg(PPC::R11);
   } else {
-    BuildMI(MBB, MI, PPC::IMPLICIT_DEF, 0, PPC::R0);
     addFrameReference(BuildMI(MBB, MI, OC, 2, DestReg), FrameIdx);
   }
 }
