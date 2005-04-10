@@ -17,6 +17,7 @@
 #define LLVM_CODEGEN_MACHINEINSTR_H
 
 #include "llvm/ADT/iterator"
+#include "llvm/Support/DataTypes.h"
 #include <vector>
 #include <cassert>
 
@@ -117,7 +118,7 @@ private:
                         //   the generated machine code.     
                         // LLVM global for MO_GlobalAddress.
 
-    int immedVal;		// Constant value for an explicit constant
+    int64_t immedVal;		// Constant value for an explicit constant
 
     MachineBasicBlock *MBB;     // For MO_MachineBasicBlock type
     const char *SymbolName;     // For MO_ExternalSymbol type
@@ -138,7 +139,8 @@ private:
     memset (&extra, 0, sizeof (extra));
   }
 
-  MachineOperand(int ImmVal = 0, MachineOperandType OpTy = MO_VirtualRegister)
+  MachineOperand(int64_t ImmVal = 0,
+        MachineOperandType OpTy = MO_VirtualRegister)
     : flags(0), opType(OpTy) {
     zeroContents ();
     contents.immedVal = ImmVal;
@@ -259,7 +261,7 @@ public:
     assert(opType == MO_MachineRegister && "Wrong MachineOperand accessor");
     return extra.regNum;
   }
-  int getImmedValue() const {
+  int64_t getImmedValue() const {
     assert(isImmediate() && "Wrong MachineOperand accessor");
     return contents.immedVal;
   }
@@ -599,6 +601,16 @@ public:
   /// machine instruction.
   ///
   void addZeroExtImmOperand(int intValue) {
+    assert(!OperandsComplete() &&
+           "Trying to add an operand to a machine instr that is already done!");
+    operands.push_back(
+      MachineOperand(intValue, MachineOperand::MO_UnextendedImmed));
+  }
+
+  /// addZeroExtImm64Operand - Add a zero extended 64-bit constant argument
+  /// to the machine instruction.
+  ///
+  void addZeroExtImm64Operand(uint64_t intValue) {
     assert(!OperandsComplete() &&
            "Trying to add an operand to a machine instr that is already done!");
     operands.push_back(
