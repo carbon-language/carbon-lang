@@ -1305,21 +1305,12 @@ unsigned ISel::SelectExprFP(SDOperand N, unsigned Result)
     Tmp1 = SelectExpr(N.getOperand(0));  // Get the operand register
     Tmp2 = MakeReg(MVT::f64); // temp reg to load the integer value into
     Tmp3 = MakeReg(MVT::i32); // temp reg to hold the conversion constant
-    unsigned ConstF = MakeReg(MVT::f64); // temp reg to hold the fp constant
     
     int FrameIdx = BB->getParent()->getFrameInfo()->CreateStackObject(8, 8);
     MachineConstantPool *CP = BB->getParent()->getConstantPool();
     
-    // FIXME: pull this FP constant generation stuff out into something like
-    // the simple ISel's getReg.
     if (IsUnsigned) {
-      ConstantFP *CFP = ConstantFP::get(Type::DoubleTy, 0x1.000000p52);
-      unsigned CPI = CP->getConstantPoolIndex(CFP);
-      // Load constant fp value
-      unsigned Tmp4 = MakeReg(MVT::i32);
-      BuildMI(BB, PPC::LOADHiAddr, 2, Tmp4).addReg(getGlobalBaseReg())
-        .addConstantPoolIndex(CPI);
-      BuildMI(BB, PPC::LFD, 2, ConstF).addConstantPoolIndex(CPI).addReg(Tmp4);
+      unsigned ConstF = getConstDouble(0x1.000000p52);
       // Store the hi & low halves of the fp value, currently in int regs
       BuildMI(BB, PPC::LIS, 1, Tmp3).addSImm(0x4330);
       addFrameReference(BuildMI(BB, PPC::STW, 3).addReg(Tmp3), FrameIdx);
@@ -1328,14 +1319,8 @@ unsigned ISel::SelectExprFP(SDOperand N, unsigned Result)
       // Generate the return value with a subtract
       BuildMI(BB, PPC::FSUB, 2, Result).addReg(Tmp2).addReg(ConstF);
     } else {
-      ConstantFP *CFP = ConstantFP::get(Type::DoubleTy, 0x1.000008p52);
-      unsigned CPI = CP->getConstantPoolIndex(CFP);
-      // Load constant fp value
-      unsigned Tmp4 = MakeReg(MVT::i32);
+      unsigned ConstF = getConstDouble(0x1.000008p52);
       unsigned TmpL = MakeReg(MVT::i32);
-      BuildMI(BB, PPC::LOADHiAddr, 2, Tmp4).addReg(getGlobalBaseReg())
-        .addConstantPoolIndex(CPI);
-      BuildMI(BB, PPC::LFD, 2, ConstF).addConstantPoolIndex(CPI).addReg(Tmp4);
       // Store the hi & low halves of the fp value, currently in int regs
       BuildMI(BB, PPC::LIS, 1, Tmp3).addSImm(0x4330);
       addFrameReference(BuildMI(BB, PPC::STW, 3).addReg(Tmp3), FrameIdx);
