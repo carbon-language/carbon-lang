@@ -892,6 +892,12 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
       return getNode(ISD::SUB, VT, N1, N2.getOperand(0));
     if (N1.getOpcode() == ISD::FNEG)          // ((-A)+B) -> B-A
       return getNode(ISD::SUB, VT, N2, N1.getOperand(0));
+    if (N1.getOpcode() == ISD::SUB && isa<ConstantSDNode>(N1.getOperand(0)) &&
+        cast<ConstantSDNode>(N1.getOperand(0))->getValue() == 0)
+      return getNode(ISD::SUB, VT, N2, N1.getOperand(1)); // (0-A)+B -> B-A
+    if (N2.getOpcode() == ISD::SUB && isa<ConstantSDNode>(N2.getOperand(0)) &&
+        cast<ConstantSDNode>(N2.getOperand(0))->getValue() == 0)
+      return getNode(ISD::SUB, VT, N1, N2.getOperand(1)); // A+(0-B) -> A-B
     break;
   case ISD::SUB:
     if (N1.getOpcode() == ISD::ADD) {
