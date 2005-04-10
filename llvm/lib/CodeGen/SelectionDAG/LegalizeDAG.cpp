@@ -1937,7 +1937,7 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
 
     // The low part is just a zero extension of the input (which degenerates to
     // a copy).
-    Lo = DAG.getNode(ISD::ZERO_EXTEND, NVT, LegalizeOp(Node->getOperand(0)));
+    Lo = DAG.getNode(ISD::ZERO_EXTEND, NVT, In);
     
     // The high part is just a zero.
     Hi = DAG.getConstant(0, NVT);

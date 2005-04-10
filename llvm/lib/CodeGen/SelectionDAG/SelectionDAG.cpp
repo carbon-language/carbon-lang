@@ -767,6 +767,10 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
       if (N2C->isAllOnesValue())
 	return N1;                // X and -1 -> X
 
+      // FIXME: Should add a corresponding version of this for
+      // ZERO_EXTEND/SIGN_EXTEND by converting them to an ANY_EXTEND node which
+      // we don't have yet.
+
       // and (zero_extend_inreg x:16:32), 1 -> and x, 1
       if (N1.getOpcode() == ISD::ZERO_EXTEND_INREG ||
           N1.getOpcode() == ISD::SIGN_EXTEND_INREG) {
