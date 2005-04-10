@@ -1101,6 +1101,12 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,SDOperand N1,
         return N1;
     }
 
+    // If we are (zero|sign) extending a [zs]extload, return just the load.
+    if ((N1.getOpcode() == ISD::ZEXTLOAD && Opcode == ISD::ZERO_EXTEND_INREG) ||
+        (N1.getOpcode() == ISD::SEXTLOAD && Opcode == ISD::SIGN_EXTEND_INREG))
+      if (cast<MVTSDNode>(N1)->getExtraValueType() <= EVT)
+        return N1;
+
     // If we are extending the result of a setcc, and we already know the
     // contents of the top bits, eliminate the extension.
     if (N1.getOpcode() == ISD::SETCC)
