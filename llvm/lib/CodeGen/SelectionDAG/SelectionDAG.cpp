@@ -1119,6 +1119,25 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,SDOperand N1,
         if (Opcode == ISD::SIGN_EXTEND_INREG) return N1;
         break;
       }
+
+    // If we are sign extending the result of an (and X, C) operation, and we
+    // know the extended bits are zeros already, don't do the extend.
+    if (N1.getOpcode() == ISD::AND)
+      if (ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1.getOperand(1))) {
+        uint64_t Mask = N1C->getValue();
+        unsigned NumBits = MVT::getSizeInBits(EVT);
+        if (Opcode == ISD::ZERO_EXTEND_INREG) {
+          if ((Mask & (~0ULL << NumBits)) == 0)
+            return N1;
+          else
+            return getNode(ISD::AND, VT, N1.getOperand(0),
+                           getConstant(Mask & (~0ULL >> (64-NumBits)), VT));
+        } else {
+          assert(Opcode == ISD::SIGN_EXTEND_INREG);
+          if ((Mask & (~0ULL << (NumBits-1))) == 0)
+            return N1;
+        }
+      }
     break;
   }
 
