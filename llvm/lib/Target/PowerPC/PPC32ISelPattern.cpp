@@ -1388,7 +1388,8 @@ unsigned ISel::SelectExpr(SDOperand N) {
     DestType = N.getValue(0).getValueType();
     
   if (DestType == MVT::f64 || DestType == MVT::f32)
-    if (ISD::LOAD != opcode && ISD::EXTLOAD != opcode && ISD::UNDEF != opcode)
+    if (ISD::LOAD != opcode && ISD::EXTLOAD != opcode && 
+        ISD::UNDEF != opcode && ISD::CALL != opcode)
       return SelectExprFP(N, Result);
 
   switch (opcode) {
