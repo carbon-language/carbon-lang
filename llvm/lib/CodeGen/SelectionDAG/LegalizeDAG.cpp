@@ -1355,7 +1355,8 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
   case ISD::LOAD:
     Tmp1 = LegalizeOp(Node->getOperand(0));   // Legalize the chain.
     Tmp2 = LegalizeOp(Node->getOperand(1));   // Legalize the pointer.
-    Result = DAG.getNode(ISD::EXTLOAD, NVT, Tmp1, Tmp2, VT);
+    // FIXME: When the DAG combiner exists, change this to use EXTLOAD!
+    Result = DAG.getNode(ISD::ZEXTLOAD, NVT, Tmp1, Tmp2, VT);
 
     // Remember that we legalized the chain.
     AddLegalizedOperand(Op.getValue(1), Result.getValue(1));
