@@ -442,22 +442,47 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
 
   case ISD::EXTLOAD:
   case ISD::SEXTLOAD:
-  case ISD::ZEXTLOAD:
+  case ISD::ZEXTLOAD: {
     Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
     Tmp2 = LegalizeOp(Node->getOperand(1));  // Legalize the pointer.
-    if (Tmp1 != Node->getOperand(0) ||
-        Tmp2 != Node->getOperand(1))
-      Result = DAG.getNode(Node->getOpcode(), Node->getValueType(0), Tmp1, Tmp2,
-                           cast<MVTSDNode>(Node)->getExtraValueType());
-    else
-      Result = SDOperand(Node, 0);
-    
-    // Since loads produce two values, make sure to remember that we legalized
-    // both of them.
-    AddLegalizedOperand(SDOperand(Node, 0), Result);
-    AddLegalizedOperand(SDOperand(Node, 1), Result.getValue(1));
-    return Result.getValue(Op.ResNo);
 
+    MVT::ValueType SrcVT = cast<MVTSDNode>(Node)->getExtraValueType();
+    switch (TLI.getOperationAction(Node->getOpcode(), SrcVT)) {
+    case TargetLowering::Promote:
+    default: assert(0 && "This action is not supported yet!");
+    case TargetLowering::Legal:
+      if (Tmp1 != Node->getOperand(0) ||
+          Tmp2 != Node->getOperand(1))
+        Result = DAG.getNode(Node->getOpcode(), Node->getValueType(0),
+                             Tmp1, Tmp2, SrcVT);
+      else
+        Result = SDOperand(Node, 0);
+
+      // Since loads produce two values, make sure to remember that we legalized
+      // both of them.
+      AddLegalizedOperand(SDOperand(Node, 0), Result);
+      AddLegalizedOperand(SDOperand(Node, 1), Result.getValue(1));
+      return Result.getValue(Op.ResNo);
+      break;
+    case TargetLowering::Expand:
+      assert(Node->getOpcode() != ISD::EXTLOAD &&
+             "EXTLOAD should always be supported!");
+      // Turn the unsupported load into an EXTLOAD followed by an explicit
+      // zero/sign extend inreg.
+      Result = DAG.getNode(ISD::EXTLOAD, Node->getValueType(0),
+                           Tmp1, Tmp2, SrcVT);
+      unsigned ExtOp = Node->getOpcode() == ISD::SEXTLOAD ?
+                            ISD::SIGN_EXTEND_INREG : ISD::ZERO_EXTEND_INREG;
+      SDOperand ValRes = DAG.getNode(ExtOp, Result.getValueType(),
+                                     Result, SrcVT);
+      AddLegalizedOperand(SDOperand(Node, 0), ValRes);
+      AddLegalizedOperand(SDOperand(Node, 1), Result.getValue(1));
+      if (Op.ResNo)
+        return Result.getValue(1);
+      return ValRes;
+    }
+    assert(0 && "Unreachable");
+  }
   case ISD::EXTRACT_ELEMENT:
     // Get both the low and high parts.
     ExpandOp(Node->getOperand(0), Tmp1, Tmp2);
