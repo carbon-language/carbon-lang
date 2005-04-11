@@ -667,7 +667,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
 
     /* otherwise, our immediate is big, so we use movl */
     uint64_t Imm = immediate;
-    BuildMI(BB, IA64::MOVLIMM64, 1, Result).addU64Imm(Imm);
+    BuildMI(BB, IA64::MOVLIMM64, 1, Result).addImm64(Imm);
     return Result;
   }
 
