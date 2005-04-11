@@ -275,11 +275,11 @@ public:
   }
   int getFrameIndex() const {
     assert(isFrameIndex() && "Wrong MachineOperand accessor");
-    return contents.immedVal;
+    return (int)contents.immedVal;
   }
   unsigned getConstantPoolIndex() const {
     assert(isConstantPoolIndex() && "Wrong MachineOperand accessor");
-    return contents.immedVal;
+    return (unsigned)contents.immedVal;
   }
   GlobalValue *getGlobal() const {
     assert(isGlobalAddress() && "Wrong MachineOperand accessor");
