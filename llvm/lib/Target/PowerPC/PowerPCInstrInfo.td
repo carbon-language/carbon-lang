@@ -1,3 +1,4 @@
+
 //===- PowerPCInstrInfo.td - The PowerPC Instruction Set -----*- tablegen -*-=//
 // 
 //                     The LLVM Compiler Infrastructure
@@ -221,38 +222,38 @@ def LDX  : XForm_1<31,  21, 1, 0, (ops GPRC:$dst, GPRC:$base, GPRC:$index),
                    "ldx $dst, $base, $index">;
 }
 def MFCR : XForm_5<31,  19, 0, 0, (ops GPRC:$dst), "mfcr $dst">;
-def AND  : XForm_6<31,  28, 0, 0, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
+def AND  : XForm_6<31,  28, 0, 0, 0, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
                    "and $rA, $rS, $rB">;
-
-def ANDo : XForm_6<31,  28, 0, 0, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
-                   "and. $rA, $rS, $rB">, DOT;
-def ANDC : XForm_6<31,  60, 0, 0, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
+let Defs = [CR0] in
+def ANDo : XForm_6<31,  28, 1, 0, 0, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
+                   "and. $rA, $rS, $rB">;
+def ANDC : XForm_6<31,  60, 0, 0, 0, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
                    "andc $rA, $rS, $rB">;
-def EQV  : XForm_6<31, 284, 0, 0, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
+def EQV  : XForm_6<31, 284, 0, 0, 0, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
                    "eqv $rA, $rS, $rB">;
-def NAND : XForm_6<31, 476, 0, 0, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
+def NAND : XForm_6<31, 476, 0, 0, 0, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
                    "nand $rA, $rS, $rB">;
-def NOR  : XForm_6<31, 124, 0, 0, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
+def NOR  : XForm_6<31, 124, 0, 0, 0, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
                    "nor $rA, $rS, $rB">;
-def OR   : XForm_6<31, 444, 0, 0, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
+def OR   : XForm_6<31, 444, 0, 0, 0, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
                    "or $rA, $rS, $rB">;
-def ORo  : XForm_6<31, 444, 0, 0, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
-                   "or. $rA, $rS, $rB">, DOT;
-def ORC  : XForm_6<31, 412, 0, 0, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
+def ORo  : XForm_6<31, 444, 1, 0, 0, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
+                   "or. $rA, $rS, $rB">;
+def ORC  : XForm_6<31, 412, 0, 0, 0, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
                    "orc $rA, $rS, $rB">;
-def SLD  : XForm_6<31,  27, 1, 0, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
+def SLD  : XForm_6<31,  27, 0, 1, 0, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
                    "sld $rA, $rS, $rB">;
-def SLW  : XForm_6<31,  24, 0, 0, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
+def SLW  : XForm_6<31,  24, 0, 0, 0, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
                    "slw $rA, $rS, $rB">;
-def SRD  : XForm_6<31, 539, 1, 0, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
+def SRD  : XForm_6<31, 539, 0, 1, 0, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
                    "srd $rA, $rS, $rB">;
-def SRW  : XForm_6<31, 536, 0, 0, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
+def SRW  : XForm_6<31, 536, 0, 0, 0, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
                    "srw $rA, $rS, $rB">;
-def SRAD : XForm_6<31, 794, 1, 0, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
+def SRAD : XForm_6<31, 794, 0, 1, 0, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
                    "srad $rA, $rS, $rB">;
-def SRAW : XForm_6<31, 792, 0, 0, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
+def SRAW : XForm_6<31, 792, 0, 0, 0, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
                    "sraw $rA, $rS, $rB">;
-def XOR  : XForm_6<31, 316, 0, 0, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
+def XOR  : XForm_6<31, 316, 0, 0, 0, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
                    "xor $rA, $rS, $rB">;
 let isStore = 1 in {
 def STBX  : XForm_8<31, 215, 0, 0, (ops GPRC:$rS, GPRC:$rA, GPRC:$rB),

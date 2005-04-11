@@ -10,14 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-// DOT - This is a marker that should be added to instructions that set the
-// flags in CR0.
-class DOT {
-  list<Register> Defs = [CR0];
-  bit RC = 1;
-}
-
-
 class Format<bits<5> val> {
   bits<5> Value = val;
 }
@@ -225,19 +217,18 @@ class XForm_base_r3xo<bits<6> opcode, bits<10> xo, bit rc, bit ppc64, bit vmx,
 // This is the same as XForm_base_r3xo, but the first two operands are swapped
 // when code is emitted.
 class XForm_base_r3xo_swapped
-        <bits<6> opcode, bits<10> xo, bit ppc64, bit vmx,
+        <bits<6> opcode, bits<10> xo, bit rc, bit ppc64, bit vmx,
          dag OL, string asmstr> 
   : I<opcode, ppc64, vmx, OL, asmstr> {
   bits<5> A;
   bits<5> RST;
   bits<5> B;
-  bit RC = 0;
 
   let Inst{6-10}  = RST;
   let Inst{11-15} = A;
   let Inst{16-20} = B;
   let Inst{21-30} = xo;
-  let Inst{31}    = RC;
+  let Inst{31}    = rc;
 }
 
 
@@ -252,10 +243,9 @@ class XForm_5<bits<6> opcode, bits<10> xo, bit ppc64, bit vmx,
   let B = 0;
 }
 
-class XForm_6<bits<6> opcode, bits<10> xo, bit ppc64, bit vmx,
+class XForm_6<bits<6> opcode, bits<10> xo, bit rc, bit ppc64, bit vmx,
               dag OL, string asmstr> 
-  : XForm_base_r3xo_swapped<opcode, xo, ppc64, vmx, OL, asmstr> {
-}
+  : XForm_base_r3xo_swapped<opcode, xo, rc, ppc64, vmx, OL, asmstr>;
 
 class XForm_8<bits<6> opcode, bits<10> xo, bit ppc64, bit vmx,
               dag OL, string asmstr> 
@@ -263,15 +253,13 @@ class XForm_8<bits<6> opcode, bits<10> xo, bit ppc64, bit vmx,
 
 class XForm_10<bits<6> opcode, bits<10> xo, bit rc, bit ppc64, bit vmx,
                dag OL, string asmstr> 
-  : XForm_base_r3xo_swapped<opcode, xo, ppc64, vmx, OL, asmstr> {
-  let RC = rc;
+  : XForm_base_r3xo_swapped<opcode, xo, rc, ppc64, vmx, OL, asmstr> {
 }
 
 class XForm_11<bits<6> opcode, bits<10> xo, bit rc, bit ppc64, bit vmx,
                dag OL, string asmstr> 
-  : XForm_base_r3xo_swapped<opcode, xo, ppc64, vmx, OL, asmstr> {
+  : XForm_base_r3xo_swapped<opcode, xo, rc, ppc64, vmx, OL, asmstr> {
   let B = 0;
-  let RC = rc;
 }
 
 class XForm_16<bits<6> opcode, bits<10> xo, bit ppc64, bit vmx,
