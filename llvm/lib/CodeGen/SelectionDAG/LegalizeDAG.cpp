@@ -910,6 +910,8 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
   case ISD::ADD:
   case ISD::SUB:
   case ISD::MUL:
+  case ISD::MULHS:
+  case ISD::MULHU:
   case ISD::UDIV:
   case ISD::SDIV:
   case ISD::AND:
@@ -1678,12 +1680,20 @@ static SDNode *FindAdjCallStackUp(SDNode *Node) {
 static SDOperand FindInputOutputChains(SDNode *OpNode, SDNode *&OutChain,
                                        SDOperand Entry) {
   SDNode *LatestAdjCallStackDown = Entry.Val;
+  SDNode *LatestAdjCallStackUp = 0;
   FindLatestAdjCallStackDown(OpNode, LatestAdjCallStackDown);
   //std::cerr << "Found node: "; LatestAdjCallStackDown->dump(); std::cerr <<"\n";
-
-  SDNode *LatestAdjCallStackUp = FindAdjCallStackUp(LatestAdjCallStackDown);
-
-
+  
+  // It is possible that no ISD::ADJCALLSTACKDOWN was found because there is no
+  // previous call in the function.  LatestCallStackDown may in that case be
+  // the entry node itself.  Do not attempt to find a matching ADJCALLSTACKUP
+  // unless LatestCallStackDown is an ADJCALLSTACKDOWN.
+  if (LatestAdjCallStackDown->getOpcode() == ISD::ADJCALLSTACKDOWN)
+    LatestAdjCallStackUp = FindAdjCallStackUp(LatestAdjCallStackDown);
+  else
+    LatestAdjCallStackUp = Entry.Val;
+  assert(LatestAdjCallStackUp && "NULL return from FindAdjCallStackUp");
+  
   SDNode *EarliestAdjCallStackUp = 0;
   FindEarliestAdjCallStackUp(OpNode, EarliestAdjCallStackUp);
 
@@ -2042,7 +2052,22 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     ExpandByParts(ISD::SUB_PARTS, Node->getOperand(0), Node->getOperand(1),
                   Lo, Hi);
     break;
-  case ISD::MUL:  Lo = ExpandLibCall("__muldi3" , Node, Hi); break;
+  case ISD::MUL: {
+    if (TLI.getOperationAction(ISD::MULHU, NVT) == TargetLowering::Legal) {
+      SDOperand LL, LH, RL, RH;
+      ExpandOp(Node->getOperand(0), LL, LH);
+      ExpandOp(Node->getOperand(1), RL, RH);
+      Hi = DAG.getNode(ISD::MULHU, NVT, LL, RL);
+      RH = DAG.getNode(ISD::MUL, NVT, LL, RH);
+      LH = DAG.getNode(ISD::MUL, NVT, LH, RL);
+      Hi = DAG.getNode(ISD::ADD, NVT, Hi, RH);
+      Hi = DAG.getNode(ISD::ADD, NVT, Hi, LH);
+      Lo = DAG.getNode(ISD::MUL, NVT, LL, RL);
+    } else {
+      Lo = ExpandLibCall("__muldi3" , Node, Hi); break;
+    }
+    break;
+  }
   case ISD::SDIV: Lo = ExpandLibCall("__divdi3" , Node, Hi); break;
   case ISD::UDIV: Lo = ExpandLibCall("__udivdi3", Node, Hi); break;
   case ISD::SREM: Lo = ExpandLibCall("__moddi3" , Node, Hi); break;
