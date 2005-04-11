@@ -237,6 +237,7 @@ def NOR  : XForm_6<31, 124, 0, 0, 0, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
                    "nor $rA, $rS, $rB">;
 def OR   : XForm_6<31, 444, 0, 0, 0, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
                    "or $rA, $rS, $rB">;
+let Defs = [CR0] in
 def ORo  : XForm_6<31, 444, 1, 0, 0, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
                    "or. $rA, $rS, $rB">;
 def ORC  : XForm_6<31, 412, 0, 0, 0, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
