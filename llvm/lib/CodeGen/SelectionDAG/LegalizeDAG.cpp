@@ -1443,8 +1443,27 @@ ExpandByParts(unsigned NodeOp, SDOperand LHS, SDOperand RHS,
   ExpandOp(LHS, LHSL, LHSH);
   ExpandOp(RHS, RHSL, RHSH);
 
-  // Convert this add to the appropriate ADDC pair.  The low part has no carry
-  // in.
+  // FIXME: this should be moved to the dag combiner someday.
+  if (NodeOp == ISD::ADD_PARTS || NodeOp == ISD::SUB_PARTS)
+    if (LHSL.getValueType() == MVT::i32) {
+      SDOperand LowEl;
+      if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(LHSL))
+        if (C->getValue() == 0)
+          LowEl = RHSL;
+      if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(RHSL))
+        if (C->getValue() == 0)
+          LowEl = LHSL;
+      if (LowEl.Val) {
+        // Turn this into an add/sub of the high part only.
+        SDOperand HiEl =
+          DAG.getNode(NodeOp == ISD::ADD_PARTS ? ISD::ADD : ISD::SUB,
+                      LowEl.getValueType(), LHSH, RHSH);
+        Lo = LowEl;
+        Hi = HiEl;
+        return;
+      }
+    }
+
   std::vector<SDOperand> Ops;
   Ops.push_back(LHSL);
   Ops.push_back(LHSH);
