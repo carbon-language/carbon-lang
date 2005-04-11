@@ -1500,6 +1500,9 @@ bool SelectionDAGLegalize::ExpandShift(unsigned Opc, SDOperand Op,SDOperand Amt,
       } else if (Cst > NVTBits) {
         Lo = DAG.getConstant(0, NVT);
         Hi = DAG.getNode(ISD::SHL, NVT, InL, DAG.getConstant(Cst-NVTBits,ShTy));
+      } else if (Cst == NVTBits) {
+        Lo = DAG.getConstant(0, NVT);
+        Hi = InL;
       } else {
         Lo = DAG.getNode(ISD::SHL, NVT, InL, DAG.getConstant(Cst, ShTy));
         Hi = DAG.getNode(ISD::OR, NVT,
@@ -1513,6 +1516,9 @@ bool SelectionDAGLegalize::ExpandShift(unsigned Opc, SDOperand Op,SDOperand Amt,
         Hi = DAG.getConstant(0, NVT);
       } else if (Cst > NVTBits) {
         Lo = DAG.getNode(ISD::SRL, NVT, InH, DAG.getConstant(Cst-NVTBits,ShTy));
+        Hi = DAG.getConstant(0, NVT);
+      } else if (Cst == NVTBits) {
+        Lo = InH;
         Hi = DAG.getConstant(0, NVT);
       } else {
         Lo = DAG.getNode(ISD::OR, NVT,
@@ -1528,6 +1534,10 @@ bool SelectionDAGLegalize::ExpandShift(unsigned Opc, SDOperand Op,SDOperand Amt,
       } else if (Cst > NVTBits) {
         Lo = DAG.getNode(ISD::SRA, NVT, InH, 
                            DAG.getConstant(Cst-NVTBits, ShTy));
+        Hi = DAG.getNode(ISD::SRA, NVT, InH, 
+                              DAG.getConstant(NVTBits-1, ShTy));
+      } else if (Cst == NVTBits) {
+        Lo = InH;
         Hi = DAG.getNode(ISD::SRA, NVT, InH, 
                               DAG.getConstant(NVTBits-1, ShTy));
       } else {
