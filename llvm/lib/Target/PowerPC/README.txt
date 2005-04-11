@@ -1,12 +1,8 @@
 TODO:
-* poor switch statement codegen
-* load/store to alloca'd array or struct.
-* implement not-R0 register GPR class
-* implement scheduling info
-* implement do-loop pass
+* condition register allocation
+* gpr0 allocation
 * implement do-loop -> bdnz transform
 * implement powerpc-64 for darwin
-* implement powerpc-64 for aix
 * use stfiwx in float->int
 * should hint to the branch select pass that it doesn't need to print the
   second unconditional branch, so we don't end up with things like:
