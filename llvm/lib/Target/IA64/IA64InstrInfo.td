@@ -22,15 +22,8 @@ def s8imm : Operand<i8> {
 def s14imm  : Operand<i16> {
   let PrintMethod = "printS14ImmOperand";
 }
-def s16imm  : Operand<i16>;
-def s21imm  : Operand<i32> {
-  let PrintMethod = "printS21ImmOperand";
-}
-def u32imm  : Operand<i32> {
-  let PrintMethod = "printU32ImmOperand";
-}
-def s32imm  : Operand<i32> {
-  let PrintMethod = "printS32ImmOperand";
+def s22imm  : Operand<i32> {
+  let PrintMethod = "printS22ImmOperand";
 }
 def u64imm  : Operand<i64> {
   let PrintMethod = "printU64ImmOperand";
@@ -92,13 +85,11 @@ let isTwoAddress = 1 in {
     "($qp) cmp.eq $dst, p0 = $src3, $src4;;">;
 }
 
-def MOVI32 : AForm<0x03, 0x0b, (ops GR:$dst, u32imm:$imm),
+def MOVSIMM14 : AForm<0x03, 0x0b, (ops GR:$dst, s14imm:$imm),
   "mov $dst = $imm;;">;
-def MOVLI32 : AForm<0x03, 0x0b, (ops GR:$dst, u32imm:$imm),
-  "movl $dst = $imm;;">;
-def MOVLSI32 : AForm<0x03, 0x0b, (ops GR:$dst, s32imm:$imm),
-  "movl $dst = $imm;;">;
-def MOVLI64 : AForm<0x03, 0x0b, (ops GR:$dst, u64imm:$imm),
+def MOVSIMM22 : AForm<0x03, 0x0b, (ops GR:$dst, s22imm:$imm),
+  "mov $dst = $imm;;">;
+def MOVLIMM64 : AForm<0x03, 0x0b, (ops GR:$dst, u64imm:$imm),
   "movl $dst = $imm;;">;
 
 def AND : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src1, GR:$src2),
@@ -109,15 +100,15 @@ def XOR : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src1, GR:$src2),
   "xor $dst = $src1, $src2;;">;
 def SHL : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src1, GR:$src2),
   "shl $dst = $src1, $src2;;">;
-def SHLI : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src1, s21imm:$imm), 
-  "shl $dst = $src1, $imm;;">; // FIXME: 6 immediate bits, not 21
+def SHLI : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src1, u6imm:$imm), 
+  "shl $dst = $src1, $imm;;">;
 def SHRU : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src1, GR:$src2),
   "shr.u $dst = $src1, $src2;;">;
-def SHRUI : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src1, s21imm:$imm),
+def SHRUI : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src1, u6imm:$imm),
   "shr.u $dst = $src1, $imm;;">;
 def SHRS : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src1, GR:$src2),
   "shr $dst = $src1, $src2;;">;
-def SHRSI : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src1, s21imm:$imm),
+def SHRSI : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src1, u6imm:$imm),
   "shr $dst = $src1, $imm;;">;
 
 def EXTRU : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src1, u6imm:$imm1, u6imm:$imm2),
@@ -193,17 +184,17 @@ def ADD : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src1, GR:$src2),
 def ADDIMM14 : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src1, s14imm:$imm),
   "adds $dst = $imm, $src1;;">;
 
-def ADDIMM22 : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src1, s21imm:$imm),
+def ADDIMM22 : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src1, s22imm:$imm),
   "add $dst = $imm, $src1;;">;
-def CADDIMM22 : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src1, s21imm:$imm, PR:$qp),
+def CADDIMM22 : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src1, s22imm:$imm, PR:$qp),
   "($qp) add $dst = $imm, $src1;;">;
 
 let isTwoAddress = 1 in {
 def TPCADDIMM22 : AForm<0x03, 0x0b,
-  (ops GR:$dst, GR:$src1, s21imm:$imm, PR:$qp),
+  (ops GR:$dst, GR:$src1, s22imm:$imm, PR:$qp),
     "($qp) add $dst = $imm, $dst;;">;
 def TPCMPIMM8NE : AForm<0x03, 0x0b,
-  (ops PR:$dst, PR:$src1, s21imm:$imm, GR:$src2, PR:$qp),
+  (ops PR:$dst, PR:$src1, s22imm:$imm, GR:$src2, PR:$qp),
     "($qp) cmp.ne $dst , p0 = $imm, $src2;;">;
 }
 

@@ -225,14 +225,6 @@ namespace {
       }
     }
     
-    void printS16ImmOperand(const MachineInstr *MI, unsigned OpNo,
-                            MVT::ValueType VT) {
-      O << (short)MI->getOperand(OpNo).getImmedValue();
-    }
-    void printU16ImmOperand(const MachineInstr *MI, unsigned OpNo,
-                            MVT::ValueType VT) {
-      O << (unsigned short)MI->getOperand(OpNo).getImmedValue();
-    }
     void printS8ImmOperand(const MachineInstr *MI, unsigned OpNo,
                             MVT::ValueType VT) {
       int val=(unsigned int)MI->getOperand(OpNo).getImmedValue();
@@ -245,17 +237,11 @@ namespace {
       if(val>=8192) val=val-16384; // if negative, flip sign
       O << val;
     }
-    void printS21ImmOperand(const MachineInstr *MI, unsigned OpNo,
+    void printS22ImmOperand(const MachineInstr *MI, unsigned OpNo,
                             MVT::ValueType VT) {
-      O << (int)MI->getOperand(OpNo).getImmedValue(); // FIXME (21, not 32!)
-    }
-    void printS32ImmOperand(const MachineInstr *MI, unsigned OpNo,
-                            MVT::ValueType VT) {
-      O << (int)MI->getOperand(OpNo).getImmedValue();
-    }
-    void printU32ImmOperand(const MachineInstr *MI, unsigned OpNo,
-                            MVT::ValueType VT) {
-      O << (unsigned int)MI->getOperand(OpNo).getImmedValue();
+      int val=(unsigned int)MI->getOperand(OpNo).getImmedValue();
+      if(val>=2097152) val=val-4194304; // if negative, flip sign
+      O << val;
     }
     void printU64ImmOperand(const MachineInstr *MI, unsigned OpNo,
                             MVT::ValueType VT) {

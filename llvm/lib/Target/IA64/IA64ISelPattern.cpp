@@ -639,28 +639,36 @@ unsigned ISel::SelectExpr(SDOperand N) {
 		      else // false:
 			BuildMI(BB, IA64::CMPNE, 2, Result)
 			  .addReg(IA64::r0).addReg(IA64::r0);
-		      return Result;
+		      return Result; // early exit
 		    }
-      case MVT::i64: Opc = IA64::MOVLI32; break;
+      case MVT::i64: break;
     }
    
     int64_t immediate = cast<ConstantSDNode>(N)->getValue();
-    if(immediate>>32) { // if our immediate really is big:
-      int highPart = immediate>>32;
-      int lowPart = immediate&0xFFFFFFFF;
-      unsigned dummy = MakeReg(MVT::i64);
-      unsigned dummy2 = MakeReg(MVT::i64);
-      unsigned dummy3 = MakeReg(MVT::i64);
-     
-      BuildMI(BB, IA64::MOVLI32, 1, dummy).addImm(highPart);
-      BuildMI(BB, IA64::SHLI, 2, dummy2).addReg(dummy).addImm(32);
-      BuildMI(BB, IA64::MOVLI32, 1, dummy3).addImm(lowPart);
-      BuildMI(BB, IA64::ADD, 2, Result).addReg(dummy2).addReg(dummy3);
-    } else {
-      BuildMI(BB, IA64::MOVLI32, 1, Result).addImm(immediate);
+
+    if(immediate==0) { // if the constant is just zero,
+      BuildMI(BB, IA64::MOV, 1, Result).addReg(IA64::r0); // just copy r0
+      return Result; // early exit
     }
 
-  return Result;
+    if (immediate <= 8191 && immediate >= -8192) {
+      // if this constants fits in 14 bits, we use a mov the assembler will
+      // turn into:   "adds rDest=imm,r0"  (and _not_ "andl"...)
+      BuildMI(BB, IA64::MOVSIMM14, 1, Result).addSImm(immediate);
+      return Result; // early exit
+    } 
+
+    if (immediate <= 2097151 && immediate >= -2097152) {
+      // if this constants fits in 22 bits, we use a mov the assembler will
+      // turn into:   "addl rDest=imm,r0"
+      BuildMI(BB, IA64::MOVSIMM22, 1, Result).addSImm(immediate);
+      return Result; // early exit
+    } 
+
+    /* otherwise, our immediate is big, so we use movl */
+    uint64_t Imm = immediate;
+    BuildMI(BB, IA64::MOVLIMM64, 1, Result).addU64Imm(Imm);
+    return Result;
   }
 
   case ISD::UNDEF: {
@@ -706,7 +714,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
 		    // first load zero:
 		    BuildMI(BB, IA64::MOV, 1, dummy).addReg(IA64::r0);
 		    // ...then conditionally (PR:Tmp1) add 1:
-		    BuildMI(BB, IA64::CADDIMM22, 3, Result).addReg(dummy)
+		    BuildMI(BB, IA64::TPCADDIMM22, 2, Result).addReg(dummy)
 		      .addImm(1).addReg(Tmp1);
 		    return Result; // XXX early exit!
 		  }
@@ -823,15 +831,16 @@ assert(0 && "hmm, ISD::SIGN_EXTEND: shouldn't ever be reached. bad luck!\n");
       return Result; // early exit
     }
     Tmp1 = SelectExpr(N.getOperand(0));
-    Tmp2 = SelectExpr(N.getOperand(1));
     if(DestType != MVT::f64) { // integer addition:
         switch (ponderIntegerAdditionWith(N.getOperand(1), Tmp3)) {
 	  case 1: // adding a constant that's 14 bits
 	    BuildMI(BB, IA64::ADDIMM14, 2, Result).addReg(Tmp1).addSImm(Tmp3);
 	    return Result; // early exit
 	} // fallthrough and emit a reg+reg ADD:
+	Tmp2 = SelectExpr(N.getOperand(1));
 	BuildMI(BB, IA64::ADD, 2, Result).addReg(Tmp1).addReg(Tmp2);
     } else { // this is a floating point addition
+      Tmp2 = SelectExpr(N.getOperand(1));
       BuildMI(BB, IA64::FADD, 2, Result).addReg(Tmp1).addReg(Tmp2);
     }
     return Result;
@@ -868,7 +877,6 @@ assert(0 && "hmm, ISD::SIGN_EXTEND: shouldn't ever be reached. bad luck!\n");
       BuildMI(BB, IA64::FMS, 3, Result).addReg(Tmp1).addReg(Tmp2).addReg(Tmp3);
       return Result; // early exit
     }
-    Tmp1 = SelectExpr(N.getOperand(0));
     Tmp2 = SelectExpr(N.getOperand(1));
     if(DestType != MVT::f64) { // integer subtraction:
         switch (ponderIntegerSubtractionFrom(N.getOperand(0), Tmp3)) {
@@ -876,8 +884,10 @@ assert(0 && "hmm, ISD::SIGN_EXTEND: shouldn't ever be reached. bad luck!\n");
 	    BuildMI(BB, IA64::SUBIMM8, 2, Result).addSImm(Tmp3).addReg(Tmp2);
 	    return Result; // early exit
 	} // fallthrough and emit a reg+reg SUB:
+	Tmp1 = SelectExpr(N.getOperand(0));
 	BuildMI(BB, IA64::SUB, 2, Result).addReg(Tmp1).addReg(Tmp2);
     } else { // this is a floating point subtraction
+      Tmp1 = SelectExpr(N.getOperand(0));
       BuildMI(BB, IA64::FSUB, 2, Result).addReg(Tmp1).addReg(Tmp2);
     }
     return Result;
@@ -1311,9 +1321,20 @@ pC = pA OR pB
 
   case ISD::SETCC: {
     Tmp1 = SelectExpr(N.getOperand(0));
-    Tmp2 = SelectExpr(N.getOperand(1));
+
     if (SetCCSDNode *SetCC = dyn_cast<SetCCSDNode>(Node)) {
       if (MVT::isInteger(SetCC->getOperand(0).getValueType())) {
+
+	if(ConstantSDNode *CSDN =
+	     dyn_cast<ConstantSDNode>(N.getOperand(1))) {
+	// if we are comparing against a constant zero
+	if(CSDN->getValue()==0)
+	  Tmp2 = IA64::r0; // then we can just compare against r0
+	else
+	  Tmp2 = SelectExpr(N.getOperand(1));
+	} else // not comparing against a constant
+	  Tmp2 = SelectExpr(N.getOperand(1));
+	
 	switch (SetCC->getCondition()) {
 	default: assert(0 && "Unknown integer comparison!");
 	case ISD::SETEQ:
@@ -1351,6 +1372,20 @@ pC = pA OR pB
       else { // if not integer, should be FP. FIXME: what about bools? ;)
 	assert(SetCC->getOperand(0).getValueType() != MVT::f32 &&
 	    "error: SETCC should have had incoming f32 promoted to f64!\n");
+
+	if(ConstantFPSDNode *CFPSDN =
+	     dyn_cast<ConstantFPSDNode>(N.getOperand(1))) {
+
+	  // if we are comparing against a constant +0.0 or +1.0
+	  if(CFPSDN->isExactlyValue(+0.0))
+	    Tmp2 = IA64::F0; // then we can just compare against f0
+	  else if(CFPSDN->isExactlyValue(+1.0))
+	    Tmp2 = IA64::F1; // or f1
+	  else
+	    Tmp2 = SelectExpr(N.getOperand(1));
+	} else // not comparing against a constant
+	  Tmp2 = SelectExpr(N.getOperand(1));
+
 	switch (SetCC->getCondition()) {
 	default: assert(0 && "Unknown FP comparison!");
 	case ISD::SETEQ:
@@ -1836,7 +1871,7 @@ void ISel::Select(SDOperand N) {
 	  unsigned dummy3 = MakeReg(MVT::i64);
 	  unsigned dummy4 = MakeReg(MVT::i64);
 	  BuildMI(BB, IA64::MOV, 1, dummy3).addReg(IA64::r0);
-	  BuildMI(BB, IA64::CADDIMM22, 3, dummy4)
+	  BuildMI(BB, IA64::TPCADDIMM22, 2, dummy4)
 	    .addReg(dummy3).addImm(1).addReg(Tmp1); // if(Tmp1) dummy=0+1;
 	  BuildMI(BB, Opc, 2).addReg(dummy2).addReg(dummy4);
 	}
@@ -1858,7 +1893,7 @@ void ISel::Select(SDOperand N) {
 	  unsigned dummy3 = MakeReg(MVT::i64);
 	  unsigned dummy4 = MakeReg(MVT::i64);
 	  BuildMI(BB, IA64::MOV, 1, dummy3).addReg(IA64::r0);
-	  BuildMI(BB, IA64::CADDIMM22, 3, dummy4)
+	  BuildMI(BB, IA64::TPCADDIMM22, 2, dummy4)
 	    .addReg(dummy3).addImm(1).addReg(Tmp1); // if(Tmp1) dummy=0+1;
 	  BuildMI(BB, Opc, 2).addReg(Tmp2).addReg(dummy4);
 	}

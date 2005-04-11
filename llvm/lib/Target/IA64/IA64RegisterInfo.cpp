@@ -189,7 +189,7 @@ void IA64RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const
     //fix up the old:
     MI.SetMachineOperandReg(i, IA64::r22);
     MachineInstr* nMI;
-    nMI=BuildMI(IA64::MOVLSI32, 1, IA64::r22).addSImm(Offset);
+    nMI=BuildMI(IA64::MOVLIMM64, 1, IA64::r22).addSImm(Offset);
     MBB.insert(II, nMI);
     nMI=BuildMI(IA64::ADD, 2, IA64::r22).addReg(BaseRegister)
       .addReg(IA64::r22);
@@ -280,7 +280,7 @@ void IA64RegisterInfo::emitPrologue(MachineFunction &MF) const {
     MI=BuildMI(IA64::ADDIMM22, 2, IA64::r12).addReg(IA64::r12).addImm(-NumBytes);
     MBB.insert(MBBI, MI);
   } else { // we use r22 as a scratch register here
-    MI=BuildMI(IA64::MOVLSI32, 1, IA64::r22).addSImm(-NumBytes);
+    MI=BuildMI(IA64::MOVLIMM64, 1, IA64::r22).addSImm(-NumBytes);
     // FIXME: MOVLSI32 expects a _u_32imm
     MBB.insert(MBBI, MI);  // first load the decrement into r22
     MI=BuildMI(IA64::ADD, 2, IA64::r12).addReg(IA64::r12).addReg(IA64::r22);
@@ -328,7 +328,7 @@ void IA64RegisterInfo::emitEpilogue(MachineFunction &MF,
       MI=BuildMI(IA64::ADDIMM22, 2, IA64::r12).addReg(IA64::r12).addImm(NumBytes);
       MBB.insert(MBBI, MI);
     } else {
-      MI=BuildMI(IA64::MOVLI32, 1, IA64::r22).addImm(NumBytes);
+      MI=BuildMI(IA64::MOVLIMM64, 1, IA64::r22).addImm(NumBytes);
       MBB.insert(MBBI, MI);
       MI=BuildMI(IA64::ADD, 2, IA64::r12).addReg(IA64::r12).addReg(IA64::r22);
       MBB.insert(MBBI, MI);
