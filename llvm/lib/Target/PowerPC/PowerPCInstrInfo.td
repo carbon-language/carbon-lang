@@ -140,12 +140,14 @@ def STW  : DForm_3<36, 0, 0, (ops GPRC:$rS, s16imm:$disp, GPRC:$rA),
 def STWU : DForm_3<37, 0, 0, (ops GPRC:$rS, s16imm:$disp, GPRC:$rA),
                    "stwu $rS, $disp($rA)">;
 }
+let Defs = [CR0] in {
 def ANDIo : DForm_4<28, 0, 0,
                     (ops GPRC:$dst, GPRC:$src1, u16imm:$src2),
                     "andi. $dst, $src1, $src2">;
 def ANDISo : DForm_4<29, 0, 0,
                     (ops GPRC:$dst, GPRC:$src1, u16imm:$src2),
                     "andis. $dst, $src1, $src2">;
+}
 def ORI   : DForm_4<24, 0, 0,
                     (ops GPRC:$dst, GPRC:$src1, u16imm:$src2),
                     "ori $dst, $src1, $src2">;
@@ -222,6 +224,9 @@ def LDX  : XForm_1<31,  21, 1, 0, (ops GPRC:$dst, GPRC:$base, GPRC:$index),
 def MFCR : XForm_5<31,  19, 0, 0, (ops GPRC:$dst), "mfcr $dst">;
 def AND  : XForm_6<31,  28, 0, 0, 0, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
                    "and $rA, $rS, $rB">;
+let Defs = [CR0] in
+def ANDo : XForm_6<31,  28, 1, 0, 0, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
+                   "and. $rA, $rS, $rB">;
 def ANDC : XForm_6<31,  60, 0, 0, 0, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
                    "andc $rA, $rS, $rB">;
 def EQV  : XForm_6<31, 284, 0, 0, 0, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),

@@ -473,7 +473,7 @@ LowerFrameReturnAddress(bool isFrameAddress, SDOperand Chain, unsigned Depth,
 }
 
 namespace {
-Statistic<>Rotates("ppc-codegen", "Number of rotates emitted");
+Statistic<>Recorded("ppc-codegen", "Number of recording ops emitted");
 Statistic<>FusedFP("ppc-codegen", "Number of fused fp operations");
 //===--------------------------------------------------------------------===//
 /// ISel - PPC32 specific code to select PPC32 machine instructions for
@@ -492,7 +492,7 @@ class ISel : public SelectionDAGISel {
 
   unsigned GlobalBaseReg;
   bool GlobalBaseInitialized;
-  
+  bool RecordSuccess;
 public:
   ISel(TargetMachine &TM) : SelectionDAGISel(PPC32Lowering), PPC32Lowering(TM),
                             ISelDAG(0) {}
@@ -526,7 +526,7 @@ public:
   unsigned getConstDouble(double floatVal, unsigned Result);
   bool SelectBitfieldInsert(SDOperand OR, unsigned Result);
   unsigned SelectSetCR0(SDOperand CC);
-  unsigned SelectExpr(SDOperand N);
+  unsigned SelectExpr(SDOperand N, bool Recording=false);
   unsigned SelectExprFP(SDOperand N, unsigned Result);
   void Select(SDOperand N);
   
@@ -648,6 +648,17 @@ static unsigned getImmediateForOpcode(SDOperand N, unsigned Opcode,
   return 0;
 }
 
+/// NodeHasRecordingVariant - If SelectExpr can always produce code for
+/// NodeOpcode that also sets CR0 as a side effect, return true.  Otherwise,
+/// return false.
+static bool NodeHasRecordingVariant(unsigned NodeOpcode) {
+  switch(NodeOpcode) {
+  default: return false;
+  case ISD::AND:
+  case ISD::OR: return true;
+  }
+}
+
 /// getBCCForSetCC - Returns the PowerPC condition branch mnemonic corresponding
 /// to Condition.  If the Condition is unordered or unsigned, the bool argument
 /// U is set to true, otherwise it is set to false.
@@ -683,6 +694,8 @@ static unsigned IndexedOpForOp(unsigned Opcode) {
   }
   return 0;
 }
+
+/// 
 
 // Structure used to return the necessary information to codegen an SDIV as 
 // a multiply.
@@ -927,7 +940,6 @@ bool ISel::SelectBitfieldInsert(SDOperand OR, unsigned Result) {
     // where both bitfield halves are sourced from the same value.
     if (IsRotate && 
         OR.getOperand(0).getOperand(0) == OR.getOperand(1).getOperand(0)) {
-      ++Rotates;  // Statistic
       Tmp1 = SelectExpr(OR.getOperand(0).getOperand(0));
       BuildMI(BB, PPC::RLWINM, 4, Result).addReg(Tmp1).addImm(Amount)
         .addImm(0).addImm(31);
@@ -955,13 +967,29 @@ unsigned ISel::SelectSetCR0(SDOperand CC) {
   SetCCSDNode* SetCC = dyn_cast<SetCCSDNode>(CC.Val);
   if (SetCC && CC.getOpcode() == ISD::SETCC) {
     bool U;
+    bool AlreadySelected = false;
     Opc = getBCCForSetCC(SetCC->getCondition(), U);
-    Tmp1 = SelectExpr(SetCC->getOperand(0));
 
     // Pass the optional argument U to getImmediateForOpcode for SETCC,
     // so that it knows whether the SETCC immediate range is signed or not.
     if (1 == getImmediateForOpcode(SetCC->getOperand(1), ISD::SETCC, 
                                    Tmp2, U)) {
+      // For comparisons against zero, we can implicity set CR0 if a recording 
+      // variant (e.g. 'or.' instead of 'or') of the instruction that defines
+      // operand zero of the SetCC node is available.
+      if (0 == Tmp2 && 
+          NodeHasRecordingVariant(SetCC->getOperand(0).getOpcode())) {
+        RecordSuccess = false;
+        Tmp1 = SelectExpr(SetCC->getOperand(0), true);
+        if (RecordSuccess) {
+          ++Recorded;
+          return Opc;
+        }
+        AlreadySelected = true;
+      }
+      // If we could not implicitly set CR0, then emit a compare immediate
+      // instead.
+      if (!AlreadySelected) Tmp1 = SelectExpr(SetCC->getOperand(0));
       if (U)
         BuildMI(BB, PPC::CMPLWI, 2, PPC::CR0).addReg(Tmp1).addImm(Tmp2);
       else
@@ -969,6 +997,7 @@ unsigned ISel::SelectSetCR0(SDOperand CC) {
     } else {
       bool IsInteger = MVT::isInteger(SetCC->getOperand(0).getValueType());
       unsigned CompareOpc = CompareOpcodes[2 * IsInteger + U];
+      Tmp1 = SelectExpr(SetCC->getOperand(0));
       Tmp2 = SelectExpr(SetCC->getOperand(1));
       BuildMI(BB, CompareOpc, 2, PPC::CR0).addReg(Tmp1).addReg(Tmp2);
     }
@@ -1337,7 +1366,7 @@ unsigned ISel::SelectExprFP(SDOperand N, unsigned Result)
   return 0;
 }
 
-unsigned ISel::SelectExpr(SDOperand N) {
+unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
   unsigned Result;
   unsigned Tmp1, Tmp2, Tmp3;
   unsigned Opc = 0;
@@ -1588,10 +1617,10 @@ unsigned ISel::SelectExpr(SDOperand N) {
     Tmp1 = SelectExpr(N.getOperand(0));
     switch(cast<MVTSDNode>(Node)->getExtraValueType()) {
     default: Node->dump(); assert(0 && "Unhandled SIGN_EXTEND type"); break;
-    case MVT::i16:  
+    case MVT::i16:
       BuildMI(BB, PPC::EXTSH, 1, Result).addReg(Tmp1); 
       break;
-    case MVT::i8:   
+    case MVT::i8:
       BuildMI(BB, PPC::EXTSB, 1, Result).addReg(Tmp1); 
       break;
     case MVT::i1:
@@ -1681,7 +1710,8 @@ unsigned ISel::SelectExpr(SDOperand N) {
       default: assert(0 && "unhandled result code");
       case 0: // No immediate
         Tmp2 = SelectExpr(N.getOperand(1));
-        BuildMI(BB, PPC::AND, 2, Result).addReg(Tmp1).addReg(Tmp2);
+        Opc = Recording ? PPC::ANDo : PPC::AND;
+        BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(Tmp2);
         break;
       case 1: // Low immediate
         BuildMI(BB, PPC::ANDIo, 2, Result).addReg(Tmp1).addImm(Tmp2);
@@ -1690,6 +1720,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
         BuildMI(BB, PPC::ANDISo, 2, Result).addReg(Tmp1).addImm(Tmp2);
         break;
     }
+    RecordSuccess = true;
     return Result;
   
   case ISD::OR:
@@ -1700,7 +1731,9 @@ unsigned ISel::SelectExpr(SDOperand N) {
       default: assert(0 && "unhandled result code");
       case 0: // No immediate
         Tmp2 = SelectExpr(N.getOperand(1));
-        BuildMI(BB, PPC::OR, 2, Result).addReg(Tmp1).addReg(Tmp2);
+        Opc = Recording ? PPC::ORo : PPC::OR;
+        RecordSuccess = true;
+        BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(Tmp2);
         break;
       case 1: // Low immediate
         BuildMI(BB, PPC::ORI, 2, Result).addReg(Tmp1).addImm(Tmp2);
