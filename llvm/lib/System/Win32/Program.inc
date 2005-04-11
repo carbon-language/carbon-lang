@@ -122,7 +122,7 @@ Program::ExecuteAndWait(const Path& path,
 
   for (unsigned i = 0; args[i]; i++) {
     const char *arg = args[i];
-	size_t len = strlen(arg);
+    size_t len = strlen(arg);
     bool needsQuoting = strchr(arg, ' ') != 0;
     if (needsQuoting)
       *p++ = '"';
