@@ -108,9 +108,9 @@ public:
     return *this;
   }
 
-  /// addU64Imm - Add a new 64-bit immediate operand...
+  /// addImm64 - Add a new 64-bit immediate operand...
   ///
-  const MachineInstrBuilder &addU64Imm(uint64_t Val) const {
+  const MachineInstrBuilder &addImm64(uint64_t Val) const {
     MI->addZeroExtImm64Operand(Val);
     return *this;
   }
