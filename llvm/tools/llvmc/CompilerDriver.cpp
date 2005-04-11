@@ -394,8 +394,9 @@ private:
 
       // Invoke the program
       const char** Args = (const char**) 
-        alloca(sizeof(const char*)*(action->args.size()+1));
-      for (unsigned i = 0; i != action->args.size(); ++i)
+        alloca(sizeof(const char*)*(action->args.size()+2));
+      Args[0] = action->program.toString().c_str();
+      for (unsigned i = 1; i != action->args.size(); ++i)
         Args[i] = action->args[i].c_str();
       Args[action->args.size()] = 0;  // null terminate list.
       if (isSet(TIME_ACTIONS_FLAG)) {
