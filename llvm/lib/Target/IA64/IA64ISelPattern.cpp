@@ -62,7 +62,6 @@ namespace {
       setShiftAmountType(MVT::i64);
 
       setOperationAction(ISD::EXTLOAD          , MVT::i1   , Promote);
-      setOperationAction(ISD::EXTLOAD          , MVT::f32  , Promote);
 
       setOperationAction(ISD::ZEXTLOAD         , MVT::i1   , Expand);
       setOperationAction(ISD::ZEXTLOAD         , MVT::i32  , Expand);
