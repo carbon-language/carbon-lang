@@ -249,14 +249,13 @@ def GR : RegisterClass<i64, 64,
         r104, r105, r106, r107, r108, r109, r110, r111,
         r112, r113, r114, r115, r116, r117, r118, r119,
         r120, r121, r122, r123, r124, r125, r126, r127,
-	r0, r1, r2, r12, r13, r15, r22, 
 	out0, out1, out2, out3,
-	out4, out5, out6, out7]> // these last 15 are special (look down)
-
+	out4, out5, out6, out7,
+	r0, r1, r2, r12, r13, r15, r22]> // these last 7 are special (look down)
   {
     let Methods = [{
       iterator allocation_order_end(MachineFunction &MF) const {
-	int numReservedRegs=15; // the 15 special registers r0,r1,r2,r12,r13 etc
+	int numReservedRegs=7; // the 15 special registers r0,r1,r2,r12,r13 etc
 	// we also can't allocate registers for use as locals if they're
 	// already required as 'out' registers
 	numReservedRegs+=MF.getInfo<IA64FunctionInfo>()->outRegsUsed;
