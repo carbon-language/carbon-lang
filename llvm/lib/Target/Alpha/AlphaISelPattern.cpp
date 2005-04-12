@@ -170,24 +170,24 @@ AlphaTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG)
     for (int i = 0; i < 6; ++i)
     {
       if (F.isVarArg()) {
-        F->addLiveIn(args_int[i]);
-        F->addLiveIn(args_float[i]);
+        MF.addLiveIn(args_int[i]);
+        MF.addLiveIn(args_float[i]);
 //        BuildMI(&BB, Alpha::IDEF, 0, args_int[i]);
 //        BuildMI(&BB, Alpha::IDEF, 0, args_float[i]);
       } else if (I != E)
       {
         if(MVT::isInteger(getValueType(I->getType())))
-          F->addLiveIn(args_int[i]);
+          MF.addLiveIn(args_int[i]);
 //          BuildMI(&BB, Alpha::IDEF, 0, args_int[i]);
         else
-          F->addLiveIn(args_float[i]);
+          MF.addLiveIn(args_float[i]);
 //          BuildMI(&BB, Alpha::IDEF, 0, args_float[i]);
         ++I;
       }
     }
   }
 
-  F->addLiveIn(Alpha::R29);
+  MF.addLiveIn(Alpha::R29);
 //  BuildMI(&BB, Alpha::IDEF, 0, Alpha::R29);
   BuildMI(&BB, Alpha::BIS, 2, GP).addReg(Alpha::R29).addReg(Alpha::R29);
 
