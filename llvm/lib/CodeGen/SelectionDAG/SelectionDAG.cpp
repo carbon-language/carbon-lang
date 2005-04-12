@@ -911,6 +911,14 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
     if (N2.getOpcode() == ISD::FNEG)          // (A- (-B) -> A+B
       return getNode(ISD::ADD, VT, N1, N2.getOperand(0));
     break;
+  case ISD::SHL:
+  case ISD::SRL:
+  case ISD::SRA:
+    if (N2.getOpcode() == ISD::ZERO_EXTEND_INREG || 
+        N2.getOpcode() == ISD::SIGN_EXTEND_INREG) {
+      return getNode(Opcode, VT, N1, N2.getOperand(0));
+    }
+    break;
   }
 
   SDNode *&N = BinaryOps[std::make_pair(Opcode, std::make_pair(N1, N2))];
@@ -1001,6 +1009,14 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
         return getNode(ISD::BR, MVT::Other, N1, N3);
       else
         return N1;         // Never-taken branch
+    break;
+  case ISD::SRA_PARTS:
+  case ISD::SRL_PARTS:
+  case ISD::SHL_PARTS:
+    if (N3.getOpcode() == ISD::ZERO_EXTEND_INREG || 
+        N3.getOpcode() == ISD::SIGN_EXTEND_INREG) {
+      return getNode(Opcode, VT, N1, N2, N3.getOperand(0));
+    }
     break;
   }
 
