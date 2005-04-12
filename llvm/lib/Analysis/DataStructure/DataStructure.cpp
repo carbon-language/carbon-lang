@@ -119,10 +119,9 @@ DSNode::DSNode(const Type *T, DSGraph *G)
 // DSNode copy constructor... do not copy over the referrers list!
 DSNode::DSNode(const DSNode &N, DSGraph *G, bool NullLinks)
   : NumReferrers(0), Size(N.Size), ParentGraph(G),
-    Ty(N.Ty), NodeType(N.NodeType) {
+    Ty(N.Ty), Globals(N.Globals), NodeType(N.NodeType) {
   if (!NullLinks) {
     Links = N.Links;
-    Globals = N.Globals;
   } else
     Links.resize(N.Links.size()); // Create the appropriate number of null links
   G->addNode(this);
