@@ -12,7 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/BasicBlock.h"
-#include "llvm/Constant.h"
+#include "llvm/Constants.h"
 #include "llvm/Instructions.h"
 #include "llvm/Type.h"
 #include "llvm/Support/CFG.h"
@@ -134,7 +134,8 @@ BasicBlock *BasicBlock::getSinglePredecessor() {
 // update the PHI nodes that reside in the block.  Note that this should be
 // called while the predecessor still refers to this block.
 //
-void BasicBlock::removePredecessor(BasicBlock *Pred) {
+void BasicBlock::removePredecessor(BasicBlock *Pred,
+                                   bool DontDeleteUselessPHIs) {
   assert((hasNUsesOrMore(16)||// Reduce cost of this assertion for complex CFGs.
           find(pred_begin(this), pred_end(this), Pred) != pred_end(this)) &&
 	 "removePredecessor: BB is not a predecessor!");
@@ -164,10 +165,12 @@ void BasicBlock::removePredecessor(BasicBlock *Pred) {
     if (this == Other) max_idx = 3;
   }
 
-  if (max_idx <= 2) {                // <= Two predecessors BEFORE I remove one?
+  // <= Two predecessors BEFORE I remove one?
+  if (max_idx <= 2 && !DontDeleteUselessPHIs) {
     // Yup, loop through and nuke the PHI nodes
     while (PHINode *PN = dyn_cast<PHINode>(&front())) {
-      PN->removeIncomingValue(Pred); // Remove the predecessor first...
+      // Remove the predecessor first.
+      PN->removeIncomingValue(Pred, !DontDeleteUselessPHIs);
 
       // If the PHI _HAD_ two uses, replace PHI node with its now *single* value
       if (max_idx == 2) {
@@ -175,7 +178,7 @@ void BasicBlock::removePredecessor(BasicBlock *Pred) {
           PN->replaceAllUsesWith(PN->getOperand(0));
         else
           // We are left with an infinite loop with no entries: kill the PHI.
-          PN->replaceAllUsesWith(Constant::getNullValue(PN->getType()));
+          PN->replaceAllUsesWith(UndefValue::get(PN->getType()));
         getInstList().pop_front();    // Remove the PHI node
       }
 
@@ -187,7 +190,7 @@ void BasicBlock::removePredecessor(BasicBlock *Pred) {
     // PHI nodes.  Iterate over each PHI node fixing them up
     PHINode *PN;
     for (iterator II = begin(); (PN = dyn_cast<PHINode>(II)); ++II)
-      PN->removeIncomingValue(Pred);
+      PN->removeIncomingValue(Pred, false);
   }
 }
 
