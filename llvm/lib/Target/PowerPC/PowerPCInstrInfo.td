@@ -464,6 +464,10 @@ def RLWIMI : MForm_2<20, 0, 0, 0,
 def RLWINM : MForm_2<21, 0, 0, 0,
                      (ops GPRC:$rA, GPRC:$rS, u5imm:$SH, u5imm:$MB, u5imm:$ME),
                      "rlwinm $rA, $rS, $SH, $MB, $ME">;
+let Defs = [CR0] in
+def RLWINMo : MForm_2<21, 1, 0, 0,
+                     (ops GPRC:$rA, GPRC:$rS, u5imm:$SH, u5imm:$MB, u5imm:$ME),
+                     "rlwinm. $rA, $rS, $SH, $MB, $ME">;
 def RLWNM  : MForm_2<23, 0, 0, 0,
                      (ops GPRC:$rA, GPRC:$rS, GPRC:$rB, u5imm:$MB, u5imm:$ME),
                      "rlwnm $rA, $rS, $rB, $MB, $ME">;

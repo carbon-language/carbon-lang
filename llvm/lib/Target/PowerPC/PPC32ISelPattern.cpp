@@ -604,12 +604,13 @@ static bool IsRunOfOnes(unsigned Val, unsigned &MB, unsigned &ME) {
 /// getImmediateForOpcode - This method returns a value indicating whether
 /// the ConstantSDNode N can be used as an immediate to Opcode.  The return
 /// values are either 0, 1 or 2.  0 indicates that either N is not a
-/// ConstantSDNode, or is not suitable for use by that opcode.  A return value 
-/// of 1 indicates that the constant may be used in normal immediate form.  A
-/// return value of 2 indicates that the constant may be used in shifted
-/// immediate form.  A return value of 3 indicates that log base 2 of the
-/// constant may be used.  A return value of 4 indicates that the constant is
-/// suitable for conversion into a magic number for integer division.
+/// ConstantSDNode, or is not suitable for use by that opcode.
+/// Return value codes for turning into an enum someday:
+/// 1: constant may be used in normal immediate form.
+/// 2: constant may be used in shifted immediate form.
+/// 3: log base 2 of the constant may be used.
+/// 4: constant is suitable for integer division conversion
+/// 5: constant is a bitfield mask
 ///
 static unsigned getImmediateForOpcode(SDOperand N, unsigned Opcode,
                                       unsigned& Imm, bool U = false) {
@@ -623,7 +624,13 @@ static unsigned getImmediateForOpcode(SDOperand N, unsigned Opcode,
     if (v <= 32767 && v >= -32768) { Imm = v & 0xFFFF; return 1; }
     if ((v & 0x0000FFFF) == 0) { Imm = v >> 16; return 2; }
     break;
-  case ISD::AND:
+  case ISD::AND: {
+    unsigned MB, ME;
+    if (IsRunOfOnes(v, MB, ME)) { Imm = MB << 16 | ME & 0xFFFF; return 5; }
+    if (v >= 0 && v <= 65535) { Imm = v & 0xFFFF; return 1; }
+    if ((v & 0x0000FFFF) == 0) { Imm = v >> 16; return 2; }
+    break;
+  }
   case ISD::XOR:
   case ISD::OR:
     if (v >= 0 && v <= 65535) { Imm = v & 0xFFFF; return 1; }
@@ -639,6 +646,7 @@ static unsigned getImmediateForOpcode(SDOperand N, unsigned Opcode,
     break;
   case ISD::SDIV:
     if ((Imm = ExactLog2(v))) { return 3; }
+    if ((Imm = ExactLog2(-v))) { Imm = -Imm; return 3; }
     if (v <= -2 || v >= 2) { return 4; }
     break;
   case ISD::UDIV:
@@ -694,8 +702,6 @@ static unsigned IndexedOpForOp(unsigned Opcode) {
   }
   return 0;
 }
-
-/// 
 
 // Structure used to return the necessary information to codegen an SDIV as 
 // a multiply.
@@ -1719,6 +1725,13 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
       case 2: // Shifted immediate
         BuildMI(BB, PPC::ANDISo, 2, Result).addReg(Tmp1).addImm(Tmp2);
         break;
+      case 5: // Bitfield mask
+        Opc = Recording ? PPC::RLWINMo : PPC::RLWINM;
+        Tmp3 = Tmp2 >> 16;  // MB
+        Tmp2 &= 0xFFFF;     // ME
+        BuildMI(BB, Opc, 4, Result).addReg(Tmp1).addImm(0)
+          .addImm(Tmp3).addImm(Tmp2);
+        break;
     }
     RecordSuccess = true;
     return Result;
@@ -1828,8 +1841,15 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
     case 3:
       Tmp1 = MakeReg(MVT::i32);
       Tmp2 = SelectExpr(N.getOperand(0));
-      BuildMI(BB, PPC::SRAWI, 2, Tmp1).addReg(Tmp2).addImm(Tmp3);
-      BuildMI(BB, PPC::ADDZE, 1, Result).addReg(Tmp1);
+      if ((int)Tmp3 < 0) {
+        unsigned Tmp4 = MakeReg(MVT::i32);
+        BuildMI(BB, PPC::SRAWI, 2, Tmp1).addReg(Tmp2).addImm(-Tmp3);
+        BuildMI(BB, PPC::ADDZE, 1, Tmp4).addReg(Tmp1);
+        BuildMI(BB, PPC::NEG, 1, Result).addReg(Tmp4);
+      } else {
+        BuildMI(BB, PPC::SRAWI, 2, Tmp1).addReg(Tmp2).addImm(Tmp3);
+        BuildMI(BB, PPC::ADDZE, 1, Result).addReg(Tmp1);
+      }
       return Result;
     // If this is a divide by constant, we can emit code using some magic
     // constants to implement it as a multiply instead.
