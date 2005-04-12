@@ -234,7 +234,13 @@ def B6 : GR<0, "b6">;
 // in IA64RegisterInfo.cpp
 
 def GR : RegisterClass<i64, 64, 
-       [r3,  r8,  r9,  r10, r11, r14,
+       [
+       
+//FIXME!: for readability, we don't want the out registers to be the first
+//        ones allocated
+
+        out7, out6, out5, out4, out3, out2, out1, out0,
+        r3,  r8,  r9,  r10, r11, r14,
         r16, r17, r18, r19, r20, r21, r23,
         r24, r25, r26, r27, r28, r29, r30, r31,
         r32, r33, r34, r35, r36, r37, r38, r39,
@@ -249,13 +255,18 @@ def GR : RegisterClass<i64, 64,
         r104, r105, r106, r107, r108, r109, r110, r111,
         r112, r113, r114, r115, r116, r117, r118, r119,
         r120, r121, r122, r123, r124, r125, r126, r127,
-	out0, out1, out2, out3,
-	out4, out5, out6, out7,
-	r0, r1, r2, r12, r13, r15, r22]> // these last 7 are special (look down)
+	r0, r1, r2, r12, r13, r15, r22]> // the last 15 are special (look down)
   {
     let Methods = [{
+
+      iterator allocation_order_begin(MachineFunction &MF) const {
+	// hide registers appropriately:
+	return begin()+(8-(MF.getInfo<IA64FunctionInfo>()->outRegsUsed));
+      }
+
       iterator allocation_order_end(MachineFunction &MF) const {
-	int numReservedRegs=7; // the 15 special registers r0,r1,r2,r12,r13 etc
+	int numReservedRegs=7; // the 7 special registers r0,r1,r2,r12,r13 etc
+
 	// we also can't allocate registers for use as locals if they're
 	// already required as 'out' registers
 	numReservedRegs+=MF.getInfo<IA64FunctionInfo>()->outRegsUsed;

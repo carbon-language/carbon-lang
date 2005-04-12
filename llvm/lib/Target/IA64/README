@@ -55,6 +55,8 @@ I guarantee it.
 TODO:
 
   - clean up and thoroughly test the isel patterns.
+  - fix stacked register allocation order: (for readability) we don't want
+    the out? registers being the first ones used
   - fix up floating point
     (nb http://gcc.gnu.org/wiki?pagename=ia64%20floating%20point )
   - bundling!
