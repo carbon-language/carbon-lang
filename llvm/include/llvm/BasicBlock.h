@@ -155,7 +155,7 @@ public:
   /// update the PHI nodes that reside in the block.  Note that this should be
   /// called while the predecessor still refers to this block.
   ///
-  void removePredecessor(BasicBlock *Pred);
+  void removePredecessor(BasicBlock *Pred, bool DontDeleteUselessPHIs = false);
 
   /// splitBasicBlock - This splits a basic block into two at the specified
   /// instruction.  Note that all instructions BEFORE the specified iterator
