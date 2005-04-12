@@ -429,6 +429,15 @@ SDOperand SelectionDAG::getSetCC(ISD::CondCode Cond, MVT::ValueType VT,
         N2 = getConstant(C2, N2.getValueType());
         N2C = cast<ConstantSDNode>(N2.Val);
       }
+      
+      // If we have setult X, 1, turn it into seteq X, 0
+      if ((Cond == ISD::SETLT || Cond == ISD::SETULT) && C2 == MinVal+1)
+        return getSetCC(ISD::SETEQ, VT, N1,
+                        getConstant(MinVal, N1.getValueType()));
+      // If we have setult X, 1, turn it into seteq X, 0
+      else if ((Cond == ISD::SETGT || Cond == ISD::SETUGT) && C2 == MaxVal-1)
+        return getSetCC(ISD::SETEQ, VT, N1,
+                        getConstant(MaxVal, N1.getValueType()));
 
       // If we have "setcc X, C1", check to see if we can shrink the immediate
       // by changing cc.
