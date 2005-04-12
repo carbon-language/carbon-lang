@@ -663,7 +663,8 @@ static bool NodeHasRecordingVariant(unsigned NodeOpcode) {
   switch(NodeOpcode) {
   default: return false;
   case ISD::AND:
-  case ISD::OR: return true;
+  case ISD::OR: 
+  case ISD::ZERO_EXTEND_INREG: return true;
   }
 }
 
@@ -965,6 +966,7 @@ bool ISel::SelectBitfieldInsert(SDOperand OR, unsigned Result) {
 
 unsigned ISel::SelectSetCR0(SDOperand CC) {
   unsigned Opc, Tmp1, Tmp2;
+  bool AlreadySelected = false;
   static const unsigned CompareOpcodes[] = 
     { PPC::FCMPU, PPC::FCMPU, PPC::CMPW, PPC::CMPLW };
   
@@ -973,7 +975,6 @@ unsigned ISel::SelectSetCR0(SDOperand CC) {
   SetCCSDNode* SetCC = dyn_cast<SetCCSDNode>(CC.Val);
   if (SetCC && CC.getOpcode() == ISD::SETCC) {
     bool U;
-    bool AlreadySelected = false;
     Opc = getBCCForSetCC(SetCC->getCondition(), U);
 
     // Pass the optional argument U to getImmediateForOpcode for SETCC,
@@ -984,7 +985,8 @@ unsigned ISel::SelectSetCR0(SDOperand CC) {
       // variant (e.g. 'or.' instead of 'or') of the instruction that defines
       // operand zero of the SetCC node is available.
       if (0 == Tmp2 && 
-          NodeHasRecordingVariant(SetCC->getOperand(0).getOpcode())) {
+          NodeHasRecordingVariant(SetCC->getOperand(0).getOpcode()) &&
+          SetCC->getOperand(0).Val->hasOneUse()) {
         RecordSuccess = false;
         Tmp1 = SelectExpr(SetCC->getOperand(0), true);
         if (RecordSuccess) {
@@ -1008,9 +1010,9 @@ unsigned ISel::SelectSetCR0(SDOperand CC) {
       BuildMI(BB, CompareOpc, 2, PPC::CR0).addReg(Tmp1).addReg(Tmp2);
     }
   } else {
+    Opc = PPC::BNE;
     Tmp1 = SelectExpr(CC);
     BuildMI(BB, PPC::CMPLWI, 2, PPC::CR0).addReg(Tmp1).addImm(0);
-    Opc = PPC::BNE;
   }
   return Opc;
 }
@@ -1643,8 +1645,9 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
     case MVT::i8:   Tmp2 = 24; break;
     case MVT::i1:   Tmp2 = 31; break;
     }
-    BuildMI(BB, PPC::RLWINM, 4, Result).addReg(Tmp1).addImm(0).addImm(Tmp2)
-      .addImm(31);
+    Opc = Recording ? PPC::RLWINMo : PPC::RLWINM;
+    RecordSuccess = true;
+    BuildMI(BB, Opc, 4, Result).addReg(Tmp1).addImm(0).addImm(Tmp2).addImm(31);
     return Result;
     
   case ISD::CopyFromReg:
@@ -2017,40 +2020,28 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
  
   case ISD::SETCC:
     if (SetCCSDNode *SetCC = dyn_cast<SetCCSDNode>(Node)) {
-      // We can codegen setcc op, 0 very efficiently compared to a conditional
-      // branch.  Check for that here.
       if (ConstantSDNode *CN = 
           dyn_cast<ConstantSDNode>(SetCC->getOperand(1).Val)) {
+        // We can codegen setcc op, imm very efficiently compared to a brcond.
+        // Check for those cases here.
+        // setcc op, 0
         if (CN->getValue() == 0) {
           Tmp1 = SelectExpr(SetCC->getOperand(0));
           switch (SetCC->getCondition()) {
           default: assert(0 && "Unhandled SetCC condition"); abort();
           case ISD::SETEQ:
-          case ISD::SETULE:
             Tmp2 = MakeReg(MVT::i32);
             BuildMI(BB, PPC::CNTLZW, 1, Tmp2).addReg(Tmp1);
             BuildMI(BB, PPC::RLWINM, 4, Result).addReg(Tmp2).addImm(27)
               .addImm(5).addImm(31);
             break;
           case ISD::SETNE:
-          case ISD::SETUGT:
             Tmp2 = MakeReg(MVT::i32);
             BuildMI(BB, PPC::ADDIC, 2, Tmp2).addReg(Tmp1).addSImm(-1);
             BuildMI(BB, PPC::SUBFE, 2, Result).addReg(Tmp2).addReg(Tmp1);
             break;
-          case ISD::SETULT:
-            BuildMI(BB, PPC::LI, 1, Result).addSImm(0);
-            break;
           case ISD::SETLT:
             BuildMI(BB, PPC::RLWINM, 4, Result).addReg(Tmp1).addImm(1)
-              .addImm(31).addImm(31);
-            break;
-          case ISD::SETLE:
-            Tmp2 = MakeReg(MVT::i32);
-            Tmp3 = MakeReg(MVT::i32);
-            BuildMI(BB, PPC::NEG, 2, Tmp2).addReg(Tmp1);
-            BuildMI(BB, PPC::ORC, 2, Tmp3).addReg(Tmp1).addReg(Tmp2);
-            BuildMI(BB, PPC::RLWINM, 4, Result).addReg(Tmp3).addImm(1)
               .addImm(31).addImm(31);
             break;
           case ISD::SETGT:
@@ -2061,10 +2052,38 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
             BuildMI(BB, PPC::RLWINM, 4, Result).addReg(Tmp3).addImm(1)
               .addImm(31).addImm(31);
             break;
-          case ISD::SETUGE:
-            BuildMI(BB, PPC::LI, 1, Result).addSImm(1);
+          }
+          return Result;
+        }
+        // setcc op, -1
+        if (CN->isAllOnesValue()) {
+          Tmp1 = SelectExpr(SetCC->getOperand(0));
+          switch (SetCC->getCondition()) {
+          default: assert(0 && "Unhandled SetCC condition"); abort();
+          case ISD::SETEQ:
+            Tmp2 = MakeReg(MVT::i32);
+            Tmp3 = MakeReg(MVT::i32);
+            BuildMI(BB, PPC::ADDIC, 2, Tmp2).addReg(Tmp1).addSImm(1);
+            BuildMI(BB, PPC::LI, 1, Tmp3).addSImm(0);
+            BuildMI(BB, PPC::ADDZE, 1, Result).addReg(Tmp3);
             break;
-          case ISD::SETGE:
+          case ISD::SETNE:
+            Tmp2 = MakeReg(MVT::i32);
+            Tmp3 = MakeReg(MVT::i32);
+            BuildMI(BB, PPC::NOR, 2, Tmp2).addReg(Tmp1).addReg(Tmp1);
+            BuildMI(BB, PPC::ADDIC, 2, Tmp3).addReg(Tmp2).addSImm(-1);
+            BuildMI(BB, PPC::SUBFE, 2, Result).addReg(Tmp3).addReg(Tmp2);
+            break;
+          case ISD::SETLT:
+            Tmp2 = MakeReg(MVT::i32);
+            Tmp3 = MakeReg(MVT::i32);
+            BuildMI(BB, PPC::ADDI, 2, Tmp2).addReg(Tmp1).addSImm(1);
+            BuildMI(BB, PPC::AND, 2, Tmp3).addReg(Tmp2).addReg(Tmp1);
+            BuildMI(BB, PPC::RLWINM, 4, Result).addReg(Tmp3).addImm(1)
+              .addImm(31).addImm(31);
+            break;
+          case ISD::SETGT:
+            Tmp2 = MakeReg(MVT::i32);
             BuildMI(BB, PPC::RLWINM, 4, Tmp2).addReg(Tmp1).addImm(1)
               .addImm(31).addImm(31);
             BuildMI(BB, PPC::XORI, 2, Result).addReg(Tmp2).addImm(1);
