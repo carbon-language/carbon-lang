@@ -768,6 +768,16 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
                               DAG.getConstant(0, Tmp1.getValueType()));
         break;
       default:
+        // If this is a comparison of the sign bit, just look at the top part.
+        // X > -1,  x < 0
+        if (ConstantSDNode *CST = dyn_cast<ConstantSDNode>(Node->getOperand(1)))
+          if ((cast<SetCCSDNode>(Node)->getCondition() == ISD::SETLT && 
+               CST->getValue() == 0) ||              // X < 0
+              (cast<SetCCSDNode>(Node)->getCondition() == ISD::SETGT &&
+               (CST->isAllOnesValue())))             // X > -1
+            return DAG.getSetCC(cast<SetCCSDNode>(Node)->getCondition(),
+                                Node->getValueType(0), LHSHi, RHSHi);
+
         // FIXME: This generated code sucks.
         ISD::CondCode LowCC;
         switch (cast<SetCCSDNode>(Node)->getCondition()) {
