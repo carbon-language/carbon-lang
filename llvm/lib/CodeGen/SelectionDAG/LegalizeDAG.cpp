@@ -448,8 +448,17 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
 
     MVT::ValueType SrcVT = cast<MVTSDNode>(Node)->getExtraValueType();
     switch (TLI.getOperationAction(Node->getOpcode(), SrcVT)) {
-    case TargetLowering::Promote:
     default: assert(0 && "This action is not supported yet!");
+    case TargetLowering::Promote:
+      assert(SrcVT == MVT::i1 && "Can only promote EXTLOAD from i1 -> i8!");
+      Result = DAG.getNode(Node->getOpcode(), Node->getValueType(0),
+                           Tmp1, Tmp2, MVT::i8);
+      // Since loads produce two values, make sure to remember that we legalized
+      // both of them.
+      AddLegalizedOperand(SDOperand(Node, 0), Result);
+      AddLegalizedOperand(SDOperand(Node, 1), Result.getValue(1));
+      return Result.getValue(Op.ResNo);
+      
     case TargetLowering::Legal:
       if (Tmp1 != Node->getOperand(0) ||
           Tmp2 != Node->getOperand(1))
@@ -463,7 +472,6 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       AddLegalizedOperand(SDOperand(Node, 0), Result);
       AddLegalizedOperand(SDOperand(Node, 1), Result.getValue(1));
       return Result.getValue(Op.ResNo);
-      break;
     case TargetLowering::Expand:
       assert(Node->getOpcode() != ISD::EXTLOAD &&
              "EXTLOAD should always be supported!");
