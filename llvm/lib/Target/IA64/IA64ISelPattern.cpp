@@ -183,7 +183,8 @@ IA64TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
 	    // fixme? (well, will need to for weird FP structy stuff, 
 	    // see intel ABI docs)
 	  case MVT::f64:
-	    BuildMI(&BB, IA64::IDEF, 0, args_FP[used_FPArgs]);
+//XXX	    BuildMI(&BB, IA64::IDEF, 0, args_FP[used_FPArgs]);
+	    MF.addLiveIn(args_FP[used_FPArgs]); // mark this reg as liveIn
 	    // floating point args go into f8..f15 as-needed, the increment
 	    argVreg[count] =                              // is below..:
 	    MF.getSSARegMap()->createVirtualRegister(getRegClassFor(MVT::f64));
@@ -199,7 +200,8 @@ IA64TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
 	  case MVT::i16:
 	  case MVT::i32:
 	  case MVT::i64:
-	    BuildMI(&BB, IA64::IDEF, 0, args_int[count]);
+//XXX	    BuildMI(&BB, IA64::IDEF, 0, args_int[count]);
+	    MF.addLiveIn(args_int[count]); // mark this register as liveIn
 	    argVreg[count] = 
 	    MF.getSSARegMap()->createVirtualRegister(getRegClassFor(MVT::i64));
 	    argPreg[count] = args_int[count];
@@ -271,6 +273,24 @@ IA64TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
     }
   }
 
+  // Finally, inform the code generator which regs we return values in.
+  // (see the ISD::RET: case down below)
+  switch (getValueType(F.getReturnType())) {
+  default: assert(0 && "i have no idea where to return this type!");
+  case MVT::isVoid: break;
+  case MVT::i1:
+  case MVT::i8:
+  case MVT::i16:
+  case MVT::i32:
+  case MVT::i64:
+    MF.addLiveOut(IA64::r8);
+    break;
+  case MVT::f32:
+  case MVT::f64:
+    MF.addLiveOut(IA64::F8);
+    break;
+  }
+  
   return ArgValues;
 }
   
@@ -1769,10 +1789,15 @@ void ISel::Select(SDOperand N) {
       default: assert(0 && "All other types should have been promoted!!");
 	       // FIXME: do I need to add support for bools here?
 	       // (return '0' or '1' r8, basically...)
+	       //
+	       // FIXME: need to round floats - 80 bits is bad, the tester
+	       // told me so
       case MVT::i64:
+	// we mark r8 as live on exit up above in LowerArguments() 
 	BuildMI(BB, IA64::MOV, 1, IA64::r8).addReg(Tmp1);
 	break;
       case MVT::f64:
+	// we mark F8 as live on exit up above in LowerArguments()
 	BuildMI(BB, IA64::FMOV, 1, IA64::F8).addReg(Tmp1);
       }
       break;
