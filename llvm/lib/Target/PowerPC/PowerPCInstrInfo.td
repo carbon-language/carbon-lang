@@ -221,7 +221,6 @@ def LWZX : XForm_1<31,  23, 0, 0, (ops GPRC:$dst, GPRC:$base, GPRC:$index),
 def LDX  : XForm_1<31,  21, 1, 0, (ops GPRC:$dst, GPRC:$base, GPRC:$index),
                    "ldx $dst, $base, $index">;
 }
-def MFCR : XForm_5<31,  19, 0, 0, (ops GPRC:$dst), "mfcr $dst">;
 def AND  : XForm_6<31,  28, 0, 0, 0, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
                    "and $rA, $rS, $rB">;
 let Defs = [CR0] in
@@ -341,6 +340,8 @@ def CRNOR  : XLForm_1<19,  33, 0, 0, (ops u5imm:$D, u5imm:$A, u5imm:$B),
                       "crnor $D, $A, $B">;
 def CROR   : XLForm_1<19, 449, 0, 0, (ops u5imm:$D, u5imm:$A, u5imm:$B),
                       "cror $D, $A, $B">;
+def MCRF   : XLForm_3<19, 0, 0, 0, (ops CRRC:$BF, CRRC:$BFA),
+                      "mfcr $BF, $BFA">;
 
 // XFX-Form instructions.  Instructions that deal with SPRs
 //
@@ -349,9 +350,11 @@ def CROR   : XLForm_1<19, 449, 0, 0, (ops u5imm:$D, u5imm:$A, u5imm:$B),
 // which means the SPR value needs to be multiplied by a factor of 32.
 def MFCTR : XFXForm_1_ext<31, 339, 288, 0, 0, (ops GPRC:$rT), "mfctr $rT">;
 def MFLR  : XFXForm_1_ext<31, 339, 256, 0, 0, (ops GPRC:$rT), "mflr $rT">;
+def MFCR  : XFXForm_3<31, 19, 0, 0, (ops GPRC:$rT), "mfcr $rT">;
+def MTCRF : XFXForm_5<31, 144, 0, 0, (ops CRRC:$FXM, GPRC:$rS),
+                      "mtcrf $FXM, $rS">;
 def MTCTR : XFXForm_7_ext<31, 467, 288, 0, 0, (ops GPRC:$rS), "mtctr $rS">;
 def MTLR  : XFXForm_7_ext<31, 467, 256, 0, 0, (ops GPRC:$rS), "mtlr $rS">;
-
 
 // XS-Form instructions.  Just 'sradi'
 //

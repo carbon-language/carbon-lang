@@ -65,6 +65,14 @@ bool PPC32InstrInfo::isMoveInstr(const MachineInstr& MI,
     sourceReg = MI.getOperand(1).getReg();
     destReg = MI.getOperand(0).getReg();
     return true;
+  } else if (oc == PPC::MCRF) {             // mcrf cr1, cr2
+    assert(MI.getNumOperands() == 2 &&
+           MI.getOperand(0).isRegister() &&
+           MI.getOperand(1).isRegister() &&
+           "invalid PPC MCRF instruction");
+    sourceReg = MI.getOperand(1).getReg();
+    destReg = MI.getOperand(0).getReg();
+    return true;
   }
   return false;
 }

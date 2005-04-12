@@ -236,13 +236,6 @@ class XForm_1<bits<6> opcode, bits<10> xo, bit ppc64, bit vmx,
               dag OL, string asmstr> 
   : XForm_base_r3xo<opcode, xo, 0, ppc64, vmx, OL, asmstr>;
 
-class XForm_5<bits<6> opcode, bits<10> xo, bit ppc64, bit vmx,
-              dag OL, string asmstr>
-  : XForm_base_r3xo<opcode, xo, 0, ppc64, vmx, OL, asmstr> {
-  let A = 0;
-  let B = 0;
-}
-
 class XForm_6<bits<6> opcode, bits<10> xo, bit rc, bit ppc64, bit vmx,
               dag OL, string asmstr> 
   : XForm_base_r3xo_swapped<opcode, xo, rc, ppc64, vmx, OL, asmstr>;
@@ -343,13 +336,27 @@ class XLForm_2_ext<bits<6> opcode, bits<10> xo, bits<5> bo,
   let BH = 0;
 }
 
+class XLForm_3<bits<6> opcode, bits<10> xo, bit ppc64, bit vmx, 
+               dag OL, string asmstr> : I<opcode, ppc64, vmx, OL, asmstr> {
+  bits<3> BF;
+  bits<3> BFA;
+  
+  let Inst{6-8}   = BF;
+  let Inst{9-10}  = 0;
+  let Inst{11-13} = BFA;
+  let Inst{14-15} = 0;
+  let Inst{16-20} = 0;
+  let Inst{21-30} = xo;
+  let Inst{31}    = 0;
+}
+
 // 1.7.8 XFX-Form
 class XFXForm_1<bits<6> opcode, bits<10> xo, bit ppc64, bit vmx, 
                 dag OL, string asmstr> : I<opcode, ppc64, vmx, OL, asmstr> {
-  bits<5>  ST;
+  bits<5>  RT;
   bits<10> SPR;
 
-  let Inst{6-10}  = ST;
+  let Inst{6-10}  = RT;
   let Inst{11-20} = SPR;
   let Inst{21-30} = xo;
   let Inst{31}    = 0;
@@ -359,6 +366,29 @@ class XFXForm_1_ext<bits<6> opcode, bits<10> xo, bits<10> spr, bit ppc64,
                     bit vmx, dag OL, string asmstr> 
   : XFXForm_1<opcode, xo, ppc64, vmx, OL, asmstr> {
   let SPR = spr;
+}
+
+class XFXForm_3<bits<6> opcode, bits<10> xo, bit ppc64, bit vmx, 
+                dag OL, string asmstr> : I<opcode, ppc64, vmx, OL, asmstr> {
+  bits<5>  RT;
+   
+  let Inst{6-10}  = RT;
+  let Inst{11-20} = 0;
+  let Inst{21-30} = xo;
+  let Inst{31}    = 0;
+}
+
+class XFXForm_5<bits<6> opcode, bits<10> xo, bit ppc64, bit vmx, 
+                dag OL, string asmstr> : I<opcode, ppc64, vmx, OL, asmstr> {
+  bits<8>  FXM;
+  bits<5>  ST;
+   
+  let Inst{6-10}  = ST;
+  let Inst{11}    = 0;
+  let Inst{12-19} = FXM;
+  let Inst{20}    = 0;
+  let Inst{21-30} = xo;
+  let Inst{31}    = 0;
 }
 
 class XFXForm_7<bits<6> opcode, bits<10> xo, bit ppc64, bit vmx,

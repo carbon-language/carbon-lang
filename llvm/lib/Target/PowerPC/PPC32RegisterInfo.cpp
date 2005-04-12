@@ -69,6 +69,11 @@ static unsigned getIdx(const TargetRegisterClass *RC) {
       case 4:  return 3;
       case 8:  return 4;
     }
+  } else if (RC == PPC32::CRRCRegisterClass) {
+    switch (RC->getSize()) {
+      default: assert(0 && "Invalid data size!");
+      case 4:  return 2;
+    }
   }
   std::cerr << "Invalid register class to getIdx()!\n";
   abort();
@@ -84,6 +89,9 @@ PPC32RegisterInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
   unsigned OC = Opcode[getIdx(getClass(SrcReg))];
   if (SrcReg == PPC::LR) {
     BuildMI(MBB, MI, PPC::MFLR, 1, PPC::R11).addReg(PPC::LR);
+    addFrameReference(BuildMI(MBB, MI, OC, 3).addReg(PPC::R11),FrameIdx);
+  } else if (PPC32::CRRCRegisterClass == getClass(SrcReg)) {
+    BuildMI(MBB, MI, PPC::MFCR, 0, PPC::R11);
     addFrameReference(BuildMI(MBB, MI, OC, 3).addReg(PPC::R11),FrameIdx);
   } else {
     addFrameReference(BuildMI(MBB, MI, OC, 3).addReg(SrcReg),FrameIdx);
@@ -101,6 +109,9 @@ PPC32RegisterInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
   if (DestReg == PPC::LR) {
     addFrameReference(BuildMI(MBB, MI, OC, 2, PPC::R11), FrameIdx);
     BuildMI(MBB, MI, PPC::MTLR, 1).addReg(PPC::R11);
+  } else if (PPC32::CRRCRegisterClass == getClass(DestReg)) {
+    addFrameReference(BuildMI(MBB, MI, OC, 2, PPC::R11), FrameIdx);
+    BuildMI(MBB, MI, PPC::MTCRF, 1, DestReg).addReg(PPC::R11);
   } else {
     addFrameReference(BuildMI(MBB, MI, OC, 2, DestReg), FrameIdx);
   }
@@ -116,7 +127,9 @@ void PPC32RegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
     BuildMI(MBB, MI, PPC::OR, 2, DestReg).addReg(SrcReg).addReg(SrcReg);
   } else if (RC == PPC32::FPRCRegisterClass) {
     BuildMI(MBB, MI, PPC::FMR, 1, DestReg).addReg(SrcReg);
-  } else { 
+  } else if (RC == PPC32::CRRCRegisterClass) {
+    BuildMI(MBB, MI, PPC::MCRF, 1, DestReg).addReg(SrcReg);
+  } else {
     std::cerr << "Attempt to copy register that is not GPR or FPR";
     abort();
   }
