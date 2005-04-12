@@ -960,12 +960,6 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
 
     if (VT == MVT::i1) {  // Boolean SELECT
       if (N2C) {
-        if (N3C) {
-          if (N2C->getValue()) // select C, 1, 0 -> C
-            return N1;
-          return getNode(ISD::XOR, VT, N1, N3); // select C, 0, 1 -> ~C
-        }
-
         if (N2C->getValue())   // select C, 1, X -> C | X
           return getNode(ISD::OR, VT, N1, N3);
         else                   // select C, 0, X -> ~C & X
@@ -980,6 +974,11 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
         else                   // select C, X, 0 -> C & X
           return getNode(ISD::AND, VT, N1, N2);
       }
+
+      if (N1 == N2)   // X ? X : Y --> X ? 1 : Y --> X | Y
+        return getNode(ISD::OR, VT, N1, N3);
+      if (N1 == N3)   // X ? Y : X --> X ? Y : 0 --> X & Y
+        return getNode(ISD::AND, VT, N1, N2);
     }
 
     // If this is a selectcc, check to see if we can simplify the result.
@@ -1001,7 +1000,6 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
               N2.getOperand(0) == N3)
             return getNode(ISD::FABS, VT, N3);
         }
-
     }
     break;
   case ISD::BRCOND:
