@@ -750,6 +750,16 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       switch (cast<SetCCSDNode>(Node)->getCondition()) {
       case ISD::SETEQ:
       case ISD::SETNE:
+        if (RHSLo == RHSHi)
+          if (ConstantSDNode *RHSCST = dyn_cast<ConstantSDNode>(RHSLo))
+            if (RHSCST->isAllOnesValue()) {
+              // Comparison to -1.
+              Tmp1 = DAG.getNode(ISD::AND, LHSLo.getValueType(), LHSLo, LHSHi);
+              Result = DAG.getSetCC(cast<SetCCSDNode>(Node)->getCondition(), 
+                                    Node->getValueType(0), Tmp1, RHSLo);
+              break;                                    
+            }
+
         Tmp1 = DAG.getNode(ISD::XOR, LHSLo.getValueType(), LHSLo, RHSLo);
         Tmp2 = DAG.getNode(ISD::XOR, LHSLo.getValueType(), LHSHi, RHSHi);
         Tmp1 = DAG.getNode(ISD::OR, Tmp1.getValueType(), Tmp1, Tmp2);
