@@ -61,7 +61,6 @@ namespace {
       setOperationAction(ISD::SREM, MVT::i32, Expand);
       setOperationAction(ISD::UREM, MVT::i32, Expand);
 
-      setShiftAmountFlavor(Extend);   // shl X, 32 == 0
       setSetCCResultContents(ZeroOrOneSetCCResult);
       addLegalFPImmediate(+0.0); // Necessary for FSEL
       addLegalFPImmediate(-0.0); // 

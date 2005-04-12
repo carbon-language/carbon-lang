@@ -266,14 +266,7 @@ public:
       } else if (isa<ConstantPointerNull>(C)) {
         return N = DAG.getConstant(0, TLI.getPointerTy());
       } else if (isa<UndefValue>(C)) {
-	/// FIXME: Implement UNDEFVALUE better.
-        if (MVT::isInteger(VT))
-          return N = DAG.getConstant(0, VT);
-        else if (MVT::isFloatingPoint(VT))
-          return N = DAG.getConstantFP(0, VT);
-        else
-          assert(0 && "Unknown value type!");
-
+        return N = DAG.getNode(ISD::UNDEF, VT);
       } else if (ConstantFP *CFP = dyn_cast<ConstantFP>(C)) {
         return N = DAG.getConstantFP(CFP->getValue(), VT);
       } else {

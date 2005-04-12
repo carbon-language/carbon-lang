@@ -755,19 +755,12 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
 
     case ISD::SHL:
     case ISD::SRL:
-      // If the shift amount is bigger than the size of the data, simplify.
-      if (C2 >= MVT::getSizeInBits(N1.getValueType())) {
-        if (TLI.getShiftAmountFlavor() == TargetLowering::Mask) {
-          unsigned NewAmt =
-            C2 & ((1 << MVT::getSizeInBits(N1.getValueType()))-1);
-          return getNode(Opcode, VT, N1, getConstant(NewAmt,N2.getValueType()));
-        } else if (TLI.getShiftAmountFlavor() == TargetLowering::Extend) {
-          // Shifting all of the bits out?
-          return getConstant(0, N1.getValueType());
-        }
-      }
-      // FALL THROUGH.
     case ISD::SRA:
+      // If the shift amount is bigger than the size of the data, then all the
+      // bits are shifted out.  Simplify to loading constant zero.
+      if (C2 >= MVT::getSizeInBits(N1.getValueType())) {
+        return getNode(ISD::UNDEF, N1.getValueType());
+      }
       if (C2 == 0) return N1;
       break;
 
