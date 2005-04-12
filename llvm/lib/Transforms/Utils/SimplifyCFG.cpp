@@ -837,8 +837,8 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
 
     // Loop through all of our successors and make sure they know that one
     // of their predecessors is going away.
-    for_each(succ_begin(BB), succ_end(BB),
-	     std::bind2nd(std::mem_fun(&BasicBlock::removePredecessor), BB));
+    for (succ_iterator SI = succ_begin(BB), E = succ_end(BB); SI != E; ++SI)
+      SI->removePredecessor(BB);
 
     while (!BB->empty()) {
       Instruction &I = BB->back();
