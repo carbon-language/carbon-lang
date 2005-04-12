@@ -170,20 +170,25 @@ AlphaTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG)
     for (int i = 0; i < 6; ++i)
     {
       if (F.isVarArg()) {
-        BuildMI(&BB, Alpha::IDEF, 0, args_int[i]);
-        BuildMI(&BB, Alpha::IDEF, 0, args_float[i]);
+        F->addLiveIn(args_int[i]);
+        F->addLiveIn(args_float[i]);
+//        BuildMI(&BB, Alpha::IDEF, 0, args_int[i]);
+//        BuildMI(&BB, Alpha::IDEF, 0, args_float[i]);
       } else if (I != E)
       {
         if(MVT::isInteger(getValueType(I->getType())))
-          BuildMI(&BB, Alpha::IDEF, 0, args_int[i]);
+          F->addLiveIn(args_int[i]);
+//          BuildMI(&BB, Alpha::IDEF, 0, args_int[i]);
         else
-          BuildMI(&BB, Alpha::IDEF, 0, args_float[i]);
+          F->addLiveIn(args_float[i]);
+//          BuildMI(&BB, Alpha::IDEF, 0, args_float[i]);
         ++I;
       }
     }
   }
 
-  BuildMI(&BB, Alpha::IDEF, 0, Alpha::R29);
+  F->addLiveIn(Alpha::R29);
+//  BuildMI(&BB, Alpha::IDEF, 0, Alpha::R29);
   BuildMI(&BB, Alpha::BIS, 2, GP).addReg(Alpha::R29).addReg(Alpha::R29);
 
   for (Function::arg_iterator I = F.arg_begin(), E = F.arg_end(); I != E; ++I)
@@ -257,6 +262,24 @@ AlphaTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG)
 
   //Set up a token factor with all the stack traffic
   DAG.setRoot(DAG.getNode(ISD::TokenFactor, MVT::Other, LS));
+
+  // Finally, inform the code generator which regs we return values in.
+  switch (getValueType(F.getReturnType())) {
+  default: assert(0 && "Unknown type!");
+  case MVT::isVoid: break;
+  case MVT::i1:
+  case MVT::i8:
+  case MVT::i16:
+  case MVT::i32:
+  case MVT::i64:
+    MF.addLiveOut(Alpha::R0);
+    break;
+  case MVT::f32:
+  case MVT::f64:
+    MF.addLiveOut(Alpha::F0);
+    break;
+  }
+
   //return the arguments
   return ArgValues;
 }
