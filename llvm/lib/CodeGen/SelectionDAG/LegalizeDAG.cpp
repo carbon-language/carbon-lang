@@ -1822,7 +1822,37 @@ ExpandIntToFP(bool isSigned, MVT::ValueType DestTy, SDOperand Source) {
     // signed, then adjust the result if the sign bit is set.
     SDOperand SignedConv = ExpandIntToFP(true, DestTy, Source);
 
-    assert(0 && "Unsigned casts not supported yet!");
+    assert(Source.getValueType() == MVT::i64 &&
+           "This only works for 64-bit -> FP");
+    // The 64-bit value loaded will be incorrectly if the 'sign bit' of the
+    // incoming integer is set.  To handle this, we dynamically test to see if
+    // it is set, and, if so, add a fudge factor.
+    SDOperand Lo, Hi;
+    ExpandOp(Source, Lo, Hi);
+
+    SDOperand SignSet = DAG.getSetCC(ISD::SETLT, TLI.getSetCCResultTy(), Hi,
+                                     DAG.getConstant(0, Hi.getValueType()));
+    SDOperand Zero = getIntPtrConstant(0), Four = getIntPtrConstant(4);
+    SDOperand CstOffset = DAG.getNode(ISD::SELECT, Zero.getValueType(),
+                                      SignSet, Four, Zero);
+    // FIXME: This is almost certainly broken for big-endian systems.  Should
+    // this just put the fudge factor in the low bits of the uint64 constant or?
+    static Constant *FudgeFactor =
+      ConstantUInt::get(Type::ULongTy, 0x5f800000ULL << 32);
+
+    MachineConstantPool *CP = DAG.getMachineFunction().getConstantPool();
+    SDOperand CPIdx = DAG.getConstantPool(CP->getConstantPoolIndex(FudgeFactor),
+                                          TLI.getPointerTy());
+    CPIdx = DAG.getNode(ISD::ADD, TLI.getPointerTy(), CPIdx, CstOffset);
+    SDOperand FudgeInReg;
+    if (DestTy == MVT::f32)
+      FudgeInReg = DAG.getLoad(MVT::f32, DAG.getEntryNode(), CPIdx);
+    else {
+      assert(DestTy == MVT::f64 && "Unexpected conversion");
+      FudgeInReg = DAG.getNode(ISD::EXTLOAD, MVT::f64, DAG.getEntryNode(),
+                               CPIdx, MVT::f32);
+    }
+    return DAG.getNode(ISD::ADD, DestTy, SignedConv, FudgeInReg);
   }
   SDOperand Callee = DAG.getExternalSymbol(FnName, TLI.getPointerTy());
 
@@ -1835,7 +1865,6 @@ ExpandIntToFP(bool isSigned, MVT::ValueType DestTy, SDOperand Source) {
   // calls wherever we need them to satisfy data dependences.
   const Type *RetTy = MVT::getTypeForValueType(DestTy);
   return TLI.LowerCallTo(InChain, RetTy, false, Callee, Args, DAG).first;
-                         
 }
                    
 
