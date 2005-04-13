@@ -1820,7 +1820,7 @@ ExpandIntToFP(bool isSigned, MVT::ValueType DestTy, SDOperand Source) {
   } else {
     // If this is unsigned, and not supported, first perform the conversion to
     // signed, then adjust the result if the sign bit is set.
-    SDOperand SignedConv = ExpandIntToFP(false, DestTy, Source);
+    SDOperand SignedConv = ExpandIntToFP(true, DestTy, Source);
 
     assert(0 && "Unsigned casts not supported yet!");
   }
