@@ -524,6 +524,7 @@ public:
   unsigned getGlobalBaseReg();
   unsigned getConstDouble(double floatVal, unsigned Result);
   bool SelectBitfieldInsert(SDOperand OR, unsigned Result);
+  unsigned FoldIfWideZeroExtend(SDOperand N);
   unsigned SelectSetCR0(SDOperand CC);
   unsigned SelectExpr(SDOperand N, bool Recording=false);
   unsigned SelectExprFP(SDOperand N, unsigned Result);
@@ -961,6 +962,21 @@ bool ISel::SelectBitfieldInsert(SDOperand OR, unsigned Result) {
     return true;
   }
   return false;
+}
+
+/// FoldIfWideZeroExtend - 32 bit PowerPC implicit masks shift amounts to the
+/// low six bits.  If the shift amount is an ISD::AND node with a mask that is
+/// wider than the implicit mask, then we can get rid of the AND and let the
+/// shift do the mask.
+unsigned ISel::FoldIfWideZeroExtend(SDOperand N) {
+  unsigned C;
+  if (N.getOpcode() == ISD::AND &&
+      5 == getImmediateForOpcode(N.getOperand(1), ISD::AND, C) && // isMask
+      31 == (C & 0xFFFF) && // ME
+      26 >= (C >> 16))      // MB
+    return SelectExpr(N.getOperand(0));
+  else
+    return SelectExpr(N);
 }
 
 unsigned ISel::SelectSetCR0(SDOperand CC) {
@@ -1650,7 +1666,7 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
       BuildMI(BB, PPC::RLWINM, 4, Result).addReg(Tmp1).addImm(Tmp2).addImm(0)
         .addImm(31-Tmp2);
     } else {
-      Tmp2 = SelectExpr(N.getOperand(1));
+      Tmp2 = FoldIfWideZeroExtend(N.getOperand(1));
       BuildMI(BB, PPC::SLW, 2, Result).addReg(Tmp1).addReg(Tmp2);
     }
     return Result;
@@ -1662,7 +1678,7 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
       BuildMI(BB, PPC::RLWINM, 4, Result).addReg(Tmp1).addImm(32-Tmp2)
         .addImm(Tmp2).addImm(31);
     } else {
-      Tmp2 = SelectExpr(N.getOperand(1));
+      Tmp2 = FoldIfWideZeroExtend(N.getOperand(1));
       BuildMI(BB, PPC::SRW, 2, Result).addReg(Tmp1).addReg(Tmp2);
     }
     return Result;
@@ -1673,7 +1689,7 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
       Tmp2 = CN->getValue() & 0x1F;
       BuildMI(BB, PPC::SRAWI, 2, Result).addReg(Tmp1).addImm(Tmp2);
     } else {
-      Tmp2 = SelectExpr(N.getOperand(1));
+      Tmp2 = FoldIfWideZeroExtend(N.getOperand(1));
       BuildMI(BB, PPC::SRAW, 2, Result).addReg(Tmp1).addReg(Tmp2);
     }
     return Result;
@@ -1880,9 +1896,9 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
            "Not an i64 shift!");
     unsigned ShiftOpLo = SelectExpr(N.getOperand(0));
     unsigned ShiftOpHi = SelectExpr(N.getOperand(1));
-    unsigned SHReg = SelectExpr(N.getOperand(2));
-    Tmp1 = MakeReg(MVT::i32);  
-    Tmp2 = MakeReg(MVT::i32);  
+    unsigned SHReg = FoldIfWideZeroExtend(N.getOperand(2));
+    Tmp1 = MakeReg(MVT::i32);
+    Tmp2 = MakeReg(MVT::i32);
     Tmp3 = MakeReg(MVT::i32);
     unsigned Tmp4 = MakeReg(MVT::i32);
     unsigned Tmp5 = MakeReg(MVT::i32);
