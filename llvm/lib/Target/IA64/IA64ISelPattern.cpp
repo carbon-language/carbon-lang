@@ -445,7 +445,7 @@ void ISel::InstructionSelectBasicBlock(SelectionDAG &DAG) {
 
 /// ExactLog2 - This function solves for (Val == 1 << (N-1)) and returns N.  It
 /// returns zero when the input is not exactly a power of two.
-static uint64_t ExactLog2(uint64_t Val) {
+static unsigned ExactLog2(uint64_t Val) {
   if (Val == 0 || (Val & (Val-1))) return 0;
   unsigned Count = 0;
   while (Val != 1) {
@@ -453,6 +453,17 @@ static uint64_t ExactLog2(uint64_t Val) {
     ++Count;
   }
   return Count;
+}
+
+/// ExactLog2sub1 - This function solves for (Val == (1 << (N-1))-1)
+/// and returns N.  It returns 666 if Val is not 2^n -1 for some n.
+static unsigned ExactLog2sub1(uint64_t Val) {
+  unsigned int n;
+  for(n=0; n<64; n++) {
+    if(Val==(uint64_t)((1<<n)-1))
+      return n;
+  }
+  return 666;
 }
 
 /// ponderIntegerDivisionBy - When handling integer divides, if the divide
@@ -469,6 +480,19 @@ static unsigned ponderIntegerDivisionBy(SDOperand N, bool isSigned,
 
   if ((Imm = ExactLog2(v))) { // if a division by a power of two, say so 
     return 1;
+  } 
+  
+  return 0; // fallthrough
+}
+
+static unsigned ponderIntegerAndWith(SDOperand N, unsigned& Imm) {
+  if (N.getOpcode() != ISD::Constant) return 0; // if not ANDing with
+                                                // a constant, give up.
+
+  int64_t v = (int64_t)cast<ConstantSDNode>(N)->getSignExtended();
+
+  if ((Imm = ExactLog2sub1(v))!=666) { // if ANDing with ((2^n)-1) for some n
+    return 1; // say so
   } 
   
   return 0; // fallthrough
@@ -967,15 +991,34 @@ assert(0 && "hmm, ISD::SIGN_EXTEND: shouldn't ever be reached. bad luck!\n");
 	.addReg(bogusTemp1).addReg(IA64::r0).addReg(IA64::r0).addReg(pTemp);
       break;
     }
+    
     // if not a bool, we just AND away:
     case MVT::i8:
     case MVT::i16:
     case MVT::i32:
     case MVT::i64: {
       Tmp1 = SelectExpr(N.getOperand(0));
+      switch (ponderIntegerAndWith(N.getOperand(1), Tmp3)) {
+        case 1: // ANDing a constant that is 2^n-1 for some n
+	  switch (Tmp3) {
+	    case 8:  // if AND 0x00000000000000FF, be quaint and use zxt1
+	      BuildMI(BB, IA64::ZXT1, 1, Result).addReg(Tmp1);
+	      break;
+	    case 16: // if AND 0x000000000000FFFF, be quaint and use zxt2
+	      BuildMI(BB, IA64::ZXT2, 1, Result).addReg(Tmp1);
+	      break;
+	    case 32: // if AND 0x00000000FFFFFFFF, be quaint and use zxt4
+	      BuildMI(BB, IA64::ZXT4, 1, Result).addReg(Tmp1);
+	      break;
+	    default: // otherwise, use dep.z to paste zeros
+	      BuildMI(BB, IA64::DEPZ, 3, Result).addReg(Tmp1)
+		.addImm(0).addImm(Tmp3);
+	      break;
+	  }
+	  return Result; // early exit
+      } // fallthrough and emit a simple AND:
       Tmp2 = SelectExpr(N.getOperand(1));
       BuildMI(BB, IA64::AND, 2, Result).addReg(Tmp1).addReg(Tmp2);
-      break;
     }
     }
     return Result;
