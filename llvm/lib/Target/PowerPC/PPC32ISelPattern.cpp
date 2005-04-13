@@ -525,7 +525,7 @@ public:
   unsigned getConstDouble(double floatVal, unsigned Result);
   bool SelectBitfieldInsert(SDOperand OR, unsigned Result);
   unsigned FoldIfWideZeroExtend(SDOperand N);
-  unsigned SelectSetCR0(SDOperand CC);
+  unsigned SelectCC(SDOperand CC, unsigned &Opc);
   unsigned SelectExpr(SDOperand N, bool Recording=false);
   unsigned SelectExprFP(SDOperand N, unsigned Result);
   void Select(SDOperand N);
@@ -979,11 +979,14 @@ unsigned ISel::FoldIfWideZeroExtend(SDOperand N) {
     return SelectExpr(N);
 }
 
-unsigned ISel::SelectSetCR0(SDOperand CC) {
-  unsigned Opc, Tmp1, Tmp2;
+unsigned ISel::SelectCC(SDOperand CC, unsigned &Opc) {
+  unsigned Result, Tmp1, Tmp2;
   bool AlreadySelected = false;
   static const unsigned CompareOpcodes[] = 
     { PPC::FCMPU, PPC::FCMPU, PPC::CMPW, PPC::CMPLW };
+  
+  // Allocate a condition register for this expression
+  Result = RegMap->createVirtualRegister(PPC32::CRRCRegisterClass);
   
   // If the first operand to the select is a SETCC node, then we can fold it
   // into the branch that selects which value to return.
@@ -1006,7 +1009,7 @@ unsigned ISel::SelectSetCR0(SDOperand CC) {
         Tmp1 = SelectExpr(SetCC->getOperand(0), true);
         if (RecordSuccess) {
           ++Recorded;
-          return Opc;
+          return PPC::CR0;
         }
         AlreadySelected = true;
       }
@@ -1014,22 +1017,22 @@ unsigned ISel::SelectSetCR0(SDOperand CC) {
       // instead.
       if (!AlreadySelected) Tmp1 = SelectExpr(SetCC->getOperand(0));
       if (U)
-        BuildMI(BB, PPC::CMPLWI, 2, PPC::CR0).addReg(Tmp1).addImm(Tmp2);
+        BuildMI(BB, PPC::CMPLWI, 2, Result).addReg(Tmp1).addImm(Tmp2);
       else
-        BuildMI(BB, PPC::CMPWI, 2, PPC::CR0).addReg(Tmp1).addSImm(Tmp2);
+        BuildMI(BB, PPC::CMPWI, 2, Result).addReg(Tmp1).addSImm(Tmp2);
     } else {
       bool IsInteger = MVT::isInteger(SetCC->getOperand(0).getValueType());
       unsigned CompareOpc = CompareOpcodes[2 * IsInteger + U];
       Tmp1 = SelectExpr(SetCC->getOperand(0));
       Tmp2 = SelectExpr(SetCC->getOperand(1));
-      BuildMI(BB, CompareOpc, 2, PPC::CR0).addReg(Tmp1).addReg(Tmp2);
+      BuildMI(BB, CompareOpc, 2, Result).addReg(Tmp1).addReg(Tmp2);
     }
   } else {
     Opc = PPC::BNE;
     Tmp1 = SelectExpr(CC);
-    BuildMI(BB, PPC::CMPLWI, 2, PPC::CR0).addReg(Tmp1).addImm(0);
+    BuildMI(BB, PPC::CMPLWI, 2, Result).addReg(Tmp1).addImm(0);
   }
-  return Opc;
+  return Result;
 }
 
 /// Check to see if the load is a constant offset from a base register
@@ -1055,8 +1058,9 @@ void ISel::SelectBranchCC(SDOperand N)
   MachineBasicBlock *Dest = 
     cast<BasicBlockSDNode>(N.getOperand(2))->getBasicBlock();
 
+  unsigned Opc, CCReg;
   Select(N.getOperand(0));  //chain
-  unsigned Opc = SelectSetCR0(N.getOperand(1));
+  CCReg = SelectCC(N.getOperand(1), Opc);
 
   // Iterate to the next basic block, unless we're already at the end of the
   ilist<MachineBasicBlock>::iterator It = BB, E = BB->getParent()->end();
@@ -1070,21 +1074,20 @@ void ISel::SelectBranchCC(SDOperand N)
     MachineBasicBlock *Fallthrough = 
       cast<BasicBlockSDNode>(N.getOperand(3))->getBasicBlock();
     if (Dest != It) {
-      BuildMI(BB, PPC::COND_BRANCH, 4).addReg(PPC::CR0).addImm(Opc)
+      BuildMI(BB, PPC::COND_BRANCH, 4).addReg(CCReg).addImm(Opc)
         .addMBB(Dest).addMBB(Fallthrough);
       if (Fallthrough != It)
         BuildMI(BB, PPC::B, 1).addMBB(Fallthrough);
     } else {
       if (Fallthrough != It) {
         Opc = PPC32InstrInfo::invertPPCBranchOpcode(Opc);
-        BuildMI(BB, PPC::COND_BRANCH, 4).addReg(PPC::CR0).addImm(Opc)
+        BuildMI(BB, PPC::COND_BRANCH, 4).addReg(CCReg).addImm(Opc)
           .addMBB(Fallthrough).addMBB(Dest);
       }
     }
   } else {
-    BuildMI(BB, PPC::COND_BRANCH, 4).addReg(PPC::CR0).addImm(Opc)
+    BuildMI(BB, PPC::COND_BRANCH, 4).addReg(CCReg).addImm(Opc)
       .addMBB(Dest).addMBB(It);
-    //BuildMI(BB, Opc, 2).addReg(PPC::CR0).addMBB(Dest);
   }
   return;
 }
@@ -1177,7 +1180,7 @@ unsigned ISel::SelectExprFP(SDOperand N, unsigned Result)
     
     unsigned TrueValue = SelectExpr(N.getOperand(1)); //Use if TRUE
     unsigned FalseValue = SelectExpr(N.getOperand(2)); //Use if FALSE
-    Opc = SelectSetCR0(N.getOperand(0));
+    unsigned CCReg = SelectCC(N.getOperand(0), Opc);
 
     // Create an iterator with which to insert the MBB for copying the false 
     // value and the MBB to hold the PHI instruction for this SetCC.
@@ -1189,12 +1192,12 @@ unsigned ISel::SelectExprFP(SDOperand N, unsigned Result)
     //  thisMBB:
     //  ...
     //   TrueVal = ...
-    //   cmpTY cr0, r1, r2
+    //   cmpTY ccX, r1, r2
     //   bCC copy1MBB
     //   fallthrough --> copy0MBB
     MachineBasicBlock *copy0MBB = new MachineBasicBlock(LLVM_BB);
     MachineBasicBlock *sinkMBB = new MachineBasicBlock(LLVM_BB);
-    BuildMI(BB, Opc, 2).addReg(PPC::CR0).addMBB(sinkMBB);
+    BuildMI(BB, Opc, 2).addReg(CCReg).addMBB(sinkMBB);
     MachineFunction *F = BB->getParent();
     F->getBasicBlockList().insert(It, copy0MBB);
     F->getBasicBlockList().insert(It, sinkMBB);
@@ -2095,7 +2098,7 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
         }
       }
     
-      Opc = SelectSetCR0(N);
+      unsigned CCReg = SelectCC(N, Opc);
       unsigned TrueValue = MakeReg(MVT::i32);
       BuildMI(BB, PPC::LI, 1, TrueValue).addSImm(1);
       unsigned FalseValue = MakeReg(MVT::i32);
@@ -2110,12 +2113,12 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
   
       //  thisMBB:
       //  ...
-      //   cmpTY cr0, r1, r2
+      //   cmpTY ccX, r1, r2
       //   %TrueValue = li 1
       //   bCC sinkMBB
       MachineBasicBlock *copy0MBB = new MachineBasicBlock(LLVM_BB);
       MachineBasicBlock *sinkMBB = new MachineBasicBlock(LLVM_BB);
-      BuildMI(BB, Opc, 2).addReg(PPC::CR0).addMBB(sinkMBB);
+      BuildMI(BB, Opc, 2).addReg(CCReg).addMBB(sinkMBB);
       MachineFunction *F = BB->getParent();
       F->getBasicBlockList().insert(It, copy0MBB);
       F->getBasicBlockList().insert(It, sinkMBB);
@@ -2144,7 +2147,7 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
   case ISD::SELECT: {
     unsigned TrueValue = SelectExpr(N.getOperand(1)); //Use if TRUE
     unsigned FalseValue = SelectExpr(N.getOperand(2)); //Use if FALSE
-    Opc = SelectSetCR0(N.getOperand(0));
+    unsigned CCReg = SelectCC(N.getOperand(0), Opc);
 
     // Create an iterator with which to insert the MBB for copying the false 
     // value and the MBB to hold the PHI instruction for this SetCC.
@@ -2156,12 +2159,12 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
     //  thisMBB:
     //  ...
     //   TrueVal = ...
-    //   cmpTY cr0, r1, r2
+    //   cmpTY ccX, r1, r2
     //   bCC copy1MBB
     //   fallthrough --> copy0MBB
     MachineBasicBlock *copy0MBB = new MachineBasicBlock(LLVM_BB);
     MachineBasicBlock *sinkMBB = new MachineBasicBlock(LLVM_BB);
-    BuildMI(BB, Opc, 2).addReg(PPC::CR0).addMBB(sinkMBB);
+    BuildMI(BB, Opc, 2).addReg(CCReg).addMBB(sinkMBB);
     MachineFunction *F = BB->getParent();
     F->getBasicBlockList().insert(It, copy0MBB);
     F->getBasicBlockList().insert(It, sinkMBB);
