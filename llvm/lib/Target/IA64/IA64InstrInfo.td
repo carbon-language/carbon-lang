@@ -111,6 +111,9 @@ def SHRS : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src1, GR:$src2),
 def SHRSI : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src1, u6imm:$imm),
   "shr $dst = $src1, $imm;;">;
 
+def SHLADD : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src1, u6imm:$imm, GR:$src2), 
+  "shladd $dst = $src1, $imm, $src2;;">;
+
 def EXTRU : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src1, u6imm:$imm1, u6imm:$imm2),
   "extr.u $dst = $src1, $imm1, $imm2;;">;
 

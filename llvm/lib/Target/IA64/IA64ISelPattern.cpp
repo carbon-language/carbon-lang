@@ -873,6 +873,26 @@ assert(0 && "hmm, ISD::SIGN_EXTEND: shouldn't ever be reached. bad luck!\n");
       BuildMI(BB, IA64::FMA, 3, Result).addReg(Tmp1).addReg(Tmp2).addReg(Tmp3);
       return Result; // early exit
     }
+
+    if(DestType != MVT::f64 && N.getOperand(0).getOpcode() == ISD::SHL &&
+	N.getOperand(0).Val->hasOneUse()) { // if we might be able to fold
+                                            // this add into a shladd, try:
+      ConstantSDNode *CSD = NULL;
+      if((CSD = dyn_cast<ConstantSDNode>(N.getOperand(0).getOperand(1))) &&
+	  (CSD->getValue() >= 1) && (CSD->getValue() <= 4) ) { // we can:
+
+	// ++FusedSHLADD; // Statistic
+	Tmp1 = SelectExpr(N.getOperand(0).getOperand(0));
+	int shl_amt = CSD->getValue();
+	Tmp3 = SelectExpr(N.getOperand(1));
+	
+	BuildMI(BB, IA64::SHLADD, 3, Result)
+	  .addReg(Tmp1).addImm(shl_amt).addReg(Tmp3);
+	return Result; // early exit
+      }
+    }
+
+    //else, fallthrough:
     Tmp1 = SelectExpr(N.getOperand(0));
     if(DestType != MVT::f64) { // integer addition:
         switch (ponderIntegerAdditionWith(N.getOperand(1), Tmp3)) {
