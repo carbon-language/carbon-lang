@@ -943,10 +943,8 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
   case ISD::SHL:
   case ISD::SRL:
   case ISD::SRA:
-    if (N2.getOpcode() == ISD::ZERO_EXTEND_INREG || 
-        N2.getOpcode() == ISD::SIGN_EXTEND_INREG) {
+    if (N2.getOpcode() == ISD::SIGN_EXTEND_INREG)
       return getNode(Opcode, VT, N1, N2.getOperand(0));
-    }
     break;
   }
 
@@ -1042,10 +1040,8 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
   case ISD::SRA_PARTS:
   case ISD::SRL_PARTS:
   case ISD::SHL_PARTS:
-    if (N3.getOpcode() == ISD::ZERO_EXTEND_INREG || 
-        N3.getOpcode() == ISD::SIGN_EXTEND_INREG) {
+    if (N3.getOpcode() == ISD::SIGN_EXTEND_INREG)
       return getNode(Opcode, VT, N1, N2, N3.getOperand(0));
-    }
     break;
   }
 
