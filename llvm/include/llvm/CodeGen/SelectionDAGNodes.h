@@ -141,13 +141,12 @@ namespace ISD {
     SINT_TO_FP,
     UINT_TO_FP,
 
-    // SIGN_EXTEND_INREG/ZERO_EXTEND_INREG - These operators atomically performs
-    // a SHL/(SRA|SHL) pair to (sign|zero) extend a small value in a large
-    // integer register (e.g. sign extending the low 8 bits of a 32-bit register
-    // to fill the top 24 bits with the 7th bit).  The size of the smaller type
-    // is indicated by the ExtraValueType in the MVTSDNode for the operator.
+    // SIGN_EXTEND_INREG - This operator atomically performs a SHL/SRA pair to
+    // sign extend a small value in a large integer register (e.g. sign
+    // extending the low 8 bits of a 32-bit register to fill the top 24 bits
+    // with the 7th bit).  The size of the smaller type is indicated by the
+    // ExtraValueType in the MVTSDNode for the operator.
     SIGN_EXTEND_INREG,
-    ZERO_EXTEND_INREG,
 
     // FP_TO_[US]INT - Convert a floating point value to a signed or unsigned
     // integer.
@@ -809,7 +808,6 @@ public:
   static bool classof(const SDNode *N) {
     return 
       N->getOpcode() == ISD::SIGN_EXTEND_INREG ||
-      N->getOpcode() == ISD::ZERO_EXTEND_INREG ||
       N->getOpcode() == ISD::FP_ROUND_INREG ||
       N->getOpcode() == ISD::EXTLOAD  ||
       N->getOpcode() == ISD::SEXTLOAD || 
