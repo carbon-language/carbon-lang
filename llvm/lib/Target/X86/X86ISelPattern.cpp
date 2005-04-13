@@ -2191,8 +2191,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
     assert((N.getOpcode() != ISD::SREM || MVT::isInteger(N.getValueType())) &&
            "We don't support this operator!");
 
-    if (N.getOpcode() == ISD::SDIV)
-
+    if (N.getOpcode() == ISD::SDIV) {
       // We can fold loads into FpDIVs, but not really into any others.
       if (N.getValueType() == MVT::f64) {
         // Check for reversed and unreversed DIV.
@@ -2267,6 +2266,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
           return Result;
         }
       }
+    }
 
     if (getRegPressure(N.getOperand(0)) > getRegPressure(N.getOperand(1))) {
       Tmp1 = SelectExpr(N.getOperand(0));
