@@ -2126,25 +2126,6 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
     return 0;
     
   case ISD::SELECT: {
-    // We can codegen select (a < 0) ? b : 0 very efficiently compared to a 
-    // conditional branch.  Check for that here.
-    if (SetCCSDNode *SetCC = dyn_cast<SetCCSDNode>(N.getOperand(0).Val)) {
-      if (ConstantSDNode *CN = 
-          dyn_cast<ConstantSDNode>(SetCC->getOperand(1).Val)) {
-        if (ConstantSDNode *CNF = 
-            dyn_cast<ConstantSDNode>(N.getOperand(2).Val)) {
-          if (CN->getValue() == 0 && CNF->getValue() == 0 &&
-              SetCC->getCondition() == ISD::SETLT) {
-            Tmp1 = SelectExpr(N.getOperand(1)); // TRUE value
-            Tmp2 = SelectExpr(SetCC->getOperand(0));
-            Tmp3 = MakeReg(MVT::i32);
-            BuildMI(BB, PPC::SRAWI, 2, Tmp3).addReg(Tmp2).addImm(31);
-            BuildMI(BB, PPC::AND, 2, Result).addReg(Tmp1).addReg(Tmp3);
-            return Result;
-          }
-        }
-      }
-    }
     unsigned TrueValue = SelectExpr(N.getOperand(1)); //Use if TRUE
     unsigned FalseValue = SelectExpr(N.getOperand(2)); //Use if FALSE
     Opc = SelectSetCR0(N.getOperand(0));

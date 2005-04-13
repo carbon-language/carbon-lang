@@ -773,7 +773,7 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
     case ISD::AND:
       if (!C2) return N2;         // X and 0 -> 0
       if (N2C->isAllOnesValue())
-	return N1;                // X and -1 -> X
+        return N1;                // X and -1 -> X
 
       // FIXME: Should add a corresponding version of this for
       // ZERO_EXTEND/SIGN_EXTEND by converting them to an ANY_EXTEND node which
@@ -795,13 +795,13 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
 
       // If we are anding the result of a setcc, and we know setcc always
       // returns 0 or 1, simplify the RHS to either be 0 or 1
-      if (N1.getOpcode() == ISD::SETCC && C2 != 1 &&
+      if (N1.getOpcode() == ISD::SETCC &&
           TLI.getSetCCResultContents() == TargetLowering::ZeroOrOneSetCCResult)
         if (C2 & 1)
-          return getNode(ISD::AND, VT, N1, getConstant(1, VT));
+          return N1;
         else
           return getConstant(0, VT);
-
+      
       if (N1.getOpcode() == ISD::ZEXTLOAD) {
         // If we are anding the result of a zext load, realize that the top bits
         // of the loaded value are already zero to simplify C2.
@@ -941,6 +941,10 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
     if (N2.getOpcode() == ISD::FNEG)          // (A- (-B) -> A+B
       return getNode(ISD::ADD, VT, N1, N2.getOperand(0));
     break;
+  // FIXME: figure out how to safely handle things like
+  // int foo(int x) { return 1 << (x & 255); }
+  // int bar() { return foo(256); }
+#if 0
   case ISD::SHL:
   case ISD::SRL:
   case ISD::SRA:
@@ -955,8 +959,8 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
         if ((AndRHS->getValue() & (NumBits-1)) == NumBits-1)
           return getNode(Opcode, VT, N1, N2.getOperand(0));
       }
-             
     break;
+#endif
   }
 
   SDNode *&N = BinaryOps[std::make_pair(Opcode, std::make_pair(N1, N2))];
@@ -1039,6 +1043,22 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
               N2.getOperand(0) == N3)
             return getNode(ISD::FABS, VT, N3);
         }
+      // select (setlt X, 0), A, 0 -> and (sra X, size(X)-1, A)
+      if (ConstantSDNode *CN =
+          dyn_cast<ConstantSDNode>(SetCC->getOperand(1)))
+        if (CN->getValue() == 0 && N3C && N3C->getValue() == 0)
+          if (SetCC->getCondition() == ISD::SETLT) {
+            MVT::ValueType XType = SetCC->getOperand(0).getValueType();
+            MVT::ValueType AType = N2.getValueType();
+            if (XType >= AType) {
+              SDOperand Shift = getNode(ISD::SRA, XType, SetCC->getOperand(0),
+                getConstant(MVT::getSizeInBits(XType)-1,
+                            TLI.getShiftAmountTy()));
+              if (XType > AType)
+                Shift = getNode(ISD::TRUNCATE, AType, Shift);
+              return getNode(ISD::AND, AType, Shift, N2);
+            }
+          }
     }
     break;
   case ISD::BRCOND:
@@ -1048,6 +1068,10 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
       else
         return N1;         // Never-taken branch
     break;
+  // FIXME: figure out how to safely handle things like
+  // int foo(int x) { return 1 << (x & 255); }
+  // int bar() { return foo(256); }
+#if 0
   case ISD::SRA_PARTS:
   case ISD::SRL_PARTS:
   case ISD::SHL_PARTS:
@@ -1062,9 +1086,8 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
         if ((AndRHS->getValue() & (NumBits-1)) == NumBits-1)
           return getNode(Opcode, VT, N1, N2, N3.getOperand(0));
       }
-
-
     break;
+#endif
   }
 
   SDNode *N = new SDNode(Opcode, N1, N2, N3);
