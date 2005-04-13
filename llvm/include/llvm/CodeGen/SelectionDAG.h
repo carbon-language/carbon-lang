@@ -149,6 +149,10 @@ public:
   SDOperand getSetCC(ISD::CondCode, MVT::ValueType VT,
                      SDOperand LHS, SDOperand RHS);
 
+  /// getZeroExtendInReg - Return the expression required to zero extend the Op
+  /// value assuming it was the smaller SrcTy value.
+  SDOperand getZeroExtendInReg(SDOperand Op, MVT::ValueType SrcTy);
+
   /// getNode - Gets or creates the specified node.
   ///
   SDOperand getNode(unsigned Opcode, MVT::ValueType VT);
