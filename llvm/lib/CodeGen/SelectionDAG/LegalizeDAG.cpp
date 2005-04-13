@@ -479,10 +479,12 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       // zero/sign extend inreg.
       Result = DAG.getNode(ISD::EXTLOAD, Node->getValueType(0),
                            Tmp1, Tmp2, SrcVT);
-      unsigned ExtOp = Node->getOpcode() == ISD::SEXTLOAD ?
-                            ISD::SIGN_EXTEND_INREG : ISD::ZERO_EXTEND_INREG;
-      SDOperand ValRes = DAG.getNode(ExtOp, Result.getValueType(),
-                                     Result, SrcVT);
+      SDOperand ValRes;
+      if (Node->getOpcode() == ISD::SEXTLOAD)
+        ValRes = DAG.getNode(ISD::SIGN_EXTEND_INREG, Result.getValueType(),
+                             Result, SrcVT);
+      else
+        ValRes = DAG.getZeroExtendInReg(Result, SrcVT);
       AddLegalizedOperand(SDOperand(Node, 0), ValRes);
       AddLegalizedOperand(SDOperand(Node, 1), Result.getValue(1));
       if (Op.ResNo)
@@ -735,8 +737,8 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
           // ALL of these operations will work if we either sign or zero extend
           // the operands (including the unsigned comparisons!).  Zero extend is
           // usually a simpler/cheaper operation, so prefer it.
-          Tmp1 = DAG.getNode(ISD::ZERO_EXTEND_INREG, NVT, Tmp1, VT);
-          Tmp2 = DAG.getNode(ISD::ZERO_EXTEND_INREG, NVT, Tmp2, VT);
+          Tmp1 = DAG.getZeroExtendInReg(Tmp1, VT);
+          Tmp2 = DAG.getZeroExtendInReg(Tmp2, VT);
           break;
         case ISD::SETGE:
         case ISD::SETGT:
@@ -1054,8 +1056,8 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         Result = PromoteOp(Node->getOperand(0));
         // NOTE: Any extend would work here...
         Result = DAG.getNode(ISD::ZERO_EXTEND, Op.getValueType(), Result);
-        Result = DAG.getNode(ISD::ZERO_EXTEND_INREG, Op.getValueType(),
-                             Result, Node->getOperand(0).getValueType());
+        Result = DAG.getZeroExtendInReg(Result,
+                                        Node->getOperand(0).getValueType());
         break;
       case ISD::SIGN_EXTEND:
         Result = PromoteOp(Node->getOperand(0));
@@ -1088,16 +1090,15 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         break;
       case ISD::UINT_TO_FP:
         Result = PromoteOp(Node->getOperand(0));
-        Result = DAG.getNode(ISD::ZERO_EXTEND_INREG, Result.getValueType(),
-                             Result, Node->getOperand(0).getValueType());
+        Result = DAG.getZeroExtendInReg(Result,
+                                        Node->getOperand(0).getValueType());
         Result = DAG.getNode(ISD::UINT_TO_FP, Op.getValueType(), Result);
         break;
       }
     }
     break;
   case ISD::FP_ROUND_INREG:
-  case ISD::SIGN_EXTEND_INREG:
-  case ISD::ZERO_EXTEND_INREG: {
+  case ISD::SIGN_EXTEND_INREG: {
     Tmp1 = LegalizeOp(Node->getOperand(0));
     MVT::ValueType ExtraVT = cast<MVTSDNode>(Node)->getExtraValueType();
 
@@ -1112,16 +1113,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       break;
     case TargetLowering::Expand:
       // If this is an integer extend and shifts are supported, do that.
-      if (Node->getOpcode() == ISD::ZERO_EXTEND_INREG) {
-        // NOTE: we could fall back on load/store here too for targets without
-        // AND.  However, it is doubtful that any exist.
-        // AND out the appropriate bits.
-        SDOperand Mask =
-          DAG.getConstant((1ULL << MVT::getSizeInBits(ExtraVT))-1,
-                          Node->getValueType(0));
-        Result = DAG.getNode(ISD::AND, Node->getValueType(0),
-                             Node->getOperand(0), Mask);
-      } else if (Node->getOpcode() == ISD::SIGN_EXTEND_INREG) {
+      if (Node->getOpcode() == ISD::SIGN_EXTEND_INREG) {
         // NOTE: we could fall back on load/store here too for targets without
         // SAR.  However, it is doubtful that any exist.
         unsigned BitsDiff = MVT::getSizeInBits(Node->getValueType(0)) -
@@ -1259,8 +1251,8 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
         Result = DAG.getNode(ISD::SIGN_EXTEND_INREG, NVT, Result,
                              Node->getOperand(0).getValueType());
       else
-        Result = DAG.getNode(ISD::ZERO_EXTEND_INREG, NVT, Result,
-                             Node->getOperand(0).getValueType());
+        Result = DAG.getZeroExtendInReg(Result,
+                                        Node->getOperand(0).getValueType());
       break;
     }
     break;
@@ -1294,8 +1286,8 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
         Result = DAG.getNode(ISD::SIGN_EXTEND_INREG, Result.getValueType(),
                              Result, Node->getOperand(0).getValueType());
       else
-        Result = DAG.getNode(ISD::ZERO_EXTEND_INREG, Result.getValueType(),
-                             Result, Node->getOperand(0).getValueType());
+        Result = DAG.getZeroExtendInReg(Result,
+                                        Node->getOperand(0).getValueType());
       // No extra round required here.
       Result = DAG.getNode(Node->getOpcode(), NVT, Result);
       break;
@@ -1383,8 +1375,8 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
     Tmp1 = PromoteOp(Node->getOperand(0));
     Tmp2 = PromoteOp(Node->getOperand(1));
     assert(MVT::isInteger(NVT) && "Operators don't apply to FP!");
-    Tmp1 = DAG.getNode(ISD::ZERO_EXTEND_INREG, NVT, Tmp1, VT);
-    Tmp2 = DAG.getNode(ISD::ZERO_EXTEND_INREG, NVT, Tmp2, VT);
+    Tmp1 = DAG.getZeroExtendInReg(Tmp1, VT);
+    Tmp2 = DAG.getZeroExtendInReg(Tmp2, VT);
     Result = DAG.getNode(Node->getOpcode(), NVT, Tmp1, Tmp2);
     break;
 
@@ -1403,7 +1395,7 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
   case ISD::SRL:
     // The input value must be properly zero extended.
     Tmp1 = PromoteOp(Node->getOperand(0));
-    Tmp1 = DAG.getNode(ISD::ZERO_EXTEND_INREG, NVT, Tmp1, VT);
+    Tmp1 = DAG.getZeroExtendInReg(Tmp1, VT);
     Tmp2 = LegalizeOp(Node->getOperand(1));
     Result = DAG.getNode(ISD::SRL, NVT, Tmp1, Tmp2);
     break;
@@ -2026,8 +2018,7 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     case Promote:
       In = PromoteOp(Node->getOperand(0));
       // Emit the appropriate zero_extend_inreg to get the value we want.
-      In = DAG.getNode(ISD::ZERO_EXTEND_INREG, In.getValueType(), In,
-                       Node->getOperand(0).getValueType());
+      In = DAG.getZeroExtendInReg(In, Node->getOperand(0).getValueType());
       break;
     }
 
