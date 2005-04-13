@@ -1154,18 +1154,6 @@ unsigned ISel::SelectExpr(SDOperand N) {
     }
     return Result;
     
-  case ISD::ZERO_EXTEND_INREG:
-    Tmp1 = SelectExpr(N.getOperand(0));
-    switch(cast<MVTSDNode>(Node)->getExtraValueType()) {
-    default: Node->dump(); assert(0 && "Unhandled ZERO_EXTEND type"); break;
-    case MVT::i16:  Tmp2 = 16; break;
-    case MVT::i8:   Tmp2 = 24; break;
-    case MVT::i1:   Tmp2 = 31; break;
-    }
-    BuildMI(BB, PPC::RLWINM, 4, Result).addReg(Tmp1).addImm(0).addImm(Tmp2)
-      .addImm(31);
-    return Result;
-    
   case ISD::CopyFromReg:
     if (Result == 1)
       Result = ExprMap[N.getValue(0)] = MakeReg(N.getValue(0).getValueType());
