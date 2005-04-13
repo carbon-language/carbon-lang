@@ -795,7 +795,7 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
 
       // If we are anding the result of a setcc, and we know setcc always
       // returns 0 or 1, simplify the RHS to either be 0 or 1
-      if (N1.getOpcode() == ISD::SETCC &&
+      if (N1.getOpcode() == ISD::SETCC && C2 != 1 &&
           TLI.getSetCCResultContents() == TargetLowering::ZeroOrOneSetCCResult)
         if (C2 & 1)
           return getNode(ISD::AND, VT, N1, getConstant(1, VT));
