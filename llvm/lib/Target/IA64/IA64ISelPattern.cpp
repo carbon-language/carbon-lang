@@ -1304,23 +1304,6 @@ pC = pA OR pB
     return Result;
   }
 
-  case ISD::ZERO_EXTEND_INREG: {
-    Tmp1 = SelectExpr(N.getOperand(0));
-    MVTSDNode* MVN = dyn_cast<MVTSDNode>(Node);
-    switch(MVN->getExtraValueType())
-    {
-    default:
-      Node->dump();
-      assert(0 && "don't know how to zero extend this type");
-      break;
-    case MVT::i8: Opc = IA64::ZXT1; break;
-    case MVT::i16: Opc = IA64::ZXT2; break;
-    case MVT::i32: Opc = IA64::ZXT4; break;
-    }
-    BuildMI(BB, Opc, 1, Result).addReg(Tmp1);
-    return Result;
-  }
- 
   case ISD::SIGN_EXTEND_INREG: {
     Tmp1 = SelectExpr(N.getOperand(0));
     MVTSDNode* MVN = dyn_cast<MVTSDNode>(Node);
