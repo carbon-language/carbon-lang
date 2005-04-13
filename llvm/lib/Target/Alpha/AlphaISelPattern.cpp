@@ -1490,47 +1490,43 @@ unsigned ISel::SelectExpr(SDOperand N) {
             bool isAdd = N.getOperand(0).getOpcode() == ISD::ADD;
             bool isMul = N.getOperand(0).getOpcode() == ISD::MUL;
             //FIXME: first check for Scaled Adds and Subs!
-            if(N.getOperand(0).getOperand(1).getOpcode() == ISD::Constant &&
+            ConstantSDNode* CSD = NULL;
+            if(!isMul && N.getOperand(0).getOperand(0).getOpcode() == ISD::SHL &&
+               (CSD = dyn_cast<ConstantSDNode>(N.getOperand(0).getOperand(0).getOperand(1))) &&
+               (CSD->getValue() == 2 || CSD->getValue() == 3))
+            {
+              bool use4 = CSD->getValue() == 2;
+              Tmp1 = SelectExpr(N.getOperand(0).getOperand(0).getOperand(0));
+              Tmp2 = SelectExpr(N.getOperand(0).getOperand(1));
+              BuildMI(BB, isAdd?(use4?Alpha::S4ADDL:Alpha::S8ADDL):(use4?Alpha::S4SUBL:Alpha::S8SUBL),
+                      2,Result).addReg(Tmp1).addReg(Tmp2);
+            }
+            else if(isAdd && N.getOperand(0).getOperand(1).getOpcode() == ISD::SHL &&
+                    (CSD = dyn_cast<ConstantSDNode>(N.getOperand(0).getOperand(1).getOperand(1))) &&
+                    (CSD->getValue() == 2 || CSD->getValue() == 3))
+            {
+              bool use4 = CSD->getValue() == 2;
+              Tmp1 = SelectExpr(N.getOperand(0).getOperand(1).getOperand(0));
+              Tmp2 = SelectExpr(N.getOperand(0).getOperand(0));
+              BuildMI(BB, use4?Alpha::S4ADDL:Alpha::S8ADDL, 2,Result).addReg(Tmp1).addReg(Tmp2);
+            }
+            else if(N.getOperand(0).getOperand(1).getOpcode() == ISD::Constant &&
                cast<ConstantSDNode>(N.getOperand(0).getOperand(1))->getValue() <= 255)
             { //Normal imm add/sub
               Opc = isAdd ? Alpha::ADDLi : (isMul ? Alpha::MULLi : Alpha::SUBLi);
-              //if the value was really originally a i32, skip the up conversion
-              if (N.getOperand(0).getOperand(0).getOpcode() == ISD::SIGN_EXTEND_INREG &&
-                  dyn_cast<MVTSDNode>(N.getOperand(0).getOperand(0).Val)
-                  ->getExtraValueType() == MVT::i32)
-                Tmp1 = SelectExpr(N.getOperand(0).getOperand(0).getOperand(0));
-              else
-                Tmp1 = SelectExpr(N.getOperand(0).getOperand(0));
+              Tmp1 = SelectExpr(N.getOperand(0).getOperand(0));
               Tmp2 = cast<ConstantSDNode>(N.getOperand(0).getOperand(1))->getValue();
               BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addImm(Tmp2);
             }
             else
             { //Normal add/sub
-              Opc = isAdd ? Alpha::ADDL : (isMul ? Alpha::MULLi : Alpha::SUBL);
-              //if the value was really originally a i32, skip the up conversion
-              if (N.getOperand(0).getOperand(0).getOpcode() == ISD::SIGN_EXTEND_INREG &&
-                  dyn_cast<MVTSDNode>(N.getOperand(0).getOperand(0).Val)
-                  ->getExtraValueType() == MVT::i32)
-                Tmp1 = SelectExpr(N.getOperand(0).getOperand(0).getOperand(0));
-              else
-                Tmp1 = SelectExpr(N.getOperand(0).getOperand(0));
-              //if the value was really originally a i32, skip the up conversion
-              if (N.getOperand(0).getOperand(1).getOpcode() == ISD::SIGN_EXTEND_INREG &&
-                  dyn_cast<MVTSDNode>(N.getOperand(0).getOperand(1).Val)
-                  ->getExtraValueType() == MVT::i32)
-                Tmp2 = SelectExpr(N.getOperand(0).getOperand(1).getOperand(0));
-              else
-                Tmp2 = SelectExpr(N.getOperand(0).getOperand(1));
-
+              Opc = isAdd ? Alpha::ADDL : (isMul ? Alpha::MULL : Alpha::SUBL);
               Tmp1 = SelectExpr(N.getOperand(0).getOperand(0));
+              Tmp2 = SelectExpr(N.getOperand(0).getOperand(1));
               BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(Tmp2);
             }
             return Result;
           }
-        case ISD::SEXTLOAD:
-          //SelectionDag isn't deleting the signextend after sextloads
-          Reg = Result = SelectExpr(N.getOperand(0));
-          return Result;
         default: break; //Fall Though;
         }
       } //Every thing else fall though too, including unhandled opcodes above
@@ -1787,79 +1783,52 @@ unsigned ISel::SelectExpr(SDOperand N) {
 
       //first check for Scaled Adds and Subs!
       //Valid for add and sub
+      ConstantSDNode* CSD = NULL;
       if(N.getOperand(0).getOpcode() == ISD::SHL &&
-         N.getOperand(0).getOperand(1).getOpcode() == ISD::Constant &&
-         cast<ConstantSDNode>(N.getOperand(0).getOperand(1))->getValue() == 2)
+         (CSD = dyn_cast<ConstantSDNode>(N.getOperand(0).getOperand(1))) &&
+         (CSD->getValue() == 2 || CSD->getValue() == 3))
       {
+        bool use4 = CSD->getValue() == 2;
         Tmp2 = SelectExpr(N.getOperand(0).getOperand(0));
-        if (N.getOperand(1).getOpcode() == ISD::Constant &&
-            cast<ConstantSDNode>(N.getOperand(1))->getValue() <= 255)
-          BuildMI(BB, isAdd?Alpha::S4ADDQi:Alpha::S4SUBQi, 2, Result).addReg(Tmp2)
-            .addImm(cast<ConstantSDNode>(N.getOperand(1))->getValue());
+        if ((CSD = dyn_cast<ConstantSDNode>(N.getOperand(1))) && CSD->getValue() <= 255)
+          BuildMI(BB, isAdd?(use4?Alpha::S4ADDQi:Alpha::S8ADDQi):(use4?Alpha::S4SUBQi:Alpha::S8SUBQi),
+                  2, Result).addReg(Tmp2).addImm(CSD->getValue());
         else {
           Tmp1 = SelectExpr(N.getOperand(1));
-          BuildMI(BB, isAdd?Alpha::S4ADDQ:Alpha::S4SUBQ, 2, Result).addReg(Tmp2).addReg(Tmp1);
-        }
-      }
-      else if(N.getOperand(0).getOpcode() == ISD::SHL &&
-         N.getOperand(0).getOperand(1).getOpcode() == ISD::Constant &&
-         cast<ConstantSDNode>(N.getOperand(0).getOperand(1))->getValue() == 3)
-      {
-        Tmp2 = SelectExpr(N.getOperand(0).getOperand(0));
-        if (N.getOperand(1).getOpcode() == ISD::Constant &&
-            cast<ConstantSDNode>(N.getOperand(1))->getValue() <= 255)
-          BuildMI(BB, isAdd?Alpha::S8ADDQi:Alpha::S8SUBQi, 2, Result).addReg(Tmp2)
-            .addImm(cast<ConstantSDNode>(N.getOperand(1))->getValue());
-        else {
-          Tmp1 = SelectExpr(N.getOperand(1));
-          BuildMI(BB, isAdd?Alpha::S8ADDQ:Alpha::S8SUBQ, 2, Result).addReg(Tmp2).addReg(Tmp1);
+          BuildMI(BB, isAdd?(use4?Alpha::S4ADDQi:Alpha::S8ADDQi):(use4?Alpha::S4SUBQi:Alpha::S8SUBQi),
+                  2, Result).addReg(Tmp2).addReg(Tmp1);
         }
       }
       //Position prevents subs
-      else if(N.getOperand(1).getOpcode() == ISD::SHL && isAdd &
-         N.getOperand(1).getOperand(1).getOpcode() == ISD::Constant &&
-         cast<ConstantSDNode>(N.getOperand(1).getOperand(1))->getValue() == 2)
-      {
-        Tmp2 = SelectExpr(N.getOperand(1).getOperand(0));
-        if (N.getOperand(0).getOpcode() == ISD::Constant &&
-            cast<ConstantSDNode>(N.getOperand(0))->getValue() <= 255)
-          BuildMI(BB, Alpha::S4ADDQi, 2, Result).addReg(Tmp2)
-            .addImm(cast<ConstantSDNode>(N.getOperand(0))->getValue());
-        else {
-          Tmp1 = SelectExpr(N.getOperand(0));
-          BuildMI(BB, Alpha::S4ADDQ, 2, Result).addReg(Tmp2).addReg(Tmp1);
-        }
-      }
       else if(N.getOperand(1).getOpcode() == ISD::SHL && isAdd &&
-         N.getOperand(1).getOperand(1).getOpcode() == ISD::Constant &&
-         cast<ConstantSDNode>(N.getOperand(1).getOperand(1))->getValue() == 3)
+              (CSD = dyn_cast<ConstantSDNode>(N.getOperand(1).getOperand(1))) &&
+              (CSD->getValue() == 2 || CSD->getValue() == 3))
       {
+        bool use4 = CSD->getValue() == 2;
         Tmp2 = SelectExpr(N.getOperand(1).getOperand(0));
-        if (N.getOperand(0).getOpcode() == ISD::Constant &&
-            cast<ConstantSDNode>(N.getOperand(0))->getValue() <= 255)
-          BuildMI(BB, Alpha::S8ADDQi, 2, Result).addReg(Tmp2)
-            .addImm(cast<ConstantSDNode>(N.getOperand(0))->getValue());
+        if ((CSD = dyn_cast<ConstantSDNode>(N.getOperand(0))) && CSD->getValue() <= 255)
+          BuildMI(BB, use4?Alpha::S4ADDQi:Alpha::S8ADDQi, 2, Result).addReg(Tmp2)
+            .addImm(CSD->getValue());
         else {
           Tmp1 = SelectExpr(N.getOperand(0));
-          BuildMI(BB, Alpha::S8ADDQ, 2, Result).addReg(Tmp2).addReg(Tmp1);
+          BuildMI(BB, use4?Alpha::S4ADDQ:Alpha::S8ADDQ, 2, Result).addReg(Tmp2).addReg(Tmp1);
         }
       }
       //small addi
-      else if(N.getOperand(1).getOpcode() == ISD::Constant &&
-         cast<ConstantSDNode>(N.getOperand(1))->getValue() <= 255)
+      else if((CSD = dyn_cast<ConstantSDNode>(N.getOperand(1))) &&
+              CSD->getValue() <= 255)
       { //Normal imm add/sub
         Opc = isAdd ? Alpha::ADDQi : Alpha::SUBQi;
         Tmp1 = SelectExpr(N.getOperand(0));
-        Tmp2 = cast<ConstantSDNode>(N.getOperand(1))->getValue();
-        BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addImm(Tmp2);
+        BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addImm(CSD->getValue());
       }
       //larger addi
-      else if(N.getOperand(1).getOpcode() == ISD::Constant &&
-              (cast<ConstantSDNode>(N.getOperand(1))->getValue() <= 32767 ||
-               (long)cast<ConstantSDNode>(N.getOperand(1))->getValue() >= -32767))
+      else if((CSD = dyn_cast<ConstantSDNode>(N.getOperand(1))) &&
+              CSD->getSignExtended() <= 32767 &&
+              CSD->getSignExtended() >= -32767)
       { //LDA
         Tmp1 = SelectExpr(N.getOperand(0));
-        Tmp2 = (long)cast<ConstantSDNode>(N.getOperand(1))->getValue();
+        Tmp2 = (long)CSD->getSignExtended();
         if (!isAdd)
           Tmp2 = -Tmp2;
         BuildMI(BB, Alpha::LDA, 2, Result).addImm(Tmp2).addReg(Tmp1);
@@ -2270,3 +2239,4 @@ void ISel::Select(SDOperand N) {
 FunctionPass *llvm::createAlphaPatternInstructionSelector(TargetMachine &TM) {
   return new ISel(TM);  
 }
+
