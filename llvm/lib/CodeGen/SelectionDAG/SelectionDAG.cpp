@@ -943,8 +943,18 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
   case ISD::SHL:
   case ISD::SRL:
   case ISD::SRA:
-    if (N2.getOpcode() == ISD::SIGN_EXTEND_INREG)
+    if (N2.getOpcode() == ISD::SIGN_EXTEND_INREG &&
+        cast<MVTSDNode>(N2)->getExtraValueType() != MVT::i1)
       return getNode(Opcode, VT, N1, N2.getOperand(0));
+    else if (N2.getOpcode() == ISD::AND)
+      if (ConstantSDNode *AndRHS = dyn_cast<ConstantSDNode>(N2.getOperand(1))) {
+        // If the and is only masking out bits that cannot effect the shift,
+        // eliminate the and.
+        unsigned NumBits = MVT::getSizeInBits(VT);
+        if ((AndRHS->getValue() & (NumBits-1)) == NumBits-1)
+          return getNode(Opcode, VT, N1, N2.getOperand(0));
+      }
+             
     break;
   }
 
@@ -1040,8 +1050,19 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
   case ISD::SRA_PARTS:
   case ISD::SRL_PARTS:
   case ISD::SHL_PARTS:
-    if (N3.getOpcode() == ISD::SIGN_EXTEND_INREG)
+    if (N3.getOpcode() == ISD::SIGN_EXTEND_INREG &&
+        cast<MVTSDNode>(N3)->getExtraValueType() != MVT::i1)
       return getNode(Opcode, VT, N1, N2, N3.getOperand(0));
+    else if (N3.getOpcode() == ISD::AND)
+      if (ConstantSDNode *AndRHS = dyn_cast<ConstantSDNode>(N3.getOperand(1))) {
+        // If the and is only masking out bits that cannot effect the shift,
+        // eliminate the and.
+        unsigned NumBits = MVT::getSizeInBits(VT)*2;
+        if ((AndRHS->getValue() & (NumBits-1)) == NumBits-1)
+          return getNode(Opcode, VT, N1, N2, N3.getOperand(0));
+      }
+
+
     break;
   }
 
