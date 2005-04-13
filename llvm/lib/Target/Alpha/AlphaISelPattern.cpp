@@ -1562,27 +1562,6 @@ unsigned ISel::SelectExpr(SDOperand N) {
       }
       return Result;
     }
-  case ISD::ZERO_EXTEND_INREG:
-    {
-      Tmp1 = SelectExpr(N.getOperand(0));
-      MVTSDNode* MVN = dyn_cast<MVTSDNode>(Node);
-      //std::cerr << "SrcT: " << MVN->getExtraValueType() << "\n";
-      switch(MVN->getExtraValueType())
-      {
-      default:
-        Node->dump();
-        assert(0 && "Zero Extend InReg not there yet");
-        break;
-      case MVT::i32: Tmp2 = 0xf0; break;
-      case MVT::i16: Tmp2 = 0xfc; break;
-      case MVT::i8: Tmp2 = 0xfe; break;
-      case MVT::i1: //handle this one special
-        BuildMI(BB, Alpha::ANDi, 2, Result).addReg(Tmp1).addImm(1);
-        return Result;
-      }
-      BuildMI(BB, Alpha::ZAPi, 2, Result).addReg(Tmp1).addImm(Tmp2);
-      return Result;
-    }
     
   case ISD::SETCC:
     {
