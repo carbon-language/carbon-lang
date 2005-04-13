@@ -49,6 +49,7 @@ namespace {
     ///
     typedef std::map<const Value *, unsigned> ValueMapTy;
     ValueMapTy NumberForBB;
+    std::string CurSection;
 
     virtual const char *getPassName() const {
       return "Alpha Assembly Printer";
@@ -62,6 +63,7 @@ namespace {
     bool runOnMachineFunction(MachineFunction &F);    
     bool doInitialization(Module &M);
     bool doFinalization(Module &M);
+    void SwitchSection(std::ostream &OS, const char *NewSection);
   };
 } // end of anonymous namespace
 
@@ -134,8 +136,13 @@ void AlphaAsmPrinter::printOp(const MachineOperand &MO, bool IsCallOp) {
     O << MO.getSymbolName();
     return;
 
-  case MachineOperand::MO_GlobalAddress: 
-    O << Mang->getValueName(MO.getGlobal());
+  case MachineOperand::MO_GlobalAddress:
+    //Abuse PCrel to specify pcrel calls
+    //calls are the only thing that use this flag
+    if (MO.isPCRelative())
+      O << "$" << Mang->getValueName(MO.getGlobal()) << "..ng";
+    else
+      O << Mang->getValueName(MO.getGlobal());
     return;
     
   default:
@@ -169,8 +176,8 @@ bool AlphaAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   printConstantPool(MF.getConstantPool());
 
   // Print out labels for the function.
-  O << "\t.text\n";
-  emitAlignment(3);
+  SwitchSection(O, "text");
+  emitAlignment(4);
   O << "\t.globl\t" << CurrentFnName << "\n";
   O << "\t.ent\t" << CurrentFnName << "\n";
 
@@ -209,8 +216,9 @@ void AlphaAsmPrinter::printConstantPool(MachineConstantPool *MCP) {
  
   if (CP.empty()) return;
 
+  SwitchSection(O, "section .rodata");
   for (unsigned i = 0, e = CP.size(); i != e; ++i) {
-    O << "\t.section\t.rodata\n";
+    //    SwitchSection(O, "section .rodata, \"dr\"");
     emitAlignment(TD.getTypeAlignmentShift(CP[i]->getType()));
     O << "CPI" << CurrentFnName << "_" << i << ":\t\t\t\t\t" << CommentString
       << *CP[i] << "\n";
@@ -229,18 +237,17 @@ bool AlphaAsmPrinter::doInitialization(Module &M)
 // SwitchSection - Switch to the specified section of the executable if we are
 // not already in it!
 //
-static void SwitchSection(std::ostream &OS, std::string &CurSection,
-                          const char *NewSection) {
+void AlphaAsmPrinter::SwitchSection(std::ostream &OS, const char *NewSection) 
+{
   if (CurSection != NewSection) {
     CurSection = NewSection;
     if (!CurSection.empty())
-      OS << "\t" << NewSection << "\n";
+      OS << "\t." << NewSection << "\n";
   }
 }
 
 bool AlphaAsmPrinter::doFinalization(Module &M) {
   const TargetData &TD = TM.getTargetData();
-  std::string CurSection;
   
   for (Module::const_global_iterator I = M.global_begin(), E = M.global_end(); I != E; ++I)
     if (I->hasInitializer()) {   // External global require no code
@@ -253,7 +260,7 @@ bool AlphaAsmPrinter::doFinalization(Module &M) {
       if (C->isNullValue() && 
           (I->hasLinkOnceLinkage() || I->hasInternalLinkage() ||
            I->hasWeakLinkage() /* FIXME: Verify correct */)) {
-        SwitchSection(O, CurSection, ".data");
+        SwitchSection(O, "data");
         if (I->hasInternalLinkage())
           O << "\t.local " << name << "\n";
         
@@ -268,7 +275,7 @@ bool AlphaAsmPrinter::doFinalization(Module &M) {
         case GlobalValue::WeakLinkage:   // FIXME: Verify correct for weak.
           // Nonnull linkonce -> weak
           O << "\t.weak " << name << "\n";
-          SwitchSection(O, CurSection, "");
+          SwitchSection(O, "");
           O << "\t.section\t.llvm.linkonce.d." << name << ",\"aw\",@progbits\n";
           break;
         case GlobalValue::AppendingLinkage:
@@ -280,9 +287,9 @@ bool AlphaAsmPrinter::doFinalization(Module &M) {
           // FALL THROUGH
         case GlobalValue::InternalLinkage:
           if (C->isNullValue())
-            SwitchSection(O, CurSection, ".data"); //was .bss
+            SwitchSection(O, "bss"); //was .bss
           else
-            SwitchSection(O, CurSection, ".data");
+            SwitchSection(O, "data");
           break;
         case GlobalValue::GhostLinkage:
           std::cerr << "GhostLinkage cannot appear in AlphaAsmPrinter!\n";

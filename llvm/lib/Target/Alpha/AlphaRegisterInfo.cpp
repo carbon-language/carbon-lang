@@ -16,6 +16,7 @@
 #include "AlphaRegisterInfo.h"
 #include "llvm/Constants.h"
 #include "llvm/Type.h"
+#include "llvm/Function.h"
 #include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineFunction.h"
@@ -213,7 +214,10 @@ void AlphaRegisterInfo::emitPrologue(MachineFunction &MF) const {
   //handle GOP offset
   MI = BuildMI(Alpha::LDGP, 0);
   MBB.insert(MBBI, MI);
-
+  //evil const_cast until MO stuff setup to handle const
+  MI = BuildMI(Alpha::ALTENT, 1).addGlobalAddress(const_cast<Function*>(MF.getFunction()), true);
+  MBB.insert(MBBI, MI);
+                                                  
   // Get the number of bytes to allocate from the FrameInfo
   long NumBytes = MFI->getStackSize();
 
