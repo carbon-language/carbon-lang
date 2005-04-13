@@ -286,6 +286,7 @@ SelectionDAG::~SelectionDAG() {
 }
 
 SDOperand SelectionDAG::getZeroExtendInReg(SDOperand Op, MVT::ValueType VT) {
+  if (Op.getValueType() == VT) return Op;
   int64_t Imm = ~0ULL >> 64-MVT::getSizeInBits(VT);
   return getNode(ISD::AND, Op.getValueType(), Op,
                  getConstant(Imm, Op.getValueType()));
