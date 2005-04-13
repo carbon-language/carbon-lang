@@ -1692,6 +1692,26 @@ unsigned ISel::SelectExpr(SDOperand N) {
       }
     //Fall through
   case ISD::AND:
+    //handle zap
+    if (opcode == ISD::AND && N.getOperand(1).getOpcode() == ISD::Constant)
+    {
+      uint64_t k = cast<ConstantSDNode>(N.getOperand(1))->getValue();
+      unsigned int build = 0;
+      for(int i = 0; i < 8; ++i)
+      {
+        if (k & 0xFF == 0xFF)
+          build |= 1 << i;
+        else if (k & 0xFF != 0)
+        { build = 0; break; }
+        k >>= 8;
+      }
+      if (build)
+      {
+        Tmp1 = SelectExpr(N.getOperand(0));
+        BuildMI(BB, Alpha::ZAPNOTi, 2, Result).addReg(Tmp1).addImm(build);
+        return Result;
+      }
+    }
   case ISD::OR:
     //Check operand(0) == Not
     if (N.getOperand(0).getOpcode() == ISD::XOR && 
