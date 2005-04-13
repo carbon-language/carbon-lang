@@ -663,7 +663,7 @@ static bool NodeHasRecordingVariant(unsigned NodeOpcode) {
   default: return false;
   case ISD::AND:
   case ISD::OR: 
-  case ISD::ZERO_EXTEND_INREG: return true;
+    return true;
   }
 }
 
