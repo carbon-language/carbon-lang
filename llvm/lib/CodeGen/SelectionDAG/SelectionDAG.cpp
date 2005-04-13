@@ -798,7 +798,7 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
       if (N1.getOpcode() == ISD::SETCC &&
           TLI.getSetCCResultContents() == TargetLowering::ZeroOrOneSetCCResult)
         if (C2 & 1)
-          return getNode(ISD::AND, VT, N1.getOperand(1), getConstant(1, VT));
+          return getNode(ISD::AND, VT, N1, getConstant(1, VT));
         else
           return getConstant(0, VT);
 
