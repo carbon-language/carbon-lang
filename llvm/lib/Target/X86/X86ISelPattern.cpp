@@ -59,9 +59,7 @@ namespace {
       setOperationAction(ISD::BRCONDTWOWAY     , MVT::Other, Expand);
       setOperationAction(ISD::MEMMOVE          , MVT::Other, Expand);
       setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i16  , Expand);
-      setOperationAction(ISD::ZERO_EXTEND_INREG, MVT::i16  , Expand);
       setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i1   , Expand);
-      setOperationAction(ISD::ZERO_EXTEND_INREG, MVT::i1   , Expand);
       setOperationAction(ISD::FP_ROUND_INREG   , MVT::f32  , Expand);
       setOperationAction(ISD::SEXTLOAD         , MVT::i1   , Expand);
       setOperationAction(ISD::SREM             , MVT::f64  , Expand);
