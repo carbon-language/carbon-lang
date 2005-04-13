@@ -29,7 +29,7 @@ def IDEF : PseudoInstAlpha<(ops GPRC:$RA), "#idef $RA">;
 def WTF : PseudoInstAlpha<(ops ), "#wtf">;
 def ADJUSTSTACKUP : PseudoInstAlpha<(ops ), "ADJUP">;
 def ADJUSTSTACKDOWN : PseudoInstAlpha<(ops ), "ADJDOWN">;
-
+def ALTENT : PseudoInstAlpha<(ops s64imm:$TARGET), "$TARGET:\n">;
 def PCLABEL : PseudoInstAlpha<(ops s64imm:$num), "PCMARKER_$num:\n">;
 
 //*****************
