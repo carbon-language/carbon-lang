@@ -28,6 +28,9 @@ def s22imm  : Operand<i32> {
 def u64imm  : Operand<i64> {
   let PrintMethod = "printU64ImmOperand";
 }
+def s64imm  : Operand<i64> {
+  let PrintMethod = "printS64ImmOperand";
+}
 
 // the asmprinter needs to know about calls
 let PrintMethod = "printCallOperand" in
@@ -89,7 +92,7 @@ def MOVSIMM14 : AForm<0x03, 0x0b, (ops GR:$dst, s14imm:$imm),
   "mov $dst = $imm;;">;
 def MOVSIMM22 : AForm<0x03, 0x0b, (ops GR:$dst, s22imm:$imm),
   "mov $dst = $imm;;">;
-def MOVLIMM64 : AForm<0x03, 0x0b, (ops GR:$dst, u64imm:$imm),
+def MOVLIMM64 : AForm<0x03, 0x0b, (ops GR:$dst, s64imm:$imm),
   "movl $dst = $imm;;">;
 
 def AND : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src1, GR:$src2),

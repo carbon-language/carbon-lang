@@ -247,7 +247,11 @@ namespace {
                             MVT::ValueType VT) {
       O << (uint64_t)MI->getOperand(OpNo).getImmedValue();
     }
-   
+    void printS64ImmOperand(const MachineInstr *MI, unsigned OpNo,
+                            MVT::ValueType VT) {
+      O << (int64_t)MI->getOperand(OpNo).getImmedValue();
+    }
+  
     void printCallOperand(const MachineInstr *MI, unsigned OpNo,
                           MVT::ValueType VT) {
       printOp(MI->getOperand(OpNo), true); // this is a br.call instruction 
