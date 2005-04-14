@@ -64,11 +64,11 @@ namespace {
       setOperationAction(ISD::EXTLOAD          , MVT::i1   , Promote);
 
       setOperationAction(ISD::ZEXTLOAD         , MVT::i1   , Expand);
-      setOperationAction(ISD::ZEXTLOAD         , MVT::i32  , Expand);
 
       setOperationAction(ISD::SEXTLOAD         , MVT::i1   , Expand);
       setOperationAction(ISD::SEXTLOAD         , MVT::i8   , Expand);
       setOperationAction(ISD::SEXTLOAD         , MVT::i16  , Expand);
+      setOperationAction(ISD::SEXTLOAD         , MVT::i32  , Expand);
 
       setOperationAction(ISD::SREM             , MVT::f32  , Expand);
       setOperationAction(ISD::SREM             , MVT::f64  , Expand);
