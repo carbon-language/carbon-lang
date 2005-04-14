@@ -1115,7 +1115,7 @@ void PPC32ISel::EmitComparison(unsigned OpNum, Value *Op0, Value *Op1,
   // Use crand for lt, gt and crandc for le, ge
   unsigned CROpcode = (OpNum == 2 || OpNum == 4) ? PPC::CRAND : PPC::CRANDC;
   // ? cr1[lt] : cr1[gt]
-  unsigned CR1field = (OpNum == 2 || OpNum == 3) ? 4 : 5;
+  unsigned CR1field = (OpNum == 2 || OpNum == 3) ? 0 : 1;
   // ? cr0[lt] : cr0[gt]
   unsigned CR0field = (OpNum == 2 || OpNum == 5) ? 0 : 1;
   unsigned Opcode = CompTy->isSigned() ? PPC::CMPW : PPC::CMPLW;
@@ -1165,9 +1165,10 @@ void PPC32ISel::EmitComparison(unsigned OpNum, Value *Op0, Value *Op1,
           .addReg(ConstReg);
         BuildMI(*MBB, IP, Opcode, 2, PPC::CR1).addReg(Op0r+1)
           .addReg(ConstReg+1);
-        BuildMI(*MBB, IP, PPC::CRAND, 3).addImm(2).addImm(2).addImm(CR1field);
-        BuildMI(*MBB, IP, PPC::CROR, 3).addImm(CR0field).addImm(CR0field)
-          .addImm(2);
+        BuildMI(*MBB, IP, PPC::CRAND, 5, PPC::CR0).addImm(2)
+          .addReg(PPC::CR0).addImm(2).addReg(PPC::CR1).addImm(CR1field);
+        BuildMI(*MBB, IP, PPC::CROR, 5, PPC::CR0).addImm(CR0field)
+          .addReg(PPC::CR0).addImm(CR0field).addReg(PPC::CR0).addImm(2);
         return;
       }
     }
@@ -1204,9 +1205,10 @@ void PPC32ISel::EmitComparison(unsigned OpNum, Value *Op0, Value *Op1,
       // cr0 = r3 ccOpcode r5 or (r3 == r5 AND r4 ccOpcode r6)
       BuildMI(*MBB, IP, Opcode, 2, PPC::CR0).addReg(Op0r).addReg(Op1r);
       BuildMI(*MBB, IP, Opcode, 2, PPC::CR1).addReg(Op0r+1).addReg(Op1r+1);
-      BuildMI(*MBB, IP, PPC::CRAND, 3).addImm(2).addImm(2).addImm(CR1field);
-      BuildMI(*MBB, IP, PPC::CROR, 3).addImm(CR0field).addImm(CR0field)
-        .addImm(2);
+      BuildMI(*MBB, IP, PPC::CRAND, 5, PPC::CR0).addImm(2)
+        .addReg(PPC::CR0).addImm(2).addReg(PPC::CR1).addImm(CR1field);
+      BuildMI(*MBB, IP, PPC::CROR, 5, PPC::CR0).addImm(CR0field)
+        .addReg(PPC::CR0).addImm(CR0field).addReg(PPC::CR0).addImm(2);
       return;
     }
   }

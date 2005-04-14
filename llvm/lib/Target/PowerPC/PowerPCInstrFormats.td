@@ -309,8 +309,22 @@ class XForm_28<bits<6> opcode, bits<10> xo, bit ppc64, bit vmx,
 
 // 1.7.7 XL-Form
 class XLForm_1<bits<6> opcode, bits<10> xo, bit ppc64, bit vmx,
-               dag OL, string asmstr> 
-  : XForm_base_r3xo<opcode, xo, 0, ppc64, vmx, OL, asmstr> {
+               dag OL, string asmstr> : I<opcode, ppc64, vmx, OL, asmstr> {
+  bits<3> CRD;
+  bits<2> CRDb;
+  bits<3> CRA;
+  bits<2> CRAb;
+  bits<3> CRB;
+  bits<2> CRBb;
+  
+  let Inst{6-8}   = CRD;
+  let Inst{9-10}  = CRDb;
+  let Inst{11-13} = CRA;
+  let Inst{14-15} = CRAb;
+  let Inst{16-18} = CRB;
+  let Inst{19-20} = CRBb;
+  let Inst{21-30} = xo;
+  let Inst{31}    = 0;
 }
 
 class XLForm_2<bits<6> opcode, bits<10> xo, bit lk, bit ppc64, bit vmx, 

@@ -45,6 +45,9 @@ def symbolHi: Operand<i32> {
 def symbolLo: Operand<i32> {
   let PrintMethod = "printSymbolLo";
 }
+def crbit: Operand<i8> {
+  let PrintMethod = "printcrbit";
+}
 
 // Pseudo-instructions:
 def PHI : Pseudo<(ops), "; PHI">;
@@ -332,14 +335,30 @@ def STFDX : XForm_28<31, 727, 0, 0, (ops FPRC:$frS, GPRC:$rA, GPRC:$rB),
 
 // XL-Form instructions.  condition register logical ops.
 //
-def CRAND  : XLForm_1<19, 257, 0, 0, (ops u5imm:$D, u5imm:$A, u5imm:$B),
-                      "crand $D, $A, $B">;
-def CRANDC : XLForm_1<19, 129, 0, 0, (ops u5imm:$D, u5imm:$A, u5imm:$B),
-                      "crandc $D, $A, $B">;
-def CRNOR  : XLForm_1<19,  33, 0, 0, (ops u5imm:$D, u5imm:$A, u5imm:$B),
-                      "crnor $D, $A, $B">;
-def CROR   : XLForm_1<19, 449, 0, 0, (ops u5imm:$D, u5imm:$A, u5imm:$B),
-                      "cror $D, $A, $B">;
+def CRAND  : XLForm_1<19, 257, 0, 0, (ops CRRC:$D, crbit:$Db,
+                      CRRC:$A, crbit:$Ab, CRRC:$B, crbit:$Bb),
+                      "crand $Db, $Ab, $Bb">;
+def CRANDC : XLForm_1<19, 129, 0, 0, (ops CRRC:$D, crbit:$Db,
+                      CRRC:$A, crbit:$Ab, CRRC:$B, crbit:$Bb),
+                      "crandc $Db, $Ab, $Bb">;
+def CREQV  : XLForm_1<19, 289, 0, 0, (ops CRRC:$D, crbit:$Db,
+                      CRRC:$A, crbit:$Ab, CRRC:$B, crbit:$Bb),
+                      "creqv $Db, $Ab, $Bb">;
+def CRNAND : XLForm_1<19, 225, 0, 0, (ops CRRC:$D, crbit:$Db,
+                      CRRC:$A, crbit:$Ab, CRRC:$B, crbit:$Bb),
+                      "crnand $Db, $Ab, $Bb">;
+def CRNOR  : XLForm_1<19, 33, 0, 0, (ops CRRC:$D, crbit:$Db,
+                      CRRC:$A, crbit:$Ab, CRRC:$B, crbit:$Bb),
+                      "crnor $Db, $Ab, $Bb">;
+def CROR   : XLForm_1<19, 449, 0, 0, (ops CRRC:$D, crbit:$Db,
+                      CRRC:$A, crbit:$Ab, CRRC:$B, crbit:$Bb),
+                      "cror $Db, $Ab, $Bb">;
+def CRORC  : XLForm_1<19, 417, 0, 0, (ops CRRC:$D, crbit:$Db,
+                      CRRC:$A, crbit:$Ab, CRRC:$B, crbit:$Bb),
+                      "crorc $Db, $Ab, $Bb">;
+def CRXOR  : XLForm_1<19, 193, 0, 0, (ops CRRC:$D, crbit:$Db,
+                      CRRC:$A, crbit:$Ab, CRRC:$B, crbit:$Bb),
+                      "crxor $Db, $Ab, $Bb">;
 def MCRF   : XLForm_3<19, 0, 0, 0, (ops CRRC:$BF, CRRC:$BFA),
                       "mfcr $BF, $BFA">;
 

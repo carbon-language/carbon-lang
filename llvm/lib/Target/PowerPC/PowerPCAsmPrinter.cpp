@@ -138,6 +138,26 @@ namespace {
         O << "-\"L0000" << LabelNumber << "$pb\")";
       }
     }
+    void printcrbit(const MachineInstr *MI, unsigned OpNo,
+                       MVT::ValueType VT) {
+      unsigned char value = MI->getOperand(OpNo).getImmedValue();
+      assert(value <= 3 && "Invalid crbit argument!");
+      unsigned RegNo, CCReg = MI->getOperand(OpNo-1).getReg();
+      switch (CCReg) {
+      case PPC::CR0:  RegNo = 0; break;
+      case PPC::CR1:  RegNo = 1; break;
+      case PPC::CR2:  RegNo = 2; break;
+      case PPC::CR3:  RegNo = 3; break;
+      case PPC::CR4:  RegNo = 4; break;
+      case PPC::CR5:  RegNo = 5; break;
+      case PPC::CR6:  RegNo = 6; break;
+      case PPC::CR7:  RegNo = 7; break;
+      default:
+        std::cerr << "Unhandled reg in enumRegToRealReg!\n";
+        abort();
+      }
+      O << 4 * RegNo + value;
+    }
   
     virtual void printConstantPool(MachineConstantPool *MCP) = 0;
     virtual bool runOnMachineFunction(MachineFunction &F) = 0;    
