@@ -460,7 +460,7 @@ static unsigned ExactLog2(uint64_t Val) {
 static unsigned ExactLog2sub1(uint64_t Val) {
   unsigned int n;
   for(n=0; n<64; n++) {
-    if(Val==(uint64_t)((1<<n)-1))
+    if(Val==(uint64_t)((1LL<<n)-1))
       return n;
   }
   return 666;
