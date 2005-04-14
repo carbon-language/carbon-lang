@@ -360,7 +360,7 @@ def CRXOR  : XLForm_1<19, 193, 0, 0, (ops CRRC:$D, crbit:$Db,
                       CRRC:$A, crbit:$Ab, CRRC:$B, crbit:$Bb),
                       "crxor $Db, $Ab, $Bb">;
 def MCRF   : XLForm_3<19, 0, 0, 0, (ops CRRC:$BF, CRRC:$BFA),
-                      "mfcr $BF, $BFA">;
+                      "mcrf $BF, $BFA">;
 
 // XFX-Form instructions.  Instructions that deal with SPRs
 //

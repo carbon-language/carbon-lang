@@ -474,6 +474,7 @@ LowerFrameReturnAddress(bool isFrameAddress, SDOperand Chain, unsigned Depth,
 namespace {
 Statistic<>Recorded("ppc-codegen", "Number of recording ops emitted");
 Statistic<>FusedFP("ppc-codegen", "Number of fused fp operations");
+Statistic<>MultiBranch("ppc-codegen", "Number of setcc logical ops collapsed");
 //===--------------------------------------------------------------------===//
 /// ISel - PPC32 specific code to select PPC32 machine instructions for
 /// SelectionDAG operations.
@@ -685,6 +686,43 @@ static unsigned getBCCForSetCC(unsigned Condition, bool& U) {
   case ISD::SETGT:  return PPC::BGT;
   case ISD::SETUGE: U = true;
   case ISD::SETGE:  return PPC::BGE;
+  }
+  return 0;
+}
+
+/// getCROpForOp - Return the condition register opcode (or inverted opcode)
+/// associated with the SelectionDAG opcode.
+static unsigned getCROpForSetCC(unsigned Opcode, bool Inv1, bool Inv2) {
+  switch (Opcode) {
+  default: assert(0 && "Unknown opcode!"); abort();
+  case ISD::AND:
+    if (Inv1 && Inv2) return PPC::CRNOR; // De Morgan's Law
+    if (!Inv1 && !Inv2) return PPC::CRAND;
+    if (Inv1 ^ Inv2) return PPC::CRANDC;
+  case ISD::OR:
+    if (Inv1 && Inv2) return PPC::CRNAND; // De Morgan's Law
+    if (!Inv1 && !Inv2) return PPC::CROR;
+    if (Inv1 ^ Inv2) return PPC::CRORC;
+  }
+  return 0;
+}
+
+/// getCRIdxForSetCC - Return the index of the condition register field
+/// associated with the SetCC condition, and whether or not the field is
+/// treated as inverted.  That is, lt = 0; ge = 0 inverted.
+static unsigned getCRIdxForSetCC(unsigned Condition, bool& Inv) {
+  switch (Condition) {
+  default: assert(0 && "Unknown condition!"); abort();
+  case ISD::SETULT: 
+  case ISD::SETLT:  Inv = false;  return 0;
+  case ISD::SETUGE:
+  case ISD::SETGE:  Inv = true;   return 0;
+  case ISD::SETUGT:
+  case ISD::SETGT:  Inv = false;  return 1;
+  case ISD::SETULE:
+  case ISD::SETLE:  Inv = true;   return 1;
+  case ISD::SETEQ:  Inv = false;  return 2;
+  case ISD::SETNE:  Inv = true;   return 2;
   }
   return 0;
 }
@@ -1009,7 +1047,8 @@ unsigned ISel::SelectCC(SDOperand CC, unsigned &Opc) {
         Tmp1 = SelectExpr(SetCC->getOperand(0), true);
         if (RecordSuccess) {
           ++Recorded;
-          return PPC::CR0;
+          BuildMI(BB, PPC::MCRF, 1, Result).addReg(PPC::CR0);
+          return Result;
         }
         AlreadySelected = true;
       }
@@ -1028,6 +1067,33 @@ unsigned ISel::SelectCC(SDOperand CC, unsigned &Opc) {
       BuildMI(BB, CompareOpc, 2, Result).addReg(Tmp1).addReg(Tmp2);
     }
   } else {
+#if 0
+    if (CC.getOpcode() == ISD::AND || CC.getOpcode() == ISD::OR)
+      if (CC.getOperand(0).Val->hasOneUse() &&
+          CC.getOperand(1).Val->hasOneUse()) {
+        SetCCSDNode* Op0CC = dyn_cast<SetCCSDNode>(CC.getOperand(0).Val);
+        SetCCSDNode* Op1CC = dyn_cast<SetCCSDNode>(CC.getOperand(1).Val);
+        if (Op0CC && Op1CC) {
+          ++MultiBranch;
+          bool Inv0, Inv1;
+          unsigned Opc1;
+          unsigned Idx0 = getCRIdxForSetCC(Op0CC->getCondition(), Inv0);
+          unsigned Idx1 = getCRIdxForSetCC(Op1CC->getCondition(), Inv1);
+          unsigned CROpc = getCROpForSetCC(CC.getOpcode(), Inv0, Inv1);
+          Tmp1 = SelectCC(CC.getOperand(0), Opc);
+          Tmp2 = SelectCC(CC.getOperand(1), Opc1);
+          if (Inv0 && !Inv1) {
+            std::swap(Tmp1, Tmp2);
+            std::swap(Idx0, Idx1);
+            Opc = Opc1;
+          }
+          if (Inv0 && Inv1) Opc = PPC32InstrInfo::invertPPCBranchOpcode(Opc);
+          BuildMI(BB, CROpc, 5, Result).addImm(Idx0).addReg(Tmp1).addImm(Idx0)
+            .addReg(Tmp2).addImm(Idx1);
+          return Result;
+        }
+    }
+#endif
     Opc = PPC::BNE;
     Tmp1 = SelectExpr(CC);
     BuildMI(BB, PPC::CMPLWI, 2, Result).addReg(Tmp1).addImm(0);
@@ -2033,7 +2099,7 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
         if (CN->getValue() == 0) {
           Tmp1 = SelectExpr(SetCC->getOperand(0));
           switch (SetCC->getCondition()) {
-          default: assert(0 && "Unhandled SetCC condition"); abort();
+          default: SetCC->dump(); assert(0 && "Unhandled SetCC condition"); abort();
           case ISD::SETEQ:
             Tmp2 = MakeReg(MVT::i32);
             BuildMI(BB, PPC::CNTLZW, 1, Tmp2).addReg(Tmp1);
