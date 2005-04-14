@@ -25,8 +25,13 @@
 
 #include "llvm/Support/Mangler.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/Support/CommandLine.h"
 
 using namespace llvm;
+
+namespace llvm {
+  extern cl::opt<bool> EnableAlphaFTOI;
+}
 
 namespace {
   Statistic<> EmittedInsts("asm-printer", "Number of machine instrs printed");
@@ -229,7 +234,10 @@ void AlphaAsmPrinter::printConstantPool(MachineConstantPool *MCP) {
 bool AlphaAsmPrinter::doInitialization(Module &M)
 {
   AsmPrinter::doInitialization(M);
-  O << "\t.arch ev56\n";
+  if(EnableAlphaFTOI)
+    O << "\t.arch ev6\n";
+  else
+    O << "\t.arch ev56\n";
   return false;
 }
     

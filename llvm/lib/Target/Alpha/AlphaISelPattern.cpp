@@ -1695,9 +1695,9 @@ unsigned ISel::SelectExpr(SDOperand N) {
       unsigned int build = 0;
       for(int i = 0; i < 8; ++i)
       {
-        if (k & 0xFF == 0xFF)
+        if ((k & 0x00FF) == 0x00FF)
           build |= 1 << i;
-        else if (k & 0xFF != 0)
+        else if ((k & 0x00FF) != 0)
         { build = 0; break; }
         k >>= 8;
       }
