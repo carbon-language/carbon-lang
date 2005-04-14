@@ -436,11 +436,18 @@ SDOperand SelectionDAG::getSetCC(ISD::CondCode Cond, MVT::ValueType VT,
         N2C = cast<ConstantSDNode>(N2.Val);
       }
       
+      if ((Cond == ISD::SETLT || Cond == ISD::SETULT) && C2 == MinVal)
+        return getConstant(0, VT);      // X < MIN --> false
+        
+      // Canonicalize setgt X, Min --> setne X, Min
+      if ((Cond == ISD::SETGT || Cond == ISD::SETUGT) && C2 == MinVal)
+        return getSetCC(ISD::SETNE, VT, N1, N2);
+        
       // If we have setult X, 1, turn it into seteq X, 0
       if ((Cond == ISD::SETLT || Cond == ISD::SETULT) && C2 == MinVal+1)
         return getSetCC(ISD::SETEQ, VT, N1,
                         getConstant(MinVal, N1.getValueType()));
-      // If we have setult X, 1, turn it into seteq X, 0
+      // If we have setugt X, Max-1, turn it into seteq X, Max
       else if ((Cond == ISD::SETGT || Cond == ISD::SETUGT) && C2 == MaxVal-1)
         return getSetCC(ISD::SETEQ, VT, N1,
                         getConstant(MaxVal, N1.getValueType()));
