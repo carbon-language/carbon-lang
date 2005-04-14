@@ -1418,6 +1418,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
           BuildMI(BB, Alpha::CALL, 1).addGlobalAddress(GASD->getGlobal());
         } else {
           //use PC relative branch call
+          AlphaLowering.restoreGP(BB);
           BuildMI(BB, Alpha::BSR, 1, Alpha::R26).addGlobalAddress(GASD->getGlobal(),true);
         }
       } 

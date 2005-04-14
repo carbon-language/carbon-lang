@@ -330,7 +330,7 @@ let isCall = 1,
             R20, R21, R22, R23, R24, R25, R27, R28, R29,
             F0, F1,
             F10, F11, F12, F13, F14, F15, F16, F17, F18, F19,
-            F20, F21, F22, F23, F24, F25, F26, F27, F28, F29, F30] in {
+            F20, F21, F22, F23, F24, F25, F26, F27, F28, F29, F30], Uses = [R29] in {
     def JSR : MForm< 0x1A, (ops GPRC:$RD, GPRC:$RS, s14imm:$DISP), "jsr $RD,($RS),$DISP">; //Jump to subroutine
     def BSR : BForm<0x34, (ops GPRC:$RD, s21imm:$DISP), "bsr $RD,$DISP">; //Branch to subroutine
 }
