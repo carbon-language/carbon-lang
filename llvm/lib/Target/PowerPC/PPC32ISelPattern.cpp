@@ -1067,7 +1067,7 @@ unsigned ISel::SelectCC(SDOperand CC, unsigned &Opc) {
       BuildMI(BB, CompareOpc, 2, Result).addReg(Tmp1).addReg(Tmp2);
     }
   } else {
-#if 0
+    if (PPCCRopts)
     if (CC.getOpcode() == ISD::AND || CC.getOpcode() == ISD::OR)
       if (CC.getOperand(0).Val->hasOneUse() &&
           CC.getOperand(1).Val->hasOneUse()) {
@@ -1093,7 +1093,6 @@ unsigned ISel::SelectCC(SDOperand CC, unsigned &Opc) {
           return Result;
         }
     }
-#endif
     Opc = PPC::BNE;
     Tmp1 = SelectExpr(CC);
     BuildMI(BB, PPC::CMPLWI, 2, Result).addReg(Tmp1).addImm(0);
@@ -1127,7 +1126,7 @@ void ISel::SelectBranchCC(SDOperand N)
   unsigned Opc, CCReg;
   Select(N.getOperand(0));  //chain
   CCReg = SelectCC(N.getOperand(1), Opc);
-
+  
   // Iterate to the next basic block, unless we're already at the end of the
   ilist<MachineBasicBlock>::iterator It = BB, E = BB->getParent()->end();
   if (++It == E) It = BB;

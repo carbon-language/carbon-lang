@@ -41,9 +41,6 @@ namespace {
   cl::opt<bool> DisableOutput("disable-x86-llc-output", cl::Hidden,
                               cl::desc("Disable the X86 asm printer, for use "
                                        "when profiling the code generator."));
-  cl::opt<bool> DisablePatternISel("disable-pattern-isel", cl::Hidden,
-                                 cl::desc("Disable the pattern isel XXX FIXME"),
-                                   cl::init(true));
 
 #if 0
   // FIXME: This should eventually be handled with target triples and
@@ -113,7 +110,8 @@ bool X86TargetMachine::addPassesToEmitAssembly(PassManager &PM,
   // Make sure that no unreachable blocks are instruction selected.
   PM.add(createUnreachableBlockEliminationPass());
 
-  if (DisablePatternISel)
+  // Default to simple ISel
+  if (PatternISelTriState != 1)
     PM.add(createX86SimpleInstructionSelector(*this));
   else
     PM.add(createX86PatternInstructionSelector(*this));
@@ -171,7 +169,8 @@ void X86JITInfo::addPassesToJITCompile(FunctionPassManager &PM) {
   // Make sure that no unreachable blocks are instruction selected.
   PM.add(createUnreachableBlockEliminationPass());
 
-  if (DisablePatternISel)
+  // Default to simple ISel
+  if (PatternISelTriState != 1)
     PM.add(createX86SimpleInstructionSelector(TM));
   else
     PM.add(createX86PatternInstructionSelector(TM));

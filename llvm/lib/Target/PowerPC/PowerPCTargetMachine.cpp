@@ -30,15 +30,18 @@
 using namespace llvm;
 
 namespace llvm {
+  bool PPCCRopts;
   cl::opt<bool> AIX("aix", 
                     cl::desc("Generate AIX/xcoff instead of Darwin/MachO"), 
                     cl::Hidden);
-
   cl::opt<bool> EnablePPCLSR("enable-lsr-for-ppc", 
-                             cl::desc("Enable LSR for PPC (beta option!)"), 
+                             cl::desc("Enable LSR for PPC (beta)"), 
                              cl::Hidden);
-  cl::opt<bool> EnablePatternISel("enable-ppc-pattern-isel", cl::Hidden,
-                                cl::desc("Enable the pattern isel"));
+  cl::opt<bool, true> EnablePPCCRopts("enable-cc-opts", 
+                            cl::desc("Enable opts using condition regs (beta)"),
+                            cl::location(PPCCRopts),
+                            cl::init(false),
+                            cl::Hidden);
 }
 
 namespace {
@@ -96,12 +99,13 @@ bool PowerPCTargetMachine::addPassesToEmitAssembly(PassManager &PM,
   // Make sure that no unreachable blocks are instruction selected.
   PM.add(createUnreachableBlockEliminationPass());
 
+  // Default to pattern ISel
   if (LP64)
     PM.add(createPPC64ISelPattern(*this));
-  else if (EnablePatternISel)
-    PM.add(createPPC32ISelPattern(*this));
-  else
+  else if (PatternISelTriState == 0)
     PM.add(createPPC32ISelSimple(*this));
+  else
+    PM.add(createPPC32ISelPattern(*this));
 
   if (PrintMachineCode)
     PM.add(createMachineFunctionPrinterPass(&std::cerr));
@@ -126,6 +130,8 @@ bool PowerPCTargetMachine::addPassesToEmitAssembly(PassManager &PM,
 }
 
 void PowerPCJITInfo::addPassesToJITCompile(FunctionPassManager &PM) {
+  bool LP64 = (0 != dynamic_cast<PPC64TargetMachine *>(&TM));
+
   if (EnablePPCLSR) {
     PM.add(createLoopStrengthReducePass());
     PM.add(createCFGSimplificationPass());
@@ -145,7 +151,14 @@ void PowerPCJITInfo::addPassesToJITCompile(FunctionPassManager &PM) {
   // Make sure that no unreachable blocks are instruction selected.
   PM.add(createUnreachableBlockEliminationPass());
 
-  PM.add(createPPC32ISelSimple(TM));
+  // Default to pattern ISel
+  if (LP64)
+    PM.add(createPPC64ISelPattern(TM));
+  else if (PatternISelTriState == 0)
+    PM.add(createPPC32ISelSimple(TM));
+  else
+    PM.add(createPPC32ISelPattern(TM));
+
   PM.add(createRegisterAllocator());
   PM.add(createPrologEpilogCodeInserter());
 

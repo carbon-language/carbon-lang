@@ -34,6 +34,13 @@ namespace llvm {
   /// over the place.
   extern bool NoExcessFPPrecision;
 
+  /// PatternISelTriState - This flag is enabled when -pattern-isel=X is
+  /// specified on the command line.  The default value is 2, in which case the
+  /// target chooses what is best for it.  Setting X to 0 forces the use of
+  /// a simple ISel if available, while setting it to 1 forces the use of a
+  /// pattern ISel if available.
+  extern int PatternISelTriState;
+
 } // End llvm namespace
 
 #endif

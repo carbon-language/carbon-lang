@@ -25,6 +25,7 @@ namespace llvm {
   bool PrintMachineCode;
   bool NoFramePointerElim;
   bool NoExcessFPPrecision;
+  int  PatternISelTriState;
 };
 namespace {
   cl::opt<bool, true> PrintCode("print-machineinstrs",
@@ -38,9 +39,13 @@ namespace {
                   cl::init(false));
   cl::opt<bool, true>
   DisableExcessPrecision("disable-excess-fp-precision",
-                         cl::desc("Disable optimizations that may increase FP precision"),
-                         cl::location(NoExcessFPPrecision),
-                         cl::init(false));
+               cl::desc("Disable optimizations that may increase FP precision"),
+               cl::location(NoExcessFPPrecision),
+               cl::init(false));
+  cl::opt<int, true> PatternISel("enable-pattern-isel",
+                    cl::desc("sets the pattern ISel off(0), on(1), default(2)"),
+                    cl::location(PatternISelTriState),
+                    cl::init(2));
 };
 
 //---------------------------------------------------------------------------
