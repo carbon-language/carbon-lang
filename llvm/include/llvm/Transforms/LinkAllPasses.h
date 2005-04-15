@@ -114,6 +114,7 @@ namespace {
       (void) llvm::createTraceValuesPassForBasicBlocks();
       (void) llvm::createTraceValuesPassForFunction();
       (void) llvm::createUnifyFunctionExitNodesPass();
+      (void) llvm::createCondPropagationPass();
     }
   } _ForcePassLinking;
 };
