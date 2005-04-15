@@ -182,6 +182,13 @@ FunctionPass *createReassociatePass();
 //
 FunctionPass *createCorrelatedExpressionEliminationPass();
 
+
+// createCondPropagationPass - This pass propagates information about
+// conditional expressions through the program, allowing it to eliminate
+// conditional branches in some cases.
+//
+FunctionPass *createCondPropagationPass();
+
 //===----------------------------------------------------------------------===//
 //
 // TailDuplication - Eliminate unconditional branches through controlled code
