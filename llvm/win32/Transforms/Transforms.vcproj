@@ -239,6 +239,9 @@
 					RelativePath="..\..\lib\Transforms\Scalar\BasicBlockPlacement.cpp">
 				</File>
 				<File
+					RelativePath="..\..\lib\Transforms\Scalar\CondPropagate.cpp">
+				</File>
+				<File
 					RelativePath="..\..\lib\Transforms\Scalar\ConstantProp.cpp">
 				</File>
 				<File
