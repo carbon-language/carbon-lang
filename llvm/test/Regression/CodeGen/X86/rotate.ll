@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -x86-asm-syntax=intel -disable-pattern-isel=0 | grep ro[rl] | wc -l | grep 12
+; RUN: llvm-as < %s | llc -march=x86 -x86-asm-syntax=intel -enable-pattern-isel=1 | grep ro[rl] | wc -l | grep 12
 
 uint %rotl32(uint %A, ubyte %Amt) {
 	%B = shl uint %A, ubyte %Amt

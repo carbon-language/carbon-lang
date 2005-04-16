@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=ppc32 -enable-ppc-pattern-isel | grep 'fn\?madd\|fn\?msub' | wc -l | grep 7
+; RUN: llvm-as < %s | llc -march=ppc32 | grep 'fn\?madd\|fn\?msub' | wc -l | grep 7
 
 double %test_FMADD1(double %A, double %B, double %C) {
 	%D = mul double %A, %B
