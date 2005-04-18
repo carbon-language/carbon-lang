@@ -727,6 +727,22 @@ static unsigned getCRIdxForSetCC(unsigned Condition, bool& Inv) {
   return 0;
 }
 
+/// getCRIdxForBCC - Return the index of the condition register field
+/// associated with the PowerPC branch instruction, and whether or not the field 
+/// is treated as inverted.  That is, lt = 0; ge = 0 inverted.
+static unsigned getCRIdxForBCC(unsigned Condition, bool& Inv) {
+  switch (Condition) {
+  default: assert(0 && "Unknown condition!"); abort();
+  case PPC::BLT:    Inv = false;  return 29;  // 28 -> 31, rol 29
+  case PPC::BGE:    Inv = true;   return 29;  // 28 -> 31, rol 29
+  case PPC::BGT:    Inv = false;  return 30;  // 29 -> 31, rol 30
+  case PPC::BLE:    Inv = true;   return 30;  // 29 -> 31, rol 30
+  case PPC::BEQ:    Inv = false;  return 31;  // 30 -> 31, rol 31
+  case PPC::BNE:    Inv = true;   return 31;  // 30 -> 31, rol 31
+  }
+  return 0;
+}
+
 /// IndexedOpForOp - Return the indexed variant for each of the PowerPC load
 /// and store immediate instructions.
 static unsigned IndexedOpForOp(unsigned Opcode) {
@@ -1028,8 +1044,7 @@ unsigned ISel::SelectCC(SDOperand CC, unsigned &Opc) {
   
   // If the first operand to the select is a SETCC node, then we can fold it
   // into the branch that selects which value to return.
-  SetCCSDNode* SetCC = dyn_cast<SetCCSDNode>(CC.Val);
-  if (SetCC && CC.getOpcode() == ISD::SETCC) {
+  if (SetCCSDNode* SetCC = dyn_cast<SetCCSDNode>(CC.Val)) {
     bool U;
     Opc = getBCCForSetCC(SetCC->getCondition(), U);
 
@@ -2163,47 +2178,21 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
         }
       }
     
+      bool Inv = false;
       unsigned CCReg = SelectCC(N, Opc);
-      unsigned TrueValue = MakeReg(MVT::i32);
-      BuildMI(BB, PPC::LI, 1, TrueValue).addSImm(1);
-      unsigned FalseValue = MakeReg(MVT::i32);
-      BuildMI(BB, PPC::LI, 1, FalseValue).addSImm(0);
-
-      // Create an iterator with which to insert the MBB for copying the false 
-      // value and the MBB to hold the PHI instruction for this SetCC.
-      MachineBasicBlock *thisMBB = BB;
-      const BasicBlock *LLVM_BB = BB->getBasicBlock();
-      ilist<MachineBasicBlock>::iterator It = BB;
-      ++It;
-  
-      //  thisMBB:
-      //  ...
-      //   cmpTY ccX, r1, r2
-      //   %TrueValue = li 1
-      //   bCC sinkMBB
-      MachineBasicBlock *copy0MBB = new MachineBasicBlock(LLVM_BB);
-      MachineBasicBlock *sinkMBB = new MachineBasicBlock(LLVM_BB);
-      BuildMI(BB, Opc, 2).addReg(CCReg).addMBB(sinkMBB);
-      MachineFunction *F = BB->getParent();
-      F->getBasicBlockList().insert(It, copy0MBB);
-      F->getBasicBlockList().insert(It, sinkMBB);
-      // Update machine-CFG edges
-      BB->addSuccessor(copy0MBB);
-      BB->addSuccessor(sinkMBB);
-
-      //  copy0MBB:
-      //   %FalseValue = li 0
-      //   fallthrough
-      BB = copy0MBB;
-      // Update machine-CFG edges
-      BB->addSuccessor(sinkMBB);
-
-      //  sinkMBB:
-      //   %Result = phi [ %FalseValue, copy0MBB ], [ %TrueValue, thisMBB ]
-      //  ...
-      BB = sinkMBB;
-      BuildMI(BB, PPC::PHI, 4, Result).addReg(FalseValue)
-        .addMBB(copy0MBB).addReg(TrueValue).addMBB(thisMBB);
+      unsigned IntCR = MakeReg(MVT::i32);
+      unsigned ShAmt = getCRIdxForBCC(Opc, Inv);
+      BuildMI(BB, PPC::MCRF, 1, PPC::CR7).addReg(CCReg);
+      BuildMI(BB, PPC::MFCR, 1, IntCR).addReg(PPC::CR7);
+      if (Inv) {
+        Tmp1 = MakeReg(MVT::i32);
+        BuildMI(BB, PPC::RLWINM, 4, Tmp1).addReg(IntCR).addImm(ShAmt)
+          .addImm(31).addImm(31);
+        BuildMI(BB, PPC::XORI, 2, Result).addReg(Tmp1).addImm(1);
+      } else {
+        BuildMI(BB, PPC::RLWINM, 4, Result).addReg(IntCR).addImm(ShAmt)
+          .addImm(31).addImm(31);
+      }
       return Result;
     }
     assert(0 && "Is this legal?");

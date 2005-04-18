@@ -392,13 +392,13 @@ class XFXForm_3<bits<6> opcode, bits<10> xo, bit ppc64, bit vmx,
   let Inst{31}    = 0;
 }
 
-class XFXForm_5<bits<6> opcode, bits<10> xo, bit ppc64, bit vmx, 
+class XFXForm_5<bits<6> opcode, bit mfcrf, bits<10> xo, bit ppc64, bit vmx, 
                 dag OL, string asmstr> : I<opcode, ppc64, vmx, OL, asmstr> {
   bits<8>  FXM;
   bits<5>  ST;
    
   let Inst{6-10}  = ST;
-  let Inst{11}    = 0;
+  let Inst{11}    = mfcrf;
   let Inst{12-19} = FXM;
   let Inst{20}    = 0;
   let Inst{21-30} = xo;
