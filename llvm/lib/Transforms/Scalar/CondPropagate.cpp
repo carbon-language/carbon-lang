@@ -83,7 +83,7 @@ void CondProp::SimplifyBlock(BasicBlock *BB) {
   // See if we can fold any PHI nodes in this block now.
   // FIXME: This would not be required if removePredecessor did this for us!!
   PHINode *PN;
-  for (BasicBlock::iterator I = BB->begin(); PN = dyn_cast<PHINode>(I++); )
+  for (BasicBlock::iterator I = BB->begin(); (PN = dyn_cast<PHINode>(I++)); )
     if (Value *PNV = hasConstantValue(PN))
       if (!isa<Instruction>(PNV)) {
         PN->replaceAllUsesWith(PNV);
