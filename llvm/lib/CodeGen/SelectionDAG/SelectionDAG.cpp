@@ -647,6 +647,56 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
   return SDOperand(N, 0);
 }
 
+/// MaskedValueIsZero - Return true if 'V & Mask' is known to be zero.  We use
+/// this predicate to simplify operations downstream.  V and Mask are known to
+/// be the same type.
+static bool MaskedValueIsZero(const SDOperand &Op, uint64_t Mask,
+                              const TargetLowering &TLI) {
+  unsigned SrcBits;
+  if (Mask == 0) return true;
+  
+  // If we know the result of a setcc has the top bits zero, use this info.
+  switch (Op.getOpcode()) {
+  case ISD::UNDEF:
+    return true;
+  case ISD::Constant:
+    return (cast<ConstantSDNode>(Op)->getValue() & Mask) == 0;
+
+  case ISD::SETCC:
+    return ((Mask & 1) == 0) && 
+           TLI.getSetCCResultContents() == TargetLowering::ZeroOrOneSetCCResult;
+
+  case ISD::ZEXTLOAD:
+    SrcBits = MVT::getSizeInBits(cast<MVTSDNode>(Op)->getExtraValueType());
+    return (Mask & ((1ULL << SrcBits)-1)) == 0; // Returning only the zext bits.
+  case ISD::ZERO_EXTEND:
+    SrcBits = MVT::getSizeInBits(Op.getOperand(0).getValueType());
+    return MaskedValueIsZero(Op.getOperand(0),Mask & ((1ULL << SrcBits)-1),TLI);
+
+  case ISD::AND:
+    // (X & C1) & C2 == 0   iff   C1 & C2 == 0.
+    if (ConstantSDNode *AndRHS = dyn_cast<ConstantSDNode>(Op.getOperand(0)))
+      return MaskedValueIsZero(Op.getOperand(0),AndRHS->getValue() & Mask, TLI);
+
+    // FALL THROUGH
+  case ISD::OR:
+  case ISD::XOR:
+    return MaskedValueIsZero(Op.getOperand(0), Mask, TLI) &&
+           MaskedValueIsZero(Op.getOperand(1), Mask, TLI);
+  case ISD::SELECT:
+    return MaskedValueIsZero(Op.getOperand(1), Mask, TLI) &&
+           MaskedValueIsZero(Op.getOperand(2), Mask, TLI);
+    
+  // TODO: (shl X, C1) & C2 == 0   iff  (-1 << C1) & C2 == 0
+  // TODO: (ushr X, C1) & C2 == 0   iff  (-1 >> C1) & C2 == 0
+  default: break;
+  }
+
+  return false;
+}
+
+
+
 SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
                                 SDOperand N1, SDOperand N2) {
 #ifndef NDEBUG
@@ -770,7 +820,7 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
     case ISD::SRL:
     case ISD::SRA:
       // If the shift amount is bigger than the size of the data, then all the
-      // bits are shifted out.  Simplify to loading constant zero.
+      // bits are shifted out.  Simplify to undef.
       if (C2 >= MVT::getSizeInBits(N1.getValueType())) {
         return getNode(ISD::UNDEF, N1.getValueType());
       }
@@ -781,6 +831,12 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
       if (!C2) return N2;         // X and 0 -> 0
       if (N2C->isAllOnesValue())
         return N1;                // X and -1 -> X
+
+      if (MaskedValueIsZero(N1, C2, TLI))  // X and 0 -> 0
+        return getConstant(0, VT);
+
+      if (MaskedValueIsZero(N1, ~C2, TLI))
+        return N1;                // if (X & ~C2) -> 0, the and is redundant
 
       // FIXME: Should add a corresponding version of this for
       // ZERO_EXTEND/SIGN_EXTEND by converting them to an ANY_EXTEND node which
@@ -794,31 +850,6 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
           MVT::getSizeInBits(cast<MVTSDNode>(N1)->getExtraValueType());
         if ((C2 & (~0ULL << ExtendBits)) == 0)
           return getNode(ISD::AND, VT, N1.getOperand(0), N2);
-      }
-      if (N1.getOpcode() == ISD::AND)
-        if (ConstantSDNode *OpRHS = dyn_cast<ConstantSDNode>(N1.getOperand(1)))
-          return getNode(ISD::AND, VT, N1.getOperand(0),
-                         getNode(ISD::AND, VT, N1.getOperand(1), N2));
-
-      // If we are anding the result of a setcc, and we know setcc always
-      // returns 0 or 1, simplify the RHS to either be 0 or 1
-      if (N1.getOpcode() == ISD::SETCC &&
-          TLI.getSetCCResultContents() == TargetLowering::ZeroOrOneSetCCResult)
-        if (C2 & 1)
-          return N1;
-        else
-          return getConstant(0, VT);
-      
-      if (N1.getOpcode() == ISD::ZEXTLOAD) {
-        // If we are anding the result of a zext load, realize that the top bits
-        // of the loaded value are already zero to simplify C2.
-        unsigned SrcBits =
-          MVT::getSizeInBits(cast<MVTSDNode>(N1)->getExtraValueType());
-        uint64_t C3 = C2 & (~0ULL >> (64-SrcBits));
-        if (C3 != C2)
-          return getNode(ISD::AND, VT, N1, getConstant(C3, VT));
-        else if (C2 == (~0ULL >> (64-SrcBits)))
-          return N1;   // Anding out just what is already masked.
       }
       break;
     case ISD::OR:
