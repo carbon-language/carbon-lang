@@ -524,9 +524,11 @@ public:
   
   unsigned getGlobalBaseReg();
   unsigned getConstDouble(double floatVal, unsigned Result);
+  void MoveCRtoGPR(unsigned CCReg, bool Inv, unsigned Idx, unsigned Result);
   bool SelectBitfieldInsert(SDOperand OR, unsigned Result);
   unsigned FoldIfWideZeroExtend(SDOperand N);
-  unsigned SelectCC(SDOperand CC, unsigned &Opc);
+  unsigned SelectCC(SDOperand CC, unsigned &Opc, bool &Inv, unsigned &Idx);
+  unsigned SelectCCExpr(SDOperand N, unsigned& Opc, bool &Inv, unsigned &Idx);
   unsigned SelectExpr(SDOperand N, bool Recording=false);
   unsigned SelectExprFP(SDOperand N, unsigned Result);
   void Select(SDOperand N);
@@ -727,22 +729,6 @@ static unsigned getCRIdxForSetCC(unsigned Condition, bool& Inv) {
   return 0;
 }
 
-/// getCRIdxForBCC - Return the index of the condition register field
-/// associated with the PowerPC branch instruction, and whether or not the field 
-/// is treated as inverted.  That is, lt = 0; ge = 0 inverted.
-static unsigned getCRIdxForBCC(unsigned Condition, bool& Inv) {
-  switch (Condition) {
-  default: assert(0 && "Unknown condition!"); abort();
-  case PPC::BLT:    Inv = false;  return 29;  // 28 -> 31, rol 29
-  case PPC::BGE:    Inv = true;   return 29;  // 28 -> 31, rol 29
-  case PPC::BGT:    Inv = false;  return 30;  // 29 -> 31, rol 30
-  case PPC::BLE:    Inv = true;   return 30;  // 29 -> 31, rol 30
-  case PPC::BEQ:    Inv = false;  return 31;  // 30 -> 31, rol 31
-  case PPC::BNE:    Inv = true;   return 31;  // 30 -> 31, rol 31
-  }
-  return 0;
-}
-
 /// IndexedOpForOp - Return the indexed variant for each of the PowerPC load
 /// and store immediate instructions.
 static unsigned IndexedOpForOp(unsigned Opcode) {
@@ -934,6 +920,23 @@ unsigned ISel::getConstDouble(double doubleVal, unsigned Result=0) {
   return Result;
 }
 
+/// MoveCRtoGPR - Move CCReg[Idx] to the least significant bit of Result.  If 
+/// Inv is true, then invert the result.
+void ISel::MoveCRtoGPR(unsigned CCReg, bool Inv, unsigned Idx, unsigned Result){
+  unsigned IntCR = MakeReg(MVT::i32);
+  BuildMI(BB, PPC::MCRF, 1, PPC::CR7).addReg(CCReg);
+  BuildMI(BB, PPC::MFCR, 1, IntCR).addReg(PPC::CR7);
+  if (Inv) {
+    unsigned Tmp1 = MakeReg(MVT::i32);
+    BuildMI(BB, PPC::RLWINM, 4, Tmp1).addReg(IntCR).addImm(32-(3-Idx))
+      .addImm(31).addImm(31);
+    BuildMI(BB, PPC::XORI, 2, Result).addReg(Tmp1).addImm(1);
+  } else {
+    BuildMI(BB, PPC::RLWINM, 4, Result).addReg(IntCR).addImm(32-(3-Idx))
+      .addImm(31).addImm(31);
+  }
+}
+
 /// SelectBitfieldInsert - turn an or of two masked values into 
 /// the rotate left word immediate then mask insert (rlwimi) instruction.
 /// Returns true on success, false if the caller still needs to select OR.
@@ -1033,7 +1036,7 @@ unsigned ISel::FoldIfWideZeroExtend(SDOperand N) {
     return SelectExpr(N);
 }
 
-unsigned ISel::SelectCC(SDOperand CC, unsigned &Opc) {
+unsigned ISel::SelectCC(SDOperand CC, unsigned& Opc, bool &Inv, unsigned& Idx) {
   unsigned Result, Tmp1, Tmp2;
   bool AlreadySelected = false;
   static const unsigned CompareOpcodes[] = 
@@ -1047,6 +1050,7 @@ unsigned ISel::SelectCC(SDOperand CC, unsigned &Opc) {
   if (SetCCSDNode* SetCC = dyn_cast<SetCCSDNode>(CC.Val)) {
     bool U;
     Opc = getBCCForSetCC(SetCC->getCondition(), U);
+    Idx = getCRIdxForSetCC(SetCC->getCondition(), Inv);
 
     // Pass the optional argument U to getImmediateForOpcode for SETCC,
     // so that it knows whether the SETCC immediate range is signed or not.
@@ -1083,34 +1087,54 @@ unsigned ISel::SelectCC(SDOperand CC, unsigned &Opc) {
     }
   } else {
     if (PPCCRopts)
-    if (CC.getOpcode() == ISD::AND || CC.getOpcode() == ISD::OR)
-      if (CC.getOperand(0).Val->hasOneUse() &&
-          CC.getOperand(1).Val->hasOneUse()) {
-        SetCCSDNode* Op0CC = dyn_cast<SetCCSDNode>(CC.getOperand(0).Val);
-        SetCCSDNode* Op1CC = dyn_cast<SetCCSDNode>(CC.getOperand(1).Val);
-        if (Op0CC && Op1CC) {
-          ++MultiBranch;
-          bool Inv0, Inv1;
-          unsigned Opc1;
-          unsigned Idx0 = getCRIdxForSetCC(Op0CC->getCondition(), Inv0);
-          unsigned Idx1 = getCRIdxForSetCC(Op1CC->getCondition(), Inv1);
-          unsigned CROpc = getCROpForSetCC(CC.getOpcode(), Inv0, Inv1);
-          Tmp1 = SelectCC(CC.getOperand(0), Opc);
-          Tmp2 = SelectCC(CC.getOperand(1), Opc1);
-          if (Inv0 && !Inv1) {
-            std::swap(Tmp1, Tmp2);
-            std::swap(Idx0, Idx1);
-            Opc = Opc1;
-          }
-          if (Inv0 && Inv1) Opc = PPC32InstrInfo::invertPPCBranchOpcode(Opc);
-          BuildMI(BB, CROpc, 5, Result).addImm(Idx0).addReg(Tmp1).addImm(Idx0)
-            .addReg(Tmp2).addImm(Idx1);
-          return Result;
-        }
-    }
+      return SelectCCExpr(CC, Opc, Inv, Idx);
+    // If this isn't a SetCC, then select the value and compare it against zero,
+    // treating it as if it were a boolean.
     Opc = PPC::BNE;
+    Idx = getCRIdxForSetCC(ISD::SETNE, Inv);
     Tmp1 = SelectExpr(CC);
     BuildMI(BB, PPC::CMPLWI, 2, Result).addReg(Tmp1).addImm(0);
+  }
+  return Result;
+}
+
+unsigned ISel::SelectCCExpr(SDOperand N, unsigned& Opc, bool &Inv, 
+                            unsigned &Idx) {
+  bool Inv0, Inv1;
+  unsigned Idx0, Idx1, CROpc, Opc1, Tmp1, Tmp2;
+
+  // Allocate a condition register for this expression
+  unsigned Result = RegMap->createVirtualRegister(PPC32::CRRCRegisterClass);
+
+  // Check for the operations we support:
+  switch(N.getOpcode()) {
+  default:
+    Opc = PPC::BNE;
+    Idx = getCRIdxForSetCC(ISD::SETNE, Inv);
+    Tmp1 = SelectExpr(N);
+    BuildMI(BB, PPC::CMPLWI, 2, Result).addReg(Tmp1).addImm(0);
+    break;
+  case ISD::OR:
+  case ISD::AND:
+    ++MultiBranch;
+    Tmp1 = SelectCCExpr(N.getOperand(0), Opc, Inv0, Idx0);
+    Tmp2 = SelectCCExpr(N.getOperand(1), Opc1, Inv1, Idx1);
+    CROpc = getCROpForSetCC(N.getOpcode(), Inv0, Inv1);
+    if (Inv0 && !Inv1) {
+      std::swap(Tmp1, Tmp2);
+      std::swap(Idx0, Idx1);
+      Opc = Opc1;
+    }
+    if (Inv0 && Inv1) Opc = PPC32InstrInfo::invertPPCBranchOpcode(Opc);
+    BuildMI(BB, CROpc, 5, Result).addImm(Idx0).addReg(Tmp1).addImm(Idx0)
+      .addReg(Tmp2).addImm(Idx1);
+    Inv = false;
+    Idx = Idx0;
+    break;
+  case ISD::SETCC:
+    Tmp1 = SelectCC(N, Opc, Inv, Idx);
+    Result = Tmp1;
+    break;
   }
   return Result;
 }
@@ -1138,9 +1162,10 @@ void ISel::SelectBranchCC(SDOperand N)
   MachineBasicBlock *Dest = 
     cast<BasicBlockSDNode>(N.getOperand(2))->getBasicBlock();
 
-  unsigned Opc, CCReg;
+  bool Inv;
+  unsigned Opc, CCReg, Idx;
   Select(N.getOperand(0));  //chain
-  CCReg = SelectCC(N.getOperand(1), Opc);
+  CCReg = SelectCC(N.getOperand(1), Opc, Inv, Idx);
   
   // Iterate to the next basic block, unless we're already at the end of the
   ilist<MachineBasicBlock>::iterator It = BB, E = BB->getParent()->end();
@@ -1258,9 +1283,10 @@ unsigned ISel::SelectExprFP(SDOperand N, unsigned Result)
       return 0;
     }
     
+    bool Inv;
     unsigned TrueValue = SelectExpr(N.getOperand(1)); //Use if TRUE
     unsigned FalseValue = SelectExpr(N.getOperand(2)); //Use if FALSE
-    unsigned CCReg = SelectCC(N.getOperand(0), Opc);
+    unsigned CCReg = SelectCC(N.getOperand(0), Opc, Inv, Tmp3);
 
     // Create an iterator with which to insert the MBB for copying the false 
     // value and the MBB to hold the PHI instruction for this SetCC.
@@ -1796,6 +1822,15 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
     return Result;
 
   case ISD::AND:
+    if (PPCCRopts) {
+      if (N.getOperand(0).getOpcode() == ISD::SETCC || 
+          N.getOperand(1).getOpcode() == ISD::SETCC) {
+        bool Inv;
+        Tmp1 = SelectCCExpr(N, Opc, Inv, Tmp2);
+        MoveCRtoGPR(Tmp1, Inv, Tmp2, Result);
+        return Result;
+      }
+    }
     Tmp1 = SelectExpr(N.getOperand(0));
     // FIXME: should add check in getImmediateForOpcode to return a value
     // indicating the immediate is a run of set bits so we can emit a bitfield
@@ -1827,6 +1862,15 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
   case ISD::OR:
     if (SelectBitfieldInsert(N, Result))
       return Result;
+    if (PPCCRopts) {
+      if (N.getOperand(0).getOpcode() == ISD::SETCC || 
+          N.getOperand(1).getOpcode() == ISD::SETCC) {
+        bool Inv;
+        Tmp1 = SelectCCExpr(N, Opc, Inv, Tmp2);
+        MoveCRtoGPR(Tmp1, Inv, Tmp2, Result);
+        return Result;
+      }
+    }
     Tmp1 = SelectExpr(N.getOperand(0));
     switch(getImmediateForOpcode(N.getOperand(1), opcode, Tmp2)) {
       default: assert(0 && "unhandled result code");
@@ -2178,30 +2222,19 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
         }
       }
     
-      bool Inv = false;
-      unsigned CCReg = SelectCC(N, Opc);
-      unsigned IntCR = MakeReg(MVT::i32);
-      unsigned ShAmt = getCRIdxForBCC(Opc, Inv);
-      BuildMI(BB, PPC::MCRF, 1, PPC::CR7).addReg(CCReg);
-      BuildMI(BB, PPC::MFCR, 1, IntCR).addReg(PPC::CR7);
-      if (Inv) {
-        Tmp1 = MakeReg(MVT::i32);
-        BuildMI(BB, PPC::RLWINM, 4, Tmp1).addReg(IntCR).addImm(ShAmt)
-          .addImm(31).addImm(31);
-        BuildMI(BB, PPC::XORI, 2, Result).addReg(Tmp1).addImm(1);
-      } else {
-        BuildMI(BB, PPC::RLWINM, 4, Result).addReg(IntCR).addImm(ShAmt)
-          .addImm(31).addImm(31);
-      }
+      bool Inv;
+      unsigned CCReg = SelectCC(N, Opc, Inv, Tmp2);
+      MoveCRtoGPR(CCReg, Inv, Tmp2, Result);
       return Result;
     }
     assert(0 && "Is this legal?");
     return 0;
     
   case ISD::SELECT: {
+    bool Inv;
     unsigned TrueValue = SelectExpr(N.getOperand(1)); //Use if TRUE
     unsigned FalseValue = SelectExpr(N.getOperand(2)); //Use if FALSE
-    unsigned CCReg = SelectCC(N.getOperand(0), Opc);
+    unsigned CCReg = SelectCC(N.getOperand(0), Opc, Inv, Tmp3);
 
     // Create an iterator with which to insert the MBB for copying the false 
     // value and the MBB to hold the PHI instruction for this SetCC.
