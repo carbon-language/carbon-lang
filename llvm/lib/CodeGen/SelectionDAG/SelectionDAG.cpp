@@ -406,6 +406,51 @@ SDOperand SelectionDAG::getSetCC(ISD::CondCode Cond, MVT::ValueType VT,
       case ISD::SETGE:  return getConstant((int64_t)C1 >= (int64_t)C2, VT);
       }
     } else {
+      // If the LHS is a ZERO_EXTEND and if this is an ==/!= comparison, perform
+      // the comparison on the input.
+      if (N1.getOpcode() == ISD::ZERO_EXTEND) {
+        unsigned InSize = MVT::getSizeInBits(N1.getOperand(0).getValueType());
+
+        // If the comparison constant has bits in the upper part, the
+        // zero-extended value could never match.
+        if (C2 & (~0ULL << InSize)) {
+          unsigned VSize = MVT::getSizeInBits(N1.getValueType());
+          switch (Cond) {
+          case ISD::SETUGT:
+          case ISD::SETUGE:
+          case ISD::SETEQ: return getConstant(0, VT);
+          case ISD::SETULT:
+          case ISD::SETULE:
+          case ISD::SETNE: return getConstant(1, VT);
+          case ISD::SETGT:
+          case ISD::SETGE:
+            // True if the sign bit of C2 is set.
+            return getConstant((C2 & (1ULL << VSize)) != 0, VT);
+          case ISD::SETLT:
+          case ISD::SETLE:
+            // True if the sign bit of C2 isn't set.
+            return getConstant((C2 & (1ULL << VSize)) == 0, VT);
+          default:
+            break;
+          }
+        }
+
+        // Otherwise, we can perform the comparison with the low bits.
+        switch (Cond) {
+        case ISD::SETEQ:
+        case ISD::SETNE:
+        case ISD::SETUGT:
+        case ISD::SETUGE:
+        case ISD::SETULT:
+        case ISD::SETULE:
+          return getSetCC(Cond, VT, N1.getOperand(0),
+                          getConstant(C2, N1.getOperand(0).getValueType()));
+        default:
+          break;   // todo, be more careful with signed comparisons
+        }
+      }
+
+
       uint64_t MinVal, MaxVal;
       unsigned OperandBitSize = MVT::getSizeInBits(N2C->getValueType(0));
       if (ISD::isSignedIntSetCC(Cond)) {
