@@ -138,6 +138,9 @@ namespace {
     // to.
     std::map<void*, Function*> StubToFunctionMap;
 
+    /// ExternalFnToStubMap - This is the equivalent of FunctionToStubMap for
+    /// external functions.
+    std::map<void*, void*> ExternalFnToStubMap;
   public:
     JITResolver(MachineCodeEmitter &mce) : MCE(mce) {
       LazyResolverFn =
@@ -147,6 +150,10 @@ namespace {
     /// getFunctionStub - This returns a pointer to a function stub, creating
     /// one on demand as needed.
     void *getFunctionStub(Function *F);
+
+    /// getExternalFunctionStub - Return a stub for the function at the
+    /// specified address, created lazily on demand.
+    void *getExternalFunctionStub(void *FnAddr);
 
     /// AddCallbackAtLocation - If the target is capable of rewriting an
     /// instruction without the use of a stub, record the location of the use so
@@ -203,6 +210,20 @@ void *JITResolver::getFunctionStub(Function *F) {
   StubToFunctionMap[Stub] = F;
   return Stub;
 }
+
+/// getExternalFunctionStub - Return a stub for the function at the
+/// specified address, created lazily on demand.
+void *JITResolver::getExternalFunctionStub(void *FnAddr) {
+  // If we already have a stub for this function, recycle it.
+  void *&Stub = ExternalFnToStubMap[FnAddr];
+  if (Stub) return Stub;
+
+  Stub = TheJIT->getJITInfo().emitFunctionStub(FnAddr, MCE);
+  DEBUG(std::cerr << "JIT: Stub emitted at [" << Stub
+        << "] for external function at '" << FnAddr << "'\n");
+  return Stub;
+}
+
 
 /// JITCompilerFn - This function is called when a lazy compilation stub has
 /// been entered.  It looks up which function this stub corresponds to, compiles
@@ -350,9 +371,13 @@ void JITEmitter::finishFunction(MachineFunction &F) {
     for (unsigned i = 0, e = Relocations.size(); i != e; ++i) {
       MachineRelocation &MR = Relocations[i];
       void *ResultPtr;
-      if (MR.isString())
+      if (MR.isString()) {
         ResultPtr = TheJIT->getPointerToNamedFunction(MR.getString());
-      else
+        
+        // If the target REALLY wants a stub for this function, emit it now.
+        if (!MR.doesntNeedFunctionStub())
+          ResultPtr = getJITResolver(this).getExternalFunctionStub(ResultPtr);
+      } else
         ResultPtr = getPointerToGlobal(MR.getGlobalValue(),
                                        CurBlock+MR.getMachineCodeOffset(),
                                        MR.doesntNeedFunctionStub());
