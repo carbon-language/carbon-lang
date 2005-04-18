@@ -597,6 +597,45 @@ SDOperand SelectionDAG::getSetCC(ISD::CondCode Cond, MVT::ValueType VT,
     }
   }
 
+  // Fold away ALL boolean setcc's.
+  if (N1.getValueType() == MVT::i1) {
+    switch (Cond) {
+    default: assert(0 && "Unknown integer setcc!");
+    case ISD::SETEQ:  // X == Y  -> (X^Y)^1
+      N1 = getNode(ISD::XOR, MVT::i1,
+                   getNode(ISD::XOR, MVT::i1, N1, N2),
+                   getConstant(1, MVT::i1));
+      break;
+    case ISD::SETNE:  // X != Y   -->  (X^Y)
+      N1 = getNode(ISD::XOR, MVT::i1, N1, N2);
+      break;
+    case ISD::SETGT:  // X >s Y   -->  X == 0 & Y == 1  -->  X^1 & Y
+    case ISD::SETULT: // X <u Y   -->  X == 0 & Y == 1  -->  X^1 & Y
+      N1 = getNode(ISD::AND, MVT::i1, N2,
+                   getNode(ISD::XOR, MVT::i1, N1, getConstant(1, MVT::i1)));
+      break;
+    case ISD::SETLT:  // X <s Y   --> X == 1 & Y == 0  -->  Y^1 & X
+    case ISD::SETUGT: // X >u Y   --> X == 1 & Y == 0  -->  Y^1 & X
+      N1 = getNode(ISD::AND, MVT::i1, N1,
+                   getNode(ISD::XOR, MVT::i1, N2, getConstant(1, MVT::i1)));
+      break;
+    case ISD::SETULE: // X <=u Y  --> X == 0 | Y == 1  -->  X^1 | Y
+    case ISD::SETGE:  // X >=s Y  --> X == 0 | Y == 1  -->  X^1 | Y
+      N1 = getNode(ISD::OR, MVT::i1, N2,
+                   getNode(ISD::XOR, MVT::i1, N1, getConstant(1, MVT::i1)));
+      break;
+    case ISD::SETUGE: // X >=u Y  --> X == 1 | Y == 0  -->  Y^1 | X
+    case ISD::SETLE:  // X <=s Y  --> X == 1 | Y == 0  -->  Y^1 | X
+      N1 = getNode(ISD::OR, MVT::i1, N1,
+                   getNode(ISD::XOR, MVT::i1, N2, getConstant(1, MVT::i1)));
+      break;
+    }
+    if (VT != MVT::i1)
+      N1 = getNode(ISD::ZERO_EXTEND, VT, N1);
+    return N1;
+  }
+
+
   SetCCSDNode *&N = SetCCs[std::make_pair(std::make_pair(N1, N2),
                                           std::make_pair(Cond, VT))];
   if (N) return SDOperand(N, 0);
