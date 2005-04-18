@@ -933,6 +933,17 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
         SDOperand LR = LHS->getOperand(1), RR = RHS->getOperand(1);
         ISD::CondCode Op2 = RHS->getCondition();
 
+        // (X != 0) | (Y != 0) -> (X|Y != 0)
+        // (X == 0) & (Y == 0) -> (X|Y == 0)
+        if (LR == RR && isa<ConstantSDNode>(LR) &&
+            cast<ConstantSDNode>(LR)->getValue() == 0 &&
+            Op2 == LHS->getCondition() && MVT::isInteger(LL.getValueType())) {
+          if ((Op2 == ISD::SETEQ && Opcode == ISD::AND) ||
+              (Op2 == ISD::SETNE && Opcode == ISD::OR))
+            return getSetCC(Op2, VT, 
+                            getNode(ISD::OR, LR.getValueType(), LL, RL), LR);
+        }
+
         // (X op1 Y) | (Y op2 X) -> (X op1 Y) | (X swapop2 Y)
         if (LL == RR && LR == RL) {
           Op2 = ISD::getSetCCSwappedOperands(Op2);
