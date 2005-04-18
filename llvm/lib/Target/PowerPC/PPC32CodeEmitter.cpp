@@ -188,8 +188,10 @@ int PPC32CodeEmitter::getMachineOpValue(MachineInstr &MI, MachineOperand &MO) {
     rv = enumRegToMachineReg(MO.getReg());
   } else if (MO.isImmediate()) {
     rv = MO.getImmedValue();
-  } else if (MO.isGlobalAddress()) {
-    GlobalValue *GV = MO.getGlobal();
+  } else if (MO.isGlobalAddress() || MO.isExternalSymbol()) {
+    bool isExternal = MO.isExternalSymbol() ||
+                      MO.getGlobal()->hasWeakLinkage() ||
+                      MO.getGlobal()->isExternal();
     unsigned Reloc = 0;
     int Offset = 0;
     if (MI.getOpcode() == PPC::CALLpcrel)
@@ -199,29 +201,31 @@ int PPC32CodeEmitter::getMachineOpValue(MachineInstr &MI, MachineOperand &MO) {
       Offset = -((intptr_t)MovePCtoLROffset+4);
 
       if (MI.getOpcode() == PPC::LOADHiAddr) {
-        if (GV->hasWeakLinkage() || GV->isExternal())
+        if (isExternal)
           Reloc = PPC::reloc_absolute_ptr_high;   // Pointer to stub
         else
           Reloc = PPC::reloc_absolute_high;       // Pointer to symbol
 
       } else if (MI.getOpcode() == PPC::LA) {
-        assert(!(GV->hasWeakLinkage() || GV->isExternal())
-               && "Something in the ISEL changed\n");
+        assert(!isExternal && "Something in the ISEL changed\n");
 
         Reloc = PPC::reloc_absolute_low;
       } else if (MI.getOpcode() == PPC::LWZ) {
         Reloc = PPC::reloc_absolute_ptr_low;
 
-        assert((GV->hasWeakLinkage() || GV->isExternal()) &&
-               "Something in the ISEL changed\n");
+        assert(isExternal && "Something in the ISEL changed\n");
       } else {
         // These don't show up for global value references AFAIK, only for
         // constant pool refs: PPC::LFS, PPC::LFD
         assert(0 && "Unknown instruction for relocation!");
       }
     }
-    MCE.addRelocation(MachineRelocation(MCE.getCurrentPCOffset(),
-                                        Reloc, MO.getGlobal(), Offset));
+    if (MO.isGlobalAddress())
+      MCE.addRelocation(MachineRelocation(MCE.getCurrentPCOffset(),
+                                          Reloc, MO.getGlobal(), Offset));
+    else
+      MCE.addRelocation(MachineRelocation(MCE.getCurrentPCOffset(),
+                                          Reloc, MO.getSymbolName(), Offset));
   } else if (MO.isMachineBasicBlock()) {
     unsigned* CurrPC = (unsigned*)(intptr_t)MCE.getCurrentPCValue();
     BBRefs.push_back(std::make_pair(MO.getMachineBasicBlock(), CurrPC));
