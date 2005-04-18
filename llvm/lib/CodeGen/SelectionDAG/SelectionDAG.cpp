@@ -964,6 +964,14 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
             return getSetCC(Result, LHS->getValueType(0), LL, LR);
         }
       }
+
+    // and/or zext(a), zext(b) -> zext(and/or a, b)
+    if (N1.getOpcode() == ISD::ZERO_EXTEND &&
+        N2.getOpcode() == ISD::ZERO_EXTEND &&
+        N1.getOperand(0).getValueType() == N2.getOperand(0).getValueType())
+      return getNode(ISD::ZERO_EXTEND, VT,
+                     getNode(Opcode, N1.getOperand(0).getValueType(),
+                             N1.getOperand(0), N2.getOperand(0)));
     break;
   case ISD::XOR:
     if (N1 == N2) return getConstant(0, VT);  // xor X, Y -> 0
