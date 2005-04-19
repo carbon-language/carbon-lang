@@ -186,6 +186,13 @@ int PPC32CodeEmitter::getMachineOpValue(MachineInstr &MI, MachineOperand &MO) {
                   // or things that get fixed up later by the JIT.
   if (MO.isRegister()) {
     rv = enumRegToMachineReg(MO.getReg());
+
+    // Special encoding for MTCRF and MFCRF, which uses a bit mask for the
+    // register, not the register number directly.
+    if ((MI.getOpcode() == PPC::MTCRF || MI.getOpcode() == PPC::MFCRF) &&
+        (MO.getReg() >= PPC::CR0 && MO.getReg() <= PPC::CR7)) {
+      rv = 0x80 >> rv;
+    }
   } else if (MO.isImmediate()) {
     rv = MO.getImmedValue();
   } else if (MO.isGlobalAddress() || MO.isExternalSymbol()) {
