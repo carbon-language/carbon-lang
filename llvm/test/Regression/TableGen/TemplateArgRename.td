@@ -8,3 +8,10 @@ class After : Before<4> {
   dag XX = (S);
 }
 
+
+
+class C1<int X> {
+  int Y = X;
+}
+class C2<int Y, dag X> : C1<Y>;
+
