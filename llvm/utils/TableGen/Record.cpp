@@ -275,7 +275,7 @@ bool BitsInit::printAsUnset(std::ostream &OS) const {
 // resolveReferences - If there are any field references that refer to fields
 // that have been filled in, we can propagate the values now.
 //
-Init *BitsInit::resolveReferences(Record &R) {
+Init *BitsInit::resolveReferences(Record &R, const RecordVal *RV) {
   bool Changed = false;
   BitsInit *New = new BitsInit(getNumBits());
 
@@ -285,7 +285,7 @@ Init *BitsInit::resolveReferences(Record &R) {
 
     do {
       B = CurBit;
-      CurBit = CurBit->resolveReferences(R);
+      CurBit = CurBit->resolveReferences(R, RV);
       Changed |= B != CurBit;
     } while (B != CurBit);
     New->setBit(i, CurBit);
@@ -334,7 +334,7 @@ Init *ListInit::convertInitListSlice(const std::vector<unsigned> &Elements) {
   return new ListInit(Vals);
 }
 
-Init *ListInit::resolveReferences(Record &R) {
+Init *ListInit::resolveReferences(Record &R, const RecordVal *RV) {
   std::vector<Init*> Resolved;
   Resolved.reserve(getSize());
   bool Changed = false;
@@ -345,7 +345,7 @@ Init *ListInit::resolveReferences(Record &R) {
 
     do {
       E = CurElt;
-      CurElt = CurElt->resolveReferences(R);
+      CurElt = CurElt->resolveReferences(R, RV);
       Changed |= E != CurElt;
     } while (E != CurElt);
     Resolved.push_back(E);
@@ -396,9 +396,10 @@ Init *TypedInit::convertInitListSlice(const std::vector<unsigned> &Elements) {
 }
 
 
-Init *VarInit::resolveBitReference(Record &R, unsigned Bit) {
-  if (R.isTemplateArg(getName()))
-    return 0;
+Init *VarInit::resolveBitReference(Record &R, const RecordVal *IRV,
+                                   unsigned Bit) {
+  if (R.isTemplateArg(getName())) return 0;
+  if (IRV && IRV->getName() != getName()) return 0;
 
   RecordVal *RV = R.getValue(getName());
   assert(RV && "Reference to a non-existant variable?");
@@ -413,9 +414,10 @@ Init *VarInit::resolveBitReference(Record &R, unsigned Bit) {
   return 0;
 }
 
-Init *VarInit::resolveListElementReference(Record &R, unsigned Elt) {
-  if (R.isTemplateArg(getName()))
-    return 0;
+Init *VarInit::resolveListElementReference(Record &R, const RecordVal *IRV,
+                                           unsigned Elt) {
+  if (R.isTemplateArg(getName())) return 0;
+  if (IRV && IRV->getName() != getName()) return 0;
 
   RecordVal *RV = R.getValue(getName());
   assert(RV && "Reference to a non-existant variable?");
@@ -456,33 +458,36 @@ Init *VarInit::getFieldInit(Record &R, const std::string &FieldName) const {
 /// If a value is set for the variable later, this method will be called on
 /// users of the value to allow the value to propagate out.
 ///
-Init *VarInit::resolveReferences(Record &R) {
+Init *VarInit::resolveReferences(Record &R, const RecordVal *RV) {
   if (RecordVal *Val = R.getValue(VarName))
-    if (!dynamic_cast<UnsetInit*>(Val->getValue()))
+    if (RV == Val || (RV == 0 && !dynamic_cast<UnsetInit*>(Val->getValue())))
       return Val->getValue();
   return this;
 }
   
 
-Init *VarBitInit::resolveReferences(Record &R) {
-  if (Init *I = getVariable()->resolveBitReference(R, getBitNum()))
+Init *VarBitInit::resolveReferences(Record &R, const RecordVal *RV) {
+  if (Init *I = getVariable()->resolveBitReference(R, RV, getBitNum()))
     return I;
   return this;
 }
 
-Init *VarListElementInit::resolveReferences(Record &R) {
-  if (Init *I = getVariable()->resolveListElementReference(R, getElementNum()))
+Init *VarListElementInit::resolveReferences(Record &R, const RecordVal *RV) {
+  if (Init *I = getVariable()->resolveListElementReference(R, RV,
+                                                           getElementNum()))
     return I;
   return this;
 }
 
-Init *VarListElementInit::resolveBitReference(Record &R, unsigned Bit) {
+Init *VarListElementInit::resolveBitReference(Record &R, const RecordVal *RV,
+                                              unsigned Bit) {
   // FIXME: This should be implemented, to support references like:
   // bit B = AA[0]{1};
   return 0;
 }
 
-Init *VarListElementInit::resolveListElementReference(Record &R, unsigned Elt) {
+Init *VarListElementInit::
+resolveListElementReference(Record &R, const RecordVal *RV, unsigned Elt) {
   // FIXME: This should be implemented, to support references like:
   // int B = AA[0][1];
   return 0;
@@ -503,7 +508,8 @@ void DefInit::print(std::ostream &OS) const {
   OS << Def->getName();
 }
 
-Init *FieldInit::resolveBitReference(Record &R, unsigned Bit) {
+Init *FieldInit::resolveBitReference(Record &R, const RecordVal *RV,
+                                     unsigned Bit) {
   if (Init *BitsVal = Rec->getFieldInit(R, FieldName))
     if (BitsInit *BI = dynamic_cast<BitsInit*>(BitsVal)) {
       assert(Bit < BI->getNumBits() && "Bit reference out of range!");
@@ -515,7 +521,8 @@ Init *FieldInit::resolveBitReference(Record &R, unsigned Bit) {
   return 0;
 }
 
-Init *FieldInit::resolveListElementReference(Record &R, unsigned Elt) {
+Init *FieldInit::resolveListElementReference(Record &R, const RecordVal *RV,
+                                             unsigned Elt) {
   if (Init *ListVal = Rec->getFieldInit(R, FieldName))
     if (ListInit *LI = dynamic_cast<ListInit*>(ListVal)) {
       if (Elt >= LI->getSize()) return 0;
@@ -527,11 +534,19 @@ Init *FieldInit::resolveListElementReference(Record &R, unsigned Elt) {
   return 0;
 }
 
-Init *FieldInit::resolveReferences(Record &R) {
-  Init *BitsVal = Rec->getFieldInit(R, FieldName);
+Init *FieldInit::resolveReferences(Record &R, const RecordVal *RV) {
+  Init *NewRec = RV ? Rec->resolveReferences(R, RV) : Rec;
+
+  Init *BitsVal = NewRec->getFieldInit(R, FieldName);
   if (BitsVal) {
-    Init *BVR = BitsVal->resolveReferences(R);
+    Init *BVR = BitsVal->resolveReferences(R, RV);
     return BVR->isComplete() ? BVR : this;
+  }
+
+  if (NewRec != Rec) {
+    dump();
+    NewRec->dump(); std::cerr << "\n";
+    return new FieldInit(NewRec, FieldName);
   }
   return this;
 }
@@ -566,19 +581,23 @@ void RecordVal::dump() const { std::cerr << *this; }
 void RecordVal::print(std::ostream &OS, bool PrintSem) const {
   if (getPrefix()) OS << "field ";
   OS << *getType() << " " << getName();
-  if (getValue()) {
+
+  if (getValue())
     OS << " = " << *getValue();
-  }
+
   if (PrintSem) OS << ";\n";
 }
 
-// resolveReferences - If there are any field references that refer to fields
-// that have been filled in, we can propagate the values now.
-//
-void Record::resolveReferences() {
-  for (unsigned i = 0, e = Values.size(); i != e; ++i)
-    Values[i].setValue(Values[i].getValue()->resolveReferences(*this));
+/// resolveReferencesTo - If anything in this record refers to RV, replace the
+/// reference to RV with the RHS of RV.  If RV is null, we resolve all possible
+/// references.
+void Record::resolveReferencesTo(const RecordVal *RV) {
+  for (unsigned i = 0, e = Values.size(); i != e; ++i) {
+    if (Init *V = Values[i].getValue())
+      Values[i].setValue(V->resolveReferences(*this, RV));
+  }
 }
+
 
 void Record::dump() const { std::cerr << *this; }
 

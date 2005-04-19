@@ -23,7 +23,7 @@
 
 namespace llvm {
 
-// RecTy subclasses...
+// RecTy subclasses.
 class BitRecTy;
 class BitsRecTy;
 class IntRecTy;
@@ -33,7 +33,7 @@ class CodeRecTy;
 class DagRecTy;
 class RecordRecTy;
 
-// Init subclasses...
+// Init subclasses.
 struct Init;
 class UnsetInit;
 class BitInit;
@@ -50,8 +50,9 @@ class FieldInit;
 class VarBitInit;
 class VarListElementInit;
 
-// Other classes...
+// Other classes.
 class Record;
+class RecordVal;
 
 //===----------------------------------------------------------------------===//
 //  Type Classes
@@ -474,7 +475,9 @@ struct Init {
   /// If a value is set for the variable later, this method will be called on
   /// users of the value to allow the value to propagate out.
   ///
-  virtual Init *resolveReferences(Record &R) { return this; }
+  virtual Init *resolveReferences(Record &R, const RecordVal *RV) {
+    return this;
+  }
 };
 
 inline std::ostream &operator<<(std::ostream &OS, const Init &I) {
@@ -543,7 +546,7 @@ public:
   }
   virtual void print(std::ostream &OS) const;
 
-  virtual Init *resolveReferences(Record &R);
+  virtual Init *resolveReferences(Record &R, const RecordVal *RV);
 
   // printXX - Print this bitstream with the specified format, returning true if
   // it is not possible.
@@ -631,7 +634,7 @@ public:
   /// If a value is set for the variable later, this method will be called on
   /// users of the value to allow the value to propagate out.
   ///
-  virtual Init *resolveReferences(Record &R);
+  virtual Init *resolveReferences(Record &R, const RecordVal *RV);
 
   virtual void print(std::ostream &OS) const;
 };
@@ -654,12 +657,14 @@ public:
   /// VarBitInit::resolveReferences.  If the bit is able to be resolved, we
   /// simply return the resolved value, otherwise we return null.
   ///
-  virtual Init *resolveBitReference(Record &R, unsigned Bit) = 0;
+  virtual Init *resolveBitReference(Record &R, const RecordVal *RV,
+                                    unsigned Bit) = 0;
 
   /// resolveListElementReference - This method is used to implement
   /// VarListElementInit::resolveReferences.  If the list element is resolvable
   /// now, we return the resolved value, otherwise we return null.
-  virtual Init *resolveListElementReference(Record &R, unsigned Elt) = 0;
+  virtual Init *resolveListElementReference(Record &R, const RecordVal *RV,
+                                            unsigned Elt) = 0;
 };
 
 /// VarInit - 'Opcode' - Represent a reference to an entire variable object.
@@ -675,8 +680,10 @@ public:
 
   const std::string &getName() const { return VarName; }
 
-  virtual Init *resolveBitReference(Record &R, unsigned Bit);
-  virtual Init *resolveListElementReference(Record &R, unsigned Elt);
+  virtual Init *resolveBitReference(Record &R, const RecordVal *RV,
+                                    unsigned Bit);
+  virtual Init *resolveListElementReference(Record &R, const RecordVal *RV,
+                                            unsigned Elt);
 
   virtual RecTy *getFieldType(const std::string &FieldName) const;
   virtual Init *getFieldInit(Record &R, const std::string &FieldName) const;
@@ -686,7 +693,7 @@ public:
   /// If a value is set for the variable later, this method will be called on
   /// users of the value to allow the value to propagate out.
   ///
-  virtual Init *resolveReferences(Record &R);
+  virtual Init *resolveReferences(Record &R, const RecordVal *RV);
   
   virtual void print(std::ostream &OS) const { OS << VarName; }
 };
@@ -714,7 +721,7 @@ public:
   virtual void print(std::ostream &OS) const {
     TI->print(OS); OS << "{" << Bit << "}";
   }
-  virtual Init *resolveReferences(Record &R);
+  virtual Init *resolveReferences(Record &R, const RecordVal *RV);
 };
 
 /// VarListElementInit - List[4] - Represent access to one element of a var or 
@@ -737,17 +744,19 @@ public:
   TypedInit *getVariable() const { return TI; }
   unsigned getElementNum() const { return Element; }
 
-  virtual Init *resolveBitReference(Record &R, unsigned Bit);
+  virtual Init *resolveBitReference(Record &R, const RecordVal *RV,
+                                    unsigned Bit);
 
   /// resolveListElementReference - This method is used to implement
   /// VarListElementInit::resolveReferences.  If the list element is resolvable
   /// now, we return the resolved value, otherwise we return null.
-  virtual Init *resolveListElementReference(Record &R, unsigned Elt);
+  virtual Init *resolveListElementReference(Record &R, const RecordVal *RV,
+                                            unsigned Elt);
 
   virtual void print(std::ostream &OS) const {
     TI->print(OS); OS << "[" << Element << "]";
   }
-  virtual Init *resolveReferences(Record &R);
+  virtual Init *resolveReferences(Record &R, const RecordVal *RV);
 };
 
 /// DefInit - AL - Represent a reference to a 'def' in the description
@@ -787,10 +796,12 @@ public:
     return Ty->convertValue(this);
   }
 
-  virtual Init *resolveBitReference(Record &R, unsigned Bit);
-  virtual Init *resolveListElementReference(Record &R, unsigned Elt);
+  virtual Init *resolveBitReference(Record &R, const RecordVal *RV,
+                                    unsigned Bit);
+  virtual Init *resolveListElementReference(Record &R, const RecordVal *RV,
+                                            unsigned Elt);
 
-  virtual Init *resolveReferences(Record &R);
+  virtual Init *resolveReferences(Record &R, const RecordVal *RV);
 
   virtual void print(std::ostream &OS) const {
     Rec->print(OS); OS << "." << FieldName;
@@ -949,10 +960,15 @@ public:
     SuperClasses.push_back(R);
   }
 
-  // resolveReferences - If there are any field references that refer to fields
-  // that have been filled in, we can propagate the values now.
-  //
-  void resolveReferences();
+  /// resolveReferences - If there are any field references that refer to fields
+  /// that have been filled in, we can propagate the values now.
+  ///
+  void resolveReferences() { resolveReferencesTo(0); }
+
+  /// resolveReferencesTo - If anything in this record refers to RV, replace the
+  /// reference to RV with the RHS of RV.  If RV is null, we resolve all
+  /// possible references.
+  void resolveReferencesTo(const RecordVal *RV);
 
   void dump() const;
 

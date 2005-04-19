@@ -25,6 +25,7 @@ namespace llvm {
 
 extern int Filelineno;
 static Record *CurRec = 0;
+static bool ParsingTemplateArgs = false;
 
 typedef std::pair<Record*, std::vector<Init*>*> SubClassRefTy;
 
@@ -133,6 +134,8 @@ static void setValue(const std::string &ValName,
   }
 }
 
+// addSubClass - Add SC as a subclass to CurRec, resolving TemplateArgs as SC's
+// template arguments.
 static void addSubClass(Record *SC, const std::vector<Init*> &TemplateArgs) {
   // Add all of the values in the subclass into the current class...
   const std::vector<RecordVal> &Vals = SC->getValues();
@@ -147,11 +150,19 @@ static void addSubClass(Record *SC, const std::vector<Init*> &TemplateArgs) {
     exit(1);
   } else {    // This class expects template arguments...
     // Loop over all of the template arguments, setting them to the specified
-    // value or leaving them as the default as necessary.
+    // value or leaving them as the default if necessary.
     for (unsigned i = 0, e = TArgs.size(); i != e; ++i) {
       if (i < TemplateArgs.size()) {  // A value is specified for this temp-arg?
 	// Set it now.
 	setValue(TArgs[i], 0, TemplateArgs[i]);
+
+        // Resolve it next.
+        CurRec->resolveReferencesTo(CurRec->getValue(TArgs[i]));
+                                    
+        
+        // Now remove it.
+        CurRec->removeValue(TArgs[i]);
+
       } else if (!CurRec->getValue(TArgs[i])->getValue()->isComplete()) {
 	err() << "ERROR: Value not specified for template argument #"
 	      << i << " (" << TArgs[i] << ") of subclass '" << SC->getName()
@@ -268,6 +279,10 @@ Value : INTVAL {
   } | ID {
     if (const RecordVal *RV = (CurRec ? CurRec->getValue(*$1) : 0)) {
       $$ = new VarInit(*$1, RV->getType());
+    } else if (CurRec && CurRec->isTemplateArg(CurRec->getName()+":"+*$1)) {
+      const RecordVal *RV = CurRec->getValue(CurRec->getName()+":"+*$1);
+      assert(RV && "Template arg doesn't exist??");
+      $$ = new VarInit(CurRec->getName()+":"+*$1, RV->getType());
     } else if (Record *D = Records.getDef(*$1)) {
       $$ = new DefInit(D);
     } else {
@@ -434,9 +449,13 @@ ValueListNE : Value {
   };
 
 Declaration : OptPrefix Type ID OptValue {
-  addValue(RecordVal(*$3, $2, $1));
-  setValue(*$3, 0, $4);
-  $$ = $3;
+  std::string DecName = *$3;
+  if (ParsingTemplateArgs)
+    DecName = CurRec->getName() + ":" + DecName;
+
+  addValue(RecordVal(DecName, $2, $1));
+  setValue(DecName, 0, $4);
+  $$ = new std::string(DecName);
 };
 
 BodyItem : Declaration ';' {
@@ -492,12 +511,15 @@ ObjectBody : OptID {
              *$1 = "anonymous."+utostr(AnonCounter++);
            CurRec = new Record(*$1);
            delete $1;
+           ParsingTemplateArgs = true;
          } OptTemplateArgList ClassList {
+           ParsingTemplateArgs = false;
            for (unsigned i = 0, e = $4->size(); i != e; ++i) {
 	     addSubClass((*$4)[i].first, *(*$4)[i].second);
              // Delete the template arg values for the class
              delete (*$4)[i].second;
            }
+           delete $4;   // Delete the class list...
 
 	   // Process any variables on the set stack...
 	   for (unsigned i = 0, e = LetStack.size(); i != e; ++i)
@@ -506,22 +528,9 @@ ObjectBody : OptID {
                         LetStack[i][j].HasBits ? &LetStack[i][j].Bits : 0,
                         LetStack[i][j].Value);
          } Body {
-  CurRec->resolveReferences();
-
-  // Now that all of the references have been resolved, we can delete template
-  // arguments for superclasses, so they don't pollute our record, and so that
-  // their names won't conflict with later uses of the name...
-  for (unsigned i = 0, e = $4->size(); i != e; ++i) {
-    Record *SuperClass = (*$4)[i].first;
-    for (unsigned i = 0, e = SuperClass->getTemplateArgs().size(); i != e; ++i)
-      if (!CurRec->isTemplateArg(SuperClass->getTemplateArgs()[i]))
-        CurRec->removeValue(SuperClass->getTemplateArgs()[i]);
-  }
-  delete $4;   // Delete the class list...
-
-  $$ = CurRec;
-  CurRec = 0;
-};
+           $$ = CurRec;
+           CurRec = 0;
+         };
 
 ClassInst : CLASS ObjectBody {
   if (Records.getClass($2->getName())) {
@@ -532,6 +541,8 @@ ClassInst : CLASS ObjectBody {
 };
 
 DefInst : DEF ObjectBody {
+  $2->resolveReferences();
+
   if (!$2->getTemplateArgs().empty()) {
     err() << "Def '" << $2->getName()
           << "' is not permitted to have template arguments!\n";
