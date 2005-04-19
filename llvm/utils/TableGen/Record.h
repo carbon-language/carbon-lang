@@ -463,6 +463,11 @@ struct Init {
   virtual Init *getFieldInit(Record &R, const std::string &FieldName) const {
     return 0;
   }
+  
+  enum BinaryOp { SHL, SRA, SRL };
+  virtual Init *getBinaryOp(BinaryOp Op, Init *RHS) {
+    return 0;
+  }
 
   /// resolveReferences - This method is used by classes that refer to other
   /// variables which may not be defined at the time they expression is formed.

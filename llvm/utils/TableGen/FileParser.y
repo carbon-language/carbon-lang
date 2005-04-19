@@ -189,6 +189,7 @@ using namespace llvm;
 };
 
 %token INT BIT STRING BITS LIST CODE DAG CLASS DEF FIELD LET IN
+%token SHLTOK SRATOK SRLTOK
 %token <IntVal>      INTVAL
 %token <StrVal>      ID VARNAME STRVAL CODEFRAGMENT
 
@@ -308,6 +309,24 @@ Value : INTVAL {
       exit(1);
     }
     delete $3;
+  } | SHLTOK '(' Value ',' Value ')' {
+    $$ = $3->getBinaryOp(Init::SHL, $5);
+    if ($$ == 0) {
+      err() << "Cannot shift values '" << *$3 << "' and '" << *$5 << "'!\n";
+      exit(1);
+    }
+  } | SRATOK '(' Value ',' Value ')' {
+    $$ = $3->getBinaryOp(Init::SRA, $5);
+    if ($$ == 0) {
+      err() << "Cannot shift values '" << *$3 << "' and '" << *$5 << "'!\n";
+      exit(1);
+    }
+  } | SRLTOK '(' Value ',' Value ')' {
+    $$ = $3->getBinaryOp(Init::SRL, $5);
+    if ($$ == 0) {
+      err() << "Cannot shift values '" << *$3 << "' and '" << *$5 << "'!\n";
+      exit(1);
+    }
   };
 
 OptVarName : /* empty */ {

@@ -195,6 +195,11 @@ field          { return FIELD; }
 let            { return LET; }
 in             { return IN; }
 
+!sra           { return SRATOK; }
+!srl           { return SRLTOK; }
+!shl           { return SHLTOK; }
+
+
 {Identifier}   { Filelval.StrVal = new std::string(yytext, yytext+yyleng);
                  return ID; }
 ${Identifier}  { Filelval.StrVal = new std::string(yytext+1, yytext+yyleng);
