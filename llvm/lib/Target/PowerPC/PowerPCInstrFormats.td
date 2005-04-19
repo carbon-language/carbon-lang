@@ -200,9 +200,9 @@ class DSForm_2<bits<6> opcode, bits<2> xo, bit ppc64, bit vmx,
   : DSForm_1<opcode, xo, ppc64, vmx, OL, asmstr>;
 
 // 1.7.6 X-Form
-class XForm_base_r3xo<bits<6> opcode, bits<10> xo, bit rc, bit ppc64, bit vmx,
+class XForm_base_r3xo<bits<6> opcode, bits<10> xo, bit rc,
                       dag OL, string asmstr> 
-  : I<opcode, ppc64, vmx, OL, asmstr> {
+  : I<opcode, 0, 0, OL, asmstr> {
   bits<5> RST;
   bits<5> A;
   bits<5> B;
@@ -217,9 +217,8 @@ class XForm_base_r3xo<bits<6> opcode, bits<10> xo, bit rc, bit ppc64, bit vmx,
 // This is the same as XForm_base_r3xo, but the first two operands are swapped
 // when code is emitted.
 class XForm_base_r3xo_swapped
-        <bits<6> opcode, bits<10> xo, bit rc, bit ppc64, bit vmx,
-         dag OL, string asmstr> 
-  : I<opcode, ppc64, vmx, OL, asmstr> {
+        <bits<6> opcode, bits<10> xo, bit rc, dag OL, string asmstr> 
+  : I<opcode, 0, 0, OL, asmstr> {
   bits<5> A;
   bits<5> RST;
   bits<5> B;
@@ -232,31 +231,26 @@ class XForm_base_r3xo_swapped
 }
 
 
-class XForm_1<bits<6> opcode, bits<10> xo, bit ppc64, bit vmx,
-              dag OL, string asmstr> 
-  : XForm_base_r3xo<opcode, xo, 0, ppc64, vmx, OL, asmstr>;
+class XForm_1<bits<6> opcode, bits<10> xo, dag OL, string asmstr> 
+  : XForm_base_r3xo<opcode, xo, 0, OL, asmstr>;
 
-class XForm_6<bits<6> opcode, bits<10> xo, bit rc, bit ppc64, bit vmx,
-              dag OL, string asmstr> 
-  : XForm_base_r3xo_swapped<opcode, xo, rc, ppc64, vmx, OL, asmstr>;
+class XForm_6<bits<6> opcode, bits<10> xo, bit rc, dag OL, string asmstr> 
+  : XForm_base_r3xo_swapped<opcode, xo, rc, OL, asmstr>;
 
-class XForm_8<bits<6> opcode, bits<10> xo, bit ppc64, bit vmx,
-              dag OL, string asmstr> 
-  : XForm_base_r3xo<opcode, xo, 0, ppc64, vmx, OL, asmstr>;
+class XForm_8<bits<6> opcode, bits<10> xo, dag OL, string asmstr> 
+  : XForm_base_r3xo<opcode, xo, 0, OL, asmstr>;
 
-class XForm_10<bits<6> opcode, bits<10> xo, bit rc, bit ppc64, bit vmx,
-               dag OL, string asmstr> 
-  : XForm_base_r3xo_swapped<opcode, xo, rc, ppc64, vmx, OL, asmstr> {
+class XForm_10<bits<6> opcode, bits<10> xo, bit rc, dag OL, string asmstr> 
+  : XForm_base_r3xo_swapped<opcode, xo, rc, OL, asmstr> {
 }
 
-class XForm_11<bits<6> opcode, bits<10> xo, bit rc, bit ppc64, bit vmx,
-               dag OL, string asmstr> 
-  : XForm_base_r3xo_swapped<opcode, xo, rc, ppc64, vmx, OL, asmstr> {
+class XForm_11<bits<6> opcode, bits<10> xo, bit rc, dag OL, string asmstr> 
+  : XForm_base_r3xo_swapped<opcode, xo, rc, OL, asmstr> {
   let B = 0;
 }
 
-class XForm_16<bits<6> opcode, bits<10> xo, bit ppc64, bit vmx,
-               dag OL, string asmstr> : I<opcode, ppc64, vmx, OL, asmstr> {
+class XForm_16<bits<6> opcode, bits<10> xo, dag OL, string asmstr>
+         : I<opcode, 0, 0, OL, asmstr> {
   bits<3> BF;
   bits<1> L; 
   bits<5> RA;
@@ -271,14 +265,13 @@ class XForm_16<bits<6> opcode, bits<10> xo, bit ppc64, bit vmx,
   let Inst{31}    = 0;
 }
 
-class XForm_16_ext<bits<6> opcode, bits<10> xo, bit ppc64, bit vmx,
-                   dag OL, string asmstr>
-  : XForm_16<opcode, xo, ppc64, vmx, OL, asmstr> {
-  let L = ppc64;
+class XForm_16_ext<bits<6> opcode, bits<10> xo, dag OL, string asmstr>
+  : XForm_16<opcode, xo, OL, asmstr> {
+  let L = PPC64;
 }
 
-class XForm_17<bits<6> opcode, bits<10> xo, bit ppc64, bit vmx,
-               dag OL, string asmstr> : I<opcode, ppc64, vmx, OL, asmstr> {
+class XForm_17<bits<6> opcode, bits<10> xo, dag OL, string asmstr>
+         : I<opcode, 0, 0, OL, asmstr> {
   bits<3> BF;
   bits<5> FRA;
   bits<5> FRB;
@@ -291,25 +284,22 @@ class XForm_17<bits<6> opcode, bits<10> xo, bit ppc64, bit vmx,
   let Inst{31}    = 0;
 }
 
-class XForm_25<bits<6> opcode, bits<10> xo, bit ppc64, bit vmx,
-               dag OL, string asmstr> 
-  : XForm_base_r3xo<opcode, xo, 0, ppc64, vmx, OL, asmstr> {
+class XForm_25<bits<6> opcode, bits<10> xo, dag OL, string asmstr> 
+  : XForm_base_r3xo<opcode, xo, 0, OL, asmstr> {
 }
 
-class XForm_26<bits<6> opcode, bits<10> xo, bit rc, bit ppc64, bit vmx,
-               dag OL, string asmstr> 
-  : XForm_base_r3xo<opcode, xo, rc, ppc64, vmx, OL, asmstr> {
+class XForm_26<bits<6> opcode, bits<10> xo, bit rc, dag OL, string asmstr> 
+  : XForm_base_r3xo<opcode, xo, rc, OL, asmstr> {
   let A = 0;
 }
 
-class XForm_28<bits<6> opcode, bits<10> xo, bit ppc64, bit vmx,
-               dag OL, string asmstr> 
-  : XForm_base_r3xo<opcode, xo, 0, ppc64, vmx, OL, asmstr> {
+class XForm_28<bits<6> opcode, bits<10> xo, dag OL, string asmstr> 
+  : XForm_base_r3xo<opcode, xo, 0, OL, asmstr> {
 }
 
 // 1.7.7 XL-Form
-class XLForm_1<bits<6> opcode, bits<10> xo, bit ppc64, bit vmx,
-               dag OL, string asmstr> : I<opcode, ppc64, vmx, OL, asmstr> {
+class XLForm_1<bits<6> opcode, bits<10> xo, dag OL, string asmstr>
+         : I<opcode, 0, 0, OL, asmstr> {
   bits<3> CRD;
   bits<2> CRDb;
   bits<3> CRA;
@@ -327,8 +317,8 @@ class XLForm_1<bits<6> opcode, bits<10> xo, bit ppc64, bit vmx,
   let Inst{31}    = 0;
 }
 
-class XLForm_2<bits<6> opcode, bits<10> xo, bit lk, bit ppc64, bit vmx, 
-               dag OL, string asmstr> : I<opcode, ppc64, vmx, OL, asmstr> {
+class XLForm_2<bits<6> opcode, bits<10> xo, bit lk, 
+               dag OL, string asmstr> : I<opcode, 0, 0, OL, asmstr> {
   bits<5> BO;
   bits<5> BI;
   bits<2> BH;
@@ -342,16 +332,15 @@ class XLForm_2<bits<6> opcode, bits<10> xo, bit lk, bit ppc64, bit vmx,
 }
 
 class XLForm_2_ext<bits<6> opcode, bits<10> xo, bits<5> bo, 
-                   bits<5> bi, bit lk, bit ppc64, bit vmx, 
-                   dag OL, string asmstr>
-  : XLForm_2<opcode, xo, lk, ppc64, vmx, OL, asmstr> {
+                   bits<5> bi, bit lk, dag OL, string asmstr>
+  : XLForm_2<opcode, xo, lk, OL, asmstr> {
   let BO = bo;
   let BI = bi;
   let BH = 0;
 }
 
-class XLForm_3<bits<6> opcode, bits<10> xo, bit ppc64, bit vmx, 
-               dag OL, string asmstr> : I<opcode, ppc64, vmx, OL, asmstr> {
+class XLForm_3<bits<6> opcode, bits<10> xo, dag OL, string asmstr>
+         : I<opcode, 0, 0, OL, asmstr> {
   bits<3> BF;
   bits<3> BFA;
   
