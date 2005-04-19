@@ -303,6 +303,7 @@ Init *IntInit::getBinaryOp(BinaryOp Op, Init *RHS) {
 
   int NewValue;
   switch (Op) {
+  default: assert(0 && "Unknown binop");
   case SHL: NewValue = Value << RHSi->getValue(); break;
   case SRA: NewValue = Value >> RHSi->getValue(); break;
   case SRL: NewValue = (unsigned)Value >> (unsigned)RHSi->getValue(); break;
