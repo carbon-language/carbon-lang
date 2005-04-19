@@ -297,6 +297,20 @@ Init *BitsInit::resolveReferences(Record &R) {
   return this;
 }
 
+Init *IntInit::getBinaryOp(BinaryOp Op, Init *RHS) {
+  IntInit *RHSi = dynamic_cast<IntInit*>(RHS);
+  if (RHSi == 0) return 0;
+
+  int NewValue;
+  switch (Op) {
+  case SHL: NewValue = Value << RHSi->getValue(); break;
+  case SRA: NewValue = Value >> RHSi->getValue(); break;
+  case SRL: NewValue = (unsigned)Value >> (unsigned)RHSi->getValue(); break;
+  }
+  return new IntInit(NewValue);
+}
+
+
 Init *IntInit::convertInitializerBitRange(const std::vector<unsigned> &Bits) {
   BitsInit *BI = new BitsInit(Bits.size());
 

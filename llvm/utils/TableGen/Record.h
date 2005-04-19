@@ -567,6 +567,8 @@ public:
   }
   virtual Init *convertInitializerBitRange(const std::vector<unsigned> &Bits);
 
+  virtual Init *getBinaryOp(BinaryOp Op, Init *RHS);
+
   virtual void print(std::ostream &OS) const { OS << Value; }
 };
 
