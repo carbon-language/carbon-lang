@@ -65,24 +65,24 @@ let Defs = [LR] in
 
 let isBranch = 1, isTerminator = 1 in {
   def COND_BRANCH : Pseudo<(ops), "; COND_BRANCH">;
-  def B   : IForm<18, 0, 0, 0, 0, (ops target:$func), "b $func">;
-//def BA  : IForm<18, 1, 0, 0, 0, (ops target:$func), "ba $func">;
-  def BL  : IForm<18, 0, 1, 0, 0, (ops target:$func), "bl $func">;
-//def BLA : IForm<18, 1, 1, 0, 0, (ops target:$func), "bla $func">;
+  def B   : IForm<18, 0, 0, (ops target:$func), "b $func">;
+//def BA  : IForm<18, 1, 0, (ops target:$func), "ba $func">;
+  def BL  : IForm<18, 0, 1, (ops target:$func), "bl $func">;
+//def BLA : IForm<18, 1, 1, (ops target:$func), "bla $func">;
 
   // FIXME: 4*CR# needs to be added to the BI field!
   // This will only work for CR0 as it stands now
-  def BLT : BForm_ext<16, 0, 0, 12, 0, 0, 0, (ops CRRC:$crS, target:$block),
+  def BLT : BForm_ext<16, 0, 0, 12, 0, (ops CRRC:$crS, target:$block),
                       "blt $block">;
-  def BLE : BForm_ext<16, 0, 0, 4,  1, 0, 0, (ops CRRC:$crS, target:$block),
+  def BLE : BForm_ext<16, 0, 0, 4,  1, (ops CRRC:$crS, target:$block),
                       "ble $block">;
-  def BEQ : BForm_ext<16, 0, 0, 12, 2, 0, 0, (ops CRRC:$crS, target:$block),
+  def BEQ : BForm_ext<16, 0, 0, 12, 2, (ops CRRC:$crS, target:$block),
                       "beq $block">;
-  def BGE : BForm_ext<16, 0, 0, 4,  0, 0, 0, (ops CRRC:$crS, target:$block),
+  def BGE : BForm_ext<16, 0, 0, 4,  0, (ops CRRC:$crS, target:$block),
                       "bge $block">;
-  def BGT : BForm_ext<16, 0, 0, 12, 1, 0, 0, (ops CRRC:$crS, target:$block),
+  def BGT : BForm_ext<16, 0, 0, 12, 1, (ops CRRC:$crS, target:$block),
                       "bgt $block">;
-  def BNE : BForm_ext<16, 0, 0, 4,  2, 0, 0, (ops CRRC:$crS, target:$block),
+  def BNE : BForm_ext<16, 0, 0, 4,  2, (ops CRRC:$crS, target:$block),
                       "bne $block">;
 }
 
@@ -93,7 +93,7 @@ let isBranch = 1, isTerminator = 1, isCall = 1,
           LR,XER,CTR,
           CR0,CR1,CR5,CR6,CR7] in {
   // Convenient aliases for call instructions
-  def CALLpcrel : IForm<18, 0, 1, 0, 0, (ops target:$func), "bl $func">;
+  def CALLpcrel : IForm<18, 0, 1, (ops target:$func), "bl $func">;
   def CALLindirect : XLForm_2_ext<19, 528, 20, 0, 1, (ops), "bctrl">;
 }
 

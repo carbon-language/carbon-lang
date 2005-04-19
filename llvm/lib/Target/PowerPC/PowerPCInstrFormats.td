@@ -57,8 +57,8 @@ class I<bits<6> opcode, bit ppc64, bit vmx, dag OL, string asmstr>
 }
 
 // 1.7.1 I-Form
-class IForm<bits<6> opcode, bit aa, bit lk, bit ppc64, bit vmx,
-            dag OL, string asmstr> : I<opcode, ppc64, vmx, OL, asmstr> {
+class IForm<bits<6> opcode, bit aa, bit lk, dag OL, string asmstr>
+         : I<opcode, 0, 0, OL, asmstr> {
   bits<24> LI;
 
   let Inst{6-29}  = LI;
@@ -67,8 +67,8 @@ class IForm<bits<6> opcode, bit aa, bit lk, bit ppc64, bit vmx,
 }
 
 // 1.7.2 B-Form
-class BForm<bits<6> opcode, bit aa, bit lk, bit ppc64, bit vmx,
-            dag OL, string asmstr> : I<opcode, ppc64, vmx, OL, asmstr> {
+class BForm<bits<6> opcode, bit aa, bit lk, 
+            dag OL, string asmstr> : I<opcode, 0, 0, OL, asmstr> {
   bits<5>  BO;
   bits<3>  CRNum;
   bits<2>  BICode;
@@ -83,8 +83,8 @@ class BForm<bits<6> opcode, bit aa, bit lk, bit ppc64, bit vmx,
 }
 
 class BForm_ext<bits<6> opcode, bit aa, bit lk, bits<5> bo, bits<2> bicode, 
-                bit ppc64, bit vmx, dag OL, string asmstr>
-  : BForm<opcode, aa, lk, ppc64, vmx, OL, asmstr> {
+                dag OL, string asmstr>
+  : BForm<opcode, aa, lk, OL, asmstr> {
   let BO = bo;
   let BICode = bicode;
 }
