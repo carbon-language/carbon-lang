@@ -370,60 +370,60 @@ def MCRF   : XLForm_3<19, 0, 0, 0, (ops CRRC:$BF, CRRC:$BFA),
 // Note that although LR should be listed as `8' and CTR as `9' in the SPR
 // field, the manual lists the groups of bits as [5-9] = 0, [0-4] = 8 or 9
 // which means the SPR value needs to be multiplied by a factor of 32.
-def MFCTR : XFXForm_1_ext<31, 339, 288, 0, 0, (ops GPRC:$rT), "mfctr $rT">;
-def MFLR  : XFXForm_1_ext<31, 339, 256, 0, 0, (ops GPRC:$rT), "mflr $rT">;
-def MFCR  : XFXForm_3<31, 19, 0, 0, (ops GPRC:$rT), "mfcr $rT">;
-def MTCRF : XFXForm_5<31, 0, 144, 0, 0, (ops CRRC:$FXM, GPRC:$rS),
+def MFCTR : XFXForm_1_ext<31, 339, 288, (ops GPRC:$rT), "mfctr $rT">;
+def MFLR  : XFXForm_1_ext<31, 339, 256, (ops GPRC:$rT), "mflr $rT">;
+def MFCR  : XFXForm_3<31, 19, (ops GPRC:$rT), "mfcr $rT">;
+def MTCRF : XFXForm_5<31, 0, 144, (ops CRRC:$FXM, GPRC:$rS),
                       "mtcrf $FXM, $rS">;
-def MFCRF : XFXForm_5<31, 1, 19, 0, 0, (ops GPRC:$rT, CRRC:$FXM),
+def MFCRF : XFXForm_5<31, 1, 19, (ops GPRC:$rT, CRRC:$FXM),
                       "mfcr $rT, $FXM">;
-def MTCTR : XFXForm_7_ext<31, 467, 288, 0, 0, (ops GPRC:$rS), "mtctr $rS">;
-def MTLR  : XFXForm_7_ext<31, 467, 256, 0, 0, (ops GPRC:$rS), "mtlr $rS">;
+def MTCTR : XFXForm_7_ext<31, 467, 288, (ops GPRC:$rS), "mtctr $rS">;
+def MTLR  : XFXForm_7_ext<31, 467, 256, (ops GPRC:$rS), "mtlr $rS">;
 
 // XS-Form instructions.  Just 'sradi'
 //
-def SRADI  : XSForm_1<31, 413, 0, 1, 0, (ops GPRC:$rA, GPRC:$rS, u6imm:$SH),
-                      "sradi $rA, $rS, $SH">;
+def SRADI  : XSForm_1<31, 413, 0, (ops GPRC:$rA, GPRC:$rS, u6imm:$SH),
+                      "sradi $rA, $rS, $SH">, isPPC64;
 
 // XO-Form instructions.  Arithmetic instructions that can set overflow bit
 //
-def ADD   : XOForm_1<31, 266, 0, 0, 0, 0, (ops GPRC:$rT, GPRC:$rA, GPRC:$rB),
+def ADD   : XOForm_1<31, 266, 0, 0, (ops GPRC:$rT, GPRC:$rA, GPRC:$rB),
                      "add $rT, $rA, $rB">;
-def ADDC  : XOForm_1<31, 10, 0, 0, 0, 0, (ops GPRC:$rT, GPRC:$rA, GPRC:$rB),
+def ADDC  : XOForm_1<31, 10, 0, 0, (ops GPRC:$rT, GPRC:$rA, GPRC:$rB),
                      "addc $rT, $rA, $rB">;
-def ADDE  : XOForm_1<31, 138, 0, 0, 0, 0, (ops GPRC:$rT, GPRC:$rA, GPRC:$rB),
+def ADDE  : XOForm_1<31, 138, 0, 0, (ops GPRC:$rT, GPRC:$rA, GPRC:$rB),
                      "adde $rT, $rA, $rB">;
-def DIVD  : XOForm_1<31, 489, 0, 0, 1, 0, (ops GPRC:$rT, GPRC:$rA, GPRC:$rB),
-                     "divd $rT, $rA, $rB">;
-def DIVDU : XOForm_1<31, 457, 0, 0, 1, 0, (ops GPRC:$rT, GPRC:$rA, GPRC:$rB),
-                     "divdu $rT, $rA, $rB">;
-def DIVW  : XOForm_1<31, 491, 0, 0, 0, 0, (ops GPRC:$rT, GPRC:$rA, GPRC:$rB),
+def DIVD  : XOForm_1<31, 489, 0, 0, (ops GPRC:$rT, GPRC:$rA, GPRC:$rB),
+                     "divd $rT, $rA, $rB">, isPPC64;
+def DIVDU : XOForm_1<31, 457, 0, 0, (ops GPRC:$rT, GPRC:$rA, GPRC:$rB),
+                     "divdu $rT, $rA, $rB">, isPPC64;
+def DIVW  : XOForm_1<31, 491, 0, 0, (ops GPRC:$rT, GPRC:$rA, GPRC:$rB),
                      "divw $rT, $rA, $rB">;
-def DIVWU : XOForm_1<31, 459, 0, 0, 0, 0, (ops GPRC:$rT, GPRC:$rA, GPRC:$rB),
+def DIVWU : XOForm_1<31, 459, 0, 0, (ops GPRC:$rT, GPRC:$rA, GPRC:$rB),
                      "divwu $rT, $rA, $rB">;
-def MULHW : XOForm_1<31, 75, 0, 0, 0, 0, (ops GPRC:$rT, GPRC:$rA, GPRC:$rB),
+def MULHW : XOForm_1<31, 75, 0, 0, (ops GPRC:$rT, GPRC:$rA, GPRC:$rB),
                      "mulhw $rT, $rA, $rB">;
-def MULHWU : XOForm_1<31, 11, 0, 0, 0, 0, (ops GPRC:$rT, GPRC:$rA, GPRC:$rB),
+def MULHWU : XOForm_1<31, 11, 0, 0, (ops GPRC:$rT, GPRC:$rA, GPRC:$rB),
                      "mulhwu $rT, $rA, $rB">;
-def MULLD : XOForm_1<31, 233, 0, 0, 1, 0, (ops GPRC:$rT, GPRC:$rA, GPRC:$rB),
-                     "mulld $rT, $rA, $rB">;
-def MULLW : XOForm_1<31, 235, 0, 0, 0, 0, (ops GPRC:$rT, GPRC:$rA, GPRC:$rB),
+def MULLD : XOForm_1<31, 233, 0, 0, (ops GPRC:$rT, GPRC:$rA, GPRC:$rB),
+                     "mulld $rT, $rA, $rB">, isPPC64;
+def MULLW : XOForm_1<31, 235, 0, 0, (ops GPRC:$rT, GPRC:$rA, GPRC:$rB),
                      "mullw $rT, $rA, $rB">;
-def SUBF  : XOForm_1<31, 40, 0, 0, 0, 0, (ops GPRC:$rT, GPRC:$rA, GPRC:$rB),
+def SUBF  : XOForm_1<31, 40, 0, 0, (ops GPRC:$rT, GPRC:$rA, GPRC:$rB),
                      "subf $rT, $rA, $rB">;
-def SUBFC : XOForm_1<31, 8, 0, 0, 0, 0, (ops GPRC:$rT, GPRC:$rA, GPRC:$rB),
+def SUBFC : XOForm_1<31, 8, 0, 0, (ops GPRC:$rT, GPRC:$rA, GPRC:$rB),
                      "subfc $rT, $rA, $rB">;
-def SUBFE : XOForm_1<31, 136, 0, 0, 0, 0, (ops GPRC:$rT, GPRC:$rA, GPRC:$rB),
+def SUBFE : XOForm_1<31, 136, 0, 0, (ops GPRC:$rT, GPRC:$rA, GPRC:$rB),
                      "subfe $rT, $rA, $rB">;
-def SUB  : XOForm_1r<31, 40, 0, 0, 0, 0, (ops GPRC:$rT, GPRC:$rA, GPRC:$rB),
+def SUB  : XOForm_1r<31, 40, 0, 0, (ops GPRC:$rT, GPRC:$rA, GPRC:$rB),
                      "sub $rT, $rA, $rB">;
-def ADDME  : XOForm_3<31, 234, 0, 0, 0, 0, (ops GPRC:$rT, GPRC:$rA),
+def ADDME  : XOForm_3<31, 234, 0, 0, (ops GPRC:$rT, GPRC:$rA),
                       "addme $rT, $rA">;
-def ADDZE  : XOForm_3<31, 202, 0, 0, 0, 0, (ops GPRC:$rT, GPRC:$rA),
+def ADDZE  : XOForm_3<31, 202, 0, 0, (ops GPRC:$rT, GPRC:$rA),
                       "addze $rT, $rA">;
-def NEG    : XOForm_3<31, 104, 0, 0, 0, 0, (ops GPRC:$rT, GPRC:$rA),
+def NEG    : XOForm_3<31, 104, 0, 0, (ops GPRC:$rT, GPRC:$rA),
                       "neg $rT, $rA">;
-def SUBFZE : XOForm_3<31, 200, 0, 0, 0, 0, (ops GPRC:$rT, GPRC:$rA),
+def SUBFZE : XOForm_3<31, 200, 0, 0, (ops GPRC:$rT, GPRC:$rA),
                       "subfze $rT, $rA">;
 
 // A-Form instructions.  Most of the instructions executed in the FPU are of

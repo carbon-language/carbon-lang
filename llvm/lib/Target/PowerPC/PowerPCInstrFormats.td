@@ -365,8 +365,8 @@ class XLForm_3<bits<6> opcode, bits<10> xo, bit ppc64, bit vmx,
 }
 
 // 1.7.8 XFX-Form
-class XFXForm_1<bits<6> opcode, bits<10> xo, bit ppc64, bit vmx, 
-                dag OL, string asmstr> : I<opcode, ppc64, vmx, OL, asmstr> {
+class XFXForm_1<bits<6> opcode, bits<10> xo, dag OL, string asmstr>
+         : I<opcode, 0, 0, OL, asmstr> {
   bits<5>  RT;
   bits<10> SPR;
 
@@ -376,14 +376,14 @@ class XFXForm_1<bits<6> opcode, bits<10> xo, bit ppc64, bit vmx,
   let Inst{31}    = 0;
 }
 
-class XFXForm_1_ext<bits<6> opcode, bits<10> xo, bits<10> spr, bit ppc64, 
-                    bit vmx, dag OL, string asmstr> 
-  : XFXForm_1<opcode, xo, ppc64, vmx, OL, asmstr> {
+class XFXForm_1_ext<bits<6> opcode, bits<10> xo, bits<10> spr, 
+                   dag OL, string asmstr> 
+  : XFXForm_1<opcode, xo, OL, asmstr> {
   let SPR = spr;
 }
 
-class XFXForm_3<bits<6> opcode, bits<10> xo, bit ppc64, bit vmx, 
-                dag OL, string asmstr> : I<opcode, ppc64, vmx, OL, asmstr> {
+class XFXForm_3<bits<6> opcode, bits<10> xo, 
+                dag OL, string asmstr> : I<opcode, 0, 0, OL, asmstr> {
   bits<5>  RT;
    
   let Inst{6-10}  = RT;
@@ -392,8 +392,8 @@ class XFXForm_3<bits<6> opcode, bits<10> xo, bit ppc64, bit vmx,
   let Inst{31}    = 0;
 }
 
-class XFXForm_5<bits<6> opcode, bit mfcrf, bits<10> xo, bit ppc64, bit vmx, 
-                dag OL, string asmstr> : I<opcode, ppc64, vmx, OL, asmstr> {
+class XFXForm_5<bits<6> opcode, bit mfcrf, bits<10> xo, 
+                dag OL, string asmstr> : I<opcode, 0, 0, OL, asmstr> {
   bits<8>  FXM;
   bits<5>  ST;
    
@@ -405,19 +405,18 @@ class XFXForm_5<bits<6> opcode, bit mfcrf, bits<10> xo, bit ppc64, bit vmx,
   let Inst{31}    = 0;
 }
 
-class XFXForm_7<bits<6> opcode, bits<10> xo, bit ppc64, bit vmx,
-                dag OL, string asmstr>
-  : XFXForm_1<opcode, xo, ppc64, vmx, OL, asmstr>;
+class XFXForm_7<bits<6> opcode, bits<10> xo, dag OL, string asmstr>
+  : XFXForm_1<opcode, xo, OL, asmstr>;
 
 class XFXForm_7_ext<bits<6> opcode, bits<10> xo, bits<10> spr, 
-                    bit ppc64, bit vmx, dag OL, string asmstr> 
-  : XFXForm_7<opcode, xo, ppc64, vmx, OL, asmstr> {
+                    dag OL, string asmstr> 
+  : XFXForm_7<opcode, xo, OL, asmstr> {
   let SPR = spr;
 }
 
 // 1.7.10 XS-Form
-class XSForm_1<bits<6> opcode, bits<9> xo, bit rc, bit ppc64, bit vmx,
-               dag OL, string asmstr> : I<opcode, ppc64, vmx, OL, asmstr> {
+class XSForm_1<bits<6> opcode, bits<9> xo, bit rc, 
+               dag OL, string asmstr> : I<opcode, 0, 0, OL, asmstr> {
   bits<5> RS;
   bits<5> A;
   bits<6> SH;
@@ -431,8 +430,8 @@ class XSForm_1<bits<6> opcode, bits<9> xo, bit rc, bit ppc64, bit vmx,
 }
 
 // 1.7.11 XO-Form
-class XOForm_1<bits<6> opcode, bits<9> xo, bit oe, bit rc, bit ppc64, bit vmx,
-               dag OL, string asmstr> : I<opcode, ppc64, vmx, OL, asmstr> {
+class XOForm_1<bits<6> opcode, bits<9> xo, bit oe, bit rc, 
+               dag OL, string asmstr> : I<opcode, 0, 0, OL, asmstr> {
   bits<5> RT;
   bits<5> RA;
   bits<5> RB;
@@ -445,16 +444,16 @@ class XOForm_1<bits<6> opcode, bits<9> xo, bit oe, bit rc, bit ppc64, bit vmx,
   let Inst{31}    = rc;  
 }
 
-class XOForm_1r<bits<6> opcode, bits<9> xo, bit oe, bit rc, bit ppc64, bit vmx,
+class XOForm_1r<bits<6> opcode, bits<9> xo, bit oe, bit rc,
                dag OL, string asmstr>
-  : XOForm_1<opcode, xo, oe, rc, ppc64, vmx, OL, asmstr> {
+  : XOForm_1<opcode, xo, oe, rc, OL, asmstr> {
   let Inst{11-15} = RB;
   let Inst{16-20} = RA;
 }
 
-class XOForm_3<bits<6> opcode, bits<9> xo, bit oe, bit rc, bit ppc64, bit vmx,
+class XOForm_3<bits<6> opcode, bits<9> xo, bit oe, bit rc, 
                dag OL, string asmstr>
-  : XOForm_1<opcode, xo, oe, rc, ppc64, vmx, OL, asmstr> {
+  : XOForm_1<opcode, xo, oe, rc, OL, asmstr> {
   let RB = 0;
 }
 
