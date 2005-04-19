@@ -418,88 +418,93 @@ class XSForm_1<bits<6> opcode, bits<9> xo, dag OL, string asmstr>
 }
 
 // 1.7.11 XO-Form
-class XOForm_1<bits<6> opcode, bits<9> xo, bit oe, bit rc, 
-               dag OL, string asmstr> : I<opcode, OL, asmstr> {
+class XOForm_1<bits<6> opcode, bits<9> xo, bit oe, dag OL, string asmstr>
+         : I<opcode, OL, asmstr> {
   bits<5> RT;
   bits<5> RA;
   bits<5> RB;
+
+  bit RC = 0;    // set by isDOT
 
   let Inst{6-10}  = RT;
   let Inst{11-15} = RA;
   let Inst{16-20} = RB;
   let Inst{21}    = oe;
   let Inst{22-30} = xo;
-  let Inst{31}    = rc;  
+  let Inst{31}    = RC;  
 }
 
-class XOForm_1r<bits<6> opcode, bits<9> xo, bit oe, bit rc,
-               dag OL, string asmstr>
-  : XOForm_1<opcode, xo, oe, rc, OL, asmstr> {
+class XOForm_1r<bits<6> opcode, bits<9> xo, bit oe, dag OL, string asmstr>
+  : XOForm_1<opcode, xo, oe, OL, asmstr> {
   let Inst{11-15} = RB;
   let Inst{16-20} = RA;
 }
 
-class XOForm_3<bits<6> opcode, bits<9> xo, bit oe, bit rc, 
+class XOForm_3<bits<6> opcode, bits<9> xo, bit oe, 
                dag OL, string asmstr>
-  : XOForm_1<opcode, xo, oe, rc, OL, asmstr> {
+  : XOForm_1<opcode, xo, oe, OL, asmstr> {
   let RB = 0;
 }
 
 // 1.7.12 A-Form
-class AForm_1<bits<6> opcode, bits<5> xo, bit rc, dag OL, string asmstr>
+class AForm_1<bits<6> opcode, bits<5> xo, dag OL, string asmstr>
          : I<opcode, OL, asmstr> {
   bits<5> FRT;
   bits<5> FRA;
   bits<5> FRC;
   bits<5> FRB;
 
+  bit RC = 0;    // set by isDOT
+
   let Inst{6-10}  = FRT;
   let Inst{11-15} = FRA;
   let Inst{16-20} = FRB;
   let Inst{21-25} = FRC;
   let Inst{26-30} = xo;
-  let Inst{31}    = rc;
+  let Inst{31}    = RC;
 }
 
-class AForm_2<bits<6> opcode, bits<5> xo, bit rc, dag OL, string asmstr> 
-  : AForm_1<opcode, xo, rc, OL, asmstr> {
+class AForm_2<bits<6> opcode, bits<5> xo, dag OL, string asmstr> 
+  : AForm_1<opcode, xo, OL, asmstr> {
   let FRC = 0;
 }
 
-class AForm_3<bits<6> opcode, bits<5> xo, bit rc, dag OL,
-              string asmstr> 
-  : AForm_1<opcode, xo, rc, OL, asmstr> {
+class AForm_3<bits<6> opcode, bits<5> xo, dag OL, string asmstr> 
+  : AForm_1<opcode, xo, OL, asmstr> {
   let FRB = 0;
 }
 
 // 1.7.13 M-Form
-class MForm_1<bits<6> opcode, bit rc, dag OL, string asmstr>
-         : I<opcode, OL, asmstr> {
+class MForm_1<bits<6> opcode, dag OL, string asmstr> : I<opcode, OL, asmstr> {
   bits<5> RA;
   bits<5> RS;
   bits<5> RB;
   bits<5> MB;
   bits<5> ME;
 
+  bit RC = 0;    // set by isDOT
+
   let Inst{6-10}  = RS;
   let Inst{11-15} = RA;
   let Inst{16-20} = RB;
   let Inst{21-25} = MB;
   let Inst{26-30} = ME;
-  let Inst{31}    = rc;
+  let Inst{31}    = RC;
 }
 
-class MForm_2<bits<6> opcode, bit rc, dag OL, string asmstr>
-  : MForm_1<opcode, rc, OL, asmstr> {
+class MForm_2<bits<6> opcode, dag OL, string asmstr>
+  : MForm_1<opcode, OL, asmstr> {
 }
 
 // 1.7.14 MD-Form
-class MDForm_1<bits<6> opcode, bits<3> xo, bit rc,
-               dag OL, string asmstr> : I<opcode, OL, asmstr> {
+class MDForm_1<bits<6> opcode, bits<3> xo, dag OL, string asmstr>
+         : I<opcode, OL, asmstr> {
   bits<5> RS;
   bits<5> RA;
   bits<6> SH;
   bits<6> MBE;
+
+  bit RC = 0;    // set by isDOT
 
   let Inst{6-10}  = RS;
   let Inst{11-15} = RA;
@@ -507,7 +512,7 @@ class MDForm_1<bits<6> opcode, bits<3> xo, bit rc,
   let Inst{21-26} = MBE;
   let Inst{27-29} = xo;
   let Inst{30}    = SH{0};
-  let Inst{31}    = rc;
+  let Inst{31}    = RC;
 }
 
 //===----------------------------------------------------------------------===//
