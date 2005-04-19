@@ -15,6 +15,9 @@
 
 include "PowerPCInstrFormats.td"
 
+class isPPC64 { bit PPC64 = 1; }
+class isVMX   { bit VMX = 1; }
+
 let isTerminator = 1 in {
   let isReturn = 1 in
     def BLR : XLForm_2_ext<19, 16, 20, 0, 0, 0, 0, (ops), "blr">;
@@ -426,84 +429,84 @@ def SUBFZE : XOForm_3<31, 200, 0, 0, 0, 0, (ops GPRC:$rT, GPRC:$rA),
 // A-Form instructions.  Most of the instructions executed in the FPU are of
 // this type.
 //
-def FMADD : AForm_1<63, 29, 0, 0, 0,
+def FMADD : AForm_1<63, 29, 0, 
                     (ops FPRC:$FRT, FPRC:$FRA, FPRC:$FRC, FPRC:$FRB),
                     "fmadd $FRT, $FRA, $FRC, $FRB">;
-def FMADDS : AForm_1<59, 29, 0, 0, 0,
+def FMADDS : AForm_1<59, 29, 0, 
                     (ops FPRC:$FRT, FPRC:$FRA, FPRC:$FRC, FPRC:$FRB),
                     "fmadds $FRT, $FRA, $FRC, $FRB">;
-def FMSUB : AForm_1<63, 28, 0, 0, 0,
+def FMSUB : AForm_1<63, 28, 0, 
                     (ops FPRC:$FRT, FPRC:$FRA, FPRC:$FRC, FPRC:$FRB),
                     "fmsub $FRT, $FRA, $FRC, $FRB">;
-def FMSUBS : AForm_1<59, 28, 0, 0, 0,
+def FMSUBS : AForm_1<59, 28, 0, 
                     (ops FPRC:$FRT, FPRC:$FRA, FPRC:$FRC, FPRC:$FRB),
                     "fmsubs $FRT, $FRA, $FRC, $FRB">;
-def FNMADD : AForm_1<63, 31, 0, 0, 0,
+def FNMADD : AForm_1<63, 31, 0, 
                     (ops FPRC:$FRT, FPRC:$FRA, FPRC:$FRC, FPRC:$FRB),
                     "fnmadd $FRT, $FRA, $FRC, $FRB">;
-def FNMADDS : AForm_1<59, 31, 0, 0, 0,
+def FNMADDS : AForm_1<59, 31, 0, 
                     (ops FPRC:$FRT, FPRC:$FRA, FPRC:$FRC, FPRC:$FRB),
                     "fnmadds $FRT, $FRA, $FRC, $FRB">;
-def FNMSUB : AForm_1<63, 30, 0, 0, 0,
+def FNMSUB : AForm_1<63, 30, 0, 
                     (ops FPRC:$FRT, FPRC:$FRA, FPRC:$FRC, FPRC:$FRB),
                     "fnmsub $FRT, $FRA, $FRC, $FRB">;
-def FNMSUBS : AForm_1<59, 30, 0, 0, 0,
+def FNMSUBS : AForm_1<59, 30, 0, 
                     (ops FPRC:$FRT, FPRC:$FRA, FPRC:$FRC, FPRC:$FRB),
                     "fnmsubs $FRT, $FRA, $FRC, $FRB">;
-def FSEL  : AForm_1<63, 23, 0, 0, 0,
+def FSEL  : AForm_1<63, 23, 0, 
                     (ops FPRC:$FRT, FPRC:$FRA, FPRC:$FRC, FPRC:$FRB),
                     "fsel $FRT, $FRA, $FRC, $FRB">;
-def FADD  : AForm_2<63, 21, 0, 0, 0,
+def FADD  : AForm_2<63, 21, 0, 
                     (ops FPRC:$FRT, FPRC:$FRA, FPRC:$FRB),
                     "fadd $FRT, $FRA, $FRB">;
-def FADDS : AForm_2<59, 21, 0, 0, 0,
+def FADDS : AForm_2<59, 21, 0, 
                     (ops FPRC:$FRT, FPRC:$FRA, FPRC:$FRB),
                     "fadds $FRT, $FRA, $FRB">;
-def FDIV  : AForm_2<63, 18, 0, 0, 0,
+def FDIV  : AForm_2<63, 18, 0, 
                     (ops FPRC:$FRT, FPRC:$FRA, FPRC:$FRB),
                     "fdiv $FRT, $FRA, $FRB">;
-def FDIVS : AForm_2<59, 18, 0, 0, 0,
+def FDIVS : AForm_2<59, 18, 0, 
                     (ops FPRC:$FRT, FPRC:$FRA, FPRC:$FRB),
                     "fdivs $FRT, $FRA, $FRB">;
-def FMUL  : AForm_3<63, 25, 0, 0, 0,
+def FMUL  : AForm_3<63, 25, 0, 
                     (ops FPRC:$FRT, FPRC:$FRA, FPRC:$FRB),
                     "fmul $FRT, $FRA, $FRB">;
-def FMULS : AForm_3<59, 25, 0, 0, 0,
+def FMULS : AForm_3<59, 25, 0, 
                     (ops FPRC:$FRT, FPRC:$FRA, FPRC:$FRB),
                     "fmuls $FRT, $FRA, $FRB">;
-def FSUB  : AForm_2<63, 20, 0, 0, 0,
+def FSUB  : AForm_2<63, 20, 0, 
                     (ops FPRC:$FRT, FPRC:$FRA, FPRC:$FRB),
                     "fsub $FRT, $FRA, $FRB">;
-def FSUBS : AForm_2<59, 20, 0, 0, 0,
+def FSUBS : AForm_2<59, 20, 0, 
                     (ops FPRC:$FRT, FPRC:$FRA, FPRC:$FRB),
                     "fsubs $FRT, $FRA, $FRB">;
 
 // M-Form instructions.  rotate and mask instructions.
 //
 let isTwoAddress = 1 in {
-def RLWIMI : MForm_2<20, 0, 0, 0,
+def RLWIMI : MForm_2<20, 0, 
                      (ops GPRC:$rA, GPRC:$rSi, GPRC:$rS, u5imm:$SH, u5imm:$MB, 
                       u5imm:$ME), "rlwimi $rA, $rS, $SH, $MB, $ME">;
 }
-def RLWINM : MForm_2<21, 0, 0, 0,
+def RLWINM : MForm_2<21, 0, 
                      (ops GPRC:$rA, GPRC:$rS, u5imm:$SH, u5imm:$MB, u5imm:$ME),
                      "rlwinm $rA, $rS, $SH, $MB, $ME">;
 let Defs = [CR0] in
-def RLWINMo : MForm_2<21, 1, 0, 0,
+def RLWINMo : MForm_2<21, 1, 
                      (ops GPRC:$rA, GPRC:$rS, u5imm:$SH, u5imm:$MB, u5imm:$ME),
                      "rlwinm. $rA, $rS, $SH, $MB, $ME">;
-def RLWNM  : MForm_2<23, 0, 0, 0,
+def RLWNM  : MForm_2<23, 0, 
                      (ops GPRC:$rA, GPRC:$rS, GPRC:$rB, u5imm:$MB, u5imm:$ME),
                      "rlwnm $rA, $rS, $rB, $MB, $ME">;
 
 // MD-Form instructions.  64 bit rotate instructions.
 //
-def RLDICL : MDForm_1<30, 0, 0, 1, 0, 
+def RLDICL : MDForm_1<30, 0, 0,
                       (ops GPRC:$rA, GPRC:$rS, u6imm:$SH, u6imm:$MB),
-                      "rldicl $rA, $rS, $SH, $MB">;
-def RLDICR : MDForm_1<30, 1, 0, 1, 0, 
+                      "rldicl $rA, $rS, $SH, $MB">, isPPC64;
+def RLDICR : MDForm_1<30, 1, 0,
                       (ops GPRC:$rA, GPRC:$rS, u6imm:$SH, u6imm:$ME),
-                      "rldicr $rA, $rS, $SH, $ME">;
+                      "rldicr $rA, $rS, $SH, $ME">, isPPC64;
 
 def PowerPCInstrInfo : InstrInfo {
   let PHIInst  = PHI;

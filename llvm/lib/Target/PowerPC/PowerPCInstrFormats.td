@@ -459,8 +459,8 @@ class XOForm_3<bits<6> opcode, bits<9> xo, bit oe, bit rc, bit ppc64, bit vmx,
 }
 
 // 1.7.12 A-Form
-class AForm_1<bits<6> opcode, bits<5> xo, bit rc, bit ppc64, bit vmx, 
-              dag OL, string asmstr> : I<opcode, ppc64, vmx, OL, asmstr> {
+class AForm_1<bits<6> opcode, bits<5> xo, bit rc, dag OL, string asmstr>
+         : I<opcode, 0, 0, OL, asmstr> {
   bits<5> FRT;
   bits<5> FRA;
   bits<5> FRC;
@@ -474,21 +474,20 @@ class AForm_1<bits<6> opcode, bits<5> xo, bit rc, bit ppc64, bit vmx,
   let Inst{31}    = rc;
 }
 
-class AForm_2<bits<6> opcode, bits<5> xo, bit rc, bit ppc64, bit vmx, dag OL,
-              string asmstr> 
-  : AForm_1<opcode, xo, rc, ppc64, vmx, OL, asmstr> {
+class AForm_2<bits<6> opcode, bits<5> xo, bit rc, dag OL, string asmstr> 
+  : AForm_1<opcode, xo, rc, OL, asmstr> {
   let FRC = 0;
 }
 
-class AForm_3<bits<6> opcode, bits<5> xo, bit rc, bit ppc64, bit vmx, dag OL,
+class AForm_3<bits<6> opcode, bits<5> xo, bit rc, dag OL,
               string asmstr> 
-  : AForm_1<opcode, xo, rc, ppc64, vmx, OL, asmstr> {
+  : AForm_1<opcode, xo, rc, OL, asmstr> {
   let FRB = 0;
 }
 
 // 1.7.13 M-Form
-class MForm_1<bits<6> opcode, bit rc, bit ppc64, bit vmx,
-              dag OL, string asmstr> : I<opcode, ppc64, vmx, OL, asmstr> {
+class MForm_1<bits<6> opcode, bit rc, dag OL, string asmstr>
+         : I<opcode, 0, 0, OL, asmstr> {
   bits<5> RA;
   bits<5> RS;
   bits<5> RB;
@@ -503,14 +502,13 @@ class MForm_1<bits<6> opcode, bit rc, bit ppc64, bit vmx,
   let Inst{31}    = rc;
 }
 
-class MForm_2<bits<6> opcode, bit rc, bit ppc64, bit vmx, 
-              dag OL, string asmstr>
-  : MForm_1<opcode, rc, ppc64, vmx, OL, asmstr> {
+class MForm_2<bits<6> opcode, bit rc, dag OL, string asmstr>
+  : MForm_1<opcode, rc, OL, asmstr> {
 }
 
 // 1.7.14 MD-Form
-class MDForm_1<bits<6> opcode, bits<3> xo, bit rc, bit ppc64, bit vmx,
-               dag OL, string asmstr> : I<opcode, ppc64, vmx, OL, asmstr> {
+class MDForm_1<bits<6> opcode, bits<3> xo, bit rc,
+               dag OL, string asmstr> : I<opcode, 0, 0, OL, asmstr> {
   bits<5> RS;
   bits<5> RA;
   bits<6> SH;
