@@ -1,2 +1,4 @@
 Lexer.cpp
-llvmAsmParser.*
+llvmAsmParser.cpp
+llvmAsmParser.h
+llvmAsmParser.output
