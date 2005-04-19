@@ -1,4 +1,4 @@
-// tblgen %s
+// RUN: tblgen %s
 
 // Make sure there is no collision between XX and XX.
 def S;
