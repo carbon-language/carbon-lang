@@ -1141,6 +1141,9 @@ ModulePass *llvm::createIPSCCPPass() {
 
 
 static bool AddressIsTaken(GlobalValue *GV) {
+  // Delete any dead constantexpr klingons.
+  GV->removeDeadConstantUsers();
+
   for (Value::use_iterator UI = GV->use_begin(), E = GV->use_end();
        UI != E; ++UI)
     if (StoreInst *SI = dyn_cast<StoreInst>(*UI)) {
@@ -1173,7 +1176,8 @@ bool IPSCCP::runOnModule(Module &M) {
     if (!F->hasInternalLinkage() || AddressIsTaken(F)) {
       if (!F->isExternal())
         Solver.MarkBlockExecutable(F->begin());
-      for (Function::arg_iterator AI = F->arg_begin(), E = F->arg_end(); AI != E; ++AI)
+      for (Function::arg_iterator AI = F->arg_begin(), E = F->arg_end();
+           AI != E; ++AI)
         Values[AI].markOverdefined();
     } else {
       Solver.AddTrackedFunction(F);
@@ -1182,7 +1186,8 @@ bool IPSCCP::runOnModule(Module &M) {
   // Loop over global variables.  We inform the solver about any internal global
   // variables that do not have their 'addresses taken'.  If they don't have
   // their addresses taken, we can propagate constants through them.
-  for (Module::global_iterator G = M.global_begin(), E = M.global_end(); G != E; ++G)
+  for (Module::global_iterator G = M.global_begin(), E = M.global_end();
+       G != E; ++G)
     if (!G->isConstant() && G->hasInternalLinkage() && !AddressIsTaken(G))
       Solver.TrackValueOfGlobalVariable(G);
 
@@ -1204,7 +1209,8 @@ bool IPSCCP::runOnModule(Module &M) {
   //
   std::set<BasicBlock*> &ExecutableBBs = Solver.getExecutableBlocks();
   for (Module::iterator F = M.begin(), E = M.end(); F != E; ++F) {
-    for (Function::arg_iterator AI = F->arg_begin(), E = F->arg_end(); AI != E; ++AI)
+    for (Function::arg_iterator AI = F->arg_begin(), E = F->arg_end();
+         AI != E; ++AI)
       if (!AI->use_empty()) {
         LatticeVal &IV = Values[AI];
         if (IV.isConstant() || IV.isUndefined()) {
