@@ -101,113 +101,104 @@ let isBranch = 1, isTerminator = 1, isCall = 1,
 // register and an immediate are of this type.
 //
 let isLoad = 1 in {
-def LBZ : DForm_1<34, 0, 0, (ops GPRC:$rD, s16imm:$disp, GPRC:$rA),
+def LBZ : DForm_1<34, (ops GPRC:$rD, s16imm:$disp, GPRC:$rA),
                   "lbz $rD, $disp($rA)">;
-def LHA : DForm_1<42, 0, 0, (ops GPRC:$rD, s16imm:$disp, GPRC:$rA),
+def LHA : DForm_1<42, (ops GPRC:$rD, s16imm:$disp, GPRC:$rA),
                   "lha $rD, $disp($rA)">;
-def LHZ : DForm_1<40, 0, 0, (ops GPRC:$rD, s16imm:$disp, GPRC:$rA),
+def LHZ : DForm_1<40, (ops GPRC:$rD, s16imm:$disp, GPRC:$rA),
                   "lhz $rD, $disp($rA)">;
-def LMW : DForm_1<46, 0, 0, (ops GPRC:$rD, s16imm:$disp, GPRC:$rA),
+def LMW : DForm_1<46, (ops GPRC:$rD, s16imm:$disp, GPRC:$rA),
                   "lmw $rD, $disp($rA)">;
-def LWZ : DForm_1<32, 0, 0, (ops GPRC:$rD, symbolLo:$disp, GPRC:$rA),
+def LWZ : DForm_1<32, (ops GPRC:$rD, symbolLo:$disp, GPRC:$rA),
                   "lwz $rD, $disp($rA)">;
-def LWZU : DForm_1<35, 0, 0, (ops GPRC:$rD, symbolLo:$disp, GPRC:$rA),
+def LWZU : DForm_1<35, (ops GPRC:$rD, symbolLo:$disp, GPRC:$rA),
                    "lwzu $rD, $disp($rA)">;
 }
-def ADDI   : DForm_2<14, 0, 0, (ops GPRC:$rD, GPRC:$rA, s16imm:$imm),
+def ADDI   : DForm_2<14, (ops GPRC:$rD, GPRC:$rA, s16imm:$imm),
                      "addi $rD, $rA, $imm">;
-def ADDIC  : DForm_2<12, 0, 0, (ops GPRC:$rD, GPRC:$rA, s16imm:$imm),
+def ADDIC  : DForm_2<12, (ops GPRC:$rD, GPRC:$rA, s16imm:$imm),
                      "addic $rD, $rA, $imm">;
-def ADDICo : DForm_2<13, 0, 0, (ops GPRC:$rD, GPRC:$rA, s16imm:$imm),
+def ADDICo : DForm_2<13, (ops GPRC:$rD, GPRC:$rA, s16imm:$imm),
                      "addic. $rD, $rA, $imm">;
-def ADDIS  : DForm_2<15, 0, 0, (ops GPRC:$rD, GPRC:$rA, s16imm:$imm),
+def ADDIS  : DForm_2<15, (ops GPRC:$rD, GPRC:$rA, s16imm:$imm),
                      "addis $rD, $rA, $imm">;
-def LA     : DForm_2<14, 0, 0, (ops GPRC:$rD, GPRC:$rA, symbolLo:$sym),
+def LA     : DForm_2<14, (ops GPRC:$rD, GPRC:$rA, symbolLo:$sym),
                      "la $rD, $sym($rA)">;
-def LOADHiAddr : DForm_2<15, 0, 0, (ops GPRC:$rD, GPRC:$rA, symbolHi:$sym),
+def LOADHiAddr : DForm_2<15, (ops GPRC:$rD, GPRC:$rA, symbolHi:$sym),
                          "addis $rD, $rA, $sym">;
-def MULLI  : DForm_2< 7, 0, 0, (ops GPRC:$rD, GPRC:$rA, s16imm:$imm),
+def MULLI  : DForm_2< 7, (ops GPRC:$rD, GPRC:$rA, s16imm:$imm),
                      "mulli $rD, $rA, $imm">;
-def SUBFIC : DForm_2< 8, 0, 0, (ops GPRC:$rD, GPRC:$rA, s16imm:$imm),
+def SUBFIC : DForm_2< 8, (ops GPRC:$rD, GPRC:$rA, s16imm:$imm),
                      "subfic $rD, $rA, $imm">;
-def LI  : DForm_2_r0<14, 0, 0, (ops GPRC:$rD, s16imm:$imm),
+def LI  : DForm_2_r0<14, (ops GPRC:$rD, s16imm:$imm),
                      "li $rD, $imm">;
-def LIS : DForm_2_r0<15, 0, 0, (ops GPRC:$rD, s16imm:$imm),
+def LIS : DForm_2_r0<15, (ops GPRC:$rD, s16imm:$imm),
                      "lis $rD, $imm">;
 let isStore = 1 in {
-def STMW : DForm_3<47, 0, 0, (ops GPRC:$rS, s16imm:$disp, GPRC:$rA),
+def STMW : DForm_3<47, (ops GPRC:$rS, s16imm:$disp, GPRC:$rA),
                    "stmw $rS, $disp($rA)">;
-def STB  : DForm_3<38, 0, 0, (ops GPRC:$rS, s16imm:$disp, GPRC:$rA),
+def STB  : DForm_3<38, (ops GPRC:$rS, s16imm:$disp, GPRC:$rA),
                    "stb $rS, $disp($rA)">;
-def STH  : DForm_3<44, 0, 0, (ops GPRC:$rS, s16imm:$disp, GPRC:$rA),
+def STH  : DForm_3<44, (ops GPRC:$rS, s16imm:$disp, GPRC:$rA),
                    "sth $rS, $disp($rA)">;
-def STW  : DForm_3<36, 0, 0, (ops GPRC:$rS, s16imm:$disp, GPRC:$rA),
+def STW  : DForm_3<36, (ops GPRC:$rS, s16imm:$disp, GPRC:$rA),
                    "stw $rS, $disp($rA)">;
-def STWU : DForm_3<37, 0, 0, (ops GPRC:$rS, s16imm:$disp, GPRC:$rA),
+def STWU : DForm_3<37, (ops GPRC:$rS, s16imm:$disp, GPRC:$rA),
                    "stwu $rS, $disp($rA)">;
 }
 let Defs = [CR0] in {
-def ANDIo : DForm_4<28, 0, 0,
-                    (ops GPRC:$dst, GPRC:$src1, u16imm:$src2),
+def ANDIo : DForm_4<28, (ops GPRC:$dst, GPRC:$src1, u16imm:$src2),
                     "andi. $dst, $src1, $src2">;
-def ANDISo : DForm_4<29, 0, 0,
-                    (ops GPRC:$dst, GPRC:$src1, u16imm:$src2),
+def ANDISo : DForm_4<29, (ops GPRC:$dst, GPRC:$src1, u16imm:$src2),
                     "andis. $dst, $src1, $src2">;
 }
-def ORI   : DForm_4<24, 0, 0,
-                    (ops GPRC:$dst, GPRC:$src1, u16imm:$src2),
+def ORI   : DForm_4<24, (ops GPRC:$dst, GPRC:$src1, u16imm:$src2),
                     "ori $dst, $src1, $src2">;
-def ORIS  : DForm_4<25, 0, 0,
-                    (ops GPRC:$dst, GPRC:$src1, u16imm:$src2),
+def ORIS  : DForm_4<25, (ops GPRC:$dst, GPRC:$src1, u16imm:$src2),
                     "oris $dst, $src1, $src2">;
-def XORI  : DForm_4<26, 0, 0,
-                    (ops GPRC:$dst, GPRC:$src1, u16imm:$src2),
+def XORI  : DForm_4<26, (ops GPRC:$dst, GPRC:$src1, u16imm:$src2),
                     "xori $dst, $src1, $src2">;
-def XORIS : DForm_4<27, 0, 0,
-                    (ops GPRC:$dst, GPRC:$src1, u16imm:$src2),
+def XORIS : DForm_4<27, (ops GPRC:$dst, GPRC:$src1, u16imm:$src2),
                     "xoris $dst, $src1, $src2">;
-def NOP   : DForm_4_zero<24, 0, 0, (ops), "nop">;
-def CMPI  : DForm_5<11, 0, 0, (ops CRRC:$crD, i1imm:$L, GPRC:$rA, s16imm:$imm),
+def NOP   : DForm_4_zero<24, (ops), "nop">;
+def CMPI  : DForm_5<11, (ops CRRC:$crD, i1imm:$L, GPRC:$rA, s16imm:$imm),
                     "cmpi $crD, $L, $rA, $imm">;
-def CMPWI : DForm_5_ext<11, 0, 0, (ops CRRC:$crD, GPRC:$rA, s16imm:$imm),
+def CMPWI : DForm_5_ext<11, (ops CRRC:$crD, GPRC:$rA, s16imm:$imm),
                         "cmpwi $crD, $rA, $imm">;
-def CMPDI : DForm_5_ext<11, 1, 0, (ops CRRC:$crD, GPRC:$rA, s16imm:$imm),
-                        "cmpdi $crD, $rA, $imm">;
-def CMPLI  : DForm_6<10, 0, 0,
-                     (ops CRRC:$dst, i1imm:$size, GPRC:$src1, u16imm:$src2),
+def CMPDI : DForm_5_ext<11, (ops CRRC:$crD, GPRC:$rA, s16imm:$imm),
+                        "cmpdi $crD, $rA, $imm">, isPPC64;
+def CMPLI  : DForm_6<10, (ops CRRC:$dst, i1imm:$size, GPRC:$src1, u16imm:$src2),
                      "cmpli $dst, $size, $src1, $src2">;
-def CMPLWI : DForm_6_ext<10, 0, 0,
-                         (ops CRRC:$dst, GPRC:$src1, u16imm:$src2),
+def CMPLWI : DForm_6_ext<10, (ops CRRC:$dst, GPRC:$src1, u16imm:$src2),
                          "cmplwi $dst, $src1, $src2">;
-def CMPLDI : DForm_6_ext<10, 1, 0,
-                         (ops CRRC:$dst, GPRC:$src1, u16imm:$src2),
-                         "cmpldi $dst, $src1, $src2">;
+def CMPLDI : DForm_6_ext<10, (ops CRRC:$dst, GPRC:$src1, u16imm:$src2),
+                         "cmpldi $dst, $src1, $src2">, isPPC64;
 let isLoad = 1 in {
-def LFS : DForm_8<48, 0, 0, (ops GPRC:$rD, symbolLo:$disp, GPRC:$rA),
+def LFS : DForm_8<48, (ops GPRC:$rD, symbolLo:$disp, GPRC:$rA),
                   "lfs $rD, $disp($rA)">;
-def LFD : DForm_8<50, 0, 0, (ops GPRC:$rD, symbolLo:$disp, GPRC:$rA),
+def LFD : DForm_8<50, (ops GPRC:$rD, symbolLo:$disp, GPRC:$rA),
                   "lfd $rD, $disp($rA)">;
 }
 let isStore = 1 in {
-def STFS : DForm_9<52, 0, 0, (ops GPRC:$rS, s16imm:$disp, GPRC:$rA),
+def STFS : DForm_9<52, (ops GPRC:$rS, s16imm:$disp, GPRC:$rA),
                    "stfs $rS, $disp($rA)">;
-def STFD : DForm_9<54, 0, 0, (ops GPRC:$rS, s16imm:$disp, GPRC:$rA),
+def STFD : DForm_9<54, (ops GPRC:$rS, s16imm:$disp, GPRC:$rA),
                    "stfd $rS, $disp($rA)">;
 }
 
 // DS-Form instructions.  Load/Store instructions available in PPC-64
 //
 let isLoad = 1 in {
-def LWA  : DSForm_1<58, 2, 1, 0, (ops GPRC:$rT, s16imm:$DS, GPRC:$rA),
-                    "lwa $rT, $DS($rA)">;
-def LD   : DSForm_2<58, 0, 1, 0, (ops GPRC:$rT, s16imm:$DS, GPRC:$rA),
-                    "ld $rT, $DS($rA)">;
+def LWA  : DSForm_1<58, 2, (ops GPRC:$rT, s16imm:$DS, GPRC:$rA),
+                    "lwa $rT, $DS($rA)">, isPPC64;
+def LD   : DSForm_2<58, 0, (ops GPRC:$rT, s16imm:$DS, GPRC:$rA),
+                    "ld $rT, $DS($rA)">, isPPC64;
 }
 let isStore = 1 in {
-def STD  : DSForm_2<62, 0, 1, 0, (ops GPRC:$rT, s16imm:$DS, GPRC:$rA),
-                    "std $rT, $DS($rA)">;
-def STDU : DSForm_2<62, 1, 1, 0, (ops GPRC:$rT, s16imm:$DS, GPRC:$rA),
-                    "stdu $rT, $DS($rA)">;
+def STD  : DSForm_2<62, 0, (ops GPRC:$rT, s16imm:$DS, GPRC:$rA),
+                    "std $rT, $DS($rA)">, isPPC64;
+def STDU : DSForm_2<62, 1, (ops GPRC:$rT, s16imm:$DS, GPRC:$rA),
+                    "stdu $rT, $DS($rA)">, isPPC64;
 }
 
 // X-Form instructions.  Most instructions that perform an operation on a

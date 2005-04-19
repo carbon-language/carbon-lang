@@ -90,8 +90,8 @@ class BForm_ext<bits<6> opcode, bit aa, bit lk, bits<5> bo, bits<2> bicode,
 }
 
 // 1.7.4 D-Form
-class DForm_base<bits<6> opcode, bit ppc64, bit vmx, dag OL, string asmstr>
-  : I<opcode, ppc64, vmx, OL, asmstr> {
+class DForm_base<bits<6> opcode, dag OL, string asmstr>
+  : I<opcode, 0, 0, OL, asmstr> {
   bits<5>  A;
   bits<5>  B;
   bits<16> C;
@@ -101,8 +101,8 @@ class DForm_base<bits<6> opcode, bit ppc64, bit vmx, dag OL, string asmstr>
   let Inst{16-31} = C;
 }
 
-class DForm_1<bits<6> opcode, bit ppc64, bit vmx, dag OL, string asmstr>
-  : I<opcode, ppc64, vmx, OL, asmstr> {
+class DForm_1<bits<6> opcode, dag OL, string asmstr>
+         : I<opcode, 0, 0, OL, asmstr> {
   bits<5>  A;
   bits<16> C;
   bits<5>  B;
@@ -112,11 +112,11 @@ class DForm_1<bits<6> opcode, bit ppc64, bit vmx, dag OL, string asmstr>
   let Inst{16-31} = C;
 }
 
-class DForm_2<bits<6> opcode, bit ppc64, bit vmx, dag OL, string asmstr>
-  : DForm_base<opcode, ppc64, vmx, OL, asmstr>;
+class DForm_2<bits<6> opcode, dag OL, string asmstr>
+  : DForm_base<opcode, OL, asmstr>;
 
-class DForm_2_r0<bits<6> opcode, bit ppc64, bit vmx, dag OL, string asmstr>
-  : I<opcode, ppc64, vmx, OL, asmstr> {
+class DForm_2_r0<bits<6> opcode, dag OL, string asmstr>
+  : I<opcode, 0, 0, OL, asmstr> {
   bits<5>  A;
   bits<16> B;
   
@@ -126,11 +126,11 @@ class DForm_2_r0<bits<6> opcode, bit ppc64, bit vmx, dag OL, string asmstr>
 }
 
 // Currently we make the use/def reg distinction in ISel, not tablegen
-class DForm_3<bits<6> opcode, bit ppc64, bit vmx, dag OL, string asmstr>
-  : DForm_1<opcode, ppc64, vmx, OL, asmstr>;
+class DForm_3<bits<6> opcode, dag OL, string asmstr>
+  : DForm_1<opcode, OL, asmstr>;
 
-class DForm_4<bits<6> opcode, bit ppc64, bit vmx, dag OL, string asmstr> 
-  : I<opcode, ppc64, vmx, OL, asmstr> {
+class DForm_4<bits<6> opcode, dag OL, string asmstr> 
+  : I<opcode, 0, 0, OL, asmstr> {
   bits<5>  B;
   bits<5>  A;
   bits<16> C;
@@ -140,15 +140,15 @@ class DForm_4<bits<6> opcode, bit ppc64, bit vmx, dag OL, string asmstr>
   let Inst{16-31} = C;
 }
               
-class DForm_4_zero<bits<6> opcode, bit ppc64, bit vmx, dag OL, string asmstr>
-  : DForm_1<opcode, ppc64, vmx, OL, asmstr> {
+class DForm_4_zero<bits<6> opcode, dag OL, string asmstr>
+  : DForm_1<opcode, OL, asmstr> {
   let A = 0;
   let B = 0;
   let C = 0;
 }
 
-class DForm_5<bits<6> opcode, bit ppc64, bit vmx, dag OL, string asmstr>
-  : I<opcode, ppc64, vmx, OL, asmstr> {
+class DForm_5<bits<6> opcode, dag OL, string asmstr>
+         : I<opcode, 0, 0, OL, asmstr> {
   bits<3>  BF;
   bits<1>  L;
   bits<5>  RA;
@@ -161,30 +161,30 @@ class DForm_5<bits<6> opcode, bit ppc64, bit vmx, dag OL, string asmstr>
   let Inst{16-31} = I;
 }
 
-class DForm_5_ext<bits<6> opcode, bit ppc64, bit vmx, dag OL, string asmstr>
-  : DForm_5<opcode, ppc64, vmx, OL, asmstr> {
-  let L = ppc64;
+class DForm_5_ext<bits<6> opcode, dag OL, string asmstr>
+  : DForm_5<opcode, OL, asmstr> {
+  let L = PPC64;
 }
 
-class DForm_6<bits<6> opcode, bit ppc64, bit vmx, dag OL, string asmstr> 
-  : DForm_5<opcode, ppc64, vmx, OL, asmstr>;
+class DForm_6<bits<6> opcode, dag OL, string asmstr> 
+  : DForm_5<opcode, OL, asmstr>;
 
-class DForm_6_ext<bits<6> opcode, bit ppc64, bit vmx, dag OL, string asmstr>
-  : DForm_6<opcode, ppc64, vmx, OL, asmstr> {
-  let L = ppc64;
+class DForm_6_ext<bits<6> opcode, dag OL, string asmstr>
+  : DForm_6<opcode, OL, asmstr> {
+  let L = PPC64;
 }
 
-class DForm_8<bits<6> opcode, bit ppc64, bit vmx, dag OL, string asmstr>
-  : DForm_1<opcode, ppc64, vmx, OL, asmstr> {
+class DForm_8<bits<6> opcode, dag OL, string asmstr>
+  : DForm_1<opcode, OL, asmstr> {
 }
 
-class DForm_9<bits<6> opcode, bit ppc64, bit vmx, dag OL, string asmstr>
-  : DForm_1<opcode, ppc64, vmx, OL, asmstr> {
+class DForm_9<bits<6> opcode, dag OL, string asmstr>
+  : DForm_1<opcode, OL, asmstr> {
 }
 
 // 1.7.5 DS-Form
-class DSForm_1<bits<6> opcode, bits<2> xo, bit ppc64, bit vmx,
-               dag OL, string asmstr> : I<opcode, ppc64, vmx, OL, asmstr> {
+class DSForm_1<bits<6> opcode, bits<2> xo, dag OL, string asmstr>
+         : I<opcode, 0, 0, OL, asmstr> {
   bits<5>  RST;
   bits<14> DS;
   bits<5>  RA;
@@ -195,9 +195,8 @@ class DSForm_1<bits<6> opcode, bits<2> xo, bit ppc64, bit vmx,
   let Inst{30-31} = xo;
 }
 
-class DSForm_2<bits<6> opcode, bits<2> xo, bit ppc64, bit vmx, 
-               dag OL, string asmstr>
-  : DSForm_1<opcode, xo, ppc64, vmx, OL, asmstr>;
+class DSForm_2<bits<6> opcode, bits<2> xo, dag OL, string asmstr>
+  : DSForm_1<opcode, xo, OL, asmstr>;
 
 // 1.7.6 X-Form
 class XForm_base_r3xo<bits<6> opcode, bits<10> xo, bit rc,
