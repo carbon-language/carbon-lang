@@ -17,6 +17,10 @@ include "PowerPCInstrFormats.td"
 
 class isPPC64 { bit PPC64 = 1; }
 class isVMX   { bit VMX = 1; }
+class isDOT   {
+  list<Register> Defs = [CR0];
+  bit RC  = 1;
+}
 
 let isTerminator = 1 in {
   let isReturn = 1 in
@@ -218,39 +222,37 @@ def LWZX : XForm_1<31,  23, (ops GPRC:$dst, GPRC:$base, GPRC:$index),
 def LDX  : XForm_1<31,  21, (ops GPRC:$dst, GPRC:$base, GPRC:$index),
                    "ldx $dst, $base, $index">, isPPC64;
 }
-def AND  : XForm_6<31,  28, 0, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
+def AND  : XForm_6<31,  28, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
                    "and $rA, $rS, $rB">;
-let Defs = [CR0] in
-def ANDo : XForm_6<31,  28, 1, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
-                   "and. $rA, $rS, $rB">;
-def ANDC : XForm_6<31,  60, 0, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
+def ANDo : XForm_6<31,  28, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
+                   "and. $rA, $rS, $rB">, isDOT;
+def ANDC : XForm_6<31,  60, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
                    "andc $rA, $rS, $rB">;
-def EQV  : XForm_6<31, 284, 0, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
+def EQV  : XForm_6<31, 284, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
                    "eqv $rA, $rS, $rB">;
-def NAND : XForm_6<31, 476, 0, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
+def NAND : XForm_6<31, 476, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
                    "nand $rA, $rS, $rB">;
-def NOR  : XForm_6<31, 124, 0, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
+def NOR  : XForm_6<31, 124, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
                    "nor $rA, $rS, $rB">;
-def OR   : XForm_6<31, 444, 0, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
+def OR   : XForm_6<31, 444, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
                    "or $rA, $rS, $rB">;
-let Defs = [CR0] in
-def ORo  : XForm_6<31, 444, 1, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
-                   "or. $rA, $rS, $rB">;
-def ORC  : XForm_6<31, 412, 0, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
+def ORo  : XForm_6<31, 444, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
+                   "or. $rA, $rS, $rB">, isDOT;
+def ORC  : XForm_6<31, 412, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
                    "orc $rA, $rS, $rB">;
-def SLD  : XForm_6<31,  27, 0, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
+def SLD  : XForm_6<31,  27, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
                    "sld $rA, $rS, $rB">, isPPC64;
-def SLW  : XForm_6<31,  24, 0, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
+def SLW  : XForm_6<31,  24, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
                    "slw $rA, $rS, $rB">;
-def SRD  : XForm_6<31, 539, 0, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
+def SRD  : XForm_6<31, 539, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
                    "srd $rA, $rS, $rB">, isPPC64;
-def SRW  : XForm_6<31, 536, 0, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
+def SRW  : XForm_6<31, 536, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
                    "srw $rA, $rS, $rB">;
-def SRAD : XForm_6<31, 794, 0, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
+def SRAD : XForm_6<31, 794, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
                    "srad $rA, $rS, $rB">, isPPC64;
-def SRAW : XForm_6<31, 792, 0, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
+def SRAW : XForm_6<31, 792, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
                    "sraw $rA, $rS, $rB">;
-def XOR  : XForm_6<31, 316, 0, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
+def XOR  : XForm_6<31, 316, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
                    "xor $rA, $rS, $rB">;
 let isStore = 1 in {
 def STBX  : XForm_8<31, 215, (ops GPRC:$rS, GPRC:$rA, GPRC:$rB),
@@ -266,15 +268,15 @@ def STDX  : XForm_8<31, 149, (ops GPRC:$rS, GPRC:$rA, GPRC:$rB),
 def STDUX : XForm_8<31, 181, (ops GPRC:$rS, GPRC:$rA, GPRC:$rB),
                    "stdux $rS, $rA, $rB">, isPPC64;
 }
-def SRAWI : XForm_10<31, 824, 0, (ops GPRC:$rA, GPRC:$rS, u5imm:$SH), 
+def SRAWI : XForm_10<31, 824, (ops GPRC:$rA, GPRC:$rS, u5imm:$SH), 
                      "srawi $rA, $rS, $SH">;
-def CNTLZW : XForm_11<31,  26, 0, (ops GPRC:$rA, GPRC:$rS),
+def CNTLZW : XForm_11<31,  26, (ops GPRC:$rA, GPRC:$rS),
                       "cntlzw $rA, $rS">;
-def EXTSB  : XForm_11<31, 954, 0, (ops GPRC:$rA, GPRC:$rS),
+def EXTSB  : XForm_11<31, 954, (ops GPRC:$rA, GPRC:$rS),
                       "extsb $rA, $rS">;
-def EXTSH  : XForm_11<31, 922, 0, (ops GPRC:$rA, GPRC:$rS),
+def EXTSH  : XForm_11<31, 922, (ops GPRC:$rA, GPRC:$rS),
                       "extsh $rA, $rS">;
-def EXTSW  : XForm_11<31, 986, 0, (ops GPRC:$rA, GPRC:$rS),
+def EXTSW  : XForm_11<31, 986, (ops GPRC:$rA, GPRC:$rS),
                       "extsw $rA, $rS">, isPPC64;
 def CMP    : XForm_16<31, 0, (ops CRRC:$crD, i1imm:$long, GPRC:$rA, GPRC:$rB),
                       "cmp $crD, $long, $rA, $rB">;
@@ -298,21 +300,21 @@ def LFSX   : XForm_25<31, 535, (ops FPRC:$dst, GPRC:$base, GPRC:$index),
 def LFDX   : XForm_25<31, 599, (ops FPRC:$dst, GPRC:$base, GPRC:$index),
                       "lfdx $dst, $base, $index">;
 }
-def FCFID  : XForm_26<63, 846, 0, (ops FPRC:$frD, FPRC:$frB),
+def FCFID  : XForm_26<63, 846, (ops FPRC:$frD, FPRC:$frB),
                       "fcfid $frD, $frB">, isPPC64;
-def FCTIDZ : XForm_26<63, 815, 0, (ops FPRC:$frD, FPRC:$frB),
+def FCTIDZ : XForm_26<63, 815, (ops FPRC:$frD, FPRC:$frB),
                       "fctidz $frD, $frB">, isPPC64;
-def FCTIWZ : XForm_26<63, 15, 0, (ops FPRC:$frD, FPRC:$frB),
+def FCTIWZ : XForm_26<63, 15, (ops FPRC:$frD, FPRC:$frB),
                       "fctiwz $frD, $frB">;
-def FABS   : XForm_26<63, 264, 0, (ops FPRC:$frD, FPRC:$frB),
+def FABS   : XForm_26<63, 264, (ops FPRC:$frD, FPRC:$frB),
                       "fabs $frD, $frB">;
-def FMR    : XForm_26<63, 72, 0, (ops FPRC:$frD, FPRC:$frB),
+def FMR    : XForm_26<63, 72, (ops FPRC:$frD, FPRC:$frB),
                       "fmr $frD, $frB">;
-def FNABS  : XForm_26<63, 136, 0, (ops FPRC:$frD, FPRC:$frB),
+def FNABS  : XForm_26<63, 136, (ops FPRC:$frD, FPRC:$frB),
                       "fnabs $frD, $frB">;
-def FNEG   : XForm_26<63, 40, 0, (ops FPRC:$frD, FPRC:$frB),
+def FNEG   : XForm_26<63, 40, (ops FPRC:$frD, FPRC:$frB),
                       "fneg $frD, $frB">;
-def FRSP   : XForm_26<63, 12, 0, (ops FPRC:$frD, FPRC:$frB),
+def FRSP   : XForm_26<63, 12, (ops FPRC:$frD, FPRC:$frB),
                       "frsp $frD, $frB">;
 let isStore = 1 in {
 def STFSX : XForm_28<31, 663, (ops FPRC:$frS, GPRC:$rA, GPRC:$rB),
@@ -367,7 +369,7 @@ def MTLR  : XFXForm_7_ext<31, 467, 256, (ops GPRC:$rS), "mtlr $rS">;
 
 // XS-Form instructions.  Just 'sradi'
 //
-def SRADI  : XSForm_1<31, 413, 0, (ops GPRC:$rA, GPRC:$rS, u6imm:$SH),
+def SRADI  : XSForm_1<31, 413, (ops GPRC:$rA, GPRC:$rS, u6imm:$SH),
                       "sradi $rA, $rS, $SH">, isPPC64;
 
 // XO-Form instructions.  Arithmetic instructions that can set overflow bit

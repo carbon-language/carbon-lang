@@ -194,51 +194,55 @@ class DSForm_2<bits<6> opcode, bits<2> xo, dag OL, string asmstr>
   : DSForm_1<opcode, xo, OL, asmstr>;
 
 // 1.7.6 X-Form
-class XForm_base_r3xo<bits<6> opcode, bits<10> xo, bit rc,
+class XForm_base_r3xo<bits<6> opcode, bits<10> xo, 
                       dag OL, string asmstr> : I<opcode, OL, asmstr> {
   bits<5> RST;
   bits<5> A;
   bits<5> B;
 
+  bit RC = 0;    // set by isDOT
+
   let Inst{6-10}  = RST;
   let Inst{11-15} = A;
   let Inst{16-20} = B;
   let Inst{21-30} = xo;
-  let Inst{31}    = rc;
+  let Inst{31}    = RC;
 }
 
 // This is the same as XForm_base_r3xo, but the first two operands are swapped
 // when code is emitted.
 class XForm_base_r3xo_swapped
-        <bits<6> opcode, bits<10> xo, bit rc, dag OL, string asmstr> 
+        <bits<6> opcode, bits<10> xo, dag OL, string asmstr> 
   : I<opcode, OL, asmstr> {
   bits<5> A;
   bits<5> RST;
   bits<5> B;
 
+  bit RC = 0;    // set by isDOT
+
   let Inst{6-10}  = RST;
   let Inst{11-15} = A;
   let Inst{16-20} = B;
   let Inst{21-30} = xo;
-  let Inst{31}    = rc;
+  let Inst{31}    = RC;
 }
 
 
 class XForm_1<bits<6> opcode, bits<10> xo, dag OL, string asmstr> 
-  : XForm_base_r3xo<opcode, xo, 0, OL, asmstr>;
+  : XForm_base_r3xo<opcode, xo, OL, asmstr>;
 
-class XForm_6<bits<6> opcode, bits<10> xo, bit rc, dag OL, string asmstr> 
-  : XForm_base_r3xo_swapped<opcode, xo, rc, OL, asmstr>;
+class XForm_6<bits<6> opcode, bits<10> xo, dag OL, string asmstr> 
+  : XForm_base_r3xo_swapped<opcode, xo, OL, asmstr>;
 
 class XForm_8<bits<6> opcode, bits<10> xo, dag OL, string asmstr> 
-  : XForm_base_r3xo<opcode, xo, 0, OL, asmstr>;
+  : XForm_base_r3xo<opcode, xo, OL, asmstr>;
 
-class XForm_10<bits<6> opcode, bits<10> xo, bit rc, dag OL, string asmstr> 
-  : XForm_base_r3xo_swapped<opcode, xo, rc, OL, asmstr> {
+class XForm_10<bits<6> opcode, bits<10> xo, dag OL, string asmstr> 
+  : XForm_base_r3xo_swapped<opcode, xo, OL, asmstr> {
 }
 
-class XForm_11<bits<6> opcode, bits<10> xo, bit rc, dag OL, string asmstr> 
-  : XForm_base_r3xo_swapped<opcode, xo, rc, OL, asmstr> {
+class XForm_11<bits<6> opcode, bits<10> xo, dag OL, string asmstr> 
+  : XForm_base_r3xo_swapped<opcode, xo, OL, asmstr> {
   let B = 0;
 }
 
@@ -278,16 +282,16 @@ class XForm_17<bits<6> opcode, bits<10> xo, dag OL, string asmstr>
 }
 
 class XForm_25<bits<6> opcode, bits<10> xo, dag OL, string asmstr> 
-  : XForm_base_r3xo<opcode, xo, 0, OL, asmstr> {
+  : XForm_base_r3xo<opcode, xo, OL, asmstr> {
 }
 
-class XForm_26<bits<6> opcode, bits<10> xo, bit rc, dag OL, string asmstr> 
-  : XForm_base_r3xo<opcode, xo, rc, OL, asmstr> {
+class XForm_26<bits<6> opcode, bits<10> xo, dag OL, string asmstr> 
+  : XForm_base_r3xo<opcode, xo, OL, asmstr> {
   let A = 0;
 }
 
 class XForm_28<bits<6> opcode, bits<10> xo, dag OL, string asmstr> 
-  : XForm_base_r3xo<opcode, xo, 0, OL, asmstr> {
+  : XForm_base_r3xo<opcode, xo, OL, asmstr> {
 }
 
 // 1.7.7 XL-Form
@@ -397,18 +401,20 @@ class XFXForm_7_ext<bits<6> opcode, bits<10> xo, bits<10> spr,
 }
 
 // 1.7.10 XS-Form
-class XSForm_1<bits<6> opcode, bits<9> xo, bit rc, dag OL, string asmstr>
+class XSForm_1<bits<6> opcode, bits<9> xo, dag OL, string asmstr>
          : I<opcode, OL, asmstr> {
   bits<5> RS;
   bits<5> A;
   bits<6> SH;
+
+  bit RC = 0;    // set by isDOT
 
   let Inst{6-10}  = RS;
   let Inst{11-15} = A;
   let Inst{16-20} = SH{1-5};
   let Inst{21-29} = xo;
   let Inst{30}    = SH{0};
-  let Inst{31}    = rc;
+  let Inst{31}    = RC;
 }
 
 // 1.7.11 XO-Form
