@@ -1935,10 +1935,8 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
               }
               break;                  // (X == 13 | X == 15) -> no change
 
-            case Instruction::SetGT:
-              if (LHSCst == SubOne(RHSCst)) // (X == 13 | X > 14) -> X > 13
-                return new SetCondInst(Instruction::SetGT, LHSVal, LHSCst);
-              break;                        // (X == 13 | X > 15) -> no change
+            case Instruction::SetGT:  // (X == 13 | X > 14) -> no change
+              break;
             case Instruction::SetNE:  // (X == 13 | X != 15) -> X != 15
             case Instruction::SetLT:  // (X == 13 | X < 15)  -> X < 15
               return ReplaceInstUsesWith(I, RHS);
