@@ -311,6 +311,10 @@ Path::writable() const {
 
 bool
 Path::executable() const {
+  struct stat st;
+  int r = stat(path.c_str(), &st);
+  if (r != 0 || !S_ISREG(st.st_mode))
+    return false;
   return 0 == access(path.c_str(), R_OK | X_OK );
 }
 
