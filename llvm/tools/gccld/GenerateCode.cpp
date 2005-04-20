@@ -130,7 +130,7 @@ static void dumpArgs(const char **args) {
 static inline void addPass(PassManager &PM, Pass *P) {
   // Add the pass to the pass manager...
   PM.add(P);
-  
+
   // If we are verifying all of the intermediate steps, add the verifier...
   if (Verify) PM.add(createVerifierPass());
 }
@@ -144,12 +144,12 @@ static bool isBytecodeLibrary(const sys::Path &FullPath) {
   if (FullPath.isArchive() ) {
     std::string ErrorMessage;
     Archive* ar = Archive::OpenAndLoadSymbols( FullPath, &ErrorMessage );
-    return ar->isBytecodeArchive();    
+    return ar->isBytecodeArchive();
   }
   return false;
 }
 
-static bool isBytecodeLPath(const std::string &LibPath) {                        
+static bool isBytecodeLPath(const std::string &LibPath) {
   bool isBytecodeLPath = false;
 
   // Make sure the -L path has a '/' character
@@ -174,7 +174,7 @@ static bool isBytecodeLPath(const std::string &LibPath) {
 
     if ( File->isDirectory() )
       continue;
-    
+
     std::string path = File->toString();
     std::string dllsuffix = sys::Path::GetDLLSuffix();
 
@@ -183,7 +183,7 @@ static bool isBytecodeLPath(const std::string &LibPath) {
     if ( path.find(dllsuffix, path.size()-dllsuffix.size()) == std::string::npos
         && path.find(".a", path.size()-2) == std::string::npos )
       continue;
-     
+
     // Finally, check to see if the file is a true bytecode file
     if (isBytecodeLibrary(*File))
       isBytecodeLPath = true;
@@ -391,7 +391,7 @@ int llvm::GenerateNative(const std::string &OutputFilename,
   args.push_back("-o");
   args.push_back(OutputFilename.c_str());
   args.push_back(InputFilename.c_str());
-  
+
   if (Shared) args.push_back("-shared");
   if (!RPath.empty()) {
     std::string rp = "-Wl,-rpath," + RPath;
@@ -401,7 +401,7 @@ int llvm::GenerateNative(const std::string &OutputFilename,
     std::string so = "-Wl,-soname," + SOName;
     args.push_back(so.c_str());
   }
-  
+
   // Add in the libpaths to find the libraries.
   //
   // Note:

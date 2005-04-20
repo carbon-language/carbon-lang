@@ -46,9 +46,9 @@ namespace {
   OutputFilename("o", cl::desc("Override output filename"), cl::init("a.out"),
                  cl::value_desc("filename"));
 
-  cl::opt<bool>    
+  cl::opt<bool>
   Verbose("v", cl::desc("Print information about actions taken"));
-  
+
   cl::list<std::string> 
   LibPaths("L", cl::desc("Specify a library search path"), cl::Prefix,
            cl::value_desc("directory"));
@@ -77,29 +77,29 @@ namespace {
   Relink("r", cl::desc("Alias for -link-as-library"),
          cl::aliasopt(LinkAsLibrary));
 
-  cl::opt<bool>    
+  cl::opt<bool>
   Native("native",
          cl::desc("Generate a native binary instead of a shell script"));
-  cl::opt<bool>    
+  cl::opt<bool>
   NativeCBE("native-cbe",
             cl::desc("Generate a native binary with the C backend and GCC"));
 
-  cl::opt<bool>    
+  cl::opt<bool>
   SaveTemps("save-temps",
          cl::desc("Do not delete temporary files"));
-            
+
   cl::opt<std::string>
   RPath("rpath",
         cl::desc("Set runtime shared library search path (requires -native or"
                  " -native-cbe)"), 
         cl::Prefix, cl::value_desc("directory"));
-        
+
   cl::opt<std::string>
   SOName("soname",
          cl::desc("Set internal name of shared library (requires -native or"
                  " -native-cbe)"), 
          cl::Prefix, cl::value_desc("name"));
-  
+
   // Compatibility options that are ignored but supported by LD
   cl::opt<std::string>
   CO4("version-script", cl::Hidden, cl::desc("Compatibility option: ignored"));
@@ -317,7 +317,7 @@ int main(int argc, char **argv, char **envp ) {
         // Remove the bytecode language file.
         sys::Path(RealBytecodeOutput).destroyFile();
       }
-    
+
     } else if (NativeCBE) {
       sys::Path CFile (OutputFilename);
       CFile.appendSuffix("cbe.c");
@@ -352,7 +352,7 @@ int main(int argc, char **argv, char **envp ) {
 
     } else if (!LinkAsLibrary) {
       EmitShellScript(argv);
-      
+
       // Make the bytecode file readable and directly executable in LLEE
       sys::Path(RealBytecodeOutput).makeExecutable();
       sys::Path(RealBytecodeOutput).makeReadable();
@@ -360,7 +360,7 @@ int main(int argc, char **argv, char **envp ) {
 
     // Make the output, whether native or script, executable as well...
     sys::Path(OutputFilename).makeExecutable();
-  
+
   } catch (const char*msg) {
     std::cerr << argv[0] << ": " << msg << "\n";
     exitCode = 1;
