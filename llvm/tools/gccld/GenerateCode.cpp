@@ -120,6 +120,13 @@ static void RemoveEnv(const char * name, char ** const envp) {
   return;
 }
 
+static void dumpArgs(const char **args) {
+  std::cout << *args++;
+  while (*args)
+    std::cout << ' ' << *args++;
+  std::cout << '\n';
+}
+
 static inline void addPass(PassManager &PM, Pass *P) {
   // Add the pass to the pass manager...
   PM.add(P);
@@ -297,7 +304,8 @@ int llvm::GenerateBytecode(Module *M, int StripLevel, bool Internalize,
 ///
 int llvm::GenerateAssembly(const std::string &OutputFilename,
                            const std::string &InputFilename,
-                           const sys::Path &llc) {
+                           const sys::Path &llc,
+                           bool Verbose) {
   // Run LLC to convert the bytecode file into assembly code.
   std::vector<const char*> args;
   args.push_back(llc.c_str());
@@ -306,7 +314,7 @@ int llvm::GenerateAssembly(const std::string &OutputFilename,
   args.push_back(OutputFilename.c_str());
   args.push_back(InputFilename.c_str());
   args.push_back(0);
-
+  if (Verbose) dumpArgs(&args[0]);
   return sys::Program::ExecuteAndWait(llc, &args[0]);
 }
 
@@ -314,7 +322,8 @@ int llvm::GenerateAssembly(const std::string &OutputFilename,
 /// specified bytecode file.
 int llvm::GenerateCFile(const std::string &OutputFile,
                         const std::string &InputFile,
-                        const sys::Path &llc) {
+                        const sys::Path &llc,
+                        bool Verbose) {
   // Run LLC to convert the bytecode file into C.
   std::vector<const char*> args;
   args.push_back(llc.c_str());
@@ -324,6 +333,7 @@ int llvm::GenerateCFile(const std::string &OutputFile,
   args.push_back(OutputFile.c_str());
   args.push_back(InputFile.c_str());
   args.push_back(0);
+  if (Verbose) dumpArgs(&args[0]);
   return sys::Program::ExecuteAndWait(llc, &args[0]);
 }
 
@@ -349,7 +359,8 @@ int llvm::GenerateNative(const std::string &OutputFilename,
                          const sys::Path &gcc, char ** const envp,
                          bool Shared,
                          const std::string &RPath,
-                         const std::string &SOName) {
+                         const std::string &SOName,
+                         bool Verbose) {
   // Remove these environment variables from the environment of the
   // programs that we will execute.  It appears that GCC sets these
   // environment variables so that the programs it uses can configure
@@ -417,6 +428,7 @@ int llvm::GenerateNative(const std::string &OutputFilename,
   args.push_back(0);
 
   // Run the compiler to assembly and link together the program.
+  if (Verbose) dumpArgs(&args[0]);
   return sys::Program::ExecuteAndWait(gcc, &args[0], (const char**)clean_env);
 }
 

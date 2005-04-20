@@ -83,6 +83,10 @@ namespace {
   cl::opt<bool>    
   NativeCBE("native-cbe",
             cl::desc("Generate a native binary with the C backend and GCC"));
+
+  cl::opt<bool>    
+  SaveTemps("save-temps",
+         cl::desc("Do not delete temporary files"));
             
   cl::opt<std::string>
   RPath("rpath",
@@ -300,16 +304,19 @@ int main(int argc, char **argv, char **envp ) {
 
       // Generate an assembly language file for the bytecode.
       if (Verbose) std::cout << "Generating Assembly Code\n";
-      GenerateAssembly(AssemblyFile.toString(), RealBytecodeOutput, llc);
+      GenerateAssembly(AssemblyFile.toString(), RealBytecodeOutput, llc, 
+                       Verbose);
       if (Verbose) std::cout << "Generating Native Code\n";
       GenerateNative(OutputFilename, AssemblyFile.toString(), 
                      LibPaths, Libraries, gcc, envp, LinkAsLibrary, RPath,
-                     SOName );
+                     SOName, Verbose);
 
-      // Remove the assembly language file.
-      AssemblyFile.destroyFile();
-      // Remove the bytecode language file.
-      sys::Path(RealBytecodeOutput).destroyFile();
+      if (!SaveTemps) {
+        // Remove the assembly language file.
+        AssemblyFile.destroyFile();
+        // Remove the bytecode language file.
+        sys::Path(RealBytecodeOutput).destroyFile();
+      }
     
     } else if (NativeCBE) {
       sys::Path CFile (OutputFilename);
@@ -329,18 +336,19 @@ int main(int argc, char **argv, char **envp ) {
         return PrintAndReturn(argv[0], "Failed to find gcc");
 
       // Generate an assembly language file for the bytecode.
-      if (Verbose) std::cout << "Generating Assembly Code\n";
-      GenerateCFile(CFile.toString(), RealBytecodeOutput, llc);
+      if (Verbose) std::cout << "Generating C Source Code\n";
+      GenerateCFile(CFile.toString(), RealBytecodeOutput, llc, Verbose);
       if (Verbose) std::cout << "Generating Native Code\n";
       GenerateNative(OutputFilename, CFile.toString(),
                      LibPaths, Libraries, gcc, envp, LinkAsLibrary, RPath,
-                     SOName );
+                     SOName, Verbose);
 
-      // Remove the assembly language file.
-      CFile.destroyFile();
-    
-      // Remove the bytecode language file.
-      sys::Path(RealBytecodeOutput).destroyFile();
+      if (!SaveTemps) {
+        // Remove the assembly language file.
+        CFile.destroyFile();
+        // Remove the bytecode language file.
+        sys::Path(RealBytecodeOutput).destroyFile();
+      }
 
     } else if (!LinkAsLibrary) {
       EmitShellScript(argv);

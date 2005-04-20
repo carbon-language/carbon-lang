@@ -29,12 +29,14 @@ GenerateBytecode (Module * M,
 int
 GenerateAssembly (const std::string & OutputFilename,
                   const std::string & InputFilename,
-                  const sys::Path & llc);
+                  const sys::Path & llc,
+                  bool Verbose=false);
 
 int 
 GenerateCFile (const std::string &OutputFile, 
                const std::string &InputFile,
-               const sys::Path &llc);
+               const sys::Path &llc,
+               bool Verbose=false);
 int
 GenerateNative (const std::string & OutputFilename,
                 const std::string & InputFilename,
@@ -44,6 +46,7 @@ GenerateNative (const std::string & OutputFilename,
                 char ** const envp,
                 bool Shared,
                 const std::string & RPath,
-                const std::string & SOName);
+                const std::string & SOName,
+                bool Verbose=false);
 
 } // End llvm namespace
