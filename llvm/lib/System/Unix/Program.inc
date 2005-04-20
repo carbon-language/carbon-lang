@@ -44,6 +44,8 @@ Program::FindProgramByName(const std::string& progName) {
   Path temp;
   if (!temp.setFile(progName)) // invalid name
     return Path();
+  // FIXME: have to check for absolute filename - we cannot assume anything
+  // about "." being in $PATH
   if (temp.executable()) // already executable as is
     return temp;
 
