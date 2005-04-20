@@ -21,15 +21,15 @@
 namespace llvm {
 
 int
-GenerateBytecode (Module * M,
+GenerateBytecode (Module *M,
                   int StripLevel,
                   bool Internalize,
-                  std::ostream * Out);
+                  std::ostream *Out);
 
 int
-GenerateAssembly (const std::string & OutputFilename,
-                  const std::string & InputFilename,
-                  const sys::Path & llc,
+GenerateAssembly (const std::string &OutputFilename,
+                  const std::string &InputFilename,
+                  const sys::Path &llc,
                   bool Verbose=false);
 
 int 
@@ -38,15 +38,15 @@ GenerateCFile (const std::string &OutputFile,
                const sys::Path &llc,
                bool Verbose=false);
 int
-GenerateNative (const std::string & OutputFilename,
-                const std::string & InputFilename,
-                const std::vector<std::string> & LibPaths,
-                const std::vector<std::string> & Libraries,
-                const sys::Path & gcc,
+GenerateNative (const std::string &OutputFilename,
+                const std::string &InputFilename,
+                const std::vector<std::string> &LibPaths,
+                const std::vector<std::string> &Libraries,
+                const sys::Path &gcc,
                 char ** const envp,
                 bool Shared,
-                const std::string & RPath,
-                const std::string & SOName,
+                const std::string &RPath,
+                const std::string &SOName,
                 bool Verbose=false);
 
 } // End llvm namespace
