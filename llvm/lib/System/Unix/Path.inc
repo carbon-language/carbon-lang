@@ -398,17 +398,22 @@ Path::getDirectoryContents(std::set<Path>& result) const {
 
   result.clear();
   struct dirent* de = ::readdir(direntries);
-  while (de != 0) {
+  for ( ; de != 0; de = ::readdir(direntries)) {
     if (de->d_name[0] != '.') {
       Path aPath(path + (const char*)de->d_name);
       struct stat buf;
-      if (0 != stat(aPath.path.c_str(), &buf))
+      if (0 != stat(aPath.path.c_str(), &buf)) {
+        int saved_errno = errno;
+        struct stat st;
+        if (0 == lstat(aPath.path.c_str(), &st) && S_ISLNK(st.st_mode))
+          continue; // dangling symlink -- ignore
+        errno = saved_errno;
         ThrowErrno(aPath.path + ": can't get status");
+      }
       if (S_ISDIR(buf.st_mode))
         aPath.path += "/";
       result.insert(aPath);
     }
-    de = ::readdir(direntries);
   }
   
   closedir(direntries);
