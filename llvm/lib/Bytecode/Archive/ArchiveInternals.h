@@ -39,7 +39,7 @@ namespace llvm {
     /// @name Data
     /// @{
     public:
-      char name[16];///< Name of the file member. 
+      char name[16];  ///< Name of the file member. 
       char date[12];  ///< File date, decimal seconds since Epoch
       char uid[6];    ///< user id in ASCII decimal
       char gid[6];    ///< group id in ASCII decimal
