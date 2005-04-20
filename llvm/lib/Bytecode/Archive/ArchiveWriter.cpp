@@ -318,6 +318,12 @@ Archive::writeSymbolTable(std::ofstream& ARFile) {
   memcpy(Hdr.name,ARFILE_LLVM_SYMTAB_NAME,16);
   uint64_t secondsSinceEpoch = sys::TimeValue::now().toEpochTime();
   char buffer[32];
+  sprintf(buffer, "%-8o", 0644);
+  memcpy(Hdr.mode,buffer,8);
+  sprintf(buffer, "%-6u", getuid());
+  memcpy(Hdr.uid,buffer,6);
+  sprintf(buffer, "%-6u", getgid());
+  memcpy(Hdr.gid,buffer,6);
   sprintf(buffer,"%-12u", unsigned(secondsSinceEpoch));
   memcpy(Hdr.date,buffer,12);
   sprintf(buffer,"%-10u",symTabSize);
