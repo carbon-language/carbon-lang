@@ -1,10 +1,10 @@
 //===--- examples/Fibonacci/fibonacci.cpp - An example use of the JIT -----===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by Valery A. Khamenya and is distributed under the
 // University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This small program provides an example of how to build quickly a small module
@@ -17,7 +17,7 @@
 //     if(x<=2) return 1;
 //     return fib(x-1)+fib(x-2);
 //   }
-// 
+//
 // Once we have this, we compile the module via JIT, then execute the `fib'
 // function and return result to a driver, i.e. to a "host program".
 //
@@ -38,10 +38,10 @@ static Function *CreateFibFunction(Module *M) {
   // Create the fib function and insert it into module M.  This function is said
   // to return an int and take an int parameter.
   Function *FibF = M->getOrInsertFunction("fib", Type::IntTy, Type::IntTy, 0);
-  
+
   // Add a basic block to the function.
   BasicBlock *BB = new BasicBlock("EntryBlock", FibF);
-  
+
   // Get pointers to the constants.
   Value *One = ConstantSInt::get(Type::IntTy, 1);
   Value *Two = ConstantSInt::get(Type::IntTy, 2);
@@ -61,11 +61,11 @@ static Function *CreateFibFunction(Module *M) {
 
   // Create: ret int 1
   new ReturnInst(One, RetBB);
-  
+
   // create fib(x-1)
   Value *Sub = BinaryOperator::createSub(ArgX, One, "arg", RecurseBB);
   Value *CallFibX1 = new CallInst(FibF, Sub, "fibx1", RecurseBB);
-      
+
   // create fib(x-2)
   Sub = BinaryOperator::createSub(ArgX, Two, "arg", RecurseBB);
   Value *CallFibX2 = new CallInst(FibF, Sub, "fibx2", RecurseBB);
@@ -73,7 +73,7 @@ static Function *CreateFibFunction(Module *M) {
   // fib(x-1)+fib(x-2)
   Value *Sum = BinaryOperator::createAdd(CallFibX1, CallFibX2,
                                          "addresult", RecurseBB);
-      
+
   // Create the return instruction and add it to the basic block
   new ReturnInst(Sum, RecurseBB);
 
@@ -90,7 +90,7 @@ int main(int argc, char **argv) {
   // We are about to create the "fib" function:
   Function *FibF = CreateFibFunction(M);
 
-  // Now we going to create JIT 
+  // Now we going to create JIT
   ExistingModuleProvider *MP = new ExistingModuleProvider(M);
   ExecutionEngine *EE = ExecutionEngine::create(MP, false);
 

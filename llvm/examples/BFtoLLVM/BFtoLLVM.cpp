@@ -1,10 +1,10 @@
 //===-- BFtoLLVM.cpp - BF language Front End for LLVM ---------------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This is a simple front end for the BF language.  It is compatible with the
@@ -60,7 +60,7 @@ void emitArith (std::string op, char delta, std::ofstream &dest) {
   std::string ptr = gensym (op + "ptr"),
 	      val = gensym (op + "val"),
 	      result = gensym (op + "result");
-  dest << ptr << " = load sbyte** %ptrbox\n" 
+  dest << ptr << " = load sbyte** %ptrbox\n"
        << val << " = load sbyte* " << ptr << "\n"
        << result << " = add sbyte " << val << ", " << (int)delta << "\n"
        << "store sbyte " << result << ", sbyte* " << ptr << "\n";
@@ -172,7 +172,7 @@ int main (int argc, char **argv) {
 
   char *sourceFileName = argv[1];
   char *destFileName = argv[2];
-  
+
   std::ifstream src (sourceFileName);
   if (!src.good()) {
     std::cerr << sourceFileName << ": " << strerror(errno) << "\n";
@@ -184,7 +184,7 @@ int main (int argc, char **argv) {
     std::cerr << destFileName << ": " << strerror(errno) << "\n";
     return 1;
   }
-  
+
   emitDeclarations(dest);
   emitMainFunctionProlog(dest);
 
@@ -199,7 +199,7 @@ int main (int argc, char **argv) {
       repeatCount = 0;
     }
   consume (lastCh, repeatCount, dest);
-  
+
   emitMainFunctionEpilog(dest);
 
   src.close();
