@@ -20,9 +20,8 @@
 #include "llvm/System/Signals.h"
 #include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/StringExtras.h"
-#include <iostream>
 #include "llvm/Config/alloca.h"
-
+#include <iostream>
 using namespace llvm;
 
 namespace {
