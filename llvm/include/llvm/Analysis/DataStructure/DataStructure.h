@@ -126,14 +126,17 @@ public:
   DSGraph &getDSGraph(const Function &F) const {
     hash_map<Function*, DSGraph*>::const_iterator I =
       DSInfo.find(const_cast<Function*>(&F));
-    assert(I != DSInfo.end() && "Function not in module!");
-    return *I->second;
+    if (I != DSInfo.end())
+      return *I->second;
+    return const_cast<BUDataStructures*>(this)->
+                   CreateGraphForExternalFunction(F);
   }
 
   DSGraph &getGlobalsGraph() const { return *GlobalsGraph; }
 
   EquivalenceClasses<GlobalValue*> &getGlobalECs() { return GlobalECs; }
 
+  DSGraph &CreateGraphForExternalFunction(const Function &F);
 
   /// deleteValue/copyValue - Interfaces to update the DSGraphs in the program.
   /// These correspond to the interfaces defined in the AliasAnalysis class.
@@ -234,8 +237,9 @@ public:
   DSGraph &getDSGraph(const Function &F) const {
     hash_map<Function*, DSGraph*>::const_iterator I =
       DSInfo.find(const_cast<Function*>(&F));
-    assert(I != DSInfo.end() && "Function not in module!");
-    return *I->second;
+    if (I != DSInfo.end()) return *I->second;
+    return const_cast<TDDataStructures*>(this)->
+        getOrCreateDSGraph(const_cast<Function&>(F));
   }
 
   DSGraph &getGlobalsGraph() const { return *GlobalsGraph; }
