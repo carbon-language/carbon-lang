@@ -19,6 +19,7 @@
 #include "llvm/Module.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/Timer.h"
 using namespace llvm;
 
 namespace {
@@ -172,7 +173,8 @@ bool BUDataStructures::runOnModule(Module &M) {
   std::set<GlobalValue*> ECGlobals;
   BuildGlobalECs(*GlobalsGraph, ECGlobals);
   if (!ECGlobals.empty()) {
-    DEBUG(std::cerr << "Eliminating " << ECGlobals.size() << " EC Globals!\n");
+    NamedRegionTimer X("Bottom-UP EC Cleanup");
+    std::cerr << "Eliminating " << ECGlobals.size() << " EC Globals!\n";
     for (hash_map<Function*, DSGraph*>::iterator I = DSInfo.begin(),
            E = DSInfo.end(); I != E; ++I)
       EliminateUsesOfECGlobals(*I->second, ECGlobals);
@@ -225,7 +227,8 @@ static bool isVAHackFn(const Function *F) {
   return F->getName() == "printf"  || F->getName() == "sscanf" ||
     F->getName() == "fprintf" || F->getName() == "open" ||
     F->getName() == "sprintf" || F->getName() == "fputs" ||
-    F->getName() == "fscanf";
+    F->getName() == "fscanf" || F->getName() == "malloc" ||
+    F->getName() == "free";
 }
 
 static bool isResolvableFunc(const Function* callee) {
@@ -403,6 +406,32 @@ void BUDataStructures::releaseMyMemory() {
   delete GlobalsGraph;
   GlobalsGraph = 0;
 }
+
+DSGraph &BUDataStructures::CreateGraphForExternalFunction(const Function &Fn) {
+  Function *F = const_cast<Function*>(&Fn);
+  DSGraph *DSG = new DSGraph(GlobalECs, GlobalsGraph->getTargetData());
+  DSInfo[F] = DSG;
+  DSG->setGlobalsGraph(GlobalsGraph);
+  DSG->setPrintAuxCalls();
+
+  // Add function to the graph.
+  DSG->getReturnNodes().insert(std::make_pair(F, DSNodeHandle()));
+
+  if (F->getName() == "free") { // Taking the address of free.
+    
+    // Free should take a single pointer argument, mark it as heap memory.
+    DSNode *N = new DSNode(0, DSG);
+    N->setHeapNodeMarker();
+    DSG->getNodeForValue(F->arg_begin()).mergeWith(N);
+
+  } else {
+    std::cerr << "Unrecognized external function: " << F->getName() << "\n";
+    abort();
+  }
+
+  return *DSG;
+}
+
 
 void BUDataStructures::calculateGraph(DSGraph &Graph) {
   // Move our call site list into TempFCs so that inline call sites go into the
