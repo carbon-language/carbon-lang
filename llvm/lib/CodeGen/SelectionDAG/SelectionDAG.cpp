@@ -781,7 +781,7 @@ static bool MaskedValueIsZero(const SDOperand &Op, uint64_t Mask,
 
   case ISD::AND:
     // (X & C1) & C2 == 0   iff   C1 & C2 == 0.
-    if (ConstantSDNode *AndRHS = dyn_cast<ConstantSDNode>(Op.getOperand(0)))
+    if (ConstantSDNode *AndRHS = dyn_cast<ConstantSDNode>(Op.getOperand(1)))
       return MaskedValueIsZero(Op.getOperand(0),AndRHS->getValue() & Mask, TLI);
 
     // FALL THROUGH
@@ -792,9 +792,23 @@ static bool MaskedValueIsZero(const SDOperand &Op, uint64_t Mask,
   case ISD::SELECT:
     return MaskedValueIsZero(Op.getOperand(1), Mask, TLI) &&
            MaskedValueIsZero(Op.getOperand(2), Mask, TLI);
-    
-  // TODO: (shl X, C1) & C2 == 0   iff  (-1 << C1) & C2 == 0
-  // TODO: (ushr X, C1) & C2 == 0   iff  (-1 >> C1) & C2 == 0
+
+  case ISD::SRL:
+    // (ushr X, C1) & C2 == 0   iff  X & (C2 << C1) == 0
+    if (ConstantSDNode *ShAmt = dyn_cast<ConstantSDNode>(Op.getOperand(1))) {
+      uint64_t NewVal = Mask << ShAmt->getValue();
+      SrcBits = MVT::getSizeInBits(Op.getValueType());
+      if (SrcBits != 64) NewVal &= (1ULL << SrcBits)-1;
+      return MaskedValueIsZero(Op.getOperand(0), NewVal, TLI);
+    }
+    return false;
+  case ISD::SHL:
+    // (ushl X, C1) & C2 == 0   iff  X & (C2 >> C1) == 0
+    if (ConstantSDNode *ShAmt = dyn_cast<ConstantSDNode>(Op.getOperand(1))) {
+      uint64_t NewVal = Mask >> ShAmt->getValue();
+      return MaskedValueIsZero(Op.getOperand(0), NewVal, TLI);
+    }
+    return false;
   default: break;
   }
 
@@ -941,8 +955,14 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
       if (MaskedValueIsZero(N1, C2, TLI))  // X and 0 -> 0
         return getConstant(0, VT);
 
-      if (MaskedValueIsZero(N1, ~C2, TLI))
-        return N1;                // if (X & ~C2) -> 0, the and is redundant
+      {
+        uint64_t NotC2 = ~C2;
+        if (VT != MVT::i64)
+          NotC2 &= (1ULL << MVT::getSizeInBits(VT))-1;
+
+        if (MaskedValueIsZero(N1, NotC2, TLI))
+          return N1;                // if (X & ~C2) -> 0, the and is redundant
+      }
 
       // FIXME: Should add a corresponding version of this for
       // ZERO_EXTEND/SIGN_EXTEND by converting them to an ANY_EXTEND node which
