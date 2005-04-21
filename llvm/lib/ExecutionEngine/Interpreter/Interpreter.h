@@ -1,10 +1,10 @@
 //===-- Interpreter.h ------------------------------------------*- C++ -*--===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This header file defines the interpreter structure
@@ -123,7 +123,7 @@ public:
   /// freeMachineCodeForFunction - The interpreter does not generate any code.
   ///
   void freeMachineCodeForFunction(Function *F) { }
-  
+
   // Methods used to execute code:
   // Place a call on the stack
   void callFunction(Function *F, const std::vector<GenericValue> &ArgVals);
@@ -160,7 +160,7 @@ public:
     assert(0 && "Instruction not interpretable yet!");
   }
 
-  GenericValue callExternalFunction(Function *F, 
+  GenericValue callExternalFunction(Function *F,
                                     const std::vector<GenericValue> &ArgVals);
   void exitCalled(GenericValue GV);
 
@@ -181,7 +181,7 @@ private:  // Helper functions
   // SwitchToNewBasicBlock - Start execution in a new basic block and run any
   // PHI nodes in the top of the block.  This is used for intraprocedural
   // control flow.
-  // 
+  //
   void SwitchToNewBasicBlock(BasicBlock *Dest, ExecutionContext &SF);
 
   void *getPointerToFunction(Function *F) { return (void*)F; }

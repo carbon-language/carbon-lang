@@ -1,16 +1,16 @@
 //===-- ExternalFunctions.cpp - Implement External Functions --------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
-// 
+//
 //  This file contains both code to deal with invoking "external" functions, but
 //  also contains code that implements "exported" external functions.
 //
-//  External functions in the interpreter are implemented by 
+//  External functions in the interpreter are implemented by
 //  using the system's dynamic loader to look up the address of the function
 //  we want to invoke.  If a function is found, then one of the
 //  many lle_* wrapper functions in this file will translate its arguments from
@@ -301,7 +301,7 @@ GenericValue lle_X_sprintf(FunctionType *M, const vector<GenericValue> &Args) {
         Last = *FB++ = *FmtStr++;
       }
       *FB = 0;
-      
+
       switch (Last) {
       case '%':
         sprintf(Buffer, FmtBuf); break;
@@ -328,7 +328,7 @@ GenericValue lle_X_sprintf(FunctionType *M, const vector<GenericValue> &Args) {
         sprintf(Buffer, FmtBuf, Args[ArgNo++].DoubleVal); break;
       case 'p':
         sprintf(Buffer, FmtBuf, (void*)GVTOP(Args[ArgNo++])); break;
-      case 's': 
+      case 's':
         sprintf(Buffer, FmtBuf, (char*)GVTOP(Args[ArgNo++])); break;
       default:  std::cout << "<unknown printf code '" << *FmtStr << "'!>";
         ArgNo++; break;
@@ -504,7 +504,7 @@ static GenericValue size_t_to_GV (size_t n) {
   return Ret;
 }
 
-static size_t GV_to_size_t (GenericValue GV) { 
+static size_t GV_to_size_t (GenericValue GV) {
   size_t count;
   if (sizeof (size_t) == sizeof (uint64_t)) {
     count = (size_t)GV.ULongVal;

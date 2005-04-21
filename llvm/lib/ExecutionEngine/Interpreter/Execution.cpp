@@ -1,12 +1,12 @@
 //===-- Execution.cpp - Implement code to simulate the program ------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
-// 
+//
 //  This file contains the actual instruction interpreter.
 //
 //===----------------------------------------------------------------------===//
@@ -34,39 +34,39 @@ namespace {
 //                     Value Manipulation code
 //===----------------------------------------------------------------------===//
 
-static GenericValue executeAddInst(GenericValue Src1, GenericValue Src2, 
-				   const Type *Ty);
-static GenericValue executeSubInst(GenericValue Src1, GenericValue Src2, 
-				   const Type *Ty);
-static GenericValue executeMulInst(GenericValue Src1, GenericValue Src2, 
-				   const Type *Ty);
-static GenericValue executeRemInst(GenericValue Src1, GenericValue Src2, 
-				   const Type *Ty);
-static GenericValue executeDivInst(GenericValue Src1, GenericValue Src2, 
-				   const Type *Ty);
-static GenericValue executeAndInst(GenericValue Src1, GenericValue Src2, 
-				   const Type *Ty);
-static GenericValue executeOrInst(GenericValue Src1, GenericValue Src2, 
-				   const Type *Ty);
-static GenericValue executeXorInst(GenericValue Src1, GenericValue Src2, 
-				   const Type *Ty);
-static GenericValue executeSetEQInst(GenericValue Src1, GenericValue Src2, 
-				   const Type *Ty);
-static GenericValue executeSetNEInst(GenericValue Src1, GenericValue Src2, 
-				   const Type *Ty);
-static GenericValue executeSetLTInst(GenericValue Src1, GenericValue Src2, 
-				   const Type *Ty);
-static GenericValue executeSetGTInst(GenericValue Src1, GenericValue Src2, 
-				   const Type *Ty);
-static GenericValue executeSetLEInst(GenericValue Src1, GenericValue Src2, 
-				   const Type *Ty);
-static GenericValue executeSetGEInst(GenericValue Src1, GenericValue Src2, 
-				   const Type *Ty);
-static GenericValue executeShlInst(GenericValue Src1, GenericValue Src2, 
-				   const Type *Ty);
-static GenericValue executeShrInst(GenericValue Src1, GenericValue Src2, 
-				   const Type *Ty);
-static GenericValue executeSelectInst(GenericValue Src1, GenericValue Src2, 
+static GenericValue executeAddInst(GenericValue Src1, GenericValue Src2,
+                                   const Type *Ty);
+static GenericValue executeSubInst(GenericValue Src1, GenericValue Src2,
+                                   const Type *Ty);
+static GenericValue executeMulInst(GenericValue Src1, GenericValue Src2,
+                                   const Type *Ty);
+static GenericValue executeRemInst(GenericValue Src1, GenericValue Src2,
+                                   const Type *Ty);
+static GenericValue executeDivInst(GenericValue Src1, GenericValue Src2,
+                                   const Type *Ty);
+static GenericValue executeAndInst(GenericValue Src1, GenericValue Src2,
+                                   const Type *Ty);
+static GenericValue executeOrInst(GenericValue Src1, GenericValue Src2,
+                                   const Type *Ty);
+static GenericValue executeXorInst(GenericValue Src1, GenericValue Src2,
+                                   const Type *Ty);
+static GenericValue executeSetEQInst(GenericValue Src1, GenericValue Src2,
+                                   const Type *Ty);
+static GenericValue executeSetNEInst(GenericValue Src1, GenericValue Src2,
+                                   const Type *Ty);
+static GenericValue executeSetLTInst(GenericValue Src1, GenericValue Src2,
+                                   const Type *Ty);
+static GenericValue executeSetGTInst(GenericValue Src1, GenericValue Src2,
+                                   const Type *Ty);
+static GenericValue executeSetLEInst(GenericValue Src1, GenericValue Src2,
+                                   const Type *Ty);
+static GenericValue executeSetGEInst(GenericValue Src1, GenericValue Src2,
+                                   const Type *Ty);
+static GenericValue executeShlInst(GenericValue Src1, GenericValue Src2,
+                                   const Type *Ty);
+static GenericValue executeShrInst(GenericValue Src1, GenericValue Src2,
+                                   const Type *Ty);
+static GenericValue executeSelectInst(GenericValue Src1, GenericValue Src2,
                                       GenericValue Src3);
 
 GenericValue Interpreter::getConstantExprValue (ConstantExpr *CE,
@@ -179,8 +179,8 @@ void Interpreter::initializeExecutionEngine() {
 #define IMPLEMENT_BINARY_OPERATOR(OP, TY) \
    case Type::TY##TyID: Dest.TY##Val = Src1.TY##Val OP Src2.TY##Val; break
 
-static GenericValue executeAddInst(GenericValue Src1, GenericValue Src2, 
-				   const Type *Ty) {
+static GenericValue executeAddInst(GenericValue Src1, GenericValue Src2,
+                                   const Type *Ty) {
   GenericValue Dest;
   switch (Ty->getTypeID()) {
     IMPLEMENT_BINARY_OPERATOR(+, UByte);
@@ -200,8 +200,8 @@ static GenericValue executeAddInst(GenericValue Src1, GenericValue Src2,
   return Dest;
 }
 
-static GenericValue executeSubInst(GenericValue Src1, GenericValue Src2, 
-				   const Type *Ty) {
+static GenericValue executeSubInst(GenericValue Src1, GenericValue Src2,
+                                   const Type *Ty) {
   GenericValue Dest;
   switch (Ty->getTypeID()) {
     IMPLEMENT_BINARY_OPERATOR(-, UByte);
@@ -221,8 +221,8 @@ static GenericValue executeSubInst(GenericValue Src1, GenericValue Src2,
   return Dest;
 }
 
-static GenericValue executeMulInst(GenericValue Src1, GenericValue Src2, 
-				   const Type *Ty) {
+static GenericValue executeMulInst(GenericValue Src1, GenericValue Src2,
+                                   const Type *Ty) {
   GenericValue Dest;
   switch (Ty->getTypeID()) {
     IMPLEMENT_BINARY_OPERATOR(*, UByte);
@@ -242,8 +242,8 @@ static GenericValue executeMulInst(GenericValue Src1, GenericValue Src2,
   return Dest;
 }
 
-static GenericValue executeDivInst(GenericValue Src1, GenericValue Src2, 
-				   const Type *Ty) {
+static GenericValue executeDivInst(GenericValue Src1, GenericValue Src2,
+                                   const Type *Ty) {
   GenericValue Dest;
   switch (Ty->getTypeID()) {
     IMPLEMENT_BINARY_OPERATOR(/, UByte);
@@ -263,8 +263,8 @@ static GenericValue executeDivInst(GenericValue Src1, GenericValue Src2,
   return Dest;
 }
 
-static GenericValue executeRemInst(GenericValue Src1, GenericValue Src2, 
-				   const Type *Ty) {
+static GenericValue executeRemInst(GenericValue Src1, GenericValue Src2,
+                                   const Type *Ty) {
   GenericValue Dest;
   switch (Ty->getTypeID()) {
     IMPLEMENT_BINARY_OPERATOR(%, UByte);
@@ -288,8 +288,8 @@ static GenericValue executeRemInst(GenericValue Src1, GenericValue Src2,
   return Dest;
 }
 
-static GenericValue executeAndInst(GenericValue Src1, GenericValue Src2, 
-				   const Type *Ty) {
+static GenericValue executeAndInst(GenericValue Src1, GenericValue Src2,
+                                   const Type *Ty) {
   GenericValue Dest;
   switch (Ty->getTypeID()) {
     IMPLEMENT_BINARY_OPERATOR(&, Bool);
@@ -308,7 +308,7 @@ static GenericValue executeAndInst(GenericValue Src1, GenericValue Src2,
   return Dest;
 }
 
-static GenericValue executeOrInst(GenericValue Src1, GenericValue Src2, 
+static GenericValue executeOrInst(GenericValue Src1, GenericValue Src2,
                                   const Type *Ty) {
   GenericValue Dest;
   switch (Ty->getTypeID()) {
@@ -328,7 +328,7 @@ static GenericValue executeOrInst(GenericValue Src1, GenericValue Src2,
   return Dest;
 }
 
-static GenericValue executeXorInst(GenericValue Src1, GenericValue Src2, 
+static GenericValue executeXorInst(GenericValue Src1, GenericValue Src2,
                                    const Type *Ty) {
   GenericValue Dest;
   switch (Ty->getTypeID()) {
@@ -360,8 +360,8 @@ static GenericValue executeXorInst(GenericValue Src1, GenericValue Src2,
         Dest.BoolVal = (void*)(intptr_t)Src1.PointerVal OP \
                        (void*)(intptr_t)Src2.PointerVal; break
 
-static GenericValue executeSetEQInst(GenericValue Src1, GenericValue Src2, 
-				     const Type *Ty) {
+static GenericValue executeSetEQInst(GenericValue Src1, GenericValue Src2,
+                                     const Type *Ty) {
   GenericValue Dest;
   switch (Ty->getTypeID()) {
     IMPLEMENT_SETCC(==, UByte);
@@ -382,8 +382,8 @@ static GenericValue executeSetEQInst(GenericValue Src1, GenericValue Src2,
   return Dest;
 }
 
-static GenericValue executeSetNEInst(GenericValue Src1, GenericValue Src2, 
-				     const Type *Ty) {
+static GenericValue executeSetNEInst(GenericValue Src1, GenericValue Src2,
+                                     const Type *Ty) {
   GenericValue Dest;
   switch (Ty->getTypeID()) {
     IMPLEMENT_SETCC(!=, UByte);
@@ -405,8 +405,8 @@ static GenericValue executeSetNEInst(GenericValue Src1, GenericValue Src2,
   return Dest;
 }
 
-static GenericValue executeSetLEInst(GenericValue Src1, GenericValue Src2, 
-				     const Type *Ty) {
+static GenericValue executeSetLEInst(GenericValue Src1, GenericValue Src2,
+                                     const Type *Ty) {
   GenericValue Dest;
   switch (Ty->getTypeID()) {
     IMPLEMENT_SETCC(<=, UByte);
@@ -427,8 +427,8 @@ static GenericValue executeSetLEInst(GenericValue Src1, GenericValue Src2,
   return Dest;
 }
 
-static GenericValue executeSetGEInst(GenericValue Src1, GenericValue Src2, 
-				     const Type *Ty) {
+static GenericValue executeSetGEInst(GenericValue Src1, GenericValue Src2,
+                                     const Type *Ty) {
   GenericValue Dest;
   switch (Ty->getTypeID()) {
     IMPLEMENT_SETCC(>=, UByte);
@@ -449,8 +449,8 @@ static GenericValue executeSetGEInst(GenericValue Src1, GenericValue Src2,
   return Dest;
 }
 
-static GenericValue executeSetLTInst(GenericValue Src1, GenericValue Src2, 
-				     const Type *Ty) {
+static GenericValue executeSetLTInst(GenericValue Src1, GenericValue Src2,
+                                     const Type *Ty) {
   GenericValue Dest;
   switch (Ty->getTypeID()) {
     IMPLEMENT_SETCC(<, UByte);
@@ -471,8 +471,8 @@ static GenericValue executeSetLTInst(GenericValue Src1, GenericValue Src2,
   return Dest;
 }
 
-static GenericValue executeSetGTInst(GenericValue Src1, GenericValue Src2, 
-				     const Type *Ty) {
+static GenericValue executeSetGTInst(GenericValue Src1, GenericValue Src2,
+                                     const Type *Ty) {
   GenericValue Dest;
   switch (Ty->getTypeID()) {
     IMPLEMENT_SETCC(>, UByte);
@@ -523,7 +523,7 @@ void Interpreter::visitBinaryOperator(BinaryOperator &I) {
   SetValue(&I, R, SF);
 }
 
-static GenericValue executeSelectInst(GenericValue Src1, GenericValue Src2, 
+static GenericValue executeSelectInst(GenericValue Src1, GenericValue Src2,
                                       GenericValue Src3) {
   return Src1.BoolVal ? Src2 : Src3;
 }
@@ -564,15 +564,15 @@ void Interpreter::popStackAndReturnValueToCaller (const Type *RetTy,
   // Pop the current stack frame.
   ECStack.pop_back();
 
-  if (ECStack.empty()) {  // Finished main.  Put result into exit code... 
-    if (RetTy && RetTy->isIntegral()) {          // Nonvoid return type?       
-      ExitCode = Result.IntVal;   // Capture the exit code of the program 
-    } else { 
-      ExitCode = 0; 
-    } 
-  } else { 
-    // If we have a previous stack frame, and we have a previous call, 
-    // fill in the return value... 
+  if (ECStack.empty()) {  // Finished main.  Put result into exit code...
+    if (RetTy && RetTy->isIntegral()) {          // Nonvoid return type?
+      ExitCode = Result.IntVal;   // Capture the exit code of the program
+    } else {
+      ExitCode = 0;
+    }
+  } else {
+    // If we have a previous stack frame, and we have a previous call,
+    // fill in the return value...
     ExecutionContext &CallingSF = ECStack.back();
     if (Instruction *I = CallingSF.Caller.getInstruction()) {
       if (CallingSF.Caller.getType() != Type::VoidTy)      // Save result...
@@ -629,7 +629,7 @@ void Interpreter::visitBranchInst(BranchInst &I) {
   if (!I.isUnconditional()) {
     Value *Cond = I.getCondition();
     if (getOperandValue(Cond, SF).BoolVal == 0) // If false cond...
-      Dest = I.getSuccessor(1);    
+      Dest = I.getSuccessor(1);
   }
   SwitchToNewBasicBlock(Dest, SF);
 }
@@ -647,7 +647,7 @@ void Interpreter::visitSwitchInst(SwitchInst &I) {
       Dest = cast<BasicBlock>(I.getOperand(i+1));
       break;
     }
-  
+
   if (!Dest) Dest = I.getDefaultDest();   // No cases matched: use default
   SwitchToNewBasicBlock(Dest, SF);
 }
@@ -677,7 +677,7 @@ void Interpreter::SwitchToNewBasicBlock(BasicBlock *Dest, ExecutionContext &SF){
     int i = PN->getBasicBlockIndex(PrevBB);
     assert(i != -1 && "PHINode doesn't contain entry for predecessor??");
     Value *IncomingValue = PN->getIncomingValue(i);
-    
+
     // Save the incoming value for this PHI node...
     ResultValues.push_back(getOperandValue(IncomingValue, SF));
   }
@@ -724,8 +724,8 @@ void Interpreter::visitFreeInst(FreeInst &I) {
 // getElementOffset - The workhorse for getelementptr.
 //
 GenericValue Interpreter::executeGEPOperation(Value *Ptr, gep_type_iterator I,
-					      gep_type_iterator E,
-					      ExecutionContext &SF) {
+                                              gep_type_iterator E,
+                                              ExecutionContext &SF) {
   assert(isa<PointerType>(Ptr->getType()) &&
          "Cannot getElementOffset of a nonpointer type!");
 
@@ -734,10 +734,10 @@ GenericValue Interpreter::executeGEPOperation(Value *Ptr, gep_type_iterator I,
   for (; I != E; ++I) {
     if (const StructType *STy = dyn_cast<StructType>(*I)) {
       const StructLayout *SLO = TD.getStructLayout(STy);
-      
+
       const ConstantUInt *CPU = cast<ConstantUInt>(I.getOperand());
       unsigned Index = unsigned(CPU->getValue());
-      
+
       Total += (PointerTy)SLO->MemberOffsets[Index];
     } else {
       const SequentialType *ST = cast<SequentialType>(*I);
@@ -845,23 +845,23 @@ void Interpreter::visitCallSite(CallSite CS) {
     const Type *Ty = V->getType();
     if (Ty->isIntegral() && Ty->getPrimitiveSize() < 4) {
       if (Ty == Type::ShortTy)
-	ArgVals.back().IntVal = ArgVals.back().ShortVal;
+        ArgVals.back().IntVal = ArgVals.back().ShortVal;
       else if (Ty == Type::UShortTy)
-	ArgVals.back().UIntVal = ArgVals.back().UShortVal;
+        ArgVals.back().UIntVal = ArgVals.back().UShortVal;
       else if (Ty == Type::SByteTy)
-	ArgVals.back().IntVal = ArgVals.back().SByteVal;
+        ArgVals.back().IntVal = ArgVals.back().SByteVal;
       else if (Ty == Type::UByteTy)
-	ArgVals.back().UIntVal = ArgVals.back().UByteVal;
+        ArgVals.back().UIntVal = ArgVals.back().UByteVal;
       else if (Ty == Type::BoolTy)
-	ArgVals.back().UIntVal = ArgVals.back().BoolVal;
+        ArgVals.back().UIntVal = ArgVals.back().BoolVal;
       else
-	assert(0 && "Unknown type!");
+        assert(0 && "Unknown type!");
     }
   }
 
-  // To handle indirect calls, we must get the pointer value from the argument 
+  // To handle indirect calls, we must get the pointer value from the argument
   // and treat it as a function pointer.
-  GenericValue SRC = getOperandValue(SF.Caller.getCalledValue(), SF);  
+  GenericValue SRC = getOperandValue(SF.Caller.getCalledValue(), SF);
   callFunction((Function*)GVTOP(SRC), ArgVals);
 }
 
@@ -958,7 +958,7 @@ void Interpreter::visitShr(ShiftInst &I) {
    IMPLEMENT_CAST_CASE_END()
 
 GenericValue Interpreter::executeCastOperation(Value *SrcVal, const Type *Ty,
-					       ExecutionContext &SF) {
+                                               ExecutionContext &SF) {
   const Type *SrcTy = SrcVal->getType();
   GenericValue Dest, Src = getOperandValue(SrcVal, SF);
 
@@ -994,7 +994,7 @@ void Interpreter::visitVANextInst(VANextInst &I) {
   // Get the incoming valist parameter.  LLI treats the valist as a
   // (ec-stack-depth var-arg-index) pair.
   GenericValue VAList = getOperandValue(I.getOperand(0), SF);
-  
+
   // Move the pointer to the next vararg.
   ++VAList.UIntPairVal.second;
   SetValue(&I, VAList, SF);
@@ -1011,7 +1011,7 @@ void Interpreter::visitVAArgInst(VAArgInst &I) {
   GenericValue VAList = getOperandValue(I.getOperand(0), SF);
   GenericValue Dest;
   GenericValue Src = ECStack[VAList.UIntPairVal.first]
-	.VarArgs[VAList.UIntPairVal.second];
+   .VarArgs[VAList.UIntPairVal.second];
   const Type *Ty = I.getType();
   switch (Ty->getTypeID()) {
     IMPLEMENT_VAARG(UByte);
@@ -1030,7 +1030,7 @@ void Interpreter::visitVAArgInst(VAArgInst &I) {
     std::cout << "Unhandled dest type for vaarg instruction: " << *Ty << "\n";
     abort();
   }
-  
+
   // Set the Value of this Instruction.
   SetValue(&I, Dest, SF);
 }
@@ -1044,9 +1044,9 @@ void Interpreter::visitVAArgInst(VAArgInst &I) {
 //
 void Interpreter::callFunction(Function *F,
                                const std::vector<GenericValue> &ArgVals) {
-  assert((ECStack.empty() || ECStack.back().Caller.getInstruction() == 0 || 
-	  ECStack.back().Caller.arg_size() == ArgVals.size()) &&
-	 "Incorrect number of arguments passed into function call!");
+  assert((ECStack.empty() || ECStack.back().Caller.getInstruction() == 0 ||
+          ECStack.back().Caller.arg_size() == ArgVals.size()) &&
+         "Incorrect number of arguments passed into function call!");
   // Make a new stack frame... and fill it in.
   ECStack.push_back(ExecutionContext());
   ExecutionContext &StackFrame = ECStack.back();
@@ -1066,7 +1066,7 @@ void Interpreter::callFunction(Function *F,
 
   // Run through the function arguments and initialize their values...
   assert((ArgVals.size() == F->arg_size() ||
-         (ArgVals.size() > F->arg_size() && F->getFunctionType()->isVarArg())) &&
+         (ArgVals.size() > F->arg_size() && F->getFunctionType()->isVarArg()))&&
          "Invalid number of values passed to function invocation!");
 
   // Handle non-varargs arguments...
@@ -1083,7 +1083,7 @@ void Interpreter::run() {
     // Interpret a single instruction & increment the "PC".
     ExecutionContext &SF = ECStack.back();  // Current stack frame
     Instruction &I = *SF.CurInst++;         // Increment before execute
-    
+
     // Track the number of dynamic instructions executed.
     ++NumDynamicInsts;
 

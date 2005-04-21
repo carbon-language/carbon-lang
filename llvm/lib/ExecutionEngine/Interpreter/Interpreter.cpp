@@ -1,10 +1,10 @@
 //===- Interpreter.cpp - Top-Level LLVM Interpreter Implementation --------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements the top-level functionality for the LLVM interpreter.
@@ -50,7 +50,7 @@ ExecutionEngine *Interpreter::create(Module *M, IntrinsicLowering *IL) {
 //
 Interpreter::Interpreter(Module *M, bool isLittleEndian, bool isLongPointer,
                          IntrinsicLowering *il)
-  : ExecutionEngine(M), ExitCode(0), 
+  : ExecutionEngine(M), ExitCode(0),
     TD("lli", isLittleEndian, isLongPointer ? 8 : 4, isLongPointer ? 8 : 4,
        isLongPointer ? 8 : 4), IL(il) {
 
@@ -92,13 +92,13 @@ GenericValue Interpreter::runFunction(Function *F,
   const unsigned ArgCount = F->getFunctionType()->getNumParams();
   for (unsigned i = 0; i < ArgCount; ++i)
     ActualArgs.push_back(ArgValues[i]);
-  
+
   // Set up the function call.
   callFunction(F, ActualArgs);
 
   // Start executing the function.
   run();
-  
+
   GenericValue rv;
   rv.IntVal = ExitCode;
   return rv;
