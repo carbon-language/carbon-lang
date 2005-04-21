@@ -14,6 +14,7 @@
 
 #include "ArchiveInternals.h"
 #include "llvm/ModuleProvider.h"
+#include "llvm/System/Process.h"
 
 using namespace llvm;
 
@@ -40,8 +41,8 @@ ArchiveMember::getMemberSize() const {
 ArchiveMember::ArchiveMember() 
   : next(0), prev(0), parent(0), path("<invalid>"), flags(0), data(0)
 {
-  info.user = 1000;
-  info.group = 1000; 
+  info.user = sys::Process::GetCurrentUserId();
+  info.group = sys::Process::GetCurrentGroupId(); 
   info.mode = 0777; 
   info.fileSize = 0; 
   info.modTime = sys::TimeValue::now();
