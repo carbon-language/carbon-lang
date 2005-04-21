@@ -15,6 +15,7 @@
 #include "llvm/Bytecode/Reader.h"
 #include "llvm/Support/Compressor.h"
 #include "llvm/System/Signals.h"
+#include "llvm/System/Process.h"
 #include <fstream>
 #include <iostream>
 #include <iomanip>
@@ -320,9 +321,9 @@ Archive::writeSymbolTable(std::ofstream& ARFile) {
   char buffer[32];
   sprintf(buffer, "%-8o", 0644);
   memcpy(Hdr.mode,buffer,8);
-  sprintf(buffer, "%-6u", getuid());
+  sprintf(buffer, "%-6u", sys::Process::GetCurrentUserId());
   memcpy(Hdr.uid,buffer,6);
-  sprintf(buffer, "%-6u", getgid());
+  sprintf(buffer, "%-6u", sys::Process::GetCurrentGroupId());
   memcpy(Hdr.gid,buffer,6);
   sprintf(buffer,"%-12u", unsigned(secondsSinceEpoch));
   memcpy(Hdr.date,buffer,12);
