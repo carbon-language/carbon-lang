@@ -28,12 +28,12 @@ class GlobalValue : public Constant {
   GlobalValue(const GlobalValue &);             // do not implement
 public:
   enum LinkageTypes {
-    ExternalLinkage,   // Externally visible function
-    LinkOnceLinkage,   // Keep one copy of named function when linking (inline)
-    WeakLinkage,       // Keep one copy of named function when linking (weak)
-    AppendingLinkage,  // Special purpose, only applies to global arrays
-    InternalLinkage,   // Rename collisions when linking (static functions)
-    GhostLinkage       // Stand-in functions for streaming fns from BC files
+    ExternalLinkage,   /// Externally visible function
+    LinkOnceLinkage,   /// Keep one copy of named function when linking (inline)
+    WeakLinkage,       /// Keep one copy of named function when linking (weak)
+    AppendingLinkage,  /// Special purpose, only applies to global arrays
+    InternalLinkage,   /// Rename collisions when linking (static functions)
+    GhostLinkage       /// Stand-in functions for streaming fns from BC files
   };
 protected:
   GlobalValue(const Type *Ty, ValueTy vty, Use *Ops, unsigned NumOps,
