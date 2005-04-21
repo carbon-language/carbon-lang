@@ -3120,6 +3120,20 @@ void ISel::Select(SDOperand N) {
         addFullAddress(BuildMI(BB, Opc, 4+1), AM).addImm(CN->getValue());
         return;
       }
+    } else if (GlobalAddressSDNode *GA =
+                      dyn_cast<GlobalAddressSDNode>(N.getOperand(1))) {
+      assert(GA->getValueType(0) == MVT::i32 && "Bad pointer operand");
+
+      if (getRegPressure(N.getOperand(0)) > getRegPressure(N.getOperand(2))) {
+        Select(N.getOperand(0));
+        SelectAddress(N.getOperand(2), AM);
+      } else {
+        SelectAddress(N.getOperand(2), AM);
+        Select(N.getOperand(0));
+      }
+      addFullAddress(BuildMI(BB, X86::MOV32mi, 4+1),
+                     AM).addGlobalAddress(GA->getGlobal());
+      return;
     }
 
     // Check to see if this is a load/op/store combination.
