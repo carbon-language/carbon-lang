@@ -195,17 +195,17 @@ void BasicBlock::removePredecessor(BasicBlock *Pred,
 }
 
 
-// splitBasicBlock - This splits a basic block into two at the specified
-// instruction.  Note that all instructions BEFORE the specified iterator stay
-// as part of the original basic block, an unconditional branch is added to 
-// the new BB, and the rest of the instructions in the BB are moved to the new
-// BB, including the old terminator.  This invalidates the iterator.
-//
-// Note that this only works on well formed basic blocks (must have a 
-// terminator), and 'I' must not be the end of instruction list (which would
-// cause a degenerate basic block to be formed, having a terminator inside of
-// the basic block). 
-//
+/// splitBasicBlock - This splits a basic block into two at the specified
+/// instruction.  Note that all instructions BEFORE the specified iterator stay
+/// as part of the original basic block, an unconditional branch is added to 
+/// the new BB, and the rest of the instructions in the BB are moved to the new
+/// BB, including the old terminator.  This invalidates the iterator.
+///
+/// Note that this only works on well formed basic blocks (must have a 
+/// terminator), and 'I' must not be the end of instruction list (which would
+/// cause a degenerate basic block to be formed, having a terminator inside of
+/// the basic block). 
+///
 BasicBlock *BasicBlock::splitBasicBlock(iterator I, const std::string &BBName) {
   assert(getTerminator() && "Can't use splitBasicBlock on degenerate BB!");
   assert(I != InstList.end() && 
