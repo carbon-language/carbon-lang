@@ -1,10 +1,10 @@
 //===-- llvm/CodeGen/MachineCodeEmitter.h - Code emission -------*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file defines an abstract interface that is used by the machine code
@@ -37,7 +37,7 @@ public:
   /// about to be code generated.
   ///
   virtual void startFunction(MachineFunction &F) {}
-  
+
   /// finishFunction - This callback is invoked when the specified function has
   /// finished code generation.
   ///
@@ -88,7 +88,7 @@ public:
   /// addRelocation - Whenever a relocatable address is needed, it should be
   /// noted with this interface.
   virtual void addRelocation(const MachineRelocation &MR) = 0;
-  
+
   // getConstantPoolEntryAddress - Return the address of the 'Index' entry in
   // the constant pool that was last emitted with the 'emitConstantPool' method.
   //

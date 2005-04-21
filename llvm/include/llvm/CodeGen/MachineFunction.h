@@ -1,18 +1,18 @@
 //===-- llvm/CodeGen/MachineFunction.h --------------------------*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
-// 
+//
 // Collect native machine code for a function.  This class contains a list of
 // MachineBasicBlock instances that make up the current compiled function.
 //
 // This class also contains pointers to various classes which hold
 // target-specific information about the generated code.
-//   
+//
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_CODEGEN_MACHINEFUNCTION_H
@@ -35,19 +35,19 @@ struct ilist_traits<MachineBasicBlock> {
   // this is only set by the MachineFunction owning the ilist
   friend class MachineFunction;
   MachineFunction* Parent;
-  
+
 public:
   ilist_traits<MachineBasicBlock>() : Parent(0) { }
-  
+
   static MachineBasicBlock* getPrev(MachineBasicBlock* N) { return N->Prev; }
   static MachineBasicBlock* getNext(MachineBasicBlock* N) { return N->Next; }
-  
+
   static const MachineBasicBlock*
   getPrev(const MachineBasicBlock* N) { return N->Prev; }
-  
+
   static const MachineBasicBlock*
   getNext(const MachineBasicBlock* N) { return N->Next; }
-  
+
   static void setPrev(MachineBasicBlock* N, MachineBasicBlock* prev) {
     N->Prev = prev;
   }
@@ -179,7 +179,7 @@ public:
   /// is an error to add the same register to the same set more than once.
   void addLiveIn(unsigned Reg) { LiveIns.push_back(Reg); }
   void addLiveOut(unsigned Reg) { LiveOuts.push_back(Reg); }
-  
+
   // Iteration support for live in/out sets.  These sets are kept in sorted
   // order by their register number.
   typedef std::vector<unsigned>::const_iterator liveinout_iterator;
@@ -219,7 +219,7 @@ public:
   /// in your path.
   ///
   void viewCFG() const;
-  
+
   /// viewCFGOnly - This function is meant for use from the debugger.  It works
   /// just like viewCFG, but it does not include the contents of basic blocks
   /// into the nodes, just the label.  If you are only interested in the CFG
@@ -256,7 +256,7 @@ public:
   // Provide accessors for basic blocks...
   const BasicBlockListType &getBasicBlockList() const { return BasicBlocks; }
         BasicBlockListType &getBasicBlockList()       { return BasicBlocks; }
- 
+
   //===--------------------------------------------------------------------===//
   // BasicBlock iterator forwarding functions
   //
@@ -331,7 +331,7 @@ template <> struct GraphTraits<const MachineFunction*> :
 };
 
 
-// Provide specializations of GraphTraits to be able to treat a function as a 
+// Provide specializations of GraphTraits to be able to treat a function as a
 // graph of basic blocks... and to walk it in inverse order.  Inverse order for
 // a function is considered to be when traversing the predecessor edges of a BB
 // instead of the successor edges.

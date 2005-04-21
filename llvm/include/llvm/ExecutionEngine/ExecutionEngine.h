@@ -1,10 +1,10 @@
 //===- ExecutionEngine.h - Abstract Execution Engine Interface --*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file defines the abstract interface that implements execution support
@@ -57,7 +57,7 @@ public:
   ExecutionEngine(ModuleProvider *P);
   ExecutionEngine(Module *M);
   virtual ~ExecutionEngine();
-  
+
   Module &getModule() const { return CurMod; }
   const TargetData &getTargetData() const { return *TD; }
 

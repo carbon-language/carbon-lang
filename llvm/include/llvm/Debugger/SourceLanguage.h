@@ -1,10 +1,10 @@
 //===- SourceLanguage.h - Interact with source languages --------*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file defines the abstract SourceLanguage interface, which is used by the

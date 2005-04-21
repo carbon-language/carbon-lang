@@ -1,15 +1,15 @@
 //===-- llvm/CodeGen/SelectionDAG.h - InstSelection DAG ---------*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
-// 
+//
 // This file declares the SelectionDAG class, and transitively defines the
 // SDNode class and subclasses.
-//   
+//
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_CODEGEN_SELECTIONDAG_H
@@ -62,7 +62,7 @@ public:
   typedef std::vector<SDNode*>::const_iterator allnodes_iterator;
   allnodes_iterator allnodes_begin() const { return AllNodes.begin(); }
   allnodes_iterator allnodes_end() const { return AllNodes.end(); }
-  
+
   /// getRoot - Return the root tag of the SelectionDAG.
   ///
   const SDOperand &getRoot() const { return Root; }

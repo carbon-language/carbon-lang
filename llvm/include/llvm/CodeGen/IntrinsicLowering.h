@@ -1,12 +1,12 @@
 //===-- IntrinsicLowering.h - Intrinsic Function Lowering -------*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
-// 
+//
 // This file defines the IntrinsicLowering interface.  This interface allows
 // addition of domain-specific or front-end specific intrinsics to LLVM without
 // having to modify all of the code generators to support the new intrinsic.
@@ -38,7 +38,7 @@
 namespace llvm {
   class CallInst;
   class Module;
-  
+
   class IntrinsicLowering {
   public:
     virtual ~IntrinsicLowering() {}
@@ -67,7 +67,7 @@ namespace llvm {
   /// implementation to allow for future extensibility.
   struct DefaultIntrinsicLowering : public IntrinsicLowering {
     virtual void AddPrototypes(Module &M);
-    virtual void LowerIntrinsicCall(CallInst *CI);    
+    virtual void LowerIntrinsicCall(CallInst *CI);
   };
 }
 

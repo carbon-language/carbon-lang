@@ -1,10 +1,10 @@
 //===-- llvm/Bytecode/Reader.h - Reader for VM bytecode files ---*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This functionality is implemented by the lib/Bytecode/Reader library.
@@ -60,21 +60,21 @@ Module* ParseBytecodeBuffer(const unsigned char *Buffer,
 /// dependent libraries.
 /// @returns true on success, false otherwise
 /// @brief Get the list of dependent libraries from a bytecode file.
-bool GetBytecodeDependentLibraries(const std::string &fileName, 
+bool GetBytecodeDependentLibraries(const std::string &fileName,
                                    Module::LibraryListType& deplibs);
 
 /// This function will read only the necessary parts of a bytecode file in order
 /// to obtain a list of externally visible global symbols that the bytecode
-/// module defines. This is used for archiving and linking when only the list 
+/// module defines. This is used for archiving and linking when only the list
 /// of symbols the module defines is needed.
 /// @returns true on success, false otherwise
 /// @brief Get a bytecode file's externally visibile defined global symbols.
-bool GetBytecodeSymbols(const sys::Path& fileName, 
+bool GetBytecodeSymbols(const sys::Path& fileName,
                         std::vector<std::string>& syms);
 
 /// This function will read only the necessary parts of a bytecode buffer in
-/// order to obtain a list of externally visible global symbols that the 
-/// bytecode module defines. This is used for archiving and linking when only 
+/// order to obtain a list of externally visible global symbols that the
+/// bytecode module defines. This is used for archiving and linking when only
 /// the list of symbols the module defines is needed and the bytecode is
 /// already in memory.
 /// @returns the ModuleProvider on success, 0 if the bytecode can't be parsed

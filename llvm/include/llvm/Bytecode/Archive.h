@@ -1,16 +1,16 @@
 //===-- llvm/Bytecode/Archive.h - LLVM Bytecode Archive ---------*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
-// This file was developed by Reid Spencer and is distributed under the 
+// This file was developed by Reid Spencer and is distributed under the
 // University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This header file declares the Archive and ArchiveMember classes that provide
 // manipulation of LLVM Archive files.  The implementation is provided by the
-// lib/Bytecode/Archive library.  This library is used to read and write 
-// archive (*.a) files that contain LLVM bytecode files (or others). 
+// lib/Bytecode/Archive library.  This library is used to read and write
+// archive (*.a) files that contain LLVM bytecode files (or others).
 //
 //===----------------------------------------------------------------------===//
 
@@ -26,7 +26,7 @@
 
 namespace llvm {
 
-// Forward declare classes 
+// Forward declare classes
 class ModuleProvider;      // From VMCore
 class Module;              // From VMCore
 class Archive;             // Declared below
@@ -34,9 +34,9 @@ class ArchiveMemberHeader; // Internal implementation class
 
 /// This class is the main class manipulated by users of the Archive class. It
 /// holds information about one member of the Archive. It is also the element
-/// stored by the Archive's ilist, the Archive's main abstraction. Because of 
-/// the special requirements of archive files, users are not permitted to 
-/// construct ArchiveMember instances. You should obtain them from the methods 
+/// stored by the Archive's ilist, the Archive's main abstraction. Because of
+/// the special requirements of archive files, users are not permitted to
+/// construct ArchiveMember instances. You should obtain them from the methods
 /// of the Archive class instead.
 /// @brief This class represents a single archive member.
 class ArchiveMember {
@@ -77,19 +77,19 @@ class ArchiveMember {
     /// @brief Get the user associated with this archive member.
     unsigned getUser() const             { return info.user; }
 
-    /// The "group" is the owning group of the file per Unix security. This 
-    /// may not have any applicability on non-Unix systems but is a required 
+    /// The "group" is the owning group of the file per Unix security. This
+    /// may not have any applicability on non-Unix systems but is a required
     /// component of the "ar" file format.
     /// @brief Get the group associated with this archive member.
     unsigned getGroup() const            { return info.group; }
 
-    /// The "mode" specifies the access permissions for the file per Unix 
+    /// The "mode" specifies the access permissions for the file per Unix
     /// security. This may not have any applicabiity on non-Unix systems but is
     /// a required component of the "ar" file format.
     /// @brief Get the permission mode associated with this archive member.
     unsigned getMode() const             { return info.mode; }
 
-    /// This method returns the time at which the archive member was last 
+    /// This method returns the time at which the archive member was last
     /// modified when it was not in the archive.
     /// @brief Get the time of last modification of the archive member.
     sys::TimeValue getModTime() const    { return info.modTime; }
@@ -98,7 +98,7 @@ class ArchiveMember {
     /// @brief Get the size of the archive member.
     unsigned getSize() const             { return info.fileSize; }
 
-    /// This method returns the total size of the archive member as it 
+    /// This method returns the total size of the archive member as it
     /// appears on disk. This includes the file content, the header, the
     /// long file name if any, and the padding.
     /// @brief Get total on-disk member size.
@@ -106,7 +106,7 @@ class ArchiveMember {
 
     /// This method will return a pointer to the in-memory content of the
     /// archive member, if it is available. If the data has not been loaded
-    /// into memory, the return value will be null. 
+    /// into memory, the return value will be null.
     /// @returns a pointer to the member's data.
     /// @brief Get the data content of the archive member
     const void* getData() const { return data; }
@@ -147,7 +147,7 @@ class ArchiveMember {
     bool hasPath() const { return flags&HasPathFlag; }
 
     /// Long filenames are an artifact of the ar(1) file format which allows
-    /// up to sixteen characters in its header and doesn't allow a path 
+    /// up to sixteen characters in its header and doesn't allow a path
     /// separator character (/). To avoid this, a "long format" member name is
     /// allowed that doesn't have this restriction. This method determines if
     /// that "long format" is used for this member.
@@ -158,7 +158,7 @@ class ArchiveMember {
     /// This method returns the status info (like Unix stat(2)) for the archive
     /// member. The status info provides the file's size, permissions, and
     /// modification time. The contents of the Path::StatusInfo structure, other
-    /// than the size and modification time, may not have utility on non-Unix 
+    /// than the size and modification time, may not have utility on non-Unix
     /// systems.
     /// @returns the status info for the archive member
     /// @brief Obtain the status info for the archive member
@@ -212,14 +212,14 @@ class ArchiveMember {
   /// @}
 };
 
-/// This class defines the interface to LLVM Archive files. The Archive class 
-/// presents the archive file as an ilist of ArchiveMember objects. The members 
+/// This class defines the interface to LLVM Archive files. The Archive class
+/// presents the archive file as an ilist of ArchiveMember objects. The members
 /// can be rearranged in any fashion either by directly editing the ilist or by
-/// using editing methods on the Archive class (recommended). The Archive 
-/// class also provides several ways of accessing the archive file for various 
+/// using editing methods on the Archive class (recommended). The Archive
+/// class also provides several ways of accessing the archive file for various
 /// purposes such as editing and linking.  Full symbol table support is provided
-/// for loading only those files that resolve symbols. Note that read 
-/// performance of this library is _crucial_ for performance of JIT type 
+/// for loading only those files that resolve symbols. Note that read
+/// performance of this library is _crucial_ for performance of JIT type
 /// applications and the linkers. Consequently, the implementation of the class
 /// is optimized for reading.
 class Archive {
@@ -273,12 +273,12 @@ class Archive {
   /// @{
   public:
     /// This method splices a \p src member from an archive (possibly \p this),
-    /// to a position just before the member given by \p dest in \p this. When 
+    /// to a position just before the member given by \p dest in \p this. When
     /// the archive is written, \p src will be written in its new location.
     /// @brief Move a member to a new location
     inline void splice(iterator dest, Archive& arch, iterator src)
       { return members.splice(dest,arch.members,src); }
-                                                    
+
     /// This method erases a \p target member from the archive. When the
     /// archive is written, it will no longer contain \p target. The associated
     /// ArchiveMember is deleted.
@@ -290,10 +290,10 @@ class Archive {
   /// @{
   public:
     /// Create an empty archive file and associate it with the \p Filename. This
-    /// method does not actually create the archive disk file. It creates an 
+    /// method does not actually create the archive disk file. It creates an
     /// empty Archive object. If the writeToDisk method is called, the archive
-    /// file \p Filename will be created at that point, with whatever content 
-    /// the returned Archive object has at that time.  
+    /// file \p Filename will be created at that point, with whatever content
+    /// the returned Archive object has at that time.
     /// @returns An Archive* that represents the new archive file.
     /// @brief Create an empty Archive.
     static Archive* CreateEmpty(
@@ -314,15 +314,15 @@ class Archive {
     /// This method opens an existing archive file from \p Filename and reads in
     /// its symbol table without reading in any of the archive's members. This
     /// reduces both I/O and cpu time in opening the archive if it is to be used
-    /// solely for symbol lookup (e.g. during linking).  The \p Filename must 
+    /// solely for symbol lookup (e.g. during linking).  The \p Filename must
     /// exist and be an archive file or an exception will be thrown. This form
     /// of opening the archive is intended for read-only operations that need to
     /// locate members via the symbol table for link editing.  Since the archve
     /// members are not read by this method, the archive will appear empty upon
-    /// return. If editing operations are performed on the archive, they will 
+    /// return. If editing operations are performed on the archive, they will
     /// completely replace the contents of the archive! It is recommended that
     /// if this form of opening the archive is used that only the symbol table
-    /// lookup methods (getSymbolTable, findModuleDefiningSymbol, and 
+    /// lookup methods (getSymbolTable, findModuleDefiningSymbol, and
     /// findModulesDefiningSymbols) be used.
     /// @throws std::string if an error occurs opening the file
     /// @returns an Archive* that represents the archive file.
@@ -333,11 +333,11 @@ class Archive {
     );
 
     /// This destructor cleans up the Archive object, releases all memory, and
-    /// closes files. It does nothing with the archive file on disk. If you 
-    /// haven't used the writeToDisk method by the time the destructor is 
+    /// closes files. It does nothing with the archive file on disk. If you
+    /// haven't used the writeToDisk method by the time the destructor is
     /// called, all changes to the archive will be lost.
     /// @throws std::string if an error occurs
-    /// @brief Destruct in-memory archive 
+    /// @brief Destruct in-memory archive
     ~Archive();
 
   /// @}
@@ -355,15 +355,15 @@ class Archive {
     /// @brief Get the iplist of the members
     MembersList& getMembers() { return members; }
 
-    /// This method allows direct query of the Archive's symbol table. The 
+    /// This method allows direct query of the Archive's symbol table. The
     /// symbol table is a std::map of std::string (the symbol) to unsigned (the
-    /// file offset). Note that for efficiency reasons, the offset stored in 
+    /// file offset). Note that for efficiency reasons, the offset stored in
     /// the symbol table is not the actual offset. It is the offset from the
     /// beginning of the first "real" file member (after the symbol table). Use
     /// the getFirstFileOffset() to obtain that offset and add this value to the
-    /// offset in the symbol table to obtain the real file offset. Note that 
-    /// there is purposefully no interface provided by Archive to look up 
-    /// members by their offset. Use the findModulesDefiningSymbols and 
+    /// offset in the symbol table to obtain the real file offset. Note that
+    /// there is purposefully no interface provided by Archive to look up
+    /// members by their offset. Use the findModulesDefiningSymbols and
     /// findModuleDefiningSymbol methods instead.
     /// @returns the Archive's symbol table.
     /// @brief Get the archive's symbol table
@@ -386,15 +386,15 @@ class Archive {
     /// @brief Instantiate all the bytecode modules located in the archive
     bool getAllModules(std::vector<Module*>& Modules, std::string* ErrMessage);
 
-    /// This accessor looks up the \p symbol in the archive's symbol table and 
+    /// This accessor looks up the \p symbol in the archive's symbol table and
     /// returns the associated module that defines that symbol. This method can
-    /// be called as many times as necessary. This is handy for linking the 
+    /// be called as many times as necessary. This is handy for linking the
     /// archive into another module based on unresolved symbols. Note that the
     /// ModuleProvider returned by this accessor should not be deleted by the
-    /// caller. It is managed internally by the Archive class. It is possible 
+    /// caller. It is managed internally by the Archive class. It is possible
     /// that multiple calls to this accessor will return the same ModuleProvider
-    /// instance because the associated module defines multiple symbols. 
-    /// @returns The ModuleProvider* found or null if the archive does not 
+    /// instance because the associated module defines multiple symbols.
+    /// @returns The ModuleProvider* found or null if the archive does not
     /// contain a module that defines the \p symbol.
     /// @brief Look up a module by symbol name.
     ModuleProvider* findModuleDefiningSymbol(
@@ -402,10 +402,10 @@ class Archive {
     );
 
     /// This method is similar to findModuleDefiningSymbol but allows lookup of
-    /// more than one symbol at a time. If \p symbols contains a list of 
-    /// undefined symbols in some module, then calling this method is like 
+    /// more than one symbol at a time. If \p symbols contains a list of
+    /// undefined symbols in some module, then calling this method is like
     /// making one complete pass through the archive to resolve symbols but is
-    /// more efficient than looking at the individual members. Note that on 
+    /// more efficient than looking at the individual members. Note that on
     /// exit, the symbols resolved by this method will be removed from \p
     /// symbols to ensure they are not re-searched on a subsequent call. If
     /// you need to retain the list of symbols, make a copy.
@@ -414,11 +414,11 @@ class Archive {
       std::set<std::string>& symbols,     ///< Symbols to be sought
       std::set<ModuleProvider*>& modules  ///< The modules matching \p symbols
     );
-    
-    /// This method determines whether the archive is a properly formed llvm 
-    /// bytecode archive.  It first makes sure the symbol table has been loaded 
-    /// and has a non-zero size.  If it does, then it is an archive.  If not, 
-    /// then it tries to load all the bytecode modules of the archive.  Finally, 
+
+    /// This method determines whether the archive is a properly formed llvm
+    /// bytecode archive.  It first makes sure the symbol table has been loaded
+    /// and has a non-zero size.  If it does, then it is an archive.  If not,
+    /// then it tries to load all the bytecode modules of the archive.  Finally,
     /// it returns whether it was successfull.
     /// @returns true if the archive is a proper llvm bytecode archive
     /// @brief Determine whether the archive is a proper llvm bytecode archive.
@@ -428,15 +428,15 @@ class Archive {
   /// @name Mutators
   /// @{
   public:
-    /// This method is the only way to get the archive written to disk. It 
+    /// This method is the only way to get the archive written to disk. It
     /// creates or overwrites the file specified when \p this was created
     /// or opened. The arguments provide options for writing the archive. If
     /// \p CreateSymbolTable is true, the archive is scanned for bytecode files
-    /// and a symbol table of the externally visible function and global 
+    /// and a symbol table of the externally visible function and global
     /// variable names is created. If \p TruncateNames is true, the names of the
-    /// archive members will have their path component stripped and the file 
-    /// name will be truncated at 15 characters. If \p Compress is specified, 
-    /// all archive members will be compressed before being written. If 
+    /// archive members will have their path component stripped and the file
+    /// name will be truncated at 15 characters. If \p Compress is specified,
+    /// all archive members will be compressed before being written. If
     /// \p PrintSymTab is true, the symbol table will be printed to std::cout.
     /// @throws std::string if an error occurs
     /// @brief Write (possibly modified) archive contents to disk
@@ -449,7 +449,7 @@ class Archive {
     /// This method adds a new file to the archive. The \p filename is examined
     /// to determine just enough information to create an ArchiveMember object
     /// which is then inserted into the Archive object's ilist at the location
-    /// given by \p where. 
+    /// given by \p where.
     /// @throws std::string if an error occurs reading the \p filename.
     /// @returns nothing
     /// @brief Add a file to the archive.
@@ -459,7 +459,7 @@ class Archive {
   /// @name Implementation
   /// @{
   protected:
-    /// @brief Construct an Archive for \p filename and optionally  map it 
+    /// @brief Construct an Archive for \p filename and optionally  map it
     /// into memory.
     Archive(const sys::Path& filename, bool map = false );
 
@@ -486,14 +486,14 @@ class Archive {
         bool CreateSymbolTable, bool TruncateNames, bool ShouldCompress);
 
     /// @brief Fill in an ArchiveMemberHeader from ArchiveMember.
-    bool fillHeader(const ArchiveMember&mbr, 
+    bool fillHeader(const ArchiveMember&mbr,
                     ArchiveMemberHeader& hdr,int sz, bool TruncateNames) const;
-    
+
     /// This type is used to keep track of bytecode modules loaded from the
     /// symbol table. It maps the file offset to a pair that consists of the
-    /// associated ArchiveMember and the ModuleProvider. 
+    /// associated ArchiveMember and the ModuleProvider.
     /// @brief Module mapping type
-    typedef std::map<unsigned,std::pair<ModuleProvider*,ArchiveMember*> > 
+    typedef std::map<unsigned,std::pair<ModuleProvider*,ArchiveMember*> >
       ModuleMap;
 
   /// @}

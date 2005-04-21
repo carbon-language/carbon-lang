@@ -1,12 +1,12 @@
 //===-- llvm/CodeGen/SelectionDAGNodes.h - SelectionDAG Nodes ---*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
-// 
+//
 // This file declares the SDNode class and derived classes, which are used to
 // represent the nodes and operations present in a SelectionDAG.  These nodes
 // and operations are machine code level operations, with some similarities to
@@ -51,7 +51,7 @@ namespace ISD {
     // single token result.  This is used to represent the fact that the operand
     // operators are independent of each other.
     TokenFactor,
-    
+
     // Various leaf nodes.
     Constant, ConstantFP, GlobalAddress, FrameIndex, ConstantPool,
     BasicBlock, ExternalSymbol,
@@ -185,7 +185,7 @@ namespace ISD {
     //          integer result type.
     // ZEXTLOAD loads the integer operand and zero extends it to a larger
     //          integer result type.
-    // EXTLOAD  is used for two things: floating point extending loads, and 
+    // EXTLOAD  is used for two things: floating point extending loads, and
     //          integer extending loads where it doesn't matter what the high
     //          bits are set to.  The code generator is allowed to codegen this
     //          into whichever operation is more efficient.
@@ -205,7 +205,7 @@ namespace ISD {
     DYNAMIC_STACKALLOC,
 
     // Control flow instructions.  These all have token chains.
-    
+
     // BR - Unconditional branch.  The first operand is the chain
     // operand, the second is the MBB to branch to.
     BR,
@@ -240,7 +240,7 @@ namespace ISD {
     MEMSET,
     MEMMOVE,
     MEMCPY,
-    
+
     // ADJCALLSTACKDOWN/ADJCALLSTACKUP - These operators mark the beginning and
     // end of a call sequence and indicate how much the stack pointer needs to
     // be adjusted for that particular call.  The first operand is a chain, the
@@ -284,7 +284,7 @@ namespace ISD {
     SETUGT,        //    1 0 1 0       True if unordered or greater than
     SETUGE,        //    1 0 1 1       True if unordered, greater than, or equal
     SETULT,        //    1 1 0 0       True if unordered or less than
-    SETULE,        //    1 1 0 1       True if unordered, less than, or equal 
+    SETULE,        //    1 1 0 1       True if unordered, less than, or equal
     SETUNE,        //    1 1 1 0       True if unordered or not equal
     SETTRUE,       //    1 1 1 1       Always true (always folded)
     // Don't care operations: undefined if the input is a nan.
@@ -293,7 +293,7 @@ namespace ISD {
     SETGT,         //  1 X 0 1 0       True if greater than
     SETGE,         //  1 X 0 1 1       True if greater than or equal
     SETLT,         //  1 X 1 0 0       True if less than
-    SETLE,         //  1 X 1 0 1       True if less than or equal 
+    SETLE,         //  1 X 1 0 1       True if less than or equal
     SETNE,         //  1 X 1 1 0       True if not equal
     SETTRUE2,      //  1 X 1 1 1       Always true (always folded)
 
@@ -385,7 +385,7 @@ public:
   /// getValueType - Return the ValueType of the referenced return value.
   ///
   inline MVT::ValueType getValueType() const;
-  
+
   // Forwarding methods - These forward to the corresponding methods in SDNode.
   inline unsigned getOpcode() const;
   inline unsigned getNodeDepth() const;
@@ -806,11 +806,11 @@ public:
 
   static bool classof(const MVTSDNode *) { return true; }
   static bool classof(const SDNode *N) {
-    return 
+    return
       N->getOpcode() == ISD::SIGN_EXTEND_INREG ||
       N->getOpcode() == ISD::FP_ROUND_INREG ||
       N->getOpcode() == ISD::EXTLOAD  ||
-      N->getOpcode() == ISD::SEXTLOAD || 
+      N->getOpcode() == ISD::SEXTLOAD ||
       N->getOpcode() == ISD::ZEXTLOAD ||
       N->getOpcode() == ISD::TRUNCSTORE;
   }
@@ -819,7 +819,7 @@ public:
 class SDNodeIterator : public forward_iterator<SDNode, ptrdiff_t> {
   SDNode *Node;
   unsigned Operand;
-  
+
   SDNodeIterator(SDNode *N, unsigned Op) : Node(N), Operand(Op) {}
 public:
   bool operator==(const SDNodeIterator& x) const {
@@ -832,18 +832,18 @@ public:
     Operand = I.Operand;
     return *this;
   }
-  
+
   pointer operator*() const {
     return Node->getOperand(Operand).Val;
   }
   pointer operator->() const { return operator*(); }
-  
+
   SDNodeIterator& operator++() {                // Preincrement
     ++Operand;
     return *this;
   }
   SDNodeIterator operator++(int) { // Postincrement
-    SDNodeIterator tmp = *this; ++*this; return tmp; 
+    SDNodeIterator tmp = *this; ++*this; return tmp;
   }
 
   static SDNodeIterator begin(SDNode *N) { return SDNodeIterator(N, 0); }
@@ -859,10 +859,10 @@ template <> struct GraphTraits<SDNode*> {
   typedef SDNode NodeType;
   typedef SDNodeIterator ChildIteratorType;
   static inline NodeType *getEntryNode(SDNode *N) { return N; }
-  static inline ChildIteratorType child_begin(NodeType *N) { 
+  static inline ChildIteratorType child_begin(NodeType *N) {
     return SDNodeIterator::begin(N);
   }
-  static inline ChildIteratorType child_end(NodeType *N) { 
+  static inline ChildIteratorType child_end(NodeType *N) {
     return SDNodeIterator::end(N);
   }
 };

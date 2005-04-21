@@ -1,10 +1,10 @@
 //===- InferiorProcess.h - Represent the program being debugged -*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file defines the InferiorProcess class, which is used to represent,
@@ -59,7 +59,7 @@ namespace llvm {
     static InferiorProcess *create(Module *M,
                                    const std::vector<std::string> &Arguments,
                                    const char * const *envp);
-    
+
     // InferiorProcess destructor - Kill the current process.  If something
     // terrible happens, we throw an exception from the destructor.
     virtual ~InferiorProcess() {}

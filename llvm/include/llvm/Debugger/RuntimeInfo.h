@@ -1,10 +1,10 @@
 //===- RuntimeInfo.h - Information about running program --------*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file defines classes that capture various pieces of information about
@@ -42,7 +42,7 @@ namespace llvm {
     const SourceFileInfo *SourceInfo;
   public:
     StackFrame(RuntimeInfo &RI, void *ParentFrameID);
-    
+
     StackFrame &operator=(const StackFrame &RHS) {
       FrameID = RHS.FrameID;
       FunctionDesc = RHS.FunctionDesc;
@@ -80,7 +80,7 @@ namespace llvm {
     /// CallStack - This caches information about the current stack trace of the
     /// program.  This is lazily computed as needed.
     std::vector<StackFrame> CallStack;
-    
+
     /// CurrentFrame - The user can traverse the stack frame with the
     /// up/down/frame family of commands.  This index indicates the current
     /// stack frame.

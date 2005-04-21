@@ -1,10 +1,10 @@
 //===-- SchedGraphCommon.h - Scheduling Base Graph --------------*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // A common graph class that is based on the SSA graph. It includes
@@ -47,7 +47,7 @@ public:
   typedef std::vector<SchedGraphEdge*>::const_iterator const_iterator;
   typedef std::vector<SchedGraphEdge*>::reverse_iterator reverse_iterator;
   typedef std::vector<SchedGraphEdge*>::const_reverse_iterator const_reverse_iterator;
-  
+
   // Accessor methods
   unsigned getNodeId() const { return ID; }
   int getLatency() const { return latency; }
@@ -60,7 +60,7 @@ public:
   iterator endInEdges()	 { return inEdges.end(); }
   iterator beginOutEdges() { return outEdges.begin(); }
   iterator endOutEdges() { return outEdges.end(); }
-  
+
   const_iterator beginInEdges() const { return inEdges.begin(); }
   const_iterator endInEdges() const { return inEdges.end(); }
   const_iterator beginOutEdges() const { return outEdges.begin(); }
@@ -70,29 +70,29 @@ public:
 
   // Debugging support
   virtual void print(std::ostream &os) const = 0;
-  
+
 protected:
   friend class SchedGraphCommon;
   friend class SchedGraphEdge;		// give access for adding edges
-  
-  
+
+
   // disable default constructor and provide a ctor for single-block graphs
   SchedGraphNodeCommon();	// DO NOT IMPLEMENT
-  
+
   inline SchedGraphNodeCommon(unsigned Id, int index, int late=0) : ID(Id), latency(late), origIndexInBB(index) {}
-  
+
   virtual ~SchedGraphNodeCommon();
-  
+
   //Functions to add and remove edges
   inline void addInEdge(SchedGraphEdge* edge) { inEdges.push_back(edge); }
   inline void addOutEdge(SchedGraphEdge* edge) { outEdges.push_back(edge); }
   void removeInEdge(const SchedGraphEdge* edge);
   void removeOutEdge(const SchedGraphEdge* edge);
-  
+
 };
 
 // ostream << operator for SchedGraphNode class
-inline std::ostream &operator<<(std::ostream &os, 
+inline std::ostream &operator<<(std::ostream &os,
 				const SchedGraphNodeCommon &node) {
   node.print(os);
   return os;
@@ -112,7 +112,7 @@ public:
   enum DataDepOrderType {
     TrueDep = 0x1, AntiDep=0x2, OutputDep=0x4, NonDataDep=0x8
   };
-  
+
 protected:
   SchedGraphNodeCommon*	src;
   SchedGraphNodeCommon*	sink;
@@ -120,7 +120,7 @@ protected:
   unsigned int depOrderType;
   int minDelay; // cached latency (assumes fixed target arch)
   int iteDiff;
-  
+
   union {
     const Value* val;
     int          machineRegNum;
@@ -130,30 +130,30 @@ protected:
 public:	
   // For all constructors, if minDelay is unspecified, minDelay is
   // set to _src->getLatency().
-  
+
   // constructor for CtrlDep or MemoryDep edges, selected by 3rd argument
   SchedGraphEdge(SchedGraphNodeCommon* _src, SchedGraphNodeCommon* _sink,
 		 SchedGraphEdgeDepType _depType, unsigned int _depOrderType,
 		 int _minDelay = -1);
-  
+
   // constructor for explicit value dependence (may be true/anti/output)
   SchedGraphEdge(SchedGraphNodeCommon* _src, SchedGraphNodeCommon* _sink,
 		 const Value* _val, unsigned int _depOrderType,
 		 int _minDelay = -1);
-  
+
   // constructor for machine register dependence
   SchedGraphEdge(SchedGraphNodeCommon* _src,SchedGraphNodeCommon* _sink,
 		 unsigned int _regNum, unsigned int _depOrderType,
 		 int _minDelay = -1);
-  
+
   // constructor for any other machine resource dependences.
   // DataDepOrderType is always NonDataDep.  It it not an argument to
   // avoid overloading ambiguity with previous constructor.
   SchedGraphEdge(SchedGraphNodeCommon* _src, SchedGraphNodeCommon* _sink,
 		 ResourceId _resourceId, int _minDelay = -1);
-  
+
   ~SchedGraphEdge() {}
-  
+
   SchedGraphNodeCommon*	getSrc() const { return src; }
   SchedGraphNodeCommon*	getSink() const { return sink; }
   int getMinDelay() const { return minDelay; }
@@ -179,12 +179,12 @@ public:
   int getIteDiff() {
     return iteDiff;
   }
-  
+
 public:
   // Debugging support
   void print(std::ostream &os) const;
   void dump(int indent=0) const;
-    
+
 private:
   // disable default ctor
   SchedGraphEdge();	// DO NOT IMPLEMENT
@@ -197,7 +197,7 @@ inline std::ostream &operator<<(std::ostream &os, const SchedGraphEdge &edge) {
 }
 
 class SchedGraphCommon {
-  
+
 protected:
   SchedGraphNodeCommon* graphRoot;     // the root and leaf are not inserted
   SchedGraphNodeCommon* graphLeaf;     //  in the hash_map (see getNumNodes())
@@ -207,16 +207,16 @@ public:
   // Accessor methods
   //
   SchedGraphNodeCommon* getRoot() const { return graphRoot; }
-  SchedGraphNodeCommon* getLeaf() const { return graphLeaf; } 
- 
+  SchedGraphNodeCommon* getLeaf() const { return graphLeaf; }
+
   //
   // Delete nodes or edges from the graph.
-  // 
+  //
   void eraseNode(SchedGraphNodeCommon* node);
   void eraseIncomingEdges(SchedGraphNodeCommon* node, bool addDummyEdges = true);
   void eraseOutgoingEdges(SchedGraphNodeCommon* node, bool addDummyEdges = true);
   void eraseIncidentEdges(SchedGraphNodeCommon* node, bool addDummyEdges = true);
-  
+
   SchedGraphCommon() {}
   ~SchedGraphCommon();
 };
@@ -227,30 +227,30 @@ public:
 // Ok to make it a template because it shd get instantiated at most twice:
 // for <SchedGraphNode, SchedGraphNode::iterator> and
 // for <const SchedGraphNode, SchedGraphNode::const_iterator>.
-// 
+//
 template <class _NodeType, class _EdgeType, class _EdgeIter>
 class SGPredIterator: public bidirectional_iterator<_NodeType, ptrdiff_t> {
 protected:
   _EdgeIter oi;
 public:
   typedef SGPredIterator<_NodeType, _EdgeType, _EdgeIter> _Self;
-  
+
   inline SGPredIterator(_EdgeIter startEdge) : oi(startEdge) {}
-  
+
   inline bool operator==(const _Self& x) const { return oi == x.oi; }
   inline bool operator!=(const _Self& x) const { return !operator==(x); }
-  
+
   // operator*() differs for pred or succ iterator
   inline _NodeType* operator*() const { return (_NodeType*)(*oi)->getSrc(); }
   inline _NodeType* operator->() const { return operator*(); }
-  
+
   inline _EdgeType* getEdge() const { return *(oi); }
-  
+
   inline _Self &operator++() { ++oi; return *this; }    // Preincrement
   inline _Self operator++(int) {                      	// Postincrement
-    _Self tmp(*this); ++*this; return tmp; 
+    _Self tmp(*this); ++*this; return tmp;
   }
-  
+
   inline _Self &operator--() { --oi; return *this; }    // Predecrement
   inline _Self operator--(int) {                       	// Postdecrement
     _Self tmp = *this; --*this; return tmp;
@@ -263,22 +263,22 @@ protected:
   _EdgeIter oi;
 public:
   typedef SGSuccIterator<_NodeType, _EdgeType, _EdgeIter> _Self;
-  
+
   inline SGSuccIterator(_EdgeIter startEdge) : oi(startEdge) {}
-  
+
   inline bool operator==(const _Self& x) const { return oi == x.oi; }
   inline bool operator!=(const _Self& x) const { return !operator==(x); }
-  
+
   inline _NodeType* operator*() const { return (_NodeType*)(*oi)->getSink(); }
   inline _NodeType* operator->() const { return operator*(); }
-  
+
   inline _EdgeType* getEdge() const { return *(oi); }
-  
+
   inline _Self &operator++() { ++oi; return *this; }    // Preincrement
   inline _Self operator++(int) {                      	// Postincrement
-    _Self tmp(*this); ++*this; return tmp; 
+    _Self tmp(*this); ++*this; return tmp;
   }
-  
+
   inline _Self &operator--() { --oi; return *this; }    // Predecrement
   inline _Self operator--(int) {                       	// Postdecrement
     _Self tmp = *this; --*this; return tmp;

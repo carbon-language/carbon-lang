@@ -1,10 +1,10 @@
 //===- ProgramInfo.h - Information about the loaded program -----*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file defines various pieces of information about the currently loaded
@@ -70,7 +70,7 @@ namespace llvm {
   public:
     SourceFileInfo(const GlobalVariable *Desc, const SourceLanguage &Lang);
     ~SourceFileInfo();
-    
+
     const std::string &getBaseName() const { return BaseName; }
     const std::string &getDirectory() const { return Directory; }
     unsigned getDebugVersion() const { return Version; }
@@ -149,7 +149,7 @@ namespace llvm {
     /// with the program, through the getSourceFileFromDesc method.  If ALL of
     /// the source files are needed, the getSourceFiles() method scans the
     /// entire program looking for them.
-    /// 
+    ///
     std::multimap<std::string, SourceFileInfo*> SourceFileIndex;
 
     /// SourceFunctions - This map contains entries functions in the source
@@ -163,7 +163,7 @@ namespace llvm {
     /// effectively a small map from the languages that are active in the
     /// program to their caches.  This can be accessed by the language by the
     /// "getLanguageCache" method.
-    std::vector<std::pair<const SourceLanguage*, 
+    std::vector<std::pair<const SourceLanguage*,
                           SourceLanguageCache*> > LanguageCaches;
   public:
     ProgramInfo(Module *m);
@@ -172,7 +172,7 @@ namespace llvm {
     /// getProgramTimeStamp - Return the time-stamp of the program when it was
     /// loaded.
     sys::TimeValue getProgramTimeStamp() const { return ProgramTimeStamp; }
-    
+
     //===------------------------------------------------------------------===//
     // Interfaces to the source code files that make up the program.
     //

@@ -1,10 +1,10 @@
 //===-- Passes.h - Target independent code generation passes ----*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file defines interfaces to access the target independent code generation
@@ -31,7 +31,7 @@ namespace llvm {
   /// last LLVM modifying pass to clean up blocks that are not reachable from
   /// the entry block.
   FunctionPass *createUnreachableBlockEliminationPass();
-    
+
   /// MachineFunctionPrinter pass - This pass prints out the machine function to
   /// standard error, as a debugging tool.
   FunctionPass *createMachineFunctionPrinterPass(std::ostream *OS,
@@ -62,9 +62,9 @@ namespace llvm {
   /// LocalRegisterAllocation Pass - This pass register allocates the input code
   /// a basic block at a time, yielding code better than the simple register
   /// allocator, but not as good as a global allocator.
-  /// 
+  ///
   FunctionPass *createLocalRegisterAllocator();
-  
+
   /// LinearScanRegisterAllocation Pass - This pass implements the linear scan
   /// register allocation algorithm, a global register allocator.
   ///
@@ -90,7 +90,7 @@ namespace llvm {
   /// the current function, which should happen after the function has been
   /// emitted to a .s file or to memory.
   FunctionPass *createMachineCodeDeleter();
-    
+
   /// getRegisterAllocator - This creates an instance of the register allocator
   /// for the Sparc.
   FunctionPass *getRegisterAllocator(TargetMachine &T);

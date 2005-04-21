@@ -1,10 +1,10 @@
 //===-- BytecodeHandler.h - Handle Bytecode Parsing Events ------*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
-// This file was developed by Reid Spencer and is distributed under the 
+// This file was developed by Reid Spencer and is distributed under the
 // University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 //  This header file defines the interface to the Bytecode Handler. The handler
@@ -28,11 +28,11 @@ class ConstantArray;
 class Module;
 
 /// This class provides the interface for handling bytecode events during
-/// reading of bytecode. The methods on this interface are invoked by the 
-/// BytecodeReader as it discovers the content of a bytecode stream. 
-/// This class provides a a clear separation of concerns between recognizing 
-/// the semantic units of a bytecode file (the Reader) and deciding what to do 
-/// with them (the Handler). 
+/// reading of bytecode. The methods on this interface are invoked by the
+/// BytecodeReader as it discovers the content of a bytecode stream.
+/// This class provides a a clear separation of concerns between recognizing
+/// the semantic units of a bytecode file (the Reader) and deciding what to do
+/// with them (the Handler).
 ///
 /// The BytecodeReader recognizes the content of the bytecode file and
 /// calls the BytecodeHandler methods to let it perform additional tasks. This
@@ -40,7 +40,7 @@ class Module;
 /// purposes simply by creating a subclass of BytecodeHandler. None of the
 /// parsing details need to be understood, only the meaning of the calls
 /// made on this interface.
-/// 
+///
 /// @see BytecodeHandler
 /// @brief Handle Bytecode Parsing Events
 class BytecodeHandler {
@@ -64,8 +64,8 @@ public:
 
   /// This method is called whenever the parser detects an error in the
   /// bytecode formatting. It gives the handler a chance to do something
-  /// with the error message before the parser throws an exception to 
-  /// terminate the parsing. 
+  /// with the error message before the parser throws an exception to
+  /// terminate the parsing.
   /// @brief Handle parsing errors.
   virtual void handleError(const std::string& str ) {}
 
@@ -91,8 +91,8 @@ public:
     const std::string& moduleId ///< An identifier for the module
   ) {}
 
-  /// This method is called once the version information has been parsed. It 
-  /// provides the information about the version of the bytecode file being 
+  /// This method is called once the version information has been parsed. It
+  /// provides the information about the version of the bytecode file being
   /// read.
   /// @brief Handle the bytecode prolog
   virtual void handleVersionInfo(
@@ -105,10 +105,10 @@ public:
   /// contains the global variables and the function placeholders
   virtual void handleModuleGlobalsBegin() {}
 
-  /// This method is called when a non-initialized global variable is 
+  /// This method is called when a non-initialized global variable is
   /// recognized. Its type, constness, and linkage type are provided.
   /// @brief Handle a non-initialized global variable
-  virtual void handleGlobalVariable( 
+  virtual void handleGlobalVariable(
     const Type* ElemType,     ///< The type of the global variable
     bool isConstant,          ///< Whether the GV is constant or not
     GlobalValue::LinkageTypes,///< The linkage type of the GV
@@ -120,20 +120,20 @@ public:
   /// provides the number of types that the list contains. The handler
   /// should expect that number of calls to handleType.
   /// @brief Handle a type
-  virtual void handleTypeList( 
+  virtual void handleTypeList(
     unsigned numEntries ///< The number of entries in the type list
   ) {}
 
-  /// This method is called when a new type is recognized. The type is 
+  /// This method is called when a new type is recognized. The type is
   /// converted from the bytecode and passed to this method.
   /// @brief Handle a type
-  virtual void handleType( 
+  virtual void handleType(
     const Type* Ty ///< The type that was just recognized
   ) {}
 
   /// This method is called when the function prototype for a function is
   /// encountered in the module globals block.
-  virtual void handleFunctionDeclaration( 
+  virtual void handleFunctionDeclaration(
     Function* Func ///< The function being declared
   ) {}
 
@@ -146,7 +146,7 @@ public:
   /// in the module globals block.
   virtual void handleDependentLibrary(const std::string& libName) {}
 
-  /// This method is called if the module globals has a non-empty target 
+  /// This method is called if the module globals has a non-empty target
   /// triple
   virtual void handleTargetTriple(const std::string& triple) {}
 
@@ -159,13 +159,13 @@ public:
   virtual void handleCompactionTableBegin() {}
 
   /// @brief Handle start of a compaction table plane
-  virtual void handleCompactionTablePlane( 
+  virtual void handleCompactionTablePlane(
     unsigned Ty,         ///< The type of the plane (slot number)
     unsigned NumEntries  ///< The number of entries in the plane
   ) {}
 
   /// @brief Handle a type entry in the compaction table
-  virtual void handleCompactionTableType( 
+  virtual void handleCompactionTableType(
     unsigned i,       ///< Index in the plane of this type
     unsigned TypSlot, ///< Slot number for this type
     const Type*       ///< The type referenced by this slot
@@ -182,27 +182,27 @@ public:
   virtual void handleCompactionTableEnd() {}
 
   /// @brief Handle start of a symbol table
-  virtual void handleSymbolTableBegin( 
+  virtual void handleSymbolTableBegin(
     Function* Func,  ///< The function to which the ST belongs
     SymbolTable* ST  ///< The symbol table being filled
   ) {}
 
   /// @brief Handle start of a symbol table plane
-  virtual void handleSymbolTablePlane( 
+  virtual void handleSymbolTablePlane(
     unsigned TySlot,      ///< The slotnum of the type plane
     unsigned NumEntries,  ///< Number of entries in the plane
     const Type* Typ       ///< The type of this type plane
   ) {}
 
   /// @brief Handle a named type in the symbol table
-  virtual void handleSymbolTableType( 
+  virtual void handleSymbolTableType(
     unsigned i,              ///< The index of the type in this plane
     unsigned slot,           ///< Slot number of the named type
     const std::string& name  ///< Name of the type
   ) {}
 
   /// @brief Handle a named value in the symbol table
-  virtual void handleSymbolTableValue( 
+  virtual void handleSymbolTableValue(
     unsigned i,              ///< The index of the value in this plane
     unsigned slot,           ///< Slot number of the named value
     const std::string& name  ///< Name of the value.
@@ -227,7 +227,7 @@ public:
     unsigned blocknum ///< The block number of the block
   ) {}
 
-  /// This method is called for each instruction that is parsed. 
+  /// This method is called for each instruction that is parsed.
   /// @returns true if the instruction is a block terminating instruction
   /// @brief Handle an instruction
   virtual bool handleInstruction(
@@ -246,29 +246,29 @@ public:
   virtual void handleGlobalConstantsBegin() {}
 
   /// @brief Handle a constant expression
-  virtual void handleConstantExpression( 
+  virtual void handleConstantExpression(
     unsigned Opcode,  ///< Opcode of primary expression operator
     std::vector<Constant*> ArgVec, ///< expression args
     Constant* C ///< The constant value
   ) {}
 
   /// @brief Handle a constant array
-  virtual void handleConstantArray( 
+  virtual void handleConstantArray(
     const ArrayType* AT,                ///< Type of the array
     std::vector<Constant*>& ElementSlots,///< Slot nums for array values
     unsigned TypeSlot,                  ///< Slot # of type
     Constant* Val                       ///< The constant value
   ) {}
 
-  /// @brief Handle a constant structure 
-  virtual void handleConstantStruct( 
+  /// @brief Handle a constant structure
+  virtual void handleConstantStruct(
     const StructType* ST,               ///< Type of the struct
     std::vector<Constant*>& ElementSlots,///< Slot nums for struct values
     Constant* Val                       ///< The constant value
   ) {}
 
   /// @brief Handle a constant packed
-  virtual void handleConstantPacked( 
+  virtual void handleConstantPacked(
     const PackedType* PT,                ///< Type of the array
     std::vector<Constant*>& ElementSlots,///< Slot nums for packed values
     unsigned TypeSlot,                  ///< Slot # of type
@@ -276,7 +276,7 @@ public:
   ) {}
 
   /// @brief Handle a constant pointer
-  virtual void handleConstantPointer( 
+  virtual void handleConstantPointer(
     const PointerType* PT, ///< Type of the pointer
     unsigned Slot,         ///< Slot num of initializer value
     GlobalValue* GV        ///< Referenced global value
@@ -288,7 +288,7 @@ public:
   ) {}
 
   /// @brief Handle a primitive constant value
-  virtual void handleConstantValue( 
+  virtual void handleConstantValue(
     Constant * c ///< The constant just defined
   ) {}
 

@@ -1,10 +1,10 @@
 //===- SourceFile.h - Class to represent a source code file -----*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file defines the SourceFile class which is used to represent a single
@@ -60,11 +60,11 @@ namespace llvm {
     /// getDescriptor - Return the debugging decriptor for this source file.
     ///
     const GlobalVariable *getDescriptor() const { return Descriptor; }
-    
+
     /// getFilename - Return the fully resolved path that this file was loaded
     /// from.
     const std::string &getFilename() const { return Filename.toString(); }
-    
+
     /// getSourceLine - Given a line number, return the start and end of the
     /// line in the file.  If the line number is invalid, or if the file could
     /// not be loaded, null pointers are returned for the start and end of the
@@ -72,7 +72,7 @@ namespace llvm {
     /// any newlines from the end of the line, to ease formatting of the text.
     void getSourceLine(unsigned LineNo, const char *&LineStart,
                        const char *&LineEnd) const;
-  
+
     /// getNumLines - Return the number of lines the source file contains.
     ///
     unsigned getNumLines() const {
@@ -84,7 +84,7 @@ namespace llvm {
     /// readFile - Load Filename into memory
     ///
     void readFile();
-    
+
     /// calculateLineOffsets - Compute the LineOffset vector for the current
     /// file.
     void calculateLineOffsets() const;

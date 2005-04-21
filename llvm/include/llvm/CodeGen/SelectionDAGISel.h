@@ -1,10 +1,10 @@
 //===-- llvm/CodeGen/SelectionDAGISel.h - Common Base Class------*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements the SelectionDAGISel class, which is used as the common
@@ -49,13 +49,13 @@ public:
   unsigned MakeReg(MVT::ValueType VT);
 
   virtual void InstructionSelectBasicBlock(SelectionDAG &SD) = 0;
-  
+
 private:
   SDOperand CopyValueToVirtualRegister(SelectionDAGLowering &SDL,
                                        Value *V, unsigned Reg);
   void SelectBasicBlock(BasicBlock *BB, MachineFunction &MF,
                         FunctionLoweringInfo &FuncInfo);
-  
+
   void BuildSelectionDAG(SelectionDAG &DAG, BasicBlock *LLVMBB,
            std::vector<std::pair<MachineInstr*, unsigned> > &PHINodesToUpdate,
                          FunctionLoweringInfo &FuncInfo);

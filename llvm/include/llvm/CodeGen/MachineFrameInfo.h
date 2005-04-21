@@ -1,12 +1,12 @@
 //===-- CodeGen/MachineFrameInfo.h - Abstract Stack Frame Rep. --*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
-// 
+//
 // The MachineFrameInfo class represents an abstract stack frame until
 // prolog/epilog code is inserted.  This class is key to allowing stack frame
 // representation optimizations, such as frame pointer elimination.  It also
@@ -168,7 +168,7 @@ public:
   ///
   bool hasCalls() const { return HasCalls; }
   void setHasCalls(bool V) { HasCalls = V; }
-  
+
   /// getMaxCallFrameSize - Return the maximum size of a call frame that must be
   /// allocated for an outgoing function call.  This is only available if
   /// CallFrameSetup/Destroy pseudo instructions are used by the target, and
@@ -186,7 +186,7 @@ public:
     Objects.insert(Objects.begin(), StackObject(Size, 1, SPOffset));
     return -++NumFixedObjects;
   }
-  
+
   /// CreateStackObject - Create a new statically sized stack object, returning
   /// a postive identifier to represent it.
   ///

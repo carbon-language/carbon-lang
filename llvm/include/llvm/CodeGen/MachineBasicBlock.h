@@ -1,12 +1,12 @@
 //===-- llvm/CodeGen/MachineBasicBlock.h ------------------------*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
-// 
+//
 // Collect the sequence of machine instructions for a basic block.
 //
 //===----------------------------------------------------------------------===//
@@ -75,7 +75,7 @@ public:
   }
 
   ~MachineBasicBlock();
-  
+
   /// getBasicBlock - Return the LLVM basic block that this instance
   /// corresponded to originally.
   ///
@@ -111,7 +111,7 @@ public:
   typedef std::vector<MachineBasicBlock *>::const_iterator const_pred_iterator;
   typedef std::vector<MachineBasicBlock *>::iterator       succ_iterator;
   typedef std::vector<MachineBasicBlock *>::const_iterator const_succ_iterator;
-  
+
   pred_iterator        pred_begin()       { return Predecessors.begin (); }
   const_pred_iterator  pred_begin() const { return Predecessors.begin (); }
   pred_iterator        pred_end()         { return Predecessors.end ();   }
@@ -162,7 +162,7 @@ public:
   iterator erase(iterator I, iterator E) { return Insts.erase(I, E); }
   MachineInstr *remove(MachineInstr *I)  { return Insts.remove(I); }
   void clear()                           { Insts.clear(); }
-  
+
   /// splice - Take a block of instructions from MBB 'Other' in the range [From,
   /// To), and insert them into this MBB right before 'where'.
   void splice(iterator where, MachineBasicBlock *Other, iterator From,
@@ -219,10 +219,10 @@ template <> struct GraphTraits<MachineBasicBlock *> {
   typedef MachineBasicBlock::succ_iterator ChildIteratorType;
 
   static NodeType *getEntryNode(MachineBasicBlock *BB) { return BB; }
-  static inline ChildIteratorType child_begin(NodeType *N) { 
+  static inline ChildIteratorType child_begin(NodeType *N) {
     return N->succ_begin();
   }
-  static inline ChildIteratorType child_end(NodeType *N) { 
+  static inline ChildIteratorType child_end(NodeType *N) {
     return N->succ_end();
   }
 };
@@ -232,10 +232,10 @@ template <> struct GraphTraits<const MachineBasicBlock *> {
   typedef MachineBasicBlock::const_succ_iterator ChildIteratorType;
 
   static NodeType *getEntryNode(const MachineBasicBlock *BB) { return BB; }
-  static inline ChildIteratorType child_begin(NodeType *N) { 
+  static inline ChildIteratorType child_begin(NodeType *N) {
     return N->succ_begin();
   }
-  static inline ChildIteratorType child_end(NodeType *N) { 
+  static inline ChildIteratorType child_end(NodeType *N) {
     return N->succ_end();
   }
 };
@@ -252,10 +252,10 @@ template <> struct GraphTraits<Inverse<MachineBasicBlock*> > {
   static NodeType *getEntryNode(Inverse<MachineBasicBlock *> G) {
     return G.Graph;
   }
-  static inline ChildIteratorType child_begin(NodeType *N) { 
+  static inline ChildIteratorType child_begin(NodeType *N) {
     return N->pred_begin();
   }
-  static inline ChildIteratorType child_end(NodeType *N) { 
+  static inline ChildIteratorType child_end(NodeType *N) {
     return N->pred_end();
   }
 };
@@ -264,12 +264,12 @@ template <> struct GraphTraits<Inverse<const MachineBasicBlock*> > {
   typedef const MachineBasicBlock NodeType;
   typedef MachineBasicBlock::const_pred_iterator ChildIteratorType;
   static NodeType *getEntryNode(Inverse<const MachineBasicBlock*> G) {
-    return G.Graph; 
+    return G.Graph;
   }
-  static inline ChildIteratorType child_begin(NodeType *N) { 
+  static inline ChildIteratorType child_begin(NodeType *N) {
     return N->pred_begin();
   }
-  static inline ChildIteratorType child_end(NodeType *N) { 
+  static inline ChildIteratorType child_end(NodeType *N) {
     return N->pred_end();
   }
 };

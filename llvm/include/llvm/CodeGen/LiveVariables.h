@@ -1,12 +1,12 @@
 //===-- llvm/CodeGen/LiveVariables.h - Live Variable Analysis ---*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
-// 
+//
 // This file implements the LiveVariable analysis pass.  For each machine
 // instruction in the function, this pass calculates the set of registers that
 // are immediately dead after the instruction (i.e., the instruction calculates
@@ -23,7 +23,7 @@
 // to resolve physical register lifetimes in each basic block).  If a physical
 // register is not register allocatable, it is not tracked.  This is useful for
 // things like the stack pointer and condition codes.
-//   
+//
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_CODEGEN_LIVEVARIABLES_H
@@ -111,7 +111,7 @@ public:
   /// killed_iterator - Iterate over registers killed by a machine instruction
   ///
   typedef std::multimap<MachineInstr*, unsigned>::iterator killed_iterator;
-  
+
   /// killed_begin/end - Get access to the range of registers killed by a
   /// machine instruction.
   killed_iterator killed_begin(MachineInstr *MI) {

@@ -1,17 +1,17 @@
 //===-- llvm/Bytecode/Analyzer.h - Analyzer for Bytecode files --*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
-// This file was developed by Reid Spencer and is distributed under the 
+// This file was developed by Reid Spencer and is distributed under the
 // University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This functionality is implemented by the lib/Bytecode/Reader library.
 // It is used to read VM bytecode files from a file or memory buffer
-// and print out a diagnostic analysis of the contents of the file. It is 
-// intended for three uses: (a) understanding the bytecode format, (b) ensuring 
-// correctness of bytecode format, (c) statistical analysis of generated 
+// and print out a diagnostic analysis of the contents of the file. It is
+// intended for three uses: (a) understanding the bytecode format, (b) ensuring
+// correctness of bytecode format, (c) statistical analysis of generated
 // bytecode files.
 //
 //===----------------------------------------------------------------------===//
@@ -30,8 +30,8 @@ namespace llvm {
 class Function;
 class Module;
 
-/// This structure is used to contain the output of the Bytecode Analysis 
-/// library. It simply contains fields to hold each item of the analysis 
+/// This structure is used to contain the output of the Bytecode Analysis
+/// library. It simply contains fields to hold each item of the analysis
 /// results.
 /// @brief Bytecode Analysis results structure
 struct BytecodeAnalysis {
@@ -68,7 +68,7 @@ struct BytecodeAnalysis {
   unsigned vbrCompBytes;    ///< Number of vbr bytes (compressed)
   unsigned vbrExpdBytes;    ///< Number of vbr bytes (expanded)
 
-  typedef std::map<BytecodeFormat::CompressedBytecodeBlockIdentifiers,unsigned> 
+  typedef std::map<BytecodeFormat::CompressedBytecodeBlockIdentifiers,unsigned>
       BlockSizeMap;
   BlockSizeMap BlockSizes;
 
@@ -91,20 +91,20 @@ struct BytecodeAnalysis {
     unsigned vbrExpdBytes;    ///< Number of vbr bytes (expanded)
   };
 
-  /// A mapping of function slot numbers to the collected information about 
+  /// A mapping of function slot numbers to the collected information about
   /// the function.
-  std::map<const Function*,BytecodeFunctionInfo> FunctionInfo; 
+  std::map<const Function*,BytecodeFunctionInfo> FunctionInfo;
 
   /// The content of the progressive verification
   std::string VerifyInfo;
 
   /// Flags for what should be done
-  bool detailedResults;       ///< If true, FunctionInfo has contents 
+  bool detailedResults;       ///< If true, FunctionInfo has contents
   bool progressiveVerify;     ///< If true, VerifyInfo has contents
 };
 
 /// This function is the main entry point into the bytecode analysis library. It
-/// allows you to simply provide a \p filename and storage for the \p Results 
+/// allows you to simply provide a \p filename and storage for the \p Results
 /// that will be filled in with the analysis results.
 /// @brief Analyze contents of a bytecode File
 Module* AnalyzeBytecodeFile(

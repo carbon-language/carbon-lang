@@ -1,10 +1,10 @@
 //===-- llvm/CodeGen/AsmPrinter.h - AsmPrinter Framework --------*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This class is intended to be used as a base class for target-specific
@@ -78,7 +78,7 @@ namespace llvm {
     /// AsciiDirective - This directive allows emission of an ascii string with
     /// the standard C escape characters embedded into it.
     const char *AsciiDirective;
-    
+
     /// DataDirectives - These directives are used to output some unit of
     /// integer data to the current section.  If a data directive is set to
     /// null, smaller data directives will be used to emit the large sizes.
