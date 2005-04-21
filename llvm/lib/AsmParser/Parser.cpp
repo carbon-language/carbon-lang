@@ -1,10 +1,10 @@
 //===- Parser.cpp - Main dispatch module for the Parser library -------------===
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This library implements the functionality defined in llvm/assembly/parser.h
@@ -49,24 +49,24 @@ Module *llvm::ParseAssemblyFile(const std::string &Filename) {
 
 
 ParseException::ParseException(const std::string &filename,
-                               const std::string &message, 
-			       int lineNo, int colNo) 
+                               const std::string &message,
+                               int lineNo, int colNo)
   : Filename(filename), Message(message) {
   LineNo = lineNo; ColumnNo = colNo;
 }
 
-ParseException::ParseException(const ParseException &E) 
+ParseException::ParseException(const ParseException &E)
   : Filename(E.Filename), Message(E.Message) {
   LineNo = E.LineNo;
   ColumnNo = E.ColumnNo;
 }
 
 // Includes info from options
-const std::string ParseException::getMessage() const { 
+const std::string ParseException::getMessage() const {
   std::string Result;
   char Buffer[10];
 
-  if (Filename == "-") 
+  if (Filename == "-")
     Result += "<stdin>";
   else
     Result += Filename;
@@ -79,6 +79,6 @@ const std::string ParseException::getMessage() const {
       Result += std::string(",") + Buffer;
     }
   }
-  
+
   return Result + ": " + Message;
 }

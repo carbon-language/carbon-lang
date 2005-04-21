@@ -1,13 +1,13 @@
 //===-- ParserInternals.h - Definitions internal to the parser --*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
-//  This header file defines the various variables that are shared among the 
+//  This header file defines the various variables that are shared among the
 //  different components of the parser...
 //
 //===----------------------------------------------------------------------===//
@@ -52,21 +52,21 @@ char *UnEscapeLexed(char *Buffer, bool AllowNull = false);
 // ThrowException - Wrapper around the ParseException class that automatically
 // fills in file line number and column number and options info.
 //
-// This also helps me because I keep typing 'throw new ParseException' instead 
+// This also helps me because I keep typing 'throw new ParseException' instead
 // of just 'throw ParseException'... sigh...
 //
 static inline void ThrowException(const std::string &message,
-				  int LineNo = -1) {
+                                  int LineNo = -1) {
   if (LineNo == -1) LineNo = llvmAsmlineno;
   // TODO: column number in exception
   throw ParseException(CurFilename, message, LineNo);
 }
 
 // ValID - Represents a reference of a definition of some sort.  This may either
-// be a numeric reference or a symbolic (%var) reference.  This is just a 
+// be a numeric reference or a symbolic (%var) reference.  This is just a
 // discriminated union.
 //
-// Note that I can't implement this class in a straight forward manner with 
+// Note that I can't implement this class in a straight forward manner with
 // constructors and stuff because it goes in a union.
 //
 struct ValID {
