@@ -242,7 +242,7 @@ information.</p>
 </pre><p>
 
 <p>This declares a "<tt>Hello</tt>" class that is a subclass of <tt><a
-href="http://llvm.cs.uiuc.edu/doxygen/structllvm_1_1FunctionPass.html">FunctionPass</a></tt>.
+href="http://llvm.cs.uiuc.edu/doxygen/classllvm_1_1FunctionPass.html">FunctionPass</a></tt>.
 The different builtin pass subclasses are described in detail <a
 href="#passtype">later</a>, but for now, know that <a
 href="#FunctionPass"><tt>FunctionPass</tt></a>'s operate a function at a
@@ -424,7 +424,7 @@ slow.</p>
 <div class="doc_text">
 
 <p>The most plain and boring type of pass is the "<tt><a
-href="http://llvm.cs.uiuc.edu/doxygen/structllvm_1_1ImmutablePass.html">ImmutablePass</a></tt>"
+href="http://llvm.cs.uiuc.edu/doxygen/classllvm_1_1ImmutablePass.html">ImmutablePass</a></tt>"
 class.  This pass type is used for passes that do not have to be run, do not
 change state, and never need to be updated.  This is not a normal type of
 transformation or analysis, but can provide information about the current
@@ -485,7 +485,7 @@ otherwise.</p>
 <div class="doc_text">
 
 <p>The "<tt><a
-href="http://llvm.cs.uiuc.edu/doxygen/structllvm_1_1CallGraphSCCPass.html">CallGraphSCCPass</a></tt>"
+href="http://llvm.cs.uiuc.edu/doxygen/classllvm_1_1CallGraphSCCPass.html">CallGraphSCCPass</a></tt>"
 is used by passes that need to traverse the program bottom-up on the call graph
 (callees before callers).  Deriving from CallGraphSCCPass provides some
 mechanics for building and traversing the CallGraph, but also allows the system
@@ -1011,9 +1011,9 @@ the fact that it hacks on the CFG.
 <pre>
   <i>// This is an example implementation from an analysis, which does not modify
   // the program at all, yet has a prerequisite.</i>
-  <b>void</b> <a href="http://llvm.cs.uiuc.edu/doxygen/structllvm_1_1PostDominanceFrontier.html">PostDominanceFrontier</a>::getAnalysisUsage(AnalysisUsage &amp;AU) <b>const</b> {
+  <b>void</b> <a href="http://llvm.cs.uiuc.edu/doxygen/classllvm_1_1PostDominanceFrontier.html">PostDominanceFrontier</a>::getAnalysisUsage(AnalysisUsage &amp;AU) <b>const</b> {
     AU.setPreservesAll();
-    AU.addRequired&lt;<a href="http://llvm.cs.uiuc.edu/doxygen/structllvm_1_1PostDominatorTree.html">PostDominatorTree</a>&gt;();
+    AU.addRequired&lt;<a href="http://llvm.cs.uiuc.edu/doxygen/classllvm_1_1PostDominatorTree.html">PostDominatorTree</a>&gt;();
   }
 </pre>
 
@@ -1267,7 +1267,7 @@ etc... until the entire program has been run through the passes.
 the LLVM program representation for a single function at a time, instead of
 traversing the entire program.  It reduces the memory consumption of compiler,
 because, for example, only one <a
-href="http://llvm.cs.uiuc.edu/doxygen/structllvm_1_1DominatorSet.html"><tt>DominatorSet</tt></a>
+href="http://llvm.cs.uiuc.edu/doxygen/classllvm_1_1DominatorSet.html"><tt>DominatorSet</tt></a>
 needs to be calculated at a time.  This also makes it possible some <a
 href="#SMP">interesting enhancements</a> in the future.</p></li>
 
