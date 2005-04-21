@@ -109,6 +109,16 @@ Process::GetTimeUsage(TimeValue& elapsed, TimeValue& user_time,
 #endif
 }
 
+int Process::GetCurrentUserId()
+{
+  return getuid();
+}
+
+int Process::GetCurrentGroupId()
+{
+  return getgid();
+}
+
 // Some LLVM programs such as bugpoint produce core files as a normal part of
 // their operation. To prevent the disk from filling up, this function
 // does what's necessary to prevent their generation.
