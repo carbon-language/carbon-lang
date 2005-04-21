@@ -1,14 +1,14 @@
 //===-- Internal/SlotTable.h - Type/Value Slot Holder -----------*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by Reid Spencer and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file declares the SlotTable class for type plane numbering.
-// 
+//
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_INTERNAL_SLOTTABLE_H
@@ -28,10 +28,10 @@ class SymbolTable;
 class ConstantArray;
 
 /// This class is the common abstract data type for both the SlotMachine and
-/// the SlotCalculator. It provides the two-way mapping between Values and 
+/// the SlotCalculator. It provides the two-way mapping between Values and
 /// Slots as well as the two-way mapping between Types and Slots. For Values,
 /// the slot number can be extracted by simply using the getSlot()
-/// method and passing in the Value. For Types, it is the same. 
+/// method and passing in the Value. For Types, it is the same.
 /// @brief Abstract data type for slot numbers.
 class SlotTable
 {
@@ -39,7 +39,7 @@ class SlotTable
 /// @{
 public:
 
-  /// This type is used throughout the code to make it clear that 
+  /// This type is used throughout the code to make it clear that
   /// an unsigned value refers to a Slot number and not something else.
   /// @brief Type slot number identification type.
   typedef unsigned SlotNum;
@@ -56,13 +56,13 @@ public:
   };
 
   /// @brief A single plane of Values. Intended index is slot number.
-  typedef std::vector<const Value*> ValuePlane; 
+  typedef std::vector<const Value*> ValuePlane;
 
   /// @brief A table of Values. Intended index is Type::TypeID.
-  typedef std::vector<ValuePlane> ValueTable; 
+  typedef std::vector<ValuePlane> ValueTable;
 
   /// @brief A map of values to slot numbers.
-  typedef std::map<const Value*,SlotNum> ValueMap; 
+  typedef std::map<const Value*,SlotNum> ValueMap;
 
   /// @brief A single plane of Types. Intended index is slot number.
   typedef std::vector<const Type*>  TypePlane;
@@ -80,7 +80,7 @@ public:
   /// SlotTable will need the primitive types. If you don't need them, pass
   /// in true.
   /// @brief Default Constructor
-  explicit SlotTable( 
+  explicit SlotTable(
       bool dont_insert_primitives = false ///< Control insertion of primitives.
   );
 
@@ -169,11 +169,11 @@ private:
   ValueTable vTable;
 
   /// A map of Values to unsigned integer. This allows for efficient lookup of
-  /// A Value's slot number in its type plane. 
+  /// A Value's slot number in its type plane.
   ValueMap   vMap;
 
   /// A one dimensional vector of Types indexed by slot number. Types are
-  /// handled separately because they are not Values. 
+  /// handled separately because they are not Values.
   TypePlane  tPlane;
 
   /// A map of Types to unsigned integer. This allows for efficient lookup of
@@ -186,6 +186,6 @@ private:
 
 } // End llvm namespace
 
-// vim: sw=2 
+// vim: sw=2
 
 #endif

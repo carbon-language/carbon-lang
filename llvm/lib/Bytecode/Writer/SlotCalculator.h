@@ -1,10 +1,10 @@
 //===-- Analysis/SlotCalculator.h - Calculate value slots -------*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This class calculates the slots that values will land in.  This is useful for
@@ -77,7 +77,7 @@ public:
   SlotCalculator(const Module *M );
   // Start out in incorp state
   SlotCalculator(const Function *F );
-  
+
   /// getSlot - Return the slot number of the specified value in it's type
   /// plane.  This returns < 0 on error!
   ///
@@ -103,8 +103,8 @@ public:
       return CompactionTypes.size();
   }
 
-  inline unsigned getModuleLevel(unsigned Plane) const { 
-    return Plane < ModuleLevel.size() ? ModuleLevel[Plane] : 0; 
+  inline unsigned getModuleLevel(unsigned Plane) const {
+    return Plane < ModuleLevel.size() ? ModuleLevel[Plane] : 0;
   }
 
   /// Returns the number of types in the type list that are at module level
@@ -113,7 +113,7 @@ public:
   }
 
   TypePlane &getPlane(unsigned Plane);
-  TypeList& getTypes() { 
+  TypeList& getTypes() {
     if (!CompactionTypes.empty())
       return CompactionTypes;
     return Types;

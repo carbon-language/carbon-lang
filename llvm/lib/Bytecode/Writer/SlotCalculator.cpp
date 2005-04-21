@@ -1,10 +1,10 @@
 //===-- SlotCalculator.cpp - Calculate what slots values land in ----------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements a useful analysis step to figure out what numbered slots
@@ -150,7 +150,7 @@ void SlotCalculator::processModule() {
         TypePlane &Plane = Table[plane];
         unsigned FirstNonStringID = 0;
         for (unsigned i = 0, e = Plane.size(); i != e; ++i)
-          if (isa<ConstantAggregateZero>(Plane[i]) || 
+          if (isa<ConstantAggregateZero>(Plane[i]) ||
 	      (isa<ConstantArray>(Plane[i]) &&
                cast<ConstantArray>(Plane[i])->isString())) {
             // Check to see if we have to shuffle this string around.  If not,
@@ -158,7 +158,7 @@ void SlotCalculator::processModule() {
             if (i != FirstNonStringID) {
               // Swap the plane entries....
               std::swap(Plane[i], Plane[FirstNonStringID]);
-              
+
               // Keep the NodeMap up to date.
               NodeMap[Plane[i]] = i;
               NodeMap[Plane[FirstNonStringID]] = FirstNonStringID;
@@ -167,14 +167,14 @@ void SlotCalculator::processModule() {
           }
       }
   }
-  
-  // Scan all of the functions for their constants, which allows us to emit 
-  // more compact modules.  This is optional, and is just used to compactify 
+
+  // Scan all of the functions for their constants, which allows us to emit
+  // more compact modules.  This is optional, and is just used to compactify
   // the constants used by different functions together.
   //
-  // This functionality tends to produce smaller bytecode files.  This should 
-  // not be used in the future by clients that want to, for example, build and 
-  // emit functions on the fly.  For now, however, it is unconditionally 
+  // This functionality tends to produce smaller bytecode files.  This should
+  // not be used in the future by clients that want to, for example, build and
+  // emit functions on the fly.  For now, however, it is unconditionally
   // enabled.
   ModuleContainsAllFunctionConstants = true;
 
@@ -183,7 +183,7 @@ void SlotCalculator::processModule() {
        F != E; ++F) {
     for (const_inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I){
       for (unsigned op = 0, e = I->getNumOperands(); op != e; ++op)
-        if (isa<Constant>(I->getOperand(op)) && 
+        if (isa<Constant>(I->getOperand(op)) &&
             !isa<GlobalValue>(I->getOperand(op)))
           getOrCreateSlot(I->getOperand(op));
       getOrCreateSlot(I->getType());
@@ -244,7 +244,7 @@ void SlotCalculator::processSymbolTable(const SymbolTable *ST) {
     getOrCreateSlot(TI->second);
 
   // Now do the values.
-  for (SymbolTable::plane_const_iterator PI = ST->plane_begin(), 
+  for (SymbolTable::plane_const_iterator PI = ST->plane_begin(),
        PE = ST->plane_end(); PI != PE; ++PI)
     for (SymbolTable::value_const_iterator VI = PI->second.begin(),
            VE = PI->second.end(); VI != VE; ++VI)
@@ -258,7 +258,7 @@ void SlotCalculator::processSymbolTableConstants(const SymbolTable *ST) {
     getOrCreateSlot(TI->second);
 
   // Now do the constant values in all planes
-  for (SymbolTable::plane_const_iterator PI = ST->plane_begin(), 
+  for (SymbolTable::plane_const_iterator PI = ST->plane_begin(),
        PE = ST->plane_end(); PI != PE; ++PI)
     for (SymbolTable::value_const_iterator VI = PI->second.begin(),
            VE = PI->second.end(); VI != VE; ++VI)
@@ -294,7 +294,7 @@ void SlotCalculator::incorporateFunction(const Function *F) {
     // before any nonconstant values.  This will be turned into the constant
     // pool for the bytecode writer.
     //
-    
+
     // Emit all of the constants that are being used by the instructions in
     // the function...
     constant_iterator CI = constant_begin(F);
@@ -303,10 +303,10 @@ void SlotCalculator::incorporateFunction(const Function *F) {
       this->getOrCreateSlot(*CI);
       ++CI;
     }
-    
+
     // If there is a symbol table, it is possible that the user has names for
     // constants that are not being used.  In this case, we will have problems
-    // if we don't emit the constants now, because otherwise we will get 
+    // if we don't emit the constants now, because otherwise we will get
     // symbol table references to constants not in the output.  Scan for these
     // constants now.
     //
@@ -380,7 +380,7 @@ void SlotCalculator::purgeFunction() {
         NodeMap.erase(Plane.back());   // Erase from nodemap
         Plane.pop_back();              // Shrink plane
       }
-      
+
       Table.pop_back();                // Nuke the plane, we don't like it.
     }
   }
@@ -482,7 +482,7 @@ void SlotCalculator::buildCompactionTable(const Function *F) {
     getOrCreateCompactionTableSlot(TI->second);
 
   // Now do the constants and global values
-  for (SymbolTable::plane_const_iterator PI = ST.plane_begin(), 
+  for (SymbolTable::plane_const_iterator PI = ST.plane_begin(),
        PE = ST.plane_end(); PI != PE; ++PI)
     for (SymbolTable::value_const_iterator VI = PI->second.begin(),
            VE = PI->second.end(); VI != VE; ++VI)
@@ -503,14 +503,14 @@ void SlotCalculator::buildCompactionTable(const Function *F) {
       assert(Ty->getTypeID() != Type::LabelTyID);
       getOrCreateCompactionTableSlot(Constant::getNullValue(Ty));
     }
-  
+
   // Okay, now at this point, we have a legal compaction table.  Since we want
   // to emit the smallest possible binaries, do not compactify the type plane if
   // it will not save us anything.  Because we have not yet incorporated the
   // function body itself yet, we don't know whether or not it's a good idea to
   // compactify other planes.  We will defer this decision until later.
   TypeList &GlobalTypes = Types;
-  
+
   // All of the values types will be scrunched to the start of the types plane
   // of the global table.  Figure out just how many there are.
   assert(!GlobalTypes.empty() && "No global types???");
@@ -530,7 +530,7 @@ void SlotCalculator::buildCompactionTable(const Function *F) {
     std::swap(CompactionTable, TmpCompactionTable);
     TypeList TmpTypes;
     std::swap(TmpTypes, CompactionTypes);
-    
+
     // Move each plane back over to the uncompactified plane
     while (!TmpTypes.empty()) {
       const Type *Ty = TmpTypes.back();
@@ -540,7 +540,7 @@ void SlotCalculator::buildCompactionTable(const Function *F) {
       // Find the global slot number for this type.
       int TySlot = getSlot(Ty);
       assert(TySlot != -1 && "Type doesn't exist in global table?");
-      
+
       // Now we know where to put the compaction table plane.
       if (CompactionTable.size() <= unsigned(TySlot))
         CompactionTable.resize(TySlot+1);
@@ -575,7 +575,7 @@ void SlotCalculator::pruneCompactionTable() {
       if (GlobalSlot >= Table.size())
         Table.resize(GlobalSlot+1);
       TypePlane &GPlane = Table[GlobalSlot];
-      
+
       unsigned ModLevel = getModuleLevel(ctp);
       unsigned NumFunctionObjs = CPlane.size()-ModLevel;
 
@@ -624,7 +624,7 @@ void SlotCalculator::pruneCompactionTable() {
 }
 
 /// Determine if the compaction table is actually empty. Because the
-/// compaction table always includes the primitive type planes, we 
+/// compaction table always includes the primitive type planes, we
 /// can't just check getCompactionTable().size() because it will never
 /// be zero. Furthermore, the ModuleLevel factors into whether a given
 /// plane is empty or not. This function does the necessary computation
@@ -640,7 +640,7 @@ bool SlotCalculator::CompactionTableIsEmpty() const {
       // If the module level is non-zero then at least the
       // first element of the plane is valid and therefore not empty.
       unsigned End = getModuleLevel(i);
-      if (End != 0) 
+      if (End != 0)
         return false;
     }
   }
@@ -699,8 +699,8 @@ int SlotCalculator::getOrCreateSlot(const Value *V) {
       assert(CompactionNodeMap.empty() &&
              "All needed constants should be in the compaction map already!");
 
-      // Do not index the characters that make up constant strings.  We emit 
-      // constant strings as special entities that don't require their 
+      // Do not index the characters that make up constant strings.  We emit
+      // constant strings as special entities that don't require their
       // individual characters to be emitted.
       if (!isa<ConstantArray>(C) || !cast<ConstantArray>(C)->isString()) {
         // This makes sure that if a constant has uses (for example an array of
@@ -746,7 +746,7 @@ int SlotCalculator::insertValue(const Value *D, bool dontIgnore) {
       return getOrCreateCompactionTableSlot(D);
   }
 
-  // If this node does not contribute to a plane, or if the node has a 
+  // If this node does not contribute to a plane, or if the node has a
   // name and we don't want names, then ignore the silly node... Note that types
   // do need slot numbers so that we can keep track of where other values land.
   //
@@ -823,7 +823,7 @@ int SlotCalculator::doInsertValue(const Value *D) {
   } else {
     Ty = Typ->getTypeID();
   }
-  
+
   if (Table.size() <= Ty)    // Make sure we have the type plane allocated...
     Table.resize(Ty+1, TypePlane());
 
@@ -843,10 +843,10 @@ int SlotCalculator::doInsertValue(const Value *D) {
   unsigned DestSlot = NodeMap[D] = Table[Ty].size();
   Table[Ty].push_back(D);
 
-  SC_DEBUG("  Inserting value [" << Ty << "] = " << D << " slot=" << 
+  SC_DEBUG("  Inserting value [" << Ty << "] = " << D << " slot=" <<
            DestSlot << " [");
   // G = Global, C = Constant, T = Type, F = Function, o = other
-  SC_DEBUG((isa<GlobalVariable>(D) ? "G" : (isa<Constant>(D) ? "C" : 
+  SC_DEBUG((isa<GlobalVariable>(D) ? "G" : (isa<Constant>(D) ? "C" :
            (isa<Function>(D) ? "F" : "o"))));
   SC_DEBUG("]\n");
   return (int)DestSlot;

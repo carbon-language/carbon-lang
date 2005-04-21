@@ -1,10 +1,10 @@
 //===-- Writer.cpp - Library for writing LLVM bytecode files --------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This library implements the functionality defined in llvm/Bytecode/Writer.h
@@ -40,7 +40,7 @@ const unsigned BCVersionNum = 5;
 
 static RegisterPass<WriteBytecodePass> X("emitbytecode", "Bytecode Writer");
 
-static Statistic<> 
+static Statistic<>
 BytesWritten("bytecodewriter", "Number of bytecode bytes written");
 
 //===----------------------------------------------------------------------===//
@@ -48,11 +48,11 @@ BytesWritten("bytecodewriter", "Number of bytecode bytes written");
 //===----------------------------------------------------------------------===//
 
 // output - If a position is specified, it must be in the valid portion of the
-// string... note that this should be inlined always so only the relevant IF 
+// string... note that this should be inlined always so only the relevant IF
 // body should be included.
 inline void BytecodeWriter::output(unsigned i, int pos) {
   if (pos == -1) { // Be endian clean, little endian is our friend
-    Out.push_back((unsigned char)i); 
+    Out.push_back((unsigned char)i);
     Out.push_back((unsigned char)(i >> 8));
     Out.push_back((unsigned char)(i >> 16));
     Out.push_back((unsigned char)(i >> 24));
@@ -71,15 +71,15 @@ inline void BytecodeWriter::output(int i) {
 /// output_vbr - Output an unsigned value, by using the least number of bytes
 /// possible.  This is useful because many of our "infinite" values are really
 /// very small most of the time; but can be large a few times.
-/// Data format used:  If you read a byte with the high bit set, use the low 
-/// seven bits as data and then read another byte. 
+/// Data format used:  If you read a byte with the high bit set, use the low
+/// seven bits as data and then read another byte.
 inline void BytecodeWriter::output_vbr(uint64_t i) {
   while (1) {
     if (i < 0x80) { // done?
       Out.push_back((unsigned char)i);   // We know the high bit is clear...
       return;
     }
-    
+
     // Nope, we are bigger than a character, output the next 7 bits and set the
     // high bit to say that there is more coming...
     Out.push_back(0x80 | ((unsigned char)i & 0x7F));
@@ -93,7 +93,7 @@ inline void BytecodeWriter::output_vbr(unsigned i) {
       Out.push_back((unsigned char)i);   // We know the high bit is clear...
       return;
     }
-    
+
     // Nope, we are bigger than a character, output the next 7 bits and set the
     // high bit to say that there is more coming...
     Out.push_back(0x80 | ((unsigned char)i & 0x7F));
@@ -111,7 +111,7 @@ inline void BytecodeWriter::output_typeid(unsigned i) {
 }
 
 inline void BytecodeWriter::output_vbr(int64_t i) {
-  if (i < 0) 
+  if (i < 0)
     output_vbr(((uint64_t)(-i) << 1) | 1); // Set low order sign bit...
   else
     output_vbr((uint64_t)i << 1);          // Low order bit is clear.
@@ -119,7 +119,7 @@ inline void BytecodeWriter::output_vbr(int64_t i) {
 
 
 inline void BytecodeWriter::output_vbr(int i) {
-  if (i < 0) 
+  if (i < 0)
     output_vbr(((unsigned)(-i) << 1) | 1); // Set low order sign bit...
   else
     output_vbr((unsigned)i << 1);          // Low order bit is clear.
@@ -168,7 +168,7 @@ inline void BytecodeWriter::output_double(double& DoubleVal) {
 }
 
 inline BytecodeBlock::BytecodeBlock(unsigned ID, BytecodeWriter& w,
-		     bool elideIfEmpty, bool hasLongFormat )
+                                    bool elideIfEmpty, bool hasLongFormat )
   : Id(ID), Writer(w), ElideIfEmpty(elideIfEmpty), HasLongFormat(hasLongFormat){
 
   if (HasLongFormat) {
@@ -181,7 +181,7 @@ inline BytecodeBlock::BytecodeBlock(unsigned ID, BytecodeWriter& w,
 }
 
 inline BytecodeBlock::~BytecodeBlock() { // Do backpatch when block goes out
-				         // of scope...
+                                         // of scope...
   if (Loc == Writer.size() && ElideIfEmpty) {
     // If the block is empty, and we are allowed to, do not emit the block at
     // all!
@@ -201,7 +201,7 @@ inline BytecodeBlock::~BytecodeBlock() { // Do backpatch when block goes out
 
 void BytecodeWriter::outputType(const Type *T) {
   output_vbr((unsigned)T->getTypeID());
-  
+
   // That's all there is to handling primitive types...
   if (T->isPrimitiveType()) {
     return;     // We might do this if we alias a prim type: %x = type int
@@ -291,14 +291,14 @@ void BytecodeWriter::outputConstant(const Constant *CPV) {
 
   // We must check for a ConstantExpr before switching by type because
   // a ConstantExpr can be of any type, and has no explicit value.
-  // 
+  //
   if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(CPV)) {
     // FIXME: Encoding of constant exprs could be much more compact!
     assert(CE->getNumOperands() > 0 && "ConstantExpr with 0 operands");
     assert(CE->getNumOperands() != 1 || CE->getOpcode() == Instruction::Cast);
     output_vbr(1+CE->getNumOperands());   // flags as an expr
     output_vbr(CE->getOpcode());        // flags as an expr
-    
+
     for (User::const_op_iterator OI = CE->op_begin(); OI != CE->op_end(); ++OI){
       int Slot = Table.getSlot(*OI);
       assert(Slot != -1 && "Unknown constant used in ConstantExpr!!");
@@ -313,7 +313,7 @@ void BytecodeWriter::outputConstant(const Constant *CPV) {
   } else {
     output_vbr(0U);       // flag as not a ConstantExpr
   }
-  
+
   switch (CPV->getType()->getTypeID()) {
   case Type::BoolTyID:    // Boolean Types
     if (cast<ConstantBool>(CPV)->getValue())
@@ -385,7 +385,7 @@ void BytecodeWriter::outputConstant(const Constant *CPV) {
     break;
   }
 
-  case Type::VoidTyID: 
+  case Type::VoidTyID:
   case Type::LabelTyID:
   default:
     std::cerr << __FILE__ << ":" << __LINE__ << ": Don't know how to serialize"
@@ -404,14 +404,14 @@ void BytecodeWriter::outputConstantStrings() {
   // the 'void' type plane.
   output_vbr(unsigned(E-I));
   output_typeid(Type::VoidTyID);
-    
+
   // Emit all of the strings.
   for (I = Table.string_begin(); I != E; ++I) {
     const ConstantArray *Str = *I;
     int Slot = Table.getSlot(Str->getType());
     assert(Slot != -1 && "Constant string of unknown type?");
     output_typeid((unsigned)Slot);
-    
+
     // Now that we emitted the type (which indicates the size of the string),
     // emit all of the characters.
     std::string Val = Str->getAsString();
@@ -444,7 +444,7 @@ void BytecodeWriter::outputInstructionFormat0(const Instruction *I,
   if (!isa<GetElementPtrInst>(&I)) {
     for (unsigned i = 0; i < NumArgs; ++i) {
       int Slot = Table.getSlot(I->getOperand(i));
-      assert(Slot >= 0 && "No slot number for value!?!?");      
+      assert(Slot >= 0 && "No slot number for value!?!?");
       output_vbr((unsigned)Slot);
     }
 
@@ -460,7 +460,7 @@ void BytecodeWriter::outputInstructionFormat0(const Instruction *I,
 
   } else {
     int Slot = Table.getSlot(I->getOperand(0));
-    assert(Slot >= 0 && "No slot number for value!?!?");      
+    assert(Slot >= 0 && "No slot number for value!?!?");
     output_vbr(unsigned(Slot));
 
     // We need to encode the type of sequential type indices into their slot #
@@ -468,8 +468,8 @@ void BytecodeWriter::outputInstructionFormat0(const Instruction *I,
     for (gep_type_iterator TI = gep_type_begin(I), E = gep_type_end(I);
          Idx != NumArgs; ++TI, ++Idx) {
       Slot = Table.getSlot(I->getOperand(Idx));
-      assert(Slot >= 0 && "No slot number for value!?!?");      
-    
+      assert(Slot >= 0 && "No slot number for value!?!?");
+
       if (isa<SequentialType>(*TI)) {
         unsigned IdxId;
         switch (I->getOperand(Idx)->getType()->getTypeID()) {
@@ -496,10 +496,10 @@ void BytecodeWriter::outputInstructionFormat0(const Instruction *I,
 //
 // Format: [opcode] [type] [numargs] [arg0] [arg1] ... [arg<numargs-1>]
 //
-void BytecodeWriter::outputInstrVarArgsCall(const Instruction *I, 
-	                                    unsigned Opcode,
-					    const SlotCalculator &Table,
-				            unsigned Type) {
+void BytecodeWriter::outputInstrVarArgsCall(const Instruction *I,
+                                            unsigned Opcode,
+                                            const SlotCalculator &Table,
+                                            unsigned Type) {
   assert(isa<CallInst>(I) || isa<InvokeInst>(I));
   // Opcode must have top two bits clear...
   output_vbr(Opcode << 2);                  // Instruction Opcode ID
@@ -526,19 +526,19 @@ void BytecodeWriter::outputInstrVarArgsCall(const Instruction *I,
   // instruction.  Just emit the slot # now.
   for (unsigned i = 0; i != NumFixedOperands; ++i) {
     int Slot = Table.getSlot(I->getOperand(i));
-    assert(Slot >= 0 && "No slot number for value!?!?");      
+    assert(Slot >= 0 && "No slot number for value!?!?");
     output_vbr((unsigned)Slot);
   }
 
   for (unsigned i = NumFixedOperands, e = I->getNumOperands(); i != e; ++i) {
     // Output Arg Type ID
     int Slot = Table.getSlot(I->getOperand(i)->getType());
-    assert(Slot >= 0 && "No slot number for value!?!?");      
+    assert(Slot >= 0 && "No slot number for value!?!?");
     output_typeid((unsigned)Slot);
-    
+
     // Output arg ID itself
     Slot = Table.getSlot(I->getOperand(i));
-    assert(Slot >= 0 && "No slot number for value!?!?");      
+    assert(Slot >= 0 && "No slot number for value!?!?");
     output_vbr((unsigned)Slot);
   }
 }
@@ -547,10 +547,10 @@ void BytecodeWriter::outputInstrVarArgsCall(const Instruction *I,
 // outputInstructionFormat1 - Output one operand instructions, knowing that no
 // operand index is >= 2^12.
 //
-inline void BytecodeWriter::outputInstructionFormat1(const Instruction *I, 
-	                                             unsigned Opcode,
-						     unsigned *Slots, 
-						     unsigned Type) {
+inline void BytecodeWriter::outputInstructionFormat1(const Instruction *I,
+                                                     unsigned Opcode,
+                                                     unsigned *Slots,
+                                                     unsigned Type) {
   // bits   Instruction format:
   // --------------------------
   // 01-00: Opcode type, fixed to 1.
@@ -565,17 +565,17 @@ inline void BytecodeWriter::outputInstructionFormat1(const Instruction *I,
 // outputInstructionFormat2 - Output two operand instructions, knowing that no
 // operand index is >= 2^8.
 //
-inline void BytecodeWriter::outputInstructionFormat2(const Instruction *I, 
-     						     unsigned Opcode,
-						     unsigned *Slots, 
-						     unsigned Type) {
+inline void BytecodeWriter::outputInstructionFormat2(const Instruction *I,
+                                                     unsigned Opcode,
+                                                     unsigned *Slots,
+                                                     unsigned Type) {
   // bits   Instruction format:
   // --------------------------
   // 01-00: Opcode type, fixed to 2.
   // 07-02: Opcode
   // 15-08: Resulting type plane
   // 23-16: Operand #1
-  // 31-24: Operand #2  
+  // 31-24: Operand #2
   //
   output(2 | (Opcode << 2) | (Type << 8) | (Slots[0] << 16) | (Slots[1] << 24));
 }
@@ -584,10 +584,10 @@ inline void BytecodeWriter::outputInstructionFormat2(const Instruction *I,
 // outputInstructionFormat3 - Output three operand instructions, knowing that no
 // operand index is >= 2^6.
 //
-inline void BytecodeWriter::outputInstructionFormat3(const Instruction *I, 
+inline void BytecodeWriter::outputInstructionFormat3(const Instruction *I,
                                                      unsigned Opcode,
-						     unsigned *Slots, 
-						     unsigned Type) {
+                                                     unsigned *Slots,
+                                                     unsigned Type) {
   // bits   Instruction format:
   // --------------------------
   // 01-00: Opcode type, fixed to 3.
@@ -616,7 +616,7 @@ void BytecodeWriter::outputInstruction(const Instruction &I) {
   // the type of the first parameter, as opposed to the type of the instruction
   // (for example, with setcc, we always know it returns bool, but the type of
   // the first param is actually interesting).  But if we have no arguments
-  // we take the type of the instruction itself.  
+  // we take the type of the instruction itself.
   //
   const Type *Ty;
   switch (I.getOpcode()) {
@@ -661,7 +661,7 @@ void BytecodeWriter::outputInstruction(const Instruction &I) {
     //
     unsigned MaxOpSlot = Type;
     unsigned Slots[3]; Slots[0] = (1 << 12)-1;   // Marker to signify 0 operands
-    
+
     for (unsigned i = 0; i != NumOperands; ++i) {
       int slot = Table.getSlot(I.getOperand(i));
       assert(slot != -1 && "Broken bytecode!");
@@ -742,7 +742,7 @@ void BytecodeWriter::outputInstruction(const Instruction &I) {
 //===                              Block Output                            ===//
 //===----------------------------------------------------------------------===//
 
-BytecodeWriter::BytecodeWriter(std::vector<unsigned char> &o, const Module *M) 
+BytecodeWriter::BytecodeWriter(std::vector<unsigned char> &o, const Module *M)
   : Out(o), Table(M) {
 
   // Emit the signature...
@@ -758,9 +758,9 @@ BytecodeWriter::BytecodeWriter(std::vector<unsigned char> &o, const Module *M)
   bool hasNoPointerSize = M->getPointerSize() == Module::AnyPointerSize;
 
   // Output the version identifier and other information.
-  unsigned Version = (BCVersionNum << 4) | 
+  unsigned Version = (BCVersionNum << 4) |
                      (unsigned)isBigEndian | (hasLongPointers << 1) |
-                     (hasNoEndianness << 2) | 
+                     (hasNoEndianness << 2) |
                      (hasNoPointerSize << 3);
   output_vbr(Version);
 
@@ -794,7 +794,7 @@ void BytecodeWriter::outputTypes(unsigned TypeNum) {
   assert(TypeNum <= Types.size() && "Invalid TypeNo index");
 
   unsigned NumEntries = Types.size() - TypeNum;
-  
+
   // Output type header: [num entries]
   output_vbr(NumEntries);
 
@@ -804,11 +804,11 @@ void BytecodeWriter::outputTypes(unsigned TypeNum) {
 
 // Helper function for outputConstants().
 // Writes out all the constants in the plane Plane starting at entry StartNo.
-// 
+//
 void BytecodeWriter::outputConstantsInPlane(const std::vector<const Value*>
                                             &Plane, unsigned StartNo) {
   unsigned ValNo = StartNo;
-  
+
   // Scan through and ignore function arguments, global values, and constant
   // strings.
   for (; ValNo < Plane.size() &&
@@ -866,13 +866,13 @@ void BytecodeWriter::outputConstants(bool isFunction) {
       unsigned ValNo = 0;
       if (isFunction)                  // Don't re-emit module constants
         ValNo += Table.getModuleLevel(pno);
-      
+
       if (hasNullValue(pno)) {
         // Skip zero initializer
         if (ValNo == 0)
           ValNo = 1;
       }
-      
+
       // Write out constants in the plane
       outputConstantsInPlane(Plane, ValNo);
     }
@@ -892,7 +892,7 @@ static unsigned getEncodedLinkage(const GlobalValue *GV) {
 
 void BytecodeWriter::outputModuleInfoBlock(const Module *M) {
   BytecodeBlock ModuleInfoBlock(BytecodeFormat::ModuleGlobalInfoBlockID, *this);
-  
+
   // Output the types for the global variables in the module...
   for (Module::const_global_iterator I = M->global_begin(), End = M->global_end(); I != End;++I) {
     int Slot = Table.getSlot(I->getType());
@@ -962,13 +962,13 @@ void BytecodeWriter::outputFunction(const Function *F) {
     // Otherwise, emit the compaction table.
     outputCompactionTable();
   }
-  
+
   // Output all of the instructions in the body of the function
   outputInstructions(F);
-  
+
   // If needed, output the symbol table for the function...
   outputSymbolTable(F->getSymbolTable());
-  
+
   Table.purgeFunction();
 }
 
@@ -1029,11 +1029,11 @@ void BytecodeWriter::outputCompactionTable() {
   // Avoid writing the compaction table at all if there is no content.
   if (Table.getCompactionTypes().size() >= Type::FirstDerivedTyID ||
       (!Table.CompactionTableIsEmpty())) {
-    BytecodeBlock CTB(BytecodeFormat::CompactionTableBlockID, *this, 
+    BytecodeBlock CTB(BytecodeFormat::CompactionTableBlockID, *this,
                       true/*ElideIfEmpty*/);
     const std::vector<std::vector<const Value*> > &CT =
       Table.getCompactionTable();
-    
+
     // First things first, emit the type compaction table if there is one.
     outputCompactionTypes(Type::FirstDerivedTyID);
 
@@ -1050,7 +1050,7 @@ void BytecodeWriter::outputSymbolTable(const SymbolTable &MST) {
   BytecodeBlock SymTabBlock(BytecodeFormat::SymbolTableBlockID, *this,
                             true/*ElideIfEmpty*/);
 
-  // Write the number of types 
+  // Write the number of types
   output_vbr(MST.num_types());
 
   // Write each of the types
@@ -1058,16 +1058,16 @@ void BytecodeWriter::outputSymbolTable(const SymbolTable &MST) {
        TE = MST.type_end(); TI != TE; ++TI ) {
     // Symtab entry:[def slot #][name]
     output_typeid((unsigned)Table.getSlot(TI->second));
-    output(TI->first); 
+    output(TI->first);
   }
 
   // Now do each of the type planes in order.
-  for (SymbolTable::plane_const_iterator PI = MST.plane_begin(), 
+  for (SymbolTable::plane_const_iterator PI = MST.plane_begin(),
        PE = MST.plane_end(); PI != PE;  ++PI) {
     SymbolTable::value_const_iterator I = MST.value_begin(PI->first);
     SymbolTable::value_const_iterator End = MST.value_end(PI->first);
     int Slot;
-    
+
     if (I == End) continue;  // Don't mess with an absent type...
 
     // Write the number of values in this plane
@@ -1116,7 +1116,7 @@ void llvm::WriteBytecodeToFile(const Module *M, std::ostream &Out,
 
     // We signal compression by using an alternate magic number for the
     // file. The compressed bytecode file's magic number is "llvc" instead
-    // of "llvm". 
+    // of "llvm".
     char compressed_magic[4];
     compressed_magic[0] = 'l';
     compressed_magic[1] = 'l';

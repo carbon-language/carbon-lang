@@ -1,10 +1,10 @@
 //===- WriterInternals.h - Data structures shared by the Writer -*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This header defines the interface used between components of the bytecode
@@ -47,24 +47,24 @@ private:
   void outputInstructions(const Function *F);
   void outputInstruction(const Instruction &I);
   void outputInstructionFormat0(const Instruction *I, unsigned Opcode,
-				const SlotCalculator &Table,
-				unsigned Type);
-  void outputInstrVarArgsCall(const Instruction *I, 
-			      unsigned Opcode,
-			      const SlotCalculator &Table,
-			      unsigned Type) ;
-  inline void outputInstructionFormat1(const Instruction *I, 
-				       unsigned Opcode,
-				       unsigned *Slots, 
-				       unsigned Type) ;
-  inline void outputInstructionFormat2(const Instruction *I, 
-				       unsigned Opcode,
-			               unsigned *Slots, 
-				       unsigned Type) ;
-  inline void outputInstructionFormat3(const Instruction *I, 
-				       unsigned Opcode,
-				       unsigned *Slots, 
-				       unsigned Type) ;
+                                const SlotCalculator &Table,
+                                unsigned Type);
+  void outputInstrVarArgsCall(const Instruction *I,
+                              unsigned Opcode,
+                              const SlotCalculator &Table,
+                              unsigned Type) ;
+  inline void outputInstructionFormat1(const Instruction *I,
+                                       unsigned Opcode,
+                                       unsigned *Slots,
+                                       unsigned Type) ;
+  inline void outputInstructionFormat2(const Instruction *I,
+                                       unsigned Opcode,
+                                       unsigned *Slots,
+                                       unsigned Type) ;
+  inline void outputInstructionFormat3(const Instruction *I,
+                                       unsigned Opcode,
+                                       unsigned *Slots,
+                                       unsigned Type) ;
 
   void outputModuleInfoBlock(const Module *C);
   void outputSymbolTable(const SymbolTable &ST);
