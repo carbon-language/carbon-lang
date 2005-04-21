@@ -507,6 +507,28 @@ SDOperand SelectionDAG::getSetCC(ISD::CondCode Cond, MVT::ValueType VT,
 
       // FIXME: Implement the rest of these.
 
+
+      // Fold bit comparisons when we can.
+      if ((Cond == ISD::SETEQ || Cond == ISD::SETNE) &&
+          VT == N1.getValueType() && N1.getOpcode() == ISD::AND)
+        if (ConstantSDNode *AndRHS =
+                    dyn_cast<ConstantSDNode>(N1.getOperand(1))) {
+          if (Cond == ISD::SETNE && C2 == 0) {// (X & 8) != 0  -->  (X & 8) >> 3
+            // Perform the xform if the AND RHS is a single bit.
+            if ((AndRHS->getValue() & (AndRHS->getValue()-1)) == 0) {
+              return getNode(ISD::SRL, VT, N1,
+                             getConstant(ExactLog2(AndRHS->getValue()),
+                                                   TLI.getShiftAmountTy()));
+            }
+          } else if (Cond == ISD::SETEQ && C2 == AndRHS->getValue()) {
+            // (X & 8) == 8  -->  (X & 8) >> 3
+            // Perform the xform if C2 is a single bit.
+            if ((C2 & (C2-1)) == 0) {
+              return getNode(ISD::SRL, VT, N1,
+                             getConstant(ExactLog2(C2),TLI.getShiftAmountTy()));
+            }
+          }
+        }
     }
   } else if (isa<ConstantSDNode>(N1.Val)) {
       // Ensure that the constant occurs on the RHS.
