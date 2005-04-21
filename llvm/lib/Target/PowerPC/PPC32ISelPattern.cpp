@@ -1899,7 +1899,7 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
       BuildMI(BB, PPC::EQV, 2, Result).addReg(Tmp1).addReg(Tmp2);
       return Result;
     }
-    // Check for NOT, NOR, and NAND: xor (copy, or, and), -1
+    // Check for NOT, NOR, EQV, and NAND: xor (copy, or, xor, and), -1
     if (N.getOperand(1).getOpcode() == ISD::Constant &&
         cast<ConstantSDNode>(N.getOperand(1))->isAllOnesValue()) {
       switch(N.getOperand(0).getOpcode()) {
@@ -1912,6 +1912,11 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
         Tmp1 = SelectExpr(N.getOperand(0).getOperand(0));
         Tmp2 = SelectExpr(N.getOperand(0).getOperand(1));
         BuildMI(BB, PPC::NAND, 2, Result).addReg(Tmp1).addReg(Tmp2);
+        break;
+      case ISD::XOR:
+        Tmp1 = SelectExpr(N.getOperand(0).getOperand(0));
+        Tmp2 = SelectExpr(N.getOperand(0).getOperand(1));
+        BuildMI(BB, PPC::EQV, 2, Result).addReg(Tmp1).addReg(Tmp2);
         break;
       default:
         Tmp1 = SelectExpr(N.getOperand(0));
