@@ -128,12 +128,12 @@ BasicBlock *BasicBlock::getSinglePredecessor() {
   return (PI == E) ? ThePred : 0 /*multiple preds*/;
 }
 
-// removePredecessor - This method is used to notify a BasicBlock that the
-// specified Predecessor of the block is no longer able to reach it.  This is
-// actually not used to update the Predecessor list, but is actually used to 
-// update the PHI nodes that reside in the block.  Note that this should be
-// called while the predecessor still refers to this block.
-//
+/// removePredecessor - This method is used to notify a BasicBlock that the
+/// specified Predecessor of the block is no longer able to reach it.  This is
+/// actually not used to update the Predecessor list, but is actually used to 
+/// update the PHI nodes that reside in the block.  Note that this should be
+/// called while the predecessor still refers to this block.
+///
 void BasicBlock::removePredecessor(BasicBlock *Pred,
                                    bool DontDeleteUselessPHIs) {
   assert((hasNUsesOrMore(16)||// Reduce cost of this assertion for complex CFGs.
