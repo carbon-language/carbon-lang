@@ -91,7 +91,7 @@ Path::GetTemporaryDirectory() {
   char pathname[MAXPATHLEN];
   strcpy(pathname,"/tmp/llvm_XXXXXX");
   if (0 == mkdtemp(pathname))
-    ThrowErrno(std::string(pathname) + ": Can't create temporary directory");
+    ThrowErrno(std::string(pathname) + ": can't create temporary directory");
   Path result;
   result.setDirectory(pathname);
   assert(result.isValid() && "mkdtemp didn't create a valid pathname!");
@@ -106,11 +106,11 @@ Path::GetTemporaryDirectory() {
   strcpy(pathname, "/tmp/llvm_XXXXXX");
   int fd = 0;
   if (-1 == (fd = mkstemp(pathname)))
-    ThrowErrno(std::string(pathname) + ": Can't create temporary directory");
+    ThrowErrno(std::string(pathname) + ": can't create temporary directory");
   ::close(fd);
   ::unlink(pathname); // start race condition, ignore errors
   if (-1 == ::mkdir(pathname, S_IRWXU)) // end race condition
-    ThrowErrno(std::string(pathname) + ": Can't create temporary directory");
+    ThrowErrno(std::string(pathname) + ": can't create temporary directory");
   Path result;
   result.setDirectory(pathname);
   assert(result.isValid() && "mkstemp didn't create a valid pathname!");
@@ -125,9 +125,9 @@ Path::GetTemporaryDirectory() {
   strcpy(pathname, "/tmp/llvm_XXXXXX");
   char *TmpName = ::mktemp(pathname);
   if (TmpName == 0)
-    throw std::string(TmpName) + ": Can't create unique directory name";
+    ThrowErrno(std::string(TmpName) + ": can't create unique directory name");
   if (-1 == ::mkdir(TmpName, S_IRWXU))
-    ThrowErrno(std::string(TmpName) + ": Can't create temporary directory");
+    ThrowErrno(std::string(TmpName) + ": can't create temporary directory");
   Path result;
   result.setDirectory(TmpName);
   assert(result.isValid() && "mktemp didn't create a valid pathname!");
@@ -148,7 +148,7 @@ Path::GetTemporaryDirectory() {
     sprintf(pathname, "/tmp/llvm_%010u", unsigned(num));
   } while ( 0 == access(pathname, F_OK ) );
   if (-1 == ::mkdir(pathname, S_IRWXU))
-    ThrowErrno(std::string(pathname) + ": Can't create temporary directory");
+    ThrowErrno(std::string(pathname) + ": can't create temporary directory");
   Path result;
   result.setDirectory(pathname);
   assert(result.isValid() && "mkstemp didn't create a valid pathname!");
@@ -344,7 +344,7 @@ void
 Path::getStatusInfo(StatusInfo& info) const {
   struct stat buf;
   if (0 != stat(path.c_str(), &buf)) {
-    ThrowErrno(std::string("Can't get status for path: ")+path);
+    ThrowErrno(path + ": can't determine type of path object: ");
   }
   info.fileSize = buf.st_size;
   info.modTime.fromEpochTime(buf.st_mtime);
@@ -407,12 +407,12 @@ Path::getDirectoryContents(std::set<Path>& result) const {
       Path aPath(path + (const char*)de->d_name);
       struct stat buf;
       if (0 != stat(aPath.path.c_str(), &buf)) {
-        int saved_errno = errno;
+        int stat_errno = errno;
         struct stat st;
         if (0 == lstat(aPath.path.c_str(), &st) && S_ISLNK(st.st_mode))
           continue; // dangling symlink -- ignore
-        errno = saved_errno;
-        ThrowErrno(aPath.path + ": can't get status");
+        ThrowErrno(aPath.path + 
+          ": can't determine file object type", stat_errno);
       }
       if (S_ISDIR(buf.st_mode))
         aPath.path += "/";
@@ -566,7 +566,7 @@ Path::createDirectory( bool create_parents) {
       *next = 0;
       if (0 != access(pathname, F_OK | R_OK | W_OK))
         if (0 != mkdir(pathname, S_IRWXU | S_IRWXG))
-          ThrowErrno(std::string(pathname) + ": Can't create directory");
+          ThrowErrno(std::string(pathname) + ": can't create directory");
       char* save = next;
       next = strchr(next+1,'/');
       *save = '/';
@@ -575,7 +575,7 @@ Path::createDirectory( bool create_parents) {
 
   if (0 != access(pathname, F_OK | R_OK))
     if (0 != mkdir(pathname, S_IRWXU | S_IRWXG))
-      ThrowErrno(std::string(pathname) + ": Can't create directory");
+      ThrowErrno(std::string(pathname) + ": can't create directory");
   return true;
 }
 
@@ -587,7 +587,7 @@ Path::createFile() {
   // Create the file
   int fd = ::creat(path.c_str(), S_IRUSR | S_IWUSR);
   if (fd < 0)
-    ThrowErrno(path + ": Can't create file");
+    ThrowErrno(path + ": can't create file");
   ::close(fd);
 
   return true;
@@ -634,7 +634,7 @@ Path::destroyDirectory(bool remove_contents) const {
     else
       pathname[lastchar+1] = 0;
     if ( 0 != rmdir(pathname))
-      ThrowErrno(std::string(pathname) + ": Can't destroy directory");
+      ThrowErrno(std::string(pathname) + ": can't destroy directory");
   }
   return true;
 }
@@ -643,7 +643,7 @@ bool
 Path::destroyFile() const {
   if (!isFile()) return false;
   if (0 != unlink(path.c_str()))
-    ThrowErrno(path + ": Can't destroy file");
+    ThrowErrno(path + ": can't destroy file");
   return true;
 }
 
@@ -651,8 +651,8 @@ bool
 Path::renameFile(const Path& newName) {
   if (!isFile()) return false;
   if (0 != rename(path.c_str(), newName.c_str()))
-    ThrowErrno(std::string("can't rename ") + path + " as " + 
-               newName.toString());
+    ThrowErrno(std::string("can't rename '") + path + "' as '" + 
+               newName.toString() + "' ");
   return true;
 }
 
@@ -676,24 +676,24 @@ sys::CopyFile(const sys::Path &Dest, const sys::Path &Src) {
   try {
     inFile = ::open(Src.c_str(), O_RDONLY);
     if (inFile == -1)
-      ThrowErrno("Cannnot open source file to copy: " + Src.toString());
+      ThrowErrno(Src.toString() + ": can't open source file to copy: ");
 
     outFile = ::open(Dest.c_str(), O_WRONLY|O_CREAT, 0666);
     if (outFile == -1)
-      ThrowErrno("Cannnot create destination file for copy: " +Dest.toString());
+      ThrowErrno(Dest.toString() +": can't create destination file for copy: ");
 
     char Buffer[16*1024];
     while (ssize_t Amt = ::read(inFile, Buffer, 16*1024)) {
       if (Amt == -1) {
         if (errno != EINTR && errno != EAGAIN) 
-          ThrowErrno("Can't read source file: " + Src.toString());
+          ThrowErrno(Src.toString()+": can't read source file: ");
       } else {
         char *BufPtr = Buffer;
         while (Amt) {
           ssize_t AmtWritten = ::write(outFile, BufPtr, Amt);
           if (AmtWritten == -1) {
             if (errno != EINTR && errno != EAGAIN) 
-              ThrowErrno("Can't write destination file: " + Dest.toString());
+              ThrowErrno(Dest.toString() + ": can't write destination file: ");
           } else {
             Amt -= AmtWritten;
             BufPtr += AmtWritten;
@@ -726,7 +726,7 @@ Path::makeUnique(bool reuse_current) {
 #if defined(HAVE_MKSTEMP)
   int TempFD;
   if ((TempFD = mkstemp(FNBuffer)) == -1) {
-    ThrowErrno("Cannot make unique filename for '" + path + "'");
+    ThrowErrno(path + ": can't make unique filename");
   }
 
   // We don't need to hold the temp file descriptor... we will trust that no one
@@ -738,7 +738,7 @@ Path::makeUnique(bool reuse_current) {
 #elif defined(HAVE_MKTEMP)
   // If we don't have mkstemp, use the old and obsolete mktemp function.
   if (mktemp(FNBuffer) == 0) {
-    ThrowErrno("Cannot make unique filename for '" + path + "'");
+    ThrowErrno(path + ": can't make unique filename");
   }
 
   // Save the name
@@ -752,7 +752,7 @@ Path::makeUnique(bool reuse_current) {
     path = FNBuffer;
   }
   if (FCounter > 999999)
-    throw std::string("Cannot make unique filename for '" + path + "'");
+    throw std::string(path + ": can't make unique filename: too many files");
 #endif
 
 }
